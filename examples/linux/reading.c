@@ -49,6 +49,11 @@ struct linux_reader {
   reader_session current;
   reader_session pending;
   int has_pending,pending_owns_session,pending_new_pager;
+#ifdef EXR_READER_PREFERENCES
+  reader_preferences appearance;
+  int appearance_enabled;
+  uint32_t system_theme;
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   reader_catalog *catalog;
   char *catalog_path;
@@ -269,6 +274,17 @@ static exr_status pager_create(linux_reader *reader,reader_session *session,size
                                exr_pager **out,exr_error *error) {
   exr_layout_config config=exr_layout_config_defaults();exr_status status;
   config.page=(exr_layout_options){520,640,28,(float)size,1.5f,8};config.control=reader->control;
+#ifdef EXR_READER_PREFERENCES
+  char css[256];
+  if(reader->appearance_enabled) {
+    const reader_preferences *p=&reader->appearance;
+    config.page=(exr_layout_options){520,640,p->margin,p->font_size,p->line_spacing,p->paragraph_spacing};
+    int dark=reader_preferences_effective_theme(p,(reader_preferences_theme)reader->system_theme)==READER_PREFERENCES_THEME_DARK;
+    const uint8_t *fg=dark ? p->dark_foreground:p->light_foreground,*bg=dark ? p->dark_background:p->light_background;
+    snprintf(css,sizeof(css),"*{color:#%02x%02x%02x%02x !important;}body{background-color:#%02x%02x%02x%02x !important;}",
+      fg[0],fg[1],fg[2],fg[3],bg[0],bg[1],bg[2],bg[3]);config.user_css=css;
+  }
+#endif
   if(session->bounded) {
     exr_chapter_options options=exr_chapter_options_defaults();options.window_bytes=16384;
     status=exr_publication_pager_create(session->publication,part,reader->font,&config,&options,out,error);
@@ -647,6 +663,19 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
   int owned_session=0,new_pager=0;int64_t id=command->book;size_t target=0;
   int wants_shelf=command->action==READER_SHELF || command->action==READER_OPEN || command->action==READER_IMPORT;
   memset(result,0,sizeof(*result));
+#ifdef EXR_READER_PREFERENCES
+  reader_preferences old_appearance=reader->appearance;int old_enabled=reader->appearance_enabled;
+  uint32_t old_theme=reader->system_theme;
+  if(command->preferences_set) {
+    const reader_preferences *p=&command->preferences;
+    reader_preferences_error problem={0};
+    if(reader_preferences_validate(p,&problem)!=READER_PREFERENCES_OK ||
+       520-2*p->margin<p->font_size*1.5f || 640-2*p->margin<p->font_size*p->line_spacing) {
+      status=EXR_ARGUMENT;strcpy(result->message,"Settings do not fit this reader's 520 by 640 page; previous settings retained");goto done;
+    }
+    reader->appearance=*p;reader->appearance_enabled=1;reader->system_theme=command->system_theme;
+  }
+#endif
 #ifdef EXR_READER_ACCOUNT
   if(command->action>=READER_RECEIVE_BEGIN && command->action<=READER_RECEIVE_CONFLICTS_NEXT) {
     received_execute(reader,command,result);return;
@@ -690,6 +719,9 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
   pending_discard(reader);
   if(status!=EXR_OK) goto done;
   if(command->action==READER_SHELF) goto done;
+#ifdef EXR_READER_PREFERENCES
+  if(command->action==READER_SETTINGS && !next.id) goto preferences_saved;
+#endif
   if(command->action==READER_IMPORT || command->action==READER_OPEN) {
     if(command->action==READER_IMPORT) {
       reader_import_saved saved={0};status=reader_import_suspend(reader,&saved);
@@ -741,13 +773,17 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
     reader_result_free(&entries);
   } else if(command->action==READER_NOTE_JUMP) {
     status=jump_note(reader,&next,command->note,result,&error);new_pager=next.pager!=reader->current.pager;
-  } else if(command->action==READER_ZOOM) {
+  } else if(command->action==READER_ZOOM || (command->action==READER_SETTINGS && next.fixed_document)) {
     if(!next.fixed_document || command->zoom<25 || command->zoom>400) status=EXR_ARGUMENT;
     else { next.zoom=command->zoom;status=render_fixed(reader,&next,next.page,result,&error); }
   } else if(command->action==READER_FONT && next.fixed_document) status=EXR_ARGUMENT;
-  else if(command->action==READER_FONT) {
+  else if(command->action==READER_FONT || command->action==READER_SETTINGS) {
     exr_anchor point={0};exr_anchor_match match;size_t position=next.position;
-    if(command->font<12 || command->font>48) status=EXR_ARGUMENT;
+    int minimum=12,maximum=48;
+#ifdef EXR_READER_PREFERENCES
+    if(command->preferences_set) { minimum=4;maximum=256; }
+#endif
+    if(command->font<minimum || command->font>maximum) status=EXR_ARGUMENT;
     else status=capture(reader,&next,position,position,&point,&error);
     if(status==EXR_OK) {
       next.pager=NULL;new_pager=1;status=pager_create(reader,&next,next.part,command->font,&next.pager,&error);
@@ -790,6 +826,20 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
     result->has_shelf=status==EXR_OK;
   }
   if(status==EXR_OK) status=cancel(reader);
+#ifdef EXR_READER_PREFERENCES
+preferences_saved:
+  if(status==EXR_OK && command->preferences_path) {
+    reader_preferences_error problem={0};reader_preferences_save_options options={0};options.struct_size=sizeof(options);
+    options.control.cancelled=reader->control.cancelled;options.control.context=reader->control.context;
+    reader_preferences_status saved=reader_preferences_save(&command->preferences,command->preferences_path,&options,&problem);
+    if(saved!=READER_PREFERENCES_OK) {
+      status=saved==READER_PREFERENCES_CANCELLED ? EXR_CANCELLED:EXR_IO;
+      snprintf(result->message,sizeof(result->message),"Settings save failed (%s); previous settings retained",reader_preferences_status_name(saved));
+    }
+  }
+  if(status==EXR_OK && command->preferences_set) { result->has_preferences=1;result->preferences=command->preferences; }
+  if(command->action==READER_SETTINGS && !next.id) goto done;
+#endif
   if(status==EXR_OK && result->has_frame) {
     next.page=result->page;next.start=result->start;next.end=result->end;
     result->position=next.position;reader->pending=next;reader->has_pending=1;
@@ -797,6 +847,11 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
     owned_session=new_pager=0;
   }
 done:
+#ifdef EXR_READER_PREFERENCES
+  if(status!=EXR_OK && command->preferences_set) {
+    reader->appearance=old_appearance;reader->appearance_enabled=old_enabled;reader->system_theme=old_theme;
+  }
+#endif
   if(owned_session) session_free(&next);
   else if(new_pager) exr_pager_free(next.pager);
   if(status!=EXR_OK) result->has_frame=0;
