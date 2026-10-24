@@ -143,7 +143,9 @@ commit_report commit_wire(reader_jh *h,reader_jh_kind kind,const std::string &wi
 void expect_committed(const std::string &name,const commit_report &r,reader_jh_outcome outcome){
   expect(name,r.status==READER_JH_OK&&r.result.outcome==outcome,
     "status="+std::string(jh_name(r.status))+" outcome="+std::string(outcome_name(r.result.outcome))
-    +" evicted="+numv(r.result.evicted)+" truncated="+numv(r.result.truncated)+" message="+r.error.message);
+    +" evicted="+numv(r.result.evicted)+" truncated="+numv(r.result.truncated)
+    +" rs="+std::string(rs_name(r.error.rs_code))+" gap="+gap_name(r.error.gap)
+    +" revision_code="+numv(r.error.revision_code)+" message="+r.error.message);
 }
 bool decode_item(const reader_jh_item &item,reader_rs_record *rec,reader_rs_error *err){
   return reader_rs_decode(S.store,item.wire,item.wire_bytes,rec,err)==READER_RS_OK;
@@ -314,7 +316,7 @@ int main(int argc,char **argv){
     expect("state_get refuses an unknown struct version",reader_jh_state_get(H,&bad,&err)==READER_JH_VERSION_UNSUPPORTED,err.message);
   }
   size_t first3=locate(textTxt,"读");
-  exr_anchor aTxt1{};SDK(exr_anchor_create(docTxt,0,first3+std::strlen("读"),&aTxt1,&e_));
+  exr_anchor aTxt1{};SDK(exr_anchor_create(docTxt,first3,first3,&aTxt1,&e_));
   reader_rs_capture cTxt1{};cTxt1.mode=READER_RS_REFLOW_GLOBAL;cTxt1.anchor=&aTxt1;
   commit_report rTxt1=commit_capture(H,"txt",READER_JH_PAGE,cTxt1,0);
   expect_committed("a real TXT reflow capture is stored as ADDED",rTxt1,READER_JH_ADDED);
@@ -327,7 +329,7 @@ int main(int argc,char **argv){
   expect("UNCHANGED keeps the entry id and the single entry",rTxt1b.result.entry_id==rTxt1.result.entry_id&&snapshot(H).count==1,
     "entry_id="+numv(rTxt1b.result.entry_id)+" "+state_text(snapshot(H)));
   size_t eta=locate(textTxt,"The repeated phrase appears here.");
-  exr_anchor aTxt2{};SDK(exr_anchor_create(docTxt,eta,eta+std::strlen("The repeated phrase appears here."),&aTxt2,&e_));
+  exr_anchor aTxt2{};SDK(exr_anchor_create(docTxt,eta,eta,&aTxt2,&e_));
   reader_rs_capture cTxt2{};cTxt2.mode=READER_RS_REFLOW_GLOBAL;cTxt2.anchor=&aTxt2;
   commit_report rTxt2=commit_capture(H,"txt",READER_JH_PAGE,cTxt2,0);
   expect_committed("a page turn inside one book coalesces",rTxt2,READER_JH_COALESCED);
@@ -335,7 +337,7 @@ int main(int argc,char **argv){
   std::string chapterUnique;
   {exr_pager *pg=pager(uniquePart);chapterUnique=chapter_text(pg);exr_pager_free(pg);}
   size_t q=locate(chapterUnique,"阅读跳转在这里");
-  exr_anchor aEpub{};{exr_pager *pg=pager(uniquePart);SDK(exr_pager_anchor_create(pg,q,q+std::strlen("阅读跳转在这里"),nullptr,&aEpub,&e_));exr_pager_free(pg);}
+  exr_anchor aEpub{};{exr_pager *pg=pager(uniquePart);SDK(exr_pager_anchor_create(pg,q,q,nullptr,&aEpub,&e_));exr_pager_free(pg);}
   reader_rs_capture cEpub{};cEpub.mode=READER_RS_EPUB_CHAPTER;cEpub.anchor=&aEpub;cEpub.part_path=parts[uniquePart].path;
   commit_report rEpub=commit_capture(H,"epub",READER_JH_SEARCH,cEpub,uniquePart);
   expect_committed("a real EPUB chapter capture is stored as ADDED",rEpub,READER_JH_ADDED);
@@ -349,7 +351,7 @@ int main(int argc,char **argv){
   size_t ps=locate(pageOne,"Shared quote across pages.");
   exr_fixed_anchor aPdf{};exr_fixed_text *pdfText=nullptr;
   SDK(exr_fixed_load_text(pdf.doc,0,nullptr,&pdfText,&e_));
-  SDK(exr_fixed_anchor_create(pdf.ids[0].c_str(),pdfText,ps,ps+std::strlen("Shared quote across pages."),&aPdf,&e_));
+  SDK(exr_fixed_anchor_create(pdf.ids[0].c_str(),pdfText,ps,ps,&aPdf,&e_));
   reader_rs_capture cPdf{};cPdf.mode=READER_RS_FIXED_PAGE;cPdf.fixed=&aPdf;cPdf.page=0;
   commit_report rPdf=commit_capture(H,"pdf",READER_JH_TOC,cPdf,0);
   expect_committed("a real PDF page capture is stored as ADDED",rPdf,READER_JH_ADDED);
@@ -450,7 +452,7 @@ int main(int argc,char **argv){
   /* Stale: a landing after the peek invalidates the item. */
   {reader_jh_state before=snapshot(H);reader_jh_item it{};reader_jh_error err{};
    expect("a forward peek succeeds before the history changes",reader_jh_peek(H,READER_JH_FORWARD,&it,&err)==READER_JH_OK,err.message);
-   exr_anchor stale{};SDK(exr_anchor_create(docTxt,eta,eta+std::strlen("The repeated phrase appears here."),&stale,&e_));
+   exr_anchor stale{};SDK(exr_anchor_create(docTxt,eta,eta,&stale,&e_));
    reader_rs_capture staleC{};staleC.mode=READER_RS_REFLOW_GLOBAL;staleC.anchor=&stale;
    commit_report rs2=commit_capture(H,"txt",READER_JH_SEARCH,staleC,0);
    expect_committed("a search landing after a forward peek truncates forward",rs2,READER_JH_ADDED);
@@ -461,12 +463,12 @@ int main(int argc,char **argv){
    exr_anchor_free(&stale);reader_jh_item_release(&it);}
   /* Ambiguity never becomes FOUND and never moves the cursor. */
   {size_t amb=locate(textTxt,"AMBIGUOUS TARGET",1);
-   exr_anchor ambiguous{};SDK(exr_anchor_create(docTxt,amb,amb+std::strlen("AMBIGUOUS TARGET"),&ambiguous,&e_));
+   exr_anchor ambiguous{};SDK(exr_anchor_create(docTxt,amb,amb,&ambiguous,&e_));
    reader_rs_capture ambC{};ambC.mode=READER_RS_REFLOW_GLOBAL;ambC.anchor=&ambiguous;
    commit_report rAmb=commit_capture(H,"txt",READER_JH_SEARCH,ambC,0);
    expect_committed("an ambiguous place can still be recorded",rAmb,READER_JH_ADDED);
    size_t other=locate(textTxt,"Jump beta start.");
-   exr_anchor otherA{};SDK(exr_anchor_create(docTxt,other,other+std::strlen("Jump beta start."),&otherA,&e_));
+   exr_anchor otherA{};SDK(exr_anchor_create(docTxt,other,other,&otherA,&e_));
    reader_rs_capture otherC{};otherC.mode=READER_RS_REFLOW_GLOBAL;otherC.anchor=&otherA;
    commit_report rOther=commit_capture(H,"txt",READER_JH_SEARCH,otherC,0);
    expect_committed("a later landing clears the forward stack",rOther,READER_JH_ADDED);
@@ -484,7 +486,7 @@ int main(int argc,char **argv){
   /* Repeated spine: the stored index addresses the part, the path alone cannot. */
   {std::string repeatedChapter;{exr_pager *pg=pager(repeatedPart);repeatedChapter=chapter_text(pg);exr_pager_free(pg);}
    size_t ra=locate(repeatedChapter,"Repeated spine chapter");
-   exr_anchor aRep{};{exr_pager *pg=pager(repeatedPart);SDK(exr_pager_anchor_create(pg,ra,ra+std::strlen("Repeated spine chapter"),nullptr,&aRep,&e_));exr_pager_free(pg);}
+   exr_anchor aRep{};{exr_pager *pg=pager(repeatedPart);SDK(exr_pager_anchor_create(pg,ra,ra,nullptr,&aRep,&e_));exr_pager_free(pg);}
    reader_rs_capture cRep{};cRep.mode=READER_RS_EPUB_CHAPTER;cRep.anchor=&aRep;cRep.part_path=parts[repeatedPart].path;
    commit_report rRep=commit_capture(H,"epub",READER_JH_SEARCH,cRep,repeatedPart);
    expect_committed("a repeated spine part is still a stored landing",rRep,READER_JH_ADDED);
@@ -570,13 +572,21 @@ int main(int argc,char **argv){
   lim.max_entries=64;lim.max_bytes=4096;
   reader_jh *H3=nullptr;opened(&H3,&lim);
   {reader_jh_state s=snapshot(H3);expect("the byte budget is applied",s.max_bytes==4096&&s.max_entries==64,state_text(s));}
+  /* A selection is not a reading position: the installed validator refuses a
+     non-point progress selector, so the history refuses it too and nothing
+     changes. That is also why one legitimate entry (bounded by book_key, a
+     <=1024 byte EPUB part path, 32-scalar context and its wire) cannot exceed
+     the 4 KiB byte floor on its own, so the budget is proven by eviction and
+     the per-entry cap by the wire API below. */
   {reader_jh_state before=snapshot(H3);
-   exr_anchor big{};SDK(exr_anchor_create(docTxt,base,base+4400,&big,&e_));
-   reader_rs_capture c{};c.mode=READER_RS_REFLOW_GLOBAL;c.anchor=&big;
+   exr_anchor selection{};SDK(exr_anchor_create(docTxt,base,base+4400,&selection,&e_));
+   reader_rs_capture c{};c.mode=READER_RS_REFLOW_GLOBAL;c.anchor=&selection;
    commit_report r=commit_capture(H3,"txt",READER_JH_SEARCH,c,0);
-   expect("a position above the byte budget is TOO_LARGE",r.status==READER_JH_TOO_LARGE,std::string(jh_name(r.status))+" "+r.error.message);
-   expect_unchanged(H3,before,"a refused oversize position leaves the history untouched");
-   exr_anchor_free(&big);}
+   expect("a progress selection is refused by the installed validator",
+     r.status==READER_JH_REVISION&&r.error.rs_code==READER_RS_REVISION,
+     std::string(jh_name(r.status))+" rs="+rs_name(r.error.rs_code)+" revision_code="+numv(r.error.revision_code)+" "+r.error.message);
+   expect_unchanged(H3,before,"a refused selection leaves the history untouched");
+   exr_anchor_free(&selection);}
   for(int i=0;i<16;i++){
     exr_anchor p{};SDK(exr_anchor_create(docTxt,base+(size_t)i*40,base+(size_t)i*40,&p,&e_));
     reader_rs_capture c{};c.mode=READER_RS_REFLOW_GLOBAL;c.anchor=&p;
@@ -618,7 +628,9 @@ int main(int argc,char **argv){
   /* ---------------- D: refused inputs never change the history ---------------- */
   stage("error paths");
   reader_jh *E=nullptr;opened(&E,nullptr);
-  exr_anchor eAnchor{};SDK(exr_anchor_create(docTxt,0,first3+std::strlen("读"),&eAnchor,&e_));
+  exr_anchor eAnchor{};SDK(exr_anchor_create(docTxt,0,0,&eAnchor,&e_));
+  exr_anchor eSelection{};SDK(exr_anchor_create(docTxt,0,first3+std::strlen("读"),&eSelection,&e_));
+  reader_rs_capture eSelCapture{};eSelCapture.mode=READER_RS_REFLOW_GLOBAL;eSelCapture.anchor=&eSelection;
   reader_rs_capture eCapture{};eCapture.mode=READER_RS_REFLOW_GLOBAL;eCapture.anchor=&eAnchor;
   expect_committed("the error-case landing is ADDED",commit_capture(E,"txt",READER_JH_PAGE,eCapture,0),READER_JH_ADDED);
   reader_jh_state eb=snapshot(E);
@@ -645,7 +657,7 @@ int main(int argc,char **argv){
    reader_rs_envelope aenv{};aenv.revision_id=rid;aenv.operation="put";aenv.entity_kind="annotation";
    aenv.annotation_id=annotationId.c_str();aenv.book_key=keys["txt"].c_str();
    aenv.parser_version=parser_version.c_str();aenv.note_text="not a position";
-   reader_rs_status as=reader_rs_encode_v2(S.store,&aenv,&eCapture,0,&aw,&an,&re);
+   reader_rs_status as=reader_rs_encode_v2(S.store,&aenv,&eSelCapture,0,&aw,&an,&re);
    expect("the installed encoder accepts an annotation as a control",as==READER_RS_OK,std::string(rs_name(as))+" "+re.message);
    if(as==READER_RS_OK){std::string wire(aw,an);reader_rs_free(aw);
      commit_report r=commit_wire(E,READER_JH_PAGE,wire);
@@ -697,15 +709,16 @@ int main(int argc,char **argv){
    reader_jh_item_release(&it);}
   expect_unchanged(E,eb,"refused completes left the cursor alone");
   closed(&E);
+  exr_anchor_free(&eSelection);
   exr_anchor_free(&eAnchor);
 
   /* ---------------- E: one owner thread at a time ---------------- */
   stage("thread ownership");
   reader_jh *T=nullptr;opened(&T,nullptr);
-  {exr_anchor a{};SDK(exr_anchor_create(docTxt,0,first3+std::strlen("读"),&a,&e_));
+  {exr_anchor a{};SDK(exr_anchor_create(docTxt,0,0,&a,&e_));
    reader_rs_capture c{};c.mode=READER_RS_REFLOW_GLOBAL;c.anchor=&a;
    if(commit_capture(T,"txt",READER_JH_PAGE,c,0).status!=READER_JH_OK)fatal("thread setup landing");
-   reader_rs_capture c2=c;exr_anchor b{};SDK(exr_anchor_create(docTxt,eta,eta+std::strlen("The repeated phrase appears here."),&b,&e_));
+   reader_rs_capture c2=c;exr_anchor b{};SDK(exr_anchor_create(docTxt,eta,eta,&b,&e_));
    c2.anchor=&b;
    if(commit_capture(T,"txt",READER_JH_SEARCH,c2,0).status!=READER_JH_OK)fatal("thread setup landing 2");
    exr_anchor_free(&a);exr_anchor_free(&b);}
@@ -736,7 +749,7 @@ int main(int argc,char **argv){
   /* ---------------- F: released sources and closed histories ---------------- */
   stage("item lifetime");
   reader_jh *L=nullptr;opened(&L,nullptr);
-  exr_anchor lAnchor{};SDK(exr_anchor_create(docTxt,0,first3+std::strlen("读"),&lAnchor,&e_));
+  exr_anchor lAnchor{};SDK(exr_anchor_create(docTxt,0,0,&lAnchor,&e_));
   reader_rs_capture lCapture{};lCapture.mode=READER_RS_REFLOW_GLOBAL;lCapture.anchor=&lAnchor;
   expect_committed("the lifetime landing is ADDED",commit_capture(L,"txt",READER_JH_PAGE,lCapture,0),READER_JH_ADDED);
   reader_jh_item held{};reader_jh_error lErr{};

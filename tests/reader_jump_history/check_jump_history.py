@@ -46,7 +46,7 @@ REQUIRED = [
     'a textless fixed page target resolves FOUND',
     'the entry cap keeps exactly four entries',
     'the entry cap dropped the two oldest',
-    'a position above the byte budget is TOO_LARGE',
+    'a progress selection is refused by the installed validator',
     'a wire above the per-entry cap is TOO_LARGE',
     'the byte budget is never exceeded',
     'the byte budget evicts the oldest entries',
