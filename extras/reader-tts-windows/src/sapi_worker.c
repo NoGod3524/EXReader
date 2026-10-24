@@ -425,8 +425,9 @@ static void push_started(reader_tts *handle, exr_tts_utterance *utterance) {
 
 static void pump_status(reader_tts *handle, exr_tts_utterance *utterance) {
   ISpEventSource *source = (ISpEventSource *)utterance->voice;
-  SPEVENT events[8];
+  SPEVENTEX events[8];   /* wider than SPEVENT: GetEvents may fill extended data */
   ULONG fetched = 0, index;
+  HRESULT events_hr = E_FAIL;
   SPVOICESTATUS status;
   LPWSTR bookmark = NULL;
   HRESULT hr;
@@ -452,7 +453,14 @@ static void pump_status(reader_tts *handle, exr_tts_utterance *utterance) {
       utterance->saw_stream = 1;
     }
   }
-  if (source && SUCCEEDED(source->lpVtbl->GetEvents(source, 8, events, &fetched))) {
+  if (source) events_hr = source->lpVtbl->GetEvents(source, 8, (SPEVENT *)events, &fetched);
+  EnterCriticalSection(&handle->lock);
+  handle->probe_event_hresult = (int)events_hr;
+  handle->probe_event_calls++;
+  handle->probe_event_total += fetched;
+  if (fetched > 0) handle->probe_last_event_id = (unsigned)events[fetched - 1].eEventId;
+  LeaveCriticalSection(&handle->lock);
+  if (source && SUCCEEDED(events_hr)) {
     for (index = 0; index < fetched; index++) {
       if (events[index].eEventId == SPEI_WORD_BOUNDARY) {
         utterance->saw_stream = 1;
@@ -692,8 +700,7 @@ DWORD WINAPI exr_tts_worker_main(LPVOID parameter) {
     if (voice) {
       ISpNotifySource *notify_source = (ISpNotifySource *)voice;
       ISpEventSource *events = (ISpEventSource *)voice;
-      ULONGLONG interest = SPFEI(SPEI_START_INPUT_STREAM) | SPFEI(SPEI_END_INPUT_STREAM)
-                         | SPFEI(SPEI_WORD_BOUNDARY);
+      ULONGLONG interest = SPFEI_ALL_TTS_EVENTS;
       /* SAPI queues interested events only once a notify connection exists, and the
          engine's word position follows those boundaries. The package polls GetEvents
          and never waits on SAPI's own event handle. */

@@ -485,6 +485,10 @@ static void phase_speak(suite *s) {
     info(s, "engine_word_len", (unsigned long long)probe.word_length);
     info(s, "engine_current_stream", (unsigned long long)probe.current_stream);
     info(s, "engine_last_queued", (unsigned long long)probe.last_queued);
+    info(s, "engine_event_hresult", (unsigned long long)(uint32_t)probe.event_hresult);
+    info(s, "engine_event_calls", (unsigned long long)probe.event_calls);
+    info(s, "engine_event_total", (unsigned long long)probe.event_total);
+    info(s, "engine_last_event_id", (unsigned long long)probe.last_event_id);
   }
   reader_tts_observe(handle, &snap, NULL);
   check_state(s, "speak.state_ready", snap.state, READER_TTS_READY);

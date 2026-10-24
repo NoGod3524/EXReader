@@ -633,6 +633,10 @@ void reader_tts_windows_debug_engine_probe(reader_tts *handle, reader_tts_window
   out->current_stream = handle->probe_stream;
   out->last_queued = handle->probe_last_queued;
   out->samples = handle->probe_samples;
+  out->event_hresult = handle->probe_event_hresult;
+  out->event_calls = handle->probe_event_calls;
+  out->event_total = handle->probe_event_total;
+  out->last_event_id = handle->probe_last_event_id;
   LeaveCriticalSection(&handle->lock);
 }
 

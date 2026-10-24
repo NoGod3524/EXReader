@@ -38,6 +38,8 @@ typedef struct {
   uint32_t word_position, word_length;
   uint32_t current_stream, last_queued;
   uint32_t samples;
+  int32_t event_hresult;
+  uint32_t event_calls, event_total, last_event_id;
 } reader_tts_windows_engine_probe;
 void reader_tts_windows_debug_engine_probe(reader_tts *, reader_tts_windows_engine_probe *);
 #ifdef __cplusplus

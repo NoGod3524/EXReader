@@ -93,6 +93,8 @@ struct reader_tts {
   int probe_hresult;
   unsigned probe_running, probe_word_pos, probe_word_len, probe_stream, probe_last_queued;
   unsigned probe_samples;
+  int probe_event_hresult;
+  unsigned probe_event_calls, probe_event_total, probe_last_event_id;
 };
 
 /* reader_tts.c: accounting, validation, queue and owner-side plumbing. */
