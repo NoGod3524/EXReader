@@ -9,6 +9,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
+#include <iterator>
 #include <string>
 #include <thread>
 #include <vector>
@@ -37,14 +39,10 @@ std::string expected_binding(const reader_account_profiles_activation &plan) {
 }
 
 bool read_file(const std::string &path, std::string &out) {
-  FILE *file = std::fopen(path.c_str(), "rb");
-  char buffer[256];
-  size_t got;
-  out.clear();
-  if (!file) return false;
-  while ((got = std::fread(buffer, 1, sizeof(buffer), file)) > 0) out.append(buffer, got);
-  std::fclose(file);
-  return true;
+  std::ifstream stream(path, std::ios::binary);
+  if (!stream) return false;
+  out.assign(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
+  return !stream.bad();
 }
 
 session_outcome run_session(const reader_account_profiles_activation &plan,

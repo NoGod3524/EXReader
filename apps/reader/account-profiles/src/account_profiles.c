@@ -935,7 +935,16 @@ reader_account_profiles_prepare_activation(const char *store_dir, const char *pr
         plan.struct_size = (uint32_t)sizeof(plan);
         plan.store_generation = document.generation;
         plan.profile = document.items[position];
-        (void)snprintf(plan.product_path, sizeof(plan.product_path), "%s", product);
+        {
+          size_t product_length = strlen(product);
+          if (product_length >= sizeof(plan.product_path)) {
+            status = READER_ACCOUNT_PROFILES_LIMIT;
+            ap_error_set(error, READER_ACCOUNT_PROFILES_LIMIT, 0, 0,
+                         "the derived product path exceeds the plan capacity");
+          } else {
+            memcpy(plan.product_path, product, product_length + 1u);
+          }
+        }
         status = ap_directory_path(plan.private_directory, sizeof(plan.private_directory), store,
                                    profile_id, "private");
         if (status == READER_ACCOUNT_PROFILES_OK)

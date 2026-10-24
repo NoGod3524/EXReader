@@ -45,10 +45,10 @@ static void print_list(const reader_account_profiles_list *list) {
   (void)printf("generation=%llu\n", (unsigned long long)list->generation);
   (void)printf("count=%u\n", (unsigned)list->count);
   for (index = 0; index < list->count; ++index) {
-    (void)printf("p%u.id=%s\n", (unsigned)index, list->items[index].profile_id);
-    (void)printf("p%u.account=%s\n", (unsigned)index, list->items[index].account_id);
-    (void)printf("p%u.url=%s\n", (unsigned)index, list->items[index].root_url);
-    (void)printf("p%u.name=%s\n", (unsigned)index, list->items[index].display_name);
+    (void)printf("p%u.id=%s\n", (unsigned)index, list->profiles[index].profile_id);
+    (void)printf("p%u.account=%s\n", (unsigned)index, list->profiles[index].account_id);
+    (void)printf("p%u.url=%s\n", (unsigned)index, list->profiles[index].root_url);
+    (void)printf("p%u.name=%s\n", (unsigned)index, list->profiles[index].display_name);
   }
 }
 
