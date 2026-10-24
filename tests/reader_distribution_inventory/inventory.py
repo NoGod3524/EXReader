@@ -95,22 +95,24 @@ def archive_key(name):
 
 
 def inventory_archives(stage):
-    sdk, vendor, other = [], [], []
+    sdk, vendor, other, foreign = [], [], []
     base = stage / 'lib'
     for path in sorted(base.iterdir()) if base.is_dir() else []:
         if path.is_file() and re.fullmatch(r'(?:lib)?exr_.+\.(?:a|lib)', path.name):
             kind = archive_key(path.name)[0]
             (sdk if kind == 'sdk' else other).append(path)
+        elif re.fullmatch(r'.+[.](?:a|lib)', path.name):
+            foreign.append(path)
     nested = base / 'exreader'
     for path in sorted(nested.iterdir()) if nested.is_dir() else []:
         if path.is_file() and re.fullmatch(r'(?:lib)?exr_vendor_.+\.(?:a|lib)', path.name):
             kind = archive_key(path.name)[0]
             (vendor if kind == 'vendor' else other).append(path)
-    return sdk, vendor, other
+    return sdk, vendor, other, foreign
 
 
 def static_section(stage, commands, host, installed):
-    sdk_paths_list, vendor_paths, others = inventory_archives(stage)
+    sdk_paths_list, vendor_paths, others, foreign_paths = inventory_archives(stage)
     problems = []
     if not sdk_paths_list:
         problems.append('installed SDK component archives are missing')
@@ -149,13 +151,29 @@ def static_section(stage, commands, host, installed):
                         'undefined_count': symbol_record['summary']['undefined_count'],
                         'defined_sha256': symbol_record['summary']['defined_sha256'],
                         'undefined_sha256': symbol_record['summary']['undefined_sha256']})
+    foreign = []
+    for path in foreign_paths:
+        relative = path.relative_to(stage).as_posix()
+        record = next((item for item in installed if item['path'] == relative), None)
+        if record is None:
+            problems.append('installed archive is not in the file inventory: ' + relative)
+            continue
+        if host == 'Windows':
+            members, _, _ = commands.run('archive members %s' % path.name, 'lib-list',
+                                         ['lib', '/nologo', '/list', str(path)])
+        else:
+            members, _, _ = commands.run('archive members %s' % path.name, 'ar', ['ar', 't', str(path)])
+        foreign.append({'path': relative, 'name': path.name, 'bytes': record['bytes'],
+                        'sha256': record['sha256'],
+                        'members': [item['name'] for item in members['entries']]})
     sdk_archives = [path.relative_to(stage).as_posix() for path in sdk_paths_list]
     edges = contract.symbol_edges(symbols, symbols)
     reached = contract.reachable(edges, [path for path in sdk_archives if path in symbols], set(symbols))
     unreferenced = sorted(path for path in symbols
                           if path not in sdk_archives and not any(edge['to'] == path for edge in edges))
     return {'sdk_archives': sdk_archives, 'archives': entries, 'edges': edges,
-            'unreferenced_archives': unreferenced, 'reachable_archives': sorted(reached)}, problems
+            'unreferenced_archives': unreferenced, 'reachable_archives': sorted(reached),
+            'foreign_archives': foreign}, problems
 
 
 def link_section(commands, build, target, installed_archives):
@@ -389,6 +407,11 @@ def main():
                        'pass' if not static['unreferenced_archives'] else 'reported',
                        '%d archives, unreferenced: %r'
                        % (len(static['archives']), static['unreferenced_archives'])))
+    checks.append(item('archives.foreign_copies',
+                       'pass' if not static['foreign_archives'] else 'reported',
+                       '%d upstream-named library files under lib/: %r'
+                       % (len(static['foreign_archives']),
+                          [entry['path'] for entry in static['foreign_archives']])))
     static['owners'] = {}
     for component in licenses['components']:
         for path in static['archives']:
