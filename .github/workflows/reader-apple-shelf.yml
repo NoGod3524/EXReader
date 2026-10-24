@@ -213,6 +213,14 @@ jobs:
           assert len(seeds) == 1
           seed = json.loads(seeds[0].read_text())
           assert seed['accepted'] is True and len(seed['checks']) == 16 and len(set(seed['source_keys'])) == 2202
+          accounts = list(Path('evidence').glob('apple-shelf-native-*/account/account-native.json'))
+          assert len(accounts) == 1
+          account = json.loads(accounts[0].read_text())
+          assert account['accepted'] is True and account['source_sha'] == source
+          assert str(account['run_id']) == run and str(account['attempt']) == attempt
+          assert len(account['checks']) == len(set(account['checks'])) == 18
+          assert account['sweeps'] == 1 and account['actual_shards'] == 256 and account['secret_scan_passed'] is True
+          assert account['host_account_ui_accepted'] is False
           request = urllib.request.Request(f'https://api.github.com/repos/{os.environ["GITHUB_REPOSITORY"]}/actions/runs/{run}/artifacts?per_page=100',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
           data = json.load(urllib.request.urlopen(request))
           assert data['total_count'] == len(data['artifacts']) == 6
@@ -253,6 +261,11 @@ jobs:
             examples/apple/HostCatalog.swift examples/apple/SelectableText.swift tests/apple_host/shelf/ShelfReview.swift \
             -o build/apple-shelf-native/shelf-review 2>&1 | tee build/apple-shelf-native/build.log
           build/apple-shelf-native/shelf-review build/apple-resources build/apple-shelf-native/seed 2>&1 | tee build/apple-shelf-native/review.log
+          python3 tools/apple_swift.py --sdk "$sdk" -- -swift-version 5 -parse-as-library -O \
+            -I "$sdk/include" -L "$sdk/lib" -lexreader -Xlinker -rpath -Xlinker "$sdk/lib" \
+            examples/apple/HostSDK.swift examples/apple/HostCatalog.swift examples/apple/HostAccount.swift \
+            tests/apple_host/account/AccountReview.swift -o build/apple-shelf-native/account-review
+          python3 tests/apple_host/account/check_account.py --consumer build/apple-shelf-native/account-review --output build/apple-shelf-native/account
           python3 - <<'PY'
           import json, os
           from pathlib import Path

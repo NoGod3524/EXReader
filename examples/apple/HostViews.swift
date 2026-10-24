@@ -25,9 +25,13 @@ private func hostPasteboard(_ value: String) {
 }
 
 struct HostRootView: View {
-    @StateObject private var model = HostReaderModel()
+    @StateObject private var model: HostReaderModel
     @Environment(\.scenePhase) private var phase
     private let selfTesting = CommandLine.arguments.contains("--self-test")
+
+    init(profile: HostAccountProfile? = nil, accounts: HostAccounts? = nil) {
+        _model = StateObject(wrappedValue: HostReaderModel(profile: profile, accounts: accounts))
+    }
 
     private var resignPublisher: NotificationCenter.Publisher {
 #if os(iOS)
@@ -53,7 +57,7 @@ struct HostRootView: View {
         }
         .onChange(of: phase) { value in
             if !selfTesting { model.observeUITestScene(String(describing: value)) }
-            if value != .active && !selfTesting { model.persistNow() }
+            if value != .active && !selfTesting { model.persistNow(); model.closeAccountSession() }
         }
         .onReceive(resignPublisher) { _ in
             if !selfTesting { model.persistNow() }
@@ -118,9 +122,14 @@ private struct ShelfObservationView: View {
 struct LibraryScreen: View {
     @ObservedObject var model: HostReaderModel
     @State private var importing = false
-    @StateObject private var shelf = HostShelf()
+    @StateObject private var shelf: HostShelf
     @FocusState private var searchFocused: Bool
     @Environment(\.scenePhase) private var phase
+
+    init(model: HostReaderModel) {
+        self.model = model
+        _shelf = StateObject(wrappedValue: HostShelf(defaults: model.shelfDefaults))
+    }
 
     private func restoreShelf(_ proxy: ScrollViewProxy, revision: Int) {
         guard revision == shelf.restoreRevision, shelf.needsScroll, let key = shelf.restoreKey else { return }
@@ -228,6 +237,9 @@ struct LibraryScreen: View {
             }
             if !shelf.error.isEmpty {
                 Text(shelf.error).font(.caption).foregroundColor(.red).accessibilityIdentifier("library.shelf.error")
+            }
+            if let account = model.accountSession {
+                HostSyncControls(session: account, preparing: model.syncPreparing) { model.synchronizeAccount() }
             }
 
             VStack(spacing: 8) {

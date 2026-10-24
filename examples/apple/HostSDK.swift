@@ -5,6 +5,7 @@
 import Foundation
 import CryptoKit
 import CEXReader
+import Darwin
 
 enum HostError: Error, LocalizedError {
     case engine(code: Int, message: String)
@@ -978,6 +979,57 @@ final class HostLibrary {
         try cancel?.check()
         return HostSourceFingerprint(format: format,
             sha256: hash.finalize().map { String(format: "%02x", $0) }.joined(), bytes: Int64(offset))
+    }
+
+    // One bounded public source lease; no source or SDK handle enters the network worker.
+    func exportSyncOriginal(_ book: HostProductBook, directory: URL, cancel: HostCancelBox) throws {
+        guard book.bytes > 0, book.bytes <= 128 * 1024 * 1024,
+              book.sha256.utf8.count == 64, book.sha256.utf8.allSatisfy({ (48...57).contains($0) || (97...102).contains($0) }),
+              ["epub", "pdf", "cbz", "txt", "html", "fb2", "docx", "rtf", "mobi"].contains(book.format),
+              book.key == book.format + ":" + book.sha256 else { throw HostError.invalidInput("同步原件身份无效") }
+        try cancel.check()
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true,
+                                                attributes: [.posixPermissions: 0o700])
+        let attributes = try directory.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
+        guard attributes.isDirectory == true, attributes.isSymbolicLink != true else { throw HostError.invalidInput("同步目录无效") }
+        let temporary = directory.appendingPathComponent("." + UUID().uuidString + ".part")
+        let descriptor = Darwin.open(temporary.path, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0o600)
+        guard descriptor >= 0 else { throw HostError.invalidResult("无法创建同步原件副本") }
+        let output = FileHandle(fileDescriptor: descriptor, closeOnDealloc: true)
+        defer { try? output.close(); try? FileManager.default.removeItem(at: temporary) }
+        var source = exr_source(), error = exr_error()
+        try hostCheck(exr_library_source(handle, book.sdkID, &source, &error), error)
+        defer { source.release?(source.context) }
+        guard source.size == UInt64(book.bytes), let read = source.read_at else { throw HostError.invalidResult("SDK 原件长度与产品身份不一致") }
+        var buffer = [UInt8](repeating: 0, count: 64 * 1024), offset: UInt64 = 0, hash = SHA256()
+        while offset < source.size {
+            try cancel.check()
+            let request = Int(min(UInt64(buffer.count), source.size - offset))
+            let received = buffer.withUnsafeMutableBytes { read(source.context, offset, $0.baseAddress, request) }
+            guard received > 0, received <= request else { throw HostError.invalidResult("SDK 原件读取不完整") }
+            let chunk = Data(buffer.prefix(received)); hash.update(data: chunk); try output.write(contentsOf: chunk)
+            offset += UInt64(received)
+        }
+        guard hash.finalize().map({ String(format: "%02x", $0) }).joined() == book.sha256 else { throw HostError.invalidResult("SDK 原件摘要与产品身份不一致") }
+        try output.synchronize(); try output.close(); try cancel.check()
+        let destination = directory.appendingPathComponent(book.sha256 + "." + book.format)
+        if FileManager.default.fileExists(atPath: destination.path) {
+            let existingDescriptor = Darwin.open(destination.path, O_RDONLY | O_NOFOLLOW | O_CLOEXEC)
+            guard existingDescriptor >= 0 else { throw HostError.invalidResult("已有同步副本无效") }
+            let existing = FileHandle(fileDescriptor: existingDescriptor, closeOnDealloc: true)
+            defer { try? existing.close() }
+            var status = stat()
+            guard fstat(existingDescriptor, &status) == 0, (Int32(status.st_mode) & S_IFMT) == S_IFREG,
+                  status.st_size == book.bytes else { throw HostError.invalidResult("已有同步副本长度无效") }
+            var total = 0, digest = SHA256()
+            while Int64(total) < book.bytes {
+                try cancel.check()
+                let chunk = try existing.read(upToCount: Int(min(Int64(64 * 1024), book.bytes - Int64(total)))) ?? Data()
+                guard !chunk.isEmpty else { throw HostError.invalidResult("已有同步副本读取不完整") }
+                digest.update(data: chunk); total += chunk.count
+            }
+            guard digest.finalize().map({ String(format: "%02x", $0) }).joined() == book.sha256 else { throw HostError.invalidResult("已有同步副本摘要无效") }
+        } else { try FileManager.default.moveItem(at: temporary, to: destination) }
     }
 
     func locationKind(book: HostBook) throws -> String {
