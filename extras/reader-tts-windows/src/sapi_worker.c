@@ -222,6 +222,14 @@ static reader_tts_status enumerate_voices(reader_tts_voice_list *list, int *nati
     if (SUCCEEDED(((ISpDataKey *)token)->lpVtbl->GetStringValue((ISpDataKey *)token, L"Name", &name)) && name) {
       voices[index].name = utf16_to_utf8(name);
       CoTaskMemFree(name);
+      name = NULL;
+    }
+    if (!voices[index].name
+        && SUCCEEDED(((ISpDataKey *)token)->lpVtbl->GetStringValue((ISpDataKey *)token, NULL, &name)) && name) {
+      /* Windows Server 2022 keeps the friendly name only in the default value. */
+      voices[index].name = utf16_to_utf8(name);
+      CoTaskMemFree(name);
+      name = NULL;
     }
     if (SUCCEEDED(((ISpDataKey *)token)->lpVtbl->GetStringValue((ISpDataKey *)token, L"Language", &language))
         && language) {
