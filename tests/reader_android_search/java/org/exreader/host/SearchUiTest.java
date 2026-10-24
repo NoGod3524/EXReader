@@ -94,8 +94,8 @@ public final class SearchUiTest extends Instrumentation {
     private long book(String role)throws Exception{return books.getJSONObject(role).getLong("id");}
     private void open(String role)throws Exception {
         if(act(node->description(node,"搜索状态"),null)){click("关闭");zero();}
-        if(act(node->id(node,"back_button"),null))click("Shelf");
-        until(node->id(node,"import_button"),null,"shelf restored",30000);String title=books.getJSONObject(role).getString("title");
+        until(node->node.isVisibleToUser()&&((id(node,"back_button")&&node.isEnabled())||id(node,"import_button")),node->{if(id(node,"back_button"))tap(node);},"reader or shelf ready after modal close",30000);
+        until(node->node.isVisibleToUser()&&id(node,"import_button"),null,"shelf restored",30000);String title=books.getJSONObject(role).getString("title");
         until(node->node.isEnabled()&&(text(node).equals(title)||text(node).startsWith(title+"\n")),this::tap,"book "+title,30000);waitFrame(book(role));
     }
     private static String hash(NativeLibrary library,long id)throws Exception {
