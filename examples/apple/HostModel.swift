@@ -574,6 +574,52 @@ final class HostSession {
         return (result, try result.renderSnapshot())
     }
 
+    func navigationCandidate(_ selection: HostNavigationSelection, acceptPart: Bool,
+                             cancel: HostCancelBox) throws -> (HostSession, HostSnapshot) {
+        try cancel.check()
+        guard book?.id == selection.bookID,
+              selection.resolution.status == READER_NAVIGATION_OK ||
+                (acceptPart && selection.resolution.status == READER_NAVIGATION_PART_ONLY) else {
+            throw HostError.invalidInput("目录目标尚未确认")
+        }
+        let independent = try HostLibrary(path: library.path)
+        guard let targetBook = try independent.books().first(where: { $0.id == selection.bookID }),
+              try independent.sourceFingerprint(book: targetBook, cancel: cancel).searchKey == selection.sourceKey else {
+            throw HostError.invalidInput("原件身份已变化，请重新打开目录")
+        }
+        let result = HostSession(library: independent, font: font, slowDelay: slowDelay, viewport: viewport, fontSize: fontSize)
+        try result.begin(cancel); result.book = targetBook
+        let target = selection.resolution.target
+        if targetBook.isFixed {
+            let fixed = try independent.fixed(bookID: targetBook.id, font: font, cancel: cancel)
+            guard target.kind == READER_NAVIGATION_RESULT_PAGE.rawValue, target.row == selection.row,
+                  target.part == selection.row, target.part < UInt64(fixed.pageCount), !target.partID.isEmpty,
+                  fixed.pageIDs.filter({ $0 == target.partID }).count == 1,
+                  fixed.pageIDs[Int(target.part)] == target.partID else { throw HostError.invalidInput("独立页面身份不一致") }
+            result.fixed = fixed; result.page = Int(target.part)
+        } else {
+            let publication: HostPublication?
+            let document: HostDocument?
+            if try independent.isBoundedEPUB(book: targetBook) {
+                publication = try HostPublication(library: independent, bookID: targetBook.id, cancel: cancel); document = nil
+            } else { publication = nil; document = try independent.document(bookID: targetBook.id, cancel: cancel) }
+            let (proof, offset) = try HostNavigationWorker.verify(selection, publication: publication, document: document, cancel: cancel)
+            let anchor = try proof.makeAnchor(start: offset, end: offset, cancel: cancel)
+            result.publication = publication; result.document = document
+            result.part = publication == nil ? -1 : Int(target.part); result.readingOffset = offset
+            try result.rebuildPager(width: Double(viewport.width), height: Double(viewport.height), font: fontSize, cancel: cancel)
+            guard let pager = result.pager else { throw HostError.invalidResult("目录目标分页不可用") }
+            try pager.verifyProjection(proof.text, cancel: cancel)
+            let match = try pager.resolve(anchor, cancel: cancel)
+            guard match.isFound, match.range?.lowerBound == offset else {
+                throw HostError.invalidInput("目录目标未精确匹配，保留当前页面")
+            }
+            result.page = try pager.pageIndex(for: offset, cancel: cancel)
+        }
+        try cancel.check()
+        return (result, try result.renderSnapshot())
+    }
+
     // Keep the last usable frame/session if parsing, seeking, rendering or saving fails.
     private func changing(_ cancel: HostCancelBox, _ operation: () throws -> HostSnapshot) throws -> HostSnapshot {
         let old = (book, document, pager, fixed, page, readingOffset, fontSize, viewport, pageText, pageRange, currentCancel,
@@ -1014,6 +1060,7 @@ final class HostSession {
 
 final class HostReaderModel: ObservableObject {
     let search = HostSearchState()
+    let navigation = HostNavigationState()
     @Published var books: [HostBookRow] = []
     @Published var current: HostBookRow?
     @Published var image: CGImage?
@@ -1328,8 +1375,9 @@ final class HostReaderModel: ObservableObject {
         return error.localizedDescription
     }
 
-    private func begin() -> (Int, HostCancelBox) {
+    private func begin(preserveNavigation: Bool = false) -> (Int, HostCancelBox) {
         search.cancel()
+        if !preserveNavigation { navigation.cancel() }
         activeCancel?.cancel()
         token += 1
         let box = HostCancelBox()
@@ -1475,6 +1523,78 @@ final class HostReaderModel: ObservableObject {
         search.bind(bookID: current.id, query: defaults.string(forKey: key) ?? "")
     }
 
+    func prepareNavigation() {
+        guard let current, !busy else { return }
+        navigation.bind(current.id); loadNavigation()
+    }
+
+    func loadNavigation(parent: UInt64 = UInt64.max, first: UInt64 = 0) {
+        guard !busy, let bookID = current?.id, navigation.bookID == bookID else { return }
+        let boundKey = navigation.key
+        let (epoch, box) = navigation.begin()
+        queue.async {
+            do {
+                guard let session = self.session, session.book?.id == bookID, let catalog = self.catalog else {
+                    throw HostError.invalidInput("书籍已切换")
+                }
+                let key = try catalog.searchSourceKey(sdkID: bookID)
+                guard boundKey == nil || boundKey == key else { throw HostError.invalidInput("原件身份已变化，请重新打开目录") }
+#if EXR_APPLE_HOST_REVIEW
+                let previous = HostSDKReview.poll
+                let hold = CommandLine.arguments.contains("-EXRHoldNavigationCancellation")
+                if hold {
+                    HostSDKReview.poll = { polled in
+                        guard polled === box, HostNavigationWorker.reviewInsideSnapshot else { previous?(polled); return }
+                        DispatchQueue.main.async { self.navigation.reviewCancellationReady(generation: epoch) }
+                        while !polled.isCancelled { Thread.sleep(forTimeInterval: 0.05) }
+                    }
+                }
+                defer { if hold { HostSDKReview.poll = previous } }
+#endif
+                let page = try HostNavigationWorker.page(library: session.library, font: session.font, bookID: bookID,
+                    key: key, parent: parent, first: first, cancel: box)
+                DispatchQueue.main.async {
+                    guard self.current?.id == bookID else { return }
+                    self.navigation.accept(page, key: key, generation: epoch)
+                }
+            } catch { DispatchQueue.main.async { self.navigation.fail(error, generation: epoch) } }
+        }
+    }
+
+    func selectNavigation(row: UInt64, explicitPart: UInt64 = UInt64.max, acceptPart: Bool = false, cfi: String = "") {
+        guard !busy, !navigation.running, let bookID = current?.id, navigation.bookID == bookID,
+              let key = navigation.key, cfi.isEmpty || (cfi.utf8.count <= 4096 && !cfi.utf8.contains(0)) else { return }
+        let (myToken, box) = begin(preserveNavigation: true)
+        let (epoch, _) = navigation.begin(box: box)
+        statusText = "正在核对目录目标…"
+        queue.async {
+            do {
+                guard let session = self.session, let catalog = self.catalog, session.book?.id == bookID,
+                      try catalog.searchSourceKey(sdkID: bookID) == key else { throw HostError.invalidInput("书籍身份已变化") }
+                let selection = try HostNavigationWorker.resolve(library: session.library, font: session.font,
+                    bookID: bookID, key: key, row: row, explicitPart: explicitPart, cfi: cfi, cancel: box)
+                if selection.resolution.status == READER_NAVIGATION_AMBIGUOUS ||
+                    (selection.resolution.status == READER_NAVIGATION_PART_ONLY && !acceptPart) {
+                    DispatchQueue.main.async {
+                        guard myToken == self.token else { return }
+                        self.navigation.propose(selection, generation: epoch); self.finish()
+                    }
+                    return
+                }
+                let (candidate, snapshot) = try session.navigationCandidate(selection, acceptPart: acceptPart, cancel: box)
+                if self.completeFrame(snapshot, session: candidate, token: myToken, status: "已精确定位目录目标") {
+                    self.session = candidate
+                    DispatchQueue.main.async { self.navigation.didCommit(generation: epoch) }
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    guard myToken == self.token else { return }
+                    self.navigation.fail(error, generation: epoch); self.fail(error)
+                }
+            }
+        }
+    }
+
     func findInBook(restart: Bool = true) {
         guard !busy, let bookID = current?.id, search.bookID == bookID,
               !search.running, restart || !search.complete else { return }
@@ -1556,6 +1676,7 @@ final class HostReaderModel: ObservableObject {
     func openBook(_ row: HostBookRow) {
         guard !busy else { return }
         search.invalidate()
+        navigation.invalidate()
         let (myToken, box) = begin()
         statusText = "正在打开…"
         queue.async {
@@ -1853,6 +1974,7 @@ final class HostReaderModel: ObservableObject {
 
     func backToLibrary() {
         search.invalidate()
+        navigation.invalidate()
         token += 1
         let myToken = token
         activeCancel?.cancel()
@@ -1924,6 +2046,7 @@ final class HostReaderModel: ObservableObject {
 
     func detach() {
         search.cancel()
+        navigation.cancel()
         activeCancel?.cancel()
         persistNow()
     }

@@ -388,6 +388,7 @@ struct ReaderScreen: View {
     @State private var showSelection = false
     @State private var showNotes = false
     @State private var showSearch = false
+    @State private var showNavigation = false
 #if os(iOS)
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -431,6 +432,8 @@ struct ReaderScreen: View {
                 .accessibilityIdentifier("reader.notes")
             Button { model.prepareSearch(); showSearch = true } label: { hostActionLabel("查找") }
                 .accessibilityIdentifier("reader.search")
+            Button { model.prepareNavigation(); showNavigation = true } label: { hostActionLabel("目录") }
+                .accessibilityIdentifier("reader.navigation")
         }.buttonStyle(.bordered).disabled(model.busy)
     }
 
@@ -521,6 +524,7 @@ struct ReaderScreen: View {
             NotesSheet(model: model)
         }
         .sheet(isPresented: $showSearch) { HostSearchSheet(model: model) }
+        .sheet(isPresented: $showNavigation) { HostNavigationSheet(model: model) }
         .onDisappear { model.detach() }
         .onChange(of: model.location) { value in hostAnnounce(value) }
         .onChange(of: model.statusText) { value in if !model.busy { hostAnnounce(value) } }

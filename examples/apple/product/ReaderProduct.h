@@ -5,3 +5,4 @@
 #include <reader_reading_state.h>
 #include <exr_credentials.h>
 #include <reader_search.h>
+#include <reader_navigation.h>

@@ -58,7 +58,7 @@ def app_settings(target, platform, deployment, info_plist)
     settings['ENABLE_DEBUG_DYLIB'] = 'NO'
     settings['CLANG_ENABLE_MODULES'] = 'YES'
     settings['EXR_SDK_DIR'] = '$(SRCROOT)/sdk'
-    settings['OTHER_LDFLAGS'] = ['$(inherited)', '-lreader_search', '-lreader_session', '-lreader_sync',
+    settings['OTHER_LDFLAGS'] = ['$(inherited)', '-lreader_navigation', '-lreader_search', '-lreader_session', '-lreader_sync',
       '-lexr_webdav', '-lreader_commands', '-lreader_reading_state_codec', '-lreader_revisions',
       '-lreader_revision_hash', '-lreader_catalog', '-lreader_catalog_sqlite', '-lexr_credentials', '-lexreader',
       '-lc++', '-lxml2', '-framework', 'Foundation', '-framework', 'CoreFoundation', '-framework', 'Security']
@@ -166,7 +166,7 @@ end
         'EXR_APPLE_ACCOUNT_REVIEW'
       elsif test_directory.include?('/accessibility/')
         nil
-      elsif test_directory.include?('/search/')
+      elsif test_directory.include?('/search/') || test_directory.include?('/navigation/')
         nil
       else
         'EXR_APPLE_IMPORT_REVIEW'
