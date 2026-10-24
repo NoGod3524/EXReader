@@ -1,7 +1,7 @@
 {
   "accepted": false,
   "navigation_scope_passed": false,
-  "status": "diagnostic passed; full same-source navigation UI refused after NCX selection did not dispatch",
+  "status": "last full navigation UI refused an unselected NCX row; native focus and actual selection readiness fix awaiting cloud run",
   "baseline": "9762a7dd4ede02b11339105ccd64b8d187f5d6bf",
   "navigation_source": "cbd7832b914bddcf99e06a85962d301a00b47efa",
   "navigation_tree": "9395914832e191ad63f18f6188ca5044260d2f12",
@@ -27,6 +27,7 @@
     "artifact": {"id": 12572590346, "bytes": 21395505, "sha256": "4821140aa263e6ed13728b1db464f28e9d6c4b9d09b728a6fb807590b5129f73", "expires_at": "2027-01-22T19:10:39Z"}
   },
   "artifacts": [],
+  "read_only_diagnostics": [{"run_id": 40126131632, "job_id": 120967828785, "diagnostic_only": true, "accepted": false, "conclusion": "success", "reason": "retained failure-tree proved active modal, unselected NCX row, no focused widget and insensitive Open button"}],
   "earlier_failed_runs": [
     {"run_id": 40122987085, "attempt": 1, "job_id": 120958359181, "source_sha": "2799df5885631b2c3f948dd60853d97f055e0720", "reason": "four misleading-indentation warnings in new GTK host code rejected under original -Wall -Wextra -Werror; statements separated, warnings remain errors", "artifact": {"id": 12572121611, "bytes": 1899854, "sha256": "c12b5de18f7283bf89981c1234cfa8784945ab9f0941e0f30bec76dd3902787e", "expires_at": "2027-01-22T18:56:15Z"}},
     {"run_id": 40123371736, "attempt": 1, "job_id": 120959514382, "source_sha": "4ad9f45de819df2bff0759c65f05c708d698099e", "reason": "all navigation and CFI/page cases passed before active-cancel probe; post-open native-window enumeration consumed the 9000-row snapshot work window, leaving phase3/polls40 before observation", "artifact": {"id": 12571684023, "bytes": 21400042, "sha256": "ca6735990d03e1218833769720a35bc3deef12bc7c165861a40141936018e79f", "expires_at": "2027-01-22T19:01:17Z"}},

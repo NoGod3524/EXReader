@@ -76,7 +76,14 @@ def main():
     def select(index,candidate=False):
         prefix=('Spine item ' if candidate else 'Directory entry ')+str(index+1)
         node=next(node for node in rows() if bus.name(node)==prefix or bus.name(node).startswith(prefix+':'))
+        end=time.monotonic()+10
+        while time.monotonic()<end:
+            rect=bus.extents(node);states=bus.states(node)
+            if rect and rect['width']>50 and rect['height']>=12 and states.get('showing') and states.get('sensitive'):break
+            time.sleep(.02)
+        else:raise TimeoutError('native row has no actionable allocation: '+prefix)
         click_node(node)
+        wait(lambda v:v['selected']==str(index) and v['open_sensitive']=='1')
     def action(keys):
         before=int(observed()['actions']);host.key(keys);return wait(lambda v:int(v['actions'])>before)
     def choose(index,candidate=False):select(index,candidate);return action('alt+o')

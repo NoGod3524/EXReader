@@ -6,7 +6,10 @@
 源码`8bf2b68dba205a63d7cdae78b2dd0f139c04ffb4`的专项
 [40124093566](https://github.com/NoGod3524/EXReader/actions/runs/40124093566)已通过导航UI29/29、
 新后端58，以及F2原130项、Search264/34和F3 20。
-同源完整保留回归[40124481444](https://github.com/NoGod3524/EXReader/actions/runs/40124481444)正在执行。
+同源完整保留回归[40124481444](https://github.com/NoGod3524/EXReader/actions/runs/40124481444)拒绝导航UI：
+NCX子项尚未选中，Open仍禁用，随后mnemonic没有提交；Search30/296、原46+105+4+AT-SPI10通过，设置仍33/35。
+云端只读诊断`40126131632`在原failure-tree确认了modal active、行未selected和Open不敏感。
+现在在行替换结束后恢复原生列表焦点，探针先等真实行分配和选中/Open可用，再发一次打开快捷键；不重放点击。
 
 可选`EXR_READER_GTK_NAVIGATION=ON`和安装前缀`READER_NAVIGATION_PREFIX`接入，默认关闭。
 原“更多”末尾及Ctrl+Shift+T打开原生模态目录，每层只显示当前32行，可打开条目、进入子级、返回或继续分页。
@@ -42,3 +45,4 @@ PDF/CBZ真实页入口，以及实际控制轮询中的取消/Escape/最小化/�
 仅将语句分行，编译检查保持不变。`4ad9f45d`/run`40123371736`已通过导航/CFI/页入口场景，
 但取消探针额外的窗口枚举耗尽9000行快照工作窗口，观察时已是phase3/polls40；保留该轮失败，
 移除额外窗口操作后以新source重新执行。另以第二对象的原生SDK解析替代重复F2调用，并补精确位置断言。
+完整轮次中的NCX选择失败同样保留，不以专项29通过替代它；只读诊断不授予验收。
