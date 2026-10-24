@@ -480,7 +480,7 @@ def main():
         cpp = subprocess.run([str(args.cxx.resolve())], capture_output=True, text=True, encoding='utf-8')
         assert cpp.returncode == 0 and 'cloud-import-cpp ok' in cpp.stdout, cpp
         record('independent_c_and_cpp_consumers_from_installed_package')
-        text = ''.join(p.read_text(encoding='utf-8', errors='replace') for p in folder.rglob('*') if p.suffix in ('.json', '.log', '.txt'))
+        text = ''.join(p.read_text(encoding='utf-8', errors='replace') for p in folder.rglob('*') if p.is_file() and p.suffix in ('.json', '.log', '.txt'))
         assert AUTH not in text and 'fixture-password' not in text, 'credential leaked into evidence'
         record('no_credentials_in_evidence')
 
