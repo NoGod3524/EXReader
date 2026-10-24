@@ -12,6 +12,8 @@
 
 第四轮 `e3ff5895` / run `40109992266` 的前九组新增检查通过，包含真实 TXT/EPUB/PDF FOUND 导航、28 字号与重复 spine，以及 CBZ 拒绝。JNI 负例把 selector exact 改成不同字节长度，却仍携带原范围，SDK 正确返回 ARGUMENT。测试保留该拒绝断言，另用同长度不存在的 quote 检查 MISSING 不回退；固定页内嵌 NUL 也保持原 quote 长度。SDK 与生产解析逻辑不变。
 
+第五轮 `369b6d24` / run `40110880624` 的首进程 13 组及重启后存储/无恢复搜索检查通过；最后重开 TXT 时，探针在弹窗退出的窗口过渡瞬间只探测了一次 Shelf 控件，漏过点击后直接等待书架而超时。换书 helper 改为有界等待真实可见 reader/shelf 控件，再操作真实 Shelf；最后重启后搜索断言保留。
+
 ## 使用与行为
 
 启用 `-PexrSearch=true` 并提供已安装的 `exrSearchPrefix`。当前验证构建同时保留 `exrSync=true` 和原账号/接收功能。阅读页低频“更多”菜单提供“书内搜索”；没有增加常驻搜索栏。Debug 保留原 Rebuild 按钮、ID 与动作；启用搜索的 Release 隐藏该调试按钮，“更多”占用原位置。
