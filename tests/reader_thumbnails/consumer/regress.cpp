@@ -144,9 +144,18 @@ void lru_write(const fs::path& dir, const Bytes& png) {
 }
 
 void lru_verify(const fs::path& dir, const Bytes& png) {
+  std::string listing;
+  {
+    for (const auto& it : fs::directory_iterator(dir)) listing += it.path().filename().string() + "|";
+  }
   rth_cache* c = open_cache(dir, limits_with_entries(2));
   rth_book b = mk_book((int)EXR_EPUB, sha_of(png));
   rth_stats s = stats_now(c);
+  std::printf("SETUP lru-verify open entries %u evictions %llu hits %llu misses %llu corrupt %llu scanned %llu own %llu deleted %llu bytes %llu files[%s]\n",
+              s.entries, (unsigned long long)s.evictions, (unsigned long long)s.hits, (unsigned long long)s.misses,
+              (unsigned long long)s.corrupt_rebuilt, (unsigned long long)s.scanned_files, (unsigned long long)s.own_candidates,
+              (unsigned long long)s.scan_deleted, (unsigned long long)s.bytes, listing.c_str());
+  std::fflush(stdout);
   Thumb t8, t4, t6;
   rth_status s8 = cover(c, b, png, 8, t8);
   rth_status s4 = cover(c, b, png, 4, t4);
