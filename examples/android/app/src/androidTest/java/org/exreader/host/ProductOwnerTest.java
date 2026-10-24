@@ -99,6 +99,7 @@ public final class ProductOwnerTest extends Instrumentation {
     private void strictUtf16AndEmoji()throws Exception{
         String value="书架😀E\u0301";ok(tag(1,empty(),value));equal(value,text("SELECT name FROM reader_tags"));
         for(String bad:new String[]{"\ud800","\udc00","\ud800A","A\udc00","A\0B"})rejects(IllegalArgumentException.class,()->tag(2,new String[]{id(1)},bad));
+        refused(NativeCatalog.applyBook(owner(),id(2),empty(),0,"txt:"+"a".repeat(64),"txt","a".repeat(64),123,null,"","",false),1,0);
         counts(1,1,1);
     }
     private void staleObservedHeadsAreAtomic(){ok(tag(1,empty(),"First"));ok(tag(2,new String[]{id(1)},"Second"));refused(tag(3,new String[]{id(1)},"Stale"),3,10);counts(2,2,1);equal("Second",text("SELECT name FROM reader_tags"));}

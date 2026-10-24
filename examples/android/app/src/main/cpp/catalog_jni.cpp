@@ -171,7 +171,8 @@ extern "C" JNIEXPORT jobjectArray JNICALL JNI_METHOD(heads)(JNIEnv *env,jclass,j
 });}
 extern "C" JNIEXPORT jobjectArray JNICALL JNI_METHOD(book)(JNIEnv *env,jclass,jlong id,jstring revision,jobjectArray heads,jint op,jstring key,jstring format,jstring sha,jlong bytes,jstring title,jstring author,jstring sort,jboolean favorite){return call(env,id,[&](owner &o)->jobjectArray{
   context c(env,o,revision,heads);auto k=utf8(env,key),f=utf8(env,format,true),h=utf8(env,sha,true),t=utf8(env,title,true),a=utf8(env,author,true),s=utf8(env,sort,true);
-  reader_book_command input{(reader_command_operation)op,k.c_str(),f.c_str(),h.c_str(),t.c_str(),a.c_str(),s.c_str(),(uint64_t)bytes,favorite?1:0};
+  reader_book_command input{(reader_command_operation)op,k.c_str(),format?f.c_str():nullptr,sha?h.c_str():nullptr,
+    title?t.c_str():nullptr,author?a.c_str():nullptr,sort?s.c_str():nullptr,(uint64_t)bytes,favorite?1:0};
   reader_command_result result{};reader_command_error e{};auto status=reader_command_apply_book(&c.native,&input,&result,&e);return command_result(env,status,result,e);
 });}
 extern "C" JNIEXPORT jobjectArray JNICALL JNI_METHOD(group)(JNIEnv *env,jclass,jlong id,jstring revision,jobjectArray heads,jint op,jint kind,jstring key,jstring name,jstring parent,jlong ordinal){return call(env,id,[&](owner &o)->jobjectArray{
