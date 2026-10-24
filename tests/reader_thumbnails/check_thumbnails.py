@@ -14,13 +14,15 @@ import sys
 # category prefix -> minimum number of named checks that must be present and passing
 REQUIRED_PREFIXES = {
     'version:': 1, 'sha256:': 2, 'exact:': 20, 'aspect:': 4, 'alpha:': 4, 'missing cover:': 5, 'library cover:': 4,
-    'preview:': 13, 'origins:': 1, 'unchanged:': 2, 'limits:': 20, 'anomalous image:': 3, 'decoded bytes:': 2,
+    'preview:': 13, 'origins:': 1, 'unchanged:': 2, 'limits:': 21, 'anomalous image:': 4, 'decoded bytes:': 2,
     'lru:': 6, 'mishit:': 9, 'corruption (': 24, 'recovery:': 6, 'cancel ': 10, 'reopen:': 7, 'owner:': 3,
 }
 # individually required behaviours (exact names)
 REQUIRED_EXACT = [
     'missing cover: host with no encoded cover gets the normal placeholder',
-    'limits: an image declaring 30000x30000 is refused before decoding',
+    'anomalous image: a PNG header declaring 30000x30000 over invalid data is refused before decoding (the SDK reports a damaged header)',
+    'limits: a valid 9000x1 PNG above the 8192 SDK edge limit is refused with a limit status before decoding',
+    'limits: a valid 4100x4100 PNG above 16,777,216 pixels is refused with a limit status before decoding',
     'limits: a 4294967295x4294967295 box is refused without allocation',
     'limits: a 9,000,000-pixel image above max_source_pixels=1,000,000 is refused before any decode allocation',
     'decoded bytes: a 3000x3000 cover reports 36,000,000 transient decoded bytes',
