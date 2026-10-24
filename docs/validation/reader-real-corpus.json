@@ -1,0 +1,79 @@
+{
+  "schema": 1,
+  "package": "F5 reader real corpus",
+  "state": "awaiting-first-run",
+  "accepted": false,
+  "start_commit": "cdfe48231853d6e70fba2c41b42bdd187155901a",
+  "branch": "codex/reader-real-corpus",
+  "manifest": "tests/reader_real_corpus/manifest.json",
+  "expected": {
+    "real_files": 18,
+    "formats": 9,
+    "per_format": 2
+  },
+  "counts": {
+    "real_files": 18,
+    "accepted": 0,
+    "failed": 0,
+    "pending": 0,
+    "formats": {
+      "EPUB": {
+        "real": 2,
+        "accepted": 0,
+        "failed": 0,
+        "pending": 0
+      },
+      "TXT": {
+        "real": 2,
+        "accepted": 0,
+        "failed": 0,
+        "pending": 0
+      },
+      "PDF": {
+        "real": 2,
+        "accepted": 0,
+        "failed": 0,
+        "pending": 0
+      },
+      "HTML": {
+        "real": 2,
+        "accepted": 0,
+        "failed": 0,
+        "pending": 0
+      },
+      "FB2": {
+        "real": 2,
+        "accepted": 0,
+        "failed": 0,
+        "pending": 0
+      },
+      "DOCX": {
+        "real": 2,
+        "accepted": 0,
+        "failed": 0,
+        "pending": 0
+      },
+      "RTF": {
+        "real": 2,
+        "accepted": 0,
+        "failed": 0,
+        "pending": 0
+      },
+      "MOBI": {
+        "real": 2,
+        "accepted": 0,
+        "failed": 0,
+        "pending": 0
+      },
+      "CBZ": {
+        "real": 2,
+        "accepted": 0,
+        "failed": 0,
+        "pending": 0
+      }
+    }
+  },
+  "runs": [],
+  "artifacts": [],
+  "note": "acceptance is false until the pinned manifest has been executed on Windows and Linux in the cloud; this file is not evidence by itself"
+}
