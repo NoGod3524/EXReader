@@ -966,7 +966,7 @@ def s_reimport_path_swap(ctx):
         f.write(b"B" * 4096)  # same size, different bytes
     out = env.run("reimport", "--key", book.key, "--file", book.path,
                   "--swap-at", "1", "--swap-from", substitute)
-    if "SWAP ok" not in out.lines:
+    if not any(t.startswith("SWAP ok") for t in out.lines):
         detail = next((t for t in out.lines if t.startswith("SWAP ")), "no SWAP line")
         raise SkipCheck("the host refused to replace the open file: " + detail)
     r = out.result
