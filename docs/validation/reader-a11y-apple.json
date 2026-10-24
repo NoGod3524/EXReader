@@ -2,13 +2,13 @@
   "schema": 1,
   "package": "G16 Apple accessibility audit",
   "branch": "codex/reader-a11y-apple",
-  "source_sha": "97cad3fd30ad95b2ff49084988868ad9f77cb104",
+  "source_sha": "16a0b2b5426fbf474601169ba1bcecca848fb231",
   "start_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
   "run": {
-    "id": "40094191862",
+    "id": "40096206815",
     "attempt": 1,
-    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40094191862"
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40096206815"
   },
   "workflow": ".github/workflows/reader-a11y-apple.yml",
   "contract": {
@@ -30,9 +30,9 @@
       },
       "content_size": "not-applicable",
       "keyboard_ui_mode": "3",
-      "program_sha256": "258898128067d41c2010130ceb84a552a7cd13d4802ba53be8d5c49681cd3976",
+      "program_sha256": "6226628e636fd55a5223f62afd91cc5c0505b615ac86a37e986be8768e177d93",
       "program_bytes": 58656,
-      "embedded_source_sha": "97cad3fd30ad95b2ff49084988868ad9f77cb104",
+      "embedded_source_sha": "16a0b2b5426fbf474601169ba1bcecca848fb231",
       "sdk_sha256": "f0d15a63de7eb3ce9cd3961190fcaf81bea2813fd4538a9db08a6aad10b54e9d",
       "xcode": "Xcode 16.4\nBuild version 16F6",
       "steps": 14,
@@ -60,7 +60,7 @@
       "keyboard_ui_mode": "not-applicable",
       "program_sha256": "6e6ff64712addcee93283ffe23b391ca1982990b8c53a4b327848eb0d09b7c6f",
       "program_bytes": 39472,
-      "embedded_source_sha": "97cad3fd30ad95b2ff49084988868ad9f77cb104",
+      "embedded_source_sha": "16a0b2b5426fbf474601169ba1bcecca848fb231",
       "sdk_sha256": "e41f9131ba4daf5c78db0502bc78610d4481d8f2a2df6c1f6879e7e2326ba9ce",
       "xcode": "Xcode 16.4\nBuild version 16F6",
       "steps": 15,
@@ -88,7 +88,7 @@
       "keyboard_ui_mode": "not-applicable",
       "program_sha256": "6e6ff64712addcee93283ffe23b391ca1982990b8c53a4b327848eb0d09b7c6f",
       "program_bytes": 39472,
-      "embedded_source_sha": "97cad3fd30ad95b2ff49084988868ad9f77cb104",
+      "embedded_source_sha": "16a0b2b5426fbf474601169ba1bcecca848fb231",
       "sdk_sha256": "e41f9131ba4daf5c78db0502bc78610d4481d8f2a2df6c1f6879e7e2326ba9ce",
       "xcode": "Xcode 16.4\nBuild version 16F6",
       "steps": 15,
@@ -179,7 +179,7 @@
       "actual": "最小边 20.5 pt",
       "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
       "screenshots": [
-        "CCE4F17D-AD14-4E61-BB8F-EF09A7FCCACE.png"
+        "BEF89E17-F2E5-4827-91A8-443AE0BFF7E5.png"
       ]
     },
     {
@@ -198,9 +198,9 @@
       "actual": "最小边 20.5 pt",
       "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
       "screenshots": [
-        "0A2B84A1-0A3A-4143-9D52-A79429242FC8.png",
-        "832D2ED2-AE00-48CD-A2C0-A9DC3333712F.png",
-        "9B30CF06-8EB2-4063-978F-363218FBDF8D.png"
+        "D74A71D6-6D6C-4285-B2CD-B0B00FF2C87C.png",
+        "C2E26B92-4B83-4980-A291-3139B243DE6B.png",
+        "692A5428-D310-45CB-B0FB-CAFCFAA7D025.png"
       ]
     },
     {
@@ -217,7 +217,7 @@
       "actual": "isHittable=false（可能被遮挡或在窗口外）",
       "fix": "",
       "screenshots": [
-        "832D2ED2-AE00-48CD-A2C0-A9DC3333712F.png"
+        "C2E26B92-4B83-4980-A291-3139B243DE6B.png"
       ]
     },
     {
@@ -234,7 +234,7 @@
       "actual": "frame={\"height\": 20.5, \"width\": 34.0, \"x\": 16.0, \"y\": -34.5} window={\"height\": 375.0, \"width\": 667.0, \"x\": 0.0, \"y\": 0.0}",
       "fix": "为大字体/小窗口加滚动回退或压缩行距，避免控件溢出窗口",
       "screenshots": [
-        "832D2ED2-AE00-48CD-A2C0-A9DC3333712F.png"
+        "C2E26B92-4B83-4980-A291-3139B243DE6B.png"
       ]
     },
     {
@@ -251,7 +251,7 @@
       "actual": "frame={\"height\": 34.5, \"width\": 58.0, \"x\": 264.5, \"y\": 362.5} window={\"height\": 375.0, \"width\": 667.0, \"x\": 0.0, \"y\": 0.0}",
       "fix": "为大字体/小窗口加滚动回退或压缩行距，避免控件溢出窗口",
       "screenshots": [
-        "832D2ED2-AE00-48CD-A2C0-A9DC3333712F.png"
+        "C2E26B92-4B83-4980-A291-3139B243DE6B.png"
       ]
     },
     {
@@ -268,7 +268,7 @@
       "actual": "frame={\"height\": 34.5, \"width\": 70.0, \"x\": 332.5, \"y\": 362.5} window={\"height\": 375.0, \"width\": 667.0, \"x\": 0.0, \"y\": 0.0}",
       "fix": "为大字体/小窗口加滚动回退或压缩行距，避免控件溢出窗口",
       "screenshots": [
-        "832D2ED2-AE00-48CD-A2C0-A9DC3333712F.png"
+        "C2E26B92-4B83-4980-A291-3139B243DE6B.png"
       ]
     },
     {
@@ -345,7 +345,7 @@
       "actual": "高度 15.0pt / 窗口 667.0pt = 2.2%",
       "fix": "把导入按钮区折叠进菜单或滚动容器，给书架列表留出可读高度",
       "screenshots": [
-        "2D373CFA-F6F2-4A4D-B20D-5F36D3A2C906.png"
+        "DB75AB5A-3BDC-4E96-B5AB-FA1C6979283F.png"
       ]
     },
     {
@@ -362,7 +362,7 @@
       "actual": "高度 153.0pt / 窗口 667.0pt = 22.9%",
       "fix": "大字体下把控制区折叠成单行工具条或包进滚动容器，避免阅读面被压到几行",
       "screenshots": [
-        "EAB2C62B-9267-41DB-9F59-9997F92C561B.png"
+        "267AB4DC-4FF1-45AA-BB50-3A8363961466.png"
       ]
     },
     {
@@ -379,7 +379,7 @@
       "actual": "最小边 20.5 pt",
       "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
       "screenshots": [
-        "292907A0-18F6-4340-9033-32EDF9BF6822.png"
+        "39C874D9-D1ED-4FB3-B211-4AD6FDE520FE.png"
       ]
     },
     {
@@ -398,9 +398,9 @@
       "actual": "最小边 20.5 pt",
       "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
       "screenshots": [
-        "D4D72B04-6647-4DF0-B4E0-EA7DE42292FA.png",
-        "3585EF0E-C3BF-40C5-A541-AB8EFA291D79.png",
-        "3008E2D2-F6BD-4BCB-B2C4-1B183CF73849.png"
+        "EE4C20D0-1CB1-4455-B622-5693BFFE33F9.png",
+        "A8EA6EE9-A117-4681-BD8B-33AA3BC03FBF.png",
+        "883F591A-1BCA-4DCC-91BB-DC5E56C2CC2C.png"
       ]
     },
     {
@@ -899,43 +899,43 @@
   ],
   "artifacts": [
     {
-      "id": 12561051202,
-      "name": "reader-a11y-apple-audit-iphone-40094191862-1",
-      "size_in_bytes": 5247096,
-      "digest": "sha256:2e89332ed2e94ed2bad7e650162e2984159e3923d51c150b92ff7c7a6d3a0d76",
-      "expires_at": "2026-11-23T12:52:23Z",
+      "id": 12562237653,
+      "name": "reader-a11y-apple-audit-iphone-40096206815-1",
+      "size_in_bytes": 5244668,
+      "digest": "sha256:d4a8bd753fec51884a6d00e8075dc31458fa06003c1991fe6df7b5aff1f0f825",
+      "expires_at": "2026-11-23T13:46:29Z",
       "expired": false
     },
     {
-      "id": 12560975237,
-      "name": "reader-a11y-apple-audit-macos-40094191862-1",
-      "size_in_bytes": 5247283,
-      "digest": "sha256:4a74fdbab130783f42238ac35d6b54c89efb2e1ab9a35f86b291ebdbeba6ba3d",
-      "expires_at": "2026-11-23T12:41:18Z",
+      "id": 12562146933,
+      "name": "reader-a11y-apple-audit-ipad-40096206815-1",
+      "size_in_bytes": 10368605,
+      "digest": "sha256:43ac84cfd63a5e61bd9be80736ba142936288f274368f40bed22f02708f11573",
+      "expires_at": "2026-11-23T13:37:55Z",
       "expired": false
     },
     {
-      "id": 12560876181,
-      "name": "reader-a11y-apple-validation-40094191862-1",
-      "size_in_bytes": 6526,
-      "digest": "sha256:399e63bb6ae929c3026f755817d12f566e8b7cefff894914554d0ef4b8e79451",
-      "expires_at": "2026-11-23T12:54:03Z",
+      "id": 12562117975,
+      "name": "reader-a11y-apple-validation-40096206815-1",
+      "size_in_bytes": 6532,
+      "digest": "sha256:6a2bd627b7f552256a764babdff067ea508364a928ef106bfa023651434c85e1",
+      "expires_at": "2026-11-23T13:46:58Z",
       "expired": false
     },
     {
-      "id": 12560189926,
-      "name": "reader-a11y-apple-audit-ipad-40094191862-1",
-      "size_in_bytes": 10321363,
-      "digest": "sha256:f6e04995d7c67b1a8f55ecf4545b6880d8acd2a1b59395d71b6d5d7108859042",
-      "expires_at": "2026-11-23T12:48:32Z",
+      "id": 12561997025,
+      "name": "reader-a11y-apple-audit-macos-40096206815-1",
+      "size_in_bytes": 5256022,
+      "digest": "sha256:c5911890153a9be1a9125a5e37284a2048af48ba7ae8d641ebc5040bd23d32b8",
+      "expires_at": "2026-11-23T13:34:18Z",
       "expired": false
     },
     {
-      "id": 12560127906,
-      "name": "reader-a11y-apple-judge-40094191862-1",
-      "size_in_bytes": 2075,
-      "digest": "sha256:b24c0503282d36711d78473d31955521e6448da69bf60f978ccdb5a68c50d4ef",
-      "expires_at": "2026-11-23T12:30:27Z",
+      "id": 12560454763,
+      "name": "reader-a11y-apple-judge-40096206815-1",
+      "size_in_bytes": 2106,
+      "digest": "sha256:ceb6e885bdf69050c4562dbb948649368b715bc45c0de90214e8fc9effa7e243",
+      "expires_at": "2026-11-23T12:59:33Z",
       "expired": false
     }
   ],
@@ -1001,6 +1001,17 @@
         "detail": "同一容器内可视区域重叠面积占较小控件 100%",
         "expected": "fail",
         "id": "same-container-containment-64pct-area",
+        "observed": "fail",
+        "passed": true,
+        "raw_ratio": 1,
+        "same_container": true,
+        "visible_ratio": 1
+      },
+      {
+        "description": "同级小控件面积约 80%（89.4x89.4 落在 100x100 内）且被 100% 覆盖 → fail",
+        "detail": "同一容器内可视区域重叠面积占较小控件 100%",
+        "expected": "fail",
+        "id": "same-container-containment-80pct-area",
         "observed": "fail",
         "passed": true,
         "raw_ratio": 1,
@@ -1191,7 +1202,7 @@
       "reading_order_tolerance_pt": 20
     },
     "schema": 1,
-    "source_sha": "97cad3fd30ad95b2ff49084988868ad9f77cb104"
+    "source_sha": "16a0b2b5426fbf474601169ba1bcecca848fb231"
   },
   "history": [
     {

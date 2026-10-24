@@ -48,7 +48,7 @@
 | --- | --- | --- | --- |
 | v1（run `40085956514`，source `29f03e23`） | 只要任一侧 `path` 含 `ScrollView` 就整对跳过 | **过宽**：同一容器内的真实重叠被一起排除，并对滚动内容暗示“已被裁剪” | 该 run 把 iPhone `library.large_type` 的 `library.book.0|library.import.epub`（原始重叠 91%）记为阻断遮挡，实际是 15 pt 视口把行裁掉 |
 | v2（run `40090892898`，source `59a21fd1`） | 同容器用共享视口裁剪；不同容器分别裁剪；包含关系按面积 ≤ 90% 豁免 | **新的盲区**：`nested_child()` 只按面积猜父子，同级 100×100 与 80×80 完全重叠会被判成“嵌套、不算遮挡”，小控件 100% 被覆盖却返回 `none` | 该 run 的工件保留；`judge` 的同级完全包含用例在 v3 里必须 `fail` |
-| v3（run `40094191862`，source `97cad3fd`） | 容器只由语义路径推导；包含关系只在**路径前缀**证明真实祖先时豁免；滚动祖先缺标识或视口缺失 → `uncovered` | 面积不再参与父子判断；同级/跨容器完全包含按 50% 判 `fail`；不可证的可见性不冒充已测 | `judge` 22 例：同级完全包含（同尺寸 / 80% 面积 / 64% 面积 / 20% 面积）全部 `fail`，跨容器完全包含 `fail`，路径父子 `none`，无标识视口 `undetermined`，并回放原 run 误判对（`legacy=skipped` → `current=excluded`） |
+| v3（run `40096206815`，source `16a0b2b5`） | 容器只由语义路径推导；包含关系只在**路径前缀**证明真实祖先时豁免；滚动祖先缺标识或视口缺失 → `uncovered` | 面积不再参与父子判断；同级/跨容器完全包含按 50% 判 `fail`；不可证的可见性不冒充已测 | `judge` 22 例：同级完全包含（同尺寸 / 80% 面积 / 64% 面积 / 20% 面积）全部 `fail`，跨容器完全包含 `fail`，路径父子 `none`，无标识视口 `undetermined`，并回放原 run 误判对（`legacy=skipped` → `current=excluded`） |
 
 v1 与 v2 的工件、报告与被取代条目**保留不删**：`docs/validation/reader-a11y-apple.json` 的 `history` 里仍记着
 这两个 run 的工件身份与被取代结论；§7 只引用最新一次同源运行。门槛（24/44/20 pt、50%、2 pt、20 pt）三版相同，
@@ -194,17 +194,17 @@ v1 与 v2 的工件、报告与被取代条目**保留不删**：`docs/validatio
 
 本节与 `docs/validation/reader-a11y-apple.json` 来自同一次运行，不拼接其它 run/attempt。
 
-- 受测 source：`97cad3fd30ad95b2ff49084988868ad9f77cb104`（GITHUB_SHA，同时写入受测程序 Info.plist 的 EXRSourceSHA）
-- 运行：`40094191862` attempt `1`，工作流 Reader Apple accessibility audit
+- 受测 source：`16a0b2b5426fbf474601169ba1bcecca848fb231`（GITHUB_SHA，同时写入受测程序 Info.plist 的 EXRSourceSHA）
+- 运行：`40096206815` attempt `1`，工作流 Reader Apple accessibility audit
 - 契约：`tests/reader_a11y_apple/a11y_contract.json`，`sha256:0d330a6841831494a15fafbf1f318d8441cffd9bee0a068fca9b10b3105ed2f1`
 - SDK 保护树：`9854061be331fe603a1822d9b2b36ee357154927`（frozen job 校验通过）；实现起点 `f43baf9182d75907c0cb5d6f77048f27bca8c950`
-- 重叠判据：v3；judge job 21 例全过，原 run 误判对回放 legacy=`skipped` → current=`excluded`（原始重叠 91.5%，可视重叠 0.0%）
+- 重叠判据：v3；judge job 22 例全过，原 run 误判对回放 legacy=`skipped` → current=`excluded`（原始重叠 91.5%，可视重叠 0.0%）
 
 ### 7.1 逐目标证据
 
 | 目标 | 设备 / runtime | 窗口 | 字体/键盘装置 | 受测程序 SHA-256 | 步骤 | pass | fail | 其中阻断 | blocked | 缺口 | 未覆盖 | 建议项 | 截图 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| macos | macOS host / macOS | 900×488 | keyboard=3 | `258898128067d41c2010130ceb84a552a7cd13d4802ba53be8d5c49681cd3976` | 14 | 403 | 4 | 0 | 0 | 8 | 7 | 0 | 28 |
+| macos | macOS host / macOS | 900×488 | keyboard=3 | `6226628e636fd55a5223f62afd91cc5c0505b615ac86a37e986be8768e177d93` | 14 | 403 | 4 | 0 | 0 | 8 | 7 | 0 | 28 |
 | iphone | iPhone SE (3rd generation) / com.apple.CoreSimulator.SimRuntime.iOS-26-2 | 375×667 | content_size=accessibility-extra-extra-extra-large | `6e6ff64712addcee93283ffe23b391ca1982990b8c53a4b327848eb0d09b7c6f` | 15 | 434 | 14 | 8 | 0 | 8 | 7 | 47 | 30 |
 | ipad | iPad mini (A17 Pro) / com.apple.CoreSimulator.SimRuntime.iOS-26-2 | 744×1133 | content_size=accessibility-extra-extra-extra-large | `6e6ff64712addcee93283ffe23b391ca1982990b8c53a4b327848eb0d09b7c6f` | 15 | 442 | 8 | 4 | 0 | 8 | 7 | 47 | 30 |
 
@@ -219,14 +219,14 @@ v1 与 v2 的工件、报告与被取代条目**保留不删**：`docs/validatio
 
 | 目标 | 步骤 | 元素路径 | 实际 | 预期 | 截图（导出文件名） | 最小修复 |
 | --- | --- | --- | --- | --- | --- | --- |
-| iphone | library.busy | `Application>Window>Button[library.cancel]` | 最小边 20.5 pt | 控件不小于 24 pt（WCAG 2.5.8） | CCE4F17D-AD14-4E61-BB8F-EF09A7FCCACE.png | 扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)） |
-| iphone | reader.epub, reader.landscape, reader.portrait | `Application>Window>Button[reader.back]` | 最小边 20.5 pt | 控件不小于 24 pt（WCAG 2.5.8） | 0A2B84A1-0A3A-4143-9D52-A79429242FC8.png | 扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)） |
-| iphone | reader.landscape | `Application>Window>Button[reader.back]` | isHittable=false（可能被遮挡或在窗口外） | 启用中的控件可被命中 | 832D2ED2-AE00-48CD-A2C0-A9DC3333712F.png | 见 7.7（控件可见性 P1） |
-| iphone | reader.landscape | `Application>Window>Button[reader.back]` | frame={"height": 20.5, "width": 34.0, "x": 16.0, "y": -34.5} window={"height": 375.0, "width": 667.0, "x": 0.0, "y": 0.0} | 控件完整落在窗口内 | 832D2ED2-AE00-48CD-A2C0-A9DC3333712F.png | 为大字体/小窗口加滚动回退或压缩行距，避免控件溢出窗口 |
-| iphone | reader.landscape | `Application>Window>Button[reader.select]` | frame={"height": 34.5, "width": 58.0, "x": 264.5, "y": 362.5} window={"height": 375.0, "width": 667.0, "x": 0.0, "y": 0.0} | 控件完整落在窗口内 | 832D2ED2-AE00-48CD-A2C0-A9DC3333712F.png | 为大字体/小窗口加滚动回退或压缩行距，避免控件溢出窗口 |
-| iphone | reader.landscape | `Application>Window>Button[reader.notes]` | frame={"height": 34.5, "width": 70.0, "x": 332.5, "y": 362.5} window={"height": 375.0, "width": 667.0, "x": 0.0, "y": 0.0} | 控件完整落在窗口内 | 832D2ED2-AE00-48CD-A2C0-A9DC3333712F.png | 为大字体/小窗口加滚动回退或压缩行距，避免控件溢出窗口 |
-| ipad | library.busy | `Application>Window>Button[library.cancel]` | 最小边 20.5 pt | 控件不小于 24 pt（WCAG 2.5.8） | 292907A0-18F6-4340-9033-32EDF9BF6822.png | 扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)） |
-| ipad | reader.epub, reader.landscape, reader.portrait | `Application>Window>Button[reader.back]` | 最小边 20.5 pt | 控件不小于 24 pt（WCAG 2.5.8） | D4D72B04-6647-4DF0-B4E0-EA7DE42292FA.png | 扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)） |
+| iphone | library.busy | `Application>Window>Button[library.cancel]` | 最小边 20.5 pt | 控件不小于 24 pt（WCAG 2.5.8） | BEF89E17-F2E5-4827-91A8-443AE0BFF7E5.png | 扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)） |
+| iphone | reader.epub, reader.landscape, reader.portrait | `Application>Window>Button[reader.back]` | 最小边 20.5 pt | 控件不小于 24 pt（WCAG 2.5.8） | D74A71D6-6D6C-4285-B2CD-B0B00FF2C87C.png | 扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)） |
+| iphone | reader.landscape | `Application>Window>Button[reader.back]` | isHittable=false（可能被遮挡或在窗口外） | 启用中的控件可被命中 | C2E26B92-4B83-4980-A291-3139B243DE6B.png | 见 7.7（控件可见性 P1） |
+| iphone | reader.landscape | `Application>Window>Button[reader.back]` | frame={"height": 20.5, "width": 34.0, "x": 16.0, "y": -34.5} window={"height": 375.0, "width": 667.0, "x": 0.0, "y": 0.0} | 控件完整落在窗口内 | C2E26B92-4B83-4980-A291-3139B243DE6B.png | 为大字体/小窗口加滚动回退或压缩行距，避免控件溢出窗口 |
+| iphone | reader.landscape | `Application>Window>Button[reader.select]` | frame={"height": 34.5, "width": 58.0, "x": 264.5, "y": 362.5} window={"height": 375.0, "width": 667.0, "x": 0.0, "y": 0.0} | 控件完整落在窗口内 | C2E26B92-4B83-4980-A291-3139B243DE6B.png | 为大字体/小窗口加滚动回退或压缩行距，避免控件溢出窗口 |
+| iphone | reader.landscape | `Application>Window>Button[reader.notes]` | frame={"height": 34.5, "width": 70.0, "x": 332.5, "y": 362.5} window={"height": 375.0, "width": 667.0, "x": 0.0, "y": 0.0} | 控件完整落在窗口内 | C2E26B92-4B83-4980-A291-3139B243DE6B.png | 为大字体/小窗口加滚动回退或压缩行距，避免控件溢出窗口 |
+| ipad | library.busy | `Application>Window>Button[library.cancel]` | 最小边 20.5 pt | 控件不小于 24 pt（WCAG 2.5.8） | 39C874D9-D1ED-4FB3-B211-4AD6FDE520FE.png | 扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)） |
+| ipad | reader.epub, reader.landscape, reader.portrait | `Application>Window>Button[reader.back]` | 最小边 20.5 pt | 控件不小于 24 pt（WCAG 2.5.8） | EE4C20D0-1CB1-4455-B622-5693BFFE33F9.png | 扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)） |
 
 ### 7.4 非阻断发现（内容规则）
 
@@ -257,11 +257,11 @@ v1 与 v2 的工件、报告与被取代条目**保留不删**：`docs/validatio
 
 | 工件 | id | 字节 | sha256 | 有效期 |
 | --- | --- | --- | --- | --- |
-| `reader-a11y-apple-audit-iphone-40094191862-1` | 12561051202 | 5247096 | `sha256:2e89332ed2e94ed2bad7e650162e2984159e3923d51c150b92ff7c7a6d3a0d76` | 2026-11-23T12:52:23Z |
-| `reader-a11y-apple-audit-macos-40094191862-1` | 12560975237 | 5247283 | `sha256:4a74fdbab130783f42238ac35d6b54c89efb2e1ab9a35f86b291ebdbeba6ba3d` | 2026-11-23T12:41:18Z |
-| `reader-a11y-apple-validation-40094191862-1` | 12560876181 | 6526 | `sha256:399e63bb6ae929c3026f755817d12f566e8b7cefff894914554d0ef4b8e79451` | 2026-11-23T12:54:03Z |
-| `reader-a11y-apple-audit-ipad-40094191862-1` | 12560189926 | 10321363 | `sha256:f6e04995d7c67b1a8f55ecf4545b6880d8acd2a1b59395d71b6d5d7108859042` | 2026-11-23T12:48:32Z |
-| `reader-a11y-apple-judge-40094191862-1` | 12560127906 | 2075 | `sha256:b24c0503282d36711d78473d31955521e6448da69bf60f978ccdb5a68c50d4ef` | 2026-11-23T12:30:27Z |
+| `reader-a11y-apple-audit-iphone-40096206815-1` | 12562237653 | 5244668 | `sha256:d4a8bd753fec51884a6d00e8075dc31458fa06003c1991fe6df7b5aff1f0f825` | 2026-11-23T13:46:29Z |
+| `reader-a11y-apple-audit-ipad-40096206815-1` | 12562146933 | 10368605 | `sha256:43ac84cfd63a5e61bd9be80736ba142936288f274368f40bed22f02708f11573` | 2026-11-23T13:37:55Z |
+| `reader-a11y-apple-validation-40096206815-1` | 12562117975 | 6532 | `sha256:6a2bd627b7f552256a764babdff067ea508364a928ef106bfa023651434c85e1` | 2026-11-23T13:46:58Z |
+| `reader-a11y-apple-audit-macos-40096206815-1` | 12561997025 | 5256022 | `sha256:c5911890153a9be1a9125a5e37284a2048af48ba7ae8d641ebc5040bd23d32b8` | 2026-11-23T13:34:18Z |
+| `reader-a11y-apple-judge-40096206815-1` | 12560454763 | 2106 | `sha256:ceb6e885bdf69050c4562dbb948649368b715bc45c0de90214e8fc9effa7e243` | 2026-11-23T12:59:33Z |
 
 ### 7.7 交给 Apple owner 的最小修复建议
 
