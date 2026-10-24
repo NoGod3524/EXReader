@@ -85,6 +85,7 @@ static void search_readonly(linux_reader *reader,const reader_command *command,r
         reader_result opened={0};exr_error problem={0};
         exr_status sdk=open_book(reader,command->book,reader->current.font,reader->current.zoom,&search->source,&opened,&problem);
         reader_result_free(&opened);
+        exr_pager_free(search->source.pager);search->source.pager=NULL;
         if(sdk!=EXR_OK) { status=READER_SEARCH_SDK;error.sdk_code=sdk;snprintf(error.message,sizeof(error.message),"Search source could not be opened"); }
         else {
           reader_search_options options={0};options.struct_size=sizeof(options);
@@ -130,7 +131,7 @@ static void search_readonly(linux_reader *reader,const reader_command *command,r
     reader_search_result_free(&next);
   }
   result->search_code=status;result->search_sdk_code=error.sdk_code;result->status=search_status(status,&error);
-  snprintf(result->message,sizeof(result->message),"%s",status==READER_SEARCH_OK ? (result->search_count ? "Search results ready":"No matching text"):error.message[0] ? error.message:"Search did not complete; current reading retained");
+  snprintf(result->message,sizeof(result->message),"%s",status==READER_SEARCH_OK ? (result->search_count ? "Search results ready":command->action==READER_SEARCH_NEXT ? "Search complete; no more results":"No matching text"):error.message[0] ? error.message:"Search did not complete; current reading retained");
   if(status!=READER_SEARCH_OK && (command->action==READER_SEARCH_BEGIN || status==READER_SEARCH_MEMORY)) search_free(reader);
 }
 static exr_status search_jump(linux_reader *reader,reader_session *next,const reader_command *command,reader_result *result,exr_error *error) {
