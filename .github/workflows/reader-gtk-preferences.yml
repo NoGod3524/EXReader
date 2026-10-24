@@ -8,13 +8,41 @@ on:
         type: boolean
         default: false
         description: Diagnose new controls without granting retained-suite acceptance
+      inspect_account_run:
+        type: string
+        default: ''
+        description: Read the retained account logs of failed run 40096404519 only
 permissions:
   contents: read
+  actions: read
 defaults:
   run:
     shell: bash
 jobs:
+  inspect_account:
+    if: ${{ github.event.inputs.inspect_account_run == '40096404519' }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 40096404519
+          name: reader-gtk-preferences-40096404519-1
+          path: previous
+      - name: Read the actual account import refusal without granting acceptance
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          root=Path('previous/account-ui')
+          for name in ('application.log','state.ini','result.json'):
+              path=root/name
+              print('===',name,'===')
+              print(path.read_text(errors='replace')[-18000:] if path.exists() else 'not produced')
+          print('diagnostic_only=true accepted=false')
+          PY
   account:
+    if: ${{ github.event.inputs.inspect_account_run == '' }}
     name: GTK installed reading preferences and retained reading exits
     runs-on: ubuntu-22.04
     timeout-minutes: 65
