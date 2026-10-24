@@ -27,13 +27,48 @@ static void mutate(linux_reader *reader,int64_t book,const reader_av_item *item,
   reader_command value=command(READER_RECORDS_SAVE,book);value.records_kind=kind;value.records_operation=operation;value.records_id=item->annotation_id;
   value.records_head=item->revision_id;value.records_sha=item->sha256;value.records_text=body;value.records_version=version;linux_reader_execute(reader,&value,result);
 }
+static void receive(reader_revisions *store,const char *key,const char *annotation,const char *revision,const char *operation,
+    const char *const *parents,size_t parent_count,const char *body,const exr_anchor *anchor) {
+  reader_rs_envelope envelope={revision,operation,"annotation",key,annotation,parents,parent_count,body,exr_version()};
+  reader_rs_capture captured={0};captured.mode=READER_RS_REFLOW_GLOBAL;captured.anchor=!strcmp(operation,"delete") ? NULL:anchor;
+  char *wire=NULL;size_t size=0;reader_rs_error error={0};REQUIRE(reader_rs_encode_v2(store,&envelope,&captured,0,&wire,&size,&error)==READER_RS_OK);
+  char *sha=g_compute_checksum_for_data(G_CHECKSUM_SHA256,(const guchar *)wire,size);reader_revision_info info={0};int created=0;
+  REQUIRE(reader_revision_receive(store,wire,size,sha,&info,&created,NULL)==READER_REV_OK && created);g_free(sha);reader_rs_free(wire);
+}
 int main(int argc,char **argv) {
   REQUIRE(argc==5);int cancel=0;exr_control control={cancelled,NULL,&cancel};linux_reader *reader=NULL;exr_error error={0};reader_result result={0};
   REQUIRE(linux_reader_open(argv[1],argv[2],&control,&reader,&error)==EXR_OK);
-  int routes=!strcmp(argv[4],"routes");
-  reader_command value=command(!strcmp(argv[4],"first") || routes ? READER_IMPORT:READER_OPEN,1);value.path=argv[3];linux_reader_execute(reader,&value,&result);
+  int routes=!strcmp(argv[4],"routes"),graphs=!strcmp(argv[4],"graphs");
+  reader_command value=command(!strcmp(argv[4],"first") || routes || graphs ? READER_IMPORT:READER_OPEN,1);value.path=argv[3];linux_reader_execute(reader,&value,&result);
   REQUIRE(result.status==EXR_OK && result.has_frame);int64_t book=result.book;commit(reader,&result);reader_result_free(&result);
-  if(routes) {
+  if(graphs) {
+    save(reader,book,READER_RC_PROGRESS,"",&result);REQUIRE(result.status==EXR_OK && result.records_created);reader_result_free(&result);
+    list(reader,book,&result);char key[73];g_strlcpy(key,result.records_key,sizeof(key));reader_result_free(&result);
+    char *product=g_strconcat(argv[1],".product.sqlite",NULL);reader_revisions *store=NULL;REQUIRE(reader_revisions_open(product,&store,NULL)==READER_REV_OK);g_free(product);
+    exr_library *library=NULL;exr_document *document=NULL;exr_anchor anchor={0};REQUIRE(exr_library_open(argv[1],&library,&error)==EXR_OK);
+    REQUIRE(exr_library_document(library,book,&document,&error)==EXR_OK);REQUIRE(exr_anchor_create(document,0,0,&anchor,&error)==EXR_OK);
+    char ids[8][33];for(size_t i=0;i<8;i++) REQUIRE(reader_revision_new_id(ids[i],NULL)==READER_REV_OK);
+    const char *parent[]={ids[0]};const char *conflict="f0000000000000000000000000000001",*pending="f0000000000000000000000000000002",*blocked="f0000000000000000000000000000003";
+    receive(store,key,conflict,ids[0],"put",NULL,0,"private root",&anchor);
+    receive(store,key,conflict,ids[1],"put",parent,1,"PRIVATE CONCURRENT QUOTE",&anchor);receive(store,key,conflict,ids[2],"put",parent,1,"PRIVATE OTHER QUOTE",&anchor);
+    parent[0]=ids[3];receive(store,key,pending,ids[4],"put",parent,1,"PRIVATE PENDING QUOTE",&anchor);
+    receive(store,key,blocked,ids[5],"delete",NULL,0,NULL,&anchor);parent[0]=ids[5];receive(store,key,blocked,ids[6],"put",parent,1,"PRIVATE BLOCKED QUOTE",&anchor);
+    char *large=g_malloc0(65537);memset(large,'x',65536);
+    for(unsigned i=0;i<32;i++) { char annotation[33],revision[33];snprintf(annotation,sizeof(annotation),"%032x",0x200+i);REQUIRE(reader_revision_new_id(revision,NULL)==READER_REV_OK);receive(store,key,annotation,revision,"put",NULL,0,large,&anchor); }
+    g_free(large);exr_anchor_free(&anchor);exr_document_free(document);exr_library_close(library);REQUIRE(reader_revisions_close(&store,NULL)==READER_REV_OK);
+    list(reader,book,&result);REQUIRE(result.records_page.count==31 && result.records_page.budget_stopped && !result.records_page.complete && result.records_page.output_bytes<=2097152);
+    char after[33];g_strlcpy(after,result.records_page.next.after_id,33);reader_result_free(&result);
+    value=command(READER_RECORDS_LIST,book);value.records_after=after;value.direction=1;linux_reader_execute(reader,&value,&result);REQUIRE(result.status==EXR_OK && result.records_page.count==4 && result.records_page.complete);
+    size_t concurrent_count=0,pending_count=0,blocked_count=0;
+    for(size_t i=0;i<result.records_page.count;i++) {
+      reader_av_item *item=&result.records_page.items[i];if(item->state==READER_AV_STATE_SAFE) continue;
+      REQUIRE(!item->content_available && !item->exact && !item->note_text && !item->part_path && !item->page_id && !item->revision_id[0] && !item->sha256[0] && item->resolution==READER_AV_RESOLUTION_NOT_ATTEMPTED);
+      if(item->state==READER_AV_STATE_CONCURRENT) { concurrent_count++;REQUIRE(item->revisions==3 && item->heads==2); }
+      if(item->state==READER_AV_STATE_PENDING_PARENTS) { pending_count++;REQUIRE(item->missing_parents==1); }
+      if(item->state==READER_AV_STATE_BLOCKED_RESTORE) { blocked_count++;REQUIRE(item->requires_restore); }
+    }
+    REQUIRE(concurrent_count==1 && pending_count==1 && blocked_count==1);reader_result_free(&result);
+  } else if(routes) {
     save(reader,book,READER_RC_BOOKMARK,"EPUB point",&result);REQUIRE(result.status==EXR_OK && result.records_created);reader_result_free(&result);
     list(reader,book,&result);REQUIRE(result.records_page.count==1 && result.records_page.items[0].mode==READER_AV_MODE_EPUB && result.records_page.items[0].has_part && result.records_page.items[0].part==0);
     reader_av_item *item=&result.records_page.items[0];value=command(READER_RECORDS_JUMP,book);value.records_id=item->annotation_id;value.records_head=item->revision_id;value.records_sha=item->sha256;

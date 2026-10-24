@@ -165,6 +165,7 @@ jobs:
           build/account-desktop/reader-gtk-reading-records-backend "$PWD/build/records-backend/profile/library.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/records-command-fixtures/book.txt" first | tee build/records-backend/first.log
           build/account-desktop/reader-gtk-reading-records-backend "$PWD/build/records-backend/profile/library.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/records-command-fixtures/book.txt" resumed | tee build/records-backend/resumed.log
           build/account-desktop/reader-gtk-reading-records-backend "$PWD/build/records-backend/profile/routes.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/records-command-fixtures/book.epub" routes | tee build/records-backend/routes.log
+          build/account-desktop/reader-gtk-reading-records-backend "$PWD/build/records-backend/profile/graphs.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/records-command-fixtures/book.txt" graphs | tee build/records-backend/graphs.log
       - name: Actual native progress bookmark highlight edit delete restore and process recovery
         run: |
           mkdir -p build/gtk-atspi-client
@@ -177,7 +178,7 @@ jobs:
             trap "kill $wm || true" EXIT
             gsettings set org.gnome.desktop.interface toolkit-accessibility true
             gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
-            /usr/bin/python3 tests/reader_gtk_reading_records/check_ui.py --payload build/account-package/EXReader-Linux --fixtures build/records-command-fixtures --output build/records-ui
+            /usr/bin/python3 tests/reader_gtk_reading_records/check_ui.py --payload build/account-package/EXReader-Linux --fixtures build/records-command-fixtures --output build/records-ui --backend build/account-desktop/reader-gtk-reading-records-backend
           '
       - name: Actual native directory explicit targets independent FOUND and lifecycle
         env:
