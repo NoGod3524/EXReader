@@ -1,0 +1,5 @@
+@PACKAGE_INIT@
+include(CMakeFindDependencyMacro)
+find_dependency(EXReader 3.40.0 EXACT CONFIG COMPONENTS library)
+find_dependency(EXReaderSideload CONFIG)
+include("${CMAKE_CURRENT_LIST_DIR}/EXReaderBatchImportTargets.cmake")
