@@ -81,7 +81,7 @@ static void search_readonly(linux_reader *reader,const reader_command *command,r
       if(!search) status=READER_SEARCH_MEMORY;
       else {
         reader->search_data=search;search->token=command->search_token;search->reader=reader;
-        search->observe=command->search_control;search->request=search->observe ? g_atomic_int_get(&search->observe->request):0;search_phase(search,1);
+        search->observe=command->search_control;search->request=command->search_request;search_phase(search,1);
         reader_result opened={0};exr_error problem={0};
         exr_status sdk=open_book(reader,command->book,reader->current.font,reader->current.zoom,&search->source,&opened,&problem);
         reader_result_free(&opened);
@@ -101,7 +101,11 @@ static void search_readonly(linux_reader *reader,const reader_command *command,r
           }
 #endif
           search->chapter=exr_chapter_options_defaults();search->chapter.window_bytes=16384;
-          if(search->source.fixed_document) status=reader_search_open_fixed(search->source.fixed_document,query,length,&options,&search->handle,&error);
+          if(search->source.fixed_book && search->source.fixed_book->format==EXR_CBZ) {
+            status=READER_SEARCH_SDK;error.sdk_code=EXR_FORMAT;
+            snprintf(error.message,sizeof(error.message),"CBZ pages have no searchable text; OCR is not available");
+          }
+          else if(search->source.fixed_document) status=reader_search_open_fixed(search->source.fixed_document,query,length,&options,&search->handle,&error);
           else if(search->source.bounded) status=reader_search_open_epub(search->source.publication,reader->font,&search->layout,&search->chapter,query,length,&options,&search->handle,&error);
           else status=reader_search_open_reflow(search->source.document,query,length,&options,&search->handle,&error);
         }
@@ -109,7 +113,7 @@ static void search_readonly(linux_reader *reader,const reader_command *command,r
     }
   } else if(!search || search->token!=command->search_token || search->source.id!=command->book || command->book!=reader->current.id) status=READER_SEARCH_ARGUMENT;
   if(status==READER_SEARCH_OK) {
-    search->observe=command->search_control;search->request=search->observe ? g_atomic_int_get(&search->observe->request):0;
+    search->observe=command->search_control;search->request=command->search_request;
     search_phase(search,2);reader_search_result next={0};status=reader_search_next(search->handle,32,&next,&error);search_phase(search,3);
     if(status==READER_SEARCH_OK) {
       reader_search_row *rows=calloc(next.count ? next.count:1,sizeof(*rows));
