@@ -18,6 +18,14 @@ static GtkWidget *collections_scroll(GtkWidget *child) {
   gtk_widget_set_vexpand(widget,TRUE);return widget;
 }
 static void collections_access(GtkWidget *widget,const char *name) { atk_object_set_name(gtk_widget_get_accessible(widget),name); }
+static gboolean collections_list_mnemonic(GtkWidget *label,gboolean cycling,gpointer target) {
+  (void)label;(void)cycling;GtkWidget *list=target;
+  GtkListBoxRow *row=gtk_list_box_get_selected_row(GTK_LIST_BOX(list));
+  if(!row) row=gtk_list_box_get_row_at_index(GTK_LIST_BOX(list),0);
+  if(row) { gtk_widget_grab_focus(GTK_WIDGET(row));gtk_list_box_select_row(GTK_LIST_BOX(list),row); }
+  else gtk_widget_grab_focus(list);
+  return TRUE;
+}
 static GtkWidget *collections_button(GtkWidget *box,const char *caption,GCallback callback,gpointer value) {
   GtkWidget *button=gtk_button_new_with_mnemonic(caption);gtk_box_pack_start(GTK_BOX(box),button,FALSE,FALSE,0);
   g_signal_connect(button,"clicked",callback,value);return button;
@@ -169,7 +177,7 @@ static void collections_show_editor(const reader_result *result) {
   gtk_label_set_mnemonic_widget(GTK_LABEL(position),collections.ordinal);collections_access(collections.ordinal,"Collection position");
   gtk_grid_attach(GTK_GRID(grid),position,0,line,1,1);gtk_grid_attach(GTK_GRID(grid),collections.ordinal,1,line++,1,1);
   gboolean ordered=collections.entity==0 ? collections.kind==0:collections.kind!=1;
-  gtk_widget_set_sensitive(collections.ordinal,ordered && collections.operation==0);
+  gtk_widget_set_sensitive(collections.ordinal,ordered && (collections.operation==0 || (collections.entity==1 && collections.operation==2)));
   collections.editor_message=gtk_label_new(result->collection_dependency ? "Restore the parent collection first":result->collection_conflict ? "Versions differ; refresh before changing this collection":result->message);
   gtk_label_set_line_wrap(GTK_LABEL(collections.editor_message),TRUE);gtk_grid_attach(GTK_GRID(grid),collections.editor_message,0,line,2,1);
   if(result->collection_dependency) gtk_dialog_add_button(GTK_DIALOG(collections.editor),"View _parent",3);
@@ -332,9 +340,12 @@ static void collections_open(GtkWidget *button,gpointer unused) {
   gtk_box_pack_start(GTK_BOX(area),filters,FALSE,FALSE,4);
   GtkWidget *panes=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,12),*left=gtk_box_new(GTK_ORIENTATION_VERTICAL,5),*right=gtk_box_new(GTK_ORIENTATION_VERTICAL,5);
   collections.groups=gtk_list_box_new();collections.members=gtk_list_box_new();gtk_widget_set_can_focus(collections.groups,TRUE);gtk_widget_set_can_focus(collections.members,TRUE);
+  gtk_list_box_set_activate_on_single_click(GTK_LIST_BOX(collections.groups),FALSE);gtk_list_box_set_activate_on_single_click(GTK_LIST_BOX(collections.members),FALSE);
   collections_access(collections.groups,"Collection groups");collections_access(collections.members,"Collection members");
   GtkWidget *groups=gtk_label_new_with_mnemonic("_Groups"),*members=gtk_label_new_with_mnemonic("_Books");
   gtk_label_set_mnemonic_widget(GTK_LABEL(groups),collections.groups);gtk_label_set_mnemonic_widget(GTK_LABEL(members),collections.members);
+  g_signal_connect(groups,"mnemonic-activate",G_CALLBACK(collections_list_mnemonic),collections.groups);
+  g_signal_connect(members,"mnemonic-activate",G_CALLBACK(collections_list_mnemonic),collections.members);
   gtk_box_pack_start(GTK_BOX(left),groups,FALSE,FALSE,0);gtk_box_pack_start(GTK_BOX(left),collections_scroll(collections.groups),TRUE,TRUE,0);
   GtkWidget *group_pages=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,4);
   collections.previous_groups=collections_button(group_pages,"Previous groups",G_CALLBACK(collections_page),GINT_TO_POINTER(0));
@@ -390,6 +401,10 @@ static char *collections_observation(void) {
   g_key_file_set_string(file,"collections","selected_name",collections.selected_name ? collections.selected_name:"");
   g_key_file_set_integer(file,"collections","selected_deleted",collections.selected_deleted);
   g_key_file_set_integer(file,"collections","dependency",collections.dependency);
+  GtkListBoxRow *member=!collections.closing && !closing && collections.members ? gtk_list_box_get_selected_row(GTK_LIST_BOX(collections.members)):NULL;
+  const char *member_key=member ? g_object_get_data(G_OBJECT(member),"member-key"):NULL;
+  g_key_file_set_string(file,"collections","selected_member_key",member_key ? member_key:"");
+  g_key_file_set_integer(file,"collections","member_position_enabled",!collections.closing && !closing && collections.position && gtk_widget_get_sensitive(collections.position));
   g_key_file_set_integer(file,"collections","editor_accept",collections.editor && !collections.closing && !closing &&
     gtk_widget_get_sensitive(gtk_dialog_get_widget_for_response(GTK_DIALOG(collections.editor),GTK_RESPONSE_ACCEPT)));
   g_key_file_set_string(file,"collections","editor_parent",collections.editor_parent ? collections.editor_parent:"");
