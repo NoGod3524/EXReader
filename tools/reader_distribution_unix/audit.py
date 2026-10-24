@@ -302,9 +302,9 @@ def build_report(args):
                     dedupe_problems.append('duplicate copy changed: ' + item['duplicate'])
                 inodes.add(duplicate.stat().st_ino)
                 verified += 1
-            if args.label in ('after', 'before') and len(inodes) != 1:
+            if args.label == 'after' and len(inodes) != 1:
                 dedupe_problems.append('duplicate copies do not share one inode: ' + primary)
-            if len(inodes) == 1 and (prefix / primary).stat().st_nlink < 2:
+            if args.label == 'after' and len(inodes) == 1 and (prefix / primary).stat().st_nlink < 2:
                 dedupe_problems.append('hardlink count did not increase: ' + primary)
             if by_path.get(primary) is None:
                 dedupe_problems.append('dedupe primary is not part of the stage inventory')
@@ -354,8 +354,6 @@ def build_report(args):
             consumer_reports[name] = report
     if not consumer_reports:
         consumer_problems.append('no installed consumer report was supplied')
-    record('installed_consumers', consumer_problems,
-           'C and C++ consumers ran against the installed prefix')
     if 'c' in consumer_reports and args.png:
         png_path = Path(args.png)
         if png_path.is_file():
@@ -363,6 +361,10 @@ def build_report(args):
                    'sha256': contract.digest(png_path)}
             if png['bytes'] != consumer_reports['c'].get('png_bytes'):
                 consumer_problems.append('rendered PNG size differs from the consumer report')
+        else:
+            consumer_problems.append('rendered PNG is missing: ' + args.png)
+    record('installed_consumers', consumer_problems,
+           'C and C++ consumers ran against the installed prefix')
 
     smoke_problems, smoke = [], None
     if args.smoke:

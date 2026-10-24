@@ -51,14 +51,15 @@ def build(profile, install, output, platform, runner_os, arch, licenses):
                   'unexpected SDK identity %s/ABI %d' % (sdk_version, abi))
     exported = (install / 'lib/cmake/EXReader/EXReaderTargets.cmake').read_text(encoding='utf-8')
     dependencies = (install / 'lib/cmake/EXReader/EXReaderDependencies.cmake').read_text(encoding='utf-8')
-    components = contract.link_order(exported)
+    targets = contract.link_order(exported)
+    components = ['lib%s.a' % name for name in targets]
     vendor = contract.vendor_archives(dependencies)
     system = contract.system_libraries(dependencies)
     for name in components:
         contract.need((install / 'lib' / name).is_file(), 'missing component archive ' + name)
     for name in vendor:
         contract.need((install / 'lib/exreader' / name).is_file(), 'missing private archive ' + name)
-    contract.need(not any(name.startswith('libexr_library') for name in components),
+    contract.need('exr_library' not in targets,
                   'reading-core candidate unexpectedly exports the SQLite bookshelf')
     licence_report = contract.decode_json(licenses)
     contract.need(licence_report.get('release_ready') is True and licence_report.get('failures') == []
@@ -100,6 +101,7 @@ def build(profile, install, output, platform, runner_os, arch, licenses):
                       'sha256': contract.digest(pc_path), 'text': pc_text,
                       'fields': pc_fields},
         'link_order': components,
+        'component_targets': targets,
         'private_archives': vendor,
         'system_libraries': system,
         'files': records,

@@ -135,6 +135,9 @@ def summary_main(args):
              'artifact expiry is not in the future: ' + name)
         need(type(artifact.get('size_in_bytes')) is int and artifact['size_in_bytes'] > 0,
              'artifact is empty: ' + name)
+        origin = artifact.get('workflow_run') or {}
+        need(str(origin.get('id')) == str(run_id) and origin.get('head_sha') == sha,
+             'artifact was produced by another run or source: ' + name)
         target = downloads / (name + '.zip')
         api_bytes('/repos/%s/actions/artifacts/%d/zip' % (repo, artifact['id']), target)
         computed = contract.digest(target)
