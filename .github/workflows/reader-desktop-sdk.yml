@@ -1,7 +1,7 @@
 name: Desktop product public SDK bridge
 on:
   push:
-    branches: [codex/reader-desktop-catalog, codex/reader-gtk-fixed-pages, codex/reader-desktop-shelf]
+    branches: [codex/reader-desktop-catalog, codex/reader-gtk-fixed-pages, codex/reader-desktop-shelf, codex/reader-windows-shelf]
   workflow_dispatch:
 permissions:
   contents: read
@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, windows-2022]
+        os: ${{ github.ref_name == 'codex/reader-windows-shelf' && fromJSON('["windows-2022"]') || fromJSON('["ubuntu-22.04","windows-2022"]') }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -54,7 +54,7 @@ jobs:
           echo "DESKTOP_WORKSPACE=$ws" >> "$GITHUB_ENV"
           gtk=OFF
           if [ "$RUNNER_OS" = Linux ]; then gtk=ON; fi
-          cmake -S apps/reader/desktop -B build/desktop-sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$ws/build/reading-library/stage" -DEXR_READER_FIXTURES="$ws/tests/fixtures" -DEXR_READER_BUILD_GTK="$gtk" -DEXR_LINUX_REVIEW_TESTS="$gtk" -DEXR_LINUX_FIXED_TESTS="$gtk" 2>&1 | tee build/desktop-evidence/configure.log
+          cmake -S apps/reader/desktop -B build/desktop-sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$ws/build/reading-library/stage" -DEXR_READER_FIXTURES="$ws/tests/fixtures" -DEXR_READER_BUILD_GTK="$gtk" -DEXR_LINUX_REVIEW_TESTS="$gtk" -DEXR_LINUX_FIXED_TESTS="$gtk" -DEXR_READER_WINDOWS_SHELF_TESTS=ON 2>&1 | tee build/desktop-evidence/configure.log
           cmake --build build/desktop-sdk --parallel 4 --verbose 2>&1 | tee build/desktop-evidence/build.log
       - name: Real source digest, mode, cancellation and product transaction checks
         run: ctest --test-dir build/desktop-sdk --output-on-failure --no-tests=error --timeout 180 --output-junit "$DESKTOP_WORKSPACE/build/desktop-evidence/tests.xml"
@@ -76,6 +76,12 @@ jobs:
       - name: Actual Windows product source identity, recovery, visible refusal and dual ownership locks
         if: runner.os == 'Windows'
         run: python3 tests/reader_catalog/check_windows_product.py --package build/desktop-windows-package/EXReader --original-evidence build/desktop-windows-ui --fixtures build/desktop-windows-fixtures --output build/desktop-windows-product
+      - name: Actual open worker survives cache eviction and cancelled candidate ownership
+        if: runner.os == 'Windows'
+        run: python3 tests/windows_host/check_shelf_worker.py --candidate build/desktop-sdk/EXReaderShelfReview.exe --package build/desktop-windows-package/EXReader --output build/desktop-windows-shelf-worker
+      - name: Actual product 2202-book native scrolling search recovery and import
+        if: runner.os == 'Windows'
+        run: python3 tests/windows_host/check_shelf_ui.py --candidate build/desktop-windows-package/EXReader/EXReader.exe --seed build/desktop-sdk/reader-windows-shelf-seed.exe --package build/desktop-windows-package/EXReader --output build/desktop-windows-shelf-ui
       - name: Assemble the actual GTK host with the original pinned font
         if: runner.os == 'Linux'
         run: python3 tools/build_linux_host.py --sdk build/reading-library/stage --binary build/desktop-sdk/gtk-host/exreader-linux --output build/desktop-linux-package
@@ -134,5 +140,7 @@ jobs:
             build/desktop-windows-negative/
             build/desktop-windows-ui/
             build/desktop-windows-product/
+            build/desktop-windows-shelf-worker/
+            build/desktop-windows-shelf-ui/
             build/desktop-sdk/windows-host.map
           if-no-files-found: error
