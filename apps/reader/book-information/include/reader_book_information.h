@@ -45,7 +45,7 @@ typedef enum {
   READER_BOOK_INFORMATION_LOCAL_UNCHECKED, /* Mapping exists; no SDK handle was supplied. */
   READER_BOOK_INFORMATION_LOCAL_PRESENT,   /* Public SDK source exists and passed identity. */
   READER_BOOK_INFORMATION_LOCAL_MISSING,   /* Mapping exists but the SDK cannot supply the original. */
-  READER_BOOK_INFORMATION_IDENTITY_MISMATCH /* SDK bytes are not this product book. */
+  READER_BOOK_INFORMATION_LOCAL_MISMATCH   /* SDK bytes are not this product book. */
 } reader_book_information_availability;
 
 typedef enum {

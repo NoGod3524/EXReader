@@ -53,7 +53,7 @@ def pdf_bytes(pages, info=None):
     for _ in range(pages):
         objects.append(b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 300] /Resources << >> >>")
     info_id = 0
-    if info:
+    if info is not None:
         info_id = len(objects) + 1
         entries = " ".join(
             "/%s %s" % (key.capitalize(), pdf_string(value)) for key, value in info.items()
@@ -165,7 +165,7 @@ def write_fixtures(directory):
                                      "subject": UNICODE_SUBJECT}))
     emit("long.pdf", pdf_bytes(1, {"title": "A" * 1500, "keywords": "B" * 1300,
                                   "subject": "short subject"}))
-    emit("pages7.pdf", pdf_bytes(7, None))
+    emit("pages7.pdf", pdf_bytes(7, {}))
     emit("swap-alpha.pdf", pdf_bytes(1, {"title": "Swap alpha"}))
     emit("swap-beta.pdf", pdf_bytes(1, {"title": "Swap beta!"}))
     emit("collection.cbz", cbz_bytes())

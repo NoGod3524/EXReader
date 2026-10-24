@@ -73,7 +73,7 @@ void reader_book_information_free(reader_book_information *);
 | `LOCAL_UNCHECKED` | 有映射，但调用方没给 SDK 句柄 |
 | `LOCAL_PRESENT` | 公开 SDK 源存在并通过下列身份级别 |
 | `LOCAL_MISSING` | 有映射，但 SDK 无法提供原件（行缺失或读取中途失效） |
-| `IDENTITY_MISMATCH` | 存的是另一本书 |
+| `LOCAL_MISMATCH` | 存的是另一本书 |
 
 | identity | 含义 |
 | --- | --- |

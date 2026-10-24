@@ -43,7 +43,7 @@ or cancellation leaves both stores and every borrowed handle untouched.
 | `LOCAL_UNCHECKED` | mapping exists; the caller supplied no SDK handle |
 | `LOCAL_PRESENT` | public SDK source exists and passed the identity level below |
 | `LOCAL_MISSING` | mapping exists but the SDK cannot supply the original |
-| `IDENTITY_MISMATCH` | the stored bytes are not this product book |
+| `LOCAL_MISMATCH` | the stored bytes are not this product book |
 
 | identity | meaning |
 | --- | --- |
