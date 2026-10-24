@@ -227,6 +227,7 @@ def main():
         ready(lambda s: s['visible'] == '0' and s['session_present'] == '0')
 
     def field(mnemonic, value):
+        window()
         host.key('alt+' + mnemonic, 'ctrl+a');host.paste(value)
 
     def fill(remember=False, url=root):
@@ -238,12 +239,21 @@ def main():
         print(json.dumps({'check': name, 'pass': True}), flush=True)
 
     def disconnect():
+        window()
         host.key('alt+d');return ready(lambda s: s['session_present'] == '0' and s['form_enabled'] == '1')
+
+    def scan():
+        window();host.key('alt+s')
+
+    def retry_scan():
+        window();previous = int(account()['attempt']);host.key('alt+t')
+        return ready(lambda s: int(s['attempt']) > previous and s['session_state'] in ('4', '5'), seconds=180)
 
     def pause_next():
         blocked.clear();release.clear();flags['pause'] = True
 
     def start_preparing():
+        window()
         command('xdotool', 'key', '--clearmodifiers', 'alt+s')
         end = time.monotonic() + 5
         while time.monotonic() < end:
@@ -292,7 +302,7 @@ def main():
         assert not requests, {'unexpected_http_requests': len(requests), 'account': account()}
         record('main_window_close_during_preparation_retires_queued_owner_work_before_shutdown')
         host.launch();open_account()
-        host.key('alt+s');done = ready(lambda s: s['session_state'] in ('4', '5'), seconds=180)
+        scan();done = ready(lambda s: s['session_state'] in ('4', '5'), seconds=180)
         assert done['session_state'] == '4', done
         assert done['seen'] == '52' and int(done['prepared']) + int(done['existing']) == 52 and done['pending'] == '0' and done['failed'] == '0'
         assert done['max_page_rows'] == '50' and done['completed_shards'] == '256'
@@ -317,23 +327,23 @@ def main():
         payload = raw(remote);path = '/dav/exreader-sync-v1/revisions/00/' + remote['id'] + '-' + hashlib.sha256(payload).hexdigest() + '.json'
         directories.add('/dav/exreader-sync-v1/revisions/00/');entries[path] = payload
         entries['/dav/exreader-sync-v1/objects/' + digest[:2] + '/' + digest + '.txt'] = remote_body
-        pause_next();host.key('alt+s');assert blocked.wait(40)
+        pause_next();scan();assert blocked.wait(40)
         ticks = int(account()['ticks']);time.sleep(.7)
         assert int(account()['ticks']) > ticks and account()['cancel_enabled'] == '1'
         window();host.key('alt+c');ready(lambda s: s['cancel_requested'] == '1', seconds=5);release.set()
         cancelled = ready(lambda s: s['session_state'] in ('3', '4', '5'))
         assert cancelled['session_state'] == '3' and cancelled['retry_enabled'] == '1'
         record('real_paused_tls_scan_leaves_gtk_responsive_and_cancel_is_nonblocking')
-        host.key('alt+t');retried = ready(lambda s: s['session_state'] in ('4', '5'), seconds=180)
+        retried = retry_scan()
         assert retried['session_state'] == '4' and int(retried['attempt']) == 2 and int(retried['pulled']) >= 1
         assert sql('SELECT count(*) FROM reader_books') == [(52,)] and sql('SELECT count(*) FROM reader_local_books') == [(52,)]
         with sqlite3.connect(host.folder / 'profile/library.sqlite') as db:
             assert db.execute('SELECT count(*) FROM books').fetchone() == (52,)
         assert sql("SELECT count(*) FROM reader_revisions WHERE entity_key=?", ('txt:' + digest,)) == [(1,)]
         record('explicit_retry_keeps_same_handle_and_remote_history_without_projecting_or_importing_it')
-        disconnect();flags['http'] = 503;host.key('alt+s')
+        disconnect();flags['http'] = 503;scan()
         failed = ready(lambda s: s['session_state'] == '5');assert failed['retry_enabled'] == '1'
-        flags['http'] = 0;host.key('alt+t');assert ready(lambda s: s['session_state'] in ('4', '5'), seconds=180)['session_state'] == '4'
+        flags['http'] = 0;recovered = retry_scan();assert recovered['session_state'] == '4', recovered
         record('server_failure_is_visible_and_only_explicit_retry_resumes_the_scan')
         disconnect()
         parent = sql("SELECT revision_id FROM reader_revisions WHERE entity_kind='book' AND entity_key=?", (first,))[0][0]
@@ -349,7 +359,7 @@ def main():
         remote_tag = revision(99992, shard=0, kind='tag', key='9' * 32, payload={'name': 'Received while a local book has conflicts'})
         wire = raw(remote_tag)
         entries['/dav/exreader-sync-v1/revisions/00/' + remote_tag['id'] + '-' + hashlib.sha256(wire).hexdigest() + '.json'] = wire
-        host.key('alt+s');conflicted = ready(lambda s: s['session_state'] in ('4', '5'), seconds=180)
+        scan();conflicted = ready(lambda s: s['session_state'] in ('4', '5'), seconds=180)
         assert conflicted['session_state'] == '4' and conflicted['seen'] == '52' and conflicted['bootstraps'] == '0', conflicted
         after_heads = protocol('heads', 'book', first)
         assert after_heads['state'] == before_heads['state'] and after_heads['heads'] == before_heads['heads']
@@ -368,10 +378,10 @@ def main():
         assert refused['root'] == root and len(requests) == before
         field('w', root);record('changing_exact_root_is_refused_without_network_or_rebinding')
         first_file = next(staged.iterdir());retained = first_file.read_bytes();first_file.write_bytes(b'kept unknown original')
-        before = len(requests);host.key('alt+s');refused = ready(lambda s: s['stage_status'] != '0')
+        before = len(requests);scan();refused = ready(lambda s: s['stage_status'] != '0')
         assert refused['session_present'] == '0' and len(requests) == before and first_file.read_bytes() == b'kept unknown original'
         first_file.write_bytes(retained);record('mismatching_existing_private_original_is_never_overwritten_and_prevents_network_start')
-        pause_next();host.key('alt+s');assert blocked.wait(40)
+        pause_next();scan();assert blocked.wait(40)
         generation = int(account()['session_generation']);host.key('alt+F4');time.sleep(.5)
         assert account()['closing'] == '1' and host.process.poll() is None
         release.set();window(False);ready(lambda s: s['session_present'] == '0')
@@ -388,7 +398,7 @@ def main():
                                  'Unfinished group', '-', '0', '0', 'stage'], capture_output=True, text=True, timeout=30)
         assert seeded.returncode == 0 and json.loads(seeded.stdout)['status'] == 0 and journal.exists()
         pending_bytes = journal.read_bytes();before = len(requests)
-        host.launch();open_account();fill();host.key('alt+s')
+        host.launch();open_account();fill();scan()
         refused = ready(lambda s: s['stage_status'] != '0')
         assert 'earlier library edit recovery' in refused['notice'] and journal.read_bytes() == pending_bytes and len(requests) == before
         close_account();host.close()
@@ -398,7 +408,7 @@ def main():
         record('durable_pending_metadata_refuses_staging_without_overwriting_the_journal')
         config['account']['id'] = str(uuid.uuid4())
         with (host.folder / 'profile/account.ini').open('w') as output: config.write(output)
-        host.launch();open_account();fill();before = len(requests);host.key('alt+s')
+        host.launch();open_account();fill();before = len(requests);scan()
         mismatch = ready(lambda s: s['session_state'] == '5')
         assert mismatch['session_status'] == '4' and len(requests) == before
         disconnect();close_account();host.close()
@@ -409,13 +419,13 @@ def main():
         fill(True);host.key('alt+a');unavailable = ready(lambda s: s['credential_status'] == '2' and s['bound'] == '1')
         assert 'credentials were not saved' in unavailable['notice'] and unavailable['session_present'] == '0'
         record('locked_real_secret_service_reports_unavailable_and_does_not_claim_credentials_saved')
-        host.key('alt+h');host.key('alt+s');done = ready(lambda s: s['session_state'] in ('4', '5'), seconds=120)
+        host.key('alt+h');scan();done = ready(lambda s: s['session_state'] in ('4', '5'), seconds=120)
         assert done['session_state'] == '4' and done['remember'] == '0'
         record('explicit_session_only_choice_still_scans_with_secure_storage_unavailable')
         disconnect();close_account();host.close();host.launch();open_account()
         assert ready()['credential_status'] == '2' and ready()['has_password'] == '0' and ready()['has_user'] == '0'
         record('session_only_credentials_are_absent_after_actual_process_restart')
-        fill();pause_next();host.key('alt+s');assert blocked.wait(30)
+        fill();pause_next();scan();assert blocked.wait(30)
         command('wmctrl', '-ic', hex(int(host.window)));time.sleep(.6)
         assert host.process.poll() is None and account()['closing'] == '1'
         release.set();assert host.process.wait(timeout=35) == 0;host.log.close()

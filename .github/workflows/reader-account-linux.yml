@@ -83,6 +83,14 @@ jobs:
           build/account-desktop/gtk-host/exreader-linux-bounded-backend build/account-bounded.sqlite build/account-package/EXReader-Linux/Reader.otf build/account-bounded-inputs/routes.epub | tee build/account-logs/bounded-backend.log
           mkdir -p build/account-shelf/profile
           build/account-desktop/reader-gtk-shelf-check build/account-shelf/profile/library.sqlite build/account-package/EXReader-Linux/Reader.otf | tee build/account-logs/shelf-backend.log
+      - name: Real GTK secure save load delete unavailable session-only full library scan cancel retry and shutdown
+        run: |
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            openbox >build/account-logs/account-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            python3 tests/linux_host/check_account_ui.py --payload build/account-package/EXReader-Linux --metadata-consumer build/account-metadata-consumer/metadata-consumer --revision-consumer build/account-revision-consumer/revision-consumer --output build/account-ui
+          '
       - name: Preserve twenty product five fixed twenty-four shelf fourteen metadata fifteen collections twenty-seven
         run: |
           xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
@@ -96,14 +104,6 @@ jobs:
             python3 tests/linux_host/check_shelf_ui.py --payload build/account-package/EXReader-Linux --output build/account-shelf
             python3 tests/linux_host/check_metadata_ui.py --payload build/account-package/EXReader-Linux --command-consumer build/account-command-consumer/command-consumer --output build/account-metadata-ui
             python3 tests/linux_host/check_collections_ui.py --payload build/account-package/EXReader-Linux --command-consumer build/account-command-consumer/command-consumer --output build/account-collections-ui
-          '
-      - name: Real GTK secure save load delete unavailable session-only full library scan cancel retry and shutdown
-        run: |
-          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
-            openbox >build/account-logs/account-openbox.log 2>&1 &
-            wm=$!
-            trap "kill $wm || true" EXIT
-            python3 tests/linux_host/check_account_ui.py --payload build/account-package/EXReader-Linux --metadata-consumer build/account-metadata-consumer/metadata-consumer --revision-consumer build/account-revision-consumer/revision-consumer --output build/account-ui
           '
       - name: Preserve source-bound evidence and original logs without credentials or TLS private keys
         if: always()
