@@ -1,6 +1,11 @@
 name: Reader real corpus
 
 on:
+  push:
+    branches: [codex/reader-real-corpus]
+    paths:
+      - tests/reader_real_corpus/**
+      - .github/workflows/reader-real-corpus.yml
   workflow_dispatch:
     inputs:
       mode:
@@ -17,8 +22,20 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  prepare:
+    runs-on: ubuntu-22.04
+    outputs:
+      pinned: ${{ steps.check.outputs.pinned }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check whether every digest is pinned
+        id: check
+        run: |
+          python3 -c "import json; m=json.load(open('tests/reader_real_corpus/manifest.json')); print('pinned=' + ('true' if m['files'] and all(f['source'].get('sha256') for f in m['files']) else 'false'))" >> "$GITHUB_OUTPUT"
+
   pin:
-    if: inputs.mode == 'pin'
+    needs: prepare
+    if: github.event_name == 'push' && needs.prepare.outputs.pinned == 'false' || github.event_name == 'workflow_dispatch' && inputs.mode == 'pin'
     runs-on: ubuntu-22.04
     timeout-minutes: 20
     steps:
@@ -36,7 +53,8 @@ jobs:
           if-no-files-found: warn
 
   protocol:
-    if: inputs.mode == 'accept'
+    needs: prepare
+    if: needs.prepare.outputs.pinned == 'true' && (github.event_name == 'push' || inputs.mode == 'accept')
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
@@ -45,8 +63,8 @@ jobs:
         run: python3 tests/reader_real_corpus/protocol_check.py --manifest tests/reader_real_corpus/manifest.json
 
   acceptance:
-    if: inputs.mode == 'accept'
-    needs: protocol
+    if: needs.prepare.outputs.pinned == 'true' && (github.event_name == 'push' || inputs.mode == 'accept')
+    needs: [prepare, protocol]
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -113,7 +131,7 @@ jobs:
           if-no-files-found: warn
 
   aggregate:
-    if: always() && inputs.mode == 'accept'
+    if: always() && needs.acceptance.result != 'skipped'
     needs: acceptance
     runs-on: ubuntu-22.04
     timeout-minutes: 10
