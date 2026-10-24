@@ -11,6 +11,24 @@ static struct {
   unsigned actions,closed;
 } records;
 static gboolean reading_records_opened(void) { return records.dialog!=NULL; }
+static const char *records_state_name(int state,int progress) {
+  if(progress) {
+    switch(state) {
+      case READER_SELECTION_SAFE:return "Saved";
+      case READER_SELECTION_CONCURRENT:return "Versions need review";
+      case READER_SELECTION_PENDING_PARENTS:return "Waiting for earlier versions";
+      case READER_SELECTION_BLOCKED_RESTORE:return "Restore needs review";
+      default:return "Not saved";
+    }
+  }
+  switch(state) {
+    case READER_AV_STATE_SAFE:return "Saved";
+    case READER_AV_STATE_CONCURRENT:return "Versions need review";
+    case READER_AV_STATE_PENDING_PARENTS:return "Waiting for earlier versions";
+    case READER_AV_STATE_BLOCKED_RESTORE:return "Restore needs review";
+    default:return "Not available";
+  }
+}
 static void records_message(const char *message) {
   if(records.status) { gtk_label_set_text(GTK_LABEL(records.status),message);atk_object_set_name(gtk_widget_get_accessible(records.status),message); }
 }
@@ -23,7 +41,8 @@ static void records_controls(void) {
   gboolean write=!records.running && !records.pending;
   gtk_widget_set_sensitive(records.save,write && !records.progress_deleted && (records.progress_state==READER_SELECTION_SAFE || records.progress_state==READER_SELECTION_MISSING));
   gtk_widget_set_sensitive(records.bookmark,write);gtk_widget_set_sensitive(records.highlight,write && records.has_range);
-  gtk_widget_set_sensitive(records.more,!records.running && !records.page.complete);gtk_widget_set_sensitive(records.previous,!records.running && records.page.count>0);
+  gtk_widget_set_sensitive(records.more,!records.running && records.page.count>0 && !(records.page.next.direction>0 && records.page.complete));
+  gtk_widget_set_sensitive(records.previous,!records.running && records.page.count>0 && !(records.page.next.direction<0 && records.page.complete));
   gtk_widget_set_sensitive(records.refresh,!records.running);gtk_widget_set_sensitive(records.list,!records.running);gtk_widget_set_sensitive(records.progress,!records.running);
   gtk_widget_set_sensitive(records.jump,!records.running && safe && !deleted);gtk_widget_set_sensitive(records.edit,write && safe && !deleted && !records.progress_selected);
   gtk_widget_set_sensitive(records.remove,write && safe && !deleted);gtk_widget_set_sensitive(records.restore,write && safe && deleted);
@@ -70,7 +89,7 @@ static void records_queue(reader_action action,int kind,int operation,const char
   job->command.records_text=g_strdup(body ? body:"");job->command.records_version=g_strdup(version ? version:"");
   job->command.start=records.start;job->command.end=records.end;
   if(action==READER_RECORDS_LIST && direction) {
-    const reader_av_cursor *cursor=direction>0 ? &records.page.next:&records.page.reverse;
+    const reader_av_cursor *cursor=records.page.next.direction==direction ? &records.page.next:&records.page.reverse;
     job->command.records_after=g_strdup(cursor->has_after ? cursor->after_id:"");
   }
   if(action==READER_RECORDS_DISCARD) job->command.records_head=g_strdup(records.pending_revision);
@@ -213,12 +232,12 @@ static gboolean reading_records_apply(host_result *done) {
     records.progress_state=result->records_progress_state;records.progress_deleted=result->records_progress_deleted;
     g_strlcpy(records.progress_head,result->records_progress_head,33);g_strlcpy(records.progress_sha,result->records_progress_sha,65);
     records.pending=result->records_pending;records.pending_error=result->records_pending_error;g_strlcpy(records.pending_revision,result->records_revision,33);
-    char *progress_label=g_strdup_printf("Saved progress · state %d · %zu versions / %zu heads / %zu missing / %zu foreign%s",records.progress_state,
+    char *progress_label=g_strdup_printf("Saved progress · %s · %zu versions / %zu current / %zu missing / %zu unrelated%s",records_state_name(records.progress_state,1),
       result->records_progress_revisions,result->records_progress_heads,result->records_progress_missing,result->records_progress_foreign,records.progress_deleted ? " · deleted":"");
     gtk_button_set_label(GTK_BUTTON(records.progress),progress_label);g_free(progress_label);
     for(size_t i=0;i<records.page.count;i++) {
       reader_av_item *item=&records.page.items[i];char *name;
-      if(item->state!=READER_AV_STATE_SAFE) name=g_strdup_printf("Record %.8s · state %d · %zu versions / %zu heads / %zu missing / %zu foreign",item->annotation_id,item->state,item->revisions,item->heads,item->missing_parents,item->foreign_parents);
+      if(item->state!=READER_AV_STATE_SAFE) name=g_strdup_printf("%s · %zu versions / %zu current / %zu missing / %zu unrelated",records_state_name(item->state,0),item->revisions,item->heads,item->missing_parents,item->foreign_parents);
       else if(item->deleted) name=g_strdup_printf("Record %.8s · deleted · retained versions available",item->annotation_id);
       else {
         char *body=g_utf8_substring(item->note_text ? item->note_text:"",0,120);

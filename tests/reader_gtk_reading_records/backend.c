@@ -21,6 +21,7 @@ static void list(linux_reader *reader,int64_t book,reader_result *result) {
 static void save(linux_reader *reader,int64_t book,int kind,const char *text,reader_result *result) {
   reader_command value=command(READER_RECORDS_SAVE,book);value.records_kind=kind;value.records_operation=READER_RC_PUT;value.records_text=text;value.start=0;value.end=6;
   linux_reader_execute(reader,&value,result);
+  if(result->status!=EXR_OK) fprintf(stderr,"save kind=%d status=%d g03=%d pending=%d pending_error=%d message=%s\n",kind,result->status,result->records_code,result->records_pending,result->records_pending_error,result->message);
 }
 static void mutate(linux_reader *reader,int64_t book,const reader_av_item *item,int kind,int operation,const char *body,const char *version,reader_result *result) {
   reader_command value=command(READER_RECORDS_SAVE,book);value.records_kind=kind;value.records_operation=operation;value.records_id=item->annotation_id;
@@ -29,9 +30,25 @@ static void mutate(linux_reader *reader,int64_t book,const reader_av_item *item,
 int main(int argc,char **argv) {
   REQUIRE(argc==5);int cancel=0;exr_control control={cancelled,NULL,&cancel};linux_reader *reader=NULL;exr_error error={0};reader_result result={0};
   REQUIRE(linux_reader_open(argv[1],argv[2],&control,&reader,&error)==EXR_OK);
-  reader_command value=command(!strcmp(argv[4],"first") ? READER_IMPORT:READER_OPEN,1);value.path=argv[3];linux_reader_execute(reader,&value,&result);
+  int routes=!strcmp(argv[4],"routes");
+  reader_command value=command(!strcmp(argv[4],"first") || routes ? READER_IMPORT:READER_OPEN,1);value.path=argv[3];linux_reader_execute(reader,&value,&result);
   REQUIRE(result.status==EXR_OK && result.has_frame);int64_t book=result.book;commit(reader,&result);reader_result_free(&result);
-  if(!strcmp(argv[4],"first")) {
+  if(routes) {
+    save(reader,book,READER_RC_BOOKMARK,"EPUB point",&result);REQUIRE(result.status==EXR_OK && result.records_created);reader_result_free(&result);
+    list(reader,book,&result);REQUIRE(result.records_page.count==1 && result.records_page.items[0].mode==READER_AV_MODE_EPUB && result.records_page.items[0].has_part && result.records_page.items[0].part==0);
+    reader_av_item *item=&result.records_page.items[0];value=command(READER_RECORDS_JUMP,book);value.records_id=item->annotation_id;value.records_head=item->revision_id;value.records_sha=item->sha256;
+    reader_result jumped={0};linux_reader_execute(reader,&value,&jumped);REQUIRE(jumped.status==EXR_OK && jumped.has_frame && jumped.bounded && jumped.part==0 && jumped.records_match==EXR_ANCHOR_FOUND);commit(reader,&jumped);reader_result_free(&jumped);reader_result_free(&result);
+    char *folder=g_path_get_dirname(argv[3]),*path=g_build_filename(folder,"pages.pdf",NULL);value=command(READER_IMPORT,0);value.path=path;linux_reader_execute(reader,&value,&result);g_free(path);
+    REQUIRE(result.status==EXR_OK && result.has_frame && result.fixed);book=result.book;commit(reader,&result);reader_result_free(&result);
+    save(reader,book,READER_RC_BOOKMARK,"PDF point",&result);REQUIRE(result.status==EXR_OK && result.records_created);reader_result_free(&result);
+    list(reader,book,&result);REQUIRE(result.records_page.count==1 && result.records_page.items[0].mode==READER_AV_MODE_FIXED && result.records_page.items[0].has_page);
+    item=&result.records_page.items[0];value=command(READER_RECORDS_JUMP,book);value.records_id=item->annotation_id;value.records_head=item->revision_id;value.records_sha=item->sha256;
+    linux_reader_execute(reader,&value,&jumped);REQUIRE(jumped.status==EXR_OK && jumped.has_frame && jumped.fixed && jumped.page==0 && jumped.records_match==EXR_ANCHOR_FOUND);commit(reader,&jumped);reader_result_free(&jumped);reader_result_free(&result);
+    path=g_build_filename(folder,"pages.cbz",NULL);g_free(folder);value=command(READER_IMPORT,0);value.path=path;linux_reader_execute(reader,&value,&result);g_free(path);
+    REQUIRE(result.status==EXR_OK && result.has_frame && result.fixed);book=result.book;commit(reader,&result);reader_result_free(&result);
+    save(reader,book,READER_RC_BOOKMARK,"CBZ must not invent text",&result);REQUIRE(result.status==EXR_UNSUPPORTED && !result.records_created && !result.records_pending && !result.has_frame);reader_result_free(&result);
+    list(reader,book,&result);REQUIRE(result.records_page.count==0 && result.records_page.complete);reader_result_free(&result);
+  } else if(!strcmp(argv[4],"first")) {
     list(reader,book,&result);REQUIRE(result.records_page.count==0 && result.records_page.complete);REQUIRE(result.records_progress_state==READER_SELECTION_MISSING);reader_result_free(&result);
     save(reader,book,READER_RC_PROGRESS,"",&result);REQUIRE(result.status==EXR_OK && result.records_created && !result.records_pending && !result.has_frame);reader_result_free(&result);
     for(unsigned i=0;i<35;i++) { char text[64];snprintf(text,sizeof(text),"Bookmark %u 书签 🙂",i);save(reader,book,READER_RC_BOOKMARK,text,&result);REQUIRE(result.status==EXR_OK && result.records_created && !result.has_frame && !result.records_pending);reader_result_free(&result); }

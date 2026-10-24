@@ -163,6 +163,7 @@ jobs:
           mkdir -p build/records-backend/profile
           build/account-desktop/reader-gtk-reading-records-backend "$PWD/build/records-backend/profile/library.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/records-command-fixtures/book.txt" first | tee build/records-backend/first.log
           build/account-desktop/reader-gtk-reading-records-backend "$PWD/build/records-backend/profile/library.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/records-command-fixtures/book.txt" resumed | tee build/records-backend/resumed.log
+          build/account-desktop/reader-gtk-reading-records-backend "$PWD/build/records-backend/profile/routes.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/records-command-fixtures/book.epub" routes | tee build/records-backend/routes.log
       - name: Actual native progress bookmark highlight edit delete restore and process recovery
         run: |
           mkdir -p build/gtk-atspi-client
