@@ -32,6 +32,7 @@ def main():
     parser.add_argument('--artifact-id', required=True)
     parser.add_argument('--upload-digest', default='')
     parser.add_argument('--account-checks', type=int, required=True)
+    parser.add_argument('--a11y-checks', type=int, required=True)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     repository, sha = os.environ['GITHUB_REPOSITORY'], os.environ['GITHUB_SHA']
@@ -88,6 +89,12 @@ def main():
     require(len(names) == args.account_checks, 'account checks %d differ from %d' % (len(names), args.account_checks))
     counts['account'] = len(names)
     require(account.get('complete_product') is False, 'the report must not claim a complete product')
+    a11y = load('account-a11y/a11y-ui.json')
+    a11y_names = bound(a11y, 'account-a11y/a11y-ui.json')
+    require(len(a11y_names) == args.a11y_checks, 'a11y checks %d differ from %d' % (len(a11y_names), args.a11y_checks))
+    require(a11y.get('transport') == 'sendinput+uia', 'the keyboard regression must record its real transport')
+    require(a11y.get('screen_reader_verified') is False, 'no screen reader pass was run; the report must say so')
+    counts['a11y'] = len(a11y_names)
     result = {'accepted': not problems, 'problems': problems, 'source_sha': sha, 'run_id': run, 'attempt': attempt,
               'artifact': {'id': int(args.artifact_id), 'name': meta['name'], 'bytes': meta['size_in_bytes'],
                            'expires_at': meta['expires_at'], 'sha256': digest},

@@ -66,7 +66,9 @@ enum {
   IDC_METADATA_MESSAGE,
   IDC_ACCOUNT_BUTTON, IDC_ACCOUNT_ROOT, IDC_ACCOUNT_USER, IDC_ACCOUNT_PASSWORD, IDC_ACCOUNT_REMEMBER,
   IDC_ACCOUNT_APPLY, IDC_ACCOUNT_SYNC, IDC_ACCOUNT_CANCEL, IDC_ACCOUNT_RETRY, IDC_ACCOUNT_FORGET,
-  IDC_ACCOUNT_CLOSE, IDC_ACCOUNT_MESSAGE, IDC_ACCOUNT_DETAIL
+  IDC_ACCOUNT_CLOSE, IDC_ACCOUNT_MESSAGE, IDC_ACCOUNT_DETAIL,
+  /* Accessibility labels only: no original or account control id moves. */
+  IDC_SHELF_SEARCH_LABEL = 150, IDC_NOTE_EDIT_LABEL
 };
 
 #define WM_HOST_COMPLETE (WM_APP + 1)
@@ -132,7 +134,7 @@ typedef struct {
   HWND prev_button, next_button, select_button, copy_button;
   HWND add_button, update_button, remove_button, jump_button;
   HWND font_dec, font_inc, zoom_dec, zoom_inc, cancel_button;
-  HWND shelf_label, notes_label;
+  HWND shelf_label, notes_label, shelf_search_label, note_edit_label;
   exr_library *library;
   exr_font *font;
   wchar_t font_path[HOST_PATH];
@@ -241,6 +243,12 @@ typedef exr_status (*host_progress_fn)(void *context, unsigned percent);
 /* Small helpers                                                       */
 /* ------------------------------------------------------------------ */
 
+/* Native accessibility providers live in one owner file (windows_accessibility.inc).
+   These entry points are used by code that is compiled before that file. */
+static void host_a11y_status_changed(void);
+static void host_a11y_prepare_note(void);
+static void host_a11y_owner_enabled(int enabled);
+
 static void set_status(const wchar_t *text) {
   if (!text) text = L"";
   wcsncpy(g.status_text, text, 767);
@@ -251,7 +259,7 @@ static void set_status(const wchar_t *text) {
     wcsncat(g.status_text,L" · 书架信息待恢复",767-length);
   }
 #endif
-  if (g.status) SetWindowTextW(g.status, g.status_text);
+  if (g.status) { SetWindowTextW(g.status, g.status_text); host_a11y_status_changed(); }
 }
 
 static void set_statusf(const wchar_t *format, ...) {
@@ -2073,38 +2081,41 @@ static void create_controls(HWND parent) {
   g.import_edit = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_TABSTOP |
                                   ES_AUTOHSCROLL, 0, 0, 10, 10, parent, (HMENU)(INT_PTR)IDC_IMPORT_EDIT, NULL, NULL);
   SendMessageW(g.import_edit, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
-  g.import_button = make_button(parent, IDC_IMPORT_BUTTON, L"导入");
-  g.open_button = make_button(parent, IDC_OPEN_BUTTON, L"打开");
-  g.delete_button = make_button(parent, IDC_DELETE_BUTTON, L"删除");
-  g.prev_button = make_button(parent, IDC_PREV, L"上一页");
-  g.next_button = make_button(parent, IDC_NEXT, L"下一页");
-  g.select_button = make_button(parent, IDC_SELECT_ALL, L"全选本页");
-  g.copy_button = make_button(parent, IDC_COPY_QUOTE, L"复制引用");
-  g.add_button = make_button(parent, IDC_ADD_NOTE, L"添加标注");
-  g.update_button = make_button(parent, IDC_UPDATE_NOTE, L"更新标注");
-  g.remove_button = make_button(parent, IDC_DELETE_NOTE, L"删除标注");
-  g.jump_button = make_button(parent, IDC_JUMP_NOTE, L"跳转标注");
+  g.import_button = make_button(parent, IDC_IMPORT_BUTTON, L"导入(&I)");
+  g.open_button = make_button(parent, IDC_OPEN_BUTTON, L"打开(&O)");
+  g.delete_button = make_button(parent, IDC_DELETE_BUTTON, L"删除(&D)");
+  g.prev_button = make_button(parent, IDC_PREV, L"上一页(&P)");
+  g.next_button = make_button(parent, IDC_NEXT, L"下一页(&N)");
+  g.select_button = make_button(parent, IDC_SELECT_ALL, L"全选本页(&A)");
+  g.copy_button = make_button(parent, IDC_COPY_QUOTE, L"复制引用(&C)");
+  g.add_button = make_button(parent, IDC_ADD_NOTE, L"添加标注(&T)");
+  g.update_button = make_button(parent, IDC_UPDATE_NOTE, L"更新标注(&U)");
+  g.remove_button = make_button(parent, IDC_DELETE_NOTE, L"删除标注(&R)");
+  g.jump_button = make_button(parent, IDC_JUMP_NOTE, L"跳转标注(&J)");
   g.font_dec = make_button(parent, IDC_FONT_DEC, L"字号-");
   g.font_inc = make_button(parent, IDC_FONT_INC, L"字号+");
   g.zoom_dec = make_button(parent, IDC_ZOOM_DEC, L"缩放-");
   g.zoom_inc = make_button(parent, IDC_ZOOM_INC, L"缩放+");
-  g.cancel_button = make_button(parent, IDC_CANCEL, L"取消");
+  g.cancel_button = make_button(parent, IDC_CANCEL, L"取消(&X)");
   g.shelf_label = make_static(parent, IDC_SHELF_LABEL, L"书架");
   g.books = CreateWindowExW(WS_EX_CLIENTEDGE, L"LISTBOX", L"书架",
                             WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
                             0, 0, 10, 10, parent, (HMENU)(INT_PTR)IDC_BOOKS, NULL, NULL);
   SendMessageW(g.books, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 #ifdef EXR_READER_PRODUCT_CATALOG
+  /* A real static with a mnemonic names the search box (the same native path the
+     import field already uses) and gives it an Alt access key. */
+  g.shelf_search_label=make_static(parent,IDC_SHELF_SEARCH_LABEL,L"\u641c\u7d22(&S)");
   g.shelf_search=CreateWindowExW(WS_EX_CLIENTEDGE,L"EDIT",L"",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,
     0,0,10,10,parent,(HMENU)(INT_PTR)IDC_SHELF_SEARCH,NULL,NULL);
   SendMessageW(g.shelf_search,WM_SETFONT,(WPARAM)GetStockObject(DEFAULT_GUI_FONT),TRUE);
   SendMessageW(g.shelf_search,EM_SETLIMITTEXT,256,0);
-  g.shelf_refresh=make_button(parent,IDC_SHELF_REFRESH,L"刷新");
+  g.shelf_refresh=make_button(parent,IDC_SHELF_REFRESH,L"刷新(&F)");
 #ifdef EXR_READER_DESKTOP_METADATA
-  g.metadata_button=make_button(parent,IDC_METADATA_BUTTON,L"详情");
+  g.metadata_button=make_button(parent,IDC_METADATA_BUTTON,L"详情(&E)");
 #endif
 #ifdef EXR_READER_WINDOWS_ACCOUNT
-  g.account_button=make_button(parent,IDC_ACCOUNT_BUTTON,L"账号");
+  g.account_button=make_button(parent,IDC_ACCOUNT_BUTTON,L"账号(&K)");
 #endif
   g.shelf_applying=1;
   wchar_t *shelf_query=host_wide(g.shelf_query ? g.shelf_query:"",g.shelf_query ? strlen(g.shelf_query):0);
@@ -2116,10 +2127,13 @@ static void create_controls(HWND parent) {
                             WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
                             0, 0, 10, 10, parent, (HMENU)(INT_PTR)IDC_NOTES, NULL, NULL);
   SendMessageW(g.notes, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
+  g.note_edit_label = make_static(parent, IDC_NOTE_EDIT_LABEL, L"\u6807\u6ce8\u5185\u5bb9(&M)");
   g.note_edit = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_TABSTOP |
                                  ES_MULTILINE | ES_AUTOVSCROLL | WS_VSCROLL,
                                  0, 0, 10, 10, parent, (HMENU)(INT_PTR)IDC_NOTE_EDIT, NULL, NULL);
   SendMessageW(g.note_edit, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
+  /* Multiline editing without swallowing Tab: see host_a11y_prepare_note. */
+  host_a11y_prepare_note();
   g.page = CreateWindowExW(WS_EX_CLIENTEDGE, L"EXReaderPage", L"阅读区域",
                            WS_CHILD | WS_VISIBLE | WS_TABSTOP, 0, 0, 10, 10, parent,
                            (HMENU)(INT_PTR)IDC_PAGE, NULL, NULL);
@@ -2172,21 +2186,24 @@ static void layout_controls(void) {
   if (books_height < 120) books_height = 120;
   MoveWindow(g.books, 8, content_top + 20, left_width - 16, books_height, TRUE);
 #ifdef EXR_READER_PRODUCT_CATALOG
-  MoveWindow(g.shelf_search,8,content_top+20,left_width-78,24,TRUE);
+  MoveWindow(g.shelf_search_label,8,content_top+22,52,20,TRUE);
+  MoveWindow(g.shelf_search,64,content_top+20,left_width-134,24,TRUE);
   MoveWindow(g.shelf_refresh,left_width-64,content_top+20,56,24,TRUE);
   MoveWindow(g.books,8,content_top+48,left_width-16,books_height-28,TRUE);
   if(g.product_ready) PostMessageW(g.window,WM_APP+31,0,0);
 #endif
   notes_top = content_top + 20 + books_height + 24;
-  notes_height = content_bottom - 62 - notes_top;
+  notes_height = content_bottom - 80 - notes_top;
   if (notes_height < 80) notes_height = 80;
   MoveWindow(g.notes_label, 8, notes_top - 20, left_width - 16, 18, TRUE);
   MoveWindow(g.notes, 8, notes_top, left_width - 16, notes_height, TRUE);
-  MoveWindow(g.note_edit, 8, content_bottom - 56, left_width - 16, 52, TRUE);
+  MoveWindow(g.note_edit_label, 8, content_bottom - 74, left_width - 16, 18, TRUE);
+  MoveWindow(g.note_edit, 8, content_bottom - 54, left_width - 16, 52, TRUE);
   MoveWindow(g.page, left_width + 4, content_top, width - left_width - 12, content_bottom - content_top - 4, TRUE);
   MoveWindow(g.page_label, 8, content_bottom + 8, 330, 22, TRUE);
   MoveWindow(g.status, 346, content_bottom + 8, width - 354, 22, TRUE);
 }
+#include "../apps/reader/desktop/windows_accessibility.inc"
 
 static int compute_view(void) {
   RECT area;
@@ -2393,6 +2410,8 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
     case WM_KILLFOCUS:
       InvalidateRect(window, NULL, TRUE);
       return 0;
+    case WM_GETOBJECT:
+      return host_a11y_page_object(window, wparam, lparam);
     case WM_GETDLGCODE:
       return DLGC_WANTARROWS | DLGC_WANTCHARS;
     case WM_LBUTTONDOWN:
@@ -2442,6 +2461,7 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
         }
         selection_report();
         InvalidateRect(window, NULL, FALSE);
+        host_a11y_page_changed(1);
       }
       return 0;
     case WM_MOUSEWHEEL:
@@ -2482,6 +2502,7 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
 /* ------------------------------------------------------------------ */
 
 static void update_page_label(void) {
+  host_a11y_page_changed(0);
   if (!g.frame.valid || !g.has_current) {
     SetWindowTextW(g.page_label, L"未打开书籍");
     return;
@@ -2742,6 +2763,7 @@ static void select_all_page(void) {
     selection_report();
   }
   InvalidateRect(g.page, NULL, FALSE);
+  host_a11y_page_changed(1);
 }
 
 static void copy_quote(void) {
@@ -3063,6 +3085,7 @@ static int import_title_fallback(const wchar_t *path, int64_t id) {
 }
 
 static void host_update_controls(void) {
+  HWND focused = GetFocus();
   int busy = (g.job != NULL) || (g.pending != NULL);
   int has = g.has_current && g.frame.valid;
   EnableWindow(g.import_button, !busy);
@@ -3090,6 +3113,10 @@ static void host_update_controls(void) {
 #ifdef EXR_READER_WINDOWS_ACCOUNT
   EnableWindow(g.account_button,!g.closing && !g.metadata_running && !g.metadata_dialog);
 #endif
+  /* A command that just disabled itself must not take keyboard focus with it. */
+  host_a11y_focus_guard(focused);
+  /* A modal dialog owns the keyboard: keep the truthful blocked state. */
+  host_a11y_owner_reapply();
 }
 
 static void handle_job_complete(host_job *job) {

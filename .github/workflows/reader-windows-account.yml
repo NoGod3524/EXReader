@@ -34,7 +34,7 @@ jobs:
           git merge-base --is-ancestor "$START_SHA" HEAD
           git diff --exit-code "$SDK_BASELINE" HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
           git diff --exit-code "$START_SHA" HEAD -- apps/reader/store/001_catalog.sql apps/reader/desktop/CMakeLists.txt
-          bad=$(git diff --name-only "$START_SHA" HEAD | grep -Ev '^(apps/reader/windows-account/|apps/reader/desktop/windows_accounts[^/]*\.inc$|apps/reader/desktop/windows_(catalog|shelf|metadata|metadata_ui)\.inc$|examples/reader\.c$|tests/reader_windows_account/|\.github/workflows/reader-windows-account\.yml$|docs/READER-WINDOWS-ACCOUNT\.md$|docs/validation/reader-windows-account\.json$)' || true)
+          bad=$(git diff --name-only "$START_SHA" HEAD | grep -Ev '^(apps/reader/windows-account/|apps/reader/desktop/windows_accounts[^/]*\.inc$|apps/reader/desktop/windows_accessibility[^/]*\.inc$|apps/reader/desktop/windows_(catalog|shelf|metadata|metadata_ui)\.inc$|examples/reader\.c$|tests/reader_windows_account/|\.github/workflows/reader-windows-account\.yml$|docs/READER-WINDOWS-ACCOUNT\.md$|docs/validation/reader-windows-account\.json$)' || true)
           if test -n "$bad"; then echo "Files outside the package allowlist:"; echo "$bad"; exit 1; fi
       - name: Enter native Windows compiler environment
         shell: pwsh
@@ -128,6 +128,10 @@ jobs:
         run: python3 tests/windows_host/check_metadata_ui.py --candidate build/account-package/EXReader/EXReader.exe --package build/account-package/EXReader --command-consumer build/account-command-consumer/command-consumer.exe --output build/account-metadata-ui
       - name: Real Win32 account controls, native HTTPS, two devices, retry, isolation and close barriers
         run: python3 tests/reader_windows_account/check_account_ui.py --candidate build/account-package/EXReader/EXReader.exe --package build/account-package/EXReader --fixtures build/account-fixtures --revision-consumer build/account-revision-consumer/revision-consumer.exe --capture-probe build/account-capture/reading-capture-probe.exe --reading-fixtures build/account-reading-fixtures --reading-font tests/fixtures/fonts/primary.ttf --link-map build/account-host/windows-host.map --output build/account-ui
+      - name: Real keyboard and UI Automation regression on the packaged host
+        run: |
+          python3 -m pip install "uiautomation==2.0.29" 2>&1 | tee build/account-logs/a11y-pip.log
+          python3 tests/reader_windows_account/check_a11y_ui.py --candidate build/account-package/EXReader/EXReader.exe --package build/account-package/EXReader --output build/account-a11y 2>&1 | tee build/account-logs/a11y-ui.log
       - name: Preserve source-bound evidence, packaged EXE and link graph
         id: upload
         if: always()
@@ -149,6 +153,7 @@ jobs:
             build/account-shelf-ui/
             build/account-metadata-ui/
             build/account-ui/
+            build/account-a11y/
             !build/**/*.key
             !build/**/profile/**/*.sqlite
           if-no-files-found: error
@@ -174,7 +179,7 @@ jobs:
         run: |
           test "$ACCOUNT_RESULT" = success
           test -n "$ARTIFACT_ID"
-          python3 tests/reader_windows_account/verify_summary.py --artifact-id "$ARTIFACT_ID" --upload-digest "$ARTIFACT_DIGEST" --account-checks 32 --output build/account-summary
+          python3 tests/reader_windows_account/verify_summary.py --artifact-id "$ARTIFACT_ID" --upload-digest "$ARTIFACT_DIGEST" --account-checks 32 --a11y-checks 11 --output build/account-summary
       - name: Preserve strict summary
         if: always()
         uses: actions/upload-artifact@v4

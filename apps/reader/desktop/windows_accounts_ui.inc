@@ -263,8 +263,8 @@ static INT_PTR CALLBACK acct_dialog_procedure(HWND dialog, UINT message, WPARAM 
     case WM_DESTROY:
       acct.dialog = acct.root = acct.user = acct.password = acct.remember = acct.message = acct.detail = NULL;
       if (g.window && IsWindow(g.window)) {
-        EnableWindow(g.window, TRUE);
-        if (!g.closing) { SetActiveWindow(g.window); product_shelf_schedule(0, 0); }
+        host_a11y_owner_enabled(1);
+        if (!g.closing) { SetActiveWindow(g.window); SetFocus(g.account_button); product_shelf_schedule(0, 0); }
       }
       return TRUE;
   }
@@ -283,7 +283,7 @@ static void acct_open_dialog(void) {
   if (!window) { set_status(L"无法打开账号窗口。"); return; }
   GetWindowRect(g.window, &parent);
   SetWindowPos(window, HWND_TOP, parent.left + 120, parent.top + 80, 640, 470, SWP_SHOWWINDOW);
-  EnableWindow(g.window, FALSE); SetForegroundWindow(window); SetFocus(acct.root);
+  host_a11y_owner_enabled(0); SetForegroundWindow(window); SetFocus(acct.root);
   if (!acct.owner.loaded && !g.job && !g.pending) {
     job = acct_job(JOB_ACCOUNT_LOAD, 0);
     if (job) { acct_notice(L"正在读取账号设置。"); job_submit(job); }
