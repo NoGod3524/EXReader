@@ -13,4 +13,6 @@ final class NativeProduct {
     static native long create(String product,String cache,String originals,String account,String root,String authorization,int timeout);
     static native byte[] command(long session,int command);
     static native byte[] stats();
+    static native byte[] readingAppend(String product,String[] fields,long[] numbers);
+    static native byte[] readingDecode(String product,String revision);
 }
