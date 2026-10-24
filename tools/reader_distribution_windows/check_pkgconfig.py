@@ -141,43 +141,79 @@ def main():
                 outside.append({'name': name, 'path': directory})
         record['ok'] = fresh and not any(item['name'] == name for item in outside)
         results.append(record)
-    consumer = {'linked': False, 'ran': False}
+    consumer = {'linked': False, 'ran': False, 'attempts': []}
+
+    def compile_and_run(source_text, include_dirs, libs_text, forced_symbol, tag):
+        attempt = {'tag': tag, 'linked': False, 'ran': False}
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            source = folder / 'pkgconfig-probe.c'
+            source.write_text(source_text, encoding='utf-8')
+            command = [args.cl, '/nologo', '/c', str(source)]
+            for directory in include_dirs:
+                command.append('/I' + directory)
+            code, output, error = run(command)
+            attempt['compile_output'] = (output or error)[-400:]
+            if code != 0:
+                attempt['error'] = 'compile'
+                return attempt
+            executable = folder / 'pkgconfig-probe.exe'
+            arguments = convert_libs(libs_text.split())
+            link = [args.cl, '/nologo', '/Fe:' + str(executable),
+                    str(folder / 'pkgconfig-probe.obj'), '/link'] + arguments
+            if forced_symbol:
+                link.append('/INCLUDE:' + forced_symbol)
+            code, output, error = run(link)
+            attempt['link_output'] = (output or error)[-800:]
+            attempt['linked'] = code == 0 and executable.is_file()
+            if attempt['linked']:
+                code, output, error = run([str(executable)])
+                attempt['ran'] = code == 0
+                attempt['run_returncode'] = code
+                attempt['stdout'] = (output or '')[:200]
+            return attempt
+
+    webp_source = ('#include <webp/decode.h>\n'
+                   '#include <stdio.h>\n'
+                   'int main(void) {\n'
+                   '  int version = WebPGetDecoderVersion();\n'
+                   '  printf("%d\n", version);\n'
+                   '  return version > 0 ? 0 : 1;\n'
+                   '}\n')
+    empty_source = 'int main(void) { return 0; }\n'
     for record in results:
         if not record.get('ok'):
             continue
+        include_dirs = record.get('include_dirs', [])
+        libs_text = record.get('libs', '')
         libraries = []
         for directory in record.get('library_dirs', []):
-            for token in record.get('libs', '').split():
+            for token in libs_text.split():
                 if token.startswith('-l') and len(token) > 2:
                     candidate = Path(directory) / (token[2:] + '.lib')
                     if candidate.is_file():
                         libraries.append(candidate)
         if not libraries:
             continue
-        library = libraries[0]
-        symbol = choose_symbol(args.dumpbin, library)
-        if not symbol:
-            continue
-        with tempfile.TemporaryDirectory() as temporary:
-            folder = Path(temporary)
-            source = folder / 'pkgconfig-probe.c'
-            source.write_text('int main(void) { return 0; }\n', encoding='utf-8')
-            code, output, error = run([args.cl, '/nologo', '/c', str(source)])
-            distlib.require(code == 0, 'probe compilation failed: ' + (output or error)[-400:])
-            arguments = convert_libs(record.get('libs', '').split())
-            executable = folder / 'pkgconfig-probe.exe'
-            code, output, error = run([args.cl, '/nologo', '/Fe:' + str(executable),
-                                       str(folder / 'pkgconfig-probe.obj'), '/link'] +
-                                      arguments + ['/INCLUDE:' + symbol])
-            consumer = {'package': record['name'], 'library': str(library.relative_to(prefix)),
-                        'symbol': symbol, 'libs': record.get('libs'),
-                        'link_returncode': code, 'link_output': (output or error)[-600:],
-                        'linked': code == 0 and executable.is_file(), 'ran': False}
-            if consumer['linked']:
-                code, output, error = run([str(executable)])
-                consumer['ran'] = code == 0
-                consumer['run_returncode'] = code
-        break
+        headers = [Path(directory) / 'webp' / 'decode.h' for directory in include_dirs]
+        if any(path.is_file() for path in headers):
+            attempt = compile_and_run(webp_source, include_dirs, libs_text, None,
+                                      record['name'] + ':webp-api')
+            consumer['attempts'].append(attempt)
+            if attempt['linked'] and attempt['ran']:
+                consumer.update(attempt, package=record['name'],
+                                library=str(libraries[0].relative_to(prefix)), libs=libs_text)
+                break
+        symbol = choose_symbol(args.dumpbin, libraries[0])
+        if symbol:
+            attempt = compile_and_run(empty_source, include_dirs, libs_text, symbol,
+                                      record['name'] + ':forced-symbol')
+            attempt['symbol'] = symbol
+            consumer['attempts'].append(attempt)
+            if attempt['linked'] and attempt['ran']:
+                consumer.update(attempt, package=record['name'],
+                                library=str(libraries[0].relative_to(prefix)), libs=libs_text)
+                break
     outside_paths = [item for item in outside]
     report = {'schema': 'reader-distribution-windows-pkgconfig-v1',
               'prefix': str(prefix), 'tool': tool, 'tool_version': version,
