@@ -5,6 +5,7 @@
    total-row limits, reentry, wrong thread, catalog/source change during a scan,
    argument bounds and bounded-memory streaming reads. */
 #include "reader_library_health.h"
+#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,9 +15,12 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <psapi.h>
+#include <direct.h>
 #else
 #include <pthread.h>
 #include <sys/resource.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #endif
 
 #define MAX_PLAN 8192
@@ -71,8 +75,39 @@ static const char *platform_name(void) {
 #endif
 }
 
+static int make_dir(const char *path) {
+#if defined(_WIN32)
+  return _mkdir(path);
+#else
+  return mkdir(path, 0777);
+#endif
+}
+
+/* Creates one work directory; an existing directory is success. */
+static int ensure_dir(const char *path) {
+  if (!path || !*path) return 0;
+  if (make_dir(path) == 0) return 1;
+  return errno == EEXIST;
+}
+
 static void path_join(char *out, size_t capacity, const char *dir, const char *name) {
   snprintf(out, capacity, "%s/%s", dir, name);
+}
+
+/* Bounded formatted detail. The intermediate buffer covers every source field
+   so the copy never depends on a truncating %s conversion. */
+static void note(char *out, size_t size, const char *fmt, ...) {
+  char buffer[1600];
+  va_list ap;
+  size_t length;
+  if (!out || size == 0) return;
+  va_start(ap, fmt);
+  vsnprintf(buffer, sizeof(buffer), fmt, ap);
+  va_end(ap);
+  length = strlen(buffer);
+  if (length >= size) length = size - 1;
+  memcpy(out, buffer, length);
+  out[length] = 0;
 }
 
 static int read_plan(const char *path, plan_file *p) {
@@ -179,14 +214,18 @@ static int open_pair(const char *dir, reader_catalog **catalog, exr_library **li
                      char *catalog_path, char *library_path) {
   reader_catalog_error catalog_error;
   exr_error error;
-  path_join(catalog_path, 1024, dir, "catalog.db");
-  path_join(library_path, 1024, dir, "library.db");
   memset(&catalog_error, 0, sizeof(catalog_error));
   memset(&error, 0, sizeof(error));
   *catalog = NULL;
   *library = NULL;
+  if (!ensure_dir(dir)) {
+    snprintf(catalog_path, 1024, "cannot create directory %s", dir);
+    return 0;
+  }
+  path_join(catalog_path, 1024, dir, "catalog.db");
+  path_join(library_path, 1024, dir, "library.db");
   if (reader_catalog_open(catalog_path, catalog, &catalog_error) != 0) {
-    snprintf(catalog_path, 1024, "catalog open failed: %s", catalog_error.message);
+    note(catalog_path, 1024, "catalog open failed: %s", catalog_error.message);
     return 0;
   }
   if (exr_library_open(library_path, library, &error) != EXR_OK) {
@@ -211,7 +250,7 @@ static int build_pair(const char *dir, const char *fixtures, const plan_row *row
   memset(&error, 0, sizeof(error));
   if (why && why_size) why[0] = 0;
   if (!open_pair(dir, &catalog, &library, catalog_path, library_path)) {
-    if (why) snprintf(why, why_size, "cannot open %s", catalog_path);
+    if (why) note(why, why_size, "cannot open %s", catalog_path);
     return 0;
   }
   if (extra_id) *extra_id = 0;
@@ -225,13 +264,13 @@ static int build_pair(const char *dir, const char *fixtures, const plan_row *row
     path_join(file_path, sizeof(file_path), fixtures, r->file);
     data = read_file(file_path, &size);
     if (!data) {
-      if (why) snprintf(why, why_size, "cannot read %s", r->file);
+      if (why) note(why, why_size, "cannot read %s", r->file);
       ok = 0;
       break;
     }
     if (exr_library_import(library, format_enum(r->format), data, size, r->sort_title, &id,
                            &error) != EXR_OK) {
-      if (why) snprintf(why, why_size, "import %s: %s", r->file, error.message);
+      if (why) note(why, why_size, "import %s: %s", r->file, error.message);
       free(data);
       ok = 0;
       break;
@@ -250,20 +289,20 @@ static int build_pair(const char *dir, const char *fixtures, const plan_row *row
     book.sdk_book_id = id;
     book.favorite = 0;
     if (reader_catalog_attach(catalog, &book, &catalog_error) != 0) {
-      if (why) snprintf(why, why_size, "attach %s: %s", r->sort_title, catalog_error.message);
+      if (why) note(why, why_size, "attach %s: %s", r->sort_title, catalog_error.message);
       ok = 0;
       break;
     }
     if (!strcmp(r->action, "cloud")) {
       if (reader_catalog_remove_local(catalog, id, &catalog_error) != 0) {
-        if (why) snprintf(why, why_size, "remove_local: %s", catalog_error.message);
+        if (why) note(why, why_size, "remove_local: %s", catalog_error.message);
         ok = 0;
         break;
       }
     }
     if (!strcmp(r->action, "missing")) {
       if (deleted_count >= MAX_DELETED) {
-        if (why) snprintf(why, why_size, "too many missing-source rows");
+        if (why) note(why, why_size, "too many missing-source rows");
         ok = 0;
         break;
       }
@@ -282,11 +321,11 @@ static int build_pair(const char *dir, const char *fixtures, const plan_row *row
         ok = 0;
       free(data);
     }
-    if (why && !ok) snprintf(why, why_size, "extra import %s failed", extra_file);
+    if (why && !ok) note(why, why_size, "extra import %s failed", extra_file);
   }
   for (i = 0; i < deleted_count && ok; i++) {
     if (exr_library_delete(library, deleted[i], &error) != EXR_OK) {
-      if (why) snprintf(why, why_size, "delete mapped original: %s", error.message);
+      if (why) note(why, why_size, "delete mapped original: %s", error.message);
       ok = 0;
     }
   }

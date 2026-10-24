@@ -218,6 +218,8 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     (work / 'main').mkdir(parents=True, exist_ok=True)
     (work / 'ev').mkdir(parents=True, exist_ok=True)
+    (work / 'adv').mkdir(parents=True, exist_ok=True)
+    (work / 'mem').mkdir(parents=True, exist_ok=True)
     evidence = work / 'ev'
 
     manifest = json.loads((fixtures / 'manifest.json').read_text(encoding='utf-8'))

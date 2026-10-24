@@ -48,7 +48,7 @@ def xhtml(body):
             '<body>' + body + '</body></html>').encode('utf-8')
 
 
-def png_rgba(width, height, seed):
+def png_rgba(width, height, seed, note=b''):
     rows = []
     for y in range(height):
         row = bytearray(b'\x00')
@@ -62,8 +62,9 @@ def png_rgba(width, height, seed):
                 struct.pack('>I', zlib.crc32(tag + data) & 0xFFFFFFFF))
 
     ihdr = struct.pack('>IIBBBBB', width, height, 8, 6, 0, 0, 0)
+    text = chunk(b'tEXt', b'Comment\x00' + note) if note else b''
     return (b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', ihdr) +
-            chunk(b'IDAT', zlib.compress(raw, 9)) + chunk(b'IEND', b''))
+            chunk(b'IDAT', zlib.compress(raw, 9)) + text + chunk(b'IEND', b''))
 
 
 def txt_bytes(index, size=None):
@@ -133,7 +134,7 @@ def write_epub(path, index, body_size=0):
 
 def write_cbz(path, index):
     with zip_open(path) as book:
-        put(book, 'page-000.png', png_rgba(16, 16, index & 0xFF))
+        put(book, 'page-000.png', png_rgba(16, 16, index & 0xFF, b'LH-%04d' % index))
 
 
 def write_original(path, fmt, index, size=None):
