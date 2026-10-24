@@ -20,6 +20,13 @@ static GtkWidget *collections_scroll(GtkWidget *child) {
   gtk_widget_set_vexpand(widget,TRUE);return widget;
 }
 static void collections_access(GtkWidget *widget,const char *name) { atk_object_set_name(gtk_widget_get_accessible(widget),name); }
+static gboolean collections_type_focus(GtkWidget *widget,GtkDirectionType direction,gpointer unused) {
+  (void)direction;(void)unused;
+  if(gtk_widget_is_focus(widget)) return FALSE;
+  /* GTK3 grab_focus delegates to a private button absent from its ATK tree.
+     Keep real keyboard focus on the public combo; its native bindings handle keys. */
+  gtk_window_set_focus(GTK_WINDOW(collections.dialog),widget);return TRUE;
+}
 static gboolean collections_list_mnemonic(GtkWidget *label,gboolean cycling,gpointer target) {
   (void)label;(void)cycling;GtkWidget *list=target;
   GtkListBoxRow *row=gtk_list_box_get_selected_row(GTK_LIST_BOX(list));
@@ -309,8 +316,10 @@ static void collections_apply(host_result *done) {
   reader_result *result=&done->value;metadata_running=busy=FALSE;
   if(!collections.dialog) { state();return; }
   gtk_widget_set_sensitive(collections.dialog,TRUE);
-  if(collections.resume_focus && gtk_widget_get_toplevel(collections.resume_focus)==collections.dialog)
-    gtk_widget_grab_focus(collections.resume_focus);
+  if(collections.resume_focus && gtk_widget_get_toplevel(collections.resume_focus)==collections.dialog) {
+    if(collections.resume_focus==collections.types) gtk_window_set_focus(GTK_WINDOW(collections.dialog),collections.types);
+    else gtk_widget_grab_focus(collections.resume_focus);
+  }
   g_clear_object(&collections.resume_focus);
   if(collections.editor) gtk_widget_set_sensitive(collections.editor,TRUE);
   if(collections.recovery) gtk_widget_set_sensitive(collections.recovery,TRUE);
@@ -340,6 +349,7 @@ static void collections_open(GtkWidget *button,gpointer unused) {
   GtkWidget *area=gtk_dialog_get_content_area(GTK_DIALOG(collections.dialog));gtk_container_set_border_width(GTK_CONTAINER(area),12);
   GtkWidget *filters=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,8);collections.types=gtk_combo_box_text_new();
   gtk_widget_set_can_focus(collections.types,TRUE);
+  g_signal_connect(collections.types,"focus",G_CALLBACK(collections_type_focus),NULL);
   for(int i=0;i<3;i++) gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(collections.types),(const char *[]) {"Shelves","Tags","Series"}[i]);
   gtk_combo_box_set_active(GTK_COMBO_BOX(collections.types),0);collections_access(collections.types,"Collection type");
   GtkWidget *type=gtk_label_new_with_mnemonic("_Type");gtk_label_set_mnemonic_widget(GTK_LABEL(type),collections.types);
@@ -388,7 +398,7 @@ static void collections_open(GtkWidget *button,gpointer unused) {
   g_signal_connect(collections.members,"row-selected",G_CALLBACK(collections_member_selected),NULL);g_signal_connect(collections.members,"row-activated",G_CALLBACK(collections_member_activated),NULL);
   g_signal_connect(collections.dialog,"response",G_CALLBACK(collections_response),NULL);g_signal_connect(collections.dialog,"delete-event",G_CALLBACK(collections_delete),NULL);
   g_signal_connect(collections.dialog,"destroy",G_CALLBACK(collections_destroyed),NULL);g_signal_connect(collections.dialog,"key-press-event",G_CALLBACK(collections_keys),NULL);
-  collections.applying=FALSE;gtk_widget_show_all(collections.dialog);gtk_widget_grab_focus(collections.types);
+  collections.applying=FALSE;gtk_widget_show_all(collections.dialog);gtk_window_set_focus(GTK_WINDOW(collections.dialog),collections.types);
   collections_queue(READER_COLLECTIONS_LIST);
 }
 static char *collections_observation(void) {
