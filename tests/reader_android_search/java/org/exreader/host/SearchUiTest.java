@@ -61,8 +61,8 @@ public final class SearchUiTest extends Instrumentation {
         if(node.performAction(AccessibilityNodeInfo.ACTION_CLICK))return;Rect rect=new Rect();node.getBoundsInScreen(rect);need(rect.width()>0&&rect.height()>0,"visible click target");
         long now=SystemClock.uptimeMillis();sendPointerSync(MotionEvent.obtain(now,now,MotionEvent.ACTION_DOWN,rect.centerX(),rect.centerY(),0));sendPointerSync(MotionEvent.obtain(now,now+30,MotionEvent.ACTION_UP,rect.centerX(),rect.centerY(),0));
     }
-    private void click(String label){until(node->node.isEnabled()&&text(node).equalsIgnoreCase(label),this::tap,"click "+label,30000);}
-    private void contains(String label){until(node->node.isEnabled()&&text(node).contains(label),this::tap,"result "+label,30000);}
+    private void click(String label){until(node->node.isVisibleToUser()&&node.isEnabled()&&text(node).equalsIgnoreCase(label),this::tap,"click "+label,30000);}
+    private void contains(String label){until(node->id(node,"text1")&&node.isVisibleToUser()&&node.isEnabled()&&text(node).contains(label),this::tap,"result "+label,30000);}
     private String searchStatus(){String[] value={null};act(node->description(node,"搜索状态"),node->value[0]=text(node));return value[0];}
     private void status(String value){until(node->description(node,"搜索状态")&&text(node).contains(value),null,"search status "+value,120000);}
     private void panel(){until(node->description(node,"阅读更多操作")&&node.isEnabled(),this::tap,"reading More",30000);click("书内搜索");until(node->description(node,"书内搜索词"),null,"search input",30000);}
@@ -136,7 +136,7 @@ public final class SearchUiTest extends Instrumentation {
     private void arrived()throws Exception {long end=SystemClock.elapsedRealtime()+30000;while(SystemClock.elapsedRealtime()<end){if(new File(context.getFilesDir(),"search-gate-arrived").isFile()){need(NativeSearchProbe.live()==1,"real installed Search call owns its handle at control boundary");return;}SystemClock.sleep(30);}throw new AssertionError("installed search control boundary not observed");}
     private void choose(String label)throws Exception {JSONObject before=frame();long token=before.getLong("accepted_token"),book=before.getLong("book");contains(label);until(node->id(node,"reader_view"),null,"reader after explicit FOUND selection",120000);long end=SystemClock.elapsedRealtime()+120000;while(SystemClock.elapsedRealtime()<end){JSONObject after=frame();if(after.optLong("book",-1)==book&&after.optLong("accepted_token",0)>token){zero();return;}SystemClock.sleep(80);}throw new AssertionError("FOUND selection did not publish a new real page");}
     private void closePanel(){click("关闭");zero();}
-    private void readonlyQuery(String query,String status)throws Exception {String state=snapshot(),page=stableFrame();panel();search(query);status(status);unchanged(state,page);closePanel();}
+    private void readonlyQuery(String query,String status)throws Exception {String state=snapshot(),page=stableFrame();panel();search(query);status(status);unchanged(state,page);closePanel();unchanged(state,page);}
     private JSONObject tree(AccessibilityNodeInfo node,int depth,int[] count)throws Exception {
         need(depth<=32&&++count[0]<=2048,"semantic tree bounds");JSONArray children=new JSONArray();for(int i=0;i<node.getChildCount();i++){AccessibilityNodeInfo child=node.getChild(i);if(child!=null){try{children.put(tree(child,depth+1,count));}finally{child.recycle();}}}
         return new JSONObject().put("id",node.getViewIdResourceName()).put("text",text(node)).put("description",String.valueOf(node.getContentDescription())).put("actions",node.getActions()).put("children",children);

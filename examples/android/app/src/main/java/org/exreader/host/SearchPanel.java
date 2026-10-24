@@ -38,7 +38,7 @@ final class SearchPanel {
         status=new TextView(activity);status.setContentDescription("搜索状态");status.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);content.addView(status);
         list=new ListView(activity);list.setContentDescription("搜索结果");adapter=new ArrayAdapter<>(activity,android.R.layout.simple_list_item_1,new ArrayList<>());list.setAdapter(adapter);content.addView(list,new LinearLayout.LayoutParams(-1,(int)(260*activity.getResources().getDisplayMetrics().density)));
         list.setOnItemClickListener((parent,view,position,id)->{if(!busy&&position>=0&&position<hits.length)choose(hits[position]);});
-        more=button(content,"更多结果",()->scan(true));
+        more=new Button(activity);more.setText("更多结果");more.setOnClickListener(v->scan(true));content.addView(more,new LinearLayout.LayoutParams(-1,-2));
         input.addTextChangedListener(new android.text.TextWatcher(){
             public void beforeTextChanged(CharSequence value,int start,int count,int after){}
             public void onTextChanged(CharSequence value,int start,int before,int count){}
