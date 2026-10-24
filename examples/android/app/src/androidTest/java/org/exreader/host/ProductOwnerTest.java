@@ -172,7 +172,9 @@ public final class ProductOwnerTest extends Instrumentation {
         BookStore.VerifiedSource source=realBook(false);File file=new File(directory,"closed-legacy.db");
         // This is an offline migration fixture: close the former provider fully
         // before any native product connection touches this particular file.
-        try(android.database.sqlite.SQLiteDatabase old=android.database.sqlite.SQLiteDatabase.openOrCreateDatabase(file,null)){
+        try(android.database.sqlite.SQLiteDatabase old=android.database.sqlite.SQLiteDatabase.openDatabase(file.getAbsolutePath(),null,
+                android.database.sqlite.SQLiteDatabase.OPEN_READWRITE | android.database.sqlite.SQLiteDatabase.CREATE_IF_NECESSARY
+                        | android.database.sqlite.SQLiteDatabase.NO_LOCALIZED_COLLATORS)){
             JSONArray migration=new JSONObject(new String(CatalogStore.readAsset(context),StandardCharsets.UTF_8)).getJSONArray("statements");
             for(int i=0;i<migration.length();i++)old.execSQL(migration.getString(i));
             old.execSQL("INSERT INTO reader_books(book_key,format,source_sha256,source_bytes,title,author,sort_title,favorite) VALUES(?,?,?,?,?,?,?,1)",
