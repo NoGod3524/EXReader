@@ -1,0 +1,19 @@
+{
+  "package": "EXReaderThumbnails",
+  "version": "0.1.0",
+  "fixed_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk_freeze": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "abi": 1,
+  "status": "implemented; awaiting same-source cloud run",
+  "accepted": false,
+  "tested_source": null,
+  "interfaces": {
+    "header": "reader_thumbnails.h",
+    "cmake_target": "EXReaderThumbnails::reader_thumbnails",
+    "threads_created": false,
+    "product_sql_written": false,
+    "sdk_private_sql_read": false
+  },
+  "not_granted": ["product performance", "host UI integration", "six-platform interoperability", "release"]
+}
