@@ -17,6 +17,8 @@ import zipfile
 from pathlib import Path
 
 SYSTEMS = {'Linux': 'ubuntu-22.04', 'Windows': 'windows-2022', 'macOS': 'macos-15'}
+# Runner logs carry terminal escapes; they are removed before any pattern match.
+ESCAPES = re.compile(r'\x1b\[[0-9;?]*[ -/]*[@-~]|\x1b\][^\x07]*\x07')
 
 
 def api(path, binary=False):
@@ -29,6 +31,23 @@ def api(path, binary=False):
             raise SystemExit(f'gh api {path} failed: {message}')
         time.sleep(10 * (attempt + 1))
     raise SystemExit('unreachable')
+
+
+def job_log(repo, job_id):
+    """Read one job's log as plain text.
+
+    Runner logs contain terminal escapes, and gh refuses to print such a response
+    unless told to pass the escapes through; the flag is retried without on older
+    clients. Escapes are stripped so the upload lines still match exactly.
+    """
+    base = f'repos/{repo}/actions/jobs/{job_id}/logs'
+    code = 1
+    for extra in (['--allow-escape-sequences'], []):
+        result = subprocess.run(['gh', 'api', base] + extra, capture_output=True)
+        code = result.returncode
+        if code == 0:
+            return ESCAPES.sub('', result.stdout.decode('utf-8', 'replace')), 0
+    return '', code
 
 
 def main(output):
@@ -57,14 +76,14 @@ def main(output):
             problems.append(f'{name}: expected one job for {runner}, got {len(job)}')
         else:
             record['job'] = {'id': job[0]['id'], 'conclusion': job[0]['conclusion'], 'run_attempt': job[0].get('run_attempt')}
-            log = subprocess.run(['gh', 'api', f'repos/{repo}/actions/jobs/{job[0]["id"]}/logs'], capture_output=True)
-            text = log.stdout.decode('utf-8', 'replace')
+            text, log_code = job_log(repo, job[0]['id'])
             logged = re.findall(r'SHA256 digest of uploaded artifact zip is ([0-9a-f]{64})', text)
             ids = re.findall(r'Artifact ID is (\d+)', text) or re.findall(r'Artifact ID (\d+)', text)
             sizes = re.findall(r'Final size is (\d+) bytes', text)
-            record['upload_log'] = {'digests': logged, 'ids': ids, 'sizes': sizes}
-            if log.returncode != 0 or logged[-1:] != [digest] or ids[-1:] != [str(artifact['id'])] or sizes[-1:] != [str(len(data))]:
-                problems.append(f'{name}: upload log differs from the downloaded ZIP')
+            record['upload_log'] = {'gh_exit': log_code, 'chars': len(text), 'digests': logged, 'ids': ids, 'sizes': sizes}
+            if log_code != 0 or logged[-1:] != [digest] or ids[-1:] != [str(artifact['id'])] or sizes[-1:] != [str(len(data))]:
+                problems.append(f'{name}: upload log differs from the downloaded ZIP '
+                                f'(gh exit {log_code}, {len(text)} chars, digest/id/size {logged[-1:]}/{ids[-1:]}/{sizes[-1:]})')
         archive = zipfile.ZipFile(io.BytesIO(data))
         names = set(archive.namelist())
         summary_name = next((n for n in names if n.endswith('rc-evidence/summary.json')), None)
