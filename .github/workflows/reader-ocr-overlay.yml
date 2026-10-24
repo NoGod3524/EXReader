@@ -1,0 +1,154 @@
+name: Reader OCR overlay temporary text snapshot
+on:
+  push:
+    branches: [codex/reader-ocr-overlay]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  overlay:
+    name: overlay (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-14]
+    env:
+      OMP_THREAD_LIMIT: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK, schema1 and the J15 path whitelist
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD -- apps/reader/store/001_catalog.sql
+          allowed='^(apps/reader/ocr-overlay/|tests/reader_ocr_overlay/|\.github/workflows/reader-ocr-overlay\.yml$|docs/READER-OCR-OVERLAY\.md$|docs/validation/reader-ocr-overlay\.json$)'
+          bad="$(git diff --name-only f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD | grep -Ev "$allowed" || true)"
+          if [ -n "$bad" ]; then printf 'paths outside the J15 whitelist:\n%s\n' "$bad"; exit 1; fi
+          git diff --name-only f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD
+      - name: Install the optional OCR backend, Pillow, the fixture font and frozen models
+        run: |
+          set -euo pipefail
+          if [ "$RUNNER_OS" = macOS ]; then
+            brew install tesseract ninja pkg-config
+            python3 -m pip install --quiet --disable-pip-version-check pillow || python3 -m pip install --quiet --break-system-packages --disable-pip-version-check pillow
+            FONT=''
+            for candidate in /System/Library/Fonts/Supplemental/Arial.ttf /Library/Fonts/Arial.ttf /System/Library/Fonts/Supplemental/Times_New_Roman.ttf /System/Library/Fonts/Helvetica.ttc; do
+              if [ -f "$candidate" ]; then FONT="$candidate"; break; fi
+            done
+            if [ -z "$FONT" ]; then ls /System/Library/Fonts | head -60; echo 'no usable fixture font'; exit 1; fi
+          else
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends libtesseract-dev libleptonica-dev tesseract-ocr python3-pil fonts-dejavu-core pkg-config ninja-build
+            FONT=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
+          fi
+          echo "J15_FONT=$FONT" >> "$GITHUB_ENV"
+          echo "J15_ROOT=$PWD/build/j15" >> "$GITHUB_ENV"
+          mkdir -p build/j15/models build/j15/logs build/j15/fixtures build/j15/binaries build/j15/evidence
+          for item in eng chi_sim; do
+            curl --fail --location --retry 3 "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/87416418657359cb625c412a48b6e1d6d41c29bd/$item.traineddata" --output "build/j15/models/$item.traineddata"
+          done
+          curl --fail --location "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/87416418657359cb625c412a48b6e1d6d41c29bd/LICENSE" --output build/j15/models/LICENSE
+          python3 - <<'PY'
+          import hashlib, json, pathlib
+          root = pathlib.Path('build/j15/models')
+          files = {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in sorted(root.iterdir()) if path.is_file()}
+          (root / 'identity.json').write_text(json.dumps({
+              'repository': 'tesseract-ocr/tessdata_fast',
+              'commit': '87416418657359cb625c412a48b6e1d6d41c29bd',
+              'license': 'Apache-2.0',
+              'languages': ['eng', 'chi_sim'],
+              'files': files,
+          }, indent=2) + '\n', encoding='utf-8')
+          PY
+          tesseract --version | head -5
+          pkg-config --modversion tesseract
+      - name: Build and install the unmodified reading SDK
+        run: |
+          set -euo pipefail
+          cmake -S . -B build/j15/sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$J15_ROOT/sdk" \
+            -DEXR_BUILD_TESTS=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF \
+            -DEXR_ENABLE_AUDIO=OFF -DEXR_ENABLE_LIBRARY=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF=OFF \
+            -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF 2>&1 | tee build/j15/logs/sdk-configure.log
+          cmake --build build/j15/sdk --parallel 4 2>&1 | tee build/j15/logs/sdk-build.log
+          cmake --install build/j15/sdk 2>&1 | tee build/j15/logs/sdk-install.log
+      - name: Install the separate OCR adapter and this package against installed prefixes only
+        run: |
+          set -euo pipefail
+          cmake -S extras/ocr -B build/j15/ocr-adapter -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_OCR_TESTS=OFF \
+            -DCMAKE_PREFIX_PATH="$J15_ROOT/sdk" -DCMAKE_INSTALL_PREFIX="$J15_ROOT/prefix" 2>&1 | tee build/j15/logs/adapter.log
+          cmake --build build/j15/ocr-adapter --parallel 4 2>&1 | tee -a build/j15/logs/adapter.log
+          cmake --install build/j15/ocr-adapter 2>&1 | tee -a build/j15/logs/adapter.log
+          cmake -S apps/reader/ocr-overlay -B build/j15/overlay -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$J15_ROOT/sdk;$J15_ROOT/prefix" -DCMAKE_INSTALL_PREFIX="$J15_ROOT/prefix" 2>&1 | tee build/j15/logs/overlay.log
+          cmake --build build/j15/overlay --parallel 4 2>&1 | tee -a build/j15/logs/overlay.log
+          cmake --install build/j15/overlay 2>&1 | tee -a build/j15/logs/overlay.log
+          test -s "$J15_ROOT/prefix/include/reader_ocr_overlay.h"
+          test -s "$J15_ROOT/prefix/lib/cmake/EXReaderOCROverlay/EXReaderOCROverlayConfig.cmake"
+          ls -l "$J15_ROOT/prefix/lib"
+      - name: Compile independent C and C++ consumers from the install prefixes
+        run: |
+          set -euo pipefail
+          cmake -S tests/reader_ocr_overlay/consumer -B build/j15/consumer -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$J15_ROOT/prefix;$J15_ROOT/sdk" 2>&1 | tee build/j15/logs/consumer.log
+          cmake --build build/j15/consumer --verbose 2>&1 | tee -a build/j15/logs/consumer.log
+          cp build/j15/consumer/reader-ocr-overlay-probe build/j15/binaries/
+          cp build/j15/consumer/reader-ocr-overlay-c-consumer build/j15/binaries/
+          ./build/j15/consumer/reader-ocr-overlay-c-consumer | tee build/j15/logs/c-consumer.log
+      - name: Freeze this run's page fixtures and their identity
+        run: |
+          set -euo pipefail
+          python3 tests/reader_ocr_overlay/make_fixtures.py --out build/j15/fixtures --font "$J15_FONT" 2>&1 | tee build/j15/logs/fixtures.log
+          sha256sum build/j15/fixtures/scan.png build/j15/fixtures/bars.png build/j15/fixtures/lines.tsv build/j15/fixtures/manifest.json 2>/dev/null || shasum -a 256 build/j15/fixtures/scan.png build/j15/fixtures/bars.png build/j15/fixtures/lines.tsv build/j15/fixtures/manifest.json
+      - name: Run the installed probe and judge every named verdict
+        run: |
+          set -euo pipefail
+          python3 tests/reader_ocr_overlay/check_overlay.py \
+            --probe build/j15/consumer/reader-ocr-overlay-probe \
+            --fixtures build/j15/fixtures \
+            --models build/j15/models \
+            --output build/j15/evidence \
+            --binary "probe=build/j15/consumer/reader-ocr-overlay-probe" \
+            --binary "c_consumer=build/j15/consumer/reader-ocr-overlay-c-consumer" 2>&1 | tee build/j15/logs/judge.log
+      - name: Preserve fixtures, models, licences, logs, binaries and verdicts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-ocr-overlay-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/j15/logs/
+            build/j15/fixtures/
+            build/j15/models/
+            build/j15/evidence/
+            build/j15/binaries/
+          if-no-files-found: warn
+  evidence:
+    name: same-run artifact evidence
+    needs: overlay
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify both same-run ZIPs, every digest and the summary identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_ocr_overlay/check_artifacts.py build/j15-artifacts
+      - name: Preserve the artifact verification record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-ocr-overlay-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/j15-artifacts/
+          if-no-files-found: warn
