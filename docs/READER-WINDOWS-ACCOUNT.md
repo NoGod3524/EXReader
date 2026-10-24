@@ -18,8 +18,8 @@ sideload packages.
 The default shelf has no resident account panel. The only addition is one small
 **账号** button on the second control row (and `Ctrl+Shift+A`). It opens a modal
 **账号与同步** window with server address, username, masked password, a
-"save to system secure storage" checkbox (unchecked means *this app session only*),
-and Apply / Sync / Cancel / Retry / Forget / Close. Control IDs follow the original
+"save to system secure storage" checkbox (ticked by default; unticking keeps the
+secret *for this app session only*), and Apply / Sync / Cancel / Retry / Forget / Close. Control IDs follow the original
 metadata editor IDs (137–149), so original IDs 100–136 are unchanged.
 
 ## Credentials and binding
@@ -69,7 +69,86 @@ metadata editor IDs (137–149), so original IDs 100–136 are unchanged.
    until the session reports `CLOSED`, destroys it, then finishes the normal close
    barrier. Closing the dialog only cancels; the handle stays for Retry.
 
+## Package verification
+
+`.github/workflows/reader-windows-account.yml` runs on `windows-2022` and first
+proves the exact source: `HEAD == GITHUB_SHA`, `f43baf9` is an ancestor, the
+protected SDK tree, product SQL and the shared `apps/reader/desktop/CMakeLists.txt`
+are byte-identical to their fixed points, and every changed path is inside this
+package. It builds the product provider, the installed SDK, `extras/sideload`,
+`extras/credentials`, and the `commands`, `desktop-metadata`, `sync`, `session`
+and `revisions` modules, then builds the real Win32 host from `examples/reader.c`
+through the independent `apps/reader/windows-account/CMakeLists.txt` (static
+product package, EXE and link map).
+
+Retained baselines re-run on this same source and artifact:
+
+| step | checks |
+| --- | --- |
+| original evidence rejection + static SDK provider refusals | `account-negative/checks.json` (>= 26) |
+| original Windows UI and eight bound screenshots | 158 / 158, 0 failed |
+| original product checks | 10 |
+| original worker checks | 5 |
+| original 2202-book bookshelf UI | 13 |
+| retained typed metadata edit and recovery | 18 |
+
+The account checker (`tests/reader_windows_account/check_account_ui.py`) drives
+the packaged `EXReader.exe` only through real control messages (`BM_CLICK`,
+`WM_SETTEXT`, `WM_GETTEXT`, list-control messages, `WM_CLOSE`) against one
+temporary HTTPS WebDAV server and six independent product profiles. Each line
+below is a recorded named check in `account-ui/account-ui.json`:
+
+1. `default_shelf_has_one_secondary_account_entry_and_no_resident_account_controls`
+2. `four_original_formats_are_imported_through_the_native_import_control`
+3. `typed_metadata_edit_creates_the_remote_title_author_and_favorite_to_preserve`
+4. `account_dialog_opens_from_the_real_button_with_sync_disabled_until_credentials_exist`
+5. `non_https_account_root_is_refused_before_anything_is_bound_or_saved`
+6. `credentials_are_saved_in_windows_credential_manager_and_binding_stores_only_uuid_and_root`
+7. `a_different_account_root_is_refused_for_a_bound_library`
+8. `whole_local_library_originals_are_staged_exactly_and_published_after_source_release`
+9. `four_format_originals_and_metadata_revisions_reach_native_https_with_session_authorization`
+10. `session_only_credentials_are_used_without_writing_secure_or_plain_storage`
+11. `cloud_only_books_are_imported_from_verified_private_files_and_mapped_to_a_second_sdk_library`
+12. `remote_title_author_and_favorite_survive_import_and_mapping`
+13. `cloud_only_books_open_and_render_on_the_receiving_device`
+14. `real_reading_progress_and_annotation_captures_round_trip_to_the_second_device_byte_exactly`
+15. `remote_progress_arrives_and_metadata_applies_while_the_active_reading_page_is_not_moved`
+16. `exit_and_reopen_loads_saved_credentials_and_a_repeat_scan_adds_no_duplicates`
+17. `forget_removes_the_credential_manager_record_and_disables_scanning`
+18. `fault_round_1_network_interruption_fails_visibly_and_explicit_retry_completes`
+19. `network_cancel_is_visible_and_retry_resumes_to_completion`
+20. `fault_round_2_mapping_failure_after_import_is_reported_and_repaired_without_reimport`
+21. `fault_round_3_closing_during_a_native_scan_waits_for_closed_then_exits_cleanly`
+22. `reopened_library_resumes_after_closing_mid_scan`
+23. `independent_account_root_sees_none_of_the_other_accounts_books`
+24. `no_plaintext_credential_survives_any_product_shutdown`
+25. `link_graph_contains_native_session_credentials_sideload_and_winhttp_without_webview`
+
+Check 24 walks every byte under every profile twice. While the hosts run it may
+skip only files a live owner holds with share mode 0 (the bound session's own
+`<product>.sync-account`, plus `.lock`, `-journal`, `-wal` and `-shm`); once every
+product has exited it re-reads exactly those files and re-walks every profile with
+no exemption at all, looking for the username, the password, the exact
+`Authorization` value, its base64 form and the password's hex form.
+
+The strict summary job (`tests/reader_windows_account/verify_summary.py`)
+re-downloads the uploaded ZIP, recomputes its SHA-256 against both the upload
+step output and the API digest, and requires every retained and account report to
+be bound to this source, run and attempt.
+
 ## Not covered by this package
 
-Listed in `docs/validation/reader-windows-account.json`; nothing here is a claim
-for those items.
+Mirrored in `docs/validation/reader-windows-account.json` and never a claim for
+these items:
+
+* Windows Credential Manager `UNAVAILABLE`: the runner always has a working vault,
+  so only the session-only branch is exercised.
+* Screen-reader narration of the new window.
+* `CONCURRENT`, pending-parent and tombstone receive states: the counters are
+  displayed and nothing is auto-applied, but the run never provokes those states
+  end to end.
+* Cancel during receive/import; cancel is exercised during the network scan.
+* A real remote HTTPS collection: the run uses loopback TLS with a runner-local
+  test CA that is removed afterwards.
+* Product performance and any unified six-target product claim.
+

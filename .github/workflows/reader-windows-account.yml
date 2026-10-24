@@ -160,7 +160,7 @@ jobs:
         run: |
           test "$ACCOUNT_RESULT" = success
           test -n "$ARTIFACT_ID"
-          python3 tests/reader_windows_account/verify_summary.py --artifact-id "$ARTIFACT_ID" --upload-digest "$ARTIFACT_DIGEST" --account-checks 24 --output build/account-summary
+          python3 tests/reader_windows_account/verify_summary.py --artifact-id "$ARTIFACT_ID" --upload-digest "$ARTIFACT_DIGEST" --account-checks 25 --output build/account-summary
       - name: Preserve strict summary
         if: always()
         uses: actions/upload-artifact@v4
