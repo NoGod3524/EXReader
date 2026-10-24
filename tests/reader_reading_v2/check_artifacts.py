@@ -54,6 +54,9 @@ def main():
                             require(original.get('accepted') is True and original['source_sha'] == source and len(original['checks']) == count, 'retained suite missing/refused ' + relative)
                     else:
                         require(report['legacy_checks'] == 121 and len(report['cases']) == 18 and report['receiver_found'] == 17 and report['receiver_mislocated'] == 0, 'SDK outcomes differ')
+                        exported = json.loads(archive.read('v2-export-evidence/result.json'))
+                        require(exported.get('accepted') is True and exported['source_sha'] == source and int(exported['run_id']) == run_id and int(exported['attempt']) == attempt, 'original export report identity/refusal')
+                        require(exported['count'] == 14 and len(set(exported['checks'])) == 14 and set(exported['originals']) == {'txt', 'epub', 'pdf', 'cbz'}, 'original export cases missing')
                         normalized.append([{k: c[k] for k in ('id', 'mode', 'kind', 'part', 'start', 'end', 'state')} for c in report['cases']])
                 summary['artifacts'].append({k: artifact[k] for k in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')})
         require(len(normalized) == 2 and normalized[0] == normalized[1], 'platform capture outcomes differ')
