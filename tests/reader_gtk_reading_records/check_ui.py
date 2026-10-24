@@ -97,6 +97,7 @@ def main():
         host.wait(lambda value: not value['saving'])
 
     def import_book(path):
+        command('xdotool', 'windowactivate', '--sync', host.window)
         prior = host.read()['generation']
         end = time.monotonic() + 30
         host.key('F1')
@@ -276,6 +277,17 @@ def main():
         record('cancel_or_close_read_only_panel_preserves_current_reading', host.read()['frame_generation'] == before and sdk_dump(True) == notes)
         host.key('Escape')
         wait(lambda value: value['visible'] == '0')
+        import_book((args.fixtures / 'pages.cbz').resolve())
+        record('actual_cbz_opens_with_genuine_empty_sdk_text_snapshot', host.read()['fixed'] == 1 and host.read()['end'] == 0)
+        open_records()
+        record('cbz_empty_snapshot_has_no_highlight_range_without_fabricating_text', observed()['has_range'] == '0' and not bus.states(element('Highlight selection', {'push button'})).get('sensitive'))
+        action('Save progress')
+        editor('Add bookmark', 'CBZ page point 书签')
+        record('cbz_genuine_public_point_capture_saves_progress_and_bookmark', observed()['progress_state'] == '4' and observed()['count'] == '1' and sdk_dump(True) == notes)
+        select(0)
+        action('Open location')
+        wait(lambda value: value['visible'] == '0')
+        record('cbz_page_id_point_requires_independent_and_current_found_before_navigation', observed()['match'] == '1' and host.read()['fixed'] == 1 and host.read()['page'] == 0)
         record('all_original_source_bytes_remain_unchanged', hashlib.sha256(source.read_bytes()).hexdigest() == original_sha)
         record('product_wire_records_remain_explicit_versions', bool(product_wires()))
         host.close()

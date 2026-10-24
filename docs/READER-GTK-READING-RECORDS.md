@@ -20,7 +20,7 @@
 
 G04 每次调用在原 owner 打开并关闭 view，返回独立拥有的 32 行、2 MiB keyset 快照。界面区分本方向完成、还有后续与字节预算截停。SAFE 以外只显示真实图计数；SAFE tombstone 不显示正文。不默认选首行，不按时间选 head。
 
-“Open location”重新读取当前 SAFE head/SHA，以独立公开 SDK 会话 resolve；FOUND 后再次在当前 SDK 会话核对相同路由与字节范围，才进入原 frame 接受与 COMMIT 流程。EPUB 章节坐标不与 legacy/global 混用；固定页以 page_id 寻址；CBZ 不伪造文字提供者。
+“Open location”重新读取当前 SAFE head/SHA，以独立公开 SDK 会话 resolve；FOUND 后再次在当前 SDK 会话核对相同路由与字节范围，才进入原 frame 接受与 COMMIT 流程。EPUB 章节坐标不与 legacy/global 混用；固定页以 page_id 寻址。PDF/CBZ 均使用公开 `exr_fixed_load_text` 实际返回的快照；真实空快照的页点照常交给公开 capture/resolve，不手填 selector，不以旧页号猜 FOUND。
 
 恢复需明确选中历史版本并再次确认。历史通过公开 `revision_get` 沿原父关系读取，最多 128 节点、32 个可选版本、累计 2 MiB；达到任一上限明确显示列表未完整。独立 FOUND 后重新公开 capture，生成新 restore 修订。
 

@@ -159,7 +159,6 @@ static exr_status records_capture(linux_reader *reader,reader_session *source,si
     reader_rs_capture *capture_value,exr_anchor *anchor,exr_fixed_anchor *fixed,exr_error *error) {
   memset(capture_value,0,sizeof(*capture_value));
   if(source->fixed_document) {
-    if(source->fixed_book && source->fixed_book->format==EXR_CBZ) return EXR_UNSUPPORTED;
     exr_fixed_text *text=NULL;exr_status status=exr_fixed_load_text(source->fixed_document,unit,&reader->control,&text,error);
     size_t count=0;const exr_fixed_page *pages=exr_fixed_pages(source->fixed_document,&count);
     if(status==EXR_OK && (!pages || unit>=count)) status=EXR_ARGUMENT;
