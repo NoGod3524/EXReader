@@ -57,7 +57,8 @@ def access_lines(data, agent):
 
 
 def verify_service(service, archive, source, run_id, attempt, module):
-    prefix = service + '/'
+    # upload-artifact roots members at the evidence folder's common ancestor.
+    prefix = 'interop-evidence/' + service + '/'
     report_bytes = archive.read(prefix + 'result.json')
     require(0 < len(report_bytes) <= 32 * 1024 * 1024, 'report size differs')
     report = json.loads(report_bytes)
@@ -183,8 +184,9 @@ def main():
     finally:
         (args.output / 'result.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
         print(json.dumps({'accepted': result['accepted'], 'problems': result['problems'],
-                          'services': [{k: s.get(k) for k in ('service', 'accepted', 'passed', 'count')}
-                                       for s in result['services']]}, ensure_ascii=False))
+                          'services': [{k: s.get(k) for k in ('service', 'accepted', 'passed', 'count', 'failed',
+                                                              'findings', 'server_log')}
+                                       for s in result['services']]}, ensure_ascii=False, indent=1))
     raise SystemExit(0 if result['accepted'] else 1)
 
 

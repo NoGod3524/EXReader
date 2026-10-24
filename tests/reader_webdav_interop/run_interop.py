@@ -1260,7 +1260,11 @@ class Harness:
                 text = text.replace(needle, '[credential removed]')
             (self.evidence / 'result.json').write_text(text + '\n', encoding='utf-8')
             print(json.dumps({'service': self.name, 'accepted': report['accepted'], 'passed': report['passed'],
-                              'count': report['count'], 'problems': report['problems']}, ensure_ascii=False))
+                              'count': report['count'], 'problems': report['problems'],
+                              'failed': [{'id': r['id'], 'error': r.get('error')} for r in self.results
+                                         if r.get('pass') is not True],
+                              'findings': [{'id': f['id'], 'summary': f['summary']} for f in self.findings]},
+                             ensure_ascii=False, indent=1))
         return 0 if report['accepted'] else 1
 
 
