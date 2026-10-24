@@ -10,6 +10,7 @@ F3 原交回 `f453af14852ad3d8833d27c0eb6888f804c12050` 相对原受测 `6f33caf
 - 仅 `-PexrPreferences=true` 打开；使用安装后的 `EXReaderPreferences 0.1.0`，与公开锚点接线一起启用。
 - F3 留在原 SDK host DSO，单一既有 worker；不添加线程、产品表、同步实体、SQLite 或 SDK provider。
 - `阅读更多操作 → 阅读设置` 是低频原生面板。字号、行距、段距、页边距传给真实 SDK 布局，固定缩放传给实际固定页 render；翻页方向与点击/滑动/方向键作用于原 ReaderView。
+- 修复原固定页 zoom 被 fit-to-window 抵消的问题：同时提高 SDK 栅格采样和实际 Canvas 目标尺寸。使用 draw/settled 后的真实 scale×fit 验证视觉倍率；大于100%时居中放大，平移另行跟踪。
 - 默认 24 pt / 1.6 / 12 pt / 48 pt / light / ltr / tap / 100%；数值范围由安装的 F3 验证，组合视口由实际 SDK 布局验证。旧 SharedPreferences 中实际存在的 font/zoom 按显式 present 位导入，未列字段保留 F3 默认。
 - 应用时先公开 capture 当前页真实点，独立 resolve 必须 FOUND，再以新配置建立候选 pager 并找到含该点的页面。bounded EPUB 保持 spine/path，legacy EPUB 保持 global 投影。旧进度锚点、SDK notes、产品修订/outbox 不因设置而写入。
 - 重复 legacy 章节的空范围点可能 AMBIGUOUS；此时只从该页真实 SDK 边界 capture 不超过64KiB的可见范围，再独立 resolve，仍须 FOUND。该范围的真实起点保持页首；若仍歧义则拒绝，不将旧偏移或章节序号当作 FOUND。
