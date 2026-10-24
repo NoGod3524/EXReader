@@ -1,0 +1,18 @@
+{
+  "accepted": false,
+  "status": "pending first same-source cloud run",
+  "package": "EXReaderAnnotationExport 0.1.0",
+  "common_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "source_sha": null,
+  "run_id": null,
+  "attempt": null,
+  "artifacts": [],
+  "jobs": [],
+  "problems": [],
+  "sdk_changed": false,
+  "schema_changed": false,
+  "host_ui_accepted": false,
+  "import_or_conflict_resolution": false,
+  "six_platform_accepted": false,
+  "complete_product": false
+}
