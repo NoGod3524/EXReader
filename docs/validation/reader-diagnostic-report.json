@@ -1,0 +1,62 @@
+{
+  "package": "EXReaderDiagnosticReport 0.1.0",
+  "id": "J21",
+  "schema": 1,
+  "accepted": false,
+  "status": "awaiting-first-cloud-run",
+  "owner_worktree": "C:/Users/Oscar/exreader-agents/j21-diagnostic-report/EXReader",
+  "branch": "codex/reader-diagnostic-report",
+  "workflow": ".github/workflows/reader-diagnostic-report.yml",
+  "common_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
+  "source_sha": null,
+  "final_head": null,
+  "source_and_head_identical": null,
+  "run": {
+    "id": null,
+    "attempt": null,
+    "url": null,
+    "conclusion": null
+  },
+  "jobs": [],
+  "artifacts": [],
+  "named_results": {
+    "case_count": 32,
+    "platform_specific": {
+      "dangling-symlink-target": "Linux, macOS",
+      "invalid-utf8-target": "Windows"
+    },
+    "passes": [],
+    "failures": [],
+    "skipped": []
+  },
+  "grants": {
+    "module": false,
+    "installed_c_consumer": false,
+    "installed_cpp_consumer": false,
+    "windows": false,
+    "linux": false,
+    "macos": false,
+    "host_ui": false,
+    "host_wiring": false,
+    "performance": false,
+    "real_device": false,
+    "auto_upload": false
+  },
+  "invariants": {
+    "sdk_changed": false,
+    "product_schema_changed": false,
+    "wire_changed": false,
+    "reading_anchor_changed": false,
+    "protected_paths_changed": false
+  },
+  "failures": [],
+  "uncovered": [
+    "host wiring on Windows, GTK, Android and Apple stays with root",
+    "no real-device, desktop, audio or screen-reader acceptance",
+    "no performance claim or measurement",
+    "output-limits guard is reachable only through the test-hook build",
+    "Windows targets longer than MAX_PATH are not addressed",
+    "POSIX filesystems without hard links refuse the commit with IO"
+  ]
+}

@@ -1,0 +1,114 @@
+name: Reader diagnostic report
+on:
+  push:
+    branches: [codex/reader-diagnostic-report]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  consumers:
+    name: diagnostic report consumers (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            platform: Linux
+          - os: windows-2022
+            platform: Windows
+          - os: macos-15
+            platform: macOS
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Pin source, common start, protected SDK, product schema and path ownership
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD -- apps/reader/store/001_catalog.sql
+          if git diff --name-only f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD | grep -v -E '^(apps/reader/diagnostic-report/|tests/reader_diagnostic_report/|\.github/workflows/reader-diagnostic-report\.yml$|docs/READER-DIAGNOSTIC-REPORT\.md$|docs/validation/reader-diagnostic-report\.json$)'; then
+            echo "files outside the J21 ownership list changed"; exit 1
+          fi
+      - name: Enter Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c ('"' + $bat + '" >nul && set') | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install the optional diagnostic-report package
+        run: |
+          mkdir -p build/diag-logs
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "DIAG_WS=$ws" >> "$GITHUB_ENV"
+          cmake -S apps/reader/diagnostic-report -B build/diag -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/diag-stage" 2>&1 | tee build/diag-logs/package-configure.log
+          cmake --build build/diag --parallel 4 --verbose 2>&1 | tee build/diag-logs/package-build.log
+          cmake --install build/diag 2>&1 | tee build/diag-logs/package-install.log
+      - name: Compile installed C and C++ consumers and the test-hook worker
+        run: |
+          cmake -S tests/reader_diagnostic_report/consumer -B build/diag-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$DIAG_WS/build/diag-stage" -DEXR_DIAGNOSTIC_SOURCE="$DIAG_WS/apps/reader/diagnostic-report/src" -DEXR_DIAGNOSTIC_INCLUDE="$DIAG_WS/apps/reader/diagnostic-report/include" 2>&1 | tee build/diag-logs/consumer-configure.log
+          cmake --build build/diag-consumer --verbose 2>&1 | tee build/diag-logs/consumer-build.log
+      - name: Installed consumers, closed fields, atomic publish, cancellation, kill and secret scan
+        run: |
+          python3 tests/reader_diagnostic_report/check_diagnostic_report.py --consumer-dir build/diag-consumer --installed build/diag-stage --build-log build/diag-logs/consumer-build.log --output build/diag-evidence --platform "${{ matrix.platform }}" 2>&1 | tee build/diag-logs/check.log
+      - name: Preserve installed package, consumers, evidence and every original failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-diagnostic-report-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/diag-logs/
+            build/diag-evidence/
+            build/diag-stage/
+            build/diag-consumer/diagnostic-c-consumer*
+            build/diag-consumer/diagnostic-cpp-consumer*
+            build/diag-consumer/diagnostic-worker*
+            build/diag/CMakeCache.txt
+          if-no-files-found: error
+  evidence:
+    name: strict diagnostic evidence
+    needs: [consumers]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Re-assert source, protected SDK, product schema and path ownership
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD -- apps/reader/store/001_catalog.sql
+          if git diff --name-only f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD | grep -v -E '^(apps/reader/diagnostic-report/|tests/reader_diagnostic_report/|\.github/workflows/reader-diagnostic-report\.yml$|docs/READER-DIAGNOSTIC-REPORT\.md$|docs/validation/reader-diagnostic-report\.json$)'; then
+            echo "files outside the J21 ownership list changed"; exit 1
+          fi
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: reader-diagnostic-report-*
+          path: build/diag-artifacts
+      - name: Authenticate all three platform ZIPs and compare named outcomes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_diagnostic_report/check_artifacts.py build/diag-summary
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-diagnostic-report-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/diag-summary/
+          if-no-files-found: error
