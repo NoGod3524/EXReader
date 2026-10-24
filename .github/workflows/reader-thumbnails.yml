@@ -77,7 +77,7 @@ jobs:
           exe=""
           if [ "$RUNNER_OS" = Windows ]; then exe=".exe"; fi
           python3 tests/reader_thumbnails/make_fixtures.py build/thumb-fixtures 2>&1 | tee build/thumb-logs/fixtures.log
-          python3 tests/reader_thumbnails/check_thumbnails.py --probe "build/thumb-consumer/thumb-probe$exe" --c-consumer "build/thumb-consumer/thumb-c-consumer$exe" --fixtures build/thumb-fixtures --repo-fixtures tests/fixtures --installed build/thumb-stage --output build/thumbnail-evidence 2>&1 | tee build/thumb-logs/checks.log
+          python3 tests/reader_thumbnails/check_thumbnails.py --probe "build/thumb-consumer/thumb-probe$exe" --c-consumer "build/thumb-consumer/thumb-c-consumer$exe" --regress "build/thumb-consumer/thumb-regress$exe" --fixtures build/thumb-fixtures --repo-fixtures tests/fixtures --installed build/thumb-stage --output build/thumbnail-evidence 2>&1 | tee build/thumb-logs/checks.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -89,6 +89,7 @@ jobs:
             build/thumb-stage/
             build/thumb-consumer/thumb-probe*
             build/thumb-consumer/thumb-c-consumer*
+            build/thumb-consumer/thumb-regress*
           if-no-files-found: error
   evidence:
     name: strict thumbnail evidence
