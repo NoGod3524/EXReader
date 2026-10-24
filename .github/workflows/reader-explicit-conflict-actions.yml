@@ -101,7 +101,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import json, os, pathlib
-          files = sorted(pathlib.Path('evidence').glob('*/build/evidence/evidence.json')) or sorted(pathlib.Path('evidence').glob('*/evidence.json'))
+          files = sorted(pathlib.Path('evidence').rglob('evidence.json'))
           assert len(files) == 3, files
           values = [json.loads(f.read_text(encoding='utf-8')) for f in files]
           assert {v['sha'] for v in values} == {os.environ['GITHUB_SHA']}
