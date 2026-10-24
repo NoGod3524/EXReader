@@ -19,6 +19,7 @@ import threading
 import time
 import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from socketserver import TCPServer
 from urllib.parse import parse_qs, urlsplit
 
 STATE = {"records": [], "lock": threading.Lock(), "bases": {}, "fixtures": "", "log": None}
@@ -340,6 +341,14 @@ class TolerantServer(ThreadingHTTPServer):
     """A stray TCP connect (a port probe) must not kill the TLS accept loop."""
 
     daemon_threads = True
+
+    def server_bind(self):
+        # HTTPServer.server_bind calls getfqdn(), which stalls for tens of seconds on
+        # macOS runners; the fixture never needs its own FQDN.
+        TCPServer.server_bind(self)
+        host, port = self.server_address[:2]
+        self.server_name = host
+        self.server_port = port
 
     def get_request(self):
         while True:

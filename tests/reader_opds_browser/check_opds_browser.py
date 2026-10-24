@@ -78,7 +78,7 @@ def trust_ca(directory):
         raise SystemExit("unsupported runner platform: " + system)
 
 
-def wait_for(path, timeout=30.0):
+def wait_for(path, timeout=90.0):
     deadline = time.time() + timeout
     while time.time() < deadline:
         if path.exists():
