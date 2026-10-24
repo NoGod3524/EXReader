@@ -17,6 +17,8 @@ root审读`apps/reader/thumbnails/src/thumbnails.cpp`与其消费者后发现：
 
 第一轮回修`00f3d3713619bef8f41c4f5d97957d37dbb3ed87`、run`40083975196`已通过其原158/159项与9项新增回归，文档HEAD`f1912d45c5a599f575f32d2d6df225c31c28a193`。root二次审查仍未放行：扫描截断后继续可写会漏算未扫描的合法缓存文件；多个进程各自的map不能共同保证目录硬上限；只catch异常没有RAII回收open对象、已分配输出和SDK blob。已要求原owner用真实有效条目/独立进程/分配失败回归修复，不能只把硬预算改成已扫描前缀的统计。
 
+继续读固定`5af48c35`发现回修引入的像素源错误：`finish`把刚分配的输出`raw`传为`resample`的输入，缩小时会按源尺寸读取较小输出；应使用`bmp.pixels`。另外`drop_entry`先从map/total删除，再忽略磁盘删除错误，文件被占用时不能保证目录硬预算。已发送紧急回修：独立非均匀像素参考、真实大图缩小路径、占用有效条目导致淘汰失败，并保留RAII与独占锁。尚无上述两项的新通过结论。
+
 ## G04：标注列表，已进入待集成队列
 
 受测`02ec0587869a8ea036ffc9b3cbd9a780060fed72`，文档HEAD`0527476aed2f099e19bbc7dbeb8271dc662a3636`；两者只差两份证据文档。run`40082509106`三平台消费者、Linux诊断sanitizer和严格汇总五作业均success，root已独立核对；三平台各56项。复审确认同页快照复制、无冲突头伪选择、取消整页丢弃、输出预算与所有权路径。不因此授予宿主界面或移动平台。
@@ -38,6 +40,8 @@ root审读`apps/reader/local-downloads/src/local_downloads.c`：
 这些是源码审查结论，不是已经运行过的失败测试。原交付记录不删除，新候选需三平台同源复验。
 
 G06已由原G14完工后的空闲DeepSeek会话接管原工作树；G14交付保持不动。
+
+第一轮回修`44a6991f65021b58f48165124fd5ae654b14e157`、run`40086428132`交回51项及原源码回归。root二审又发现：`ld_stage_copy`未在复制阶段执行期望长度/格式上限/`max_input_bytes`，会在SDK拒绝前无界写暂存；PDF分支先attach映射再发布保留文件，发布失败返回IO却已改变两库。已实际发送第二次根因回修与公开API故障回归要求；owner在`198aeb2d`/`041a1e1e`继续修，未复审授予。另冻结SDK会把PDF原件存入BLOB，文档不可再以“后续阅读依赖导入路径”为保留文件的理由。
 
 ## G03：阅读命令，自动身份重试复审通过，待集成
 
@@ -76,6 +80,10 @@ G12受测`da2bcde7d684c1db8a9a51de9a7d478d870d5149`、run`40084309431`审计作�
 - Apple正式账号分支已独立为`codex/reader-apple-host-account`。`8b70b91ac9684124eca505aed54f519b54aea225`的WP13/mapping/shelf三轮均实际失败，原因分别涉及bounded消费者仍导入旧SQLite3头及macOS WebDAV缺curl链接，原失败保留。新同源`9b84f4254a7442a10e91a082796e8c8f1a8d840c`已派完整三套：`40086427673`、`40086438356`、`40086444544`，未授予新候选。
 - Android正式UI受测`2db9c240705fbe89579ea1bba5bb6e498f34aff5`：root核对codec`40085974325`的Win/Linux通过；旧18捕获及原宿主run`40085974318`通过。正式UI`40085974320`在instrumentation runner注册处失败，owner保留原suite并修分别构建测试APK，不借旧通过授予账号UI。
 - GTK最新`dc1fa2c1fd6a156f0471e66ec9bd29d97e56cfb6`、run`40086097714`继续原46+105+4及定向AT-SPI；先前公共combo焦点仍落入私有button的候选未授予。只真实焦点事件和原生键盘路径通过后登记。
+
+10:49 UTC后续：Android最新正式候选`170d1f77d6e320c75fca25b047dbf117bd1d0c5f`，原完整回归`40086660638`及Win/Linux codec`40086660644`通过，正式`40086660647`在新语义阶段失败，owner继续Actions诊断。GTK的`dc1`原46+105+4与定向9项实际通过；Actions只读诊断`40087119792`确认状态名称事件已发，筛选应读AT-SPI的event.type而非detail1。owner在自有测试修正事件类型并核同一source对象，完整新候选`ddaded9b81c2e51de4313919242f883246dd4426`/`40087214516`待验；旧G13报告留存，最终完整审计需同源重跑。
+
+G16落盘的`a8756cd196a18a050acb47967948b631df4313f7`/`40083042946`报告仍是`accessibility_accepted=false`；其iPhone大字体横屏返回/选文/笔记越界、返回/取消触控区、正文仅60字等明确问题已交Apple生产owner只读核实并修复。新审计`29f03e23`/`40085956514`还在汇总，报告源不得混用。Apple已确认先收当前回归，再补独占HostViews/HostModel的生产修复和定向XCUI，G16测试目录保持只读。
 
 交付HEAD`cd0c7f9b8e3a9af53e30e53248d47ce959f1d0c8`，受测`20c6a1deec794b4902f0ae3a7140a17b19cef7fd`、run`40082869006`自报25项及原基线成功。
 

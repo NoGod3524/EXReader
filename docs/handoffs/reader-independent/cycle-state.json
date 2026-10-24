@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "recorded_at_utc": "2026-10-24T10:38:00Z",
+  "recorded_at_utc": "2026-10-24T10:49:42Z",
   "current_cycle": 1,
   "completed_cycles": 0,
   "audit_interval": 5,
@@ -12,8 +12,8 @@
   "integration_runs": [],
   "mainline_owners": [
     { "agent": "/root/handoff_modules", "branch": "codex/reader-apple-host-account", "completed_ios_evidence_head": "254466e7", "ios_run": 40080841137, "candidate": "9b84f4254a7442a10e91a082796e8c8f1a8d840c", "candidate_runs": [40086427673, 40086438356, 40086444544] },
-    { "agent": "/root/handoff_validation", "branch": "codex/reader-gtk-receive" },
-    { "agent": "/root/main_android", "branch": "codex/reader-android-sync-session" }
+    { "agent": "/root/handoff_validation", "branch": "codex/reader-gtk-receive", "candidate": "ddaded9b81c2e51de4313919242f883246dd4426", "candidate_runs": [40087214516] },
+    { "agent": "/root/main_android", "branch": "codex/reader-android-sync-session", "candidate": "170d1f77d6e320c75fca25b047dbf117bd1d0c5f", "candidate_runs": [40086660647, 40086660638, 40086660644] }
   ],
   "claude_quota": {
     "observed_at_utc": "2026-10-24T09:10:35Z",
@@ -71,7 +71,7 @@
       "new_owner": "DeepSeek Harness Flash1017 High PTC",
       "new_owner_started": true,
       "full_permissions_observed": true,
-      "state": "root_review_fixes_and_regressions"
+      "state": "root_review_raii_and_disk_limits_followed_by_new_pixel_source_and_failed_eviction_fixes"
     },
     {
       "package_id": "G06",
@@ -81,7 +81,7 @@
       "reused_completed_session": "Unicode 路径与跨平台回归测试",
       "new_owner_started": true,
       "full_permissions_observed": true,
-      "state": "root_review_fixes_and_regressions"
+      "state": "root_second_review_staging_limit_and_publish_before_mapping_fixes"
     },
     {
       "package_id": "G05",
