@@ -331,6 +331,10 @@ def summarize(manifest, records, args):
             {"format": "TXT", "capability": "document metadata title", "reason": "plain text has no title field"},
             {"format": "HTML/FB2/DOCX/RTF", "capability": "EPUB-style navigation resource", "reason": "format carries no authored navigation document"},
             {"format": "MOBI", "capability": "navigation", "reason": "reported per file; presence depends on the source NCX, not asserted"},
+            {"format": "HTML", "capability": "document title metadata", "reason": "the HTML <title> exists in the source but exr_document_title is empty; recorded as report, not asserted"},
+            {"format": "DOCX", "capability": "document title metadata", "reason": "MHRA core title exists but is not projected; ES1 has no core title; recorded as report/empty"},
+            {"format": "RTF", "capability": "real RTF stream acceptance", "reason": "both pinned Word/WordPad RTF streams are rejected as invalid or unsupported (trailing NUL/control stream)"},
+            {"format": "CBZ", "capability": "real CBZ member naming", "reason": "both pinned Pepper&Carrot CBZs contain leading-/ member paths and are rejected as unsafe"},
         ],
         "files": records,
     }
