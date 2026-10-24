@@ -1,0 +1,93 @@
+{
+  "accepted": true,
+  "scope": "Windows native book title author favorite and durable typed edit recovery only",
+  "source_sha": "1be8367f056026fe92a4a8f527b62b83155fad47",
+  "run_id": 40050226847,
+  "attempt": 1,
+  "job_id": 120741039207,
+  "workflow": ".github/workflows/reader-desktop-sdk.yml",
+  "base_source": "210403d121d6484a8fff4ea7ffd911efa3163535",
+  "sdk_frozen_source": "9854061be331fe603a1822d9b2b36ee357154927",
+  "shared_adapter_source": "17eacd2de77dbf5b75bfab68ab2677174ebc0315",
+  "shared_adapter_version": "0.1.0",
+  "sdk_database_writes": false,
+  "schema1_changed": false,
+  "wire_changed": false,
+  "groups_ui_accepted": false,
+  "gtk_revalidation_credited": false,
+  "mobile_accepted": false,
+  "complete_product": false,
+  "performance_accepted": false,
+  "check_method": "completed GitHub job logs and run/job/artifact metadata; no local test execution or artifact download",
+  "checks": [
+    "original_native_control_ids_100_through_127_are_preserved_and_details_is_appended",
+    "actual_native_import_retains_the_independently_hashed_original_identity",
+    "first_editor_verifies_public_sdk_source_and_bootstraps_current_product_fields",
+    "native_unicode_entries_and_favorite_checkbox_commit_the_exact_user_fields",
+    "one_user_save_is_one_metadata_history_outbox_transaction_without_changing_original_or_local_id",
+    "cancel_closes_the_native_editor_without_creating_an_intent_or_changing_metadata",
+    "actual_product_write_refusal_preserves_a_complete_intent_with_zero_partial_writes",
+    "actual_host_process_termination_preserves_pending_bytes_and_releases_its_owner",
+    "fresh_native_host_detects_pending_without_automatically_rebinding_or_submitting_it",
+    "retry_commits_the_same_persisted_revision_and_full_typed_payload_once",
+    "normal_restart_does_not_duplicate_a_completed_native_edit",
+    "independent_installed_native_producer_advances_the_editor_snapshot_head",
+    "stale_native_gui_save_cannot_overwrite_a_concurrent_native_commit",
+    "explicit_discard_removes_only_the_uncommitted_original_intent",
+    "actual_writer_lock_cancel_and_dialog_wm_close_cannot_discard_an_accepted_save",
+    "native_utf16_input_refusal_keeps_saved_metadata_and_never_stages_a_partial_intent",
+    "main_window_wm_close_waits_for_the_accepted_native_transaction_before_exiting",
+    "original_public_sdk_reading_and_native_copy_survive_all_edits_recovery_and_normal_close"
+  ],
+  "count": 18,
+  "screenshots": [
+    "01-legacy-editor.bmp",
+    "02-native-edited-shelf.bmp",
+    "03-recoverable-refusal.bmp",
+    "04-stale-edit-retained.bmp",
+    "05-dialog-close-barrier.bmp",
+    "06-original-still-readable.bmp"
+  ],
+  "original_regressions": {
+    "sdk_consumer": 9,
+    "native_catalog": 12,
+    "actual_process_kills": [
+      {
+        "stage": "sdk",
+        "killed_returncode": 1,
+        "recovered": true
+      },
+      {
+        "stage": "transaction",
+        "killed_returncode": 1,
+        "recovered": true
+      }
+    ],
+    "package_selftest_minimum_enforced": 26,
+    "evidence_refusal_checks": 54,
+    "ui": {
+      "steps": 158,
+      "passed": 158,
+      "failed": 0
+    },
+    "ui_screenshots": 8,
+    "product": 10,
+    "worker": 5,
+    "bounded_shelf": 13,
+    "desktop_ctest": "3/3",
+    "product_provider_ctest": "1/1"
+  },
+  "actual_product_sha256_from_shelf_report": "ddf2bc053f19fd76d062f579d67adbfc2e16c8a93fa7167bf85cb9a22b500d96",
+  "artifact": {
+    "id": 12543013408,
+    "name": "reader-desktop-sdk-Windows-40050226847-1",
+    "size_in_bytes": 39071309,
+    "digest": "sha256:edcb1bc323d8f09d717c954e27422e698911c3f67e1d58733dbde7995cf50196",
+    "expired": false,
+    "expires_at": "2027-01-22T01:32:02Z",
+    "run_id": 40050226847,
+    "source_sha": "1be8367f056026fe92a4a8f527b62b83155fad47"
+  },
+  "full_metadata_report_path": "desktop-windows-metadata/metadata-ui.json",
+  "integration_next": "root merges this fixed delivery with its corrected GTK delivery and reruns the full five-job same-source preintegration gate"
+}
