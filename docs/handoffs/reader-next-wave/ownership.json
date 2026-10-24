@@ -1,0 +1,407 @@
+{
+  "schema": 1,
+  "prepared_for": "manual_user_handoff",
+  "implementation_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "dispatched_by_root": false,
+  "tasks": [
+    {
+      "id": "J01",
+      "slug": "webdav-import",
+      "title": "WebDAV 选书下载与侧载导入",
+      "priority": "P0",
+      "branch": "codex/reader-webdav-import",
+      "task": "webdav-import.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "apps/reader/cloud-import/**",
+        "tests/reader_webdav_import/**",
+        ".github/workflows/reader-webdav-import.yml",
+        "docs/READER-WEBDAV-IMPORT.md",
+        "docs/validation/reader-webdav-import.json"
+      ]
+    },
+    {
+      "id": "J02",
+      "slug": "opds-browser",
+      "title": "OPDS 浏览、搜索与获取适配",
+      "priority": "P1",
+      "branch": "codex/reader-opds-browser",
+      "task": "opds-browser.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "apps/reader/opds-browser/**",
+        "tests/reader_opds_browser/**",
+        ".github/workflows/reader-opds-browser.yml",
+        "docs/READER-OPDS-BROWSER.md",
+        "docs/validation/reader-opds-browser.json"
+      ]
+    },
+    {
+      "id": "J03",
+      "slug": "desktop-drop",
+      "title": "桌面文件拖放与粘贴入口适配",
+      "priority": "P1",
+      "branch": "codex/reader-desktop-drop",
+      "task": "desktop-drop.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "extras/desktop-drop/**",
+        "tests/reader_desktop_drop/**",
+        ".github/workflows/reader-desktop-drop.yml",
+        "docs/READER-DESKTOP-DROP.md",
+        "docs/validation/reader-desktop-drop.json"
+      ]
+    },
+    {
+      "id": "J04",
+      "slug": "android-import-entry",
+      "title": "Android 分享、打开与 SAF 文件入口",
+      "priority": "P0",
+      "branch": "codex/reader-android-import-entry",
+      "task": "android-import-entry.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "extras/android-import-entry/**",
+        "tests/reader_android_import_entry/**",
+        ".github/workflows/reader-android-import-entry.yml",
+        "docs/READER-ANDROID-IMPORT-ENTRY.md",
+        "docs/validation/reader-android-import-entry.json"
+      ]
+    },
+    {
+      "id": "J05",
+      "slug": "apple-file-entry",
+      "title": "Apple 文件选择、文件共享与安全作用域入口",
+      "priority": "P0",
+      "branch": "codex/reader-apple-file-entry",
+      "task": "apple-file-entry.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "extras/apple-file-entry/**",
+        "tests/reader_apple_file_entry/**",
+        ".github/workflows/reader-apple-file-entry.yml",
+        "docs/READER-APPLE-FILE-ENTRY.md",
+        "docs/validation/reader-apple-file-entry.json"
+      ]
+    },
+    {
+      "id": "J06",
+      "slug": "external-link-policy",
+      "title": "书内外链与打开动作策略",
+      "priority": "P1",
+      "branch": "codex/reader-external-link-policy",
+      "task": "external-link-policy.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "apps/reader/link-policy/**",
+        "tests/reader_external_link_policy/**",
+        ".github/workflows/reader-external-link-policy.yml",
+        "docs/READER-EXTERNAL-LINK-POLICY.md",
+        "docs/validation/reader-external-link-policy.json"
+      ]
+    },
+    {
+      "id": "J07",
+      "slug": "jump-history",
+      "title": "阅读跳转历史与前进后退",
+      "priority": "P1",
+      "branch": "codex/reader-jump-history",
+      "task": "jump-history.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "apps/reader/jump-history/**",
+        "tests/reader_jump_history/**",
+        ".github/workflows/reader-jump-history.yml",
+        "docs/READER-JUMP-HISTORY.md",
+        "docs/validation/reader-jump-history.json"
+      ]
+    },
+    {
+      "id": "J08",
+      "slug": "keyboard-actions",
+      "title": "原生快捷键与输入焦点动作映射",
+      "priority": "P1",
+      "branch": "codex/reader-keyboard-actions",
+      "task": "keyboard-actions.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "apps/reader/keyboard-actions/**",
+        "tests/reader_keyboard_actions/**",
+        ".github/workflows/reader-keyboard-actions.yml",
+        "docs/READER-KEYBOARD-ACTIONS.md",
+        "docs/validation/reader-keyboard-actions.json"
+      ]
+    },
+    {
+      "id": "J09",
+      "slug": "book-information",
+      "title": "原书与产品元数据只读信息快照",
+      "priority": "P1",
+      "branch": "codex/reader-book-information",
+      "task": "book-information.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "apps/reader/book-information/**",
+        "tests/reader_book_information/**",
+        ".github/workflows/reader-book-information.yml",
+        "docs/READER-BOOK-INFORMATION.md",
+        "docs/validation/reader-book-information.json"
+      ]
+    },
+    {
+      "id": "J10",
+      "slug": "bulk-organization",
+      "title": "书架批量整理命令",
+      "priority": "P0",
+      "branch": "codex/reader-bulk-organization",
+      "task": "bulk-organization.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "apps/reader/bulk-organization/**",
+        "tests/reader_bulk_organization/**",
+        ".github/workflows/reader-bulk-organization.yml",
+        "docs/READER-BULK-ORGANIZATION.md",
+        "docs/validation/reader-bulk-organization.json"
+      ]
+    },
+    {
+      "id": "J11",
+      "slug": "explicit-conflict-actions",
+      "title": "显式冲突选择与合并命令",
+      "priority": "P0",
+      "branch": "codex/reader-explicit-conflict-actions",
+      "task": "explicit-conflict-actions.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "apps/reader/conflict-actions/**",
+        "tests/reader_explicit_conflict_actions/**",
+        ".github/workflows/reader-explicit-conflict-actions.yml",
+        "docs/READER-EXPLICIT-CONFLICT-ACTIONS.md",
+        "docs/validation/reader-explicit-conflict-actions.json"
+      ]
+    },
+    {
+      "id": "J12",
+      "slug": "sync-status-view",
+      "title": "同步、待处理与错误状态只读模型",
+      "priority": "P1",
+      "branch": "codex/reader-sync-status-view",
+      "task": "sync-status-view.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "apps/reader/sync-status-view/**",
+        "tests/reader_sync_status_view/**",
+        ".github/workflows/reader-sync-status-view.yml",
+        "docs/READER-SYNC-STATUS-VIEW.md",
+        "docs/validation/reader-sync-status-view.json"
+      ]
+    },
+    {
+      "id": "J13",
+      "slug": "account-profiles",
+      "title": "不含秘密的账号配置与隔离目录",
+      "priority": "P1",
+      "branch": "codex/reader-account-profiles",
+      "task": "account-profiles.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "apps/reader/account-profiles/**",
+        "tests/reader_account_profiles/**",
+        ".github/workflows/reader-account-profiles.yml",
+        "docs/READER-ACCOUNT-PROFILES.md",
+        "docs/validation/reader-account-profiles.json"
+      ]
+    },
+    {
+      "id": "J14",
+      "slug": "library-health",
+      "title": "原书与本机映射健康检查",
+      "priority": "P1",
+      "branch": "codex/reader-library-health",
+      "task": "library-health.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "apps/reader/library-health/**",
+        "tests/reader_library_health/**",
+        ".github/workflows/reader-library-health.yml",
+        "docs/READER-LIBRARY-HEALTH.md",
+        "docs/validation/reader-library-health.json"
+      ]
+    },
+    {
+      "id": "J15",
+      "slug": "ocr-overlay",
+      "title": "扫描页 OCR 临时文字覆盖层",
+      "priority": "P2",
+      "branch": "codex/reader-ocr-overlay",
+      "task": "ocr-overlay.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "apps/reader/ocr-overlay/**",
+        "tests/reader_ocr_overlay/**",
+        ".github/workflows/reader-ocr-overlay.yml",
+        "docs/READER-OCR-OVERLAY.md",
+        "docs/validation/reader-ocr-overlay.json"
+      ]
+    },
+    {
+      "id": "J16",
+      "slug": "tts-windows",
+      "title": "Windows 原生朗读适配",
+      "priority": "P2",
+      "branch": "codex/reader-tts-windows",
+      "task": "tts-windows.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "extras/reader-tts-windows/**",
+        "tests/reader_tts_windows/**",
+        ".github/workflows/reader-tts-windows.yml",
+        "docs/READER-TTS-WINDOWS.md",
+        "docs/validation/reader-tts-windows.json"
+      ]
+    },
+    {
+      "id": "J17",
+      "slug": "tts-apple",
+      "title": "macOS／iPhone／iPad 原生朗读适配",
+      "priority": "P2",
+      "branch": "codex/reader-tts-apple",
+      "task": "tts-apple.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "extras/reader-tts-apple/**",
+        "tests/reader_tts_apple/**",
+        ".github/workflows/reader-tts-apple.yml",
+        "docs/READER-TTS-APPLE.md",
+        "docs/validation/reader-tts-apple.json"
+      ]
+    },
+    {
+      "id": "J18",
+      "slug": "tts-android",
+      "title": "Android 系统 TextToSpeech 适配",
+      "priority": "P2",
+      "branch": "codex/reader-tts-android",
+      "task": "tts-android.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "extras/reader-tts-android/**",
+        "tests/reader_tts_android/**",
+        ".github/workflows/reader-tts-android.yml",
+        "docs/READER-TTS-ANDROID.md",
+        "docs/validation/reader-tts-android.json"
+      ]
+    },
+    {
+      "id": "J19",
+      "slug": "tts-linux",
+      "title": "Linux 原生 Speech Dispatcher 朗读适配",
+      "priority": "P2",
+      "branch": "codex/reader-tts-linux",
+      "task": "tts-linux.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "extras/reader-tts-linux/**",
+        "tests/reader_tts_linux/**",
+        ".github/workflows/reader-tts-linux.yml",
+        "docs/READER-TTS-LINUX.md",
+        "docs/validation/reader-tts-linux.json"
+      ]
+    },
+    {
+      "id": "J20",
+      "slug": "localization",
+      "title": "中英文界面资源与格式化",
+      "priority": "P1",
+      "branch": "codex/reader-localization",
+      "task": "localization.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "apps/reader/localization/**",
+        "tests/reader_localization/**",
+        ".github/workflows/reader-localization.yml",
+        "docs/READER-LOCALIZATION.md",
+        "docs/validation/reader-localization.json"
+      ]
+    },
+    {
+      "id": "J21",
+      "slug": "diagnostic-report",
+      "title": "隐私保护的用户诊断导出",
+      "priority": "P2",
+      "branch": "codex/reader-diagnostic-report",
+      "task": "diagnostic-report.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "apps/reader/diagnostic-report/**",
+        "tests/reader_diagnostic_report/**",
+        ".github/workflows/reader-diagnostic-report.yml",
+        "docs/READER-DIAGNOSTIC-REPORT.md",
+        "docs/validation/reader-diagnostic-report.json"
+      ]
+    },
+    {
+      "id": "J22",
+      "slug": "cross-os-relay",
+      "title": "真实跨操作系统修订与原书往返验收",
+      "priority": "P0",
+      "branch": "codex/reader-cross-os-relay",
+      "task": "cross-os-relay.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "tests/reader_cross_os_relay/**",
+        ".github/workflows/reader-cross-os-relay.yml",
+        "docs/READER-CROSS-OS-RELAY.md",
+        "docs/validation/reader-cross-os-relay.json"
+      ]
+    },
+    {
+      "id": "J23",
+      "slug": "app-boundary-fuzz",
+      "title": "应用模块公开边界故障与模糊回归",
+      "priority": "P1",
+      "branch": "codex/reader-app-boundary-fuzz",
+      "task": "app-boundary-fuzz.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "tests/reader_app_boundary_fuzz/**",
+        ".github/workflows/reader-app-boundary-fuzz.yml",
+        "docs/READER-APP-BOUNDARY-FUZZ.md",
+        "docs/validation/reader-app-boundary-fuzz.json"
+      ]
+    },
+    {
+      "id": "J24",
+      "slug": "distribution-unix",
+      "title": "Unix 可重定位分发准备",
+      "priority": "P1",
+      "branch": "codex/reader-distribution-unix",
+      "task": "distribution-unix.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "tests/reader_distribution_unix/**",
+        ".github/workflows/reader-distribution-unix.yml",
+        "docs/READER-DISTRIBUTION-UNIX.md",
+        "docs/validation/reader-distribution-unix.json",
+        "tools/reader_distribution_unix/**"
+      ]
+    },
+    {
+      "id": "J25",
+      "slug": "distribution-windows",
+      "title": "Windows 无构建路径的分发准备",
+      "priority": "P1",
+      "branch": "codex/reader-distribution-windows",
+      "task": "distribution-windows.md",
+      "state": "ready_not_dispatched",
+      "allowed_paths": [
+        "tests/reader_distribution_windows/**",
+        ".github/workflows/reader-distribution-windows.yml",
+        "docs/READER-DISTRIBUTION-WINDOWS.md",
+        "docs/validation/reader-distribution-windows.json",
+        "tools/reader_distribution_windows/**"
+      ]
+    }
+  ]
+}
