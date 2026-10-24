@@ -1,0 +1,113 @@
+name: Reader real SDK reading-state round trip
+on:
+  push:
+    branches: [codex/reader-reading-state]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  reading-state:
+    name: reading state (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK, schema1 and read-only shared reader modules
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor 210403d121d6484a8fff4ea7ffd911efa3163535 HEAD
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
+          git diff --exit-code f32bb8aa18ed3de286900f19ce4230fd93435dd0 HEAD -- apps/reader/store/001_catalog.sql
+          git diff --exit-code 210403d121d6484a8fff4ea7ffd911efa3163535 HEAD -- apps/reader/store apps/reader/revisions apps/reader/sync apps/reader/commands docs/READER-REVISION-WIRE.md
+      - name: Enter Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Install the one product SQLite provider and unchanged revision module
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          prefix="$ws/build/rs-product-stage"
+          echo "RS_WORKSPACE=$ws" >> "$GITHUB_ENV"
+          echo "RS_PREFIX=$prefix" >> "$GITHUB_ENV"
+          mkdir -p build/rs-logs
+          cmake -S apps/reader/store/native -B build/rs-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee build/rs-logs/product-configure.log
+          cmake --build build/rs-product --parallel 4 2>&1 | tee build/rs-logs/product-build.log
+          cmake --install build/rs-product 2>&1 | tee build/rs-logs/product-install.log
+          cmake -S apps/reader/revisions -B build/rs-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee build/rs-logs/revisions-configure.log
+          cmake --build build/rs-revisions --parallel 4 2>&1 | tee build/rs-logs/revisions-build.log
+          cmake --install build/rs-revisions 2>&1 | tee build/rs-logs/revisions-install.log
+      - name: Build and install the unmodified reading-library SDK
+        run: |
+          cmake --preset reading-library 2>&1 | tee build/rs-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/rs-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/rs-logs/sdk-install.log
+      - name: Build and install the reading-state adapter against installed packages only
+        run: |
+          set -o pipefail
+          cmake -S apps/reader/reading-state -B build/rs-adapter -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$RS_WORKSPACE/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$RS_PREFIX" -DCMAKE_INSTALL_PREFIX="$RS_PREFIX" 2>&1 | tee build/rs-logs/adapter-configure.log
+          cmake --build build/rs-adapter --verbose 2>&1 | tee build/rs-logs/adapter-build.log
+          cmake --install build/rs-adapter 2>&1 | tee build/rs-logs/adapter-install.log
+      - name: Compile independent C and C++ consumers from installed packages
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_reading_state/consumer -B build/rs-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$RS_PREFIX;$RS_WORKSPACE/build/reading-library/stage" 2>&1 | tee build/rs-logs/consumer-configure.log
+          cmake --build build/rs-consumer --verbose 2>&1 | tee build/rs-logs/consumer-build.log
+      - name: Generate originals, two libraries and two catalogs, then judge the real round trip
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_reading_state/make_fixtures.py build/rs-fixtures
+          python3 tests/reader_reading_state/check_reading_state.py --probe "build/rs-consumer/reading-state-probe$exe" --c-consumer "build/rs-consumer/reading-state-c-consumer$exe" --fixtures build/rs-fixtures --font tests/fixtures/fonts/primary.ttf --link-map build/rs-consumer/reading-state-link.map --output build/rs-evidence
+      - name: Preserve source-bound originals, databases, packages and every failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-reading-state-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/rs-logs/
+            build/rs-fixtures/
+            build/rs-evidence/
+            build/rs-product-stage/
+            build/rs-consumer/reading-state-probe*
+            build/rs-consumer/reading-state-c-consumer*
+            build/rs-consumer/reading-state-link.map
+            build/rs-adapter/CMakeCache.txt
+          if-no-files-found: error
+  evidence:
+    name: same-run artifact evidence
+    needs: reading-state
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify both same-run ZIPs, digests and report identity in the cloud
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_reading_state/check_artifacts.py build/rs-artifact-evidence
+      - name: Preserve the artifact verification record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-reading-state-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/rs-artifact-evidence/
+          if-no-files-found: error

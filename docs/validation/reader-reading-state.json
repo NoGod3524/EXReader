@@ -1,0 +1,1396 @@
+{
+  "schema": "reader-reading-state-compatibility-v1",
+  "accepted": true,
+  "scope": "Protocol compatibility research plus real two-library v1 highlight round trip; NOT reading-state sync completion",
+  "reading_state_sync_complete": false,
+  "progress_sync_accepted": false,
+  "bookmark_sync_accepted": false,
+  "v1_nonempty_highlight_roundtrip_accepted": true,
+  "source_sha": "a403fee5f0cdb120840cd6fe0ef24e5fc2c0ce96",
+  "branch": "codex/reader-reading-state",
+  "fixed_start": "210403d121d6484a8fff4ea7ffd911efa3163535",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "original_product_schema1": "f32bb8aa18ed3de286900f19ce4230fd93435dd0",
+  "gates": [
+    "HEAD == GITHUB_SHA",
+    "fixed start is an ancestor",
+    "eight frozen SDK paths unchanged",
+    "schema1 unchanged",
+    "apps/reader/{store,revisions,sync,commands} and READER-REVISION-WIRE.md unchanged since the fixed start"
+  ],
+  "run_id": 40055313938,
+  "attempt": 1,
+  "workflow": ".github/workflows/reader-reading-state.yml",
+  "workflow_conclusion": "success",
+  "packages": {
+    "sdk": "EXReader 3.40.0 (reading-library preset, installed stage)",
+    "product": "EXReaderProductCatalog 0.1.0",
+    "revisions": "EXReaderRevisions 0.3.0 (unchanged)",
+    "adapter": "EXReaderReadingState 0.1.0"
+  },
+  "originals": {
+    "cbz": {
+      "bytes": 43936,
+      "file": "pages.cbz",
+      "sha256": "1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3"
+    },
+    "edited": {
+      "bytes": 663,
+      "file": "book-edited.txt",
+      "sha256": "a3fd2777a0091020bd583a5e5c7bf8063f5bae2d43fba2114f8eb0fabf570ad8"
+    },
+    "epub": {
+      "bytes": 1913,
+      "file": "book.epub",
+      "sha256": "99a21d3a73924d5b2efe4596076348b1eb7b00715ebc727737edd91f2f3bf50b"
+    },
+    "pdf": {
+      "bytes": 1560,
+      "file": "pages.pdf",
+      "sha256": "23f9dff3bc6bd85a19a9e24c6cb0390e17d7907af8c6b98c55273295386431ed"
+    },
+    "spacer": {
+      "bytes": 45,
+      "file": "spacer.txt",
+      "sha256": "bca6bef0f360d7af447351aff99b1683f0506d14c3dceb4731edb5baa55d55fc"
+    },
+    "txt": {
+      "bytes": 636,
+      "file": "book.txt",
+      "sha256": "fcc117171436330ec0a2fa7ba24437593d77b30e96ba25cb2b9d8649ed0ac604"
+    }
+  },
+  "originals_identical_across_runners": true,
+  "platforms": [
+    {
+      "runner": "ubuntu-22.04",
+      "job_id": 120756903673,
+      "conclusion": "success",
+      "probe_checks": 121,
+      "probe_checks_failed": 0,
+      "cases": 24,
+      "receiver_found": 19,
+      "receiver_mislocated": 0,
+      "sdk_writes_without_found": 0,
+      "revisions_exchanged": 14,
+      "sdk_ids": {
+        "spacer": {
+          "A": null,
+          "B": 1
+        },
+        "txt": {
+          "A": 1,
+          "B": 2
+        },
+        "edited": {
+          "A": 2,
+          "B": 3
+        },
+        "epub": {
+          "A": 3,
+          "B": 4
+        },
+        "pdf": {
+          "A": 4,
+          "B": 5
+        },
+        "cbz": {
+          "A": 5,
+          "B": 6
+        }
+      },
+      "sqlite": {
+        "version": "3.54.0",
+        "source_id": "2026-10-09 15:46:58 be8d059e9a49089ab2dce5ed26dd87aaf598fdc5fbe0b107c0dd758464bcd5e3",
+        "link_provider": [
+          "libreader_catalog_sqlite.a"
+        ],
+        "open_v2_map": [
+          "0x00000000001399b0                sqlite3_open_v2"
+        ]
+      },
+      "probe_sha256": "74f186237c43258457856431d77e7ab4fa708a48946f1ef3eb96cccaea3d5ca4",
+      "c_consumer_sha256": "a3e4d3d5869451ce3586a2559e22f6da29ced73ef5f154af4e3274970c5d82ca",
+      "report_sha256": "a897d7210cd1f3178612db5e4da9aae92c88d2e011c55bfc30e82425f189b8ae",
+      "artifact": {
+        "name": "reader-reading-state-Linux-40055313938-1",
+        "id": 12545052072,
+        "bytes": 10092312,
+        "digest": "sha256:08dc00185ca1ac055cd235fb0bcd672e59e2c83e6c87dd0234ae174bb932fef1",
+        "summary_sha256": "8440ff7b1bdfa94ed8d37bb71041ea43a2cc4dabbafc116d3dfde7f4f893a884",
+        "report_sha256": "a897d7210cd1f3178612db5e4da9aae92c88d2e011c55bfc30e82425f189b8ae"
+      },
+      "receiver_progress_untouched_by_remote_annotations": true,
+      "problems": []
+    },
+    {
+      "runner": "windows-2022",
+      "job_id": 120756903961,
+      "conclusion": "success",
+      "probe_checks": 121,
+      "probe_checks_failed": 0,
+      "cases": 24,
+      "receiver_found": 19,
+      "receiver_mislocated": 0,
+      "sdk_writes_without_found": 0,
+      "revisions_exchanged": 14,
+      "sdk_ids": {
+        "spacer": {
+          "A": null,
+          "B": 1
+        },
+        "txt": {
+          "A": 1,
+          "B": 2
+        },
+        "edited": {
+          "A": 2,
+          "B": 3
+        },
+        "epub": {
+          "A": 3,
+          "B": 4
+        },
+        "pdf": {
+          "A": 4,
+          "B": 5
+        },
+        "cbz": {
+          "A": 5,
+          "B": 6
+        }
+      },
+      "sqlite": {
+        "version": "3.54.0",
+        "source_id": "2026-10-09 15:46:58 be8d059e9a49089ab2dce5ed26dd87aaf598fdc5fbe0b107c0dd758464bcd5e3",
+        "link_provider": [
+          "reader_catalog_sqlite.lib"
+        ],
+        "open_v2_map": [
+          "0001:000db5d0       sqlite3_open_v2            00000001400dc5d0 f   reader_catalog_sqlite:sqlite3.c.obj"
+        ]
+      },
+      "probe_sha256": "65c3ea90447932f495ee60bc6d0bf9a8884adcf24aad16c3d2cadbbc2de6ecb7",
+      "c_consumer_sha256": "74076ad00268bdba7f62ed03f2cbe6075955340e0b78f9df5c38c8a3ca04e676",
+      "report_sha256": "85db7029bbc6ca4891ebbcad716838943f5952623a3526a2ec6a0c3db738e19e",
+      "artifact": {
+        "name": "reader-reading-state-Windows-40055313938-1",
+        "id": 12544859098,
+        "bytes": 8168739,
+        "digest": "sha256:853a8c8a00d9467d9758af4f16cef7b5dd31cf28b299cc68697f1ad65e466a18",
+        "summary_sha256": "615972a66006f15bba04be83683beb595c90ecfbb4eeece5d2b7358ed1bc15a5",
+        "report_sha256": "85db7029bbc6ca4891ebbcad716838943f5952623a3526a2ec6a0c3db738e19e"
+      },
+      "receiver_progress_untouched_by_remote_annotations": true,
+      "problems": []
+    }
+  ],
+  "cases_and_lifecycle_identical_across_runners": true,
+  "evidence_job": {
+    "job_id": 120757666509,
+    "conclusion": "success",
+    "artifact": {
+      "name": "reader-reading-state-evidence-40055313938-1",
+      "id": 12545440405,
+      "bytes": 1659,
+      "digest": "sha256:4d99ea93e03e7703ca18419d31980686c5b30923e87236c460b93e3393fb2a1b"
+    },
+    "verified": "both same-run ZIPs downloaded in Actions; real size and SHA-256 equal the API record; artifact head SHA, summary identity and report hash bound to this source/run/attempt",
+    "problems": [],
+    "local_artifact_download": false
+  },
+  "cases": [
+    {
+      "id": "txt-highlight-start",
+      "book": "txt",
+      "kind": "highlight",
+      "mode": "reflow_global",
+      "sdk_capture": "exr_anchor_create",
+      "capture_status": 0,
+      "capture": {
+        "start": 0,
+        "end": 27,
+        "exact_bytes": 27,
+        "prefix_bytes": 0,
+        "suffix_bytes": 55,
+        "chapter": null
+      },
+      "sender_resolve": "FOUND",
+      "v1_literal": {
+        "status": 0,
+        "message": ""
+      },
+      "adapter": {
+        "status": "OK",
+        "gap": "none"
+      },
+      "receiver": {
+        "path": "v1",
+        "status": "OK",
+        "state": "FOUND",
+        "start": 0,
+        "end": 27,
+        "expected_start": 0,
+        "expected_end": 27,
+        "sdk_persisted": true,
+        "note": ""
+      }
+    },
+    {
+      "id": "txt-highlight-multibyte-boundary",
+      "book": "txt",
+      "kind": "highlight",
+      "mode": "reflow_global",
+      "sdk_capture": "exr_anchor_create",
+      "capture_status": 0,
+      "capture": {
+        "start": 42,
+        "end": 55,
+        "exact_bytes": 13,
+        "prefix_bytes": 42,
+        "suffix_bytes": 36,
+        "chapter": null
+      },
+      "sender_resolve": "FOUND",
+      "v1_literal": {
+        "status": 0,
+        "message": ""
+      },
+      "adapter": {
+        "status": "OK",
+        "gap": "none"
+      },
+      "receiver": {
+        "path": "v1",
+        "status": "OK",
+        "state": "FOUND",
+        "start": 42,
+        "end": 55,
+        "expected_start": 42,
+        "expected_end": 55,
+        "sdk_persisted": true,
+        "note": ""
+      }
+    },
+    {
+      "id": "txt-highlight-end",
+      "book": "txt",
+      "kind": "highlight",
+      "mode": "reflow_global",
+      "sdk_capture": "exr_anchor_create",
+      "capture_status": 0,
+      "capture": {
+        "start": 629,
+        "end": 636,
+        "exact_bytes": 7,
+        "prefix_bytes": 58,
+        "suffix_bytes": 0,
+        "chapter": null
+      },
+      "sender_resolve": "FOUND",
+      "v1_literal": {
+        "status": 0,
+        "message": ""
+      },
+      "adapter": {
+        "status": "OK",
+        "gap": "none"
+      },
+      "receiver": {
+        "path": "v1",
+        "status": "OK",
+        "state": "FOUND",
+        "start": 629,
+        "end": 636,
+        "expected_start": 629,
+        "expected_end": 636,
+        "sdk_persisted": true,
+        "note": ""
+      }
+    },
+    {
+      "id": "txt-highlight-duplicate-text-unique-context",
+      "book": "txt",
+      "kind": "highlight",
+      "mode": "reflow_global",
+      "sdk_capture": "exr_anchor_create",
+      "capture_status": 0,
+      "capture": {
+        "start": 151,
+        "end": 184,
+        "exact_bytes": 33,
+        "prefix_bytes": 32,
+        "suffix_bytes": 32,
+        "chapter": null
+      },
+      "sender_resolve": "FOUND",
+      "v1_literal": {
+        "status": 0,
+        "message": ""
+      },
+      "adapter": {
+        "status": "OK",
+        "gap": "none"
+      },
+      "receiver": {
+        "path": "v1",
+        "status": "OK",
+        "state": "FOUND",
+        "start": 151,
+        "end": 184,
+        "expected_start": 151,
+        "expected_end": 184,
+        "sdk_persisted": true,
+        "note": ""
+      }
+    },
+    {
+      "id": "txt-highlight-ambiguous",
+      "book": "txt",
+      "kind": "highlight",
+      "mode": "reflow_global",
+      "sdk_capture": "exr_anchor_create",
+      "capture_status": 0,
+      "capture": {
+        "start": 482,
+        "end": 498,
+        "exact_bytes": 16,
+        "prefix_bytes": 32,
+        "suffix_bytes": 32,
+        "chapter": null
+      },
+      "sender_resolve": "AMBIGUOUS",
+      "v1_literal": {
+        "status": 0,
+        "message": ""
+      },
+      "adapter": {
+        "status": "OK",
+        "gap": "none"
+      },
+      "receiver": {
+        "path": "v1",
+        "status": "UNRESOLVED",
+        "state": "AMBIGUOUS",
+        "start": null,
+        "end": null,
+        "expected_start": 482,
+        "expected_end": 498,
+        "sdk_persisted": false,
+        "note": ""
+      }
+    },
+    {
+      "id": "txt-invalid-utf8-offset-refused",
+      "book": "txt",
+      "kind": "highlight",
+      "mode": "reflow_global",
+      "sdk_capture": "exr_anchor_create",
+      "capture_status": 1,
+      "capture_message": "Selection must lie on UTF-8 boundaries inside the document"
+    },
+    {
+      "id": "txt-progress-point-multibyte",
+      "book": "txt",
+      "kind": "progress",
+      "mode": "reflow_global",
+      "sdk_capture": "exr_anchor_create",
+      "capture_status": 0,
+      "capture": {
+        "start": 48,
+        "end": 48,
+        "exact_bytes": 0,
+        "prefix_bytes": 48,
+        "suffix_bytes": 41,
+        "chapter": null
+      },
+      "sender_resolve": "FOUND",
+      "v1_literal": {
+        "status": 4,
+        "message": "Empty revision field"
+      },
+      "adapter": {
+        "status": "NOT_REPRESENTABLE",
+        "gap": "point"
+      },
+      "v2_proposal_by_unchanged_v1": {
+        "status": 4,
+        "message": "Unsupported anchor version"
+      },
+      "receiver": {
+        "path": "v2_proposal",
+        "status": "OK",
+        "state": "FOUND",
+        "start": 48,
+        "end": 48,
+        "expected_start": 48,
+        "expected_end": 48,
+        "sdk_persisted": true,
+        "note": "active reader: FOUND candidate offered, stored progress and view unchanged"
+      }
+    },
+    {
+      "id": "txt-progress-point-start",
+      "book": "txt",
+      "kind": "progress",
+      "mode": "reflow_global",
+      "sdk_capture": "exr_anchor_create",
+      "capture_status": 0,
+      "capture": {
+        "start": 0,
+        "end": 0,
+        "exact_bytes": 0,
+        "prefix_bytes": 0,
+        "suffix_bytes": 73,
+        "chapter": null
+      },
+      "sender_resolve": "FOUND",
+      "v1_literal": {
+        "status": 4,
+        "message": "Empty revision field"
+      },
+      "adapter": {
+        "status": "NOT_REPRESENTABLE",
+        "gap": "point"
+      },
+      "v2_proposal_by_unchanged_v1": {
+        "status": 4,
+        "message": "Unsupported anchor version"
+      },
+      "receiver": {
+        "path": "v2_proposal",
+        "status": "OK",
+        "state": "FOUND",
+        "start": 0,
+        "end": 0,
+        "expected_start": 0,
+        "expected_end": 0,
+        "sdk_persisted": true,
+        "note": ""
+      }
+    },
+    {
+      "id": "txt-progress-point-end",
+      "book": "txt",
+      "kind": "progress",
+      "mode": "reflow_global",
+      "sdk_capture": "exr_anchor_create",
+      "capture_status": 0,
+      "capture": {
+        "start": 636,
+        "end": 636,
+        "exact_bytes": 0,
+        "prefix_bytes": 63,
+        "suffix_bytes": 0,
+        "chapter": null
+      },
+      "sender_resolve": "FOUND",
+      "v1_literal": {
+        "status": 4,
+        "message": "Empty revision field"
+      },
+      "adapter": {
+        "status": "NOT_REPRESENTABLE",
+        "gap": "point"
+      },
+      "v2_proposal_by_unchanged_v1": {
+        "status": 4,
+        "message": "Unsupported anchor version"
+      },
+      "receiver": {
+        "path": "v2_proposal",
+        "status": "OK",
+        "state": "FOUND",
+        "start": 636,
+        "end": 636,
+        "expected_start": 636,
+        "expected_end": 636,
+        "sdk_persisted": true,
+        "note": ""
+      }
+    },
+    {
+      "id": "txt-bookmark-point",
+      "book": "txt",
+      "kind": "bookmark",
+      "mode": "reflow_global",
+      "sdk_capture": "exr_anchor_create",
+      "capture_status": 0,
+      "capture": {
+        "start": 118,
+        "end": 118,
+        "exact_bytes": 0,
+        "prefix_bytes": 32,
+        "suffix_bytes": 32,
+        "chapter": null
+      },
+      "sender_resolve": "FOUND",
+      "v1_literal": {
+        "status": 4,
+        "message": "Empty revision field"
+      },
+      "adapter": {
+        "status": "NOT_REPRESENTABLE",
+        "gap": "point"
+      },
+      "v2_proposal_by_unchanged_v1": {
+        "status": 4,
+        "message": "Unsupported anchor version"
+      },
+      "receiver": {
+        "path": "v2_proposal",
+        "status": "OK",
+        "state": "FOUND",
+        "start": 118,
+        "end": 118,
+        "expected_start": 118,
+        "expected_end": 118,
+        "sdk_persisted": true,
+        "note": ""
+      }
+    },
+    {
+      "id": "txt-missing-cross-original",
+      "book": "edited->txt",
+      "kind": "highlight",
+      "mode": "reflow_global",
+      "sdk_capture": "exr_anchor_create",
+      "capture_status": 0,
+      "capture": {
+        "start": 179,
+        "end": 210,
+        "exact_bytes": 31,
+        "prefix_bytes": 32,
+        "suffix_bytes": 32,
+        "chapter": null
+      },
+      "v1_literal": {
+        "status": 0,
+        "message": ""
+      },
+      "adapter": {
+        "status": "OK",
+        "gap": "none"
+      },
+      "receiver": {
+        "path": "v1(forced-into-wrong-book)",
+        "status": "UNRESOLVED",
+        "state": "MISSING",
+        "start": null,
+        "end": null,
+        "expected_start": 179,
+        "expected_end": 210,
+        "sdk_persisted": false,
+        "note": "identity check precedes resolve in product routing"
+      }
+    },
+    {
+      "id": "epub-global-chapter-scope",
+      "book": "epub(memory import)",
+      "kind": "highlight",
+      "mode": "reflow_global",
+      "sdk_capture": "exr_anchor_create",
+      "capture_status": 0,
+      "capture": {
+        "start": 172,
+        "end": 196,
+        "exact_bytes": 24,
+        "prefix_bytes": 0,
+        "suffix_bytes": 56,
+        "chapter": "b.xhtml"
+      },
+      "sender_resolve": "FOUND",
+      "v1_literal": {
+        "status": 0,
+        "message": ""
+      },
+      "adapter": {
+        "status": "NOT_REPRESENTABLE",
+        "gap": "chapter_scope"
+      },
+      "v2_proposal_by_unchanged_v1": {
+        "status": 4,
+        "message": "Unsupported anchor version"
+      },
+      "receiver": {
+        "path": "v2_proposal",
+        "status": "OK",
+        "state": "FOUND",
+        "start": 172,
+        "end": 196,
+        "expected_start": 172,
+        "expected_end": 196,
+        "sdk_persisted": false,
+        "note": "no SDK write: global EPUB progress/notes are not used by the bounded product path"
+      },
+      "scope_comparison": {
+        "with_chapter": "FOUND",
+        "chapter_dropped": "FOUND"
+      }
+    },
+    {
+      "id": "epub-highlight-chapter",
+      "book": "epub",
+      "kind": "highlight",
+      "mode": "epub_chapter",
+      "sdk_capture": "exr_pager_anchor_create",
+      "capture_status": 0,
+      "capture": {
+        "start": 27,
+        "end": 39,
+        "exact_bytes": 12,
+        "prefix_bytes": 27,
+        "suffix_bytes": 46,
+        "chapter": "b.xhtml"
+      },
+      "sender_resolve": "FOUND",
+      "v1_literal": {
+        "status": 0,
+        "message": ""
+      },
+      "adapter": {
+        "status": "OK",
+        "gap": "none"
+      },
+      "receiver": {
+        "path": "v1",
+        "status": "OK",
+        "state": "FOUND",
+        "start": 27,
+        "end": 39,
+        "expected_start": 27,
+        "expected_end": 39,
+        "sdk_persisted": true,
+        "note": ""
+      },
+      "pager_equals_part_document_capture": true
+    },
+    {
+      "id": "epub-highlight-chapter-end",
+      "book": "epub",
+      "kind": "highlight",
+      "mode": "epub_chapter",
+      "sdk_capture": "exr_pager_anchor_create",
+      "capture_status": 0,
+      "capture": {
+        "start": 159,
+        "end": 169,
+        "exact_bytes": 10,
+        "prefix_bytes": 32,
+        "suffix_bytes": 0,
+        "chapter": "b.xhtml"
+      },
+      "sender_resolve": "FOUND",
+      "v1_literal": {
+        "status": 0,
+        "message": ""
+      },
+      "adapter": {
+        "status": "OK",
+        "gap": "none"
+      },
+      "receiver": {
+        "path": "v1",
+        "status": "OK",
+        "state": "FOUND",
+        "start": 159,
+        "end": 169,
+        "expected_start": 159,
+        "expected_end": 169,
+        "sdk_persisted": true,
+        "note": ""
+      },
+      "pager_equals_part_document_capture": true
+    },
+    {
+      "id": "epub-progress-point",
+      "book": "epub",
+      "kind": "progress",
+      "mode": "epub_chapter",
+      "sdk_capture": "exr_pager_anchor_create",
+      "capture_status": 0,
+      "capture": {
+        "start": 27,
+        "end": 27,
+        "exact_bytes": 0,
+        "prefix_bytes": 27,
+        "suffix_bytes": 54,
+        "chapter": "b.xhtml"
+      },
+      "sender_resolve": "FOUND",
+      "v1_literal": {
+        "status": 4,
+        "message": "Empty revision field"
+      },
+      "adapter": {
+        "status": "NOT_REPRESENTABLE",
+        "gap": "point"
+      },
+      "v2_proposal_by_unchanged_v1": {
+        "status": 4,
+        "message": "Unsupported anchor version"
+      },
+      "receiver": {
+        "path": "v2_proposal",
+        "status": "OK",
+        "state": "FOUND",
+        "start": 27,
+        "end": 27,
+        "expected_start": 27,
+        "expected_end": 27,
+        "sdk_persisted": true,
+        "note": ""
+      },
+      "pager_equals_part_document_capture": true
+    },
+    {
+      "id": "epub-bookmark-chapter-start",
+      "book": "epub",
+      "kind": "bookmark",
+      "mode": "epub_chapter",
+      "sdk_capture": "exr_pager_anchor_create",
+      "capture_status": 0,
+      "capture": {
+        "start": 0,
+        "end": 0,
+        "exact_bytes": 0,
+        "prefix_bytes": 0,
+        "suffix_bytes": 72,
+        "chapter": "b.xhtml"
+      },
+      "sender_resolve": "FOUND",
+      "v1_literal": {
+        "status": 4,
+        "message": "Empty revision field"
+      },
+      "adapter": {
+        "status": "NOT_REPRESENTABLE",
+        "gap": "point"
+      },
+      "v2_proposal_by_unchanged_v1": {
+        "status": 4,
+        "message": "Unsupported anchor version"
+      },
+      "receiver": {
+        "path": "v2_proposal",
+        "status": "OK",
+        "state": "FOUND",
+        "start": 0,
+        "end": 0,
+        "expected_start": 0,
+        "expected_end": 0,
+        "sdk_persisted": false,
+        "note": "FOUND; SDK bounded EPUB notes require a nonempty quote, so the bookmark stays a product record"
+      },
+      "pager_equals_part_document_capture": true
+    },
+    {
+      "id": "epub-highlight-repeated-spine-route",
+      "book": "epub",
+      "kind": "highlight",
+      "mode": "epub_chapter",
+      "sdk_capture": "exr_pager_anchor_create",
+      "capture_status": 0,
+      "capture": {
+        "start": 0,
+        "end": 22,
+        "exact_bytes": 22,
+        "prefix_bytes": 0,
+        "suffix_bytes": 32,
+        "chapter": "a.xhtml"
+      },
+      "sender_resolve": "FOUND",
+      "v1_literal": {
+        "status": 0,
+        "message": ""
+      },
+      "adapter": {
+        "status": "OK",
+        "gap": "none"
+      },
+      "receiver": {
+        "path": "v1",
+        "status": "IDENTITY",
+        "state": "MISSING",
+        "start": null,
+        "end": null,
+        "expected_start": 0,
+        "expected_end": 22,
+        "sdk_persisted": false,
+        "note": "route refused: route"
+      },
+      "pager_equals_part_document_capture": true
+    },
+    {
+      "id": "pdf-highlight-page-scoped",
+      "book": "pdf",
+      "kind": "highlight",
+      "mode": "fixed_page",
+      "sdk_capture": "exr_fixed_anchor_create",
+      "capture_status": 0,
+      "capture": {
+        "start": 16,
+        "end": 42,
+        "exact_bytes": 26,
+        "prefix_bytes": 16,
+        "suffix_bytes": 32,
+        "chapter": null
+      },
+      "sender_resolve": "FOUND",
+      "v1_literal": {
+        "status": 0,
+        "message": ""
+      },
+      "adapter": {
+        "status": "OK",
+        "gap": "none"
+      },
+      "receiver": {
+        "path": "v1",
+        "status": "OK",
+        "state": "FOUND",
+        "start": 16,
+        "end": 42,
+        "expected_start": 16,
+        "expected_end": 42,
+        "sdk_persisted": true,
+        "note": ""
+      },
+      "page_text_bytes": 80
+    },
+    {
+      "id": "pdf-highlight-ambiguous-repeated-lines",
+      "book": "pdf",
+      "kind": "highlight",
+      "mode": "fixed_page",
+      "sdk_capture": "exr_fixed_anchor_create",
+      "capture_status": 0,
+      "capture": {
+        "start": 56,
+        "end": 72,
+        "exact_bytes": 16,
+        "prefix_bytes": 32,
+        "suffix_bytes": 32,
+        "chapter": null
+      },
+      "sender_resolve": "AMBIGUOUS",
+      "v1_literal": {
+        "status": 0,
+        "message": ""
+      },
+      "adapter": {
+        "status": "OK",
+        "gap": "none"
+      },
+      "receiver": {
+        "path": "v1",
+        "status": "UNRESOLVED",
+        "state": "AMBIGUOUS",
+        "start": null,
+        "end": null,
+        "expected_start": 56,
+        "expected_end": 72,
+        "sdk_persisted": false,
+        "note": ""
+      },
+      "page_text_bytes": 381
+    },
+    {
+      "id": "pdf-bookmark-point",
+      "book": "pdf",
+      "kind": "bookmark",
+      "mode": "fixed_page",
+      "sdk_capture": "exr_fixed_anchor_create",
+      "capture_status": 0,
+      "capture": {
+        "start": 16,
+        "end": 16,
+        "exact_bytes": 0,
+        "prefix_bytes": 16,
+        "suffix_bytes": 32,
+        "chapter": null
+      },
+      "sender_resolve": "FOUND",
+      "v1_literal": {
+        "status": 4,
+        "message": "Empty revision field"
+      },
+      "adapter": {
+        "status": "NOT_REPRESENTABLE",
+        "gap": "point"
+      },
+      "v2_proposal_by_unchanged_v1": {
+        "status": 4,
+        "message": "Unsupported anchor version"
+      },
+      "receiver": {
+        "path": "v2_proposal",
+        "status": "OK",
+        "state": "FOUND",
+        "start": 16,
+        "end": 16,
+        "expected_start": 16,
+        "expected_end": 16,
+        "sdk_persisted": true,
+        "note": ""
+      },
+      "page_text_bytes": 80
+    },
+    {
+      "id": "pdf-textless-page-bookmark",
+      "book": "pdf",
+      "kind": "bookmark",
+      "mode": "fixed_page",
+      "sdk_capture": "exr_fixed_anchor_create",
+      "capture_status": 0,
+      "capture": {
+        "start": 0,
+        "end": 0,
+        "exact_bytes": 0,
+        "prefix_bytes": 0,
+        "suffix_bytes": 0,
+        "chapter": null
+      },
+      "sender_resolve": "FOUND",
+      "v1_literal": {
+        "status": 4,
+        "message": "Empty revision field"
+      },
+      "adapter": {
+        "status": "NOT_REPRESENTABLE",
+        "gap": "textless_page"
+      },
+      "v2_proposal_by_unchanged_v1": {
+        "status": 4,
+        "message": "Unsupported anchor version"
+      },
+      "receiver": {
+        "path": "v2_proposal",
+        "status": "OK",
+        "state": "FOUND",
+        "start": 0,
+        "end": 0,
+        "expected_start": 0,
+        "expected_end": 0,
+        "sdk_persisted": true,
+        "note": ""
+      },
+      "page_text_bytes": 0
+    },
+    {
+      "id": "pdf-progress-page-start",
+      "book": "pdf",
+      "kind": "progress",
+      "mode": "fixed_page",
+      "sdk_capture": "exr_fixed_anchor_create",
+      "capture_status": 0,
+      "capture": {
+        "start": 0,
+        "end": 0,
+        "exact_bytes": 0,
+        "prefix_bytes": 0,
+        "suffix_bytes": 32,
+        "chapter": null
+      },
+      "sender_resolve": "FOUND",
+      "v1_literal": {
+        "status": 4,
+        "message": "Empty revision field"
+      },
+      "adapter": {
+        "status": "NOT_REPRESENTABLE",
+        "gap": "point"
+      },
+      "v2_proposal_by_unchanged_v1": {
+        "status": 4,
+        "message": "Unsupported anchor version"
+      },
+      "receiver": {
+        "path": "v2_proposal",
+        "status": "OK",
+        "state": "FOUND",
+        "start": 0,
+        "end": 0,
+        "expected_start": 0,
+        "expected_end": 0,
+        "sdk_persisted": true,
+        "note": ""
+      },
+      "page_text_bytes": 381
+    },
+    {
+      "id": "cbz-textless-page-bookmark",
+      "book": "cbz",
+      "kind": "bookmark",
+      "mode": "fixed_page",
+      "sdk_capture": "exr_fixed_anchor_create",
+      "capture_status": 0,
+      "capture": {
+        "start": 0,
+        "end": 0,
+        "exact_bytes": 0,
+        "prefix_bytes": 0,
+        "suffix_bytes": 0,
+        "chapter": null
+      },
+      "sender_resolve": "FOUND",
+      "v1_literal": {
+        "status": 4,
+        "message": "Empty revision field"
+      },
+      "adapter": {
+        "status": "NOT_REPRESENTABLE",
+        "gap": "textless_page"
+      },
+      "v2_proposal_by_unchanged_v1": {
+        "status": 4,
+        "message": "Unsupported anchor version"
+      },
+      "receiver": {
+        "path": "v2_proposal",
+        "status": "OK",
+        "state": "FOUND",
+        "start": 0,
+        "end": 0,
+        "expected_start": 0,
+        "expected_end": 0,
+        "sdk_persisted": true,
+        "note": ""
+      },
+      "page_text_bytes": 0
+    },
+    {
+      "id": "cbz-progress-textless-page",
+      "book": "cbz",
+      "kind": "progress",
+      "mode": "fixed_page",
+      "sdk_capture": "exr_fixed_anchor_create",
+      "capture_status": 0,
+      "capture": {
+        "start": 0,
+        "end": 0,
+        "exact_bytes": 0,
+        "prefix_bytes": 0,
+        "suffix_bytes": 0,
+        "chapter": null
+      },
+      "sender_resolve": "FOUND",
+      "v1_literal": {
+        "status": 4,
+        "message": "Empty revision field"
+      },
+      "adapter": {
+        "status": "NOT_REPRESENTABLE",
+        "gap": "textless_page"
+      },
+      "v2_proposal_by_unchanged_v1": {
+        "status": 4,
+        "message": "Unsupported anchor version"
+      },
+      "receiver": {
+        "path": "v2_proposal",
+        "status": "OK",
+        "state": "FOUND",
+        "start": 0,
+        "end": 0,
+        "expected_start": 0,
+        "expected_end": 0,
+        "sdk_persisted": true,
+        "note": ""
+      },
+      "page_text_bytes": 0
+    }
+  ],
+  "lifecycle": [
+    {
+      "step": "txt-end-quote",
+      "end": 636,
+      "text_bytes": 636
+    },
+    {
+      "step": "receiver-progress-after-cases",
+      "start": 636,
+      "state": "FOUND"
+    },
+    {
+      "step": "epub-spine",
+      "paths": [
+        "a.xhtml",
+        "b.xhtml",
+        "a.xhtml"
+      ]
+    },
+    {
+      "step": "epub-chapter-text",
+      "unique_bytes": 169,
+      "repeated_bytes": 171
+    },
+    {
+      "step": "epub-end-quote",
+      "end": 169,
+      "chapter_bytes": 169
+    },
+    {
+      "step": "pdf-pages",
+      "page_ids": [
+        "page-1",
+        "page-2",
+        "page-3"
+      ]
+    },
+    {
+      "step": "pdf-page-text",
+      "bytes": [
+        80,
+        381,
+        0
+      ]
+    },
+    {
+      "step": "cbz-pages",
+      "page_ids": [
+        "001.png",
+        "002.png",
+        "003.png"
+      ]
+    },
+    {
+      "step": "create-and-exact-retry",
+      "A_selection": "SAFE",
+      "A_action": "created",
+      "A_notes": 1,
+      "A_text": "first note",
+      "B_selection": "SAFE",
+      "B_action": "created",
+      "B_notes": 6,
+      "B_text": "first note",
+      "detail": ""
+    },
+    {
+      "step": "edit",
+      "A_selection": "SAFE",
+      "A_action": "updated",
+      "A_notes": 1,
+      "A_text": "edited note",
+      "B_selection": "SAFE",
+      "B_action": "updated",
+      "B_notes": 6,
+      "B_text": "edited note",
+      "detail": ""
+    },
+    {
+      "step": "concurrent-local-before-exchange",
+      "A_selection": "SAFE",
+      "A_action": "updated",
+      "A_notes": 1,
+      "A_text": "A concurrent",
+      "B_selection": "SAFE",
+      "B_action": "updated",
+      "B_notes": 6,
+      "B_text": "B concurrent",
+      "detail": ""
+    },
+    {
+      "step": "concurrent-after-exchange",
+      "A_selection": "CONCURRENT",
+      "A_action": "no-sdk-write",
+      "A_notes": 1,
+      "A_text": "A concurrent",
+      "B_selection": "CONCURRENT",
+      "B_action": "no-sdk-write",
+      "B_notes": 6,
+      "B_text": "B concurrent",
+      "detail": "SDK notes keep each side's last safe text"
+    },
+    {
+      "step": "merge",
+      "A_selection": "SAFE",
+      "A_action": "updated",
+      "A_notes": 1,
+      "A_text": "merged note",
+      "B_selection": "SAFE",
+      "B_action": "updated",
+      "B_notes": 6,
+      "B_text": "merged note",
+      "detail": ""
+    },
+    {
+      "step": "tombstone",
+      "A_selection": "SAFE",
+      "A_action": "removed",
+      "A_notes": 0,
+      "A_text": "",
+      "B_selection": "SAFE",
+      "B_action": "removed",
+      "B_notes": 5,
+      "B_text": "",
+      "detail": ""
+    },
+    {
+      "step": "put-after-delete-blocked",
+      "A_selection": "BLOCKED_RESTORE",
+      "A_action": "no-sdk-write",
+      "A_notes": 0,
+      "A_text": "",
+      "B_selection": "BLOCKED_RESTORE",
+      "B_action": "no-sdk-write",
+      "B_notes": 5,
+      "B_text": "",
+      "detail": ""
+    },
+    {
+      "step": "restore-heads-on-A",
+      "heads": 1,
+      "safe": true
+    },
+    {
+      "step": "restore",
+      "A_selection": "SAFE",
+      "A_action": "created",
+      "A_notes": 1,
+      "A_text": "restored note",
+      "B_selection": "SAFE",
+      "B_action": "created",
+      "B_notes": 6,
+      "B_text": "restored note",
+      "detail": ""
+    },
+    {
+      "step": "offline-newest-first",
+      "A_selection": "SAFE",
+      "A_action": "updated",
+      "A_notes": 1,
+      "A_text": "offline three",
+      "B_selection": "PENDING_PARENTS",
+      "B_action": "no-sdk-write",
+      "B_notes": 6,
+      "B_text": "restored note",
+      "detail": "missing parents keep SDK unchanged"
+    },
+    {
+      "step": "offline-middle",
+      "A_selection": "",
+      "A_action": "",
+      "A_notes": 0,
+      "A_text": "",
+      "B_selection": "PENDING_PARENTS",
+      "B_action": "no-sdk-write",
+      "B_notes": 6,
+      "B_text": "restored note",
+      "detail": ""
+    },
+    {
+      "step": "offline-complete",
+      "A_selection": "",
+      "A_action": "",
+      "A_notes": 0,
+      "A_text": "",
+      "B_selection": "SAFE",
+      "B_action": "updated",
+      "B_notes": 6,
+      "B_text": "offline three",
+      "detail": ""
+    },
+    {
+      "step": "restart-after-sdk-commit",
+      "A_selection": "",
+      "A_action": "",
+      "A_notes": 0,
+      "A_text": "",
+      "B_selection": "SAFE",
+      "B_action": "adopted",
+      "B_notes": 6,
+      "B_text": "after crash",
+      "detail": "in-memory SDK note map lost; identical content is adopted"
+    },
+    {
+      "step": "restart-reconcile-again",
+      "A_selection": "",
+      "A_action": "",
+      "A_notes": 0,
+      "A_text": "",
+      "B_selection": "SAFE",
+      "B_action": "adopted",
+      "B_notes": 6,
+      "B_text": "after crash",
+      "detail": "second reconcile adopts again"
+    },
+    {
+      "step": "restart-before-sdk-step-with-new-text",
+      "A_selection": "",
+      "A_action": "",
+      "A_notes": 0,
+      "A_text": "",
+      "B_selection": "SAFE",
+      "B_action": "created",
+      "B_notes": 7,
+      "B_text": "edit across restart",
+      "detail": "durable annotation map gap"
+    },
+    {
+      "step": "durable-annotation-map-gap",
+      "notes_before": 6,
+      "notes_after": 7,
+      "stale_note_retained": true
+    },
+    {
+      "step": "receiver-progress-final",
+      "start": 636,
+      "state": "FOUND"
+    }
+  ],
+  "known_gaps": [
+    "progress sync through product revisions: every SDK progress selector is a point (empty exact); wire v1 refuses it",
+    "bookmark sync: SDK bookmarks are points; wire v1 annotation selectors require nonempty exact",
+    "text-free fixed pages (CBZ, empty PDF pages): only a point exists; wire v1 refuses it",
+    "reflow selectors carrying an SDK chapter scope (EPUB in global storage): wire v1 reflow_global has no chapter field",
+    "bounded EPUB bookmarks have no SDK point-note API; product revision would be the only store even after a wire change",
+    "durable global annotation -> receiver SDK note map: schema1 has no table; an edit that crosses an interrupted SDK step and restart leaves a stale note",
+    "EPUB parts whose path repeats in the spine: wire v1 carries only part_path, so the receiver refuses routing",
+    "macOS, iOS and Android builds; host UI; WebDAV transport; six-platform interop"
+  ],
+  "retained_failures": [
+    {
+      "run_id": 40053371857,
+      "source_sha": "4526b90561f543a5b3e458ed4bb5b193662e206c",
+      "cause": "probe did not include reader_projection.h; both consumers failed to compile (adapter itself built with /W4 /WX and -Werror)"
+    },
+    {
+      "run_id": 40053631455,
+      "source_sha": "346ac31aa6e35a3ecdda8fb48f6e90443230ca9d",
+      "cause": "probe exited 2 on both runners; fatal recorded only inside the artifact, so logging was added"
+    },
+    {
+      "run_id": 40054043109,
+      "source_sha": "960df66846c2fbf862141cc71dbb181fd081cda3",
+      "cause": "probe built a std::string from (text, length) with unspecified argument order; length read as 0 in the cross-original case"
+    },
+    {
+      "run_id": 40054400770,
+      "source_sha": "045ba7ffb2e5ad6dd32f2f5f14762c308ecbfa8e",
+      "cause": "Linux passed fully; Windows passed all probe checks but the checker could not parse MSVC lib:object map lines, and deflate made originals differ across runners"
+    },
+    {
+      "run_id": 40054857963,
+      "source_sha": "922b4e9cd8e390113b6367f6ed0af40dc96fc734",
+      "cause": "workflow succeeded, but bookmark cases used non-hex annotation IDs, so v1 refused them for the ID instead of the empty quote; not used as acceptance evidence"
+    }
+  ],
+  "not_modified": [
+    "src",
+    "include",
+    "cmake",
+    "CMakeLists.txt",
+    "tests/fixtures",
+    "bindings",
+    "native.yml",
+    "reliability.yml",
+    "apps/reader/store",
+    "apps/reader/revisions",
+    "apps/reader/sync",
+    "apps/reader/commands",
+    "wire v1 rules"
+  ],
+  "default_branch_merged": false,
+  "tag_or_release": false
+}
