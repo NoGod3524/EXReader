@@ -888,6 +888,7 @@ final class HostReaderModel: ObservableObject {
     @Published private(set) var productIndexPending = false
     @Published var stateHash = "—"
     @Published var busy = false
+    @Published private(set) var syncPreparing = false
     @Published var notes: [HostNoteRow] = []
     @Published var showLibrary = true
     @Published var frameCount = 0
@@ -906,6 +907,7 @@ final class HostReaderModel: ObservableObject {
     private var catalog: HostCatalog?
     private var token = 0
     private var activeCancel: HostCancelBox?
+    private var syncCancel: HostCancelBox?
     private var started = false
     private var lastViewport = CGSize.zero
     private var viewportWork: DispatchWorkItem?
@@ -917,10 +919,20 @@ final class HostReaderModel: ObservableObject {
     private var pendingViewport: ViewportRequest?
     private var viewportWaiting = false
     private var viewportGeneration = 0
-    private let defaults = UserDefaults.standard
+    private let defaults: UserDefaults
+    private let accountProfile: HostAccountProfile?
+    private let accounts: HostAccounts?
+    let accountSession: HostAccountSession?
     private let testFixtures = ProcessInfo.processInfo.arguments.contains("-EXRUITestFixtures")
     private let freshState = ProcessInfo.processInfo.arguments.contains("-EXRFreshState")
     private var slowDelay: Double = 0
+
+    init(profile: HostAccountProfile? = nil, accounts: HostAccounts? = nil) {
+        self.accountProfile = profile
+        self.accounts = accounts
+        self.accountSession = profile.flatMap { accounts?.controller(for: $0) }
+        self.defaults = profile.flatMap { UserDefaults(suiteName: "org.exreader.account." + $0.id) } ?? .standard
+    }
 
     deinit {
         let ownedCatalog = catalog
@@ -930,6 +942,59 @@ final class HostReaderModel: ObservableObject {
     }
 
     var showsTestFixtures: Bool { testFixtures }
+    var shelfDefaults: UserDefaults { defaults }
+
+    func closeAccountSession() {
+        syncCancel?.cancel()
+        accountSession?.close()
+    }
+
+    func synchronizeAccount() {
+        guard !busy, !syncPreparing, let profile = accountProfile, let accounts, let accountSession,
+              !accountSession.running, !accountSession.preparing else { return }
+        do {
+            let authorization = try accounts.authorization(for: profile)
+            let cancel = HostCancelBox()
+            syncCancel = cancel; syncPreparing = true; accountSession.preparing = true
+            prepareSyncPage(after: nil, profile: profile, authorization: authorization, cancel: cancel)
+        } catch { errorText = describe(error) }
+    }
+
+    private func prepareSyncPage(after: String?, profile: HostAccountProfile, authorization: Data, cancel: HostCancelBox) {
+        queue.async {
+            do {
+                try cancel.check()
+                guard let session = self.session, let catalog = self.catalog else { throw HostError.invalidInput("书库尚未就绪") }
+                let directory = try self.storageFolder()
+                let page = try catalog.syncPage(after: after)
+                try catalog.withHistory { history in
+                    for book in page {
+                        try session.library.exportSyncOriginal(book, directory: directory.appendingPathComponent("sync-originals", isDirectory: true), cancel: cancel)
+                        try catalog.bootstrapVerified(book, store: history)
+                    }
+                }
+                try cancel.check()
+                if page.count == 50 {
+                    self.prepareSyncPage(after: page.last?.key, profile: profile, authorization: authorization, cancel: cancel)
+                } else {
+                    DispatchQueue.main.async {
+                        self.syncPreparing = false; self.accountSession?.preparing = false
+                        guard !cancel.isCancelled else { return }
+                        do {
+                            try self.accountSession?.start(profile: profile, directory: directory, authorization: authorization) { [weak self] in
+                                self?.statusText = "本轮云盘扫描结束；阅读位置保持不变"
+                            }
+                        } catch { self.errorText = self.describe(error) }
+                    }
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.syncPreparing = false; self.accountSession?.preparing = false
+                    if !cancel.isCancelled { self.errorText = self.describe(error) }
+                }
+            }
+        }
+    }
 
     private func traceUITest(_ event: String) {
         guard testFixtures else { return }
@@ -1095,10 +1160,12 @@ final class HostReaderModel: ObservableObject {
     private func storageFolder() throws -> URL {
         let base = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
                                                appropriateFor: nil, create: true)
-        return base.appendingPathComponent("EXReader", isDirectory: true)
+        let root = base.appendingPathComponent("EXReader", isDirectory: true)
+        return accountProfile?.directory(in: root) ?? root
     }
 
     private func stateFileURL() throws -> URL {
+        if accountProfile != nil { return try storageFolder().appendingPathComponent("host-state.json") }
 #if os(iOS)
         let folder = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask,
                                                  appropriateFor: nil, create: true)
