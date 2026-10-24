@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include "internal.h"
 #include "exr_desktop_drop_windows.h"
+#include <commctrl.h>
 #include <shlobj.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -9,6 +10,7 @@
 
 #ifdef EXR_DESKTOP_DROP_TEST_HOOKS
 static volatile LONG win_live_targets;
+static volatile LONG win_fail_subclass_install;
 #endif
 
 typedef struct win_target {
@@ -17,7 +19,6 @@ typedef struct win_target {
   volatile LONG refs;
   HWND window;
   DWORD owner_tid;
-  WNDPROC original_proc;
   int registered;
   int subclassed;
   int can_drop;
@@ -25,14 +26,16 @@ typedef struct win_target {
 
 #define WIN_FROM_IFACE(p) ((win_target *)((char *)(p) - offsetof(win_target, iface)))
 
-static const wchar_t win_property[] = L"EXReaderDesktopDropTarget";
-
 static int win_owner_thread(const struct exr_drop_target *base) {
   const win_target *target = (const win_target *)base;
   return GetCurrentThreadId() == target->owner_tid;
 }
 
 static void win_release_object(struct exr_drop_target *base);
+static ULONG STDMETHODCALLTYPE win_AddRef(IDropTarget *iface);
+static ULONG STDMETHODCALLTYPE win_Release(IDropTarget *iface);
+static LRESULT CALLBACK win_window_proc(HWND window, UINT message, WPARAM wparam, LPARAM lparam,
+    UINT_PTR subclass_id, DWORD_PTR reference);
 
 /* Every read below is bounded by the real allocation the platform handed us:
    the 1 MiB payload budget is a product limit, never a buffer size. */
@@ -287,27 +290,33 @@ static void win_restore_window(win_target *target) {
   HWND window = target->window;
   if (target->subclassed) {
     target->subclassed = 0;
-    if (window && IsWindow(window)) {
-      if (target->original_proc) SetWindowLongPtrW(window, GWLP_WNDPROC, (LONG_PTR)target->original_proc);
-      RemovePropW(window, win_property);
-    }
+    if (window && IsWindow(window))
+      RemoveWindowSubclass(window, win_window_proc, (UINT_PTR)target);
   }
-  target->original_proc = NULL;
 }
 
-static LRESULT CALLBACK win_window_proc(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
-  win_target *target = (win_target *)GetPropW(window, win_property);
-  WNDPROC original = target ? target->original_proc : NULL;
-  if (message == WM_DESTROY && target) win_revoke(target); /* frees OLE's reference in time */
-  if (message == WM_NCDESTROY && target) {
-    target->subclassed = 0;
-    target->original_proc = NULL;
+static LRESULT CALLBACK win_window_proc(HWND window, UINT message, WPARAM wparam, LPARAM lparam,
+    UINT_PTR subclass_id, DWORD_PTR reference) {
+  win_target *target = (win_target *)reference;
+  LRESULT result;
+  (void)subclass_id;
+  /* A host procedure may detach us while DefSubclassProc dispatches it. */
+  win_AddRef(&target->iface);
+  if (message == WM_DESTROY) win_revoke(target);
+  if (message == WM_NCDESTROY) {
+    win_restore_window(target);
     target->window = NULL;
-    RemovePropW(window, win_property);
-    if (original) SetWindowLongPtrW(window, GWLP_WNDPROC, (LONG_PTR)original);
   }
-  if (original) return CallWindowProcW(original, window, message, wparam, lparam);
-  return DefWindowProcW(window, message, wparam, lparam);
+  result = DefSubclassProc(window, message, wparam, lparam);
+  win_Release(&target->iface);
+  return result;
+}
+
+static BOOL win_install_subclass(win_target *target) {
+#ifdef EXR_DESKTOP_DROP_TEST_HOOKS
+  if (InterlockedExchange(&win_fail_subclass_install, 0)) return FALSE;
+#endif
+  return SetWindowSubclass(target->window, win_window_proc, (UINT_PTR)target, (DWORD_PTR)target);
 }
 
 /* ---- COM object ------------------------------------------------------ */
@@ -434,11 +443,7 @@ exr_drop_status exr_drop_windows_attach(HWND window, const exr_drop_target_optio
     return EXR_DROP_PLATFORM;
   }
   created->registered = 1;
-  SetPropW(window, win_property, created);
-  SetLastError(0);
-  created->original_proc = (WNDPROC)SetWindowLongPtrW(window, GWLP_WNDPROC, (LONG_PTR)win_window_proc);
-  if (!created->original_proc && GetLastError() != 0) {
-    RemovePropW(window, win_property);
+  if (!win_install_subclass(created)) {
     win_revoke(created);
     win_Release(&created->iface);
     return EXR_DROP_PLATFORM;
@@ -465,5 +470,8 @@ exr_drop_status exr_drop_windows_deliver_drop(exr_drop_windows_target *target, I
 #ifdef EXR_DESKTOP_DROP_TEST_HOOKS
 size_t exr_drop_windows_test_live_targets(void) {
   return (size_t)InterlockedCompareExchange(&win_live_targets, 0, 0);
+}
+void exr_drop_windows_test_fail_next_subclass_install(void) {
+  InterlockedExchange(&win_fail_subclass_install, 1);
 }
 #endif

@@ -8,6 +8,7 @@
 #include <exr_desktop_drop_windows.h>
 #include "report.h"
 #include <shlobj.h>
+#include <commctrl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -402,7 +403,30 @@ static IDataObject *shell_data_object(const wchar_t *folder, const wchar_t *file
 }
 
 /* ---- window ---------------------------------------------------------- */
+#define COEXIST_MESSAGE (WM_APP + 37)
+#define COEXIST_RESULT ((LRESULT)0x1357)
+typedef struct {
+  unsigned calls;
+  exr_drop_windows_target *detach;
+  exr_drop_status status;
+} host_layer;
+
+static LRESULT CALLBACK host_subclass(HWND window, UINT message, WPARAM wparam, LPARAM lparam,
+    UINT_PTR id, DWORD_PTR reference) {
+  host_layer *layer = (host_layer *)reference;
+  if (message == COEXIST_MESSAGE) {
+    layer->calls++;
+    if (layer->detach) {
+      layer->status = exr_drop_windows_detach(layer->detach);
+      layer->detach = NULL;
+    }
+  }
+  if (message == WM_NCDESTROY) RemoveWindowSubclass(window, host_subclass, id);
+  return DefSubclassProc(window, message, wparam, lparam);
+}
+
 static LRESULT CALLBACK probe_proc(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
+  if (message == COEXIST_MESSAGE) return COEXIST_RESULT;
   return DefWindowProcW(window, message, wparam, lparam);
 }
 static HWND make_window(void) {
@@ -1053,6 +1077,83 @@ int main(void) {
   }
 
   /* ---- lifecycle ----------------------------------------------------- */
+  {
+    HWND spare = make_window();
+    exr_drop_windows_target *victim = NULL;
+    host_layer layer = {0};
+    DWORD_PTR reference = 0;
+    int good = spare && exr_drop_windows_attach(spare, &options, &victim) == EXR_DROP_OK;
+    good = good && SetWindowSubclass(spare, host_subclass, 1, (DWORD_PTR)&layer);
+    if (good) {
+      good = SendMessageW(spare, COEXIST_MESSAGE, 0, 0) == COEXIST_RESULT && layer.calls == 1;
+      good = (exr_drop_windows_detach(victim) == EXR_DROP_OK) && good;victim = NULL;
+      good = GetWindowSubclass(spare, host_subclass, 1, &reference) && reference == (DWORD_PTR)&layer && good;
+      good = SendMessageW(spare, COEXIST_MESSAGE, 0, 0) == COEXIST_RESULT && layer.calls == 2 && good;
+    }
+    report_expect("subclass_chain_module_detaches_first", good,
+        "a later host subclass and the original procedure survive module detach");
+    if (victim) exr_drop_windows_detach(victim);
+    if (spare) DestroyWindow(spare);
+  }
+  {
+    HWND spare = make_window();
+    exr_drop_windows_target *victim = NULL;
+    host_layer layer = {0};
+    int good = spare && SetWindowSubclass(spare, host_subclass, 2, (DWORD_PTR)&layer);
+    good = good && exr_drop_windows_attach(spare, &options, &victim) == EXR_DROP_OK;
+    if (good) {
+      good = SendMessageW(spare, COEXIST_MESSAGE, 0, 0) == COEXIST_RESULT && layer.calls == 1;
+      good = RemoveWindowSubclass(spare, host_subclass, 2) && good;
+      good = SendMessageW(spare, COEXIST_MESSAGE, 0, 0) == COEXIST_RESULT && layer.calls == 1 && good;
+      good = (exr_drop_windows_detach(victim) == EXR_DROP_OK) && good;victim = NULL;
+      good = SendMessageW(spare, COEXIST_MESSAGE, 0, 0) == COEXIST_RESULT && good;
+    }
+    report_expect("subclass_chain_host_detaches_first", good,
+        "an earlier host subclass can be removed while the drop adapter remains live");
+    if (victim) exr_drop_windows_detach(victim);
+    if (spare) DestroyWindow(spare);
+  }
+  {
+    HWND spare = make_window();
+    exr_drop_windows_target *victim = NULL;
+    host_layer layer = {0};
+    int good = spare && SetWindowSubclass(spare, host_subclass, 3, (DWORD_PTR)&layer);
+    good = good && exr_drop_windows_attach(spare, &options, &victim) == EXR_DROP_OK;
+    if (good) {
+      layer.detach = victim;
+      good = SendMessageW(spare, COEXIST_MESSAGE, 0, 0) == COEXIST_RESULT &&
+          layer.calls == 1 && layer.detach == NULL && layer.status == EXR_DROP_OK;
+      victim = NULL;
+      good = SendMessageW(spare, COEXIST_MESSAGE, 0, 0) == COEXIST_RESULT && layer.calls == 2 && good;
+    }
+    report_expect("subclass_chain_reentrant_host_detach", good,
+        "the next native subclass detaches the adapter while its callback is on the stack");
+    if (victim) exr_drop_windows_detach(victim);
+    if (spare) DestroyWindow(spare);
+  }
+  {
+#ifdef EXR_DESKTOP_DROP_TEST_HOOKS
+    HWND spare = make_window();
+    exr_drop_windows_target *victim = NULL;
+    size_t live = exr_drop_windows_test_live_targets();
+    host_layer layer = {0};
+    int good = spare && SetWindowSubclass(spare, host_subclass, 4, (DWORD_PTR)&layer);
+    if (good) {
+      exr_drop_windows_test_fail_next_subclass_install();
+      good = exr_drop_windows_attach(spare, &options, &victim) == EXR_DROP_PLATFORM && victim == NULL;
+      good = exr_drop_windows_test_live_targets() == live && good;
+      good = SendMessageW(spare, COEXIST_MESSAGE, 0, 0) == COEXIST_RESULT && layer.calls == 1 && good;
+      good = exr_drop_windows_attach(spare, &options, &victim) == EXR_DROP_OK && good;
+    }
+    if (victim) exr_drop_windows_detach(victim);
+    good = exr_drop_windows_test_live_targets() == live && good;
+    report_expect("subclass_install_failure_rolls_back_ole", good,
+        "injected subclass failure releases the real OLE registration and permits a fresh attach");
+    if (spare) DestroyWindow(spare);
+#else
+    report_skip("subclass_install_failure_rolls_back_ole", "requires the EXR_DESKTOP_DROP_TEST_HOOKS build");
+#endif
+  }
   {
     detach_job job;
     HANDLE thread;

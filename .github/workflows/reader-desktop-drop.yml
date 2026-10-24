@@ -1,7 +1,7 @@
 name: Desktop file drop adapter
 on:
   push:
-    branches: [codex/reader-desktop-drop]
+    branches: [codex/reader-desktop-drop, codex/reader-drop-coexistence]
   workflow_dispatch:
 permissions:
   contents: read
