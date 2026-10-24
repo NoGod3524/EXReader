@@ -216,7 +216,7 @@ def main():
     }
     if not os.path.isdir(options.output):
         os.makedirs(options.output)
-    with open(os.path.join(options.output, "report.json"), "w", encoding="utf-8") as handle:
+    with open(os.path.join(options.output, "report.json"), "w", encoding="utf-8", newline="\n") as handle:
         json.dump(report, handle, ensure_ascii=True, sort_keys=True, indent=1)
 
     print("platform=%s consumer=%d/%d c=%d/%d ok=%s" % (

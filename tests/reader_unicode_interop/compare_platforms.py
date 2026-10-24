@@ -132,7 +132,7 @@ def main():
     }
     if not os.path.isdir(options.output):
         os.makedirs(options.output)
-    with open(os.path.join(options.output, "compare.json"), "w", encoding="utf-8") as handle:
+    with open(os.path.join(options.output, "compare.json"), "w", encoding="utf-8", newline="\n") as handle:
         json.dump(report, handle, ensure_ascii=True, sort_keys=True, indent=1)
     print("platforms=%s ok=%s problems=%d" % (",".join(platforms), report["ok"], len(problems)))
     for problem in problems[:20]:
