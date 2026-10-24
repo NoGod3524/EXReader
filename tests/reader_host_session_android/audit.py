@@ -25,6 +25,19 @@ for variant in ('Debug','Release'):
     lower=variant.lower();apk=app/'build/outputs/apk'/lower/('app-'+lower+('-unsigned' if variant=='Release' else '')+'.apk')
     kinds=(variant,) if variant=='Debug' else ('Release','RelWithDebInfo')
     with zipfile.ZipFile(apk) as package:
+        runtime_names={name.rsplit('/',1)[-1] for name in package.namelist() if name.startswith('lib/x86_64/') and name.endswith('.so')}
+        system_names={'libc.so','libdl.so','libm.so','liblog.so','libandroid.so','libz.so','libjnigraphics.so'}
+        runtime_dependencies={}
+        for name in sorted(runtime_names):
+            runtime=a.output/(lower+'-runtime-'+name);runtime.write_bytes(package.read('lib/x86_64/'+name))
+            needed=re.findall(r'\(NEEDED\).*\[([^\]]+)\]',tool('llvm-readelf','-d',runtime))
+            assert not set(needed)-runtime_names-system_names,(variant,name,needed,runtime_names)
+            runtime_dependencies[name]=needed
+        assert 'libexreader_jni.so' in runtime_names and runtime_dependencies['libexreader_jni.so'].count('libexreader.so')==1
+        jni=a.output/(lower+'-runtime-libexreader_jni.so')
+        installed_jni_id=re.search(r'Build ID:\s*(\w+)',tool('llvm-readelf','-n',Path('build/session-android/sdk-stage/lib/libexreader_jni.so')))
+        packaged_jni_id=re.search(r'Build ID:\s*(\w+)',tool('llvm-readelf','-n',jni))
+        assert installed_jni_id and packaged_jni_id and installed_jni_id[1]==packaged_jni_id[1]
         font_identity={name:hashlib.sha256(package.read('assets/'+name)).hexdigest() for name in ASSETS}
         assert all(font_identity[name]==expected for name,(_,expected) in ASSETS.items()),font_identity
         sdk_names=[n for n in package.namelist() if re.fullmatch(r'lib/x86_64/libexreader\.so(?:\.\d+)*',n)]
@@ -59,5 +72,6 @@ for variant in ('Debug','Release'):
             forbidden=(b'host_sync_fixture_ca',b'host_sync_fixture_network_security',b'NativeSyncProbe',b'HostSyncTest',b'EXReader Android test-only CA')
             for item in package.infolist():assert not any(token in item.filename.encode()+package.read(item) for token in forbidden),item.filename
     checks[-1]['apk_sha256']=hashlib.sha256(apk.read_bytes()).hexdigest();checks[-1]['font_assets']=font_identity
+    checks[-1]['jni_build_id']=packaged_jni_id[1];checks[-1]['jni_sha256']=hashlib.sha256(jni.read_bytes()).hexdigest();checks[-1]['runtime_dependencies']=runtime_dependencies
 result={**{key:os.environ[value] for key,value in [('source_sha','GITHUB_SHA'),('run_id','GITHUB_RUN_ID'),('attempt','GITHUB_RUN_ATTEMPT')]},'accepted':True,'checks':checks,'installed_sideload_sha256':hashlib.sha256(archive.read_bytes()).hexdigest(),'no_static_sdk_or_sqlite_in_host':True,'product_provider_isolated':True}
 (a.output/'result.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result),flush=True)
