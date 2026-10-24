@@ -396,7 +396,7 @@ bool ReadHandle::open_regular(const fs::path& path, uint64_t& size, std::error_c
   if (!::GetFileInformationByHandle(h, &info) ||
       (info.dwFileAttributes & (FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_DIRECTORY)) != 0) {
     ::CloseHandle(h);
-    ec = std::make_error_code(std::errc::wrong_type);
+    ec = std::make_error_code(std::errc::invalid_argument);
     return false;
   }
   handle_ = h;
@@ -411,7 +411,7 @@ bool ReadHandle::open_regular(const fs::path& path, uint64_t& size, std::error_c
   struct stat info;
   if (::fstat(fd, &info) != 0 || !S_ISREG(info.st_mode)) {
     ::close(fd);
-    ec = std::make_error_code(std::errc::wrong_type);
+    ec = std::make_error_code(std::errc::invalid_argument);
     return false;
   }
   fd_ = fd;
