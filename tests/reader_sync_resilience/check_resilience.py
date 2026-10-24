@@ -890,7 +890,7 @@ def main():
         #     no implicit replay.
         device_12 = device('real-401')
         counts_12 = counting(device_12)
-        tag_12 = revision(7, shard=18, key='g' * 32)
+        tag_12 = revision(7, shard=18, key='0c' * 16)
         seed(device_12, 'real-401', tag_12)
         first_12 = len(requests)
         global_faults.append((401, {'WWW-Authenticate': 'Basic realm="resilience-fixture"'}))
@@ -917,7 +917,7 @@ def main():
         # 13. Real 403 is a permission failure, never a silent success.
         device_13 = device('real-403')
         counts_13 = counting(device_13)
-        tag_13 = revision(8, shard=18, key='h' * 32)
+        tag_13 = revision(8, shard=18, key='0d' * 16)
         seed(device_13, 'real-403', tag_13)
         first_13 = len(requests)
         global_faults.append((403, {}))
@@ -944,7 +944,7 @@ def main():
         # 14. Real 429 with Retry-After is not followed by an implicit replay.
         device_14 = device('real-429')
         counts_14 = counting(device_14)
-        tag_14 = revision(9, shard=18, key='i' * 32)
+        tag_14 = revision(9, shard=18, key='0e' * 16)
         seed(device_14, 'real-429', tag_14)
         path_14 = revision_path(device_14, tag_14)
         fault('PUT', path_14, 429, {'Retry-After': '2'})
@@ -971,7 +971,7 @@ def main():
         #     an explicit retry only.
         device_15 = device('real-503')
         counts_15 = counting(device_15)
-        tag_15 = revision(10, shard=18, key='j' * 32)
+        tag_15 = revision(10, shard=18, key='0f' * 16)
         seed(device_15, 'real-503', tag_15)
         path_15 = revision_path(device_15, tag_15)
         fault('PUT', path_15, 503, {'Retry-After': '1'})
@@ -1031,7 +1031,7 @@ def main():
         #     which is the only acknowledgement authority.
         device_17 = device('reset-during-put')
         counts_17 = counting(device_17)
-        tag_17 = revision(11, shard=18, key='k' * 32)
+        tag_17 = revision(11, shard=18, key='1a' * 16)
         seed(device_17, 'reset-during-put', tag_17)
         path_17 = revision_path(device_17, tag_17)
         held_17 = gate('PUT', path_17, 'reset_mid_body', partial=32)
@@ -1056,7 +1056,7 @@ def main():
         # 18. A bounded publication timeout leaves no remote object.
         device_18 = device('publication-timeout')
         counts_18 = counting(device_18)
-        tag_18 = revision(12, shard=18, key='l' * 32)
+        tag_18 = revision(12, shard=18, key='1b' * 16)
         seed(device_18, 'publication-timeout', tag_18)
         path_18 = revision_path(device_18, tag_18)
         held_18 = gate('PUT', path_18, 'stall_before_headers')
@@ -1085,7 +1085,7 @@ def main():
         #     overwritten, and it blocks the acknowledgement.
         device_19 = device('foreign-immutable-bytes')
         counts_19 = counting(device_19)
-        tag_19 = revision(13, shard=18, key='m' * 32)
+        tag_19 = revision(13, shard=18, key='1c' * 16)
         path_19 = revision_path(device_19, tag_19)
         foreign_19 = b' ' + raw(tag_19)[1:]
         publish_revision(device_19, tag_19, foreign_19)
@@ -1122,7 +1122,7 @@ def main():
         assert len(manifests_20) == 1, manifests_20
         manifest_20 = manifests_20[0]
         binding_20 = digest(manifest_20.read_bytes())
-        tag_20 = revision(14, shard=18, key='n' * 32)
+        tag_20 = revision(14, shard=18, key='1d' * 16)
         seed(device_20, 'reopen', tag_20)
         path_20 = revision_path(device_20, tag_20)
         held_20 = gate('PUT', path_20, 'after_commit_hold')
@@ -1161,7 +1161,7 @@ def main():
         assert len(manifests_21) == 1, manifests_21
         manifest_21 = manifests_21[0]
         binding_21 = digest(manifest_21.read_bytes())
-        tag_21 = revision(15, shard=18, key='o' * 32)
+        tag_21 = revision(15, shard=18, key='1e' * 16)
         seed(device_21, 'reopen-other', tag_21)
         path_21 = revision_path(device_21, tag_21)
         held_21 = gate('PUT', path_21, 'after_commit_hold')
