@@ -6,7 +6,7 @@ on:
     inputs:
       scope:
         type: choice
-        options: [bounded, shelf, shelf-ui]
+        options: [bounded, shelf, shelf-ui, shelf-anchor]
         default: bounded
 permissions:
   contents: read
@@ -15,7 +15,7 @@ env:
   H9_SDK_BASELINE: 9854061be331fe603a1822d9b2b36ee357154927
 jobs:
   diagnose:
-    if: github.event_name != 'workflow_dispatch' || (inputs.scope != 'shelf' && inputs.scope != 'shelf-ui')
+    if: github.event_name != 'workflow_dispatch' || !startsWith(inputs.scope, 'shelf')
     strategy:
       fail-fast: false
       matrix:
@@ -62,7 +62,7 @@ jobs:
         if: steps.probe.outcome != 'success'
         run: exit 1
   shelf:
-    if: github.event_name == 'workflow_dispatch' && (inputs.scope == 'shelf' || inputs.scope == 'shelf-ui')
+    if: github.event_name == 'workflow_dispatch' && startsWith(inputs.scope, 'shelf')
     uses: ./.github/workflows/reader-apple-shelf-diagnostic.yml
     with:
-      mode: ${{ inputs.scope == 'shelf-ui' && 'ui' || 'native' }}
+      mode: ${{ inputs.scope == 'shelf-anchor' && 'anchor' || inputs.scope == 'shelf-ui' && 'ui' || 'native' }}
