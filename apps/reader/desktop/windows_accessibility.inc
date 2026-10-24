@@ -27,6 +27,7 @@
 #include <uiautomationcoreapi.h>
 #include <uiautomationclient.h>
 #include <oleacc.h>
+#include <wctype.h>
 #pragma comment(lib, "uiautomationcore.lib")
 #pragma comment(lib, "oleacc.lib")
 #pragma comment(lib, "oleaut32.lib")
