@@ -75,11 +75,6 @@ static reader_kbd *make(uint32_t platform, uint32_t dir, uint32_t input, uint32_
   return k;
 }
 
-static int fail(const char *what) {
-  (void)snprintf(detail, sizeof(detail), "%s", what);
-  return 0;
-}
-
 /* One expectation: returns 1 on match. */
 static int step(reader_kbd *k, const reader_kbd_context *c, reader_kbd_event e, uint32_t action,
                 uint32_t disp, uint32_t reason, const char *label) {
