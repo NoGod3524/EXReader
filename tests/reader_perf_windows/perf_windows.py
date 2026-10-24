@@ -33,6 +33,7 @@ import subprocess
 import sys
 import threading
 import time
+import zipfile
 from pathlib import Path
 
 if os.name == 'nt':
@@ -720,13 +721,18 @@ def op_import(host, fixture, expected_title, timeout=300):
     if not samples or samples[-1]['busy']:
         raise MeasurementFault('import did not complete within %d s' % timeout)
 
+    status = host.status()
     try:
         found = op_search(host, expected_title,
                           lambda app: app.lb_count() == 1 and expected_title in app.lb_item(0),
                           lambda rows: len(rows) == 1 and expected_title in rows[0])
     except TimeoutError as error:
-        raise MeasurementFault('imported book is not visible after the import (%s); rows=%r'
-                               % (error, host.rows()[:4]))
+        try:
+            host.set_text(host.control('search'), '')
+        except Exception:
+            pass
+        raise MeasurementFault('imported book is not visible after the import (%s); '
+                               'status=%r rows=%r' % (error, status, host.rows()[:4]))
     busy_samples = [sample for sample in samples
                     if sample['busy'] and sample['roundtrip_ms'] is not None]
     return {'import_ms': import_ms, 'input_samples': samples,
@@ -736,6 +742,7 @@ def op_import(host, fixture, expected_title, timeout=300):
             if busy_samples else None,
             'input_timeouts': sum(1 for sample in samples if sample['roundtrip_ms'] is None),
             'post_import_search_ms': found['ms'], 'post_import_rows': found['rows'],
+            'status_after_import': status,
             'visible': True, 'fixture': str(fixture),
             'fixture_bytes': Path(fixture).stat().st_size,
             'fixture_sha256': sha256(fixture), 'title': expected_title}
@@ -935,20 +942,44 @@ def prepare(context):
     return prep
 
 
-def make_fixture(directory, index, size=16 << 20):
-    path = directory / ('Perf Import %04d.txt' % index)
+def make_fixture(directory, index, chapters=16, chapter_bytes=700 << 10):
+    """Fixed multi-chapter EPUB whose OPF title is the expected shelf title.
+
+    The archive is stored uncompressed so the import copies a real multi-megabyte
+    original; the streaming EPUB import does not parse the whole book, so the
+    busy window is long enough to sample native input without hitting the
+    single-document text path.
+    """
+    path = directory / ('Perf Import %04d.epub' % index)
     if path.exists():
         return path
-    # The first text line is the derived title for a TXT import, so it matches
-    # the file name and the expected shelf title exactly.
-    header = 'Perf Import %04d\n' % index
-    block = 'Perf Import %04d line %04d keeps the import worker busy while input continues.\n'
-    unit = (header + ''.join(block % (index, number) for number in range(512))).encode()
-    with path.open('wb') as handle:
-        written = 0
-        while written < size:
-            handle.write(unit)
-            written += len(unit)
+    title = 'Perf Import %04d' % index
+    container = ('<container xmlns="urn:oasis:names:tc:opendocument:xmlns:container" version="1.0">'
+                 '<rootfiles><rootfile full-path="OPS/package.opf" '
+                 'media-type="application/oebps-package+xml"/></rootfiles></container>')
+    package = ('<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id">'
+               '<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">'
+               '<dc:identifier id="id">urn:exreader:perf-import:%04d</dc:identifier>'
+               '<dc:title>%s</dc:title></metadata><manifest>%s</manifest><spine>%s</spine></package>'
+               % (index, title,
+                  ''.join('<item id="c%d" href="c%d.xhtml" media-type="application/xhtml+xml"/>'
+                          % (part, part) for part in range(chapters)),
+                  ''.join('<itemref idref="c%d"/>' % part for part in range(chapters))))
+    entries = [('mimetype', 'application/epub+zip'),
+               ('META-INF/container.xml', container),
+               ('OPS/package.opf', package)]
+    paragraph = '<p>%s line %05d keeps the import worker busy while input continues.</p>'
+    for part in range(chapters):
+        body = ''.join(paragraph % (title, row) for row in range(max(1, chapter_bytes // 76)))
+        entries.append(('OPS/c%d.xhtml' % part,
+                        '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>%s</title></head>'
+                        '<body>%s</body></html>' % (title, body)))
+    with zipfile.ZipFile(path, 'w') as archive:
+        for name, content in entries:
+            info = zipfile.ZipInfo(name, date_time=(2026, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_STORED
+            info.external_attr = 0o100644 << 16
+            archive.writestr(info, content)
     return path
 
 
