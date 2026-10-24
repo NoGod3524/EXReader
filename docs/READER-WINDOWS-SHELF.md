@@ -69,8 +69,8 @@ attempt 1、Windows 作业 `120719000091` success。同次 SDK 九组、目录�
 `2045913dada11add083a652fef923a713381267b689116f38a60a11343b01161`，未过期，
 API/上传日志身份一致。
 
-同源码独立查询 run `40043264180` 的 Windows/Linux 已成功，macOS 当时排队，
-不将此前源码的 macOS 结果拼入本次。只授予 Windows 本机书架的功能范围；
+同源码独立查询 run `40043264180` 的 Windows/Linux/macOS 三作业现已全部成功，
+macOS 作业 `120719000164`，保留最初登记时排队的事实。只授予 Windows 本机书架的功能范围；
 `performance_accepted=false`、`complete_product=false`，没有产品性能硬预算、
 全局云端下载 UI、读屏或完整产品验收。
 
