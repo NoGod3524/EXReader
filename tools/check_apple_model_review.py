@@ -25,13 +25,14 @@ def main():
         parser.error('Preserve earlier evidence: choose a new output')
     output.mkdir(parents=True)
     program = output/'model-review'
-    command = ['xcrun', 'swiftc', '-swift-version', '5', '-parse-as-library',
+    command = [sys.executable, str(ROOT/'tools/apple_swift.py'), '--sdk', str(sdk), '--', '-swift-version', '5', '-parse-as-library',
                     '-D', 'EXR_APPLE_HOST_REVIEW',
-                    '-I', str(sdk/'include'), '-L', str(sdk/'lib'), '-lexreader', '-lsqlite3',
+                    '-I', str(sdk/'include'), '-L', str(sdk/'lib'), '-lexreader',
                     '-Xlinker', '-rpath', '-Xlinker', str(sdk/'lib'),
                     str(ROOT/'examples/apple/HostSDK.swift'),
                     str(ROOT/'examples/apple/HostModel.swift'),
                     str(ROOT/'examples/apple/HostCatalog.swift'),
+                    str(ROOT/'examples/apple/HostAccount.swift'),
                     str(ROOT/'examples/apple/SelectableText.swift'),
                     str(ROOT/'tests/apple_host/review/ModelReview.swift'),
                     '-o', str(program)]
@@ -46,7 +47,7 @@ def main():
             if report.is_file():
                 data = json.loads(report.read_text())
                 sources = ('examples/apple/HostSDK.swift', 'examples/apple/HostModel.swift',
-                           'examples/apple/HostCatalog.swift', 'examples/apple/SelectableText.swift',
+                           'examples/apple/HostCatalog.swift', 'examples/apple/HostAccount.swift', 'examples/apple/SelectableText.swift',
                            'tests/apple_host/review/ModelReview.swift', 'tools/check_apple_model_review.py',
                            'apps/reader/store/001_catalog.sql')
                 data['source_files_sha256'] = {

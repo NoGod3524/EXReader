@@ -207,6 +207,13 @@ final class HostShelf: ObservableObject {
     }
 
     func observe(_ positions: [String: CGRect], size: CGSize, revision: Int) {
+        if size.height > 0, revision == geometryRevision {
+            if probeRevision == revision, positions != probePositions {
+                lastProbeMovement = ProcessInfo.processInfo.systemUptime
+                schedulePendingPage()
+            }
+            probeRevision = revision; probePositions = positions; probeSize = size
+        }
 #if EXR_APPLE_SHELF_REVIEW
         if revision == geometryRevision {
             let frames: [[String: Any]] = size.height > 0 ? positions
@@ -1026,7 +1033,9 @@ final class HostReaderModel: ObservableObject {
                 let page = try catalog.syncPage(after: after)
                 try catalog.withHistory { history in
                     for book in page {
-                        try session.library.exportSyncOriginal(book, directory: directory.appendingPathComponent("sync-originals", isDirectory: true), cancel: cancel)
+                        try session.library.exportSyncOriginal(bookID: book.sdkID,
+                            expected: HostSourceFingerprint(format: book.format, sha256: book.sha256, bytes: book.bytes),
+                            directory: directory.appendingPathComponent("sync-originals", isDirectory: true), cancel: cancel)
                         try catalog.bootstrapVerified(book, store: history)
                     }
                 }

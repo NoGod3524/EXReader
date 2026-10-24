@@ -66,13 +66,14 @@ import CReaderProduct
             let page = try catalog.syncPage()
             try check("bounded_product_sync_page", page.count == 1 && page.count <= 50 && page[0].sdkID == book.id)
             let target = directory.appendingPathComponent("sync-originals", isDirectory: true)
-            try library.exportSyncOriginal(page[0], directory: target, cancel: HostCancelBox())
+            let expected = HostSourceFingerprint(format: page[0].format, sha256: page[0].sha256, bytes: page[0].bytes)
+            try library.exportSyncOriginal(bookID: page[0].sdkID, expected: expected, directory: target, cancel: HostCancelBox())
             let output = target.appendingPathComponent(page[0].sha256 + ".txt")
             try check("exact_public_sdk_original_export", Data(contentsOf: output) == original)
-            try library.exportSyncOriginal(page[0], directory: target, cancel: HostCancelBox())
+            try library.exportSyncOriginal(bookID: page[0].sdkID, expected: expected, directory: target, cancel: HostCancelBox())
             try check("existing_immutable_original_is_verified_and_reused", Data(contentsOf: output) == original)
             let cancelled = HostCancelBox(); cancelled.cancel(); var refused = false
-            do { try library.exportSyncOriginal(page[0], directory: target, cancel: cancelled) } catch { refused = true }
+            do { try library.exportSyncOriginal(bookID: page[0].sdkID, expected: expected, directory: target, cancel: cancelled) } catch { refused = true }
             try check("cancelled_preparation_preserves_the_valid_original", refused && Data(contentsOf: output) == original)
             try catalog.withHistory { try catalog.bootstrapVerified(page[0], store: $0) }
             try catalog.withHistory { try catalog.bootstrapVerified(page[0], store: $0) }

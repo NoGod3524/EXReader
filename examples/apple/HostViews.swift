@@ -105,8 +105,6 @@ private struct ShelfGeometryProbe: View {
             // Its new native probe still reports the actual post-issue epoch.
             .onAppear { measure(geometry, revision: revision) }
             .onChange(of: revision) { value in measure(geometry, revision: value) }
-            .onChange(of: geometry.frame(in: .named("catalog-shelf"))) { _ in measure(geometry, revision: revision) }
-            .onChange(of: geometry.size) { _ in measure(geometry, revision: revision) }
         }
     }
 }
