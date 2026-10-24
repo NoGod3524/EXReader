@@ -50,7 +50,8 @@ def collect(repo, run_id, attempt, sha, folder, retrospective):
         need(done.returncode == 0 and path.stat().st_size <= MAX_ZIP, "archive_download")
         archives[artifact["id"]] = path.read_bytes()
         job = select(jobs, job_name)
-        done = subprocess.run(["gh", "api", f"/repos/{repo}/actions/jobs/{job['id']}/logs"],
+        # Preserve ANSI bytes for hashing in captured logs; never print the body.
+        done = subprocess.run(["gh", "api", "--allow-escape-sequences", f"/repos/{repo}/actions/jobs/{job['id']}/logs"],
                               capture_output=True, timeout=180)
         if done.returncode != 0:
             detail = done.stderr.decode("utf-8", "replace")
