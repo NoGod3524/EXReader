@@ -3,10 +3,49 @@ on:
   push:
     branches: [codex/reader-android-collections]
   workflow_dispatch:
+    inputs:
+      diagnostics_run:
+        description: Inspect a preserved owner run only; empty executes acceptance
+        required: false
+        default: ''
+        type: string
 permissions:
   contents: read
+  actions: read
 jobs:
+  diagnostics:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.diagnostics_run != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.diagnostics_run }}
+          name: reader-owner-android-${{ inputs.diagnostics_run }}-1
+          path: preserved
+      - name: Read bounded device report and phase originals on Actions only
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path('preserved')
+          for suffix in ('owner-android/device-report.json','owner-android/native/inventory.json',
+                         'owner-android/seed-before.txt','owner-android/recover-before.txt','owner-android/witness-before.txt',
+                         'owner-android/seed-after.txt','owner-android/recover-after.txt','owner-android/witness-after.txt'):
+              matches=[p for p in root.rglob('*') if p.is_file() and p.as_posix().endswith(suffix)]
+              if len(matches)!=1:
+                  print(json.dumps({'path':suffix,'matches':len(matches)}));continue
+              raw=matches[0].read_bytes();text=raw.decode('utf-8',errors='replace')
+              print(json.dumps({'path':suffix,'bytes':len(raw),'head':text[:1800]},ensure_ascii=True))
+              if suffix.endswith('.json'):
+                  try:
+                      value=json.loads(raw)
+                      print(json.dumps({'path':suffix,'keys':list(value),'source':value.get('source_sha'),'failed':value.get('failed')}))
+                  except Exception as error:print(json.dumps({'path':suffix,'parse_error':str(error)}))
+          PY
   android-shelf:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.diagnostics_run == '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
