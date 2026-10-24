@@ -205,5 +205,14 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
   the List and stable book-row identities are retained. No readiness or anchor
   assertion is relaxed.
 
+- `297d2195` passed the unchanged refresh case (187.701 seconds) in
+  [40055648176](https://github.com/NoGod3524/EXReader/actions/runs/40055648176).
+  The restoration case stalled during ordinary forward pagination before
+  rotation: 150 cached rows, scroll issued at epoch 17, and a pending layout
+  acknowledgement. Artifact `12546095351` preserves the failure. Each geometry
+  probe now observes the shelf directly, so cached List rows rebuild their
+  measurement body when the epoch changes. This replaces the parent-captured
+  epoch and probe identity changes; the single-epoch reducer is retained.
+
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.
