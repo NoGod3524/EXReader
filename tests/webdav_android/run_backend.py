@@ -56,6 +56,7 @@ def cases(root,ports):
         add(f'uri_argument_{n}',1,resource=path)
     add('worker_owner_refusal',action='owner',resource='',wrong_owner=1,count=3)
     add('callback_reentry_refusal',action='reentry',reentry=1)
+    add('same_client_error_recovery',action='recover',first_status=5)
     add('mkcol_create',action='mkcol',resource='immutable/')
     add('mkcol_existing',action='mkcol',resource='immutable/')
     add('mkcol_redirect_refused',10,action='mkcol',resource='write-redirect/')
@@ -78,7 +79,7 @@ def main():
     def private_input(value):
         # stdin goes directly into app-private storage; credentials are never shell arguments.
         adb('shell','run-as',app,'mkdir','-p','files')
-        adb('shell','run-as',app,'sh','-c','cat > files/input.json',input=json.dumps(value).encode())
+        adb('shell',f"run-as {app} sh -c 'cat > files/input.json'",input=json.dumps(value).encode())
     def instrument(name):
         args=['shell','am','instrument','-w','-r']
         for key,value in identity.items():args.extend(['-e',key,value])
@@ -102,7 +103,7 @@ def main():
         assert server.committed.wait(20),'Process fixture never committed immutable PUT'
         pid_before=adb('shell','pidof',app).decode().strip();assert pid_before
         adb('shell','am','force-stop',app)
-        assert not adb('shell','sh','-c',f'pidof {app} || true').strip()
+        assert not adb('shell',f'pidof {app} || true').strip()
         retry=[dict(name='process_exact_retry',action='put',resource='process.bin',source_bytes=524288,expected=11,http=412),dict(name='process_get_verify',resource='process.bin')]
         private_input({'root':root,'authorization':auth,'cases':retry});second=instrument('process-restart')
         assert server.objects['/dav/process.bin']==server.payload and second['count']==4
