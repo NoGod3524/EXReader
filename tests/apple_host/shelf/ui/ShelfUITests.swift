@@ -33,12 +33,29 @@ final class ShelfUITests: XCTestCase {
         return node.label.isEmpty ? (node.value as? String) ?? "" : node.label
     }
     private func state() -> [String: Any]? {
-        guard let node = try? element("library.shelf.state").snapshot() else { return nil }
-        let raw = node.label.isEmpty ? (node.value as? String) ?? "" : node.label
+        guard let root = try? element("library.shelf.state").snapshot() else { return nil }
+        var nodes = [root], parts: [Int: String] = [:], count: Int?
+        while let node = nodes.popLast() {
+            let value = node.label.isEmpty ? (node.value as? String) ?? "" : node.label
+            if node.identifier == "library.shelf.count", let parsed = Int(value) { count = parsed }
+            let prefix = "library.shelf.part."
+            if node.identifier.hasPrefix(prefix), let index = Int(node.identifier.dropFirst(prefix.count)), !value.isEmpty {
+                if let previous = parts[index], previous != value { return nil }
+                parts[index] = value
+            }
+            nodes.append(contentsOf: node.children)
+        }
+        guard let count, (1...256).contains(count), parts.count == count,
+              (0..<count).allSatisfy({ parts[$0] != nil }) else {
+            let detail = "SHELF AX incomplete count=\(String(describing: count)) parts=\(parts.count)"
+            if detail != lastReadDiagnostic { print(detail); lastReadDiagnostic = detail }
+            return nil
+        }
+        let raw = (0..<count).map { parts[$0]! }.joined()
         guard let data = raw.data(using: .utf8) else { return nil }
         do { return try JSONSerialization.jsonObject(with: data) as? [String: Any] }
         catch {
-            let detail = "SHELF AX decode failed label_chars=\(node.label.count) value_chars=\((node.value as? String)?.count ?? -1) raw_chars=\(raw.count) error=\(error) tail=\(String(raw.suffix(100)).debugDescription)"
+            let detail = "SHELF AX decode failed parts=\(count) raw_chars=\(raw.count) error=\(error) tail=\(String(raw.suffix(100)).debugDescription)"
             if detail != lastReadDiagnostic { print(detail); lastReadDiagnostic = detail }
             return nil
         }
