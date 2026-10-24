@@ -1,21 +1,419 @@
 {
   "accepted": false,
-  "status": "cloud iteration in progress; actual reflow page background refused and retained",
+  "status": "same-source evidence complete; only the two requested reading-page palette checks remain refused",
   "baseline": "8a7cab996f7b3a876254f16a90dab69bbeb9f15a",
   "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
   "preferences_implementation": "1f51b4066cd705a670b3139061336c298e479081",
-  "source_sha": null,
-  "run_id": null,
-  "attempt": null,
-  "artifacts": [],
-  "gtk_preferences_expected_checks": 35,
-  "installed_preferences_expected_checks": 20,
-  "retained_account_receive_checks": 46,
-  "retained_gtk_ui_checks": 105,
-  "retained_fault_checks": 4,
-  "retained_atspi_checks": 10,
+  "source_sha": "ce912f8c149e30cf3843e39258ae6889235495a0",
+  "run_id": 40110581923,
+  "attempt": 1,
+  "job_id": 120921266256,
+  "workflow_conclusion": "failure",
+  "only_failed_step": "Actual settings controls geometry pixels gestures portal and persistence",
+  "diagnostic_only": false,
+  "program_sha256": "4923e07c7790b5fec1fca7c2680a1aa3c2c14b30892b0a26bbec25d788c6b115",
+  "artifacts": [
+    {
+      "id": 12566797535,
+      "name": "reader-gtk-preferences-40110581923-1",
+      "bytes": 41212307,
+      "sha256": "ddc331bedd4b8a4ba1e316531c7d2d7563bdde4a727a53a11fd870f8337636a7",
+      "expires_at": "2027-01-22T16:13:49Z",
+      "expired": false,
+      "source_sha": "ce912f8c149e30cf3843e39258ae6889235495a0",
+      "upload_log_identity_matches_api": true
+    }
+  ],
+  "artifact_payload_rehashed_in_this_final_run": false,
+  "gtk_preferences_results": {
+    "expected": 35,
+    "executed": 35,
+    "passed": 33,
+    "failed": 2,
+    "skipped": 0,
+    "checks": [
+      {
+        "name": "f3_defaults_do_not_import_or_replace_legacy_font_zoom",
+        "passed": true
+      },
+      {
+        "name": "native_secondary_modal_panel_has_initial_named_focus",
+        "passed": true
+      },
+      {
+        "name": "settings_modal_blocks_background_actions",
+        "passed": true
+      },
+      {
+        "name": "settings_escape_restores_internal_focus",
+        "passed": true
+      },
+      {
+        "name": "actual_reflow_font",
+        "passed": true
+      },
+      {
+        "name": "actual_reflow_line",
+        "passed": true
+      },
+      {
+        "name": "actual_reflow_paragraph",
+        "passed": true
+      },
+      {
+        "name": "actual_reflow_margin",
+        "passed": true
+      },
+      {
+        "name": "fractional_font_is_applied_and_saved",
+        "passed": true
+      },
+      {
+        "name": "light_foreground_and_background_change_page_pixels",
+        "passed": false
+      },
+      {
+        "name": "dark_theme_and_palette_change_page_pixels",
+        "passed": false
+      },
+      {
+        "name": "system_theme_tracks_real_portal_preference_changes",
+        "passed": true
+      },
+      {
+        "name": "ltr_tap_turns_to_next_page",
+        "passed": true
+      },
+      {
+        "name": "rtl_tap_reverses_the_horizontal_target",
+        "passed": true
+      },
+      {
+        "name": "swipe_mode_rejects_tap",
+        "passed": true
+      },
+      {
+        "name": "rtl_swipe_uses_actual_drag_direction",
+        "passed": true
+      },
+      {
+        "name": "vertical_swipe_uses_vertical_axis",
+        "passed": true
+      },
+      {
+        "name": "combined_input_accepts_tap",
+        "passed": true
+      },
+      {
+        "name": "combined_input_accepts_swipe",
+        "passed": true
+      },
+      {
+        "name": "hardware_only_rejects_page_surface_gestures",
+        "passed": true
+      },
+      {
+        "name": "hardware_vertical_key_turns_page",
+        "passed": true
+      },
+      {
+        "name": "fixed_zoom_changes_actual_sdk_bitmap_dimensions",
+        "passed": true
+      },
+      {
+        "name": "fixed_zoom_toolbar_updates_authoritative_record",
+        "passed": true
+      },
+      {
+        "name": "new_process_reopens_saved_appearance_and_fixed_zoom",
+        "passed": true
+      },
+      {
+        "name": "legacy_import_is_explicit_and_keeps_original_values_available",
+        "passed": true
+      },
+      {
+        "name": "failed_reload_keeps_current_state_and_bad_file_bytes",
+        "passed": true
+      },
+      {
+        "name": "composed_geometry_refusal_preserves_file_and_active_values",
+        "passed": true
+      },
+      {
+        "name": "real_atomic_save_failure_retains_previous_file_and_active_record",
+        "passed": true
+      },
+      {
+        "name": "retry_saves_the_retained_draft",
+        "passed": true
+      },
+      {
+        "name": "unknown_version_reopen_retains_file_and_uses_valid_defaults",
+        "passed": true
+      },
+      {
+        "name": "defaults_are_saved_through_installed_f3_api",
+        "passed": true
+      },
+      {
+        "name": "old_appearance_values_are_not_silently_overwritten",
+        "passed": true
+      },
+      {
+        "name": "parent_close_waits_for_observed_settings_owner_barrier",
+        "passed": true
+      },
+      {
+        "name": "barrier_close_reopens_the_complete_saved_record",
+        "passed": true
+      },
+      {
+        "name": "original_source_bytes_unchanged",
+        "passed": true
+      }
+    ]
+  },
+  "retained_suites": {
+    "installed_preferences": {
+      "passed": 20,
+      "expected": 20
+    },
+    "account_receive": {
+      "passed": 46,
+      "expected": 46
+    },
+    "gtk_ui": {
+      "passed": 105,
+      "expected": 105,
+      "groups": {
+        "original": 20,
+        "product": 5,
+        "fixed_pages": 24,
+        "shelf": 14,
+        "metadata": 15,
+        "collections": 27
+      }
+    },
+    "faults": {
+      "passed": 4,
+      "expected": 4
+    },
+    "targeted_atspi": {
+      "passed": 10,
+      "expected": 10
+    },
+    "fixed_backend": {
+      "groups": 11,
+      "assertions": 82,
+      "passed": true
+    },
+    "private_snapshot_created_only_cancel": {
+      "assertions": 53,
+      "passed": true
+    },
+    "public_sdk_catalog_consumer": {
+      "sdk_checks": 9,
+      "product_checks": 12,
+      "real_kill_recoveries": 2,
+      "passed": true
+    }
+  },
+  "native_account_imports": {
+    "verified_selected_files": 52,
+    "unique_imports": 52,
+    "return_per_import": 1,
+    "requires_new_generation_and_saved_idle": true,
+    "timeout_budget_seconds": 30,
+    "private_document_portal_unmounted_before_original_cleanup": true,
+    "original_verifier_unchanged": true
+  },
+  "actual_effects": {
+    "reflow_page_end": [
+      {
+        "name": "actual_reflow_font",
+        "before": 432,
+        "after": 280
+      },
+      {
+        "name": "actual_reflow_line",
+        "before": 432,
+        "after": 257
+      },
+      {
+        "name": "actual_reflow_paragraph",
+        "before": 432,
+        "after": 395
+      },
+      {
+        "name": "actual_reflow_margin",
+        "before": 432,
+        "after": 280
+      }
+    ],
+    "fixed_zoom": {
+      "before": [
+        600,
+        800
+      ],
+      "after": [
+        750,
+        1000
+      ],
+      "zoom_before": 100,
+      "zoom_after": 125
+    },
+    "light_page_foreground_pixels": 9992,
+    "requested_light_page_background_pixels": 0,
+    "actual_page_margin_rgb": [
+      255,
+      255,
+      255
+    ],
+    "system_interface_background_pixels": {
+      "dark": 45208,
+      "light": 47319
+    },
+    "light_page_foreground_pixels_in_both_system_states": 9992
+  },
   "whole_reflow_canvas_background_accepted": false,
   "dark_reading_page_accepted": false,
+  "remaining_fields": [
+    "light_background_on_reflow_canvas",
+    "dark_reading_page_palette"
+  ],
+  "earlier_failed_runs": [
+    {
+      "run_id": 40089898810,
+      "source_sha": "eec3065c1be48b5c344255bed973f05e620062f8",
+      "attempt": 1,
+      "conclusion": "failure",
+      "retained_reason": "GTK编译拒绝两处misleading-indentation；安装F3原20项已过"
+    },
+    {
+      "run_id": 40090219099,
+      "source_sha": "1722da9bef0765783d27500b3ba283e8fb111353",
+      "attempt": 1,
+      "conclusion": "failure",
+      "retained_reason": "原生同名label与spin定位及按钮旧idle竞态，字号未应用"
+    },
+    {
+      "run_id": 40090350274,
+      "source_sha": "9d6d0a7c80ed2c1227c30b7636d5e6ab1d992971",
+      "attempt": 1,
+      "conclusion": "failure",
+      "retained_reason": "实际字号输入/按钮旧idle竞态；More菜单顺序同时修复"
+    },
+    {
+      "run_id": 40090677943,
+      "source_sha": "d6dad405a67397916c170c14061755742440feb6",
+      "attempt": 1,
+      "conclusion": "failure",
+      "retained_reason": "实际控件输入仍未落地，原AT-SPI10已过"
+    },
+    {
+      "run_id": 40091074009,
+      "source_sha": "9dab6e54788e5b89b808e3ba2cf4fa3031a4a67e",
+      "attempt": 1,
+      "conclusion": "failure",
+      "retained_reason": "Spin24与focusClose证明字段未获得实际输入"
+    },
+    {
+      "run_id": 40091207927,
+      "source_sha": "893b76e9059851b9d189f929d69b750268ea23da",
+      "attempt": 1,
+      "conclusion": "failure",
+      "retained_reason": "四项真实布局/Light前景已证；页面底色仍白，保留背景拒绝"
+    },
+    {
+      "run_id": 40091469413,
+      "source_sha": "084a1950144bbe0539b620341312f443411565a0",
+      "attempt": 1,
+      "conclusion": "failure",
+      "retained_reason": "冻结render不提供页面画布底色，保留页面配色拒绝"
+    },
+    {
+      "run_id": 40091724929,
+      "source_sha": "f41f9eec1096255648ec01279583b0ef3afd4178",
+      "attempt": 1,
+      "conclusion": "failure",
+      "retained_reason": "页面配色拒绝；image角色过窄；原fixed18遇F4旧idle竞态"
+    },
+    {
+      "run_id": 40092703699,
+      "source_sha": "d3a0878ee37e32ea73b7e05b2b0bb9dcf165e945",
+      "attempt": 1,
+      "conclusion": "failure",
+      "retained_reason": "原46+105+4+AT-SPI10全过，新设置UI独立拒绝，未转移旧源码信用"
+    },
+    {
+      "run_id": 40092955599,
+      "source_sha": "6f3db91d8c7d9b25e524477e13b7fc40c2c59288",
+      "attempt": 1,
+      "conclusion": "failure",
+      "retained_reason": "原46+105+4+AT-SPI10全过，新设置UI独立拒绝，未转移旧源码信用"
+    },
+    {
+      "run_id": 40093499834,
+      "source_sha": "0f84740efffef11aea55fcdd92f78880c87e9782",
+      "attempt": 1,
+      "conclusion": "failure",
+      "retained_reason": "原生面板颜色证实；System事件早于实际GTK绘制，像素读回过早"
+    },
+    {
+      "run_id": 40093969346,
+      "source_sha": "7fb45856542a5fd88a15cef5eaa71fe9dd7ed0db",
+      "attempt": 1,
+      "conclusion": "failure",
+      "retained_reason": "System实际颜色和点击已过；RTL拖动测试旧idle早于真实release处理"
+    },
+    {
+      "run_id": 40094828710,
+      "source_sha": "f25b61ba52cfb87bcbf52d15bff2d25227498e69",
+      "attempt": 1,
+      "conclusion": "failure",
+      "retained_reason": "诊断完整35项为33通过/2页面配色拒绝，不授予原套件信用",
+      "diagnostic_only": true
+    },
+    {
+      "run_id": 40095211918,
+      "source_sha": "f25b61ba52cfb87bcbf52d15bff2d25227498e69",
+      "attempt": 1,
+      "conclusion": "failure",
+      "retained_reason": "原46个具名检查全部pass，但finally清理死document portal FUSE挂载抛ConnectionAbortedError，报告未落盘"
+    },
+    {
+      "run_id": 40096404519,
+      "source_sha": "a3cec3657c398e215c0ef8d740601a4de2810745",
+      "attempt": 1,
+      "conclusion": "failure",
+      "retained_reason": "私有FUSE清理已真实成功；第39次原生chooser固定时延输入未完成，原账号检查尚未开始"
+    },
+    {
+      "run_id": 40109606798,
+      "source_sha": "ada664f227105c9972a0e37f189dc23b5520ab1e",
+      "attempt": 1,
+      "conclusion": "failure",
+      "retained_reason": "52次真实匹配文件单Return导入全部成功；wrapper未保留原脚本同级模块路径，导入receive_checks失败"
+    }
+  ],
+  "cloud_artifact_read_diagnostics": [
+    {
+      "run_id": 40109235156,
+      "diagnostic_only": true,
+      "accepted": false,
+      "scope": "failed-run report only; primary path not yet selected"
+    },
+    {
+      "run_id": 40109319296,
+      "diagnostic_only": true,
+      "accepted": false,
+      "source_run": 40096404519,
+      "artifact_id": 12561371384,
+      "rehashed_zip_sha256": "44f9e93f8a0feb1e40866c4a404992372ef97ceff277a9ee12aed370047506cb",
+      "scope": "actual primary application log and host state"
+    }
+  ],
   "g13_full_audit_accepted": false,
   "orca_accepted": false,
   "physical_device_execution": false,
