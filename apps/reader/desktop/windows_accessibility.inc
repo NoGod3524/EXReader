@@ -900,6 +900,83 @@ static HRESULT STDMETHODCALLTYPE host_a11y_range_scroll(ITextRangeProvider *self
 }
 
 /* ---- text provider ------------------------------------------------------ */
+/* Caret geometry over the immutable rendered frame. Unlike the mouse gesture
+   path, UIA also accepts points outside the page and cannot queue a pager job.
+   Use the existing SDK glyph clusters/quads; never reopen or reparse the book. */
+static void host_a11y_nearest_caret(double x, double y, double ax, double ay, double bx, double by,
+                                    size_t offset, double *best, size_t *found) {
+  double dx = bx - ax, dy = by - ay, length = dx * dx + dy * dy;
+  double t = length > 0 ? ((x - ax) * dx + (y - ay) * dy) / length : 0;
+  double distance;
+  if (t < 0) t = 0;
+  if (t > 1) t = 1;
+  dx = x - (ax + t * dx); dy = y - (ay + t * dy);
+  distance = dx * dx + dy * dy;
+  if (distance < *best) { *best = distance; *found = offset; }
+}
+
+static size_t host_a11y_point_offset(double x, double y) {
+  size_t found = SIZE_MAX, count = 0, i;
+  double best = HUGE_VAL;
+  if (!compute_view() || g.view.scale <= 0) return SIZE_MAX;
+  x = (x - g.view.dx) / g.view.scale;
+  y = (y - g.view.dy) / g.view.scale;
+  if (g.frame.fixed) {
+    const exr_text_region *regions;
+    exr_viewport viewport;
+    exr_error error = {0};
+    if (!g.frame.fixed_text || exr_viewport_create(&g.frame.geometry, g.frame.render_scale, &viewport, &error) != EXR_OK)
+      return SIZE_MAX;
+    regions = exr_fixed_text_regions(g.frame.fixed_text, &count);
+    for (i = 0; i < count; ++i) {
+      const exr_text_region *region = &regions[i];
+      double q[8];
+      int j;
+      if ((region->flags & EXR_REGION_INVISIBLE) || region->start == region->end) continue;
+      for (j = 0; j < 4; ++j) {
+        double sx = region->quad[j * 2], sy = region->quad[j * 2 + 1];
+        q[j * 2] = viewport.matrix[0] * sx + viewport.matrix[2] * sy + viewport.matrix[4];
+        q[j * 2 + 1] = viewport.matrix[1] * sx + viewport.matrix[3] * sy + viewport.matrix[5];
+      }
+      host_a11y_nearest_caret(x, y, q[0], q[1], q[6], q[7], region->start, &best, &found);
+      host_a11y_nearest_caret(x, y, q[2], q[3], q[4], q[5], region->end, &best, &found);
+    }
+  } else {
+    const exr_glyph *glyphs = g.frame.glyphs;
+    count = g.frame.glyph_count;
+    if (!g.frame.bounded && g.frame.hit_layout) glyphs = exr_layout_glyphs(g.frame.hit_layout, &count);
+    if (!glyphs) return g.frame.range_start;
+    for (i = 0; i < count;) {
+      const exr_glyph *glyph = &glyphs[i];
+      int vertical = !!(glyph->flags & EXR_GLYPH_VERTICAL), visible = !(glyph->flags & EXR_GLYPH_HIDDEN);
+      double first = vertical ? glyph->baseline : glyph->x, last = first + glyph->advance;
+      double cross = vertical ? glyph->x : glyph->baseline, size = glyph->size;
+      size_t end = i + 1;
+      while (end < count && glyphs[end].cluster_start == glyph->cluster_start && glyphs[end].bidi_level == glyph->bidi_level) {
+        double pen = vertical ? glyphs[end].baseline : glyphs[end].x;
+        first = fmin(first, pen); last = fmax(last, pen + glyphs[end].advance);
+        visible |= !(glyphs[end].flags & EXR_GLYPH_HIDDEN);
+        ++end;
+      }
+      if (visible && glyph->cluster_start < glyph->cluster_end &&
+          glyph->cluster_end > g.frame.range_start && glyph->cluster_start < g.frame.range_end) {
+        size_t leading = glyph->bidi_level & 1 ? glyph->cluster_end : glyph->cluster_start;
+        size_t trailing = glyph->bidi_level & 1 ? glyph->cluster_start : glyph->cluster_end;
+        if (vertical) {
+          host_a11y_nearest_caret(x, y, cross - size / 2, first, cross + size / 2, first, leading, &best, &found);
+          host_a11y_nearest_caret(x, y, cross - size / 2, last, cross + size / 2, last, trailing, &best, &found);
+        } else {
+          host_a11y_nearest_caret(x, y, first, cross - size, first, cross + size / 4, leading, &best, &found);
+          host_a11y_nearest_caret(x, y, last, cross - size, last, cross + size / 4, trailing, &best, &found);
+        }
+      }
+      i = end;
+    }
+  }
+  /* A valid text page with no visible glyph still has its insertion point. */
+  return found == SIZE_MAX ? g.frame.range_start : found;
+}
+
 static void host_a11y_from_point_task(void *context) {
   host_a11y_frame_task *task = (host_a11y_frame_task *)context;
   POINT point;
@@ -909,11 +986,13 @@ static void host_a11y_from_point_task(void *context) {
   int units;
   task->result = UIA_E_ELEMENTNOTAVAILABLE;
   task->snapshot = NULL;
+  if (!isfinite(task->px) || !isfinite(task->py) || task->px < LONG_MIN || task->px > LONG_MAX ||
+      task->py < LONG_MIN || task->py > LONG_MAX) { task->result = E_INVALIDARG; return; }
   if (!g.page || !g.frame.valid) return;
   point.x = (LONG)task->px;
   point.y = (LONG)task->py;
   ScreenToClient(g.page, &point);
-  offset = point_offset(point.x, point.y, 1);
+  offset = host_a11y_point_offset(point.x, point.y);
   if (offset == SIZE_MAX) return;
   host_a11y_acquire_task(&snapshot);
   if (!snapshot) return;
