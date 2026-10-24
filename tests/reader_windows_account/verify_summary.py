@@ -17,6 +17,11 @@ RETAINED = {
 }
 
 
+def bare(digest):
+    """Compare digests by their hex body: the API adds 'sha256:', upload outputs do not."""
+    return digest.split(':', 1)[1] if ':' in digest else digest
+
+
 def gh(*arguments, binary=False):
     done = subprocess.run(['gh', 'api', *arguments], capture_output=True, check=True)
     return done.stdout if binary else done.stdout.decode()
@@ -47,8 +52,9 @@ def main():
     archive.write_bytes(gh('repos/%s/actions/artifacts/%s/zip' % (repository, args.artifact_id), binary=True))
     digest = 'sha256:' + hashlib.sha256(archive.read_bytes()).hexdigest()
     require(archive.stat().st_size > 0, 'downloaded ZIP is empty')
-    require(not meta.get('digest') or meta['digest'] == digest, 'API digest differs from the recomputed ZIP digest')
-    require(not args.upload_digest or args.upload_digest == digest, 'upload step digest differs from the recomputed ZIP digest')
+    # The API returns 'sha256:<hex>' and the upload step output is bare hex: compare hex to hex.
+    require(not meta.get('digest') or bare(meta['digest']) == bare(digest), 'API digest differs from the recomputed ZIP digest')
+    require(not args.upload_digest or bare(args.upload_digest) == bare(digest), 'upload step digest differs from the recomputed ZIP digest')
     root = args.output / 'unzipped'
     with zipfile.ZipFile(archive) as bundle:
         bundle.extractall(root)
