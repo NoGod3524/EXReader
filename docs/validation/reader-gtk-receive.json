@@ -1,0 +1,21 @@
+{
+  "accepted": false,
+  "status": "implementation candidate; first cloud run pending",
+  "baseline": "d2b59e9e9b3ad3e3246c23926f0fbebbaa9515f8",
+  "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
+  "source_sha": null,
+  "run_id": null,
+  "attempt": null,
+  "jobs": [],
+  "artifacts": [],
+  "retained_failures": [],
+  "granted_platforms": [],
+  "physical_device_execution": false,
+  "screen_reader_accepted": false,
+  "performance_accepted": false,
+  "six_platform_accepted": false,
+  "complete_product": false,
+  "sdk_changed": false,
+  "schema_changed": false,
+  "scope": "explicit GTK SAFE metadata receive, stable original import and read-only public v2 location resolution"
+}

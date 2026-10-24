@@ -8,6 +8,7 @@
 #ifdef EXR_READER_ACCOUNT
 #include <reader_session.h>
 #include <exr_credentials.h>
+#include <reader_projection.h>
 #endif
 
 static GtkWidget *window,*image,*label,*shelf,*notes,*text,*comment,*stack,*bigger,*smaller;
@@ -38,6 +39,10 @@ static gboolean accounts_defer_exit(void);
 static char *accounts_observation(void);
 static void accounts_cleanup(void);
 static gboolean close_window(GtkWidget *,GdkEvent *,gpointer);
+static void accounts_open_book(const char *);
+static void accounts_conflicts_page(GtkWidget *,gpointer);
+static void accounts_conflict_activated(GtkListBox *,GtkListBoxRow *,gpointer);
+static GtkWidget *received_panel,*received_list,*received_next;
 #endif
 #ifdef EXR_READER_DESKTOP_METADATA
 static gboolean metadata_running;
@@ -191,10 +196,26 @@ static void shelf_present(reader_result *result) {
       gtk_label_set_xalign(GTK_LABEL(title),0);gtk_label_set_ellipsize(GTK_LABEL(title),PANGO_ELLIPSIZE_END);
       gtk_widget_set_size_request(row,-1,48);
       int64_t *id=g_new(int64_t,1);*id=book->id;g_object_set_data_full(G_OBJECT(row),"book-id",id,g_free);
+#ifdef EXR_READER_ACCOUNT
+      if(cursor->receive_kind) {
+        char *notice=g_strdup_printf("%s\n%s",gtk_label_get_text(GTK_LABEL(title)),"Book versions need attention");
+        gtk_label_set_text(GTK_LABEL(title),notice);g_free(notice);
+      } else if(!book->id) {
+        char *notice=g_strdup_printf("%s\n%s",gtk_label_get_text(GTK_LABEL(title)),"Not yet in this device's reading library");
+        gtk_label_set_text(GTK_LABEL(title),notice);g_free(notice);
+      }
+      g_object_set_data(G_OBJECT(row),"received-kind",GINT_TO_POINTER(cursor->receive_kind));
+#endif
       g_object_set_data_full(G_OBJECT(row),"book-key",g_strdup(cursor->key),g_free);
       g_object_set_data_full(G_OBJECT(row),"sort-title",g_strdup(cursor->sort_title),g_free);
       gtk_container_add(GTK_CONTAINER(row),title);
-      if(!book->id) { gtk_widget_set_sensitive(row,FALSE);gtk_widget_set_tooltip_text(row,"Book has not been downloaded to this device"); }
+      if(!book->id) {
+#ifdef EXR_READER_ACCOUNT
+        gtk_widget_set_tooltip_text(row,"Open to add this book to this device's reading library");
+#else
+        gtk_widget_set_sensitive(row,FALSE);gtk_widget_set_tooltip_text(row,"Book has not been downloaded to this device");
+#endif
+      }
       gtk_list_box_insert(GTK_LIST_BOX(shelf),row,result->shelf_direction<0 ? (int)i:-1);
       if(shelf_selected_key && !strcmp(shelf_selected_key,cursor->key)) gtk_list_box_select_row(GTK_LIST_BOX(shelf),GTK_LIST_BOX_ROW(row));
     }
@@ -321,6 +342,7 @@ static void job_free(host_job *job) {
   g_free((gpointer)job->command.collection_book_key);g_free((gpointer)job->command.collection_group_cursor);
   g_free((gpointer)job->command.collection_member_cursor);
   g_free((gpointer)job->command.account_root);g_free((gpointer)job->command.account_id);
+  g_free((gpointer)job->command.receive_key);
   reader_secret_free((char *)job->command.account_user);reader_secret_free((char *)job->command.account_password);g_free(job);
 }
 static void queue_commit(void) {
@@ -333,7 +355,7 @@ static void pixels_free(guchar *pixels,gpointer unused) { (void)unused;free(pixe
 static gboolean apply_result(gpointer data) {
   host_result *done=data;reader_result *result=&done->value;
 #ifdef EXR_READER_ACCOUNT
-  if(done->action>=READER_ACCOUNT_LOAD && done->action<=READER_ACCOUNT_STAGE_NEXT) {
+  if(done->action>=READER_ACCOUNT_LOAD && done->action<=READER_RECEIVE_CONFLICTS_NEXT) {
     accounts_apply(done);goto free_result;
   }
 #endif
@@ -424,7 +446,7 @@ static gpointer work(gpointer font_path) {
     barrier=barrier || (job->command.action>=READER_METADATA_PREPARE && job->command.action<=READER_COLLECTIONS_DISCARD);
 #endif
 #ifdef EXR_READER_ACCOUNT
-    barrier=barrier || (job->command.action>=READER_ACCOUNT_LOAD && job->command.action<=READER_ACCOUNT_STAGE_NEXT);
+    barrier=barrier || (job->command.action>=READER_ACCOUNT_LOAD && job->command.action<=READER_RECEIVE_CONFLICTS_NEXT);
 #endif
     if(!barrier && job->generation!=g_atomic_int_get(&generation)) { job_free(job);continue; }
     worker_generation=barrier ? g_atomic_int_get(&generation):job->generation;
@@ -573,6 +595,15 @@ static gboolean key(GtkWidget *w,GdkEventKey *event,gpointer unused) {
 }
 static void shelf_activated(GtkListBox *box,GtkListBoxRow *row,gpointer unused) {
   (void)box;(void)unused;int64_t *id=g_object_get_data(G_OBJECT(row),"book-id");
+#ifdef EXR_READER_ACCOUNT
+  const char *key=g_object_get_data(G_OBJECT(row),"book-key");
+  if(key && GPOINTER_TO_INT(g_object_get_data(G_OBJECT(row),"received-kind"))) {
+    accounts_conflict_activated(box,row,NULL);return;
+  }
+  if(key && (!id || *id<=0)) {
+    accounts_open_book(key);return;
+  }
+#endif
   if(id && *id>0) open_id(*id);else status(EXR_ARGUMENT,"Download this book before opening it");
 }
 static void note_activated(GtkListBox *box,GtkListBoxRow *row,gpointer unused) {
@@ -695,6 +726,21 @@ int main(int argc,char **argv) {
   gtk_box_pack_start(GTK_BOX(shelf_panel),search,FALSE,FALSE,0);
 #endif
   gtk_box_pack_start(GTK_BOX(shelf_panel),shelf_scroll,TRUE,TRUE,0);
+#ifdef EXR_READER_ACCOUNT
+  received_panel=gtk_box_new(GTK_ORIENTATION_VERTICAL,4);
+  GtkWidget *received_toolbar=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,6),*received_caption=gtk_label_new("Book versions need attention");
+  gtk_label_set_xalign(GTK_LABEL(received_caption),0);gtk_box_pack_start(GTK_BOX(received_toolbar),received_caption,TRUE,TRUE,0);
+  GtkWidget *received_first=gtk_button_new_with_label("First group");received_next=gtk_button_new_with_label("More books");
+  gtk_box_pack_end(GTK_BOX(received_toolbar),received_next,FALSE,FALSE,0);gtk_box_pack_end(GTK_BOX(received_toolbar),received_first,FALSE,FALSE,0);
+  g_signal_connect(received_first,"clicked",G_CALLBACK(accounts_conflicts_page),GINT_TO_POINTER(0));
+  g_signal_connect(received_next,"clicked",G_CALLBACK(accounts_conflicts_page),GINT_TO_POINTER(1));
+  received_list=gtk_list_box_new();atk_object_set_name(gtk_widget_get_accessible(received_list),"Book versions needing attention");
+  g_signal_connect(received_list,"row-activated",G_CALLBACK(accounts_conflict_activated),NULL);
+  GtkWidget *received_scroll=scroll(received_list);gtk_widget_set_size_request(received_scroll,-1,130);
+  gtk_box_pack_start(GTK_BOX(received_panel),received_toolbar,FALSE,FALSE,0);gtk_box_pack_start(GTK_BOX(received_panel),received_scroll,TRUE,TRUE,0);
+  gtk_box_pack_start(GTK_BOX(shelf_panel),received_panel,FALSE,FALSE,0);
+  gtk_widget_show_all(received_panel);gtk_widget_hide(received_panel);gtk_widget_set_no_show_all(received_panel,TRUE);
+#endif
   gtk_stack_add_named(GTK_STACK(stack),shelf_panel,"shelf");
   g_signal_connect(search,"changed",G_CALLBACK(shelf_search_changed),NULL);
   g_signal_connect(shelf,"row-selected",G_CALLBACK(shelf_selected),NULL);

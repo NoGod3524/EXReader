@@ -31,6 +31,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ('payload', 'metadata-consumer', 'revision-consumer', 'output'):
         parser.add_argument('--' + name, type=Path, required=True)
+    for name in ('receive-fixtures', 'reading-probe', 'inspect-consumer'):
+        parser.add_argument('--' + name, type=Path)
     args = parser.parse_args()
     assert os.environ.get('GITHUB_ACTIONS') == 'true'
     folder = args.output.resolve();folder.mkdir()
@@ -373,6 +375,11 @@ def main():
                                       'received_revision_id': remote_tag['id'], 'product_metadata_preserved': True,
                                       'bootstrap_or_projection_performed': False}
         record('verified_local_book_with_two_heads_stages_original_without_selecting_or_projecting_and_still_receives_remote_records')
+        if args.receive_fixtures:
+            from receive_checks import run_receive_checks
+            report['received'] = run_receive_checks(locals())
+            report.update(scope='GTK explicit SAFE receive, stable original import and public reading-state resolution',
+                          remote_sdk_import_accepted=True, remote_projection_accepted=True)
         disconnect();before = len(requests);field('w', root.replace('/dav/', '/other/'));host.key('alt+a')
         refused = ready(lambda s: 'bound to its account and exact root' in s['notice'])
         assert refused['root'] == root and len(requests) == before
@@ -447,7 +454,8 @@ def main():
                 data = path.read_bytes();assert not any(form in data for form in forms), 'credential leak in ' + str(path.relative_to(folder))
         assert not any(form in body for form in forms for body in entries.values())
         record('credentials_and_authorization_are_absent_from_profiles_product_databases_wire_and_all_evidence')
-        assert len(checks) == 23, len(checks)
+        expected_checks = 23 + len(report.get('received', {}).get('checks', []))
+        assert len(checks) == expected_checks, len(checks)
         report.update(accepted=True, count=len(checks), local_originals=52, credential_leak_hits=0,
                       actual_secret_service='temporary unlocked then locked GNOME collection', native_https=True)
     finally:
