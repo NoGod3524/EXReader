@@ -867,6 +867,7 @@ struct host_job {
   unsigned long product_shelf_generation;
   char *product_shelf_query,*product_cursor_title,*product_cursor_key,*product_anchor_key;
   exr_book *product_books;size_t product_book_count;
+  char product_key[READER_BOOK_KEY_CAPACITY];
   host_shelf_cursor *product_cursors;
 #endif
 #ifdef EXR_READER_DESKTOP_METADATA
@@ -3113,6 +3114,10 @@ static void handle_job_complete(host_job *job) {
   if(product_job_kind(job->kind)) {
     if(job->status!=EXR_OK) { g.product_pending=1;g.product_ready=0;g.shelf_need_refresh=0; }
     else if(job->kind==JOB_PRODUCT_REPAIR) { g.product_pending=0;g.product_ready=1; }
+    /* The imported row was selected by its SDK ID; carry that choice to the stable product key
+       so the bounded page refresh restores it instead of clearing the selection. */
+    if(job->kind==JOB_PRODUCT_ATTACH && job->status==EXR_OK && job->product_key[0] && !g.closing)
+      snprintf(g.shelf_selected_key,sizeof(g.shelf_selected_key),"%s",job->product_key);
     if(job->status==EXR_OK && !g.product_pending) { g.product_ready=1;product_shelf_schedule(0,0); }
     if(job->kind==JOB_PRODUCT_DELETE && job->product_deleted) {
       show_deleted_book(job->book_id);return;
