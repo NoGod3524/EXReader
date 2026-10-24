@@ -88,6 +88,26 @@
 工件 ID/字节/SHA-256/有效期与原始日志以同一 run 的工件为准。
 系统选择器、宿主 UI、WebDAV 账号和新导入协议不在本包范围。
 
+## 云端结果（2026-10-24）
+
+- run [`40065922610`](https://github.com/NoGod3524/EXReader/actions/runs/40065922610) attempt `1`，
+  受测 source `a85bbc5fb817ab28c28512665efc19e7c13f5ff9`；Windows/Linux/macOS 三平台与
+  同次工件证据作业均为 `success`。
+- Windows/Linux/macOS 各 **668 项检查**通过，`report.json` 的 `ok=true`，无失败项。
+- 扫描 40 个候选：38 个新建、1 个精确重复（同 `book_id`、`created=0`）、1 个损坏 EPUB
+  逐项 `EXR_FORMAT` 失败；重开与重投逐项可辨。
+- 工件（同一 run/attempt，`expires_at=2027-01-22T05:21:19Z`）：
+
+| OS | artifact id | bytes | sha256 |
+| --- | ---: | ---: | --- |
+| Windows | 12548853049 | 5,471,868 | `65d2ab8e30ddbb5875f011075a6a231661826df92cef4544c0b0d7c273679116` |
+| Linux | 12549292972 | 8,220,252 | `9e22ce643d08ed7a11e65bbe3c5cb499eb9e51c1287549bfce93940ae6872272` |
+| macOS | 12548429750 | 7,045,659 | `01598657b8e41c6c7222cc5db6ae47c314814566ca447aa372fc47e05eed98a2` |
+
+工件证据作业实际下载三个 ZIP，逐一核对声明 SHA-256、字节数、有效期，并检查其中的
+`rb-evidence/report.json` 与 source；记录在
+`reader-batch-import-evidence-40065922610-1`。
+
 ## 构建
 
 ```sh
