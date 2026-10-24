@@ -19,6 +19,7 @@
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <fcntl.h>
 #include <io.h>
 #else
 #include <dirent.h>
@@ -93,13 +94,42 @@ static int ld_exists(const char *path) {
   free(wide);
   return attributes != INVALID_FILE_ATTRIBUTES;
 }
+/* A directory this module owns. Reparse points (junctions and symlinks) are
+   refused: clearing files through one would delete another directory's data. */
 static int ld_is_dir(const char *path) {
   wchar_t *wide = ld_wide(path);
   DWORD attributes;
   if (!wide) return 0;
   attributes = GetFileAttributesW(wide);
   free(wide);
-  return attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+  return attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0 &&
+    (attributes & FILE_ATTRIBUTE_REPARSE_POINT) == 0;
+}
+static int ld_is_regular_nofollow(const char *path) {
+  wchar_t *wide = ld_wide(path);
+  DWORD attributes;
+  if (!wide) return 0;
+  attributes = GetFileAttributesW(wide);
+  free(wide);
+  return attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0 &&
+    (attributes & FILE_ATTRIBUTE_REPARSE_POINT) == 0;
+}
+/* CREATE_NEW after the caller removed the entry: no pre-existing name, hard
+   link or reparse point can redirect this write. */
+static FILE *ld_create_exclusive(const char *path) {
+  wchar_t *wide = ld_wide(path);
+  HANDLE handle;
+  int descriptor;
+  FILE *file;
+  if (!wide) return NULL;
+  handle = CreateFileW(wide, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+  free(wide);
+  if (handle == INVALID_HANDLE_VALUE) return NULL;
+  descriptor = _open_osfhandle((intptr_t)handle, _O_WRONLY | _O_BINARY);
+  if (descriptor < 0) { CloseHandle(handle); return NULL; }
+  file = _fdopen(descriptor, "wb");
+  if (!file) { _close(descriptor); return NULL; }
+  return file;
 }
 static int ld_unlink(const char *path) {
   wchar_t *wide = ld_wide(path);
@@ -126,36 +156,6 @@ static int ld_replace(const char *from, const char *to, const char *dir) {
   free(a); free(b);
   return ok ? 0 : -1;
 }
-static int ld_clear_files(const char *dir) {
-  char pattern[LD_PATH];
-  wchar_t *wide;
-  WIN32_FIND_DATAW found;
-  HANDLE handle;
-  int status = 0;
-  if (snprintf(pattern, sizeof(pattern), "%s/*", dir) >= (int)sizeof(pattern)) return -1;
-  wide = ld_wide(pattern);
-  if (!wide) return -1;
-  handle = FindFirstFileW(wide, &found);
-  free(wide);
-  if (handle == INVALID_HANDLE_VALUE)
-    return GetLastError() == ERROR_FILE_NOT_FOUND || GetLastError() == ERROR_PATH_NOT_FOUND ? 0 : -1;
-  do {
-    if (!(found.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-      size_t length = wcslen(found.cFileName) + 1;
-      wchar_t *prefix = ld_wide(dir);
-      size_t base = prefix ? wcslen(prefix) : 0;
-      wchar_t *full = prefix ? (wchar_t *)malloc((base + 1 + length) * sizeof(wchar_t)) : NULL;
-      if (!full) { free(prefix); status = -1; continue; }
-      memcpy(full, prefix, base * sizeof(wchar_t));
-      full[base] = L'/';
-      memcpy(full + base + 1, found.cFileName, length * sizeof(wchar_t));
-      if (!DeleteFileW(full)) status = -1;
-      free(full); free(prefix);
-    }
-  } while (FindNextFileW(handle, &found));
-  FindClose(handle);
-  return status;
-}
 #else
 static FILE *ld_fopen(const char *path, int write) { return fopen(path, write ? "wb" : "rb"); }
 static int ld_flush(FILE *file) {
@@ -166,9 +166,23 @@ static int ld_exists(const char *path) {
   struct stat info;
   return lstat(path, &info) == 0;
 }
+/* A directory this module owns. A symbolic link is refused: clearing files
+   through it would delete another directory's data. */
 static int ld_is_dir(const char *path) {
   struct stat info;
-  return stat(path, &info) == 0 && S_ISDIR(info.st_mode);
+  return lstat(path, &info) == 0 && S_ISDIR(info.st_mode);
+}
+static int ld_is_regular_nofollow(const char *path) {
+  struct stat info;
+  return lstat(path, &info) == 0 && S_ISREG(info.st_mode);
+}
+static FILE *ld_create_exclusive(const char *path) {
+  int descriptor = open(path, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0600);
+  FILE *file;
+  if (descriptor < 0) return NULL;
+  file = fdopen(descriptor, "wb");
+  if (!file) close(descriptor);
+  return file;
 }
 static int ld_unlink(const char *path) {
   return unlink(path) == 0 || errno == ENOENT ? 0 : -1;
@@ -186,25 +200,21 @@ static int ld_replace(const char *from, const char *to, const char *dir) {
   ld_sync_dir(dir);
   return 0;
 }
-static int ld_clear_files(const char *dir) {
-  DIR *handle = opendir(dir);
-  struct dirent *entry;
-  int status = 0;
-  if (!handle) return errno == ENOENT ? 0 : -1;
-  while ((entry = readdir(handle)) != NULL) {
-    char path[LD_PATH];
-    if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) continue;
-    if (snprintf(path, sizeof(path), "%s/%s", dir, entry->d_name) >= (int)sizeof(path)) { status = -1; continue; }
-    if (!ld_is_dir(path) && unlink(path) != 0) status = -1;
-  }
-  closedir(handle);
-  return status;
-}
 #endif
 
 static int ld_join(char *out, size_t capacity, const char *dir, const char *name) {
   int written = snprintf(out, capacity, "%s/%s", dir, name);
   return written > 0 && (size_t)written < capacity ? 0 : -1;
+}
+
+/* Deletes one file this module named inside its own directory. Never walks a
+   reparse point and never touches another entry. */
+static int ld_remove_owned(const char *dir, const char *name) {
+  char path[LD_PATH];
+  if (strchr(name, '/') || strchr(name, '\\') || !strcmp(name, ".") || !strcmp(name, "..")) return -1;
+  if (!ld_is_dir(dir)) return ld_exists(dir) ? -1 : 0;
+  if (ld_join(path, sizeof(path), dir, name) != 0) return -1;
+  return ld_unlink(path);
 }
 
 /* ---------------------------------------------------------------- SHA-256 */
@@ -327,6 +337,17 @@ static const ld_format *ld_by_exr(exr_format format) {
 
 /* -------------------------------------------------------- shared helpers */
 
+/* One stateful call at a time. A host callback (stage or busy) that calls back
+   into remove/recover/reimport gets BUSY and can never interleave durable
+   writes with the call that is running. reader_ld_pending stays read-only. */
+static volatile int ld_active;
+static int ld_enter(void) {
+  if (ld_active) return -1;
+  ld_active = 1;
+  return 0;
+}
+static void ld_leave(void) { ld_active = 0; }
+
 static int ld_cancelled(const reader_ld_options *o) {
   return o->control.cancelled && o->control.cancelled(o->control.context) != 0;
 }
@@ -386,6 +407,50 @@ static reader_ld_status ld_hash_file(const reader_ld_options *o, const char *pat
   }
   if (ferror(file)) { free(buffer); fclose(file); return ld_fail(e, READER_LD_IO, EXR_OK, 0, "File read failed"); }
   free(buffer); fclose(file);
+  ld_sha_hex(&state, sha);
+  return READER_LD_OK;
+}
+
+/* Copies one opened source handle into a private staging file while hashing
+   the same bytes, so verification and import can never observe two different
+   files. The staging name is removed first and created exclusively. */
+static reader_ld_status ld_stage_copy(const reader_ld_options *o, const char *source_path,
+    const char *stage_path, char sha[65], uint64_t *size, reader_ld_error *e) {
+  ld_sha state;
+  unsigned char *buffer;
+  FILE *input, *output;
+  size_t got;
+  *size = 0; sha[0] = 0;
+  (void)ld_unlink(stage_path);
+  input = ld_fopen(source_path, 0);
+  if (!input) return ld_fail(e, READER_LD_IO, EXR_OK, 0, "File could not be opened");
+  output = ld_create_exclusive(stage_path);
+  if (!output) { fclose(input); return ld_fail(e, READER_LD_IO, EXR_OK, 0, "Private staging file could not be created"); }
+  buffer = (unsigned char *)malloc(LD_CHUNK);
+  if (!buffer) {
+    fclose(input); fclose(output); (void)ld_unlink(stage_path);
+    return ld_fail(e, READER_LD_MEMORY, EXR_OK, 0, "Hash buffer allocation failed");
+  }
+  ld_sha_init(&state);
+  while ((got = fread(buffer, 1, LD_CHUNK, input)) > 0) {
+    if (ld_cancelled(o)) {
+      free(buffer); fclose(input); fclose(output); (void)ld_unlink(stage_path);
+      return ld_fail(e, READER_LD_CANCELLED, EXR_CANCELLED, 0, "Cancelled while staging");
+    }
+    if (fwrite(buffer, 1, got, output) != got || ld_flush(output) != 0) {
+      free(buffer); fclose(input); fclose(output); (void)ld_unlink(stage_path);
+      return ld_fail(e, READER_LD_IO, EXR_OK, 0, "Private staging file could not be written");
+    }
+    ld_sha_update(&state, buffer, got);
+    *size += got;
+  }
+  free(buffer);
+  if (ferror(input)) {
+    fclose(input); fclose(output); (void)ld_unlink(stage_path);
+    return ld_fail(e, READER_LD_IO, EXR_OK, 0, "File read failed");
+  }
+  fclose(input);
+  if (fclose(output) != 0) { (void)ld_unlink(stage_path); return ld_fail(e, READER_LD_IO, EXR_OK, 0, "Private staging file could not be closed"); }
   ld_sha_hex(&state, sha);
   return READER_LD_OK;
 }
@@ -583,7 +648,10 @@ static reader_ld_status ld_intent_write(const char *state, const ld_intent *inte
   if (length <= 0 || (size_t)length >= sizeof(body))
     return ld_fail(e, READER_LD_IO, EXR_OK, 0, "Intent is too large");
   ld_sha_init(&sha); ld_sha_update(&sha, body, (size_t)length); ld_sha_hex(&sha, hex);
-  file = ld_fopen(tmp, 1);
+  /* Remove any stale entry first, then create it exclusively so a pre-existing
+     name, hard link or reparse point can never be truncated by this write. */
+  (void)ld_unlink(tmp);
+  file = ld_create_exclusive(tmp);
   if (!file) return ld_fail(e, READER_LD_IO, EXR_OK, 0, "Intent file could not be created");
   if (fwrite(body, 1, (size_t)length, file) != (size_t)length ||
       fprintf(file, "check=%s\n", hex) < 0 || ld_flush(file) != 0) {
@@ -598,69 +666,154 @@ static reader_ld_status ld_intent_write(const char *state, const ld_intent *inte
   return READER_LD_OK;
 }
 
-/* *present is 0 when no intent exists. */
+/* Strict bounded parser for the private intent record. The exact byte layout
+   is: EXRLD1, then stage/key/bytes/mapped/ids/check once each in that order,
+   then EOF. No unknown field, duplicate field, trailing byte, non-digit,
+   leading plus/minus, empty list element or out-of-range value is accepted. */
+static int ld_uint_line(const char *text, size_t size, size_t *pos, const char *prefix,
+    uint64_t limit, uint64_t *value) {
+  size_t i = *pos, n = strlen(prefix), digits = 0;
+  uint64_t result = 0;
+  if (size - i < n || memcmp(text + i, prefix, n) != 0) return -1;
+  i += n;
+  while (i < size && text[i] >= '0' && text[i] <= '9') {
+    uint64_t digit = (uint64_t)(text[i] - '0');
+    if (result > (UINT64_MAX - digit) / 10) return -1;
+    result = result * 10 + digit;
+    digits++; i++;
+  }
+  if (!digits || i >= size || text[i] != '\n' || result < 1 || result > limit) return -1;
+  *pos = i + 1;
+  *value = result;
+  return 0;
+}
+
+static int ld_text_line(const char *text, size_t size, size_t *pos, const char *prefix,
+    char *out, size_t capacity) {
+  size_t i = *pos, n = strlen(prefix), start;
+  if (size - i < n || memcmp(text + i, prefix, n) != 0) return -1;
+  start = i + n;
+  i = start;
+  while (i < size && text[i] != '\n') i++;
+  if (i >= size || i == start || (i - start) >= capacity) return -1;
+  memcpy(out, text + start, i - start);
+  out[i - start] = 0;
+  *pos = i + 1;
+  return 0;
+}
+
+static reader_ld_status ld_intent_parse(const char *text, size_t size, ld_intent *intent,
+    reader_ld_error *e) {
+  char key[160], check[65], hex[65];
+  uint64_t stage = 0, bytes = 0, mapped = 0;
+  size_t pos = 0, i;
+  ld_sha sha;
+  memset(intent, 0, sizeof(*intent));
+  intent->stage = -1; intent->mapped = -1;
+  if (size < 7 || memcmp(text, "EXRLD1\n", 7) != 0)
+    return ld_fail(e, READER_LD_CORRUPT_INTENT, EXR_OK, 0, "Intent header is invalid");
+  pos = 7;
+  if (ld_uint_line(text, size, &pos, "stage=", (uint64_t)READER_LD_STAGE_DELETED, &stage) != 0 ||
+      ld_text_line(text, size, &pos, "key=", key, sizeof(key)) != 0 ||
+      ld_uint_line(text, size, &pos, "bytes=", (uint64_t)INT64_MAX, &bytes) != 0 ||
+      ld_uint_line(text, size, &pos, "mapped=", (uint64_t)INT64_MAX, &mapped) != 0)
+    return ld_fail(e, READER_LD_CORRUPT_INTENT, EXR_OK, 0, "Intent fields are invalid");
+  if (size - pos < 4 || memcmp(text + pos, "ids=", 4) != 0)
+    return ld_fail(e, READER_LD_CORRUPT_INTENT, EXR_OK, 0, "Intent ids are invalid");
+  pos += 4;
+  for (;;) {
+    uint64_t id = 0;
+    size_t digits = 0;
+    while (pos < size && text[pos] >= '0' && text[pos] <= '9') {
+      uint64_t digit = (uint64_t)(text[pos] - '0');
+      if (id > (UINT64_MAX - digit) / 10) break;
+      id = id * 10 + digit;
+      digits++; pos++;
+    }
+    if (!digits || id == 0 || id > (uint64_t)INT64_MAX || intent->count >= READER_LD_MAX_COPIES)
+      return ld_fail(e, READER_LD_CORRUPT_INTENT, EXR_OK, 0, "Intent ids are invalid");
+    intent->ids[intent->count++] = (int64_t)id;
+    if (pos < size && text[pos] == ',') { pos++; continue; }
+    break;
+  }
+  if (pos >= size || text[pos] != '\n')
+    return ld_fail(e, READER_LD_CORRUPT_INTENT, EXR_OK, 0, "Intent ids are invalid");
+  pos++;
+  ld_sha_init(&sha); ld_sha_update(&sha, text, pos); ld_sha_hex(&sha, hex);
+  if (size - pos != 6 + 64 + 1 || memcmp(text + pos, "check=", 6) != 0 ||
+      text[pos + 70] != '\n')
+    return ld_fail(e, READER_LD_CORRUPT_INTENT, EXR_OK, 0, "Intent checksum line is invalid");
+  memcpy(check, text + pos + 6, 64);
+  check[64] = 0;
+  for (i = 0; i < 64; i++)
+    if (!((check[i] >= '0' && check[i] <= '9') || (check[i] >= 'a' && check[i] <= 'f')))
+      return ld_fail(e, READER_LD_CORRUPT_INTENT, EXR_OK, 0, "Intent checksum is not hexadecimal");
+  if (strcmp(check, hex) != 0)
+    return ld_fail(e, READER_LD_CORRUPT_INTENT, EXR_OK, 0, "Intent checksum differs");
+  pos += 71;
+  if (pos != size)
+    return ld_fail(e, READER_LD_CORRUPT_INTENT, EXR_OK, 0, "Intent has trailing bytes");
+  intent->stage = (int)stage;
+  intent->bytes = bytes;
+  intent->mapped = (int64_t)mapped;
+  snprintf(intent->key, sizeof(intent->key), "%s", key);
+  {
+    ld_key parsed;
+    int has_mapped = 0;
+    if (ld_parse_key(intent->key, &parsed) != 0)
+      return ld_fail(e, READER_LD_CORRUPT_INTENT, EXR_OK, 0, "Intent key is invalid");
+    for (i = 0; i < intent->count; i++) if (intent->ids[i] == intent->mapped) has_mapped = 1;
+    if (!has_mapped)
+      return ld_fail(e, READER_LD_CORRUPT_INTENT, EXR_OK, 0, "Intent identity is invalid");
+  }
+  return READER_LD_OK;
+}
+
+/* *present is 0 when no intent exists. A damaged record is refused and left
+   exactly as it is; nothing is repaired, truncated or deleted here. */
 static reader_ld_status ld_intent_read(const char *state, ld_intent *intent, int *present,
     reader_ld_error *e) {
-  char path[LD_PATH], tmp[LD_PATH], originals[LD_PATH], text[LD_INTENT_MAX + 1], hex[65];
-  char *check, *line, *cursor;
+  char path[LD_PATH], tmp[LD_PATH], originals[LD_PATH], text[LD_INTENT_MAX + 2];
   size_t got;
   FILE *file;
-  ld_sha sha;
   *present = 0;
   if (ld_paths(state, path, tmp, originals) != 0)
     return ld_fail(e, READER_LD_IO, EXR_OK, 0, "State path is too long");
-  if (!ld_exists(path)) return READER_LD_OK;
+  if (!ld_is_regular_nofollow(path)) {
+    if (!ld_exists(path)) return READER_LD_OK;
+    return ld_fail(e, READER_LD_CORRUPT_INTENT, EXR_OK, 0, "Intent entry is not a plain file");
+  }
   file = ld_fopen(path, 0);
   if (!file) return ld_fail(e, READER_LD_IO, EXR_OK, 0, "Intent file could not be opened");
-  got = fread(text, 1, LD_INTENT_MAX, file);
+  got = fread(text, 1, LD_INTENT_MAX + 1, file);
   if (ferror(file)) { fclose(file); return ld_fail(e, READER_LD_IO, EXR_OK, 0, "Intent file could not be read"); }
+  if (got > LD_INTENT_MAX || !feof(file)) {
+    fclose(file);
+    return ld_fail(e, READER_LD_CORRUPT_INTENT, EXR_OK, 0, "Intent file exceeds its byte bound");
+  }
   fclose(file);
   text[got] = 0;
-  check = strstr(text, "check=");
-  if (!check || check == text || check[-1] != '\n' || strncmp(text, "EXRLD1\n", 7))
-    return ld_fail(e, READER_LD_CORRUPT_INTENT, EXR_OK, 0, "Intent file is incomplete");
-  ld_sha_init(&sha); ld_sha_update(&sha, text, (size_t)(check - text)); ld_sha_hex(&sha, hex);
-  if (strncmp(check + 6, hex, 64) != 0 || check[70] != '\n' || check[71] != 0)
-    return ld_fail(e, READER_LD_CORRUPT_INTENT, EXR_OK, 0, "Intent checksum differs");
-  check[0] = 0;
-  memset(intent, 0, sizeof(*intent));
-  intent->stage = -1; intent->mapped = -1;
-  for (line = strtok(text, "\n"); line; line = strtok(NULL, "\n")) {
-    if (!strncmp(line, "stage=", 6)) intent->stage = atoi(line + 6);
-    else if (!strncmp(line, "key=", 4)) snprintf(intent->key, sizeof(intent->key), "%s", line + 4);
-    else if (!strncmp(line, "bytes=", 6)) intent->bytes = strtoull(line + 6, NULL, 10);
-    else if (!strncmp(line, "mapped=", 7)) intent->mapped = strtoll(line + 7, NULL, 10);
-    else if (!strncmp(line, "ids=", 4)) {
-      cursor = line + 4;
-      while (*cursor && intent->count < READER_LD_MAX_COPIES) {
-        char *end = NULL;
-        long long id = strtoll(cursor, &end, 10);
-        if (end == cursor || id <= 0) { intent->count = READER_LD_MAX_COPIES + 1; break; }
-        intent->ids[intent->count++] = (int64_t)id;
-        cursor = *end == ',' ? end + 1 : end;
-        if (*end != ',' && *end) { intent->count = READER_LD_MAX_COPIES + 1; break; }
-      }
-      if (*cursor) intent->count = READER_LD_MAX_COPIES + 1;
-    }
-  }
   {
-    ld_key key; size_t i; int has_mapped = 0;
-    if (intent->stage < READER_LD_STAGE_BEGUN || intent->stage > READER_LD_STAGE_DELETED ||
-        ld_parse_key(intent->key, &key) != 0 || intent->bytes == 0 || intent->mapped <= 0 ||
-        intent->count == 0 || intent->count > READER_LD_MAX_COPIES)
-      return ld_fail(e, READER_LD_CORRUPT_INTENT, EXR_OK, 0, "Intent fields are invalid");
-    for (i = 0; i < intent->count; i++) if (intent->ids[i] == intent->mapped) has_mapped = 1;
-    if (!has_mapped) return ld_fail(e, READER_LD_CORRUPT_INTENT, EXR_OK, 0, "Intent identity is invalid");
+    reader_ld_status status = ld_intent_parse(text, got, intent, e);
+    if (status != READER_LD_OK) return status;
   }
   *present = 1;
   return READER_LD_OK;
 }
 
-static reader_ld_status ld_rollback(const char *state, reader_ld_error *e) {
-  char path[LD_PATH], tmp[LD_PATH], originals[LD_PATH];
+static reader_ld_status ld_rollback(const char *state, const char *sha, reader_ld_error *e) {
+  char path[LD_PATH], tmp[LD_PATH], originals[LD_PATH], name[160];
   if (ld_paths(state, path, tmp, originals) != 0)
     return ld_fail(e, READER_LD_IO, EXR_OK, 0, "State path is too long");
-  if (ld_clear_files(originals) != 0 || ld_unlink(tmp) != 0 || ld_unlink(path) != 0)
+  /* Only this book's own files: a retained original of another book may still
+     be the file the SDK is reading. */
+  snprintf(name, sizeof(name), "%s.orig", sha);
+  if (ld_remove_owned(originals, name) != 0)
+    return ld_fail(e, READER_LD_IO, EXR_OK, 0, "Intent cleanup failed");
+  snprintf(name, sizeof(name), "%s.open", sha);
+  if (ld_remove_owned(originals, name) != 0)
+    return ld_fail(e, READER_LD_IO, EXR_OK, 0, "Intent cleanup failed");
+  if (ld_unlink(tmp) != 0 || ld_unlink(path) != 0)
     return ld_fail(e, READER_LD_IO, EXR_OK, 0, "Intent cleanup failed");
   return READER_LD_OK;
 }
@@ -784,7 +937,7 @@ static reader_ld_status ld_forward(const reader_ld_options *o, ld_intent *intent
       if (code != 0) status = ld_catalog_fail(e, code, &ce, "Local mapping removal");
     }
     if (status != READER_LD_OK) {
-      if (fresh) { reader_ld_error ignored; (void)ld_rollback(o->state_dir, &ignored); }
+      if (fresh) { reader_ld_error ignored; (void)ld_rollback(o->state_dir, key.sha, &ignored); }
       return status;
     }
     status = ld_set_stage(o, intent, READER_LD_STAGE_UNMAPPED, e);
@@ -801,7 +954,7 @@ static reader_ld_status ld_forward(const reader_ld_options *o, ld_intent *intent
         restore = ld_attach(o, &key, &row, intent->mapped, &ignored);
         ld_row_free(&row);
       }
-      if (restore == READER_LD_OK && ld_rollback(o->state_dir, &ignored) == READER_LD_OK)
+      if (restore == READER_LD_OK && ld_rollback(o->state_dir, key.sha, &ignored) == READER_LD_OK)
         result->outcome = READER_LD_OUTCOME_RESTORED;
       return status;
     }
@@ -809,8 +962,15 @@ static reader_ld_status ld_forward(const reader_ld_options *o, ld_intent *intent
     status = ld_set_stage(o, intent, READER_LD_STAGE_DELETED, e);
     if (status != READER_LD_OK) return status;
   }
-  if (ld_clear_files(originals) != 0)
-    return ld_fail(e, READER_LD_IO, EXR_OK, 0, "Verified original export could not be removed");
+  {
+    char name[160];
+    snprintf(name, sizeof(name), "%s.orig", key.sha);
+    if (ld_remove_owned(originals, name) != 0)
+      return ld_fail(e, READER_LD_IO, EXR_OK, 0, "Verified original export could not be removed");
+    snprintf(name, sizeof(name), "%s.open", key.sha);
+    if (ld_remove_owned(originals, name) != 0)
+      return ld_fail(e, READER_LD_IO, EXR_OK, 0, "Verified original export could not be removed");
+  }
   ld_hook(o, READER_LD_STAGE_CLEANED);
   if (ld_unlink(path) != 0 || ld_unlink(tmp) != 0)
     return ld_fail(e, READER_LD_IO, EXR_OK, 0, "Intent could not be removed");
@@ -847,7 +1007,7 @@ static exr_status ld_export_status(const reader_ld_options *o, int64_t id, const
   return exr_sideload_export_original(o->library, id, destination, &so, written, se);
 }
 
-reader_ld_status reader_ld_remove(const reader_ld_options *o, const char *book_key,
+static reader_ld_status ld_remove_locked(const reader_ld_options *o, const char *book_key,
     reader_ld_result *result, reader_ld_error *e) {
   reader_ld_status status;
   ld_key key;
@@ -885,9 +1045,24 @@ reader_ld_status reader_ld_remove(const reader_ld_options *o, const char *book_k
   if (ld_cancelled(o)) { status = ld_fail(e, READER_LD_CANCELLED, EXR_CANCELLED, 0, "Cancelled before starting"); goto done; }
   status = ld_busy(o, &intent, e);
   if (status != READER_LD_OK) goto done;
-  if (ld_mkdir(originals) != 0 || ld_clear_files(originals) != 0) {
+  if (ld_mkdir(originals) != 0) {
     status = ld_fail(e, READER_LD_IO, EXR_OK, 0, "Private original directory is unavailable");
     goto done;
+  }
+  /* Only this book's own files are touched: another book's retained original
+     may still be open in the SDK. */
+  {
+    char stale[160];
+    snprintf(stale, sizeof(stale), "%s.orig", key.sha);
+    if (ld_remove_owned(originals, stale) != 0) {
+      status = ld_fail(e, READER_LD_IO, EXR_OK, 0, "Private original directory is unavailable");
+      goto done;
+    }
+    snprintf(stale, sizeof(stale), "%s.open", key.sha);
+    if (ld_remove_owned(originals, stale) != 0) {
+      status = ld_fail(e, READER_LD_IO, EXR_OK, 0, "Private original directory is unavailable");
+      goto done;
+    }
   }
   status = ld_set_stage(o, &intent, READER_LD_STAGE_BEGUN, e);
   if (status != READER_LD_OK) { (void)ld_unlink(tmp); goto done; }
@@ -957,12 +1132,12 @@ reader_ld_status reader_ld_remove(const reader_ld_options *o, const char *book_k
 done:
   if (books) exr_books_free(books, count);
   if (has_row) ld_row_free(&row);
-  if (begun == 1 && status != READER_LD_OK) { reader_ld_error ignored; (void)ld_rollback(o->state_dir, &ignored); }
+  if (begun == 1 && status != READER_LD_OK) { reader_ld_error ignored; (void)ld_rollback(o->state_dir, key.sha, &ignored); }
   if (status != READER_LD_OK && result->outcome != READER_LD_OUTCOME_RESTORED) result->outcome = READER_LD_OUTCOME_NONE;
   return status;
 }
 
-reader_ld_status reader_ld_recover(const reader_ld_options *o, reader_ld_result *result,
+static reader_ld_status ld_recover_locked(const reader_ld_options *o, reader_ld_result *result,
     reader_ld_error *e) {
   reader_ld_status status;
   ld_intent intent;
@@ -976,17 +1151,25 @@ reader_ld_status reader_ld_recover(const reader_ld_options *o, reader_ld_result 
   if (status != READER_LD_OK) return status;
   if (!present) { result->outcome = READER_LD_OUTCOME_NOTHING_PENDING; return READER_LD_OK; }
   result->sdk_book_id = intent.mapped;
-  if (intent.stage == READER_LD_STAGE_BEGUN) {
-    status = ld_rollback(o->state_dir, e);
-    if (status == READER_LD_OK) result->outcome = READER_LD_OUTCOME_ROLLED_BACK;
-    return status;
+  {
+    ld_key key;
+    if (ld_parse_key(intent.key, &key) != 0)
+      return ld_fail(e, READER_LD_CORRUPT_INTENT, EXR_OK, 0, "Intent key is invalid");
+    if (intent.stage == READER_LD_STAGE_BEGUN) {
+      status = ld_rollback(o->state_dir, key.sha, e);
+      if (status == READER_LD_OK) result->outcome = READER_LD_OUTCOME_ROLLED_BACK;
+      return status;
+    }
   }
   if (intent.stage == READER_LD_STAGE_PREPARED) {
+    ld_key key;
     status = ld_has_local(o, intent.mapped, &mapped, e);
     if (status != READER_LD_OK) return status;
+    if (mapped && ld_parse_key(intent.key, &key) != 0)
+      return ld_fail(e, READER_LD_CORRUPT_INTENT, EXR_OK, 0, "Intent key is invalid");
     if (mapped) {
       /* No mapping change happened yet: undo the preparation instead. */
-      status = ld_rollback(o->state_dir, e);
+      status = ld_rollback(o->state_dir, key.sha, e);
       if (status == READER_LD_OK) result->outcome = READER_LD_OUTCOME_ROLLED_BACK;
       return status;
     }
@@ -1011,7 +1194,7 @@ reader_ld_status reader_ld_pending(const char *state_dir, reader_ld_pending_info
   return READER_LD_OK;
 }
 
-reader_ld_status reader_ld_reimport(const reader_ld_options *o, const char *book_key,
+static reader_ld_status ld_reimport_locked(const reader_ld_options *o, const char *book_key,
     const char *path, reader_ld_result *result, reader_ld_error *e) {
   reader_ld_status status;
   ld_key key;
@@ -1043,26 +1226,106 @@ reader_ld_status reader_ld_reimport(const reader_ld_options *o, const char *book
     if (status != READER_LD_OK) goto done;
     if (present) { result->outcome = READER_LD_OUTCOME_ALREADY_LOCAL; result->sdk_book_id = row.sdk_book_id; goto done; }
   }
-  status = ld_hash_file(o, path, sha, &size, e);
-  if (status != READER_LD_OK) goto done;
-  if (size != row.bytes || strcmp(sha, key.sha)) {
-    status = ld_fail(e, READER_LD_IDENTITY, EXR_OK, 0, "File differs from the book's format and SHA-256 identity");
-    goto done;
-  }
-  memset(&so, 0, sizeof(so)); memset(&sr, 0, sizeof(sr)); memset(&se, 0, sizeof(se));
-  so.struct_size = sizeof(so); so.max_input_bytes = o->max_input_bytes; so.control = o->control;
-  sr.struct_size = sizeof(sr);
-  sdk = exr_sideload_import_file(o->library, key.format->format, path, row.title, &so, &sr, &se);
-  if (sdk != EXR_OK) { status = ld_sdk_fail(e, sdk, &se, "SDK import"); goto done; }
-  status = ld_attach(o, &key, &row, sr.book_id, e);
-  if (status != READER_LD_OK) {
-    if (sr.created) { exr_error ignored; (void)exr_library_delete(o->library, sr.book_id, &ignored); }
-    goto done;
+  {
+    char originals[LD_PATH], stage[LD_PATH], name[160], imported[65];
+    exr_source check;
+    memset(&check, 0, sizeof(check));
+    if (ld_join(originals, sizeof(originals), o->state_dir, "originals") != 0 || ld_mkdir(originals) != 0) {
+      status = ld_fail(e, READER_LD_IO, EXR_OK, 0, "Private original directory is unavailable");
+      goto done;
+    }
+    snprintf(name, sizeof(name), "%s.open", key.sha);
+    if (ld_join(stage, sizeof(stage), originals, name) != 0) {
+      status = ld_fail(e, READER_LD_IO, EXR_OK, 0, "Staging path is too long");
+      goto done;
+    }
+    /* Hash and import consume one private copy of exactly the verified bytes:
+       a pathname swapped after hashing cannot change what the SDK stores. */
+    status = ld_stage_copy(o, path, stage, sha, &size, e);
+    if (status != READER_LD_OK) goto done;
+    if (size != row.bytes || strcmp(sha, key.sha)) {
+      (void)ld_unlink(stage);
+      status = ld_fail(e, READER_LD_IDENTITY, EXR_OK, 0, "File differs from the book's format and SHA-256 identity");
+      goto done;
+    }
+    memset(&so, 0, sizeof(so)); memset(&sr, 0, sizeof(sr)); memset(&se, 0, sizeof(se));
+    so.struct_size = sizeof(so); so.max_input_bytes = o->max_input_bytes; so.control = o->control;
+    sr.struct_size = sizeof(sr);
+    sdk = exr_sideload_import_file(o->library, key.format->format, stage, row.title, &so, &sr, &se);
+    if (sdk != EXR_OK) { (void)ld_unlink(stage); status = ld_sdk_fail(e, sdk, &se, "SDK import"); goto done; }
+    /* Verify the row the SDK actually created before it is ever mapped. */
+    imported[0] = 0;
+    sdk = exr_library_source(o->library, sr.book_id, &check, &se);
+    if (sdk != EXR_OK) {
+      status = ld_sdk_fail(e, sdk, &se, "Imported original");
+    } else if (check.size != row.bytes) {
+      if (check.release) check.release(check.context);
+      status = ld_fail(e, READER_LD_IDENTITY, EXR_OK, 0, "Imported original has another size");
+    } else {
+      status = ld_hash_source(o, &check, imported, e);
+      if (check.release) check.release(check.context);
+    }
+    if (status != READER_LD_OK || strcmp(imported, key.sha)) {
+      if (sr.created) { exr_error ignored; (void)exr_library_delete(o->library, sr.book_id, &ignored); }
+      (void)ld_unlink(stage);
+      if (status == READER_LD_OK)
+        status = ld_fail(e, READER_LD_IDENTITY, EXR_OK, 0, "Imported original differs from the book identity");
+      goto done;
+    }
+    status = ld_attach(o, &key, &row, sr.book_id, e);
+    if (status != READER_LD_OK) {
+      if (sr.created) { exr_error ignored; (void)exr_library_delete(o->library, sr.book_id, &ignored); }
+      (void)ld_unlink(stage);
+      goto done;
+    }
+    /* A PDF original is read through a private stable file, so the verified
+       copy outlives this call until the same book is removed again. */
+    if (key.format->format == EXR_PDF) {
+      char stable[LD_PATH];
+      snprintf(name, sizeof(name), "%s.orig", key.sha);
+      if (ld_join(stable, sizeof(stable), originals, name) != 0 || ld_replace(stage, stable, originals) != 0) {
+        (void)ld_unlink(stage);
+        status = ld_fail(e, READER_LD_IO, EXR_OK, 0, "Verified original could not be retained");
+        goto done;
+      }
+    } else {
+      (void)ld_unlink(stage);
+    }
   }
   result->outcome = READER_LD_OUTCOME_ATTACHED;
   result->sdk_book_id = sr.book_id;
 done:
   if (has_row) ld_row_free(&row);
+  return status;
+}
+
+reader_ld_status reader_ld_remove(const reader_ld_options *o, const char *book_key,
+    reader_ld_result *result, reader_ld_error *e) {
+  reader_ld_status status;
+  if (ld_enter() != 0)
+    return ld_fail(e, READER_LD_BUSY, EXR_OK, 0, "A local-download call is already running");
+  status = ld_remove_locked(o, book_key, result, e);
+  ld_leave();
+  return status;
+}
+
+reader_ld_status reader_ld_recover(const reader_ld_options *o, reader_ld_result *result,
+    reader_ld_error *e) {
+  reader_ld_status status;
+  if (ld_enter() != 0)
+    return ld_fail(e, READER_LD_BUSY, EXR_OK, 0, "A local-download call is already running");
+  status = ld_recover_locked(o, result, e);
+  ld_leave();
+  return status;
+}
+
+reader_ld_status reader_ld_reimport(const reader_ld_options *o, const char *book_key,
+    const char *path, reader_ld_result *result, reader_ld_error *e) {
+  reader_ld_status status;
+  if (ld_enter() != 0)
+    return ld_fail(e, READER_LD_BUSY, EXR_OK, 0, "A local-download call is already running");
+  status = ld_reimport_locked(o, book_key, path, result, e);
+  ld_leave();
   return status;
 }
 

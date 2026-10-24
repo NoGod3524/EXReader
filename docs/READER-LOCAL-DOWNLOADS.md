@@ -85,3 +85,65 @@ source/run/attempt actually granted; nothing here is granted until it says so.
 
 Not covered: UI/host wiring (owned elsewhere), real devices, large-library
 backup cost, PDF fixtures, and any sync protocol. The module designs none.
+
+## 审查回修（第 1 轮，root 源码审查）
+
+本轮在不改 SDK、产品 schema、wire 和既有断言的前提下，按 root 的五项发现改实现并补确定性回归；
+原有 31 个具名检查全部保留，新增 20 个具名检查（共 51）。
+
+### 1. 重导入身份 TOCTOU
+
+旧实现先 `ld_hash_file(path)`（关闭文件），再 `exr_sideload_import_file(path)`，最后**不核对
+SDK 实际保存的字节**就把返回值映射到旧 `book_key`。取消回调在已读 buffer 之后把 pathname 换成
+另一个同格式、同尺寸的有效原件即可让"哈希算 A、导入 B"。
+
+现在：`ld_stage_copy` 用**一个**已打开句柄把调用者文件复制到私有
+`originals/<sha>.open`（独占创建），同时对该字节流做 SHA-256；尺寸/摘要与该书身份不符即拒绝并删除
+暂存；导入只读这份私有副本；导入后再用公共 `exr_library_source` **重新哈希新行**，与身份不符则删除
+该行、不写任何映射。PDF 的已验证副本保留为 `originals/<sha>.orig`（定页读取依赖该私有文件），
+只在该书再次移除时删除；其他格式立即删除暂存。
+
+回归：`check_regressions.py` 用**同一份探针源码**分别链接**上一受测实现**（`7817caa9`）与本树，
+证明旧实现存入的是替换后的字节（`stored_matches_identity=false`），本树保持原字节（`true`）；
+`reimport_path_swap_keeps_identity`、`reimport_verifies_imported_row`、`pdf_private_original` 在
+三平台消费者上验证同一性质。
+
+### 2. intent 记录解析
+
+旧读取只 `fread` 2048 字节、不验证 EOF，且用 `atoi`/`strtoull`/`strtok`：数字后缀、重复字段、
+未知字段、超过 2048 字节但前 2048 字节自洽的文件都会被接受。现在改为严格有界解析：必须精确到文件末尾、
+字段集合与顺序固定、每个字段只出现一次、数字必须是纯十进制（无符号/后缀/溢出/空元素），ids 1..8 且
+必须包含 mapped，校验和覆盖全部前序字节。任何不符都返回 `CORRUPT_INTENT`，**原文件与两个数据库逐字
+不变**（回归逐例比较 sdk.db / catalog.db 摘要与 intent 文件摘要）。
+
+回归：`intent_trailing_bytes`、`intent_trailing_nul`、`intent_oversized`、`intent_truncated`、
+`intent_bad_number`、`intent_stage_suffix`、`intent_duplicate_field`、`intent_unknown_field`、
+`intent_empty_id`、`intent_nine_ids`；`check_regressions.py` 进一步证明旧实现对
+`stage=2junk`、`bytes=<n>abc`、重复 `bytes=`、未知字段、溢出 id、以及"前 2048 字节自洽 + 尾随字节"
+这六种记录返回 `ok`，本树返回 `corrupt_intent`。
+
+### 3. 状态目录与临时文件边界
+
+`ld_is_dir` 现在不跟随链接（POSIX `lstat`；Windows 额外拒绝 `FILE_ATTRIBUTE_REPARSE_POINT`），
+因此目录符号链接/junction 会被拒绝而不是被"沿着清理"；`ld_create_exclusive`（`O_CREAT|O_EXCL|
+O_NOFOLLOW` / `CREATE_NEW`）配合先删除目标项，保证预置的同名文件、硬链接或 reparse 点不会被截断；
+清理改为**按书删除自己的两个文件名**（`<sha>.orig`、`<sha>.open`），不再清空整个目录——另一本书
+仍在使用的私有原件不会被下一次移除清掉。
+
+回归：`state_dir_link_refused`、`originals_link_refused`（cache 外 sentinel 逐字不变、目录内容不变）、
+`intent_tmp_hardlink_kept`（预置硬链接的 sentinel 不被截断）。
+
+### 4. 回调重入
+
+`after_stage`/`is_busy`/取消回调若再次调用 `reader_ld_remove`/`recover`/`reimport`，现在返回
+`READER_LD_BUSY` 且不改动任何持久状态；外层调用继续完成并可恢复。`reader_ld_pending` 明确为只读，
+允许在回调内调用，并报告已提交的阶段。
+
+回归：`reenter_remove_from_stage`、`reenter_recover_from_busy`、`reenter_pending_readonly`。
+
+### 5. 九格式覆盖
+
+`formats_all_remove_reimport` 对 txt/html/fb2/epub/docx/rtf/mobi/**pdf**/cbz 逐一执行
+"移除 → 全局书目保留、本机映射消失、SDK 行删除、无残留导出" 与 "按原格式+原始 SHA-256 重导入 →
+字节与映射精确恢复"，再移除并核对其邻居可读；PDF 另有 `pdf_private_original` 覆盖私有原件寿命与
+跨书清理隔离（真实公共 SDK 原件为 `tests/fixtures/pdf-public.pdf`）。

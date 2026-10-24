@@ -31,7 +31,23 @@ EXPECTED_CHECKS = [
     "disk_failure_leaves_book_readable", "mapping_failure_leaves_book_readable",
     "cancel_at_begun", "cancel_at_prepared", "corrupt_intent_refused",
     "identity_mismatch_refused", "missing_sdk_row_refused", "cpp_consumer",
+    "reimport_path_swap_keeps_identity", "reimport_verifies_imported_row",
+    "intent_trailing_bytes_refused", "intent_trailing_nul_refused",
+    "intent_oversized_refused", "intent_truncated_refused",
+    "intent_bad_number_refused", "intent_stage_suffix_refused",
+    "intent_duplicate_field_refused", "intent_unknown_field_refused",
+    "intent_empty_id_refused", "intent_nine_ids_refused",
+    "state_dir_link_refused", "originals_link_refused", "intent_tmp_hardlink_kept",
+    "reenter_remove_from_stage", "reenter_recover_from_busy", "reenter_pending_readonly",
+    "pdf_private_original", "formats_all_remove_reimport",
 ]
+
+FORMAT_FIXTURES = {
+    "epub": "cover-import.epub", "cbz": "comic.cbz", "pdf": "pdf-public.pdf",
+    "html": "sample.html", "fb2": "sample.fb2", "docx": "sample.docx",
+    "rtf": "sample.rtf", "mobi": "sample.mobi",
+}
+ALL_FORMATS = ("txt", "html", "fb2", "epub", "docx", "rtf", "mobi", "pdf", "cbz")
 
 PRODUCT_TABLES = ["reader_books", "reader_shelves", "reader_book_shelves", "reader_tags",
                   "reader_book_tags", "reader_series", "reader_book_series",
@@ -141,7 +157,7 @@ class Env:
             with open(path, "wb") as f:
                 f.write(body)
         else:
-            source = self.ctx.fixture("cover-import.epub" if kind == "epub" else "comic.cbz")
+            source = self.ctx.fixture(FORMAT_FIXTURES[kind])
             path = os.path.join(self.work, "files", "book%d.%s" % (self.counter, kind))
             shutil.copyfile(source, path)
         sha = sha256_file(path)
@@ -730,6 +746,344 @@ def s_cpp(ctx):
     need(b"CPP ok version=0.1.0" in completed.stdout, "C++ consumer output")
 
 
+# ------------------------------------------------- root review regressions
+
+class SkipCheck(Exception):
+    """A named, visible skip; never a silent pass."""
+
+
+def make_dir_link(target, link):
+    """Directory link (symlink, or a Windows junction) or None with a reason."""
+    try:
+        os.symlink(target, link, target_is_directory=True)
+        return None
+    except (OSError, AttributeError, NotImplementedError) as exc:
+        reason = str(exc)
+    if os.name == "nt":
+        completed = subprocess.run(["cmd", "/c", "mklink", "/J", link, target],
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if completed.returncode == 0:
+            return None
+        reason += " / junction: " + completed.stderr.decode("utf-8", "replace").strip()
+    return reason
+
+
+def intent_record(book, lines=None, extra=b"", checksum=True, stage=1):
+    if lines is None:
+        lines = [b"stage=%d" % stage, b"key=" + book.key.encode("ascii"),
+                 b"bytes=%d" % book.size, b"mapped=%d" % book.mapped,
+                 b"ids=%d" % book.mapped]
+    body = b"EXRLD1\n" + b"".join(line + b"\n" for line in lines)
+    tail = b"check=" + hashlib.sha256(body).hexdigest().encode("ascii") + b"\n" if checksum else b""
+    return body + tail + extra
+
+
+def damaged_intent(ctx, name, build):
+    """A damaged record is refused and neither database nor the file changes."""
+    env = ctx.new(name)
+    book = env.add("txt", "Damaged " + name)
+    neighbour = env.add("txt", "Damaged neighbour")
+    env.seed_product([book, neighbour])
+    intent_path = os.path.join(env.state, "intent.rdi")
+    damaged = build(book)
+    with open(intent_path, "wb") as f:
+        f.write(damaged)
+    before = env.snap()
+    sdk_before = sha256_file(os.path.join(env.work, "sdk.db"))
+    catalog_before = sha256_file(env.catalog_path)
+    r = env.run("recover").result
+    same(r["status"], "corrupt_intent", "damaged intent refused: " + r["msg"])
+    same(sha256_file(intent_path), sha256_bytes(damaged), "damaged intent left verbatim")
+    same(sha256_file(os.path.join(env.work, "sdk.db")), sdk_before, "SDK database unchanged")
+    same(sha256_file(env.catalog_path), catalog_before, "catalog database unchanged")
+    env.assert_unchanged_but(before)
+    same(env.pending()["status"], "corrupt_intent", "pending refuses the damaged record too")
+    with open(intent_path, "wb") as f:
+        f.write(intent_record(book))
+    rec = env.run("recover").result
+    same(rec["status"], "ok", "restored record recovers: " + rec["msg"])
+    same(rec["outcome"], "rolled_back", "a begun record rolls back")
+    env.assert_state_clean()
+    env.assert_unchanged_but(before)
+    same(env.dump_sha(book.mapped), book.sha, "original intact after the restored rollback")
+
+
+def s_intent_trailing_bytes(ctx):
+    damaged_intent(ctx, "intent_trailing", lambda b: intent_record(b, extra=b"x"))
+
+
+def s_intent_trailing_nul(ctx):
+    damaged_intent(ctx, "intent_trailing_nul", lambda b: intent_record(b, extra=b"\x00"))
+
+
+def oversized_record(book):
+    """A record whose first 2048 bytes are complete, followed by more bytes:
+    the previous reader stopped at 2048 and never looked at the end."""
+    lines = [b"stage=1", b"key=" + book.key.encode("ascii"), b"bytes=%d" % book.size,
+             b"mapped=%d" % book.mapped, b"ids=%d" % book.mapped]
+    body = b"EXRLD1\n" + b"".join(line + b"\n" for line in lines)
+    pad = 2048 - (len(body) + 5 + 71)
+    need(pad > 0, "record is already past the bound")
+    body += b"pad=" + b"A" * pad + b"\n"
+    record = body + b"check=" + hashlib.sha256(body).hexdigest().encode("ascii") + b"\n"
+    need(len(record) == 2048, "padded record must reach the bound exactly")
+    return record + b"TRAILING"
+
+
+def s_intent_oversized(ctx):
+    damaged_intent(ctx, "intent_oversized", oversized_record)
+
+
+def s_intent_truncated(ctx):
+    damaged_intent(ctx, "intent_truncated", lambda b: intent_record(b)[:-1])
+
+
+def s_intent_bad_number(ctx):
+    def build(book):
+        return intent_record(book, lines=[
+            b"stage=1", b"key=" + book.key.encode("ascii"), b"bytes=%dabc" % book.size,
+            b"mapped=%d" % book.mapped, b"ids=%d" % book.mapped])
+    damaged_intent(ctx, "intent_bad_number", build)
+
+
+def s_intent_stage_suffix(ctx):
+    def build(book):
+        return intent_record(book, lines=[
+            b"stage=2junk", b"key=" + book.key.encode("ascii"), b"bytes=%d" % book.size,
+            b"mapped=%d" % book.mapped, b"ids=%d" % book.mapped])
+    damaged_intent(ctx, "intent_stage_suffix", build)
+
+
+def s_intent_duplicate_field(ctx):
+    def build(book):
+        return intent_record(book, lines=[
+            b"stage=1", b"key=" + book.key.encode("ascii"), b"bytes=%d" % book.size,
+            b"bytes=%d" % book.size, b"mapped=%d" % book.mapped, b"ids=%d" % book.mapped])
+    damaged_intent(ctx, "intent_duplicate_field", build)
+
+
+def s_intent_unknown_field(ctx):
+    def build(book):
+        return intent_record(book, lines=[
+            b"stage=1", b"key=" + book.key.encode("ascii"), b"bytes=%d" % book.size,
+            b"mapped=%d" % book.mapped, b"ids=%d" % book.mapped, b"extra=1"])
+    damaged_intent(ctx, "intent_unknown_field", build)
+
+
+def s_intent_empty_id(ctx):
+    def build(book):
+        return intent_record(book, lines=[
+            b"stage=1", b"key=" + book.key.encode("ascii"), b"bytes=%d" % book.size,
+            b"mapped=%d" % book.mapped, b"ids=%d,,%d" % (book.mapped, book.mapped)])
+    damaged_intent(ctx, "intent_empty_id", build)
+
+
+def s_intent_nine_ids(ctx):
+    def build(book):
+        ids = b",".join(b"%d" % (book.mapped + i) for i in range(9))
+        return intent_record(book, lines=[
+            b"stage=1", b"key=" + book.key.encode("ascii"), b"bytes=%d" % book.size,
+            b"mapped=%d" % book.mapped, b"ids=" + ids])
+    damaged_intent(ctx, "intent_nine_ids", build)
+
+
+def s_state_dir_link_refused(ctx):
+    env = ctx.new("state_link")
+    book = env.add("txt", "State Link")
+    env.seed_product([book])
+    sentinel_dir = os.path.join(env.work, "sentinel")
+    os.makedirs(sentinel_dir, exist_ok=True)
+    sentinel = os.path.join(sentinel_dir, "keep.bin")
+    with open(sentinel, "wb") as f:
+        f.write(b"sentinel outside the cache\n" * 4)
+    digest = sha256_file(sentinel)
+    shutil.rmtree(env.state)
+    reason = make_dir_link(sentinel_dir, env.state)
+    if reason is not None:
+        raise SkipCheck("directory link unavailable: " + reason)
+    r = env.run("remove", "--key", book.key).result
+    same(r["status"], "io", "a linked state directory is refused: " + r["msg"])
+    same(sha256_file(sentinel), digest, "sentinel untouched")
+    same(sorted(os.listdir(sentinel_dir)), ["keep.bin"], "no intent written through the link")
+    need(book.mapped in env.books(), "SDK row kept")
+
+
+def s_originals_link_refused(ctx):
+    env = ctx.new("originals_link")
+    book = env.add("txt", "Originals Link")
+    neighbour = env.add("txt", "Originals neighbour")
+    env.seed_product([book, neighbour])
+    sentinel_dir = os.path.join(env.work, "sentinel")
+    os.makedirs(sentinel_dir, exist_ok=True)
+    sentinel = os.path.join(sentinel_dir, "keep.bin")
+    with open(sentinel, "wb") as f:
+        f.write(b"sentinel outside the cache\n" * 8)
+    digest = sha256_file(sentinel)
+    reason = make_dir_link(sentinel_dir, os.path.join(env.state, "originals"))
+    if reason is not None:
+        raise SkipCheck("directory link unavailable: " + reason)
+    before = env.snap()
+    r = env.run("remove", "--key", book.key).result
+    same(r["status"], "io", "a linked originals directory is refused: " + r["msg"])
+    same(sha256_file(sentinel), digest, "sentinel untouched")
+    same(sorted(os.listdir(sentinel_dir)), ["keep.bin"], "no file cleared through the link")
+    env.assert_unchanged_but(before)
+    same(env.dump_sha(neighbour.mapped), neighbour.sha, "neighbour readable")
+
+
+def s_intent_tmp_hardlink_kept(ctx):
+    env = ctx.new("tmp_hardlink")
+    book = env.add("txt", "Hard Link")
+    neighbour = env.add("txt", "Hard Link neighbour")
+    env.seed_product([book, neighbour])
+    sentinel = os.path.join(env.work, "sentinel.bin")
+    with open(sentinel, "wb") as f:
+        f.write(b"victim outside the cache\n" * 8)
+    digest = sha256_file(sentinel)
+    tmp = os.path.join(env.state, "intent.tmp")
+    try:
+        os.link(sentinel, tmp)
+    except OSError as exc:
+        raise SkipCheck("hard link unavailable: %s" % exc)
+    before = env.snap()
+    removed_ok(env.run("remove", "--key", book.key), book)
+    env.assert_unchanged_but(before, {book.key})
+    same(sha256_file(sentinel), digest, "a pre-placed hard link is never truncated")
+    env.assert_state_clean()
+    same(env.dump_sha(neighbour.mapped), neighbour.sha, "neighbour readable")
+
+
+def s_reimport_path_swap(ctx):
+    """The pathname is replaced after the hash read: the stored bytes must still
+    be the bytes that were verified."""
+    env = ctx.new("swap_reimport")
+    book = env.add("txt", "Swap Target", content=b"A" * 4096)
+    other = env.add("txt", "Swap Source", content=b"B" * 4096)
+    env.seed_product([book, other])
+    removed_ok(env.run("remove", "--key", book.key), book)
+    substitute = os.path.join(env.work, "files", "substitute.txt")
+    with open(substitute, "wb") as f:
+        f.write(b"B" * 4096)  # same size, different bytes
+    out = env.run("reimport", "--key", book.key, "--file", book.path,
+                  "--swap-at", "1", "--swap-from", substitute)
+    need("SWAP ok" in out.lines, "the swap did not happen")
+    r = out.result
+    same((r["status"], r["outcome"]), ("ok", "attached"), "reimport after swap: " + r["msg"])
+    new_id = int(r["id"])
+    same(env.dump_sha(new_id), book.sha, "imported bytes are the verified bytes")
+    found, local, mapped, deleted = env.catalog(book.key)
+    same((found, local, mapped), (1, 1, new_id), "mapping points at the verified row")
+    books = env.books()
+    for i in books:
+        if i != new_id:
+            need(same(env.dump_sha(i), other.sha) is None, "unrelated row changed")
+    env.assert_state_clean()
+
+
+def s_reimport_import_verified(ctx):
+    env = ctx.new("import_verified")
+    book = env.add("epub", "Verified Import")
+    env.seed_product([book])
+    removed_ok(env.run("remove", "--key", book.key), book)
+    r = env.run("reimport", "--key", book.key, "--file", book.path).result
+    same((r["status"], r["outcome"]), ("ok", "attached"), "reimport: " + r["msg"])
+    same(env.dump_sha(int(r["id"])), book.sha, "stored bytes match the identity")
+    same(env.catalog(book.key)[:3], (1, 1, int(r["id"])), "mapping written after verification")
+    env.assert_state_clean()
+
+
+def s_reenter_remove_from_stage(ctx):
+    env = ctx.new("reenter_remove")
+    book = env.add("txt", "Reenter Remove")
+    neighbour = env.add("txt", "Reenter neighbour")
+    env.seed_product([book, neighbour])
+    before = env.snap()
+    out = env.run("remove", "--key", book.key, "--reenter", "remove")
+    same(out.line("REENTER ")["status"], "busy", "reentrant remove refused")
+    removed_ok(out, book)
+    env.assert_state_clean()
+    env.assert_unchanged_but(before, {book.key})
+
+
+def s_reenter_recover_from_busy(ctx):
+    """is_busy is consulted before any destructive step; a callback that calls
+    recover from there must be refused without disturbing the outer call."""
+    env = ctx.new("reenter_busy")
+    book = env.add("txt", "Reenter Busy")
+    neighbour = env.add("txt", "Reenter Busy neighbour")
+    env.seed_product([book, neighbour])
+    before = env.snap()
+    out = env.run("remove", "--key", book.key, "--reenter", "recover", "--reenter-in-busy")
+    same(out.line("REENTER ")["status"], "busy", "reentrant recover refused from is_busy")
+    removed_ok(out, book)
+    env.assert_state_clean()
+    env.assert_unchanged_but(before, {book.key})
+    same(env.dump_sha(neighbour.mapped), neighbour.sha, "neighbour readable")
+
+
+def s_reenter_pending_readonly(ctx):
+    env = ctx.new("reenter_pending")
+    book = env.add("txt", "Reenter Pending")
+    env.seed_product([book])
+    out = env.run("remove", "--key", book.key, "--reenter", "pending")
+    fields = out.line("REENTER ")
+    same(fields["status"], "ok", "pending is read-only and allowed")
+    same(fields["pending"], "1", "pending reports the live record")
+    same(fields["stage"], "begun", "pending reports the committed stage")
+    removed_ok(out, book)
+    env.assert_state_clean()
+
+
+def s_pdf_private_original(ctx):
+    env = ctx.new("pdf_private")
+    book = env.add("pdf", "Private PDF")
+    other = env.add("pdf", "Private PDF Other")
+    env.seed_product([book, other])
+    removed_ok(env.run("remove", "--key", book.key), book)
+    r = env.run("reimport", "--key", book.key, "--file", book.path).result
+    same((r["status"], r["outcome"]), ("ok", "attached"), "PDF reimport: " + r["msg"])
+    stable = os.path.join(env.state, "originals", book.sha + ".orig")
+    need(os.path.isfile(stable), "the PDF private original is retained")
+    same(sha256_file(stable), book.sha, "retained PDF bytes")
+    removed_ok(env.run("remove", "--key", other.key), other)
+    r = env.run("reimport", "--key", other.key, "--file", other.path).result
+    same((r["status"], r["outcome"]), ("ok", "attached"), "second PDF reimport")
+    other_stable = os.path.join(env.state, "originals", other.sha + ".orig")
+    need(os.path.isfile(other_stable), "the second PDF private original is retained")
+    other_digest = sha256_file(other_stable)
+    removed_ok(env.run("remove", "--key", book.key), book)
+    need(not os.path.exists(stable), "the removed book's private original is gone")
+    need(os.path.isfile(other_stable), "another book's private original is untouched")
+    same(sha256_file(other_stable), other_digest, "other private bytes unchanged")
+    same(env.catalog(book.key)[:2], (1, 0), "global book kept without a local copy")
+    env.assert_state_clean()
+
+
+def s_formats_all(ctx):
+    """Every supported format: remove, exact reimport, remove again."""
+    for kind in ALL_FORMATS:
+        env = ctx.new("format_" + kind)
+        book = env.add(kind, "Format " + kind)
+        neighbour = env.add("txt", "Format neighbour " + kind)
+        env.seed_product([book, neighbour])
+        before = env.snap()
+        removed_ok(env.run("remove", "--key", book.key), book)
+        env.assert_unchanged_but(before, {book.key})
+        found, local, mapped, deleted = env.catalog(book.key)
+        same((found, local, mapped), (1, 0, 0), kind + ": global kept, local gone")
+        need(book.mapped not in env.books(), kind + ": SDK row removed")
+        need(not os.path.exists(os.path.join(env.state, "originals", book.sha + ".orig")),
+             kind + ": no retained export after removal")
+        r = env.run("reimport", "--key", book.key, "--file", book.path).result
+        same((r["status"], r["outcome"]), ("ok", "attached"), kind + " reimport: " + r["msg"])
+        new_id = int(r["id"])
+        same(env.dump_sha(new_id), book.sha, kind + ": reimported bytes match the identity")
+        same(env.catalog(book.key)[:3], (1, 1, new_id), kind + ": mapping back")
+        removed_ok(env.run("remove", "--key", book.key), book)
+        same(env.dump_sha(neighbour.mapped), neighbour.sha, kind + ": neighbour readable")
+        env.assert_state_clean()
+
+
 SCENARIOS = [
     ("cloud_only_noop", s_cloud_only), ("remove_txt", s_remove_txt), ("remove_epub", s_remove_epub),
     ("remove_cbz", s_remove_cbz), ("repeat_request_idempotent", s_repeat),
@@ -747,6 +1101,28 @@ SCENARIOS = [
     ("cancel_at_begun", make_cancel("begun")), ("cancel_at_prepared", make_cancel("prepared")),
     ("corrupt_intent_refused", s_corrupt), ("identity_mismatch_refused", s_identity),
     ("missing_sdk_row_refused", s_missing_row), ("cpp_consumer", s_cpp),
+    # root review round: identity TOCTOU, strict intent, cache boundary,
+    # reentrancy and the full nine-format matrix
+    ("reimport_path_swap_keeps_identity", s_reimport_path_swap),
+    ("reimport_verifies_imported_row", s_reimport_import_verified),
+    ("intent_trailing_bytes_refused", s_intent_trailing_bytes),
+    ("intent_trailing_nul_refused", s_intent_trailing_nul),
+    ("intent_oversized_refused", s_intent_oversized),
+    ("intent_truncated_refused", s_intent_truncated),
+    ("intent_bad_number_refused", s_intent_bad_number),
+    ("intent_stage_suffix_refused", s_intent_stage_suffix),
+    ("intent_duplicate_field_refused", s_intent_duplicate_field),
+    ("intent_unknown_field_refused", s_intent_unknown_field),
+    ("intent_empty_id_refused", s_intent_empty_id),
+    ("intent_nine_ids_refused", s_intent_nine_ids),
+    ("state_dir_link_refused", s_state_dir_link_refused),
+    ("originals_link_refused", s_originals_link_refused),
+    ("intent_tmp_hardlink_kept", s_intent_tmp_hardlink_kept),
+    ("reenter_remove_from_stage", s_reenter_remove_from_stage),
+    ("reenter_recover_from_busy", s_reenter_recover_from_busy),
+    ("reenter_pending_readonly", s_reenter_pending_readonly),
+    ("pdf_private_original", s_pdf_private_original),
+    ("formats_all_remove_reimport", s_formats_all),
 ]
 
 
@@ -770,12 +1146,18 @@ def main():
     ctx = Ctx(os.path.abspath(args.probe), os.path.abspath(args.cpp), os.path.abspath(args.fixtures),
               os.path.abspath(args.work), args.path_extra)
     checks = []
+    skipped = []
     for name, fn in SCENARIOS:
         started = time.time()
         try:
             fn(ctx)
             checks.append({"name": name, "ok": True, "seconds": round(time.time() - started, 2)})
             print("PASS", name)
+        except SkipCheck as exc:
+            skipped.append({"name": name, "reason": str(exc)[:300]})
+            checks.append({"name": name, "ok": True, "skipped": str(exc)[:300],
+                           "seconds": round(time.time() - started, 2)})
+            print("SKIP", name, str(exc))
         except Exception as exc:  # report every failure, never stop early
             detail = "".join(traceback.format_exception_only(type(exc), exc)).strip()
             checks.append({"name": name, "ok": False, "detail": detail[:2000],
@@ -793,6 +1175,7 @@ def main():
             "libraries": dict((os.path.basename(p), sha256_file(p)) for p in args.library if os.path.isfile(p)),
         },
         "real_process_kill_stages": ["begun", "prepared", "unmapped", "deleted", "cleaned"],
+        "skipped": skipped,
         "checks": checks,
     }
     with open(os.path.join(args.output, "report.json"), "w", encoding="utf-8") as f:
