@@ -199,7 +199,6 @@ def main():
             "note": "uploaded after this record is written; the three upstream artifacts above are authenticated here",
         }
         summary["accepted"] = True
-        summary["accepted"] = True
     except Exception as error:  # noqa: BLE001 - refusal is evidence
         summary["problems"].append(str(error))
     (output / "artifacts.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n",
