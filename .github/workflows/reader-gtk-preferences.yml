@@ -146,7 +146,7 @@ jobs:
             python3 tools/check_linux_host.py --payload build/account-package/EXReader-Linux --output build/account-original
             python3 tests/reader_catalog/check_gtk_product.py --payload build/account-package/EXReader-Linux --original-evidence build/account-original --output build/account-product-ui
             python3 tools/check_linux_host_regressions.py --payload build/account-package/EXReader-Linux --consumer build/account-desktop/gtk-host --output build/account-regressions
-            python3 tests/linux_host/check_fixed_ui.py --payload build/account-package/EXReader-Linux --original-evidence build/account-original --product-evidence build/account-product-ui --output build/account-fixed-ui
+            python3 tests/reader_gtk_preferences/retain_fixed.py --payload build/account-package/EXReader-Linux --original-evidence build/account-original --product-evidence build/account-product-ui --output build/account-fixed-ui
             python3 tests/linux_host/check_shelf_ui.py --payload build/account-package/EXReader-Linux --output build/account-shelf
             python3 tests/linux_host/check_metadata_ui.py --payload build/account-package/EXReader-Linux --command-consumer build/account-command-consumer/command-consumer --output build/account-metadata-ui
             python3 tests/linux_host/check_collections_ui.py --payload build/account-package/EXReader-Linux --command-consumer build/account-command-consumer/command-consumer --output build/account-collections-ui
