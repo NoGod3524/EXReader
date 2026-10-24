@@ -237,8 +237,8 @@ std::string md_text(const char *p,size_t n){
     unsigned char c=(unsigned char)p[i];
     if(c=='\r'){if(i+1<n&&p[i+1]=='\n')i++;out.push_back('\n');}
     else if(c=='\n'||c=='\t')out.push_back((char)c);
-    else if(c<0x20){out.push_back((char)0xE2);out.push_back((char)0x90);out.push_back((char)(0x80+c));}
-    else if(c==0x7f){out.push_back((char)0xE2);out.push_back((char)0x90);out.push_back((char)0xA1);}
+    else if(c<0x20){out.append("\xE2\x90",2);out.push_back((char)(0x80+c));}
+    else if(c==0x7f){out.append("\xE2\x90\xA1",3);}
     else out.push_back((char)c);
   }
   return out;
