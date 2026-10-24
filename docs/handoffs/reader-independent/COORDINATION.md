@@ -8,7 +8,7 @@
 
 | owner | 当前主线 | 独占工作树 |
 | --- | --- | --- |
-| `/root/handoff_modules` | iOS原生会话、故障恢复与UIKit接入 | `C:/Users/Oscar/.codex/worktrees/reader-ios-sync-session/EXReader` |
+| `/root/handoff_modules` | iOS原生会话已交回；接续Apple正式宿主、账号和阅读状态 | iOS证据保留原工作树；当前写入`C:/Users/Oscar/.codex/worktrees/reader-apple-shelf/EXReader` |
 | `/root/handoff_validation` | GTK显式收取、原件导入与阅读状态接入 | `C:/Users/Oscar/.codex/worktrees/reader-gtk-receive/EXReader` |
 | `/root/main_android` | Android原生会话与阅读状态互通 | `C:/Users/Oscar/.codex/worktrees/reader-android-sync-session/EXReader` |
 | root | 外部分包、额度与接入协调；每五轮综合审计和修复 | 本交接工作树及独立产品集成候选 |
