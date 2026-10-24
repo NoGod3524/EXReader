@@ -114,8 +114,9 @@ def main():
               'metadata_projection_accepted': False,
               'complete_product': False}
     (folder / 'report.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
-    print(json.dumps({'accepted': True, 'platforms': sorted(platforms),
-                      'boundaries': len(NEW_CHECKS), 'source_sha': source}))
+    # The aggregate record is also emitted to the job log so the published
+    # evidence values can be read from the run itself, not re-derived locally.
+    print(json.dumps(report, sort_keys=True))
 
 
 if __name__ == '__main__':
