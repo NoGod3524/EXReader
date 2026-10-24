@@ -45,11 +45,28 @@ struct object {
 };
 std::vector<std::string> checks;
 size_t failures = 0;
-void expect(bool ok, const std::string &name, const std::string &detail = "") {
-  if (!ok) { failures++; std::fprintf(stderr, "FAIL %s %s\n", name.c_str(), detail.c_str()); }
-  checks.push_back(object().str("name", name).set("pass", ok ? "true" : "false").str("detail", detail).dump());
-}
+const size_t A_COUNT = 1203;
+/* Crash-safe evidence: every check first records the exact step in progress.txt
+   and then rewrites the whole report, so an unexpected fault still names its
+   location and keeps the real result of every check that already ran. Only a
+   report with complete=true is a finished run; the judge rejects anything else. */
+std::string g_work, g_trace = "start", g_book_a_key, g_product_digest, g_sdk_digest;
+size_t g_book_a_final = 0;
+void write_report(bool complete);
 [[noreturn]] void fatal(const std::string &what) { std::fprintf(stderr, "FATAL %s\n", what.c_str()); std::exit(2); }
+void trace(const std::string &tag) {
+  g_trace = tag;
+  std::fprintf(stderr, "TRACE %s\n", tag.c_str()); std::fflush(stderr);
+  if (g_work.empty()) return;
+  std::ofstream out(g_work + "/progress.txt", std::ios::binary | std::ios::trunc);
+  if (out) { out << tag << "\n"; out.flush(); }
+}
+void expect(bool ok, const std::string &name, const std::string &detail = "") {
+  trace("check:" + name);
+  if (!ok) { failures++; std::fprintf(stderr, "FAIL %s %s\n", name.c_str(), detail.c_str()); std::fflush(stderr); }
+  checks.push_back(object().str("name", name).set("pass", ok ? "true" : "false").str("detail", detail).dump());
+  write_report(false);
+}
 std::string read_file(const std::string &path) {
   std::ifstream in(path, std::ios::binary); if (!in) fatal("cannot read " + path);
   std::ostringstream s; s << in.rdbuf(); return s.str();
@@ -99,6 +116,21 @@ uint64_t rev_counter = 0;
 reader_revisions *store = nullptr;
 std::vector<std::pair<std::string, std::string>> history; /* revision id -> exact wire */
 std::set<std::string> entity_keys;
+
+void write_report(bool complete) {
+  if (g_work.empty()) return;
+  std::string json = "[";
+  for (size_t i = 0; i < checks.size(); i++) { if (i) json += ","; json += checks[i]; }
+  json += "]";
+  object report;
+  report.str("module_version", READER_ANNOTATION_VIEW_VERSION).str("revisions_version", READER_REVISIONS_VERSION)
+        .set("checks", json).set("checks_total", num(checks.size())).set("checks_failed", num(failures))
+        .set("history_revisions", num(history.size())).set("book_a_initial", num(A_COUNT))
+        .set("book_a_final", num(g_book_a_final)).str("book_a_key", g_book_a_key)
+        .str("product_digest", g_product_digest).str("sdk_digest", g_sdk_digest)
+        .set("complete", complete ? "true" : "false").str("last_trace", g_trace);
+  write_file(g_work + "/report.json", report.dump() + "\n");
+}
 
 struct spec {
   std::string book, aid, rev, op = "put", mode = "reflow_global";
@@ -220,6 +252,7 @@ std::vector<refrow> ref_scan(const std::string &book, int direction, size_t limi
       fatal(std::string("reference page: ") + e.message);
     for (auto &r : c.rows) all.push_back(r);
     if (c.rows.size() < limit) return all;
+    trace("refpage:" + book.substr(0, 8) + ":" + std::to_string(direction) + ":" + std::to_string(all.size()));
     has = true; after = c.rows.back().id;
   }
   fatal("reference scan did not terminate");
@@ -313,6 +346,7 @@ scan_result scan(reader_av_view *v, const std::string &book, int direction, size
       }
       r.ids.push_back(it.annotation_id); r.by_state[it.state]++; r.by_kind[it.kind]++; r.items++;
     }
+    trace("page:" + book.substr(0, 8) + ":" + std::to_string(direction) + ":" + std::to_string(limit) + ":" + std::to_string(r.pages));
     if (!p.complete && p.count < limit && !p.budget_stopped) r.early_complete++;
     bool done = p.complete; r.last_complete = p.complete; cur = p.next;
     reader_av_page_free(&p);
@@ -403,8 +437,11 @@ int main(int argc, char **argv) {
     if (a == "--work") work = argv[i + 1]; else if (a == "--book") book_path = argv[i + 1]; else if (a == "--sha") book_sha = argv[i + 1];
   }
   if (work.empty() || book_path.empty() || book_sha.size() != 64) fatal("usage: probe --work DIR --book FILE --sha SHA256");
+  g_work = work;
+  trace("main:start");
   std::string db_path = work + "/product.sqlite", lib_path = work + "/sdk.sqlite";
 
+  trace("main:sdk");
   /* SDK library with a real book, progress and notes (separate from the product catalog). */
   exr_library *lib = nullptr; exr_error ee{}; int64_t sdk_book = 0;
   if (exr_library_open(lib_path.c_str(), &lib, &ee) != EXR_OK) fatal(std::string("library open: ") + ee.message);
@@ -421,22 +458,28 @@ int main(int argc, char **argv) {
     exr_document_free(doc);
   }
 
+  trace("main:product_store");
   reader_revision_error re{};
   if (reader_revisions_open(db_path.c_str(), &store, &re) != READER_REV_OK) fatal(std::string("revisions open: ") + re.message);
   const std::string A = "txt:" + book_sha, B = "txt:" + mkid('k', 2) + mkid('k', 3), C = "txt:" + mkid('k', 4) + mkid('k', 5),
                     E = "epub:" + mkid('k', 6) + mkid('k', 7), P = "pdf:" + mkid('k', 8) + mkid('k', 9), Z = "txt:" + mkid('k', 10) + mkid('k', 11);
-  const size_t A_COUNT = 1203;
+  g_book_a_key = A;
 
   /* ---------- dataset ---------- */
+  trace("dataset:A");
   for (uint64_t i = 0; i < A_COUNT; i++) make_reflow(A, 'a', i, (int)(i % 12));
+  trace("dataset:B");
   for (uint64_t i = 0; i < 100; i++) make_reflow(B, 'b', i, (int)(i % 5));
+  trace("dataset:C");
   for (uint64_t i = 0; i < 120; i++) { /* large notes for the page-byte budget */
     spec s = mk(C, mkid('c', i), "reflow_global"); quote(s, "big " + std::to_string(i), i * 10);
     s.text = std::to_string(i) + ":" + std::string(65000, 'n'); submit(s); reg(s, READER_AV_STATE_SAFE, 1, 1);
   }
+  trace("dataset:largest");
   { /* largest legal exact and note fields in one item */
     spec s = mk(C, mkid('c', 5000), "reflow_global"); quote(s, std::string(65536, 'x'), 0); s.text = std::string(65536, 'y'); submit(s); reg(s, READER_AV_STATE_SAFE, 1, 1);
   }
+  trace("dataset:EPUB");
   { /* EPUB: duplicate spine path a.xhtml at parts 0 and 2, a v1 anchor without a part, and a bookmark; first five via the local outbox path */
     const char *paths[] = {"a.xhtml", "a.xhtml", "a.xhtml", "b.xhtml", "a.xhtml"};
     for (int i = 0; i < 5; i++) {
@@ -449,6 +492,7 @@ int main(int argc, char **argv) {
       submit(s, true); reg(s, READER_AV_STATE_SAFE, 1, 1);
     }
   }
+  trace("dataset:PDF");
   { /* PDF/CBZ fixed pages: textless page point, v1 and v2 highlights, note */
     for (int i = 0; i < 4; i++) {
       spec s = mk(P, mkid('p', (uint64_t)i), "fixed_page"); s.page_id = "page-" + std::to_string(i + 1); s.page = (uint64_t)i;
@@ -462,9 +506,11 @@ int main(int argc, char **argv) {
   expect(history.size() > 2000, "dataset_history_size", std::to_string(history.size()) + " retained revisions");
 
   /* ---------- independent expectations ---------- */
+  trace("section:independent_expectations");
   const std::vector<std::string> books = {A, B, C, E, P};
   std::map<std::string, std::vector<refrow>> ref;
   for (auto &b : books) {
+    trace("refbook:" + b.substr(0, 8));
     ref[b] = ref_scan(b, 1, 100);
     std::vector<refrow> down = ref_scan(b, -1, 7); std::reverse(down.begin(), down.end());
     expect(ids_of(down) == ids_of(ref[b]), "direct_scan_ascending_equals_descending", b.substr(0, 8) + " " + std::to_string(down.size()));
@@ -483,17 +529,22 @@ int main(int argc, char **argv) {
     expect(!overlap, "annotation_ids_are_distinct_across_books"); }
 
   /* ---------- read-only section: capture state ---------- */
+  trace("section:capture_state");
   const std::string product_before = product_dump(db_path), sdk_before = sdk_dump(lib, sdk_book, lib_path);
+  g_product_digest = hex64(fnv(product_before)); g_sdk_digest = hex64(fnv(sdk_before));
   expect(product_before.size() > 1000000, "product_dump_covers_history_outbox_and_database", std::to_string(product_before.size()));
 
   std::map<std::string, scan_result> forward;
+  trace("section:forward_scans");
   { view_guard g; g.v = open_view(A);
     for (size_t limit : {(size_t)100, (size_t)1, (size_t)7, (size_t)33}) {
+      trace("scanA:" + std::to_string(limit));
       scan_result r = scan(g.v, A, 1, limit, &ref[A]);
       if (limit == 100) forward["A100"] = r;
       expect(r.ok && r.bad_items == 0 && r.ids == ids_of(ref[A]) && r.last_complete && r.early_complete == 0 && r.empty_incomplete == 0,
              "forward_scan_matches_direct_public_pages_limit_" + std::to_string(limit), "pages=" + num(r.pages) + " items=" + num(r.items) + " " + r.error);
     }
+    trace("scanA:reverse");
     scan_result d = scan(g.v, A, -1, 100, &ref[A]);
     std::vector<std::string> down = ids_of(ref[A]); std::reverse(down.begin(), down.end());
     expect(d.ok && d.bad_items == 0 && d.ids == down && d.last_complete, "reverse_scan_matches_direct_public_pages", "pages=" + num(d.pages) + " " + d.error);
@@ -505,6 +556,7 @@ int main(int argc, char **argv) {
            "all_states_and_kinds_are_distinguished", "bookmark=" + num(f.by_kind.at(READER_AV_KIND_BOOKMARK)) + " tombstone=" + num(f.by_kind.at(READER_AV_KIND_TOMBSTONE)));
 
     /* continuation and reverse */
+    trace("section:continuation");
     reader_av_cursor c0{}; reader_av_error e{}; reader_av_cursor_start(g.v, 1, &c0, &e);
     reader_av_page p1{}, p2{}, back{}, before_first{};
     reader_av_status s1 = reader_av_page_get(g.v, &c0, 100, &p1, &e);
@@ -524,6 +576,7 @@ int main(int argc, char **argv) {
     expect(p1.items == nullptr && p1.count == 0, "page_free_zeroes_the_page");
 
     /* 100-item page boundary: exactly 100 rows -> full page then empty complete page */
+    trace("section:boundary_100");
     view_guard gb; gb.v = open_view(B);
     reader_av_cursor cb{}; reader_av_cursor_start(gb.v, 1, &cb, &e);
     reader_av_page q1{}, q2{};
@@ -538,6 +591,7 @@ int main(int argc, char **argv) {
 
   /* books: epub duplicate spine/v1/v2, fixed pages, empty book, large items */
   for (auto &pair : std::vector<std::pair<std::string, std::string>>{{E, "epub_v1_v2_duplicate_spine"}, {P, "fixed_pages_textless_v1_v2"}, {C, "large_notes_default_budget"}}) {
+    trace("section:book_" + pair.second);
     view_guard g; g.v = open_view(pair.first);
     scan_result r = scan(g.v, pair.first, 1, 100, &ref[pair.first]);
     expect(r.ok && r.bad_items == 0 && r.ids == ids_of(ref[pair.first]), "scan_" + pair.second, "items=" + num(r.items) + " " + r.error);
@@ -558,6 +612,7 @@ int main(int argc, char **argv) {
     reader_av_page_free(&p); reader_av_page_free(&more); }
 
   /* page byte budget */
+  trace("section:page_budget");
   { reader_av_options o{}; o.struct_size = sizeof(o); o.max_page_bytes = READER_AV_PAGE_BYTES_MIN;
     view_guard g; g.v = open_view(C, &o); reader_av_cursor cur{}; reader_av_error e{}; reader_av_cursor_start(g.v, 1, &cur, &e);
     std::vector<std::string> ids; size_t pages = 0, stopped = 0; bool ok = true, bounded = true, nonempty = true;
@@ -576,6 +631,7 @@ int main(int argc, char **argv) {
     expect(refused, "invalid_budget_and_option_size_are_refused"); }
 
   /* cross-book and cursor refusal */
+  trace("section:cross_book");
   { view_guard ga, gb; ga.v = open_view(A); gb.v = open_view(B); reader_av_error e{};
     reader_av_cursor ca{}; reader_av_cursor_start(ga.v, 1, &ca, &e); reader_av_page p{};
     bool refused = reader_av_page_get(gb.v, &ca, 10, &p, &e) == READER_AV_CURSOR && p.items == nullptr && p.count == 0;
@@ -607,6 +663,7 @@ int main(int argc, char **argv) {
     expect(args, "limit_direction_and_null_arguments_are_refused"); }
 
   /* owner thread */
+  trace("section:owner_thread");
   { view_guard g; g.v = open_view(A); reader_av_cursor c{}; reader_av_error e{}; reader_av_cursor_start(g.v, 1, &c, &e);
     reader_av_status page_status = READER_AV_OK, close_status = READER_AV_OK; bool empty = false;
     std::thread other([&] {
@@ -618,12 +675,14 @@ int main(int argc, char **argv) {
     expect(page_status == READER_AV_OWNER && close_status == READER_AV_OWNER && empty && usable, "another_thread_is_refused_and_the_handle_survives"); }
 
   /* cancellation at every poll point */
+  trace("section:cancel");
   { canceler k; view_guard g; reader_av_options o{}; o.struct_size = sizeof(o); o.cancel = cancel_cb; o.cancel_context = &k; g.v = open_view(A, &o);
     reader_av_error e{}; reader_av_cursor c{}; reader_av_cursor_start(g.v, 1, &c, &e); reader_av_page base{};
     bool ok = reader_av_page_get(g.v, &c, 100, &base, &e) == READER_AV_OK; const std::string want = page_digest(base); const uint64_t total = base.polls;
     expect(ok && total > 100 && k.calls == total, "poll_count_is_reported_and_exact", "polls=" + num(total) + " calls=" + num(k.calls));
     size_t cancelled = 0, clean = 0, retried = 0, exact_calls = 0;
     for (uint64_t at = 1; at <= total; at++) {
+      trace("cancel:at=" + std::to_string(at) + "/" + std::to_string(total));
       k.calls = 0; k.at = at; reader_av_page p{}; reader_av_cursor before = c;
       reader_av_status st = reader_av_page_get(g.v, &c, 100, &p, &e);
       if (st == READER_AV_CANCELLED) cancelled++;
@@ -641,6 +700,7 @@ int main(int argc, char **argv) {
     reader_av_page_free(&down); }
 
   /* reentry */
+  trace("section:reentry");
   { canceler k; k.mode = 1; view_guard g; reader_av_options o{}; o.struct_size = sizeof(o); o.cancel = cancel_cb; o.cancel_context = &k; g.v = open_view(A, &o); k.view = &g.v;
     reader_av_error e{}; reader_av_cursor c{}; reader_av_cursor_start(g.v, 1, &c, &e); reader_av_page p{};
     bool ok = reader_av_page_get(g.v, &c, 100, &p, &e) == READER_AV_OK && p.count == 100;
@@ -650,13 +710,14 @@ int main(int argc, char **argv) {
     reader_av_page q{}; expect(reader_av_page_get(g.v, &c, 5, &q, &e) == READER_AV_OK && q.count == 5, "view_is_usable_after_refused_reentry"); reader_av_page_free(&q); }
 
   /* product history, outbox, database and SDK progress/notes are unchanged */
+  trace("section:capture_after");
   const std::string product_after = product_dump(db_path), sdk_after = sdk_dump(lib, sdk_book, lib_path);
   expect(product_after == product_before, "product_history_outbox_and_database_unchanged_after_all_reads", "digest=" + hex64(fnv(product_after)) + " bytes=" + num(product_after.size()));
   expect(sdk_after == sdk_before && sdk_before.find("N:") != std::string::npos && sdk_before.find("P:") != std::string::npos, "sdk_progress_notes_and_library_file_unchanged_after_all_reads",
          "digest=" + hex64(fnv(sdk_after)) + " bytes=" + num(sdk_after.size()));
 
   /* concurrent insert and tombstone between pages */
-  size_t final_a = 0;
+  trace("section:concurrency");
   { view_guard g; g.v = open_view(A); reader_av_error e{}; reader_av_cursor c{}; reader_av_cursor_start(g.v, 1, &c, &e); reader_av_page p1{};
     bool got = reader_av_page_get(g.v, &c, 100, &p1, &e) == READER_AV_OK && p1.count == 100;
     std::vector<std::string> first; for (size_t i = 0; got && i < p1.count; i++) first.push_back(p1.items[i].annotation_id);
@@ -673,7 +734,7 @@ int main(int argc, char **argv) {
       for (const std::string &id : {victim_shown, victim_later}) { spec d = mk(A, id, "reflow_global"); d.op = "delete"; d.parents = {truth[A][id].head.rev}; submit(d); reg(d, READER_AV_STATE_SAFE, truth[A][id].revisions + 1, 1); }
       for (const std::string &id : {low, high}) { spec s = mk(A, id, "reflow_global"); quote(s, "inserted " + id.substr(0, 4), 7); s.text = "inserted"; submit(s); reg(s, READER_AV_STATE_SAFE, 1, 1); }
     }
-    std::vector<refrow> ref2 = ref_scan(A, 1, 100); ref[A] = ref2; final_a = ref2.size();
+    std::vector<refrow> ref2 = ref_scan(A, 1, 100); ref[A] = ref2; g_book_a_final = ref2.size();
     std::vector<refrow> tail; for (auto &r : ref2) if (r.id > last) tail.push_back(r);
     std::vector<std::string> rest; bool ok = setup; reader_av_cursor cur = next; std::string err;
     for (int guard = 0; ok && guard < 1000; guard++) {
@@ -697,6 +758,7 @@ int main(int argc, char **argv) {
     reader_av_page_free(&p1); }
 
   /* snapshot lifetime: close view, store and SDK, then read the page */
+  trace("section:lifetime");
   { reader_revisions *store2 = nullptr; reader_revision_error r2{};
     if (reader_revisions_open(db_path.c_str(), &store2, &r2) != READER_REV_OK) fatal(std::string("second store: ") + r2.message);
     reader_av_view *v = nullptr; reader_av_error e{}; reader_av_open(store2, A.c_str(), nullptr, &v, &e);
@@ -708,13 +770,8 @@ int main(int argc, char **argv) {
     reader_av_page_free(&p); }
 
   reader_revision_error ce{}; reader_revisions_close(&store, &ce);
-  std::string checks_json = "["; for (size_t i = 0; i < checks.size(); i++) { if (i) checks_json += ","; checks_json += checks[i]; } checks_json += "]";
-  object report;
-  report.str("module_version", READER_ANNOTATION_VIEW_VERSION).str("revisions_version", READER_REVISIONS_VERSION)
-        .set("checks", checks_json).set("checks_total", num(checks.size())).set("checks_failed", num(failures))
-        .set("history_revisions", num(history.size())).set("book_a_initial", num(A_COUNT)).set("book_a_final", num(final_a))
-        .str("book_a_key", A).str("product_digest", hex64(fnv(product_before))).str("sdk_digest", hex64(fnv(sdk_before)));
-  write_file(work + "/report.json", report.dump() + "\n");
-  std::printf("checks=%zu failed=%zu\n", checks.size(), failures);
+  trace("main:done");
+  write_report(true);
+  std::printf("checks=%zu failed=%zu\n", checks.size(), failures); std::fflush(stdout);
   return failures ? 1 : 0;
 }
