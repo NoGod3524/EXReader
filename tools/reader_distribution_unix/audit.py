@@ -80,18 +80,31 @@ def pkgconfig_query(prefix, platform, tokens, stage):
         return ['pkg-config query failed: ' + done.stderr.strip()[:300]], ''
     output = done.stdout.strip()
     tokens_flags = output.split()
+    prefix_norm = os.path.normpath(str(prefix))
+    # pkg-config expands prefix=${pcfiledir}/../.. without collapsing "..", so a
+    # legitimate flag always passes through the prefix directory. Only paths that
+    # escape the relocated prefix, or name another build/install root, are leaks.
+    escapes = []
+    for token in tokens:
+        if not token:
+            continue
+        norm = os.path.normpath(token)
+        if norm != prefix_norm and not prefix_norm.startswith(norm.rstrip(os.sep) + os.sep):
+            escapes.append(norm)
+    observed = set()
     for token in tokens_flags:
         if token.startswith(('-I', '-L')):
-            path = token[2:]
-            if any(bad and bad in path for bad in tokens):
-                problems.append('pkg-config flag leaks a workspace path: ' + token)
-            if not path.startswith(str(prefix)):
+            normalized = os.path.normpath(token[2:])
+            observed.add(normalized)
+            if any(bad in normalized for bad in escapes):
+                problems.append('pkg-config flag names another build or install root: ' + token)
+            if normalized != prefix_norm and not normalized.startswith(prefix_norm + os.sep):
                 problems.append('pkg-config flag resolves outside the relocated prefix: ' + token)
         if token.startswith('-Wl,'):
             problems.append('pkg-config emits a linker wrapper flag: ' + token)
-    for required in ('-I' + str(prefix / 'include'), '-L' + str(prefix / 'lib')):
-        if required not in tokens_flags:
-            problems.append('pkg-config output is missing ' + required)
+    for required in ('include', 'lib', 'lib/exreader'):
+        if os.path.normpath(str(prefix / required)) not in observed:
+            problems.append('pkg-config output is missing the installed ' + required + ' directory')
     for flag in ('-lexr_render', '-lexr_pdf', '-lexr_vendor_miniz', '-pthread', '-lm'):
         if flag not in tokens_flags:
             problems.append('pkg-config output is missing ' + flag)
