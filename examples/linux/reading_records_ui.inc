@@ -186,12 +186,15 @@ static void reading_records_open(GtkWidget *button,gpointer unused) {
   GtkWidget *focus=gtk_window_get_focus(GTK_WINDOW(window));if(focus) records.return_focus=g_object_ref(focus);
   records.content=gtk_bin_get_child(GTK_BIN(window));gtk_widget_set_sensitive(records.content,FALSE);
   records.dialog=gtk_dialog_new_with_buttons("Reading records",GTK_WINDOW(window),GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT,"_Close",GTK_RESPONSE_CLOSE,NULL);
+#ifdef EXR_READER_PREFERENCES_UI
+  gtk_style_context_add_class(gtk_widget_get_style_context(records.dialog),"exreader-appearance");
+#endif
   GtkWindowGroup *group=gtk_window_group_new();gtk_window_group_add_window(group,GTK_WINDOW(records.dialog));g_object_unref(group);
   GtkWidget *area=gtk_dialog_get_content_area(GTK_DIALOG(records.dialog));gtk_container_set_border_width(GTK_CONTAINER(area),12);
   records.status=gtk_label_new("");gtk_label_set_line_wrap(GTK_LABEL(records.status),TRUE);gtk_box_pack_start(GTK_BOX(area),records.status,FALSE,FALSE,4);
   GtkWidget *row=records_button_row(area);
-  records.save=records_button(row,"Save _progress",G_CALLBACK(records_save_progress),NULL);
-  records.bookmark=records_button(row,"Add _bookmark",G_CALLBACK(records_edit_text),GINT_TO_POINTER(READER_RC_BOOKMARK));
+  records.save=records_button(row,"_Save progress",G_CALLBACK(records_save_progress),NULL);
+  records.bookmark=records_button(row,"_Add bookmark",G_CALLBACK(records_edit_text),GINT_TO_POINTER(READER_RC_BOOKMARK));
   records.highlight=records_button(row,"_Highlight selection",G_CALLBACK(records_edit_text),GINT_TO_POINTER(READER_RC_HIGHLIGHT));
   records.progress=gtk_button_new_with_label("Saved progress");atk_object_set_name(gtk_widget_get_accessible(records.progress),"Saved product progress");
   gtk_box_pack_start(GTK_BOX(area),records.progress,FALSE,FALSE,4);g_signal_connect(records.progress,"clicked",G_CALLBACK(records_select_progress),NULL);
@@ -199,11 +202,11 @@ static void reading_records_open(GtkWidget *button,gpointer unused) {
   atk_object_set_name(gtk_widget_get_accessible(records.list),"Bookmarks and annotations");g_signal_connect(records.list,"row-selected",G_CALLBACK(records_selected),NULL);
   GtkWidget *view=gtk_scrolled_window_new(NULL,NULL);gtk_widget_set_size_request(view,560,240);gtk_container_add(GTK_CONTAINER(view),records.list);gtk_box_pack_start(GTK_BOX(area),view,TRUE,TRUE,4);
   row=records_button_row(area);records.jump=records_button(row,"_Open location",G_CALLBACK(records_jump_button),NULL);
-  records.edit=records_button(row,"Edit _text",G_CALLBACK(records_edit_text),GINT_TO_POINTER(READER_RC_NOTE_TEXT));
-  records.remove=records_button(row,"_Delete record",G_CALLBACK(records_remove),NULL);records.restore=records_button(row,"Choose _restore version",G_CALLBACK(records_restore_button),NULL);
+  records.edit=records_button(row,"_Edit text",G_CALLBACK(records_edit_text),GINT_TO_POINTER(READER_RC_NOTE_TEXT));
+  records.remove=records_button(row,"_Delete record",G_CALLBACK(records_remove),NULL);records.restore=records_button(row,"Choose restore _version",G_CALLBACK(records_restore_button),NULL);
   row=records_button_row(area);records.previous=records_button(row,"_Previous batch",G_CALLBACK(records_previous),NULL);records.more=records_button(row,"_Next batch",G_CALLBACK(records_more),NULL);
-  records.refresh=records_button(row,"_Refresh records",G_CALLBACK(records_refresh),NULL);records.cancel=records_button(row,"Cancel _operation",G_CALLBACK(records_cancel),NULL);
-  row=records_button_row(area);records.retry=records_button(row,"Confirm original _save",G_CALLBACK(records_retry_button),NULL);records.discard=records_button(row,"_End save confirmation",G_CALLBACK(records_discard),NULL);
+  records.refresh=records_button(row,"_Refresh records",G_CALLBACK(records_refresh),NULL);records.cancel=records_button(row,"Cancel operation",G_CALLBACK(records_cancel),NULL);
+  row=records_button_row(area);records.retry=records_button(row,"Confirm original save",G_CALLBACK(records_retry_button),NULL);records.discard=records_button(row,"End save confirmation",G_CALLBACK(records_discard),NULL);
   GtkTextIter start,end;records.has_range=page_text && gtk_text_buffer_get_selection_bounds(gtk_text_view_get_buffer(GTK_TEXT_VIEW(text)),&start,&end);
   records.start=records.end=0;
   if(records.has_range) { records.start=page_start+(size_t)(g_utf8_offset_to_pointer(page_text,gtk_text_iter_get_offset(&start))-page_text);records.end=page_start+(size_t)(g_utf8_offset_to_pointer(page_text,gtk_text_iter_get_offset(&end))-page_text); }

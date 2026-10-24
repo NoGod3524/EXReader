@@ -262,7 +262,9 @@ static exr_status records_prepare(linux_reader *reader,received_owner *owner,con
   }
   reader_rs_free(capture_wire);reader_rs_record_free(&retained);exr_anchor_free(&anchor);exr_fixed_anchor_free(&fixed);session_free(&source);
 done:
-  reader_revision_bytes_free(old_wire);return status;
+  reader_revision_bytes_free(old_wire);
+  if(status!=EXR_OK && !result->message[0]) snprintf(result->message,sizeof(result->message),"Save did not complete. Refresh this record before trying again");
+  return status;
 }
 static exr_status records_retry(linux_reader *reader,received_owner *owner,const records_book *book,reader_result *result) {
   GKeyFile *pending=NULL;int pending_state=records_pending_read(reader,&pending);
