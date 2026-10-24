@@ -275,6 +275,11 @@ def main():
           {'csv_rows': len(csv_rows), 'results': len(results), 'ok_samples': retained,
            'aggregated_ok_samples': aggregated})
 
+    for name, value in sorted(metrics.items()):
+        print('METRIC %s count=%d min=%s p50=%s p95=%s max=%s start="%s"' % (
+            name, value['count'], value['min_ms'], value['p50_ms'], value['p95_ms'],
+            value['max_ms'], value['start_reference']), flush=True)
+
     rss = {'per_launch_kb': high_water,
            'p50_kb': sorted(high_water)[len(high_water) // 2] if high_water else None,
            'max_kb': max(high_water) if high_water else None,

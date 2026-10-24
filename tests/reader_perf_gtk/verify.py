@@ -207,6 +207,22 @@ def main():
         'report': {'accepted': report['accepted'], 'launches': report['launches'],
                    'samples': report['samples'], 'checks': len(report['checks']),
                    'metrics': report['metrics']},
+        'observations': {metric: {'count': summary['metrics'][metric]['count'],
+                                  'min_ms': summary['metrics'][metric]['min_ms'],
+                                  'p50_ms': summary['metrics'][metric]['p50_ms'],
+                                  'p95_ms': summary['metrics'][metric]['p95_ms'],
+                                  'max_ms': summary['metrics'][metric]['max_ms']}
+                         for metric in sorted(summary['metrics'])},
+        'package': summary['environment']['payload'],
+        'archive': summary['environment'].get('package'),
+        'corpus': {'books': summary['corpus']['books'],
+                   'long_book_bytes': summary['corpus']['long_book_bytes'],
+                   'total_original_bytes': summary['corpus']['total_original_bytes'],
+                   'corpus_sha256': summary['environment']['seed']['corpus_sha256']},
+        'rss_kb': {'per_launch': summary['rss']['per_launch_kb'],
+                   'p50': summary['rss']['p50_kb'], 'max': summary['rss']['max_kb']},
+        'paint_events': summary['paint']['total'],
+        'calibration': summary['calibration'],
         'verified_by': VERIFY_JOB,
     }
     (output / 'verified.json').write_text(json.dumps(verified, indent=2) + '\n')
