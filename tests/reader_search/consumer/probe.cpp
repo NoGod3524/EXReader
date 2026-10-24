@@ -16,6 +16,7 @@
 #include <map>
 #include <set>
 #include <tuple>
+#include <thread>
 extern "C" unsigned long long search_probe_peak_memory(void);
 
 namespace {
@@ -55,9 +56,13 @@ rec copy_hit(const reader_search_hit &h){
   return r;
 }
 bool same_cursor(const reader_search_cursor &a,const reader_search_cursor &b){return !std::memcmp(&a,&b,sizeof(a));}
+/* Controlled fixtures only: resume calls below reopen the identical original.
+   Cross-source and parser-version rejection use distinct keys explicitly. */
+constexpr const char *fixture_resume_key="search-probe-fixture:projection-v1";
 run collect(const opener &open,size_t max,const visitor &visit=nullptr,const exr_control *control=nullptr,
             const reader_search_cursor *resume=nullptr,size_t limit=SIZE_MAX){
   run r;reader_search_options o{};o.struct_size=sizeof(o);if(control)o.control=*control;o.resume=resume;
+  o.source_key=fixture_resume_key;
   reader_search *s=nullptr;r.status=open(&o,&s,&r.error);if(r.status!=READER_SEARCH_OK)return r;
   for(size_t b=0;b<limit;b++){
     reader_search_result res{};reader_search_status st=reader_search_next(s,max,&res,&r.error);
@@ -191,7 +196,9 @@ int main(int argc,char **argv){
   exr_fixed_open_options fopts{};fopts.struct_size=sizeof(fopts);exr_fixed_document *fa=nullptr,*fb=nullptr;
   SDK(exr_library_fixed(A.lib,A.ids["pdf"],&fopts,&fa,&e_));SDK(exr_library_fixed(B.lib,B.ids["pdf"],&fopts,&fb,&e_));
   /* Preexisting state that search must never change. */
-  exr_anchor progress_in{};SDK(exr_anchor_create(ta,7,7,&progress_in,&e_));SDK(exr_library_progress(A.lib,A.ids["txt"],&progress_in,&e_));
+  size_t progress_bytes=0;const char *progress_text=exr_document_text(ta,&progress_bytes);
+  const size_t progress_offset=locate(std::string(progress_text,progress_bytes),"repeat-phrase");
+  exr_anchor progress_in{};SDK(exr_anchor_create(ta,progress_offset,progress_offset,&progress_in,&e_));SDK(exr_library_progress(A.lib,A.ids["txt"],&progress_in,&e_));
   const size_t progress_start=progress_in.start;exr_anchor_free(&progress_in);
   auto notes_total=[&]{size_t n=0;for(const char *r:{"txt","epub","long"})n+=count_notes(A,A.ids[r])+count_epub(A,A.ids[r]);n+=count_fixed(A,A.ids["pdf"]);return n;};
   const size_t notes_before=notes_total(),outbox_a=pending(A).size(),outbox_b=pending(B).size();
@@ -283,7 +290,7 @@ int main(int argc,char **argv){
     run ref=collect(reflow_open(ta,"Z-hit"),100);run resumed=collect(reflow_open(ta,"Z-hit"),100,nullptr,nullptr,&ref.cursors[0]);
     const std::vector<triple> all=triples(ref);std::vector<triple> tail(all.begin()+100,all.end());
     expect(triples(resumed)==tail&&resumed.complete,"a stored cursor resumes at the next hit in a new handle");
-    reader_search_cursor wrong=ref.cursors[0];wrong.binding^=1;reader_search *s=nullptr;reader_search_options o{};o.struct_size=sizeof(o);o.resume=&wrong;
+    reader_search_cursor wrong=ref.cursors[0];wrong.binding^=1;reader_search *s=nullptr;reader_search_options o{};o.struct_size=sizeof(o);o.resume=&wrong;o.source_key=fixture_resume_key;
     expect(reader_search_open_reflow(ta,"Z-hit",5,&o,&s,nullptr)==READER_SEARCH_ARGUMENT&&!s,"a cursor bound to a different query is refused");
     o.resume=&ref.cursors[0];expect(reader_search_open_reflow(ta,"E-hit",5,&o,&s,nullptr)==READER_SEARCH_ARGUMENT&&!s,"a cursor is not reusable for another query");
     wrong=ref.cursors[0];wrong.mode=READER_SEARCH_EPUB;o.resume=&wrong;
@@ -292,6 +299,86 @@ int main(int argc,char **argv){
     expect(reader_search_open_reflow(ta,"Z-hit",5,&o,&s,nullptr)==READER_SEARCH_OK,"a complete cursor opens");
     reader_search_result res{};expect(reader_search_next(s,10,&res,nullptr)==READER_SEARCH_OK&&res.count==0&&res.complete,"a complete cursor returns an empty complete batch");
     reader_search_result_free(&res);reader_search_close(&s,nullptr);
+  }
+
+  /* ===== verified source identity, cursor format and owner enforcement ===== */
+  stage("cursor identity and owner");
+  {
+    run ref=collect(reflow_open(ta,"Z-hit"),100);
+    run reopened=collect(reflow_open(tb,"Z-hit"),100,nullptr,nullptr,&ref.cursors[0]);
+    const auto all=triples(ref);const std::vector<triple> tail(all.begin()+100,all.end());
+    expect(reopened.status==READER_SEARCH_OK&&reopened.complete&&triples(reopened)==tail,
+      "the same verified original resumes through an independent SDK instance");
+    reader_search_options o{};o.struct_size=sizeof(o);o.source_key=fixture_resume_key;
+    reader_search_cursor wrong=ref.cursors[0];o.resume=&wrong;reader_search *s=nullptr;
+    wrong.version=1;
+    expect(reader_search_open_reflow(ta,"Z-hit",5,&o,&s,nullptr)==READER_SEARCH_ARGUMENT&&!s,"unbound version 1 cursors are refused");
+    wrong=ref.cursors[0];wrong.unit=1;
+    expect(reader_search_open_reflow(ta,"Z-hit",5,&o,&s,nullptr)==READER_SEARCH_ARGUMENT&&!s,"a reflow cursor with a nonzero unit is refused");
+    wrong=ref.cursors[0];wrong.offset=text_bytes+1;
+    expect(reader_search_open_reflow(ta,"Z-hit",5,&o,&s,nullptr)==READER_SEARCH_ARGUMENT&&!s,"a cursor past the verified source is refused");
+    wrong=ref.cursors[0];wrong.complete=1;
+    expect(reader_search_open_reflow(ta,"Z-hit",5,&o,&s,nullptr)==READER_SEARCH_ARGUMENT&&!s,"an early complete cursor is refused");
+    wrong=ref.cursors[0];std::memset(wrong.source_key,'x',sizeof(wrong.source_key));
+    expect(reader_search_open_reflow(ta,"Z-hit",5,&o,&s,nullptr)==READER_SEARCH_ARGUMENT&&!s,"an unterminated cursor source key is refused");
+    o.resume=&ref.cursors[0];o.source_key="search-probe-fixture:projection-v2";
+    expect(reader_search_open_reflow(ta,"Z-hit",5,&o,&s,nullptr)==READER_SEARCH_ARGUMENT&&!s,"a changed parser projection identity is refused");
+    o.source_key=nullptr;
+    expect(reader_search_open_reflow(ta,"Z-hit",5,&o,&s,nullptr)==READER_SEARCH_ARGUMENT&&!s,"resume requires a verified source key");
+    o.resume=nullptr;
+    const std::string oversized(READER_SEARCH_SOURCE_KEY_MAX+1,'x');
+    for(const char *key:{"",oversized.c_str(),"\xc0\x80"}){
+      o.source_key=key;
+      expect(reader_search_open_reflow(ta,"Z-hit",5,&o,&s,nullptr)==READER_SEARCH_ARGUMENT&&!s,"invalid source key is refused");
+    }
+    o.source_key=nullptr;
+    expect(reader_search_open_reflow(ta,"Z-hit",5,&o,&s,nullptr)==READER_SEARCH_OK,"a transient search opens without an identity");
+    reader_search_result first{};reader_search_cursor transient{};
+    expect(reader_search_next(s,1,&first,nullptr)==READER_SEARCH_OK&&first.count==1,"a transient search advances on its live handle");
+    reader_search_cursor_get(s,&transient,nullptr);reader_search_result_free(&first);reader_search_close(&s,nullptr);
+    o.resume=&transient;o.source_key=fixture_resume_key;
+    expect(reader_search_open_reflow(ta,"Z-hit",5,&o,&s,nullptr)==READER_SEARCH_ARGUMENT&&!s,"a transient cursor cannot resume as a verified source");
+
+    auto make_document=[&](const char *text){
+      exr_node_input nodes[4]{};nodes[0].kind=EXR_NODE_DOCUMENT;nodes[0].parent=SIZE_MAX;
+      nodes[1].kind=EXR_NODE_CHAPTER;nodes[1].parent=0;nodes[2].kind=EXR_NODE_PARAGRAPH;nodes[2].parent=1;
+      nodes[3].kind=EXR_NODE_TEXT;nodes[3].parent=2;nodes[3].text=text;
+      exr_chapter_input chapter{};chapter.path="identity.xhtml";chapter.root=1;chapter.in_reading_order=1;
+      exr_document_input input{};input.nodes=nodes;input.node_count=4;input.chapters=&chapter;input.chapter_count=1;
+      exr_document *doc=nullptr;SDK(exr_document_create(&input,&doc,&e_));return doc;
+    };
+    exr_document *one=make_document("needle alpha needle"),*two=make_document("needle bravo needle");
+    size_t n1=0,n2=0;const char *t1=exr_document_text(one,&n1),*t2=exr_document_text(two,&n2);
+    expect(n1==n2&&std::memcmp(t1,t2,n1)!=0,"cross-book fixtures have different text with equal normalized length");
+    o.resume=nullptr;o.source_key="test-original:needle-alpha:projection-v1";
+    expect(reader_search_open_reflow(one,"needle",6,&o,&s,nullptr)==READER_SEARCH_OK,"open the first verified identity");
+    reader_search_result batch{};reader_search_cursor saved{};
+    expect(reader_search_next(s,1,&batch,nullptr)==READER_SEARCH_OK&&batch.count==1,"capture a cursor in the first verified identity");
+    reader_search_cursor_get(s,&saved,nullptr);reader_search_result_free(&batch);reader_search_close(&s,nullptr);
+    o.resume=&saved;o.source_key="test-original:needle-bravo:projection-v1";
+    expect(reader_search_open_reflow(two,"needle",6,&o,&s,nullptr)==READER_SEARCH_ARGUMENT&&!s,
+      "a cursor is refused for another equal-length book with the same query");
+    exr_document_free(one);exr_document_free(two);
+
+    expect(reader_search_open_reflow(ta,"Z-hit",5,nullptr,&s,nullptr)==READER_SEARCH_OK,"open on the SDK owner for worker rejection");
+    reader_search_cursor before{},after{};reader_search_stats stats_before{},stats_after{};
+    reader_search_cursor_get(s,&before,nullptr);reader_search_stats_get(s,&stats_before,nullptr);
+    bool rejected=false;
+    std::thread worker([&]{
+      reader_search_result r{};reader_search_cursor c{};reader_search_stats st{};reader_search *copy=s;
+      const auto next_status=reader_search_next(s,1,&r,nullptr);
+      const auto cursor_status=reader_search_cursor_get(s,&c,nullptr);
+      const auto stats_status=reader_search_stats_get(s,&st,nullptr);
+      const auto close_status=reader_search_close(&copy,nullptr);
+      rejected=next_status==READER_SEARCH_ARGUMENT&&cursor_status==READER_SEARCH_ARGUMENT&&
+        stats_status==READER_SEARCH_ARGUMENT&&close_status==READER_SEARCH_ARGUMENT&&copy==s&&!r.hits&&!r.count;
+    });worker.join();
+    reader_search_cursor_get(s,&after,nullptr);reader_search_stats_get(s,&stats_after,nullptr);
+    expect(rejected&&same_cursor(before,after)&&!std::memcmp(&stats_before,&stats_after,sizeof(stats_before)),
+      "wrong-thread next cursor stats and close are refused without changing the owner state");
+    reader_search_result result{};
+    expect(reader_search_next(s,1,&result,nullptr)==READER_SEARCH_OK&&result.count==1,"the creating owner still searches after worker rejection");
+    reader_search_result_free(&result);reader_search_close(&s,nullptr);
   }
 
   /* ===== EPUB with a repeated spine path ===== */

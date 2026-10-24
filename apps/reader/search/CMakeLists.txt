@@ -11,10 +11,11 @@ endif()
 # catalog, revision store, SQLite or SDK private header is used here.
 find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED COMPONENTS core
   PATHS "${EXR_SDK}" NO_DEFAULT_PATH)
+find_package(Threads REQUIRED)
 add_library(reader_search STATIC src/search.cpp)
 target_include_directories(reader_search PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_link_libraries(reader_search PUBLIC EXReader::exr_core)
+target_link_libraries(reader_search PUBLIC EXReader::exr_core PRIVATE Threads::Threads)
 if(MSVC)
   target_compile_options(reader_search PRIVATE /W4 /WX)
 else()

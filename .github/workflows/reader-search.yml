@@ -1,7 +1,7 @@
 name: Reader in-book search
 on:
   push:
-    branches: [codex/reader-search]
+    branches: [codex/reader-search, codex/reader-search-review]
   workflow_dispatch:
 permissions:
   contents: read

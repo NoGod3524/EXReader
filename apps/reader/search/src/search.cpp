@@ -8,6 +8,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <thread>
 
 namespace {
 struct failure { reader_search_status code; int sdk; const char *message; };
@@ -78,6 +79,7 @@ struct busy_guard {
 }
 
 struct reader_search {
+  const std::thread::id owner=std::this_thread::get_id();
   reader_search_mode mode=READER_SEARCH_REFLOW;
   std::string query;
   std::vector<uint32_t> prefix; /* KMP failure table: streaming state survives block boundaries */
@@ -259,13 +261,20 @@ void setup(reader_search &s,reader_search_mode mode,uint64_t units,const char *q
   uint32_t m=(uint32_t)mode;h=fnv(h,&m,sizeof(m));h=fnv(h,&units,sizeof(units));
   uint64_t n=query_size;h=fnv(h,&n,sizeof(n));h=fnv(h,query,query_size);
   s.binding=h;
-  s.cursor={};s.cursor.version=1;s.cursor.mode=(uint32_t)mode;s.cursor.binding=h;
+  s.cursor={};s.cursor.version=2;s.cursor.mode=(uint32_t)mode;s.cursor.binding=h;
   if(options){
     s.control=options->control;
+    if(options->source_key){size_t size=0;while(size<=READER_SEARCH_SOURCE_KEY_MAX&&options->source_key[size])++size;
+      if(!size||size>READER_SEARCH_SOURCE_KEY_MAX||!well_formed((const unsigned char *)options->source_key,size))reject(READER_SEARCH_ARGUMENT,"Invalid verified search source key");
+      std::memcpy(s.cursor.source_key,options->source_key,size+1);
+    }
     if(options->resume){
       const reader_search_cursor &r=*options->resume;
-      if(r.version!=1||r.mode!=(uint32_t)mode||r.binding!=h||r.reserved)
+      if(!s.cursor.source_key[0]||r.version!=2||r.mode!=(uint32_t)mode||r.binding!=h||r.reserved||r.complete>1||
+          !std::memchr(r.source_key,0,sizeof(r.source_key))||std::strcmp(r.source_key,s.cursor.source_key))
         reject(READER_SEARCH_ARGUMENT,"Cursor belongs to another search, query or source");
+      if(mode==READER_SEARCH_REFLOW?(r.unit!=0||r.offset>units||(r.complete&&r.offset!=units)):
+          (r.unit>units||(r.unit==units&&r.offset)||(r.complete&&r.unit!=units)))reject(READER_SEARCH_ARGUMENT,"Cursor lies outside its verified source");
       s.cursor=r;
     }
   }
@@ -315,6 +324,7 @@ extern "C" reader_search_status reader_search_open_fixed(exr_fixed_document *doc
 
 extern "C" reader_search_status reader_search_next(reader_search *search,size_t max_hits,reader_search_result *result,reader_search_error *error){
   if(result)std::memset(result,0,sizeof(*result));
+  if(search&&search->owner!=std::this_thread::get_id())return call(error,[&]{reject(READER_SEARCH_ARGUMENT,"Search requires its creating owner");});
   if(search&&search->busy)return call(error,[&]{reject(READER_SEARCH_BUSY,"Search handle is inside a call; reentry refused");});
   reader_search_status status=call(error,[&]{
     if(!search||!result)reject(READER_SEARCH_ARGUMENT,"Missing search handle or result");
@@ -364,6 +374,7 @@ extern "C" reader_search_status reader_search_cursor_get(const reader_search *se
   if(cursor)std::memset(cursor,0,sizeof(*cursor));
   return call(error,[&]{
     if(!search||!cursor)reject(READER_SEARCH_ARGUMENT,"Missing search handle or cursor");
+    if(search->owner!=std::this_thread::get_id())reject(READER_SEARCH_ARGUMENT,"Search requires its creating owner");
     if(search->busy)reject(READER_SEARCH_BUSY,"Search handle is inside a call; reentry refused");
     *cursor=search->cursor;
   });
@@ -372,6 +383,7 @@ extern "C" reader_search_status reader_search_stats_get(const reader_search *sea
   if(stats)std::memset(stats,0,sizeof(*stats));
   return call(error,[&]{
     if(!search||!stats)reject(READER_SEARCH_ARGUMENT,"Missing search handle or statistics");
+    if(search->owner!=std::this_thread::get_id())reject(READER_SEARCH_ARGUMENT,"Search requires its creating owner");
     if(search->busy)reject(READER_SEARCH_BUSY,"Search handle is inside a call; reentry refused");
     *stats=search->stats;
   });
@@ -380,6 +392,7 @@ extern "C" reader_search_status reader_search_close(reader_search **search,reade
   return call(error,[&]{
     if(!search)reject(READER_SEARCH_ARGUMENT,"Missing search handle");
     if(!*search)return;
+    if((*search)->owner!=std::this_thread::get_id())reject(READER_SEARCH_ARGUMENT,"Search requires its creating owner");
     if((*search)->busy)reject(READER_SEARCH_BUSY,"Search handle is inside a call; close refused");
     delete *search;*search=nullptr;
   });

@@ -1,6 +1,6 @@
 {
   "accepted": false,
-  "status": "no cloud run recorded yet",
+  "status": "original cloud run rejected; isolated review awaiting full rerun",
   "package": "EXReaderSearch 0.1.0",
   "common_start": "c3511a011eefbf1fba1d20908f000cef22b1ced2",
   "source_sha": null,
@@ -8,7 +8,22 @@
   "attempt": null,
   "artifacts": [],
   "jobs": [],
-  "problems": ["Nothing has been built or run in GitHub Actions for this package; the fields above are filled only from a real run."],
+  "problems": ["Original C++ probe used a progress offset inside a UTF-8 scalar. Both platforms compiled and ran the C consumer, but the C++ probe and strict summary failed. Review changes are not accepted until a full same-source run succeeds."],
+  "retained_failures": [{
+    "source_sha": "db3d574798518f8b91339148a78d02620e8c993b",
+    "run_id": 40062703988,
+    "attempt": 1,
+    "jobs": [
+      {"id": 120779422925, "platform": "linux", "conclusion": "failure"},
+      {"id": 120779423127, "platform": "windows", "conclusion": "failure"},
+      {"id": 120780054207, "role": "strict evidence", "conclusion": "failure"}
+    ],
+    "artifacts": [
+      {"id": 12548251952, "size_in_bytes": 7803236, "digest": "sha256:45052b7273ac7c747fca5ab0714b46d172282eae6e5d2fed8191732b031ede01"},
+      {"id": 12547828468, "size_in_bytes": 5836550, "digest": "sha256:1afe3829a6395d23cb7a4c54e45102fa57ed5b3f57ea139aa2c41a3947eb2ad5"},
+      {"id": 12548267146, "size_in_bytes": 372, "digest": "sha256:2682ff33171336e1342931d80b7f4959cd30ce9f4a223da9c0cc760fa1791b63"}
+    ]
+  }],
   "granted_platforms": [],
   "macos_accepted": false,
   "performance_claimed": false,

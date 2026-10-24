@@ -11,6 +11,7 @@ extern "C" {
 #define READER_SEARCH_VERSION "0.1.0"
 #define READER_SEARCH_QUERY_MAX 4096u
 #define READER_SEARCH_BATCH_MAX 100u
+#define READER_SEARCH_SOURCE_KEY_MAX 255u
 
 /* In-book search over three explicit sources of the frozen public SDK. Matching
    is a literal, case-sensitive comparison of well-formed UTF-8 bytes over the
@@ -26,6 +27,8 @@ extern "C" {
    Owner rules: every handle passed to open is borrowed from the host owner and
    must outlive the search handle. The search handle, its calls, results' capture
    calls and close are used from that same owner; nothing here creates a thread.
+   Calls from another thread return READER_SEARCH_ARGUMENT before touching the
+   borrowed SDK or committed state; a refused close keeps the handle.
    Concurrent use is a host error. A call made from inside an exr_control
    callback of the same search handle (reentry) returns READER_SEARCH_BUSY and
    changes nothing. The module never writes the SDK library, product history,
@@ -61,24 +64,32 @@ typedef enum {
   READER_SEARCH_FIXED=3   /* exr_fixed_document: one page's text at a time */
 } reader_search_mode;
 
-/* Plain value, safe to store or copy. It is bound to the mode, the query bytes
-   and the source's unit count (EPUB spine items, fixed pages, or the reflow text
-   size), and any other search is refused with ARGUMENT. `unit` is the EPUB spine
+/* Plain value, safe to store or copy when a verified source_key was supplied.
+   It is bound to that exact key, mode, query bytes and source's unit count
+   (EPUB spine items, fixed pages, or reflow text size). A transient search
+   without a source_key can advance on its handle but cannot resume via open.
+   `unit` is the EPUB spine
    index or fixed page index (0 for reflow). `offset` is the byte offset inside
    the unit's text at which the next hit may start. */
 typedef struct {
-  uint32_t version;  /* 1 */
+  uint32_t version;  /* 2: version 1 did not bind a source identity and is refused. */
   uint32_t mode;
   uint64_t binding;
   uint64_t unit, offset;
   uint32_t complete; /* nonzero: nothing remains */
   uint32_t reserved; /* zero */
+  char source_key[READER_SEARCH_SOURCE_KEY_MAX+1]; /* exact non-secret host identity */
 } reader_search_cursor;
 
 typedef struct {
   size_t struct_size;             /* sizeof this struct */
   exr_control control;            /* copied; its context is borrowed until close */
   const reader_search_cursor *resume; /* NULL starts at the beginning */
+  /* Optional for a transient search, required to resume. Host-verified original
+     book identity plus parser/projection version; never an SDK-local row ID or
+     object address. 1..255 UTF-8 bytes, copied into the cursor. The module does
+     not derive this identity by parsing or hashing the whole book at open. */
+  const char *source_key;
 } reader_search_options;
 
 /* One hit. Offsets are normalized UTF-8 byte offsets in the text addressed by the
