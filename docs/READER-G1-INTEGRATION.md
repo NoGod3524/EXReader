@@ -28,6 +28,12 @@ G01–G16 的交回提交以普通 merge 保留历史；完整身份见
 
 ## 未完成范围
 
-本候选尚无云端验收结果，`accepted=false`。即使上述首轮通过，仍不等于本轮整合完成或完整六平台产品通过。GTK搜索、Android导航/后续阅读面板、Apple宿主改动尚在各自owner分支；后续须固定交回并接入共同源码，再执行适用宿主和组合回归。
+受测源码 `4e2dad0bc40aa5b523b98175f19fcb8ddde3eaa3` 在 [run 40118190108](https://github.com/NoGod3524/EXReader/actions/runs/40118190108)、attempt 1 的7个作业全部成功。root读取两个严格汇总及最终作业原始日志，最终记录 `accepted=true`、`problems=[]`；范围为三桌面安装组合与保留的Windows原生宿主检查。三平台初始/搬移后的新链均通过，G02–G06原判定器全部重跑；Windows实际计数为158/10/5/13/18、账户32、定向键盘/UIA24。
+
+两套严格汇总在Actions内下载并复核同次ZIP的ID、字节、digest、有效期和报告/消费者身份，最终作业再次认证两份汇总。最终工件 `12570591453` 为624字节，SHA-256 `9ba538081f6f368f021c76e454e2776cf12f2e855a68d826095ebb9fa8e09fab`，有效期至 `2027-01-22T17:53:34Z`。七份工件、作业、消费者摘要和各平台具名判定见[验收JSON](validation/reader-g1-integration.json)。
+
+首次失败 run `40116411109` 保留：集成探针把公开位置类型 `reflow_global` 写成 `reflow`；修复探针后整轮重执行，未放宽模块断言。Apple链接图检查复用既有ld64解析路径。此次证据登记仅改两份文档，受测源码保持以上完整SHA。
+
+`cycle_complete=false`、`complete_product=false`。GTK、Android、Apple宿主新改动尚在各自owner分支；后续须固定交回并接入共同源码，再执行适用宿主和组合回归。Windows账户检查尚未覆盖真实远程云盘、接收/导入阶段取消、读屏朗读和Credential Manager不可用；部分接收分支由测试直接植入产品库，没有第二远端生产者。
 
 G09分发路径缺口、G10/G11性能观测及G12–G16无障碍审计仍按原记录保留；报告完成不授予性能、读屏或真机。发布tag/Release另取授权。J01–J25手动工作包未在本候选实现。
