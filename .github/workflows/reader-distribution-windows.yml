@@ -46,6 +46,8 @@ jobs:
           echo "changed files: $(echo "$changed" | sed '/^$/d' | wc -l)"
       - name: Reject leaking stages, tampered seals and unbounded reports (synthetic fixtures)
         run: python3 tests/reader_distribution_windows/check_distributions.py
+      - name: Reject incomplete same-attempt summaries (synthetic fixtures)
+        run: python3 tests/reader_distribution_windows/check_aggregate.py
       - name: Keep the acceptance document honestly unaccepted until a real run exists
         run: |
           python3 -c "
@@ -115,6 +117,11 @@ jobs:
           for item in report.get('candidates', []):
               print('CANDIDATE', item.get('returncode'), item.get('hits'), item.get('flags'))
           PY
+      - name: Install a real pkg-config implementation for the metadata check
+        run: |
+          choco install pkgconfiglite -y --no-progress > build/dist/choco-pkgconfig.log 2>&1 ||
+            choco install pkgconf -y --no-progress >> build/dist/choco-pkgconfig.log 2>&1
+          pkg-config --version | tee build/dist/pkgconfig-version.log
       - name: Build and install the frozen reading-core profile
         run: |
           cmake --preset reading-core -DCMAKE_C_FLAGS="$COMPILE_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILE_FLAGS" 2>&1 | tee build/dist/configure.log
@@ -274,6 +281,12 @@ jobs:
           python tools/check_corpus.py build/reloc-reading/reading-document.exe \
             tests/fixtures/fonts/primary.ttf tools/reading_core/smoke-manifest.json build/dist/corpus \
             --root tests/fixtures --timeout 90
+      - name: Query the relocated pkg-config metadata with the real tool
+        run: |
+          EXPECT=$(python -c "import json; d=json.load(open('build/dist/sanitize.json')); print(sum(1 for item in d['rewritten'] if item.get('mode') == 'pcfiledir'))")
+          python tools/reader_distribution_windows/check_pkgconfig.py \
+            --prefix "$PREFIX_M" --expect "$EXPECT" \
+            --output build/dist/pkgconfig.json
       - name: Check the import closure and the exported vendor closure
         run: |
           python tools/reader_distribution_windows/check_dependencies.py --stage build/dist/sanitized \
@@ -356,7 +369,8 @@ jobs:
             --sanitize build/dist/sanitize.json --identity build/dist/identity.json \
             --relocation build/dist/relocation.json --smoke build/dist/corpus/summary.json \
             --dependencies build/dist/dependencies.json --probe build/dist/probe.json \
-            --negatives build/dist/negatives.json --source-sha "$GITHUB_SHA" \
+            --negatives build/dist/negatives.json \
+            --pkgconfig build/dist/pkgconfig.json --source-sha "$GITHUB_SHA" \
             --output build/dist/summary.json
       - name: Record the named results for this source
         if: always()
@@ -364,7 +378,7 @@ jobs:
           python - <<'PY'
           import json, os
           for name in ('summary.json', 'surfaces.json', 'dependencies.json', 'negatives.json',
-                       'sanitize.json'):
+                       'sanitize.json', 'pkgconfig.json'):
               path = os.path.join('build/dist', name)
               if not os.path.isfile(path):
                   print('MISSING ' + name)

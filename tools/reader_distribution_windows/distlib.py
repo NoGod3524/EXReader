@@ -411,24 +411,77 @@ def seal_zip(stage, output, epoch=SEAL_EPOCH):
             'entries': len(entries)}
 
 
-def read_zip(path, limit=1024 * 1024 * 1024):
-    """Entry names and payload digests; escaping entries are refused."""
-    records, total = [], 0
-    require(Path(path).is_file(), 'distribution archive is missing: ' + str(path))
-    with zipfile.ZipFile(Path(path)) as archive:
-        for info in archive.infolist():
+def read_zip(path, limit=1024 * 1024 * 1024, max_entries=20000, max_entry=None):
+    """Public wrapper: a malformed container is reported as a refusal."""
+    try:
+        return _read_zip_checked(path, limit, max_entries, max_entry)
+    except zipfile.BadZipFile as error:
+        raise ValueError('unreadable distribution archive %s: %s' % (path, error))
+
+
+def _read_zip_checked(path, limit, max_entries, max_entry):
+    """Bounded, streaming read of a distribution archive.
+
+    Nothing is allocated before the declared sizes are checked: the entry count,
+    each declared uncompressed size and the declared cumulative size are validated
+    first, then every entry is streamed in fixed blocks while its real length and
+    CRC are verified. Declared sizes that exceed the limit are refused before any
+    content is read, so an oversized declaration cannot force an allocation.
+    """
+    import zlib
+    path = Path(path)
+    require(path.is_file(), 'distribution archive is missing: ' + str(path))
+    entry_limit = limit if max_entry is None else min(max_entry, limit)
+    require(limit > 0 and entry_limit > 0 and max_entries > 0,
+            'archive limits must be positive')
+    require(path.stat().st_size <= limit * 2,
+            'archive file itself exceeds the double of the declared unpack limit')
+    records, seen, declared_total = [], set(), 0
+    with zipfile.ZipFile(path) as archive:
+        infos = archive.infolist()
+        require(len(infos) <= max_entries,
+                'archive declares %d entries, above the limit of %d' % (len(infos), max_entries))
+        require(infos, 'empty distribution archive: ' + str(path))
+        for info in infos:
             name = info.filename
             require('\\' not in name, 'backslash zip entry: ' + name)
             require(not name.startswith('/'), 'absolute zip entry: ' + name)
             require('..' not in name.split('/'), 'escaping zip entry: ' + name)
             require(not info.is_dir(), 'unexpected directory zip entry: ' + name)
-            payload = archive.read(info)
-            total += len(payload)
-            require(total <= limit, 'distribution archive exceeds the declared limit')
-            records.append({'path': name, 'bytes': len(payload), 'sha256': digest_bytes(payload),
-                            'crc32': info.CRC})
-            require(len(records) <= 20000, 'distribution archive has too many entries')
-    require(records, 'empty distribution archive: ' + str(path))
+            require(isinstance(info.file_size, int) and info.file_size >= 0,
+                    'entry declares no usable size: ' + name)
+            require(info.file_size <= entry_limit,
+                    'entry %s declares %d bytes, above the per-entry limit of %d'
+                    % (name, info.file_size, entry_limit))
+            if getattr(info, 'flag_bits', 0) & 0x1:
+                raise ValueError('encrypted zip entry is refused: ' + name)
+            folded = name.casefold()
+            require(folded not in seen, 'duplicate or case-aliased zip entry: ' + name)
+            seen.add(folded)
+            declared_total += info.file_size
+            require(declared_total <= limit,
+                    'archive declares %d bytes, above the limit of %d' % (declared_total, limit))
+        for info in infos:
+            digest = hashlib.sha256()
+            crc = 0
+            actual = 0
+            with archive.open(info, 'r') as stream:
+                while True:
+                    block = stream.read(1024 * 1024)
+                    if not block:
+                        break
+                    actual += len(block)
+                    require(actual <= info.file_size,
+                            'entry %s grew past its declared size' % info.filename)
+                    crc = zlib.crc32(block, crc)
+                    digest.update(block)
+            require(actual == info.file_size,
+                    'entry %s is truncated: %d of %d declared bytes'
+                    % (info.filename, actual, info.file_size))
+            require((crc & 0xFFFFFFFF) == info.CRC,
+                    'entry %s fails its CRC check' % info.filename)
+            records.append({'path': info.filename, 'bytes': actual,
+                            'sha256': digest.hexdigest(), 'crc32': info.CRC})
     return records
 
 
@@ -463,12 +516,15 @@ def path_token(key):
     return ('<path:%s>' % key).encode('utf-8')
 
 
-def rewrite_occurrences(payload, needles):
+def rewrite_occurrences(payload, needles, replacements=None):
     """Replace every case-insensitive occurrence, longest match first per position.
 
     Returns the new payload and the occurrence list in new-payload order, so the
-    original bytes can be rebuilt exactly (including the original casing).
+    original bytes can be rebuilt exactly (including the original casing). A
+    caller may supply a per-pattern replacement (for example a relocatable
+    ${pcfiledir} expression); by default a stable placeholder token is used.
     """
+    replacements = replacements or {}
     lowered = payload.lower()
     matches = []
     for key in sorted(needles):
@@ -485,9 +541,11 @@ def rewrite_occurrences(payload, needles):
         if offset < cursor:
             continue
         output += payload[cursor:offset]
-        output += path_token(key)
+        replacement = replacements.get(key) or path_token(key)
+        output += replacement
         matched = payload[offset:offset + length].decode('utf-8')
-        occurrences.append({'key': key, 'matched': matched, 'offset': offset})
+        occurrences.append({'key': key, 'matched': matched, 'offset': offset,
+                            'replacement': replacement.decode('utf-8')})
         cursor = offset + length
     output += payload[cursor:]
     return bytes(output), occurrences
@@ -497,7 +555,8 @@ def restore_occurrences(payload, occurrences):
     """Rebuild the original bytes from a rewritten payload and its occurrence list."""
     output, cursor = bytearray(), 0
     for occurrence in occurrences:
-        token = path_token(occurrence['key'])
+        token = (occurrence.get('replacement') or
+                 path_token(occurrence['key']).decode('utf-8')).encode('utf-8')
         index = payload.find(token, cursor)
         require(index >= 0, 'rewritten payload lost the token for ' + occurrence['key'])
         output += payload[cursor:index]

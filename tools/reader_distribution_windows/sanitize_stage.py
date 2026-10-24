@@ -25,6 +25,7 @@ import tempfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import distlib
+import pc_metadata
 import reduce_archives
 
 
@@ -92,6 +93,32 @@ def main():
             continue
         distlib.require(len(payload) <= args.text_limit,
                         'rewritable file exceeds the declared text limit: ' + record['path'])
+        if path.suffix.lower() == '.pc':
+            relocated, occurrences, expression = pc_metadata.relocate(payload, args.source,
+                                                                       record['path'])
+            distlib.require(occurrences,
+                            'pkg-config metadata carries no absolute prefix: ' + record['path'])
+            distlib.require(distlib.restore_occurrences(relocated, occurrences) == payload,
+                            'relocation is not invertible for ' + record['path'])
+            again, extra = pc_metadata.relocate(relocated, args.source, record['path'])
+            distlib.require(again == relocated and not extra,
+                            'relocation is not idempotent for ' + record['path'])
+            distlib.require(relocated.count(bytes([10])) == payload.count(bytes([10])),
+                            'relocation changed the line count of ' + record['path'])
+            residual_hits = distlib.find_hits(record['path'], relocated, needles)
+            distlib.require(not residual_hits,
+                            'pkg-config metadata still references a build path: %s %s' %
+                            (record['path'], json.dumps(residual_hits[:2])))
+            path.write_bytes(relocated)
+            used = sorted({occurrence['key'] for occurrence in occurrences})
+            rewritten.append({'path': record['path'], 'mode': 'pcfiledir',
+                              'expression': expression,
+                              'prefix_variable': pc_metadata.has_prefix_variable(payload),
+                              'patterns': used, 'occurrences': occurrences,
+                              'bytes_before': len(payload), 'bytes_after': len(relocated),
+                              'sha256_before': distlib.digest_bytes(payload),
+                              'sha256_after': distlib.digest_bytes(relocated)})
+            continue
         selected = {key: needles[key] for key in keys}
         replacement, occurrences = distlib.rewrite_occurrences(payload, selected)
         distlib.require(occurrences, 'scan declared hits but no span matched: ' + record['path'])
@@ -104,7 +131,7 @@ def main():
                         'rewrite changed the line count of ' + record['path'])
         path.write_bytes(replacement)
         used = sorted({occurrence['key'] for occurrence in occurrences})
-        rewritten.append({'path': record['path'],
+        rewritten.append({'path': record['path'], 'mode': 'token',
                           'patterns': used,
                           'tokens': [distlib.path_token(key).decode('utf-8') for key in used],
                           'occurrences': occurrences,

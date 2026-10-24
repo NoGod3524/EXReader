@@ -17,6 +17,7 @@ import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import distlib
+import verify_distribution
 
 
 def gh_json(arguments):
@@ -45,6 +46,40 @@ def download(repo, artifact_id, destination):
     distlib.require(destination.is_file() and destination.stat().st_size > 0,
                     'downloaded artifact is empty')
     return destination
+
+
+def validate_summary(summary, source_sha, run_id, attempt):
+    """Reuse the fixed named-result contract: no missing, duplicate or substitute."""
+    results = []
+    reported = [item.get('name') for item in summary.get('results', [])
+                if isinstance(item, dict)]
+    distlib.require(reported, 'the gate summary carries no named results')
+    distlib.require(len(reported) == len(set(reported)),
+                    'duplicate named result in the summary: ' + ', '.join(sorted(
+                        {name for name in reported if reported.count(name) > 1})))
+    required = set(verify_distribution.REQUIRED_RESULTS) | set(
+        verify_distribution.REQUIRED_NEGATIVES)
+    missing = sorted(required - set(reported))
+    unexpected = sorted(set(reported) - required)
+    distlib.require(not missing, 'summary is missing required named results: ' + ', '.join(missing))
+    distlib.require(not unexpected, 'summary carries unexpected named results: ' + ', '.join(unexpected))
+    failed = [item.get('name') for item in summary.get('results', [])
+              if item.get('status') != 'pass']
+    distlib.require(not failed, 'summary reports failing named results: ' + ', '.join(failed))
+    cases = summary.get('negative_cases') or []
+    distlib.require(sorted(cases) == sorted(verify_distribution.REQUIRED_NEGATIVES),
+                    'summary negative case list differs from the fixed list')
+    distlib.named(results, 'summary-source-bound', summary.get('source_sha') == source_sha and
+                  summary.get('accepted') is True, summary.get('source_sha'))
+    distlib.named(results, 'summary-same-run-and-attempt',
+                  str(summary.get('ci', {}).get('GITHUB_RUN_ID')) == str(run_id) and
+                  str(summary.get('ci', {}).get('GITHUB_RUN_ATTEMPT')) == str(attempt),
+                  summary.get('ci', {}))
+    distlib.named(results, 'summary-named-results-complete',
+                  not (missing or unexpected) and not failed,
+                  {'count': len(reported), 'required': len(required),
+                   'missing': missing[:6], 'unexpected': unexpected[:6], 'failed': failed[:6]})
+    return results
 
 
 def main():
@@ -94,16 +129,7 @@ def main():
                     'artifact does not carry the gate summary next to the distribution report')
     summary = distlib.load_json(summary_path)
     distribution = distlib.load_json(distributions[0])
-    distlib.named(results, 'summary-source-bound', summary.get('source_sha') == args.source_sha and
-                  summary.get('accepted') is True, summary.get('source_sha'))
-    distlib.named(results, 'summary-same-run-and-attempt',
-                  str(summary.get('ci', {}).get('GITHUB_RUN_ID')) == args.run_id and
-                  str(summary.get('ci', {}).get('GITHUB_RUN_ATTEMPT')) == args.attempt,
-                  summary.get('ci', {}))
-    named = summary.get('results', [])
-    failed = [item['name'] for item in named if item.get('status') != 'pass']
-    distlib.named(results, 'summary-named-results-pass', bool(named) and not failed,
-                  {'count': len(named), 'failed': failed[:6]})
+    results.extend(validate_summary(summary, args.source_sha, args.run_id, args.attempt))
     sealed = list(content.rglob('EXReader-*.zip'))
     distlib.require(len(sealed) == 1, 'artifact does not contain exactly one sealed distribution')
     sealed_digest = distlib.digest(sealed[0])

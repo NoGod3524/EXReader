@@ -316,6 +316,148 @@ def main():
         else:
             raise AssertionError('sealed an empty stage')
 
+
+        # 10. Bounded archive reads: declared sizes are refused before any content read.
+        import struct
+        def central_offsets(payload):
+            offsets = []
+            position = payload.find(b'PK' + bytes([1, 2]))
+            while position >= 0:
+                offsets.append(position)
+                position = payload.find(b'PK' + bytes([1, 2]), position + 4)
+            return offsets
+
+        small = root / 'declared-oversize.zip'
+        with zipfile.ZipFile(small, 'w', zipfile.ZIP_STORED) as handle:
+            handle.writestr('payload.bin', b'x' * 64)
+        payload = bytearray(small.read_bytes())
+        assert len(payload) < 4096
+        for offset in central_offsets(bytes(payload)):
+            payload[offset + 24:offset + 28] = (0x40000000).to_bytes(4, 'little')
+        small.write_bytes(bytes(payload))
+        assert small.stat().st_size < 4096, 'the oversize fixture must stay tiny'
+        try:
+            distlib.read_zip(small, limit=1024 * 1024)
+        except ValueError as error:
+            assert 'declares' in str(error), str(error)
+            case('zip-refuses-declared-oversize-before-reading')
+        else:
+            raise AssertionError('accepted an entry that declares more than the limit')
+        try:
+            distlib.read_zip(small, limit=1024 * 1024, max_entry=64)
+        except ValueError as error:
+            case('zip-refuses-declared-per-entry-oversize')
+        else:
+            raise AssertionError('accepted a per-entry oversize declaration')
+
+        truncated = root / 'truncated.zip'
+        good = root / 'good.zip'
+        with zipfile.ZipFile(good, 'w', zipfile.ZIP_STORED) as handle:
+            handle.writestr('payload.bin', b'y' * 256)
+        raw = good.read_bytes()
+        truncated.write_bytes(raw[:-40])
+        try:
+            distlib.read_zip(truncated)
+        except ValueError:
+            case('zip-refuses-truncated-container')
+        else:
+            raise AssertionError('accepted a truncated archive')
+
+        tampered = root / 'tampered.zip'
+        payload = bytearray(raw)
+        start = payload.find(b'PK' + bytes([3, 4]))
+        name_length = struct.unpack_from('<H', payload, start + 26)[0]
+        extra_length = struct.unpack_from('<H', payload, start + 28)[0]
+        body = start + 30 + name_length + extra_length
+        payload[body] = payload[body] ^ 0xFF
+        tampered.write_bytes(bytes(payload))
+        try:
+            distlib.read_zip(tampered)
+        except ValueError:
+            case('zip-refuses-tampered-content')
+        else:
+            raise AssertionError('accepted an entry whose CRC no longer matches')
+
+        duplicated = root / 'duplicate.zip'
+        with zipfile.ZipFile(duplicated, 'w', zipfile.ZIP_STORED) as handle:
+            handle.writestr('same.bin', b'one')
+            handle.writestr('same.bin', b'two')
+        try:
+            distlib.read_zip(duplicated)
+        except ValueError as error:
+            assert 'duplicate' in str(error), str(error)
+            case('zip-refuses-duplicate-members')
+        else:
+            raise AssertionError('accepted duplicate member names')
+
+        aliased = root / 'case-alias.zip'
+        with zipfile.ZipFile(aliased, 'w', zipfile.ZIP_STORED) as handle:
+            handle.writestr('Member.txt', b'one')
+            handle.writestr('member.txt', b'two')
+        try:
+            distlib.read_zip(aliased)
+        except ValueError as error:
+            assert 'duplicate' in str(error), str(error)
+            case('zip-refuses-case-aliased-members')
+        else:
+            raise AssertionError('accepted case-aliased member names')
+
+        honest = root / 'honest.zip'
+        with zipfile.ZipFile(honest, 'w', zipfile.ZIP_DEFLATED) as handle:
+            handle.writestr('bin/one.bin', b'z' * 2048)
+            handle.writestr('two.txt', 'text\n')
+        records = distlib.read_zip(honest)
+        assert [item['path'] for item in records] == ['bin/one.bin', 'two.txt']
+        assert all(item['bytes'] > 0 and len(item['sha256']) == 64 for item in records)
+        case('zip-accepts-honest-archive')
+
+        # 11. pkg-config metadata is relocated relatively, not replaced by a token.
+        pc_stage = stage(root / 'pc-stage')
+        pc_prefix = str(pc_stage).replace('\\', '/')
+        write(pc_stage / 'lib/pkgconfig/demo.pc',
+              'prefix=' + pc_prefix + '\n'
+              'exec_prefix=' + chr(36) + '{prefix}\n'
+              'libdir=' + chr(36) + '{exec_prefix}/lib\n'
+              'includedir=' + chr(36) + '{prefix}/include\n'
+              'Name: demo\nDescription: synthetic relocation fixture\nVersion: 1.0\n'
+              'Libs: -L' + chr(36) + '{libdir} -ldemo\n'
+              'Cflags: -I' + chr(36) + '{includedir}\n')
+        pc_scan = root / 'scan-pc.json'
+        assert run(TOOLS / 'scan_paths.py', '--root', pc_stage, '--root-arg',
+                   str(pc_stage), '--output', pc_scan).returncode == 0
+        pc_destination = root / 'pc-sanitized'
+        pc_sanitize = root / 'pc-sanitize.json'
+        completed = run(TOOLS / 'sanitize_stage.py', '--source', pc_stage,
+                        '--destination', pc_destination, '--scan', pc_scan,
+                        '--output', pc_sanitize)
+        assert completed.returncode == 0, completed.stderr
+        audit = json.loads(pc_sanitize.read_text())
+        record = [item for item in audit['rewritten'] if item['path'].endswith('demo.pc')][0]
+        assert record['mode'] == 'pcfiledir', record['mode']
+        assert record['expression'] == chr(36) + '{pcfiledir}/../..', record['expression']
+        assert all(item['replacement'] == record['expression'] for item in record['occurrences'])
+        text = (pc_destination / 'lib/pkgconfig/demo.pc').read_text()
+        assert 'prefix=' + chr(36) + '{pcfiledir}/../..' in text
+        assert 'Libs: -L' + chr(36) + '{libdir} -ldemo' in text
+        assert 'Cflags: -I' + chr(36) + '{includedir}' in text
+        rebuilt = distlib.restore_occurrences(
+            (pc_destination / 'lib/pkgconfig/demo.pc').read_bytes(), record['occurrences'])
+        assert rebuilt == (pc_stage / 'lib/pkgconfig/demo.pc').read_bytes()
+        case('pkgconfig-metadata-relocated-relative-to-its-own-directory')
+
+        outside = stage(root / 'pc-outside')
+        write(outside / 'lib/pkgconfig/escape.pc',
+              'prefix=D:/a/EXReader/EXReader/build/elsewhere\n'
+              'Libs: -L' + chr(36) + '{prefix}/lib -lescape\n')
+        outside_scan = root / 'scan-pc-outside.json'
+        assert run(TOOLS / 'scan_paths.py', '--root', outside, '--root-arg',
+                   str(outside), '--output', outside_scan).returncode == 0
+        completed = run(TOOLS / 'sanitize_stage.py', '--source', outside,
+                        '--destination', root / 'pc-outside-sanitized',
+                        '--scan', outside_scan, '--output', root / 'pc-outside.json')
+        assert completed.returncode != 0
+        case('pkgconfig-refuses-prefix-outside-the-installed-tree')
+
     print(json.dumps({'accepted': True, 'checks': len(CASES), 'cases': CASES}))
     return 0
 

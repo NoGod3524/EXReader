@@ -25,7 +25,12 @@ REQUIRED_RESULTS = (
     'relocation-prefix-distinct', 'relocated-consumers-pass', 'nine-format-smoke-complete',
     'installed-identity-matches-headers', 'dependency-closure-system-only',
     'probe-prefix-bound', 'debug-sections-carry-no-build-root', 'no-absolute-drective',
-    'archive-member-names-relative', 'deterministic-seal',
+    'archive-member-names-relative', 'deterministic-seal', 'pkgconfig-metadata-relocatable',
+    'pkgconfig-consumer-links-installed-library',
+)
+REQUIRED_NEGATIVES = (
+    'negative-probe-rejects-foreign-prefix', 'negative-consumer-rejects-missing-book',
+    'negative-scan-blocks-leaking-control', 'negative-scan-blocks-absolute-drective',
 )
 SYSTEM_IMPORT_ALLOW = frozenset({
     'kernel32.dll', 'user32.dll', 'gdi32.dll', 'advapi32.dll', 'shell32.dll', 'ole32.dll',
@@ -63,6 +68,8 @@ def main():
     parser.add_argument('--dependencies', type=Path, required=True)
     parser.add_argument('--probe', type=Path, required=True)
     parser.add_argument('--negatives', type=Path, required=True)
+    parser.add_argument('--pkgconfig', type=Path, required=True,
+                        help='pkg-config metadata and consumer report')
     parser.add_argument('--source-sha', required=True)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
@@ -76,6 +83,7 @@ def main():
     dependencies = distlib.load_json(args.dependencies)
     probe = distlib.load_json(args.probe)
     negatives = distlib.load_json(args.negatives)
+    pkgconfig = distlib.load_json(args.pkgconfig)
     needles = {key: value.encode('utf-8') for key, value in scan['patterns'].items()}
 
     ci = distribution.get('ci', {})
@@ -146,8 +154,25 @@ def main():
     accepted_sanitize = (sanitize.get('accepted') is True and not sanitize.get('refused') and
                          sanitize.get('residual', {}).get('text_hits') == 0 and
                          sanitize.get('residual', {}).get('binary_hits') == 0)
-    distlib.named(results, 'sanitization-audited', audit_ok and accepted_sanitize,
-                  {'rewritten': len(sanitize.get('rewritten', [])), 'problems': audit_detail[:4]})
+    pcfiledir_ok, pcfiledir_detail = True, []
+    for record in sanitize.get('rewritten', []):
+        if record.get('mode') != 'pcfiledir':
+            continue
+        expression = record.get('expression') or ''
+        expected = '$' + '{pcfiledir}'
+        occurrences = record.get('occurrences') or []
+        if not expression.startswith(expected) or record.get('prefix_variable') is not True:
+            pcfiledir_ok = False
+            pcfiledir_detail.append({'path': record['path'], 'problem': 'no pcfiledir expression'})
+            continue
+        if any(item.get('replacement') != expression for item in occurrences):
+            pcfiledir_ok = False
+            pcfiledir_detail.append({'path': record['path'], 'problem': 'mixed replacement values'})
+    distlib.named(results, 'sanitization-audited', audit_ok and accepted_sanitize and pcfiledir_ok,
+                  {'rewritten': len(sanitize.get('rewritten', [])), 'problems':
+                   (audit_detail + pcfiledir_detail)[:4],
+                   'pcfiledir_files': sum(1 for item in sanitize.get('rewritten', [])
+                                          if item.get('mode') == 'pcfiledir')})
 
     reduction_ok, reduction_detail = True, []
     for record in sanitize.get('reduced', []):
@@ -225,6 +250,18 @@ def main():
                   {'module_path': probe.get('module_path'), 'external': probe.get('external_modules'),
                    'version': probe.get('sdk_version')})
 
+    distlib.named(results, 'pkgconfig-metadata-relocatable',
+                  pkgconfig.get('accepted') is True and int(pkgconfig.get('packages') or 0) >= 1 and
+                  pkgconfig.get('resolved_inside_prefix') is True and
+                  not pkgconfig.get('outside_paths') and not pkgconfig.get('failed'),
+                  {'packages': pkgconfig.get('packages'),
+                   'outside': (pkgconfig.get('outside_paths') or [])[:4],
+                   'failed': (pkgconfig.get('failed') or [])[:4]})
+    distlib.named(results, 'pkgconfig-consumer-links-installed-library',
+                  (pkgconfig.get('consumer') or {}).get('linked') is True and
+                  (pkgconfig.get('consumer') or {}).get('ran') is True,
+                  pkgconfig.get('consumer'))
+
     debug_records = [item for item in stage_records if item.get('debug_section_count')]
     distlib.named(results, 'debug-sections-carry-no-build-root',
                   all(not item['hits'] for item in debug_records),
@@ -241,14 +278,20 @@ def main():
                   distribution.get('reproducibility'))
 
     distlib.require_named_pass(results, REQUIRED_RESULTS)
+    reported = [entry.get('name') for entry in negatives.get('results', [])]
+    distlib.require(len(reported) == len(set(reported)),
+                    'duplicate negative case in the report: ' + ', '.join(sorted(reported)))
+    distlib.require(set(reported) == set(REQUIRED_NEGATIVES),
+                    'negative cases differ from the fixed list (missing %s, unexpected %s)' % (
+                        sorted(set(REQUIRED_NEGATIVES) - set(reported)),
+                        sorted(set(reported) - set(REQUIRED_NEGATIVES))))
     for entry in negatives.get('results', []):
-        distlib.require(isinstance(entry, dict) and entry.get('name') and entry.get('status') in
-                        ('pass', 'fail'), 'negative case report is malformed')
+        distlib.require(isinstance(entry, dict) and entry.get('name') and
+                        entry.get('status') in ('pass', 'fail'),
+                        'negative case report is malformed')
         results.append({'name': entry['name'], 'status': entry['status'],
                         'detail': entry.get('detail')})
-    distlib.require(len(negatives.get('results', [])) >= 4,
-                    'at least four named negative cases are required')
-    distlib.require_named_pass(results, [entry['name'] for entry in negatives.get('results', [])])
+    distlib.require_named_pass(results, list(REQUIRED_NEGATIVES))
     summary = {'schema': 'reader-distribution-windows-summary-v1', 'accepted': True,
                'source_sha': args.source_sha, 'ci': ci,
                'distribution': {'archive': distribution['archive']['archive'],
@@ -262,6 +305,9 @@ def main():
                                             for name in ('c11', 'cpp17', 'document', 'identity')}},
                'smoke': {'entries': len(smoke_results), 'accepted': smoke.get('accepted')},
                'dependencies': {'imports': sorted(imports), 'vendor': vendor},
+               'pkgconfig': {'packages': pkgconfig.get('packages'),
+                             'consumer': pkgconfig.get('consumer'),
+                             'outside_paths': pkgconfig.get('outside_paths')},
                'negative_cases': [entry['name'] for entry in negatives.get('results', [])],
                'results': results}
     distlib.write_json(args.output, summary)
