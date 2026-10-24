@@ -47,6 +47,8 @@ jobs:
           cmake --build "build/sdk-$target" --parallel 4
           cmake --install "build/sdk-$target" --prefix "stage/$target"
           test -f "stage/$target/lib/libexreader.dylib"
+      - name: Install product packages with their single SQLite provider
+        run: python3 tools/build_apple_product.py --sdk "stage/${{ matrix.target }}" --target '${{ matrix.target }}' --build "build/apple-product-${{ matrix.target }}"
       - name: Record SDK identity
         run: |
           python3 tests/apple_host/evidence_contract.py sdk \
@@ -56,8 +58,8 @@ jobs:
         if: matrix.target == 'macos'
         run: |
           mkdir -p build/apple-preflight
-          xcrun swiftc -swift-version 5 -parse-as-library -O -D EXR_APPLE_HOST_REVIEW \
-            -I stage/macos/include -L stage/macos/lib -lexreader -lsqlite3 \
+          python3 tools/apple_swift.py --sdk stage/macos -- -swift-version 5 -parse-as-library -O -D EXR_APPLE_HOST_REVIEW \
+            -I stage/macos/include -L stage/macos/lib -lexreader \
             -Xlinker -rpath -Xlinker "$PWD/stage/macos/lib" \
             examples/apple/HostSDK.swift examples/apple/HostModel.swift examples/apple/HostCatalog.swift examples/apple/SelectableText.swift \
             tests/apple_host/bounded_review/BoundedReview.swift -o build/apple-preflight/bounded-review

@@ -1,0 +1,9 @@
+// SQLite3 always resolves to the installed product header at this include path.
+module SQLite3 [system] {
+    header "ProductSQLite.h"
+    export *
+}
+module CReaderProduct {
+    header "ReaderProduct.h"
+    export *
+}

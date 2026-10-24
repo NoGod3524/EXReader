@@ -55,10 +55,16 @@ def app_settings(target, platform, deployment, info_plist)
     settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
     settings['CLANG_ENABLE_MODULES'] = 'YES'
     settings['EXR_SDK_DIR'] = '$(SRCROOT)/sdk'
-    settings['OTHER_LDFLAGS'] = ['$(inherited)', '-lexreader', '-lsqlite3']
+    settings['OTHER_LDFLAGS'] = ['$(inherited)', '-lexreader', '-lreader_session', '-lreader_sync',
+      '-lexr_webdav', '-lreader_commands', '-lreader_reading_state_codec', '-lreader_revisions',
+      '-lreader_revision_hash', '-lreader_catalog', '-lreader_catalog_sqlite', '-lexr_credentials',
+      '-lc++', '-lxml2', '-framework', 'Foundation', '-framework', 'CoreFoundation', '-framework', 'Security']
+    settings['LD_GENERATE_MAP_FILE'] = 'YES'
+    settings['LD_MAP_FILE_PATH'] = '$(TARGET_BUILD_DIR)/$(PRODUCT_NAME).link.map'
     settings['LIBRARY_SEARCH_PATHS'] = ['$(inherited)', '$(EXR_SDK_DIR)/lib']
-    settings['HEADER_SEARCH_PATHS'] = ['$(inherited)', '$(EXR_SDK_DIR)/include']
-    settings['SWIFT_INCLUDE_PATHS'] = ['$(inherited)', '$(EXR_SDK_DIR)/include']
+    settings['HEADER_SEARCH_PATHS'] = ['$(inherited)', '$(EXR_SDK_DIR)/include', '$(EXR_SDK_DIR)/include/exreader-product']
+    settings['SWIFT_INCLUDE_PATHS'] = ['$(inherited)', '$(EXR_SDK_DIR)/include',
+      '$(EXR_SDK_DIR)/include/exreader-product', File.join(Dir.pwd, 'examples/apple/product')]
     settings['LD_RUNPATH_SEARCH_PATHS'] = ['$(inherited)', '@executable_path/Frameworks',
                                             '@executable_path/../Frameworks']
     if platform == :ios
@@ -116,6 +122,9 @@ def embed_phase(target)
         codesign --force --sign - "$lib"
       done
     fi
+    python3 "#{File.join(Dir.pwd, 'tools/check_apple_product.py')}" \\
+      --binary "${TARGET_BUILD_DIR}/${EXECUTABLE_PATH}" --map "${LD_MAP_FILE_PATH}" \\
+      --output "${TARGET_BUILD_DIR}/product-link.json"
   SCRIPT
 end
 
