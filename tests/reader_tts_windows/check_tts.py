@@ -28,7 +28,7 @@ MAX_WAV_BYTES = 64 * 1024 * 1024
 # label, phase, pinned check count, subprocess timeout in seconds
 PHASES = [
     ("basic", "basic", 45, 180),
-    ("speak", "speak", 21, 420),
+    ("speak", "speak", 21, 300),
     ("unicode", "unicode", 12, 300),
     ("limits", "limits", 27, 420),
     ("control", "control", 28, 420),
@@ -170,18 +170,23 @@ def main():
         if failure is not None:
             continue
         command = [str(consumer), phase, "--wav-dir", str(wav_dir)]
-        try:
-            done = subprocess.run(command, capture_output=True, text=True, encoding="utf-8",
-                                  errors="replace", timeout=timeout)
-        except subprocess.TimeoutExpired:
-            fail(label + "_timeout")
-            (logs / (log_name + ".stdout.log")).write_text("", encoding="utf-8")
-            (logs / (log_name + ".stderr.log")).write_text("timeout\n", encoding="utf-8")
-            continue
-        (logs / (log_name + ".stdout.log")).write_text(done.stdout, encoding="utf-8")
-        (logs / (log_name + ".stderr.log")).write_text(done.stderr, encoding="utf-8")
-        parsed = parse_phase(done.stdout, phase)
-        record["exit"] = done.returncode
+        out_path = logs / (log_name + ".stdout.log")
+        err_path = logs / (log_name + ".stderr.log")
+        returncode = None
+        # Stream into the log files so a timeout still leaves the partial, source-bound
+        # output behind instead of an empty log.
+        with out_path.open("w", encoding="utf-8") as out_file, err_path.open("w", encoding="utf-8") as err_file:
+            try:
+                completed = subprocess.run(command, stdout=out_file, stderr=err_file, text=True,
+                                           timeout=timeout)
+                returncode = completed.returncode
+            except subprocess.TimeoutExpired:
+                fail(label + "_timeout", "phase exceeded %d s" % timeout)
+                err_file.write("timeout after %d s\n" % timeout)
+                err_file.flush()
+        output = out_path.read_text(encoding="utf-8", errors="replace")
+        parsed = parse_phase(output, phase)
+        record["exit"] = returncode
         record["checks"] = parsed["checks"]
         record["summaries"] = parsed["summaries"]
         record["installed"] = []
@@ -198,12 +203,12 @@ def main():
             fail(label + "_summary")
         elif parsed["summaries"][0]["passed"] != len(ids) or parsed["summaries"][0]["total"] != len(ids):
             fail(label + "_summary_counts", json.dumps(parsed["summaries"][0]))
-        if done.returncode != 0:
-            fail(label + "_exit", str(done.returncode))
+        if returncode != 0:
+            fail(label + "_exit", str(returncode))
         failing = [row["id"] for row in parsed["checks"] if row["result"] != "pass"]
         if failing:
             fail(label + "_check_failed", ",".join(failing[:6]))
-        record["accepted"] = (failure is None and done.returncode == 0
+        record["accepted"] = (failure is None and returncode == 0
                               and len(ids) == expected and not failing)
         total_checks += len(ids)
         for item in parsed["wavs"]:
@@ -240,11 +245,17 @@ def main():
                       b"Numbers 0123456789 and punctuation; still one utterance.\n")
         text_path.write_bytes(probe_text)
         probe_wav = wav_dir / "probe.wav"
-        done = subprocess.run([str(probe), str(text_path), str(probe_wav), "1.25"],
-                              capture_output=True, text=True, encoding="utf-8", errors="replace",
-                              timeout=420)
-        (logs / "11-probe.stdout.log").write_text(done.stdout, encoding="utf-8")
-        (logs / "11-probe.stderr.log").write_text(done.stderr, encoding="utf-8")
+        with (logs / "11-probe.stdout.log").open("w", encoding="utf-8") as out_file,                 (logs / "11-probe.stderr.log").open("w", encoding="utf-8") as err_file:
+            try:
+                done = subprocess.run([str(probe), str(text_path), str(probe_wav), "1.25"],
+                                      stdout=out_file, stderr=err_file, text=True, timeout=300)
+                probe_returncode = done.returncode
+            except subprocess.TimeoutExpired:
+                probe_returncode = None
+                err_file.write("timeout\n")
+        done = type("Probe", (), {"stdout": (logs / "11-probe.stdout.log").read_text(encoding="utf-8",
+                                                                                    errors="replace"),
+                                  "returncode": probe_returncode})()
         probe_record["exit"] = done.returncode
         try:
             summary = json.loads(done.stdout.strip().splitlines()[-1])

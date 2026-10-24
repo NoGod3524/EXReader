@@ -429,24 +429,25 @@ static void pump_status(reader_tts *handle, exr_tts_utterance *utterance) {
   if (!utterance->voice || !utterance->speaking) return;
   memset(&status, 0, sizeof status);
   hr = utterance->voice->lpVtbl->GetStatus(utterance->voice, &status, NULL);
-  if (FAILED(hr)) {
-    finish_request(handle, utterance, READER_TTS_FAILED, READER_TTS_IO);
-    return;
-  }
   if (!utterance->started) push_started(handle, utterance);
   if (!utterance->speaking) return;   /* the STARTED push may have ended the request */
-  if (status.ulCurrentStream != 0 && status.ulCurrentStream == status.ulLastStreamQueued) {
-    utterance->saw_stream = 1;
+  if (SUCCEEDED(hr)) {
+    if (status.ulCurrentStream != 0 && status.ulCurrentStream == status.ulLastStreamQueued) {
+      utterance->saw_stream = 1;
+    }
+    if (status.ulInputWordLen > 0 && status.ulInputWordPos != utterance->last_word) {
+      utterance->last_word = status.ulInputWordPos;
+      report_word(handle, utterance, status.ulInputWordPos, status.ulInputWordLen);
+      if (!utterance->speaking) return;
+    }
   }
-  if (status.ulInputWordLen > 0 && status.ulInputWordPos != utterance->last_word) {
-    utterance->last_word = status.ulInputWordPos;
-    report_word(handle, utterance, status.ulInputWordPos, status.ulInputWordLen);
-    if (!utterance->speaking) return;
-  }
-  if (status.dwRunningState & SPRS_DONE) {
+  /* WaitUntilDone(0) is the engine's own "the output for this utterance has been
+     completed" answer; dwRunningState alone can keep reporting "speaking" for a
+     stream output. */
+  if (utterance->voice->lpVtbl->WaitUntilDone(utterance->voice, 0) == S_OK) {
     DWORD elapsed = GetTickCount() - utterance->started_at;
     if (!utterance->saw_stream && elapsed < EXR_TTS_START_GRACE_MS) return;
-    if (FAILED(status.hrLastResult)) {
+    if (SUCCEEDED(hr) && FAILED(status.hrLastResult)) {
       finish_request(handle, utterance, READER_TTS_FAILED, READER_TTS_IO);
     } else {
       finish_request(handle, utterance, READER_TTS_FINISHED, READER_TTS_OK);
