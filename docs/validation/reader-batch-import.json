@@ -1,0 +1,115 @@
+{
+  "package": "EXReaderBatchImport",
+  "version": "0.1.0",
+  "fixed_start": "c3511a011eefbf1fba1d20908f000cef22b1ced2",
+  "sdk_freeze": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "abi": 1,
+  "status": "source-complete; cloud run pending",
+  "interfaces": {
+    "header": "reader_batch_import.h",
+    "cmake_target": "EXReaderBatchImport::reader_batch_import",
+    "phases": [
+      "enumerate",
+      "import"
+    ],
+    "threads_created": false,
+    "product_sql_written": false
+  },
+  "limits": {
+    "batch": {
+      "default": 32,
+      "maximum": 100
+    },
+    "depth": {
+      "default": 8,
+      "maximum": 16,
+      "recursive_required": true
+    },
+    "directories": {
+      "default": 4096,
+      "maximum": 10000
+    },
+    "candidates": {
+      "default": 4096,
+      "maximum": 10000
+    },
+    "path_bytes": {
+      "default": 4096,
+      "maximum": 32768
+    },
+    "pending_bytes": {
+      "default": 1048576,
+      "maximum": 8388608
+    }
+  },
+  "checks": [
+    {
+      "name": "installed C/C++ consumers on Windows/Linux/macOS",
+      "status": "pending"
+    },
+    {
+      "name": "nine real formats and azw3/MOBI",
+      "status": "pending"
+    },
+    {
+      "name": "Unicode/space and multi-level paths",
+      "status": "pending"
+    },
+    {
+      "name": "non-book, corrupt and directory-as-book rejected",
+      "status": "pending"
+    },
+    {
+      "name": "symlink/junction/root escape rejected",
+      "status": "pending"
+    },
+    {
+      "name": "post-enumeration modify/delete/link",
+      "status": "pending"
+    },
+    {
+      "name": "depth/directory/candidate/path/pending limits report truncated",
+      "status": "pending"
+    },
+    {
+      "name": "batch 1..100 and continuation",
+      "status": "pending"
+    },
+    {
+      "name": "cancellation preserves committed results and metadata",
+      "status": "pending"
+    },
+    {
+      "name": "exact duplicate reuses oldest book_id and created=0",
+      "status": "pending"
+    },
+    {
+      "name": "existing storage mode preserved",
+      "status": "pending"
+    },
+    {
+      "name": "public SDK readback matches source SHA-256",
+      "status": "pending"
+    },
+    {
+      "name": "no product SQL tables",
+      "status": "pending"
+    },
+    {
+      "name": "staging temp cleanup",
+      "status": "pending"
+    }
+  ],
+  "cloud": {
+    "run_id": null,
+    "run_attempt": null,
+    "artifacts": [],
+    "status": "pending"
+  },
+  "limitations": [
+    "System file picker and host product UI are out of scope.",
+    "Product catalog/revision/outbox mapping is performed by root after the SDK result callback.",
+    "Cancellation cannot interrupt the public PDF SDK call itself; a result committed by that call is returned."
+  ]
+}
