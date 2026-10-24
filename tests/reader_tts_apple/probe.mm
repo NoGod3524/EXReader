@@ -767,7 +767,8 @@ int rtts_probe_run(const char *output_path) {
             if (event.kind == READER_TTS_FINISHED) { stopped = true; how = "finished"; }
           }
         }
-        Expect("probe.stop-after-pause", stopped, "no terminal event after stop/pause exercise");
+        if (stopped) Pass("probe.stop-after-pause", std::string("terminal=") + how);
+        else Fail("probe.stop-after-pause", "no terminal event after the pause/resume exercise");
       }
     } else {
       Pending("probe.pause-resume", g_speech_note);
