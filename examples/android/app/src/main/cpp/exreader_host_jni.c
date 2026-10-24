@@ -3,6 +3,12 @@
    Only installed public headers are used; no engine internals. */
 #include <jni.h>
 #include <exreader.h>
+#ifdef READER_HOST_SYNC
+#include <exr_sideload.h>
+#endif
+#if defined(READER_HOST_SYNC) || defined(READER_HOST_SEARCH)
+#include <dlfcn.h>
+#endif
 
 #include <limits.h>
 #include <stdint.h>
@@ -185,6 +191,32 @@ static exr_library *library(JNIEnv *env, jlong handle) {
   return (exr_library *)(intptr_t)handle;
 }
 
+#ifdef READER_HOST_SYNC
+typedef struct {JNIEnv *env;jobject task;jmethodID check;} sync_export_control;
+static int sync_export_cancel(void *opaque) {
+  sync_export_control *control=opaque;
+  if((*control->env)->ExceptionCheck(control->env))return 1;
+  (*control->env)->CallVoidMethod(control->env,control->task,control->check);
+  return (*control->env)->ExceptionCheck(control->env)?1:0;
+}
+JNIEXPORT jlong JNICALL Java_org_exreader_host_NativeLibrary_nativeExportOriginal(
+    JNIEnv *env,jclass type,jlong handle,jlong book,jstring destination,jobject task) {
+  exr_library *store=library(env,handle);char *path=NULL;uint64_t bytes=0;
+  exr_sideload_options options={0};exr_error error={0};exr_status status;
+  sync_export_control control={env,task,NULL};jclass task_type;(void)type;
+  if(!store||!task)return 0;
+  path=input_string(env,destination);if(!path)return 0;
+  task_type=(*env)->GetObjectClass(env,task);if(!task_type){free(path);return 0;}
+  control.check=(*env)->GetMethodID(env,task_type,"check","()V");(*env)->DeleteLocalRef(env,task_type);
+  if(!control.check){free(path);return 0;}
+  options.struct_size=sizeof(options);options.control.cancelled=sync_export_cancel;options.control.context=&control;
+  status=exr_sideload_export_original(store,(int64_t)book,path,&options,&bytes,&error);free(path);
+  if((*env)->ExceptionCheck(env))return 0;
+  if(status!=EXR_OK){throw_status(env,status,&error,"Cannot stage original for sync");return 0;}
+  return (jlong)bytes;
+}
+#endif
+
 static jobjectArray new_rows(JNIEnv *env, jsize count) {
   jclass type = (*env)->FindClass(env, "[Ljava/lang/String;");
   jobjectArray rows;
@@ -233,6 +265,15 @@ JNIEXPORT jstring JNICALL Java_org_exreader_host_NativeLibrary_nativeIdentity(JN
   snprintf(buffer, sizeof(buffer), "%s/%u", exr_version(), exr_abi_version());
   return output_string(env, buffer);
 }
+#ifdef READER_HOST_SYNC
+JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeLibrary_syncIdentity(JNIEnv *env,jclass type) {
+  Dl_info library_info={0},source_info={0},export_info={0};jobjectArray row=new_row(env,4);(void)type;
+  if(!row)return NULL;
+  if(!dladdr((void *)exr_library_open,&library_info)||!dladdr((void *)exr_library_source,&source_info)||!dladdr((void *)exr_sideload_export_original,&export_info))return NULL;
+  if(!set_cell(env,row,0,exr_version())||!set_cell(env,row,1,library_info.dli_fname)||!set_cell(env,row,2,source_info.dli_fname)||!set_cell(env,row,3,export_info.dli_fname))return NULL;
+  return row;
+}
+#endif
 
 JNIEXPORT jlong JNICALL Java_org_exreader_host_NativeLibrary_nativeOpen(JNIEnv *env, jclass type, jstring path) {
   char *name = input_string(env, path);
@@ -808,3 +849,13 @@ JNIEXPORT void JNICALL Java_org_exreader_host_NativeLibrary_nativeDeleteBook(
   status = exr_library_delete(store, (int64_t)book_id, &error);
   if (status != EXR_OK) throw_status(env, status, &error, "Cannot remove the book");
 }
+
+#ifdef READER_HOST_SEARCH
+#include "search_jni.inc"
+#endif
+#ifdef READER_HOST_NAVIGATION
+#include "navigation_jni.inc"
+#endif
+#ifdef READER_HOST_READING
+#include "reading_sdk_jni.inc"
+#endif

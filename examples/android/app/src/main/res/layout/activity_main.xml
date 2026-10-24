@@ -59,6 +59,7 @@
             android:hint="Search title or author"
             android:contentDescription="Search title or author"
             android:singleLine="true"
+            android:minHeight="48dp"
             android:inputType="text"
             android:imeOptions="actionSearch" />
 
@@ -72,6 +73,7 @@
 
         <TextView
             android:id="@+id/status_text"
+            android:accessibilityLiveRegion="polite"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
@@ -138,6 +140,14 @@
                     android:layout_height="wrap_content"
                     android:text="Rebuild"
                     android:contentDescription="Rebuild activity" />
+
+                <Button
+                    android:id="@+id/reader_more"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="更多"
+                    android:contentDescription="阅读更多操作"
+                    android:visibility="gone" />
             </LinearLayout>
 
             <LinearLayout
@@ -223,6 +233,7 @@
 
         <TextView
             android:id="@+id/reader_status"
+            android:accessibilityLiveRegion="polite"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="24dp"

@@ -43,6 +43,17 @@ final class ReflowSession implements AutoCloseable {
     PageLoad seek(NativeLibrary.Note note,HostTask task) throws Exception {
         return bounded!=null?bounded.seek(note,task):seek(note.start,task);
     }
+    PageLoad seekSearch(NativeSearch.Hit hit,NativeSearch.Match match,HostTask task)throws Exception {
+        return bounded!=null?bounded.seekSearch(hit,task):seek(match.start,task);
+    }
+    PageLoad seekNavigation(NativeNavigation.Destination destination,HostTask task)throws Exception {
+        return bounded!=null?bounded.seekNavigation(destination,task):seek(destination.result.offset,task);
+    }
+    PageLoad seekReading(NativeReadingSdk.Match match,HostTask task)throws Exception {
+        if(!match.found())throw new IllegalArgumentException("Reading location is not FOUND");
+        if(bounded==null&&match.recaptured.mode!=ReadingCapture.REFLOW)throw new NativeReadingSdk.Projection();
+        return bounded!=null?bounded.seekReading(match,task):seek(match.recaptured.start,task);
+    }
     void saveProgress(PageSnapshot page) { bounded.saveProgress(page); }
     void saveBoundedNote(long id,long start,long end,String text) { bounded.saveNote(id,start,end,text); }
     void refreshSource() { if(bounded!=null) bounded.refresh(); }

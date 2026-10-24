@@ -1,0 +1,573 @@
+{
+  "accepted": true,
+  "scope": "Android API34 default x86_64 SDK originals, isolated native product session and eighteen real SDK captures over native TLS DAV; read-only public resolve",
+  "source_sha": "4b09e4375f95111ef8a0b835cc1c5cc946c6f6fd",
+  "run_id": 40081333678,
+  "attempt": 1,
+  "job_id": 120835348896,
+  "conclusion": "success",
+  "artifact": {
+    "id": 12555611930,
+    "bytes": 47082966,
+    "sha256": "b87c9db722083ef7eab42ce53bf98f06cff755f0d29def8fc32d12b4342d9602",
+    "expires_at": "2027-01-22T09:16:59Z"
+  },
+  "all_execution_on_actions": true,
+  "roundtrip_checks": 12,
+  "reading_roundtrip": {
+    "name": "eighteen_public_sdk_captures_cross_real_tls_dav_with_exact_v2_codec_and_reopen",
+    "passed": true,
+    "sent": {
+      "code": 0,
+      "alive": true,
+      "state": 4,
+      "status": 0,
+      "attempt": 1,
+      "sweeps": 1,
+      "steps": 256,
+      "shard": 255,
+      "completed_shards": 256,
+      "pushed": 26,
+      "pulled": 26,
+      "originals_verified": 52,
+      "dav_code": 0,
+      "revision_code": 0,
+      "http_status": 0,
+      "full_library_complete": 0,
+      "ok": true,
+      "pid": 2535
+    },
+    "received": {
+      "code": 0,
+      "alive": true,
+      "state": 4,
+      "status": 0,
+      "attempt": 1,
+      "sweeps": 1,
+      "steps": 256,
+      "shard": 255,
+      "completed_shards": 256,
+      "pushed": 0,
+      "pulled": 26,
+      "originals_verified": 18,
+      "dav_code": 0,
+      "revision_code": 0,
+      "http_status": 0,
+      "full_library_complete": 0,
+      "ok": true,
+      "pid": 2535
+    },
+    "resolved": {
+      "cases": [
+        {
+          "id": "txt-progress-start",
+          "mode": 1,
+          "sdk_status": 0,
+          "state": 1,
+          "start": 0,
+          "end": 0,
+          "expected_start": 0,
+          "expected_end": 0,
+          "wire_sha256": "8c5031f150ba67b6cb3cd48709820ec421424d1909b1abe81ad87ff1d8578e16",
+          "safe_selected": false
+        },
+        {
+          "id": "txt-progress-multibyte",
+          "mode": 1,
+          "sdk_status": 0,
+          "state": 1,
+          "start": 48,
+          "end": 48,
+          "expected_start": 48,
+          "expected_end": 48,
+          "wire_sha256": "65660253c26059d99afbfd8988c0c50aa08f059d29231c62ed724ea867f8fd93",
+          "safe_selected": false
+        },
+        {
+          "id": "txt-progress-end",
+          "mode": 1,
+          "sdk_status": 0,
+          "state": 1,
+          "start": 636,
+          "end": 636,
+          "expected_start": 636,
+          "expected_end": 636,
+          "wire_sha256": "773961fab038e6a2e52ae24c8753276e89b972cff9a678393cef37be79368b6a",
+          "safe_selected": true
+        },
+        {
+          "id": "txt-bookmark",
+          "mode": 1,
+          "sdk_status": 0,
+          "state": 1,
+          "start": 118,
+          "end": 118,
+          "expected_start": 118,
+          "expected_end": 118,
+          "wire_sha256": "a7dec9a7f6417c65361e60856545f441a6210988ade898defaa61717ff738048",
+          "safe_selected": true
+        },
+        {
+          "id": "txt-highlight",
+          "mode": 1,
+          "sdk_status": 0,
+          "state": 1,
+          "start": 48,
+          "end": 52,
+          "expected_start": 48,
+          "expected_end": 52,
+          "wire_sha256": "6c744b1d03cf5f763c4def6a9da7ea36a45c51b56504ac97fe58aaf7d031976a",
+          "safe_selected": true
+        },
+        {
+          "id": "txt-ambiguous",
+          "mode": 1,
+          "sdk_status": 0,
+          "state": 2,
+          "start": -1,
+          "end": -1,
+          "expected_start": 482,
+          "expected_end": 498,
+          "wire_sha256": "5e8446b13b8ffcf26f959df7f88a948bb0751c5095088850dd0de157c039e4f6",
+          "safe_selected": true
+        },
+        {
+          "id": "epub-global-highlight",
+          "mode": 1,
+          "sdk_status": 0,
+          "state": 1,
+          "start": 172,
+          "end": 196,
+          "expected_start": 172,
+          "expected_end": 196,
+          "wire_sha256": "2537eaa1f6cba915e8fc682cf918650897517013a854e632b8b9e5ef9dedd3d7",
+          "safe_selected": true
+        },
+        {
+          "id": "epub-global-progress",
+          "mode": 1,
+          "sdk_status": 0,
+          "state": 1,
+          "start": 172,
+          "end": 172,
+          "expected_start": 172,
+          "expected_end": 172,
+          "wire_sha256": "296e04ab1c3e63669f41e73d45805fc62c161bfdea74df9bed7aee5c3f99899c",
+          "safe_selected": false
+        },
+        {
+          "id": "epub-bookmark-part-0",
+          "mode": 2,
+          "sdk_status": 0,
+          "state": 1,
+          "start": 0,
+          "end": 0,
+          "expected_start": 0,
+          "expected_end": 0,
+          "wire_sha256": "61eb152643b7a575790c7fa22927181df22d81966ae54a2157cf3d10d9ca96c1",
+          "safe_selected": true
+        },
+        {
+          "id": "epub-bookmark-part-1",
+          "mode": 2,
+          "sdk_status": 0,
+          "state": 1,
+          "start": 0,
+          "end": 0,
+          "expected_start": 0,
+          "expected_end": 0,
+          "wire_sha256": "60158e26fba02559e767a092ff47d35838078ccff8c79ad4aadd82af89707022",
+          "safe_selected": true
+        },
+        {
+          "id": "epub-chapter-progress",
+          "mode": 2,
+          "sdk_status": 0,
+          "state": 1,
+          "start": 0,
+          "end": 0,
+          "expected_start": 0,
+          "expected_end": 0,
+          "wire_sha256": "933fbc6f4a6aaa58c34bcfc4acad85cba52dee941228d59d29d0be293ada7425",
+          "safe_selected": true
+        },
+        {
+          "id": "epub-bookmark-part-2",
+          "mode": 2,
+          "sdk_status": 0,
+          "state": 1,
+          "start": 0,
+          "end": 0,
+          "expected_start": 0,
+          "expected_end": 0,
+          "wire_sha256": "721b436898df0b50766f86652e501099a06339c13ac9b32bceb7eeab7a76b5a1",
+          "safe_selected": true
+        },
+        {
+          "id": "pdf-highlight",
+          "mode": 3,
+          "sdk_status": 0,
+          "state": 1,
+          "start": 16,
+          "end": 42,
+          "expected_start": 16,
+          "expected_end": 42,
+          "wire_sha256": "6a39b6ca499716ab545c90e2387255a9028493a8cd743aab622ce2f170b586b7",
+          "safe_selected": true
+        },
+        {
+          "id": "pdf-bookmark",
+          "mode": 3,
+          "sdk_status": 0,
+          "state": 1,
+          "start": 16,
+          "end": 16,
+          "expected_start": 16,
+          "expected_end": 16,
+          "wire_sha256": "c17bd542c71027fa94dfb865713f2fe5360f11585b13e5be9745b8e20cb4a31a",
+          "safe_selected": true
+        },
+        {
+          "id": "pdf-textless-bookmark",
+          "mode": 3,
+          "sdk_status": 0,
+          "state": 1,
+          "start": 0,
+          "end": 0,
+          "expected_start": 0,
+          "expected_end": 0,
+          "wire_sha256": "de25d0f1db578a05a00b457a649ef7c76653600469d58c659672d1604c60de0e",
+          "safe_selected": true
+        },
+        {
+          "id": "pdf-progress",
+          "mode": 3,
+          "sdk_status": 0,
+          "state": 1,
+          "start": 0,
+          "end": 0,
+          "expected_start": 0,
+          "expected_end": 0,
+          "wire_sha256": "a77276c2b0995c7b4a10b068266139999c4d21776a774246b86fca01aa4c9b83",
+          "safe_selected": true
+        },
+        {
+          "id": "cbz-bookmark",
+          "mode": 3,
+          "sdk_status": 0,
+          "state": 1,
+          "start": 0,
+          "end": 0,
+          "expected_start": 0,
+          "expected_end": 0,
+          "wire_sha256": "ff883a6b660a9402aa0d5e9623873174bd957a96a6839be8aaf7e23a3bb03da6",
+          "safe_selected": true
+        },
+        {
+          "id": "cbz-progress",
+          "mode": 3,
+          "sdk_status": 0,
+          "state": 1,
+          "start": 0,
+          "end": 0,
+          "expected_start": 0,
+          "expected_end": 0,
+          "wire_sha256": "ca0770ce4f6d70a0b6ce583a107707734c2fbe9e29d7834c4b68f35a6ad6ce4d",
+          "safe_selected": true
+        }
+      ],
+      "audit": [
+        0,
+        636,
+        636,
+        0,
+        0,
+        0,
+        0
+      ],
+      "books": [
+        {
+          "role": "txt",
+          "format": "txt",
+          "sha": "fcc117171436330ec0a2fa7ba24437593d77b30e96ba25cb2b9d8649ed0ac604",
+          "bytes": 636,
+          "key": "txt:fcc117171436330ec0a2fa7ba24437593d77b30e96ba25cb2b9d8649ed0ac604",
+          "sdk_id": 2,
+          "path": "/data/user/0/org.exreader.sessionprobe/files/ReadingB/cache/fcc117171436330ec0a2fa7ba24437593d77b30e96ba25cb2b9d8649ed0ac604.txt",
+          "location": "reflow_global"
+        },
+        {
+          "role": "epub",
+          "format": "epub",
+          "sha": "99a21d3a73924d5b2efe4596076348b1eb7b00715ebc727737edd91f2f3bf50b",
+          "bytes": 1913,
+          "key": "epub:99a21d3a73924d5b2efe4596076348b1eb7b00715ebc727737edd91f2f3bf50b",
+          "sdk_id": 3,
+          "path": "/data/user/0/org.exreader.sessionprobe/files/ReadingB/cache/99a21d3a73924d5b2efe4596076348b1eb7b00715ebc727737edd91f2f3bf50b.epub",
+          "location": "epub_chapter"
+        },
+        {
+          "role": "pdf",
+          "format": "pdf",
+          "sha": "23f9dff3bc6bd85a19a9e24c6cb0390e17d7907af8c6b98c55273295386431ed",
+          "bytes": 1560,
+          "key": "pdf:23f9dff3bc6bd85a19a9e24c6cb0390e17d7907af8c6b98c55273295386431ed",
+          "sdk_id": 4,
+          "path": "/data/user/0/org.exreader.sessionprobe/files/ReadingB/cache/23f9dff3bc6bd85a19a9e24c6cb0390e17d7907af8c6b98c55273295386431ed.pdf",
+          "location": "fixed_page"
+        },
+        {
+          "role": "cbz",
+          "format": "cbz",
+          "sha": "1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3",
+          "bytes": 43936,
+          "key": "cbz:1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3",
+          "sdk_id": 5,
+          "path": "/data/user/0/org.exreader.sessionprobe/files/ReadingB/cache/1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3.cbz",
+          "location": "fixed_page"
+        }
+      ],
+      "ok": true,
+      "pid": 2535
+    },
+    "reopened_pid": 5150,
+    "schemas": {
+      "ReadingA": {
+        "sdk_version": 7,
+        "product_version": 1,
+        "sdk_tables": [
+          "audio_marks",
+          "audio_resume",
+          "book_progress",
+          "books",
+          "epub_bounded_books",
+          "epub_notes",
+          "epub_progress",
+          "fixed_notes",
+          "notes"
+        ],
+        "product_tables": [
+          "reader_book_series",
+          "reader_book_shelves",
+          "reader_book_tags",
+          "reader_books",
+          "reader_local_books",
+          "reader_outbox",
+          "reader_revisions",
+          "reader_series",
+          "reader_shelves",
+          "reader_tags"
+        ]
+      },
+      "ReadingB": {
+        "sdk_version": 7,
+        "product_version": 1,
+        "sdk_tables": [
+          "audio_marks",
+          "audio_resume",
+          "book_progress",
+          "books",
+          "epub_bounded_books",
+          "epub_notes",
+          "epub_progress",
+          "fixed_notes",
+          "notes"
+        ],
+        "product_tables": [
+          "reader_book_series",
+          "reader_book_shelves",
+          "reader_book_tags",
+          "reader_books",
+          "reader_local_books",
+          "reader_outbox",
+          "reader_revisions",
+          "reader_series",
+          "reader_shelves",
+          "reader_tags"
+        ]
+      }
+    },
+    "stats": {
+      "clients": 0,
+      "uploads": 0,
+      "attaches": 2194,
+      "detaches": 2194,
+      "ok": true,
+      "pid": 2535
+    },
+    "originals": 4,
+    "receiver_found": 17,
+    "receiver_ambiguous": 1,
+    "sdk_note_copies": 0,
+    "active_progress_untouched": true
+  },
+  "public_sdk_export": {
+    "source_sha": "4b09e4375f95111ef8a0b835cc1c5cc946c6f6fd",
+    "run_id": "40081333678",
+    "attempt": "1",
+    "api": 34,
+    "abi": "x86_64",
+    "sdk_owner": "pool-2-thread-1",
+    "sha256": "8816f31ba2861e2a7ad907085905efdea5b458d26ed6fe4929ae21467ba1fa97",
+    "checks": [
+      {
+        "name": "fresh",
+        "ok": true,
+        "status": 0,
+        "expected": 0,
+        "bytes": 1048576,
+        "message": ""
+      },
+      {
+        "name": "existing",
+        "ok": true,
+        "status": 3,
+        "expected": 3,
+        "bytes": 0,
+        "message": "Original export destination exists or publication failed"
+      },
+      {
+        "name": "cancel-before",
+        "ok": true,
+        "status": 9,
+        "expected": 9,
+        "bytes": 0,
+        "message": "Original export cancelled before publication"
+      },
+      {
+        "name": "cancel-stream",
+        "ok": true,
+        "status": 9,
+        "expected": 9,
+        "bytes": 0,
+        "message": "Original export cancelled before publication"
+      },
+      {
+        "name": "limit",
+        "ok": true,
+        "status": 6,
+        "expected": 6,
+        "bytes": 0,
+        "message": "Original export exceeds its byte limit"
+      },
+      {
+        "name": "release-reopen-success",
+        "ok": true,
+        "import_status": 0,
+        "anchor_state": 1,
+        "anchor_start": 8,
+        "continued": true,
+        "old_source_readable": true
+      },
+      {
+        "name": "release-reopen-failure",
+        "ok": true,
+        "import_status": 5,
+        "anchor_state": 1,
+        "anchor_start": 8,
+        "continued": true,
+        "old_source_readable": true
+      },
+      {
+        "name": "release-reopen-cancel",
+        "ok": true,
+        "import_status": 9,
+        "anchor_state": 1,
+        "anchor_start": 8,
+        "continued": true,
+        "old_source_readable": true
+      }
+    ],
+    "ok": true
+  },
+  "native_link_audit": {
+    "source_sha": "4b09e4375f95111ef8a0b835cc1c5cc946c6f6fd",
+    "run_id": "40081333678",
+    "attempt": "1",
+    "checks": [
+      {
+        "module": "tests/reader_session_android/android/session",
+        "variant": "Debug",
+        "build_id": "00fe4dd544c16f58e240b4d27a314b7cdb97e3b6",
+        "packaged_sha256": "34d2b7dc5ba3c1539f5ff40dedf74250c743c4c25687224b725340c592b723ec",
+        "installed_private_provider_unique": true
+      },
+      {
+        "module": "tests/reader_session_android/android/session",
+        "variant": "Release",
+        "build_id": "64b9157aefe3b90a257fc43eb2ed373961b96c6e",
+        "packaged_sha256": "ca827387243ab1624c82f5ebe27b71a629225f72d652183e1f6d137cf1dae56c",
+        "installed_private_provider_unique": true
+      },
+      {
+        "module": "examples/android/app",
+        "variant": "Debug",
+        "build_id": "3f9e4953b3d52df8f0688fc474c5a8124d4b2171",
+        "packaged_sha256": "f0f1df707b5570db547dd414d1982deea752ba4cadfe72ffb2e763b4a8aa00b8",
+        "installed_private_provider_unique": true
+      },
+      {
+        "module": "examples/android/app",
+        "variant": "Release",
+        "build_id": "5261254bd75a27cc00b404621912034eef5e2bd8",
+        "packaged_sha256": "cf71d5201d8e540c3c5f287275d5a213141d086d215c17a29777f1873ae444ed",
+        "installed_private_provider_unique": true
+      }
+    ],
+    "accepted": true
+  },
+  "android_backend": {
+    "source_sha": "4b09e4375f95111ef8a0b835cc1c5cc946c6f6fd",
+    "run_id": "40081333678",
+    "attempt": "1",
+    "accepted": true,
+    "api": 34,
+    "abi": "x86_64",
+    "backend_cases": 91,
+    "restart_cases": 4,
+    "process_killed_after_server_commit": true,
+    "force_stop_pid": "5421",
+    "immutable_payload_sha256": "61d1d9c5745bdaa4fab39240651bc242a5186b15393fd475082fcf6e84f400ab",
+    "authorization_sha256": "988ca52cfa6e1dff93a27bb681d91a34712832ce2d8299820640d5017014a94b",
+    "foreign_requests": 0,
+    "secret_scan": true,
+    "android_sync_ui_complete": false
+  },
+  "same_source_codec_regression": {
+    "run_id": 40081333621,
+    "attempt": 1,
+    "conclusion": "success",
+    "windows_job": 120835348648,
+    "linux_job": 120835348883,
+    "legacy_checks_each": 121,
+    "v2_checks_each": 116,
+    "v2_capture_cases_each": 18,
+    "artifacts": [
+      {
+        "id": 12555407068,
+        "name": "reading-codec-Windows-40081333621-1",
+        "bytes": 11795010,
+        "sha256": "46cf84bdb02216f1fd471c06b4cc7ce6f3e1a24117cf734d5d6d4170551bb167",
+        "expires_at": "2027-01-22T09:16:59Z"
+      },
+      {
+        "id": 12555197709,
+        "name": "reading-codec-Linux-40081333621-1",
+        "bytes": 12328003,
+        "sha256": "3d66cc19f2dead4994c7d93f0a887ed6c32588d512a61c7fd175575d97b42f6c",
+        "expires_at": "2027-01-22T09:16:59Z"
+      }
+    ]
+  },
+  "frozen_sdk_sha": "9854061be331fe603a1822d9b2b36ee357154927",
+  "product_schema": 1,
+  "host_account_ui_accepted": false,
+  "reading_annotation_ui_accepted": false,
+  "six_platform_accepted": false,
+  "physical_device": false,
+  "retained_failed_run": {
+    "run_id": 40080981674,
+    "source_sha": "ec2aa6e59d660b8d69fdfc89146cf1dbcd192e6a",
+    "reason": "SDK owner linked library/sideload only; public publication/pager functions require installed core target. No assertion changed."
+  }
+}

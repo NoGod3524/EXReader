@@ -6,6 +6,7 @@ import android.os.CancellationSignal;
 import android.util.Log;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -14,6 +15,8 @@ import java.util.List;
 
 /** Worker-thread facade over the SDK library; no call is made from the UI thread. */
 final class BookStore implements AutoCloseable {
+    private final Thread sdkOwner=Thread.currentThread();
+    void searchOwner(){if(Thread.currentThread()!=sdkOwner)throw new IllegalStateException("Search requires the existing SDK owner");}
     private final NativeLibrary library;
     private final CatalogStore catalog;
     private boolean metadataRepairPending;
@@ -113,6 +116,29 @@ final class BookStore implements AutoCloseable {
 
     NativeCatalog.Result bootstrapBook(long id,String revision,String[] expected,HostTask task) throws IOException {
         return catalog.bootstrap(verifySource(id,null,0,task),revision,expected);
+    }
+
+    /** Finish every SDK source borrow before the network session can start. */
+    void stageSyncOriginals(File directory,android.content.SharedPreferences pending,HostTask task)throws IOException {
+        if(!directory.isDirectory()&&!directory.mkdirs())throw new IOException("同步目录创建失败");
+        for(NativeLibrary.Book book:library.books()){
+            task.check();VerifiedSource verified=verifySource(book,null,0,task);
+            String[] selection=NativeCatalog.selection(catalog.nativeOwner(),"book",verified.key);
+            if("0".equals(selection[0])){
+                String request="book-"+verified.key;String[] ids=NativeCatalog.prepareCreate(pending,request);
+                NativeCatalog.Result committed=catalog.bootstrap(verified,ids[0],new String[0]);
+                if(committed.status!=NativeCatalog.Result.OK)throw new IOException("书籍信息尚不能同步");
+            }
+            File staged=new File(directory,verified.sha256+"."+verified.format);
+            if(staged.exists()){
+                if(staged.length()!=verified.bytes||!verified.sha256.equals(syncFileHash(staged,task)))throw new IOException("同步原件校验失败");
+            }else if(library.exportOriginal(book.id,staged.getAbsolutePath(),task)!=verified.bytes)throw new IOException("同步原件导出不完整");
+        }
+    }
+    static String syncFileHash(File file,HostTask task)throws IOException {
+        MessageDigest digest;try{digest=MessageDigest.getInstance("SHA-256");}catch(NoSuchAlgorithmException error){throw new AssertionError(error);}
+        byte[] bytes=new byte[65536];try(FileInputStream input=new FileInputStream(file)){int count;while((count=input.read(bytes))!=-1){task.check();digest.update(bytes,0,count);}}
+        StringBuilder result=new StringBuilder();for(byte value:digest.digest())result.append(String.format(java.util.Locale.ROOT,"%02x",value&255));return result.toString();
     }
 
     /** SDK is authoritative for bytes; retry only IDs absent from the local mapping. */
