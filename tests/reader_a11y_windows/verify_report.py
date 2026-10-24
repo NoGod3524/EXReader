@@ -93,7 +93,9 @@ def check_tree_names(output, problems):
                 problems.append("%s: control id %d (%s) is missing from the UIA tree"
                                 % (name, identifier, expected))
         classes = {(node.get("class_name") or "") for node in nodes}
-        for expected in ("ListBox", "Edit"):
+        expected_classes = ("Edit", "Button") if name == "t03-details-dialog" \
+            else ("ListBox", "Edit")
+        for expected in expected_classes:
             if expected not in classes:
                 problems.append("%s: no %s element in the UIA tree" % (name, expected))
     return summary
