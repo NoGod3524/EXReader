@@ -84,6 +84,15 @@ jobs:
           cmake -S extras/sideload -B build/account-sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
           cmake --build build/account-sideload --parallel 4
           cmake --install build/account-sideload
+      - name: Build the installed reading-state adapter and the account capture consumer
+        run: |
+          cmake -S apps/reader/reading-state -B build/account-reading-state -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX" 2>&1 | tee build/account-logs/reading-state-configure.log
+          cmake --build build/account-reading-state --parallel 4 2>&1 | tee build/account-logs/reading-state-build.log
+          cmake --install build/account-reading-state 2>&1 | tee build/account-logs/reading-state-install.log
+          cmake -S tests/reader_windows_account/consumer -B build/account-capture -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$WS/build/reading-library/stage" 2>&1 | tee build/account-logs/capture-configure.log
+          cmake --build build/account-capture --parallel 4 2>&1 | tee build/account-logs/capture-build.log
+          test -f build/account-capture/reading-capture-probe.exe
+          test -f build/account-capture/reading-capture-link.map
       - name: Build the actual Win32 host with account integration from examples/reader.c
         run: |
           cmake -S apps/reader/windows-account -B build/account-host -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DREADER_METADATA_PREFIX="$ACCOUNT_PREFIX" -DREADER_ACCOUNT_PREFIX="$ACCOUNT_PREFIX" 2>&1 | tee build/account-logs/host-configure.log
@@ -95,6 +104,8 @@ jobs:
         run: |
           python3 tools/build_windows_host.py --sdk build/reading-library/stage --binary build/account-host/EXReaderProduct.exe --output build/account-package --static-reading
           python3 tests/windows_host/make_fixtures.py --output build/account-fixtures
+          python3 tests/reader_reading_state/make_fixtures.py build/account-reading-fixtures
+          test -f build/account-reading-fixtures/manifest.json
       - name: Original evidence rejection cases plus static SDK provider refusals
         if: ${{ github.event.inputs.account_only != 'true' }}
         run: python3 tests/windows_host/check_evidence.py --package build/account-package/EXReader --sdk build/reading-library/stage --manifest build/account-package/build.json --fixtures build/account-fixtures --selftest-report build/account-package/report.json --consumer-binary build/account-host/EXReaderProduct.exe --static-link-map build/account-host/windows-host.map --output build/account-negative
@@ -116,7 +127,7 @@ jobs:
         if: ${{ github.event.inputs.account_only != 'true' }}
         run: python3 tests/windows_host/check_metadata_ui.py --candidate build/account-package/EXReader/EXReader.exe --package build/account-package/EXReader --command-consumer build/account-command-consumer/command-consumer.exe --output build/account-metadata-ui
       - name: Real Win32 account controls, native HTTPS, two devices, retry, isolation and close barriers
-        run: python3 tests/reader_windows_account/check_account_ui.py --candidate build/account-package/EXReader/EXReader.exe --package build/account-package/EXReader --fixtures build/account-fixtures --revision-consumer build/account-revision-consumer/revision-consumer.exe --link-map build/account-host/windows-host.map --output build/account-ui
+        run: python3 tests/reader_windows_account/check_account_ui.py --candidate build/account-package/EXReader/EXReader.exe --package build/account-package/EXReader --fixtures build/account-fixtures --revision-consumer build/account-revision-consumer/revision-consumer.exe --capture-probe build/account-capture/reading-capture-probe.exe --reading-fixtures build/account-reading-fixtures --reading-font tests/fixtures/fonts/primary.ttf --link-map build/account-host/windows-host.map --output build/account-ui
       - name: Preserve source-bound evidence, packaged EXE and link graph
         id: upload
         if: always()
@@ -126,6 +137,9 @@ jobs:
           path: |
             build/account-logs/
             build/account-host/windows-host.map
+            build/account-capture/reading-capture-probe.exe
+            build/account-capture/reading-capture-link.map
+            build/account-reading-fixtures/
             build/account-host/CMakeCache.txt
             build/account-package/
             build/account-negative/
@@ -160,7 +174,7 @@ jobs:
         run: |
           test "$ACCOUNT_RESULT" = success
           test -n "$ARTIFACT_ID"
-          python3 tests/reader_windows_account/verify_summary.py --artifact-id "$ARTIFACT_ID" --upload-digest "$ARTIFACT_DIGEST" --account-checks 25 --output build/account-summary
+          python3 tests/reader_windows_account/verify_summary.py --artifact-id "$ARTIFACT_ID" --upload-digest "$ARTIFACT_DIGEST" --account-checks 32 --output build/account-summary
       - name: Preserve strict summary
         if: always()
         uses: actions/upload-artifact@v4

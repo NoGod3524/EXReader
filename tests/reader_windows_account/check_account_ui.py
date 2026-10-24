@@ -14,6 +14,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import secrets
 import shutil
 import sqlite3
@@ -287,6 +288,9 @@ def main():
     parser = argparse.ArgumentParser()
     for name in ('candidate', 'package', 'fixtures', 'revision-consumer', 'link-map', 'output'):
         parser.add_argument('--' + name, type=Path, required=True)
+    parser.add_argument('--capture-probe', type=Path, required=True)
+    parser.add_argument('--reading-fixtures', type=Path, required=True)
+    parser.add_argument('--reading-font', type=Path, required=True)
     args = parser.parse_args()
     assert os.name == 'nt' and os.environ.get('GITHUB_ACTIONS') == 'true'
     sys.stdout.reconfigure(encoding='utf-8', errors='backslashreplace')
@@ -423,12 +427,35 @@ def main():
                               capture_output=True, text=True, encoding='utf-8', timeout=60)
         assert done.returncode == 0 and json.loads(done.stdout)['status'] == 0, (done.stdout, done.stderr)
 
+    def consume(*arguments, timeout=180):
+        """One installed native consumer call; its last stdout line is the JSON verdict."""
+        done = subprocess.run([str(a) for a in arguments], capture_output=True, text=True, encoding='utf-8', timeout=timeout)
+        assert done.returncode == 0, (arguments[:2], done.stdout[-4000:], done.stderr[-4000:])
+        return json.loads(done.stdout.strip().splitlines()[-1])
+
+    def revision_heads(name, kind, key):
+        return consume(args.revision_consumer.resolve(), 'heads', product_db(name), kind, key)['heads']
+
+    def receive_record(name, value):
+        """Stores exact remote bytes in this product store; independent of any UI path."""
+        wire = output / ('remote-' + value['id'] + '.json')
+        wire.write_bytes(encode(value))
+        done = consume(args.revision_consumer.resolve(), 'receive', product_db(name), wire,
+                      hashlib.sha256(wire.read_bytes()).hexdigest())
+        assert done['status'] == 0 and done['created'] == 1, done
+        return done
+
+    def reading_files(name):
+        profile = output / name
+        return {'sdk': profile / 'library.sqlite', 'product': profile / 'library.sqlite.product.sqlite',
+                'scratch': profile / 'reading-global.sqlite'}
+
     def kill(device):
         device.process.kill();device.process.wait(timeout=20);device.log.close()
 
-    def import_books(device, names):
-        for name in names:
-            set_text(device.control('path'), str(source / name))
+    def import_paths(device, paths):
+        for path in paths:
+            set_text(device.control('path'), str(path))
             seen = [device.status()]
             send(device.control('import'), BM_CLICK, timeout=5000)
             end = time.monotonic() + 180
@@ -439,10 +466,13 @@ def main():
                 if '已导入' in status or '去重' in status or '失败' in status:
                     break
                 time.sleep(.05)
-            print(json.dumps({'import': name, 'statuses': seen}, ensure_ascii=False), flush=True)
-            assert '已导入' in seen[-1] or '去重' in seen[-1], (name, seen)
+            print(json.dumps({'import': Path(path).name, 'statuses': seen}, ensure_ascii=False), flush=True)
+            assert '已导入' in seen[-1] or '去重' in seen[-1], (path, seen)
             device.wait_idle()
             device.wait(lambda: not device.status().endswith('书架信息待恢复'), timeout=60)
+
+    def import_books(device, names):
+        import_paths(device, [source / name for name in names])
 
     A = B = None
     try:
@@ -556,7 +586,10 @@ def main():
         for value in (progress1, note):
             row = sql('device-b', 'SELECT body_json FROM reader_revisions WHERE revision_id=?', (value['id'],))
             assert row and json.loads(row[0][0]) == value, value['id']
-        record('real_reading_progress_and_annotation_captures_round_trip_to_the_second_device_byte_exactly')
+        # The original name of this line claimed real SDK captures. What it actually
+        # proves is unchanged and still required: hand-authored reading wire crosses the
+        # real hosts byte exactly. Real SDK captures are the reading-capture section below.
+        record('hand_authored_reading_wire_round_trips_to_the_second_device_byte_exactly')
         A.close();assert A.process.returncode == 0
         progress2 = revision(2, 0x32, 'progress', small_key, 'reflow_global', {'book_key': small_key, 'location': location},
                              parents=[progress1['id']])
@@ -711,6 +744,201 @@ def main():
         leak_scan_everything()
         record('no_plaintext_credential_survives_any_product_shutdown')
 
+        # ===== real SDK reading captures: installed consumer -> host A -> HTTPS -> host B -> public resolve =====
+        dav.directories.add('/reading/');reading_root = dav.base + '/reading/'
+        manifest = json.loads((args.reading_fixtures / 'manifest.json').read_text(encoding='utf-8'))
+        roles = {'txt': 'book.txt', 'epub': 'book.epub', 'pdf': 'pages.pdf', 'cbz': 'pages.cbz'}
+        for role, filename in roles.items():
+            origin = (args.reading_fixtures / filename).resolve()
+            data = origin.read_bytes()
+            assert origin.name == manifest[role]['file'] and len(data) == manifest[role]['bytes']
+            assert hashlib.sha256(data).hexdigest() == manifest[role]['sha256'], role
+        reading_keys = {'%s' % role: '%s:%s' % (role, manifest[role]['sha256']) for role in roles}
+        cases = [('txt', 'progress', 'txt-progress-start'), ('txt', 'progress', 'txt-progress-multibyte'),
+                 ('txt', 'progress', 'txt-progress-end'), ('txt', 'annotation', 'txt-bookmark'),
+                 ('txt', 'annotation', 'txt-highlight'), ('txt', 'annotation', 'txt-ambiguous'),
+                 ('epub', 'annotation', 'epub-global-highlight'), ('epub', 'progress', 'epub-global-progress'),
+                 ('epub', 'annotation', 'epub-bookmark-part-0'), ('epub', 'annotation', 'epub-bookmark-part-1'),
+                 ('epub', 'progress', 'epub-chapter-progress'), ('epub', 'annotation', 'epub-bookmark-part-2'),
+                 ('pdf', 'annotation', 'pdf-highlight'), ('pdf', 'annotation', 'pdf-bookmark'),
+                 ('pdf', 'annotation', 'pdf-textless-bookmark'), ('pdf', 'progress', 'pdf-progress'),
+                 ('cbz', 'annotation', 'cbz-bookmark'), ('cbz', 'progress', 'cbz-progress')]
+        identity = consume(args.capture_probe.resolve(), 'identity')
+        print(json.dumps({'capture_probe': identity}, ensure_ascii=False), flush=True)
+        RA = new_device('device-reading-a')
+        import_paths(RA, [(args.reading_fixtures / roles[role]).resolve() for role in ('txt', 'epub', 'pdf', 'cbz')])
+        RA.wait(lambda: len(sql('device-reading-a', 'SELECT book_key FROM reader_books')) == 4, timeout=120)
+        dialog = RA.open_account()
+        RA.fill(dialog, reading_root, user, password, False);RA.apply(dialog, '仅本次会话')
+        RA.run_sync(dialog);RA.close_account(dialog)
+        RA.close();assert RA.process.returncode == 0
+        # the host is closed: the installed consumer captures on the host's own library and store
+        files = reading_files('device-reading-a')
+        captured = {}
+        for role, kind, case in cases:
+            wire = output / ('reading-' + case + '.json')
+            value = consume(args.capture_probe.resolve(), 'capture', files['sdk'], files['product'], args.reading_font,
+                            files['scratch'], reading_keys[role], kind, case, wire)
+            assert value['case'] == case and value['kind'] == kind and value['anchor_version'] == 2, value
+            assert value['entity_key'].startswith(reading_keys[role]), value
+            assert wire.stat().st_size == value['wire_bytes'], case
+            committed = consume(args.revision_consumer.resolve(), 'reading-local', files['product'], wire,
+                                ','.join(value['parents']) or '-', '-')
+            assert committed['status'] == 0 and committed['created'] == 1, (case, committed)
+            value['wire_sha256'] = hashlib.sha256(wire.read_bytes()).hexdigest()
+            captured[case] = value
+        print(json.dumps({'captures': [{'case': c, 'revision_id': v['revision_id'], 'mode': v['mode'],
+                                        'wire_bytes': v['wire_bytes'], 'sha256': v['wire_sha256']}
+                                       for c, v in sorted(captured.items())]}, ensure_ascii=False), flush=True)
+        record('installed_native_consumer_captures_all_eighteen_cases_from_the_four_real_originals')
+        RA = new_device('device-reading-a', existing=True)
+        dialog = RA.open_account()
+        published = dav.count('revisions/')
+        RA.run_sync(dialog)
+        assert dav.count('revisions/') == published + len(cases), (published, dav.count('revisions/'))
+        RA.close_account(dialog)
+        RA.close();assert RA.process.returncode == 0
+        RB = new_device('device-reading-b')
+        dialog = RB.open_account()
+        RB.fill(dialog, reading_root, user, password, False);RB.apply(dialog, '仅本次会话')
+        RB.run_sync(dialog)
+        RB.wait(lambda: len(sql('device-reading-b', 'SELECT sdk_book_id FROM reader_local_books')) == 4, timeout=240)
+        stored = {row[0] for row in sql('device-reading-b', 'SELECT revision_id FROM reader_revisions')}
+        for role, kind, case in cases:
+            assert captured[case]['revision_id'] in stored, case
+        RB.close_account(dialog)
+        RB.close();assert RB.process.returncode == 0
+        record('eighteen_real_captures_cross_the_real_host_https_as_exact_anchor_v2_bytes')
+        rfiles = reading_files('device-reading-b')
+        resolved = {}
+        for role, kind, case in cases:
+            value = consume(args.capture_probe.resolve(), 'resolve', rfiles['sdk'], rfiles['product'], args.reading_font,
+                            rfiles['scratch'], captured[case]['revision_id'])
+            resolved[case] = value
+            assert value['decoded'] and value['anchor_version'] == 2, value
+            assert value['wire_sha256'] == captured[case]['wire_sha256'], case
+            assert value['mode'] == captured[case]['mode'] and value['kind'] == kind, (case, value)
+            if captured[case]['mode'] == 'epub_chapter':
+                assert value['part'] == captured[case]['part'], (case, value)
+                assert value.get('part_path') == captured[case]['part_path'], (case, value)
+            if captured[case]['has_chapter']:
+                assert value['has_chapter'] and value.get('chapter') == captured[case]['chapter'], (case, value)
+            else:
+                assert not value['has_chapter'], (case, value)
+            expected = 'AMBIGUOUS' if case == 'txt-ambiguous' else 'FOUND'
+            assert value['state'] == expected, (case, value)
+            if expected == 'FOUND':
+                assert value['match_start'] == captured[case]['start'], (case, value)
+                assert value['match_end'] == captured[case]['end'], (case, value)
+        found = sum(1 for case in resolved if resolved[case]['state'] == 'FOUND')
+        print(json.dumps({'receiver_found': found, 'receiver_ambiguous': len(cases) - found,
+                          'mislocated': 0}, ensure_ascii=False), flush=True)
+        assert found == 17, found
+        record('seventeen_real_captures_resolve_found_and_the_planted_ambiguity_stays_ambiguous')
+        for name in ('device-reading-a', 'device-reading-b'):
+            source_files = reading_files(name)
+            for role in roles:
+                value = consume(args.capture_probe.resolve(), 'notes', source_files['sdk'], source_files['product'],
+                                reading_keys[role])
+                assert value['sdk_notes'] == 0, (name, role, value)
+        record('product_owned_annotations_leave_zero_sdk_note_copies_on_both_hosts')
+        RB = new_device('device-reading-b', existing=True)
+        dialog = RB.open_account()
+        assert '已载入' not in RB.note(dialog), 'session-only credentials must not survive a restart'
+        RB.fill(dialog, reading_root, user, password, False);RB.apply(dialog, '仅本次会话')
+        RB.run_sync(dialog);RB.close_account(dialog)
+        RB.close();assert RB.process.returncode == 0
+        for role, kind, case in cases:
+            value = consume(args.capture_probe.resolve(), 'resolve', rfiles['sdk'], rfiles['product'], args.reading_font,
+                            rfiles['scratch'], captured[case]['revision_id'])
+            assert value['state'] == resolved[case]['state'], (case, value)
+            assert value['wire_sha256'] == resolved[case]['wire_sha256'], (case, value)
+            assert value['match_start'] == resolved[case]['match_start'], (case, value)
+        record('reopened_receiver_repeats_the_same_eighteen_resolutions_and_wire_hashes')
+
+        # ===== planted CONCURRENT, PENDING-parent and tombstone heads in the receiver's own product store =====
+        planted_key = 'txt:' + 'e' * 64
+        planted = {'version': 1, 'id': '%02x%030x' % (0x50, 1), 'entity_kind': 'book', 'entity_key': planted_key,
+                   'operation': 'put', 'location_kind': 'none', 'parents': [],
+                   'payload': {'format': 'txt', 'source_sha256': 'e' * 64, 'source_bytes': 4096,
+                               'title': 'Cloud Only Conflict', 'author': 'planted', 'favorite': False}}
+        receive_record('device-reading-b', planted)
+        RB = new_device('device-reading-b', existing=True)
+        dialog = RB.open_account()
+        RB.fill(dialog, reading_root, user, password, False);RB.apply(dialog, '仅本次会话')
+        RB.run_sync(dialog);RB.close_account(dialog)
+        RB.wait(lambda: sql('device-reading-b', 'SELECT title FROM reader_books WHERE book_key=?', (planted_key,)),
+                timeout=120)
+        assert sql('device-reading-b', 'SELECT title,deleted FROM reader_books WHERE book_key=?', (planted_key,)) == \
+            [('Cloud Only Conflict', 0)]
+        RB.close();assert RB.process.returncode == 0
+        txt_key, epub_key = reading_keys['txt'], reading_keys['epub']
+        txt_heads = revision_heads('device-reading-b', 'book', txt_key)
+        epub_heads = revision_heads('device-reading-b', 'book', epub_key)
+        planted_heads = revision_heads('device-reading-b', 'book', planted_key)
+        assert len(txt_heads) == 1 and len(planted_heads) == 1, (txt_heads, planted_heads)
+        tombstone = {'version': 1, 'id': '%02x%030x' % (0x50, 2), 'entity_kind': 'book', 'entity_key': planted_key,
+                     'operation': 'delete', 'location_kind': 'none', 'parents': planted_heads, 'payload': None}
+        receive_record('device-reading-b', tombstone)
+        concurrent_ids = []
+        for index, title in enumerate(('Concurrent Head A', 'Concurrent Head B')):
+            competitor = {
+                'version': 1, 'id': '%02x%030x' % (0x51, index + 1), 'entity_kind': 'book', 'entity_key': txt_key,
+                'operation': 'put', 'location_kind': 'none', 'parents': txt_heads,
+                'payload': {'format': 'txt', 'source_sha256': manifest['txt']['sha256'],
+                            'source_bytes': manifest['txt']['bytes'], 'title': title,
+                            'author': 'conflicting remote metadata', 'favorite': False}}
+            receive_record('device-reading-b', competitor)
+            concurrent_ids.append(competitor['id'])
+        receive_record('device-reading-b', {
+            'version': 1, 'id': '%02x%030x' % (0x52, 1), 'entity_kind': 'book', 'entity_key': 'txt:' + 'd' * 64,
+            'operation': 'put', 'location_kind': 'none', 'parents': ['f' * 32],
+            'payload': {'format': 'txt', 'source_sha256': 'd' * 64, 'source_bytes': 2048,
+                        'title': 'Pending Child', 'author': 'planted', 'favorite': False}})
+        txt_title = sql('device-reading-b', 'SELECT title FROM reader_books WHERE book_key=?', (txt_key,))[0][0]
+        epub_title = sql('device-reading-b', 'SELECT title FROM reader_books WHERE book_key=?', (epub_key,))[0][0]
+        before_counts = {key: sql('device-reading-b', 'SELECT count(*) FROM reader_revisions WHERE entity_key=?', (key,))[0][0]
+                         for key in (txt_key, epub_key, planted_key)}
+        RB = new_device('device-reading-b', existing=True)
+        dialog = RB.open_account()
+        RB.fill(dialog, reading_root, user, password, False);RB.apply(dialog, '仅本次会话')
+        RB.close_account(dialog)
+        RB.wait(lambda: RB.has_row(txt_title), timeout=120)
+        RB.open(txt_title);RB.wait_idle()
+        page_label = U.GetDlgItem(RB.window, 124)
+        page_before = M.text(page_label)
+        dialog = RB.open_account()
+        RB.run_sync(dialog)
+        detail = RB.detail(dialog)
+        print(json.dumps({'planted_receive': detail}, ensure_ascii=False), flush=True)
+
+        def counter(label):
+            found = re.search(label + r' (\d+)', detail)
+            assert found, (label, detail)
+            return int(found.group(1))
+        assert counter('并发版本') == 1 and counter('待依赖') == 1 and counter('墓碑') == 1, detail
+        assert sql('device-reading-b', 'SELECT title,deleted FROM reader_books WHERE book_key=?', (txt_key,)) == \
+            [(txt_title, 0)], 'a concurrent metadata head must not be projected'
+        assert sql('device-reading-b', 'SELECT title FROM reader_books WHERE book_key=?', (epub_key,)) == [(epub_title,)]
+        assert sql('device-reading-b', 'SELECT title,deleted FROM reader_books WHERE book_key=?', (planted_key,)) == \
+            [('Cloud Only Conflict', 0)], 'a tombstone must keep the local copy and never resurrect it'
+        assert sql('device-reading-b', 'SELECT count(*) FROM reader_books WHERE book_key=?', ('txt:' + 'd' * 64,))[0][0] == 0
+        heads_after = revision_heads('device-reading-b', 'book', txt_key)
+        assert len(heads_after) == 3 and set(heads_after) == set(txt_heads) | set(concurrent_ids), heads_after
+        assert revision_heads('device-reading-b', 'book', epub_key) == epub_heads
+        assert revision_heads('device-reading-b', 'book', planted_key) == [tombstone['id']]
+        after_counts = {key: sql('device-reading-b', 'SELECT count(*) FROM reader_revisions WHERE entity_key=?', (key,))[0][0]
+                        for key in (txt_key, epub_key, planted_key)}
+        assert after_counts == before_counts, (before_counts, after_counts)
+        record('planted_concurrent_pending_and_tombstone_heads_stay_explicit_without_projection')
+        assert M.text(page_label) == page_before, 'received history must not move the open page'
+        assert '已打开' in RB.status(), RB.status()
+        RB.click('select');RB.click('copy')
+        assert '阅读状态跨设备同步' in clipboard_text(RB), 'the conflicted local original must stay readable offline'
+        RB.close_account(dialog)
+        RB.close();assert RB.process.returncode == 0
+        record('conflicted_local_original_still_reads_offline_with_unchanged_heads_and_no_page_jump')
+
         # ===== link graph =====
         graph = args.link_map.read_text(errors='replace')
         for needle in ('reader_session', 'exr_webdav', 'exr_credentials', 'exr_sideload', 'reader_revisions', 'sqlite3_open'):
@@ -720,15 +948,16 @@ def main():
         (output / 'dependents.txt').write_text(dependents)
         assert 'WINHTTP.dll' in dependents.upper().replace('WINHTTP.DLL', 'WINHTTP.dll') or 'winhttp' in dependents.lower()
         record('link_graph_contains_native_session_credentials_sideload_and_winhttp_without_webview')
-        assert len(checks) == 25, len(checks)
+        assert len(checks) == 32, len(checks)
         report = {'accepted': True, 'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
                   'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'checks': checks, 'count': len(checks),
                   'program_sha256': hashlib.sha256(args.candidate.read_bytes()).hexdigest(), 'screenshots': shots,
                   'uncovered': ['Credential Manager UNAVAILABLE state',
                                 'screen-reader narration',
-                                'CONCURRENT, PENDING-parent and tombstone receive states are displayed but never provoked end to end',
+                                'CONCURRENT, PENDING-parent and tombstone heads are planted directly in the receiver product store; no second remote peer produced that branch over the wire',
                                 'cancel during receive/import (only cancel during the network scan is exercised)',
-                                'a real remote HTTPS collection (loopback TLS with a runner-local test CA only)'],
+                                'a real remote HTTPS collection (loopback TLS with a runner-local test CA only)',
+                                'product performance and any unified six-target product claim'],
                   'complete_product': False}
         (output / 'account-ui.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
         print(json.dumps({'accepted': True, 'count': len(checks)}), flush=True)
