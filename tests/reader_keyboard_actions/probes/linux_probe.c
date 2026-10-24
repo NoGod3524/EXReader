@@ -128,8 +128,20 @@ static const char *disposition_name(uint32_t disposition) {
   return disposition == (uint32_t)READER_KBD_CONSUME ? "consume" : "pass";
 }
 
+/* GtkWindow receives key events before its class handler propagates them to the
+   focus widget, so the real focus owner is read here instead of guessed from
+   the signal target. */
 static uint32_t focus_for(GtkWidget *widget) {
+  GtkWidget *focus;
   if (g.modal_open != 0) return (uint32_t)READER_KBD_FOCUS_MODAL;
+  if (widget != NULL && widget == g.dialog) return (uint32_t)READER_KBD_FOCUS_MODAL;
+  if (widget == NULL || widget == g.window) {
+    focus = gtk_window_get_focus(GTK_WINDOW(g.window));
+    if (focus != NULL && GTK_IS_EDITABLE(focus) != 0) {
+      return (uint32_t)READER_KBD_FOCUS_TEXT_INPUT;
+    }
+    return (uint32_t)READER_KBD_FOCUS_READER;
+  }
   if (widget == g.entry) return (uint32_t)READER_KBD_FOCUS_TEXT_INPUT;
   return (uint32_t)READER_KBD_FOCUS_READER;
 }
@@ -655,8 +667,6 @@ int main(void) {
   gtk_box_pack_start(GTK_BOX(box), g.area, TRUE, TRUE, 0);
   gtk_box_pack_start(GTK_BOX(box), g.entry, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(g.window), box);
-  g_signal_connect(g.entry, "key-press-event", G_CALLBACK(on_key), &g);
-  g_signal_connect(g.entry, "key-release-event", G_CALLBACK(on_key), &g);
   g_signal_connect(g.window, "key-press-event", G_CALLBACK(on_key), &g);
   g_signal_connect(g.window, "key-release-event", G_CALLBACK(on_key), &g);
   g_signal_connect(g.window, "focus-out-event", G_CALLBACK(on_focus_out), &g);
