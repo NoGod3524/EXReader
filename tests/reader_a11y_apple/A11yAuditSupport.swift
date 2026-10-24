@@ -119,7 +119,10 @@ enum A11yAudit {
         if let explicit = ProcessInfo.processInfo.environment["EXR_A11Y_PLATFORM"], !explicit.isEmpty {
             return explicit
         }
-        return UIDevice.current.userInterfaceIdiom == .pad ? "ipad" : "iphone"
+        if UIDevice.current.userInterfaceIdiom == .pad { return "ipad" }
+        // On an iPad the runner reports .unspecified and model "iPad".
+        if UIDevice.current.model.lowercased().hasPrefix("ipad") { return "ipad" }
+        return "iphone"
 #endif
     }
 

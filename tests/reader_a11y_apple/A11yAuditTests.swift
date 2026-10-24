@@ -152,13 +152,36 @@ final class EXReaderA11yAuditTests: XCTestCase {
         XCTAssertTrue(waitIdle(240), "library did not settle")
     }
 
+    private func waitUntil(_ timeout: TimeInterval, _ condition: () -> Bool) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if condition() { return true }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.3))
+        }
+        return condition()
+    }
+
+    /// A single recorded retry covers a dropped first tap; the import still has to
+    /// reach the expected status, so nothing is asserted more weakly.
     private func importFixture(_ identifier: String, expects: [String], timeout: TimeInterval = 300) {
-        let button = waitElement(identifier, 120)
-        XCTAssertTrue(button.isEnabled, identifier + " must be enabled for the audited import")
-        button.tap()
+        for attempt in 1...2 {
+            let button = waitElement(identifier, 120)
+            XCTAssertTrue(button.isEnabled, identifier + " must be enabled for the audited import")
+            button.tap()
+            if waitUntil(20, { self.importLeftIdle() }) { break }
+            print("EXR_A11Y_TAP_RETRY import " + identifier + " attempt=" + String(attempt))
+        }
         XCTAssertTrue(waitText("library.status", containsAny: expects, timeout: timeout),
                       identifier + " did not report " + expects.joined(separator: "|"))
         XCTAssertTrue(waitIdle(300), "library did not settle after " + identifier)
+    }
+
+    /// True once the import produced any reaction: the busy marker appeared or the
+    /// status text left the idle value.
+    private func importLeftIdle() -> Bool {
+        if element("library.busy").exists { return true }
+        let status = axText("library.status")
+        return !status.isEmpty && status != "就绪"
     }
 
     private func ensureBooks() {
@@ -177,6 +200,10 @@ final class EXReaderA11yAuditTests: XCTestCase {
         let rows = shelfRows()
         XCTAssertGreaterThan(rows.count, 0, "library exposes no book row")
         rows.element(boundBy: 0).tap()
+        if !element("reader.page").waitForExistence(timeout: 30) {
+            print("EXR_A11Y_TAP_RETRY open-first-row")
+            shelfRows().element(boundBy: 0).tap()
+        }
         _ = waitElement("reader.page", 360)
         XCTAssertTrue(waitIdle(360), "reader did not settle")
     }
@@ -198,6 +225,10 @@ final class EXReaderA11yAuditTests: XCTestCase {
         XCTAssertTrue(row.waitForExistence(timeout: 180), "book row " + title + " missing")
         XCTAssertTrue(waitIdle(180), "library did not settle before opening " + title)
         row.tap()
+        if !element("reader.page").waitForExistence(timeout: 30) {
+            print("EXR_A11Y_TAP_RETRY open " + title)
+            bookRow(title).tap()
+        }
         _ = waitElement("reader.page", 360)
         XCTAssertTrue(waitIdle(timeout), "reader did not settle for " + title)
     }
@@ -362,15 +393,13 @@ final class EXReaderA11yAuditTests: XCTestCase {
         throw XCTSkip("macOS has no system Dynamic Type scale; window stress is recorded as reader.window_min")
 #else
         try step("a11y-12-large-type-reader") {
-            launch()
-            ensureBooks()
-            openBook("Sample.epub")
-            app.terminate()
-            // The device content size is the fixture here; a launch-argument
+            // The container already holds the imported fixtures from the default-size
+            // pass. The device content size is the fixture here; a launch-argument
             // override resets the app to the default category, so it is not used.
             launch()
             if !element("reader.page").waitForExistence(timeout: 180) {
-                openLibrary()
+                _ = element("library.title").waitForExistence(timeout: 120)
+                ensureBooks()
                 openAnyBook()
             }
             XCTAssertTrue(waitIdle(360), "reader did not settle at the accessibility text size")

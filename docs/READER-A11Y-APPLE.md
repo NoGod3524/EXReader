@@ -42,6 +42,21 @@
 macOS 的 `hasFocus`、匿名控件计数、窗口框、文本样式点值）；`audit_collect.py` 在 Actions 里把记录
 与契约逐项比对，产出 `report.json`；`audit_gate.py` 汇总三目标并给出两个独立结论。
 
+### 实测到的平台差异（写进判据，避免把装置差异当成产品缺陷）
+
+1. **平台身份**：iPad 模拟器上的测试进程会把 `UIDevice.current.userInterfaceIdiom` 报成 iPhone，
+   所以平台由工作流以 `TEST_RUNNER_EXR_A11Y_PLATFORM` 注入（xcodebuild 会把 `TEST_RUNNER_` 前缀去掉
+   交给测试进程），并再用 `simctl` 目的地（设备名/UDID）复核；两者不一致时该步骤记 `blocked`。
+2. **文本暴露**：macOS 上 SwiftUI `Text` 的元素是 `label=""`、`value="<字符串>"`。名称判定与内容规则
+   都走同一个 fallback（label 为空则用 value），否则规则会在空串上“通过”。
+3. **阅读面 value**：`reader.page` 在 macOS 上不桥接 AX value，页号只能从 AT 名称读（名称本身是
+   `第 N 页：正文前 60 字`）。所以页号判据看名称，不看 value。
+4. **大字体装置**：`-UIPreferredContentSizeCategoryName` 启动参数在当前 runtime 上会把应用重置回默认
+   类别，不能当夹具用；必须用 `xcrun simctl ui <udid> content_size` 改设备设置，并且判定前先确认
+   测试进程的 `caption1_pt` 确实变大，否则输出 `blocked`。
+5. **懒加载书架**：大字体下 `LazyVStack` 只构建可见行，按书名找行的探针会落空，所以大字体用例
+   只要求“有书可开”，不绑定具体书名。
+
 ### 受审步骤（18）
 
 | 步骤 | 覆盖 | 平台 |
