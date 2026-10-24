@@ -50,11 +50,12 @@ def main():
             time.sleep(.08)
             try:
                 values = self.numbers()
-                if values and wanted(values):
-                    self.wait_idle()
-                    return
+                ready = values and wanted(values)
             except TimeoutError:
                 continue
+            if ready:
+                self.wait_idle()  # a real worker timeout must still fail
+                return
         raise AssertionError("Native wheel traversal incomplete: " + repr(self.numbers()))
 
     module.Product.titles = titles
