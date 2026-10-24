@@ -63,19 +63,21 @@ static exr_status records_pending_write(linux_reader *reader,GKeyFile *pending) 
   if(state) return EXR_DATABASE;
   gsize size=0;char *bytes=g_key_file_to_data(pending,&size,NULL),*path=records_pending_path(reader);
   char *temporary=g_strconcat(path,".XXXXXX",NULL),*directory=g_path_get_dirname(path);
-  int file=-1,dir=-1;exr_status status=EXR_IO;
+  int file=-1,dir=-1,created=0;exr_status status=EXR_IO;
   if(!bytes || size>RECORDS_PENDING_LIMIT || !accounts_private_directory(directory,0)) goto done;
   file=g_mkstemp_full(temporary,O_RDWR|O_CLOEXEC,0600);if(file<0) goto done;
+  created=1;
   size_t at=0;while(at<size) { ssize_t got=write(file,bytes+at,size-at);if(got<0 && errno==EINTR) continue;if(got<=0) goto done;at+=(size_t)got; }
   if(fsync(file)) goto done;
   if(close(file)) { file=-1;goto done; }file=-1;
   if(rename(temporary,path)) goto done;
+  created=0;
   dir=open(directory,O_RDONLY|O_DIRECTORY|O_CLOEXEC);if(dir<0 || fsync(dir)) goto done;
   status=EXR_OK;
 done:
   if(file>=0) close(file);
   if(dir>=0) close(dir);
-  unlink(temporary);
+  if(created) unlink(temporary);
   g_free(directory);g_free(temporary);g_free(path);g_free(bytes);return status;
 }
 static exr_status records_pending_clear(linux_reader *reader,const char *revision) {
@@ -242,7 +244,7 @@ static exr_status records_prepare(linux_reader *reader,received_owner *owner,con
   if(status==EXR_OK && command->records_kind!=READER_RC_NOTE_TEXT) {
     reader_rs_envelope envelope={revision,command->records_operation==READER_RC_DELETE ? "delete":command->records_operation==READER_RC_RESTORE ? "restore":"put",
       progress ? "progress":"annotation",book->key,progress ? NULL:annotation,parents,heads.count,progress || command->records_operation==READER_RC_DELETE ? NULL:body,exr_version()};
-    if(reader_rs_encode_v2(owner->revisions,&envelope,&captured,capture_unit,&capture_wire,&capture_bytes,&problem)!=READER_RS_OK) status=EXR_ARGUMENT;
+    if(reader_rs_encode_v2(owner->revisions,&envelope,&captured,capture_unit,&capture_wire,&capture_bytes,&problem)!=READER_RS_OK) { status=EXR_ARGUMENT;snprintf(result->message,sizeof(result->message),"Capture cannot be retained: %.120s",problem.message); }
   }
   if(status==EXR_OK) status=cancel(reader);
   if(status==EXR_OK) {
@@ -265,16 +267,16 @@ done:
 static exr_status records_retry(linux_reader *reader,received_owner *owner,const records_book *book,reader_result *result) {
   GKeyFile *pending=NULL;int pending_state=records_pending_read(reader,&pending);
   if(pending_state!=1) { result->records_pending=pending_state!=0;result->records_pending_error=pending_state<0;return EXR_DATABASE; }
-  GError *error=NULL;char *key=g_key_file_get_string(pending,"request","book",&error);
-  char *revision=g_key_file_get_string(pending,"request","revision",&error),*bootstrap=g_key_file_get_string(pending,"request","bootstrap",&error);
-  char *annotation=g_key_file_get_string(pending,"request","annotation",&error),*body=g_key_file_get_string(pending,"request","body",&error);
-  char *parser=g_key_file_get_string(pending,"request","parser",&error),*wire=g_key_file_get_string(pending,"request","capture",&error);
-  char *format=g_key_file_get_string(pending,"request","format",&error),*title=g_key_file_get_string(pending,"request","title",&error);
-  char *author=g_key_file_get_string(pending,"request","author",&error),*sort=g_key_file_get_string(pending,"request","sort",&error);
-  gsize head_count=0;char **heads=g_key_file_get_string_list(pending,"request","heads",&head_count,&error);
-  int kind=g_key_file_get_integer(pending,"request","kind",&error),operation=g_key_file_get_integer(pending,"request","operation",&error);
-  uint64_t bytes=g_key_file_get_uint64(pending,"request","source_bytes",&error);int favorite=g_key_file_get_integer(pending,"request","favorite",&error);
-  int64_t sdk_book=g_key_file_get_int64(pending,"request","sdk_book",&error);exr_status status=EXR_ARGUMENT;
+  GError *error=NULL;char *key=g_key_file_get_string(pending,"request","book",error ? NULL : &error);
+  char *revision=g_key_file_get_string(pending,"request","revision",error ? NULL : &error),*bootstrap=g_key_file_get_string(pending,"request","bootstrap",error ? NULL : &error);
+  char *annotation=g_key_file_get_string(pending,"request","annotation",error ? NULL : &error),*body=g_key_file_get_string(pending,"request","body",error ? NULL : &error);
+  char *parser=g_key_file_get_string(pending,"request","parser",error ? NULL : &error),*wire=g_key_file_get_string(pending,"request","capture",error ? NULL : &error);
+  char *format=g_key_file_get_string(pending,"request","format",error ? NULL : &error),*title=g_key_file_get_string(pending,"request","title",error ? NULL : &error);
+  char *author=g_key_file_get_string(pending,"request","author",error ? NULL : &error),*sort=g_key_file_get_string(pending,"request","sort",error ? NULL : &error);
+  gsize head_count=0;char **heads=g_key_file_get_string_list(pending,"request","heads",&head_count,error ? NULL : &error);
+  int kind=g_key_file_get_integer(pending,"request","kind",error ? NULL : &error),operation=g_key_file_get_integer(pending,"request","operation",error ? NULL : &error);
+  uint64_t bytes=g_key_file_get_uint64(pending,"request","source_bytes",error ? NULL : &error);int favorite=g_key_file_get_integer(pending,"request","favorite",error ? NULL : &error);
+  int64_t sdk_book=g_key_file_get_int64(pending,"request","sdk_book",error ? NULL : &error);exr_status status=EXR_ARGUMENT;
   reader_rs_record decoded={0};reader_rs_error decode_error={0};reader_rs_capture capture_value={0};exr_anchor anchor={0};exr_fixed_anchor fixed={0};
   if(error || !key || strcmp(key,book->key) || sdk_book!=reader->current.id || !records_hex(bootstrap,32) || !records_hex(revision,32) ||
      head_count>32 || !body || strlen(body)>65536 || !g_utf8_validate(body,-1,NULL) || kind<READER_RC_PROGRESS || kind>READER_RC_NOTE_TEXT || operation<READER_RC_PUT || operation>READER_RC_RESTORE ||
@@ -293,7 +295,7 @@ static exr_status records_retry(linux_reader *reader,received_owner *owner,const
     reader_command_context context={owner->revisions,bootstrap,NULL,0};
     reader_book_command bootstrap_command={READER_COMMAND_PUT,key,format,strchr(key,':')+1,title,author,sort,bytes,favorite};
     reader_command_result submitted={0};reader_command_error problem={0};
-    if(reader_command_apply_book(&context,&bootstrap_command,&submitted,&problem)!=READER_COMMAND_OK) { status=EXR_DATABASE;goto done; }
+    if(reader_command_apply_book(&context,&bootstrap_command,&submitted,&problem)!=READER_COMMAND_OK) { status=EXR_DATABASE;snprintf(result->message,sizeof(result->message),"Book preparation refused: %.120s",problem.message);goto done; }
   } else if(identity!=READER_REV_OK || retained_bytes!=bytes) { status=EXR_DATABASE;goto done; }
   reader_rc_context context={owner->revisions,revision,(const char *const *)heads,head_count,parser};
   reader_rc_command command={(reader_rc_kind)kind,(reader_rc_operation)operation,key,kind==READER_RC_PROGRESS ? NULL:annotation,
@@ -307,6 +309,7 @@ done:
   if(error) g_error_free(error);
   reader_rs_record_free(&decoded);g_strfreev(heads);g_free(key);g_free(revision);g_free(bootstrap);g_free(annotation);
   g_free(body);g_free(parser);g_free(wire);g_free(format);g_free(title);g_free(author);g_free(sort);g_key_file_free(pending);
+  if(status!=EXR_OK && !result->message[0]) snprintf(result->message,sizeof(result->message),"Original reading request could not be verified; retained for review");
   records_pending_status(reader,result);return status;
 }
 static exr_status records_jump(linux_reader *reader,reader_session *next,const reader_command *command,reader_result *result,exr_error *error) {
@@ -457,6 +460,7 @@ static void records_execute(linux_reader *reader,const reader_command *command,r
   else if(result->status==EXR_OK && command->action==READER_RECORDS_DISCARD) result->status=records_pending_clear(reader,command->records_head);
   else if(result->status==EXR_OK && command->action==READER_RECORDS_HISTORY) result->status=records_history(reader,owner,command,result);
   else if(result->status==EXR_OK) result->status=EXR_UNSUPPORTED;
+  if(command->action==READER_RECORDS_SAVE || command->action==READER_RECORDS_RETRY || command->action==READER_RECORDS_DISCARD) records_pending_status(reader,result);
   if(!result->message[0]) snprintf(result->message,sizeof(result->message),"%s",result->status==EXR_OK ? "Reading records ready":"Reading operation did not complete; saved records retained");
   records_book_free(&book);
 }
