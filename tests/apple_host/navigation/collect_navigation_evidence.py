@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-"""Authenticate the five native navigation UI cases and original attachments."""
+"""Authenticate the six native navigation UI cases and original attachments."""
 import argparse
 import json
 import os
@@ -24,6 +24,7 @@ CASES = {
         'missing-fragment-keeps-reader', 'duplicate-spine-explicit-options', 'chosen-spine-found'],
     'testActualSnapshotCancellation': ['original-opens', 'actual-f2-cancel-poll', 'cancel-reader-unchanged'],
     'testPdfByPageNeverAuthoredOutline': ['original-opens', 'fixed-pages-labeled', 'fixed-directory-close-unchanged'],
+    'testAuthorCfiEntryUsesReaderLabel': ['original-opens', 'author-position-reader-label', 'author-position-independent-found'],
 }
 
 
@@ -58,7 +59,7 @@ def main():
     require(provider['installed_navigation_linked'] is True and provider['static_sdk_linked'] is False, 'F2 provider differs')
     shutil.copytree(app, output / 'program/EXReaderHost.app')
     cases = load_results(xcresult)
-    require(len(cases) == 5 and {case_name(row['name']) for row in cases} == set(CASES) and
+    require(len(cases) == 6 and {case_name(row['name']) for row in cases} == set(CASES) and
             all(row['result'] == 'Passed' for row in cases), 'missing/failed/skipped navigation case')
     attachments = output / 'attachments'
     command('xcrun', 'xcresulttool', 'export', 'attachments', '--path', xcresult, '--output-path', attachments)

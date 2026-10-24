@@ -71,7 +71,7 @@ def main():
                         hashlib.sha256(archive.read('navigation-review')).hexdigest() == provider['binary_sha256'], 'native executable differs')
             else:
                 value = read_json('evidence/navigation-ui.json')
-                require(value['accepted'] is True and len(value['cases']) == 5 and len(value['steps']) == 5 and
+                require(value['accepted'] is True and len(value['cases']) == 6 and len(value['steps']) == 6 and
                         all(row['result'] == 'Passed' for row in value['cases']) and
                         value['provider']['installed_navigation_linked'] is True and value['provider']['static_sdk_linked'] is False,
                         'UI evidence failed')

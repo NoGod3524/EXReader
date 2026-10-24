@@ -123,4 +123,16 @@ final class NavigationUITests: XCTestCase {
         XCTAssertEqual(text("reader.location"), location); XCTAssertEqual(text("reader.page"), page)
         mark("fixed-directory-close-unchanged")
     }
+    func testAuthorCfiEntryUsesReaderLabel() {
+        openFixture(); directory()
+        XCTAssertFalse(element("navigation.cfi").exists)
+        XCTAssertEqual(element("navigation.row.6").label, "Unicode destination")
+        mark("author-position-reader-label")
+        tap("navigation.row.6")
+        XCTAssertTrue(wait { !self.element("navigation.close").exists && !self.element("reader.busy").exists &&
+            self.text("reader.location").contains("第 2 章") && self.text("reader.page").contains("A😀Z") },
+            "Author CFI did not independently locate: \(app.debugDescription)")
+        XCTAssertFalse(element("reader.error").exists)
+        mark("author-position-independent-found")
+    }
 }
