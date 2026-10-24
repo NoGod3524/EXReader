@@ -3,6 +3,7 @@ on:
   push:
     branches: [codex/reader-desktop-catalog, codex/reader-gtk-fixed-pages, codex/reader-desktop-shelf, codex/reader-windows-shelf]
   workflow_dispatch:
+  workflow_call:
 permissions:
   contents: read
 defaults:

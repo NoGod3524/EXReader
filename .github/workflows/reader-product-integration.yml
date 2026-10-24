@@ -1,0 +1,47 @@
+name: Reader product preintegration
+on:
+  push:
+    branches: [codex/reader-product-integration]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  desktop:
+    name: desktop
+    uses: ./.github/workflows/reader-desktop-sdk.yml
+  commands:
+    name: commands
+    uses: ./.github/workflows/reader-commands.yml
+  summary:
+    name: strict preintegration summary
+    needs: [desktop, commands]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require frozen SDK schema and accepted component ancestors
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
+          git diff --exit-code f32bb8aa18ed3de286900f19ce4230fd93435dd0 HEAD -- apps/reader/store/001_catalog.sql
+          for ref in 3be2473e27faca4d2ebb1ac6d528ffbbfbb97846 e4600abd4b75d22f117483673cba2898e3ae628a a6d7dd81eef36e83e004fdc381a565a2ffee5462 d064b5bcf5ed91e9718204cb3d448d7f0807454a; do
+            git merge-base --is-ancestor "$ref" HEAD
+          done
+      - name: Reject incomplete stale or substituted evidence contracts
+        run: python3 tests/reader_integration/check_gate.py
+      - name: Verify this run's four upstream jobs and authenticated evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/check_reader_product_integration.py --output build/reader-product-integration
+      - name: Preserve strict preintegration result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-product-preintegration-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-product-integration/
+          if-no-files-found: error
