@@ -353,7 +353,10 @@ public final class ImportEntry {
             // Closing a reliable pipe reports a writer-side error; that must fail the copy before any publish.
             AssetFileDescriptor finished = afd;
             afd = null;
-            try { finished.close(); } catch (IOException e) {
+            try {
+                finished.getParcelFileDescriptor().checkError();
+                finished.close();
+            } catch (IOException e) {
                 throw new Failure(ImportError.Code.IO, "Provider reported a stream error");
             }
             String id = hex(digest.digest()) + "." + format.extension();
