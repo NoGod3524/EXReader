@@ -58,9 +58,9 @@ def app_settings(target, platform, deployment, info_plist)
     settings['ENABLE_DEBUG_DYLIB'] = 'NO'
     settings['CLANG_ENABLE_MODULES'] = 'YES'
     settings['EXR_SDK_DIR'] = '$(SRCROOT)/sdk'
-    settings['OTHER_LDFLAGS'] = ['$(inherited)', '-lexreader', '-lreader_session', '-lreader_sync',
+    settings['OTHER_LDFLAGS'] = ['$(inherited)', '-lreader_session', '-lreader_sync',
       '-lexr_webdav', '-lreader_commands', '-lreader_reading_state_codec', '-lreader_revisions',
-      '-lreader_revision_hash', '-lreader_catalog', '-lreader_catalog_sqlite', '-lexr_credentials',
+      '-lreader_revision_hash', '-lreader_catalog', '-lreader_catalog_sqlite', '-lexr_credentials', '-lexreader',
       '-lc++', '-lxml2', '-framework', 'Foundation', '-framework', 'CoreFoundation', '-framework', 'Security']
     settings['LD_GENERATE_MAP_FILE'] = 'YES'
     settings['LD_MAP_FILE_PATH'] = '$(TARGET_BUILD_DIR)/$(PRODUCT_NAME).link.map'
