@@ -69,9 +69,18 @@ final class AccountUITests: XCTestCase {
     }
 
     private func library() {
-        if node("reader.back").exists { tap("reader.back") }
-        XCTAssertTrue(node("library.title").waitForExistence(timeout: 60))
-        XCTAssertTrue(wait { !self.node("library.busy").exists })
+        var previous = "", stableSince = Date()
+        XCTAssertTrue(wait {
+            if self.node("reader.back").exists && !self.node("reader.busy").exists && self.node("reader.back").isHittable {
+                self.node("reader.back").tap(); previous = ""; return false
+            }
+            let count = self.app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'library.book.'")).count
+            guard self.node("library.title").exists, !self.node("library.busy").exists,
+                  count > 0 || self.node("library.empty").exists else { previous = ""; return false }
+            let value = "\(count)|\(self.text("library.status"))"
+            if value != previous { previous = value; stableSince = Date() }
+            return Date().timeIntervalSince(stableSince) >= 0.6
+        })
     }
 
     private func choose(_ root: String) {

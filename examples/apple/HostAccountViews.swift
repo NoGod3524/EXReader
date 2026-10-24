@@ -28,7 +28,7 @@ private struct HostAccountChooser: View {
     @State private var remember = true
     @State private var failure = ""
     @State private var updating: HostAccountProfile?
-    private enum Field { case root, username, password }
+    private enum Field: Hashable { case root, username, password }
     @FocusState private var focused: Field?
 
     var body: some View {
