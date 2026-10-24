@@ -5,6 +5,7 @@
    separately built application drives the same backend.
    Usage: tts-probe <text-file> <wav-file> [rate] [voice-id] */
 #include "reader_tts.h"
+#include "reader_tts_windows.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
