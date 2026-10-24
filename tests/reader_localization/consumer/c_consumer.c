@@ -169,7 +169,9 @@ static int hex_value(int character) {
 
 typedef struct {
   reader_localization_param items[READER_LOCALIZATION_MAX_SLOTS];
-  char texts[READER_LOCALIZATION_MAX_SLOTS][READER_LOCALIZATION_MAX_VALUE_BYTES + 1u];
+  /* One byte past the value limit, so the fixture format can carry an
+     over-long value and let the library refuse it instead of the parser. */
+  char texts[READER_LOCALIZATION_MAX_SLOTS][READER_LOCALIZATION_MAX_VALUE_BYTES + 2u];
   size_t count;
 } staged_params;
 
