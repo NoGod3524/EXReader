@@ -2,7 +2,7 @@
 import Foundation
 import CoreGraphics
 import CEXReader
-import SQLite3
+import CReaderSQLite
 
 @main struct BoundedReview {
     static func main() throws {
