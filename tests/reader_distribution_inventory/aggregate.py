@@ -205,7 +205,10 @@ def verify_platform(key, profile, payload, inventory, licenses_doc, run, compone
                       'sbom_identity')
         document = contract.decode_json(data)
         structural = validator(document, inventory)
-        contract.need(not structural, 'sbom_structure')
+        if structural:
+            error = contract.InventoryError('sbom_structure')
+            error.detail = [name + ': ' + item for item in structural]
+            raise error
         documents[name] = document
         if schemas:
             jsonschema, schema = schemas[name]
