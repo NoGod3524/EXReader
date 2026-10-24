@@ -45,7 +45,7 @@ def main():
     with server.lock:
         server.entries['/dav/exreader-sync-v1/objects/'+sha[:2]+'/'+sha+'.epub']=remote
         server.dirs.update(('/dav/exreader-sync-v1/','/dav/exreader-sync-v1/objects/','/dav/exreader-sync-v1/objects/'+sha[:2]+'/', '/dav/exreader-sync-v1/revisions/'))
-    payload={'root':root,'user':user,'password':password,'local_text':'abcdefghijk retained UI reading anchor.\n'+'Safe original paragraph.\n'*40,'remote_sha':sha,'remote_title':remote_title,'remote_author':remote_author}
+    payload={'root':root,'user':user,'password':password,'local_text':'abcdefghijk retained UI reading anchor.\n'+'Safe original paragraph.\n'*200,'remote_sha':sha,'remote_title':remote_title,'remote_author':remote_author}
     listing_blocked=threading.Event();listing_release=threading.Event();listing_armed=threading.Event();base=server.server.RequestHandlerClass
     class ListingGate(base):
         def do_PROPFIND(self):
@@ -92,7 +92,7 @@ def main():
             for key,value in identity.items():command.extend(('-e',key,value))
             raw=adb(*command,package+'.test/'+package+'.HostSyncTest',timeout=300);save(phase+'-instrumentation.txt',raw)
             report=json.loads(adb('exec-out','run-as',package,'cat','files/host-ui-'+phase+'.json'));save(phase+'-report.json',(json.dumps(report,ensure_ascii=False,indent=2)+'\n').encode())
-            print(json.dumps({'phase':phase,'passed':report.get('passed'),'expected_checks':expected[phase],'actual_checks':report.get('checks'),'failure_class':report.get('failure_class'),'failure':report.get('failure'),'observations':report.get('observations',[])},ensure_ascii=False),flush=True)
+            print(json.dumps({'phase':phase,'passed':report.get('passed'),'expected_checks':expected[phase],'actual_checks':report.get('checks'),'failed_check':report.get('failed_check'),'failure_class':report.get('failure_class'),'failure':report.get('failure'),'observations':report.get('observations',[])},ensure_ascii=False),flush=True)
             stop.set();thread.join(10);assert not thread.is_alive() and not monitor_failure,monitor_failure
             assert all(report.get(key)==value for key,value in identity.items()) and report['phase']==phase and report['passed'] is True
             assert [row['name'] for row in report['checks']]==expected[phase] and all(row['pass'] is True for row in report['checks'])
@@ -109,6 +109,8 @@ def main():
                 assert all(not named(observed[name],key) for name in ('organizer','large-font-organizer') for key in ('import_button','more_button','shelf_search'))
                 before=named(observed['reader-before'],'reader_view')[0];after=named(observed['reader-after-forward'],'reader_view')[0]
                 assert before['actions']&4096 and before['actions']&8192 and before['description']!=after['description']
+                before_frame=json.loads(before['frame']);after_frame=json.loads(after['frame'])
+                assert before_frame['book']==after_frame['book'] and after_frame['index']==before_frame['index']+1 and after_frame['start']>before_frame['start']
                 assert named(observed['reader-toolbar'],'font_up')[0]['state'] and named(observed['reader-toolbar'],'reader_status')[0]['live_region']==1
                 assert observations[-1]['font_scale']>=1.9
                 (a.output/'captures').mkdir(exist_ok=True)

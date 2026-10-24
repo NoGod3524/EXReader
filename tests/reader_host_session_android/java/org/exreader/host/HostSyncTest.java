@@ -31,10 +31,12 @@ public final class HostSyncTest extends Instrumentation {
     private final JSONArray checks=new JSONArray();
     private final JSONArray observations=new JSONArray();
     private String phase;
+    private String activeCheck;
     interface Check {void run()throws Exception;}
     @Override public void onCreate(Bundle args){super.onCreate(args);arguments=args;start();}
     static void need(boolean value,String label){if(!value)throw new AssertionError(label);}
     private void check(String name,Check action)throws Exception{
+        activeCheck=name;
         Bundle start=new Bundle();start.putString("class",getClass().getName());start.putString("test",name);sendStatus(1,start);
         action.run();checks.put(new JSONObject().put("name",name).put("pass",true));sendStatus(0,start);
     }
@@ -55,7 +57,7 @@ public final class HostSyncTest extends Instrumentation {
     private JSONObject tree(AccessibilityNodeInfo node,int depth,int[] count)throws Exception{
         need(depth<=32&&++count[0]<=2048,"semantic tree bounds");Rect bounds=new Rect();node.getBoundsInScreen(bounds);JSONArray children=new JSONArray();
         for(int n=0;n<node.getChildCount();n++){AccessibilityNodeInfo child=node.getChild(n);if(child!=null){try{children.put(tree(child,depth+1,count));}finally{child.recycle();}}}
-        return new JSONObject().put("class",String.valueOf(node.getClassName())).put("id",node.getViewIdResourceName()).put("text",text(node)).put("description",String.valueOf(node.getContentDescription())).put("state",state(node)).put("live_region",node.getLiveRegion()).put("actions",node.getActions()).put("visible",node.isVisibleToUser()).put("bounds",new JSONArray(new int[]{bounds.left,bounds.top,bounds.right,bounds.bottom})).put("children",children);
+        return new JSONObject().put("class",String.valueOf(node.getClassName())).put("id",node.getViewIdResourceName()).put("text",text(node)).put("description",String.valueOf(node.getContentDescription())).put("state",state(node)).put("frame",node.getExtras().getString("exreader.frame","")).put("live_region",node.getLiveRegion()).put("actions",node.getActions()).put("visible",node.isVisibleToUser()).put("bounds",new JSONArray(new int[]{bounds.left,bounds.top,bounds.right,bounds.bottom})).put("children",children);
     }
     private void capture(String name)throws Exception{
         AccessibilityNodeInfo root=getUiAutomation().getRootInActiveWindow();need(root!=null,"semantic capture root");int[] count={0};JSONObject tree;
@@ -81,7 +83,7 @@ public final class HostSyncTest extends Instrumentation {
     private int credential(){String id=context.getSharedPreferences("reader-sync",0).getString("account","");byte[] bytes=new byte[2048];int[] count={0};int result=CredentialStore.open(context,"org.exreader.reader.webdav").get(id,bytes,count);Arrays.fill(bytes,(byte)0);return result;}
     private void seed()throws Exception{
         File file=new File(context.getFilesDir(),"host-ui-local.txt");Files.write(file.toPath(),input.getString("local_text").getBytes(StandardCharsets.UTF_8));
-        try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"library.db").getAbsolutePath())){NativeLibrary.ImportResult imported=library.importFile(file.getAbsolutePath(),NativeLibrary.FORMAT_TXT,"UI local original");library.saveProgress(imported.id,8);}
+        try(NativeLibrary library=new NativeLibrary(new File(context.getFilesDir(),"library.db").getAbsolutePath())){NativeLibrary.ImportResult imported=library.importFile(file.getAbsolutePath(),NativeLibrary.FORMAT_TXT,"UI local original");library.saveProgress(imported.id,8);need(context.getSharedPreferences("host",0).edit().putString("path_"+imported.id,file.getAbsolutePath()).putLong("size_"+imported.id,file.length()).commit(),"host-owned original path registered");}
     }
     private String sourceHash(NativeLibrary library,long id)throws Exception{MessageDigest digest=MessageDigest.getInstance("SHA-256");try(NativeLibrary.Source source=library.source(id)){byte[] chunk=new byte[65536];for(long at=0;at<source.size;){int count=source.read(at,chunk,(int)Math.min(chunk.length,source.size-at));need(count>0,"public source read");digest.update(chunk,0,count);at+=count;}}StringBuilder hash=new StringBuilder();for(byte value:digest.digest())hash.append(String.format(java.util.Locale.ROOT,"%02x",value&255));return hash.toString();}
     private void inspect()throws Exception{
@@ -133,11 +135,11 @@ public final class HostSyncTest extends Instrumentation {
                     click("Shelf");click("More");click("Organize");until(node->"Organize panel".contentEquals(node.getContentDescription()==null?"":node.getContentDescription()),null,30000);need(!act(node->id(node,"import_button")||id(node,"more_button"),null),"large font organizer keeps shelf hidden");capture("large-font-organizer");click("Close");
                 });
             }else throw new AssertionError("unknown phase");
-        }catch(Throwable error){failure=error;}
+        }catch(Throwable error){failure=error;if("semantics".equals(phase))try{capture("failure");}catch(Throwable captureError){error.addSuppressed(captureError);}}
         finally{if("semantics".equals(phase))try{getUiAutomation().executeShellCommand("settings put system font_scale 1.0").close();}catch(Exception ignored){}}
         try{
             JSONObject report=new JSONObject().put("source_sha",arguments.getString("source_sha")).put("run_id",arguments.getString("run_id")).put("attempt",arguments.getString("attempt")).put("phase",phase).put("pid",android.os.Process.myPid()).put("api",android.os.Build.VERSION.SDK_INT).put("abi",android.os.Build.SUPPORTED_ABIS[0]).put("passed",failure==null).put("checks",checks).put("count",checks.length()).put("observations",observations);
-            if(failure!=null)report.put("failure_class",failure.getClass().getName()).put("failure",failure.getMessage());
+            if(failure!=null)report.put("failed_check",activeCheck).put("failure_class",failure.getClass().getName()).put("failure",failure.getMessage());
             Files.write(new File(context.getFilesDir(),"host-ui-"+phase+".json").toPath(),report.toString(2).getBytes(StandardCharsets.UTF_8));
             result.putString("stream",failure==null?"HOST_SYNC_UI_PASS "+phase:"HOST_SYNC_UI_FAIL "+phase);finish(failure==null?Activity.RESULT_OK:Activity.RESULT_CANCELED,result);
         }catch(Exception error){result.putString("shortMsg","UI evidence unavailable");finish(Activity.RESULT_CANCELED,result);}

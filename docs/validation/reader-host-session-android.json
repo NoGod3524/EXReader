@@ -20,6 +20,13 @@
       "diagnostic_run": 40087476482,
       "passed_before_failure": "first/secure-reopen/session-reopen: 12 checks, plus semantics polite status; feature-on original 18-capture shell, original host17+2 and DAV91+4 also passed",
       "reason": "Organizer background remained in the device tree despite NO_HIDE_DESCENDANTS. Hide the fully covered shelf while the modal overlay is visible and restore its prior visibility, accessibility importance and focus on close. No assertions changed."
+    },
+    {
+      "source_sha": "4fc349c0bf8937d95f63ea35437026386e380680",
+      "runs": [40087607387],
+      "diagnostic_run": 40088346418,
+      "passed_before_failure": "12 account/Receive checks and first two semantics checks; Organizer background exclusion now passes",
+      "reason": "The SDK-only TXT seed omitted the formal host's path_<id>/size_<id> registration, so openBook correctly rejected the missing app-owned path before producing a reader frame. Register the generated private original as normal host import does, enlarge the generated text for genuine multipage traversal, and retain frame observations/failure check names. No production fix or relaxed assertion."
     }
   ],
   "reading_state_ui_accepted": false,
