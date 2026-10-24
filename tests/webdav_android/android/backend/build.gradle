@@ -1,0 +1,23 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'org.exreader.webdav.probe'
+    compileSdk 35
+    ndkVersion '27.2.12479018'
+    defaultConfig {
+        applicationId 'org.exreader.webdav.probe'
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName '0.1.0'
+        testInstrumentationRunner 'org.exreader.webdav.probe.BackendProbe'
+        ndk { abiFilters 'x86_64' }
+        externalNativeBuild { cmake { arguments '-DANDROID_STL=c++_static' } }
+    }
+    buildTypes {
+        debug { externalNativeBuild { cmake { arguments "-DCMAKE_PREFIX_PATH=${rootDir}/../../../build/webdav-android/stage-debug" } } }
+        release { externalNativeBuild { cmake { arguments "-DCMAKE_PREFIX_PATH=${rootDir}/../../../build/webdav-android/stage-release" } } }
+    }
+    externalNativeBuild { cmake { path '../../consumer/CMakeLists.txt'; version '3.31.1' } }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}
+dependencies { implementation project(':support') }
