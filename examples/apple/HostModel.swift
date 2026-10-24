@@ -41,6 +41,9 @@ final class HostShelf: ObservableObject {
     private var probePositions: [String: CGRect] = [:]
     private var probeSize = CGSize.zero
     private var probeFlushScheduled = false
+    private var lastProbeMovement: TimeInterval?
+    private var pendingPage: (() -> Void)?
+    private var pendingPageWork: DispatchWorkItem?
     // Even epochs precede the native scroll; odd epochs follow its issue.
     var geometryRevision: Int { restoreRevision * 2 + (issuedRestoreRevision == restoreRevision ? 1 : 0) }
     var needsScroll: Bool { awaitingLayoutKey != nil && issuedRestoreRevision != restoreRevision }
@@ -68,7 +71,7 @@ final class HostShelf: ObservableObject {
         selected = defaults.string(forKey: "EXRShelfSelected")
         if let data = defaults.data(forKey: "EXRShelfTop") { top = try? JSONDecoder().decode(HostShelfKey.self, from: data) }
     }
-    deinit { debounce?.cancel(); pendingSave?.cancel() }
+    deinit { debounce?.cancel(); pendingSave?.cancel(); pendingPageWork?.cancel() }
 
     func connect(_ load: @escaping Loader) {
         guard loader == nil else { return }
@@ -78,6 +81,7 @@ final class HostShelf: ObservableObject {
 
     func search() {
         debounce?.cancel()
+        pendingPageWork?.cancel(); pendingPage = nil
         query = String(String.UnicodeScalarView(query.precomposedStringWithCanonicalMapping.unicodeScalars.prefix(256)))
         generation += 1
         rows = []; visible = []; top = nil; awaitingLayoutKey = nil; before = false; after = false; loading = true
@@ -95,6 +99,7 @@ final class HostShelf: ObservableObject {
     }
 
     private func reset(anchor: HostShelfKey?) {
+        pendingPageWork?.cancel(); pendingPage = nil
         generation += 1; loading = false; error = ""
         rows = []; visible = []; awaitingLayoutKey = nil; before = false; after = false
         request(anchor: anchor, previous: false, inclusive: true, replacing: true)
@@ -105,10 +110,15 @@ final class HostShelf: ObservableObject {
         loading = true
         let token = generation, requested = query
         loader(requested, anchor, previous, inclusive) { [weak self] result in
-            guard let self else { return }
-            guard self.generation == token, self.query == requested else { self.discarded += 1; return }
-            self.loading = false
-            switch result {
+            self?.receive(result, token: token, requested: requested, anchor: anchor, previous: previous, replacing: replacing)
+        }
+    }
+
+    private func receive(_ result: Result<[HostShelfBook], Error>, token: Int, requested: String,
+                         anchor: HostShelfKey?, previous: Bool, replacing: Bool, settled: Bool = false) {
+        guard generation == token, query == requested else { discarded += 1; return }
+        loading = false
+        switch result {
             case .failure(let error): self.error = error.localizedDescription
             case .success(let page):
                 guard page.count <= 50 else { self.error = "书架分页超过上限"; return }
@@ -119,6 +129,18 @@ final class HostShelf: ObservableObject {
                 }
                 if replacing && page.isEmpty && anchor != nil && !previous {
                     self.request(anchor: anchor, previous: true, inclusive: false, replacing: true)
+                    return
+                }
+                // A prepend/eviction moves existing rows. Wait for measured
+                // native movement to stop before changing those coordinates.
+                if !replacing, previous || self.rows.count + page.count > 150, !settled,
+                   let lastProbeMovement, ProcessInfo.processInfo.systemUptime - lastProbeMovement < 0.15 {
+                    loading = true
+                    pendingPage = { [weak self] in
+                        self?.receive(result, token: token, requested: requested, anchor: anchor,
+                                      previous: previous, replacing: replacing, settled: true)
+                    }
+                    schedulePendingPage()
                     return
                 }
                 let retainedTop = replacing ? anchor :
@@ -150,8 +172,18 @@ final class HostShelf: ObservableObject {
                     self.awaitingLayoutKey = self.restoreKey
                     self.restoreRevision += 1
                 }
-            }
         }
+    }
+
+    private func schedulePendingPage() {
+        guard pendingPage != nil else { return }
+        pendingPageWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            let apply = self.pendingPage; self.pendingPage = nil; apply?()
+        }
+        pendingPageWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: work)
     }
 
     func measureProbe(key: String?, frame: CGRect, size: CGSize, revision: Int) {
@@ -159,7 +191,10 @@ final class HostShelf: ObservableObject {
         if probeRevision != revision {
             probeRevision = revision; probePositions = [:]; probeSize = .zero
         }
-        if let key { probePositions[key] = frame } else { probeSize = size }
+        if let key {
+            if probePositions[key] != frame { lastProbeMovement = ProcessInfo.processInfo.systemUptime; schedulePendingPage() }
+            probePositions[key] = frame
+        } else { probeSize = size }
         guard !probeFlushScheduled else { return }
         probeFlushScheduled = true
         DispatchQueue.main.async { [weak self] in
