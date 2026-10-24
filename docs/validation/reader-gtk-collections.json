@@ -1,0 +1,156 @@
+{
+  "accepted": true,
+  "status": "completed-success",
+  "source_sha": "b9124fbd49c5207eeba204414578dda2f0075e81",
+  "run_id": 40057786209,
+  "attempt": 1,
+  "scope": "GTK native shelves children tags series bounded memberships and explicit pending recovery",
+  "complete_product": false,
+  "performance_accepted": false,
+  "six_platform_accepted": false,
+  "sdk_changed": false,
+  "schema_changed": false,
+  "ui_expected": {
+    "original": 20,
+    "product": 5,
+    "fixed": 24,
+    "shelf": 14,
+    "book_metadata": 15,
+    "collections": 27
+  },
+  "page_limits": {
+    "groups": 50,
+    "members": 50,
+    "main_shelf_cache": 150
+  },
+  "job_id": 120764494096,
+  "ui_observed": {
+    "original": 20,
+    "product": 5,
+    "fixed": 24,
+    "shelf": 14,
+    "book_metadata": 15,
+    "collections": 27
+  },
+  "native_observed": {
+    "sdk": 9,
+    "catalog": 12,
+    "process_kills": 2,
+    "backend": 82,
+    "backend_groups": 11,
+    "fixed_snapshot": 53,
+    "bounded_backend": 82
+  },
+  "program_sha256": "ad01fd0c38caf28801af7584c414bb7626b2e4a75707d45c451eb6343975444c",
+  "raw_report": {
+    "path": "desktop-gtk-collections/collections-ui.json",
+    "sha256": "90703ddf22074a847d028cf7ffb8a537dc7560bcbd83f185bc27528e9a3f64d9"
+  },
+  "screenshots": {
+    "01-native-organizer.png": "0672be950a42b8c31c21653541b2eece3fa2c57607dd45e59afc9a186fa5df74",
+    "02-restore-parent-required.png": "2b7f9f4b03bd69f4ae31968c6f22dc95efd310dab4b923bf373687422d84b191",
+    "03-series-order.png": "8fcd4fcd182294db632ecf62357388dcbd97c7ae2272e4b833008f6b38111178",
+    "04-durable-refusal.png": "1582c7d74d3dfa39328143d4febb24315e059aca460e74c17890c43bf6b72a7b",
+    "05-stale-head-refused.png": "1582c7d74d3dfa39328143d4febb24315e059aca460e74c17890c43bf6b72a7b",
+    "06-bounded-member-page.png": "bbdf52512222a7e58202d1822d594ebdd224df27398438d3e9e2c67bd6f590be",
+    "07-original-opened-from-membership.png": "14ab1421db30e61251485072d93de2e563b2d0239a8549c1b604f466e7006ec2"
+  },
+  "artifact": {
+    "id": 12545949051,
+    "name": "reader-desktop-sdk-Linux-40057786209-1",
+    "size_in_bytes": 39285410,
+    "digest": "sha256:242152b70c7364a5dbf01fa4a14380702069844c9c047aae0bb42592a13ea59e",
+    "expired": false,
+    "expires_at": "2027-01-22T03:18:48Z",
+    "source_sha": "b9124fbd49c5207eeba204414578dda2f0075e81",
+    "run_id": 40057786209
+  },
+  "evidence_read": "Completed GitHub job logs, matching upload digest and GitHub artifact API metadata; no local artifact download or test execution.",
+  "retained_failures": [
+    {
+      "source_sha": "50d47a42f7bdacbd7a3d483d02224994aa6ab187",
+      "run_id": 40054652102,
+      "attempt": 1,
+      "job_id": 120754824163,
+      "conclusion": "failure",
+      "new_ui_completed": 0,
+      "new_ui_expected": 26,
+      "reason": "strict_compiler_misleading_indentation",
+      "artifact": {
+        "id": 12544623498,
+        "name": "reader-desktop-sdk-Linux-40054652102-1",
+        "size_in_bytes": 1280573,
+        "digest": "sha256:c3acc53d5614dfd6e43440fadc547c5fcfaedb1ae31b894f9844c7b2858fe6d7",
+        "expired": false
+      }
+    },
+    {
+      "source_sha": "78f89fd85b9f77a8a018278a085f858e54d903e5",
+      "run_id": 40054970154,
+      "attempt": 1,
+      "job_id": 120755835387,
+      "conclusion": "failure",
+      "new_ui_completed": 4,
+      "new_ui_expected": 26,
+      "reason": "cancel_new_cleared_current_group_selection",
+      "artifact": {
+        "id": 12544483688,
+        "name": "reader-desktop-sdk-Linux-40054970154-1",
+        "size_in_bytes": 39049781,
+        "digest": "sha256:4b9c4d06cabdb9083e11c7540434dc81319461f91122217b3f49d3e807cfe160",
+        "expired": false
+      }
+    },
+    {
+      "source_sha": "0937b28dcba790c3e1bbf90dcd0df415abf8dc4b",
+      "run_id": 40055547372,
+      "attempt": 1,
+      "job_id": 120757610898,
+      "conclusion": "failure",
+      "new_ui_completed": 8,
+      "new_ui_expected": 27,
+      "reason": "list_mnemonic_did_not_select_member",
+      "artifact": {
+        "id": 12545620985,
+        "name": "reader-desktop-sdk-Linux-40055547372-1",
+        "size_in_bytes": 39052002,
+        "digest": "sha256:d111cac1c03b4e0d456add7d4e2213372cb7c1e3d0df65340b5261e64ccf9068",
+        "expired": false
+      }
+    },
+    {
+      "source_sha": "109c9f75dcb3fd4bf20683afccd862c87c170dd9",
+      "run_id": 40056340641,
+      "attempt": 1,
+      "job_id": 120760041842,
+      "conclusion": "failure",
+      "new_ui_completed": 12,
+      "new_ui_expected": 27,
+      "reason": "parent_view_and_position_shared_a_mnemonic",
+      "artifact": {
+        "id": 12546011284,
+        "name": "reader-desktop-sdk-Linux-40056340641-1",
+        "size_in_bytes": 39072813,
+        "digest": "sha256:23ddba40acf0974e5e25b39ca5a2a2e4c8ca3761f26b3923f18d3abb24616c5d",
+        "expired": false
+      }
+    },
+    {
+      "source_sha": "983c67d706a3783c0d4252cd04a2ab6ad8ff9c84",
+      "run_id": 40057064804,
+      "attempt": 1,
+      "job_id": 120762265658,
+      "conclusion": "failure",
+      "new_ui_completed": 14,
+      "new_ui_expected": 27,
+      "reason": "asynchronous_read_lost_type_selector_focus",
+      "artifact": {
+        "id": 12545773534,
+        "name": "reader-desktop-sdk-Linux-40057064804-1",
+        "size_in_bytes": 39063582,
+        "digest": "sha256:3c7e1eeb2bf96e9e6fd89a61cc3aa348601fc8c7519573f85b14abfcf6406f76",
+        "expired": false
+      }
+    }
+  ]
+}

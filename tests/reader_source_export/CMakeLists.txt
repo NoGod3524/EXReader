@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: MIT
+cmake_minimum_required(VERSION 3.24)
+project(ReaderOriginalExportConsumer LANGUAGES C CXX)
+set(CMAKE_CXX_STANDARD 17)
+if(MSVC)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  add_compile_options(/utf-8)
+endif()
+find_package(EXReaderSideload CONFIG REQUIRED)
+add_executable(original-export-consumer consumer.cpp api.c)
+target_link_libraries(original-export-consumer PRIVATE EXReaderSideload::exr_sideload)

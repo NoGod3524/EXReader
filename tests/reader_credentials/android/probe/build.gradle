@@ -1,0 +1,45 @@
+// Emulator probe: links the installed NDK build of the C ABI and depends on the
+// credentials library module for the Java entry.
+plugins {
+    id 'com.android.application'
+}
+
+def credentialsPrefix = project.findProperty('exrCredentials') ?: ''
+
+android {
+    namespace 'org.exreader.credentials.probe'
+    compileSdk 35
+    ndkVersion '27.0.12077973'
+
+    defaultConfig {
+        applicationId 'org.exreader.credentials.probe'
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName '0.1.0'
+        ndk { abiFilters 'x86_64' }
+        externalNativeBuild {
+            cmake {
+                arguments "-DEXReaderCredentials_DIR=${credentialsPrefix}/lib/cmake/EXReaderCredentials"
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    externalNativeBuild {
+        cmake {
+            path file('src/main/cpp/CMakeLists.txt')
+            version '3.22.1'
+        }
+    }
+
+    lint { abortOnError false }
+}
+
+dependencies {
+    implementation project(':credentials')
+}

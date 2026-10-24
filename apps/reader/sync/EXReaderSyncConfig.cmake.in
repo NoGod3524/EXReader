@@ -1,0 +1,8 @@
+@PACKAGE_INIT@
+include(CMakeFindDependencyMacro)
+find_dependency(EXReaderRevisions 0.3.0 EXACT CONFIG)
+find_dependency(EXReaderWebDAV 0.2.0 EXACT CONFIG)
+if(NOT WIN32 AND NOT APPLE AND NOT ANDROID)
+  find_dependency(OpenSSL COMPONENTS Crypto)
+endif()
+include("${CMAKE_CURRENT_LIST_DIR}/EXReaderSyncTargets.cmake")

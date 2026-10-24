@@ -1,0 +1,89 @@
+{
+  "schema": 1,
+  "accepted": true,
+  "scope": "read-only native HTTPS WebDAV book source on Windows and Linux",
+  "source_sha": "46e2f30c54beb7996380fc48ef0103c10a33c4b6",
+  "base_sha": "57ad488423dc393b2ecd15526beec0806e0501f8",
+  "module_contract_ancestor": "f32bb8aa18ed3de286900f19ce4230fd93435dd0",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "frozen_sdk_unchanged_cloud_guard": true,
+  "product_schema_unchanged_cloud_guard": true,
+  "workflow": ".github/workflows/reader-webdav.yml",
+  "run_id": 40031774271,
+  "attempt": 1,
+  "run_status": "completed",
+  "run_conclusion": "success",
+  "jobs": [
+    {
+      "platform": "Windows 2022 x64",
+      "job_id": 120681499373,
+      "conclusion": "success",
+      "checks": 76,
+      "expected_checks": 76,
+      "accepted": true,
+      "https_transport": "WinHTTP with system certificate and hostname verification",
+      "xml_parser": "XmlLite with DTD prohibited",
+      "artifact": {
+        "id": 12535592124,
+        "name": "reader-webdav-Windows-40031774271-1",
+        "bytes": 393741,
+        "sha256": "b5b54b7421055ce4af69f08fab503ab0a2b381892b494b0f9d48b88af8a0b842",
+        "expires_at": "2027-01-21T22:09:35Z",
+        "expired": false,
+        "run_and_source_verified": true,
+        "digest_matches_upload_log": true
+      }
+    },
+    {
+      "platform": "Ubuntu 22.04 x64",
+      "job_id": 120681499593,
+      "conclusion": "success",
+      "checks": 77,
+      "expected_checks": 77,
+      "accepted": true,
+      "https_transport": "native libcurl with peer and hostname verification enabled",
+      "xml_parser": "libxml2 with network access disabled and DTD/entity references refused",
+      "additional_platform_case": "actual symlink destination is preserved",
+      "artifact": {
+        "id": 12535487356,
+        "name": "reader-webdav-Linux-40031774271-1",
+        "bytes": 163880,
+        "sha256": "c8b78a53395872aec618d68fbe32f4ae14d895f5a82ef558c1135a6b6812f7d0",
+        "expires_at": "2027-01-21T22:09:35Z",
+        "expired": false,
+        "run_and_source_verified": true,
+        "digest_matches_upload_log": true
+      }
+    }
+  ],
+  "failed_iterations_retained": [
+    {
+      "source_sha": "809246e500cff9714f15a4f489f7594dda480604",
+      "run_id": 40030890464,
+      "reason": "Strict compiler diagnostics: Linux condition formatting and missing explicit Windows COM header",
+      "artifacts": [
+        {"id": 12535136246, "bytes": 4882, "sha256": "799d86b04e100b8c16a151f69c9b99804606a3b7a9b00fb1623832a25198361d"},
+        {"id": 12534657779, "bytes": 6098, "sha256": "f11b395c1b72f798f46dc59628ae0a89c47f4df48569ee62ee826c2ac689b9bb"}
+      ]
+    },
+    {
+      "source_sha": "341c3f17f190a80b232563beba3ed784f1f32519",
+      "run_id": 40031024147,
+      "reason": "Both builds installed; Linux 67 checks passed; Windows fixture certificate provider unavailable before TLS cases",
+      "artifacts": [
+        {"id": 12534702015, "bytes": 77699, "sha256": "c2bafca31ae8d99243a51bb77f9e3b1e3270c4bb9071da31262a1e7d2c35476f"},
+        {"id": 12534263353, "bytes": 12844, "sha256": "11fbf3a6e08aba250c10f2f54dc21cd768cbe661beea320533c6069a94637fc8"}
+      ]
+    }
+  ],
+  "prior_successful_runs_not_combined": [40031294681, 40031521200, 40031568983],
+  "limits": {"download_bytes": 134217728, "listing_bytes": 4194304, "entries": 2000, "xml_elements": 20000, "xml_depth": 32, "redirects": 4},
+  "local_build_test_service_or_artifact_download": false,
+  "complete_product": false,
+  "cross_device_sync_accepted": false,
+  "mobile_adapters_accepted": false,
+  "host_ui_accepted": false,
+  "real_provider_interoperability_accepted": false,
+  "performance_or_rss_budget_accepted": false,
+  "remote_writes_or_revision_protocol_implemented": false
+}

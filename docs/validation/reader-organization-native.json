@@ -1,0 +1,86 @@
+{
+  "accepted": true,
+  "source_sha": "4bfe09766d6a92445a09d7a66b47fa9eb59ab325",
+  "run_id": 40046721924,
+  "attempt": 1,
+  "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
+  "scope": "native read-only shelf tag series organization API; no UI acceptance",
+  "schema1_unchanged": true,
+  "complete_product": false,
+  "ui_accepted": false,
+  "records": [
+    {
+      "platform": "macOS",
+      "job_id": 120730038421,
+      "accepted": true,
+      "source_sha": "4bfe09766d6a92445a09d7a66b47fa9eb59ab325",
+      "run_id": "40046721924",
+      "attempt": "1",
+      "original_groups": 12,
+      "query_groups": 10,
+      "organization_groups": 15,
+      "ui_credit": 0,
+      "reports": {
+        "build/shelf-query/original/result.json": "6c623350c947896fa319699c08fbd9ca919299c56515cede4bae428a190660b2",
+        "build/shelf-query/shelf/shelf-result.json": "abb002a7ff6e5b670e801372d1fa170927d52a77c1fb12156b0f4742a4d6399a",
+        "build/shelf-query/organization/organization-result.json": "68b370aedd42cea76e2263832078b9a0e0674b000f669d64d9a43c33198d6e43"
+      },
+      "artifact": {
+        "id": 12542090525,
+        "name": "desktop-shelf-query-macOS-40046721924-1",
+        "size_in_bytes": 496841,
+        "digest": "sha256:351fa74958f0e33d8fb11b115c7b51c4998c164f1eeaf03bb55a0ef09b8edd0c",
+        "expired_at_verification": false
+      }
+    },
+    {
+      "platform": "Linux",
+      "job_id": 120730038191,
+      "accepted": true,
+      "source_sha": "4bfe09766d6a92445a09d7a66b47fa9eb59ab325",
+      "run_id": "40046721924",
+      "attempt": "1",
+      "original_groups": 12,
+      "query_groups": 10,
+      "organization_groups": 15,
+      "ui_credit": 0,
+      "reports": {
+        "build/shelf-query/original/result.json": "6c623350c947896fa319699c08fbd9ca919299c56515cede4bae428a190660b2",
+        "build/shelf-query/shelf/shelf-result.json": "abb002a7ff6e5b670e801372d1fa170927d52a77c1fb12156b0f4742a4d6399a",
+        "build/shelf-query/organization/organization-result.json": "68b370aedd42cea76e2263832078b9a0e0674b000f669d64d9a43c33198d6e43"
+      },
+      "artifact": {
+        "id": 12540829185,
+        "name": "desktop-shelf-query-Linux-40046721924-1",
+        "size_in_bytes": 496409,
+        "digest": "sha256:938d6563d5dee7d10588378a38c6dac3200067acb9bad59d1606448a9bf7bd15",
+        "expired_at_verification": false
+      }
+    },
+    {
+      "platform": "Windows",
+      "job_id": 120730038574,
+      "accepted": true,
+      "source_sha": "4bfe09766d6a92445a09d7a66b47fa9eb59ab325",
+      "run_id": "40046721924",
+      "attempt": "1",
+      "original_groups": 12,
+      "query_groups": 10,
+      "organization_groups": 15,
+      "ui_credit": 0,
+      "reports": {
+        "build\\shelf-query\\original\\result.json": "6c623350c947896fa319699c08fbd9ca919299c56515cede4bae428a190660b2",
+        "build\\shelf-query\\shelf\\shelf-result.json": "abb002a7ff6e5b670e801372d1fa170927d52a77c1fb12156b0f4742a4d6399a",
+        "build\\shelf-query\\organization\\organization-result.json": "68b370aedd42cea76e2263832078b9a0e0674b000f669d64d9a43c33198d6e43"
+      },
+      "artifact": {
+        "id": 12541956025,
+        "name": "desktop-shelf-query-Windows-40046721924-1",
+        "size_in_bytes": 497029,
+        "digest": "sha256:95dabae6584e73dbcad46dda965ae7676963469225b186f350c64112c77f1cc7",
+        "expired_at_verification": false
+      }
+    }
+  ],
+  "problems": []
+}

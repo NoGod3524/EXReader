@@ -1,0 +1,21 @@
+{
+  "source_sha": "f93ec5cd8154d82be63d8831e14547a27a597eca",
+  "run_id": 40043264202,
+  "attempt": 1,
+  "job_id": 120719000091,
+  "accepted": true,
+  "scope": "Windows downloaded-books functional UI",
+  "performance_accepted": false,
+  "complete_product": false,
+  "sdk_candidate": "9854061be331fe603a1822d9b2b36ee357154927",
+  "product_schema": 1,
+  "originals": 2202,
+  "page_size": 50,
+  "cache_limit": 150,
+  "checks": {"sdk_groups": 9, "catalog_groups": 12, "query_groups": 10, "kill_boundaries": 2, "native_selfchecks": 26, "evidence_checks": 54, "original_ui": 158, "original_screenshots": 8, "product_ui": 10, "worker_cache_cases": 5, "actual_bounded_shelf_ui": 13},
+  "binary_sha256": "5a158ce5eda35e8644f65db4cf3886aecb8c4ae0408d49d6ea27316f5520b3e7",
+  "worker_review_binary_sha256": "1f4f466d5f1274980ef3c9483822a286f61b468b3ab3275691153ff72b262ad6",
+  "artifact": {"id": 12539874813, "name": "reader-desktop-sdk-Windows-40043264202-1", "bytes": 36618700, "sha256": "2045913dada11add083a652fef923a713381267b689116f38a60a11343b01161", "expired_at_verification": false},
+  "separate_query_run": {"id": 40043264180, "windows": "success", "linux": "success", "macos": "success", "macos_job_id": 120719000164, "macos_initial_status_retained": "queued_at_verification"},
+  "problems": []
+}
