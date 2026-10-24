@@ -1,0 +1,22 @@
+{
+  "package": "G08 reader-module-composition",
+  "branch": "codex/reader-module-composition",
+  "implementation_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "status": "not_yet_executed_on_this_source",
+  "granted_platforms": [],
+  "ungranted_platforms": [
+    "android",
+    "ios",
+    "host-ui",
+    "performance"
+  ],
+  "source_sha": null,
+  "runs": [],
+  "items": [],
+  "notes": [
+    "This record is written before the first Actions execution and is replaced with the real per-item results of the same source, run and attempt.",
+    "No capability is granted from a successful configure, a report about a run, or another package's evidence."
+  ],
+  "complete_product": false
+}
