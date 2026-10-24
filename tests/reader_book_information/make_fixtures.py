@@ -175,7 +175,7 @@ def write_fixtures(directory):
     emit("tiny.txt", ("另一本书" * 3 + "\n").encode("utf-8"))
     # 16 lines of 64 KiB: sixteen hash chunks with a paragraph count far below
     # the SDK node budget, so the only limit under test is this package's own.
-    emit("large.txt", ("行" * 21845 + "\n") * 16)
+    emit("large.txt", (("行" * 21845 + "\n") * 16).encode("utf-8"))
 
     manifest = {
         "directory": str(books.resolve()),
