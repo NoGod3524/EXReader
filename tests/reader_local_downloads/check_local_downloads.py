@@ -38,6 +38,7 @@ EXPECTED_CHECKS = [
     "intent_duplicate_field_refused", "intent_unknown_field_refused",
     "intent_empty_id_refused", "intent_nine_ids_refused",
     "state_dir_link_refused", "originals_link_refused", "intent_tmp_hardlink_kept",
+    "reimport_publish_blocked", "reimport_over_ceiling", "reimport_longer_file",
     "reenter_remove_from_stage", "reenter_recover_from_busy", "reenter_pending_readonly",
     "pdf_private_original", "formats_all_remove_reimport",
 ]
@@ -991,6 +992,91 @@ def s_reimport_import_verified(ctx):
     env.assert_state_clean()
 
 
+def s_reimport_publish_blocked(ctx):
+    """A blocked retained-original publish must leave no SDK row and no mapping,
+    and the same call must succeed after the obstruction is removed."""
+    env = ctx.new("publish_blocked")
+    book = env.add("pdf", "Publish Blocked")
+    neighbour = env.add("txt", "Publish neighbour")
+    env.seed_product([book, neighbour])
+    removed_ok(env.run("remove", "--key", book.key), book)
+    originals = os.path.join(env.state, "originals")
+    os.makedirs(originals, exist_ok=True)
+    blocked = os.path.join(originals, book.sha + ".orig")
+    os.makedirs(blocked)  # a directory where the retained file has to go
+    keep = os.path.join(blocked, "keep.bin")
+    with open(keep, "wb") as f:
+        f.write(b"blocked target\n")
+    before = env.snap()
+    sdk_before = sha256_file(os.path.join(env.work, "sdk.db"))
+    catalog_before = sha256_file(env.catalog_path)
+    rows_before = sorted(env.books())
+    r = env.run("reimport", "--key", book.key, "--file", book.path).result
+    same(r["status"], "io", "a blocked publish is refused: " + r["msg"])
+    same(sha256_file(os.path.join(env.work, "sdk.db")), sdk_before, "no SDK row was created")
+    same(sha256_file(env.catalog_path), catalog_before, "the catalog was not touched")
+    same(sorted(env.books()), rows_before, "SDK rows unchanged")
+    same(env.catalog(book.key)[:3], (1, 0, 0), "no mapping was written")
+    need(not os.path.exists(os.path.join(originals, book.sha + ".open")), "staging left behind")
+    need(os.path.isfile(keep), "the blocking target was modified")
+    env.assert_unchanged_but(before)
+    shutil.rmtree(blocked)
+    r = env.run("reimport", "--key", book.key, "--file", book.path).result
+    same((r["status"], r["outcome"]), ("ok", "attached"), "retry after clearing the block")
+    same(env.dump_sha(int(r["id"])), book.sha, "the retry stored the verified bytes")
+    same(env.catalog(book.key)[:3], (1, int(r["id"]), 1), "mapping restored on the retry")
+    env.assert_state_clean()
+
+
+def s_reimport_over_ceiling(ctx):
+    """A ceiling below the book refuses before copying anything."""
+    env = ctx.new("reimport_ceiling")
+    book = env.add("txt", "Ceiling", content=b"C" * 4096)
+    env.seed_product([book])
+    removed_ok(env.run("remove", "--key", book.key), book)
+    before = env.snap()
+    sdk_before = sha256_file(os.path.join(env.work, "sdk.db"))
+    catalog_before = sha256_file(env.catalog_path)
+    r = env.run("reimport", "--key", book.key, "--file", book.path, "--max-input", "1024").result
+    same(r["status"], "argument", "a ceiling below the book is refused: " + r["msg"])
+    same(sha256_file(os.path.join(env.work, "sdk.db")), sdk_before, "no SDK row was created")
+    same(sha256_file(env.catalog_path), catalog_before, "the catalog was not touched")
+    originals = os.path.join(env.state, "originals")
+    same(os.listdir(originals) if os.path.isdir(originals) else [], [], "nothing was staged")
+    env.assert_unchanged_but(before)
+    r = env.run("reimport", "--key", book.key, "--file", book.path, "--max-input", "8192").result
+    same((r["status"], r["outcome"]), ("ok", "attached"), "a sufficient ceiling succeeds")
+    same(env.dump_sha(int(r["id"])), book.sha, "verified bytes stored")
+    env.assert_state_clean()
+
+
+def s_reimport_longer_file(ctx):
+    """An input far past the identity length is refused and the private copy
+    never exceeds that length."""
+    env = ctx.new("reimport_longer")
+    book = env.add("txt", "Longer", content=b"D" * 4096)
+    env.seed_product([book])
+    removed_ok(env.run("remove", "--key", book.key), book)
+    longer = os.path.join(env.work, "files", "longer.txt")
+    with open(longer, "wb") as f:
+        f.write(b"D" * 4096)
+        f.write(b"E" * (192 * 1024))
+    before = env.snap()
+    sdk_before = sha256_file(os.path.join(env.work, "sdk.db"))
+    r = env.run("reimport", "--key", book.key, "--file", longer).result
+    same(r["status"], "identity", "a longer file is refused: " + r["msg"])
+    same(sha256_file(os.path.join(env.work, "sdk.db")), sdk_before, "no SDK row was created")
+    originals = os.path.join(env.state, "originals")
+    staged = os.listdir(originals) if os.path.isdir(originals) else []
+    same(staged, [], "no staging file is left")
+    biggest = 0
+    for name in staged:
+        biggest = max(biggest, os.path.getsize(os.path.join(originals, name)))
+    need(biggest <= book.size, "a private copy exceeded the identity length")
+    env.assert_unchanged_but(before)
+    env.assert_state_clean()
+
+
 def s_reenter_remove_from_stage(ctx):
     env = ctx.new("reenter_remove")
     book = env.add("txt", "Reenter Remove")
@@ -1126,6 +1212,9 @@ SCENARIOS = [
     ("state_dir_link_refused", s_state_dir_link_refused),
     ("originals_link_refused", s_originals_link_refused),
     ("intent_tmp_hardlink_kept", s_intent_tmp_hardlink_kept),
+    ("reimport_publish_blocked", s_reimport_publish_blocked),
+    ("reimport_over_ceiling", s_reimport_over_ceiling),
+    ("reimport_longer_file", s_reimport_longer_file),
     ("reenter_remove_from_stage", s_reenter_remove_from_stage),
     ("reenter_recover_from_busy", s_reenter_recover_from_busy),
     ("reenter_pending_readonly", s_reenter_pending_readonly),

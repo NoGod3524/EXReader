@@ -411,19 +411,49 @@ static reader_ld_status ld_hash_file(const reader_ld_options *o, const char *pat
   return READER_LD_OK;
 }
 
+/* The effective installed-sideload input ceiling for one format: the format
+   limit, lowered (never raised) by the caller's max_input_bytes. */
+static uint64_t ld_input_limit(const ld_format *format, const reader_ld_options *o) {
+  uint64_t limit = (format->format == EXR_EPUB || format->format == EXR_CBZ ||
+                    format->format == EXR_PDF) ? EXR_SIDELOAD_STREAM_LIMIT
+                                               : EXR_SIDELOAD_MEMORY_LIMIT;
+  if (o->max_input_bytes && o->max_input_bytes < limit) limit = o->max_input_bytes;
+  return limit;
+}
+
 /* Copies one opened source handle into a private staging file while hashing
    the same bytes, so verification and import can never observe two different
    files. The staging name is removed first and created exclusively. */
 static reader_ld_status ld_stage_copy(const reader_ld_options *o, const char *source_path,
-    const char *stage_path, char sha[65], uint64_t *size, reader_ld_error *e) {
+    const char *stage_path, uint64_t expected, uint64_t ceiling, char sha[65], uint64_t *size,
+    reader_ld_error *e) {
   ld_sha state;
   unsigned char *buffer;
   FILE *input, *output;
   size_t got;
   *size = 0; sha[0] = 0;
+  /* Refuse before copying anything when the book cannot fit the configured
+     input ceiling. */
+  if (!expected || expected > ceiling)
+    return ld_fail(e, READER_LD_ARGUMENT, EXR_OK,
+      0, "The book original exceeds the configured input ceiling");
   (void)ld_unlink(stage_path);
   input = ld_fopen(source_path, 0);
   if (!input) return ld_fail(e, READER_LD_IO, EXR_OK, 0, "File could not be opened");
+  /* A file that already disagrees with the identity is refused without a
+     copy; the loop below still bounds a file that grows afterwards. */
+  if (fseek(input, 0, SEEK_END) == 0) {
+    long end = ftell(input);
+    if (end < 0 || fseek(input, 0, SEEK_SET) != 0) {
+      fclose(input);
+      return ld_fail(e, READER_LD_IO, EXR_OK, 0, "File could not be sized");
+    }
+    if ((uint64_t)end != expected) {
+      fclose(input);
+      return ld_fail(e, READER_LD_IDENTITY, EXR_OK, 0,
+        "File size differs from the book identity");
+    }
+  }
   output = ld_create_exclusive(stage_path);
   if (!output) { fclose(input); return ld_fail(e, READER_LD_IO, EXR_OK, 0, "Private staging file could not be created"); }
   buffer = (unsigned char *)malloc(LD_CHUNK);
@@ -436,6 +466,13 @@ static reader_ld_status ld_stage_copy(const reader_ld_options *o, const char *so
     if (ld_cancelled(o)) {
       free(buffer); fclose(input); fclose(output); (void)ld_unlink(stage_path);
       return ld_fail(e, READER_LD_CANCELLED, EXR_CANCELLED, 0, "Cancelled while staging");
+    }
+    /* Hard bound: never write past the expected original length, so a file
+       that grows while it is read cannot fill the disk or slip past the check. */
+    if (*size + got > expected) {
+      free(buffer); fclose(input); fclose(output); (void)ld_unlink(stage_path);
+      return ld_fail(e, READER_LD_IDENTITY, EXR_OK, 0,
+        "File grew past the book identity while it was read");
     }
     if (fwrite(buffer, 1, got, output) != got || ld_flush(output) != 0) {
       free(buffer); fclose(input); fclose(output); (void)ld_unlink(stage_path);
@@ -1206,14 +1243,15 @@ static reader_ld_status ld_reimport_locked(const reader_ld_options *o, const cha
   exr_sideload_result sr;
   exr_error se;
   exr_status sdk;
-  char sha[65];
+  char sha[65], publish_path[LD_PATH];
   uint64_t size = 0;
-  int present = 0, has_row = 0;
+  int present = 0, has_row = 0, published = 0, existed = 0;
   if (e) memset(e, 0, sizeof(*e));
   status = ld_result_check(result, e);
   if (status != READER_LD_OK) return status;
   status = ld_check_options(o, 1, e);
   if (status != READER_LD_OK) return status;
+  publish_path[0] = 0;
   if (ld_parse_key(book_key, &key) != 0 || !path || !path[0])
     return ld_fail(e, READER_LD_ARGUMENT, EXR_OK, 0, "Book key and file path are required");
   status = ld_intent_read(o->state_dir, &pending, &present, e);
@@ -1243,7 +1281,7 @@ static reader_ld_status ld_reimport_locked(const reader_ld_options *o, const cha
     }
     /* Hash and import consume one private copy of exactly the verified bytes:
        a pathname swapped after hashing cannot change what the SDK stores. */
-    status = ld_stage_copy(o, path, stage, sha, &size, e);
+    status = ld_stage_copy(o, path, stage, row.bytes, ld_input_limit(key.format, o), sha, &size, e);
     if (status != READER_LD_OK) goto done;
     if (size != row.bytes || strcmp(sha, key.sha)) {
       (void)ld_unlink(stage);
@@ -1253,8 +1291,40 @@ static reader_ld_status ld_reimport_locked(const reader_ld_options *o, const cha
     memset(&so, 0, sizeof(so)); memset(&sr, 0, sizeof(sr)); memset(&se, 0, sizeof(se));
     so.struct_size = sizeof(so); so.max_input_bytes = o->max_input_bytes; so.control = o->control;
     sr.struct_size = sizeof(sr);
-    sdk = exr_sideload_import_file(o->library, key.format->format, stage, row.title, &so, &sr, &se);
-    if (sdk != EXR_OK) { (void)ld_unlink(stage); status = ld_sdk_fail(e, sdk, &se, "SDK import"); goto done; }
+    /* Publish the retained private original BEFORE anything is mapped: a
+       publication failure then leaves no SDK row and no mapping behind. */
+    imported[0] = 0;
+    {
+      char stable[LD_PATH];
+      published = 0;
+      existed = 0;
+      publish_path = stage;
+      if (key.format->format == EXR_PDF) {
+        snprintf(name, sizeof(name), "%s.orig", key.sha);
+        if (ld_join(stable, sizeof(stable), originals, name) != 0) {
+          (void)ld_unlink(stage);
+          status = ld_fail(e, READER_LD_IO, EXR_OK, 0, "Retained original path is too long");
+          goto done;
+        }
+        existed = ld_exists(stable);
+        if (ld_replace(stage, stable, originals) != 0) {
+          (void)ld_unlink(stage);
+          status = ld_fail(e, READER_LD_IO, EXR_OK, 0,
+            "Verified original could not be published");
+          goto done;
+        }
+        published = 1;
+        publish_path = stable;
+      }
+    }
+    sdk = exr_sideload_import_file(o->library, key.format->format, publish_path, row.title, &so,
+                                   &sr, &se);
+    if (sdk != EXR_OK) {
+      if (!published) (void)ld_unlink(stage);
+      else if (!existed) (void)ld_unlink(publish_path);
+      status = ld_sdk_fail(e, sdk, &se, "SDK import");
+      goto done;
+    }
     /* Verify the row the SDK actually created before it is ever mapped. */
     imported[0] = 0;
     sdk = exr_library_source(o->library, sr.book_id, &check, &se);
@@ -1269,7 +1339,8 @@ static reader_ld_status ld_reimport_locked(const reader_ld_options *o, const cha
     }
     if (status != READER_LD_OK || strcmp(imported, key.sha)) {
       if (sr.created) { exr_error ignored; (void)exr_library_delete(o->library, sr.book_id, &ignored); }
-      (void)ld_unlink(stage);
+      if (!published) (void)ld_unlink(stage);
+      else if (!existed) (void)ld_unlink(publish_path);
       if (status == READER_LD_OK)
         status = ld_fail(e, READER_LD_IDENTITY, EXR_OK, 0, "Imported original differs from the book identity");
       goto done;
@@ -1277,22 +1348,14 @@ static reader_ld_status ld_reimport_locked(const reader_ld_options *o, const cha
     status = ld_attach(o, &key, &row, sr.book_id, e);
     if (status != READER_LD_OK) {
       if (sr.created) { exr_error ignored; (void)exr_library_delete(o->library, sr.book_id, &ignored); }
-      (void)ld_unlink(stage);
+      if (!published) (void)ld_unlink(stage);
+      else if (!existed) (void)ld_unlink(publish_path);
       goto done;
     }
-    /* A PDF original is read through a private stable file, so the verified
-       copy outlives this call until the same book is removed again. */
-    if (key.format->format == EXR_PDF) {
-      char stable[LD_PATH];
-      snprintf(name, sizeof(name), "%s.orig", key.sha);
-      if (ld_join(stable, sizeof(stable), originals, name) != 0 || ld_replace(stage, stable, originals) != 0) {
-        (void)ld_unlink(stage);
-        status = ld_fail(e, READER_LD_IO, EXR_OK, 0, "Verified original could not be retained");
-        goto done;
-      }
-    } else {
-      (void)ld_unlink(stage);
-    }
+    /* Not published here: the staging copy was only an input and goes away.
+       The retained PDF copy (published above) stays as this module's recovery
+       artifact; the SDK already stores the original in its own database. */
+    if (!published) (void)ld_unlink(stage);
   }
   result->outcome = READER_LD_OUTCOME_ATTACHED;
   result->sdk_book_id = sr.book_id;
