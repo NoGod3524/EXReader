@@ -170,6 +170,27 @@ def build_cases():
                   'expected': 'fail', 'threshold_ratio': 1.0,
                   'outcome': classify_overlap(elements['a'], elements['b'], elements, 0.5)})
 
+    # 14. Siblings inside an unrecorded scroll view: they cannot be scrolled relative
+    # to each other, so the unchanged threshold still applies.
+    elements = {'a': element('a', 0, 0, 100, 100,
+                             'Application>Window>ScrollView>Other>Other>Button[a]'),
+                'b': element('b', 30, 0, 100, 100,
+                             'Application>Window>ScrollView>Other>Other>Button[b]')}
+    cases.append({'id': 'same-unnamed-scroll-siblings-overlap',
+                  'description': '无标识滚动容器内的同级控件重叠 70% 仍判遮挡',
+                  'expected': 'fail', 'threshold_ratio': 0.70,
+                  'outcome': classify_overlap(elements['a'], elements['b'], elements, 0.5)})
+
+    # 15. Same unnamed scroll view but different nesting depth: undecidable.
+    elements = {'a': element('a', 0, 0, 100, 100,
+                             'Application>Window>ScrollView>Other>Other>Button[a]'),
+                'b': element('b', 30, 0, 100, 100,
+                             'Application>Window>ScrollView>Other>Button[b]')}
+    cases.append({'id': 'same-scroll-non-sibling-unknown-viewport',
+                  'description': '同一无标识滚动容器但层级不同 → uncovered，不猜可见性',
+                  'expected': 'undetermined', 'threshold_ratio': None,
+                  'outcome': classify_overlap(elements['a'], elements['b'], elements, 0.5)})
+
     return cases, elements
 
 
