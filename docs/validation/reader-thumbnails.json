@@ -1,0 +1,185 @@
+{
+  "package": "EXReaderThumbnails",
+  "version": "0.1.0",
+  "fixed_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk_freeze": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "abi": 1,
+  "status": "root-reviewed native enumeration and ownership fixes, verified on three desktops with strict same-source leak and allocation-fault evidence",
+  "accepted": true,
+  "tested_source": "430c718b7a92cf8055e5c3775bdcb254e918419b",
+  "run": {"id": 40092824048, "attempt": 1, "workflow": ".github/workflows/reader-thumbnails.yml"},
+  "jobs": [
+    {"id": 120868839001, "name": "thumbnail consumers (ubuntu-22.04)", "conclusion": "success"},
+    {"id": 120868838955, "name": "thumbnail consumers (windows-2022)", "conclusion": "success"},
+    {"id": 120868838850, "name": "thumbnail consumers (macos-15)", "conclusion": "success"},
+    {"id": 120868838988, "name": "sanitized probe (ubuntu-22.04)", "conclusion": "success"},
+    {"id": 120872572483, "name": "strict thumbnail evidence", "conclusion": "success"}
+  ],
+  "artifacts": [
+    {"id": 12559642629, "name": "reader-thumbnails-Linux-40092824048-1", "bytes": 19685882, "digest": "sha256:d6ad9af5d326d898757d20343ac372e0058527867e09d0798769bc167d63af28", "expires_at": "2027-01-22T12:10:16Z"},
+    {"id": 12559956379, "name": "reader-thumbnails-Windows-40092824048-1", "bytes": 52345691, "digest": "sha256:4323f7c80a034020a53da7cd8d189dce651572fcd1d735fdf9da36eefc660664", "expires_at": "2027-01-22T12:10:16Z"},
+    {"id": 12559946968, "name": "reader-thumbnails-macOS-40092824048-1", "bytes": 14258129, "digest": "sha256:891571cbbde945759a82b5c8f7e855bb356d4f461610e30432ca7909fd41d2c6", "expires_at": "2027-01-22T12:10:16Z"},
+    {"id": 12559487241, "name": "reader-thumbnails-sanitized-40092824048-1", "bytes": 44922, "digest": "sha256:0ef3c2fa43e44596706c6059143d9e7e1c0bd75597548767f36d33f36176c458", "expires_at": "2027-01-22T12:10:16Z"},
+    {"id": 12560451051, "name": "reader-thumbnails-evidence-40092824048-1", "bytes": 2110, "digest": "sha256:e9976576051bee2d7908f46ead28c0f9b454fc7cf7c6e7b1ff90b414b0947984"}
+  ],
+  "checks": {
+    "linux": {"probe": 179, "regress": 11, "fault_sweeps": 3, "injected_open_store_library": [31, 42, 40], "terminations": 0},
+    "windows": {"probe": 178, "regress": 11, "fault_sweeps": 3, "injected_open_store_library": [17, 22, 21], "terminations": 0},
+    "macos": {"probe": 179, "regress": 11, "fault_sweeps": 3, "injected_open_store_library": [13, 25, 24], "terminations": 0},
+    "sanitized_linux": {"probe": 179, "regress": 11, "fault_sweeps": 3, "injected_open_store_library": [25, 38, 36], "terminations": 0}
+  },
+  "sanitizers": {"asan_options": "detect_leaks=1:abort_on_error=1", "ubsan_options": "halt_on_error=1:print_stacktrace=1", "scope": "package and installed consumers instrumented, frozen SDK uninstrumented; LeakSanitizer intercepts malloc for failed SDK blob/pixel cleanup paths"},
+  "review_fixes": [
+    "complete directory accounting or refusal, exclusive OS directory owner, failed deletions retained in byte and entry totals",
+    "RAII for partial cache, output pixels, decoded bitmap, borrowed SDK blob and store rollback",
+    "non-uniform pixel reference and 64x48 to 7x5 downscale; finish reads bmp.pixels rather than its output buffer",
+    "native directory handles replace the exact libstdc++ allocation/noexcept call site found by Actions stack traces",
+    "every allocation point includes index zero; every termination or nonzero child exit fails; active-cache C++ allocation counts and close/retry integrity are checked separately from C malloc leak evidence"
+  ],
+  "granted_platforms": ["linux", "windows", "macos"],
+  "performance_claimed": false,
+  "host_ui_accepted": false,
+  "six_platform_accepted": false,
+  "complete_product": false,
+  "sdk_changed": false,
+  "schema_changed": false,
+  "review_history": [
+    {"source": "bae50ff3", "run": 40088602169, "result": "failure; Linux open terminated and macOS store leaked map allocations"},
+    {"source": "b7bc49e38ca2deb41a47e4db76f8257ff38c169e", "run": 40089614222, "result": "retained earlier store rollback and child-spawn iteration"},
+    {"source": "c68b87dcc66766d1a7d7918e8958f258063d395c", "run": 40090050527, "result": "consumer failures, sanitized probe success"},
+    {"source": "b7e38e5ba403e1aef3b06a7cd827ec992a3a1dd6", "run": 40091225844, "result": "green but root rejected the fault grant: Linux counted eight terminations as passing"},
+    {"source": "b99034cde106868c50024058b6e9ad278be06cd3", "run": 40092109613, "result": "failure with exact allocation stacks locating the directory-iterator constructor"},
+    {"source": "7afa5982b36b73faf84375bddf5b69a2270d2dfb", "run": 40092373580, "result": "Linux test checks passed, diagnostic shell command failed on already-cleaned scratch; later superseded queued work cancelled"},
+    {"source": "b0ddaacad979d66dddb41f799e3670a2f1893188", "run": 40092639342, "result": "superseded queued work cancelled; original logs retained"},
+    {"source": "8d845f71ee1528b9dfbfd4076081d34f8f092865", "run": 40092723573, "result": "Linux consumers and full leak suite passed; superseded queued work cancelled before the final allocation-zero sweep"}
+  ],
+  "historical_record": {
+  "status": "root review pending: exact allocation stacks exposed a terminating directory enumeration path; historical source and results below are preserved",
+  "accepted": false,
+  "historical_run_accepted": true,
+  "current_review": {
+    "candidate": "7afa5982b36b73faf84375bddf5b69a2270d2dfb",
+    "run_id": 40092373580,
+    "accepted": false,
+    "diagnostic_source": "b99034cde106868c50024058b6e9ad278be06cd3",
+    "diagnostic_run": 40092109613,
+    "finding": "eight Linux open allocation points terminate inside the libstdc++ directory-iterator constructor; no termination is now allowed to pass",
+    "fix": "native directory handles keep path allocation outside the standard-library noexcept boundary"
+  },
+  "tested_source": "00f3d3713619bef8f41c4f5d97957d37dbb3ed87",
+  "run": {"id": 40083975196, "attempt": 1, "workflow": ".github/workflows/reader-thumbnails.yml"},
+  "jobs": [
+    {"id": 120843034234, "name": "thumbnail consumers (ubuntu-22.04)", "conclusion": "success"},
+    {"id": 120843034066, "name": "thumbnail consumers (windows-2022)", "conclusion": "success"},
+    {"id": 120843034216, "name": "thumbnail consumers (macos-15)", "conclusion": "success"},
+    {"id": 120845168468, "name": "strict thumbnail evidence", "conclusion": "success"}
+  ],
+  "artifacts": [
+    {"id": 12556347240, "name": "reader-thumbnails-Linux-40083975196-1", "bytes": 12348921, "digest": "sha256:33455fad50d527f8957410d2c0be68f40a94979259403421e30a9a1a33f3be58", "expires_at": "2027-01-22T09:57:11Z"},
+    {"id": 12556571488, "name": "reader-thumbnails-Windows-40083975196-1", "bytes": 8550390, "digest": "sha256:20fb48b82a24dae99d8e1d7fa257bd94045939721797c42421752d8a7b39ff5f", "expires_at": "2027-01-22T09:57:11Z"},
+    {"id": 12556617338, "name": "reader-thumbnails-macOS-40083975196-1", "bytes": 10508845, "digest": "sha256:dc7ee85e5268b89bfaf783d55f8955c9de73aaca44844dcb1770a011fc56b2d0", "expires_at": "2027-01-22T09:57:11Z"},
+    {"id": 12555873988, "name": "reader-thumbnails-evidence-40083975196-1", "bytes": 1683, "digest": "sha256:b42c3f31cfd7c2ea1950cbd44341315857ee6b9c50b0f010558e3063ff5816fc", "expires_at": "2027-01-22T09:57:11Z"}
+  ],
+  "consumers": ["thumb-c-consumer (C11, installed header + static library)", "thumb-probe (C++17, installed packages only)", "thumb-regress (C++17, installed package only; three separate processes)"],
+  "results": {
+    "checks_per_platform": "159 named checks on Linux and macOS, 158 on Windows (the thread-count check is Linux/macOS only); every check passed; the three platforms' check-name sets are equal apart from that one",
+    "regression_consumer": "thumb-regress runs lru-write -> lru-verify -> cache as three separate processes and reports the same 9 named checks on all three platforms; all pass. The checks were written against the public ABI that existed at the reviewed source, and were run there first (see history.red_4313315c): 6 of them failed, which is the reproduction being fixed.",
+    "review_findings": {
+      "1_atomic_index_replace": "Fixed with a platform atomic replace: MoveFileExW(REPLACE_EXISTING|WRITE_THROUGH) on Windows, rename(2) elsewhere. Reporting: rth_cache_open and rth_cache_clear now return RTH_IO when the index cannot be published and rth_stats.index_failures counts it; before the fix the same situation returned RTH_OK (red run, all three platforms: 'index that cannot be atomically replaced' :: status 0). Honest correction to the review premise: the assumed Windows failure of a rename onto an existing target did NOT reproduce on the windows-2022 runner (the MSVC STL maps std::filesystem::rename to a replacing MoveFileEx), so the 'touch -> close -> independent reopen -> smaller bound' identity check passed at the unfixed source on all three platforms. The identity assertion is kept as a permanent per-platform check ('regress: LRU recency written by one process survives an independent reopen', 'reopening with a smaller entry bound evicts the stale entry, not the touched ones', entries 2, 8x8 hit, 4x4 hit, 6x6 miss on Linux/Windows/macOS).",
+      "2_temporary_safety": "Reproduced on all three platforms: with 80 hard links planted (from a cancel callback) at the pre-0.1.0 temporary names, the unfixed store truncated the external sentinel (sentinel intact 0) and open deleted another process's fresh temporary. Fixed with exclusive create (O_CREAT|O_EXCL|O_NOFOLLOW / CREATE_NEW|FILE_FLAG_OPEN_REPARSE_POINT) under an unpredictable per-open name plus a same-directory atomic replace, no-follow reads, and a 600 s grace before a current-naming temporary is treated as stale. Green: seeded 80, sentinel intact 1, links intact 1; live temporary preserved (4 bytes); stale temporary removed.",
+      "3_bounded_scan": "Reproduced: 1200 recognised candidates with max_entries=4 left 0 files, i.e. the whole directory was adopted and removed. Fixed with one bounded pass (budget 256 + max_entries*8, capped at 65536), entry-by-entry retention and eviction, and an explicit truncation flag. Green: 272 candidates inspected of 1300, 912 left untouched, retained entries 0, unrelated files kept, cache still stores and serves; a 40-entry reopen with max_entries=3 reports scanned_files 41 and peak_retained_entries 3 on every platform.",
+      "4_reentry_and_exception_boundary": "Reproduced: rth_cache_stats inside a control callback returned RTH_OK (status 0) while the header promises refusal, and on Windows an unrepresentable directory path terminated the process inside rth_cache_open (no check line, no summary in the red run). Fixed: every entry point that takes a cache uses the same owner/busy guard (stats, clear, find, cover/preview, close), a refused close leaves the cache alive, and every entry point catches std::bad_alloc (RTH_MEMORY) and other exceptions (RTH_IO). Green: stats/clear/find/cover all RTH_ARGUMENT inside the callback, outer call completes, cache usable; the unrepresentable path returns RTH_IO on Windows and macOS and RTH_OK with a byte-named directory on Linux, never terminating."
+    },
+    "covered": [
+      "deterministic RGBA pixels against an independent expectation (10 scenarios, hit and miss)",
+      "aspect and no-upscale",
+      "alpha preservation",
+      "missing cover placeholder (no stored cover, 8 MiB+ cover left in source, bounded file import)",
+      "real PDF and CBZ first-page previews (generated originals with known colours, repository pdf-public.pdf and comic.cbz, library-owned and memory readers)",
+      "cover versus preview labelling and separation",
+      "edge/pixel/entry/byte limit refusals and 64-bit overflow-box refusal",
+      "valid oversize PNGs (9000x1, 4100x4100)",
+      "LRU by count and by bytes, persisted across close and across an independent process",
+      "cross-book, cross-format, cross-parameter and cross-encoded-bytes mis-hit prevention",
+      "six corruption forms detected at lookup and at reopen then rebuilt",
+      "garbage/missing index, stale temporaries, foreign files untouched",
+      "cancellation at every poll point for encoded, library, PDF and CBZ paths",
+      "owner-thread and re-entry refusal on every entry point",
+      "original fixtures and stored library source bytes unchanged",
+      "bounded open: candidate budget, retained-entry peak, truncation, untouched leftovers",
+      "exclusive-create publish: no temporary survives, no index failure, hard link never followed or truncated"
+    ],
+    "observed_sdk_behaviour": "A PNG whose IHDR declares 30000x30000 over invalid data is refused by exr_image_page_dimensions as a damaged header (EXR_FORMAT), not EXR_LIMIT; the first run asserted LIMIT and failed on all three platforms. The check now accepts a refusal status LIMIT or FORMAT before decode and separate valid oversize PNGs assert LIMIT strictly. The SDK also refuses to import an EPUB that declares a cover item whose file is missing, so the cover-less case uses a generated EPUB with no cover item. Unchanged by this revision."
+  },
+  "measurements_raw": {
+    "note": "Recorded numbers only; no performance is granted. RSS values are whole-process figures taken in the probe and process_peak_rss is cumulative across scenarios. cache_bytes is the on-disk .rth byte total of the scratch directory; for the overflow scenario it counts the candidates the bounded scan deliberately left untouched, while the retained cache is empty (entries 0). scanned_files and peak_retained_entries are the bounded-scan work and the largest retained entry set of that open, not RSS.",
+    "cover_3000x3000": {"cache_bytes": 16640, "decoded_bytes": 36000000, "process_peak_rss": {"linux": 80777216, "windows": 78192640, "macos": 96223232}},
+    "pdf_preview_100x50": {"cache_bytes_after_first_entry": 20193, "rendered_bytes": 20000, "process_peak_rss": {"linux": 24240128, "windows": 22413312, "macos": 23592960}},
+    "cbz_preview_40": {"cache_bytes_after_first_entry": 65860, "rendered_bytes": 4320},
+    "lru_4096_cap": {"cache_bytes": 3792},
+    "bounded_reopen_max_entries_3": {"scanned_files": 41, "peak_retained_entries": 3, "cache_bytes": 2304, "platforms": ["linux", "windows", "macos"]},
+    "bounded_overflow_max_entries_2": {"scanned_files": 272, "peak_retained_entries": 0, "retained_entries": 0, "directory_bytes": {"linux": 144000, "windows": 180000, "macos": 137200}, "candidates": 1300}
+  },
+  "interfaces": {
+    "header": "reader_thumbnails.h",
+    "cmake_target": "EXReaderThumbnails::reader_thumbnails",
+    "threads_created": false,
+    "product_sql_written": false,
+    "sdk_private_sql_read": false,
+    "stats_additions": ["index_failures", "scanned_files", "peak_retained_entries", "scan_truncated"]
+  },
+  "not_granted": ["product performance", "host UI integration", "six-platform interoperability", "release", "decoder total-memory bound (only max_source_pixels bounds it)", "streaming cover extraction for bounded EPUB imports (they store no cover)", "symlinked/reparse-point cache entries (hard links are used for the tests because creating symbolic links needs a privilege on Windows)"],
+  "history": {
+    "green_797774f2_run_40078420397": {
+      "note": "First accepted run, kept unchanged. It predates the four review findings and does not cover them; it stands only for the suite as it existed then.",
+      "tested_source": "797774f283f17901161346a0938a0c0e81e4c118",
+      "run": {"id": 40078420397, "attempt": 1},
+      "checks_per_platform": "149 named checks on Linux and macOS, 148 on Windows",
+      "artifacts": [
+        {"id": 12553199658, "name": "reader-thumbnails-Linux-40078420397-1", "bytes": 8281909, "digest": "sha256:28a42ec3932bdd10bb22882750f67840d55f5d670a8fb297cf2a671ad6aaa318"},
+        {"id": 12554082683, "name": "reader-thumbnails-Windows-40078420397-1", "bytes": 6008680, "digest": "sha256:157074498ecd8ce39fc91755763dce42c722f18b68f7271e868dcd3e5d41b659"},
+        {"id": 12553344359, "name": "reader-thumbnails-macOS-40078420397-1", "bytes": 7047774, "digest": "sha256:6f19b43200e6f06ff8ad92e3a3bdb1d8a08be32e4d60035dada64d10f64a5738"},
+        {"id": 12554800423, "name": "reader-thumbnails-evidence-40078420397-1", "bytes": 1118, "digest": "sha256:1d4215836f9a06a6a339d602accd35e495a6559cdebda2208861d0d6d76f1f60"}
+      ]
+    },
+    "red_4313315c_run_40082494089": {
+      "note": "The regression consumer and workflow were pushed BEFORE any fix, on purpose: the reviewed implementation fails them. This is the reproduction record, not a passing run; its strict evidence job recorded accepted=false.",
+      "tested_source": "4313315c3655c1eae49ad58e119323b85da04512",
+      "run": {"id": 40082494089, "attempt": 1},
+      "conclusion": "failure",
+      "jobs": {"ubuntu-22.04": "failure", "windows-2022": "failure", "macos-15": "failure", "strict thumbnail evidence": "failure"},
+      "evidence_result": {"accepted": false, "problems": ["upstream failed or different source: thumbnail consumers (ubuntu-22.04)"]},
+      "artifacts": [
+        {"id": 12555468685, "name": "reader-thumbnails-Linux-40082494089-1", "bytes": 12355061, "digest": "sha256:ee6da6a0c0a96f066670c9307db7e797eecd2b5813e4731e8d34910852bd3861"},
+        {"id": 12555777950, "name": "reader-thumbnails-Windows-40082494089-1", "bytes": 8615927, "digest": "sha256:91dacbf4358d427dcfbc037e398925291391e2581589973231f52e162254d447"},
+        {"id": 12555644225, "name": "reader-thumbnails-macOS-40082494089-1", "bytes": 10512586, "digest": "sha256:c8478280108e0379ca001f01df4345fa5e902da56ccd2301016f53d42544e25c"},
+        {"id": 12555409920, "name": "reader-thumbnails-evidence-40082494089-1", "bytes": 402, "digest": "sha256:a4c0f0351775ebb04b8047342d2e46d3552badd4dbf4ac326ea8abaa15b2be24"}
+      ],
+      "failed_checks_by_platform": {
+        "linux": [
+          "regress: a pre-seeded hard link at a temporary name is never followed or truncated :: seeded 80 sentinel intact 0 links intact 0",
+          "regress: a fresh temporary file of another live cache instance is preserved by open :: file was deleted or rewritten",
+          "regress: a stale temporary of the cache naming is removed by open :: stale removed 1 (this line failed only because its prerequisite, the live temporary, had already been deleted; the fixed suite asserts the two independently)",
+          "regress: an index that cannot be atomically replaced is reported instead of silently accepted :: status 0",
+          "regress: re-entry from a control callback is refused by the cache statistics call :: status 0 entries 1",
+          "regress: a directory with many more candidates than the scan budget leaves the uninspected files untouched :: left 0 of 1200"
+        ],
+        "windows": [
+          "the same six checks",
+          "regress: an unrepresentable directory path is refused with a status instead of an escaping exception :: NO LINE: rth_cache_open terminated the process (no check line and no summary in regress-cache.log)"
+        ],
+        "macos": [
+          "the same six checks",
+          "the unrepresentable-path check passed with status 3 (RTH_IO) because APFS refuses the byte sequence in create_directories"
+        ]
+      },
+      "identity_checks_at_the_unfixed_source": "Both cross-process LRU checks passed on Linux, Windows and macOS at 4313315c: entries 2, 8x8 hit, 4x4 hit, 6x6 miss. See results.review_findings.1_atomic_index_replace for why the reviewed Windows rename premise did not reproduce."
+    },
+    "build_iterations": [
+      {"source": "ca7e70d6ea759ceb3447314512fbff88ccb94e7d", "run": 40083310974, "result": "build failure: std::errc has no wrong_type; the read handle now reports std::errc::invalid_argument"},
+      {"source": "79dbe9b58f96219259db7aee1dc3f126b28a8774", "run": 40083552017, "result": "build failure: the probe cover helper takes width and height; two new calls passed one value"}
+    ]
+  }
+  }
+}
