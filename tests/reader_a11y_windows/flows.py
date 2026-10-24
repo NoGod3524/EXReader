@@ -109,18 +109,35 @@ def edit_value(s, name):
     return s.host.text(name)
 
 
+def clear_edit(s, name, limit=512):
+    """Empty a text field with the keyboard so a second import starts clean."""
+    ok, _ = s.goto(name)
+    if not ok:
+        return False
+    if edit_value(s, name) and s.kb.transport == "sendinput":
+        s.kb.press(0x41, ("ctrl",), note="select the previous path")
+        s.kb.press("delete", note="remove the selected path")
+    for _ in range(limit):
+        if not edit_value(s, name):
+            return True
+        s.kb.press("backspace")
+    return not edit_value(s, name)
+
+
 def import_book(s, path_text, timeout=90):
     """Keyboard-only import: focus the path edit, type the path, activate 导入."""
     ok_edit, stops = s.goto("import_edit")
     if not ok_edit:
         return {"ok": False, "stage": "focus", "stops": stops}
+    cleared = clear_edit(s, "import_edit")
     s.kb.type_text(path_text, note="type the book path like a user")
     typed = edit_value(s, "import_edit")
     ok_button, stops2 = s.goto("import_button")
     if not ok_button:
         return {"ok": False, "stage": "button", "stops": stops2, "typed": typed}
     s.kb.press("space", note="activate 导入 from the keyboard")
-    return {"ok": True, "typed": typed, "stops": stops + stops2, "focus_after_space": s.focus_name()}
+    return {"ok": True, "typed": typed, "cleared": cleared, "stops": stops + stops2,
+            "focus_after_space": s.focus_name()}
 
 
 def phase_import(s, r, epub_path):

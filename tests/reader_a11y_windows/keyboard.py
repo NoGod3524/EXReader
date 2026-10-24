@@ -23,6 +23,7 @@ MODIFIERS = {
 
 KEYS = {
     "backspace": w32.VK_BACK,
+    "delete": 0x2E,
     "tab": w32.VK_TAB,
     "enter": w32.VK_RETURN,
     "escape": w32.VK_ESCAPE,
