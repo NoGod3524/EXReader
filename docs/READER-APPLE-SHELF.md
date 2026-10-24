@@ -298,6 +298,14 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
   The original macOS04/05/07 and both mobile06 cases resume focused validation.
   Review-only current-epoch frame observations also update on rejection paths;
   their publication never clears restoration or substitutes for exact ACK.
+- `0c31b285` focused run `40071203621` passed macOS04/05/07 and iPad06.
+  The raw macOS trace now moved the prepended target from y=2,800 to y=0
+  before exact acknowledgement. iPhone06 instead reached direct restart with
+  an already aligned target at y=0 in epoch12, issued epoch13, then received
+  no subsequent geometry callback. Only each transparent measurement probe
+  now directly observes the shelf and renews its own GeometryReader by epoch.
+  ScrollView, VStack and source-key book identities remain stable. The same
+  three-platform original-case focus must pass before another full candidate.
 
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.
