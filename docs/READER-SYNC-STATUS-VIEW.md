@@ -80,6 +80,41 @@ sweep-complete / failed / closing / closed，外加 unknown。
 （重算 ZIP 摘要、核对 API digest/字节/有效期、报告身份与具名清单）。统一守卫：
 `HEAD == GITHUB_SHA`、固定起点为祖先、SDK 保护树与产品 SQL 相等、diff 全在白名单。
 
+
+## 云端验收
+
+受测源码 `d427875579f714c0874c1b3cc5388b95a7f4e950`（固定起点
+`f43baf9182d75907c0cb5d6f77048f27bca8c950`），run `40124617915` attempt `1`。
+Linux/Ubuntu 22.04、Windows Server 2022、macOS 14 三平台各以安装前缀编译实际 C 与 C++
+消费者，对真实原生 TLS 会话跑完 22 项具名检查（22/22，全部 pass）；汇总作业在同一次
+run/attempt 内逐个下载三份归档，重算 SHA-256 与 API digest 比对，从归档内重读
+`result.json` 与消费者字节并核对 `source_sha`/run/attempt/platform/具名清单，缺项、
+跨源码、跨 attempt 或摘要不符即失败。结果为 `problems: []`。
+
+| 平台 | job | 工件 | 字节 | sha256 |
+| --- | --- | --- | --- | --- |
+| linux | 120963276896 | `reader-sync-status-view-Linux-40124617915-1`（12572950281） | 2808934 | `ad0a69713f02f3e35dcc9e341a92619e2f6f97f7c03ceb8b6cc1915b20356338` |
+| win32 | 120963277062 | `reader-sync-status-view-Windows-40124617915-1`（12572069143） | 2495443 | `61737f60a44ab0835d3f412c4f72aaaf663e7b1e92159484cf4e516d282ce788` |
+| darwin | 120963276635 | `reader-sync-status-view-macOS-40124617915-1`（12573315552） | 2418831 | `6227060374f9534966ef41edaebf7dd8759a9324be1100760de30f4960d14757` |
+| 汇总 | 120965848353 | `reader-sync-status-view-aggregate-40124617915-1`（12573235566） | 7704671 | `8814d9b954ce18de6c26956a56d8edbb467b761b7fe25f7e8d136688b42d032d` |
+
+四份工件均非空、未过期（`2027-01-22T19:17:29Z`）。完整身份、逐条报告与保留失败见
+[状态视图验收](validation/reader-sync-status-view.json)。
+
+## 保留的失败与候选
+
+| 源码 | run | 结果及接续 |
+| --- | --- | --- |
+| `f52900ad` | `40122530644` | 两平台在配置 sync 时找不到 `EXReaderRevisions`：安装前缀只写进 `GITHUB_ENV`，同一步内不可见。改为每次 configure 显式 `-DCMAKE_PREFIX_PATH`。 |
+| `58102433` | `40123173490` | Linux 在 `-Werror=misleading-indentation` 处失败；Windows 通过 4 项后断言"完成的分片仍保留非空游标"，而完成分片的游标本就为空。源码改为全括号控制流，夹具改为单分片 105 条。 |
+| `4e0cb525` | `40123647670` | 源码两平台编译通过，但验收脚本仍是"每分片一条记录"的旧夹具，重蹈空游标断言；macOS 未启动即取消。 |
+| `a78b7286` | `40123947125` | 续跑扫描阶段 `KeyError: completed_sweeps`：测试读取了消费者并未发布的汇总字段名。保留。 |
+| `154b1d40` | `40124504199` | 修正字段名后取消，用于重新武装夹具放行闸；不作验收声明。 |
+
+以上失败与工件保留，前轮通过项不授予后轮源码。本包只授予"Windows/Linux/macOS 安装后
+只读同步状态视图模块与真实原生 TLS 会话"这一范围；宿主面板接线、待 metadata 正向路径、
+移动端、音频/朗读、性能与无障碍分别登记。
+
 ## 未覆盖
 
 - 本包不做宿主面板/UI 接线与产品集成（root 负责）。
