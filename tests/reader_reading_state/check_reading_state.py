@@ -99,11 +99,13 @@ def main():
         if capture['exact_bytes'] == 0:
             need(adapter.get('status') == 'NOT_REPRESENTABLE' and adapter.get('gap') in ('point', 'textless_page'),
                  f'{cid}: empty-exact capture must be NOT_REPRESENTABLE point/textless')
-            need(literal.get('status') == REV_FORMAT, f'{cid}: literal v1 point must be refused as FORMAT')
+            need(literal.get('status') == REV_FORMAT and literal.get('message') == 'Empty revision field',
+                 f'{cid}: literal v1 point must be refused for its empty quote, got {literal}')
         if adapter.get('status') == 'OK':
             need(literal.get('status') == 0, f'{cid}: adapter accepted bytes that literal v1 refuses')
         if 'v2_proposal' in case:
-            need(case['v2_proposal'].get('v1_client_status') == REV_FORMAT, f'{cid}: unchanged v1 client must refuse anchor_version 2')
+            need(case['v2_proposal'].get('v1_client_status') == REV_FORMAT and case['v2_proposal'].get('v1_client_message') == 'Unsupported anchor version',
+                 f'{cid}: unchanged v1 client must refuse anchor_version 2 by version, got {case["v2_proposal"]}')
         if receiver:
             if receiver.get('state') == 'FOUND' and receiver.get('status') == 'OK':
                 need(receiver['start'] == receiver['expected_start'] and receiver['end'] == receiver['expected_end'], f'{cid}: mislocated')

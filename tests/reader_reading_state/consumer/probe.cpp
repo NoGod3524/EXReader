@@ -175,7 +175,7 @@ size_t locate(const std::string &text,const std::string &needle,int occurrence=0
 /* ---------- reflow (TXT, global storage) ---------- */
 struct reflow {exr_document *a=nullptr,*b=nullptr;std::string text;int64_t ida=0,idb=0;};
 void reflow_case(reflow &r,const std::string &role,const char *kind,const std::string &aid,size_t start,size_t end,const char *label,bool active_reader=false){
-  observation ob;ob.o.str("id",label).str("book",role).str("kind",std::string(kind)=="progress"?"progress":aid.rfind("bm",0)==0?"bookmark":"highlight")
+  observation ob;ob.o.str("id",label).str("book",role).str("kind",std::string(kind)=="progress"?"progress":aid[0]=='b'?"bookmark":"highlight")
     .str("sdk_capture","exr_anchor_create").str("mode","reflow_global");
   exr_anchor a{};exr_error e{};exr_status cs=exr_anchor_create(r.a,start,end,&a,&e);
   ob.o.set("capture_status",num((unsigned)cs));
@@ -343,7 +343,7 @@ int main(int argc,char **argv){
   reflow_case(r,"txt","progress","",emoji,emoji,"txt-progress-point-multibyte",true);
   reflow_case(r,"txt","progress","",0,0,"txt-progress-point-start");
   reflow_case(r,"txt","progress","",T.size(),T.size(),"txt-progress-point-end");
-  reflow_case(r,"txt","annotation","bm000000000000000000000000000001",locate(T,"Tail alpha"),locate(T,"Tail alpha"),"txt-bookmark-point");
+  reflow_case(r,"txt","annotation","b0000000000000000000000000000001",locate(T,"Tail alpha"),locate(T,"Tail alpha"),"txt-bookmark-point");
   {/* Cross-document capture: real SDK quote from a different original. */
     observation ob;ob.o.str("id","txt-missing-cross-original").str("book","edited->txt").str("kind","highlight").str("sdk_capture","exr_anchor_create").str("mode","reflow_global");
     exr_document *ed=nullptr;SDK(exr_library_document(A.lib,A.ids["edited"],&ed,&e_));size_t n=0;const char *etext=exr_document_text(ed,&n);std::string et(etext,n);
@@ -392,7 +392,7 @@ int main(int argc,char **argv){
     auto chapter_text=[&](exr_pager *pg){std::string out;size_t size=exr_pager_chapter_statistics(pg).projection_bytes;
       SDK(exr_pager_read_text(pg,0,size,[](void *c,const char *t,size_t n,exr_error *){((std::string *)c)->append(t,n);return EXR_OK;},&out,nullptr,&e_));return out;};
     auto epub_case=[&](size_t part,const char *kind,const std::string &aid,size_t start,size_t end,const char *label){
-      observation ob;ob.o.str("id",label).str("book","epub").str("kind",std::string(kind)=="progress"?"progress":aid.rfind("bm",0)==0?"bookmark":"highlight")
+      observation ob;ob.o.str("id",label).str("book","epub").str("kind",std::string(kind)=="progress"?"progress":aid[0]=='b'?"bookmark":"highlight")
         .str("sdk_capture","exr_pager_anchor_create").str("mode","epub_chapter").set("part",num(part)).str("part_path",parts[part].path);
       exr_pager *ga=pager(pa,part);exr_anchor a{};SDK(exr_pager_anchor_create(ga,start,end,nullptr,&a,&e_));sel s=from(a);ob.capture(s);
       exr_document *pd=nullptr;SDK(exr_publication_load(pa,part,&pd,&e_));exr_anchor d{};exr_error de{};exr_status ds=exr_anchor_create(pd,start,end,&d,&de);
@@ -439,7 +439,7 @@ int main(int argc,char **argv){
     lifecycle.push_back(object().str("step","epub-end-quote").set("end",num(tail+std::strlen("章末🌙"))).set("chapter_bytes",num(ct.size())).dump());
     epub_case(unique,"annotation","a0000000000000000000000000000e02",tail,tail+std::strlen("章末🌙"),"epub-highlight-chapter-end");
     epub_case(unique,"progress","",q,q,"epub-progress-point");
-    epub_case(unique,"annotation","bm00000000000000000000000000e001",0,0,"epub-bookmark-chapter-start");
+    epub_case(unique,"annotation","b000000000000000000000000000e001",0,0,"epub-bookmark-chapter-start");
     size_t rq=locate(rt,"Repeated spine chapter");epub_case(repeated,"annotation","a0000000000000000000000000000e03",rq,rq+std::strlen("Repeated spine chapter"),"epub-highlight-repeated-spine-route");
     exr_publication_free(pa);exr_publication_free(pb);
   }
@@ -453,7 +453,7 @@ int main(int argc,char **argv){
     lifecycle.push_back(object().str("step",role+"-pages").set("page_ids",array(ids)).dump());
     auto text_of=[&](exr_fixed_document *d,size_t page){exr_fixed_text *t=nullptr;SDK(exr_fixed_load_text(d,page,nullptr,&t,&e_));size_t n=0;const char *s=exr_fixed_text_string(t,&n);std::string out(s?s:"",n);exr_fixed_text_free(t);return out;};
     auto fixed_case=[&](size_t page,const char *kind,const std::string &aid,size_t start,size_t end,const char *label){
-      observation ob;ob.o.str("id",label).str("book",role).str("kind",std::string(kind)=="progress"?"progress":aid.rfind("bm",0)==0?"bookmark":"highlight")
+      observation ob;ob.o.str("id",label).str("book",role).str("kind",std::string(kind)=="progress"?"progress":aid[0]=='b'?"bookmark":"highlight")
         .str("sdk_capture","exr_fixed_anchor_create").str("mode","fixed_page").set("page",num(page)).str("page_id",pages[page].id);
       exr_fixed_text *ta=nullptr;SDK(exr_fixed_load_text(da,page,nullptr,&ta,&e_));size_t tn=0;exr_fixed_text_string(ta,&tn);ob.o.set("page_text_bytes",num(tn));
       exr_fixed_anchor a{};SDK(exr_fixed_anchor_create(pages[page].id,ta,start,end,&a,&e_));sel s=from(a);ob.capture(s);
@@ -494,11 +494,11 @@ int main(int argc,char **argv){
       lifecycle.push_back(object().str("step","pdf-page-text").set("bytes",array({num(p0.size()),num(p1.size()),num(p2.size())})).dump());
       size_t s0=locate(p0,"Shared quote across pages.");fixed_case(0,"annotation","a0000000000000000000000000000f01",s0,s0+std::strlen("Shared quote across pages."),"pdf-highlight-page-scoped");
       size_t s1=locate(p1,"selection target");fixed_case(1,"annotation","a0000000000000000000000000000f02",s1,s1+std::strlen("selection target"),"pdf-highlight-ambiguous-repeated-lines");
-      fixed_case(0,"annotation","bm00000000000000000000000000f001",s0,s0,"pdf-bookmark-point");
-      fixed_case(2,"annotation","bm00000000000000000000000000f002",0,0,"pdf-textless-page-bookmark");
+      fixed_case(0,"annotation","b000000000000000000000000000f001",s0,s0,"pdf-bookmark-point");
+      fixed_case(2,"annotation","b000000000000000000000000000f002",0,0,"pdf-textless-page-bookmark");
       fixed_case(1,"progress","",0,0,"pdf-progress-page-start");
     }else{
-      fixed_case(1,"annotation","bm00000000000000000000000000c001",0,0,"cbz-textless-page-bookmark");
+      fixed_case(1,"annotation","b000000000000000000000000000c001",0,0,"cbz-textless-page-bookmark");
       fixed_case(1,"progress","",0,0,"cbz-progress-textless-page");
     }
     exr_fixed_free(da);exr_fixed_free(db);
