@@ -22,8 +22,13 @@
 #define EXR_TTS_POLL_MS 20u
 
 typedef struct {
+  ISpStream *stream;
+  int closed;
+} exr_tts_sink;
+
+typedef struct {
   ISpVoice *voice;
-  ISpStream *sink;         /* WAV output for the active request, else NULL */
+  exr_tts_sink sink;       /* WAV sink bound to the voice, finalized per request */
   wchar_t *text;           /* owned until the terminal event */
   size_t text_units;
   size_t *unit_map;
@@ -326,12 +331,19 @@ static HRESULT open_wav_sink(ISpVoice *voice, const wchar_t *path, ISpStream **s
   return S_OK;
 }
 
-static void close_wav_sink(ISpVoice *voice, ISpStream **sink) {
-  if (!*sink) return;
-  voice->lpVtbl->SetOutput(voice, NULL, FALSE);
-  (*sink)->lpVtbl->Close(*sink);
-  (*sink)->lpVtbl->Release(*sink);
-  *sink = NULL;
+/* Closes the WAV file so its RIFF sizes are final before the terminal event; the
+   stream object stays bound to the voice until the next request replaces it. */
+static void finalize_sink(exr_tts_sink *sink) {
+  if (!sink->stream || sink->closed) return;
+  sink->stream->lpVtbl->Close(sink->stream);
+  sink->closed = 1;
+}
+
+static void release_sink(exr_tts_sink *sink) {
+  if (!sink->stream) return;
+  sink->stream->lpVtbl->Release(sink->stream);
+  sink->stream = NULL;
+  sink->closed = 0;
 }
 
 /* ---- request lifecycle ---- */
@@ -344,7 +356,7 @@ static void publish_ready(reader_tts *handle) {
 static void finish_request(reader_tts *handle, exr_tts_utterance *utterance,
                            reader_tts_event_kind kind, reader_tts_status status) {
   exr_tts_queue_event event;
-  close_wav_sink(utterance->voice, &utterance->sink);
+  finalize_sink(&utterance->sink);
   memset(&event, 0, sizeof event);
   event.request_id = utterance->request_id;
   event.kind = kind;
@@ -480,10 +492,24 @@ static reader_tts_status start_speak(reader_tts *handle, exr_tts_utterance *utte
   }
   wav = exr_tts_copy_wav_path(handle);
   if (wav) {
-    hr = open_wav_sink(voice, wav, &utterance->sink);
+    ISpStream *fresh = NULL;
+    hr = open_wav_sink(voice, wav, &fresh);
     exr_tts_release(wav);
     if (FAILED(hr)) {
       *native = (int)hr;
+      return READER_TTS_IO;
+    }
+    finalize_sink(&utterance->sink);
+    release_sink(&utterance->sink);
+    utterance->sink.stream = fresh;
+    utterance->sink.closed = 0;
+  } else if (utterance->sink.stream) {
+    /* Returning from a WAV sink to the default audio device needs an endpoint;
+       without one SAPI answers with an error instead of a usable stream. */
+    HRESULT restored = voice->lpVtbl->SetOutput(voice, NULL, FALSE);
+    release_sink(&utterance->sink);
+    if (FAILED(restored)) {
+      *native = (int)restored;
       return READER_TTS_IO;
     }
   }
@@ -497,7 +523,7 @@ static reader_tts_status start_speak(reader_tts *handle, exr_tts_utterance *utte
   hr = voice->lpVtbl->Speak(voice, utterance->text, SPF_ASYNC | SPF_PURGEBEFORESPEAK, NULL);
   if (FAILED(hr)) {
     *native = (int)hr;
-    close_wav_sink(voice, &utterance->sink);
+    finalize_sink(&utterance->sink);
     exr_tts_release(utterance->text);
     exr_tts_release(utterance->unit_map);
     utterance->text = NULL;
@@ -513,7 +539,7 @@ static reader_tts_status start_speak(reader_tts *handle, exr_tts_utterance *utte
 
 /* Returns 1 when the command was CLOSE. */
 static int handle_command(reader_tts *handle, exr_tts_utterance *utterance, ISpVoice **voice,
-                          HANDLE *notify, exr_tts_command *command) {
+                          exr_tts_command *command) {
   int native = 0;
   reader_tts_status status = READER_TTS_OK;
   switch (command->kind) {
@@ -575,11 +601,12 @@ static int handle_command(reader_tts *handle, exr_tts_utterance *utterance, ISpV
         purge(*voice);
         finish_request(handle, utterance, READER_TTS_STOPPED, READER_TTS_OK);
       }
+      finalize_sink(&utterance->sink);
       if (*voice) {
         (*voice)->lpVtbl->Release(*voice);
         *voice = NULL;
       }
-      *notify = NULL;
+      release_sink(&utterance->sink);
       set_ack(handle, READER_TTS_OK, 0);
       return 1;
     default:
@@ -595,7 +622,6 @@ DWORD WINAPI exr_tts_worker_main(LPVOID parameter) {
   reader_tts *handle = (reader_tts *)parameter;
   exr_tts_utterance utterance;
   ISpVoice *voice = NULL;
-  HANDLE notify = NULL;
   int com = 0;
   HRESULT hr;
   memset(&utterance, 0, sizeof utterance);
@@ -621,12 +647,12 @@ DWORD WINAPI exr_tts_worker_main(LPVOID parameter) {
                          | SPFEI(SPEI_WORD_BOUNDARY);
       ISpNotifySource *source = (ISpNotifySource *)voice;
       ISpEventSource *events = (ISpEventSource *)voice;
+      /* The Win32-event notify connection makes SAPI queue the interest mask for
+         GetEvents; the package never waits on SAPI's own handle. */
       if (FAILED(source->lpVtbl->SetNotifyWin32Event(source))
           || FAILED(events->lpVtbl->SetInterest(events, interest, interest))) {
         voice->lpVtbl->Release(voice);
         voice = NULL;
-      } else {
-        notify = source->lpVtbl->GetNotifyEventHandle(source);
       }
     }
   }
@@ -642,29 +668,24 @@ DWORD WINAPI exr_tts_worker_main(LPVOID parameter) {
     HANDLE waits[2];
     DWORD count = 1, timeout = INFINITE, result;
     if (take_command(handle, &command)) {
-      if (handle_command(handle, &utterance, &voice, &notify, &command)) break;
+      if (handle_command(handle, &utterance, &voice, &command)) break;
       continue;
     }
     if (utterance.speaking) pump_events(handle, &utterance);
     if (exr_tts_closing(handle) && !utterance.speaking) break;
     waits[0] = handle->cmd_event;
-    if (utterance.speaking) {
-      if (notify) {
-        waits[count++] = notify;
-      } else {
-        timeout = EXR_TTS_POLL_MS;
-      }
-    }
+    if (utterance.speaking) timeout = EXR_TTS_POLL_MS;
     result = WaitForMultipleObjects(count, waits, FALSE, timeout);
     if (result == WAIT_FAILED) break;
   }
   if (utterance.speaking) {
     purge(voice);
-    close_wav_sink(voice, &utterance.sink);
+    finalize_sink(&utterance.sink);
     exr_tts_release(utterance.text);
     exr_tts_release(utterance.unit_map);
   }
   if (voice) voice->lpVtbl->Release(voice);
+  release_sink(&utterance.sink);
   if (com) CoUninitialize();
   return 0;
 }

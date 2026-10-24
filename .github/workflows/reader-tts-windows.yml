@@ -96,6 +96,15 @@ jobs:
           cp build/consumer/CMakeCache.txt build/tts/logs/consumer-CMakeCache.txt
           cp build/probe/CMakeCache.txt build/tts/logs/probe-CMakeCache.txt
           ls -l build/tts/consumer build/tts/stage/include build/tts/stage/lib
+      - name: Enable local crash dumps for the acceptance consumer
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path C:\dumps | Out-Null
+          $key = 'HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\tts-consumer.exe'
+          New-Item -Path $key -Force | Out-Null
+          Set-ItemProperty -Path $key -Name DumpFolder -Value 'C:\dumps' -Type ExpandString
+          Set-ItemProperty -Path $key -Name DumpType -Value 2 -Type DWord
+          Get-ItemProperty -Path $key | Out-String
       - name: Actual SAPI synthesis acceptance
         run: |
           python tests/reader_tts_windows/check_tts.py \
@@ -103,6 +112,28 @@ jobs:
             --probe build/tts/consumer/tts-probe.exe \
             --module-prefix build/tts/stage \
             --output build/tts
+      - name: Collect crash evidence when the consumer died
+        if: always()
+        shell: pwsh
+        run: |
+          $out = 'build/tts/evidence/crash.txt'
+          New-Item -ItemType Directory -Force -Path build/tts/evidence | Out-Null
+          Get-WinEvent -LogName Application -MaxEvents 60 -ErrorAction SilentlyContinue |
+            Where-Object { $_.ProviderName -in @('Application Error','Windows Error Reporting') } |
+            Select-Object -First 4 |
+            ForEach-Object { "=== $($_.TimeCreated) $($_.ProviderName)"; $_.Message } |
+            Out-File $out -Encoding utf8
+          $cdb = 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\cdb.exe'
+          if (-not (Test-Path $cdb)) { "cdb absent" | Out-File $out -Append -Encoding utf8 }
+          Get-ChildItem C:\dumps -Filter *.dmp -ErrorAction SilentlyContinue | Select-Object -First 1 | ForEach-Object {
+            "=== dump $($_.Name) $($_.Length) bytes" | Out-File $out -Append -Encoding utf8
+            if (Test-Path $cdb) {
+              & $cdb -z $_.FullName -c '!analyze -v; k; q' 2>&1 |
+                Select-String -Pattern 'FAULTING_|IMAGE_NAME|MODULE_NAME|SYMBOL_NAME|EXCEPTION_CODE|STACK_TEXT|^[0-9a-f]+ ' |
+                Select-Object -First 40 | Out-File $out -Append -Encoding utf8
+            }
+          }
+          Get-Content $out
       - name: Preserve source-bound logs, installed component and report
         if: always()
         uses: actions/upload-artifact@v4
