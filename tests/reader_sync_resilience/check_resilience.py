@@ -28,6 +28,7 @@ import subprocess
 import sys
 import threading
 import time
+import traceback
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -75,13 +76,16 @@ def main():
     gates, faults, global_faults = {}, {}, []
     all_gates, processes = [], []
 
-    def revision_path(value):
+    def prefix(spec):
+        return '/' + spec['space'] + '/exreader-sync-v1/'
+
+    def revision_path(spec, value):
         body = raw(value)
-        return ('/dav/exreader-sync-v1/revisions/' + value['id'][:2] + '/' + value['id'] + '-' +
+        return (prefix(spec) + 'revisions/' + value['id'][:2] + '/' + value['id'] + '-' +
                 hashlib.sha256(body).hexdigest() + '.json')
 
-    def object_path(sha, kind='txt'):
-        return '/dav/exreader-sync-v1/objects/' + sha[:2] + '/' + sha + '.' + kind
+    def object_path(spec, sha, kind='txt'):
+        return prefix(spec) + 'objects/' + sha[:2] + '/' + sha + '.' + kind
 
     def provision(path):
         parent = path[:path.rfind('/') + 1]
@@ -90,16 +94,16 @@ def main():
             for size in range(1, len(parts) + 1):
                 directories.add('/' + '/'.join(parts[:size]) + '/')
 
-    def publish_revision(value, body=None):
+    def publish_revision(spec, value, body=None):
         data = raw(value) if body is None else body
-        path = revision_path(value)
+        path = revision_path(spec, value)
         provision(path)
         with lock:
             entries[path] = data
         return path
 
-    def publish_object(sha, data, kind='txt'):
-        path = object_path(sha, kind)
+    def publish_object(spec, sha, data, kind='txt'):
+        path = object_path(spec, sha, kind)
         provision(path)
         with lock:
             entries[path] = data
@@ -355,12 +359,17 @@ def main():
     context.load_cert_chain(server_certificate, server_key)
     server.socket = context.wrap_socket(server.socket, server_side=True)
     threading.Thread(target=server.serve_forever, daemon=True).start()
-    root = 'https://127.0.0.1:' + str(server.server_port) + '/dav/'
+    # Every device builds its own fixture namespace URL; there is no shared root.
 
     def device(name, account=None, database=None, timeout=3000):
+        # Every scenario owns its own fixture namespace, so a sweep can never
+        # pull another boundary's revisions or be influenced by its remnants.
         base = folder / name
         base.mkdir(exist_ok=True)
-        value = {'base': base, 'url': root, 'account': account or str(uuid.uuid4()),
+        with lock:
+            directories.add('/' + name + '/')
+        value = {'base': base, 'space': name, 'url': 'https://127.0.0.1:' + str(server.server_port) + '/' + name + '/',
+                 'account': account or str(uuid.uuid4()),
                  'db': database or base / '\u4ea7\u54c1.sqlite',
                  'cache': base / 'cache', 'originals': base / 'originals', 'timeout': timeout}
         value['cache'].mkdir(exist_ok=True)
@@ -429,18 +438,20 @@ def main():
             assert self.command('destroy')['code'] == 0
             assert self.process.wait(timeout=30) == 0
 
+    def store_counts(base):
+        candidates = sorted(Path(base).glob('*.sqlite'))
+        if not candidates:
+            return (0, 0)
+        try:
+            with sqlite3.connect(str(candidates[0])) as database:
+                return tuple(database.execute(
+                    'SELECT (SELECT count(*) FROM reader_revisions),'
+                    '(SELECT count(*) FROM reader_outbox)').fetchone())
+        except sqlite3.OperationalError:
+            return (0, 0)
+
     def counting(spec):
-        def counts():
-            if not Path(spec['db']).exists():
-                return (0, 0)
-            try:
-                with sqlite3.connect(str(spec['db'])) as database:
-                    return tuple(database.execute(
-                        'SELECT (SELECT count(*) FROM reader_revisions),'
-                        '(SELECT count(*) FROM reader_outbox)').fetchone())
-            except sqlite3.OperationalError:
-                return (0, 0)
-        return counts
+        return lambda: store_counts(spec['base'])
 
     def seed(spec, name, value):
         path = folder / (name + '.json')
@@ -501,7 +512,7 @@ def main():
         tag_1 = revision(1, shard=18, key='a' * 32)
         seed(device_1, 'kill-put', tag_1)
         assert counts_1() == (1, 1)
-        path_1 = revision_path(tag_1)
+        path_1 = revision_path(device_1, tag_1)
         held_1 = gate('PUT', path_1, 'after_commit_hold')
         session_1 = Session(device_1)
         assert session_1.created == 0 and session_1.command('start')['code'] == 0
@@ -549,7 +560,7 @@ def main():
                           payload={'format': 'txt', 'source_sha256': sha_2, 'source_bytes': len(source_2),
                                    'title': 'Resilience fixture', 'author': '', 'favorite': False})
         seed(device_2, 'kill-original-upload', book_2)
-        object_2 = object_path(sha_2)
+        object_2 = object_path(device_2, sha_2)
         held_2 = gate('PUT', object_2, 'before_body')
         session_2 = Session(device_2)
         assert session_2.command('start')['code'] == 0
@@ -586,7 +597,7 @@ def main():
         device_3 = device('replay-existing-remote')
         counts_3 = counting(device_3)
         tag_3 = revision(2, shard=18, key='b' * 32)
-        path_3 = publish_revision(tag_3)
+        path_3 = publish_revision(device_3, tag_3)
         seed(device_3, 'replay', tag_3)
         before_3 = digest(entries[path_3])
         result_3 = step(device_3, shard=18)
@@ -597,7 +608,7 @@ def main():
         assert outcomes_3 == [412], outcomes_3
         assert digest(entries[path_3]) == before_3
         same_id_3 = [path for path in entries
-                     if path.startswith('/dav/exreader-sync-v1/revisions/12/') and
+                     if path.startswith(prefix(device_3) + 'revisions/12/') and
                      path.split('/')[-1].startswith(tag_3['id'])]
         assert same_id_3 == [path_3], same_id_3
         record('replay_of_an_already_committed_immutable_revision_is_412_and_never_rewritten',
@@ -612,7 +623,7 @@ def main():
         device_4 = device('kill-verification-get')
         counts_4 = counting(device_4)
         tag_4 = revision(3, shard=18, key='c' * 32)
-        path_4 = publish_revision(tag_4)
+        path_4 = publish_revision(device_4, tag_4)
         seed(device_4, 'kill-verify', tag_4)
         held_4 = gate('GET', path_4, 'partial_body', partial=24)
         session_4 = Session(device_4)
@@ -642,7 +653,7 @@ def main():
         device_5 = device('truncated-verification-get')
         counts_5 = counting(device_5)
         tag_5 = revision(4, shard=18, key='d' * 32)
-        path_5 = publish_revision(tag_5)
+        path_5 = publish_revision(device_5, tag_5)
         seed(device_5, 'truncated', tag_5)
         held_5 = gate('GET', path_5, 'short_body_close')
         result_5 = step(device_5, shard=18, timeout=6000)
@@ -669,7 +680,7 @@ def main():
         prepare_6.close()
         assert counts_6() == (0, 0)
         tag_6 = revision(5, shard=18, key='e' * 32)
-        path_6 = publish_revision(tag_6)
+        path_6 = publish_revision(device_6, tag_6)
         seed(device_6, 'ack-window', tag_6)
         held_6 = gate('GET', path_6, 'before_response')
         session_6 = Session(device_6)
@@ -693,7 +704,7 @@ def main():
         resume_6.wait(4)
         assert counts_6() == (1, 0)
         same_id_6 = [path for path in entries
-                     if path.startswith('/dav/exreader-sync-v1/revisions/12/') and
+                     if path.startswith(prefix(device_6) + 'revisions/12/') and
                      path.split('/')[-1].startswith(tag_6['id'])]
         assert same_id_6 == [path_6], same_id_6
         resume_6.close()
@@ -712,8 +723,8 @@ def main():
         counts_7 = counting(device_7)
         tag_7 = revision(6, shard=18, key='f' * 32)
         seed(device_7, 'exit-after-ack', tag_7)
-        path_7 = revision_path(tag_7)
-        held_7 = gate('PROPFIND', '/dav/exreader-sync-v1/revisions/00/', 'before_response')
+        path_7 = revision_path(device_7, tag_7)
+        held_7 = gate('PROPFIND', prefix(device_7) + 'revisions/00/', 'before_response')
         session_7 = Session(device_7)
         assert session_7.command('start')['code'] == 0
         assert held_7['event'].wait(120), 'the first discovery request was never received'
@@ -731,7 +742,7 @@ def main():
                      if item['method'] == 'PUT' and item['path'] == path_7]
         assert uploads_7 == [201], uploads_7
         same_id_7 = [path for path in entries
-                     if path.startswith('/dav/exreader-sync-v1/revisions/12/') and
+                     if path.startswith(prefix(device_7) + 'revisions/12/') and
                      path.split('/')[-1].startswith(tag_7['id'])]
         assert same_id_7 == [path_7], same_id_7
         resume_7.close()
@@ -751,8 +762,8 @@ def main():
         book_8 = revision(1, shard=32, kind='book', key='txt:' + sha_8,
                           payload={'format': 'txt', 'source_sha256': sha_8, 'source_bytes': len(source_8),
                                    'title': 'Download fixture', 'author': '', 'favorite': False})
-        publish_revision(book_8)
-        object_8 = publish_object(sha_8, source_8)
+        publish_revision(device_8, book_8)
+        object_8 = publish_object(device_8, sha_8, source_8)
         held_8 = gate('GET', object_8, 'partial_body', partial=48)
         killed_8 = subprocess.Popen(step_command(device_8, 32), env=environment,
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8')
@@ -793,8 +804,8 @@ def main():
         book_9 = revision(1, shard=32, kind='book', key='txt:' + sha_9,
                           payload={'format': 'txt', 'source_sha256': sha_9, 'source_bytes': len(source_9),
                                    'title': 'Timeout fixture', 'author': '', 'favorite': False})
-        publish_revision(book_9)
-        object_9 = publish_object(sha_9, source_9)
+        publish_revision(device_9, book_9)
+        object_9 = publish_object(device_9, sha_9, source_9)
         held_9 = gate('GET', object_9, 'stall_before_headers')
         began_9 = time.monotonic()
         result_9 = step(device_9, shard=32, timeout=1500)
@@ -827,8 +838,8 @@ def main():
         book_10 = revision(1, shard=32, kind='book', key='txt:' + sha_10,
                            payload={'format': 'txt', 'source_sha256': sha_10, 'source_bytes': len(source_10),
                                     'title': 'Identity fixture', 'author': '', 'favorite': False})
-        publish_revision(book_10)
-        object_10 = publish_object(sha_10, source_10)
+        publish_revision(device_10, book_10)
+        object_10 = publish_object(device_10, sha_10, source_10)
         assert step(device_10, shard=32)['status'] == 0
         cached_10 = device_10['cache'] / (sha_10 + '.txt')
         assert digest(cached_10.read_bytes()) == sha_10
@@ -858,8 +869,8 @@ def main():
         book_11 = revision(1, shard=32, kind='book', key='txt:' + sha_11,
                            payload={'format': 'txt', 'source_sha256': sha_11, 'source_bytes': len(source_11),
                                     'title': 'Wrong bytes', 'author': '', 'favorite': False})
-        publish_revision(book_11)
-        object_11 = publish_object(sha_11, source_11)
+        publish_revision(device_11, book_11)
+        object_11 = publish_object(device_11, sha_11, source_11)
         foreign_11 = b'X' + source_11[1:]
         with lock:
             entries[object_11] = foreign_11
@@ -935,7 +946,7 @@ def main():
         counts_14 = counting(device_14)
         tag_14 = revision(9, shard=18, key='i' * 32)
         seed(device_14, 'real-429', tag_14)
-        path_14 = revision_path(tag_14)
+        path_14 = revision_path(device_14, tag_14)
         fault('PUT', path_14, 429, {'Retry-After': '2'})
         result_14 = step(device_14, shard=18, timeout=6000)
         assert result_14['status'] == 3 and result_14['dav_code'] == 5, result_14
@@ -962,7 +973,7 @@ def main():
         counts_15 = counting(device_15)
         tag_15 = revision(10, shard=18, key='j' * 32)
         seed(device_15, 'real-503', tag_15)
-        path_15 = revision_path(tag_15)
+        path_15 = revision_path(device_15, tag_15)
         fault('PUT', path_15, 503, {'Retry-After': '1'})
         result_15 = step(device_15, shard=18, timeout=6000)
         assert result_15['status'] == 3 and result_15['dav_code'] == 5, result_15
@@ -989,7 +1000,7 @@ def main():
         #     the failed shard on the next explicit start.
         device_16 = device('mid-sweep-503')
         counts_16 = counting(device_16)
-        failed_path_16 = '/dav/exreader-sync-v1/revisions/28/'
+        failed_path_16 = prefix(device_16) + 'revisions/28/'
         fault('PROPFIND', failed_path_16, 503, {'Retry-After': '1'})
         session_16 = Session(device_16)
         assert session_16.command('start')['code'] == 0
@@ -1022,7 +1033,7 @@ def main():
         counts_17 = counting(device_17)
         tag_17 = revision(11, shard=18, key='k' * 32)
         seed(device_17, 'reset-during-put', tag_17)
-        path_17 = revision_path(tag_17)
+        path_17 = revision_path(device_17, tag_17)
         held_17 = gate('PUT', path_17, 'reset_mid_body', partial=32)
         result_17 = step(device_17, shard=18, timeout=6000)
         assert held_17['event'].wait(60)
@@ -1047,7 +1058,7 @@ def main():
         counts_18 = counting(device_18)
         tag_18 = revision(12, shard=18, key='l' * 32)
         seed(device_18, 'publication-timeout', tag_18)
-        path_18 = revision_path(tag_18)
+        path_18 = revision_path(device_18, tag_18)
         held_18 = gate('PUT', path_18, 'stall_before_headers')
         began_18 = time.monotonic()
         result_18 = step(device_18, shard=18, timeout=1200)
@@ -1075,9 +1086,9 @@ def main():
         device_19 = device('foreign-immutable-bytes')
         counts_19 = counting(device_19)
         tag_19 = revision(13, shard=18, key='m' * 32)
-        path_19 = revision_path(tag_19)
+        path_19 = revision_path(device_19, tag_19)
         foreign_19 = b' ' + raw(tag_19)[1:]
-        publish_revision(tag_19, foreign_19)
+        publish_revision(device_19, tag_19, foreign_19)
         seed(device_19, 'foreign-bytes', tag_19)
         result_19 = step(device_19, shard=18)
         assert result_19['status'] == 5, result_19
@@ -1113,7 +1124,7 @@ def main():
         binding_20 = digest(manifest_20.read_bytes())
         tag_20 = revision(14, shard=18, key='n' * 32)
         seed(device_20, 'reopen', tag_20)
-        path_20 = revision_path(tag_20)
+        path_20 = revision_path(device_20, tag_20)
         held_20 = gate('PUT', path_20, 'after_commit_hold')
         session_20 = Session(device_20)
         assert session_20.command('start')['code'] == 0
@@ -1152,7 +1163,7 @@ def main():
         binding_21 = digest(manifest_21.read_bytes())
         tag_21 = revision(15, shard=18, key='o' * 32)
         seed(device_21, 'reopen-other', tag_21)
-        path_21 = revision_path(tag_21)
+        path_21 = revision_path(device_21, tag_21)
         held_21 = gate('PUT', path_21, 'after_commit_hold')
         session_21 = Session(device_21)
         assert session_21.command('start')['code'] == 0
@@ -1222,6 +1233,18 @@ def main():
         print(json.dumps({'accepted': True, 'platform': sys.platform, 'checks': len(checks),
                           'source_sha': os.environ['GITHUB_SHA']}), flush=True)
     finally:
+        if sys.exc_info()[1] is not None:
+            # A failed boundary must still leave the observable protocol trace
+            # and every product store count behind for root cause analysis.
+            try:
+                (folder / 'failure.json').write_text(json.dumps(
+                    {'error': traceback.format_exc(), 'requests': requests,
+                     'entries': sorted(entries),
+                     'stores': {path.name: list(store_counts(path))
+                                for path in sorted(folder.iterdir()) if path.is_dir()}},
+                    indent=2), encoding='utf-8')
+            except Exception:
+                pass
         cleanup()
         for certificate in certificates.glob('*.key'):
             certificate.unlink()
