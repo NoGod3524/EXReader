@@ -111,8 +111,10 @@ final class ShelfUITests: XCTestCase {
         observations.append(["id": id, "state": value, "uptime": ProcessInfo.processInfo.systemUptime])
     }
     private func search(_ query: String) {
+        let deadline = Date().addingTimeInterval(120)
         let field = element("library.search")
-        XCTAssertTrue(field.waitForExistence(timeout: 120)); field.tap()
+        XCTAssertTrue(field.waitForExistence(timeout: max(0, deadline.timeIntervalSinceNow))); field.tap()
+        XCTAssertTrue(wait(max(0, deadline.timeIntervalSinceNow)) { self.text("library.search.focus") == "focused" })
 #if os(macOS)
         field.typeKey("a", modifierFlags: .command)
         field.typeText(XCUIKeyboardKey.delete.rawValue)
@@ -121,6 +123,7 @@ final class ShelfUITests: XCTestCase {
         if !previous.isEmpty { field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: previous.count)) }
 #endif
         if !query.isEmpty { field.typeText(query) }
+        XCTAssertTrue(wait(max(0, deadline.timeIntervalSinceNow)) { self.text("library.search.focus") == "focused" })
         field.typeText(XCUIKeyboardKey.return.rawValue)
     }
     private func scroll(previous: Bool) {

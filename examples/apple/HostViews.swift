@@ -80,6 +80,7 @@ private struct ShelfGeometryKey: PreferenceKey {
 #if EXR_APPLE_SHELF_REVIEW
 private struct ShelfObservationView: View {
     let value: String
+    let searchFocused: Bool
     var body: some View {
         // macOS XCTest truncates one static-text value to 512 UTF-16 units.
         let scalars = Array(value.unicodeScalars)
@@ -87,6 +88,7 @@ private struct ShelfObservationView: View {
             String(String.UnicodeScalarView(scalars[start..<min(start + 200, scalars.count)]))
         }
         ZStack {
+            Text(searchFocused ? "focused" : "unfocused").accessibilityIdentifier("library.search.focus")
             Text(String(parts.count)).accessibilityIdentifier("library.shelf.count")
             ForEach(parts.indices, id: \.self) { index in
                 Text(parts[index]).accessibilityIdentifier("library.shelf.part.\(index)")
@@ -107,9 +109,9 @@ struct LibraryScreen: View {
     @Environment(\.scenePhase) private var phase
 
     private func restoreShelf(_ proxy: ScrollViewProxy, revision: Int) {
-        guard revision == shelf.restoreRevision, let key = shelf.restoreKey else { return }
+        guard revision == shelf.restoreRevision, shelf.needsScroll, let key = shelf.restoreKey else { return }
         DispatchQueue.main.async {
-            guard shelf.restoreRevision == revision else { return }
+            guard shelf.restoreRevision == revision, shelf.needsScroll else { return }
             proxy.scrollTo(key, anchor: .top)
             shelf.didScroll(revision: revision)
         }
@@ -117,7 +119,6 @@ struct LibraryScreen: View {
 
     var body: some View {
         let geometryRevision = shelf.geometryRevision
-        let restoreRevision = shelf.restoreRevision
         VStack(spacing: 0) {
             HStack {
                 Text("EXReader 书架").font(.title2).bold()
@@ -199,13 +200,18 @@ struct LibraryScreen: View {
                     .background(GeometryReader { geometry in
                         Color.clear.preference(key: ShelfGeometryKey.self, value: ShelfGeometry(size: geometry.size, revision: geometryRevision))
                     }.id(geometryRevision))
-                    .onPreferenceChange(ShelfGeometryKey.self) { geometry in shelf.observe(geometry.frames, size: geometry.size, revision: geometry.revision) }
-                    .task(id: restoreRevision) { @MainActor in restoreShelf(proxy, revision: restoreRevision) }
+                    .onPreferenceChange(ShelfGeometryKey.self) { geometry in
+                        shelf.observe(geometry.frames, size: geometry.size, revision: geometry.revision)
+                        if geometry.revision == shelf.geometryRevision, geometry.size.width > 0, geometry.size.height > 0,
+                           let key = shelf.restoreKey, let frame = geometry.frames[key], !frame.isEmpty {
+                            restoreShelf(proxy, revision: shelf.restoreRevision)
+                        }
+                    }
                 }
             }
 
 #if EXR_APPLE_SHELF_REVIEW
-            ShelfObservationView(value: shelf.observation)
+            ShelfObservationView(value: shelf.observation, searchFocused: searchFocused)
 #endif
             if model.productIndexPending {
                 Text("产品索引待修复；暂时最多显示最近 50 本本地书籍，重启后重试。")

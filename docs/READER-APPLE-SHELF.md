@@ -267,6 +267,16 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
   geometry epoch as identity; the native ScrollView and book IDs stay stable.
   Review frames also record their actual observed epoch. Focused recovery now
   selects original macOS04/05/07 and iPhone/iPad06 with unchanged time limits.
+- Focused `3712aa09` run `40065561941` preserved three platform failures.
+  The observed-epoch trace distinguished an iPhone pending epoch21 with last
+  measured epoch19 from a macOS current epoch with no visible rows. Restoration
+  now waits for the same epoch's full target frame and positive viewport size
+  before issuing scroll; an offscreen target is eligible. The independent
+  restore task is removed. Only a subsequent real visible frame may acknowledge
+  it. Existing issued/awaiting state and all exact-key assertions are retained.
+  iPad also failed before restoration because Return had no keyboard focus;
+  the test now waits for the real SwiftUI FocusState before keyboard actions,
+  within its existing 120-second search deadline, and still sends Return.
 
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.
