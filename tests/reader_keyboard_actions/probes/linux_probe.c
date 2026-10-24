@@ -14,8 +14,10 @@
 #include <X11/keysym.h>
 #include <X11/extensions/XTest.h>
 
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 typedef struct {
   reader_kbd *kbd;
@@ -57,11 +59,19 @@ static int on_x_error(Display *display, XErrorEvent *event) {
   return 0;
 }
 
+/* Drain the pending events with a hard bound: a permanently ready source must
+   never turn the drain itself into an endless loop. */
+static void drain_events(void) {
+  int guard;
+  for (guard = 0; guard < 64; ++guard) {
+    if (gtk_main_iteration_do(FALSE) == 0) return;
+  }
+}
+
 static int wait_mapped(GtkWidget *widget, int milliseconds) {
   gint64 deadline = g_get_monotonic_time() + ((gint64)milliseconds * 1000);
   for (;;) {
-    while (gtk_main_iteration_do(FALSE)) {
-    }
+    drain_events();
     if (gtk_widget_get_mapped(widget) != 0) return 1;
     if (g_get_monotonic_time() >= deadline) return 0;
     g_usleep(2000);
@@ -94,10 +104,26 @@ static void reset_counters(void) {
 static void pump(int milliseconds) {
   gint64 deadline = g_get_monotonic_time() + ((gint64)milliseconds * 1000);
   while (g_get_monotonic_time() < deadline) {
-    while (gtk_main_iteration_do(FALSE)) {
-    }
+    drain_events();
     g_usleep(2000);
   }
+}
+
+static const char *current_step = "startup";
+
+static void begin_case(const char *name) {
+  current_step = name;
+  (void)fprintf(stdout, "STEP %s
+", name);
+  (void)fflush(stdout);
+}
+
+static void on_watchdog(int signal_number) {
+  (void)signal_number;
+  (void)fprintf(stderr, "watchdog: the probe exceeded its time budget in case %s
+", current_step);
+  (void)fflush(stderr);
+  _exit(3);
 }
 
 static const char *disposition_name(uint32_t disposition) {
@@ -225,6 +251,7 @@ static gboolean on_delete(GtkWidget *widget, GdkEvent *event, gpointer user) {
 }
 
 static void case_ready(void) {
+  begin_case("ready");
   int event_base = 0;
   int error_base = 0;
   int major = 0;
@@ -247,6 +274,7 @@ static void case_ready(void) {
 }
 
 static void case_page_next(void) {
+  begin_case("page-next");
   reset_counters();
   set_x_focus(g.window);
   if (tap_symbol(XK_Right) == 0) {
@@ -268,6 +296,7 @@ static void case_page_next(void) {
 }
 
 static void case_page_previous(void) {
+  begin_case("page-previous");
   reset_counters();
   set_x_focus(g.window);
   if (tap_symbol(XK_Left) == 0) {
@@ -284,6 +313,7 @@ static void case_page_previous(void) {
 }
 
 static void case_command_search(void) {
+  begin_case("command-search");
   reset_counters();
   set_x_focus(g.window);
   if (tap_chord(XK_Control_L, XK_f) == 0) {
@@ -301,6 +331,7 @@ static void case_command_search(void) {
 }
 
 static void case_shift_space(void) {
+  begin_case("shift-space");
   reset_counters();
   set_x_focus(g.window);
   if (tap_chord(XK_Shift_L, XK_space) == 0) {
@@ -317,6 +348,7 @@ static void case_shift_space(void) {
 }
 
 static void case_conflict_passes(void) {
+  begin_case("conflict-passes");
   reset_counters();
   set_x_focus(g.window);
   if (inject_key(XK_Control_L, 1) == 0 || inject_key(XK_Shift_L, 1) == 0) {
@@ -345,6 +377,7 @@ static void case_conflict_passes(void) {
 }
 
 static void case_key_up(void) {
+  begin_case("key-up");
   reset_counters();
   set_x_focus(g.window);
   if (inject_key(XK_Right, 1) == 0) {
@@ -378,6 +411,7 @@ static void case_key_up(void) {
 }
 
 static void case_repeat(void) {
+  begin_case("repeat");
   reset_counters();
   set_x_focus(g.window);
   if (inject_key(XK_Right, 1) == 0) {
@@ -409,6 +443,7 @@ static void case_repeat(void) {
 }
 
 static void case_edit_keeps_keys(void) {
+  begin_case("edit-keeps-keys");
   const char *text;
   set_x_focus(g.window);
   gtk_widget_grab_focus(g.entry);
@@ -448,6 +483,7 @@ static void case_edit_keeps_keys(void) {
 }
 
 static void case_edit_command(void) {
+  begin_case("edit-command");
   set_x_focus(g.window);
   gtk_widget_grab_focus(g.entry);
   pump(150);
@@ -467,6 +503,7 @@ static void case_edit_command(void) {
 }
 
 static void case_modal(void) {
+  begin_case("modal");
   set_x_focus(g.window);
   gtk_widget_grab_focus(g.area);
   pump(120);
@@ -499,6 +536,7 @@ static void case_modal(void) {
 }
 
 static void case_focus_change(void) {
+  begin_case("focus-change");
   set_x_focus(g.window);
   gtk_widget_grab_focus(g.area);
   pump(120);
@@ -538,6 +576,7 @@ static void case_focus_change(void) {
 }
 
 static void case_deactivate(void) {
+  begin_case("deactivate");
   set_x_focus(g.window);
   gtk_widget_grab_focus(g.area);
   pump(120);
@@ -563,6 +602,7 @@ static void case_deactivate(void) {
 }
 
 static void case_ime(void) {
+  begin_case("ime");
   record("ime-composing-passthrough", "SKIP",
          "no input method runs under Xvfb; the composing gate and the VK_PROCESSKEY vector are "
          "covered by the installed consumers");
@@ -577,6 +617,8 @@ int main(void) {
   GtkWidget *box;
   GtkWidget *content;
 
+  (void)signal(SIGALRM, on_watchdog);
+  alarm(240);
   if (gtk_init_check(NULL, NULL) == 0) {
     record("probe-window-ready", "FAIL", "gtk_init_check failed (no DISPLAY?)");
     return 1;
@@ -661,8 +703,7 @@ int main(void) {
   gtk_widget_destroy(g.dialog);
   gtk_widget_destroy(g.other);
   gtk_widget_destroy(g.window);
-  while (gtk_main_iteration_do(FALSE)) {
-  }
+  drain_events();
 
   (void)fprintf(stdout, "probe %s pass=%d fail=%d skip=%d\n", failures == 0 ? "ok" : "failed",
                 passes, failures, skips);

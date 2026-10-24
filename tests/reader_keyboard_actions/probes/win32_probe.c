@@ -56,6 +56,14 @@ static void record(const char *name, const char *status, const char *detail) {
   (void)fflush(stdout);
 }
 
+static const char *current_step = "startup";
+
+static void begin_case(const char *name) {
+  current_step = name;
+  (void)fprintf(stdout, "STEP %s\n", name);
+  (void)fflush(stdout);
+}
+
 static void reset_counters(void) {
   g.down_action = 0xffffffffu;
   g.down_reason = 0xffffffffu;
@@ -259,6 +267,7 @@ static const char *disposition_name(uint32_t disposition) {
 }
 
 static void case_ready(void) {
+  begin_case("ready");
   if (focus_window(g.window) == 0) {
     (void)snprintf(scratch, sizeof(scratch),
                    "foreground activation failed: foreground=%p window=%p",
@@ -274,6 +283,7 @@ static void case_ready(void) {
 }
 
 static void case_page_next(void) {
+  begin_case("page-next");
   reset_counters();
   if (tap_word(VK_RIGHT) == 0) {
     record("reader-page-next-consumed", "FAIL", "SendInput refused VK_RIGHT");
@@ -294,6 +304,7 @@ static void case_page_next(void) {
 }
 
 static void case_page_previous(void) {
+  begin_case("page-previous");
   reset_counters();
   if (tap_word(VK_LEFT) == 0) {
     record("reader-page-previous-consumed", "FAIL", "SendInput refused VK_LEFT");
@@ -310,6 +321,7 @@ static void case_page_previous(void) {
 }
 
 static void case_command_search(void) {
+  begin_case("command-search");
   reset_counters();
   if (tap_chord(VK_CONTROL, 'F') == 0) {
     record("reader-command-search", "FAIL", "SendInput refused Ctrl+F");
@@ -326,6 +338,7 @@ static void case_command_search(void) {
 }
 
 static void case_shift_space(void) {
+  begin_case("shift-space");
   reset_counters();
   if (tap_two(VK_SHIFT, VK_SPACE) == 0) {
     record("reader-shift-space-previous", "FAIL", "SendInput refused Shift+Space");
@@ -341,6 +354,7 @@ static void case_shift_space(void) {
 }
 
 static void case_conflict_passes(void) {
+  begin_case("conflict-passes");
   reset_counters();
   if (inject(VK_CONTROL, 1) == 0 || inject(VK_SHIFT, 1) == 0) {
     record("reader-modifier-conflict-passes", "FAIL", "SendInput refused the modifiers");
@@ -368,6 +382,7 @@ static void case_conflict_passes(void) {
 }
 
 static void case_key_up(void) {
+  begin_case("key-up");
   reset_counters();
   if (inject(VK_RIGHT, 1) == 0) {
     record("reader-key-up-swallowed", "FAIL", "SendInput refused the key-down");
@@ -400,6 +415,7 @@ static void case_key_up(void) {
 }
 
 static void case_repeat(void) {
+  begin_case("repeat");
   reset_counters();
   if (inject(VK_RIGHT, 1) == 0) {
     record("reader-repeat-bounded", "FAIL", "SendInput refused the held key-down");
@@ -430,6 +446,7 @@ static void case_repeat(void) {
 }
 
 static void case_edit_keeps_keys(void) {
+  begin_case("edit-keeps-keys");
   wchar_t text[64];
   DWORD start = 99;
   DWORD stop = 99;
@@ -473,6 +490,7 @@ static void case_edit_keeps_keys(void) {
 }
 
 static void case_edit_command(void) {
+  begin_case("edit-command");
   SetFocus(g.edit);
   pump(100);
   reset_counters();
@@ -491,6 +509,7 @@ static void case_edit_command(void) {
 }
 
 static void case_modal(void) {
+  begin_case("modal");
   SetFocus(g.window);
   pump(100);
   reset_counters();
@@ -529,6 +548,7 @@ static void case_modal(void) {
 }
 
 static void case_focus_change(void) {
+  begin_case("focus-change");
   SetFocus(g.window);
   pump(100);
   reset_counters();
@@ -577,6 +597,7 @@ static void case_focus_change(void) {
 }
 
 static void case_deactivate(void) {
+  begin_case("deactivate");
   SetFocus(g.window);
   pump(100);
   reset_counters();
@@ -596,6 +617,7 @@ static void case_deactivate(void) {
 }
 
 static void case_ime(void) {
+  begin_case("ime");
   record("ime-composing-passthrough", "SKIP",
          "no IME is installed on a hosted Windows runner; the VK_PROCESSKEY composing path is "
          "covered by the installed consumer's win32 vectors and its composing gate");

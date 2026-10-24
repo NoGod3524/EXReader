@@ -74,12 +74,19 @@ def digest(path):
 def collect(binary, log, prefix, expected):
     if not Path(binary).is_file():
         raise ValueError('missing binary ' + str(binary))
-    completed = subprocess.run([str(binary)], capture_output=True, text=True, timeout=900)
     log.parent.mkdir(parents=True, exist_ok=True)
-    log.write_text('$ %s\n%s\n[stderr]\n%s\n[exit %d]\n' % (binary, completed.stdout,
-                                                           completed.stderr, completed.returncode),
-                   encoding='utf-8')
-    return parse(completed.stdout, prefix, expected), completed.returncode
+    with log.open('w', encoding='utf-8') as stream:
+        stream.write('$ %s\n' % binary)
+        stream.flush()
+        process = subprocess.Popen([str(binary)], stdout=stream, stderr=subprocess.STDOUT)
+        try:
+            code = process.wait(timeout=300)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            code = process.wait()
+            stream.write('[stopped after the 300 second budget]\n')
+    cases = parse(log.read_text(encoding='utf-8', errors='replace'), prefix, expected)
+    return cases, code
 
 
 def main():
