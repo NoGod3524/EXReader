@@ -90,6 +90,7 @@ final class SearchUITests: XCTestCase {
         query("MissingLiteral_159873")
         XCTAssertTrue(wait { self.text("search.status") == "没有匹配结果" })
         XCTAssertEqual(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'search.hit.'")).count, 0)
+        XCTAssertFalse(element("search.next").exists)
         mark("no-hit-complete")
         tap("search.close")
         XCTAssertEqual(text("reader.location"), location)
@@ -109,5 +110,26 @@ final class SearchUITests: XCTestCase {
         XCTAssertEqual(text("reader.location"), location)
         XCTAssertEqual(text("reader.page"), page)
         mark("cancel-reader-unchanged")
+    }
+    func testExactly32HitsKeepFinalWindow() {
+        openFixture()
+        let originalLocation = text("reader.location")
+        query("EXRSEARCH32TOKEN")
+        let hits = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'search.hit.'"))
+        XCTAssertTrue(wait { self.text("search.status") == "本批 32 项 · 还可继续查找" &&
+            self.element("search.next").exists && hits.count > 0 })
+        let firstID = hits.firstMatch.identifier
+        mark("exact-32-first-batch")
+        tap("search.next")
+        XCTAssertTrue(wait { self.text("search.status") == "本批 32 项 · 已查找完毕" &&
+            !self.element("search.next").exists && self.element(firstID).exists })
+        XCTAssertNotEqual(text("search.status"), "没有匹配结果")
+        mark("empty-tail-keeps-32-and-completes")
+        tap(firstID)
+        XCTAssertTrue(wait { !self.element("search.query").exists && !self.element("reader.busy").exists &&
+            self.text("reader.page").contains("EXRSEARCH32TOKEN") && self.text("reader.location") != originalLocation },
+            "Retained tail result did not navigate: status=\(text("reader.status")) error=\(text("reader.error"))")
+        XCTAssertFalse(element("reader.error").exists)
+        mark("tail-result-remains-selectable")
     }
 }

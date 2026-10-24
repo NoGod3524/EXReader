@@ -60,7 +60,7 @@ def main():
             if name.startswith('apple-search-sdk-'):
                 reports['sdk'] = read_json('build/sdk-identity.json')
             elif name.startswith('apple-search-native-'):
-                for report, count in [('consumer/search-review.json', 10), ('catalog.json', 8), ('mapping/mapping-review.json', 16)]:
+                for report, count in [('consumer/search-review.json', 11), ('catalog.json', 8), ('mapping/mapping-review.json', 16)]:
                     value = read_json(report)
                     require(value['accepted'] is True and value['failed'] == value['skipped'] == 0 and
                             len(value['checks']) == len({row['id'] for row in value['checks']}) == count and
@@ -71,7 +71,7 @@ def main():
                         hashlib.sha256(archive.read('search-review')).hexdigest() == provider['binary_sha256'], 'native executable differs')
             else:
                 value = read_json('evidence/search-ui.json')
-                require(value['accepted'] is True and len(value['cases']) == 3 and len(value['steps']) == 3 and
+                require(value['accepted'] is True and len(value['cases']) == 4 and len(value['steps']) == 4 and
                         all(row['result'] == 'Passed' for row in value['cases']) and
                         value['provider']['installed_search_linked'] is True and value['provider']['static_sdk_linked'] is False,
                         'UI evidence failed')

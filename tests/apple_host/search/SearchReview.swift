@@ -138,6 +138,34 @@ import Darwin
                 let (_, frame) = try session.searchCandidate(found.hits[0], cancel: HostCancelBox())
                 try expect(frame.pageText.contains(query), "Resolved PDF page differs")
             }
+            check("exact-full-window-and-first-zero") {
+                let expected = try JSONSerialization.jsonObject(with: Data(contentsOf: resources.appendingPathComponent("search-expected.json"))) as! [String: Any]
+                guard let query = expected["query"] as? String, expected["count"] as? Int == 32 else {
+                    throw HostError.invalidResult("Independent 32-hit fixture contract missing")
+                }
+                let (bookID, _) = try session.importBook(url: resources.appendingPathComponent("Sample.epub"), cancel: HostCancelBox(), catalog: catalog)
+                let identity = try catalog.searchSourceKey(sdkID: bookID)
+                let first = try HostSearchWorker.batch(library: library, font: font, bookID: bookID,
+                    sourceKey: identity, query: query, resume: nil, cancel: HostCancelBox())
+                try expect(first.hits.count == 32 && !first.complete, "Actual source did not fill exactly one window")
+                let tail = try HostSearchWorker.batch(library: library, font: font, bookID: bookID,
+                    sourceKey: identity, query: query, resume: first.next, cancel: HostCancelBox())
+                try expect(tail.hits.isEmpty && tail.complete, "Exactly 32 hits did not require an empty EOF read")
+                let state = HostSearchState()
+                state.bind(bookID: bookID, query: query)
+                let (initialEpoch, _) = state.begin(restart: true)
+                state.accept(first, key: identity, generation: initialEpoch)
+                let ids = state.rows.map(\.id)
+                let (tailEpoch, _) = state.begin(restart: false)
+                state.accept(tail, key: identity, generation: tailEpoch)
+                try expect(state.complete && state.rows.count == 32 && state.rows.map(\.id) == ids &&
+                    state.status == "本批 32 项 · 已查找完毕", "Empty EOF read discarded the usable final window")
+                let missing = try HostSearchWorker.batch(library: library, font: font, bookID: bookID,
+                    sourceKey: identity, query: "NoSuchFirstHit_159873", resume: nil, cancel: HostCancelBox())
+                let (emptyEpoch, _) = state.begin(restart: true)
+                state.accept(missing, key: identity, generation: emptyEpoch)
+                try expect(state.rows.isEmpty && state.complete && state.status == "没有匹配结果", "First zero-hit search retained old results")
+            }
             check("one-dynamic-sdk-image") {
                 var images: [String] = []
                 for name in ["exr_document_free", "exr_anchor_free", "exr_anchor_resolve_ex", "exr_pager_anchor_resolve"] {
@@ -151,11 +179,11 @@ import Darwin
             }
         }
         let failed = checks.filter { $0["passed"] as? Bool != true }.count
-        let report: [String: Any] = ["accepted": failed == 0 && checks.count == 10, "failed": failed,
+        let report: [String: Any] = ["accepted": failed == 0 && checks.count == 11, "failed": failed,
             "skipped": 0, "source_sha": environment["GITHUB_SHA"] ?? "", "run_id": environment["GITHUB_RUN_ID"] ?? "",
             "attempt": environment["GITHUB_RUN_ATTEMPT"] ?? "", "checks": checks]
         try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
             .write(to: output.appendingPathComponent("search-review.json"))
-        if failed != 0 || checks.count != 10 { throw HostError.invalidResult("Apple search checks failed") }
+        if failed != 0 || checks.count != 11 { throw HostError.invalidResult("Apple search checks failed") }
     }
 }
