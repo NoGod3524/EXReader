@@ -85,6 +85,18 @@ jobs:
           if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
           python3 tests/reader_reading_state/make_fixtures.py build/v2-fixtures
           python3 tests/reader_reading_v2/check_sdk.py --probe "build/v2-consumer/reading-v2-probe$exe" --legacy-probe "build/v1-consumer/reading-state-probe$exe" --legacy-c-consumer "build/v1-consumer/reading-state-c-consumer$exe" --fixtures build/v2-fixtures --font tests/fixtures/fonts/primary.ttf --legacy-map build/v1-consumer/reading-state-link.map --link-map build/v2-consumer/reading-v2-link.map --output build/v2-sdk-evidence
+      - name: Install optional search and compile its independent installed C C++ consumers
+        run: |
+          cmake -S apps/reader/search -B build/v2-search -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$V2_WS/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$V2_WS/build/v2-search-stage" 2>&1 | tee build/v2-logs/search-configure.log
+          cmake --build build/v2-search --verbose 2>&1 | tee build/v2-logs/search-build.log
+          cmake --install build/v2-search
+          cmake -S tests/reader_search/consumer -B build/v2-search-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$V2_WS/build/v2-search-stage;$V2_WS/build/v2-stage;$V2_WS/build/v2-product-stage;$V2_WS/build/reading-library/stage" 2>&1 | tee build/v2-logs/search-consumer-configure.log
+          cmake --build build/v2-search-consumer --verbose 2>&1 | tee build/v2-logs/search-consumer-build.log
+      - name: Complete search batches captures cancellation identity and owner checks on this joint source
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_search/make_search_fixtures.py build/v2-search-fixtures
+          python3 tests/reader_search/check_search.py --probe "build/v2-search-consumer/search-probe$exe" --c-consumer "build/v2-search-consumer/search-c-consumer$exe" --fixtures build/v2-search-fixtures --font tests/fixtures/fonts/primary.ttf --installed build/v2-search-stage --output build/v2-search-evidence
       - name: Install optional source export and compile an independent C C++ consumer
         run: |
           cmake -S extras/sideload -B build/v2-sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$V2_WS/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$V2_WS/build/v2-sideload-stage"
@@ -118,6 +130,11 @@ jobs:
             build/v2-logs/
             build/v2-fixtures/
             build/v2-sdk-evidence/
+            build/v2-search-fixtures/
+            build/v2-search-evidence/
+            build/v2-search-stage/
+            build/v2-search-consumer/search-probe*
+            build/v2-search-consumer/search-c-consumer*
             build/v2-export-evidence/
             build/v2-sideload-stage/
             build/v2-export-consumer/original-export-consumer*
