@@ -81,7 +81,10 @@ def main():
         app.wait(lambda: send(U.GetDlgItem(d, HITS), 0x18B) == 3 and U.IsWindowEnabled(U.GetDlgItem(d, FIND)))
         app.wait_idle()
         record('enter-searches-focused-query', '已查找完毕' in text(U.GetDlgItem(d, MESSAGE)))
-        rows = element(U.GetDlgItem(d, HITS));items = rows.GetChildren()
+        rows = element(U.GetDlgItem(d, HITS));children = rows.GetChildren()
+        report['result_list_name'] = rows.Name
+        report['result_children'] = [{'name': child.Name, 'type': child.ControlTypeName} for child in children]
+        items = [child for child in children if child.ControlTypeName == 'ListItemControl']
         record('results-expose-selection-items', '书内查找结果' in (rows.Name or '') and len(items) == 3 and
                all(item.Name and item.GetSelectionItemPattern() for item in items))
         record('completed-next-and-cancel-disabled', not element(U.GetDlgItem(d, NEXT)).IsEnabled and
