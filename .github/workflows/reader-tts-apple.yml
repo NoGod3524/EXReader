@@ -41,7 +41,7 @@ jobs:
           done <<< "$changed"
 
   macos:
-    name: macOS native speech: logic suite, installed probe, PCM
+    name: macOS logic suite, installed probe and PCM
     needs: guard
     runs-on: macos-15
     timeout-minutes: 60
