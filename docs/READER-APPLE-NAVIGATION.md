@@ -35,4 +35,12 @@ Apple 构建只显式链接安装后的 `libreader_navigation.a` 与既有动态
 
 Shelf [40133527618](https://github.com/NoGod3524/EXReader/actions/runs/40133527618)（`scope=full`）已结束：native 原 catalog8 / shelf16 / account22 与 2202 原件通过，macOS 和 iPhone 的书架7、账号3、生产语义2全部通过；iPad 书架6/7，`test07StoredOriginalReadingAndFilteredReturn` 失败，后续账号与生产语义跳过，汇总未授予。失败时当前 epoch 的真实单行 frame 已对齐 `min_y=0`，但原模型仍等待尚未发出的滚动命令，筛选原书返回一直处于恢复布局。容器定位成功，collector 与 always-trace 原件独立保留。该失败及 iPad 工件 `12577227656`（226856392 字节、`sha256:56181a157e13eefad8ce4c3d1d5427f31cae490dff1e5f9df6ad58bedaa7cc74`）不删改；修复后按新源码复验。
 
+## 真实已对齐布局的恢复修复
+
+候选 `f5d25b4c71ea39bd22bebea4eedfee16ca178c35` 在共同 `observe` 路径修复上述等待：尚未发出滚动时，必须具有同 epoch 的全部当前行 frame、真实正视口、已应用的 query/generation、无加载，且目标确为首个可见行、`min_y` 距零不超过 1pt，才确认布局已经对齐；不伪造 `issued_restore_revision`。过期、部分、缺行、未应用 query、偏离目标的几何仍被拒绝。原 shelf16 检查与 collector、期限全部保留。
+
+该源码导航专项 [40139222963](https://github.com/NoGod3524/EXReader/actions/runs/40139222963) / attempt1 已 7/7 严格通过：新增恢复正反例后 native13/13、容器5/5、macOS/iPhone/iPad 各6UI/23步骤/29附件，汇总 `121010058019` 为 `accepted=true`。同源重点恢复 [40139232257](https://github.com/NoGod3524/EXReader/actions/runs/40139232257) 的原 catalog8/shelf16/account22 与2202真实原件通过；macOS 原04/05/07、iPhone与iPad原05/06/07均3/3，原失败test07分别11.943/15.505/18.470秒通过。这轮恢复仍明确 `diagnostic_only=true, accepted=false`，不作为完整书架授予。
+
+候选的四套完整原回归已各发起一次：Search [40140546536](https://github.com/NoGod3524/EXReader/actions/runs/40140546536)、WP13 [40140554070](https://github.com/NoGod3524/EXReader/actions/runs/40140554070)、Mapping [40140570887](https://github.com/NoGod3524/EXReader/actions/runs/40140570887)、Shelf full [40140560610](https://github.com/NoGod3524/EXReader/actions/runs/40140560610)。当前执行中，旧源码结果保留原身份，不转移到此候选。
+
 完整作业、生产与失败工件 ID / 字节 / digest / 有效期见 [reader-apple-navigation.json](validation/reader-apple-navigation.json)。所有运行均在 Actions；本地仅源码与 Git 操作。授予范围是本包声明的原生 Apple 导航接口，性能、真机与完整产品均未授予。
