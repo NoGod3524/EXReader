@@ -134,9 +134,20 @@ static void folder_open(GtkWidget *widget,gpointer unused) {
   GtkWidget *recursive=gtk_check_button_new_with_label("Include subfolders");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(recursive),FALSE);
   gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER(chooser),recursive);gtk_widget_show(recursive);
+#ifdef EXR_READER_PREFERENCES_UI
+  preferences_import_dialog=chooser;
+  g_signal_connect(chooser,"selection-changed",G_CALLBACK(preferences_import_changed),NULL);
+  g_signal_connect(chooser,"current-folder-changed",G_CALLBACK(preferences_import_changed),NULL);
+  g_signal_connect(chooser,"map-event",G_CALLBACK(preferences_import_mapped),NULL);
+  g_signal_connect_after(chooser,"set-focus",G_CALLBACK(preferences_import_focus),NULL);
+  g_signal_connect(chooser,"notify::is-active",G_CALLBACK(preferences_import_activity),NULL);
+#endif
   g_signal_connect(chooser,"selection-changed",G_CALLBACK(folder_chooser_changed),NULL);
   g_signal_connect(chooser,"current-folder-changed",G_CALLBACK(folder_chooser_changed),NULL);
   folder.chooser=chooser;choosing_file=TRUE;state();int response=gtk_dialog_run(GTK_DIALOG(chooser));choosing_file=FALSE;
+#ifdef EXR_READER_PREFERENCES_UI
+  preferences_import_dialog=NULL;preferences_import_schedule();
+#endif
   char *root=response==GTK_RESPONSE_ACCEPT ? gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(chooser)):NULL;
   int include=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(recursive));folder.chooser=NULL;gtk_widget_destroy(chooser);
   if(!root) { state();return; }
@@ -163,11 +174,8 @@ static void folder_open(GtkWidget *widget,gpointer unused) {
   folder.timer=g_timeout_add(80,folder_tick,NULL);
 }
 static char *folder_observation(void) {
-  char *selected=folder.chooser ? gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(folder.chooser)):NULL;
-  char *sha=selected ? g_compute_checksum_for_string(G_CHECKSUM_SHA256,selected,-1):g_strdup("");g_free(selected);
-  char *value=g_strdup_printf("[folder_import]\nvisible=%d\nchooser=%d\nselected_sha256=%s\nrunning=%d\nowner=%d\ntoken=%"G_GUINT64_FORMAT"\nactions=%u\ndone=%d\ncomplete=%d\ntruncated=%d\ncancelled=%d\ncancel_requested=%d\nseen=%"G_GUINT64_FORMAT"\nattempted=%"G_GUINT64_FORMAT"\nimported=%"G_GUINT64_FORMAT"\nduplicates=%"G_GUINT64_FORMAT"\nfailed=%"G_GUINT64_FORMAT"\npending=%"G_GUINT64_FORMAT"\nrows=%zu\nmax_rows=%zu\nphase=%d\ncurrent_bytes=%d\ntotal_bytes=%d\n",
-    folder.dialog!=NULL,folder.chooser!=NULL,sha,folder.running,folder.has_owner,folder.token,folder.actions,folder.done,folder.complete,folder.truncated,folder.cancelled,
+  return g_strdup_printf("[folder_import]\nvisible=%d\nchooser=%d\nrunning=%d\nowner=%d\ntoken=%"G_GUINT64_FORMAT"\nactions=%u\ndone=%d\ncomplete=%d\ntruncated=%d\ncancelled=%d\ncancel_requested=%d\nseen=%"G_GUINT64_FORMAT"\nattempted=%"G_GUINT64_FORMAT"\nimported=%"G_GUINT64_FORMAT"\nduplicates=%"G_GUINT64_FORMAT"\nfailed=%"G_GUINT64_FORMAT"\npending=%"G_GUINT64_FORMAT"\nrows=%zu\nmax_rows=%zu\nphase=%d\ncurrent_bytes=%d\ntotal_bytes=%d\n",
+    folder.dialog!=NULL,folder.chooser!=NULL,folder.running,folder.has_owner,folder.token,folder.actions,folder.done,folder.complete,folder.truncated,folder.cancelled,
     g_atomic_int_get(&folder.control.cancelled),folder.seen,folder.attempted,folder.imported,folder.duplicates,folder.failed,folder.pending,folder.rows,folder.max_rows,
     g_atomic_int_get(&folder.control.phase),g_atomic_int_get(&folder.control.current_bytes),g_atomic_int_get(&folder.control.total_bytes));
-  g_free(sha);return value;
 }

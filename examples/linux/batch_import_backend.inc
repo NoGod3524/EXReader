@@ -8,7 +8,7 @@ typedef struct {
   reader_batch_receipt receipts[READER_BATCH_DEFAULT_BATCH];
   char *staging;
   reader_batch_control *observe;
-  int request,complete,truncated,stopped,needs_map,done;
+  int request,complete,truncated,stopped,cancelled,needs_map,done;
   uint64_t token,seen,attempted,imported,duplicates,failed,pending;
 } gtk_batch_owner;
 static int batch_cancelled(void *context) {
@@ -20,8 +20,8 @@ static void batch_phase(gtk_batch_owner *batch,int phase) {
     g_atomic_int_set(&batch->observe->phase,phase);
 }
 static void batch_progress(void *context,exr_stage stage,uint64_t completed,uint64_t total) {
-  gtk_batch_owner *batch=context;(void)stage;
-  if(batch->observe && g_atomic_int_get(&batch->observe->request)==batch->request) {
+  gtk_batch_owner *batch=context;
+  if(stage==EXR_STAGE_READ && batch->observe && g_atomic_int_get(&batch->observe->request)==batch->request) {
     g_atomic_int_set(&batch->observe->current_bytes,(int)MIN(completed,(uint64_t)G_MAXINT));
     g_atomic_int_set(&batch->observe->total_bytes,(int)MIN(total,(uint64_t)G_MAXINT));
   }
@@ -33,7 +33,7 @@ static void batch_free(linux_reader *reader) {
   free(batch);reader->batch_data=NULL;
 }
 static void batch_stop(gtk_batch_owner *batch) {
-  batch->stopped=1;batch->needs_map=1;
+  batch->stopped=1;batch->cancelled|=batch_cancelled(batch);batch->needs_map=1;
   reader_batch_enumerate_close(batch->scan);batch->scan=NULL;
 }
 static exr_status batch_status(reader_batch_status code,const reader_batch_error *error) {
@@ -70,7 +70,7 @@ static exr_status batch_map(gtk_batch_owner *batch,reader_result *result) {
 static void batch_copy(gtk_batch_owner *batch,reader_result *result) {
   result->batch_token=batch->token;result->batch_done=batch->done;
   result->batch_complete=batch->complete;result->batch_truncated=batch->truncated;
-  result->batch_cancelled=batch->stopped;result->batch_map=batch->needs_map;
+  result->batch_cancelled=batch->cancelled;result->batch_map=batch->needs_map;
   result->batch_seen=batch->seen;result->batch_attempted=batch->attempted;
   result->batch_imported=batch->imported;result->batch_duplicates=batch->duplicates;
   result->batch_failed=batch->failed;result->batch_pending=batch->pending;
