@@ -118,7 +118,9 @@ def main():
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER); context.load_cert_chain(cert, key)
     server.socket = context.wrap_socket(server.socket, server_side=True)
     threading.Thread(target=server.serve_forever, daemon=True).start()
-    root = 'https://localhost:' + str(server.server_port) + '/dav/'
+    # The listener is IPv4-only. Use its actual address (present in the test
+    # certificate SAN), avoiding WinHTTP retrying unreachable localhost IPv6.
+    root = 'https://127.0.0.1:' + str(server.server_port) + '/dav/'
     env = dict(os.environ, READER_TEST_AUTH=auth)
     processes = []
 
@@ -256,7 +258,8 @@ def main():
                   'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'platform': sys.platform, 'checks': checks, 'count': len(checks),
                   'consumer_sha256': hashlib.sha256(consumer.read_bytes()).hexdigest(), 'sdk_changed': False,
                   'schema_changed': False, 'metadata_projection_accepted': False, 'host_ui_accepted': False,
-                  'six_platform_accepted': False, 'complete_product': False}
+                  'six_platform_accepted': False, 'complete_product': False,
+                  'fixture_endpoint': 'IPv4 loopback with verified certificate IP SAN'}
         for path in folder.rglob('*'):
             if path.is_file() and path.suffix != '.key':
                 data = path.read_bytes(); assert secret.encode() not in data and auth.encode() not in data
