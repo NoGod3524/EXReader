@@ -73,10 +73,18 @@ static void output_ready(CFWriteStreamRef stream,CFStreamEventType event,void *c
     didReceiveResponse:(NSURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completion {
   (void)session;(void)task;
   if(![response isKindOfClass:NSHTTPURLResponse.class]){completion(NSURLSessionResponseCancel);return;}
+  size_t header_bytes=0;bool bounded=true;
+  NSDictionary *headers=((NSHTTPURLResponse *)response).allHeaderFields;
+  for(id key in headers){
+    size_t bytes=[[key description] lengthOfBytesUsingEncoding:NSUTF8StringEncoding]+
+      [[headers[key] description] lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+    if(bytes>32768-header_bytes){bounded=false;break;}header_bytes+=bytes;
+  }
   bool stopped;
   {std::lock_guard<std::mutex> lock(state->mutex);stopped=state->stopped;
+    if(!bounded)state->auth=EXR_DAV_LIMIT;
     if(!stopped){state->response=(NSHTTPURLResponse *)response;state->header=true;}}
-  state->changed.notify_all();completion(stopped?NSURLSessionResponseCancel:NSURLSessionResponseAllow);
+  state->changed.notify_all();completion(stopped||!bounded?NSURLSessionResponseCancel:NSURLSessionResponseAllow);
 }
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)task didReceiveData:(NSData *)data {
   (void)session;(void)task;

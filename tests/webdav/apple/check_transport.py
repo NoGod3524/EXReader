@@ -67,6 +67,9 @@ def main():
             self.send(412 if exists else 201)
         def do_GET(self):
             with lock: requests.append(('GET', self.path)); data = objects.get(self.path)
+            if self.path.endswith('headers.bin'):
+                self.send_response(200); self.send_header('X-Budget', 'x' * 40000)
+                self.send_header('Content-Length', '0'); self.end_headers(); return
             self.send(404 if data is None else 200, b'' if data is None else data)
 
     server = ThreadingHTTPServer(('127.0.0.1', 0), Handler); server.daemon_threads = True
@@ -109,7 +112,9 @@ def main():
         assert value['reentry_ok'] is True and value['callback_owner'] is True and value['settled'] is True
         assert (folder / 'output.bin').read_bytes() == payload
         record('callback_reentry_free_refused_and_callbacks_remain_on_owner')
-        assert len(checks) == 10
+        run('header-budget', 'get', 'headers.bin', expected=8)
+        record('native_response_headers_retain_32kib_bound')
+        assert len(checks) == 11
         report = {'accepted': True, 'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
                   'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'platform': sys.platform,
                   'execution_platform': 'ios-simulator' if os.environ.get('EXR_DAV_IOS_UDID') else 'macos',
