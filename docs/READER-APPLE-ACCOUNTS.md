@@ -29,7 +29,7 @@ SDK 固定为 `9854061be331fe603a1822d9b2b36ee357154927`，产品 schema 1 和 w
 
 `tools/build_apple_product.py` 将正常产品包安装到已有冻结 Apple SDK 旁。
 宿主编译器通过 `tools/apple_swift.py` 与相同的 Xcode 配置使用其已安装头和归档。
-`SQLite3` Swift 模块明确指向该产品头，链接仅使用 `libreader_catalog_sqlite.a`；
+`CReaderSQLite` Swift 模块明确指向该产品头，链接仅使用 `libreader_catalog_sqlite.a`；
 阅读状态只链接 codec，解析继续由已有动态 SDK 完成。
 
 每份实际程序都生成链接图并检查 SQLite 的唯一符号/对象来源，拒绝系统 SQLite、

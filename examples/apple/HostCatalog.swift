@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import Foundation
 // tools/apple_swift.py selects the installed product SQLite header/provider.
-import SQLite3
+import CReaderSQLite
 import CReaderProduct
 import Darwin
 

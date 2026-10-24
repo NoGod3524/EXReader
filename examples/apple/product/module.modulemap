@@ -1,5 +1,5 @@
-// SQLite3 always resolves to the installed product header at this include path.
-module SQLite3 [system] {
+// Distinct from the SQLite3 module declared by Apple's CoreFoundation SDK.
+module CReaderSQLite [system] {
     header "ProductSQLite.h"
     export *
 }
