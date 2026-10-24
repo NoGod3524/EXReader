@@ -47,7 +47,7 @@ void exr_credentials_wipe(void *, size_t);
 | 平台 | 原生存储 | 记录键 | UNAVAILABLE |
 | --- | --- | --- | --- |
 | Windows | Credential Manager `CredWriteW/CredReadW/CredDeleteW`，`CRED_TYPE_GENERIC`，`CRED_PERSIST_LOCAL_MACHINE`（本机当前用户，不漫游） | target `EXReaderCredentials/<namespace>/<account>` | 无凭据登录会话（服务、S4U 任务）、拒绝访问、策略禁用 |
-| macOS | Security.framework `SecItem*`，`kSecClassGenericPassword`，用户默认 keychain 搜索列表 | service `EXReaderCredentials/<namespace>` + account | keychain 锁定（禁止交互，不弹解锁框）、无默认 keychain、缺授权 |
+| macOS | Security.framework `SecItem*`，`kSecClassGenericPassword`，仅用户默认 keychain（先检查已解锁，查找与写入不越出它） | service `EXReaderCredentials/<namespace>` + account | keychain 锁定（禁止交互，不弹解锁框）、无默认 keychain、缺授权 |
 | iOS/iPadOS | 同上，应用 data protection keychain，`AfterFirstUnlockThisDeviceOnly`，不同步 | 同上 | 首次解锁前、缺 entitlement |
 | Linux | Secret Service（libsecret ≥0.19，`secret_service_*`），默认 collection，schema `org.exreader.Credentials` | 精确属性 `namespace` + `account` | 无会话总线／服务、无默认 collection、collection 或条目锁定；从不解锁、不弹提示 |
 | Android | Java `CredentialStore`：每 namespace 一把不可导出 AndroidKeyStore AES-256 key；每 account 一份 AES-GCM 记录（平台随机 IV，AAD 绑定 namespace+account），存于 no-backup 私有目录，原子替换 | 文件 `<noBackup>/exreader-credentials/<namespace>/<account>.rec` | Keystore 不可用；C ABI 未绑定 Java 时 |
@@ -99,4 +99,32 @@ namespace 写入凭据（如 `user\0password` 或 token 的序列化字节），
 
 ## 结果
 
-待云端运行。
+受测源码 **`e2247deb35b52615810508092441922c4e4f7913`**，
+[run40057087875](https://github.com/NoGod3524/EXReader/actions/runs/40057087875) attempt1，六个作业全部成功；
+同源报告作业 120763048106 授予五个平台，pending 为空：
+
+| 平台 | 作业 | 检查 | 秘密扫描 | 不可用／锁定 | 工件 |
+| --- | --- | ---: | ---: | --- | --- |
+| Windows Server 2022 x64 | 120762337436 | 24/24 | 0命中 | **pending**（见下） | 12546140647，134434字节 |
+| Ubuntu 22.04 x64 | 120762337469 | 34/34 | 0命中 | collection锁定；无服务／总线 | 12546315161，41165字节 |
+| macOS 15 arm64 | 120762337494 | 29/29 | 0命中 | 测试keychain锁定 | 12545627948，36978字节 |
+| iOS 18.5 模拟器 | 120762337364 | 23/23 | 0命中 | **pending**（模拟器无密码锁） | 12545399797，38706字节 |
+| Android API34 模拟器 | 120762337552 | 46/46 | 0命中 | 仅C ABI未绑定；Keystore故障 pending | 12545831746，134809字节 |
+
+工件 SHA-256 digest、到期时间与保留的失败迭代见 [reader-credentials.json](validation/reader-credentials.json)。
+工件含安装模块、独立消费者／探针、逐阶段原始输出、构建日志、CMake 配置和报告；不含任何秘密。
+
+限制如实保留：
+
+- **Windows 不可用路径未被实际触发**：低完整性进程、停止 VaultSvc、S4U 计划任务下 Credential Manager
+  仍可读写（三次尝试作为 diagnostics 留在报告中）。`ERROR_NO_SUCH_LOGON_SESSION` 等到 UNAVAILABLE 的映射
+  仅经代码审查，未经运行证据。
+- iOS 只在模拟器上验证；锁定 keychain、真机和发行签名的 access group 未覆盖。探针以 ad-hoc 签名、
+  链接期 `__entitlements` 段，经 `simctl spawn` 运行（SpringBoard 拒绝无 UI 探针）。
+- Android 只在模拟器上验证；无法诱发 Keystore 服务故障，UNAVAILABLE 只覆盖 C ABI 未绑定 Java 的情形。
+  模拟器 Keystore 不代表硬件 TEE／StrongBox。
+- macOS 的 legacy file keychain 在锁定时即使设置 `kSecUseAuthenticationUIFail` 也会阻塞在解锁提示上
+  （run40055569089），因此后端先检查默认 keychain 锁定状态，并把查找限定在默认 keychain。
+- run40056060271 的测试消费者曾把未初始化的 detail 缓冲区打印进日志（扫描 0 命中）；已修复，且 harness
+  现对非状态字符的 detail 判失败并脱敏。
+- 根目录构建、主界面／账号对话框、同步调度、真机和账号同步验收由后续包负责。
