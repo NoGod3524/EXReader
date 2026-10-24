@@ -89,8 +89,8 @@ jobs:
       - name: Record the toolchain identities
         run: |
           mkdir -p build/dist
-          cl 2>&1 | head -2 | tee build/dist/toolchain.log
-          link 2>&1 | head -2 | tee -a build/dist/toolchain.log
+          cl 2>&1 | head -2 | tee build/dist/toolchain.log || true
+          link 2>&1 | head -2 | tee -a build/dist/toolchain.log || true
           cmake --version | head -1 | tee -a build/dist/toolchain.log
           ninja --version | tee -a build/dist/toolchain.log
           python --version | tee -a build/dist/toolchain.log

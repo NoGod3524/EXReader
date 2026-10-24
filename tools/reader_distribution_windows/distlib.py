@@ -77,8 +77,9 @@ def category_of(path):
 
 def inventory(root):
     """Every installed file with size and digest; symlinks and escapes are refused."""
-    root = Path(root).resolve(strict=True)
+    root = Path(root)
     require(root.is_dir(), 'distribution stage is not a directory: ' + str(root))
+    root = root.resolve()
     entries = []
     for path in sorted(root.rglob('*')):
         require(not path.is_symlink(), 'symlink in distribution stage: ' + str(path))
@@ -330,7 +331,9 @@ def scan_file(path, patterns, label=None, limit=DEFAULT_SCAN_LIMIT):
 
 
 def scan_tree(root, patterns, limit=DEFAULT_SCAN_LIMIT):
-    root = Path(root).resolve(strict=True)
+    root = Path(root)
+    require(root.is_dir(), 'scan root is not a directory: ' + str(root))
+    root = root.resolve()
     records = []
     for path in sorted(root.rglob('*')):
         if path.is_dir():
@@ -357,7 +360,8 @@ def digest_of_entries(records):
 
 def seal_zip(stage, output, epoch=SEAL_EPOCH):
     """Deterministic ZIP: sorted entries, fixed timestamps, no extra fields."""
-    stage, output = Path(stage).resolve(strict=True), Path(output)
+    require(Path(stage).is_dir(), 'distribution stage is not a directory: ' + str(stage))
+    stage, output = Path(stage).resolve(), Path(output)
     entries = []
     for path in sorted(stage.rglob('*')):
         require(not path.is_symlink(), 'symlink in distribution stage: ' + str(path))
