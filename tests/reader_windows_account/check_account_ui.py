@@ -653,11 +653,21 @@ def main():
             lock.rollback();lock.close()
         shot('08-mapping-failure.bmp', dialog)
         D.close_account(dialog)
-        D.wait_idle();send(D.control('books'), 0, 0)
-        send(U.GetDlgItem(D.window, REFRESH), BM_CLICK)
+        # The remote title of this book is the one A renamed earlier, so the repaired shelf
+        # list must show it; the row is reached only through the real 刷新 control.
+        repaired_title = sql('device-d', 'SELECT title FROM reader_books WHERE book_key=?',
+                             ('epub:' + hashes['Account Epub.epub'],))[0][0]
+        assert repaired_title == 'Epub Retitled Remotely', repaired_title
         D.wait(lambda: len(sql('device-d', 'SELECT sdk_book_id FROM reader_local_books')) == 5, timeout=120)
+        deadline = time.monotonic() + 120
+        while not D.has_row(repaired_title):
+            assert time.monotonic() < deadline, 'the repaired book never reached the shelf list'
+            send(U.GetDlgItem(D.window, REFRESH), BM_CLICK)
+            time.sleep(1)
+        assert len(sql('device-d', 'SELECT book_key FROM reader_books')) == 5
+        assert len(sql('device-d', 'SELECT sdk_book_id FROM reader_local_books')) == 5
         D.wait_idle()
-        D.open('Account Epub');D.wait_idle()
+        D.open(repaired_title);D.wait_idle()
         record('fault_round_2_mapping_failure_after_import_is_reported_and_repaired_without_reimport')
         D.close();assert D.process.returncode == 0
 
