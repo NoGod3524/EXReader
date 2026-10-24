@@ -188,6 +188,12 @@ class State:
                    % (digest(self.report_zip), self.artifacts[1]["name"], len(self.report_zip))).encode(),
         }
 
+    @staticmethod
+    def upload_log(zip_bytes, name, artifact_id):
+        return ("Preparing artifact\nSHA256 digest of uploaded artifact zip is %s\n"
+                "Finalizing artifact upload\nArtifact %s has been successfully uploaded! Final size is %d bytes. "
+                "Artifact ID is %d\n" % (digest(zip_bytes), name, len(zip_bytes), artifact_id)).encode()
+
     def repack_files(self):
         """Re-packs the current files without regenerating the report hashes.
 
@@ -197,10 +203,9 @@ class State:
         self.windows_zip = pack(self.files)
         self.archives[5001] = self.windows_zip
         self.artifacts[0]["size_in_bytes"] = len(self.windows_zip)
-        previous = self.windows_digest[7:]
         self.windows_digest = "sha256:" + digest(self.windows_zip)
         self.artifacts[0]["digest"] = self.windows_digest
-        self.logs[7001] = self.logs[7001].replace(previous.encode(), digest(self.windows_zip).encode())
+        self.logs[7001] = self.upload_log(self.windows_zip, self.artifacts[0]["name"], 5001)
 
     def strict(self):
         return verify(self.run, self.jobs, self.artifacts, self.archives, self.logs, REPO, self.sha,
@@ -211,11 +216,16 @@ class State:
                              self.run_id, self.attempt)
 
 
+LAST = {"observed": ""}
+
+
 def expect(code, action):
     try:
         action()
     except EvidenceError as error:
+        LAST["observed"] = str(error)
         return str(error) == code
+    LAST["observed"] = "accepted"
     return False
 
 
@@ -228,6 +238,8 @@ def main():
     results = []
 
     def record(name, ok, detail=""):
+        if not ok:
+            detail = (detail + " observed=" + LAST["observed"]).strip()
         results.append({"case": name, "result": "pass" if ok else "fail", "detail": detail})
 
     state = State()

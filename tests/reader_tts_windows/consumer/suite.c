@@ -80,18 +80,18 @@ static void check(suite *s, const char *id, int ok, const char *detail) {
 }
 
 static void check_status(suite *s, const char *id, reader_tts_status actual, reader_tts_status expected) {
-  sprintf(s->detail, "expected=%s actual=%s", status_name(expected), status_name(actual));
+  snprintf(s->detail, sizeof s->detail, "expected=%s actual=%s", status_name(expected), status_name(actual));
   check(s, id, actual == expected, s->detail);
 }
 
 static void check_state(suite *s, const char *id, reader_tts_state actual, reader_tts_state expected) {
-  sprintf(s->detail, "expected=%s actual=%s", state_name(expected), state_name(actual));
+  snprintf(s->detail, sizeof s->detail, "expected=%s actual=%s", state_name(expected), state_name(actual));
   check(s, id, actual == expected, s->detail);
 }
 
 static void check_count(suite *s, const char *id, unsigned long long actual,
                         unsigned long long minimum, int at_least) {
-  sprintf(s->detail, "%s=%llu actual=%llu", at_least ? "minimum" : "expected", minimum, actual);
+  snprintf(s->detail, sizeof s->detail, "%s=%llu actual=%llu", at_least ? "minimum" : "expected", minimum, actual);
   check(s, id, at_least ? actual >= minimum : actual == minimum, s->detail);
 }
 
@@ -110,7 +110,10 @@ suite *suite_create(const char *wav_dir) {
     free(s);
     return NULL;
   }
-  strcpy(s->wav_dir, wav_dir);
+  {
+    size_t length = strlen(wav_dir);
+    memcpy(s->wav_dir, wav_dir, length + 1);
+  }
   return s;
 }
 
@@ -132,7 +135,7 @@ static size_t fill_text(suite *s, size_t bytes, char marker) {
 }
 
 static const char *wav_name(suite *s, const char *name) {
-  sprintf(s->wav, "%s\\%s.wav", s->wav_dir, name);
+  snprintf(s->wav, sizeof s->wav, "%s\\%s.wav", s->wav_dir, name);
   return s->wav;
 }
 
@@ -176,7 +179,7 @@ static reader_tts *open_ready(suite *s, const reader_tts_config *config, const c
   reader_tts *handle = NULL;
   reader_tts_snapshot snap;
   reader_tts_status status = reader_tts_create(config, &handle, NULL);
-  sprintf(s->detail, "create=%s", status_name(status));
+  snprintf(s->detail, sizeof s->detail, "create=%s", status_name(status));
   check(s, prefix, status == READER_TTS_OK && handle != NULL, s->detail);
   if (status != READER_TTS_OK || !handle) return NULL;
   wait_state(handle, READER_TTS_READY, 30000, &snap);
@@ -193,7 +196,7 @@ static int close_and_destroy(suite *s, reader_tts **handle, const char *prefix) 
   if (wait_state(*handle, READER_TTS_CLOSED, 30000, &snap) != READER_TTS_CLOSED) ok = 0;
   status = reader_tts_destroy(handle, NULL);
   if (status != READER_TTS_OK || *handle != NULL) ok = 0;
-  sprintf(s->detail, "closed_and_destroyed=%d", ok);
+  snprintf(s->detail, sizeof s->detail, "closed_and_destroyed=%d", ok);
   check(s, prefix, ok, s->detail);
   return ok;
 }
@@ -649,22 +652,22 @@ static void phase_chunks(suite *s) {
   for (chunk = 0; chunk < 3; chunk++) {
     char id[64];
     bytes = fill_text(s, 1000, (char)('A' + chunk));
-    sprintf(id, "chunks.%d.wav_output", chunk);
+    snprintf(id, sizeof id, "chunks.%d.wav_output", chunk);
     check_status(s, id, set_wav(s, handle, names[chunk]), READER_TTS_OK);
-    sprintf(id, "chunks.%d.start", chunk);
+    snprintf(id, sizeof id, "chunks.%d.start", chunk);
     check_status(s, id, reader_tts_speak(handle, (uint64_t)(chunk + 1), s->text, bytes, NULL, 1.5, NULL),
                  READER_TTS_OK);
     tally_init(&t, (uint64_t)(chunk + 1), s->text, bytes);
     outcome = pump_until_terminal(handle, &t, 180000, &foreign);
-    sprintf(id, "chunks.%d.terminal", chunk);
+    snprintf(id, sizeof id, "chunks.%d.terminal", chunk);
     check(s, id, outcome == 0, outcome == 1 ? "timeout" : "poll failure");
-    sprintf(id, "chunks.%d.finished", chunk);
+    snprintf(id, sizeof id, "chunks.%d.finished", chunk);
     check_count(s, id, t.finished, 1, 0);
-    sprintf(id, "chunks.%d.started", chunk);
+    snprintf(id, sizeof id, "chunks.%d.started", chunk);
     check_count(s, id, t.started, 1, 0);
-    sprintf(id, "chunks.%d.range_bounds", chunk);
+    snprintf(id, sizeof id, "chunks.%d.range_bounds", chunk);
     check(s, id, t.bad_range == 0, "chunk ranges inside this chunk");
-    sprintf(id, "chunks.%d.byte_window", chunk);
+    snprintf(id, sizeof id, "chunks.%d.byte_window", chunk);
     check(s, id, t.max_end > 0 && t.max_end <= bytes, "ranges bound to this chunk");
     announce_wav(s, names[chunk], 1000);
   }

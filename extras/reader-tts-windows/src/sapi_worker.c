@@ -309,10 +309,10 @@ static void finish_request(reader_tts *handle, exr_tts_utterance *utterance,
   else exr_tts_publish(handle, READER_TTS_READY, status, EXR_TTS_CAPS, 0);
 }
 
-static void report_range(reader_tts *handle, exr_tts_utterance *utterance, const SPEVENTEX *source) {
+static void report_range(reader_tts *handle, exr_tts_utterance *utterance, const SPEVENT *source) {
   exr_tts_queue_event event;
   size_t start_units, length_units;
-  if (source->lParam < 0 || source->wParam < 0) {
+  if (source->lParam < 0) {
     finish_request(handle, utterance, READER_TTS_FAILED, READER_TTS_IO);
     return;
   }
@@ -339,9 +339,9 @@ static void report_range(reader_tts *handle, exr_tts_utterance *utterance, const
 
 static void pump_events(reader_tts *handle, exr_tts_utterance *utterance) {
   ISpEventSource *source = (ISpEventSource *)utterance->voice;
-  SPEVENTEX events[8];
+  SPEVENT events[8];
   ULONG fetched = 0, index;
-  if (FAILED(source->lpVtbl->GetEventsEx(source, 8, events, &fetched))) return;
+  if (FAILED(source->lpVtbl->GetEvents(source, 8, events, &fetched))) return;
   for (index = 0; index < fetched; index++) {
     switch (events[index].eEventId) {
       case SPEI_START_INPUT_STREAM:
