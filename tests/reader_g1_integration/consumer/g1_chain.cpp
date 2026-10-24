@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
     reader_catalog_book mapping{};
     mapping.format = "txt"; mapping.sha256 = sha; mapping.source_bytes = original.size();
     mapping.title = book.title; mapping.author = book.author; mapping.sort_title = book.sort_title;
-    mapping.sdk_book_id = imported.book_id; mapping.location_kind = "reflow";
+    mapping.sdk_book_id = imported.book_id; mapping.location_kind = "reflow_global";
     reader_catalog_error ce{};
     check(reader_catalog_attach(side.catalog, &mapping, &ce) == 0,
           "verified original attaches to the same product provider", ce.message);

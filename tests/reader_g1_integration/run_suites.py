@@ -94,7 +94,7 @@ def main():
         providers = maps.archive_providers(mapping)
         assert len(providers) == 1 and 'reader_catalog_sqlite' in providers[0]
         assert not maps.direct_providers(mapping)
-        run('codec-only', [PYTHON, REPO / 'tests/reader_reading_state_codec/check_link.py',
+        run('codec-only', [PYTHON, Path(__file__).parent / 'check_codec.py',
                            '--consumer', binary / ('g1-codec-only' + suffix),
                            '--map', binary / 'g1-codec.map', '--output', output / 'codec'])
         for name in ('g1-chain', 'g1-codec-only'):
