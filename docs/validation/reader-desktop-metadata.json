@@ -1,0 +1,252 @@
+{
+  "accepted": true,
+  "scope": "installed desktop native metadata adapter only",
+  "source_sha": "17eacd2de77dbf5b75bfab68ab2677174ebc0315",
+  "run_id": 40047847396,
+  "attempt": 1,
+  "workflow": ".github/workflows/reader-commands.yml",
+  "base_preintegration": "118e628d078a42d918552d6b2797d9aa3a3517eb",
+  "organization_api_source": "4bfe09766d6a92445a09d7a66b47fa9eb59ab325",
+  "sdk_frozen_source": "9854061be331fe603a1822d9b2b36ee357154927",
+  "schema1_ancestor": "f32bb8aa18ed3de286900f19ce4230fd93435dd0",
+  "sdk_database_writes": false,
+  "sdk_source_verification_accepted": false,
+  "schema1_changed": false,
+  "wire_changed": false,
+  "desktop_ui_accepted": false,
+  "mobile_accepted": false,
+  "complete_product": false,
+  "method": "read-only GitHub run/jobs/artifact metadata and completed job logs; no local artifact download or re-execution",
+  "jobs": [
+    {
+      "id": 120733531036,
+      "name": "installed typed product commands (windows-2022)",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "17eacd2de77dbf5b75bfab68ab2677174ebc0315"
+    },
+    {
+      "id": 120733531257,
+      "name": "installed typed product commands (ubuntu-22.04)",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "17eacd2de77dbf5b75bfab68ab2677174ebc0315"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12542745017,
+      "name": "reader-commands-Windows-40047847396-1",
+      "size_in_bytes": 4591954,
+      "digest": "sha256:5292f6e674d62509a65266132b068a434f45ce906feb8133c31889ecb5deae08",
+      "expired": false,
+      "expires_at": "2027-01-22T01:01:25Z",
+      "source_sha": "17eacd2de77dbf5b75bfab68ab2677174ebc0315",
+      "run_id": 40047847396
+    },
+    {
+      "id": 12541483605,
+      "name": "reader-commands-Linux-40047847396-1",
+      "size_in_bytes": 3215671,
+      "digest": "sha256:97c363629e1984a8d169a078a6d74981d388a50b74b595d3063f1fa6365ab21b",
+      "expired": false,
+      "expires_at": "2027-01-22T01:01:25Z",
+      "source_sha": "17eacd2de77dbf5b75bfab68ab2677174ebc0315",
+      "run_id": 40047847396
+    }
+  ],
+  "platforms": [
+    {
+      "platform": "linux",
+      "original_checks": [
+        {
+          "suite": "source",
+          "checks": 77,
+          "source_sha": "17eacd2de77dbf5b75bfab68ab2677174ebc0315",
+          "accepted": true
+        },
+        {
+          "suite": "protocol",
+          "checks": 59,
+          "source_sha": "17eacd2de77dbf5b75bfab68ab2677174ebc0315",
+          "accepted": true
+        },
+        {
+          "suite": "sync",
+          "checks": 33,
+          "source_sha": "17eacd2de77dbf5b75bfab68ab2677174ebc0315",
+          "accepted": true
+        },
+        {
+          "suite": "projection",
+          "checks": 32,
+          "source_sha": "17eacd2de77dbf5b75bfab68ab2677174ebc0315",
+          "accepted": true
+        },
+        {
+          "suite": "typed_commands",
+          "checks": 33,
+          "source_sha": "17eacd2de77dbf5b75bfab68ab2677174ebc0315",
+          "accepted": true
+        }
+      ],
+      "adapter": {
+        "accepted": true,
+        "source_sha": "17eacd2de77dbf5b75bfab68ab2677174ebc0315",
+        "run_id": "40047847396",
+        "attempt": 1,
+        "platform": "linux",
+        "count": 29,
+        "checks": [
+          "installed_adapter_uses_the_same_single_verified_product_sqlite",
+          "independent_installed_c_consumer_bootstraps_and_calls_all_three_typed_producers",
+          "native_metadata_owner_rejects_wrong_thread_calls",
+          "a_second_owner_cannot_share_the_pending_profile",
+          "catalog_only_prepare_preserves_current_product_metadata_and_reports_bootstrap",
+          "verified_source_mismatch_cannot_stage_or_write_any_revision",
+          "ordinary_book_edit_cannot_silently_bootstrap_legacy_metadata",
+          "membership_reports_needs_bootstrap_before_staging_or_writing",
+          "explicit_verified_bootstrap_retains_edited_fields_and_existing_sdk_local_mapping",
+          "favorite_produces_only_native_schema1_with_the_complete_original_snapshot",
+          "complete_bounded_typed_intent_and_both_ids_are_durable_before_any_mutation",
+          "exact_old_intent_retry_never_requeues_or_replays_newer_metadata",
+          "a_committed_pending_intent_cannot_be_abandoned",
+          "a_new_staged_action_cannot_replace_an_existing_pending_intent",
+          "stale_expected_heads_refuse_all_writes_and_keep_the_exact_original_intent",
+          "explicit_abandonment_only_clears_an_uncommitted_intent",
+          "shelves_subshelves_tags_and_series_share_the_installed_native_adapter",
+          "all_three_membership_kinds_preserve_existing_ordinal_contracts",
+          "deleted_group_metadata_remains_visible_for_explicit_restore",
+          "typed_group_names_remain_standard_utf8_with_supplementary_characters",
+          "concurrent_native_writer_never_combines_old_metadata_with_new_expected_heads",
+          "actual_process_kill_stage_recovers_exact_ids_payload_heads_and_releases_owner_lock",
+          "actual_process_kill_apply_recovers_exact_ids_payload_heads_and_releases_owner_lock",
+          "real_cleanup_refusal_reports_committed_and_retains_safe_retry_intent",
+          "changed_or_truncated_pending_bytes_are_refused_without_product_writes",
+          "oversized_pending_intent_is_refused_before_unbounded_allocation",
+          "pending_database_binding_is_checked_before_opening_another_product_database",
+          "orphan_prepublication_temporary_file_cannot_replay_or_block_a_new_intent",
+          "producer_validation_failure_preserves_the_intent_and_zero_transaction_effects"
+        ],
+        "sdk_database_writes": false,
+        "schema1_changed": false,
+        "wire_changed": false,
+        "network_used": false,
+        "native_adapter_only": true,
+        "desktop_ui_accepted": false,
+        "sdk_source_verification_accepted": false,
+        "consumer_sha256": "b4c3f89bc1dda9b3109b73d92708fb195799dd3753f9cf621fabb67ad5bc3e00"
+      }
+    },
+    {
+      "platform": "windows",
+      "original_checks": [
+        {
+          "suite": "source",
+          "checks": 76,
+          "source_sha": "17eacd2de77dbf5b75bfab68ab2677174ebc0315",
+          "accepted": true
+        },
+        {
+          "suite": "protocol",
+          "checks": 59,
+          "source_sha": "17eacd2de77dbf5b75bfab68ab2677174ebc0315",
+          "accepted": true
+        },
+        {
+          "suite": "sync",
+          "checks": 33,
+          "source_sha": "17eacd2de77dbf5b75bfab68ab2677174ebc0315",
+          "accepted": true
+        },
+        {
+          "suite": "projection",
+          "checks": 32,
+          "source_sha": "17eacd2de77dbf5b75bfab68ab2677174ebc0315",
+          "accepted": true
+        },
+        {
+          "suite": "typed_commands",
+          "checks": 33,
+          "source_sha": "17eacd2de77dbf5b75bfab68ab2677174ebc0315",
+          "accepted": true
+        }
+      ],
+      "adapter": {
+        "accepted": true,
+        "source_sha": "17eacd2de77dbf5b75bfab68ab2677174ebc0315",
+        "run_id": "40047847396",
+        "attempt": 1,
+        "platform": "win32",
+        "count": 29,
+        "checks": [
+          "installed_adapter_uses_the_same_single_verified_product_sqlite",
+          "independent_installed_c_consumer_bootstraps_and_calls_all_three_typed_producers",
+          "native_metadata_owner_rejects_wrong_thread_calls",
+          "a_second_owner_cannot_share_the_pending_profile",
+          "catalog_only_prepare_preserves_current_product_metadata_and_reports_bootstrap",
+          "verified_source_mismatch_cannot_stage_or_write_any_revision",
+          "ordinary_book_edit_cannot_silently_bootstrap_legacy_metadata",
+          "membership_reports_needs_bootstrap_before_staging_or_writing",
+          "explicit_verified_bootstrap_retains_edited_fields_and_existing_sdk_local_mapping",
+          "favorite_produces_only_native_schema1_with_the_complete_original_snapshot",
+          "complete_bounded_typed_intent_and_both_ids_are_durable_before_any_mutation",
+          "exact_old_intent_retry_never_requeues_or_replays_newer_metadata",
+          "a_committed_pending_intent_cannot_be_abandoned",
+          "a_new_staged_action_cannot_replace_an_existing_pending_intent",
+          "stale_expected_heads_refuse_all_writes_and_keep_the_exact_original_intent",
+          "explicit_abandonment_only_clears_an_uncommitted_intent",
+          "shelves_subshelves_tags_and_series_share_the_installed_native_adapter",
+          "all_three_membership_kinds_preserve_existing_ordinal_contracts",
+          "deleted_group_metadata_remains_visible_for_explicit_restore",
+          "typed_group_names_remain_standard_utf8_with_supplementary_characters",
+          "concurrent_native_writer_never_combines_old_metadata_with_new_expected_heads",
+          "actual_process_kill_stage_recovers_exact_ids_payload_heads_and_releases_owner_lock",
+          "actual_process_kill_apply_recovers_exact_ids_payload_heads_and_releases_owner_lock",
+          "real_cleanup_refusal_reports_committed_and_retains_safe_retry_intent",
+          "changed_or_truncated_pending_bytes_are_refused_without_product_writes",
+          "oversized_pending_intent_is_refused_before_unbounded_allocation",
+          "pending_database_binding_is_checked_before_opening_another_product_database",
+          "orphan_prepublication_temporary_file_cannot_replay_or_block_a_new_intent",
+          "producer_validation_failure_preserves_the_intent_and_zero_transaction_effects"
+        ],
+        "sdk_database_writes": false,
+        "schema1_changed": false,
+        "wire_changed": false,
+        "network_used": false,
+        "native_adapter_only": true,
+        "desktop_ui_accepted": false,
+        "sdk_source_verification_accepted": false,
+        "consumer_sha256": "0c68d4b0d1392c861b61d577e169c598e78e1a6225378b9c4dfd73b88a019f00"
+      }
+    }
+  ],
+  "iterations_retained": [
+    {
+      "source_sha": "4ae0f7e6f763d6e9f4d5814f1c20bb870003d497",
+      "run_id": 40047257430,
+      "attempt": 1,
+      "conclusion": "success",
+      "windows_adapter_checks": 28,
+      "linux_adapter_checks": 28
+    },
+    {
+      "source_sha": "78a4195cc603a772badb9d6847467cd3d1b8bf8a",
+      "run_id": 40047579022,
+      "attempt": 1,
+      "conclusion": "success",
+      "windows_adapter_checks": 29,
+      "linux_adapter_checks": 29,
+      "change": "verify heads and graph before/after metadata reads, plus actual concurrent native writer"
+    },
+    {
+      "source_sha": "17eacd2de77dbf5b75bfab68ab2677174ebc0315",
+      "run_id": 40047847396,
+      "attempt": 1,
+      "conclusion": "success",
+      "windows_adapter_checks": 29,
+      "linux_adapter_checks": 29,
+      "change": "preserve producer required-field rejection before staging; installed C consumer verifies zero writes"
+    }
+  ]
+}
