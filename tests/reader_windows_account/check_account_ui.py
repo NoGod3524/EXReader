@@ -366,12 +366,21 @@ def main():
 
     def import_books(device, names):
         for name in names:
-            device.import_file(source / name)
+            set_text(device.control('path'), str(source / name))
+            seen = [device.status()]
+            send(device.control('import'), BM_CLICK, timeout=5000)
+            end = time.monotonic() + 180
+            while time.monotonic() < end:
+                status = device.status()
+                if status != seen[-1]:
+                    seen.append(status)
+                if '已导入' in status or '去重' in status or '失败' in status:
+                    break
+                time.sleep(.05)
+            print(json.dumps({'import': name, 'statuses': seen}, ensure_ascii=False), flush=True)
+            assert '已导入' in seen[-1] or '去重' in seen[-1], (name, seen)
             device.wait_idle()
-            status = device.status()
-            print(json.dumps({'import': name, 'status': status}, ensure_ascii=False), flush=True)
-            assert '已导入' in status or '去重' in status, (name, status)
-            device.wait(lambda: device.status() != '' and not device.status().endswith('书架信息待恢复'), timeout=60)
+            device.wait(lambda: not device.status().endswith('书架信息待恢复'), timeout=60)
 
     A = B = None
     try:
