@@ -4,6 +4,8 @@
 
 这是未验收候选。[验收记录](validation/reader-android-search.json) 在完整 Actions 通过前保持 `accepted:false`。本地未运行构建、语法检查、测试或夹具。
 
+首轮源码 `44bd6d2b` 的 [run 40094753066](https://github.com/NoGod3524/EXReader/actions/runs/40094753066) 完成安装包/依赖审计、原 18/17+2/DAV 与原 16 项，新增搜索在测试种子的偏移 8 处被 SDK 拒绝，因为该 TXT 以中文开头。`85f3add0` 修正为边界 0，并保留原 Debug Rebuild 控件；新组尚未授予。失败及原件保留。
+
 ## 使用与行为
 
 启用 `-PexrSearch=true` 并提供已安装的 `exrSearchPrefix`。当前验证构建同时保留 `exrSync=true` 和原账号/接收功能。阅读页低频“更多”菜单提供“书内搜索”；没有增加常驻搜索栏。Debug 保留原 Rebuild 按钮、ID 与动作；启用搜索的 Release 隐藏该调试按钮，“更多”占用原位置。
