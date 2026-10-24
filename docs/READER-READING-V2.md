@@ -72,3 +72,14 @@ attempt1，五作业全部成功。Windows/Linux 各保留全部原生原套件�
 绑定源码、run、attempt、作业及报告身份，比较跨平台捕获结果，得到
 `accepted=true, problems=[]`。五份工件均非空、未过期，身份见
 [reader-reading-v2.json](validation/reader-reading-v2.json)。SDK和产品schema1未改。
+
+## 按书读取标注与书签（候选）
+
+`reader_revision_annotations_page` 按全局book_key查询，annotation_id作为双向keyset游标，
+每页1..100项，复用schema1的修订实体索引。每个ID只返回一次，包含删除和未解决历史；
+SAFE给出精确原始wire及元数据，缺父、并发、隐式复活只给出状态和图计数。
+宿主复制回调记录后再编辑或导航；回调内重入及跨worker调用拒绝。
+
+整页使用一个读事务，即使其他连接在回调期间提交恢复，当前页仍保持原快照。
+新增235实体、双向跨页、独立书籍隔离、状态、停止回调、输入拒绝、所有权、
+只读索引范围与真实第二连接并发提交共10项检查；这部分等待新源码云端验收。

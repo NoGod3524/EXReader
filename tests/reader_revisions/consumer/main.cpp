@@ -24,9 +24,22 @@ static void pause_marker(){std::ofstream file(std::filesystem::u8path(marker),st
 static void pause_sql(sqlite3_context *,int,sqlite3_value **){pause_marker();}
 static int install_pause(sqlite3 *db,char **,const sqlite3_api_routines *){return sqlite3_create_function_v2(db,"reader_test_pause",0,SQLITE_UTF8|SQLITE_INNOCUOUS,nullptr,pause_sql,nullptr,nullptr,nullptr);}
 static std::string metadata(const reader_revision_info &i){return "\"id\":"+quote(i.revision_id)+",\"kind\":"+quote(i.entity_kind)+",\"key\":"+quote(i.entity_key)+",\"operation\":"+quote(i.operation)+",\"location\":"+quote(i.location_kind)+",\"sha256\":"+quote(i.sha256)+",\"bytes\":"+std::to_string(i.bytes);}
-struct observations {reader_revisions *store;std::vector<std::string> heads,queue;bool reentry=false;int nested=-1;};
+struct observations {reader_revisions *store;std::vector<std::string> heads,queue;bool reentry=false;int nested=-1;std::vector<std::string> annotations;size_t stop=0;std::string database,mutation;};
 static int head(void *opaque,const reader_revision_head *h){auto &o=*(observations *)opaque;o.heads.push_back("{\"id\":"+quote(h->revision_id)+",\"operation\":"+quote(h->operation)+",\"complete\":"+std::to_string(h->complete)+",\"requires_restore\":"+std::to_string(h->requires_restore)+"}");if(o.reentry){char *wire=nullptr;size_t n=0;reader_revision_error e{};o.nested=reader_revision_get(o.store,h->revision_id,&wire,&n,nullptr,&e);reader_revision_bytes_free(wire);}return 0;}
 static int queued(void *opaque,const reader_revision_outbox_row *r){auto &o=*(observations *)opaque;o.queue.push_back("{"+metadata(r->info)+",\"wire\":"+quote(std::string(r->wire,r->info.bytes))+",\"queue_id\":"+std::to_string(r->queue_id)+",\"attempts\":"+std::to_string(r->attempts)+",\"last_error\":"+quote(r->last_error)+"}");return 0;}
+static int annotation(void *opaque,const reader_revision_annotation_row *r){
+  auto &o=*(observations *)opaque;
+  o.annotations.push_back("{\"annotation_id\":"+quote(r->annotation_id)+",\"selection_kind\":"+std::to_string(r->selection.kind)+",\"revisions\":"+std::to_string(r->selection.graph.revisions)+",\"heads\":"+std::to_string(r->selection.graph.heads)+",\"deleted\":"+std::to_string(r->selection.graph.deleted)+","+metadata(r->info)+",\"wire\":"+(r->wire?quote(std::string(r->wire,r->info.bytes)):"null")+"}");
+  if(o.reentry){char *wire=nullptr;size_t n=0;reader_revision_error error{};o.nested=reader_revision_get(o.store,r->info.revision_id,&wire,&n,nullptr,&error);reader_revision_bytes_free(wire);}
+  if(!o.mutation.empty()){
+    std::string wire=read(o.mutation);o.mutation.clear();reader_revisions *other=nullptr;reader_revision_error error{};reader_revision_info info{};int created=0;
+    o.nested=reader_revisions_open(o.database.c_str(),&other,&error);
+    if(o.nested==READER_REV_OK)o.nested=reader_revision_validate(other,wire.data(),wire.size(),nullptr,&info,&error);
+    if(o.nested==READER_REV_OK)o.nested=reader_revision_receive(other,wire.data(),wire.size(),info.sha256,nullptr,&created,&error);
+    if(other&&reader_revisions_close(&other,&error)!=READER_REV_OK)o.nested=READER_REV_DATABASE;
+  }
+  return o.stop&&o.annotations.size()>=o.stop;
+}
 static std::string array(const std::vector<std::string> &v){std::string out="[";for(size_t i=0;i<v.size();i++){if(i)out+=',';out+=v[i];}return out+"]";}
 int main(int argc,char **argv){try{
   std::vector<std::string> args;
@@ -65,6 +78,16 @@ int main(int argc,char **argv){try{
       if(action=="crash-reading-after-commit"&&status==READER_REV_OK){marker=args.at(6);pause_marker();}
     }else if(action=="project-remote"){
       status=reader_revision_project(store,args.at(3).c_str(),args.at(4).c_str(),args.at(5).c_str(),args.at(6)=="-"?nullptr:args[6].c_str(),&info,&error);
+    }else if(action=="receive-batch"){
+      std::ifstream lines(std::filesystem::u8path(args.at(3)),std::ios::binary);if(!lines)return 3;std::string line;size_t accepted=0;
+      while(std::getline(lines,line)){if(line.size()<66||line[64]!=' ')return 2;std::string sha=line.substr(0,64),body=line.substr(65);status=reader_revision_receive(store,body.data(),body.size(),sha.c_str(),&info,&created,&error);if(status!=READER_REV_OK)break;++accepted;}
+      extra=",\"accepted_count\":"+std::to_string(accepted);
+    }else if(action=="annotations-page"||action=="annotations-wrong-thread"){
+      observed.stop=(size_t)std::stoul(args.at(7));observed.reentry=args.at(8)=="reentry";
+      if(args.at(8)=="mutate"){observed.database=args[2];observed.mutation=args.at(9);}
+      auto invoke=[&]{status=reader_revision_annotations_page(store,args.at(3)=="NULL"?nullptr:args[3].c_str(),args.at(4)=="-"?nullptr:args[4].c_str(),std::stoi(args.at(5)),(size_t)std::stoul(args.at(6)),args.at(8)=="null-callback"?nullptr:annotation,&observed,&error);};
+      if(action=="annotations-wrong-thread"){std::thread worker(invoke);worker.join();}else invoke();
+      nested=observed.nested;extra=",\"annotations\":"+array(observed.annotations);
     }else if(action=="selected"){
       char *wire=nullptr;size_t bytes=0;reader_revision_selection selection{};
       status=reader_revision_selected(store,args.at(3).c_str(),args.at(4).c_str(),&wire,&bytes,&info,&selection,&error);state=selection.graph;

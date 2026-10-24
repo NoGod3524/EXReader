@@ -144,6 +144,7 @@ jobs:
         run: |
           if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
           python3 tests/reader_reading_v2/check_protocol.py --consumer "build/sync-revision-consumer/revision-consumer$exe" --legacy-consumer "build/reading-v1-consumer/revision-consumer$exe" --output build/reading-v2-protocol
+          python3 tests/reader_reading_v2/check_annotations.py --consumer "build/sync-revision-consumer/revision-consumer$exe" --output build/reading-v2-annotations
       - name: Preserve source-bound evidence and installed modules without keys
         if: always()
         uses: actions/upload-artifact@v4
@@ -171,6 +172,7 @@ jobs:
             build/session-evidence/
             build/session-consumer/session-consumer*
             build/reading-v2-protocol/
+            build/reading-v2-annotations/
             build/reading-v1-consumer/revision-consumer*
           if-no-files-found: error
 

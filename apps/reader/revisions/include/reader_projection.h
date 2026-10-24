@@ -40,6 +40,23 @@ reader_revision_status reader_revision_project(reader_revisions *,const char *en
 reader_revision_status reader_revision_selected(reader_revisions *,const char *entity_kind,
   const char *entity_key,char **wire,size_t *bytes,reader_revision_info *,
   reader_revision_selection *,reader_revision_error *);
+typedef struct {
+  const char *annotation_id; /* Borrowed lowercase 32-hex ID, cursor within book. */
+  reader_revision_selection selection;
+  reader_revision_info info; /* Zero unless SAFE, including safe tombstones. */
+  const char *wire; /* Exact retained bytes only for SAFE; otherwise NULL. */
+} reader_revision_annotation_row;
+typedef int (*reader_revision_annotation_fn)(void *,const reader_revision_annotation_row *);
+/* One read snapshot, distinct global annotation IDs in bytewise keyset order.
+   book_key is required; after_id NULL starts at the appropriate end. direction
+   is +1/-1 and limit is 1..100. Includes tombstones and unresolved entities;
+   only SAFE supplies info/wire, and navigation still requires SDK FOUND.
+   Callback data is borrowed until return. Nonzero stops successfully. Calls
+   use the creating worker without reentry. Discard the page on any error.
+   Uses the schema1 entity index, with no OFFSET, migration or SDK write. */
+reader_revision_status reader_revision_annotations_page(reader_revisions *,const char *book_key,
+  const char *after_id,int direction,size_t limit,reader_revision_annotation_fn,void *,
+  reader_revision_error *);
 #ifdef __cplusplus
 }
 #endif

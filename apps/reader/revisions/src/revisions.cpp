@@ -299,6 +299,12 @@ void commit(reader_revisions *store,const std::string &wire,bool local,const cha
 }
 std::set<std::string> head_ids(const graph &g){std::set<std::string> ids;for(const auto &pair:g.nodes)if(pair.second.head)ids.insert(pair.first);return ids;}
 std::string safe_head(const graph &g){if(!g.state.projection_safe)reject(READER_REV_UNSAFE,"Entity has no complete safe unique head");return *head_ids(g).begin();}
+reader_selection_kind selection_kind(const graph &g){
+  if(!g.state.heads)return READER_SELECTION_MISSING;
+  if(g.state.missing_parents||g.state.foreign_parents)return READER_SELECTION_PENDING_PARENTS;
+  if(g.state.heads>1)return READER_SELECTION_CONCURRENT;
+  return g.state.projection_safe?READER_SELECTION_SAFE:READER_SELECTION_BLOCKED_RESTORE;
+}
 bool product_exists(sqlite3 *db,const std::string &table,const std::string &column,const std::string &key,bool active=false){
   std::string sql="SELECT 1 FROM "+table+" WHERE "+column+"=?1"+(active?" AND deleted=0":"");statement q(db,sql.c_str());q.bind(1,key);return q.next()==SQLITE_ROW;
 }
@@ -459,6 +465,31 @@ extern "C" reader_revision_status reader_revision_selected(reader_revisions *sto
     std::string body;revision r=retained(store,safe_head(current),&body);
     std::unique_ptr<char,decltype(&std::free)> copy((char *)std::malloc(body.size()+1),std::free);if(!copy)throw std::bad_alloc();std::memcpy(copy.get(),body.data(),body.size());copy.get()[body.size()]=0;
     tx.commit();selection->kind=READER_SELECTION_SAFE;*wire=copy.release();*bytes=body.size();info(r,out);
+  });
+}
+extern "C" reader_revision_status reader_revision_annotations_page(reader_revisions *store,const char *book_key,const char *after_id,int direction,size_t limit,reader_revision_annotation_fn visit,void *context,reader_revision_error *error){
+  return call(error,[&]{guard owner(store);
+    if(!book_key||!visit||!limit||limit>100||(direction!=1&&direction!=-1))reject(READER_REV_ARGUMENT,"Annotation page requires book, callback, direction and limit 1..100");
+    book(book_key);if(after_id)identifier(after_id);
+    std::string prefix=std::string(book_key)+":",lower=prefix,upper=prefix+"g";
+    if(after_id){if(direction==1)lower+=after_id;else upper=prefix+after_id;}
+    transaction tx(store->db,"BEGIN");std::vector<std::string> keys;
+    {
+      statement q(store->db,direction==1?
+        "SELECT DISTINCT entity_key FROM reader_revisions WHERE entity_kind='annotation' AND entity_key>?1 AND entity_key<?2 ORDER BY entity_key LIMIT ?3":
+        "SELECT DISTINCT entity_key FROM reader_revisions WHERE entity_kind='annotation' AND entity_key>?1 AND entity_key<?2 ORDER BY entity_key DESC LIMIT ?3");
+      q.bind(1,lower);q.bind(2,upper);check(sqlite3_bind_int(q.s,3,(int)limit));
+      while(q.next()==SQLITE_ROW)keys.push_back(text(q.s,0));
+    }
+    for(const std::string &key:keys){
+      std::string id=key.substr(prefix.size());identifier(id);
+      graph current(store->db,"annotation",key);reader_revision_annotation_row row{};
+      row.annotation_id=id.c_str();row.selection.graph=current.state;row.selection.kind=selection_kind(current);
+      std::string body;
+      if(row.selection.kind==READER_SELECTION_SAFE){revision r=retained(store,safe_head(current),&body);info(r,&row.info);row.wire=body.c_str();}
+      if(visit(context,&row))break;
+    }
+    tx.commit();
   });
 }
 extern "C" reader_revision_status reader_revision_outbox(reader_revisions *store,size_t limit,reader_revision_outbox_fn visit,void *context,reader_revision_error *error){return call(error,[&]{
