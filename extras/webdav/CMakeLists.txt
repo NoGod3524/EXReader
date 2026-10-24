@@ -13,7 +13,7 @@ target_include_directories(exr_webdav PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_S
 if(WIN32)
   target_link_libraries(exr_webdav PRIVATE winhttp xmllite shlwapi)
 elseif(ANDROID)
-  if(CMAKE_SYSTEM_VERSION LESS 26)
+  if(DEFINED ANDROID_PLATFORM_LEVEL AND ANDROID_PLATFORM_LEVEL LESS 26)
     message(FATAL_ERROR "Android WebDAV requires API 26 or newer")
   endif()
   set_target_properties(exr_webdav PROPERTIES POSITION_INDEPENDENT_CODE ON)

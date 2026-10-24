@@ -14,6 +14,9 @@
 #include <vector>
 #include <filesystem>
 #ifdef __ANDROID__
+#if __ANDROID_API__ < 26
+#error "Android WebDAV requires API 26 or newer"
+#endif
 #include "exr_webdav_android.h"
 #include <thread>
 #include <mutex>
