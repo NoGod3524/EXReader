@@ -53,10 +53,10 @@ final class NativeNavigation implements AutoCloseable {
     private void owned(){if(Thread.currentThread()!=owner||handle==0)throw new IllegalStateException("Navigation requires its live SDK owner");}
     Info info(){owned();return new Info(nativeInfo(handle));}
     Page page(long parent,long first){owned();return new Page(nativePage(handle,parent,first,32));}
-    Destination resolve(BookStore store,long row,long explicitPart,String cfi,byte[] font,HostTask task,Control control)throws Exception {
+    Destination resolve(BookStore store,long row,long explicitPart,String cfi,byte[] font,float size,HostTask task,Control control)throws Exception {
         owned();store.searchOwner();BookStore.VerifiedSource source=store.verifySource(book,null,0,task);String live=source.key+"@exreader-sdk-"+nativeVersion();
         if(!key.equals(live))throw new IllegalStateException("书籍已改变，请重新打开目录");
-        return new Destination(book,key,mode,new Result(nativeResolve(handle,store.nativeLibrary().checked(),book,mode,live,row,explicitPart,cfi,font,control)));
+        return new Destination(book,key,mode,new Result(nativeResolve(handle,store.nativeLibrary().checked(),book,mode,live,row,explicitPart,cfi,font,size,control)));
     }
     @Override public void close(){if(handle==0)return;owned();nativeClose(handle);handle=0;}
     private static native String nativeVersion();
@@ -64,6 +64,6 @@ final class NativeNavigation implements AutoCloseable {
     private static native long nativeOpen(long library,long book,int mode,String key,byte[] font,Control control);
     private static native long[] nativeInfo(long handle);
     private static native String[][] nativePage(long handle,long parent,long first,int limit);
-    private static native String[][] nativeResolve(long handle,long library,long book,int mode,String key,long row,long explicitPart,String cfi,byte[] font,Control control);
+    private static native String[][] nativeResolve(long handle,long library,long book,int mode,String key,long row,long explicitPart,String cfi,byte[] font,float size,Control control);
     private static native void nativeClose(long handle);
 }

@@ -1479,7 +1479,8 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     }
     @Override public void directoryResolve(long book,long row,long part,String cfi,HostTask task,java.util.function.Consumer<NativeNavigation.Destination> done,java.util.function.Consumer<Throwable> failed){
         ExecutorService owner=worker;if(owner==null||destroyed){failed.accept(new HostTask.Cancelled());return;}
-        owner.execute(()->{try{task.check();if(navigation==null||navigation.book!=book)throw new HostTask.Cancelled();NativeNavigation.Destination target=navigation.resolve(store,row,part,cfi,fontBytes(),task,directoryControl(task));task.check();done.accept(target);}catch(Throwable error){failed.accept(error);}});
+        final float requestedFont=fontSize;
+        owner.execute(()->{try{task.check();if(navigation==null||navigation.book!=book)throw new HostTask.Cancelled();NativeNavigation.Destination target=navigation.resolve(store,row,part,cfi,fontBytes(),requestedFont,task,directoryControl(task));task.check();done.accept(target);}catch(Throwable error){failed.accept(error);}});
     }
     @Override public void navigateDirectory(NativeNavigation.Destination destination){
         NativeNavigation.Result target=destination.result;
