@@ -108,6 +108,8 @@ def main():
     parser.add_argument("--attempt", type=int, default=int(os.environ.get("GITHUB_RUN_ATTEMPT", "0") or 0))
     parser.add_argument("--repo-root", type=Path, default=HERE.parents[1])
     parser.add_argument("--keep-data", action="store_true")
+    parser.add_argument("--verbose", action="store_true",
+                        help="print the environment, every named result and the trace summary")
     args = parser.parse_args()
 
     payload = args.payload.absolute()
@@ -240,6 +242,43 @@ def main():
             "blocking": report["blocking"],
             "artifacts": len(report["artifacts"]),
         }, ensure_ascii=False, indent=2))
+        if args.verbose:
+            print_diagnostics(recorder, environment, trace, report)
+
+
+def print_diagnostics(recorder, environment, trace, report):
+    """Put the whole audit state in the job log so a failed run explains itself."""
+    print("=== environment ===")
+    print(json.dumps(environment, ensure_ascii=False, indent=2, default=str)[:6000])
+    print("=== named results ===")
+    for check in recorder.checks:
+        print("%-16s %-13s %-9s %s" % (check["id"], check["status"], check["severity"],
+                                       (check["actual"] or "").replace("
+", " ")[:260]))
+    print("=== waits, dialogs and captures ===")
+    for event in trace.events:
+        if event["kind"] == "key":
+            continue
+        print(json.dumps(event, ensure_ascii=False)[:400])
+    print("=== key events (first 120) ===")
+    shown = 0
+    for event in trace.events:
+        if event["kind"] != "key":
+            continue
+        if shown >= 120:
+            break
+        shown += 1
+        payload = event["payload"]
+        print("#%d %s %s mods=%s delivered=%s focus=%s -> %s"
+              % (event["seq"], payload.get("transport"), payload.get("key"),
+                 payload.get("modifiers"), payload.get("delivered"),
+                 payload.get("focus_before"), payload.get("focus_after")))
+    print("=== artifacts ===")
+    for item in report["artifacts"]:
+        print("%8d %s %s" % (item["bytes"], item["path"], item["sha256"][:16]))
+    print("=== limits ===")
+    for limitation in report["limitations"]:
+        print("- " + limitation)
 
 
 def _open_first(session, recorder):

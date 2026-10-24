@@ -47,10 +47,62 @@ class Keyboard(object):
         self.transport = None
         self.probe = {}
         self._thread = 0
+        self._pid = 0
+        self._last_dialog = -1
+        self._foreground_failures = 0
+        self._foreground_give_up_until = 0.0
         try:
-            self._thread = w32.thread_id(hwnd)[0]
+            self._thread, self._pid = w32.thread_id(hwnd)
         except Exception:
             self._thread = 0
+
+    # -- readiness ------------------------------------------------------------
+    def note_dialog(self):
+        """Record every appearance or disappearance of a host message/dialog window."""
+        current = 0
+        try:
+            for hwnd in w32.top_windows():
+                _tid, pid = w32.thread_id(hwnd)
+                if pid != self._pid:
+                    continue
+                if w32.class_name(hwnd).lower() != "#32770":
+                    continue
+                current = hwnd
+                break
+        except Exception:
+            return None
+        if current != self._last_dialog:
+            self._last_dialog = current
+            self._log("host_dialog", {"hwnd": hex(current) if current else None,
+                                      "title": w32.window_text(current) if current else None})
+        return current
+
+    def ready(self):
+        """Keep the audited window in the foreground so real input reaches it.
+
+        Retries are bounded: a runner session without an interactive desktop must
+        not turn every keystroke into a foreground fight.
+        """
+        if not self.hwnd:
+            return False
+        if w32.foreground() != self.hwnd:
+            now = time.time()
+            if now >= self._foreground_give_up_until:
+                brought = w32.bring_to_front(self.hwnd)
+                self._log("foreground", {"hwnd": hex(self.hwnd), "brought": brought,
+                                         "foreground": hex(w32.foreground())})
+                if brought:
+                    self._foreground_failures = 0
+                else:
+                    self._foreground_failures += 1
+                    if self._foreground_failures >= 2:
+                        self._foreground_give_up_until = now + 30
+                        self._log("foreground_unavailable",
+                                  {"hwnd": hex(self.hwnd),
+                                   "foreground": hex(w32.foreground()),
+                                   "pause_seconds": 30})
+        self.note_dialog()
+        return True
 
     # -- focus ----------------------------------------------------------------
     def focus(self):
@@ -143,6 +195,7 @@ class Keyboard(object):
         else:
             vk = int(key)
             name = "vk:0x%02x" % vk
+        self.ready()
         focus_before = self.focus()
         sent = self._press_raw(vk, modifiers)
         time.sleep(self.delay)

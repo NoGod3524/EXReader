@@ -56,7 +56,9 @@ class Session(object):
         if not hwnd:
             return "none"
         self.refresh_names()
-        return self.by_hwnd.get(hwnd, "hwnd:0x%x" % hwnd)
+        if hwnd in self.by_hwnd:
+            return self.by_hwnd[hwnd]
+        return "%s:%s" % (w32.class_name(hwnd) or "?", w32.window_text(hwnd) or "")
 
     def locate(self, name):
         info = self.host.describe_control(name)
@@ -104,6 +106,19 @@ class Session(object):
         return names
 
     # -- keyboard -------------------------------------------------------------
+    def tab_step(self, backward=False, note=None):
+        """One Tab press, retried once with a fresh foreground if focus is stuck."""
+        modifiers = ("shift",) if backward else ()
+        before = self.focus_name()
+        self.kb.press("tab", modifiers, note=note)
+        after = self.focus_name()
+        if after == before and before != "none":
+            self.kb.ready()
+            self.kb.press("tab", modifiers, note="retry after re-activating the host")
+            after = self.focus_name()
+            self.trace.event("focus_retry", {"before": before, "after": after})
+        return after
+
     def goto(self, target, limit=64, note=None):
         """Tab forward until the focused control is *target* (keyboard only)."""
         current = self.focus_name()
@@ -111,11 +126,12 @@ class Session(object):
             return True, []
         stops = []
         for step in range(limit):
-            self.kb.press("tab", note=note if step == 0 else None)
-            name = self.focus_name()
+            name = self.tab_step(note=note if step == 0 else None)
             stops.append(name)
             if name == target:
                 return True, stops
+            if name == "none" and step > 0:
+                return False, stops
         return False, stops
 
     def goto_back(self, target, limit=64, note=None):
@@ -124,11 +140,12 @@ class Session(object):
             return True, []
         stops = []
         for step in range(limit):
-            self.kb.press("tab", ("shift",), note=note if step == 0 else None)
-            name = self.focus_name()
+            name = self.tab_step(backward=True, note=note if step == 0 else None)
             stops.append(name)
             if name == target:
                 return True, stops
+            if name == "none" and step > 0:
+                return False, stops
         return False, stops
 
     def activate(self, target, limit=64):
@@ -143,11 +160,7 @@ class Session(object):
         order = []
         seen = set()
         for _ in range(limit):
-            if backward:
-                self.kb.press("tab", ("shift",), note="reverse tab order discovery")
-            else:
-                self.kb.press("tab", note="tab order discovery")
-            name = self.focus_name()
+            name = self.tab_step(backward=backward, note="tab order discovery")
             if name in seen:
                 return order, name
             if name == "none":
@@ -159,13 +172,16 @@ class Session(object):
     # -- capture --------------------------------------------------------------
     def capture_now(self):
         capture = w32.capture_rgb(self.host.hwnd)
-        if capture:
+        if capture and "error" not in capture:
             self.last_capture = capture
-        return capture
+            return capture
+        self.trace.event("capture_failed", capture or {"error": "no result"})
+        return None
 
     def shot(self, label):
         capture = self.capture_now()
         if not capture:
+            self.trace.event("screenshot_missing", {"label": label})
             return None
         path = self.shots / (label + ".png")
         png.write_png(path, capture["width"], capture["height"], capture["rgb"])
