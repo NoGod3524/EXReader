@@ -414,9 +414,13 @@ def verify_license_materials(records, payload, expected, components):
     """Re-hash the installed licence originals and compare them with the pins."""
     problems = []
     observed = {}
+    present = set()
     for record in records:
         path = record.get('path')
-        if not isinstance(path, str) or not path.startswith(LICENSES):
+        if not isinstance(path, str):
+            continue
+        present.add(path)
+        if not path.startswith(LICENSES):
             continue
         name = 'stage/' + path
         if name not in payload:
@@ -429,11 +433,14 @@ def verify_license_materials(records, payload, expected, components):
         if not data:
             problems.append('empty installed license: ' + path)
     for path, entry in sorted(expected.items()):
-        if path not in observed:
-            problems.append('registered license not installed: ' + path)
-            continue
-        if entry['sha256'] and entry['sha256'] != observed[path]:
-            problems.append('installed license differs from its registered pin: ' + path)
+        if entry['sha256']:
+            if path not in observed:
+                problems.append('registered license not installed: ' + path)
+                continue
+            if entry['sha256'] != observed[path]:
+                problems.append('installed license differs from its registered pin: ' + path)
+        elif path not in present:
+            problems.append('registered licence material not installed: ' + path)
         if not entry['sha256'] and entry['pinned']:
             problems.append('registered license has no pinned hash: ' + path)
     for path in sorted(set(observed) - set(expected)):

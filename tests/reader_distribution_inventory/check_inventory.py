@@ -228,6 +228,14 @@ def verify(fixture):
                                      switches=fixture['switches'])
 
 
+def verify_ok(fixture):
+    """Accept a fixture, naming every problem when it is rejected instead."""
+    try:
+        return verify(fixture)
+    except contract.InventoryError as error:
+        raise RuntimeError('fixture rejected: %s %s' % (error.code, error.detail)) from None
+
+
 def mutate_sbom(fixture, name, mutate):
     document = contract.decode_json(fixture['payload'][name])
     mutate(document)
@@ -330,7 +338,7 @@ CASES = [
 
 def cases_report():
     accepted = []
-    verify(build())
+    verify_ok(build())
     accepted.append('base fixture granted')
     blocker = build()
     declared_blocker(blocker)
@@ -339,7 +347,7 @@ def cases_report():
         raise RuntimeError('declared private path was not retained as a release blocker')
     accepted.append('declared private path blocks release without failing the evidence')
     for platform, profile in (('windows', 'reading-library'), ('macos', 'reading-core')):
-        verify(build(platform=platform, profile=profile))
+        verify_ok(build(platform=platform, profile=profile))
     accepted.append('windows and macos fixtures granted')
     rejected = []
     for label, expected, mutate in CASES:
