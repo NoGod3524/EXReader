@@ -74,23 +74,23 @@ jobs:
       - name: Build and install the unmodified reading SDK
         run: |
           set -euo pipefail
-          cmake -S . -B build/j15/sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$J15_ROOT/sdk" \
+          cmake -S . -B build/j15/sdk-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$J15_ROOT/sdk" \
             -DEXR_BUILD_TESTS=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF \
             -DEXR_ENABLE_AUDIO=OFF -DEXR_ENABLE_LIBRARY=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_PDF=OFF \
             -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_BUILD_SHARED_COMPAT=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF 2>&1 | tee build/j15/logs/sdk-configure.log
-          cmake --build build/j15/sdk --parallel 4 2>&1 | tee build/j15/logs/sdk-build.log
-          cmake --install build/j15/sdk 2>&1 | tee build/j15/logs/sdk-install.log
+          cmake --build build/j15/sdk-build --parallel 4 2>&1 | tee build/j15/logs/sdk-build.log
+          cmake --install build/j15/sdk-build 2>&1 | tee build/j15/logs/sdk-install.log
       - name: Install the separate OCR adapter and this package against installed prefixes only
         run: |
           set -euo pipefail
-          cmake -S extras/ocr -B build/j15/ocr-adapter -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_OCR_TESTS=OFF \
+          cmake -S extras/ocr -B build/j15/ocr-adapter-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_OCR_TESTS=OFF \
             -DCMAKE_PREFIX_PATH="$J15_ROOT/sdk" -DCMAKE_INSTALL_PREFIX="$J15_ROOT/prefix" 2>&1 | tee build/j15/logs/adapter.log
-          cmake --build build/j15/ocr-adapter --parallel 4 2>&1 | tee -a build/j15/logs/adapter.log
-          cmake --install build/j15/ocr-adapter 2>&1 | tee -a build/j15/logs/adapter.log
-          cmake -S apps/reader/ocr-overlay -B build/j15/overlay -G Ninja -DCMAKE_BUILD_TYPE=Release \
+          cmake --build build/j15/ocr-adapter-build --parallel 4 2>&1 | tee -a build/j15/logs/adapter.log
+          cmake --install build/j15/ocr-adapter-build 2>&1 | tee -a build/j15/logs/adapter.log
+          cmake -S apps/reader/ocr-overlay -B build/j15/overlay-build -G Ninja -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_PREFIX_PATH="$J15_ROOT/sdk;$J15_ROOT/prefix" -DCMAKE_INSTALL_PREFIX="$J15_ROOT/prefix" 2>&1 | tee build/j15/logs/overlay.log
-          cmake --build build/j15/overlay --parallel 4 2>&1 | tee -a build/j15/logs/overlay.log
-          cmake --install build/j15/overlay 2>&1 | tee -a build/j15/logs/overlay.log
+          cmake --build build/j15/overlay-build --parallel 4 2>&1 | tee -a build/j15/logs/overlay.log
+          cmake --install build/j15/overlay-build 2>&1 | tee -a build/j15/logs/overlay.log
           test -s "$J15_ROOT/prefix/include/reader_ocr_overlay.h"
           test -s "$J15_ROOT/prefix/lib/cmake/EXReaderOCROverlay/EXReaderOCROverlayConfig.cmake"
           ls -l "$J15_ROOT/prefix/lib"
