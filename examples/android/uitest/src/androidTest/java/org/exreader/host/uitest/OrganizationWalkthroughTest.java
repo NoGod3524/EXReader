@@ -79,7 +79,8 @@ public final class OrganizationWalkthroughTest {
                 device.executeShellCommand("am force-stop "+APP);assertTrue(device.executeShellCommand("pidof "+APP).trim().isEmpty());
                 phase("release-fault");device.executeShellCommand("am force-stop "+APP);launch();open();
                 clickText("Saved intent");clickText("Retry exact intent");committed();
-                phase("verify-ui");String newPid=device.executeShellCommand("pidof "+APP).trim();assertNotEquals(oldPid,newPid);
+                String newPid=device.executeShellCommand("pidof "+APP).trim();assertTrue(newPid.matches("[0-9]+"));assertNotEquals(oldPid,newPid);
+                phase("verify-ui");
                 JSONObject verified=new JSONObject(device.executeShellCommand("cat /sdcard/Android/data/"+APP+"/files/organization-tests/verified.json"));
                 assertTrue(verified.getBoolean("exact_retry"));assertTrue(verified.getBoolean("product_fields_preserved"));
                 detail.put("old_pid",oldPid).put("new_pid",newPid).put("verified",verified);
