@@ -17,7 +17,7 @@ REQUIRED = [
     'epub-search-keeps-progress-and-notes', 'epub-independent-found-selects-second-part',
     'epub-repeated-path-keeps-explicit-spine-unit', 'epub-no-hit-is-complete',
     'pdf-text-search-two-independent-pages', 'pdf-independent-found-selects-stable-page',
-    'pdf-ambiguous-match-refuses-jump', 'cbz-missing-text-provider-is-error',
+    'pdf-ambiguous-match-refuses-jump', 'cbz-image-only-text-search-is-unsupported',
     'book-switch-destroys-old-search-dialog', 'new-book-has-empty-query',
     'reflow-ambiguous-match-refuses-jump', 'changed-original-refuses-stale-hit',
     'restored-original-reopens-for-new-search', 'host-restart-discards-transient-query',
@@ -48,7 +48,7 @@ def main():
     spec = importlib.util.spec_from_file_location('search_reading_state_fixtures',
         Path(__file__).resolve().parents[1] / 'reader_reading_state' / 'make_fixtures.py')
     generator = importlib.util.module_from_spec(spec);spec.loader.exec_module(generator)
-    cbz = out / 'No text provider.cbz';generator.cbz(cbz)
+    cbz = out / 'Image only.cbz';generator.cbz(cbz)
     other = out / 'Other independent source.txt'
     other.write_text('A different book. Other target.\n' * 12, encoding='utf-8')
     files = [fixtures / 'book.epub', fixtures / 'pages.pdf', fixtures / 'book.txt', cbz, other]
@@ -141,10 +141,10 @@ def main():
         before = state();message = jump(d)
         record('pdf-ambiguous-match-refuses-jump', '未跳转' in message and state() == before)
         close_dialog(d)
-        phase = 'cbz';app.open('No text provider');app.wait_idle();d = find_dialog();before = state()
+        phase = 'cbz';app.open('Image only');app.wait_idle();d = find_dialog();before = state()
         count = query(d, 'text');after = state()
         report['cbz_changed_state_tables'] = [key for key in before if before[key] != after[key]]
-        record('cbz-missing-text-provider-is-error', count == 0 and
+        record('cbz-image-only-text-search-is-unsupported', count == 0 and
                '图像页' in text(U.GetDlgItem(d, MESSAGE)) and '不支持文字查找' in text(U.GetDlgItem(d, MESSAGE)) and
                '没有匹配' not in text(U.GetDlgItem(d, MESSAGE)) and after == before)
         close_dialog(d)

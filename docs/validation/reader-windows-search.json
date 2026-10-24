@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "accepted": false,
-  "state": "initial_txt_ui_passed_broader_host_acceptance_pending",
+  "state": "all_host_tests_passed_strict_legacy_schema_fix_pending",
   "branch": "codex/reader-windows-search-ui",
   "start": "3bcc6511",
   "sdk": "9854061be331fe603a1822d9b2b36ee357154927",
@@ -124,6 +124,26 @@
       "artifact": 12576862322,
       "artifact_bytes": 53706563,
       "artifact_sha256": "b75fa2d4400b029473fe4427896630efbde947e4e47605df296fb64e09341b91"
+    },
+    {
+      "source": "2de59ee96c5ade5f40c599148d60626791164791",
+      "run": 40135839283,
+      "attempt": 1,
+      "producer_job": 120997050904,
+      "producer_conclusion": "success",
+      "original_f1_checks": 264,
+      "initial_txt_checks": 13,
+      "formats_lifecycle_checks": 25,
+      "keyboard_uia_checks": 17,
+      "retained_windows_regressions_passed": true,
+      "strict_job": 120998829393,
+      "strict_conclusion": "failure",
+      "phase": "strict-validator-required-count-from-three-legacy-reports-without-count-field",
+      "strict_accepted": false,
+      "artifact": 12577135321,
+      "artifact_bytes": 53721235,
+      "artifact_sha256": "013486394a9919beb42515799dcca179c55a9e08ad521d7be0abfb3671c5e6de",
+      "artifact_expires_at": "2027-01-22T21:48:32Z"
     }
   ],
   "complete_product": false,
