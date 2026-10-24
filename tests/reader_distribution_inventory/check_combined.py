@@ -333,7 +333,8 @@ def assemble(fixture):
         'not_covered': ['mobile packaging'],
         'sbom': {},
     }
-    _, observations = contract.scan_forbidden(payload, inventory, allow_credentials=True)
+    _, observations = contract.scan_forbidden(payload, contract.forbidden_context(fixture['switches']),
+                                              allow_credentials=True)
     inventory['observations'] = observations
     inventory['release_blockers'] = contract.private_path_blockers(hits)
     for name, document in (('combined.spdx.json', sbom.build_spdx(inventory, '2026-10-24T00:00:00Z')),

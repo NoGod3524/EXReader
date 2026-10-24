@@ -517,6 +517,12 @@ def scan_test_secrets(payload, prefix='prefix/', markers=SECRET_MARKERS):
     return hits
 
 
+def forbidden_context(switches):
+    """The minimal module context the inclusion scan needs, identical everywhere."""
+    return {'config': {'cache_switches': dict(switches)}, 'identity': {'targets': []},
+            'dynamic_dependencies': {'entries': []}}
+
+
 def scan_forbidden(payload, inventory, allow_credentials=False):
     """Audio/GPL options, WebView, credential modules and the module switch set."""
     problems = []
