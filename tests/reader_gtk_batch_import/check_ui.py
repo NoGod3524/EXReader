@@ -120,6 +120,11 @@ def main():
             print(json.dumps(dict(expected_path=str(root), expected_sha256=hashlib.sha256(str(root).encode()).hexdigest(), controls=[dict(role=bus.role(node), name=bus.name(node), state=bus.states(node), text=bus.accessible_text(node)) for node in bus.walk(chooser) if bus.role(node) in ('text', 'push button') and bus.states(node).get('showing')]), ensure_ascii=False), flush=True)
             raise TimeoutError('folder chooser readiness: ' + repr(observed('native_import')))
         native_ready(lambda value: value.get('active') == '1')
+        # Start through the real Home place rather than the empty Recent view.
+        # This observes an actual browse-directory transition in SELECT_FOLDER.
+        click('Home', {'label'})
+        home_sha = hashlib.sha256(str(Path.home()).encode()).hexdigest()
+        native_ready(lambda value: value.get('selected_sha256') == home_sha)
         host.key('ctrl+l')
         entries = [node for node in bus.walk(chooser) if bus.role(node) == 'text' and bus.states(node).get('showing') and bus.states(node).get('sensitive')]
         assert entries, 'native folder location entry missing'
