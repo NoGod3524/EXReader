@@ -3,14 +3,24 @@
   "version": "0.1.0",
   "fixed_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "sdk_freeze": "9854061be331fe603a1822d9b2b36ee357154927",
-  "status": "unverified-awaiting-actions",
-  "tested_source": null,
+  "status": "cloud-verified-native-module",
+  "tested_source": "e51f31624e4331329e0abe6faf4d3f5b3e79ff45",
+  "run": {"id": 40139763379, "attempt": 1, "workflow": "reader-bulk-organization.yml",
+          "jobs": {"ubuntu-22.04": "success", "windows-2022": "success", "macos-15": "success", "same-run artifact evidence": "success"}},
+  "checks_per_platform": 20,
   "limits": {"batch_max": 100, "heads_max": 32, "journal_max_bytes": 524288},
-  "claims": {
-    "atomic_batch": false,
-    "threads_created": false,
-    "schema_or_wire_changed": false,
-    "host_ui_wired": false
-  },
-  "evidence": []
+  "claims": {"atomic_batch": false, "threads_created": false, "schema_or_wire_changed": false, "host_ui_wired": false},
+  "artifacts": [
+    {"name": "reader-bulk-organization-Linux-40139763379-1", "id": 12577064691, "bytes": 4400017, "sha256": "9915a294a9c2923ceaa05b9df02cc6e49e8d7adce10a44232a22cfda51078320", "expires_at": "2027-01-22T22:43:21Z"},
+    {"name": "reader-bulk-organization-Windows-40139763379-1", "id": 12577229619, "bytes": 5289101, "sha256": "28cf137e242cb0b3712abbc0e703588c2ac8a5768f9a5ac2ce4900fd9dc4494b", "expires_at": "2027-01-22T22:43:21Z"},
+    {"name": "reader-bulk-organization-macOS-40139763379-1", "id": 12578496171, "bytes": 4228833, "sha256": "391e5f783a39b15b6e9354f1a990a0d35bd84ba758df967dcda6040bee84bc49", "expires_at": "2027-01-22T22:43:21Z"},
+    {"name": "reader-bulk-organization-evidence-40139763379-1", "id": 12578760852, "bytes": 768, "sha256": "0b9410a0155b428defb120df9a24fcb951460b5bf10e245e2a977ad310e3ce4e", "expires_at": "2027-01-22T22:43:21Z"}
+  ],
+  "earlier_failures_retained": [
+    {"run": 40138360813, "cause": "MSVC min macro in bulk.cpp; fork injection refused by local command path (UNSAFE)"},
+    {"run": 40138674699, "cause": "same fork refusal, reason surfaced by diagnostic"},
+    {"run": 40139094578, "cause": "received revision needs transport SHA-256"},
+    {"run": 40139434828, "cause": "platform jobs passed; artifact verifier expected 19 checks, report has 20"}
+  ],
+  "scope_not_covered": ["host UI wiring", "real account or user documents", "simulator/desktop/device runs", "audio/speech", "product performance", "TSan or other sanitizers"]
 }
