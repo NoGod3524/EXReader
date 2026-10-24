@@ -54,6 +54,9 @@ build. Root owns host wiring; this package only proves the module.
 * **Memory.** Inputs are copied; voices are library-owned and released by
   `reader_tts_voice_list_free` (which may be called after the handle is gone);
   errors carry a status plus a platform code, never message text or input bytes.
+* **Liveness.** While a request is active the library only peeks the socket for
+  EOF; it never sends a setting command during speech (a rate round trip both
+  disturbs playback and can block forever on a dead daemon).
 * **Submission boundary.** `speak` copies the text, applies voice and rate, then
   submits with `spd_say`; a callback that races in before the daemon's message id
   is known is buffered and replayed, a callback for an older message is dropped.
@@ -124,7 +127,8 @@ Separately granted, never merged into one "TTS works" statement:
 * Request-id reuse is detected for the last 256 ids only.
 * A daemon that accepts the socket but stops answering can block a call inside
   libspeechd; there is no client-side timeout. While a request is active the
-  library probes every 500 ms, so a *dead* daemon is detected, a *hung* one is not.
+  library peeks the SSIP socket every 500 ms (no command is sent while speaking),
+  so a *dead* daemon is detected, a *hung* one is not.
 * `SIGPIPE` must be ignored by the host (documented in the header); the CI
   consumers install that disposition themselves.
 * After a named voice, a default-voice request reconnects the client, because

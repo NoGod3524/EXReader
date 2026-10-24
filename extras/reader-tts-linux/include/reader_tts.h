@@ -157,7 +157,8 @@ reader_tts_status reader_tts_observe(reader_tts *, reader_tts_snapshot *, reader
    keep request order; a late daemon callback for an earlier request never alters
    a newer request. Queued events stay readable in CLOSING and CLOSED so the
    terminal event of an interrupted request is not lost. While a request is
-   active, poll also notices a daemon that stopped answering and then queues
+   active, poll also notices that the daemon closed the socket (a
+   non-destructive peek; no SSIP command is sent while speaking) and then queues
    FAILED/UNAVAILABLE. STARTED means the daemon reported the message started;
    RANGE is never emitted. */
 reader_tts_status reader_tts_poll(reader_tts *, reader_tts_event *, int *available, reader_tts_error *);

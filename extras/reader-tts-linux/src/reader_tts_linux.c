@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <time.h>
 
 #ifdef READER_TTS_TEST_HOOKS
@@ -21,8 +22,7 @@
 
 /* Callbacks the daemon may deliver before spd_say() returned its message id. */
 #define EARLY_MAX 8
-/* Liveness probe period while a request is active. The probe is a no-op rate
-   round trip, so a dead daemon is noticed quickly without disturbing speech. */
+/* Liveness probe period while a request is active. */
 #define PROBE_ACTIVE_MS 500
 /* connect_conn failure codes (native_code values reported to the host). */
 #define CONNECT_NO_CONNECTION 1
@@ -56,7 +56,6 @@ struct reader_tts {
   size_t seen_n;
   size_t seen_next;
   SPDConnection *conn;
-  int rate;         /* last "SET SELF RATE" value sent to the daemon */
   int voice_custom; /* a voice was selected and must be dropped on reconnect */
   struct timespec last_probe;
   pthread_t closer;
@@ -202,6 +201,23 @@ static void slot_release(reader_tts *h) {
   pthread_mutex_unlock(&g_mu);
 }
 
+/* A dead daemon closes the SSIP socket. A non-destructive peek is the only
+   liveness check that cannot disturb what is being spoken: any SSIP command
+   (a setting, a list, a cancel) either changes state or blocks forever on a
+   daemon that is already gone. Pending data is left in the queue for
+   libspeechd's own thread. */
+static int conn_alive(SPDConnection *c) {
+  char byte;
+  ssize_t n;
+  if (!c || c->socket < 0) return 0;
+  do {
+    n = recv(c->socket, &byte, 1, MSG_PEEK | MSG_DONTWAIT);
+  } while (n < 0 && errno == EINTR);
+  if (n == 0) return 0; /* orderly shutdown: the daemon is gone */
+  if (n > 0) return 1;  /* data waiting, not consumed */
+  return (errno == EAGAIN || errno == EWOULDBLOCK) ? 1 : 0;
+}
+
 static SPDConnection *conn_of(reader_tts *h) {
   SPDConnection *c;
   pthread_mutex_lock(&h->mu);
@@ -220,7 +236,6 @@ static void drop_conn(reader_tts *h) {
   pthread_mutex_lock(&h->mu);
   c = h->conn;
   h->conn = NULL;
-  h->rate = 0;
   h->voice_custom = 0;
   pthread_mutex_unlock(&h->mu);
   if (c) spd_close(c);
@@ -267,7 +282,6 @@ static int connect_conn(reader_tts *h) {
   }
   pthread_mutex_lock(&h->mu);
   h->conn = c;
-  h->rate = 0;
   h->voice_custom = 0;
   clock_gettime(CLOCK_MONOTONIC, &h->last_probe);
   pthread_mutex_unlock(&h->mu);
@@ -278,12 +292,9 @@ static int connect_conn(reader_tts *h) {
    connection (write refused) is dropped and one reconnect is attempted. */
 static int ensure_live(reader_tts *h, reader_tts_error *e) {
   SPDConnection *c = conn_of(h);
-  int rate, r;
+  int r;
   if (c) {
-    pthread_mutex_lock(&h->mu);
-    rate = h->rate;
-    pthread_mutex_unlock(&h->mu);
-    if (spd_set_voice_rate(c, rate) == 0) return 1;
+    if (conn_alive(c)) return 1;
     go_unavailable(h, -1);
   }
   r = connect_conn(h);
@@ -311,11 +322,10 @@ static int ensure_live(reader_tts *h, reader_tts_error *e) {
 static void housekeeping(reader_tts *h) {
   struct timespec now;
   SPDConnection *c;
-  int active, rate;
+  int active;
   pthread_mutex_lock(&h->mu);
   active = h->active;
   c = h->conn;
-  rate = h->rate;
   clock_gettime(CLOCK_MONOTONIC, &now);
   if (!active || !c || elapsed_ms(&h->last_probe, &now) < PROBE_ACTIVE_MS) {
     pthread_mutex_unlock(&h->mu);
@@ -323,7 +333,7 @@ static void housekeeping(reader_tts *h) {
   }
   h->last_probe = now;
   pthread_mutex_unlock(&h->mu);
-  if (spd_set_voice_rate(c, rate) != 0) go_unavailable(h, -1);
+  if (!conn_alive(c)) go_unavailable(h, -1);
 }
 
 static int is_owner(const reader_tts *h) { return pthread_equal(h->owner, pthread_self()); }
@@ -583,7 +593,7 @@ reader_tts_status reader_tts_speak(reader_tts *h, uint64_t id, const char *text,
     if (!c || spd_set_synthesis_voice(c, voice) != 0) {
       free(copy);
       if (!c) return fail(e, READER_TTS_UNAVAILABLE, 0);
-      if (conn_of(h) && spd_set_voice_rate(conn_of(h), 0) == 0) return fail(e, READER_TTS_IO, 0);
+      if (conn_alive(c)) return fail(e, READER_TTS_IO, 0);
       go_unavailable(h, -1);
       return fail(e, READER_TTS_UNAVAILABLE, 0);
     }
@@ -615,7 +625,6 @@ reader_tts_status reader_tts_speak(reader_tts *h, uint64_t id, const char *text,
     return fail(e, READER_TTS_UNAVAILABLE, 0);
   }
   pthread_mutex_lock(&h->mu);
-  h->rate = mapped;
   h->active = 1;
   h->active_id = id;
   h->last_id = id;
@@ -707,7 +716,7 @@ reader_tts_status reader_tts_pause(reader_tts *h, uint64_t id, reader_tts_error 
   c = conn_of(h);
   if (!c) return fail(e, READER_TTS_UNAVAILABLE, 0);
   if (spd_pause(c) != 0) {
-    if (conn_of(h) && spd_set_voice_rate(conn_of(h), 0) == 0) return fail(e, READER_TTS_UNSUPPORTED, 0);
+    if (conn_alive(c)) return fail(e, READER_TTS_UNSUPPORTED, 0);
     go_unavailable(h, -1);
     return fail(e, READER_TTS_UNAVAILABLE, 0);
   }
@@ -725,7 +734,7 @@ reader_tts_status reader_tts_resume(reader_tts *h, uint64_t id, reader_tts_error
   c = conn_of(h);
   if (!c) return fail(e, READER_TTS_UNAVAILABLE, 0);
   if (spd_resume(c) != 0) {
-    if (conn_of(h) && spd_set_voice_rate(conn_of(h), 0) == 0) return fail(e, READER_TTS_UNSUPPORTED, 0);
+    if (conn_alive(c)) return fail(e, READER_TTS_UNSUPPORTED, 0);
     go_unavailable(h, -1);
     return fail(e, READER_TTS_UNAVAILABLE, 0);
   }
@@ -766,7 +775,7 @@ reader_tts_status reader_tts_stop(reader_tts *h, uint64_t id, reader_tts_error *
   r = spd_cancel(c);
   if (r == 0 && was_paused) spd_resume(c); /* pause is per client: leave it clean */
   if (r != 0) {
-    if (conn_of(h) && spd_set_voice_rate(conn_of(h), 0) == 0) {
+    if (conn_alive(c)) {
       /* daemon alive, cancel refused */
       pthread_mutex_lock(&h->mu);
       if (h->active && h->state == READER_TTS_STOPPING)
