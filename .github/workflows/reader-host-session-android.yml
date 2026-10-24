@@ -91,6 +91,7 @@ jobs:
           gradle -p tests/webdav_android/android --no-daemon --stacktrace :platform:assembleDebug :platform:assembleDebugAndroidTest :platform:assembleRelease :support:assembleDebug :support:assembleRelease :support:runtimeEvidence :backend:assembleDebug :backend:assembleDebugAndroidTest :backend:assembleRelease :baseline:assembleRelease 2>&1 | tee build/webdav-android/logs/gradle.log
           python tests/webdav_android/audit.py --output build/webdav-android/packages
           python tools/reader_catalog_assets.py --output examples/android/app/src/main/assets/reader-catalog-v1.json
+          python -c "import sys; sys.path.insert(0,'tools'); from host_font import fetch; fetch('examples/android/app/src/main/assets')"
           mkdir -p build/host-session-android/test-apks
           gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.ProductOwnerTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/original-runner-build.log
           cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/host-session-android/test-apks/original-owner.apk

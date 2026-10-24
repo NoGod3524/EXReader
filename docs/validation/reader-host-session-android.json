@@ -27,6 +27,12 @@
       "diagnostic_run": 40088346418,
       "passed_before_failure": "12 account/Receive checks and first two semantics checks; Organizer background exclusion now passes",
       "reason": "The SDK-only TXT seed omitted the formal host's path_<id>/size_<id> registration, so openBook correctly rejected the missing app-owned path before producing a reader frame. Register the generated private original as normal host import does, enlarge the generated text for genuine multipage traversal, and retain frame observations/failure check names. No production fix or relaxed assertion."
+    },
+    {
+      "source_sha": "b394e410048c6a093fcca133bec42c47275177f3",
+      "runs": [40088497379],
+      "passed_before_failure": "12 account/Receive checks and first two semantics checks",
+      "reason": "The failure tree reports The bundled font is missing: the direct-Gradle workflow omitted the normal host packaging step. Reuse unchanged tools/host_font.fetch and assert the pinned Reader.otf/OFL hashes in both Debug and Release APKs. The generated original path is now registered; no production change or assertion relaxation."
     }
   ],
   "reading_state_ui_accepted": false,
