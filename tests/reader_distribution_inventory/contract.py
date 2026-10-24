@@ -449,10 +449,12 @@ def verify_license_materials(records, payload, expected, components):
             problems.append('empty installed license: ' + path)
     for path, entry in sorted(expected.items()):
         if entry['sha256']:
-            if path not in observed:
+            # A pinned entry may live outside the licenses directory (first-party
+            # copies), so compare the installed bytes wherever they are.
+            if 'stage/' + path not in payload:
                 problems.append('registered license not installed: ' + path)
                 continue
-            if entry['sha256'] != observed[path]:
+            if entry['sha256'] != digest(payload['stage/' + path]):
                 problems.append('installed license differs from its registered pin: ' + path)
         elif path not in present:
             problems.append('registered licence material not installed: ' + path)
