@@ -358,6 +358,22 @@ jobs:
             --dependencies build/dist/dependencies.json --probe build/dist/probe.json \
             --negatives build/dist/negatives.json --source-sha "$GITHUB_SHA" \
             --output build/dist/summary.json
+      - name: Record the named results for this source
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, os
+          for name in ('summary.json', 'surfaces.json', 'dependencies.json', 'negatives.json',
+                       'sanitize.json'):
+              path = os.path.join('build/dist', name)
+              if not os.path.isfile(path):
+                  print('MISSING ' + name)
+                  continue
+              with open(path, encoding='utf-8') as stream:
+                  value = json.load(stream)
+              print('== ' + name)
+              print(json.dumps(value, indent=1)[:12000])
+          PY
       - name: Preserve the same-attempt evidence and the sealed distribution
         if: always()
         uses: actions/upload-artifact@v4
