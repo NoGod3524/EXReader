@@ -238,6 +238,8 @@ def main():
     }
     summary_path = output / 'summary.json'
     summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    for row in rows:
+        print('VERDICT {name}: {status}: {detail}'.format(**row))
     print(json.dumps({'accepted': accepted, 'checks_total': len(rows), 'counts': counts, 'problems': problems},
                      ensure_ascii=False))
     return 0 if accepted else 1

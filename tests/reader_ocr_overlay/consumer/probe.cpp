@@ -470,9 +470,23 @@ int main(int argc, char **argv) {
     render.channels = 0;
     render.background = 0xffffffffu;
     const exr_status status_render = exr_fixed_render(document, 0, 1.0, &render, &rendered, &sdk);
-    check("render_fixture_page", status_render == EXR_OK && rendered.width == 900 && rendered.height == 1200 && rendered.channels == 4 && rendered.pixels,
+    /* The page must actually carry ink: a blank render would make every later
+       recognition verdict meaningless, so count dark opaque pixels here. */
+    long dark = 0;
+    if(status_render == EXR_OK && rendered.pixels && rendered.channels == 4) {
+      for(uint32_t y = 0; y < rendered.height; y++) {
+        const unsigned char *row = rendered.pixels + static_cast<size_t>(y) * rendered.stride;
+        for(uint32_t x = 0; x < rendered.width; x++) {
+          const unsigned char *p = row + static_cast<size_t>(x) * 4;
+          if(p[3] == 255 && (77u * p[0] + 150u * p[1] + 29u * p[2]) / 256 < 128) dark++;
+        }
+      }
+    }
+    check("render_fixture_page", status_render == EXR_OK && rendered.width == 900 && rendered.height == 1200 &&
+      rendered.channels == 4 && rendered.pixels && dark > 1000,
       std::string("status=") + status_name(status_render == EXR_OK ? READER_OCR_OVERLAY_OK : READER_OCR_OVERLAY_RENDER) +
-      " " + std::to_string(rendered.width) + "x" + std::to_string(rendered.height) + " ch=" + std::to_string(rendered.channels));
+      " " + std::to_string(rendered.width) + "x" + std::to_string(rendered.height) + " ch=" + std::to_string(rendered.channels) +
+      " dark=" + std::to_string(dark) + " " + sdk.message);
   }
   Overlay host;
   reader_ocr_overlay_options host_options = options;
