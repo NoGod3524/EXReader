@@ -266,6 +266,9 @@ def main():
             tap(VK_SPACE)
             time.sleep(0.2)
             focused = focus_of(process.pid)
+            print(json.dumps({"disabled_command": name, "focus_after": focused,
+                              "foreground": USER32.GetForegroundWindow(),
+                              "owner": host["window"]}), flush=True)
             assert focused, name + " focus dropped"
             assert USER32.GetParent(focused) == host["window"], name + " focus left the window"
             assert USER32.IsWindowEnabled(focused), name + " focus landed on a disabled stop"

@@ -1169,35 +1169,18 @@ static void host_a11y_status_changed(void) {
   NotifyWinEvent(EVENT_OBJECT_NAMECHANGE, g.status, OBJID_CLIENT, CHILDID_SELF);
 }
 /* ---- keyboard continuity ------------------------------------------------ */
-/* Enabled tab stop after (or before) a control, in the same z-order the dialog
-   manager walks. */
-static HWND host_a11y_tab_stop(HWND from, int backwards) {
-  HWND list[256];
-  HWND child;
-  int count = 0, index = -1, i;
-  if (!g.window) return NULL;
-  for (child = GetWindow(g.window, GW_CHILD); child && count < 256; child = GetWindow(child, GW_HWNDNEXT)) {
-    LONG_PTR style = GetWindowLongPtrW(child, GWL_STYLE);
-    if (!(style & WS_TABSTOP) || !IsWindowVisible(child) || !IsWindowEnabled(child)) continue;
-    if (child == from) index = count;
-    list[count++] = child;
-  }
-  if (!count) return NULL;
-  if (index < 0) index = backwards ? count : -1;
-  for (i = 1; i <= count; i++) {
-    int at = ((index + (backwards ? -i : i)) % count + count) % count;
-    if (list[at] != from) return list[at];
-  }
-  return NULL;
-}
-
 /* A command that disables itself while it holds focus must hand focus on. */
 static void host_a11y_focus_guard(HWND before) {
-  HWND next;
+  HWND next, current;
   if (!before || !IsWindow(before) || IsWindowEnabled(before)) return;
-  if (GetFocus() != before) return;
-  next = host_a11y_tab_stop(before, 0);
-  if (!next) next = host_a11y_tab_stop(before, 1);
+  /* EnableWindow can clear focus before this guard runs. Preserve any valid
+     redirect (including a modal dialog); restore only this active owner's lost
+     focus or the disabled command itself, using native dialog tab order. */
+  current = GetFocus();
+  if (current && current != before && IsWindowEnabled(current)) return;
+  if (!g.window || !IsWindowEnabled(g.window) || GetActiveWindow() != g.window) return;
+  next = GetNextDlgTabItem(g.window, before, FALSE);
+  if (!next || next == before) next = GetNextDlgTabItem(g.window, before, TRUE);
   if (next && next != before) SetFocus(next);
 }
 
