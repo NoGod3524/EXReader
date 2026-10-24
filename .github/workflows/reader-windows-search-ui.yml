@@ -16,7 +16,7 @@ defaults:
 jobs:
   search:
     if: ${{github.event.inputs.inspect_artifact == ''}}
-    name: installed F1 and initial native Windows search controls
+    name: installed F1 and native Windows search controls and lifecycle
     runs-on: windows-2022
     timeout-minutes: 90
     steps:
@@ -37,7 +37,7 @@ jobs:
           'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
           'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
       - name: Check source syntax in Actions
-        run: python3 -m py_compile tests/reader_windows_search/guard.py tests/reader_windows_search/check_ui.py
+        run: python3 -m py_compile tests/reader_windows_search/guard.py tests/reader_windows_search/check_ui.py tests/reader_windows_search/check_formats.py
       - name: Build and install the frozen SDK and one product provider
         run: |
           set -o pipefail
@@ -78,6 +78,9 @@ jobs:
         run: |
           python3 tools/build_windows_host.py --sdk build/reading-library/stage --binary build/ws-host/EXReaderProduct.exe --output build/ws-package --static-reading
           python3 tests/reader_windows_search/check_ui.py --candidate build/ws-package/EXReader/EXReader.exe --font build/ws-package/EXReader/Reader.otf --output build/ws-search-ui
+      - name: Execute EPUB, PDF, provider refusal and live cancellation on the shared native host
+        run: |
+          python3 tests/reader_windows_search/check_formats.py --candidate build/ws-package/EXReader/EXReader.exe --review build/ws-host/EXReaderShelfReview.exe --font build/ws-package/EXReader/Reader.otf --fixtures build/ws-search-fixtures --output build/ws-search-formats
       - name: Preserve source-bound initial evidence without granting broader scope
         if: always()
         uses: actions/upload-artifact@v4
@@ -87,6 +90,7 @@ jobs:
             build/winsearch-logs/
             build/ws-search-module-evidence/
             build/ws-search-ui/
+            build/ws-search-formats/
             build/ws-host/windows-host.map
             build/ws-host/CMakeCache.txt
             build/ws-package/

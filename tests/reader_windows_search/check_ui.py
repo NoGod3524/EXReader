@@ -25,6 +25,12 @@ REQUIRED = ['native-secondary-entry', 'query-has-no-sdk-local-row-id', 'exactly-
 
 
 class SearchApp(M.MetadataApp):
+    def wait_initial_shelf(self):
+        def ready():
+            serial = U.GetPropW(self.control('books'), 'EXReaderShelfSnapshot') or 0
+            return serial >= 2 and serial % 2 == 0 and U.IsWindowEnabled(self.control('import'))
+        self.wait(ready)
+
     def dialog(self):
         def find():
             windows = []
@@ -79,10 +85,7 @@ def main():
     try:
         app = SearchApp(args.candidate.resolve(), args.font.resolve(), output / 'profile')
         phase = 'wait-initial-product-shelf-snapshot'
-        def initial_shelf_ready():
-            serial = U.GetPropW(app.control('books'), 'EXReaderShelfSnapshot') or 0
-            return serial >= 2 and serial % 2 == 0 and U.IsWindowEnabled(app.control('import'))
-        app.wait(initial_shelf_ready)
+        app.wait_initial_shelf()
         phase = 'import'
         app.import_file(source)
         phase = 'wait-imported-row'
