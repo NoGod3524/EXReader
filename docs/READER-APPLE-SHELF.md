@@ -151,6 +151,13 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
   artifact `12543115466` is retained. The narrow macOS diagnostic now reports AX
   decoding, visible-row and readiness conditions, using the authenticated SDK
   and 2,202-original seed from this source. It grants no acceptance.
+- The single macOS case at `67f9efae4a84abbbacbefd9758ae92489eca1924`,
+  [diagnostic 40050301786](https://github.com/NoGod3524/EXReader/actions/runs/40050301786),
+  proved that the AX snapshot returned an empty label and a 512-character static
+  text value, truncating the JSON mid-string before readiness could inspect it.
+  Artifact `12542857759` preserves that failure. Review telemetry now exposes
+  200-scalar fragments, reconstructed from one container snapshot; the original
+  readiness, cache and layout assertions remain unchanged.
 
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.

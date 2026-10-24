@@ -76,6 +76,28 @@ private struct ShelfGeometryKey: PreferenceKey {
     }
 }
 
+#if EXR_APPLE_SHELF_REVIEW
+private struct ShelfObservationView: View {
+    let value: String
+    var body: some View {
+        // macOS XCTest truncates one static-text value to 512 UTF-16 units.
+        let scalars = Array(value.unicodeScalars)
+        let parts = stride(from: 0, to: scalars.count, by: 200).map { start in
+            String(String.UnicodeScalarView(scalars[start..<min(start + 200, scalars.count)]))
+        }
+        ZStack {
+            Text(String(parts.count)).accessibilityIdentifier("library.shelf.count")
+            ForEach(parts.indices, id: \.self) { index in
+                Text(parts[index]).accessibilityIdentifier("library.shelf.part.\(index)")
+            }
+        }
+        .font(.caption2).lineLimit(1).frame(height: 1).clipped()
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("library.shelf.state")
+    }
+}
+#endif
+
 struct LibraryScreen: View {
     @ObservedObject var model: HostReaderModel
     @State private var importing = false
@@ -172,8 +194,7 @@ struct LibraryScreen: View {
             }
 
 #if EXR_APPLE_SHELF_REVIEW
-            Text(shelf.observation).font(.caption2).lineLimit(1)
-                .accessibilityLabel(shelf.observation).accessibilityIdentifier("library.shelf.state")
+            ShelfObservationView(value: shelf.observation)
 #endif
             if model.productIndexPending {
                 Text("产品索引待修复；暂时最多显示最近 50 本本地书籍，重启后重试。")
