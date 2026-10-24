@@ -21,7 +21,7 @@ SDK固定为`9854061be331fe603a1822d9b2b36ee357154927`，SDK3.40.0／ABI1／sche
 当前阶段交付导入模块和产品存储基础：c2c75f99的云端run39980923147四作业已通过，
 详见[模块记录](validation/reader-modules-c2c75f9.json)。尚未交付新的产品UI或跨设备同步客户端。
 
-### 后续独立候选进度（未合并）
+### 后续独立候选进度（未合入默认分支）
 
 以上是默认分支起点，不等同于产品分支进度。后续以可独立审阅的草稿 PR 交付：
 PR4 模块基础、PR5/6 平台产品目录、PR8/12 导入映射、PR10 桌面目录桥接、
@@ -63,6 +63,88 @@ WebDAV [实施契约](WEBDAV-PROTOCOL.md)的网络与两端协议结果按各包
 Apple owner 队列负责独立 `reader-catalog.db` 的生命周期，原生包、UI、Model 与
 Bounded 消费者使用同一完整 SQL。目录和导入映射的独立结果见
 [Apple 导入映射](READER-IMPORT-MAPPING-APPLE.md)；新的有界书架尚未纳入本候选。
+
+### 最新产品候选接续
+
+共同产品metadata候选 `ae584ccf` 已通过Windows/Linux严格预集成及Android原生owner
+同源复验。其后的模块和界面按各自固定源码分别验收：
+
+- [真实WebDAV互操作](READER-WEBDAV-COMPAT.md)：Apache与Nextcloud各33项，
+  同源原生Windows/Linux回归通过，修复2000条真实目录的XML容量与百分号路径兼容。
+- [账号后台会话](READER-SYNC-SESSION.md)：Windows/Linux各20项，
+  真实HTTPS、256分片、取消重试和账号独占；尚未接入账号UI或SDK原件导出。
+- [阅读状态v2](READER-READING-V2.md)：`818e3629` 的Windows/Linux协议、
+  旧端拒收及SDK往返五作业同源严格通过；进度和点书签进入产品修订。
+  按书标注keyset分页 `4e59a0b8` 的新增10项与全部保留套件同源五作业严格通过。
+- [GTK收藏整理](READER-GTK-COLLECTIONS.md)：`b9124fbd` 的27项新UI与全部保留
+  回归同次通过；已正常合入工作候选，支持子书架、标签、系列及显式恢复。
+- [SDK原件导出](READER-SOURCE-EXPORT.md)：`745c3483` 两平台各14项、五作业严格
+  通过；侧载模块在SDK owner上完成分块读出、取消处理和不覆盖目标的原子发布。
+- 平台凭据独立交付 `e2247deb`、run `40057087875` 五平台成功；验证器`32f72ba7`
+  的run`40060725476`通过96项拒绝回归并重新散列五ZIP，已正常合入工作候选。
+  Windows不可用、iOS锁屏、Android Keystore故障保留未验证范围。
+- 阅读状态原生HTTPS联验`f7e911c8`、run`40060616599`同源五作业严格通过：
+  四格式原件经SDK导出/上传/下载/第二端实际导入，18个锚点17 FOUND/1预期歧义，
+  零误定位。后续`fb30036a`、run`40062187051`同源五作业严格通过：接收端先投影
+  四本书的SAFE metadata再导入下载原件，title/author/favorite不被本地默认值覆盖，
+  18个阅读捕获仍17 FOUND/1预期歧义、零误定位。
+
+Android收藏整理`3f50a165`的run`40059870895`完整通过，新增8原生/8UI/真实重启及
+15门禁与全部原17+2/112/87/19同次通过，已正常合入工作候选。
+接收发现/投影公共接口`2cbdd49b`的run`40061634535`两平台各12项、五作业严格通过。
+书内搜索包`971e528e`的run`40064018124`两平台各264检查/34场景、严格汇总通过，
+包含同长度换书游标拒绝、独立SDK重开、线程归属、完整分页/取消与锚点兼容。
+已正常合入工作候选；`8476d6b9`、run`40064505462`同源五作业严格通过，
+两平台重跑264搜索检查/34场景及原生同步/metadata/阅读状态/原件传输全部保留套件。
+汇总重新校验实际消费者和安装包哈希、原始命名检查及跨平台结果，
+`search_package_accepted=true, webdav_roundtrip_accepted=true`。
+完整工件身份见[同源联验](validation/reader-search-joint.json)，宿主搜索UI尚未授予。
+原生同步macOS接入`a32602be`、run`40065344267`同源四作业严格通过：
+macOS ARM64/Linux各283检查、Windows282检查，覆盖HTTPS、修订、同步、metadata、
+命令、恢复与账号会话。Apple使用系统随机源/CommonCrypto和系统libcurl/libxml2，
+SDK/schema不变。已正常合入工作候选；本包未授予iOS、Android同步或宿主账号UI，
+身份见[macOS原生同步](validation/reader-sync-apple.json)。
+正常合入macOS接入后的组合源码`867c8650`、run`40065943105`同源五作业严格通过，
+再次保留264搜索检查/34场景、全部原生套件及四格式原件/18阅读捕获的HTTPS往返。
+
+阅读设置F3原16组交付保留；root补回归后修复数值语法/有效数字、可空error状态及64 KiB
+上限，`1f51b406`、run`40067465230`三平台各20组、严格汇总四作业通过，已正常合入。
+Android WebDAV `7c27efec`、run`40066284731`同源三作业通过：API34 x86_64原生91组
+及真实重启4组，Linux77/Windows76与各12兼容检查；API26编译、Release扫描与包体增量
+单列在[验收记录](validation/reader-webdav-android.json)。已正常合入；尚未授予Android完整
+同步会话/SDK原件导出/宿主账号UI。上述两项在后续共同源码复验，不拼接旧结果。
+
+F4文件夹导入原`a85bbc5f`、run`40065922610`三平台668项交付已核实；root独立审查
+补出目录预算排队超界、父目录链接替换、并行计数及macOS复制修改观测缺口。
+修复源码`67cee469`、run`40068645513`同源四作业成功：三平台各原668+新增4项，
+Linux额外8个owner/64次导入的真实TSan通过；严格工件验证另拒绝6种篡改报告。
+已正常合入工作候选；原交付、三轮红测及Windows夹具问题均保留在
+[独立审查记录](validation/reader-batch-import-review.json)。宿主批量导入UI与组合源码复验待完成。
+
+GTK账号与全库本地准备 `d88ed89d`、run`40068924227` 已通过并正常合入：新增23项，
+原105项与4项故障检查同次通过，另保留桌面/产品ctest。包含Secret Service或明确的
+仅本次会话凭据、每页50/逐书SDK owner准备、真实多头保留、取消/重试及关闭生命周期。
+该扫描会下载校验原书缓存，但尚未把接收历史完整投影为可打开的宿主书籍；
+接收投影、SDK导入和缓存缺失后的下载调度继续接续，见
+[GTK账号记录](validation/reader-gtk-account.json)。
+
+Apple原生WebDAV传输`5bebae0f`、run`40070706494`四producer与严格汇总五作业通过，
+已正常合入。iOS26.2 arm64 iPhone Simulator实际100项，macOS Foundation306项，
+Linux295项、Windows294项同源通过；系统TLS验证、流式上传/取消、线程归属及回调保留。
+该包只授予传输；完整iOS阅读器会话、SDK导入/导出调度和账号UI继续接续，见
+[Apple传输记录](validation/reader-webdav-apple.json)。macOS默认仍为已验系统curl，
+iOS默认使用Foundation。上述新包仍需在最终产品共同源码复验。
+
+F5真实文件独立复核仍拒绝：原交付Windows12/18、Linux14/18。
+审查源码`80946aa4`、run`40070449808`确认原Windows进程参数已损坏俄文查询；
+修复消费者UTF-16→UTF-8入口后，两平台均14/18，SDK源码未改。
+RTF两份与CBZ两份仍失败，不更换文件或改成预期拒绝；18份不计入旧1710目标。
+该分支未合入工作候选，兼容性与路径策略另行处理，见
+[F5审查记录](https://github.com/NoGod3524/EXReader/blob/1ea0e160bc1805619c222bd121028cc1373d50e3/docs/READER-REAL-CORPUS-REVIEW.md)。
+
+Apple有界书架仍等完整云端出口。随后需把已验收包合到同一源码
+复验，并把已通过的原生原件/metadata/阅读状态WebDAV往返接入宿主的分批下载、
+投影调度、凭据/账号UI及四套原生壳的列表/导航。以上独立结果不转移到尚未测试的组合源码。
 
 ## 并行工作包
 

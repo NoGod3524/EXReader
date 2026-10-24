@@ -43,6 +43,13 @@
                 android:layout_weight="1"
                 android:text="Refresh"
                 android:contentDescription="Refresh shelf" />
+            <Button
+                android:id="@+id/more_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="More"
+                android:contentDescription="More shelf actions" />
         </LinearLayout>
 
         <EditText

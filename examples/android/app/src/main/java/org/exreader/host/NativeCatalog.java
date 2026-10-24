@@ -31,6 +31,13 @@ final class NativeCatalog {
     /** Current product metadata, including deleted state; null only if absent. */
     static native String[] metadata(long owner, String bookKey);
     static native String[] heads(long owner, String kind, String key);
+    /** Selection kind, deleted flag, restore flag, followed by every observed head. */
+    static native String[] selection(long owner,String kind,String key);
+    static native boolean retained(long owner,String revision);
+    static native String[][] groups(long owner,int kind,String parent,String cursor,long ordinal,boolean before,boolean removed);
+    static native String[][] groupFind(long owner,int kind,String id);
+    static native String[][] members(long owner,int kind,String group,String cursor,long ordinal,boolean before,String query);
+    static native String[][] memberFind(long owner,int kind,String group,String book);
     private static native String[] book(long owner, String revision, String[] expected, int operation,
                                        String key, String format, String sha, long bytes, String title,
                                        String author, String sort, boolean favorite);

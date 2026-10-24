@@ -49,17 +49,19 @@ static void bid(unsigned n,char out[72]) { snprintf(out,72,"txt:%064x",n); }
 static unsigned number(const char *id) { return (unsigned)strtoul(id+strlen(id)-8,NULL,16); }
 typedef struct {
   size_t count;unsigned last;int direction,reenter,stop,deleted,parent,book_deleted;
-  uint64_t ordinal;char id[72],name[1025];
+  uint64_t ordinal;char id[72],name[1025],parent_id[33];
 } capture;
 static int receive_group(void *context,const reader_catalog_group_row *row) {
   capture *p=context;unsigned n=number(row->id);
   if(p->last) CHECK(p->direction>0 ? p->last<n:p->last>n);
   p->last=n;p->ordinal=row->ordinal;p->deleted=row->deleted;p->parent=row->parent_id!=NULL;p->count++;
   snprintf(p->id,sizeof(p->id),"%s",row->id);snprintf(p->name,sizeof(p->name),"%s",row->name);
+  snprintf(p->parent_id,sizeof(p->parent_id),"%s",row->parent_id?row->parent_id:"");
   if(p->reenter) {
     int found=7;
     CHECK(reader_catalog_group_find(catalog,READER_CATALOG_SHELF,row->id,receive_group,p,&found,NULL)==SQLITE_MISUSE && found==0);
     CHECK(reader_catalog_groups_page(catalog,READER_CATALOG_SHELF,NULL,NULL,1,1,receive_group,p,NULL)==SQLITE_MISUSE);
+    CHECK(reader_catalog_removed_groups_page(catalog,READER_CATALOG_SHELF,NULL,1,1,receive_group,p,NULL)==SQLITE_MISUSE);
   }
   return p->stop;
 }
@@ -116,6 +118,7 @@ static void *wrong_owner(void *unused) {
 #endif
   (void)unused;capture p={0};char id[33];gid(1,id);int found=8;
   CHECK(reader_catalog_groups_page(catalog,READER_CATALOG_SHELF,NULL,NULL,1,1,receive_group,&p,NULL)==SQLITE_MISUSE);
+  CHECK(reader_catalog_removed_groups_page(catalog,READER_CATALOG_SHELF,NULL,1,1,receive_group,&p,NULL)==SQLITE_MISUSE);
   CHECK(reader_catalog_membership_find(catalog,READER_CATALOG_SHELF,id,"txt:any",receive_membership,&p,&found,NULL)==SQLITE_MISUSE && found==0);
   CHECK(!p.count);return 0;
 }
@@ -129,8 +132,8 @@ int main(int argc,char **argv) {
     snprintf(q,sizeof(q),"INSERT INTO reader_books VALUES('txt:%064x','txt','%064x',123,'Book %04u','%s','Book %04u',%u,%u)",n,n,n,n==17?"%_!作者":"Author",n,n==17,n==2202);sql(db,q);
     if(n%2) { snprintf(q,sizeof(q),"INSERT INTO reader_local_books VALUES('txt:%064x',%u,'reflow_global')",n,n);sql(db,q); }
     for(unsigned k=0;k<3;k++) {
-      if(k==0) snprintf(q,sizeof(q),"INSERT INTO reader_shelves VALUES('%032x',%s,'Group %04u',%u,%u)",n,n==2?"'00000000000000000000000000000001'":"NULL",n,n/7,n==2202);
-      else snprintf(q,sizeof(q),"INSERT INTO %s VALUES('%032x','Group %04u',%u)",tables[k],n,n,n==2202);
+      if(k==0) snprintf(q,sizeof(q),"INSERT INTO reader_shelves VALUES('%032x',%s,'Group %04u',%u,%u)",n,n==2?"'00000000000000000000000000000001'":n==2202?"'00000000000000000000000000000002'":"NULL",n,n/7,n>=2201);
+      else snprintf(q,sizeof(q),"INSERT INTO %s VALUES('%032x','Group %04u',%u)",tables[k],n,n,n>=2201);
       sql(db,q);
       if(k==1) snprintf(q,sizeof(q),"INSERT INTO reader_book_tags VALUES('txt:%064x','%032x')",n,1);
       else snprintf(q,sizeof(q),"INSERT INTO %s VALUES('%032x','txt:%064x',%u)",joins[k],1,n,n/7);
@@ -145,13 +148,33 @@ int main(int argc,char **argv) {
   CHECK(reader_catalog_groups_page(catalog,READER_CATALOG_SHELF,id,NULL,1,20,receive_group,&p,NULL)==SQLITE_OK && p.count==1 && p.last==2 && p.parent);
   PASS("child_shelves_are_read_through_the_public_parent_view");
   for(unsigned k=0;k<3;k++) for(int direction=-1;direction<=1;direction+=2)
-    CHECK(scan_groups((reader_catalog_group_kind)k,direction)==(k==0?2200:2201));
+    CHECK(scan_groups((reader_catalog_group_kind)k,direction)==(k==0?2199:2200));
   PASS("three_group_kinds_page_both_directions_without_missing_or_duplicate_ids");
   PASS("shelf_ordinal_ties_cross_37_row_pages_in_stable_id_order");
   gid(2202,id);memset(&p,0,sizeof(p));
   CHECK(reader_catalog_group_find(catalog,READER_CATALOG_SHELF,id,receive_group,&p,&found,NULL)==SQLITE_OK && found && p.deleted);
   gid(9999,id);CHECK(reader_catalog_group_find(catalog,READER_CATALOG_TAG,id,receive_group,&p,&found,NULL)==SQLITE_OK && !found);
   PASS("group_lookup_preserves_tombstoned_metadata_and_distinguishes_missing");
+  for(unsigned k=0;k<3;k++) for(int direction=-1;direction<=1;direction+=2) {
+    char cursor[33];memset(&p,0,sizeof(p));p.direction=direction;
+    CHECK(reader_catalog_removed_groups_page(catalog,(reader_catalog_group_kind)k,NULL,direction,1,receive_group,&p,NULL)==SQLITE_OK);
+    CHECK(p.count==1 && p.deleted==1 && p.last==(direction>0?2201u:2202u));
+    snprintf(cursor,sizeof(cursor),"%.32s",p.id);p.count=0;
+    CHECK(reader_catalog_removed_groups_page(catalog,(reader_catalog_group_kind)k,cursor,direction,1,receive_group,&p,NULL)==SQLITE_OK);
+    CHECK(p.count==1 && p.deleted==1 && p.last==(direction>0?2202u:2201u));
+    if(k==0 && direction>0) CHECK(p.parent && !strcmp(p.parent_id,"00000000000000000000000000000002") && p.ordinal==2202/7 && !strcmp(p.name,"Group 2202"));
+    snprintf(cursor,sizeof(cursor),"%.32s",p.id);p.count=0;
+    CHECK(reader_catalog_removed_groups_page(catalog,(reader_catalog_group_kind)k,cursor,direction,1,receive_group,&p,NULL)==SQLITE_OK && !p.count);
+  }
+  memset(&p,0,sizeof(p));p.direction=1;p.stop=p.reenter=1;
+  CHECK(reader_catalog_removed_groups_page(catalog,READER_CATALOG_SHELF,NULL,1,200,receive_group,&p,NULL)==SQLITE_OK && p.count==1);
+  CHECK(reader_catalog_removed_groups_page(catalog,READER_CATALOG_SHELF,"invalid",1,1,receive_group,&p,NULL)==SQLITE_MISUSE);
+  CHECK(reader_catalog_removed_groups_page(catalog,(reader_catalog_group_kind)3,NULL,1,1,receive_group,&p,NULL)==SQLITE_MISUSE);
+  CHECK(reader_catalog_removed_groups_page(catalog,READER_CATALOG_SHELF,NULL,0,1,receive_group,&p,NULL)==SQLITE_MISUSE);
+  CHECK(reader_catalog_removed_groups_page(catalog,READER_CATALOG_SHELF,NULL,1,0,receive_group,&p,NULL)==SQLITE_MISUSE);
+  CHECK(reader_catalog_removed_groups_page(catalog,READER_CATALOG_SHELF,NULL,1,201,receive_group,&p,NULL)==SQLITE_MISUSE);
+  CHECK(reader_catalog_removed_groups_page(catalog,READER_CATALOG_SHELF,NULL,1,1,NULL,&p,NULL)==SQLITE_MISUSE);
+  PASS("removed_groups_page_all_levels_both_directions_preserving_restore_fields");
   for(unsigned k=0;k<3;k++) for(int direction=-1;direction<=1;direction+=2)
     CHECK(scan_members((reader_catalog_group_kind)k,direction,0,NULL)==2201);
   PASS("shelf_tag_series_member_keysets_traverse_all_2201_visible_books");
@@ -197,7 +220,7 @@ int main(int argc,char **argv) {
   PASS("actual_forward_reverse_queries_use_existing_index_ranges_without_offset");
   CHECK(writes==0);CHECK(reader_catalog_close(&catalog,NULL)==SQLITE_OK);CHECK(sqlite3_close(db)==SQLITE_OK);sqlite3_reset_auto_extension();
   PASS("all_organization_reads_execute_without_any_database_write");
-  CHECK(groups==15);snprintf(path,sizeof(path),"%s/organization-result.json",argv[1]);FILE *report=fopen(path,"wb");CHECK(report);
+  CHECK(groups==16);snprintf(path,sizeof(path),"%s/organization-result.json",argv[1]);FILE *report=fopen(path,"wb");CHECK(report);
   fprintf(report,"{\"accepted\":true,\"source_sha\":\"%s\",\"run_id\":\"%s\",\"attempt\":\"%s\",\"groups_per_kind\":2202,\"books\":2202,\"checks\":[",getenv("GITHUB_SHA"),getenv("GITHUB_RUN_ID"),getenv("GITHUB_RUN_ATTEMPT"));
   for(unsigned i=0;i<groups;i++) fprintf(report,"%s{\"id\":\"%s\",\"passed\":true}",i?",":"",names[i]);
   fprintf(report,"],\"sdk_changed\":false,\"schema_changed\":false,\"ui_accepted\":false,\"problems\":[]}\n");CHECK(!fclose(report));return 0;

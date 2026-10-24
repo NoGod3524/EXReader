@@ -7,6 +7,7 @@
 #include <strings.h>
 #include <sys/types.h>
 #include <math.h>
+#include <errno.h>
 #ifdef EXR_READER_PRODUCT_CATALOG
 #include "catalog_sdk.h"
 #include <fcntl.h>
@@ -16,6 +17,13 @@
 #ifdef EXR_READER_DESKTOP_METADATA
 #include <reader_metadata.h>
 #include <glib.h>
+#endif
+#ifdef EXR_READER_ACCOUNT
+#include <glib/gstdio.h>
+#include <sys/stat.h>
+#include <exr_credentials.h>
+#include <exr_sideload.h>
+#include <exr_webdav.h>
 #endif
 
 #define PAGE_TEXT_LIMIT (1024u*1024u)
@@ -49,8 +57,21 @@ struct linux_reader {
   reader_metadata_snapshot *metadata_snapshot;
   uint64_t metadata_token;
   int64_t metadata_book;
+  reader_metadata_snapshot *collection_snapshot;
+  uint64_t collection_token;
+  int collection_entity,collection_kind,collection_operation;
+  char collection_parent[33];
+#endif
+#ifdef EXR_READER_ACCOUNT
+  void *account_data;
 #endif
 };
+#ifdef EXR_READER_ACCOUNT
+static void accounts_free(linux_reader *);
+#endif
+void reader_secret_free(char *value) {
+  if(value) { volatile char *out=value;size_t size=strlen(value);while(size--) *out++=0;free(value); }
+}
 static void session_free(reader_session *session) {
   exr_pager_free(session->pager);exr_publication_free(session->publication);
   exr_document_free(session->document);exr_fixed_free(session->fixed_document);
@@ -65,6 +86,19 @@ static void pending_discard(linux_reader *reader) {
 void reader_result_free(reader_result *result) {
   size_t i;free(result->pixels);free(result->text);
   free(result->metadata_title);free(result->metadata_author);
+  free(result->account_id);free(result->account_root);
+  reader_secret_free(result->account_user);reader_secret_free(result->account_password);
+  for(i=0;i<result->collection_group_count;i++) {
+    free(result->collection_groups[i].id);free(result->collection_groups[i].name);free(result->collection_groups[i].parent);
+  }
+  free(result->collection_groups);
+  for(i=0;i<result->collection_member_count;i++) {
+    free(result->collection_members[i].key);free(result->collection_members[i].title);free(result->collection_members[i].author);
+  }
+  free(result->collection_members);
+  reader_collection_group *groups[]={&result->collection_selected,&result->collection_navigation,&result->collection_dependency_group};
+  for(i=0;i<sizeof(groups)/sizeof(groups[0]);i++) { free(groups[i]->id);free(groups[i]->name);free(groups[i]->parent); }
+  free(result->collection_book_key);free(result->collection_book_title);
   if(result->cursors) for(i=0;i<result->book_count;i++) {
     free(result->cursors[i].key);free(result->cursors[i].sort_title);
   }
@@ -99,12 +133,16 @@ exr_status linux_reader_open(const char *database,const char *font,const exr_con
 }
 void linux_reader_close(linux_reader *reader) {
   if(reader) {
+#ifdef EXR_READER_ACCOUNT
+    accounts_free(reader);
+#endif
     pending_discard(reader);
     session_free(&reader->current);exr_font_free(reader->font);
     exr_library_close(reader->library);
 #ifdef EXR_READER_PRODUCT_CATALOG
 #ifdef EXR_READER_DESKTOP_METADATA
     reader_metadata_snapshot_free(reader->metadata_snapshot);
+    reader_metadata_snapshot_free(reader->collection_snapshot);
     reader_metadata_close(&reader->metadata,NULL);
 #endif
     reader_catalog_close(&reader->catalog,NULL);
@@ -193,6 +231,10 @@ static exr_status product_shelf(linux_reader *reader,const reader_command *comma
 #endif
 #ifdef EXR_READER_DESKTOP_METADATA
 #include "metadata.inc"
+#include "collections.inc"
+#endif
+#ifdef EXR_READER_ACCOUNT
+#include "accounts.inc"
 #endif
 static size_t extent(reader_session *session) {
   size_t size=0;
@@ -566,7 +608,15 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
   int owned_session=0,new_pager=0;int64_t id=command->book;size_t target=0;
   int wants_shelf=command->action==READER_SHELF || command->action==READER_OPEN || command->action==READER_IMPORT;
   memset(result,0,sizeof(*result));
+#ifdef EXR_READER_ACCOUNT
+  if(command->action>=READER_ACCOUNT_LOAD && command->action<=READER_ACCOUNT_STAGE_NEXT) {
+    accounts_execute(reader,command,result);return;
+  }
+#endif
 #ifdef EXR_READER_DESKTOP_METADATA
+  if(command->action>=READER_COLLECTIONS_LIST && command->action<=READER_COLLECTIONS_DISCARD) {
+    collections_execute(reader,command,result);return;
+  }
   if(command->action>=READER_METADATA_PREPARE && command->action<=READER_METADATA_DISCARD) {
     metadata_execute(reader,command,result);return;
   }

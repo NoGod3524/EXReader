@@ -14,6 +14,8 @@ import subprocess
 import sys
 import threading
 import time
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'webdav'))
+from cloud_native import trust_fixture_certificates
 
 AUTH = 'Basic ' + base64.b64encode(b'sync-user:sync-private-fixture').decode()
 DISABLED = (1 << 64) - 1
@@ -54,12 +56,7 @@ def main():
     trusted_key, trusted = cert('trusted', 'localhost')
     wrong_key, wrong = cert('wrong-host', 'wrong.example')
     untrusted_key, untrusted = cert('untrusted', 'localhost')
-    for certificate in (trusted, wrong):
-        subprocess.run(['certutil', '-addstore', '-f', 'Root', str(certificate)] if os.name == 'nt' else
-                       ['sudo', 'cp', str(certificate), '/usr/local/share/ca-certificates/exr-sync-' + certificate.name],
-                       check=True, capture_output=True)
-    if os.name != 'nt':
-        subprocess.run(['sudo', 'update-ca-certificates'], check=True, capture_output=True)
+    trust_fixture_certificates((trusted, wrong), 'exr-sync-')
     entries, directories, requests, checks = {}, set(), [], []
     lock = threading.Lock()
     flags = {'disconnect': '', 'pause_get': '', 'redirect_write': False, 'redirect_put': False}

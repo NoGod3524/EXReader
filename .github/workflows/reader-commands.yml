@@ -4,6 +4,19 @@ on:
     branches: [codex/reader-commands, codex/reader-desktop-metadata]
   workflow_dispatch:
   workflow_call:
+    inputs:
+      platforms:
+        type: string
+        default: '["ubuntu-22.04","windows-2022"]'
+      session:
+        type: boolean
+        default: false
+      reading_v2:
+        type: boolean
+        default: false
+      apple_urlsession:
+        type: boolean
+        default: false
 permissions:
   contents: read
 defaults:
@@ -17,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, windows-2022]
+        os: ${{ fromJSON(inputs.platforms || '["ubuntu-22.04","windows-2022"]') }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -33,6 +46,26 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config
+      - name: Use Apple system native TLS XML and platform SHA with fixture-only OpenSSL CLI
+        if: runner.os == 'macOS'
+        run: |
+          brew install ninja pkg-config openssl@3
+          sdkroot=$(xcrun --sdk macosx --show-sdk-path)
+          mkdir -p build/apple-pkgconfig
+          version=$(/usr/bin/curl --version | awk 'NR==1 {print $2}')
+          cat > build/apple-pkgconfig/libcurl.pc <<EOF
+          prefix=$sdkroot/usr
+          Name: libcurl
+          Description: Apple SDK system libcurl
+          Version: $version
+          Libs: -L\${prefix}/lib -lcurl
+          Cflags:
+          EOF
+          echo "PKG_CONFIG_PATH=$PWD/build/apple-pkgconfig" >> "$GITHUB_ENV"
+          echo "CMAKE_PREFIX_PATH=$sdkroot/usr" >> "$GITHUB_ENV"
+          echo "PATH=$(brew --prefix openssl@3)/bin:$PATH" >> "$GITHUB_ENV"
+          /usr/bin/curl --version
+          xcodebuild -version
       - name: Enter Windows native compiler environment
         if: runner.os == 'Windows'
         shell: pwsh
@@ -55,7 +88,9 @@ jobs:
           cmake --install build/sync-product 2>&1 | tee build/sync-logs/product-install.log
       - name: Build and install the native TLS and revision modules
         run: |
-          cmake -S extras/webdav -B build/sync-dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$SYNC_WORKSPACE/build/sync-dav-stage" 2>&1 | tee build/sync-logs/dav-configure.log
+          apple_native=OFF
+          if [ "$RUNNER_OS" = macOS ] && [ "${{ inputs.apple_urlsession }}" = true ]; then apple_native=ON; fi
+          cmake -S extras/webdav -B build/sync-dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_WEBDAV_APPLE_URLSESSION="$apple_native" -DCMAKE_INSTALL_PREFIX="$SYNC_WORKSPACE/build/sync-dav-stage" 2>&1 | tee build/sync-logs/dav-configure.log
           cmake --build build/sync-dav --verbose 2>&1 | tee build/sync-logs/dav-build.log
           cmake --install build/sync-dav
           cmake -S apps/reader/revisions -B build/sync-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$SYNC_WORKSPACE/build/sync-product-stage" -DCMAKE_INSTALL_PREFIX="$SYNC_WORKSPACE/build/sync-revision-stage" 2>&1 | tee build/sync-logs/revision-configure.log
@@ -77,6 +112,7 @@ jobs:
         run: |
           if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
           python3 tests/webdav/check_tls.py --consumer "build/sync-dav-consumer/webdav-consumer$exe" --module-prefix build/sync-dav-stage --output build/sync-source-evidence
+          python3 tests/webdav/check_compat.py --consumer "build/sync-dav-consumer/webdav-consumer$exe" --output build/sync-compat-evidence
           python3 tests/reader_revisions/check_protocol.py --consumer "build/sync-revision-consumer/revision-consumer$exe" --c-consumer "build/sync-revision-consumer/revision-c-consumer$exe" --product-prefix build/sync-product-stage --revision-prefix build/sync-revision-stage --build-log build/sync-logs/revision-consumer-build.log --link-map build/sync-revision-consumer/revision-link.map --output build/sync-protocol-evidence
       - name: Actual TLS two-client immutable publication and bounded discovery
         run: |
@@ -109,6 +145,42 @@ jobs:
         run: |
           if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
           python3 tests/reader_metadata/check_metadata.py --consumer "build/metadata-consumer/metadata-consumer$exe" --c-consumer "build/metadata-consumer/metadata-c-consumer$exe" --command-consumer "build/commands-consumer/command-consumer$exe" --product-prefix build/sync-product-stage --link-map build/metadata-consumer/metadata-link.map --build-log build/sync-logs/metadata-consumer-build.log --output build/metadata-evidence
+      - name: Build and install the optional native account session and C consumer
+        if: inputs.session == true
+        run: |
+          cmake -S apps/reader/session -B build/session -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$SYNC_PREFIXES" -DCMAKE_INSTALL_PREFIX="$SYNC_WORKSPACE/build/session-stage" 2>&1 | tee build/sync-logs/session-configure.log
+          cmake --build build/session --verbose 2>&1 | tee build/sync-logs/session-build.log
+          cmake --install build/session
+          cmake -S tests/reader_session/consumer -B build/session-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$SYNC_WORKSPACE/build/session-stage;$SYNC_PREFIXES"
+          cmake --build build/session-consumer --verbose 2>&1 | tee build/sync-logs/session-consumer-build.log
+      - name: Actual asynchronous native account sweeps cancellation retry and isolation
+        if: inputs.session == true
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_session/check_session.py --consumer "build/session-consumer/session-consumer$exe" --revision-consumer "build/sync-revision-consumer/revision-consumer$exe" --output build/session-evidence
+      - name: Native Foundation immutable writes owner and callback lifetime
+        if: runner.os == 'macOS' && inputs.apple_urlsession == true
+        run: |
+          cmake -S tests/webdav/apple -B build/apple-dav-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$SYNC_PREFIXES"
+          cmake --build build/apple-dav-consumer --verbose
+          python3 tests/webdav/apple/check_transport.py --consumer build/apple-dav-consumer/WebDAVProbe --native-binary build/apple-dav-consumer/WebDAVProbe --output build/apple-dav-evidence
+      - name: Build an actual immutable v1 validator against the same product provider
+        if: inputs.reading_v2 == true
+        run: |
+          mkdir -p build/reading-v1-source
+          git archive 210403d121d6484a8fff4ea7ffd911efa3163535 apps/reader/revisions extras/opds tests/reader_revisions/consumer | tar -x -C build/reading-v1-source
+          cmake -S build/reading-v1-source/apps/reader/revisions -B build/reading-v1-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$SYNC_WORKSPACE/build/sync-product-stage" -DCMAKE_INSTALL_PREFIX="$SYNC_WORKSPACE/build/reading-v1-stage"
+          cmake --build build/reading-v1-revisions --verbose
+          cmake --install build/reading-v1-revisions
+          cmake -S build/reading-v1-source/tests/reader_revisions/consumer -B build/reading-v1-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$SYNC_WORKSPACE/build/reading-v1-stage;$SYNC_WORKSPACE/build/sync-product-stage"
+          cmake --build build/reading-v1-consumer --verbose
+      - name: V2 transactions actual legacy refusal immutable bytes and process kill
+        if: inputs.reading_v2 == true
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_reading_v2/check_protocol.py --consumer "build/sync-revision-consumer/revision-consumer$exe" --legacy-consumer "build/reading-v1-consumer/revision-consumer$exe" --output build/reading-v2-protocol
+          python3 tests/reader_reading_v2/check_annotations.py --consumer "build/sync-revision-consumer/revision-consumer$exe" --output build/reading-v2-annotations
+          python3 tests/reader_projection/check_entities.py --consumer "build/sync-revision-consumer/revision-consumer$exe" --output build/reading-v2-entities
       - name: Preserve source-bound evidence and installed modules without keys
         if: always()
         uses: actions/upload-artifact@v4
@@ -117,6 +189,7 @@ jobs:
           path: |
             build/sync-logs/
             build/sync-source-evidence/
+            build/sync-compat-evidence/
             build/sync-protocol-evidence/
             build/sync-evidence/
             build/projection-evidence/
@@ -132,5 +205,22 @@ jobs:
             build/sync-dav-stage/
             build/sync-stage/
             build/sync-consumer/sync-consumer*
+            build/sync-dav-consumer/webdav-consumer*
+            build/sync-revision-consumer/revision-consumer*
+            build/sync-revision-consumer/revision-c-consumer*
+            build/commands-consumer/command-consumer*
+            build/commands-consumer/command-c-consumer*
+            build/metadata-consumer/metadata-consumer*
+            build/metadata-consumer/metadata-c-consumer*
+            build/apple-pkgconfig/
+            build/apple-dav-consumer/WebDAVProbe
+            build/apple-dav-evidence/
+            build/session-stage/
+            build/session-evidence/
+            build/session-consumer/session-consumer*
+            build/reading-v2-protocol/
+            build/reading-v2-annotations/
+            build/reading-v2-entities/
+            build/reading-v1-consumer/revision-consumer*
           if-no-files-found: error
 

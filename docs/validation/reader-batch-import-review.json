@@ -1,0 +1,260 @@
+{
+  "accepted": true,
+  "scope": "F4 independent batch-import review and four confirmed fixes",
+  "branch": "codex/reader-batch-import-review",
+  "original_source": "a85bbc5fb817ab28c28512665efc19e7c13f5ff9",
+  "base_docs_head": "e0d6f339e7c05b37014187406d2e92f2bc63814d",
+  "accepted_source": "67cee4696bcb37d072b8ffe8fdf2b926df792c8d",
+  "run_id": 40068645513,
+  "attempt": 1,
+  "conclusion": "success",
+  "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/40068645513",
+  "jobs": {
+    "macos": {
+      "id": 120797111697,
+      "original_checks": 668,
+      "review_checks": 4,
+      "conclusion": "success"
+    },
+    "windows": {
+      "id": 120797111752,
+      "original_checks": 668,
+      "review_checks": 4,
+      "conclusion": "success"
+    },
+    "linux": {
+      "id": 120797111790,
+      "original_checks": 668,
+      "review_checks": 4,
+      "tsan_owners": 8,
+      "tsan_imports": 64,
+      "conclusion": "success"
+    },
+    "strict": {
+      "id": 120797721602,
+      "artifacts_verified": 3,
+      "altered_reports_rejected": 6,
+      "conclusion": "success"
+    }
+  },
+  "artifacts": [
+    {
+      "id": 12550421663,
+      "name": "reader-batch-import-macOS-40068645513-1",
+      "bytes": 10498002,
+      "digest": "sha256:e0a1071617d9182e906e3fa45f4bafef59d9141d8e8b465ebebb96f4cbf0b926"
+    },
+    {
+      "id": 12550381708,
+      "name": "reader-batch-import-Windows-40068645513-1",
+      "bytes": 8521590,
+      "digest": "sha256:d1acdbe20c39fab7797562ea0337b64d60700c3db7ab4b99cf3e9ae7b5973d4c"
+    },
+    {
+      "id": 12550206998,
+      "name": "reader-batch-import-Linux-40068645513-1",
+      "bytes": 16541254,
+      "digest": "sha256:b1878c9f9a23077eeff75dd0ffd245d7772df9a077d689196fa40513c05816e5"
+    },
+    {
+      "id": 12549919640,
+      "name": "reader-batch-import-evidence-40068645513-1",
+      "bytes": 683,
+      "digest": "sha256:abf10d7c0a90a21ace8d904049be965f82e7b9a1e374cc5aa1f1f9a70549e466"
+    }
+  ],
+  "fixes": [
+    {
+      "id": "queued-directory-budget",
+      "original_lines": [
+        456,
+        491,
+        497,
+        818,
+        819
+      ],
+      "before": "max_directories=2 visited root and all three leaf directories; candidates=3 complete=1 truncated=0",
+      "after": "candidates=1 complete=0 truncated=1",
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ]
+    },
+    {
+      "id": "ancestor-link-redirect",
+      "original_lines": [
+        946,
+        948,
+        989
+      ],
+      "before": "enumerated parent replaced by an external symlink/junction; outside replacement committed=1",
+      "after": "committed=0; terminal FAILED item before SDK import",
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ]
+    },
+    {
+      "id": "macos-subsecond-source-change",
+      "original_lines": [
+        1013,
+        1093
+      ],
+      "before": "same-size copy-time rewrite with mtime 100ms to 900ms in same second committed on macOS",
+      "after": "all three platforms report Candidate changed while it was being staged; committed=0",
+      "platforms": [
+        "macos"
+      ]
+    },
+    {
+      "id": "shared-temp-counter-race",
+      "original_lines": [
+        1109,
+        1119
+      ],
+      "before": "actual Linux TSan data race in rb_create_temp; exit 66",
+      "after": "C11 relaxed atomic / Windows Interlocked increment; 8 independent owners and 64 imports pass TSan",
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ]
+    }
+  ],
+  "unchanged": [
+    "public reader_batch_import.h and status enums",
+    "original 668-check suite",
+    "SDK protected source and headers",
+    "installed sideload package",
+    "original author branch and original delivery records",
+    "root default build",
+    "frozen Android WebDAV b0bee514",
+    "separate Apple work"
+  ],
+  "execution": {
+    "all_builds_tests_fixtures_artifact_inspection": "GitHub Actions",
+    "local_operations": "source/document edits and Git only",
+    "sdk_mocks": false
+  },
+  "retained_failures": [
+    {
+      "source": "87c0fd3cda5925fbf85670bbbaae5fe2d0a1573b",
+      "run_id": 40067630022,
+      "attempt": 1,
+      "implementation_equals_original": true,
+      "jobs": {
+        "macos": 120794098045,
+        "linux": 120794098192,
+        "windows": 120794098279,
+        "strict": 120794743814
+      },
+      "reason": "original directory/ancestor-link/macOS timestamp/counter defects; Windows new junction setup failed before product regression",
+      "artifacts": [
+        {
+          "id": 12549907805,
+          "name": "reader-batch-import-evidence-40067630022-1",
+          "bytes": 767,
+          "digest": "sha256:149dec9d2a7ecf76919df86ad7550910b6dc1ac28f19f2a3077166f71eb37a9e"
+        },
+        {
+          "id": 12549634168,
+          "name": "reader-batch-import-Windows-40067630022-1",
+          "bytes": 5472799,
+          "digest": "sha256:c757c03fec50996411d47debb0c66e78e6e01780ea201fd0a0e44fafbe8a1a5c"
+        },
+        {
+          "id": 12549582980,
+          "name": "reader-batch-import-macOS-40067630022-1",
+          "bytes": 7066310,
+          "digest": "sha256:73c55a2125656dfd056f6d786c774e5ef40f2b99346b754802dc1f88b0e88abf"
+        },
+        {
+          "id": 12549383593,
+          "name": "reader-batch-import-Linux-40067630022-1",
+          "bytes": 8242609,
+          "digest": "sha256:c158688b2ed10f2b6a6c4b320d575b56435ca962fdb14b155bb964711f2b5aac"
+        }
+      ]
+    },
+    {
+      "source": "3d4eaee03357adf6c12ac8660f0262d24dc9d012",
+      "run_id": 40068018470,
+      "attempt": 1,
+      "implementation_equals_original": true,
+      "jobs": {
+        "windows": 120795240577,
+        "macos": 120795240666,
+        "linux": 120795240819,
+        "strict": 120795843736
+      },
+      "reason": "original defects retained; Windows absolute junction fixture was still misparsed by cmd quoting",
+      "artifacts": [
+        {
+          "id": 12549981755,
+          "name": "reader-batch-import-macOS-40068018470-1",
+          "bytes": 10497754,
+          "digest": "sha256:eb79c78dbc232e7e17e8bb5fdfe698f1a3b9e6b679b36ede1f2d025a0b85d886"
+        },
+        {
+          "id": 12549908492,
+          "name": "reader-batch-import-evidence-40068018470-1",
+          "bytes": 768,
+          "digest": "sha256:6e5a583fc006cfc9da7218b1c1d15d0eae07a5dca86587d929fb5cf9c1f04482"
+        },
+        {
+          "id": 12549684667,
+          "name": "reader-batch-import-Windows-40068018470-1",
+          "bytes": 8499588,
+          "digest": "sha256:226f09c69683d3eaa44f14b9404b55a98271adc8494122883fe8578bc624fad4"
+        },
+        {
+          "id": 12549558455,
+          "name": "reader-batch-import-Linux-40068018470-1",
+          "bytes": 16535492,
+          "digest": "sha256:c538ea2cc40b0bd113a3f3bd8b81bcd0f70d3a5acc69809d04841244ee07fdf3"
+        }
+      ]
+    },
+    {
+      "source": "559b8bf5b58112930313a758fead946461129429",
+      "run_id": 40068301211,
+      "attempt": 1,
+      "implementation_equals_original": true,
+      "jobs": {
+        "linux": 120796082865,
+        "windows": 120796083045,
+        "macos": 120796083100,
+        "strict": 120796691683
+      },
+      "reason": "actual directory and ancestor junction failures reproduced on Windows with native PowerShell junction; Linux/macOS original defects and TSan race retained",
+      "artifacts": [
+        {
+          "id": 12550630970,
+          "name": "reader-batch-import-evidence-40068301211-1",
+          "bytes": 748,
+          "digest": "sha256:7746a22dd402979ec68be35d9fdcb426fa6fd3cec932be1a28c31601e99bfda5"
+        },
+        {
+          "id": 12550357081,
+          "name": "reader-batch-import-Linux-40068301211-1",
+          "bytes": 16535489,
+          "digest": "sha256:7d80ed691cf5430dc8c723cd488e9ce4ef45d0ad4875bc5c72504ceecb058ebb"
+        },
+        {
+          "id": 12549953649,
+          "name": "reader-batch-import-macOS-40068301211-1",
+          "bytes": 10497757,
+          "digest": "sha256:5552dfdd36a150d1af33a27101d9e1493b0cec7151525901399ee09450766385"
+        },
+        {
+          "id": 12549938673,
+          "name": "reader-batch-import-Windows-40068301211-1",
+          "bytes": 8518889,
+          "digest": "sha256:81197c67e66285934226088b656868b90ca9c7f0fb79fa079bc16d96ca6c636e"
+        }
+      ]
+    }
+  ]
+}

@@ -16,6 +16,7 @@ import threading
 import time
 from urllib.parse import urlsplit
 import zipfile
+from cloud_native import trust_fixture_certificates
 
 AUTH = 'Basic ' + base64.b64encode(b'fixture-user:fixture-password').decode()
 OK, ARG, MEMORY, IO, TLS, HTTP, AUTH_REQUIRED, CANCELLED, LIMIT, FORMAT, REDIRECT, EXISTS = range(12)
@@ -27,17 +28,20 @@ def main():
     parser.add_argument('--consumer', type=Path, required=True)
     parser.add_argument('--module-prefix', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--native-binary', type=Path)
     args = parser.parse_args()
     assert os.environ.get('GITHUB_ACTIONS') == 'true', 'Cloud execution only'
     folder = args.output.resolve()
     folder.mkdir(parents=True)
     consumer = args.consumer.resolve()
+    native_binary = (args.native_binary or args.consumer).resolve()
     module_prefix = args.module_prefix.resolve()
     assert (module_prefix / 'include/exr_webdav.h').is_file()
     installed = {str(path.relative_to(module_prefix)): {'bytes': path.stat().st_size,
                  'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
                  for path in sorted(module_prefix.rglob('*')) if path.is_file()}
-    dependencies = subprocess.check_output(['dumpbin', '/DEPENDENTS', str(consumer)] if os.name == 'nt' else ['ldd', str(consumer)], text=True)
+    dependencies = subprocess.check_output(['dumpbin', '/DEPENDENTS', str(native_binary)] if os.name == 'nt' else
+                                           ['otool', '-L', str(native_binary)] if sys.platform == 'darwin' else ['ldd', str(native_binary)], text=True)
     assert not any(name in dependencies.lower() for name in ('webview', 'chromium', 'webkit', 'electron'))
     (folder / 'consumer-dependencies.txt').write_text(dependencies, encoding='utf-8')
     certificates = folder / 'certificates'
@@ -54,13 +58,7 @@ def main():
     key, trusted = certificate('trusted', 'localhost')
     bad_key, untrusted = certificate('untrusted', 'localhost')
     wrong_key, wrong_host = certificate('wrong-host', 'wrong.example')
-    if os.name == 'nt':
-        for cert in (trusted, wrong_host):
-            subprocess.run(['certutil', '-addstore', '-f', 'Root', str(cert)], check=True, capture_output=True)
-    else:
-        for cert in (trusted, wrong_host):
-            subprocess.run(['sudo', 'cp', str(cert), '/usr/local/share/ca-certificates/exr-dav-' + cert.name], check=True)
-        subprocess.run(['sudo', 'update-ca-certificates'], check=True, capture_output=True)
+    trust_fixture_certificates((trusted, wrong_host), 'exr-dav-')
 
     fixture = io.BytesIO()
     with zipfile.ZipFile(fixture, 'w') as book:
@@ -301,7 +299,8 @@ def main():
         report = {'accepted': True, 'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
                   'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'platform': sys.platform, 'checks': checks,
                   'count': len(checks), 'tls_verification': 'native certificate and hostname verification',
-                  'consumer_sha256': hashlib.sha256(consumer.read_bytes()).hexdigest(),
+                  'consumer_sha256': hashlib.sha256(native_binary.read_bytes()).hexdigest(),
+                  'execution_platform': 'ios-simulator' if os.environ.get('EXR_DAV_IOS_UDID') else sys.platform,
                   'installed_module_files': installed, 'consumer_native_dependencies': dependencies,
                   'original_sha256': hashlib.sha256(payload).hexdigest(), 'original_bytes': len(payload),
                   'scope': 'read-only HTTPS WebDAV book source; no sync protocol, credentials persistence, host UI or mobile claim',

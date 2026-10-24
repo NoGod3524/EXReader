@@ -19,6 +19,12 @@ typedef struct {reader_selection_kind kind;reader_revision_state graph;} reader_
 reader_revision_status reader_revision_local_project(reader_revisions *,const void *wire,size_t,
   const char *const *expected_heads,size_t expected_count,const char *book_sort_title,
   reader_revision_info *,int *created,int *applied,reader_revision_error *);
+/* Product-owned progress/annotation history+outbox only, with the same complete
+   expected-head check and exact-retry semantics. Requires retained verified
+   book history. No metadata projection, SDK note copy or current-page write. */
+reader_revision_status reader_revision_local_reading(reader_revisions *,const void *wire,size_t,
+  const char *const *expected_heads,size_t expected_count,
+  reader_revision_info *,int *created,reader_revision_error *);
 /* Read current graph and apply only its complete, safe unique expected_head
    in one product transaction. No history/outbox/SDK write. Missing product
    dependencies remain pending; constraints never weaken or rewrite history.
@@ -34,6 +40,46 @@ reader_revision_status reader_revision_project(reader_revisions *,const char *en
 reader_revision_status reader_revision_selected(reader_revisions *,const char *entity_kind,
   const char *entity_key,char **wire,size_t *bytes,reader_revision_info *,
   reader_revision_selection *,reader_revision_error *);
+typedef struct {
+  const char *annotation_id; /* Borrowed lowercase 32-hex ID, cursor within book. */
+  reader_revision_selection selection;
+  reader_revision_info info; /* Zero unless SAFE, including safe tombstones. */
+  const char *wire; /* Exact retained bytes only for SAFE; otherwise NULL. */
+} reader_revision_annotation_row;
+typedef int (*reader_revision_annotation_fn)(void *,const reader_revision_annotation_row *);
+/* One read snapshot, distinct global annotation IDs in bytewise keyset order.
+   book_key is required; after_id NULL starts at the appropriate end. direction
+   is +1/-1 and limit is 1..100. Includes tombstones and unresolved entities;
+   only SAFE supplies info/wire, and navigation still requires SDK FOUND.
+   Callback data is borrowed until return. Nonzero stops successfully. Calls
+   use the creating worker without reentry. Discard the page on any error.
+   Uses the schema1 entity index, with no OFFSET, migration or SDK write. */
+reader_revision_status reader_revision_annotations_page(reader_revisions *,const char *book_key,
+  const char *after_id,int direction,size_t limit,reader_revision_annotation_fn,void *,
+  reader_revision_error *);
+
+typedef struct {
+  const char *entity_key; /* Borrowed typed global key; cursor within entity_kind. */
+  reader_revision_selection selection;
+  reader_revision_info info; /* Zero unless SAFE, including a safe tombstone. */
+  const char *wire; /* Exact original bytes only for SAFE. */
+} reader_revision_entity_row;
+typedef int (*reader_revision_entity_fn)(void *,const reader_revision_entity_row *);
+/* Enumerate one explicit kind in one read snapshot. after_key NULL starts at
+   either end; direction +/-1, limit 1..100. Includes unresolved/deleted entities
+   so the host can report conflicts or schedule safe metadata projection.
+   Copy callback data before applying: reentry is refused. Nonzero stops. On
+   error discard the page. Uses schema1's index; no writes/SDK work/OFFSET.
+   A later project call still checks its expected safe head transactionally. */
+reader_revision_status reader_revision_entities_page(reader_revisions *,const char *entity_kind,
+  const char *after_key,int direction,size_t limit,reader_revision_entity_fn,void *,
+  reader_revision_error *);
+/* Copy the exact title from one retained non-delete book revision for the
+   host's existing NFC sort conversion. Does not select a head or normalize.
+   project(expected_head) remains the authority before writing metadata.
+   Release the output with reader_revision_bytes_free; failure leaves NULL. */
+reader_revision_status reader_revision_book_title(reader_revisions *,const char *revision_id,
+  char **title,reader_revision_error *);
 #ifdef __cplusplus
 }
 #endif
