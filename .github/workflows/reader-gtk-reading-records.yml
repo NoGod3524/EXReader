@@ -161,6 +161,7 @@ jobs:
       - name: Real reading owner writes keyset pages failed commit and true process retry
         run: |
           mkdir -p build/records-backend/profile
+          chmod 700 build/records-backend/profile
           build/account-desktop/reader-gtk-reading-records-backend "$PWD/build/records-backend/profile/library.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/records-command-fixtures/book.txt" first | tee build/records-backend/first.log
           build/account-desktop/reader-gtk-reading-records-backend "$PWD/build/records-backend/profile/library.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/records-command-fixtures/book.txt" resumed | tee build/records-backend/resumed.log
           build/account-desktop/reader-gtk-reading-records-backend "$PWD/build/records-backend/profile/routes.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/records-command-fixtures/book.epub" routes | tee build/records-backend/routes.log
