@@ -234,6 +234,9 @@ def _dumpbin_symbols(text, _strip_underscore):
         if match.group(2) != 'External':
             continue
         name = match.group(3)
+        if name.startswith('.'):
+            # Section symbols are not linkable symbols.
+            continue
         state = 'undefined' if match.group(1) == 'UNDEF' else 'defined'
         if state == 'undefined':
             entries[name] = 'undefined'
