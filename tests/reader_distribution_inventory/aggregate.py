@@ -173,7 +173,8 @@ def verify_combined(key, payload, inventory, licenses_doc, run, components=None,
     for path in directives:
         contract.need(claimed_directives[path] == directives[path], 'combined_directives')
     archive_names = {entry['name'] for entry in archives}
-    index = {path: payload['stage/' + path] for path in by_path}
+    index = {path: payload['stage/' + path] for path in by_path
+             if 'stage/' + path in payload}
 
     providers = packages.symbol_providers(symbols)
     sections = {row.get('id'): row for row in inventory.get('packages') or []}
