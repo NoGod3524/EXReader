@@ -30,7 +30,7 @@ static void stop_worker(void);
 static GtkWidget *shelf_scroll,*search;
 static gint shelf_generation;
 static gboolean shelf_loading,shelf_before,shelf_after,shelf_restoring,shelf_pending,shelf_filter_pending;
-static guint search_timer,viewport_timer,restore_timer;
+static guint search_timer,viewport_timer,restore_timer,shelf_edge_idle;
 static unsigned shelf_queries,shelf_evicted,shelf_max_cached;
 static unsigned shelf_layout,restore_layout;
 static char *shelf_query,*shelf_top_key,*shelf_selected_key,*restore_key;
@@ -40,6 +40,12 @@ static void shelf_remember(void);
 static GtkWidget *shelf_top_row(void);
 static gboolean shelf_save_viewport(gpointer unused);
 static void shelf_schedule_restore(void);
+static void shelf_scrolled(GtkAdjustment *adjustment,gpointer unused);
+static gboolean shelf_check_edges(gpointer unused) {
+  (void)unused;shelf_edge_idle=0;
+  shelf_scrolled(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(shelf_scroll)),NULL);
+  return G_SOURCE_REMOVE;
+}
 #endif
 
 static void state(void) {
@@ -186,6 +192,7 @@ static GtkWidget *shelf_top_row(void) {
 }
 static void shelf_allocated(GtkWidget *widget,GtkAllocation *allocation,gpointer unused) {
   (void)widget;(void)allocation;(void)unused;shelf_layout++;
+  if(!shelf_edge_idle) shelf_edge_idle=g_idle_add(shelf_check_edges,NULL);
 }
 static void shelf_remember(void) {
   if(shelf_filter_pending || shelf_restoring || !shelf_scroll || strcmp(gtk_stack_get_visible_child_name(GTK_STACK(stack)),"shelf")) return;
@@ -215,7 +222,7 @@ static gboolean shelf_restore(gpointer unused) {
   g_list_free(children);shelf_restoring=FALSE;shelf_remember();
   if(viewport_timer) g_source_remove(viewport_timer);
   viewport_timer=g_timeout_add(300,shelf_save_viewport,NULL);
-  state();restore_timer=0;return G_SOURCE_REMOVE;
+  state();restore_timer=0;shelf_scrolled(adjustment,NULL);return G_SOURCE_REMOVE;
 }
 static void shelf_schedule_restore(void) {
   if(shelf_restoring && !restore_timer) restore_timer=g_timeout_add(30,shelf_restore,NULL);
