@@ -34,7 +34,7 @@ final class SyncPanel implements SyncController.Listener {
     void show(){
         controller.attach(this);if(dialog!=null&&dialog.isShowing())return;
         LinearLayout panel=new LinearLayout(activity);panel.setOrientation(LinearLayout.VERTICAL);int pad=(int)(16*activity.getResources().getDisplayMetrics().density);panel.setPadding(pad,pad,pad,pad);
-        summary=new TextView(activity);summary.setContentDescription("同步状态");panel.addView(summary);
+        summary=new TextView(activity);summary.setContentDescription("同步状态");summary.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);panel.addView(summary);
         button(panel,"云盘账号",this::configure);
         LinearLayout actions=new LinearLayout(activity);panel.addView(actions);
         start=button(actions,"立即同步",()->controller.start(host));cancel=button(actions,"取消同步",controller::cancel);button(actions,"断开",controller::close);
@@ -53,7 +53,7 @@ final class SyncPanel implements SyncController.Listener {
         AlertDialog settings=new AlertDialog.Builder(activity).setTitle("云盘账号").setView(form).setPositiveButton("安全保存",(value,which)->save.accept(true)).setNeutralButton("仅本次使用",(value,which)->save.accept(false)).setNegativeButton("取消",null).create();settings.show();
         if(!root.isEmpty())button(form,"移除凭据",()->new AlertDialog.Builder(activity).setMessage("移除凭据后需重新输入；书籍和书库绑定保留").setPositiveButton("移除",(value,which)->{controller.forget();settings.dismiss();}).setNegativeButton("取消",null).show());
     }
-    private void render(){if(summary==null)return;summary.setText(status+(root.isEmpty()?"":"\n"+root));start.setEnabled(!busy);cancel.setEnabled(busy);refresh.setEnabled(!busy);next.setEnabled(!busy&&books.size()==50);adapter.clear();for(NativeSync.RemoteBook book:books)adapter.add(book.label());adapter.notifyDataSetChanged();}
+    private void render(){if(summary==null)return;String message=status+(root.isEmpty()?"":"\n"+root);if(!message.contentEquals(summary.getText()))summary.setText(message);start.setEnabled(!busy);cancel.setEnabled(busy);refresh.setEnabled(!busy);next.setEnabled(!busy&&books.size()==50);adapter.clear();for(NativeSync.RemoteBook book:books)adapter.add(book.label());adapter.notifyDataSetChanged();}
     @Override public void update(String status,String root,List<NativeSync.RemoteBook> rows,boolean busy){this.status=status;this.root=root;this.books=new ArrayList<>(rows);this.busy=busy;render();}
     void background(){if(dialog!=null)dialog.dismiss();controller.detach(this);}
     void close(){background();}

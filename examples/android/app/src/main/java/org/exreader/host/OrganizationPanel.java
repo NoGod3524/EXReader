@@ -6,6 +6,7 @@ import android.app.AlertDialog;
 import android.os.CancellationSignal;
 import android.text.InputType;
 import android.view.View;
+import android.view.accessibility.AccessibilityEvent;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -28,6 +29,9 @@ final class OrganizationPanel {
     private final Supplier<BookStore> store;
     private final Runnable changed;
     private final LinearLayout panel;
+    private final View shelf;
+    private int shelfAccessibility;
+    private View previousFocus;
     private final TextView heading,status;
     private final ListView list;
     private final EditText search;
@@ -46,6 +50,7 @@ final class OrganizationPanel {
 
     OrganizationPanel(Activity activity,Executor worker,Supplier<BookStore> store,Runnable changed) {
         this.activity=activity;this.worker=worker;this.store=store;this.changed=changed;
+        shelf=activity.findViewById(R.id.shelf_panel);
         panel=new LinearLayout(activity);panel.setOrientation(LinearLayout.VERTICAL);panel.setPadding(12,12,12,12);panel.setBackgroundColor(0xffffffff);
         panel.setContentDescription("Organize panel");panel.setClickable(true);panel.setVisibility(View.GONE);
         heading=new TextView(activity);heading.setTextSize(20);panel.addView(heading);
@@ -77,12 +82,14 @@ final class OrganizationPanel {
     }
     boolean visible() { return panel.getVisibility()==View.VISIBLE; }
     void show(long sdkId) {
+        if(!visible()){previousFocus=activity.getCurrentFocus();shelf.clearFocus();shelfAccessibility=shelf.getImportantForAccessibility();shelf.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);}
         panel.setVisibility(View.VISIBLE);reset();selectedBook=null;
+        panel.setFocusableInTouchMode(true);panel.requestFocus();panel.sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED);
         if(sdkId>0)run((books,t)->books.localShelfBook(sdkId),book->{selectedBook=book;load(null,false);});else load(null,false);
     }
     private void reset() { removed=false;members=false;picking=false;path.clear();currentGroup=null;query="";search.setText(""); }
-    void hide() { invalidate();panel.setVisibility(View.GONE);rows.clear();adapter.clear();changed.run(); }
-    void close() { closed=true;invalidate(); }
+    void hide() { invalidate();panel.setVisibility(View.GONE);shelf.setImportantForAccessibility(shelfAccessibility);if(previousFocus!=null&&previousFocus.isShown())previousFocus.requestFocus();previousFocus=null;rows.clear();adapter.clear();changed.run(); }
+    void close() { if(visible())shelf.setImportantForAccessibility(shelfAccessibility);closed=true;invalidate(); }
     private void invalidate() { generation.incrementAndGet();if(task!=null)task.cancel();task=null;busy=false; }
     private String parent() { return kind!=0||path.isEmpty()?"":path.get(path.size()-1).id; }
     private void up() {

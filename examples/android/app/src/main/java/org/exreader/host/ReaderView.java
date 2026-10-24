@@ -349,8 +349,19 @@ public final class ReaderView extends View {
         super.onInitializeAccessibilityNodeInfo(info);
         info.setClassName(ReaderView.class.getName());
         info.setContentDescription(describe());
-        info.setScrollable(false);
+        info.setScrollable(page!=null);
+        if(page!=null){
+            info.addAction(new AccessibilityNodeInfo.AccessibilityAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD,"Next page"));
+            info.addAction(new AccessibilityNodeInfo.AccessibilityAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD,"Previous page"));
+        }
         if(BuildConfig.DEBUG) info.getExtras().putString("exreader.frame",frameObservation());
+    }
+
+    @Override public boolean performAccessibilityAction(int action,Bundle arguments){
+        if(isShown()&&isEnabled()&&page!=null&&listener!=null&&(action==AccessibilityNodeInfo.ACTION_SCROLL_FORWARD||action==AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)){
+            listener.onTapZone(action==AccessibilityNodeInfo.ACTION_SCROLL_FORWARD?1:-1);return true;
+        }
+        return super.performAccessibilityAction(action,arguments);
     }
 
     private AccessibilityNodeInfo hostNode() {
