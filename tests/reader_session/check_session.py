@@ -40,7 +40,8 @@ def main():
         subprocess.run(['sudo', 'update-ca-certificates'], check=True, capture_output=True)
     secret = uuid.uuid4().hex
     auth = 'Basic ' + base64.b64encode(('session:' + secret).encode()).decode()
-    entries, dirs, requests, checks = {}, {'/dav/'}, [], []
+    entries, dirs, requests, checks = {}, {'/dav/', '/dav/exreader-sync-v1/',
+                                         '/dav/exreader-sync-v1/revisions/', '/dav/exreader-sync-v1/revisions/00/'}, [], []
     lock = threading.Lock()
     blocked, release = threading.Event(), threading.Event()
     flags = {'pause': False, 'http': 0, 'late': False}
@@ -128,12 +129,15 @@ def main():
             self.originals, self.cache = path / 'originals', path / 'cache'
             self.originals.mkdir(); self.cache.mkdir()
             self.account = account or str(uuid.uuid4())
+            self.trace = path / 'native-controls.jsonl'
             self.process = subprocess.Popen([str(consumer), url, str(self.db), str(self.cache), str(self.originals), self.account, '3000'],
                                              stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                              encoding='utf-8', env=dict(env, READER_TEST_AUTH=authorization))
             processes.append(self.process); self.lines = queue.Queue()
             def reader():
-                for line in self.process.stdout: self.lines.put(line)
+                with self.trace.open('w', encoding='utf-8') as trace:
+                    for line in self.process.stdout:
+                        trace.write(line); trace.flush(); self.lines.put(line)
             threading.Thread(target=reader, daemon=True).start()
             self.created = json.loads(self.lines.get(timeout=10))['create']
         def command(self, value):
@@ -169,7 +173,8 @@ def main():
         assert d.command('destroy')['code'] == 2
         record('premature_destroy_is_nonblocking_busy_and_preserves_handle')
         flags['pause'] = True; start = time.monotonic(); assert d.command('start')['code'] == 0
-        assert blocked.wait(8) and time.monotonic() - start < 3
+        assert time.monotonic() - start < 1
+        assert blocked.wait(8)
         assert d.command('observe')['state'] == 1
         record('background_worker_and_observation_remain_responsive_during_native_https')
         assert d.command('start')['code'] == 2
@@ -177,7 +182,7 @@ def main():
         assert d.command('cancel')['code'] == 0
         assert d.command('observe')['state'] == 2
         release.set(); cancelled = d.wait(3)
-        assert cancelled['steps'] == 0 and cancelled['completed_shards'] == 0 and cancelled['sweeps'] == 0
+        assert cancelled['steps'] == 0 and cancelled['completed_shards'] == 0 and cancelled['sweeps'] == 0, cancelled
         record('cancelled_transfer_keeps_the_last_successful_cursor')
         n = len(requests)
         second = Device('同库并发', database=d.db, account=d.account)
@@ -201,7 +206,7 @@ def main():
         d.command('start'); pushed = d.wait(4)
         assert pushed['pushed'] == 1 and d.count()[1] == 0
         record('offline_outbox_is_published_verified_and_acked_on_the_worker')
-        source = '独立SDK owner已导出的原书\n'.encode()
+        source = '会话模块私有原件夹具\n'.encode()
         digest = hashlib.sha256(source).hexdigest()
         book = revision(889, shard=32, kind='book', key='txt:' + digest,
                         payload={'format': 'txt', 'source_sha256': digest, 'source_bytes': len(source),
