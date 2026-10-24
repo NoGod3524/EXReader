@@ -68,6 +68,7 @@ def main():
         assert not host.read()['error'];return host.read()['book']
     def open_directory(idle=True):
         command('xdotool','windowactivate','--sync',host.window);host.key('ctrl+shift+t');value=wait(lambda v:v['visible']=='1',idle=idle)
+        if not idle:return value
         window=command('xdotool','search','--onlyvisible','--name','^Directory and page entries$').splitlines()[-1]
         command('xdotool','windowactivate','--sync',window);return value
     def close_directory():host.key('Escape');wait(lambda v:v['visible']=='0')
@@ -100,7 +101,9 @@ def main():
     def cfi(name):
         click('Full EPUB CFI',{'text'});host.key('ctrl+a');host.paste((args.fixtures/name).read_text());return action('Return')
     def active_directory():
-        open_directory(idle=False);return wait(lambda v:v['phase']=='2' and int(v['polls'])>0,idle=False,seconds=15)
+        command('xdotool','windowactivate','--sync',host.window)
+        command('xdotool','key','--clearmodifiers','--delay','0','ctrl+shift+t')
+        return wait(lambda v:v['phase']=='2' and int(v['polls'])>0,idle=False,seconds=15)
     try:
         assert bus.init()[0];host.launch();app=bus.wait_application('exreader-linux');wait()
         book=import_book(args.fixtures/'nav3.epub');host.key('F7','ctrl+Home','ctrl+shift+Right','F11');host.paste('Existing native directory note');host.key('F8');host.wait(lambda v:v['notes']==1)
@@ -118,7 +121,7 @@ def main():
         choose(7);record('missing_target_refuses_without_fallback',observed()['code']=='9' and frame()==prior and storage()==saved)
         close_directory();record('read_only_browsing_close_preserves_pixels_notes_progress_and_product',frame()==prior and storage()==saved and image('after-directory')==pixels)
         notes=storage(True);open_directory();select(0);action('alt+h');choose(1)
-        record('actual_unicode_fragment_uses_independent_found_and_correct_spine',observed()['visible']=='0' and observed()['match']=='1' and host.read()['book']==book and host.read()['part']==1 and host.read()['font']==28 and storage(True)==notes,frame())
+        record('actual_unicode_fragment_uses_independent_found_and_correct_spine',observed()['visible']=='0' and observed()['match']=='1' and host.read()['book']==book and host.read()['part']==1 and host.read()['position']==0 and host.read()['font']==28 and storage(True)==notes,frame())
         open_directory();choose(5);prior=frame();saved=storage()
         record('missing_fragment_requires_explicit_part_start_confirmation',observed()['code']=='13' and frame()==prior and storage()==saved)
         action('alt+p');record('explicit_part_start_is_reverified_and_found',observed()['visible']=='0' and observed()['match']=='1' and host.read()['part']==2)
@@ -132,14 +135,14 @@ def main():
         import_book(args.fixtures/'unicode.epub');prior=frame();saved=storage();open_directory();cfi('surrogate.cfi')
         record('surrogate_interior_cfi_is_not_guessed_to_utf8',observed()['visible']=='1' and frame()==prior and storage()==saved)
         cfi('collapsed.cfi');record('collapsed_raw_cfi_is_not_guessed_to_normalized_offset',observed()['visible']=='1' and frame()==prior and storage()==saved)
-        cfi('normal.cfi');record('full_cfi_maps_only_verified_scalar_and_projection_then_found',observed()['visible']=='0' and observed()['match']=='1' and host.read()['part']==1)
+        cfi('normal.cfi');record('full_cfi_maps_only_verified_scalar_and_projection_then_found',observed()['visible']=='0' and observed()['match']=='1' and host.read()['part']==1 and host.read()['position']==2)
         import_book(args.fixtures/'empty.epub');prior=frame();saved=storage();open_directory();record('no_authored_directory_is_explicit_empty',not rows() and observed()['total']=='0' and frame()==prior and storage()==saved);close_directory()
         book=import_book(args.fixtures/'pages.pdf');prior=frame();saved=storage();open_directory()
         record('pdf_is_page_entries_and_never_exposes_authored_outlines',observed()['kind']=='2' and bus.find_one(app,text='By-page entries · not an author outline',roles={'label'}) is not None and len(rows())==3 and all('Authored Outline' not in bus.name(n) for n in rows()) and frame()==prior and storage()==saved)
         choose(2);record('pdf_explicit_page_id_is_independently_verified_before_frame',observed()['visible']=='0' and observed()['verified']=='1' and host.read()['book']==book and host.read()['page']==2)
         book=import_book(args.fixed_inputs/'Pages.cbz');open_directory();choose(1)
         record('cbz_page_identity_opens_without_fabricating_text_outline',observed()['visible']=='0' and observed()['verified']=='1' and host.read()['book']==book and host.read()['page']==1)
-        import_book(args.fixtures/'cancel.epub');prior=frame();saved=storage();scanning=active_directory();host.key('alt+n');wait(lambda v:v['running']=='0' and v['code']=='4')
+        import_book(args.fixtures/'cancel.epub');prior=frame();saved=storage();scanning=active_directory();command('xdotool','key','--clearmodifiers','--delay','0','alt+n');wait(lambda v:v['running']=='0' and v['code']=='4')
         record('actual_control_poll_cancel_keeps_reader_and_storage',int(scanning['polls'])>0 and frame()==prior and storage()==saved);close_directory()
         active_directory();close_directory();record('escape_during_actual_directory_scan_discards_late_rows',observed()['visible']=='0' and frame()==prior and storage()==saved)
         active_directory();command('xdotool','windowminimize',host.window);wait(lambda v:v['visible']=='0');command('xdotool','windowmap',host.window);command('xdotool','windowactivate','--sync',host.window)

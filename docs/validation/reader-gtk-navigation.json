@@ -9,7 +9,10 @@
   "run_id": null,
   "attempt": null,
   "artifacts": [],
-  "earlier_failed_runs": [{"run_id": 40122987085, "attempt": 1, "job_id": 120958359181, "source_sha": "2799df5885631b2c3f948dd60853d97f055e0720", "reason": "four misleading-indentation warnings in new GTK host code rejected under original -Wall -Wextra -Werror; statements separated, warnings remain errors"}],
+  "earlier_failed_runs": [
+    {"run_id": 40122987085, "attempt": 1, "job_id": 120958359181, "source_sha": "2799df5885631b2c3f948dd60853d97f055e0720", "reason": "four misleading-indentation warnings in new GTK host code rejected under original -Wall -Wextra -Werror; statements separated, warnings remain errors"},
+    {"run_id": 40123371736, "attempt": 1, "job_id": 120959514382, "source_sha": "4ad9f45de819df2bff0759c65f05c708d698099e", "reason": "all navigation and CFI/page cases passed before active-cancel probe; post-open native-window enumeration consumed the 9000-row snapshot work window, leaving phase3/polls40 before observation"}
+  ],
   "pending_settings_checks": ["light_foreground_and_background_change_page_pixels", "dark_theme_and_palette_change_page_pixels"],
   "whole_reading_page_palette_accepted": false,
   "author_outline_for_fixed_documents": false,

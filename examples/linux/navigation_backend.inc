@@ -109,12 +109,6 @@ static void navigation_readonly(linux_reader *reader,const reader_command *comma
     result->navigation_kind==READER_NAVIGATION_PAGES ? "By-page entries · not an author outline":result->navigation_count ? "Author directory ready":"No authored directory in this book");
   if(code!=READER_NAVIGATION_OK && command->action==READER_NAVIGATION_BEGIN) navigation_free(reader);
 }
-static int navigation_same_target(const reader_navigation_target *a,const reader_navigation_target *b) {
-  if(a->kind!=b->kind || a->part!=b->part || a->node!=b->node || a->cfi_node!=b->cfi_node || a->cfi_offset!=b->cfi_offset || a->cfi_side!=b->cfi_side) return 0;
-  const char *left[]={a->part_path,a->part_id,a->fragment,a->cfi},*right[]={b->part_path,b->part_id,b->fragment,b->cfi};
-  for(size_t i=0;i<4;i++) if(strcmp(left[i] ? left[i]:"",right[i] ? right[i]:"")) return 0;
-  return 1;
-}
 static reader_navigation_status navigation_resolve(gtk_navigation_owner *owner,reader_session *input,const reader_command *command,
     const char *key,reader_navigation_target *target,reader_navigation_error *error) {
   reader_navigation_resolve_options options={0};options.struct_size=sizeof(options);options.source_key=key;
@@ -156,8 +150,46 @@ static exr_status navigation_projection_chunk(void *opaque,const char *text,size
   if(proof->at>proof->size || size>proof->size-proof->at || memcmp(proof->text+proof->at,text,size)) return EXR_FORMAT;
   proof->at+=size;return EXR_OK;
 }
+/* This verification calls raw public SDK APIs on a second input. Calling F2
+   twice would only repeat its mapping and could not detect a wrong native node. */
+static exr_status navigation_verify(reader_session *input,const reader_command *command,const reader_navigation_target *target,
+    reader_navigation_status code,const exr_control *control,exr_document **loaded,exr_error *error) {
+  size_t count=0,chapter=0,node=SIZE_MAX,resource=SIZE_MAX;const exr_document *document=input->document;
+  if(input->fixed_document) {
+    const exr_fixed_page *pages=exr_fixed_pages(input->fixed_document,&count);
+    return target->kind==READER_NAVIGATION_RESULT_PAGE && target->row==command->navigation_row && target->part==command->navigation_row &&
+      target->part<count && target->part_id && !strcmp(target->part_id,pages[target->part].id) ? EXR_OK:EXR_FORMAT;
+  }
+  if(input->bounded) {
+    const exr_part *parts=exr_publication_parts(input->publication,&count);
+    if(target->part>=count || !target->part_path || !target->part_id || strcmp(target->part_path,parts[target->part].path ? parts[target->part].path:"") ||
+      strcmp(target->part_id,parts[target->part].id ? parts[target->part].id:"")) return EXR_FORMAT;
+    if(command->navigation_cfi) {
+      exr_cfi_point point={SIZE_MAX,SIZE_MAX,0};size_t part=SIZE_MAX;
+      if(target->kind!=READER_NAVIGATION_RESULT_CFI || !target->cfi || strcmp(target->cfi,command->navigation_cfi)) return EXR_FORMAT;
+      exr_status status=exr_publication_cfi_resolve(input->publication,command->navigation_cfi,control,&part,loaded,&point,error);
+      if(status!=EXR_OK) return status;
+      return part==target->part && point.node==target->cfi_node && point.offset==target->cfi_offset && point.side==target->cfi_side ? EXR_OK:EXR_FORMAT;
+    }
+    if(target->kind!=READER_NAVIGATION_RESULT_SPINE || target->row!=command->navigation_row) return EXR_FORMAT;
+    exr_status status=exr_publication_load(input->publication,(size_t)target->part,loaded,error);if(status!=EXR_OK) return status;
+    document=*loaded;
+  } else {
+    const exr_chapter *chapters=exr_document_chapters(document,&count);
+    if(target->kind!=READER_NAVIGATION_RESULT_CHAPTER || target->row!=command->navigation_row || target->part>=count || !target->part_path || !target->part_id ||
+      strcmp(target->part_path,chapters[target->part].path ? chapters[target->part].path:"") || strcmp(target->part_id,chapters[target->part].id ? chapters[target->part].id:"")) return EXR_FORMAT;
+    chapter=(size_t)target->part;
+  }
+  if(target->fragment && target->fragment[0]) {
+    size_t length=strlen(target->fragment);char *uri=malloc(length+2);if(!uri) return EXR_MEMORY;
+    uri[0]='#';memcpy(uri+1,target->fragment,length+1);exr_status status=exr_document_resolve(document,chapter,uri,&resource,&node,error);free(uri);
+    if(status!=EXR_OK) return status;
+    if(node!=target->node || ((code==READER_NAVIGATION_PART_ONLY)!=(node==SIZE_MAX))) return EXR_FORMAT;
+  } else if(target->node!=READER_NAVIGATION_NONE) return EXR_FORMAT;
+  return EXR_OK;
+}
 static exr_status navigation_jump(linux_reader *reader,reader_session *next,const reader_command *command,reader_result *result,exr_error *sdk_error) {
-  gtk_navigation_owner *owner=reader->navigation_data;reader_session first={0},second={0};reader_navigation_target target={0},verified={0};
+  gtk_navigation_owner *owner=reader->navigation_data;reader_session first={0},second={0};reader_navigation_target target={0};
   reader_navigation_error error={0};reader_navigation_status code=READER_NAVIGATION_ARGUMENT;exr_status status=EXR_ARGUMENT;
   char key[128];exr_document *loaded=NULL;exr_anchor anchor={0};exr_anchor_match match={0};size_t offset=SIZE_MAX;
   result->has_navigation=1;result->navigation_token=command->navigation_token;
@@ -174,17 +206,15 @@ static exr_status navigation_jump(linux_reader *reader,reader_session *next,cons
   if(code!=READER_NAVIGATION_OK && code!=READER_NAVIGATION_PART_ONLY) goto done;
   if(code==READER_NAVIGATION_PART_ONLY && !command->navigation_accept_part) goto done;
   status=navigation_input(reader,next->id,&second,sdk_error);if(status!=EXR_OK) goto done;
-  reader_navigation_status independent=navigation_resolve(owner,&second,command,key,&verified,&error);
-  if(independent!=code || !navigation_same_target(&target,&verified)) { code=READER_NAVIGATION_MISMATCH;goto done; }
+  status=navigation_verify(&second,command,&target,code,&reader->control,&loaded,sdk_error);
+  if(status!=EXR_OK) { code=status==EXR_CANCELLED ? READER_NAVIGATION_CANCELLED:READER_NAVIGATION_MISMATCH;goto done; }
   if(next->fixed_document) {
     size_t count;const exr_fixed_page *pages=exr_fixed_pages(next->fixed_document,&count);
     if(target.kind!=READER_NAVIGATION_RESULT_PAGE || target.part>=count || !target.part_id || strcmp(target.part_id,pages[target.part].id)) { code=READER_NAVIGATION_MISMATCH;goto done; }
     status=render_fixed(reader,next,(size_t)target.part,result,sdk_error);result->navigation_verified=status==EXR_OK;goto done;
   }
   const exr_document *document=second.document;
-  if(second.bounded) {
-    status=exr_publication_load(second.publication,(size_t)target.part,&loaded,sdk_error);if(status!=EXR_OK) goto done;document=loaded;
-  }
+  if(second.bounded) document=loaded;
   size_t count,size;const exr_node *nodes=exr_document_nodes(document,&count);const char *text=exr_document_text(document,&size);
   if(target.kind==READER_NAVIGATION_RESULT_CFI) {
     if(!navigation_cfi_offset(document,&target,&offset)) { code=READER_NAVIGATION_UNRESOLVED;goto done; }
@@ -219,7 +249,7 @@ done:
   else if(status!=EXR_OK && code==READER_NAVIGATION_OK) { code=READER_NAVIGATION_SDK;error.sdk_code=status; }
   result->navigation_code=code;result->navigation_sdk_code=error.sdk_code;
   exr_anchor_free(&anchor);exr_document_free(loaded);session_free(&first);session_free(&second);
-  reader_navigation_target_free(&target);reader_navigation_target_free(&verified);
+  reader_navigation_target_free(&target);
   if(!result->navigation_verified) snprintf(result->message,sizeof(result->message),"%s",code==READER_NAVIGATION_PART_ONLY ? "Fragment absent. Explicitly open this part's start?":
     code==READER_NAVIGATION_AMBIGUOUS ? "Repeated part path. Choose the intended spine item":code==READER_NAVIGATION_NEEDS_HOST ? "External link not opened":
     "Directory target could not be proved; reading unchanged");
