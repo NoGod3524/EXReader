@@ -11,6 +11,7 @@
       "speak_finished_event",
       "speak_state_ready_after_finish",
       "observe_reports_last_request_id",
+      "speak_rate_low_accepted_early",
       "speak_long_utterance_started",
       "speak_busy_second_request",
       "speak_busy_state_unchanged",

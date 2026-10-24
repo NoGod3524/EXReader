@@ -200,7 +200,7 @@ jobs:
             --expected tests/reader_tts_linux/expected_cases.json \
             --source-sha "${{ github.sha }}" \
             --runner-label "${{ matrix.key }}" \
-            --start-cmd /usr/bin/speech-dispatcher 2>&1 | tee build/pkg-logs/scenarios.log
+            --start-cmd "/usr/bin/speech-dispatcher -l 7" 2>&1 | tee build/pkg-logs/scenarios.log
       - name: Preserve source-bound logs, installed package and evidence
         if: always()
         uses: actions/upload-artifact@v4

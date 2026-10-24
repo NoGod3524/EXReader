@@ -308,6 +308,19 @@ static void phase_live(suite *s) {
   report(s, "observe_reports_last_request_id", snap.request_id == id, "id=%llu want=%llu",
          (unsigned long long)snap.request_id, (unsigned long long)id);
 
+  /* The slowest rate again, before any pause/stop state exists: separates "the
+     rate itself is refused" from "earlier request state poisons the client". */
+  {
+    char tiny[8];
+    fill_ascii(tiny, 8, 'q');
+    t0 = now_ms();
+    ok = run_request(h, ++id, tiny, 8, NULL, 0.5, CASE_TIMEOUT_MS, &rs, &spk);
+    report(s, "speak_rate_low_accepted_early", ok && rs.c.finished == 1,
+           "rate=0.5 speak=%s started=%d finished=%d stopped=%d failed=%d status=%s ms=%ld",
+           status_name(spk), rs.c.started, rs.c.finished, rs.c.stopped, rs.c.failed,
+           status_name(rs.term_status), now_ms() - t0);
+  }
+
   /* a long utterance stays active: BUSY, pause, resume, stop */
   id = 2;
   fill_repeat(text, LONG_BYTES, "\xE6\x9C\x97\xE8\xAF\xBB\xE6\xB5\x8B\xE8\xAF\x95\xE3\x80\x82");
