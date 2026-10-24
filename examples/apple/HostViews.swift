@@ -511,6 +511,9 @@ struct ReaderScreen: View {
                     .accessibilityIdentifier("reader.error")
             }
         }
+        // A keyboard in a native sheet does not resize/repaginate the reader
+        // underneath it or overwrite a completed search navigation status.
+        .ignoresSafeArea(.keyboard)
         .sheet(isPresented: $showSelection) {
             SelectionSheet(model: model)
         }
