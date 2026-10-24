@@ -10,6 +10,7 @@ jobs:
     uses: ./.github/workflows/reader-commands.yml
     with:
       reading_v2: true
+      session: true
   sdk:
     name: real v2 capture (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -31,6 +32,11 @@ jobs:
           git merge-base --is-ancestor a403fee5f0cdb120840cd6fe0ef24e5fc2c0ce96 HEAD
           git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
           git diff --exit-code f32bb8aa18ed3de286900f19ce4230fd93435dd0 HEAD -- apps/reader/store/001_catalog.sql
+      - name: Install Linux native HTTPS XML and SHA dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config
       - name: Enter Windows native compiler environment
         if: runner.os == 'Windows'
         shell: pwsh
@@ -90,6 +96,20 @@ jobs:
         run: |
           if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
           python3 tests/reader_source_export/check_export.py --consumer "build/v2-export-consumer/original-export-consumer$exe" --fixtures build/v2-fixtures --output build/v2-export-evidence
+      - name: Install native sync and compile the complete original export and reading consumer
+        run: |
+          cmake -S extras/webdav -B build/v2-dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$V2_WS/build/v2-dav-stage"
+          cmake --build build/v2-dav --verbose
+          cmake --install build/v2-dav
+          cmake -S apps/reader/sync -B build/v2-sync -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$V2_WS/build/v2-dav-stage;$V2_WS/build/v2-stage;$V2_WS/build/v2-product-stage" -DCMAKE_INSTALL_PREFIX="$V2_WS/build/v2-sync-stage"
+          cmake --build build/v2-sync --verbose
+          cmake --install build/v2-sync
+          cmake -S tests/reader_reading_v2/consumer -B build/v2-webdav-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADING_V2_WEBDAV=ON -DCMAKE_PREFIX_PATH="$V2_WS/build/v2-dav-stage;$V2_WS/build/v2-sync-stage;$V2_WS/build/v2-sideload-stage;$V2_WS/build/v2-stage;$V2_WS/build/v2-product-stage;$V2_WS/build/reading-library/stage"
+          cmake --build build/v2-webdav-consumer --verbose
+      - name: Real native HTTPS transfers SDK-exported originals and all eighteen reading captures
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_reading_v2/check_webdav.py --probe "build/v2-webdav-consumer/reading-v2-probe$exe" --fixtures build/v2-fixtures --font tests/fixtures/fonts/primary.ttf --link-map build/v2-webdav-consumer/reading-v2-link.map --output build/v2-webdav-evidence
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -101,6 +121,12 @@ jobs:
             build/v2-export-evidence/
             build/v2-sideload-stage/
             build/v2-export-consumer/original-export-consumer*
+            build/v2-webdav-evidence/
+            !build/**/certificates/*.key
+            build/v2-webdav-consumer/reading-v2-probe*
+            build/v2-webdav-consumer/reading-v2-link.map
+            build/v2-sync-stage/
+            build/v2-dav-stage/
             build/v2-stage/
             build/v2-product-stage/
             build/v1-stage/

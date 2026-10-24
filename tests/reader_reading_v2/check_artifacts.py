@@ -18,7 +18,8 @@ def main():
     out = Path(sys.argv[1]); out.mkdir(parents=True)
     summary = {'accepted': False, 'source_sha': source, 'run_id': run_id, 'attempt': attempt,
                'artifacts': [], 'problems': [], 'sdk_changed': False, 'schema_changed': False,
-               'host_ui_accepted': False, 'webdav_roundtrip_accepted': False, 'six_platform_accepted': False, 'complete_product': False}
+               'host_ui_accepted': False, 'webdav_roundtrip_accepted': False, 'six_platform_accepted': False, 'complete_product': False,
+               'scope': 'Windows/Linux SDK captures and original export over real native HTTPS fixture; no host UI'}
     try:
         run = fetch(f'actions/runs/{run_id}')
         require(run['head_sha'] == source and run['run_attempt'] == attempt and run['path'] == '.github/workflows/reader-reading-v2.yml', 'caller identity differs')
@@ -49,7 +50,7 @@ def main():
                         require(listing.get('accepted') is True and listing['source_sha'] == source and int(listing['run_id']) == run_id and int(listing['attempt']) == attempt, 'annotation page report identity/refusal')
                         require(listing['count'] == 10 and len(set(listing['checks'])) == 10 and listing['entities'] == 235, 'annotation page cases missing')
                         for relative, count in [('sync-source-evidence/result.json', 77 if platform == 'Linux' else 76), ('sync-protocol-evidence/result.json', 59),
-                                                ('sync-evidence/result.json', 33), ('projection-evidence/result.json', 32), ('commands-evidence/result.json', 33), ('metadata-evidence/result.json', 29)]:
+                                                ('sync-evidence/result.json', 33), ('projection-evidence/result.json', 32), ('commands-evidence/result.json', 33), ('metadata-evidence/result.json', 29), ('session-evidence/result.json', 20)]:
                             original = json.loads(archive.read(relative))
                             require(original.get('accepted') is True and original['source_sha'] == source and len(original['checks']) == count, 'retained suite missing/refused ' + relative)
                     else:
@@ -57,9 +58,16 @@ def main():
                         exported = json.loads(archive.read('v2-export-evidence/result.json'))
                         require(exported.get('accepted') is True and exported['source_sha'] == source and int(exported['run_id']) == run_id and int(exported['attempt']) == attempt, 'original export report identity/refusal')
                         require(exported['count'] == 14 and len(set(exported['checks'])) == 14 and set(exported['originals']) == {'txt', 'epub', 'pdf', 'cbz'}, 'original export cases missing')
+                        transported = json.loads(archive.read('v2-webdav-evidence/result.json'))
+                        require(transported.get('accepted') is True and transported['source_sha'] == source and int(transported['run_id']) == run_id and int(transported['attempt']) == attempt, 'SDK WebDAV report identity/refusal')
+                        require(transported['originals_exported'] == 4 and transported['network_pushed'] == 22 and transported['network_pulled'] >= 22 and transported['request_count'] > 0, 'native transfer missing')
+                        require(len(transported['cases']) == 18 and transported['receiver_found'] == 17 and transported['receiver_mislocated'] == 0, 'transported reading outcomes differ')
+                        fields = ('id', 'mode', 'kind', 'part', 'start', 'end', 'state')
+                        require([{k: c[k] for k in fields} for c in transported['cases']] == [{k: c[k] for k in fields} for c in report['cases']], 'native transport changes SDK capture outcomes')
                         normalized.append([{k: c[k] for k in ('id', 'mode', 'kind', 'part', 'start', 'end', 'state')} for c in report['cases']])
                 summary['artifacts'].append({k: artifact[k] for k in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')})
         require(len(normalized) == 2 and normalized[0] == normalized[1], 'platform capture outcomes differ')
+        summary['webdav_roundtrip_accepted'] = True
         summary['accepted'] = True
     except Exception as error:
         summary['problems'].append(str(error))

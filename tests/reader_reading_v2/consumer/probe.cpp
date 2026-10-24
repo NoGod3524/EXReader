@@ -5,9 +5,62 @@
 #include "../../reader_reading_state/consumer/probe.cpp"
 #undef main
 #include <functional>
+#include <filesystem>
+#include <set>
+#ifdef READER_V2_WEBDAV_TEST
+#include <reader_sync.h>
+#include <exr_sideload.h>
+#endif
 extern "C" int v2_c_contract(void);
 namespace {
 std::string final_wire,final_key;
+std::string webdav_root,transport_work;
+size_t network_pushed=0,network_pulled=0,originals_exported=0;
+std::string cached_original(const std::string &role){return transport_work+"/B-cache/"+shas[role]+"."+formats[role];}
+#ifdef READER_V2_WEBDAV_TEST
+static int original_path(void *opaque,const char *key,char *out,size_t capacity){
+  std::string value=key;size_t colon=value.find(':');std::string path=*(std::string *)opaque+"/A-originals/"+value.substr(colon+1)+"."+value.substr(0,colon);
+  if(path.size()>=capacity)return 1;std::memcpy(out,path.c_str(),path.size()+1);return 0;
+}
+struct network_side {
+  exr_webdav_client *dav=nullptr;reader_sync *sync=nullptr;
+  network_side(side &device){
+    std::string folder=transport_work+"/"+device.name+"-cache";std::filesystem::create_directories(std::filesystem::u8path(folder));
+    exr_webdav_config config{};config.root_url=webdav_root.c_str();config.authorization=std::getenv("READER_TEST_AUTH");config.timeout_ms=15000;
+    exr_webdav_error de{};if(!config.authorization||exr_webdav_create(&config,&dav,&de)!=EXR_DAV_OK)fatal("native transport create");
+    reader_sync_config options{};options.dav=dav;options.revisions=device.store;options.private_directory=folder.c_str();
+    if(&device==&A){options.original=original_path;options.context=&transport_work;}
+    reader_sync_error se{};if(reader_sync_create(&options,&sync,&se)!=READER_SYNC_OK)fatal("native sync create");
+  }
+  ~network_side(){reader_sync_free(sync);exr_webdav_free(dav);}
+  void step(unsigned shard){
+    std::string cursor;reader_sync_report report{};
+    do{reader_sync_error error{};if(reader_sync_step(sync,shard,cursor.c_str(),100,nullptr,&report,&error)!=READER_SYNC_OK)
+      fatal("real native HTTPS step "+std::to_string(error.code)+"/"+std::to_string(error.http_status));
+      expect(!report.pending_metadata&&!report.pending_local_original,"native transfer has verified book originals");
+      network_pushed+=report.pushed;network_pulled+=report.pulled;cursor=report.after;
+    }while(!report.shard_complete);
+  }
+};
+#endif
+void transfer(side &from,side &to){
+  if(webdav_root.empty()){flush(from,to);return;}
+#ifdef READER_V2_WEBDAV_TEST
+  auto outgoing=pending(from);if(outgoing.empty())fatal("native transport has no actual queued revisions");
+  std::set<unsigned> shards;for(const auto &row:outgoing)shards.insert((unsigned)std::stoul(row.id.substr(0,2),nullptr,16));
+  network_side sender(from),receiver(to);sender.step(*shards.begin());
+  expect(pending(from).empty(),"native conditional publication and GET verification ack the outbox");
+  for(unsigned shard:shards)receiver.step(shard);
+  for(const auto &row:outgoing){
+    char *a=nullptr,*b=nullptr;size_t an=0,bn=0;
+    expect(reader_revision_get(from.store,row.id.c_str(),&a,&an,nullptr,nullptr)==READER_REV_OK&&
+      reader_revision_get(to.store,row.id.c_str(),&b,&bn,nullptr,nullptr)==READER_REV_OK&&an==bn&&std::string(a,an)==std::string(b,bn),"native HTTPS preserves exact retained revision bytes");
+    reader_revision_bytes_free(a);reader_revision_bytes_free(b);
+  }
+#else
+  fatal("probe was built without native WebDAV transport");
+#endif
+}
 using resolver=std::function<reader_rs_status(const reader_rs_record *,exr_anchor_match *)>;
 void roundtrip(const char *name,const char *role,const char *kind,const reader_rs_capture &capture,size_t part,
                const resolver &resolve,exr_anchor_state expected=EXR_ANCHOR_FOUND){
@@ -20,7 +73,7 @@ void roundtrip(const char *name,const char *role,const char *kind,const reader_r
   std::string exact(wire,bytes);reader_rs_free(wire);reader_revision_info info{};reader_revision_error revision_error{};int created=0;
   if(reader_revision_local_reading(A.store,exact.data(),exact.size(),parent.data(),parent.size(),&info,&created,&revision_error)!=READER_REV_OK||!created)
     fatal(std::string(name)+" commit: "+revision_error.message);
-  flush(A,B);
+  transfer(A,B);
   char *received=nullptr;size_t size=0;reader_revision_selection selection{};
   if(reader_revision_selected(B.store,kind,key.c_str(),&received,&size,&info,&selection,&revision_error)!=READER_REV_OK)fatal(std::string(name)+" select");
   expect(std::string(received,size)==exact,std::string(name)+" received exact product bytes");
@@ -49,23 +102,38 @@ void seed_books(){
     std::string id=new_id(),wire="{\"version\":1,\"id\":"+esc(id)+",\"entity_kind\":\"book\",\"entity_key\":"+esc(keys[role])+",\"operation\":\"put\",\"location_kind\":\"none\",\"parents\":[],\"payload\":{\"format\":"+esc(formats[role])+",\"source_sha256\":"+esc(shas[role])+",\"source_bytes\":"+num(sizes[role])+",\"title\":"+esc(role)+",\"author\":\"\",\"favorite\":false}}";
     reader_revision_error error{};int created=0;if(reader_revision_local(A.store,wire.data(),wire.size(),nullptr,&created,&error)!=READER_REV_OK)fatal("book seed");
   }
-  flush(A,B);
+  transfer(A,B);
 }
 }
 int main(int argc,char **argv){
   if(v2_c_contract())fatal("v2 C ABI");
   std::string fixtures,font,work,report_path;
   for(int i=1;i+1<argc;i+=2){std::string k=argv[i],v=argv[i+1];
-    if(k=="--fixtures")fixtures=v;else if(k=="--font")font=v;else if(k=="--work")work=v;else if(k=="--report")report_path=v;
+    if(k=="--fixtures")fixtures=v;else if(k=="--font")font=v;else if(k=="--work")work=v;else if(k=="--report")report_path=v;else if(k=="--webdav-root")webdav_root=v;
     else if(k=="--sha"){size_t equal=v.find('=');shas[v.substr(0,equal)]=v.substr(equal+1);}else fatal("unknown argument");}
   const char *roles[][3]={{"txt","book.txt","txt"},{"spacer","spacer.txt","txt"},{"epub","book.epub","epub"},{"pdf","pages.pdf","pdf"},{"cbz","pages.cbz","cbz"}};
   for(auto &r:roles){paths[r[0]]=fixtures+"/"+r[1];formats[r[0]]=r[2];sizes[r[0]]=read_file(paths[r[0]]).size();if(!shas.count(r[0]))fatal("missing digest");keys[r[0]]=std::string(r[2])+":"+shas[r[0]];}
   parser_version=std::string("exreader-sdk-")+exr_version();
   A.lib_path=work+"/A-library.sqlite";A.product_path=work+"/A-product.sqlite";B.lib_path=work+"/B-library.sqlite";B.product_path=work+"/B-product.sqlite";
+  transport_work=work;
   open_side(A);open_side(B);import(B,"spacer",EXR_TXT,false);
-  for(side *s:{&A,&B}){import(*s,"txt",EXR_TXT,false);import(*s,"epub",EXR_EPUB,true);import(*s,"pdf",EXR_PDF,true);import(*s,"cbz",EXR_CBZ,true);
+  for(side *s:{&A,&B}){if(!webdav_root.empty()&&s==&B)continue;import(*s,"txt",EXR_TXT,false);import(*s,"epub",EXR_EPUB,true);import(*s,"pdf",EXR_PDF,true);import(*s,"cbz",EXR_CBZ,true);
     attach(*s,"txt","reflow_global");attach(*s,"epub","epub_chapter");attach(*s,"pdf","fixed_page");attach(*s,"cbz","fixed_page");}
+  if(!webdav_root.empty()){
+#ifdef READER_V2_WEBDAV_TEST
+    std::filesystem::create_directories(std::filesystem::u8path(work+"/A-originals"));
+    for(const char *role:{"txt","epub","pdf","cbz"}){std::string destination=work+"/A-originals/"+shas[role]+"."+formats[role];uint64_t bytes=0;exr_error error{};
+      if(exr_sideload_export_original(A.lib,A.ids[role],destination.c_str(),nullptr,&bytes,&error)!=EXR_OK||bytes!=sizes[role])fatal("SDK original export before network worker");++originals_exported;}
+#else
+    fatal("probe was built without original export");
+#endif
+  }
   seed_books();
+  if(!webdav_root.empty()){
+    auto original_paths=paths;for(const char *role:{"txt","epub","pdf","cbz"})paths[role]=cached_original(role);
+    import(B,"txt",EXR_TXT,false);import(B,"epub",EXR_EPUB,true);import(B,"pdf",EXR_PDF,true);import(B,"cbz",EXR_CBZ,true);
+    attach(B,"txt","reflow_global");attach(B,"epub","epub_chapter");attach(B,"pdf","fixed_page");attach(B,"cbz","fixed_page");paths=original_paths;
+  }
   exr_document *ta=nullptr,*tb=nullptr;SDK(exr_library_document(A.lib,A.ids["txt"],&ta,&e_));SDK(exr_library_document(B.lib,B.ids["txt"],&tb,&e_));
   size_t text_bytes=0;const char *text=exr_document_text(ta,&text_bytes);std::string t(text,text_bytes);
   exr_anchor existing_progress{};SDK(exr_anchor_create(tb,text_bytes,text_bytes,&existing_progress,&e_));SDK(exr_library_progress(B.lib,B.ids["txt"],&existing_progress,&e_));exr_anchor_free(&existing_progress);
@@ -77,7 +145,8 @@ int main(int argc,char **argv){
   txt("txt-highlight","annotation",emoji,emoji+std::strlen("🙂"));size_t ambiguous=locate(t,"AMBIGUOUS TARGET",1);
   txt("txt-ambiguous","annotation",ambiguous,ambiguous+std::strlen("AMBIGUOUS TARGET"),EXR_ANCHOR_AMBIGUOUS);
   int64_t gaid=0,gbid=0;std::string epub=read_file(paths["epub"]);
-  SDK(exr_library_import(A.lib,EXR_EPUB,epub.data(),epub.size(),"global",&gaid,&e_));SDK(exr_library_import(B.lib,EXR_EPUB,epub.data(),epub.size(),"global",&gbid,&e_));
+  std::string receiver_epub=webdav_root.empty()?epub:read_file(cached_original("epub"));
+  SDK(exr_library_import(A.lib,EXR_EPUB,epub.data(),epub.size(),"global",&gaid,&e_));SDK(exr_library_import(B.lib,EXR_EPUB,receiver_epub.data(),receiver_epub.size(),"global",&gbid,&e_));
   exr_document *ga=nullptr,*gb=nullptr;SDK(exr_library_document(A.lib,gaid,&ga,&e_));SDK(exr_library_document(B.lib,gbid,&gb,&e_));
   size_t gn=0;const char *gt=exr_document_text(ga,&gn);size_t chapter=locate(std::string(gt,gn),"第二章节独有文字");
   for(int point_only=0;point_only<2;point_only++){
@@ -131,6 +200,7 @@ int main(int argc,char **argv){
   expect(progress.start==text_bytes,"remote progress and annotations never change receiver active progress");exr_anchor_free(&progress);
   expect(cases.size()==18&&receiver_found==17&&receiver_mislocated==0,"all eighteen real captures have exact expected outcomes");
   close_side(A);close_side(B);
-  object report;report.set("cases",array(cases)).set("checks",array(checks)).set("failures",num(failures)).set("receiver_found",num(receiver_found)).set("receiver_mislocated",num(receiver_mislocated));
+  object report;report.set("cases",array(cases)).set("checks",array(checks)).set("failures",num(failures)).set("receiver_found",num(receiver_found)).set("receiver_mislocated",num(receiver_mislocated))
+    .set("native_webdav",boolean(!webdav_root.empty())).set("network_pushed",num(network_pushed)).set("network_pulled",num(network_pulled)).set("originals_exported",num(originals_exported));
   std::ofstream output(report_path,std::ios::binary);output<<report.dump()<<"\n";return failures?1:0;
 }
