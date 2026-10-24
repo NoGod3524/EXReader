@@ -153,8 +153,9 @@ def build(platform='linux'):
             run('lib-list' if platform == 'windows' else 'ar', 'archive members ' + name,
                 ('member.obj\n' if platform == 'windows' else 'member.o\n'))
             undefined = []
-            if index == 0 and package['system'][platform]:
-                undefined = [FAMILY_SYMBOL.get(package['system'][platform][0], 'unknown_external')]
+            if index == 0:
+                undefined = [FAMILY_SYMBOL.get(library, 'unknown_external')
+                             for library in package['system'][platform]]
             run('dumpbin-symbols' if platform == 'windows' else 'nm',
                 'archive symbols ' + name,
                 symbols_text(defined, undefined,
@@ -243,10 +244,6 @@ def assemble(fixture):
                          'directives': directive_names, 'bundled': bundled,
                          'link': link, 'link_evidence': evidence})
 
-    observations, _ = contract.scan_forbidden(
-        payload, {'config': {'cache_switches': fixture['switches']},
-                  'identity': {'targets': []}, 'dynamic_dependencies': {'entries': []}},
-        allow_credentials=True)
     hits = contract.scan_private_paths(payload, contract.GENERIC_PRIVATE_PATHS)
     leaked = sorted({hit['path'] for hit in hits})
     generic = set(contract.GENERIC_PRIVATE_PATHS)
@@ -324,7 +321,7 @@ def assemble(fixture):
             'edges': edges, 'unreferenced_archives': unreferenced, 'owners': owners,
             'foreign_archives': [], 'directives': directives},
         'dependency_commands': fixture['records'],
-        'observations': observations,
+        'observations': {},
         'private_paths': {'generic_needles': list(contract.GENERIC_PRIVATE_PATHS),
                           'needles_checked': len(contract.GENERIC_PRIVATE_PATHS),
                           'needle_digests': [],
@@ -336,6 +333,8 @@ def assemble(fixture):
         'not_covered': ['mobile packaging'],
         'sbom': {},
     }
+    _, observations = contract.scan_forbidden(payload, inventory, allow_credentials=True)
+    inventory['observations'] = observations
     inventory['release_blockers'] = contract.private_path_blockers(hits)
     for name, document in (('combined.spdx.json', sbom.build_spdx(inventory, '2026-10-24T00:00:00Z')),
                            ('combined.cdx.json',
