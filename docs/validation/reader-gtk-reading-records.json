@@ -1,16 +1,357 @@
 {
+  "schema": 1,
   "accepted": false,
-  "status": "candidate_unexecuted",
-  "sdk_source": "9854061be331fe603a1822d9b2b36ee357154927",
-  "sdk_version": "3.40.0",
-  "sdk_abi": 1,
+  "status": "scoped_delivery_complete_with_retained_palette_failures",
+  "source_sha": "98796b9bacea347c62baf6b5808122127093225c",
+  "run": {
+    "id": 40135514002,
+    "attempt": 1,
+    "job": 120996089136,
+    "event": "workflow_dispatch",
+    "reading_diagnostic_only": false,
+    "status": "completed",
+    "conclusion": "failure"
+  },
+  "sdk": {
+    "source": "9854061be331fe603a1822d9b2b36ee357154927",
+    "version": "3.40.0",
+    "abi": 1,
+    "changed": false
+  },
   "base": "1ad762a0b68372c56b712d0129be8129d38b651f",
-  "reading_records_scope_accepted": false,
+  "fixed_trees": {
+    "reading_commands": "cf067b8be378d4195817d1106b81f358579e2280",
+    "annotation_view": "9d30b6c54f61496010f647695dedd7ea7ab0c7c1",
+    "reading_state_codec": "60127ae75fbac918237b1c8584e0f7ac2e6130a4"
+  },
+  "reading_records_scope_accepted": true,
   "complete_product": false,
   "performance_accepted": false,
-  "runs": [],
+  "local_build_test_syntax_or_artifact_processing": false,
+  "last_completed_diagnostic": {
+    "source": "61bc8ac7b09954833de37fa2700745f816157070",
+    "run": 40134726495,
+    "attempt": 1,
+    "job": 120993709680,
+    "conclusion": "success",
+    "native_reading_ui_checks": 26,
+    "native_directory_ui_checks": 29,
+    "backend_checks": {
+      "first_process": 64,
+      "reopened_process": 19,
+      "routes": 27,
+      "unsafe_graphs_and_budget": 141
+    },
+    "reading_commands_checks": 1413,
+    "annotation_view_checks": 56,
+    "legacy_checks": 121,
+    "v2_cases": 18,
+    "program_sha256": "da146db6553bc571dd4d7b74398b4bc8d70ca7e4766bda2060a940b916661a45",
+    "artifact": {
+      "id": 12575779017,
+      "bytes": 22253793,
+      "sha256": "778b409dae9d124f9473b5968304ca7439d9a7dc13bdb0b2fca465f5df37db93",
+      "expiry": "2027-01-22T21:33:12Z"
+    },
+    "limits": "Diagnostic-only. This source still had a host-specific CBZ refusal; it is not the final source and does not describe the SDK's empty text snapshot capability."
+  },
+  "earlier_failed_runs": [
+    {
+      "run": 40132484455,
+      "attempt": 1,
+      "status": "failure",
+      "reason": "The backend fixture profile used mode 0755; private request persistence correctly refused it before the first progress commit.",
+      "id": 12576165568,
+      "bytes": 21978937,
+      "digest": "sha256:f945d5f33cb1360cd3fb2ce0b61d64c08558695cd1e92ea184282dcc7fd6921d",
+      "expired": false,
+      "expiry": "2027-01-22T21:02:50Z",
+      "source": "9712644fa0ac09b7591bb80dc586861f9beb5ba1"
+    },
+    {
+      "run": 40133105160,
+      "attempt": 1,
+      "status": "failure",
+      "reason": "The same non-private backend fixture still refused persistence. The host check was kept; the fixture was changed to 0700 in 341431e4.",
+      "id": 12575384650,
+      "bytes": 21979589,
+      "digest": "sha256:a800524a84c85248f53cbc49072a95522a48fd4c2cd244df517e50ba55d32e42",
+      "expired": false,
+      "expiry": "2027-01-22T21:11:15Z",
+      "source": "20f9983539048ae580afd262236341181af5a3e1"
+    },
+    {
+      "run": 40133141462,
+      "attempt": 1,
+      "status": "failure",
+      "reason": "The probe sent two alt+r shortcuts across different native modals; no restore save was queued (actions remained 10). Precise native Restore buttons replaced the shortcuts.",
+      "id": 12575753151,
+      "bytes": 22099225,
+      "digest": "sha256:54d1d9471751ed385996716d90965201ea3661c1a584cfefa901244b9efa74e8",
+      "expired": false,
+      "expiry": "2027-01-22T21:11:48Z",
+      "source": "341431e45c65b9dc37f9e557d87a62e39fc5ae7c"
+    },
+    {
+      "run": 40133632284,
+      "attempt": 1,
+      "status": "failure",
+      "reason": "The native Highlight selection control remained disabled after modal entry. The run stopped without granting the remaining UI cases.",
+      "id": 12576935008,
+      "bytes": 22111715,
+      "digest": "sha256:0718e73cef944351a17e11955e340145570452a66257c4d26f2141a51eede707",
+      "expired": false,
+      "expiry": "2027-01-22T21:18:29Z",
+      "source": "6121287697be8cc1c56eeacad29da6df3d464d50"
+    },
+    {
+      "run": 40134174797,
+      "attempt": 1,
+      "status": "failure",
+      "reason": "A positive real main-window selection was confirmed before opening the panel, but the host queried it only after disabling the main widget tree. 61bc8ac7 snapshots the real UTF-8 range before focus or sensitivity changes.",
+      "id": 12576411690,
+      "bytes": 22194592,
+      "digest": "sha256:b54fc6e05e8bb62375ed05806a73020c8eb01d1cf66cb65078aa82681ae9c465",
+      "expired": false,
+      "expiry": "2027-01-22T21:25:49Z",
+      "source": "3b80ee6cdc8236509d9fa31e1ad2cb7a72dee55a"
+    },
+    {
+      "run": 40135154048,
+      "attempt": 1,
+      "status": "failure",
+      "reason": "The retained 9000-entry Nav cancel probe saw phase 2 but reached normal phase 3/code 0 before observing the required cancellation result. Reading UI30 and all new reading backend checks passed; the failure and raw evidence are retained without weakening Nav assertions.",
+      "id": 12576139202,
+      "bytes": 22261194,
+      "digest": "sha256:eee8e4897910ce0984d0c00e71438ff9135c85e52620d1eaa9369166c2468afa",
+      "expired": false,
+      "expiry": "2027-01-22T21:39:04Z",
+      "source": "ccecc28bb9a5f7b60b8d4f1459b8f561c10ea5bc"
+    },
+    {
+      "run": 40135435918,
+      "attempt": 1,
+      "status": "failure",
+      "reason": "The same-source retained Nav cancel probe did not observe the brief phase-2 scan window before phase 3/code 0. New reading UI30 including real CBZ second-page points and all reading backends passed. The full same-source dispatch remains independent.",
+      "id": 12576379081,
+      "bytes": 22261587,
+      "digest": "sha256:e796cfd6cc59176f4ccdb39dcc0a4a2825943dd2142fc2e771eadaa143759d0d",
+      "expired": false,
+      "expiry": "2027-01-22T21:42:57Z",
+      "source": "98796b9bacea347c62baf6b5808122127093225c"
+    }
+  ],
   "retained_failures": [
     "light_foreground_and_background_change_page_pixels",
     "dark_theme_and_palette_change_page_pixels"
-  ]
+  ],
+  "same_source_diagnostic": {
+    "source": "98796b9bacea347c62baf6b5808122127093225c",
+    "run": 40135435918,
+    "attempt": 1,
+    "job": 120995850977,
+    "conclusion": "failure",
+    "failure_scope": "Retained Nav transient cancellation observation",
+    "reading_records_scope_passed": true,
+    "native_reading_ui_checks": 30,
+    "backend_checks": {
+      "first_process": 65,
+      "reopened_process": 19,
+      "routes": 37,
+      "unsafe_graphs_and_budget": 141
+    },
+    "program_sha256": "eeb43f34439b780820b67e5dab0ddf965e4dda45d9f62dd3f4549c20d744aa22",
+    "cbz": "Real public empty text snapshot; second-page progress/bookmark and independent/current FOUND actually executed."
+  },
+  "all_non_palette_retained_suites_passed": true,
+  "program_sha256": "eeb43f34439b780820b67e5dab0ddf965e4dda45d9f62dd3f4549c20d744aa22",
+  "artifact": {
+    "id": 12577940620,
+    "name": "reader-gtk-reading-records-40135514002-1",
+    "bytes": 43314895,
+    "digest": "sha256:2250a111678d9697d3bbda1ec03602fdcf34dddc2f0ee8abd3089cbd33d4a7a4",
+    "expired": false,
+    "expiry": "2027-01-22T21:44:05Z",
+    "source": "98796b9bacea347c62baf6b5808122127093225c",
+    "run": 40135514002
+  },
+  "final_checks": {
+    "reading_records_native_ui": {
+      "checks": 30,
+      "failed": 0,
+      "scope_passed": true,
+      "cbz_second_page": 1
+    },
+    "reading_records_backend": {
+      "first_process": 64,
+      "reopened_process": 19,
+      "routes": 37,
+      "unsafe_graphs_and_budget": 141,
+      "total": 261
+    },
+    "reading_commands": {
+      "checks": 1413,
+      "cases": 21,
+      "race_rounds": 6
+    },
+    "annotation_view": {
+      "checks": 56,
+      "book_a_initial": 1203,
+      "book_a_final": 1205
+    },
+    "reading_legacy": {
+      "checks": 121
+    },
+    "reading_v2": {
+      "checks": 116,
+      "cases": 18,
+      "receiver_found": 17,
+      "ambiguous": 1,
+      "receiver_mislocated": 0
+    },
+    "preferences_installed": {
+      "cases": 20
+    },
+    "search": {
+      "installed_checks": 264,
+      "cases": 34,
+      "backend_checks": 296,
+      "native_ui_checks": 30
+    },
+    "navigation": {
+      "installed_checks": 130,
+      "cases": 4,
+      "backend_checks": 58,
+      "native_ui_checks": 29
+    },
+    "retained_native_ui": {
+      "account_and_received": 46,
+      "original_host": 20,
+      "catalog": 5,
+      "fixed_pages": 24,
+      "shelf": 14,
+      "metadata": 15,
+      "collections": 27,
+      "total_original_product": 105,
+      "isolated_regressions": 4,
+      "targeted_atspi": 10
+    },
+    "settings": {
+      "checks": 35,
+      "passed": 33,
+      "failed": 2,
+      "failed_names": [
+        "light_foreground_and_background_change_page_pixels",
+        "dark_theme_and_palette_change_page_pixels"
+      ]
+    }
+  },
+  "steps": [
+    {
+      "name": "Set up job",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run actions/checkout@v4",
+      "conclusion": "success"
+    },
+    {
+      "name": "Require fixed public SDK product schema and unchanged module contracts",
+      "conclusion": "success"
+    },
+    {
+      "name": "Install native GTK TLS XML and Secret Service dependencies",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build installed product metadata and account modules with one product provider",
+      "conclusion": "success"
+    },
+    {
+      "name": "Install unchanged frozen SDK and public original export module",
+      "conclusion": "success"
+    },
+    {
+      "name": "Install public reading adapter and real-capture fixture consumers",
+      "conclusion": "success"
+    },
+    {
+      "name": "Install fixed G03 G04 and rerun their original public consumers",
+      "conclusion": "success"
+    },
+    {
+      "name": "Preserve the original 121 legacy checks and eighteen real v2 captures",
+      "conclusion": "success"
+    },
+    {
+      "name": "Install unchanged F3 and run all twenty installed package checks",
+      "conclusion": "success"
+    },
+    {
+      "name": "Install unchanged Search and rerun its public installed consumers",
+      "conclusion": "success"
+    },
+    {
+      "name": "Install fixed F2 and rerun all original public consumers",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build actual GTK host with optional navigation and retained installed integrations",
+      "conclusion": "success"
+    },
+    {
+      "name": "Preserve fixed bounded backend and 2202-book installed SDK checks",
+      "conclusion": "success"
+    },
+    {
+      "name": "Real reading owner writes keyset pages failed commit and true process retry",
+      "conclusion": "success"
+    },
+    {
+      "name": "Actual native progress bookmark highlight edit delete restore and process recovery",
+      "conclusion": "success"
+    },
+    {
+      "name": "Actual native directory explicit targets independent FOUND and lifecycle",
+      "conclusion": "success"
+    },
+    {
+      "name": "Actual native in-book query results selection cancellation and lifecycle",
+      "conclusion": "success"
+    },
+    {
+      "name": "Actual settings controls geometry pixels gestures portal and persistence",
+      "conclusion": "failure"
+    },
+    {
+      "name": "Real GTK secure save load delete unavailable session-only full library scan cancel retry and shutdown",
+      "conclusion": "success"
+    },
+    {
+      "name": "Preserve twenty product five fixed twenty-four shelf fourteen metadata fifteen collections twenty-seven",
+      "conclusion": "success"
+    },
+    {
+      "name": "Targeted real AT-SPI regressions for G13 production fixes",
+      "conclusion": "success"
+    },
+    {
+      "name": "Preserve source-bound evidence and original logs without credentials or TLS private keys",
+      "conclusion": "success"
+    },
+    {
+      "name": "Post Run actions/checkout@v4",
+      "conclusion": "success"
+    },
+    {
+      "name": "Complete job",
+      "conclusion": "success"
+    }
+  ],
+  "sqlite_provider": {
+    "providers": [
+      "libreader_catalog_sqlite.a"
+    ],
+    "map_sha256": "47162f998ef8ec1bbe46a1876680f8989394347d942b0411f5bfe0fedaf7e0e9"
+  }
 }
