@@ -151,11 +151,19 @@ def main():
                     'ZIP bytes or digest differ for ' + key)
             (downloads / (name + '.zip')).write_bytes(data)
             with zipfile.ZipFile(io.BytesIO(data)) as archive:
+                names = archive.namelist()
+                # upload-artifact@v4 keeps paths relative to the uploaded root; a
+                # different common ancestor only changes the prefix, never the leaf.
+                prefix = ''
+                for candidate in ('', 'composition/'):
+                    if candidate + 'evidence/result.json' in names:
+                        prefix = candidate
+                        break
                 bundle = {}
                 for field, relative in (('result', 'evidence/result.json'),
                                         ('gates', 'gates/gates.json'),
                                         ('manifest', 'install-all.json')):
-                    with archive.open(relative) as handle:
+                    with archive.open(prefix + relative) as handle:
                         bundle[field] = json.loads(handle.read())
                 bundles[key] = bundle
             summary['artifacts'].append({field: artifact[field] for field in
