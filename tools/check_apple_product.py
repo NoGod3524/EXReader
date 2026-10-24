@@ -38,6 +38,15 @@ def inspect(binary, link_map):
                           'sqlite_provider_objects': [line for line in mapping.splitlines() if 'sqlite3.c.o' in line],
                           'dependencies': dependencies}), flush=True)
         raise
+    search_linked = bool(re.search(r'\b[Tt]\s+_reader_search_next\s*$', symbols, re.M))
+    if search_linked:
+        providers = [line for line in mapping.splitlines()
+                     if 'libreader_search.a' in line and 'search.cpp.o' in line]
+        assert len(providers) == 1, 'installed F1 search object missing or duplicated'
+        assert re.search(r'\blibexreader(?:\.[0-9]+)*\.dylib', dependencies), 'search host lacks the dynamic SDK'
+        assert re.search(r'\bU\s+_exr_anchor_resolve_ex\s*$', symbols, re.M), 'resolver must come from the dynamic SDK'
+        assert not re.search(r'\b[Tt]\s+_exr_(?:document_free|anchor_free|anchor_resolve_ex|pager_create)\s*$',
+                             symbols, re.M), 'search embedded a second SDK implementation'
     rejected = []
     wrong_owner = re.sub(r'(?m)^(0x[0-9a-fA-F]+\s+0x[0-9a-fA-F]+\s+\[\s*)\d+(\]\s+_sqlite3_open_v2\s*)$',
                          r'\g<1>999999\2', mapping)
@@ -58,6 +67,7 @@ def inspect(binary, link_map):
     return {'accepted': True, 'binary_sha256': hashlib.sha256(Path(binary).read_bytes()).hexdigest(),
             'sqlite_provider': provider, 'system_sqlite_fallback': False,
             'static_sdk_linked': False, 'reading_resolver_linked': False,
+            'installed_search_linked': search_linked,
             'dependencies': dependencies, 'negative_checks': rejected}
 
 

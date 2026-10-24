@@ -191,6 +191,20 @@ final class HostCatalog {
         return try body(opened)
     }
 
+    func searchIdentity(sdkID: Int64) throws -> HostSourceFingerprint {
+        let (database, statement) = try prepare("SELECT b.format,b.source_sha256,b.source_bytes FROM reader_books b JOIN reader_local_books l USING(book_key) WHERE l.sdk_book_id=? AND b.deleted=0 LIMIT 2", [.integer(sdkID)])
+        defer { sqlite3_finalize(statement) }
+        try check(sqlite3_step(statement), database, expected: SQLITE_ROW)
+        guard let format = columnText(statement, 0), let sha = columnText(statement, 1),
+              sha.utf8.count == 64, sha.utf8.allSatisfy({ (48...57).contains($0) || (97...102).contains($0) }),
+              sqlite3_column_type(statement, 2) == SQLITE_INTEGER, sqlite3_column_int64(statement, 2) > 0 else {
+            throw HostCatalogError.invalid("搜索原件身份无效")
+        }
+        let value = HostSourceFingerprint(format: format, sha256: sha, bytes: sqlite3_column_int64(statement, 2))
+        try check(sqlite3_step(statement), database, expected: SQLITE_DONE)
+        return value
+    }
+
     func syncPage(after: String? = nil) throws -> [HostProductBook] {
         let fields = "b.book_key,l.sdk_book_id,b.format,b.source_sha256,b.source_bytes,b.title,b.author,b.sort_title,b.favorite,l.location_kind"
         var sql = "SELECT " + fields + " FROM reader_books b JOIN reader_local_books l USING(book_key) WHERE b.deleted=0"

@@ -303,12 +303,17 @@ final class HostDocument {
     deinit { exr_document_free(handle) }
 
     func resolve(_ anchor: HostAnchor, cancel: HostCancelBox? = nil) throws -> HostAnchorMatch {
+        try resolveInput(anchor.raw, cancel: cancel)
+    }
+
+    func resolveInput(_ input: exr_anchor, cancel: HostCancelBox? = nil) throws -> HostAnchorMatch {
         let active = cancel ?? HostCancelBox()
         try active.check()
+        var anchor = input
         var match = exr_anchor_match()
         var error = exr_error()
         var control = hostControl(active)
-        try hostCheck(exr_anchor_resolve_ex(handle, &anchor.raw, &control, &match, &error), error)
+        try hostCheck(exr_anchor_resolve_ex(handle, &anchor, &control, &match, &error), error)
         try active.check()
         let range: Range<Int>? = match.state == EXR_ANCHOR_FOUND ? Int(match.start)..<Int(match.end) : nil
         return HostAnchorMatch(state: match.state, range: range)
@@ -476,6 +481,11 @@ final class HostPager {
     func resolveLocation(_ location: HostEPUBLocation, cancel: HostCancelBox) throws -> HostAnchorMatch {
         try bind(cancel)
         return try withExtendedLifetime(location) { try resolveRaw(location.raw.selector) }
+    }
+    func resolveInput(_ anchor: exr_anchor, cancel: HostCancelBox) throws -> HostAnchorMatch {
+        try bind(cancel)
+        if let document { return try document.resolveInput(anchor, cancel: cancel) }
+        return try resolveRaw(anchor)
     }
     private func resolveRaw(_ raw: exr_anchor) throws -> HostAnchorMatch {
         var anchor = raw, match = exr_anchor_match(), error = exr_error(), control = hostControl(box)

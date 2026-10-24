@@ -528,6 +528,52 @@ final class HostSession {
                     viewport: viewport, fontSize: fontSize)
     }
 
+    // The old reader is untouched until a fresh SDK instance has FOUND the
+    // copied selector. Opening for resolution does not restore or write progress.
+    func searchCandidate(_ hit: HostSearchHit, cancel: HostCancelBox) throws -> (HostSession, HostSnapshot) {
+        try cancel.check()
+        guard book?.id == hit.bookID else { throw HostError.invalidInput("书籍已切换，请重新查找") }
+        let independent = try HostLibrary(path: library.path)
+        guard let target = try independent.books().first(where: { $0.id == hit.bookID }),
+              try independent.sourceFingerprint(book: target, cancel: cancel).searchKey == hit.sourceKey else {
+            throw HostError.invalidInput("原件身份已变化，请重新查找")
+        }
+        let result = HostSession(library: independent, font: font, slowDelay: slowDelay,
+                                 viewport: viewport, fontSize: fontSize)
+        try result.begin(cancel)
+        result.book = target
+        let match: HostAnchorMatch
+        if target.isFixed, hit.mode == READER_SEARCH_FIXED {
+            let fixed = try independent.fixed(bookID: target.id, font: font, cancel: cancel)
+            let pages = fixed.pageIDs.enumerated().filter { $0.element == hit.pageID }
+            guard pages.count == 1, !hit.pageID.isEmpty else { throw HostError.invalidInput("页面目标缺失或不唯一") }
+            let selectedPage = pages[0].offset
+            let text = try fixed.text(page: selectedPage, cancel: cancel)
+            match = try hit.fixed.withInput { try text.resolve($0, pageID: hit.pageID, cancel: cancel) }
+            result.fixed = fixed; result.page = selectedPage
+        } else if hit.mode == READER_SEARCH_EPUB, try independent.isBoundedEPUB(book: target) {
+            let publication = try HostPublication(library: independent, bookID: target.id, cancel: cancel)
+            _ = try publication.route(hit.unit, path: hit.path)
+            result.publication = publication; result.part = hit.unit
+            try result.rebuildPager(width: Double(viewport.width), height: Double(viewport.height), font: fontSize, cancel: cancel)
+            guard let pager = result.pager else { throw HostError.invalidResult("章节分页不可用") }
+            match = try hit.anchor.withInput { try pager.resolveInput($0, cancel: cancel) }
+        } else if hit.mode == READER_SEARCH_REFLOW, !target.isFixed, try !independent.isBoundedEPUB(book: target) {
+            let document = try independent.document(bookID: target.id, cancel: cancel)
+            result.document = document
+            match = try hit.anchor.withInput { try document.resolveInput($0, cancel: cancel) }
+        } else { throw HostError.invalidInput("搜索模式与书籍不一致") }
+        guard match.isFound, let range = match.range else { throw HostError.invalidInput("选文未精确匹配；保留当前页面") }
+        try cancel.check()
+        if result.fixed == nil {
+            result.readingOffset = range.lowerBound
+            if result.pager == nil {
+                try result.rebuildPager(width: Double(viewport.width), height: Double(viewport.height), font: fontSize, cancel: cancel)
+            } else { result.page = try result.pager!.pageIndex(for: range.lowerBound, cancel: cancel) }
+        }
+        return (result, try result.renderSnapshot())
+    }
+
     // Keep the last usable frame/session if parsing, seeking, rendering or saving fails.
     private func changing(_ cancel: HostCancelBox, _ operation: () throws -> HostSnapshot) throws -> HostSnapshot {
         let old = (book, document, pager, fixed, page, readingOffset, fontSize, viewport, pageText, pageRange, currentCancel,
@@ -967,6 +1013,7 @@ final class HostSession {
 }
 
 final class HostReaderModel: ObservableObject {
+    let search = HostSearchState()
     @Published var books: [HostBookRow] = []
     @Published var current: HostBookRow?
     @Published var image: CGImage?
@@ -1282,6 +1329,7 @@ final class HostReaderModel: ObservableObject {
     }
 
     private func begin() -> (Int, HostCancelBox) {
+        search.cancel()
         activeCancel?.cancel()
         token += 1
         let box = HostCancelBox()
@@ -1421,6 +1469,75 @@ final class HostReaderModel: ObservableObject {
         }
     }
 
+    func prepareSearch() {
+        guard let current, !busy else { return }
+        let key = "EXRSearchQuery.\(current.id)"
+        search.bind(bookID: current.id, query: defaults.string(forKey: key) ?? "")
+    }
+
+    func findInBook(restart: Bool = true) {
+        guard !busy, let bookID = current?.id, search.bookID == bookID,
+              !search.running, restart || !search.complete else { return }
+        let query = search.query
+        guard !query.isEmpty, query.utf8.count <= 4096, !query.utf8.contains(0) else { return }
+        defaults.set(query, forKey: "EXRSearchQuery.\(bookID)")
+        let resume = restart ? nil : search.cursor
+        let boundSource = restart ? nil : search.sourceKey
+        let (epoch, box) = search.begin(restart: restart)
+        queue.async {
+            do {
+                guard let session = self.session, let catalog = self.catalog,
+                      session.book?.id == bookID else { throw HostError.invalidInput("书籍已切换") }
+                let key = try catalog.searchIdentity(sdkID: bookID).searchKey
+                guard boundSource == nil || boundSource == key else { throw HostError.invalidInput("原件身份已变化，请重新查找") }
+#if EXR_APPLE_HOST_REVIEW
+                let priorPoll = HostSDKReview.poll
+                let hold = CommandLine.arguments.contains("-EXRHoldSearchCancellation")
+                if hold {
+                    HostSDKReview.poll = { polled in
+                        guard polled === box else { priorPoll?(polled); return }
+                        DispatchQueue.main.async { self.search.reviewCancellationReady(generation: epoch) }
+                        while !polled.isCancelled { Thread.sleep(forTimeInterval: 0.05) }
+                    }
+                }
+                defer { if hold { HostSDKReview.poll = priorPoll } }
+#endif
+                let batch = try HostSearchWorker.batch(library: session.library, font: session.font,
+                    bookID: bookID, sourceKey: key, query: query, resume: resume, cancel: box)
+                DispatchQueue.main.async {
+                    guard self.current?.id == bookID else { return }
+                    self.search.accept(batch, key: key, generation: epoch)
+                }
+            } catch {
+                DispatchQueue.main.async { self.search.fail(error, generation: epoch) }
+            }
+        }
+    }
+
+    func selectSearchHit(_ hit: HostSearchHit) {
+        guard !busy, !search.running, current?.id == hit.bookID, search.bookID == hit.bookID,
+              search.sourceKey == hit.sourceKey, search.rows.contains(where: { $0.id == hit.id }) else { return }
+        let (myToken, box) = begin()
+        statusText = "正在精确定位…"
+        queue.async {
+            do {
+                guard let session = self.session, let catalog = self.catalog,
+                      try catalog.searchIdentity(sdkID: hit.bookID).searchKey == hit.sourceKey else {
+                    throw HostError.invalidInput("原件身份已变化")
+                }
+                let (candidate, snapshot) = try session.searchCandidate(hit, cancel: box)
+                if self.completeFrame(snapshot, session: candidate, token: myToken, status: "已精确定位选文") {
+                    self.session = candidate
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    guard myToken == self.token else { return }
+                    self.fail(error)
+                }
+            }
+        }
+    }
+
     func openBook(id: Int64) {
         openBook(HostBookRow(id: id, title: "", detail: "", isFixed: false, position: 0))
     }
@@ -1438,6 +1555,7 @@ final class HostReaderModel: ObservableObject {
 
     func openBook(_ row: HostBookRow) {
         guard !busy else { return }
+        search.invalidate()
         let (myToken, box) = begin()
         statusText = "正在打开…"
         queue.async {
@@ -1734,6 +1852,7 @@ final class HostReaderModel: ObservableObject {
     }
 
     func backToLibrary() {
+        search.invalidate()
         token += 1
         let myToken = token
         activeCancel?.cancel()
@@ -1804,6 +1923,7 @@ final class HostReaderModel: ObservableObject {
     }
 
     func detach() {
+        search.cancel()
         activeCancel?.cancel()
         persistNow()
     }
