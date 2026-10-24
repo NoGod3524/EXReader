@@ -189,7 +189,8 @@ static void collections_member_selected(GtkListBox *box,GtkListBoxRow *row,gpoin
   (void)box;(void)unused;if(collections.applying || collections.closing || closing) return;
   gboolean selected=row!=NULL && !collections.selected_deleted;
   if(collections.detach) gtk_widget_set_sensitive(collections.detach,selected);
-  if(collections.position) gtk_widget_set_sensitive(collections.position,selected && collections.kind!=1);state();
+  if(collections.position) gtk_widget_set_sensitive(collections.position,selected && collections.kind!=1);
+  state();
 }
 static void collections_enter(GtkWidget *button,gpointer unused) {
   (void)button;(void)unused;if(collections.kind!=0 || collections.trash || !collections.selected || collections.selected_deleted) return;

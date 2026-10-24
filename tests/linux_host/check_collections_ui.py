@@ -49,8 +49,11 @@ def main():
         return dict(state['collections']) if state.has_section('collections') else {}
 
     def ready(predicate=lambda state: True):
-        host.wait(lambda state: not state.get('shelf_loading') and not state.get('shelf_restoring')
-                  and predicate(observation()), timeout=60)
+        try:
+            host.wait(lambda state: not state.get('shelf_loading') and not state.get('shelf_restoring')
+                      and predicate(observation()), timeout=60)
+        except TimeoutError as error:
+            raise TimeoutError(str(error) + '; collections=' + repr(observation())) from error
         return observation()
 
     def window(title, present=True):
@@ -314,6 +317,10 @@ def main():
         assert len(checks) == 26, checks
         report['accepted'] = True
     finally:
+        if not report['accepted']:
+            print(json.dumps({'failed_collections_observation': observation(), 'host': host.read()}, ensure_ascii=False), flush=True)
+            if host.process and host.process.poll() is None:
+                shot('failure-native-desktop', 'root')
         if host.process and host.process.poll() is None:
             host.process.kill();host.process.wait(timeout=15)
         if host.log and not host.log.closed:
@@ -324,7 +331,10 @@ def main():
         report['files'] = {str(path.relative_to(folder)): hashlib.sha256(path.read_bytes()).hexdigest()
                            for path in sorted(folder.rglob('*')) if path.is_file()}
         (folder / 'collections-ui.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-        print(json.dumps({'accepted': report['accepted'], 'count': len(checks), 'source_sha': report['source_sha']}), flush=True)
+        print(json.dumps({'accepted': report['accepted'], 'count': len(checks), 'source_sha': report['source_sha'],
+                          'run_id': report['run_id'], 'attempt': report['attempt'], 'program_sha256': report['program_sha256'],
+                          'report_sha256': hashlib.sha256((folder / 'collections-ui.json').read_bytes()).hexdigest(),
+                          'screenshots': {name: report['files'][name] for name in shots}}, ensure_ascii=False), flush=True)
 
 
 if __name__ == '__main__':
