@@ -218,7 +218,7 @@ jobs:
           account = json.loads(accounts[0].read_text())
           assert account['accepted'] is True and account['source_sha'] == source
           assert str(account['run_id']) == run and str(account['attempt']) == attempt
-          assert len(account['checks']) == len(set(account['checks'])) == 19
+          assert len(account['checks']) == len(set(account['checks'])) == 22
           assert account['sweeps'] == 1 and account['actual_shards'] == 256 and account['secret_scan_passed'] is True
           assert account['host_account_ui_accepted'] is False
           request = urllib.request.Request(f'https://api.github.com/repos/{os.environ["GITHUB_REPOSITORY"]}/actions/runs/{run}/artifacts?per_page=100',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})

@@ -23,7 +23,10 @@ from cloud_native import trust_fixture_certificates
 CHECKS = [
     'stable_lowercase_profile_uuid', 'actual_keychain_roundtrip_after_profile_reopen',
     'metadata_contains_no_authorization', 'insecure_root_rejected_without_profile_write',
-    'session_only_authorization_not_restored_from_disk', 'account_directories_are_isolated',
+    'session_only_authorization_not_restored_from_disk',
+    'unreadable_metadata_blocks_create_and_credential_changes',
+    'metadata_size_checked_before_profile_or_secret_mutation',
+    'all_saved_profiles_remain_loadable_after_size_rejection', 'account_directories_are_isolated',
     'bounded_product_sync_page', 'exact_public_sdk_original_export',
     'existing_immutable_original_is_verified_and_reused', 'cancelled_preparation_preserves_the_valid_original',
     'verified_bootstrap_is_idempotent_history_and_outbox', 'bootstrap_preserves_product_title_author',

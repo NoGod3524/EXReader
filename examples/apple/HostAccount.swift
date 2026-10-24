@@ -22,6 +22,7 @@ final class HostAccounts: ObservableObject {
     private var transient: [String: Data] = [:]
     private var sessions: [String: HostAccountSession] = [:]
     private let folder: URL
+    private var metadataWritable = true
 
     init(folder: URL? = nil) {
         self.folder = folder ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -42,7 +43,10 @@ final class HostAccounts: ObservableObject {
                 let previous = UserDefaults.standard.string(forKey: "EXRSelectedAccount")
                 selected = loaded.contains(where: { $0.id == previous }) ? previous : nil
             }
-        } catch { message = "账号记录无法读取；原文件已保留" }
+        } catch {
+            metadataWritable = false
+            message = "账号记录无法读取；原文件已保留，请先恢复该文件"
+        }
     }
 
     deinit {
@@ -63,17 +67,29 @@ final class HostAccounts: ObservableObject {
         guard result == EXR_DAV_OK else { throw HostError.invalidInput("请输入以 / 结尾的 HTTPS WebDAV 文件夹地址") }
     }
 
+    private func encodedProfiles(_ values: [HostAccountProfile]) throws -> Data {
+        guard metadataWritable else { throw HostError.invalidInput("账号记录无法读取；请先恢复原文件") }
+        let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
+        let data = try encoder.encode(values)
+        guard data.count <= 64 * 1024 else { throw HostError.invalidInput("账号记录超过 64 KiB，请缩短云盘地址或减少账号") }
+        return data
+    }
+
+    private func persistProfiles(_ data: Data) throws {
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try data.write(to: folder.appendingPathComponent("accounts.json"), options: .atomic)
+    }
+
     func create(root: String, username: String, password: String, remember: Bool) throws {
         guard profiles.count < 16 else { throw HostError.invalidInput("账号数量已达 16 个") }
         try validateRoot(root)
         guard !profiles.contains(where: { $0.root == root }) else { throw HostError.invalidInput("该云盘账号已经存在") }
         let profile = HostAccountProfile(id: UUID().uuidString.lowercased(), root: root, anonymous: username.isEmpty && password.isEmpty)
-        try updateCredentials(profile, username: username, password: password, remember: remember)
         let updated = profiles + [profile]
+        let metadata = try encodedProfiles(updated)
+        try updateCredentials(profile, username: username, password: password, remember: remember)
         do {
-            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-            let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
-            try encoder.encode(updated).write(to: folder.appendingPathComponent("accounts.json"), options: .atomic)
+            try persistProfiles(metadata)
         } catch {
             transient.removeValue(forKey: profile.id)
             if let credentials { _ = profile.id.withCString { exr_credentials_delete(credentials, $0) } }
@@ -84,6 +100,7 @@ final class HostAccounts: ObservableObject {
     }
 
     func updateCredentials(_ profile: HostAccountProfile, username: String, password: String, remember: Bool) throws {
+        guard metadataWritable else { throw HostError.invalidInput("账号记录无法读取；请先恢复原文件") }
         guard !username.contains(":"), !username.utf8.contains(0), !password.utf8.contains(0) else {
             throw HostError.invalidInput("用户名或密码包含不支持的字符")
         }
@@ -91,6 +108,12 @@ final class HostAccounts: ObservableObject {
             Data(("Basic " + Data((username + ":" + password).utf8).base64EncodedString()).utf8)
         defer { authorization.withUnsafeMutableBytes { exr_credentials_wipe($0.baseAddress, $0.count) } }
         guard authorization.count <= Int(EXR_CREDENTIALS_SECRET_MAX) else { throw HostError.invalidInput("授权信息过长") }
+        var updated = profiles
+        var metadata: Data?
+        if let index = profiles.firstIndex(where: { $0.id == profile.id }), profiles[index].anonymous != authorization.isEmpty {
+            updated[index].anonymous = authorization.isEmpty
+            metadata = try encodedProfiles(updated)
+        }
         sessions[profile.id]?.close()
         // The metadata file contains only an independent UUID and the root URL.
         transient[profile.id] = authorization
@@ -105,11 +128,8 @@ final class HostAccounts: ObservableObject {
             let result = profile.id.withCString { exr_credentials_delete(credentials, $0) }
             removed = result == EXR_CRED_OK || result == EXR_CRED_NOT_FOUND
         }
-        if let index = profiles.firstIndex(where: { $0.id == profile.id }), profiles[index].anonymous != authorization.isEmpty {
-            var updated = profiles
-            updated[index].anonymous = authorization.isEmpty
-            let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
-            try encoder.encode(updated).write(to: folder.appendingPathComponent("accounts.json"), options: .atomic)
+        if let metadata {
+            try persistProfiles(metadata)
             profiles = updated
         }
         if authorization.isEmpty { message = removed ? "匿名连接，未保存授权信息" : "匿名连接；钥匙串中的旧授权未能移除" }
