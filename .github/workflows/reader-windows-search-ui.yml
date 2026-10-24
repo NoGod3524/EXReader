@@ -3,6 +3,11 @@ on:
   push:
     branches: [codex/reader-windows-search-ui]
   workflow_dispatch:
+    inputs:
+      inspect_artifact:
+        description: "Read a preserved initial-search ZIP in an isolated diagnostic job"
+        type: string
+        default: ''
 permissions:
   contents: read
 defaults:
@@ -10,6 +15,7 @@ defaults:
     shell: bash
 jobs:
   search:
+    if: ${{github.event.inputs.inspect_artifact == ''}}
     name: installed F1 and initial native Windows search controls
     runs-on: windows-2022
     timeout-minutes: 90
@@ -85,3 +91,18 @@ jobs:
             build/ws-host/CMakeCache.txt
             build/ws-package/
           if-no-files-found: error
+  inspect:
+    if: ${{github.event.inputs.inspect_artifact != '' && github.event_name == 'workflow_dispatch'}}
+    name: read preserved Windows search failure evidence
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate and inspect the original failure ZIP without acceptance
+        env:
+          GH_TOKEN: ${{github.token}}
+          INSPECT_ARTIFACT: ${{inputs.inspect_artifact}}
+        run: python3 tests/reader_windows_search/inspect.py

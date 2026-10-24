@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import sqlite3
 import sys
+import traceback
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'windows_host'))
 import check_metadata_ui as M
@@ -72,10 +73,16 @@ def main():
         send(U.GetDlgItem(dialog, FIND), 0xF5)
         app.wait(lambda: U.IsWindowEnabled(U.GetDlgItem(dialog, FIND)), timeout=90)
         return send(U.GetDlgItem(dialog, HITS), 0x18B)
+    phase = 'launch'
     try:
         app = SearchApp(args.candidate.resolve(), args.font.resolve(), output / 'profile')
-        app.import_file(source);app.wait(lambda: send(app.control('books'), 0x18B) == 1);app.wait_idle()
+        phase = 'import'
+        app.import_file(source)
+        phase = 'wait-imported-row'
+        app.wait(lambda: send(app.control('books'), 0x18B) == 1);app.wait_idle()
+        phase = 'open-imported-book'
         app.open('Native search sample');app.wait_idle()
+        phase = 'snapshot-before-search'
         before = snapshot()
         record('native-secondary-entry', bool(U.GetDlgItem(app.window, BUTTON)))
         send(U.GetDlgItem(app.window, BUTTON), 0xF5);dialog = app.dialog()
@@ -102,7 +109,10 @@ def main():
         assert set(checks) == set(REQUIRED) and len(checks) == len(REQUIRED)
         report['accepted'] = True
     except Exception as error:
-        problems.append(type(error).__name__ + ': ' + str(error))
+        problems.append(phase + ': ' + type(error).__name__ + ': ' + str(error))
+        traceback.print_exc()
+        if app:
+            print('Native status:', app.status(), flush=True)
     finally:
         if app:
             app.close()
