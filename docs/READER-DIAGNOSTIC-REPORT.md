@@ -149,3 +149,39 @@ sign, no planted secret. The scanner reads the files, not a library flag.
   counter set and 32 errors stay inside 8192/4096 bytes), so the guard exists to keep a future
   limit change from silently truncating.
 - Windows path length beyond MAX_PATH; POSIX filesystems without hard links.
+
+
+## 5. Cloud acceptance
+
+Tested source: 7ee7ab8050fca0f471cc2321c3ccc2c1aaca2e6d. Run 40126181997 attempt 1
+(https://github.com/NoGod3524/EXReader/actions/runs/40126181997), all four jobs
+success. Evidence JSON: docs/validation/reader-diagnostic-report.json.
+
+| platform | job | applicable cases | artifact id | bytes |
+| --- | --- | --- | --- | --- |
+| Linux | 120967980675 | 31 | 12573551615 | 78939 |
+| Windows | 120967980931 | 31 | 12573481634 | 333053 |
+| macOS | 120967980928 | 31 | 12573296755 | 73644 |
+| strict evidence | 120968142793 | summary | 12573102080 | 963 |
+
+The strict evidence job authenticated the three platform ZIPs against the Actions
+API in the same run, recomputed each sha256 digest, re-read
+diag-evidence/result.json from inside every ZIP and required the exact
+per-platform case set. The union of the three platforms covers all 32 contract
+cases, and the aggregator refused every cross-source, missing or edited artifact
+path it knows about.
+
+Retained original failures (kept as evidence, not rewritten):
+
+- run 40125336749 attempt 1 at 132968f7: the installed-header scan refused the
+  ull suffix, the max preset filled 16 counter slots while only 10 ids exist,
+  the before-commit hook was armed on every publish so the after-commit test
+  waited on the wrong marker, io.c ended without a newline and failed
+  -Wnewline-eof on macOS, and a live paused worker held a temporary file so the
+  Windows artifact upload failed with EBUSY.
+- run 40125859530 attempt 1 at 72cc1b65: the checker compared enumerator names
+  alphabetically instead of by id and refused a correct report on all three
+  platforms.
+
+This evidence commit changes documentation only; the tested source is 7ee7ab80
+and no source or test byte changed after that run.

@@ -2,41 +2,162 @@
   "package": "EXReaderDiagnosticReport 0.1.0",
   "id": "J21",
   "schema": 1,
-  "accepted": false,
-  "status": "awaiting-first-cloud-run",
+  "accepted": true,
+  "status": "module-accepted-cloud",
+  "acceptance_scope": "module and installed consumers on Windows, Linux and macOS only",
   "owner_worktree": "C:/Users/Oscar/exreader-agents/j21-diagnostic-report/EXReader",
   "branch": "codex/reader-diagnostic-report",
   "workflow": ".github/workflows/reader-diagnostic-report.yml",
   "common_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
-  "source_sha": null,
+  "source_sha": "7ee7ab8050fca0f471cc2321c3ccc2c1aaca2e6d",
   "final_head": null,
-  "source_and_head_identical": null,
-  "run": {
-    "id": null,
-    "attempt": null,
-    "url": null,
-    "conclusion": null
+  "source_and_head_identical": false,
+  "final_head_delta": {
+    "note": "the evidence commit after the tested source touches documentation only",
+    "paths": [
+      "docs/READER-DIAGNOSTIC-REPORT.md",
+      "docs/validation/reader-diagnostic-report.json"
+    ]
   },
-  "jobs": [],
-  "artifacts": [],
+  "run": {
+    "id": 40126181997,
+    "attempt": 1,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40126181997",
+    "conclusion": "success",
+    "created_at": "2026-10-24T19:37:59Z",
+    "updated_at": "2026-10-24T19:38:56Z"
+  },
+  "jobs": [
+    {
+      "id": 120967980675,
+      "name": "diagnostic report consumers (ubuntu-22.04)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120967980931,
+      "name": "diagnostic report consumers (windows-2022)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120967980928,
+      "name": "diagnostic report consumers (macos-15)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120968142793,
+      "name": "strict diagnostic evidence",
+      "conclusion": "success"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12573551615,
+      "name": "reader-diagnostic-report-Linux-40126181997-1",
+      "bytes": 78939,
+      "digest": "sha256:df9e48ea2af3c17d1fbff81ec93eb867efcda645834dd4e5eae704919ef8557e",
+      "expires_at": "2027-01-22T19:37:59Z"
+    },
+    {
+      "id": 12573481634,
+      "name": "reader-diagnostic-report-Windows-40126181997-1",
+      "bytes": 333053,
+      "digest": "sha256:c3340008f4023457452ec5e09c0c7f10f1e489feab4e720b18a667604539d499",
+      "expires_at": "2027-01-22T19:37:59Z"
+    },
+    {
+      "id": 12573296755,
+      "name": "reader-diagnostic-report-macOS-40126181997-1",
+      "bytes": 73644,
+      "digest": "sha256:31387585a2a93ef37e153bb4b0898aeec76803d282366d4a5b64e32b1ac1f9d1",
+      "expires_at": "2027-01-22T19:37:59Z"
+    },
+    {
+      "id": 12573102080,
+      "name": "reader-diagnostic-report-summary-40126181997-1",
+      "bytes": 963,
+      "digest": "sha256:8a1f8d94a0ad20e67c67f411a70b23ce7d82464de6a80e8384f243aa95841e1a",
+      "expires_at": "2027-01-22T19:37:59Z"
+    }
+  ],
   "named_results": {
     "case_count": 32,
+    "checks_per_platform": 31,
     "platform_specific": {
-      "dangling-symlink-target": "Linux, macOS",
-      "invalid-utf8-target": "Windows"
+      "dangling-symlink-target": [
+        "Linux",
+        "macOS"
+      ],
+      "invalid-utf8-target": [
+        "Windows"
+      ]
     },
-    "passes": [],
+    "passes": [
+      "installed-header-contract",
+      "c-consumer",
+      "cpp-consumer",
+      "installed-consumers-compile",
+      "abi-and-status-names",
+      "defaults",
+      "minimal-report",
+      "typical-report-bytes",
+      "canonical-order",
+      "max-entries-fit",
+      "entry-limits",
+      "output-limits",
+      "app-version-grammar",
+      "refusal-no-echo",
+      "field-closed-set",
+      "duplicate-entries",
+      "struct-and-abi-guards",
+      "output-bytes-secret-scan",
+      "publish-new-file",
+      "publish-exists-not-replaced",
+      "publish-directory-target",
+      "dangling-symlink-target",
+      "invalid-utf8-target",
+      "publish-io-failure",
+      "cancelled-build",
+      "cancelled-write",
+      "kill-before-commit",
+      "kill-after-commit",
+      "concurrent-writers",
+      "unicode-target",
+      "thread-safety",
+      "output-lifetime"
+    ],
     "failures": [],
-    "skipped": []
+    "skipped": {
+      "Linux": [
+        "invalid-utf8-target"
+      ],
+      "Windows": [
+        "dangling-symlink-target"
+      ],
+      "macOS": [
+        "invalid-utf8-target"
+      ]
+    },
+    "union_covered": true
+  },
+  "contract_limits": {
+    "READER_DIAG_ABI_VERSION": 1,
+    "READER_DIAG_FORMAT_VERSION": 1,
+    "READER_DIAG_MAX_APP_VERSION_BYTES": 32,
+    "READER_DIAG_MAX_COUNT": 9007199254740991,
+    "READER_DIAG_MAX_COUNTER_ENTRIES": 16,
+    "READER_DIAG_MAX_ERROR_ENTRIES": 32,
+    "READER_DIAG_MAX_JSON_BYTES": 8192,
+    "READER_DIAG_MAX_SUMMARY_BYTES": 4096,
+    "READER_DIAG_MAX_UNIX_TIME": 4102444800
   },
   "grants": {
-    "module": false,
-    "installed_c_consumer": false,
-    "installed_cpp_consumer": false,
-    "windows": false,
-    "linux": false,
-    "macos": false,
+    "module": true,
+    "installed_c_consumer": true,
+    "installed_cpp_consumer": true,
+    "windows": true,
+    "linux": true,
+    "macos": true,
     "host_ui": false,
     "host_wiring": false,
     "performance": false,
@@ -44,19 +165,47 @@
     "auto_upload": false
   },
   "invariants": {
+    "head_equals_github_sha": true,
+    "common_start_is_ancestor": true,
+    "sdk_protected_tree_identical": true,
+    "product_sql_identical_to_start": true,
+    "changed_paths_inside_whitelist": true,
     "sdk_changed": false,
     "product_schema_changed": false,
     "wire_changed": false,
-    "reading_anchor_changed": false,
-    "protected_paths_changed": false
+    "reading_anchor_changed": false
   },
-  "failures": [],
+  "retained_failures": [
+    {
+      "run": 40125336749,
+      "attempt": 1,
+      "source_sha": "132968f7",
+      "conclusion": "failure",
+      "reasons": [
+        "installed-header-contract: the header scan refused the ull suffix on READER_DIAG_MAX_COUNT",
+        "max-entries-fit, output-limits, output-bytes-secret-scan, publish-exists-not-replaced, output-lifetime: the max preset filled 16 counter slots while only 10 ids exist, so the closed-set check returned FIELD",
+        "kill-after-commit: the before-commit hook was armed on every publish, so the after test waited on the wrong marker",
+        "macOS build: io.c ended without a newline and -Wnewline-eof failed the build",
+        "Windows upload: a live paused worker held the temporary file (EBUSY), so the artifact was not created"
+      ]
+    },
+    {
+      "run": 40125859530,
+      "attempt": 1,
+      "source_sha": "72cc1b65",
+      "conclusion": "failure",
+      "reasons": [
+        "max-entries-fit: the checker compared enumerator names alphabetically instead of by id and refused a correct report on all three platforms"
+      ]
+    }
+  ],
   "uncovered": [
-    "host wiring on Windows, GTK, Android and Apple stays with root",
+    "host wiring on Windows, GTK, Android and Apple stays with root; no product UI is accepted here",
     "no real-device, desktop, audio or screen-reader acceptance",
     "no performance claim or measurement",
-    "output-limits guard is reachable only through the test-hook build",
+    "output-limits reaches the overflow guard only through the test-hook build; contract-valid input cannot overflow",
     "Windows targets longer than MAX_PATH are not addressed",
-    "POSIX filesystems without hard links refuse the commit with IO"
+    "POSIX filesystems without hard links refuse the commit with IO",
+    "auto upload is out of scope by contract"
   ]
 }
