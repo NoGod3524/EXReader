@@ -123,7 +123,10 @@ def main():
         host.key('ctrl+a')
         host.paste(str(root))
         digest = hashlib.sha256(str(root).encode()).hexdigest()
-        native_ready(lambda value: value.get('entry_sha256') == digest and value.get('entry_focused') == '1')
+        # The real SELECT_FOLDER entry completes an existing directory with a
+        # trailing '/'. Both spellings identify exactly this selected directory.
+        typed_digests = {digest, hashlib.sha256((str(root) + '/').encode()).hexdigest()}
+        native_ready(lambda value: value.get('entry_sha256') in typed_digests and value.get('entry_focused') == '1')
         # SELECT_FOLDER first navigates to a typed directory. Unlike OPEN, it
         # cannot select/accept that path before this real native activation.
         host.key('Return')
