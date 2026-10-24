@@ -123,6 +123,43 @@ class Session(object):
                                            "count": self.focus_recoveries})
         return after
 
+    def focus_control(self, name):
+        """Give one named control the host keyboard focus through the host thread.
+
+        Harness recovery only (a trap or a lost focus made the key walk unusable);
+        every call is a focus_set event in the key trace.
+        """
+        hwnd = self.locate(name).get("hwnd", 0)
+        if not hwnd:
+            self.trace.event("focus_set_failed", {"target": name})
+            return False
+        dialog = self.host.dialog_window()
+        w32.attach_and_focus(dialog or self.host.hwnd, hwnd)
+        got = self.focus_name()
+        self.trace.event("focus_set", {"target": name, "focus": got})
+        return got == name
+
+    def close_host_dialog(self, label, attempts=3):
+        """Close a host dialog from the inside so later flows start clean."""
+        dialog = self.host.dialog_window()
+        if not dialog:
+            return True
+        for attempt in range(attempts):
+            self.focus_control("metadata_title")
+            self.kb.press("escape", note="close the host dialog (%s)" % label)
+            closed = self.host.wait_for(lambda: self.host.dialog_window() is None,
+                                        timeout=10, interval=0.2,
+                                        label="host dialog closes (%s)" % label)
+            if closed:
+                return True
+            dialog = self.host.dialog_window()
+            if not dialog:
+                return True
+            self.trace.event("dialog_still_open", {"label": label, "attempt": attempt,
+                                                   "title": w32.window_text(dialog)})
+        self.trace.event("dialog_stuck", {"label": label})
+        return False
+
     def next_tab_stop(self, after_name):
         """The next enabled tab stop after *after_name*, in host creation order."""
         order = [name for name in TAB_ORDER if self.host.control(name)]

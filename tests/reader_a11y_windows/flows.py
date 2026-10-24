@@ -759,6 +759,7 @@ def phase_details(s, r):
                   "cancel": {"name": can, "access_key": key_cancel}},
         fix="give 取消 a mnemonic (取消(&C)) like the other dialog commands")
 
+    focus_in_dialog = s.focus_control("metadata_title")
     order = []
     for _ in range(5):
         s.kb.press("tab", note="dialog tab order")
@@ -770,25 +771,30 @@ def phase_details(s, r):
         "OR-07", "organize", "Tab order inside the dialog is complete and contained",
         "blocking", "pass" if order == expected and contained else "fail",
         "Tab walks 书名 -> 作者 -> 收藏 -> 保存 -> 取消 -> 书名 and never leaves the dialog",
-        "observed order=%r (expected %r), all inside dialog=%s" % (order, expected, contained),
+        "focus placed on 书名=%s; observed order=%r (expected %r), all inside dialog=%s"
+        % (focus_in_dialog, order, expected, contained),
         steps=["open the dialog", "press Tab five times and read the focused control"],
         element={"dialog": hex(dialog)},
         evidence={"order": order},
         fix="none needed while the template order matches the visual order")
 
-    owner_disabled = not bool(w32.user32.IsWindowEnabled(s.host.hwnd))
+    owner_enabled = bool(w32.user32.IsWindowEnabled(s.host.hwnd))
     import_el = s.uia_named("import_button")
-    owner_uia_disabled = bool(import_el) and import_el.get("enabled") is False
+    child_enabled = (import_el or {}).get("enabled")
     r.record(
         "OR-10", "organize", "the owner window reports its disabled state",
-        "serious", "pass" if owner_disabled and owner_uia_disabled else "fail",
-        "while the dialog is open the main window and its commands report IsEnabled=false",
-        "IsWindowEnabled(main)=%s, UIA enabled of 导入=%r"
-        % (not owner_disabled, (import_el or {}).get("enabled")),
-        steps=["read IsWindowEnabled and the UIA IsEnabled of a main-window command"],
+        "serious",
+        "pass" if (not owner_enabled and child_enabled is False) else "fail",
+        "while the dialog is open the owner window and its commands report IsEnabled=false",
+        "IsWindowEnabled(main)=%r, UIA IsEnabled of 导入=%r"
+        % (owner_enabled, child_enabled),
+        steps=["read IsWindowEnabled(main) and the UIA IsEnabled of a main-window command"],
         element=s.element("import_button"),
-        fix="none needed; EnableWindow(owner, FALSE) already reports through UIA")
+        fix="the owner is disabled with EnableWindow, but the Win32 provider still reports its "
+            "children as enabled; expose the blocked state through a provider so a screen reader "
+            "does not offer controls that cannot be used")
 
+    back_in_dialog = s.focus_control("metadata_title")
     s.kb.press("escape", note="cancel the dialog from the keyboard")
     closed = s.host.wait_for(lambda: s.host.dialog_window() is None, timeout=30, interval=0.2,
                              label="dialog closes on Escape")
@@ -796,8 +802,9 @@ def phase_details(s, r):
         "OR-08", "organize", "Escape closes the details dialog",
         "blocking", "pass" if closed else "fail",
         "Escape cancels the dialog without touching the book",
-        "dialog closed=%s, status=%r" % (bool(closed), s.status()),
-        steps=["open the dialog", "press Escape"],
+        "focus inside the dialog before Escape=%s, dialog closed=%s, status=%r"
+        % (back_in_dialog, bool(closed), s.status()),
+        steps=["open the dialog", "put the focus back on 书名", "press Escape"],
         element={"dialog": hex(dialog)},
         fix="none needed; IsDialogMessage already maps Escape to IDCANCEL")
 
@@ -814,6 +821,7 @@ def phase_details(s, r):
         fix="call SetFocus on the invoking button in the dialog's WM_DESTROY "
             "(SetActiveWindow alone does not restore keyboard focus)")
 
+    s.close_host_dialog("before reopening for the default-button check")
     ok_again, stops_again = s.goto("metadata_button")
     if ok_again:
         s.kb.press("space", note="reopen the details dialog")
@@ -830,6 +838,7 @@ def phase_details(s, r):
             reason="dialog did not reopen", fix="fix the reopen path first")
         return
     time.sleep(0.4)
+    focus_for_enter = s.focus_control("metadata_title")
     s.kb.press("enter", note="activate the default 保存 button")
     saved = s.host.wait_for(lambda: "已保存" in s.status() or "未提交" in s.status(),
                             timeout=90, interval=0.25, label="save path reports a result")
@@ -844,12 +853,14 @@ def phase_details(s, r):
         "OR-11", "organize", "Enter activates the dialog default button",
         "moderate", "pass" if saved and gone else "fail",
         "Enter in the dialog triggers the default 保存 command and the dialog closes",
-        "status=%r, dialog closed=%s, recovery dialog=%s"
-        % (s.status(), bool(gone), bool(recovery)),
+        "focus placed on 书名=%s, status=%r, dialog closed=%s, recovery dialog=%s"
+        % (focus_for_enter, s.status(), bool(gone), bool(recovery)),
         steps=["open the dialog", "press Enter without touching the fields"],
         element={"control_id": 132, "class": "Button"},
         evidence={"stops": stops_again, "status": s.status()},
         fix="none needed; DM_SETDEFID plus IsDialogMessage already route Enter")
+    s.close_host_dialog("end of the details flow")
+    s.host.wait_idle(timeout=60)
 
 
 def phase_keyboard(s, r):
@@ -912,13 +923,16 @@ def phase_keyboard(s, r):
     forward_reversed = list(reversed(core))
     r.record(
         "KB-02", "keyboard", "Shift+Tab reverses the same order",
-        "serious", "pass" if reverse == forward_reversed and len(core) >= 10
-        and s.focus_traps == 0 else "fail",
+        "serious",
+        "not_verified" if s.focus_traps else
+        ("pass" if reverse == forward_reversed and len(core) >= 10 else "fail"),
         "Shift+Tab visits the same stops in exactly the reverse order",
         "reverse=%r (forward order of %d stops)" % (reverse, len(core)),
         steps=["from the first stop press Shift+Tab once per stop"],
         element={"stops": reverse},
         evidence={"reverse": reverse, "forward_reversed": forward_reversed},
+        reason=("a keyboard trap made the reverse walk leave the tab order; see KB-07"
+                if s.focus_traps else None),
         fix="none needed while the dialog manager owns traversal")
 
     samples = []
