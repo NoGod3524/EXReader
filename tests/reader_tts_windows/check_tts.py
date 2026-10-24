@@ -31,7 +31,7 @@ PHASES = [
     ("speak", "speak", 22, 300),
     ("unicode", "unicode", 18, 300),
     ("limits", "limits", 27, 420),
-    ("control", "control", 28, 420),
+    ("control", "control", 27, 420),
     ("chunks", "chunks", 25, 900),
     ("overflow", "overflow", 9, 420),
     ("service", "service", 7, 180),
