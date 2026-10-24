@@ -247,6 +247,7 @@ int main(int argc, char **argv) {
         reader_rs_error reading_error;
         reader_revision_info info;
         char revision[33];
+        char annotation_id[33] = {0};
         char *wire = NULL;
         size_t bytes = 0;
         int created = 0;
@@ -257,11 +258,14 @@ int main(int argc, char **argv) {
         memset(&revision_error, 0, sizeof revision_error);
         check(reader_revision_new_id(revision, &revision_error) == READER_REV_OK, "C revision id allocates",
               revision_error.message);
+        check(reader_revision_new_id(annotation_id, &revision_error) == READER_REV_OK,
+              "C annotation id allocates", revision_error.message);
         memset(&envelope, 0, sizeof envelope);
         envelope.revision_id = revision;
         envelope.operation = "put";
         envelope.entity_kind = "annotation";
         envelope.book_key = book_key;
+        envelope.annotation_id = annotation_id;
         envelope.note_text = "c-composition";
         memset(&reading_error, 0, sizeof reading_error);
         check(reader_rs_encode_v2(store, &envelope, &capture, 0, &wire, &bytes, &reading_error) == READER_RS_OK,

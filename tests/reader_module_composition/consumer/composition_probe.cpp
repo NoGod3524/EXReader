@@ -395,7 +395,9 @@ int run(const arguments &args) {
   {
     SDK(exr_library_document(a.library, text_book, &document_a, &sdk_error));
     text = exr_document_text(document_a, &text_size);
-    check(text && text_size == text_bytes, "the SDK resolves the imported reflow text",
+    /* The SDK exposes its normalized text, so its length is not the raw file
+       size; the searched range below is what the composition has to preserve. */
+    check(text && text_size > 0, "the SDK resolves the imported reflow text",
           std::to_string(text_size));
     const std::string query = "\xE5\xBC\x95\xE6\x93\x8E\xE6\x8E\x8C\xE6\x8E\xA7";  /* 引擎掌控 */
     const std::string whole(text ? text : "", text ? text_size : 0);
