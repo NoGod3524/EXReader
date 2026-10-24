@@ -266,19 +266,28 @@ def main():
 
     def selected_menu_item():
         for node in a11y.find_all(current_app(), roles=('menu item',)):
-            if a11y.states(node).get('selected'):
+            current = a11y.states(node)
+            if current.get('showing') and (current.get('selected') or current.get('focused')):
                 return a11y.name(node)
         return ''
 
     def choose_menu_item(target):
         host.key('Home')
-        time.sleep(0.2)
+        time.sleep(0.25)
+        current = selected_menu_item()
+        if current == target:
+            return True
+        if not current:
+            # No item reports SELECTED or FOCUSED; Home still targets the first entry.
+            shown = [a11y.name(node) for node in a11y.find_all(current_app(), roles=('menu item',))
+                     if a11y.states(node).get('showing')]
+            return bool(shown) and shown[0] == target
         for _ in range(4):
+            host.key('Down')
+            time.sleep(0.12)
             if selected_menu_item() == target:
                 return True
-            host.key('Down')
-            time.sleep(0.1)
-        return selected_menu_item() == target
+        return False
 
     # -- phases ------------------------------------------------------------
     def phase_bridge():
@@ -392,12 +401,21 @@ def main():
                     evaluated=bool(focused_steps),
                     fix='none when the sequence is complete')
 
-        toolbar_seen = []
-        for entry in names:
-            if entry in contract.TOOLBAR and (not toolbar_seen or toolbar_seen[-1] != entry):
-                toolbar_seen.append(entry)
-        toolbar_order_ok = toolbar_seen == [entry for entry in contract.TOOLBAR
-                                            if entry in toolbar_seen]
+        def first_cycle(observations, available):
+            cycle = []
+            for entry in observations:
+                if entry in available and entry not in cycle:
+                    cycle.append(entry)
+            return cycle
+
+        def cyclic_equal(observed, expected):
+            if len(observed) != len(expected) or not expected:
+                return False
+            return any(observed == expected[index:] + expected[:index]
+                       for index in range(len(expected)))
+
+        toolbar_cycle = first_cycle(names, set(contract.TOOLBAR))
+        toolbar_order_ok = cyclic_equal(toolbar_cycle, list(contract.TOOLBAR))
         row_names = [contract.NAMES['search'], contract.NAMES['details'], contract.NAMES['more']]
         boxes = []
         for text in row_names:
@@ -408,18 +426,18 @@ def main():
                 boxes.append((text, box))
         visual_order = [text for text, _ in sorted(boxes, key=lambda pair: (pair[1]['y'],
                                                                           pair[1]['x']))]
-        deduped = []
-        for entry in names:
-            if entry in row_names and (not deduped or deduped[-1] != entry):
-                deduped.append(entry)
+        row_cycle = first_cycle(names, set(row_names))
+        row_order_ok = cyclic_equal(row_cycle, visual_order)
         audit.check('shelf_tab_order_follows_visual_order',
-                    toolbar_order_ok and deduped == visual_order and len(boxes) == len(row_names),
+                    toolbar_order_ok and row_order_ok and len(boxes) == len(row_names),
                     expected='focus order matches the visual left-to-right order of the toolbar '
                              'and of the shelf action row',
-                    actual={'toolbar_focus_order': toolbar_seen,
-                            'toolbar_visual_order': list(contract.TOOLBAR),
-                            'action_row_focus_order': deduped,
+                    actual={'toolbar_focus_cycle': toolbar_cycle,
+                            'toolbar_expected_cycle': list(contract.TOOLBAR),
+                            'toolbar_matches': toolbar_order_ok,
+                            'action_row_focus_cycle': row_cycle,
                             'action_row_visual_order': visual_order,
+                            'action_row_matches': row_order_ok,
                             'action_row_extents': dict(boxes)},
                     element='window/%s' % contract.WINDOW_TITLE, severity='blocking',
                     evaluated=bool(focused_steps),
@@ -429,6 +447,26 @@ def main():
                     fix='create the row in visual order: call gtk_box_pack_end for the more '
                         'button before the details button in reader.c, so the focus chain '
                         'agrees with the drawn order')
+
+        unnamed = [{'role': entry['role'], 'name': entry['name'], 'path': entry['path']}
+                   for entry in focused_steps if not entry['name']]
+        audit.check('tab_cycle_elements_named', bool(focused_steps) and not unnamed,
+                    expected='every element that takes keyboard focus exposes a non-empty '
+                             'accessible name',
+                    actual={'unnamed_focus_stops': unnamed,
+                            'cycle': [{'role': entry['role'], 'name': entry['name']}
+                                      for entry in sequence]},
+                    element=unnamed[0]['path'] if unnamed else '',
+                    severity='blocking',
+                    evaluated=bool(focused_steps),
+                    reproduction=['show the shelf with F2',
+                                  'press Tab through one complete cycle and read the name of the '
+                                  'FOCUSED element after each press'],
+                    fix='the focusable element is the GtkScrolledWindow the host wraps each list '
+                        'in; GTK leaves its accessible unnamed while it still takes focus, so name '
+                        'it in reader.c: atk_object_set_name(gtk_widget_get_accessible('
+                        'gtk_widget_get_ancestor(image, GTK_TYPE_SCROLLED_WINDOW)), "Page") and '
+                        'the same for the shelf, notes, organizer group and member lists')
 
         cycles = len(names) - len({entry['path'] for entry in sequence}) > 0
         audit.check('shelf_tab_order_cycles_without_trap', cycles,
@@ -452,18 +490,20 @@ def main():
         items = []
         deadline = time.monotonic() + 15
         while time.monotonic() < deadline:
-            items = a11y.find_all(current_app(), roles=('menu item',))
+            items = [node for node in a11y.find_all(current_app(), roles=('menu item',))
+                     if a11y.states(node).get('showing')]
             if items:
                 break
             time.sleep(0.1)
-        names = [a11y.name(node) for node in items]
+        shown = [node for node in items if a11y.states(node).get('showing')]
+        names = [a11y.name(node) for node in shown]
         missing = [entry for entry in contract.MORE_MENU_ITEMS if entry not in names]
-        audit.check('more_menu_items_named', reached and bool(items) and not missing,
+        audit.check('more_menu_items_named', reached and bool(shown) and not missing,
                     expected='the more menu button opens a menu whose items are named %r'
                              % (contract.MORE_MENU_ITEMS,),
                     actual={'reached_more_button': reached, 'menu_items': names,
                             'missing': missing, 'roles': [a11y.role(node) for node in items]},
-                    element=snapshot(items[0])['path'] if items else snapshot(None)['path'],
+                    element=snapshot(items[0])['path'] if items else snapshot(frame())['path'],
                     severity='advisory',
                     reproduction=['press F2, Tab to the more menu button, press space',
                                   'read the menu item roles and names'],
@@ -531,6 +571,38 @@ def main():
         shot('03-collections', window)
 
         sequence = traverse(16)
+        focused_steps_dialog = [entry for entry in sequence if entry['path']]
+        type_element = a11y.find_one(current_app(), roles=('combo box',),
+                                     text=contract.COLLECTIONS_NAMES['type'])
+        in_cycle = any(entry['name'] == contract.COLLECTIONS_NAMES['type']
+                       for entry in sequence)
+        host.key('alt+t')
+        time.sleep(0.4)
+        mnemonic_focus = focus_snapshot()
+        mnemonic_ok = (mnemonic_focus['name'] == contract.COLLECTIONS_NAMES['type']
+                       or mnemonic_focus['role'] == 'combo box')
+        if mnemonic_ok:
+            host.key('Escape')  # close the popped list so the next Escape closes the dialog
+            time.sleep(0.2)
+        audit.check('collections_type_selector_reachable',
+                    type_element is not None and (in_cycle or mnemonic_ok),
+                    expected='the collection type selector can be reached from the keyboard, '
+                             'either in the Tab cycle or through its mnemonic',
+                    actual={'in_tab_cycle': in_cycle, 'reachable_by_mnemonic': mnemonic_ok,
+                            'focusable_state': a11y.states(type_element).get('focusable')
+                            if type_element is not None else None,
+                            'focus_after_mnemonic': mnemonic_focus,
+                            'tab_cycle': [entry['name'] for entry in sequence]},
+                    element=snapshot(type_element)['path'] or snapshot(dialog)['path'],
+                    severity='advisory',
+                    evaluated=bool(focused_steps_dialog),
+                    reproduction=['open the organizer',
+                                  'Tab through one complete cycle, then press Alt+T',
+                                  'read the focused element after each step'],
+                    fix='the selector sits outside the Tab chain and is reachable only through '
+                        'its _Type mnemonic; add gtk_widget_set_can_focus(collections.types, TRUE) '
+                        'while keeping the mnemonic widget so both paths work')
+
         mark = recorder.mark()
         close_with_escape(contract.COLLECTIONS_DIALOG)
         after = focus_snapshot()
@@ -559,13 +631,17 @@ def main():
         host.activate(window)
         dialog = wait_element(contract.IMPORT_DIALOG)
         focused = focus_snapshot()
+        node = focus_node()
+        inside = (dialog is not None and node is not None
+                  and (a11y.same(node, dialog) or a11y.is_ancestor(dialog, node)))
         audit.check('import_dialog_identity_and_focus',
-                    dialog is not None and a11y.role(dialog) in contract.DIALOG_ROLES
-                    and focused['name'] != '',
-                    expected='F1 opens a dialog named %r that takes keyboard focus'
-                             % contract.IMPORT_DIALOG,
+                    dialog is not None
+                    and a11y.role(dialog) in contract.DIALOG_ROLES + ('file chooser',)
+                    and inside,
+                    expected='F1 opens a file chooser dialog named %r that takes keyboard focus '
+                             'inside its own subtree' % contract.IMPORT_DIALOG,
                     actual={'role': a11y.role(dialog) if dialog is not None else None,
-                            'focused': focused, 'window': window},
+                            'focused': focused, 'focus_inside_dialog': inside, 'window': window},
                     element=snapshot(dialog)['path'],
                     reproduction=['press F1 on the main window',
                                   'read the dialog and the focused element'],
@@ -621,7 +697,7 @@ def main():
                              'navigation can announce the book',
                     actual={'rows': detail, 'unnamed_rows': len(unnamed),
                             'unnamed_with_text_child': len(fallback)},
-                    element=detail[0]['path'] if detail else '',
+                    element=detail[0]['path'] if detail else snapshot(listing)['path'],
                     reproduction=['import originals, show the shelf with F2',
                                   'read the Name property of each list row on the bus'],
                     fix='in reader.c shelf_present(), after building the caption: '
@@ -635,7 +711,7 @@ def main():
                     actual={'rows': len(detail), 'not_focusable': not_focusable,
                             'insensitive': [entry['path'] for entry in detail
                                             if not entry['states'].get('enabled')]},
-                    element=detail[0]['path'] if detail else '',
+                    element=detail[0]['path'] if detail else snapshot(listing)['path'],
                     reproduction=['show the shelf with F2 and read the FOCUSABLE state of each row'],
                     fix='none when the rows report FOCUSABLE')
 
@@ -657,7 +733,7 @@ def main():
                     expected='the reader exposes the page image, selectable text, comment entry and '
                              'saved-notes list by accessible name and usable role',
                     actual={'panels': panels, 'missing': missing, 'book': state.get('book')},
-                    element=panels['page_text']['path'],
+                    element=panels['page_text']['path'] or snapshot(frame())['path'],
                     reproduction=['open a book with F2 then Return',
                                   'read the reader panel elements on the bus'],
                     fix='none: all four names are set through atk_object_set_name in reader.c')
@@ -697,7 +773,7 @@ def main():
                              'accessible name',
                     actual={'notes': state.get('notes'), 'rows': detail,
                             'unnamed_rows': len(unnamed)},
-                    element=detail[0]['path'] if detail else '',
+                    element=detail[0]['path'] if detail else snapshot(listing)['path'],
                     reproduction=['select page text with F7 then ctrl+a',
                                   'type a comment after F11', 'press F8 to add the note',
                                   'read the saved-note rows'],
@@ -748,7 +824,7 @@ def main():
                             'status_role': a11y.role(after) if after is not None else None,
                             'status_attributes': a11y.attributes(after)
                             if after is not None else {}},
-                    element=snapshot(after)['path'],
+                    element=snapshot(after)['path'] or snapshot(before)['path'],
                     reproduction=['read the status label name', 'import invalid.epub with F1',
                                   'read the label again and the delivered accessibility events'],
                     evaluated=evaluated,
@@ -877,7 +953,8 @@ def main():
                             'exported_text_is_secret': leaked,
                             'exported_text_sample': ((exported or {}).get('text') or '')[:8],
                             'attributes': attributes, 'attributes_mark_secret': marked},
-                    element=snapshot(password)['path'], severity='blocking',
+                    element=snapshot(password)['path'] or snapshot(dialog)['path'],
+                    severity='blocking',
                     reproduction=['open Account and Sync', 'Tab to the password entry',
                                   'paste a known secret', 'read the AT-SPI text and attributes of '
                                   'that entry'],
@@ -972,6 +1049,7 @@ def main():
         audit.observations['fatal_traceback'] = traceback.format_exc()[-4000:]
         print('AUDIT FATAL %r' % (exc,), flush=True)
     finally:
+        host.focus_hook = None
         try:
             host.window_tree(folder / 'logs' / 'window-tree.txt')
         except Exception as exc:

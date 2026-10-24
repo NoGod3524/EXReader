@@ -197,10 +197,13 @@ class Host:
             self.wait_state(settle, timeout=settle_timeout, description='host idle after %r' % (keys,))
 
     def paste(self, value):
+        # xclip forks a holder process that inherits the stdio pipes; capturing
+        # them would keep this call waiting until the timeout expires.
         result = subprocess.run(['xclip', '-selection', 'clipboard'], input=value.encode(),
-                                check=False, capture_output=True, timeout=20)
+                                check=False, stdout=subprocess.DEVNULL,
+                                stderr=subprocess.DEVNULL, timeout=20)
         if result.returncode != 0:
-            raise RuntimeError('xclip failed: %r' % (result.stderr,))
+            raise RuntimeError('xclip failed with status %d' % result.returncode)
         self.key('ctrl+v')
 
     def type_text(self, value):
