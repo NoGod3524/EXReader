@@ -1,0 +1,47 @@
+{
+  "package": "J23 reader application boundary fuzz",
+  "accepted": false,
+  "branch": "codex/reader-app-boundary-fuzz",
+  "workflow": ".github/workflows/reader-app-boundary-fuzz.yml",
+  "start_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk_sha": "9854061be331fe603a1822d9b2b36ee357154927",
+  "source_sha": null,
+  "run_id": null,
+  "attempt": null,
+  "jobs": [],
+  "artifacts": [],
+  "cases": [],
+  "checks": 0,
+  "required_checks": 45,
+  "fuzz": [],
+  "replay": [],
+  "limits": {
+    "iterations": 2500,
+    "time_budget_ms": 90000,
+    "seed": "0x6a32332d66757a7a"
+  },
+  "sanitizers": [
+    "address",
+    "undefined",
+    "leak"
+  ],
+  "granted_platforms": [],
+  "windows_accepted": false,
+  "macos_accepted": false,
+  "android_accepted": false,
+  "apple_accepted": false,
+  "host_ui_accepted": false,
+  "sync_accepted": false,
+  "sdk_changed": false,
+  "schema_changed": false,
+  "complete_product": false,
+  "problems": [
+    "no cloud run has been granted yet"
+  ],
+  "uncovered": [
+    "Windows, macOS, iOS, Android and GTK hosts were not built or run",
+    "no host UI, theme observer, product wiring or synchronization client was exercised",
+    "encode cases use explicit public selector values and do not load a document",
+    "no release, tag or signed artifact was produced"
+  ]
+}
