@@ -1,0 +1,181 @@
+{
+  "id": "J15",
+  "component": "reader_ocr_overlay",
+  "worktree": "C:/Users/Oscar/exreader-agents/j15-ocr-overlay/EXReader",
+  "branch": "codex/reader-ocr-overlay",
+  "source_sha": "614b14ab6d031c3571e8b60d7c3d615b33878867",
+  "implementation_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "sdk_abi": 1,
+  "product_schema": 1,
+  "run_id": 40127504830,
+  "attempt": 1,
+  "accepted": true,
+  "scope": "module-level temporary OCR text/region snapshot for one rendered fixed page: installed C ABI, installed C and C++ consumers, real Tesseract recognition, rotation/scale mapping, cancellation/deadline/staleness, model-missing paths, snapshot lifetime, document immutability",
+  "complete_product": false,
+  "host_wired": false,
+  "default_reading_profile_enabled": false,
+  "windows_host_accepted": false,
+  "android_host_accepted": false,
+  "apple_host_accepted": false,
+  "real_scan_quality_accepted": false,
+  "chinese_cer_accepted": false,
+  "checks": {
+    "total": 55,
+    "passed": 53,
+    "skipped": 2,
+    "failed": 0,
+    "pending": 0
+  },
+  "named_skips": [
+    "windows_host_scope",
+    "mobile_host_scope"
+  ],
+  "jobs": {
+    "linux": {
+      "id": 120971969878,
+      "name": "overlay (ubuntu-24.04)",
+      "conclusion": "success"
+    },
+    "macos": {
+      "id": 120971969787,
+      "name": "overlay (macos-14)",
+      "conclusion": "success"
+    },
+    "evidence": {
+      "id": 120972221425,
+      "name": "same-run artifact evidence",
+      "conclusion": "success"
+    }
+  },
+  "artifacts": [
+    {
+      "name": "reader-ocr-overlay-Linux-40127504830-1",
+      "id": 12573648790,
+      "bytes": 5327270,
+      "sha256": "6d7f157dab1e962078c469d93786cfec58aabf08f78b9164d46d44d957cf62d1",
+      "expired_at_verification": false,
+      "expires_at": "2027-01-22T19:55:47Z",
+      "summary_sha256": "104cd91a0c1bd23d5c67b478964660068f604b221bfa62aa92ead018d5483017",
+      "report_sha256": "8c19ca448f3e834f7f156401af9a4bd48e7095cf935b3dd4645280ac739fc753",
+      "results_sha256": "8945bc5bff57d196e42973a8e3fa12ab3c8074120a054631ff72637f3c492e89"
+    },
+    {
+      "name": "reader-ocr-overlay-macOS-40127504830-1",
+      "id": 12573409160,
+      "bytes": 5146619,
+      "sha256": "f51f2473d2531ce2bc682836a9af513d2c2a7d02ed2f8925b01dc078659746ad",
+      "expired_at_verification": false,
+      "expires_at": "2027-01-22T19:55:47Z",
+      "summary_sha256": "1316e5204c38f09509496b01c6bfd4e3dba574adb44b0916000c941099e74949",
+      "report_sha256": "6fd402d514841515d578bb0d9e12ab1632daa0dfc17f0dd8feb35d17216759f8",
+      "results_sha256": "ad7753141144cc2bbd5756e7273317fe19b9133860ba4f895c84db9b167e6c59"
+    },
+    {
+      "name": "reader-ocr-overlay-evidence-40127504830-1",
+      "id": 12572694090,
+      "bytes": 1888,
+      "sha256": "4edeff8a0b895a70f5a573a9a01b37e22dc929026f35963d5d3ea554009030cd",
+      "expired_at_verification": false,
+      "expires_at": "2027-01-22T19:55:47Z"
+    }
+  ],
+  "consumers": {
+    "linux": {
+      "tesseract": "5.3.4",
+      "probe": {
+        "bytes": 1369992,
+        "sha256": "fbd9c4f8938265945ea5d06229abf66171f7bc3d7b1fd81b744b41b0786dc5b1"
+      },
+      "c_consumer": {
+        "bytes": 1141792,
+        "sha256": "c20f0a42e0ab9af9e710c78a428f75444bbf1855332d889d8c4e6d35d889f3cb"
+      }
+    },
+    "macos": {
+      "tesseract": "5.5.3",
+      "probe": {
+        "sha256": "2bc6dbd269f9333f02c8bf3bb30029b198c7ca141f1e1e4bf636bfaf818665df"
+      },
+      "c_consumer": {
+        "sha256": "cdb77b18e1fa1045d56fe1c1cab9ccf00385f508bd1a9625c8f9ac6266291f3b"
+      }
+    }
+  },
+  "model_identity": {
+    "repository": "tesseract-ocr/tessdata_fast",
+    "commit": "87416418657359cb625c412a48b6e1d6d41c29bd",
+    "license": "Apache-2.0",
+    "languages": [
+      "eng",
+      "chi_sim"
+    ],
+    "registered_in_artifact": "models/identity.json"
+  },
+  "observations": {
+    "rendered_page": {
+      "width": 900,
+      "height": 1200,
+      "channels": 4,
+      "dark_pixels": {
+        "linux": 13303,
+        "macos": 12660
+      }
+    },
+    "recognized": {
+      "lines": 4,
+      "words": 8,
+      "dpi": 300,
+      "clockwise": 0
+    },
+    "rotation_invariance_page_units": 0,
+    "content_rotation_clock": 270,
+    "scale_1_5": {
+      "bitmap": [
+        1350,
+        1800
+      ],
+      "dpi": 450,
+      "max_deviation_page_units": {
+        "linux": 0.666667,
+        "macos": 0.333333
+      }
+    },
+    "confidence_floor": {
+      "linux": 96.846756,
+      "macos": 96.900848,
+      "kept": 1,
+      "of": 12
+    },
+    "blank_page_records": 0,
+    "image_only_page_records": 0,
+    "document_memory_bytes": [
+      754,
+      754
+    ],
+    "provider_calls_before_pixel_limit_rejection": 0
+  },
+  "retained_failed_runs": [
+    40123250843,
+    40123989938,
+    40124528190,
+    40125032038,
+    40125410749,
+    40125893580,
+    40126276548,
+    40126918224,
+    40127068074
+  ],
+  "problems": [],
+  "not_covered": [
+    "Windows host execution",
+    "Android host execution",
+    "Apple iOS host execution",
+    "real user scan quality (skew, dirt, handwriting)",
+    "Chinese or other-language recognition accuracy (only model opening is checked)",
+    "hard CPU/RSS isolation (the deadline is cooperative)",
+    "host UI wiring and default reading-profile enablement",
+    "product transaction or sidecar behaviour"
+  ]
+}
