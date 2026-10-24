@@ -184,7 +184,7 @@ static int daemon_processes(void) {
   int n = 0;
   if (!d) return -1;
   while ((e = readdir(d)) != NULL) {
-    char path[256], comm[64];
+    char path[512], comm[64];
     FILE *f;
     size_t len;
     if (e->d_name[0] < '0' || e->d_name[0] > '9') continue;
@@ -550,7 +550,7 @@ static void phase_live(suite *s) {
 
   {
     size_t before = list.count;
-    char keep[64] = {0};
+    char keep[300] = {0};
     if (before && list.voices && list.voices[0].id) snprintf(keep, sizeof keep, "%s", list.voices[0].id);
     reader_tts_voice_list_free(&list);
     report(s, "voice_list_freed_after_destroy",
