@@ -237,15 +237,19 @@ def case_validate_unicode_names():
     for name in names:
         process = run([PROBE, "validate", profile_id, account, "https://one.example/reader/", name])
         expect_status(process, "OK")
-    too_long = "a" * 129
-    expect_status(run([PROBE, "validate", profile_id, account, "https://one.example/reader/",
-                       too_long]), "INVALID")
-    expect_status(run([PROBE, "validate", profile_id, account, "https://one.example/reader/",
-                       " leading"]), "INVALID")
-    expect_status(run([PROBE, "validate", profile_id, account, "https://one.example/reader/",
-                       "trailing "]), "INVALID")
-    expect_status(run([PROBE, "validate", profile_id, account, "https://one.example/reader/",
-                       ""]), "INVALID")
+    for name in ["", " leading", "trailing "]:
+        process = run([PROBE, "validate", profile_id, account, "https://one.example/reader/", name])
+        expect(status_of(process) == "INVALID",
+               "name %r -> %s" % (name, status_of(process)))
+    store_path = store("name-document")
+    add(store_path, profile_id, account, "https://one.example/reader/", "one")
+    original = document_bytes(store_path)
+    altered = original.replace(b'"one"', b'"' + (b"a" * 129) + b'"', 1)
+    expect(altered != original, "fixture did not change the name")
+    document(store_path).write_bytes(altered)
+    expect_status(run([PROBE, "load", store_path]), "FORMAT")
+    expect(document_bytes(store_path) == altered,
+           "a document with an oversized name was overwritten")
 
 
 def case_validate_utf8_refusals():
@@ -872,8 +876,8 @@ def main():
     PROBE = arguments.probe
     SESSION = arguments.session
     WORKER = arguments.worker
-    PREFIX = Path(arguments.prefix)
-    ROOT = Path(arguments.work)
+    PREFIX = Path(arguments.prefix).resolve()
+    ROOT = Path(arguments.work).resolve()
     PLATFORM = arguments.platform
     if ROOT.exists():
         shutil.rmtree(ROOT)

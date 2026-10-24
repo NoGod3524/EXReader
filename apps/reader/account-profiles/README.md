@@ -17,7 +17,10 @@ A profile is exactly four non-secret fields:
 
 A credential, token, password, `Authorization` header, cookie, URL userinfo,
 query or fragment is never accepted, stored, echoed or returned. `root_url` is
-never rewritten: the existing session binds the exact string.
+never rewritten: the existing session binds the exact string. Field rules are
+enforced by `validate`/`add` (`INVALID`/`SECRET`); a stored field that does not fit
+its fixed capacity, including an unterminated or oversized value, makes the whole
+document `FORMAT` and it is never rewritten.
 
 ## Store layout
 
