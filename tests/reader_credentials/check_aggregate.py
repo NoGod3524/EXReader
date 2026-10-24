@@ -187,6 +187,8 @@ def main():
     reject("phase_dropped_named_check", lambda s: repack(s, "linux", lambda r: r["phases"][0]["checks"].pop(), True), "phase_raw_mismatch")
     reject("phase_forged_expected_set", lambda s: repack(s, "linux", lambda r: r["phases"][0].__setitem__("expected", ["fabricated"]), True), "phase_expected_ids")
     reject("phase_summary_replaced", lambda s: repack(s, "android", lambda r: r["phases"][0].__setitem__("summaries", []), True), "phase_raw_mismatch")
+    reject("phase_summary_boolean", lambda s: repack(s, "linux", lambda r: r["phases"][2]["summaries"][0].__setitem__("passed", True), True), "phase_summary_type")
+    reject("windows_diagnostic_boolean_contract", lambda s: repack(s, "windows", lambda r: r["observations"]["windows_unavailable_attempts"].__setitem__(WINDOWS_DIAGNOSTICS[0], 0), True), "windows_observations")
     reject("phase_log_reference_missing", lambda s: repack(s, "linux", lambda r: r["phases"][0].__setitem__("log", "99-suite"), True), "phase_logs_missing")
     for field, value in (("hits", 1), ("hits", False), ("secrets", 7), ("forms_per_secret", "raw only"), ("files", 0), ("bytes", 0)):
         reject("secret_scan_" + field + "_" + str(value), lambda s, f=field, v=value: repack(s, "linux", lambda r: r["secret_scan"].__setitem__(f, v), True))

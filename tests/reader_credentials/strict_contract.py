@@ -154,7 +154,10 @@ def raw_phase(entry, files, expected, summaries, diagnostic=False):
         phase = PHASE_LINE.fullmatch(line.strip())
         if phase:
             observed.append({"phase": phase[1], "passed": int(phase[2]), "total": int(phase[3])})
-    need(entry.get("checks") == checks and entry.get("summaries") == observed, "phase_raw_mismatch")
+    reported = entry.get("summaries")
+    need(type(reported) is list and all(type(row) is dict and type(row.get("passed")) is int
+         and type(row.get("total")) is int for row in reported), "phase_summary_type")
+    need(entry.get("checks") == checks and reported == observed, "phase_raw_mismatch")
     ids = [row["id"] for row in checks];need(len(ids) == len(set(ids)), "phase_duplicate_check")
     code = entry.get("exit");need(code is None or integer(code), "phase_exit")
     complete = ids == expected and all(row["result"] == "pass" for row in checks) and type(code) is int and code == 0 and observed == summaries
@@ -171,7 +174,9 @@ def plan_for(key, report, files):
             need(row.get("phase") == "unavailable", "windows_diagnostic_phase")
             states.append(raw_phase(row, files, C["unavailable"], normal("unavailable")[3], True))
         obs = report.get("observations", {})
-        need(obs.get("windows_unavailable_attempts") == dict(zip(WINDOWS_DIAGNOSTICS, states))
+        attempts = obs.get("windows_unavailable_attempts")
+        need(type(attempts) is dict and all(type(value) is bool for value in attempts.values())
+             and attempts == dict(zip(WINDOWS_DIAGNOSTICS, states))
              and obs.get("s4u_input_removed_by_consumer") is True, "windows_observations")
         plan = [normal("suite"), normal("reopen"), normal("seed")]
         if any(states):
