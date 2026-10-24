@@ -173,7 +173,9 @@ def write_fixtures(directory):
     emit("shelf2.epub", epub_bytes(title="重排：第二本", author="作者：另一位"))
     emit("small.txt", ("第一章\n" + "正文一行。" * 40 + "\n").encode("utf-8"))
     emit("tiny.txt", ("另一本书" * 3 + "\n").encode("utf-8"))
-    emit("large.txt", "".join(f"line {i:07d} 大量文本\n" for i in range(240000)).encode("utf-8"))
+    # 16 lines of 64 KiB: sixteen hash chunks with a paragraph count far below
+    # the SDK node budget, so the only limit under test is this package's own.
+    emit("large.txt", ("行" * 21845 + "\n") * 16)
 
     manifest = {
         "directory": str(books.resolve()),

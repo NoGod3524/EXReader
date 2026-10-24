@@ -465,6 +465,7 @@ def case_cancel_at_every_poll(world, a):
     large_polls = int(big.get("polls", 0))
     a.eq("large.poll_budget", large_polls, 3 + chunks)
     a.eq("large.identity", (big.get("view") or {}).get("identity"), SHA256_IDENTITY)
+    a.true("large.chunks", chunks >= 4, chunks)
     for limit in (1, 2, 3, 2 + chunks // 2, large_polls - 1, large_polls):
         result = world.read(world.keys["large"], 1, 0, cancel=limit)
         a.eq("large.cancel[%d].status" % limit, result.get("status"), CANCELLED)
