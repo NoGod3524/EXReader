@@ -1,0 +1,942 @@
+{
+  "schema": 1,
+  "package": "G16 Apple accessibility audit",
+  "branch": "codex/reader-a11y-apple",
+  "source_sha": "29f03e233ee5e6c668d737f8236974648ce4333c",
+  "start_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
+  "run": {
+    "id": "40085956514",
+    "attempt": 1,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40085956514"
+  },
+  "workflow": ".github/workflows/reader-a11y-apple.yml",
+  "contract": {
+    "path": "tests/reader_a11y_apple/a11y_contract.json",
+    "sha256": "3ad5fb034aa9d27b224f8154158839eabe9027b7a275f209aa08b808cc913128"
+  },
+  "audit_completed": true,
+  "accessibility_accepted": false,
+  "platforms": {
+    "macos": {
+      "platform": "macos",
+      "device": "macOS host",
+      "runtime": "macOS",
+      "window": {
+        "height": 488,
+        "width": 900,
+        "x": 62,
+        "y": 122
+      },
+      "content_size": "not-applicable",
+      "keyboard_ui_mode": "3",
+      "program_sha256": "bb9777ceca90ef1e6fd3ba616b6b934bb7e03555c05db6dbd78aeb72fb4d375e",
+      "program_bytes": 58656,
+      "embedded_source_sha": "29f03e233ee5e6c668d737f8236974648ce4333c",
+      "sdk_sha256": "f0d15a63de7eb3ce9cd3961190fcaf81bea2813fd4538a9db08a6aad10b54e9d",
+      "xcode": "Xcode 16.4\nBuild version 16F6",
+      "steps": 14,
+      "pass": 403,
+      "fail": 4,
+      "blocking": 0,
+      "blocked": 0,
+      "gaps": 8,
+      "uncovered": 7,
+      "advisories": 0,
+      "screenshots": 28,
+      "test_failures": []
+    },
+    "iphone": {
+      "platform": "iphone",
+      "device": "iPhone SE (3rd generation)",
+      "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-26-2",
+      "window": {
+        "height": 667,
+        "width": 375,
+        "x": 0,
+        "y": 0
+      },
+      "content_size": "accessibility-extra-extra-extra-large",
+      "keyboard_ui_mode": "not-applicable",
+      "program_sha256": "6e6ff64712addcee93283ffe23b391ca1982990b8c53a4b327848eb0d09b7c6f",
+      "program_bytes": 39472,
+      "embedded_source_sha": "29f03e233ee5e6c668d737f8236974648ce4333c",
+      "sdk_sha256": "e41f9131ba4daf5c78db0502bc78610d4481d8f2a2df6c1f6879e7e2326ba9ce",
+      "xcode": "Xcode 16.4\nBuild version 16F6",
+      "steps": 15,
+      "pass": 433,
+      "fail": 14,
+      "blocking": 8,
+      "blocked": 0,
+      "gaps": 8,
+      "uncovered": 7,
+      "advisories": 47,
+      "screenshots": 30,
+      "test_failures": []
+    },
+    "ipad": {
+      "platform": "ipad",
+      "device": "iPad mini (A17 Pro)",
+      "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-26-2",
+      "window": {
+        "height": 1133,
+        "width": 744,
+        "x": 0,
+        "y": 0
+      },
+      "content_size": "accessibility-extra-extra-extra-large",
+      "keyboard_ui_mode": "not-applicable",
+      "program_sha256": "6e6ff64712addcee93283ffe23b391ca1982990b8c53a4b327848eb0d09b7c6f",
+      "program_bytes": 39472,
+      "embedded_source_sha": "29f03e233ee5e6c668d737f8236974648ce4333c",
+      "sdk_sha256": "e41f9131ba4daf5c78db0502bc78610d4481d8f2a2df6c1f6879e7e2326ba9ce",
+      "xcode": "Xcode 16.4\nBuild version 16F6",
+      "steps": 15,
+      "pass": 442,
+      "fail": 8,
+      "blocking": 4,
+      "blocked": 0,
+      "gaps": 8,
+      "uncovered": 7,
+      "advisories": 47,
+      "screenshots": 30,
+      "test_failures": []
+    }
+  },
+  "fixtures_sha256": "fefd00e2f79d14e21d436675a888b7bd25293c091ad16b268a987a29e354abbb",
+  "findings": [
+    {
+      "platform": "macos",
+      "states": [
+        "reader.epub"
+      ],
+      "element": "reader.state",
+      "element_path": "Application>Window[EXReaderHost.HostRootView-1-AppWindow-1]>Group>StaticText[reader.state]",
+      "criterion": "content-rule:reader-state-internal-hash",
+      "severity": "minor",
+      "blocking": false,
+      "expected": "辅助技术只应读到用户可理解的状态，而不是内部状态哈希",
+      "actual": "匹配禁止模式 ^#[0-9A-Za-z]{4,}$ | #41996943",
+      "fix": "生产构建隐藏该调试行，或对其加 .accessibilityHidden(true)",
+      "screenshots": []
+    },
+    {
+      "platform": "macos",
+      "states": [
+        "reader.epub"
+      ],
+      "element": "reader.font.decrease",
+      "element_path": "Application>Window[EXReaderHost.HostRootView-1-AppWindow-1]>Group>Button[reader.font.decrease]",
+      "criterion": "content-rule:font-button-symbol-only",
+      "severity": "major",
+      "blocking": false,
+      "expected": "字号按钮有语义名称（增大/减小字号）",
+      "actual": "匹配禁止模式 ^A[-+±]$ | A-",
+      "fix": "补 .accessibilityLabel(\"减小字号\")/\"增大字号\"",
+      "screenshots": []
+    },
+    {
+      "platform": "macos",
+      "states": [
+        "library.empty"
+      ],
+      "element": "library.title",
+      "element_path": "Application>Window[EXReaderHost.HostRootView-1-AppWindow-1]>Group>StaticText[library.title]",
+      "criterion": "content-rule:library-title-trace",
+      "severity": "minor",
+      "blocking": false,
+      "expected": "AX value 不应暴露内部 UI 测试追踪串",
+      "actual": "包含 token= | 1:token=0,busy=false,started=false:scene=background | 2:token=0,busy=false,started=false:startup-request | 3:token=0,busy=true,started=true:startup-worker-scheduled | 4:token=0,busy=true,started=true:",
+      "fix": "仅在 -EXRUITestFixtures 下挂载该调试值，或加 .accessibilityHidden(true)",
+      "screenshots": []
+    },
+    {
+      "platform": "macos",
+      "states": [
+        "library.populated"
+      ],
+      "element": "library.book.0",
+      "element_path": "Application>Window[EXReaderHost.HostRootView-1-AppWindow-1]>Group>ScrollView[library.list]>Other>Button[library.book.0]",
+      "criterion": "content-rule:library-book-index-identifier",
+      "severity": "minor",
+      "blocking": false,
+      "expected": "书架行标识应稳定（按记录 id），而不是按枚举下标",
+      "actual": "命中需改进模式 ^library\\.book\\.\\d+$ | library.book.0",
+      "fix": "改用 library.book.<bookID>；同时保留 AX 名称中的书名以便人工脚本稳定",
+      "screenshots": []
+    },
+    {
+      "platform": "iphone",
+      "states": [
+        "library.busy"
+      ],
+      "element": "library.cancel",
+      "element_path": "Application>Window>Other>Other>Other>Other>Button[library.cancel]",
+      "criterion": "target-size",
+      "severity": "major",
+      "blocking": true,
+      "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+      "actual": "最小边 20.5 pt",
+      "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+      "screenshots": [
+        "83B9D49F-189B-4CB3-A238-E49518EF8201.png"
+      ]
+    },
+    {
+      "platform": "iphone",
+      "states": [
+        "reader.epub",
+        "reader.landscape",
+        "reader.portrait"
+      ],
+      "element": "reader.back",
+      "element_path": "Application>Window>Other>Other>Other>Other>Button[reader.back]",
+      "criterion": "target-size",
+      "severity": "major",
+      "blocking": true,
+      "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+      "actual": "最小边 20.5 pt",
+      "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+      "screenshots": [
+        "49327F08-A1D6-4F63-A6E5-C2D346766632.png",
+        "D385E31E-1647-49B3-ACBE-A8E63B2E7A2D.png",
+        "2652EE7F-9BA1-487F-9B64-D0EAC73D49EB.png"
+      ]
+    },
+    {
+      "platform": "iphone",
+      "states": [
+        "reader.landscape"
+      ],
+      "element": "reader.back",
+      "element_path": "Application>Window>Other>Other>Other>Other>Button[reader.back]",
+      "criterion": "hittable",
+      "severity": "major",
+      "blocking": true,
+      "expected": "启用中的控件可被命中",
+      "actual": "isHittable=false（可能被遮挡或在窗口外）",
+      "fix": "",
+      "screenshots": [
+        "D385E31E-1647-49B3-ACBE-A8E63B2E7A2D.png"
+      ]
+    },
+    {
+      "platform": "iphone",
+      "states": [
+        "reader.landscape"
+      ],
+      "element": "reader.back",
+      "element_path": "Application>Window>Other>Other>Other>Other>Button[reader.back]",
+      "criterion": "clipped",
+      "severity": "major",
+      "blocking": true,
+      "expected": "控件完整落在窗口内",
+      "actual": "frame={\"height\": 20.5, \"width\": 34.0, \"x\": 16.0, \"y\": -34.5} window={\"height\": 375.0, \"width\": 667.0, \"x\": 0.0, \"y\": 0.0}",
+      "fix": "为大字体/小窗口加滚动回退或压缩行距，避免控件溢出窗口",
+      "screenshots": [
+        "D385E31E-1647-49B3-ACBE-A8E63B2E7A2D.png"
+      ]
+    },
+    {
+      "platform": "iphone",
+      "states": [
+        "reader.landscape"
+      ],
+      "element": "reader.select",
+      "element_path": "Application>Window>Other>Other>Other>Other>Button[reader.select]",
+      "criterion": "clipped",
+      "severity": "major",
+      "blocking": true,
+      "expected": "控件完整落在窗口内",
+      "actual": "frame={\"height\": 34.5, \"width\": 58.0, \"x\": 264.5, \"y\": 362.5} window={\"height\": 375.0, \"width\": 667.0, \"x\": 0.0, \"y\": 0.0}",
+      "fix": "为大字体/小窗口加滚动回退或压缩行距，避免控件溢出窗口",
+      "screenshots": [
+        "D385E31E-1647-49B3-ACBE-A8E63B2E7A2D.png"
+      ]
+    },
+    {
+      "platform": "iphone",
+      "states": [
+        "reader.landscape"
+      ],
+      "element": "reader.notes",
+      "element_path": "Application>Window>Other>Other>Other>Other>Button[reader.notes]",
+      "criterion": "clipped",
+      "severity": "major",
+      "blocking": true,
+      "expected": "控件完整落在窗口内",
+      "actual": "frame={\"height\": 34.5, \"width\": 70.0, \"x\": 332.5, \"y\": 362.5} window={\"height\": 375.0, \"width\": 667.0, \"x\": 0.0, \"y\": 0.0}",
+      "fix": "为大字体/小窗口加滚动回退或压缩行距，避免控件溢出窗口",
+      "screenshots": [
+        "D385E31E-1647-49B3-ACBE-A8E63B2E7A2D.png"
+      ]
+    },
+    {
+      "platform": "iphone",
+      "states": [
+        "reader.epub"
+      ],
+      "element": "reader.state",
+      "element_path": "Application>Window>Other>Other>Other>Other>StaticText[reader.state]",
+      "criterion": "content-rule:reader-state-internal-hash",
+      "severity": "minor",
+      "blocking": false,
+      "expected": "辅助技术只应读到用户可理解的状态，而不是内部状态哈希",
+      "actual": "匹配禁止模式 ^#[0-9A-Za-z]{4,}$ | #41996943",
+      "fix": "生产构建隐藏该调试行，或对其加 .accessibilityHidden(true)",
+      "screenshots": []
+    },
+    {
+      "platform": "iphone",
+      "states": [
+        "reader.epub"
+      ],
+      "element": "reader.font.decrease",
+      "element_path": "Application>Window>Other>Other>Other>Other>Button[reader.font.decrease]",
+      "criterion": "content-rule:font-button-symbol-only",
+      "severity": "major",
+      "blocking": false,
+      "expected": "字号按钮有语义名称（增大/减小字号）",
+      "actual": "匹配禁止模式 ^A[-+±]$ | A-",
+      "fix": "补 .accessibilityLabel(\"减小字号\")/\"增大字号\"",
+      "screenshots": []
+    },
+    {
+      "platform": "iphone",
+      "states": [
+        "library.empty"
+      ],
+      "element": "library.title",
+      "element_path": "Application>Window>Other>Other>Other>Other>StaticText[library.title]",
+      "criterion": "content-rule:library-title-trace",
+      "severity": "minor",
+      "blocking": false,
+      "expected": "AX value 不应暴露内部 UI 测试追踪串",
+      "actual": "包含 token= | 1:token=0,busy=false,started=false:scene=inactive | 2:token=0,busy=false,started=false:startup-request | 3:token=0,busy=true,started=true:startup-worker-scheduled | 4:token=0,busy=true,started=true:st",
+      "fix": "仅在 -EXRUITestFixtures 下挂载该调试值，或加 .accessibilityHidden(true)",
+      "screenshots": []
+    },
+    {
+      "platform": "iphone",
+      "states": [
+        "library.populated"
+      ],
+      "element": "library.book.0",
+      "element_path": "Application>Window>Other>Other>Other>Other>ScrollView[library.list]>Other>Other>Button[library.book.0]",
+      "criterion": "content-rule:library-book-index-identifier",
+      "severity": "minor",
+      "blocking": false,
+      "expected": "书架行标识应稳定（按记录 id），而不是按枚举下标",
+      "actual": "命中需改进模式 ^library\\.book\\.\\d+$ | library.book.0",
+      "fix": "改用 library.book.<bookID>；同时保留 AX 名称中的书名以便人工脚本稳定",
+      "screenshots": []
+    },
+    {
+      "platform": "iphone",
+      "states": [
+        "library.large_type"
+      ],
+      "element": "library.list",
+      "element_path": "Application>Window>Other>Other>Other>Other>ScrollView[library.list]",
+      "criterion": "content-area:shelf-content-area",
+      "severity": "major",
+      "blocking": false,
+      "expected": "大字体下书架列表仍保留至少 25% 窗口高度（作者设定的设计下限，不是 WCAG 判据）",
+      "actual": "高度 15.0pt / 窗口 667.0pt = 2.2%",
+      "fix": "把导入按钮区折叠进菜单或滚动容器，给书架列表留出可读高度",
+      "screenshots": [
+        "571C515B-4B3F-4EDA-B88F-D34D9926FFF9.png"
+      ]
+    },
+    {
+      "platform": "iphone",
+      "states": [
+        "reader.large_type"
+      ],
+      "element": "reader.page",
+      "element_path": "Application>Window>Other>Other>Other>Other>Other[reader.page]",
+      "criterion": "content-area:reader-content-area",
+      "severity": "major",
+      "blocking": false,
+      "expected": "大字体下阅读面仍保留至少 25% 窗口高度（作者设定的设计下限，不是 WCAG 判据）",
+      "actual": "高度 153.0pt / 窗口 667.0pt = 22.9%",
+      "fix": "大字体下把控制区折叠成单行工具条或包进滚动容器，避免阅读面被压到几行",
+      "screenshots": [
+        "9673B6DE-A2D1-4523-9D40-FE6E2B261D00.png"
+      ]
+    },
+    {
+      "platform": "ipad",
+      "states": [
+        "library.busy"
+      ],
+      "element": "library.cancel",
+      "element_path": "Application>Window>Other>Other>Other>Other>Other>Button[library.cancel]",
+      "criterion": "target-size",
+      "severity": "major",
+      "blocking": true,
+      "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+      "actual": "最小边 20.5 pt",
+      "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+      "screenshots": [
+        "382106F8-A5DF-4E47-B7D0-BC2E91C2D7C1.png"
+      ]
+    },
+    {
+      "platform": "ipad",
+      "states": [
+        "reader.epub",
+        "reader.landscape",
+        "reader.portrait"
+      ],
+      "element": "reader.back",
+      "element_path": "Application>Window>Other>Other>Other>Other>Other>Button[reader.back]",
+      "criterion": "target-size",
+      "severity": "major",
+      "blocking": true,
+      "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+      "actual": "最小边 20.5 pt",
+      "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+      "screenshots": [
+        "FAE38DA4-65F2-4DF9-A25D-9DC9860172FC.png",
+        "0A97ADD8-BCD0-41D3-B312-E4AB8740F833.png",
+        "9E72CED2-7164-4F3D-9553-F9155DCC6116.png"
+      ]
+    },
+    {
+      "platform": "ipad",
+      "states": [
+        "reader.epub"
+      ],
+      "element": "reader.state",
+      "element_path": "Application>Window>Other>Other>Other>Other>Other>StaticText[reader.state]",
+      "criterion": "content-rule:reader-state-internal-hash",
+      "severity": "minor",
+      "blocking": false,
+      "expected": "辅助技术只应读到用户可理解的状态，而不是内部状态哈希",
+      "actual": "匹配禁止模式 ^#[0-9A-Za-z]{4,}$ | #41996943",
+      "fix": "生产构建隐藏该调试行，或对其加 .accessibilityHidden(true)",
+      "screenshots": []
+    },
+    {
+      "platform": "ipad",
+      "states": [
+        "reader.epub"
+      ],
+      "element": "reader.font.decrease",
+      "element_path": "Application>Window>Other>Other>Other>Other>Other>Button[reader.font.decrease]",
+      "criterion": "content-rule:font-button-symbol-only",
+      "severity": "major",
+      "blocking": false,
+      "expected": "字号按钮有语义名称（增大/减小字号）",
+      "actual": "匹配禁止模式 ^A[-+±]$ | A-",
+      "fix": "补 .accessibilityLabel(\"减小字号\")/\"增大字号\"",
+      "screenshots": []
+    },
+    {
+      "platform": "ipad",
+      "states": [
+        "library.empty"
+      ],
+      "element": "library.title",
+      "element_path": "Application>Window>Other>Other>Other>Other>Other>StaticText[library.title]",
+      "criterion": "content-rule:library-title-trace",
+      "severity": "minor",
+      "blocking": false,
+      "expected": "AX value 不应暴露内部 UI 测试追踪串",
+      "actual": "包含 token= | 1:token=0,busy=false,started=false:scene=inactive | 2:token=0,busy=false,started=false:startup-request | 3:token=0,busy=true,started=true:startup-worker-scheduled | 4:token=0,busy=true,started=true:st",
+      "fix": "仅在 -EXRUITestFixtures 下挂载该调试值，或加 .accessibilityHidden(true)",
+      "screenshots": []
+    },
+    {
+      "platform": "ipad",
+      "states": [
+        "library.populated"
+      ],
+      "element": "library.book.0",
+      "element_path": "Application>Window>Other>Other>Other>Other>Other>ScrollView[library.list]>Other>Other>Button[library.book.0]",
+      "criterion": "content-rule:library-book-index-identifier",
+      "severity": "minor",
+      "blocking": false,
+      "expected": "书架行标识应稳定（按记录 id），而不是按枚举下标",
+      "actual": "命中需改进模式 ^library\\.book\\.\\d+$ | library.book.0",
+      "fix": "改用 library.book.<bookID>；同时保留 AX 名称中的书名以便人工脚本稳定",
+      "screenshots": []
+    }
+  ],
+  "advisories": [
+    {
+      "platform": "iphone",
+      "element": "library.import.epub",
+      "criterion": "target-size-hig",
+      "count": 3
+    },
+    {
+      "platform": "iphone",
+      "element": "library.import.epub.duplicate",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "iphone",
+      "element": "library.import.pdf",
+      "criterion": "target-size-hig",
+      "count": 2
+    },
+    {
+      "platform": "iphone",
+      "element": "library.import.picker",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "iphone",
+      "element": "library.import.broken",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "iphone",
+      "element": "library.import.large",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "iphone",
+      "element": "library.import.unicode",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "iphone",
+      "element": "library.import.bounded",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "iphone",
+      "element": "notes.save",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "iphone",
+      "element": "notes.cancel",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "iphone",
+      "element": "notes.jump.0",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "iphone",
+      "element": "notes.edit.0",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "iphone",
+      "element": "notes.delete.0",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "iphone",
+      "element": "notes.close",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "iphone",
+      "element": "reader.first",
+      "criterion": "target-size-hig",
+      "count": 3
+    },
+    {
+      "platform": "iphone",
+      "element": "reader.previous",
+      "criterion": "target-size-hig",
+      "count": 3
+    },
+    {
+      "platform": "iphone",
+      "element": "reader.next",
+      "criterion": "target-size-hig",
+      "count": 4
+    },
+    {
+      "platform": "iphone",
+      "element": "reader.font.decrease",
+      "criterion": "target-size-hig",
+      "count": 3
+    },
+    {
+      "platform": "iphone",
+      "element": "reader.font.increase",
+      "criterion": "target-size-hig",
+      "count": 3
+    },
+    {
+      "platform": "iphone",
+      "element": "reader.select",
+      "criterion": "target-size-hig",
+      "count": 3
+    },
+    {
+      "platform": "iphone",
+      "element": "reader.notes",
+      "criterion": "target-size-hig",
+      "count": 4
+    },
+    {
+      "platform": "iphone",
+      "element": "selection.all",
+      "criterion": "target-size-hig",
+      "count": 2
+    },
+    {
+      "platform": "iphone",
+      "element": "selection.copy",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "iphone",
+      "element": "selection.annotate",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "iphone",
+      "element": "selection.close",
+      "criterion": "target-size-hig",
+      "count": 2
+    },
+    {
+      "platform": "iphone",
+      "element": "selection.verifyPaste",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "ipad",
+      "element": "library.import.epub",
+      "criterion": "target-size-hig",
+      "count": 3
+    },
+    {
+      "platform": "ipad",
+      "element": "library.import.epub.duplicate",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "ipad",
+      "element": "library.import.pdf",
+      "criterion": "target-size-hig",
+      "count": 2
+    },
+    {
+      "platform": "ipad",
+      "element": "library.import.picker",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "ipad",
+      "element": "library.import.broken",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "ipad",
+      "element": "library.import.large",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "ipad",
+      "element": "library.import.unicode",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "ipad",
+      "element": "library.import.bounded",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "ipad",
+      "element": "notes.save",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "ipad",
+      "element": "notes.cancel",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "ipad",
+      "element": "notes.jump.0",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "ipad",
+      "element": "notes.edit.0",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "ipad",
+      "element": "notes.delete.0",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "ipad",
+      "element": "notes.close",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "ipad",
+      "element": "reader.first",
+      "criterion": "target-size-hig",
+      "count": 3
+    },
+    {
+      "platform": "ipad",
+      "element": "reader.previous",
+      "criterion": "target-size-hig",
+      "count": 3
+    },
+    {
+      "platform": "ipad",
+      "element": "reader.next",
+      "criterion": "target-size-hig",
+      "count": 4
+    },
+    {
+      "platform": "ipad",
+      "element": "reader.font.decrease",
+      "criterion": "target-size-hig",
+      "count": 3
+    },
+    {
+      "platform": "ipad",
+      "element": "reader.font.increase",
+      "criterion": "target-size-hig",
+      "count": 3
+    },
+    {
+      "platform": "ipad",
+      "element": "reader.select",
+      "criterion": "target-size-hig",
+      "count": 3
+    },
+    {
+      "platform": "ipad",
+      "element": "reader.notes",
+      "criterion": "target-size-hig",
+      "count": 4
+    },
+    {
+      "platform": "ipad",
+      "element": "selection.all",
+      "criterion": "target-size-hig",
+      "count": 2
+    },
+    {
+      "platform": "ipad",
+      "element": "selection.copy",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "ipad",
+      "element": "selection.annotate",
+      "criterion": "target-size-hig",
+      "count": 1
+    },
+    {
+      "platform": "ipad",
+      "element": "selection.close",
+      "criterion": "target-size-hig",
+      "count": 2
+    },
+    {
+      "platform": "ipad",
+      "element": "selection.verifyPaste",
+      "criterion": "target-size-hig",
+      "count": 1
+    }
+  ],
+  "gaps": [
+    {
+      "id": "hint-absent",
+      "criterion": "控件提示（accessibilityHint）",
+      "actual": "HostViews.swift 全文没有任何 accessibilityHint",
+      "expected": "会改变状态的控件应说明结果（例如翻页、导入、删除标注）",
+      "fix": "为翻页/导入/删除标注补 .accessibilityHint；若判定不需要，在 README 中记录理由",
+      "severity": "minor",
+      "source_file": "examples/apple/HostViews.swift",
+      "source_check": "source citation holds"
+    },
+    {
+      "id": "header-traits-absent",
+      "criterion": "标题语义（isHeader）",
+      "actual": "无 .accessibilityAddTraits(.isHeader)",
+      "expected": "书架/阅读/标注面板标题应带标题语义，便于按标题导航",
+      "fix": "给 library.title、selection.title、notes.title、notes.edit.title 加 .isHeader",
+      "severity": "minor",
+      "source_file": "examples/apple/HostViews.swift",
+      "source_check": "source citation holds"
+    },
+    {
+      "id": "sort-priority-absent",
+      "criterion": "阅读顺序优先级（accessibilitySortPriority）",
+      "actual": "依赖默认容器顺序",
+      "expected": "跨容器布局（阅读面与控制栏）应显式声明排序优先级",
+      "fix": "为 reader.page 与底部控制栏加 accessibilitySortPriority",
+      "severity": "minor",
+      "source_file": "examples/apple/HostViews.swift",
+      "source_check": "source citation holds"
+    },
+    {
+      "id": "status-not-announced",
+      "criterion": "状态变化播报",
+      "actual": "状态只更新 Text，不触发播报；VoiceOver 用户需要手动逐项巡检",
+      "expected": "导入完成/失败、页面更新、标注保存等状态变化应主动播报",
+      "fix": "在 statusText 变化处 post .announcement，或给状态 Text 加 .accessibilityAddTraits(.updatesFrequently)",
+      "severity": "major",
+      "source_file": "examples/apple/HostViews.swift",
+      "source_check": "source citation holds"
+    },
+    {
+      "id": "reader-not-scrollable",
+      "criterion": "大字体/小窗口下的滚动回退",
+      "actual": "ReaderScreen 主体是固定 VStack（183-267），只有书架和标注面板用 ScrollView（91/420）",
+      "expected": "固定高度的控制栈在大字体或最小窗口下应可滚动，避免控件被裁掉",
+      "fix": "把阅读器控制区包进 ScrollView，或在大字体下折叠为单一工具行",
+      "severity": "major",
+      "source_file": "examples/apple/HostViews.swift",
+      "source_check": "source citation holds"
+    },
+    {
+      "id": "copy-annotate-enabled-without-selection",
+      "criterion": "控件可用状态与实际动作一致",
+      "actual": "只按 .disabled(!isCurrent) 控制；未选文时按钮可用，按下后仅在 selection.hint 提示“请先选择文字”",
+      "expected": "未选文时“复制/标注所选”应不可用，或明确标注为会被拒绝",
+      "fix": "把 .disabled 条件扩展为 !isCurrent || quote.isEmpty",
+      "severity": "minor",
+      "source_file": "examples/apple/HostViews.swift",
+      "source_check": "source citation holds"
+    },
+    {
+      "id": "named-icons-not-hidden",
+      "criterion": "装饰性图像对辅助技术隐藏",
+      "actual": "Image(systemName: \"chevron.right\") 没有 accessibilityHidden(true)，按钮内节点合并依赖默认行为",
+      "expected": "chevron 等装饰图像应隐藏，避免多余节点",
+      "fix": "给装饰图像加 .accessibilityHidden(true)",
+      "severity": "minor",
+      "source_file": "examples/apple/HostViews.swift",
+      "source_check": "source citation holds"
+    },
+    {
+      "id": "page-label-60-chars",
+      "criterion": "阅读面文本替身完整性",
+      "actual": "HostModel.swift:428-431 的 pageLabel 只取页文本前 60 字，其余内容对辅助技术不可见",
+      "expected": "阅读面的可访问名称/值应覆盖整页文本，或提供逐段导航",
+      "fix": "页文本放进 accessibilityValue（或自定义 rotor 逐段暴露），名称保留页号；不要用名称承载整页正文",
+      "severity": "major",
+      "source_file": "examples/apple/HostModel.swift",
+      "source_check": "source citation holds"
+    }
+  ],
+  "uncovered": [
+    {
+      "id": "ax-traits",
+      "criterion": "AX traits（isHeader / updatesFrequently / 混合角色）",
+      "reason": "XCUITest 公共 API 只暴露 elementType/label/value/enabled，不暴露 traits；需 Accessibility Inspector 或人工核对"
+    },
+    {
+      "id": "voiceover-speech",
+      "criterion": "VoiceOver 实际朗读、转子与提示音",
+      "reason": "自动 XCUI 不等于 VoiceOver 通过；本包不声称 VoiceOver 验证"
+    },
+    {
+      "id": "appearance-adaptations",
+      "criterion": "Reduce Motion / Bold Text / Increase Contrast / Differentiate Without Color",
+      "reason": "这些辅助功能设置在 cloud runner 上无脚本化开关，本包不声称适配通过"
+    },
+    {
+      "id": "macos-dynamic-type",
+      "criterion": "macOS 大字体",
+      "reason": "macOS 无系统 Dynamic Type 字号缩放；只有窗口最小尺寸压力证据，大字体本身未覆盖"
+    },
+    {
+      "id": "physical-device",
+      "criterion": "真机（含 VoiceOver 手势与真实性能）",
+      "reason": "本包只在 Actions 模拟器/宿主执行，未接真机"
+    },
+    {
+      "id": "system-picker",
+      "criterion": "系统文件选择器面板",
+      "reason": "系统面板不属于宿主 AX 树，且不接真实用户文件；只审计 library.import.picker 按钮本身"
+    },
+    {
+      "id": "ime-input",
+      "criterion": "软键盘/输入法路径",
+      "reason": "未驱动软键盘输入法；只审计 notes.editor 的可达性与名称"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12557730890,
+      "name": "reader-a11y-apple-validation-40085956514-1",
+      "size_in_bytes": 6235,
+      "digest": "sha256:fb5f7753f6157194605ef6885513cdddefd2016f2fd612161f27293dc1f7f1f1",
+      "expires_at": "2026-11-23T10:46:30Z",
+      "expired": false
+    },
+    {
+      "id": 12557441388,
+      "name": "reader-a11y-apple-audit-macos-40085956514-1",
+      "size_in_bytes": 5556607,
+      "digest": "sha256:6ad1120762bd257530ee5f1183ee66799fb127b43490d7e5063b9231592d671d",
+      "expires_at": "2026-11-23T10:34:35Z",
+      "expired": false
+    },
+    {
+      "id": 12557223395,
+      "name": "reader-a11y-apple-audit-iphone-40085956514-1",
+      "size_in_bytes": 7650889,
+      "digest": "sha256:921d15b6906659a49c490a360ceb1b798bd30850f193ba14efb6e73432f5c6a1",
+      "expires_at": "2026-11-23T10:41:58Z",
+      "expired": false
+    },
+    {
+      "id": 12556999698,
+      "name": "reader-a11y-apple-audit-ipad-40085956514-1",
+      "size_in_bytes": 12637861,
+      "digest": "sha256:3a4a88e5636df2ac8262c2419eca973e7a411a2b7c64669fc8e9aae7a61cefd2",
+      "expires_at": "2026-11-23T10:42:31Z",
+      "expired": false
+    }
+  ],
+  "limits": [
+    "自动 XCUI 不等于 VoiceOver 通过；traits、朗读、转子与外观适配保持未覆盖。",
+    "未在真机执行；只在 Actions 的 macOS 宿主与模拟器 runtime 上审计。",
+    "未接真实 iCloud 账号或用户文件；只审计 -EXRUITestFixtures 夹具路径。",
+    "macOS 无系统 Dynamic Type 缩放，大字体只在 iOS 模拟器上取证。",
+    "iOS 全键盘访问未在模拟器启用，iOS 键盘路径保持未覆盖。",
+    "macOS 逐控件焦点顺序不可观察（XCUIElement 无焦点 API），只测到键盘可操作性。"
+  ]
+}

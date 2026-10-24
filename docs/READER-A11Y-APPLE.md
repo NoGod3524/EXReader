@@ -168,39 +168,38 @@
 
 本节与 `docs/validation/reader-a11y-apple.json` 来自同一次运行，不拼接其它 run/attempt。
 
-- 受测 source：`a8756cd196a18a050acb47967948b631df4313f7`（GITHUB_SHA，同时写入受测程序 Info.plist 的 EXRSourceSHA）
-- 运行：`40083042946` attempt `1`，工作流 Reader Apple accessibility audit
-- 契约：`tests/reader_a11y_apple/a11y_contract.json`，`sha256:28c0e7e88d4f8e370606e863aaa8263bda71918d95268d4d9856f68d5ab93dcb`
+- 受测 source：`29f03e233ee5e6c668d737f8236974648ce4333c`（GITHUB_SHA，同时写入受测程序 Info.plist 的 EXRSourceSHA）
+- 运行：`40085956514` attempt `1`，工作流 Reader Apple accessibility audit
+- 契约：`tests/reader_a11y_apple/a11y_contract.json`，`sha256:3ad5fb034aa9d27b224f8154158839eabe9027b7a275f209aa08b808cc913128`
 - SDK 保护树：`9854061be331fe603a1822d9b2b36ee357154927`（frozen job 校验通过）；实现起点 `f43baf9182d75907c0cb5d6f77048f27bca8c950`
 
 ### 7.1 逐目标证据
 
 | 目标 | 设备 / runtime | 窗口 | 字体/键盘装置 | 受测程序 SHA-256 | 步骤 | pass | fail | 其中阻断 | blocked | 缺口 | 未覆盖 | 建议项 | 截图 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| macos | macOS host / macOS | 900×488 | keyboard=3 | `849ec1d899e4fc15760034228aff48f47374a6589c92527d385fcd7fafff1863` | 14 | 403 | 4 | 0 | 0 | 8 | 7 | 0 | 28 |
-| iphone | iPhone SE (3rd generation) / com.apple.CoreSimulator.SimRuntime.iOS-26-2 | 375×667 | content_size=accessibility-extra-extra-extra-large | `6e6ff64712addcee93283ffe23b391ca1982990b8c53a4b327848eb0d09b7c6f` | 15 | 433 | 13 | 9 | 0 | 8 | 7 | 47 | 30 |
-| ipad | iPad mini (A17 Pro) / com.apple.CoreSimulator.SimRuntime.iOS-26-2 | 744×1133 | content_size=accessibility-extra-extra-extra-large | `6e6ff64712addcee93283ffe23b391ca1982990b8c53a4b327848eb0d09b7c6f` | 15 | 440 | 8 | 4 | 0 | 8 | 7 | 47 | 30 |
+| macos | macOS host / macOS | 900×488 | keyboard=3 | `bb9777ceca90ef1e6fd3ba616b6b934bb7e03555c05db6dbd78aeb72fb4d375e` | 14 | 403 | 4 | 0 | 0 | 8 | 7 | 0 | 28 |
+| iphone | iPhone SE (3rd generation) / com.apple.CoreSimulator.SimRuntime.iOS-26-2 | 375×667 | content_size=accessibility-extra-extra-extra-large | `6e6ff64712addcee93283ffe23b391ca1982990b8c53a4b327848eb0d09b7c6f` | 15 | 433 | 14 | 8 | 0 | 8 | 7 | 47 | 30 |
+| ipad | iPad mini (A17 Pro) / com.apple.CoreSimulator.SimRuntime.iOS-26-2 | 744×1133 | content_size=accessibility-extra-extra-extra-large | `6e6ff64712addcee93283ffe23b391ca1982990b8c53a4b327848eb0d09b7c6f` | 15 | 442 | 8 | 4 | 0 | 8 | 7 | 47 | 30 |
 
 ### 7.2 结论
 
 | 结论 | 值 | 依据 |
 | --- | --- | --- |
 | audit_completed | `true` | 三目标契约步骤齐全、无 blocked、审计用例无失败、工件名含 run/attempt 且字节/摘要非空 |
-| accessibility_accepted | `false` | 三目标共 9 类阻断判据失败（见 7.3），按约定不授予无障碍 |
+| accessibility_accepted | `false` | 三目标共 8 类阻断判据失败（见 7.3），按约定不授予无障碍 |
 
 ### 7.3 阻断缺陷（不授予无障碍）
 
 | 目标 | 步骤 | 元素路径 | 实际 | 预期 | 截图（导出文件名） | 最小修复 |
 | --- | --- | --- | --- | --- | --- | --- |
-| iphone | library.busy | `Application>Window>Button[library.cancel]` | 最小边 20.5 pt | 控件不小于 24 pt（WCAG 2.5.8） | CEA30726-A4BD-45D1-858A-501E0D5E2702.png | 扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)） |
-| iphone | library.large_type | `library.book.0|library.import.epub` | 重叠面积占较小控件 91% | 可交互控件的布局框不互相重叠 | CB8A57CE-EDB4-4ADE-88AC-D39D0D190544.png | 在压缩布局中重新分配间距，避免控件互相覆盖 |
-| iphone | reader.epub, reader.landscape, reader.portrait | `Application>Window>Button[reader.back]` | 最小边 20.5 pt | 控件不小于 24 pt（WCAG 2.5.8） | 1E5B136F-4D12-4E32-ABC2-AA96FE24E49A.png | 扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)） |
-| iphone | reader.landscape | `Application>Window>Button[reader.back]` | isHittable=false（可能被遮挡或在窗口外） | 启用中的控件可被命中 | BC14A28F-837D-47B2-900D-FE80F7E9650F.png | — |
-| iphone | reader.landscape | `Application>Window>Button[reader.back]` | frame={"height": 20.5, "width": 34.0, "x": 16.0, "y": -34.5} window={"height": 375.0, "width": 667.0, "x": 0.0, "y": 0.0} | 控件完整落在窗口内 | BC14A28F-837D-47B2-900D-FE80F7E9650F.png | 为大字体/小窗口加滚动回退或压缩行距，避免控件溢出窗口 |
-| iphone | reader.landscape | `Application>Window>Button[reader.select]` | frame={"height": 34.5, "width": 58.0, "x": 264.5, "y": 362.5} window={"height": 375.0, "width": 667.0, "x": 0.0, "y": 0.0} | 控件完整落在窗口内 | BC14A28F-837D-47B2-900D-FE80F7E9650F.png | 为大字体/小窗口加滚动回退或压缩行距，避免控件溢出窗口 |
-| iphone | reader.landscape | `Application>Window>Button[reader.notes]` | frame={"height": 34.5, "width": 70.0, "x": 332.5, "y": 362.5} window={"height": 375.0, "width": 667.0, "x": 0.0, "y": 0.0} | 控件完整落在窗口内 | BC14A28F-837D-47B2-900D-FE80F7E9650F.png | 为大字体/小窗口加滚动回退或压缩行距，避免控件溢出窗口 |
-| ipad | library.busy | `Application>Window>Button[library.cancel]` | 最小边 20.5 pt | 控件不小于 24 pt（WCAG 2.5.8） | 2FABAE0B-A164-4AB5-8659-FC7CC3B0642A.png | 扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)） |
-| ipad | reader.epub, reader.landscape, reader.portrait | `Application>Window>Button[reader.back]` | 最小边 20.5 pt | 控件不小于 24 pt（WCAG 2.5.8） | BF1270CA-3242-47E1-B666-4D4DAE28B5B3.png | 扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)） |
+| iphone | library.busy | `Application>Window>Button[library.cancel]` | 最小边 20.5 pt | 控件不小于 24 pt（WCAG 2.5.8） | 83B9D49F-189B-4CB3-A238-E49518EF8201.png | 扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)） |
+| iphone | reader.epub, reader.landscape, reader.portrait | `Application>Window>Button[reader.back]` | 最小边 20.5 pt | 控件不小于 24 pt（WCAG 2.5.8） | 49327F08-A1D6-4F63-A6E5-C2D346766632.png | 扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)） |
+| iphone | reader.landscape | `Application>Window>Button[reader.back]` | isHittable=false（可能被遮挡或在窗口外） | 启用中的控件可被命中 | D385E31E-1647-49B3-ACBE-A8E63B2E7A2D.png | 见 7.7（控件可见性 P1） |
+| iphone | reader.landscape | `Application>Window>Button[reader.back]` | frame={"height": 20.5, "width": 34.0, "x": 16.0, "y": -34.5} window={"height": 375.0, "width": 667.0, "x": 0.0, "y": 0.0} | 控件完整落在窗口内 | D385E31E-1647-49B3-ACBE-A8E63B2E7A2D.png | 为大字体/小窗口加滚动回退或压缩行距，避免控件溢出窗口 |
+| iphone | reader.landscape | `Application>Window>Button[reader.select]` | frame={"height": 34.5, "width": 58.0, "x": 264.5, "y": 362.5} window={"height": 375.0, "width": 667.0, "x": 0.0, "y": 0.0} | 控件完整落在窗口内 | D385E31E-1647-49B3-ACBE-A8E63B2E7A2D.png | 为大字体/小窗口加滚动回退或压缩行距，避免控件溢出窗口 |
+| iphone | reader.landscape | `Application>Window>Button[reader.notes]` | frame={"height": 34.5, "width": 70.0, "x": 332.5, "y": 362.5} window={"height": 375.0, "width": 667.0, "x": 0.0, "y": 0.0} | 控件完整落在窗口内 | D385E31E-1647-49B3-ACBE-A8E63B2E7A2D.png | 为大字体/小窗口加滚动回退或压缩行距，避免控件溢出窗口 |
+| ipad | library.busy | `Application>Window>Button[library.cancel]` | 最小边 20.5 pt | 控件不小于 24 pt（WCAG 2.5.8） | 382106F8-A5DF-4E47-B7D0-BC2E91C2D7C1.png | 扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)） |
+| ipad | reader.epub, reader.landscape, reader.portrait | `Application>Window>Button[reader.back]` | 最小边 20.5 pt | 控件不小于 24 pt（WCAG 2.5.8） | FAE38DA4-65F2-4DF9-A25D-9DC9860172FC.png | 扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)） |
 
 ### 7.4 非阻断发现（内容规则）
 
@@ -214,6 +213,8 @@
 | iphone | reader.epub | `reader.font.decrease` | content-rule:font-button-symbol-only | 匹配禁止模式 ^A[-+±]$ / A- | 补 .accessibilityLabel("减小字号")/"增大字号" |
 | iphone | library.empty | `library.title` | content-rule:library-title-trace | 包含 token= / 1:token=0,busy=false,started=false:scene=inactive / 2:token=0,busy=false,started=false:startup-request / 3:token=0,busy=true,started=true: | 仅在 -EXRUITestFixtures 下挂载该调试值，或加 .accessibilityHidden(true) |
 | iphone | library.populated | `library.book.0` | content-rule:library-book-index-identifier | 命中需改进模式 ^library\.book\.\d+$ / library.book.0 | 改用 library.book.<bookID>；同时保留 AX 名称中的书名以便人工脚本稳定 |
+| iphone | library.large_type | `library.list` | content-area:shelf-content-area | 高度 15.0pt / 窗口 667.0pt = 2.2% | 把导入按钮区折叠进菜单或滚动容器，给书架列表留出可读高度 |
+| iphone | reader.large_type | `reader.page` | content-area:reader-content-area | 高度 153.0pt / 窗口 667.0pt = 22.9% | 大字体下把控制区折叠成单行工具条或包进滚动容器，避免阅读面被压到几行 |
 | ipad | reader.epub | `reader.state` | content-rule:reader-state-internal-hash | 匹配禁止模式 ^#[0-9A-Za-z]{4,}$ / #41996943 | 生产构建隐藏该调试行，或对其加 .accessibilityHidden(true) |
 | ipad | reader.epub | `reader.font.decrease` | content-rule:font-button-symbol-only | 匹配禁止模式 ^A[-+±]$ / A- | 补 .accessibilityLabel("减小字号")/"增大字号" |
 | ipad | library.empty | `library.title` | content-rule:library-title-trace | 包含 token= / 1:token=0,busy=false,started=false:scene=inactive / 2:token=0,busy=false,started=false:startup-request / 3:token=0,busy=true,started=true: | 仅在 -EXRUITestFixtures 下挂载该调试值，或加 .accessibilityHidden(true) |
@@ -229,10 +230,10 @@
 
 | 工件 | id | 字节 | sha256 | 有效期 |
 | --- | --- | --- | --- | --- |
-| `reader-a11y-apple-audit-ipad-40083042946-1` | 12557085807 | 13343992 | `sha256:4a0fc9a029096d7b47188e8999a646540ee5b8e4a14a1771edbdb4b502c911f9` | 2026-11-23T10:19:11Z |
-| `reader-a11y-apple-validation-40083042946-1` | 12556359831 | 6081 | `sha256:752e62ee044c1940905e98902e8e5e273ad79ad7fc7a2ec598a0dd7c1e0fe43d` | 2026-11-23T10:21:47Z |
-| `reader-a11y-apple-audit-iphone-40083042946-1` | 12556119011 | 7815251 | `sha256:2f8d2468cf30470da86e0c1837eff3c4fe795832ffadf473094a25bd52560f67` | 2026-11-23T10:21:15Z |
-| `reader-a11y-apple-audit-macos-40083042946-1` | 12555909373 | 5550194 | `sha256:c34f4b34b8e864af1282fb61884eb1243a76da3bf0aeaee869b497802aea50ec` | 2026-11-23T10:11:58Z |
+| `reader-a11y-apple-validation-40085956514-1` | 12557730890 | 6235 | `sha256:fb5f7753f6157194605ef6885513cdddefd2016f2fd612161f27293dc1f7f1f1` | 2026-11-23T10:46:30Z |
+| `reader-a11y-apple-audit-macos-40085956514-1` | 12557441388 | 5556607 | `sha256:6ad1120762bd257530ee5f1183ee66799fb127b43490d7e5063b9231592d671d` | 2026-11-23T10:34:35Z |
+| `reader-a11y-apple-audit-iphone-40085956514-1` | 12557223395 | 7650889 | `sha256:921d15b6906659a49c490a360ceb1b798bd30850f193ba14efb6e73432f5c6a1` | 2026-11-23T10:41:58Z |
+| `reader-a11y-apple-audit-ipad-40085956514-1` | 12556999698 | 12637861 | `sha256:3a4a88e5636df2ac8262c2419eca973e7a411a2b7c64669fc8e9aae7a61cefd2` | 2026-11-23T10:42:31Z |
 
 ### 7.7 交给 Apple owner 的最小修复建议
 
