@@ -899,7 +899,7 @@ int main(int argc, char **argv) {
     size_t page_count = 0;
     const exr_fixed_page *current = exr_fixed_pages(document, &page_count);
     exr_fixed_text *attached = nullptr;
-    const Status load = exr_fixed_load_text(document, 0, nullptr, &attached, &sdk);
+    const exr_status load = exr_fixed_load_text(document, 0, nullptr, &attached, &sdk);
     Overlay overlay;
     const Status result = reader_ocr_overlay_recognize_page(engine, document, 0, &options, &overlay.value, &error);
     const size_t after = exr_fixed_memory_size(document);
