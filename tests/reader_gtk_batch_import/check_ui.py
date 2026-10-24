@@ -125,31 +125,21 @@ def main():
         click('Home', {'label'})
         home_sha = hashlib.sha256(str(Path.home()).encode()).hexdigest()
         native_ready(lambda value: value.get('selected_sha256') == home_sha)
-        host.key('ctrl+l')
-        entries = [node for node in bus.walk(chooser) if bus.role(node) == 'text' and bus.states(node).get('showing') and bus.states(node).get('sensitive')]
-        assert entries, 'native folder location entry missing'
-        click_node(entries[0])
-        native_ready(lambda value: value.get('entry_focused') == '1')
-        host.key('ctrl+a')
-        host.paste(str(root))
-        digest = hashlib.sha256(str(root).encode()).hexdigest()
-        # The real SELECT_FOLDER entry completes an existing directory with a
-        # trailing '/'. Both spellings identify exactly this selected directory.
-        typed_digests = {digest, hashlib.sha256((str(root) + '/').encode()).hexdigest()}
-        native_ready(lambda value: value.get('entry_sha256') in typed_digests and value.get('entry_focused') == '1')
-        # SELECT_FOLDER first navigates to a typed directory. Unlike OPEN, it
-        # cannot select/accept that path before this real native activation.
-        host.key('Return')
-        native_ready(lambda value: observed().get('visible') == '1' or value.get('selected_sha256') == digest)
-        if observed().get('visible') == '1':
-            return
-        # The first Enter may accept GTK's directory completion popup. Activate
-        # the still-focused location once more only if the real accept button
-        # remains disabled; no dialog response or file-picker state is injected.
-        if not bus.states(element('Choose folder', {'push button'})).get('sensitive'):
-            host.key('Return')
-            if observed().get('visible') == '1':
-                return
+        # Browse the real native table. Each selected path is independently
+        # observed before entering it; the final folder is selected, not opened.
+        current = Path.home()
+        parts = root.relative_to(current).parts
+        for index, name in enumerate(parts):
+            row = element(name, {'table cell'})
+            click_node(row)
+            current = current / name
+            selected_sha = hashlib.sha256(str(current).encode()).hexdigest()
+            native_ready(lambda value: value.get('selected_sha256') == selected_sha)
+            if index + 1 < len(parts):
+                rect = bus.extents(row)
+                command('xdotool', 'mousemove', '--sync', str(rect['x'] + rect['width'] // 2), str(rect['y'] + rect['height'] // 2))
+                command('xdotool', 'click', '--repeat', '2', '--delay', '150', '1')
+                time.sleep(.15)
         click('Choose folder', {'push button'})
         wait(lambda value: value['visible'] == '1')
 
