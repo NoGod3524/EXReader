@@ -322,7 +322,7 @@ static void phase_live(suite *s) {
   }
 
   /* a long utterance stays active: BUSY, pause, resume, stop */
-  id = 2;
+  ++id;
   fill_repeat(text, LONG_BYTES, "\xE6\x9C\x97\xE8\xAF\xBB\xE6\xB5\x8B\xE8\xAF\x95\xE3\x80\x82");
   rs_init(&rs);
   st = reader_tts_speak(h, id, text, LONG_BYTES, NULL, 0.5, &err);

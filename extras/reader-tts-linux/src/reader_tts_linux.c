@@ -45,6 +45,7 @@ struct reader_tts {
   int active;
   int started;
   int submitting;
+  int want_stop; /* the host asked to stop; a pre-BEGIN cancel is then its stop */
   long msg_id;
   long forced_msg; /* test hook: message id to assume instead of the daemon's */
   early_cb early[EARLY_MAX];
@@ -98,6 +99,12 @@ static reader_tts_status fail(reader_tts_error *e, reader_tts_status c, int nati
 }
 static reader_tts_status succeed(reader_tts_error *e) { return fail(e, READER_TTS_OK, 0); }
 
+static void sleep_ms(int ms) {
+  struct timespec ts;
+  ts.tv_sec = ms / 1000;
+  ts.tv_nsec = (long)(ms % 1000) * 1000000L;
+  nanosleep(&ts, NULL);
+}
 static int closing_locked(const reader_tts *h) {
   return h->state == READER_TTS_CLOSING || h->state == READER_TTS_CLOSED;
 }
@@ -127,6 +134,7 @@ static void push_locked(reader_tts *h, uint64_t id, reader_tts_event_kind kind,
 static void finish_locked(reader_tts *h) {
   h->active = 0;
   h->started = 0;
+  h->want_stop = 0;
   if (h->state == READER_TTS_SPEAKING || h->state == READER_TTS_PAUSED ||
       h->state == READER_TTS_STOPPING)
     h->state = READER_TTS_READY;
@@ -148,7 +156,13 @@ static void apply_locked(reader_tts *h, int type) {
     finish_locked(h);
     break;
   case SPD_EVENT_CANCEL:
-    push_locked(h, h->active_id, READER_TTS_STOPPED, READER_TTS_OK);
+    /* A message the daemon cancels before it ever began was refused by the
+       platform: reporting STOPPED would claim a user stop that never happened.
+       An explicit host stop is the one case where STOPPED is the truth. */
+    if (h->started || h->want_stop)
+      push_locked(h, h->active_id, READER_TTS_STOPPED, READER_TTS_OK);
+    else
+      push_locked(h, h->active_id, READER_TTS_FAILED, READER_TTS_IO);
     finish_locked(h);
     break;
   default:
@@ -755,7 +769,7 @@ reader_tts_status reader_tts_resume(reader_tts *h, uint64_t id, reader_tts_error
 reader_tts_status reader_tts_stop(reader_tts *h, uint64_t id, reader_tts_error *e) {
   reader_tts_status s = entry(h, e);
   SPDConnection *c;
-  int was_paused, r;
+  int was_paused, r, i;
   if (s) return s;
   if (!id) return fail(e, READER_TTS_ARGUMENT, 0);
   pthread_mutex_lock(&h->mu);
@@ -774,6 +788,7 @@ reader_tts_status reader_tts_stop(reader_tts *h, uint64_t id, reader_tts_error *
   }
   was_paused = h->state == READER_TTS_PAUSED;
   h->state = READER_TTS_STOPPING;
+  h->want_stop = 1;
   pthread_mutex_unlock(&h->mu);
   c = conn_of(h);
   if (!c) {
@@ -786,6 +801,7 @@ reader_tts_status reader_tts_stop(reader_tts *h, uint64_t id, reader_tts_error *
     if (conn_alive(c)) {
       /* daemon alive, cancel refused */
       pthread_mutex_lock(&h->mu);
+      h->want_stop = 0;
       if (h->active && h->state == READER_TTS_STOPPING)
         h->state = was_paused ? READER_TTS_PAUSED : READER_TTS_SPEAKING;
       pthread_mutex_unlock(&h->mu);
@@ -794,7 +810,23 @@ reader_tts_status reader_tts_stop(reader_tts *h, uint64_t id, reader_tts_error *
     go_unavailable(h, r);
     return fail(e, READER_TTS_UNAVAILABLE, r);
   }
+  /* Wait (bounded) for the daemon's own cancel notification. The espeak-ng module
+     keeps tearing the message down after SPEAK is cancelled, and a message
+     submitted inside that window is cancelled by the daemon before it begins
+     (measured: a 0.5-rate SPEAK issued ~200 ms after a cancel came back as an
+     immediate CANCEL). Waiting for the notification makes "stop, then speak the
+     next paragraph" deterministic; the cap keeps stop bounded when no
+     notification arrives. */
+  for (i = 0; i < 100; ++i) {
+    int still_active;
+    pthread_mutex_lock(&h->mu);
+    still_active = h->active;
+    pthread_mutex_unlock(&h->mu);
+    if (!still_active) break;
+    sleep_ms(5);
+  }
   pthread_mutex_lock(&h->mu);
+  h->want_stop = 0;
   if (h->active) {
     push_locked(h, h->active_id, READER_TTS_STOPPED, READER_TTS_OK);
     finish_locked(h);

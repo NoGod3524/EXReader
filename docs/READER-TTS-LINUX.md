@@ -54,6 +54,15 @@ build. Root owns host wiring; this package only proves the module.
 * **Memory.** Inputs are copied; voices are library-owned and released by
   `reader_tts_voice_list_free` (which may be called after the handle is gone);
   errors carry a status plus a platform code, never message text or input bytes.
+* **Stop, then speak.** The espeak-ng module keeps tearing a cancelled message
+  down after SPEAK is cancelled; a message submitted inside that window is
+  cancelled by the daemon before it begins (measured: a 0.5-rate request issued
+  ~200 ms after a cancel came back as an immediate CANCEL). stop therefore waits
+  for the daemon's own cancel notification, bounded at 500 ms, so "stop, then read
+  the next paragraph" is deterministic.
+* **Refusal vs stop.** A message the daemon cancels before BEGIN is reported as
+  FAILED/IO, because nobody asked to stop it; an explicit stop always yields
+  STOPPED.
 * **Liveness.** While a request is active the library only peeks the socket for
   EOF; it never sends a setting command during speech (a rate round trip both
   disturbs playback and can block forever on a dead daemon).

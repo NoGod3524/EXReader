@@ -148,7 +148,10 @@ reader_tts_status reader_tts_pause(reader_tts *, uint64_t request_id, reader_tts
 reader_tts_status reader_tts_resume(reader_tts *, uint64_t request_id, reader_tts_error *);
 /* stop: ends the active request with exactly one STOPPED event; a request that
    already ended is OK and adds no second event; an id that was never started is
-   ARGUMENT. */
+   ARGUMENT. stop waits (bounded, at most 500 ms) for the daemon's own cancel
+   notification, because the espeak-ng module keeps tearing a cancelled message
+   down for a moment and a message submitted inside that window is cancelled by
+   the daemon before it begins. */
 reader_tts_status reader_tts_stop(reader_tts *, uint64_t request_id, reader_tts_error *);
 /* observe: snapshot of state, last_status, the active (else most recent) request
    id and the backend capability bits. CAN_PAUSE is reported because the backend
@@ -162,7 +165,10 @@ reader_tts_status reader_tts_observe(reader_tts *, reader_tts_snapshot *, reader
    terminal event of an interrupted request is not lost. While a request is
    active, poll also notices that the daemon closed the socket (a
    non-destructive peek; no SSIP command is sent while speaking) and then queues
-   FAILED/UNAVAILABLE. STARTED means the daemon reported the message started;
+   FAILED/UNAVAILABLE. STARTED means the daemon reported the message started. A
+   message the daemon cancels before it ever began is reported as FAILED/IO: the
+   platform refused it, and STOPPED would claim a user stop that never happened
+   (an explicit reader_tts_stop is the exception and always yields STOPPED).
    RANGE is never emitted. */
 reader_tts_status reader_tts_poll(reader_tts *, reader_tts_event *, int *available, reader_tts_error *);
 /* request_close: non-blocking and idempotent. Moves to CLOSING, stops the active
