@@ -1188,7 +1188,11 @@ def main():
     }
     with open(os.path.join(args.output, "report.json"), "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, sort_keys=True)
-    print("report ok=%s checks=%d" % (report["ok"], len(checks)))
+    print("report ok=%s checks=%d skipped=%d" % (report["ok"], len(checks), len(skipped)))
+    print("consumer probe=%s" % report["consumer_sha256"]["probe"])
+    print("consumer cpp=%s" % report["consumer_sha256"]["cpp"])
+    for name in sorted(report["consumer_sha256"].get("libraries", {})):
+        print("library %s %s" % (name, report["consumer_sha256"]["libraries"][name]))
     return 0 if report["ok"] else 1
 
 
