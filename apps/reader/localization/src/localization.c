@@ -123,7 +123,8 @@ reader_localization_status reader_localization_parse_locale(const char *tag, uin
       value = '-';
     } else if (value >= 'A' && value <= 'Z') {
       value = (char)(value - 'A' + 'a');
-    } else if ((value < 'a' || value > 'z') && (value < '0' || value > '9')) {
+    }
+    if (!((value >= 'a' && value <= 'z') || (value >= '0' && value <= '9') || value == '-')) {
       return READER_LOCALIZATION_UNKNOWN_LOCALE;
     }
     normalized[i] = value;

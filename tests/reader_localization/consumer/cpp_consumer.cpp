@@ -58,6 +58,7 @@ std::string render(const reader_localization_context& context, const char* messa
       &context, message_id, params.empty() ? nullptr : params.data(), params.size(), &measurement);
   if (out_status != nullptr) *out_status = status;
   if (status != READER_LOCALIZATION_OK) return std::string();
+  if (measurement.bytes == 0u) return std::string();
   std::string text(measurement.bytes, '\0');
   status = reader_localization_format(&context, message_id,
                                       params.empty() ? nullptr : params.data(), params.size(),
@@ -119,7 +120,9 @@ int main() {
     check(reader_localization_measure(&en, "reader.a11y.shelf.book", params.data(), params.size(),
                                       &measurement) == READER_LOCALIZATION_OK,
           "cpp-measure-short");
-    std::vector<char> tiny(measurement.bytes - 1u, static_cast<char>(0xa5));
+    check(measurement.bytes > 1u, "cpp-measure-short-size");
+    std::vector<char> tiny(measurement.bytes > 1u ? measurement.bytes - 1u : 1u,
+                           static_cast<char>(0xa5));
     const std::vector<char> before = tiny;
     check(reader_localization_format(&en, "reader.a11y.shelf.book", params.data(), params.size(),
                                      tiny.data(), tiny.size(), nullptr) == READER_LOCALIZATION_CAPACITY,
