@@ -2,8 +2,14 @@
 #include "internal.h"
 #include "exr_desktop_drop_windows.h"
 #include <shlobj.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
+
+#ifdef EXR_DESKTOP_DROP_TEST_HOOKS
+static volatile LONG win_live_targets;
+#endif
 
 typedef struct win_target {
   struct exr_drop_target base; /* must be first */
@@ -11,11 +17,15 @@ typedef struct win_target {
   volatile LONG refs;
   HWND window;
   DWORD owner_tid;
+  WNDPROC original_proc;
   int registered;
+  int subclassed;
   int can_drop;
 } win_target;
 
 #define WIN_FROM_IFACE(p) ((win_target *)((char *)(p) - offsetof(win_target, iface)))
+
+static const wchar_t win_property[] = L"EXReaderDesktopDropTarget";
 
 static int win_owner_thread(const struct exr_drop_target *base) {
   const win_target *target = (const win_target *)base;
@@ -23,6 +33,15 @@ static int win_owner_thread(const struct exr_drop_target *base) {
 }
 
 static void win_release_object(struct exr_drop_target *base);
+
+/* Every read below is bounded by the real allocation the platform handed us:
+   the 1 MiB payload budget is a product limit, never a buffer size. */
+static size_t global_extent(HGLOBAL handle) {
+  SIZE_T size;
+  if (!handle) return 0;
+  size = GlobalSize(handle);
+  return (size_t)size;
+}
 
 /* ---- payload extraction --------------------------------------------- */
 static CLIPFORMAT file_group_format(void) {
@@ -33,19 +52,25 @@ static exr_drop_status request_from_unicode_text(HGLOBAL handle, exr_drop_origin
     const exr_drop_control *control, exr_drop_request **out) {
   drop_builder builder;
   const wchar_t *text;
-  size_t length;
+  size_t capacity, units;
   exr_drop_status status;
-  if (!handle) { *out = NULL; return EXR_DROP_PLATFORM; }
+  *out = NULL;
+  capacity = global_extent(handle) / sizeof(wchar_t); /* an odd trailing byte is unusable */
+  if (capacity == 0) return EXR_DROP_PLATFORM;
   text = (const wchar_t *)GlobalLock(handle);
-  if (!text) { *out = NULL; return EXR_DROP_PLATFORM; }
-  length = wcsnlen(text, EXR_DROP_MAX_INPUT_BYTES / 2u + 1u);
-  if (length > EXR_DROP_MAX_INPUT_BYTES / 2u) {
+  if (!text) return EXR_DROP_PLATFORM;
+  units = wcsnlen(text, capacity);
+  if (units == capacity) {
+    /* No terminator inside the allocation: reading on would leave the buffer. */
     GlobalUnlock(handle);
-    *out = NULL;
+    return EXR_DROP_PLATFORM;
+  }
+  if (units > EXR_DROP_MAX_INPUT_BYTES / 2u) {
+    GlobalUnlock(handle);
     return EXR_DROP_TOO_LARGE;
   }
   drop_builder_init(&builder, origin, control);
-  drop_utf16_split((const uint16_t *)(const void *)text, length, EXR_DROP_UTF16_LINES, &builder);
+  drop_utf16_split((const uint16_t *)(const void *)text, units, EXR_DROP_UTF16_LINES, &builder);
   status = drop_builder_finish(&builder, out);
   GlobalUnlock(handle);
   return status;
@@ -55,13 +80,27 @@ static exr_drop_status request_from_file_group(HGLOBAL handle, exr_drop_origin o
     const exr_drop_control *control, exr_drop_request **out) {
   const FILEGROUPDESCRIPTORW *group;
   drop_builder builder;
-  UINT index;
+  size_t bytes, available;
+  UINT declared, index;
   exr_drop_status status;
-  if (!handle) { *out = NULL; return EXR_DROP_UNSUPPORTED; }
+  *out = NULL;
+  bytes = global_extent(handle);
+  if (bytes < sizeof(FILEGROUPDESCRIPTORW)) return EXR_DROP_PLATFORM;
   group = (const FILEGROUPDESCRIPTORW *)GlobalLock(handle);
-  if (!group) { *out = NULL; return EXR_DROP_PLATFORM; }
+  if (!group) return EXR_DROP_PLATFORM;
+  declared = group->cItems;
+  if (declared == 0) {
+    GlobalUnlock(handle);
+    return EXR_DROP_UNSUPPORTED;
+  }
+  /* The header may promise more descriptors than the allocation holds. */
+  available = (bytes - offsetof(FILEGROUPDESCRIPTORW, fgd)) / sizeof(FILEDESCRIPTORW);
+  if ((size_t)declared > available) {
+    GlobalUnlock(handle);
+    return EXR_DROP_PLATFORM;
+  }
   drop_builder_init(&builder, origin, control);
-  for (index = 0; index < group->cItems && !drop_builder_stopped(&builder); index++)
+  for (index = 0; index < declared && !drop_builder_stopped(&builder); index++)
     drop_add_virtual(&builder, (const uint16_t *)(const void *)group->fgd[index].cFileName,
         wcsnlen(group->fgd[index].cFileName, 260));
   status = drop_builder_finish(&builder, out);
@@ -70,26 +109,87 @@ static exr_drop_status request_from_file_group(HGLOBAL handle, exr_drop_origin o
   return status;
 }
 
+/* An HDROP list must be complete inside its allocation before the shell parses
+   it: header present, pFiles in range, and a wide or ANSI list terminated by an
+   empty entry inside the buffer. Wide units are read bytewise so a truncated
+   code unit can never be read past the end. */
+typedef struct {
+  UINT count;
+  size_t units;
+} hdrop_scan;
+
+static exr_drop_status hdrop_scan_list(HGLOBAL handle, hdrop_scan *scan) {
+  const DROPFILES *header;
+  const unsigned char *bytes_from;
+  size_t bytes, offset, capacity, index;
+  exr_drop_status status = EXR_DROP_OK;
+  memset(scan, 0, sizeof(*scan));
+  bytes = global_extent(handle);
+  if (bytes < sizeof(DROPFILES)) return EXR_DROP_PLATFORM;
+  header = (const DROPFILES *)GlobalLock(handle);
+  if (!header) return EXR_DROP_PLATFORM;
+  offset = (size_t)header->pFiles;
+  if (offset < sizeof(DROPFILES) || offset > bytes) {
+    GlobalUnlock(handle);
+    return EXR_DROP_PLATFORM;
+  }
+  bytes_from = (const unsigned char *)(const void *)header + offset;
+  if (header->fWide) {
+    capacity = (bytes - offset) / sizeof(wchar_t);
+    index = 0;
+    for (;;) {
+      size_t start = index;
+      while (index < capacity
+          && (bytes_from[index * 2] != 0 || bytes_from[index * 2 + 1] != 0))
+        index++;
+      if (index >= capacity) { status = EXR_DROP_PLATFORM; break; }
+      if (index == start) break; /* empty entry terminates the list */
+      scan->count++;
+      scan->units += (index - start) + 1;
+      if (scan->units > EXR_DROP_MAX_INPUT_BYTES / 2u) { status = EXR_DROP_TOO_LARGE; break; }
+      index++;
+    }
+  } else {
+    capacity = bytes - offset;
+    index = 0;
+    for (;;) {
+      size_t start = index;
+      while (index < capacity && bytes_from[index] != 0) index++;
+      if (index >= capacity) { status = EXR_DROP_PLATFORM; break; }
+      if (index == start) break;
+      scan->count++;
+      scan->units += (index - start) + 1;
+      if (scan->units > EXR_DROP_MAX_INPUT_BYTES / 2u) { status = EXR_DROP_TOO_LARGE; break; }
+      index++;
+    }
+  }
+  GlobalUnlock(handle);
+  return status;
+}
+
 exr_drop_status exr_drop_windows_request_from_hdrop(HDROP drop, exr_drop_origin origin,
     const exr_drop_control *control, exr_drop_request **out) {
   drop_builder builder;
-  UINT count, index;
-  uint64_t units = 0;
+  hdrop_scan scan;
+  UINT index;
+  exr_drop_status status;
   if (!out) return EXR_DROP_ARGUMENT;
   *out = NULL;
   if (!drop) return EXR_DROP_ARGUMENT;
   if (origin < EXR_DROP_ORIGIN_DROP || origin > EXR_DROP_ORIGIN_TEXT) return EXR_DROP_ARGUMENT;
   if (control && control->struct_size != sizeof(*control)) return EXR_DROP_ARGUMENT;
-  count = DragQueryFileW(drop, 0xFFFFFFFFu, NULL, 0);
-  if (count == 0) return EXR_DROP_EMPTY;
-  for (index = 0; index < count; index++) {
-    units += (uint64_t)DragQueryFileW(drop, index, NULL, 0) + 1u;
-    if (units * 2u > (uint64_t)EXR_DROP_MAX_INPUT_BYTES) return EXR_DROP_TOO_LARGE;
-  }
+  status = hdrop_scan_list((HGLOBAL)drop, &scan);
+  if (status != EXR_DROP_OK) return status;
+  if (scan.count == 0) return EXR_DROP_EMPTY;
   drop_builder_init(&builder, origin, control);
-  for (index = 0; index < count && !drop_builder_stopped(&builder); index++) {
+  for (index = 0; index < scan.count && !drop_builder_stopped(&builder); index++) {
     UINT length = DragQueryFileW(drop, index, NULL, 0);
-    wchar_t *path = (wchar_t *)malloc(((size_t)length + 1u) * sizeof(wchar_t));
+    wchar_t *path;
+    if (length == 0 || length >= EXR_DROP_MAX_INPUT_BYTES / 2u) {
+      builder.failure = EXR_DROP_PLATFORM;
+      break;
+    }
+    path = (wchar_t *)malloc(((size_t)length + 1u) * sizeof(wchar_t));
     if (!path) { builder.failure = EXR_DROP_NO_MEMORY; break; }
     if (DragQueryFileW(drop, index, path, length + 1u) != length) {
       free(path);
@@ -173,6 +273,42 @@ exr_drop_status exr_drop_windows_clipboard_request(exr_drop_origin origin,
   return status;
 }
 
+/* ---- lifecycle ------------------------------------------------------- */
+/* Revoking drops OLE's reference; it must happen while the window is valid. */
+static void win_revoke(win_target *target) {
+  HWND window = target->window;
+  if (!target->registered) return;
+  target->registered = 0;
+  if (window && IsWindow(window)) RevokeDragDrop(window);
+}
+
+static void win_restore_window(win_target *target) {
+  HWND window = target->window;
+  if (target->subclassed) {
+    target->subclassed = 0;
+    if (window && IsWindow(window)) {
+      if (target->original_proc) SetWindowLongPtrW(window, GWLP_WNDPROC, (LONG_PTR)target->original_proc);
+      RemovePropW(window, win_property);
+    }
+  }
+  target->original_proc = NULL;
+}
+
+static LRESULT CALLBACK win_window_proc(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
+  win_target *target = (win_target *)GetPropW(window, win_property);
+  WNDPROC original = target ? target->original_proc : NULL;
+  if (message == WM_DESTROY && target) win_revoke(target); /* frees OLE's reference in time */
+  if (message == WM_NCDESTROY && target) {
+    target->subclassed = 0;
+    target->original_proc = NULL;
+    target->window = NULL;
+    RemovePropW(window, win_property);
+    if (original) SetWindowLongPtrW(window, GWLP_WNDPROC, (LONG_PTR)original);
+  }
+  if (original) return CallWindowProcW(original, window, message, wparam, lparam);
+  return DefWindowProcW(window, message, wparam, lparam);
+}
+
 /* ---- COM object ------------------------------------------------------ */
 static HRESULT STDMETHODCALLTYPE win_QueryInterface(IDropTarget *iface, REFIID iid, void **out) {
   win_target *target = WIN_FROM_IFACE(iface);
@@ -192,7 +328,9 @@ static ULONG STDMETHODCALLTYPE win_Release(IDropTarget *iface) {
   win_target *target = WIN_FROM_IFACE(iface);
   LONG left = InterlockedDecrement(&target->refs);
   if (left == 0) {
-    if (target->registered) { target->registered = 0; RevokeDragDrop(target->window); }
+#ifdef EXR_DESKTOP_DROP_TEST_HOOKS
+    InterlockedDecrement(&win_live_targets);
+#endif
     free(target);
   }
   return (ULONG)left;
@@ -261,13 +399,10 @@ static HRESULT STDMETHODCALLTYPE win_Drop(IDropTarget *iface, IDataObject *objec
 static const IDropTargetVtbl win_vtbl = {win_QueryInterface, win_AddRef, win_Release, win_DragEnter,
     win_DragOver, win_DragLeave, win_Drop};
 
-/* ---- lifecycle ------------------------------------------------------- */
 static void win_release_object(struct exr_drop_target *base) {
   win_target *target = (win_target *)base;
-  if (target->registered) {
-    target->registered = 0;
-    RevokeDragDrop(target->window);
-  }
+  win_restore_window(target);
+  win_revoke(target);
   win_Release(&target->iface);
 }
 
@@ -283,6 +418,9 @@ exr_drop_status exr_drop_windows_attach(HWND window, const exr_drop_target_optio
   if (!owner || owner != GetCurrentThreadId()) return EXR_DROP_PLATFORM;
   created = (win_target *)calloc(1, sizeof(*created));
   if (!created) return EXR_DROP_NO_MEMORY;
+#ifdef EXR_DESKTOP_DROP_TEST_HOOKS
+  InterlockedIncrement(&win_live_targets);
+#endif
   drop_target_init(&created->base, options, win_owner_thread, win_release_object);
   created->iface.lpVtbl = &win_vtbl;
   created->refs = 1;
@@ -290,10 +428,20 @@ exr_drop_status exr_drop_windows_attach(HWND window, const exr_drop_target_optio
   created->owner_tid = owner;
   result = RegisterDragDrop(window, &created->iface);
   if (FAILED(result)) {
-    free(created);
+    win_Release(&created->iface);
     return EXR_DROP_PLATFORM;
   }
   created->registered = 1;
+  SetPropW(window, win_property, created);
+  SetLastError(0);
+  created->original_proc = (WNDPROC)SetWindowLongPtrW(window, GWLP_WNDPROC, (LONG_PTR)win_window_proc);
+  if (!created->original_proc && GetLastError() != 0) {
+    RemovePropW(window, win_property);
+    win_revoke(created);
+    win_Release(&created->iface);
+    return EXR_DROP_PLATFORM;
+  }
+  created->subclassed = 1;
   *target = (exr_drop_windows_target *)created;
   return EXR_DROP_OK;
 }
@@ -311,3 +459,9 @@ exr_drop_status exr_drop_windows_deliver_drop(exr_drop_windows_target *target, I
   win_deliver(concrete, object, effect);
   return EXR_DROP_OK;
 }
+
+#ifdef EXR_DESKTOP_DROP_TEST_HOOKS
+size_t exr_drop_windows_test_live_targets(void) {
+  return (size_t)InterlockedCompareExchange(&win_live_targets, 0, 0);
+}
+#endif

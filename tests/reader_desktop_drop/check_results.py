@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
 """Validate the named acceptance cases of one platform and bind them to this
-source revision, run, attempt and the exact binaries/logs that produced them."""
+source revision, run, attempt and the exact binaries/logs that produced them.
+
+Supplemental logs (a hook build and a sanitizer build on Windows) are merged by
+case name with fail > pass > skip precedence, and each supplemental log must
+carry the complete case set on its own, so a crashed sanitizer run can never be
+masked by a green primary run.
+"""
 import argparse
 import hashlib
 import json
@@ -34,8 +40,17 @@ PLATFORM_CASES = {
         "clipboard_cancel", "request_outlives_clipboard",
         "shell_data_object_created", "shell_drop_delivers_file", "object_hdrop_delivers",
         "object_unicode_text_delivers", "object_virtual_descriptor", "object_unsupported_format",
-        "request_outlives_data_object", "detach_from_other_thread", "detach_inside_callback",
-        "window_destroyed_before_detach", "deliver_null_object", "detach_owner_thread",
+        "request_outlives_data_object",
+        "reject_text_without_terminator", "reject_text_odd_bytes", "reject_text_short_global",
+        "accept_text_exact_terminator", "reject_file_group_short_header",
+        "reject_file_group_beyond_allocation", "reject_file_group_extreme_count",
+        "reject_file_group_empty", "reject_hdrop_short_header", "reject_hdrop_pfiles_out_of_range",
+        "reject_hdrop_pfiles_before_header", "reject_hdrop_wide_unterminated",
+        "reject_hdrop_ansi_unterminated", "accept_hdrop_ansi_list", "reject_hdrop_wide_truncated_unit",
+        "reject_clipboard_text_without_terminator",
+        "detach_from_other_thread", "detach_inside_callback", "window_destroyed_before_detach",
+        "window_proc_restored_after_detach", "com_object_reclaimed_after_window_destroy",
+        "deliver_null_object", "detach_owner_thread",
     ],
     "linux": [
         "gtk_init", "gtk_window_created", "fixtures_created", "attach_real_widget",
@@ -67,6 +82,10 @@ ALLOWED_SKIPS = {
     "linux": {},
     "macos": {},
 }
+
+SANITIZER_MARKERS = ("AddressSanitizer", "LeakSanitizer", "MemorySanitizer", "ThreadSanitizer")
+
+RANK = {"fail": 3, "pass": 2, "skip": 1}
 
 
 def parse_jsonl(path, label, problems):
@@ -110,6 +129,26 @@ def parse_jsonl(path, label, problems):
     return cases, summaries, noise
 
 
+def require_complete(label, cases, required, problems):
+    names = {case["name"] for case in cases}
+    for name in required:
+        if name not in names:
+            problems.append(f"{label}: case missing: {name}")
+
+
+def merge(source_cases):
+    merged = {}
+    for label, cases in source_cases:
+        for case in cases:
+            current = merged.get(case["name"])
+            if current is None or RANK[case["status"]] > RANK[current["status"]]:
+                merged[case["name"]] = {"name": case["name"], "status": case["status"],
+                                        "detail": case["detail"], "source": label}
+            elif RANK[case["status"]] == RANK[current["status"]] and case["status"] == "fail":
+                merged[case["name"]]["detail"] += " | " + case["detail"]
+    return sorted(merged.values(), key=lambda case: case["name"])
+
+
 def sha256_file(path):
     digest = hashlib.sha256()
     with open(path, "rb") as handle:
@@ -118,11 +157,26 @@ def sha256_file(path):
     return digest.hexdigest()
 
 
+def scan_file(path, problems):
+    if not os.path.isfile(path):
+        problems.append(f"scan file missing: {path}")
+        return
+    with open(path, "r", encoding="utf-8", errors="replace") as handle:
+        for number, line in enumerate(handle, 1):
+            for marker in SANITIZER_MARKERS:
+                if marker in line:
+                    problems.append(f"sanitizer report in {path}:{number}: {line.strip()[:160]}")
+                    return
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--platform", required=True, choices=["windows", "linux", "macos"])
     parser.add_argument("--probe-log", required=True)
     parser.add_argument("--portable-log", required=True)
+    parser.add_argument("--extra-probe-log", action="append", default=[])
+    parser.add_argument("--extra-portable-log", action="append", default=[])
+    parser.add_argument("--scan", action="append", default=[])
     parser.add_argument("--exe", required=True, help="platform probe binary")
     parser.add_argument("--portable-exe", required=True)
     parser.add_argument("--root", required=True, help="artifact root, e.g. build/desktop-drop")
@@ -131,33 +185,54 @@ def main():
     args = parser.parse_args()
 
     problems = []
-    probe_cases, probe_summaries, probe_noise = parse_jsonl(args.probe_log, "probe", problems)
-    portable_cases, portable_summaries, portable_noise = parse_jsonl(args.portable_log, "portable", problems)
-    probe_names = {case["name"] for case in probe_cases}
-    portable_names = {case["name"] for case in portable_cases}
+    noise_all = []
+    probe_streams = [("probe", args.probe_log)]
+    portable_streams = [("portable", args.portable_log)]
+    for path in args.extra_probe_log:
+        probe_streams.append((os.path.basename(path), path))
+    for path in args.extra_portable_log:
+        portable_streams.append((os.path.basename(path), path))
+    for _, path in probe_streams + portable_streams:
+        if not os.path.isfile(path) or os.path.getsize(path) == 0:
+            problems.append(f"log missing or empty: {path}")
 
-    for name in PLATFORM_CASES[args.platform]:
-        if name not in probe_names:
-            problems.append(f"platform case missing: {name}")
-    for name in PORTABLE_CASES:
-        if name not in portable_names:
-            problems.append(f"portable case missing: {name}")
+    probe_sets = []
+    portable_sets = []
+    for label, path in probe_streams:
+        if not os.path.isfile(path):
+            continue
+        cases, summaries, noise = parse_jsonl(path, label, problems)
+        noise_all.extend(noise)
+        require_complete(label, cases, PLATFORM_CASES[args.platform], problems)
+        for summary in summaries:
+            if summary.get("failed", 0) != 0:
+                problems.append(f"{label}: summary reports failures: {summary}")
+        probe_sets.append((label, cases))
+    for label, path in portable_streams:
+        if not os.path.isfile(path):
+            continue
+        cases, summaries, noise = parse_jsonl(path, label, problems)
+        noise_all.extend(noise)
+        require_complete(label, cases, PORTABLE_CASES, problems)
+        for summary in summaries:
+            if summary.get("failed", 0) != 0:
+                problems.append(f"{label}: summary reports failures: {summary}")
+        portable_sets.append((label, cases))
+
+    probe_cases = merge(probe_sets)
+    portable_cases = merge(portable_sets)
 
     allowed = ALLOWED_SKIPS[args.platform]
-    unplanned_skips = []
     for case in probe_cases + portable_cases:
         if case["status"] == "fail":
-            problems.append(f"case failed: {case['name']}: {case['detail']}")
-        if case["status"] == "skip":
-            if case["name"] in allowed and allowed[case["name"]] in case["detail"]:
-                continue
-            unplanned_skips.append(case["name"])
-    for name in unplanned_skips:
-        problems.append(f"unplanned skip: {name}")
+            problems.append(f"case failed: {case['name']} ({case['source']}): {case['detail']}")
+        elif case["status"] == "skip":
+            reason = allowed.get(case["name"])
+            if not reason or reason not in case["detail"]:
+                problems.append(f"unplanned skip: {case['name']} ({case['source']}): {case['detail']}")
 
-    for summary in probe_summaries + portable_summaries:
-        if summary.get("failed", 0) != 0:
-            problems.append(f"summary reports failures: {summary}")
+    for path in args.scan:
+        scan_file(path, problems)
 
     if not os.path.isfile(args.exe) or os.path.getsize(args.exe) == 0:
         problems.append(f"missing or empty probe binary: {args.exe}")
@@ -170,26 +245,31 @@ def main():
     if not source_sha:
         problems.append("GITHUB_SHA is not set")
 
-    bindings = []
-    for relative in (
+    binding_paths = [
         os.path.relpath(args.exe, args.root),
         os.path.relpath(args.portable_exe, args.root),
-        os.path.relpath(args.probe_log, args.root),
-        os.path.relpath(args.portable_log, args.root),
-        "logs/module-configure.log",
-        "logs/module-build.log",
-        "logs/module-install.log",
-        "logs/consumer-configure.log",
-        "logs/consumer-build.log",
-        "logs/examples-configure.log",
-        "logs/examples-build.log",
-    ):
+    ]
+    for _, path in probe_streams + portable_streams:
+        binding_paths.append(os.path.relpath(path, args.root))
+    for path in args.scan:
+        binding_paths.append(os.path.relpath(path, args.root))
+    for relative in ("logs/module-configure.log", "logs/module-build.log", "logs/module-install.log",
+                     "logs/consumer-configure.log", "logs/consumer-build.log",
+                     "logs/examples-configure.log", "logs/examples-build.log"):
+        binding_paths.append(relative)
+
+    bindings = []
+    seen_paths = set()
+    for relative in binding_paths:
+        relative = relative.replace("\\", "/")
+        if relative in seen_paths:
+            continue
+        seen_paths.add(relative)
         path = os.path.join(args.root, relative)
         if not os.path.isfile(path):
             problems.append(f"binding file missing: {relative}")
             continue
-        bindings.append({"path": relative.replace("\\", "/"), "sha256": sha256_file(path),
-                         "bytes": os.path.getsize(path)})
+        bindings.append({"path": relative, "sha256": sha256_file(path), "bytes": os.path.getsize(path)})
 
     report = {
         "schema": 1,
@@ -198,6 +278,9 @@ def main():
         "source_sha": source_sha,
         "run": {"id": run_id, "attempt": attempt, "job": args.job},
         "cases": {"probe": probe_cases, "portable": portable_cases},
+        "streams": {"probe": [label for label, _ in probe_streams],
+                    "portable": [label for label, _ in portable_streams],
+                    "scanned": list(args.scan)},
         "counts": {
             "probe": len(probe_cases),
             "portable": len(portable_cases),
@@ -205,11 +288,13 @@ def main():
             "skipped": [c["name"] for c in probe_cases + portable_cases if c["status"] == "skip"],
         },
         "bindings": bindings,
-        "toolkit_noise": (probe_noise + portable_noise)[:20],
+        "toolkit_noise": noise_all[:20],
         "limits": [
             "One GitHub Actions runner per platform; no physical device, no interactive drag session.",
             "Windows drops are delivered through the adapter entry OLE calls for IDropTarget::Drop with a real "
             "shell data object; no pointer-device drag is started.",
+            "Windows memory safety is asserted by an AddressSanitizer build of the same probe and by a hook "
+            "build that counts live COM targets; the hook counters are compiled out of the installed binary.",
             "GTK payloads travel through a real X11 clipboard and a real drop destination; the drag gesture "
             "itself is not synthesised.",
             "AppKit payloads travel through a real private NSPasteboard and a real NSDraggingInfo double into "

@@ -302,6 +302,79 @@ static IDataObject *test_object_create(CLIPFORMAT format, HGLOBAL memory) {
   return (IDataObject *)object;
 }
 
+/* ---- malformed-buffer fixtures --------------------------------------- */
+static HGLOBAL make_raw(const void *bytes, size_t size) {
+  HGLOBAL handle = GlobalAlloc(GHND, size ? size : 1);
+  void *target;
+  if (!handle) return NULL;
+  target = GlobalLock(handle);
+  if (!target) {
+    GlobalFree(handle);
+    return NULL;
+  }
+  if (size) memcpy(target, bytes, size);
+  GlobalUnlock(handle);
+  return handle;
+}
+
+/* Header plus a caller-controlled list; the allocation is exactly what the
+   header claims so pFiles and truncation cases are real. */
+static HGLOBAL make_hdrop_raw(DWORD pfiles, BOOL wide, const void *list, size_t list_bytes) {
+  size_t total = sizeof(DROPFILES) + list_bytes;
+  HGLOBAL handle = GlobalAlloc(GHND, total);
+  DROPFILES *header;
+  if (!handle) return NULL;
+  header = (DROPFILES *)GlobalLock(handle);
+  if (!header) {
+    GlobalFree(handle);
+    return NULL;
+  }
+  memset(header, 0, sizeof(*header));
+  header->pFiles = pfiles;
+  header->fWide = wide;
+  if (list && list_bytes) memcpy((unsigned char *)header + sizeof(DROPFILES), list, list_bytes);
+  GlobalUnlock(handle);
+  return handle;
+}
+
+static exr_drop_windows_target *g_target;
+
+/* Deliver a synthetic data object and check the outcome. A rejected buffer must
+   produce one callback with no request and DROPEFFECT_NONE. */
+static void deliver_object(capture *state, const char *name, CLIPFORMAT format, HGLOBAL memory,
+    exr_drop_status want_status, exr_drop_item_status want_item, size_t want_items) {
+  IDataObject *object;
+  DWORD effect = DROPEFFECT_COPY;
+  char detail[300];
+  if (!memory) {
+    report_fail(name, "fixture allocation failed");
+    return;
+  }
+  object = test_object_create(format, memory);
+  if (!object) {
+    GlobalFree(memory);
+    report_fail(name, "object allocation failed");
+    return;
+  }
+  capture_reset(state);
+  if (!g_target || exr_drop_windows_deliver_drop(g_target, object, &effect) != EXR_DROP_OK) {
+    report_fail(name, "deliver refused");
+  } else if (want_status != EXR_DROP_OK) {
+    snprintf(detail, sizeof(detail), "status=%s items=%zu request=%s effect=%lu",
+        exr_drop_status_name(state->status), state->items, state->request ? "set" : "null",
+        (unsigned long)effect);
+    report_expect(name, state->calls == 1 && state->status == want_status && state->request == NULL
+        && effect == DROPEFFECT_NONE, detail);
+  } else {
+    snprintf(detail, sizeof(detail), "status=%s items=%zu first=%s path=%s",
+        exr_drop_status_name(state->status), state->items,
+        exr_drop_item_status_name(state->first_status), state->first_path);
+    report_expect(name, state->calls == 1 && state->status == EXR_DROP_OK && state->items == want_items
+        && state->first_status == want_item, detail);
+  }
+  object->lpVtbl->Release(object);
+}
+
 static IDataObject *shell_data_object(const wchar_t *folder, const wchar_t *file) {
   PIDLIST_ABSOLUTE folder_pidl = NULL, file_pidl = NULL;
   PCUITEMID_CHILD child;
@@ -411,6 +484,7 @@ int main(void) {
   options.context = &state;
   report_expect("attach_real_window", exr_drop_windows_attach(g_window, &options, &target) == EXR_DROP_OK,
       "RegisterDragDrop succeeded");
+  g_target = target;
   {
     exr_drop_windows_target *scratch = NULL;
     report_expect("attach_null_window", exr_drop_windows_attach(NULL, &options, &scratch) == EXR_DROP_ARGUMENT,
@@ -844,11 +918,130 @@ int main(void) {
           "path bytes survive the data object");
       exr_drop_request_release(state.request);
       state.request = NULL;
+      state.hold_request = 0;
     } else {
       report_fail("request_outlives_data_object", "deliver failed");
       if (object) object->lpVtbl->Release(object);
       state.hold_request = 0;
     }
+  }
+
+  /* ---- malformed platform buffers ------------------------------------- */
+  {
+    static const unsigned char raw[4] = {'A', 0, 'B', 0}; /* two units, no terminator */
+    deliver_object(&state, "reject_text_without_terminator", CF_UNICODETEXT, make_raw(raw, sizeof(raw)),
+        EXR_DROP_PLATFORM, (exr_drop_item_status)0, 0);
+  }
+  {
+    static const unsigned char raw[5] = {'A', 0, 'B', 0, 'C'}; /* odd byte count */
+    deliver_object(&state, "reject_text_odd_bytes", CF_UNICODETEXT, make_raw(raw, sizeof(raw)),
+        EXR_DROP_PLATFORM, (exr_drop_item_status)0, 0);
+  }
+  {
+    static const unsigned char raw[1] = {'A'}; /* smaller than one UTF-16 unit */
+    deliver_object(&state, "reject_text_short_global", CF_UNICODETEXT, make_raw(raw, sizeof(raw)),
+        EXR_DROP_PLATFORM, (exr_drop_item_status)0, 0);
+  }
+  {
+    static const wchar_t text[] = L"https://e.x"; /* 11 units plus the terminator, nothing spare */
+    deliver_object(&state, "accept_text_exact_terminator", CF_UNICODETEXT, make_raw(text, sizeof(text)),
+        EXR_DROP_OK, EXR_DROP_ITEM_REMOTE_URL, 1);
+  }
+  {
+    static const unsigned char raw[4] = {1, 0, 0, 0}; /* cItems without a descriptor */
+    deliver_object(&state, "reject_file_group_short_header", RegisterClipboardFormatW(CFSTR_FILEDESCRIPTORW),
+        make_raw(raw, sizeof(raw)), EXR_DROP_PLATFORM, (exr_drop_item_status)0, 0);
+  }
+  {
+    HGLOBAL memory = GlobalAlloc(GHND, sizeof(FILEGROUPDESCRIPTORW));
+    FILEGROUPDESCRIPTORW *group = memory ? (FILEGROUPDESCRIPTORW *)GlobalLock(memory) : NULL;
+    if (!group) {
+      report_fail("reject_file_group_beyond_allocation", "fixture allocation failed");
+      if (memory) GlobalFree(memory);
+    } else {
+      group->cItems = 3; /* promises three, the allocation holds one */
+      wcsncpy_s(group->fgd[0].cFileName, 260, L"a.epub", _TRUNCATE);
+      GlobalUnlock(memory);
+      deliver_object(&state, "reject_file_group_beyond_allocation",
+          RegisterClipboardFormatW(CFSTR_FILEDESCRIPTORW), memory, EXR_DROP_PLATFORM, (exr_drop_item_status)0, 0);
+    }
+  }
+  {
+    HGLOBAL memory = GlobalAlloc(GHND, sizeof(FILEGROUPDESCRIPTORW));
+    FILEGROUPDESCRIPTORW *group = memory ? (FILEGROUPDESCRIPTORW *)GlobalLock(memory) : NULL;
+    if (!group) {
+      report_fail("reject_file_group_extreme_count", "fixture allocation failed");
+      if (memory) GlobalFree(memory);
+    } else {
+      group->cItems = 0xFFFFFFFFu;
+      wcsncpy_s(group->fgd[0].cFileName, 260, L"a.epub", _TRUNCATE);
+      GlobalUnlock(memory);
+      deliver_object(&state, "reject_file_group_extreme_count",
+          RegisterClipboardFormatW(CFSTR_FILEDESCRIPTORW), memory, EXR_DROP_PLATFORM, (exr_drop_item_status)0, 0);
+    }
+  }
+  {
+    HGLOBAL memory = GlobalAlloc(GHND, sizeof(FILEGROUPDESCRIPTORW));
+    FILEGROUPDESCRIPTORW *group = memory ? (FILEGROUPDESCRIPTORW *)GlobalLock(memory) : NULL;
+    if (!group) {
+      report_fail("reject_file_group_empty", "fixture allocation failed");
+      if (memory) GlobalFree(memory);
+    } else {
+      group->cItems = 0;
+      GlobalUnlock(memory);
+      deliver_object(&state, "reject_file_group_empty", RegisterClipboardFormatW(CFSTR_FILEDESCRIPTORW),
+          memory, EXR_DROP_UNSUPPORTED, (exr_drop_item_status)0, 0);
+    }
+  }
+  {
+    static const unsigned char raw[4] = {0x18, 0, 0, 0}; /* shorter than DROPFILES */
+    deliver_object(&state, "reject_hdrop_short_header", CF_HDROP, make_raw(raw, sizeof(raw)),
+        EXR_DROP_PLATFORM, (exr_drop_item_status)0, 0);
+  }
+  deliver_object(&state, "reject_hdrop_pfiles_out_of_range", CF_HDROP,
+      make_hdrop_raw((DWORD)(sizeof(DROPFILES) + 64), FALSE, NULL, 0), EXR_DROP_PLATFORM,
+      (exr_drop_item_status)0, 0);
+  deliver_object(&state, "reject_hdrop_pfiles_before_header", CF_HDROP, make_hdrop_raw(4, FALSE, NULL, 0),
+      EXR_DROP_PLATFORM, (exr_drop_item_status)0, 0);
+  {
+    static const wchar_t list[] = L"C:\\a.txt"; /* own terminator only, no empty entry */
+    deliver_object(&state, "reject_hdrop_wide_unterminated", CF_HDROP,
+        make_hdrop_raw((DWORD)sizeof(DROPFILES), TRUE, list, sizeof(list)), EXR_DROP_PLATFORM,
+        (exr_drop_item_status)0, 0);
+  }
+  {
+    static const char list[] = "C:\\a.txt"; /* own terminator only, no empty entry */
+    deliver_object(&state, "reject_hdrop_ansi_unterminated", CF_HDROP,
+        make_hdrop_raw((DWORD)sizeof(DROPFILES), FALSE, list, sizeof(list)), EXR_DROP_PLATFORM,
+        (exr_drop_item_status)0, 0);
+  }
+  {
+    static const char list[] = "C:\\a.txt\0"; /* string plus the terminating empty entry */
+    HGLOBAL memory = make_hdrop_raw((DWORD)sizeof(DROPFILES), FALSE, list, sizeof(list));
+    deliver_object(&state, "accept_hdrop_ansi_list", CF_HDROP, memory, EXR_DROP_OK, EXR_DROP_ITEM_MISSING, 1);
+  }
+  {
+    static const unsigned char list[5] = {'A', 0, 'B', 0x33, 0x01}; /* truncated second unit */
+    deliver_object(&state, "reject_hdrop_wide_truncated_unit", CF_HDROP,
+        make_hdrop_raw((DWORD)sizeof(DROPFILES), TRUE, list, sizeof(list)), EXR_DROP_PLATFORM,
+        (exr_drop_item_status)0, 0);
+  }
+  if (g_clipboard_ok) {
+    static const unsigned char raw[4] = {'A', 0, 'B', 0};
+    HGLOBAL memory = make_raw(raw, sizeof(raw));
+    if (!memory) {
+      report_fail("reject_clipboard_text_without_terminator", "fixture allocation failed");
+    } else if (!clipboard_put(CF_UNICODETEXT, memory)) {
+      report_fail("reject_clipboard_text_without_terminator", "SetClipboardData failed");
+    } else {
+      exr_drop_request *rejected = NULL;
+      exr_drop_status status = exr_drop_windows_clipboard_request(EXR_DROP_ORIGIN_CLIPBOARD, NULL, &rejected);
+      report_expect("reject_clipboard_text_without_terminator",
+          status == EXR_DROP_PLATFORM && rejected == NULL, exr_drop_status_name(status));
+      exr_drop_request_release(rejected);
+    }
+  } else {
+    report_skip_clipboard("reject_clipboard_text_without_terminator");
   }
 
   /* ---- lifecycle ----------------------------------------------------- */
@@ -900,12 +1093,58 @@ int main(void) {
     HWND spare = make_window();
     exr_drop_windows_target *victim = NULL;
     if (spare && exr_drop_windows_attach(spare, &options, &victim) == EXR_DROP_OK) {
-      DestroyWindow(spare);
+      DestroyWindow(spare); /* WM_DESTROY revokes the OLE registration and drops OLE's reference */
       report_expect("window_destroyed_before_detach", exr_drop_windows_detach(victim) == EXR_DROP_OK,
-          "detach after DestroyWindow only frees memory");
+          "detach after DestroyWindow frees the last reference");
     } else {
       report_fail("window_destroyed_before_detach", "attach failed");
     }
+  }
+  {
+    HWND spare = make_window();
+    exr_drop_windows_target *victim = NULL;
+    LONG_PTR before = spare ? GetWindowLongPtrW(spare, GWLP_WNDPROC) : 0;
+    LONG_PTR during = 0, after = 0;
+    if (!spare) {
+      report_fail("window_proc_restored_after_detach", "window unavailable");
+    } else if (exr_drop_windows_attach(spare, &options, &victim) != EXR_DROP_OK) {
+      report_fail("window_proc_restored_after_detach", "attach failed");
+    } else {
+      during = GetWindowLongPtrW(spare, GWLP_WNDPROC);
+      exr_drop_windows_detach(victim);
+      after = GetWindowLongPtrW(spare, GWLP_WNDPROC);
+      report_expect("window_proc_restored_after_detach", during != before && after == before,
+          "one transparent subclass installed and restored");
+      DestroyWindow(spare);
+    }
+  }
+  {
+#ifdef EXR_DESKTOP_DROP_TEST_HOOKS
+    size_t live_before = exr_drop_windows_test_live_targets();
+    HWND spare = make_window();
+    exr_drop_windows_target *victim = NULL;
+    if (!spare) {
+      report_fail("com_object_reclaimed_after_window_destroy", "window unavailable");
+    } else if (exr_drop_windows_attach(spare, &options, &victim) != EXR_DROP_OK) {
+      report_fail("com_object_reclaimed_after_window_destroy", "attach failed");
+      DestroyWindow(spare);
+    } else {
+      size_t live_during = exr_drop_windows_test_live_targets();
+      exr_drop_status status;
+      size_t live_after;
+      char detail[160];
+      DestroyWindow(spare);
+      status = exr_drop_windows_detach(victim);
+      live_after = exr_drop_windows_test_live_targets();
+      snprintf(detail, sizeof(detail), "live %zu -> %zu -> %zu, detach=%s", live_before, live_during,
+          live_after, exr_drop_status_name(status));
+      report_expect("com_object_reclaimed_after_window_destroy",
+          live_during == live_before + 1 && status == EXR_DROP_OK && live_after == live_before, detail);
+    }
+#else
+    report_skip("com_object_reclaimed_after_window_destroy",
+        "requires the EXR_DESKTOP_DROP_TEST_HOOKS build");
+#endif
   }
   {
     DWORD local_effect = DROPEFFECT_COPY;
