@@ -158,7 +158,10 @@ static int split_key(const char *key, char digest[65]) {
   if (!colon || colon == key) return 0;
   n = (size_t)(colon - key);
   if (n > 8) return 0;
-  for (i = 0; i < n; i++) if (key[i] < 'a' || key[i] > 'z') return 0;
+  /* Product formats are lowercase tokens, and two of the nine formats carry a
+   * digit: fb2 and the rest of the fixed vocabulary stay accepted here. */
+  for (i = 0; i < n; i++)
+    if (!((key[i] >= 'a' && key[i] <= 'z') || (key[i] >= '0' && key[i] <= '9'))) return 0;
   if (total != n + 1 + 64) return 0;
   for (i = 0; i < 64; i++) {
     char c = colon[1 + i];
