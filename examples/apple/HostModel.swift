@@ -3,6 +3,7 @@ import Foundation
 import CoreGraphics
 import CryptoKit
 import CEXReader
+import CReaderProduct
 import Combine
 import Darwin
 
