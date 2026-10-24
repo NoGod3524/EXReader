@@ -69,6 +69,61 @@ metadata editor IDs (137–149), so original IDs 100–136 are unchanged.
    until the session reports `CLOSED`, destroys it, then finishes the normal close
    barrier. Closing the dialog only cancels; the handle stays for Retry.
 
+## Accessibility fixes carried by this owner
+
+The independent Windows audit `docs/READER-A11Y-WINDOWS.md` (source
+`da2bcde7d684c1db8a9a51de9a7d478d870d5149`, run `40084309431`, 49 named checks:
+34 pass / 9 fail / 5 gap / 1 not verified, 8 blocking, `accessibility_accepted`
+false) was read from its own artifact, not from its summary. Each blocking item
+was re-derived from this host's source before changing anything; where the report's
+suggested fix was not the actual root cause, the real cause is noted below.
+
+| audit id | real root cause found in this host | change | measured by |
+| --- | --- | --- | --- |
+| SH-04 | the search box has no static label, and Win32 derives an edit's name from a labelled static | a real `搜索(&S)` static immediately before the edit (the same native path the import field already uses) | `shelf_search_and_comment_edits_expose_accessible_names` |
+| AN-02 | the comment editor's only neighbour names the list, not the editor | a real `标注内容(&M)` static immediately before the editor | same check |
+| KB-07 | a multiline edit answers `WM_GETDLGCODE` with `DLGC_WANTTAB`, so the dialog manager hands it Tab and it inserts a tab character | subclass answers `DLGC_WANTCHARS \| DLGC_WANTARROWS` only; `IsDialogMessage` traverses in and out | `comment_editor_releases_tab_and_shift_tab` |
+| KB-01 | consequence of KB-07 (the cycle was only closable by the audit's own resume) | the trap is gone, so the cycle closes by itself | `tab_order_visits_every_enabled_stop_once_and_closes` |
+| KB-06 / IM-06 | `host_update_controls` disables the command that already holds focus, and Windows parks focus on no window | a focus guard moves focus to the next enabled tab stop before the disable takes effect | `import_and_refresh_commands_keep_a_defined_focus_stop` |
+| OR-09 | the details dialog only re-activated the owner window; activating a window does not set keyboard focus | `WM_DESTROY` sets focus back on the invoking 详情 command | `details_dialog_returns_focus_to_its_invoking_command` |
+| OR-10 | **not a provider gap**: UI Automation reports each child's own enabled state, so blocking the parent window is invisible to it | the owner's children are disabled individually when a modal dialog opens and restored after it closes; a job finishing meanwhile re-applies the blocked state | `modal_background_commands_report_disabled_to_uia` |
+| IM-05 | `set_status` only called `SetWindowTextW` | one `EVENT_OBJECT_NAMECHANGE` per real text change (`NotifyWinEvent`) | `status_line_raises_a_native_change_event` |
+| RD-02 / KB-05 | the page is a custom control and the host answered no `WM_GETOBJECT` at all | `apps/reader/desktop/windows_accessibility.inc` implements a native provider (`IRawElementProviderSimple`, `ITextProvider`, `ITextRangeProvider`, `IValueProvider`) returned through `UiaReturnRawElementProvider`; the document text is the same page text the copy command reads and the selection range is the host's own selection | `page_exposes_text_through_a_native_text_pattern`, `page_selection_is_exposed_as_a_text_range` |
+| ST-05 | no command carried a mnemonic | `&`-mnemonics on 15 main commands, both new labels and the details dialog cancel; the four 字号/缩放 +/- buttons are deliberately left bare because their captions end in an operator | `main_commands_expose_alt_mnemonics` |
+
+The page provider never invents text: `host_a11y_page_text` returns exactly the
+frame bytes the copy command uses (`g.frame.utf8`/`text_bytes` for reflow,
+`exr_fixed_text_string` for fixed pages), and offsets are converted between UTF-8
+bytes and UTF-16 units in both directions. `TextPattern.Select` writes the same
+`g.selection` the mouse writes and raises the selection event. No SDK file, no
+WebView and no product schema byte is touched; the provider lives entirely in the
+host and is compiled into both the independent account host and the shared
+desktop host (`#pragma comment(lib, ...)` supplies UIAutomationCore/oleacc, so the
+shared `apps/reader/desktop/CMakeLists.txt` is untouched).
+
+Still not claimed here: the settings surface gap (ST-04), the reverse-order
+measurement (KB-02) and any screen-reader acceptance - no NVDA, Narrator or human
+pass is part of this package. `screen_reader_verified` stays false in the
+regression record, and the full audit must be re-run by root after integration.
+
+### Real-input accessibility regression (11 checks)
+
+`tests/reader_windows_account/check_a11y_ui.py` drives the packaged host with
+`SendInput` only (no `WM_COMMAND`, no `BM_CLICK`) and reads state through UI
+Automation and `GetGUIThreadInfo`; it aborts if the host is not the foreground
+window, so a misdirected key event can never look like a pass.
+
+1. `import_command_activates_from_the_keyboard`
+2. `shelf_search_and_comment_edits_expose_accessible_names`
+3. `comment_editor_releases_tab_and_shift_tab`
+4. `import_and_refresh_commands_keep_a_defined_focus_stop`
+5. `status_line_raises_a_native_change_event`
+6. `page_exposes_text_through_a_native_text_pattern`
+7. `page_selection_is_exposed_as_a_text_range`
+8. `modal_background_commands_report_disabled_to_uia`
+9. `details_dialog_returns_focus_to_its_invoking_command`
+10. `main_commands_expose_alt_mnemonics`
+11. `tab_order_visits_every_enabled_stop_once_and_closes`
 ## Package verification
 
 `.github/workflows/reader-windows-account.yml` runs on `windows-2022` and first

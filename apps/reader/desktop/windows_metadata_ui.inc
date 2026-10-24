@@ -44,14 +44,14 @@ static void metadata_submit_job(int kind) {
     job->metadata_snapshot=g.metadata_snapshot;g.metadata_snapshot=NULL;
   }
   g.metadata_running=1;
-  EnableWindow(g.window,FALSE);
+  host_a11y_owner_enabled(0);
   metadata_dialog_controls();
   set_status(kind==JOB_METADATA_PREPARE ? L"正在读取书籍信息。":L"正在保存书籍信息，完成后可以继续操作。");job_submit(job);
 }
 static void metadata_failed_to_start(host_job *job) {
   g.metadata_running=0;
   if(job->metadata_snapshot && !g.metadata_snapshot) { g.metadata_snapshot=job->metadata_snapshot;job->metadata_snapshot=NULL; }
-  EnableWindow(g.window,g.metadata_dialog==NULL);metadata_dialog_controls();
+  host_a11y_owner_enabled(g.metadata_dialog==NULL);metadata_dialog_controls();
 }
 static HWND metadata_entry(HWND parent,int id,int y,const wchar_t *value) {
   HWND entry=CreateWindowExW(WS_EX_CLIENTEDGE,L"EDIT",value ? value:L"",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,
@@ -85,7 +85,7 @@ static INT_PTR CALLBACK metadata_dialog_procedure(HWND dialog,UINT message,WPARA
       g.metadata_message=make_static(dialog,IDC_METADATA_MESSAGE,g.metadata_notice);
       MoveWindow(g.metadata_message,18,132,576,48,TRUE);
       MoveWindow(make_button(dialog,IDC_METADATA_SAVE,L"保存(&S)"),364,196,110,30,TRUE);
-      MoveWindow(make_button(dialog,IDC_METADATA_CANCEL,L"取消"),484,196,110,30,TRUE);
+      MoveWindow(make_button(dialog,IDC_METADATA_CANCEL,L"取消(&C)"),484,196,110,30,TRUE);
       SendMessageW(dialog,DM_SETDEFID,IDC_METADATA_SAVE,0);metadata_dialog_controls();
       SetFocus(g.metadata_title);return FALSE;
     case WM_COMMAND: {
@@ -105,8 +105,8 @@ static INT_PTR CALLBACK metadata_dialog_procedure(HWND dialog,UINT message,WPARA
       g.metadata_dialog=g.metadata_title=g.metadata_author=g.metadata_favorite=g.metadata_message=NULL;
       metadata_clear_ui();
       if(g.window && IsWindow(g.window)) {
-        EnableWindow(g.window,TRUE);
-        if(!g.closing) { SetActiveWindow(g.window);product_shelf_schedule(0,0); }
+        host_a11y_owner_enabled(1);
+        if(!g.closing) { SetActiveWindow(g.window);SetFocus(g.metadata_button);product_shelf_schedule(0,0); }
       }
       return TRUE;
   }
@@ -118,10 +118,10 @@ static void metadata_show_dialog(void) {
   DLGTEMPLATE *dialog=(DLGTEMPLATE *)data.bytes;
   dialog->style=WS_POPUP|WS_CAPTION|WS_SYSMENU|DS_MODALFRAME;dialog->cx=340;dialog->cy=150;
   HWND window=CreateDialogIndirectParamW(GetModuleHandleW(NULL),dialog,g.window,metadata_dialog_procedure,0);
-  if(!window) { metadata_clear_ui();EnableWindow(g.window,TRUE);set_status(L"无法打开书籍详情窗口。");return; }
+  if(!window) { metadata_clear_ui();host_a11y_owner_enabled(1);set_status(L"无法打开书籍详情窗口。");return; }
   RECT parent;GetWindowRect(g.window,&parent);
   SetWindowPos(window,HWND_TOP,parent.left+140,parent.top+100,628,g.metadata_recovery ? 244:278,SWP_SHOWWINDOW);
-  EnableWindow(g.window,FALSE);SetForegroundWindow(window);
+  host_a11y_owner_enabled(0);SetForegroundWindow(window);
   SetFocus(g.metadata_recovery ? GetDlgItem(window,IDC_METADATA_RETRY):g.metadata_title);
 }
 static void metadata_edit_selected(void) {
@@ -161,7 +161,7 @@ static void metadata_job_accept(host_job *job) {
     if(job->metadata_snapshot && !g.metadata_snapshot) { g.metadata_snapshot=job->metadata_snapshot;job->metadata_snapshot=NULL; }
     if(g.metadata_dialog) {
       metadata_dialog_controls();SetWindowTextW(g.metadata_message,L"暂时无法保存，请检查输入并重试。已保存的信息不会改变。");
-    } else EnableWindow(g.window,TRUE);
+    } else host_a11y_owner_enabled(1);
     set_status(L"暂时无法处理书籍信息，请检查输入或重新打开详情。");
   }
 }
