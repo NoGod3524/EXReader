@@ -157,9 +157,11 @@ def main():
     for mode in ('open', 'store', 'library'):
         code, names = run_consumer(fault, ['--mode', mode, '--work', str(fault_work / mode), '--fixtures', str(a.fixtures.resolve()),
                                            '--repo-fixtures', str(a.repo_fixtures.resolve())], out, 'fault-' + mode, 1200)
-        assert all(n['pass'] for n in names), 'fault failures: %s' % [n['name'] for n in names if not n['pass']]
-        assert code == 0, 'fault consumer mode %s exited %s' % (mode, code)
+        assert names, 'fault consumer mode %s produced no checks (exit %s)' % (mode, code)
         fault_names += names
+        if code != 0:
+            assert any(not n['pass'] for n in names), 'fault consumer failed without a failed check'
+    assert all(n['pass'] for n in fault_names), 'fault failures: %s' % [n['name'] for n in fault_names if not n['pass']]
     fault_check_names = [n['name'] for n in fault_names]
     missing = [n for n in REQUIRED_FAULT if n not in fault_check_names]
     assert not missing, 'fault checks absent: %s' % missing

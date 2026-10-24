@@ -2,14 +2,13 @@
 // Installed fault-injection consumer for EXReaderThumbnails. It replaces the global
 // operator new/delete inside its own binary only (no production hook, no public API
 // change), makes the n-th allocation of one operation throw std::bad_alloc, and counts
-// live allocations so a failed call can be shown to leak nothing: not the cache, not the
-// borrowed SDK blob, not the thumbnail pixels, not a temporary file.
+// live C++ allocations. SDK malloc blobs/pixels are checked by the separate leak-
+// sanitizer job; operator-new accounting alone does not measure those allocations.
 //
 // Every allocation point runs in its own child process: the standard library declares
 // parts of <filesystem> noexcept, so an injected failure there aborts instead of
-// unwinding. A child that dies that way reports TERMINATE through its terminate handler;
-// the driver counts those points separately and bounded, and every other point must
-// pass its assertions.
+// unwinding. A child that dies reports the allocation stack; every termination fails
+// the contract, including one reached through a standard-library noexcept function.
 //
 //   --mode open|store|library  DIR FIXTURES [--repo-fixtures DIR]   driver
 //   --mode ... --n K --report FILE                                  one point (child)
@@ -27,8 +26,13 @@
 #include <vector>
 
 #ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+#include <dbghelp.h>
 #include <process.h>
 #else
+#include <execinfo.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #endif
@@ -45,12 +49,19 @@ bool g_tripped = false;
 const char* g_step = "none";
 long long g_last_n = 0;
 FILE* g_report = nullptr;
+void* g_failure_stack[64];
+int g_failure_depth = 0;
 
 bool trip() {
   if (!g_armed) return false;
   if (g_countdown <= 0) {
     g_tripped = true;
     g_armed = false;
+#ifdef _WIN32
+    g_failure_depth = static_cast<int>(::CaptureStackBackTrace(0, 64, g_failure_stack, nullptr));
+#else
+    g_failure_depth = ::backtrace(g_failure_stack, 64);
+#endif
     return true;
   }
   --g_countdown;
@@ -64,13 +75,29 @@ void report(const std::string& text) {
   std::fflush(g_report);
 }
 
-// A throw from a noexcept context aborts instead of unwinding: record it without
-// allocating so the driver can tell that boundary from a real failure.
+// The stack was captured where allocation failed, before exception unwinding.
 void on_terminate() {
   if (g_report) {
     std::fprintf(g_report, "TERMINATE step=%s n=%lld armed=%d countdown=%lld live=%lld tripped=%d\n", g_step, g_last_n,
                  (int)g_armed, g_countdown, g_live, (int)g_tripped);
     std::fflush(g_report);
+#ifdef _WIN32
+    alignas(SYMBOL_INFO) unsigned char storage[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
+    SYMBOL_INFO* symbol = reinterpret_cast<SYMBOL_INFO*>(storage);
+    for (int i = 0; i < g_failure_depth; ++i) {
+      std::memset(storage, 0, sizeof(storage));
+      symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+      symbol->MaxNameLen = MAX_SYM_NAME;
+      DWORD64 offset = 0;
+      const DWORD64 address = reinterpret_cast<DWORD64>(g_failure_stack[i]);
+      if (::SymFromAddr(::GetCurrentProcess(), address, &offset, symbol))
+        std::fprintf(g_report, "FRAME %s +0x%llx\n", symbol->Name, static_cast<unsigned long long>(offset));
+      else std::fprintf(g_report, "FRAME 0x%llx\n", static_cast<unsigned long long>(address));
+    }
+    std::fflush(g_report);
+#else
+    ::backtrace_symbols_fd(g_failure_stack, g_failure_depth, ::fileno(g_report));
+#endif
   }
   std::_Exit(3);
 }
@@ -429,14 +456,16 @@ int drive(const std::string& self, const std::string& mode, const fs::path& work
       continue;
     }
     if (text.rfind("TERMINATE", 0) == 0 && (code == 3 || code == 134)) {
-      ++boundaries;  // an allocation inside a noexcept <filesystem> shim, not our code
+      ++boundaries;
+      std::printf("UNCLASSIFIED TERMINATION mode=%s n=%lld\n%s", mode.c_str(), n, text.c_str());
+      std::fflush(stdout);
       continue;
     }
     bad = "n=" + std::to_string(n) + " exit=" + std::to_string(code) + " " + text.substr(0, 220);
   }
   const std::string detail = (bad.empty() ? "points " + std::to_string(points) + " noexcept boundaries " + std::to_string(boundaries)
                                           : bad);
-  const bool ok = bad.empty() && finished && points > 0 && boundaries <= 12;
+  const bool ok = bad.empty() && finished && points > 0 && boundaries == 0;
   const char* name = mode == "open" ? kOpenCheck : (mode == "store" ? kStoreCheck : kLibraryCheck);
   check(name, ok, detail);
   size_t failures = 0;
@@ -501,6 +530,14 @@ int main(int argc, char** argv) {
   if (mode.empty() || work.empty() || fixtures.empty()) fatal("usage: --mode open|store|library --work DIR --fixtures DIR [--n K --report FILE]");
   fs::create_directories(work);
   std::set_terminate(on_terminate);
+#ifdef _WIN32
+  ::SymSetOptions(SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS);
+  ::SymInitialize(::GetCurrentProcess(), nullptr, TRUE);
+#else
+  // Warm up the unwinder before arming fault injection.
+  void* warmup[1];
+  ::backtrace(warmup, 1);
+#endif
   if (!report_path.empty()) {
     g_report = std::fopen(report_path.u8string().c_str(), "wb");
     if (!g_report) fatal("cannot open the report file");
