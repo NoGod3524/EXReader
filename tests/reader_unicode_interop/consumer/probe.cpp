@@ -228,9 +228,11 @@ void cmd_book(reader_revisions *store, const std::string &label) {
   std::string tag = A("book." + label);
   std::string op = A("act." + label);
   int operation = op_of(op);
-  std::string format = HA("format." + label) ? A("format." + label) : A(tag + ".format");
+  std::string original = A(tag + ".format");
+  std::string format = HA("format." + label) ? A("format." + label) : original;
   std::string sha = A(tag + ".sha");
-  std::string key = format + ":" + sha;
+  /* The host passes the verified original identity; metadata must agree with it. */
+  std::string key = original + ":" + sha;
   std::string title, author, sort;
   if (operation != READER_COMMAND_DELETE) {
     title = REF(A("title." + label));
