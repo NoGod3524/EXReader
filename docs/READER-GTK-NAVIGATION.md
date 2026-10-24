@@ -14,7 +14,8 @@
 
 所有F2快照、SDK对象、解析、关闭和可取消任务都在原SDK owner。来源key通过既有
 `reader_catalog_sdk_original_identity`以64 KiB块重读真实原件，包含format、SHA-256及公开SDK版本。
-解析时使用两个独立新SDK对象调用安装后的F2，再逐字段比较part/path/id/node或完整CFI点。
+模块在第一个新SDK对象解析后，第二个独立对象直接调用公开SDK的URI/CFI解析和page数组，
+核对part/path/id/node或完整CFI点；不以重复调用同一个模块充当独立验证。
 重排目标另在当前阅读对象严格resolve，仅FOUND且目标字节相等才走原帧接受/COMMIT路径。
 有界EPUB先将公开pager的全部流式投影逐块与独立document比较，不拼第二份章节字符串，不猜两种偏移天然相同。
 CFI raw UTF-16只有完整scalar且raw/规范化节点文本相同时才能映射；半surrogate、折叠空白和无法证明的点拒绝。
