@@ -41,6 +41,7 @@ FAMILY_SYMBOL = {
 SWITCHES = {'EXR_ENABLE_PDF': 'ON', 'EXR_ENABLE_LIBRARY': 'ON', 'EXR_ENABLE_AUDIO': 'OFF',
             'EXR_ENABLE_MP3': 'OFF', 'EXR_ENABLE_AAC': 'OFF'}
 ARCHIVE = re.compile(r'lib/(?:exreader/)?[^/]+[.](?:a|lib)')
+EMPTY = {'defined': [], 'undefined': []}
 
 
 def extension(platform):
@@ -302,10 +303,10 @@ def assemble(fixture):
             'archives': [{'path': path, 'name': path.split('/')[-1],
                           'bytes': len(index[path]), 'sha256': contract.digest(index[path]),
                           'members': [],
-                          'defined_count': len(symbols[path]['defined']),
-                          'undefined_count': len(symbols[path]['undefined']),
-                          'defined_sha256': contract.text_digest(symbols[path]['defined']),
-                          'undefined_sha256': contract.text_digest(symbols[path]['undefined'])}
+                          'defined_count': len(symbols.get(path, EMPTY)['defined']),
+                          'undefined_count': len(symbols.get(path, EMPTY)['undefined']),
+                          'defined_sha256': contract.text_digest(symbols.get(path, EMPTY)['defined']),
+                          'undefined_sha256': contract.text_digest(symbols.get(path, EMPTY)['undefined'])}
                          for path in archives],
             'edges': edges, 'unreferenced_archives': unreferenced, 'owners': owners,
             'foreign_archives': [], 'directives': directives},
