@@ -191,7 +191,7 @@ final class HostCatalog {
         return try body(opened)
     }
 
-    func searchIdentity(sdkID: Int64) throws -> HostSourceFingerprint {
+    func searchSourceKey(sdkID: Int64) throws -> String {
         let (database, statement) = try prepare("SELECT b.format,b.source_sha256,b.source_bytes FROM reader_books b JOIN reader_local_books l USING(book_key) WHERE l.sdk_book_id=? AND b.deleted=0 LIMIT 2", [.integer(sdkID)])
         defer { sqlite3_finalize(statement) }
         try check(sqlite3_step(statement), database, expected: SQLITE_ROW)
@@ -200,7 +200,7 @@ final class HostCatalog {
               sqlite3_column_type(statement, 2) == SQLITE_INTEGER, sqlite3_column_int64(statement, 2) > 0 else {
             throw HostCatalogError.invalid("搜索原件身份无效")
         }
-        let value = HostSourceFingerprint(format: format, sha256: sha, bytes: sqlite3_column_int64(statement, 2))
+        let value = "exr3.40.0:projection1:\(format):\(sha):\(sqlite3_column_int64(statement, 2))"
         try check(sqlite3_step(statement), database, expected: SQLITE_DONE)
         return value
     }

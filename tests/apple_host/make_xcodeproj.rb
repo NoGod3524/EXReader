@@ -166,6 +166,8 @@ end
         'EXR_APPLE_ACCOUNT_REVIEW'
       elsif test_directory.include?('/accessibility/')
         nil
+      elsif test_directory.include?('/search/')
+        nil
       else
         'EXR_APPLE_IMPORT_REVIEW'
       end
