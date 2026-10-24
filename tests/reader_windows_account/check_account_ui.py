@@ -357,7 +357,11 @@ def main():
                    password.encode().hex().encode()]
         for path in profile.rglob('*'):
             if path.is_file() and path.stat().st_size < 64 * 1024 * 1024:
-                data = path.read_bytes()
+                try:
+                    data = path.read_bytes()
+                except PermissionError:
+                    assert path.stat().st_size == 0 or path.suffix == ".lock", path  # exclusive owner lock files only
+                    continue
                 if any(n in data for n in needles):
                     return str(path)
         return None
