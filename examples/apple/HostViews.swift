@@ -86,7 +86,7 @@ struct HostRootView: View {
             if value != .active && !selfTesting { model.persistNow(); model.closeAccountSession() }
         }
         .onReceive(resignPublisher) { _ in
-            if !selfTesting { model.persistNow() }
+            if !selfTesting { model.persistNow(); model.closeAccountSession() }
         }
         .onDisappear {
             if !selfTesting { model.persistNow(); model.closeAccountSession() }
