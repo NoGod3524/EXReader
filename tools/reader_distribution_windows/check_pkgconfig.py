@@ -180,6 +180,7 @@ def main():
                    '  return version > 0 ? 0 : 1;\n'
                    '}\n')
     empty_source = 'int main(void) { return 0; }\n'
+    candidates = []
     for record in results:
         if not record.get('ok'):
             continue
@@ -190,29 +191,34 @@ def main():
             for token in libs_text.split():
                 if token.startswith('-l') and len(token) > 2:
                     candidate = Path(directory) / (token[2:] + '.lib')
-                    if candidate.is_file():
+                    if candidate.is_file() and candidate not in libraries:
                         libraries.append(candidate)
-        if not libraries:
-            continue
-        headers = [Path(directory) / 'webp' / 'decode.h' for directory in include_dirs]
-        if any(path.is_file() for path in headers):
-            attempt = compile_and_run(webp_source, include_dirs, libs_text, None,
-                                      record['name'] + ':webp-api')
+        if libraries:
+            candidates.append((record, include_dirs, libs_text, libraries))
+    # A header-based API call is the strongest evidence, so try every package that
+    # ships headers first; only then fall back to a forced symbol from the archive.
+    for use_header in (True, False):
+        for record, include_dirs, libs_text, libraries in candidates:
+            headers = [Path(directory) / 'webp' / 'decode.h' for directory in include_dirs]
+            if use_header:
+                if not any(path.is_file() for path in headers):
+                    continue
+                attempt = compile_and_run(webp_source, include_dirs, libs_text, None,
+                                          record['name'] + ':webp-api')
+            else:
+                symbol = choose_symbol(args.dumpbin, libraries[0])
+                if not symbol:
+                    continue
+                attempt = compile_and_run(empty_source, include_dirs, libs_text, symbol,
+                                          record['name'] + ':forced-symbol')
+                attempt['symbol'] = symbol
             consumer['attempts'].append(attempt)
             if attempt['linked'] and attempt['ran']:
                 consumer.update(attempt, package=record['name'],
                                 library=str(libraries[0].relative_to(prefix)), libs=libs_text)
                 break
-        symbol = choose_symbol(args.dumpbin, libraries[0])
-        if symbol:
-            attempt = compile_and_run(empty_source, include_dirs, libs_text, symbol,
-                                      record['name'] + ':forced-symbol')
-            attempt['symbol'] = symbol
-            consumer['attempts'].append(attempt)
-            if attempt['linked'] and attempt['ran']:
-                consumer.update(attempt, package=record['name'],
-                                library=str(libraries[0].relative_to(prefix)), libs=libs_text)
-                break
+        if consumer.get('linked') and consumer.get('ran'):
+            break
     outside_paths = [item for item in outside]
     report = {'schema': 'reader-distribution-windows-pkgconfig-v1',
               'prefix': str(prefix), 'tool': tool, 'tool_version': version,
