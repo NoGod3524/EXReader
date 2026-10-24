@@ -23,3 +23,7 @@ target_link_libraries(thumb-probe PRIVATE EXReaderThumbnails::reader_thumbnails 
 if(WIN32)
   target_link_libraries(thumb-probe PRIVATE psapi)
 endif()
+# Regression consumer for the four review findings: it only uses the public ABI that
+# existed at the reviewed source, so it builds against both the unfixed and fixed library.
+add_executable(thumb-regress regress.cpp)
+target_link_libraries(thumb-regress PRIVATE EXReaderThumbnails::reader_thumbnails)
