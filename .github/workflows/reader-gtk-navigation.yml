@@ -8,13 +8,46 @@ on:
         type: boolean
         default: false
         description: Diagnose new controls without granting retained-suite acceptance
+      inspect_ui_run:
+        type: string
+        default: ''
+        description: Read retained NCX selection failure 40124481444 without acceptance
 permissions:
   contents: read
 defaults:
   run:
     shell: bash
 jobs:
+  inspect_ui:
+    if: ${{ github.event.inputs.inspect_ui_run == '40124481444' }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    permissions:
+      actions: read
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 40124481444
+          name: reader-gtk-navigation-40124481444-1
+          path: previous
+      - name: Read actual native focus selection and button state
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path('previous/gtk-navigation-ui')
+          print((root/'state.ini').read_text())
+          tree=json.loads((root/'failure-tree.json').read_text())
+          def walk(node):
+              if node.get('role') in ('dialog','list item','push button','text') or node.get('states',{}).get('focused'):
+                  print(json.dumps({key:node.get(key) for key in ('role','name','states','text','bounds','path')},ensure_ascii=False))
+              for child in node.get('children',[]):walk(child)
+          walk(tree)
+          print('diagnostic_only=true accepted=false')
+          PY
   account:
+    if: ${{ github.event.inputs.inspect_ui_run == '' }}
     name: GTK installed navigation with retained search settings and reading exits
     runs-on: ubuntu-22.04
     timeout-minutes: 65
