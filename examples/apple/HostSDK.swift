@@ -213,7 +213,7 @@ final class HostPublication {
     func bind(_ cancel: HostCancelBox) throws { try cancel.check(); controlOwner.active = cancel }
     func route(_ part: Int, path: String? = nil) throws -> HostPart {
         guard parts.indices.contains(part), parts[part].reading,
-              path == nil || path == parts[part].path else { throw HostError.invalidInput("EPUB 章节路由无效") }
+              path.map({ $0.utf8.elementsEqual(parts[part].path.utf8) }) ?? true else { throw HostError.invalidInput("EPUB 章节路由无效") }
         return parts[part]
     }
 }

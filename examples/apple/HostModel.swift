@@ -554,7 +554,7 @@ final class HostSession {
         let match: HostAnchorMatch
         if target.isFixed, hit.mode == READER_SEARCH_FIXED {
             let fixed = try independent.fixed(bookID: target.id, font: font, cancel: cancel)
-            let pages = fixed.pageIDs.enumerated().filter { $0.element == hit.pageID }
+            let pages = fixed.pageIDs.enumerated().filter { $0.element.utf8.elementsEqual(hit.pageID.utf8) }
             guard pages.count == 1, !hit.pageID.isEmpty else { throw HostError.invalidInput("页面目标缺失或不唯一") }
             let selectedPage = pages[0].offset
             let text = try fixed.text(page: selectedPage, cancel: cancel)
@@ -603,8 +603,8 @@ final class HostSession {
             let fixed = try independent.fixed(bookID: targetBook.id, font: font, cancel: cancel)
             guard target.kind == READER_NAVIGATION_RESULT_PAGE.rawValue, target.row == selection.row,
                   target.part == selection.row, target.part < UInt64(fixed.pageCount), !target.partID.isEmpty,
-                  fixed.pageIDs.filter({ $0 == target.partID }).count == 1,
-                  fixed.pageIDs[Int(target.part)] == target.partID else { throw HostError.invalidInput("独立页面身份不一致") }
+                  fixed.pageIDs.filter({ $0.utf8.elementsEqual(target.partID.utf8) }).count == 1,
+                  fixed.pageIDs[Int(target.part)].utf8.elementsEqual(target.partID.utf8) else { throw HostError.invalidInput("独立页面身份不一致") }
             result.fixed = fixed; result.page = Int(target.part)
         } else {
             let publication: HostPublication?
@@ -657,7 +657,7 @@ final class HostSession {
         if verifiedBook.isFixed, input.mode == 3, let anchor = input.fixed {
             let fixed = try independent.fixed(bookID: book.id, font: font, cancel: cancel)
             let id = anchor.fields[0].map { String(decoding: $0, as: UTF8.self) } ?? ""
-            let choices = fixed.pageIDs.enumerated().filter { $0.element == id }
+            let choices = fixed.pageIDs.enumerated().filter { $0.element.utf8.elementsEqual(id.utf8) }
             guard !id.isEmpty, choices.count == 1 else { throw HostError.invalidInput("固定页位置缺失或不唯一") }
             unit = choices[0].offset
             let text = try fixed.text(page: unit, cancel: cancel)
@@ -667,7 +667,7 @@ final class HostSession {
         } else if input.mode == 2, !verifiedBook.isFixed, try independent.isBoundedEPUB(book: verifiedBook), let anchor = input.anchor {
             let publication = try HostPublication(library: independent, bookID: book.id, cancel: cancel)
             if decoded.version == 1 {
-                let choices = publication.parts.filter { $0.path == input.path && $0.reading }
+                let choices = publication.parts.filter { $0.path.utf8.elementsEqual(input.path.utf8) && $0.reading }
                 guard choices.count == 1 else { throw HostError.invalidInput("旧版章节位置不唯一，保留记录") }
                 unit = choices[0].index
             } else { unit = input.part; _ = try publication.route(unit, path: input.path) }
