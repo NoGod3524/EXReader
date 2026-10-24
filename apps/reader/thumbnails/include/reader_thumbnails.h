@@ -4,8 +4,12 @@
 
    Ownership: a cache and every borrowed SDK handle (exr_library,
    exr_fixed_document) belong to the thread that opened/created them; every call
-   runs synchronously on that thread. A call from another thread, or re-entry from
-   a control callback, is refused with RTH_ARGUMENT and changes nothing.
+   runs synchronously on that thread. Every entry point that takes a cache
+   (open, stats, clear, find, find/cover/preview, close) refuses a call from another
+   thread, and refuses re-entry from a control callback, with RTH_ARGUMENT; such a
+   refusal changes nothing and rth_cache_close leaves the cache alive. No C++
+   exception crosses the ABI: allocation and filesystem failures return RTH_MEMORY
+   or RTH_IO.
 
    Two origins are never mixed: RTH_ORIGIN_AUTHOR_COVER is an image the book
    declares as its cover; RTH_ORIGIN_FIRST_PAGE_PREVIEW is a page rendered from a
@@ -100,11 +104,30 @@ typedef struct {
   uint64_t bytes;
   uint64_t hits, misses, stores, evictions, corrupt_rebuilt, rejected, store_failures;
   uint64_t last_decoded_bytes, peak_decoded_bytes;
+  /* Publishing and scanning accounting. index_failures counts index publications
+     whose atomic replace failed (rth_cache_open and rth_cache_clear return RTH_IO
+     instead of hiding such a failure). scanned_files is the number of directory
+     entries one bounded open inspected; peak_retained_entries is the largest entry
+     set it held at once (bounded by max_entries); scan_truncated is 1 when the
+     directory held more candidates than the scan budget, so adoption is partial
+     and the uninspected files are left untouched. */
+  uint64_t index_failures, scanned_files, peak_retained_entries, scan_truncated;
 } rth_stats;
 
 typedef struct rth_cache rth_cache;
-/* Opens/creates the directory and adopts valid entries, deleting only files it
-   recognises as its own (*.rth, *.tmp, index). Over-limit entries are evicted. */
+/* Opens/creates the directory and adopts valid entries in ONE bounded pass (the
+   candidate budget is 256 + max_entries*8, at most 65536 files), deleting only
+   files it recognises as its own (entry files, temporaries of its own naming, the
+   index). Over-limit entries are evicted entry by entry while scanning, so the
+   retained set never exceeds max_entries. Returns RTH_IO when the index cannot be
+   published atomically.
+
+   Multi-process contract for one directory: every file is created exclusively under
+   an unpredictable per-open temporary name and published with a same-directory
+   atomic replace, so two processes may share a directory; open removes temporaries
+   of the pre-0.1.0 naming ("rth-tmp-<n>.tmp") at once and temporaries of the current
+   naming only when they are older than 600 s, because a younger one may belong to a
+   live process. */
 rth_status rth_cache_open(const char *directory_utf8, const rth_limits *limits, rth_cache **out, rth_error *error);
 void rth_cache_close(rth_cache *cache); /* persists LRU order */
 rth_status rth_cache_clear(rth_cache *cache, rth_error *error);

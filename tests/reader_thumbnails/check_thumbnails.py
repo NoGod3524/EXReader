@@ -16,6 +16,7 @@ REQUIRED_PREFIXES = {
     'version:': 1, 'sha256:': 2, 'exact:': 20, 'aspect:': 4, 'alpha:': 4, 'missing cover:': 5, 'library cover:': 4,
     'preview:': 13, 'origins:': 1, 'unchanged:': 2, 'limits:': 21, 'anomalous image:': 4, 'decoded bytes:': 2,
     'lru:': 6, 'mishit:': 9, 'corruption (': 24, 'recovery:': 6, 'cancel ': 10, 'reopen:': 7, 'owner:': 3,
+    'bounded open:': 5, 'publish:': 3, 're-entry:': 2,
 }
 # individually required behaviours (exact names)
 REQUIRED_EXACT = [
@@ -34,6 +35,11 @@ REQUIRED_EXACT = [
     'unchanged: the stored original and the book rows are byte-identical after previews',
     'unchanged: every original fixture file is byte-identical after all operations',
     'owner: a call from another thread is refused and changes nothing',
+    'bounded open: a reopen with max_entries=3 retains at most 3 while scanning, never 40',
+    'bounded open: 1300 candidates are scanned within the 272-file budget and the rest is left untouched',
+    'publish: an index that cannot be atomically replaced makes open fail with RTH_IO',
+    'publish: a hard link planted at a temporary name is neither followed nor truncated',
+    're-entry: stats, clear, find and close are all refused inside a control callback',
 ]
 # The four root review findings, each named check required on every platform.
 REQUIRED_REGRESS = [
