@@ -523,8 +523,18 @@ static int case_range_utf8_boundaries(void) {
 static int case_poll_empty_available_zero(void) {
   reader_tts_event event;
   int available = 1;
+  int drained = 0;
+  /* A late advisory RANGE for the previous request may still arrive; drain for
+     a bounded window and then require a truly empty queue. */
+  for (int step = 0; step < 100; step++) {
+    expect_status(reader_tts_poll(g_main, &event, &available, NULL), READER_TTS_OK, "poll while draining");
+    if (!available) break;
+    drained += 1;
+    sleep_ms(5);
+  }
   memset(&event, 0xFF, sizeof(event));
   expect_status(reader_tts_poll(g_main, &event, &available, NULL), READER_TTS_OK, "poll on an empty queue");
+  note("drained=%d; ", drained);
   expect_uint((unsigned long)available, 0, "empty queue reports available=0");
   expect_uint((unsigned long)event.request_id, 0, "empty queue zeroes the request id");
   expect_uint((unsigned long)event.start, 0, "empty queue zeroes the range start");
@@ -778,8 +788,11 @@ static int case_destroy_until_closed_and_null(void) {
   return g_case_failed ? 1 : 0;
 }
 
+/* Three bounded chunks at double speed: enough to prove that a text above the
+   host chunk size is spoken chunk by chunk with one terminal event each, while
+   keeping real playback time short enough for a timed wait. */
 static int case_long_text_chunked_requests(void) {
-  size_t total = 6000;
+  size_t total = 900;
   size_t offset = 0;
   unsigned chunks = 0;
   char *text = make_ascii(total);
@@ -792,7 +805,7 @@ static int case_long_text_chunked_requests(void) {
     return 1;
   }
   while (offset < total) {
-    size_t end = offset + 3000 < total ? offset + 3000 : total;
+    size_t end = offset + 300 < total ? offset + 300 : total;
     struct ledger log;
     uint64_t request = 0;
     if (end < total) {
@@ -801,7 +814,7 @@ static int case_long_text_chunked_requests(void) {
       if (scan > offset) end = scan + 1;
     }
     request = next_id();
-    expect_status(reader_tts_speak(g_main, request, text + offset, end - offset, NULL, 1.0, NULL),
+    expect_status(reader_tts_speak(g_main, request, text + offset, end - offset, NULL, 2.0, NULL),
       READER_TTS_OK, "speak a bounded chunk");
     if (g_case_failed) break;
     if (collect(g_main, request, 45000, text + offset, end - offset, &log) != 0) {

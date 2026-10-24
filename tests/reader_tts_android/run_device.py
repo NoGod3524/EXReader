@@ -40,11 +40,12 @@ def adb(*arguments, timeout=300, check=True):
     return completed.stdout
 
 
-def product(pattern, root='.'):
-    matches = sorted(Path(root).glob(pattern))
-    if not matches:
-        raise SystemExit('missing build product: ' + pattern)
-    return matches[0]
+def product(*patterns, root='.'):
+    for pattern in patterns:
+        matches = sorted(Path(root).glob(pattern))
+        if matches:
+            return matches[0]
+    raise SystemExit('missing build product: ' + ' | '.join(patterns))
 
 
 def pull(remote, destination):
@@ -141,7 +142,8 @@ def main():
 
     app_apk = product('tests/reader_tts_android/android/probe/build/outputs/apk/debug/*.apk')
     test_apk = product('tests/reader_tts_android/android/probe/build/outputs/apk/androidTest/debug/*.apk',
-                       'tests/reader_tts_android/android/probe/build/outputs/apk/androidTest/*.apk')
+                       'tests/reader_tts_android/android/probe/build/outputs/apk/androidTest/*.apk',
+                       'tests/reader_tts_android/android/probe/build/outputs/apk/androidTest/**/*.apk')
     adb('install', '-r', '-t', app_apk.resolve(), timeout=600)
     adb('install', '-r', '-t', test_apk.resolve(), timeout=600)
     (logs / 'install.txt').write_text(str(adb('shell', 'pm', 'list', 'packages', PACKAGE)), encoding='utf-8')
