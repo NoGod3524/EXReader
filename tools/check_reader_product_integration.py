@@ -144,7 +144,7 @@ def verify_reports(kind, platform, read, source, run_id, attempt):
             all(k.get('recovered') is True and k.get('killed_returncode') not in (None, 0) for k in kills),
             'real kill/recovery evidence differs')
     load('desktop-sdk/shelf-check/shelf-result.json', 10, flag='passed')
-    organization = load('desktop-sdk/organization-check/organization-result.json', 15, flag='passed')
+    organization = load('desktop-sdk/organization-check/organization-result.json', 16, flag='passed')
     require(organization.get('sdk_changed') is False and organization.get('schema_changed') is False and
             organization.get('ui_accepted') is False, 'native organization reader contract differs')
     if platform == 'Linux':

@@ -93,6 +93,12 @@ int reader_catalog_membership_find(reader_catalog *, reader_catalog_group_kind, 
 int reader_catalog_groups_page(reader_catalog *, reader_catalog_group_kind, const char *parent_id,
   const reader_catalog_group_cursor *, int direction, size_t limit,
   reader_catalog_group_visit, void *, reader_catalog_error *);
+/* Deleted groups across all hierarchy levels, ordered only by ID. A NULL
+ * cursor starts at an end; direction +1/-1, limit 1..200. Returned parent and
+ * ordinal remain available for explicit restore; no parent is restored here. */
+int reader_catalog_removed_groups_page(reader_catalog *, reader_catalog_group_kind,
+  const char *cursor_id, int direction, size_t limit,
+  reader_catalog_group_visit, void *, reader_catalog_error *);
 /* Active group members ordered by (ordinal,book_key), or book_key for tags.
  * local_only=1 selects downloaded books; 0 retains cloud-only metadata.
  * Title/author search remains a literal substring, with the existing UTF-8 rules.
