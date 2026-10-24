@@ -53,6 +53,27 @@
       }
     }
   ],
+  "native_preflights": [
+    {
+      "source_sha": "3f7bcbede9ef6a175eaf66d742bb67ab1450995f",
+      "run_id": 40143531917,
+      "attempt": 1,
+      "job_id": 121020027087,
+      "status": "failure",
+      "diagnostic_only": true,
+      "accepted": false,
+      "native_passed": 17,
+      "native_expected": 19,
+      "failed": ["real-public-point-captures-four-formats", "cbz-real-empty-snapshot-point-independent-found"],
+      "reason": "Host decoder dropped EPUB chapter scope stored as part_path; preserve exact selector equality, reconstruct chapter from the retained EPUB route. First failing loop prevented reaching the CBZ capture, so its missing input is not a CBZ provider failure",
+      "artifact": {
+        "id": 12579194309,
+        "bytes": 3566712,
+        "digest": "sha256:1ba807edd310c968d439863d5c75f18e1cdfed188527f8573d92635df050dc1d",
+        "expires_at": "2027-01-22T23:38:03Z"
+      }
+    }
+  ],
   "initial_compile_diagnostic": {
     "source_sha": "f581dec838f29131475aac8488926f92b2a71602",
     "run_id": 40141724772,

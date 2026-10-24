@@ -97,8 +97,15 @@ import Darwin
                 return try HostReadingWorker.page(catalog: catalog, bookID: book.sdkID, bookKey: book.key, from: nil, cancel: HostCancelBox())
             }
             func row(_ id: String) throws -> HostReadingRow {
-                guard let value = try page().rows.first(where: { $0.annotation == id }) else { throw HostError.invalidResult("Committed annotation absent from G04") }
-                return value
+                let book = try catalog.readingBook(sdkID: session.book!.id)
+                var cursor: reader_av_cursor?
+                for _ in 0..<8 {
+                    let value = try HostReadingWorker.page(catalog: catalog, bookID: book.sdkID, bookKey: book.key, from: cursor, cancel: HostCancelBox())
+                    if let found = value.rows.first(where: { $0.annotation == id }) { return found }
+                    if value.complete { break }
+                    cursor = value.next
+                }
+                throw HostError.invalidResult("Committed annotation absent from G04")
             }
             func encode(_ input: HostReadingRequest, version: Int = 2, revision: String, parents: [String]) throws -> Data {
                 guard let capture = input.capture else { throw HostError.invalidResult("Real encoder capture missing") }
@@ -124,12 +131,18 @@ import Darwin
             }
             var captures: [String: HostReadingRequest] = [:]
             check("real-public-point-captures-four-formats") {
+                var problems: [String] = []
                 for name in ["Records.txt", "Bounded.epub", "Sample.pdf", "NavigationPages.cbz"] {
-                    _ = try open(name); let before = try session.stateHash(), input = try request(1)
-                    _ = try submit(input); captures[name] = input
-                    let stored = try catalog.withHistory { try HostReadingWorker.decoded(wire(input), history: $0).capture }
-                    try expect(stored == input.capture && session.stateHash() == before, "Product progress changed SDK or real selector")
+                    do {
+                        _ = try open(name); let before = try session.stateHash(), input = try request(1)
+                        _ = try submit(input); captures[name] = input
+                        let stored = try catalog.withHistory { try HostReadingWorker.decoded(wire(input), history: $0).capture }
+                        let sameSelector = stored == input.capture, sameSDK = try session.stateHash() == before
+                        print("READING_CAPTURE_IDENTITY format=\(name) selector_equal=\(sameSelector) sdk_unchanged=\(sameSDK) mode=\(stored.mode) part=\(stored.part) page=\(stored.page)"); fflush(stdout)
+                        if !sameSelector || !sameSDK { problems.append(name + ": selector_equal=\(sameSelector) sdk_unchanged=\(sameSDK)") }
+                    } catch { problems.append(name + ": " + error.localizedDescription) }
                 }
+                try expect(problems.isEmpty, "Product progress changed SDK or real selector: " + problems.joined(separator: "; "))
             }
             check("cbz-real-empty-snapshot-point-independent-found") {
                 _ = try open("NavigationPages.cbz")
@@ -238,12 +251,15 @@ import Darwin
                 session = candidate
             }
             check("g04-pagination-cancel-and-snapshot-reopen") {
+                for _ in 0..<35 { _ = try submit(request()) }
                 let book = try catalog.readingBook(sdkID: session.book!.id), cancel = HostCancelBox()
                 let first = try HostReadingWorker.page(catalog: catalog, bookID: book.sdkID, bookKey: book.key, from: nil, cancel: HostCancelBox())
+                try expect(first.rows.count == 32 && !first.complete, "Actual G04 first page did not reach the real 32-row boundary")
                 cancel.cancel()
                 try expect(refuses { _ = try HostReadingWorker.page(catalog: catalog, bookID: book.sdkID, bookKey: book.key, from: first.next, cancel: cancel) }, "Actual G04 entry cancellation was ignored")
                 let retry = try HostReadingWorker.page(catalog: catalog, bookID: book.sdkID, bookKey: book.key, from: first.next, cancel: HostCancelBox())
-                try expect(Set(first.rows.map(\.id)).isDisjoint(with: Set(retry.rows.map(\.id))), "Reopened thread-owned G04 view duplicated a keyset row")
+                try expect(!retry.rows.isEmpty && retry.complete && Set(first.rows.map(\.id)).isDisjoint(with: Set(retry.rows.map(\.id))),
+                           "Reopened thread-owned G04 view lost or duplicated the actual nonempty continuation")
             }
             check("concurrent-g04-row-only-real-graph-counts") {
                 let before = try session.stateHash()
