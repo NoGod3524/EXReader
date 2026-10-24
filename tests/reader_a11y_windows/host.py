@@ -29,6 +29,17 @@ CONTROLS = {
 }
 IDS = {value: name for name, value in CONTROLS.items()}
 
+# Control creation order in examples/reader.c, which is also the z-order the
+# dialog manager walks for Tab. It differs from id order because the product
+# catalog controls (126-128) are created right after the book list.
+TAB_ORDER = [
+    "import_label", "import_edit", "import_button", "open_button", "delete_button",
+    "prev", "next", "select_all", "copy_quote", "add_note", "update_note", "delete_note",
+    "jump_note", "font_dec", "font_inc", "zoom_dec", "zoom_inc", "cancel",
+    "shelf_label", "books", "shelf_search", "shelf_refresh", "metadata_button",
+    "notes_label", "notes", "note_edit", "page", "page_label", "status",
+]
+
 EXPECTED_CLASS = {
     "import_label": "static", "shelf_label": "static", "notes_label": "static",
     "page_label": "static", "status": "static", "metadata_message": "static",
