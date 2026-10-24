@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Actions-only regression evidence for the independent F4 review."""
 import argparse
+import base64
 import json
 import os
 from pathlib import Path
@@ -16,9 +17,17 @@ def main():
     (link/'root/parent/book.txt').write_text('selected original\n');(link/'external/book.txt').write_text('outside replacement\n')
     before=subprocess.run([str(a.original_probe),'enumerate','--root',str(link/'root'),'--recursive','--out',str(link/'before.tsv')],capture_output=True,text=True,timeout=60)
     assert before.returncode==0 and 'parent/book.txt' in (link/'before.tsv').read_text()
-    (link/'root/parent').rename(link/'root/original-parent');supported,detail=make_junction(str((link/'root/parent').absolute()),str((link/'external').resolve()))
-    assert supported,detail
+    (link/'root/parent').rename(link/'root/original-parent')
+    if os.name=='nt':
+        # Pass the fixture command as UTF-16 rather than through cmd.exe quoting.
+        quote=lambda value:"'"+str(value).replace("'","''")+"'"
+        script='New-Item -ItemType Junction -Path '+quote((link/'root/parent').absolute())+' -Target '+quote((link/'external').resolve())+' -ErrorAction Stop | Out-Null'
+        created=subprocess.run(['powershell','-NoProfile','-NonInteractive','-EncodedCommand',base64.b64encode(script.encode('utf-16le')).decode()],capture_output=True,text=True,timeout=30)
+        supported=created.returncode==0;detail=created.stdout+created.stderr
+    else:supported,detail=make_junction(str((link/'root/parent').absolute()),str((link/'external').resolve()))
     for name in ('directory-budget','parent-link','copy-change','concurrent'):
+        if name=='parent-link' and not supported:
+            checks.append({'name':name,'ok':False,'returncode':2,'detail':'junction fixture failed: '+detail});print(json.dumps(checks[-1]),flush=True);continue
         result=subprocess.run([str(a.probe),name,str((a.work/name).resolve())],capture_output=True,text=True,timeout=90)
         (a.output/(name+'.txt')).write_text(result.stdout+result.stderr)
         checks.append({'name':name,'ok':result.returncode==0,'returncode':result.returncode,'detail':result.stdout+result.stderr})
