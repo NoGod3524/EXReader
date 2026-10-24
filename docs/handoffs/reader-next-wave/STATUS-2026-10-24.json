@@ -1,14 +1,15 @@
 {
   "schema": 1,
-  "observed_at_utc": "2026-10-24T22:45:00Z",
+  "observed_at_utc": "2026-10-24T23:20:30Z",
   "packages": 19,
-  "cloud_success": 17,
-  "returned_pending_root_review": 15,
-  "root_review_closed_awaiting_integration": ["J03", "J06"],
-  "needs_further_work": [
-    "J19",
+  "cloud_success": 19,
+  "returned_pending_root_review": 16,
+  "root_review_closed_awaiting_integration": [
+    "J03",
+    "J06",
     "J25"
   ],
+  "needs_further_work": [],
   "root_review_and_integration_complete": false,
   "tasks": [
     {
@@ -137,9 +138,9 @@
       "branch": "codex/reader-tts-linux",
       "latest_run": 40138462305,
       "source": "2f4304c0a037e8f20b064bbfa248ea2e9371d436",
-      "status": "in_progress",
-      "conclusion": "",
-      "root_state": "three_runtime_variants_passed_ubuntu2204_asan_in_progress",
+      "status": "completed",
+      "conclusion": "success",
+      "root_state": "cloud_success_awaiting_root_review_and_integration",
       "earlier_observed_failure_run": 40132713831
     },
     {
@@ -181,11 +182,11 @@
     {
       "id": "J25",
       "branch": "codex/reader-distribution-windows",
-      "latest_run": 40138632294,
-      "source": "b34f71985ec2c7198711655c869def40e02c8eeb",
-      "status": "in_progress",
-      "conclusion": "",
-      "root_state": "root_review_repairs_running_protocol_job_failed_windows_producer_running",
+      "latest_run": 40140884244,
+      "source": "e41c29ab0e33db0a61bc82560db7d0a08c7fee3f",
+      "status": "completed",
+      "conclusion": "success",
+      "root_state": "root_review_closed_awaiting_integration",
       "earlier_cloud_success_run": 40135232301,
       "earlier_observed_failure_run": 40133712445,
       "review": "J25-ROOT-REVIEW.md"
