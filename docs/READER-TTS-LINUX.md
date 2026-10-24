@@ -151,13 +151,115 @@ Separately granted, never merged into one "TTS works" statement:
 
 ## 6. Evidence
 
-Filled from the real runs below.
+Everything below belongs to one run. The artifacts were downloaded back through the
+Actions REST API by the report job, their ZIP digests were recomputed, and all 138
+named cases were re-validated against `expected_cases.json` before the run was
+marked accepted.
+
+### 6.1 Tested source
 
 | field | value |
 | --- | --- |
-| tested source SHA | pending |
-| workflow run / attempt | pending |
-| jobs | pending |
-| artifacts (id, bytes, sha256, expires) | pending |
-| named cases | pending |
-| first failing run and fix | pending |
+| tested source SHA | `2f4304c0a037e8f20b064bbfa248ea2e9371d436` (branch `codex/reader-tts-linux`) |
+| fixed start | `f43baf9182d75907c0cb5d6f77048f27bca8c950` |
+| frozen SDK | `9854061be331fe603a1822d9b2b36ee357154927` (3.40.0 / ABI 1) |
+| workflow run / attempt | [40138462305](https://github.com/NoGod3524/EXReader/actions/runs/40138462305) / 1, conclusion `success` |
+| guard job | `121004930945` success (fixed start, protected trees, product SQL blob, whitelist, source invariants) |
+| report job | `121010696804` success, aggregation `accepted=true`, 552 case executions |
+
+This evidence file is committed on top of the tested SHA; that commit changes
+documentation only (`docs/`), so the tested source stays
+`2f4304c0a037e8f20b064bbfa248ea2e9371d436`.
+
+### 6.2 Platform jobs (each 138/138 named cases, 0 fail, 0 skip)
+
+| job | job id | image | Speech Dispatcher | libspeechd-dev |
+| --- | --- | --- | --- | --- |
+| ubuntu-2404-release | `121004951274` | Ubuntu 24.04.5 LTS | speech-dispatcher 0.12.0-rc2 | see artifact `pkg-logs/libspeechd-version.log` |
+| ubuntu-2404-asan | `121004951352` | Ubuntu 24.04.5 LTS | speech-dispatcher 0.12.0-rc2 | same |
+| ubuntu-2204-release | `121004951325` | Ubuntu 22.04.5 LTS | speech-dispatcher 0.11.1 | same |
+| ubuntu-2204-asan | `121004951356` | Ubuntu 22.04.5 LTS | speech-dispatcher 0.11.1 | same |
+
+ASan (leak detection with the documented suppressions) and UBSan with
+`-fno-sanitize-recover=all` are enabled in the two `*-asan` jobs for the library,
+both consumers and the fault-injection suite.
+
+### 6.3 Artifacts of this run
+
+| job | artifact id | bytes | sha256 (recomputed ZIP) | expires |
+| --- | --- | --- | --- | --- |
+| ubuntu-2204-release | `12577903441` | 51120 | `5df3e0a9c4e45b8b49dbcbd68c7df85a399f6783eaef3b7865d5ddad61682c38` | 2027-01-22T22:25:03Z |
+| ubuntu-2204-asan | `12579025224` | 137394 | `b715770a3bdeeb6eca22ffa7ad51f6482b7fa51d2cfe8baf50e44af42d7de555` | 2027-01-22T22:25:03Z |
+| ubuntu-2404-release | `12577197975` | 50821 | `1fde0746d651668a6b638e06c92a5b5189272a73cdaffd971ac71c203731ea71` | 2027-01-22T22:25:03Z |
+| ubuntu-2404-asan | `12577038289` | 125856 | `99669f69437221aa184f8ae17f10bb63049ecd3ebb2775dc39478af4b7eed8d5` | 2027-01-22T22:25:03Z |
+| report (summary + rejections + downloaded ZIPs) | `12579130182` | 344822 | `b8e31aaeaff3a3a851d97e557d354197964bae5cdbac23c98e7ff1cec5211388` | 2027-01-22T22:25:03Z |
+
+Each platform artifact carries `evidence/results.json` (named cases, environment,
+consumer digests), `evidence/files.sha256`, the six per-phase JSON files and logs,
+`pkg-logs/` (configure/build/install/consumer logs, CMake caches, libspeechd header
+digest) and the installed prefix `stage/` (header, `libreader_tts.a`, CMake package
+files, `LICENSE.txt`).
+
+The report job's rejection regressions ran 39 offline fixtures (sound and mutated:
+wrong source/run/attempt, expired or zero-byte artifact, malformed digest,
+tampered ZIP, tampered and unpacked manifests, missing/duplicate/unexpected cases,
+missing detail, flat and prefixed layouts) and every mutation was rejected.
+
+### 6.4 Named results
+
+138 cases per platform, 552 executions in total, all `pass`:
+
+| phase | cases | what it proves |
+| --- | --- | --- |
+| live | 70 | create/observe/voices, request lifecycle, UTF-8/limit/rate/voice validation, owner-thread rejection, second handle, close/destroy, voice-list lifetime, config ceilings |
+| pause | 12 | pause/resume transitions and idempotence, two cycles, stop after resume, close |
+| cpp | 11 | the same ABI from C++ (owner thread from std::thread, voice list outliving the handle, full cycle) |
+| hook | 22 | early-callback buffering, late-callback filtering, queue ceiling, allocation failures, measured voice count |
+| kill | 12 | daemon SIGKILLed mid-utterance: FAILED/UNAVAILABLE, no autospawn, restart and same-handle recovery |
+| down | 7 | no daemon: CREATE OK with SERVICE_UNAVAILABLE, voices/speak UNAVAILABLE, no autospawn, clean close |
+| recover | 4 | daemon back: a fresh process connects, speaks, closes |
+
+### 6.5 Failing runs and what each one fixed
+
+Every failure is preserved in its own run; nothing was deleted, widened or turned
+into an expected rejection.
+
+| run (tested SHA) | failure | fix |
+| --- | --- | --- |
+| [40124635826](https://github.com/NoGod3524/EXReader/actions/runs/40124635826) (`b191e57f`) | `-Werror=format-truncation` on the installed C consumer's `/proc` path buffer | buffer sized (`2d6239b5`) |
+| [40125071124](https://github.com/NoGod3524/EXReader/actions/runs/40125071124) (`2d6239b5`) | the driver exported `SPEECHD_ADDRESS=unix_socket=...`, which libspeechd 0.11.1 rejects, so the library never connected | default address, preflight gate, address probes recorded (`ca2f9307`) |
+| [40125748485](https://github.com/NoGod3524/EXReader/actions/runs/40125748485) (`ca2f9307`) | `voices` returned LIMIT (the module lists 13362 voices), hook queue order, long-utterance backlog | ceiling 65536 + measured count, hook order, boundary case last (`b9c03ce5`) |
+| [40126679643](https://github.com/NoGod3524/EXReader/actions/runs/40126679643) (`b9c03ce5`) | the rate round-trip probe blocked forever after SIGKILL and disturbed playback | liveness by socket peek (`5550a575`) |
+| [40127692686](https://github.com/NoGod3524/EXReader/actions/runs/40127692686) (`5550a575`) | one audio case failed without saying why | submission status, terminal kinds and elapsed time reported (`431e9bbd`) |
+| [40128347109](https://github.com/NoGod3524/EXReader/actions/runs/40128347109) (`431e9bbd`) | rate 0.5 cancelled by the daemon at the -100 endpoint | mapping on the daemon's percentage scale (`c51c9cf1`) |
+| [40129061386](https://github.com/NoGod3524/EXReader/actions/runs/40129061386) (`c51c9cf1`) | still cancelled; the same rate works before a stop and fails after one | bisect cases added (`b32cebac`) |
+| [40129612797](https://github.com/NoGod3524/EXReader/actions/runs/40129612797) (`b32cebac`) | bisect proved the cancel, not the rate; also an id-reuse bug in the test | stop waits for the daemon's cancel, refusal is FAILED/IO, id fixed (`18eb191c`) |
+| [40130205438](https://github.com/NoGod3524/EXReader/actions/runs/40130205438) (`18eb191c`) | an explicit stop ended with FINISHED because espeak-ng reports a cancelled message as END | intent decides the terminal event (`98672235`) |
+| [40130822607](https://github.com/NoGod3524/EXReader/actions/runs/40130822607) (`98672235`) | ubuntu-24.04 green; on 22.04 a cancelled message wedges the module and every later request of the client is silent | Latin long text, per-case reset, fresh daemon per phase (`ca330266`) |
+| [40132122033](https://github.com/NoGod3524/EXReader/actions/runs/40132122033) (`ca330266`) | the wedge survived CANCEL+STOP | pause/resume moved to their own phase (`27e5ca03`) |
+| [40132713831](https://github.com/NoGod3524/EXReader/actions/runs/40132713831) (`27e5ca03`) | three of four jobs green; 22.04 ASan hung in a voice query after a cancel and reported a libspeechd `getline` leak | voice queries before any cancel, `leak:__getdelim` with that evidence (`4262dfcd`) |
+| [40135611342](https://github.com/NoGod3524/EXReader/actions/runs/40135611342) (`4262dfcd`) | all four platform jobs passed, but the aggregation looked for `results.json` at the archive root | evidence directory located inside the artifact, manifest scoped, both layouts in the rejection tests (`2f4304c0`) |
+| [40138462305](https://github.com/NoGod3524/EXReader/actions/runs/40138462305) (`2f4304c0`) | — | accepted: 4 jobs × 138 cases, 0 fail, 0 skip |
+
+### 6.6 Platform defect on speech-dispatcher 0.11.1 (recorded, not worked around)
+
+On Ubuntu 22.04 (speech-dispatcher 0.11.1) a cancelled message can leave the
+espeak-ng module wedged: the daemon keeps accepting SPEAK (the client gets no
+event at all afterwards) and never answers LIST SYNTHESIS VOICES. A fresh daemon
+clears it. The package handles this the only honest way - the pause/resume
+scenario runs on its own daemon, the driver restarts the daemon between phases,
+and voice queries run before any cancel - and the behaviour is registered here as a
+platform defect rather than hidden behind a changed expectation. The library's own
+behaviour (stop, refusal classification, cancellation bookkeeping) is verified on
+both versions.
+
+### 6.7 What is still not covered
+
+* Audible output, voice quality and listening tests: the runner has a null audio
+  sink; only the daemon's begin/end/cancel handling is observed.
+* A daemon that accepts the connection and then stops answering: no client-side
+  timeout exists (documented), so such a call can block inside libspeechd.
+* Distributions other than Ubuntu 22.04/24.04, and non-x86_64 hosts.
+* GTK host wiring and the default reading configuration (root's work).
+* Two handles using the daemon at the same time (one connection per process, by
+  design).
