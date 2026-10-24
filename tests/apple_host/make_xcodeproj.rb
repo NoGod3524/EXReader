@@ -156,7 +156,13 @@ end
   app_settings(app, platform, deployment, info_plist)
   if ARGV[2]
     app.build_configurations.each do |config|
-      review = test_directory.include?('/shelf/') ? 'EXR_APPLE_SHELF_REVIEW' : 'EXR_APPLE_IMPORT_REVIEW'
+      review = if test_directory.include?('/shelf/')
+        'EXR_APPLE_SHELF_REVIEW'
+      elsif test_directory.include?('/account/')
+        'EXR_APPLE_ACCOUNT_REVIEW'
+      else
+        'EXR_APPLE_IMPORT_REVIEW'
+      end
       config.build_settings['SWIFT_ACTIVE_COMPILATION_CONDITIONS'] = '$(inherited) EXR_APPLE_HOST_REVIEW ' + review
     end
   end
