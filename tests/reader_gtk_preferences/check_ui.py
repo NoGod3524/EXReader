@@ -126,14 +126,18 @@ def main():
         assert value.returncode == 0, value.stdout + value.stderr
         return json.loads(value.stdout)
 
-    def panel_pixels(name, color):
-        path = shot(name);rectangle = bus.extents(element('Selectable page text', {'text'}))
-        frame = bus.extents(element('EXReader Linux', {'frame'}))
-        x, y = rectangle['x'] - frame['x'], rectangle['y'] - frame['y']
-        crop = Image.open(path).convert('RGB').crop((x, y, x + rectangle['width'], y + rectangle['height']))
-        count = sum(1 for pixel in crop.getdata() if max(abs(pixel[i] - color[i]) for i in range(3)) <= 3)
-        return {'matching_pixels': count, 'rectangle': rectangle, 'frame': frame,
-                'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+    def panel_pixels(name, color, minimum=0):
+        deadline = time.monotonic() + 10;attempts = 0
+        while True:
+            attempts += 1;path = shot(name);rectangle = bus.extents(element('Selectable page text', {'text'}))
+            frame = bus.extents(element('EXReader Linux', {'frame'}))
+            x, y = rectangle['x'] - frame['x'], rectangle['y'] - frame['y']
+            crop = Image.open(path).convert('RGB').crop((x, y, x + rectangle['width'], y + rectangle['height']))
+            count = sum(1 for pixel in crop.getdata() if max(abs(pixel[i] - color[i]) for i in range(3)) <= 3)
+            if count >= minimum or time.monotonic() >= deadline:
+                return {'matching_pixels': count, 'rectangle': rectangle, 'frame': frame, 'paint_observations': attempts,
+                        'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+            time.sleep(.05)
 
     def page_click(x_fraction=.8, y_fraction=.5):
         rectangle = bus.extents(element('Rendered page; selectable text is in the adjacent panel', {'image', 'icon'}))
@@ -196,11 +200,11 @@ def main():
         open_settings();combo('Theme', 2);save();close_settings()
         command('gsettings', 'set', 'org.gnome.desktop.interface', 'color-scheme', 'prefer-dark')
         dark = wait(lambda value: value['effective_theme'] == '2' and int(value['portal_events']) > 0)
-        dark_pixels = panel_pixels('system-dark-panel-background', (20, 30, 70))
+        dark_pixels = panel_pixels('system-dark-panel-background', (20, 30, 70), minimum=1000)
         dark_page = pixels('system-dark-light-page', (208, 32, 32))
         command('gsettings', 'set', 'org.gnome.desktop.interface', 'color-scheme', 'prefer-light')
         light = wait(lambda value: value['effective_theme'] == '1' and int(value['portal_events']) > int(dark['portal_events']))
-        light_pixels = panel_pixels('system-light-panel-background', (253, 244, 220))
+        light_pixels = panel_pixels('system-light-panel-background', (253, 244, 220), minimum=1000)
         light_page = pixels('system-light-light-page', (208, 32, 32))
         record('system_theme_tracks_real_portal_preference_changes', int(light['portal_version']) >= 1 and
                dark_pixels['matching_pixels'] > 1000 and light_pixels['matching_pixels'] > 1000 and

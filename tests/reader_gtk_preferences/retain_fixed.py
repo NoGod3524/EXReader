@@ -19,8 +19,12 @@ instances = []
 def key(self, *values):
     if self not in instances: instances.append(self)
     for value in values:
-        trace.append({'key': value, 'before': self.read()})
+        before = self.read();trace.append({'key': value, 'before': before})
         original(self, value)
+        trace[-1]['after_original_wait'] = self.read()
+        if value in ('F3', 'F4', 'F5', 'F6', 'F8', 'F10'):
+            trace[-1]['original_wait_saw_dispatch'] = self.read()['generation'] > before['generation']
+            self.wait(lambda state: state['generation'] > before['generation'] and not state['saving'])
         trace[-1]['after'] = self.read()
 
 
@@ -33,3 +37,7 @@ except BaseException:
         path = instance.folder / 'application.log'
         if path.exists(): print(path.read_text(errors='replace')[-16000:], flush=True)
     raise
+finally:
+    if '--output' in sys.argv:
+        folder = Path(sys.argv[sys.argv.index('--output') + 1])
+        if folder.is_dir(): (folder / 'settings-original-fixed-driver.json').write_text(json.dumps(list(trace), indent=2), encoding='utf-8')
