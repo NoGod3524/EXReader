@@ -149,8 +149,20 @@ Windows 整套曾通过，之后审查收紧 owner 就绪观测，并补任务�
 ## 后续范围
 
 [Draft PR10](https://github.com/NoGod3524/EXReader/pull/10) 尚未合并。
-最终源码的默认必过门禁是独立 run `40029737987`，需另行等待其全部 17 作业和严格汇总，
-不能用上述两作业产品验收替代。
+独立默认必过门禁 [40029737987](https://github.com/NoGod3524/EXReader/actions/runs/40029737987)
+attempt 1 已完成 **17/17 success**，28 工件均非空、未过期且带 digest；汇总作业
+`120685281040` 的原日志确认 `accepted=true`、`problems=[]`。PR workflow head 为
+`5d97e5a08f938b7807d8201d3cb26c26033671c9`，实际受测合并源码为
+`fb96e2224dbd342a9a3f569501ed452d0e8b19f8`，两个父提交分别为 CPU 基线
+`220585e8248918096b9fc2c389ea5ad2389d388b` 与上述产品源码，未将两者冒充同一 SHA。
+严格汇总归档为 `12535009525`，3390 字节，ZIP SHA-256
+`a9973b11626a8f9f0cba1da0fc5d8a38fb3c6810adb359418f4079b1d396d7f0`，
+与原 upload 日志和 API 一致。冻结 SDK 仍为 K；本包尚未合并、未发布。
+
+该次性能作业 `120674741195` 接受，严格汇总固定选择独立
+`amd-epyc-9v45` 预算（`2d739ed0a7c442bd4a1dbc5847ae83ff505ea0af572d0ef37611dfac1a8e1fe3`）；
+登记表摘要 `d389ec5c71f702a52dfed8acf7b23be4c760acfb8a6a16d7192b701f56c0a6d3`。
+这补上 9V45 后继 enforcing 通过证据，旧 7763 预算及失败历史不变。
 
 Windows/GTK 的显示书架仍使用 SDK 全量 `books()` 数组，尚未接有界产品分页。
 GTK 尚未接 PDF/CBZ 固定页界面；本轮实际 GTK UI 仅授 EPUB/TXT 原声明范围。
