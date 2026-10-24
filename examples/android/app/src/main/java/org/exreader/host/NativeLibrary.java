@@ -116,12 +116,35 @@ public final class NativeLibrary implements AutoCloseable {
     }
 
     public ImportResult importFile(String path, int format, String title) {
-        long[] values = nativeImportFile(checked(), path, format, title, false);
+        long[] values = nativeImportFile(checked(), path, format, title, false, false);
         return new ImportResult(values[0], values[1] != 0);
     }
+
+    /** Seekable original bytes owned by the SDK, independent of host path preferences. */
+    static final class Source implements AutoCloseable {
+        private long handle;
+        final long size;
+        Source(long[] value) { handle = value[0]; size = value[1]; }
+        int read(long offset, byte[] bytes, int count) {
+            if (handle == 0) throw new IllegalStateException("Source is closed");
+            return nativeReadSource(handle, offset, bytes, count);
+        }
+        @Override public void close() {
+            if (handle != 0) { nativeCloseSource(handle); handle = 0; }
+        }
+    }
+
+    Source source(long bookId) { return new Source(nativeOpenSource(checked(), bookId)); }
     ImportResult importLegacyFile(String path,int format,String title) {
-        long[] values=nativeImportFile(checked(),path,format,title,true);
+        long[] values=nativeImportFile(checked(),path,format,title,true,false);
         return new ImportResult(values[0],values[1]!=0);
+    }
+
+    /** Cloud regression creates pre-unique historical rows through public SDK imports. */
+    ImportResult importHistoricalFile(String path, int format, String title, boolean legacy) {
+        if (!BuildConfig.DEBUG) throw new IllegalStateException("Historical import is debug-only");
+        long[] values = nativeImportFile(checked(), path, format, title, legacy, true);
+        return new ImportResult(values[0], values[1] != 0);
     }
 
     public void setPosition(long bookId, long position) {
@@ -215,11 +238,15 @@ public final class NativeLibrary implements AutoCloseable {
     }
 
     private static native String nativeIdentity();
+    private static native long[] nativeOpenSource(long handle, long bookId);
+    private static native int nativeReadSource(long source, long offset, byte[] bytes, int count);
+    private static native void nativeCloseSource(long source);
     private static native boolean nativeBounded(long handle,long bookId);
     private static native long nativeOpen(String path);
     private static native void nativeClose(long handle);
     private static native String[][] nativeBooks(long handle);
-    private static native long[] nativeImportFile(long handle, String path, int format, String title,boolean legacy);
+    private static native long[] nativeImportFile(long handle, String path, int format, String title,
+                                                 boolean legacy, boolean historical);
     private static native void nativeSetPosition(long handle, long bookId, long position);
     private static native String[][] nativeNotes(long handle, long bookId);
     private static native long nativeSaveNote(long handle, long bookId, long noteId, long start, long end, String comment);
