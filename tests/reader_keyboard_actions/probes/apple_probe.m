@@ -230,10 +230,11 @@ static void send_key(NSWindow *window, NSEventType type, unsigned short code,
                      NSEventModifierFlags flags, NSString *characters, BOOL is_repeat) {
   @autoreleasepool {
     NSEvent *event = make_event(type, code, flags, characters, is_repeat, window);
-    /* Use the application dispatch path whenever the window owns the keyboard;
-       a window that a hosted runner never made key still receives the event
-       through its own sendEvent:, which is the same AppKit dispatch. */
-    if ([NSApp keyWindow] == window || g.modal_open != 0) {
+    /* The application dispatch path is used only when the process is actually
+       active, because an inactive application drops the event instead of
+       routing it. Otherwise the event goes through the window's own sendEvent:,
+       which is the same AppKit dispatch and never depends on activation. */
+    if ([NSApp isActive] && [NSApp keyWindow] == window) {
       g.dispatch_path = "application";
       [NSApp sendEvent:event];
     } else {

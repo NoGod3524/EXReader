@@ -440,11 +440,26 @@ static void case_repeat(void) {
   record("reader-repeat-bounded", "PASS", scratch);
 }
 
+static int focus_entry(void) {
+  GtkWidget *focus;
+  gtk_window_present(GTK_WINDOW(g.window));
+  set_x_focus(g.window);
+  gtk_widget_grab_focus(g.entry);
+  pump(250);
+  focus = gtk_window_get_focus(GTK_WINDOW(g.window));
+  return focus == g.entry && gtk_widget_has_focus(g.entry) != 0;
+}
+
 static void case_edit_keeps_keys(void) {
   begin_case("edit-keeps-keys");
   const char *text;
-  set_x_focus(g.window);
-  gtk_widget_grab_focus(g.entry);
+  if (focus_entry() == 0) {
+    (void)snprintf(scratch, sizeof(scratch),
+                   "the entry never received the GTK focus (toplevel focus=%d)",
+                   gtk_window_has_toplevel_focus(GTK_WINDOW(g.window)) ? 1 : 0);
+    record("edit-keeps-editing-keys", "FAIL", scratch);
+    return;
+  }
   gtk_entry_set_text(GTK_ENTRY(g.entry), "abcdef");
   gtk_editable_set_position(GTK_EDITABLE(g.entry), 0);
   pump(150);
@@ -482,9 +497,10 @@ static void case_edit_keeps_keys(void) {
 
 static void case_edit_command(void) {
   begin_case("edit-command");
-  set_x_focus(g.window);
-  gtk_widget_grab_focus(g.entry);
-  pump(150);
+  if (focus_entry() == 0) {
+    record("edit-command-passes", "FAIL", "the entry never received the GTK focus");
+    return;
+  }
   reset_counters();
   if (tap_chord(XK_Control_L, XK_f) == 0) {
     record("edit-command-passes", "FAIL", "XTest refused Control+f in the entry");
