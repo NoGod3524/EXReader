@@ -123,8 +123,9 @@ def check_group(observations, expected, required, aliases):
                 continue
             present = set()
             for key in got:
-                if key.startswith("row"):
-                    present.add(key.split(".")[0])
+                head, _, tail = key.partition(".")
+                if head.startswith("row") and head[3:].isdigit() and tail:
+                    present.add(head)
             if len(present) != claimed:
                 integrity.append({"record": name, "issue": "row count differs from row fields"})
 
