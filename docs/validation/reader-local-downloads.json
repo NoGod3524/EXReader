@@ -1,51 +1,289 @@
 {
-  "package": "EXReaderLocalDownloads",
-  "version": "0.1.0",
-  "fixed_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
-  "sdk_freeze": "9854061be331fe603a1822d9b2b36ee357154927",
-  "sdk_version": "3.40.0",
-  "abi": 1,
-  "status": "cloud-verified",
-  "tested_source": "7817caa968ce9350ed1c6b3712d31a13c2da8fd8",
-  "original_failure": {
-    "run_id": 40079065398,
-    "run_attempt": 1,
-    "source": "27f46d2a73fcd8343ecd827d055ec2dcc492bc9b",
-    "summary": "Linux compile failed (-Werror=format-truncation: backup path 1200 bytes into a 1024-byte field); the evidence job failed with it. Windows and macOS passed 31/31 on that source. Fixed in 7817caa by sizing the field; this run is not used for acceptance."
-  },
-  "cloud": {
-    "run_id": 40079478242,
-    "run_attempt": 1,
-    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40079478242",
-    "jobs": {
-      "macos-15": "success (120829827482)",
-      "ubuntu-22.04": "success (120829827667)",
-      "windows-2022": "success (120829827690)",
-      "same-run artifact evidence": "success (120830543439)"
-    },
-    "checks_per_platform": 31,
-    "report_ok": true,
-    "artifacts": [
-      {"name": "reader-local-downloads-Linux-40079478242-1", "id": 12555090603, "bytes": 9416454, "digest": "sha256:a21df516912d83fe4c1db4bb06d7eee2e5352bbce266f57d2fb565b574560436", "expires_at": "2027-01-22T08:48:32Z"},
-      {"name": "reader-local-downloads-macOS-40079478242-1", "id": 12554986207, "bytes": 8234163, "digest": "sha256:47dd809d7da06a97167420fa403cccbefeb443df80376616ce55488d3d21c279", "expires_at": "2027-01-22T08:48:32Z"},
-      {"name": "reader-local-downloads-Windows-40079478242-1", "id": 12554543078, "bytes": 7139984, "digest": "sha256:91b7ebebc9c172963878f20d5307cbce16c979c83325ad4d6d542b0a41120eca", "expires_at": "2027-01-22T08:48:32Z"},
-      {"name": "reader-local-downloads-evidence-40079478242-1", "id": 12554162944, "bytes": 2967, "digest": "sha256:b7505a5297686d6b9865f07f77a839694aac6a551541975411e3cf47a392fba4", "expires_at": "2027-01-22T08:48:32Z"}
-    ],
-    "consumer_probe_sha256": {
-      "Windows": "b39e513ac27449aed0449c4432d47d2b9689e73f42ab317a210495b68cf0bae4",
-      "Linux": "30b2b59e0631e1755382006e45c87abe87a888790daa232969d48bb669020c4b",
-      "macOS": "d3cd27db19710fe9322218d13148445e9c9c7eb2bc00ef5f53051f696036646a"
-    }
-  },
-  "granted": [
-    "Windows/Linux/macOS installed C and C++ consumers (31 named checks each: cloud-only, downloaded txt/epub/cbz, repeat request, duplicate SDK ids, legacy notes/progress, busy/held source, disk and mapping failure, cancellation, corrupt intent, identity/missing-row refusal, re-import)",
-    "real process termination (_exit in the durable-stage hook) at begun, prepared, unmapped, deleted and cleaned, then reopen and recovery in fresh processes",
-    "product books/shelves/tags/series/revisions/outbox/tombstones and a simulated remote object tree unchanged, compared independently in Python"
+ "package": "G06",
+ "title": "Optional local original removal with durable intent recovery",
+ "module": "EXReaderLocalDownloads 0.1.0 (C ABI, installed packages only)",
+ "implementation_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+ "sdk_protected_tree": "9854061be331fe603a1822d9b2b36ee357154927",
+ "previously_tested_source": "7817caa968ce9350ed1c6b3712d31a13c2da8fd8",
+ "previous_green_run": 40079478242,
+ "review_round": 1,
+ "accepted": {
+  "source": "44a6991f65021b58f48165124fd5ae654b14e157",
+  "branch": "codex/reader-local-downloads",
+  "workflow": "Reader local downloads",
+  "workflow_path": ".github/workflows/reader-local-downloads.yml",
+  "run": 40086428132,
+  "attempt": 1,
+  "event": "push",
+  "conclusion": "success",
+  "created_at": "2026-10-24T10:34:06Z",
+  "updated_at": "2026-10-24T10:37:59Z",
+  "url": "https://github.com/NoGod3524/EXReader/actions/runs/40086428132",
+  "jobs": [
+   {
+    "name": "local downloads (windows-2022)",
+    "id": 120850205231,
+    "conclusion": "success",
+    "started": "2026-10-24T10:34:08Z",
+    "completed": "2026-10-24T10:37:45Z"
+   },
+   {
+    "name": "local downloads (ubuntu-22.04)",
+    "id": 120850205414,
+    "conclusion": "success",
+    "started": "2026-10-24T10:34:09Z",
+    "completed": "2026-10-24T10:37:05Z"
+   },
+   {
+    "name": "local downloads (macos-15)",
+    "id": 120850205430,
+    "conclusion": "success",
+    "started": "2026-10-24T10:34:09Z",
+    "completed": "2026-10-24T10:36:45Z"
+   },
+   {
+    "name": "same-run artifact evidence",
+    "id": 120850899674,
+    "conclusion": "success",
+    "started": "2026-10-24T10:37:47Z",
+    "completed": "2026-10-24T10:37:59Z"
+   }
   ],
-  "not_granted": [
-    "host integration (G01) and UI wiring",
-    "kill timing inside a single SDK call or inside the OS flush (only stage boundaries are killed)",
-    "PDF originals and very large libraries (backup policy copies the whole SDK library)",
-    "real device or screen-reader evidence"
+  "hosts": {
+   "linux": {
+    "runner": "ubuntu-22.04",
+    "observer_sha256": {
+     "probe": "292a67fdcc36a6a8ad3e84c622b7cba591661aadfa968d2bcea8a56f447ad4ce",
+     "cpp": "74fc87f367a16d2abd81b734e4dd2ab4d4d5d5609f5ebcc704de506f6aef3b8e",
+     "library": "ebcf1e10d566bf84866739273506d3853f02521e3df5214584229bfc4793b25c"
+    },
+    "checks": {
+     "total": 51,
+     "passed": 51,
+     "failed": 0,
+     "skipped": 0
+    },
+    "skip_reason": "",
+    "regressions": {
+     "ok": true,
+     "skipped": 0
+    }
+   },
+   "macos": {
+    "runner": "macos-15",
+    "observer_sha256": {
+     "probe": "5cd5ff8b48c4c9dc233db8cec3d4cd29e149997ada2ac4db9f97e28634b913af",
+     "cpp": "7e9bd0f6d587caa9ff5d24f9895dd59ede9375cfbb0d82a9ba39d629039f1199",
+     "library": "53aa58c9a06ad634e842b8e42bd27b57ae5efcc1cfa278c24b62b952dee1b180"
+    },
+    "checks": {
+     "total": 51,
+     "passed": 51,
+     "failed": 0,
+     "skipped": 0
+    },
+    "skip_reason": "",
+    "regressions": {
+     "ok": true,
+     "skipped": 0
+    }
+   },
+   "windows": {
+    "runner": "windows-2022",
+    "observer_sha256": {
+     "probe": "8f6f26265b39adf7a89e6afde0083f5a9a23b6bc24042adc68115c974f6082cd",
+     "cpp": "529d1110b6ff91675d818bd3362e993ccf06fb3a8eb053321fd0ff2b0f266964",
+     "library": "not-recorded-windows-static-library"
+    },
+    "checks": {
+     "total": 51,
+     "passed": 50,
+     "failed": 0,
+     "skipped": 1
+    },
+    "skip_reason": "reimport_path_swap_keeps_identity: this host refuses to replace a file the module holds open (SWAP blocked errno=13), so the pathname cannot be swapped mid-read there; the same identity property is covered on Windows by reimport_verifies_imported_row, reimport_wrong_file_rejected and the post-import re-read",
+    "regressions": {
+     "ok": true,
+     "skipped": 1
+    }
+   }
+  },
+  "checks": {
+   "total": 51,
+   "original": [
+    "cloud_only_noop",
+    "remove_txt",
+    "remove_epub",
+    "remove_cbz",
+    "repeat_request_idempotent",
+    "reimport_same_identity",
+    "reimport_wrong_file_rejected",
+    "duplicate_sdk_ids_removed_exactly",
+    "duplicate_with_legacy_rejected",
+    "legacy_notes_rejected_then_backup",
+    "legacy_progress_rejected",
+    "busy_rejects_without_change",
+    "held_source_readable_then_released",
+    "kill_begun",
+    "kill_prepared",
+    "kill_unmapped",
+    "kill_deleted",
+    "kill_cleaned",
+    "kill_unmapped_cbz",
+    "kill_deleted_epub",
+    "late_legacy_restores_mapping",
+    "pending_blocks_other_removal",
+    "pending_blocks_reimport",
+    "disk_failure_leaves_book_readable",
+    "mapping_failure_leaves_book_readable",
+    "cancel_at_begun",
+    "cancel_at_prepared",
+    "corrupt_intent_refused",
+    "identity_mismatch_refused",
+    "missing_sdk_row_refused",
+    "cpp_consumer"
+   ],
+   "added": [
+    "reimport_path_swap_keeps_identity",
+    "reimport_verifies_imported_row",
+    "intent_trailing_bytes_refused",
+    "intent_trailing_nul_refused",
+    "intent_oversized_refused",
+    "intent_truncated_refused",
+    "intent_bad_number_refused",
+    "intent_stage_suffix_refused",
+    "intent_duplicate_field_refused",
+    "intent_unknown_field_refused",
+    "intent_empty_id_refused",
+    "intent_nine_ids_refused",
+    "state_dir_link_refused",
+    "originals_link_refused",
+    "intent_tmp_hardlink_kept",
+    "reenter_remove_from_stage",
+    "reenter_recover_from_busy",
+    "reenter_pending_readonly",
+    "pdf_private_original",
+    "formats_all_remove_reimport"
+   ]
+  },
+  "regressions": {
+   "script": "tests/reader_local_downloads/check_regressions.py",
+   "previous_build_source": "7817caa968ce9350ed1c6b3712d31a13c2da8fd8",
+   "previous_probe_sha256": {
+    "linux": "13cbae769785133567604270dc0c875514ec34bc4b239bc9f3859030364f880e",
+    "macos": "b6ccd423c3ac599913cbdb31825a373d4229133d41e377fb96ee68ea2b72fa47",
+    "windows": "ce88700350595a8ca427dbdba4aba4c31efa908c839ced831437ce36c14f5509"
+   },
+   "cases": {
+    "swap (path replaced after the hash read)": {
+     "linux": "old stored other bytes (False) / new keeps identity (True)",
+     "macos": "old False / new True",
+     "windows": "host refused the replace: case skipped, new keeps identity"
+    },
+    "intent stage=2junk": {
+     "all": "old ok / new corrupt_intent"
+    },
+    "intent bytes=<n>abc": {
+     "all": "old ok / new corrupt_intent"
+    },
+    "intent duplicate bytes field": {
+     "all": "old ok / new corrupt_intent"
+    },
+    "intent unknown field": {
+     "all": "old ok / new corrupt_intent"
+    },
+    "intent overflowing id": {
+     "all": "old ok / new corrupt_intent"
+    },
+    "intent valid 2048-byte prefix plus trailing bytes": {
+     "all": "old ok / new corrupt_intent"
+    }
+   },
+   "result": {
+    "linux": "ok",
+    "macos": "ok",
+    "windows": "ok (swap case skipped as above)"
+   }
+  },
+  "artifacts": [
+   {
+    "name": "reader-local-downloads-Windows-40086428132-1",
+    "id": 12557321439,
+    "bytes": 10658927,
+    "digest": "sha256:feaaecc21dc57b64fecd766243387177e3f30bfce3aa856e0918808b28169876",
+    "expires_at": "2027-01-22T10:34:06Z"
+   },
+   {
+    "name": "reader-local-downloads-Linux-40086428132-1",
+    "id": 12556894780,
+    "bytes": 13947926,
+    "digest": "sha256:832723ef95ed154f6dc52440e6d532f5d6a62753950fae0700b0ba5408233f2d",
+    "expires_at": "2027-01-22T10:34:06Z"
+   },
+   {
+    "name": "reader-local-downloads-macOS-40086428132-1",
+    "id": 12557352053,
+    "bytes": 12178196,
+    "digest": "sha256:e6796868ed7f1a41635ccadbb2cf69d3fbda1ef07c1a3dc4c05707dd3694f38a",
+    "expires_at": "2027-01-22T10:34:06Z"
+   },
+   {
+    "name": "reader-local-downloads-evidence-40086428132-1",
+    "id": 12557301558,
+    "bytes": 3089,
+    "digest": "sha256:27667855181ef629ebe5f3d7742f540c5e004baa87be0a9a81ed44a2d339ff5b",
+    "expires_at": "2027-01-22T10:34:06Z"
+   }
+  ],
+  "review_findings_closed": [
+   "1 reimport identity TOCTOU: private staging copy hashed and imported as one byte stream, then the created SDK row is re-read through exr_library_source and compared before any mapping is written; a wrong row is deleted again. PDF keeps the verified copy as originals/<sha>.orig and only that book's removal deletes it.",
+   "2 strict bounded intent parser: exact EOF, fixed field set and order, single occurrence, decimal-only values without sign/suffix/overflow, 1..8 ids including mapped, checksum over every preceding byte; a damaged record leaves the file and both databases byte-identical.",
+   "3 no-follow state directory and exclusive temporary files; per-book cleanup (<sha>.orig, <sha>.open) replaces clearing the directory, so another book's private original survives.",
+   "4 reentrancy: remove/recover/reimport return READER_LD_BUSY when called from after_stage, is_busy or the cancellation hook and change nothing; reader_ld_pending stays read-only and reports the committed stage.",
+   "5 nine-format matrix (txt/html/fb2/epub/docx/rtf/mobi/pdf/cbz) with remove, exact reimport and second remove, plus PDF private-original lifetime and cross-book isolation using the real public PDF original."
+  ],
+  "preserved": [
+   "the original 31 named checks and their assertions",
+   "the legacy reject/backup semantics and the late-legacy restore path",
+   "the frozen SDK tree, product schema 1, wire v1 and the existing budgets"
   ]
+ },
+ "earlier_runs": [
+  {
+   "run": 40083479274,
+   "source": "834a8583637b5ae6edb84c0138cc3a435e60beb8",
+   "conclusion": "cancelled",
+   "cause": "superseded by the next fix while still queued"
+  },
+  {
+   "run": 40083596698,
+   "source": "368eebf006365f8e3b0aacb11e148738d4c899f0",
+   "conclusion": "failure",
+   "cause": "ubuntu: -Werror=format-truncation on the intent key copy; macos/windows: three defects in the new checks (unset swap target, two books sharing one PDF fixture key, catalog tuple order)"
+  },
+  {
+   "run": 40084663610,
+   "source": "8eb1b6b50b51e8fd57f1b20fcb4f1b110416d583",
+   "conclusion": "failure",
+   "cause": "two defects in the new checks: same() called with two arguments; the PDF scenario expected an empty originals directory although one retained original must stay"
+  },
+  {
+   "run": 40085199662,
+   "source": "2c35eba4",
+   "conclusion": "failure",
+   "cause": "linux and macos fully green; windows refused to replace the open caller file, so the swap check failed instead of reporting the host limitation"
+  },
+  {
+   "run": 40085621462,
+   "source": "32031918",
+   "conclusion": "success",
+   "note": "superseded only because the swap line was matched exactly, which reported a passing case as a skip on linux/macos"
+  },
+  {
+   "run": 40086062994,
+   "source": "5976fca7",
+   "conclusion": "success",
+   "note": "superseded by the prefix match fix; same functional result"
+  }
+ ]
 }

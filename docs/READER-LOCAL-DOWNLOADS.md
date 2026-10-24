@@ -147,3 +147,34 @@ O_NOFOLLOW` / `CREATE_NEW`）配合先删除目标项，保证预置的同名文
 "移除 → 全局书目保留、本机映射消失、SDK 行删除、无残留导出" 与 "按原格式+原始 SHA-256 重导入 →
 字节与映射精确恢复"，再移除并核对其邻居可读；PDF 另有 `pdf_private_original` 覆盖私有原件寿命与
 跨书清理隔离（真实公共 SDK 原件为 `tests/fixtures/pdf-public.pdf`）。
+
+## 云端结果（同一次 source/run/attempt）
+
+受测源码 `44a6991f65021b58f48165124fd5ae654b14e157`，run **40086428132**，attempt **1**，
+四个作业全部 success；逐项明细、消费者 SHA-256 与工件身份见
+[`docs/validation/reader-local-downloads.json`](validation/reader-local-downloads.json)。
+
+| 宿主 | 具名检查 | 跳过 | 消费者 probe SHA-256（前 12 位） | 回归（旧实现 vs 本树） |
+| --- | --- | --- | --- | --- |
+| ubuntu-22.04 | 51/51 | 0 | `292a67fdcc36` | swap old=False / new=True，6 项解析缺口 old=ok → new=corrupt_intent |
+| macos-15 | 51/51 | 0 | `5cd5ff8b48c4` | 同上 |
+| windows-2022 | 51/51 | 1 | `8f6f26265b39` | 同上；swap 用例按主机限制**具名跳过** |
+
+Windows 的跳过是诚实的平台事实：该宿主拒绝替换本进程正在读取的文件
+（`SWAP blocked errno=13`），所以"哈希后替换 pathname"在该平台无法发生；同一身份性质在
+Windows 上仍由 `reimport_verifies_imported_row`、`reimport_wrong_file_rejected` 与导入后重读校验覆盖。
+Linux/macOS 上该用例是**通过**（旧实现存入替换后的字节，本树保持原字节）。
+
+工件：Windows `12557321439 / 10658927 B / feaaecc2…`、Linux `12556894780 / 13947926 B / 832723ef…`、
+macOS `12557352053 / 12178196 B / e6796868…`、证据 `12557301558 / 3089 B / 27667855…`，均 2027-01-22 到期。
+
+### 本轮早期失败（保留，不转为通过）
+
+| run | 源码 | 原因 | 处置 |
+| --- | --- | --- | --- |
+| 40083596698 | `368eebf0` | ubuntu -Werror=format-truncation（intent key 拷贝）；三处新检查缺陷 | 加长度校验后 memcpy；修检查 |
+| 40084663610 | `8eb1b6b5` | 两处新检查缺陷（same() 少参数；PDF 场景误要求 originals 为空） | 修检查 |
+| 40085199662 | `2c35eba4` | Linux/macOS 全绿；Windows 拒绝替换打开的文件，swap 用例判失败 | 改为具名跳过并说明原因 |
+| 40085621462 / 40086062994 | `32031918` / `5976fca7` | 全部作业绿；swap 行按全等匹配把通过误报为跳过 | 改为前缀匹配后重跑 |
+
+通过证据只取上表那一次 source/run/attempt；早期 run 的结果不拼接到当前源码。
