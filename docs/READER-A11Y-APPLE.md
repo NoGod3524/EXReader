@@ -42,6 +42,15 @@
 匿名控件计数、窗口框、文本样式点值）；键盘另发一条 `EXR_A11Y_KEYBOARD` 记录（见下文键盘判据）；`audit_collect.py` 在 Actions 里把记录
 与契约逐项比对，产出 `report.json`；`audit_gate.py` 汇总三目标并给出两个独立结论。
 
+### 3.1 重叠判据的两个版本（v1 误判 → v2）
+
+| 版本 | 规则 | 后果 | 证据 |
+| --- | --- | --- | --- |
+| v1（run `40085956514`，source `29f03e23`） | 只要任一侧 `path` 含 `ScrollView` 就整对跳过 | **过宽**：同一滚动容器内真实重叠的控件也被排除，并对滚动内容暗示“已被裁剪” | 该 run 把 iPhone `library.large_type` 的 `library.book.0|library.import.epub`（原始重叠 91%）记为**阻断**遮挡——实际是 15 pt 视口把行裁掉，可视部分与按钮不相交 |
+| v2（本版） | 同容器比布局框；跨容器用已记录视口裁剪后比可视部分；缺视口记 `uncovered` | 同容器真实重叠仍 `fail`；视口外滚动内容不再误 `fail`；无法判定时如实 `uncovered` | `judge` job 的正反例 + 原误判对回放（`legacy=skipped` → `current=excluded`），随 `reader-a11y-apple-validation-<run>-<attempt>` 工件发布 |
+
+v1 的工件与报告**保留不删**：`docs/validation/reader-a11y-apple.json` 的 `history` 仍记着那个 run 的工件身份与被取代的阻断条目；§7 只引用最新一次同源运行。门槛（24/44/20 pt、50%、2 pt、20 pt）两版相同，`judge` 每次运行都会重算并比对，改动任一门槛都会让判定器失败。
+
 ### 实测到的平台差异（写进判据，避免把装置差异当成产品缺陷）
 
 1. **平台身份**：iPad 模拟器上的测试进程把 `userInterfaceIdiom` 报成 `.unspecified`（`model` 仍是
@@ -94,8 +103,11 @@
 - **建议项（`advisory`，不阻断、不计入 finding）**：iOS 上 24–44 pt 的 HIG 触控建议，
   以及 macOS 上小于 20 pt 的指针目标。门槛写在契约 `policy.minimum_target_pt`，
   避免用 Web 的 24 pt 去误判 AppKit 控件。
-- **重叠**：同一步骤内可交互控件的布局框不得互相覆盖超过较小控件的 50%；位于 `ScrollView` 内的行
-  与外部控件的几何重叠会被滚动视口裁剪，这类组合记为 `uncovered` 而不是遮挡缺陷。
+- **重叠**（v2）：同一滚动容器内（含两侧都不在任何滚动容器内）直接比较布局框，按 **50% 阈值**判遮挡；
+  不同容器先用**已记录的最近滚动祖先视口**裁剪两侧，再比较可视部分，重叠仍按同一阈值判 `fail`。
+  排除时留 `overlap-scroll-clipped` 证据行（含对数与配对数），未判定时留 `overlap-undetermined`
+  并写明原因（祖先缺标识 / 视口未记录 / 视口框为空），**不声称已被裁剪**。
+  包含关系只在被包含方面积 ≤ 容器 90% 时豁免（真实嵌套子控件）；同尺寸近似重叠不豁免。
 - **阅读顺序**：声明的阅读序列必须与视觉纵向顺序一致（容差 20 pt）。
 - **内容区占位**：大字体状态下书架列表 `library.list` 与阅读面 `reader.page` 至少保留窗口高度的 25%
   （作者设定的设计下限，不是 WCAG 判据，因此不阻断），把“控制区把正文/书架挤没”这件事量化出来。
@@ -146,13 +158,17 @@
 
 ## 6. 云端出口
 
-工作流 `Reader Apple accessibility audit` 四个 job：
+工作流 `Reader Apple accessibility audit` 五个 job：
 
 1. `frozen`：`HEAD == GITHUB_SHA`、实现起点是祖先、SDK 保护树等于
    `9854061be331fe603a1822d9b2b36ee357154927`、产品 SQL 与实现起点相等、
    `git diff --name-only <start> HEAD` 全在本包白名单内。
-2. `sdk`：在 `macos-15` 上构建并安装 `macos` 与 `iphonesimulator` 两套 SDK（本包自己的工作流，不改 `wp13-apple.yml`）。
-3. `audit`（`macos`/`iphone`/`ipad` 三路并行）：生成独立审计工程（`make_a11y_xcodeproj.rb`，
+2. `judge`（`ubuntu-latest`，纯 Python）：跑 `tests/reader_a11y_apple/a11y_overlap_regression.py` 的
+   正反例回归——同容器可见控件真实重叠必须 `fail`、滚动内容在视口外与外部按钮重叠必须不 `fail`、
+   不同/嵌套滚动与未记录祖先分别区分、50% 与 24/44/20 pt 门槛未变，并回放原 run 的误判对证明缺口；
+   判定器一退化，`audit` 与 `summary` 都不会启动。工件 `reader-a11y-apple-judge-<run>-<attempt>`。
+3. `sdk`：在 `macos-15` 上构建并安装 `macos` 与 `iphonesimulator` 两套 SDK（本包自己的工作流，不改 `wp13-apple.yml`）。
+4. `audit`（`macos`/`iphone`/`ipad` 三路并行）：生成独立审计工程（`make_a11y_xcodeproj.rb`，
    不带 `EXR_APPLE_HOST_REVIEW`/`EXR_APPLE_IMPORT_REVIEW`，受测的是普通宿主）、跑独立 UI 用例、
    导出截图附件、采集逐项证据，工件名 `reader-a11y-apple-audit-<platform>-<run>-<attempt>`。
    iPhone/iPad 各跑两次：默认内容尺寸一次（跳过 `test07DynamicTypeAudit`），
@@ -160,7 +176,7 @@
    只跑该用例一次（`-only-testing:`），最后复位为 `medium`。`simctl ui ... content_size` 的读数
    作为“字体设置”写入证据；`-UIPreferredContentSizeCategoryName` 启动参数在当前 runtime 上不生效，
    所以大字体必须由设备级设置给。
-4. `summary`：合流三份 `report.json`，用 `gh api` 核对工件身份（名称含 run/attempt、字节非零、
+5. `summary`：合流三份 `report.json` 与判定器报告，用 `gh api` 核对工件身份（名称含 run/attempt、字节非零、
    `sha256:` 摘要、未过期），再输出 `reader-a11y-apple-summary.json` 与
    `reader-a11y-apple-validation-<run>-<attempt>` 工件。
 
