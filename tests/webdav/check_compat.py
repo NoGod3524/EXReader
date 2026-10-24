@@ -10,6 +10,7 @@ import ssl
 import subprocess
 import sys
 import threading
+from cloud_native import trust_fixture_certificates
 
 
 def main():
@@ -20,9 +21,7 @@ def main():
     key, cert = certs / 'compat.key', certs / 'compat.crt'
     subprocess.run(['openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '1', '-keyout', str(key),
                     '-out', str(cert), '-subj', '/CN=localhost', '-addext', 'subjectAltName=DNS:localhost,IP:127.0.0.1'], check=True, capture_output=True)
-    subprocess.run(['certutil', '-addstore', '-f', 'Root', str(cert)] if os.name == 'nt' else
-                   ['sudo', 'cp', str(cert), '/usr/local/share/ca-certificates/reader-dav-compat.crt'], check=True, capture_output=True)
-    if os.name != 'nt': subprocess.run(['sudo', 'update-ca-certificates'], check=True, capture_output=True)
+    trust_fixture_certificates((cert,), 'reader-dav-compat-')
     payload = '真实原生请求\n'.encode(); requests, checks = [], []
 
     def response(href, extra=False, pad=0):

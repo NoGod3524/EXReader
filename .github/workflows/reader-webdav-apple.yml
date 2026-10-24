@@ -1,0 +1,14 @@
+name: Native Foundation WebDAV adoption
+on:
+  push:
+    branches: [codex/reader-webdav-apple]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native:
+    uses: ./.github/workflows/reader-commands.yml
+    with:
+      platforms: '["ubuntu-22.04","windows-2022","macos-15"]'
+      session: true
+      apple_urlsession: true
