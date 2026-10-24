@@ -1304,9 +1304,9 @@ def main():
 
     for name, value in TEXTS:
         ITEMS.append((name, KIND_UTF16, utf16_payload(value)))
-    for key in ("workdir", "db_a", "db_b", "db_c", "db_d"):
-        value = AUX["path." + key]
-        ITEMS.append(("p." + key, KIND_UTF16, value.encode("utf-16-le")))
+    ITEMS.append(("p.workdir", KIND_UTF16, workdir.encode("utf-16-le")))
+    for key in ("a", "b", "c", "d"):
+        ITEMS.append(("p.db_" + key, KIND_UTF16, dbs[key].encode("utf-16-le")))
     ITEMS.append(("raw.bad_path", KIND_RAW, (base + "/bad").encode("ascii")
                   + b"-\xff\xfe.sqlite3"))
     for name, data in RAW:
