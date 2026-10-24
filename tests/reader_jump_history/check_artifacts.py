@@ -17,6 +17,10 @@ import zipfile
 from pathlib import Path
 
 PLATFORMS = ('Linux', 'Windows', 'macOS')
+# The database fingerprints contain the runner's own paths, so only the counts
+# and the two verdicts are comparable across runners.
+STABLE_NO_WRITE = ('revision_rows', 'outbox_rows', 'sdk_progress_records', 'sdk_notes', 'sdk_fixed_notes',
+                   'sdk_epub_notes', 'databases_unchanged', 'control_write_changed')
 
 
 def api(path, binary=False):
@@ -100,8 +104,9 @@ def main(output):
             values = [json.dumps(r.get(field), sort_keys=True) for r in records]
             if len(set(values)) != 1:
                 problems.append('the three runners disagree on ' + field)
-        fingerprints = [json.dumps(r.get('no_write'), sort_keys=True) for r in records]
-        if len(set(fingerprints)) != 1:
+        verdicts = [json.dumps({key: (r.get('no_write') or {}).get(key) for key in STABLE_NO_WRITE}, sort_keys=True)
+                    for r in records]
+        if len(set(verdicts)) != 1:
             problems.append('the three runners disagree on the no-write proof')
     else:
         problems.append('only ' + str(len(records)) + ' platform artifacts were authenticated')
