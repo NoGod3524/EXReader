@@ -136,6 +136,7 @@ def build_product(stage, build):
     common = ['-G', 'Ninja', '-DCMAKE_TOOLCHAIN_FILE=' + str(ndk_home() / 'build/cmake/android.toolchain.cmake'),
               '-DANDROID_ABI=x86_64', '-DANDROID_PLATFORM=android-' + str(MIN_SDK),
               '-DANDROID_STL=c++_static', '-DCMAKE_BUILD_TYPE=Release', '-DCMAKE_POSITION_INDEPENDENT_CODE=ON',
+              '-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH',
               '-DCMAKE_INSTALL_PREFIX=' + str(stage), '-DCMAKE_PREFIX_PATH=' + str(stage),
               '-DREADER_PRODUCT_PREFIX=' + str(stage)]
     for name, source, target in (

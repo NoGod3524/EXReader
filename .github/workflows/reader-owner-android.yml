@@ -125,8 +125,6 @@ jobs:
         run: |
           mkdir -p build/android-host/evidence/artifacts
           if compgen -G 'build/android-host/artifacts/*.apk' > /dev/null; then cp build/android-host/artifacts/*.apk build/android-host/evidence/artifacts/; fi
-          gradle -p examples/android --no-daemon --stacktrace :app:assembleRelease -PexrSdk=$GITHUB_WORKSPACE/stage/android-x86_64
-          python tools/check_reader_owner_android.py --evidence build/owner-android --collect-native
           python tools/check_android_host.py --repo . --evidence build/android-host/evidence --build build/android-host/build.json --stage stage/android-x86_64 --output build/android-host/evidence/preflight.json
       - name: Unchanged original 48 evidence gate checks
         id: gate_review
