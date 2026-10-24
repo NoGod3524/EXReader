@@ -100,7 +100,7 @@ def main():
                             'pkg-config metadata carries no absolute prefix: ' + record['path'])
             distlib.require(distlib.restore_occurrences(relocated, occurrences) == payload,
                             'relocation is not invertible for ' + record['path'])
-            again, extra = pc_metadata.relocate(relocated, args.source, record['path'])
+            again, extra, _ = pc_metadata.relocate(relocated, args.source, record['path'])
             distlib.require(again == relocated and not extra,
                             'relocation is not idempotent for ' + record['path'])
             distlib.require(relocated.count(bytes([10])) == payload.count(bytes([10])),
