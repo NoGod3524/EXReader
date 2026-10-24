@@ -1,7 +1,17 @@
 {
   "schema": 1,
   "scope": "desktop file drop and paste adapter: portable strict parsers plus Windows bounded HGLOBAL/OLE drop target, GTK3 text/uri-list drop destination and AppKit NSPasteboard drag destination",
-  "accepted": true,
+  "accepted": false,
+  "state": "root_native_subclass_coexistence_candidate_pending_actions",
+  "candidate_branch": "codex/reader-drop-coexistence",
+  "previous_delivery_head": "986f2f0132ecdf753d6d428ba821a58175cd0d0c",
+  "previous_delivery_was_accepted_on_its_own_source": true,
+  "candidate_changes": [
+    "SetWindowSubclass/RemoveWindowSubclass/DefSubclassProc preserve independent host subclasses",
+    "temporary COM reference protects reentrant detach from the next window procedure",
+    "subclass installation failure revokes the actual OLE registration",
+    "four new named coexistence and rollback cases with all prior acceptance retained"
+  ],
   "complete_product": false,
   "host_wiring": false,
   "interactive_drag_gesture": false,

@@ -273,3 +273,11 @@ kept in the record; nothing was loosened to turn it green.
   before detach.
 - No filesystem, network or archive access is performed, so drag-and-drop of
   remote or virtual entries stops at the reported status.
+# Root接续：窗口子类共存候选
+
+分支 `codex/reader-drop-coexistence` 从原交回HEAD `986f2f0132ecdf753d6d428ba821a58175cd0d0c` 独立接续，原分支不改。本候选尚待Actions，当前 `accepted=false`；下文原绿只属于原受测源码 `5a0cd498` / run `40136297928`。
+
+用Windows已有 `SetWindowSubclass/RemoveWindowSubclass/DefSubclassProc` 取代直接覆盖和还原 `GWLP_WNDPROC`，detach仅移除本模块。原生子类调用栈持有临时COM引用，允许下一层宿主回调重入detach。安装失败回滚真实OLE注册，不再依赖未检查成功的SetProp。静态包显式导出系统comctl32链接依赖。
+
+新增四项实际窗口检查：模块先卸载、宿主先卸载、下层宿主在消息栈内卸载模块、注入子类安装失败后宿主消息/COM计数/OLE重新attach均恢复；所有既有HGLOBAL负例、ASan、生命周期、三平台安装消费者及同轮ZIP认证保留。本地仅源码文档Git，未执行构建、语法或测试。原始证据继续保留如下。
+

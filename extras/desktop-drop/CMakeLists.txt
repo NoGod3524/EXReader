@@ -31,7 +31,7 @@ set(exrdd_components "")
 if(WIN32)
   add_library(exr_desktop_drop_win32 STATIC src/windows.c)
   target_link_libraries(exr_desktop_drop_win32 PUBLIC exr_desktop_drop
-    PRIVATE ole32 oleaut32 uuid shell32 user32)
+    PRIVATE ole32 oleaut32 uuid shell32 user32 comctl32)
   set_target_properties(exr_desktop_drop_win32 PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON EXPORT_NAME win32)
   if(EXR_DESKTOP_DROP_TEST_HOOKS)
     target_compile_definitions(exr_desktop_drop_win32 PUBLIC EXR_DESKTOP_DROP_TEST_HOOKS=1)

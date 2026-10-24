@@ -15,13 +15,14 @@ extern "C" {
  * Register one drop target per window on the STA thread that owns that window
  * and has called OleInitialize(). exr_drop_windows_attach() calls
  * RegisterDragDrop(window, ...) with this module's IDropTarget, then installs
- * one transparent window procedure so the registration can be released while
+ * one native chainable window subclass so the registration can be released while
  * the window is still valid: WM_DESTROY revokes the OLE registration (which
- * drops OLE's reference) and WM_NCDESTROY restores the original procedure. The
+ * drops OLE's reference) and WM_NCDESTROY removes this module's subclass. The
  * returned handle owns the remaining reference; detach, before or after the
  * window dies, therefore frees the COM object and never leaves one behind.
- * Nothing else about the host window changes: every other message is passed to
- * the original procedure unchanged, and detach restores it.
+ * Other native subclasses may attach and detach in either order. Messages pass
+ * through DefSubclassProc; detach removes only this module's own entry. Failure
+ * to install the subclass revokes the new OLE registration and returns PLATFORM.
  *
  * The adapter accepts CF_HDROP, CF_UNICODETEXT and "FileGroupDescriptorW" (a
  * promised virtual file, reported as EXR_DROP_ITEM_VIRTUAL; the file is never
@@ -74,6 +75,9 @@ exr_drop_status exr_drop_windows_deliver_drop(exr_drop_windows_target *target, I
    attach/detach pair, including one where the window died first, must return
    to the previous value, which proves the object was reclaimed. */
 size_t exr_drop_windows_test_live_targets(void);
+/* Fail one subclass installation after the real OLE registration, so acceptance
+   can verify rollback. Absent from the normal installed package. */
+void exr_drop_windows_test_fail_next_subclass_install(void);
 #endif
 
 #ifdef __cplusplus
