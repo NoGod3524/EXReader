@@ -132,8 +132,12 @@ def main():
         command=['shell','am','instrument','-w','-r']
         for key,value in identity.items():command.extend(('-e',key,value))
         if phase:command.extend(('-e','phase',phase))
-        raw=adb(*command,'org.exreader.host.test/org.exreader.host.ProductOwnerTest',timeout=240)
-        (a.output/(name+'.txt')).write_bytes(raw);return raw
+        result=subprocess.run(['adb',*command,'org.exreader.host.test/org.exreader.host.ProductOwnerTest'],stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=240)
+        raw=result.stdout
+        (a.output/(name+'.txt')).write_bytes(raw)
+        if result.returncode:
+            raise RuntimeError(raw.decode(errors='replace'))
+        return raw
     def snapshot(profile):
         for name in ('sdk.sqlite','product.sqlite'):
             data=adb('exec-out','run-as',package,'cat',f'files/{profile}/{name}')
