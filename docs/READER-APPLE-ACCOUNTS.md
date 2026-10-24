@@ -135,3 +135,10 @@ activation point 终止，尚未执行原来的滚动路径。后续先按真实
 空闲多行顺序，覆盖了完整 preference 的排序。后续将多行 fallback 限于确有待确认
 恢复时，确认后立即回到完整 preference 的普通滚动路径；native 另断言空闲 probe
 不能覆盖已确认 top。此修复仍待实际云端回归。
+
+该短回归 iPad 原 test06 还暴露冷启动探针竞态：搜索框存在但尚未可操作时就点击，
+随后一直等不到焦点。后续在原同一个 120 秒 deadline 内先要求 enabled、位于窗口内
+且 hittable，再执行原点击与焦点检查。`f249aec5` 的生产诊断 macOS 两例通过；iOS
+在设置设备字号前因 fresh simulator 仍为 Shutdown 而失败，未执行用例。诊断入口
+后续先实际 boot/bootstatus 再设置字号；完整入口原先由其前置原 UI 套件启动模拟器，
+该路径不变。
