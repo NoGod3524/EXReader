@@ -2,7 +2,7 @@
 
 本轮将既有原生同步模块扩展到 macOS；不修改冻结 SDK、产品 schema 或修订 wire。
 起点为阅读器组合源码 `8476d6b94ffff1fc7df04abacd9f2f9651a486df`。
-验收记录在 `docs/validation/reader-sync-apple.json`，当前尚未通过云端运行。
+验收记录在 `docs/validation/reader-sync-apple.json`，本轮同源三平台原生验收已通过。
 
 ## 实现
 
@@ -39,3 +39,17 @@ run/source/attempt、全部七套报告、命名检查一致性及实际消费�
 
 本轮不授予 iPhone/iPad、Android 原生同步、宿主账号 UI 或六平台联合验收；这些继续由
 实际平台接入与同源运行证明。既有失败和先前源码的证据继续独立保留。
+
+## 本轮结果
+
+受测源码`a32602be224f58483da3f77c78ca59612c23bf98`，run
+[`40065344267`](https://github.com/NoGod3524/EXReader/actions/runs/40065344267)，attempt1，
+三平台原生作业及严格汇总四作业全部成功。macOS/Linux各283项、Windows282项，
+上述七套旧具名检查同次全部保留。严格作业`120788175687`重新散列三个ZIP、核对所有
+报告run/source/attempt、逐套具名检查及实际消费者哈希，`accepted=true, problems=[]`。
+
+macOS实际镜像`macos-15-arm64`、系统15.7.9、Xcode16.4(16F6)、AppleClang17.0.0、
+MacOSX15.5 SDK。原始编译与链接命令均为`-arch arm64`，实际运行了安装后的C/C++消费者。
+WebDAV链接Apple SDK系统libcurl8.7.1(SecureTransport)/libxml2 2.9.13，
+原生证书/主机名检查、不覆盖原件、进程终止恢复与账号取消/重试均通过。
+冻结SDK和产品schema不变；Android SHA分支保持未授予，iOS尚无本轮运行。

@@ -1,18 +1,114 @@
 {
-  "accepted": false,
-  "status": "awaiting cloud execution",
-  "source_sha": null,
-  "run_id": null,
-  "attempt": null,
-  "artifacts": [],
-  "jobs": [],
-  "problems": ["No macOS native sync acceptance has been recorded for this candidate."],
-  "common_start": "8476d6b94ffff1fc7df04abacd9f2f9651a486df",
+  "accepted": true,
+  "source_sha": "a32602be224f58483da3f77c78ca59612c23bf98",
+  "run_id": 40065344267,
+  "attempt": 1,
+  "artifacts": [
+    {
+      "id": 12548692961,
+      "name": "reader-commands-Linux-40065344267-1",
+      "size_in_bytes": 9548796,
+      "digest": "sha256:933662fdbd0737742799e5ba650b1b027a248486690f078c7b684de92aa39471",
+      "expires_at": "2027-01-22T05:12:25Z"
+    },
+    {
+      "id": 12549252503,
+      "name": "reader-commands-Windows-40065344267-1",
+      "size_in_bytes": 10468605,
+      "digest": "sha256:1aad5fe3f0fc68c2c03ad7192bca7889da99230bfde8a1da50becca2a1fc20a1",
+      "expires_at": "2027-01-22T05:12:25Z"
+    },
+    {
+      "id": 12549645079,
+      "name": "reader-commands-macOS-40065344267-1",
+      "size_in_bytes": 8710206,
+      "digest": "sha256:e767aa70fa486a9b9b6f240677870ba5bb516dcf518f05bd12c2eae09f8bfe7a",
+      "expires_at": "2027-01-22T05:12:25Z"
+    }
+  ],
+  "jobs": [
+    {
+      "id": 120787299035,
+      "name": "native / installed typed product commands (ubuntu-22.04)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120787299116,
+      "name": "native / installed typed product commands (windows-2022)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120787299178,
+      "name": "native / installed typed product commands (macos-15)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120788175687,
+      "name": "strict native sync platform evidence",
+      "conclusion": "success"
+    }
+  ],
+  "platforms": {
+    "Linux": {
+      "sync-source-evidence": 77,
+      "sync-protocol-evidence": 59,
+      "sync-evidence": 33,
+      "projection-evidence": 32,
+      "commands-evidence": 33,
+      "metadata-evidence": 29,
+      "session-evidence": 20
+    },
+    "Windows": {
+      "sync-source-evidence": 76,
+      "sync-protocol-evidence": 59,
+      "sync-evidence": 33,
+      "projection-evidence": 32,
+      "commands-evidence": 33,
+      "metadata-evidence": 29,
+      "session-evidence": 20
+    },
+    "macOS": {
+      "sync-source-evidence": 77,
+      "sync-protocol-evidence": 59,
+      "sync-evidence": 33,
+      "projection-evidence": 32,
+      "commands-evidence": 33,
+      "metadata-evidence": 29,
+      "session-evidence": 20
+    }
+  },
+  "problems": [],
   "sdk_changed": false,
   "schema_changed": false,
   "ios_accepted": false,
   "android_accepted": false,
   "host_ui_accepted": false,
   "six_platform_accepted": false,
-  "complete_product": false
+  "complete_product": false,
+  "status": "accepted macOS native sync modules with full same-source Windows/Linux native regressions",
+  "common_start": "8476d6b94ffff1fc7df04abacd9f2f9651a486df",
+  "evidence_artifact": {
+    "id": 12549411612,
+    "name": "reader-sync-apple-evidence-40065344267-1",
+    "size_in_bytes": 828,
+    "digest": "sha256:a11476bdd26a1ff83d352fde6516b0a36ebf766c68d2ae562efc323d8cfba63d",
+    "expires_at": "2027-01-22T05:12:25Z"
+  },
+  "totals": {
+    "macOS": 283,
+    "Linux": 283,
+    "Windows": 282
+  },
+  "apple_toolchain": {
+    "runner_image": "macos-15-arm64",
+    "runner_image_version": "20260907.0337.1",
+    "os": "15.7.9",
+    "architecture": "arm64 (verified compile and link commands)",
+    "xcode": "16.4 (16F6)",
+    "clang": "17.0.0.17000013",
+    "sdk": "MacOSX15.5.sdk",
+    "system_curl": "8.7.1 / SecureTransport",
+    "system_libxml": "2.9.13"
+  },
+  "scope": "installed native WebDAV, revisions, immutable sync, metadata commands/recovery and asynchronous account session; no reader host UI or mobile sync grant"
 }
