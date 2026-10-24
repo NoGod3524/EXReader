@@ -95,7 +95,8 @@ Retained baselines re-run on this same source and artifact:
 The account checker (`tests/reader_windows_account/check_account_ui.py`) drives
 the packaged `EXReader.exe` only through real control messages (`BM_CLICK`,
 `WM_SETTEXT`, `WM_GETTEXT`, list-control messages, `WM_CLOSE`) against one
-temporary HTTPS WebDAV server and six independent product profiles. Each line
+temporary HTTPS WebDAV server, six independent product profiles for the account
+round and two more on a second account root for the reading captures. Each line
 below is a recorded named check in `account-ui/account-ui.json`:
 
 1. `default_shelf_has_one_secondary_account_entry_and_no_resident_account_controls`
@@ -111,7 +112,10 @@ below is a recorded named check in `account-ui/account-ui.json`:
 11. `cloud_only_books_are_imported_from_verified_private_files_and_mapped_to_a_second_sdk_library`
 12. `remote_title_author_and_favorite_survive_import_and_mapping`
 13. `cloud_only_books_open_and_render_on_the_receiving_device`
-14. `real_reading_progress_and_annotation_captures_round_trip_to_the_second_device_byte_exactly`
+14. `hand_authored_reading_wire_round_trips_to_the_second_device_byte_exactly`
+    (renamed: this line proves exact transport of hand-authored reading wire. The
+    previous name claimed real SDK captures; runs up to `40082869006` reported it
+    under that name and that record stays in the artifacts)
 15. `remote_progress_arrives_and_metadata_applies_while_the_active_reading_page_is_not_moved`
 16. `exit_and_reopen_loads_saved_credentials_and_a_repeat_scan_adds_no_duplicates`
 17. `forget_removes_the_credential_manager_record_and_disables_scanning`
@@ -122,7 +126,14 @@ below is a recorded named check in `account-ui/account-ui.json`:
 22. `reopened_library_resumes_after_closing_mid_scan`
 23. `independent_account_root_sees_none_of_the_other_accounts_books`
 24. `no_plaintext_credential_survives_any_product_shutdown`
-25. `link_graph_contains_native_session_credentials_sideload_and_winhttp_without_webview`
+25. `installed_native_consumer_captures_all_eighteen_cases_from_the_four_real_originals`
+26. `eighteen_real_captures_cross_the_real_host_https_as_exact_anchor_v2_bytes`
+27. `seventeen_real_captures_resolve_found_and_the_planted_ambiguity_stays_ambiguous`
+28. `product_owned_annotations_leave_zero_sdk_note_copies_on_both_hosts`
+29. `reopened_receiver_repeats_the_same_eighteen_resolutions_and_wire_hashes`
+30. `planted_concurrent_pending_and_tombstone_heads_stay_explicit_without_projection`
+31. `conflicted_local_original_still_reads_offline_with_unchanged_heads_and_no_page_jump`
+32. `link_graph_contains_native_session_credentials_sideload_and_winhttp_without_webview`
 
 Check 24 walks every byte under every profile twice. While the hosts run it may
 skip only files a live owner holds with share mode 0 (the bound session's own
@@ -137,31 +148,74 @@ step output and the API digest, and requires every retained and account report t
 be bound to this source, run and attempt.
 
 
+
+### Real reading captures (checks 25-31)
+
+`tests/reader_windows_account/consumer/probe.cpp` is a separate installed native
+consumer. It links only installed packages (`EXReaderReadingState`, the product
+catalog and the revisions module) and it never reads SDK tables: every selector
+comes from a public capture call on a real document, every receiver state from a
+public resolve call.
+
+* Cases are the unchanged `tests/reader_reading_v2` definition: four real
+  originals (`book.txt`, `book.epub`, `pages.pdf`, `pages.cbz` from
+  `tests/reader_reading_state/make_fixtures.py`, digests re-checked against
+  `manifest.json` in the checker) and eighteen captures.
+* Capture runs on the host's own library and product store while that host is
+  closed: `exr_library_document` + `exr_anchor_create` for TXT, the bounded
+  publication + pager for EPUB parts, `exr_library_fixed` +
+  `exr_fixed_anchor_create` for PDF/CBZ. Offsets are located by searching the
+  real text, never guessed. The two whole-book EPUB reflow cases use a scratch
+  library built from the host's own verified original, because a host stores EPUB
+  originals bounded (chapter-local) by design.
+* Each live capture is encoded by `reader_rs_encode_v2` (anchor v2, chapter scope
+  and spine index preserved) and committed by the product revisions module; the
+  real Win32 host then publishes all eighteen over its own native HTTPS WebDAV
+  session, and a second real host receives them.
+* On the receiver the same consumer calls `reader_rs_decode` on the retained
+  bytes and the public `reader_rs_resolve_reflow` / `reader_rs_epub_record_part`
+  + `reader_rs_resolve_epub` / `reader_rs_resolve_fixed` path. Result: seventeen
+  FOUND with exact start/end, one AMBIGUOUS (`txt-ambiguous`), zero mislocated.
+* Product-owned annotations leave zero SDK note copies on both hosts, and a
+  reopened receiver repeats the same eighteen states and wire digests.
+
+Checks 30-31 plant the three explicit head states directly in the receiver's own
+product store and then drive the real sync: a book with two competing metadata
+heads, a book revision whose parent never arrives, and a tombstone over a
+previously projected cloud-only book.
 ### Accepted run
 
-Source `20c6a1deec794b4902f0ae3a7140a17b19cef7fd`, run `40082869006`, attempt 1,
-job `120839830599`: every step above succeeded, all 25 named account checks
-passed, and the strict summary job `120841063040` accepted the artefact with no
+Source `dde92e8990ec14888b2f500d6000db596f03c601`, run `40089084258`, attempt 1,
+job `120857884310`: every step above succeeded, all 32 named account checks
+passed, and the strict summary job `120859348468` accepted the artefact with no
 problems.
 
-* artefact `reader-windows-account-40082869006-1`, id `12556205896`,
-  39,993,859 bytes, SHA-256
-  `e546121dec975ecc318df514a2ea4ce6d03f1dcd53fcd31a8dfc3cc19d7d2df0`
+* artefact `reader-windows-account-40089084258-1`, id `12558044881`,
+  44,066,535 bytes, SHA-256
+  `2adb9134b9e704ed23c059b0f0a0e7b50d84cb198422c45fd567651f242e9e3d`
   (identical in the API, the upload step output and the ZIP re-hashed inside
-  Actions), expires 2027-01-22T09:40:15Z.
-* summary artefact `reader-windows-account-summary-40082869006-1`, id
-  `12556092304`, 724 bytes, SHA-256
-  `13a3c3bef2d9034bcd20b3f941fe368a44a3479dc79a58b4ff26d9260c1a2560`.
+  Actions), expires 2027-01-22T11:14:16Z.
+* summary artefact `reader-windows-account-summary-40089084258-1`, id
+  `12558770821`, 786 bytes, SHA-256
+  `a8a1cfd6341397a40f4ff4e1dfd165fd3d8a42b1638a7c7c20e2cdfc74badcbb`.
 * counts: original UI 158/158, product 10, worker 5, bookshelf 13, metadata 18,
-  evidence rejections >= 26, account 25.
+  evidence rejections >= 26, account 32.
+* capture consumer identity in the same run: reading-state `0.1.0`, SDK
+  `3.40.0`, parser version `exreader-sdk-3.40.0`; receiver `17 FOUND,
+  1 AMBIGUOUS, 0 mislocated`.
 * the packaged EXE digest is `program_sha256` in `account-ui/account-ui.json`
-  inside that artefact; the screenshots and link map sit beside it.
+  and the capture consumer plus its link map are
+  `build/account-capture/reading-capture-probe.exe` and
+  `.../reading-capture-link.map` inside that artefact.
 
 Earlier failures on this branch are kept, not rewritten: run `40080415165`
 (the credential scan read the session's share-mode-0 manifest as a leak), run
-`40081525331` (the mapping-repair round opened a row by its pre-rename title)
-and run `40082268762` (the summary compared a `sha256:` prefixed API digest
-with the bare upload value).
+`40081525331` (the mapping-repair round opened a row by its pre-rename title),
+run `40082268762` (the summary compared a `sha256:` prefixed API digest with the
+bare upload value), run `40085544703` (the reopened reading host had no
+session-only credential to scan with), run `40086502382` (the reading revisions
+were counted in the wrong account root) and run `40087140475` / `40088432339`
+(the planted parents were head objects, and a shared parent stops being a head).
 ## Not covered by this package
 
 Mirrored in `docs/validation/reader-windows-account.json` and never a claim for
@@ -170,11 +224,15 @@ these items:
 * Windows Credential Manager `UNAVAILABLE`: the runner always has a working vault,
   so only the session-only branch is exercised.
 * Screen-reader narration of the new window.
-* `CONCURRENT`, pending-parent and tombstone receive states: the counters are
-  displayed and nothing is auto-applied, but the run never provokes those states
-  end to end.
+* `CONCURRENT`, pending-parent and tombstone heads are planted directly in the
+  receiver product store. The host's counters, the absence of projection and the
+  untouched heads are real UI and product observations, but no second remote peer
+  produced that branch over the wire, and no clock-, merge- or restore-policy
+  case is claimed.
 * Cancel during receive/import; cancel is exercised during the network scan.
 * A real remote HTTPS collection: the run uses loopback TLS with a runner-local
   test CA that is removed afterwards.
+* Reading captures for a *bounded* EPUB part beyond anchor (0,0): the eighteen
+  cases use the specified fixture selectors, not arbitrary in-chapter positions.
 * Product performance and any unified six-target product claim.
 
