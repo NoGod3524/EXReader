@@ -11,7 +11,7 @@ extern "C" {
 #endif
 #define READER_READING_STATE_VERSION "0.1.0"
 /* Bridge between public SDK selectors and the unchanged product revision wire
-   v1 (anchor_version 1). It never reads SDK tables, never writes the product
+   v1 envelope with explicit anchor versions 1/2. It never reads SDK tables, never writes the product
    catalog, and never rewrites retained revision bytes. All calls follow the
    owner rules of the SDK handle and revision store passed to them. */
 typedef enum {
@@ -74,7 +74,7 @@ reader_rs_status reader_rs_encode_v2(reader_revisions *, const reader_rs_envelop
   const reader_rs_capture *, size_t part, char **wire, size_t *bytes, reader_rs_error *);
 void reader_rs_free(void *);
 
-/* Decoded copy of one revalidated v1 wire. has_location is zero for delete. */
+/* Decoded copy of one revalidated wire (anchor v1/v2). has_location is zero for delete. */
 typedef struct {
   char entity_kind[16], operation[8], book_key[73], annotation_id[33], parser_version[65];
   reader_rs_mode mode;
