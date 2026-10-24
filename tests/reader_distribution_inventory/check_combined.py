@@ -77,7 +77,16 @@ def link_text(package, platform, drop=None):
     return ' '.join(parts) + '\n'
 
 
-def symbols_text(defined, undefined):
+def symbols_text(defined, undefined, kind='nm'):
+    if kind == 'dumpbin-symbols':
+        lines = ['Dump of file archive.lib', '', 'File Type: LIBRARY', '', 'COFF SYMBOL TABLE']
+        for index, name in enumerate(defined):
+            lines.append('%03X 00000000 SECT%d  notype ()    External     | %s'
+                         % (index + 1, index + 1, name))
+        for index, name in enumerate(undefined):
+            lines.append('%03X 00000000 UNDEF  notype ()    External     | %s'
+                         % (len(defined) + index + 1, name))
+        return '\n'.join(lines) + '\n'
     lines = ['archive.a(member.o):']
     lines += ['%016x T %s' % (index * 16, name) for index, name in enumerate(defined)]
     lines += ['                 U %s' % name for name in undefined]
@@ -116,7 +125,8 @@ def build(platform='linux'):
     sdk_archive = 'lib/libexr_base%s' % ext
     if platform == 'windows':
         run('lib-list', 'archive members sdk', 'base.obj\n')
-        run('dumpbin-symbols', 'archive symbols sdk', symbols_text(['exr_open'], []), archive=sdk_archive)
+        run('dumpbin-symbols', 'archive symbols sdk',
+            symbols_text(['exr_open'], [], 'dumpbin-symbols'), archive=sdk_archive)
         run('dumpbin-directives', 'archive directives sdk', '', archive=sdk_archive)
     else:
         run('ar', 'archive members sdk', 'base.o\n')
@@ -146,7 +156,10 @@ def build(platform='linux'):
             if index == 0 and package['system'][platform]:
                 undefined = [FAMILY_SYMBOL.get(package['system'][platform][0], 'unknown_external')]
             run('dumpbin-symbols' if platform == 'windows' else 'nm',
-                'archive symbols ' + name, symbols_text(defined, undefined), archive=path)
+                'archive symbols ' + name,
+                symbols_text(defined, undefined,
+                             'dumpbin-symbols' if platform == 'windows' else 'nm'),
+                archive=path)
             if platform == 'windows':
                 directive = ''.join('/DEFAULTLIB:"%s.lib"\n' % LINK_NAME.get(library, library)
                                     for library in (package['system'][platform] if index == 0 else []))
@@ -383,13 +396,22 @@ def mutate_sbom(fixture, name, mutate):
     fixture['inventory']['sbom'][name] = {'bytes': len(data), 'sha256': contract.digest(data)}
 
 
+def drop(fixture, path):
+    key = 'stage/' + path
+    if key not in fixture['payload']:
+        raise RuntimeError('fixture has no %s; installed: %r'
+                           % (key, sorted(name for name in fixture['payload']
+                                          if name.startswith(('stage/lib/', 'stage/include/')))))
+    fixture['payload'].pop(key)
+
+
 def archive_path(fixture, identifier):
     return 'lib/%s%s' % (packages.by_id(identifier)['archives'][0], extension(fixture['platform']))
 
 
 CASES = [
     ('missing package archive', 'combined_package_archives',
-     lambda f: f['payload'].pop('stage/' + archive_path(f, 'search'))),
+     lambda f: drop(f, archive_path(f, 'search'))),
     ('archive hash changed', 'combined_package_archives',
      lambda f: f['payload'].__setitem__('stage/' + archive_path(f, 'preferences'),
                                         b'!<arch>\ntampered')),
@@ -398,9 +420,9 @@ CASES = [
          'stage/' + packages.by_id('commands')['config']
          + '/EXReaderCommandsConfigVersion.cmake', b'set(PACKAGE_VERSION "9.9.9")\n')),
     ('package header removed', 'combined_package_headers',
-     lambda f: f['payload'].pop('stage/' + packages.by_id('session')['headers'][0])),
+     lambda f: drop(f, packages.by_id('session')['headers'][0])),
     ('package licence removed', 'combined_package_licence',
-     lambda f: f['payload'].pop('stage/share/exreader/LICENSE')),
+     lambda f: drop(f, 'share/exreader/LICENSE')),
     ('package configuration changed', 'combined_package_config_files',
      lambda f: f['payload'].__setitem__(
          'stage/' + packages.by_id('webdav')['config'] + '/EXReaderWebDAVConfig.cmake',
