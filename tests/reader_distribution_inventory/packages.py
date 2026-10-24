@@ -366,7 +366,8 @@ def link_evidence(tokens, archive_names, expected):
                     archives.append(base)
                 else:
                     system.append(canonical(name))
-            elif re.search(r'[.](?:so(?:[.][0-9]+)*|dylib|tbd|a|lib)$', part, re.I):
+            elif not part.startswith(('-', '/')) and re.search(
+                    r'[.](?:so(?:[.][0-9]+)*|dylib|tbd|a|lib)$', part, re.I):
                 base = part.replace('\\', '/').split('/')[-1]
                 if base in archive_names:
                     archives.append(base)
