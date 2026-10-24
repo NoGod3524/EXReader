@@ -84,14 +84,15 @@ def main():
     content = args.download_dir / 'content'
     # upload-artifact keeps the least common ancestor of the uploaded paths, so the
     # reports sit under a preserved directory rather than at the artifact root.
-    summaries = list(content.rglob('summary.json'))
     distributions = list(content.rglob('distribution.json'))
-    distlib.require(len(summaries) == 1 and len(distributions) == 1,
-                    'artifact must carry exactly one summary and one distribution report, found %d and %d'
-                    % (len(summaries), len(distributions)))
-    distlib.require(summaries[0].parent == distributions[0].parent,
-                    'summary and distribution reports are not from the same directory')
-    summary = distlib.load_json(summaries[0])
+    distlib.require(len(distributions) == 1,
+                    'artifact must carry exactly one distribution report, found %d'
+                    % len(distributions))
+    folder = distributions[0].parent
+    summary_path = folder / 'summary.json'
+    distlib.require(summary_path.is_file(),
+                    'artifact does not carry the gate summary next to the distribution report')
+    summary = distlib.load_json(summary_path)
     distribution = distlib.load_json(distributions[0])
     distlib.named(results, 'summary-source-bound', summary.get('source_sha') == args.source_sha and
                   summary.get('accepted') is True, summary.get('source_sha'))
