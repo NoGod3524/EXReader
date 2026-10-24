@@ -1,0 +1,118 @@
+name: Reader explicit conflict actions
+on:
+  push:
+    branches: [codex/reader-explicit-conflict-actions]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+env:
+  BASE_COMMIT: f43baf9182d75907c0cb5d6f77048f27bca8c950
+jobs:
+  conflict-actions:
+    name: installed explicit conflict actions (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-14]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Source, protected tree and allowed path guards
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$BASE_COMMIT" HEAD
+          changed=$(git diff --name-only "$BASE_COMMIT" HEAD)
+          echo "$changed"
+          bad=$(echo "$changed" | grep -v -E '^(apps/reader/conflict-actions/|tests/reader_explicit_conflict_actions/|\.github/workflows/reader-explicit-conflict-actions\.yml$|docs/READER-EXPLICIT-CONFLICT-ACTIONS\.md$|docs/validation/reader-explicit-conflict-actions\.json$)' || true)
+          test -z "$bad" || { echo "path outside the allowed set:"; echo "$bad"; exit 1; }
+          # Protected trees are byte-identical to the fixed start.
+          git diff --exit-code "$BASE_COMMIT" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings apps/reader/store apps/reader/revisions apps/reader/commands apps/reader/desktop-metadata extras .github/workflows/native.yml .github/workflows/reliability.yml
+      - name: Install Linux build tools
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build
+      - name: Install macOS build tools
+        if: runner.os == 'macOS'
+        run: brew install ninja
+      - name: Enter Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install the product provider revisions commands and this module
+        run: |
+          mkdir -p build/logs
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "WS=$ws" >> "$GITHUB_ENV"
+          cmake -S apps/reader/store/native -B build/product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/product-stage"
+          cmake --build build/product
+          cmake --install build/product
+          cmake -S apps/reader/revisions -B build/revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$ws/build/product-stage" -DCMAKE_INSTALL_PREFIX="$ws/build/revisions-stage"
+          cmake --build build/revisions
+          cmake --install build/revisions
+          cmake -S apps/reader/commands -B build/commands -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ws/build/revisions-stage;$ws/build/product-stage" -DCMAKE_INSTALL_PREFIX="$ws/build/commands-stage"
+          cmake --build build/commands
+          cmake --install build/commands
+          cmake -S apps/reader/conflict-actions -B build/conflict -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ws/build/commands-stage;$ws/build/revisions-stage;$ws/build/product-stage" -DCMAKE_INSTALL_PREFIX="$ws/build/conflict-stage" 2>&1 | tee build/logs/conflict-configure.log
+          cmake --build build/conflict --verbose 2>&1 | tee build/logs/conflict-build.log
+          cmake --install build/conflict
+      - name: Build the independent installed C and C++ consumers
+        run: |
+          cmake -S tests/reader_explicit_conflict_actions/consumer -B build/consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WS/build/conflict-stage;$WS/build/commands-stage;$WS/build/revisions-stage;$WS/build/product-stage"
+          cmake --build build/consumer --verbose 2>&1 | tee build/logs/consumer-build.log
+      - name: Real two-client explicit conflict actions
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_explicit_conflict_actions/check_conflict_actions.py --consumer "build/consumer/conflict-consumer$exe" --c-consumer "build/consumer/conflict-c-consumer$exe" --link-map build/consumer/conflict-link.map --build-log build/logs/consumer-build.log --output build/evidence
+      - name: Preserve source-bound evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-conflict-actions-${{ runner.os }}-${{ github.sha }}
+          path: |
+            build/evidence/evidence.json
+            build/logs/
+            build/consumer/conflict-link.map
+            build/conflict-stage/
+          if-no-files-found: error
+  summary:
+    name: strict same-source summary
+    needs: conflict-actions
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: reader-conflict-actions-*-${{ github.sha }}
+          path: evidence
+      - name: Require identical source and check sets on every platform
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib
+          files = sorted(pathlib.Path('evidence').glob('*/build/evidence/evidence.json')) or sorted(pathlib.Path('evidence').glob('*/evidence.json'))
+          assert len(files) == 3, files
+          values = [json.loads(f.read_text(encoding='utf-8')) for f in files]
+          assert {v['sha'] for v in values} == {os.environ['GITHUB_SHA']}
+          assert len({tuple(v['checks']) for v in values}) == 1 and len(values[0]['checks']) == 29
+          assert {v['os'] for v in values} == {'Linux', 'Windows', 'Darwin'}
+          assert not any(v['local_run'] for v in values)
+          summary = {'sha': values[0]['sha'], 'platforms': sorted(v['os'] for v in values), 'checks': values[0]['checks']}
+          pathlib.Path('summary.json').write_text(json.dumps(summary, indent=2), encoding='utf-8')
+          print(json.dumps(summary, indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reader-conflict-actions-summary-${{ github.sha }}
+          path: summary.json
