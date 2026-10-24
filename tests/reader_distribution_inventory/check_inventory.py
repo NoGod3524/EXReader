@@ -211,7 +211,7 @@ def refresh(fixture, created='2026-10-24T00:00:00Z'):
                                   'needles_checked': len(contract.GENERIC_PRIVATE_PATHS),
                                   'needle_digests': [],
                                   'hits': [{'path': path, 'needle_digests': []} for path in leaked]}
-    inventory['release_blockers'] = [path + ' ships a build-machine absolute path' for path in leaked]
+    inventory['release_blockers'] = contract.private_path_blockers(hits)
     inventory['release_ready'] = not inventory['release_blockers'] and not inventory['problems']
     for name, document in (('inventory.spdx.json', sbom.build_spdx(inventory, created)),
                            ('inventory.cdx.json', sbom.build_cyclonedx(inventory, created))):

@@ -104,7 +104,7 @@ def verify_platform(key, profile, payload, inventory, licenses_doc, run, compone
         contract.need(ARTIFACT_PATH.match(name) is not None, 'artifact_path')
     problems = []
     problems += contract.verify_module_switches(inventory, switches)
-    problems += contract.verify_identity(inventory)
+    problems += contract.verify_identity(inventory.get('identity') or {})
     problems += contract.verify_installed(payload, files)
 
     def enabled(expression):
@@ -192,7 +192,7 @@ def verify_platform(key, profile, payload, inventory, licenses_doc, run, compone
     leaked = sorted({hit['path'] for hit in hits})
     contract.need(leaked == sorted({row['path'] for row in (inventory.get('private_paths') or {}).get('hits') or []}),
                   'private_path_scan')
-    blockers = sorted(path + ' ships a build-machine absolute path' for path in leaked)
+    blockers = contract.private_path_blockers(hits)
     contract.need(blockers == sorted(inventory.get('release_blockers') or []), 'release_blockers')
 
     documents = {}

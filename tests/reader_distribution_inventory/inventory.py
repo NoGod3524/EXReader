@@ -454,15 +454,18 @@ def main():
             needles.extend([cleaned + os.sep, cleaned])
     hits = contract.scan_private_paths(payload, needles)
     leaked = sorted({hit['path'] for hit in hits})
-    for path in leaked:
-        blockers.append(path + ' ships a build-machine absolute path')
+    blockers.extend(contract.private_path_blockers(hits))
     checks.append(item('inclusions.no_machine_paths', 'pass' if not leaked else 'blocked',
                        '%d installed files contain a private absolute path' % len(leaked)))
+    generic = set(contract.GENERIC_PRIVATE_PATHS)
     inventory['private_paths'] = {
         'generic_needles': list(contract.GENERIC_PRIVATE_PATHS), 'needles_checked': len(needles),
         'needle_digests': sorted({contract.digest(needle.encode('utf-8'))[:16] for needle in needles}),
-        'hits': [{'path': path, 'needle_digests': sorted({contract.digest(hit['needle'].encode('utf-8'))[:16]
-                                                          for hit in hits if hit['path'] == path})}
+        'hits': [{'path': path,
+                  'needles': sorted({hit['needle'] for hit in hits
+                                     if hit['path'] == path and hit['needle'] in generic}),
+                  'needle_digests': sorted({contract.digest(hit['needle'].encode('utf-8'))[:16]
+                                            for hit in hits if hit['path'] == path})}
                  for path in leaked]}
 
     epoch = os.environ.get('SOURCE_DATE_EPOCH')

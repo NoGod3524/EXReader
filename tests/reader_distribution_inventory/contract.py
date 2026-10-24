@@ -211,22 +211,20 @@ def _symbol_name(name, strip_underscore):
 
 
 def _nm_entries(text, strip_underscore):
-    entries = {}
+    seen = {}
     for line in text.splitlines():
         match = NM_UNDEFINED.match(line)
         if match:
-            name = _symbol_name(match.group(1), strip_underscore)
-            entries[name] = 'undefined'
+            seen[(_symbol_name(match.group(1), strip_underscore), 'undefined')] = True
             continue
         match = NM_DEFINED.match(line)
         if match and match.group(1) in DEFINED_TYPES:
-            name = _symbol_name(match.group(2), strip_underscore)
-            entries.setdefault(name, 'defined')
-    return [{'name': name, 'state': state} for name, state in sorted(entries.items())]
+            seen[(_symbol_name(match.group(2), strip_underscore), 'defined')] = True
+    return [{'name': name, 'state': state} for name, state in sorted(seen)]
 
 
 def _dumpbin_symbols(text, _strip_underscore):
-    entries = {}
+    seen = {}
     for line in text.splitlines():
         match = DUMPBIN_SYMBOL.match(line.strip())
         if not match:
@@ -237,12 +235,8 @@ def _dumpbin_symbols(text, _strip_underscore):
         if name.startswith('.'):
             # Section symbols are not linkable symbols.
             continue
-        state = 'undefined' if match.group(1) == 'UNDEF' else 'defined'
-        if state == 'undefined':
-            entries[name] = 'undefined'
-        else:
-            entries.setdefault(name, 'defined')
-    return [{'name': name, 'state': state} for name, state in sorted(entries.items())]
+        seen[(name, 'undefined' if match.group(1) == 'UNDEF' else 'defined')] = True
+    return [{'name': name, 'state': state} for name, state in sorted(seen)]
 
 
 def _ninja_link_entries(text):
@@ -276,8 +270,11 @@ def parse_entries(kind, text, strip_underscore=False):
 
 
 def symbol_summary(entries):
+    """An archive that defines a symbol provides it, even if another member uses it."""
     defined = sorted({entry['name'] for entry in entries if entry['state'] == 'defined'})
-    undefined = sorted({entry['name'] for entry in entries if entry['state'] == 'undefined'})
+    provided = set(defined)
+    undefined = sorted({entry['name'] for entry in entries
+                        if entry['state'] == 'undefined' and entry['name'] not in provided})
     return {'defined': defined, 'undefined': undefined}
 
 
@@ -448,15 +445,12 @@ def verify_license_materials(records, payload, expected, components):
     for path in sorted(set(observed) - set(expected)):
         problems.append('unregistered installed license material: ' + path)
     for component in components:
-        installed = [item['installed'] for item in component['files']
-                     if item['installed'] in observed]
-        for item in component['files']:
-            if item['installed'] not in expected:
-                continue
-            if item['installed'] not in present:
-                problems.append('license material missing for ' + component['id'] + ': '
-                                + item['installed'])
-        if component.get('notice_marker') and not installed:
+        registered_here = [item for item in component['files'] if item['installed'] in expected]
+        if not registered_here:
+            # Outside this profile, or a notice-only fact in THIRD_PARTY_NOTICES.md.
+            continue
+        if component.get('notice_marker') and not any(item['installed'] in observed
+                                                      for item in registered_here):
             problems.append('registered component has no installed notice: ' + component['id'])
     return problems
 
@@ -473,6 +467,18 @@ def scan_private_paths(payload, needles):
             if utf8 in data or utf16 in data:
                 hits.append({'path': name[len('stage/'):], 'needle': needle})
     return hits
+
+
+def private_path_blockers(hits, generic=None):
+    """Stable blocker sentences naming the file and the matched prefix."""
+    allowed = set(GENERIC_PRIVATE_PATHS if generic is None else generic)
+    blockers = []
+    for path in sorted({hit['path'] for hit in hits}):
+        shown = sorted({hit['needle'] for hit in hits
+                        if hit['path'] == path and hit['needle'] in allowed})
+        blockers.append('%s ships a build-machine absolute path (%s)'
+                        % (path, ', '.join(shown) if shown else 'runner path'))
+    return blockers
 
 
 def scan_forbidden(payload, inventory):
@@ -538,9 +544,9 @@ def verify_module_switches(inventory, preset_switches):
     return problems
 
 
-def verify_identity(inventory):
+def verify_identity(identity):
     problems = []
-    identity = inventory.get('identity', {})
+    identity = identity or {}
     version = identity.get('version')
     abi = identity.get('abi')
     if not isinstance(version, str) or not re.fullmatch(r'\d+\.\d+\.\d+', version):
