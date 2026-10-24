@@ -1,36 +1,36 @@
 {
   "accepted": true,
-  "source_sha": "8476d6b94ffff1fc7df04abacd9f2f9651a486df",
-  "run_id": 40064505462,
+  "source_sha": "867c8650d27ff4077f13a054ef9e5c63f3323738",
+  "run_id": 40065943105,
   "attempt": 1,
   "artifacts": [
     {
-      "id": 12548607016,
-      "name": "reader-commands-Linux-40064505462-1",
-      "size_in_bytes": 5194334,
-      "digest": "sha256:f3bb4012ac3b3fc00973959aeef4e620aafe3fade6d47c438258518c8e935ae5",
-      "expires_at": "2027-01-22T04:59:43Z"
+      "id": 12549318242,
+      "name": "reader-commands-Linux-40065943105-1",
+      "size_in_bytes": 10517854,
+      "digest": "sha256:9cc179c00074591fc83b894adaf64491a403d1195b3ba76ca836ed52c0f91546",
+      "expires_at": "2027-01-22T05:21:39Z"
     },
     {
-      "id": 12548538921,
-      "name": "reader-reading-v2-Linux-40064505462-1",
-      "size_in_bytes": 31562409,
-      "digest": "sha256:245353f6d523feaac23c8da87c2e8ae594d18ad02149d1ef07b5f409957e05da",
-      "expires_at": "2027-01-22T04:59:43Z"
+      "id": 12548949462,
+      "name": "reader-reading-v2-Linux-40065943105-1",
+      "size_in_bytes": 31562291,
+      "digest": "sha256:c691e44da668960e3b15dee9bfd8196c85dab49da5784a08b8a9ebf114e8d68e",
+      "expires_at": "2027-01-22T05:21:39Z"
     },
     {
-      "id": 12548881422,
-      "name": "reader-commands-Windows-40064505462-1",
-      "size_in_bytes": 6518327,
-      "digest": "sha256:42a36ad61363d2497e697b786d6014a333f492527157d99b7c911aaa5c77e8ac",
-      "expires_at": "2027-01-22T04:59:43Z"
+      "id": 12549054177,
+      "name": "reader-commands-Windows-40065943105-1",
+      "size_in_bytes": 11371035,
+      "digest": "sha256:d0469016c0140657c8a054d2dc7918230c42518bdde40ba75f7cf3b64f24b61e",
+      "expires_at": "2027-01-22T05:21:39Z"
     },
     {
-      "id": 12548862261,
-      "name": "reader-reading-v2-Windows-40064505462-1",
-      "size_in_bytes": 26060180,
-      "digest": "sha256:25cd095b7a222bb16ed5e2d89970b3259e53fd8cf797e58ada5bcb1840ca0c60",
-      "expires_at": "2027-01-22T04:59:43Z"
+      "id": 12549900012,
+      "name": "reader-reading-v2-Windows-40065943105-1",
+      "size_in_bytes": 26060342,
+      "digest": "sha256:d051af0312ab5dab9d0e65d804e774260a448dd2209893785ce8bde769eb93cf",
+      "expires_at": "2027-01-22T05:21:39Z"
     }
   ],
   "problems": [],
@@ -52,9 +52,9 @@
           "batches": 16,
           "stream_chunks": 45,
           "straddling_hits": 37,
-          "peak_rss_before": 17432576,
-          "peak_rss_after_sdk_stream_only": 18042880,
-          "peak_rss_after_search": 19910656,
+          "peak_rss_before": 17563648,
+          "peak_rss_after_sdk_stream_only": 18440192,
+          "peak_rss_after_search": 20287488,
           "sdk_peak_parse_workspace_bytes": 6460624,
           "sdk_windows_loaded": 1,
           "sdk_windows_evicted": 0,
@@ -62,7 +62,7 @@
           "module_units_scanned": 16,
           "module_peak_accounted_bytes": 109192,
           "module_seen_sdk_peak_parse_workspace_bytes": 6460624,
-          "elapsed_ms": 948.425333,
+          "elapsed_ms": 973.686395,
           "note": "single observation; not a performance claim; peak RSS is a process-wide monotone high-water mark"
         }
       ]
@@ -79,9 +79,9 @@
           "batches": 16,
           "stream_chunks": 45,
           "straddling_hits": 37,
-          "peak_rss_before": 15065088,
-          "peak_rss_after_sdk_stream_only": 18149376,
-          "peak_rss_after_search": 20496384,
+          "peak_rss_before": 15056896,
+          "peak_rss_after_sdk_stream_only": 17973248,
+          "peak_rss_after_search": 20549632,
           "sdk_peak_parse_workspace_bytes": 6460544,
           "sdk_windows_loaded": 1,
           "sdk_windows_evicted": 0,
@@ -89,7 +89,7 @@
           "module_units_scanned": 16,
           "module_peak_accounted_bytes": 109184,
           "module_seen_sdk_peak_parse_workspace_bytes": 6460544,
-          "elapsed_ms": 726.0378,
+          "elapsed_ms": 902.6173,
           "note": "single observation; not a performance claim; peak RSS is a process-wide monotone high-water mark"
         }
       ]
@@ -100,38 +100,45 @@
   "scope": "Windows/Linux SDK captures and original export over real native HTTPS fixture; no host UI",
   "jobs": [
     {
-      "id": 120784813829,
-      "name": "real v2 capture (ubuntu-22.04)",
-      "conclusion": "success"
-    },
-    {
-      "id": 120784813911,
-      "name": "native / installed typed product commands (windows-2022)",
-      "conclusion": "success"
-    },
-    {
-      "id": 120784813945,
+      "id": 120789109686,
       "name": "real v2 capture (windows-2022)",
       "conclusion": "success"
     },
     {
-      "id": 120784813972,
+      "id": 120789109946,
+      "name": "native / installed typed product commands (windows-2022)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120789110002,
+      "name": "real v2 capture (ubuntu-22.04)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120789110039,
       "name": "native / installed typed product commands (ubuntu-22.04)",
       "conclusion": "success"
     },
     {
-      "id": 120785920181,
+      "id": 120790118847,
       "name": "strict reading v2 evidence",
       "conclusion": "success"
     }
   ],
   "evidence_artifact": {
-    "id": 12548667016,
-    "name": "reader-reading-v2-evidence-40064505462-1",
-    "size_in_bytes": 1192,
-    "digest": "sha256:4fe0460fe47290e6b47df3d19b115e563c1ca4509ffc68703cb58b4ce5beba9b",
-    "expires_at": "2027-01-22T04:59:43Z"
+    "id": 12548454909,
+    "name": "reader-reading-v2-evidence-40065943105-1",
+    "size_in_bytes": 1189,
+    "digest": "sha256:2ee8efa392a3333554e5aae1db0af6767d6491d7a379631551b2d87684accd77",
+    "expires_at": "2027-01-22T05:21:39Z"
   },
-  "prior_search_record": "reader-search.json",
-  "prior_metadata_record": "reader-metadata-webdav.json"
+  "previous_acceptance": {
+    "source_sha": "8476d6b94ffff1fc7df04abacd9f2f9651a486df",
+    "run_id": 40064505462,
+    "record": "https://github.com/NoGod3524/EXReader/blob/4be49363a4abf84845d0e5696d2e843c6e8d0ef1/docs/validation/reader-search-joint.json"
+  },
+  "later_modules_require_joint_rerun": [
+    "reviewed preferences",
+    "Android WebDAV"
+  ]
 }
