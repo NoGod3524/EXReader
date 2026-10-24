@@ -30,6 +30,7 @@ static gboolean choosing_file;
 static gboolean profile_writable;
 #ifdef EXR_READER_PREFERENCES_UI
 static reader_preferences appearance;
+static GtkWidget *preferences_import_dialog;
 static uint32_t appearance_system_theme=READER_PREFERENCES_THEME_LIGHT;
 static void preferences_open(GtkWidget *,gpointer);
 static void preferences_prepare(reader_command *);
@@ -563,8 +564,17 @@ static void import_dialog(void) {
   if(busy || closing || save_failed) { state();return; }
   GtkWidget *dialog=gtk_file_chooser_dialog_new("Import book",GTK_WINDOW(window),GTK_FILE_CHOOSER_ACTION_OPEN,
     "Cancel",GTK_RESPONSE_CANCEL,"Import",GTK_RESPONSE_ACCEPT,NULL);
+#ifdef EXR_READER_PREFERENCES_UI
+  preferences_import_dialog=dialog;
+  g_signal_connect(dialog,"selection-changed",G_CALLBACK(preferences_import_changed),NULL);
+  g_signal_connect(dialog,"current-folder-changed",G_CALLBACK(preferences_import_changed),NULL);
+  g_signal_connect(dialog,"map-event",G_CALLBACK(preferences_import_mapped),NULL);
+#endif
   choosing_file=TRUE;
   int response=gtk_dialog_run(GTK_DIALOG(dialog));choosing_file=FALSE;
+#ifdef EXR_READER_PREFERENCES_UI
+  preferences_import_dialog=NULL;
+#endif
   if(response==GTK_RESPONSE_ACCEPT) {
     char *path=gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));gtk_widget_destroy(dialog);
     submit(READER_IMPORT,0,path,font_size);g_free(path);
