@@ -1,0 +1,58 @@
+{
+  "accepted": true,
+  "scope": "installed reading-state codec split and unchanged full SDK adapter regression",
+  "source_sha": "79af34fd0fd0dbfd2d2313dc34a6484685b7f2d2",
+  "codec_run": {
+    "id": 40080302383,
+    "attempt": 1,
+    "jobs": [
+      {
+        "os": "Linux",
+        "id": 120832271455,
+        "legacy_checks": 121,
+        "v2_checks": 116,
+        "v2_cases": 18,
+        "found": 17,
+        "ambiguous": 1,
+        "codec_sdk_symbols": false,
+        "artifact": {
+          "id": 12554788696,
+          "bytes": 12328028,
+          "sha256": "268be2c5f418c29b7bbcb8f2590d71ba2adc34172fd99fc464f54e535e29742e"
+        }
+      },
+      {
+        "os": "Windows",
+        "id": 120832271519,
+        "legacy_checks": 121,
+        "v2_checks": 116,
+        "v2_cases": 18,
+        "found": 17,
+        "ambiguous": 1,
+        "codec_sdk_symbols": false,
+        "artifact": {
+          "id": 12555300207,
+          "bytes": 11795041,
+          "sha256": "bf479393e203258e5a70dc28c158a14e3cb537582591a796a9149387c676f411"
+        }
+      }
+    ],
+    "conclusion": "success"
+  },
+  "android_regression": {
+    "run_id": 40080302300,
+    "attempt": 1,
+    "job_id": 120832271297,
+    "conclusion": "success",
+    "artifact": {
+      "id": 12554659576,
+      "bytes": 44473829,
+      "sha256": "1d124516128c4efd1b9a1daf19616ebe0468b18562cf190edbd256a74c1ef093"
+    }
+  },
+  "public_api_unchanged": true,
+  "sdk_unchanged": true,
+  "schema_unchanged": true,
+  "android_reading_state_dav_accepted": false,
+  "host_sync_ui_accepted": false
+}
