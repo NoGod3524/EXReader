@@ -173,6 +173,24 @@ int point_open(const fs::path& root, long long n) {
     report("NOFAIL");
     return 0;
   }
+  if (!escaped && st == RTH_OK) {
+    // A standard-library error_code overload can absorb an allocation failure (MSVC's
+    // create_directories does), and the open then completes normally. That is a valid
+    // outcome only if the returned cache is sound and leaks nothing once it is closed.
+    stats_now(c);
+    rth_cache_close(c);
+    const bool closed_clean = g_live == live_before;
+    rth_cache* again = nullptr;
+    std::memset(&e, 0, sizeof(e));
+    const bool reopen = rth_cache_open(text.c_str(), nullptr, &again, &e) == RTH_OK && again != nullptr;
+    if (again) rth_cache_close(again);
+    if (!closed_clean || !reopen) {
+      report("FAIL n=" + num(n) + " completed open leaked " + num(live_before) + "->" + num(g_live) + " reopen " + num((long long)reopen));
+      return 1;
+    }
+    report("PASS n=" + num(n) + " absorbed");
+    return 0;
+  }
   const bool reported = !escaped && (st == RTH_MEMORY || st == RTH_IO) && c == nullptr;
   const bool no_leak = g_live == live_before;
   if (!reported || !no_leak) {
@@ -230,15 +248,16 @@ int point_store(const fs::path& root, const Bytes& png, long long n) {
     const rth_stats after = stats_now(c);
     Thumb hit;
     const rth_status st3 = rth_cover_from_encoded(c, &b, png.data(), png.size(), &request, nullptr, &hit.t, &e);
-    const bool index_only = t.t.pixels != nullptr && t.t.stored == 1 && t.t.origin == RTH_ORIGIN_AUTHOR_COVER &&
-                            after.index_failures == before_stats.index_failures + 1 && count_entries(dir) == 1 &&
-                            count_temps(dir) == 0 && st3 == RTH_OK && hit.t.from_cache == 1;
+    const bool complete = t.t.pixels != nullptr && t.t.stored == 1 && t.t.origin == RTH_ORIGIN_AUTHOR_COVER &&
+                          count_entries(dir) == 1 && count_temps(dir) == 0 && st3 == RTH_OK && hit.t.from_cache == 1;
+    const bool index_only = complete && after.index_failures == before_stats.index_failures + 1;
+    const bool absorbed = complete && after.index_failures == before_stats.index_failures;
     rth_cache_close(c);
-    if (!index_only) {
-      report("FAIL n=" + num(n) + " index point: entry or index accounting differs");
+    if (!index_only && !absorbed) {
+      report("FAIL n=" + num(n) + " completed store: entry or index accounting differs");
       return 1;
     }
-    report("PASS n=" + num(n) + " index");
+    report("PASS n=" + num(n) + (index_only ? " index" : " absorbed"));
     return 0;
   }
   const bool reported = !escaped && (st == RTH_MEMORY || st == RTH_IO);
@@ -316,15 +335,19 @@ int point_library(const fs::path& root, const Bytes& epub, long long n) {
   }
   if (!escaped && st == RTH_OK) {
     const rth_stats after = stats_now(c);
-    const bool index_only = t.t.pixels != nullptr && t.t.origin == RTH_ORIGIN_AUTHOR_COVER && t.t.stored == 1 &&
-                            after.index_failures == before_stats.index_failures + 1;
+    Thumb hit;
+    const rth_status st3 = rth_cover_from_library(c, lib, id, &b, &request, nullptr, &hit.t, &re);
+    const bool complete = t.t.pixels != nullptr && t.t.origin == RTH_ORIGIN_AUTHOR_COVER && t.t.stored == 1 && st3 == RTH_OK &&
+                          hit.t.from_cache == 1;
+    const bool index_only = complete && after.index_failures == before_stats.index_failures + 1;
+    const bool absorbed = complete && after.index_failures == before_stats.index_failures;
     exr_library_close(lib);
     rth_cache_close(c);
-    if (!index_only) {
-      report("FAIL n=" + num(n) + " index point: entry or index accounting differs");
+    if (!index_only && !absorbed) {
+      report("FAIL n=" + num(n) + " completed library cover: entry or index accounting differs");
       return 1;
     }
-    report("PASS n=" + num(n) + " index");
+    report("PASS n=" + num(n) + (index_only ? " index" : " absorbed"));
     return 0;
   }
   const bool reported = !escaped && (st == RTH_MEMORY || st == RTH_IO || st == RTH_SDK);
