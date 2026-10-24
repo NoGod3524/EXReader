@@ -1,7 +1,7 @@
 name: Reader folder batch import
 on:
   push:
-    branches: [codex/reader-batch-import]
+    branches: [codex/reader-batch-import, codex/reader-batch-import-review]
   workflow_dispatch:
 permissions:
   contents: read
@@ -88,6 +88,22 @@ jobs:
           if [ "$RUNNER_OS" = Windows ]; then exe=".exe"; fi
           python3 tests/reader_batch_import/make_fixtures.py --fixtures tests/fixtures --out build/rb-fixtures 2>&1 | tee build/rb-logs/fixtures.log
           python3 tests/reader_batch_import/check_batch_import.py --probe "build/rb-consumer/batch-probe$exe" --cxx "build/rb-consumer/batch-cpp-consumer$exe" --fixtures build/rb-fixtures --staging build/rb-staging --work build/rb-work --output build/rb-evidence 2>&1 | tee build/rb-logs/checks.log
+      - name: Exercise independent review regressions against the installed package
+        run: |
+          exe=""
+          if [ "$RUNNER_OS" = Windows ]; then exe=".exe"; fi
+          python3 tests/reader_batch_import/check_review.py --probe "build/rb-consumer/batch-review-probe$exe" --original-probe "build/rb-consumer/batch-probe$exe" --work build/rb-review-work --output build/rb-review-evidence
+      - name: Race-check independent SDK owners with an instrumented installed adapter
+        if: always() && runner.os == 'Linux'
+        run: |
+          mkdir -p build/rb-review-evidence
+          cmake -S apps/reader/batch-import -B build/rb-tsan-adapter -G Ninja -DCMAKE_BUILD_TYPE=Debug -DEXR_SDK="$RB_SDK" -DCMAKE_PREFIX_PATH="$RB_PREFIX;$RB_SDK" -DCMAKE_INSTALL_PREFIX="$WS/build/rb-tsan-prefix" -DCMAKE_C_FLAGS="-fsanitize=thread -g -O1 -fno-omit-frame-pointer" 2>&1 | tee build/rb-logs/tsan-adapter-configure.log
+          cmake --build build/rb-tsan-adapter --parallel 4 2>&1 | tee build/rb-logs/tsan-adapter-build.log
+          cmake --install build/rb-tsan-adapter
+          cmake -S tests/reader_batch_import/consumer -B build/rb-tsan-consumer -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="$WS/build/rb-tsan-prefix;$RB_PREFIX;$RB_SDK" -DCMAKE_C_FLAGS="-fsanitize=thread -g -O1 -fno-omit-frame-pointer" -DCMAKE_CXX_FLAGS="-fsanitize=thread -g -O1 -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread" 2>&1 | tee build/rb-logs/tsan-consumer-configure.log
+          cmake --build build/rb-tsan-consumer --target batch-review-probe --parallel 4 2>&1 | tee build/rb-logs/tsan-consumer-build.log
+          sudo sysctl vm.mmap_rnd_bits=28
+          TSAN_OPTIONS="halt_on_error=1:exitcode=66" build/rb-tsan-consumer/batch-review-probe concurrent build/rb-tsan-work 2>&1 | tee build/rb-review-evidence/tsan.txt
       - name: Preserve source-bound originals, databases and every failure
         if: always()
         uses: actions/upload-artifact@v4
@@ -97,6 +113,8 @@ jobs:
             build/rb-logs/
             build/rb-work/
             build/rb-evidence/
+            build/rb-review-evidence/
+            build/rb-review-work/
             build/rb-prefix/
             build/rb-consumer/batch-probe*
             build/rb-consumer/batch-cpp-consumer*

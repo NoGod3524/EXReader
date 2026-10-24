@@ -14,3 +14,6 @@ target_link_libraries(batch-probe PRIVATE EXReaderBatchImport::reader_batch_impo
 set_target_properties(batch-probe PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)
 add_executable(batch-cpp-consumer batch_cpp_consumer.cpp)
 target_link_libraries(batch-cpp-consumer PRIVATE EXReaderBatchImport::reader_batch_import)
+find_package(Threads REQUIRED)
+add_executable(batch-review-probe batch_review_probe.cpp)
+target_link_libraries(batch-review-probe PRIVATE EXReaderBatchImport::reader_batch_import Threads::Threads)
