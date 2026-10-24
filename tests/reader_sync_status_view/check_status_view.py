@@ -308,6 +308,7 @@ def main():
         record('running_capture_reports_syncing_phase_before_any_step_completes')
 
         blocked.clear()
+        release.clear()
         flags['pause_shard'] = '/dav/exreader-sync-v1/revisions/10/'
         flags['pause_seen'] = False
         first.command('start')
