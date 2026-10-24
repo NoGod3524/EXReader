@@ -159,21 +159,68 @@ key-up 吞掉、自动重复上限、编辑框保留编辑键、编辑框命令�
 在同一次 run/attempt 内通过 API 取作业与工件，下载每个平台 ZIP、重算字节数与 sha256、解包读
 `keyboard-evidence/result.json`，校验 source/run/attempt/平台授权/41 个用例名与状态三平台一致。
 
+## 云端验收结果（同源、同 attempt）
+
+- 受测源码：**f8e765b15932b6b738f709bd03b48c4f0d6b0c4f**
+- 工作流：`.github/workflows/reader-keyboard-actions.yml`，run **40130358865**，attempt 1，结论 success
+- 作业：`keyboard actions (ubuntu-22.04)` = 120980574787、`keyboard actions (windows-2022)` = 120980574909、
+  `keyboard actions (macos-14)` = 120980574974、`strict keyboard-actions evidence` = 120980924321，四项全部 success
+- 每个平台 **41 项**具名结果（20 项安装后 C 消费者 + 7 项安装后 C++ 消费者 + 14 项原生 probe），全部 PASS
+  或登记在案的 SKIP；三平台用例名集合完全一致
+- 安装证明（每个平台各一份）：消费者 `CMakeCache.txt` 的 `EXReaderKeyboardActions_DIR` 指向
+  `build/kbd-stage/lib/cmake/EXReaderKeyboardActions`，编译日志提到该前缀且**不含**源码 include 路径
+- 工件（API 摘要，已由证据作业下载并重算字节数与 sha256，`strict keyboard-actions evidence` 通过）：
+
+| 工件 | ID | 字节 | digest | 有效期 |
+| --- | --- | --- | --- | --- |
+| reader-keyboard-actions-Linux-40130358865-1 | 12574503984 | 122414 | sha256:fc2532e9e317c528126d8cb6574fcc5875af76233a8a6285cfb18c85e44781c3 | 2027-01-22T20:34:05Z |
+| reader-keyboard-actions-Windows-40130358865-1 | 12574799025 | 90360 | sha256:f8ff2219862b5d281db19acb9fe5a3a68ea8ca22a20ec1b0ed5ee878c3b93b42 | 2027-01-22T20:34:05Z |
+| reader-keyboard-actions-macOS-40130358865-1 | 12574184229 | 94528 | sha256:1ae073e39b050860028c13121ba774ebc4dfb8ca60f699c08053f502fe6c5f1c | 2027-01-22T20:34:05Z |
+| reader-keyboard-actions-summary-40130358865-1 | 12574704001 | 1972 | sha256:112d263b72f76790c1111467f6e1144922692131ea001358085f8f8393e8794b | 2027-01-22T20:34:05Z |
+
+受测消费者二进制（由各自报告记录，sha256 前缀）：Linux C `7dbb73c6` / C++ `fbd1fddb` / probe `42579945`；
+Windows C `2c72e659` / C++ `1a0cb612` / probe `24901268`；macOS C `e2310aaa` / C++ `8504cafa` /
+probe `bbe17659`（完整值见 `docs/validation/reader-keyboard-actions.json` 的 `platforms.*.binaries`）。
+
+实际观测到的行为（摘自证据报告，非声明）：
+
+- Linux：`reader-repeat-bounded` 真实通过（X 服务器对注入按键自动重复，动作数落在硬上限内）。
+- Windows：`reader-repeat-bounded` 为 SKIP —— 该 runner 不对 `SendInput` 注入的按键产生自动重复
+  （`page_actions=1`）；重复上限由 C 消费者 `repeat-policy` 与 probe 的三平台同名用例承担。
+- macOS：`deactivate-cancels` 为 SKIP —— 托管 runner 不允许该进程成为活动应用，`NSApp deactivate`
+  不产生取消；同一取消路径由 `focus-change-forgets-hold`（窗口所有权转移）在三平台真实验证。
+  事件派发路径在 probe 详情里逐次记录（该 runner 上为 `window`，即 `NSWindow sendEvent:`）。
+
 ## 明确未覆盖
 
 - **IME 真机组词**：托管 runner 上没有安装输入法（Linux 无输入法服务、Windows 无 IME、macOS 无
   输入法且无辅助功能授权）。`composing` 门限行为由 C 消费者的 `context-gating` 与 win32 的
-  VK_PROCESSKEY 向量覆盖；probe 的 `ime-composing-passthrough` 逐平台登记为 SKIP。
-- **系统级自动重复**：若某 runner 不对注入按键产生自动重复，`reader-repeat-bounded` 登记为 SKIP
-  并写明原因；上限本身由 C 消费者的 `repeat-policy` 逐项验证。
+  VK_PROCESSKEY 向量覆盖；probe 的 `ime-composing-passthrough` 三平台均登记为 SKIP（唯一"三平台都
+  未 PASS"的用例，证据作业对此单独计数并接受）。
+- **系统级自动重复**：Windows runner 不对注入按键产生自动重复，该平台 `reader-repeat-bounded` 登记为
+  SKIP；上限本身由 C 消费者 `repeat-policy` 逐项验证，Linux/macOS 的真实重复路径分别通过 X 服务器
+  自动重复与真实 `NSEvent.isARepeat` 覆盖。
+- **应用失活门限**：macOS 托管 runner 上无法让进程成为活动应用，`deactivate-cancels` 登记为 SKIP；
+  失活取消的宿主策略由 Linux 的 `FocusOut`、Windows 的 `WM_ACTIVATE` 与 C 消费者的
+  `context-gating` 的 `INACTIVE` 分支验证。
 - **Android 设备**：本包只提供 `reader_kbd_event_from_android` 数字向量，不授予真机结论。
-- **宿主接线**：四套宿主的快捷键表与 UI 由 root 后续统一接线，本包不授予宿主/UI 结论。
+- **宿主接线**：四套宿主的快捷键表与 UI 由 root 后续统一接线，本包不授予宿主/UI 结论
+  （`host_ui_accepted=false`）。
+
+## 原始失败（保留，不删除）
+
+九次真实失败按时间保留在 `docs/validation/reader-keyboard-actions.json` 的 `retained_failures`，每次
+都记录了当时的 source SHA、run、失败作业与**当时的具体原因**（工作流引号转义、libX11 未链接、MSVC
+C4127、CMake 配置日志误判、C++ key-up 期望、GMainContext 无界排空、C 字符串转义、NSApplication 非活动
+丢事件、Xvfb 无窗口管理器、GtkWindow 事件顺序、证据作业自检门）。没有删除断言、没有换语料、没有把
+真实失败改判为预期拒绝。
 
 ## 复现
 
-1. 检出 `codex/reader-keyboard-actions` 分支的目标 SHA（见 `docs/validation/reader-keyboard-actions.json`
-   的 `source_sha`）。
-2. 在该 run 的 Actions 页面查看 `keyboard actions (<runner>)` 三个作业与 `strict keyboard-actions evidence`。
-3. 下载三个平台工件（名称 `reader-keyboard-actions-<Platform>-<run>-<attempt>`），核对
-   `keyboard-evidence/result.json` 与 `keyboard-evidence/probe.log`；证据工件
-   `reader-keyboard-actions-summary-<run>-<attempt>` 含 ZIP 摘要与身份校验结果。
+1. 检出 `codex/reader-keyboard-actions` 上受测源码 `f8e765b15932b6b738f709bd03b48c4f0d6b0c4f`
+   （或之后的最终 HEAD：两者之间只有文档提交，源码/测试/工作流逐字相同）。
+2. 打开 run 40130358865 attempt 1：四个作业与上述 ID 对应。
+3. 下载任一平台工件，解包后核对 `keyboard-evidence/result.json`（`accepted`、`checks=41`、
+   每项 `status`/`detail`）与 `keyboard-evidence/probe.log`（`STEP` 与 `PROBE` 行）。
+4. 下载证据工件，按其 `result.json` 核对其余三个工件的 `id`/`size_in_bytes`/`digest`/`expires_at`
+   与 `platforms.*.install_proof`。
