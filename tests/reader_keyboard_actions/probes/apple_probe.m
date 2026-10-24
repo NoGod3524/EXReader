@@ -10,8 +10,10 @@
 
 #include "reader_keyboard_actions.h"
 
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 typedef struct {
   reader_kbd *kbd;
@@ -49,6 +51,21 @@ static void record(const char *name, const char *status, const char *detail) {
   else ++passes;
   (void)fprintf(stdout, "PROBE %s %s %s\n", name, status, detail != NULL ? detail : "");
   (void)fflush(stdout);
+}
+
+static const char *current_step = "startup";
+
+static void begin_case(const char *name) {
+  current_step = name;
+  (void)fprintf(stdout, "STEP %s\n", name);
+  (void)fflush(stdout);
+}
+
+static void on_watchdog(int signal_number) {
+  (void)signal_number;
+  (void)fprintf(stderr, "watchdog: the probe exceeded its time budget in case %s\n", current_step);
+  (void)fflush(stderr);
+  _exit(3);
 }
 
 static void reset_counters(void) {
@@ -225,6 +242,7 @@ static void tap_key(NSWindow *window, unsigned short code, NSEventModifierFlags 
 }
 
 static void case_ready(void) {
+  begin_case("ready");
   if (g.window == nil || ![g.window isVisible] || [g.window windowNumber] <= 0) {
     record("probe-window-ready", "FAIL", "the Cocoa window is not visible");
     return;
@@ -246,6 +264,7 @@ static void case_ready(void) {
 }
 
 static void case_page_next(void) {
+  begin_case("page-next");
   reset_counters();
   [g.window makeFirstResponder:g.area];
   pump(0.05);
@@ -265,6 +284,7 @@ static void case_page_next(void) {
 }
 
 static void case_page_previous(void) {
+  begin_case("page-previous");
   reset_counters();
   tap_key(g.window, 123, 0, @"\uF702");
   if (g.down_action != (uint32_t)READER_KBD_ACTION_PAGE_PREVIOUS) {
@@ -277,6 +297,7 @@ static void case_page_previous(void) {
 }
 
 static void case_command_search(void) {
+  begin_case("command-search");
   reset_counters();
   tap_key(g.window, 3, NSEventModifierFlagCommand, @"f");
   if (g.down_action != (uint32_t)READER_KBD_ACTION_SEARCH ||
@@ -290,6 +311,7 @@ static void case_command_search(void) {
 }
 
 static void case_shift_space(void) {
+  begin_case("shift-space");
   reset_counters();
   tap_key(g.window, 49, NSEventModifierFlagShift, @" ");
   if (g.down_action != (uint32_t)READER_KBD_ACTION_PAGE_PREVIOUS) {
@@ -302,6 +324,7 @@ static void case_shift_space(void) {
 }
 
 static void case_conflict_passes(void) {
+  begin_case("conflict-passes");
   reset_counters();
   tap_key(g.window, 3, NSEventModifierFlagCommand | NSEventModifierFlagShift, @"F");
   if (g.down_reason != (uint32_t)READER_KBD_REASON_MODIFIER_CONFLICT ||
@@ -318,6 +341,7 @@ static void case_conflict_passes(void) {
 }
 
 static void case_key_up(void) {
+  begin_case("key-up");
   reset_counters();
   send_key(g.window, NSEventTypeKeyDown, 124, 0, @"\uF703", NO);
   if (g.down_action != (uint32_t)READER_KBD_ACTION_PAGE_NEXT) {
@@ -344,6 +368,7 @@ static void case_key_up(void) {
 }
 
 static void case_repeat(void) {
+  begin_case("repeat");
   int index;
   reset_counters();
   send_key(g.window, NSEventTypeKeyDown, 124, 0, @"\uF703", NO);
@@ -369,6 +394,7 @@ static void case_repeat(void) {
 }
 
 static void case_edit_keeps_keys(void) {
+  begin_case("edit-keeps-keys");
   NSRange selection;
   NSTextView *editor;
   reset_counters();
@@ -405,6 +431,7 @@ static void case_edit_keeps_keys(void) {
 }
 
 static void case_edit_command(void) {
+  begin_case("edit-command");
   reset_counters();
   [g.window makeFirstResponder:g.field];
   pump(0.1);
@@ -420,6 +447,7 @@ static void case_edit_command(void) {
 }
 
 static void case_modal(void) {
+  begin_case("modal");
   reset_counters();
   [g.window makeFirstResponder:g.area];
   pump(0.05);
@@ -447,6 +475,7 @@ static void case_modal(void) {
 }
 
 static void case_focus_change(void) {
+  begin_case("focus-change");
   reset_counters();
   [g.window makeKeyAndOrderFront:nil];
   [g.window makeFirstResponder:g.area];
@@ -478,6 +507,7 @@ static void case_focus_change(void) {
 }
 
 static void case_deactivate(void) {
+  begin_case("deactivate");
   reset_counters();
   [g.window makeKeyAndOrderFront:nil];
   pump(0.1);
@@ -498,6 +528,7 @@ static void case_deactivate(void) {
 }
 
 static void case_ime(void) {
+  begin_case("ime");
   record("ime-composing-passthrough", "SKIP",
          "no input method and no accessibility grant exist on a hosted macOS runner; the "
          "composing gate is covered by the installed consumer's vectors");
@@ -514,6 +545,8 @@ int main(void) {
     [NSApp activateIgnoringOtherApps:YES];
   }
 
+  (void)signal(SIGALRM, on_watchdog);
+  alarm(240);
   frame = NSMakeRect(80, 80, 640, 420);
   g.window = [[ProbeWindow alloc] initWithContentRect:frame
                                             styleMask:(NSWindowStyleMaskTitled |
