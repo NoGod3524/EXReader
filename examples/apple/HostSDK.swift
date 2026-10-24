@@ -303,7 +303,7 @@ final class HostDocument {
     deinit { exr_document_free(handle) }
 
     func resolve(_ anchor: HostAnchor, cancel: HostCancelBox? = nil) throws -> HostAnchorMatch {
-        try resolveInput(anchor.raw, cancel: cancel)
+        try withExtendedLifetime(anchor) { try resolveInput(anchor.raw, cancel: cancel) }
     }
 
     func resolveInput(_ input: exr_anchor, cancel: HostCancelBox? = nil) throws -> HostAnchorMatch {

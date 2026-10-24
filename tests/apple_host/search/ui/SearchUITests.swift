@@ -61,8 +61,8 @@ final class SearchUITests: XCTestCase {
     func testFindSelectAndProcessRestart() {
         openFixture()
         query("C00P040W00")
-        XCTAssertTrue(wait { self.app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'search.hit.'")).count == 1 })
-        XCTAssertTrue(text("search.status").contains("已查找完毕"))
+        XCTAssertTrue(wait { self.app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'search.hit.'")).count == 1 &&
+            self.text("search.status").contains("已查找完毕") })
         mark("one-exact-result")
         app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'search.hit.'")).firstMatch.tap()
         XCTAssertTrue(wait { self.text("reader.status") == "已精确定位选文" && !self.element("reader.busy").exists })

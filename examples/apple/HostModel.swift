@@ -1495,7 +1495,7 @@ final class HostReaderModel: ObservableObject {
                 let hold = CommandLine.arguments.contains("-EXRHoldSearchCancellation")
                 if hold {
                     HostSDKReview.poll = { polled in
-                        guard polled === box else { priorPoll?(polled); return }
+                        guard polled === box, HostSearchWorker.reviewInsideNext else { priorPoll?(polled); return }
                         DispatchQueue.main.async { self.search.reviewCancellationReady(generation: epoch) }
                         while !polled.isCancelled { Thread.sleep(forTimeInterval: 0.05) }
                     }
