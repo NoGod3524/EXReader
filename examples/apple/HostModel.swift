@@ -224,9 +224,12 @@ final class HostShelf: ObservableObject {
             self.probeFlushScheduled = false
             guard self.probeRevision == self.geometryRevision else { return }
             self.probePositions = self.probePositions.filter { key, _ in self.rows.contains(where: { $0.id == key }) }
-            // A row callback is a partial layout, not the complete visible
-            // ordering. Only a single-row shelf has an unambiguous first row.
-            guard self.rows.count == 1 else { return }
+            // An already-aligned native scroll can emit no changed whole
+            // preference. Its new probes still measure actual geometry. A
+            // partial set cannot establish the first visible row: require
+            // every current row and the viewport from this same epoch.
+            guard !self.rows.isEmpty, self.probeSize.width > 0, self.probeSize.height > 0,
+                  self.rows.allSatisfy({ self.probePositions[$0.id] != nil }) else { return }
             self.observe(self.probePositions, size: self.probeSize, revision: self.probeRevision)
         }
     }
