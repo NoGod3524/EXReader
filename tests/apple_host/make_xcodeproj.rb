@@ -53,6 +53,9 @@ def app_settings(target, platform, deployment, info_plist)
     settings['ENABLE_HARDENED_RUNTIME'] = 'NO'
     settings['ENABLE_APP_SANDBOX'] = 'NO'
     settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
+    # Keep the actual host in its executable, like the shipped standalone
+    # package; Xcode's preview stub otherwise owns no product SQLite symbols.
+    settings['ENABLE_DEBUG_DYLIB'] = 'NO'
     settings['CLANG_ENABLE_MODULES'] = 'YES'
     settings['EXR_SDK_DIR'] = '$(SRCROOT)/sdk'
     settings['OTHER_LDFLAGS'] = ['$(inherited)', '-lexreader', '-lreader_session', '-lreader_sync',
