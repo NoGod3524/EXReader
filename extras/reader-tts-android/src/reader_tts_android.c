@@ -332,12 +332,12 @@ reader_tts_status reader_tts_android_initialize(JNIEnv *env, jobject context) {
     clear_exception(env);
     return READER_TTS_UNAVAILABLE;
   }
-  create = (*env)->GetStaticMethodID(local_class, "create",
+  create = (*env)->GetStaticMethodID(env, local_class, "create",
     "(Landroid/content/Context;J)Lorg/exreader/tts/Backend;");
-  speak = (*env)->GetStaticMethodID(local_class, "speak", "(JJ[B[BD)I");
-  stop = (*env)->GetStaticMethodID(local_class, "stop", "(J)I");
-  voices = (*env)->GetStaticMethodID(local_class, "voices", "(J)[B");
-  release = (*env)->GetStaticMethodID(local_class, "release", "(J)I");
+  speak = (*env)->GetStaticMethodID(env, local_class, "speak", "(JJ[B[BD)I");
+  stop = (*env)->GetStaticMethodID(env, local_class, "stop", "(J)I");
+  voices = (*env)->GetStaticMethodID(env, local_class, "voices", "(J)[B");
+  release = (*env)->GetStaticMethodID(env, local_class, "release", "(J)I");
   if (clear_exception(env) || !create || !speak || !stop || !voices || !release) {
     return READER_TTS_UNAVAILABLE;
   }
