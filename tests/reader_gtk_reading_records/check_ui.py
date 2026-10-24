@@ -19,6 +19,7 @@ def main():
     parser = argparse.ArgumentParser()
     for name in ('payload', 'fixtures', 'output'):
         parser.add_argument('--' + name, type=Path, required=True)
+    parser.add_argument('--backend', type=Path, required=True)
     args = parser.parse_args()
     assert os.environ.get('GITHUB_ACTIONS') == 'true'
     os.environ.pop('NO_AT_BRIDGE', None)
@@ -194,7 +195,7 @@ def main():
         select(0)
         before = int(observed()['actions'])
         click('Delete record', {'push button'})
-        host.key('alt+d')
+        click('Delete', {'push button'})
         wait(lambda value: int(value['actions']) >= before + 2)
         record('explicit_delete_is_a_bodyless_tombstone', any('deleted' in bus.name(row) and 'edited' not in bus.name(row) for row in rows()) and sdk_dump() == baseline)
         select(0)
@@ -203,8 +204,8 @@ def main():
         versions = [row for row in bus.children(retained) if bus.role(row) == 'list item']
         record('restore_requires_a_real_explicit_unselected_historical_version', len(versions) >= 2 and not any(bus.states(row).get('selected') for row in versions))
         click_node(versions[0])
-        host.key('alt+r')
-        host.key('alt+r')
+        click('Restore selected version', {'push button'})
+        click('Restore', {'push button'})
         wait(lambda value: value['count'] == '1' and value['running'] == '0' and 'deleted' not in bus.name(rows()[0]))
         record('restore_recaptures_only_after_independent_found_without_navigation', sdk_dump() == baseline and all(host.read()[key] == value for key, value in frame.items()))
         select(0)
@@ -255,6 +256,35 @@ def main():
         wait(lambda value: value['visible'] == '0')
         record('all_original_source_bytes_remain_unchanged', hashlib.sha256(source.read_bytes()).hexdigest() == original_sha)
         record('product_wire_records_remain_explicit_versions', bool(product_wires()))
+        host.close()
+        # A separate real owner process seeds hostile graph states through the
+        # installed public revision API; the GTK host only reads these records.
+        graph_folder = output / 'graphs'
+        profile = graph_folder / 'profile'
+        profile.mkdir(parents=True, mode=0o700)
+        seeded = subprocess.run([str(args.backend.resolve()), str(profile / 'library.sqlite'), str(host.font), str(source), 'graphs'], text=True, capture_output=True, timeout=60)
+        (graph_folder / 'seed.log').write_text(seeded.stdout + seeded.stderr)
+        assert seeded.returncode == 0, seeded.stdout + seeded.stderr
+        host = Session(host.binary, host.font, graph_folder)
+        launch()
+        host.key('F2', 'Home', 'Return')
+        host.wait(lambda value: value['book'] > 0 and not value['saving'])
+        graph_sdk = sdk_dump()
+        open_records()
+        record('actual_native_page_reports_2mib_budget_stop_without_claiming_complete', observed()['count'] == '31' and observed()['complete'] == '0' and observed()['budget_stopped'] == '1' and int(observed()['output_bytes']) <= 2097152)
+        action('Next batch')
+        names = [bus.name(row) for row in rows()]
+        record('next_keyset_batch_contains_all_three_unsafe_graph_states', observed()['count'] == '4' and observed()['complete'] == '1' and any('Versions need review' in name for name in names) and any('Waiting for earlier versions' in name for name in names) and any('Restore needs review' in name for name in names))
+        record('unsafe_native_rows_show_counts_and_hide_all_retained_body_and_location', not any('PRIVATE' in bus.name(node) for node in bus.walk(app)) and all('versions /' in name and 'current /' in name for name in names[1:]))
+        for index in (1, 2, 3):
+            select(index)
+            record('unsafe_row_%d_cannot_jump_edit_delete_or_restore' % index, all(not bus.states(element(name, {'push button'})).get('sensitive') for name in ('Open location', 'Edit text', 'Delete record', 'Choose restore version')))
+        action('Previous batch')
+        record('reverse_page_and_forward_return_keep_keyset_direction_and_budget_honest', observed()['count'] == '31' and observed()['complete'] == '1' and int(observed()['output_bytes']) <= 2097152)
+        action('Next batch')
+        record('forward_after_reverse_returns_same_four_rows_without_duplicates', [bus.name(row) for row in rows()] == names and sdk_dump() == graph_sdk)
+        host.key('Escape')
+        wait(lambda value: value['visible'] == '0')
         host.close()
         report['reading_records_scope_passed'] = True
     except BaseException as error:

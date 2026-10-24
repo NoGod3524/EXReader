@@ -135,6 +135,12 @@ static void records_remove(GtkWidget *button,gpointer unused) {
   if(records_confirm("Delete this reading record?","Its retained versions remain available for explicit restoration.","_Delete"))
     records_queue(READER_RECORDS_SAVE,records_target_kind(),READER_RC_DELETE,NULL,NULL,0);
 }
+static void records_body_insert(GtkTextBuffer *buffer,GtkTextIter *where,gchar *inserted,gint length,gpointer unused) {
+  (void)where;(void)unused;GtkTextIter start,end;gtk_text_buffer_get_bounds(buffer,&start,&end);
+  char *current=gtk_text_buffer_get_text(buffer,&start,&end,FALSE);size_t size=strlen(current);g_free(current);
+  if(length<0 || size>65536 || (size_t)length>65536-size || memchr(inserted,0,(size_t)length) || !g_utf8_validate(inserted,length,NULL))
+    g_signal_stop_emission_by_name(buffer,"insert-text");
+}
 static void records_edit_text(GtkWidget *button,gpointer kind_value) {
   (void)button;int kind=GPOINTER_TO_INT(kind_value);reader_av_item *item=kind==READER_RC_NOTE_TEXT ? records_selected_item():NULL;
   if(records.running || records.pending || !records.dialog) return;
@@ -144,6 +150,7 @@ static void records_edit_text(GtkWidget *button,gpointer kind_value) {
   g_object_ref_sink(dialog);records.choice=dialog;GtkWidget *entry=gtk_text_view_new();gtk_widget_set_size_request(entry,420,140);
   gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(entry),GTK_WRAP_WORD_CHAR);atk_object_set_name(gtk_widget_get_accessible(entry),"Reading record text");
   gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(entry)),item && item->note_text ? item->note_text:"",-1);
+  g_signal_connect(gtk_text_view_get_buffer(GTK_TEXT_VIEW(entry)),"insert-text",G_CALLBACK(records_body_insert),NULL);
   gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),entry,TRUE,TRUE,12);gtk_widget_show_all(dialog);
   int response=gtk_dialog_run(GTK_DIALOG(dialog));char *body=NULL;gboolean current=records.dialog && records.token==token && !gtk_widget_in_destruction(entry);
   if(current && response==GTK_RESPONSE_ACCEPT) { GtkTextIter start,end;GtkTextBuffer *buffer=gtk_text_view_get_buffer(GTK_TEXT_VIEW(entry));gtk_text_buffer_get_bounds(buffer,&start,&end);body=gtk_text_buffer_get_text(buffer,&start,&end,FALSE); }
