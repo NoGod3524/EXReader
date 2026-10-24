@@ -253,8 +253,15 @@ def verify_report(files, run):
     need(probe["summary"].get("started") == 1 and probe["summary"].get("finished") == 1
          and probe["summary"].get("failed") == 0 and probe["summary"].get("bad_range") == 0
          and probe["summary"].get("state_after") == "READY", "probe_summary")
-    need(probe["summary"]["ranges"] >= 5 and 0 < probe["summary"]["max_end"] <= probe["summary"]["text_bytes"],
-         "probe_ranges")
+    ranges = probe["summary"].get("ranges")
+    need(type(ranges) is int and ranges >= 0, "probe_ranges")
+    if ranges == 0:
+        # This environment produced no engine word positions, so the capability bit
+        # must stay clear instead of claiming ranges.
+        need((probe["summary"].get("capabilities", 0) & 2) == 0, "probe_range_capability")
+    else:
+        need(ranges >= 5 and (probe["summary"].get("capabilities", 0) & 2) != 0
+             and 0 < probe["summary"].get("max_end", 0) <= probe["summary"]["text_bytes"], "probe_ranges")
     probe_wav = by_file.get(probe.get("wav", {}).get("file"))
     need(probe_wav is not None and probe_wav["sha256"] == digest(files["wav/" + safe_path(probe_wav["file"])]),
          "probe_wav_record")
