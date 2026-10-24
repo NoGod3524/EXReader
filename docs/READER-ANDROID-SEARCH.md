@@ -2,7 +2,21 @@
 
 本候选从正式账号/接收已通过的固定源码 `ed9ff5ffc3608971bb19020f1ec07496a79d9710` 建立，分支 `codex/reader-android-search-ui`。安装后的 `EXReaderSearch 0.1.0` 保持原样：最后修订 `523a91f0e8c11e4365e0eab7d3687bf05df2d2c0`，源码树 `2e09cb2945564f25085074a816b95472392df205`。未合入 G01–G16。
 
-这是未验收候选。[验收记录](validation/reader-android-search.json) 在完整 Actions 通过前保持 `accepted:false`。本地未运行构建、语法检查、测试或夹具。
+真实宿主搜索 UI 已在 API34 x86_64 模拟器通过。[验收记录](validation/reader-android-search.json) 只授予本包界面、严格 FOUND 导航和生命周期范围。本地未运行构建、语法检查、测试、夹具或工件解析。
+
+## 同源验收
+
+受测完整源码 `e764f08dea4986f11db183c5b17b41ddb5526bcc`，完整 [run 40111800432](https://github.com/NoGod3524/EXReader/actions/runs/40111800432) attempt **2**、作业 `120925154490` 成功。API26 编译 Debug/Release；API34 真模拟器保留原件导出 8 项、18 实际捕获（17 FOUND / 1 AMBIGUOUS）的 12 组原生壳、原宿主 17+2、DAV 91+4，以及正式账号/接收 **16 项 / 4 进程**，全部在此源码再次执行。
+
+新增 **15/15**，两个真实进程 **6424 / 6592**，七套实际语义树/PNG，六份原件跨两阶段共 12 行散列回读。TXT 的非导航搜索和歧义选择保持 index 0/start 0 与同一个真实 bitmap；显式 FOUND 后真实 index **16**、start **2979**、selection **3039..3048**。EPUB 独有结果到 part 1，实际改到字号 **28** 后重复 spine 明确到 part **2**；PDF 独立 page ID 解析后实际 index **3**。真实控制回调内取消、重试、关闭、Home、进程重开与重开后再次搜索均通过。
+
+遮挡期间的数据来自存活 ReaderView 在 UI 主线程产生的已有 accessibility extras，含其真实 page、accepted token 与实际 bitmap ARGB SHA-256；没有重建或预期帧。关闭后使用可见窗口的实际 ReaderView、实际新 token/页/选区和 PNG 验证定位；只读查询关闭后再次比较页面、像素与存储。独立公开 SDK 解析为 FOUND 和原 runPage 的严格解析均保留，未以偏移猜测代替。
+
+工件 `reader-android-search-40111800432-2`，ID **12567530810**，**118919384 B**，SHA-256 `188846a51dfc4b9ce2446a53fa0e5fb3fcc863b6393a0c454bb6e924bc1693fe`，有效期 `2027-01-22T16:30:41Z`。保存 SDK 实际 CMakeCache、安装包、Debug/Release APK/ELF/map、三套 runner、全部旧回归及新 UI 的原始日志、报告与 PNG。
+
+Search 安装归档 SHA-256 `624d7aa15bf3eb2baae172477652d63d4770c1cecdf676ae77fe4beac288cf3d`；SDK cache SHA-256 `e597e6f5e1c0512fbff2be9c761a32c2a579d43db07d7c2d3abb7100b852366b`，实测 AUDIO/MP3/JNI/SHARED 为 ON，AAC 为 OFF。Debug/Release 均只有原共享 SDK provider，产品 DSO 不含 Search/SDK；SDK/JNI 安装与包内材料及全部 NEEDED 列于 JSON。这仍是原 Android audio-enabled JNI 配置。
+
+同 run 的 attempt 1 在下载 API34 system image 时遇到 `ZipFile unknown archive`，未进入编译/测试。其失败作业 `120924896056` 日志仍可读；整轮重跑后小工件 `12567345101` 的 API 已返回 404，记录明确标为不可取得，不作验收证据。以下源码/探针失败均保留各自运行历史。
 
 首轮源码 `44bd6d2b` 的 [run 40094753066](https://github.com/NoGod3524/EXReader/actions/runs/40094753066) 完成安装包/依赖审计、原 18/17+2/DAV 与原 16 项，新增搜索在测试种子的偏移 8 处被 SDK 拒绝，因为该 TXT 以中文开头。`85f3add0` 修正为边界 0，并保留原 Debug Rebuild 控件；新组尚未授予。失败及原件保留。
 

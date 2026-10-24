@@ -1,10 +1,10 @@
 {
-  "accepted": false,
+  "accepted": true,
   "scope": "Android installed Search package consumed by actual host controls, explicit FOUND navigation and lifecycle",
   "fixed_base": "ed9ff5ffc3608971bb19020f1ec07496a79d9710",
   "search_last_revision": "523a91f0e8c11e4365e0eab7d3687bf05df2d2c0",
   "search_tree": "2e09cb2945564f25085074a816b95472392df205",
-  "source_sha": null,
+  "source_sha": "e764f08dea4986f11db183c5b17b41ddb5526bcc",
   "runs": [{"run_id":40094753066,"source_sha":"44bd6d2b13842622cd29ca264864545a8b46d331","attempt":1,"conclusion":"failure","search_ui_accepted":false},{"run_id":40095203666,"source_sha":"85f3add0b07710d7af40e83da9ce6ddbbb93df04","attempt":1,"conclusion":"failure","search_ui_accepted":false,"new_search_groups_passed":1,"failure":"Modal dialog occluded the underlying ReaderView from the accessibility window inventory. Preserve actual frame/pixel/store assertions and observe the same live View on its UI thread."}],
   "retained_failures": [{"source_sha":"44bd6d2b13842622cd29ca264864545a8b46d331","run_id":40094753066,"reason":"The generated TXT starts with Chinese. Test seed offset8 lies inside a UTF-8 scalar and public SDK correctly refused it before any new search group. Seed at valid boundary0. No assertion or SDK change.","new_search_groups_passed":0,"preserved_suites_passed":["original18-capture/17+2/DAV","original16-account-ui","Debug/Release installed archive, provider and package audit"]}],
   "latest_failed_candidate": {"source_sha":"18d5ce81a839bc9230d22dd48eb284ad132b749b","run_id":40109097666,"attempt":1,"conclusion":"failure","new_search_groups_passed":4,"failed_check":"ambiguous_selection_keeps_list_page_and_stored_progress","reason":"Probe matched the query EditText instead of a result row. Restrict selection to visible result text1 rows; preserve ambiguous/no-jump and frame/store assertions.","preserved_suites_passed":["original18-capture/17+2/DAV","original16-account-ui","Debug/Release installed archive, provider and package audit"]},
@@ -16,5 +16,317 @@
   "performance_accepted": false,
   "physical_device": false,
   "talkback_speech_accepted": false,
-  "complete_product": false
+  "complete_product": false,
+"producer": {
+    "source_sha": "e764f08dea4986f11db183c5b17b41ddb5526bcc",
+    "run_id": 40111800432,
+    "attempt": 2,
+    "job_id": 120925154490,
+    "conclusion": "success"
+  },
+  "artifact": {
+    "id": 12567530810,
+    "name": "reader-android-search-40111800432-2",
+    "bytes": 118919384,
+    "sha256": "188846a51dfc4b9ce2446a53fa0e5fb3fcc863b6393a0c454bb6e924bc1693fe",
+    "expires_at": "2027-01-22T16:30:41Z",
+    "expired": false
+  },
+  "platform": {
+    "compile_api": 26,
+    "execution_api": 34,
+    "abi": "x86_64",
+    "emulator": true
+  },
+  "search_ui": {
+    "accepted": true,
+    "named_checks": 15,
+    "first_process_checks": 13,
+    "reopen_checks": 2,
+    "process_ids": [
+      6424,
+      6592
+    ],
+    "real_semantic_tree_and_png_pairs": 7,
+    "verified_original_rows": 12,
+    "native_live_at_phase_end": 0,
+    "required_checks": [
+      "installed_search_and_same_shared_sdk_provider",
+      "txt_bounded_batches_preserve_source_notes_progress_outbox_and_page",
+      "unicode_query_and_explicit_empty_result_preserve_reader",
+      "invalid_query_reports_error_without_touching_stores",
+      "ambiguous_selection_keeps_list_page_and_stored_progress",
+      "txt_explicit_found_selection_navigates_real_page",
+      "bounded_epub_unique_and_repeated_spine_routes",
+      "pdf_text_found_and_textless_pdf_empty_are_distinct",
+      "cbz_is_explicitly_unsupported_not_empty",
+      "jni_query_selector_byte_and_owner_boundaries",
+      "cancel_real_installed_search_control_then_retry",
+      "close_real_control_releases_and_reopens_search",
+      "background_closes_control_and_manual_reopen_is_clean",
+      "process_reopen_has_no_search_and_preserves_original_stores",
+      "real_search_after_process_restart"
+    ],
+    "frames": [
+      {
+        "name": "txt-results",
+        "pid": 6424,
+        "book": 1,
+        "index": 0,
+        "part": -1,
+        "font": 24,
+        "start": 0,
+        "end": 578,
+        "selection_start": -1,
+        "selection_end": -1,
+        "bitmap_argb_sha256": "f1a9b52615c12486fba616dd4695c5b3ff9501b32661b5709c26a4514b2483de"
+      },
+      {
+        "name": "ambiguous",
+        "pid": 6424,
+        "book": 1,
+        "index": 0,
+        "part": -1,
+        "font": 24,
+        "start": 0,
+        "end": 578,
+        "selection_start": -1,
+        "selection_end": -1,
+        "bitmap_argb_sha256": "f1a9b52615c12486fba616dd4695c5b3ff9501b32661b5709c26a4514b2483de"
+      },
+      {
+        "name": "txt-found",
+        "pid": 6424,
+        "book": 1,
+        "index": 16,
+        "part": -1,
+        "font": 24,
+        "start": 2979,
+        "end": 3138,
+        "selection_start": 3039,
+        "selection_end": 3048,
+        "bitmap_argb_sha256": "07ee40a2562033cb3464fee99736bebb3b7bfbec147eb4d78ed931acd3733b72"
+      },
+      {
+        "name": "epub-found",
+        "pid": 6424,
+        "book": 2,
+        "index": 0,
+        "part": 2,
+        "font": 28,
+        "start": 0,
+        "end": 132,
+        "selection_start": 0,
+        "selection_end": 17,
+        "bitmap_argb_sha256": "c9c1542ba386f8907cc0a6a15af08c27ec83b69b8a866db53667440696937513"
+      },
+      {
+        "name": "pdf-found",
+        "pid": 6424,
+        "book": 3,
+        "index": 3,
+        "part": -1,
+        "font": null,
+        "start": 0,
+        "end": 56,
+        "selection_start": 0,
+        "selection_end": 16,
+        "bitmap_argb_sha256": "1d7d9ba9e131ab7e810adb6da7fe7052e96fb5f8aff88837d304cd5e24a76443"
+      },
+      {
+        "name": "cbz-unsupported",
+        "pid": 6424,
+        "book": 5,
+        "index": 0,
+        "part": -1,
+        "font": null,
+        "start": 0,
+        "end": 0,
+        "selection_start": -1,
+        "selection_end": -1,
+        "bitmap_argb_sha256": "ce5d8a4f8f72456874f00696947f1972de584e3add4c28b9d60bd5c97619eb92"
+      },
+      {
+        "name": "reopened-reader",
+        "pid": 6592,
+        "book": 1,
+        "index": 18,
+        "part": -1,
+        "font": 28,
+        "start": 2899,
+        "end": 3038,
+        "selection_start": -1,
+        "selection_end": -1,
+        "bitmap_argb_sha256": "4cac98c5b7f930e0cb5a2a3bce205a4e7a2c4b535eee7d9fe12c507b55abe0ba"
+      }
+    ]
+  },
+  "preserved_suites": {
+    "sdk_original_export": 8,
+    "native_groups": 12,
+    "actual_captures": 18,
+    "capture_found": 17,
+    "capture_ambiguous": 1,
+    "original_host_checks": 17,
+    "original_host_process_recovery_phases": 2,
+    "dav_checks": 91,
+    "dav_restart_cases": 4,
+    "formal_account_receive_ui_checks": 16,
+    "formal_account_receive_ui_processes": 4
+  },
+  "observation_contract": {
+    "modal": "Read existing exreader.frame extras from the actual live ReaderView.createAccessibilityNodeInfo on its UI thread when the modal owner is occluded from window inventory. No expected or reconstructed frame.",
+    "after_dismissal": "Actual visible ReaderView accessibility extras, new accepted token, actual page/selection and PNG captures prove independent public SDK FOUND navigation.",
+    "pixel_identity": "Real rendered bitmap logical ARGB SHA-256, unchanged across non-navigating search batches and ambiguous selection; closed read-only query checked again."
+  },
+  "runtime_audit": {
+    "source_sha": "e764f08dea4986f11db183c5b17b41ddb5526bcc",
+    "run_id": "40111800432",
+    "attempt": "2",
+    "accepted": true,
+    "installed_search_sha256": "624d7aa15bf3eb2baae172477652d63d4770c1cecdf676ae77fe4beac288cf3d",
+    "shared_sdk_single_provider": true,
+    "no_search_or_sdk_in_product_dso": true,
+    "checks": [
+      {
+        "variant": "Debug",
+        "apk_bytes": 26629032,
+        "apk_sha256": "eb650fccd0e93a58efb50417b4331c4279a800ab0eedfd53329351c4437d0c7a",
+        "runtimes": {
+          "libexreader.so": {
+            "bytes": 5545208,
+            "sha256": "041ba9141a4b0c655545349ee61be8bc36abccfca872cb852a8677f6753dee8b",
+            "needed": [
+              "libOpenSLES.so",
+              "libm.so",
+              "libdl.so",
+              "libc.so"
+            ]
+          },
+          "libexreader_host.so": {
+            "bytes": 410496,
+            "sha256": "bc40a4a140b27c1c9256c8249206ec988392f8c09d6bba33f3b00b6893fb1337",
+            "needed": [
+              "libexreader.so",
+              "libdl.so",
+              "libm.so",
+              "libc.so"
+            ]
+          },
+          "libexreader_jni.so": {
+            "bytes": 40392,
+            "sha256": "182ee0175ca883aa5a3cc5d985b215cba2808df508ab7381cb341423909981f2",
+            "needed": [
+              "libexreader.so",
+              "libm.so",
+              "libdl.so",
+              "libc.so"
+            ]
+          },
+          "libexreader_product.so": {
+            "bytes": 2632592,
+            "sha256": "18bee957c6fed11ebbbcd6215fe4883eac87bccd31a9df2a8f55563158463544",
+            "needed": [
+              "libdl.so",
+              "libm.so",
+              "libc.so"
+            ]
+          }
+        }
+      },
+      {
+        "variant": "Release",
+        "apk_bytes": 25575145,
+        "apk_sha256": "0abcc6491d100bf556d709622a291ad6e16de3c39c4e1ef860b0d91f273d4cb1",
+        "runtimes": {
+          "libexreader.so": {
+            "bytes": 5545208,
+            "sha256": "041ba9141a4b0c655545349ee61be8bc36abccfca872cb852a8677f6753dee8b",
+            "needed": [
+              "libOpenSLES.so",
+              "libm.so",
+              "libdl.so",
+              "libc.so"
+            ]
+          },
+          "libexreader_host.so": {
+            "bytes": 287552,
+            "sha256": "91db041c1c7abac64a6a718f6fc7aa13de2c49712feedf787eff9e25a4b494da",
+            "needed": [
+              "libexreader.so",
+              "libdl.so",
+              "libm.so",
+              "libc.so"
+            ]
+          },
+          "libexreader_jni.so": {
+            "bytes": 40392,
+            "sha256": "182ee0175ca883aa5a3cc5d985b215cba2808df508ab7381cb341423909981f2",
+            "needed": [
+              "libexreader.so",
+              "libm.so",
+              "libdl.so",
+              "libc.so"
+            ]
+          },
+          "libexreader_product.so": {
+            "bytes": 2076880,
+            "sha256": "4622f3fddaaa2008ba42ef2d5620d16ddaccd6bde06c9c6e6e46bb56a9cade30",
+            "needed": [
+              "libdl.so",
+              "libm.so",
+              "libc.so"
+            ]
+          }
+        }
+      }
+    ],
+    "sdk_configuration": {
+      "profile": "formal Android shared SDK, not desktop reading-core preset",
+      "options": {
+        "EXR_ENABLE_AUDIO": "ON",
+        "EXR_ENABLE_MP3": "ON",
+        "EXR_ENABLE_AAC": "OFF",
+        "EXR_BUILD_JNI": "ON",
+        "EXR_BUILD_SHARED_COMPAT": "ON"
+      },
+      "actual_cache_sha256": "e597e6f5e1c0512fbff2be9c761a32c2a579d43db07d7c2d3abb7100b852366b",
+      "installed_runtimes": {
+        "libexreader.so": {
+          "bytes": 22258128,
+          "sha256": "42bb8b94f1226f7a0d446c0c996762379d18a1e42abb03e4a0e08423947f80c2",
+          "needed": [
+            "libOpenSLES.so",
+            "libm.so",
+            "libdl.so",
+            "libc.so"
+          ]
+        },
+        "libexreader_jni.so": {
+          "bytes": 176496,
+          "sha256": "917a4b480cdc8d4cf02b474a1d13d43ffecc2d33881f64dea6a2fda47a54c337",
+          "needed": [
+            "libexreader.so",
+            "libm.so",
+            "libdl.so",
+            "libc.so"
+          ]
+        }
+      },
+      "jni_requires_audio_pdf": true
+    }
+  },
+  "failed_provisioning_attempt": {
+    "source_sha": "e764f08dea4986f11db183c5b17b41ddb5526bcc",
+    "run_id": 40111800432,
+    "attempt": 1,
+    "job_id": 120924896056,
+    "conclusion": "failure",
+    "reason": "Android API34 system-image download failed with ZipFile unknown archive before compilation or execution.",
+    "artifact_id": 12567345101,
+    "artifact_available": false,
+    "artifact_read_result": "GitHub API 404 after the full run was rerun. Failure attempt/job logs remain readable; no test grant.",
+    "compiled": false,
+    "executed_tests": false
+  }
 }
