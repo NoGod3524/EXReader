@@ -1,0 +1,39 @@
+{
+  "schema": "reader-distribution-windows-acceptance-v1",
+  "accepted": false,
+  "scope": "Windows reading-core distribution: build-machine path removal, audited text rewrite, deterministic seal, relocated installed C/C++ consumption, nine-format smoke, import and vendor closure",
+  "branch": "codex/reader-distribution-windows",
+  "workflow": ".github/workflows/reader-distribution-windows.yml",
+  "fixed_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "abi": 1,
+  "original_product_schema1": "f32bb8aa18ed3de286900f19ce4230fd93435dd0",
+  "tested_source": null,
+  "final_head": null,
+  "run_id": null,
+  "attempt": null,
+  "jobs": {},
+  "artifacts": [],
+  "named_results": [],
+  "negative_cases": [],
+  "distribution": null,
+  "relocation": null,
+  "dependencies": null,
+  "surfaces": null,
+  "accepted_scope": [],
+  "uncovered": [
+    "Windows production host wiring (root owns it)",
+    "reading-library profile, shared compatibility DLL, audio and text index components",
+    "signing, tag, release and pull request merge",
+    "cross-source or cross-attempt artifact reuse"
+  ],
+  "problems": [
+    "No cloud run has been executed for this source yet; every named result is pending"
+  ],
+  "merged": false,
+  "tag_or_release_created": false,
+  "signed": false,
+  "published": false,
+  "local_build_test_or_syntax_execution": false
+}

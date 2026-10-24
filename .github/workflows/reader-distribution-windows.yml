@@ -1,0 +1,322 @@
+name: Windows reader distribution readiness
+on:
+  push:
+    branches: [codex/reader-distribution-windows]
+    paths:
+      - 'tools/reader_distribution_windows/**'
+      - 'tests/reader_distribution_windows/**'
+      - '.github/workflows/reader-distribution-windows.yml'
+      - 'docs/READER-DISTRIBUTION-WINDOWS.md'
+      - 'docs/validation/reader-distribution-windows.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+env:
+  START_SHA: f43baf9182d75907c0cb5d6f77048f27bca8c950
+  SDK_SHA: 9854061be331fe603a1822d9b2b36ee357154927
+  PRODUCT_SQL_SHA: f32bb8aa18ed3de286900f19ce4230fd93435dd0
+  PYTHONUTF8: '1'
+jobs:
+  protocol:
+    name: distribution protocol and refusal fixtures
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require the fixed start, the frozen SDK tree and this package's paths only
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$START_SHA" HEAD
+          git diff --exit-code "$SDK_SHA" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code "$START_SHA" HEAD -- apps/reader/store/001_catalog.sql
+          git diff --exit-code "$PRODUCT_SQL_SHA" HEAD -- apps/reader/store/001_catalog.sql
+          changed=$(git diff --name-only "$START_SHA" HEAD)
+          echo "$changed" | sed '/^$/d' | while read -r path; do
+            case "$path" in
+              tests/reader_distribution_windows/*|tools/reader_distribution_windows/*|docs/validation/reader-distribution-windows.json|docs/READER-DISTRIBUTION-WINDOWS.md|.github/workflows/reader-distribution-windows.yml) ;;
+              *) echo "out of scope for J25: $path" >&2; exit 1;;
+            esac
+          done
+          echo "changed files: $(echo "$changed" | sed '/^$/d' | wc -l)"
+      - name: Reject leaking stages, tampered seals and unbounded reports (synthetic fixtures)
+        run: python3 tests/reader_distribution_windows/check_distributions.py
+      - name: Keep the acceptance document honestly unaccepted until a real run exists
+        run: python3 -c "import json; d=json.load(open('docs/validation/reader-distribution-windows.json')); print(json.dumps({'accepted': d.get('accepted'), 'problems': d.get('problems')}))"
+
+  windows:
+    name: installed reading distribution relocation
+    runs-on: windows-2022
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require the fixed start, the frozen SDK tree and this package's paths only
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$START_SHA" HEAD
+          git diff --exit-code "$SDK_SHA" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code "$START_SHA" HEAD -- apps/reader/store/001_catalog.sql
+          changed=$(git diff --name-only "$START_SHA" HEAD)
+          echo "$changed" | sed '/^$/d' | while read -r path; do
+            case "$path" in
+              tests/reader_distribution_windows/*|tools/reader_distribution_windows/*|docs/validation/reader-distribution-windows.json|docs/READER-DISTRIBUTION-WINDOWS.md|.github/workflows/reader-distribution-windows.yml) ;;
+              *) echo "out of scope for J25: $path" >&2; exit 1;;
+            esac
+          done
+      - name: Enter the real MSVC environment
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          & $env:ComSpec /c ('"' + $bat + '" >nul && set') | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Record the toolchain identities
+        run: |
+          mkdir -p build/dist
+          cl 2>&1 | head -2 | tee build/dist/toolchain.log
+          link 2>&1 | head -2 | tee -a build/dist/toolchain.log
+          cmake --version | head -1 | tee -a build/dist/toolchain.log
+          ninja --version | tee -a build/dist/toolchain.log
+          python --version | tee -a build/dist/toolchain.log
+      - name: Build and install the frozen reading-core profile
+        run: |
+          cmake --preset reading-core 2>&1 | tee build/dist/configure.log
+          cmake --build --preset reading-core 2>&1 | tee build/dist/build.log
+          cmake --install build/reading-core 2>&1 | tee build/dist/install.log
+          test -f build/reading-core/stage/include/exr/base.h
+      - name: Scan the installed stage for build-machine paths
+        run: |
+          WS=$(cygpath -m "$PWD")
+          STAGE=$(cygpath -m "$PWD/build/reading-core/stage")
+          echo "WS=$WS" >> "$GITHUB_ENV"
+          echo "STAGE_M=$STAGE" >> "$GITHUB_ENV"
+          python tools/reader_distribution_windows/scan_paths.py \
+            --root build/reading-core/stage --label installed-stage \
+            --root-arg "$WS" --root-arg "$STAGE" --root-arg "$USERPROFILE" \
+            --source-sha "$GITHUB_SHA" --output build/dist/scan-stage.json
+      - name: Rewrite text surfaces and refuse binary leaks
+        run: |
+          python tools/reader_distribution_windows/sanitize_stage.py \
+            --source build/reading-core/stage --destination build/dist/sanitized \
+            --scan build/dist/scan-stage.json --output build/dist/sanitize.json
+          python tools/reader_distribution_windows/scan_paths.py \
+            --root build/dist/sanitized --label sanitized-stage --require-clean \
+            --root-arg "$WS" --root-arg "$STAGE_M" --root-arg "$USERPROFILE" \
+            --source-sha "$GITHUB_SHA" --output build/dist/scan-sanitized.json
+      - name: Seal the deterministic distribution archive
+        run: |
+          VERSION=$(python -c "import re; print(re.search(r'#define EXR_VERSION \"([^\"]+)\"', open('include/exr/base.h').read()).group(1))")
+          ARCHIVE="build/dist/EXReader-reading-core-${VERSION}-Windows-X64.zip"
+          python tools/reader_distribution_windows/seal_distribution.py \
+            --stage build/dist/sanitized --scan build/dist/scan-sanitized.json \
+            --sanitize build/dist/sanitize.json --archive-out "$ARCHIVE" \
+            --report build/dist/distribution.json --source-sha "$GITHUB_SHA"
+          python tools/reader_distribution_windows/scan_paths.py \
+            --zip "$ARCHIVE" --label distribution-archive --require-clean \
+            --root-arg "$WS" --root-arg "$STAGE_M" --root-arg "$USERPROFILE" \
+            --source-sha "$GITHUB_SHA" --output build/dist/scan-archive.json
+      - name: Prove each surface of the compile and archive parameters with live controls
+        run: |
+          SURF=$(cygpath -m "$PWD/build/path-surface")
+          echo "SURF_M=$SURF" >> "$GITHUB_ENV"
+          mkdir -p build/path-surface/raw build/path-surface/bare build/path-surface/nested/a build/path-surface/nested/b build/path-surface/drective
+          cp tests/reader_distribution_windows/probe/path_surface.c build/path-surface/path_surface.c
+          cl /nologo /c /Z7 "/Fo$SURF/raw/path_surface.obj" "$SURF/path_surface.c" 2>&1 | tee build/path-surface/cl-raw.log
+          link /nologo "/OUT:$SURF/raw/path_surface.exe" "$SURF/raw/path_surface.obj" 2>&1 | tee -a build/path-surface/cl-raw.log
+          lib /nologo "/OUT:$SURF/raw/path_surface.lib" "$SURF/raw/path_surface.obj" 2>&1 | tee -a build/path-surface/cl-raw.log
+          ( cd build/path-surface && cl /nologo /c /Z7 "/Fo$SURF/bare/path_surface.obj" path_surface.c ) 2>&1 | tee build/path-surface/cl-bare.log
+          link /nologo "/OUT:$SURF/bare/path_surface.exe" "$SURF/bare/path_surface.obj" 2>&1 | tee -a build/path-surface/cl-bare.log
+          lib /nologo "/OUT:$SURF/bare/path_surface.lib" "$SURF/bare/path_surface.obj" 2>&1 | tee -a build/path-surface/cl-bare.log
+          cp build/path-surface/path_surface.c build/path-surface/nested/a/first.c
+          cp build/path-surface/path_surface.c build/path-surface/nested/b/second.c
+          cl /nologo /c /Z7 "/Fo$SURF/nested/a/first.obj" "$SURF/nested/a/first.c" > build/path-surface/cl-nested.log 2>&1
+          cl /nologo /c /Z7 "/Fo$SURF/nested/b/second.obj" "$SURF/nested/b/second.c" >> build/path-surface/cl-nested.log 2>&1
+          lib /nologo "/OUT:$SURF/nested/nested.lib" "$SURF/nested/a/first.obj" "$SURF/nested/b/second.obj" 2>&1 | tee -a build/path-surface/cl-nested.log
+          printf 'int reader_distribution_drective_anchor(void) { return 7; }\n#pragma comment(lib, "%s")\n' "$SURF/vendor-control.lib" > build/path-surface/drective/drective_surface.c
+          cl /nologo /c "/Fo$SURF/drective/drective_surface.obj" "$SURF/drective/drective_surface.c" 2>&1 | tee build/path-surface/cl-drective.log
+          lib /nologo "/OUT:$SURF/drective/drective.lib" "$SURF/drective/drective_surface.obj" 2>&1 | tee -a build/path-surface/cl-drective.log
+          ./build/path-surface/raw/path_surface.exe "$SURF/raw-run.json"
+          ./build/path-surface/bare/path_surface.exe "$SURF/bare-run.json"
+          python tools/reader_distribution_windows/check_surfaces.py --root "$SURF" \
+            --raw-obj build/path-surface/raw/path_surface.obj \
+            --bare-obj build/path-surface/bare/path_surface.obj \
+            --raw-lib build/path-surface/raw/path_surface.lib \
+            --bare-lib build/path-surface/bare/path_surface.lib \
+            --nested-lib build/path-surface/nested/nested.lib \
+            --drective-lib build/path-surface/drective/drective.lib \
+            --raw-run build/path-surface/raw-run.json --bare-run build/path-surface/bare-run.json \
+            --output build/dist/surfaces.json
+      - name: Extract the sealed archive outside the workspace and build installed consumers
+        run: |
+          RELOC="D:/relocated/exreader-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          PREFIX="$RELOC/prefix"
+          echo "RELOC=$RELOC" >> "$GITHUB_ENV"
+          echo "PREFIX_M=$PREFIX" >> "$GITHUB_ENV"
+          rm -rf "$(cygpath -u "$RELOC")"
+          mkdir -p "$(cygpath -u "$RELOC")"
+          python -c "import sys,zipfile; zipfile.ZipFile(sys.argv[1]).extractall(sys.argv[2])" \
+            "$(ls build/dist/EXReader-reading-core-*-Windows-X64.zip)" "$(cygpath -u "$PREFIX")"
+          test -f "$(cygpath -u "$PREFIX")/include/exr/base.h"
+          cmake -S tests/reader_distribution_windows/consumer -B build/reloc-consumer -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PREFIX" 2>&1 | tee build/dist/reloc-configure.log
+          cmake --build build/reloc-consumer --parallel 4 2>&1 | tee build/dist/reloc-build.log
+          cmake -S tests/reading_core -B build/reloc-reading -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DEXR_SDK="$PREFIX" -DEXR_EXPECT_LIBRARY=OFF \
+            -DEXR_TEST_FONT="$PWD/tests/fixtures/fonts/primary.ttf" \
+            -DEXR_TEST_COLOR_FONT="$PWD/tests/fixtures/fonts/colrv1.ttf" \
+            -DEXR_TEST_FIXTURES="$PWD/tests/fixtures" 2>&1 | tee build/dist/reloc-reading-configure.log
+          cmake --build build/reloc-reading --target reading-document --parallel 4 2>&1 | tee build/dist/reloc-reading-build.log
+          cmake -S tests/reading_release -B build/reloc-identity -G Ninja -DEXR_SDK="$PREFIX" \
+            -DEXR_RELEASE_LIBRARY=OFF 2>&1 | tee build/dist/reloc-identity-configure.log
+          cmake --build build/reloc-identity --parallel 4 2>&1 | tee build/dist/reloc-identity-build.log
+      - name: Execute the relocated consumers, the nine-format smoke and the native probe
+        run: |
+          PREFIX=$(cygpath -u "$PREFIX_M")
+          OUT=$(cygpath -m "$PWD/build/dist")
+          ./build/reloc-consumer/distribution-consumer-c.exe "$PREFIX/examples/fonts/primary.ttf" \
+            "$PREFIX/examples/books/layout.epub" "$OUT/c11.json"
+          ./build/reloc-consumer/distribution-consumer-cpp.exe "$OUT/cpp17.json"
+          ./build/reloc-consumer/relocation-probe.exe --prefix "$PREFIX_M" \
+            --font "$PREFIX_M/examples/fonts/primary.ttf" --book "$PREFIX_M/examples/books/layout.epub" \
+            --output "$OUT/probe.json"
+          ./build/reloc-reading/reading-document.exe tests/fixtures/sample.txt tests/fixtures/fonts/primary.ttf \
+            > "$OUT/document.json"
+          ./build/reloc-identity/release-identity.exe > build/dist/identity-raw.json
+          python tools/check_corpus.py build/reloc-reading/reading-document.exe \
+            tests/fixtures/fonts/primary.ttf tools/reading_core/smoke-manifest.json build/dist/corpus \
+            --root tests/fixtures --timeout 90
+      - name: Check the import closure and the exported vendor closure
+        run: |
+          python tools/reader_distribution_windows/check_dependencies.py --stage build/dist/sanitized \
+            --pe build/reloc-consumer/distribution-consumer-c.exe \
+            --pe build/reloc-consumer/distribution-consumer-cpp.exe \
+            --pe build/reloc-consumer/relocation-probe.exe \
+            --pe build/reloc-reading/reading-document.exe \
+            --output build/dist/dependencies.json
+      - name: Record named negative cases that must fail
+        run: |
+          python - <<'PY'
+          import json, os, subprocess, sys
+          prefix = os.environ['PREFIX_M']
+          results = []
+          def record(name, command):
+              completed = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+              results.append({'name': name, 'status': 'pass' if completed.returncode != 0 else 'fail',
+                              'detail': {'returncode': completed.returncode,
+                                         'stderr': completed.stderr.decode('utf-8', 'replace')[-400:]}})
+          record('negative-probe-rejects-foreign-prefix', [
+              'build/reloc-consumer/relocation-probe.exe', '--prefix', prefix + '/missing-prefix',
+              '--font', prefix + '/examples/fonts/primary.ttf',
+              '--book', prefix + '/examples/books/layout.epub',
+              '--output', 'build/dist/rejected-probe.json'])
+          record('negative-consumer-rejects-missing-book', [
+              'build/reloc-consumer/distribution-consumer-c.exe',
+              prefix + '/examples/fonts/primary.ttf', prefix + '/examples/books/missing.epub',
+              'build/dist/rejected-consumer.json'])
+          record('negative-scan-blocks-leaking-control', [
+              sys.executable, 'tools/reader_distribution_windows/scan_paths.py',
+              '--root', 'build/path-surface/raw', '--require-clean',
+              '--root-arg', os.environ['SURF_M'], '--output', 'build/dist/scan-control-negative.json'])
+          record('negative-scan-blocks-absolute-drective', [
+              sys.executable, 'tools/reader_distribution_windows/scan_paths.py',
+              '--root', 'build/path-surface/drective', '--require-clean',
+              '--root-arg', os.environ['SURF_M'], '--output', 'build/dist/scan-drective-negative.json'])
+          payload = {'schema': 'reader-distribution-windows-negatives-v1', 'results': results}
+          with open('build/dist/negatives.json', 'w', encoding='utf-8') as stream:
+              json.dump(payload, stream, indent=2)
+          failed = [item['name'] for item in results if item['status'] != 'pass']
+          print(json.dumps({'negatives': len(results), 'failed': failed}))
+          sys.exit(1 if failed else 0)
+          PY
+      - name: Bind the relocation evidence to the extracted prefix
+        run: |
+          python - <<'PY'
+          import json, os
+          prefix = os.environ['PREFIX_M'].replace('\\', '/').lower()
+          def load(name):
+              with open(os.path.join('build/dist', name), encoding='utf-8') as stream:
+                  return json.load(stream)
+          consumers = {}
+          for name, source in (('c11', 'c11.json'), ('cpp17', 'cpp17.json'),
+                               ('document', 'document.json'), ('identity', 'identity-raw.json')):
+              payload = load(source)
+              if name == 'document':
+                  passed = payload.get('status') == 0 and payload.get('complete') is True
+              elif name == 'identity':
+                  passed = payload.get('sdk_version') is not None and payload.get('abi') == 1
+              else:
+                  passed = payload.get('passed') is True
+              consumers[name] = {'status': 'pass' if passed else 'fail', 'passed': bool(passed),
+                                 'report': payload}
+          report = {'schema': 'reader-distribution-windows-relocation-v1', 'prefix': prefix,
+                    'extracted_elsewhere': True, 'consumers': consumers}
+          with open('build/dist/relocation.json', 'w', encoding='utf-8') as stream:
+              json.dump(report, stream, indent=2)
+          identity = dict(load('identity-raw.json'))
+          identity['probe'] = True
+          with open('build/dist/identity.json', 'w', encoding='utf-8') as stream:
+              json.dump(identity, stream, indent=2)
+          print(json.dumps({name: consumers[name]['status'] for name in consumers}))
+          PY
+      - name: Require every named result to pass for this source
+        run: |
+          python tools/reader_distribution_windows/verify_distribution.py \
+            --distribution build/dist/distribution.json \
+            --archive "$(ls build/dist/EXReader-reading-core-*-Windows-X64.zip)" \
+            --stage build/dist/sanitized --scan build/dist/scan-sanitized.json \
+            --sanitize build/dist/sanitize.json --identity build/dist/identity.json \
+            --relocation build/dist/relocation.json --smoke build/dist/corpus/summary.json \
+            --dependencies build/dist/dependencies.json --probe build/dist/probe.json \
+            --negatives build/dist/negatives.json --source-sha "$GITHUB_SHA" \
+            --output build/dist/summary.json
+      - name: Preserve the same-attempt evidence and the sealed distribution
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-distribution-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/dist/
+            !build/dist/sanitized/**
+            build/path-surface/
+            build/reloc-consumer/distribution-consumer-c.exe
+            build/reloc-consumer/distribution-consumer-cpp.exe
+            build/reloc-consumer/relocation-probe.exe
+            build/reloc-reading/reading-document.exe
+          if-no-files-found: error
+          include-hidden-files: true
+
+  aggregate:
+    name: re-aggregate the same attempt artifact
+    needs: windows
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Recompute the artifact and sealed archive digests
+        run: |
+          python3 tools/reader_distribution_windows/aggregate_artifacts.py \
+            --repo "$GITHUB_REPOSITORY" --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" \
+            --source-sha "$GITHUB_SHA" \
+            --artifact-name "reader-distribution-windows-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" \
+            --download-dir build/aggregate --output build/aggregate.json
+      - name: Preserve the aggregation record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-distribution-windows-aggregate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/aggregate.json
+          if-no-files-found: warn
