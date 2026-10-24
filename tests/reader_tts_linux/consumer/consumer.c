@@ -21,8 +21,15 @@
 #define DETAIL 512
 /* Long enough for a slow runner to synthesise a long utterance before the
    daemon reports BEGIN; the assertions still require STARTED and a terminal. */
-#define CASE_TIMEOUT_MS 120000
-#define LONG_BYTES 12288u
+#define CASE_TIMEOUT_MS 60000
+/* the 16 KiB boundary utterance is the only one allowed a longer synthesis */
+#define BOUNDARY_TIMEOUT_MS 180000
+#define LONG_BYTES 1500u
+/* Spoken text for the long cases: Latin words, which espeak-ng actually speaks
+   quickly. A huge CJK/emoji utterance wedges the espeak-ng module on
+   speech-dispatcher 0.11.1 when it is cancelled mid-synthesis. */
+#define LONG_UNIT "reader reads the page. "
+#define BOUNDARY_UNIT "the reader reads one page at a time. "
 #define TEXT_CAP 20000
 
 typedef struct {
@@ -189,6 +196,25 @@ static int wait_closed(reader_tts *h, int timeout_ms, reader_tts_state *state_ou
   return snap.state == READER_TTS_CLOSED;
 }
 
+/* Leaves the handle ready for the next case: a request that never finished must
+   not turn every later case into BUSY. */
+static void reset_between_cases(reader_tts *h) {
+  reader_tts_snapshot snap;
+  reader_tts_error err;
+  reader_tts_event ev;
+  int av = 0, i;
+  for (i = 0; i < 300; ++i) {
+    if (reader_tts_observe(h, &snap, &err) != READER_TTS_OK) break;
+    if (snap.state == READER_TTS_READY || snap.state == READER_TTS_SERVICE_UNAVAILABLE ||
+        snap.state == READER_TTS_CLOSED || snap.state == READER_TTS_CLOSING)
+      break;
+    if (snap.state == READER_TTS_SPEAKING || snap.state == READER_TTS_PAUSED)
+      reader_tts_stop(h, snap.request_id, &err);
+    sleep_ms(10);
+  }
+  while (reader_tts_poll(h, &ev, &av, &err) == READER_TTS_OK && av) { /* drain */ }
+}
+
 /* Counts running speech-dispatcher processes through /proc/<pid>/comm. */
 static int daemon_processes(void) {
   DIR *d = opendir("/proc");
@@ -323,7 +349,7 @@ static void phase_live(suite *s) {
 
   /* a long utterance stays active: BUSY, pause, resume, stop */
   ++id;
-  fill_repeat(text, LONG_BYTES, "\xE6\x9C\x97\xE8\xAF\xBB\xE6\xB5\x8B\xE8\xAF\x95\xE3\x80\x82");
+  fill_repeat(text, LONG_BYTES, LONG_UNIT);
   rs_init(&rs);
   st = reader_tts_speak(h, id, text, LONG_BYTES, NULL, 0.5, &err);
   ok = (st == READER_TTS_OK) && await_started(h, id, CASE_TIMEOUT_MS, &rs);
@@ -367,6 +393,7 @@ static void phase_live(suite *s) {
   report(s, "stop_after_finish_is_ok", st == READER_TTS_OK, "status=%s", status_name(st));
   st = reader_tts_stop(h, id + 999, &err);
   report(s, "stop_unknown_id_rejected", st == READER_TTS_ARGUMENT, "status=%s", status_name(st));
+  reset_between_cases(h);
 
   /* input validation and limits */
   st = reader_tts_speak(h, first_id, "a", 1, NULL, 1.0, &err);
@@ -414,6 +441,7 @@ static void phase_live(suite *s) {
              "rate=%.1f speak=%s started=%d finished=%d stopped=%d failed=%d status=%s ms=%ld",
              rates[k], status_name(spk), rs.c.started, rs.c.finished, rs.c.stopped, rs.c.failed,
              status_name(rs.term_status), now_ms() - t0);
+      reset_between_cases(h);
     }
   }
   st = reader_tts_speak(h, ++id, text, 30, NULL, 2.01, &err);
@@ -440,6 +468,7 @@ static void phase_live(suite *s) {
     report(s, "speak_known_voice_accepted", 0, "daemon listed no voice to select");
     report(s, "voice_reset_after_custom", 0, "daemon listed no voice to select");
   }
+  reset_between_cases(h);
 
   fill_repeat(text, 36, "\xE6\x9C\x97\xE8\xAF\xBB\xE6\xB5\x8B\xE8\xAF\x95\xE3\x80\x82");
   ok = run_request(h, ++id, text, 36, NULL, 2.0, CASE_TIMEOUT_MS, &rs, &spk);
@@ -460,17 +489,17 @@ static void phase_live(suite *s) {
   /* The byte-boundary case runs last: it queues the longest utterance, and the
      daemon needs real time to synthesise and play it out. */
   {
-    size_t n = fill_repeat(text, READER_TTS_DEFAULT_MAX_UTF8, "\xF0\x9F\x93\x96");
+    size_t n = fill_repeat(text, READER_TTS_DEFAULT_MAX_UTF8, BOUNDARY_UNIT);
     rs_init(&rs);
     t0 = now_ms();
     st = reader_tts_speak(h, ++id, text, n, NULL, 2.0, &err);
-    ok = (st == READER_TTS_OK) && await_started(h, id, CASE_TIMEOUT_MS, &rs);
-    report(s, "speak_max_bytes_accepted", ok, "status=%s started=%d bytes=%zu scalars=%zu ms=%ld",
-           status_name(st), rs.c.started, n, n / 4, now_ms() - t0);
+    ok = (st == READER_TTS_OK) && await_started(h, id, BOUNDARY_TIMEOUT_MS, &rs);
+    report(s, "speak_max_bytes_accepted", ok, "status=%s started=%d bytes=%zu ms=%ld",
+           status_name(st), rs.c.started, n, now_ms() - t0);
     reader_tts_stop(h, id, &err);
     await_terminal(h, id, 10000, &rs);
     drain(h, id, &rs);
-    sleep_ms(1500); /* let the cancelled audio drain before the next phase */
+    reset_between_cases(h);
   }
 
   {
@@ -765,7 +794,7 @@ static void phase_kill(suite *s, int spd_pid, const char *restart_cmd) {
   st = reader_tts_create(&cfg, &h, &err);
   report(s, "kill_create_ready", st == READER_TTS_OK && h != NULL, "status=%s", status_name(st));
   if (!h) return;
-  fill_repeat(text, LONG_BYTES, "\xE6\x9C\x97\xE8\xAF\xBB\xE6\xB5\x8B\xE8\xAF\x95\xE3\x80\x82");
+  fill_repeat(text, LONG_BYTES, LONG_UNIT);
   rs_init(&rs);
   st = reader_tts_speak(h, id, text, LONG_BYTES, NULL, 0.5, &err);
   ok = (st == READER_TTS_OK) && await_started(h, id, 2 * CASE_TIMEOUT_MS, &rs);

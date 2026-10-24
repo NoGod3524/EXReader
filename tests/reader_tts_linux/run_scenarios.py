@@ -337,9 +337,24 @@ def main():
         time.sleep(2.0)
         return rc
 
+    def restart_daemon(tag):
+        """Each phase is a separate process; give it a fresh system daemon so a
+        wedged module in one phase cannot decide the next phase's result."""
+        kill_daemons()
+        rc_r, _ = run(["/bin/sh", start_script],
+                      os.path.join(logs, "daemon-restart-%s.log" % tag), timeout=180)
+        pids_now = daemon_pids()
+        sock_now = discover_socket(socket_candidates())
+        env_note["restart_%s" % tag] = {"exit": rc_r, "pids": pids_now, "socket": sock_now or ""}
+        log("restart(%s): exit=%s pids=%s socket=%s" % (tag, rc_r, pids_now, sock_now))
+        return rc_r == 0 and bool(pids_now)
+
     run_phase("live", [consumer, "--phase", "live"], timeout=900)
+    restart_daemon("before-cpp")
     run_phase("cpp", [consumer_cpp, "--phase", "cpp"], timeout=300)
+    restart_daemon("before-hook")
     run_phase("hook", [hook_suite, "--phase", "hook"], timeout=600)
+    restart_daemon("before-kill")
 
     pids = daemon_pids()
     pid = pids[0] if pids else 0
