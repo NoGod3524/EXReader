@@ -13,9 +13,11 @@ import json
 from pathlib import Path
 import shutil
 import sys
+import tempfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import distlib
+import reduce_archives
 
 
 def copy_tree(source, destination):
@@ -46,6 +48,10 @@ def main():
     parser.add_argument('--destination', type=Path, required=True)
     parser.add_argument('--scan', type=Path, required=True, help='scan report of the source stage')
     parser.add_argument('--text-limit', type=int, default=8 * 1024 * 1024)
+    parser.add_argument('--reduce-archives', action='store_true',
+                        help='rebuild vendor static libraries without resource objects')
+    parser.add_argument('--lib-tool', default='lib')
+    parser.add_argument('--dumpbin', default='dumpbin')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     distlib.require(args.text_limit > 0, 'text limit must be positive')
@@ -87,6 +93,14 @@ def main():
                           'bytes_before': len(payload), 'bytes_after': len(replacement),
                           'sha256_before': distlib.digest_bytes(payload),
                           'sha256_after': distlib.digest_bytes(replacement)})
+    reduced = []
+    if args.reduce_archives:
+        with tempfile.TemporaryDirectory() as temporary:
+            for library in sorted(destination.rglob('*.lib')):
+                record = reduce_archives.reduce_library(library, args.lib_tool, args.dumpbin,
+                                                        needles, temporary)
+                if record:
+                    reduced.append(record)
     after = stage_digest(destination)
     residual = distlib.scan_tree(destination, needles)
     text_hits = sum(1 for item in residual for hit in item['hits'] if hit['class'] == 'text')
@@ -96,13 +110,15 @@ def main():
               'stage_digest_before': before, 'stage_digest_after': after,
               'text_limit': args.text_limit,
               'patterns': {key: value.decode('utf-8', 'replace') for key, value in needles.items()},
-              'rewritten': rewritten, 'refused': refused,
+              'rewritten': rewritten, 'refused': refused, 'reduced': reduced,
               'residual': {'text_hits': text_hits, 'binary_hits': binary_hits},
               'accepted': bool(not refused and not text_hits and not binary_hits)}
     distlib.write_json(args.output, report)
     print(json.dumps({'rewritten': len(rewritten), 'refused': len(refused),
+                      'reduced': len(reduced),
                       'residual_text': text_hits, 'residual_binary': binary_hits,
                       'occurrences': sum(len(item['occurrences']) for item in rewritten),
+                      'removed_members': sum(len(item['removed']) for item in reduced),
                       'accepted': report['accepted']}))
     if refused:
         print('blocking binary or non-rewritable build-machine paths: ' +

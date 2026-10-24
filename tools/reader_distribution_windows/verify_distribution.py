@@ -16,11 +16,12 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import distlib
+import reduce_archives
 
 REQUIRED_RESULTS = (
     'source-identity-bound', 'archive-matches-stage', 'archive-tamper-evident',
     'archive-content-scanned-clean', 'stage-scanned-clean',
-    'headers-config-licenses-hashed', 'sanitization-audited',
+    'headers-config-licenses-hashed', 'sanitization-audited', 'resource-objects-removed',
     'relocation-prefix-distinct', 'relocated-consumers-pass', 'nine-format-smoke-complete',
     'installed-identity-matches-headers', 'dependency-closure-system-only',
     'probe-prefix-bound', 'debug-sections-carry-no-build-root', 'no-absolute-drective',
@@ -147,6 +148,25 @@ def main():
                          sanitize.get('residual', {}).get('binary_hits') == 0)
     distlib.named(results, 'sanitization-audited', audit_ok and accepted_sanitize,
                   {'rewritten': len(sanitize.get('rewritten', [])), 'problems': audit_detail[:4]})
+
+    reduction_ok, reduction_detail = True, []
+    for record in sanitize.get('reduced', []):
+        path = Path(record['path'])
+        if not path.is_file() or distlib.digest(path) != record['sha256_after']:
+            reduction_ok = False
+            reduction_detail.append({'path': str(path), 'problem': 'reduced library changed'})
+            continue
+        try:
+            keep, drop = reduce_archives.plan(path.read_bytes())
+        except ValueError as error:
+            reduction_ok = False
+            reduction_detail.append({'path': str(path), 'problem': str(error)})
+            continue
+        if drop:
+            reduction_ok = False
+            reduction_detail.append({'path': str(path), 'problem': 'resource objects remain'})
+    distlib.named(results, 'resource-objects-removed', reduction_ok,
+                  {'libraries': len(sanitize.get('reduced', [])), 'problems': reduction_detail[:4]})
 
     prefix = Path(relocation.get('prefix', '')).as_posix().rstrip('/')
     stage_path = Path(args.stage).resolve().as_posix().rstrip('/')

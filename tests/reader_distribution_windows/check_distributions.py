@@ -46,7 +46,7 @@ def coff_object(section, payload):
     return bytes(header) + bytes(section_header) + payload
 
 
-def archive(members):
+def make_archive(members):
     body = bytearray(b'!<arch>' + bytes([10]))
     for name, payload in members:
         header = bytearray(60)
@@ -245,7 +245,7 @@ def main():
         absolute = b'/DEFAULTLIB:"D:\\a\\EXReader\\EXReader\\vendor.lib"'
         member = coff_object('.drective', absolute)
         library = root / 'surface.lib'
-        library.write_bytes(archive([('control.obj', member)]))
+        library.write_bytes(make_archive([('control.obj', member)]))
         facts = distlib.scan_archive('surface.lib', library.read_bytes())
         assert facts['member_names_sample'] == ['control.obj']
         assert not facts['member_names_with_separator']
@@ -254,7 +254,7 @@ def main():
         case('archive-reader-classifies-members-and-drective')
         debug_member = coff_object('.debug$S', b'\x04' + b'0' * 8 + b'D:\\a\\EXReader\\EXReader\\x.c' + bytes([0]))
         debug_library = root / 'debug.lib'
-        debug_library.write_bytes(archive([('control.obj', debug_member)]))
+        debug_library.write_bytes(make_archive([('control.obj', debug_member)]))
         debug_facts = distlib.scan_archive('debug.lib', debug_library.read_bytes())
         assert debug_facts['debug_section_count'] == 1
         assert debug_facts['debug_sections'][0]['section'] == '.debug$S'

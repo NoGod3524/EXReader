@@ -195,7 +195,8 @@ jobs:
         run: |
           python tools/reader_distribution_windows/sanitize_stage.py \
             --source build/reading-core/stage --destination build/dist/sanitized \
-            --scan build/dist/scan-stage.json --output build/dist/sanitize.json
+            --scan build/dist/scan-stage.json --reduce-archives \
+            --lib-tool lib --dumpbin dumpbin --output build/dist/sanitize.json
           python tools/reader_distribution_windows/scan_paths.py \
             --root build/dist/sanitized --label sanitized-stage --require-clean \
             --root-arg "$WS" --root-arg "$STAGE_M" --root-arg "$USERPROFILE" \

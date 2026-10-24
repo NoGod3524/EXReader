@@ -211,6 +211,33 @@ def absolute_directive(directive):
     return None
 
 
+def archive_members(payload):
+    """Every member of an MSVC/ar archive with its resolved name and payload."""
+    require(payload[:len(ARCHIVE_MAGIC)] == ARCHIVE_MAGIC, 'not an archive')
+    position, longnames, members = len(ARCHIVE_MAGIC), b'', []
+    while position + 60 <= len(payload):
+        header = payload[position:position + 60]
+        require(header[58:60] == MEMBER_FMAG, 'invalid archive member header at %d' % position)
+        raw = header[0:16].decode('latin-1').rstrip()
+        size = int(header[48:58].decode('latin-1').strip() or '0')
+        body = payload[position + 60:position + 60 + size]
+        require(len(body) == size, 'truncated archive member ' + raw)
+        name = raw
+        if raw == '//':
+            longnames = body
+        elif raw.startswith('/') and raw[1:].isdigit():
+            offset = int(raw[1:])
+            end = longnames.find(bytes([0]), offset)
+            name = longnames[offset:end if end > 0 else len(longnames)].decode('latin-1')
+        elif raw.endswith('/') and len(raw) > 1:
+            name = raw[:-1]
+        members.append({'name': name, 'raw': raw, 'body': body})
+        require(len(members) <= 20000, 'archive has too many members')
+        position = position + 60 + size + (size & 1)
+    require(members, 'archive carries no members')
+    return members
+
+
 def scan_archive(name, payload):
     """Member names, member COFF surfaces and .drectve directives of one archive."""
     members, section_hits, directives, machines = [], [], [], set()
