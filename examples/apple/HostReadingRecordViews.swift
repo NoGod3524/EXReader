@@ -12,6 +12,9 @@ struct HostReadingRecordsSheet: View {
     init(model: HostReaderModel) {
         self.model = model; self.records = model.readingRecords
     }
+    private var confirmationTitle: String {
+        deleting != nil ? "删除阅读记录？" : restoring != nil ? "恢复这个保留版本？" : "放弃这项待完成请求？"
+    }
     var body: some View {
         VStack(spacing: 12) {
             Text("阅读记录").font(.headline).accessibilityAddTraits(.isHeader)
@@ -74,24 +77,22 @@ struct HostReadingRecordsSheet: View {
                 Button("关闭") { presentation.wrappedValue.dismiss() }.accessibilityIdentifier("reading.close")
             }.buttonStyle(.bordered)
         }.padding().frame(minWidth: 280, minHeight: 360)
-            .onDisappear { model.closeReadingRecords() }
+            .onDisappear { if editing == nil { model.closeReadingRecords() } }
             .sheet(item: $editing) { HostReadingNoteEditor(model: model, row: $0) }
-            .alert("删除阅读记录？", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } })) {
-                Button("删除", role: .destructive) { if let row = deleting { model.deleteReadingRecord(row) }; deleting = nil }
-                    .accessibilityIdentifier("reading.confirm-delete")
-                Button("取消", role: .cancel) { deleting = nil }
-            } message: { Text("保留版本仍可查看。") }
-            .alert("恢复这个保留版本？", isPresented: Binding(get: { restoring != nil }, set: { if !$0 { restoring = nil } })) {
-                Button("恢复") { if let version = restoring { model.restoreReadingVersion(version) }; restoring = nil }
-                    .accessibilityIdentifier("reading.confirm-restore")
-                Button("取消", role: .cancel) { restoring = nil }
-            } message: { Text("先核验原书中的实际位置，再新建恢复记录。当前页面保持不变。") }
-            .alert("放弃这项待完成请求？", isPresented: Binding(get: { discardRevision != nil }, set: { if !$0 { discardRevision = nil } })) {
-                Button("放弃请求", role: .destructive) {
-                    if let revision = discardRevision { model.discardReadingRequest(expected: revision) }; discardRevision = nil
-                }.accessibilityIdentifier("reading.confirm-discard")
-                Button("取消", role: .cancel) { discardRevision = nil }
-            } message: { Text("已经提交的版本会保留。") }
+            .alert(confirmationTitle, isPresented: Binding(get: { deleting != nil || restoring != nil || discardRevision != nil },
+                set: { if !$0 { deleting = nil; restoring = nil; discardRevision = nil } })) {
+                if let row = deleting {
+                    Button("删除", role: .destructive) { model.deleteReadingRecord(row); deleting = nil }
+                        .accessibilityIdentifier("reading.confirm-delete")
+                } else if let version = restoring {
+                    Button("恢复") { model.restoreReadingVersion(version); restoring = nil }
+                        .accessibilityIdentifier("reading.confirm-restore")
+                } else if let revision = discardRevision {
+                    Button("放弃请求", role: .destructive) { model.discardReadingRequest(expected: revision); discardRevision = nil }
+                        .accessibilityIdentifier("reading.confirm-discard")
+                }
+                Button("取消", role: .cancel) { deleting = nil; restoring = nil; discardRevision = nil }
+            } message: { Text(restoring != nil ? "先核验原书中的实际位置，再新建恢复记录。当前页面保持不变。" : "已经提交的版本会保留。") }
     }
 }
 

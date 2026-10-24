@@ -12,7 +12,7 @@ func hostReadingField<T>(_ input: T) -> String {
     }
 }
 
-struct HostReadingCapture: Codable {
+struct HostReadingCapture: Codable, Equatable {
     let mode: Int
     let part: Int
     let path: String

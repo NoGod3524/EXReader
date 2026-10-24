@@ -28,12 +28,22 @@ jobs:
           test "$(git rev-parse HEAD:apps/reader/search)" = 2e09cb2945564f25085074a816b95472392df205
           test "$(git rev-parse HEAD:apps/reader/navigation)" = 9395914832e191ad63f18f6188ca5044260d2f12
           git merge-base --is-ancestor 356c57a4c641f05e10cff13850e24bd94336454e HEAD
+          base=356c57a4c641f05e10cff13850e24bd94336454e
+          if test -d apps/reader/reading-commands; then
+            test "$(git rev-parse HEAD:apps/reader/reading-commands)" = cf067b8be378d4195817d1106b81f358579e2280
+            test "$(git rev-parse HEAD:apps/reader/annotation-view)" = 9d30b6c54f61496010f647695dedd7ea7ab0c7c1
+            test "$(git rev-parse HEAD:apps/reader/reading-state)" = 60127ae75fbac918237b1c8584e0f7ac2e6130a4
+            base=f5d25b4c71ea39bd22bebea4eedfee16ca178c35
+            git merge-base --is-ancestor "$base" HEAD
+          fi
           while IFS= read -r path; do
             case "$path" in
               apps/reader/navigation/*|examples/apple/HostNavigation.swift|examples/apple/HostNavigationViews.swift|examples/apple/HostModel.swift|examples/apple/HostSDK.swift|examples/apple/HostViews.swift|examples/apple/product/ReaderProduct.h|tests/apple_host/navigation/*|tests/apple_host/resolve_container.py|tests/apple_host/make_xcodeproj.rb|tools/build_apple_product.py|tools/apple_swift.py|tools/check_apple_product.py|.github/workflows/reader-apple-navigation.yml|.github/workflows/reader-apple-shelf.yml|docs/READER-APPLE-NAVIGATION.md|docs/validation/reader-apple-navigation.json) ;;
+              apps/reader/reading-commands/*|apps/reader/annotation-view/*|examples/apple/HostReadingRecords.swift|examples/apple/HostReadingRecordViews.swift|examples/apple/HostCatalog.swift|examples/apple/HostSearch.swift|tests/apple_host/reading/*|.github/workflows/reader-apple-reading-records.yml|.github/workflows/reader-apple-reading-records-diagnostic.yml|docs/READER-APPLE-READING-RECORDS.md|docs/validation/reader-apple-reading-records.json)
+                test "$base" = f5d25b4c71ea39bd22bebea4eedfee16ca178c35 ;;
               *) echo "Unowned change: $path"; exit 1 ;;
             esac
-          done < <(git diff --name-only 356c57a4c641f05e10cff13850e24bd94336454e HEAD)
+          done < <(git diff --name-only "$base" HEAD)
       - name: Build unchanged public SDK and install optional products
         run: |
           target='${{ matrix.target }}'
