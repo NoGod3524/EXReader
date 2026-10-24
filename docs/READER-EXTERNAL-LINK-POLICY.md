@@ -144,15 +144,62 @@ then authenticates the three same-run ZIPs through the GitHub API, re-computes
 their digests, and compares the report against the installed library, header and
 consumer bytes inside the same ZIP.
 
+## Cloud test evidence
+
+Tested source **e175a00fbf7f623993698a276e8f066c392ad061** on branch
+`codex/reader-external-link-policy`, run **40123584995** attempt **1**.
+All four jobs succeeded; the final HEAD of the branch is a later docs-only
+`[skip ci]` commit and is not part of the tested source.
+
+| platform | named checks | job |
+| --- | --- | --- |
+| Linux (ubuntu-22.04) | 36/36 pass | 120960162825 |
+| Windows (windows-2022) | 36/36 pass | 120960162668 |
+| macOS (macos-15) | 36/36 pass | 120960162760 |
+| same-run artifact evidence | 3 ZIPs authenticated | 120964157535 |
+
+Artifacts of that run (sha256 of the uploaded ZIP, retention until 2027-01-22T19:04:03Z):
+
+| artifact | id | bytes | sha256 |
+| --- | --- | --- | --- |
+| reader-external-link-policy-Linux-40123584995-1 | 12571723825 | 421612 | 6a82469a2658f42447dc4f7417f5ab28b24e4194cf06c62673aa31ed504f4b29 |
+| reader-external-link-policy-Windows-40123584995-1 | 12572047455 | 858245 | 2a1d4d40be90b3e00a4a37edd7e7da332407cd240d00c1ee91b0a1a983ebbff2 |
+| reader-external-link-policy-macOS-40123584995-1 | 12572544145 | 384639 | 601e3505db9656e762808a74be6f297c416a9ec1a79a20bd0872523c4bea24fd |
+| reader-external-link-policy-summary-40123584995-1 | 12572590948 | 865 | 7bd4fbed6e2ee664f4e7b6dc7886b06e60353eb0b074aeb178f535184c97e22d |
+
+The evidence job downloaded each ZIP itself, recomputed its digest, rejected
+altered report variants, and matched `report.json` to the installed library,
+header and consumer bytes carried inside the same ZIP. It reported
+`artifact evidence ok: 3 artifacts`.
+
+Per platform: 127 default fixture cases, 7 custom-policy cases, 19 groups; the
+SDK hand-off saw 6 authored navigation entries with 4 INTERNAL targets all
+accepted by `exr_document_resolve` and the single NEEDS_HOST target refused by
+it; the static symbol audit found no network, process or file reference
+(110 symbols on Linux, 263 on Windows, 219 on macOS) and the negative control
+was detected in every run.
+
+Retained original failures (kept, not rewritten):
+
+- run **40122660917** (source ad378913): the C++ consumer was compiled with
+  the wrong version macro names on every platform, so all three jobs failed; artifacts
+  12572355548, 12571393229, 12571918268, 12571519608.
+- run **40122960979** (source 1df6dd3c): the worker's never-cancel case still
+  polls four times and its lifetime case started allocation tracking after the
+  policy existed, and MSVC refused `strcpy` under /W4 /WX; Linux and Windows
+  failed. The macOS job of that superseded run was cancelled while still
+  queued so the fixed run could obtain a runner, so it produced no evidence;
+  artifacts 12572206174 and 12572311188.
+
 ## Acceptance status
 
 | item | status |
 | --- | --- |
-| module behaviour (36 named checks) | cloud test pending |
-| installed C and C++ consumers | cloud test pending |
-| no network / process / file dependency | static proof pending (audit + negative control) |
+| module behaviour (36 named checks) | **accepted** on Linux, Windows and macOS from run 40123584995 |
+| installed C and C++ consumers | **accepted** (five consumers built from the install prefix only) |
+| no network / process / file dependency | **static proof passed**, including a negative control |
 | actual hosts (Windows, GTK, Android, Apple) | **not wired**; owned by root and the host owners |
 | real device / emulator / performance / accessibility | **not in scope** of this package |
+| root review against the merged common source | **not done**; integration is not claimed |
 
-`docs/validation/reader-external-link-policy.json` starts with `accepted=false` and is
-filled only from real, same-run artifact evidence.
+`docs/validation/reader-external-link-policy.json` carries the accepted record with the real run/attempt, jobs, artifacts and retained failures above.
