@@ -1,14 +1,45 @@
 {
-  "accepted": false,
-  "status": "original cloud run rejected; isolated review awaiting full rerun",
+  "accepted": true,
+  "status": "accepted Windows/Linux package interfaces after complete same-source cloud rerun",
   "package": "EXReaderSearch 0.1.0",
   "common_start": "c3511a011eefbf1fba1d20908f000cef22b1ced2",
-  "source_sha": null,
-  "run_id": null,
-  "attempt": null,
-  "artifacts": [],
-  "jobs": [],
-  "problems": ["Original C++ probe used a progress offset inside a UTF-8 scalar. Both platforms compiled and ran the C consumer, but the C++ probe and strict summary failed. Review changes are not accepted until a full same-source run succeeds."],
+  "source_sha": "971e528e50eca5d08371e096b24a4c351478786b",
+  "run_id": 40064018124,
+  "attempt": 1,
+  "artifacts": [
+    {
+      "id": 12548074953,
+      "name": "reader-search-Linux-40064018124-1",
+      "size_in_bytes": 7818547,
+      "digest": "sha256:d20983d115dbc688ce0e020a2da41756b9b9b51a2a494b3892bdd60552451cf1",
+      "expires_at": "2027-01-22T04:51:55Z"
+    },
+    {
+      "id": 12548203226,
+      "name": "reader-search-Windows-40064018124-1",
+      "size_in_bytes": 5858581,
+      "digest": "sha256:25057553558113ebbcf3501db6de1226b1f604bb5ae27df80e48c35b33845846",
+      "expires_at": "2027-01-22T04:51:55Z"
+    }
+  ],
+  "jobs": [
+    {
+      "id": 120783341274,
+      "name": "search consumers (ubuntu-22.04)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120783341430,
+      "name": "search consumers (windows-2022)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120784028927,
+      "name": "strict search evidence",
+      "conclusion": "success"
+    }
+  ],
+  "problems": [],
   "retained_failures": [{
     "source_sha": "db3d574798518f8b91339148a78d02620e8c993b",
     "run_id": 40062703988,
@@ -62,8 +93,104 @@
         "digest": "sha256:7b759c0da2d073b9824c508ad82073177cc5d9598530962c4f706cbfbbd3b8c5"
       }
     ]
+  }, {
+    "source_sha": "9d250399c3c965b7ae3054f4560c3c76f3f623ff",
+    "run_id": 40063858211,
+    "attempt": 1,
+    "reason": "Probe initialization queried global notes on a bounded EPUB. Fixed to use chapter-local notes for bounded EPUB; original immutability assertion retained.",
+    "jobs": [
+      {
+        "id": 120782865732,
+        "name": "search consumers (windows-2022)",
+        "conclusion": "failure"
+      },
+      {
+        "id": 120782865910,
+        "name": "search consumers (ubuntu-22.04)",
+        "conclusion": "failure"
+      },
+      {
+        "id": 120783410693,
+        "name": "strict search evidence",
+        "conclusion": "failure"
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 12548975041,
+        "size_in_bytes": 7812177,
+        "digest": "sha256:81beab46d8259c3f7caa3f94cdd6524a5467f81cde9f991dd36d9ce45c672b95"
+      },
+      {
+        "id": 12548910748,
+        "size_in_bytes": 371,
+        "digest": "sha256:56bf5b1a29450a698029a73d8f5e17624bea9423df4d8faad5c2f7b75bb987f7"
+      },
+      {
+        "id": 12548392246,
+        "size_in_bytes": 5851919,
+        "digest": "sha256:fab7455cec46ef9d0b932a400a3b96317cf9da7ee096379f11864a432e68f8a8"
+      }
+    ]
   }],
-  "granted_platforms": [],
+  "granted_platforms": ["linux", "windows"],
+  "checks_per_platform": 264,
+  "cases_per_platform": 34,
+  "evidence_artifact": {
+    "id": 12548259661,
+    "name": "reader-search-evidence-40064018124-1",
+    "size_in_bytes": 650,
+    "digest": "sha256:314365f1cc968b0f181d7ac8d828ec9ad5bdfb8de810172a2218078c6b7d3d67",
+    "expires_at": "2027-01-22T04:51:55Z"
+  },
+  "measurements": {
+    "Linux": [
+      {
+        "id": "epub-long-chapter",
+        "source_bytes": 1478719,
+        "projection_bytes": 1468499,
+        "hits": 1500,
+        "batches": 16,
+        "stream_chunks": 45,
+        "straddling_hits": 37,
+        "peak_rss_before": 17694720,
+        "peak_rss_after_sdk_stream_only": 18259968,
+        "peak_rss_after_search": 20127744,
+        "sdk_peak_parse_workspace_bytes": 6460624,
+        "sdk_windows_loaded": 1,
+        "sdk_windows_evicted": 0,
+        "module_bytes_scanned": 1468499,
+        "module_units_scanned": 16,
+        "module_peak_accounted_bytes": 109192,
+        "module_seen_sdk_peak_parse_workspace_bytes": 6460624,
+        "elapsed_ms": 452.398649,
+        "note": "single observation; not a performance claim; peak RSS is a process-wide monotone high-water mark"
+      }
+    ],
+    "Windows": [
+      {
+        "id": "epub-long-chapter",
+        "source_bytes": 1478719,
+        "projection_bytes": 1468499,
+        "hits": 1500,
+        "batches": 16,
+        "stream_chunks": 45,
+        "straddling_hits": 37,
+        "peak_rss_before": 15085568,
+        "peak_rss_after_sdk_stream_only": 18132992,
+        "peak_rss_after_search": 20570112,
+        "sdk_peak_parse_workspace_bytes": 6460544,
+        "sdk_windows_loaded": 1,
+        "sdk_windows_evicted": 0,
+        "module_bytes_scanned": 1468499,
+        "module_units_scanned": 16,
+        "module_peak_accounted_bytes": 109184,
+        "module_seen_sdk_peak_parse_workspace_bytes": 6460544,
+        "elapsed_ms": 966.059,
+        "note": "single observation; not a performance claim; peak RSS is a process-wide monotone high-water mark"
+      }
+    ]
+  },
   "macos_accepted": false,
   "performance_claimed": false,
   "host_ui_accepted": false,
