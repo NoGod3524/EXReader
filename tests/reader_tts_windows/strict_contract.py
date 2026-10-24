@@ -318,6 +318,9 @@ def verify_checked(run, jobs, artifacts, archives, logs, repo, sha, run_id, atte
          and run.get("head_repository", {}).get("id") == run["repository"]["id"], "run_repository")
     need((run.get("status") == "completed" and run.get("conclusion") == "success") if completed else
          (run.get("status") == "in_progress" and run.get("conclusion") is None), "run_conclusion")
+    # The retrospective verify job is listed as skipped in a push run; only jobs that
+    # were actually scheduled belong to the evidence set.
+    jobs = [job for job in jobs if job.get("conclusion") != "skipped"]
     unique(jobs, "job_duplicate")
     unique(artifacts, "artifact_duplicate")
     need({row["name"] for row in jobs} == {PRODUCER_JOB, REPORT_JOB}, "job_set")
