@@ -304,7 +304,14 @@ static exr_status received_resolve(linux_reader *reader,received_owner *owner,co
     else { result->receive_reading_rows++;result->receive_reading_unresolved++; }
     g_free(copy.wire);
   }
-  result->receive_reading_more=count==100;result->receive_resolutions=g_string_free(matches,FALSE);return status;
+  if(status==EXR_OK && count==100) {
+    received_annotation extra={0};
+    code=reader_revision_annotations_page(owner->revisions,key,after,1,1,received_copy_annotation,&extra,NULL);
+    if(code!=READER_REV_OK) status=EXR_DATABASE;
+    else result->receive_reading_more=extra.found;
+    g_free(extra.wire);
+  }
+  result->receive_resolutions=g_string_free(matches,FALSE);return status;
 }
 static exr_status received_open(linux_reader *reader,received_owner *owner,const reader_command *command,reader_result *result) {
   result->receive_response=6;account_control control={reader,command->account_control};

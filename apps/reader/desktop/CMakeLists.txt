@@ -122,12 +122,10 @@ if(EXR_READER_BUILD_GTK)
     target_compile_definitions(exreader-linux PRIVATE EXR_READER_ACCOUNT=1)
     target_link_libraries(exreader-linux-reading PRIVATE EXReaderCredentials::exr_credentials
       EXReaderSideload::exr_sideload EXReaderWebDAV::exr_webdav EXReaderReadingState::reader_reading_state)
-    target_link_libraries(exreader-linux PRIVATE EXReaderSession::reader_session EXReaderCredentials::exr_credentials)
-    # Pull the installed product amalgamation before the SDK's optional vendor
-    # archive can satisfy SQLite symbols in this combined executable.
-    get_target_property(reader_gtk_links exreader-linux LINK_LIBRARIES)
-    set_property(TARGET exreader-linux PROPERTY LINK_LIBRARIES EXReaderProductCatalog::reader_catalog_sqlite ${reader_gtk_links})
-    target_link_options(exreader-linux PRIVATE "LINKER:-u,sqlite3_open")
+    # Like the installed reading-state consumer, make the product provider a
+    # direct dependency before the SDK's transitive vendor archives.
+    target_link_libraries(exreader-linux PRIVATE EXReaderSession::reader_session EXReaderCredentials::exr_credentials
+      EXReaderProductCatalog::reader_catalog EXReaderProductCatalog::reader_catalog_sqlite)
     target_link_options(exreader-linux PRIVATE "-Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/gtk-account-host.map")
   endif()
   add_executable(reader-gtk-shelf-check ../../../tests/linux_host/shelf_backend.c)

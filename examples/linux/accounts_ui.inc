@@ -14,7 +14,7 @@ static struct {
   int64_t open_book,imported_book,restored_book;
   int imported_created,restore_failed;
   size_t restored_part,restored_position,conflict_rows;
-  uint64_t projected,conflicted,waiting,receive_seen;
+  uint64_t projected,conflicted,waiting,receive_seen,receive_attempt;
   size_t receive_page_rows,max_receive_page_rows;
   size_t reading_rows,reading_found,reading_unresolved;
   int reading_more;
@@ -143,6 +143,7 @@ static void accounts_submit(reader_action action,int saved_only) {
     (accounts.bound_root ? accounts.bound_root:""));job->command.account_saved_only=saved_only;
   job->command.account_control=&accounts.control;
   if(action==READER_RECEIVE_OPEN) job->command.receive_key=g_strdup(accounts.receive_key);
+  if(action==READER_RECEIVE_OPEN) accounts.receive_attempt++;
   if(action==READER_RECEIVE_CONFLICTS_BEGIN) job->command.receive_key=g_strdup(accounts.conflict_cursor);
   if(action==READER_ACCOUNT_SET) {
     job->command.account_user=g_strdup(gtk_entry_get_text(GTK_ENTRY(accounts.user)));
@@ -467,6 +468,7 @@ static char *accounts_observation(void) {
   g_key_file_set_uint64(file,group,"reading_unresolved",accounts.reading_unresolved);g_key_file_set_integer(file,group,"reading_more",accounts.reading_more);
   g_key_file_set_string(file,group,"resolutions",accounts.resolutions ? accounts.resolutions:"");
   g_key_file_set_uint64(file,group,"receive_seen",accounts.receive_seen);g_key_file_set_uint64(file,group,"projected",accounts.projected);
+  g_key_file_set_uint64(file,group,"receive_attempt",accounts.receive_attempt);
   g_key_file_set_uint64(file,group,"conflicted",accounts.conflicted);g_key_file_set_uint64(file,group,"waiting",accounts.waiting);
   g_key_file_set_uint64(file,group,"receive_page_rows",accounts.receive_page_rows);g_key_file_set_uint64(file,group,"max_receive_page_rows",accounts.max_receive_page_rows);
   g_key_file_set_uint64(file,group,"conflict_rows",accounts.conflict_rows);
