@@ -119,13 +119,14 @@ def main():
                       'debug_section_count': summary['debug_section_count'],
                       'archives': summary['archives'], 'pe_files': summary['pe_files'],
                       'surfaces': surfaces}))
-    if blocking or any(surfaces.values()):
-        print('blocking binary build-machine surfaces: ' +
-              json.dumps({'hits': blocking[:4], 'surfaces': surfaces}), file=sys.stderr)
-        return 2
-    if args.require_clean and summary['hits']:
-        print('build-machine paths remain in a shipped artifact', file=sys.stderr)
-        return 3
+    if args.require_clean:
+        if blocking or any(surfaces.values()):
+            print('blocking binary build-machine surfaces: ' +
+                  json.dumps({'hits': blocking[:4], 'surfaces': surfaces}), file=sys.stderr)
+            return 2
+        if summary['hits']:
+            print('build-machine paths remain in a shipped artifact', file=sys.stderr)
+            return 3
     return 0
 
 

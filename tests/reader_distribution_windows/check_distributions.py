@@ -24,6 +24,7 @@ CASES = []
 
 def case(label):
     CASES.append(label)
+    print('case:', label, flush=True)
 
 
 def write(path, text):
@@ -140,6 +141,10 @@ def main():
         leaking = stage(root / 'leaking', binary_leak=True)
         completed = run(TOOLS / 'scan_paths.py', '--root', leaking, '--root-arg',
                         'D:/a/EXReader/EXReader', '--output', root / 'scan-leaking.json')
+        assert completed.returncode == 0, completed.stderr
+        completed = run(TOOLS / 'scan_paths.py', '--root', leaking, '--root-arg',
+                        'D:/a/EXReader/EXReader', '--require-clean',
+                        '--output', root / 'scan-leaking-clean.json')
         assert completed.returncode == 2, completed.stderr
         case('scan-cli-blocks-binary-hit')
 
