@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "accepted": false,
-  "state": "first_source_finished_verifier_python_compatibility_fix_pending_revalidation",
-  "tested_source": "927201157d045f7ff994a1241a7e7703bc360fa3",
+  "state": "same_source_scopes_authenticated_two_palette_failures_remain",
+  "tested_source": "7adda19cb5dd4108d4b4a434a8f2bb619519529d",
   "branch": "codex/reader-hosts-integration",
   "merge_baseline": "33167f2faa6cabae6656b8c1089a799dc7e5549e",
   "sdk": "9854061be331fe603a1822d9b2b36ee357154927",
@@ -31,6 +31,28 @@
       "strict_host_summary": 121010251668,
       "strict_host_summary_error": "Python 3.10 lacks hashlib.file_digest; all raw host reports retained for repaired Actions-only inspection",
       "overall_acceptance_not_granted": true
+    },
+    {
+      "id": 40140496079,
+      "attempt": 1,
+      "source": "f09148bac21df08446173590e67492320819a82e",
+      "status": "completed",
+      "conclusion": "failure",
+      "windows_initial_import_failed_before_search": true,
+      "windows_job": 121011068780,
+      "strict_host_summary": 121013989747,
+      "overall_acceptance_not_granted": true
+    },
+    {
+      "id": 40141520772,
+      "attempt": 1,
+      "source": "7adda19cb5dd4108d4b4a434a8f2bb619519529d",
+      "status": "completed",
+      "conclusion": "failure",
+      "strict_host_summary": 121018373358,
+      "problems": [],
+      "accepted": false,
+      "diagnostic_only": false
     }
   ],
   "retained_palette_failures": [
@@ -41,5 +63,62 @@
   "performance_accepted": false,
   "six_target_product_accepted": false,
   "screen_reader_speech_accepted": false,
-  "physical_device_accepted": false
+  "physical_device_accepted": false,
+  "current_scopes": {
+    "three_desktop_composition": true,
+    "windows_search": true,
+    "gtk_reading_records": true,
+    "gtk_search": true,
+    "gtk_navigation": true,
+    "gtk_preferences": false,
+    "android_reading_search_navigation_emulator": true
+  },
+  "current_jobs": {
+    "source_and_syntax": 121014076303,
+    "composition_linux": 121014126221,
+    "composition_windows": 121014126264,
+    "composition_macos": 121014126282,
+    "composition_strict": 121016990543,
+    "windows_search": 121014126238,
+    "windows_strict": 121015971296,
+    "gtk": 121014126270,
+    "android": 121014126184,
+    "host_authentication": 121018373358
+  },
+  "current_artifacts": [
+    {
+      "id": 12579440752,
+      "name": "reader-module-composition-report-40141520772-1",
+      "bytes": 2026,
+      "digest": "sha256:1c049f518dfbe4a368af4e6006eb218076904f6fb65d1329e308a58add97637b"
+    },
+    {
+      "id": 12579082302,
+      "name": "reader-windows-search-summary-40141520772-1",
+      "bytes": 752,
+      "digest": "sha256:106106d263acf885b28806490f206bd18b27164fcb6d1bb2acf4cb55bc16a3db"
+    },
+    {
+      "id": 12579641183,
+      "name": "reader-gtk-reading-records-40141520772-1",
+      "bytes": 43316682,
+      "digest": "sha256:ba4612b1c3d7c21e8bb7fa74176a88f79ec004dea2798bebfa4e1fa901bb1d41"
+    },
+    {
+      "id": 12579262436,
+      "name": "reader-android-reading-40141520772-1",
+      "bytes": 136586817,
+      "digest": "sha256:20874842a687b65646a125d678da787b6dc528139bf1263eedf69591991aa5e4"
+    }
+  ],
+  "current_artifact_expiry": "2027-01-22T23:08:49Z",
+  "preserved_diagnostic": {
+    "run": 40140526318,
+    "validator_source": "f09148bac21df08446173590e67492320819a82e",
+    "validated_source": "927201157d045f7ff994a1241a7e7703bc360fa3",
+    "validated_run": 40138835223,
+    "accepted": false,
+    "diagnostic_only": true,
+    "problems": []
+  }
 }
