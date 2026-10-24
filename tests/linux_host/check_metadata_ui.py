@@ -92,7 +92,9 @@ def main():
                 assert time.monotonic() < end, 'typed intent did not reach durable staging'
                 time.sleep(.02)
             assert host.read()['busy'] == 1
-            command('xdotool', 'windowclose', dialog)
+            # windowclose calls XDestroyWindow and bypasses WM_DELETE_WINDOW.
+            # Use the same window-manager shortcut a user presses instead.
+            command('xdotool', 'key', '--clearmodifiers', 'alt+F4')
             window('Book details')
             assert host.process.poll() is None
         finally:
