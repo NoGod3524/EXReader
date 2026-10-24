@@ -1406,7 +1406,7 @@ def main():
         "counts": {"records": len(REC), "aliases": len(ALIAS), "items": len(ITEMS),
                    "aux": len([k for k in AUX if AUX[k] is not None])},
     }
-    with open(os.path.join(out, "expected.json"), "w", encoding="utf-8") as handle:
+    with open(os.path.join(out, "expected.json"), "w", encoding="utf-8", newline="\n") as handle:
         json.dump(expected, handle, ensure_ascii=True, sort_keys=True, indent=1)
     meta = {
         "fixture": "g14-unicode-interop-1",
@@ -1418,7 +1418,7 @@ def main():
         "records": len(REC),
         "items": len(ITEMS),
     }
-    with open(os.path.join(out, "meta.json"), "w", encoding="utf-8") as handle:
+    with open(os.path.join(out, "meta.json"), "w", encoding="utf-8", newline="\n") as handle:
         json.dump(meta, handle, ensure_ascii=True, sort_keys=True, indent=1)
     print("fixtures: %d records, %d items, %d bytes container" % (len(REC), len(ITEMS), size))
     return 0
