@@ -89,3 +89,25 @@ jobs:
             build/rs-consumer/reading-state-link.map
             build/rs-adapter/CMakeCache.txt
           if-no-files-found: error
+  evidence:
+    name: same-run artifact evidence
+    needs: reading-state
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify both same-run ZIPs, digests and report identity in the cloud
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_reading_state/check_artifacts.py build/rs-artifact-evidence
+      - name: Preserve the artifact verification record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-reading-state-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/rs-artifact-evidence/
+          if-no-files-found: error
