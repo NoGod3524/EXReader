@@ -430,3 +430,51 @@ def require_named_pass(results, names):
     require(not missing, 'missing named results: ' + ', '.join(missing))
     failed = [item['name'] for item in results if item['status'] != 'pass']
     require(not failed, 'failed named results: ' + ', '.join(failed))
+
+
+def path_token(key):
+    return ('<path:%s>' % key).encode('utf-8')
+
+
+def rewrite_occurrences(payload, needles):
+    """Replace every case-insensitive occurrence, longest match first per position.
+
+    Returns the new payload and the occurrence list in new-payload order, so the
+    original bytes can be rebuilt exactly (including the original casing).
+    """
+    lowered = payload.lower()
+    matches = []
+    for key in sorted(needles):
+        needle = needles[key].lower()
+        if not needle:
+            continue
+        start = lowered.find(needle)
+        while start >= 0:
+            matches.append((start, len(needle), key))
+            start = lowered.find(needle, start + 1)
+    matches.sort(key=lambda item: (item[0], -item[1], item[2]))
+    output, occurrences, cursor = bytearray(), [], 0
+    for offset, length, key in matches:
+        if offset < cursor:
+            continue
+        output += payload[cursor:offset]
+        output += path_token(key)
+        matched = payload[offset:offset + length].decode('utf-8')
+        occurrences.append({'key': key, 'matched': matched, 'offset': offset})
+        cursor = offset + length
+    output += payload[cursor:]
+    return bytes(output), occurrences
+
+
+def restore_occurrences(payload, occurrences):
+    """Rebuild the original bytes from a rewritten payload and its occurrence list."""
+    output, cursor = bytearray(), 0
+    for occurrence in occurrences:
+        token = path_token(occurrence['key'])
+        index = payload.find(token, cursor)
+        require(index >= 0, 'rewritten payload lost the token for ' + occurrence['key'])
+        output += payload[cursor:index]
+        output += occurrence['matched'].encode('utf-8')
+        cursor = index + len(token)
+    output += payload[cursor:]
+    return bytes(output)

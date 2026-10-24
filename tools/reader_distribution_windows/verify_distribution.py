@@ -128,9 +128,17 @@ def main():
             audit_ok = False
             audit_detail.append({'path': record['path'], 'problem': 'sanitized file changed'})
             continue
-        restored = path.read_bytes()
-        for key in record['patterns']:
-            restored = restored.replace(('<path:%s>' % key).encode(), needles[key])
+        occurrences = record.get('occurrences') or []
+        if not occurrences:
+            audit_ok = False
+            audit_detail.append({'path': record['path'], 'problem': 'no recorded occurrences'})
+            continue
+        try:
+            restored = distlib.restore_occurrences(path.read_bytes(), occurrences)
+        except ValueError as error:
+            audit_ok = False
+            audit_detail.append({'path': record['path'], 'problem': str(error)})
+            continue
         if distlib.digest_bytes(restored) != record['sha256_before']:
             audit_ok = False
             audit_detail.append({'path': record['path'], 'problem': 'rewrite is not invertible'})
@@ -177,7 +185,8 @@ def main():
                   {'headers': [sdk_version, abi], 'reported': [identity.get('sdk_version'), identity.get('abi')]})
 
     imports = {name.lower() for name in dependencies.get('imports', [])}
-    unexpected = sorted(imports - SYSTEM_IMPORT_ALLOW)
+    unexpected = sorted(name for name in imports if name not in SYSTEM_IMPORT_ALLOW and
+                        not name.startswith(('api-ms-win-', 'ext-ms-win-')))
     vendor = dependencies.get('vendor_closure', {})
     closure_ok = (not dependencies.get('absolute_imports') and not unexpected and
                   dependencies.get('checked_pe_files', 0) >= 3 and

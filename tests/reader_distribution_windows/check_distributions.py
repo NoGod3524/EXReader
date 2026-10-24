@@ -171,11 +171,13 @@ def main():
         assert 'D:\\a\\' not in rewritten and '<path:' in rewritten
         original_text = (source / 'docs/guide.md').read_text()
         assert len(rewritten.splitlines()) == len(original_text.splitlines())
-        needless = {key: value.encode() for key, value in json.loads(scan_copy.read_text())['patterns'].items()}
-        restored = rewritten
-        for key in json.loads(sanitize.read_text())['rewritten'][0]['patterns']:
-            restored = restored.replace('<path:%s>' % key, needless[key].decode())
-        assert restored == original_text
+        record = json.loads(sanitize.read_text())['rewritten'][0]
+        assert sorted(record['patterns']) == ['hosted-work-unix', 'runner-workspace-d-drive']
+        matched = [item['matched'] for item in record['occurrences']]
+        assert matched[0] == 'D:\\a\\' and matched[-1] == '/home/runner/work'
+        rebuilt = distlib.restore_occurrences(
+            (destination / 'docs/guide.md').read_bytes(), record['occurrences'])
+        assert rebuilt == (source / 'docs/guide.md').read_bytes()
         case('sanitizer-rewrites-invertibly-without-changing-lines')
         completed = run(TOOLS / 'sanitize_stage.py', '--source', source, '--destination', destination,
                         '--scan', scan_copy, '--output', root / 'sanitize-again.json')

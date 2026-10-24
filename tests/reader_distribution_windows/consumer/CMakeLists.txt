@@ -6,7 +6,8 @@ if(NOT EXR_SDK)
   message(FATAL_ERROR "EXR_SDK must point at an extracted EXReader distribution prefix")
 endif()
 if(MSVC)
-  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  # Keep the default dynamic CRT so the consumer uses the same runtime as the
+  # installed SDK; a mismatched runtime would prove nothing about relocation.
   add_compile_options(/utf-8 /W4)
 endif()
 list(PREPEND CMAKE_PREFIX_PATH "${EXR_SDK}")

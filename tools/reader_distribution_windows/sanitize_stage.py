@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-"""Rewrite build-machine roots out of text surfaces of a distribution stage.
+"""Rewrite build-machine roots out of the text surfaces of a distribution stage.
 
-The stage copy is audited: every changed file must be restorable byte-for-byte
-by replacing the recorded token back with the recorded needle, no line count may
-change, and binary containers are never edited. A binary hit is a refusal, so a
-leaking archive stays blocked instead of being patched.
+Detection is case-insensitive, so rewriting is too: each matched span is
+replaced by a stable token and recorded with its original bytes. The copy is
+then audited by rebuilding it byte-for-byte from the recorded occurrences, so a
+rewrite can never hide a second edit. Binary containers are never touched: a
+binary hit is a refusal and the leaking archive stays blocked.
 """
 import argparse
 import json
@@ -16,32 +17,11 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import distlib
 
-TOKEN = '<path:%s>'
-
-
-def token_for(pattern):
-    return (TOKEN % pattern).encode('utf-8')
-
-
-def rewrite(payload, needles):
-    """Replace needles longest-first; return the new payload and the used keys."""
-    used = []
-    for key in sorted(needles, key=lambda item: (-len(needles[item]), item)):
-        needle = needles[key]
-        if needle in payload:
-            payload = payload.replace(needle, token_for(key))
-            used.append(key)
-    return payload, used
-
-
-def restore(payload, keys, needles):
-    for key in keys:
-        payload = payload.replace(token_for(key), needles[key])
-    return payload
-
 
 def copy_tree(source, destination):
-    source = Path(source).resolve(strict=True)
+    source = Path(source)
+    distlib.require(source.is_dir(), 'sanitizer source is not a directory: ' + str(source))
+    source = source.resolve()
     destination = Path(destination)
     distlib.require(not destination.exists(), 'sanitizer destination already exists')
     distlib.require(not destination.resolve().is_relative_to(source), 'destination inside source')
@@ -88,15 +68,22 @@ def main():
             continue
         distlib.require(len(payload) <= args.text_limit,
                         'rewritable file exceeds the declared text limit: ' + record['path'])
-        replacement, used = rewrite(payload, {key: needles[key] for key in keys})
-        distlib.require(restore(replacement, used, needles) == payload,
+        selected = {key: needles[key] for key in keys}
+        replacement, occurrences = distlib.rewrite_occurrences(payload, selected)
+        distlib.require(occurrences, 'scan declared hits but no span matched: ' + record['path'])
+        distlib.require(distlib.restore_occurrences(replacement, occurrences) == payload,
                         'rewrite is not invertible for ' + record['path'])
-        again, _ = rewrite(replacement, {key: needles[key] for key in keys})
-        distlib.require(again == replacement, 'rewrite is not idempotent for ' + record['path'])
+        again, extra = distlib.rewrite_occurrences(replacement, selected)
+        distlib.require(again == replacement and not extra,
+                        'rewrite is not idempotent for ' + record['path'])
         distlib.require(replacement.count(bytes([10])) == payload.count(bytes([10])),
                         'rewrite changed the line count of ' + record['path'])
         path.write_bytes(replacement)
-        rewritten.append({'path': record['path'], 'patterns': used, 'tokens': [TOKEN % key for key in used],
+        used = sorted({occurrence['key'] for occurrence in occurrences})
+        rewritten.append({'path': record['path'],
+                          'patterns': used,
+                          'tokens': [distlib.path_token(key).decode('utf-8') for key in used],
+                          'occurrences': occurrences,
                           'bytes_before': len(payload), 'bytes_after': len(replacement),
                           'sha256_before': distlib.digest_bytes(payload),
                           'sha256_after': distlib.digest_bytes(replacement)})
@@ -115,6 +102,7 @@ def main():
     distlib.write_json(args.output, report)
     print(json.dumps({'rewritten': len(rewritten), 'refused': len(refused),
                       'residual_text': text_hits, 'residual_binary': binary_hits,
+                      'occurrences': sum(len(item['occurrences']) for item in rewritten),
                       'accepted': report['accepted']}))
     if refused:
         print('blocking binary or non-rewritable build-machine paths: ' +
