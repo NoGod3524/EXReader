@@ -1,4 +1,4 @@
-"""Read a preserved test artifact in Actions; never grant acceptance."""
+"""Read a preserved artifact in Actions without shadowing Python's inspect module."""
 import hashlib
 import io
 import json

@@ -145,7 +145,8 @@ def main():
         count = query(d, 'text');after = state()
         report['cbz_changed_state_tables'] = [key for key in before if before[key] != after[key]]
         record('cbz-missing-text-provider-is-error', count == 0 and
-               '失败' in text(U.GetDlgItem(d, MESSAGE)) and '没有匹配' not in text(U.GetDlgItem(d, MESSAGE)) and after == before)
+               '图像页' in text(U.GetDlgItem(d, MESSAGE)) and '不支持文字查找' in text(U.GetDlgItem(d, MESSAGE)) and
+               '没有匹配' not in text(U.GetDlgItem(d, MESSAGE)) and after == before)
         close_dialog(d)
         phase = 'reflow';app.open('book');app.wait_idle();d = find_dialog()
         assert query(d, 'AMBIGUOUS TARGET') == 2

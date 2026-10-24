@@ -183,4 +183,4 @@ jobs:
         env:
           GH_TOKEN: ${{github.token}}
           INSPECT_ARTIFACT: ${{inputs.inspect_artifact}}
-        run: python3 tests/reader_windows_search/inspect.py
+        run: python3 tests/reader_windows_search/inspect_artifact.py

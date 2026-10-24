@@ -180,6 +180,10 @@ static exr_status winsearch_job(host_job *job) {
   if(strcmp(key,g.session.search_key)) {
     snprintf(job->error.message,sizeof(job->error.message),"The original changed; reopen the book before searching");return EXR_ARGUMENT;
   }
+  if(g.current.format==EXR_CBZ) {
+    snprintf(job->error.message,sizeof(job->error.message),"Image-only CBZ pages do not contain searchable text; OCR is not enabled");
+    return EXR_UNSUPPORTED;
+  }
   return job->kind==JOB_SEARCH_BATCH ? winsearch_batch_run(job):winsearch_open_run(job);
 }
 static void winsearch_controls(void) {
@@ -236,7 +240,8 @@ static void winsearch_accept(host_job *job) {
      job->book_id!=g.current.id || job->book_id!=inbook.book_id) { winsearch_controls();return; }
   if(job->status!=EXR_OK || job_cancel_flag(job)) {
     SetWindowTextW(inbook.message,job->status==EXR_CANCELLED || job_cancel_flag(job) ?
-      L"已取消，上一批结果和位置已保留。":L"查找或原文核对失败，未跳转；请重新打开书籍后重试。");
+      L"已取消，上一批结果和位置已保留。":job->status==EXR_UNSUPPORTED && g.current.format==EXR_CBZ ?
+      L"本书是图像页，暂不支持文字查找（不包含OCR）。":L"查找或原文核对失败，未跳转；请重新打开书籍后重试。");
     winsearch_controls();return;
   }
   if(job->kind==JOB_SEARCH_OPEN) {
