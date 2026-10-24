@@ -50,3 +50,9 @@ root发现新书签/高亮在空`annotation_id`时每次随机生成身份。首
 ## 主线证据核对
 
 root已通过GitHub作业接口独立核对：iOS run`40080841137`的producer和严格汇总均success；Android run`40081333678`实际模拟器作业success；同源codec run`40081333621`的Windows/Linux作业success。正式SwiftUI/Android账号和阅读界面的接线继续由各主线owner实施，不借测试壳授予产品界面。
+
+## 后续审查队列
+
+- G09清单run`40081161966`记录`release_ready=false`：安装文档、部分归档与pkg-config材料仍有构建机绝对路径。后续分发准备须在冻结SDK约束内解决并复验；清单完成不等于发布就绪。
+- G10观测run`40081997953`没有授予性能预算。其保留失败`40079602783`里的16 MiB TXT导入不可见后来改用多章EPUB进行观测；原TXT必须单独复现、区分实际导入/标题查询/等待条件的根因。EPUB观测不能证明原TXT问题已修复，暂待root向原owner交回该回归。
+- G07记录的Windows操作耗时可超过单个WinHTTP超时设置；“1200 ms是整个操作上界”的含义不能从4.02 s观测推出。集成时应准确区分各阶段设置与端到端总耗时。
