@@ -401,7 +401,9 @@ def audit(summary, output, budgets=None):
     page_signatures = {case: {f"{part}/{page}": dict(zip(SIGNATURE_FIELDS, values))
                              for (part, page), values in routes.items()} for case, routes in signatures.items()}
     if budgets is not None:
-        require(summary["budget_sha256"] == sha256(BUDGETS) and budgets == read(BUDGETS), "Budget identity changed")
+        from reading_real_environments import report_budget
+        budget_path = report_budget(summary)
+        require(summary["budget_sha256"] == sha256(budget_path) and budgets == read(budget_path), "Budget identity changed")
         require(budgets["schema"] == 1 and budgets["frozen"] is True and
                 budgets["contract_sha256"] == summary["contract_sha256"] and
                 budgets["corpus_manifest_sha256"] == summary["corpus_manifest_sha256"], "Unfrozen/incompatible budgets")
@@ -503,7 +505,9 @@ def main():
     parser.add_argument("output", type=Path)
     parser.add_argument("--sdk", type=Path, required=True)
     parser.add_argument("--source-sha", required=True)
-    parser.add_argument("--budgets", type=Path)
+    budget_group = parser.add_mutually_exclusive_group()
+    budget_group.add_argument("--budgets", type=Path)
+    budget_group.add_argument("--frozen-budgets", action="store_true")
     args = parser.parse_args()
     require(os.environ.get("GITHUB_ACTIONS") == "true", "Measurements require GitHub Actions")
     output = args.output.resolve();output.mkdir(parents=True, exist_ok=False)
@@ -516,7 +520,7 @@ def main():
                "corpus_registration_sha": CORPUS_REGISTRATION,
                "contract_path": "tests/reading_real/contract.json", "budget_path": "tests/reading_real/budgets.json",
                "corpus_manifest_sha256": sha256(args.manifest), "contract_sha256": sha256(CONTRACT),
-               "budget_sha256": sha256(args.budgets) if args.budgets else None,
+               "budget_sha256": None,
                "contract": contract, "files": entries, "attempts": [], "references": [], "problems": [],
                "real_document_credit": 0, "synthetic_credit": 0, "wp16_cpu_credit_seconds": 0,
                "results": None, "complete_product": False}
@@ -542,12 +546,21 @@ def main():
         summary["environment"] = environment()
         require(summary["environment"]["runner_os"] == "Linux" and summary["environment"]["runner_arch"] == "X64" and
                 summary["environment"]["runner_image"] == "ubuntu22", "Wrong fixed runner")
+        budget_path = None
+        if args.frozen_budgets or args.budgets:
+            from reading_real_environments import select_budget
+            budget_path, selection = select_budget(summary["environment"])
+            require(args.budgets is None or args.budgets.resolve() == budget_path.resolve(),
+                    "Explicit budget differs from the exact frozen environment")
+            summary["budget_path"] = selection["budget_path"]
+            summary["budget_sha256"] = selection["budget_sha256"]
+            summary["budget_selection"] = selection
         summary["before"] = identity(binary, font, args.manifest, CONTRACT, entries, args.corpus)
         sdk_files = sorted(path for path in args.sdk.rglob("*") if path.is_file())
         summary["installed_sdk"] = {"bytes": sum(path.stat().st_size for path in sdk_files),
             "files": {str(path.relative_to(args.sdk)): file_identity(path) for path in sdk_files}}
         summary["dynamic_dependencies"] = checked_output(["ldd", str(binary)])
-        budgets = read(args.budgets) if args.budgets else None
+        budgets = read(budget_path) if budget_path else None
         if budgets:
             summary["baseline_origin"] = baseline_origin(budgets, args.source_sha)
             retain_baseline_report(summary["baseline_origin"], output)

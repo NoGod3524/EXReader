@@ -1,0 +1,105 @@
+name: Native product catalog
+on:
+  push:
+    branches: [codex/reader-desktop-catalog]
+  pull_request:
+    paths:
+      - apps/reader/store/**
+      - tests/reader_catalog/native_catalog_check.c
+      - .github/workflows/reader-catalog-native.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  catalog:
+    name: catalog (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-15]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require unchanged SDK and product migration
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
+          git diff --exit-code f32bb8aa18ed3de286900f19ce4230fd93435dd0 HEAD -- apps/reader/store/001_catalog.sql
+      - name: Enter the native Windows compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Configure the actual native adapter and pinned public SQLite
+        run: |
+          mkdir -p build/native-catalog-evidence
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "CATALOG_WORKSPACE=$ws" >> "$GITHUB_ENV"
+          cmake --version > build/native-catalog-evidence/cmake.txt
+          cmake -S apps/reader/store/native -B build/native-catalog -G Ninja -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/native-catalog-evidence/configure.log
+      - name: Compile production sources
+        run: cmake --build build/native-catalog --parallel 4 2>&1 | tee build/native-catalog-evidence/build.log
+      - name: Execute transactions, refusals, owner thread and actual keyset query
+        run: ctest --test-dir build/native-catalog --output-on-failure --no-tests=error --timeout 180 --output-junit "$CATALOG_WORKSPACE/build/native-catalog-evidence/tests.xml"
+      - name: Check original product schema regressions
+        if: runner.os == 'Linux'
+        run: python3 tests/reader_catalog/check_schema.py --output build/native-catalog-evidence/schema.json
+      - name: Require the exact native cases and bind evidence identity
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          expected = {
+              'migration_matches_source_and_reopens', 'foreign_identity_preserved',
+              'atomic_attach_rollback', 'verified_identity_and_mode_refusals',
+              'oldest_duplicate_keeps_true_mode', 'existing_metadata_and_history_retained',
+              'local_removal_retains_global_records', 'bounded_keyset_no_duplicates',
+              'rejects_bad_inputs', 'owner_queue_and_no_reentry', 'busy_writer_retries',
+              'shelf_triggers_still_enforced',
+          }
+          report = json.loads(Path('build/native-catalog/result.json').read_text())
+          assert report['accepted'] is True and report['problems'] == []
+          assert report['source_sha'] == os.environ['GITHUB_SHA']
+          assert report['run_id'] == os.environ['GITHUB_RUN_ID']
+          assert report['attempt'] == os.environ['GITHUB_RUN_ATTEMPT']
+          assert report['sqlite_version'] == '3.54.0'
+          cases = report['checks']
+          assert len(cases) == len(expected) and {r['id'] for r in cases} == expected
+          assert all(r['passed'] is True for r in cases)
+          assert report['complete_product'] is False and report['ui_performance_credit'] == 0
+          binary = Path('build/native-catalog/reader-catalog-check' + ('.exe' if os.name == 'nt' else ''))
+          sources = [binary, Path('apps/reader/store/001_catalog.sql'),
+              Path('apps/reader/store/native/catalog.c'), Path('apps/reader/store/native/catalog.h'),
+              Path('build/native-catalog/catalog_migration.h')]
+          report['identity'] = {str(p): {'bytes': p.stat().st_size,
+              'sha256': hashlib.sha256(p.read_bytes()).hexdigest()} for p in sources}
+          report['scope'] = 'native product catalog adapter; no SDK import or UI acceptance'
+          Path('build/native-catalog-evidence/verified.json').write_text(json.dumps(report, indent=2)+'\n')
+          print(json.dumps({'accepted': True, 'checks': len(cases), 'source_sha': report['source_sha'],
+              'sqlite_version': report['sqlite_version'], 'scope': report['scope']}))
+          PY
+      - name: Preserve original native checks and failed databases
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-native-catalog-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/native-catalog-evidence/
+            build/native-catalog/result.json
+            build/native-catalog/Testing/Temporary/LastTest.log
+            build/native-catalog/CMakeCache.txt
+            build/native-catalog/catalog_migration.h
+            build/native-catalog/*.db
+          if-no-files-found: error

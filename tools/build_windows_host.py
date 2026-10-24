@@ -53,6 +53,7 @@ def main():
     parser.add_argument('--sdk', type=Path, required=True)
     parser.add_argument('--binary', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--static-reading', action='store_true', help='Package the installed lightweight static reading consumer')
     args = parser.parse_args()
     sdk, binary, output = args.sdk.absolute(), args.binary.absolute(), args.output.absolute()
     if output.exists():
@@ -61,9 +62,13 @@ def main():
     payload.mkdir(parents=True)
     shutil.copyfile(binary, payload/'EXReader.exe')
     runtimes = [sdk/'bin'/name for name in ('exreader.dll', 'libexreader.dll') if (sdk/'bin'/name).is_file()]
-    if len(runtimes) != 1:
-        parser.error('Expected exactly one installed SDK runtime')
-    shutil.copyfile(runtimes[0], payload/runtimes[0].name)
+    if args.static_reading:
+        if runtimes:
+            parser.error('Static reading stage must not include the shared compatibility SDK')
+    else:
+        if len(runtimes) != 1:
+            parser.error('Expected exactly one installed SDK runtime')
+        shutil.copyfile(runtimes[0], payload/runtimes[0].name)
     font = host_font(ROOT/'build/host-font-cache')
     for name in ('Reader.otf', 'OFL.txt'):
         shutil.copyfile(font/name, payload/name)
@@ -92,6 +97,8 @@ def main():
                 'files': {str(p.relative_to(payload)).replace('\\', '/'): digest(p)
                           for p in sorted(payload.rglob('*')) if p.is_file()},
                 'report_sha256': digest(report), 'image_sha256': digest(image)}
+    if args.static_reading:
+        manifest['linkage'] = 'static-reading'
     (output/'build.json').write_text(json.dumps(manifest, indent=2)+'\n')
     shutil.make_archive(str(output/'EXReader-Windows'), 'zip', root_dir=payload)
     print(str(checked['checks'])+' Windows native host checks passed')
