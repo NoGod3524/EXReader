@@ -313,13 +313,14 @@ def main():
         assert cancelled['library_complete'] == 0
         record('cancelled_snapshot_keeps_cursor_and_partial_history_resumable')
 
-        before = len(requests)
         first.command('start')
         finished = first.wait(4, 300)
         assert finished['sweeps'] == 1 and finished['completed_shards'] == 256, finished
-        listed = {item['path'] for item in requests[before:] if item['method'] == 'PROPFIND'
+        # The resumed sweep continues from the retained shard cursor, so the full
+        # 256-shard coverage is the union over this session's lists.
+        listed = {item['path'] for item in requests if item['method'] == 'PROPFIND'
                   and SHARD_DIRECTORY.match(item['path'])}
-        assert len(listed) == 256, len(listed)
+        assert len(listed) == 256, sorted(listed)[:5] + ['count=%d' % len(listed)]
         assert first.counts() == (40, 0), first.counts()
         swept = capture(first, 100)['summary']
         assert swept['phase'] == 4 and swept['phase_text'] == 'sweep-complete', swept
