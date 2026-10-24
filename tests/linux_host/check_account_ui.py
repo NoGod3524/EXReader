@@ -320,7 +320,7 @@ def main():
         pause_next();host.key('alt+s');assert blocked.wait(40)
         ticks = int(account()['ticks']);time.sleep(.7)
         assert int(account()['ticks']) > ticks and account()['cancel_enabled'] == '1'
-        host.key('alt+c');assert account()['cancel_requested'] == '1';release.set()
+        window();host.key('alt+c');ready(lambda s: s['cancel_requested'] == '1', seconds=5);release.set()
         cancelled = ready(lambda s: s['session_state'] in ('3', '4', '5'))
         assert cancelled['session_state'] == '3' and cancelled['retry_enabled'] == '1'
         record('real_paused_tls_scan_leaves_gtk_responsive_and_cancel_is_nonblocking')

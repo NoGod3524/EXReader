@@ -310,6 +310,7 @@ static char *accounts_observation(void) {
   g_key_file_set_integer(file,group,"full_library_complete",accounts.view.full_library_complete);
   g_key_file_set_string(file,group,"id",accounts.id ? accounts.id:"");g_key_file_set_string(file,group,"root",accounts.bound_root ? accounts.bound_root:"");
   if(accounts.dialog && !closing) {
+    g_key_file_set_integer(file,group,"focused",gtk_window_is_active(GTK_WINDOW(accounts.dialog)));
     g_key_file_set_integer(file,group,"password_visible",gtk_entry_get_visibility(GTK_ENTRY(accounts.password)));
     g_key_file_set_integer(file,group,"has_password",gtk_entry_get_text(GTK_ENTRY(accounts.password))[0]!=0);
     g_key_file_set_integer(file,group,"has_user",gtk_entry_get_text(GTK_ENTRY(accounts.user))[0]!=0);
