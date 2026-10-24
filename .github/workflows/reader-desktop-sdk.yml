@@ -1,7 +1,7 @@
 name: Desktop product public SDK bridge
 on:
   push:
-    branches: [codex/reader-desktop-catalog, codex/reader-gtk-fixed-pages, codex/reader-desktop-shelf, codex/reader-windows-shelf, codex/reader-windows-metadata]
+    branches: [codex/reader-desktop-catalog, codex/reader-gtk-fixed-pages, codex/reader-desktop-shelf, codex/reader-windows-shelf, codex/reader-windows-metadata, codex/reader-gtk-collections]
   workflow_dispatch:
   workflow_call:
 permissions:
@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ (github.ref_name == 'codex/reader-windows-shelf' || github.ref_name == 'codex/reader-windows-metadata') && fromJSON('["windows-2022"]') || fromJSON('["ubuntu-22.04","windows-2022"]') }}
+        os: ${{ github.ref_name == 'codex/reader-gtk-collections' && fromJSON('["ubuntu-22.04"]') || (github.ref_name == 'codex/reader-windows-shelf' || github.ref_name == 'codex/reader-windows-metadata') && fromJSON('["windows-2022"]') || fromJSON('["ubuntu-22.04","windows-2022"]') }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -137,6 +137,7 @@ jobs:
             python3 tests/linux_host/check_fixed_ui.py --payload build/desktop-linux-package/EXReader-Linux --original-evidence build/desktop-gtk-ui --product-evidence build/desktop-gtk-product --output build/desktop-gtk-fixed
             python3 tests/linux_host/check_shelf_ui.py --payload build/desktop-linux-package/EXReader-Linux --output build/desktop-gtk-shelf
             python3 tests/linux_host/check_metadata_ui.py --payload build/desktop-linux-package/EXReader-Linux --command-consumer build/desktop-command-consumer/command-consumer --output build/desktop-gtk-metadata
+            python3 tests/linux_host/check_collections_ui.py --payload build/desktop-linux-package/EXReader-Linux --command-consumer build/desktop-command-consumer/command-consumer --output build/desktop-gtk-collections
           '
       - name: Preserve original logs, link provider and source-bound evidence
         if: always()
@@ -161,6 +162,7 @@ jobs:
             build/desktop-gtk-shelf/
             build/desktop-gtk-regressions/
             build/desktop-gtk-metadata/
+            build/desktop-gtk-collections/
             build/desktop-product-stage/
             build/desktop-command-consumer/command-link.map
             build/desktop-fixed-inputs/
