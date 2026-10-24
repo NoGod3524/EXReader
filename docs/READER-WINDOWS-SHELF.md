@@ -1,7 +1,7 @@
 # Windows 有界书架接入
 
 状态：第一阶段 worker 结果所有权专项已通过；第二阶段有界实际界面候选已接入，
-尚未授予 Windows 有界界面验收。
+第二阶段 Windows 声明范围功能专项已通过，见末节。
 分支从 GTK 书架候选 `a39199b98e70b3076f9026150803d73fe265388e` 正常分出，
 不改变冻结 SDK、schema 或预算；后续接入双向分页、搜索与稳定 key/像素恢复。
 
@@ -55,3 +55,25 @@ Windows 作业 `120707909214` 成功。同次 SDK 九组、原目录十二组、
 字面/空/快速搜索、cache外当前书重开、立即关闭保存、cache外导入及本机移除十三项；
 隔离 review 程序再验证五项真实 worker 交付/取消，包括查询被开书抢占后的补发。
 原有 Windows 全套及目录/query/kill 回归保留；原生查询另在三平台复验。
+
+## 第二阶段 Windows 专项通过
+
+受测完整源码 `f93ec5cd8154d82be63d8831e14547a27a597eca`，run `40043264202`、
+attempt 1、Windows 作业 `120719000091` success。同次 SDK 九组、目录十二组、
+查询十组（新增 local-only 断言）、真实 kill 两项、原 26 自检/54 证据/158 UI/8
+截图/10 产品检查、新任务交付五项及实际产品十三项全部通过，最终 `accepted=true`。
+
+实际产品程序 SHA-256 `5a158ce5eda35e8644f65db4cf3886aecb8c4ae0408d49d6ea27316f5520b3e7`，
+隔离任务检查程序 SHA-256 `1f4f466d5f1274980ef3c9483822a286f61b468b3ab3275691153ff72b262ad6`。
+同源工件 `12539874813`，36618700 字节，SHA-256
+`2045913dada11add083a652fef923a713381267b689116f38a60a11343b01161`，未过期，
+API/上传日志身份一致。
+
+同源码独立查询 run `40043264180` 的 Windows/Linux 已成功，macOS 当时排队，
+不将此前源码的 macOS 结果拼入本次。只授予 Windows 本机书架的功能范围；
+`performance_accepted=false`、`complete_product=false`，没有产品性能硬预算、
+全局云端下载 UI、读屏或完整产品验收。
+
+本分支还携带独立提交 `13a06d37`：完整 required PR 门禁只在目标默认分支触发。
+十七作业严格汇总、规则、发布流程和旧预算均不改变，stacked 分支保留专项与既有
+native/reading-core 检查，最终进入 `codex/framework` 时仍必须完整验收。
