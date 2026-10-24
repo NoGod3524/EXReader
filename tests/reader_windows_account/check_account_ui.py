@@ -793,6 +793,8 @@ def main():
         record('installed_native_consumer_captures_all_eighteen_cases_from_the_four_real_originals')
         RA = new_device('device-reading-a', existing=True)
         dialog = RA.open_account()
+        # Session-only credentials never survive a restart, so this host is re-entered.
+        RA.fill(dialog, reading_root, user, password, False);RA.apply(dialog, '仅本次会话')
         published = dav.count('revisions/')
         RA.run_sync(dialog)
         assert dav.count('revisions/') == published + len(cases), (published, dav.count('revisions/'))
