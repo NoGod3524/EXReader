@@ -26,7 +26,14 @@ def inspect(binary, link_map):
     mapping = Path(link_map).read_text()
     Path(str(link_map) + '.symbols.txt').write_text(symbols)
     Path(str(link_map) + '.dependencies.txt').write_text(dependencies)
-    provider = validate(dependencies, symbols, mapping)
+    try:
+        provider = validate(dependencies, symbols, mapping)
+    except AssertionError:
+        print(json.dumps({'binary': str(binary),
+                          'sqlite_open_symbols': [line for line in symbols.splitlines() if 'sqlite3_open' in line],
+                          'sqlite_provider_objects': [line for line in mapping.splitlines() if 'sqlite3.c.o' in line],
+                          'dependencies': dependencies}), flush=True)
+        raise
     rejected = []
     cases = [('system_sqlite', dependencies + '\n/usr/lib/libsqlite3.dylib', symbols, mapping),
              ('missing_symbol', dependencies, '', mapping),
