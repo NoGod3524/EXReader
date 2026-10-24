@@ -115,6 +115,9 @@ private func hostSearchCheck(_ status: reader_search_status, _ error: reader_sea
 }
 
 enum HostSearchWorker {
+#if EXR_APPLE_HOST_REVIEW
+    static var reviewInsideNext = false
+#endif
     static func batch(library: HostLibrary, font: HostFont, bookID: Int64, sourceKey: String,
                       query: String, resume: reader_search_cursor?, cancel: HostCancelBox) throws -> HostSearchBatch {
         try cancel.check()
@@ -156,9 +159,13 @@ enum HostSearchWorker {
                     }
                     try hostSearchCheck(status, error)
                     guard search != nil else { throw HostError.invalidResult("搜索句柄缺失") }
-                    defer { _ = reader_search_close(&search, nil) }
                     return try withExtendedLifetime((publication, fixed)) {
+                        defer { _ = reader_search_close(&search, nil) }
                         var result = reader_search_result()
+#if EXR_APPLE_HOST_REVIEW
+                        reviewInsideNext = true
+                        defer { reviewInsideNext = false }
+#endif
                         try hostSearchCheck(reader_search_next(search, 32, &result, &error), error)
                         defer { reader_search_result_free(&result) }
                         try cancel.check()

@@ -41,6 +41,8 @@ import Darwin
             _ = try session.open(bookID: id, cancel: HostCancelBox())
             let key = try catalog.searchSourceKey(sdkID: id)
             let baseline = try session.stateHash()
+            let revisionCount = try catalog.scalar("SELECT count(*) FROM reader_revisions")
+            let outboxCount = try catalog.scalar("SELECT count(*) FROM reader_outbox")
             func batch(_ resume: reader_search_cursor? = nil, query: String = "needle😀", sourceKey: String? = nil,
                        cancel: HostCancelBox = HostCancelBox(), using owner: HostLibrary? = nil) throws -> HostSearchBatch {
                 try HostSearchWorker.batch(library: owner ?? library, font: font, bookID: id,
@@ -67,6 +69,18 @@ import Darwin
             check("cancelled-batch-retries-previous-cursor") {
                 let cancelled = HostCancelBox(); cancelled.cancel()
                 try expect(rejects { _ = try batch(first.next, cancel: cancelled) }, "Cancelled scan succeeded")
+#if EXR_APPLE_HOST_REVIEW
+                let active = HostCancelBox(), prior = HostSDKReview.poll
+                var cancelledInsideNext = false
+                HostSDKReview.poll = { polled in
+                    if polled === active, HostSearchWorker.reviewInsideNext {
+                        cancelledInsideNext = true; polled.cancel()
+                    } else { prior?(polled) }
+                }
+                defer { HostSDKReview.poll = prior }
+                try expect(rejects { _ = try batch(first.next, cancel: active) }, "In-flight F1 scan ignored cancellation")
+                try expect(cancelledInsideNext, "Cancellation did not occur inside reader_search_next")
+#endif
                 let retried = try batch(first.next)
                 try expect(retried.hits.map(\.id) == second.hits.map(\.id), "Cancelled batch advanced")
             }
@@ -76,6 +90,8 @@ import Darwin
                 try expect(try session.stateHash() == baseline, "Scanning changed progress or notes")
                 try expect(try Data(contentsOf: source) == Data(text.utf8), "Source was changed")
                 try expect(try catalog.scalar("SELECT count(*) FROM reader_books") == 1, "Search wrote a product record")
+                try expect(try catalog.scalar("SELECT count(*) FROM reader_revisions") == revisionCount &&
+                    catalog.scalar("SELECT count(*) FROM reader_outbox") == outboxCount, "Search wrote a revision or outbox entry")
             }
             check("independent-found-navigation") {
                 let (selected, snapshot) = try session.searchCandidate(second.hits[7], cancel: HostCancelBox())
