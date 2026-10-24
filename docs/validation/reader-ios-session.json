@@ -2,6 +2,17 @@
   "accepted": false,
   "status": "expanded lifecycle and real process recovery candidate awaits its own same-source cloud run; prior scoped evidence retained below",
   "prior_scoped_accepted": true,
+  "earlier_failed_runs": [{
+    "source_sha": "c51e772ca9ac6d80bbdbe60d954e5e165d2e4cec",
+    "run_id": 40079854212,
+    "attempt": 1,
+    "job_id": 120830946870,
+    "original_roundtrip_passed": true,
+    "session_fault_checks_passed_before_failure": 9,
+    "uikit_process_recovery_not_run": true,
+    "reason": "The existing checker resolves revision-consumer symlinks. Role detection by the symlink basename was lost and the session consumer received revision arguments. An explicit revision entry now preserves its role; original assertions and deadlines retained.",
+    "artifact": {"id": 12554936956, "size_in_bytes": 14037032, "digest": "sha256:7a30a3f5e7c563fa340482287030318ce3e06b89d90c85ee06fe9a4a2b140165"}
+  }],
   "scope": "iOS Simulator installed public SDK originals and reading captures through actual background account sessions",
   "source_sha": "88c64f51011b3bc48e1e8daf51c0058b02f756c0",
   "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",

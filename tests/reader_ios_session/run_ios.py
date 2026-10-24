@@ -70,6 +70,12 @@ def main():
         run('install', ['xcrun', 'simctl', 'install', udid, app])
         container = run('container', ['xcrun', 'simctl', 'get_app_container', udid, 'org.exreader.session.probe', 'data'])
         os.environ['EXR_DAV_IOS_UDID'] = udid; os.environ['EXR_DAV_IOS_CONTAINER'] = container
+        os.environ['EXR_IOS_FAULT_BINARY'] = str(fault_binary)
+        os.environ['EXR_IOS_REVISION_BINARY'] = str(revision_binary)
+        fault_adapter = root / 'tests/reader_ios_session/launch_fault.py'; fault_adapter.chmod(0o755)
+        revision_adapter = root / 'tests/reader_ios_session/launch_revision.py'; revision_adapter.chmod(0o755)
+        revision_contract = json.loads(run('revision-adapter-contract', [revision_adapter, 'identity', out / 'revision-adapter-contract.sqlite']))
+        assert revision_contract['status'] == 0 and revision_contract['json_smoke'] == 1
         adapter = root / 'tests/reader_ios_session/launch.py'; adapter.chmod(0o755)
         evidence = out / 'evidence'
         run('actual-session-roundtrip', [sys.executable, 'tests/reader_reading_v2/check_webdav.py', '--probe', adapter,
@@ -82,10 +88,6 @@ def main():
         assert sessions['accepted'] is True and sessions['count'] == len(sessions['sessions']) == 38
         assert all(s['shards'] == 256 and s['sweeps'] == 1 and s['observations'] > 0 for s in sessions['sessions'])
         assert lifecycle['code'] == 0 and lifecycle['main_thread_ticks'] > 0
-        os.environ['EXR_IOS_FAULT_BINARY'] = str(fault_binary)
-        os.environ['EXR_IOS_REVISION_BINARY'] = str(revision_binary)
-        fault_adapter = root / 'tests/reader_ios_session/launch_fault.py'; fault_adapter.chmod(0o755)
-        revision_adapter = consumer / 'revision-launch'; revision_adapter.symlink_to(fault_adapter)
         run('original-20-session-faults', [sys.executable, 'tests/reader_session/check_session.py',
             '--consumer', fault_adapter, '--revision-consumer', revision_adapter, '--native-binary', fault_binary,
             '--output', out / 'faults'], timeout=1200)
