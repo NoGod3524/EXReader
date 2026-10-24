@@ -1,5 +1,11 @@
 # READER-DESKTOP-DROP: desktop file drop and paste adapter
 
+## Root共存修补：云端已验收
+
+独立分支 `codex/reader-drop-coexistence`，受测完整源码 `335f188352575c8d598a60692104946dfe3f21c3`，[run 40139548335](https://github.com/NoGod3524/EXReader/actions/runs/40139548335) / attempt1，guard、Windows、Linux、macOS与严格同轮汇总5/5success。Windows真实窗口53项（含新增四项共存/回滚）、三平台各便携52项、GTK28与AppKit28全部通过；Windows原hook及ASan变体保留并通过，严格汇总13项拒绝回归通过，认证三平台ZIP及绑定文件。
+
+生产实现使用Windows原生链式子类，只卸载自身；下一层宿主回调内detach由临时COM引用保护；安装失败撤销真实OLE注册，宿主消息和重新attach保持可用。SDK/schema不变，未接生产宿主、未授手势级拖拽或产品性能。新工件ID/完整摘要/大小/有效期及全部旧交回证据在验证JSON内，旧记录完整保留在 `previous_delivery`。
+
 Package J03. Independent, SDK-free C module that turns a native desktop drop or
 paste into a bounded, immutable request that outlives the platform data object,
 the widget and the drop target. The host then decides what to import: only
@@ -275,7 +281,7 @@ kept in the record; nothing was loosened to turn it green.
   remote or virtual entries stops at the reported status.
 # Root接续：窗口子类共存候选
 
-分支 `codex/reader-drop-coexistence` 从原交回HEAD `986f2f0132ecdf753d6d428ba821a58175cd0d0c` 独立接续，原分支不改。本候选尚待Actions，当前 `accepted=false`；下文原绿只属于原受测源码 `5a0cd498` / run `40136297928`。
+分支 `codex/reader-drop-coexistence` 从原交回HEAD `986f2f0132ecdf753d6d428ba821a58175cd0d0c` 独立接续，原分支不改。候选初写时 `accepted=false`；现在按页首新源码实测授予本包范围。原交回绿仍只属于原受测源码 `5a0cd498` / run `40136297928`。
 
 用Windows已有 `SetWindowSubclass/RemoveWindowSubclass/DefSubclassProc` 取代直接覆盖和还原 `GWLP_WNDPROC`，detach仅移除本模块。原生子类调用栈持有临时COM引用，允许下一层宿主回调重入detach。安装失败回滚真实OLE注册，不再依赖未检查成功的SetProp。静态包显式导出系统comctl32链接依赖。
 
