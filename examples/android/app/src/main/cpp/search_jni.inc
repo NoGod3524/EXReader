@@ -3,6 +3,7 @@
 #include <reader_search.h>
 #include <pthread.h>
 #include <stdatomic.h>
+#include <math.h>
 
 typedef struct {
   pthread_t owner;reader_search *search;
@@ -51,12 +52,12 @@ static exr_control search_control(JNIEnv *env,host_search *search,jobject value)
 JNIEXPORT jstring JNICALL Java_org_exreader_host_NativeSearch_nativeVersion(JNIEnv *env,jclass type) {
   (void)type;return output_string(env,exr_version());
 }
-JNIEXPORT jlong JNICALL Java_org_exreader_host_NativeSearch_nativeOpen(JNIEnv *env,jclass type,jlong owner,jlong book,jint mode,jstring key,jstring query,jbyteArray font,jobject control) {
+JNIEXPORT jlong JNICALL Java_org_exreader_host_NativeSearch_nativeOpen(JNIEnv *env,jclass type,jlong owner,jlong book,jint mode,jstring key,jstring query,jbyteArray font,jfloat size,jobject control) {
   host_search *search=NULL;exr_library *store=library(env,owner);char *text=NULL;exr_error sdk_error={0};reader_search_error error={0};
   exr_status sdk=EXR_OK;reader_search_status status=READER_SEARCH_OK;reader_search_options options={0};exr_control cancellation;
   exr_layout_config layout=exr_layout_config_defaults();exr_chapter_options chapter=exr_chapter_options_defaults();(void)type;
   if(!store||(*env)->ExceptionCheck(env))return 0;
-  if(book<=0||!query||!key||(*env)->GetStringLength(env,query)>4096||(*env)->GetStringLength(env,key)>255){throw_argument(env,"Invalid search source or query");return 0;}
+  if(book<=0||!isfinite(size)||size<18||size>40||!query||!key||(*env)->GetStringLength(env,query)>4096||(*env)->GetStringLength(env,key)>255){throw_argument(env,"Invalid search source or query");return 0;}
   text=input_string(env,query);if(!text)return 0;
   if(!text[0]||strlen(text)>READER_SEARCH_QUERY_MAX){free(text);search_failure(env,READER_SEARCH_QUERY,0);return 0;}
   search=calloc(1,sizeof(*search));if(!search){free(text);search_failure(env,READER_SEARCH_MEMORY,0);return 0;}
@@ -70,7 +71,7 @@ JNIEXPORT jlong JNICALL Java_org_exreader_host_NativeSearch_nativeOpen(JNIEnv *e
   }else if(mode==READER_SEARCH_EPUB){
     sdk=host_publication(store,(int64_t)book,&search->publication,&sdk_error);
     if(sdk==EXR_OK)sdk=search_font(env,font,&search->font,&sdk_error);
-    layout.page.width=600;layout.page.height=860;layout.page.margin=32;layout.page.font_size=24;layout.page.line_height=1.6f;layout.page.paragraph_spacing=12;
+    layout.page.width=600;layout.page.height=860;layout.page.margin=32;layout.page.font_size=size;layout.page.line_height=1.6f;layout.page.paragraph_spacing=12;
     layout.document_css=1;layout.embedded_fonts=1;chapter.workspace_budget=8*1024*1024;chapter.window_bytes=64*1024;
     if(sdk==EXR_OK)status=reader_search_open_epub(search->publication,search->font,&layout,&chapter,text,strlen(text),&options,&search->search,&error);
   }else if(mode==READER_SEARCH_FIXED){
@@ -134,13 +135,13 @@ JNIEXPORT void JNICALL Java_org_exreader_host_NativeSearch_nativeClose(JNIEnv *e
   host_search *search=search_owner(env,handle);reader_search_error error={0};reader_search_status status;(void)type;
   if(!search)return;status=reader_search_close(&search->search,&error);if(status!=READER_SEARCH_OK){search_failure(env,status,error.sdk_code);return;}search_free(env,search);
 }
-JNIEXPORT jlongArray JNICALL Java_org_exreader_host_NativeSearch_nativeResolve(JNIEnv *env,jclass type,jlong owner,jlong book,jint mode,jlong unit,jlong start,jlong end,jobjectArray route,jobjectArray selectors,jbyteArray font,jobject task) {
+JNIEXPORT jlongArray JNICALL Java_org_exreader_host_NativeSearch_nativeResolve(JNIEnv *env,jclass type,jlong owner,jlong book,jint mode,jlong unit,jlong start,jlong end,jobjectArray route,jobjectArray selectors,jbyteArray font,jfloat size,jobject task) {
   exr_library *store=library(env,owner);char *fields[4]={0},*bytes[3]={0};size_t sizes[3]={0},i,count=0,page=SIZE_MAX;
   exr_document *document=NULL;exr_publication *publication=NULL;exr_font *face=NULL;exr_pager *pager=NULL;exr_fixed_document *fixed=NULL;exr_fixed_text *text=NULL;
   exr_anchor anchor={0};exr_fixed_anchor fixed_anchor={0};exr_anchor_match match={0};exr_error error={0};exr_status status=EXR_OK;
   host_control context;exr_control control={0};jlong values[4];jlongArray out=NULL;(void)type;
   if(!store||(*env)->ExceptionCheck(env))return NULL;
-  if(book<=0||unit<0||start<0||end<start||(uint64_t)unit>=SIZE_MAX||(uint64_t)end>=SIZE_MAX||!task||!route||!selectors||(*env)->GetArrayLength(env,route)!=4||(*env)->GetArrayLength(env,selectors)!=3){throw_argument(env,"Invalid search selector route");return NULL;}
+  if(book<=0||unit<0||start<0||end<start||!isfinite(size)||size<18||size>40||(uint64_t)unit>=SIZE_MAX||(uint64_t)end>=SIZE_MAX||!task||!route||!selectors||(*env)->GetArrayLength(env,route)!=4||(*env)->GetArrayLength(env,selectors)!=3){throw_argument(env,"Invalid search selector route");return NULL;}
   control=host_task_control(env,task,&context);if((*env)->ExceptionCheck(env))return NULL;
   for(i=0;i<4;i++){jstring value=(*env)->GetObjectArrayElement(env,route,(jsize)i);if(value){if((*env)->GetStringLength(env,value)>32768){(*env)->DeleteLocalRef(env,value);throw_argument(env,"Search route exceeds its bound");goto done;}fields[i]=input_string(env,value);(*env)->DeleteLocalRef(env,value);if(!fields[i])goto done;}}
   if(!fields[0]||!fields[0][0]||strlen(fields[0])>255){status=EXR_ARGUMENT;goto done;}
@@ -155,7 +156,7 @@ JNIEXPORT jlongArray JNICALL Java_org_exreader_host_NativeSearch_nativeResolve(J
     status=host_publication(store,(int64_t)book,&publication,&error);if(status!=EXR_OK)goto done;
     parts=exr_publication_parts(publication,&count);if((uint64_t)unit>=count||!fields[1]||strcmp(parts[(size_t)unit].path,fields[1])){status=EXR_ARGUMENT;goto done;}
     status=search_font(env,font,&face,&error);if(status!=EXR_OK)goto done;
-    layout.page.width=600;layout.page.height=860;layout.page.margin=32;layout.page.font_size=24;layout.page.line_height=1.6f;layout.page.paragraph_spacing=12;layout.document_css=1;layout.embedded_fonts=1;layout.control=control;
+    layout.page.width=600;layout.page.height=860;layout.page.margin=32;layout.page.font_size=size;layout.page.line_height=1.6f;layout.page.paragraph_spacing=12;layout.document_css=1;layout.embedded_fonts=1;layout.control=control;
     options.workspace_budget=8*1024*1024;options.window_bytes=64*1024;
     status=exr_publication_pager_create(publication,(size_t)unit,face,&layout,&options,&pager,&error);
     if(status==EXR_OK)status=exr_pager_anchor_resolve(pager,&anchor,&control,&match,&error);page=(size_t)unit;

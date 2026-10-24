@@ -1463,17 +1463,19 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     @Override public void scan(long book,String query,boolean next,HostTask task,java.util.function.Consumer<NativeSearch.Batch> done,java.util.function.Consumer<Throwable> failed){
         ExecutorService owner=worker;if(owner==null||destroyed){failed.accept(new HostTask.Cancelled());return;}
         final boolean gate=BuildConfig.DEBUG&&getIntent().getBooleanExtra("exr_search_gate",false);
+        final float searchFont=fontSize;
         owner.execute(()->{try{
             task.check();if(store==null)throw new HostTask.Cancelled();NativeSearch.validate(query);
             NativeSearch.Control control=new NativeSearch.Control(task,getFilesDir(),gate);
-            if(!next){closeSearchNative();search=new NativeSearch(store,book,query,fontBytes(),task,control);}
+            if(!next){closeSearchNative();search=new NativeSearch(store,book,query,fontBytes(),searchFont,task,control);}
             else if(search==null||search.bookId!=book)throw new IllegalStateException("请重新搜索这本书");
             NativeSearch.Batch batch=search.next(control);if(batch.complete)closeSearchNative();task.check();done.accept(batch);
         }catch(Throwable error){closeSearchNative();failed.accept(error);}});
     }
     @Override public void resolve(long book,NativeSearch.Hit hit,HostTask task,java.util.function.Consumer<NativeSearch.Match> done,java.util.function.Consumer<Throwable> failed){
         ExecutorService owner=worker;if(owner==null||destroyed){failed.accept(new HostTask.Cancelled());return;}
-        owner.execute(()->{try{task.check();if(store==null)throw new HostTask.Cancelled();NativeSearch.Match match=NativeSearch.resolve(store,book,hit,fontBytes(),task);task.check();done.accept(match);}catch(Throwable error){failed.accept(error);}});
+        final float searchFont=fontSize;
+        owner.execute(()->{try{task.check();if(store==null)throw new HostTask.Cancelled();NativeSearch.Match match=NativeSearch.resolve(store,book,hit,fontBytes(),searchFont,task);task.check();done.accept(match);}catch(Throwable error){failed.accept(error);}});
     }
     @Override public void navigate(long book,NativeSearch.Hit hit,NativeSearch.Match match){
         if(match.state!=NativeSearch.FOUND||currentBook==null||currentBook.id!=book||current==null||operation!=0||pageBusy)return;
