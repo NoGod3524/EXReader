@@ -23,3 +23,11 @@
 此外attach未检查 `SetPropW` 返回值；若失败却继续替换窗口过程，`win_window_proc()` 取得NULL target，只能走DefWindowProc，宿主消息处理被替换。
 
 请复用Windows原生链式子类机制（如SetWindowSubclass/RemoveWindowSubclass/DefSubclassProc及稳定模块标识），移除时只卸载自身，正确处理安装失败与销毁重入。不通过禁止宿主正常子类扩展来规避。增加实际两层子类的两种detach次序、窗口先销毁、回调内detach与安装失败回滚，验证宿主自定义消息始终到达、另一层仍在、COM对象回到原计数。HGLOBAL与ASan/所有三平台及严格汇总保留；第二轮由原owner唯一修改。
+
+## Root独立接续并关闭复审
+
+电脑操作停止后，没有向外部会话再发送该指令。root从其已完成交回HEAD `986f2f0132ecdf753d6d428ba821a58175cd0d0c` 新建独立工作树/分支 `codex/reader-drop-coexistence` 直接修复，原owner工作树及原分支未改。
+
+受测源码 `335f188352575c8d598a60692104946dfe3f21c3` / run `40139548335` / attempt1：guard、Windows、Linux、macOS、严格汇总5/5success。Windows53项（新增4）、三平台各portable52、GTK28/AppKit28通过；原hook/ASan与13项工件拒绝回归保留。新增实际窗口证明两种卸载次序均保留宿主消息链、下层回调重入detach安全、子类安装失败回滚真实OLE注册并允许再次attach。模块公开头明确共存/失败语义，系统comctl32依赖在安装包导出。
+
+复审关闭，待共同源码接入。新的证据JSON完整保留原交回对象，旧绿/失败未转移或删除；不授予生产宿主接线、真实指针拖拽或性能。

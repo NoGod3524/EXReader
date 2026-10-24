@@ -1,12 +1,11 @@
 {
   "schema": 1,
-  "observed_at_utc": "2026-10-24T22:30:00Z",
+  "observed_at_utc": "2026-10-24T22:45:00Z",
   "packages": 19,
   "cloud_success": 17,
   "returned_pending_root_review": 15,
-  "root_review_closed_awaiting_integration": ["J06"],
+  "root_review_closed_awaiting_integration": ["J03", "J06"],
   "needs_further_work": [
-    "J03",
     "J19",
     "J25"
   ],
@@ -23,12 +22,13 @@
     },
     {
       "id": "J03",
-      "branch": "codex/reader-desktop-drop",
-      "latest_run": 40136297928,
-      "source": "5a0cd498ce4ec570f6cd52c6eca4d611431c1cc0",
+      "branch": "codex/reader-drop-coexistence",
+      "original_delivery_branch": "codex/reader-desktop-drop",
+      "latest_run": 40139548335,
+      "source": "335f188352575c8d598a60692104946dfe3f21c3",
       "status": "completed",
       "conclusion": "success",
-      "root_state": "second_root_review_subclass_coexistence_changes_needed_not_dispatched_after_computer_use_stop",
+      "root_state": "root_repaired_on_independent_branch_cloud_success_awaiting_integration",
       "earlier_cloud_success_run": 40123821461,
       "review": "J03-ROOT-REVIEW.md"
     },

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "recorded_at_utc": "2026-10-24T22:30:00Z",
+  "recorded_at_utc": "2026-10-24T22:45:00Z",
   "current_cycle": 1,
   "completed_cycles": 0,
   "audit_interval": 5,
@@ -14,6 +14,8 @@
     "status": "in_progress",
     "accepted": false,
     "pin_job_success": true,
+    "composition_all_three_jobs_and_strict_summary_success": true,
+    "windows_search_and_strict_summary_success": true,
     "gtk_palette_failures_remain_actual_failures": true,
     "apple_host_not_yet_included": true
   },
@@ -134,7 +136,13 @@
       "reading_ui_checks_passed": 16,
       "reading_scope": "API34 default x86_64 emulator only",
       "preferences_fixed_source": "ba25961961ae69222bfed4f7a98cb02bb1dc6847",
-      "preferences_fixed_tree": "a3e53123e861ac7ceb2c5fee4829288822229211"
+      "preferences_fixed_tree": "a3e53123e861ac7ceb2c5fee4829288822229211",
+      "preferences_source": "657ea2ccf37087b608155169a2fcecdf28fe8f33",
+      "preferences_evidence_head": "91270f8e7b5a3085430992b97dd27f612666480a",
+      "preferences_run": 40138266576,
+      "preferences_checks_passed": 17,
+      "preferences_page_colors_accepted": false,
+      "next_after_preferences": "real_public_empty_CBZ_snapshot_point_capture_and_independent_FOUND"
     }
   ],
   "claude_quota": {
@@ -286,6 +294,15 @@
   ],
   "audit_history": [],
   "complete_product": false,
+  "root_drop_repair": {
+    "branch": "codex/reader-drop-coexistence",
+    "source": "335f188352575c8d598a60692104946dfe3f21c3",
+    "run": 40139548335,
+    "accepted": true,
+    "windows_checks": 53,
+    "new_coexistence_checks": 4,
+    "integrated": false
+  },
   "root_windows_search": {
     "branch": "codex/reader-windows-search-ui",
     "accepted": true,
