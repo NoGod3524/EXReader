@@ -15,11 +15,6 @@
       "speak_long_utterance_started",
       "speak_busy_second_request",
       "speak_busy_state_unchanged",
-      "pause_transitions_to_paused",
-      "pause_idempotent_ok",
-      "pause_wrong_request_id_rejected",
-      "resume_transitions_to_speaking",
-      "resume_idempotent_ok",
       "stop_emits_stopped_once",
       "stop_state_ready",
       "stop_after_finish_is_ok",
@@ -78,6 +73,20 @@
       "config_oversized_limit_rejected",
       "second_cycle_closed",
       "second_cycle_destroyed"
+    ],
+    "pause": [
+      "pause_utterance_started",
+      "pause_transitions_to_paused",
+      "pause_idempotent_ok",
+      "pause_wrong_request_id_rejected",
+      "resume_transitions_to_speaking",
+      "resume_idempotent_ok",
+      "pause_second_cycle_paused",
+      "pause_second_cycle_speaking",
+      "pause_stop_after_resume",
+      "pause_state_ready_after_stop",
+      "pause_close_clean",
+      "pause_destroy_ok"
     ],
     "cpp": [
       "cpp_create_ready",

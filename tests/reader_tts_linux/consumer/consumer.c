@@ -363,22 +363,9 @@ static void phase_live(suite *s) {
          snap.state == READER_TTS_SPEAKING && snap.request_id == id, "state=%s id=%llu",
          state_name(snap.state), (unsigned long long)snap.request_id);
 
-  st = reader_tts_pause(h, id, &err);
-  reader_tts_observe(h, &snap, &err);
-  report(s, "pause_transitions_to_paused", st == READER_TTS_OK && snap.state == READER_TTS_PAUSED,
-         "status=%s state=%s", status_name(st), state_name(snap.state));
-  st = reader_tts_pause(h, id, &err);
-  report(s, "pause_idempotent_ok", st == READER_TTS_OK, "status=%s", status_name(st));
-  st = reader_tts_pause(h, id + 7, &err);
-  report(s, "pause_wrong_request_id_rejected", st == READER_TTS_ARGUMENT, "status=%s",
-         status_name(st));
-  st = reader_tts_resume(h, id, &err);
-  reader_tts_observe(h, &snap, &err);
-  report(s, "resume_transitions_to_speaking",
-         st == READER_TTS_OK && snap.state == READER_TTS_SPEAKING, "status=%s state=%s",
-         status_name(st), state_name(snap.state));
-  st = reader_tts_resume(h, id, &err);
-  report(s, "resume_idempotent_ok", st == READER_TTS_OK, "status=%s", status_name(st));
+  /* pause/resume live in their own phase: on speech-dispatcher 0.11.1 the
+     espeak-ng module stops answering after a paused message is resumed, which
+     would otherwise decide every later case of this phase. */
   st = reader_tts_stop(h, id, &err);
   await_terminal(h, id, 5000, &rs);
   drain(h, id, &rs);
@@ -694,6 +681,81 @@ static void phase_live(suite *s) {
   }
 }
 
+/* ------------------------------------------------------------ pause phase -- */
+/* Pause/resume are one scenario on one utterance, in their own phase and process:
+   a module that breaks while paused cannot drag the rest of the interface with it
+   (measured on speech-dispatcher 0.11.1, see docs/READER-TTS-LINUX.md). */
+static void phase_pause(suite *s) {
+  reader_tts_error err;
+  reader_tts *h = NULL;
+  reader_tts_config cfg;
+  reader_tts_snapshot snap;
+  reader_tts_status st;
+  reader_tts_state end = READER_TTS_INITIALIZING;
+  runstate rs;
+  char text[TEXT_CAP];
+  const uint64_t id = 41;
+  int ok;
+  memset(&err, 0, sizeof err);
+  memset(&snap, 0, sizeof snap);
+  memset(&cfg, 0, sizeof cfg);
+  cfg.struct_size = sizeof cfg;
+  st = reader_tts_create(&cfg, &h, &err);
+  if (!h) {
+    report(s, "pause_utterance_started", 0, "create failed: status=%s", status_name(st));
+    return;
+  }
+  fill_repeat(text, LONG_BYTES, LONG_UNIT);
+  rs_init(&rs);
+  st = reader_tts_speak(h, id, text, LONG_BYTES, NULL, 0.5, &err);
+  ok = (st == READER_TTS_OK) && await_started(h, id, CASE_TIMEOUT_MS, &rs);
+  report(s, "pause_utterance_started", ok, "status=%s started=%d", status_name(st), rs.c.started);
+
+  st = reader_tts_pause(h, id, &err);
+  reader_tts_observe(h, &snap, &err);
+  report(s, "pause_transitions_to_paused", st == READER_TTS_OK && snap.state == READER_TTS_PAUSED,
+         "status=%s state=%s", status_name(st), state_name(snap.state));
+  st = reader_tts_pause(h, id, &err);
+  report(s, "pause_idempotent_ok", st == READER_TTS_OK, "status=%s", status_name(st));
+  st = reader_tts_pause(h, id + 7, &err);
+  report(s, "pause_wrong_request_id_rejected", st == READER_TTS_ARGUMENT, "status=%s",
+         status_name(st));
+  st = reader_tts_resume(h, id, &err);
+  reader_tts_observe(h, &snap, &err);
+  report(s, "resume_transitions_to_speaking",
+         st == READER_TTS_OK && snap.state == READER_TTS_SPEAKING, "status=%s state=%s",
+         status_name(st), state_name(snap.state));
+  st = reader_tts_resume(h, id, &err);
+  report(s, "resume_idempotent_ok", st == READER_TTS_OK, "status=%s", status_name(st));
+
+  st = reader_tts_pause(h, id, &err);
+  reader_tts_observe(h, &snap, &err);
+  report(s, "pause_second_cycle_paused", st == READER_TTS_OK && snap.state == READER_TTS_PAUSED,
+         "status=%s state=%s", status_name(st), state_name(snap.state));
+  st = reader_tts_resume(h, id, &err);
+  reader_tts_observe(h, &snap, &err);
+  report(s, "pause_second_cycle_speaking",
+         st == READER_TTS_OK && snap.state == READER_TTS_SPEAKING, "status=%s state=%s",
+         status_name(st), state_name(snap.state));
+
+  st = reader_tts_stop(h, id, &err);
+  await_terminal(h, id, 10000, &rs);
+  drain(h, id, &rs);
+  report(s, "pause_stop_after_resume", st == READER_TTS_OK && rs.c.stopped == 1,
+         "status=%s stopped=%d finished=%d failed=%d", status_name(st), rs.c.stopped,
+         rs.c.finished, rs.c.failed);
+  st = reader_tts_observe(h, &snap, &err);
+  report(s, "pause_state_ready_after_stop", st == READER_TTS_OK && snap.state == READER_TTS_READY,
+         "state=%s", state_name(snap.state));
+  st = reader_tts_request_close(h, &err);
+  {
+    int closed = wait_closed(h, 10000, &end);
+    report(s, "pause_close_clean", st == READER_TTS_OK && closed, "state=%s", state_name(end));
+  }
+  st = reader_tts_destroy(&h, &err);
+  report(s, "pause_destroy_ok", st == READER_TTS_OK && h == NULL, "status=%s", status_name(st));
+}
+
 /* ------------------------------------------------------------- down phase -- */
 static void phase_down(suite *s) {
   reader_tts_error err;
@@ -863,7 +925,7 @@ int main(int argc, char **argv) {
   }
   if (!phase || !out) {
     fprintf(stderr,
-            "usage: %s --phase live|kill|down|recover --output FILE [--spd-pid PID] "
+            "usage: %s --phase live|pause|kill|down|recover --output FILE [--spd-pid PID] "
             "[--restart-cmd CMD]\n",
             argv[0]);
     return 2;
@@ -878,6 +940,7 @@ int main(int argc, char **argv) {
   s.fails = 0;
   rw_begin(out_file, argv[0], phase);
   if (strcmp(phase, "live") == 0) phase_live(&s);
+  else if (strcmp(phase, "pause") == 0) phase_pause(&s);
   else if (strcmp(phase, "down") == 0) phase_down(&s);
   else if (strcmp(phase, "recover") == 0) phase_recover(&s);
   else if (strcmp(phase, "kill") == 0) phase_kill(&s, spd_pid, restart_cmd);

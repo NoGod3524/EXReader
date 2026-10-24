@@ -36,7 +36,7 @@ build. Root owns host wiring; this package only proves the module.
 | `tests/reader_tts_linux/consumer/` | installed-package C consumer, real daemon scenarios |
 | `tests/reader_tts_linux/consumer_cpp/` | installed-package C++ consumer (C ABI from C++, std::thread ownership, voice-list lifetime, unique_ptr deleter) |
 | `tests/reader_tts_linux/tts_hook_suite.c` | source-built fault-injection suite |
-| `tests/reader_tts_linux/expected_cases.json` | the 130 named cases, fixed before any result is read |
+| `tests/reader_tts_linux/expected_cases.json` | the 138 named cases, fixed before any result is read |
 | `tests/reader_tts_linux/run_scenarios.py` | owns the daemon lifecycle, merges and validates results |
 | `tests/reader_tts_linux/aggregate.py`, `check_aggregate.py` | strict same-run aggregation and its rejection regressions |
 | `tests/reader_tts_linux/check_scope.sh` | fixed start, frozen SDK, product SQL, whitelist and source invariants |
@@ -103,8 +103,9 @@ Each job:
    **not** installed);
 4. compiles the C and the C++ consumer **from the installed prefix only**;
 5. builds the fault-injection suite from the package source;
-6. runs `run_scenarios.py`, which starts and kills the real daemon, runs six
-   phases (live, cpp, hook, kill/restart, down, recover), merges the named cases
+6. runs `run_scenarios.py`, which starts and kills the real daemon, runs seven
+   phases (live, pause, cpp, hook, kill/restart, down, recover) with a fresh
+   daemon per phase, merges the named cases
    and rejects any missing, duplicate, unexpected, failing or skipped case;
 7. uploads evidence, logs and the installed prefix as one artifact whose name
    carries run id, attempt and source SHA.
@@ -113,7 +114,7 @@ The report job re-runs `check_scope.sh`, runs the aggregation rejection
 regressions, then downloads this run's artifacts through the REST API, checks the
 artifact id/name tokens/byte size/sha256 digest/expiry, recomputes the ZIP digest,
 verifies the archived `files.sha256` against the archive contents, and re-validates
-all 130 named cases against `expected_cases.json`. Any mismatch is a rejection.
+all 138 named cases against `expected_cases.json`. Any mismatch is a rejection.
 
 ## 4. Scope of what may be claimed
 

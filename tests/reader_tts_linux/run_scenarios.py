@@ -350,6 +350,8 @@ def main():
         return rc_r == 0 and bool(pids_now)
 
     run_phase("live", [consumer, "--phase", "live"], timeout=900)
+    restart_daemon("before-pause")
+    run_phase("pause", [consumer, "--phase", "pause"], timeout=300)
     restart_daemon("before-cpp")
     run_phase("cpp", [consumer_cpp, "--phase", "cpp"], timeout=300)
     restart_daemon("before-hook")
