@@ -123,7 +123,7 @@ class State:
                                "sha256": digest(self.probe), "wav": probe_wav,
                                "summary": {"result": "pass", "started": 1, "ranges": 12, "finished": 1,
                                            "failed": 0, "stopped": 0, "text_bytes": 240, "max_end": 239,
-                                           "bad_range": 0, "state_after": "READY"}}
+                                           "bad_range": 0, "state_after": "READY", "capabilities": 3}}
         self.report["installed_files"] = [{"path": name, "bytes": len(data), "sha256": digest(data)}
                                           for name, data in sorted(self.stage.items())]
 
@@ -316,6 +316,13 @@ def main():
     case.files["consumer/tts-consumer.exe"] = case.consumer + b"tamper"
     case.repack_files()
     record("reject.consumer_hash", expect("consumer_hash", case.strict), "consumer binary replaced")
+
+    case = State()
+    case.report["probe"]["summary"]["ranges"] = 0
+    case.files["evidence/report.json"] = json.dumps(case.report).encode()
+    case.repack_files()
+    record("reject.probe_capability", expect("probe_range_capability", case.strict),
+           "capability claimed without engine positions")
 
     case = State()
     case.artifacts.append(dict(case.artifacts[0]))
