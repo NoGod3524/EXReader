@@ -7,7 +7,7 @@ static struct {
   char *parent,*selected,*selected_name,*selected_parent,*navigation_parent,*target_key,*target_title,*editor_parent,*editor_book;
   char group_cursor[33],member_cursor[73];uint64_t group_ordinal,member_ordinal,token;
   int kind,trash,group_direction,member_direction,entity,operation,selected_deleted,dependency;
-  gboolean applying,closing,editor_closing;
+  gboolean applying,closing,editor_closing,creating;
 } collections;
 static void collections_queue(reader_action action);
 static void collections_refresh(void);
@@ -89,7 +89,7 @@ static void collections_queue(reader_action action) {
   reader_command *command=&job->command;command->action=action;command->collection_kind=collections.kind;
   command->collection_removed=collections.trash;command->collection_operation=collections.operation;command->collection_token=collections.token;
   command->collection_parent=g_strdup(collections.parent ? collections.parent:"");
-  command->collection_id=g_strdup(collections.selected ? collections.selected:"");
+  command->collection_id=g_strdup(action==READER_COLLECTIONS_PREPARE_GROUP && collections.creating ? "":collections.selected ? collections.selected:"");
   command->collection_group_cursor=g_strdup(collections.group_cursor);command->collection_group_cursor_ordinal=collections.group_ordinal;
   command->collection_member_cursor=g_strdup(collections.member_cursor);command->collection_member_cursor_ordinal=collections.member_ordinal;
   command->collection_group_direction=collections.group_direction;command->collection_member_direction=collections.member_direction;
@@ -111,7 +111,7 @@ static void collections_refresh(void) { collections_reset_pages();collections_qu
 static void collections_prepare_group(GtkWidget *button,gpointer value) {
   (void)button;if(metadata_running || collections.closing) return;
   int action=GPOINTER_TO_INT(value);collections.entity=0;collections.operation=action==3 ? 0:action;
-  if(action==3) collections_string(&collections.selected,"");
+  collections.creating=action==3;
   collections_queue(READER_COLLECTIONS_PREPARE_GROUP);
 }
 static void collections_prepare_member(GtkWidget *button,gpointer value) {
@@ -170,7 +170,7 @@ static void collections_show_editor(const reader_result *result) {
   gtk_grid_attach(GTK_GRID(grid),position,0,line,1,1);gtk_grid_attach(GTK_GRID(grid),collections.ordinal,1,line++,1,1);
   gboolean ordered=collections.entity==0 ? collections.kind==0:collections.kind!=1;
   gtk_widget_set_sensitive(collections.ordinal,ordered && collections.operation==0);
-  collections.editor_message=gtk_label_new(result->collection_dependency ? "Restore the parent collection first":result->collection_conflict ? "Versions differ; refresh before changing this collection":"");
+  collections.editor_message=gtk_label_new(result->collection_dependency ? "Restore the parent collection first":result->collection_conflict ? "Versions differ; refresh before changing this collection":result->message);
   gtk_label_set_line_wrap(GTK_LABEL(collections.editor_message),TRUE);gtk_grid_attach(GTK_GRID(grid),collections.editor_message,0,line,2,1);
   if(result->collection_dependency) gtk_dialog_add_button(GTK_DIALOG(collections.editor),"View _parent",3);
   gtk_dialog_set_response_sensitive(GTK_DIALOG(collections.editor),GTK_RESPONSE_ACCEPT,!result->collection_dependency && !result->collection_conflict);
@@ -193,7 +193,7 @@ static void collections_member_selected(GtkListBox *box,GtkListBoxRow *row,gpoin
   state();
 }
 static void collections_enter(GtkWidget *button,gpointer unused) {
-  (void)button;(void)unused;if(collections.kind!=0 || collections.trash || !collections.selected || collections.selected_deleted) return;
+  (void)button;(void)unused;if(collections.kind!=0 || collections.trash || !collections.selected || !collections.selected[0] || collections.selected_deleted) return;
   collections_string(&collections.parent,collections.selected);collections_string(&collections.selected,"");collections_refresh();
 }
 static void collections_up(GtkWidget *button,gpointer value) {

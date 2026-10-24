@@ -29,13 +29,13 @@ def main():
     catalog = folder / 'profile/library.sqlite.product.sqlite'
     journal = Path(str(catalog) + '.commands.pending')
     host = Session((args.payload / 'bin/exreader-linux').resolve(), (args.payload / 'Reader.otf').resolve(), folder)
-    checks, shots, native = [], [], []
+    checks, shots, native, recovery_evidence = [], [], [], []
     report = {'accepted': False, 'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
               'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'checks': checks, 'screenshots': shots,
               'scope': 'GTK shelves children tags series bounded membership and explicit recovery',
               'group_page_limit': 50, 'member_page_limit': 50, 'main_shelf_cache_limit': 150,
               'sdk_changed': False, 'schema_changed': False, 'sync_ui_accepted': False,
-              'performance_accepted': False, 'complete_product': False}
+              'recovery_observations': recovery_evidence, 'performance_accepted': False, 'complete_product': False}
 
     def sql(query, values=()):
         with sqlite3.connect(catalog) as db:
@@ -165,21 +165,27 @@ def main():
         record('native_rename_and_group_position_preserve_the_group_identity')
         before = counts();host.key('alt+n');window('Collection details');field('n', 'Cancelled group')
         host.key('Escape');window('Collection details', False)
-        assert counts() == before and not journal.exists() and not sql("SELECT * FROM reader_shelves WHERE name='Cancelled group'")
+        assert ready()['selected_id'] == parent and counts() == before and not journal.exists()
+        assert not sql("SELECT * FROM reader_shelves WHERE name='Cancelled group'")
         record('native_cancel_changes_no_metadata_history_outbox_or_pending_intent')
         host.key('alt+e');ready(lambda state: state['parent_id'] == parent)
         child = group('Child shelf', 3)
         assert sql('SELECT parent_id,ordinal FROM reader_shelves WHERE shelf_id=?', (child,)) == [(parent, 3)]
         record('enter_shelf_creates_a_child_with_explicit_parent_and_position')
 
-        before = counts();member_editor('a', 5)
-        assert counts() == (before[0] + 2, before[1] + 2)
+        before = counts();host.key('alt+a');window('Book classification');ready(lambda state: state['editor'] == '1')
+        assert counts() == (before[0] + 1, before[1] + 1)
         assert sql('SELECT title,author,favorite FROM reader_books WHERE book_key=?', (book_key,)) == [('Legacy collection title', '旧作者', 1)]
-        assert sql('SELECT ordinal FROM reader_book_shelves WHERE shelf_id=? AND book_key=?', (child, book_key)) == [(5,)]
         assert sql('SELECT sdk_book_id FROM reader_local_books WHERE book_key=?', (book_key,)) == [(sdk_id,)]
         bootstrap = json.loads(sql("SELECT body_json FROM reader_revisions WHERE entity_kind='book'")[0][0])
         assert bootstrap['payload']['title'] == 'Legacy collection title' and bootstrap['payload']['favorite'] is True
         record('first_membership_verifies_sdk_original_and_bootstraps_preserved_legacy_fields')
+        host.key('Escape');window('Book classification', False)
+        assert counts() == (before[0] + 1, before[1] + 1) and not sql('SELECT * FROM reader_book_shelves') and not journal.exists()
+        record('cancel_after_explicit_original_verification_keeps_book_history_without_classifying_it')
+        member_editor('a', 5)
+        assert counts() == (before[0] + 2, before[1] + 2)
+        assert sql('SELECT ordinal FROM reader_book_shelves WHERE shelf_id=? AND book_key=?', (child, book_key)) == [(5,)]
         current = ready(lambda state: state['member_count'] == '1')
         assert current['member_keys'] == book_key and current['member_ordinals'] == '5'
         record('membership_uses_stable_global_key_while_local_sdk_mapping_is_preserved')
@@ -238,13 +244,17 @@ def main():
         sql("CREATE TRIGGER collection_test_refusal BEFORE UPDATE ON reader_tags BEGIN SELECT RAISE(ABORT,'test collection refusal');END")
         before = counts();host.key('alt+r');window('Collection details');field('n', 'Recovered tag');host.key('Return')
         recovery = window('Recover collection change');pending = hashlib.sha256(journal.read_bytes()).hexdigest()
+        (folder / 'pending-refused.bin').write_bytes(journal.read_bytes())
+        recovery_evidence.append({'stage': 'refused', 'sha256': pending, 'history_outbox': counts()})
         assert counts() == before and sql('SELECT name FROM reader_tags WHERE tag_id=?', (tag,)) == [('Barrier rename',)]
         shot('04-durable-refusal', recovery)
         record('actual_product_refusal_keeps_pending_bytes_and_zero_partial_effects')
         kill();assert hashlib.sha256(journal.read_bytes()).hexdigest() == pending
+        recovery_evidence.append({'stage': 'after-process-death', 'sha256': hashlib.sha256(journal.read_bytes()).hexdigest(), 'history_outbox': counts()})
         record('actual_process_death_preserves_the_original_pending_collection_intent')
         sql('DROP TRIGGER collection_test_refusal');host.launch();open_collections();window('Recover collection change')
         assert hashlib.sha256(journal.read_bytes()).hexdigest() == pending and counts() == before
+        recovery_evidence.append({'stage': 'fresh-host-before-retry', 'sha256': hashlib.sha256(journal.read_bytes()).hexdigest(), 'history_outbox': counts()})
         record('fresh_host_presents_recovery_without_automatic_rebinding_or_resubmission')
         host.key('alt+r');window('Recover collection change', False);ready()
         assert counts() == (before[0] + 1, before[1] + 1) and not journal.exists()
@@ -314,7 +324,7 @@ def main():
         close_collections();host.key('F2', 'Return');host.wait(lambda state: state['book'] == sdk_id and state['reader_visible'] == 1)
         record('normal_restart_preserves_collections_memberships_and_the_main_native_reading_path')
         host.close()
-        assert len(checks) == 26, checks
+        assert len(checks) == 27, checks
         report['accepted'] = True
     finally:
         if not report['accepted']:
