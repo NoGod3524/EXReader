@@ -94,8 +94,10 @@ def main():
     if partial.exists():
         shutil.rmtree(partial)
     shutil.copytree(prefix, partial)
+    # CMake searches <prefix>/lib/cmake/<name>*/ by glob, so the package must
+    # leave that directory entirely; a suffix would still be discovered.
     hidden = partial / 'lib' / 'cmake' / 'EXReaderWebDAV'
-    hidden.rename(hidden.with_name('EXReaderWebDAV.hidden'))
+    shutil.move(str(hidden), str(partial / 'lib' / 'withheld-EXReaderWebDAV'))
     missing = run(['cmake', '-S', str(source / 'negative_missing_dependency'),
                    '-B', str(scratch / 'missing-dependency'), *generator,
                    '-DEXR_MODULE_PREFIX=' + str(partial)], out / 'missing-dependency.log')
