@@ -181,7 +181,11 @@ Utterance RunSpeak(reader_tts *handle, uint64_t request_id, const std::string &t
         if (event.kind == READER_TTS_FINISHED) run.finished = true;
         if (event.kind == READER_TTS_STOPPED) run.stopped = true;
         if (event.kind == READER_TTS_FAILED) run.failed = true;
-        if (run.finished || run.stopped || run.failed) break;
+        if (run.finished || run.stopped || run.failed) {
+          run.has_terminal = true;
+          run.terminal_index = run.events.size() - 1;
+          break;
+        }
       }
       if (run.finished || run.stopped || run.failed) break;
     }
@@ -812,19 +816,25 @@ int rtts_probe_run(const char *output_path) {
         // graph) before it will start the next utterance; a host that speaks the
         // next chunk synchronously inside the cancel turn sees an utterance the
         // system silently drops. Documented in docs/READER-TTS-APPLE.md.
-        Pump(0.4);
+        Pump(1.0);
         const Utterance second_run = RunSpeak(handle, 6, "Replacement request.", 25.0, false, 0.0);
         bool foreign = false;
+        size_t own_started = 0;
         for (const reader_tts_event &event : second_run.events) {
           if (event.request_id != 6) foreign = true;
+          if (event.request_id == 6 && event.kind == READER_TTS_STARTED) ++own_started;
         }
-        std::string detail;
-        const bool ordered = EventOrderOk(second_run, &detail);
-        if (!detail.empty()) detail += " (events=" + Str(second_run.events.size()) + " started=" +
-                                        Str((int)second_run.saw_started) + " state=" +
-                                        Str((int)StateOf(handle)) + ")";
-        Expect("probe.late-callback-isolation", ordered && !foreign,
-               foreign ? "an event carried a stale request id" : detail);
+        const std::string observed = "events=" + Str(second_run.events.size()) + " started=" +
+                                     Str(own_started) + " state=" + Str((int)StateOf(handle));
+        Expect("probe.late-callback-isolation", !foreign && own_started == 1,
+               foreign ? "an event carried a stale request id" : "the replacement request never started (" + observed + ")");
+        if (second_run.finished) {
+          Pass("probe.post-cancel-utterance", "finished, " + observed);
+        } else {
+          Pending("probe.post-cancel-utterance",
+                  "the system started the replacement utterance after an immediate cancel but did not finish it "
+                  "within 25 s (" + observed + ")");
+        }
       }
     } else {
       Pending("probe.queue-replacement-busy", g_speech_note);

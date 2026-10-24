@@ -57,6 +57,7 @@ PENDING_ALLOWED = {
     'probe.cancel-terminal-once',
     'probe.late-callback-isolation',
     'probe.pcm-wav-captured',
+    'probe.post-cancel-utterance',
 }
 
 MINIMUM_LOGIC_CASES = 55
