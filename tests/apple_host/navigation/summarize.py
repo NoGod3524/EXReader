@@ -60,12 +60,14 @@ def main():
             if name.startswith('apple-navigation-sdk-'):
                 reports['sdk'] = read_json('build/sdk-identity.json')
             elif name.startswith('apple-navigation-native-'):
-                for report, count in [('consumer/navigation-review.json', 12)]:
+                for report, count in [('consumer/navigation-review.json', 13)]:
                     value = read_json(report)
                     require(value['accepted'] is True and value['failed'] == value['skipped'] == 0 and
                             len(value['checks']) == len({row['id'] for row in value['checks']}) == count and
                             all(row['passed'] is True for row in value['checks']), 'native checks failed or omitted')
                     reports[report] = value
+                    require(any(row['id'] == 'aligned-native-layout-without-scroll-requires-full-current-geometry'
+                                for row in value['checks']), 'aligned layout rejection check missing')
                 provider = read_json('navigation-review.product.json')
                 require(provider['installed_navigation_linked'] is True and provider['static_sdk_linked'] is False and
                         hashlib.sha256(archive.read('navigation-review')).hexdigest() == provider['binary_sha256'], 'native executable differs')

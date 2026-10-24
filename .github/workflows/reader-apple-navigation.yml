@@ -94,7 +94,8 @@ jobs:
           assert value['accepted'] is True and value['failed'] == value['skipped'] == 0
           assert value['source_sha'] == os.environ['GITHUB_SHA']
           assert str(value['run_id']) == os.environ['GITHUB_RUN_ID'] and str(value['attempt']) == os.environ['GITHUB_RUN_ATTEMPT']
-          assert len(value['checks']) == len({row['id'] for row in value['checks']}) == 12 and all(row['passed'] is True for row in value['checks'])
+          assert len(value['checks']) == len({row['id'] for row in value['checks']}) == 13 and all(row['passed'] is True for row in value['checks'])
+          assert any(row['id'] == 'aligned-native-layout-without-scroll-requires-full-current-geometry' for row in value['checks'])
           provider = json.loads((root / 'navigation-review.product.json').read_text())
           assert provider['installed_navigation_linked'] is True and provider['static_sdk_linked'] is False
           PY

@@ -202,13 +202,51 @@ import Darwin
                 print("NAVIGATION_DSO_IMAGES \(images)")
             }
         }
+        check("aligned-native-layout-without-scroll-requires-full-current-geometry") {
+            let row = HostShelfBook(key: HostShelfKey(sort: "book 0201", key: "filtered-source"), sdkID: 201,
+                title: "Book 0201", author: "Author", format: "TXT", bytes: 32)
+            let other = HostShelfBook(key: HostShelfKey(sort: "book 0202", key: "second-source"), sdkID: 202,
+                title: "Book 0202", author: "Author", format: "TXT", bytes: 32)
+            let size = CGSize(width: 100, height: 100)
+            let frame = CGRect(x: 0, y: 0, width: 100, height: 40)
+            func make(_ values: [HostShelfBook]) -> HostShelf {
+                let defaults = UserDefaults(suiteName: "EXR.NavigationAlignedLayout.\(UUID().uuidString)")!
+                let value = HostShelf(defaults: defaults)
+                value.query = "Book 0201"
+                value.connect { _, _, _, _, done in done(.success(values)) }
+                return value
+            }
+            func waiting(_ value: HostShelf) -> Bool { value.observation.contains("\"restoring_layout\":true") }
+            let single = make([row]), epoch = single.geometryRevision
+            single.observe([row.id: frame], size: size, revision: epoch - 2)
+            try expect(waiting(single) && single.top == nil, "Stale epoch acknowledged unissued restoration")
+            single.observe([row.id: frame], size: size, revision: epoch, complete: false)
+            try expect(waiting(single), "Incomplete snapshot acknowledged unissued restoration")
+            single.observe([:], size: size, revision: epoch)
+            try expect(waiting(single), "Missing row acknowledged unissued restoration")
+            single.observe([row.id: frame.offsetBy(dx: 0, dy: 2)], size: size, revision: epoch)
+            try expect(waiting(single), "Misaligned frame acknowledged unissued restoration")
+            single.query = "new query"
+            single.observe([row.id: frame], size: size, revision: epoch)
+            try expect(waiting(single), "Unapplied query acknowledged old geometry")
+            single.query = "Book 0201"
+            single.observe([row.id: frame], size: size, revision: epoch)
+            try expect(!waiting(single) && single.top == row.key && single.geometryRevision == epoch && !single.needsScroll,
+                "Actual aligned single row did not acknowledge without fabricating a scroll issue")
+            let multiple = make([row, other]), multiEpoch = multiple.geometryRevision
+            multiple.observe([row.id: frame], size: size, revision: multiEpoch)
+            try expect(waiting(multiple), "Partial cached-row geometry acknowledged unissued restoration")
+            multiple.observe([row.id: frame, other.id: frame.offsetBy(dx: 0, dy: 40)], size: size, revision: multiEpoch)
+            try expect(!waiting(multiple) && multiple.top == row.key && multiple.geometryRevision == multiEpoch,
+                "Full current cached-row geometry did not acknowledge aligned restoration")
+        }
         let failed = checks.filter { $0["passed"] as? Bool != true }.count
-        let result: [String: Any] = ["accepted": failed == 0 && checks.count == 12, "failed": failed, "skipped": 0,
+        let result: [String: Any] = ["accepted": failed == 0 && checks.count == 13, "failed": failed, "skipped": 0,
             "source_sha": environment["GITHUB_SHA"] ?? "", "run_id": environment["GITHUB_RUN_ID"] ?? "",
             "attempt": environment["GITHUB_RUN_ATTEMPT"] ?? "", "checks": checks]
         try JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted, .sortedKeys])
             .write(to: output.appendingPathComponent("navigation-review.json"))
         print("NAVIGATION_REPORT \(result)"); fflush(stdout)
-        if failed != 0 || checks.count != 12 { exit(1) }
+        if failed != 0 || checks.count != 13 { exit(1) }
     }
 }

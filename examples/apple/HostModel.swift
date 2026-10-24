@@ -276,9 +276,18 @@ final class HostShelf: ObservableObject {
         }
         viewportSize = size
         guard complete else { return }
-        guard awaitingLayoutKey == nil || issuedRestoreRevision == restoreRevision else { return }
         let ordered = positions.filter { $0.value.maxY > 0 && $0.value.minY < size.height }
             .sorted { $0.value.minY < $1.value.minY }
+        if let target = awaitingLayoutKey, issuedRestoreRevision != restoreRevision {
+            // Rebuilding identical filtered content can leave the native list
+            // already aligned without emitting a changed aggregate preference.
+            // Full current geometry can prove that no scroll is needed.
+            guard !loading, generation == appliedGeneration, query == appliedQuery,
+                  size.width > 0, !rows.isEmpty,
+                  rows.allSatisfy({ positions[$0.id] != nil }),
+                  ordered.first?.key == target, let frame = positions[target],
+                  frame.width > 0, frame.height > 0, abs(frame.minY) <= 1 else { return }
+        }
         let newVisible = Set(ordered.map(\.key))
         guard let first = ordered.first, let index = rows.firstIndex(where: { $0.id == first.key }) else { return }
         let lastIndex = ordered.last.flatMap { last in rows.firstIndex(where: { $0.id == last.key }) } ?? index

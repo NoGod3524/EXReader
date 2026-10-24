@@ -118,7 +118,7 @@ jobs:
             if test "$platform" = macos; then
               cases=(-only-testing:EXReaderHostUITests-macOS/ShelfUITests/test04TitleAuthorAndLiteralSearch -only-testing:EXReaderHostUITests-macOS/ShelfUITests/test05RapidSearchRefreshAndNativeViewport -only-testing:EXReaderHostUITests-macOS/ShelfUITests/test07StoredOriginalReadingAndFilteredReturn)
             else
-              cases=(-only-testing:EXReaderHostUITests-iOS/ShelfUITests/test05RapidSearchRefreshAndNativeViewport -only-testing:EXReaderHostUITests-iOS/ShelfUITests/test06RotationBackgroundAndProcessRestore)
+              cases=(-only-testing:EXReaderHostUITests-iOS/ShelfUITests/test05RapidSearchRefreshAndNativeViewport -only-testing:EXReaderHostUITests-iOS/ShelfUITests/test06RotationBackgroundAndProcessRestore -only-testing:EXReaderHostUITests-iOS/ShelfUITests/test07StoredOriginalReadingAndFilteredReturn)
             fi
           fi
           xcodebuild test -project build/apple-shelf-project/EXReaderHost.xcodeproj -scheme "$scheme" \
