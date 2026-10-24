@@ -1,0 +1,26 @@
+{
+  "accepted": false,
+  "schema": 1,
+  "package": "J17 reader-tts-apple",
+  "branch": "codex/reader-tts-apple",
+  "start_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk_sha": "9854061be331fe603a1822d9b2b36ee357154927",
+  "source_sha": null,
+  "run_id": null,
+  "attempt": null,
+  "artifacts": [],
+  "jobs": [],
+  "platforms": {},
+  "problems": [
+    "cloud acceptance has not completed yet; accepted stays false until the strict same-source aggregate passes"
+  ],
+  "capsule": {
+    "module_accepted": false,
+    "host_function_accepted": false,
+    "physical_device_execution": false,
+    "listening_impression_evaluated": false,
+    "performance_budget_accepted": false,
+    "complete_product": false
+  },
+  "execution": "All builds, tests, syntax checks, fixtures and artifact download/parsing in GitHub Actions; local source/docs/Git only"
+}

@@ -1,0 +1,152 @@
+name: Native Apple speech adoption
+
+on:
+  push:
+    branches: [codex/reader-tts-apple]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  START_SHA: f43baf9182d75907c0cb5d6f77048f27bca8c950
+  SDK_SHA: 9854061be331fe603a1822d9b2b36ee357154927
+
+jobs:
+  guard:
+    name: source, protected-tree and path guard
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require tested HEAD, frozen SDK tree, unchanged product SQL, whitelisted paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$START_SHA" HEAD
+          git merge-base --is-ancestor "$SDK_SHA" HEAD
+          git diff --exit-code "$SDK_SHA" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code "$START_SHA" HEAD -- apps/reader/store/001_catalog.sql
+          changed="$(git diff --name-only "$START_SHA" HEAD)"
+          echo "$changed"
+          while IFS= read -r path; do
+            [ -z "$path" ] && continue
+            case "$path" in
+              extras/reader-tts-apple/*|tests/reader_tts_apple/*|.github/workflows/reader-tts-apple.yml|docs/READER-TTS-APPLE.md|docs/validation/reader-tts-apple.json) ;;
+              *) echo "Unexpected changed path: $path"; exit 1 ;;
+            esac
+          done <<< "$changed"
+
+  macos:
+    name: macOS native speech: logic suite, installed probe, PCM
+    needs: guard
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Re-check the same guard in this job
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$START_SHA" HEAD
+          git diff --exit-code "$SDK_SHA" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code "$START_SHA" HEAD -- apps/reader/store/001_catalog.sql
+          git diff --name-only "$START_SHA" HEAD | while IFS= read -r path; do
+            [ -z "$path" ] && continue
+            case "$path" in
+              extras/reader-tts-apple/*|tests/reader_tts_apple/*|.github/workflows/reader-tts-apple.yml|docs/READER-TTS-APPLE.md|docs/validation/reader-tts-apple.json) ;;
+              *) echo "Unexpected changed path: $path"; exit 1 ;;
+            esac
+          done
+      - name: Fixture-only tooling
+        run: brew install ninja
+      - name: Audio inventory (evidence only, never a gate)
+        continue-on-error: true
+        run: |
+          mkdir -p build/tts-apple-macos
+          { system_profiler SPAudioDataType || true; } > build/tts-apple-macos/audio-devices.txt 2>&1
+          cat build/tts-apple-macos/audio-devices.txt
+      - name: Build, install, and run the logic suite, installed probe and example
+        run: python3 tests/reader_tts_apple/run_macos.py
+      - name: Upload macOS producer
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-tts-apple-macos-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          path: |
+            build/tts-apple-macos/result.json
+            build/tts-apple-macos/logic-result.json
+            build/tts-apple-macos/speech-result.json
+            build/tts-apple-macos/speech-result.json.wav
+            build/tts-apple-macos/audio-devices.txt
+            build/tts-apple-macos/logs/
+
+  ios:
+    name: iOS Simulator native speech inside a UIKit app
+    needs: guard
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Re-check the same guard in this job
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$START_SHA" HEAD
+          git diff --exit-code "$SDK_SHA" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code "$START_SHA" HEAD -- apps/reader/store/001_catalog.sql
+          git diff --name-only "$START_SHA" HEAD | while IFS= read -r path; do
+            [ -z "$path" ] && continue
+            case "$path" in
+              extras/reader-tts-apple/*|tests/reader_tts_apple/*|.github/workflows/reader-tts-apple.yml|docs/READER-TTS-APPLE.md|docs/validation/reader-tts-apple.json) ;;
+              *) echo "Unexpected changed path: $path"; exit 1 ;;
+            esac
+          done
+      - name: Fixture-only tooling
+        run: brew install ninja
+      - name: Build, boot, and run the installed probe in the simulator
+        run: python3 tests/reader_tts_apple/run_ios.py
+      - name: Upload iOS producer
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-tts-apple-ios-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          path: |
+            build/tts-apple-ios/result.json
+            build/tts-apple-ios/speech-result.json
+            build/tts-apple-ios/speech-result.json.wav
+            build/tts-apple-ios/logs/
+
+  evidence:
+    name: strict same-source evidence
+    needs: [macos, ios]
+    if: always() && needs.macos.result == 'success' && needs.ios.result == 'success'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Re-download both producers and re-verify identity, size, digest and cases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_tts_apple/aggregate.py
+      - name: Upload evidence bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-tts-apple-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          path: build/tts-apple-evidence/
