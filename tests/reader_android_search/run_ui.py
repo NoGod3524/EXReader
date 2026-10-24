@@ -38,7 +38,7 @@ try:
             save(phase+'-instrumentation.txt',error.stdout or b'');raise
         save(phase+'-instrumentation.txt',raw)
         report=json.loads(private('search-ui-'+phase+'.json'));save(phase+'-report.json',(json.dumps(report,ensure_ascii=False,indent=2)+'\n').encode())
-        print(json.dumps({'phase':phase,'expected':names,'actual':report['checks'],'failed_check':report.get('failed_check'),'failure_class':report.get('failure_class'),'failure':report.get('failure'),'observations':report['observations']},ensure_ascii=False),flush=True)
+        print(json.dumps({'phase':phase,'expected':names,'actual':report['checks'],'failed_check':report.get('failed_check'),'failure_class':report.get('failure_class'),'failure':report.get('failure'),'failure_trace':report.get('failure_trace'),'failure_module_code':report.get('failure_module_code'),'failure_sdk_code':report.get('failure_sdk_code'),'observations':report['observations']},ensure_ascii=False),flush=True)
         save(phase+'-logcat.txt',adb('logcat','-d','-v','threadtime','-t','3000'))
         for observation in report['observations']:
             image=private('search-captures/'+observation['name']+'.png');assert image.startswith(b'\x89PNG\r\n\x1a\n') and len(image)>1000
