@@ -193,7 +193,7 @@ struct LibraryScreen: View {
                                     value: ShelfGeometry(frames: [book.id: geometry.frame(in: .named("catalog-shelf"))], revision: geometryRevision))
                             })
                         }
-                      }.id(geometryRevision)
+                      }
                     }
                     .accessibilityIdentifier("library.list")
                     .coordinateSpace(name: "catalog-shelf")
