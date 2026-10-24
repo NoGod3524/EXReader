@@ -1,0 +1,75 @@
+name: GTK account retained failure inspection
+on:
+  push:
+    branches: [codex/reader-gtk-account-inspect]
+    paths: [.github/workflows/reader-account-inspect.yml]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 8
+    steps:
+      - name: Read verified retained ZIPs only on this cloud runner
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import configparser,hashlib,io,json,os,urllib.request,urllib.error,urllib.parse,zipfile
+          from pathlib import Path,PurePosixPath
+          API='https://api.github.com/repos/NoGod3524/EXReader'
+          SOURCE='9e24b28f68de5b7c660ccd38addd0b3645952074'
+          RUN=40065023405
+          headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','User-Agent':'EXReader-GTK-cloud-inspection'}
+          def require(value,message):
+              if not value:raise ValueError(message)
+          def api(path):
+              with urllib.request.urlopen(urllib.request.Request(API+path,headers=headers),timeout=60) as response:return json.load(response)
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self,*args):return None
+          result={'accepted':False,'diagnostic_only':True,'source_sha':SOURCE,'run_id':RUN,'attempts':[]}
+          for attempt,artifact,size,digest in [(1,12548932693,38918029,'sha256:bbf2ed8f08e0e4970b3004e909551cb1524cb7322d0731f1492aacac1c313b04'),(2,12549247926,39564824,'sha256:419cbcf3d9ccc66e7d2bf6294819b3a794ea9d5873395348fa7d5640a7dda955')]:
+              metadata=api('/actions/artifacts/'+str(artifact))
+              require(metadata['workflow_run']['id']==RUN and metadata['workflow_run']['head_sha']==SOURCE and not metadata['expired'] and metadata['digest']==digest and metadata['size_in_bytes']==size,'artifact identity differs')
+              request=urllib.request.Request(API+'/actions/artifacts/'+str(artifact)+'/zip',headers=headers)
+              try:response=urllib.request.build_opener(NoRedirect).open(request,timeout=60)
+              except urllib.error.HTTPError as error:
+                  require(error.code==302,'missing signed redirect')
+                  location=error.headers['Location'];target=urllib.parse.urlparse(location)
+                  require(target.scheme=='https' and target.hostname and not target.username and not target.password,'invalid redirect')
+                  response=urllib.request.urlopen(location,timeout=60)
+              with response:body=response.read(size+1)
+              require(len(body)==size and 'sha256:'+hashlib.sha256(body).hexdigest()==digest,'ZIP digest differs')
+              archive=zipfile.ZipFile(io.BytesIO(body));names=archive.namelist()
+              require(len(names)==len(set(names)) and sum(x.file_size for x in archive.infolist())<1024**3,'invalid ZIP entries')
+              for name in names:
+                  path=PurePosixPath(name);require(not path.is_absolute() and '..' not in path.parts and '\\' not in name,'unsafe ZIP path')
+              def read(suffix):
+                  paths=[name for name in names if name.endswith(suffix)]
+                  require(len(paths)==1,'missing or ambiguous '+suffix)
+                  return archive.read(paths[0]).decode('utf-8','replace')
+              item={'attempt':attempt,'artifact_id':artifact,'digest':digest}
+              if attempt==1:
+                  partial=json.loads(read('/account-regressions/font-mutant-evidence/report.json'))
+                  item['mutant_checks']=partial['checks'];item['has_restart_expected']='restart_expected' in partial
+                  log=read('/account-regressions/font-mutant-verifier.log')
+                  item['mutant_verifier_tail']=log.splitlines()[-10:]
+              else:
+                  state=configparser.ConfigParser(interpolation=None);state.read_string(read('/account-ui/primary/state.ini'))
+                  item['account_state']=dict(state['account']);item['host_state']=dict(state['host'])
+                  item['partial_result']=json.loads(read('/account-ui/result.json'))
+                  log=read('/account-ui/primary/application.log')
+                  item['status_tail']=[line for line in log.splitlines() if line.startswith(('STATUS ','FRAME '))][-10:]
+                  item['runtime_error_counts']={marker:log.count(marker) for marker in ('CRITICAL','Segmentation fault','malloc','double free','assertion')}
+              result['attempts'].append(item)
+          output=Path('build/account-inspection');output.mkdir(parents=True)
+          (output/'inspection.json').write_text(json.dumps(result,indent=2)+'\n')
+          print(json.dumps(result),flush=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gtk-account-inspection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/account-inspection/
+          if-no-files-found: error
