@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* Pure UI values cross the existing SDK-owner queue; no SDK handle lives here. */
 #include <reader_search.h>
+static void inbook_progress(void *unused);
 static struct {
   GtkWidget *dialog,*content,*entry,*list,*status,*start,*more,*cancel,*return_focus;
   gboolean running,complete,has_owner,suppress_focus;
@@ -9,7 +10,7 @@ static struct {
   unsigned actions,closed;
   int code,match;
   reader_search_control control;
-} inbook;
+} inbook={.control={.changed=inbook_progress}};
 static gboolean inbook_progress_idle(gpointer unused) { (void)unused;state();return G_SOURCE_REMOVE; }
 static void inbook_progress(void *unused) { (void)unused;g_idle_add(inbook_progress_idle,NULL); }
 static gboolean inbook_opened(void) { return inbook.dialog!=NULL; }
@@ -74,7 +75,7 @@ static void inbook_queue(reader_action action,size_t index) {
   if(action==READER_SEARCH_BEGIN) { inbook_release();inbook_clear_rows();inbook.token++; }
   job->command.search_token=inbook.token;job->command.search_index=index;
   g_atomic_int_set(&inbook.control.request,job->generation);g_atomic_int_set(&inbook.control.phase,0);g_atomic_int_set(&inbook.control.polls,0);
-  inbook.control.changed=inbook_progress;job->command.search_control=&inbook.control;
+  job->command.search_control=&inbook.control;job->command.search_request=job->generation;
   if(action==READER_SEARCH_BEGIN) job->command.search_query=g_strdup(gtk_entry_get_text(GTK_ENTRY(inbook.entry)));
   inbook.has_owner=TRUE;inbook.running=TRUE;inbook.actions++;busy=TRUE;
   inbook_controls();inbook_message(action==READER_SEARCH_CHOOSE ? "Resolving selected result…":"Searching…");
@@ -92,7 +93,8 @@ static void inbook_changed(GtkEditable *entry,gpointer unused) {
 }
 static void inbook_choose(GtkListBox *list,GtkListBoxRow *row,gpointer unused) {
   (void)list;(void)unused;
-  if(row) inbook_queue(READER_SEARCH_CHOOSE,GPOINTER_TO_SIZE(g_object_get_data(G_OBJECT(row),"result-index")));
+  if(row && gtk_widget_get_parent(GTK_WIDGET(row))==inbook.list)
+    inbook_queue(READER_SEARCH_CHOOSE,GPOINTER_TO_SIZE(g_object_get_data(G_OBJECT(row),"result-index")));
 }
 static void inbook_open(GtkWidget *button,gpointer unused) {
   (void)button;(void)unused;
@@ -115,7 +117,7 @@ static void inbook_open(GtkWidget *button,gpointer unused) {
   gtk_entry_set_placeholder_text(GTK_ENTRY(inbook.entry),"Text to find · up to 4096 UTF-8 bytes");atk_object_set_name(gtk_widget_get_accessible(inbook.entry),"In-book query");
   gtk_box_pack_start(GTK_BOX(area),inbook.entry,FALSE,FALSE,4);
   GtkWidget *actions=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,6);gtk_box_pack_start(GTK_BOX(area),actions,FALSE,FALSE,4);
-  inbook.start=gtk_button_new_with_mnemonic("_Search");inbook.more=gtk_button_new_with_mnemonic("_More results");inbook.cancel=gtk_button_new_with_mnemonic("_Cancel search");
+  inbook.start=gtk_button_new_with_mnemonic("_Search");inbook.more=gtk_button_new_with_mnemonic("_More results");inbook.cancel=gtk_button_new_with_mnemonic("Ca_ncel search");
   GtkWidget *buttons[]={inbook.start,inbook.more,inbook.cancel};
   for(size_t i=0;i<G_N_ELEMENTS(buttons);i++) gtk_box_pack_start(GTK_BOX(actions),buttons[i],FALSE,FALSE,0);
   inbook.status=gtk_label_new("");gtk_label_set_line_wrap(GTK_LABEL(inbook.status),TRUE);gtk_box_pack_start(GTK_BOX(area),inbook.status,FALSE,FALSE,4);

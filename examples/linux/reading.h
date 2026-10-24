@@ -52,6 +52,7 @@ typedef struct {
   size_t search_index;
   const char *search_query;
   reader_search_control *search_control;
+  int search_request;
 #endif
 #ifdef EXR_READER_PREFERENCES
   reader_preferences preferences;

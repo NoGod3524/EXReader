@@ -10,7 +10,6 @@ on:
         description: Diagnose new controls without granting retained-suite acceptance
 permissions:
   contents: read
-  actions: read
 defaults:
   run:
     shell: bash

@@ -30,6 +30,7 @@ static int64_t import(linux_reader *reader,const char *folder,const char *name) 
 static reader_result scan(linux_reader *reader,reader_action action,int64_t book,uint64_t token,const char *query,reader_search_control *control) {
   reader_command value=command(action,book,0,0);value.search_token=token;value.search_query=query;value.search_control=control;
   if(control) { g_atomic_int_inc(&control->request);g_atomic_int_set(&control->phase,0);g_atomic_int_set(&control->polls,0); }
+  value.search_request=control ? g_atomic_int_get(&control->request):0;
   reader_result result={0};linux_reader_execute(reader,&value,&result);return result;
 }
 static reader_result choose(linux_reader *reader,int64_t book,size_t part,size_t page,uint64_t token,size_t index) {
