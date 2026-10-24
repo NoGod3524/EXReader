@@ -310,6 +310,9 @@ def _open_first(session, recorder):
 
 
 def _open_fixed(session, recorder, fixtures, pdf_name, filter_text):
+    session.close_host_dialog("before the fixed-page flow")
+    session.host.wait_idle(timeout=90)
+    session.ensure_focus("start of the fixed-page flow")
     pdf = Path(fixtures) / pdf_name
     imported = flows.import_book(session, str(pdf))
     if not imported.get("ok"):

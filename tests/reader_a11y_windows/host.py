@@ -304,6 +304,7 @@ class Host(object):
         if not self.ini_path.is_file():
             return None
         parser = configparser.ConfigParser(interpolation=None)
+        parser.optionxform = str
         try:
             parser.read_string(self.ini_path.read_text(encoding="utf-8", errors="replace"))
         except Exception as exc:
