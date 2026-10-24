@@ -264,12 +264,15 @@
     "branch": "codex/reader-windows-search-ui",
     "accepted": false,
     "source": "f4366ed0033ab5b3dac652424fbf07f790a01da3",
-    "next": "verify native shelf snapshot readiness before initial TXT import, then complete lifecycle and retained regressions",
+    "next": "complete EPUB/PDF, cancellation/lifecycle, keyboard/UIA and retained regressions with strict artifact authentication",
     "run": 40131176153,
     "earlier_failed_runs": [40128929347, 40129875990, 40130496026],
     "original_f1_checks_passed_per_run": 264,
-    "initial_host_checks_completed": 0,
-    "failure_phase": "wait-imported-row",
+    "initial_host_checks_completed": 13,
+    "initial_txt_run_conclusion": "success",
+    "initial_txt_job": 120983017930,
+    "initial_txt_artifact": 12575590677,
+    "earlier_failure_phase": "wait-imported-row",
     "first_artifact_read_only_diagnostic": 40130113080
   }
 }
