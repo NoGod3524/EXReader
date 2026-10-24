@@ -396,6 +396,8 @@ static int cmd_remove(const char *work, int argc, char **argv, int recover, int 
     swap_at = at ? atoi(at) : 0;
     swap_from = arg(argc, argv, "--swap-from");
     swap_to = arg(argc, argv, "--swap-to");
+    /* The default target is the caller's own path argument. */
+    if (!swap_to) swap_to = arg(argc, argv, "--file");
     cancel_calls = 0;
     reenter = arg(argc, argv, "--reenter");
     reenter_in_busy = flag(argc, argv, "--reenter-in-busy");
