@@ -109,6 +109,51 @@ The checker is invoked by the workflow as
       --prefix build/ap-prefix --work build/ap-work \
       --output build/ap-evidence --platform <Linux|Windows|macOS>
 
+## Cloud record
+
+Same-source run: [40127110929 attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40127110929),
+workflow `.github/workflows/reader-account-profiles.yml`, tested source
+`b1c7467af0b9faf843b9ec988df49c0476c74ee9`.
+
+| job | id | conclusion |
+| --- | --- | --- |
+| account profiles (ubuntu-22.04) | 120970784004 | success |
+| account profiles (windows-2022) | 120970784075 | success |
+| account profiles (macos-15) | 120970784047 | success |
+| same-run artifact evidence | 120971062350 | success |
+
+| artifact | id | bytes | sha256 | expires |
+| --- | --- | --- | --- | --- |
+| reader-account-profiles-Linux-40127110929-1 | 12573753172 | 1247476 | `0bac87b3bd626896c5c2d2fde43f29dd6aa3d9e97edd7d1ac5aa5e56053b1ddc` | 2027-01-22T19:50:25Z |
+| reader-account-profiles-Windows-40127110929-1 | 12573323555 | 1237680 | `6657842b7b15dcb910631d6bc22436cb1ea19f1330240c6e171a5bf10f9df5af` | 2027-01-22T19:50:25Z |
+| reader-account-profiles-macOS-40127110929-1 | 12573183555 | 938161 | `7d02c297134756ef295bd5f1b23f7f82d2821e9aa849685f48bc36d7a970117f` | 2027-01-22T19:50:25Z |
+| reader-account-profiles-evidence-40127110929-1 | 12573243659 | 956 | `41d45aca6d600d6cd0543cb41cc782ba21b9901c314083cd8a33b19b43ab8f07` | 2027-01-22T19:50:25Z |
+
+Every declared digest was recomputed from the downloaded ZIP in the cloud evidence
+job and matched, the three platform case sets were identical, 40 of 40 cases
+passed on each platform, nine mutated reports were rejected by the validator, and
+the Linux AddressSanitizer plus UndefinedBehaviorSanitizer run recorded
+`failures=0`.
+
+### Real-session cross-account proof
+
+Identical on all three platforms (raw record kept at
+`ap-work/session/session-consumer.json` in each artifact):
+
+    prepare_a=0 prepare_b=0 distinct=true
+    create_a=0 state_a=5 status_a=5 closed_a=1 destroy_a=0
+    binding_a=true verify_a=0
+    borrow_create=0 borrow_state=5 borrow_status=4 borrow_closed=1
+    own_b_create=0 own_b_status=5 own_b_closed=1
+    binding_b=true verify_b=0
+
+`status=4` is `READER_SESSION_ACCOUNT`: the real, unchanged session refused to reuse
+account A's product library when it was handed account B's identity, so a second
+account cannot borrow the first account's local library. `status=5` is
+`READER_SESSION_SYNC` from the loopback URL that refuses the connection; no remote
+transfer is claimed. `verify_a`/`verify_b=0` show that this package accepts exactly the binding
+file the real session writes.
+
 ## Scope and limitations
 
 - The package is a component. Wiring it into the Windows, GTK, Android, Apple or
@@ -116,13 +161,15 @@ The checker is invoked by the workflow as
   root and the host owners. This document does not claim host or product
   integration.
 - No real account secret, private document or user cloud drive is used. The
-  session proof uses a loopback URL that refuses the connection, so only the local
-  binding, product-database and refusal paths are exercised; no remote transfer is
-  claimed.
+  real-session proof uses a loopback URL that refuses the connection, so only the
+  local binding, product-database and refusal paths are exercised; no remote
+  transfer is claimed.
+- `add`/`rename`/`remove`/`load` trust the caller-supplied store directory and rely on the operating
+  system; `prepare_activation` and `verify_activation` verify every component of that path and
+  create the profile directories themselves.
 - `thread-reentrancy` adds from four threads of one process; because the library holds
   no shared memory, true parallelism is additionally covered by the eight-process
-  exclusion case. No race inside the library is claimed beyond what those cases
-  show.
+  exclusion case. No wider race freedom is claimed.
 - Cancellation is polled, not asynchronous: a callback that never returns blocks
   the call exactly as documented.
 - The two-phase commit cannot make a same-user attacker race impossible between
@@ -132,12 +179,22 @@ The checker is invoked by the workflow as
 
 ## Retained failures
 
-None yet: this document was written before the first cloud run. Real failures,
-retained logs and any unimplemented behaviour are appended here after the run;
-they are never deleted or retargeted.
+Every earlier attempt is kept in its own run; nothing was deleted, retargeted or
+turned into an expected refusal.
+
+| run | source | real failure | resolution |
+| --- | --- | --- | --- |
+| 40123173113 | f5b04d48 | package build: the binding presence flag was not declared | declared it in the binding read block |
+| 40124406060 | a8f8c01c | Linux: `-Wformat-truncation` on the plan product copy; macOS: the probe used a non-existent list member | bounded copy plus the public `profiles` member |
+| 40124868582 | be4ec926 | probe and worker truncated profile fields through `snprintf` | bounded `copy_field` helper |
+| 40125587687 | 187b6796 | the checker passed relative store paths and expected a 129-byte name the struct cannot hold | resolve the work root; judge the oversized stored name as `FORMAT` |
+| 40126050835 | d8ff6cd2 | the binding path was built with a separator instead of the product-path suffix (four named cases) | append `.sync-account` to the product path |
+| 40126331462 | 91cbcb0e | platforms green, evidence job required its own not-yet-uploaded artifact | authenticate the three upstream artifacts before the record is uploaded |
 
 ## Acceptance
 
-`docs/validation/reader-account-profiles.json` starts at `accepted: false` / `status:
-implementation-complete-cloud-pending` and is only rewritten from the real same-source
-run. The evidence commit is documentation-only and carries `[skip ci]`.
+`docs/validation/reader-account-profiles.json` records `accepted: true` for this component
+only, bound to run 40127110929 attempt 1 at `b1c7467af0b9faf843b9ec988df49c0476c74ee9`. The
+evidence commit is documentation-only and carries `[skip ci]`, so the final HEAD
+differs from the tested source only in this document and the validation record.
+Root still owns host wiring and the joint re-verification on common source.

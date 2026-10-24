@@ -6,11 +6,18 @@
   "sdk_version": "3.40.0",
   "abi": 1,
   "branch": "codex/reader-account-profiles",
-  "status": "implementation-complete-cloud-pending",
-  "accepted": false,
-  "tested_source": null,
+  "status": "cloud-verified-component",
+  "accepted": true,
+  "scope": "component: secret-free account profiles and isolated activation plans; host wiring and credentials backend excluded",
+  "tested_source": "b1c7467af0b9faf843b9ec988df49c0476c74ee9",
   "final_head": null,
-  "final_head_diff": null,
+  "final_head_diff": {
+    "paths": [
+      "docs/READER-ACCOUNT-PROFILES.md",
+      "docs/validation/reader-account-profiles.json"
+    ],
+    "note": "the evidence commit is documentation-only and carries [skip ci]; no source, test, workflow or SDK path differs from tested_source"
+  },
   "interfaces": {
     "header": "reader_account_profiles.h",
     "cmake_target": "EXReaderAccountProfiles::reader_account_profiles",
@@ -40,174 +47,512 @@
       "maximum": 10000
     }
   },
-  "cloud": null,
+  "cloud": {
+    "run_id": 40127110929,
+    "run_attempt": 1,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40127110929",
+    "workflow": ".github/workflows/reader-account-profiles.yml",
+    "jobs": [
+      {
+        "id": 120970784004,
+        "name": "account profiles (ubuntu-22.04)",
+        "conclusion": "success"
+      },
+      {
+        "id": 120970784075,
+        "name": "account profiles (windows-2022)",
+        "conclusion": "success"
+      },
+      {
+        "id": 120970784047,
+        "name": "account profiles (macos-15)",
+        "conclusion": "success"
+      },
+      {
+        "id": 120971062350,
+        "name": "same-run artifact evidence",
+        "conclusion": "success"
+      }
+    ],
+    "artifacts": [
+      {
+        "platform": "Linux",
+        "id": 12573753172,
+        "name": "reader-account-profiles-Linux-40127110929-1",
+        "bytes": 1247476,
+        "sha256": "0bac87b3bd626896c5c2d2fde43f29dd6aa3d9e97edd7d1ac5aa5e56053b1ddc",
+        "digest": "sha256:0bac87b3bd626896c5c2d2fde43f29dd6aa3d9e97edd7d1ac5aa5e56053b1ddc",
+        "expires_at": "2027-01-22T19:50:25Z",
+        "checks": 40
+      },
+      {
+        "platform": "Windows",
+        "id": 12573323555,
+        "name": "reader-account-profiles-Windows-40127110929-1",
+        "bytes": 1237680,
+        "sha256": "6657842b7b15dcb910631d6bc22436cb1ea19f1330240c6e171a5bf10f9df5af",
+        "digest": "sha256:6657842b7b15dcb910631d6bc22436cb1ea19f1330240c6e171a5bf10f9df5af",
+        "expires_at": "2027-01-22T19:50:25Z",
+        "checks": 40
+      },
+      {
+        "platform": "macOS",
+        "id": 12573183555,
+        "name": "reader-account-profiles-macOS-40127110929-1",
+        "bytes": 938161,
+        "sha256": "7d02c297134756ef295bd5f1b23f7f82d2821e9aa849685f48bc36d7a970117f",
+        "digest": "sha256:7d02c297134756ef295bd5f1b23f7f82d2821e9aa849685f48bc36d7a970117f",
+        "expires_at": "2027-01-22T19:50:25Z",
+        "checks": 40
+      }
+    ],
+    "evidence_record": {
+      "platform": "evidence",
+      "id": 12573243659,
+      "name": "reader-account-profiles-evidence-40127110929-1",
+      "bytes": 956,
+      "sha256": "41d45aca6d600d6cd0543cb41cc782ba21b9901c314083cd8a33b19b43ab8f07",
+      "digest": "sha256:41d45aca6d600d6cd0543cb41cc782ba21b9901c314083cd8a33b19b43ab8f07",
+      "expires_at": "2027-01-22T19:50:25Z"
+    },
+    "named_cases_per_platform": 40,
+    "case_sets_identical": true,
+    "mutated_reports_rejected": 9,
+    "sanitizers": {
+      "platform": "Linux",
+      "address": true,
+      "undefined": true,
+      "result": "failures=0"
+    },
+    "session_proof": {
+      "prepare_a": 0,
+      "prepare_b": 0,
+      "distinct": true,
+      "create_a": 0,
+      "state_a": 5,
+      "status_a": 5,
+      "closed_a": 1,
+      "destroy_a": 0,
+      "binding_a": true,
+      "verify_a": 0,
+      "borrow_create": 0,
+      "borrow_state": 5,
+      "borrow_status": 4,
+      "borrow_closed": 1,
+      "own_b_create": 0,
+      "own_b_status": 5,
+      "own_b_closed": 1,
+      "binding_b": true,
+      "verify_b": 0
+    }
+  },
   "cases": [
     {
       "name": "installed-c-consumer",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "installed-cpp-session-consumer",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "validate-unicode-names",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "validate-utf8-refusals",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "validate-uuid",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "validate-url-rules",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "secret-url-refused",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "add-load-roundtrip-unicode",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "duplicate-id-and-pair",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "same-url-different-account-isolation",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "same-account-different-url-isolation",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "profile-count-limit",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "file-limit-lowered",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "unknown-version-preserved",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "corrupt-format-preserved",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "noncanonical-bytes-preserved",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "cancelled-add-before-lock",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "cancelled-save-preserves",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "failed-save-preserves",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "lock-timeout-and-recovery",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "real-termination-releases-lock",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "crash-before-rename-leftover",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "concurrent-processes-no-lost-update",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "thread-reentrancy",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "generation-conflict",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "argument-and-struct-size",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "activation-derived-paths",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "no-directory-before-activation",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "unsafe-link-rejected",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "hardlink-library-rejected",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "binding-missing-refused",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "binding-mismatch-refused",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "binding-match-accepted",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "verify-tampered-plan",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "verify-stale-plan",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "verify-missing-profile",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "unicode-store-path",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "secret-scan",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "no-sdk-or-product-dependency",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
     },
     {
       "name": "cross-account-real-session",
-      "status": "pending"
+      "status": "pass",
+      "platforms": [
+        "Linux",
+        "Windows",
+        "macOS"
+      ]
+    }
+  ],
+  "retained_failures": [
+    {
+      "run_id": 40123173113,
+      "source": "f5b04d48",
+      "failure": "package build: binding presence flag not declared",
+      "resolution": "declared the flag in the binding read block"
+    },
+    {
+      "run_id": 40124406060,
+      "source": "a8f8c01c",
+      "failure": "Linux: -Wformat-truncation on the plan product copy; macOS: probe used a non-existent list member",
+      "resolution": "bounded copy plus the public profiles member"
+    },
+    {
+      "run_id": 40124868582,
+      "source": "be4ec926",
+      "failure": "probe/worker truncated profile fields with snprintf",
+      "resolution": "bounded copy_field helper"
+    },
+    {
+      "run_id": 40125587687,
+      "source": "187b6796",
+      "failure": "checker passed relative store paths and expected an unrepresentable 129-byte name",
+      "resolution": "resolve the work root; judge the oversized stored name as FORMAT"
+    },
+    {
+      "run_id": 40126050835,
+      "source": "d8ff6cd2",
+      "failure": "binding file addressed with a separator instead of the product-path suffix (4 named cases)",
+      "resolution": "append .sync-account to the product path"
+    },
+    {
+      "run_id": 40126331462,
+      "source": "91cbcb0e",
+      "failure": "platforms green; evidence job required its own not-yet-uploaded artifact",
+      "resolution": "authenticate the three upstream artifacts before the record is uploaded"
     }
   ],
   "limitations": [
     "Host UI wiring and the credentials backend stay with root and the host owners.",
     "No real account secret, private document or user cloud drive is used.",
-    "The session proof uses a loopback URL that refuses the connection; no remote transfer is claimed.",
-    "Android and Apple platform grants are not claimed."
+    "The real-session proof uses a loopback URL that refuses the connection, so only the binding, product-database and refusal paths are exercised; no remote transfer is claimed.",
+    "add/rename/remove/load trust the caller-supplied store directory and rely on the operating system; prepare_activation and verify_activation verify every component of that path.",
+    "Android and Apple platform grants are not claimed.",
+    "Thread-level parallelism is covered by four threads in one process plus eight concurrent processes; no wider race freedom is claimed."
   ],
-  "notes": "accepted stays false until the same-source GitHub Actions run is recorded here."
+  "notes": "accepted=true only for this component and only for the same-source run 40127110929 attempt 1 at b1c7467a; root still owns host integration and the joint re-verification."
 }
