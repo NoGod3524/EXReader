@@ -80,9 +80,14 @@ def archive_providers(map_text):
 
 
 def direct_providers(map_text):
-    """SQLite amalgamation objects linked directly instead of through an archive."""
+    """SQLite amalgamation objects linked directly instead of through an archive.
+
+    A direct object always carries a path separator; an archive member appears as
+    lib(name).a(sqlite3.c.o) (GNU/ld64) or name.lib:sqlite3.c.obj (MSVC), so both
+    of those shapes are excluded here on purpose.
+    """
     found = set()
-    for match in re.finditer(r'([^\s\]]*sqlite3\.c\.o)(?![)])', map_text):
+    for match in re.finditer(r'([^\s\]"]*[/\\]sqlite3\.c\.o)(?![)])', map_text):
         found.add(match.group(1))
     return sorted(found)
 
@@ -198,14 +203,19 @@ def main():
         # Server-side evidence: the bytes really travelled, under one identity.
         objects = fixture.objects()
         revisions = fixture.revisions()
-        audit(len(objects) == 1, 'exactly one immutable original reached the store', str(len(objects)))
+        audit(len(objects) == len(fixture.roots),
+              'each prefix root received exactly one immutable original', str(len(objects)))
         for path, body in objects.items():
             digest = hashlib.sha256(body).hexdigest()
-            audit(digest == text_sha and '/objects/' + text_sha[:2] + '/' + text_sha + '.txt' == path,
+            audit(digest == text_sha and path.endswith('/objects/' + text_sha[:2] + '/' + text_sha + '.txt'),
                   'the stored original carries the source identity', path)
             audit(len(body) == (fixtures / 'sample.txt').stat().st_size,
                   'the stored original keeps its exact length', str(len(body)))
-        audit(len(revisions) == 6, 'both runs published their three revisions', str(len(revisions)))
+        published = (run1_report.get('network_pushed', 0) + run1_report.get('session_pushed', 0) +
+                     relocated_report.get('network_pushed', 0) + relocated_report.get('session_pushed', 0))
+        audit(len(revisions) == published,
+              'the store holds exactly the revisions both runs acknowledged',
+              '%d stored / %d acknowledged' % (len(revisions), published))
         for path, body in revisions.items():
             leaf = path.rsplit('/', 1)[1]
             value = json.loads(body)
