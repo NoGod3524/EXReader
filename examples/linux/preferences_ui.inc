@@ -13,6 +13,7 @@ static struct {
   int load_status,save_status,portal_color;
   unsigned portal_events,portal_version;
   unsigned deferred_closes;
+  unsigned actions;
   size_t bitmap_width,bitmap_height;
   double press_x,press_y;
   gboolean pressed;
@@ -247,6 +248,7 @@ static void preferences_fill(const reader_preferences *p) {
 }
 static void preferences_save(GtkWidget *button,gpointer unused) {
   (void)button;(void)unused;if(preferences.running) return;
+  preferences.actions++;state();
   GtkWidget *numbers[]={preferences.font,preferences.line,preferences.paragraph,preferences.margin,preferences.zoom};
   for(size_t i=0;i<G_N_ELEMENTS(numbers);i++) gtk_spin_button_update(GTK_SPIN_BUTTON(numbers[i]));
   reader_preferences p=appearance;p.font_size=(float)gtk_spin_button_get_value(GTK_SPIN_BUTTON(preferences.font));
@@ -264,19 +266,21 @@ static void preferences_save(GtkWidget *button,gpointer unused) {
   preferences_queue(&p,TRUE);
 }
 static void preferences_defaults(GtkWidget *button,gpointer unused) {
-  (void)button;(void)unused;reader_preferences p=reader_preferences_defaults();preferences_fill(&p);preferences_notice("Defaults shown. Save to apply them");
+  (void)button;(void)unused;reader_preferences p=reader_preferences_defaults();preferences_fill(&p);preferences_notice("Defaults shown. Save to apply them");preferences.actions++;state();
 }
 static void preferences_reload(GtkWidget *button,gpointer unused) {
   (void)button;(void)unused;reader_preferences p=appearance;reader_preferences_error problem={0};
+  preferences.actions++;
   preferences.load_status=reader_preferences_load(preferences.path,&p,NULL,&problem);
   if(preferences.load_status!=READER_PREFERENCES_OK) { preferences_notice("Settings file could not be loaded; current valid settings retained");state();return; }
   preferences_fill(&p);preferences_queue(&p,FALSE);
 }
 static void preferences_import(GtkWidget *button,gpointer unused) {
   (void)button;(void)unused;reader_preferences p=appearance;reader_preferences_error problem={0};
+  preferences.actions++;
   if(!preferences.legacy.present) { preferences_notice("No old appearance settings were found");return; }
   if(reader_preferences_import_legacy(&p,&preferences.legacy,NULL,&problem)!=READER_PREFERENCES_OK) { preferences_notice("Old appearance values were invalid; current settings retained");return; }
-  preferences_fill(&p);preferences_notice("Old font and zoom shown. Save to apply this explicit import");
+  preferences_fill(&p);preferences_notice("Old font and zoom shown. Save to apply this explicit import");state();
 }
 static void preferences_open(GtkWidget *button,gpointer unused) {
   (void)button;(void)unused;
@@ -345,11 +349,11 @@ static gboolean preferences_page_release(GtkWidget *widget,GdkEventButton *event
   return TRUE;
 }
 static char *preferences_observation(void) {
-  return g_strdup_printf("[preferences]\nvisible=%d\nrunning=%d\nload_status=%d\nsave_status=%d\nfont=%.3f\nline=%.3f\nparagraph=%.3f\nmargin=%.3f\ntheme=%u\nsystem_theme=%u\neffective_theme=%u\ndirection=%u\ninput=%u\nzoom=%u\nportal_version=%u\nportal_events=%u\nbitmap_width=%zu\nbitmap_height=%zu\ndeferred_closes=%u\n",
+  return g_strdup_printf("[preferences]\nvisible=%d\nrunning=%d\nload_status=%d\nsave_status=%d\nfont=%.3f\nline=%.3f\nparagraph=%.3f\nmargin=%.3f\ntheme=%u\nsystem_theme=%u\neffective_theme=%u\ndirection=%u\ninput=%u\nzoom=%u\nportal_version=%u\nportal_events=%u\nbitmap_width=%zu\nbitmap_height=%zu\ndeferred_closes=%u\nactions=%u\n",
     preferences.dialog!=NULL,preferences.running,preferences.load_status,preferences.save_status,(double)appearance.font_size,(double)appearance.line_spacing,
     (double)appearance.paragraph_spacing,(double)appearance.margin,appearance.theme,appearance_system_theme,
     (unsigned)reader_preferences_effective_theme(&appearance,(reader_preferences_theme)appearance_system_theme),appearance.page_turn_direction,appearance.page_turn_input,appearance.fixed_page_zoom,preferences.portal_version,preferences.portal_events,
-    preferences.bitmap_width,preferences.bitmap_height,preferences.deferred_closes);
+    preferences.bitmap_width,preferences.bitmap_height,preferences.deferred_closes,preferences.actions);
 }
 static void preferences_cleanup(void) {
   preferences.cleaned=TRUE;
