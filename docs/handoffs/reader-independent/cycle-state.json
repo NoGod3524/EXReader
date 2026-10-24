@@ -38,7 +38,11 @@
       "new_owner": "DeepSeek Harness Flash1017 High PTC",
       "new_owner_ui_title": "[G01] Windows 账号、同步与收取",
       "new_owner_started": true,
-      "full_permissions_observed": true
+      "full_permissions_observed": true,
+      "state": "account_capture_review_passed_windows_a11y_followup_running",
+      "tested_source": "dde92e8990ec14888b2f500d6000db596f03c601",
+      "verified_run": 40089084258,
+      "evidence_head": "be197da252683eae031a5660f294be94fa0209a7"
     },
     {
       "package_id": "G03",

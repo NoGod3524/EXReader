@@ -75,11 +75,13 @@ root已通过GitHub作业接口独立核对：iOS run`40080841137`的producer和
 
 GTK受测`27ab57fd725816dd098c7031fa634efde83c63e5`、run`40082557686`、job`120838919065`已由root接口核对success；46项账号/收取、原105项界面与4项故障、原后端同轮通过。文档HEAD`adef2c01a177c120831b27897c5f3a460eafe788`仅两份证据文档。其后GTK/ATK修复候选`532d8ebb97a21a113cb1464b6014827c058e21a9`的run`40084158805`仍待真实回归，不转移上一源码通过结论。
 
-## G01：Windows账号，补齐真实capture出口
+## G01：Windows账号，真实capture回修通过，宿主无障碍接续
 
 原受测`20c6a1deec794b4902f0ae3a7140a17b19cef7fd`、文档HEAD`cd0c7f9b8e3a9af53e30e53248d47ce959f1d0c8`、run`40082869006`保留。root发现旧探针手写v1 location再提交wire，并未调用SDK capture，已要求原owner补安装后四格式18真实捕获、正式A/TLS/B往返与公开resolve、重开，以及冲突/缺父/墓碑不投影的真实UI出口。此前25项只授予其实际传输范围。
 
 G12受测`da2bcde7d684c1db8a9a51de9a7d478d870d5149`、run`40084309431`审计作业success，root已独立核对并读报告：49项为34pass/9fail/5gap/1not_verified，其中8blocking；`audit_completed=true`、`accessibility_accepted=false`。root已将报告交同一Windows生产owner，先完成当前18捕获，再修无名输入框、Tab陷阱、禁用时丢焦点、详情关闭焦点恢复、阅读页真实文字/选择provider、模态背景语义及状态事件。只增G01定向回归；G12报告目录只读，完整审计在集成后复跑。
+
+回修受测`dde92e8990ec14888b2f500d6000db596f03c601`、纯文档HEAD`be197da252683eae031a5660f294be94fa0209a7`的run`40089084258` producer/严格汇总两作业已由root独立核对success。root已读原生capture/resolve消费者及实际宿主驱动：18捕获调用公开SDK创建，两个真实宿主经原生TLS传输并重开，17FOUND/1预期歧义、零SDK笔记副本；新旧共32项及原158/10/5/13/18回归保留。冲突/缺父/墓碑在接收端独立产品库种入，真实UI证明不投影、不选头、页面不跳、本机冲突原件仍可离线读取；这不冒称第二远端产生了冲突分支。两文档净差异已核。该固定账号/capture交付进入待集成队列，owner随后G12生产修复仍未验收，不把新脏文件转授。
 
 ## 主线后续候选（2026-10-24 10:38 UTC）
 
