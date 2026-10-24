@@ -1,0 +1,213 @@
+{
+  "package": "EXReaderAccountProfiles",
+  "version": "0.1.0",
+  "fixed_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk_freeze": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "abi": 1,
+  "branch": "codex/reader-account-profiles",
+  "status": "implementation-complete-cloud-pending",
+  "accepted": false,
+  "tested_source": null,
+  "final_head": null,
+  "final_head_diff": null,
+  "interfaces": {
+    "header": "reader_account_profiles.h",
+    "cmake_target": "EXReaderAccountProfiles::reader_account_profiles",
+    "sdk_dependency": false,
+    "product_sql_written": false,
+    "network": false,
+    "threads_created": false,
+    "phases": [
+      "validate",
+      "add",
+      "rename",
+      "remove",
+      "load",
+      "prepare_activation",
+      "verify_activation"
+    ]
+  },
+  "limits": {
+    "profiles": 32,
+    "name_bytes": 128,
+    "url_bytes": 1024,
+    "store_path_bytes": 2048,
+    "path_bytes": 2304,
+    "file_bytes": 131072,
+    "lock_timeout_ms": {
+      "default": 2000,
+      "maximum": 10000
+    }
+  },
+  "cloud": null,
+  "cases": [
+    {
+      "name": "installed-c-consumer",
+      "status": "pending"
+    },
+    {
+      "name": "installed-cpp-session-consumer",
+      "status": "pending"
+    },
+    {
+      "name": "validate-unicode-names",
+      "status": "pending"
+    },
+    {
+      "name": "validate-utf8-refusals",
+      "status": "pending"
+    },
+    {
+      "name": "validate-uuid",
+      "status": "pending"
+    },
+    {
+      "name": "validate-url-rules",
+      "status": "pending"
+    },
+    {
+      "name": "secret-url-refused",
+      "status": "pending"
+    },
+    {
+      "name": "add-load-roundtrip-unicode",
+      "status": "pending"
+    },
+    {
+      "name": "duplicate-id-and-pair",
+      "status": "pending"
+    },
+    {
+      "name": "same-url-different-account-isolation",
+      "status": "pending"
+    },
+    {
+      "name": "same-account-different-url-isolation",
+      "status": "pending"
+    },
+    {
+      "name": "profile-count-limit",
+      "status": "pending"
+    },
+    {
+      "name": "file-limit-lowered",
+      "status": "pending"
+    },
+    {
+      "name": "unknown-version-preserved",
+      "status": "pending"
+    },
+    {
+      "name": "corrupt-format-preserved",
+      "status": "pending"
+    },
+    {
+      "name": "noncanonical-bytes-preserved",
+      "status": "pending"
+    },
+    {
+      "name": "cancelled-add-before-lock",
+      "status": "pending"
+    },
+    {
+      "name": "cancelled-save-preserves",
+      "status": "pending"
+    },
+    {
+      "name": "failed-save-preserves",
+      "status": "pending"
+    },
+    {
+      "name": "lock-timeout-and-recovery",
+      "status": "pending"
+    },
+    {
+      "name": "real-termination-releases-lock",
+      "status": "pending"
+    },
+    {
+      "name": "crash-before-rename-leftover",
+      "status": "pending"
+    },
+    {
+      "name": "concurrent-processes-no-lost-update",
+      "status": "pending"
+    },
+    {
+      "name": "thread-reentrancy",
+      "status": "pending"
+    },
+    {
+      "name": "generation-conflict",
+      "status": "pending"
+    },
+    {
+      "name": "argument-and-struct-size",
+      "status": "pending"
+    },
+    {
+      "name": "activation-derived-paths",
+      "status": "pending"
+    },
+    {
+      "name": "no-directory-before-activation",
+      "status": "pending"
+    },
+    {
+      "name": "unsafe-link-rejected",
+      "status": "pending"
+    },
+    {
+      "name": "hardlink-library-rejected",
+      "status": "pending"
+    },
+    {
+      "name": "binding-missing-refused",
+      "status": "pending"
+    },
+    {
+      "name": "binding-mismatch-refused",
+      "status": "pending"
+    },
+    {
+      "name": "binding-match-accepted",
+      "status": "pending"
+    },
+    {
+      "name": "verify-tampered-plan",
+      "status": "pending"
+    },
+    {
+      "name": "verify-stale-plan",
+      "status": "pending"
+    },
+    {
+      "name": "verify-missing-profile",
+      "status": "pending"
+    },
+    {
+      "name": "unicode-store-path",
+      "status": "pending"
+    },
+    {
+      "name": "secret-scan",
+      "status": "pending"
+    },
+    {
+      "name": "no-sdk-or-product-dependency",
+      "status": "pending"
+    },
+    {
+      "name": "cross-account-real-session",
+      "status": "pending"
+    }
+  ],
+  "limitations": [
+    "Host UI wiring and the credentials backend stay with root and the host owners.",
+    "No real account secret, private document or user cloud drive is used.",
+    "The session proof uses a loopback URL that refuses the connection; no remote transfer is claimed.",
+    "Android and Apple platform grants are not claimed."
+  ],
+  "notes": "accepted stays false until the same-source GitHub Actions run is recorded here."
+}
