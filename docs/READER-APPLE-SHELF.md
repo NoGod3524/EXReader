@@ -130,6 +130,16 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
   is unchanged. A manual native-only diagnostic reuses the authenticated frozen
   macOS SDK artifact `12539811656`, and always reports `diagnostic_only: true`
   and `accepted: false`. It cannot replace final same-source three-workflow acceptance.
+- `9c4636e3b89169d7eeb85e1ab2088040b1e121f8` passed the single native-only
+  [diagnostic 40044750632](https://github.com/NoGod3524/EXReader/actions/runs/40044750632),
+  attempt 1: catalog8 and all original shelf16 checks completed. The refresh
+  observation changed from `saved_unchanged=false` to `true`; exact restored
+  layout, terminal viewport clamping and tall-viewport prefetch also passed.
+  Artifact `12540554730` is 821,246 bytes with uploaded/API ZIP digest
+  `sha256:8308ae0400760dff42bfc0442efe66f1b6360df0d17bb81c282ea8b47b6a127c`.
+  Its outer scope remains `diagnostic_only: true`, `accepted: false`.
+  The following complete candidate changes only this record and requires fresh
+  shelf, import-mapping and original Apple acceptance on its own full source.
 
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.
