@@ -62,18 +62,19 @@ import CReaderProduct
                   HostAccounts(folder: folder).authorization(for: profile) == auth)
         let largeFolder = folder.appendingPathComponent("large-profiles", isDirectory: true)
         let large = HostAccounts(folder: largeFolder)
-        for index in 0..<8 {
-            let address = "https://example.invalid/" + String(repeating: "a", count: 7800) + "/\(index)/"
+        let longHost = String(repeating: "a", count: 240) + ".invalid"
+        for index in 0..<14 {
+            let address = "https://" + longHost + "/" + String(repeating: "a", count: 4080) + "/\(index)/"
             try large.create(root: address, username: "", password: "", remember: false)
         }
         let largeURL = largeFolder.appendingPathComponent("accounts.json")
         let largeMetadata = try Data(contentsOf: largeURL)
         var rejectedLargeCreate = false
         do {
-            try large.create(root: "https://example.invalid/" + String(repeating: "b", count: 7800) + "/",
+            try large.create(root: "https://" + longHost + "/" + String(repeating: "b", count: 4080) + "/",
                              username: "", password: "", remember: false)
         } catch { rejectedLargeCreate = true }
-        try check("metadata_size_checked_before_profile_or_secret_mutation", rejectedLargeCreate && large.profiles.count == 8 &&
+        try check("metadata_size_checked_before_profile_or_secret_mutation", rejectedLargeCreate && large.profiles.count == 14 &&
                   largeMetadata.count <= 64 * 1024 && Data(contentsOf: largeURL) == largeMetadata)
         let largeReopened = HostAccounts(folder: largeFolder)
         try check("all_saved_profiles_remain_loadable_after_size_rejection", largeReopened.profiles == large.profiles &&
