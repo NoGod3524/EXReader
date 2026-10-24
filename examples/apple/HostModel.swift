@@ -1632,7 +1632,9 @@ final class HostReaderModel: ObservableObject {
                 DispatchQueue.main.async {
                     guard myToken == self.token else { return }
                     if generation == self.readingRecords.generation && self.readingRecords.bookID == bookID {
-                        self.readingRecords.rows = (cursor == nil ? progress.map { [$0] } ?? [] : []) + page.rows
+                        if cursor == nil || !page.rows.isEmpty {
+                            self.readingRecords.rows = (cursor == nil ? progress.map { [$0] } ?? [] : []) + page.rows
+                        }
                         self.readingRecords.cursor = page.next; self.readingRecords.complete = page.complete
                         self.readingRecords.pending = pending; self.readingRecords.status = status
                         self.readingRecords.running = false

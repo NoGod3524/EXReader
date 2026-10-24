@@ -243,7 +243,10 @@ enum HostReadingWorker {
             capture = HostReadingCapture(mode: 3, part: 0, path: "", page: Int(record.page), anchor: nil, fixed: try HostSearchFixedAnchor(raw, maximumBytes: 65536))
         } else {
             var raw = exr_anchor(); raw.start = Int(record.start); raw.end = Int(record.end)
-            raw.exact = record.exact; raw.prefix = record.prefix; raw.suffix = record.suffix; raw.chapter = record.chapter
+            raw.exact = record.exact; raw.prefix = record.prefix; raw.suffix = record.suffix
+            // EPUB stores this SDK chapter scope in its explicit part_path;
+            // record.chapter is reserved for the reflow-global wire mode.
+            raw.chapter = record.mode == READER_RS_EPUB_CHAPTER ? record.part_path : record.chapter
             capture = HostReadingCapture(mode: record.mode == READER_RS_EPUB_CHAPTER ? 2 : 1, part: Int(record.part),
                 path: hostString(record.part_path), page: 0, anchor: HostSearchAnchor(raw), fixed: nil)
         }
