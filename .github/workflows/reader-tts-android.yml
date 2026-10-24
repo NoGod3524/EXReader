@@ -1,0 +1,155 @@
+name: Reader TTS Android
+on:
+  push:
+    branches: [codex/reader-tts-android]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+env:
+  FIXED_START: f43baf9182d75907c0cb5d6f77048f27bca8c950
+  SDK_BASELINE: 9854061be331fe603a1822d9b2b36ee357154927
+  PRODUCT_BASELINE: f32bb8aa18ed3de286900f19ce4230fd93435dd0
+  OWNED_PATHS: '^(extras/reader-tts-android/|tests/reader_tts_android/|\.github/workflows/reader-tts-android\.yml$|docs/READER-TTS-ANDROID\.md$|docs/validation/reader-tts-android\.json$)'
+jobs:
+  tts-android-device:
+    name: tts-android-device
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Pin source, start commit, protected SDK tree, product schema and path ownership
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$FIXED_START" HEAD
+          git diff --exit-code "$SDK_BASELINE" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code "$PRODUCT_BASELINE" HEAD -- apps/reader/store/001_catalog.sql
+          if git diff --name-only "$FIXED_START" HEAD | grep -v -E "$OWNED_PATHS"; then
+            echo "files outside the J18 ownership list changed"; exit 1
+          fi
+          mkdir -p build/reader-tts-android/logs build/reader-tts-android/identity
+          git rev-parse HEAD > build/reader-tts-android/identity/source.txt
+          git diff --name-only "$FIXED_START" HEAD > build/reader-tts-android/identity/changed_paths.txt
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          Path('build/reader-tts-android/identity/identity.json').write_text(json.dumps({
+              'source_sha': os.environ['GITHUB_SHA'],
+              'run_id': int(os.environ['GITHUB_RUN_ID']),
+              'attempt': int(os.environ['GITHUB_RUN_ATTEMPT']),
+              'workflow': os.environ['GITHUB_WORKFLOW'],
+              'fixed_start': os.environ['FIXED_START'],
+              'sdk_baseline': os.environ['SDK_BASELINE'],
+              'product_schema_baseline': os.environ['PRODUCT_BASELINE'],
+          }, indent=2) + '\n')
+          PY
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Install the Android toolchain and the emulator image
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install \
+            "platform-tools" "platforms;android-35" "build-tools;35.0.0" "cmake;3.31.1" \
+            "ndk;27.2.12479018" "emulator" \
+            "system-images;android-34;google_apis_playstore;x86_64" \
+            2>&1 | tee build/reader-tts-android/logs/sdkmanager.log
+      - name: Build and install the API 26 static archive for both configurations
+        run: |
+          toolchain="$ANDROID_HOME/ndk/27.2.12479018/build/cmake/android.toolchain.cmake"
+          for config in Debug Release; do
+            lower=$(echo "$config" | tr '[:upper:]' '[:lower:]')
+            cmake -S extras/reader-tts-android -B "build/reader-tts-android/native-$lower" -G Ninja \
+              -DCMAKE_TOOLCHAIN_FILE="$toolchain" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 \
+              -DCMAKE_BUILD_TYPE="$config" -DCMAKE_INSTALL_PREFIX="$PWD/build/reader-tts-android/stage-$lower" \
+              2>&1 | tee "build/reader-tts-android/logs/$lower-configure.log"
+            cmake --build "build/reader-tts-android/native-$lower" --verbose 2>&1 | tee "build/reader-tts-android/logs/$lower-build.log"
+            cmake --install "build/reader-tts-android/native-$lower" 2>&1 | tee "build/reader-tts-android/logs/$lower-install.log"
+          done
+      - name: Refuse a host target and refuse an API level below 26
+        run: |
+          toolchain="$ANDROID_HOME/ndk/27.2.12479018/build/cmake/android.toolchain.cmake"
+          if cmake -S extras/reader-tts-android -B build/reader-tts-android/refused-host -G Ninja \
+            > build/reader-tts-android/logs/refused-host.log 2>&1; then
+            echo "a host target must be refused"; exit 1
+          fi
+          grep -q "builds only for Android targets" build/reader-tts-android/logs/refused-host.log
+          if cmake -S extras/reader-tts-android -B build/reader-tts-android/refused-api25 -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE="$toolchain" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-25 \
+            > build/reader-tts-android/logs/refused-api25.log 2>&1; then
+            echo "API 25 must be refused"; exit 1
+          fi
+          grep -q "requires API 26 or newer" build/reader-tts-android/logs/refused-api25.log
+      - name: Assemble the support archive, the installed-package probe and the baseline app
+        run: |
+          gradle -p tests/reader_tts_android/android --no-daemon --stacktrace \
+            :support:assembleRelease :support:lintRelease \
+            :baseline:assembleRelease \
+            :probe:assembleDebug :probe:assembleDebugAndroidTest :probe:assembleRelease \
+            2>&1 | tee build/reader-tts-android/logs/gradle.log
+          python3 tests/reader_tts_android/audit.py --output build/reader-tts-android/packages
+      - name: Enable emulator acceleration
+        run: sudo chmod 666 /dev/kvm
+      - name: Real engine acceptance, missing engine acceptance and audio artifacts
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis_playstore
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -no-boot-anim -camera-back none
+          script: |
+            python3 tests/reader_tts_android/run_device.py --output build/reader-tts-android
+      - name: Preserve source-bound evidence, packages and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-tts-android-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/reader-tts-android/
+            extras/reader-tts-android/android/tts/build/outputs/aar/
+            tests/reader_tts_android/android/probe/build/outputs/apk/
+            tests/reader_tts_android/android/baseline/build/outputs/apk/
+          if-no-files-found: error
+
+  tts-artifact-summary:
+    name: tts-artifact-summary
+    needs: [tts-android-device]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate the same-run artifact and compare named outcomes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_tts_android/verify_evidence.py build/reader-tts-android-summary
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-tts-android-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-tts-android-summary/
+          if-no-files-found: error

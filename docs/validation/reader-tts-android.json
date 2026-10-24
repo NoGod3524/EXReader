@@ -1,0 +1,35 @@
+{
+  "accepted": false,
+  "scope": "optional Android system TextToSpeech backend for the frozen reader TTS C ABI",
+  "base_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "branch": "codex/reader-tts-android",
+  "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
+  "accepted_source_sha": null,
+  "run_id": null,
+  "attempt": null,
+  "run_url": null,
+  "run_conclusion": null,
+  "all_execution_on_actions": true,
+  "native_target_api": 26,
+  "device_api": 34,
+  "device_abi": "x86_64",
+  "jobs": {},
+  "artifacts": [],
+  "named_results": {
+    "engine_present": null,
+    "engine_removed": null
+  },
+  "audio": null,
+  "packages": null,
+  "runtime_dependencies": [],
+  "retained_failures": [],
+  "contracts_verified": [],
+  "not_covered": [
+    "Android host product wiring and background playback",
+    "audio focus, media session and haptics",
+    "spoken-output quality on a real handset",
+    "engines other than the one installed on the acceptance image"
+  ],
+  "real_device_accepted": false,
+  "android_host_wired": false
+}
