@@ -68,9 +68,9 @@ def main():
                         require('Foundation.framework' in dependencies and 'libcurl' not in dependencies.lower(), 'Foundation transport dependency differs')
                         report = json.loads(archive.read('apple-dav-evidence/result.json'))
                         require(report.get('accepted') is True and report['source_sha'] == source and int(report['run_id']) == run_id and int(report['attempt']) == attempt, 'native write report differs')
-                        require(report.get('count') == 10 and len(set(report['checks'])) == 10 and len(report['checks']) == 10, 'native write cases absent')
+                        require(report.get('count') == 11 and len(set(report['checks'])) == 11 and len(report['checks']) == 11, 'native write cases absent')
                         require(hashlib.sha256(archive.read('apple-dav-consumer/WebDAVProbe')).hexdigest() == report['consumer_sha256'], 'native write consumer differs')
-                        counts['apple-dav-evidence'] = 10
+                        counts['apple-dav-evidence'] = 11
                     else:
                         require('/usr/lib/libcurl.4.dylib' in dependencies, 'Apple system curl transport differs')
                     require(not any(s in dependencies.lower() for s in ('webview', 'webkit', 'chromium', 'libcrypto', 'libssl')), 'Apple native transport dependency differs')
@@ -94,7 +94,7 @@ def main():
                 require(report['execution_platform'] == 'ios-simulator' and report['architecture'] == 'arm64' and report['physical_device_execution'] is False, 'iOS runtime scope differs')
                 binary_hash = hashlib.sha256(archive.read('consumer/WebDAVProbe.app/WebDAVProbe')).hexdigest()
                 require(binary_hash == report['consumer_sha256'], 'iOS actual Mach-O hash differs')
-                for suite, count in [('source', 77), ('compat', 12), ('writes', 10)]:
+                for suite, count in [('source', 77), ('compat', 12), ('writes', 11)]:
                     value = json.loads(archive.read(suite + '/result.json'))
                     require(value.get('accepted') is True and value['source_sha'] == source and int(value['run_id']) == run_id and int(value['attempt']) == attempt, 'iOS suite identity differs ' + suite)
                     ids = [c['id'] if isinstance(c, dict) else c for c in value['checks']]
@@ -105,7 +105,7 @@ def main():
             summary['jobs'].append({k: job[k] for k in ('id', 'name', 'conclusion')})
             summary['artifacts'].append({k: artifact[k] for k in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')})
             summary['ios_transport_accepted'] = True
-            summary['platforms']['ios-simulator'] = {'source': 77, 'compat': 12, 'writes': 10}
+            summary['platforms']['ios-simulator'] = {'source': 77, 'compat': 12, 'writes': 11}
         summary['accepted'] = True
     except Exception as error:
         summary['problems'].append(str(error))

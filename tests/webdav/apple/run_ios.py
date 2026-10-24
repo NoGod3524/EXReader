@@ -58,7 +58,7 @@ def main():
         run('write-suite', [sys.executable, 'tests/webdav/apple/check_transport.py', '--consumer', launch, '--native-binary', binary,
                             '--output', out / 'writes'], timeout=600)
         reports = {name: json.loads((out / name / 'result.json').read_text(encoding='utf-8')) for name in ('source', 'compat', 'writes')}
-        for name, count in [('source', 77), ('compat', 12), ('writes', 10)]:
+        for name, count in [('source', 77), ('compat', 12), ('writes', 11)]:
             value = reports[name]
             assert value['accepted'] is True and value['source_sha'] == os.environ['GITHUB_SHA']
             assert value['count'] == count and value['execution_platform'] == 'ios-simulator'
