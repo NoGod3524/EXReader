@@ -26,6 +26,13 @@ def validate_ui(report,source,run,attempt,product,review):
   report['performance_accepted'] is False and report['screen_reader_accepted'] is False,'invalid scope claim')
  return len(required)
 
+def validate_standalone(link_map):
+ # MSVC maps identify archive members as library:object, without a .lib suffix.
+ require(all(name in link_map for name in ('reader_navigation_open_publication',
+  'reader_navigation_children','reader_navigation_resolve_cfi')) and
+  all(name not in link_map for name in ('reader_search_open_reflow','reader_search_next')),
+  'navigation must link F2 independently of F1')
+
 def self_test():
  source=os.environ['GITHUB_SHA'];run=os.environ['GITHUB_RUN_ID'];attempt=os.environ['GITHUB_RUN_ATTEMPT']
  names=search_verify.names_from_source(Path(__file__).with_name('check_ui.py'),'REQUIRED')
@@ -41,7 +48,13 @@ def self_test():
   try:validate_ui(bad,source,run,attempt,'product','review')
   except ValueError:continue
   raise ValueError('accepted navigation rejection mutation '+repr(mutation))
- return search_verify.protocol_selftest(source,run,attempt)+len(bads)
+ symbols='reader_navigation_open_publication reader_navigation_children reader_navigation_resolve_cfi'
+ validate_standalone(symbols)
+ for wrong in (symbols.replace('reader_navigation_children',''),symbols+' reader_search_next'):
+  try:validate_standalone(wrong)
+  except ValueError:continue
+  raise ValueError('accepted wrong navigation-only link map')
+ return search_verify.protocol_selftest(source,run,attempt)+len(bads)+2
 
 def main():
  require(os.environ.get('GITHUB_ACTIONS')=='true','Actions only')
@@ -79,7 +92,7 @@ def main():
     set(contract.REQUIRED_CASES)<={c['id'] for c in cases},'F2 case identity')
    for case in cases:require(case['mislocated']==0 and case['other']==0,'F2 unresolved failure')
    standalone=z.read('ws-navigation-only/windows-host.map').decode('utf-8',errors='replace').lower()
-   require('reader_navigation.lib' in standalone and 'reader_search.lib' not in standalone,'navigation must not require F1')
+   validate_standalone(standalone)
    jobs=fetch('actions/runs/%d/attempts/%d/jobs?per_page=100'%(run,attempt))['jobs']
    job=[j for j in jobs if j['name']=='installed F1 and native Windows search controls and lifecycle']
    require(len(job)==1 and job[0]['conclusion']=='success','host job failed')
