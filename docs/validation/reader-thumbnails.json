@@ -5,8 +5,18 @@
   "sdk_freeze": "9854061be331fe603a1822d9b2b36ee357154927",
   "sdk_version": "3.40.0",
   "abi": 1,
-  "status": "cloud-verified installed C11/C++17 consumers plus the four-finding regression consumer on Linux, Windows and macOS (this package only)",
-  "accepted": true,
+  "status": "root review pending: exact allocation stacks exposed a terminating directory enumeration path; historical source and results below are preserved",
+  "accepted": false,
+  "historical_run_accepted": true,
+  "current_review": {
+    "candidate": "7afa5982b36b73faf84375bddf5b69a2270d2dfb",
+    "run_id": 40092373580,
+    "accepted": false,
+    "diagnostic_source": "b99034cde106868c50024058b6e9ad278be06cd3",
+    "diagnostic_run": 40092109613,
+    "finding": "eight Linux open allocation points terminate inside the libstdc++ directory-iterator constructor; no termination is now allowed to pass",
+    "fix": "native directory handles keep path allocation outside the standard-library noexcept boundary"
+  },
   "tested_source": "00f3d3713619bef8f41c4f5d97957d37dbb3ed87",
   "run": {"id": 40083975196, "attempt": 1, "workflow": ".github/workflows/reader-thumbnails.yml"},
   "jobs": [

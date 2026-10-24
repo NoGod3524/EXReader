@@ -217,6 +217,7 @@ def main():
         'fault_sha256': sha256(a.fault), 'installed_files': tree(a.installed),
         'granted_platform': runner, 'performance_claimed': False, 'host_ui_accepted': False, 'six_platform_accepted': False,
         'complete_product': False, 'schema_changed': False, 'sdk_changed': False,
+        'sanitizers': {'asan_options': os.environ.get('ASAN_OPTIONS'), 'ubsan_options': os.environ.get('UBSAN_OPTIONS')},
     }
     (out / 'result.json').write_text(json.dumps(summary, indent=2) + '\n', encoding='utf-8'); print(json.dumps(summary), flush=True)
 

@@ -130,11 +130,13 @@ at 64x48, 16x12, 31x9 and 7x5.
 
 `thumb-fault` replaces the global `operator new/delete` inside its own binary and makes the n-th allocation throw, then
 walks every allocation point of `open`, of a cover that already holds thumbnail pixels, and of the borrowed-blob path,
-counting live allocations: each failure must report a status, leave an empty output box, leak no cache/blob/pixels/
-temporary and leave the cache able to store on retry. Each point runs in its own child process, because
-`<filesystem>::increment(error_code&)` and `symlink_status(error_code&)` are `noexcept` and an injected failure inside
-those shims aborts instead of unwinding: such a child writes `TERMINATE` and the driver counts it as a noexcept boundary
-(bounded), while every other point must satisfy the assertions. The report states both counts.
+counting live C++ allocations. A failed operation must report a status, leave an empty output box and remain usable
+for retry. C++ allocation accounting does not cover SDK malloc blobs or pixels; the independent LeakSanitizer job
+checks those allocations. Each point runs in its own child process; any termination fails the test. Its report
+includes the allocation stack captured before exception unwinding. Actions run `40092109613` located eight such
+Linux failures in the libstdc++ directory-iterator constructor reached from `rth_cache_open`. The implementation
+now enumerates through a native directory handle so allocation of a returned name can unwind into the ABI guard.
+This fix remains pending the complete same-source run; the former allowance of up to twelve terminations is removed.
 
 See `docs/validation/reader-thumbnails.json` for the run-bound results; nothing here grants product performance, host
 UI, six-platform or release status.

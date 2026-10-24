@@ -147,17 +147,12 @@ jobs:
           ASAN_OPTIONS: detect_leaks=1:abort_on_error=1
           UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
         run: |
-          mkdir -p build/thumb-logs build/asan-evidence
+          set -o pipefail
+          mkdir -p build/thumb-logs
           python3 tests/reader_thumbnails/make_fixtures.py build/thumb-fixtures-asan > build/thumb-logs/fixtures-asan.log 2>&1
-          set +e
-          build/consumer-asan/thumb-probe --fixtures build/thumb-fixtures-asan --repo-fixtures tests/fixtures --work build/asan-work --report build/asan-evidence/probe.json > build/thumb-logs/probe-asan.log 2>&1
-          status=$?
-          set -e
-          tail -n 3 build/thumb-logs/probe-asan.log
-          echo "probe exit code: $status"
-          if [ "$status" != "0" ]; then echo "the sanitized probe exited $status"; exit 1; fi
-          if ! grep -q 'failures=0' build/thumb-logs/probe-asan.log; then echo "the sanitized probe reported failures"; exit 1; fi
-          if grep -qE 'ERROR: (Address|Leak)Sanitizer|runtime error:' build/thumb-logs/probe-asan.log; then echo "a sanitizer reported a defect"; exit 1; fi
+          # The allocation-fault children execute the SDK blob/pixel cleanup paths,
+          # so leak checking includes failed operations rather than only the probe.
+          python3 tests/reader_thumbnails/check_thumbnails.py --probe build/consumer-asan/thumb-probe --c-consumer build/consumer-asan/thumb-c-consumer --regress build/consumer-asan/thumb-regress --fault build/consumer-asan/thumb-fault --fixtures build/thumb-fixtures-asan --repo-fixtures tests/fixtures --installed build/thumb-asan-stage --output build/asan-evidence 2>&1 | tee build/thumb-logs/checks-asan.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -168,7 +163,7 @@ jobs:
           if-no-files-found: error
   evidence:
     name: strict thumbnail evidence
-    needs: [consumers]
+    needs: [consumers, sanitized]
     if: always()
     runs-on: ubuntu-22.04
     timeout-minutes: 15
