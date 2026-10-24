@@ -53,7 +53,7 @@ JNIEXPORT jlong JNICALL Java_org_exreader_host_NativeSearch_nativeOpen(JNIEnv *e
   exr_status sdk=EXR_OK;reader_search_status status=READER_SEARCH_OK;reader_search_options options={0};exr_control cancellation;
   exr_layout_config layout=exr_layout_config_defaults();exr_chapter_options chapter=exr_chapter_options_defaults();(void)type;
   if(!store||(*env)->ExceptionCheck(env))return 0;
-  if(book<=0||!isfinite(size)||size<18||size>40||!query||!key||(*env)->GetStringLength(env,query)>4096||(*env)->GetStringLength(env,key)>255){throw_argument(env,"Invalid search source or query");return 0;}
+  if(book<=0||!isfinite(size)||size<4||size>256||!query||!key||(*env)->GetStringLength(env,query)>4096||(*env)->GetStringLength(env,key)>255){throw_argument(env,"Invalid search source or query");return 0;}
   text=input_string(env,query);if(!text)return 0;
   if(!text[0]||strlen(text)>READER_SEARCH_QUERY_MAX){free(text);search_failure(env,READER_SEARCH_QUERY,0);return 0;}
   search=calloc(1,sizeof(*search));if(!search){free(text);search_failure(env,READER_SEARCH_MEMORY,0);return 0;}
@@ -137,7 +137,7 @@ JNIEXPORT jlongArray JNICALL Java_org_exreader_host_NativeSearch_nativeResolve(J
   exr_anchor anchor={0};exr_fixed_anchor fixed_anchor={0};exr_anchor_match match={0};exr_error error={0};exr_status status=EXR_OK;
   host_control context;exr_control control={0};jlong values[4];jlongArray out=NULL;(void)type;
   if(!store||(*env)->ExceptionCheck(env))return NULL;
-  if(book<=0||unit<0||start<0||end<start||!isfinite(size)||size<18||size>40||(uint64_t)unit>=SIZE_MAX||(uint64_t)end>=SIZE_MAX||!task||!route||!selectors||(*env)->GetArrayLength(env,route)!=4||(*env)->GetArrayLength(env,selectors)!=3){throw_argument(env,"Invalid search selector route");return NULL;}
+  if(book<=0||unit<0||start<0||end<start||!isfinite(size)||size<4||size>256||(uint64_t)unit>=SIZE_MAX||(uint64_t)end>=SIZE_MAX||!task||!route||!selectors||(*env)->GetArrayLength(env,route)!=4||(*env)->GetArrayLength(env,selectors)!=3){throw_argument(env,"Invalid search selector route");return NULL;}
   control=host_task_control(env,task,&context);if((*env)->ExceptionCheck(env))return NULL;
   for(i=0;i<4;i++){jstring value=(*env)->GetObjectArrayElement(env,route,(jsize)i);if(value){if((*env)->GetStringLength(env,value)>32768){(*env)->DeleteLocalRef(env,value);throw_argument(env,"Search route exceeds its bound");goto done;}fields[i]=input_string(env,value);(*env)->DeleteLocalRef(env,value);if(!fields[i])goto done;}}
   if(!fields[0]||!fields[0][0]||strlen(fields[0])>255){status=EXR_ARGUMENT;goto done;}
