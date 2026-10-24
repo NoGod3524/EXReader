@@ -26,8 +26,11 @@
 #include <string>
 #include <vector>
 
-#ifndef _WIN32
+#ifdef _WIN32
+#include <process.h>
+#else
 #include <sys/wait.h>
+#include <unistd.h>
 #endif
 
 namespace fs = std::filesystem;
@@ -338,13 +341,32 @@ int point_library(const fs::path& root, const Bytes& epub, long long n) {
   return 0;
 }
 
-std::string quote(const std::string& s) { return "\"" + s + "\""; }
-
-int exit_code(int status) {
+// Runs one child without a shell: cmd.exe mangles a quoted executable plus arguments,
+// and the exit code is what the sweep reads.
+int run_child(const std::string& exe, const std::vector<std::string>& args) {
 #ifdef _WIN32
-  return status;  // system() returns the child's exit code
+  std::vector<std::wstring> wide;
+  wide.push_back(fs::u8path(exe).wstring());
+  for (const std::string& a : args) wide.push_back(fs::u8path(a).wstring());
+  std::vector<const wchar_t*> argv;
+  argv.reserve(wide.size() + 1);
+  for (const std::wstring& w : wide) argv.push_back(w.c_str());
+  argv.push_back(nullptr);
+  return static_cast<int>(_wspawnv(_P_WAIT, wide[0].c_str(), argv.data()));
 #else
-  if (status == -1) return -1;
+  std::vector<char*> argv;
+  argv.reserve(args.size() + 2);
+  argv.push_back(const_cast<char*>(exe.c_str()));
+  for (const std::string& a : args) argv.push_back(const_cast<char*>(a.c_str()));
+  argv.push_back(nullptr);
+  const pid_t pid = fork();
+  if (pid == 0) {
+    execv(exe.c_str(), argv.data());
+    _exit(127);
+  }
+  if (pid < 0) return -1;
+  int status = 0;
+  if (waitpid(pid, &status, 0) < 0) return -1;
   if (WIFEXITED(status)) return WEXITSTATUS(status);
   if (WIFSIGNALED(status)) return 128 + WTERMSIG(status);
   return -1;
@@ -360,11 +382,15 @@ int drive(const std::string& self, const std::string& mode, const fs::path& work
     const fs::path rep = work / ("point-" + std::to_string(n) + ".txt");
     std::error_code ec;
     fs::remove(rep, ec);
-    std::string cmd = quote(self) + " --mode " + mode + " --n " + std::to_string(n) + " --work " + quote(work.u8string()) +
-                      " --fixtures " + quote(fixtures.u8string());
-    if (!repo.empty()) cmd += " --repo-fixtures " + quote(repo.u8string());
-    cmd += " --report " + quote(rep.u8string());
-    const int code = exit_code(std::system(cmd.c_str()));
+    std::vector<std::string> args{"--mode", mode, "--n", std::to_string(n), "--work", work.u8string(), "--fixtures",
+                                  fixtures.u8string()};
+    if (!repo.empty()) {
+      args.push_back("--repo-fixtures");
+      args.push_back(repo.u8string());
+    }
+    args.push_back("--report");
+    args.push_back(rep.u8string());
+    const int code = run_child(self, args);
     std::string text;
     {
       std::ifstream in(rep);
