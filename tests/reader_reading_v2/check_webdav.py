@@ -109,6 +109,7 @@ def main():
         print(done.stdout); print(done.stderr); assert done.returncode == 0, 'native SDK/WebDAV roundtrip refused'
         report = json.loads((out / 'probe.json').read_text(encoding='utf-8'))
         assert report['native_webdav'] is True and report['originals_exported'] == 4 and report['network_pushed'] == 22
+        assert report['metadata_projected'] == 4
         assert report['network_pulled'] >= 22 and report['failures'] == 0 and report['checks'] and all(c['pass'] is True for c in report['checks'])
         assert [c['id'] for c in report['cases']] == EXPECTED and report['receiver_found'] == 17 and report['receiver_mislocated'] == 0
         for case in report['cases']:
@@ -135,6 +136,9 @@ def main():
         with sqlite3.connect(work / 'B-product.sqlite') as db:
             assert db.execute('SELECT count(*) FROM reader_revisions').fetchone() == (22,)
             assert db.execute('SELECT count(*) FROM reader_outbox').fetchone() == (0,)
+            assert db.execute('SELECT count(*) FROM reader_local_books').fetchone() == (4,)
+            assert db.execute('SELECT format,title,author,favorite FROM reader_books ORDER BY format').fetchall() == [
+                (fmt, 'Remote ' + fmt, '云端作者', 1) for fmt in ('cbz', 'epub', 'pdf', 'txt')]
         assert requests and all(r['authenticated'] for r in requests)
         assert all(r['if_none_match'] == '*' for r in requests if r['method'] == 'PUT')
         assert all(r['depth'] == '1' for r in requests if r['method'] == 'PROPFIND')
@@ -148,6 +152,7 @@ def main():
         summary = {'accepted': True, 'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
                    'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'platform': sys.platform, 'cases': report['cases'],
                    'receiver_found': 17, 'receiver_mislocated': 0, 'originals_exported': 4, 'network_pushed': 22,
+                   'metadata_projected': 4,
                    'network_pulled': report['network_pulled'], 'request_count': len(requests), 'sqlite_providers': providers,
                    'consumer_sha256': hashlib.sha256(a.probe.read_bytes()).hexdigest(), 'sdk_changed': False,
                    'schema_changed': False, 'host_ui_accepted': False, 'six_platform_accepted': False, 'complete_product': False,

@@ -1,0 +1,21 @@
+plugins { id 'com.android.library' }
+android {
+    namespace 'org.exreader.webdav'
+    compileSdk 35
+    defaultConfig { minSdk 26; targetSdk 35; consumerProguardFiles 'consumer-rules.pro' }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    lint { abortOnError true }
+}
+dependencies {
+    implementation('com.squareup.okhttp3:okhttp:4.12.0') { version { strictly '4.12.0' } }
+}
+tasks.register('runtimeEvidence') {
+    doLast {
+        def artifacts=configurations.releaseRuntimeClasspath.resolvedConfiguration.resolvedArtifacts
+        def rows=artifacts.collect { item ->
+            [module:item.moduleVersion.id.toString(),bytes:item.file.length(),sha256:java.security.MessageDigest.getInstance('SHA-256').digest(item.file.bytes).encodeHex().toString()]
+        }.sort { it.module }
+        def target=file("${buildDir}/reports/runtime.json");target.parentFile.mkdirs()
+        target.text=groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(rows))+'\n'
+    }
+}

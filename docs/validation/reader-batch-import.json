@@ -1,0 +1,161 @@
+{
+  "package": "EXReaderBatchImport",
+  "version": "0.1.0",
+  "fixed_start": "c3511a011eefbf1fba1d20908f000cef22b1ced2",
+  "sdk_freeze": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "abi": 1,
+  "status": "cloud-verified",
+  "tested_source": "a85bbc5fb817ab28c28512665efc19e7c13f5ff9",
+  "interfaces": {
+    "header": "reader_batch_import.h",
+    "cmake_target": "EXReaderBatchImport::reader_batch_import",
+    "phases": [
+      "enumerate",
+      "import"
+    ],
+    "threads_created": false,
+    "product_sql_written": false
+  },
+  "limits": {
+    "batch": {
+      "default": 32,
+      "maximum": 100
+    },
+    "depth": {
+      "default": 8,
+      "maximum": 16,
+      "recursive_required": true
+    },
+    "directories": {
+      "default": 4096,
+      "maximum": 10000
+    },
+    "candidates": {
+      "default": 4096,
+      "maximum": 10000
+    },
+    "path_bytes": {
+      "default": 4096,
+      "maximum": 32768
+    },
+    "pending_bytes": {
+      "default": 1048576,
+      "maximum": 8388608
+    }
+  },
+  "cloud": {
+    "run_id": 40065922610,
+    "run_attempt": 1,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40065922610",
+    "jobs": {
+      "Windows": "success",
+      "Linux": "success",
+      "macOS": "success",
+      "same-run artifact evidence": "success"
+    },
+    "report_checks_per_platform": 668,
+    "report_ok": true,
+    "results": {
+      "scan_candidates": 40,
+      "imported": 38,
+      "duplicate": 1,
+      "failed": 1,
+      "failed_case": "broken.epub (EXR_FORMAT)"
+    },
+    "artifacts": [
+      {
+        "os": "Windows",
+        "id": 12548853049,
+        "bytes": 5471868,
+        "sha256": "65d2ab8e30ddbb5875f011075a6a231661826df92cef4544c0b0d7c273679116",
+        "expires_at": "2027-01-22T05:21:19Z",
+        "report_checks": 668
+      },
+      {
+        "os": "Linux",
+        "id": 12549292972,
+        "bytes": 8220252,
+        "sha256": "9e22ce643d08ed7a11e65bbe3c5cb499eb9e51c1287549bfce93940ae6872272",
+        "expires_at": "2027-01-22T05:21:19Z",
+        "report_checks": 668
+      },
+      {
+        "os": "macOS",
+        "id": 12548429750,
+        "bytes": 7045659,
+        "sha256": "01598657b8e41c6c7222cc5db6ae47c314814566ca447aa372fc47e05eed98a2",
+        "expires_at": "2027-01-22T05:21:19Z",
+        "report_checks": 668
+      }
+    ],
+    "evidence_artifact": {
+      "name": "reader-batch-import-evidence-40065922610-1",
+      "status": "all three artifacts downloaded and matched declared sha256"
+    }
+  },
+  "checks": [
+    {
+      "name": "installed C/C++ consumers on Windows/Linux/macOS",
+      "status": "passed"
+    },
+    {
+      "name": "nine real formats and azw3/MOBI",
+      "status": "passed"
+    },
+    {
+      "name": "Unicode/space and multi-level paths",
+      "status": "passed"
+    },
+    {
+      "name": "non-book, corrupt and directory-as-book rejected",
+      "status": "passed"
+    },
+    {
+      "name": "symlink/junction/root escape rejected",
+      "status": "passed"
+    },
+    {
+      "name": "post-enumeration modify/delete/link",
+      "status": "passed"
+    },
+    {
+      "name": "depth/directory/candidate/path/pending limits report truncated",
+      "status": "passed"
+    },
+    {
+      "name": "batch 1..100 and continuation",
+      "status": "passed"
+    },
+    {
+      "name": "cancellation preserves committed results and metadata",
+      "status": "passed"
+    },
+    {
+      "name": "exact duplicate reuses oldest book_id and created=0",
+      "status": "passed"
+    },
+    {
+      "name": "existing storage mode preserved",
+      "status": "passed"
+    },
+    {
+      "name": "public SDK readback matches source SHA-256",
+      "status": "passed"
+    },
+    {
+      "name": "no product SQL tables",
+      "status": "passed"
+    },
+    {
+      "name": "staging temp cleanup",
+      "status": "passed"
+    }
+  ],
+  "limitations": [
+    "System file picker and host product UI are out of scope.",
+    "Product catalog/revision/outbox mapping is performed by root after the SDK result callback.",
+    "Cancellation cannot interrupt the public PDF SDK call itself; a result committed by that call is returned.",
+    "The tested source is a85bbc5f; later documentation-only commits do not change the package."
+  ]
+}

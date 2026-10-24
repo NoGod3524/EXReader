@@ -1,0 +1,150 @@
+{
+  "accepted": true,
+  "status": "root review accepted after all 20 named checks on all three platforms",
+  "package": "EXReaderPreferences 0.1.0",
+  "common_start": "c3511a011eefbf1fba1d20908f000cef22b1ced2",
+  "source_sha": "1f51b4066cd705a670b3139061336c298e479081",
+  "run_id": 40067465230,
+  "attempt": 1,
+  "artifacts": [
+    {
+      "id": 12548929528,
+      "name": "reader-preferences-Linux-40067465230-1",
+      "size_in_bytes": 108016,
+      "digest": "sha256:feb0de08a2fe50f4245b601bd507973f629df319a42bf374acd1e32134475d30",
+      "expires_at": "2027-01-22T05:45:00Z"
+    },
+    {
+      "id": 12550365516,
+      "name": "reader-preferences-Windows-40067465230-1",
+      "size_in_bytes": 401074,
+      "digest": "sha256:65f1b46e6c25f846e192dc63eb1a73af188e4e50ffc7472a59c9946dfefc797c",
+      "expires_at": "2027-01-22T05:45:00Z"
+    },
+    {
+      "id": 12549932048,
+      "name": "reader-preferences-macOS-40067465230-1",
+      "size_in_bytes": 92801,
+      "digest": "sha256:498c1ec8ce9ebb62c04a1cfbc4c6a3a177ac354fdf3502c33f895288e820a33b",
+      "expires_at": "2027-01-22T05:45:00Z"
+    }
+  ],
+  "jobs": [
+    {
+      "id": 120793618064,
+      "name": "preferences consumers (ubuntu-22.04)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120793618093,
+      "name": "preferences consumers (windows-2022)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120793618112,
+      "name": "preferences consumers (macos-14)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120793748419,
+      "name": "strict preferences evidence",
+      "conclusion": "success"
+    }
+  ],
+  "problems": [],
+  "original_acceptance": {
+    "source_sha": "6f33caf83bfb845e27db6382edc5ee100d8db954",
+    "run_id": 40065361635,
+    "attempt": 1,
+    "checks_per_platform": 16,
+    "record": "https://github.com/NoGod3524/EXReader/blob/f453af14852ad3d8833d27c0eb6888f804c12050/docs/validation/reader-preferences.json"
+  },
+  "retained_review_failures": [
+    {
+      "source_sha": "35fc72c32a707396efe1e2bf21300a24baeca97d",
+      "run_id": 40067107414,
+      "attempt": 1,
+      "expected_original_passes": 16,
+      "added_failures": [
+        "json-leading-zero-refusals",
+        "json-significant-fraction-digits",
+        "optional-error-pointer-status-parity",
+        "load-limit-ceiling"
+      ],
+      "jobs": [
+        {
+          "id": 120792563910,
+          "name": "preferences consumers (ubuntu-22.04)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 120792564062,
+          "name": "preferences consumers (macos-14)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 120792564078,
+          "name": "preferences consumers (windows-2022)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 120792679223,
+          "name": "strict preferences evidence",
+          "conclusion": "failure"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12550205001,
+          "name": "reader-preferences-Windows-40067107414-1",
+          "size_in_bytes": 396565,
+          "digest": "sha256:0bc1bc25709ae535ff427f808a22db689abad6528cd01dc6186c4ef652975d6a",
+          "expires_at": "2027-01-22T05:39:30Z"
+        },
+        {
+          "id": 12550085725,
+          "name": "reader-preferences-macOS-40067107414-1",
+          "size_in_bytes": 88812,
+          "digest": "sha256:966b04baa4a082cd59e53b962f9db47e966eb6e335e4c30d58719563b87524f5",
+          "expires_at": "2027-01-22T05:39:30Z"
+        },
+        {
+          "id": 12550085717,
+          "name": "reader-preferences-Linux-40067107414-1",
+          "size_in_bytes": 105121,
+          "digest": "sha256:9f1ac223b1d77b5386016bb4748cf423dbdbe47e3535cb8de78967c9cd268b51",
+          "expires_at": "2027-01-22T05:39:30Z"
+        },
+        {
+          "id": 12549596988,
+          "name": "reader-preferences-summary-40067107414-1",
+          "size_in_bytes": 433,
+          "digest": "sha256:e6d74b76a4bb15889c047b57857b7809c4407e2ccf1b3920d54072b373817115",
+          "expires_at": "2027-01-22T05:39:30Z"
+        }
+      ]
+    }
+  ],
+  "granted_platforms": [
+    "linux",
+    "windows",
+    "macos"
+  ],
+  "macos_accepted": true,
+  "performance_claimed": false,
+  "host_ui_accepted": false,
+  "six_platform_accepted": false,
+  "complete_product": false,
+  "sdk_changed": false,
+  "schema_changed": false,
+  "host_settings_changed": false,
+  "protected_trees_unchanged": true,
+  "checks_per_platform": 20,
+  "evidence_artifact": {
+    "id": 12549459446,
+    "name": "reader-preferences-summary-40067465230-1",
+    "size_in_bytes": 794,
+    "digest": "sha256:b299f8ce62a903fedd149830daecaff102bee95e3a7b8bcfc301939bec504e00",
+    "expires_at": "2027-01-22T05:45:00Z"
+  }
+}
