@@ -1,12 +1,31 @@
 {
   "schema": 1,
   "accepted": false,
-  "state": "compiled_ui_import_failure_under_investigation",
+  "state": "initial_txt_ui_passed_broader_host_acceptance_pending",
   "branch": "codex/reader-windows-search-ui",
   "start": "3bcc6511",
   "sdk": "9854061be331fe603a1822d9b2b36ee357154927",
-  "tested_source": null,
-  "runs": [],
+  "tested_source": "f4366ed0033ab5b3dac652424fbf07f790a01da3",
+  "runs": [
+    {
+      "run": 40131176153,
+      "attempt": 1,
+      "source": "f4366ed0033ab5b3dac652424fbf07f790a01da3",
+      "job": 120983017930,
+      "conclusion": "success",
+      "scope": "initial Win32 TXT native search controls only",
+      "original_f1_checks": 264,
+      "host_checks_passed": 13,
+      "host_problems": [],
+      "consumer_sha256": "ebb0c5619b3982603121e6c7cf13ded6947dc18c5217f3f4ccc29cc04c92ec19",
+      "artifact": 12575590677,
+      "artifact_bytes": 35597200,
+      "artifact_sha256": "a777acc37d52f0372a9875e9e994598122aa131eab669e5743913dd6f6d2ffc0",
+      "artifact_expires_at": "2027-01-22T20:44:58Z",
+      "artifact_metadata_observed": true,
+      "strict_artifact_authentication_pending": true
+    }
+  ],
   "earlier_failed_runs": [
     {
       "source": "e4bddc310ba5a731596bd4d5b3b29a831cd4bf1b",
