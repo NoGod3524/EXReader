@@ -16,6 +16,10 @@ PDF = 'pdf:' + 'c' * 64
 OTHER = 'txt:' + '9' * 64
 MASS = 'txt:' + 'e' * 64
 EMPTY = 'txt:' + 'f' * 64
+WPARENT = 'txt:' + '1' * 64
+WMERGE = 'txt:' + '2' * 64
+WDELETE = 'txt:' + '3' * 64
+WRESTORE = 'txt:' + '4' * 64
 TITLES = {
     TXT: '《测试书》 é 🙂 <img src=x onerror=alert(1)> *bold* # [l](javascript:alert(1)) &copy; \\ `tick`',
     EPUB: 'EPUB "quoted" book',
@@ -71,6 +75,8 @@ class Corpus:
     def __init__(self):
         self.wires = []
         self.books = {}
+        self.window = []
+        self.advance_ids = set()
         self.counter = 0
 
     def rid(self):
@@ -98,11 +104,13 @@ class Corpus:
              'payload': {'book_key': key, 'location': location(spec)}}
         self.add(v)
 
-    def revision(self, key, aid, op, parents, spec, note, style='canon', revision_id=None):
+    def revision(self, key, aid, op, parents, spec, note, style='canon', revision_id=None, advance=False):
         v = {'version': 1, 'id': revision_id or self.rid(), 'entity_kind': 'annotation', 'entity_key': key + ':' + aid,
              'operation': op, 'location_kind': spec['mode'], 'parents': parents,
              'payload': None if op == 'delete' else {'book_key': key, 'annotation_id': aid, 'location': location(spec), 'text': note}}
         self.add(v, style)
+        if advance:
+            self.advance_ids.add(v['id'])
         return {'id': v['id'], 'operation': op, 'has_location': op != 'delete',
                 'spec': None if op == 'delete' else spec, 'note': None if op == 'delete' else note}
 
@@ -227,22 +235,81 @@ def build():
             c.expect(MASS, a, 'concurrent', [r2, r3], 3, label='mass_conflict')
         else:
             c.expect(MASS, a, 'safe', [r1], 1, label='mass')
+
+    # ---------------- mid-export single-entity snapshot windows ----------------
+    # Each window book holds exactly one annotation, so one advance revision
+    # received by a second process between the page read and that entity's heads
+    # read is the whole window. The page snapshot is therefore never SAFE and the
+    # export must describe the entity from one later valid public snapshot.
+    def window_book(key, title):
+        c.books[key] = {'title': title, 'annotations': {}}
+
+    def window_advance(case, key, aid_value, wire_revision_id, operation, heads, revisions):
+        wire = next(w for w in c.wires if w['revision_id'] == wire_revision_id)
+        c.window.append({'case': case, 'book': key, 'annotation': aid_value,
+                         'advance': {'revision_id': wire_revision_id, 'operation': operation,
+                                     'sha256': wire['sha256'], 'wire_hex': wire['wire_hex']},
+                         'expected': {'selection': 'safe', 'tombstone': operation == 'delete',
+                                      'heads': heads, 'revisions': revisions}})
+
+    window_book(WPARENT, '快照窗口：父到达')
+    a = aid(0xA000)
+    missing = '%032x' % 0xAB000001
+    head = c.revision(WPARENT, a, 'put', [missing], reflow(exact='等待父修订', start=10), '父未到达')
+    c.revision(WPARENT, a, 'put', [], reflow(exact='父到达', start=10), '父修订', revision_id=missing, advance=True)
+    window_advance('parent_arrival', WPARENT, a, missing, 'put', [head['id']], 2)
+
+    window_book(WMERGE, '快照窗口：显式合并')
+    a = aid(0xA000)
+    b = c.revision(WMERGE, a, 'put', [], reflow(exact='并发基线', start=20), 'base')
+    h1 = c.revision(WMERGE, a, 'put', [b['id']], reflow(exact='并发甲', start=20), '甲')
+    h2 = c.revision(WMERGE, a, 'put', [b['id']], reflow(exact='并发乙', start=20), '乙')
+    m = c.revision(WMERGE, a, 'put', [h1['id'], h2['id']], reflow(exact='显式合并', start=20), '合并', advance=True)
+    window_advance('explicit_merge', WMERGE, a, m['id'], 'put', [m['id']], 4)
+
+    window_book(WDELETE, '快照窗口：并发删除合并')
+    a = aid(0xA000)
+    b = c.revision(WDELETE, a, 'put', [], reflow(exact='并发基线', start=30), 'base')
+    h1 = c.revision(WDELETE, a, 'put', [b['id']], reflow(exact='保留分支', start=30), '甲')
+    h2 = c.revision(WDELETE, a, 'delete', [b['id']], reflow(), None)
+    m = c.revision(WDELETE, a, 'delete', [h1['id'], h2['id']], reflow(), None, advance=True)
+    window_advance('delete_merge', WDELETE, a, m['id'], 'delete', [m['id']], 4)
+
+    window_book(WRESTORE, '快照窗口：显式恢复')
+    a = aid(0xA000)
+    r1 = c.revision(WRESTORE, a, 'put', [], reflow(exact='先删后恢复', start=40), 'x')
+    r2 = c.revision(WRESTORE, a, 'delete', [r1['id']], reflow(), None)
+    r3 = c.revision(WRESTORE, a, 'put', [r2['id']], reflow(exact='隐式复活', start=40), '未经 restore')
+    r4 = c.revision(WRESTORE, a, 'restore', [r3['id'], r2['id']], reflow(exact='显式恢复', start=40), '已恢复', advance=True)
+    window_advance('explicit_restore', WRESTORE, a, r4['id'], 'restore', [r4['id']], 5)
     return c
+
+
+def line(wire):
+    return wire['sha256'].encode() + b' ' + bytes.fromhex(wire['wire_hex']) + b'\n'
 
 
 def main():
     out = Path(sys.argv[1]); out.mkdir(parents=True)
     c = build()
-    corpus = {'books': {k: {'title': v['title'], 'annotations': v['annotations']} for k, v in c.books.items()}, 'wires': c.wires}
+    # The mid-export advance wires must be absent from the corpus database until
+    # the second process receives them inside the measured window.
+    base_wires = [w for w in c.wires if w['revision_id'] not in c.advance_ids]
+    corpus = {'books': {k: {'title': v['title'], 'annotations': v['annotations']} for k, v in c.books.items()},
+              'wires': c.wires, 'window': c.window, 'batch_wires': len(base_wires)}
     (out / 'corpus.json').write_text(json.dumps(corpus, ensure_ascii=False, indent=1), encoding='utf-8')
     with open(out / 'all.batch', 'wb') as f:
-        for w in c.wires:
-            f.write(w['sha256'].encode() + b' ' + bytes.fromhex(w['wire_hex']) + b'\n')
-    small = [w for w in c.wires if w['entity_key'].startswith(MASS) is False and MASS.split(':')[1] not in w['entity_key']]
+        for w in base_wires:
+            f.write(line(w))
+    small = [w for w in base_wires if w['entity_key'].startswith(MASS) is False and MASS.split(':')[1] not in w['entity_key']]
     with open(out / 'small.batch', 'wb') as f:
         for w in small:
-            f.write(w['sha256'].encode() + b' ' + bytes.fromhex(w['wire_hex']) + b'\n')
-    print('wires', len(c.wires), 'small', len(small), 'mass annotations', len(c.books[MASS]['annotations']))
+            f.write(line(w))
+    for case in c.window:
+        with open(out / ('advance-' + case['case'] + '.batch'), 'wb') as f:
+            f.write(line({'sha256': case['advance']['sha256'], 'wire_hex': case['advance']['wire_hex']}))
+    print('wires', len(c.wires), 'batch', len(base_wires), 'small', len(small), 'window', len(c.window),
+          'mass annotations', len(c.books[MASS]['annotations']))
 
 
 if __name__ == '__main__':

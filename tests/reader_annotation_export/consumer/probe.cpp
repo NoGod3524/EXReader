@@ -6,6 +6,10 @@
 //     keys: cancel_after=N  fsize=N (POSIX RLIMIT_FSIZE applied at the first poll)
 //           lock=<path-hex> (Windows: hold the target open without delete sharing)
 //           thread=1 (call from a non-owner thread)  short_struct=1  null_options=1
+//           advance_at_poll=N go=<path-hex> done=<path-hex> advance_wait=N
+//             (block inside the cancel callback until a second process has committed a revision)
+//           reenter=1 [reenter_at=N] reenter_path=<path-hex> [reenter_stats=1]
+//             (call the public entry again from the cancel callback)
 #include <reader_annotation_export.h>
 #include <reader_projection.h>
 #include <cstdio>
@@ -17,12 +21,15 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <chrono>
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #else
+#include <fcntl.h>
 #include <signal.h>
 #include <sys/resource.h>
+#include <unistd.h>
 #endif
 
 namespace {
@@ -40,10 +47,48 @@ std::string esc(const std::string &s){
     else o.push_back(ch);}
   return o+"\"";
 }
+bool path_exists(const std::string &p){
+#ifdef _WIN32
+  int n=MultiByteToWideChar(CP_UTF8,0,p.c_str(),-1,nullptr,0);
+  std::wstring w((size_t)n,L'\0');MultiByteToWideChar(CP_UTF8,0,p.c_str(),-1,&w[0],n);
+  return GetFileAttributesW(w.c_str())!=INVALID_FILE_ATTRIBUTES;
+#else
+  return ::access(p.c_str(),F_OK)==0;
+#endif
+}
+void path_touch(const std::string &p){
+  if(p.empty())return;
+#ifdef _WIN32
+  int n=MultiByteToWideChar(CP_UTF8,0,p.c_str(),-1,nullptr,0);
+  std::wstring w((size_t)n,L'\0');MultiByteToWideChar(CP_UTF8,0,p.c_str(),-1,&w[0],n);
+  HANDLE h=CreateFileW(w.c_str(),GENERIC_WRITE,0,nullptr,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr);
+  if(h!=INVALID_HANDLE_VALUE)CloseHandle(h);
+#else
+  int fd=::open(p.c_str(),O_WRONLY|O_CREAT|O_TRUNC,0666);
+  if(fd>=0)::close(fd);
+#endif
+}
+/* Deterministic handshake: the export blocks inside its own cancel callback
+   until the harness has let a second process commit the advance revision. */
+bool path_wait(const std::string &p,int seconds){
+  if(p.empty())return true;
+  for(int i=0;i<seconds*200;i++){
+    if(path_exists(p))return true;
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+  }
+  return false;
+}
 struct poll_state {
   unsigned long polls=0,cancel_after=0;
   long long fsize=-1;
   bool limited=false;
+  unsigned long advance_at=0;bool advanced=false;int advance_timeout=0;
+  std::string go,done;int advance_wait=60;
+  unsigned long reenter_at=0;bool reentered=false;
+  reader_annotation_export_options *nested=nullptr;
+  reader_annotation_export_stats *nested_stats=nullptr;
+  reader_annotation_export_error *nested_error=nullptr;
+  int reenter_status=-1;
 };
 int poll(void *context){
   poll_state &s=*(poll_state *)context;
@@ -54,6 +99,14 @@ int poll(void *context){
     struct rlimit r;getrlimit(RLIMIT_FSIZE,&r);r.rlim_cur=(rlim_t)s.fsize;setrlimit(RLIMIT_FSIZE,&r);
   }
 #endif
+  if(s.advance_at&&s.polls==s.advance_at&&!s.advanced){
+    s.advanced=true;path_touch(s.go);
+    if(!path_wait(s.done,s.advance_wait)){s.advance_timeout=1;return 1;}
+  }
+  if(s.reenter_at&&s.polls==s.reenter_at&&!s.reentered&&s.nested){
+    s.reentered=true;
+    s.reenter_status=(int)reader_annotation_export_run(s.nested,s.nested_stats,s.nested_error);
+  }
   return s.cancel_after&&s.polls>=s.cancel_after;
 }
 int receive_batch(const std::string &db,const std::string &batch){
@@ -90,6 +143,20 @@ int do_export(int argc,char **argv){
   o.jsonl_path=std::string(argv[5])=="-"?nullptr:jsonl.c_str();o.markdown_path=std::string(argv[6])=="-"?nullptr:md.c_str();
   o.max_output_bytes=max_bytes;o.cancel=poll;o.cancel_context=&ps;
   reader_annotation_export_stats st{};reader_annotation_export_error er{};
+  if(opt.count("advance_at_poll")){
+    ps.advance_at=std::strtoul(opt["advance_at_poll"].c_str(),nullptr,10);
+    ps.go=unhex(opt.count("go")?opt["go"]:"-");ps.done=unhex(opt.count("done")?opt["done"]:"-");
+    if(opt.count("advance_wait"))ps.advance_wait=std::atoi(opt["advance_wait"].c_str());
+  }
+  reader_annotation_export_options nested{};reader_annotation_export_stats nested_stats{};reader_annotation_export_error nested_error{};
+  std::string nested_path=unhex(opt.count("reenter_path")?opt["reenter_path"]:"-");
+  if(opt.count("reenter")){
+    nested.struct_size=sizeof(nested);nested.revisions=store;nested.book_key=book.c_str();
+    nested.book_title=o.book_title;nested.jsonl_path=nested_path.empty()?nullptr:nested_path.c_str();
+    ps.nested=&nested;ps.nested_error=&nested_error;
+    ps.nested_stats=opt.count("reenter_stats")?&st:&nested_stats;
+    ps.reenter_at=opt.count("reenter_at")?std::strtoul(opt["reenter_at"].c_str(),nullptr,10):2;
+  }
   std::string lock_note;
 #ifdef _WIN32
   HANDLE lock=INVALID_HANDLE_VALUE;
@@ -107,9 +174,14 @@ int do_export(int argc,char **argv){
   if(lock!=INVALID_HANDLE_VALUE)CloseHandle(lock);
 #endif
   std::printf("{\"status\":%d,\"revision_code\":%d,\"rs_code\":%d,\"os_error\":%d,\"message\":%s,\"polls\":%lu,\"note\":%s,"
+    "\"advanced\":%d,\"advance_timeout\":%d,"
+    "\"reenter\":{\"status\":%d,\"code\":%d,\"message\":%s,\"annotations\":%llu,\"jsonl_published\":%d},"
     "\"stats\":{\"annotations\":%llu,\"current\":%llu,\"tombstones\":%llu,\"pending_parents\":%llu,\"concurrent\":%llu,\"blocked_restore\":%llu,"
     "\"head_wires\":%llu,\"jsonl_bytes\":%llu,\"markdown_bytes\":%llu,\"jsonl_published\":%d,\"markdown_published\":%d}}\n",
     (int)status,er.revision_code,er.rs_code,er.os_error,esc(er.message).c_str(),ps.polls,esc(lock_note).c_str(),
+    ps.advanced?1:0,ps.advance_timeout,
+    ps.reenter_status,nested_error.code,esc(nested_error.message).c_str(),
+    (unsigned long long)nested_stats.annotations,nested_stats.jsonl_published,
     (unsigned long long)st.annotations,(unsigned long long)st.current,(unsigned long long)st.tombstones,(unsigned long long)st.pending_parents,
     (unsigned long long)st.concurrent,(unsigned long long)st.blocked_restore,(unsigned long long)st.head_wires,
     (unsigned long long)st.jsonl_bytes,(unsigned long long)st.markdown_bytes,st.jsonl_published,st.markdown_published);
