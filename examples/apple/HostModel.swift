@@ -37,6 +37,7 @@ final class HostShelf: ObservableObject {
     private var firstLayoutUptime: TimeInterval?
     private var awaitingLayoutKey: String?
     private var issuedRestoreRevision = -1
+    // Even epochs precede the native scroll; odd epochs follow its issue.
     var geometryRevision: Int { restoreRevision * 2 + (issuedRestoreRevision == restoreRevision ? 1 : 0) }
     private var pendingSave: DispatchWorkItem?
 #if EXR_APPLE_SHELF_REVIEW

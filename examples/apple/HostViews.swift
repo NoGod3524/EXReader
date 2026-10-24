@@ -117,6 +117,7 @@ struct LibraryScreen: View {
     }
 
     var body: some View {
+        let geometryRevision = shelf.geometryRevision
         VStack(spacing: 0) {
             HStack {
                 Text("EXReader 书架").font(.title2).bold()
@@ -187,7 +188,7 @@ struct LibraryScreen: View {
                             .listRowInsets(EdgeInsets(top: 0, leading: 8, bottom: 0, trailing: 8))
                             .background(GeometryReader { geometry in
                                 Color.clear.preference(key: ShelfGeometryKey.self,
-                                    value: ShelfGeometry(frames: [book.id: geometry.frame(in: .named("catalog-shelf"))], revision: shelf.geometryRevision))
+                                    value: ShelfGeometry(frames: [book.id: geometry.frame(in: .named("catalog-shelf"))], revision: geometryRevision))
                             })
                         }
                     }
@@ -195,7 +196,7 @@ struct LibraryScreen: View {
                     .listStyle(.plain)
                     .coordinateSpace(name: "catalog-shelf")
                     .background(GeometryReader { geometry in
-                        Color.clear.preference(key: ShelfGeometryKey.self, value: ShelfGeometry(size: geometry.size, revision: shelf.geometryRevision))
+                        Color.clear.preference(key: ShelfGeometryKey.self, value: ShelfGeometry(size: geometry.size, revision: geometryRevision))
                     })
                     .onPreferenceChange(ShelfGeometryKey.self) { geometry in shelf.observe(geometry.frames, size: geometry.size, revision: geometry.revision) }
                     .onAppear { restoreShelf(proxy) }
