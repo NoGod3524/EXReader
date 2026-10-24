@@ -1,5 +1,7 @@
 {
-  "accepted": true,
+  "accepted": false,
+  "status": "expanded lifecycle and real process recovery candidate awaits its own same-source cloud run; prior scoped evidence retained below",
+  "prior_scoped_accepted": true,
   "scope": "iOS Simulator installed public SDK originals and reading captures through actual background account sessions",
   "source_sha": "88c64f51011b3bc48e1e8daf51c0058b02f756c0",
   "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
@@ -42,5 +44,5 @@
   "complete_product": false,
   "sdk_changed": false,
   "schema_changed": false,
-  "problems": []
+  "problems": ["Current lifecycle candidate has no completed same-source run yet; the 38-session result below belongs only to 88c64f51011b3bc48e1e8daf51c0058b02f756c0."]
 }

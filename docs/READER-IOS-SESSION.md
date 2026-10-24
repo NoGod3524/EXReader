@@ -27,3 +27,16 @@ API与上传日志摘要均为 `sha256:57b34561a37b1779ab66552225f6adfbdcea4dbdb
 完整身份见[验收记录](validation/reader-ios-session.json)。
 这一步没有接入正式Apple账号界面，也尚未覆盖原20项会话故障套件、
 真实进程终止后恢复、真机或六目标联合验收；后续仍需补齐这些出口。
+
+## 会话生命周期接续候选
+
+后续候选仍从安装后的同份模块消费，原38会话和18捕获先实际重跑。
+原 `tests/reader_session/check_session.py` 的20项保持原断言和时限，以iOS arm64消费者执行：
+控制程序通过 `simctl spawn` 保留stdin/stdout协议，实际SDK会话入口在其后台owner线程运行，
+另一个同源iOS修订消费者负责原始本地修订输入。此部分是Simulator原生worker出口，不声称它是UIKit账号界面。
+
+同次UIKit探针另外进入交互控制模式：主线程保持窗口和活跃采样，后台owner复用原消费者。
+测试在实际不可变PUT提交、GET验证被阻塞且outbox尚未ack时，对真实app PID发送SIGKILL；
+重新启动同一安装包、同一账号和同一产品库，核对不可变重试412、GET验证、仅一次ack与保留历史。
+还核对传输中非阻塞close、主线程采样持续、CLOSED之后才destroy。
+这份候选的完整同源云端出口尚未完成，首轮原38会话通过记录不转移授予新源码。

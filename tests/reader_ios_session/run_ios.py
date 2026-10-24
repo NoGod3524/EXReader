@@ -47,6 +47,10 @@ def main():
     run('consumer-build', ['cmake', '--build', consumer, '--parallel', '4', '--verbose'])
     app = consumer / 'ReaderSessionProbe.app'; binary = app / 'ReaderSessionProbe'
     run('sign', ['codesign', '--force', '--sign', '-', app])
+    fault_binary, revision_binary = consumer / 'ios-session-controls', consumer / 'ios-session-revisions'
+    for name, native in [('fault', fault_binary), ('revision', revision_binary)]:
+        run(name + '-sign', ['codesign', '--force', '--sign', '-', native])
+        assert run(name + '-architecture', ['lipo', '-archs', native]) == 'arm64'
     assert run('architecture', ['lipo', '-archs', binary]) == 'arm64'
     dependencies = run('dependencies', ['otool', '-L', binary])
     assert 'Foundation.framework' in dependencies and not any(x in dependencies.lower() for x in ('libcurl', 'libssl', 'libcrypto', 'webkit', 'webview'))
@@ -78,11 +82,32 @@ def main():
         assert sessions['accepted'] is True and sessions['count'] == len(sessions['sessions']) == 38
         assert all(s['shards'] == 256 and s['sweeps'] == 1 and s['observations'] > 0 for s in sessions['sessions'])
         assert lifecycle['code'] == 0 and lifecycle['main_thread_ticks'] > 0
+        os.environ['EXR_IOS_FAULT_BINARY'] = str(fault_binary)
+        os.environ['EXR_IOS_REVISION_BINARY'] = str(revision_binary)
+        fault_adapter = root / 'tests/reader_ios_session/launch_fault.py'; fault_adapter.chmod(0o755)
+        revision_adapter = consumer / 'revision-launch'; revision_adapter.symlink_to(fault_adapter)
+        run('original-20-session-faults', [sys.executable, 'tests/reader_session/check_session.py',
+            '--consumer', fault_adapter, '--revision-consumer', revision_adapter, '--native-binary', fault_binary,
+            '--output', out / 'faults'], timeout=1200)
+        faults = json.loads((out / 'faults/result.json').read_text(encoding='utf-8'))
+        assert faults['accepted'] is True and faults['count'] == 20 and len(set(faults['checks'])) == 20
+        assert faults['execution_platform'] == 'ios-simulator' and faults['source_sha'] == os.environ['GITHUB_SHA']
+        assert faults['consumer_sha256'] == hashlib.sha256(fault_binary.read_bytes()).hexdigest()
+        run('actual-uikit-termination-recovery', [sys.executable, 'tests/reader_ios_session/check_process_recovery.py',
+            '--revision-consumer', revision_adapter, '--native-binary', binary, '--output', out / 'process-recovery'], timeout=600)
+        recovery = json.loads((out / 'process-recovery/result.json').read_text(encoding='utf-8'))
+        assert recovery['accepted'] is True and recovery['count'] == 7 and len(set(recovery['checks'])) == 7
+        assert recovery['source_sha'] == os.environ['GITHUB_SHA'] and recovery['native_processes'] == 3
+        assert recovery['consumer_sha256'] == hashlib.sha256(binary.read_bytes()).hexdigest()
         report = {'accepted': True, 'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
                   'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'execution_platform': 'ios-simulator', 'architecture': 'arm64',
-                  'runtime': runtime, 'device_type': device, 'consumer_sha256': hashlib.sha256(binary.read_bytes()).hexdigest(),
+                  'runtime': {'identifier': runtime['identifier'], 'version': runtime['version']}, 'device_type': device, 'consumer_sha256': hashlib.sha256(binary.read_bytes()).hexdigest(),
                   'reading_cases': 18, 'receiver_found': 17, 'receiver_mislocated': 0, 'originals_exported': 4,
                   'session_sweeps': 38, 'main_thread_ticks': lifecycle['main_thread_ticks'], 'sqlite_provider': reading['sqlite_providers'],
+                  'session_fault_checks': faults['count'], 'uikit_process_recovery_checks': recovery['count'],
+                  'uikit_process_launches': recovery['native_processes'],
+                  'fault_consumer_sha256': hashlib.sha256(fault_binary.read_bytes()).hexdigest(),
+                  'revision_consumer_sha256': hashlib.sha256(revision_binary.read_bytes()).hexdigest(),
                   'sdk_changed': False, 'schema_changed': False, 'host_ui_accepted': False, 'physical_device_execution': False, 'complete_product': False}
         (out / 'result.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
         print(json.dumps(report), flush=True)
