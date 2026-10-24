@@ -56,6 +56,10 @@ std::string path(const std::string &input,bool absolute) {
   std::string out,segment;
   auto finish=[&]() {
     if(segment=="." || segment==".." || !utf8(segment)) reject(EXR_DAV_ARGUMENT,"Ambiguous resource path");
+    // A literal percent is valid; a second encoded escape remains ambiguous.
+    for(size_t n=0;n+2<segment.size();n++)
+      if(segment[n]=='%'&&hex(segment[n+1])>=0&&hex(segment[n+2])>=0)
+        reject(EXR_DAV_ARGUMENT,"Doubly encoded resource segment");
     segment.clear();
   };
   for(size_t i=0;i<input.size();i++) {
@@ -67,7 +71,7 @@ std::string path(const std::string &input,bool absolute) {
     if(ch=='%') {
       if(i+2>=input.size() || hex(input[i+1])<0 || hex(input[i+2])<0) reject(EXR_DAV_ARGUMENT,"Invalid resource encoding");
       unsigned char decoded=(unsigned char)(hex(input[i+1])*16+hex(input[i+2]));
-      if(decoded=='/' || decoded=='\\' || decoded=='%' || decoded<32 || decoded==127)
+      if(decoded=='/' || decoded=='\\' || decoded<32 || decoded==127)
         reject(EXR_DAV_ARGUMENT,"Ambiguous encoded resource segment");
       segment+=(char)decoded;out+='%';
       out+=(char)std::toupper((unsigned char)input[++i]);out+=(char)std::toupper((unsigned char)input[++i]);
@@ -408,15 +412,28 @@ url fetch(exr_webdav_client &client,url u,const char *method,int expected,sink &
   }
 }
 struct node { std::string name,ns,text;std::vector<node> children; };
-node xml(const std::vector<unsigned char> &bytes) {
-  node document;std::vector<node *> stack{&document};size_t elements=0;
+node xml(const std::vector<unsigned char> &bytes,size_t maximum_entries) {
+  node document;std::vector<node *> stack{&document};size_t responses=0,response_depth=0,response_elements=0,outside_elements=0;
   auto event=[&](int kind,const std::string &name,const std::string &ns,const std::string &text,bool empty) {
     if(kind==1) {
       if(name.size()>128 || ns.size()>1024) reject(EXR_DAV_LIMIT,"WebDAV XML name limit exceeded");
-      if(++elements>20000 || stack.size()>32) reject(EXR_DAV_LIMIT,"WebDAV XML structure limit exceeded");
+      // Budget each Depth:1 response independently. Apache includes separate
+      // successful/missing property groups, so 2000 valid entries can exceed
+      // the former global 20000 elements while staying below the byte ceiling.
+      if(stack.size()==2&&name=="response"&&ns=="DAV:") {
+        if(++responses>maximum_entries+1)reject(EXR_DAV_LIMIT,"WebDAV XML response limit exceeded");
+        response_depth=stack.size();response_elements=0;
+      }
+      if(stack.size()>32 || (response_depth?++response_elements>32:++outside_elements>128))
+        reject(EXR_DAV_LIMIT,"WebDAV XML structure limit exceeded");
       stack.back()->children.push_back(node{name,ns,{}, {}});
       if(!empty) stack.push_back(&stack.back()->children.back());
-    } else if(kind==2) { if(stack.size()<=1) reject(EXR_DAV_FORMAT,"Invalid WebDAV XML nesting");stack.pop_back(); }
+      else if(response_depth==stack.size())response_depth=0;
+    } else if(kind==2) {
+      if(stack.size()<=1) reject(EXR_DAV_FORMAT,"Invalid WebDAV XML nesting");
+      if(response_depth&&stack.size()==response_depth+1)response_depth=0;
+      stack.pop_back();
+    }
     else if(kind==3) { if(text.size()>65536-stack.back()->text.size()) reject(EXR_DAV_LIMIT,"WebDAV XML text limit exceeded");stack.back()->text+=text; }
   };
 #ifdef _WIN32
@@ -464,6 +481,14 @@ const node *child(const node &n,const char *name,bool required=false) {
 }
 bool success(const node &n) { int code=0;return std::sscanf(n.text.c_str(),"%*15s %d",&code)==1 && code>=200 && code<300; }
 char *copy(const std::string &s) { char *out=(char *)std::malloc(s.size()+1);if(!out) throw std::bad_alloc();std::memcpy(out,s.c_str(),s.size()+1);return out; }
+std::string component_title(const std::string &component) {
+  std::string title;
+  for(size_t n=0;n<component.size();n++) {
+    if(component[n]=='%'){title+=(char)(hex(component[n+1])*16+hex(component[n+2]));n+=2;}
+    else title+=component[n];
+  }
+  return title;
+}
 exr_webdav_status report(exr_webdav_error *e,const failure &f) {
   if(e) { e->code=f.code;e->http_status=f.http;std::snprintf(e->message,sizeof(e->message),"%s",f.message); }return f.code;
 }
@@ -499,7 +524,7 @@ extern "C" exr_webdav_status exr_webdav_list(exr_webdav_client *client,const cha
     if(!client || !collection || !out) reject(EXR_DAV_ARGUMENT,"Missing collection request");
     std::string resource=path(collection,false);if(!resource.empty() && resource.back()!='/') reject(EXR_DAV_ARGUMENT,"Collection resource must end in slash");
     url current=client->root;current.path+=resource;std::vector<unsigned char> bytes;sink s{client->max_listing,0,control,&bytes,nullptr};
-    current=fetch(*client,current,"PROPFIND",207,s);node root=xml(bytes);
+    current=fetch(*client,current,"PROPFIND",207,s);node root=xml(bytes,client->max_entries);
     if(!dav(root,"multistatus")) reject(EXR_DAV_FORMAT,"Response is not DAV multistatus");
     std::set<std::string> seen;
     for(const node &response_node:root.children) {
@@ -521,7 +546,7 @@ extern "C" exr_webdav_status exr_webdav_list(exr_webdav_client *client,const cha
       const node *type=child(*prop,"resourcetype",true),*length=child(*prop,"getcontentlength"),*display=child(*prop,"displayname"),*etag=child(*prop,"getetag");
       bool folder=child(*type,"collection")!=nullptr;
       if(folder!=(target.path.back()=='/')) reject(EXR_DAV_FORMAT,"Collection href and resource type disagree");
-      std::string title=display ? display->text:component,tag=etag ? etag->text:"";
+      std::string title=display ? display->text:component_title(component),tag=etag ? etag->text:"";
       if(title.size()>1024 || tag.size()>1024 || !utf8(title) || !utf8(tag)) reject(EXR_DAV_FORMAT,"Invalid WebDAV display metadata");
       auto *entries=(exr_webdav_entry *)std::realloc(out->entries,(out->count+1)*sizeof(*out->entries));if(!entries) throw std::bad_alloc();out->entries=entries;
       exr_webdav_entry &entry=out->entries[out->count++];std::memset(&entry,0,sizeof(entry));

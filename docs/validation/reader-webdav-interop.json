@@ -1,0 +1,112 @@
+{
+  "schema": "reader-webdav-interop-acceptance-v1",
+  "accepted": false,
+  "scope": "Job-local pinned real WebDAV services against installed EXReaderWebDAV 0.2.0 / EXReaderRevisions 0.3.0 / EXReaderSync 0.1.0 with the product SQLite; Linux libcurl backend; two independent product libraries and private original directories",
+  "start_point": "210403d121d6484a8fff4ea7ffd911efa3163535",
+  "source_sha": "b870a2f1edc590019c0c76545969627e4de35a7d",
+  "branch": "codex/reader-webdav-interop",
+  "workflow": ".github/workflows/reader-webdav-interop.yml",
+  "run_id": 40054114195,
+  "attempt": 1,
+  "event": "push",
+  "workflow_conclusion": "failure",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_protected_trees_unchanged": true,
+  "product_schema1_unchanged": true,
+  "module_sources_unchanged_since_start_point": true,
+  "services": [
+    {
+      "service": "apache",
+      "title": "Apache httpd mod_dav + mod_dav_fs",
+      "image": "httpd:2.4.68@sha256:03f858efb82c25cb0f9962946615cdcdaf26927cb971722149b563197cfd0fdd",
+      "tls": "httpd mod_ssl, per-run test CA, SAN DNS:apache.interop.test; untrusted and hostname-mismatch refusals checked",
+      "runner": "ubuntu-22.04",
+      "job_id": 120753145555,
+      "conclusion": "failure",
+      "checks": 33,
+      "passed": 32,
+      "failed": [
+        {
+          "id": "shard_with_2000_entries_is_listed_and_paged_by_cursor",
+          "observed": "reader_sync_step status 7 (LIMIT), dav_code 8; direct exr_webdav_list: 'WebDAV XML structure limit exceeded'",
+          "server_answer": "PROPFIND Depth:1 207 with 2001 responses, 24014 XML elements, 1152588 bytes"
+        }
+      ],
+      "server_log_module_requests": {"PROPFIND 207": 76, "PROPFIND 404": 1, "MKCOL 201": 20, "MKCOL 405": 28, "MKCOL 409": 1, "PUT 201": 12, "PUT 412": 8, "PUT 400": 1, "GET 200": 55},
+      "artifact": {
+        "id": 12544677295,
+        "name": "reader-webdav-interop-apache-40054114195-1",
+        "size_in_bytes": 15587878,
+        "digest": "sha256:f9f9639908b207b825ec8ab662f93bd8bfa1fb8a0fce0fc7bbf7b6d2c94178b2",
+        "expires_at": "2027-01-22T02:25:38Z",
+        "verified_by_summary_job": true
+      }
+    },
+    {
+      "service": "nextcloud",
+      "title": "Nextcloud server (SabreDAV) behind its image Apache",
+      "image": "nextcloud:33.0.10-apache@sha256:e02fb1a7558bae683188eb94471cdb1b4550970f905e615c8e9d10c4760f13a1",
+      "tls": "image Apache mod_ssl, per-run test CA, SAN DNS:nextcloud.interop.test; untrusted and hostname-mismatch refusals checked",
+      "runner": "ubuntu-22.04",
+      "job_id": 120753145349,
+      "conclusion": "success",
+      "checks": 33,
+      "passed": 33,
+      "failed": [],
+      "server_log_module_requests": {"PROPFIND 207": 76, "PROPFIND 404": 1, "MKCOL 201": 20, "MKCOL 405": 28, "MKCOL 409": 1, "PUT 201": 12, "PUT 412": 8, "PUT 400": 1, "GET 200": 155},
+      "artifact": {
+        "id": 12544812188,
+        "name": "reader-webdav-interop-nextcloud-40054114195-1",
+        "size_in_bytes": 15685977,
+        "digest": "sha256:136cebb24db8ad7edc660053d476fed7c786394872c98e31d4e8eff8dfcc0078",
+        "expires_at": "2027-01-22T02:25:38Z",
+        "verified_by_summary_job": true
+      }
+    }
+  ],
+  "summary": {
+    "job_id": 120754200175,
+    "conclusion": "failure",
+    "reason": "apache report not accepted (32/33); both artifacts verified against run/attempt/source, digest and raw server access logs with no problems",
+    "artifact": {
+      "id": 12544866884,
+      "name": "reader-webdav-interop-summary-40054114195-1",
+      "size_in_bytes": 3779,
+      "digest": "sha256:02f5bf70f77d3e41995a295b52252bf6ee50ce048233767d1a664dd7b76b4fa8"
+    }
+  },
+  "findings_for_root": [
+    {
+      "id": "xml_structure_bound_rejects_shard_below_2000_entry_ceiling",
+      "services": ["apache"],
+      "severity": "capacity",
+      "minimal_repro": "2000 files in one Apache mod_dav_fs collection; exr_webdav_list(collection) with default limits returns EXR_DAV_LIMIT 'WebDAV XML structure limit exceeded'",
+      "cause": "mod_dav_fs answers each entry with a 200 and a 404 propstat (12 elements); the client's 20000-element XML bound is reached near 1666 entries, below the documented 2000-entry/4 MiB shard ceiling",
+      "effect": "explicit refusal, never truncation; sync of such a shard stays incomplete",
+      "proposed_shared_file": "extras/webdav/src/webdav.cpp"
+    },
+    {
+      "id": "percent_named_child_refuses_entire_listing",
+      "services": ["apache", "nextcloud"],
+      "severity": "interop",
+      "minimal_repro": "PUT <root>/ok.txt; PUT <root>/100%25.txt; exr_webdav_list(root, \"\") returns EXR_DAV_ARGUMENT with an empty listing although the server answered 207",
+      "proposed_shared_file": "extras/webdav/src/webdav.cpp"
+    },
+    {
+      "id": "display_name_falls_back_to_percent_encoded_component",
+      "services": ["apache"],
+      "severity": "cosmetic",
+      "minimal_repro": "mod_dav_fs omits DAV:displayname; exr_webdav_list returns display_name 'a%20b.txt' for 'a b.txt'",
+      "proposed_shared_file": "extras/webdav/src/webdav.cpp"
+    }
+  ],
+  "retained_failures": [
+    {
+      "run_id": 40053615279,
+      "source_sha": "6df34306f6777b14c82e94da31de424a5439b9cc",
+      "result": "nextcloud success; apache 32/33 (same check); summary failed to locate reports under the artifact root (harness-side path bug, fixed in b870a2f1). Not used as evidence."
+    }
+  ],
+  "not_covered": ["Windows WinHTTP backend (Linux containers cannot run on windows runners)", "real user cloud accounts", "mobile/macOS clients", "six-platform client acceptance", "host UI", "complete product"],
+  "local_execution": "none; build, services, tests, artifact download and parsing ran only in GitHub Actions"
+}
