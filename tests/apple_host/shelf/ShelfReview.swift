@@ -121,7 +121,9 @@ import CryptoKit
         let chosen = paged.rows[25]
         layout(chosen.id); paged.save()
         let saved = pageDefaults.data(forKey: "EXRShelfTop")
+        FileHandle.standardOutput.write(Data("SHELF before refresh saved=\(saved != nil) chosen=\(chosen.id) state=\(paged.observation)\n".utf8))
         deferred = true; paged.refresh(); paged.save()
+        FileHandle.standardOutput.write(Data("SHELF during refresh saved_unchanged=\(pageDefaults.data(forKey: "EXRShelfTop") == saved) state=\(paged.observation)\n".utf8))
         try check("refresh_interruption_retains_saved_top_key", paged.loading && paged.rows.isEmpty &&
             saved != nil && pageDefaults.data(forKey: "EXRShelfTop") == saved)
         deferred = false; pending?(); pending = nil

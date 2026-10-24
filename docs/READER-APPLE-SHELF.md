@@ -111,6 +111,15 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
   title's author with an ambiguous grapheme prefix; the correction compares the
   complete fixture title. The assertion is unchanged. Native failure artifact
   `12539137105` is retained. UI and summary were skipped and grant no acceptance.
+- `5f924754a9a089dd927e4dd5bfcbba1583e19c6f` corrected fixture identification:
+  [shelf 40041333550](https://github.com/NoGod3524/EXReader/actions/runs/40041333550),
+  [mapping 40041333658](https://github.com/NoGod3524/EXReader/actions/runs/40041333658),
+  [original Apple 40041333686](https://github.com/NoGod3524/EXReader/actions/runs/40041333686).
+  The shelf native job passed catalog8, canonical title/author byte preservation,
+  and complete forward/reverse traversal, then failed
+  `refresh_interruption_retains_saved_top_key`. Native failure artifact
+  `12539344540` is retained. UI and summary were skipped. The following candidate
+  adds state diagnostics around that unchanged assertion; no acceptance is granted.
 
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.
