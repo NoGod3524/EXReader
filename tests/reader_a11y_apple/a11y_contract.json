@@ -1,0 +1,1239 @@
+{
+  "schema": 1,
+  "package": "G16 Apple accessibility audit",
+  "source_citation": "examples/apple/HostViews.swift @ f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "role_names": "XCUITest elementType names (Button, StaticText, TextField, TextView, ScrollView, Other)",
+  "policy": {
+    "blocking_rule": "a finding blocks accessibility only when its criterion is part of the audited accessibility contract and the contract marks it blocking",
+    "audit_vs_acceptance": "audit_completed reports whether the three targets produced the declared evidence; accessibility_accepted reports whether that evidence violated a blocking criterion",
+    "minimum_target_pt": {
+      "blocking": 24,
+      "advisory_ios": 44
+    },
+    "clip_tolerance_pt": 2,
+    "reading_order_tolerance_pt": 20
+  },
+  "states": {
+    "library.empty": {
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "description": "Fresh launch, empty shelf",
+      "required": [
+        {
+          "id": "library.title",
+          "role": "StaticText",
+          "name_equals": "EXReader 书架",
+          "fix": "无（标题与源码一致）"
+        },
+        {
+          "id": "library.empty",
+          "role": "StaticText",
+          "name_equals": "书架为空，导入一本示例书开始。",
+          "fix": "无"
+        },
+        {
+          "id": "library.status",
+          "role": "StaticText",
+          "fix": "状态行必须暴露非空 AX 名称"
+        },
+        {
+          "id": "library.import.epub",
+          "role": "Button",
+          "name_equals": "导入 EPUB 示例",
+          "fix": "无"
+        },
+        {
+          "id": "library.import.epub.duplicate",
+          "role": "Button",
+          "name_equals": "再次导入同一 EPUB",
+          "fix": "无"
+        },
+        {
+          "id": "library.import.pdf",
+          "role": "Button",
+          "name_equals": "导入 PDF 示例",
+          "fix": "无"
+        },
+        {
+          "id": "library.import.picker",
+          "role": "Button",
+          "name_equals": "打开文件…",
+          "fix": "无"
+        },
+        {
+          "id": "library.import.broken",
+          "role": "Button",
+          "name_equals": "导入损坏文件",
+          "fix": "无"
+        },
+        {
+          "id": "library.import.large",
+          "role": "Button",
+          "name_equals": "导入大文件",
+          "fix": "无"
+        },
+        {
+          "id": "library.import.unicode",
+          "role": "Button",
+          "name_equals": "导入 Unicode 示例",
+          "fix": "无"
+        },
+        {
+          "id": "library.import.bounded",
+          "role": "Button",
+          "name_equals": "导入跨章示例",
+          "fix": "无"
+        }
+      ],
+      "interactive": [
+        "library.import.epub",
+        "library.import.epub.duplicate",
+        "library.import.pdf",
+        "library.import.picker",
+        "library.import.broken",
+        "library.import.large",
+        "library.import.unicode",
+        "library.import.bounded"
+      ],
+      "reading_sequence": [
+        "library.title",
+        "library.empty",
+        "library.import.epub",
+        "library.import.pdf",
+        "library.status"
+      ],
+      "content_rules": [
+        "library-title-trace"
+      ]
+    },
+    "library.populated": {
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "description": "Two fixture books imported through the visible import buttons",
+      "required": [
+        {
+          "id": "library.title",
+          "role": "StaticText",
+          "name_equals": "EXReader 书架"
+        },
+        {
+          "id": "library.list",
+          "role": [
+            "ScrollView",
+            "Other"
+          ],
+          "fix": "书架列表容器需要稳定的 AX 标识与滚动语义"
+        },
+        {
+          "id": "library.book.0",
+          "role": "Button",
+          "name_contains": "Sample.epub",
+          "fix": "书架行必须把书名与格式位置作为 AX 名称"
+        },
+        {
+          "id": "library.book.1",
+          "role": "Button",
+          "name_contains": "Sample.pdf",
+          "fix": "书架行必须把书名与格式位置作为 AX 名称"
+        },
+        {
+          "id": "library.import.epub",
+          "role": "Button",
+          "name_equals": "导入 EPUB 示例"
+        },
+        {
+          "id": "library.status",
+          "role": "StaticText"
+        }
+      ],
+      "interactive": [
+        "library.book.0",
+        "library.book.1",
+        "library.import.epub",
+        "library.import.pdf"
+      ],
+      "reading_sequence": [
+        "library.title",
+        "library.book.0",
+        "library.book.1",
+        "library.import.epub",
+        "library.import.pdf",
+        "library.status"
+      ],
+      "content_rules": [
+        "library-title-trace",
+        "library-book-index-identifier"
+      ]
+    },
+    "library.busy": {
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "description": "Long import in flight; busy marker and cancel control visible",
+      "required": [
+        {
+          "id": "library.busy",
+          "role": "StaticText",
+          "name_contains": "处理中",
+          "fix": "忙状态必须有文本替身，不能只有进度动画"
+        },
+        {
+          "id": "library.cancel",
+          "role": "Button",
+          "name_equals": "取消",
+          "expect_enabled": true,
+          "fix": "取消必须可操作"
+        },
+        {
+          "id": "library.status",
+          "role": "StaticText"
+        }
+      ],
+      "interactive": [
+        "library.cancel"
+      ],
+      "state_exposure": [
+        {
+          "ids": [
+            "library.import.epub",
+            "library.import.pdf",
+            "library.import.picker"
+          ],
+          "expect_enabled": false,
+          "severity": "minor",
+          "blocking": false,
+          "note": "导入控件在忙时禁用；本项复核禁用状态对辅助技术可见（功能语义由既有 Apple 验收断言拥有）"
+        }
+      ]
+    },
+    "library.after_cancel": {
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "description": "Cancelled import leaves the shelf usable",
+      "required": [
+        {
+          "id": "library.status",
+          "role": "StaticText",
+          "name_contains": "已取消"
+        },
+        {
+          "id": "library.import.epub",
+          "role": "Button",
+          "expect_enabled": true,
+          "fix": "取消后导入控件必须恢复可用"
+        }
+      ],
+      "interactive": [
+        "library.import.epub"
+      ]
+    },
+    "reader.epub": {
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "description": "Reflow EPUB open at page 1 after 首页",
+      "required": [
+        {
+          "id": "reader.back",
+          "role": "Button",
+          "name_equals": "书架"
+        },
+        {
+          "id": "reader.title",
+          "role": "StaticText",
+          "name_contains": "Sample.epub",
+          "fix": "书名必须完整暴露给辅助技术，即使视觉单行截断"
+        },
+        {
+          "id": "reader.page",
+          "role": [
+            "Other",
+            "Image",
+            "StaticText"
+          ],
+          "name_contains": "第 1 页",
+          "value_contains": "第 1 页",
+          "fix": "阅读面必须有页号与页文本替身；空名称等于阅读内容对辅助技术不可用"
+        },
+        {
+          "id": "reader.location",
+          "role": "StaticText",
+          "name_contains": "第 1 页"
+        },
+        {
+          "id": "reader.progress",
+          "role": "StaticText",
+          "name_contains": "%"
+        },
+        {
+          "id": "reader.state",
+          "role": "StaticText"
+        },
+        {
+          "id": "reader.status",
+          "role": "StaticText",
+          "name_contains": "就绪"
+        },
+        {
+          "id": "reader.first",
+          "role": "Button",
+          "name_equals": "首页"
+        },
+        {
+          "id": "reader.previous",
+          "role": "Button",
+          "name_equals": "上一页"
+        },
+        {
+          "id": "reader.next",
+          "role": "Button",
+          "name_equals": "下一页"
+        },
+        {
+          "id": "reader.font.decrease",
+          "role": "Button",
+          "fix": "字号按钮需要语义名称（如“减小字号”），不能只靠 A-/A+ 符号"
+        },
+        {
+          "id": "reader.font.value",
+          "role": "StaticText",
+          "name_contains": "字号"
+        },
+        {
+          "id": "reader.font.increase",
+          "role": "Button",
+          "fix": "字号按钮需要语义名称（如“增大字号”）"
+        },
+        {
+          "id": "reader.select",
+          "role": "Button",
+          "name_equals": "选文"
+        },
+        {
+          "id": "reader.notes",
+          "role": "Button",
+          "name_contains": "标注"
+        }
+      ],
+      "interactive": [
+        "reader.back",
+        "reader.first",
+        "reader.previous",
+        "reader.next",
+        "reader.font.decrease",
+        "reader.font.increase",
+        "reader.select",
+        "reader.notes"
+      ],
+      "reading_sequence": [
+        "reader.back",
+        "reader.title",
+        "reader.page",
+        "reader.location",
+        "reader.progress",
+        "reader.first",
+        "reader.previous",
+        "reader.next",
+        "reader.font.decrease",
+        "reader.font.value",
+        "reader.font.increase",
+        "reader.select",
+        "reader.notes",
+        "reader.status"
+      ],
+      "content_rules": [
+        "reader-state-internal-hash",
+        "font-button-symbol-only"
+      ],
+      "scaling_reference": true
+    },
+    "reader.second_page": {
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "description": "One page turn later; the location change must be exposed",
+      "required": [
+        {
+          "id": "reader.location",
+          "role": "StaticText",
+          "name_contains": "第 2 页"
+        },
+        {
+          "id": "reader.page",
+          "role": [
+            "Other",
+            "Image",
+            "StaticText"
+          ],
+          "value_contains": "第 2 页"
+        },
+        {
+          "id": "reader.next",
+          "role": "Button",
+          "name_equals": "下一页"
+        },
+        {
+          "id": "reader.status",
+          "role": "StaticText"
+        }
+      ],
+      "interactive": [
+        "reader.next"
+      ]
+    },
+    "selection.sheet": {
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "description": "Selection sheet before any text is selected",
+      "required": [
+        {
+          "id": "selection.title",
+          "role": "StaticText",
+          "name_equals": "选择本页文字"
+        },
+        {
+          "id": "selection.text",
+          "role": [
+            "TextView",
+            "ScrollView",
+            "Other"
+          ],
+          "fix": "可选文本视图必须暴露可读名称与内容"
+        },
+        {
+          "id": "selection.quote",
+          "role": "StaticText",
+          "name_equals": "尚未选择文字"
+        },
+        {
+          "id": "selection.hint",
+          "role": "StaticText",
+          "name_nonempty": true
+        },
+        {
+          "id": "selection.clipboard",
+          "role": "StaticText",
+          "name_equals": "剪贴板为空"
+        },
+        {
+          "id": "selection.all",
+          "role": "Button",
+          "name_equals": "全选"
+        },
+        {
+          "id": "selection.copy",
+          "role": "Button",
+          "name_equals": "复制"
+        },
+        {
+          "id": "selection.annotate",
+          "role": "Button",
+          "name_equals": "标注所选"
+        },
+        {
+          "id": "selection.verifyPaste",
+          "role": "Button",
+          "name_equals": "粘贴校验"
+        },
+        {
+          "id": "selection.close",
+          "role": "Button",
+          "name_equals": "关闭"
+        }
+      ],
+      "interactive": [
+        "selection.all",
+        "selection.verifyPaste",
+        "selection.close"
+      ],
+      "reading_sequence": [
+        "selection.title",
+        "selection.text",
+        "selection.quote",
+        "selection.hint",
+        "selection.clipboard",
+        "selection.all",
+        "selection.verifyPaste",
+        "selection.close"
+      ]
+    },
+    "selection.selected": {
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "description": "Whole page selected through 全选",
+      "required": [
+        {
+          "id": "selection.quote",
+          "role": "StaticText",
+          "name_not_contains": "尚未选择文字",
+          "fix": "选文后必须把所选文本作为 AX 名称发布"
+        },
+        {
+          "id": "selection.copy",
+          "role": "Button",
+          "name_equals": "复制",
+          "expect_enabled": true
+        },
+        {
+          "id": "selection.annotate",
+          "role": "Button",
+          "name_equals": "标注所选",
+          "expect_enabled": true
+        }
+      ],
+      "interactive": [
+        "selection.all",
+        "selection.copy",
+        "selection.annotate",
+        "selection.close"
+      ]
+    },
+    "reader.with_note": {
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "description": "Reader after the audited annotation was saved",
+      "required": [
+        {
+          "id": "reader.notes",
+          "role": "Button",
+          "name_contains": "标注 1",
+          "fix": "标注计数必须出现在名称里，否则用户无法在不打开面板时得知标注数"
+        },
+        {
+          "id": "reader.status",
+          "role": "StaticText",
+          "name_contains": "已保存标注"
+        }
+      ],
+      "interactive": [
+        "reader.notes"
+      ]
+    },
+    "notes.sheet": {
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "description": "Annotation list with one saved note",
+      "required": [
+        {
+          "id": "notes.title",
+          "role": "StaticText",
+          "name_contains": "标注"
+        },
+        {
+          "id": "notes.quote.0",
+          "role": "StaticText",
+          "fix": "标注摘录必须可读；lineLimit(2) 不得截断 AX 名称"
+        },
+        {
+          "id": "notes.comment.0",
+          "role": "StaticText"
+        },
+        {
+          "id": "notes.state.0",
+          "role": "StaticText",
+          "name_contains": "状态"
+        },
+        {
+          "id": "notes.jump.0",
+          "role": "Button",
+          "name_equals": "定位"
+        },
+        {
+          "id": "notes.edit.0",
+          "role": "Button",
+          "name_equals": "编辑"
+        },
+        {
+          "id": "notes.delete.0",
+          "role": "Button",
+          "name_equals": "删除"
+        },
+        {
+          "id": "notes.close",
+          "role": "Button",
+          "name_equals": "关闭"
+        },
+        {
+          "id": "notes.status",
+          "role": "StaticText"
+        }
+      ],
+      "interactive": [
+        "notes.jump.0",
+        "notes.edit.0",
+        "notes.delete.0",
+        "notes.close"
+      ],
+      "reading_sequence": [
+        "notes.title",
+        "notes.quote.0",
+        "notes.comment.0",
+        "notes.state.0",
+        "notes.jump.0",
+        "notes.edit.0",
+        "notes.delete.0",
+        "notes.close"
+      ]
+    },
+    "notes.editor": {
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "description": "Annotation edit sheet",
+      "required": [
+        {
+          "id": "notes.edit.title",
+          "role": "StaticText",
+          "name_equals": "编辑标注"
+        },
+        {
+          "id": "notes.editor",
+          "role": [
+            "TextField",
+            "TextView"
+          ],
+          "fix": "编辑框必须有可读名称（占位符或 explicit label）"
+        },
+        {
+          "id": "notes.save",
+          "role": "Button",
+          "name_equals": "保存",
+          "expect_enabled": true
+        },
+        {
+          "id": "notes.cancel",
+          "role": "Button",
+          "name_equals": "取消"
+        }
+      ],
+      "interactive": [
+        "notes.save",
+        "notes.cancel"
+      ]
+    },
+    "reader.large_type": {
+      "platforms": [
+        "iphone",
+        "ipad"
+      ],
+      "description": "Reader relaunched at UICTContentSizeCategoryAccessibilityExtraExtraExtraLarge",
+      "required": [
+        {
+          "id": "reader.page",
+          "role": [
+            "Other",
+            "Image",
+            "StaticText"
+          ],
+          "fix": "大字体下阅读面仍须可定位并有名称"
+        },
+        {
+          "id": "reader.location",
+          "role": "StaticText"
+        },
+        {
+          "id": "reader.progress",
+          "role": "StaticText"
+        },
+        {
+          "id": "reader.status",
+          "role": "StaticText"
+        },
+        {
+          "id": "reader.next",
+          "role": "Button",
+          "name_equals": "下一页"
+        },
+        {
+          "id": "reader.back",
+          "role": "Button",
+          "name_equals": "书架"
+        },
+        {
+          "id": "reader.title",
+          "role": "StaticText"
+        },
+        {
+          "id": "reader.font.value",
+          "role": "StaticText"
+        }
+      ],
+      "interactive": [
+        "reader.back",
+        "reader.first",
+        "reader.previous",
+        "reader.next",
+        "reader.font.decrease",
+        "reader.font.increase",
+        "reader.select",
+        "reader.notes"
+      ]
+    },
+    "library.large_type": {
+      "platforms": [
+        "iphone",
+        "ipad"
+      ],
+      "description": "Library at the accessibility text size",
+      "required": [
+        {
+          "id": "library.title",
+          "role": "StaticText",
+          "name_equals": "EXReader 书架"
+        },
+        {
+          "id": "library.book.0",
+          "role": "Button",
+          "name_contains": "Sample"
+        },
+        {
+          "id": "library.import.epub",
+          "role": "Button",
+          "name_equals": "导入 EPUB 示例"
+        },
+        {
+          "id": "library.status",
+          "role": "StaticText"
+        }
+      ],
+      "interactive": [
+        "library.book.0",
+        "library.book.1",
+        "library.import.epub",
+        "library.import.pdf"
+      ]
+    },
+    "reader.landscape": {
+      "platforms": [
+        "iphone",
+        "ipad"
+      ],
+      "description": "Reader after rotation to landscape",
+      "required": [
+        {
+          "id": "reader.page",
+          "role": [
+            "Other",
+            "Image",
+            "StaticText"
+          ]
+        },
+        {
+          "id": "reader.location",
+          "role": "StaticText"
+        },
+        {
+          "id": "reader.next",
+          "role": "Button",
+          "name_equals": "下一页"
+        },
+        {
+          "id": "reader.status",
+          "role": "StaticText"
+        }
+      ],
+      "interactive": [
+        "reader.back",
+        "reader.first",
+        "reader.previous",
+        "reader.next",
+        "reader.font.decrease",
+        "reader.font.increase",
+        "reader.select",
+        "reader.notes"
+      ]
+    },
+    "reader.portrait": {
+      "platforms": [
+        "iphone",
+        "ipad"
+      ],
+      "description": "Reader after restoring portrait",
+      "required": [
+        {
+          "id": "reader.page",
+          "role": [
+            "Other",
+            "Image",
+            "StaticText"
+          ]
+        },
+        {
+          "id": "reader.location",
+          "role": "StaticText"
+        },
+        {
+          "id": "reader.next",
+          "role": "Button",
+          "name_equals": "下一页"
+        }
+      ],
+      "interactive": [
+        "reader.back",
+        "reader.first",
+        "reader.previous",
+        "reader.next",
+        "reader.font.decrease",
+        "reader.font.increase",
+        "reader.select",
+        "reader.notes"
+      ]
+    },
+    "reader.window_min": {
+      "platforms": [
+        "macos"
+      ],
+      "description": "macOS reader dragged to its minimum window size",
+      "required": [
+        {
+          "id": "reader.page",
+          "role": [
+            "Other",
+            "Image",
+            "StaticText"
+          ]
+        },
+        {
+          "id": "reader.location",
+          "role": "StaticText"
+        },
+        {
+          "id": "reader.next",
+          "role": "Button",
+          "name_equals": "下一页"
+        },
+        {
+          "id": "reader.status",
+          "role": "StaticText"
+        }
+      ],
+      "interactive": [
+        "reader.back",
+        "reader.first",
+        "reader.previous",
+        "reader.next",
+        "reader.font.decrease",
+        "reader.font.increase",
+        "reader.select",
+        "reader.notes"
+      ]
+    },
+    "reader.window_default": {
+      "platforms": [
+        "macos"
+      ],
+      "description": "macOS reader after restoring the window size",
+      "required": [
+        {
+          "id": "reader.page",
+          "role": [
+            "Other",
+            "Image",
+            "StaticText"
+          ]
+        },
+        {
+          "id": "reader.next",
+          "role": "Button",
+          "name_equals": "下一页"
+        }
+      ],
+      "interactive": [
+        "reader.back",
+        "reader.first",
+        "reader.previous",
+        "reader.next",
+        "reader.font.decrease",
+        "reader.font.increase",
+        "reader.select",
+        "reader.notes"
+      ]
+    },
+    "reader.keyboard": {
+      "platforms": [
+        "macos"
+      ],
+      "description": "Reader captured around the Tab traversal run",
+      "required": [
+        {
+          "id": "reader.next",
+          "role": "Button",
+          "name_equals": "下一页"
+        },
+        {
+          "id": "reader.select",
+          "role": "Button",
+          "name_equals": "选文"
+        }
+      ],
+      "interactive": [
+        "reader.back",
+        "reader.first",
+        "reader.previous",
+        "reader.next",
+        "reader.font.decrease",
+        "reader.font.increase",
+        "reader.select",
+        "reader.notes"
+      ]
+    }
+  },
+  "scaling": [
+    {
+      "id": "dynamic-type-scales",
+      "from": "reader.epub",
+      "to": "reader.large_type",
+      "platforms": [
+        "iphone",
+        "ipad"
+      ],
+      "ids": [
+        "reader.location",
+        "reader.progress",
+        "reader.status",
+        "reader.title"
+      ],
+      "min_growth_pt": 0.5,
+      "blocking": true,
+      "severity": "major",
+      "expected": "系统文本样式（.caption/.headline）随内容尺寸类别放大",
+      "fix": "若高度不增长，说明固定 frame/lineLimit 压制了缩放：改为可换行布局或按 @ScaledMetric 决定行高"
+    }
+  ],
+  "content_rules": [
+    {
+      "id": "reader-state-internal-hash",
+      "state": "reader.epub",
+      "element": "reader.state",
+      "field": "label",
+      "forbid_regex": "^#[0-9A-Za-z]{4,}$",
+      "severity": "minor",
+      "blocking": false,
+      "expected": "辅助技术只应读到用户可理解的状态，而不是内部状态哈希",
+      "note": "HostViews.swift:226 把 model.stateHash 直接渲染为 #<hash> 并暴露为 reader.state",
+      "fix": "生产构建隐藏该调试行，或对其加 .accessibilityHidden(true)"
+    },
+    {
+      "id": "font-button-symbol-only",
+      "state": "reader.epub",
+      "element": "reader.font.decrease",
+      "field": "label",
+      "forbid_regex": "^A[-+±]$",
+      "severity": "major",
+      "blocking": false,
+      "expected": "字号按钮有语义名称（增大/减小字号）",
+      "note": "HostViews.swift:242/246 用 A-/A+ 作为唯一按钮文本",
+      "fix": "补 .accessibilityLabel(\"减小字号\")/\"增大字号\""
+    },
+    {
+      "id": "library-title-trace",
+      "state": "library.empty",
+      "element": "library.title",
+      "field": "value",
+      "forbid_substring": "token=",
+      "severity": "minor",
+      "blocking": false,
+      "expected": "AX value 不应暴露内部 UI 测试追踪串",
+      "note": "HostViews.swift:73 把 model.uiTestTrace 作为 library.title 的 accessibilityValue",
+      "fix": "仅在 -EXRUITestFixtures 下挂载该调试值，或加 .accessibilityHidden(true)"
+    },
+    {
+      "id": "library-book-index-identifier",
+      "state": "library.populated",
+      "element": "library.book.0",
+      "field": "id",
+      "warn_regex": "^library\\.book\\.\\d+$",
+      "severity": "minor",
+      "blocking": false,
+      "expected": "书架行标识应稳定（按记录 id），而不是按枚举下标",
+      "note": "HostViews.swift:111 用 ForEach 的 index 生成 library.book.<index>",
+      "fix": "改用 library.book.<bookID>；同时保留 AX 名称中的书名以便人工脚本稳定"
+    }
+  ],
+  "keyboard": {
+    "platforms": [
+      "macos"
+    ],
+    "blocking": true,
+    "expected": "macOS 全键盘访问（AppleKeyboardUIMode=3）下，阅读器控件可由 Tab 依次聚焦",
+    "fix": "若 0 个控件可聚焦，为控件补 .focusable()/keyboardShortcut，或在 HStack 外包 .focusSection()",
+    "partial_severity": "major"
+  },
+  "feature_gaps": [
+    {
+      "id": "hint-absent",
+      "criterion": "控件提示（accessibilityHint）",
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "verify": {
+        "file": "examples/apple/HostViews.swift",
+        "absent": "accessibilityHint"
+      },
+      "expected": "会改变状态的控件应说明结果（例如翻页、导入、删除标注）",
+      "actual": "HostViews.swift 全文没有任何 accessibilityHint",
+      "severity": "minor",
+      "blocking": false,
+      "fix": "为翻页/导入/删除标注补 .accessibilityHint；若判定不需要，在 README 中记录理由"
+    },
+    {
+      "id": "header-traits-absent",
+      "criterion": "标题语义（isHeader）",
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "verify": {
+        "file": "examples/apple/HostViews.swift",
+        "absent": "isHeader"
+      },
+      "expected": "书架/阅读/标注面板标题应带标题语义，便于按标题导航",
+      "actual": "无 .accessibilityAddTraits(.isHeader)",
+      "severity": "minor",
+      "blocking": false,
+      "fix": "给 library.title、selection.title、notes.title、notes.edit.title 加 .isHeader"
+    },
+    {
+      "id": "sort-priority-absent",
+      "criterion": "阅读顺序优先级（accessibilitySortPriority）",
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "verify": {
+        "file": "examples/apple/HostViews.swift",
+        "absent": "accessibilitySortPriority"
+      },
+      "expected": "跨容器布局（阅读面与控制栏）应显式声明排序优先级",
+      "actual": "依赖默认容器顺序",
+      "severity": "minor",
+      "blocking": false,
+      "fix": "为 reader.page 与底部控制栏加 accessibilitySortPriority"
+    },
+    {
+      "id": "status-not-announced",
+      "criterion": "状态变化播报",
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "verify": {
+        "file": "examples/apple/HostViews.swift",
+        "absent": "UIAccessibility.post",
+        "absent_in_lines": [
+          150,
+          270
+        ]
+      },
+      "expected": "导入完成/失败、页面更新、标注保存等状态变化应主动播报",
+      "actual": "状态只更新 Text，不触发播报；VoiceOver 用户需要手动逐项巡检",
+      "severity": "major",
+      "blocking": false,
+      "fix": "在 statusText 变化处 post .announcement，或给状态 Text 加 .accessibilityAddTraits(.updatesFrequently)"
+    },
+    {
+      "id": "reader-not-scrollable",
+      "criterion": "大字体/小窗口下的滚动回退",
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "verify": {
+        "file": "examples/apple/HostViews.swift",
+        "contains": [
+          "VStack(spacing: 6)"
+        ],
+        "absent_in_lines": [
+          183,
+          267
+        ],
+        "absent": "ScrollView"
+      },
+      "expected": "固定高度的控制栈在大字体或最小窗口下应可滚动，避免控件被裁掉",
+      "actual": "ReaderScreen 主体是固定 VStack（183-267），只有书架和标注面板用 ScrollView（91/420）",
+      "severity": "major",
+      "blocking": false,
+      "fix": "把阅读器控制区包进 ScrollView，或在大字体下折叠为单一工具行"
+    },
+    {
+      "id": "copy-annotate-enabled-without-selection",
+      "criterion": "控件可用状态与实际动作一致",
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "verify": {
+        "file": "examples/apple/HostViews.swift",
+        "contains": [
+          "Button(\"复制\") { copySelection() }"
+        ]
+      },
+      "expected": "未选文时“复制/标注所选”应不可用，或明确标注为会被拒绝",
+      "actual": "只按 .disabled(!isCurrent) 控制；未选文时按钮可用，按下后仅在 selection.hint 提示“请先选择文字”",
+      "severity": "minor",
+      "blocking": false,
+      "fix": "把 .disabled 条件扩展为 !isCurrent || quote.isEmpty"
+    },
+    {
+      "id": "named-icons-not-hidden",
+      "criterion": "装饰性图像对辅助技术隐藏",
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "verify": {
+        "file": "examples/apple/HostViews.swift",
+        "absent": "accessibilityHidden"
+      },
+      "expected": "chevron 等装饰图像应隐藏，避免多余节点",
+      "actual": "Image(systemName: \"chevron.right\") 没有 accessibilityHidden(true)，按钮内节点合并依赖默认行为",
+      "severity": "minor",
+      "blocking": false,
+      "fix": "给装饰图像加 .accessibilityHidden(true)"
+    },
+    {
+      "id": "page-label-60-chars",
+      "criterion": "阅读面文本替身完整性",
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "verify": {
+        "file": "examples/apple/HostModel.swift",
+        "contains": [
+          "String(flat.prefix(60))"
+        ]
+      },
+      "expected": "阅读面的可访问名称/值应覆盖整页文本，或提供逐段导航",
+      "actual": "HostModel.swift:428-431 的 pageLabel 只取页文本前 60 字，其余内容对辅助技术不可见",
+      "severity": "major",
+      "blocking": false,
+      "fix": "页文本放进 accessibilityValue（或自定义 rotor 逐段暴露），名称保留页号；不要用名称承载整页正文"
+    }
+  ],
+  "uncovered": [
+    {
+      "id": "ax-traits",
+      "criterion": "AX traits（isHeader / updatesFrequently / 混合角色）",
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "reason": "XCUITest 公共 API 只暴露 elementType/label/value/enabled，不暴露 traits；需 Accessibility Inspector 或人工核对",
+      "owner": "apple"
+    },
+    {
+      "id": "voiceover-speech",
+      "criterion": "VoiceOver 实际朗读、转子与提示音",
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "reason": "自动 XCUI 不等于 VoiceOver 通过；本包不声称 VoiceOver 验证",
+      "owner": "apple"
+    },
+    {
+      "id": "appearance-adaptations",
+      "criterion": "Reduce Motion / Bold Text / Increase Contrast / Differentiate Without Color",
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "reason": "这些辅助功能设置在 cloud runner 上无脚本化开关，本包不声称适配通过",
+      "owner": "apple"
+    },
+    {
+      "id": "ios-hardware-keyboard",
+      "criterion": "iOS/iPadOS 全键盘访问路径",
+      "platforms": [
+        "iphone",
+        "ipad"
+      ],
+      "reason": "模拟器未启用 Full Keyboard Access；键盘路径保持未覆盖",
+      "owner": "apple"
+    },
+    {
+      "id": "macos-dynamic-type",
+      "criterion": "macOS 大字体",
+      "platforms": [
+        "macos"
+      ],
+      "reason": "macOS 无系统 Dynamic Type 字号缩放；只有窗口最小尺寸压力证据，大字体本身未覆盖",
+      "owner": "apple"
+    },
+    {
+      "id": "physical-device",
+      "criterion": "真机（含 VoiceOver 手势与真实性能）",
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "reason": "本包只在 Actions 模拟器/宿主执行，未接真机",
+      "owner": "apple"
+    },
+    {
+      "id": "system-picker",
+      "criterion": "系统文件选择器面板",
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "reason": "系统面板不属于宿主 AX 树，且不接真实用户文件；只审计 library.import.picker 按钮本身",
+      "owner": "apple"
+    },
+    {
+      "id": "ime-input",
+      "criterion": "软键盘/输入法路径",
+      "platforms": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "reason": "未驱动软键盘输入法；只审计 notes.editor 的可达性与名称",
+      "owner": "apple"
+    }
+  ]
+}
