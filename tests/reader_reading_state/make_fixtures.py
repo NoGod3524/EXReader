@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MIT
 """Generate reading-state originals in Actions only; never run locally.
 
-Standard library only (no Pillow), so Windows and Linux runners produce the
-same bytes. The manifest records each original's size and SHA-256.
+Standard library only (no Pillow); stored ZIP entries and level-0 zlib keep
+Windows and Linux originals byte-identical. The manifest records each original's size and SHA-256.
 """
 import hashlib
 import json
@@ -28,9 +28,12 @@ def txt(edited=False):
             '结尾段落含多字节文字与表情🎉终').encode('utf-8')
 
 
-def entry(archive, name, data, stored=False):
+def entry(archive, name, data):
+    # Stored entries keep the originals byte-identical across runner zlib builds.
     info = zipfile.ZipInfo(name, date_time=STAMP)
-    info.compress_type = zipfile.ZIP_STORED if stored else zipfile.ZIP_DEFLATED
+    info.compress_type = zipfile.ZIP_STORED
+    info.create_system = 3
+    info.external_attr = 0o644 << 16
     archive.writestr(info, data)
 
 
@@ -41,7 +44,7 @@ def xhtml(body):
 
 def epub(path):
     with zipfile.ZipFile(path, 'w') as book:
-        entry(book, 'mimetype', b'application/epub+zip', stored=True)
+        entry(book, 'mimetype', b'application/epub+zip')
         entry(book, 'META-INF/container.xml',
               b'<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">'
               b'<rootfiles><rootfile full-path="book.opf" media-type="application/oebps-package+xml"/></rootfiles></container>')
@@ -95,7 +98,7 @@ def png(width, height, shade):
     def chunk(kind, body):
         return struct.pack('>I', len(body)) + kind + body + struct.pack('>I', zlib.crc32(kind + body) & 0xffffffff)
     return (b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, 2, 0, 0, 0)) +
-            chunk(b'IDAT', zlib.compress(rows, 9)) + chunk(b'IEND', b''))
+            chunk(b'IDAT', zlib.compress(rows, 0)) + chunk(b'IEND', b''))
 
 
 def cbz(path):
