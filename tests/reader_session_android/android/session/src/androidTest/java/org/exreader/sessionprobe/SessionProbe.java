@@ -37,6 +37,15 @@ public final class SessionProbe extends Instrumentation {
                         for(File file:folder.listFiles())if(file.getName().contains(".exr-export-"))ok=false;
                         checks.put(new JSONObject().put("name",name).put("ok",ok).put("status",code).put("expected",wanted).put("bytes",exported).put("message",out[2]));
                     }
+                    File old=new File(folder,"reading.txt"),second=new File(folder,"second.txt"),bad=new File(folder,"malformed.epub");
+                    Files.write(old.toPath(),"abcdefghijk original reading anchor and continued text.\n".getBytes(StandardCharsets.UTF_8));
+                    long[] reading=NativeSdk.importFile(sdk,old.getAbsolutePath(),1);if(reading[0]!=0)throw new AssertionError("Old reading book import failed");
+                    Files.write(second.toPath(),"Another imported book.\n".getBytes(StandardCharsets.UTF_8));Files.write(bad.toPath(),"Malformed EPUB".getBytes(StandardCharsets.UTF_8));
+                    for(String name:new String[]{"success","failure","cancel"}){
+                        long[] reopened=NativeSdk.reopenAfterImport(sdk,reading[1],name.equals("failure")?bad.getAbsolutePath():second.getAbsolutePath(),name.equals("failure")?4:1,name.equals("cancel"));
+                        boolean importOk=name.equals("success")?reopened[0]==0&&reopened[1]>0:name.equals("cancel")?reopened[0]==9&&reopened[1]==0:reopened[0]!=0&&reopened[1]==0;
+                        checks.put(new JSONObject().put("name","release-reopen-"+name).put("ok",importOk&&reopened[2]==1&&reopened[3]==8&&reopened[4]==1&&reopened[5]==1).put("import_status",reopened[0]).put("anchor_state",reopened[2]).put("anchor_start",reopened[3]).put("continued",reopened[4]==1).put("old_source_readable",reopened[5]==1));
+                    }
                 }finally{NativeSdk.close(sdk);}
                 boolean ok=true;for(int i=0;i<checks.length();i++)ok&=checks.getJSONObject(i).getBoolean("ok");
                 return new JSONObject().put("source_sha",args.getString("source_sha")).put("run_id",args.getString("run_id")).put("attempt",args.getString("attempt")).put("api",Build.VERSION.SDK_INT).put("abi",Build.SUPPORTED_ABIS[0]).put("sdk_owner",Thread.currentThread().getName()).put("sha256",expected).put("checks",checks).put("ok",ok);
