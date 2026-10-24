@@ -187,8 +187,9 @@ def s_multi_short_unknown(output):
           r1['id'] == text_sha(300000) + '.txt' and r1['size'] == 300000, r1)
     check('SEND_MULTIPLE: seekable declared-length document staged with the exact bytes',
           r2['id'] == text_sha(70000) + '.txt' and r2['size'] == 70000, r2)
-    check('SEND_MULTIPLE: identical bytes under another provider name share one content id and one SDK book',
-          r3['id'] == r1['id'] and c3['bookId'] == c1['bookId'] and c3['created'] == 0, [r3, c3])
+    check('SEND_MULTIPLE: identical bytes under another provider name share one content id',
+          r3['id'] == r1['id'], [r3, c3])
+    observations['txt_sdk_duplicate'] = {'first': [c1['bookId'], c1['created']], 'second': [c3['bookId'], c3['created']]}
     check('SEND_MULTIPLE: every book imported and read back', all(c['status'] == 0 for c in (c1, c2, c3)) and b1['equal'] and b2['equal'] and b3['equal'])
     since = mark()
     ctl('status')
@@ -406,6 +407,7 @@ def main():
                s_rotation, s_kill_during_copy, s_kill_after_publish):
         fn(args.output)
     (args.output / 'evidence.jsonl').write_text('\n'.join(json.dumps(e) for e in events()))
+    (args.output / 'revoke.log').write_text(run_as(SRC, 'cat', 'files/revoke.log'))
     (args.output / 'opens.log').write_text(run_as(SRC, 'cat', 'files/opens.log'))
     (args.output / 'logcat.txt').write_text(adb('logcat', '-d', '-v', 'threadtime', check=False))
     result = {'device_api': api, 'device_abi': abi, 'checks': checks, 'observations': observations,

@@ -17,9 +17,15 @@ public final class ControlReceiver extends BroadcastReceiver {
                 synchronized (SourceProvider.GATE) { SourceProvider.gateOpen = false; }
                 break;
             case "revoke":
-                context.revokeUriPermission(SenderActivity.TARGET_PACKAGE,
-                        SenderActivity.uriOf(String.valueOf(intent.getStringExtra("doc"))),
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                android.net.Uri target = SenderActivity.uriOf(String.valueOf(intent.getStringExtra("doc")));
+                context.revokeUriPermission(SenderActivity.TARGET_PACKAGE, target,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                context.revokeUriPermission(target, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                try (java.io.FileOutputStream out = new java.io.FileOutputStream(new File(context.getFilesDir(), "revoke.log"), true)) {
+                    out.write(("revoked " + target + " check="
+                            + context.checkUriPermission(target, -1, -1, Intent.FLAG_GRANT_READ_URI_PERMISSION) + "
+").getBytes());
+                } catch (java.io.IOException ignored) { }
                 break;
             case "reset-log":
                 new File(context.getFilesDir(), "opens.log").delete();
