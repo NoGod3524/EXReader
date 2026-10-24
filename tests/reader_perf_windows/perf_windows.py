@@ -720,9 +720,13 @@ def op_import(host, fixture, expected_title, timeout=300):
     if not samples or samples[-1]['busy']:
         raise MeasurementFault('import did not complete within %d s' % timeout)
 
-    found = op_search(host, expected_title,
-                      lambda app: app.lb_count() == 1 and expected_title in app.lb_item(0),
-                      lambda rows: len(rows) == 1 and expected_title in rows[0])
+    try:
+        found = op_search(host, expected_title,
+                          lambda app: app.lb_count() == 1 and expected_title in app.lb_item(0),
+                          lambda rows: len(rows) == 1 and expected_title in rows[0])
+    except TimeoutError as error:
+        raise MeasurementFault('imported book is not visible after the import (%s); rows=%r'
+                               % (error, host.rows()[:4]))
     busy_samples = [sample for sample in samples
                     if sample['busy'] and sample['roundtrip_ms'] is not None]
     return {'import_ms': import_ms, 'input_samples': samples,
@@ -935,9 +939,11 @@ def make_fixture(directory, index, size=16 << 20):
     path = directory / ('Perf Import %04d.txt' % index)
     if path.exists():
         return path
-    header = 'Perf import fixture %04d. Read the shelf while an import runs.\n' % index
-    block = 'line %04d keeps the import worker busy while input continues.\n'
-    unit = (header + ''.join(block % number for number in range(512))).encode()
+    # The first text line is the derived title for a TXT import, so it matches
+    # the file name and the expected shelf title exactly.
+    header = 'Perf Import %04d\n' % index
+    block = 'Perf Import %04d line %04d keeps the import worker busy while input continues.\n'
+    unit = (header + ''.join(block % (index, number) for number in range(512))).encode()
     with path.open('wb') as handle:
         written = 0
         while written < size:
