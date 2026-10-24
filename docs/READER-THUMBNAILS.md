@@ -85,8 +85,8 @@ in the same process, another process, and a handle whose holder died (the OS rel
 crash never blocks the directory). There is no multi-process LRU and no shared budget: one handle owns the directory and
 every OK open is the only writer.
 
-**Bounded working set, hard directory bound.** The directory is walked once; entries are made room for and inserted one by
-one, so the retained map never exceeds `max_entries` and the directory is never collected into an in-memory list
+**Bounded working set, hard directory bound.** The directory is walked once, inserting and evicting one entry at a time;
+the directory is never collected into an in-memory list.
 The candidate takes part in the eviction choice, so the entry with the oldest tick is the one that goes and
 `peak_retained_entries` is the true map peak: at most `max_entries` retained entries plus the one candidate being
 admitted. Every own entry file the pass meets is either adopted or deleted — damaged, larger than `max_total_bytes`, or
@@ -136,7 +136,14 @@ checks those allocations. Each point runs in its own child process; any terminat
 includes the allocation stack captured before exception unwinding. Actions run `40092109613` located eight such
 Linux failures in the libstdc++ directory-iterator constructor reached from `rth_cache_open`. The implementation
 now enumerates through a native directory handle so allocation of a returned name can unwind into the ABI guard.
-This fix remains pending the complete same-source run; the former allowance of up to twelve terminations is removed.
+Run [40092824048](https://github.com/NoGod3524/EXReader/actions/runs/40092824048), attempt 1, verifies source
+`430c718b7a92cf8055e5c3775bdcb254e918419b`: all three platform consumers, the full Linux ASan/UBSan/LeakSanitizer
+suite and the strict four-ZIP evidence job passed. Linux/macOS run 179 probe checks and Windows 178 (the one named
+thread-count difference); all run 11 independent regression checks and three allocation-fault sweeps. The sweeps
+include allocation zero and reject every nonzero child exit, including a child that printed `NOFAIL` before failing
+at process teardown. Open/store/library injected points were Linux 31/42/40, Windows 17/22/21, macOS 13/25/24, and
+the sanitized Linux build 25/38/36, with zero termination boundaries everywhere. The former allowance of up to
+twelve terminations is removed. No old-source result is combined with this run.
 
 See `docs/validation/reader-thumbnails.json` for the run-bound results; nothing here grants product performance, host
 UI, six-platform or release status.
