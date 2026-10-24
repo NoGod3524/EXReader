@@ -17,6 +17,9 @@ final class BookStore implements AutoCloseable {
     private final NativeLibrary library;
     private final CatalogStore catalog;
     private boolean metadataRepairPending;
+    private final OrganizationStore organization;
+    OrganizationStore organization() { return organization; }
+    long productOwner() { return catalog.nativeOwner(); }
     NativeLibrary nativeLibrary() { return library; }
     boolean bounded(long bookId) { return library.bounded(bookId); }
 
@@ -32,6 +35,7 @@ final class BookStore implements AutoCloseable {
         }
         catalog = openedCatalog;
         library = openedLibrary;
+        organization = new OrganizationStore(this,context.getSharedPreferences("organization",Context.MODE_PRIVATE));
         try { repairMissingMappings(); }
         catch (RuntimeException | Error error) {
             try { library.close(); } catch (RuntimeException cleanup) { error.addSuppressed(cleanup); }
