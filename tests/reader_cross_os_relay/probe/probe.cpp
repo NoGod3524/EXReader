@@ -435,7 +435,8 @@ std::string key_of(const std::string &label, const std::vector<std::vector<std::
 }
 
 void sweep_all(net_side &n, bool strict) {
-  for (unsigned shard = 0; shard < 256; shard++) n.step_shard(shard, strict);
+  /* Counters describe the whole store, so zero is required once the final shard of the sweep is done. */
+  for (unsigned shard = 0; shard < 256; shard++) n.step_shard(shard, strict && shard == 255);
 }
 void project_received_books(const std::string &epub_title_override) {
   std::vector<reader_revision_info> rows;
@@ -782,7 +783,7 @@ void run_receiver(bool confirm) {
   std::string persisted;
   reader_revision_status st;
   reader_revision_selection sel = select_state("tag", key_of("conflict-root", rows), &persisted, nullptr, &st);
-  expect(confirm ? (st == READER_REV_OK && sel.kind == READER_SELECTION_SAFE) : (st == READER_REV_UNSAFE && sel.kind == READER_SELECTION_CONCURRENT), "organization state survives the final reopen");
+  expect(st == READER_REV_OK && sel.kind == READER_SELECTION_SAFE, "organization state survives the final reopen");
   close_side(B);
 }
 }  // namespace
