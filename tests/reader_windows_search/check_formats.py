@@ -85,7 +85,9 @@ def main():
         set_text(U.GetDlgItem(d, QUERY), value);send(U.GetDlgItem(d, FIND), 0xF5)
         app.wait(lambda: U.IsWindowEnabled(U.GetDlgItem(d, FIND)), timeout=90)
         app.wait_idle()
-        return send(U.GetDlgItem(d, HITS), 0x18B)
+        count = send(U.GetDlgItem(d, HITS), 0x18B)
+        report['last_search'] = {'query': value, 'count': count, 'message': text(U.GetDlgItem(d, MESSAGE))}
+        return count
 
     def jump(d, row=0):
         send(U.GetDlgItem(d, HITS), 0x186, row);send(U.GetDlgItem(d, OPEN), 0xF5)
@@ -140,8 +142,10 @@ def main():
         record('pdf-ambiguous-match-refuses-jump', '未跳转' in message and state() == before)
         close_dialog(d)
         phase = 'cbz';app.open('No text provider');app.wait_idle();d = find_dialog();before = state()
-        record('cbz-missing-text-provider-is-error', query(d, 'text') == 0 and
-               '失败' in text(U.GetDlgItem(d, MESSAGE)) and '没有匹配' not in text(U.GetDlgItem(d, MESSAGE)) and state() == before)
+        count = query(d, 'text');after = state()
+        report['cbz_changed_state_tables'] = [key for key in before if before[key] != after[key]]
+        record('cbz-missing-text-provider-is-error', count == 0 and
+               '失败' in text(U.GetDlgItem(d, MESSAGE)) and '没有匹配' not in text(U.GetDlgItem(d, MESSAGE)) and after == before)
         close_dialog(d)
         phase = 'reflow';app.open('book');app.wait_idle();d = find_dialog()
         assert query(d, 'AMBIGUOUS TARGET') == 2
