@@ -150,8 +150,8 @@ def verify_reports(kind, platform, read, source, run_id, attempt):
         product = load('desktop-gtk-product/product-result.json', 5)
         load('desktop-gtk-fixed/fixed-ui.json', 24, flag='passed', key='name')
         shelf = load('desktop-gtk-shelf/shelf-result.json', 14)
-        metadata = load('desktop-gtk-metadata/metadata-ui.json', 14)
-        require(metadata.get('count') == 14 and metadata.get('groups_ui_accepted') is False and
+        metadata = load('desktop-gtk-metadata/metadata-ui.json', 15)
+        require(metadata.get('count') == 15 and metadata.get('groups_ui_accepted') is False and
                 metadata.get('performance_accepted') is False and len(metadata.get('screenshots', [])) == 4 and
                 re.fullmatch('[0-9a-f]{64}', metadata.get('program_sha256', '')) is not None,
                 'actual GTK metadata UI contract differs')

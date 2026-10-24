@@ -4,6 +4,19 @@ static void metadata_dialog_close(void) {
   if(metadata_dialog) gtk_widget_destroy(metadata_dialog);
   metadata_dialog=metadata_title=metadata_author=metadata_favorite=metadata_message=NULL;
 }
+static void metadata_dialog_destroyed(GtkWidget *widget,gpointer unused) {
+  (void)unused;
+  if(widget==metadata_dialog) metadata_dialog=metadata_title=metadata_author=metadata_favorite=metadata_message=NULL;
+}
+static gboolean metadata_dialog_delete(GtkWidget *widget,GdkEvent *event,gpointer unused) {
+  (void)widget;(void)event;(void)unused;
+  if(!metadata_running) metadata_dialog_close();
+  return TRUE;
+}
+static void metadata_dialog_lifecycle(void) {
+  g_signal_connect(metadata_dialog,"delete-event",G_CALLBACK(metadata_dialog_delete),NULL);
+  g_signal_connect(metadata_dialog,"destroy",G_CALLBACK(metadata_dialog_destroyed),NULL);
+}
 static void metadata_submit(reader_action action) {
   if(closing || metadata_running || busy || saving || save_failed) return;
   host_job *job=g_new0(host_job,1);job->generation=g_atomic_int_get(&generation);
@@ -33,6 +46,7 @@ static void metadata_recovery(const char *message) {
   metadata_dialog=gtk_dialog_new_with_buttons("Recover book edit",GTK_WINDOW(window),
     GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT,"Close",GTK_RESPONSE_CANCEL,
     "_Discard uncommitted",2,"_Retry",GTK_RESPONSE_ACCEPT,NULL);
+  metadata_dialog_lifecycle();
   gtk_dialog_set_default_response(GTK_DIALOG(metadata_dialog),GTK_RESPONSE_ACCEPT);
   metadata_message=gtk_label_new(message);gtk_label_set_line_wrap(GTK_LABEL(metadata_message),TRUE);
   gtk_container_set_border_width(GTK_CONTAINER(gtk_dialog_get_content_area(GTK_DIALOG(metadata_dialog))),16);
@@ -44,6 +58,7 @@ static void metadata_present(const reader_result *result) {
   metadata_dialog_close();metadata_token=result->metadata_token;
   metadata_dialog=gtk_dialog_new_with_buttons("Book details",GTK_WINDOW(window),
     GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT,"Cancel",GTK_RESPONSE_CANCEL,"Save",GTK_RESPONSE_ACCEPT,NULL);
+  metadata_dialog_lifecycle();
   gtk_dialog_set_default_response(GTK_DIALOG(metadata_dialog),GTK_RESPONSE_ACCEPT);
   GtkWidget *grid=gtk_grid_new();gtk_grid_set_row_spacing(GTK_GRID(grid),8);
   gtk_grid_set_column_spacing(GTK_GRID(grid),12);gtk_container_set_border_width(GTK_CONTAINER(grid),16);
