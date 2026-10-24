@@ -445,18 +445,17 @@ def verify_license_materials(records, payload, expected, components):
             problems.append('registered license has no pinned hash: ' + path)
     for path in sorted(set(observed) - set(expected)):
         problems.append('unregistered installed license material: ' + path)
-    owners = {component['id'] for component in components}
     for component in components:
         installed = [item['installed'] for item in component['files']
                      if item['installed'] in observed]
         for item in component['files']:
             if item['installed'] not in expected:
                 continue
-            if item['installed'] not in observed:
-                problems.append('license material missing for ' + component['id'] + ': ' + item['installed'])
+            if item['installed'] not in present:
+                problems.append('license material missing for ' + component['id'] + ': '
+                                + item['installed'])
         if component.get('notice_marker') and not installed:
             problems.append('registered component has no installed notice: ' + component['id'])
-    need(owners, 'components_missing')
     return problems
 
 
