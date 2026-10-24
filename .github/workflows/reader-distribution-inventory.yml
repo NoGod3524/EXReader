@@ -1,0 +1,228 @@
+name: Product dependency, license and offline distribution inventory
+on:
+  push:
+    branches: [codex/reader-distribution-inventory]
+    paths:
+      - 'tests/reader_distribution_inventory/**'
+      - '.github/workflows/reader-distribution-inventory.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+env:
+  START_SHA: f43baf9182d75907c0cb5d6f77048f27bca8c950
+  FROZEN_SDK: 9854061be331fe603a1822d9b2b36ee357154927
+jobs:
+  protocol:
+    name: rejection protocol
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK, product schema and package-only changes
+        run: bash tests/reader_distribution_inventory/check_scope.sh
+      - name: Reject unproven inventories, SBOM drift and artifact identity
+        run: |
+          set -o pipefail
+          mkdir -p build/protocol
+          python3 tests/reader_distribution_inventory/check_inventory.py 2>&1 | tee build/protocol/self-check.log
+      - name: Preserve the protocol record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-distribution-protocol-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/protocol/
+          if-no-files-found: error
+
+  install:
+    name: inventory (${{ matrix.os }}, ${{ matrix.profile }})
+    needs: [protocol]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-22.04, key: linux, profile: reading-core, py: python3}
+          - {os: ubuntu-22.04, key: linux, profile: reading-library, py: python3}
+          - {os: windows-2022, key: windows, profile: reading-core, py: python}
+          - {os: windows-2022, key: windows, profile: reading-library, py: python}
+          - {os: macos-15, key: macos, profile: reading-core, py: python}
+          - {os: macos-15, key: macos, profile: reading-library, py: python}
+    env:
+      PROFILE: ${{ matrix.profile }}
+      KEY: ${{ matrix.key }}
+      PY: ${{ matrix.py }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK, product schema and package-only changes
+        run: bash tests/reader_distribution_inventory/check_scope.sh
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the pinned Ninja generator
+        run: $PY -m pip install 'ninja==1.11.1.1'
+      - name: Enter the Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "$env:ProgramFiles(x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path $bat)) { throw "vcvars64.bat not found under $vs" }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          "CC=cl" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Record the workspace layout
+        run: |
+          mkdir -p build/$PROFILE
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            echo "WS=$(cygpath -m "$PWD")" >> "$GITHUB_ENV"
+            echo "EXE=.exe" >> "$GITHUB_ENV"
+            echo "HOST=Windows" >> "$GITHUB_ENV"
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            echo "WS=$PWD" >> "$GITHUB_ENV"
+            echo "EXE=" >> "$GITHUB_ENV"
+            echo "HOST=Darwin" >> "$GITHUB_ENV"
+          else
+            echo "WS=$PWD" >> "$GITHUB_ENV"
+            echo "EXE=" >> "$GITHUB_ENV"
+            echo "HOST=Linux" >> "$GITHUB_ENV"
+          fi
+          { echo "## cmake"; cmake --version; echo "## ninja"; ninja --version; echo "## python"; $PY --version
+            echo "## runner"; echo "ImageOS=$ImageOS ImageVersion=$ImageVersion RUNNER_ARCH=$RUNNER_ARCH"; } > "build/$PROFILE/toolchain.log" 2>&1
+          cat "build/$PROFILE/toolchain.log"
+      - name: Configure the explicit reading preset
+        run: |
+          set -o pipefail
+          cmake --preset "$PROFILE" 2>&1 | tee "build/$PROFILE/configure.log"
+      - name: Build and install the selected components
+        run: |
+          set -o pipefail
+          cmake --build --preset "$PROFILE" 2>&1 | tee "build/$PROFILE/build.log"
+          cmake --install "build/$PROFILE" 2>&1 | tee "build/$PROFILE/install.log"
+      - name: Compile the installed public-API consumer for dynamic dependency evidence
+        run: |
+          set -o pipefail
+          library=OFF
+          if [ "$PROFILE" = "reading-library" ]; then library=ON; fi
+          cmake -S tests/reading_core -B build/reading-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/$PROFILE/stage" -DEXR_EXPECT_LIBRARY=$library -DEXR_TEST_FONT="$WS/tests/fixtures/fonts/primary.ttf" -DEXR_TEST_COLOR_FONT="$WS/tests/fixtures/fonts/colrv1.ttf" -DEXR_TEST_FIXTURES="$WS/tests/fixtures" 2>&1 | tee "build/$PROFILE/consumer-configure.log"
+          cmake --build build/reading-consumer --target reading-document --parallel 4 2>&1 | tee "build/$PROFILE/consumer-build.log"
+      - name: Compile and run the installed identity probe
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_distribution_inventory/probe -B build/probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/$PROFILE/stage" 2>&1 | tee "build/$PROFILE/probe-configure.log"
+          cmake --build build/probe 2>&1 | tee "build/$PROFILE/probe-build.log"
+          "build/probe/probe$EXE" > "build/$PROFILE/probe.json"
+          cat "build/$PROFILE/probe.json"
+      - name: Require complete release licence materials on this installed stage
+        run: |
+          set -o pipefail
+          set +e
+          $PY tools/check_reading_licenses.py "$PROFILE" "build/$PROFILE" "build/$PROFILE/stage" "build/$PROFILE/licenses.json" --require-release-ready > "build/$PROFILE/licenses.log" 2>&1
+          echo $? > "build/$PROFILE/licenses.exit"
+          set -e
+          cat "build/$PROFILE/licenses.log"
+      - name: Generate the file inventory, both SBOM documents and the dependency record
+        run: |
+          set -o pipefail
+          set +e
+          $PY tests/reader_distribution_inventory/inventory.py --profile "$PROFILE" --platform "$KEY" --runner-os "$HOST" --architecture "$RUNNER_ARCH" --build "build/$PROFILE" --stage "build/$PROFILE/stage" --licenses "build/$PROFILE/licenses.json" --consumer "build/reading-consumer/reading-document$EXE" --probe "build/probe/probe$EXE" --probe-build build/probe --output "build/$PROFILE/inventory" > "build/$PROFILE/inventory.log" 2>&1
+          echo $? > "build/$PROFILE/inventory.exit"
+          set -e
+          cat "build/$PROFILE/inventory.log"
+      - name: Gate on materials and inventory evidence
+        run: |
+          licenses_code=$(cat "build/$PROFILE/licenses.exit")
+          inventory_code=$(cat "build/$PROFILE/inventory.exit")
+          $PY -c "import json;doc=json.load(open('build/$PROFILE/inventory/inventory.json'));print(json.dumps({'checks':len(doc['checks']),'files':doc['totals']['files'],'problems':doc['problems'],'release_blockers':doc['release_blockers'],'release_ready':doc['release_ready']},indent=2))"
+          if [ "$licenses_code" != "0" ] || [ "$inventory_code" != "0" ]; then
+            echo "materials or inventory evidence failed (licenses=$licenses_code inventory=$inventory_code)"
+            exit 1
+          fi
+      - name: Assemble the uploaded evidence layout
+        if: always()
+        run: |
+          art="build/$PROFILE/artifact"
+          rm -rf "$art"
+          mkdir -p "$art/logs" "$art/probe"
+          if [ -d "build/$PROFILE/stage" ]; then cp -r "build/$PROFILE/stage" "$art/stage"; fi
+          if [ -d "build/$PROFILE/inventory" ]; then cp -r "build/$PROFILE/inventory/." "$art/"; fi
+          for name in licenses.json probe.json; do
+            if [ -f "build/$PROFILE/$name" ]; then cp "build/$PROFILE/$name" "$art/$name"; fi
+          done
+          for file in build/$PROFILE/*.log build/$PROFILE/*.exit; do
+            if [ -f "$file" ]; then cp "$file" "$art/logs/"; fi
+          done
+          if [ -f "build/probe/probe$EXE" ]; then cp "build/probe/probe$EXE" "$art/probe/"; fi
+          find "$art" -type f | sort | head -50
+      - name: Preserve the installed SDK, recorded tool output and SBOM
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-distribution-inventory-${{ matrix.key }}-${{ matrix.profile }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/${{ matrix.profile }}/artifact/
+          if-no-files-found: error
+          include-hidden-files: true
+
+  report:
+    name: same-source report
+    needs: [install]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the SBOM schema validator
+        run: python -m pip install 'jsonschema>=4.21'
+      - name: Fetch the published SPDX 2.3 and CycloneDX 1.5 schemas
+        run: |
+          set -o pipefail
+          mkdir -p build/schemas
+          fetch() {
+            output=$1
+            shift
+            for url in "$@"; do
+              if curl --fail --show-error --silent --location --retry 3 --max-time 60 --output "$output" "$url"; then
+                echo "$output <- $url"
+                return 0
+              fi
+            done
+            echo "cannot fetch $output" >&2
+            return 1
+          }
+          fetch build/schemas/spdx-2.3.schema.json \
+            https://raw.githubusercontent.com/spdx/spdx-spec/v2.3/schemas/spdx-schema.json \
+            https://raw.githubusercontent.com/spdx/spdx-spec/support/2.3/schemas/spdx-schema.json
+          for name in bom-1.5.schema.json spdx.schema.json jsf-0.82.schema.json; do
+            fetch "build/schemas/$name" \
+              "https://raw.githubusercontent.com/CycloneDX/specification/1.5.0/schema/$name" \
+              "https://raw.githubusercontent.com/CycloneDX/specification/master/schema/$name"
+          done
+          ls -l build/schemas
+      - name: Re-derive every claim from the uploaded bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -o pipefail
+          python3 tests/reader_distribution_inventory/aggregate.py --downloads build/downloads --output build/aggregate --spdx-schema build/schemas/spdx-2.3.schema.json --cdx-schema build/schemas/bom-1.5.schema.json 2>&1 | tee build/aggregate.log
+      - name: Preserve the same-source report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-distribution-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/aggregate/
+            build/aggregate.log
+            build/schemas/
+          if-no-files-found: warn
