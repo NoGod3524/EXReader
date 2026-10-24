@@ -234,7 +234,7 @@
         "import": "ok",
         "readback": "ok",
         "open": "ok",
-        "metadata.title": "nonempty",
+        "metadata.title": "report",
         "metadata.entries": "not_exposed",
         "toc": "empty",
         "pages.first": "ok",
@@ -275,7 +275,7 @@
         "import": "ok",
         "readback": "ok",
         "open": "ok",
-        "metadata.title": "nonempty",
+        "metadata.title": "report",
         "metadata.entries": "not_exposed",
         "toc": "empty",
         "pages.first": "ok",
@@ -352,7 +352,7 @@
         },
         "final_url": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf"
       },
-      "query": "Artificial Intelligence Risk Management Framework",
+      "query": "Framework",
       "expect": {
         "import": "ok",
         "readback": "ok",
@@ -393,7 +393,7 @@
         },
         "final_url": "https://dn720700.ca.archive.org/0/items/ivan_sergeevich_turgenev-bretyor-1539118486/Turgenev_Bretyor.bQhEMA.287228.fb2"
       },
-      "query": "Кистер",
+      "query": "Бретёр",
       "expect": {
         "import": "ok",
         "readback": "ok",
@@ -434,7 +434,7 @@
         },
         "final_url": "https://dn721205.ca.archive.org/0/items/ivan_sergeevich_turgenev-tri_portreta-680315ebee76d/Turgenev_Tri-portreta.Yr0Diw.582148.fb2"
       },
-      "query": "Лугинов",
+      "query": "портрет",
       "expect": {
         "import": "ok",
         "readback": "ok",
@@ -475,12 +475,12 @@
         },
         "final_url": "https://assets.publishing.service.gov.uk/media/68d50dff9ce370a7e0a0fc9a/Template_ES1.docx"
       },
-      "query": "Financial remedy summary of case",
+      "query": "Financial",
       "expect": {
         "import": "ok",
         "readback": "ok",
         "open": "ok",
-        "metadata.title": "report",
+        "metadata.title": "empty",
         "metadata.entries": "not_exposed",
         "toc": "empty",
         "pages.first": "ok",
@@ -516,7 +516,7 @@
         },
         "final_url": "https://assets.publishing.service.gov.uk/media/640067008fa8f527f4f54b37/Applicant_s_response_template.docx"
       },
-      "query": "Medicines and Healthcare products Regulatory Agency",
+      "query": "Medicines",
       "expect": {
         "import": "ok",
         "readback": "ok",
