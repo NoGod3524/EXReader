@@ -514,9 +514,21 @@ def environment(package, exe, font, seed_exe, seed_source_sha):
 # Operations
 # ---------------------------------------------------------------------------
 
+REQUIRED_CONTROLS = ('books', 'page_label', 'status', 'import', 'open', 'path', 'search',
+                    'next', 'delete')
+
+
+def controls_present(host):
+    return all(U.GetDlgItem(host.window, IDS[name]) for name in REQUIRED_CONTROLS)
+
+
 def op_window(host, deadline=240):
+    # The main window becomes enumerable while its own WM_CREATE is still
+    # creating the child controls, so the control surface is awaited separately.
     host.poll(lambda: (host.window,) if host.find_window() else None, deadline, interval=0.003)
-    return {'window_ms': round(now_ms() - host.t0, 3)}
+    seen = now_ms() - host.t0
+    host.poll(lambda: (True,) if controls_present(host) else None, deadline, interval=0.003)
+    return {'window_ms': round(seen, 3), 'controls_ms': round(now_ms() - host.t0, 3)}
 
 
 def op_first_screen(host, deadline=240):
@@ -525,7 +537,7 @@ def op_first_screen(host, deadline=240):
     def rows_ready():
         try:
             return (True,) if host.lb_count(80) >= 50 else None
-        except TimeoutError:
+        except (TimeoutError, MeasurementFault):
             return None
 
     host.poll(rows_ready, deadline, interval=0.004)
@@ -593,7 +605,7 @@ def op_resume(host, expected_key, timeout=180):
             'verified': (key == expected_key) if expected_key else None}
 
 
-def op_page_turn(host, previous_key, timeout=40):
+def op_page_turn(host, previous_key, timeout=25):
     host.wait_enabled('next', 30)
     started = now_ms()
     host.click('next')
@@ -611,7 +623,7 @@ def op_page_turn(host, previous_key, timeout=40):
             'label': label, 'status': 'ok'}
 
 
-def op_shelf_next_page(host, timeout=180):
+def op_shelf_next_page(host, timeout=90):
     started = now_ms()
     bursts = 0
     while now_ms() - started < timeout * 1000:
@@ -627,7 +639,7 @@ def op_shelf_next_page(host, timeout=180):
     raise MeasurementFault('shelf did not deliver its next 50-row page')
 
 
-def op_search(host, query, probe, verify, timeout=120):
+def op_search(host, query, probe, verify, timeout=90):
     """Time WM_SETTEXT on the real search box to visible rows.
 
     probe() reads at most two list rows so polling does not flood the UI thread;
@@ -1109,6 +1121,7 @@ def build_summary(context, records, aggregates, environment_doc, prep):
         'checks_total': len(checks),
         'problems': [{'launch_id': record['launch_id'], 'faults': record['faults']}
                      for record in records if not record.get('ok')],
+        'aborted': context.get('aborted'),
         'performance_accepted': False,
         'performance_reason': 'This package measures the baseline host and proposes budgets only. '
                               'No numeric product budget is enforced here and no observed latency is '
@@ -1190,6 +1203,8 @@ def main():
     parser.add_argument('--work', type=Path)
     parser.add_argument('--cohorts', default='cold_shelf,warm_shelf,reading,import')
     parser.add_argument('--launches-per-cohort', type=int, default=12)
+    parser.add_argument('--max-failures', type=int, default=4,
+                        help='stop observing after this many incomplete launches')
     parser.add_argument('--self-check', action='store_true')
     args = parser.parse_args()
     if args.self_check:
@@ -1227,6 +1242,7 @@ def main():
                'reading_profile': work / 'profiles' / 'reading-profile',
                'fixture': lambda index: make_fixture(work / 'fixtures', index)}
     records, prep, aggregates, summary = [], {}, {}, {}
+    failures = 0
     try:
         prep = prepare(context)
         context['corpus'] = prep['corpus']
@@ -1235,7 +1251,15 @@ def main():
                 record = run_launch(cohort, index, context)
                 record.pop('_sampler', None)
                 records.append(record)
+                if not record.get('ok'):
+                    failures += 1
                 print(json.dumps(flatten(record), ensure_ascii=False), flush=True)
+                if failures >= args.max_failures:
+                    context['aborted'] = 'stopped after %d incomplete launches' % failures
+                    print('aborting the matrix: ' + context['aborted'], file=sys.stderr)
+                    break
+            if context.get('aborted'):
+                break
     finally:
         aggregates = aggregate(records)
         summary = build_summary(context, records, aggregates, environment_doc, prep)
