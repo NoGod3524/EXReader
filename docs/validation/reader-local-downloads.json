@@ -1,0 +1,20 @@
+{
+  "package": "EXReaderLocalDownloads",
+  "version": "0.1.0",
+  "fixed_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk_freeze": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "abi": 1,
+  "status": "unverified",
+  "tested_source": null,
+  "cloud": null,
+  "granted": [],
+  "not_granted": [
+    "Windows installed consumer",
+    "Linux installed consumer",
+    "macOS installed consumer",
+    "real process kill/reopen at every durable stage",
+    "host integration (G01) and UI wiring",
+    "real device or screen-reader evidence"
+  ]
+}
