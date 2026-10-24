@@ -11,6 +11,8 @@
 #include <time.h>
 
 #ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #include <direct.h>
 #define make_dir(p) _mkdir(p)
 #else
@@ -182,7 +184,7 @@ static exr_format parse_format(const char *name) {
 
 static int fixed_format(exr_format f) { return f == EXR_PDF || f == EXR_CBZ; }
 
-int main(int argc, char **argv) {
+static int corpus_main(int argc, char **argv) {
   const char *file = NULL, *format_name = NULL, *font_path = NULL, *outdir = NULL, *query = NULL;
   exr_format format;
   exr_font *font = NULL;
@@ -609,3 +611,25 @@ int main(int argc, char **argv) {
   exr_font_free(font);
   return 0;
 }
+
+#ifdef _WIN32
+/* MSVC's narrow argv uses the Windows ANSI code page, independently of /utf-8.
+   Preserve the actual UTF-16 command line as the SDK's required UTF-8 bytes. */
+int wmain(int argc, wchar_t **wide) {
+  char **args = calloc((size_t)argc + 1, sizeof(*args));
+  int result = 2;
+  if (!args) return result;
+  for (int i = 0; i < argc; i++) {
+    int size = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wide[i], -1, NULL, 0, NULL, NULL);
+    if (!size || !(args[i] = malloc((size_t)size)) ||
+        !WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wide[i], -1, args[i], size, NULL, NULL)) goto cleanup;
+  }
+  result = corpus_main(argc, args);
+cleanup:
+  for (int i = 0; i < argc; i++) free(args[i]);
+  free(args);
+  return result;
+}
+#else
+int main(int argc, char **argv) { return corpus_main(argc, argv); }
+#endif

@@ -222,6 +222,12 @@ def compare_expectations(expect, result):
     return mismatches
 
 
+def query_matches(entry, result):
+    if (result or {}).get('ops', {}).get('import') != 'ok':
+        return True
+    return (result or {}).get('detail', {}).get('find', {}).get('query') == entry.get('query', '')
+
+
 def run_one(manifest_entry, root, consumer, font, timeout):
     ident = manifest_entry["id"]
     outdir = root / "results" / ident
@@ -260,6 +266,8 @@ def run_one(manifest_entry, root, consumer, font, timeout):
         "result": result, "parse_error": parse_error,
     }
     mismatches = compare_expectations(manifest_entry["expect"], result)
+    if not query_matches(manifest_entry, result):
+        mismatches.append({'op': 'consumer.query_utf8', 'expected': 'exact manifest UTF-8 bytes', 'actual': 'query changed before SDK search'})
     readback = outdir / "readback.bin"
     readback_ok = readback.exists() and readback.stat().st_size == manifest_entry["source"]["bytes"] and \
         sha256_file(readback) == manifest_entry["source"]["sha256"]

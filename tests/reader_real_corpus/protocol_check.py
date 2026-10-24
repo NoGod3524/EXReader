@@ -72,6 +72,9 @@ def main():
     check("report accepts nonempty", not rac.compare_expectations(report_expect, {"ops": {"toc": "nonempty"}}))
     check("report accepts empty", not rac.compare_expectations(report_expect, {"ops": {"toc": "empty"}}))
     check("report rejects failure", rac.compare_expectations(report_expect, {"ops": {"toc": "failed"}}))
+    query_entry = {'query': '\u0411\u0440\u0435\u0442\u0451\u0440'}
+    check('exact UTF-8 query survives process invocation', rac.query_matches(query_entry, {'ops': {'import': 'ok'}, 'detail': {'find': {'query': query_entry['query']}}}))
+    check('damaged process query is rejected', not rac.query_matches(query_entry, {'ops': {'import': 'ok'}, 'detail': {'find': {'query': '??????'}}}))
 
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
