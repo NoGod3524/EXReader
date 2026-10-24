@@ -3,6 +3,7 @@
    so every command reopens the SDK library and the product catalog. */
 #define _CRT_SECURE_NO_WARNINGS
 #include <reader_local_downloads.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -148,10 +149,15 @@ static int cancelled(void *context) {
   if (swap_at && cancel_calls == swap_at && swap_from && swap_to) {
     /* Replace the caller pathname while the module is between reading and
        importing. The bytes that were hashed must still be the bytes stored. */
-    remove(swap_to);
-    printf("SWAP %s\n", rename(swap_from, swap_to) == 0 ? "ok" : "failed");
-    fflush(stdout);
-    swap_at = 0;
+    {
+      int cleared = remove(swap_to);
+      int moved = cleared == 0 ? rename(swap_from, swap_to) : -1;
+      /* "blocked" is the host refusing to replace a file this process holds
+         open (Windows share modes); the check reports that as a named skip. */
+      printf("SWAP %s errno=%d\n", moved == 0 ? "ok" : "blocked", errno);
+      fflush(stdout);
+      swap_at = 0;
+    }
   }
   return state->cancel;
 }

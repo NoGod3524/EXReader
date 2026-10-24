@@ -70,7 +70,7 @@ def run_swap(ctx, name):
     stored = None
     if r["status"] == "ok" and int(r["id"]) > 0:
         stored = env.dump_sha(int(r["id"]))
-    return {"status": r["status"], "outcome": r["outcome"],
+    return {"swapped": "SWAP ok" in out.lines, "status": r["status"], "outcome": r["outcome"],
             "stored_matches_identity": stored == book.sha, "stored_sha": stored or ""}
 
 
@@ -128,11 +128,22 @@ def main():
         "intent_oversized_prefix": ("ok", "corrupt_intent"),
     }
     failures = []
+    skipped = []
     detail = {}
+    if not old_cases["swap"]["swapped"]:
+        skipped.append("swap: this host refuses to replace a file the module holds open, "
+                       "so the path cannot be swapped mid-read here")
     for name, (old_want, new_want) in expectations.items():
         old_case, new_case = old_cases[name], new_cases[name]
         key = "stored_matches_identity" if name == "swap" else "status"
         detail[name] = {"old": old_case, "new": new_case}
+        if name == "swap" and not old_case["swapped"]:
+            # The old build never saw a swapped path on this host; only require
+            # that the current build keeps the verified identity.
+            if new_case[key] != new_want:
+                failures.append("swap: the current build is wrong (%r != %r)" % (
+                    new_case[key], new_want))
+            continue
         if old_case[key] != old_want:
             failures.append("%s: the previous build did not show the defect (%r != %r)" % (
                 name, old_case[key], old_want))
@@ -157,14 +168,18 @@ def main():
         "new_probe_sha256": sha256_file(args.new_probe),
         "previous_implementation": "apps/reader/local-downloads at the previously tested source",
         "cases": detail,
+        "skipped": skipped,
         "failures": failures,
     }
     if not os.path.isdir(args.output):
         os.makedirs(args.output)
     with open(os.path.join(args.output, "regressions.json"), "w", encoding="utf-8", newline="\n") as f:
         json.dump(report, f, indent=1, sort_keys=True)
-    print("regressions ok=%s old=%s new=%s" % (
-        report["ok"], report["old_probe_sha256"][:12], report["new_probe_sha256"][:12]))
+    print("regressions ok=%s old=%s new=%s skipped=%d" % (
+        report["ok"], report["old_probe_sha256"][:12], report["new_probe_sha256"][:12],
+        len(skipped)))
+    for reason in skipped:
+        print("SKIP " + reason)
     for name in sorted(detail):
         print("case %s old=%s new=%s" % (name,
             detail[name]["old"].get("stored_matches_identity", detail[name]["old"].get("status")),
