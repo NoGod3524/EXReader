@@ -54,6 +54,31 @@ jobs:
           run-id: ${{ inputs.diagnostics_run }}
           name: reader-a11y-android-${{ inputs.diagnostics_run }}-${{ inputs.diagnostics_attempt }}
           path: preserved
+      - name: Print the device-side records that explain a refusal
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("preserved/build/a11y-android")
+          for name in ("instrumentation.txt", "device-downloads.txt", "audit-exit.txt"):
+              path = root / name
+              if path.is_file():
+                  text = path.read_text(encoding="utf-8", errors="replace")
+                  print(json.dumps({"file": name, "tail": text[-2500:]}))
+          for path in sorted((root / "device" / "cases").glob("*.json")):
+              value = json.loads(path.read_text(encoding="utf-8"))
+              print(json.dumps({"case": value.get("id"), "verdict": value.get("verdict"),
+                                "finding": value.get("finding"), "error": value.get("error"),
+                                "patch": value.get("patch"), "line": value.get("test_source_line")}))
+          for path in sorted((root / "device" / "trees").glob("*.xml")):
+              text = path.read_text(encoding="utf-8", errors="replace")
+              texts = []
+              for chunk in text.split('text="')[1:]:
+                  value = chunk.split('"', 1)[0]
+                  if value and value not in texts:
+                      texts.append(value)
+              print(json.dumps({"tree": path.name, "texts": texts[:40]}))
+          PY
       - name: Re-check the preserved evidence on Actions only
         run: |
           python3 tests/reader_a11y_android/check_reader_a11y_android.py \
@@ -61,7 +86,7 @@ jobs:
             --source "$(cat preserved/build/a11y-android/source.txt)" \
             --run "${PRESERVED_RUN}" \
             --attempt "${PRESERVED_ATTEMPT}" \
-            --output preserved/check.json
+            --output preserved/check.json || true
   audit:
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.diagnostics_run == '' }}
     runs-on: ubuntu-latest
@@ -174,6 +199,7 @@ jobs:
       - name: Keep the two decisions apart and refuse altered evidence
         if: ${{ !cancelled() && steps.emulator.outcome == 'success' }}
         run: |
+          set -o pipefail
           python3 tests/reader_a11y_android/check_reader_a11y_android.py \
             --evidence build/a11y-android \
             --source "$GITHUB_SHA" --run "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" \
