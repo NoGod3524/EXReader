@@ -340,7 +340,7 @@ def main():
         swept = capture(first, 100)['summary']
         assert swept['phase'] == 4 and swept['phase_text'] == 'sweep-complete', swept
         assert swept['sweep_complete'] == 1 and swept['library_complete'] == 0
-        assert swept['completed_shards'] == 256 and swept['completed_sweeps'] >= 1
+        assert swept['completed_shards'] == 256 and swept['sweeps'] >= 1
         assert swept['shard_count'] == 256 and swept['more_may_exist'] == 0
         assert swept['outbox_included'] == 1 and swept['pending'] == 0
         record('one_completed_256_shard_sweep_is_not_a_complete_library')
@@ -355,7 +355,7 @@ def main():
         right = seed(first.db, revision(707, shard=111, key=conflict_key, payload={'name': 'B'}))
         page = capture(first, 2, 0)
         assert page['summary']['pending'] == 2 and page['summary']['more_may_exist'] == 1, page['summary']
-        assert page['summary']['conflicts_checked'] == 0 and page['summary']['conflict_records'] == 0
+        assert page['summary']['conflicts_checked'] == 0 and page['summary']['conflicts'] == 0
         assert [row['id'] for row in page['rows']] == [local[0], local[1]]
         head = first.command('rows 0 1')
         assert head['status'] == 0 and head['copied'] == 1 and head['rows'][0]['id'] == local[0]
@@ -368,10 +368,10 @@ def main():
 
         marked = capture(first, 100, 1)
         assert marked['summary']['conflicts_checked'] == 1 and marked['summary']['pending'] == 7
-        assert marked['summary']['conflict_records'] == 2, marked['summary']
+        assert marked['summary']['conflicts'] == 2, marked['summary']
         assert {row['id'] for row in marked['rows'] if row['conflict']} == {left, right}
         plain = capture(first, 100, 0)
-        assert plain['summary']['conflict_records'] == 0 and plain['summary']['conflicts_checked'] == 0
+        assert plain['summary']['conflicts'] == 0 and plain['summary']['conflicts_checked'] == 0
         assert not any(row['conflict'] for row in plain['rows'])
         record('conflict_probe_is_opt_in_and_marks_only_listed_records')
 
