@@ -210,7 +210,12 @@ def main():
 
     # ---- mid-batch conflict, deleted dependency, missing and legacy books
     base = totals()
-    conflict = invoke('run', 'action=%d' % FAV_SET, 'start=1200', 'count=100', 'interfere_after=10', 'fork_book=1250', expect=OK)
+    wire = json.dumps({'version': 1, 'id': 'c0' * 16, 'entity_kind': 'book', 'entity_key': key(1250), 'operation': 'put', 'location_kind': 'none',
+                       'parents': [], 'payload': {'format': 'txt', 'source_sha256': '%064x' % 1251, 'source_bytes': 1350, 'title': 'concurrent-1250',
+                                                  'author': 'author', 'favorite': False}}, separators=(',', ':'))
+    wire_path = folder / 'remote-book.json'
+    wire_path.write_bytes(wire.encode('utf-8'))
+    conflict = invoke('run', 'action=%d' % FAV_SET, 'start=1200', 'count=100', 'interfere_after=10', 'fork_book=1250', 'fork_wire=' + str(wire_path), 'fork_sha=' + hashlib.sha256(wire.encode('utf-8')).hexdigest(), expect=OK)
     out = conflict['items']
     assert conflict['summary']['complete'] == 1 and conflict['summary']['conflicts'] == 1 and conflict['summary']['committed'] == 99
     assert out[50]['outcome'] == CONFLICT and out[50]['conflict'] == 1 and not out[50]['revision'] and fav(1250) == 0

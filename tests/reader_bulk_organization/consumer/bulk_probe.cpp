@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <iterator>
 #include <iostream>
 #include <map>
 #include <sstream>
@@ -47,14 +48,12 @@ struct hooks {
   void fork_book(size_t index){
     reader_revisions *store=nullptr;reader_revision_error e{};
     if(reader_revisions_open(db.c_str(),&store,&e)!=READER_REV_OK)std::exit(21);
-    std::string key=book_key(index),sha=book_sha(index),title="concurrent-"+std::to_string(index);
-    char id[33];if(reader_revision_new_id(id,&e)!=READER_REV_OK)std::exit(28);
-    /* A revision received from another device: no parents, concurrent with the local head. */
-    std::string wire="{\"version\":1,\"id\":\""+std::string(id)+"\",\"entity_kind\":\"book\",\"entity_key\":\""+key
-      +"\",\"operation\":\"put\",\"location_kind\":\"none\",\"parents\":[],\"payload\":{\"format\":\"txt\",\"source_sha256\":\""+sha
-      +"\",\"source_bytes\":"+std::to_string(100+index)+",\"title\":\""+title+"\",\"author\":\"author\",\"favorite\":false}}";
+    (void)index;
+    /* A revision received from another device (wire prepared by the checker): no parents, concurrent with the local head. */
+    std::ifstream in(opt.get("fork_wire"),std::ios::binary);std::string wire((std::istreambuf_iterator<char>(in)),std::istreambuf_iterator<char>());
+    std::string digest=opt.get("fork_sha");
     reader_revision_info info{};int created=0;
-    if(reader_revision_receive(store,wire.data(),wire.size(),nullptr,&info,&created,&e)!=READER_REV_OK||!created){std::fprintf(stderr,"fork refused: %d %s\n",(int)e.code,e.message);std::exit(22);}
+    if(wire.empty()||reader_revision_receive(store,wire.data(),wire.size(),digest.c_str(),&info,&created,&e)!=READER_REV_OK||!created){std::fprintf(stderr,"fork refused: %d %s\n",(int)e.code,e.message);std::exit(22);}
     if(reader_revisions_close(&store,&e)!=READER_REV_OK)std::exit(23);
   }
   static int collect(void *context,const reader_revision_head *head){
