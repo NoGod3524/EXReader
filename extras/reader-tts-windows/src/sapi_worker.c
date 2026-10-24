@@ -97,7 +97,7 @@ static HRESULT open_voice_category(ISpObjectTokenCategory **category) {
   return hr;
 }
 
-static reader_tts_status voice_count(ULONG *count, LONG *native) {
+static reader_tts_status voice_count(ULONG *count, int *native) {
   ISpObjectTokenCategory *category = NULL;
   IEnumSpObjectTokens *tokens = NULL;
   HRESULT hr = open_voice_category(&category);
@@ -110,12 +110,12 @@ static reader_tts_status voice_count(ULONG *count, LONG *native) {
     hr = tokens->lpVtbl->GetCount(tokens, count);
     tokens->lpVtbl->Release(tokens);
   }
-  *native = (LONG)hr;
+  *native = (int)hr;
   if (FAILED(hr) || *count == 0) return READER_TTS_UNAVAILABLE;
   return READER_TTS_OK;
 }
 
-static reader_tts_status enumerate_voices(reader_tts_voice_list *list, LONG *native) {
+static reader_tts_status enumerate_voices(reader_tts_voice_list *list, int *native) {
   ISpObjectTokenCategory *category = NULL;
   IEnumSpObjectTokens *tokens = NULL;
   ULONG count = 0, index = 0;
@@ -134,7 +134,7 @@ static reader_tts_status enumerate_voices(reader_tts_voice_list *list, LONG *nat
   }
   if (FAILED(hr) || !tokens || count == 0) {
     if (tokens) tokens->lpVtbl->Release(tokens);
-    *native = (LONG)hr;
+    *native = (int)hr;
     return READER_TTS_UNAVAILABLE;
   }
   voices = (reader_tts_voice *)exr_tts_alloc(count * sizeof *voices);
@@ -212,7 +212,7 @@ static reader_tts_status enumerate_voices(reader_tts_voice_list *list, LONG *nat
 }
 
 /* Resolves a voice id from the voices category and makes it the voice's voice. */
-static reader_tts_status apply_voice(ISpVoice *voice, const wchar_t *wanted, LONG *native) {
+static reader_tts_status apply_voice(ISpVoice *voice, const wchar_t *wanted, int *native) {
   ISpObjectTokenCategory *category = NULL;
   IEnumSpObjectTokens *tokens = NULL;
   ISpObjectToken *match = NULL;
@@ -244,7 +244,7 @@ static reader_tts_status apply_voice(ISpVoice *voice, const wchar_t *wanted, LON
   hr = voice->lpVtbl->SetVoice(voice, match);
   match->lpVtbl->Release(match);
   if (FAILED(hr)) {
-    *native = (LONG)hr;
+    *native = (int)hr;
     return READER_TTS_IO;
   }
   return READER_TTS_OK;
@@ -338,7 +338,7 @@ static void report_range(reader_tts *handle, exr_tts_utterance *utterance, const
 }
 
 static void pump_events(reader_tts *handle, exr_tts_utterance *utterance) {
-  ISpNotifySource *source = (ISpNotifySource *)utterance->voice;
+  ISpEventSource *source = (ISpEventSource *)utterance->voice;
   SPEVENTEX events[8];
   ULONG fetched = 0, index;
   if (FAILED(source->lpVtbl->GetEventsEx(source, 8, events, &fetched))) return;
@@ -428,7 +428,7 @@ static reader_tts_status start_speak(reader_tts *handle, exr_tts_utterance *utte
     hr = open_wav_sink(voice, wav, &utterance->sink);
     exr_tts_release(wav);
     if (FAILED(hr)) {
-      *native = (LONG)hr;
+      *native = (int)hr;
       return READER_TTS_IO;
     }
   }
@@ -441,7 +441,7 @@ static reader_tts_status start_speak(reader_tts *handle, exr_tts_utterance *utte
   command->unit_map = NULL;
   hr = voice->lpVtbl->Speak(voice, utterance->text, SPF_ASYNC | SPF_PURGEBEFORESPEAK, NULL);
   if (FAILED(hr)) {
-    *native = (LONG)hr;
+    *native = (int)hr;
     close_wav_sink(voice, &utterance->sink);
     exr_tts_release(utterance->text);
     exr_tts_release(utterance->unit_map);
@@ -555,7 +555,7 @@ DWORD WINAPI exr_tts_worker_main(LPVOID parameter) {
     hr = CoCreateInstance(&CLSID_SpVoice, NULL, CLSCTX_ALL, &IID_ISpVoice, (void **)&voice);
     if (SUCCEEDED(hr)) {
       ULONG count = 0;
-      LONG native = 0;
+      int native = 0;
       if (voice_count(&count, &native) != READER_TTS_OK) {
         voice->lpVtbl->Release(voice);
         voice = NULL;
@@ -565,8 +565,9 @@ DWORD WINAPI exr_tts_worker_main(LPVOID parameter) {
       ULONGLONG interest = SPFEI(SPEI_START_INPUT_STREAM) | SPFEI(SPEI_END_INPUT_STREAM)
                          | SPFEI(SPEI_WORD_BOUNDARY);
       ISpNotifySource *source = (ISpNotifySource *)voice;
+      ISpEventSource *events = (ISpEventSource *)voice;
       if (FAILED(source->lpVtbl->SetNotifyWin32Event(source))
-          || FAILED(source->lpVtbl->SetInterest(source, interest, interest))) {
+          || FAILED(events->lpVtbl->SetInterest(events, interest, interest))) {
         voice->lpVtbl->Release(voice);
         voice = NULL;
       } else {

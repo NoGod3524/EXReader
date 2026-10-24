@@ -357,7 +357,7 @@ reader_tts_status reader_tts_voices(reader_tts *handle, reader_tts_voice_list *l
                                     reader_tts_error *error) {
   reader_tts_status status;
   reader_tts_state state;
-  reader_tts_command command;
+  exr_tts_command command;
   if (error) { error->code = READER_TTS_OK; error->native_code = 0; }
   if (!handle || !list) return fail(handle, error, READER_TTS_ARGUMENT, 0);
   list->voices = NULL;

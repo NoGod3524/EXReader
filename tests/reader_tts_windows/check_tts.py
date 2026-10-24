@@ -54,7 +54,7 @@ def wav_container(path):
     if len(data) < 44 or data[0:4] != b"RIFF" or data[8:12] != b"WAVE":
         raise ValueError("not a RIFF/WAVE file")
     riff_size = struct.unpack("<I", data[4:8])[0]
-    if riff_size + 8 > len(data) or riff_size + 8 < len(data) - 1:
+    if riff_size + 8 > len(data) or len(data) - (riff_size + 8) > 1:
         raise ValueError("RIFF size does not match the file")
     offset = 12
     fmt = None

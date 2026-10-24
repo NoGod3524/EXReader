@@ -148,7 +148,8 @@ def upload_binding(log, artifact):
 
 def wav_container(data):
     need(type(data) is bytes and len(data) >= 44 and data[0:4] == b"RIFF" and data[8:12] == b"WAVE", "wav_header")
-    need(struct.unpack("<I", data[4:8])[0] + 8 == len(data), "wav_riff_size")
+    riff_size = struct.unpack("<I", data[4:8])[0]
+    need(riff_size + 8 <= len(data) and len(data) - (riff_size + 8) <= 1, "wav_riff_size")
     offset, fmt, samples = 12, None, None
     while offset + 8 <= len(data):
         chunk_id = data[offset:offset + 4]
@@ -236,7 +237,7 @@ def verify_report(files, run):
         need(row["file"] not in by_file, "wav_duplicate")
         by_file[row["file"]] = row
     for label, line in wav_lines:
-        name = PurePosixPath(line["path"]).name
+        name = PurePosixPath(line["path"].replace("\\", "/")).name
         need(name in by_file, "wav_missing")
         path = "wav/" + safe_path(name)
         need(path in files, "wav_archive_missing")
