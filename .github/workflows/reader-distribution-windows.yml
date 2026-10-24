@@ -94,29 +94,27 @@ jobs:
           cmake --version | head -1 | tee -a build/dist/toolchain.log
           ninja --version | tee -a build/dist/toolchain.log
           python --version | tee -a build/dist/toolchain.log
-      - name: Probe the external path-mapping capability of this compiler
+      - name: Select the external compile parameters that remove build roots
         run: |
           WS=$(cygpath -m "$PWD")
-          SURF="$WS/build/path-surface"
           echo "WS=$WS" >> "$GITHUB_ENV"
-          mkdir -p build/path-surface
+          mkdir -p build/path-surface build/dist
           cp tests/reader_distribution_windows/probe/path_surface.c build/path-surface/path_surface.c
-          FLAGS="/utf-8"
-          LOG=build/dist/pathmap-capability.log
-          if cl /nologo /c "/Fo$SURF/capability.obj" "/pathmap:$WS=exreader-src" "$SURF/path_surface.c" > "$LOG" 2>&1; then
-            {
-              echo 'PATHMAP_SUPPORTED=1'
-              printf 'COMPILE_FLAGS=%s /pathmap:%s=exreader-src\n' "$FLAGS" "$WS"
-            } >> "$GITHUB_ENV"
-            echo "path mapping is supported by this cl.exe"
-          else
-            {
-              echo 'PATHMAP_SUPPORTED=0'
-              printf 'COMPILE_FLAGS=%s\n' "$FLAGS"
-            } >> "$GITHUB_ENV"
-            echo "path mapping is unavailable; the leak inventory below is the blocking record"
-            cat "$LOG"
-          fi
+          python tools/reader_distribution_windows/probe_compile_flags.py --workspace "$WS" \
+            --source build/path-surface/path_surface.c --scratch build/dist/flag-probe \
+            --output build/dist/compile-flags.json || echo "no candidate removed the build root"
+          python - <<'PY'
+          import json, os
+          with open('build/dist/compile-flags.json', encoding='utf-8') as stream:
+              report = json.load(stream)
+          flags = ' '.join(report.get('chosen') or [])
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as stream:
+              stream.write('COMPILE_FLAGS=%s\n' % flags)
+              stream.write('PATHMAP_SUPPORTED=%d\n' % (1 if report.get('supported') else 0))
+          print('COMPILE_FLAGS=' + flags)
+          for item in report.get('candidates', []):
+              print('CANDIDATE', item.get('returncode'), item.get('hits'), item.get('flags'))
+          PY
       - name: Build and install the frozen reading-core profile
         run: |
           cmake --preset reading-core -DCMAKE_C_FLAGS="$COMPILE_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILE_FLAGS" 2>&1 | tee build/dist/configure.log
@@ -218,24 +216,8 @@ jobs:
         run: |
           SURF=$(cygpath -m "$PWD/build/path-surface")
           echo "SURF_M=$SURF" >> "$GITHUB_ENV"
-          mkdir -p build/path-surface/raw build/path-surface/bare build/path-surface/nested/a build/path-surface/nested/b build/path-surface/drective
-          cp tests/reader_distribution_windows/probe/path_surface.c build/path-surface/path_surface.c
-          cl /nologo /c /Z7 "/Fo$SURF/raw/path_surface.obj" "$SURF/path_surface.c" 2>&1 | tee build/path-surface/cl-raw.log
-          link /nologo "/OUT:$SURF/raw/path_surface.exe" "$SURF/raw/path_surface.obj" 2>&1 | tee -a build/path-surface/cl-raw.log
-          lib /nologo "/OUT:$SURF/raw/path_surface.lib" "$SURF/raw/path_surface.obj" 2>&1 | tee -a build/path-surface/cl-raw.log
-          ( cd build/path-surface && cl /nologo /c /Z7 "/Fo$SURF/bare/path_surface.obj" path_surface.c ) 2>&1 | tee build/path-surface/cl-bare.log
-          link /nologo "/OUT:$SURF/bare/path_surface.exe" "$SURF/bare/path_surface.obj" 2>&1 | tee -a build/path-surface/cl-bare.log
-          lib /nologo "/OUT:$SURF/bare/path_surface.lib" "$SURF/bare/path_surface.obj" 2>&1 | tee -a build/path-surface/cl-bare.log
-          cp build/path-surface/path_surface.c build/path-surface/nested/a/first.c
-          cp build/path-surface/path_surface.c build/path-surface/nested/b/second.c
-          cl /nologo /c /Z7 "/Fo$SURF/nested/a/first.obj" "$SURF/nested/a/first.c" > build/path-surface/cl-nested.log 2>&1
-          cl /nologo /c /Z7 "/Fo$SURF/nested/b/second.obj" "$SURF/nested/b/second.c" >> build/path-surface/cl-nested.log 2>&1
-          lib /nologo "/OUT:$SURF/nested/nested.lib" "$SURF/nested/a/first.obj" "$SURF/nested/b/second.obj" 2>&1 | tee -a build/path-surface/cl-nested.log
-          printf 'int reader_distribution_drective_anchor(void) { return 7; }\n#pragma comment(lib, "%s")\n' "$SURF/vendor-control.lib" > build/path-surface/drective/drective_surface.c
-          cl /nologo /c "/Fo$SURF/drective/drective_surface.obj" "$SURF/drective/drective_surface.c" 2>&1 | tee build/path-surface/cl-drective.log
-          lib /nologo "/OUT:$SURF/drective/drective.lib" "$SURF/drective/drective_surface.obj" 2>&1 | tee -a build/path-surface/cl-drective.log
-          ./build/path-surface/raw/path_surface.exe "$SURF/raw-run.json"
-          ./build/path-surface/bare/path_surface.exe "$SURF/bare-run.json"
+          python tools/reader_distribution_windows/build_path_controls.py --root build/path-surface \
+            --source tests/reader_distribution_windows/probe/path_surface.c
           python tools/reader_distribution_windows/check_surfaces.py --root "$SURF" \
             --raw-obj build/path-surface/raw/path_surface.obj \
             --bare-obj build/path-surface/bare/path_surface.obj \
