@@ -1,61 +1,61 @@
 {
   "accepted": true,
-  "status": "accepted Linux/Windows/macOS installed-consumer interfaces after one complete same-source cloud run",
+  "status": "accepted Linux/Windows/macOS installed-consumer interfaces, with the executed consumer binaries bound to each platform artifact",
   "package": "EXReaderOpdsBrowser 0.1.0",
   "common_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "branch": "codex/reader-opds-browser",
-  "source_sha": "7c2b274e021b95b65438ad37abca6d5bc15a7adc",
-  "run_id": 40125592894,
+  "source_sha": "dcf77c2776d7cdce180f303d2a85152cf538a8d6",
+  "run_id": 40126660557,
   "attempt": 1,
   "workflow": ".github/workflows/reader-opds-browser.yml",
   "artifacts": [
     {
-      "id": 12573760577,
-      "name": "reader-opds-browser-linux-40125592894-1",
-      "size_in_bytes": 136502,
-      "digest": "sha256:94858ee7dc694e086eafb7d9aec694eafe9c9d42522dcaaa0b2929b97e440d7e",
-      "expires_at": "2027-01-22T19:30:23Z"
+      "id": 12573492675,
+      "name": "reader-opds-browser-linux-40126660557-1",
+      "size_in_bytes": 4275700,
+      "digest": "sha256:ae999f0990a4cdd0a1627df46736c5a580bb94e59988061ff2b63f3696db7d65",
+      "expires_at": "2027-01-22T19:44:27Z"
     },
     {
-      "id": 12573330973,
-      "name": "reader-opds-browser-windows-40125592894-1",
-      "size_in_bytes": 202341,
-      "digest": "sha256:41d2d74d702f46b12c28bafaa2aa7a3bb4bdd8e8d38210dae0bc0659bd482527",
-      "expires_at": "2027-01-22T19:30:23Z"
+      "id": 12573277935,
+      "name": "reader-opds-browser-windows-40126660557-1",
+      "size_in_bytes": 3386286,
+      "digest": "sha256:3fb40aa1d4f95117f1af87a2c78828791001d817e77cd2ea37fd2f66cb13210d",
+      "expires_at": "2027-01-22T19:44:27Z"
     },
     {
-      "id": 12573256350,
-      "name": "reader-opds-browser-macos-40125592894-1",
-      "size_in_bytes": 134159,
-      "digest": "sha256:cf02a781409cdc80a4ad22083db411b139b746432b4955306a061ca7dccb991f",
-      "expires_at": "2027-01-22T19:30:23Z"
+      "id": 12573547771,
+      "name": "reader-opds-browser-macos-40126660557-1",
+      "size_in_bytes": 3665408,
+      "digest": "sha256:50c97a59d8194bea9995399c880d9ff9220bccf8b74a65aeea08643bb69f41d4",
+      "expires_at": "2027-01-22T19:44:27Z"
     },
     {
-      "id": 12572856911,
-      "name": "reader-opds-browser-evidence-40125592894-1",
-      "size_in_bytes": 1258,
-      "digest": "sha256:c3ae0a58db1870d80dbbb88c56e317b36ab5ed57579a0aaf5faf801401b718f9",
-      "expires_at": "2027-01-22T19:30:23Z"
+      "id": 12573537844,
+      "name": "reader-opds-browser-evidence-40126660557-1",
+      "size_in_bytes": 1623,
+      "digest": "sha256:2cf6c368cf8ed9634cf71b17fd2e5d9192621a87c8a267c45c4330fdd3398ad3",
+      "expires_at": "2027-01-22T19:44:27Z"
     }
   ],
   "jobs": [
     {
-      "id": 120966209126,
+      "id": 120969458912,
       "name": "opds consumers (ubuntu-22.04)",
       "conclusion": "success"
     },
     {
-      "id": 120966208920,
+      "id": 120969458897,
       "name": "opds consumers (windows-2022)",
       "conclusion": "success"
     },
     {
-      "id": 120966209165,
+      "id": 120969458713,
       "name": "opds consumers (macos-15)",
       "conclusion": "success"
     },
     {
-      "id": 120967169373,
+      "id": 120970046951,
       "name": "strict opds evidence",
       "conclusion": "success"
     }
@@ -303,6 +303,48 @@
       "ok": true
     }
   ],
+  "consumers": {
+    "linux": [
+      [
+        "opds-consumer",
+        147920,
+        "632c959389471ffb1eaf4df341ca215b228ca0e21bebe9ac127caca02403d281"
+      ],
+      [
+        "opds-import-consumer",
+        8582504,
+        "c61ab8b59bbcba654404d8b36af7634ec6b3a06c5a34740287acd2f462bc44e7"
+      ]
+    ],
+    "windows": [
+      [
+        "opds-consumer.exe",
+        292352,
+        "411b903244bb6a3e7f7c53bb10ccfa5ff8f807b3cf777f66728a5dbcb8c7c499"
+      ],
+      [
+        "opds-import-consumer.exe",
+        6133760,
+        "cbee3c7d60748223096954a60ab0d6ff0198162fccc05c1c83b58828409f0d95"
+      ]
+    ],
+    "macos": [
+      [
+        "opds-consumer",
+        158816,
+        "caefeaac03394d8615b0c38d3483497864f7a4f060d1431b5a1d6c5465303974"
+      ],
+      [
+        "opds-import-consumer",
+        7000312,
+        "2032fa5abb763ff5288c9aa105b4f820843be72decd9e5e4196b6bc98c0dcdef"
+      ]
+    ]
+  },
+  "installed_package": {
+    "note": "Each artifact carries the installed prefix the consumers were linked against (opds-browser-stage/lib plus the SDK and sideload stages' CMakeCache) and the two consumer executables whose SHA-256 the strict job recomputed from the ZIP.",
+    "consumer_sources": "tests/reader_opds_browser/consumer/{consumer.c,consumer.cpp,CMakeLists.txt} at the tested source"
+  },
   "origin_isolation": {
     "requests": 36,
     "plain_requests_with_authorization": 0,
@@ -312,15 +354,16 @@
   },
   "staging_files": [
     "import.db",
-    "opds-7f6b79bc40aa673a53dac499.epub",
-    "opds-935553d6bf6a6180e236f2a9.epub"
+    "opds-0af7967242fdc453f914a2a6.epub",
+    "opds-4ef290ae052442fd072dc628.epub"
   ],
   "granted": [
     "network_phase",
     "sdk_owner_import",
     "linux",
     "windows",
-    "macos"
+    "macos",
+    "consumer_binary_binding"
   ],
   "not_granted": [
     "host integration (root owns the product hosts)",
@@ -328,6 +371,12 @@
     "performance, CPU, accessibility and real-device claims",
     "release packaging, signing and tags"
   ],
+  "superseded_accepted_run": {
+    "source_sha": "7c2b274e021b95b65438ad37abca6d5bc15a7adc",
+    "run_id": 40125592894,
+    "attempt": 1,
+    "note": "passed all four jobs before the consumer binaries were bound into the evidence; kept as history, not as the accepted source"
+  },
   "retained_failures": [
     {
       "source_sha": "4e873f2256329ed4cc73ee39166ed7b457ddc5f6",
@@ -556,11 +605,44 @@
           "digest": "sha256:e3f15c51db4fb611d51721c8cb9bc948c705b15cab55ad20191e759d5b6aa917"
         }
       ]
+    },
+    {
+      "source_sha": "935e47a97a99cb2eaf76e6b6a9e839cf1472768d",
+      "run_id": 40126530848,
+      "attempt": 1,
+      "reason": "cancelled on purpose: the evidence job matched build/opds-consumer/CMakeCache.txt as a third consumer entry, fixed before it finished",
+      "jobs": [],
+      "artifacts": [
+        {
+          "id": 12573796088,
+          "name": "reader-opds-browser-windows-40126530848-1",
+          "size_in_bytes": 20194,
+          "digest": "sha256:35dbc802f1b81c5fe1980bd67dc538c9e37e04d63aca0b7620920020f4b99d1a"
+        },
+        {
+          "id": 12573517448,
+          "name": "reader-opds-browser-macos-40126530848-1",
+          "size_in_bytes": 3665418,
+          "digest": "sha256:ada5041063a075799a802bdd4650697dd61f1f72931745fb49f26539fc469d35"
+        },
+        {
+          "id": 12573497471,
+          "name": "reader-opds-browser-linux-40126530848-1",
+          "size_in_bytes": 4275544,
+          "digest": "sha256:11762541149b4c220cde5c8b19a1b857fec6e1d146e9ec10c1878816b0da11fb"
+        },
+        {
+          "id": 12573407703,
+          "name": "reader-opds-browser-evidence-40126530848-1",
+          "size_in_bytes": 390,
+          "digest": "sha256:6686a6cabcc8b272fb78dda7c9e5118165678af220f8c73eda472e18353b0792"
+        }
+      ]
     }
   ],
   "evidence_commit": {
-    "note": "This record and the package document are committed after the run with [skip ci]; no source, test, workflow or fixture byte changes, so the tested source stays 7c2b274e and the final branch HEAD differs only in docs/.",
-    "source_tested": "7c2b274e021b95b65438ad37abca6d5bc15a7adc",
+    "note": "This record and the package document are committed after the run with [skip ci]; no source, test, workflow or fixture byte changes, so the tested source stays dcf77c27 and the branch head differs only in docs/.",
+    "source_tested": "dcf77c2776d7cdce180f303d2a85152cf538a8d6",
     "skip_ci": true
   },
   "sdk_changed": false,
