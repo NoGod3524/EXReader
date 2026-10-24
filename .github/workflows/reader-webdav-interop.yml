@@ -31,7 +31,7 @@ jobs:
           git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
           git diff --exit-code f32bb8aa18ed3de286900f19ce4230fd93435dd0 HEAD -- apps/reader/store/001_catalog.sql
           git diff --exit-code "$client" HEAD -- apps extras tests/webdav tests/reader_sync tests/reader_revisions
-          outside=$(git diff --name-only "$client" HEAD | grep -v -E '^(tests/reader_webdav_interop/|tools/check_reader_webdav_interop\.py$|\.github/workflows/reader-webdav-interop\.yml$|docs/READER-WEBDAV-INTEROP\.md$|docs/validation/reader-webdav-interop\.json$)' || true)
+          outside=$(git diff --name-only "$client" HEAD | grep -v -E '^(tests/reader_webdav_interop/|tools/check_reader_webdav_interop\.py$|\.github/workflows/reader-webdav-interop\.yml$|docs/READER-WEBDAV-INTEROP\.md$|docs/validation/reader-webdav-interop(-fixed)?\.json$)' || true)
           if [ -n "$outside" ]; then echo "::error::changes outside this package: $outside"; exit 1; fi
       - name: Syntax-check package Python in the cloud
         run: python3 -m py_compile tests/reader_webdav_interop/run_interop.py tools/check_reader_webdav_interop.py

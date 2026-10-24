@@ -106,7 +106,7 @@ Depth:1应答为2001个response、24014个XML元素，客户端以“WebDAV XML 
 
 ## 证据与限制
 
-### root 共享修复候选（待真实服务复验）
+### root 共享修复复验通过
 
 原两轮失败及上述 JSON 均保留。root 已在独立共享候选
 `dfc711cc91d6059d6bd8b5062249dafd890fa6d9` 修复 XML 分项预算、一次解码显示名及
@@ -117,7 +117,21 @@ Linux 原77+新增12、Windows 原76+新增12均成功。详见
 本候选 workflow 要求此固定客户端提交为祖先，apps/extras 与它逐项相同；互操作改动
 仍限于本包路径。2000项、2001项拒绝等原断言保留。两个百分号场景改为要求合法名称
 成功列出/下载并核对服务端编码路径，第二重编码仍须在请求前拒绝；显示名断言从
-“编码或解码均可”收紧为一次解码后的精确字节。修后真实服务结果尚待同次云端运行。
+“编码或解码均可”收紧为一次解码后的精确字节。
+
+共同受测源码 `e3dc2386eda2bcf4117b583ea133bdc8359b4a79`：
+
+| 出口 | run / attempt | 实际结果 |
+| --- | --- | --- |
+| 原生客户端 | `40055185562` / 1 | Windows原76+新增12、Linux原77+新增12，2/2成功 |
+| 真实服务及严格汇总 | `40055185584` / 1 | Apache33/33、Nextcloud33/33、summary accepted=true，3/3成功 |
+
+两个服务各304条模块请求的原始access log经云端汇总独立复核，均包含实际
+PUT412、MKCOL405/409、全部条件PUT与Depth1。两个服务 findings 均为空；2000项成功续页，
+2001项继续整体拒绝。五份工件均同源、非空、未过期，API digest与上传日志一致，
+服务工件另由云端严格汇总实际下载/散列校验。
+完整身份见 [修复后验收](validation/reader-webdav-interop-fixed.json)。原失败JSON保持不变。
+仅授予上表声明范围；两个服务的Linux结果不授予移动或真实用户云盘验收。
 
 工件 `reader-webdav-interop-<service>-<run>-<attempt>` 含 `result.json`、原始access/error/容器日志、
 Nextcloud日志、原始PROPFIND XML、全部消费者调用、两端及辅助产品库、原件与缓存、公开证书
