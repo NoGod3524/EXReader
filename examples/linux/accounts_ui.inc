@@ -3,7 +3,7 @@
 static struct {
   GtkWidget *dialog,*form,*root,*user,*password,*remember,*session_only,*identity,*notice,*progress,*resume_focus;
   GtkWidget *load,*apply,*forget,*scan,*cancel,*retry,*disconnect;
-  GtkWidget *spinner;
+  GtkWidget *spinner,*main_content;
   reader_session *session;reader_session_snapshot view;reader_account_control control;
   char *id,*bound_root;
   guint timer,stage_idle;reader_action next_stage;
@@ -46,6 +46,8 @@ static void accounts_destroyed(GtkWidget *widget,gpointer unused) {
   accounts.remember=accounts.session_only=accounts.identity=accounts.notice=accounts.progress=NULL;
   accounts.load=accounts.apply=accounts.forget=accounts.scan=accounts.cancel=accounts.retry=accounts.disconnect=NULL;
   accounts.spinner=NULL;
+  if(accounts.main_content) gtk_widget_set_sensitive(accounts.main_content,TRUE);
+  accounts.main_content=NULL;
   g_clear_object(&accounts.resume_focus);accounts.close_wanted=FALSE;
   if(!closing && shelf_filter_pending) shelf_request(0,FALSE);
   state();
@@ -146,7 +148,10 @@ static void accounts_cancel(GtkWidget *button,gpointer unused) {
 static void accounts_retry(GtkWidget *button,gpointer unused) {
   (void)button;(void)unused;if(!accounts.session || accounts.close_wanted) return;
   reader_session_status code=reader_session_start(accounts.session);
-  if(code==READER_SESSION_OK) accounts_notice("Retrying this connection's scan; earlier accepted work is retained");
+  if(code==READER_SESSION_OK) {
+    g_atomic_int_set(&accounts.control.cancelled,0);
+    accounts_notice("Retrying this connection's scan; earlier accepted work is retained");
+  }
   reader_session_observe(accounts.session,&accounts.view);accounts_update_controls();state();
 }
 static void accounts_disconnect(GtkWidget *button,gpointer unused) {
@@ -178,6 +183,7 @@ static void accounts_apply(host_result *done) {
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(accounts.session_only),TRUE);
   }
   if(result->message[0]) accounts_notice(result->message);
+  else if(result->status!=EXR_OK) accounts_notice("The account operation could not finish; saved library data was retained");
   if(result->account_response==2) {
     if(!accounts.want_start || result->status!=EXR_OK || result->account_credential_status!=EXR_CRED_OK || g_atomic_int_get(&accounts.control.cancelled) ||
        accounts.close_wanted || accounts.exit_wanted) accounts.preparing=accounts.want_start=FALSE;
@@ -243,7 +249,10 @@ static void accounts_open(GtkWidget *button,gpointer unused) {
   (void)button;(void)unused;
   if(closing || busy || saving || save_failed || metadata_running || metadata_dialog || collections_opened() || accounts.dialog || !profile_writable) return;
   accounts.close_wanted=accounts.want_start=accounts.preparing=FALSE;g_atomic_int_set(&accounts.control.cancelled,0);
-  accounts.dialog=gtk_dialog_new_with_buttons("Account and Sync",GTK_WINDOW(window),GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT,"_Back",GTK_RESPONSE_CLOSE,NULL);
+  /* Keep the parent WM close event active. Insensitive content prevents other
+     library actions while this transient dialog owns preparation/session state. */
+  accounts.main_content=gtk_bin_get_child(GTK_BIN(window));gtk_widget_set_sensitive(accounts.main_content,FALSE);
+  accounts.dialog=gtk_dialog_new_with_buttons("Account and Sync",GTK_WINDOW(window),GTK_DIALOG_DESTROY_WITH_PARENT,"_Back",GTK_RESPONSE_CLOSE,NULL);
   gtk_window_set_default_size(GTK_WINDOW(accounts.dialog),760,480);
   GtkWidget *area=gtk_dialog_get_content_area(GTK_DIALOG(accounts.dialog));gtk_container_set_border_width(GTK_CONTAINER(area),16);
   accounts.identity=gtk_label_new("Loading this library's account");gtk_label_set_xalign(GTK_LABEL(accounts.identity),0);

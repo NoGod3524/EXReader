@@ -42,6 +42,7 @@ def main():
     authorization = 'Basic ' + base64.b64encode((user + ':' + password).encode()).decode()
     report = {'accepted': False, 'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
               'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'checks': checks, 'count': 0,
+              'program_sha256': hashlib.sha256((args.payload / 'bin/exreader-linux').read_bytes()).hexdigest(),
               'scope': 'GTK secure credentials and all-local-original staging before record scans',
               'owner_page_limit': 50, 'copy_chunk_limit': 65536, 'original_limit': 128 * 1024 * 1024,
               'remote_sdk_import_accepted': False, 'remote_projection_accepted': False, 'complete_product': False}
@@ -64,6 +65,8 @@ def main():
     for line in daemon.stdout.splitlines():
         if '=' in line:
             key, value = line.split('=', 1);credential_env[key] = value
+    keyring_pid = subprocess.run(['pgrep', '-u', str(os.getuid()), '-n', 'gnome-keyring-d'],
+                                capture_output=True, text=True, check=True, timeout=5).stdout.strip()
 
     def dbus(path, method, *values):
         done = subprocess.run(['gdbus', 'call', '--session', '--dest', 'org.freedesktop.secrets', '--object-path', path,
@@ -207,6 +210,7 @@ def main():
 
     def open_account(menu=False):
         command('xdotool', 'windowactivate', '--sync', host.window);host.key('F2')
+        host.wait(lambda s: not s.get('shelf_loading') and not s.get('shelf_restoring'), timeout=60)
         host.key('alt+m', 'Down', 'Return') if menu else host.key('ctrl+shift+a')
         target = window();ready(lambda s: s['visible'] == '1');return target
 
@@ -398,7 +402,10 @@ def main():
                 device.process.kill();device.process.wait(timeout=15)
             if device.log and not device.log.closed: device.log.close()
         server.shutdown();server.server_close();key.unlink(missing_ok=True)
-        subprocess.run(['gnome-keyring-daemon', '--quit'], env=credential_env, capture_output=True, timeout=20)
+        try:
+            os.kill(int(keyring_pid), signal.SIGTERM)
+        except ProcessLookupError:
+            pass
         os.kill(int(bus_pid), signal.SIGTERM)
         shutil.rmtree(private, ignore_errors=True)
         os.environ.clear();os.environ.update(original_env)
