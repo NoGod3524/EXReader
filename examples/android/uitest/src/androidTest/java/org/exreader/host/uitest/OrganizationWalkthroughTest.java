@@ -117,8 +117,13 @@ public final class OrganizationWalkthroughTest {
     }
     private List<UiObject2> items(){UiObject2 list=device.wait(Until.findObject(By.desc("Organization items")),10000);assertNotNull(list);return list.getChildren();}
     private boolean hasItem(String prefix){for(UiObject2 row:items())if(row.getText()!=null&&row.getText().startsWith(prefix))return true;return false;}
-    private void waitItem(String prefix){assertNotNull(device.wait(Until.findObject(By.textStartsWith(prefix)),15000));}
-    private void item(String prefix){UiObject2 row=device.wait(Until.findObject(By.textStartsWith(prefix)),15000);assertNotNull("Missing item "+prefix,row);row.click();}
+    private UiObject2 waitItem(String prefix){
+        long deadline=SystemClock.uptimeMillis()+15000;while(SystemClock.uptimeMillis()<deadline){
+            UiObject2 scope=device.findObject(By.desc("Organization items"));UiObject2 row=scope==null?null:scope.findObject(By.textStartsWith(prefix));
+            if(row!=null)return row;SystemClock.sleep(100);
+        }fail("Missing organization item "+prefix);return null;
+    }
+    private void item(String prefix){waitItem(prefix).click();}
     private void create(String name,String order){clickText("New");field("Name",name);if(order!=null)field("Order — smaller first",order);clickText("Save");committed();waitItem(name);}
     private void addBook(String title,String order){clickText("Add book");ready();item(title);if(order!=null&&device.wait(Until.hasObject(By.desc("Order — smaller first")),3000))field("Order — smaller first",order);clickText("Add");committed();waitItem(title);}
     private void createRefused(String name){clickText("New");field("Name",name);clickText("Save");assertNotNull(device.wait(Until.findObject(By.textContains("Change refused")),20000));}
