@@ -51,8 +51,18 @@ root发现新书签/高亮在空`annotation_id`时每次随机生成身份。首
 
 root已通过GitHub作业接口独立核对：iOS run`40080841137`的producer和严格汇总均success；Android run`40081333678`实际模拟器作业success；同源codec run`40081333621`的Windows/Linux作业success。正式SwiftUI/Android账号和阅读界面的接线继续由各主线owner实施，不借测试壳授予产品界面。
 
+GTK受测`27ab57fd725816dd098c7031fa634efde83c63e5`、run`40082557686`、job`120838919065`已由root接口核对success；46项账号/收取、原105项界面与4项故障、原后端同轮通过。文档HEAD`adef2c01a177c120831b27897c5f3a460eafe788`仅两份证据文档。其后GTK/ATK修复候选`532d8ebb97a21a113cb1464b6014827c058e21a9`的run`40084158805`仍待真实回归，不转移上一源码通过结论。
+
+## G01：Windows账号，补齐真实capture出口
+
+交付HEAD`cd0c7f9b8e3a9af53e30e53248d47ce959f1d0c8`，受测`20c6a1deec794b4902f0ae3a7140a17b19cef7fd`、run`40082869006`自报25项及原基线成功。
+
+root读到`check_account_ui.py`的`capture()`只把Python手写v1 wire交给`revision-consumer reading-local`；location的`exact/start/end`均为常量，没有公开SDK capture调用。原检查证明修订字节传输，不能授予“真实阅读capture往返”。要求保持旧传输断言，补四格式公开SDK真实捕获、v2编码、正式宿主TLS往返和第二SDK定位（优先复用既有18案例），并证明当前阅读/SDK notes不被自动写入。
+
+同轮还须实际触发未覆盖的并发、待父与墓碑状态，验证不选头、不误投影/复活及已有本机书仍离线可读。已交回原DeepSeek接续owner；这不等于否定旧25项各自的实际范围，也不把缺口移到限制里就算本包收口。
+
 ## 后续审查队列
 
 - G09清单run`40081161966`记录`release_ready=false`：安装文档、部分归档与pkg-config材料仍有构建机绝对路径。后续分发准备须在冻结SDK约束内解决并复验；清单完成不等于发布就绪。
-- G10观测run`40081997953`没有授予性能预算。其保留失败`40079602783`里的16 MiB TXT导入不可见后来改用多章EPUB进行观测；原TXT必须单独复现、区分实际导入/标题查询/等待条件的根因。EPUB观测不能证明原TXT问题已修复，暂待root向原owner交回该回归。
+- G10观测run`40081997953`没有授予性能预算。其保留失败`40079602783`里的16 MiB TXT导入不可见后来改用多章EPUB进行观测；原TXT必须单独复现、区分实际导入/标题查询/等待条件的根因。EPUB观测不能证明原TXT问题已修复，已交回原owner保留原输入并追查。
 - G07记录的Windows操作耗时可超过单个WinHTTP超时设置；“1200 ms是整个操作上界”的含义不能从4.02 s观测推出。集成时应准确区分各阶段设置与端到端总耗时。
