@@ -382,13 +382,15 @@ def main():
         assert refused['session_present'] == '0' and len(requests) == before and first_file.read_bytes() == b'kept unknown original'
         first_file.write_bytes(retained);record('mismatching_existing_private_original_is_never_overwritten_and_prevents_network_start')
         pause_next();scan();assert blocked.wait(40)
-        generation = int(account()['session_generation']);host.key('alt+F4');time.sleep(.5)
-        assert account()['closing'] == '1' and host.process.poll() is None
+        generation = int(account()['session_generation']);window();host.key('alt+F4')
+        ready(lambda s: s['closing'] == '1' or (s['visible'] == '0' and s['session_present'] == '0'
+              and int(s['closed_generation']) == generation), seconds=5)
+        assert host.process.poll() is None
         release.set();window(False);ready(lambda s: s['session_present'] == '0')
         assert int(account()['closed_generation']) == generation
         open_account();assert ready()['has_password'] == '1'
         record('back_waits_asynchronously_for_closed_and_reopening_loads_credentials')
-        host.key('alt+f');assert ready(lambda s: s['has_password'] == '0')['has_user'] == '0'
+        window();host.key('alt+f');assert ready(lambda s: s['has_password'] == '0')['has_user'] == '0'
         close_account();host.close();host.launch();open_account()
         assert ready()['credential_status'] == '1' and ready()['has_password'] == '0' and ready()['id'] == identity
         record('forget_deletes_real_system_record_and_restart_keeps_nonsecret_binding_only')
@@ -419,16 +421,21 @@ def main():
         fill(True);host.key('alt+a');unavailable = ready(lambda s: s['credential_status'] == '2' and s['bound'] == '1')
         assert 'credentials were not saved' in unavailable['notice'] and unavailable['session_present'] == '0'
         record('locked_real_secret_service_reports_unavailable_and_does_not_claim_credentials_saved')
-        host.key('alt+h');scan();done = ready(lambda s: s['session_state'] in ('4', '5'), seconds=120)
+        window();host.key('alt+h');scan();done = ready(lambda s: s['session_state'] in ('4', '5'), seconds=120)
         assert done['session_state'] == '4' and done['remember'] == '0'
         record('explicit_session_only_choice_still_scans_with_secure_storage_unavailable')
         disconnect();close_account();host.close();host.launch();open_account()
         assert ready()['credential_status'] == '2' and ready()['has_password'] == '0' and ready()['has_user'] == '0'
         record('session_only_credentials_are_absent_after_actual_process_restart')
         fill();pause_next();scan();assert blocked.wait(30)
-        command('wmctrl', '-ic', hex(int(host.window)));time.sleep(.6)
-        assert host.process.poll() is None and account()['closing'] == '1'
-        release.set();assert host.process.wait(timeout=35) == 0;host.log.close()
+        generation = int(account()['session_generation']);command('wmctrl', '-ic', hex(int(host.window)))
+        deadline = time.monotonic() + 5
+        while host.process.poll() is None and account()['closing'] != '1' and int(account()['closed_generation']) != generation:
+            assert time.monotonic() < deadline, 'main close request was not observed'
+            time.sleep(.05)
+        release.set();close_code = host.process.wait(timeout=35);host.log.close()
+        assert close_code == 0, {'close_exit': close_code, 'account': account()}
+        assert int(account()['closed_generation']) == generation and account()['session_present'] == '0'
         record('application_close_defers_sdk_owner_shutdown_until_native_session_closed')
         (folder / 'requests.json').write_text(json.dumps(requests, indent=2))
         (folder / 'wire.json').write_text(json.dumps({path: hashlib.sha256(body).hexdigest() for path, body in entries.items()}, indent=2))
