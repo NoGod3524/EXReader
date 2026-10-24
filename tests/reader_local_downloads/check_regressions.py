@@ -136,6 +136,9 @@ def main():
         if old_case[key] != old_want:
             failures.append("%s: the previous build did not show the defect (%r != %r)" % (
                 name, old_case[key], old_want))
+        if name == "swap" and old_case["status"] != "ok":
+            failures.append("swap: the previous build did not even complete the reimport (%r)"
+                            % old_case["status"])
         if new_case[key] != new_want:
             failures.append("%s: the current build is wrong (%r != %r)" % (
                 name, new_case[key], new_want))
