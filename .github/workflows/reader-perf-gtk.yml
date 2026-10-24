@@ -1,0 +1,163 @@
+name: GTK product performance observation
+on:
+  push:
+    branches: [codex/reader-perf-gtk]
+    paths:
+      - 'tests/reader_perf_gtk/**'
+      - '.github/workflows/reader-perf-gtk.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  perf:
+    name: GTK product performance sampling (ubuntu-22.04)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require the fixed start, frozen SDK tree and the package file set
+        run: |
+          mkdir -p build/perf-guards build/perf-logs
+          START=f43baf9182d75907c0cb5d6f77048f27bca8c950
+          SDK=9854061be331fe603a1822d9b2b36ee357154927
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$START" HEAD
+          git diff --exit-code "$SDK" HEAD -- src include cmake CMakeLists.txt tests/fixtures \
+            bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code "$START" HEAD -- apps extras tools examples README.md CMakePresets.json \
+            docs/handoffs licenses CHANGELOG.md .clang-format .gitattributes .gitignore
+          export START SDK
+          python3 - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          start, sdk = os.environ['START'], os.environ['SDK']
+          def git(*args):
+              return subprocess.check_output(['git', *args], text=True)
+          changed = [line for line in git('diff', '--name-only', start + '..HEAD').splitlines() if line]
+          allowed = {'.github/workflows/reader-perf-gtk.yml', 'docs/READER-PERF-GTK.md',
+                     'docs/validation/reader-perf-gtk.json'}
+          outside = [path for path in changed
+                     if not (path.startswith('tests/reader_perf_gtk/') or path in allowed)]
+          owner = [line for line in git('diff', '--name-only', start + '..HEAD', '--', 'apps', 'extras',
+                                        'tools', 'examples', 'docs/handoffs').splitlines() if line]
+          guards = {
+              'head': git('rev-parse', 'HEAD').strip(),
+              'github_sha': os.environ['GITHUB_SHA'],
+              'fixed_start': start,
+              'sdk_freeze': sdk,
+              'fixed_start_ancestor': True,
+              'sdk_frozen_tree_equal': True,
+              'product_sql_equal': True,
+              'owner_trees_equal': not owner,
+              'owner_tree_changes': owner,
+              'package_files_only': not outside,
+              'outside_whitelist': outside,
+              'changed_files': changed,
+          }
+          Path('build/perf-guards/guards.json').write_text(json.dumps(guards, indent=2) + '\n')
+          print(json.dumps(guards, sort_keys=True))
+          if outside:
+              raise SystemExit('changed files outside the package whitelist')
+          if owner:
+              raise SystemExit('owner trees changed')
+          PY
+      - name: Install the fixed native desktop toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libgtk-3-dev libglib2.0-dev pkg-config ninja-build xvfb openbox \
+            xdotool xclip x11-utils dbus dbus-x11 at-spi2-core
+      - name: Build the frozen SDK, the GTK product host, the payload and the corpus probe
+        run: |
+          set -o pipefail
+          cmake --preset reading-library 2>&1 | tee build/perf-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/perf-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/perf-logs/sdk-install.log
+          cmake -S apps/reader/desktop -B build/perf-desktop -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DEXR_SDK="$PWD/build/reading-library/stage" -DEXR_READER_BUILD_GTK=ON \
+            -DEXR_READER_FIXTURES="$PWD/tests/fixtures" 2>&1 | tee build/perf-logs/host-configure.log
+          cmake --build build/perf-desktop --parallel 4 2>&1 | tee build/perf-logs/host-build.log
+          cmake -S tests/reader_perf_gtk -B build/perf-probe -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DEXR_SDK="$PWD/build/reading-library/stage" 2>&1 | tee build/perf-logs/probe-configure.log
+          cmake --build build/perf-probe --parallel 4 2>&1 | tee build/perf-logs/probe-build.log
+          python3 tools/build_linux_host.py --sdk build/reading-library/stage \
+            --binary build/perf-desktop/gtk-host/exreader-linux --output build/perf-package
+          ls -l build/perf-package | tee build/perf-logs/package-archive.txt
+          stat -c '%s %n' build/perf-package/EXReader-Linux.tar.gz | tee -a build/perf-logs/package-archive.txt
+      - name: Prove the packaged host identity and the absence of any WebView runtime
+        run: |
+          set -o pipefail
+          build/perf-package/EXReader-Linux/bin/exreader-linux --version | tee build/perf-logs/host-version.txt
+          grep -qx '3.40.0 1' build/perf-logs/host-version.txt
+          ! grep -Eic 'webkit|webview|libcef|electron' build/perf-package/runtime-dependencies.txt
+          python3 -m py_compile tests/reader_perf_gtk/observe.py tests/reader_perf_gtk/sample.py \
+            tests/reader_perf_gtk/summarize.py tests/reader_perf_gtk/verify.py
+      - name: Thirty-two independent launches on a fixed Xvfb, window manager and resolution
+        run: |
+          set -o pipefail
+          xdpyinfo > build/perf-logs/pre-xdpyinfo.txt 2>&1 || true
+          Xvfb :99 -screen 0 1440x900x24 -nolisten tcp > build/perf-logs/xvfb.log 2>&1 &
+          xvfb=$!
+          trap 'kill $xvfb 2>/dev/null || true' EXIT
+          sleep 2
+          export DISPLAY=:99
+          dbus-run-session -- bash -euc '
+            openbox > build/perf-logs/openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm 2>/dev/null || true" EXIT
+            sleep 1
+            xdpyinfo > build/perf-logs/xdpyinfo.txt
+            xwininfo -root -tree > build/perf-logs/root-tree.txt
+            python3 tests/reader_perf_gtk/sample.py \
+              --payload build/perf-package/EXReader-Linux \
+              --tarball "$PWD/build/perf-package/EXReader-Linux.tar.gz" \
+              --seed build/perf-probe/seed_library \
+              --output build/perf-evidence \
+              --launches 32 2>&1 | tee build/perf-logs/sampler.log
+            pkill -x xclip 2>/dev/null || true
+          '
+      - name: Preserve the raw logs next to the raw samples
+        if: always()
+        run: |
+          mkdir -p build/perf-evidence/logs
+          cp build/perf-logs/*.log build/perf-logs/*.txt build/perf-evidence/logs/ 2>/dev/null || true
+          cp build/perf-package/build.json build/perf-package/runtime-dependencies.txt \
+            build/perf-evidence/logs/ 2>/dev/null || true
+      - name: Aggregate without new budgets and require complete planned coverage
+        if: always()
+        run: |
+          set -o pipefail
+          python3 tests/reader_perf_gtk/summarize.py --output build/perf-evidence \
+            --guards build/perf-guards/guards.json 2>&1 | tee build/perf-logs/summarize.log
+      - name: Preserve the raw CSV, JSON, logs and environment of this attempt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-perf-gtk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/perf-evidence/
+          if-no-files-found: error
+  verify:
+    name: artifact identity verification
+    needs: perf
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify this attempt's jobs, artifact identity and every evidence digest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_perf_gtk/verify.py --output build/perf-verify
+      - name: Preserve the verification record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-perf-gtk-verification-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/perf-verify/
+          if-no-files-found: error

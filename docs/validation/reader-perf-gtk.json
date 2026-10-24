@@ -1,0 +1,472 @@
+{
+  "package": {
+    "payload_bytes": 25869184,
+    "payload_files": 27,
+    "archive_bytes": 17879982,
+    "archive_sha256": "785b1b82738ad21cdc707e25c32f503dff9f7e3e978191cc043f558e43c3662e",
+    "font_bytes": 16437364,
+    "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+    "build_json_sha256": "1ffbbffd05524eccda6b2089a98552336bd6402b895a1c070f109c2408fd7f3f"
+  },
+  "kind": "gtk-product-performance-observation",
+  "fixed_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk_freeze": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "abi": 1,
+  "status": "cloud-verified",
+  "tested_source": "553d1a5e2aa27b8625930900f592d78d11e2378e",
+  "workflow": ".github/workflows/reader-perf-gtk.yml",
+  "platform": "Linux",
+  "host": {
+    "binary": "bin/exreader-linux",
+    "bytes": 9305864,
+    "sha256": "ab9e0df18c4b48804a4d6ca3280e7c32a475e52cc6fe0e763fdd8524e221807b",
+    "version": "3.40.0 1",
+    "webview": false,
+    "gtk": "3.24.33"
+  },
+  "environment": {
+    "runner": "ubuntu-22.04 hosted",
+    "display": ":99",
+    "screen": "1440x900x24",
+    "window_manager": "openbox",
+    "window": [
+      1040,
+      820
+    ],
+    "deterministic_environment": [
+      "DISPLAY",
+      "GDK_BACKEND=x11",
+      "LANG/LC_ALL=C.UTF-8",
+      "HOME",
+      "XDG_RUNTIME_DIR",
+      "XDG_CACHE_HOME",
+      "XDG_CONFIG_HOME"
+    ],
+    "host_state_outside_evidence": true
+  },
+  "corpus": {
+    "books": 2202,
+    "long_book_bytes": 312000,
+    "total_original_bytes": 477075,
+    "corpus_sha256": "f992e58badb1fc2df0b1cdb4aaa6f30cf43133d9b0c7afecc35aad3bc5721fdf",
+    "seed_sha256": "3f3191bbed629f4483924ced0316263047d1ba6f8cfe0e5d87fc5c7367dcf11d",
+    "import_originals": [
+      6291456,
+      6291456,
+      6291456,
+      6291456
+    ],
+    "import_profile_is_a_copy": true
+  },
+  "measurement": {
+    "start": "before the xdotool process of the injected event, or before process start",
+    "end": "the frozen host's own synchronous observation write, timestamped by an inotify watcher",
+    "observation": "inotify on the observation directory; g_file_set_contents renames into place",
+    "polling": false,
+    "at_spi": false,
+    "screenshots_used_for_latency": false,
+    "injection_overhead_ms": {
+      "count": 20,
+      "min": 2.545,
+      "median": 2.72,
+      "max": 3.1
+    },
+    "injection_attribution": "an observation delivered before the injection start is skipped and counted, never reported",
+    "real_paints": 192,
+    "state_writes": 2133,
+    "frame_clock_available": false,
+    "cold_warm": {
+      "cold_launches": [
+        0,
+        8,
+        16,
+        24
+      ],
+      "cold_effective": true,
+      "warm_launches": 28,
+      "drop_command": "sync; echo 3 > /proc/sys/vm/drop_caches",
+      "page_cache_uncontrolled": true
+    }
+  },
+  "launches": {
+    "planned": 32,
+    "completed": 32,
+    "minimum_required": 30,
+    "kinds": {
+      "shelf_search_open_turn": 8,
+      "shelf_search_variants": 8,
+      "resume_turn": 8,
+      "import_probe": 8
+    },
+    "clean_exits": 32,
+    "observation_failures": 0
+  },
+  "samples": {
+    "planned": 520,
+    "recorded": 520,
+    "ok": 520,
+    "failed": 0,
+    "missing": 0,
+    "duplicates": 0,
+    "filtered": false
+  },
+  "observations_ms": {
+    "startup_shelf_rows": {
+      "planned": 24,
+      "count": 24,
+      "min": 140.907,
+      "p50": 144.835,
+      "p95": 252.278,
+      "max": 3312.444,
+      "start": "process start to the first bounded 50-row shelf page"
+    },
+    "startup_key_response": {
+      "planned": 16,
+      "count": 16,
+      "min": 192.888,
+      "p50": 197.924,
+      "p95": 3373.077,
+      "max": 3373.077,
+      "start": "process start to the first real key response"
+    },
+    "shelf_selection_move": {
+      "planned": 16,
+      "count": 16,
+      "min": 3.73,
+      "p50": 3.961,
+      "p95": 5.849,
+      "max": 5.849,
+      "start": "key injection to the keyboard row selection change"
+    },
+    "search_title_unique": {
+      "planned": 16,
+      "count": 16,
+      "min": 244.022,
+      "p50": 245.338,
+      "p95": 275.799,
+      "max": 275.799,
+      "start": "query injection to the filtered single-row result"
+    },
+    "search_author_literal": {
+      "planned": 8,
+      "count": 8,
+      "min": 210.59,
+      "p50": 211.449,
+      "p95": 213.556,
+      "max": 213.556,
+      "start": "query injection to the literal author result page"
+    },
+    "search_empty": {
+      "planned": 8,
+      "count": 8,
+      "min": 244.038,
+      "p50": 244.731,
+      "p95": 248.961,
+      "max": 248.961,
+      "start": "query injection to the empty result"
+    },
+    "search_clear": {
+      "planned": 8,
+      "count": 8,
+      "min": 236.945,
+      "p50": 237.289,
+      "p95": 238.65,
+      "max": 238.65,
+      "start": "query injection to the restored first page"
+    },
+    "open_book_applied": {
+      "planned": 16,
+      "count": 16,
+      "min": 77.597,
+      "p50": 278.532,
+      "p95": 512.343,
+      "max": 512.343,
+      "start": "Return injection to the applied reader frame"
+    },
+    "open_book_painted": {
+      "planned": 16,
+      "count": 16,
+      "min": 76.666,
+      "p50": 277.631,
+      "p95": 511.486,
+      "max": 511.486,
+      "start": "Return injection to the first real paint of the reader frame"
+    },
+    "page_turn_forward": {
+      "planned": 112,
+      "count": 112,
+      "min": 21.906,
+      "p50": 33.417,
+      "p95": 35.912,
+      "max": 39.052,
+      "start": "F4 injection to the first real paint of the next page"
+    },
+    "page_turn_backward": {
+      "planned": 32,
+      "count": 32,
+      "min": 14.529,
+      "p50": 17.115,
+      "p95": 21.757,
+      "max": 27.621,
+      "start": "F3 injection to the first real paint of the previous page"
+    },
+    "resume_frame_applied": {
+      "planned": 8,
+      "count": 8,
+      "min": 180.647,
+      "p50": 345.872,
+      "p95": 595.04,
+      "max": 595.04,
+      "start": "process start to the restored reader frame"
+    },
+    "resume_frame_painted": {
+      "planned": 8,
+      "count": 8,
+      "min": 179.803,
+      "p50": 359.942,
+      "p95": 594.276,
+      "max": 594.276,
+      "start": "process start to the first real paint of the restored frame"
+    },
+    "import_complete": {
+      "planned": 24,
+      "count": 24,
+      "min": 1944.482,
+      "p50": 1957.519,
+      "p95": 1967.638,
+      "max": 1969.596,
+      "start": "F1 injection to the completed import and opened original"
+    },
+    "import_input_response": {
+      "planned": 192,
+      "count": 192,
+      "min": 1.246,
+      "p50": 3.613,
+      "p95": 4.509,
+      "max": 6.059,
+      "start": "key injection to the host answer while the worker is busy"
+    },
+    "import_resize_response": {
+      "planned": 16,
+      "count": 16,
+      "min": 7.48,
+      "p50": 11.703,
+      "p95": 18.017,
+      "max": 18.017,
+      "start": "resize to the main-loop answer while the worker is busy"
+    }
+  },
+  "rss_kb": {
+    "metric": "/proc/<pid>/status VmHWM",
+    "per_launch": [
+      120964,
+      69088,
+      62976,
+      209024,
+      68796,
+      69104,
+      63104,
+      237228,
+      68324,
+      69344,
+      62848,
+      209208,
+      68860,
+      69064,
+      63232,
+      209024,
+      68528,
+      68940,
+      62720,
+      237288,
+      68628,
+      69092,
+      63104,
+      208948,
+      68812,
+      69052,
+      62720,
+      209384,
+      68944,
+      69008,
+      63104,
+      208864
+    ],
+    "median": 69008,
+    "max": 237288,
+    "observation_only": true
+  },
+  "cloud": {
+    "run_id": 40086971620,
+    "run_attempt": 1,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40086971620",
+    "jobs": {
+      "GTK product performance sampling (ubuntu-22.04)": {
+        "id": 120851788112,
+        "status": "success"
+      },
+      "artifact identity verification": {
+        "id": 120852600194,
+        "status": "success"
+      }
+    },
+    "artifacts": [
+      {
+        "name": "reader-perf-gtk-40086971620-1",
+        "id": 12557169378,
+        "bytes": 2511534,
+        "digest": "sha256:e55046651afb3ef664c5488589b670a531db936cd1f558d368660b5e3d1217c7",
+        "downloaded_zip_sha256": "e55046651afb3ef664c5488589b670a531db936cd1f558d368660b5e3d1217c7",
+        "members": 138,
+        "bundle_members": 137,
+        "expires_at": "2027-01-22T10:42:22Z",
+        "verified": "downloaded in Actions, ZIP and every member recomputed"
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "same-source-run-attempt-identity",
+      "status": "passed"
+    },
+    {
+      "name": "fixed-start-sdk-tree-and-package-file-set",
+      "status": "passed"
+    },
+    {
+      "name": "independent-launch-count",
+      "status": "passed",
+      "value": "32 launches (>= 30)"
+    },
+    {
+      "name": "every-launch-clean-exit-and-no-observation-failure",
+      "status": "passed"
+    },
+    {
+      "name": "fixed-screen-window-and-border",
+      "status": "passed",
+      "value": "1440x900x24, window 1040x820"
+    },
+    {
+      "name": "fixed-2202-original-corpus",
+      "status": "passed",
+      "value": 2202
+    },
+    {
+      "name": "event-driven-observation-not-polling",
+      "status": "passed",
+      "value": "2133 writes, 192 paints"
+    },
+    {
+      "name": "complete-planned-sample-coverage",
+      "status": "passed",
+      "value": "520/520"
+    },
+    {
+      "name": "package-identity-and-size",
+      "status": "passed"
+    },
+    {
+      "name": "rss-high-water-recorded",
+      "status": "passed",
+      "value": "32/32"
+    },
+    {
+      "name": "all-samples-retained-without-filtering",
+      "status": "passed",
+      "value": "520 rows = 520 results"
+    }
+  ],
+  "granted": {
+    "first_screen_end_to_end_interactive": true,
+    "search_end_to_end": true,
+    "open_and_page_turn_end_to_end": true,
+    "continue_reading_end_to_end": true,
+    "import_input_responsiveness": true,
+    "import_resize_response_during_busy_worker": true,
+    "process_rss_high_water": true,
+    "package_size": true,
+    "real_paint_events": true
+  },
+  "not_granted": {
+    "frame_clock_interval": false,
+    "frame_time_percentiles": false,
+    "dropped_frame_accounting": false,
+    "hard_cpu_or_memory_budget": false,
+    "sdk_frozen_budget_changed": false,
+    "real_hardware_fluency": false,
+    "screen_reader_accessibility": false,
+    "memory_constant_startup": false,
+    "product_completion": false,
+    "other_packages_backed": false
+  },
+  "retained_failures": [
+    {
+      "run_id": 40076732656,
+      "tested_source": "e282039f75bde73e2b1eda2460a2b438e3cf5f7e",
+      "conclusion": "cancelled",
+      "cause": "import completion keyed on a bounded shelf row count that stays 50; each import waited 300s",
+      "fix": "key completion on the newly applied book id with a settled worker"
+    },
+    {
+      "run_id": 40079933810,
+      "tested_source": "1c4b45a9f04767eace07b2bbca85ede45746d3d6",
+      "conclusion": "cancelled",
+      "cause": "cancel landed in the log-preservation step after all 32 launches and 520 samples completed",
+      "fix": "not used as evidence"
+    },
+    {
+      "run_id": 40081042286,
+      "tested_source": "e54e2dbc8f83d191ea2aa3a9efb7ffada975a9bd",
+      "conclusion": "cancelled",
+      "cause": "resize-to-repaint probe waited 60s per probe; the frozen host does not guarantee a resize repaint",
+      "fix": "measure the resize answer of the main loop and record the paint delta instead"
+    },
+    {
+      "run_id": 40083621487,
+      "tested_source": "b0b6b998892405bac0d2c8591fad224195b9c3c0",
+      "conclusion": "failure",
+      "cause": "pkill -f xclip matched the enclosing bash command line and terminated the sampler step (143)",
+      "fix": "pkill -x xclip; also fixed the coverage projection in the summarizer"
+    },
+    {
+      "run_id": 40084494437,
+      "tested_source": "355a7a21e672634aa12a760827283c431af1aa63",
+      "conclusion": "failure",
+      "cause": "hidden host HOME files inside the evidence directory were dropped by the artifact upload",
+      "fix": "host HOME and XDG state moved outside the evidence directory"
+    },
+    {
+      "run_id": 40085263230,
+      "tested_source": "a30e014e9875370f460d44bb53900b86dc1b2e3e",
+      "conclusion": "failure",
+      "cause": "report.metrics.expected held the whole coverage record",
+      "fix": "report the planned count and assert the record shape"
+    },
+    {
+      "run_id": 40085328680,
+      "tested_source": "b10ecdcfa754cee0112d8656a460d02534d921f9",
+      "conclusion": "failure",
+      "cause": "same metrics shape defect predating the fix",
+      "fix": "superseded"
+    },
+    {
+      "run_id": 40086173841,
+      "tested_source": "7d74faf3f9733e7b7dc1452483c3c37b2f522ad4",
+      "conclusion": "success superseded",
+      "cause": "one import input sample was attributed to an observation delivered before the injection",
+      "fix": "observations delivered before the injection are skipped and counted; re-ran at 553d1a5e"
+    }
+  ],
+  "limitations": [
+    "Only the frozen GTK product host is measured; the host, accounts.inc and receiver-owner files are untouched.",
+    "Latency includes the xdotool command startup measured separately in calibration.",
+    "The frozen host exposes a monotonic painted_generation counter, not per-frame frame-clock timestamps.",
+    "Screenshots and AT-SPI are not used for any latency; no screenshots are collected.",
+    "Absolute values belong to this runner image, GTK theme and screen; they are not portable.",
+    "OS page cache and background load are uncontrolled; four launches report an effective cold cache drop.",
+    "RSS is the kernel resident high-water mark of the host process, not engine object accounting.",
+    "Opening a book still enumerates the public SDK library inside the measured product path."
+  ]
+}
