@@ -1,0 +1,176 @@
+{
+  "schema": "reader-webdav-compat-acceptance-v1",
+  "accepted": true,
+  "source_sha": "e3dc2386eda2bcf4117b583ea133bdc8359b4a79",
+  "shared_client_base": "dfc711cc91d6059d6bd8b5062249dafd890fa6d9",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "scope": "Native Windows/Linux client compatibility plus both pinned real WebDAV services on Linux; declared scopes only",
+  "native": {
+    "run_id": 40055185562,
+    "attempt": 1,
+    "jobs": [
+      {
+        "id": 120756507459,
+        "platform": "windows",
+        "original_checks": 76,
+        "compatibility_checks": 12,
+        "conclusion": "success"
+      },
+      {
+        "id": 120756507725,
+        "platform": "linux",
+        "original_checks": 77,
+        "compatibility_checks": 12,
+        "conclusion": "success"
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 12545495333,
+        "name": "reader-webdav-Windows-40055185562-1",
+        "size_in_bytes": 446076,
+        "digest": "sha256:8f5a6d3cd5f9a0f7ba72dfc6d181e4cfc11c5f6bf1175f53af2efe89cc62dd1b",
+        "expires_at": "2027-01-22T02:40:58Z",
+        "expired": false,
+        "head_sha": "e3dc2386eda2bcf4117b583ea133bdc8359b4a79"
+      },
+      {
+        "id": 12544259079,
+        "name": "reader-webdav-Linux-40055185562-1",
+        "size_in_bytes": 191907,
+        "digest": "sha256:6433f943692d13406182a1f328fc599cc0bf9210c01eb6e220c6efa0304aff84",
+        "expires_at": "2027-01-22T02:40:58Z",
+        "expired": false,
+        "head_sha": "e3dc2386eda2bcf4117b583ea133bdc8359b4a79"
+      }
+    ],
+    "artifact_check": "GitHub API identity and upload-log digest match"
+  },
+  "real_services": {
+    "run_id": 40055185584,
+    "attempt": 1,
+    "jobs": [
+      {
+        "id": 120756507296,
+        "name": "real WebDAV interop (apache)",
+        "conclusion": "success"
+      },
+      {
+        "id": 120756507645,
+        "name": "real WebDAV interop (nextcloud)",
+        "conclusion": "success"
+      },
+      {
+        "id": 120757590520,
+        "name": "interop summary",
+        "conclusion": "success"
+      }
+    ],
+    "cloud_summary": {
+      "accepted": true,
+      "problems": [],
+      "services": [
+        {
+          "service": "apache",
+          "accepted": true,
+          "passed": 33,
+          "count": 33,
+          "failed": [],
+          "findings": [],
+          "server_log": {
+            "module_requests": 304,
+            "by_method_status": {
+              "PROPFIND 404": 1,
+              "PROPFIND 207": 77,
+              "GET 200": 156,
+              "MKCOL 201": 20,
+              "MKCOL 405": 28,
+              "MKCOL 409": 1,
+              "PUT 201": 12,
+              "PUT 412": 8,
+              "PUT 400": 1
+            }
+          }
+        },
+        {
+          "service": "nextcloud",
+          "accepted": true,
+          "passed": 33,
+          "count": 33,
+          "failed": [],
+          "findings": [],
+          "server_log": {
+            "module_requests": 304,
+            "by_method_status": {
+              "PROPFIND 404": 1,
+              "PROPFIND 207": 77,
+              "GET 200": 156,
+              "MKCOL 201": 20,
+              "MKCOL 405": 28,
+              "MKCOL 409": 1,
+              "PUT 201": 12,
+              "PUT 412": 8,
+              "PUT 400": 1
+            }
+          }
+        }
+      ]
+    },
+    "artifacts": [
+      {
+        "id": 12545345639,
+        "name": "reader-webdav-interop-apache-40055185584-1",
+        "size_in_bytes": 15605487,
+        "digest": "sha256:607b5a5ea18bdcfbf4e60357fa847a16b45fd01a0ae544621502f13a10c74183",
+        "expires_at": "2027-01-22T02:40:58Z",
+        "expired": false,
+        "head_sha": "e3dc2386eda2bcf4117b583ea133bdc8359b4a79"
+      },
+      {
+        "id": 12545008544,
+        "name": "reader-webdav-interop-summary-40055185584-1",
+        "size_in_bytes": 2692,
+        "digest": "sha256:a7e3b4f4fcd72251928581ef57e7cee21672679a722f718ca87e1292dcc0f114",
+        "expires_at": "2027-01-22T02:40:58Z",
+        "expired": false,
+        "head_sha": "e3dc2386eda2bcf4117b583ea133bdc8359b4a79"
+      },
+      {
+        "id": 12544843957,
+        "name": "reader-webdav-interop-nextcloud-40055185584-1",
+        "size_in_bytes": 15685868,
+        "digest": "sha256:d88b19ddec411c5ccfaf0ddb1bfd08e367f03d2335522aec5245b61ee8d0f0c5",
+        "expires_at": "2027-01-22T02:40:58Z",
+        "expired": false,
+        "head_sha": "e3dc2386eda2bcf4117b583ea133bdc8359b4a79"
+      }
+    ],
+    "artifact_check": "Cloud strict summary downloaded and hashed both service archives, bound source/run/attempt and re-derived HTTP facts from raw server logs; summary ZIP identity and upload digest also matched"
+  },
+  "retained_failures": [
+    {
+      "run_id": 40053615279,
+      "source_sha": "6df34306",
+      "reason": "Apache capacity failure; original summary archive prefix incorrect"
+    },
+    {
+      "run_id": 40054114195,
+      "source_sha": "b870a2f1edc590019c0c76545969627e4de35a7d",
+      "reason": "Apache 32/33, valid 2000-entry response exceeded former global XML element limit; strict summary refused"
+    }
+  ],
+  "limits": {
+    "listing_bytes": 4194304,
+    "entries": 2000,
+    "xml_depth": 32,
+    "xml_elements_per_response": 32,
+    "xml_elements_outside_response": 128
+  },
+  "sdk_changed": false,
+  "schema_changed": false,
+  "real_user_cloud_accepted": false,
+  "mobile_accepted": false,
+  "host_ui_accepted": false,
+  "six_platform_accepted": false,
+  "complete_product": false
+}
