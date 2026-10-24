@@ -201,6 +201,15 @@ def main():
             host.key('Tab')
         return focus_name() == target
 
+    def wait_rows(listing, minimum, timeout=25):
+        """Rows are created by the shelf/notes result handler after the stack switches."""
+        deadline = time.monotonic() + timeout
+        rows = a11y.children(listing) if listing is not None else []
+        while time.monotonic() < deadline and len(rows) < minimum:
+            time.sleep(0.15)
+            rows = a11y.children(listing) if listing is not None else []
+        return rows
+
     def dump_tree(tag):
         tree = a11y.dump(current_app())
         path = folder / 'tree' / (tag + '.json')
@@ -684,7 +693,7 @@ def main():
         host.key('F2')
         state = idle()
         listing = wait_element(contract.NAMES['shelf_list'])
-        row_nodes = a11y.children(listing) if listing is not None else []
+        row_nodes = wait_rows(listing, len(books))
         row_text = [' '.join(a11y.name(node) for node in a11y.find_all(row, roles=('label',)))
                     for row in row_nodes]
         missing = [path.stem for path in books
@@ -708,7 +717,7 @@ def main():
         host.key('F2')
         idle()
         listing = wait_element(contract.NAMES['shelf_list'])
-        rows = a11y.children(listing) if listing is not None else []
+        rows = wait_rows(listing, max(1, host.host_state().get('books', 1)))
         detail = []
         for row in rows:
             detail.append({'role': a11y.role(row), 'name': a11y.name(row),
@@ -789,7 +798,7 @@ def main():
         host.key('F8')
         state = host.wait_state(lambda current: current.get('notes', 0) >= 1, timeout=90)
         listing = wait_element(contract.NAMES['notes_list'])
-        rows = a11y.children(listing) if listing is not None else []
+        rows = wait_rows(listing, max(1, state.get('notes', 1) or 1))
         detail = [{'role': a11y.role(row), 'name': a11y.name(row), 'path': a11y.path_of(row),
                    'text_children': [a11y.name(node)
                                      for node in a11y.find_all(row, roles=('label',))]}
