@@ -115,7 +115,7 @@ endif()
 # refused. A directly linked object file always collides, on every linker.
 if(EXR_NEGATIVE_DUPLICATE_PROVIDER)
   add_library(second_sqlite_provider OBJECT duplicate_provider.c)
-  target_link_libraries(composition-cxx PRIVATE ${TARGET_OBJECTS:second_sqlite_provider})
+  target_link_libraries(composition-cxx PRIVATE $<TARGET_OBJECTS:second_sqlite_provider>)
 endif()
 
 # Per-header self-containment: one translation unit per installed public
