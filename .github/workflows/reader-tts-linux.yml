@@ -1,0 +1,260 @@
+name: J19 Linux reader TTS backend
+on:
+  push:
+    branches: [codex/reader-tts-linux]
+    paths:
+      - 'extras/reader-tts-linux/**'
+      - 'tests/reader_tts_linux/**'
+      - 'docs/READER-TTS-LINUX.md'
+      - 'docs/validation/reader-tts-linux.json'
+      - '.github/workflows/reader-tts-linux.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+env:
+  START_SHA: f43baf9182d75907c0cb5d6f77048f27bca8c950
+  FROZEN_SDK: 9854061be331fe603a1822d9b2b36ee357154927
+  JOB_KEYS: ubuntu-2204-release,ubuntu-2204-asan,ubuntu-2404-release,ubuntu-2404-asan
+
+jobs:
+  guard:
+    name: package guard
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK and package-only changes
+        run: bash tests/reader_tts_linux/check_scope.sh
+
+  linux:
+    name: tts-linux (${{ matrix.key }})
+    needs: [guard]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            key: ubuntu-2204-release
+            build_type: Release
+            opt: -O2
+            sanitize: "off"
+          - os: ubuntu-22.04
+            key: ubuntu-2204-asan
+            build_type: RelWithDebInfo
+            opt: -O1
+            sanitize: "on"
+          - os: ubuntu-24.04
+            key: ubuntu-2404-release
+            build_type: Release
+            opt: -O2
+            sanitize: "off"
+          - os: ubuntu-24.04
+            key: ubuntu-2404-asan
+            build_type: RelWithDebInfo
+            opt: -O1
+            sanitize: "on"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK and package-only changes
+        run: bash tests/reader_tts_linux/check_scope.sh
+      - name: Install the system Speech Dispatcher, audio sinks and build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            speech-dispatcher speech-dispatcher-espeak-ng libspeechd-dev espeak-ng \
+            libespeak-ng1 pulseaudio pulseaudio-utils alsa-utils pkg-config ninja-build cmake
+          # audio plugins are what let the daemon actually render sound; best effort
+          sudo apt-get install -y speech-dispatcher-audio-plugins || true
+          speech-dispatcher --version | head -1
+          dpkg -l speech-dispatcher speech-dispatcher-espeak-ng libspeechd-dev espeak-ng \
+            | awk '/^ii/ {print $2, $3}'
+      - name: Deterministic runtime directory, null audio sinks and daemon config evidence
+        run: |
+          set -o pipefail
+          mkdir -p build/pkg-logs build/evidence
+          mkdir -p "$RUNNER_TEMP/xdg"
+          chmod 700 "$RUNNER_TEMP/xdg"
+          echo "XDG_RUNTIME_DIR=$RUNNER_TEMP/xdg" >> "$GITHUB_ENV"
+          export XDG_RUNTIME_DIR="$RUNNER_TEMP/xdg"
+          sudo tee /etc/asound.conf >/dev/null <<'CFG'
+          pcm.!default { type null }
+          ctl.!default { type null }
+          CFG
+          ( pulseaudio --start --exit-idle-time=-1 --log-target=stderr \
+              2>&1 | tee build/pkg-logs/pulseaudio.log ) || true
+          ( pactl load-module module-null-sink sink_name=ttsnull rate=22050 channels=1 \
+              2>&1 | tee -a build/pkg-logs/pulseaudio.log ) || true
+          ( pactl set-default-sink ttsnull 2>&1 | tee -a build/pkg-logs/pulseaudio.log ) || true
+          ( pactl info 2>&1 | tee -a build/pkg-logs/pulseaudio.log ) || true
+          grep -i 'audiooutputmethod\|defaultmodule' /etc/speech-dispatcher/speechd.conf \
+            | tee build/pkg-logs/speechd-config.log || true
+          ls -l /etc/speech-dispatcher/modules/ | tee -a build/pkg-logs/speechd-config.log
+          dpkg -s libspeechd-dev | grep -E '^(Version|Package)' \
+            | tee build/pkg-logs/libspeechd-version.log
+          sha256sum /usr/include/speech-dispatcher/libspeechd.h \
+            | tee build/pkg-logs/libspeechd-header.sha256
+      - name: Build and install the independent optional module
+        run: |
+          set -o pipefail
+          if [ "${{ matrix.sanitize }}" = "on" ]; then
+            SAN="-fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer -g"
+          else
+            SAN=""
+          fi
+          FLAGS="${{ matrix.opt }} $SAN"
+          echo "J19_FLAGS=$FLAGS" >> "$GITHUB_ENV"
+          echo "J19_SAN=$SAN" >> "$GITHUB_ENV"
+          cmake -S extras/reader-tts-linux -B build/pkg -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_INSTALL_PREFIX="$PWD/build/stage" \
+            -DCMAKE_C_FLAGS="$FLAGS" -DCMAKE_EXE_LINKER_FLAGS="$SAN" \
+            2>&1 | tee build/pkg-logs/configure.log
+          cmake --build build/pkg --verbose 2>&1 | tee build/pkg-logs/build.log
+          cmake --install build/pkg 2>&1 | tee build/pkg-logs/install.log
+          cp build/pkg/CMakeCache.txt build/pkg-logs/module-CMakeCache.txt
+      - name: Verify the installed package, license material and installed header
+        run: |
+          set -o pipefail
+          {
+            echo "# J19 reader-tts-linux installed package"
+            echo
+            echo "source: ${{ github.sha }}"
+            echo "run: ${{ github.run_id }}/${{ github.run_attempt }}"
+            echo "job: ${{ matrix.key }}"
+            echo "runner image: $(. /etc/os-release; echo "$PRETTY_NAME")"
+            echo "speech-dispatcher: $(speech-dispatcher --version | head -1)"
+            echo "libspeechd-dev: $(dpkg -s libspeechd-dev | awk '/^Version:/ {print $2}')"
+            echo
+            echo "## files"
+            (cd build/stage && find . -type f | sort | while read -r f; do
+               printf '%s  %s\n' "$(sha256sum "$f" | cut -d' ' -f1)" "$f"
+             done)
+            echo
+            echo "## exported targets"
+            grep -h 'add_library\|INTERFACE_LINK_LIBRARIES' \
+              build/stage/lib/cmake/EXReaderTTSLinux/*.cmake || true
+          } | tee build/evidence/install-manifest.txt
+          test -f build/stage/share/exreader-tts-linux/LICENSE.txt
+          test -f build/stage/include/reader_tts.h
+          test -f build/stage/lib/libreader_tts.a
+          test -f build/stage/lib/cmake/EXReaderTTSLinux/EXReaderTTSLinuxConfig.cmake
+          if [ -f build/stage/include/reader_tts_test.h ]; then
+            echo "unexpected test hooks installed in the release package" >&2
+            exit 1
+          fi
+      - name: Compile the C consumer from the installed prefix only
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_tts_linux/consumer -B build/consumer -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_PREFIX_PATH="$PWD/build/stage" \
+            -DCMAKE_C_FLAGS="$J19_FLAGS" -DCMAKE_EXE_LINKER_FLAGS="$J19_SAN" \
+            2>&1 | tee build/pkg-logs/consumer-configure.log
+          cmake --build build/consumer --verbose 2>&1 | tee build/pkg-logs/consumer-build.log
+          cp build/consumer/CMakeCache.txt build/pkg-logs/consumer-CMakeCache.txt
+      - name: Compile the C++ consumer from the installed prefix only
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_tts_linux/consumer_cpp -B build/consumer-cpp -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_PREFIX_PATH="$PWD/build/stage" \
+            -DCMAKE_CXX_FLAGS="$J19_FLAGS" -DCMAKE_EXE_LINKER_FLAGS="$J19_SAN" \
+            2>&1 | tee build/pkg-logs/consumer-cpp-configure.log
+          cmake --build build/consumer-cpp --verbose 2>&1 | tee build/pkg-logs/consumer-cpp-build.log
+          cp build/consumer-cpp/CMakeCache.txt build/pkg-logs/consumer-cpp-CMakeCache.txt
+      - name: Build the fault-injection suite from the package source
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_tts_linux -B build/suite -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_C_FLAGS="$J19_FLAGS" -DCMAKE_EXE_LINKER_FLAGS="$J19_SAN" \
+            2>&1 | tee build/pkg-logs/suite-configure.log
+          cmake --build build/suite --verbose 2>&1 | tee build/pkg-logs/suite-build.log
+      - name: Collect the test binaries
+        run: |
+          mkdir -p build/test-bin
+          cp build/consumer/reader-tts-consumer build/test-bin/
+          cp build/consumer-cpp/reader-tts-consumer-cpp build/test-bin/
+          cp build/suite/tts-hook-suite build/test-bin/
+          (cd build/test-bin && sha256sum ./* | tee "$GITHUB_WORKSPACE/build/pkg-logs/binaries.sha256")
+      - name: Run the real daemon scenarios
+        env:
+          ASAN_OPTIONS: detect_leaks=1:abort_on_error=0:allocator_may_return_null=1:strict_string_checks=1:detect_stack_use_after_return=1
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+          LSAN_OPTIONS: suppressions=${{ github.workspace }}/tests/reader_tts_linux/asan.supp:print_suppressions=1
+        run: |
+          set -o pipefail
+          python3 tests/reader_tts_linux/run_scenarios.py \
+            --build-dir build/test-bin \
+            --output-dir build/evidence \
+            --expected tests/reader_tts_linux/expected_cases.json \
+            --source-sha "${{ github.sha }}" \
+            --runner-label "${{ matrix.key }}" \
+            --start-cmd /usr/bin/speech-dispatcher 2>&1 | tee build/pkg-logs/scenarios.log
+      - name: Preserve source-bound logs, installed package and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-tts-linux-${{ matrix.key }}-r${{ github.run_id }}-a${{ github.run_attempt }}-${{ github.sha }}
+          path: |
+            build/evidence/
+            build/pkg-logs/
+            build/stage/
+          if-no-files-found: error
+
+  report:
+    name: same-run aggregation
+    needs: [guard, linux]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK and package-only changes
+        run: bash tests/reader_tts_linux/check_scope.sh
+      - name: Rejection regressions for the aggregation rules
+        run: |
+          set -o pipefail
+          mkdir -p build
+          python3 tests/reader_tts_linux/check_aggregate.py \
+            --expected tests/reader_tts_linux/expected_cases.json \
+            --output build/aggregate/rejections 2>&1 | tee build/aggregate-rejections.log
+      - name: Strictly bind artifacts, ZIP digests and named cases to this run
+        if: needs.linux.result == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -o pipefail
+          python3 tests/reader_tts_linux/aggregate.py \
+            --downloads build/downloads \
+            --output build/aggregate \
+            --expected tests/reader_tts_linux/expected_cases.json \
+            --keys "$JOB_KEYS" \
+            --repo "${{ github.repository }}" \
+            --run-id "${{ github.run_id }}" \
+            --run-attempt "${{ github.run_attempt }}" \
+            --source-sha "${{ github.sha }}" 2>&1 | tee build/aggregate.log
+      - name: Reject a run where a tts-linux job did not succeed
+        if: needs.linux.result != 'success'
+        run: |
+          printf 'a tts-linux job did not succeed (%s); no acceptance is possible\n' "${{ needs.linux.result }}" >&2
+          exit 1
+      - name: Preserve the aggregation summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-tts-linux-report-r${{ github.run_id }}-a${{ github.run_attempt }}-${{ github.sha }}
+          path: build/
+          if-no-files-found: warn

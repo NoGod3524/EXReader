@@ -1,0 +1,10 @@
+# LeakSanitizer suppressions for the J19 runner.
+# The library owns and frees everything it allocates; these entries cover the
+# system libspeechd/libglib allocations that outlive the test process.
+leak:libspeechd.so
+leak:libglib-2.0.so
+leak:libgobject-2.0.so
+leak:libpulse.so
+leak:libpulsecommon
+leak:libdbus-1.so
+leak:libespeak-ng.so

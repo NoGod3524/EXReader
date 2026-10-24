@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "id": "J19",
+  "package": "reader-tts-linux",
+  "accepted": false,
+  "accepted_reason": "no cloud run has been verified yet",
+  "source": {
+    "fixed_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+    "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+    "sdk_version": "3.40.0 / ABI 1",
+    "branch": "codex/reader-tts-linux",
+    "tested_sha": null
+  },
+  "workflow": {
+    "file": ".github/workflows/reader-tts-linux.yml",
+    "run_id": null,
+    "run_attempt": null,
+    "url": null,
+    "jobs": {}
+  },
+  "artifacts": [],
+  "cases": {
+    "expected": 127,
+    "pass": 0,
+    "fail": 0,
+    "skip": 0
+  },
+  "scope": {
+    "module_behaviour": "pending",
+    "actual_audio": "not covered: the CI runner has a null audio sink; no listening test",
+    "pause_resume": "pending: daemon state transitions only",
+    "host_integration": "not covered: root wires the GTK host",
+    "platforms": [
+      "ubuntu-22.04 x86_64",
+      "ubuntu-24.04 x86_64"
+    ],
+    "performance": "not measured for this package",
+    "accessibility": "not claimed by this package"
+  },
+  "failures": [],
+  "not_covered": [
+    "audible output and voice quality",
+    "distributions other than Ubuntu 22.04/24.04, and non-x86_64",
+    "a daemon that accepts the socket but hangs (no client timeout)",
+    "GTK host wiring and default reading configuration",
+    "multi-handle use inside one process"
+  ],
+  "as_of": null
+}
