@@ -118,14 +118,14 @@ static void host_epub_free(host_epub *reader) {
     exr_font_free(reader->font); free(reader);
   }
 }
-JNIEXPORT jlong JNICALL Java_org_exreader_host_BoundedEpub_nativeOpen(JNIEnv *env,jclass type,jlong owner,jlong book,jint part,jbyteArray font,jfloat size,jlong budget,jobject task) {
+JNIEXPORT jlong JNICALL Java_org_exreader_host_BoundedEpub_nativeOpen(JNIEnv *env,jclass type,jlong owner,jlong book,jint part,jbyteArray font,jfloat size,jfloat line,jfloat paragraph,jfloat margin,jlong budget,jobject task) {
   host_epub *reader=NULL; exr_library *store=library(env,owner); exr_error error={0};
   exr_status status=EXR_OK; exr_layout_config config=exr_layout_config_defaults();
   exr_chapter_options options=exr_chapter_options_defaults(); exr_font_input input={0};
   host_control context; exr_control control=host_task_control(env,task,&context);
   jbyte *bytes=NULL; jsize length=font?(*env)->GetArrayLength(env,font):0; (void)type;
   if(!store || (*env)->ExceptionCheck(env)) return 0;
-  if(part<0 || size<18 || size>40 || length<=0 || length>64*1024*1024 || budget<1024*1024 || budget>8*1024*1024) { throw_argument(env,"Invalid chapter font/configuration"); return 0; }
+  if(part<0 || size<4 || size>256 || length<=0 || length>64*1024*1024 || budget<1024*1024 || budget>8*1024*1024) { throw_argument(env,"Invalid chapter font/configuration"); return 0; }
   reader=calloc(1,sizeof(*reader)); if(!reader) { status=EXR_MEMORY; goto done; }
   reader->library=store; reader->book=(int64_t)book; reader->part=(size_t)part;
   status=exr_library_source(store,(int64_t)book,&reader->source,&error); if(status!=EXR_OK) goto done;
@@ -136,8 +136,8 @@ JNIEXPORT jlong JNICALL Java_org_exreader_host_BoundedEpub_nativeOpen(JNIEnv *en
   bytes=(*env)->GetByteArrayElements(env,font,NULL); if(!bytes) goto done;
   input.data=bytes; input.size=(size_t)length;
   status=exr_font_create(&input,1,&reader->font,&error); if(status!=EXR_OK) goto done;
-  config.page.width=600; config.page.height=860; config.page.margin=32; config.page.font_size=size;
-  config.page.line_height=1.6f; config.page.paragraph_spacing=12; config.document_css=1; config.embedded_fonts=1;
+  config.page.width=600; config.page.height=860; config.page.margin=margin; config.page.font_size=size;
+  config.page.line_height=line; config.page.paragraph_spacing=paragraph; config.document_css=1; config.embedded_fonts=1;
   config.control=control; options.workspace_budget=(size_t)budget; options.window_bytes=64*1024;
   status=exr_publication_pager_create(reader->publication,(size_t)part,reader->font,&config,&options,&reader->pager,&error);
   if(status==EXR_OK) status=exr_pager_set_control(reader->pager,NULL,&error);
