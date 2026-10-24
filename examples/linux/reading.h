@@ -12,7 +12,10 @@ typedef enum { READER_SHELF, READER_OPEN, READER_IMPORT, READER_NEXT,
   READER_METADATA_PREPARE, READER_METADATA_SAVE, READER_METADATA_RETRY,
   READER_METADATA_DISCARD, READER_COLLECTIONS_LIST, READER_COLLECTIONS_PREPARE_GROUP,
   READER_COLLECTIONS_SAVE_GROUP, READER_COLLECTIONS_PREPARE_MEMBER,
-  READER_COLLECTIONS_SAVE_MEMBER, READER_COLLECTIONS_RETRY, READER_COLLECTIONS_DISCARD } reader_action;
+  READER_COLLECTIONS_SAVE_MEMBER, READER_COLLECTIONS_RETRY, READER_COLLECTIONS_DISCARD,
+  READER_ACCOUNT_LOAD, READER_ACCOUNT_SET, READER_ACCOUNT_DELETE,
+  READER_ACCOUNT_STAGE_BEGIN, READER_ACCOUNT_STAGE_NEXT } reader_action;
+typedef struct { int cancelled,current_bytes,total_bytes; } reader_account_control;
 typedef struct {
   reader_action action;
   int64_t book,note;
@@ -31,6 +34,9 @@ typedef struct {
   uint64_t collection_token,collection_group_cursor_ordinal,collection_member_cursor_ordinal;
   const char *collection_parent,*collection_id,*collection_name,*collection_position,*collection_book_key;
   const char *collection_group_cursor,*collection_member_cursor;
+  const char *account_root,*account_id,*account_user,*account_password;
+  int account_remember,account_saved_only;
+  reader_account_control *account_control;
 } reader_command;
 typedef struct { int64_t id;size_t part,start,end;char *text; } reader_note;
 typedef struct { char *key,*sort_title; } reader_shelf_cursor;
@@ -64,10 +70,15 @@ typedef struct {
   reader_collection_member *collection_members;size_t collection_member_count;
   reader_collection_group collection_selected,collection_navigation,collection_dependency_group;
   char *collection_book_key,*collection_book_title;
+  int has_account,account_response,account_credential_status,account_remember,account_bound,account_more;
+  char *account_root,*account_id,*account_user,*account_password;
+  uint64_t account_seen,account_prepared,account_existing,account_pending,account_failed,account_bootstraps;
+  size_t account_page_rows;
 } reader_result;
 exr_status linux_reader_open(const char *database,const char *font,const exr_control *control,
                             linux_reader **out,exr_error *error);
 void linux_reader_close(linux_reader *reader);
 void linux_reader_execute(linux_reader *reader,const reader_command *command,reader_result *result);
 void reader_result_free(reader_result *result);
+void reader_secret_free(char *value);
 #endif
