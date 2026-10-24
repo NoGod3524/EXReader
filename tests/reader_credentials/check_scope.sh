@@ -9,7 +9,7 @@ git merge-base --is-ancestor "$START_SHA" HEAD
 git diff --exit-code "$FROZEN_SDK" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings \
   .github/workflows/native.yml .github/workflows/reliability.yml
 outside=$(git diff --name-only "$START_SHA" HEAD | grep -v -E \
-  '^(extras/credentials/|tests/reader_credentials/|\.github/workflows/reader-credentials\.yml$|docs/READER-CREDENTIALS\.md$|docs/validation/reader-credentials\.json$)' || true)
+  '^(extras/credentials/|tests/reader_credentials/|\.github/workflows/reader-credentials(-review)?\.yml$|docs/READER-CREDENTIALS\.md$|docs/validation/reader-credentials\.json$)' || true)
 if [ -n "$outside" ]; then
   echo "changes outside the credentials package:"; echo "$outside"; exit 1
 fi
