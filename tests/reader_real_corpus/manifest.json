@@ -475,7 +475,7 @@
         },
         "final_url": "https://assets.publishing.service.gov.uk/media/68d50dff9ce370a7e0a0fc9a/Template_ES1.docx"
       },
-      "query": "Financial",
+      "query": "summary",
       "expect": {
         "import": "ok",
         "readback": "ok",
