@@ -142,3 +142,10 @@ activation point 终止，尚未执行原来的滚动路径。后续先按真实
 在设置设备字号前因 fresh simulator 仍为 Shutdown 而失败，未执行用例。诊断入口
 后续先实际 boot/bootstatus 再设置字号；完整入口原先由其前置原 UI 套件启动模拟器，
 该路径不变。
+
+`281d18ea` 的生产诊断 `40107115391` 和短回归 `40107533231` 六个目标作业均通过，
+仍为 `diagnostic_only=true, accepted=false`。随后的完整映射 `40109096548` iPhone
+首例失败，另外四例通过：实际手势后 trace 仍是 token=0、书籍 0、idle/就绪，宿主未
+收到导入动作。映射探针原先只检查一次 enabled/hittable；后续沿用原 WP13 的单次
+点击准备条件，在原 startup 90 秒、action 30 秒内等待前台和实际帧/状态稳定 0.6 秒，
+再执行唯一一次点击，保留全部导入结果 90 秒断言并记录前后真实 trace；不重试点击。
