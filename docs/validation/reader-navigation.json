@@ -1,13 +1,24 @@
 {
   "accepted": false,
-  "status": "cloud iteration pending after preserved first compile and second fixture failures",
+  "status": "114 checks passed on Windows/Linux in one cloud run; source-identity audit remains open",
   "package": "EXReaderNavigation 0.1.0",
   "common_start": "c3511a011eefbf1fba1d20908f000cef22b1ced2",
-  "source_sha": null,
-  "run_id": null,
-  "attempt": null,
-  "artifacts": [],
-  "jobs": [],
+  "source_sha": "7a7d2de2a8e1baeaca7fc739898fa33cab1f8e00",
+  "run_id": 40073915372,
+  "attempt": 1,
+  "cloud_summary_accepted": true,
+  "checks_per_platform": 114,
+  "failures_per_platform": 0,
+  "artifacts": [
+    {"id": 12552223258, "name": "reader-navigation-Linux-40073915372-1", "size_in_bytes": 6696956, "digest": "sha256:47934f1ffde2dbda8af8907a092bb60d60b546c4c8f759a1906b3e51e2acc07a", "expires_at": "2027-01-22T07:23:04Z"},
+    {"id": 12551962898, "name": "reader-navigation-Windows-40073915372-1", "size_in_bytes": 4366228, "digest": "sha256:47df057e6e0f1b47f12d4cf9f339a78be7d2012336c83daf333f70ea50416e5f", "expires_at": "2027-01-22T07:23:04Z"},
+    {"id": 12552592035, "name": "reader-navigation-evidence-40073915372-1", "size_in_bytes": 656, "digest": "sha256:b0df4e33f65fde131bda09c15491d36a2286da212ac69f0eeb96245e0ae6aea2", "expires_at": "2027-01-22T07:23:04Z"}
+  ],
+  "jobs": [
+    {"id": 120813090501, "platform": "linux", "conclusion": "success"},
+    {"id": 120813090443, "platform": "windows", "conclusion": "success"},
+    {"id": 120813666965, "role": "strict evidence", "conclusion": "success"}
+  ],
   "earlier_failed_runs": [{
     "source_sha": "e3ebed25c88d60b8b57e5d5a37484a7adc420e5e",
     "run_id": 40073175739,
@@ -26,13 +37,14 @@
     "attempt": 1,
     "jobs": [
       {"id": 120811427609, "platform": "linux", "conclusion": "failure"},
-      {"id": 120811427726, "platform": "windows", "conclusion": "failure"}
+      {"id": 120811427726, "platform": "windows", "conclusion": "failure"},
+      {"id": 120812004883, "role": "strict evidence", "conclusion": "failure"}
     ],
     "checks_per_platform": 113,
     "failures_per_platform": 1,
     "reason": "The custom publication fixture returned TXT without a chapter directory, so public fragment resolve rejected its chapter index. The fixture now constructs a real chapter with the public SDK; original PART_ONLY expectation retained and an independent SDK precondition check added."
   }],
-  "problems": ["No complete same-source cloud run has accepted this package yet."],
+  "problems": ["The implementation compares only ordered part paths and IDs to identify the live source. Distinct books with identical directories are not yet distinguished; the public same-book contract is not fully verified by this run."],
   "granted_platforms": [],
   "macos_accepted": false,
   "performance_claimed": false,

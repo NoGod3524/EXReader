@@ -80,4 +80,14 @@ EPUB3 nav、EPUB2 NCX、嵌套与空目录、重复标题、非 ASCII 标题、�
 自定义 publication 的加载器返回无 chapter 的 TXT，不能用于公开 fragment resolve。
 探针现改为用 `exr_document_create` 构造带真实章节路径的文档，另先独立核对缺失片段的 SDK 返回值；
 原 `PART_ONLY` 断言保留，模块生产源码与冻结 SDK 未变。后续结果仅按实际云端运行登记。
+
+源码 `7a7d2de2a8e1baeaca7fc739898fa33cab1f8e00` 的
+[run 40073915372](https://github.com/NoGod3524/EXReader/actions/runs/40073915372) attempt1
+三个作业均成功：Windows/Linux 各 114 项、0 失败，严格工件汇总 `accepted=true`。
+两平台四组目录结果逐项一致，真实 EPUB 解析包含 13/8/3 行与空目录，零错位。
+工件大小、摘要、消费者和安装文件身份记录见验收 JSON；所有工件同 source/run/attempt，未过期。
+
+独立审查还发现身份检查仅比较 part 路径和 ID 的有序目录，不足以区分目录相同而内容不同的两本书。
+这轮原有套件成功保留，但 `docs/validation/reader-navigation.json` 的整体 `accepted` 继续为 false、
+`granted_platforms` 为空；须补上真实来源身份绑定及同目录换书负例，才能授予完整包契约。
 即便通过，也只授予本包接口：不含宿主 UI、产品性能、六平台互通、macOS，且 PDF/CBZ 无作者大纲。
