@@ -8,7 +8,13 @@
     "audit_vs_acceptance": "audit_completed reports whether the three targets produced the declared evidence; accessibility_accepted reports whether that evidence violated a blocking criterion",
     "minimum_target_pt": {
       "blocking": 24,
-      "advisory_ios": 44
+      "blocking_platforms": [
+        "iphone",
+        "ipad"
+      ],
+      "advisory_ios": 44,
+      "advisory_macos": 20,
+      "note": "WCAG 2.5.8 的 24 pt 下限按触控平台阻断；macOS 原生控件按指针平台惯例只做 20 pt 建议项，避免用 Web 门槛误判 AppKit 控件"
     },
     "clip_tolerance_pt": 2,
     "reading_order_tolerance_pt": 20
