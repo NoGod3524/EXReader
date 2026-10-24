@@ -49,6 +49,7 @@ PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
 PROCESS_VM_READ = 0x0010
 
 WM_NULL, WM_SETTEXT, WM_GETTEXT, WM_CLOSE = 0x0000, 0x000C, 0x000D, 0x0010
+WM_GETTEXTLENGTH = 0x000E
 WM_MOUSEWHEEL, BM_CLICK = 0x020A, 0x00F5
 LB_GETCOUNT, LB_GETTEXT, LB_SETCURSEL = 0x018B, 0x0189, 0x0186
 LB_GETTOPINDEX = 0x018E
@@ -235,6 +236,10 @@ class Host:
         self.sampler.start()
         self.window = None
         self._handles = {}
+        # Buffers stay alive for the whole launch: a SendMessageTimeout that
+        # expires leaves the message queued, so its buffer must never be freed.
+        self._read_buffer = None
+        self._write_buffer = None
 
     # -- primitives ------------------------------------------------------
     def send(self, hwnd, message, wparam=0, lparam=0, timeout=2000):
@@ -264,13 +269,26 @@ class Host:
             self._handles[name] = handle
         return self._handles[name]
 
+    def _scratch(self, name, capacity):
+        buffer = getattr(self, name)
+        if buffer is None or len(buffer) < capacity:
+            buffer = C.create_unicode_buffer(capacity)
+            setattr(self, name, buffer)
+        return buffer
+
     def text(self, hwnd, capacity=2048, timeout=2000):
-        buffer = C.create_unicode_buffer(capacity)
+        buffer = self._scratch('_read_buffer', capacity)
+        buffer[0] = '\x00'
         self.send(hwnd, WM_GETTEXT, capacity, C.addressof(buffer), timeout)
         return buffer.value
 
+    def text_length(self, hwnd, timeout=2000):
+        return int(self.send(hwnd, WM_GETTEXTLENGTH, 0, 0, timeout))
+
     def set_text(self, hwnd, value, timeout=2000):
-        buffer = C.create_unicode_buffer(value)
+        encoded = value.encode('utf-16-le') + b'\x00\x00'
+        buffer = self._scratch('_write_buffer', len(encoded) // 2 + 1)
+        C.memmove(C.addressof(buffer), encoded, len(encoded))
         self.send(hwnd, WM_SETTEXT, 0, C.addressof(buffer), timeout)
         return self.text(hwnd, max(64, len(value) + 8), timeout)
 
@@ -308,8 +326,21 @@ class Host:
         for _ in range(notches):
             self.send(self.control('books'), WM_MOUSEWHEEL, (120 & 0xFFFF) << 16, 0, timeout)
 
+    def enabled(self, name):
+        return bool(U.IsWindowEnabled(self.control(name)))
+
+    def wait_enabled(self, name, timeout=60):
+        deadline = time.perf_counter() + timeout
+        while time.perf_counter() < deadline:
+            if self.process.poll() is not None:
+                raise MeasurementFault('host exited before control became usable: ' + name)
+            if self.enabled(name):
+                return True
+            time.sleep(0.01)
+        raise MeasurementFault('product control stayed disabled: ' + name)
+
     def import_enabled(self):
-        return bool(U.IsWindowEnabled(self.control('import')))
+        return self.enabled('import')
 
     def roundtrip(self, timeout=2000):
         started = now_ms()
@@ -521,31 +552,41 @@ def op_open(host, title, timeout=180):
         return None
 
     (row,) = host.poll(locate, 120, interval=0.02)
-    started = now_ms()
     host.lb_set(row)
+    host.wait_enabled('open', 60)
+    label_control = host.control('page_label')
+    started = now_ms()
     host.click('open')
 
     def opened():
+        # WM_GETTEXTLENGTH is a scalar message: a timed-out probe cannot leave a
+        # buffered message behind while the host is still starting up.
         try:
-            label = host.label(150)
+            if host.text_length(label_control, 150) <= 6:  # "未打开书籍"
+                return None
         except TimeoutError:
             return None
+        label = host.label(5000)
         return (label,) if page_key(label) else None
 
-    (label,) = host.poll(opened, timeout, interval=0.003)
+    (label,) = host.poll(opened, timeout, interval=0.004)
     return {'ms': round(now_ms() - started, 3), 'label': label, 'key': page_key(label),
             'row': row, 'book': title}
 
 
 def op_resume(host, expected_key, timeout=180):
+    label_control = host.control('page_label')
+
     def restored():
         try:
-            label = host.label(150)
+            if host.text_length(label_control, 150) <= 6:  # "未打开书籍"
+                return None
         except TimeoutError:
             return None
+        label = host.label(5000)
         return (label,) if page_key(label) else None
 
-    (label,) = host.poll(restored, timeout, interval=0.003)
+    (label,) = host.poll(restored, timeout, interval=0.004)
     key = page_key(label)
     return {'ms': round(now_ms() - host.t0, 3), 'label': label, 'key': key,
             'expected_key': expected_key,
@@ -553,6 +594,7 @@ def op_resume(host, expected_key, timeout=180):
 
 
 def op_page_turn(host, previous_key, timeout=40):
+    host.wait_enabled('next', 30)
     started = now_ms()
     host.click('next')
 
@@ -618,6 +660,7 @@ def op_import(host, fixture, expected_title, timeout=300):
         # The host opens a file dialog when the path box is empty; never let a
         # rejected path turn into a modal dialog.
         raise MeasurementFault('import path edit rejected the fixture path: %r' % echoed)
+    host.wait_enabled('import', 60)
     started = now_ms()
     host.click('import')
     # BM_CLICK returns after the catalog import job is submitted, so the import
