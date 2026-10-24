@@ -1,6 +1,6 @@
 {
   "accepted": false,
-  "status": "first cloud run refused at installed consumer configuration; corrected complete rerun pending",
+  "status": "two retained cloud refusals; corrected complete rerun pending",
   "baseline": "d2b59e9e9b3ad3e3246c23926f0fbebbaa9515f8",
   "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
   "source_sha": null,
@@ -16,6 +16,13 @@
     "conclusion": "failure",
     "reason": "Installed ReadingState consumer could not find EXReaderConfig through CMAKE_PREFIX_PATH. Both installed prefixes are now explicit; SDK and module implementations unchanged.",
     "artifact": {"id": 12554514742, "size_in_bytes": 1312167, "digest": "sha256:9dff8904c126a4879d32ac4bcc6620bcc26fc69311463fafb6e58055eea7385c"}
+  }, {
+    "source_sha": "e8d8a1e6c9e280987446c54a02f5cac151bfd594",
+    "run_id": 40080818884,
+    "attempt": 1,
+    "job_id": 120833822016,
+    "conclusion": "failure",
+    "reason": "Actual GTK link map used libexr_vendor_exr_sqlite.a instead of the installed product provider. GTK-account target now pulls the product provider before SDK vendor resolution; unchanged identity gate retained."
   }],
   "granted_platforms": [],
   "physical_device_execution": false,
