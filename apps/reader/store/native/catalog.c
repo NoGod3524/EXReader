@@ -509,4 +509,3 @@ int reader_catalog_metadata(reader_catalog *c,const char *key,
     reader_catalog_visit visit,void *context,int *found,reader_catalog_error *e) {
   return lookup(c,2,0,key,visit,context,found,e);
 }
-

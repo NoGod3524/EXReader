@@ -144,6 +144,9 @@ def verify_reports(kind, platform, read, source, run_id, attempt):
             all(k.get('recovered') is True and k.get('killed_returncode') not in (None, 0) for k in kills),
             'real kill/recovery evidence differs')
     load('desktop-sdk/shelf-check/shelf-result.json', 10, flag='passed')
+    organization = load('desktop-sdk/organization-check/organization-result.json', 15, flag='passed')
+    require(organization.get('sdk_changed') is False and organization.get('schema_changed') is False and
+            organization.get('ui_accepted') is False, 'native organization reader contract differs')
     if platform == 'Linux':
         original_path = 'desktop-gtk-ui/report.json'
         original = load(original_path, 20, flag='pass', key='name', success='passed', has_attempt=False)
@@ -175,6 +178,11 @@ def verify_reports(kind, platform, read, source, run_id, attempt):
         product = load('desktop-windows-product/product-result.json', 10)
         load('desktop-windows-shelf-worker/worker-result.json', 5)
         shelf = load('desktop-windows-shelf-ui/shelf-result.json', 13)
+        metadata = load('desktop-windows-metadata/metadata-ui.json', 18)
+        require(metadata.get('count') == 18 and metadata.get('groups_ui_accepted') is False and
+                metadata.get('performance_accepted') is False and len(metadata.get('screenshots', [])) == 6 and
+                metadata.get('program_sha256') == shelf.get('binary_sha256'),
+                'actual Windows metadata UI contract differs')
         require(product.get('original_ui_steps') == 158 and
                 product.get('program_sha256') == original.get('program_sha256') == shelf.get('binary_sha256') and
                 re.fullmatch('[0-9a-f]{64}', shelf.get('binary_sha256', '')) is not None,
@@ -194,7 +202,7 @@ def main():
     run_id, attempt = int(os.environ['GITHUB_RUN_ID']), int(os.environ['GITHUB_RUN_ATTEMPT'])
     args.output.mkdir(parents=True, exist_ok=False)
     result = {'accepted': False, 'source_sha': source, 'run_id': run_id, 'attempt': attempt,
-              'scope': 'same-source desktop shelves GTK book metadata UI and native sync modules only',
+              'scope': 'same-source desktop shelves book metadata UI and native sync modules only',
               'complete_product': False, 'performance_accepted': False, 'six_platform_accepted': False,
               'artifacts': [], 'problems': []}
     try:
