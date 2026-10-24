@@ -6,6 +6,7 @@ import hashlib
 import io
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
@@ -69,6 +70,28 @@ def find_artifact(artifacts, name):
     return None
 
 
+def require_report(report, source, count, names=None):
+    if not isinstance(report, dict) or report.get('ok') is not True or report.get('source') != source:
+        raise ValueError('report must have exact source and boolean success')
+    checks=report.get('checks')
+    if not isinstance(checks,list) or len(checks)!=count:
+        raise ValueError('report check count differs')
+    if any(not isinstance(row,dict) or row.get('ok') is not True or not isinstance(row.get('name'),str) or not row['name'] for row in checks):
+        raise ValueError('report contains missing or failed checks')
+    if names is not None and {row['name'] for row in checks}!=names:
+        raise ValueError('review check names differ')
+
+
+def report_negative_checks():
+    good={'ok':True,'source':'expected','checks':[{'name':'actual','ok':True}]}
+    altered=[{},dict(good,source='other'),dict(good,ok='true'),dict(good,checks=[]),dict(good,checks=[{'name':'actual','ok':False}]),dict(good,checks=[{'name':'actual','ok':1}])]
+    for value in altered:
+        try:require_report(value,'expected',1)
+        except ValueError:continue
+        raise AssertionError('altered report was accepted')
+    require_report(good,'expected',1);return len(altered)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", required=True)
@@ -93,7 +116,7 @@ def main():
         time.sleep(10)
     record = {"run_id": run_id, "attempt": attempt, "source": source,
               "checked_at": dt.datetime.now(dt.timezone.utc).isoformat(),
-              "artifacts": [], "ok": True, "failures": []}
+              "artifacts": [], "ok": True, "failures": [], "altered_reports_rejected":report_negative_checks()}
     for os_name in EXPECTED:
         name = "reader-batch-import-{}{}".format(os_name, suffix)
         artifact = find_artifact(artifacts, name)
@@ -109,6 +132,11 @@ def main():
         item["digest"] = artifact.get("digest")
         item["expires_at"] = artifact.get("expires_at")
         item["expired"] = artifact.get("expired")
+        if (type(artifact.get('id')) is not int or artifact['id']<=0 or
+            type(artifact.get('size_in_bytes')) is not int or artifact['size_in_bytes']<=0 or
+            artifact.get('expired') is not False or
+            re.fullmatch(r'sha256:[0-9a-f]{64}',artifact.get('digest') or '') is None):
+            record['failures'].append(name+': missing/invalid strict metadata');record['ok']=False
         if artifact.get("expired"):
             record["failures"].append(name + ": expired")
             record["ok"] = False
@@ -152,6 +180,18 @@ def main():
                 report = json.loads(bundle.read(report_entry).decode("utf-8"))
                 item["report_ok"] = report.get("ok")
                 item["report_checks"] = len(report.get("checks", []))
+                require_report(report,source,668)
+                review_entry=[entry for entry in bundle.namelist() if entry.endswith('rb-review-evidence/review.json')]
+                if len(review_entry)!=1:raise ValueError('one review report required')
+                review=json.loads(bundle.read(review_entry[0]).decode('utf-8'))
+                require_report(review,source,4,{'directory-budget','parent-link','copy-change','concurrent'})
+                if review.get('run_id')!=run_id or review.get('attempt')!=attempt:raise ValueError('review run identity differs')
+                item['review_checks']=len(review['checks'])
+                if os_name=='Linux':
+                    tsan_entry=[entry for entry in bundle.namelist() if entry.endswith('rb-review-evidence/tsan.txt')]
+                    if len(tsan_entry)!=1:raise ValueError('TSan evidence absent')
+                    tsan=bundle.read(tsan_entry[0]).decode('utf-8')
+                    if 'failures=0' not in tsan or 'WARNING: ThreadSanitizer' in tsan:raise ValueError('TSan did not pass')
                 if not report.get("ok"):
                     record["failures"].append(name + ": report not ok")
                     record["ok"] = False
