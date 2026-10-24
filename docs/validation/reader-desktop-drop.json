@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "scope": "desktop file drop and paste adapter: portable parsers plus Windows HDROP/OLE, GTK3 text/uri-list and AppKit NSPasteboard heads",
+  "accepted": false,
+  "implementation_base": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk_frozen_source": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "sdk_abi": 1,
+  "product_schema": 1,
+  "branch": "codex/reader-desktop-drop",
+  "workflow": ".github/workflows/reader-desktop-drop.yml",
+  "source_sha": null,
+  "run": null,
+  "artifacts": [],
+  "results": {
+    "portable_matrix": null,
+    "windows_native": null,
+    "gtk3_native": null,
+    "appkit_native": null,
+    "installed_consumers": null
+  },
+  "limits": [
+    "Accepted stays false until a real same-source run produced every named case and artifact below.",
+    "One GitHub Actions runner per platform; no pointer-device drag, no physical desktop."
+  ],
+  "problems": [],
+  "notes": [
+    "Evidence is committed after the run with [skip ci]; the tested source revision is recorded in source_sha."
+  ]
+}
