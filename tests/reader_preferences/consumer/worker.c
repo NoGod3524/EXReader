@@ -218,8 +218,8 @@ int main(int argc, char **argv) {
     report.struct_size = sizeof(report);
     status = reader_preferences_import_legacy(&p, &legacy, &report, &error);
     if (status != READER_PREFERENCES_OK) return report_failure(status, &error);
-    (void)printf("applied=%u preserved=%u\n", (unsigned)report.applied,
-                 (unsigned)report.preserved);
+    (void)printf("applied=%u\n", (unsigned)report.applied);
+    (void)printf("preserved=%u\n", (unsigned)report.preserved);
     print_preferences(&p);
     status = reader_preferences_save(&p, argv[2], NULL, &error);
     if (status != READER_PREFERENCES_OK) return report_failure(status, &error);
