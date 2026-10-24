@@ -107,7 +107,7 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeReadingPr
   Dl_info commands{},view{},sqlite{};if(!dladdr(reinterpret_cast<void *>(&reader_rc_apply),&commands)||!dladdr(reinterpret_cast<void *>(&reader_av_page_get),&view)||!dladdr(reinterpret_cast<void *>(&sqlite3_open_v2),&sqlite))return nullptr;
   return product_jni::strings(env,{commands.dli_fname,view.dli_fname,sqlite.dli_fname});
 }
-extern "C" JNIEXPORT jint JNICALL Java_org_exreader_host_NativeReadingProbe_receive(JNIEnv *env,jclass,jlong handle,jbyteArray bytes){
-  return product_jni::call(env,handle,[&](product_jni::owner &owner)->jint{std::string wire=reading_product::input_bytes(env,bytes,READER_REVISION_MAX_BYTES,false);reader_revision_info info{};reader_revision_error error{};int created=0;auto status=reader_revision_receive(owner.revisions,wire.data(),wire.size(),nullptr,&info,&created,&error);if(status!=READER_REV_OK)product_jni::reject("java/lang/IllegalStateException","Public revision fixture receive refused");return created;});
+extern "C" JNIEXPORT jint JNICALL Java_org_exreader_host_NativeReadingProbe_nativeReceive(JNIEnv *env,jclass,jlong handle,jbyteArray bytes,jstring expected){
+  return product_jni::call(env,handle,[&](product_jni::owner &owner)->jint{std::string wire=reading_product::input_bytes(env,bytes,READER_REVISION_MAX_BYTES,false),sha=product_jni::utf8(env,expected);reader_revision_info info{};reader_revision_error error{};int created=0;auto status=reader_revision_receive(owner.revisions,wire.data(),wire.size(),sha.c_str(),&info,&created,&error);if(status!=READER_REV_OK){std::string message="Public revision fixture receive refused "+std::to_string(status)+": "+error.message;jclass type=env->FindClass("java/lang/IllegalStateException");product_jni::pending(env);env->ThrowNew(type,message.c_str());env->DeleteLocalRef(type);product_jni::pending(env);}return created;});
 }
 #endif

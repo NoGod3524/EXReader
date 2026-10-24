@@ -63,7 +63,7 @@ for variant in ('Debug', 'Release'):
                 assert len(re.findall(r'\bsqlite3_open_v2\s*$', symbols, re.M)) == 1
                 assert not any(item in mapping for item in sdk_archives)
                 assert not re.search(r'\bexr_(?:library_|document_|pager_|anchor_)\w*\s*$', symbols, re.M)
-                assert ('Java_org_exreader_host_NativeReadingProbe_receive' in symbols) == (variant == 'Debug')
+                assert ('Java_org_exreader_host_NativeReadingProbe_nativeReceive' in symbols) == (variant == 'Debug')
             else:
                 assert libraries[name]['needed'].count('libexreader.so') == 1
                 assert all('lib' + archive + '.a' not in mapping for archive in archives)
