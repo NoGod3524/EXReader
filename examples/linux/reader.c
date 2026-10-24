@@ -776,13 +776,13 @@ int main(int argc,char **argv) {
   gtk_button_set_use_underline(GTK_BUTTON(more),TRUE);atk_object_set_name(gtk_widget_get_accessible(more),"More library actions");
   GtkWidget *menu=gtk_menu_new(),*organize=gtk_menu_item_new_with_label("Collections…");
   gtk_menu_shell_append(GTK_MENU_SHELL(menu),organize);g_signal_connect(organize,"activate",G_CALLBACK(collections_open),NULL);
-#ifdef EXR_READER_PREFERENCES_UI
-  GtkWidget *reading_settings=gtk_menu_item_new_with_label("Reading settings…");
-  gtk_menu_shell_append(GTK_MENU_SHELL(menu),reading_settings);g_signal_connect(reading_settings,"activate",G_CALLBACK(preferences_open),NULL);
-#endif
 #ifdef EXR_READER_ACCOUNT
   GtkWidget *account=gtk_menu_item_new_with_label("Account / Sync…");
   gtk_menu_shell_append(GTK_MENU_SHELL(menu),account);g_signal_connect(account,"activate",G_CALLBACK(accounts_open),NULL);
+#endif
+#ifdef EXR_READER_PREFERENCES_UI
+  GtkWidget *reading_settings=gtk_menu_item_new_with_label("Reading settings…");
+  gtk_menu_shell_append(GTK_MENU_SHELL(menu),reading_settings);g_signal_connect(reading_settings,"activate",G_CALLBACK(preferences_open),NULL);
 #endif
   gtk_widget_show_all(menu);gtk_menu_button_set_popup(GTK_MENU_BUTTON(more),menu);
   gtk_widget_set_tooltip_text(more,"Organize shelves, tags and series (Ctrl+Shift+C)");
