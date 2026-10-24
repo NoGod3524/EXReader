@@ -205,8 +205,8 @@ def main():
         cases = judge.get('cases') or []
         if not judge.get('passed'):
             problems.append('重叠判定器回归未通过：%s' % ', '.join(judge.get('failed') or ['<unknown>']))
-        if len(cases) < 13:
-            problems.append('重叠判定器回归用例不足：%d < 13' % len(cases))
+        if len(cases) < 15:
+            problems.append('重叠判定器回归用例不足：%d < 15' % len(cases))
         required = {'minimum_target_pt.blocking': 24,
                     'minimum_target_pt.advisory_ios': 44,
                     'minimum_target_pt.advisory_macos': 20,

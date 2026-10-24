@@ -307,11 +307,13 @@ def nested_child(outer, inner):
 def classify_overlap(first, second, elements, threshold):
     """Decide whether two interactive elements really occlude each other.
 
-    Same scroll container (including both outside any scroll view): compare the
-    laid-out boxes, because nothing is clipped between them. Different containers:
-    compare only the parts each scroll viewport leaves visible, so scroll content
-    below the viewport cannot fake an overlap with an external control. When an
-    ancestor viewport is not recorded the pair stays undetermined."""
+    Same scroll container with a recorded viewport: clip both by that shared
+    viewport, then compare what is visible. Same container without a recorded
+    viewport: true siblings cannot be scrolled apart, so their boxes are compared
+    directly; a pair nested at different depths stays undetermined. Different
+    containers: clip each side by its nearest recorded viewport, so scroll content
+    below the viewport cannot fake an overlap with an external control. Any pair
+    whose clip cannot be computed is reported as undetermined, never as clipped."""
     first_box = rect(first)
     second_box = rect(second)
     raw_ratio, _ = overlap_ratio(first_box, second_box)
@@ -323,6 +325,49 @@ def classify_overlap(first, second, elements, threshold):
     second_container = ('scroll', second_chain[0]['id']) if second_chain else ('none',)
     same_container = first_container == second_container
     if same_container:
+        in_scroll = bool(first_chain)
+        shared = first_chain[0] if in_scroll else None
+        viewport_known = False
+        if shared is not None and not shared['bare']:
+            viewport = elements.get(shared['id'])
+            viewport_known = (viewport is not None
+                              and rect(viewport)['width'] > 0 and rect(viewport)['height'] > 0)
+        first_parent = path_tokens(first.get('path'))[:-1]
+        second_parent = path_tokens(second.get('path'))[:-1]
+        siblings = first_parent == second_parent
+        if in_scroll and not viewport_known and not siblings:
+            # Same scroll container, one side nested deeper, viewport unknown: the
+            # visible parts cannot be located, so the pair stays undetermined.
+            return {'verdict': 'undetermined', 'same_container': True, 'raw_ratio': raw_ratio,
+                    'visible_ratio': 0.0,
+                    'detail': '同一滚动容器内但最近视口未记录，无法判断可见部分'}
+        if in_scroll and viewport_known:
+            first_box, first_status, first_detail = visible_box(first, elements)
+            second_box, second_status, second_detail = visible_box(second, elements)
+            if first_status != 'ok' or second_status != 'ok':
+                return {'verdict': 'undetermined', 'same_container': True, 'raw_ratio': raw_ratio,
+                        'visible_ratio': 0.0,
+                        'detail': first_detail if first_status != 'ok' else second_detail}
+            if first_box is None or second_box is None:
+                return {'verdict': 'excluded', 'same_container': True, 'raw_ratio': raw_ratio,
+                        'visible_ratio': 0.0, 'detail': '可视部分为空，滚动视口已裁掉该片段'}
+            visible_ratio, _ = overlap_ratio(first_box, second_box)
+            if ((contains_box(first_box, second_box) and nested_child(first_box, second_box))
+                    or (contains_box(second_box, first_box) and nested_child(second_box, first_box))):
+                return {'verdict': 'none', 'same_container': True, 'raw_ratio': raw_ratio,
+                        'visible_ratio': visible_ratio, 'detail': '一方可视区域包含另一方，不算遮挡'}
+            if visible_ratio <= 0:
+                return {'verdict': 'none', 'same_container': True, 'raw_ratio': raw_ratio,
+                        'visible_ratio': 0.0, 'detail': '同一容器内可视部分不相交'}
+            if visible_ratio > threshold:
+                return {'verdict': 'fail', 'same_container': True, 'raw_ratio': raw_ratio,
+                        'visible_ratio': visible_ratio,
+                        'detail': '同一容器内可视区域重叠面积占较小控件 %.0f%%' % (visible_ratio * 100)}
+            return {'verdict': 'none', 'same_container': True, 'raw_ratio': raw_ratio,
+                    'visible_ratio': visible_ratio,
+                    'detail': '同一容器内可视区域重叠 %.0f%% 低于阈值' % (visible_ratio * 100)}
+        # No scroll view between them (or viewport unknown but true siblings): the two
+        # boxes cannot be scrolled relative to each other, so compare them directly.
         if ((contains_box(first_box, second_box) and nested_child(first_box, second_box))
                 or (contains_box(second_box, first_box) and nested_child(second_box, first_box))):
             return {'verdict': 'none', 'same_container': True, 'raw_ratio': raw_ratio,
