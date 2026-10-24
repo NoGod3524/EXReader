@@ -212,7 +212,10 @@ final class HostSearchState: ObservableObject {
     }
     func accept(_ batch: HostSearchBatch, key: String, generation expected: Int) {
         guard expected == generation else { return }
-        rows = batch.hits; cursor = batch.next; sourceKey = key
+        // An exact full final batch needs one empty EOF read. Keep its last
+        // usable window; a first empty batch still starts with no rows.
+        if !batch.hits.isEmpty || cursor == nil { rows = batch.hits }
+        cursor = batch.next; sourceKey = key
         complete = batch.complete; running = false; cancelBox = nil
         status = rows.isEmpty && complete ? "没有匹配结果" : "本批 \(rows.count) 项\(complete ? " · 已查找完毕" : " · 还可继续查找")"
     }

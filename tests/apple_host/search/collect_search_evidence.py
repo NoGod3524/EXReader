@@ -20,6 +20,8 @@ CASES = {
         'independent-found-selected', 'restart-recomputes-query'],
     'testNoHitPreservesReader': ['original-opens', 'no-hit-complete', 'no-hit-reader-unchanged'],
     'testCancelActualSearchPoll': ['original-opens', 'actual-f1-cancel-poll', 'cancel-reader-unchanged'],
+    'testExactly32HitsKeepFinalWindow': ['original-opens', 'exact-32-first-batch',
+        'empty-tail-keeps-32-and-completes', 'tail-result-remains-selectable'],
 }
 
 
@@ -54,7 +56,7 @@ def main():
     require(provider['installed_search_linked'] is True and provider['static_sdk_linked'] is False, 'F1 provider differs')
     shutil.copytree(app, output / 'program/EXReaderHost.app')
     cases = load_results(xcresult)
-    require(len(cases) == 3 and {case_name(row['name']) for row in cases} == set(CASES) and
+    require(len(cases) == 4 and {case_name(row['name']) for row in cases} == set(CASES) and
             all(row['result'] == 'Passed' for row in cases), 'missing/failed/skipped search case')
     attachments = output / 'attachments'
     command('xcrun', 'xcresulttool', 'export', 'attachments', '--path', xcresult, '--output-path', attachments)
