@@ -4,6 +4,12 @@
 # helper, no SDK private header and no second SQLite build.
 cmake_minimum_required(VERSION 3.24)
 project(EXReaderModuleComposition LANGUAGES C CXX)
+if(MSVC)
+  # Every installed module is built with the static MSVC runtime; a consumer
+  # that keeps the default /MD cannot link them, so state it here as well.
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  add_compile_options(/utf-8)
+endif()
 
 if(NOT EXR_MODULE_PREFIX)
   message(FATAL_ERROR "EXR_MODULE_PREFIX must name the single installed prefix")
@@ -95,6 +101,10 @@ set_target_properties(composition-cxx PROPERTIES CXX_STANDARD 17 CXX_STANDARD_RE
 if(MSVC)
   target_link_options(composition-cxx PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/composition-link.map")
   target_link_options(composition-c PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/composition-c-link.map")
+elseif(APPLE)
+  # ld64 spells the map flag in lower case and has no --trace-symbol.
+  target_link_options(composition-cxx PRIVATE "-Wl,-map,${CMAKE_CURRENT_BINARY_DIR}/composition-link.map")
+  target_link_options(composition-c PRIVATE "-Wl,-map,${CMAKE_CURRENT_BINARY_DIR}/composition-c-link.map")
 else()
   target_link_options(composition-cxx PRIVATE
     "-Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/composition-link.map" "-Wl,--trace-symbol=sqlite3_open_v2")

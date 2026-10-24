@@ -106,7 +106,10 @@ def judged(report_path, required, label, problems):
         problems.append(label + ' wrote no report')
         return {'checks': [], 'failures': 1}
     report = json.loads(Path(report_path).read_text(encoding='utf-8'))
-    names = [item['name'] for item in report.get('checks', [])]
+    if not isinstance(report.get('checks'), list):
+        problems.append(label + ' reported no check list')
+        return {'checks': [], 'failures': 1}
+    names = [item['name'] for item in report['checks']]
     duplicated = sorted({name for name in names if names.count(name) > 1})
     if duplicated:
         problems.append(label + ' reported duplicate items: ' + ', '.join(duplicated))
