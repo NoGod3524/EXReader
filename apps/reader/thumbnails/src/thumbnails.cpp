@@ -807,13 +807,28 @@ bool store(rth_cache* c, const std::string& key, rth_origin origin, const unsign
   }
   const auto inserted = c->entries.emplace(name, rth_cache::Entry{key, width, height, need, 0});
   c->total += need;
+  // If anything below throws (the publish path allocates), the entry must not stay in
+  // the map: the map would then claim bytes that are not on disk.
+  struct Rollback {
+    rth_cache* cache;
+    std::string name;
+    uint64_t bytes;
+    bool armed = true;
+    ~Rollback() {
+      if (!armed) return;
+      cache->entries.erase(name);
+      cache->total -= bytes;
+    }
+  } rollback{c, name, need};
   std::error_code ec;
   if (!publish_file(c, c->dir / name, file.data(), file.size(), ec)) {
+    rollback.armed = false;
     c->entries.erase(inserted.first);  // the file was not published: keep map and disk equal
     c->total -= need;
     ++c->stats.store_failures;
     return false;
   }
+  rollback.armed = false;
   inserted.first->second.tick = ++c->clock;
   ++c->stats.stores;
   write_index(c);

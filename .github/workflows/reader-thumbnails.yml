@@ -139,15 +139,17 @@ jobs:
           ASAN_OPTIONS: detect_leaks=0:abort_on_error=1
           UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
         run: |
-          set -o pipefail
-          python3 tests/reader_thumbnails/make_fixtures.py build/thumb-fixtures-asan 2>&1 | tee build/thumb-logs/fixtures-asan.log
+          mkdir -p build/thumb-logs build/asan-evidence
+          python3 tests/reader_thumbnails/make_fixtures.py build/thumb-fixtures-asan > build/thumb-logs/fixtures-asan.log 2>&1
           set +e
-          build/consumer-asan/thumb-probe --fixtures build/thumb-fixtures-asan --repo-fixtures tests/fixtures --work build/asan-work --report build/asan-evidence/probe.json 2>&1 | tee build/thumb-logs/probe-asan.log
-          status=$PIPESTATUS[0]
+          build/consumer-asan/thumb-probe --fixtures build/thumb-fixtures-asan --repo-fixtures tests/fixtures --work build/asan-work --report build/asan-evidence/probe.json > build/thumb-logs/probe-asan.log 2>&1
+          status=$?
           set -e
-          tail -n 1 build/thumb-logs/probe-asan.log
-          grep -q 'failures=0' build/thumb-logs/probe-asan.log
-          test "$status" = 0
+          tail -n 3 build/thumb-logs/probe-asan.log
+          echo "probe exit code: $status"
+          if [ "$status" != "0" ]; then echo "the sanitized probe exited $status"; exit 1; fi
+          if ! grep -q 'failures=0' build/thumb-logs/probe-asan.log; then echo "the sanitized probe reported failures"; exit 1; fi
+          if grep -qE 'ERROR: (Address|Leak)Sanitizer|runtime error:' build/thumb-logs/probe-asan.log; then echo "a sanitizer reported a defect"; exit 1; fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
