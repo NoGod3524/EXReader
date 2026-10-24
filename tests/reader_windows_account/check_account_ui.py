@@ -219,6 +219,13 @@ class Device(M.MetadataApp):
         except AssertionError:
             return False
 
+    def details_for(self, title):
+        """Select the named shelf row with the real list control, then press the real details button."""
+        self.wait_idle()
+        send(self.control('books'), 0x186, self.row(title))
+        send(U.GetDlgItem(self.window, M.DETAILS), BM_CLICK)
+        return self.dialog()
+
     def open_account(self):
         self.wait_idle()
         send(U.GetDlgItem(self.window, ACCOUNT), BM_CLICK)
@@ -396,13 +403,14 @@ def main():
         # A real typed metadata edit so remote title, author and favorite differ from SDK defaults.
         small_key = 'txt:' + hashes['Remote Small.txt']
         title0 = sql('device-a', 'SELECT title FROM reader_books WHERE book_key=?', (small_key,))[0][0]
-        A.wait_idle();send(A.control('books'), 0x186, A.row(title0))
-        dialog = A.details();set_text(U.GetDlgItem(dialog, M.TITLE), 'Remote Title ✓ 书名')
+        A.wait(lambda: A.has_row(title0))
+        dialog = A.details_for(title0);set_text(U.GetDlgItem(dialog, M.TITLE), 'Remote Title ✓ 书名')
         set_text(U.GetDlgItem(dialog, M.AUTHOR), 'Remote Author 作者')
         if send(U.GetDlgItem(dialog, M.FAVORITE), BM_GETCHECK) != 1:
             send(U.GetDlgItem(dialog, M.FAVORITE), BM_CLICK)
         send(U.GetDlgItem(dialog, M.SAVE), BM_CLICK);A.closed(dialog)
-        assert sql('device-a', 'SELECT title,author,favorite FROM reader_books WHERE book_key=?', (small_key,)) == [('Remote Title ✓ 书名', 'Remote Author 作者', 1)]
+        edited = sql('device-a', 'SELECT title,author,favorite FROM reader_books WHERE book_key=?', (small_key,))
+        assert edited == [('Remote Title ✓ 书名', 'Remote Author 作者', 1)], edited
         record('typed_metadata_edit_creates_the_remote_title_author_and_favorite_to_preserve')
 
         # ===== account controls: refusal, secure save, binding and no plaintext =====
@@ -501,8 +509,8 @@ def main():
         A = new_device('device-a', existing=True)
         title_a = sql('device-a', 'SELECT title FROM reader_books WHERE book_key=?', ('epub:' + hashes['Account Epub.epub'],))[0][0]
         A.wait(lambda: A.has_row(title_a))
-        send(A.control('books'), 0x186, A.row(title_a))
-        dialog = A.details();set_text(U.GetDlgItem(dialog, M.TITLE), 'Epub Retitled Remotely')
+        A.wait(lambda: A.has_row(title_a))
+        dialog = A.details_for(title_a);set_text(U.GetDlgItem(dialog, M.TITLE), 'Epub Retitled Remotely')
         send(U.GetDlgItem(dialog, M.SAVE), BM_CLICK);A.closed(dialog)
         dialog = A.open_account();A.run_sync(dialog);A.close_account(dialog)
         dialog = B.open_account();B.run_sync(dialog)
