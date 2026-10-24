@@ -140,6 +140,14 @@
                     android:layout_height="wrap_content"
                     android:text="Rebuild"
                     android:contentDescription="Rebuild activity" />
+
+                <Button
+                    android:id="@+id/reader_more"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="更多"
+                    android:contentDescription="阅读更多操作"
+                    android:visibility="gone" />
             </LinearLayout>
 
             <LinearLayout
