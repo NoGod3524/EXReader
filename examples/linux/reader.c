@@ -70,13 +70,14 @@ static void shelf_schedule_restore(void);
 static void shelf_scrolled(GtkAdjustment *adjustment,gpointer unused);
 static gboolean shelf_check_edges(gpointer unused) {
   (void)unused;shelf_edge_idle=0;
+  if(closing) return G_SOURCE_REMOVE;
   shelf_scrolled(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(shelf_scroll)),NULL);
   return G_SOURCE_REMOVE;
 }
 #endif
 
 static void state(void) {
-  if(!state_path) return;
+  if(!state_path || !window || gtk_widget_in_destruction(window)) return;
   GtkTextIter a,b;size_t selected=0;
   if(gtk_text_buffer_get_selection_bounds(gtk_text_view_get_buffer(GTK_TEXT_VIEW(text)),&a,&b))
     selected=(size_t)(gtk_text_iter_get_offset(&b)-gtk_text_iter_get_offset(&a));
@@ -226,7 +227,8 @@ static GtkWidget *shelf_top_row(void) {
   return GTK_WIDGET(gtk_list_box_get_row_at_y(GTK_LIST_BOX(shelf),(int)gtk_adjustment_get_value(adjustment)));
 }
 static void shelf_allocated(GtkWidget *widget,GtkAllocation *allocation,gpointer unused) {
-  (void)widget;(void)allocation;(void)unused;shelf_layout++;
+  (void)widget;(void)allocation;(void)unused;if(closing) return;
+  shelf_layout++;
   if(!shelf_edge_idle) shelf_edge_idle=g_idle_add(shelf_check_edges,NULL);
 }
 static void shelf_remember(void) {
@@ -267,6 +269,7 @@ static gboolean shelf_save_viewport(gpointer unused) {
 }
 static void shelf_scrolled(GtkAdjustment *adjustment,gpointer unused) {
   (void)unused;
+  if(closing) return;
   if(shelf_filter_pending || shelf_restoring || !shelf_query || strcmp(gtk_stack_get_visible_child_name(GTK_STACK(stack)),"shelf")) return;
   shelf_remember();if(viewport_timer) g_source_remove(viewport_timer);
   viewport_timer=g_timeout_add(300,shelf_save_viewport,NULL);
@@ -589,7 +592,12 @@ static void stop_worker(void) {
   if(accounts_defer_exit()) return;
 #endif
   if(closing) return;
-  closing=TRUE;g_atomic_int_inc(&generation);host_job *stop=g_new0(host_job,1);stop->stop=1;g_async_queue_push(queue,stop);state();
+  closing=TRUE;
+#ifdef EXR_READER_PRODUCT_CATALOG
+  guint *sources[]={&search_timer,&viewport_timer,&restore_timer,&shelf_edge_idle};
+  for(size_t i=0;i<G_N_ELEMENTS(sources);i++) if(*sources[i]) { g_source_remove(*sources[i]);*sources[i]=0; }
+#endif
+  g_atomic_int_inc(&generation);host_job *stop=g_new0(host_job,1);stop->stop=1;g_async_queue_push(queue,stop);state();
 }
 static gboolean close_window(GtkWidget *w,GdkEvent *event,gpointer unused) {
   (void)w;(void)event;(void)unused;

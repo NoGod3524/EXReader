@@ -206,7 +206,9 @@ def main():
         # Persist a nondefault value: restoring defaults must fail this check.
         host.key('F5')
         host.wait(lambda s: s['font'] == 26 and s['error'] == 0)
-        host.key('F4', 'F4')
+        host.key('F4')
+        host.wait(lambda s: s['page'] == 1)
+        host.key('F4')
         saved = host.wait(lambda s: s['page'] == 2)
         report['restart_expected'] = saved
         book.unlink()

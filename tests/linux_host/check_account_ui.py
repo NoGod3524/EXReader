@@ -29,7 +29,7 @@ from check_sync import raw, revision
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    for name in ('payload', 'metadata-consumer', 'output'):
+    for name in ('payload', 'metadata-consumer', 'revision-consumer', 'output'):
         parser.add_argument('--' + name, type=Path, required=True)
     args = parser.parse_args()
     assert os.environ.get('GITHUB_ACTIONS') == 'true'
@@ -182,6 +182,14 @@ def main():
         with sqlite3.connect(host.folder / 'profile/library.sqlite.product.sqlite') as db:
             return db.execute(query, values).fetchall()
 
+    def protocol(action, *values):
+        done = subprocess.run([str(args.revision_consumer.resolve()), action,
+                               str(host.folder / 'profile/library.sqlite.product.sqlite'), *map(str, values)],
+                              capture_output=True, text=True, timeout=45)
+        assert done.returncode == 0, 'installed revision consumer failed'
+        value = json.loads(done.stdout);assert value['status'] == 0, value
+        return value
+
     def account():
         state = configparser.ConfigParser(interpolation=None);state.read(host.observe)
         return dict(state['account']) if state.has_section('account') else {}
@@ -279,7 +287,9 @@ def main():
         assert not requests and account()['session_generation'] == '0'
         record('back_during_local_preparation_cancels_owner_work_before_network_start')
         open_account();start_preparing();command('wmctrl', '-ic', hex(int(host.window)))
-        assert host.process.wait(timeout=35) == 0;host.log.close();assert not requests
+        close_code = host.process.wait(timeout=35);host.log.close()
+        assert close_code == 0, {'close_exit': close_code, 'account': account(), 'http_requests': len(requests)}
+        assert not requests, {'unexpected_http_requests': len(requests), 'account': account()}
         record('main_window_close_during_preparation_retires_queued_owner_work_before_shutdown')
         host.launch();open_account()
         host.key('alt+s');done = ready(lambda s: s['session_state'] in ('4', '5'), seconds=180)
@@ -325,6 +335,34 @@ def main():
         failed = ready(lambda s: s['session_state'] == '5');assert failed['retry_enabled'] == '1'
         flags['http'] = 0;host.key('alt+t');assert ready(lambda s: s['session_state'] in ('4', '5'), seconds=180)['session_state'] == '4'
         record('server_failure_is_visible_and_only_explicit_retry_resumes_the_scan')
+        disconnect()
+        parent = sql("SELECT revision_id FROM reader_revisions WHERE entity_kind='book' AND entity_key=?", (first,))[0][0]
+        first_digest = first.split(':', 1)[1]
+        for index, title in enumerate(('Unselected branch one', 'Unselected branch two')):
+            conflict = revision(20001 + index, shard=64 + index, kind='book', key=first, parents=(parent,), payload={
+                'format': 'txt', 'source_sha256': first_digest, 'source_bytes': len(originals[first_digest]),
+                'title': title, 'author': 'Concurrent branch', 'favorite': bool(index)})
+            wire = folder / ('local-conflict-%d.json' % index);wire.write_bytes(raw(conflict));protocol('local', wire)
+        before_heads = protocol('heads', 'book', first)
+        assert before_heads['state']['heads'] == 2 and not before_heads['state']['projection_safe']
+        conflict_history = sql("SELECT revision_id,body_json FROM reader_revisions WHERE entity_kind='book' AND entity_key=? ORDER BY revision_id", (first,))
+        remote_tag = revision(99992, shard=0, kind='tag', key='9' * 32, payload={'name': 'Received while a local book has conflicts'})
+        wire = raw(remote_tag)
+        entries['/dav/exreader-sync-v1/revisions/00/' + remote_tag['id'] + '-' + hashlib.sha256(wire).hexdigest() + '.json'] = wire
+        host.key('alt+s');conflicted = ready(lambda s: s['session_state'] in ('4', '5'), seconds=180)
+        assert conflicted['session_state'] == '4' and conflicted['seen'] == '52' and conflicted['bootstraps'] == '0', conflicted
+        after_heads = protocol('heads', 'book', first)
+        assert after_heads['state'] == before_heads['state'] and after_heads['heads'] == before_heads['heads']
+        assert sql("SELECT revision_id,body_json FROM reader_revisions WHERE entity_kind='book' AND entity_key=? ORDER BY revision_id", (first,)) == conflict_history
+        assert sql('SELECT book_key,title,author,sort_title,favorite FROM reader_books ORDER BY book_key') == baseline
+        assert (staged / (first_digest + '.txt')).read_bytes() == originals[first_digest]
+        assert sql('SELECT count(*) FROM reader_revisions WHERE revision_id=?', (remote_tag['id'],)) == [(1,)]
+        assert sql('SELECT count(*) FROM reader_outbox') == [(0,)]
+        report['conflict_fixture'] = {'book_key': first, 'original_sha256': first_digest, 'source_bytes': len(originals[first_digest]),
+                                      'heads': before_heads['heads'], 'graph': before_heads['state'],
+                                      'received_revision_id': remote_tag['id'], 'product_metadata_preserved': True,
+                                      'bootstrap_or_projection_performed': False}
+        record('verified_local_book_with_two_heads_stages_original_without_selecting_or_projecting_and_still_receives_remote_records')
         disconnect();before = len(requests);field('w', root.replace('/dav/', '/other/'));host.key('alt+a')
         refused = ready(lambda s: 'bound to its account and exact root' in s['notice'])
         assert refused['root'] == root and len(requests) == before
@@ -392,7 +430,7 @@ def main():
                 data = path.read_bytes();assert not any(form in data for form in forms), 'credential leak in ' + str(path.relative_to(folder))
         assert not any(form in body for form in forms for body in entries.values())
         record('credentials_and_authorization_are_absent_from_profiles_product_databases_wire_and_all_evidence')
-        assert len(checks) == 22, len(checks)
+        assert len(checks) == 23, len(checks)
         report.update(accepted=True, count=len(checks), local_originals=52, credential_leak_hits=0,
                       actual_secret_service='temporary unlocked then locked GNOME collection', native_https=True)
     finally:

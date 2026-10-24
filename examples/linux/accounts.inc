@@ -211,8 +211,8 @@ static exr_status accounts_pending(linux_reader *reader,reader_result *result) {
 static exr_status accounts_bootstrap(linux_reader *reader,const account_local_book *book,const char *hash,uint64_t bytes,reader_result *result,int *created) {
   reader_metadata_snapshot *snapshot=NULL;reader_metadata_error error={0};reader_metadata_result submitted={0};*created=0;
   reader_metadata_status code=reader_metadata_prepare_book(reader->metadata,book->key,&snapshot,&error);
+  const reader_metadata_view *view=reader_metadata_snapshot_view(snapshot);
   if(code==READER_METADATA_NEEDS_BOOTSTRAP) {
-    const reader_metadata_view *view=reader_metadata_snapshot_view(snapshot);
     if(!view || strcmp(view->book.source_sha256,hash) || view->book.source_bytes!=bytes) code=READER_METADATA_CONFLICT;
     else {
       reader_metadata_verified_source proof={view->book.format,hash,bytes};
@@ -220,6 +220,11 @@ static exr_status accounts_bootstrap(linux_reader *reader,const account_local_bo
       if(code==READER_METADATA_OK) code=reader_metadata_finish_pending(reader->metadata,&submitted,&error);
       if(code==READER_METADATA_OK) *created=1;
     }
+  } else if(code==READER_METADATA_CONFLICT && view && view->present && view->graph.revisions && !view->needs_bootstrap &&
+      !strcmp(view->book.book_key,book->key) && !strcmp(view->book.source_sha256,hash) && view->book.source_bytes==bytes) {
+    /* Original identity is proven independently. Stage its bytes while keeping
+       every existing head and product field; raw sync does not select a head. */
+    code=READER_METADATA_OK;
   }
   reader_metadata_snapshot_free(snapshot);
   if(code==READER_METADATA_OK) return EXR_OK;
