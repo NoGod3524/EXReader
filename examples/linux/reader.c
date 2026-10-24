@@ -597,7 +597,7 @@ static void shelf_activated(GtkListBox *box,GtkListBoxRow *row,gpointer unused) 
   (void)box;(void)unused;int64_t *id=g_object_get_data(G_OBJECT(row),"book-id");
 #ifdef EXR_READER_ACCOUNT
   const char *key=g_object_get_data(G_OBJECT(row),"book-key");
-  if(key && GPOINTER_TO_INT(g_object_get_data(G_OBJECT(row),"received-kind"))) {
+  if(key && (!id || *id<=0) && GPOINTER_TO_INT(g_object_get_data(G_OBJECT(row),"received-kind"))) {
     accounts_conflict_activated(box,row,NULL);return;
   }
   if(key && (!id || *id<=0)) {

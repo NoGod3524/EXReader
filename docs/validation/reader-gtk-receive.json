@@ -1,6 +1,6 @@
 {
   "accepted": false,
-  "status": "three retained cloud refusals; corrected complete rerun pending",
+  "status": "preceding complete source passed; local conflict offline-read fix and stronger recovery proof pending",
   "baseline": "d2b59e9e9b3ad3e3246c23926f0fbebbaa9515f8",
   "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
   "source_sha": null,
@@ -30,7 +30,24 @@
     "attempt": 1,
     "job_id": 120834788359,
     "conclusion": "failure",
-    "reason": "Receive test helper tried to obtain module-level command/raw functions from main() locals. It now imports those existing helpers directly. This interim source also used -u SQLite ordering; final source removes that in favor of normal installed product target dependencies."
+    "reason": "Receive test helper tried to obtain module-level command/raw functions from main() locals. It now imports those existing helpers directly. This interim source also used -u SQLite ordering; final source removes that in favor of normal installed product target dependencies.",
+    "artifact": {"id": 12555745967, "size_in_bytes": 20697428, "digest": "sha256:da2c25d49d45df6a74908cb39f4b27dc88e70d27d15ef07c9435986772c0d5ce"}
+  }],
+  "earlier_passed_candidates": [{
+    "source_sha": "3a9084891f2aa49171bb5405629c67e832fab555",
+    "run_id": 40081634220,
+    "attempt": 1,
+    "job_id": 120836227049,
+    "conclusion": "success",
+    "account_and_receive_checks": 45,
+    "retained_gtk_ui_checks": 105,
+    "retained_fault_checks": 4,
+    "desktop_ctest": 4,
+    "product_ctest": 1,
+    "sqlite_provider": "libreader_catalog_sqlite.a",
+    "program_sha256": "48dc3d9e8df1b00de90deab090a880872b1d077d4577095db8639d9dba375bda",
+    "artifact": {"id": 12555667708, "size_in_bytes": 39972255, "digest": "sha256:ef7dd22f9093372badbc7f1da4e2dad29dce91a6195f3041565ef0f11bc2ff4b", "expires_at": "2027-01-22T09:21:33Z"},
+    "scope": "superseded by explicit offline opening of mapped metadata-conflict books and stronger old-reader/page assertions; not transferred to later source"
   }],
   "granted_platforms": [],
   "physical_device_execution": false,
