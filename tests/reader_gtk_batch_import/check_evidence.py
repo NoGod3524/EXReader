@@ -44,6 +44,7 @@ def main():
     try:
         own = load('gtk-batch-ui/report.json', count=27, grant='batch_import_scope_passed')
         assert own['checks_failed'] == 0 and own['accepted'] is False and own['complete_product'] is False
+        assert own['diagnostic_only'] is False and own['program_source_sha'] == source
         required = {
             'native_flat_scan_exact_results_and_real_file_failures',
             'normal_completion_does_not_mean_truncation_or_cancellation',
