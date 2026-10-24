@@ -65,7 +65,11 @@ SPEAKING/PAUSED -> READY            （收到该请求终态）
 - `voice_id` 为 NULL 或空串使用系统默认；非空 id 必须是 `reader_tts_voices` 返回的 id 之一，
   否则 ARGUMENT。id 是 SAPI token id 的 UTF-8 形式，`language` 尽量给出 BCP-47 标签
   （token 的 `Language` 是十六进制 LCID 时用 `LOCALE_SNAME` 换算）。
-- READY 之后能力位为 `READER_TTS_CAN_PAUSE | READER_TTS_CAN_REPORT_RANGE`。
+- 能力位按实际能力动态给出：`READER_TTS_CAN_PAUSE` 在 READY 后始终可用；`READER_TTS_CAN_REPORT_RANGE`
+  **只在该句柄真的收到过引擎词位置之后**才置位。Windows Server 2022 上把 SAPI 输出到 WAV 文件
+  （无音频端点）时，引擎既不产生 word-boundary 事件（`GetEvents` 返回 S_FALSE），也不更新
+  `GetStatus` 的 `ulInputWordPos/ulInputWordLen`，因此这条路下 RANGE 不置位、也不伪造进度；
+  UTF-16→UTF-8 的字节换算由包内 `reader_tts_windows_debug_map_utf16` 覆盖（见验收）。
 
 ## 构建、安装与消费
 

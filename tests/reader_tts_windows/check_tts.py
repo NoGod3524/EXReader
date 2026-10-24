@@ -134,7 +134,7 @@ def main():
         "source_sha": os.environ.get("GITHUB_SHA", ""),
         "run_id": os.environ.get("GITHUB_RUN_ID", ""),
         "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT", ""),
-        "job": os.environ.get("GITHUB_JOB", ""),
+        "job": os.environ.get("TTS_PRODUCER_JOB", os.environ.get("GITHUB_JOB", "")),
         "runner": {"os": "Windows", "image": os.environ.get("ImageOS", "")},
         "phases": [],
         "diagnostics": [],

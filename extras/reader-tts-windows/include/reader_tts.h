@@ -76,10 +76,12 @@
  *  - voice_id NULL or "" selects the system default. A non-empty id must be one of the
  *    ids returned by reader_tts_voices(); any other value is ARGUMENT.
  *
- * Capabilities reported on Windows once READY: READER_TTS_CAN_PAUSE |
- * READER_TTS_CAN_REPORT_RANGE. Synthesis succeeds only if the machine has at least one
- * SAPI voice token; without one the handle stays SERVICE_UNAVAILABLE and no mock stands
- * in for speech.
+ * Capabilities: READER_TTS_CAN_PAUSE once READY. READER_TTS_CAN_REPORT_RANGE is set
+ * only after this handle has actually received an engine word position; a host that
+ * speaks to a stream output on a machine without an audio endpoint may never see one,
+ * in which case the bit stays clear and no progress is invented. Synthesis succeeds
+ * only if the machine has at least one SAPI voice token; without one the handle stays
+ * SERVICE_UNAVAILABLE and no mock stands in for speech.
  */
 #ifndef READER_TTS_H
 #define READER_TTS_H
