@@ -97,9 +97,12 @@ struct request {
     }else{
       if(given.empty()){
         if(command.operation!=READER_RC_PUT||command.kind==READER_RC_NOTE_TEXT||!parents.empty())reject("Only a new bookmark or highlight can allocate its annotation ID");
-        char generated[33];reader_revision_error e{};
-        if(reader_revision_new_id(generated,&e)!=READER_REV_OK)throw failure{READER_RC_REVISION,"Cannot allocate an annotation ID",{},e};
-        given=generated;
+        given=retained_annotation();
+        if(given.empty()){
+          char generated[33];reader_revision_error e{};
+          if(reader_revision_new_id(generated,&e)!=READER_REV_OK)throw failure{READER_RC_REVISION,"Cannot allocate an annotation ID",{},e};
+          given=generated;
+        }
       }else if(!hex32(given))reject("Invalid annotation ID");
       annotation_id=given;key=book_key+":"+annotation_id;assigned(result.annotation_id,sizeof(result.annotation_id),annotation_id);
     }
@@ -114,6 +117,24 @@ struct request {
     env.entity_kind=annotation?"annotation":"progress";env.book_key=book_key.c_str();env.annotation_id=annotation?annotation_id.c_str():nullptr;
     env.parents=pointers.empty()?nullptr:pointers.data();env.parent_count=pointers.size();env.note_text=annotation?text.c_str():nullptr;env.parser_version=parser;
     return env;
+  }
+  /* A caller that lost the first response keeps only the stable revision ID, so an
+     empty annotation ID must not mean "allocate another identity": if a revision is
+     already retained under that ID, its annotation is re-derived from the retained
+     entity key. The rebuilt wire is then byte-identical, which the module answers
+     with created == 0 (COLLISION only if the payload really differs). */
+  std::string retained_annotation()const{
+    owned held;size_t bytes=0;reader_revision_info info{};reader_revision_error e{};
+    reader_revision_status st=reader_revision_get(context.store,revision_id.c_str(),&held.wire,&bytes,&info,&e);
+    if(st==READER_REV_NOT_FOUND)return std::string();
+    if(st!=READER_REV_OK)throw failure{READER_RC_REVISION,"Cannot read the retained revision",{},e};
+    if(std::strcmp(info.entity_kind,"annotation"))refuse(READER_RC_SOURCE,"The retained revision ID belongs to another entity");
+    std::string key=info.entity_key;size_t colon=key.rfind(':');
+    if(colon==std::string::npos||key.size()-colon-1!=32||key.compare(0,colon,book_key))
+      refuse(READER_RC_SOURCE,"The retained revision belongs to another annotation");
+    std::string aid=key.substr(colon+1);
+    if(!hex32(aid))refuse(READER_RC_SOURCE,"The retained revision has no annotation identity");
+    return aid;
   }
   std::string encode(const reader_rs_envelope &env,const reader_rs_capture &capture,size_t part,bool v1)const{
     produced out;size_t bytes=0;reader_rs_error e{};
