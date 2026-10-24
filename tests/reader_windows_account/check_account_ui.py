@@ -434,7 +434,8 @@ def main():
         return json.loads(done.stdout.strip().splitlines()[-1])
 
     def revision_heads(name, kind, key):
-        return consume(args.revision_consumer.resolve(), 'heads', product_db(name), kind, key)['heads']
+        """Head ids only: the consumer reports each head as an object with id/operation."""
+        return [row['id'] for row in consume(args.revision_consumer.resolve(), 'heads', product_db(name), kind, key)['heads']]
 
     def receive_record(name, value):
         """Stores exact remote bytes in this product store; independent of any UI path."""
