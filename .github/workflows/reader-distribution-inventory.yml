@@ -73,11 +73,11 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $vs = & "$env:ProgramFiles(x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
           $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
           if (-not (Test-Path $bat)) { throw "vcvars64.bat not found under $vs" }
           cmd /c "`"$bat`" >nul && set" | ForEach-Object {
-            if ($_ -match '^([^=]+)=(.*)') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
           }
           "CC=cl" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
       - name: Record the workspace layout
