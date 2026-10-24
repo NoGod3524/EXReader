@@ -106,7 +106,10 @@ static INT_PTR CALLBACK metadata_dialog_procedure(HWND dialog,UINT message,WPARA
       metadata_clear_ui();
       if(g.window && IsWindow(g.window)) {
         host_a11y_owner_enabled(1);
-        if(!g.closing) { SetActiveWindow(g.window);SetFocus(g.metadata_button);product_shelf_schedule(0,0); }
+        /* Closing a read-only/cancelled editor has no shelf mutation. Save and
+           discard completions already schedule their own refresh; refreshing
+           here disables the just-restored invoking button and loses focus. */
+        if(!g.closing) { SetActiveWindow(g.window);SetFocus(g.metadata_button); }
       }
       return TRUE;
   }
