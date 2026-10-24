@@ -1,0 +1,140 @@
+name: Reader real corpus
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "pin records byte counts and SHA-256 without running the SDK; accept runs the installed SDK"
+        type: choice
+        options: [accept, pin]
+        default: accept
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reader-real-corpus
+  cancel-in-progress: false
+
+jobs:
+  pin:
+    if: inputs.mode == 'pin'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Collect pinned sizes and hashes (no SDK)
+        run: python3 tests/reader_real_corpus/run_acceptance.py pin --out build/reader-corpus-pin
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-real-corpus-pin
+          path: |
+            build/reader-corpus-pin/pin.json
+            build/reader-corpus-pin/assets/
+          retention-days: 30
+          if-no-files-found: warn
+
+  protocol:
+    if: inputs.mode == 'accept'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Protocol checks (no corpus download, no engine)
+        run: python3 tests/reader_real_corpus/protocol_check.py --manifest tests/reader_real_corpus/manifest.json
+
+  acceptance:
+    if: inputs.mode == 'accept'
+    needs: protocol
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            python: python
+            font: C:/Windows/Fonts/arial.ttf
+            consumer: build/reader-consumer/Release/exreader-real-corpus-consumer.exe
+          - os: ubuntu-22.04
+            python: python3
+            font: /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
+            consumer: build/reader-consumer/exreader-real-corpus-consumer
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure the frozen SDK
+        shell: bash
+        run: cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AAC=OFF
+      - name: Build and install the frozen SDK
+        shell: bash
+        run: |
+          cmake --build build/sdk --config Release --parallel 4
+          cmake --install build/sdk --config Release --prefix stage
+      - name: Build the consumer against the installed SDK
+        shell: bash
+        run: |
+          cmake -S tests/reader_real_corpus -B build/reader-consumer -DEXR_SDK="$PWD/stage" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/reader-consumer --config Release --parallel 4
+      - name: Run the real-document acceptance
+        shell: bash
+        run: |
+          ${{ matrix.python }} tests/reader_real_corpus/run_acceptance.py run \
+            --manifest tests/reader_real_corpus/manifest.json \
+            --out build/reader-corpus \
+            --consumer "${{ matrix.consumer }}" \
+            --font "${{ matrix.font }}" \
+            --source-commit "$GITHUB_SHA" \
+            --run-id "$GITHUB_RUN_ID" \
+            --attempt "$GITHUB_RUN_ATTEMPT"
+      - name: Boundary fixtures (separate, never counted as real)
+        if: always()
+        continue-on-error: true
+        shell: bash
+        run: |
+          ${{ matrix.python }} tests/reader_real_corpus/make_boundary.py \
+            --consumer "${{ matrix.consumer }}" \
+            --font "${{ matrix.font }}" \
+            --out build/reader-boundary.json
+      - name: Preserve inputs, outputs and per-operation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-real-corpus-${{ matrix.os }}
+          path: |
+            build/reader-corpus/summary.json
+            build/reader-corpus/downloads.json
+            build/reader-corpus/license-evidence.json
+            build/reader-corpus/assets/
+            build/reader-corpus/licenses/
+            build/reader-corpus/results/
+            build/reader-boundary.json
+          retention-days: 30
+          if-no-files-found: warn
+
+  aggregate:
+    if: always() && inputs.mode == 'accept'
+    needs: acceptance
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: reader-real-corpus-*
+          path: build/artifacts
+      - name: Strict cross-platform aggregate
+        run: |
+          set -eu
+          win=$(find build/artifacts -path '*windows-latest*/summary.json' -print -quit)
+          linux=$(find build/artifacts -path '*ubuntu-22.04*/summary.json' -print -quit)
+          test -n "$win"
+          test -n "$linux"
+          python3 tests/reader_real_corpus/run_acceptance.py aggregate --summaries "$win" "$linux" --out build/aggregate.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-real-corpus-aggregate
+          path: build/aggregate.json
+          retention-days: 30
+          if-no-files-found: warn
