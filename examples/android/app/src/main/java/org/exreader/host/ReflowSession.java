@@ -51,6 +51,7 @@ final class ReflowSession implements AutoCloseable {
     }
     PageLoad seekReading(NativeReadingSdk.Match match,HostTask task)throws Exception {
         if(!match.found())throw new IllegalArgumentException("Reading location is not FOUND");
+        if(bounded==null&&match.recaptured.mode!=ReadingCapture.REFLOW)throw new NativeReadingSdk.Projection();
         return bounded!=null?bounded.seekReading(match,task):seek(match.recaptured.start,task);
     }
     void saveProgress(PageSnapshot page) { bounded.saveProgress(page); }

@@ -28,6 +28,8 @@ G04以32项keyset页显示书签/高亮/笔记及tombstone。非SAFE状态只显
 
 CBZ 在冻结 SDK 中没有 text provider，不能通过公开 fixed anchor 接口产生真实捕获；本面板明确报告不支持，不以空白捕获替代。空白 PDF 有公开空文本快照，其真实点捕获单独验证。固定 selector 中的 NUL 会原长传给 SDK；产品 wire 的现有限制仍由 G03/codec 明确拒绝，不截断后保存。
 
+旧导入 EPUB 的 global renderer 与现代 bounded chapter renderer 使用不同坐标。收到另一投影模式的产品 selector 时明确拒绝导航/恢复，不把章节字节偏移当作全书偏移；保留原修订和当前画面。专用夹具通过真实 legacy 导入及独立公开 pager 捕获第二章位置，再经 G03/G04 验证拒绝路径。
+
 新测试包含 14 组首进程检查、1 组真实提交后杀进程再精确重试、1 组再次重开检查。全部仍待 Actions 首轮运行；源码中写出的断言不算通过证据。
 
 保留原件导出、18捕获/原宿主17+2/DAV、正式16、搜索15及导航18，随后执行新阅读记录真实UI正反例。覆盖SDK capture→G03→G04→独立FOUND、三种mode及v2字节、非SAFE状态、旧selector/body编辑、delete/明确restore、过期观察head、取消/生命周期与提交响应不确定后的进程重开exact-retry；核对SDK notes/旧progress与产品修订的写入边界及Debug/Release provider/依赖材料。

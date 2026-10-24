@@ -8,6 +8,7 @@ final class NativeReadingSdk {
     static {System.loadLibrary("exreader_host");}
     static final int FOUND=1,AMBIGUOUS=2,LEGACY=3;
     static final class Unsupported extends java.io.IOException {Unsupported(){super("此格式不支持位置捕获（CBZ）");}}
+    static final class Projection extends java.io.IOException {Projection(){super("记录的分页方式与当前文档不同，未跳转");}}
     static final class Match {
         final int sdk,state;final long unit,start,end;final ReadingCapture recaptured;
         Match(long[] values,ReadingCapture capture){if(values==null||values.length!=5)throw new IllegalStateException("Incomplete reading resolution");sdk=(int)values[0];state=(int)values[1];unit=values[2];start=values[3];end=values[4];recaptured=capture;if(state==FOUND&&(sdk!=0||capture==null))throw new IllegalStateException("FOUND requires a genuine recapture");}
@@ -25,6 +26,7 @@ final class NativeReadingSdk {
     static Match resolve(BookStore store,long book,ReadingCapture capture,byte[] font,float size,HostTask task,ReadingControl control)throws Exception {
         store.searchOwner();BookStore.VerifiedSource source=store.verifySource(book,null,0,task);
         if(!source.key.equals(capture.bookKey)||!("exreader-sdk-"+nativeVersion()).equals(capture.parser))throw new IllegalStateException("Reading original or parser differs");
+        int displayedMode=source.book.fixed()?ReadingCapture.FIXED:source.location.equals("epub_chapter")?ReadingCapture.EPUB:ReadingCapture.REFLOW;if(capture.mode!=displayedMode)throw new Projection();
         task.check();Match result=nativeResolve(store.nativeLibrary().checked(),book,capture.numbers(),capture.route(),capture.bytes(),font,size,control);task.check();return result;
     }
     static String parser(){return "exreader-sdk-"+nativeVersion();}
