@@ -62,7 +62,7 @@ IDS = {
     'zoom_dec': 115, 'zoom_inc': 116, 'cancel': 117, 'shelf_label': 118,
     'books': 119, 'notes_label': 120, 'notes': 121, 'comment': 122,
     'page': 123, 'page_label': 124, 'status': 125, 'search': 126,
-    'refresh': 127,
+    'refresh': 127, 'metadata': 128,
 }
 
 LABEL_FIXED = re.compile(r'第 (\d+) / (\d+) 页')
@@ -403,11 +403,17 @@ class Host:
     def close(self):
         peak = self.memory()
         if self.process.poll() is None:
-            try:
-                if self.window:
-                    U.PostMessageW(self.window, WM_CLOSE, 0, 0)
-                self.process.wait(timeout=30)
-            except Exception:
+            # The host drops a close request while a job runs, so retry instead
+            # of waiting out a long timeout and killing a mid-write profile.
+            for _ in range(20):
+                try:
+                    if self.window:
+                        U.PostMessageW(self.window, WM_CLOSE, 0, 0)
+                    self.process.wait(timeout=1.5)
+                    break
+                except subprocess.TimeoutExpired:
+                    continue
+            if self.process.poll() is None:
                 self.process.kill()
                 self.process.wait(timeout=30)
         self.sampler.stop()
@@ -532,16 +538,31 @@ def op_window(host, deadline=240):
 
 
 def op_first_screen(host, deadline=240):
+    """Time the product shelf, not the legacy pre-catalog list.
+
+    At startup the host first fills the list from the SDK library; only after the
+    product catalog repair finishes does the product page replace it. The product
+    state is observable through the details button (enabled with product_ready)
+    and through the product row format (no legacy offset suffix).
+    """
     marks = op_window(host, deadline)
 
     def rows_ready():
+        details = U.GetDlgItem(host.window, IDS['metadata'])
+        if details and not U.IsWindowEnabled(details):
+            return None
         try:
-            return (True,) if host.lb_count(80) >= 50 else None
+            if host.lb_count(80) < 50:
+                return None
+            if '偏移' in host.lb_item(0, 80):
+                return None
         except (TimeoutError, MeasurementFault):
             return None
+        return (True,)
 
     host.poll(rows_ready, deadline, interval=0.004)
     marks['rows_ms'] = round(now_ms() - host.t0, 3)
+    marks['product_ready_ms'] = marks['rows_ms']
     try:
         marks['roundtrip_ms'] = round(host.roundtrip(5000), 3)
         marks['first_screen_interactive_ms'] = round(now_ms() - host.t0, 3)
