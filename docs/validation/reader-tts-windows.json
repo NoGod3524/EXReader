@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "accepted": false,
+  "scope": "independent optional Windows SAPI 5 text-to-speech component (frozen reader_tts 0.1.0 C ABI), installed-package C consumer and C++ probe, real synthesis to WAV; host wiring, listening judgement and physical playback devices are outside this package",
+  "module": "EXReaderTTSWindows",
+  "module_version": "0.1.0",
+  "abi": "reader_tts 0.1.0 (frozen common contract)",
+  "task": "docs/handoffs/reader-next-wave/tts-windows.md",
+  "contract": "docs/handoffs/reader-next-wave/tts-contract.md",
+  "base_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "product_schema": 1,
+  "branch": "codex/reader-tts-windows",
+  "workflow": ".github/workflows/reader-tts-windows.yml",
+  "source_sha": null,
+  "run_id": null,
+  "attempt": null,
+  "run_status": "pending",
+  "run_conclusion": "pending",
+  "guards": {
+    "head_equals_github_sha": null,
+    "fixed_start_ancestor": null,
+    "frozen_sdk_tree_unchanged": null,
+    "package_only_changes": null,
+    "module_sources_without_logging": null,
+    "default_build_excludes_module": null
+  },
+  "same_source_summary": null,
+  "jobs": [],
+  "checks": null,
+  "expected_checks": null,
+  "wavs": null,
+  "granted": [],
+  "pending": [
+    "first GitHub Actions run of the Windows acceptance job",
+    "retrospective strict verification of both artifacts of that run",
+    "host wiring by root (reading UI, chunking, lifecycle)"
+  ],
+  "not_exercised": [
+    "human listening judgement of the synthesised speech",
+    "playback through a physical audio device (no audio endpoint on the runner)",
+    "Windows host integration (root-owned)"
+  ],
+  "limits": {
+    "max_utf8_bytes": [
+      1,
+      16384
+    ],
+    "rate": [
+      0.5,
+      2
+    ],
+    "events": 128,
+    "range_events": 112
+  },
+  "original_failures": []
+}

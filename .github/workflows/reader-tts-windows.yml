@@ -1,0 +1,160 @@
+name: Windows native TTS
+on:
+  push:
+    branches: [codex/reader-tts-windows]
+  workflow_dispatch:
+    inputs:
+      target_run_id:
+        description: Completed run id to verify retrospectively (leave empty to run the tests)
+        required: false
+        default: ''
+      target_attempt:
+        description: Attempt of the target run
+        required: false
+        default: ''
+      target_sha:
+        description: Tested commit of the target run
+        required: false
+        default: ''
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+env:
+  START_SHA: f43baf9182d75907c0cb5d6f77048f27bca8c950
+  FROZEN_SDK: 9854061be331fe603a1822d9b2b36ee357154927
+  TTS_PRODUCER_JOB: tts (windows-2022)
+jobs:
+  windows:
+    name: tts (windows-2022)
+    if: github.event_name == 'push' || github.event.inputs.target_run_id == ''
+    runs-on: windows-2022
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK and package-only changes
+        run: bash tests/reader_tts_windows/check_scope.sh
+      - name: Record the runner SAPI voice inventory
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path build/tts/evidence | Out-Null
+          $out = 'build/tts/evidence/sapi-voices.txt'
+          "OS: $((Get-CimInstance Win32_OperatingSystem).Caption)" | Out-File $out -Encoding utf8
+          "Build: $((Get-CimInstance Win32_OperatingSystem).BuildNumber)" | Out-File $out -Append -Encoding utf8
+          foreach ($path in @('HKLM:\SOFTWARE\Microsoft\Speech\Voices\Tokens','HKLM:\SOFTWARE\WOW6432Node\Microsoft\Speech\Voices\Tokens','HKLM:\SOFTWARE\Microsoft\Speech_OneCore\Voices\Tokens')) {
+            "== $path" | Out-File $out -Append -Encoding utf8
+            if (Test-Path $path) {
+              Get-ChildItem $path | ForEach-Object {
+                $name = (Get-ItemProperty $_.PSPath -Name '(default)' -ErrorAction SilentlyContinue).'(default)'
+                "$($_.PSChildName) | $name" | Out-File $out -Append -Encoding utf8
+              }
+            } else {
+              "absent" | Out-File $out -Append -Encoding utf8
+            }
+          }
+          Get-Content $out
+      - name: Enter Windows native compiler environment
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          New-Item -ItemType Directory -Force -Path build | Out-Null
+          $lines = @('@echo off', ('call "' + $bat + '" >nul'), 'set')
+          Set-Content -Path build\vcvars-set.bat -Value $lines -Encoding ascii
+          cmd /c build\vcvars-set.bat | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install the independent optional component
+        run: |
+          set -o pipefail
+          ws=$(cygpath -m "$PWD")
+          echo "TTS_WS=$ws" >> "$GITHUB_ENV"
+          mkdir -p build/tts/logs build/tts/stage build/tts/consumer
+          cmake --version | tee build/tts/logs/cmake-version.log
+          (where cl || true) | tee build/tts/logs/compiler.log
+          cmake -S extras/reader-tts-windows -B build/module -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$ws/build/tts/stage" 2>&1 | tee build/tts/logs/configure.log
+          cmake --build build/module --config Release --verbose 2>&1 | tee build/tts/logs/build.log
+          cmake --install build/module --config Release 2>&1 | tee build/tts/logs/install.log
+          cp build/module/CMakeCache.txt build/tts/logs/module-CMakeCache.txt
+      - name: Compile the installed C consumer and C++ probe
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_tts_windows/consumer -B build/consumer -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$TTS_WS/build/tts/stage" 2>&1 | tee build/tts/logs/consumer-configure.log
+          cmake --build build/consumer --config Release --verbose 2>&1 | tee build/tts/logs/consumer-build.log
+          cmake -S tests/reader_tts_windows/probe -B build/probe -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$TTS_WS/build/tts/stage" 2>&1 | tee build/tts/logs/probe-configure.log
+          cmake --build build/probe --config Release --verbose 2>&1 | tee build/tts/logs/probe-build.log
+          cp build/consumer/tts-consumer.exe build/tts/consumer/
+          cp build/probe/tts-probe.exe build/tts/consumer/
+          cp build/consumer/CMakeCache.txt build/tts/logs/consumer-CMakeCache.txt
+          cp build/probe/CMakeCache.txt build/tts/logs/probe-CMakeCache.txt
+          ls -l build/tts/consumer build/tts/stage/include build/tts/stage/lib
+      - name: Actual SAPI synthesis acceptance
+        run: |
+          python tests/reader_tts_windows/check_tts.py \
+            --consumer build/tts/consumer/tts-consumer.exe \
+            --probe build/tts/consumer/tts-probe.exe \
+            --module-prefix build/tts/stage \
+            --output build/tts
+      - name: Preserve source-bound logs, installed component and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-tts-windows-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/tts/
+          if-no-files-found: error
+
+  report:
+    name: same-source report
+    needs: [windows]
+    if: always() && (github.event_name == 'push' || github.event.inputs.target_run_id == '')
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require verifier rejection fixtures to fail for the right reasons
+        run: python3 tests/reader_tts_windows/check_aggregate.py --output build/aggregate/rejections
+      - name: Strictly bind the run artifact, its logs and its report to this run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 tests/reader_tts_windows/aggregate.py \
+            --downloads build/downloads \
+            --output build/aggregate
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-tts-windows-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/aggregate/
+          if-no-files-found: error
+
+  verify:
+    name: retrospective verification
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.target_run_id != ''
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify every artifact, log and report of the target run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 tests/reader_tts_windows/aggregate.py \
+            --downloads build/strict/downloads \
+            --output build/strict \
+            --run-id "${{ github.event.inputs.target_run_id }}" \
+            --attempt "${{ github.event.inputs.target_attempt }}" \
+            --source-sha "${{ github.event.inputs.target_sha }}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-tts-windows-strict-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/strict/
+          if-no-files-found: error
