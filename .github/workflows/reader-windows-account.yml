@@ -131,7 +131,7 @@ jobs:
       - name: Real keyboard and UI Automation regression on the packaged host
         run: |
           python3 -m pip install "uiautomation==2.0.29" 2>&1 | tee build/account-logs/a11y-pip.log
-          python3 tests/reader_windows_account/check_a11y_ui.py --candidate build/account-package/EXReader/EXReader.exe --package build/account-package/EXReader --output build/account-a11y 2>&1 | tee build/account-logs/a11y-ui.log
+          python3 tests/reader_windows_account/check_a11y_ui.py --candidate build/account-package/EXReader/EXReader.exe --package build/account-package/EXReader --fixtures build/account-reading-fixtures --output build/account-a11y 2>&1 | tee build/account-logs/a11y-ui.log
       - name: Preserve source-bound evidence, packaged EXE and link graph
         id: upload
         if: always()
@@ -179,7 +179,7 @@ jobs:
         run: |
           test "$ACCOUNT_RESULT" = success
           test -n "$ARTIFACT_ID"
-          python3 tests/reader_windows_account/verify_summary.py --artifact-id "$ARTIFACT_ID" --upload-digest "$ARTIFACT_DIGEST" --account-checks 32 --a11y-checks 21 --output build/account-summary
+          python3 tests/reader_windows_account/verify_summary.py --artifact-id "$ARTIFACT_ID" --upload-digest "$ARTIFACT_DIGEST" --account-checks 32 --a11y-checks 24 --output build/account-summary
       - name: Preserve strict summary
         if: always()
         uses: actions/upload-artifact@v4

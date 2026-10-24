@@ -166,9 +166,15 @@ def wait(predicate, timeout=30, what="condition"):
     raise TimeoutError(what)
 
 
+def compare_endpoints(left, endpoint, right, other_endpoint):
+    # uiautomation 2.0.29's wrapper forgets to unwrap its target TextRange.
+    # Call the same public IUIAutomationTextRange method with both COM objects.
+    return left.textRange.CompareEndpoints(endpoint, right.textRange, other_endpoint)
+
+
 def main():
     parser = argparse.ArgumentParser()
-    for name in ("candidate", "package", "output"):
+    for name in ("candidate", "package", "fixtures", "output"):
         parser.add_argument("--" + name, type=Path, required=True)
     args = parser.parse_args()
     assert os.name == "nt" and os.environ.get("GITHUB_ACTIONS") == "true"
@@ -402,9 +408,9 @@ def main():
         assert cursor.GetText(-1) == fresh_text
         clip = units.Clone()
         assert clip.MoveEndpointByUnit(0, 0, -10**6) <= 0
-        assert clip.CompareEndpoints(0, units, 0) == 0
+        assert compare_endpoints(clip, 0, units, 0) == 0
         assert clip.MoveEndpointByUnit(1, 0, 10**6) >= 0
-        assert clip.CompareEndpoints(1, units, 1) == 0
+        assert compare_endpoints(clip, 1, units, 1) == 0
         record("text_units_truncation_and_endpoints_follow_the_contract")
 
         ascii_range = units.FindText("abcdef", False, False)
@@ -431,13 +437,13 @@ def main():
         assert crossing.GetText(-1) == ""
         target = ascii_range.Clone()
         assert target.MoveEndpointByUnit(0, 0, 3) == 3
-        assert crossing.CompareEndpoints(0, target, 0) == 0
+        assert compare_endpoints(crossing, 0, target, 0) == 0
         crossing.MoveEndpointByRange(0, ascii_range, 1)
-        assert crossing.CompareEndpoints(0, ascii_range, 1) == 0
-        assert crossing.CompareEndpoints(1, ascii_range, 1) == 0
+        assert compare_endpoints(crossing, 0, ascii_range, 1) == 0
+        assert compare_endpoints(crossing, 1, ascii_range, 1) == 0
         assert crossing.MoveEndpointByUnit(1, 0, -(2**31)) < 0
-        assert crossing.CompareEndpoints(0, units, 0) == 0
-        assert crossing.CompareEndpoints(1, units, 0) == 0
+        assert compare_endpoints(crossing, 0, units, 0) == 0
+        assert compare_endpoints(crossing, 1, units, 0) == 0
         record("crossing_endpoints_follow_the_moved_endpoint_and_int_min_is_bounded")
 
         unicode_range = units.FindText("e\u0301😀中", False, False)
@@ -490,12 +496,19 @@ def main():
         bounds = page.BoundingRectangle
         range_from_point = getattr(pattern, "RangeFromPoint", None)
         assert range_from_point is not None, "uiautomation has no RangeFromPoint"
-        point_range = range_from_point(int(single_rects[0] + single_rects[2] / 2),
+        # The left quarter is nearer the leading caret. The cell midpoint is
+        # equidistant from two insertion points and has no unique expected side.
+        point_range = range_from_point(int(single_rects[0] + single_rects[2] / 4),
                                       int(single_rects[1] + single_rects[3] / 2))
         assert point_range is not None
         point_range.ExpandToEnclosingUnit(0)
         assert point_range.GetText(-1) == single.GetText(-1), (point_range.GetText(-1), single.GetText(-1))
         record("range_from_point_uses_the_host_hit_test")
+        outside = range_from_point(int(bounds.left - 200), int(single_rects[1] + single_rects[3] / 2))
+        assert outside is not None and outside.GetText(-1) == ""
+        outside.ExpandToEnclosingUnit(0)
+        assert outside.GetText(-1) == single.GetText(-1), (outside.GetText(-1), single.GetText(-1))
+        record("outside_page_points_return_the_nearest_degenerate_text_range")
 
         # 13) one clean Tab cycle over every enabled stop
         element(control(101)).SetFocus()
@@ -512,6 +525,82 @@ def main():
         assert len(order) >= 18, len(order)
         assert focus_of(process.pid) == order[0], "the cycle did not close"
         record("tab_order_visits_every_enabled_stop_once_and_closes")
+
+        # Exercise the same provider on real PDF and bounded EPUB frames, using
+        # independent literal fixture text, native keyboard import/open and UIA.
+        def row_with(title):
+            count = USER32.SendMessageW(control(119), 0x018B, 0, 0)  # LB_GETCOUNT
+            for index in range(count):
+                length = USER32.SendMessageW(control(119), 0x018A, index, 0)  # LB_GETTEXTLEN
+                if length < 0 or length > 4096:
+                    continue
+                label = C.create_unicode_buffer(length + 1)
+                USER32.SendMessageW(control(119), 0x0189, index, C.addressof(label))
+                if title in label.value:
+                    return index
+            return None
+
+        for filename, title, literal, check in (
+            ("pages.pdf", "pages", "Fixed page one.", "pdf_text_geometry_hit_and_selection_use_the_rendered_regions"),
+            ("book.epub", "Reading state fixture", "Repeated spine chapter", "bounded_epub_text_geometry_hit_and_selection_use_the_rendered_glyphs"),
+        ):
+            old = pattern.DocumentRange
+            old_text = old.GetText(-1)
+            path = C.create_unicode_buffer(str((args.fixtures / filename).resolve()))
+            wait(lambda: USER32.IsWindowEnabled(control(102)), 120, filename + " import ready")
+            USER32.SendMessageW(control(101), 0x000C, 0, C.addressof(path))
+            element(control(102)).SetFocus()
+            wait(lambda: focus_of(process.pid) == control(102), 10, filename + " import focus")
+            tap(VK_SPACE)
+            wait(lambda: "已导入" in window_text(control(125)) and USER32.IsWindowEnabled(control(102)),
+                 120, filename + " imported")
+            wait(lambda: row_with(title) is not None, 60, filename + " visible shelf row")
+            USER32.SendMessageW(control(119), 0x0186, row_with(title), 0)
+            element(control(103)).SetFocus()
+            wait(lambda: focus_of(process.pid) == control(103), 10, filename + " open focus")
+            tap(VK_SPACE)
+
+            def loaded_range():
+                try:
+                    value = pattern.DocumentRange
+                    return value if value.GetText(-1).startswith(literal) else None
+                except Exception:
+                    return None  # readiness only; all behavioral assertions follow
+
+            current = wait(loaded_range, 120, filename + " literal page text")
+            assert old.GetText(-1) == old_text
+            refused = False
+            try:
+                old.Select()
+            except Exception as error:
+                code = getattr(error, "hresult", error.args[0] if error.args else None)
+                assert code == UIA_E_ELEMENTNOTAVAILABLE, error
+                refused = True
+            assert refused, filename + " accepted selection from the previous book"
+            whole_rects = current.GetBoundingRectangles()
+            assert len(whole_rects) >= 8 and len(whole_rects) % 4 == 0, whole_rects
+            assert len({round(whole_rects[i + 1], 1) for i in range(0, len(whole_rects), 4)}) >= 2
+            first = current.Clone()
+            first.ExpandToEnclosingUnit(0)
+            assert first.GetText(-1) == literal[0]
+            boxes = first.GetBoundingRectangles()
+            assert len(boxes) == 4 and boxes[2] > 0 and boxes[3] > 0, boxes
+            at = pattern.RangeFromPoint(int(boxes[0] + boxes[2] / 4), int(boxes[1] + boxes[3] / 2))
+            assert at and at.GetText(-1) == ""
+            at.ExpandToEnclosingUnit(0)
+            assert at.GetText(-1) == literal[0], (filename, at.GetText(-1))
+            outside = pattern.RangeFromPoint(int(page.BoundingRectangle.left - 200), int(boxes[1] + boxes[3] / 2))
+            assert outside and outside.GetText(-1) == ""
+            outside.ExpandToEnclosingUnit(0)
+            assert outside.GetText(-1) == literal[0], (filename, outside.GetText(-1))
+            chosen = current.FindText(literal, False, False)
+            assert chosen and chosen.GetText(-1) == literal
+            chosen.Select()
+            selected = pattern.GetSelection()
+            assert len(selected) == 1 and selected[0].GetText(-1) == literal
+            print(json.dumps({"format": filename, "text_prefix": current.GetText(32),
+                              "rectangles": list(whole_rects), "first": list(boxes)}, ensure_ascii=False), flush=True)
+            record(check)
 
         report = {"accepted": not failures, "source_sha": os.environ["GITHUB_SHA"], "run_id": os.environ["GITHUB_RUN_ID"],
                   "attempt": os.environ["GITHUB_RUN_ATTEMPT"], "checks": checks, "count": len(checks),
