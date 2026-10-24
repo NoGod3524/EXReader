@@ -16,7 +16,7 @@ def main():
     (link/'root/parent/book.txt').write_text('selected original\n');(link/'external/book.txt').write_text('outside replacement\n')
     before=subprocess.run([str(a.original_probe),'enumerate','--root',str(link/'root'),'--recursive','--out',str(link/'before.tsv')],capture_output=True,text=True,timeout=60)
     assert before.returncode==0 and 'parent/book.txt' in (link/'before.tsv').read_text()
-    (link/'root/parent').rename(link/'root/original-parent');supported,detail=make_junction(str(link/'root/parent'),str((link/'external').resolve()))
+    (link/'root/parent').rename(link/'root/original-parent');supported,detail=make_junction(str((link/'root/parent').absolute()),str((link/'external').resolve()))
     assert supported,detail
     for name in ('directory-budget','parent-link','copy-change','concurrent'):
         result=subprocess.run([str(a.probe),name,str((a.work/name).resolve())],capture_output=True,text=True,timeout=90)
