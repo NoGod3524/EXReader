@@ -7,7 +7,7 @@ from check_apple_product import inspect
 import json
 
 
-LIBRARIES = ('reader_session', 'reader_sync', 'exr_webdav', 'reader_commands',
+LIBRARIES = ('reader_search', 'reader_session', 'reader_sync', 'exr_webdav', 'reader_commands',
              'reader_reading_state_codec', 'reader_revisions', 'reader_revision_hash',
              'reader_catalog', 'reader_catalog_sqlite', 'exr_credentials')
 
@@ -34,9 +34,10 @@ def main():
     args = parser.parse_args()
     arguments = args.arguments[1:] if args.arguments[:1] == ['--'] else args.arguments
     if any(Path(value).name == 'HostModel.swift' for value in arguments):
-        account = Path(__file__).absolute().parents[1] / 'examples/apple/HostAccount.swift'
-        if not any(Path(value).name == account.name for value in arguments):
-            arguments.append(str(account))
+        for filename in ('HostAccount.swift', 'HostSearch.swift'):
+            source = Path(__file__).absolute().parents[1] / 'examples/apple' / filename
+            if not any(Path(value).name == source.name for value in arguments):
+                arguments.append(str(source))
     output = Path(arguments[arguments.index('-o') + 1])
     mapping = Path(str(output) + '.link.map')
     subprocess.run(['xcrun', 'swiftc', *arguments, *flags(args.sdk), '-Xlinker', '-map',

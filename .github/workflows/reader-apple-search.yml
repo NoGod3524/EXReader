@@ -1,0 +1,110 @@
+name: Apple native in-book search
+on:
+  push:
+    branches: [codex/reader-apple-search-ui]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+env:
+  SDK_BASELINE: 9854061be331fe603a1822d9b2b36ee357154927
+jobs:
+  sdk:
+    name: Frozen SDK and installed F1
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed SDK schema and tested F1 module
+        run: |
+          git diff --exit-code "$SDK_BASELINE" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code a6d7dd81eef36e83e004fdc381a565a2ffee5462 HEAD -- apps/reader/store/001_catalog.sql
+          test "$(git rev-parse HEAD:apps/reader/search)" = 2e09cb2945564f25085074a816b95472392df205
+          git merge-base --is-ancestor a1a41b08a3661bb01170e37031913649b2b296db HEAD
+      - name: Build unchanged public SDK and install optional products
+        run: |
+          cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AAC=OFF
+          cmake --build build/sdk --parallel 4
+          cmake --install build/sdk --prefix stage/macos
+          python3 tools/build_apple_product.py --sdk stage/macos --target macos --build build/product
+          python3 tests/apple_host/evidence_contract.py sdk --root stage/macos --platform macos --output build/sdk-identity.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-search-sdk-macos-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            stage/macos/
+            build/sdk-identity.json
+          include-hidden-files: true
+          if-no-files-found: error
+  native:
+    name: Native search and original adapter contracts
+    needs: sdk
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: apple-search-sdk-macos-${{ github.run_id }}-${{ github.run_attempt }}
+          path: sdk-artifact
+      - name: Prepare fixtures and compile the actual owner bridge
+        run: |
+          set -o pipefail
+          mkdir -p build/apple-search-native
+          python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
+          sdk="$PWD/sdk-artifact/stage/macos"
+          python3 tools/apple_swift.py --sdk "$sdk" -- -swift-version 5 -parse-as-library -O -D EXR_APPLE_HOST_REVIEW \
+            -I "$sdk/include" -L "$sdk/lib" -lexreader -Xlinker -rpath -Xlinker "$sdk/lib" \
+            examples/apple/HostSDK.swift examples/apple/HostModel.swift examples/apple/HostCatalog.swift examples/apple/SelectableText.swift \
+            tests/apple_host/search/SearchReview.swift -o build/apple-search-native/search-review \
+            2>&1 | tee build/apple-search-native/build.log
+          build/apple-search-native/search-review build/apple-resources build/apple-search-native/consumer \
+            2>&1 | tee build/apple-search-native/consumer.log
+      - name: Retain all original catalog and mapping checks
+        run: |
+          set -o pipefail
+          sdk="$PWD/sdk-artifact/stage/macos"
+          python3 tools/apple_swift.py --sdk "$sdk" -- -swift-version 5 -parse-as-library examples/apple/HostCatalog.swift \
+            tests/reader_catalog/apple_catalog_check.swift -o build/apple-search-native/catalog-check
+          build/apple-search-native/catalog-check apps/reader/store/001_catalog.sql build/apple-search-native/catalog.json
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil, zipfile
+          root = Path('build/apple-resources')
+          shutil.copyfile(root / 'Sample.epub', root / 'MappingLarge.epub')
+          padding = Path('build/apple-search-native/padding.bin')
+          with padding.open('wb') as stream:
+              stream.truncate(33 * 1024 * 1024)
+          with zipfile.ZipFile(root / 'MappingLarge.epub', 'a', compression=zipfile.ZIP_STORED) as archive:
+              archive.write(padding, 'unreferenced-bounded-source.bin')
+          padding.unlink()
+          PY
+          python3 tools/apple_swift.py --sdk "$sdk" -- -swift-version 5 -parse-as-library -O -D EXR_APPLE_HOST_REVIEW \
+            -I "$sdk/include" -L "$sdk/lib" -lexreader -Xlinker -rpath -Xlinker "$sdk/lib" \
+            examples/apple/HostSDK.swift examples/apple/HostModel.swift examples/apple/HostCatalog.swift examples/apple/SelectableText.swift \
+            tests/apple_host/import_mapping/MappingReview.swift -o build/apple-search-native/mapping-review
+          build/apple-search-native/mapping-review build/apple-resources build/apple-search-native/mapping \
+            2>&1 | tee build/apple-search-native/mapping.log
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          for name, count in [('consumer/search-review.json', 10), ('catalog.json', 8), ('mapping/mapping-review.json', 16)]:
+              value = json.loads((Path('build/apple-search-native') / name).read_text())
+              assert value['accepted'] is True and value['failed'] == value['skipped'] == 0
+              assert value['source_sha'] == os.environ['GITHUB_SHA']
+              assert str(value['run_id']) == os.environ['GITHUB_RUN_ID']
+              assert str(value['attempt']) == os.environ['GITHUB_RUN_ATTEMPT']
+              assert len(value['checks']) == count and len({row['id'] for row in value['checks']}) == count
+              assert all(row['passed'] is True for row in value['checks'])
+          provider = json.loads(Path('build/apple-search-native/search-review.product.json').read_text())
+          assert provider['installed_search_linked'] is True and provider['static_sdk_linked'] is False
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-search-native-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-search-native/
+          if-no-files-found: error
