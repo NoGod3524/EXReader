@@ -31,3 +31,8 @@ target_link_libraries(thumb-regress PRIVATE EXReaderThumbnails::reader_thumbnail
 # binary to make the n-th allocation fail.
 add_executable(thumb-fault fault.cpp)
 target_link_libraries(thumb-fault PRIVATE EXReaderThumbnails::reader_thumbnails EXReader::exr_library)
+if(WIN32)
+  target_link_libraries(thumb-fault PRIVATE dbghelp)
+elseif(UNIX AND NOT APPLE)
+  target_link_options(thumb-fault PRIVATE -rdynamic -no-pie)
+endif()
