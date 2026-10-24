@@ -29,6 +29,9 @@ SOURCE_PATHS = ['CMakeLists.txt', 'src', 'include', 'cmake', 'bindings/jni', 'ex
                 '.github/workflows/wp13-android.yml']
 SOURCE_PATHS += ['.github/workflows/r5-android-bounded-candidate.yml']
 SOURCE_PATHS += ['tools/reader_catalog_assets.py', 'apps/reader/store/001_catalog.sql']
+SOURCE_PATHS += ['apps/reader/store/native', 'apps/reader/revisions', 'apps/reader/commands',
+                 '.github/workflows/reader-owner-android.yml', 'tools/check_reader_owner_android.py',
+                 'tests/android_host/check_owner_evidence_gate.py']
 
 
 def ownership():
@@ -138,7 +141,7 @@ def native_record(data):
 
 def apk_native(apk):
     with zipfile.ZipFile(apk) as archive:
-        expected = {'lib/x86_64/' + name for name in ('libexreader.so', 'libexreader_jni.so', 'libexreader_host.so')}
+        expected = {'lib/x86_64/' + name for name in ('libexreader.so', 'libexreader_jni.so', 'libexreader_host.so', 'libexreader_product.so')}
         names = [name for name in archive.namelist() if name.startswith('lib/') and name.endswith('.so')]
         require(len(names) == len(expected) and set(names) == expected, 'APK native set differs from the declared x86_64 runtime')
         return {name: native_record(archive.read(name)) for name in sorted(expected)}

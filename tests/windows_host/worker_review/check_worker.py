@@ -58,13 +58,13 @@ def set_text(window, text):
 
 
 class App:
-    def __init__(self, exe, font, profile, bounded=False):
+    def __init__(self, exe, font, profile, bounded=False, existing=False):
         self.bounded = bounded
         self.note_table = 'epub_notes' if bounded else 'notes'
         self.profile = profile
-        profile.mkdir(parents=True)
+        profile.mkdir(parents=True, exist_ok=existing)
         self.db = profile/'library.sqlite'
-        self.log = (profile/'application.log').open('wb')
+        self.log = (profile/'application.log').open('ab' if existing else 'wb')
         self.process = subprocess.Popen([str(exe), '--font', str(font), '--data', str(profile)],
                                         stdout=self.log, stderr=subprocess.STDOUT)
         self.window = None

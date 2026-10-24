@@ -1,6 +1,7 @@
 name: Required native reading SDK
 on:
   pull_request:
+    branches: [codex/framework]
   push:
     branches: [codex/framework]
   workflow_dispatch:
@@ -15,6 +16,8 @@ jobs:
       - uses: actions/checkout@v4
       - run: python3 tests/check_reading_release.py
       - run: python3 tests/check_reading_required.py
+      - run: python3 tests/check_reading_real_environments.py
+      - run: python3 tests/check_reading_cpu_export.py
       - run: python3 tests/check_reading_release_plan.py
   native:
     uses: ./.github/workflows/native.yml
