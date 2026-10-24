@@ -15,6 +15,10 @@ def validate(dependencies, symbols, link_map):
     providers = [line.strip() for line in link_map.splitlines()
                  if 'libreader_catalog_sqlite.a' in line and 'sqlite3.c.o' in line]
     assert len(providers) == 1, 'installed product SQLite object missing or duplicated'
+    objects = dict(re.findall(r'^\[\s*(\d+)\]\s+(.+)$', link_map, re.M))
+    owners = re.findall(r'^0x[0-9a-fA-F]+\s+0x[0-9a-fA-F]+\s+\[\s*(\d+)\]\s+_sqlite3_open_v2\s*$', link_map, re.M)
+    assert len(owners) == 1 and re.search(r'libreader_catalog_sqlite\.a(?:\[\d+\])?\(sqlite3\.c\.o\)$',
+                                        objects.get(owners[0], '')), 'SQLite symbol belongs to another provider'
     assert not re.search(r'libexr_(?:library|core)\.a', link_map), 'second static SDK provider'
     assert 'libreader_reading_state.a' not in link_map, 'host must use its dynamic SDK resolver'
     return providers[0]
@@ -35,10 +39,13 @@ def inspect(binary, link_map):
                           'dependencies': dependencies}), flush=True)
         raise
     rejected = []
+    wrong_owner = re.sub(r'(?m)^(0x[0-9a-fA-F]+\s+0x[0-9a-fA-F]+\s+\[\s*)\d+(\]\s+_sqlite3_open_v2\s*)$',
+                         r'\g<1>999999\2', mapping)
     cases = [('system_sqlite', dependencies + '\n/usr/lib/libsqlite3.dylib', symbols, mapping),
              ('missing_symbol', dependencies, '', mapping),
              ('duplicate_symbol', dependencies, symbols + '\n0 T _sqlite3_open_v2\n', mapping),
              ('duplicate_provider', dependencies, symbols, mapping + '\n' + provider),
+             ('wrong_symbol_owner', dependencies, symbols, wrong_owner),
              ('static_sdk', dependencies, symbols, mapping + '\nlibexr_library.a'),
              ('static_resolver', dependencies, symbols, mapping + '\nlibreader_reading_state.a')]
     for name, deps, syms, data in cases:
