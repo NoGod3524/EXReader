@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "recorded_at_utc": "2026-10-24T17:08:50Z",
+  "recorded_at_utc": "2026-10-24T20:21:24Z",
   "current_cycle": 1,
   "completed_cycles": 0,
   "audit_interval": 5,
@@ -9,26 +9,109 @@
   "implementation_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "handoff_commit": "059a7b4fcd0de44674a30fadc7e0fded7cc47acd",
   "integration_source": "4e2dad0bc40aa5b523b98175f19fcb8ddde3eaa3",
-  "integration_runs": [40116411109, 40118190108],
+  "integration_runs": [
+    40116411109,
+    40118190108
+  ],
   "bounded_integration_accepted": true,
   "bounded_integration_run": 40118190108,
   "bounded_integration_attempt": 1,
   "non_p0_migration_record": "../reader-next-wave/migration-state.json",
   "integration_branch": "codex/reader-g1-integration",
-  "candidate_merged_package_ids": ["G01", "G02", "G03", "G04", "G05", "G06", "G07", "G08", "G09", "G10", "G11", "G12", "G13", "G14", "G15", "G16"],
+  "candidate_merged_package_ids": [
+    "G01",
+    "G02",
+    "G03",
+    "G04",
+    "G05",
+    "G06",
+    "G07",
+    "G08",
+    "G09",
+    "G10",
+    "G11",
+    "G12",
+    "G13",
+    "G14",
+    "G15",
+    "G16"
+  ],
   "first_common_source_scope": "three-desktop 18-package composition and native Windows retained scopes; other host branches pending integration",
-  "manual_handoff_queue": { "index": "../reader-next-wave/INDEX.md", "prepared_commit": "34ef34ada254519db8c76f62a4b2dadf46775e73", "packages": 25, "dispatched_by_root": false, "prepare_after_each_handback": true },
+  "manual_handoff_queue": {
+    "index": "../reader-next-wave/INDEX.md",
+    "prepared_commit": "34ef34ada254519db8c76f62a4b2dadf46775e73",
+    "packages": 25,
+    "dispatched_by_root": true,
+    "prepare_after_each_handback": true,
+    "dispatched_non_p0": 19,
+    "retain_claude_p0": 6
+  },
   "mainline_owners": [
-    { "agent": "/root/handoff_modules", "branch": "codex/reader-apple-host-account", "completed_ios_evidence_head": "254466e7", "ios_run": 40080841137, "candidate": "281d18ead88a934f10020e7c1c32e6e35766af0a", "candidate_runs": [40109088412, 40109096548, 40109106732], "passed_diagnostic_runs": [40107115391, 40107533231], "candidate_accepted": false, "next_work": "final_same_source_original_shelf_account_and_production_semantics_regression" },
-    { "agent": "/root/handoff_validation", "branch": "codex/reader-gtk-search-ui", "completed_receive_source": "ddaded9b81c2e51de4313919242f883246dd4426", "completed_receive_evidence_head": "8a7cab996f7b3a876254f16a90dab69bbeb9f15a", "completed_receive_run": 40087214516, "settings_evidence_source": "ce912f8c149e30cf3843e39258ae6889235495a0", "settings_evidence_head": "8a5e8a68c627196116e80ea456f12165a4e3209c", "settings_run": 40110581923, "settings_counts": { "executed": 35, "passed": 33, "failed": 2 }, "settings_accepted": false, "next_work": "native_search_ui_with_original_settings_failures_retained", "pending_settings": ["whole_reading_page_background", "dark_reading_page"] },
-    { "agent": "/root/main_android", "branch": "codex/reader-android-navigation-ui", "completed_formal_ui_source": "ed9ff5ffc3608971bb19020f1ec07496a79d9710", "completed_formal_ui_runs": [40090470041, 40090470061, 40090470091], "completed_search_source": "e764f08dea4986f11db183c5b17b41ddb5526bcc", "completed_search_evidence_head": "6bbc49bffd2de66b562a6afc1b7e6a8b91ffa8fa", "completed_search_run": 40111800432, "completed_search_attempt": 2, "completed_search_checks": 15, "next_work": "native_navigation_ui_from_fixed_search_source_and_immutable_F2_module" }
+    {
+      "agent": "/root/handoff_modules",
+      "branch": "codex/reader-apple-navigation-ui",
+      "completed_ios_evidence_head": "254466e7",
+      "ios_run": 40080841137,
+      "candidate": "ae30466a4bd72b343b90f94008373b24d2086b6f",
+      "candidate_runs": [
+        40127300142
+      ],
+      "passed_diagnostic_runs": [
+        40107115391,
+        40107533231
+      ],
+      "candidate_accepted": false,
+      "next_work": "native_F2_navigation_and_preserved_first_container_diagnostic",
+      "search_evidence_head": "356c57a4c641f05e10cff13850e24bd94336454e"
+    },
+    {
+      "agent": "/root/handoff_validation",
+      "branch": "codex/reader-gtk-navigation-ui",
+      "completed_receive_source": "ddaded9b81c2e51de4313919242f883246dd4426",
+      "completed_receive_evidence_head": "8a7cab996f7b3a876254f16a90dab69bbeb9f15a",
+      "completed_receive_run": 40087214516,
+      "settings_evidence_source": "ce912f8c149e30cf3843e39258ae6889235495a0",
+      "settings_evidence_head": "8a5e8a68c627196116e80ea456f12165a4e3209c",
+      "settings_run": 40110581923,
+      "settings_counts": {
+        "executed": 35,
+        "passed": 33,
+        "failed": 2
+      },
+      "settings_accepted": false,
+      "next_work": "complete_native_navigation_same_source_regression",
+      "pending_settings": [
+        "whole_reading_page_background",
+        "dark_reading_page"
+      ],
+      "current_navigation_source": "f31858c6df4a4bf753a0caac67bf229b17b22ef1",
+      "current_navigation_run": 40128621078
+    },
+    {
+      "agent": "/root/main_android",
+      "branch": "codex/reader-android-reading-ui",
+      "completed_formal_ui_source": "ed9ff5ffc3608971bb19020f1ec07496a79d9710",
+      "completed_formal_ui_runs": [
+        40090470041,
+        40090470061,
+        40090470091
+      ],
+      "completed_search_source": "e764f08dea4986f11db183c5b17b41ddb5526bcc",
+      "completed_search_evidence_head": "6bbc49bffd2de66b562a6afc1b7e6a8b91ffa8fa",
+      "completed_search_run": 40111800432,
+      "completed_search_attempt": 2,
+      "completed_search_checks": 15,
+      "next_work": "G03_G04_product_reading_records_native_UI",
+      "current_reading_source": "8ecd160d052b22b12cf7fd9e265b106fa017cdb5",
+      "current_reading_run": 40128548716
+    }
   ],
   "claude_quota": {
     "observed_at_utc": "2026-10-24T09:10:35Z",
-    "five_hour_used_percent": 99,
+    "five_hour_used_percent": 100,
     "reset_in_display": "2 hr 50 min",
-    "weekly_used_percent": null,
-    "weekly_status": "usage_page_loading_not_yet_revalidated",
+    "weekly_used_percent": 74,
+    "weekly_status": "observed_before_nonP0_migration",
     "five_hour_reserve_percentage_points": 10,
     "weekly_reserve_percentage_points": 15,
     "new_dispatch_allowed": false,
@@ -42,7 +125,10 @@
       "previous_owner_stopped": true,
       "checkpoint": "3dbb4b2288862470492853c29382f00d22e1f003",
       "checkpoint_dirty": false,
-      "preserved_live_runs": [40080415165, 40080392664],
+      "preserved_live_runs": [
+        40080415165,
+        40080392664
+      ],
       "new_owner": "DeepSeek Harness Flash1017 High PTC",
       "new_owner_ui_title": "[G01] Windows 账号、同步与收取",
       "new_owner_started": true,
@@ -60,7 +146,10 @@
       "provider_result": "accepted_true_problems_empty_24_targeted_checks_and_original_suites_passed",
       "provider_failed_client_enum_probe_run": 40110638065,
       "provider_failed_partial_shelf_observation_run": 40111567097,
-      "provider_superseded_runs_cancelled": [40111464529, 40113516107],
+      "provider_superseded_runs_cancelled": [
+        40111464529,
+        40113516107
+      ],
       "provider_required_checks": 24,
       "provider_wrapper_failed_run": 40109829474,
       "provider_additional_failed_run": 40109071435,
@@ -165,5 +254,12 @@
     }
   ],
   "audit_history": [],
-  "complete_product": false
+  "complete_product": false,
+  "root_windows_search": {
+    "branch": "codex/reader-windows-search-ui",
+    "accepted": false,
+    "source": "e4bddc310ba5a731596bd4d5b3b29a831cd4bf1b",
+    "next": "cloud build and initial TXT controls, followed by complete lifecycle and retained regressions",
+    "run": 40128929347
+  }
 }

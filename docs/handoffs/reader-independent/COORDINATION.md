@@ -2,7 +2,7 @@
 
 本流程由用户于2026-10-24要求，服务于完整六目标阅读器。每轮以产品候选的固定提交为起点，复用[共同约束](README.md)和[文件归属](ownership.json)。运行记录见[轮次状态](cycle-state.json)。
 
-用户后续修订：**每个包交回后即可准备新的独立包，由用户手动handoff，不必等本轮全部收齐才拆下一批。** 准备/派发与集成计数分开；已验证固定起点、互不写冲突且无未交付依赖的包可先准备。当前新队列见[25个手动交接包](../reader-next-wave/INDEX.md)，它们尚未由root派发，不继承旧run通过。每五个完成集成轮次的审计仍保留；准备25包不计25轮。
+用户后续修订：**每个包交回后即可准备新的独立包，不必等本轮全部收齐才拆下一批。** 准备/派发与集成计数分开。25包曾由用户投放；随后用户要求Claude保留六P0、19个非P0转DeepSeek，root已通过UI逐项完成，见[迁移记录](../reader-next-wave/MIGRATION.md)。同包不能重复派发，不继承旧run通过。每五个完成集成轮次的审计仍保留；派发25包不计25轮。
 
 ## 人员与主线
 
@@ -10,10 +10,10 @@
 
 | owner | 当前主线 | 独占工作树 |
 | --- | --- | --- |
-| `/root/handoff_modules` | iOS原生会话已交回；接续Apple正式宿主、账号和阅读状态 | iOS证据保留原工作树；当前写入`C:/Users/Oscar/.codex/worktrees/reader-apple-shelf/EXReader` |
-| `/root/handoff_validation` | GTK原生书内搜索；保留设置35项中的2项真实失败 | `C:/Users/Oscar/.codex/worktrees/reader-gtk-receive/EXReader` |
-| `/root/main_android` | Android搜索已交回；接续原生目录导航 | `C:/Users/Oscar/.codex/worktrees/reader-android-sync-session/EXReader` |
-| root | 外部分包、额度与接入协调；每五轮综合审计和修复 | 本交接工作树及独立产品集成候选 |
+| `/root/handoff_modules` | Apple搜索已交回；接续原生目录导航与容器证据保全 | `C:/Users/Oscar/.codex/worktrees/reader-apple-shelf/EXReader` |
+| `/root/handoff_validation` | GTK目录导航完整复验；保留设置35项中的2项真实失败 | `C:/Users/Oscar/.codex/worktrees/reader-gtk-receive/EXReader` |
+| `/root/main_android` | Android导航已交回；接续产品阅读记录原生面板 | `C:/Users/Oscar/.codex/worktrees/reader-android-sync-session/EXReader` |
+| root | 外部包审查/共同集成、Windows书内搜索UI、每五轮审计 | 交接/G1集成树及`C:/Users/Oscar/.codex/worktrees/reader-windows-search/EXReader` |
 
 Android owner另独占本轮最小codec拆分：`apps/reader/reading-state/CMakeLists.txt`、`src/reading_state.cpp`、新增`src/reading_resolve.cpp`与必要私有头，以及确需调整的包配置。其他owner不并改这些文件。旧公共API、wire与冻结SDK不变；拆分仍须旧消费者和双owner链接隔离的云端证据。
 
@@ -43,6 +43,6 @@ Android owner另独占本轮最小codec拆分：`apps/reader/reading-state/CMake
 
 ## 首轮状态
 
-当前[G01–G16](INDEX.md)是本流程第1轮，固定实现起点`f43baf9182d75907c0cb5d6f77048f27bca8c950`。16个外部会话已经启动；完成轮数仍为0，尚无本轮共同源码验收。root只按实际接收、审查、合入和复验推进状态，不把派发或单包成功计为完成一轮。
+当前[G01–G16](INDEX.md)是本流程第1轮，固定实现起点`f43baf9182d75907c0cb5d6f77048f27bca8c950`。16包已审查并普通合入G1；共同源码`4e2dad0bc40aa5b523b98175f19fcb8ddde3eaa3`在run40118190108三桌面组合及保留Windows范围7/7通过，证据HEAD3bcc6511。新GTK/Android/Apple宿主尚需共同整合，因此完成轮数仍为0。
 
 本地仅源码、文档和Git；全部构建、测试、语法检查、夹具、测量与工件解析仍在Actions执行。真实tag/Release另取用户授权。
