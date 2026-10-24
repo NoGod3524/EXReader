@@ -60,12 +60,17 @@ final class SearchUITests: XCTestCase {
     }
     func testFindSelectAndProcessRestart() {
         openFixture()
+        let originalLocation = text("reader.location")
         query("C00P040W00")
         XCTAssertTrue(wait { self.app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'search.hit.'")).count == 1 &&
             self.text("search.status").contains("已查找完毕") })
         mark("one-exact-result")
-        app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'search.hit.'")).firstMatch.tap()
-        XCTAssertTrue(wait { self.text("reader.status") == "已精确定位选文" && !self.element("reader.busy").exists })
+        let selected = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'search.hit.'")).firstMatch.identifier
+        tap(selected)
+        XCTAssertTrue(wait { !self.element("search.query").exists && !self.element("reader.busy").exists &&
+            self.text("reader.page").contains("C00P040W00") && self.text("reader.location") != originalLocation },
+            "Resolved selection did not render: status=\(text("reader.status")) error=\(text("reader.error")) tree=\(app.debugDescription)")
+        XCTAssertFalse(element("reader.error").exists)
         XCTAssertTrue(text("reader.page").contains("C00P040W00"))
         let location = text("reader.location")
         mark("independent-found-selected")

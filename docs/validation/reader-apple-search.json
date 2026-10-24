@@ -21,6 +21,25 @@
     "artifact_id": 12569452979,
     "artifact_bytes": 1345938,
     "artifact_digest": "sha256:beae1bac7eb424af7f4bac30151d3011c756f8d698721e6541fa1fef60fd7697"
+  }, {
+    "id": 40119168327,
+    "attempt": 1,
+    "source_sha": "a20738b4fcafe4ed609e81ebb8bf6a498772a4a2",
+    "accepted": false,
+    "conclusion": "failure",
+    "native_search": "10/10",
+    "original_catalog": "8/8",
+    "original_mapping": "16/16",
+    "ui_cases": {"macos": "3/3", "iphone": "3/3", "ipad": "2/3"},
+    "summary": "rejected producer failure",
+    "failure": "iPad selected the unique result, but the probe waited for a transient completion status that can be replaced by a keyboard-induced viewport update. The next candidate keeps the reader outside the sheet keyboard safe area and asserts the actual changed location and rendered matching text instead.",
+    "qualification": "The cancellation latch could stop during publication opening; this run does not grant cancellation inside reader_search_next. The next candidate restricts the latch and adds an actual in-next native cancellation assertion.",
+    "retained_failed_ui_artifact": {
+      "id": 12570064376,
+      "bytes": 113893655,
+      "digest": "sha256:78f455538a5db353eb4cad90d200b587cf6f3fc6b34f4de9c16b83c49c362dd6",
+      "expires_at": "2027-01-22T18:06:22Z"
+    }
   }],
   "platforms": {"macos": "pending", "iphone": "pending", "ipad": "pending"},
   "physical_device_execution": false,
