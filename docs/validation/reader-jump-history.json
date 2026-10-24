@@ -452,19 +452,37 @@
       "run_id": 40122676210,
       "source_sha": "29c95ac41d63fae147bf359774e06f8de258af0f",
       "conclusion": "failure",
-      "cause": "the installed consumers ran but three real defects surfaced: a zeroed reader_jh_item answered VERSION_UNSUPPORTED instead of ARGUMENT, the probe asked the reflow progress getter about PDF and CBZ books, and the checker looked for the installed archive under lib/lib; the probe aborted before the history cases and grants nothing"
+      "cause": "the installed consumers ran but three real defects surfaced: a zeroed reader_jh_item answered VERSION_UNSUPPORTED instead of ARGUMENT, the probe asked the reflow progress getter about PDF and CBZ books, and the checker looked for the installed archive under lib/lib; the probe aborted before the history cases and grants nothing",
+      "jobs": {
+        "Linux": "failure",
+        "Windows": "failure",
+        "macOS": "failure",
+        "evidence": "failure"
+      }
     },
     {
       "run_id": 40124067973,
       "source_sha": "50f118fb8f7c46dc9053d9415b87728aaa9a58c6",
-      "conclusion": "failure",
-      "cause": "the first real landing was refused with REVISION because the shared anchor-v2 wire requires a progress record to be a point; the component was right to refuse a selection as a position"
+      "conclusion": "cancelled",
+      "cause": "the first real landing was refused with REVISION because the shared anchor-v2 wire requires a progress record to be a point; the component was right to refuse a selection as a position. All four jobs had already failed when the run was cancelled to stop the queued macOS retry, so the cancellation changed no result",
+      "jobs": {
+        "Linux": "failure",
+        "Windows": "failure",
+        "macOS": "failure",
+        "evidence": "failure"
+      }
     },
     {
       "run_id": 40124740625,
       "source_sha": "c56f44e6facd1be241c10fcbbe6fc1754e3c6a64",
       "conclusion": "failure",
-      "cause": "all three platform jobs passed; the evidence job then rejected its own comparison because the no-write proof embedded each runner's database path, so no cross-runner equality could hold"
+      "cause": "all three platform jobs passed; the evidence job then rejected its own comparison because the no-write proof embedded each runner's database path, so no cross-runner equality could hold",
+      "jobs": {
+        "Linux": "success",
+        "Windows": "success",
+        "macOS": "success",
+        "evidence": "failure"
+      }
     }
   ],
   "not_modified": [
