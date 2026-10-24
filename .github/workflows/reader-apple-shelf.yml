@@ -160,11 +160,14 @@ jobs:
           destination=$(sed -n '1p' build/apple-shelf-ui/destination.txt)
           mkdir -p build/apple-shelf-ui/account
           ruby tests/apple_host/make_xcodeproj.rb build/apple-account-project build/apple-resources tests/apple_host/account/ui
-          xcodebuild test -project build/apple-account-project/EXReaderHost.xcodeproj -scheme "$scheme" \
+          python3 tests/apple_host/account/run_account_ui.py --platform "$platform" \
+            --udid "$(sed -n '2p' build/apple-shelf-ui/destination.txt)" --resources build/apple-resources \
+            --output build/apple-shelf-ui/account -- \
+            xcodebuild test -project build/apple-account-project/EXReaderHost.xcodeproj -scheme "$scheme" \
             -destination "$destination" -derivedDataPath build/AccountDerivedData \
             -resultBundlePath "build/apple-shelf-ui/account/$platform.xcresult" -parallel-testing-enabled NO \
             -test-timeouts-enabled YES -default-test-execution-time-allowance 180 -maximum-test-execution-time-allowance 300 \
-            EXR_SDK_DIR="$sdk" CODE_SIGNING_ALLOWED="$signing" 2>&1 | tee "build/apple-shelf-ui/account/$platform-xcodebuild.log"
+            EXR_SDK_DIR="$sdk" CODE_SIGNING_ALLOWED="$signing"
           if test "$platform" = macos; then
             container="$HOME/Library/Application Support/EXReader"
             app=build/AccountDerivedData/Build/Products/Debug/EXReaderHost.app
@@ -265,8 +268,8 @@ jobs:
           for row in account_ui:
               assert row['accepted'] is True and row['source_sha'] == source
               assert str(row['run_id']) == run and str(row['attempt']) == attempt
-              assert (row['cases'], row['named_steps'], row['attachments'], row['profiles']) == (2,10,4,3)
-              assert row['password_ui_accepted'] is False and row['network_sync_ui_accepted'] is False
+              assert (row['cases'], row['named_steps'], row['attachments'], row['profiles']) == (3,14,6,4)
+              assert row['password_ui_accepted'] is False and row['network_sync_ui_accepted'] is True
           request = urllib.request.Request(f'https://api.github.com/repos/{os.environ["GITHUB_REPOSITORY"]}/actions/runs/{run}/artifacts?per_page=100',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
           data = json.load(urllib.request.urlopen(request))
           assert data['total_count'] == len(data['artifacts']) == 6

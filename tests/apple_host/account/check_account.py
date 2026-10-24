@@ -36,15 +36,9 @@ CHECKS = [
 ]
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--consumer', type=Path, required=True)
-    parser.add_argument('--output', type=Path, required=True)
-    args = parser.parse_args()
+def with_fixture(folder, authorization, consume, shard_delay=0.25):
     assert os.environ.get('GITHUB_ACTIONS') == 'true'
-    folder = args.output.absolute(); folder.mkdir(parents=True)
-    password = secrets.token_urlsafe(32)
-    authorization = 'Basic ' + base64.b64encode(('reader:' + password).encode()).decode()
+    folder.mkdir(parents=True)
     cert, key = folder / 'server.crt', folder / 'server.key'
     subprocess.run(['openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '1',
                     '-keyout', str(key), '-out', str(cert), '-subj', '/CN=localhost',
@@ -101,7 +95,7 @@ def main():
             if self.headers.get('Depth') != '1': self.send(400); return
             # One real blocking native transfer lets the production main-loop
             # timer prove it remains active while the account worker is in TLS.
-            if self.path == '/dav/exreader-sync-v1/revisions/00/': time.sleep(0.25)
+            if self.path == '/dav/exreader-sync-v1/revisions/00/': time.sleep(shard_delay)
             with lock:
                 if self.path not in directories: self.send(404); return
                 children = [(path, True, 0) for path in directories if path.startswith(self.path) and
@@ -122,6 +116,22 @@ def main():
     threading.Thread(target=server.serve_forever, daemon=True).start()
     root = 'https://127.0.0.1:' + str(server.server_port) + '/dav/'
     try:
+        consume(root, entries, requests, cert)
+    finally:
+        server.shutdown(); server.server_close()
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--consumer', type=Path, required=True)
+    parser.add_argument('--output', type=Path, required=True)
+    args = parser.parse_args()
+    assert os.environ.get('GITHUB_ACTIONS') == 'true'
+    folder = args.output.absolute()
+    password = secrets.token_urlsafe(32)
+    authorization = 'Basic ' + base64.b64encode(('reader:' + password).encode()).decode()
+
+    def consume(root, entries, requests, cert):
         done = subprocess.run([str(args.consumer.absolute()), root, str(folder / 'account'),
                                'apps/reader/store/001_catalog.sql'], capture_output=True, text=True, timeout=180,
                               env=dict(os.environ, READER_ACCOUNT_TEST_PASSWORD=password))
@@ -162,8 +172,7 @@ def main():
         report['secret_scan_passed'] = True
         (folder / 'account-native.json').write_text(json.dumps(report, indent=2) + '\n')
         print(json.dumps(report))
-    finally:
-        server.shutdown(); server.server_close()
+    with_fixture(folder, authorization, consume)
 
 
 if __name__ == '__main__':

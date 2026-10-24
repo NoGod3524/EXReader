@@ -26,6 +26,11 @@ CASES = {
         'switching_back_restores_first_account_import',
         'selected_account_and_import_survive_process_restart',
         'account_import_does_not_change_local_library_rows'],
+    'test03NativeHTTPSBackgroundCloseAndRetry': [
+        'actual_ui_upload_and_256_shard_https_sweep',
+        'actual_background_transition_closes_active_account_session',
+        'manual_retry_after_background_reopens_and_completes_native_session',
+        'local_library_stays_accessible_after_real_network_sync'],
 }
 
 
@@ -49,7 +54,7 @@ def main():
     binary = args.app / ('Contents/MacOS/EXReaderHost' if args.platform == 'macos' else 'EXReaderHost')
     args.output.mkdir(parents=True, exist_ok=False)
     cases = load_results(args.xcresult)
-    require(len(cases) == 2 and {owner(case['name']) for case in cases} == set(CASES) and
+    require(len(cases) == 3 and {owner(case['name']) for case in cases} == set(CASES) and
             all(case['result'] == 'Passed' for case in cases), 'account UI cases failed, missing or skipped')
     attachments = args.output / 'attachments'
     command('xcrun', 'xcresulttool', 'export', 'attachments', '--path', args.xcresult, '--output-path', attachments)
@@ -80,7 +85,14 @@ def main():
     raw = (folder / 'accounts.json').read_bytes()
     require(0 < len(raw) <= 64 * 1024, 'persisted account metadata missing or over limit')
     profiles = json.loads(raw)
-    require(len(profiles) == 3 and len({profile['id'] for profile in profiles}) == 3, 'unexpected UI profile count')
+    https = json.loads((args.output.parent / 'https-ui.json').read_text())
+    require(https['accepted'] is True and https['source_sha'] == source and
+            str(https['run_id']) == run and str(https['attempt']) == attempt and https['platform'] == args.platform,
+            'account UI HTTPS evidence source differs')
+    require(https['actual_shards'] == 256 and https['minimum_completed_sweeps'] >= 2 and
+            https['remote_revisions'] == 1 and https['password_authentication_used'] is False,
+            'account UI HTTPS original and retry proof missing')
+    require(len(profiles) == 4 and len({profile['id'] for profile in profiles}) == 4, 'unexpected UI profile count')
     for profile in profiles:
         require(set(profile) == {'id', 'root', 'anonymous'} and profile['anonymous'] is True,
                 'anonymous UI metadata contains credential fields')
@@ -90,12 +102,19 @@ def main():
         require(product.is_file(), 'actual account product store missing')
         with sqlite3.connect(product.resolve().as_uri() + '?mode=ro', uri=True) as db:
             count = db.execute('SELECT count(*) FROM reader_local_books').fetchone()[0]
-            require(count == (1 if '/isolation-a-' in profile['root'] else 0), 'persisted account import isolation differs')
+            network = profile['root'].startswith('https://127.0.0.1:')
+            if network:
+                require(profile['root'] == https['root'], 'persisted account differs from actual UI HTTPS endpoint')
+            require(count == (1 if '/isolation-a-' in profile['root'] or network else 0), 'persisted account import isolation differs')
+            if network:
+                require(db.execute('SELECT count(*) FROM reader_outbox').fetchone()[0] == 0,
+                        'completed account UI sync retains unacknowledged revisions')
     result = {'accepted': True, 'source_sha': source, 'run_id': run, 'attempt': attempt,
-              'platform': args.platform, 'cases': 2, 'named_steps': 10, 'attachments': 4,
-              'profiles': 3, 'actual_executable_sha256': digest(binary),
-              'scope': 'anonymous SwiftUI account creation/update/switch/restart and local import isolation',
-              'password_ui_accepted': False, 'network_sync_ui_accepted': False,
+              'platform': args.platform, 'cases': 3, 'named_steps': 14, 'attachments': 6,
+              'profiles': 4, 'actual_executable_sha256': digest(binary),
+              'scope': 'anonymous SwiftUI accounts, import isolation, real HTTPS and background close/retry',
+              'password_ui_accepted': False, 'network_sync_ui_accepted': True,
+              'https': https,
               'physical_device_execution': False, 'voiceover_accepted': False}
     (args.output / 'account-ui.json').write_text(json.dumps(result, indent=2) + '\n')
     print(json.dumps(result))

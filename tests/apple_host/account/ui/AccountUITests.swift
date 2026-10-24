@@ -55,6 +55,11 @@ final class AccountUITests: XCTestCase {
         node("account.choose").label == (root == "本地书库" ? root : "云盘书库，" + root)
     }
 
+    private func text(_ identifier: String) -> String {
+        let item = node(identifier)
+        return item.label.isEmpty ? item.value as? String ?? "" : item.label
+    }
+
     private func create(_ root: String) {
         tap("account.choose")
         replaceRoot(root)
@@ -138,5 +143,35 @@ final class AccountUITests: XCTestCase {
         tap("account.choose"); tap("account.local"); library()
         XCTAssertEqual(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'library.book.'")).count, localRows)
         steps.append("account_import_does_not_change_local_library_rows")
+    }
+
+    func test03NativeHTTPSBackgroundCloseAndRetry() throws {
+        let root = try XCTUnwrap(ProcessInfo.processInfo.environment["EXR_ACCOUNT_UI_ROOT"])
+        create(root); library()
+        tap("library.import.epub")
+        let book = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'library.book.'")).firstMatch
+        XCTAssertTrue(book.waitForExistence(timeout: 90))
+        XCTAssertTrue(wait { !self.node("library.busy").exists })
+        tap("account.sync.start")
+        XCTAssertTrue(wait(180) { self.text("account.sync.state") == "本轮扫描完成" })
+        steps.append("actual_ui_upload_and_256_shard_https_sweep")
+        tap("account.sync.start")
+        XCTAssertTrue(node("account.sync.cancel").waitForExistence(timeout: 30))
+#if os(iOS)
+        XCUIDevice.shared.press(.home)
+#else
+        XCUIApplication(bundleIdentifier: "com.apple.finder").activate()
+#endif
+        XCTAssertTrue(wait { self.app.state != .runningForeground })
+        app.activate()
+        XCTAssertTrue(wait { self.text("account.sync.state") == "已关闭" })
+        steps.append("actual_background_transition_closes_active_account_session")
+        tap("account.sync.start")
+        XCTAssertTrue(wait(180) { self.text("account.sync.state") == "本轮扫描完成" })
+        XCTAssertTrue(book.exists)
+        steps.append("manual_retry_after_background_reopens_and_completes_native_session")
+        tap("account.choose"); tap("account.local"); library()
+        XCTAssertTrue(selected("本地书库"))
+        steps.append("local_library_stays_accessible_after_real_network_sync")
     }
 }
