@@ -756,7 +756,9 @@ static reader_ld_status ld_intent_parse(const char *text, size_t size, ld_intent
   intent->stage = (int)stage;
   intent->bytes = bytes;
   intent->mapped = (int64_t)mapped;
-  snprintf(intent->key, sizeof(intent->key), "%s", key);
+  if (strlen(key) >= sizeof(intent->key))
+    return ld_fail(e, READER_LD_CORRUPT_INTENT, EXR_OK, 0, "Intent key is too long");
+  memcpy(intent->key, key, strlen(key) + 1);
   {
     ld_key parsed;
     int has_mapped = 0;

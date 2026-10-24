@@ -148,7 +148,7 @@ class Env:
                 command, out.rc, expect, out.stdout, out.stderr))
         return out
 
-    def add(self, kind, title, copies=1, content=None, attach=True):
+    def add(self, kind, title, copies=1, content=None, attach=True, fixture=None):
         self.counter += 1
         if kind == "txt":
             body = content if content is not None else (
@@ -157,7 +157,7 @@ class Env:
             with open(path, "wb") as f:
                 f.write(body)
         else:
-            source = self.ctx.fixture(FORMAT_FIXTURES[kind])
+            source = self.ctx.fixture(fixture or FORMAT_FIXTURES[kind])
             path = os.path.join(self.work, "files", "book%d.%s" % (self.counter, kind))
             shutil.copyfile(source, path)
         sha = sha256_file(path)
@@ -972,7 +972,7 @@ def s_reimport_path_swap(ctx):
     new_id = int(r["id"])
     same(env.dump_sha(new_id), book.sha, "imported bytes are the verified bytes")
     found, local, mapped, deleted = env.catalog(book.key)
-    same((found, local, mapped), (1, 1, new_id), "mapping points at the verified row")
+    same((found, local, mapped), (1, new_id, 1), "mapping points at the verified row")
     books = env.books()
     for i in books:
         if i != new_id:
@@ -988,7 +988,7 @@ def s_reimport_import_verified(ctx):
     r = env.run("reimport", "--key", book.key, "--file", book.path).result
     same((r["status"], r["outcome"]), ("ok", "attached"), "reimport: " + r["msg"])
     same(env.dump_sha(int(r["id"])), book.sha, "stored bytes match the identity")
-    same(env.catalog(book.key)[:3], (1, 1, int(r["id"])), "mapping written after verification")
+    same(env.catalog(book.key)[:3], (1, int(r["id"]), 1), "mapping written after verification")
     env.assert_state_clean()
 
 
@@ -1037,7 +1037,7 @@ def s_reenter_pending_readonly(ctx):
 def s_pdf_private_original(ctx):
     env = ctx.new("pdf_private")
     book = env.add("pdf", "Private PDF")
-    other = env.add("pdf", "Private PDF Other")
+    other = env.add("pdf", "Private PDF Other", fixture="pdf-graphics.pdf")
     env.seed_product([book, other])
     removed_ok(env.run("remove", "--key", book.key), book)
     r = env.run("reimport", "--key", book.key, "--file", book.path).result
@@ -1080,7 +1080,7 @@ def s_formats_all(ctx):
         same((r["status"], r["outcome"]), ("ok", "attached"), kind + " reimport: " + r["msg"])
         new_id = int(r["id"])
         same(env.dump_sha(new_id), book.sha, kind + ": reimported bytes match the identity")
-        same(env.catalog(book.key)[:3], (1, 1, new_id), kind + ": mapping back")
+        same(env.catalog(book.key)[:3], (1, new_id, 1), kind + ": mapping back")
         book.ids[0] = new_id  # the reimport created a new SDK row
         removed_ok(env.run("remove", "--key", book.key), book)
         same(env.dump_sha(neighbour.mapped), neighbour.sha, kind + ": neighbour readable")
