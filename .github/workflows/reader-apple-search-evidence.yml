@@ -1,0 +1,60 @@
+name: Apple retained shelf container diagnostic
+on:
+  push:
+    branches: [codex/reader-apple-search-evidence]
+    paths: [.github/workflows/reader-apple-search-evidence.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect the hash-verified original container observation in Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import hashlib,io,json,os,sys,zipfile
+          from pathlib import Path
+          sys.path.insert(0,'tools')
+          from check_parallel_integration import fetch,download_artifact_zip,require
+          require(os.environ.get('GITHUB_ACTIONS')=='true','Actions only')
+          source='b05498073d6e0a0189da60ae8481a8ee1aef26ab'
+          run,job,artifact,size=40121809402,120956111430,12573195290,15066720
+          digest='sha256:b9efd3a7eccc8c55cb0bf2058c3cb55f9e44d2cf0d569bb0e9ac6120cf99f6f6'
+          producer=fetch('actions/jobs/'+str(job))
+          require(producer['run_id']==run and producer['head_sha']==source and
+                  producer['name']=='Shelf UI ipad' and producer['conclusion']=='failure','producer differs')
+          metadata=fetch('actions/artifacts/'+str(artifact))
+          require(metadata['name']=='apple-shelf-ui-ipad-40121809402-1' and
+                  metadata['workflow_run']['id']==run and metadata['workflow_run']['head_sha']==source and
+                  not metadata['expired'] and metadata['size_in_bytes']==size and metadata['digest']==digest,'metadata differs')
+          raw=download_artifact_zip(artifact)
+          require(len(raw)==size and 'sha256:'+hashlib.sha256(raw).hexdigest()==digest,'ZIP differs')
+          with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+              require(len(archive.namelist())==len(set(archive.namelist())),'duplicate member')
+              info=archive.getinfo('container.json')
+              require(0<info.file_size<=4*1024*1024,'container report size')
+              data=archive.read(info)
+              value=json.loads(data)
+              require(value['source_sha']==source and value['run_id']==str(run) and
+                      value['attempt']=='1' and value['status']=='failed','container identity differs')
+              names=[name for name in archive.namelist() if name.endswith('.json')]
+          output=Path('build/apple-search-evidence')
+          output.mkdir(parents=True)
+          (output/'container.json').write_bytes(data)
+          report={'diagnostic_only':True,'accepted':False,'origin_source':source,'origin_run':run,
+                  'artifact':metadata,'json_members':names,'container':value}
+          (output/'diagnostic.json').write_text(json.dumps(report,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(report,indent=2,sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-container-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-search-evidence/
+          if-no-files-found: error
