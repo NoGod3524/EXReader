@@ -349,22 +349,25 @@ void cache_checks(const fs::path& root, const Bytes& png) {
     rth_cache_close(c);
   }
 
-  {  // 6: a directory far larger than the scan budget must not be loaded wholesale
+  {  // 6: a directory far larger than the old scan budget is cleaned in one pass
     fs::path dir = root / "scan-budget";
     fs::remove_all(dir);
     fs::create_directories(dir);
-    const int candidates = 1200;
+    const int candidates = 1200, unrelated = 50;
     Bytes junk(200, 0x33);
     for (int i = 0; i < candidates; ++i) write_file(dir / ("rth-" + hex32((uint64_t)i) + ".rth"), junk);
+    for (int i = 0; i < unrelated; ++i) write_file(dir / ("note-" + std::to_string(i) + ".txt"), Bytes(3, (unsigned char)'n'));
     rth_cache* c = open_cache(dir, limits_with_entries(4));
     rth_stats s = stats_now(c);
-    size_t left = 0;
+    size_t left = 0, notes = 0;
     for (const auto& it : fs::directory_iterator(dir)) {
-      std::string name = it.path().filename().string();
+      const std::string name = it.path().filename().string();
       if (name.size() == 4 + 32 + 4 && name.compare(0, 4, "rth-") == 0 && name.compare(36, 4, ".rth") == 0) ++left;
+      if (name.rfind("note-", 0) == 0) ++notes;
     }
-    check("regress: a directory with many more candidates than the scan budget leaves the uninspected files untouched",
-          left > 0 && s.entries == 0, "left " + num((uint64_t)left) + " of " + num((uint64_t)candidates));
+    check("regress: 1200 own candidates are cleaned in one pass and the unrelated files are left untouched",
+          s.entries == 0 && s.own_candidates == (uint64_t)candidates && left == 0 && notes == (size_t)unrelated,
+          "own " + num(s.own_candidates) + " left " + num((uint64_t)left) + " notes " + num((uint64_t)notes));
     rth_cache_close(c);
   }
 
