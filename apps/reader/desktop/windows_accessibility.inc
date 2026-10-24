@@ -182,26 +182,26 @@ static HRESULT STDMETHODCALLTYPE host_a11y_simple_property(IRawElementProviderSi
   (void)self;
   if (!out) return E_INVALIDARG;
   VariantInit(out);
-  switch (id) {
-    case UIA_NamePropertyId: return host_a11y_bstr(out, L"\u9605\u8bfb\u533a\u57df");
-    case UIA_AutomationIdPropertyId: return host_a11y_bstr(out, L"IDC_PAGE");
-    case UIA_ClassNamePropertyId: return host_a11y_bstr(out, L"EXReaderPage");
-    case UIA_FrameworkIdPropertyId: return host_a11y_bstr(out, L"Win32");
-    case UIA_LocalizedControlTypePropertyId: return host_a11y_bstr(out, L"\u6b63\u6587");
-    case UIA_HelpTextPropertyId: return host_a11y_bstr(out, L"\u9009\u62e9\u6587\u5b57\u540e\u53ef\u590d\u5236\u5f15\u7528\u6216\u6dfb\u52a0\u6807\u6ce8");
-    case UIA_ControlTypePropertyId: out->vt = VT_I4; out->lVal = UIA_DocumentControlTypeId; return S_OK;
-    case UIA_IsKeyboardFocusablePropertyId: out->vt = VT_BOOL; out->boolVal = VARIANT_TRUE; return S_OK;
-    case UIA_HasKeyboardFocusPropertyId:
-      out->vt = VT_BOOL; out->boolVal = (GetFocus() == g.page) ? VARIANT_TRUE : VARIANT_FALSE; return S_OK;
-    case UIA_IsEnabledPropertyId:
-      out->vt = VT_BOOL; out->boolVal = (g.page && IsWindowEnabled(g.page)) ? VARIANT_TRUE : VARIANT_FALSE; return S_OK;
-    case UIA_IsControlElementPropertyId:
-    case UIA_IsContentElementPropertyId:
-    case UIA_IsTextPatternAvailablePropertyId:
-    case UIA_IsValuePatternAvailablePropertyId:
-      out->vt = VT_BOOL; out->boolVal = VARIANT_TRUE; return S_OK;
-    default: return S_OK;
+  /* The UIA_* ids are const variables in C, so they cannot label a case. */
+  if (id == UIA_NamePropertyId) return host_a11y_bstr(out, L"\u9605\u8bfb\u533a\u57df");
+  if (id == UIA_AutomationIdPropertyId) return host_a11y_bstr(out, L"IDC_PAGE");
+  if (id == UIA_ClassNamePropertyId) return host_a11y_bstr(out, L"EXReaderPage");
+  if (id == UIA_FrameworkIdPropertyId) return host_a11y_bstr(out, L"Win32");
+  if (id == UIA_LocalizedControlTypePropertyId) return host_a11y_bstr(out, L"\u6b63\u6587");
+  if (id == UIA_HelpTextPropertyId) return host_a11y_bstr(out, L"\u9009\u62e9\u6587\u5b57\u540e\u53ef\u590d\u5236\u5f15\u7528\u6216\u6dfb\u52a0\u6807\u6ce8");
+  if (id == UIA_ControlTypePropertyId) { out->vt = VT_I4; out->lVal = UIA_DocumentControlTypeId; return S_OK; }
+  if (id == UIA_IsKeyboardFocusablePropertyId) { out->vt = VT_BOOL; out->boolVal = VARIANT_TRUE; return S_OK; }
+  if (id == UIA_HasKeyboardFocusPropertyId) {
+    out->vt = VT_BOOL; out->boolVal = (GetFocus() == g.page) ? VARIANT_TRUE : VARIANT_FALSE; return S_OK;
   }
+  if (id == UIA_IsEnabledPropertyId) {
+    out->vt = VT_BOOL; out->boolVal = (g.page && IsWindowEnabled(g.page)) ? VARIANT_TRUE : VARIANT_FALSE; return S_OK;
+  }
+  if (id == UIA_IsControlElementPropertyId || id == UIA_IsContentElementPropertyId ||
+      id == UIA_IsTextPatternAvailablePropertyId || id == UIA_IsValuePatternAvailablePropertyId) {
+    out->vt = VT_BOOL; out->boolVal = VARIANT_TRUE; return S_OK;
+  }
+  return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE host_a11y_simple_host(IRawElementProviderSimple *self, IRawElementProviderSimple **out) {
