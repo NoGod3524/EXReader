@@ -89,8 +89,12 @@ static const char *format_name(exr_format format) {
     default:return NULL;
   }
 }
-static exr_status original_digest(exr_library *library,int64_t id,const exr_control *control,
+exr_status reader_catalog_sdk_original_identity(exr_library *library,int64_t id,const exr_control *control,
                                  char hex[65],uint64_t *bytes,exr_error *error) {
+  if(error) memset(error,0,sizeof(*error));
+  if(hex) hex[0]=0;
+  if(bytes) *bytes=0;
+  if(!library || id<=0 || !hex || !bytes) return fail(error,EXR_ARGUMENT,"Missing stored original identity output");
   exr_source source={0};source_hash hash={0};unsigned char digest[32],*buffer=NULL;
   exr_status status=exr_library_source(library,id,&source,error);uint64_t offset=0;
   if(status!=EXR_OK) return status;
@@ -126,7 +130,7 @@ exr_status reader_catalog_sdk_attach(reader_catalog *catalog,exr_library *librar
   const char *format=format_name(book->format);
   if(!format) return fail(error,EXR_UNSUPPORTED,"Unsupported product book format");
   if(cancelled(control)) return fail(error,EXR_CANCELLED,"Source identity check cancelled");
-  exr_status status=original_digest(library,book->id,control,hex,&bytes,error);
+  exr_status status=reader_catalog_sdk_original_identity(library,book->id,control,hex,&bytes,error);
   if(status!=EXR_OK) return status;
   if(book->format==EXR_PDF || book->format==EXR_CBZ) location="fixed_page";
   else if(book->format==EXR_EPUB) {

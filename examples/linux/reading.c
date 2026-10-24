@@ -13,6 +13,10 @@
 #include <sys/file.h>
 #include <unistd.h>
 #endif
+#ifdef EXR_READER_DESKTOP_METADATA
+#include <reader_metadata.h>
+#include <glib.h>
+#endif
 
 #define PAGE_TEXT_LIMIT (1024u*1024u)
 #define LEGACY_INPUT_LIMIT (8u*1024u*1024u)
@@ -40,6 +44,12 @@ struct linux_reader {
   char *catalog_path;
   int catalog_lock;
 #endif
+#ifdef EXR_READER_DESKTOP_METADATA
+  reader_metadata_owner *metadata;
+  reader_metadata_snapshot *metadata_snapshot;
+  uint64_t metadata_token;
+  int64_t metadata_book;
+#endif
 };
 static void session_free(reader_session *session) {
   exr_pager_free(session->pager);exr_publication_free(session->publication);
@@ -54,6 +64,7 @@ static void pending_discard(linux_reader *reader) {
 }
 void reader_result_free(reader_result *result) {
   size_t i;free(result->pixels);free(result->text);
+  free(result->metadata_title);free(result->metadata_author);
   if(result->cursors) for(i=0;i<result->book_count;i++) {
     free(result->cursors[i].key);free(result->cursors[i].sort_title);
   }
@@ -92,6 +103,10 @@ void linux_reader_close(linux_reader *reader) {
     session_free(&reader->current);exr_font_free(reader->font);
     exr_library_close(reader->library);
 #ifdef EXR_READER_PRODUCT_CATALOG
+#ifdef EXR_READER_DESKTOP_METADATA
+    reader_metadata_snapshot_free(reader->metadata_snapshot);
+    reader_metadata_close(&reader->metadata,NULL);
+#endif
     reader_catalog_close(&reader->catalog,NULL);
     free(reader->catalog_path);
     if(reader->catalog_lock>=0) close(reader->catalog_lock);
@@ -132,6 +147,7 @@ static int shelf_receive(void *context,const reader_catalog_row *row) {
   size_t index=result->book_count++;
   exr_book *book=&result->books[index];reader_shelf_cursor *cursor=&result->cursors[index];
   book->id=row->sdk_book_id;book->title=strdup(row->title);book->author=strdup(row->author);
+  book->favorite=row->favorite;
   cursor->key=strdup(row->book_key);cursor->sort_title=strdup(row->sort_title);
   if(!book->title || !book->author || !cursor->key || !cursor->sort_title) { copy->failed=1;return 1; }
   return 0;
@@ -174,6 +190,9 @@ static exr_status product_shelf(linux_reader *reader,const reader_command *comma
   }
   result->shelf_direction=command->direction;result->has_shelf=1;return EXR_OK;
 }
+#endif
+#ifdef EXR_READER_DESKTOP_METADATA
+#include "metadata.inc"
 #endif
 static size_t extent(reader_session *session) {
   size_t size=0;
@@ -547,6 +566,11 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
   int owned_session=0,new_pager=0;int64_t id=command->book;size_t target=0;
   int wants_shelf=command->action==READER_SHELF || command->action==READER_OPEN || command->action==READER_IMPORT;
   memset(result,0,sizeof(*result));
+#ifdef EXR_READER_DESKTOP_METADATA
+  if(command->action>=READER_METADATA_PREPARE && command->action<=READER_METADATA_DISCARD) {
+    metadata_execute(reader,command,result);return;
+  }
+#endif
   if(command->action==READER_SHELF_QUERY) {
 #ifdef EXR_READER_PRODUCT_CATALOG
     result->status=status==EXR_OK ? product_shelf(reader,command,result):status;

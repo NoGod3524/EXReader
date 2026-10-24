@@ -36,3 +36,19 @@ attempt1，**3/3 作业成功**。Windows、Linux、macOS 均同次通过原12�
 三份工件同 run／source／attempt、未过期；API 的大小和 SHA-256 与上传日志一致。
 各报告散列、完整工件 digest 见 [验收记录](validation/reader-organization-native.json)。
 只授予原生只读接口，`ui_accepted=false`、`complete_product=false`。
+
+## GTK 原生编辑候选
+
+当前接入书名、作者和收藏，默认书架只增加 Details 入口（Ctrl+E）。弹出的原生表单
+显示产品 metadata；旧书在表单可编辑前通过公开 SDK source 重新核验原件，再登记原产品
+字段的初始历史。用户 Save 是一条单独的完整 typed 意图及产品事务，Cancel 不提交表单字段。
+
+GTK owner 持有快照；UI 只收到复制字段和操作 token。所有 metadata 操作走提交屏障，
+关闭等待结果。提交拒绝时保留完整 pending，界面提供 Retry／Discard uncommitted；
+恢复不选择新的 heads，不覆盖并发版本。共同安装的产品 provider 供 catalog、revisions、
+commands 与适配层使用；SDK 八条冻结路径保持不变。
+
+候选新增14项实际GTK/X11操作，包括 Unicode／NFC、收藏、取消、真实进程终止后恢复、
+完整意图重试、独立原生命令写入后的旧快照拒绝。原UI20、产品5、固定页24、书架14与
+保留故障回归均继续执行；共享模块另在同源 Windows/Linux 作业运行29项适配层检查。
+本候选尚待本轮云端验收，分类管理界面、Windows 编辑入口及六平台同步仍待接入。

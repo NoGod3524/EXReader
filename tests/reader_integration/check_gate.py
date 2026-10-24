@@ -93,7 +93,7 @@ class Gate(unittest.TestCase):
     def test_native_module_scope_contract(self):
         reports = {}
         for folder, count in [('sync-source-evidence', 77), ('sync-protocol-evidence', 59),
-                              ('sync-evidence', 33), ('projection-evidence', 32), ('commands-evidence', 33)]:
+                              ('sync-evidence', 33), ('projection-evidence', 32), ('commands-evidence', 33), ('metadata-evidence', 29)]:
             reports[folder + '/result.json'] = {
                 'accepted': True, 'source_sha': SOURCE, 'run_id': str(RUN), 'attempt': str(ATTEMPT),
                 'count': count, 'platform': 'linux', 'checks': [{'id': str(i), 'pass': True} for i in range(count)],
@@ -102,11 +102,15 @@ class Gate(unittest.TestCase):
         reports['projection-evidence/result.json'].update(metadata_history_outbox_same_product_transaction=True, sdk_database_writes=False)
         reports['commands-evidence/result.json'].update(native_only_wire_producer=True, schema1_changed=False,
                                                        sdk_database_writes=False, mobile_accepted=False)
+        reports['metadata-evidence/result.json'].update(
+            checks=[str(i) for i in range(29)], native_adapter_only=True, sdk_database_writes=False,
+            schema1_changed=False, wire_changed=False, desktop_ui_accepted=False,
+            sdk_source_verification_accepted=False, consumer_sha256='b' * 64)
 
         def verify(values):
             return verify_reports('reader-commands', 'Linux', lambda n: json.dumps(values[n]).encode(), SOURCE, RUN, ATTEMPT)
 
-        self.assertEqual(len(verify(reports)), 5)
+        self.assertEqual(len(verify(reports)), 6)
         for name, field, value in [('sync-evidence', 'full_library_complete', True),
                                    ('sync-evidence', 'shards', 1),
                                    ('projection-evidence', 'metadata_history_outbox_same_product_transaction', False),
@@ -115,7 +119,10 @@ class Gate(unittest.TestCase):
                                    ('commands-evidence', 'mobile_accepted', True),
                                    ('commands-evidence', 'schema1_changed', True),
                                    ('commands-evidence', 'accepted', False),
-                                   ('commands-evidence', 'attempt', '1')]:
+                                   ('commands-evidence', 'attempt', '1'),
+                                   ('metadata-evidence', 'desktop_ui_accepted', True),
+                                   ('metadata-evidence', 'schema1_changed', True),
+                                   ('metadata-evidence', 'consumer_sha256', 'invalid')]:
             with self.subTest(name=name, field=field), self.assertRaises(ValueError):
                 changed = copy.deepcopy(reports)
                 changed[name + '/result.json'][field] = value
