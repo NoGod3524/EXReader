@@ -1,6 +1,7 @@
 name: Apple shelf native diagnostic only
 on:
   workflow_dispatch:
+  workflow_call:
 permissions:
   contents: read
   actions: read
