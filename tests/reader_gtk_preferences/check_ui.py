@@ -97,10 +97,10 @@ def main():
     def defaults():
         button('d');save();return wait()
 
-    def record(name, condition=True, observed_value=None):
+    def record(name, condition=True, observed_value=None, strict=True):
         item = {'name': name, 'pass': bool(condition), 'observed': observed_value};checks.append(item)
-        assert condition, item
         print(json.dumps(item), flush=True)
+        if strict: assert condition, item
 
     def shot(name):
         path = output / (name + '.png');command('import', '-window', host.window, str(path));return path
@@ -164,19 +164,27 @@ def main():
         record('fractional_font_is_applied_and_saved', observed()['font'] == '25.500' and installed()['font'] == 25.5)
         open_settings();defaults();field('Light foreground', '#D02020FF');field('Light background', '#FDF4DCFF');save();close_settings()
         fg = pixels('light-foreground', (208, 32, 32));bg = pixels('light-background', (253, 244, 220))
-        record('light_foreground_and_background_change_page_pixels', fg['matching_pixels'] > 100 and bg['matching_pixels'] > 1000, {'foreground': fg, 'background': bg})
+        record('light_foreground_and_background_change_page_pixels', fg['matching_pixels'] > 100 and bg['matching_pixels'] > 1000,
+               {'foreground': fg, 'background': bg, 'foreground_passed': fg['matching_pixels'] > 100,
+                'background_passed': bg['matching_pixels'] > 1000}, strict=False)
         report['reflow_outer_margin'] = {'actual_pixel': bg['outer_margin_pixel'], 'requested_background': [253, 244, 220],
                                          'whole_page_background_accepted': bg['outer_margin_pixel'] == (253, 244, 220),
                                          'limitation': 'Public reflow renderer fixes the canvas to white; user CSS controls content background. No white-pixel replacement or image recoloring is performed.'}
         open_settings();field('Dark foreground', '#14E66EFF');field('Dark background', '#141E46FF');combo('Theme', 1);save();close_settings()
         fg = pixels('dark-foreground', (20, 230, 110));bg = pixels('dark-background', (20, 30, 70))
-        record('dark_theme_and_palette_change_page_pixels', fg['matching_pixels'] > 100 and bg['matching_pixels'] > 1000, {'foreground': fg, 'background': bg})
+        record('dark_theme_and_palette_change_page_pixels', fg['matching_pixels'] > 100 and bg['matching_pixels'] > 1000,
+               {'foreground': fg, 'background': bg, 'foreground_passed': fg['matching_pixels'] > 100,
+                'background_passed': bg['matching_pixels'] > 1000}, strict=False)
         open_settings();combo('Theme', 2);save();close_settings()
         command('gsettings', 'set', 'org.gnome.desktop.interface', 'color-scheme', 'prefer-dark')
         dark = wait(lambda value: value['effective_theme'] == '2' and int(value['portal_events']) > 0)
+        dark_pixels = pixels('system-dark-foreground', (20, 230, 110))
         command('gsettings', 'set', 'org.gnome.desktop.interface', 'color-scheme', 'prefer-light')
         light = wait(lambda value: value['effective_theme'] == '1' and int(value['portal_events']) > int(dark['portal_events']))
-        record('system_theme_tracks_real_portal_preference_changes', int(light['portal_version']) >= 1, {'dark': dark, 'light': light})
+        light_pixels = pixels('system-light-foreground', (208, 32, 32))
+        record('system_theme_tracks_real_portal_preference_changes', int(light['portal_version']) >= 1 and
+               dark_pixels['matching_pixels'] > 100 and light_pixels['matching_pixels'] > 100,
+               {'dark': dark, 'light': light, 'dark_pixels': dark_pixels, 'light_pixels': light_pixels})
         open_settings();defaults();close_settings()
         page_click();record('ltr_tap_turns_to_next_page', host.read()['page'] == 1)
         key('F3');host.wait(lambda value: value['page'] == 0)
@@ -237,7 +245,10 @@ def main():
         record('barrier_close_reopens_the_complete_saved_record', observed()['font'] == '4.000' and host.read()['font'] == 4)
         record('original_source_bytes_unchanged', hashlib.sha256(source.read_bytes()).hexdigest() == before_source)
         assert len(checks) == 35
-        report.update(accepted=True, count=len(checks), preferences=installed())
+        passed = sum(bool(item['pass']) for item in checks)
+        report.update(accepted=passed == len(checks), count=len(checks), passed=passed,
+                      failed=len(checks) - passed, preferences=installed(),
+                      pending_fields=['light_background_on_reflow_canvas', 'dark_background_on_reflow_canvas'])
     finally:
         if profile.exists(): profile.chmod(0o700)
         if host.process and host.process.poll() is None:
@@ -252,6 +263,7 @@ def main():
         (output / 'result.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
         bus.exit_bus()
     print(json.dumps(report), flush=True)
+    raise SystemExit(0 if report['accepted'] else 1)
 
 
 if __name__ == '__main__': main()
