@@ -8,13 +8,47 @@ on:
         type: boolean
         default: false
         description: Diagnose new controls without granting retained-suite acceptance
+      inspect_ui_run:
+        type: string
+        default: ''
+        description: Inspect retained native chooser failure 40117667176 only
 permissions:
   contents: read
 defaults:
   run:
     shell: bash
 jobs:
+  inspect_ui:
+    if: ${{ github.event.inputs.inspect_ui_run == '40117667176' }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    permissions:
+      actions: read
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 40117667176
+          name: reader-gtk-search-40117667176-1
+          path: previous
+      - name: Read actual chooser accessibility and focus without acceptance
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path('previous/gtk-search-ui')
+          print((root/'state.ini').read_text())
+          tree=json.loads((root/'failure-tree.json').read_text())
+          def walk(node):
+              role=node.get('role','');states=node.get('states',{})
+              if role in ('dialog','file chooser','text','entry') or states.get('focused'):
+                  print(json.dumps({key:node.get(key) for key in ('role','name','states','text','path')},ensure_ascii=False))
+              for child in node.get('children',[]):walk(child)
+          walk(tree)
+          print('diagnostic_only=true accepted=false')
+          PY
   account:
+    if: ${{ github.event.inputs.inspect_ui_run == '' }}
     name: GTK installed search with retained settings and reading exits
     runs-on: ubuntu-22.04
     timeout-minutes: 65
