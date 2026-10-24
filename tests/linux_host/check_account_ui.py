@@ -248,7 +248,9 @@ def main():
             body = ('Native local original %02d\n' % index).encode() + ('Book bytes kept unchanged.\n' * 40).encode()
             source = folder / ('Local-%02d.txt' % index);source.write_bytes(body)
             originals[hashlib.sha256(body).hexdigest()] = body
-            host.dialog(source);host.wait(lambda s: s['book'] > 0 and s['books'] == index + 1, timeout=60)
+            host.dialog(source);host.wait(lambda s: s['book'] > 0 and not s['error'], timeout=60)
+            assert sql('SELECT count(*) FROM reader_local_books') == [(index + 1,)]
+            assert host.read()['books'] <= 150
         host.close()
         assert sql('SELECT count(*) FROM reader_local_books') == [(52,)]
         first = sql('SELECT book_key FROM reader_books ORDER BY book_key LIMIT 1')[0][0]
