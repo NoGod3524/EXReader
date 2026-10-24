@@ -53,6 +53,29 @@ Dark/System只改变原生界面配色，阅读页继续保留可读的Light墨�
 证据包含安装模块、build/link/provider记录、原始日志、Search逐项结果、帧截图、语义存储检查与保留回归。
 此包授予GTK搜索的功能范围；性能、完整G13/Orca、整页主题与六平台互通仍分别验收。
 
+### 下一次SDK候选的最小页色缺口（尚未实现）
+
+实际截图计量显示Light外边距为`[255,255,255]`、请求背景色像素为0；Dark前景和背景均为0。
+对应路径是宿主`render()`→公开`exr_render_page_ex()`→SDK`src/raster.c`的`render()`，
+后者先用`memset(...,255,...)`将整页设为不透明白色。`render.h`的三条重排入口和
+`exr_layout_config`都没有画布背景参数。公开`exr_canvas_config.background`只可由低层path/image
+及fixed draw sink使用；重排没有绘制到该sink的入口。
+CSS背景仅形成文档内容box，无法正确覆盖页边距、短页空白或跨页背景。
+公开positioned接口虽能重建页面，却要求document/节点/资源并复制glyph/line/box；
+有界EPUB pager又不提供底层snapshot document，宿主重建会增加整页装配和图片转接成本，因此不采用。
+
+建议下一次统一SDK候选增加一个独立、带`struct_size`的render-options入口，包含channels、
+`0xRRGGBBAA`初始画布背景和control，仍调用同一个renderer。现有三入口继续白底、逐字兼容，
+不修改既有公开结构体或函数签名；新增导出符号属于ABI1的增量接口，但必须形成新的SDK版本与冻结证据。
+背景填充替代原白色初始化，保留64 MiB位图预算、相同一份输出缓冲和取消清理，不增加中间整页位图；
+RGBA透明度及灰度行为须明确并用图文/半透明/彩色字形用例验证。
+旧API白底应逐字节一致，新接口需覆盖全页/短页/边距、图片原色、字体alpha、取消、限额和安装后消费；
+性能预算需在新源码独立复测，旧冻结成绩不转移。
+
+宿主后续还需将实际System主题作为纯值交给既有owner，在平台通知后重画当前帧而不改设置文件、
+原文或位置；旧System检查目前只证明原生面板配色和Light页可读，不能据此授予Dark页色。
+当前不修改SDK、不复制renderer、不重染已绘制位图，两项页色失败继续保留。
+
 ## 原生选择器观察修复
 
 实际GTK在Ctrl+L时先聚焦路径输入框，再提交内部location mode。同步焦点观察回调调用
