@@ -125,13 +125,19 @@ class Session(object):
         if current == target:
             return True, []
         stops = []
+        lost = 0
         for step in range(limit):
             name = self.tab_step(note=note if step == 0 else None)
             stops.append(name)
             if name == target:
                 return True, stops
-            if name == "none" and step > 0:
-                return False, stops
+            if name == "none":
+                lost += 1
+                self.trace.event("focus_lost", {"step": step, "stops": stops[-6:]})
+                if lost >= 3:
+                    return False, stops
+            else:
+                lost = 0
         return False, stops
 
     def goto_back(self, target, limit=64, note=None):
@@ -139,13 +145,18 @@ class Session(object):
         if current == target:
             return True, []
         stops = []
+        lost = 0
         for step in range(limit):
             name = self.tab_step(backward=True, note=note if step == 0 else None)
             stops.append(name)
             if name == target:
                 return True, stops
-            if name == "none" and step > 0:
-                return False, stops
+            if name == "none":
+                lost += 1
+                if lost >= 3:
+                    return False, stops
+            else:
+                lost = 0
         return False, stops
 
     def activate(self, target, limit=64):
