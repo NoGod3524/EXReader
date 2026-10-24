@@ -48,7 +48,7 @@
 | --- | --- | --- | --- |
 | v1（run `40085956514`，source `29f03e23`） | 只要任一侧 `path` 含 `ScrollView` 就整对跳过 | **过宽**：同一容器内的真实重叠被一起排除，并对滚动内容暗示“已被裁剪” | 该 run 把 iPhone `library.large_type` 的 `library.book.0|library.import.epub`（原始重叠 91%）记为阻断遮挡，实际是 15 pt 视口把行裁掉 |
 | v2（run `40090892898`，source `59a21fd1`） | 同容器用共享视口裁剪；不同容器分别裁剪；包含关系按面积 ≤ 90% 豁免 | **新的盲区**：`nested_child()` 只按面积猜父子，同级 100×100 与 80×80 完全重叠会被判成“嵌套、不算遮挡”，小控件 100% 被覆盖却返回 `none` | 该 run 的工件保留；`judge` 的同级完全包含用例在 v3 里必须 `fail` |
-| v3（run `40094191862`，source `97cad3fd`） | 容器只由语义路径推导；包含关系只在**路径前缀**证明真实祖先时豁免；滚动祖先缺标识或视口缺失 → `uncovered` | 面积不再参与父子判断；同级/跨容器完全包含按 50% 判 `fail`；不可证的可见性不冒充已测 | `judge` 21 例：同级完全包含（同尺寸 / 64% 面积 / 20% 面积）全部 `fail`，跨容器完全包含 `fail`，路径父子 `none`，无标识视口 `undetermined`，并回放原 run 误判对（`legacy=skipped` → `current=excluded`） |
+| v3（run `40094191862`，source `97cad3fd`） | 容器只由语义路径推导；包含关系只在**路径前缀**证明真实祖先时豁免；滚动祖先缺标识或视口缺失 → `uncovered` | 面积不再参与父子判断；同级/跨容器完全包含按 50% 判 `fail`；不可证的可见性不冒充已测 | `judge` 22 例：同级完全包含（同尺寸 / 80% 面积 / 64% 面积 / 20% 面积）全部 `fail`，跨容器完全包含 `fail`，路径父子 `none`，无标识视口 `undetermined`，并回放原 run 误判对（`legacy=skipped` → `current=excluded`） |
 
 v1 与 v2 的工件、报告与被取代条目**保留不删**：`docs/validation/reader-a11y-apple.json` 的 `history` 里仍记着
 这两个 run 的工件身份与被取代结论；§7 只引用最新一次同源运行。门槛（24/44/20 pt、50%、2 pt、20 pt）三版相同，
