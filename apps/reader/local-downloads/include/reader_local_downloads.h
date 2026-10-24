@@ -12,7 +12,7 @@ extern "C" {
 
 #define READER_LD_VERSION "0.1.0"
 #define READER_LD_MAX_COPIES 8u
-#define READER_LD_PATH_BYTES 1024u
+#define READER_LD_PATH_BYTES 1200u
 
 /* Removes only the local original of a downloaded book and its local SDK
    mapping. The global product book, shelves/tags/series, revision history,
