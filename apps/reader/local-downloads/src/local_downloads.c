@@ -1298,7 +1298,7 @@ static reader_ld_status ld_reimport_locked(const reader_ld_options *o, const cha
       char stable[LD_PATH];
       published = 0;
       existed = 0;
-      publish_path = stage;
+      snprintf(publish_path, sizeof(publish_path), "%s", stage);
       if (key.format->format == EXR_PDF) {
         snprintf(name, sizeof(name), "%s.orig", key.sha);
         if (ld_join(stable, sizeof(stable), originals, name) != 0) {
@@ -1314,7 +1314,7 @@ static reader_ld_status ld_reimport_locked(const reader_ld_options *o, const cha
           goto done;
         }
         published = 1;
-        publish_path = stable;
+        snprintf(publish_path, sizeof(publish_path), "%s", stable);
       }
     }
     sdk = exr_sideload_import_file(o->library, key.format->format, publish_path, row.title, &so,
