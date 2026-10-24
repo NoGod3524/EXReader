@@ -27,6 +27,7 @@ int main(int argc, char **argv) {
   exr_layout_options options = exr_layout_defaults();
   const char *text = NULL;
   size_t pages = 0, text_size = 0;
+  unsigned bitmap_width = 0, bitmap_height = 0;
   unsigned long long png_bytes = 0;
   int format = -1;
   if (argc != 4) {
@@ -66,6 +67,8 @@ int main(int argc, char **argv) {
         REQUIRE(bitmap.width > 0 && bitmap.height > 0 && bitmap.channels == 4, "bitmap-shape");
         REQUIRE(exr_bitmap_write_png(&bitmap, argv[3], &error) == EXR_OK, "write-png");
         png_bytes = file_bytes(argv[3]);
+        bitmap_width = bitmap.width;
+        bitmap_height = bitmap.height;
       }
     }
   }
@@ -77,6 +80,6 @@ int main(int argc, char **argv) {
          "\"text_bytes\":%zu,\"bitmap_width\":%u,\"bitmap_height\":%u,\"png_bytes\":%llu,"
          "\"negative_checks\":4,\"failures\":%d}\n",
          exr_version(), (unsigned)exr_abi_version(), format, pages, text_size,
-         bitmap.width, bitmap.height, png_bytes, failures);
+         bitmap_width, bitmap_height, png_bytes, failures);
   return failures == 0 ? 0 : 1;
 }
