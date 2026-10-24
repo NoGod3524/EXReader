@@ -548,7 +548,7 @@ static void phase_unicode(suite *s) {
     static const char ACUTE[] = "\xC3\xA9";
     static const char CJK[] = "\xE6\xB1\x89\xE5\xAD\x97";
     static const char EMOJI[] = "\xF0\x9F\x98\x80";
-    static const char MIXED[] = "a\xF0\x9F\x98\x80b";
+    static const char MIXED[] = "a\xF0\x9F\x98\x80" "b";
     static const char BAD[] = "\x80";
     static const size_t ASCII_EXPECT[4] = { 0, 1, 2, 3 };
     static const size_t ACUTE_EXPECT[2] = { 0, 2 };
