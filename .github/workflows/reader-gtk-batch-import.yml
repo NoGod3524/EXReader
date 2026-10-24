@@ -8,13 +8,19 @@ on:
         type: boolean
         default: false
         description: Diagnose new controls without granting retained-suite acceptance
+      probe_run:
+        type: string
+        default: '0'
+        description: Existing own run for verified chooser-only artifact diagnostics; zero builds current source
 permissions:
   contents: read
+  actions: read
 defaults:
   run:
     shell: bash
 jobs:
   account:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.probe_run == '0' }}
     name: GTK folder import and retained native suites
     runs-on: ubuntu-22.04
     timeout-minutes: 65
@@ -378,4 +384,46 @@ jobs:
             build/account-package/runtime-dependencies.txt
             build/account-package/EXReader-Linux.tar.gz
             !build/**/*.key
+          if-no-files-found: error
+
+  chooser-diagnostic:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.probe_run != '0' }}
+    name: Verified old-program native chooser diagnostic without acceptance
+    runs-on: ubuntu-22.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install native diagnostic display dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-0 libsecret-1-0 at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk dbus-x11
+      - name: Verify old run artifact bytes and unchanged host trees entirely on Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PROBE_RUN: ${{ inputs.probe_run }}
+        run: python3 tests/reader_gtk_batch_import/reuse_diagnostic.py "$PROBE_RUN" build/chooser-reuse
+      - name: Run only the real chooser diagnostic with separate source identities
+        run: |
+          python3 tests/reader_gtk_batch_import/make_inputs.py build/chooser-fixtures
+          mkdir -p build/gtk-atspi-client
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/chooser-reuse/openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_gtk_batch_import/check_ui.py --payload "$DIAGNOSTIC_PAYLOAD" --program-source "$DIAGNOSTIC_PROGRAM_SOURCE" --chooser-only --fixtures build/chooser-fixtures --output build/chooser-ui
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-gtk-folder-chooser-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/chooser-reuse/input.json
+            build/chooser-reuse/openbox.log
+            build/chooser-ui/
           if-no-files-found: error

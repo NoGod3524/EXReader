@@ -16,8 +16,11 @@ import atspi_client as bus
 
 def main():
     parser = argparse.ArgumentParser()
-    for name in ('payload', 'fixtures', 'output', 'backend'):
+    for name in ('payload', 'fixtures', 'output'):
         parser.add_argument('--' + name, type=Path, required=True)
+    parser.add_argument('--backend', type=Path)
+    parser.add_argument('--chooser-only', action='store_true')
+    parser.add_argument('--program-source')
     args = parser.parse_args()
     assert os.environ.get('GITHUB_ACTIONS') == 'true'
     os.environ.pop('NO_AT_BRIDGE', None)
@@ -26,12 +29,14 @@ def main():
     output = args.output.resolve()
     output.mkdir()
     source = args.fixtures.resolve()
-    backend = args.backend.resolve()
+    assert args.chooser_only or args.backend is not None
+    backend = args.backend.resolve() if args.backend else None
     host = Session((args.payload / 'bin/exreader-linux').resolve(), (args.payload / 'Reader.otf').resolve(), output)
     report = dict(accepted=False, batch_import_scope_passed=False, source_sha=os.environ['GITHUB_SHA'],
                   run_id=os.environ['GITHUB_RUN_ID'], attempt=os.environ['GITHUB_RUN_ATTEMPT'], checks=[],
                   program_sha256=hashlib.sha256(host.binary.read_bytes()).hexdigest(), complete_product=False,
-                  settings_whole_page_palette_accepted=False)
+                  settings_whole_page_palette_accepted=False, diagnostic_only=args.chooser_only,
+                  program_source_sha=args.program_source or os.environ['GITHUB_SHA'])
     app = None
     manifest = json.loads((source / 'manifest.json').read_text())
     expected = {row['sha256']: row['bytes'] for row in manifest['files'] if row['relative'].startswith('folder 书籍/') and row['relative'].endswith('.txt') and '/nested/' not in row['relative']}
@@ -107,6 +112,7 @@ def main():
                 if predicate(observed('native_import')):
                     return
                 time.sleep(.02)
+            print(json.dumps(dict(expected_path=str(root), expected_sha256=hashlib.sha256(str(root).encode()).hexdigest(), entries=[dict(name=bus.name(node), state=bus.states(node), text=bus.accessible_text(node)) for node in bus.walk(chooser) if bus.role(node) == 'text' and bus.states(node).get('showing')]), ensure_ascii=False), flush=True)
             raise TimeoutError('folder chooser readiness: ' + repr(observed('native_import')))
         native_ready(lambda value: value.get('active') == '1')
         host.key('ctrl+l')
@@ -160,6 +166,9 @@ def main():
         host.wait(lambda state: not state['reader_visible'] and state['books'] == 35)
         record('real_bookshelf_has_unique_books_and_is_usable', host.read()['books'] == 35)
         host.close()
+        if args.chooser_only:
+            report['diagnostic_ui_passed'] = True
+            return
         first = inspect('flat-originals')
         record('all_public_original_bytes_and_sha_match_sources_no_link_imports', {row['sha256']: row['bytes'] for row in first} == expected and len(first) == 35)
         record('private_staging_directories_removed_on_dialog_close', not list((output / 'profile').glob('*.batch-*')))
@@ -176,11 +185,21 @@ def main():
         value = wait(lambda value: value['done'] == '1')
         record('native_recursive_depth_budget_truthfully_truncates', value['complete'] == '0' and value['truncated'] == '1' and value['imported'] == '0')
         close_dialog()
+        # Start a real accepted reading frame before importing more books.
+        # The later F2 assertion must prove an actual UI transition.
+        command('xdotool', 'windowactivate', '--sync', host.window)
+        host.key('F2')
+        host.wait(lambda state: not state['reader_visible'] and not state['saving'])
+        shelf_rows = [node for node in bus.children(element('Bookshelf')) if bus.role(node) == 'list item']
+        assert shelf_rows, 'imported shelf has no actionable book'
+        click_node(shelf_rows[0])
+        host.wait(lambda state: state['reader_visible'] and state['book'] > 0 and not state['saving'])
+        accepted_book = host.read()['book']
         choose(source / 'cancel')
         wait(lambda value: 1 <= int(value['imported']) < 90)
         command('xdotool', 'windowactivate', '--sync', host.window)
         host.key('F2')
-        record('main_bookshelf_remains_responsive_during_import', not host.read()['reader_visible'])
+        record('main_bookshelf_remains_responsive_during_import', not host.read()['reader_visible'] and host.read()['book'] == accepted_book)
         native = command('xdotool', 'search', '--onlyvisible', '--name', '^Folder import$').splitlines()[-1]
         command('xdotool', 'windowactivate', '--sync', native)
         click('Cancel import', {'push button'})
