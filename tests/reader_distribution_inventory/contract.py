@@ -165,22 +165,21 @@ def _otool_entries(text):
 
 
 def _dumpbin_dependents(text):
+    """dumpbin prints the header, a blank line, the names and a blank line."""
     entries = []
     section = None
     for line in text.splitlines():
         stripped = line.strip()
         lowered = stripped.lower()
-        if lowered.startswith('image has the following delay load dependencies'):
-            section = 'delay-load'
+        if 'has the following' in lowered and 'dependencies' in lowered:
+            section = 'delay-load' if 'delay load' in lowered else 'load'
             continue
-        if lowered.startswith('image has the following dependencies'):
-            section = 'load'
+        if section is None or not stripped:
             continue
-        if section:
-            if not stripped or lowered.startswith('summary'):
-                section = None
-                continue
-            entries.append({'name': stripped, 'state': section, 'path': ''})
+        if lowered.startswith(('summary', 'dump of file', 'file type')):
+            section = None
+            continue
+        entries.append({'name': stripped, 'state': section, 'path': ''})
     return entries
 
 
