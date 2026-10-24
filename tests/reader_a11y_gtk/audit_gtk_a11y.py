@@ -315,8 +315,15 @@ def main():
     def phase_bridge():
         app = a11y.wait_application('exreader', timeout=180)
         applications = [a11y.name(entry) for entry in a11y.applications()]
+        # The application registers with the registry before it creates its window,
+        # so wait for the frame the same way a user waits for the window to appear.
+        found = None
+        deadline = time.monotonic() + 60
+        while time.monotonic() < deadline and found is None:
+            found = a11y.find_one(app, roles=('frame',), text=contract.WINDOW_TITLE)
+            if found is None:
+                time.sleep(0.2)
         frames = [a11y.name(entry) for entry in a11y.find_all(app, roles=('frame',))]
-        found = a11y.find_one(app, roles=('frame',), text=contract.WINDOW_TITLE)
         audit.check(
             'atspi_bridge_exposes_main_window', found is not None,
             expected='the accessibility bus lists this process as an application exposing a '
