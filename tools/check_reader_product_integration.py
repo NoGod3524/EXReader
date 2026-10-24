@@ -114,8 +114,8 @@ def verify_reports(kind, platform, read, source, run_id, attempt):
     if kind == 'reader-commands':
         for folder, count in (('sync-source-evidence', 77 if platform == 'Linux' else 76),
                               ('sync-protocol-evidence', 59), ('sync-evidence', 33),
-                              ('projection-evidence', 32), ('commands-evidence', 33)):
-            value = load(folder + '/result.json', count, flag='pass')
+                              ('projection-evidence', 32), ('commands-evidence', 33), ('metadata-evidence', 29)):
+            value = load(folder + '/result.json', count, flag=None if folder=='metadata-evidence' else 'pass')
             require(value.get('count') == count, 'module recorded count differs')
             require(value.get('platform') == ('linux' if platform == 'Linux' else 'win32'),
                     'module platform differs')
@@ -129,6 +129,12 @@ def verify_reports(kind, platform, read, source, run_id, attempt):
                 require(value.get('native_only_wire_producer') is True and value.get('schema1_changed') is False and
                         value.get('sdk_database_writes') is False and value.get('mobile_accepted') is False,
                         'typed commands contract differs')
+            if folder == 'metadata-evidence':
+                require(value.get('native_adapter_only') is True and value.get('sdk_database_writes') is False and
+                        value.get('schema1_changed') is False and value.get('wire_changed') is False and
+                        value.get('desktop_ui_accepted') is False and value.get('sdk_source_verification_accepted') is False and
+                        re.fullmatch('[0-9a-f]{64}', value.get('consumer_sha256', '')) is not None,
+                        'metadata adapter contract differs')
         return verified
 
     sdk = load('desktop-sdk/verified.json', 9, field='sdk_checks', flag='passed')
@@ -144,6 +150,18 @@ def verify_reports(kind, platform, read, source, run_id, attempt):
         product = load('desktop-gtk-product/product-result.json', 5)
         load('desktop-gtk-fixed/fixed-ui.json', 24, flag='passed', key='name')
         shelf = load('desktop-gtk-shelf/shelf-result.json', 14)
+        metadata = load('desktop-gtk-metadata/metadata-ui.json', 14)
+        require(metadata.get('count') == 14 and metadata.get('groups_ui_accepted') is False and
+                metadata.get('performance_accepted') is False and len(metadata.get('screenshots', [])) == 4 and
+                re.fullmatch('[0-9a-f]{64}', metadata.get('program_sha256', '')) is not None,
+                'actual GTK metadata UI contract differs')
+        manifest_path = 'desktop-linux-package/build.json'
+        manifest_bytes = read(manifest_path)
+        manifest = json.loads(manifest_bytes)
+        require(manifest.get('source_sha') == source and manifest.get('sdk_version') == '3.40.0' and
+                manifest.get('abi') == 1 and manifest.get('files', {}).get('bin/exreader-linux') == metadata['program_sha256'],
+                'GTK metadata tested program differs from actual package')
+        verified[manifest_path] = {'sha256': hashlib.sha256(manifest_bytes).hexdigest(), 'checks': None}
         regression = load('desktop-gtk-regressions/regressions.json', success='passed', has_run=False, has_attempt=False)
         require(regression.get('checks') and all(row.get('pass') is True for row in regression['checks']),
                 'retained GTK regressions failed or missing')
@@ -176,7 +194,7 @@ def main():
     run_id, attempt = int(os.environ['GITHUB_RUN_ID']), int(os.environ['GITHUB_RUN_ATTEMPT'])
     args.output.mkdir(parents=True, exist_ok=False)
     result = {'accepted': False, 'source_sha': source, 'run_id': run_id, 'attempt': attempt,
-              'scope': 'same-source desktop shelves and native sync component preintegration only',
+              'scope': 'same-source desktop shelves GTK book metadata UI and native sync modules only',
               'complete_product': False, 'performance_accepted': False, 'six_platform_accepted': False,
               'artifacts': [], 'problems': []}
     try:

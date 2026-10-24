@@ -26,6 +26,15 @@ static gboolean profile_writable;
 typedef struct { reader_command command;char *path,*comment;int generation,stop,shelf_generation; } host_job;
 typedef struct { reader_result value;reader_action action;int generation,profile_writable,shelf_generation; } host_result;
 static void stop_worker(void);
+#ifdef EXR_READER_DESKTOP_METADATA
+static gboolean metadata_running;
+static GtkWidget *metadata_dialog,*metadata_title,*metadata_author,*metadata_favorite,*metadata_message;
+static char *metadata_key;
+static uint64_t metadata_token;
+static int64_t metadata_book;
+static void metadata_apply(host_result *);
+static void metadata_edit(GtkWidget *,gpointer);
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
 static GtkWidget *shelf_scroll,*search;
 static gint shelf_generation;
@@ -150,7 +159,7 @@ static void shelf_present(reader_result *result) {
     g_list_free(old_rows);
     for(size_t i=0;i<result->book_count;i++) {
       exr_book *book=&result->books[i];reader_shelf_cursor *cursor=&result->cursors[i];
-      GtkWidget *row=gtk_list_box_row_new();char *caption=g_strdup_printf("%s\n%s",book->title,book->author);
+      GtkWidget *row=gtk_list_box_row_new();char *caption=g_strdup_printf("%s%s\n%s",book->title,book->favorite ? " ★":"",book->author);
       GtkWidget *title=gtk_label_new(caption);g_free(caption);
       gtk_label_set_xalign(GTK_LABEL(title),0);gtk_label_set_ellipsize(GTK_LABEL(title),PANGO_ELLIPSIZE_END);
       gtk_widget_set_size_request(row,-1,48);
@@ -275,7 +284,9 @@ static void notes_present(reader_result *result) {
 static void job_free(host_job *job) {
   g_free(job->path);g_free(job->comment);
   g_free((gpointer)job->command.query);g_free((gpointer)job->command.cursor_title);
-  g_free((gpointer)job->command.cursor_key);g_free((gpointer)job->command.anchor_key);g_free(job);
+  g_free((gpointer)job->command.cursor_key);g_free((gpointer)job->command.anchor_key);
+  g_free((gpointer)job->command.metadata_key);g_free((gpointer)job->command.metadata_title);
+  g_free((gpointer)job->command.metadata_author);g_free(job);
 }
 static void queue_commit(void) {
   host_job *job=g_new0(host_job,1);job->generation=g_atomic_int_get(&generation);
@@ -286,6 +297,11 @@ static void queue_commit(void) {
 static void pixels_free(guchar *pixels,gpointer unused) { (void)unused;free(pixels); }
 static gboolean apply_result(gpointer data) {
   host_result *done=data;reader_result *result=&done->value;
+#ifdef EXR_READER_DESKTOP_METADATA
+  if(done->action>=READER_METADATA_PREPARE && done->action<=READER_METADATA_DISCARD) {
+    metadata_apply(done);goto free_result;
+  }
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   if(done->action==READER_SHELF_QUERY) {
     if(closing || done->generation!=g_atomic_int_get(&generation) ||
@@ -360,8 +376,12 @@ static gpointer work(gpointer font_path) {
   g_free(database);g_free(font_path);
   for(;;) {
     host_job *job=g_async_queue_pop(queue);if(job->stop) { job_free(job);break; }
-    if(job->command.action!=READER_COMMIT && job->generation!=g_atomic_int_get(&generation)) { job_free(job);continue; }
-    worker_generation=job->command.action==READER_COMMIT ? g_atomic_int_get(&generation):job->generation;
+    int barrier=job->command.action==READER_COMMIT;
+#ifdef EXR_READER_DESKTOP_METADATA
+    barrier=barrier || (job->command.action>=READER_METADATA_PREPARE && job->command.action<=READER_METADATA_DISCARD);
+#endif
+    if(!barrier && job->generation!=g_atomic_int_get(&generation)) { job_free(job);continue; }
+    worker_generation=barrier ? g_atomic_int_get(&generation):job->generation;
     host_result *result=g_new0(host_result,1);result->generation=job->generation;result->action=job->command.action;
     result->shelf_generation=job->shelf_generation;
     result->profile_writable=opened==EXR_OK;
@@ -419,6 +439,9 @@ static void submit(reader_action action,int64_t id,const char *path,int size) {
   }
   busy=TRUE;status(EXR_OK,"Reading in worker");g_async_queue_push(queue,job);
 }
+#ifdef EXR_READER_DESKTOP_METADATA
+#include "metadata_ui.inc"
+#endif
 static void open_id(int64_t id) { submit(READER_OPEN,id,NULL,font_size); }
 static void import_dialog(void) {
   if(busy || closing || save_failed) { state();return; }
@@ -437,6 +460,9 @@ static void focus_list(GtkWidget *box) {
 }
 static void action(GtkWidget *widget,gpointer name) {
   (void)widget;const char *a=name;
+#ifdef EXR_READER_DESKTOP_METADATA
+  if(metadata_running) { status(EXR_OK,"Finishing a book edit; its accepted result will be retained");return; }
+#endif
   if(!strcmp(a,"import")) import_dialog();
   else if(!strcmp(a,"shelf")) {
     gtk_stack_set_visible_child_name(GTK_STACK(stack),"shelf");focus_list(shelf);
@@ -464,6 +490,11 @@ static void action(GtkWidget *widget,gpointer name) {
 static gboolean key(GtkWidget *w,GdkEventKey *event,gpointer unused) {
   (void)w;(void)unused;
   if(choosing_file) return FALSE;
+#ifdef EXR_READER_DESKTOP_METADATA
+  if((event->state&GDK_CONTROL_MASK) && event->keyval==GDK_KEY_e) {
+    metadata_edit(NULL,NULL);return TRUE;
+  }
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   if((event->state&GDK_CONTROL_MASK) && event->keyval==GDK_KEY_f) {
     gtk_stack_set_visible_child_name(GTK_STACK(stack),"shelf");shelf_schedule_restore();gtk_widget_grab_focus(search);return TRUE;
@@ -497,6 +528,9 @@ static void stop_worker(void) {
 }
 static gboolean close_window(GtkWidget *w,GdkEvent *event,gpointer unused) {
   (void)w;(void)event;(void)unused;
+#ifdef EXR_READER_DESKTOP_METADATA
+  if(metadata_running) { close_after_save=TRUE;return TRUE; }
+#endif
   if(save_failed) { if(!busy) queue_commit();status(EXR_DATABASE,"Retrying position; close again after success");return TRUE; }
 #ifdef EXR_READER_PRODUCT_CATALOG
   shelf_remember();
@@ -560,7 +594,19 @@ int main(int argc,char **argv) {
   search=gtk_search_entry_new();gtk_entry_set_placeholder_text(GTK_ENTRY(search),"Search title or author (Ctrl+F)");
   gtk_entry_set_max_length(GTK_ENTRY(search),256);gtk_entry_set_text(GTK_ENTRY(search),shelf_query);
   atk_object_set_name(gtk_widget_get_accessible(search),"Search bookshelf");
-  shelf_scroll=scroll(shelf);gtk_box_pack_start(GTK_BOX(shelf_panel),search,FALSE,FALSE,0);
+  shelf_scroll=scroll(shelf);
+#ifdef EXR_READER_DESKTOP_METADATA
+  GtkWidget *shelf_actions=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,4);
+  gtk_box_pack_start(GTK_BOX(shelf_actions),search,TRUE,TRUE,0);
+  GtkWidget *edit=gtk_button_new_with_label("Details");
+  gtk_widget_set_tooltip_text(edit,"Edit selected book (Ctrl+E)");
+  atk_object_set_name(gtk_widget_get_accessible(edit),"Edit book details");
+  gtk_box_pack_end(GTK_BOX(shelf_actions),edit,FALSE,FALSE,0);
+  g_signal_connect(edit,"clicked",G_CALLBACK(metadata_edit),NULL);
+  gtk_box_pack_start(GTK_BOX(shelf_panel),shelf_actions,FALSE,FALSE,0);
+#else
+  gtk_box_pack_start(GTK_BOX(shelf_panel),search,FALSE,FALSE,0);
+#endif
   gtk_box_pack_start(GTK_BOX(shelf_panel),shelf_scroll,TRUE,TRUE,0);
   gtk_stack_add_named(GTK_STACK(stack),shelf_panel,"shelf");
   g_signal_connect(search,"changed",G_CALLBACK(shelf_search_changed),NULL);
@@ -599,6 +645,9 @@ int main(int argc,char **argv) {
   state();gtk_main();g_thread_join(thread);g_async_queue_unref(queue);
 #ifdef EXR_READER_PRODUCT_CATALOG
   g_free(shelf_query);g_free(shelf_top_key);g_free(shelf_selected_key);g_free(restore_key);
+#endif
+#ifdef EXR_READER_DESKTOP_METADATA
+  g_free(metadata_key);
 #endif
   g_key_file_free(settings);g_free(home);g_free(settings_path);g_free(state_path);g_free(page_text);return 0;
 }

@@ -43,6 +43,29 @@ jobs:
             if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
           }
           'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Install one product provider and native metadata command stack
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          prefix="$ws/build/desktop-product-stage"
+          echo "DESKTOP_PRODUCT_PREFIX=$prefix" >> "$GITHUB_ENV"
+          mkdir -p build/desktop-evidence
+          cmake -S apps/reader/store/native -B build/desktop-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/desktop-product --parallel 4
+          ctest --test-dir build/desktop-product --output-on-failure --no-tests=error --timeout 180
+          cmake --install build/desktop-product
+          cmake -S apps/reader/revisions -B build/desktop-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/desktop-revisions --parallel 4
+          cmake --install build/desktop-revisions
+          cmake -S apps/reader/commands -B build/desktop-commands -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/desktop-commands --parallel 4
+          cmake --install build/desktop-commands
+          cmake -S apps/reader/desktop-metadata -B build/desktop-metadata -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/desktop-metadata --parallel 4
+          cmake --install build/desktop-metadata
+          if [ "$RUNNER_OS" = Linux ]; then
+            cmake -S tests/reader_commands/consumer -B build/desktop-command-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+            cmake --build build/desktop-command-consumer --parallel 4
+          fi
       - name: Build and install unmodified reading-library SDK
         run: |
           mkdir -p build/desktop-evidence
@@ -55,7 +78,7 @@ jobs:
           echo "DESKTOP_WORKSPACE=$ws" >> "$GITHUB_ENV"
           gtk=OFF
           if [ "$RUNNER_OS" = Linux ]; then gtk=ON; fi
-          cmake -S apps/reader/desktop -B build/desktop-sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$ws/build/reading-library/stage" -DEXR_READER_FIXTURES="$ws/tests/fixtures" -DEXR_READER_BUILD_GTK="$gtk" -DEXR_LINUX_REVIEW_TESTS="$gtk" -DEXR_LINUX_FIXED_TESTS="$gtk" -DEXR_READER_WINDOWS_SHELF_TESTS=ON 2>&1 | tee build/desktop-evidence/configure.log
+          cmake -S apps/reader/desktop -B build/desktop-sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$ws/build/reading-library/stage" -DREADER_METADATA_PREFIX="$DESKTOP_PRODUCT_PREFIX" -DEXR_READER_FIXTURES="$ws/tests/fixtures" -DEXR_READER_BUILD_GTK="$gtk" -DEXR_LINUX_REVIEW_TESTS="$gtk" -DEXR_LINUX_FIXED_TESTS="$gtk" -DEXR_READER_WINDOWS_SHELF_TESTS=ON 2>&1 | tee build/desktop-evidence/configure.log
           cmake --build build/desktop-sdk --parallel 4 --verbose 2>&1 | tee build/desktop-evidence/build.log
       - name: Real source digest, mode, cancellation and product transaction checks
         run: ctest --test-dir build/desktop-sdk --output-on-failure --no-tests=error --timeout 180 --output-junit "$DESKTOP_WORKSPACE/build/desktop-evidence/tests.xml"
@@ -111,6 +134,7 @@ jobs:
             python3 tools/check_linux_host_regressions.py --payload build/desktop-linux-package/EXReader-Linux --consumer build/desktop-sdk/gtk-host --output build/desktop-gtk-regressions
             python3 tests/linux_host/check_fixed_ui.py --payload build/desktop-linux-package/EXReader-Linux --original-evidence build/desktop-gtk-ui --product-evidence build/desktop-gtk-product --output build/desktop-gtk-fixed
             python3 tests/linux_host/check_shelf_ui.py --payload build/desktop-linux-package/EXReader-Linux --output build/desktop-gtk-shelf
+            python3 tests/linux_host/check_metadata_ui.py --payload build/desktop-linux-package/EXReader-Linux --command-consumer build/desktop-command-consumer/command-consumer --output build/desktop-gtk-metadata
           '
       - name: Preserve original logs, link provider and source-bound evidence
         if: always()
@@ -133,6 +157,9 @@ jobs:
             build/desktop-gtk-fixed/
             build/desktop-gtk-shelf/
             build/desktop-gtk-regressions/
+            build/desktop-gtk-metadata/
+            build/desktop-product-stage/
+            build/desktop-command-consumer/command-link.map
             build/desktop-fixed-inputs/
             build/desktop-linux-package/build.json
             build/desktop-linux-package/runtime-dependencies.txt

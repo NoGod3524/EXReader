@@ -1,7 +1,7 @@
 name: Reader product preintegration
 on:
   push:
-    branches: [codex/reader-product-integration]
+    branches: [codex/reader-product-integration, codex/reader-desktop-organization]
   workflow_dispatch:
 permissions:
   contents: read
