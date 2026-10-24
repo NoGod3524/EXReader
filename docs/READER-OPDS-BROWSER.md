@@ -123,3 +123,44 @@ driver is Actions-only.
   host, as the Actions run does).
 * The product hosts are not wired: this package ships an installable library, an example
   and installed-consumer probes; root owns host integration.
+
+## Recorded evidence
+
+Tested source `7c2b274e021b95b65438ad37abca6d5bc15a7adc` (branch `codex/reader-opds-browser`),
+run [40125592894 attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40125592894):
+all four jobs passed and every platform reported the same 60 named cases.
+
+| Job | ID | Result |
+| --- | --- | --- |
+| opds consumers (ubuntu-22.04) | 120966209126 | success |
+| opds consumers (windows-2022) | 120966208920 | success |
+| opds consumers (macos-15) | 120966209165 | success |
+| strict opds evidence | 120967169373 | success |
+
+| Artifact | ID | Bytes | sha256 | Expires |
+| --- | --- | --- | --- | --- |
+| reader-opds-browser-linux-40125592894-1 | 12573760577 | 136502 | `94858ee7dc694e086eafb7d9aec694eafe9c9d42522dcaaa0b2929b97e440d7e` | 2027-01-22 |
+| reader-opds-browser-windows-40125592894-1 | 12573330973 | 202341 | `41d2d74d702f46b12c28bafaa2aa7a3bb4bdd8e8d38210dae0bc0659bd482527` | 2027-01-22 |
+| reader-opds-browser-macos-40125592894-1 | 12573256350 | 134159 | `cf02a781409cdc80a4ad22083db411b139b746432b4955306a061ca7dccb991f` | 2027-01-22 |
+| reader-opds-browser-evidence-40125592894-1 | 12572856911 | 1258 | `c3ae0a58db1870d80dbbb88c56e317b36ab5ed57579a0aaf5faf801401b718f9` | 2027-01-22 |
+
+Every platform reported `accepted: true`, 60/60 named cases, 36 recorded fixture requests,
+two TLS requests, and `plain_requests_with_authorization: 0` while the credential origin
+received exactly one Authorization header.
+
+Retained failures (kept as evidence, each with its own artifacts):
+
+* `4e873f22` run 40123942977 — the installed consumer did not compile: greedy hex escapes.
+* `46911446` run 40124481258 — wrong import expectations, no-replace collision, a one-byte
+  WinHTTP header buffer and a macOS `getfqdn` stall in the fixture service.
+* `eef73089` run 40124883828 — superseded before it could pass.
+* `f82c0134` run 40125267330 — cancelled on purpose once superseded (Linux/Windows consumer
+  jobs had already passed; not claimed as evidence).
+
+This section and `docs/validation/reader-opds-browser.json` are committed with `[skip ci]`
+after the run. No source, test, workflow or fixture byte changed, so the tested source stays
+`7c2b274e` and the branch head differs only in documentation.
+
+Not granted: product-host wiring, PDF/CBZ import through the SDK (only envelope, staging and
+EPUB import are exercised), performance/CPU/accessibility/real-device claims, and release
+packaging or signing.
