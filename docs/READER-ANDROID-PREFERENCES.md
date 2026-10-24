@@ -12,6 +12,7 @@ F3 原交回 `f453af14852ad3d8833d27c0eb6888f804c12050` 相对原受测 `6f33caf
 - `阅读更多操作 → 阅读设置` 是低频原生面板。字号、行距、段距、页边距传给真实 SDK 布局，固定缩放传给实际固定页 render；翻页方向与点击/滑动/方向键作用于原 ReaderView。
 - 默认 24 pt / 1.6 / 12 pt / 48 pt / light / ltr / tap / 100%；数值范围由安装的 F3 验证，组合视口由实际 SDK 布局验证。旧 SharedPreferences 中实际存在的 font/zoom 按显式 present 位导入，未列字段保留 F3 默认。
 - 应用时先公开 capture 当前页真实点，独立 resolve 必须 FOUND，再以新配置建立候选 pager 并找到含该点的页面。bounded EPUB 保持 spine/path，legacy EPUB 保持 global 投影。旧进度锚点、SDK notes、产品修订/outbox 不因设置而写入。
+- 重复 legacy 章节的空范围点可能 AMBIGUOUS；此时只从该页真实 SDK 边界 capture 不超过64KiB的可见范围，再独立 resolve，仍须 FOUND。该范围的真实起点保持页首；若仍歧义则拒绝，不将旧偏移或章节序号当作 FOUND。
 - 所有候选渲染与可取消读取完成后，进入短发布边界：F3 写同目录临时文件、flush/fsync、原子 rename；save 成功才接受候选页及新内存值。进入发布后不再取消，符合原子 save 在 rename 成功后返回 OK 的契约。保存失败或此前取消保留旧文件/值/页面。
 - 私有位置 `files/reading-settings/preferences.json`；进程内跨 Activity 的静态锁与 owner epoch 防止旧 owner 晚保存。新进程和旋转载入同一个文件；坏格式/未知版本不自动重写原文件。
 

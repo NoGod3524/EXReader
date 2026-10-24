@@ -19,6 +19,7 @@ final class PageSnapshot {
     float layoutFont;
     float layoutLine=1.6f,layoutParagraph=12f,layoutMargin=32f;
     long preferencesPoint=-1;
+    long preferencesRangeEnd=-1;
     float layoutZoom=1f;
     final long bookId;
     final Bitmap bitmap;
