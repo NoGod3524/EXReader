@@ -78,7 +78,7 @@ typedef struct {
 typedef struct {
   uint32_t struct_size;
   reader_preferences_control control;
-  size_t max_file_bytes; /* 0 selects the 65536-byte default */
+  size_t max_file_bytes; /* 0 = 65536; may only lower it. Larger values return ARGUMENT. */
 } reader_preferences_load_options;
 
 typedef struct {

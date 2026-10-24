@@ -195,6 +195,11 @@ reader_preferences_status reader_preferences_load(const char *utf8_path,
       return READER_PREFERENCES_ARGUMENT;
     }
     if (options->max_file_bytes != 0u) limit = options->max_file_bytes;
+    if (limit > RP_DEFAULT_FILE_LIMIT) {
+      rp_error_set(error, READER_PREFERENCES_ARGUMENT, 0, 0,
+                   "load limit may only lower the 65536-byte ceiling");
+      return READER_PREFERENCES_ARGUMENT;
+    }
     control = options->control;
   } else {
     control.cancelled = NULL;

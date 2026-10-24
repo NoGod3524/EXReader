@@ -11,6 +11,7 @@ typedef struct {
   const unsigned char *p;
   const unsigned char *end;
   reader_preferences_error *error;
+  reader_preferences_status status;
 } rp_parser;
 
 typedef struct {
@@ -21,12 +22,13 @@ typedef struct {
 } rp_writer;
 
 static int rp_parser_fail(rp_parser *s, reader_preferences_status status, const char *message) {
+  s->status = status;
   rp_error_set(s->error, status, 0, (size_t)(s->p - s->begin), "%s", message);
   return 0;
 }
 
-static reader_preferences_status rp_parser_status(const reader_preferences_error *error) {
-  return error && error->status != READER_PREFERENCES_OK ? error->status : READER_PREFERENCES_FORMAT;
+static reader_preferences_status rp_parser_status(const rp_parser *parser) {
+  return parser->status != READER_PREFERENCES_OK ? parser->status : READER_PREFERENCES_FORMAT;
 }
 
 static void rp_skip_ws(rp_parser *s) {
@@ -85,9 +87,13 @@ static int rp_parse_number(rp_parser *s, double *out) {
   if (p < s->end && *p == '-') { negative = 1; ++p; }
   if (p >= s->end || !rp_digit(*p))
     return rp_parser_fail(s, READER_PREFERENCES_FORMAT, "expected number");
+  if (*p == '0' && p + 1 < s->end && rp_digit(p[1]))
+    return rp_parser_fail(s, READER_PREFERENCES_FORMAT, "leading zero in number");
   while (p < s->end && rp_digit(*p)) {
-    if (significant < 17) { mantissa = mantissa * 10.0 + (double)(*p - '0'); ++significant; }
-    else { ++exponent; }
+    if (significant || *p != '0') {
+      if (significant < 17) { mantissa = mantissa * 10.0 + (double)(*p - '0'); ++significant; }
+      else { ++exponent; }
+    }
     ++p;
   }
   if (p < s->end && *p == '.') {
@@ -97,7 +103,7 @@ static int rp_parse_number(rp_parser *s, double *out) {
     while (p < s->end && rp_digit(*p)) {
       if (significant < 17) {
         mantissa = mantissa * 10.0 + (double)(*p - '0');
-        ++significant;
+        if (significant || *p != '0') ++significant;
         --exponent;
       }
       ++p;
@@ -143,6 +149,8 @@ static int rp_parse_uint(rp_parser *s, uint32_t *out) {
   int digits = 0;
   if (p >= s->end || !rp_digit(*p))
     return rp_parser_fail(s, READER_PREFERENCES_FORMAT, "expected unsigned integer");
+  if (*p == '0' && p + 1 < s->end && rp_digit(p[1]))
+    return rp_parser_fail(s, READER_PREFERENCES_FORMAT, "leading zero in integer");
   while (p < s->end && rp_digit(*p)) {
     value = value * 10u + (uint64_t)(*p - '0');
     if (value > 0xffffffffull)
@@ -213,7 +221,7 @@ reader_preferences_status rp_json_parse(const unsigned char *data, size_t size,
     rp_error_set(error, READER_PREFERENCES_FORMAT, 0, 0, "empty document");
     return READER_PREFERENCES_FORMAT;
   }
-  s.begin = data; s.p = data; s.end = data + size; s.error = error;
+  s.begin = data; s.p = data; s.end = data + size; s.error = error;s.status = READER_PREFERENCES_OK;
   parsed = *out;
   if (size >= 3u && data[0] == 0xefu && data[1] == 0xbbu && data[2] == 0xbfu) s.p += 3;
   rp_skip_ws(&s);
@@ -263,26 +271,26 @@ reader_preferences_status rp_json_parse(const unsigned char *data, size_t size,
     } else if (rp_key_is(key, key_length, "format_version")) {
       if (seen & bit_version) { (void)rp_parser_fail(&s, READER_PREFERENCES_FORMAT, "duplicate key"); return READER_PREFERENCES_FORMAT; }
       version_offset = (size_t)(s.p - s.begin);
-      if (!rp_parse_uint(&s, &version)) return rp_parser_status(error);
+      if (!rp_parse_uint(&s, &version)) return rp_parser_status(&s);
       seen |= bit_version;
     } else if (rp_key_is(key, key_length, "font_size")) {
       if (seen & bit_font) { (void)rp_parser_fail(&s, READER_PREFERENCES_FORMAT, "duplicate key"); return READER_PREFERENCES_FORMAT; }
-      if (!rp_parse_number(&s, &number)) return rp_parser_status(error);
+      if (!rp_parse_number(&s, &number)) return rp_parser_status(&s);
       parsed.font_size = (float)number;
       seen |= bit_font;
     } else if (rp_key_is(key, key_length, "line_spacing")) {
       if (seen & bit_line) { (void)rp_parser_fail(&s, READER_PREFERENCES_FORMAT, "duplicate key"); return READER_PREFERENCES_FORMAT; }
-      if (!rp_parse_number(&s, &number)) return rp_parser_status(error);
+      if (!rp_parse_number(&s, &number)) return rp_parser_status(&s);
       parsed.line_spacing = (float)number;
       seen |= bit_line;
     } else if (rp_key_is(key, key_length, "paragraph_spacing")) {
       if (seen & bit_paragraph) { (void)rp_parser_fail(&s, READER_PREFERENCES_FORMAT, "duplicate key"); return READER_PREFERENCES_FORMAT; }
-      if (!rp_parse_number(&s, &number)) return rp_parser_status(error);
+      if (!rp_parse_number(&s, &number)) return rp_parser_status(&s);
       parsed.paragraph_spacing = (float)number;
       seen |= bit_paragraph;
     } else if (rp_key_is(key, key_length, "margin")) {
       if (seen & bit_margin) { (void)rp_parser_fail(&s, READER_PREFERENCES_FORMAT, "duplicate key"); return READER_PREFERENCES_FORMAT; }
-      if (!rp_parse_number(&s, &number)) return rp_parser_status(error);
+      if (!rp_parse_number(&s, &number)) return rp_parser_status(&s);
       parsed.margin = (float)number;
       seen |= bit_margin;
     } else if (rp_key_is(key, key_length, "theme")) {
@@ -323,7 +331,7 @@ reader_preferences_status rp_json_parse(const unsigned char *data, size_t size,
       seen |= bit_input;
     } else if (rp_key_is(key, key_length, "fixed_page_zoom")) {
       if (seen & bit_zoom) { (void)rp_parser_fail(&s, READER_PREFERENCES_FORMAT, "duplicate key"); return READER_PREFERENCES_FORMAT; }
-      if (!rp_parse_uint(&s, &parsed.fixed_page_zoom)) return rp_parser_status(error);
+      if (!rp_parse_uint(&s, &parsed.fixed_page_zoom)) return rp_parser_status(&s);
       seen |= bit_zoom;
     } else if (rp_key_is(key, key_length, "light_foreground")) {
       if (seen & bit_lfg) { (void)rp_parser_fail(&s, READER_PREFERENCES_FORMAT, "duplicate key"); return READER_PREFERENCES_FORMAT; }
