@@ -1,24 +1,38 @@
 {
-  "accepted": false,
-  "status": "source-key and owner fix candidate awaits a full new same-source cloud run; prior 114-check evidence retained below",
+  "accepted": true,
+  "status": "accepted Windows/Linux package interfaces after verified source-key binding and owner regression passed in one full cloud run",
   "package": "EXReaderNavigation 0.1.0",
   "common_start": "c3511a011eefbf1fba1d20908f000cef22b1ced2",
-  "source_sha": "7a7d2de2a8e1baeaca7fc739898fa33cab1f8e00",
-  "run_id": 40073915372,
+  "source_sha": "cbd7832b914bddcf99e06a85962d301a00b47efa",
+  "run_id": 40074866988,
   "attempt": 1,
   "cloud_summary_accepted": true,
-  "checks_per_platform": 114,
+  "checks_per_platform": 130,
   "failures_per_platform": 0,
   "artifacts": [
-    {"id": 12552223258, "name": "reader-navigation-Linux-40073915372-1", "size_in_bytes": 6696956, "digest": "sha256:47934f1ffde2dbda8af8907a092bb60d60b546c4c8f759a1906b3e51e2acc07a", "expires_at": "2027-01-22T07:23:04Z"},
-    {"id": 12551962898, "name": "reader-navigation-Windows-40073915372-1", "size_in_bytes": 4366228, "digest": "sha256:47df057e6e0f1b47f12d4cf9f339a78be7d2012336c83daf333f70ea50416e5f", "expires_at": "2027-01-22T07:23:04Z"},
-    {"id": 12552592035, "name": "reader-navigation-evidence-40073915372-1", "size_in_bytes": 656, "digest": "sha256:b0df4e33f65fde131bda09c15491d36a2286da212ac69f0eeb96245e0ae6aea2", "expires_at": "2027-01-22T07:23:04Z"}
+    {"id": 12552289772, "name": "reader-navigation-Linux-40074866988-1", "size_in_bytes": 6717600, "digest": "sha256:0f27efa2b19b5947bf580760186d6408f19853228a2cf9c28160590b08611306", "expires_at": "2027-01-22T07:37:25Z"},
+    {"id": 12552224991, "name": "reader-navigation-Windows-40074866988-1", "size_in_bytes": 4387567, "digest": "sha256:222f7ba0d396a485b81d2727d957c2bfa171941a3dfc0194384a754ef30fb8c7", "expires_at": "2027-01-22T07:37:25Z"},
+    {"id": 12553180577, "name": "reader-navigation-evidence-40074866988-1", "size_in_bytes": 656, "digest": "sha256:72cb91fe960c51ef8d97767e658a7e943bc8172cda8cf9f2d409a4fce9233ff2", "expires_at": "2027-01-22T07:37:25Z"}
   ],
   "jobs": [
-    {"id": 120813090501, "platform": "linux", "conclusion": "success"},
-    {"id": 120813090443, "platform": "windows", "conclusion": "success"},
-    {"id": 120813666965, "role": "strict evidence", "conclusion": "success"}
+    {"id": 120815952710, "platform": "linux", "conclusion": "success"},
+    {"id": 120815952678, "platform": "windows", "conclusion": "success"},
+    {"id": 120816427536, "role": "strict evidence", "conclusion": "success"}
   ],
+  "prior_cloud_candidate": {
+    "source_sha": "7a7d2de2a8e1baeaca7fc739898fa33cab1f8e00",
+    "run_id": 40073915372,
+    "attempt": 1,
+    "checks_per_platform": 114,
+    "cloud_summary_accepted": true,
+    "overall_accepted": false,
+    "reason": "Directory-only source identity did not establish the complete same-book contract; the later source-key fix and its 16 regression checks were not present.",
+    "artifacts": [
+      {"id": 12552223258, "size_in_bytes": 6696956, "digest": "sha256:47934f1ffde2dbda8af8907a092bb60d60b546c4c8f759a1906b3e51e2acc07a"},
+      {"id": 12551962898, "size_in_bytes": 4366228, "digest": "sha256:47df057e6e0f1b47f12d4cf9f339a78be7d2012336c83daf333f70ea50416e5f"},
+      {"id": 12552592035, "size_in_bytes": 656, "digest": "sha256:b0df4e33f65fde131bda09c15491d36a2286da212ac69f0eeb96245e0ae6aea2"}
+    ]
+  },
   "earlier_failed_runs": [{
     "source_sha": "e3ebed25c88d60b8b57e5d5a37484a7adc420e5e",
     "run_id": 40073175739,
@@ -44,8 +58,15 @@
     "failures_per_platform": 1,
     "reason": "The custom publication fixture returned TXT without a chapter directory, so public fragment resolve rejected its chapter index. The fixture now constructs a real chapter with the public SDK; original PART_ONLY expectation retained and an independent SDK precondition check added."
   }],
-  "problems": ["The following candidate adds verified source-key binding and owner guards; its expanded regression set has not yet completed a same-source cloud run. The recorded 114-check run predates these production changes and does not grant them acceptance."],
-  "granted_platforms": [],
+  "problems": [],
+  "granted_platforms": ["linux", "windows"],
+  "source_identity_contract": "The host verifies the original format/SHA-256 and parser version before supplying the exact key of each live SDK input; the module compares copied UTF-8 keys before SDK resolution and separately checks the ordered directory. It cannot independently verify a dishonest host key claim through the frozen SDK.",
+  "regressions_added": 16,
+  "installed_header_sha256": "100a4490b7cc1f69653e26e5e8e7f97f643783540fd95ed28ce1d14adf12d7f8",
+  "consumer_sha256": {
+    "linux": {"c": "6e786082f3b72603e1d97962e8ccc6d8fe270ea0b6c29a4dde6aaf33676b7e1d", "cpp": "78e2f5b0995eeef1a4b0fda7a7680b828a14471e311a3570ada75a62507d128d"},
+    "windows": {"c": "6b08c2c5c2b325c7a469c6fe6e35560077387d7a63c9918e896bbfbc5538e477", "cpp": "0e19937be1c94f6f31544c7b224d13fe82ce1147d5e8cb110c0d54f7e2bfc156"}
+  },
   "macos_accepted": false,
   "performance_claimed": false,
   "host_ui_accepted": false,

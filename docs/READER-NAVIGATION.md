@@ -3,7 +3,7 @@
 独立可选安装包，公开 C ABI 头 `reader_navigation.h`，仅依赖冻结 SDK（3.40.0、ABI1）的 `core` 组件。
 不自写 EPUB/PDF 解析器，不读 SDK 私有 SQL，不依赖产品目录、修订或阅读状态模块，默认 reading 构建不含它。
 源码在 `apps/reader/navigation/`，测试在 `tests/reader_navigation/`，工作流为
-`.github/workflows/reader-navigation.yml`。**验收状态见末节，当前未获云端授予。**
+`.github/workflows/reader-navigation.yml`。**Windows/Linux 本包接口已通过当前同源云端出口，身份见末节。**
 
 ## 做什么
 
@@ -84,7 +84,7 @@ EPUB3 nav、EPUB2 NCX、嵌套与空目录、重复标题、非 ASCII 标题、�
 
 ## 验收状态
 
-`docs/validation/reader-navigation.json` 仍为 `accepted: false`。
+`docs/validation/reader-navigation.json` 登记当前实际受测源码和原失败。
 首轮 `e3ebed25` / run `40073175739` 两平台因缺少公开 `exr/formats.h` 声明编译失败，原运行保留。
 第二轮 `3c0ffdd9` / run `40073375893` 两平台构建和 C 消费者通过，但 C++ 探针各 113 项中有一项失败：
 自定义 publication 的加载器返回无 chapter 的 TXT，不能用于公开 fragment resolve。
@@ -97,9 +97,17 @@ EPUB3 nav、EPUB2 NCX、嵌套与空目录、重复标题、非 ASCII 标题、�
 两平台四组目录结果逐项一致，真实 EPUB 解析包含 13/8/3 行与空目录，零错位。
 工件大小、摘要、消费者和安装文件身份记录见验收 JSON；所有工件同 source/run/attempt，未过期。
 
-独立审查还发现身份检查仅比较 part 路径和 ID 的有序目录，不足以区分目录相同而内容不同的两本书。
-这轮原有套件成功保留，但 `docs/validation/reader-navigation.json` 的整体 `accepted` 继续为 false、
-`granted_platforms` 为空；须补上真实来源身份绑定及同目录换书负例，才能授予完整包契约。
-后续候选现已补入上述 key 绑定和 owner 守卫，以及同目录异原件、同页 ID 异 PDF、独立重开、
-错误/缺少 key、UTF-8/长度边界及所有入口跨线程回归；须待这份源码的完整同源云端结果。
-即便通过，也只授予本包接口：不含宿主 UI、产品性能、六平台互通、macOS，且 PDF/CBZ 无作者大纲。
+独立审查随后发现该候选仅比较 part 路径和 ID，不足以区分目录相同而内容不同的两本书。
+因此该次云端套件成功被保留，整体包授予曾继续拒绝；没有借此为后续改动继承验收。
+
+修复源码 **`cbd7832b914bddcf99e06a85962d301a00b47efa`** 的
+[run 40074866988](https://github.com/NoGod3524/EXReader/actions/runs/40074866988) attempt1，
+Windows/Linux 和严格汇总共 **3/3 成功**，两平台各 **130 项、0 失败**。
+原 114 项与新增 16 项在同次运行执行：来源 key 复制、真实同目录不同 EPUB、同页 ID 不同 PDF、
+独立重开同原书、CFI 身份、错误/缺少 key、parser 版本、UTF-8 与 1/255/256 字节边界，
+以及所有句柄入口的错线程拒绝和拒绝后的 owner 可用性。三组原目录与空目录结果仍一致、零错位。
+
+严格作业 `120816427536` 实际重新散列两平台 ZIP，核对同 source/run/attempt、全部原始具名检查、
+实际 C/C++ 消费者与安装文件散列；`accepted=true, problems=[]`。工件 ID/字节/digest 与上传日志一致，
+全部未过期。最终授予仅为 Windows/Linux 本包接口；宿主 UI、产品性能、六平台互通、macOS 不在本次范围，
+PDF/CBZ 入口仍不声称作者大纲。
