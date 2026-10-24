@@ -2412,6 +2412,12 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
       return 0;
     case WM_GETOBJECT:
       return host_a11y_page_object(window, wparam, lparam);
+    case HOST_A11Y_CALL: {
+      /* A provider call from another thread runs here, on the UI thread. */
+      host_a11y_task *task = (host_a11y_task *)lparam;
+      if (task && task->fn) task->fn(task->context);
+      return 0;
+    }
     case WM_GETDLGCODE:
       return DLGC_WANTARROWS | DLGC_WANTCHARS;
     case WM_LBUTTONDOWN:

@@ -323,7 +323,88 @@ def main():
         assert all(keys.values()), keys
         record("main_commands_expose_alt_mnemonics")
 
-        # 8) one clean Tab cycle over every enabled stop
+        # 8) provider object lifetime: interleaved AddRef/QI/Clone/Release
+        UIA_E_ELEMENTNOTAVAILABLE = -2147220991  # 0x80040201
+        document = pattern.DocumentRange
+        full_text = document.GetText(-1)
+        survivors = []
+        for _ in range(24):
+            first = document.Clone()
+            second = first.Clone()
+            third = second.Clone()
+            assert first.Compare(second)
+            assert first.GetText(-1) == full_text
+            survivors.append(third)
+            del second, first
+            assert third.GetText(-1) == full_text
+        assert survivors[-1].GetText(-1) == full_text
+        del survivors
+        assert pattern.DocumentRange.GetText(-1) == full_text
+        assert not process.poll(), "the host died while ranges were interleaved"
+        record("text_ranges_survive_interleaved_clone_compare_and_release")
+
+        # 9) an old frame's range reads its own snapshot and refuses to select
+        stale = pattern.DocumentRange
+        stale_text = stale.GetText(-1)
+        page.SetFocus()
+        tap(0x22)  # Page Down on the focused page
+        time.sleep(0.8)
+        fresh = pattern.DocumentRange
+        fresh_text = fresh.GetText(-1)
+        assert fresh_text != stale_text, "the page did not change; the stale check would prove nothing"
+        assert stale.GetText(-1) == stale_text, "an old range must keep reading its own snapshot"
+        refused = False
+        try:
+            stale.Select()
+        except Exception as error:
+            refused = True
+            code = getattr(error, "hresult", None)
+            if code is None and getattr(error, "args", None):
+                code = error.args[0]
+            assert code is not None and int(code) == UIA_E_ELEMENTNOTAVAILABLE, (code, error)
+        assert refused, "a stale range selected inside the new frame"
+        record("stale_page_ranges_keep_their_text_and_refuse_to_select")
+
+        # 10) text units, truncation and endpoint clamping on real unicode
+        #     UIA enums: Character 0, Word 2, Document 6; endpoints Start 0, End 1.
+        units = fresh
+        assert 1 <= len(units.GetText(1)) <= 2
+        assert units.GetText(0) == ""
+        assert units.GetText(-1) == fresh_text
+        cursor = units.Clone()
+        assert cursor.Move(0, -10**6) == 0
+        assert cursor.GetText(-1) == ""
+        assert cursor.Move(6, 1) == 1
+        assert cursor.GetText(-1) == ""
+        cursor.ExpandToEnclosingUnit(6)
+        assert cursor.GetText(-1) == fresh_text
+        clip = units.Clone()
+        assert clip.MoveEndpointByUnit(0, 0, -10**6) <= 0
+        assert clip.CompareEndpoints(0, units, 0) == 0
+        assert clip.MoveEndpointByUnit(1, 0, 10**6) >= 0
+        assert clip.CompareEndpoints(1, units, 1) == 0
+        record("text_units_truncation_and_endpoints_follow_the_contract")
+
+        # 11) geometry is real for text and empty for an empty range
+        rects = units.GetBoundingRectangles()
+        assert len(rects) >= 4, rects
+        assert rects[2] > 0 and rects[3] > 0, rects
+        collapsed = units.Clone()
+        collapsed.MoveEndpointByRange(1, units, 0)  # end = range start
+        assert collapsed.GetText(-1) == ""
+        assert len(collapsed.GetBoundingRectangles()) == 0
+        record("bounding_rectangles_describe_only_real_geometry")
+
+        # 12) a point inside the page yields a range at that point
+        bounds = page.BoundingRectangle
+        range_from_point = getattr(pattern, "RangeFromPoint", None)
+        assert range_from_point is not None, "uiautomation has no RangeFromPoint"
+        point_range = range_from_point(int(bounds.left) + 40, int(bounds.top) + 40)
+        assert point_range is not None
+        assert point_range.Move(0, 1) == 1
+        record("range_from_point_uses_the_host_hit_test")
+
+        # 13) one clean Tab cycle over every enabled stop
         element(control(101)).SetFocus()
         seen, order = set(), []
         for _ in range(120):
