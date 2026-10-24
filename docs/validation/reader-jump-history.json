@@ -1,0 +1,36 @@
+{
+  "schema": "reader-jump-history-validation-v1",
+  "accepted": false,
+  "scope": "Bounded back/forward jump history component: real four-format captures, installed C and C++ consumers, no product or SDK write; NOT host wiring",
+  "host_wiring_accepted": false,
+  "implementation_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "original_product_schema1": "f32bb8aa18ed3de286900f19ce4230fd93435dd0",
+  "branch": "codex/reader-jump-history",
+  "package": "EXReaderJumpHistory 0.1.0",
+  "status": "awaiting the first cloud run",
+  "tested_source_sha": null,
+  "run_id": null,
+  "attempt": null,
+  "workflow": ".github/workflows/reader-jump-history.yml",
+  "workflow_conclusion": null,
+  "platforms": [],
+  "gates": [
+    "HEAD == GITHUB_SHA",
+    "the fixed start is an ancestor",
+    "the eight frozen SDK paths are unchanged",
+    "product schema1 is unchanged",
+    "apps/reader/{reading-state,revisions,store,sync,commands} and docs/handoffs are unchanged since the fixed start",
+    "git diff --name-only from the fixed start stays inside the J07 ownership list"
+  ],
+  "problems": [],
+  "uncovered": [
+    "host wiring, UI controls, menus and shortcuts in the four production hosts",
+    "persistence, restart, cross-device and any sync entity",
+    "other J packages and the unmerged G03/G04 search and TOC hosts",
+    "real user libraries, private cloud storage and real accounts",
+    "latency and CPU budgets; only the entry and byte caps are enforced"
+  ],
+  "default_branch_merged": false,
+  "tag_or_release": false
+}

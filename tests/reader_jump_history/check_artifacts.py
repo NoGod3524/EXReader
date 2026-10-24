@@ -1,0 +1,120 @@
+# SPDX-License-Identifier: MIT
+"""Verify this run's jump-history artifacts in Actions.
+
+Downloads each same-run ZIP through the GitHub API, compares its real size and
+SHA-256 with the API record, rebinds the summary and report inside it to this
+exact source, run and attempt, and checks that the uploaded probe binary is the
+one the summary hashed. Nothing here runs on a developer machine.
+"""
+import hashlib
+import io
+import json
+import os
+import subprocess
+import sys
+import time
+import zipfile
+from pathlib import Path
+
+PLATFORMS = ('Linux', 'Windows', 'macOS')
+
+
+def api(path, binary=False):
+    for attempt in range(4):
+        result = subprocess.run(['gh', 'api', '-H', 'Accept: application/vnd.github+json', path], capture_output=True)
+        if result.returncode == 0:
+            return result.stdout if binary else json.loads(result.stdout)
+        message = result.stderr.decode('utf-8', 'replace')
+        if attempt == 3 or not any(code in message for code in ('HTTP 500', 'HTTP 502', 'HTTP 503', 'HTTP 504')):
+            raise SystemExit('gh api ' + path + ' failed: ' + message)
+        time.sleep(10 * (attempt + 1))
+    raise SystemExit('unreachable')
+
+
+def main(output):
+    repo, run, attempt, source = (os.environ[k] for k in
+                                 ('GITHUB_REPOSITORY', 'GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT', 'GITHUB_SHA'))
+    listed = api('repos/' + repo + '/actions/runs/' + run + '/artifacts?per_page=100')['artifacts']
+    problems, records = [], []
+    for platform in PLATFORMS:
+        name = 'reader-jump-history-' + platform + '-' + run + '-' + attempt
+        found = [a for a in listed if a['name'] == name]
+        if len(found) != 1:
+            problems.append(name + ': expected one artifact, got ' + str(len(found)))
+            continue
+        artifact = found[0]
+        data = api('repos/' + repo + '/actions/artifacts/' + str(artifact['id']) + '/zip', binary=True)
+        digest = 'sha256:' + hashlib.sha256(data).hexdigest()
+        record = {'platform': platform, 'name': name, 'id': artifact['id'], 'api_bytes': artifact['size_in_bytes'],
+                  'zip_bytes': len(data), 'api_digest': artifact.get('digest'), 'zip_digest': digest,
+                  'expired': artifact['expired'], 'workflow_run': artifact.get('workflow_run', {})}
+        if artifact['expired'] or len(data) != artifact['size_in_bytes'] or artifact.get('digest') != digest:
+            problems.append(name + ': size, digest or expiry mismatch')
+        if str(artifact.get('workflow_run', {}).get('head_sha')) != source:
+            problems.append(name + ': artifact head SHA differs from this source')
+        archive = zipfile.ZipFile(io.BytesIO(data))
+        names = set(archive.namelist())
+        summary_name = next((n for n in names if n.endswith('jh-evidence/summary.json')), None)
+        report_name = next((n for n in names if n.endswith('jh-evidence/report.json')), None)
+        binary_name = next((n for n in names if n.endswith('jump-history-probe') or n.endswith('jump-history-probe.exe')), None)
+        if not summary_name or not report_name or not binary_name:
+            problems.append(name + ': summary, report or probe binary missing')
+            records.append(record)
+            continue
+        summary = json.loads(archive.read(summary_name))
+        report_bytes = archive.read(report_name)
+        report_sha = hashlib.sha256(report_bytes).hexdigest()
+        probe_sha = hashlib.sha256(archive.read(binary_name)).hexdigest()
+        identity = summary.get('identity', {})
+        record.update({'summary_sha256': hashlib.sha256(archive.read(summary_name)).hexdigest(),
+                       'report_sha256': report_sha, 'identity': identity, 'problems': summary.get('problems'),
+                       'accepted': summary.get('jump_history_module_accepted'),
+                       'host_wiring_accepted': summary.get('host_wiring_accepted'),
+                       'checks_total': summary.get('checks_total'), 'checks_failed': summary.get('checks_failed'),
+                       'moves': summary.get('moves'), 'cases_total': summary.get('cases_total'),
+                       'no_write': summary.get('no_write'), 'originals': summary.get('originals'),
+                       'installed': summary.get('installed'), 'probe_sha256': summary.get('probe_sha256'),
+                       'uploaded_probe_sha256': probe_sha, 'case_ids': sorted(c['id'] for c in summary.get('cases', [])),
+                       'steps': sorted(s['step'] for s in summary.get('lifecycle', []))})
+        if (identity.get('GITHUB_SHA'), identity.get('GITHUB_RUN_ID'), identity.get('GITHUB_RUN_ATTEMPT')) != (source, run, attempt):
+            problems.append(name + ': summary identity differs from this run')
+        if summary.get('report_sha256') != report_sha:
+            problems.append(name + ': report hash differs from the summary')
+        if summary.get('probe_sha256') != probe_sha:
+            problems.append(name + ': uploaded probe binary is not the one the summary hashed')
+        if summary.get('platform') != platform:
+            problems.append(name + ': summary platform is ' + repr(summary.get('platform')))
+        if summary.get('problems') or summary.get('jump_history_module_accepted') is not True:
+            problems.append(name + ': upstream judgement not accepted')
+        if summary.get('host_wiring_accepted') is not False:
+            problems.append(name + ': host wiring must stay unaccepted')
+        if summary.get('checks_failed') != 0 or not summary.get('checks_total'):
+            problems.append(name + ': named checks did not all pass')
+        no_write = summary.get('no_write') or {}
+        if not (no_write.get('databases_unchanged') and no_write.get('control_write_changed')
+                and no_write.get('revision_rows') == 0 and no_write.get('sdk_progress_records') == 0):
+            problems.append(name + ': the no-write proof is incomplete')
+        records.append(record)
+    if len(records) == 3:
+        for field in ('originals', 'case_ids', 'steps'):
+            values = [json.dumps(r.get(field), sort_keys=True) for r in records]
+            if len(set(values)) != 1:
+                problems.append('the three runners disagree on ' + field)
+        fingerprints = [json.dumps(r.get('no_write'), sort_keys=True) for r in records]
+        if len(set(fingerprints)) != 1:
+            problems.append('the three runners disagree on the no-write proof')
+    else:
+        problems.append('only ' + str(len(records)) + ' platform artifacts were authenticated')
+    result = {'source': source, 'run_id': run, 'run_attempt': attempt, 'artifacts': records,
+              'cases_total': records[0].get('cases_total') if records else None,
+              'checks_total': records[0].get('checks_total') if records else None,
+              'moves': records[0].get('moves') if records else None,
+              'jump_history_module_accepted': not problems, 'host_wiring_accepted': False, 'problems': problems}
+    Path(output).mkdir(parents=True, exist_ok=True)
+    (Path(output) / 'jump-history-evidence.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 1 if problems else 0
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv[1]))
