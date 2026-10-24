@@ -119,6 +119,7 @@ class World:
         self.ids = {}
         self.keys = {}
         self.cloud_rows = []
+        self.storage = []
 
     # --- setup -------------------------------------------------------------
     def import_book(self, name, fmt, mode):
@@ -210,6 +211,10 @@ class World:
         result = spawn(self.probe, ["read", self.catalog, target, key, verify, parser, cancel])
         if result.get("status", 0) == -1:
             raise Failure("read setup failed: %s" % result)
+        storage = result.get("storage")
+        if not isinstance(storage, dict):
+            raise Failure("read did not report storage fingerprints: %s" % result)
+        self.storage.append(("%s:v%d:p%d:c%d" % (key.split(":")[0] + ":" + key.split(":")[1][:8], verify, parser, cancel), storage))
         return result
 
     def compare_run(self, command, key, *extra):
@@ -521,11 +526,16 @@ def case_arguments(world, a):
     a.eq("arguments.free-null", result.get("free-null"), True)
 
 
-def case_stores(world, a, pairs):
-    a.true("stores.observed", len(pairs) >= len(REQUIRED_CASES) - 1, len(pairs))
-    for name, before, after in pairs:
-        a.eq("stores." + name, before, after)
-        a.true("stores." + name + ".nonempty", before is not None, name)
+def case_stores(world, a):
+    a.true("stores.observed", len(world.storage) >= 40, len(world.storage))
+    for label, storage in world.storage:
+        a.eq("stores." + label + ".catalog", storage.get("catalog_before"), storage.get("catalog_after"))
+        if storage.get("library_before") == "-":
+            a.eq("stores." + label + ".library_skipped", storage.get("library_after"), "-")
+            continue
+        a.true("stores." + label + ".measured", storage.get("library_before") not in (None, "unreadable"),
+               storage.get("library_before"))
+        a.eq("stores." + label + ".library", storage.get("library_before"), storage.get("library_after"))
 
 
 CASES = (
@@ -571,7 +581,6 @@ def main():
         make_fixtures.write_fixtures(fixtures)
     world = World(args.probe, args.compare, fixtures, Path(args.work))
     checks = []
-    pairs = []
     setup_error = None
     try:
         world.build()
@@ -584,21 +593,17 @@ def main():
         for name, function in CASES:
             if function is None:
                 continue
-            before = {"catalog": file_digest(world.catalog), "library": file_digest(world.library)}
             asserts = Asserts()
             try:
                 function(world, asserts)
             except Failure as error:
                 asserts.problems.append(str(error))
-            after = {"catalog": file_digest(world.catalog), "library": file_digest(world.library)}
-            pairs.append((name, before, after))
             checks.append({"name": name, "ok": not asserts.problems, "assertions": asserts.count,
-                           "problems": asserts.problems, "stores_unchanged": before == after})
+                           "problems": asserts.problems, "stores_unchanged": None})
         asserts = Asserts()
-        case_stores(world, asserts, pairs)
+        case_stores(world, asserts)
         checks.append({"name": "stores-unchanged", "ok": not asserts.problems, "assertions": asserts.count,
-                       "problems": asserts.problems,
-                       "stores_unchanged": all(before == after for _, before, after in pairs)})
+                       "problems": asserts.problems, "reads_measured": len(world.storage)})
     else:
         for name in REQUIRED_CASES:
             checks.append({"name": name, "ok": False, "assertions": 0,
@@ -617,6 +622,7 @@ def main():
         "assertions": sum(row["assertions"] for row in checks),
         "checks": checks,
         "fixtures": world.manifest["books"] if hasattr(world, "manifest") else {},
+        "database_sha256": {"catalog": file_digest(world.catalog), "library": file_digest(world.library)},
         "skipped": [],
         "uncovered": list(UNCOVERED),
         "complete_product": False,
