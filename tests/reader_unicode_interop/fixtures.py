@@ -358,8 +358,9 @@ def build_model():
     for n, fmt, loc, fav, sdk, title, author, sort in BOOKS:
         key = fmt + ":" + book_sha(n)
         MODEL.books[key] = dict(n=n, key=key, format=fmt, loc=loc, favorite=fav,
-                                sdk=sdk, bytes=book_bytes(n), title=T[title],
-                                author=T[author], sort=T[sort], deleted=False)
+                                sdk=sdk, bytes=book_bytes(n), sha=book_sha(n),
+                                title=T[title], author=T[author], sort=T[sort],
+                                deleted=False)
         AUX["b%d.sha" % n] = book_sha(n)
         AUX["b%d.format" % n] = fmt
         AUX["b%d.location" % n] = loc
@@ -373,6 +374,8 @@ def build_model():
     for g, kind, parent, ordinal, name in GROUPS:
         AUX["g.%s.id" % g] = ident("group-" + g)
         AUX["g.%s.kind" % g] = kind
+    for g in ("s1", "s4", "t3", "r1"):
+        AUX["ek." + g] = AUX["g.%s.id" % g]
 
     for label, title, author, sort in [("put.b1", "t.cjk", "t.cjk_author", "t.cjk")] + B1_EXTRA:
         AUX["title." + label] = title
@@ -396,6 +399,7 @@ def build_model():
         AUX["type." + label] = "group"
         AUX["act." + label] = "put"
         AUX["gid." + label] = AUX["g.%s.id" % g]
+        AUX["gkind." + label] = kind
         AUX["name." + label] = name
         AUX["parent." + label] = AUX["g.%s.id" % parent] if parent else ""
         AUX["ordinal." + label] = str(ordinal)
@@ -424,16 +428,20 @@ def build_model():
     AUX["gkind." + label] = "tag"
     AUX["entity_kind." + label] = "membership"
     AUX["key." + label] = "tag:" + AUX["g.t2.id"] + ":" + AUX["ek.b9"]
+    AUX["ek.m.s1.b1"] = AUX["key.mem.s1.b1"]
+    AUX["ek.m.t2.b9"] = AUX["key.del.mem.t2.b9"]
 
     for label in ["put.b%d" % n for n in range(1, 15)]:
         AUX["type." + label] = "book"
         AUX["act." + label] = "put"
-    for label, act in (("put.b1.2", "put"), ("put.b1.3", "put"),
-                       ("del.b2", "delete"), ("res.b2", "restore"),
-                       ("del.b6", "delete"), ("del.b10", "delete"),
-                       ("retry.b3", "put")):
+        AUX["book." + label] = label.split(".")[1]
+    for label, act, owner in (("put.b1.2", "put", "b1"), ("put.b1.3", "put", "b1"),
+                              ("del.b2", "delete", "b2"), ("res.b2", "restore", "b2"),
+                              ("del.b6", "delete", "b6"), ("del.b10", "delete", "b10"),
+                              ("retry.b3", "put", "b3")):
         AUX["type." + label] = "book"
         AUX["act." + label] = act
+        AUX["book." + label] = owner
 
     for label in NEGATIVES:
         AUX["rev." + label] = REVID[label]
@@ -502,6 +510,17 @@ def build_model():
     AUX["ordinal.neg.shelf_parent_missing"] = "1"
     AUX["type.neg.collision"] = "book"
     AUX["act.neg.collision"] = "put"
+    for label in ("neg.book_over_scalars", "neg.book_badutf8", "neg.book_mismatch",
+                  "neg.book_unsafe_heads", "neg.book_delete_nohead"):
+        AUX["book." + label] = "b3"
+    AUX["book.neg.collision"] = "b1"
+    AUX["gkind.neg.group_name_257"] = "shelf"
+    AUX["gkind.neg.group_name_257e"] = "shelf"
+    AUX["gkind.neg.group_badutf8"] = "tag"
+    AUX["gkind.neg.group_empty"] = "tag"
+    AUX["gkind.neg.shelf_parent_missing"] = "shelf"
+    AUX["gkind.neg.tag_ordinal"] = "tag"
+    AUX["gkind.neg.membership_nobook"] = "tag"
     AUX["title.neg.collision"] = "t.cjk"
     AUX["author.neg.collision"] = "t.nfc_cafe"
     AUX["sort.neg.collision"] = "t.nfc_cafe"
