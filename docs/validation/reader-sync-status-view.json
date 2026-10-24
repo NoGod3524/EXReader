@@ -1,0 +1,26 @@
+{
+  "schema": "reader-sync-status-view-acceptance-v1",
+  "accepted": false,
+  "source_sha": null,
+  "frozen_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "scope": "Installed read-only sync/status/pending view on Windows, Linux and macOS",
+  "claims": {
+    "module_implemented": true,
+    "installed_c_and_cpp_consumers": true,
+    "three_platform_cloud_acceptance": false,
+    "host_ui_accepted": false,
+    "product_wiring_accepted": false,
+    "mobile_accepted": false,
+    "metadata_wait_positive_covered": false,
+    "complete_product": false
+  },
+  "run": null,
+  "jobs": [],
+  "pristine_failures": [],
+  "uncovered": [
+    "host panel wiring and product integration are root work",
+    "positive pending-metadata path has no independent fixture",
+    "Android and iOS native hosts are not in this package"
+  ]
+}
