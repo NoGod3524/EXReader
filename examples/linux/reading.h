@@ -20,8 +20,13 @@ typedef enum { READER_SHELF, READER_OPEN, READER_IMPORT, READER_NEXT,
   READER_ACCOUNT_STAGE_BEGIN, READER_ACCOUNT_STAGE_NEXT,
   READER_RECEIVE_BEGIN, READER_RECEIVE_NEXT, READER_RECEIVE_OPEN,
   READER_RECEIVE_CONFLICTS_BEGIN, READER_RECEIVE_CONFLICTS_NEXT, READER_SETTINGS,
-  READER_SEARCH_BEGIN, READER_SEARCH_NEXT, READER_SEARCH_CHOOSE, READER_SEARCH_CLOSE } reader_action;
+  READER_SEARCH_BEGIN, READER_SEARCH_NEXT, READER_SEARCH_CHOOSE, READER_SEARCH_CLOSE,
+  READER_NAVIGATION_BEGIN, READER_NAVIGATION_ROWS, READER_NAVIGATION_CHOOSE,
+  READER_NAVIGATION_CLOSE } reader_action;
 typedef struct { int cancelled,current_bytes,total_bytes; } reader_account_control;
+#ifdef EXR_READER_NAVIGATION
+typedef struct { int request,phase,polls;void (*changed)(void *);void *context; } reader_navigation_control;
+#endif
 #ifdef EXR_READER_SEARCH
 typedef struct { int request,phase,polls;void (*changed)(void *);void *context; } reader_search_control;
 #endif
@@ -47,6 +52,12 @@ typedef struct {
   int account_remember,account_saved_only;
   reader_account_control *account_control;
   const char *receive_key;
+#ifdef EXR_READER_NAVIGATION
+  uint64_t navigation_token,navigation_parent,navigation_first,navigation_row,navigation_explicit_part;
+  const char *navigation_cfi;
+  int navigation_accept_part,navigation_request;
+  reader_navigation_control *navigation_control;
+#endif
 #ifdef EXR_READER_SEARCH
   uint64_t search_token;
   size_t search_index;
@@ -62,6 +73,9 @@ typedef struct {
 } reader_command;
 typedef struct { int64_t id;size_t part,start,end;char *text; } reader_note;
 typedef struct { char *key,*sort_title;int receive_kind;size_t receive_heads; } reader_shelf_cursor;
+#ifdef EXR_READER_NAVIGATION
+typedef struct { uint64_t index,parent;unsigned children;char *label; } reader_navigation_ui_row;
+#endif
 typedef struct { char *key,*title,*heads;size_t head_count;int kind; } reader_received_conflict;
 #ifdef EXR_READER_SEARCH
 typedef struct { char *label;size_t unit,start,end;int mode; } reader_search_row;
@@ -111,6 +125,15 @@ typedef struct {
   size_t receive_reading_rows,receive_reading_found,receive_reading_unresolved;
   int receive_reading_more;
   char *receive_resolutions;
+#ifdef EXR_READER_NAVIGATION
+  int has_navigation,navigation_code,navigation_sdk_code,navigation_match,navigation_verified;
+  int navigation_kind,navigation_author_outline;
+  uint64_t navigation_token,navigation_parent,navigation_next,navigation_total;
+  reader_navigation_ui_row *navigation_rows;
+  size_t navigation_count;
+  uint64_t *navigation_candidates;
+  size_t navigation_candidate_count;
+#endif
 #ifdef EXR_READER_SEARCH
   int has_search,search_complete,search_code,search_sdk_code,search_match;
   uint64_t search_token;

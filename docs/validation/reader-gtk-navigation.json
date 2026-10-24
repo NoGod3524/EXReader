@@ -1,0 +1,21 @@
+{
+  "accepted": false,
+  "navigation_scope_passed": false,
+  "status": "written; not yet built or run",
+  "baseline": "9762a7dd4ede02b11339105ccd64b8d187f5d6bf",
+  "navigation_source": "cbd7832b914bddcf99e06a85962d301a00b47efa",
+  "navigation_tree": "9395914832e191ad63f18f6188ca5044260d2f12",
+  "source_sha": null,
+  "run_id": null,
+  "attempt": null,
+  "artifacts": [],
+  "earlier_failed_runs": [],
+  "pending_settings_checks": ["light_foreground_and_background_change_page_pixels", "dark_theme_and_palette_change_page_pixels"],
+  "whole_reading_page_palette_accepted": false,
+  "author_outline_for_fixed_documents": false,
+  "performance_accepted": false,
+  "sdk_changed": false,
+  "schema_changed": false,
+  "six_platform_accepted": false,
+  "complete_product": false
+}

@@ -99,6 +99,9 @@ static void inbook_choose(GtkListBox *list,GtkListBoxRow *row,gpointer unused) {
 static void inbook_open(GtkWidget *button,gpointer unused) {
   (void)button;(void)unused;
   if(closing || busy || saving || save_failed || inbook.dialog || !book_id) return;
+#ifdef EXR_READER_NAVIGATION_UI
+  if(directory_opened()) return;
+#endif
 #ifdef EXR_READER_PREFERENCES_UI
   if(preferences_opened()) return;
 #endif
