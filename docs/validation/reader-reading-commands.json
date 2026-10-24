@@ -1,0 +1,9 @@
+{
+  "schema": "reader-reading-commands-acceptance-v1",
+  "accepted": false,
+  "status": "pending_cloud_run",
+  "branch": "codex/reader-reading-commands",
+  "start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "module": "EXReaderReadingCommands 0.1.0",
+  "note": "No run is granted yet. This record is replaced only with evidence from one source, run and attempt."
+}

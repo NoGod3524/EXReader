@@ -1,0 +1,128 @@
+name: Reader reading commands
+on:
+  push:
+    branches: [codex/reader-reading-commands]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  reading-commands:
+    name: reading commands (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-15]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK, schema1 and the package file list
+        run: |
+          start=f43baf9182d75907c0cb5d6f77048f27bca8c950
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$start" HEAD
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
+          git diff --exit-code f32bb8aa18ed3de286900f19ce4230fd93435dd0 HEAD -- apps/reader/store/001_catalog.sql
+          git diff --exit-code "$start" HEAD -- apps/reader/store apps/reader/revisions apps/reader/reading-state apps/reader/commands apps/reader/sync docs/READER-REVISION-WIRE.md
+          outside=$(git diff --name-only "$start" HEAD | grep -Ev '^(apps/reader/reading-commands/|tests/reader_reading_commands/|\.github/workflows/reader-reading-commands\.yml$|docs/READER-READING-COMMANDS\.md$|docs/validation/reader-reading-commands\.json$)' || true)
+          if [ -n "$outside" ]; then echo "files outside the package list:"; echo "$outside"; exit 1; fi
+      - name: Enter Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Install Ninja on macOS
+        if: runner.os == 'macOS'
+        run: |
+          brew install ninja
+          ninja --version
+          xcodebuild -version
+      - name: Install the one product SQLite provider and unchanged revision module
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          prefix="$ws/build/rc-stage"
+          echo "RC_WORKSPACE=$ws" >> "$GITHUB_ENV"
+          echo "RC_PREFIX=$prefix" >> "$GITHUB_ENV"
+          mkdir -p build/rc-logs
+          cmake -S apps/reader/store/native -B build/rc-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee build/rc-logs/product-configure.log
+          cmake --build build/rc-product --parallel 4 2>&1 | tee build/rc-logs/product-build.log
+          cmake --install build/rc-product 2>&1 | tee build/rc-logs/product-install.log
+          cmake -S apps/reader/revisions -B build/rc-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee build/rc-logs/revisions-configure.log
+          cmake --build build/rc-revisions --parallel 4 2>&1 | tee build/rc-logs/revisions-build.log
+          cmake --install build/rc-revisions 2>&1 | tee build/rc-logs/revisions-install.log
+      - name: Build and install the unmodified reading-library SDK
+        run: |
+          cmake --preset reading-library 2>&1 | tee build/rc-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/rc-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/rc-logs/sdk-install.log
+      - name: Build and install reading state, typed commands and reading commands from installed packages only
+        run: |
+          set -o pipefail
+          sdk="$RC_WORKSPACE/build/reading-library/stage"
+          cmake -S apps/reader/reading-state -B build/rc-state -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$sdk" -DCMAKE_PREFIX_PATH="$RC_PREFIX" -DCMAKE_INSTALL_PREFIX="$RC_PREFIX" 2>&1 | tee build/rc-logs/state-configure.log
+          cmake --build build/rc-state --verbose 2>&1 | tee build/rc-logs/state-build.log
+          cmake --install build/rc-state 2>&1 | tee build/rc-logs/state-install.log
+          cmake -S apps/reader/commands -B build/rc-commands -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$RC_PREFIX" -DCMAKE_INSTALL_PREFIX="$RC_PREFIX" 2>&1 | tee build/rc-logs/commands-configure.log
+          cmake --build build/rc-commands --verbose 2>&1 | tee build/rc-logs/commands-build.log
+          cmake --install build/rc-commands 2>&1 | tee build/rc-logs/commands-install.log
+          cmake -S apps/reader/reading-commands -B build/rc-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$RC_PREFIX;$sdk" -DCMAKE_INSTALL_PREFIX="$RC_PREFIX" 2>&1 | tee build/rc-logs/module-configure.log
+          cmake --build build/rc-module --verbose 2>&1 | tee build/rc-logs/module-build.log
+          cmake --install build/rc-module 2>&1 | tee build/rc-logs/module-install.log
+      - name: Compile independent C and C++ consumers from installed packages
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_reading_commands/consumer -B build/rc-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$RC_PREFIX;$RC_WORKSPACE/build/reading-library/stage" 2>&1 | tee build/rc-logs/consumer-configure.log
+          cmake --build build/rc-consumer --verbose 2>&1 | tee build/rc-logs/consumer-build.log
+      - name: Generate originals and judge every command through public readback
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_reading_commands/make_fixtures.py build/rc-fixtures
+          python3 tests/reader_reading_commands/check_reading_commands.py --probe "build/rc-consumer/reading-commands-probe$exe" --c-consumer "build/rc-consumer/reading-commands-c-consumer$exe" --fixtures build/rc-fixtures --font tests/fixtures/fonts/primary.ttf --link-map build/rc-consumer/reading-commands-link.map --output build/rc-evidence
+      - name: Preserve source-bound originals, report, installed modules and every failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-reading-commands-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/rc-logs/
+            build/rc-fixtures/
+            build/rc-evidence/
+            build/rc-stage/
+            build/rc-consumer/reading-commands-probe*
+            build/rc-consumer/reading-commands-c-consumer*
+            build/rc-consumer/reading-commands-link.map
+          if-no-files-found: error
+  evidence:
+    name: same-run artifact evidence
+    needs: reading-commands
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify the three same-run ZIPs, digests, upload logs and report identity in the cloud
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_reading_commands/check_artifacts.py build/rc-artifact-evidence
+      - name: Preserve the artifact verification record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-reading-commands-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/rc-artifact-evidence/
+          if-no-files-found: error
