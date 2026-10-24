@@ -127,6 +127,11 @@ static void pending_discard(linux_reader *reader) {
 }
 void reader_result_free(reader_result *result) {
   size_t i;free(result->pixels);free(result->text);
+#ifdef EXR_READER_READING_RECORDS
+  reader_av_page_free(&result->records_page);
+  for(i=0;i<result->records_version_count;i++) { free(result->records_versions[i]);free(result->records_version_labels[i]); }
+  free(result->records_versions);free(result->records_version_labels);
+#endif
 #ifdef EXR_READER_NAVIGATION
   for(i=0;i<result->navigation_count;i++) free(result->navigation_rows[i].label);
   free(result->navigation_rows);free(result->navigation_candidates);
@@ -708,11 +713,19 @@ done:
 #ifdef EXR_READER_NAVIGATION
 #include "navigation_backend.inc"
 #endif
+#ifdef EXR_READER_READING_RECORDS
+#include "reading_records_backend.inc"
+#endif
 void linux_reader_execute(linux_reader *reader,const reader_command *command,reader_result *result) {
   reader_session next=reader->current;exr_error error={0};exr_status status=cancel(reader);
   int owned_session=0,new_pager=0;int64_t id=command->book;size_t target=0;
   int wants_shelf=command->action==READER_SHELF || command->action==READER_OPEN || command->action==READER_IMPORT;
   memset(result,0,sizeof(*result));
+#ifdef EXR_READER_READING_RECORDS
+  if(command->action>=READER_RECORDS_LIST && command->action<=READER_RECORDS_HISTORY) {
+    records_execute(reader,command,result);return;
+  }
+#endif
 #ifdef EXR_READER_NAVIGATION
   if(command->action>=READER_NAVIGATION_BEGIN && command->action<=READER_NAVIGATION_CLOSE && command->action!=READER_NAVIGATION_CHOOSE) {
     navigation_readonly(reader,command,result);return;
@@ -849,6 +862,11 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
 #ifdef EXR_READER_NAVIGATION
   else if(command->action==READER_NAVIGATION_CHOOSE) {
     status=navigation_jump(reader,&next,command,result,&error);new_pager=next.pager!=reader->current.pager;
+  }
+#endif
+#ifdef EXR_READER_READING_RECORDS
+  else if(command->action==READER_RECORDS_JUMP) {
+    status=records_jump(reader,&next,command,result,&error);new_pager=next.pager!=reader->current.pager;
   }
 #endif
   else if(command->action==READER_ZOOM || (command->action==READER_SETTINGS && next.fixed_document)) {

@@ -28,6 +28,12 @@ static int worker_generation;
 static gboolean busy,saving,save_failed,closing,close_after_save;
 static gboolean choosing_file;
 static gboolean profile_writable;
+#ifdef EXR_READER_READING_RECORDS_UI
+static void reading_records_open(GtkWidget *,gpointer);
+static void reading_records_close(void);
+static gboolean reading_records_opened(void);
+static char *reading_records_observation(void);
+#endif
 #ifdef EXR_READER_NAVIGATION_UI
 static gboolean directory_opened(void);
 static void directory_open(GtkWidget *,gpointer);
@@ -56,6 +62,9 @@ static char *preferences_observation(void);
 #endif
 typedef struct { reader_command command;char *path,*comment;int generation,stop,shelf_generation; } host_job;
 typedef struct { reader_result value;reader_action action;int generation,profile_writable,shelf_generation; } host_result;
+#ifdef EXR_READER_READING_RECORDS_UI
+static gboolean reading_records_apply(host_result *);
+#endif
 #ifdef EXR_READER_NAVIGATION_UI
 static gboolean directory_apply(host_result *);
 #endif
@@ -173,6 +182,10 @@ static void state(void) {
 #ifdef EXR_READER_NAVIGATION_UI
   char *directory_state=directory_observation();
   complete=g_strconcat(data,directory_state,NULL);g_free(data);g_free(directory_state);data=complete;
+#endif
+#ifdef EXR_READER_READING_RECORDS_UI
+  char *record_state=reading_records_observation();
+  complete=g_strconcat(data,record_state,NULL);g_free(data);g_free(record_state);data=complete;
 #endif
   g_file_set_contents(state_path,data,-1,NULL);g_free(data);
 }
@@ -384,6 +397,11 @@ static void notes_present(reader_result *result) {
   gtk_widget_show_all(notes);
 }
 static void job_free(host_job *job) {
+#ifdef EXR_READER_READING_RECORDS_UI
+  g_free((gpointer)job->command.records_after);g_free((gpointer)job->command.records_id);
+  g_free((gpointer)job->command.records_head);g_free((gpointer)job->command.records_sha);
+  g_free((gpointer)job->command.records_version);g_free((gpointer)job->command.records_text);
+#endif
   g_free(job->path);g_free(job->comment);
 #ifdef EXR_READER_NAVIGATION
   g_free((gpointer)job->command.navigation_cfi);
@@ -415,6 +433,9 @@ static void queue_commit(void) {
 static void pixels_free(guchar *pixels,gpointer unused) { (void)unused;free(pixels); }
 static gboolean apply_result(gpointer data) {
   host_result *done=data;reader_result *result=&done->value;
+#ifdef EXR_READER_READING_RECORDS_UI
+  if(done->action>=READER_RECORDS_LIST && done->action<=READER_RECORDS_JUMP && reading_records_apply(done)) goto free_result;
+#endif
 #ifdef EXR_READER_NAVIGATION_UI
   if(done->action>=READER_NAVIGATION_BEGIN && done->action<=READER_NAVIGATION_CLOSE && directory_apply(done)) goto free_result;
 #endif
@@ -512,6 +533,9 @@ static gpointer work(gpointer font_path) {
   for(;;) {
     host_job *job=g_async_queue_pop(queue);if(job->stop) { job_free(job);break; }
     int barrier=job->command.action==READER_COMMIT;
+#ifdef EXR_READER_READING_RECORDS_UI
+    barrier=barrier || job->command.action==READER_RECORDS_SAVE || job->command.action==READER_RECORDS_RETRY || job->command.action==READER_RECORDS_DISCARD;
+#endif
 #ifdef EXR_READER_NAVIGATION_UI
     barrier=barrier || job->command.action==READER_NAVIGATION_CLOSE;
 #endif
@@ -540,6 +564,9 @@ static gpointer work(gpointer font_path) {
 }
 #ifdef EXR_READER_PRODUCT_CATALOG
 static void shelf_request(int direction,gboolean anchor) {
+#ifdef EXR_READER_READING_RECORDS_UI
+  if(reading_records_opened()) return;
+#endif
 #ifdef EXR_READER_SEARCH_UI
   if(inbook_opened()) return;
 #endif
@@ -617,6 +644,9 @@ static void submit(reader_action action,int64_t id,const char *path,int size) {
 #ifdef EXR_READER_NAVIGATION_UI
 #include "navigation_ui.inc"
 #endif
+#ifdef EXR_READER_READING_RECORDS_UI
+#include "reading_records_ui.inc"
+#endif
 static void open_id(int64_t id) { submit(READER_OPEN,id,NULL,font_size); }
 static void import_dialog(void) {
   if(busy || closing || save_failed) { state();return; }
@@ -690,6 +720,10 @@ static void action(GtkWidget *widget,gpointer name) {
 static gboolean key(GtkWidget *w,GdkEventKey *event,gpointer unused) {
   (void)w;(void)unused;
   if(choosing_file) return FALSE;
+#ifdef EXR_READER_READING_RECORDS_UI
+  if(reading_records_opened()) return TRUE;
+  if((event->state&GDK_CONTROL_MASK) && (event->state&GDK_SHIFT_MASK) && (event->keyval==GDK_KEY_r || event->keyval==GDK_KEY_R)) { reading_records_open(NULL,NULL);return TRUE; }
+#endif
 #ifdef EXR_READER_NAVIGATION_UI
   if(directory_opened()) return TRUE;
   if((event->state&GDK_CONTROL_MASK) && (event->state&GDK_SHIFT_MASK) &&
@@ -769,6 +803,9 @@ static void stop_worker(void) {
 }
 static gboolean close_window(GtkWidget *w,GdkEvent *event,gpointer unused) {
   (void)w;(void)event;(void)unused;
+#ifdef EXR_READER_READING_RECORDS_UI
+  if(reading_records_opened()) reading_records_close();
+#endif
 #ifdef EXR_READER_NAVIGATION_UI
   if(directory_opened()) directory_close();
 #endif
@@ -932,6 +969,12 @@ int main(int argc,char **argv) {
   atk_object_set_name(gtk_widget_get_accessible(text),"Selectable page text");
   gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text),GTK_WRAP_WORD_CHAR);gtk_widget_set_size_request(text,320,250);
   gtk_box_pack_start(GTK_BOX(right),scroll(text),TRUE,TRUE,0);
+#ifdef EXR_READER_READING_RECORDS_UI
+  GtkWidget *reading_records_button=gtk_button_new_with_label("Reading records…");
+  atk_object_set_name(gtk_widget_get_accessible(reading_records_button),"Reading records");
+  gtk_widget_set_tooltip_text(reading_records_button,"Progress, bookmarks and annotations (Ctrl+Shift+R)");
+  g_signal_connect(reading_records_button,"clicked",G_CALLBACK(reading_records_open),NULL);gtk_box_pack_start(GTK_BOX(right),reading_records_button,FALSE,FALSE,0);
+#endif
   comment=gtk_entry_new();gtk_entry_set_placeholder_text(GTK_ENTRY(comment),"Comment (F11); select text, then Add note");
   atk_object_set_name(gtk_widget_get_accessible(comment),"Annotation comment");
   gtk_box_pack_start(GTK_BOX(right),comment,FALSE,FALSE,0);
@@ -949,6 +992,9 @@ int main(int argc,char **argv) {
 #endif
 #ifdef EXR_READER_NAVIGATION_UI
   g_signal_connect(window,"window-state-event",G_CALLBACK(directory_background),NULL);
+#endif
+#ifdef EXR_READER_READING_RECORDS_UI
+  g_signal_connect(window,"window-state-event",G_CALLBACK(records_background),NULL);
 #endif
   g_signal_connect(shelf,"row-activated",G_CALLBACK(shelf_activated),NULL);
   g_signal_connect(notes,"row-activated",G_CALLBACK(note_activated),NULL);
