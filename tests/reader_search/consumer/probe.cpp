@@ -193,7 +193,7 @@ int main(int argc,char **argv){
   /* Preexisting state that search must never change. */
   exr_anchor progress_in{};SDK(exr_anchor_create(ta,6,6,&progress_in,&e_));SDK(exr_library_progress(A.lib,A.ids["txt"],&progress_in,&e_));
   const size_t progress_start=progress_in.start;exr_anchor_free(&progress_in);
-  auto notes_total=[&]{size_t n=0;for(const char *r:{"txt","epub","long"})n+=count_notes(A,A.ids[r])+count_epub(A,A.ids[r]);n+=count_fixed(A,A.ids["pdf"]);return n;};
+  auto notes_total=[&]{size_t n=0;for(const char *r:{"txt","epub","long"})n+=count_notes(A,A.ids[r]);for(const char *r:{"epub","long"})n+=count_epub(A,A.ids[r]);n+=count_fixed(A,A.ids["pdf"]);return n;};
   const size_t notes_before=notes_total(),outbox_a=pending(A).size(),outbox_b=pending(B).size();
   std::map<std::string,size_t> heads_before;
   for(const char *r:{"txt","epub","pdf","long"})heads_before[r]=heads(A,"progress",keys[r]).size();
