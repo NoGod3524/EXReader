@@ -1,0 +1,5 @@
+@PACKAGE_INIT@
+include(CMakeFindDependencyMacro)
+find_dependency(EXReaderSync 0.1.0 EXACT CONFIG)
+find_dependency(Threads)
+include("${CMAKE_CURRENT_LIST_DIR}/EXReaderSessionTargets.cmake")
