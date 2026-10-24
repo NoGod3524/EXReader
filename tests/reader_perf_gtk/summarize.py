@@ -330,7 +330,7 @@ def main():
         'workflow': '.github/workflows/reader-perf-gtk.yml', 'platform': 'Linux',
         'launches': completed, 'samples': len(results),
         'metrics': {name: {'expected': count, 'ok': coverage[name]['ok']}
-                    for name, count in sorted(coverage)},
+                    for name, count in sorted(coverage.items())},
         'checks': checks,
         'problems': [row['name'] for row in checks if row['status'] != 'passed'],
         'grants': grants, 'limitations': LIMITATIONS,

@@ -198,6 +198,16 @@ class Sampler:
             'command': sys.argv,
             'cold_launches': list(COLD_LAUNCHES),
         }
+        tarball = getattr(self.arguments, 'tarball', None)
+        package = {'path': str(tarball) if tarball is not None else None, 'exists': False,
+                   'tarball_bytes': None, 'tarball_sha256': None, 'cwd': str(Path.cwd())}
+        if tarball is not None:
+            path = Path(tarball)
+            package['exists'] = path.exists()
+            if package['exists']:
+                package['tarball_bytes'] = path.stat().st_size
+                package['tarball_sha256'] = sha256_file(path)
+        self.environment['package'] = package
         host_environment = {
             'PATH': os.environ.get('PATH', '/usr/bin:/bin'),
             'DISPLAY': os.environ.get('DISPLAY', ':99'),

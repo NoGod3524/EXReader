@@ -87,6 +87,8 @@ jobs:
           cmake --build build/perf-probe --parallel 4 2>&1 | tee build/perf-logs/probe-build.log
           python3 tools/build_linux_host.py --sdk build/reading-library/stage \
             --binary build/perf-desktop/gtk-host/exreader-linux --output build/perf-package
+          ls -l build/perf-package | tee build/perf-logs/package-archive.txt
+          stat -c '%s %n' build/perf-package/EXReader-Linux.tar.gz | tee -a build/perf-logs/package-archive.txt
       - name: Prove the packaged host identity and the absence of any WebView runtime
         run: |
           set -o pipefail
@@ -113,11 +115,11 @@ jobs:
             xwininfo -root -tree > build/perf-logs/root-tree.txt
             python3 tests/reader_perf_gtk/sample.py \
               --payload build/perf-package/EXReader-Linux \
-              --tarball build/perf-package/EXReader-Linux.tar.gz \
+              --tarball "$PWD/build/perf-package/EXReader-Linux.tar.gz" \
               --seed build/perf-probe/seed_library \
               --output build/perf-evidence \
               --launches 32 2>&1 | tee build/perf-logs/sampler.log
-            pkill -f xclip 2>/dev/null || true
+            pkill -x xclip 2>/dev/null || true
           '
       - name: Preserve the raw logs next to the raw samples
         if: always()
