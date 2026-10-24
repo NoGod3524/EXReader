@@ -7,7 +7,10 @@
   "annotation_view_tree": "9d30b6c54f61496010f647695dedd7ea7ab0c7c1",
   "unchanged_reading_state_tree": "60127ae75fbac918237b1c8584e0f7ac2e6130a4",
   "source_sha": null,
-  "runs": [{"source_sha":"95385c10a7242804d0cb251d94cc7e9cd2b06a32","run_id":40121975611,"attempt":1,"job_id":120955320799,"conclusion":"failure","phase":"installed product package configure","reason":"workflow CMAKE_PREFIX_PATH omitted installed SDK needed by EXReaderReadingStateConfig when configuring G03","reading_ui_executed":false}],
+  "runs": [
+    {"source_sha":"95385c10a7242804d0cb251d94cc7e9cd2b06a32","run_id":40121975611,"attempt":1,"job_id":120955320799,"conclusion":"failure","phase":"installed product package configure","reason":"workflow CMAKE_PREFIX_PATH omitted installed SDK needed by EXReaderReadingStateConfig when configuring G03","reading_ui_executed":false,"artifact":{"id":12570984487,"bytes":26035061,"sha256":"630ea918ab62242bd31c0ba59867b5bb5c87d182c2576bebcce66994d289bdf4","expires_at":"2027-01-22T18:43:01Z"}},
+    {"source_sha":"de535b794d01907a2e4012f8af70bec249ef418a","run_id":40122329128,"attempt":1,"job_id":120956378350,"conclusion":"failure","phase":"Android host native compile","reason":"borrowed public SDK anchor chapter field required explicit const conversion at the read-only G03 boundary","reading_ui_executed":false,"artifact":{"id":12571862425,"bytes":36961511,"sha256":"69b8ba8ffec013171c2be9fa0fa837e4797b5018d134b823a2078e803f9928dc","expires_at":"2027-01-22T18:47:36Z"}}
+  ],
   "all_execution_on_actions": true,
   "sdk_product_stores_separate": true,
   "performance_accepted": false,
