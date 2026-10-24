@@ -858,6 +858,7 @@ JNIEXPORT void JNICALL Java_org_exreader_host_NativeLibrary_nativeDeleteBook(
 #endif
 #ifdef READER_HOST_READING
 #include "reading_sdk_jni.inc"
+#include "cbz_renderer_jni.inc"
 #endif
 #ifdef READER_HOST_PREFERENCES
 #include "preferences_jni.inc"

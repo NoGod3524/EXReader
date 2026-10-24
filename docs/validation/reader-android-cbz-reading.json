@@ -1,0 +1,20 @@
+{
+  "accepted": false,
+  "source_sha": null,
+  "fixed_base": "91270f8e7b5a3085430992b97dd27f612666480a",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "original_reading_source": "047648865e509d5835b7d6e1389681e314d94e28",
+  "upgraded_check": {
+    "old": "pdf_real_page_id_points_and_cbz_capture_refusal",
+    "new": "pdf_and_cbz_real_page_id_points",
+    "reason": "replace only the known incorrect host CBZ refusal with true public capture and dual FOUND; retain PDF and every other assertion"
+  },
+  "runs": [],
+  "pending": "first full same-source Actions build and emulator execution",
+  "complete_product": false,
+  "ocr_accepted": false,
+  "page_colors_accepted": false,
+  "physical_device_execution": false,
+  "talkback_speech_accepted": false,
+  "performance_accepted": false
+}

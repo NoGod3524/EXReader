@@ -95,7 +95,10 @@ android {
     if(exrReading) {
         sourceSets {
             debug { java.srcDir '../../../tests/reader_android_reading/debug/java' }
-            androidTest { java.srcDir '../../../tests/reader_android_reading/java' }
+            androidTest {
+                java.srcDir '../../../tests/reader_android_reading/java'
+                java.srcDir '../../../tests/reader_android_cbz_reading/java'
+            }
         }
     }
     if(exrPreferences) {

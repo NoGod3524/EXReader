@@ -17,7 +17,6 @@ final class NativeReadingSdk {
     static ReadingCapture capture(BookStore store,PageSnapshot frame,long start,long end,byte[] font,float size,File original,HostTask task,ReadingControl control)throws Exception {
         store.searchOwner();if(frame.sourceKey==null||frame.sourceKey.isEmpty())throw new IllegalStateException("Reading frame has no original identity");
         BookStore.VerifiedSource source=store.verifySource(frame.bookId,null,0,task);if(!source.key.equals(frame.sourceKey))throw new IllegalStateException("Reading original changed");
-        if(source.book.format==NativeLibrary.FORMAT_CBZ)throw new Unsupported();
         if(!frame.bounded&&(original==null||original.length()!=source.bytes||!BookStore.syncFileHash(original,task).equals(source.sha256)))throw new IllegalStateException("Displayed original differs from the SDK source");
         int mode=frame.fixed?ReadingCapture.FIXED:frame.bounded?ReadingCapture.EPUB:ReadingCapture.REFLOW;long unit=frame.fixed?frame.index:frame.bounded?frame.part:0;
         if(start<frame.start||end<start||end>frame.end)throw new IllegalArgumentException("Selection is outside the actual page");

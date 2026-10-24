@@ -478,7 +478,8 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                     if(!bounded&&(new File(path).length()!=verified.bytes||!BookStore.syncFileHash(new File(path),task).equals(verified.sha256)))throw new IOException("Displayed copy differs from the verified original");
                 }
                 if (target.fixed()) {
-                    candidateFixed = new FixedSession(target.id, path, fontBytes(), target.format);
+                    candidateFixed = new FixedSession(target.id,path,fontBytes(),target.format,task);
+                    if(candidateFixed.cbz()&&!local.key.bookKey.equals(candidateFixed.sourceKey()))throw new IOException("CBZ renderer original identity differs");
                     int requested = requestedPage >= 0 ? requestedPage : (int) Math.max(0, target.position);
                     load = candidateFixed.load(requested, requestedZoom, task);
                 } else if(bounded) {
@@ -1526,8 +1527,20 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         String key=readingBook(book,task);if(selected==null||selected.state!=ReadingRecord.SAFE||!key.equals(selected.bookKey))throw new IOException("Please refresh and explicitly select a safe reading record");
         ReadingRecord fresh=NativeReadingProduct.selected(store,key,selected.id,selected.head,selected.kind==ReadingRecord.PROGRESS,readingControl(task,"selected"));if(fresh.state!=ReadingRecord.SAFE||!fresh.head.equals(selected.head)||!fresh.sha.equals(selected.sha))throw new IOException("Reading record changed; refresh");return fresh;
     }
+    private NativeReadingSdk.Match resolveReadingLocation(long book,ReadingCapture capture,float size,HostTask task)throws Exception{
+        String key=readingBook(book,task);if(!key.equals(capture.bookKey))throw new IOException("Reading selector belongs to another original");
+        NativeReadingSdk.Match independent=NativeReadingSdk.resolve(store,book,capture,fontBytes(),size,task,readingControl(task,"resolve"));
+        if(fixed==null||!fixed.cbz())return independent;
+        if(!key.equals(fixed.sourceKey()))throw new IOException("Current CBZ renderer belongs to another original");
+        NativeReadingSdk.Match actual=fixed.resolveCurrent(capture,task);
+        if(!readingBook(book,task).equals(key))throw new IOException("CBZ original changed during location verification");
+        if(!independent.found()||!actual.found())return independent.found()?actual:independent;
+        ReadingCapture a=independent.recaptured,b=actual.recaptured;
+        if(independent.unit!=actual.unit||independent.start!=actual.start||independent.end!=actual.end||!key.equals(b.bookKey)||!a.parser.equals(b.parser)||!a.pageId.equals(b.pageId)||!java.util.Arrays.deepEquals(a.bytes(),b.bytes()))throw new IOException("Independent and current CBZ page identities differ");
+        return actual;
+    }
     @Override public void readingResolve(long book,ReadingRecord selected,HostTask task,java.util.function.Consumer<NativeReadingSdk.Match> done,java.util.function.Consumer<Throwable> failed){
-        final float size=fontSize;readingCall(task,()->{ReadingRecord fresh=readingSelected(book,selected,task);if(!fresh.readable())throw new IOException("This record has no current readable location");return NativeReadingSdk.resolve(store,book,fresh.capture,fontBytes(),size,task,readingControl(task,"resolve"));},done,failed);
+        final float size=fontSize;readingCall(task,()->{ReadingRecord fresh=readingSelected(book,selected,task);if(!fresh.readable())throw new IOException("This record has no current readable location");return resolveReadingLocation(book,fresh.capture,size,task);},done,failed);
     }
     @Override public void readingHistory(long book,ReadingRecord selected,boolean first,HostTask task,java.util.function.Consumer<ReadingHistory.Page> done,java.util.function.Consumer<Throwable> failed){
         readingCall(task,()->{ReadingRecord fresh=readingSelected(book,selected,task);if(!fresh.deleted)throw new IOException("Explicit restore requires the current tombstone");if(first)readingHistory=new ReadingHistory(fresh.bookKey,fresh.id,fresh.head,fresh.kind==ReadingRecord.PROGRESS);if(readingHistory==null)throw new IOException("Please reopen retained versions");return readingHistory.next(store,readingControl(task,"history"));},done,failed);
@@ -1541,12 +1554,17 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
             if(action.target!=null&&action.target.state==ReadingRecord.SAFE){fresh=readingSelected(book,action.target,task);id=fresh.id;heads=new String[]{fresh.head};mode=fresh.mode;}
             else if(action.target!=null&&action.target.state!=ReadingRecord.MISSING)throw new IOException("Unsafe reading graph cannot be chosen automatically");
             if(action.operation==NativeReadingProduct.RESTORE){
-                if(fresh==null||!fresh.deleted||action.version==null)throw new IOException("Choose a retained version and current tombstone explicitly");ReadingVersion retained=NativeReadingProduct.version(store,key,id,action.version.id,progress,readingControl(task,"history"));if(!retained.sha.equals(action.version.sha)||!retained.restorable())throw new IOException("Retained version changed");NativeReadingSdk.Match match=NativeReadingSdk.resolve(store,book,retained.capture,fontBytes(),size,task,readingControl(task,"resolve"));if(!match.found())throw new IOException("Retained location is not FOUND; nothing restored");capture=match.recaptured;mode=capture.mode;
+                if(fresh==null||!fresh.deleted||action.version==null)throw new IOException("Choose a retained version and current tombstone explicitly");ReadingVersion retained=NativeReadingProduct.version(store,key,id,action.version.id,progress,readingControl(task,"history"));if(!retained.sha.equals(action.version.sha)||!retained.restorable())throw new IOException("Retained version changed");NativeReadingSdk.Match match=resolveReadingLocation(book,retained.capture,size,task);if(!match.found())throw new IOException("Retained location is not FOUND; nothing restored");capture=match.recaptured;mode=capture.mode;
             }else if(action.operation==NativeReadingProduct.DELETE||action.kind==NativeReadingProduct.NOTE_TEXT){
                 if(fresh==null||fresh.deleted)throw new IOException("Select a current live reading head");
             }else{
                 if(fresh!=null&&fresh.deleted)throw new IOException("Deleted records require explicit restore");long start=frame.start,end=start;if(action.kind==NativeReadingProduct.HIGHLIGHT){if(selectedRange==null||selectedRange.pageIndex!=frame.index||selectedRange.end<=selectedRange.start)throw new IOException("Select actual page text first");start=selectedRange.start;end=selectedRange.end;}
                 capture=NativeReadingSdk.capture(store,frame,start,end,fontBytes(),size,originalPath==null?null:new File(originalPath),task,readingControl(task,"capture"));mode=capture.mode;if(!progress&&id.isEmpty())id=ReadingRequests.newId();
+                if(fixed!=null&&fixed.cbz()){
+                    NativeReadingSdk.Match actual=resolveReadingLocation(book,capture,size,task);
+                    if(!actual.found()||!frame.fixedTextProvided||frame.fixedRendererIdentity!=fixed.rendererIdentity()||actual.unit!=frame.index||frame.fixedPageId==null||!frame.fixedPageId.equals(actual.recaptured.pageId))throw new IOException("Displayed CBZ page is not independently FOUND in the current renderer");
+                    capture=actual.recaptured;
+                }
             }
             ReadingRequests.Pending pending=new ReadingRequests.Pending(book,key,id,ReadingRequests.newId(),ReadingRequests.newId(),heads,action.kind,action.operation,mode,capture,action.body);task.check();readingRequests().save(pending);
             try{task.check();return commitReading(pending,task);}catch(HostTask.Cancelled cancelled){readingRequests().clear(pending.revision);throw cancelled;}
@@ -1554,6 +1572,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     }
     private NativeReadingProduct.Result commitReading(ReadingRequests.Pending pending,HostTask task)throws Exception {
         if(!readingBook(pending.sdkBook,task).equals(pending.book))throw new IOException("Pending request belongs to another original");final NativeReadingProduct.Result[] result={null};
+        if(fixed!=null&&fixed.cbz()&&pending.capture!=null&&!resolveReadingLocation(pending.sdkBook,pending.capture,fontSize,task).found())throw new IOException("Pending CBZ location is not FOUND in both source and current renderer");
         task.commit(()->{String[] selection=NativeCatalog.selection(store.productOwner(),"book",pending.book);if("0".equals(selection[0])){NativeCatalog.Result bootstrap=store.bootstrapBook(pending.sdkBook,pending.bootstrap,new String[0],task);if(bootstrap.status!=NativeCatalog.Result.OK)throw new IOException("Book metadata could not be prepared for the reading request");}
             result[0]=NativeReadingProduct.apply(store,pending.revision,pending.expected,pending.kind,pending.operation,pending.book,pending.id,pending.mode,pending.capture,pending.body);
         });
@@ -1565,7 +1584,13 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     @Override public void readingDiscard(HostTask task,Runnable done,java.util.function.Consumer<Throwable> failed){readingCall(task,()->{task.check();readingRequests().clear();return true;},ignored->done.run(),failed);}
     @Override public void navigateReading(long book,NativeReadingSdk.Match match){
         if(!match.found()||currentBook==null||currentBook.id!=book||current==null||operation!=0||pageBusy||match.unit<0||match.unit>Integer.MAX_VALUE||match.start<0||match.end<match.start)return;final float scale=zoom;final boolean isFixed=current.fixed;
-        runPage(task->{if(!readingBook(book,task).equals(match.recaptured.bookKey))throw new IOException("Reading original changed before navigation");PageLoad load=isFixed?fixed.load((int)match.unit,scale,task):reflow.seekReading(match,task);if(load!=null){load.snapshot.highlightStart=match.recaptured.start;load.snapshot.highlightEnd=match.recaptured.end;}return load;},()->setStatus("已跳转到阅读记录"),"阅读位置不可用");
+        runPage(task->{
+            if(!readingBook(book,task).equals(match.recaptured.bookKey))throw new IOException("Reading original changed before navigation");
+            NativeReadingSdk.Match location=isFixed&&fixed.cbz()?resolveReadingLocation(book,match.recaptured,fontSize,task):match;if(!location.found())throw new IOException("Current CBZ renderer cannot confirm the selected page");
+            PageLoad load=isFixed?fixed.load((int)location.unit,scale,task):reflow.seekReading(location,task);
+            try{if(load!=null){if(isFixed&&fixed.cbz()&&(!location.recaptured.pageId.equals(load.snapshot.fixedPageId)||!readingBook(book,task).equals(location.recaptured.bookKey)))throw new IOException("Rendered CBZ page/source changed before publication");load.snapshot.highlightStart=location.recaptured.start;load.snapshot.highlightEnd=location.recaptured.end;}return load;}
+            catch(Exception|Error error){if(load!=null)load.close();throw error;}
+        },()->setStatus("已跳转到阅读记录"),"阅读位置不可用");
     }
 
     private void closeDirectoryNative(){if(navigation!=null){navigation.close();navigation=null;}}
