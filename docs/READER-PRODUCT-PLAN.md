@@ -128,6 +128,13 @@ GTK账号与全库本地准备 `d88ed89d`、run`40068924227` 已通过并正常�
 接收投影、SDK导入和缓存缺失后的下载调度继续接续，见
 [GTK账号记录](validation/reader-gtk-account.json)。
 
+Apple原生WebDAV传输`5bebae0f`、run`40070706494`四producer与严格汇总五作业通过，
+已正常合入。iOS26.2 arm64 iPhone Simulator实际100项，macOS Foundation306项，
+Linux295项、Windows294项同源通过；系统TLS验证、流式上传/取消、线程归属及回调保留。
+该包只授予传输；完整iOS阅读器会话、SDK导入/导出调度和账号UI继续接续，见
+[Apple传输记录](validation/reader-webdav-apple.json)。macOS默认仍为已验系统curl，
+iOS默认使用Foundation。上述新包仍需在最终产品共同源码复验。
+
 F5真实文件独立复核仍拒绝：原交付Windows12/18、Linux14/18。
 审查源码`80946aa4`、run`40070449808`确认原Windows进程参数已损坏俄文查询；
 修复消费者UTF-16→UTF-8入口后，两平台均14/18，SDK源码未改。
