@@ -20,4 +20,12 @@ Windows使用不替换目标的MoveFileEx，POSIX使用同文件系统link；已
 候选在 `reader-reading-v2.yml` 的两平台SDK作业独立安装并编译C/C++消费者，
 验证TXT/EPUB/PDF/CBZ原件、Unicode路径、多块读取、取消、限额、写入失败、
 竞争目标不覆盖、第二连接使source失效、SDK关闭后文件可用，共14项。
-严格汇总核对同次报告和四格式原件SHA-256。当前尚待该候选云端结果。
+严格汇总核对同次报告和四格式原件SHA-256。
+
+受测源码 `745c348380e3e2270ded933fe3252a7d364bf95b`，run `40059480968`，
+attempt1，五作业全部成功。Windows/Linux各14项全部通过，原协议28、标注分页10、
+旧SDK121、真实v2捕获18及既有source/protocol/sync/projection/commands/metadata
+套件同次保留。严格作业 `120770534063` 实算四份上游ZIP并绑定全部报告身份，
+`accepted=true, problems=[]`；五份工件非空、未过期且同源。
+完整身份及四格式SHA-256见[原件导出验收](validation/reader-source-export.json)。
+平台UI、真实WebDAV与原件导出的联合回路仍需接续。
