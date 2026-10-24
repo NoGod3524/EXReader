@@ -13,4 +13,6 @@
 
 新流程复用原workflow作业内容及原消费者，在同一run/attempt执行三桌面组合、Windows搜索及原回归、GTK全部原回归、Android原全套。原始检查不删断言。GTK设置仍按实际35项报告登记，不把两项失败变成预期拒绝；整体accepted保持false，只有各自真实通过的声明范围可独立登记。Apple宿主原回归、Android后续Preferences和GTK新批量导入尚由各自owner推进，不在本候选中预先授予。
 
+源码 `927201157d045f7ff994a1241a7e7703bc360fa3` 的 [run 40138835223](https://github.com/NoGod3524/EXReader/actions/runs/40138835223) / attempt1已实际启动。当前已确认源码/语法门禁、三桌面组合、组合严格汇总、Windows搜索及严格汇总success；GTK与Android仍运行，最终共同汇总尚待执行。这份状态记录不把运行中的作业当作通过。
+
 原严格Windows与三桌面组合验证器只显式改调用workflow身份，保留原全部工件认证；最终读取真实GTK/Android报告，核同源/同轮/逐项结果与实际二进制。工作流、语法、负例、构建、测试及所有工件处理仅Actions。
