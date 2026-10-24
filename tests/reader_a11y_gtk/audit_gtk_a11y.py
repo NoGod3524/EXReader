@@ -908,9 +908,23 @@ def main():
                     element=snapshot(dialog)['path'],
                     reproduction=['press Ctrl+Shift+A',
                                   'read the dialog and the focused element'],
-                    fix='none for the name: accounts_open() focuses the root entry. The dialog is '
-                        'transient but not GTK_DIALOG_MODAL; the main content is made insensitive '
-                        'instead, which is recorded as a finding')
+                    fix='none for the name: accounts_open() already focuses the root entry')
+
+        audit.check('account_dialog_declares_modality',
+                    a11y.states(dialog).get('modal', False),
+                    expected='the account dialog declares the MODAL state, as the organizer and '
+                             'details dialogs do, so assistive clients can announce that the '
+                             'library is unavailable while it is open',
+                    actual={'states': a11y.states(dialog) if dialog is not None else None,
+                            'role': a11y.role(dialog) if dialog is not None else None,
+                            'main_window_sensitive_note': 'accounts_open() sets the main content '
+                            'insensitive instead of asking GTK for a modal dialog'},
+                    element=snapshot(dialog)['path'],
+                    severity='advisory',
+                    reproduction=['press Ctrl+Shift+A',
+                                  'read the dialog state set on the accessibility bus'],
+                    fix='pass GTK_DIALOG_MODAL to gtk_dialog_new_with_buttons in accounts_open() '
+                        '(accounts_ui.inc); the insensitive main content can then stay or go')
 
         entries = {key: snapshot(wait_element(text, timeout=10))
                    for key, text in contract.ACCOUNT_ENTRIES.items()}
@@ -943,7 +957,8 @@ def main():
         exported = a11y.accessible_text(password) if password is not None else None
         attributes = a11y.attributes(password) if password is not None else {}
         leaked = bool(exported and secret in (exported.get('text') or ''))
-        marked = bool(attributes.get('text-input-type')) or bool(attributes.get('password'))
+        marked = (a11y.role(password) == 'password text'
+                  or bool(attributes.get('text-input-type')) or bool(attributes.get('password')))
         audit.check('account_password_secret_not_reachable_through_atspi',
                     reached and password is not None and not leaked,
                     expected='the password entry takes keyboard focus and its AT-SPI text does '
@@ -962,9 +977,9 @@ def main():
                         'invisible character while the entry is not visible; the entry name and '
                         'attributes stay unchanged')
         if not marked:
-            audit.gap('The password entry exposes no AT-SPI attribute that marks it as secret '
-                      '(GTK3 host with at-spi2-core %s), so an assistive client cannot know the '
-                      'field is masked before it reads it' % a11y.atspi_version())
+            audit.gap('The password entry exposes neither the password-text role nor a secret '
+                      'attribute (GTK3 host with at-spi2-core %s), so an assistive client cannot '
+                      'know the field is masked before it reads it' % a11y.atspi_version())
         audit.observations['account_password'] = {
             'attributes': attributes, 'exported_text_length': (exported or {}).get('length'),
             'secret_exported': leaked, 'reached_by_tab': reached,
