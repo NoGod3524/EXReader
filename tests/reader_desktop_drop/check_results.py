@@ -73,6 +73,7 @@ def parse_jsonl(path, label, problems):
     cases = []
     seen = set()
     summaries = []
+    noise = []
     with open(path, "r", encoding="utf-8", errors="replace") as handle:
         for number, line in enumerate(handle, 1):
             line = line.strip()
@@ -81,7 +82,12 @@ def parse_jsonl(path, label, problems):
             try:
                 record = json.loads(line)
             except json.JSONDecodeError:
-                problems.append(f"{label}:{number}: not JSON: {line[:120]}")
+                # Toolkit chatter (GTK/AT-SPI warnings) may share the stream; a
+                # truncated case record still counts as damage.
+                if line.startswith("{"):
+                    problems.append(f"{label}:{number}: truncated JSON: {line[:120]}")
+                else:
+                    noise.append(line[:120])
                 continue
             name = record.get("case")
             if name is None:
@@ -101,7 +107,7 @@ def parse_jsonl(path, label, problems):
             cases.append({"name": name, "status": status, "detail": record.get("detail", "")})
     if not summaries:
         problems.append(f"{label}: no __summary line")
-    return cases, summaries
+    return cases, summaries, noise
 
 
 def sha256_file(path):
@@ -125,8 +131,8 @@ def main():
     args = parser.parse_args()
 
     problems = []
-    probe_cases, probe_summaries = parse_jsonl(args.probe_log, "probe", problems)
-    portable_cases, portable_summaries = parse_jsonl(args.portable_log, "portable", problems)
+    probe_cases, probe_summaries, probe_noise = parse_jsonl(args.probe_log, "probe", problems)
+    portable_cases, portable_summaries, portable_noise = parse_jsonl(args.portable_log, "portable", problems)
     probe_names = {case["name"] for case in probe_cases}
     portable_names = {case["name"] for case in portable_cases}
 
@@ -199,6 +205,7 @@ def main():
             "skipped": [c["name"] for c in probe_cases + portable_cases if c["status"] == "skip"],
         },
         "bindings": bindings,
+        "toolkit_noise": (probe_noise + portable_noise)[:20],
         "limits": [
             "One GitHub Actions runner per platform; no physical device, no interactive drag session.",
             "Windows drops are delivered through the adapter entry OLE calls for IDropTarget::Drop with a real "

@@ -259,8 +259,11 @@ int main(int argc, char **argv) {
         targets && gtk_target_list_find(targets, gdk_atom_intern_static_string("text/uri-list"), &info),
         "text/uri-list is a registered drop target");
   }
-  report_expect("attach_null_widget", exr_drop_gtk_attach(NULL, &options, &target) == EXR_DROP_ARGUMENT,
-      "NULL widget refused");
+  {
+    exr_drop_gtk_target *refused = NULL;
+    report_expect("attach_null_widget", exr_drop_gtk_attach(NULL, &options, &refused) == EXR_DROP_ARGUMENT,
+        "NULL widget refused");
+  }
   {
     hold_job job;
     GThread *thread;
