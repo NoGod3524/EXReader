@@ -1,69 +1,69 @@
 {
   "accepted": true,
-  "status": "accepted Linux/Windows/macOS installed C ABI package after a complete same-source cloud run; each entity is exported from one valid public snapshot, aliased output targets and reentrant calls are refused; no host UI, import, conflict resolution or performance grant",
+  "status": "accepted Linux/Windows/macOS installed C ABI package after a complete same-source cloud run; each entity is exported from one valid public snapshot, aliased output targets (including Windows junction parents with absent leaves) and reentrant calls are refused; no host UI, import, conflict resolution or performance grant",
   "package": "EXReaderAnnotationExport 0.1.0",
   "common_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
-  "source_sha": "0b79307a41fc5152cf10f7c34e30573d2481aa08",
-  "run_id": 40085969696,
+  "source_sha": "ad0d2fb3a38f74f5b600bd518e566ed3095a2516",
+  "run_id": 40087054573,
   "attempt": 1,
   "artifacts": [
     {
-      "id": 12556624808,
-      "name": "reader-annotation-export-Linux-40085969696-1",
-      "size_in_bytes": 9745718,
-      "digest": "sha256:0ae478072888e654aef197534228ecede8d725e4ab3d513bb9decb6a9d8e6943",
-      "expires_at": "2027-01-22T10:27:15Z"
+      "id": 12557169224,
+      "name": "reader-annotation-export-Linux-40087054573-1",
+      "size_in_bytes": 9749096,
+      "digest": "sha256:f27d4d3f436120b5f4fafd15aa9fdbbb77e3328a62f84b712833918e416c1f69",
+      "expires_at": "2027-01-22T10:43:40Z"
     },
     {
-      "id": 12556749354,
-      "name": "reader-annotation-export-Windows-40085969696-1",
-      "size_in_bytes": 6210558,
-      "digest": "sha256:56425e741a02ba2f4b4beb2a70fd8b04c44c1050b8651497bae03497f813c7df",
-      "expires_at": "2027-01-22T10:27:15Z"
+      "id": 12557935390,
+      "name": "reader-annotation-export-Windows-40087054573-1",
+      "size_in_bytes": 6230020,
+      "digest": "sha256:02f087524b4f480f50092b1c0cd873e56440a62e25596cf6d14a1f04fe26dd03",
+      "expires_at": "2027-01-22T10:43:40Z"
     },
     {
-      "id": 12557162365,
-      "name": "reader-annotation-export-macOS-40085969696-1",
-      "size_in_bytes": 8611321,
-      "digest": "sha256:9b2873d61093cf155ce8bb12824c4c5d684b5dfd0b2e201bd31a213a498a9ac1",
-      "expires_at": "2027-01-22T10:27:15Z"
+      "id": 12557368106,
+      "name": "reader-annotation-export-macOS-40087054573-1",
+      "size_in_bytes": 8618893,
+      "digest": "sha256:26e3dcf02647ede59bdd1e605676a00f589ed04d0d6ae481c16918f9f2aa25a3",
+      "expires_at": "2027-01-22T10:43:40Z"
     },
     {
-      "id": 12557171468,
-      "name": "reader-annotation-export-evidence-40085969696-1",
-      "size_in_bytes": 952,
-      "digest": "sha256:9b907e0cc400cf253b08a3c17083c469148ab236441796faaa2c30c5fe6125bc",
-      "expires_at": "2027-01-22T10:27:15Z"
+      "id": 12557905446,
+      "name": "reader-annotation-export-evidence-40087054573-1",
+      "size_in_bytes": 950,
+      "digest": "sha256:68cf32210e632421f247a1644e811cbc0f89b710a5b14d9b42d95b2b116280f9",
+      "expires_at": "2027-01-22T10:43:40Z"
     }
   ],
   "jobs": [
     {
-      "id": 120848858238,
+      "id": 120852031096,
       "name": "annotation export (ubuntu-22.04)",
       "conclusion": "success",
-      "started_at": "2026-10-24T10:27:17Z",
-      "completed_at": "2026-10-24T10:29:38Z"
+      "started_at": "2026-10-24T10:43:42Z",
+      "completed_at": "2026-10-24T10:45:27Z"
     },
     {
-      "id": 120848857956,
+      "id": 120852031019,
       "name": "annotation export (windows-2022)",
       "conclusion": "success",
-      "started_at": "2026-10-24T10:27:18Z",
-      "completed_at": "2026-10-24T10:30:51Z"
+      "started_at": "2026-10-24T10:43:42Z",
+      "completed_at": "2026-10-24T10:46:25Z"
     },
     {
-      "id": 120848858130,
+      "id": 120852030816,
       "name": "annotation export (macos-15)",
       "conclusion": "success",
-      "started_at": "2026-10-24T10:27:47Z",
-      "completed_at": "2026-10-24T10:29:47Z"
+      "started_at": "2026-10-24T10:44:28Z",
+      "completed_at": "2026-10-24T10:46:48Z"
     },
     {
-      "id": 120849563952,
+      "id": 120852629537,
       "name": "same-run artifact evidence",
       "conclusion": "success",
-      "started_at": "2026-10-24T10:30:53Z",
-      "completed_at": "2026-10-24T10:31:10Z"
+      "started_at": "2026-10-24T10:46:50Z",
+      "completed_at": "2026-10-24T10:47:06Z"
     }
   ],
   "problems": [],
@@ -163,6 +163,47 @@
       ]
     }
   ],
+  "alias_target_identity": {
+    "method": "final file identity when it exists; otherwise the parent directory identity (stat dev/ino, or CreateFileW FILE_FLAG_BACKUP_SEMANTICS + GetFileInformationByHandle) plus the final component; normalized absolute names only when a parent cannot be opened",
+    "refused_before_any_temporary_file": true,
+    "subcases": {
+      "linux": [
+        "dot-segment",
+        "duplicate-separator",
+        "parent-segment",
+        "symlinked-directory",
+        "existing-file-dot-segment"
+      ],
+      "darwin": [
+        "dot-segment",
+        "duplicate-separator",
+        "parent-segment",
+        "symlinked-directory",
+        "existing-file-dot-segment"
+      ],
+      "windows": [
+        "dot-segment",
+        "duplicate-separator",
+        "parent-segment",
+        "case-folded",
+        "existing-file-dot-segment",
+        "existing-file-case-folded",
+        "junction-parent (mklink /J, leaf absent)"
+      ]
+    },
+    "negative_control": "two genuinely distinct targets in the same directory still publish"
+  },
+  "reentrancy": {
+    "refused_status": "ARGUMENT",
+    "caller_stats_preserved": true,
+    "subcases": [
+      "nested target",
+      "shared outer stats pointer",
+      "nested target equal to the outer target",
+      "nested then cancel"
+    ],
+    "outer_export": "completes or cancels normally with no temporary left behind"
+  },
   "output_sha256_identical_on_all_three_platforms": {
     "txt.jsonl": "171133614fe8c302ce9183ca5d0106b0fb52b5cc3e1e51a15fb698faf2b4a33a",
     "txt.md": "e102e95a078b8a2611bfda5f7239d792f5dc392187042b0bab25b1712a7ef0a6",
@@ -201,7 +242,7 @@
       "run_id": 40083679976,
       "source_sha": "dbc6bb29",
       "result": "the new regressions proved all three gaps on all three platforms: selection=pending_parents with graph {heads:1, projection_safe:true}, an aliased dot-segment target reported jsonl_published=1 and markdown_published=1 on one file, and a nested export from the cancel callback returned OK with jsonl_published=1",
-      "disposition": "measured before fixing; the fixes are 6f90f462 and the checks are kept"
+      "disposition": "measured before fixing; fixes in 6f90f462; checks kept"
     },
     {
       "run_id": 40083884769,
@@ -219,14 +260,27 @@
       "run_id": 40085507969,
       "source_sha": "a076ad38",
       "result": "all 25 checks passed, but the four harness advance revisions invalidated the pre-run store baseline",
-      "disposition": "the window section re-baselines the store afterwards (0b79307a); no assertion was removed"
+      "disposition": "the window section re-baselines the store afterwards (0b79307a); no assertion removed"
+    },
+    {
+      "run_id": 40086913466,
+      "source_sha": "07e11c31",
+      "result": "Linux/macOS passed; Windows reported (alias not refused, junction-parent, status 0, jsonl_published=1, markdown_published=1): with both leaves absent and the parents being two junctions over one directory, GetFullPathNameW only absolutizes, so both outputs were published to one real file",
+      "disposition": "fixed in ad0d2fb3 by comparing the parent directory identity; the case is kept"
+    }
+  ],
+  "superseded_runs": [
+    {
+      "run_id": 40085969696,
+      "source_sha": "0b79307a",
+      "note": "first green run of the reworked package (25 checks per platform); superseded by the Windows parent-identity fix in ad0d2fb3, artifacts kept"
     }
   ],
   "limits": [
     "Different entities may still come from different moments; only one entity at a time is proven to be one valid snapshot.",
     "The window handshake uses the documented cancel callback as its only blocking point; it adds no hook to the module or the revision store.",
     "A reentrant call is refused on the calling thread; a cancel callback that starts another thread with a different store is outside the documented no-reentry contract.",
-    "Path identity is compared by platform file identity (volume/file id or realpath of the parent); exotic aliases reachable only through reparse points that do not exist yet are not enumerated.",
+    "Alias identity needs a parent directory that exists; when a parent cannot be opened the comparison falls back to normalized absolute names and creation would fail anyway. Reparse-point aliases of a parent that does not exist yet are therefore not enumerated.",
     "No host UI, real device, screen reader, performance, six-platform, import or conflict-resolution grant."
   ],
   "sdk_changed": false,
