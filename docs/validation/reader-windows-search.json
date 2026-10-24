@@ -65,6 +65,20 @@
       "artifact": 12574344794,
       "artifact_bytes": 35586649,
       "artifact_sha256": "e9415642a5d9ae34e71222445255a5a9c68fe88c4ed6704fe86012b881533a0c"
+    },
+    {
+      "source": "8fad46aff61029c808ea2c83c5561d3af1f1c966",
+      "run": 40132096070,
+      "attempt": 1,
+      "compiled": true,
+      "original_f1_checks": 264,
+      "initial_txt_checks": 13,
+      "formats_lifecycle_checks_passed_before_failure": 12,
+      "phase": "cbz-missing-text-provider-is-error",
+      "lifecycle_executed": false,
+      "artifact": 12575132989,
+      "artifact_bytes": 35613010,
+      "artifact_sha256": "00b378fa5c4af878819a828a71c6a1e6476e181f3f06bd70f7756400e2d6b8a5"
     }
   ],
   "complete_product": false,
