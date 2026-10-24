@@ -15,3 +15,11 @@
 另有已披露的窗口销毁后再detach遗留COM引用：在接入长期运行宿主前应明确消除，或用真实生命周期证据证明无持续增长；不能把“泄漏很小”当作释放通过。
 
 上述是源码推导，本地未执行构建/测试。已在 DeepSeek Harness 原会话“J03 desktop-drop implementation and cloud acceptance”提交返修，界面确认“进行中/正在分析请求”；保持 Flash1017 / High / PTC / 完全权限，root不并行修改其包工作树。原owner的新源码 `03babdbe2d2a608c9a2c1c280b6a238e1b99dc1f` / run `40135689234` 已提交云端验收，结果尚未授予。
+
+## 第一轮返修后的窗口过程共存问题
+
+最终源码 `5a0cd498ce4ec570f6cd52c6eca4d611431c1cc0` / run `40136297928` 已5/5success，原HGLOBAL界限与销毁后COM释放负例已执行。复核新的生命周期修补发现：`win_restore_window()` 无条件把 `GWLP_WNDPROC` 写回attach时的original。若宿主或另一个原生组件在attach后安装合法窗口子类，detach会移除该组件；它保留的旧next指针也会指向失去property/target的 `win_window_proc()`，后者无法再转发到原窗口过程。公开头承诺“Nothing else about the host window changes”，当前实现不满足共存。
+
+此外attach未检查 `SetPropW` 返回值；若失败却继续替换窗口过程，`win_window_proc()` 取得NULL target，只能走DefWindowProc，宿主消息处理被替换。
+
+请复用Windows原生链式子类机制（如SetWindowSubclass/RemoveWindowSubclass/DefSubclassProc及稳定模块标识），移除时只卸载自身，正确处理安装失败与销毁重入。不通过禁止宿主正常子类扩展来规避。增加实际两层子类的两种detach次序、窗口先销毁、回调内detach与安装失败回滚，验证宿主自定义消息始终到达、另一层仍在、COM对象回到原计数。HGLOBAL与ASan/所有三平台及严格汇总保留；第二轮由原owner唯一修改。
