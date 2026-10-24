@@ -446,8 +446,13 @@ void attach_all(reader_catalog *catalog) {
                                (int64_t)std::stoll(A("b1.sdk")), 0));
     (void)key;
   }
-  o.rec("remove_local.b14");
-  o.fn("status", reader_catalog_remove_local(catalog, std::stoll(A("b14.sdk"))));
+  {
+    reader_catalog_error removal;
+    std::memset(&removal, 0, sizeof removal);
+    o.rec("remove_local.b14");
+    o.fn("status", reader_catalog_remove_local(catalog, (int64_t)std::stoll(A("b14.sdk")),
+                                               &removal));
+  }
 }
 
 /* ------------------------------------------------------------- revisions */
