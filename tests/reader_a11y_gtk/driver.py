@@ -209,7 +209,9 @@ class Host:
         deterministic and produces the same key events a user produces.
         """
         command('xdotool', 'type', '--clearmodifiers', '--delay', '35', value, timeout=120)
-        self.record('type:' + value[-40:])
+        # Record the length only: the same helper types passwords, and the keystroke
+        # record is evidence that gets archived.
+        self.record('type:%d chars' % len(value))
 
     # -- evidence ----------------------------------------------------------
     def screenshot(self, path, window=None):
