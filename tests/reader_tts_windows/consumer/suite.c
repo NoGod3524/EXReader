@@ -463,7 +463,8 @@ static void phase_speak(suite *s) {
                READER_TTS_BUSY);
   tally_init(&t, 1, s->text, bytes);
   outcome = pump_until_terminal(handle, &t, 180000, &foreign);
-  check(s, "speak.terminal_reached", outcome == 0, outcome == 1 ? "timeout" : "poll failure");
+  check(s, "speak.terminal_reached", outcome == 0,
+        outcome == 0 ? "terminal event received" : outcome == 1 ? "timeout" : "poll failure");
   check_count(s, "speak.started_events", t.started, 1, 0);
   check_count(s, "speak.finished_events", t.finished, 1, 0);
   check_count(s, "speak.failed_events", t.failed, 0, 0);
@@ -496,7 +497,8 @@ static void phase_unicode(suite *s) {
                READER_TTS_OK);
   tally_init(&t, 1, UNICODE_TEXT, bytes);
   outcome = pump_until_terminal(handle, &t, 120000, &foreign);
-  check(s, "unicode.terminal_reached", outcome == 0, outcome == 1 ? "timeout" : "poll failure");
+  check(s, "unicode.terminal_reached", outcome == 0,
+        outcome == 0 ? "terminal event received" : outcome == 1 ? "timeout" : "poll failure");
   check_count(s, "unicode.started_events", t.started, 1, 0);
   check_count(s, "unicode.finished_events", t.finished, 1, 0);
   check_count(s, "unicode.range_events", t.ranges, 4, 1);
@@ -674,7 +676,7 @@ static void phase_chunks(suite *s) {
     tally_init(&t, (uint64_t)(chunk + 1), s->text, bytes);
     outcome = pump_until_terminal(handle, &t, 180000, &foreign);
     snprintf(id, sizeof id, "chunks.%d.terminal", chunk);
-    check(s, id, outcome == 0, outcome == 1 ? "timeout" : "poll failure");
+    check(s, id, outcome == 0, outcome == 0 ? "terminal event received" : outcome == 1 ? "timeout" : "poll failure");
     snprintf(id, sizeof id, "chunks.%d.finished", chunk);
     check_count(s, id, t.finished, 1, 0);
     snprintf(id, sizeof id, "chunks.%d.started", chunk);

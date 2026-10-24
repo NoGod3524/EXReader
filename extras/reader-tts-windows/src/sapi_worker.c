@@ -425,10 +425,14 @@ static void push_started(reader_tts *handle, exr_tts_utterance *utterance) {
 
 static void pump_status(reader_tts *handle, exr_tts_utterance *utterance) {
   SPVOICESTATUS status;
+  LPWSTR bookmark = NULL;
   HRESULT hr;
   if (!utterance->voice || !utterance->speaking) return;
   memset(&status, 0, sizeof status);
-  hr = utterance->voice->lpVtbl->GetStatus(utterance->voice, &status, NULL);
+  /* GetStatus writes the last bookmark string through ppszLastBookmark; it must be a
+     real out parameter, and the package never uses the value. */
+  hr = utterance->voice->lpVtbl->GetStatus(utterance->voice, &status, &bookmark);
+  if (bookmark) CoTaskMemFree(bookmark);
   if (!utterance->started) push_started(handle, utterance);
   if (!utterance->speaking) return;   /* the STARTED push may have ended the request */
   if (SUCCEEDED(hr)) {

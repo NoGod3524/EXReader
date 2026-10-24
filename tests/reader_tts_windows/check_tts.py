@@ -184,8 +184,8 @@ def main():
                 fail(label + "_timeout", "phase exceeded %d s" % timeout)
                 err_file.write("timeout after %d s\n" % timeout)
                 err_file.flush()
-        output = out_path.read_text(encoding="utf-8", errors="replace")
-        parsed = parse_phase(output, phase)
+        phase_output = out_path.read_text(encoding="utf-8", errors="replace")
+        parsed = parse_phase(phase_output, phase)
         record["exit"] = returncode
         record["checks"] = parsed["checks"]
         record["summaries"] = parsed["summaries"]
