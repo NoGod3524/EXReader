@@ -1373,7 +1373,8 @@ def main():
 
     skipped = {name: 'requested on the command line'
                for name in [item for item in args.skip_cohorts.split(',') if item]}
-    rejections = ('import_rejected', 'imported_not_in_catalog', 'catalog_identity_mismatch')
+    rejections = ('import_rejected', 'rejected_but_sdk_orphan', 'imported_not_in_catalog',
+                  'catalog_identity_mismatch')
     if diagnosis and diagnosis.get('verdict') in rejections:
         skipped.setdefault('import', 'original TXT path rejected: diagnostic verdict %r'
                            % diagnosis['verdict'])

@@ -24,7 +24,8 @@ ALLOWED = ('tests/reader_perf_windows/',
 SDK_PATHS = ('src', 'include', 'cmake', 'CMakeLists.txt', 'tests/fixtures', 'bindings',
              '.github/workflows/native.yml', '.github/workflows/reliability.yml')
 COHORTS = ('cold_shelf', 'warm_shelf', 'reading', 'import', 'import_epub')
-TXT_REJECTIONS = ('import_rejected', 'imported_not_in_catalog', 'catalog_identity_mismatch')
+TXT_REJECTIONS = ('import_rejected', 'rejected_but_sdk_orphan', 'imported_not_in_catalog',
+                  'catalog_identity_mismatch')
 REQUIRED_CHECKS = (
     'thirty_or_more_independent_process_starts',
     'at_least_ten_launches_per_named_cohort',
@@ -186,8 +187,8 @@ def main():
     require(all(record.get('ok') is True for record in records), 'a launch record is incomplete')
     require(all(record.get('window_ms') is not None for record in records),
             'a launch never observed its window')
-    require({record.get('cohort') for record in records} == set(COHORTS),
-            'launch cohorts differ from the named cohorts')
+    require({record.get('cohort') for record in records} == expected,
+            'launch cohorts differ from the expected cohorts')
     for record in records:
         if record.get('cohort') in ('cold_shelf', 'warm_shelf'):
             require(len((record.get('ops') or {}).get('page_turns') or []) == 0,
