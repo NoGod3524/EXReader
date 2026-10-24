@@ -196,9 +196,19 @@ or download.
 
 ## Verification status
 
-See `docs/validation/reader-jump-history.json`. `accepted` is false until the
-same-run artifacts of a real run are authenticated; `host_wiring_accepted` stays
-false because the four production hosts are wired by root, not here.
+`docs/validation/reader-jump-history.json` records the accepted run
+`40125391353` (attempt 1) on tested source `4ff8c803`. ubuntu-22.04,
+windows-2022 and macos-15 each built the package and the consumers from installed
+packages only and ran 139 named checks with zero failures, five stored-wire cases
+and five back/forward moves, and the runners agree on originals, case IDs,
+lifecycle steps and the no-write verdict. The `evidence` job re-authenticated all
+three same-run ZIPs inside Actions and kept that record as its own artifact.
+`host_wiring_accepted` stays false: the four production hosts are wired by root.
+
+Three earlier runs failed for real reasons and are retained in the record: a
+zeroed item's status, a fixed-page progress query and an install path; the shared
+wire refusing a selection as a reading position; and a cross-runner comparison
+that embedded each runner's own path. Nothing here runs on a developer machine.
 
 ## Uncovered
 
