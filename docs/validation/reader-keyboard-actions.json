@@ -1,23 +1,195 @@
 {
-  "accepted": false,
-  "status": "implementation committed; cloud acceptance not yet run for this source",
+  "accepted": true,
+  "status": "cloud acceptance passed on three desktop platforms; 41 named checks per platform",
   "package": "EXReaderKeyboardActions 0.1.0",
   "common_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
-  "source_sha": null,
-  "run_id": null,
-  "attempt": null,
+  "source_sha": "f8e765b15932b6b738f709bd03b48c4f0d6b0c4f",
+  "run_id": 40130358865,
+  "attempt": 1,
   "workflow": ".github/workflows/reader-keyboard-actions.yml",
-  "jobs": [],
-  "artifacts": [],
-  "platforms": {},
-  "skipped": {},
-  "uncovered": [],
-  "problems": [
-    "no cloud run has been authenticated for this source yet"
+  "jobs": [
+    {
+      "id": 120980574787,
+      "name": "keyboard actions (ubuntu-22.04)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120980574909,
+      "name": "keyboard actions (windows-2022)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120980574974,
+      "name": "keyboard actions (macos-14)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120980924321,
+      "name": "strict keyboard-actions evidence",
+      "conclusion": "success"
+    }
   ],
+  "artifacts": [
+    {
+      "id": 12574503984,
+      "name": "reader-keyboard-actions-Linux-40130358865-1",
+      "size_in_bytes": 122414,
+      "digest": "sha256:fc2532e9e317c528126d8cb6574fcc5875af76233a8a6285cfb18c85e44781c3",
+      "expires_at": "2027-01-22T20:34:05Z"
+    },
+    {
+      "id": 12574799025,
+      "name": "reader-keyboard-actions-Windows-40130358865-1",
+      "size_in_bytes": 90360,
+      "digest": "sha256:f8ff2219862b5d281db19acb9fe5a3a68ea8ca22a20ec1b0ed5ee878c3b93b42",
+      "expires_at": "2027-01-22T20:34:05Z"
+    },
+    {
+      "id": 12574184229,
+      "name": "reader-keyboard-actions-macOS-40130358865-1",
+      "size_in_bytes": 94528,
+      "digest": "sha256:1ae073e39b050860028c13121ba774ebc4dfb8ca60f699c08053f502fe6c5f1c",
+      "expires_at": "2027-01-22T20:34:05Z"
+    }
+  ],
+  "evidence_artifact": {
+    "id": 12574704001,
+    "name": "reader-keyboard-actions-summary-40130358865-1",
+    "size_in_bytes": 1972,
+    "digest": "sha256:112d263b72f76790c1111467f6e1144922692131ea001358085f8f8393e8794b",
+    "expires_at": "2027-01-22T20:34:05Z"
+  },
+  "platforms": {
+    "linux": {
+      "case_names": 41,
+      "skipped": [
+        "ime-composing-passthrough"
+      ],
+      "install_proof": {
+        "package_dir": "/home/runner/work/EXReader/EXReader/build/kbd-stage/lib/cmake/EXReaderKeyboardActions",
+        "build_log_mentions_prefix": true,
+        "source_include_absent": true
+      },
+      "binaries": {
+        "c": {
+          "path": "build/kbd-consumer/keyboard-c-consumer",
+          "bytes": 102216,
+          "sha256": "7dbb73c6958319ace27270c422a91ed94288a9fe0c00444dfa120a9ea8ada1d4"
+        },
+        "cpp": {
+          "path": "build/kbd-consumer/keyboard-cpp-consumer",
+          "bytes": 59256,
+          "sha256": "fbd1fddbe50673890b8c98070e29891c8667248de4c09fcbb7693f5af1c67362"
+        },
+        "probe": {
+          "path": "build/kbd-probe/keyboard-probe",
+          "bytes": 49056,
+          "sha256": "42579945018038206c6c84e991664058d4cf435d745b5df1e11b1bd259c00b6d"
+        }
+      }
+    },
+    "windows": {
+      "case_names": 41,
+      "skipped": [
+        "ime-composing-passthrough",
+        "reader-repeat-bounded"
+      ],
+      "install_proof": {
+        "package_dir": "D:/a/EXReader/EXReader/build/kbd-stage/lib/cmake/EXReaderKeyboardActions",
+        "build_log_mentions_prefix": true,
+        "source_include_absent": true
+      },
+      "binaries": {
+        "c": {
+          "path": "build/kbd-consumer/keyboard-c-consumer.exe",
+          "bytes": 59904,
+          "sha256": "2c72e659a34f6d9ad3b6d0527b14110377afd355ed0e15f1a971b7944269045f"
+        },
+        "cpp": {
+          "path": "build/kbd-consumer/keyboard-cpp-consumer.exe",
+          "bytes": 24064,
+          "sha256": "1a0cb612dddd48e06f4b8205155b690a094582daf2ada7e615ef6ec7ed7f9482"
+        },
+        "probe": {
+          "path": "build/kbd-probe/keyboard-probe.exe",
+          "bytes": 31232,
+          "sha256": "249012680919c156e184e6e8d6cb28afeb836bdd953f26184eb935349c49db62"
+        }
+      }
+    },
+    "macos": {
+      "case_names": 41,
+      "skipped": [
+        "deactivate-cancels",
+        "ime-composing-passthrough"
+      ],
+      "install_proof": {
+        "package_dir": "/Users/runner/work/EXReader/EXReader/build/kbd-stage/lib/cmake/EXReaderKeyboardActions",
+        "build_log_mentions_prefix": true,
+        "source_include_absent": true
+      },
+      "binaries": {
+        "c": {
+          "path": "build/kbd-consumer/keyboard-c-consumer",
+          "bytes": 87728,
+          "sha256": "e2310aaa4f593857f1f9c66ff74d064734288db7f06c16c62270ec9b984afc8e"
+        },
+        "cpp": {
+          "path": "build/kbd-consumer/keyboard-cpp-consumer",
+          "bytes": 56824,
+          "sha256": "8504cafa1f186f3c823f48fddba84e9f58687a4e11f445ebfa181c94bdea0818"
+        },
+        "probe": {
+          "path": "build/kbd-probe/keyboard-probe",
+          "bytes": 72832,
+          "sha256": "bbe176594a6819dcca861ffebad94fa3df67186f86cdbb065cd6b0b3a7ba35ff"
+        }
+      }
+    }
+  },
+  "skipped": {
+    "linux": [
+      "ime-composing-passthrough"
+    ],
+    "windows": [
+      "ime-composing-passthrough",
+      "reader-repeat-bounded"
+    ],
+    "macos": [
+      "deactivate-cancels",
+      "ime-composing-passthrough"
+    ]
+  },
+  "skipped_everywhere": [
+    "ime-composing-passthrough"
+  ],
+  "uncovered": [
+    {
+      "case": "deactivate-cancels",
+      "reason": "the runner had no window that could take activation"
+    },
+    {
+      "case": "ime-composing-passthrough",
+      "reason": "no input method is installed on a hosted runner"
+    },
+    {
+      "case": "reader-repeat-bounded",
+      "reason": "the runner did not auto-repeat the injected key"
+    }
+  ],
+  "problems": [],
   "checks_per_platform": 41,
-  "granted_platforms": [],
-  "macos_accepted": false,
+  "checks": {
+    "consumer_c": 20,
+    "consumer_cpp": 7,
+    "native_probe": 14
+  },
+  "granted_platforms": [
+    "linux",
+    "windows",
+    "macos"
+  ],
+  "macos_accepted": true,
   "host_ui_accepted": false,
   "performance_claimed": false,
   "six_platform_accepted": false,
@@ -25,5 +197,153 @@
   "sdk_changed": false,
   "schema_changed": false,
   "host_settings_changed": false,
-  "protected_trees_unchanged": true
+  "protected_trees_unchanged": true,
+  "tested_source_sha": "f8e765b15932b6b738f709bd03b48c4f0d6b0c4f",
+  "evidence_commit_note": "the commit that adds this record changes docs only; the accepted source is tested_source_sha and no source, test or workflow file differs between it and the final HEAD",
+  "retained_failures": [
+    {
+      "source_sha": "9ac76615937c82ca6f6f812f82ff83b2b109867a",
+      "run_id": 40122760908,
+      "attempt": 1,
+      "cause": "the Windows compiler-environment step escaped $bat instead of expanding it and the installed C consumer still carried an unused helper that -Werror rejects",
+      "jobs": [
+        {
+          "name": "keyboard actions (windows-2022)",
+          "conclusion": "failure"
+        },
+        {
+          "name": "keyboard actions (ubuntu-22.04)",
+          "conclusion": "failure"
+        }
+      ]
+    },
+    {
+      "source_sha": "98ad86d49024ae4c8e20a2e8f809a3c0444ff17e",
+      "run_id": 40123214061,
+      "attempt": 1,
+      "cause": "the GTK probe did not link libX11 (XFlush) and the installed C consumer tripped MSVC C4127 on the intentional constant layout assertions",
+      "jobs": [
+        {
+          "name": "keyboard actions (ubuntu-22.04)",
+          "conclusion": "failure"
+        },
+        {
+          "name": "keyboard actions (windows-2022)",
+          "conclusion": "failure"
+        }
+      ]
+    },
+    {
+      "source_sha": "6e162900629c5800af85e741c72f2dd9fe7781f5",
+      "run_id": 40123933580,
+      "attempt": 1,
+      "cause": "the harness looked for the package name in the CMake configure log, which config mode never prints",
+      "jobs": [
+        {
+          "name": "keyboard actions (ubuntu-22.04)",
+          "conclusion": "failure"
+        },
+        {
+          "name": "keyboard actions (windows-2022)",
+          "conclusion": "failure"
+        },
+        {
+          "name": "keyboard actions (macos-14)",
+          "conclusion": "failure"
+        }
+      ]
+    },
+    {
+      "source_sha": "2c0988ca96371abbbde583f1348bc0a34cee16d8",
+      "run_id": 40124878239,
+      "attempt": 1,
+      "cause": "the C++ consumer expected the host handler to run for a key-up and the Linux probe never returned because one drain pass could pull a permanently ready GMainContext source forever",
+      "jobs": [
+        {
+          "name": "keyboard actions (ubuntu-22.04)",
+          "conclusion": "failure"
+        },
+        {
+          "name": "keyboard actions (windows-2022)",
+          "conclusion": "failure"
+        },
+        {
+          "name": "keyboard actions (macos-14)",
+          "conclusion": "failure"
+        }
+      ]
+    },
+    {
+      "source_sha": "eeb70937ca3765e783b19fd89fdd233fe6b7d2a3",
+      "run_id": 40126333473,
+      "attempt": 1,
+      "cause": "the new Linux step banner carried a raw newline instead of an escape, and the Cocoa focus-change case sent its release through NSApplication to a window a hosted runner never made key",
+      "jobs": [
+        {
+          "name": "keyboard actions (ubuntu-22.04)",
+          "conclusion": "failure"
+        },
+        {
+          "name": "keyboard actions (macos-14)",
+          "conclusion": "failure"
+        }
+      ]
+    },
+    {
+      "source_sha": "55be590d61019bcbb6bfd2f59b4b36ea4baaae2e",
+      "run_id": 40127218200,
+      "attempt": 1,
+      "cause": "bare Xvfb never gave the GtkEntry the GTK focus, and the Cocoa ownership transfer asserted the dropped hold before the event that moves ownership",
+      "jobs": [
+        {
+          "name": "keyboard actions (ubuntu-22.04)",
+          "conclusion": "failure"
+        },
+        {
+          "name": "keyboard actions (macos-14)",
+          "conclusion": "failure"
+        }
+      ]
+    },
+    {
+      "source_sha": "69763315ad50016074336f563bc967088f7e7445",
+      "run_id": 40127930924,
+      "attempt": 1,
+      "cause": "the X setup step called xdpyinfo, which the runner image does not install, so the Linux job aborted in setup",
+      "jobs": [
+        {
+          "name": "keyboard actions (ubuntu-22.04)",
+          "conclusion": "failure"
+        },
+        {
+          "name": "keyboard actions (macos-14)",
+          "conclusion": "failure"
+        }
+      ]
+    },
+    {
+      "source_sha": "48c6c85892d690c76832157a42a16f5dde76420d",
+      "run_id": 40128787515,
+      "attempt": 1,
+      "cause": "GtkWindow emits key-press-event before its class handler propagates to the focus widget, so the Linux edit cases dispatched as reader keys",
+      "jobs": [
+        {
+          "name": "keyboard actions (ubuntu-22.04)",
+          "conclusion": "failure"
+        }
+      ]
+    },
+    {
+      "source_sha": "55a821a4b46a24f79a160ddde7919063bcf32d1b",
+      "run_id": 40129540791,
+      "attempt": 1,
+      "cause": "all three platform reports were accepted but the verifier required the whole run to be green while it was still running and refused a case that is a documented skip everywhere",
+      "jobs": [
+        {
+          "name": "strict keyboard-actions evidence",
+          "conclusion": "failure"
+        }
+      ]
+    }
+  ]
 }
