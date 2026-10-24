@@ -102,6 +102,16 @@ def main():
         host.wait(lambda state: True)
         wait(lambda: focused_inside(dialog))
         check('account_declares_modal', bus.states(dialog).get('modal'), bus.states(dialog))
+        before = host.read()
+        command('xdotool', 'windowactivate', '--sync', host.window)
+        key('F1', 'F4', 'ctrl+shift+c')
+        after = host.read()
+        check('account_blocks_background_shortcuts',
+              not bus.find_one(app, roles={'file chooser'}, text='Import book')
+              and not bus.find_one(app, roles={'dialog'}, text='Library collections')
+              and before['book'] == after['book'] and before['page'] == after['page'])
+        target = command('xdotool', 'search', '--onlyvisible', '--name', '^Account and Sync$').splitlines()[-1]
+        command('xdotool', 'windowactivate', '--sync', target)
         snap('account');key('Escape')
         wait(lambda: not bus.find_one(app, roles={'dialog'}, text='Account and Sync'))
         frame = bus.find_one(app, roles={'frame'}, text='EXReader Linux')
@@ -119,7 +129,7 @@ def main():
                               and event['detail1'] == 'accessible-name' and event.get('source_role') == 'label'
                               and event.get('source_name') == 'Reading operation failed; accepted page retained'])
         check('status_delivers_accessible_name_event', bool(events), events)
-        snap('status');assert len(checks) == 9
+        snap('status');assert len(checks) == 10
         report.update(accepted=True, count=len(checks))
     finally:
         recorder.stop()

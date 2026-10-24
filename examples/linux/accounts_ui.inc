@@ -222,7 +222,8 @@ static void accounts_present_conflicts(reader_result *result) {
     reader_received_conflict *entry=&result->receive_conflicts[i];
     GtkWidget *row=gtk_list_box_row_new();char *caption=g_strdup_printf("%s\n%s (%zu versions)",entry->title,
       entry->kind==READER_SELECTION_CONCURRENT ? "Version conflict":"Version details need attention",entry->head_count);
-    GtkWidget *title=gtk_label_new(caption);g_free(caption);gtk_label_set_xalign(GTK_LABEL(title),0);
+    GtkWidget *title=gtk_label_new(caption);atk_object_set_name(gtk_widget_get_accessible(row),caption);
+    g_free(caption);gtk_label_set_xalign(GTK_LABEL(title),0);
     gtk_label_set_ellipsize(GTK_LABEL(title),PANGO_ELLIPSIZE_END);gtk_container_add(GTK_CONTAINER(row),title);
     g_object_set_data_full(G_OBJECT(row),"book-key",g_strdup(entry->key),g_free);
     g_object_set_data_full(G_OBJECT(row),"received-heads",g_strdup(entry->heads),g_free);
