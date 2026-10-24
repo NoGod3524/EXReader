@@ -87,10 +87,11 @@ every OK open is the only writer.
 
 **Bounded working set, hard directory bound.** The directory is walked once; entries are made room for and inserted one by
 one, so the retained map never exceeds `max_entries` and the directory is never collected into an in-memory list
-(`peak_retained_entries` is the true map peak, taken after the insert, and is <= `max_entries`). Every own entry file the
-pass meets is either adopted or deleted — damaged, larger than `max_total_bytes`, or over the count/byte cap — so when
-the pass ends the directory itself satisfies the limits; `scanned_files`, `own_candidates` and `scan_deleted` report the
-work. Unrelated files are never deleted. Files are created exclusively under a per-open unpredictable token and published
+The candidate takes part in the eviction choice, so the entry with the oldest tick is the one that goes and
+`peak_retained_entries` is the true map peak: at most `max_entries` retained entries plus the one candidate being
+admitted. Every own entry file the pass meets is either adopted or deleted — damaged, larger than `max_total_bytes`, or
+over the count/byte cap — so when the pass ends the directory itself satisfies the limits; `scanned_files`,
+`own_candidates` and `scan_deleted` report the work. Unrelated files are never deleted. Files are created exclusively under a per-open unpredictable token and published
 with the atomic replace above; `open` removes the pre-0.1.0 temporaries at once and current-naming temporaries only when
 older than 600 s (a younger one may belong to a live process).
 
