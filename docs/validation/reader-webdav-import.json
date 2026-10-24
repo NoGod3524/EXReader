@@ -1,0 +1,79 @@
+{
+  "package": "EXReaderCloudImport",
+  "version": "0.1.0",
+  "fixed_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk_freeze": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "branch": "codex/reader-webdav-import",
+  "status": "cloud-verified",
+  "tested_source": "a0eb0c7b91eb34d6e577ac581b419ce1da8729df",
+  "later_commits": "documentation and this record only; no source or test change after the tested source",
+  "cloud": {
+    "run_id": 40138293883,
+    "run_attempt": 1,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40138293883",
+    "jobs": {
+      "ubuntu-22.04": "success",
+      "windows-2022": "success",
+      "macos-15": "success",
+      "same-run artifact evidence": "success"
+    },
+    "checks_per_platform": 43,
+    "altered_reports_rejected": 9,
+    "artifacts": [
+      {
+        "os": "Windows",
+        "id": 12577143124,
+        "bytes": 5720405,
+        "sha256": "002c43ab638d3783e65c7466989bf8626fe35dae3ac61cf2c7d8f85a6dc989bf"
+      },
+      {
+        "os": "Linux",
+        "id": 12577823400,
+        "bytes": 8383848,
+        "sha256": "91c59931597aa4a7bf818a55d3068c29f01e68f7b260c0b57def7c4f7d7cab7a"
+      },
+      {
+        "os": "macOS",
+        "id": 12577558554,
+        "bytes": 7208941,
+        "sha256": "d35871010c933194d14bc0afc063d27dc3a32604885c143135ab0c45d4bea671"
+      }
+    ]
+  },
+  "retained_failures": [
+    {
+      "run_id": 40115618988,
+      "source": "6f4e6833a99380208c0edc6fa6747403fa00018f",
+      "reason": "test used a 4096-byte limit on a 1084-byte fixture and a 43 KB 'slow' stream below the cancel threshold; fixed in the tests only"
+    },
+    {
+      "run_id": 40116077958,
+      "source": "cc11bbf85d083e282f17928f94f868a74760f7eb",
+      "reason": "all cases passed; final credential scan tried to read a directory named *.txt; fixed in the test only"
+    }
+  ],
+  "covered": [
+    "real native TLS on Linux, Windows and macOS (runner-trusted temporary CA)",
+    "nine formats plus azw3 via list, download, import",
+    "independent-process SDK readback of original bytes and titles",
+    "Unicode and same-name-different-content",
+    "duplicate preserved across failure cleanups",
+    "corruption after download (flip, truncate, append, delete)",
+    "SDK-rejected book",
+    "cross-origin redirect, HTTPS downgrade, untrusted certificate, hostname mismatch, 401, 404, 500",
+    "short read, listing length mismatch",
+    "32 MiB reflow and 128 MiB streaming ceilings, lowered limits",
+    "cancel before network, during stream, between phases, import commit-boundary sweep",
+    "credential isolation, installed C and C++ consumers, source/protected-tree/path guards"
+  ],
+  "not_covered": [
+    "real user cloud providers",
+    "mobile, simulator or device",
+    "actual audio or speech",
+    "host UI wiring",
+    "performance or memory budgets",
+    "actual 128 MiB transfer"
+  ],
+  "complete_product": false
+}
