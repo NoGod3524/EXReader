@@ -340,12 +340,14 @@ static void phase_basic(suite *s) {
   check_count(s, "basic.voices.count", voices.count, 1, 1);
   {
     int complete = voices.count > 0, unique = 1, empty_id = 0, empty_name = 0, empty_language = 0;
+    int with_language = 0;
     size_t i, j;
     unsigned long long id_length = 0, name_length = 0, language_length = 0;
     for (i = 0; i < voices.count; i++) {
       if (!voices.voices[i].id || !voices.voices[i].id[0]) { complete = 0; empty_id++; }
       if (!voices.voices[i].name || !voices.voices[i].name[0]) { complete = 0; empty_name++; }
-      if (!voices.voices[i].language || !voices.voices[i].language[0]) { complete = 0; empty_language++; }
+      if (!voices.voices[i].language || !voices.voices[i].language[0]) empty_language++;
+      else with_language++;
       if (!i) {
         if (voices.voices[i].id) id_length = (unsigned long long)strlen(voices.voices[i].id);
         if (voices.voices[i].name) name_length = (unsigned long long)strlen(voices.voices[i].name);
@@ -361,6 +363,8 @@ static void phase_basic(suite *s) {
              "empty_id=%d empty_name=%d empty_language=%d first_len=%llu/%llu/%llu",
              empty_id, empty_name, empty_language, id_length, name_length, language_length);
     check(s, "basic.voices.fields_complete", complete, s->detail);
+    snprintf(s->detail, sizeof s->detail, "voices_with_language=%d empty=%d", with_language, empty_language);
+    check(s, "basic.voices.language_present", with_language >= 1, s->detail);
     check(s, "basic.voices.ids_unique", unique, "-");
     info(s, "voices", (unsigned long long)voices.count);
     info(s, "voices_without_language", (unsigned long long)empty_language);

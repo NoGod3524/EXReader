@@ -20,7 +20,7 @@ PRODUCER_JOB = "tts (windows-2022)"
 REPORT_JOB = "same-source report"
 MODULE = "EXReaderTTSWindows"
 MODULE_VERSION = "0.1.0"
-PHASES = [("basic", 44), ("speak", 21), ("unicode", 12), ("limits", 27), ("control", 28),
+PHASES = [("basic", 45), ("speak", 21), ("unicode", 12), ("limits", 27), ("control", 28),
           ("chunks", 25), ("overflow", 9), ("service", 7), ("memory", 17), ("close", 11)]
 TOTAL_CHECKS = sum(count for _, count in PHASES)
 MAX_ZIP, MAX_EXPANDED, MAX_FILES = 64 * 1024 * 1024, 128 * 1024 * 1024, 1024

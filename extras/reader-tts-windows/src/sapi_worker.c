@@ -83,6 +83,53 @@ static char *utf16_to_utf8(const wchar_t *source) {
   return buffer;
 }
 
+/* SAPI 5 does not expose the Language attribute of every installed token (Windows
+   Server 2022 exposes "Name" but not "Language" as a data-key value of the desktop
+   voices). When the attribute is missing, read the language that the installed token
+   id already names: Microsoft ids are TTS_MS_<lang>[_<region>]_<voice>_<version> and
+   MSTTS_V110_<lang><region>_<voice>. Nothing is invented: an id without such a
+   segment yields no language. */
+static char *language_from_token_id(const char *id) {
+  const char *segment = NULL;
+  size_t i, length = 0, split = 0, out = 0;
+  char *tag;
+  int has_split = 0;
+  if (!id) return NULL;
+  for (i = 0; id[i] && !segment; i++) {
+    if (strncmp(id + i, "_MS_", 4) == 0) segment = id + i + 4;
+    else if (strncmp(id + i, "MSTTS_V110_", 11) == 0) segment = id + i + 11;
+  }
+  if (!segment) return NULL;
+  while (segment[length] && segment[length] != '_' && length < 16) length++;
+  if (length < 2) return NULL;
+  for (i = 0; i < length; i++) {
+    if (segment[i] == '-' || segment[i] == '_') {
+      has_split = 1;
+      split = i;
+      break;
+    }
+  }
+  if (!has_split && length >= 4) {
+    has_split = 1;
+    split = 2;
+  }
+  tag = (char *)exr_tts_alloc(length + 2);
+  if (!tag) return NULL;
+  for (i = 0; i < (has_split ? split : length); i++) {
+    char c = segment[i];
+    tag[out++] = (c >= 'A' && c <= 'Z') ? (char)(c - 'A' + 'a') : c;
+  }
+  if (has_split) {
+    tag[out++] = '-';
+    for (i = split + 1; i < length; i++) {
+      char c = segment[i];
+      tag[out++] = (c >= 'a' && c <= 'z') ? (char)(c - 'a' + 'A') : c;
+    }
+  }
+  tag[out] = 0;
+  return tag;
+}
+
 /* ---- voice category ---- */
 
 static HRESULT open_voice_category(ISpObjectTokenCategory **category) {
@@ -186,6 +233,9 @@ static reader_tts_status enumerate_voices(reader_tts_voice_list *list, int *nati
       }
       if (!voices[index].language) voices[index].language = utf16_to_utf8(language);
       CoTaskMemFree(language);
+    }
+    if (!voices[index].language && voices[index].id) {
+      voices[index].language = language_from_token_id(voices[index].id);
     }
     token->lpVtbl->Release(token);
     if (!voices[index].id) {

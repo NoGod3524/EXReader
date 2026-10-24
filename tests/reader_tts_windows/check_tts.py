@@ -27,7 +27,7 @@ MAX_WAV_BYTES = 64 * 1024 * 1024
 
 # label, phase, pinned check count, subprocess timeout in seconds
 PHASES = [
-    ("basic", "basic", 44, 180),
+    ("basic", "basic", 45, 180),
     ("speak", "speak", 21, 420),
     ("unicode", "unicode", 12, 300),
     ("limits", "limits", 27, 420),
