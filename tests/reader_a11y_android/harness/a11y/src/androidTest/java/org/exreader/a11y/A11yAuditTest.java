@@ -775,7 +775,7 @@ public final class A11yAuditTest {
                         .put("width_dp", width)
                         .put("height_dp", height)
                         .put("note", "text field below the 48dp recommended touch target; "
-                                + "android:minHeight="48dp" on the field would clear it"));
+                                + "android:minHeight=48dp on the field would clear it"));
                 continue;
             }
             small.append(label(node)).append('(').append(width).append('x').append(height).append("dp) ");
