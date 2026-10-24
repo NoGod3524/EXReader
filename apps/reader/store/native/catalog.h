@@ -58,6 +58,47 @@ int reader_catalog_local_page(reader_catalog *, const char *cursor_title, const 
  * Calls visit at most once; sets found=0 if deleted, missing or filtered out. */
 int reader_catalog_find(reader_catalog *, const char *book_key, const char *query,
                         reader_catalog_visit, void *, int *found, reader_catalog_error *);
+
+/* Read-only organization views. Mutations use the native typed command module.
+ * These callbacks have the same borrowed-string/owner/no-reentry contract as books. */
+typedef enum { READER_CATALOG_SHELF=0, READER_CATALOG_TAG, READER_CATALOG_SERIES } reader_catalog_group_kind;
+typedef struct {
+  const char *id, *name, *parent_id; /* parent_id NULL for roots, tags and series. */
+  uint64_t ordinal; /* Zero for tags and series. */
+  int deleted;
+} reader_catalog_group_row;
+typedef int (*reader_catalog_group_visit)(void *, const reader_catalog_group_row *);
+typedef struct { uint64_t ordinal; const char *id; } reader_catalog_group_cursor;
+typedef struct {
+  const char *group_id, *book_key;
+  uint64_t ordinal; /* Zero for tags. */
+  int group_deleted, book_deleted;
+} reader_catalog_membership_row;
+typedef int (*reader_catalog_membership_visit)(void *, const reader_catalog_membership_row *);
+typedef struct { reader_catalog_row book; uint64_t ordinal; } reader_catalog_group_book_row;
+typedef int (*reader_catalog_group_book_visit)(void *, const reader_catalog_group_book_row *);
+typedef struct { uint64_t ordinal; const char *book_key; } reader_catalog_member_cursor;
+
+/* Finds include deleted group/book metadata for explicit restore/conflict UI.
+ * Missing memberships have found=0; retained tombstone heads live in revisions.
+ * No side effects, and no implicit choice of a revision head. */
+int reader_catalog_group_find(reader_catalog *, reader_catalog_group_kind, const char *id,
+  reader_catalog_group_visit, void *, int *found, reader_catalog_error *);
+int reader_catalog_membership_find(reader_catalog *, reader_catalog_group_kind, const char *group_id,
+  const char *book_key, reader_catalog_membership_visit, void *, int *found, reader_catalog_error *);
+/* Visible sibling shelves ordered by (ordinal,id); NULL parent selects roots.
+ * Tags/series require NULL parent and use ID order. NULL cursor starts at the
+ * requested end; direction is +1/-1, limit 1..200, no OFFSET. */
+int reader_catalog_groups_page(reader_catalog *, reader_catalog_group_kind, const char *parent_id,
+  const reader_catalog_group_cursor *, int direction, size_t limit,
+  reader_catalog_group_visit, void *, reader_catalog_error *);
+/* Active group members ordered by (ordinal,book_key), or book_key for tags.
+ * local_only=1 selects downloaded books; 0 retains cloud-only metadata.
+ * Title/author search remains a literal substring, with the existing UTF-8 rules.
+ * A NULL cursor starts at an end; tags require cursor.ordinal=0. Limit 1..200. */
+int reader_catalog_group_books_page(reader_catalog *, reader_catalog_group_kind, const char *group_id,
+  const reader_catalog_member_cursor *, const char *query, int local_only, int direction, size_t limit,
+  reader_catalog_group_book_visit, void *, reader_catalog_error *);
 const char *reader_catalog_migration(size_t *bytes);
 #ifdef __cplusplus
 }
