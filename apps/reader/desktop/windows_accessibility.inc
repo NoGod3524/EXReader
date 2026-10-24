@@ -19,6 +19,7 @@
 #endif
 #include <uiautomationcore.h>
 #include <uiautomationcoreapi.h>
+#include <uiautomationclient.h>
 #include <oleacc.h>
 #pragma comment(lib, "uiautomationcore.lib")
 #pragma comment(lib, "oleacc.lib")
@@ -155,7 +156,7 @@ static ULONG STDMETHODCALLTYPE host_a11y_simple_release(IRawElementProviderSimpl
   return (ULONG)host_a11y_release((host_a11y_page *)self);
 }
 
-static HRESULT STDMETHODCALLTYPE host_a11y_simple_options(IRawElementProviderSimple *self, ProviderOptions *out) {
+static HRESULT STDMETHODCALLTYPE host_a11y_simple_options(IRawElementProviderSimple *self, enum ProviderOptions *out) {
   (void)self;
   if (!out) return E_INVALIDARG;
   *out = ProviderOptions_ServerSideProvider;
@@ -268,8 +269,8 @@ static HRESULT STDMETHODCALLTYPE host_a11y_range_compare(ITextRangeProvider *sel
   return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE host_a11y_range_compare_endpoints(ITextRangeProvider *self, TextPatternRangeEndpoint endpoint,
-    ITextRangeProvider *other, TextPatternRangeEndpoint other_endpoint, int *result) {
+static HRESULT STDMETHODCALLTYPE host_a11y_range_compare_endpoints(ITextRangeProvider *self, enum TextPatternRangeEndpoint endpoint,
+    ITextRangeProvider *other, enum TextPatternRangeEndpoint other_endpoint, int *result) {
   host_a11y_range *a = (host_a11y_range *)self, *b = (host_a11y_range *)other;
   int left, right;
   if (!result || !b) return E_INVALIDARG;
@@ -279,7 +280,7 @@ static HRESULT STDMETHODCALLTYPE host_a11y_range_compare_endpoints(ITextRangePro
   return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE host_a11y_range_expand(ITextRangeProvider *self, TextUnit unit) {
+static HRESULT STDMETHODCALLTYPE host_a11y_range_expand(ITextRangeProvider *self, enum TextUnit unit) {
   host_a11y_range *range = (host_a11y_range *)self;
   int total = host_a11y_page_units();
   (void)unit;
@@ -361,7 +362,7 @@ static HRESULT STDMETHODCALLTYPE host_a11y_range_text(ITextRangeProvider *self, 
   return *out ? S_OK : E_OUTOFMEMORY;
 }
 
-static HRESULT STDMETHODCALLTYPE host_a11y_range_move(ITextRangeProvider *self, TextUnit unit, int count, int *moved) {
+static HRESULT STDMETHODCALLTYPE host_a11y_range_move(ITextRangeProvider *self, enum TextUnit unit, int count, int *moved) {
   host_a11y_range *range = (host_a11y_range *)self;
   int total = host_a11y_page_units();
   (void)unit;
@@ -374,8 +375,8 @@ static HRESULT STDMETHODCALLTYPE host_a11y_range_move(ITextRangeProvider *self, 
   return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE host_a11y_range_move_endpoint(ITextRangeProvider *self, TextPatternRangeEndpoint endpoint,
-    TextUnit unit, int count, int *moved) {
+static HRESULT STDMETHODCALLTYPE host_a11y_range_move_endpoint(ITextRangeProvider *self, enum TextPatternRangeEndpoint endpoint,
+    enum TextUnit unit, int count, int *moved) {
   host_a11y_range *range = (host_a11y_range *)self;
   int total = host_a11y_page_units();
   (void)unit;
@@ -396,8 +397,8 @@ static HRESULT STDMETHODCALLTYPE host_a11y_range_move_endpoint(ITextRangeProvide
   return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE host_a11y_range_move_endpoint_by_range(ITextRangeProvider *self, TextPatternRangeEndpoint endpoint,
-    ITextRangeProvider *other, TextPatternRangeEndpoint other_endpoint) {
+static HRESULT STDMETHODCALLTYPE host_a11y_range_move_endpoint_by_range(ITextRangeProvider *self, enum TextPatternRangeEndpoint endpoint,
+    ITextRangeProvider *other, enum TextPatternRangeEndpoint other_endpoint) {
   host_a11y_range *a = (host_a11y_range *)self, *b = (host_a11y_range *)other;
   int value;
   if (!b) return E_INVALIDARG;
@@ -495,7 +496,7 @@ static HRESULT STDMETHODCALLTYPE host_a11y_text_from_child(ITextProvider *self, 
   return UIA_E_NOTSUPPORTED;
 }
 
-static HRESULT STDMETHODCALLTYPE host_a11y_text_from_point(ITextProvider *self, UiaPoint point, ITextRangeProvider **out) {
+static HRESULT STDMETHODCALLTYPE host_a11y_text_from_point(ITextProvider *self, struct UiaPoint point, ITextRangeProvider **out) {
   host_a11y_range *range; int start, end;
   (void)point;
   if (!out) return E_INVALIDARG;
@@ -515,7 +516,7 @@ static HRESULT STDMETHODCALLTYPE host_a11y_text_document(ITextProvider *self, IT
   return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE host_a11y_text_supported(ITextProvider *self, SupportedTextSelection *out) {
+static HRESULT STDMETHODCALLTYPE host_a11y_text_supported(ITextProvider *self, enum SupportedTextSelection *out) {
   (void)self;
   if (!out) return E_INVALIDARG;
   *out = SupportedTextSelection_Single;
