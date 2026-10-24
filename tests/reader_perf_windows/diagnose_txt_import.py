@@ -199,6 +199,49 @@ def open_observed(host, title, wait_s):
                 'status': host.status()}
 
 
+BISECT_MIB = (0.25, 0.5, 1, 2, 4, 8, 12, 16)
+
+
+def sized_fixture(directory, mib):
+    """Same line-oriented shape as the original, at a smaller declared size."""
+    size = int(mib * (1 << 20))
+    path = directory / ('Bisect %g MiB.txt' % mib)
+    header = 'Bisect %g MiB\n' % mib
+    unit = (header + ''.join('Bisect %g MiB line %04d keeps the import worker busy.\n'
+                             % (mib, number) for number in range(512))).encode()
+    written = 0
+    lines = 1
+    with path.open('wb') as handle:
+        handle.write(unit)
+        written = len(unit)
+        lines += 512
+        while written < size:
+            handle.write(unit)
+            written += len(unit)
+            lines += 512
+    return {'path': str(path), 'declared_mib': mib, 'bytes': path.stat().st_size,
+            'sha256': perf.sha256(path), 'text_lines': lines}
+
+
+def bisect_imports(host, directory, wait_s):
+    results = []
+    for mib in BISECT_MIB:
+        fixture = sized_fixture(directory, mib)
+        record = {'declared_mib': mib, 'bytes': fixture['bytes'], 'text_lines': fixture['text_lines'],
+                  'sha256': fixture['sha256']}
+        try:
+            record.update(import_original(host, fixture, wait_s))
+        except (TimeoutError, perf.MeasurementFault) as error:
+            record.update({'completed': False, 'timed_out': True, 'error': str(error),
+                           'status_after_import': None, 'status_indicates_failure': True})
+        results.append(record)
+        print(json.dumps({'bisect_mib': mib, 'bytes': record['bytes'],
+                          'status': record.get('status_after_import'),
+                          'rejected': record.get('status_indicates_failure')}, ensure_ascii=False),
+              flush=True)
+    return results
+
+
 def classify(run):
     facts = run['facts']
     if not facts['import']['completed'] or facts['import']['status_indicates_failure']:
@@ -251,7 +294,11 @@ def main():
         perf.fresh_profile(template, profile)
         fixture = original_fixture(work, index)
         expected_title = 'Perf Import %04d' % index
-        facts = {'fixture': fixture, 'expected_title': expected_title}
+        facts = {'fixture': fixture, 'expected_title': expected_title,
+                 'expectation': {'import_succeeds': True, 'visible_after_import': True,
+                                 'title': expected_title, 'source_bytes': fixture['bytes'],
+                                 'source_sha256': fixture['sha256'],
+                                 'visible_probe': 'real search box query for the expected title'}}
         host = perf.Host(exe, font, profile, output / 'logs' / ('txt-%02d.log' % index))
         try:
             facts['first_screen'] = perf.op_first_screen(host)
@@ -286,9 +333,35 @@ def main():
                           'probes': {k: v['count'] for k, v in facts['probes'].items()},
                           'open': facts['open'].get('opened')}, ensure_ascii=False), flush=True)
 
+    # One extra launch bisects the same line-oriented shape to name the boundary
+    # the SDK enforces, so the hand-off carries a threshold and not just a status.
+    bisect_profile = work / 'profiles' / 'bisect'
+    perf.fresh_profile(template, bisect_profile)
+    bisect = {'profile': str(bisect_profile)}
+    host = perf.Host(exe, font, bisect_profile, output / 'logs' / 'bisect.log')
+    try:
+        bisect['first_screen'] = perf.op_first_screen(host)
+        bisect['imports'] = bisect_imports(host, work, ORIGINAL['import_wait_s'])
+        bisect['peak'] = host.close()
+    except Exception as error:
+        bisect['error'] = '%s: %s' % (type(error).__name__, error)
+        try:
+            bisect['peak'] = host.close()
+        except Exception:
+            pass
+    for entry in bisect.get('imports', []):
+        entry['catalog'] = catalog_facts(bisect_profile, entry)
+    accepted = [entry for entry in bisect.get('imports', [])
+                if not entry.get('status_indicates_failure')]
+    rejected = [entry for entry in bisect.get('imports', [])
+                if entry.get('status_indicates_failure')]
+    bisect['largest_accepted_mib'] = max((entry['declared_mib'] for entry in accepted), default=None)
+    bisect['smallest_rejected_mib'] = min((entry['declared_mib'] for entry in rejected), default=None)
+
     verdicts = [run['verdict'] for run in runs]
     overall = verdicts[0] if len(set(verdicts)) == 1 else 'mixed'
-    observed_titles = [run['facts']['catalog'].get('row', {}).get('title') for run in runs]
+    observed_titles = [((run['facts'].get('catalog') or {}).get('row') or {}).get('title')
+                       for run in runs]
     diagnosis = {
         'schema': 1,
         'input': {'kind': 'original 16 MiB single-document TXT', 'parameters': ORIGINAL,
@@ -299,6 +372,7 @@ def main():
         'verdicts': verdicts,
         'observed_titles': observed_titles,
         'runs': runs,
+        'bisect': bisect,
         'notes': [
             'The filtered list is one observation, never the only one: the product catalog row and '
             'the public open path are recorded separately.',
