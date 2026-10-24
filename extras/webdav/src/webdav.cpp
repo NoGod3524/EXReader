@@ -21,6 +21,8 @@
 #include <thread>
 #include <mutex>
 #include <map>
+#include <sys/syscall.h>
+#include <linux/fs.h>
 #endif
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -222,8 +224,16 @@ public:
 #else
     if(fsync(file)!=0) reject(EXR_DAV_IO,"Cannot flush private download");
     cancelled(control);
+#ifdef __ANDROID__
+    // App SELinux permits rename but not hard links. The libc wrapper starts at
+    // API 30; the public NDK syscall entry supports the API 26 kernel baseline.
+    // Unsupported kernels/filesystems fail closed; never fall back to replace.
+    if(syscall(SYS_renameat2,directory,name.c_str(),directory,dest.c_str(),RENAME_NOREPLACE)!=0)
+      reject(errno==EEXIST ? EXR_DAV_EXISTS:EXR_DAV_IO,"Destination publication refused");
+#else
     if(linkat(directory,name.c_str(),directory,dest.c_str(),0)!=0) reject(errno==EEXIST ? EXR_DAV_EXISTS:EXR_DAV_IO,"Destination publication refused");
     unlinkat(directory,name.c_str(),0);
+#endif
 #endif
     name.clear();
   }

@@ -69,6 +69,14 @@ and `If-None-Match: *`. A 412 returns `EXR_DAV_EXISTS`; the host must verify rem
 identity. GET publishes only a complete bounded file and never replaces an
 existing local destination.
 
+Android publishes with the public NDK `syscall(SYS_renameat2, ...,
+RENAME_NOREPLACE)` entry. Android application SELinux rules permit rename while
+the desktop hard-link publication operation is refused. The kernel operation
+exists in Android 26's kernel baseline; Bionic's named libc wrapper starts at
+API 30. `ENOSYS`, unsupported filesystem flags and other publication failures
+return I/O failure and remove the temporary file. There is no replacing-rename
+fallback. Windows and Linux retain their existing publication paths.
+
 The unchanged hard limits are 2000 entries, 4 MiB listing bytes and 128 MiB
 transfer bytes. XML forbids DTD declarations and custom/external entities, and
 feeds the common depth, per-response element and text limits. Predefined and
