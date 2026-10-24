@@ -187,6 +187,13 @@ jobs:
             --container "$container" --app "$app" --fixtures build/apple-resources/manifest.json \
             --sdk-root "stage/$target" --sdk-identity "sdk-artifacts/apple-import-mapping-sdk-$target-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT/build/sdk-identity.json" \
             --destination build/apple-import-ui/destination.txt
+      - name: Retain actual executable provider symbols and link map
+        if: always()
+        run: |
+          mkdir -p build/apple-import-ui/product-provider
+          if test -d build/MappingDerivedData/Build/Products; then
+            find build/MappingDerivedData/Build/Products -type f \( -name '*.link.map*' -o -name product-link.json \) -exec cp '{}' build/apple-import-ui/product-provider/ \;
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:

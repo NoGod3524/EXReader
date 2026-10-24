@@ -146,6 +146,36 @@ jobs:
             --container "$container" --app "$app" --seed native-artifact/seed/shelf-seed.json \
             --sdk-root "stage/$target" --sdk-identity "sdk-artifacts/apple-shelf-sdk-$target-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT/build/sdk-identity.json" \
             --destination build/apple-shelf-ui/destination.txt
+      - name: Exercise production account chooser and account-isolated libraries
+        if: inputs.scope != 'recovery' && steps.evidence.outcome == 'success'
+        id: account_ui
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          platform='${{ matrix.platform }}'
+          scheme=EXReaderHost-iOS
+          sdk="$PWD/stage/iphonesimulator"
+          signing=NO
+          if test "$platform" = macos; then scheme=EXReaderHost-macOS; sdk="$PWD/stage/macos"; signing=YES; fi
+          destination=$(sed -n '1p' build/apple-shelf-ui/destination.txt)
+          mkdir -p build/apple-shelf-ui/account
+          ruby tests/apple_host/make_xcodeproj.rb build/apple-account-project build/apple-resources tests/apple_host/account/ui
+          xcodebuild test -project build/apple-account-project/EXReaderHost.xcodeproj -scheme "$scheme" \
+            -destination "$destination" -derivedDataPath build/AccountDerivedData \
+            -resultBundlePath "build/apple-shelf-ui/account/$platform.xcresult" -parallel-testing-enabled NO \
+            -test-timeouts-enabled YES -default-test-execution-time-allowance 180 -maximum-test-execution-time-allowance 300 \
+            EXR_SDK_DIR="$sdk" CODE_SIGNING_ALLOWED="$signing" 2>&1 | tee "build/apple-shelf-ui/account/$platform-xcodebuild.log"
+          if test "$platform" = macos; then
+            container="$HOME/Library/Application Support/EXReader"
+            app=build/AccountDerivedData/Build/Products/Debug/EXReaderHost.app
+          else
+            udid=$(sed -n '2p' build/apple-shelf-ui/destination.txt)
+            container=$(python3 tests/apple_host/resolve_container.py --udid "$udid" --output build/apple-shelf-ui/account/container.json)
+            app=build/AccountDerivedData/Build/Products/Debug-iphonesimulator/EXReaderHost.app
+          fi
+          python3 tests/apple_host/account/collect_account_ui.py --platform "$platform" \
+            --xcresult "build/apple-shelf-ui/account/$platform.xcresult" --app "$app" --container "$container" \
+            --output build/apple-shelf-ui/account/evidence
       - name: Preserve raw application layout events in focused runs
         if: always() && inputs.scope == 'recovery'
         id: layout_trace
@@ -175,13 +205,22 @@ jobs:
           Path('build/apple-shelf-ui/scope.json').write_text(json.dumps(value, indent=2) + '\n')
           print(json.dumps(value))
           PY
+      - name: Retain actual executable provider symbols and link maps
+        if: always()
+        run: |
+          for target in ShelfDerivedData AccountDerivedData; do
+            mkdir -p "build/apple-shelf-ui/product-provider/$target"
+            if test -d "build/$target/Build/Products"; then
+              find "build/$target/Build/Products" -type f \( -name '*.link.map*' -o -name product-link.json \) -exec cp '{}' "build/apple-shelf-ui/product-provider/$target/" \;
+            fi
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: apple-shelf-ui-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/apple-shelf-ui/
           if-no-files-found: error
-      - if: always() && (steps.ui.outcome != 'success' || (inputs.scope == 'recovery' && steps.layout_trace.outcome != 'success') || (inputs.scope != 'recovery' && steps.evidence.outcome != 'success'))
+      - if: always() && (steps.ui.outcome != 'success' || (inputs.scope == 'recovery' && steps.layout_trace.outcome != 'success') || (inputs.scope != 'recovery' && (steps.evidence.outcome != 'success' || steps.account_ui.outcome != 'success')))
         run: exit 1
 
   summary:
@@ -221,6 +260,13 @@ jobs:
           assert len(account['checks']) == len(set(account['checks'])) == 22
           assert account['sweeps'] == 1 and account['actual_shards'] == 256 and account['secret_scan_passed'] is True
           assert account['host_account_ui_accepted'] is False
+          account_ui = [json.loads(path.read_text()) for path in Path('evidence').rglob('account-ui.json')]
+          assert len(account_ui) == 3 and {row['platform'] for row in account_ui} == {'macos','iphone','ipad'}
+          for row in account_ui:
+              assert row['accepted'] is True and row['source_sha'] == source
+              assert str(row['run_id']) == run and str(row['attempt']) == attempt
+              assert (row['cases'], row['named_steps'], row['attachments'], row['profiles']) == (2,10,4,3)
+              assert row['password_ui_accepted'] is False and row['network_sync_ui_accepted'] is False
           request = urllib.request.Request(f'https://api.github.com/repos/{os.environ["GITHUB_REPOSITORY"]}/actions/runs/{run}/artifacts?per_page=100',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
           data = json.load(urllib.request.urlopen(request))
           assert data['total_count'] == len(data['artifacts']) == 6
@@ -228,6 +274,7 @@ jobs:
               assert artifact['workflow_run']['id'] == int(run) and artifact['workflow_run']['head_sha'] == source
               assert artifact['expired'] is False and artifact['size_in_bytes'] > 0 and re.fullmatch(r'sha256:[0-9a-f]{64}',artifact['digest'])
           result = {'accepted':True,'source_sha':source,'run_id':run,'attempt':attempt,'platforms':{row['platform']:{key:row[key] for key in ('ui_cases','named_observations','attachments','originals','measurements')} for row in reports},'artifacts':data['artifacts'],'sdk_startup_bounded':False,'hard_performance_budget_accepted':False,'problems':[]}
+          result['account_ui'] = {row['platform']: row for row in account_ui}
           Path('shelf-summary.json').write_text(json.dumps(result,indent=2)+'\n')
           print(json.dumps(result))
           PY

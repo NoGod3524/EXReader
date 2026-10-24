@@ -194,6 +194,13 @@ jobs:
             --sdk-identity "sdk-artifact/wp13-apple-sdk-$sdk_target/build/sdk-identity.json" \
             --app "$app" --fixtures build/apple-resources/manifest.json \
             --destination-file build/destination.txt
+      - name: Retain actual executable provider symbols and link map
+        if: always()
+        run: |
+          mkdir -p build/results/product-provider
+          if test -d build/DerivedData/Build/Products; then
+            find build/DerivedData/Build/Products -type f \( -name '*.link.map*' -o -name product-link.json \) -exec cp '{}' build/results/product-provider/ \;
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
