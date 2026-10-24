@@ -1,16 +1,74 @@
 {
-  "accepted": false,
-  "status": "implementation pushed; awaiting the first reader-localization Actions run",
+  "accepted": true,
+  "status": "accepted after 20 named checks passed on Linux, Windows and macOS in one run, with identical catalog digests and identical case sets",
   "package": "EXReaderLocalization 0.1.0",
   "common_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
-  "source_sha": null,
+  "source_sha": "aafb8fd0881d89ac7e9ec3b140b97a8a753737b7",
+  "source_sha_note": "tested source; the only later commits on this branch are [skip ci] documentation commits recorded in evidence_head",
   "branch": "codex/reader-localization",
-  "run_id": null,
-  "attempt": null,
-  "artifacts": [],
-  "jobs": [],
+  "workflow": ".github/workflows/reader-localization.yml",
+  "run_id": 40126739701,
+  "attempt": 1,
+  "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/40126739701",
+  "jobs": [
+    {
+      "id": 120969689921,
+      "name": "localization consumers (ubuntu-22.04)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120969689761,
+      "name": "localization consumers (windows-2022)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120969689917,
+      "name": "localization consumers (macos-14)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120969842295,
+      "name": "strict localization evidence",
+      "conclusion": "success"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12573417730,
+      "name": "reader-localization-Linux-40126739701-1",
+      "size_in_bytes": 92812,
+      "digest": "sha256:a7ef365591304d28e666c284b1c32afc2a6b6871bce04531e85f020c4ca98c9c",
+      "expires_at": "2027-01-22T19:45:29Z"
+    },
+    {
+      "id": 12573742538,
+      "name": "reader-localization-Windows-40126739701-1",
+      "size_in_bytes": 365723,
+      "digest": "sha256:62541dfe68662dd8cd6d77ff224878dc1eba9dd580e361601fbaa3bede77d961",
+      "expires_at": "2027-01-22T19:45:29Z"
+    },
+    {
+      "id": 12573082645,
+      "name": "reader-localization-macOS-40126739701-1",
+      "size_in_bytes": 86373,
+      "digest": "sha256:7592ad41c0ea52ea1d2802accf1d1f3f1c1c598c32ab5a1e4c82cc279655ef2c",
+      "expires_at": "2027-01-22T19:45:29Z"
+    },
+    {
+      "id": 12573482628,
+      "name": "reader-localization-summary-40126739701-1",
+      "size_in_bytes": 872,
+      "digest": "sha256:b23bad2900c14c16721235f8b4b6c7b75c3707ceaeab0555ead3a7909d679dce",
+      "expires_at": "2027-01-22T19:45:29Z"
+    }
+  ],
   "problems": [],
-  "catalog_digest": null,
+  "catalog_digest": "41040fcc8a162eeecea1415dbee3710f708d3f0ffef0071aedb8bd291b5f4285",
+  "catalog_digest_per_platform": {
+    "linux": "41040fcc8a162eeecea1415dbee3710f708d3f0ffef0071aedb8bd291b5f4285",
+    "windows": "41040fcc8a162eeecea1415dbee3710f708d3f0ffef0071aedb8bd291b5f4285",
+    "macos": "41040fcc8a162eeecea1415dbee3710f708d3f0ffef0071aedb8bd291b5f4285"
+  },
   "messages": 62,
   "templates": 124,
   "limits": {
@@ -41,9 +99,27 @@
     "catalog-corruption-refusal",
     "no-internal-diagnostics"
   ],
+  "named_case_results": {
+    "linux": {
+      "passed": 20,
+      "failed": 0
+    },
+    "windows": {
+      "passed": 20,
+      "failed": 0
+    },
+    "macos": {
+      "passed": 20,
+      "failed": 0
+    }
+  },
   "checks_per_platform": 20,
-  "granted_platforms": [],
-  "macos_accepted": false,
+  "granted_platforms": [
+    "linux",
+    "windows",
+    "macos"
+  ],
+  "macos_accepted": true,
   "performance_claimed": false,
   "host_ui_accepted": false,
   "six_platform_accepted": false,
@@ -52,5 +128,259 @@
   "schema_changed": false,
   "protected_trees_unchanged": true,
   "host_strings_changed": false,
-  "retained_failures": []
+  "host_wiring": "not part of this package; root owns the four native hosts and decides per surface",
+  "uncovered": [
+    "host wiring, host UI, accessibility tree changes and migration of existing host strings",
+    "locales other than zh-CN and en-US, plural-rule engines, translation memory, bidi isolation (bidi controls pass through unchanged)",
+    "performance, memory and CPU budgets beyond the documented constant bounds",
+    "real-device, simulator, audio and text-to-speech behaviour: this package renders strings only",
+    "any non-text platform surface; no WebView, no JS UI, no service, no sidecar"
+  ],
+  "retained_failures": [
+    {
+      "source_sha": "147e509f",
+      "run_id": 40124943805,
+      "attempt": 1,
+      "jobs": [
+        {
+          "id": 120964252785,
+          "name": "localization consumers (windows-2022)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 120964253033,
+          "name": "localization consumers (ubuntu-22.04)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 120964253074,
+          "name": "localization consumers (macos-14)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 120965256749,
+          "name": "strict localization evidence",
+          "conclusion": "failure"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12572069587,
+          "name": "reader-localization-Linux-40124943805-1",
+          "size_in_bytes": 93402,
+          "digest": "sha256:2c3935a16dfc379a095e2048becb0dbc1c7ef855bf7462efca332420926ceb93"
+        },
+        {
+          "id": 12572691201,
+          "name": "reader-localization-macOS-40124943805-1",
+          "size_in_bytes": 86905,
+          "digest": "sha256:948dfd032a61d02716bc57c6f5d7759869d859de20d80e6f51011274b45e3204"
+        },
+        {
+          "id": 12573115441,
+          "name": "reader-localization-summary-40124943805-1",
+          "size_in_bytes": 460,
+          "digest": "sha256:b2639b2594af0998524ee935f45b04998d1bbc3d58d64f4366790b87390a952c"
+        }
+      ],
+      "failed_cases": [
+        "installed-c-consumer",
+        "installed-cpp-consumer",
+        "format-matrix-zh",
+        "format-matrix-en",
+        "refusal-arity-and-kind",
+        "refusal-malformed-utf8",
+        "value-limit-boundary",
+        "capacity-atomicity",
+        "output-limit",
+        "fallback-missing-translation",
+        "missing-base-translation",
+        "catalog-corruption-refusal"
+      ],
+      "cause": "reader_localization_parse_locale rejected the '-' region separator, so every zh-CN/en-US tag was UNKNOWN_LOCALE; the Windows job additionally failed the vcvars step and produced no artifact"
+    },
+    {
+      "source_sha": "a6ac730d",
+      "run_id": 40125641428,
+      "attempt": 1,
+      "jobs": [
+        {
+          "id": 120966340764,
+          "name": "localization consumers (macos-14)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 120966340882,
+          "name": "localization consumers (windows-2022)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 120966340952,
+          "name": "localization consumers (ubuntu-22.04)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 120966578315,
+          "name": "strict localization evidence",
+          "conclusion": "failure"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12572591977,
+          "name": "reader-localization-Windows-40125641428-1",
+          "size_in_bytes": 46262,
+          "digest": "sha256:7e69e94f49ece077dc25ab1bcee9b362ed0dd81a5a77b4a53aa82532dddb7080"
+        },
+        {
+          "id": 12572826583,
+          "name": "reader-localization-Linux-40125641428-1",
+          "size_in_bytes": 93519,
+          "digest": "sha256:5d1c9b1859733010da49525177da3ca759247a415923e40710e6c940b7d66b60"
+        },
+        {
+          "id": 12573071240,
+          "name": "reader-localization-macOS-40125641428-1",
+          "size_in_bytes": 87113,
+          "digest": "sha256:f94c739602d940be12697f312ac051ba501337f3f027b0b4636e61966d6e0214"
+        },
+        {
+          "id": 12573006490,
+          "name": "reader-localization-summary-40125641428-1",
+          "size_in_bytes": 460,
+          "digest": "sha256:10a45b9e6020db461c58d65fb08bf0f3a03abcabe0b749349ca07da5f86664e7"
+        }
+      ],
+      "failed_cases": [
+        "installed-cpp-consumer",
+        "format-matrix-zh",
+        "format-matrix-en",
+        "refusal-arity-and-kind",
+        "refusal-malformed-utf8",
+        "value-limit-boundary",
+        "capacity-atomicity",
+        "output-limit",
+        "fallback-missing-translation"
+      ],
+      "cause": "consumer fixture parsing decoded hex past the token separator, the C++ consumer passed pointers into destroyed temporaries, MSVC C4310 on a char cast, and the fallback fixture used a different argument than its expectation"
+    },
+    {
+      "source_sha": "67ced03d",
+      "run_id": 40126019743,
+      "attempt": 1,
+      "jobs": [
+        {
+          "id": 120967474134,
+          "name": "localization consumers (ubuntu-22.04)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 120967474310,
+          "name": "localization consumers (macos-14)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 120967474420,
+          "name": "localization consumers (windows-2022)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 120967698020,
+          "name": "strict localization evidence",
+          "conclusion": "failure"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12573606216,
+          "name": "reader-localization-Linux-40126019743-1",
+          "size_in_bytes": 93108,
+          "digest": "sha256:7d2d059074be1beab5a84d217323d7331875d87121e618daf9cb092a43cf8662"
+        },
+        {
+          "id": 12573656182,
+          "name": "reader-localization-Windows-40126019743-1",
+          "size_in_bytes": 366035,
+          "digest": "sha256:4320234758b1e593344b10721e568b72a09db7ad9886796101c4acb7104084cd"
+        },
+        {
+          "id": 12573286567,
+          "name": "reader-localization-macOS-40126019743-1",
+          "size_in_bytes": 86695,
+          "digest": "sha256:7e287da54fcd800b8a51eeb9597c7d8ef964ea8fc68e6b2032588e4597dd2df5"
+        },
+        {
+          "id": 12573611377,
+          "name": "reader-localization-summary-40126019743-1",
+          "size_in_bytes": 459,
+          "digest": "sha256:b4907bb04c7a82ffae8eefc7f31832c4175e76e7c0d0ebe8f36b5b2c7e553107"
+        }
+      ],
+      "failed_cases": [
+        "refusal-arity-and-kind",
+        "refusal-malformed-utf8",
+        "value-limit-boundary",
+        "capacity-atomicity",
+        "output-limit"
+      ],
+      "cause": "the consumer spec buffer was exactly the value limit, so an over-long fixture value could not reach the library and the fixture run aborted instead of exercising VALUE_TOO_LONG"
+    },
+    {
+      "source_sha": "ae8a9caa",
+      "run_id": 40126404054,
+      "attempt": 1,
+      "jobs": [
+        {
+          "id": 120968671247,
+          "name": "localization consumers (macos-14)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 120968671452,
+          "name": "localization consumers (ubuntu-22.04)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 120968671463,
+          "name": "localization consumers (windows-2022)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 120968816942,
+          "name": "strict localization evidence",
+          "conclusion": "failure"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12573786617,
+          "name": "reader-localization-Linux-40126404054-1",
+          "size_in_bytes": 92932,
+          "digest": "sha256:1e6255822a654a10f6d7338dfacaf17838f7b9556d950651950b295efbf7de9e"
+        },
+        {
+          "id": 12573776787,
+          "name": "reader-localization-Windows-40126404054-1",
+          "size_in_bytes": 365845,
+          "digest": "sha256:3d803dfaad50b9f5fa18c64696fe1b2c9d80a32c3b017fb533082b55cb4d88ef"
+        },
+        {
+          "id": 12573252277,
+          "name": "reader-localization-macOS-40126404054-1",
+          "size_in_bytes": 86501,
+          "digest": "sha256:be4c8b14f8e91fdc9fe5251664ace13e1d7169372903973d3863b7bc806ab4f0"
+        },
+        {
+          "id": 12572687703,
+          "name": "reader-localization-summary-40126404054-1",
+          "size_in_bytes": 458,
+          "digest": "sha256:e7e9b30f6ce813b55e8a02ffc2abcf86f2f85295b60570f283b1ac313a9d772e"
+        }
+      ],
+      "failed_cases": [
+        "capacity-atomicity"
+      ],
+      "cause": "the exact-capacity fixture was sized in characters, not UTF-8 bytes, so CJK rows were rendered into a buffer one byte too small"
+    }
+  ]
 }

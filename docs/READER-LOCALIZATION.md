@@ -260,9 +260,25 @@ Not claimed by this package:
 - any change to the SDK, the product schema, the revision wire, the reading
   anchor, the protected trees or the six SDK release packages.
 
-## Original failures
+## Runs and retained failures
 
-None to date: the first cloud run of this branch is recorded in
-`docs/validation/reader-localization.json` together with every retained failed
-run, its artifact ids and its digests. Failures are never edited into
-expectations; a real failure stays in the evidence file with its run id.
+Accepted run: **40126739701 / attempt 1**, tested source
+`aafb8fd0881d89ac7e9ec3b140b97a8a753737b7`, 20/20 named checks green on
+Linux, Windows and macOS, identical case sets and one identical catalog digest
+`41040fcc8a162eeecea1415dbee3710f708d3f0ffef0071aedb8bd291b5f4285`. Every
+artifact id, byte count, `sha256` and expiry date is in
+`docs/validation/reader-localization.json`.
+
+Earlier failed runs on this branch are kept as evidence, with their jobs,
+artifacts, digests and the exact case that failed. None of them was repaired by
+editing an expectation:
+
+| run | source | failed cases | cause |
+| --- | --- | --- | --- |
+| 40124943805 | 147e509f | installed consumers, both format matrices, all refusal cases, fallback, corruption | `parse_locale` rejected the `-` separator, so no tag resolved; the Windows job also failed before configuring, so it produced no artifact |
+| 40125641428 | a6ac730d | installed C++ consumer, matrices, refusal cases, fallback | fixture hex decoding ran past the token separator, the C++ consumer passed pointers into destroyed temporaries, MSVC C4310 on a `char` cast, and the fallback fixture used a different argument than its expectation |
+| 40126019743 | 67ced03d | refusal-arity-and-kind, refusal-malformed-utf8, value-limit-boundary, capacity-atomicity, output-limit | the fixture buffer was exactly the value limit, so an over-long value could not reach the library and the fixture run aborted |
+| 40126404054 | ae8a9caa | capacity-atomicity | the exact-capacity fixture was sized in characters instead of UTF-8 bytes, so CJK rows were one byte short |
+
+The two later commits on the branch after `aafb8fd0` are documentation-only and
+carry `[skip ci]`; the tested source is `aafb8fd0`, not the documentation HEAD.
