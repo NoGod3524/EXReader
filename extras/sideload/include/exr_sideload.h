@@ -48,6 +48,22 @@ exr_status exr_sideload_import_file(exr_library *library, exr_format format,
     const char *path, const char *title, const exr_sideload_options *options,
     exr_sideload_result *result, exr_error *error);
 
+/* Export the exact original through public library_source, using at most 64KiB
+   of copy memory and a 128MiB ceiling (options may lower it). Run on the SDK
+   owner, without callback reentry. destination is a new UTF-8 filename in an
+   existing app-private directory. The host keeps this directory stable.
+   Publish is atomic and never replaces an existing destination, even on retry.
+   On failure bytes_written remains zero; only this call's temporary file is
+   removed. After success the source is released and no SDK handle is retained.
+   Only then may the host pass the immutable file to a network worker; existing
+   sync length/SHA-256 verification still establishes its global book identity.
+   Options use the same struct_size/control/max_input_bytes rules as imports.
+   Cancellation before publish removes the temporary; a published result wins.
+   A process killed before publish may leave an unreferenced .exr-export temp. */
+exr_status exr_sideload_export_original(exr_library *,int64_t book_id,
+    const char *destination,const exr_sideload_options *,uint64_t *bytes_written,
+    exr_error *);
+
 #ifdef __cplusplus
 }
 #endif

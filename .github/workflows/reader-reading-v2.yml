@@ -79,6 +79,17 @@ jobs:
           if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
           python3 tests/reader_reading_state/make_fixtures.py build/v2-fixtures
           python3 tests/reader_reading_v2/check_sdk.py --probe "build/v2-consumer/reading-v2-probe$exe" --legacy-probe "build/v1-consumer/reading-state-probe$exe" --legacy-c-consumer "build/v1-consumer/reading-state-c-consumer$exe" --fixtures build/v2-fixtures --font tests/fixtures/fonts/primary.ttf --legacy-map build/v1-consumer/reading-state-link.map --link-map build/v2-consumer/reading-v2-link.map --output build/v2-sdk-evidence
+      - name: Install optional source export and compile an independent C C++ consumer
+        run: |
+          cmake -S extras/sideload -B build/v2-sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$V2_WS/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$V2_WS/build/v2-sideload-stage"
+          cmake --build build/v2-sideload --verbose
+          cmake --install build/v2-sideload
+          cmake -S tests/reader_source_export -B build/v2-export-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$V2_WS/build/v2-sideload-stage;$V2_WS/build/reading-library/stage"
+          cmake --build build/v2-export-consumer --verbose
+      - name: Real owner original export cancellation invalidation and atomic no-replace publication
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_source_export/check_export.py --consumer "build/v2-export-consumer/original-export-consumer$exe" --fixtures build/v2-fixtures --output build/v2-export-evidence
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -87,6 +98,9 @@ jobs:
             build/v2-logs/
             build/v2-fixtures/
             build/v2-sdk-evidence/
+            build/v2-export-evidence/
+            build/v2-sideload-stage/
+            build/v2-export-consumer/original-export-consumer*
             build/v2-stage/
             build/v2-product-stage/
             build/v1-stage/
