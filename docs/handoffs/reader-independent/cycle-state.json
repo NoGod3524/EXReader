@@ -101,6 +101,24 @@
     }
   ],
   "integrated_package_ids": [],
+  "review_followups": [
+    {
+      "package_id": "G09",
+      "owner": "DeepSeek Harness Flash1017 High PTC",
+      "checkpoint": "4e140fec7b3d47ce624cecc6d239dc94833559a2",
+      "state": "original_application_module_inventory_scope_followup_sent",
+      "preserved_sdk_inventory_run": 40081161966,
+      "new_dispatch_cycle": false
+    },
+    {
+      "package_id": "G16",
+      "owner": "DeepSeek Harness Flash1017 High PTC",
+      "checkpoint": "578d4155",
+      "state": "scroll_viewport_classifier_regression_fix_running",
+      "preserved_audit_run": 40085956514,
+      "new_dispatch_cycle": false
+    }
+  ],
   "audit_history": [],
   "complete_product": false
 }

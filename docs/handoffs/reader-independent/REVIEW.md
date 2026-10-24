@@ -99,6 +99,16 @@ G16新报告`29f03e233ee5e6c668d737f8236974648ce4333c`/`40085956514`三目标及
 
 G02紧急消息最初滞留外部应用队列，root已为优先处理确认的像素源错误停止模型的例行轮询（未取消云端run），并以新的继续消息把完整回修要求送入当前会话；没有重置代码或重启同一云端运行。
 
+## G08：基线模块组成，源码复核与集成要求
+
+root已读其安装工作流、独立消费者CMake、prefix扫描和负例：固定起点已存在的13包确实按同一前缀安装，消费者复制到新目录，只用安装头/targets，移动前缀后重新编译运行；默认SDK快照与模块组合分开。其原`4b1a17ca24eab43a765a3e984a707061d012083a`/`40081552526`只覆盖固定基线，不覆盖本轮新G02–G06或codec拆分；统一集成须扩入实际新目标再同源复验。G09记录的SDK文档/归档/pkg-config内路径不等同于G08的已导出CMake接口泄漏，两种扫描范围分别处理。
+
+## G09：分发清单，SDK部分已交，应用模块范围待补齐
+
+原受测`f3b5c8f65d6a1d7db51364b897f81a995ce37c67`、文档HEAD`4e140fec7b3d47ce624cecc6d239dc94833559a2`、run`40081161966`的六SDK材料保留。root对照原交接发现范围缺项：任务要求“SDK和应用可选模块”，工作流及inventory实际只有六reading SDK profile，排除了应用可选模块，不能以更小的SCOPE算整个G09完成。
+
+已实际向原G09 DeepSeek会话发送接续：保留六SDK及原负例，在固定起点已有13包上补Windows/Linux/macOS真实组合安装清单、SBOM、版本/头/归档/config散列、许可原文及实际静态/动态依赖材料，明确系统依赖和随包库。复用G08安装方法，不依赖移动G01–G06；reading默认无可选模块的断言保持，组合profile单独显式启用。新增漏模块/依赖/notice等拒绝项，最终同源完整复验后交回。原96处安装路径命中仍登记、`release_ready=false`，不为补报告改冻结SDK/发布流程或创建tag。
+
 交付HEAD`cd0c7f9b8e3a9af53e30e53248d47ce959f1d0c8`，受测`20c6a1deec794b4902f0ae3a7140a17b19cef7fd`、run`40082869006`自报25项及原基线成功。
 
 root读到`check_account_ui.py`的`capture()`只把Python手写v1 wire交给`revision-consumer reading-local`；location的`exact/start/end`均为常量，没有公开SDK capture调用。原检查证明修订字节传输，不能授予“真实阅读capture往返”。要求保持旧传输断言，补四格式公开SDK真实捕获、v2编码、正式宿主TLS往返和第二SDK定位（优先复用既有18案例），并证明当前阅读/SDK notes不被自动写入。
