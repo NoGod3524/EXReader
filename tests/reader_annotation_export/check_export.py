@@ -19,6 +19,7 @@ import re
 import sqlite3
 import subprocess
 import sys
+import time
 
 S_OK, S_ARGUMENT, S_MEMORY, S_REVISION, S_DECODE, S_IO, S_LIMIT, S_CANCELLED = range(8)
 OWNER = 11
@@ -129,7 +130,7 @@ def main():
     assert c.returncode == 0 and c.stdout.strip() == 'OK', c
     record('c11_consumer_constants_and_argument_contract')
     main_db, small_db = str(root / 'main.sqlite'), str(root / 'small.sqlite')
-    for db, batch, total in [(main_db, 'all.batch', len(corpus['wires'])),
+    for db, batch, total in [(main_db, 'all.batch', corpus['batch_wires']),
                              (small_db, 'small.batch', None)]:
         r = run(['receive-batch', db, a.fixtures / batch])
         assert r['status'] == 0 and r['rejected'] == [], r['rejected'][:5]
@@ -512,6 +513,174 @@ def main():
     assert r['revision_code'] == OWNER, r
     record('invalid_options_paths_budgets_titles_book_keys_and_non_owner_calls_are_refused_without_writing')
 
+
+    # ---------- one valid public snapshot per entity over a real second process ----------
+    # The corpus holds one annotation per window book. The export blocks inside its
+    # own cancel callback between the page read and that entity's heads read, a
+    # second process commits one advance revision on the same product database, and
+    # only then does the export continue. Everything the export publishes for that
+    # entity must come from the one later public snapshot.
+    def derive_selection(graph):
+        if graph['heads'] == 0:
+            return 'missing'
+        if graph['missing_parents'] or graph['foreign_parents']:
+            return 'pending_parents'
+        if graph['heads'] > 1:
+            return 'concurrent'
+        return 'safe' if graph['projection_safe'] else 'blocked_restore'
+
+    def wait_for(path, seconds):
+        for _ in range(seconds * 100):
+            if Path(path).exists():
+                return True
+            time.sleep(0.01)
+        return False
+
+    window_digests = {}
+
+    def window_case(case):
+        wdir = root / 'window'
+        wdir.mkdir(exist_ok=True)
+        name = case['case']
+        jsonl, markdown = wdir / (name + '.jsonl'), wdir / (name + '.md')
+        go, done = wdir / (name + '.go'), wdir / (name + '.done')
+        args = [probe, 'export', main_db, case['book'], hexs(case['title']), hexs(str(jsonl)), hexs(str(markdown)), '0',
+                'advance_at_poll=2', 'go=' + hexs(str(go)), 'done=' + hexs(str(done)), 'advance_wait=240']
+        process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding='utf-8')
+        try:
+            assert wait_for(go, 240), ('export never reached the page/entity window', name)
+            advance = run(['receive-batch', main_db, a.fixtures / ('advance-' + name + '.batch')])
+            assert advance['status'] == 0 and advance['accepted'] == 1 and advance['created'] == 1, (name, advance)
+        finally:
+            if not done.exists():
+                done.write_bytes(b'')
+            stdout, stderr = process.communicate(timeout=600)
+        assert process.returncode == 0, (name, process.returncode, stderr, stdout[:300])
+        result = json.loads(stdout)
+        assert result['advanced'] == 1 and result['advance_timeout'] == 0, (name, result)
+        assert result['status'] == S_OK, (name, result)
+        lines = jsonl.read_bytes().split(b'\n')[:-1]
+        footer = json.loads(lines[-1])
+        body = [json.loads(x) for x in lines[1:-1]]
+        assert len(body) == 1 and body[0]['annotation_id'] == case['annotation'], (name, body)
+        row, graph, heads = body[0], body[0]['graph'], body[0]['heads']
+        derived = derive_selection(graph)
+        assert row['selection'] == derived, ('selection disagrees with the exported graph', name, row['selection'], derived, graph)
+        expected_tombstone = derived == 'safe' and len(heads) == 1 and heads[0]['operation'] == 'delete'
+        assert row['tombstone'] == expected_tombstone, ('tombstone disagrees with the exported heads', name, row['tombstone'], expected_tombstone, heads)
+        assert graph['heads'] == len(heads), ('graph head count differs from the head list', name, graph, len(heads))
+        assert row['selection'] == case['expected']['selection'] and row['tombstone'] == case['expected']['tombstone'], (name, row['selection'], case['expected'])
+        assert [h['revision_id'] for h in heads] == case['expected']['heads'], (name, [h['revision_id'] for h in heads], case['expected'])
+        assert graph['revisions'] == case['expected']['revisions'], (name, graph)
+        if derived == 'safe':
+            assert graph['projection_safe'] is True and graph['deleted'] == case['expected']['tombstone'] and not graph['requires_restore'], (name, graph)
+            assert graph['missing_parents'] == 0 and graph['foreign_parents'] == 0, (name, graph)
+        wire = bytes.fromhex(case['advance']['wire_hex'])
+        assert heads[0]['wire'].encode('utf-8') == wire and heads[0]['sha256'] == case['advance']['sha256'], ('advanced wire differs', name)
+        assert heads[0]['bytes'] == len(wire) and manual_wires(lines[1]) == [wire], ('second reader differs', name)
+        want = dict(annotations=1, current=0, tombstones=0, pending_parents=0, concurrent=0, blocked_restore=0, head_wires=len(heads))
+        if derived == 'safe':
+            want['tombstones' if row['tombstone'] else 'current'] += 1
+        else:
+            want[derived] += 1
+        assert footer == dict(type='footer', complete=True, **want), (name, footer, want)
+        stats = result['stats']
+        assert {k: stats[k] for k in want} == want, (name, stats, want)
+        annotations, _ = read_markdown(markdown, case['book'], case['title'])
+        assert len(annotations) == 1 and annotations[0]['id'] == case['annotation'], (name, annotations)
+        prefix = {'safe': '已删除（墓碑' if row['tombstone'] else '当前批注（唯一的安全头）',
+                  'concurrent': '冲突：存在 1 个并发头', 'blocked_restore': '冲突：删除后被隐式恢复',
+                  'pending_parents': '未定位：缺少父修订或父修订不属于本批注',
+                  'missing': '未定位：没有可用的修订'}[derived]
+        assert annotations[0]['status'].startswith(prefix), ('markdown status disagrees', name, annotations[0]['status'], prefix)
+        assert annotations[0]['graph'] == [graph['revisions'], len(heads), graph['missing_parents'], graph['foreign_parents']], (name, annotations[0]['graph'])
+        window_digests['window-' + name + '.jsonl'] = hashlib.sha256(jsonl.read_bytes()).hexdigest()
+        window_digests['window-' + name + '.md'] = hashlib.sha256(markdown.read_bytes()).hexdigest()
+        cases.append({'id': 'window-' + name, 'selection': derived, 'tombstone': row['tombstone'], 'graph': graph})
+
+    window_names = {'parent_arrival': 'window_parent_arrival_is_exported_from_one_consumed_snapshot',
+                    'explicit_merge': 'window_explicit_merge_is_exported_from_one_consumed_snapshot',
+                    'delete_merge': 'window_delete_merge_keeps_tombstone_and_graph_from_one_snapshot',
+                    'explicit_restore': 'window_explicit_restore_unblocks_in_one_snapshot'}
+
+    def window_gap():
+        for case in corpus['window']:
+            window_case(dict(case, title=corpus['books'][case['book']]['title']))
+            record(window_names[case['case']])
+        assert leftovers(root / 'window') == []
+
+    # ---------- real output path aliases ----------
+    def alias_gap():
+        al = root / 'alias'
+        al.mkdir()
+        keep_jsonl, keep_md = al / 'book.jsonl', al / 'book.md'
+        assert export(main_db, TXT, keep_jsonl, keep_md)['status'] == S_OK
+        good_jsonl, good_md = keep_jsonl.read_bytes(), keep_md.read_bytes()
+        base_path = str(al)
+        sep = os.sep
+        canonical = base_path + sep + 'x.jsonl'
+        aliases = [('dot-segment', canonical, base_path + sep + '.' + sep + 'x.jsonl'),
+                   ('duplicate-separator', canonical, base_path + sep + sep + 'x.jsonl')]
+        (al / 'sub').mkdir()
+        aliases.append(('parent-segment', canonical, base_path + sep + 'sub' + sep + '..' + sep + 'x.jsonl'))
+        if system == 'windows':
+            aliases.append(('case-folded', canonical, base_path + sep + 'X.JSONL'))
+        else:
+            (al / 'real').mkdir()
+            os.symlink('real', str(al / 'link'))
+            aliases.append(('symlinked-directory', base_path + sep + 'real' + sep + 'x.jsonl',
+                            base_path + sep + 'link' + sep + 'x.jsonl'))
+        for label, canon, alias in aliases:
+            r = run(['export', main_db, TXT, '-', hexs(canon), hexs(alias), 0])
+            assert r['status'] == S_ARGUMENT, ('alias not refused', label, r)
+            assert r['stats']['jsonl_published'] == 0 and r['stats']['markdown_published'] == 0, (label, r['stats'])
+            assert not Path(canon).exists() and not Path(alias).exists(), ('alias wrote a file', label)
+            assert keep_jsonl.read_bytes() == good_jsonl and keep_md.read_bytes() == good_md, label + ': existing export changed'
+            assert leftovers(al) == [], label + ': temporary file left behind'
+            cases.append({'id': 'alias-' + label, 'status': r['status'], 'os_error': r['os_error']})
+        r = export(main_db, TXT, al / 'a.jsonl', al / 'b.jsonl')
+        assert r['status'] == S_OK and (al / 'a.jsonl').exists() and (al / 'b.jsonl').exists(), ('distinct targets refused', r)
+        assert leftovers(al) == []
+        record('path_aliases_that_resolve_to_one_target_are_refused_before_writing')
+
+    # ---------- reentrant export from the cancel callback ----------
+    def reentry_gap():
+        re_dir = root / 'reentry'
+        re_dir.mkdir()
+        keep_jsonl, keep_md = re_dir / 'keep.jsonl', re_dir / 'keep.md'
+        assert export(main_db, TXT, keep_jsonl, keep_md)['status'] == S_OK
+        good_jsonl, good_md = keep_jsonl.read_bytes(), keep_md.read_bytes()
+        nested = re_dir / 'nested.jsonl'
+
+        def attempt(label, extra, expected):
+            r = export(main_db, TXT, keep_jsonl, keep_md, extra=extra)
+            assert r['status'] == expected, (label, r)
+            assert r['reenter']['status'] == S_ARGUMENT and r['reenter']['code'] == S_ARGUMENT, (label, r['reenter'])
+            assert not nested.exists(), (label, 'nested export published a file')
+            assert leftovers(re_dir) == [], label + ': temporary file left behind'
+            assert keep_jsonl.read_bytes() == good_jsonl and keep_md.read_bytes() == good_md, label + ': outer output changed'
+            cases.append({'id': 'reentry-' + label, 'status': r['status'], 'nested': r['reenter']['status']})
+            return r
+
+        attempt('nested-target', ['reenter=1', 'reenter_path=' + hexs(str(nested))], S_OK)
+        r = attempt('shared-stats', ['reenter=1', 'reenter_path=' + hexs(str(nested)), 'reenter_stats=1'], S_OK)
+        assert r['stats']['annotations'] == expected_totals(TXT)['annotations'], ('outer stats were cleared', r['stats'])
+        attempt('same-target', ['reenter=1', 'reenter_path=' + hexs(str(keep_jsonl))], S_OK)
+        attempt('then-cancel', ['reenter=1', 'reenter_path=' + hexs(str(nested)), 'cancel_after=2'], S_CANCELLED)
+        record('reentrant_export_from_the_cancel_callback_is_refused_and_the_outer_export_stays_recoverable')
+
+    gaps = []
+    def new_gap(label, body):
+        try:
+            body()
+        except AssertionError as error:
+            gaps.append({'gap': label, 'error': str(error)[:600]})
+            print('VIOLATION ' + label + ': ' + str(error)[:600], flush=True)
+    new_gap('single_entity_snapshot', window_gap)
+    new_gap('output_path_alias', alias_gap)
+    new_gap('reentrant_export', reentry_gap)
+    assert not gaps, gaps
+
     # ---------- no private data ----------
     private = [str(root), str(root).replace('\\', '/'), os.environ.get('RUNNER_TEMP', '\0'), os.environ.get('HOME', '\0'),
                '.exr-export-', 'authorization', 'password', 'rowid', 'queue_id', 'attempts', '.sqlite', 'exr_library']
@@ -534,6 +703,7 @@ def main():
     digests = {name: hashlib.sha256(path.read_bytes()).hexdigest() for name, path in
                [('txt.jsonl', state[TXT][0]), ('txt.md', state[TXT][1]), ('epub.jsonl', state[EPUB][0]), ('epub.md', state[EPUB][1]),
                 ('pdf.jsonl', state[PDF][0]), ('pdf.md', state[PDF][1]), ('mass.jsonl', jm), ('mass.md', mm_), ('empty.jsonl', je), ('empty.md', me)]}
+    digests.update(window_digests)
     report = {'accepted': True, 'digests': digests, 'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
               'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'granted_platform': system, 'checks': checks, 'count': len(checks),
               'skipped': skipped, 'cases': cases, 'wires': len(corpus['wires']), 'mass_annotations': 1234,
