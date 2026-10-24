@@ -200,7 +200,10 @@ def main():
             "oversize.json": "LIMIT",
         }
         for name, status in expected.items():
-            load_refusal(fixtures / name, status)
+            try:
+                load_refusal(fixtures / name, status)
+            except CheckFailure as error:
+                raise CheckFailure("%s: %s" % (name, error)) from error
 
     def unknown_version_keeps_bytes():
         path = work / "unknown-version-copy.json"

@@ -25,6 +25,10 @@ static int rp_parser_fail(rp_parser *s, reader_preferences_status status, const 
   return 0;
 }
 
+static reader_preferences_status rp_parser_status(const reader_preferences_error *error) {
+  return error && error->status != READER_PREFERENCES_OK ? error->status : READER_PREFERENCES_FORMAT;
+}
+
 static void rp_skip_ws(rp_parser *s) {
   while (s->p < s->end) {
     unsigned char c = *s->p;
@@ -259,26 +263,26 @@ reader_preferences_status rp_json_parse(const unsigned char *data, size_t size,
     } else if (rp_key_is(key, key_length, "format_version")) {
       if (seen & bit_version) { (void)rp_parser_fail(&s, READER_PREFERENCES_FORMAT, "duplicate key"); return READER_PREFERENCES_FORMAT; }
       version_offset = (size_t)(s.p - s.begin);
-      if (!rp_parse_uint(&s, &version)) return READER_PREFERENCES_FORMAT;
+      if (!rp_parse_uint(&s, &version)) return rp_parser_status(error);
       seen |= bit_version;
     } else if (rp_key_is(key, key_length, "font_size")) {
       if (seen & bit_font) { (void)rp_parser_fail(&s, READER_PREFERENCES_FORMAT, "duplicate key"); return READER_PREFERENCES_FORMAT; }
-      if (!rp_parse_number(&s, &number)) return READER_PREFERENCES_FORMAT;
+      if (!rp_parse_number(&s, &number)) return rp_parser_status(error);
       parsed.font_size = (float)number;
       seen |= bit_font;
     } else if (rp_key_is(key, key_length, "line_spacing")) {
       if (seen & bit_line) { (void)rp_parser_fail(&s, READER_PREFERENCES_FORMAT, "duplicate key"); return READER_PREFERENCES_FORMAT; }
-      if (!rp_parse_number(&s, &number)) return READER_PREFERENCES_FORMAT;
+      if (!rp_parse_number(&s, &number)) return rp_parser_status(error);
       parsed.line_spacing = (float)number;
       seen |= bit_line;
     } else if (rp_key_is(key, key_length, "paragraph_spacing")) {
       if (seen & bit_paragraph) { (void)rp_parser_fail(&s, READER_PREFERENCES_FORMAT, "duplicate key"); return READER_PREFERENCES_FORMAT; }
-      if (!rp_parse_number(&s, &number)) return READER_PREFERENCES_FORMAT;
+      if (!rp_parse_number(&s, &number)) return rp_parser_status(error);
       parsed.paragraph_spacing = (float)number;
       seen |= bit_paragraph;
     } else if (rp_key_is(key, key_length, "margin")) {
       if (seen & bit_margin) { (void)rp_parser_fail(&s, READER_PREFERENCES_FORMAT, "duplicate key"); return READER_PREFERENCES_FORMAT; }
-      if (!rp_parse_number(&s, &number)) return READER_PREFERENCES_FORMAT;
+      if (!rp_parse_number(&s, &number)) return rp_parser_status(error);
       parsed.margin = (float)number;
       seen |= bit_margin;
     } else if (rp_key_is(key, key_length, "theme")) {
@@ -319,7 +323,7 @@ reader_preferences_status rp_json_parse(const unsigned char *data, size_t size,
       seen |= bit_input;
     } else if (rp_key_is(key, key_length, "fixed_page_zoom")) {
       if (seen & bit_zoom) { (void)rp_parser_fail(&s, READER_PREFERENCES_FORMAT, "duplicate key"); return READER_PREFERENCES_FORMAT; }
-      if (!rp_parse_uint(&s, &parsed.fixed_page_zoom)) return READER_PREFERENCES_FORMAT;
+      if (!rp_parse_uint(&s, &parsed.fixed_page_zoom)) return rp_parser_status(error);
       seen |= bit_zoom;
     } else if (rp_key_is(key, key_length, "light_foreground")) {
       if (seen & bit_lfg) { (void)rp_parser_fail(&s, READER_PREFERENCES_FORMAT, "duplicate key"); return READER_PREFERENCES_FORMAT; }
