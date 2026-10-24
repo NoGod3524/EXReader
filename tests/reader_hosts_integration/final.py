@@ -3,10 +3,12 @@ import ast
 import copy
 from datetime import datetime, timezone
 import hashlib
+import io
 import json
 import os
 from pathlib import Path, PurePosixPath
 import sys
+import subprocess
 import tarfile
 import tempfile
 import zipfile
@@ -20,6 +22,13 @@ PALETTE = {'light_foreground_and_background_change_page_pixels',
            'dark_theme_and_palette_change_page_pixels'}
 GTK_JOB = 'GTK G03 G04 reading records and retained native suites'
 PALETTE_STEP = 'Actual settings controls geometry pixels gestures portal and persistence'
+
+
+def stream_sha256(stream):
+    digest = hashlib.sha256()
+    for block in iter(lambda: stream.read(1024 * 1024), b''):
+        digest.update(block)
+    return digest.hexdigest()
 
 
 def identity(report, source, run, attempt):
@@ -72,7 +81,7 @@ class Bundle:
             download_artifact_zip(meta['id'], self.stream)
             require(self.stream.tell() == meta['size_in_bytes'], 'downloaded ZIP size differs')
             self.stream.seek(0)
-            digest = hashlib.file_digest(self.stream, 'sha256').hexdigest()
+            digest = stream_sha256(self.stream)
             require(meta['digest'] == 'sha256:' + digest, 'downloaded ZIP digest differs')
             self.stream.seek(0)
             self.zip = zipfile.ZipFile(self.stream)
@@ -107,6 +116,9 @@ class Bundle:
 
 
 def self_test():
+    require(stream_sha256(io.BytesIO(b'abc')) ==
+            'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
+            'stream hash differs from the published SHA-256 vector')
     report = dict(accepted=True, source_sha='s', run_id=1, attempt=2, count=2,
                   checks=[dict(name='one', **{'pass': True}), dict(name='two', **{'pass': True})])
     def validate(candidate):
@@ -143,21 +155,36 @@ def main():
     require(os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only')
     if sys.argv[1:] == ['--self-test']:
         self_test();return 0
-    source, run, attempt = os.environ['GITHUB_SHA'], int(os.environ['GITHUB_RUN_ID']), int(os.environ['GITHUB_RUN_ATTEMPT'])
+    validator_source, validation_run = os.environ['GITHUB_SHA'], int(os.environ['GITHUB_RUN_ID'])
+    diagnostic = len(sys.argv) == 3 and sys.argv[1] == '--inspect-run'
+    if diagnostic:
+        require(sys.argv[2].isdigit(), 'invalid diagnostic run identity')
+        target = fetch('actions/runs/%d' % int(sys.argv[2]))
+        source, run, attempt = target['head_sha'], target['id'], target['run_attempt']
+        subprocess.run(['git', 'merge-base', '--is-ancestor', source, validator_source], check=True)
+        subprocess.run(['git', 'diff', '--exit-code', source, validator_source, '--',
+                        'src', 'include', 'cmake', 'CMakeLists.txt', 'apps', 'examples', 'extras',
+                        'tests/reader_gtk_reading_records', 'tests/reader_android_reading',
+                        'tests/reader_android_navigation', 'tests/reader_android_search'], check=True)
+    else:
+        require(len(sys.argv) == 1, 'unknown verifier arguments')
+        source, run, attempt = validator_source, validation_run, int(os.environ['GITHUB_RUN_ATTEMPT'])
     output = Path('build/hosts-summary');output.mkdir(parents=True, exist_ok=True)
     result = dict(accepted=False, source_sha=source, run_id=run, attempt=attempt, problems=[], artifacts=[],
                   scopes={}, retained_failures=[], complete_product=False, performance_accepted=False,
                   screen_reader_speech_accepted=False, physical_device_accepted=False,
                   apple_host_accepted=False, six_target_product_accepted=False, cycle_complete=False)
+    result.update(diagnostic_only=diagnostic, validator_source=validator_source, validation_run_id=validation_run)
     bundles = []
     try:
-        needs = json.loads(os.environ['RESULTS'])
-        require(set(needs) == {'compose', 'aggregate', 'search', 'summary', 'gtk', 'android'}, 'missing upstream job group')
-        require(all(needs[key]['result'] == 'success' for key in needs if key != 'gtk'), 'a mandatory producer failed')
         metadata = fetch('actions/runs/%d' % run)
         require(metadata['head_sha'] == source and metadata['run_attempt'] == attempt and metadata['path'] == WORKFLOW,
                 'wrong workflow identity')
         jobs = pages('actions/runs/%d/attempts/%d/jobs' % (run, attempt), 'jobs')
+        if not diagnostic:
+            needs = json.loads(os.environ['RESULTS'])
+            require(set(needs) == {'compose', 'aggregate', 'search', 'summary', 'gtk', 'android'}, 'missing upstream job group')
+            require(all(needs[key]['result'] == 'success' for key in needs if key != 'gtk'), 'a mandatory producer failed')
         artifacts = pages('actions/runs/%d/artifacts' % run, 'artifacts')
 
         def open_bundle(stem, job_name, palette_job=False):
@@ -210,7 +237,7 @@ def main():
                 if member.name.endswith('/bin/exreader-linux'):
                     require(member.isfile() and member.size <= 128 * 1024 * 1024, 'bad GTK binary member')
                     with archive.extractfile(member) as binary:
-                        require(hashlib.file_digest(binary, 'sha256').hexdigest() == program, 'GTK report binary differs')
+                        require(stream_sha256(binary) == program, 'GTK report binary differs')
                     binaries += 1
             require(binaries == 1, 'GTK packaged binary missing or duplicate')
         for tail, count, flag in (('gtk-search-ui/result.json', 30, 'search_scope_passed'),
@@ -243,7 +270,7 @@ def main():
             if feature == 'reading':
                 require(report['real_postcommit_kill'], 'real kill/retry evidence absent')
         result['scopes']['android_reading_search_navigation_emulator'] = True
-        result['accepted'] = not failures
+        result['accepted'] = not failures and not diagnostic
     except Exception as error:
         result['problems'].append(type(error).__name__ + ': ' + str(error))
     finally:
@@ -251,7 +278,7 @@ def main():
             bundle.close()
     (output / 'result.json').write_text(json.dumps(result, indent=2) + '\n')
     print(json.dumps(result), flush=True)
-    return 0 if result['accepted'] else 1
+    return 0 if result['accepted'] or (diagnostic and not result['problems']) else 1
 
 
 if __name__ == '__main__':
