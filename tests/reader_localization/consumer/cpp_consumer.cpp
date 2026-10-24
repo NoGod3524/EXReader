@@ -113,8 +113,10 @@ int main() {
   /* A refused render must leave the caller's string and the reported status
      consistent: measure() succeeds, format() with one byte less fails. */
   {
-    std::vector<reader_localization_param> params = {text_param("T"), text_param("A"),
-                                                     int_param(1)};
+    const std::string short_title = "T";
+    const std::string short_author = "A";
+    std::vector<reader_localization_param> params = {text_param(short_title),
+                                                     text_param(short_author), int_param(1)};
     reader_localization_measurement measurement{};
     measurement.struct_size = static_cast<uint32_t>(sizeof(measurement));
     check(reader_localization_measure(&en, "reader.a11y.shelf.book", params.data(), params.size(),

@@ -56,13 +56,14 @@ static int hex_value(int character) {
   return -1;
 }
 
-static int decode_hex(const char *hex, char *out, size_t capacity) {
+static int decode_hex(const char *hex, size_t length, char *out, size_t capacity) {
   size_t used = 0u;
   size_t i = 0u;
-  while (hex[i] != '\0') {
+  if (length % 2u != 0u) return 0;
+  while (i < length) {
     int high;
     int low;
-    if (hex[i + 1u] == '\0') return 0;
+    if (i + 1u >= length) return 0;
     high = hex_value((unsigned char)hex[i]);
     low = hex_value((unsigned char)hex[i + 1u]);
     if (high < 0 || low < 0) return 0;
@@ -95,7 +96,7 @@ static int parse_spec(const char *spec, staged_params *staged) {
     while (value[length] != '\0' && value[length] != '|') ++length;
     if (kind == 's') {
       size_t index = staged->count;
-      if (!decode_hex(value, staged->texts[index], sizeof(staged->texts[index]))) return 0;
+      if (!decode_hex(value, length, staged->texts[index], sizeof(staged->texts[index]))) return 0;
       staged->items[index] = text_param(staged->texts[index]);
     } else if (kind == 'd' || kind == 'u') {
       char number[32];

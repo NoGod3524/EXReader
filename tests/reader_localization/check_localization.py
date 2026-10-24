@@ -399,7 +399,7 @@ def main():
                 MAX_OUTPUT_BYTES, "the output limit fixture is not over the limit")
 
     def fallback_missing_translation():
-        process = run([worker, "fallback", "reader.shelf.book.progress", "zh-CN", "d:42"], 0)
+        process = run([worker, "fallback", "reader.shelf.book.progress", "zh-CN", spec_for("d")], 0)
         values = parse_kv(process)
         require(values.get("status") == "OK", "fallback render failed: %s" % values.get("status"))
         require(values.get("fallback") == "1", "fallback flag was not reported")

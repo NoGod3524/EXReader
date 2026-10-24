@@ -173,13 +173,14 @@ typedef struct {
   size_t count;
 } staged_params;
 
-static int decode_hex(const char *hex, char *out, size_t capacity) {
+static int decode_hex(const char *hex, size_t length, char *out, size_t capacity) {
   size_t used = 0u;
   size_t i = 0u;
-  while (hex[i] != '\0') {
+  if (length % 2u != 0u) return 0;
+  while (i < length) {
     int high;
     int low;
-    if (hex[i + 1u] == '\0') return 0;
+    if (i + 1u >= length) return 0;
     high = hex_value((unsigned char)hex[i]);
     low = hex_value((unsigned char)hex[i + 1u]);
     if (high < 0 || low < 0) return 0;
@@ -207,7 +208,7 @@ static int parse_spec(const char *spec, staged_params *staged) {
     while (value[length] != '\0' && value[length] != '|') ++length;
     if (kind == 's') {
       size_t index = staged->count;
-      if (!decode_hex(value, staged->texts[index], sizeof(staged->texts[index]))) return 0;
+      if (!decode_hex(value, length, staged->texts[index], sizeof(staged->texts[index]))) return 0;
       staged->items[index] = text_param(staged->texts[index]);
     } else if (kind == 'd') {
       char number[32];
@@ -724,7 +725,7 @@ static void check_capacity(void) {
   CHECK(reader_localization_format(&en, "reader.a11y.shelf.book", params, 3u, buffer,
                                    sizeof(buffer), NULL) == READER_LOCALIZATION_OK,
         "capacity-extra");
-  CHECK(buffer[required] == (char)0xa5, "capacity-tail-untouched");
+  CHECK((unsigned char)buffer[required] == 0xa5u, "capacity-tail-untouched");
   CHECK(buffer[required - 1u] == '\0', "capacity-terminator");
 }
 
