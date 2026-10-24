@@ -249,19 +249,23 @@ int reader_catalog_remove_local(reader_catalog *c,int64_t id,reader_catalog_erro
 leave:
   sqlite3_finalize(s);c->active=0;return status;
 }
+static int read_book_row(sqlite3_stmt *s,reader_catalog_row *row,reader_catalog_error *e) {
+    row->book_key=(const char *)sqlite3_column_text(s,0);row->title=(const char *)sqlite3_column_text(s,1);
+    row->format=(const char *)sqlite3_column_text(s,2);row->sort_title=(const char *)sqlite3_column_text(s,3);
+    row->source_bytes=(uint64_t)sqlite3_column_int64(s,4);row->favorite=sqlite3_column_int(s,5);
+    row->sdk_book_id=sqlite3_column_type(s,6)==SQLITE_NULL ? 0:sqlite3_column_int64(s,6);
+    row->location_kind=(const char *)sqlite3_column_text(s,7);
+    row->author=(const char *)sqlite3_column_text(s,8);
+    if(!row->book_key||!row->title||!row->format||!row->sort_title||!row->author)
+      return fail(e,SQLITE_CORRUPT,"Catalog row lacks required text");
+    return SQLITE_OK;
+}
 static int deliver_rows(reader_catalog *c,sqlite3_stmt *s,reader_catalog_visit visit,
                          void *context,size_t *count,reader_catalog_error *e) {
   int status;if(count) *count=0;
   while((status=sqlite3_step(s))==SQLITE_ROW) {
     reader_catalog_row row;
-    row.book_key=(const char *)sqlite3_column_text(s,0);row.title=(const char *)sqlite3_column_text(s,1);
-    row.format=(const char *)sqlite3_column_text(s,2);row.sort_title=(const char *)sqlite3_column_text(s,3);
-    row.source_bytes=(uint64_t)sqlite3_column_int64(s,4);row.favorite=sqlite3_column_int(s,5);
-    row.sdk_book_id=sqlite3_column_type(s,6)==SQLITE_NULL ? 0:sqlite3_column_int64(s,6);
-    row.location_kind=(const char *)sqlite3_column_text(s,7);
-    row.author=(const char *)sqlite3_column_text(s,8);
-    if(!row.book_key||!row.title||!row.format||!row.sort_title||!row.author)
-      return fail(e,SQLITE_CORRUPT,"Catalog row lacks required text");
+    if(read_book_row(s,&row,e)!=SQLITE_OK) return SQLITE_CORRUPT;
     if(count) (*count)++;
     if(visit(context,&row)) { status=SQLITE_DONE;break; }
   }
@@ -321,6 +325,151 @@ int reader_catalog_find(reader_catalog *c,const char *key,const char *query,
   if(status==SQLITE_OK && query && query[0]) status=bind_text(c,s,2,query,e);
   if(status==SQLITE_OK) status=deliver_rows(c,s,visit,context,&count,e);
   if(status==SQLITE_OK) *found=count!=0;
+leave:
+  sqlite3_finalize(s);c->active=0;return status;
+}
+
+typedef struct {
+  const char *table,*id,*members,*index;
+  int ordered_group,ordered_member;
+} group_table;
+static const group_table *group_for(reader_catalog_group_kind kind) {
+  static const group_table tables[]={
+    {"reader_shelves","shelf_id","reader_book_shelves","reader_book_shelves_page",1,1},
+    {"reader_tags","tag_id","reader_book_tags","reader_book_tags_tag",0,0},
+    {"reader_series","series_id","reader_book_series","reader_book_series_page",0,1}
+  };
+  return (unsigned)kind<=READER_CATALOG_SERIES ? &tables[(unsigned)kind]:NULL;
+}
+static int deliver_groups(reader_catalog *c,sqlite3_stmt *s,reader_catalog_group_visit visit,
+                           void *context,int *found,reader_catalog_error *e) {
+  int status;
+  while((status=sqlite3_step(s))==SQLITE_ROW) {
+    reader_catalog_group_row row;
+    row.id=(const char *)sqlite3_column_text(s,0);row.name=(const char *)sqlite3_column_text(s,1);
+    row.parent_id=(const char *)sqlite3_column_text(s,2);
+    row.ordinal=(uint64_t)sqlite3_column_int64(s,3);row.deleted=sqlite3_column_int(s,4);
+    if(!row.id || !row.name) return fail(e,SQLITE_CORRUPT,"Catalog group lacks required text");
+    if(found) *found=1;
+    if(visit(context,&row)) { status=SQLITE_DONE;break; }
+  }
+  return status==SQLITE_DONE ? SQLITE_OK:db_error(c,status,e);
+}
+int reader_catalog_group_find(reader_catalog *c,reader_catalog_group_kind kind,const char *id,
+  reader_catalog_group_visit visit,void *context,int *found,reader_catalog_error *e) {
+  sqlite3_stmt *s=NULL;char sql[512];const group_table *g=group_for(kind);int status=enter(c,e);
+  if(found) *found=0;
+  if(status!=SQLITE_OK) return status;
+  if(!g || !hex(id,32) || !visit || !found) {
+    status=fail(e,SQLITE_MISUSE,"Invalid group lookup");goto leave;
+  }
+  snprintf(sql,sizeof(sql),"SELECT g.%s,g.name,%s,%s,g.deleted FROM %s g WHERE g.%s=?1 LIMIT 1",
+    g->id,g->ordered_group?"g.parent_id":"NULL",g->ordered_group?"g.ordinal":"0",g->table,g->id);
+  status=prepare(c,sql,&s,e);
+  if(status==SQLITE_OK) status=bind_text(c,s,1,id,e);
+  if(status==SQLITE_OK) status=deliver_groups(c,s,visit,context,found,e);
+leave:
+  sqlite3_finalize(s);c->active=0;return status;
+}
+int reader_catalog_groups_page(reader_catalog *c,reader_catalog_group_kind kind,const char *parent,
+  const reader_catalog_group_cursor *cursor,int direction,size_t limit,
+  reader_catalog_group_visit visit,void *context,reader_catalog_error *e) {
+  sqlite3_stmt *s=NULL;char sql[1024],range[128],order[128];
+  const group_table *g=group_for(kind);int status=enter(c,e);
+  if(status!=SQLITE_OK) return status;
+  if(!g || !visit || !limit || limit>200 || (direction!=1 && direction!=-1) ||
+     (parent && (!g->ordered_group || !hex(parent,32))) ||
+     (cursor && (!hex(cursor->id,32) || cursor->ordinal>INT64_MAX || (!g->ordered_group && cursor->ordinal)))) {
+    status=fail(e,SQLITE_MISUSE,"Invalid bounded group cursor");goto leave;
+  }
+  const char *compare=direction>0?">":"<",*descending=direction>0?"":" DESC";
+  range[0]=0;
+  if(cursor) {
+    if(g->ordered_group) snprintf(range,sizeof(range)," AND (g.ordinal,g.%s)%s(?2,?3)",g->id,compare);
+    else snprintf(range,sizeof(range)," AND g.%s%s?3",g->id,compare);
+  }
+  if(g->ordered_group) snprintf(order,sizeof(order),"g.ordinal%s,g.%s%s",descending,g->id,descending);
+  else snprintf(order,sizeof(order),"g.%s%s",g->id,descending);
+  snprintf(sql,sizeof(sql),"SELECT g.%s,g.name,%s,%s,g.deleted FROM %s g WHERE g.deleted=0%s%s ORDER BY %s LIMIT ?4",
+    g->id,g->ordered_group?"g.parent_id":"NULL",g->ordered_group?"g.ordinal":"0",g->table,
+    g->ordered_group?" AND g.parent_id IS ?1":"",range,order);
+  status=prepare(c,sql,&s,e);
+  if(status==SQLITE_OK && g->ordered_group) status=bind_text(c,s,1,parent,e);
+  if(status==SQLITE_OK && cursor && g->ordered_group) status=sqlite3_bind_int64(s,2,(sqlite3_int64)cursor->ordinal);
+  if(status==SQLITE_OK && cursor) status=bind_text(c,s,3,cursor->id,e);
+  if(status==SQLITE_OK) status=sqlite3_bind_int(s,4,(int)limit);
+  if(status==SQLITE_OK) status=deliver_groups(c,s,visit,context,NULL,e);
+leave:
+  sqlite3_finalize(s);c->active=0;return status;
+}
+int reader_catalog_membership_find(reader_catalog *c,reader_catalog_group_kind kind,const char *id,
+  const char *key,reader_catalog_membership_visit visit,void *context,int *found,reader_catalog_error *e) {
+  sqlite3_stmt *s=NULL;char sql[768];const group_table *g=group_for(kind);int status=enter(c,e);
+  if(found) *found=0;
+  if(status!=SQLITE_OK) return status;
+  if(!g || !hex(id,32) || !valid_text(key) || !key[0] || !visit || !found) {
+    status=fail(e,SQLITE_MISUSE,"Invalid membership lookup");goto leave;
+  }
+  snprintf(sql,sizeof(sql),"SELECT m.%s,m.book_key,%s,g.deleted,b.deleted FROM %s m JOIN %s g ON g.%s=m.%s JOIN reader_books b ON b.book_key=m.book_key WHERE m.%s=?1 AND m.book_key=?2 LIMIT 1",
+    g->id,g->ordered_member?"m.ordinal":"0",g->members,g->table,g->id,g->id,g->id);
+  status=prepare(c,sql,&s,e);
+  if(status==SQLITE_OK) status=bind_text(c,s,1,id,e);
+  if(status==SQLITE_OK) status=bind_text(c,s,2,key,e);
+  if(status==SQLITE_OK) {
+    status=sqlite3_step(s);
+    if(status==SQLITE_ROW) {
+      reader_catalog_membership_row row;
+      row.group_id=(const char *)sqlite3_column_text(s,0);row.book_key=(const char *)sqlite3_column_text(s,1);
+      row.ordinal=(uint64_t)sqlite3_column_int64(s,2);
+      row.group_deleted=sqlite3_column_int(s,3);row.book_deleted=sqlite3_column_int(s,4);
+      if(!row.group_id || !row.book_key) status=fail(e,SQLITE_CORRUPT,"Membership lacks identity");
+      else { *found=1;visit(context,&row);status=SQLITE_OK; }
+    } else if(status==SQLITE_DONE) status=SQLITE_OK;
+    else status=db_error(c,status,e);
+  }
+leave:
+  sqlite3_finalize(s);c->active=0;return status;
+}
+int reader_catalog_group_books_page(reader_catalog *c,reader_catalog_group_kind kind,const char *id,
+  const reader_catalog_member_cursor *cursor,const char *query,int local_only,int direction,size_t limit,
+  reader_catalog_group_book_visit visit,void *context,reader_catalog_error *e) {
+  sqlite3_stmt *s=NULL;char sql[1800],range[128],order[128];
+  const group_table *g=group_for(kind);int status=enter(c,e);
+  if(status!=SQLITE_OK) return status;
+  if(!g || !hex(id,32) || !visit || !limit || limit>200 || (local_only!=0 && local_only!=1) ||
+     (direction!=1 && direction!=-1) || (query && !valid_text(query)) ||
+     (cursor && (!valid_text(cursor->book_key) || !cursor->book_key[0] || cursor->ordinal>INT64_MAX ||
+                 (!g->ordered_member && cursor->ordinal)))) {
+    status=fail(e,SQLITE_MISUSE,"Invalid bounded group membership query");goto leave;
+  }
+  const char *compare=direction>0?">":"<",*descending=direction>0?"":" DESC";
+  range[0]=0;
+  if(cursor) {
+    if(g->ordered_member) snprintf(range,sizeof(range)," AND (m.ordinal,m.book_key)%s(?2,?3)",compare);
+    else snprintf(range,sizeof(range)," AND m.book_key%s?3",compare);
+  }
+  if(g->ordered_member) snprintf(order,sizeof(order),"m.ordinal%s,m.book_key%s",descending,descending);
+  else snprintf(order,sizeof(order),"m.book_key%s",descending);
+  /* Identifiers are selected only from group_for's constants; all UI values bind.
+   * Use the existing group/ordinal/key index, including during reverse paging. */
+  snprintf(sql,sizeof(sql),"SELECT b.book_key,b.title,b.format,b.sort_title,b.source_bytes,b.favorite,l.sdk_book_id,l.location_kind,b.author,%s FROM %s m INDEXED BY %s JOIN %s g ON g.%s=m.%s JOIN reader_books b ON b.book_key=m.book_key LEFT JOIN reader_local_books l ON l.book_key=b.book_key WHERE m.%s=?1 AND g.deleted=0 AND b.deleted=0%s%s%s ORDER BY %s LIMIT ?4",
+    g->ordered_member?"m.ordinal":"0",g->members,g->index,g->table,g->id,g->id,g->id,
+    local_only?" AND l.sdk_book_id IS NOT NULL":"",range,
+    query && query[0]?" AND (instr(lower(b.title),lower(?5))>0 OR instr(lower(b.author),lower(?5))>0)":"",order);
+  status=prepare(c,sql,&s,e);
+  if(status==SQLITE_OK) status=bind_text(c,s,1,id,e);
+  if(status==SQLITE_OK && cursor && g->ordered_member) status=sqlite3_bind_int64(s,2,(sqlite3_int64)cursor->ordinal);
+  if(status==SQLITE_OK && cursor) status=bind_text(c,s,3,cursor->book_key,e);
+  if(status==SQLITE_OK) status=sqlite3_bind_int(s,4,(int)limit);
+  if(status==SQLITE_OK && query && query[0]) status=bind_text(c,s,5,query,e);
+  if(status!=SQLITE_OK) goto leave;
+  while((status=sqlite3_step(s))==SQLITE_ROW) {
+    reader_catalog_group_book_row row;
+    if(read_book_row(s,&row.book,e)!=SQLITE_OK) { status=SQLITE_CORRUPT;goto leave; }
+    row.ordinal=(uint64_t)sqlite3_column_int64(s,9);
+    if(visit(context,&row)) { status=SQLITE_DONE;break; }
+  }
+  status=status==SQLITE_DONE?SQLITE_OK:db_error(c,status,e);
 leave:
   sqlite3_finalize(s);c->active=0;return status;
 }

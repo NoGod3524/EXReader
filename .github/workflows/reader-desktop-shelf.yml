@@ -1,7 +1,7 @@
 name: Desktop bounded catalog queries
 on:
   push:
-    branches: [codex/reader-desktop-shelf, codex/reader-windows-shelf]
+    branches: [codex/reader-desktop-shelf, codex/reader-windows-shelf, codex/reader-desktop-organization]
     paths:
       - apps/reader/store/native/**
       - tests/reader_catalog/**
@@ -48,7 +48,7 @@ jobs:
           echo "SHELF_WORKSPACE=$ws" >> "$GITHUB_ENV"
           cmake -S tests/reader_catalog/shelf -B build/shelf-query -G Ninja -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/shelf-evidence/configure.log
           cmake --build build/shelf-query --parallel 4 --verbose 2>&1 | tee build/shelf-evidence/build.log
-      - name: Original twelve catalog groups and ten bidirectional query groups
+      - name: Original twelve catalog groups ten query groups and organization views
         run: ctest --test-dir build/shelf-query --output-on-failure --no-tests=error --timeout 180 --output-junit "$SHELF_WORKSPACE/build/shelf-evidence/tests.xml"
       - name: Require complete same-source query evidence
         run: |
@@ -58,6 +58,7 @@ jobs:
           root = Path('build/shelf-query')
           original = json.loads((root / 'original/result.json').read_text())
           shelf = json.loads((root / 'shelf/shelf-result.json').read_text())
+          organization = json.loads((root / 'organization/organization-result.json').read_text())
           expected = {
               'forward_all_visible_stable_keys_no_duplicates',
               'reverse_all_visible_stable_keys_no_duplicates',
@@ -70,19 +71,24 @@ jobs:
               'callback_stop_and_query_reentry_refused',
               'actual_forward_reverse_sql_uses_index_ranges',
           }
-          for report, count in ((original, 12), (shelf, 10)):
+          for report, count in ((original, 12), (shelf, 10), (organization, 15)):
               assert report['accepted'] is True and report['problems'] == []
               assert report['source_sha'] == os.environ['GITHUB_SHA']
               assert report['run_id'] == os.environ['GITHUB_RUN_ID']
               assert report['attempt'] == os.environ['GITHUB_RUN_ATTEMPT']
               assert len(report['checks']) == count and all(x['passed'] is True for x in report['checks'])
+              assert len({x['id'] for x in report['checks']}) == count
           assert {x['id'] for x in shelf['checks']} == expected
           assert shelf['rows'] == 2500 and shelf['visible'] == 2499 and shelf['ui_credit'] == 0
+          assert organization['groups_per_kind'] == 2202 and organization['books'] == 2202
+          assert organization['sdk_changed'] is False and organization['schema_changed'] is False
+          assert organization['ui_accepted'] is False
           evidence = {'accepted': True, 'source_sha': os.environ['GITHUB_SHA'],
               'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
-              'original_groups': 12, 'query_groups': 10, 'ui_credit': 0,
+              'original_groups': 12, 'query_groups': 10, 'organization_groups': 15, 'ui_credit': 0,
               'reports': {str(p): hashlib.sha256(p.read_bytes()).hexdigest()
-                          for p in (root / 'original/result.json', root / 'shelf/shelf-result.json')}}
+                          for p in (root / 'original/result.json', root / 'shelf/shelf-result.json',
+                                    root / 'organization/organization-result.json')}}
           Path('build/shelf-evidence/verified.json').write_text(json.dumps(evidence, indent=2) + '\n')
           print(json.dumps(evidence))
           PY
@@ -94,6 +100,7 @@ jobs:
             build/shelf-evidence/
             build/shelf-query/original/
             build/shelf-query/shelf/
+            build/shelf-query/organization/
             build/shelf-query/Testing/Temporary/LastTest.log
             build/shelf-query/CMakeCache.txt
           if-no-files-found: error
