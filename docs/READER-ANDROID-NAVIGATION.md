@@ -4,11 +4,15 @@
 
 当前未验收；[记录](validation/reader-android-navigation.json) 保持 `accepted:false`，等待本分支完整同源 Actions。所有编译、测试、语法检查、夹具和工件解析仅在 Actions 执行。
 
+首轮 `fd5734a548203da94702af26f558d2595a4898be` / run `40114452672` attempt1 编译、包材料/唯一SDK provider、旧全套、正式16与搜索15通过；新导航前14组通过。实际旋转创建新ReaderView时，探针把尚未装书的空帧直接 `getLong("book")`，抛 `No value for book`。测试改用有界等待当前可见ReaderView和实际book/bitmap就绪；原旋转、取消、帧与存储断言保留。另补上述独立pager投影逐字节证明后，以新source重新整轮验收。
+
 ## 宿主行为
 
 阅读页“更多”中的“目录 / 按页入口”打开原生列表，每批 32 个当前层级子项；可进入子层、返回上层或继续下一批。保留原 SDK 顺序、标签和层级，不执行标签 HTML。空作者目录明确显示为空。PDF/CBZ 只显示“按页入口 · 非作者大纲”，不读取或声称 PDF 作者 outline。
 
 点击目标先由已安装 Navigation 模块在新打开的公开 SDK 对象上解析，再打开第二个独立公开 SDK 对象复核 part index/path/id、片段节点、完整 CFI 点或固定 page ID，才产生渲染目标。重复路径列出全部候选，由用户明确选择章节；不取第一个。片段缺失只提示 `PART_ONLY`，只有用户再次明确接受“仅打开章节开头”，并重新解析/核对后才跳转。外链仅提示“未打开”，不启动浏览器或网络。
+
+采用 publication 文档节点 offset 前，第二个独立对象还按当前字号与真实 reader 布局创建公开 bounded pager，把每个流式文本块与已借用的文档投影逐字节比较；长度、全部字节与目标标量边界必须一致。不会另拼整章字符串；投影不能证明一致时明确拒绝，不把 full-document 偏移猜作 pager 偏移。
 
 身份 key 来自 `BookStore.verifySource` 验证后的 `format:原书SHA256@exreader-sdk-公开版本`。快照只含模块复制值，不保留 SDK 指针；页面、目标均复制并释放模块输出。创建、查询、解析与关闭使用现有 SDK worker；没有新增线程池、owner registry、SDK 副本或 SQLite。安装后的 Navigation 只以归档和公开头接入原 `exreader_host` 共享 DSO，SDK 符号继续由同一个 `libexreader.so` 提供。
 
