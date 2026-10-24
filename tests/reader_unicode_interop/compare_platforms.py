@@ -84,6 +84,7 @@ def main():
         records[key] = parse_observations(path)
 
     fixtures = {}
+    hosts = {}
     for platform, path in reports.items():
         with open(path, "r", encoding="utf-8") as handle:
             report = json.load(handle)
@@ -93,6 +94,14 @@ def main():
             problems.append("%s report is bound to a different source" % platform)
         digests.setdefault(platform, {})["report.json"] = sha256_file(path)
         fixtures[platform] = report.get("fixture_digests")
+        hosts[platform] = {
+            "consumers": report.get("consumers"),
+            "fixture_digests": report.get("fixture_digests"),
+            "groups": report.get("groups"),
+            "source": report.get("source"),
+            "run": report.get("run"),
+            "attempt": report.get("attempt"),
+        }
     if len(set(json.dumps(value, sort_keys=True) for value in fixtures.values())) != 1:
         problems.append("frozen fixture digests differ between hosts")
 
@@ -125,6 +134,7 @@ def main():
         "attempt": options.attempt,
         "platforms": platforms,
         "observation_digests": digests,
+        "hosts": hosts,
         "record_counts": {kind + "/" + platform: len(records[(kind, platform)])
                           for kind, platform in sorted(records)},
         "problems": problems,
@@ -135,6 +145,20 @@ def main():
     with open(os.path.join(options.output, "compare.json"), "w", encoding="utf-8", newline="\n") as handle:
         json.dump(report, handle, ensure_ascii=True, sort_keys=True, indent=1)
     print("platforms=%s ok=%s problems=%d" % (",".join(platforms), report["ok"], len(problems)))
+    for platform in sorted(hosts):
+        entry = hosts[platform]
+        consumers = entry["consumers"] or {}
+        print("evidence %s consumer=%s c-consumer=%s" % (
+            platform, consumers.get("unicode-consumer", {}).get("sha256"),
+            consumers.get("unicode-c-consumer", {}).get("sha256")))
+        print("evidence %s cases=%s expected=%s" % (
+            platform, entry["fixture_digests"]["cases.bin"],
+            entry["fixture_digests"]["expected.json"]))
+        for kind in ("consumer", "c"):
+            group = (entry["groups"] or {}).get(kind) or {}
+            print("evidence %s %s %d/%d ok=%s" % (
+                platform, kind, group.get("record_pass", -1),
+                group.get("required_records", -1), group.get("ok")))
     for problem in problems[:20]:
         print("problem " + problem)
     return 0 if report["ok"] else 1

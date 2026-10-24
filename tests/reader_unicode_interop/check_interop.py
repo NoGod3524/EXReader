@@ -129,6 +129,19 @@ def check_group(observations, expected, required, aliases):
             if len(present) != claimed:
                 integrity.append({"record": name, "issue": "row count differs from row fields"})
 
+    areas = {}
+    for name in required:
+        area = name.split(".")[0]
+        entry = areas.setdefault(area, {"required": 0, "pass": 0, "fail": 0, "missing": 0})
+        entry["required"] += 1
+        verdict = verdicts.get(name, "missing")
+        if verdict == "pass":
+            entry["pass"] += 1
+        elif verdict == "fail":
+            entry["fail"] += 1
+        else:
+            entry["missing"] += 1
+
     ok = (not missing and not unexpected and not missing_alias and not failed
           and not integrity)
     summary = {
@@ -141,6 +154,7 @@ def check_group(observations, expected, required, aliases):
         "alias_fail": sum(1 for name in aliases if verdicts.get(name) == "fail"),
         "unexpected_records": unexpected,
         "integrity_issues": integrity,
+        "areas": areas,
         "ok": ok,
     }
     return summary, verdicts, failed
@@ -222,6 +236,16 @@ def main():
     print("platform=%s consumer=%d/%d c=%d/%d ok=%s" % (
         options.platform, consumer_summary["record_pass"], consumer_summary["required_records"],
         c_summary["record_pass"], c_summary["required_records"], report["ok"]))
+    for area in sorted(consumer_summary["areas"]):
+        entry = consumer_summary["areas"][area]
+        print("area %s %d/%d" % (area, entry["pass"], entry["required"]))
+    print("consumer-sha256 %s" % report["consumers"]["unicode-consumer"]["sha256"])
+    print("c-consumer-sha256 %s" % report["consumers"]["unicode-c-consumer"]["sha256"])
+    print("fixtures cases=%s expected=%s" % (
+        report["fixture_digests"]["cases.bin"], report["fixture_digests"]["expected.json"]))
+    print("observations %s c=%s" % (
+        report["observation_files"]["consumer"]["sha256"],
+        report["observation_files"]["c"]["sha256"]))
     if consumer_summary["unexpected_records"]:
         print("unexpected: %s" % ",".join(sorted(consumer_summary["unexpected_records"])[:20]))
     for name in sorted(consumer_failed)[:10]:
