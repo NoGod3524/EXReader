@@ -13,6 +13,11 @@ from check_parallel_integration import download_artifact_zip, fetch, pages, requ
 
 PLATFORMS = [('Linux', 'ubuntu-22.04', 'linux'), ('Windows', 'windows-2022', 'windows'), ('macOS', 'macos-15', 'darwin')]
 SHARED_SKIPS = {'windows_locked_target_publish_failure', 'posix_rlimit_fsize_mid_stream_write_failure'}
+# Each platform runs exactly one of these two write-failure checks and declares the other skipped.
+WRITE_FAILURE = {'linux': 'mid_stream_write_failure_rlimit_fsize_keeps_previous_export',
+                 'darwin': 'mid_stream_write_failure_rlimit_fsize_keeps_previous_export',
+                 'windows': 'locked_target_publish_failure_keeps_previous_export'}
+OPTIONS = set(WRITE_FAILURE.values())
 
 
 def main():
@@ -51,7 +56,9 @@ def main():
                     and report['import_or_conflict_resolution'] is False and report['performance_claimed'] is False, 'report claims differ')
             require(all(s['name'] in SHARED_SKIPS for s in report['skipped']), 'unexpected skipped case')
             outcomes.append({'cases': {c['id']: c for c in report['cases'] if c['id'].startswith('export-')}, 'digests': report['digests']})
-            check_sets.append(set(report['checks']))
+            require(WRITE_FAILURE[granted] in report['checks'], 'platform write-failure check missing')
+            require(len(OPTIONS & set(report['checks'])) == 1, 'a platform ran the wrong write-failure check')
+            check_sets.append(set(report['checks']) - OPTIONS)
             summary['skipped'][granted] = report['skipped']
             summary['artifacts'].append({k: artifact[k] for k in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')})
             summary['jobs'].append({k: job[k] for k in ('id', 'name', 'conclusion')})
