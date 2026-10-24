@@ -1682,15 +1682,16 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
             finally{if(load!=null)load.close();if(!transferred&&candidate!=null)candidate.close();}
         });
     }
-    @Override public boolean onKeyDown(int code,android.view.KeyEvent event){
+    @Override public boolean dispatchKeyEvent(android.view.KeyEvent event){
+        int code=event.getKeyCode();
         if(BuildConfig.READER_PREFERENCES&&readingPreferences!=null&&readingPreferences.input==4&&current!=null&&!readerView.isSelectMode()&&operation==0&&readerPanel.getVisibility()==View.VISIBLE){
             int delta=0;if(code==android.view.KeyEvent.KEYCODE_PAGE_DOWN||code==android.view.KeyEvent.KEYCODE_DPAD_DOWN)delta=1;
             else if(code==android.view.KeyEvent.KEYCODE_PAGE_UP||code==android.view.KeyEvent.KEYCODE_DPAD_UP)delta=-1;
             else if(readingPreferences.direction!=3&&code==android.view.KeyEvent.KEYCODE_DPAD_RIGHT)delta=readingPreferences.direction==2?-1:1;
             else if(readingPreferences.direction!=3&&code==android.view.KeyEvent.KEYCODE_DPAD_LEFT)delta=readingPreferences.direction==2?1:-1;
-            if(delta!=0){if(event.getRepeatCount()==0)turnPage(delta);return true;}
+            if(delta!=0){if(event.getAction()==android.view.KeyEvent.ACTION_DOWN&&event.getRepeatCount()==0)turnPage(delta);return true;}
         }
-        return super.onKeyDown(code,event);
+        return super.dispatchKeyEvent(event);
     }
     @Override public void onTapZone(int delta) {
         turnPage(delta);

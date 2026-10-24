@@ -15,6 +15,8 @@ F3 原交回 `f453af14852ad3d8833d27c0eb6888f804c12050` 相对原受测 `6f33caf
 - 所有候选渲染与可取消读取完成后，进入短发布边界：F3 写同目录临时文件、flush/fsync、原子 rename；save 成功才接受候选页及新内存值。进入发布后不再取消，符合原子 save 在 rename 成功后返回 OK 的契约。保存失败或此前取消保留旧文件/值/页面。
 - 私有位置 `files/reading-settings/preferences.json`；进程内跨 Activity 的静态锁与 owner epoch 防止旧 owner 晚保存。新进程和旋转载入同一个文件；坏格式/未知版本不自动重写原文件。
 
+CBZ 在本包只授予实际固定页缩放。旧阅读记录宿主显式拒绝 CBZ 产品捕获，属于该宿主尚未接线：冻结 SDK 实际有真实空文本 provider，点 capture 与独立 FOUND 需下一轮实测。本轮一并纠正旧阅读文档的错误归因，不把拒绝测试当作 SDK 缺能力。
+
 ## 阅读页配色缺口
 
 冻结 SDK 的 `exr_layout_config.page` 只接受几何，`exr_render_page_ex` 接受 channels/control，缺整页背景及全局前景覆盖参数。CSS 可影响文档盒/字形，但不能可靠填充页边及覆盖所有作者颜色。深色选择暂拒绝且不保存；`system` 在系统浅色时可保存，系统变深色时明确提示配色未支持并保留 SDK 原图。不重染位图，不以 chrome 配色宣称阅读主题通过。云端将记录真实 CSS 深色尝试、请求色与原 SDK 输出角像素，阅读页颜色仍不授予。
