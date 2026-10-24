@@ -38,6 +38,8 @@ def main():
             maps=[f for kind in kinds for f in (app/'.cxx'/kind).rglob(map_name)]
             assert len(originals)==len(maps)==1,(module,variant,originals,maps)
             original=originals[0];mapping=maps[0].read_text();shutil.copyfile(maps[0],a.output/(prefix+'.map'))
+            build_id=re.search(r'Build ID:\s*(\w+)',tool('llvm-readelf','-n',original));packaged_id=re.search(r'Build ID:\s*(\w+)',tool('llvm-readelf','-n',native))
+            assert build_id and packaged_id and build_id[1]==packaged_id[1]
             symbols=tool('llvm-nm','--defined-only',original);dynamic=tool('llvm-readelf','-d',original);exports=tool('llvm-nm','-D','--defined-only',original)
             for label,value in (('symbols',symbols),('dynamic',dynamic),('exports',exports)):(a.output/(prefix+'-'+label+'.txt')).write_text(value)
             assert len(re.findall(r'\bsqlite3_open_v2\s*$',symbols,re.M))==1
@@ -49,8 +51,11 @@ def main():
             if 'session' in module:
                 sdk_originals=[f for kind in kinds for f in (app/'build/intermediates/cxx'/kind).rglob('lib'+sdk+'.so')];assert len(sdk_originals)==1
                 sdk_symbols=tool('llvm-nm','--defined-only',sdk_originals[0]);(a.output/(sdk+'-'+variant.lower()+'-symbols.txt')).write_text(sdk_symbols)
-                assert 'exr_vendor_exr_sqlite' in sdk_symbols and not re.search(r'\breader_(?:catalog|session|revision)',sdk_symbols)
-            checks.append({'module':module,'variant':variant,'packaged_sha256':hashlib.sha256(native.read_bytes()).hexdigest(),'installed_private_provider_unique':True})
+                assert len(re.findall(r'\bsqlite3_open_v2\s*$',sdk_symbols,re.M))==1 and not re.search(r'\breader_(?:catalog|session|revision)',sdk_symbols)
+                sdk_maps=[f for kind in kinds for f in (app/'.cxx'/kind).rglob('sdk-owner.map')];assert len(sdk_maps)==1
+                sdk_mapping=sdk_maps[0].read_text();assert 'exr_vendor_exr_sqlite' in sdk_mapping and 'reader_catalog_sqlite' not in sdk_mapping
+                shutil.copyfile(sdk_maps[0],a.output/(sdk+'-'+variant.lower()+'.map'))
+            checks.append({'module':module,'variant':variant,'build_id':build_id[1],'packaged_sha256':hashlib.sha256(native.read_bytes()).hexdigest(),'installed_private_provider_unique':True})
     aapt=Path(os.environ['ANDROID_HOME'])/'build-tools/35.0.0/aapt2'
     manifest=subprocess.check_output([str(aapt),'dump','xmltree','tests/reader_session_android/android/session/build/outputs/apk/release/session-release-unsigned.apk','--file','AndroidManifest.xml'],text=True)
     assert 'networkSecurityConfig' not in manifest and 'debuggable' not in manifest and 'ControlReceiver' not in manifest
