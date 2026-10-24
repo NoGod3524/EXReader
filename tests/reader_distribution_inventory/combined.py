@@ -328,7 +328,7 @@ def main():
     problems += forbidden
     credential_material = sorted(observations['credential_files'])
     credential_ok = bool(credential_material) and all(
-        any(marker in path for marker in CREDENTIAL) for path in credential_material)
+        any(marker in path.lower() for marker in CREDENTIAL) for path in credential_material)
     if not credential_ok:
         problems.append('the only credential material in the prefix must be the registered package')
     checks.append(item('packages.credentials_registered', 'pass' if credential_ok else 'fail',
