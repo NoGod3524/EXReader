@@ -64,9 +64,9 @@ static void render_bitmap(const exr_bitmap *bitmap, render_info *out) {
   out->fnv = fnv1a(bitmap->pixels, bytes);
 }
 
-static void print_render(const char *name, const render_info *r) {
-  printf("\"%s\":{\"outcome\":\"%s\",\"width\":%zu,\"height\":%zu,\"channels\":%zu,\"stride\":%zu,\"fnv1a64\":\"%016llx\"}",
-         name, r->ok ? "ok" : "failed", r->width, r->height, r->channels, r->stride,
+static void print_render(const render_info *r) {
+  printf("{\"outcome\":\"%s\",\"width\":%zu,\"height\":%zu,\"channels\":%zu,\"stride\":%zu,\"fnv1a64\":\"%016llx\"}",
+         r->ok ? "ok" : "failed", r->width, r->height, r->channels, r->stride,
          (unsigned long long)r->fnv);
 }
 
@@ -206,7 +206,7 @@ int main(int argc, char **argv) {
   char find_outcome[32] = "not_exposed";
   size_t find_part = SIZE_MAX, find_page = SIZE_MAX, find_start = SIZE_MAX, find_end = SIZE_MAX;
   char anchor_state_same[32] = "none", anchor_state_reopen[32] = "none";
-  char anchor_reopen_error[256] = "";
+  char anchor_reopen_error[256] = "", import_error[256] = "", open_error[256] = "";
   size_t metadata_entries = 0, fixed_text_pages = 0;
   char first_key[256] = {0};
   size_t toc_count = 0;
@@ -254,6 +254,7 @@ int main(int argc, char **argv) {
       free(bytes);
     }
     if (status == EXR_OK) import_ok = 1;
+    else snprintf(import_error, sizeof(import_error), "%s", error.message);
     if (status == EXR_OK) status = exr_library_blob(library, book_id, 0, &blob, &blob_size, &error);
     if (status == EXR_OK && blob_size) {
       FILE *f = fopen(readback_path, "wb");
@@ -294,6 +295,7 @@ int main(int argc, char **argv) {
       store_title(title, sizeof(title), exr_document_title(doc));
     }
   }
+  if (!open_ok) snprintf(open_error, sizeof(open_error), "%s", error.message);
   t_open = now_ms() - t_open;
 
   /* 3. Metadata and authored navigation. */
@@ -464,7 +466,7 @@ int main(int argc, char **argv) {
           if (exr_anchor_create(pd, start, end, &anchor, &error) == EXR_OK) {
             exr_anchor_match match = {0};
             if (exr_anchor_resolve(pd, &anchor, &match, &error) == EXR_OK && match.state == EXR_ANCHOR_FOUND) {
-              found_part = i; find_ok = 1; anchor_capture = 1; anchor_resolve = 1;
+              found_part = i; find_ok = 1; have_anchor = 1; anchor_capture = 1; anchor_resolve = 1;
               find_start = start; find_end = end;
               snprintf(anchor_state_same, sizeof(anchor_state_same), "FOUND");
             }
@@ -577,6 +579,8 @@ int main(int argc, char **argv) {
   printf("\"reopen\":\"%s\"", reopen_ok ? "ok" : "failed");
   printf("},\"detail\":{");
   printf("\"kind\":\"%s\",\"parts\":%zu,\"pages\":%zu,\"reopen_pages\":%zu,", open_kind, parts, total_pages, reopen_pages);
+  printf("\"import_error\":"); json_string(import_error); printf(",");
+  printf("\"open_error\":"); json_string(open_error); printf(",");
   printf("\"title\":"); json_string(title); printf(",");
   printf("\"toc_count\":%zu,\"toc_first\":", toc_count); json_string(toc_label); printf(",");
   printf("\"metadata_entries\":%zu,\"metadata_first_key\":", metadata_entries); json_string(first_key); printf(",");
@@ -588,10 +592,10 @@ int main(int argc, char **argv) {
   printf(",");
   printf("\"anchor_state_same\":"); json_string(anchor_state_same); printf(",");
   printf("\"anchor_state_reopen\":"); json_string(anchor_state_reopen); printf(",\"anchor_reopen_error\":"); json_string(anchor_reopen_error); printf(",");
-  printf("\"first\":"); print_render("r", &first_render); printf(",\"middle\":");
-  print_render("r", &middle_render); printf(",\"last\":");
-  print_render("r", &last_render); printf(",\"back\":");
-  print_render("r", &back_render);
+  printf("\"first\":"); print_render(&first_render); printf(",\"middle\":");
+  print_render(&middle_render); printf(",\"last\":");
+  print_render(&last_render); printf(",\"back\":");
+  print_render(&back_render);
   printf("},\"timings_ms\":{\"import\":%.3f,\"open\":%.3f,\"pages\":%.3f,\"find\":%.3f,\"reopen\":%.3f,\"total\":%.3f}}\n",
          t_import, t_open, t_pages, t_find, t_reopen, now_ms() - t0);
 
