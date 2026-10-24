@@ -46,6 +46,38 @@ import CReaderProduct
         do { _ = try HostAccounts(folder: folder).authorization(for: profile) } catch { missing = true }
         try check("session_only_authorization_not_restored_from_disk", missing && accounts.authorization(for: profile) == auth)
         try accounts.updateCredentials(profile, username: "reader", password: password, remember: true)
+        let damagedFolder = folder.appendingPathComponent("damaged-profiles", isDirectory: true)
+        try FileManager.default.createDirectory(at: damagedFolder, withIntermediateDirectories: true)
+        let damagedURL = damagedFolder.appendingPathComponent("accounts.json")
+        let damaged = Data("{original account metadata: unreadable}".utf8)
+        try damaged.write(to: damagedURL)
+        let unreadable = HostAccounts(folder: damagedFolder)
+        var rejectedDamagedCreate = false, rejectedDamagedUpdate = false
+        do { try unreadable.create(root: root, username: "reader", password: password, remember: true) }
+        catch { rejectedDamagedCreate = true }
+        do { try unreadable.updateCredentials(profile, username: "reader", password: password, remember: false) }
+        catch { rejectedDamagedUpdate = true }
+        try check("unreadable_metadata_blocks_create_and_credential_changes", rejectedDamagedCreate && rejectedDamagedUpdate &&
+                  unreadable.profiles.isEmpty && Data(contentsOf: damagedURL) == damaged &&
+                  HostAccounts(folder: folder).authorization(for: profile) == auth)
+        let largeFolder = folder.appendingPathComponent("large-profiles", isDirectory: true)
+        let large = HostAccounts(folder: largeFolder)
+        for index in 0..<8 {
+            let address = "https://example.invalid/" + String(repeating: "a", count: 7800) + "/\(index)/"
+            try large.create(root: address, username: "", password: "", remember: false)
+        }
+        let largeURL = largeFolder.appendingPathComponent("accounts.json")
+        let largeMetadata = try Data(contentsOf: largeURL)
+        var rejectedLargeCreate = false
+        do {
+            try large.create(root: "https://example.invalid/" + String(repeating: "b", count: 7800) + "/",
+                             username: "", password: "", remember: false)
+        } catch { rejectedLargeCreate = true }
+        try check("metadata_size_checked_before_profile_or_secret_mutation", rejectedLargeCreate && large.profiles.count == 8 &&
+                  largeMetadata.count <= 64 * 1024 && Data(contentsOf: largeURL) == largeMetadata)
+        let largeReopened = HostAccounts(folder: largeFolder)
+        try check("all_saved_profiles_remain_loadable_after_size_rejection", largeReopened.profiles == large.profiles &&
+                  largeReopened.profiles.allSatisfy { (try? largeReopened.authorization(for: $0)) == Data() })
         let directory = profile.directory(in: folder)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let other = HostAccountProfile(id: UUID().uuidString.lowercased(), root: root)
