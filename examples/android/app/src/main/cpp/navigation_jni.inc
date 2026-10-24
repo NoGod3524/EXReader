@@ -23,9 +23,7 @@ static void navigation_input_free(navigation_input *input) {
   exr_fixed_free(input->fixed);exr_document_free(input->document);exr_publication_free(input->publication);exr_font_free(input->font);memset(input,0,sizeof(*input));
 }
 static exr_status navigation_font(JNIEnv *env,jbyteArray font,exr_font **out,exr_error *error) {
-  exr_font_input bytes={0};jbyte *data;jsize length=font?(*env)->GetArrayLength(env,font):0;exr_status status;
-  if(length<=0||length>64*1024*1024)return EXR_ARGUMENT;data=(*env)->GetByteArrayElements(env,font,NULL);if(!data)return EXR_MEMORY;
-  bytes.data=data;bytes.size=(size_t)length;status=exr_font_create(&bytes,1,out,error);(*env)->ReleaseByteArrayElements(env,font,data,JNI_ABORT);return status;
+  return host_font_bytes(env,font,out,error);
 }
 static exr_status navigation_input_open(JNIEnv *env,exr_library *store,jlong book,int mode,jbyteArray font,const exr_control *control,navigation_input *input,exr_error *error) {
   if(mode==READER_NAVIGATION_FROM_PUBLICATION)return host_publication(store,(int64_t)book,&input->publication,error);
