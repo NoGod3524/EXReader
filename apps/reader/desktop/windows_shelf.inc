@@ -58,6 +58,12 @@ static void product_shelf_edges(void) {
   if(g.shelf_after && last+4>=g.shelf_count) product_shelf_schedule(1,0);
   else if(g.shelf_before && top<4) product_shelf_schedule(-1,0);
 }
+/* Native observers can distinguish a complete list from LB_RESETCONTENT /
+   LB_ADDSTRING in progress without assuming that two messages are atomic. */
+static ULONG_PTR product_shelf_snapshot_serial;
+static void product_shelf_snapshot_changed(void) {
+  SetPropW(g.books,L"EXReaderShelfSnapshot",(HANDLE)++product_shelf_snapshot_serial);
+}
 static void product_shelf_accept(host_job *job) {
   if(g.closing || job_cancel_flag(job) || job->product_shelf_generation!=g.shelf_generation) return;
   int direction=job->product_shelf_direction;size_t old=g.shelf_count,incoming=job->product_book_count;
@@ -95,6 +101,7 @@ static void product_shelf_accept(host_job *job) {
   g.shelf_applying=1;shelf_clear();g.shelf=books;g.shelf_cursors=cursors;g.shelf_count=count;
   g.shelf_before=before;g.shelf_after=after;g.shelf_filter_pending=0;
   g.shelf_evicted+=(unsigned)drop;if(count>g.shelf_max_cached) g.shelf_max_cached=(unsigned)count;
+  product_shelf_snapshot_changed();
   SendMessageW(g.books,WM_SETREDRAW,FALSE,0);SendMessageW(g.books,LB_RESETCONTENT,0,0);
   LRESULT top=0,selected=LB_ERR;
   for(size_t i=0;i<count;i++) {
@@ -104,9 +111,11 @@ static void product_shelf_accept(host_job *job) {
   }
   SendMessageW(g.books,LB_SETCURSEL,(WPARAM)selected,0);SendMessageW(g.books,LB_SETTOPINDEX,(WPARAM)top,0);
   SendMessageW(g.books,WM_SETREDRAW,TRUE,0);InvalidateRect(g.books,NULL,TRUE);g.shelf_applying=0;
+  product_shelf_snapshot_changed();
   product_shelf_remember();SetTimer(g.window,4,300,NULL);PostMessageW(g.window,WM_APP+31,0,0);
 }
 static LRESULT CALLBACK product_shelf_procedure(HWND window,UINT message,WPARAM wparam,LPARAM lparam) {
+  if(message==WM_NCDESTROY) RemovePropW(window,L"EXReaderShelfSnapshot");
   LRESULT result=CallWindowProcW(g.shelf_procedure,window,message,wparam,lparam);
   if(message==WM_VSCROLL || message==WM_MOUSEWHEEL || message==WM_KEYDOWN || message==WM_SIZE) {
     product_shelf_remember();SetTimer(g.window,4,300,NULL);PostMessageW(g.window,WM_APP+31,0,0);
