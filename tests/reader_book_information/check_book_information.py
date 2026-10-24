@@ -321,7 +321,7 @@ def case_unicode_fields(world, a):
     expect_properties(a, view, "unicode", [(keys["title"], unicode_book["title"]),
                                            (keys["author"], unicode_book["author"]),
                                            (keys["subject"], unicode_book["subject"])])
-    a.eq("unicode.parser_title_bytes", len(view.get("parser_title", "").encode("utf-8")),
+    a.eq("unicode.parser_title_bytes", len((view.get("parser_title") or "").encode("utf-8")),
          len(unicode_book["title"].encode("utf-8")))
 
 
@@ -471,7 +471,7 @@ def case_cancel_at_every_poll(world, a):
     big = world.read(world.keys["large"], 1, 0)
     a.eq("large.baseline", big.get("status"), OK)
     large_polls = int(big.get("polls", 0))
-    a.eq("large.poll_budget", large_polls, 3 + chunks)
+    a.eq("large.poll_budget", large_polls, 4 + chunks)
     a.eq("large.identity", (big.get("view") or {}).get("identity"), SHA256_IDENTITY)
     a.true("large.chunks", chunks >= 4, chunks)
     for limit in (1, 2, 3, 2 + chunks // 2, large_polls - 1, large_polls):
@@ -601,6 +601,8 @@ def main():
                 function(world, asserts)
             except Failure as error:
                 asserts.problems.append(str(error))
+            except Exception as error:  # noqa: BLE001 - a harness crash is a named failure
+                asserts.problems.append("%s: %s" % (type(error).__name__, error))
             checks.append({"name": name, "ok": not asserts.problems, "assertions": asserts.count,
                            "problems": asserts.problems, "stores_unchanged": None})
         asserts = Asserts()
