@@ -241,7 +241,8 @@ jobs:
             "$(ls build/dist/EXReader-reading-core-*-Windows-X64.zip)" "$(cygpath -u "$PREFIX")"
           test -f "$(cygpath -u "$PREFIX")/include/exr/base.h"
           cmake -S tests/reader_distribution_windows/consumer -B build/reloc-consumer -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PREFIX" 2>&1 | tee build/dist/reloc-configure.log
+            -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PREFIX" \
+            -DEXR_PROBE_OUTPUT="$PREFIX/bin" 2>&1 | tee build/dist/reloc-configure.log
           cmake --build build/reloc-consumer --parallel 4 2>&1 | tee build/dist/reloc-build.log
           cmake -S tests/reading_core -B build/reloc-reading -G Ninja -DCMAKE_BUILD_TYPE=Release \
             -DEXR_SDK="$PREFIX" -DEXR_EXPECT_LIBRARY=OFF \
@@ -262,7 +263,7 @@ jobs:
           echo "== consumer-cpp"
           ./build/reloc-consumer/distribution-consumer-cpp.exe "$OUT/cpp17.json"
           echo "== relocation probe"
-          ./build/reloc-consumer/relocation-probe.exe --prefix "$PREFIX_M" \
+          "$PREFIX/bin/relocation-probe.exe" --prefix "$PREFIX_M" \
             --font "$PREFIX_M/examples/fonts/primary.ttf" --book "$PREFIX_M/examples/books/layout.epub" \
             --output "$OUT/probe.json"
           echo "== reading-document"
@@ -278,7 +279,7 @@ jobs:
           python tools/reader_distribution_windows/check_dependencies.py --stage build/dist/sanitized \
             --pe build/reloc-consumer/distribution-consumer-c.exe \
             --pe build/reloc-consumer/distribution-consumer-cpp.exe \
-            --pe build/reloc-consumer/relocation-probe.exe \
+            --pe "$PREFIX_M/bin/relocation-probe.exe" \
             --pe build/reloc-reading/reading-document.exe \
             --output build/dist/dependencies.json
       - name: Record named negative cases that must fail

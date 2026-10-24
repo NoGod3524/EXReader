@@ -37,4 +37,10 @@ if(WIN32)
   target_link_libraries(relocation-probe PRIVATE EXReader::exreader EXReader::exr_pdf psapi)
   target_compile_definitions(relocation-probe PRIVATE _CRT_SECURE_NO_WARNINGS)
   set_target_properties(relocation-probe PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)
+  if(EXR_PROBE_OUTPUT)
+    # Run the probe from inside the extracted prefix: the claim under test is
+    # that an installed consumer executes from a relocated tree, not the workspace.
+    set_target_properties(relocation-probe PROPERTIES
+      RUNTIME_OUTPUT_DIRECTORY "${EXR_PROBE_OUTPUT}")
+  endif()
 endif()

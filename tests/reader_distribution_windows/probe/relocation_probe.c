@@ -109,6 +109,9 @@ static void classify_modules(probe_state *state) {
     narrow(wide, path, sizeof(path));
     normalise(path);
     state->loaded++;
+    if (!strcmp(path, state->module_path)) {
+      continue;  /* the probe itself is recorded separately, not as a dependency */
+    }
     if (starts_with(path, state->prefix) || starts_with(path, windows_root)) {
       continue;
     }
@@ -161,6 +164,7 @@ static void write_report(const probe_state *state, const char *path) {
   fprintf(stream,
           "{\"schema\":\"reader-distribution-windows-probe-v1\","
           "\"module_path\":\"%s\",\"prefix\":\"%s\",\"sdk_version\":\"%s\",\"abi\":%u,"
+          "\"self_module\":true,"
           "\"document_parts\":%u,\"loaded_modules\":%u,\"external_modules\":[",
           module, prefix, version, state->abi, (unsigned)state->parts, state->loaded);
   for (unsigned index = 0; index < state->external_count; index++) {
