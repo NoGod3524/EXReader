@@ -12,6 +12,11 @@
  * commands that disable themselves, a truthful owner-disabled state for modal
  * dialogs, and change events for the status line and the page.
  */
+/* MIDL-generated headers spell their C interfaces as "interface"; C has no such
+   keyword, and the standard workaround is to define it before the include. */
+#ifndef interface
+#define interface struct
+#endif
 #include <uiautomationcore.h>
 #include <uiautomationcoreapi.h>
 #include <oleacc.h>
