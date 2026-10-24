@@ -153,6 +153,20 @@ static exr_status render_part_page(exr_document *doc, exr_font *font, size_t ind
   return status;
 }
 
+static int read_file_bytes(const char *path, void **data, size_t *size) {
+  FILE *f = fopen(path, "rb");
+  long n;
+  if (!f) return 0;
+  if (fseek(f, 0, SEEK_END) != 0) { fclose(f); return 0; }
+  n = ftell(f);
+  if (n < 0 || fseek(f, 0, SEEK_SET) != 0) { fclose(f); return 0; }
+  *data = n ? malloc((size_t)n) : NULL;
+  if (n && (!*data || fread(*data, 1, (size_t)n, f) != (size_t)n)) {
+    free(*data); *data = NULL; fclose(f); return 0;
+  }
+  fclose(f); *size = (size_t)n; return 1;
+}
+
 static exr_format parse_format(const char *name) {
   if (!strcmp(name, "TXT")) return EXR_TXT;
   if (!strcmp(name, "HTML")) return EXR_HTML;
@@ -192,6 +206,7 @@ int main(int argc, char **argv) {
   char find_outcome[32] = "not_exposed";
   size_t find_part = SIZE_MAX, find_page = SIZE_MAX, find_start = SIZE_MAX, find_end = SIZE_MAX;
   char anchor_state_same[32] = "none", anchor_state_reopen[32] = "none";
+  char anchor_reopen_error[256] = "";
   size_t metadata_entries = 0, fixed_text_pages = 0;
   char first_key[256] = {0};
   size_t toc_count = 0;
@@ -230,7 +245,14 @@ int main(int argc, char **argv) {
   t_import = now_ms();
   status = exr_library_open(library_path, &library, &error);
   if (status == EXR_OK) {
-    status = exr_library_import_file(library, format, file, NULL, &book_id, &error);
+    if (fixed_format(format)) {
+      status = exr_library_import_file(library, format, file, NULL, &book_id, &error);
+    } else {
+      void *bytes = NULL; size_t bytes_size = 0;
+      if (!read_file_bytes(file, &bytes, &bytes_size)) status = EXR_IO;
+      else status = exr_library_import(library, format, bytes, bytes_size, NULL, &book_id, &error);
+      free(bytes);
+    }
     if (status == EXR_OK) import_ok = 1;
     if (status == EXR_OK) status = exr_library_blob(library, book_id, 0, &blob, &blob_size, &error);
     if (status == EXR_OK && blob_size) {
@@ -497,7 +519,10 @@ int main(int argc, char **argv) {
     if (reopen_ok && have_anchor) {
       exr_document *pd = doc;
       if (publication && find_part != SIZE_MAX) {
-        if (exr_publication_load(publication, find_part, &pd, &error) != EXR_OK) pd = NULL;
+        if (exr_publication_load(publication, find_part, &pd, &error) != EXR_OK) {
+          pd = NULL;
+          snprintf(anchor_reopen_error, sizeof(anchor_reopen_error), "%s", error.message);
+        }
       }
       if (pd) {
         exr_anchor_match match = {0};
@@ -560,8 +585,9 @@ int main(int argc, char **argv) {
   if (find_page == SIZE_MAX) printf(",\"page\":null"); else printf(",\"page\":%zu", find_page);
   if (find_start == SIZE_MAX) printf(",\"start\":null"); else printf(",\"start\":%zu", find_start);
   if (find_end == SIZE_MAX) printf(",\"end\":null}"); else printf(",\"end\":%zu}", find_end);
+  printf(",");
   printf("\"anchor_state_same\":"); json_string(anchor_state_same); printf(",");
-  printf("\"anchor_state_reopen\":"); json_string(anchor_state_reopen); printf(",");
+  printf("\"anchor_state_reopen\":"); json_string(anchor_state_reopen); printf(",\"anchor_reopen_error\":"); json_string(anchor_reopen_error); printf(",");
   printf("\"first\":"); print_render("r", &first_render); printf(",\"middle\":");
   print_render("r", &middle_render); printf(",\"last\":");
   print_render("r", &last_render); printf(",\"back\":");
