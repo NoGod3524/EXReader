@@ -6,8 +6,11 @@ import io
 import json
 import os
 from pathlib import Path
-import urllib.request
+import sys
 import zipfile
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'tools'))
+from check_parallel_integration import download_artifact_zip, fetch
 
 
 def require(value, message):
@@ -17,16 +20,9 @@ def require(value, message):
 
 def main():
     require(os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only')
-    repo, source, run, attempt, token = (os.environ[name] for name in
-        ('GITHUB_REPOSITORY', 'GITHUB_SHA', 'GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT', 'GH_TOKEN'))
-    base = 'https://api.github.com/repos/' + repo
+    source, run, attempt = (os.environ[name] for name in ('GITHUB_SHA', 'GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT'))
 
-    def request(path):
-        return urllib.request.urlopen(urllib.request.Request(base + path,
-            headers={'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json',
-                     'X-GitHub-Api-Version': '2022-11-28'}), timeout=90).read()
-
-    jobs = json.loads(request('/actions/runs/' + run + '/attempts/' + attempt + '/jobs?per_page=100'))
+    jobs = fetch('actions/runs/' + run + '/attempts/' + attempt + '/jobs?per_page=100')
     expected_jobs = {'Frozen SDK and installed F1 macos', 'Native search and original adapter contracts',
                      'Frozen SDK and installed F1 iphonesimulator', 'Search UI macos', 'Search UI iphone', 'Search UI ipad'}
     relevant = [row for row in jobs['jobs'] if row['name'] in expected_jobs]
@@ -34,7 +30,7 @@ def main():
             'producer job set differs')
     require(all(row['status'] == 'completed' and row['conclusion'] == 'success' and row['head_sha'] == source
                 and row['run_attempt'] == int(attempt) for row in relevant), 'producer failed or source differs')
-    artifacts = json.loads(request('/actions/runs/' + run + '/artifacts?per_page=100'))
+    artifacts = fetch('actions/runs/' + run + '/artifacts?per_page=100')
     expected_names = {'apple-search-sdk-' + target + '-' + run + '-' + attempt for target in ('macos', 'iphonesimulator')}
     expected_names |= {'apple-search-native-' + run + '-' + attempt}
     expected_names |= {'apple-search-ui-' + platform + '-' + run + '-' + attempt for platform in ('macos', 'iphone', 'ipad')}
@@ -49,7 +45,7 @@ def main():
         require(datetime.datetime.fromisoformat(artifact['expires_at'].replace('Z', '+00:00')) > now, 'artifact expired')
         digest = artifact['digest']
         require(isinstance(digest, str) and digest.startswith('sha256:') and len(digest) == 71, 'artifact digest missing')
-        data = request('/actions/artifacts/' + str(artifact['id']) + '/zip')
+        data = download_artifact_zip(artifact['id'])
         require(len(data) == artifact['size_in_bytes'] and hashlib.sha256(data).hexdigest() == digest[7:], 'ZIP identity differs')
         with zipfile.ZipFile(io.BytesIO(data)) as archive:
             require(len(archive.namelist()) == len(set(archive.namelist())), 'duplicate ZIP member')
