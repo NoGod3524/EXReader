@@ -1198,6 +1198,14 @@ final class HostReaderModel: ObservableObject {
         self.accounts = accounts
         self.accountSession = profile.flatMap { accounts?.controller(for: $0) }
         self.defaults = profile.flatMap { UserDefaults(suiteName: "org.exreader.account." + $0.id) } ?? .standard
+#if EXR_APPLE_HOST_REVIEW
+        if ProcessInfo.processInfo.arguments.contains("-EXRKillReadingAfterSave") {
+            HostReadingWorker.afterDurableSave = { _exit(73) }
+        }
+        if ProcessInfo.processInfo.arguments.contains("-EXRKillReadingAfterCommit") {
+            HostReadingWorker.afterCommit = { _exit(74) }
+        }
+#endif
     }
 
     deinit {

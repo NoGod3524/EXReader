@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "accepted": false,
+  "status": "implementation awaiting cloud compilation and native/UI results",
+  "start_sha": "f5d25b4c71ea39bd22bebea4eedfee16ca178c35",
+  "module_source": "ba25961961ae69222bfed4f7a98cb02bb1dc6847",
+  "g03_tree": "cf067b8be378d4195817d1106b81f358579e2280",
+  "g04_tree": "9d30b6c54f61496010f647695dedd7ea7ab0c7c1",
+  "codec_tree": "60127ae75fbac918237b1c8584e0f7ac2e6130a4",
+  "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "sdk_abi": 1,
+  "native_expected": 19,
+  "ui_expected_each": 7,
+  "runs": [],
+  "initial_compile_diagnostic": {
+    "source_sha": "f581dec838f29131475aac8488926f92b2a71602",
+    "run_id": 40141724772,
+    "attempt": 1,
+    "diagnostic_only": true,
+    "accepted": false
+  },
+  "complete_product": false,
+  "physical_device_execution": false,
+  "performance_accepted": false,
+  "sdk_changed": false,
+  "schema_changed": false,
+  "wire_changed": false,
+  "local_builds_tests_or_artifact_downloads": false
+}

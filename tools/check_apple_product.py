@@ -40,6 +40,16 @@ def inspect(binary, link_map):
         raise
     search_linked = bool(re.search(r'\b[Tt]\s+_reader_search_next\s*$', symbols, re.M))
     navigation_linked = bool(re.search(r'\b[Tt]\s+_reader_navigation_children\s*$', symbols, re.M))
+    reading_commands_linked = bool(re.search(r'\b[Tt]\s+_reader_rc_apply\s*$', symbols, re.M))
+    annotation_view_linked = bool(re.search(r'\b[Tt]\s+_reader_av_page_get\s*$', symbols, re.M))
+    for linked, archive, unit in [(reading_commands_linked, 'libreader_reading_commands.a', 'reading_commands.cpp.o'),
+                                  (annotation_view_linked, 'libreader_annotation_view.a', 'annotation_view.cpp.o')]:
+        if linked:
+            providers = [line for line in mapping.splitlines() if archive in line and unit in line]
+            assert len(providers) == 1, 'installed reading module provider missing or duplicated'
+            assert re.search(r'\blibexreader(?:\.[0-9]+)*\.dylib', dependencies), 'reading host lacks dynamic SDK'
+            assert not re.search(r'\b[Tt]\s+_exr_(?:anchor_create|anchor_resolve_ex|fixed_anchor_create|fixed_anchor_resolve)\s*$',
+                                 symbols, re.M), 'reading host embedded a second SDK implementation'
     if navigation_linked:
         providers = [line for line in mapping.splitlines()
                      if 'libreader_navigation.a' in line and 'navigation.cpp.o' in line]
@@ -78,6 +88,8 @@ def inspect(binary, link_map):
             'static_sdk_linked': False, 'reading_resolver_linked': False,
             'installed_search_linked': search_linked,
             'installed_navigation_linked': navigation_linked,
+            'installed_reading_commands_linked': reading_commands_linked,
+            'installed_annotation_view_linked': annotation_view_linked,
             'dependencies': dependencies, 'negative_checks': rejected}
 
 

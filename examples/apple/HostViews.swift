@@ -361,6 +361,16 @@ struct LibraryScreen: View {
                     .accessibilityIdentifier("library.import.mapping-state")
             }
 #endif
+#if EXR_APPLE_READING_REVIEW
+            if model.showsTestFixtures {
+                HStack {
+                    Button("导入阅读文本示例") { model.importFixture("Records", extension: "txt") }
+                        .accessibilityIdentifier("library.import.records-text")
+                    Button("导入漫画示例") { model.importFixture("NavigationPages", extension: "cbz") }
+                        .accessibilityIdentifier("library.import.records-cbz")
+                }
+            }
+#endif
             if !model.errorText.isEmpty {
                 Text(model.errorText).font(.caption).foregroundColor(.red)
                     .accessibilityIdentifier("library.error")

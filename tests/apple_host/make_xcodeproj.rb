@@ -164,6 +164,8 @@ end
         'EXR_APPLE_SHELF_REVIEW'
       elsif test_directory.include?('/account/')
         'EXR_APPLE_ACCOUNT_REVIEW'
+      elsif test_directory.include?('/reading/')
+        'EXR_APPLE_READING_REVIEW'
       elsif test_directory.include?('/accessibility/')
         nil
       elsif test_directory.include?('/search/') || test_directory.include?('/navigation/')

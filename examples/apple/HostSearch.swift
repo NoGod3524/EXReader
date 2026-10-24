@@ -6,7 +6,7 @@ import CReaderProduct
 
 // Only copied values cross owner-queue invocations. F1 handles and captures
 // are created, consumed and released on one actual OS thread within batch().
-struct HostSearchAnchor: Codable {
+struct HostSearchAnchor: Codable, Equatable {
     let start: Int
     let end: Int
     let fields: [Data?]
@@ -43,7 +43,7 @@ private func hostSearchBuffers<T>(_ values: [Data?], _ body: ([UnsafeMutablePoin
     return try body(buffers)
 }
 
-struct HostSearchFixedAnchor: Codable {
+struct HostSearchFixedAnchor: Codable, Equatable {
     let start: Int
     let end: Int
     let fields: [Data?]
