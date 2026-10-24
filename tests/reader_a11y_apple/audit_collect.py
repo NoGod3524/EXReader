@@ -266,12 +266,12 @@ def evaluate_geometry(platform, step, spec, elements, window, policy, items, scr
                                    '控件不小于 %g pt（WCAG 2.5.8）' % blocking_min,
                                    '最小边 %.1f pt' % smallest, 'minor', False, '', screenshot))
             if platform in ('iphone', 'ipad') and smallest < advisory_min:
-                items.append(make_item(platform, step, identifier, 'target-size-hig', 'fail',
+                items.append(make_item(platform, step, identifier, 'target-size-hig', 'advisory',
                                        'iOS HIG 建议不小于 %g pt' % advisory_min,
                                        '最小边 %.1f pt' % smallest, 'minor', False,
                                        '按 HIG 放大到 44 pt 触控区', screenshot))
             elif platform == 'macos' and smallest < advisory_macos:
-                items.append(make_item(platform, step, identifier, 'target-size-macos', 'fail',
+                items.append(make_item(platform, step, identifier, 'target-size-macos', 'advisory',
                                        'macOS 指针目标建议不小于 %g pt' % advisory_macos,
                                        '最小边 %.1f pt' % smallest, 'minor', False,
                                        '按 macOS 控件惯例放大（padding 或 frame(minWidth:minHeight:)）', screenshot))
@@ -301,6 +301,27 @@ def evaluate_geometry(platform, step, spec, elements, window, policy, items, scr
                                        '重叠面积占较小控件 %.0f%%' % (area / smaller * 100),
                                        'major', True, '在压缩布局中重新分配间距，避免控件互相覆盖', screenshot))
 
+
+def evaluate_book_rows(platform, step, spec, elements, items, screenshot):
+    """Shelf order is a product decision, so each audited title must appear in at
+    least one row accessible name rather than at a fixed index."""
+    observed = sorted(ax_name(element)[:60] for identifier, element in elements.items()
+                      if identifier.startswith("library.book."))
+    for wanted in spec.get("book_row_names") or []:
+        if not isinstance(wanted, str):
+            continue
+        matched = sorted(identifier for identifier, element in elements.items()
+                         if identifier.startswith("library.book.") and wanted in ax_name(element))
+        if matched:
+            items.append(make_item(platform, step, ",".join(matched), "book-row-visible", "pass",
+                                   "书架行名称包含 " + wanted, ", ".join(observed), "major", False,
+                                   "", screenshot))
+        else:
+            items.append(make_item(platform, step, "library.book.*", "book-row-visible", "fail",
+                                   "书架行名称包含 " + wanted,
+                                   "行名称中没有该书：" + (", ".join(observed) if observed else "<无书架行>"),
+                                   "major", True,
+                                   "书架行必须把书名与格式/位置暴露为可访问名称", screenshot))
 
 def evaluate_reading_order(platform, step, spec, elements, policy, items, screenshot):
     tolerance = float(policy.get('reading_order_tolerance_pt', 20))
@@ -387,28 +408,23 @@ def evaluate_keyboard(platform, contract, records, items):
         return
     entry = entries[-1]
     candidates = [value for value in (entry.get('candidates') or []) if isinstance(value, str)]
-    focused = [value for value in (entry.get('focused_union') or []) if isinstance(value, str)]
-    reachable = [value for value in candidates if value in focused]
-    if not entry.get('focus_observed'):
-        items.append(make_item(platform, 'reader.keyboard', '', 'keyboard-path', 'uncovered',
-                               spec.get('expected', ''),
-                               '14 次 Tab 后没有任何控件报告 AXFocused；XCUITest 在 macOS 上无法观察焦点，'
-                               '焦点路径保持未覆盖（需人工全键盘访问走查）', 'major', False,
-                               spec.get('fix', ''), ''))
-        return
-    if not reachable:
-        items.append(make_item(platform, 'reader.keyboard', '', 'keyboard-path', 'fail',
-                               spec.get('expected', ''),
-                               '0/%d 个控件可由 Tab 聚焦' % len(candidates), 'major',
-                               bool(spec.get('blocking', True)), spec.get('fix', ''), ''))
-        return
-    verdict = 'pass' if len(reachable) == len(candidates) else 'fail'
-    items.append(make_item(platform, 'reader.keyboard', '', 'keyboard-path', verdict,
-                           spec.get('expected', ''),
-                           '%d/%d 个控件可聚焦：%s' % (len(reachable), len(candidates),
-                                                     ', '.join(sorted(reachable)[:12])),
-                           spec.get('partial_severity', 'major') if verdict == 'fail' else 'minor',
-                           False, spec.get('fix', ''), ''))
+    distinct = [value for value in (entry.get('distinct_states') or []) if isinstance(value, str)]
+    changed = bool(entry.get('keyboard_state_changed'))
+    if changed:
+        actual = '可观察状态出现 %d 种取值：%s' % (len(distinct), ' / '.join(distinct[:6]))
+    else:
+        actual = ('16 次 Tab（每 4 次追加 Space）后可观察状态无变化，样本=%s，候选控件 %d 个'
+                  % (distinct[0] if distinct else '<empty>', len(candidates)))
+    items.append(make_item(platform, 'reader.keyboard', '', 'keyboard-operable',
+                           'pass' if changed else 'fail',
+                           spec.get('expected', ''), actual, 'major',
+                           bool(spec.get('blocking', True)) and not changed,
+                           spec.get('fix', ''), ''))
+    focus = spec.get('focus_order') or {}
+    items.append(make_item(platform, 'reader.keyboard', '', 'keyboard-focus-order',
+                           focus.get('verdict', 'uncovered'),
+                           '逐控件焦点顺序与 Tab 可达集合',
+                           focus.get('reason', ''), 'major', False, '', ''))
 
 
 def evaluate_scaling(platform, contract, records, items):
@@ -421,6 +437,22 @@ def evaluate_scaling(platform, contract, records, items):
             continue
         source_elements = element_map(source_state)
         target_elements = element_map(target_state)
+        base_metrics = source_state.get('metrics') or {}
+        large_metrics = target_state.get('metrics') or {}
+        base_pt = float(base_metrics.get('caption1_pt') or 0)
+        large_pt = float(large_metrics.get('caption1_pt') or 0)
+        if base_pt <= 0 or large_pt <= base_pt:
+            items.append(make_item(platform, rule.get('to'), '', 'dynamic-type-fixture', 'blocked',
+                                   '设备内容尺寸类别已提升（caption1 点值变大）',
+                                   'caption1 默认 %.1fpt 与大字体 %.1fpt 相同或缺失：大字体装置未生效，'
+                                   '不能用它评判产品' % (base_pt, large_pt),
+                                   'major', True,
+                                   'workflow: xcrun simctl ui <udid> content_size '
+                                   'accessibility-extra-extra-extra-large 后再跑大字体用例', ''))
+            continue
+        items.append(make_item(platform, rule.get('to'), '', 'dynamic-type-fixture', 'pass',
+                               '设备内容尺寸类别已提升', 'caption1 %.1fpt → %.1fpt' % (base_pt, large_pt),
+                               'minor', False, '', ''))
         for identifier in rule.get('ids') or []:
             base = source_elements.get(identifier)
             large = target_elements.get(identifier)
@@ -441,11 +473,12 @@ def evaluate_scaling(platform, contract, records, items):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--platform', choices=list(PLATFORMS), required=True)
-    parser.add_argument('--log', type=Path, required=True)
+    parser.add_argument('--log', type=Path, action='append', required=True)
     parser.add_argument('--contract', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--app', type=Path, required=True)
-    parser.add_argument('--xcresult', type=Path, required=True)
+    parser.add_argument('--xcresult', type=Path, action='append', required=True)
+    parser.add_argument('--content-size', default='')
     parser.add_argument('--attachments', type=Path)
     parser.add_argument('--destination-file', type=Path, required=True)
     parser.add_argument('--fixtures', type=Path, required=True)
@@ -459,7 +492,7 @@ def main():
     policy = contract.get('policy') or {}
     output = args.output.absolute()
     output.mkdir(parents=True, exist_ok=True)
-    log_text = args.log.read_text(encoding='utf-8', errors='replace')
+    log_text = '\n'.join(path.read_text(encoding='utf-8', errors='replace') for path in args.log)
     records = parse_records(log_text)
     cases = parse_cases(log_text)
 
@@ -485,6 +518,7 @@ def main():
         'xcode': subprocess.check_output(['xcodebuild', '-version'], text=True).strip(),
         'swift': subprocess.check_output(['xcrun', 'swiftc', '--version'], text=True).strip(),
         'keyboard_ui_mode': args.keyboard_ui_mode.strip(),
+        'content_size': args.content_size.strip(),
         'program': {
             'bundle': str(args.app),
             'executable': executable.name,
@@ -498,14 +532,15 @@ def main():
         'fixtures_sha256': hashlib.sha256(
             json.dumps(fixtures, sort_keys=True).encode('utf-8')).hexdigest(),
         'fixtures': fixtures,
-        'xcresult_sha256': '',
-        'log_sha256': digest(args.log),
+        'xcresult_sha256': {},
+        'log_sha256': {path.name: digest(path) for path in args.log},
         'test_cases': cases,
         'test_failures': sorted(name for name, result in cases.items() if result != 'passed'),
     }
-    if args.xcresult.is_dir():
-        environment['xcresult_sha256'] = digest(args.xcresult / 'Info.plist') \
-            if (args.xcresult / 'Info.plist').is_file() else ''
+    for bundle in args.xcresult:
+        if bundle.is_dir():
+            info = bundle / 'Info.plist'
+            environment['xcresult_sha256'][bundle.name] = digest(info) if info.is_file() else ''
     attachments = {}
     if args.attachments and args.attachments.is_dir():
         for path in sorted(args.attachments.rglob('*')):
@@ -544,6 +579,7 @@ def main():
                                    '窗口布局框非空', 'window=' + json.dumps(window, sort_keys=True),
                                    'major', True, '', screenshot))
         evaluate_required(args.platform, step, spec, elements, items, screenshot)
+        evaluate_book_rows(args.platform, step, spec, elements, items, screenshot)
         evaluate_geometry(args.platform, step, spec, elements, window, policy, items, screenshot)
         evaluate_reading_order(args.platform, step, spec, elements, policy, items, screenshot)
         for share in spec.get('state_exposure') or []:

@@ -167,42 +167,84 @@ jobs:
           set -euo pipefail
           platform="${{ matrix.platform }}"
           destination=$(sed -n '1p' build/destination.txt)
-          if [ "$platform" = macos ]; then
-            scheme=EXReaderA11y-macOS
-            sdk_dir="$PWD/stage/macos"
-            signing=YES
-          else
-            scheme=EXReaderA11y-iOS
-            sdk_dir="$PWD/stage/iphonesimulator"
-            signing=NO
-          fi
+          udid=$(sed -n '2p' build/destination.txt)
           mkdir -p build/results
-          xcodebuild test \
-            -project build/a11y-project/EXReaderA11y.xcodeproj \
-            -scheme "$scheme" \
-            -destination "$destination" \
-            -derivedDataPath build/DerivedData \
-            -resultBundlePath "build/results/${platform}.xcresult" \
-            -parallel-testing-enabled NO \
-            -test-timeouts-enabled YES \
-            -default-test-execution-time-allowance 420 \
-            -maximum-test-execution-time-allowance 900 \
-            EXR_SDK_DIR="$sdk_dir" \
-            CODE_SIGNING_ALLOWED="$signing" \
-            2>&1 | tee "build/results/${platform}-xcodebuild.log"
+          set +e
+          if [ "$platform" = macos ]; then
+            xcodebuild test \
+              -project build/a11y-project/EXReaderA11y.xcodeproj \
+              -scheme EXReaderA11y-macOS \
+              -destination "$destination" \
+              -derivedDataPath build/DerivedData \
+              -resultBundlePath "build/results/macos.xcresult" \
+              -parallel-testing-enabled NO \
+              -test-timeouts-enabled YES \
+              -default-test-execution-time-allowance 420 \
+              -maximum-test-execution-time-allowance 900 \
+              EXR_SDK_DIR="$PWD/stage/macos" \
+              CODE_SIGNING_ALLOWED=YES \
+              2>&1 | tee "build/results/macos-xcodebuild.log"
+            main_status=${PIPESTATUS[0]}
+            large_status=0
+            echo "not-applicable" > "build/results/macos-content-size.txt"
+          else
+            xcodebuild test \
+              -project build/a11y-project/EXReaderA11y.xcodeproj \
+              -scheme EXReaderA11y-iOS \
+              -destination "$destination" \
+              -derivedDataPath build/DerivedData \
+              -resultBundlePath "build/results/${platform}.xcresult" \
+              -parallel-testing-enabled NO \
+              -test-timeouts-enabled YES \
+              -default-test-execution-time-allowance 420 \
+              -maximum-test-execution-time-allowance 900 \
+              -skip-testing:EXReaderA11yUITests-iOS/EXReaderA11yAuditTests/test07DynamicTypeAudit \
+              EXR_SDK_DIR="$PWD/stage/iphonesimulator" \
+              CODE_SIGNING_ALLOWED=NO \
+              2>&1 | tee "build/results/${platform}-xcodebuild.log"
+            main_status=${PIPESTATUS[0]}
+            # The Dynamic Type audit needs a device-level content size category;
+            # the launch-argument override is not honoured by this runtime.
+            xcrun simctl boot "$udid" >/dev/null 2>&1 || true
+            xcrun simctl ui "$udid" content_size accessibility-extra-extra-extra-large || true
+            xcrun simctl ui "$udid" content_size | tee "build/results/${platform}-content-size.txt"
+            xcodebuild test \
+              -project build/a11y-project/EXReaderA11y.xcodeproj \
+              -scheme EXReaderA11y-iOS \
+              -destination "$destination" \
+              -derivedDataPath build/DerivedData \
+              -resultBundlePath "build/results/${platform}-large.xcresult" \
+              -parallel-testing-enabled NO \
+              -test-timeouts-enabled YES \
+              -default-test-execution-time-allowance 420 \
+              -maximum-test-execution-time-allowance 900 \
+              -only-testing:EXReaderA11yUITests-iOS/EXReaderA11yAuditTests/test07DynamicTypeAudit \
+              EXR_SDK_DIR="$PWD/stage/iphonesimulator" \
+              CODE_SIGNING_ALLOWED=NO \
+              2>&1 | tee "build/results/${platform}-large-xcodebuild.log"
+            large_status=${PIPESTATUS[0]}
+            xcrun simctl ui "$udid" content_size medium >/dev/null 2>&1 || true
+          fi
+          set -e
+          if [ "$main_status" != 0 ] || [ "$large_status" != 0 ]; then
+            echo "xcodebuild status main=$main_status large=$large_status"
+            exit 1
+          fi
       - name: Export the screenshot attachments
         if: always()
         continue-on-error: true
         run: |
           set -euo pipefail
           platform="${{ matrix.platform }}"
-          if [ -d "build/results/${platform}.xcresult" ]; then
-            xcrun xcresulttool export attachments \
-              --path "build/results/${platform}.xcresult" \
-              --output-path "build/results/${platform}-attachments"
-          else
-            echo "no xcresult to export"
-          fi
+          for bundle in "${platform}" "${platform}-large"; do
+            if [ -d "build/results/${bundle}.xcresult" ]; then
+              xcrun xcresulttool export attachments \
+                --path "build/results/${bundle}.xcresult" \
+                --output-path "build/results/${bundle}-attachments" || true
+            else
+              echo "no ${bundle} xcresult to export"
+            fi
+          done
       - name: Collect the per-criterion audit evidence
         id: collect
         if: always()
@@ -220,14 +262,27 @@ jobs:
             keyboard="not-applicable"
           fi
           mkdir -p "build/audit/${platform}"
+          logs=(--log "build/results/${platform}-xcodebuild.log")
+          bundles=(--xcresult "build/results/${platform}.xcresult")
+          shots=(--attachments "build/results/${platform}-attachments")
+          if [ -f "build/results/${platform}-large-xcodebuild.log" ]; then
+            logs+=(--log "build/results/${platform}-large-xcodebuild.log")
+            bundles+=(--xcresult "build/results/${platform}-large.xcresult")
+            shots+=(--attachments "build/results/${platform}-large-attachments")
+          fi
+          content_size="not-applicable"
+          if [ -f "build/results/${platform}-content-size.txt" ]; then
+            content_size=$(cat "build/results/${platform}-content-size.txt")
+          fi
           python3 tests/reader_a11y_apple/audit_collect.py \
             --platform "$platform" \
-            --log "build/results/${platform}-xcodebuild.log" \
+            "${logs[@]}" \
             --contract "$A11Y_CONTRACT" \
             --output "build/audit/${platform}" \
             --app "$app" \
-            --xcresult "build/results/${platform}.xcresult" \
-            --attachments "build/results/${platform}-attachments" \
+            "${bundles[@]}" \
+            "${shots[@]}" \
+            --content-size "$content_size" \
             --destination-file build/destination.txt \
             --fixtures build/apple-resources/manifest.json \
             --sdk-root "stage/$sdk_target" \
@@ -242,6 +297,7 @@ jobs:
           cp -R build/results build/upload/ 2>/dev/null || true
           cp build/destination.txt build/upload/ 2>/dev/null || true
           cp build/keyboard-ui-mode.txt build/upload/ 2>/dev/null || true
+          cp build/results/*-content-size.txt build/upload/ 2>/dev/null || true
           cp build/apple-resources/manifest.json build/upload/ 2>/dev/null || true
           du -sh build/upload || true
       - uses: actions/upload-artifact@v4

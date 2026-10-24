@@ -21,6 +21,95 @@ enum A11yAudit {
         "Slider", "Toggle", "SearchField", "PickerWheel",
     ]
 
+    /// Swift prints XCUIElement.ElementType as "XCUIElementType(rawValue: 48)";
+    /// the contract compares stable role names, so map the documented
+    /// XCUIElementType values instead of echoing a raw description.
+    static func roleName(_ type: XCUIElement.ElementType) -> String {
+        switch type.rawValue {
+        case 0: return "Any"
+        case 1: return "Other"
+        case 2: return "Application"
+        case 3: return "Group"
+        case 4: return "Window"
+        case 5: return "Sheet"
+        case 7: return "Alert"
+        case 8: return "Dialog"
+        case 9: return "Button"
+        case 10: return "RadioButton"
+        case 11: return "RadioGroup"
+        case 12: return "CheckBox"
+        case 13: return "DisclosureTriangle"
+        case 14: return "PopUpButton"
+        case 15: return "ComboBox"
+        case 16: return "MenuButton"
+        case 17: return "ToolbarButton"
+        case 18: return "Popover"
+        case 19: return "Keyboard"
+        case 20: return "Key"
+        case 21: return "NavigationBar"
+        case 22: return "TabBar"
+        case 23: return "TabGroup"
+        case 24: return "Toolbar"
+        case 25: return "StatusBar"
+        case 26: return "Table"
+        case 27: return "TableRow"
+        case 28: return "TableColumn"
+        case 29: return "Outline"
+        case 30: return "OutlineRow"
+        case 31: return "Browser"
+        case 32: return "CollectionView"
+        case 33: return "Slider"
+        case 34: return "PageIndicator"
+        case 35: return "ProgressIndicator"
+        case 36: return "ActivityIndicator"
+        case 37: return "SegmentedControl"
+        case 38: return "Picker"
+        case 39: return "PickerWheel"
+        case 40: return "Switch"
+        case 41: return "Toggle"
+        case 42: return "Link"
+        case 43: return "Image"
+        case 44: return "Icon"
+        case 45: return "SearchField"
+        case 46: return "ScrollView"
+        case 47: return "ScrollBar"
+        case 48: return "StaticText"
+        case 49: return "TextField"
+        case 50: return "SecureTextField"
+        case 51: return "DatePicker"
+        case 52: return "TextView"
+        case 53: return "Menu"
+        case 54: return "MenuItem"
+        case 55: return "MenuBar"
+        case 56: return "MenuBarItem"
+        case 57: return "Map"
+        case 58: return "WebView"
+        case 59: return "IncrementArrow"
+        case 60: return "DecrementArrow"
+        case 61: return "Timeline"
+        case 62: return "RatingIndicator"
+        case 63: return "ValueIndicator"
+        case 64: return "SplitGroup"
+        case 65: return "Splitter"
+        case 66: return "Replacement"
+        case 67: return "Matte"
+        case 68: return "TouchBar"
+        case 69: return "StatusItem"
+        case 70: return "RemoteControl"
+        case 75: return "Cell"
+        default: return "rawValue:" + String(type.rawValue)
+        }
+    }
+
+    /// The same raw-value printing affects XCUIApplication.State.
+    static func appStateName(_ app: XCUIApplication) -> String {
+        if app.state == .runningForeground { return "runningForeground" }
+        if app.state == .runningBackground { return "runningBackground" }
+        if app.state == .runningBackgroundSuspended { return "runningBackgroundSuspended" }
+        if app.state == .notRunning { return "notRunning" }
+        return "unknown"
+    }
+
     static func platformName() -> String {
 #if os(macOS)
         return "macos"
@@ -99,7 +188,7 @@ final class A11yAuditRecorder {
         var sawWindow = false
         var index = 0
         func visit(_ node: XCUIElementSnapshot, _ ancestors: [String]) {
-            let role = String(describing: node.elementType)
+            let role = A11yAudit.roleName(node.elementType)
             let identifier = node.identifier
             if !sawWindow, node.elementType == .window, !node.frame.isEmpty {
                 window = node.frame
@@ -132,7 +221,7 @@ final class A11yAuditRecorder {
             "kind": "environment",
             "platform": platform,
             "os": ProcessInfo.processInfo.operatingSystemVersionString,
-            "app_state": String(describing: app.state),
+            "app_state": A11yAudit.appStateName(app),
             "launch_arguments": app.launchArguments,
             "metrics": A11yAudit.textMetrics(),
             "orientation": A11yAudit.orientation(),
@@ -184,11 +273,7 @@ final class A11yAuditRecorder {
             ]
             if A11yAudit.interactiveRoles.contains(node.role) {
                 let live = app.descendants(matching: .any).matching(identifier: node.identifier).firstMatch
-                let present = live.exists
-                record["hittable"] = present ? live.isHittable : false
-#if os(macOS)
-                record["focus"] = present ? live.hasFocus : false
-#endif
+                record["hittable"] = live.exists ? live.isHittable : false
             }
             elements.append(record)
         }
@@ -197,7 +282,7 @@ final class A11yAuditRecorder {
             "platform": platform,
             "test": test,
             "step": step,
-            "app_state": String(describing: app.state),
+            "app_state": A11yAudit.appStateName(app),
             "orientation": A11yAudit.orientation(),
             "window": A11yAudit.frameJSON(flat.window),
             "metrics": A11yAudit.textMetrics(),
@@ -228,14 +313,13 @@ final class A11yAuditRecorder {
         return true
     }
 
-    /// Records the macOS keyboard traversal path. The sequence is emitted as its
-    /// own record type so a platform without keyboard coverage simply has none.
-    func emitKeyboard(test: String, presses: [[String: Any]], candidates: [String], step: String) {
-        var focused: [String] = []
-        for press in presses {
-            if let ids = press["focused"] as? [String] { focused.append(contentsOf: ids) }
-        }
-        let reachable = Array(Set(focused)).sorted()
+    /// Records the macOS keyboard probe. Per-control focus is not observable in
+    /// this Xcode (XCUIElement has no public hasFocus attribute), so the record
+    /// states what WAS measured: whether Tab + Space can drive the reader at all,
+    /// plus the sampled observable states. The traversal order stays uncovered
+    /// instead of being invented.
+    func emitKeyboard(test: String, presses: [[String: Any]], candidates: [String],
+                      step: String, distinctStates: [String], changed: Bool) {
         A11yAudit.emit("EXR_A11Y_KEYBOARD", [
             "kind": "keyboard",
             "platform": platform,
@@ -243,8 +327,11 @@ final class A11yAuditRecorder {
             "step": step,
             "presses": presses,
             "candidates": candidates,
-            "focused_union": reachable,
-            "focus_observed": !reachable.isEmpty,
+            "probe": "Tab 16 times with Space every 4th press; the reader's observable state is sampled after each press",
+            "distinct_states": distinctStates,
+            "keyboard_state_changed": changed,
+            "focus_observed": false,
+            "focus_unobservable_reason": "本次 Xcode 的 XCUIElement 没有 hasFocus/焦点 API，逐控件焦点顺序不可观察",
         ])
     }
 }

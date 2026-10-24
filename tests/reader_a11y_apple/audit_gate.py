@@ -108,6 +108,12 @@ def main():
         if platform == 'macos':
             if not str(environment.get('keyboard_ui_mode', '')).strip():
                 problems.append('macos: 未记录键盘访问（AppleKeyboardUIMode）设置')
+        else:
+            content_size = str(environment.get('content_size', '')).strip()
+            if not content_size or content_size == 'not-applicable':
+                problems.append('%s: 未记录大字体装置（simctl content_size）' % platform)
+            elif 'accessibility' not in content_size:
+                problems.append('%s: 大字体装置内容尺寸为 %s，不是可访问性类别' % (platform, content_size))
         if environment.get('test_failures'):
             problems.append('%s: 审计用例失败 %s（该平台证据不完整）'
                             % (platform, ', '.join(environment['test_failures'])))
