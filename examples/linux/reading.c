@@ -8,6 +8,10 @@
 #include <sys/types.h>
 #include <math.h>
 #include <errno.h>
+#ifdef EXR_READER_NAVIGATION
+#include <reader_navigation.h>
+#include <glib.h>
+#endif
 #ifdef EXR_READER_SEARCH
 #include <reader_search.h>
 #include <glib.h>
@@ -53,6 +57,11 @@ struct linux_reader {
   reader_session current;
   reader_session pending;
   int has_pending,pending_owns_session,pending_new_pager;
+#ifdef EXR_READER_NAVIGATION
+  void *navigation_data;
+  int navigation_pending;
+  uint64_t navigation_pending_token;
+#endif
 #ifdef EXR_READER_SEARCH
   void *search_data;
   int search_pending;
@@ -85,6 +94,9 @@ struct linux_reader {
 typedef struct {int64_t id;int font,zoom;} reader_import_saved;
 static exr_status reader_import_suspend(linux_reader *,reader_import_saved *);
 static exr_status reader_import_resume(linux_reader *,const reader_import_saved *,reader_result *);
+#ifdef EXR_READER_NAVIGATION
+static void navigation_free(linux_reader *);
+#endif
 #ifdef EXR_READER_SEARCH
 static void search_free(linux_reader *);
 #endif
@@ -106,12 +118,19 @@ static void pending_discard(linux_reader *reader) {
   else if(reader->pending_new_pager) exr_pager_free(reader->pending.pager);
   memset(&reader->pending,0,sizeof(reader->pending));
   reader->has_pending=reader->pending_owns_session=reader->pending_new_pager=0;
+#ifdef EXR_READER_NAVIGATION
+  reader->navigation_pending=0;
+#endif
 #ifdef EXR_READER_SEARCH
   reader->search_pending=0;
 #endif
 }
 void reader_result_free(reader_result *result) {
   size_t i;free(result->pixels);free(result->text);
+#ifdef EXR_READER_NAVIGATION
+  for(i=0;i<result->navigation_count;i++) free(result->navigation_rows[i].label);
+  free(result->navigation_rows);free(result->navigation_candidates);
+#endif
 #ifdef EXR_READER_SEARCH
   for(i=0;i<result->search_count;i++) free(result->search_rows[i].label);
   free(result->search_rows);
@@ -169,6 +188,9 @@ exr_status linux_reader_open(const char *database,const char *font,const exr_con
 }
 void linux_reader_close(linux_reader *reader) {
   if(reader) {
+#ifdef EXR_READER_NAVIGATION
+    navigation_free(reader);
+#endif
 #ifdef EXR_READER_SEARCH
     search_free(reader);
 #endif
@@ -683,11 +705,20 @@ done:
 #ifdef EXR_READER_SEARCH
 #include "search_backend.inc"
 #endif
+#ifdef EXR_READER_NAVIGATION
+#include "navigation_backend.inc"
+#endif
 void linux_reader_execute(linux_reader *reader,const reader_command *command,reader_result *result) {
   reader_session next=reader->current;exr_error error={0};exr_status status=cancel(reader);
   int owned_session=0,new_pager=0;int64_t id=command->book;size_t target=0;
   int wants_shelf=command->action==READER_SHELF || command->action==READER_OPEN || command->action==READER_IMPORT;
   memset(result,0,sizeof(*result));
+#ifdef EXR_READER_NAVIGATION
+  if(command->action>=READER_NAVIGATION_BEGIN && command->action<=READER_NAVIGATION_CLOSE && command->action!=READER_NAVIGATION_CHOOSE) {
+    navigation_readonly(reader,command,result);return;
+  }
+  if(command->action!=READER_NAVIGATION_CHOOSE) navigation_free(reader);
+#endif
 #ifdef EXR_READER_SEARCH
   if(command->action>=READER_SEARCH_BEGIN && command->action<=READER_SEARCH_CLOSE && command->action!=READER_SEARCH_CHOOSE) {
     search_readonly(reader,command,result);return;
@@ -743,6 +774,9 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
       else if(reader->pending_new_pager) exr_pager_free(reader->current.pager);
       reader->current=*pending;memset(pending,0,sizeof(*pending));
       reader->has_pending=reader->pending_owns_session=reader->pending_new_pager=0;
+#ifdef EXR_READER_NAVIGATION
+      reader->navigation_pending=0;
+#endif
 #ifdef EXR_READER_SEARCH
       reader->search_pending=0;
 #endif
@@ -810,6 +844,11 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
 #ifdef EXR_READER_SEARCH
   else if(command->action==READER_SEARCH_CHOOSE) {
     status=search_jump(reader,&next,command,result,&error);new_pager=next.pager!=reader->current.pager;
+  }
+#endif
+#ifdef EXR_READER_NAVIGATION
+  else if(command->action==READER_NAVIGATION_CHOOSE) {
+    status=navigation_jump(reader,&next,command,result,&error);new_pager=next.pager!=reader->current.pager;
   }
 #endif
   else if(command->action==READER_ZOOM || (command->action==READER_SETTINGS && next.fixed_document)) {
@@ -888,6 +927,10 @@ preferences_saved:
     reader->search_pending_token=reader->search_pending ? command->search_token:0;
 #endif
     owned_session=new_pager=0;
+#ifdef EXR_READER_NAVIGATION
+    reader->navigation_pending=command->action==READER_NAVIGATION_CHOOSE;
+    reader->navigation_pending_token=reader->navigation_pending ? command->navigation_token:0;
+#endif
   }
 done:
 #ifdef EXR_READER_PREFERENCES

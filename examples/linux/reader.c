@@ -28,6 +28,13 @@ static int worker_generation;
 static gboolean busy,saving,save_failed,closing,close_after_save;
 static gboolean choosing_file;
 static gboolean profile_writable;
+#ifdef EXR_READER_NAVIGATION_UI
+static gboolean directory_opened(void);
+static void directory_open(GtkWidget *,gpointer);
+static void directory_close(void);
+static char *directory_observation(void);
+static gboolean directory_background(GtkWidget *,GdkEventWindowState *,gpointer);
+#endif
 #ifdef EXR_READER_SEARCH_UI
 static gboolean inbook_opened(void);
 static void inbook_open(GtkWidget *,gpointer);
@@ -49,6 +56,9 @@ static char *preferences_observation(void);
 #endif
 typedef struct { reader_command command;char *path,*comment;int generation,stop,shelf_generation; } host_job;
 typedef struct { reader_result value;reader_action action;int generation,profile_writable,shelf_generation; } host_result;
+#ifdef EXR_READER_NAVIGATION_UI
+static gboolean directory_apply(host_result *);
+#endif
 #ifdef EXR_READER_SEARCH_UI
 static gboolean inbook_apply(host_result *);
 #endif
@@ -159,6 +169,10 @@ static void state(void) {
 #ifdef EXR_READER_SEARCH_UI
   char *inbook_state=inbook_observation();
   complete=g_strconcat(data,inbook_state,NULL);g_free(data);g_free(inbook_state);data=complete;
+#endif
+#ifdef EXR_READER_NAVIGATION_UI
+  char *directory_state=directory_observation();
+  complete=g_strconcat(data,directory_state,NULL);g_free(data);g_free(directory_state);data=complete;
 #endif
   g_file_set_contents(state_path,data,-1,NULL);g_free(data);
 }
@@ -371,6 +385,9 @@ static void notes_present(reader_result *result) {
 }
 static void job_free(host_job *job) {
   g_free(job->path);g_free(job->comment);
+#ifdef EXR_READER_NAVIGATION
+  g_free((gpointer)job->command.navigation_cfi);
+#endif
 #ifdef EXR_READER_SEARCH
   g_free((gpointer)job->command.search_query);
 #endif
@@ -398,6 +415,9 @@ static void queue_commit(void) {
 static void pixels_free(guchar *pixels,gpointer unused) { (void)unused;free(pixels); }
 static gboolean apply_result(gpointer data) {
   host_result *done=data;reader_result *result=&done->value;
+#ifdef EXR_READER_NAVIGATION_UI
+  if(done->action>=READER_NAVIGATION_BEGIN && done->action<=READER_NAVIGATION_CLOSE && directory_apply(done)) goto free_result;
+#endif
 #ifdef EXR_READER_SEARCH_UI
   if(done->action>=READER_SEARCH_BEGIN && done->action<=READER_SEARCH_CLOSE && inbook_apply(done)) goto free_result;
 #endif
@@ -492,6 +512,9 @@ static gpointer work(gpointer font_path) {
   for(;;) {
     host_job *job=g_async_queue_pop(queue);if(job->stop) { job_free(job);break; }
     int barrier=job->command.action==READER_COMMIT;
+#ifdef EXR_READER_NAVIGATION_UI
+    barrier=barrier || job->command.action==READER_NAVIGATION_CLOSE;
+#endif
 #ifdef EXR_READER_SEARCH_UI
     barrier=barrier || job->command.action==READER_SEARCH_CLOSE;
 #endif
@@ -591,6 +614,9 @@ static void submit(reader_action action,int64_t id,const char *path,int size) {
 #ifdef EXR_READER_SEARCH_UI
 #include "search_ui.inc"
 #endif
+#ifdef EXR_READER_NAVIGATION_UI
+#include "navigation_ui.inc"
+#endif
 static void open_id(int64_t id) { submit(READER_OPEN,id,NULL,font_size); }
 static void import_dialog(void) {
   if(busy || closing || save_failed) { state();return; }
@@ -620,6 +646,9 @@ static void focus_list(GtkWidget *box) {
 }
 static void action(GtkWidget *widget,gpointer name) {
   (void)widget;const char *a=name;
+#ifdef EXR_READER_NAVIGATION_UI
+  if(directory_opened()) return;
+#endif
 #ifdef EXR_READER_SEARCH_UI
   if(inbook_opened()) return;
 #endif
@@ -661,6 +690,11 @@ static void action(GtkWidget *widget,gpointer name) {
 static gboolean key(GtkWidget *w,GdkEventKey *event,gpointer unused) {
   (void)w;(void)unused;
   if(choosing_file) return FALSE;
+#ifdef EXR_READER_NAVIGATION_UI
+  if(directory_opened()) return TRUE;
+  if((event->state&GDK_CONTROL_MASK) && (event->state&GDK_SHIFT_MASK) &&
+     (event->keyval==GDK_KEY_t || event->keyval==GDK_KEY_T)) { directory_open(NULL,NULL);return TRUE; }
+#endif
 #ifdef EXR_READER_SEARCH_UI
   if(inbook_opened()) return TRUE;
   if((event->state&GDK_CONTROL_MASK) && (event->state&GDK_SHIFT_MASK) &&
@@ -735,6 +769,9 @@ static void stop_worker(void) {
 }
 static gboolean close_window(GtkWidget *w,GdkEvent *event,gpointer unused) {
   (void)w;(void)event;(void)unused;
+#ifdef EXR_READER_NAVIGATION_UI
+  if(directory_opened()) directory_close();
+#endif
 #ifdef EXR_READER_SEARCH_UI
   if(inbook_opened()) inbook_close();
 #endif
@@ -843,6 +880,10 @@ int main(int argc,char **argv) {
   GtkWidget *book_search=gtk_menu_item_new_with_label("Search within book…");
   gtk_menu_shell_append(GTK_MENU_SHELL(menu),book_search);g_signal_connect(book_search,"activate",G_CALLBACK(inbook_open),NULL);
 #endif
+#ifdef EXR_READER_NAVIGATION_UI
+  GtkWidget *directory_item=gtk_menu_item_new_with_label("Directory / page entries…");
+  gtk_menu_shell_append(GTK_MENU_SHELL(menu),directory_item);g_signal_connect(directory_item,"activate",G_CALLBACK(directory_open),NULL);
+#endif
   gtk_widget_show_all(menu);gtk_menu_button_set_popup(GTK_MENU_BUTTON(more),menu);
   gtk_widget_set_tooltip_text(more,"Organize shelves, tags and series (Ctrl+Shift+C)");
   gtk_box_pack_end(GTK_BOX(shelf_actions),more,FALSE,FALSE,0);
@@ -905,6 +946,9 @@ int main(int argc,char **argv) {
   g_signal_connect(window,"destroy",G_CALLBACK(destroyed),NULL);
 #ifdef EXR_READER_SEARCH_UI
   g_signal_connect(window,"window-state-event",G_CALLBACK(inbook_background),NULL);
+#endif
+#ifdef EXR_READER_NAVIGATION_UI
+  g_signal_connect(window,"window-state-event",G_CALLBACK(directory_background),NULL);
 #endif
   g_signal_connect(shelf,"row-activated",G_CALLBACK(shelf_activated),NULL);
   g_signal_connect(notes,"row-activated",G_CALLBACK(note_activated),NULL);
