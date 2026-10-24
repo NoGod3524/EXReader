@@ -116,7 +116,7 @@ def main():
     add('/dav/err/short.epub', sample_epub, 'short')
     add('/dav/err/liar.epub', sample_epub, 'file', len(sample_epub) + 7)
     add('/dav/err/big.txt', b'a' * (33 * MIB), 'chunked')
-    add('/dav/err/slow.epub', sample_epub * 40, 'slow')
+    add('/dav/err/slow.epub', sample_epub * 400, 'slow')
     add('/dav/err/missing.epub', b'x', 'status:404')
     add('/dav/err/broken.epub', b'x', 'status:500')
     add('/dav/err/pdf-edge.pdf', fx('pdf-public-text.pdf'))
@@ -427,7 +427,7 @@ def main():
         result = transfer('epub_declared_over_128mib', books['中文 书名.epub'], listed=False, expected=128 * MIB + 1)
         assert result['download_status'] == 'limit' and len(requests) == pre, result
         record('streaming_format_declared_over_128_mib_refused_before_request')
-        result = transfer('request_limit_lowers_ceiling', books['中文 书名.epub'], listed=False, max=4096)
+        result = transfer('request_limit_lowers_ceiling', books['中文 书名.epub'], listed=False, max=512)
         assert result['download_status'] == 'limit' and result['staged'] == 0, result
         staging_empty(result, 'lowered')
         record('request_limit_may_lower_ceiling')
