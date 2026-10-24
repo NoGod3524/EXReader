@@ -497,6 +497,9 @@ public final class A11yAuditTest {
         int before = captures.length();
         long started = SystemClock.elapsedRealtimeNanos();
         try {
+            if (!"import_picker".equals(id)) {
+                ensureHost();
+            }
             body.run();
             item.put("verdict", "pass");
         } catch (Finding finding) {
@@ -941,9 +944,27 @@ public final class A11yAuditTest {
 
     private void launch(String extra) throws Exception {
         device.executeShellCommand("am start -W -n " + APP + "/.MainActivity " + extra);
-        assertTrue("the audited host did not come to the foreground",
-                device.wait(Until.hasObject(By.pkg(APP)), 45000));
+        if (!device.wait(Until.hasObject(By.pkg(APP)), 20000)) {
+            device.pressHome();
+            SystemClock.sleep(600);
+            device.executeShellCommand("am start -W -n " + APP + "/.MainActivity " + extra);
+            assertTrue("the audited host did not come to the foreground",
+                    device.wait(Until.hasObject(By.pkg(APP)), 30000));
+        }
         SystemClock.sleep(900);
+    }
+
+    /** Dismiss a foreign window (the system picker) without touching the host itself. */
+    private void ensureHost() throws Exception {
+        for (int attempt = 0; attempt < 4; attempt++) {
+            AccessibilityNodeInfo root = root();
+            if (root != null && APP.equals(safe(root.getPackageName()))) {
+                return;
+            }
+            device.pressBack();
+            SystemClock.sleep(700);
+        }
+        launch("");
     }
 
     private void relaunch(String extra) throws Exception {
@@ -1015,34 +1036,33 @@ public final class A11yAuditTest {
     }
 
     private void pick(String name) throws Exception {
-        long end = SystemClock.uptimeMillis() + 45000;
+        long end = SystemClock.uptimeMillis() + 90000;
         while (SystemClock.uptimeMillis() < end) {
             try {
                 UiObject2 file = device.findObject(By.text(name));
                 if (file != null && file.isEnabled()) {
                     file.click();
                     assertTrue("the picker must return to the host",
-                            device.wait(Until.hasObject(By.pkg(APP)), 20000));
+                            device.wait(Until.hasObject(By.pkg(APP)), 30000));
                     return;
                 }
-                UiObject2 folder = device.findObject(By.text("Download"));
-                if (folder == null) {
-                    folder = device.findObject(By.text("Downloads"));
-                }
-                if (folder != null) {
-                    folder.click();
-                } else {
-                    UiObject2 roots = device.findObject(By.descContains("Show roots"));
-                    if (roots != null) {
-                        roots.click();
-                    } else {
-                        device.swipe(device.getDisplayWidth() / 2, device.getDisplayHeight() * 3 / 4,
-                                device.getDisplayWidth() / 2, device.getDisplayHeight() / 4, 25);
+                // DCIM only appears in the picker's storage root. Inside "Download" the
+                // rows are a scrollable list, and the drawer's Download entry would
+                // navigate back out of the folder.
+                if (device.hasObject(By.text("DCIM"))) {
+                    UiObject2 folder = device.findObject(By.text("Download"));
+                    if (folder != null && folder.isEnabled()) {
+                        folder.click();
+                        SystemClock.sleep(600);
+                        continue;
                     }
                 }
-                SystemClock.sleep(250);
+                int centreX = device.getDisplayWidth() / 2;
+                device.swipe(centreX, (int) (device.getDisplayHeight() * 0.72),
+                        centreX, (int) (device.getDisplayHeight() * 0.38), 24);
+                SystemClock.sleep(450);
             } catch (StaleObjectException stale) {
-                SystemClock.sleep(150);
+                SystemClock.sleep(200);
             }
         }
         throw new AssertionError("the system picker did not list " + name);
