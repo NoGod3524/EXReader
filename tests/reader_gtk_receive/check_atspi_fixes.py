@@ -132,6 +132,9 @@ def main():
         snap('status');assert len(checks) == 10
         report.update(accepted=True, count=len(checks))
     finally:
+        if not report['accepted'] and host.process and host.process.poll() is None and 'app' in locals():
+            snap('failure')
+            print(json.dumps({'focused_at_failure': [bus.path_of(node) for node in bus.focused_all(app)]}), flush=True)
         recorder.stop()
         (output / 'events.json').write_text(json.dumps(recorder.items, indent=2), encoding='utf-8')
         (output / 'keys.json').write_text(json.dumps(keys, indent=2), encoding='utf-8')
