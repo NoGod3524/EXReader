@@ -94,6 +94,60 @@ jobs:
             build/av-consumer/annotation-view-link.map
             build/av-module/CMakeCache.txt
           if-no-files-found: error
+  sanitizer:
+    name: annotation view sanitizer diagnosis (ubuntu-22.04)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 75
+    continue-on-error: true
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the existing build tool version
+        run: python -m pip install ninja==1.11.1.1
+      - name: Install the product SQLite, revisions, frozen SDK and adapter without sanitizers
+        run: |
+          mkdir -p build/av-logs build/av-san-logs
+          cmake -S apps/reader/store/native -B build/av-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/build/av-product-stage" 2>&1 | tee build/av-logs/product-configure.log
+          cmake --build build/av-product --parallel 4 2>&1 | tee build/av-logs/product-build.log
+          cmake --install build/av-product 2>&1 | tee build/av-logs/product-install.log
+          cmake -S apps/reader/revisions -B build/av-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$PWD/build/av-product-stage" -DCMAKE_INSTALL_PREFIX="$PWD/build/av-stage" 2>&1 | tee build/av-logs/revisions-configure.log
+          cmake --build build/av-revisions --parallel 4 2>&1 | tee build/av-logs/revisions-build.log
+          cmake --install build/av-revisions 2>&1 | tee build/av-logs/revisions-install.log
+          cmake --preset reading-library 2>&1 | tee build/av-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/av-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/av-logs/sdk-install.log
+          cmake -S apps/reader/reading-state -B build/av-adapter -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$PWD/build/av-stage;$PWD/build/av-product-stage" -DCMAKE_INSTALL_PREFIX="$PWD/build/av-stage" 2>&1 | tee build/av-logs/adapter-configure.log
+          cmake --build build/av-adapter --parallel 4 2>&1 | tee build/av-logs/adapter-build.log
+          cmake --install build/av-adapter 2>&1 | tee build/av-logs/adapter-install.log
+      - name: Rebuild the optional package and the consumers with AddressSanitizer and UBSan
+        run: |
+          san='-fsanitize=address,undefined -fno-omit-frame-pointer -g'
+          cmake -S apps/reader/annotation-view -B build/av-san-module -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_C_FLAGS="$san" -DCMAKE_CXX_FLAGS="$san" -DCMAKE_PREFIX_PATH="$PWD/build/av-stage;$PWD/build/av-product-stage;$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$PWD/build/av-san-stage" 2>&1 | tee build/av-san-logs/module-configure.log
+          cmake --build build/av-san-module --verbose 2>&1 | tee build/av-san-logs/module-build.log
+          cmake --install build/av-san-module 2>&1 | tee build/av-san-logs/module-install.log
+          cmake -S tests/reader_annotation_view/consumer -B build/av-san-consumer -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_C_FLAGS="$san" -DCMAKE_CXX_FLAGS="$san" -DCMAKE_EXE_LINKER_FLAGS="$san" -DCMAKE_PREFIX_PATH="$PWD/build/av-san-stage;$PWD/build/av-stage;$PWD/build/av-product-stage;$PWD/build/reading-library/stage" 2>&1 | tee build/av-san-logs/consumer-configure.log
+          cmake --build build/av-san-consumer --verbose 2>&1 | tee build/av-san-logs/consumer-build.log
+      - name: Run the sanitized consumers on the same fixture and record the real fault
+        run: |
+          export ASAN_OPTIONS=detect_leaks=0:abort_on_error=0:print_stacktrace=1
+          export UBSAN_OPTIONS=print_stacktrace=1
+          python3 tests/reader_annotation_view/check_annotation_view.py --probe build/av-san-consumer/annotation-view-probe --c-consumer build/av-san-consumer/annotation-view-c-consumer --link-map build/av-san-consumer/annotation-view-link.map --output build/av-san-evidence 2>&1 | tee build/av-san-logs/sanitized-report.log
+      - name: Preserve the sanitizer diagnosis
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-annotation-view-asan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/av-san-logs/
+            build/av-san-evidence/
+          if-no-files-found: error
   evidence:
     name: strict annotation view evidence
     needs: consumers

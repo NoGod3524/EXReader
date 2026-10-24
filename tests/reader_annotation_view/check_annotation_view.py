@@ -78,6 +78,9 @@ def main():
     c_line = ''
     if report_path.exists():
         report = json.loads(report_path.read_text(encoding='utf-8'))
+        # The probe rewrites the whole report after every check, so a fault still
+        # names its exact step. Only a finished run may be judged as accepted.
+        need(report.get('complete') is True, f"probe report is not complete: stopped during {report.get('last_trace')}")
         names = {c['name']: c for c in report['checks']}
         for name in REQUIRED:
             need(name in names, f'required check missing: {name}')
@@ -98,7 +101,8 @@ def main():
         'problems': problems, 'module_version': report and report['module_version'], 'checks_total': report and report['checks_total'],
         'checks_failed': report and report['checks_failed'], 'book_a_initial': report and report['book_a_initial'],
         'book_a_final': report and report['book_a_final'], 'history_revisions': report and report['history_revisions'],
-        'c_consumer': c_line, 'probe_sha256': sha(args.probe), 'c_consumer_sha256': sha(args.c_consumer),
+        'c_consumer': c_line, 'probe_complete': report and report.get('complete'),
+        'probe_last_trace': report and report.get('last_trace'), 'probe_sha256': sha(args.probe), 'c_consumer_sha256': sha(args.c_consumer),
         'report_sha256': sha(report_path) if report_path.exists() else None, 'link_map_sha256': sha(link_map) if link_map.exists() else None,
         'annotation_view_accepted_on_this_platform': not problems, 'uncovered': UNCOVERED,
     }
