@@ -133,8 +133,10 @@ typedef struct {
 } reader_health_options;
 
 /* Plain data. Zero-fill with reader_health_cursor_init and copy by value.
-   A cursor is valid only for the catalog its scanner was created with; using
-   it with another catalog's scanner is READER_HEALTH_ARGUMENT. */
+   A cursor is valid only for the catalog its scanner was created with, and only
+   while that catalog is still open (the cursor borrows its address, so a
+   released catalog may be reused by a later open). Using it with another
+   catalog's scanner is READER_HEALTH_ARGUMENT. */
 typedef struct {
   size_t struct_size;
   uint32_t magic;                 /* READER_HEALTH_CURSOR_MAGIC once initialized */

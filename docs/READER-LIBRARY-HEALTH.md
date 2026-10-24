@@ -77,7 +77,9 @@ past delivered rows, before the visit call, so a host stop request cannot lose a
 row. Cancellation, an unobservable source or a catalog failure never advance the
 cursor. A cursor is plain data; it can be copied and used with another scanner of
 the same catalog (the catalog pointer is checked), and it rejects a foreign
-catalog with `argument`.
+catalog with `argument`. The cursor borrows that pointer, so the catalog must
+stay open while the cursor is in use; a released catalog's address may be reused
+by the next open.
 
 ### Hard limits (fixed in the header, never widened here)
 

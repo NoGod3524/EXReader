@@ -1053,7 +1053,9 @@ static int scenario_limit(const char *workdir, const char *fixtures, const plan_
               "status=%s rows=%llu cursor=%llu hit=%d", reader_health_status_name(status),
               (unsigned long long)rows.count, (unsigned long long)cursor.rows_done, hit);
     reader_health_destroy(&first, &error);
-    options.max_total_rows = 40;
+    /* A limit equal to the row count would report limit_reached at the same
+       time as exhaustion; raise it well past the catalog instead. */
+    options.max_total_rows = 1000;
     if (reader_health_create(catalog, library, &options, &second, &error) == READER_HEALTH_OK) {
       ok = run_steps(second, &cursor, &rows, &steps, &bytes, &status, &info, &error);
       reader_health_destroy(&second, &error);
@@ -1242,15 +1244,19 @@ static int scenario_wrong_catalog(const char *workdir, const char *fixtures, con
     ok = status == READER_HEALTH_OK && rows.count == 1;
     reader_health_destroy(&scanner_a, &error);
   } else ok = 0;
-  exr_library_close(library_a);
-  reader_catalog_close(&catalog_a, NULL);
+  /* The first catalog stays open: a cursor borrows its catalog pointer, so a
+     released catalog's address may be reused by the next open. */
   if (!ok) {
     add_check("wrong_catalog_cursor_rejected", 0, "first catalog scan failed");
+    exr_library_close(library_a);
+    reader_catalog_close(&catalog_a, NULL);
     sink_free(&rows);
     return 0;
   }
   if (!open_pair(dir_b, &catalog_b, &library_b, cp, lp)) {
     add_check("wrong_catalog_cursor_rejected", 0, "%s", cp);
+    exr_library_close(library_a);
+    reader_catalog_close(&catalog_a, NULL);
     sink_free(&rows);
     return 0;
   }
@@ -1289,6 +1295,8 @@ static int scenario_wrong_catalog(const char *workdir, const char *fixtures, con
   sink_free(&rows);
   exr_library_close(library_b);
   reader_catalog_close(&catalog_b, NULL);
+  exr_library_close(library_a);
+  reader_catalog_close(&catalog_a, NULL);
   return g_check_failed == 0;
 }
 
