@@ -10,6 +10,8 @@
 NCX子项尚未选中，Open仍禁用，随后mnemonic没有提交；Search30/296、原46+105+4+AT-SPI10通过，设置仍33/35。
 云端只读诊断`40126131632`在原failure-tree确认了modal active、行未selected和Open不敏感。
 现在在行替换结束后恢复原生列表焦点，探针先等真实行分配和选中/Open可用，再发一次打开快捷键；不重放点击。
+焦点修复的专项`bd32a6ee`/run`40126438508`已29/29通过；同一恢复规则也用于重复spine候选页，
+但候选保持未选择、Open禁用，必须由用户明确选中，不因恢复焦点默认取第一项。
 
 可选`EXR_READER_GTK_NAVIGATION=ON`和安装前缀`READER_NAVIGATION_PREFIX`接入，默认关闭。
 原“更多”末尾及Ctrl+Shift+T打开原生模态目录，每层只显示当前32行，可打开条目、进入子级、返回或继续分页。

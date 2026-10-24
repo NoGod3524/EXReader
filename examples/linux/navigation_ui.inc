@@ -18,8 +18,11 @@ static gboolean directory_focus_after_rows(gpointer unused) {
   (void)unused;directory.focus_idle=0;
   if(directory.dialog && !directory.running) {
     GtkWidget *focus=gtk_window_get_focus(GTK_WINDOW(directory.dialog));
-    if(!focus || focus==directory.cancel || focus==directory.children || focus==directory.open || focus==directory.back || focus==directory.more)
+    if(!focus || focus==directory.cancel || focus==directory.children || focus==directory.open || focus==directory.back || focus==directory.more) {
       gtk_widget_grab_focus(directory.list);
+      /* Focus does not choose the first member of an ambiguous spine. */
+      if(directory.candidate_mode) gtk_list_box_unselect_all(GTK_LIST_BOX(directory.list));
+    }
     state();
   }
   return G_SOURCE_REMOVE;
@@ -95,7 +98,9 @@ static void directory_row(uint64_t index,const char *label,unsigned children,gbo
 static void directory_candidates(void) {
   directory_clear();size_t end=MIN(directory.candidate_first+32,directory.candidate_count);
   for(size_t i=directory.candidate_first;i<end;i++) directory_row(directory.candidates[i],"",0,TRUE);
-  directory.next=end<directory.candidate_count ? end:READER_NAVIGATION_NONE;gtk_widget_show_all(directory.list);directory_controls();state();
+  directory.next=end<directory.candidate_count ? end:READER_NAVIGATION_NONE;gtk_widget_show_all(directory.list);
+  if(!directory.focus_idle) directory.focus_idle=g_idle_add(directory_focus_after_rows,NULL);
+  directory_controls();state();
 }
 static void directory_selected(GtkListBox *list,GtkListBoxRow *row,gpointer unused) {
   (void)list;(void)unused;directory.selected=row ? GPOINTER_TO_SIZE(g_object_get_data(G_OBJECT(row),"navigation-index")):READER_NAVIGATION_NONE;
