@@ -49,8 +49,8 @@ jobs:
             "== $path" | Out-File $out -Append -Encoding utf8
             if (Test-Path $path) {
               Get-ChildItem $path | ForEach-Object {
-                $name = (Get-ItemProperty $_.PSPath -Name '(default)' -ErrorAction SilentlyContinue).'(default)'
-                "$($_.PSChildName) | $name" | Out-File $out -Append -Encoding utf8
+                $item = Get-ItemProperty $_.PSPath -ErrorAction SilentlyContinue
+                "$($_.PSChildName) | default=$($item.'(default)') | Name=$($item.Name) | Language=$($item.Language) | Gender=$($item.Gender)" | Out-File $out -Append -Encoding utf8
               }
             } else {
               "absent" | Out-File $out -Append -Encoding utf8

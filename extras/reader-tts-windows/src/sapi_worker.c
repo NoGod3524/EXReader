@@ -162,6 +162,11 @@ static reader_tts_status enumerate_voices(reader_tts_voice_list *list, int *nati
     if (SUCCEEDED(((ISpDataKey *)token)->lpVtbl->GetStringValue((ISpDataKey *)token, L"Name", &name)) && name) {
       voices[index].name = utf16_to_utf8(name);
       CoTaskMemFree(name);
+    } else if (SUCCEEDED(((ISpDataKey *)token)->lpVtbl->GetStringValue((ISpDataKey *)token, NULL, &name))
+               && name) {
+      /* Tokens whose friendly name lives in the default value only. */
+      voices[index].name = utf16_to_utf8(name);
+      CoTaskMemFree(name);
     }
     if (SUCCEEDED(((ISpDataKey *)token)->lpVtbl->GetStringValue((ISpDataKey *)token, L"Language", &language))
         && language) {
