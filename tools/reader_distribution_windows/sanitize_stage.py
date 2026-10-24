@@ -1,12 +1,20 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-"""Rewrite build-machine roots out of the text surfaces of a distribution stage.
+"""Prepare a distribution stage: reduce vendor archives, then rewrite text roots.
 
-Detection is case-insensitive, so rewriting is too: each matched span is
-replaced by a stable token and recorded with its original bytes. The copy is
-then audited by rebuilding it byte-for-byte from the recorded occurrences, so a
-rewrite can never hide a second edit. Binary containers are never touched: a
-binary hit is a refusal and the leaking archive stays blocked.
+Order matters and is audited:
+
+  1. the installed stage is copied (symlinks refused, destination must be new);
+  2. Windows version-resource objects are removed from vendor static libraries
+     and each archive is rebuilt by the real lib.exe (see reduce_archives.py);
+  3. the copy is re-scanned, so only surfaces that survive the reduction are
+     classified;
+  4. textual build roots are replaced by stable tokens with every replaced span
+     recorded, and the rewrite is proven invertible, idempotent and line-stable;
+  5. the copy is re-scanned again: any remaining hit is reported and blocks.
+
+Binary containers are never patched: a binary hit that survives the structural
+reduction stays a refusal, so a leaking archive cannot be shipped silently.
 """
 import argparse
 import json
@@ -60,8 +68,18 @@ def main():
     distlib.require(needles, 'scan report has no patterns to rewrite')
     before = stage_digest(args.source)
     destination = copy_tree(args.source, args.destination)
+
+    reduced = []
+    if args.reduce_archives:
+        with tempfile.TemporaryDirectory() as temporary:
+            for library in sorted(destination.rglob('*.lib')):
+                record = reduce_archives.reduce_library(library, args.lib_tool, args.dumpbin,
+                                                        needles, temporary)
+                if record:
+                    reduced.append(record)
+
     rewritten, refused = [], []
-    for record in scan['records']:
+    for record in distlib.scan_tree(destination, needles):
         if not record['hits']:
             continue
         path = destination / record['path']
@@ -93,14 +111,7 @@ def main():
                           'bytes_before': len(payload), 'bytes_after': len(replacement),
                           'sha256_before': distlib.digest_bytes(payload),
                           'sha256_after': distlib.digest_bytes(replacement)})
-    reduced = []
-    if args.reduce_archives:
-        with tempfile.TemporaryDirectory() as temporary:
-            for library in sorted(destination.rglob('*.lib')):
-                record = reduce_archives.reduce_library(library, args.lib_tool, args.dumpbin,
-                                                        needles, temporary)
-                if record:
-                    reduced.append(record)
+
     after = stage_digest(destination)
     residual = distlib.scan_tree(destination, needles)
     text_hits = sum(1 for item in residual for hit in item['hits'] if hit['class'] == 'text')
@@ -116,9 +127,9 @@ def main():
     distlib.write_json(args.output, report)
     print(json.dumps({'rewritten': len(rewritten), 'refused': len(refused),
                       'reduced': len(reduced),
-                      'residual_text': text_hits, 'residual_binary': binary_hits,
                       'occurrences': sum(len(item['occurrences']) for item in rewritten),
                       'removed_members': sum(len(item['removed']) for item in reduced),
+                      'residual_text': text_hits, 'residual_binary': binary_hits,
                       'accepted': report['accepted']}))
     if refused:
         print('blocking binary or non-rewritable build-machine paths: ' +

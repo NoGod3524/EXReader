@@ -33,6 +33,7 @@ CATEGORY_ORDER = ('header', 'config', 'license', 'library', 'doc', 'example', 'o
 REWRITABLE_SUFFIXES = frozenset({
     '.md', '.txt', '.json', '.cmake', '.py', '.c', '.h', '.hpp', '.cpp', '.html', '.htm',
     '.xml', '.yml', '.yaml', '.cfg', '.ini', '.in', '.rst', '.ps1', '.sh', '.map', '.def',
+    '.pc', '.pri', '.prl', '.props', '.targets', '.conf', '.pc.in',
 })
 DEFAULT_SCAN_LIMIT = 256 * 1024 * 1024
 SEAL_EPOCH = 946684800  # 2000-01-01T00:00:00Z so resealing is byte-identical.
