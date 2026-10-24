@@ -75,6 +75,28 @@ def verify_zip(zip_bytes, meta):
     return problems
 
 
+def evidence_prefix(names):
+    """Directory inside the artifact that holds the evidence ("" at the root)."""
+    for name in names:
+        if name.rsplit("/", 1)[-1] == "results.json":
+            return name.rsplit("/", 1)[0] if "/" in name else ""
+    return None
+
+
+def scope_entries(actual, prefix):
+    """Keeps only the files under the evidence prefix and strips it, so the
+    per-file manifest (written relative to the evidence directory) applies."""
+    scoped = {}
+    for name, digest in actual.items():
+        if prefix:
+            if not name.startswith(prefix + "/"):
+                continue
+            scoped[name[len(prefix) + 1:]] = digest
+        else:
+            scoped[name] = digest
+    return scoped
+
+
 def verify_file_manifest(entries, actual):
     """entries: list of (sha256, relpath) from files.sha256; actual: relpath->sha."""
     problems = problem_list()
@@ -266,7 +288,7 @@ def main():
 
         actual = {}
         payload = None
-        manifest_lines = []
+        manifest_text = None
         try:
             with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
                 for info in zf.infolist():
@@ -274,21 +296,27 @@ def main():
                         continue
                     data = zf.read(info)
                     actual[info.filename] = sha256_bytes(data)
-                    if info.filename == "results.json":
+                    base = info.filename.rsplit("/", 1)[-1]
+                    if base == "results.json" and payload is None:
                         payload = json.loads(data.decode("utf-8"))
-                    elif info.filename == "files.sha256":
-                        manifest_lines = data.decode("utf-8").splitlines()
+                    elif base == "files.sha256" and manifest_text is None:
+                        manifest_text = data.decode("utf-8")
         except (zipfile.BadZipFile, ValueError) as exc:
             problems.append("%s: unusable ZIP: %s" % (key, exc))
             continue
         if payload is None:
             problems.append("%s: no results.json inside the artifact" % key)
             continue
-        if not manifest_lines:
+        prefix = evidence_prefix(list(actual))
+        if prefix is None:
+            problems.append("%s: results.json is not inside a directory" % key)
+            continue
+        if not manifest_text:
             problems.append("%s: no files.sha256 inside the artifact" % key)
         else:
+            scoped = scope_entries(actual, prefix)
             problems.extend("%s: %s" % (key, p)
-                            for p in verify_file_manifest(manifest_lines, actual))
+                            for p in verify_file_manifest(manifest_text.splitlines(), scoped))
         problems.extend("%s: %s" % (key, p)
                         for p in verify_payload(payload, expected, args.source_sha,
                                                 args.run_id, args.run_attempt))

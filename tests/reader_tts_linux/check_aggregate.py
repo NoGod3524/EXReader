@@ -146,6 +146,23 @@ def main():
     manifest = ["%s  results.json" % ("d" * 64), "%s  logs/live.log" % ("e" * 64)]
     actual = {"results.json": "d" * 64, "logs/live.log": "e" * 64}
     record("accept_clean_manifest", aggregate.verify_file_manifest(manifest, actual), True)
+
+    # artifacts keep the evidence in a directory of its own, next to the logs and
+    # the installed prefix; the manifest is relative to that directory.
+    packed = {"evidence/results.json": "d" * 64, "evidence/logs/live.log": "e" * 64,
+              "evidence/files.sha256": "f" * 64, "pkg-logs/build.log": "1" * 64,
+              "stage/lib/libreader_tts.a": "2" * 64}
+    prefix = aggregate.evidence_prefix(list(packed))
+    record("accept_evidence_prefix", [] if prefix == "evidence" else ["prefix is %r" % prefix], True)
+    scoped = aggregate.scope_entries(packed, prefix)
+    record("accept_prefixed_manifest", aggregate.verify_file_manifest(manifest, scoped), True)
+    record("reject_prefixed_manifest_tamper", aggregate.verify_file_manifest(
+        manifest, dict(scoped, **{"logs/live.log": "0" * 64})), False)
+    record("reject_flat_manifest_tamper", aggregate.verify_file_manifest(
+        ["%s  results.json" % ("0" * 64), manifest[1]], actual), False)
+    record("reject_no_evidence_prefix",
+           [] if aggregate.evidence_prefix(["pkg-logs/build.log"]) is None
+           else ["a stray results.json was accepted"], True)
     record("reject_manifest_digest", aggregate.verify_file_manifest(
         ["%s  results.json" % ("0" * 64), manifest[1]], actual), False)
     record("reject_manifest_extra_entry", aggregate.verify_file_manifest(
