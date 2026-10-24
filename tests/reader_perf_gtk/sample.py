@@ -485,7 +485,7 @@ class Sampler:
             return
         self.turns(host, watch, *TURNS['resume_turn'])
 
-    def import_keys(self, host, watch):
+    def import_keys(self, host, watch, book_before):
         for slot in range(IMPORT_KEY_SLOTS):
             handle = self.expect('import_input_response')
             latest = watch.latest()
@@ -500,14 +500,16 @@ class Sampler:
                 self.record(handle, 'failed', note='key injection failed: %s' % error)
                 continue
             index, event = watch.wait(
-                lambda state: state['host'].get('busy') == 1, 60, since)
+                lambda state: (state['host'].get('busy') == 1
+                               and state['host'].get('book') == book_before), 60, since)
             if index is None:
-                self.record(handle, 'failed', note='no busy observation for the injected key: %s' % event)
+                self.record(handle, 'failed',
+                            note='no busy observation for the injected key: %s' % event)
                 continue
             self.record(handle, 'ok', start=stamp, end=event['at'], event=event,
-                        note='worker still busy; the main loop answered the key')
+                        note='same book and worker busy; the main loop answered the key')
 
-    def import_resize(self, host, watch):
+    def import_resize(self, host, watch, book_before):
         handle = self.expect('import_resize_paint')
         latest = watch.latest()
         if latest is None or latest['state']['host'].get('busy') != 1:
@@ -530,8 +532,12 @@ class Sampler:
         if index is None:
             self.record(handle, 'failed', note='no paint after the resize during import: %s' % event)
             return
+        if event['state']['host'].get('book') != book_before:
+            self.record(handle, 'not_observed',
+                        note='the observed paint belongs to the applied import, not the resize')
+            return
         self.record(handle, 'ok', start=stamp, end=event['at'], event=event,
-                    note='resize during import')
+                    note='resize paint while the same book stays on screen and the worker is busy')
 
     def scenario_import(self, index, host, watch):
         handle = self.expect('startup_shelf_rows', 'warm_catalog')
@@ -548,11 +554,12 @@ class Sampler:
         except (SampleError, subprocess.SubprocessError) as error:
             print('LAUNCH-NOTE %02d activation failed: %s' % (index, error), flush=True)
             return
-        rows = event['state']['host'].get('books', 0)
         for attempt in range(IMPORTS_PER_LAUNCH):
             path = self.import_paths[self.import_ring % len(self.import_paths)]
             self.import_ring += 1
             completion = self.expect('import_complete')
+            before = watch.latest()
+            book_before = before['state']['host'].get('book', 0) if before else 0
             since = watch.mark()
             try:
                 stamp = host.open_import_dialog(path)
@@ -562,20 +569,21 @@ class Sampler:
             except (SampleError, subprocess.SubprocessError) as error:
                 self.record(completion, 'failed', note=str(error))
                 continue
-            self.import_keys(host, watch)
+            self.import_keys(host, watch, book_before)
             if attempt % 2 == 0:
-                self.import_resize(host, watch)
+                self.import_resize(host, watch, book_before)
             try:
                 done_index, done_event = self.await_state(
                     host, watch,
-                    lambda state: settled(state) and state['host'].get('books', 0) > rows,
+                    lambda state: (settled(state) and state['host'].get('reader_visible') == 1
+                                   and state['host'].get('book') not in (0, book_before)),
                     300, busy_index, 'import completion')
             except SampleError as error:
                 self.record(completion, 'failed', note=str(error))
                 continue
-            rows = done_event['state']['host'].get('books', rows)
             self.record(completion, 'ok', start=stamp, end=done_event['at'], event=done_event,
-                        note='file=%s bytes=%d rows=%s' % (path.name, path.stat().st_size, rows))
+                        note='file=%s bytes=%d book=%s' % (path.name, path.stat().st_size,
+                                                           done_event['state']['host'].get('book')))
             try:
                 self.await_state(host, watch,
                                  lambda state: state['host'].get('reader_visible') == 1 and settled(state),
