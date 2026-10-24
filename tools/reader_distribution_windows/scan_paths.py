@@ -115,13 +115,14 @@ def main():
             sorted(by_suffix.items(), key=lambda pair: -pair[1])[:8]))
     blocking = [hit for item in records for hit in item['hits'] if hit['class'] == 'binary']
     surfaces = ({'drective_absolute': summary['drective_absolute'],
-                 'member_names_with_separator': summary['member_names_with_separator'],
                  'member_names_escaping': summary['member_names_escaping'],
                  'absolute_imports': sum(len(item.get('absolute_imports', [])) for item in records)})
     print(json.dumps({'files': summary['files'], 'hits': summary['hits'],
                       'text_hits': summary['text_hits'], 'binary_hits': summary['binary_hits'],
                       'debug_section_count': summary['debug_section_count'],
                       'archives': summary['archives'], 'pe_files': summary['pe_files'],
+                      'relative_member_names_with_separator':
+                          summary['member_names_with_separator'],
                       'surfaces': surfaces}))
     if args.require_clean:
         if blocking or any(surfaces.values()):
