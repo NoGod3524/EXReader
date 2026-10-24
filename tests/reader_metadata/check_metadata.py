@@ -150,6 +150,11 @@ def main():
     utf8 = sql('SELECT body_json FROM reader_revisions WHERE revision_id=?', (series['id'],))[0][0].encode()
     assert '系列😀'.encode() in utf8 and b'\\ud83d' not in utf8
     record('typed_group_names_remain_standard_utf8_with_supplementary_characters')
+    racing = group(name='race')
+    raw_group(racing['key'], racing['id'], 'v' + '%032x' % 903, 903)
+    race = invoke('snapshot-race', racing['key'])
+    assert race['coherent'] > 0 and race['coherent'] + race['conflicts'] == 240
+    record('concurrent_native_writer_never_combines_old_metadata_with_new_expected_heads')
 
     for phase in ('stage', 'apply'):
         marker = folder / (phase + '-ready');before = counts()
@@ -195,7 +200,7 @@ def main():
     before = counts();group(name='a' * 257, mode='finish', expected=8)
     assert counts() == before and journal.exists();invoke('abandon')
     record('producer_validation_failure_preserves_the_intent_and_zero_transaction_effects')
-    assert len(checks) == 28, len(checks)
+    assert len(checks) == 29, len(checks)
     result = {'accepted': True, 'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
               'attempt': int(os.environ['GITHUB_RUN_ATTEMPT']), 'platform': sys.platform, 'count': len(checks), 'checks': checks,
               'sdk_database_writes': False, 'schema1_changed': False, 'wire_changed': False, 'network_used': False,

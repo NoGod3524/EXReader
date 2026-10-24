@@ -208,6 +208,14 @@ void observe(reader_metadata_owner &owner,reader_metadata_snapshot &value){
   value.deleted=value.deleted||value.graph.deleted;
   if(value.graph.heads!=value.heads.size())reject(READER_METADATA_CONFLICT,"Observed metadata head set exceeds the command bound");
 }
+void verify_observation(reader_metadata_owner &owner,reader_metadata_snapshot &value){
+  reader_metadata_snapshot after;after.entity=value.entity;after.kind=value.kind;after.key=value.key;observe(owner,after);
+  const auto &a=value.graph;const auto &b=after.graph;
+  if(value.heads!=after.heads||a.revisions!=b.revisions||a.missing_parents!=b.missing_parents||a.foreign_parents!=b.foreign_parents||
+      a.projection_safe!=b.projection_safe||a.deleted!=b.deleted||a.requires_restore!=b.requires_restore)
+    reject(READER_METADATA_CONFLICT,"Metadata changed while preparing the snapshot; refresh before editing");
+  value.deleted=value.deleted||value.graph.deleted;
+}
 bool conflict(const reader_metadata_snapshot &value){return value.dependency_deleted||value.graph.heads>1||value.graph.missing_parents||value.graph.foreign_parents||value.graph.requires_restore;}
 struct receive_context {reader_metadata_snapshot *value;std::exception_ptr error;};
 int receive_book(void *context,const reader_catalog_row *row){
@@ -312,12 +320,13 @@ extern "C" reader_metadata_status reader_metadata_prepare_book(reader_metadata_o
   if(out)*out=nullptr;
   return call(error,[&]{guard lock(owner);if(!out)reject(READER_METADATA_ARGUMENT,"Missing metadata snapshot output");
     auto value=std::make_unique<reader_metadata_snapshot>();value->database=owner->database;value->key=text(book_key,72);value->book_key=value->key;
+    observe(*owner,*value);
     reader_catalog_error e{};int found=0;receive_context copy{value.get(),{}};
     catalog_check(reader_catalog_find(owner->catalog,value->key.c_str(),nullptr,receive_book,&copy,&found,&e),e);
     if(copy.error)std::rethrow_exception(copy.error);
-    observe(*owner,*value);
+    verify_observation(*owner,*value);
     value->needs_bootstrap=value->present&&!value->graph.revisions;
-    reader_metadata_status status=!value->present||conflict(*value)?READER_METADATA_CONFLICT:value->needs_bootstrap?READER_METADATA_NEEDS_BOOTSTRAP:READER_METADATA_OK;
+    reader_metadata_status status=!value->present||value->deleted||conflict(*value)?READER_METADATA_CONFLICT:value->needs_bootstrap?READER_METADATA_NEEDS_BOOTSTRAP:READER_METADATA_OK;
     *out=value.release();return status;
   });
 }
@@ -328,10 +337,11 @@ extern "C" reader_metadata_status reader_metadata_prepare_group(reader_metadata_
     reader_catalog_group_kind native_kind=catalog_kind(kind);value->key=value->group_id=text(group_id,32,true);
     if(!value->key.empty()){
       if(!id(value->key))reject(READER_METADATA_ARGUMENT,"Invalid global group identity");
+      observe(*owner,*value);
       reader_catalog_error e{};int found=0;receive_context copy{value.get(),{}};
       catalog_check(reader_catalog_group_find(owner->catalog,native_kind,value->key.c_str(),receive_group,&copy,&found,&e),e);
       if(copy.error)std::rethrow_exception(copy.error);
-      observe(*owner,*value);
+      verify_observation(*owner,*value);
     }
     reader_metadata_status status=conflict(*value)?READER_METADATA_CONFLICT:READER_METADATA_OK;
     *out=value.release();return status;
@@ -344,6 +354,7 @@ extern "C" reader_metadata_status reader_metadata_prepare_membership(reader_meta
     reader_catalog_group_kind native_kind=catalog_kind(kind);value->group_id=text(group_id,32);value->book_key=text(book_key,72);
     if(!id(value->group_id))reject(READER_METADATA_ARGUMENT,"Invalid global group identity");
     value->key=std::string(kind_name(kind))+":"+value->group_id+":"+value->book_key;
+    observe(*owner,*value);
     reader_catalog_error e{};int found=0;receive_context copy{value.get(),{}};
     catalog_check(reader_catalog_membership_find(owner->catalog,native_kind,value->group_id.c_str(),value->book_key.c_str(),receive_member,&copy,&found,&e),e);
     if(copy.error)std::rethrow_exception(copy.error);
@@ -351,7 +362,7 @@ extern "C" reader_metadata_status reader_metadata_prepare_membership(reader_meta
     catalog_check(reader_catalog_group_find(owner->catalog,native_kind,value->group_id.c_str(),receive_group,&group_copy,&group_found,&e),e);
     if(group_copy.error)std::rethrow_exception(group_copy.error);
     value->dependency_deleted=value->dependency_deleted||!group_found||group.deleted;
-    observe(*owner,*value);uint64_t bytes=0;reader_revision_error revision_error{};
+    verify_observation(*owner,*value);uint64_t bytes=0;reader_revision_error revision_error{};
     reader_revision_status known=reader_revision_book_identity(owner->revisions,value->book_key.c_str(),&bytes,&revision_error);
     if(known==READER_REV_NOT_FOUND)value->needs_bootstrap=1;else revision_check(known,revision_error);
     reader_metadata_status status=conflict(*value)?READER_METADATA_CONFLICT:value->needs_bootstrap?READER_METADATA_NEEDS_BOOTSTRAP:READER_METADATA_OK;
