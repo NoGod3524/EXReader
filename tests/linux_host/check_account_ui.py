@@ -231,6 +231,16 @@ def main():
     def pause_next():
         blocked.clear();release.clear();flags['pause'] = True
 
+    def start_preparing():
+        command('xdotool', 'key', '--clearmodifiers', 'alt+s')
+        end = time.monotonic() + 5
+        while time.monotonic() < end:
+            if account().get('preparing') == '1':
+                return
+            assert account().get('session_present') == '0', 'preparation unexpectedly passed before close input'
+            time.sleep(.002)
+        raise TimeoutError('Local preparation did not start')
+
     try:
         originals = {}
         host.launch()
@@ -258,10 +268,19 @@ def main():
         loaded = ready(lambda s: s['credential_status'] == '0' and s['has_password'] == '1')
         assert loaded['has_user'] == '1' and loaded['remember'] == '1' and loaded['id'] == identity and loaded['password_visible'] == '0'
         record('new_actual_process_loads_saved_credentials_with_the_same_stable_account_id')
+        start_preparing();command('xdotool', 'key', '--clearmodifiers', 'alt+F4');window(False)
+        ready(lambda s: s['session_present'] == '0' and s['visible'] == '0')
+        assert not requests and account()['session_generation'] == '0'
+        record('back_during_local_preparation_cancels_owner_work_before_network_start')
+        open_account();start_preparing();command('wmctrl', '-ic', hex(int(host.window)))
+        assert host.process.wait(timeout=35) == 0;host.log.close();assert not requests
+        record('main_window_close_during_preparation_retires_queued_owner_work_before_shutdown')
+        host.launch();open_account()
         host.key('alt+s');done = ready(lambda s: s['session_state'] in ('4', '5'), seconds=180)
         assert done['session_state'] == '4', done
-        assert done['seen'] == '52' and done['prepared'] == '52' and done['pending'] == '0' and done['failed'] == '0'
-        assert done['max_page_rows'] == '50' and done['bootstraps'] == '52' and done['completed_shards'] == '256'
+        assert done['seen'] == '52' and int(done['prepared']) + int(done['existing']) == 52 and done['pending'] == '0' and done['failed'] == '0'
+        assert done['max_page_rows'] == '50' and done['completed_shards'] == '256'
+        assert sql("SELECT count(*) FROM reader_revisions WHERE entity_kind='book'") == [(52,)]
         staged = host.folder / 'profile/sync-originals'
         assert {p.name for p in staged.iterdir()} == {digest + '.txt' for digest in originals}
         for digest, body in originals.items():
@@ -367,7 +386,7 @@ def main():
                 data = path.read_bytes();assert not any(form in data for form in forms), 'credential leak in ' + str(path.relative_to(folder))
         assert not any(form in body for form in forms for body in entries.values())
         record('credentials_and_authorization_are_absent_from_profiles_product_databases_wire_and_all_evidence')
-        assert len(checks) == 20, len(checks)
+        assert len(checks) == 22, len(checks)
         report.update(accepted=True, count=len(checks), local_originals=52, credential_leak_hits=0,
                       actual_secret_service='temporary unlocked then locked GNOME collection', native_https=True)
     finally:
