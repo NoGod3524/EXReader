@@ -1,0 +1,27 @@
+{
+  "package": "J14",
+  "module": "library-health",
+  "schema": 1,
+  "branch": "codex/reader-library-health",
+  "fixed_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "workflow": ".github/workflows/reader-library-health.yml",
+  "accepted": false,
+  "status": "awaiting the first same-source cloud run; every claim below is filled only from Actions evidence",
+  "tested_source_sha": null,
+  "run_id": null,
+  "attempt": null,
+  "jobs": [],
+  "artifacts": [],
+  "named_results": [],
+  "failed_attempts": [],
+  "not_covered": [
+    "host UI, product actions and user-visible repair flows",
+    "catalog rows inserted or deleted while a step is running",
+    "SDK private tables, schema migration and sync transport",
+    "performance or accessibility budgets for any host surface"
+  ],
+  "complete_product": false,
+  "host_wired": false,
+  "performance_claimed": false,
+  "repair_performed": false
+}

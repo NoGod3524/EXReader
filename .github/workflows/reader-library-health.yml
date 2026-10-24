@@ -1,0 +1,117 @@
+name: Reader library health
+on:
+  push:
+    branches: [codex/reader-library-health]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  consumers:
+    name: library health consumers (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-15]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Pin source, common start, protected SDK and schema trees, and package ownership
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code f32bb8aa18ed3de286900f19ce4230fd93435dd0 HEAD -- apps/reader/store/001_catalog.sql
+          if git diff --name-only f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD | grep -v -E '^(apps/reader/library-health/|tests/reader_library_health/|\.github/workflows/reader-library-health\.yml$|docs/READER-LIBRARY-HEALTH\.md$|docs/validation/reader-library-health\.json$)'; then
+            echo "files outside the J14 ownership list changed"; exit 1
+          fi
+      - name: Enter Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Install the unchanged product catalog provider
+        run: |
+          mkdir -p build/lh-logs
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "LH_WS=$ws" >> "$GITHUB_ENV"
+          cmake -S apps/reader/store/native -B build/lh-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/lh-product-stage" 2>&1 | tee build/lh-logs/product-configure.log
+          cmake --build build/lh-product --parallel 4 2>&1 | tee build/lh-logs/product-build.log
+          cmake --install build/lh-product
+      - name: Build and install the frozen reading SDK
+        run: |
+          cmake --preset reading-library 2>&1 | tee build/lh-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/lh-logs/sdk-build.log
+          cmake --install build/reading-library
+      - name: Build and install the optional library-health package
+        run: |
+          cmake -S apps/reader/library-health -B build/lh-lib -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DEXR_SDK="$LH_WS/build/reading-library/stage" \
+            -DCMAKE_PREFIX_PATH="$LH_WS/build/lh-product-stage" \
+            -DCMAKE_INSTALL_PREFIX="$LH_WS/build/lh-stage" 2>&1 | tee build/lh-logs/health-configure.log
+          cmake --build build/lh-lib --verbose 2>&1 | tee build/lh-logs/health-build.log
+          cmake --install build/lh-lib 2>&1 | tee build/lh-logs/health-install.log
+      - name: Compile isolated C and C++ consumers from the installed packages only
+        run: |
+          cmake -S tests/reader_library_health/consumer -B build/lh-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$LH_WS/build/lh-stage;$LH_WS/build/lh-product-stage;$LH_WS/build/reading-library/stage" 2>&1 | tee build/lh-logs/consumer-configure.log
+          cmake --build build/lh-consumer --verbose 2>&1 | tee build/lh-logs/consumer-build.log
+      - name: Generate the 2202-row catalog, four-format originals and plans
+        run: python3 tests/reader_library_health/make_fixtures.py build/lh-fixtures
+      - name: Scan, cancel, change and re-hash every original from the installed consumers
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_library_health/check_health.py \
+            --probe "build/lh-consumer/library-health-probe$exe" \
+            --cpp "build/lh-consumer/library-health-cpp-consumer$exe" \
+            --fixtures build/lh-fixtures --work build/lh-work \
+            --installed build/lh-stage --output build/lh-evidence
+      - name: Preserve logs, raw reports and the same-run result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-library-health-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/lh-evidence/
+            build/lh-work/ev/
+            build/lh-logs/
+            build/lh-fixtures/manifest.json
+            build/lh-fixtures/plan.tsv
+            build/lh-fixtures/adversarial.tsv
+            build/lh-consumer/library-health-probe*
+            build/lh-consumer/library-health-cpp-consumer*
+            build/lh-stage/
+          if-no-files-found: error
+  evidence:
+    name: strict library health evidence
+    needs: [consumers]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate all platform ZIPs and compare their named outcomes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_library_health/check_artifacts.py build/lh-artifact-evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-library-health-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/lh-artifact-evidence/
+          if-no-files-found: error
