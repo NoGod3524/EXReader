@@ -178,6 +178,8 @@ def main():
     print("regressions ok=%s old=%s new=%s skipped=%d" % (
         report["ok"], report["old_probe_sha256"][:12], report["new_probe_sha256"][:12],
         len(skipped)))
+    print("probe old=%s" % report["old_probe_sha256"])
+    print("probe new=%s" % report["new_probe_sha256"])
     for reason in skipped:
         print("SKIP " + reason)
     for name in sorted(detail):
