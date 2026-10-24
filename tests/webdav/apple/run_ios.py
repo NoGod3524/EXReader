@@ -30,7 +30,8 @@ def main():
     run('module-configure', ['cmake', '-S', 'extras/webdav', '-B', module, *common, '-DCMAKE_INSTALL_PREFIX=' + str(stage)])
     run('module-build', ['cmake', '--build', module, '--verbose'])
     run('module-install', ['cmake', '--install', module])
-    run('consumer-configure', ['cmake', '-S', 'tests/webdav/apple', '-B', consumer, *common, '-DCMAKE_PREFIX_PATH=' + str(stage)])
+    run('consumer-configure', ['cmake', '-S', 'tests/webdav/apple', '-B', consumer, *common,
+                               '-DEXReaderWebDAV_DIR=' + str(stage / 'lib/cmake/EXReaderWebDAV')])
     run('consumer-build', ['cmake', '--build', consumer, '--verbose'])
     app = consumer / 'WebDAVProbe.app'; binary = app / 'WebDAVProbe'
     run('sign', ['codesign', '--force', '--sign', '-', app])
