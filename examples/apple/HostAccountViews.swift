@@ -80,7 +80,7 @@ private struct HostAccountChooser: View {
         .frame(minWidth: 360, idealWidth: 480, minHeight: 480)
 #endif
         .onSubmit { focused = nil }
-        .onDisappear { username = ""; password = "" }
+        .onDisappear { username = ""; password = ""; root = ""; updating = nil; failure = ""; focused = nil }
     }
 }
 
