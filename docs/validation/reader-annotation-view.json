@@ -1,0 +1,18 @@
+{
+  "accepted": false,
+  "status": "implemented; no cloud run recorded yet",
+  "package": "EXReaderAnnotationView 0.1.0",
+  "common_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "branch": "codex/reader-annotation-view",
+  "source_sha": null,
+  "run_id": null,
+  "attempt": null,
+  "artifacts": [],
+  "jobs": [],
+  "not_granted": [
+    "macOS/iOS/Android hosts beyond the macOS-15 desktop runner",
+    "host navigation, UI and accessibility",
+    "real devices and WebDAV transport",
+    "cross-device annotation synchronization"
+  ]
+}
