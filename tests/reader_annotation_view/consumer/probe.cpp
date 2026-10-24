@@ -514,17 +514,19 @@ int main(int argc, char **argv) {
     ref[b] = ref_scan(b, 1, 100);
     std::vector<refrow> down = ref_scan(b, -1, 7); std::reverse(down.begin(), down.end());
     expect(ids_of(down) == ids_of(ref[b]), "direct_scan_ascending_equals_descending", b.substr(0, 8) + " " + std::to_string(down.size()));
-    std::set<std::string> uniq(ids_of(ref[b]).begin(), ids_of(ref[b]).end());
-    std::vector<std::string> sorted = ids_of(ref[b]); std::sort(sorted.begin(), sorted.end());
+    /* One materialised list, so the set and the sorted copy describe the same rows. */
+    const std::vector<std::string> ids = ids_of(ref[b]);
+    std::set<std::string> uniq(ids.begin(), ids.end());
+    std::vector<std::string> sorted = ids; std::sort(sorted.begin(), sorted.end());
     std::set<std::string> want; for (auto &kv : truth[b]) want.insert(kv.first);
-    expect(uniq.size() == ref[b].size() && sorted == ids_of(ref[b]) && uniq == want, "direct_scan_matches_construction", b.substr(0, 8) + " " + std::to_string(ref[b].size()));
+    expect(uniq.size() == ref[b].size() && sorted == ids && uniq == want, "direct_scan_matches_construction", b.substr(0, 8) + " " + std::to_string(ref[b].size()));
   }
   expect(ref[A].size() == A_COUNT && A_COUNT > 1000, "book_has_more_than_1000_annotations", std::to_string(ref[A].size()));
   expect(ref[B].size() == 100, "book_has_exactly_100_annotations", std::to_string(ref[B].size()));
   { std::map<int, size_t> n; for (auto &r : ref[A]) n[(int)state_of(r.kind)]++;
     expect(n[READER_AV_STATE_SAFE] > 0 && n[READER_AV_STATE_CONCURRENT] > 0 && n[READER_AV_STATE_PENDING_PARENTS] > 0 && n[READER_AV_STATE_BLOCKED_RESTORE] > 0,
            "direct_scan_has_safe_concurrent_pending_blocked", "safe=" + num(n[1]) + " concurrent=" + num(n[2]) + " pending=" + num(n[3]) + " blocked=" + num(n[4])); }
-  { std::set<std::string> a(ids_of(ref[A]).begin(), ids_of(ref[A]).end()); bool overlap = false;
+  { const std::vector<std::string> a_ids = ids_of(ref[A]); std::set<std::string> a(a_ids.begin(), a_ids.end()); bool overlap = false;
     for (auto &b : {B, C, E, P}) for (auto &id : ids_of(ref[b])) if (a.count(id)) overlap = true;
     expect(!overlap, "annotation_ids_are_distinct_across_books"); }
 
@@ -645,7 +647,7 @@ int main(int argc, char **argv) {
     expect(refused, "cursor_of_another_book_binding_version_direction_or_shape_is_refused");
     reader_av_cursor foreign = ca; foreign.has_after = 1; std::memcpy(foreign.after_id, ref[B][0].id.c_str(), 32);
     bool only_a = reader_av_page_get(ga.v, &foreign, 100, &p, &e) == READER_AV_OK;
-    std::set<std::string> aset(ids_of(ref[A]).begin(), ids_of(ref[A]).end());
+    const std::vector<std::string> a_ids = ids_of(ref[A]); std::set<std::string> aset(a_ids.begin(), a_ids.end());
     for (size_t i = 0; only_a && i < p.count; i++) only_a = aset.count(p.items[i].annotation_id) == 1 && std::strcmp(p.items[i].annotation_id, foreign.after_id) > 0;
     expect(only_a, "a_foreign_after_id_never_leaks_another_books_rows");
     reader_av_page_free(&p);
