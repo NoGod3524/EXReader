@@ -183,6 +183,7 @@ jobs:
               -maximum-test-execution-time-allowance 900 \
               EXR_SDK_DIR="$PWD/stage/macos" \
               CODE_SIGNING_ALLOWED=YES \
+              TEST_RUNNER_EXR_A11Y_PLATFORM="$platform" \
               2>&1 | tee "build/results/macos-xcodebuild.log"
             main_status=${PIPESTATUS[0]}
             large_status=0
@@ -201,6 +202,7 @@ jobs:
               -skip-testing:EXReaderA11yUITests-iOS/EXReaderA11yAuditTests/test07DynamicTypeAudit \
               EXR_SDK_DIR="$PWD/stage/iphonesimulator" \
               CODE_SIGNING_ALLOWED=NO \
+              TEST_RUNNER_EXR_A11Y_PLATFORM="$platform" \
               2>&1 | tee "build/results/${platform}-xcodebuild.log"
             main_status=${PIPESTATUS[0]}
             # The Dynamic Type audit needs a device-level content size category;
@@ -221,6 +223,7 @@ jobs:
               -only-testing:EXReaderA11yUITests-iOS/EXReaderA11yAuditTests/test07DynamicTypeAudit \
               EXR_SDK_DIR="$PWD/stage/iphonesimulator" \
               CODE_SIGNING_ALLOWED=NO \
+              TEST_RUNNER_EXR_A11Y_PLATFORM="$platform" \
               2>&1 | tee "build/results/${platform}-large-xcodebuild.log"
             large_status=${PIPESTATUS[0]}
             xcrun simctl ui "$udid" content_size medium >/dev/null 2>&1 || true

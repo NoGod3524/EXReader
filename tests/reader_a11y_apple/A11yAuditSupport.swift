@@ -109,10 +109,16 @@ enum A11yAudit {
         return "other"
     }
 
+    /// The test runner reports the iPhone idiom even when it runs on an iPad, so
+    /// the workflow pins the audited platform through TEST_RUNNER_EXR_A11Y_PLATFORM
+    /// (xcodebuild strips the TEST_RUNNER_ prefix for the runner process).
     static func platformName() -> String {
 #if os(macOS)
         return "macos"
 #else
+        if let explicit = ProcessInfo.processInfo.environment["EXR_A11Y_PLATFORM"], !explicit.isEmpty {
+            return explicit
+        }
         return UIDevice.current.userInterfaceIdiom == .pad ? "ipad" : "iphone"
 #endif
     }

@@ -349,8 +349,14 @@ def evaluate_content_rule(platform, rule, elements, items):
     if element is None:
         return
     field = rule.get('field', 'label')
-    value = element.get(field)
-    value = value if isinstance(value, str) else ''
+    # macOS exposes SwiftUI Text as label="" plus value="<string>", so a content
+    # rule that asks for the accessible name must use the same fallback the
+    # name checks use; otherwise the rule silently passes with an empty string.
+    if field == 'label':
+        value = ax_name(element)
+    else:
+        raw_value = element.get(field)
+        value = raw_value if isinstance(raw_value, str) else ''
     expected = rule.get('expected', '')
     fix = rule.get('fix', '')
     severity = rule.get('severity', 'minor')
@@ -479,7 +485,7 @@ def main():
     parser.add_argument('--app', type=Path, required=True)
     parser.add_argument('--xcresult', type=Path, action='append', required=True)
     parser.add_argument('--content-size', default='')
-    parser.add_argument('--attachments', type=Path)
+    parser.add_argument('--attachments', type=Path, action='append')
     parser.add_argument('--destination-file', type=Path, required=True)
     parser.add_argument('--fixtures', type=Path, required=True)
     parser.add_argument('--sdk-root', type=Path, required=True)
@@ -542,11 +548,40 @@ def main():
             info = bundle / 'Info.plist'
             environment['xcresult_sha256'][bundle.name] = digest(info) if info.is_file() else ''
     attachments = {}
-    if args.attachments and args.attachments.is_dir():
-        for path in sorted(args.attachments.rglob('*')):
+    screenshots = []
+    for directory in args.attachments or []:
+        if not directory.is_dir():
+            continue
+        for path in sorted(directory.rglob('*')):
             if path.is_file():
                 attachments[path.name] = {'sha256': digest(path), 'bytes': path.stat().st_size}
+        manifest = directory / 'manifest.json'
+        if not manifest.is_file():
+            continue
+        try:
+            entries = json.loads(manifest.read_text(encoding='utf-8'))
+        except ValueError:
+            continue
+        for entry in entries if isinstance(entries, list) else []:
+            for attachment in (entry.get('attachments') or []) if isinstance(entry, dict) else []:
+                if not isinstance(attachment, dict):
+                    continue
+                exported = attachment.get('exportedFileName') or ''
+                human = attachment.get('suggestedHumanReadableName') or ''
+                if not exported:
+                    continue
+                # xcresulttool appends "_<index>_<uuid>.<ext>"; keep the authored
+                # attachment name so every finding's screenshot is traceable.
+                name = re.sub(r'_[0-9]+_[0-9A-Fa-f-]+\.[A-Za-z0-9]+$', '', human)
+                path = directory / exported
+                screenshots.append({
+                    'name': name,
+                    'file': exported,
+                    'bytes': path.stat().st_size if path.is_file() else 0,
+                    'sha256': digest(path) if path.is_file() else '',
+                })
     environment['attachments'] = {'count': len(attachments), 'files': attachments}
+    environment['screenshots'] = screenshots
 
     items = []
     states_summary = {}
@@ -562,11 +597,25 @@ def main():
                                    '没有记录：审计用例未执行到该步骤或输出被截断', 'major', True,
                                    '', ''))
             continue
-        if state.get('platform') != args.platform:
-            items.append(make_item(args.platform, step, '', 'state-platform', 'blocked',
-                                   '记录平台为 ' + args.platform, str(state.get('platform')),
-                                   'major', True, '', ''))
-            continue
+        recorded_platform = state.get('platform')
+        if recorded_platform != args.platform:
+            # UIDevice idiom in the runner process reports iPhone on an iPad, so the
+            # family is confirmed against the simctl destination before trusting it.
+            device_name = str(environment.get('device_name', ''))
+            family = {'iphone': 'iPhone', 'ipad': 'iPad'}.get(args.platform, '')
+            if (recorded_platform in ('iphone', 'ipad') and family
+                    and family.lower() in device_name.lower()):
+                items.append(make_item(args.platform, step, '', 'state-platform', 'pass',
+                                       '记录设备族与 simctl 目的地一致',
+                                       '记录=%s 目的地=%s' % (recorded_platform, device_name),
+                                       'major', False,
+                                       '测试进程 idiom 不可靠；平台由 TEST_RUNNER_EXR_A11Y_PLATFORM 与目的地共同固定',
+                                       ''))
+            else:
+                items.append(make_item(args.platform, step, '', 'state-platform', 'blocked',
+                                       '记录平台为 ' + args.platform, str(recorded_platform),
+                                       'major', True, '', ''))
+                continue
         if state.get('app_state') != 'runningForeground':
             items.append(make_item(args.platform, step, '', 'app-foreground', 'blocked',
                                    'runningForeground', str(state.get('app_state')), 'major', True, '', ''))
