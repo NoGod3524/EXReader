@@ -2,11 +2,14 @@
 """Actions-only real-ZIP rejection regressions for credential evidence."""
 import argparse
 from copy import deepcopy
+from contextlib import redirect_stdout
 from datetime import datetime, timezone
 import io
 import json
 import os
 from pathlib import Path
+import sys
+import tempfile
 from unittest.mock import patch
 import warnings
 import zipfile
@@ -223,6 +226,17 @@ def main():
             checks.append("incomplete_api_pagination_rejected")
         else:
             raise AssertionError("missing API page accepted")
+    def lose_verifier_identity(*_):
+        os.environ.pop("GITHUB_SHA", None)
+        return {"schema": 2, "accepted": True, "granted": list(PLATFORMS)}
+    with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ), \
+         patch.object(aggregate, "collect", side_effect=lose_verifier_identity), \
+         patch.object(sys, "argv", ["aggregate", "--output", directory, "--downloads", directory]):
+        with redirect_stdout(io.StringIO()):
+            assert aggregate.main() == 1
+        failed = json.loads((Path(directory) / "aggregate.json").read_text())
+        assert failed["accepted"] is False and not failed.get("granted") and failed["error"] == "KeyError"
+    checks.append("postverification_identity_error_cannot_retain_a_partial_grant")
     assert len(checks) >= 80 and len(checks) == len(set(checks))
     result = {"accepted": True, "diagnostic_only": True, "source_sha": os.environ["GITHUB_SHA"],
               "run_id": os.environ["GITHUB_RUN_ID"], "attempt": os.environ["GITHUB_RUN_ATTEMPT"],

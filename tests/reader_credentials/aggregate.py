@@ -90,6 +90,7 @@ def main():
         summary["verifier"] = {"source_sha": os.environ["GITHUB_SHA"], "run_id": int(os.environ["GITHUB_RUN_ID"]),
                                "attempt": int(os.environ["GITHUB_RUN_ATTEMPT"])}
     except Exception as error:
+        summary = {"schema": 2, "accepted": False, "complete_product": False}
         summary["error"] = str(error) if isinstance(error, EvidenceError) else type(error).__name__
         if isinstance(error, EvidenceError):
             for name in ("platform", "phase", "diagnostic"):
