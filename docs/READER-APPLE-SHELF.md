@@ -120,6 +120,16 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
   `refresh_interruption_retains_saved_top_key`. Native failure artifact
   `12539344540` is retained. UI and summary were skipped. The following candidate
   adds state diagnostics around that unchanged assertion; no acceptance is granted.
+- `0d15ef75afa35383187ea27d069b4dc961a6e30d` recorded the failure state in
+  [shelf 40042762989](https://github.com/NoGod3524/EXReader/actions/runs/40042762989).
+  Native job `120722123008` showed the saved cursor and top source key were
+  present before refresh; the pending refresh had zero rows, was loading, and
+  retained the same top key. Only the stored JSON bytes changed because a fresh
+  encoder did not guarantee object-key order. Failure artifact `12540267821`
+  is retained. Cursor writes now sort JSON keys; the byte-preservation assertion
+  is unchanged. A manual native-only diagnostic reuses the authenticated frozen
+  macOS SDK artifact `12539811656`, and always reports `diagnostic_only: true`
+  and `accepted: false`. It cannot replace final same-source three-workflow acceptance.
 
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.
