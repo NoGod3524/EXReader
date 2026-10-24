@@ -13,6 +13,46 @@
   "native_expected": 19,
   "ui_expected_each": 7,
   "runs": [],
+  "earlier_superseded_full_queues": [
+    {
+      "source_sha": "6af82afd980704a7624ceace1dbdcd303335a6c7",
+      "run_id": 40142500507,
+      "attempt": 1,
+      "accepted": false,
+      "producer_status": "SDK producers cancelled while queued; no native or UI execution",
+      "strict_summary_job": 121018933620,
+      "strict_summary_conclusion": "failure",
+      "reason": "Superseded implementation before any SDK build; keep source and rejection, use one final explicit current-source full after preflight"
+    },
+    {
+      "source_sha": "96811166743b5f18218b9aa0b6f0df64a4e175e0",
+      "run_id": 40142823497,
+      "attempt": 1,
+      "accepted": false,
+      "producer_status": "SDK producers cancelled while queued; no native or UI execution",
+      "strict_summary_job": 121018955698,
+      "strict_summary_conclusion": "failure",
+      "reason": "Replaced UI termination mechanism with actual native boundary observation and runner termination; preserve all history"
+    }
+  ],
+  "compile_diagnostics": [
+    {
+      "source_sha": "96811166743b5f18218b9aa0b6f0df64a4e175e0",
+      "run_id": 40142823496,
+      "attempt": 1,
+      "job_id": 121017938203,
+      "status": "success",
+      "scope": "macOS app compilation only",
+      "diagnostic_only": true,
+      "accepted": false,
+      "artifact": {
+        "id": 12580006274,
+        "bytes": 1966106,
+        "digest": "sha256:ac3a3b8446d974b7d5668aa2ef2a786b146a0fde4465b38658609b6da8d4557a",
+        "expires_at": "2027-01-22T23:27:38Z"
+      }
+    }
+  ],
   "initial_compile_diagnostic": {
     "source_sha": "f581dec838f29131475aac8488926f92b2a71602",
     "run_id": 40141724772,

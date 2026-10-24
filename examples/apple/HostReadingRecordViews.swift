@@ -71,6 +71,11 @@ struct HostReadingRecordsSheet: View {
                     .accessibilityIdentifier("reading.next").disabled(model.busy)
             }
             Text(records.status).font(.caption).accessibilityIdentifier("reading.status")
+#if EXR_APPLE_HOST_REVIEW
+            if !records.nativeBoundary.isEmpty {
+                Text(records.nativeBoundary).font(.caption2).accessibilityIdentifier("reading.native-boundary")
+            }
+#endif
             HStack {
                 Button("刷新") { model.loadReadingRecords() }.accessibilityIdentifier("reading.refresh").disabled(model.busy)
                 if model.busy { Button("取消") { model.cancelWork() }.accessibilityIdentifier("reading.cancel") }

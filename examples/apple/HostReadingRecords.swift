@@ -486,6 +486,9 @@ final class HostReadingState: ObservableObject {
     @Published var pending: HostReadingRequest?
     @Published var running = false
     @Published var complete = false
+#if EXR_APPLE_HOST_REVIEW
+    @Published var nativeBoundary = ""
+#endif
     var cursor: reader_av_cursor?
     var generation = 0
     var bookID: Int64?
@@ -494,5 +497,8 @@ final class HostReadingState: ObservableObject {
     func bind(_ id: Int64?) {
         generation += 1; bookID = id; rows = []; versions = []; cursor = nil
         restoring = nil; restoreHeads = []; pending = nil; complete = false; running = false
+#if EXR_APPLE_HOST_REVIEW
+        nativeBoundary = ""
+#endif
     }
 }
