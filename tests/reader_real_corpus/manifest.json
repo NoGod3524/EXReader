@@ -53,7 +53,7 @@
       "source": {
         "url": "https://www.gutenberg.org/cache/epub/11/pg11-images-3.epub",
         "bytes": 189249,
-        "sha256": null,
+        "sha256": "4f81245d31380ac1d6eafb9a321e3691369bc70985736ae4bccf849a4f784036",
         "title": "Alice's Adventures in Wonderland",
         "creator": "Lewis Carroll",
         "published": "1865",
@@ -62,7 +62,8 @@
           "url": "https://www.gutenberg.org/policy/license.html",
           "redistribution": true,
           "basis": "Author died 1898; Project Gutenberg eBook #11"
-        }
+        },
+        "final_url": "https://www.gutenberg.org/cache/epub/11/pg11-images-3.epub"
       },
       "query": "Alice was beginning to get very tired",
       "expect": {
@@ -93,7 +94,7 @@
       "source": {
         "url": "https://www.gutenberg.org/cache/epub/84/pg84-images-3.epub",
         "bytes": 440131,
-        "sha256": null,
+        "sha256": "0bfcc8cacdc72e132272844ed465c6198f1049a8d2b9e3f16806d02beee452e3",
         "title": "Frankenstein; Or, The Modern Prometheus",
         "creator": "Mary Wollstonecraft Shelley",
         "published": "1818",
@@ -102,7 +103,8 @@
           "url": "https://www.gutenberg.org/policy/license.html",
           "redistribution": true,
           "basis": "Author died 1851; Project Gutenberg eBook #84"
-        }
+        },
+        "final_url": "https://www.gutenberg.org/cache/epub/84/pg84-images-3.epub"
       },
       "query": "It was on a dreary night of November",
       "expect": {
@@ -133,7 +135,7 @@
       "source": {
         "url": "https://www.gutenberg.org/cache/epub/1342/pg1342.txt",
         "bytes": 772386,
-        "sha256": null,
+        "sha256": "3f6bb9d6f78e0293b56acd4714dd68cb7d6d1d293402031ce9d5a216bcaf9d75",
         "title": "Pride and Prejudice",
         "creator": "Jane Austen",
         "published": "1813",
@@ -142,7 +144,8 @@
           "url": "https://www.gutenberg.org/policy/license.html",
           "redistribution": true,
           "basis": "Author died 1817; Project Gutenberg eBook #1342"
-        }
+        },
+        "final_url": "https://www.gutenberg.org/cache/epub/1342/pg1342.txt"
       },
       "query": "It is a truth universally acknowledged",
       "expect": {
@@ -173,7 +176,7 @@
       "source": {
         "url": "https://www.gutenberg.org/cache/epub/2701/pg2701.txt",
         "bytes": 1276315,
-        "sha256": null,
+        "sha256": "b5e88b71a1cda068e9ab1d94344c9d932338ba6da1a66def97a1aecd9cfcc87d",
         "title": "Moby-Dick; or, The Whale",
         "creator": "Herman Melville",
         "published": "1851",
@@ -182,7 +185,8 @@
           "url": "https://www.gutenberg.org/policy/license.html",
           "redistribution": true,
           "basis": "Author died 1891; Project Gutenberg eBook #2701"
-        }
+        },
+        "final_url": "https://www.gutenberg.org/cache/epub/2701/pg2701.txt"
       },
       "query": "Call me Ishmael",
       "expect": {
@@ -213,7 +217,7 @@
       "source": {
         "url": "https://www.gutenberg.org/cache/epub/1661/pg1661-images.html",
         "bytes": 640229,
-        "sha256": null,
+        "sha256": "26adf6c8ff1384574fca7466df77e226fc048e9ef1eac5c341f0dd997bcb71a4",
         "title": "The Adventures of Sherlock Holmes",
         "creator": "Arthur Conan Doyle",
         "published": "1892",
@@ -222,7 +226,8 @@
           "url": "https://www.gutenberg.org/policy/license.html",
           "redistribution": true,
           "basis": "Author died 1930; Project Gutenberg eBook #1661"
-        }
+        },
+        "final_url": "https://www.gutenberg.org/cache/epub/1661/pg1661-images.html"
       },
       "query": "To Sherlock Holmes she is always the woman",
       "expect": {
@@ -253,7 +258,7 @@
       "source": {
         "url": "https://www.gutenberg.org/cache/epub/345/pg345-images.html",
         "bytes": 921287,
-        "sha256": null,
+        "sha256": "4f329d89d8531b86c9fcd19731cb612e1f335488707d10974c95fb53fc317840",
         "title": "Dracula",
         "creator": "Bram Stoker",
         "published": "1897",
@@ -262,7 +267,8 @@
           "url": "https://www.gutenberg.org/policy/license.html",
           "redistribution": true,
           "basis": "Author died 1912; Project Gutenberg eBook #345"
-        }
+        },
+        "final_url": "https://www.gutenberg.org/cache/epub/345/pg345-images.html"
       },
       "query": "3 May. Bistritz",
       "expect": {
@@ -293,7 +299,7 @@
       "source": {
         "url": "https://www.irs.gov/pub/irs-pdf/fw9.pdf",
         "bytes": 140815,
-        "sha256": null,
+        "sha256": "2d420cbb4123dcf1fb82595b2359cfbb5d81f00b9df9d359fcc7af361d093f53",
         "title": "Form W-9, Request for Taxpayer Identification Number and Certification",
         "creator": "Internal Revenue Service, United States Department of the Treasury",
         "published": "2024",
@@ -302,7 +308,8 @@
           "url": "https://www.irs.gov/about-irs/use-of-content-from-irsgov",
           "redistribution": true,
           "basis": "Work prepared by federal employees as part of official duties"
-        }
+        },
+        "final_url": "https://www.irs.gov/pub/irs-pdf/fw9.pdf"
       },
       "query": "Request for Taxpayer Identification Number",
       "expect": {
@@ -333,7 +340,7 @@
       "source": {
         "url": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf",
         "bytes": 1946127,
-        "sha256": null,
+        "sha256": "7576edb531d9848825814ee88e28b1795d3a84b435b4b797d3670eafdc4a89f1",
         "title": "Artificial Intelligence Risk Management Framework (AI RMF 1.0)",
         "creator": "National Institute of Standards and Technology",
         "published": "2023",
@@ -342,7 +349,8 @@
           "url": "https://www.nist.gov/open/license",
           "redistribution": true,
           "basis": "NIST Technical Series publication; US Government work"
-        }
+        },
+        "final_url": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf"
       },
       "query": "Artificial Intelligence Risk Management Framework",
       "expect": {
@@ -373,7 +381,7 @@
       "source": {
         "url": "https://archive.org/download/ivan_sergeevich_turgenev-bretyor-1539118486/Turgenev_Bretyor.bQhEMA.287228.fb2",
         "bytes": 196462,
-        "sha256": null,
+        "sha256": "8a62c0fb0b84560cbdca693953533b71b7572568440c6da988e41f26b0d0d74d",
         "title": "Бретёр (The Fencing Master)",
         "creator": "Иван Сергеевич Тургенев (Ivan Turgenev)",
         "published": "1847",
@@ -382,7 +390,8 @@
           "url": "https://archive.org/details/ivan_sergeevich_turgenev-bretyor-1539118486",
           "redistribution": true,
           "basis": "Author died 1883; first published 1847; Internet Archive transcription"
-        }
+        },
+        "final_url": "https://dn720700.ca.archive.org/0/items/ivan_sergeevich_turgenev-bretyor-1539118486/Turgenev_Bretyor.bQhEMA.287228.fb2"
       },
       "query": "Кистер",
       "expect": {
@@ -413,7 +422,7 @@
       "source": {
         "url": "https://archive.org/download/ivan_sergeevich_turgenev-tri_portreta-680315ebee76d/Turgenev_Tri-portreta.Yr0Diw.582148.fb2",
         "bytes": 424614,
-        "sha256": null,
+        "sha256": "10f671903db641921c67b8a9af198dd6d6f7f55be52085bc0749b197ea6f27e7",
         "title": "Три портрета (Three Portraits)",
         "creator": "Иван Сергеевич Тургенев (Ivan Turgenev)",
         "published": "1846",
@@ -422,7 +431,8 @@
           "url": "https://archive.org/details/ivan_sergeevich_turgenev-tri_portreta-680315ebee76d",
           "redistribution": true,
           "basis": "Author died 1883; first published 1846; Internet Archive transcription"
-        }
+        },
+        "final_url": "https://dn721205.ca.archive.org/0/items/ivan_sergeevich_turgenev-tri_portreta-680315ebee76d/Turgenev_Tri-portreta.Yr0Diw.582148.fb2"
       },
       "query": "Лугинов",
       "expect": {
@@ -453,7 +463,7 @@
       "source": {
         "url": "https://assets.publishing.service.gov.uk/media/68d50dff9ce370a7e0a0fc9a/Template_ES1.docx",
         "bytes": 22923,
-        "sha256": null,
+        "sha256": "d4a31c4af8f0a31f5022330e4072b7cd4719a9c97eafe03f969a77350b954ea3",
         "title": "Financial remedy summary of case: Form ES1",
         "creator": "HM Courts & Tribunals Service",
         "published": "2025",
@@ -462,7 +472,8 @@
           "url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
           "redistribution": true,
           "basis": "Crown copyright; OGL permits copying and redistribution with attribution"
-        }
+        },
+        "final_url": "https://assets.publishing.service.gov.uk/media/68d50dff9ce370a7e0a0fc9a/Template_ES1.docx"
       },
       "query": "Financial remedy summary of case",
       "expect": {
@@ -493,7 +504,7 @@
       "source": {
         "url": "https://assets.publishing.service.gov.uk/media/640067008fa8f527f4f54b37/Applicant_s_response_template.docx",
         "bytes": 67023,
-        "sha256": null,
+        "sha256": "3d709b94da96e91c83e7c901b3b1dca1b4d1403f0602696eff8c77973d2aae92",
         "title": "Response template for applicants",
         "creator": "Medicines and Healthcare products Regulatory Agency",
         "published": "2023",
@@ -502,7 +513,8 @@
           "url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
           "redistribution": true,
           "basis": "Crown copyright; OGL permits copying and redistribution with attribution"
-        }
+        },
+        "final_url": "https://assets.publishing.service.gov.uk/media/640067008fa8f527f4f54b37/Applicant_s_response_template.docx"
       },
       "query": "Medicines and Healthcare products Regulatory Agency",
       "expect": {
@@ -533,7 +545,7 @@
       "source": {
         "url": "https://archive.org/download/ProfessorCrowleyPolicyandProcedureTTR/PolicyandProcedure.rtf",
         "bytes": 63797,
-        "sha256": null,
+        "sha256": "de6126e84aed9fa4204f4f7e84b1da6bedf4ef647479caa6a39befd40e9c5656",
         "title": "Policy and Procedure TTR",
         "creator": "Professor Crowley",
         "published": "2010",
@@ -542,7 +554,8 @@
           "url": "http://creativecommons.org/licenses/by/2.5/",
           "redistribution": true,
           "basis": "Internet Archive item declares CC BY 2.5 with named creator"
-        }
+        },
+        "final_url": "https://dn721509.ca.archive.org/0/items/ProfessorCrowleyPolicyandProcedureTTR/PolicyandProcedure.rtf"
       },
       "query": "Policy and Procedure TTR",
       "expect": {
@@ -573,7 +586,7 @@
       "source": {
         "url": "https://archive.org/download/SanfordStaabMicroRepublics/MicroRepublic.rtf",
         "bytes": 36814,
-        "sha256": null,
+        "sha256": "6fb4362622c633fff641dcc50935d52b552bdee669eeaba108914d139bd52b84",
         "title": "Micro Republics",
         "creator": "Sanford Staab",
         "published": "2010",
@@ -582,7 +595,8 @@
           "url": "http://creativecommons.org/licenses/by/2.5/",
           "redistribution": true,
           "basis": "Internet Archive item declares CC BY 2.5 with named creator"
-        }
+        },
+        "final_url": "https://ia800802.us.archive.org/27/items/SanfordStaabMicroRepublics/MicroRepublic.rtf"
       },
       "query": "Micro Republics",
       "expect": {
@@ -613,7 +627,7 @@
       "source": {
         "url": "https://www.gutenberg.org/cache/epub/11/pg11-images.mobi",
         "bytes": 241000,
-        "sha256": null,
+        "sha256": "1b4222ffdf1862a39d0fae6d42c588f28a34c12ad73cc21c2849fe2646cac3e1",
         "title": "Alice's Adventures in Wonderland",
         "creator": "Lewis Carroll",
         "published": "1865",
@@ -622,7 +636,8 @@
           "url": "https://www.gutenberg.org/policy/license.html",
           "redistribution": true,
           "basis": "Author died 1898; Project Gutenberg eBook #11 Kindle edition"
-        }
+        },
+        "final_url": "https://www.gutenberg.org/cache/epub/11/pg11-images.mobi"
       },
       "query": "Alice was beginning to get very tired",
       "expect": {
@@ -653,7 +668,7 @@
       "source": {
         "url": "https://www.gutenberg.org/cache/epub/84/pg84-images.mobi",
         "bytes": 519544,
-        "sha256": null,
+        "sha256": "d907f385b28a2af24f6186a646fd366ede1b84c4c688afe93da3f705862e8e74",
         "title": "Frankenstein; Or, The Modern Prometheus",
         "creator": "Mary Wollstonecraft Shelley",
         "published": "1818",
@@ -662,7 +677,8 @@
           "url": "https://www.gutenberg.org/policy/license.html",
           "redistribution": true,
           "basis": "Author died 1851; Project Gutenberg eBook #84 Kindle edition"
-        }
+        },
+        "final_url": "https://www.gutenberg.org/cache/epub/84/pg84-images.mobi"
       },
       "query": "It was on a dreary night of November",
       "expect": {
@@ -693,7 +709,7 @@
       "source": {
         "url": "https://archive.org/download/peppercarrot-en/peppercarrot_episode01.cbz",
         "bytes": 1078314,
-        "sha256": null,
+        "sha256": "02e28b6d55d9d02b7ebaa2e0ba4a20e652c4fdcb63579b1169f8c0328689d2fe",
         "title": "Pepper&Carrot, Episode 1: The Potion of Flight",
         "creator": "David Revoy",
         "published": "2014",
@@ -702,7 +718,8 @@
           "url": "https://www.peppercarrot.com/en/license/",
           "redistribution": true,
           "basis": "Comic and artwork by David Revoy, published under CC BY 4.0"
-        }
+        },
+        "final_url": "https://dn790000.ca.archive.org/0/items/peppercarrot-en/peppercarrot_episode01.cbz"
       },
       "query": "",
       "expect": {
@@ -733,7 +750,7 @@
       "source": {
         "url": "https://archive.org/download/peppercarrot-en/peppercarrot_episode02.cbz",
         "bytes": 2276638,
-        "sha256": null,
+        "sha256": "f4476b666947ef36240e05bc07e8b08f9260aa0d8c57b82e8ba9bbb029f6c8df",
         "title": "Pepper&Carrot, Episode 2: Rainbow Potions",
         "creator": "David Revoy",
         "published": "2014",
@@ -742,7 +759,8 @@
           "url": "https://www.peppercarrot.com/en/license/",
           "redistribution": true,
           "basis": "Comic and artwork by David Revoy, published under CC BY 4.0"
-        }
+        },
+        "final_url": "https://dn760101.eu.archive.org/0/items/peppercarrot-en/peppercarrot_episode02.cbz"
       },
       "query": "",
       "expect": {
