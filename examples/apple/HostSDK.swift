@@ -982,11 +982,12 @@ final class HostLibrary {
     }
 
     // One bounded public source lease; no source or SDK handle enters the network worker.
-    func exportSyncOriginal(_ book: HostProductBook, directory: URL, cancel: HostCancelBox) throws {
-        guard book.bytes > 0, book.bytes <= 128 * 1024 * 1024,
-              book.sha256.utf8.count == 64, book.sha256.utf8.allSatisfy({ (48...57).contains($0) || (97...102).contains($0) }),
-              ["epub", "pdf", "cbz", "txt", "html", "fb2", "docx", "rtf", "mobi"].contains(book.format),
-              book.key == book.format + ":" + book.sha256 else { throw HostError.invalidInput("同步原件身份无效") }
+    func exportSyncOriginal(bookID: Int64, expected: HostSourceFingerprint, directory: URL, cancel: HostCancelBox) throws {
+        guard expected.bytes > 0, expected.bytes <= 128 * 1024 * 1024,
+              expected.sha256.utf8.count == 64, expected.sha256.utf8.allSatisfy({ (48...57).contains($0) || (97...102).contains($0) }),
+              ["epub", "pdf", "cbz", "txt", "html", "fb2", "docx", "rtf", "mobi"].contains(expected.format) else {
+            throw HostError.invalidInput("同步原件身份无效")
+        }
         try cancel.check()
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true,
                                                 attributes: [.posixPermissions: 0o700])
@@ -998,9 +999,9 @@ final class HostLibrary {
         let output = FileHandle(fileDescriptor: descriptor, closeOnDealloc: true)
         defer { try? output.close(); try? FileManager.default.removeItem(at: temporary) }
         var source = exr_source(), error = exr_error()
-        try hostCheck(exr_library_source(handle, book.sdkID, &source, &error), error)
+        try hostCheck(exr_library_source(handle, bookID, &source, &error), error)
         defer { source.release?(source.context) }
-        guard source.size == UInt64(book.bytes), let read = source.read_at else { throw HostError.invalidResult("SDK 原件长度与产品身份不一致") }
+        guard source.size == UInt64(expected.bytes), let read = source.read_at else { throw HostError.invalidResult("SDK 原件长度与产品身份不一致") }
         var buffer = [UInt8](repeating: 0, count: 64 * 1024), offset: UInt64 = 0, hash = SHA256()
         while offset < source.size {
             try cancel.check()
@@ -1010,9 +1011,9 @@ final class HostLibrary {
             let chunk = Data(buffer.prefix(received)); hash.update(data: chunk); try output.write(contentsOf: chunk)
             offset += UInt64(received)
         }
-        guard hash.finalize().map({ String(format: "%02x", $0) }).joined() == book.sha256 else { throw HostError.invalidResult("SDK 原件摘要与产品身份不一致") }
+        guard hash.finalize().map({ String(format: "%02x", $0) }).joined() == expected.sha256 else { throw HostError.invalidResult("SDK 原件摘要与产品身份不一致") }
         try output.synchronize(); try output.close(); try cancel.check()
-        let destination = directory.appendingPathComponent(book.sha256 + "." + book.format)
+        let destination = directory.appendingPathComponent(expected.sha256 + "." + expected.format)
         if FileManager.default.fileExists(atPath: destination.path) {
             let existingDescriptor = Darwin.open(destination.path, O_RDONLY | O_NOFOLLOW | O_CLOEXEC)
             guard existingDescriptor >= 0 else { throw HostError.invalidResult("已有同步副本无效") }
@@ -1020,15 +1021,15 @@ final class HostLibrary {
             defer { try? existing.close() }
             var status = stat()
             guard fstat(existingDescriptor, &status) == 0, (UInt32(status.st_mode) & UInt32(S_IFMT)) == UInt32(S_IFREG),
-                  status.st_size == book.bytes else { throw HostError.invalidResult("已有同步副本长度无效") }
+                  status.st_size == expected.bytes else { throw HostError.invalidResult("已有同步副本长度无效") }
             var total = 0, digest = SHA256()
-            while Int64(total) < book.bytes {
+            while Int64(total) < expected.bytes {
                 try cancel.check()
-                let chunk = try existing.read(upToCount: Int(min(Int64(64 * 1024), book.bytes - Int64(total)))) ?? Data()
+                let chunk = try existing.read(upToCount: Int(min(Int64(64 * 1024), expected.bytes - Int64(total)))) ?? Data()
                 guard !chunk.isEmpty else { throw HostError.invalidResult("已有同步副本读取不完整") }
                 digest.update(data: chunk); total += chunk.count
             }
-            guard digest.finalize().map({ String(format: "%02x", $0) }).joined() == book.sha256 else { throw HostError.invalidResult("已有同步副本摘要无效") }
+            guard digest.finalize().map({ String(format: "%02x", $0) }).joined() == expected.sha256 else { throw HostError.invalidResult("已有同步副本摘要无效") }
         } else { try FileManager.default.moveItem(at: temporary, to: destination) }
     }
 

@@ -97,10 +97,17 @@ import CryptoKit
             if deferred { pending = { done(result) } } else { done(result) }
         }
         var appendKeepsNativeOffset = true
+        func settlePage() {
+            let deadline = Date().addingTimeInterval(1)
+            while paged.loading && Date() < deadline {
+                RunLoop.current.run(until: Date().addingTimeInterval(0.01))
+            }
+        }
         func layout(_ id: String) {
             paged.didScroll(revision: paged.restoreRevision)
             let priorKeys = paged.rows.map(\.id), priorEpoch = paged.geometryRevision
             paged.observe([id: CGRect(x: 0, y: 0, width: 100, height: 40)], size: CGSize(width: 100, height: 100), revision: paged.geometryRevision)
+            settlePage()
             if paged.rows.count > priorKeys.count && Array(paged.rows.prefix(priorKeys.count).map(\.id)) == priorKeys {
                 appendKeepsNativeOffset = appendKeepsNativeOffset && paged.geometryRevision == priorEpoch && !paged.needsScroll
             }
@@ -144,6 +151,7 @@ import CryptoKit
         let stillRestoring = paged.observation.contains("\"restoring_layout\":true")
         let beforePrependEpoch = paged.geometryRevision
         paged.observe(restoredFrame, size: CGSize(width: 100, height: 100), revision: beforePrependEpoch)
+        settlePage()
         let prepended = paged.geometryRevision != beforePrependEpoch && paged.rows.first?.id != chosen.id
         paged.observe(restoredFrame, size: CGSize(width: 100, height: 100), revision: beforePrependEpoch)
         let oldPrependFrameRejected = paged.observation.contains("\"restoring_layout\":true")
@@ -161,6 +169,10 @@ import CryptoKit
         }
         tail.didScroll(revision: tail.restoreRevision)
         tail.observe([terminalTarget.id: CGRect(x: 0, y: 0, width: 100, height: 40)], size: CGSize(width: 100, height: 400), revision: tail.geometryRevision)
+        let tailDeadline = Date().addingTimeInterval(1)
+        while tail.loading && Date() < tailDeadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.01))
+        }
         var clamped: [String: CGRect] = [:]
         for (index, row) in tail.rows.suffix(10).enumerated() {
             clamped[row.id] = CGRect(x: 0, y: CGFloat(index * 40), width: 100, height: 40)

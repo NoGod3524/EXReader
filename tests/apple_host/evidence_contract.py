@@ -469,7 +469,7 @@ def validate_review_reports(root, source, run_id, attempt, sdk, fixtures):
     require(model.get('fixtures') == {name: fixtures[name] for name in
             ('Sample.epub', 'Sample.pdf', 'Unicode.epub', 'Reader.otf', 'reader-catalog-v1.sql')}, 'model fixture identity mismatch')
     model_sources = ('examples/apple/HostSDK.swift', 'examples/apple/HostModel.swift',
-                     'examples/apple/HostCatalog.swift', 'examples/apple/SelectableText.swift',
+                     'examples/apple/HostCatalog.swift', 'examples/apple/HostAccount.swift', 'examples/apple/SelectableText.swift',
                      'tests/apple_host/review/ModelReview.swift', 'tools/check_apple_model_review.py',
                      'apps/reader/store/001_catalog.sql')
     require(model.get('source_files_sha256') == {name: digest(source_root/name) for name in model_sources},
@@ -521,7 +521,7 @@ def validate_review_reports(root, source, run_id, attempt, sdk, fixtures):
     require(bounded.get('fixtures') == {n: fixtures[n] for n in ('Bounded.epub', 'BoundedLong.epub', 'Unicode.epub', 'Reader.otf', 'Repeated.epub', 'reader-catalog-v1.sql')},
             'bounded consumer fixture identity mismatch')
     sources = ('examples/apple/HostSDK.swift', 'examples/apple/HostModel.swift', 'examples/apple/SelectableText.swift',
-               'examples/apple/HostCatalog.swift', 'tests/apple_host/bounded_review/BoundedReview.swift',
+               'examples/apple/HostCatalog.swift', 'examples/apple/HostAccount.swift', 'tests/apple_host/bounded_review/BoundedReview.swift',
                'tests/apple_host/run_bounded_review.py', 'apps/reader/store/001_catalog.sql')
     require(bounded.get('source_files_sha256') == {p: digest(source_root/p) for p in sources}, 'bounded consumer source mismatch')
     require(load(bounded_root/'consumer/bounded-review.json').get('checks') == bounded['checks'] and
