@@ -41,7 +41,8 @@ static int64_t scalar(sqlite3 *db,const char *text) {
   CHECK(sqlite3_finalize(s)==SQLITE_OK);return result;
 }
 static sqlite3 *external(const char *path) {
-  sqlite3 *db=NULL;CHECK(sqlite3_open(path,&db)==SQLITE_OK);sql(db,"PRAGMA foreign_keys=ON;");return db;
+  sqlite3 *db=NULL;CHECK(sqlite3_open(path,&db)==SQLITE_OK);
+  CHECK(sqlite3_busy_timeout(db,5000)==SQLITE_OK);sql(db,"PRAGMA foreign_keys=ON;");return db;
 }
 static unsigned char *file_bytes(const char *path,size_t *size) {
   FILE *file=fopen(path,"rb");CHECK(file);CHECK(fseek(file,0,SEEK_END)==0);

@@ -3,6 +3,9 @@
 #define READER_CATALOG_H
 #include <stddef.h>
 #include <stdint.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Product metadata, independent of the SDK database and ABI. All calls use
  * the creating host worker. UTF-8 paths/text; return zero on success. */
@@ -56,4 +59,7 @@ int reader_catalog_local_page(reader_catalog *, const char *cursor_title, const 
 int reader_catalog_find(reader_catalog *, const char *book_key, const char *query,
                         reader_catalog_visit, void *, int *found, reader_catalog_error *);
 const char *reader_catalog_migration(size_t *bytes);
+#ifdef __cplusplus
+}
+#endif
 #endif
