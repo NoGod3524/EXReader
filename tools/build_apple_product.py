@@ -36,14 +36,15 @@ def main():
                ('credentials', 'extras/credentials'), ('reading-state', 'apps/reader/reading-state')]
     for name, relative in modules:
         build = args.build.absolute() / name
-        for command in (['cmake', '-S', str(root / relative), '-B', str(build), *common],
+        options = ['-DEXR_WEBDAV_APPLE_URLSESSION=ON'] if name == 'webdav' else []
+        for command in (['cmake', '-S', str(root / relative), '-B', str(build), *common, *options],
                         ['cmake', '--build', str(build), '--parallel', '4'],
                         ['cmake', '--install', str(build)]):
             subprocess.run(command, check=True)
     source = subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
     manifest = {'source_sha': source, 'target': args.target, 'installed_modules': [x[0] for x in modules],
                 'sqlite_provider': 'libreader_catalog_sqlite.a', 'system_sqlite_fallback': False,
-                'reading_resolver_linked': False}
+                'reading_resolver_linked': False, 'webdav_transport': 'Foundation URLSession'}
     (stage / 'share/exreader-apple').mkdir(parents=True, exist_ok=True)
     (stage / 'share/exreader-apple/product.json').write_text(json.dumps(manifest, indent=2) + '\n')
 
