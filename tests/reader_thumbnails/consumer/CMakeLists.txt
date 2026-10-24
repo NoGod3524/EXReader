@@ -27,3 +27,7 @@ endif()
 # existed at the reviewed source, so it builds against both the unfixed and fixed library.
 add_executable(thumb-regress regress.cpp)
 target_link_libraries(thumb-regress PRIVATE EXReaderThumbnails::reader_thumbnails)
+# Fault-injection consumer: replaces the global operator new/delete inside its own
+# binary to make the n-th allocation fail.
+add_executable(thumb-fault fault.cpp)
+target_link_libraries(thumb-fault PRIVATE EXReaderThumbnails::reader_thumbnails EXReader::exr_library)

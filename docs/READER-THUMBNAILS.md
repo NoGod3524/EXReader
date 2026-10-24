@@ -31,8 +31,11 @@ schema and never writes the original book, the library or any user data.
   cache alive. `rth_control.cancelled` is polled on the calling thread (before decode, per output row, before publish
   and inside `exr_fixed_render`); cancellation clears the output and publishes nothing.
 * No C++ exception crosses the C ABI: every entry point catches `std::bad_alloc` (→ `RTH_MEMORY`) and any other
-  exception (→ `RTH_IO`), clears the output and leaves the cache usable. A directory path or file name this platform
-  cannot represent is a status, never a termination.
+  exception (→ `RTH_IO`), and ownership is by construction, not by the catch: the cache is held in a `unique_ptr` until
+  `*out` is filled (a failure holds no lock and leaves no partial cache), the borrowed `exr_library_blob` is freed by a
+  scope guard on every path, and the thumbnail pixels stay owned until after the store returns, so a failure inside the
+  store leaves `width/height/stride/origin` 0, `pixels` NULL and no cache entry or temporary, and the cache still
+  stores on retry. A directory path or file name this platform cannot represent is a status, never a termination.
 
 ## Identity and limits
 
@@ -51,10 +54,16 @@ is provided).
 
 Source dimensions are read with `exr_image_page_dimensions` and refused (`RTH_LIMIT`) before any decode allocation;
 all dimension arithmetic is 64-bit. Output boxes above `max_edge` are refused without allocation.
-**The cache limits bound the cache directory only.** Decoding a cover transiently allocates `width*height*4` bytes
-inside the SDK; `rth_thumbnail.decoded_bytes` and `rth_stats.peak_decoded_bytes` report that separately from
-`rth_stats.bytes`, and `max_source_pixels` is the only bound on it. An entry larger than `max_total_bytes` is returned
-but not stored (`stored == 0`, `rejected` counted). The temporary file of a publish may briefly exist beside the cache.
+`max_entries` and `max_total_bytes` are a **hard bound on the cache directory**: a cache handle exists only while the
+directory holds no more own entry files and no more own entry bytes than those limits allow (`rth_cache_open` deletes the
+surplus in the same pass that adopts the rest, so `RTH_OK` is a statement about the whole directory, not about an
+observed prefix). A directory holding more own entry files than the scan ceiling `max(4096, max_entries*64)` (at most
+65536) is refused with `RTH_LIMIT` and no cache instead of being adopted partially.
+
+They bound nothing else. Decoding a cover transiently allocates `width*height*4` bytes inside the SDK;
+`rth_thumbnail.decoded_bytes` and `rth_stats.peak_decoded_bytes` report that separately from `rth_stats.bytes`, and
+`max_source_pixels` is the only bound on it. An entry larger than `max_total_bytes` is returned but not stored
+(`stored == 0`, `rejected` counted). The temporary file of a publish may briefly exist beside the cache.
 
 ## Cache directory
 
@@ -70,16 +79,20 @@ symbolic links or reparse points and only accepts a regular file (`O_NOFOLLOW` /
 reparse-point attribute check). A failed replace is reported: `rth_cache_open` and `rth_cache_clear` return `RTH_IO`
 and `rth_stats.index_failures` counts it, instead of silently keeping a stale index.
 
-**Sharing one directory.** Temporary names carry a per-open unpredictable token, so two processes may use one directory;
-`open` removes the pre-0.1.0 temporaries (`rth-tmp-<n>.tmp`, `rth-tmp-index-<n>.tmp`) at once, and current-naming
-temporaries only when they are older than 600 s, because a younger one may belong to a live process.
+**One owner per directory.** `rth_cache_open` takes an OS lock on `rth-owner.lock` — `flock(LOCK_EX|LOCK_NB)` on POSIX,
+an exclusive open without sharing on Windows. A second open returns `RTH_BUSY` and no cache: that covers another handle
+in the same process, another process, and a handle whose holder died (the OS releases the lock with the process, so a
+crash never blocks the directory). There is no multi-process LRU and no shared budget: one handle owns the directory and
+every OK open is the only writer.
 
-**Bounded open.** The directory is scanned once and entries are retained and evicted one by one, so the retained set
-never exceeds `max_entries` and the directory is never collected into an in-memory list. The candidate budget is
-`256 + max_entries * 8`, capped at 65536 files; the index lines read are bounded by the same figure. Beyond the budget
-the scan stops, `rth_stats.scan_truncated` is 1, the uninspected files are left untouched and adoption is partial (a
-cache, not an archive: a missing entry is rebuilt on the next request). `scanned_files` and
-`peak_retained_entries` report the actual work and the actual retained peak.
+**Bounded working set, hard directory bound.** The directory is walked once; entries are made room for and inserted one by
+one, so the retained map never exceeds `max_entries` and the directory is never collected into an in-memory list
+(`peak_retained_entries` is the true map peak, taken after the insert, and is <= `max_entries`). Every own entry file the
+pass meets is either adopted or deleted — damaged, larger than `max_total_bytes`, or over the count/byte cap — so when
+the pass ends the directory itself satisfies the limits; `scanned_files`, `own_candidates` and `scan_deleted` report the
+work. Unrelated files are never deleted. Files are created exclusively under a per-open unpredictable token and published
+with the atomic replace above; `open` removes the pre-0.1.0 temporaries at once and current-naming temporaries only when
+older than 600 s (a younger one may belong to a live process).
 
 **Eviction and repair.** LRU eviction runs on count and bytes; recency persists across close and reopen (the index is
 published atomically on every change and at close). A damaged entry (bad magic, length, key, or payload digest) is
@@ -95,12 +108,17 @@ pixels are produced independently by `tests/reader_thumbnails/make_fixtures.py`;
 originals with known colours plus the repository's `pdf-public.pdf` and `comic.cbz`. Cache bytes, decoded-image
 bytes, scanned files, the retained-entry peak and process RSS are recorded per scenario as raw measurements only.
 
-`thumb-regress` runs as three separate processes and judges the four review findings with the public ABI that existed
-before the fix, so the same source fails on the reviewed implementation and passes on the fixed one:
-LRU recency written by one process and judged by an independent reopen with a smaller entry bound; a hard link planted
-at a temporary name (external bytes must stay byte-identical); a live cache's fresh temporary versus a stale one; an
-index that cannot be replaced atomically (must be reported); re-entry refused by the statistics call; a directory far
-larger than the scan budget; and an unrepresentable directory path that must not terminate the process.
+`thumb-regress` runs as separate processes and judges the contract with the public ABI that existed before the
+fixes, so the same source fails on the reviewed implementation and passes on the fixed one: LRU recency written by one
+process and judged by an independent reopen with a smaller entry bound; a hard link planted at a temporary name
+(external bytes must stay byte-identical); a live cache's fresh temporary versus a stale one; an index that cannot be
+replaced atomically; re-entry refused by the statistics call; a directory far larger than the old scan budget; an
+unrepresentable directory path; and the owner lock across a live holder and a killed one.
+
+`thumb-fault` replaces the global `operator new/delete` inside its own binary and makes the n-th allocation throw, then
+walks every allocation point of `open`, of a cover that already holds thumbnail pixels, and of the borrowed-blob path,
+counting live allocations: each failure must report a status, leave an empty output box, leak no cache/blob/pixels/
+temporary and leave the cache able to store on retry.
 
 See `docs/validation/reader-thumbnails.json` for the run-bound results; nothing here grants product performance, host
 UI, six-platform or release status.
