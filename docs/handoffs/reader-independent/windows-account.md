@@ -45,5 +45,9 @@ Windows Actions 实际 Win32 UI、两独立产品/SDK库与原生 HTTPS；四格
 
 ## 交回
 
+### 第1轮审查接续：G12发现的生产缺陷
+
+root于2026-10-24将G12审计的生产修复交本包同一owner，避免并写Win32宿主。额外允许`apps/reader/desktop/windows_accessibility*.inc`，系统UIAutomation/Oleacc依赖仍只在本包CMake接入。先完成四格式18真实capture出口，再修真实输入框名称、Tab/Shift+Tab、禁用时焦点转移、详情关闭焦点恢复、阅读页公开SDK文字/选择的原生provider、模态背景语义与状态事件；不得仅把文字塞进控件名字代替可读文本。自有G01测试补真实SendInput/UIA回归，保留所有原检查。G12测试/文档目录不写，root统一集成后复跑完整审计；未完成前不授予无障碍通过。
+
 推送功能分支；完整受测SHA、最终纯文档HEAD/差异、run/attempt/job、具名结果、工件ID/字节/digest/有效期、原失败及剩余工作。不要替root合入。
 

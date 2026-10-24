@@ -12,6 +12,7 @@
       "allowed_paths": [
         "apps/reader/windows-account/**",
         "apps/reader/desktop/windows_accounts*.inc",
+        "apps/reader/desktop/windows_accessibility*.inc",
         "apps/reader/desktop/windows_catalog.inc",
         "apps/reader/desktop/windows_shelf.inc",
         "apps/reader/desktop/windows_metadata.inc",

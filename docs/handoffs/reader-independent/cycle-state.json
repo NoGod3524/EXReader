@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "recorded_at_utc": "2026-10-24T09:42:43Z",
+  "recorded_at_utc": "2026-10-24T10:38:00Z",
   "current_cycle": 1,
   "completed_cycles": 0,
   "audit_interval": 5,
@@ -11,7 +11,7 @@
   "integration_source": null,
   "integration_runs": [],
   "mainline_owners": [
-    { "agent": "/root/handoff_modules", "branch": "codex/reader-apple-shelf", "completed_ios_evidence_head": "254466e7", "ios_run": 40080841137 },
+    { "agent": "/root/handoff_modules", "branch": "codex/reader-apple-host-account", "completed_ios_evidence_head": "254466e7", "ios_run": 40080841137, "candidate": "9b84f4254a7442a10e91a082796e8c8f1a8d840c", "candidate_runs": [40086427673, 40086438356, 40086444544] },
     { "agent": "/root/handoff_validation", "branch": "codex/reader-gtk-receive" },
     { "agent": "/root/main_android", "branch": "codex/reader-android-sync-session" }
   ],
@@ -47,7 +47,10 @@
       "new_owner": "DeepSeek Harness Flash1017 High PTC",
       "new_owner_started": true,
       "full_permissions_observed": true,
-      "state": "root_review_auto_identity_retry_fix_after_run_40081701747"
+      "state": "root_review_passed_awaiting_joint_integration",
+      "tested_source": "7829ddff129e62d156db445af6c975ebf9166881",
+      "verified_run": 40084536016,
+      "evidence_head": "e1d306e2"
     },
     {
       "package_id": "G04",
@@ -56,7 +59,10 @@
       "new_owner": "DeepSeek Harness Flash1017 High PTC",
       "new_owner_started": true,
       "full_permissions_observed": true,
-      "state": "resuming_existing_failure_without_reset"
+      "state": "root_review_passed_awaiting_joint_integration",
+      "tested_source": "02ec0587869a8ea036ffc9b3cbd9a780060fed72",
+      "verified_run": 40082509106,
+      "evidence_head": "0527476aed2f099e19bbc7dbeb8271dc662a3636"
     },
     {
       "package_id": "G02",
@@ -85,7 +91,9 @@
       "reused_completed_session": "账号同步故障一致性专项",
       "new_owner_started": true,
       "full_permissions_observed": true,
-      "state": "root_review_entity_snapshot_and_output_alias_fixes"
+      "state": "root_second_review_windows_parent_junction_alias_fix_queued",
+      "latest_verified_run": 40085969696,
+      "latest_tested_source": "0b79307a41fc5152cf10f7c34e30573d2481aa08"
     }
   ],
   "integrated_package_ids": [],

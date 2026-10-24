@@ -8,12 +8,20 @@
 
 root审读`apps/reader/thumbnails/src/thumbnails.cpp`与其消费者后发现：
 
-- `write_index`用`filesystem::rename`覆盖已有索引；Windows失败后只删除临时文件，既有测试没有证明实际跨进程LRU顺序。
+- 初审怀疑`filesystem::rename`在Windows不能覆盖已有索引；后续原源码回归证明此假设在windows-2022未重现，MSVC STL执行了替换，原跨进程LRU身份断言也通过。实际重现的是索引替换失败被吞掉、临时文件安全和重入问题。回修同时保留平台原子替换及写入失败的明确状态。
 - 临时文件用可预测名称和截断打开。必须证明预置hardlink/symlink不会覆盖缓存外文件，并使用独占创建、no-follow与原子发布。
 - 打开缓存时先保留整个目录路径vector和全部有效entry，再最终淘汰；峰值不受缓存条目上限控制。需逐条有界扫描/淘汰及明确工作上限。
 - `rth_cache_stats`未检查busy，与所有入口拒绝回调重入的合同不符；C ABI的分配/文件系统异常边界也须补齐。
 
 旧检查保留，新增独立回归先在Actions证明原缺口。原Claude已结束；DeepSeek Flash1017 High/PTC/完全权限接管原G02工作树回修。未经root复审不进入本轮集成。
+
+第一轮回修`00f3d3713619bef8f41c4f5d97957d37dbb3ed87`、run`40083975196`已通过其原158/159项与9项新增回归，文档HEAD`f1912d45c5a599f575f32d2d6df225c31c28a193`。root二次审查仍未放行：扫描截断后继续可写会漏算未扫描的合法缓存文件；多个进程各自的map不能共同保证目录硬上限；只catch异常没有RAII回收open对象、已分配输出和SDK blob。已要求原owner用真实有效条目/独立进程/分配失败回归修复，不能只把硬预算改成已扫描前缀的统计。
+
+## G04：标注列表，已进入待集成队列
+
+受测`02ec0587869a8ea036ffc9b3cbd9a780060fed72`，文档HEAD`0527476aed2f099e19bbc7dbeb8271dc662a3636`；两者只差两份证据文档。run`40082509106`三平台消费者、Linux诊断sanitizer和严格汇总五作业均success，root已独立核对；三平台各56项。复审确认同页快照复制、无冲突头伪选择、取消整页丢弃、输出预算与所有权路径。不因此授予宿主界面或移动平台。
+
+本轮所有包收口后才统一合入。集成时G03/G04/G05只需encode/decode的产品依赖应改用已收口的ReadingState codec目标，避免其旧完整ReadingState传递依赖把SDK静态组件带入隔离的移动产品owner；须共同源码安装组合与符号审计复验，不借原单包绿跳过。
 
 ## G06：本机下载，审查发现待回修
 
@@ -31,11 +39,13 @@ root审读`apps/reader/local-downloads/src/local_downloads.c`：
 
 G06已由原G14完工后的空闲DeepSeek会话接管原工作树；G14交付保持不动。
 
-## G03：阅读命令，退回自动身份重试修复
+## G03：阅读命令，自动身份重试复审通过，待集成
 
 DeepSeek接续交付HEAD`207778d8ef0b20f8945a8c8d64c7c3881205e62d`，受测`6ba1ad0d0c3c74dfc5c5267521f60dfd3210a48a`，run`40081701747`四作业成功，root已独立核对作业接口。
 
 root发现新书签/高亮在空`annotation_id`时每次随机生成身份。首次响应丢失后，以相同稳定`revision_id`和相同空身份输入重试，会生成不同实体的wire，造成碰撞而非精确no-op。已要求原接续owner补云端回归和稳定身份根因修复，保留原检查和旧通过记录；暂不交宿主采用。
+
+回修受测`7829ddff129e62d156db445af6c975ebf9166881`，文档HEAD`e1d306e2`仅两份证据文档。root已读实际实现与新增11项回归，并独立核对run`40084536016`三平台和严格工件汇总四作业全部success。实现先以稳定revision ID通过公开`reader_revision_get`恢复同书标注身份，再重建wire交原提交路径；相同输入返回原身份/`created=0`，ack后不重排队，不同payload仍碰撞；写锁失败后可再提交一次。三平台各1413项通过。本包进入待集成队列，不将它的旧完整ReadingState依赖原样接入移动隔离owner。
 
 ## G05：标注导出，退回实体快照与路径别名修复
 
@@ -47,6 +57,8 @@ root发现新书签/高亮在空`annotation_id`时每次随机生成身份。首
 
 原G07完工会话已以Flash1017 High/PTC/完全权限接管G05原工作树。此回修仍属于第1轮收口，原G07交付不再编辑。
 
+回修`0b79307a41fc5152cf10f7c34e30573d2481aa08`的run`40085969696`三平台和严格汇总均success，root已独立核对。单实体状态改从同一次heads/graph快照导出；root继续发现Windows不存在输出文件时，`GetFullPathNameW`不解析父目录junction，两个父目录别名仍能落在同一最终文件。现有测试只在POSIX建立symlink目录，Windows缺这个场景。已向原owner排队发送补充回修，要求真实junction、初始不存在的同名leaf、发布前拒绝且不创建temp；新绿不代表此缺口通过。
+
 ## 主线证据核对
 
 root已通过GitHub作业接口独立核对：iOS run`40080841137`的producer和严格汇总均success；Android run`40081333678`实际模拟器作业success；同源codec run`40081333621`的Windows/Linux作业success。正式SwiftUI/Android账号和阅读界面的接线继续由各主线owner实施，不借测试壳授予产品界面。
@@ -54,6 +66,16 @@ root已通过GitHub作业接口独立核对：iOS run`40080841137`的producer和
 GTK受测`27ab57fd725816dd098c7031fa634efde83c63e5`、run`40082557686`、job`120838919065`已由root接口核对success；46项账号/收取、原105项界面与4项故障、原后端同轮通过。文档HEAD`adef2c01a177c120831b27897c5f3a460eafe788`仅两份证据文档。其后GTK/ATK修复候选`532d8ebb97a21a113cb1464b6014827c058e21a9`的run`40084158805`仍待真实回归，不转移上一源码通过结论。
 
 ## G01：Windows账号，补齐真实capture出口
+
+原受测`20c6a1deec794b4902f0ae3a7140a17b19cef7fd`、文档HEAD`cd0c7f9b8e3a9af53e30e53248d47ce959f1d0c8`、run`40082869006`保留。root发现旧探针手写v1 location再提交wire，并未调用SDK capture，已要求原owner补安装后四格式18真实捕获、正式A/TLS/B往返与公开resolve、重开，以及冲突/缺父/墓碑不投影的真实UI出口。此前25项只授予其实际传输范围。
+
+G12受测`da2bcde7d684c1db8a9a51de9a7d478d870d5149`、run`40084309431`审计作业success，root已独立核对并读报告：49项为34pass/9fail/5gap/1not_verified，其中8blocking；`audit_completed=true`、`accessibility_accepted=false`。root已将报告交同一Windows生产owner，先完成当前18捕获，再修无名输入框、Tab陷阱、禁用时丢焦点、详情关闭焦点恢复、阅读页真实文字/选择provider、模态背景语义及状态事件。只增G01定向回归；G12报告目录只读，完整审计在集成后复跑。
+
+## 主线后续候选（2026-10-24 10:38 UTC）
+
+- Apple正式账号分支已独立为`codex/reader-apple-host-account`。`8b70b91ac9684124eca505aed54f519b54aea225`的WP13/mapping/shelf三轮均实际失败，原因分别涉及bounded消费者仍导入旧SQLite3头及macOS WebDAV缺curl链接，原失败保留。新同源`9b84f4254a7442a10e91a082796e8c8f1a8d840c`已派完整三套：`40086427673`、`40086438356`、`40086444544`，未授予新候选。
+- Android正式UI受测`2db9c240705fbe89579ea1bba5bb6e498f34aff5`：root核对codec`40085974325`的Win/Linux通过；旧18捕获及原宿主run`40085974318`通过。正式UI`40085974320`在instrumentation runner注册处失败，owner保留原suite并修分别构建测试APK，不借旧通过授予账号UI。
+- GTK最新`dc1fa2c1fd6a156f0471e66ec9bd29d97e56cfb6`、run`40086097714`继续原46+105+4及定向AT-SPI；先前公共combo焦点仍落入私有button的候选未授予。只真实焦点事件和原生键盘路径通过后登记。
 
 交付HEAD`cd0c7f9b8e3a9af53e30e53248d47ce959f1d0c8`，受测`20c6a1deec794b4902f0ae3a7140a17b19cef7fd`、run`40082869006`自报25项及原基线成功。
 
