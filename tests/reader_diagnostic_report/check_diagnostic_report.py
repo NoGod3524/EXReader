@@ -27,6 +27,15 @@ KEYS = {
     "sdk_version", "schema_version", "wire_version", "generated_at_unix",
     "account_configured", "sync_enabled", "offline_mode", "counters", "errors",
 }
+# Canonical order is the numeric id order of the closed enumerators, not the
+# alphabetical order of their names.
+COUNTER_ORDER = (
+    "books_total", "import_attempts", "import_failures", "sync_attempts",
+    "sync_failures", "sync_conflicts", "open_failures", "render_failures",
+    "search_failures", "pending_changes")
+DOMAIN_ORDER = ("library", "import", "sync", "reading", "search", "storage", "account", "other")
+KIND_ORDER = ("ARGUMENT", "IO", "FORMAT", "VERSION", "RANGE", "CANCELLED", "LIMIT", "MEMORY",
+              "BUSY", "NOT_FOUND", "CONFLICT", "INTERNAL", "UNKNOWN")
 HEADER_CONTRACT = {
     "READER_DIAG_ABI_VERSION": 1,
     "READER_DIAG_FORMAT_VERSION": 1,
@@ -406,9 +415,10 @@ def main():
         require(all(entry["count"] == MAX_COUNT for entry in payload["errors"]),
                 "max error counts")
         order = [entry["id"] for entry in payload["counters"]]
-        require(order == sorted(order), "counters are not canonical: %r" % (order,))
+        require(order == list(COUNTER_ORDER), "counters are not canonical: %r" % (order,))
         pairs = [(entry["domain"], entry["kind"]) for entry in payload["errors"]]
-        require(pairs == sorted(pairs), "errors are not canonical")
+        ranked = [(DOMAIN_ORDER.index(domain), KIND_ORDER.index(kind)) for domain, kind in pairs]
+        require(ranked == sorted(ranked), "errors are not canonical: %r" % (pairs,))
         summary = summary_path.read_text(encoding="utf-8")
         require("\nErrors: 32 kinds, %d occurrences\n" % (32 * MAX_COUNT) in summary,
                 "max summary total")
