@@ -15,6 +15,8 @@ import check_metadata_ui as M
 from check_metadata_ui import U, ENUM, send, set_text, text
 
 BUTTON, QUERY, FIND, NEXT, HITS, OPEN, CANCEL, CLOSE, MESSAGE = range(170, 179)
+U.GetPropW.argtypes = [W.HWND, W.LPCWSTR]
+U.GetPropW.restype = W.HANDLE
 REQUIRED = ['native-secondary-entry', 'query-has-no-sdk-local-row-id', 'exactly-32-results',
             'empty-final-batch-preserves-results', 'first-miss-is-empty', 'unicode-query',
             'utf8-query-limit', 'new-query-restarts-cursor', 'search-does-not-write-notes-or-history',
@@ -76,6 +78,11 @@ def main():
     phase = 'launch'
     try:
         app = SearchApp(args.candidate.resolve(), args.font.resolve(), output / 'profile')
+        phase = 'wait-initial-product-shelf-snapshot'
+        def initial_shelf_ready():
+            serial = U.GetPropW(app.control('books'), 'EXReaderShelfSnapshot') or 0
+            return serial >= 2 and serial % 2 == 0 and U.IsWindowEnabled(app.control('import'))
+        app.wait(initial_shelf_ready)
         phase = 'import'
         app.import_file(source)
         phase = 'wait-imported-row'
