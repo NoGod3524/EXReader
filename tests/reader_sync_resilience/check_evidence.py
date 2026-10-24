@@ -45,18 +45,19 @@ def main():
 
     platforms, artifacts = {}, []
     suffix = '-' + run + '-' + attempt
+    expected_names = {platform: 'reader-sync-resilience-' + label + suffix
+                      for platform, label in EXPECTED_PLATFORMS.items()}
     for candidate in sorted(root.rglob('resilience-evidence/result.json')):
-        artifact = candidate.parents[2].name
-        # A re-run attempt re-downloads earlier attempts' artifacts from the same
-        # run; only this attempt's producer is evidence for this attempt.
-        if not artifact.endswith(suffix):
-            continue
         report = json.loads(candidate.read_text(encoding='utf-8'))
         platform = report['platform']
         assert platform in EXPECTED_PLATFORMS, platform
+        # A re-run attempt re-downloads earlier attempts' artifacts of the same
+        # run; the artifact directory name binds a report to this attempt.
+        artifact = next((parent for parent in candidate.parents
+                         if parent.name == expected_names[platform]), None)
+        if artifact is None:
+            continue
         assert platform not in platforms, ('duplicate platform', platform)
-        expected_name = 'reader-sync-resilience-' + EXPECTED_PLATFORMS[platform] + suffix
-        assert artifact == expected_name, (artifact, expected_name)
         assert report['accepted'] is True, platform
         assert report['source_sha'] == source, (platform, report['source_sha'])
         assert str(report['run_id']) == run, (platform, report['run_id'])
@@ -72,7 +73,7 @@ def main():
         assert report['fault_boundaries_accepted'] is True, platform
         assert report['original_session_suite_preserved'] is True, platform
         assert len(report['consumer_sha256']) == 64 and len(report['revision_consumer_sha256']) == 64
-        session_candidates = sorted(candidate.parents[1].glob('session-evidence/result.json'))
+        session_candidates = sorted(artifact.glob('session-evidence/result.json'))
         assert len(session_candidates) == 1, (platform, session_candidates)
         session = json.loads(session_candidates[0].read_text(encoding='utf-8'))
         assert session['accepted'] is True, platform
@@ -81,7 +82,7 @@ def main():
         assert sorted(session['checks']) == sorted(ORIGINAL_SESSION_CHECKS), platform
         assert len(session['checks']) == 20, (platform, len(session['checks']))
         assert report['original_session_suite']['count'] == 20, platform
-        platforms[platform] = {'artifact': artifact,
+        platforms[platform] = {'artifact': artifact.name,
                                'boundaries': report['count'],
                                'original_session': len(session['checks']),
                                'checks': [check['id'] for check in report['checks']],
@@ -91,7 +92,7 @@ def main():
                                'session_report_sha256': digest(session_candidates[0]),
                                'request_count': report['request_count'],
                                'duration_seconds': report['duration_seconds']}
-        artifacts.append(artifact)
+        artifacts.append(artifact.name)
 
     assert set(platforms) == set(EXPECTED_PLATFORMS), sorted(platforms)
     assert len(set(artifacts)) == 3, artifacts
