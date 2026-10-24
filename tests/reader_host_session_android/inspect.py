@@ -10,11 +10,11 @@ import urllib.request
 import zipfile
 
 assert os.environ.get('GITHUB_ACTIONS') == 'true'
-run = 40086660647
-source = '170d1f77d6e320c75fca25b047dbf117bd1d0c5f'
-artifact = 12558040607
-size = 69860674
-digest = 'sha256:19e39b25a0fc65b89f6572f9e8ee49b3955cc3fe52b3d6b178653ddad6ca40e5'
+run = 40087607387
+source = '4fc349c0bf8937d95f63ea35437026386e380680'
+artifact = 12558191392
+size = 69857285
+digest = 'sha256:624a6f7d3a5fbe8f3e645ab93ad5e9a12cb362398430bbb1a27a189b7126bf34'
 api = 'https://api.github.com/repos/NoGod3524/EXReader'
 headers = {'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json', 'User-Agent': 'EXReader-host-ui-inspect'}
 
