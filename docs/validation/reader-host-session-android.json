@@ -33,6 +33,12 @@
       "runs": [40088497379],
       "passed_before_failure": "12 account/Receive checks and first two semantics checks",
       "reason": "The failure tree reports The bundled font is missing: the direct-Gradle workflow omitted the normal host packaging step. Reuse unchanged tools/host_font.fetch and assert the pinned Reader.otf/OFL hashes in both Debug and Release APKs. The generated original path is now registered; no production change or assertion relaxation."
+    },
+    {
+      "source_sha": "18b4023c9d13627b6ed31a0f9de483b86e3f383d",
+      "runs": [40089211775],
+      "passed_before_failure": "12 account/Receive checks, first two semantics checks, and pinned Debug/Release font/license checks",
+      "reason": "The failure tree reports installed libexreader_jni.so absent from the APK. Copy that unchanged installed runtime to jniLibs while the existing imported shared SDK remains auto-packaged. Check JNI build identity, its shared SDK dependency, and all APK native runtime dependencies before device execution. No SDK/bindings source change or assertion relaxation."
     }
   ],
   "reading_state_ui_accepted": false,
