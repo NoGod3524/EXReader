@@ -149,7 +149,8 @@ def main():
             folder = Path(temporary)
             source = folder / 'pkgconfig-probe.c'
             source.write_text(source_text, encoding='utf-8')
-            command = [args.cl, '/nologo', '/c', str(source)]
+            object_file = folder / 'pkgconfig-probe.obj'
+            command = [args.cl, '/nologo', '/c', '/Fo' + str(object_file), str(source)]
             for directory in include_dirs:
                 command.append('/I' + directory)
             code, output, error = run(command)
@@ -160,7 +161,7 @@ def main():
             executable = folder / 'pkgconfig-probe.exe'
             arguments = convert_libs(libs_text.split())
             link = [args.cl, '/nologo', '/Fe:' + str(executable),
-                    str(folder / 'pkgconfig-probe.obj'), '/link'] + arguments
+                    str(object_file), '/link'] + arguments
             if forced_symbol:
                 link.append('/INCLUDE:' + forced_symbol)
             code, output, error = run(link)
@@ -174,10 +175,8 @@ def main():
             return attempt
 
     webp_source = ('#include <webp/decode.h>\n'
-                   '#include <stdio.h>\n'
                    'int main(void) {\n'
                    '  int version = WebPGetDecoderVersion();\n'
-                   '  printf("%d\n", version);\n'
                    '  return version > 0 ? 0 : 1;\n'
                    '}\n')
     empty_source = 'int main(void) { return 0; }\n'
