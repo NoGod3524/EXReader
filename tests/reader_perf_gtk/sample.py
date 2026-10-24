@@ -125,12 +125,31 @@ class Sampler:
         latest = watch.latest()
         return 0 if latest is None else latest['state']['host'].get('painted_generation', 0)
 
-    def first_paint(self, watch, previous, start_index, end_index, timeout):
+    def wait_after(self, watch, predicate, timeout, since, stamp):
+        """First observation after since that also landed after the injection stamp.
+
+        A write delivered in the microseconds between arming the watch and starting
+        the input command cannot be an answer to that command, so it is skipped and
+        counted instead of being reported as a latency."""
+        index, event = watch.wait(predicate, timeout, since)
+        skipped = 0
+        while index is not None and event['at'] < stamp:
+            skipped += 1
+            index, event = watch.wait(predicate, timeout, index + 1)
+        return index, event, skipped
+
+    def first_paint(self, watch, previous, start_index, end_index, timeout, stamp=None):
         for index in range(start_index, end_index + 1):
-            if watch.event(index)['state']['host'].get('painted_generation', 0) > previous:
-                return index, watch.event(index), None
+            event = watch.event(index)
+            if stamp is not None and event['at'] < stamp:
+                continue
+            if event['state']['host'].get('painted_generation', 0) > previous:
+                return index, event, None
         index, event = watch.wait(
             lambda state: state['host'].get('painted_generation', 0) > previous, timeout, end_index + 1)
+        while index is not None and stamp is not None and event['at'] < stamp:
+            index, event = watch.wait(
+                lambda state: state['host'].get('painted_generation', 0) > previous, timeout, index + 1)
         if index is None:
             return None, None, event
         return index, event, None
@@ -513,15 +532,17 @@ class Sampler:
             except subprocess.SubprocessError as error:
                 self.record(handle, 'failed', note='key injection failed: %s' % error)
                 continue
-            index, event = watch.wait(
+            index, event, skipped = self.wait_after(
+                watch,
                 lambda state: (state['host'].get('busy') == 1
-                               and state['host'].get('book') == book_before), 60, since)
+                               and state['host'].get('book') == book_before), 60, since, stamp)
             if index is None:
                 self.record(handle, 'failed',
                             note='no busy observation for the injected key: %s' % event)
                 continue
             self.record(handle, 'ok', start=stamp, end=event['at'], event=event,
-                        note='same book and worker busy; the main loop answered the key')
+                        note='same book and worker busy; the main loop answered the key; '
+                             'pre_injection_skips=%d' % skipped)
 
     def import_resize(self, host, watch, book_before):
         """Real resize during the import. The frozen host answers a resize with an
@@ -545,7 +566,7 @@ class Sampler:
         except subprocess.SubprocessError as error:
             self.record(handle, 'failed', note='resize failed: %s' % error)
             return
-        index, event = watch.wait(lambda state: True, 60, since)
+        index, event, skipped = self.wait_after(watch, lambda state: True, 60, since, stamp)
         painted = 0
         sequence = before_sequence
         if index is not None:
@@ -559,8 +580,9 @@ class Sampler:
             self.record(handle, 'failed', note='no observation after the resize: %s' % event)
             return
         self.record(handle, 'ok', start=stamp, end=event['at'], event=event,
-                    note='resize answered during the import; book=%s sequence=%s->%s paint_delta=%d' % (
-                        book_before, before_sequence, sequence, painted))
+                    note='resize answered during the import; book=%s sequence=%s->%s '
+                         'paint_delta=%d pre_injection_skips=%d' % (
+                             book_before, before_sequence, sequence, painted, skipped))
 
     def scenario_import(self, index, host, watch):
         handle = self.expect('startup_shelf_rows', 'warm_catalog')
