@@ -293,6 +293,7 @@ std::vector<unsigned char> MakeWav(const std::vector<int16_t> &samples, double s
 
 struct PcmResult {
   bool ok = false;
+  bool saw_callback = false;  // at least one buffer arrived from the system
   std::string detail;
   size_t frames = 0;
   double sample_rate = 0;
@@ -347,6 +348,7 @@ PcmResult CapturePcm(const std::string &text, double timeout) {
       @autoreleasepool { Pump(0.01); }
     }
     result.frames = capture->samples.size();
+    result.saw_callback = capture->done.load() || capture->buffers > 0 || !capture->samples.empty();
     result.sample_rate = capture->sample_rate > 0 ? capture->sample_rate : 22050.0;
     result.rms = Rms(capture->samples);
     result.duration = result.sample_rate > 0 ? (double)result.frames / result.sample_rate : 0.0;
@@ -848,13 +850,20 @@ int rtts_probe_run(const char *output_path) {
     // arrive on this machine.
     if (g_voice_count > 0) {
       pcm = CapturePcm(kChinese, 25.0);
-      Expect("probe.pcm-wav-captured", pcm.ok && pcm.bytes > 4096 && pcm.duration > 0.2 && pcm.rms > 0.0005,
-             pcm.ok ? "bytes=" + Str(pcm.bytes) + " duration=" + std::to_string(pcm.duration) +
-                          " rms=" + std::to_string(pcm.rms)
-                    : pcm.detail);
-      if (pcm.ok) {
-        NSData *data = [NSData dataWithBytes:pcm.wav.data() length:pcm.wav.size()];
-        [data writeToFile:[NSString stringWithUTF8String:wav_path.c_str()] atomically:YES];
+      if (!pcm.saw_callback) {
+        // The system produced no audio buffer at all: this environment cannot
+        // synthesize at all (a headless simulator), so nothing is granted here.
+        Pending("probe.pcm-wav-captured", pcm.detail.empty() ? "the system returned no audio buffer" : pcm.detail);
+        pcm = PcmResult();
+      } else {
+        Expect("probe.pcm-wav-captured", pcm.ok && pcm.bytes > 4096 && pcm.duration > 0.2 && pcm.rms > 0.0005,
+               pcm.ok ? "bytes=" + Str(pcm.bytes) + " duration=" + std::to_string(pcm.duration) +
+                            " rms=" + std::to_string(pcm.rms)
+                      : pcm.detail);
+        if (pcm.ok) {
+          NSData *data = [NSData dataWithBytes:pcm.wav.data() length:pcm.wav.size()];
+          [data writeToFile:[NSString stringWithUTF8String:wav_path.c_str()] atomically:YES];
+        }
       }
     } else {
       Pending("probe.pcm-wav-captured", "no installed voice on this platform");

@@ -30,9 +30,9 @@ def main():
     logs.mkdir(parents=True)
     stage, module, probe = out / 'install', out / 'module', out / 'probe'
 
-    def run(name, command, timeout=900, check=True):
+    def run(name, command, timeout=900, check=True, env=None):
         result = subprocess.run([str(x) for x in command], capture_output=True, text=True,
-                                encoding='utf-8', errors='replace', timeout=timeout)
+                                encoding='utf-8', errors='replace', timeout=timeout, env=env)
         (logs / (name + '.log')).write_text(result.stdout + result.stderr, encoding='utf-8')
         if check and result.returncode:
             print((result.stdout + result.stderr)[-12000:], flush=True)
@@ -93,7 +93,12 @@ def main():
             run('install-' + label, ['xcrun', 'simctl', 'install', udid, app])
             container = Path(text('container-' + label, ['xcrun', 'simctl', 'get_app_container', udid, BUNDLE_ID, 'data']))
             documents = container / 'Documents'
-            run('launch-' + label, ['xcrun', 'simctl', 'launch', udid, BUNDLE_ID])
+            # simctl only forwards SIMCTL_CHILD_* variables into the app, so the
+            # tested source and run identity travel explicitly.
+            child_env = dict(os.environ)
+            for variable in ('GITHUB_SHA', 'GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT'):
+                child_env['SIMCTL_CHILD_' + variable] = os.environ[variable]
+            run('launch-' + label, ['xcrun', 'simctl', 'launch', udid, BUNDLE_ID], env=child_env)
             deadline = time.monotonic() + 600
             done = documents / 'done.json'
             while not done.is_file():
