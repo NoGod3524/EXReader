@@ -145,6 +145,21 @@ jobs:
             --container "$container" --app "$app" --seed native-artifact/seed/shelf-seed.json \
             --sdk-root "stage/$target" --sdk-identity "sdk-artifacts/apple-shelf-sdk-$target-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT/build/sdk-identity.json" \
             --destination build/apple-shelf-ui/destination.txt
+      - name: Preserve raw application layout events in focused runs
+        if: always() && inputs.scope == 'recovery'
+        id: layout_trace
+        continue-on-error: true
+        run: |
+          platform='${{ matrix.platform }}'
+          folder="$HOME/Library/Application Support/EXReader"
+          if test "$platform" != macos; then
+            udid=$(sed -n '2p' build/apple-shelf-ui/destination.txt)
+            container=$(python3 tests/apple_host/resolve_container.py --udid "$udid" --output build/apple-shelf-ui/container.json)
+            folder="$container/Library/Application Support/EXReader"
+          fi
+          cp "$folder/shelf-layout-trace.jsonl" build/apple-shelf-ui/layout-trace.jsonl
+          test -s build/apple-shelf-ui/layout-trace.jsonl
+          tail -n 80 build/apple-shelf-ui/layout-trace.jsonl
       - name: Mark focused original-case execution as diagnostic only
         if: always() && inputs.scope == 'recovery'
         env:
@@ -165,7 +180,7 @@ jobs:
           name: apple-shelf-ui-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/apple-shelf-ui/
           if-no-files-found: error
-      - if: always() && (steps.ui.outcome != 'success' || (inputs.scope != 'recovery' && steps.evidence.outcome != 'success'))
+      - if: always() && (steps.ui.outcome != 'success' || (inputs.scope == 'recovery' && steps.layout_trace.outcome != 'success') || (inputs.scope != 'recovery' && steps.evidence.outcome != 'success'))
         run: exit 1
 
   summary:

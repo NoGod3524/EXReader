@@ -44,6 +44,18 @@ final class HostShelf: ObservableObject {
 #if EXR_APPLE_SHELF_REVIEW
     private var reviewVisibleFrames: [[String: Any]] = []
     private var reviewGeometryRevision = -1
+
+    private func recordReviewTrace(_ line: String) {
+        guard let root = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }
+        let folder = root.appendingPathComponent("EXReader", isDirectory: true)
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let url = folder.appendingPathComponent("shelf-layout-trace.jsonl")
+        if !FileManager.default.fileExists(atPath: url.path) { FileManager.default.createFile(atPath: url.path, contents: nil) }
+        guard let handle = try? FileHandle(forWritingTo: url) else { return }
+        defer { try? handle.close() }
+        _ = try? handle.seekToEnd()
+        try? handle.write(contentsOf: Data((line + "\n").utf8))
+    }
 #endif
 
     init(defaults: UserDefaults = .standard) {
@@ -145,7 +157,7 @@ final class HostShelf: ObservableObject {
                     "width": Double(frame.width), "height": Double(frame.height)]
             }
             if let data = try? JSONSerialization.data(withJSONObject: trace, options: [.sortedKeys]),
-               let value = String(data: data, encoding: .utf8) { print("SHELF RAW GEOMETRY \(value)") }
+               let value = String(data: data, encoding: .utf8) { recordReviewTrace("SHELF RAW GEOMETRY \(value)") }
         }
 #endif
         guard size.height > 0, revision == geometryRevision else { return }
@@ -219,7 +231,7 @@ final class HostShelf: ObservableObject {
         guard revision == restoreRevision, issuedRestoreRevision != revision else { return }
         issuedRestoreRevision = revision
 #if EXR_APPLE_SHELF_REVIEW
-        print("SHELF SCROLL ISSUED revision=\(revision) epoch=\(geometryRevision)")
+        recordReviewTrace("SHELF SCROLL ISSUED revision=\(revision) epoch=\(geometryRevision)")
 #endif
         viewportRevision += 1
     }
