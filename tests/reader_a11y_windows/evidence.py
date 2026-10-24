@@ -22,6 +22,7 @@ class Trace(object):
         self.handle = self.path.open("w", encoding="utf-8")
         self.started = time.time()
         self.count = 0
+        self.events = []
 
     def event(self, kind, payload=None):
         self.count += 1
@@ -33,6 +34,7 @@ class Trace(object):
         }
         self.handle.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
         self.handle.flush()
+        self.events.append(record)
         return record
 
     def close(self):

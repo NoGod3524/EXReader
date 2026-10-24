@@ -133,7 +133,7 @@ jobs:
             --fixtures build/a11y-fixtures \
             --output build/a11y-evidence \
             --source "$GITHUB_SHA" --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" \
-            --keep-data
+            --keep-data --verbose
 
       - name: Require complete same-source audit evidence
         if: always()

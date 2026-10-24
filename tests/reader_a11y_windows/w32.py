@@ -477,15 +477,16 @@ def capture_rgb(hwnd):
 
     PrintWindow with PW_RENDERFULLCONTENT renders the window through WM_PRINT,
     so it also works when the runner desktop is smaller than the window. A
-    screen BitBlt is only used when the window refuses to render.
+    screen BitBlt is only used when the window refuses to render. On failure the
+    returned mapping carries an "error" key so the trace can explain itself.
     """
     rect = window_rect(hwnd)
     if not rect:
-        return None
+        return {"error": "GetWindowRect failed for %r" % (hwnd,)}
     width = rect[2] - rect[0]
     height = rect[3] - rect[1]
     if width <= 0 or height <= 0:
-        return None
+        return {"error": "empty window rect %r" % (rect,)}
     info = BITMAPINFO()
     info.bmiHeader.biSize = ctypes.sizeof(BITMAPINFOHEADER)
     info.bmiHeader.biWidth = width
@@ -494,20 +495,27 @@ def capture_rgb(hwnd):
     info.bmiHeader.biBitCount = 32
     info.bmiHeader.biCompression = 0
     screen = user32.GetDC(0)
+    if not screen:
+        return {"error": "GetDC(NULL) failed"}
     memory = gdi32.CreateCompatibleDC(screen)
+    if not memory:
+        user32.ReleaseDC(0, screen)
+        return {"error": "CreateCompatibleDC failed"}
     bits = ctypes.c_void_p()
     bitmap = gdi32.CreateDIBSection(memory, ctypes.byref(info), DIB_RGB_COLORS,
                                     ctypes.byref(bits), None, 0)
-    if not bitmap or not bits:
+    if not bitmap or not bits.value:
         gdi32.DeleteDC(memory)
         user32.ReleaseDC(0, screen)
-        return None
+        return {"error": "CreateDIBSection failed for %dx%d" % (width, height)}
     previous = gdi32.SelectObject(memory, bitmap)
     printed = bool(user32.PrintWindow(hwnd, memory, PW_RENDERFULLCONTENT))
+    blitted = False
     if not printed:
-        gdi32.BitBlt(memory, 0, 0, width, height, screen, rect[0], rect[1], SRCCOPY)
+        blitted = bool(gdi32.BitBlt(memory, 0, 0, width, height, screen, rect[0], rect[1],
+                                    SRCCOPY))
     gdi32.SelectObject(memory, previous)
-    buffer = ctypes.string_at(bits, width * height * 4)
+    buffer = ctypes.string_at(bits.value, width * height * 4)
     gdi32.DeleteObject(bitmap)
     gdi32.DeleteDC(memory)
     user32.ReleaseDC(0, screen)
@@ -516,4 +524,5 @@ def capture_rgb(hwnd):
     rgb[1::3] = buffer[1::4]
     rgb[2::3] = buffer[0::4]
     return {"width": width, "height": height, "rgb": bytes(rgb), "print_window": printed,
-            "window_rect": rect}
+            "screen_bitblt": blitted, "window_rect": rect,
+            "non_white_bytes": sum(1 for value in rgb[0:30000:3] if value != 255)}
