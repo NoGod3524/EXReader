@@ -1,0 +1,203 @@
+name: Android accessibility audit
+on:
+  push:
+    branches: [codex/reader-a11y-android]
+  workflow_dispatch:
+    inputs:
+      diagnostics_run:
+        description: Preserved run id to inspect only; empty executes the audit
+        required: false
+        default: ''
+        type: string
+      diagnostics_attempt:
+        description: Attempt of the preserved run
+        required: false
+        default: '1'
+        type: string
+permissions:
+  contents: read
+  actions: read
+jobs:
+  diagnostics:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.diagnostics_run != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PRESERVED_RUN: ${{ inputs.diagnostics_run }}
+      PRESERVED_ATTEMPT: ${{ inputs.diagnostics_attempt }}
+    steps:
+      - name: Read the exact artifact identity from the preserved run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${PRESERVED_RUN}/artifacts?per_page=100" > artifacts.json
+          python3 - <<'PY'
+          import json, os
+          name = "reader-a11y-android-" + os.environ["PRESERVED_RUN"] + "-" + os.environ["PRESERVED_ATTEMPT"]
+          payload = json.load(open("artifacts.json", encoding="utf-8"))
+          matches = [item for item in payload.get("artifacts", []) if item.get("name") == name]
+          assert len(matches) == 1, matches
+          item = matches[0]
+          assert item["size_in_bytes"] > 0, item
+          assert item["expired"] is False, item
+          assert str(item["digest"]).startswith("sha256:"), item
+          record = {"artifact_id": item["id"], "name": item["name"], "bytes": item["size_in_bytes"],
+                    "digest": item["digest"], "expired": item["expired"], "created_at": item["created_at"],
+                    "run_id": os.environ["PRESERVED_RUN"], "attempt": os.environ["PRESERVED_ATTEMPT"]}
+          open("artifact-identity.json", "w", encoding="utf-8").write(json.dumps(record, indent=2) + "\n")
+          print(json.dumps(record))
+          PY
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.diagnostics_run }}
+          name: reader-a11y-android-${{ inputs.diagnostics_run }}-${{ inputs.diagnostics_attempt }}
+          path: preserved
+      - name: Re-check the preserved evidence on Actions only
+        run: |
+          python3 tests/reader_a11y_android/check_reader_a11y_android.py \
+            --evidence preserved/build/a11y-android \
+            --source "$(cat preserved/build/a11y-android/source.txt)" \
+            --run "${PRESERVED_RUN}" \
+            --attempt "${PRESERVED_ATTEMPT}" \
+            --output preserved/check.json
+  audit:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.diagnostics_run == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    env:
+      START: f43baf9182d75907c0cb5d6f77048f27bca8c950
+      FROZEN: 9854061be331fe603a1822d9b2b36ee357154927
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require this exact source inside this package's only writable paths
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$START" HEAD
+          git diff --exit-code "$FROZEN" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code "$START" HEAD -- apps/reader/store/001_catalog.sql
+          unexpected="$(git diff --name-only "$START" HEAD | grep -v -E '^(tests/reader_a11y_android/|\.github/workflows/reader-a11y-android\.yml$|docs/READER-A11Y-ANDROID\.md$|docs/validation/reader-a11y-android\.json$)' || true)"
+          if [ -n "$unexpected" ]; then
+            echo "paths outside this package:"
+            echo "$unexpected"
+            exit 1
+          fi
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Install pinned Android compiler and emulator
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          echo "$sdk/emulator" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" \
+            "build-tools;35.0.0" "build-tools;34.0.0" "ndk;27.0.12077973" "cmake;3.22.1" "emulator" \
+            "system-images;android-34;default;x86_64"
+          sudo apt-get update -qq
+          sudo apt-get install -y patchelf
+          python -m pip install ninja==1.11.1.1
+      - name: Build the unchanged host application and its deterministic fixtures
+        run: |
+          set -o pipefail
+          mkdir -p build/a11y-android
+          python tools/build_android_host.py --stage stage/android-x86_64 --build-dir build/android-host --gradle gradle 2>&1 | tee build/a11y-android/host-build.log
+          test -s build/android-host/artifacts/app-debug.apk
+      - name: Build the independent audit test APK
+        run: |
+          set -o pipefail
+          gradle -p tests/reader_a11y_android/harness --no-daemon --stacktrace \
+            :a11y:assembleDebug :a11y:assembleDebugAndroidTest 2>&1 | tee build/a11y-android/harness-build.log
+          test -s tests/reader_a11y_android/harness/a11y/build/outputs/apk/debug/a11y-debug.apk
+          test -s tests/reader_a11y_android/harness/a11y/build/outputs/apk/androidTest/debug/a11y-debug-androidTest.apk
+      - name: Record source, run, artifacts and harness identity
+        run: |
+          set -euo pipefail
+          root=build/a11y-android
+          mkdir -p "$root/apks"
+          cp tests/reader_a11y_android/harness/a11y/build/outputs/apk/debug/a11y-debug.apk "$root/apks/"
+          cp tests/reader_a11y_android/harness/a11y/build/outputs/apk/androidTest/debug/a11y-debug-androidTest.apk "$root/apks/"
+          cp build/android-host/build.json "$root/host-build.json"
+          git rev-parse HEAD > "$root/source.txt"
+          printf '%s\n' "$GITHUB_RUN_ID" > "$root/run-id.txt"
+          printf '%s\n' "$GITHUB_RUN_ATTEMPT" > "$root/attempt.txt"
+          python3 - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          root = Path("build/a11y-android")
+          record = {}
+          for name in ("a11y-debug.apk", "a11y-debug-androidTest.apk"):
+              path = root / "apks" / name
+              raw = path.read_bytes()
+              record[name] = {"file": "apks/" + name, "size": len(raw),
+                              "sha256": hashlib.sha256(raw).hexdigest()}
+          (root / "harness-apks.json").write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+          print(json.dumps(record))
+          PY
+      - name: Enable emulator acceleration
+        run: sudo chmod 666 /dev/kvm
+      - name: Audit the real installed host through the semantic tree on API34
+        id: emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          disable-linux-hw-accel: false
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          cores: 4
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: bash tests/reader_a11y_android/ci/emulator-audit.sh
+      - name: Keep the two decisions apart and refuse altered evidence
+        if: ${{ !cancelled() && steps.emulator.outcome == 'success' }}
+        run: |
+          python3 tests/reader_a11y_android/check_reader_a11y_android.py \
+            --evidence build/a11y-android \
+            --source "$GITHUB_SHA" --run "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" \
+            --output build/a11y-android/audit-check.json \
+            --corruption-suite | tee build/a11y-android/audit-check.log
+      - name: Record audit completion separately from accessibility acceptance
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          path = Path("build/a11y-android/audit-check.json")
+          summary = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+          lines = ["## Android accessibility audit", "",
+                   "audit_completed: " + str(summary.get("audit_completed")),
+                   "accessibility_accepted: " + str(summary.get("accessibility_accepted")), ""]
+          findings = summary.get("findings") or {}
+          for name in summary.get("failed_cases") or []:
+              lines.append("- failed: " + str(name) + " - " + str(findings.get(name)))
+          if summary.get("refused"):
+              lines.append("- checker refused: " + str(summary.get("problems")[:8]))
+          text = "\n".join(lines)
+          print(text)
+          Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a", encoding="utf-8").write(text + "\n")
+          PY
+      - name: Preserve source, semantic trees, screenshots and the audit record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-a11y-android-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/a11y-android/
+            examples/android/app/build/outputs/apk/
+            tests/reader_a11y_android/harness/a11y/build/outputs/apk/
+          if-no-files-found: error
