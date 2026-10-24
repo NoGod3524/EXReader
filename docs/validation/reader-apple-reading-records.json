@@ -18,7 +18,9 @@
     "run_id": 40141724772,
     "attempt": 1,
     "diagnostic_only": true,
-    "accepted": false
+    "accepted": false,
+    "status": "failure",
+    "reason": "Diagnostic compile command omitted unchanged bindings/swift/EXReader.swift required by the existing LegacySelfTest; real Xcode generator already includes it"
   },
   "complete_product": false,
   "physical_device_execution": false,

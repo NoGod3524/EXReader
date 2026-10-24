@@ -45,7 +45,7 @@ def main():
     require(plistlib.loads(plist.read_bytes())['EXRSourceSHA'] == source, 'app source differs')
     binary = app / ('Contents/MacOS/EXReaderHost' if target == 'macos' else 'EXReaderHost')
     provider = inspect(binary, app.parent / 'EXReaderHost.link.map')
-    require(provider['installed_reading_commands_linked'] is True and provider['installed_annotation_view_linked'] is True and provider['static_sdk_linked'] is False, 'F2 provider differs')
+    require(provider['installed_reading_commands_linked'] is True and provider['installed_annotation_view_linked'] is True and provider['static_sdk_linked'] is False, 'installed reading module provider differs')
     shutil.copytree(app, output / 'program/EXReaderHost.app')
     cases = load_results(xcresult)
     require(len(cases) == 7 and {case_name(row['name']) for row in cases} == set(CASES) and

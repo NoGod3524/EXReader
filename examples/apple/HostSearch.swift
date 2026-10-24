@@ -48,13 +48,13 @@ struct HostSearchFixedAnchor: Codable, Equatable {
     let end: Int
     let fields: [Data?]
 
-    init(_ raw: exr_fixed_anchor) throws {
+    init(_ raw: exr_fixed_anchor, maximumBytes: Int = 8192) throws {
         start = raw.start; end = raw.end
         let lengths = [raw.exact_size, raw.prefix_size, raw.suffix_size]
         let pointers = [raw.exact, raw.prefix, raw.suffix]
         var values: [Data?] = [raw.page_id.map { Data(String(cString: $0).utf8) }]
         for (pointer, length) in zip(pointers, lengths) {
-            guard length <= 8192, length == 0 || pointer != nil else { throw HostError.invalidResult("搜索选择器长度无效") }
+            guard length <= maximumBytes, length == 0 || pointer != nil else { throw HostError.invalidResult("选择器长度无效") }
             values.append(pointer.map { Data(bytes: $0, count: length) })
         }
         fields = values
