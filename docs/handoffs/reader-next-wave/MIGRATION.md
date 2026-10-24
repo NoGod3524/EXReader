@@ -1,4 +1,4 @@
-# 非 P0 Claude → DeepSeek 接续准备
+# 非 P0 Claude → DeepSeek 接续状态
 
 用户要求只保留 Claude 的六个 P0：**J01、J04、J05、J10、J11、J22**；其余19个包转 DeepSeek-V4.1-Flash 1017 High / PTC。已实际观察新会话为该模型、High、PTC、完全权限，未改权限设置。
 
@@ -8,14 +8,15 @@ root读取真实Git工作树。18个已有非P0工作树HEAD均为固定起点 f
 
 `C:/Users/Oscar/exreader-agents/transfer-checkpoints/2026-10-24-J-nonP0/checkpoints.json`
 
-各包子目录含 checkpoint.json、tracked.patch 及 files/ 源码副本与摘要。J24未找到独立分支/工作树；实际Claude“分发功能 Unix 实现”会话同时收到了J24和J25，不把两个包误当两个独立对话。
+各包子目录含 checkpoint.json、tracked.patch 及 files/ 源码副本与摘要。实际Claude“分发功能 Unix 实现”会话同时收到了J24和J25。删除J12时应用另行提示会清除临时工作树，root确认后从备份逐文件恢复四份源码并核对摘要；新目录为 `C:/Users/Oscar/exreader-agents/j12-sync-status-view`，沿用原分支。J24已从固定起点建立独立分支及目录 `C:/Users/Oscar/exreader-agents/j24-distribution-unix`。
 
 ## 当前停止/接续边界
 
-- Claude当前五小时100%、周74%，usage credits余额$0；另有$55仅云会话优惠额，不能当作本机Code余额或本轮已花费用。
-- root已关闭Unix/Windows分发共用会话的“额度重置后自动继续”。其它会话需逐项核对；额度错误不被写成root已完成全部暂停/删除。
-- 用户已恢复Windows桌面。删除操作的单次批量确认仍在等待，未执行删除；六个P0保留。
-- J02已发一次**只读预检**，在root明确释放且对应release-J02.json存在前禁止修改。其它18包尚未发送，不能说已全部开工。
+- 迁移前观察到Claude五小时100%、周74%，usage credits余额$0；另有$55仅云会话优惠额，不能当作本机Code余额或本轮已花费用。
+- 用户明确确认批量删除后，19个非P0包对应的18个Claude会话已全部删除。六个P0会话保留。应用提示删除范围为此电脑，服务端副本按Anthropic数据政策保留。
+- DeepSeek已分别收到全部19包的实现指令：J02、J03、J06、J07、J08、J09、J12、J13、J14、J15、J16、J17、J18、J19、J20、J21、J23、J24、J25，一包一会话。每会话实际核对 Flash1017 / High / PTC / 完全权限。J02原只读预检已收到明确“开始实现”后续消息。
+- 当前无待派发包。19个release文件均已写入checkpoint目录；实际派发与唯一writer状态见 `migration-state.json`。收到实施指令不表示实现或验收已完成。
+- 期间电脑操作遇到状态查询超时和 GetCursorPos / 0x80070005；按恢复流程停止旧输入，用户回普通桌面后重新定位窗口，逐项继续，没有在未知状态重复发送任务。
 - 接续者必须复用本包已有绝对工作树及未提交代码；先读固定任务页及共同约束，不reset/clean/rebase、不覆盖半成品、不在其它任务目录新开writer。
 - 原owner停止核实后，再由root记录释放、更新writer并发送开始实施。所有构建/测试/语法检查/夹具/benchmark/工件解析继续仅Actions。
 
