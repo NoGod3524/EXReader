@@ -185,9 +185,10 @@ RUNTIME_NAMES = frozenset((
 
 def family(symbol):
     """Name the library a symbol belongs to, or 'runtime' for C/C++ runtime code."""
+    plain = symbol[6:] if symbol.startswith('__imp_') else symbol
     for library, prefixes in FAMILIES:
         for prefix in prefixes:
-            if symbol.startswith(prefix):
+            if plain.startswith(prefix):
                 return library
     if symbol in RUNTIME_NAMES:
         return 'runtime'

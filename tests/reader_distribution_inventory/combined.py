@@ -240,8 +240,23 @@ def main():
         expected = [packages.canonical(name) for name in package['system'][args.platform]]
         directive_names = sorted({packages.canonical(name) for path in own
                                   for name in directives.get(path, [])})
+        target = 'consumer-%s' % package['id']
+        record = None
+        for candidate_name in (target, target + '.exe'):
+            candidate, _, code = commands.run('link command %s' % candidate_name, 'ninja-link',
+                                              ['ninja', '-C', str(args.consumers.resolve()),
+                                               '-t', 'commands', candidate_name])
+            if code == 0 and candidate.get('entries'):
+                record = candidate
+                break
+        evidence = None
+        if record is not None:
+            tokens = [entry['name'] for entry in record['entries']]
+            evidence = packages.link_evidence(tokens, archive_names,
+                                              package['system'][args.platform])
+        linked = list(evidence['observed_libraries']) if evidence else []
         observed = sorted(set(packages.canonical(name) for name in external['families'])
-                          | set(directive_names))
+                          | set(directive_names) | set(linked))
         expected_missing = sorted(name for name in expected if name not in observed)
         section.update({'external': external, 'external_expected': expected,
                         'external_observed': observed, 'external_missing': expected_missing,
@@ -271,24 +286,12 @@ def main():
                                    'pass' if bundled_ok else 'fail',
                                    '%r' % [entry['library'] for entry in package['bundled']]))
 
-        target = 'consumer-%s' % package['id']
-        record = None
-        for candidate_name in (target, target + '.exe'):
-            candidate, _, code = commands.run('link command %s' % candidate_name, 'ninja-link',
-                                              ['ninja', '-C', str(args.consumers.resolve()),
-                                               '-t', 'commands', candidate_name])
-            if code == 0 and candidate.get('entries'):
-                record = candidate
-                break
         if record is None:
             problems.append('no recorded link command for ' + target)
             section.update({'link': None, 'link_evidence': None})
             package_checks.append(item('package.%s.link' % package['id'], 'fail',
                                        'link command unavailable'))
         else:
-            tokens = [entry['name'] for entry in record['entries']]
-            evidence = packages.link_evidence(tokens, archive_names,
-                                              package['system'][args.platform])
             own_names = {entry['name'] for entry in resolved['archives']}
             own_linked = sorted(own_names & set(evidence['archives']))
             if sorted(own_names) != own_linked:
