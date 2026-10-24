@@ -48,148 +48,142 @@ def assert_ratio(case, observed, expected):
 
 def build_cases():
     cases = []
-    viewport = element('list', 0, 0, 200, 400, 'Application>Window>ScrollView[list]', role='ScrollView')
-    inside = 'Application>Window>ScrollView[list]>Button[%s]'
+    scroll_path = 'Application>Window>ScrollView[list]'
+    viewport = element('list', 0, 0, 200, 400, scroll_path, role='ScrollView')
+    inside = scroll_path + '>Button[%s]'
+    plain = 'Application>Window>Button[%s]'
 
-    # 1. Two controls inside the same scroll view, both fully visible, 79% overlap.
+    def case(identifier, description, expected, elements, first, second, ratio=None):
+        return {'id': identifier, 'description': description, 'expected': expected,
+                'threshold_ratio': ratio,
+                'outcome': classify_overlap(elements[first], elements[second], elements, 0.5)}
+
+    # 1-4. Same container, shared viewport recorded: the unchanged 50% threshold.
     elements = {'list': viewport,
                 'a': element('a', 0, 0, 100, 100, inside % 'a'),
                 'b': element('b', 20, 10, 100, 100, inside % 'b')}
-    cases.append({'id': 'same-container-visible-overlap',
-                  'description': '同一滚动容器内两个可见控件真实重叠 72%（互不包含）',
-                  'expected': 'fail', 'threshold_ratio': 0.72,
-                  'outcome': classify_overlap(elements['a'], elements['b'], elements, 0.5)})
-
-    # 2. Same container, 20% overlap: below the unchanged threshold.
+    cases.append(case('same-container-visible-overlap',
+                      '同一滚动容器内两个可见控件真实重叠 72%（互不包含）',
+                      'fail', elements, 'a', 'b', 0.72))
     elements = {'list': viewport,
                 'a': element('a', 0, 0, 100, 100, inside % 'a'),
                 'b': element('b', 80, 0, 100, 100, inside % 'b')}
-    cases.append({'id': 'same-container-below-threshold',
-                  'description': '同一容器内 20% 重叠低于 50% 阈值',
-                  'expected': 'none', 'threshold_ratio': 0.20,
-                  'outcome': classify_overlap(elements['a'], elements['b'], elements, 0.5)})
-
-    # 3. Threshold edges stay at 50%.
+    cases.append(case('same-container-below-threshold',
+                      '同一容器内 20% 重叠低于 50% 阈值',
+                      'none', elements, 'a', 'b', 0.20))
     elements = {'list': viewport,
                 'a': element('a', 0, 0, 100, 100, inside % 'a'),
                 'b': element('b', 51, 0, 100, 100, inside % 'b')}
-    cases.append({'id': 'threshold-49-percent',
-                  'description': '同一容器内 49% 重叠仍判通过',
-                  'expected': 'none', 'threshold_ratio': 0.49,
-                  'outcome': classify_overlap(elements['a'], elements['b'], elements, 0.5)})
+    cases.append(case('threshold-49-percent', '同一容器内 49% 重叠仍判通过',
+                      'none', elements, 'a', 'b', 0.49))
     elements = {'list': viewport,
                 'a': element('a', 0, 0, 100, 100, inside % 'a'),
                 'b': element('b', 49, 0, 100, 100, inside % 'b')}
-    cases.append({'id': 'threshold-51-percent',
-                  'description': '同一容器内 51% 重叠判遮挡',
-                  'expected': 'fail', 'threshold_ratio': 0.51,
-                  'outcome': classify_overlap(elements['a'], elements['b'], elements, 0.5)})
+    cases.append(case('threshold-51-percent', '同一容器内 51% 重叠判遮挡',
+                      'fail', elements, 'a', 'b', 0.51))
 
-    # 4. Containment is not occlusion.
+    # 5-7. Siblings where one box fully covers the other stay a real occlusion:
+    # area alone never proves a parent-child relationship.
     elements = {'list': viewport,
                 'a': element('a', 0, 0, 100, 100, inside % 'a'),
-                'b': element('b', 10, 10, 20, 20, inside % 'b')}
-    cases.append({'id': 'same-container-containment',
-                  'description': '一方布局框包含另一方，不算遮挡',
-                  'expected': 'none', 'threshold_ratio': None,
-                  'outcome': classify_overlap(elements['a'], elements['b'], elements, 0.5)})
-
-    # 5. Scroll content outside the viewport overlapping an external button.
-    viewport = element('list', -2.5, 165, 380, 15, 'Application>Window>ScrollView[list]', role='ScrollView')
+                'b': element('b', 0, 0, 100, 100, inside % 'b')}
+    cases.append(case('same-container-containment-equal',
+                      '同级同尺寸完全重合仍判遮挡', 'fail', elements, 'a', 'b', 1.0))
     elements = {'list': viewport,
-                'book': element('book', 13.5, 165, 348, 142,
-                                'Application>Window>ScrollView[list]>Other>Button[book]'),
-                'import': element('import', -1.5, 188, 176, 77.5, 'Application>Window>Button[import]')}
-    cases.append({'id': 'scroll-content-outside-viewport',
-                  'description': '滚动内容在 15 pt 视口之外，与外部按钮几何重叠但不遮挡',
-                  'expected': 'excluded', 'threshold_ratio': None,
-                  'outcome': classify_overlap(elements['book'], elements['import'], elements, 0.5)})
+                'a': element('a', 0, 0, 100, 100, inside % 'a'),
+                'b': element('b', 10, 10, 80, 80, inside % 'b')}
+    cases.append(case('same-container-containment-64pct-area',
+                      '同级 80x80 完全落在 100x100 内（面积 64%）：可见面积 100% 被覆盖 → fail',
+                      'fail', elements, 'a', 'b', 1.0))
+    elements = {'list': viewport,
+                'a': element('a', 0, 0, 100, 100, inside % 'a'),
+                'b': element('b', 27.65, 27.65, 44.7, 44.7, inside % 'b')}
+    cases.append(case('same-container-containment-20pct-area',
+                      '同级小控件面积约 20% 且完全被覆盖 → 仍 fail',
+                      'fail', elements, 'a', 'b', 1.0))
 
-    # 6. Scroll content whose visible part does overlap an external button.
-    viewport = element('list2', 0, 100, 300, 100, 'Application>Window>ScrollView[list2]', role='ScrollView')
-    elements = {'list2': viewport,
-                'a': element('a', 0, 150, 100, 40, 'Application>Window>ScrollView[list2]>Button[a]'),
-                'b': element('b', 50, 155, 40, 40, 'Application>Window>Button[b]')}
-    cases.append({'id': 'scroll-content-visible-overlap',
-                  'description': '滚动内容的可见部分与外部按钮重叠 87.5%',
-                  'expected': 'fail', 'threshold_ratio': 0.875,
-                  'outcome': classify_overlap(elements['a'], elements['b'], elements, 0.5)})
+    # 8. The only sanctioned exception: the semantic path proves real ancestry.
+    elements = {'outer': element('outer', 0, 0, 100, 100, plain % 'outer'),
+                'inner': element('inner', 10, 10, 20, 20, plain % 'outer' + '>Other>Button[inner]')}
+    cases.append(case('path-proven-ancestor',
+                      '语义路径证明父子关系（路径前缀）才豁免嵌套遮挡',
+                      'none', elements, 'outer', 'inner'))
 
-    # 7. Two different scroll containers, both visible: still occlusion.
+    # 9-11. Different scroll containers.
+    elements = {'va': element('va', 0, 0, 300, 300, 'Application>Window>ScrollView[va]', role='ScrollView'),
+                'vb': element('vb', 0, 0, 300, 300, 'Application>Window>ScrollView[vb]', role='ScrollView'),
+                'a': element('a', 20, 20, 40, 40, 'Application>Window>ScrollView[va]>Button[a]'),
+                'b': element('b', 0, 0, 100, 100, 'Application>Window>ScrollView[vb]>Button[b]')}
+    cases.append(case('different-scroll-containers-full-containment',
+                      '不同滚动容器里小控件被大控件完全覆盖（可见）→ fail',
+                      'fail', elements, 'a', 'b', 1.0))
     elements = {'va': element('va', 0, 0, 300, 300, 'Application>Window>ScrollView[va]', role='ScrollView'),
                 'vb': element('vb', 0, 80, 300, 320, 'Application>Window>ScrollView[vb]', role='ScrollView'),
                 'a': element('a', 0, 100, 100, 50, 'Application>Window>ScrollView[va]>Button[a]'),
                 'b': element('b', 20, 110, 100, 50, 'Application>Window>ScrollView[vb]>Button[b]')}
-    cases.append({'id': 'different-scroll-containers-visible',
-                  'description': '两个不同滚动容器的可见部分重叠 64%',
-                  'expected': 'fail', 'threshold_ratio': 0.64,
-                  'outcome': classify_overlap(elements['a'], elements['b'], elements, 0.5)})
-
-    # 8. Different scroll containers where one side is clipped away.
+    cases.append(case('different-scroll-containers-visible',
+                      '两个不同滚动容器的可见部分重叠 64%',
+                      'fail', elements, 'a', 'b', 0.64))
     elements = {'va': element('va', 0, 0, 300, 50, 'Application>Window>ScrollView[va]', role='ScrollView'),
                 'a': element('a', 0, 100, 100, 50, 'Application>Window>ScrollView[va]>Button[a]'),
-                'b': element('b', 0, 120, 100, 40, 'Application>Window>Button[b]')}
-    cases.append({'id': 'different-scroll-containers-clipped',
-                  'description': '滚动内容完全在视口外，与外部按钮不构成遮挡',
-                  'expected': 'excluded', 'threshold_ratio': None,
-                  'outcome': classify_overlap(elements['a'], elements['b'], elements, 0.5)})
+                'b': element('b', 0, 120, 100, 40, plain % 'b')}
+    cases.append(case('different-scroll-containers-clipped',
+                      '滚动内容完全在视口外，与外部按钮不构成遮挡',
+                      'excluded', elements, 'a', 'b'))
 
-    # 9. Scroll ancestor without an identifier: undetermined, never 'clipped'.
-    elements = {'a': element('a', 0, 100, 100, 50, 'Application>Window>ScrollView>Button[a]'),
-                'b': element('b', 0, 120, 100, 40, 'Application>Window>Button[b]')}
-    cases.append({'id': 'bare-scroll-ancestor',
-                  'description': '滚动祖先没有标识，无法读取视口 → uncovered',
-                  'expected': 'undetermined', 'threshold_ratio': None,
-                  'outcome': classify_overlap(elements['a'], elements['b'], elements, 0.5)})
+    # 12-13. Scroll content against an external control.
+    elements = {'list': element('list2', -2.5, 165, 380, 15, 'Application>Window>ScrollView[list2]', role='ScrollView'),
+                'book': element('book', 13.5, 165, 348, 142,
+                                'Application>Window>ScrollView[list2]>Other>Button[book]'),
+                'import': element('import', -1.5, 188, 176, 77.5, plain % 'import')}
+    cases.append(case('scroll-content-outside-viewport',
+                      '滚动内容在 15 pt 视口之外，与外部按钮几何重叠但不遮挡',
+                      'excluded', elements, 'book', 'import'))
+    elements = {'list2': element('list2', 0, 100, 300, 100, 'Application>Window>ScrollView[list2]', role='ScrollView'),
+                'a': element('a', 0, 150, 100, 40, 'Application>Window>ScrollView[list2]>Button[a]'),
+                'b': element('b', 50, 155, 40, 40, plain % 'b')}
+    cases.append(case('scroll-content-visible-overlap',
+                      '滚动内容的可见部分与外部按钮重叠 87.5%',
+                      'fail', elements, 'a', 'b', 0.875))
 
-    # 10. Identifier names a viewport that the state never recorded.
-    elements = {'a': element('a', 0, 100, 100, 50, 'Application>Window>ScrollView[ghost]>Button[a]'),
-                'b': element('b', 0, 120, 100, 40, 'Application>Window>Button[b]')}
-    cases.append({'id': 'missing-scroll-viewport',
-                  'description': '滚动视口未记录 → uncovered，不声称已被裁剪',
-                  'expected': 'undetermined', 'threshold_ratio': None,
-                  'outcome': classify_overlap(elements['a'], elements['b'], elements, 0.5)})
-
-    # 11. Nested scroll views: the nearest viewport decides.
+    # 14. Nested scroll views: the nearest recorded viewport decides.
     elements = {'outer': element('outer', 0, 0, 300, 400, 'Application>Window>ScrollView[outer]', role='ScrollView'),
                 'inner': element('inner', 0, 200, 300, 40,
                                  'Application>Window>ScrollView[outer]>Other>ScrollView[inner]', role='ScrollView'),
                 'a': element('a', 0, 210, 100, 40,
                              'Application>Window>ScrollView[outer]>Other>ScrollView[inner]>Button[a]'),
-                'b': element('b', 0, 220, 100, 40, 'Application>Window>Button[b]')}
-    cases.append({'id': 'nested-scroll-nearest-ancestor',
-                  'description': '嵌套滚动按最近视口裁剪（66.7%，不是外层的 75%）',
-                  'expected': 'fail', 'threshold_ratio': 0.6667,
-                  'outcome': classify_overlap(elements['a'], elements['b'], elements, 0.5)})
+                'b': element('b', 0, 220, 100, 40, plain % 'b')}
+    cases.append(case('nested-scroll-nearest-ancestor',
+                      '嵌套滚动按最近视口裁剪（66.7%，不是外层的 75%）',
+                      'fail', elements, 'a', 'b', 0.6667))
 
-    # 12. No scroll involvement behaves exactly as before.
-    elements = {'a': element('a', 0, 0, 100, 100, 'Application>Window>Button[a]'),
-                'b': element('b', 0, 0, 100, 100, 'Application>Window>Button[b]')}
-    cases.append({'id': 'plain-no-scroll-overlap',
-                  'description': '无滚动容器时 100% 重叠仍判遮挡',
-                  'expected': 'fail', 'threshold_ratio': 1.0,
-                  'outcome': classify_overlap(elements['a'], elements['b'], elements, 0.5)})
+    # 15-17. Cannot prove where the visible area is: never claim visible occlusion.
+    elements = {'a': element('a', 0, 0, 100, 100, 'Application>Window>ScrollView>Button[a]'),
+                'b': element('b', 30, 0, 100, 100, 'Application>Window>ScrollView>Button[b]')}
+    cases.append(case('bare-scroll-siblings-unknown-viewport',
+                      '无标识滚动容器内的同级控件：视口不可证 → uncovered，不看 raw 几何',
+                      'undetermined', elements, 'a', 'b'))
+    elements = {'a': element('a', 0, 0, 100, 100, 'Application>Window>ScrollView>Other>Other>Button[a]'),
+                'b': element('b', 30, 0, 100, 100, 'Application>Window>ScrollView>Other>Button[b]')}
+    cases.append(case('bare-scroll-different-depth',
+                      '同一无标识滚动容器但层级不同 → uncovered',
+                      'undetermined', elements, 'a', 'b'))
+    elements = {'a': element('a', 0, 0, 100, 100, 'Application>Window>ScrollView[ghost]>Button[a]'),
+                'b': element('b', 30, 0, 100, 100, plain % 'b')}
+    cases.append(case('missing-scroll-viewport',
+                      '滚动视口未记录 → uncovered，不声称已被裁剪',
+                      'undetermined', elements, 'a', 'b'))
 
-    # 14. Siblings inside an unrecorded scroll view: they cannot be scrolled relative
-    # to each other, so the unchanged threshold still applies.
-    elements = {'a': element('a', 0, 0, 100, 100,
-                             'Application>Window>ScrollView>Other>Other>Button[a]'),
-                'b': element('b', 30, 0, 100, 100,
-                             'Application>Window>ScrollView>Other>Other>Button[b]')}
-    cases.append({'id': 'same-unnamed-scroll-siblings-overlap',
-                  'description': '无标识滚动容器内的同级控件重叠 70% 仍判遮挡',
-                  'expected': 'fail', 'threshold_ratio': 0.70,
-                  'outcome': classify_overlap(elements['a'], elements['b'], elements, 0.5)})
-
-    # 15. Same unnamed scroll view but different nesting depth: undecidable.
-    elements = {'a': element('a', 0, 0, 100, 100,
-                             'Application>Window>ScrollView>Other>Other>Button[a]'),
-                'b': element('b', 30, 0, 100, 100,
-                             'Application>Window>ScrollView>Other>Button[b]')}
-    cases.append({'id': 'same-scroll-non-sibling-unknown-viewport',
-                  'description': '同一无标识滚动容器但层级不同 → uncovered，不猜可见性',
-                  'expected': 'undetermined', 'threshold_ratio': None,
-                  'outcome': classify_overlap(elements['a'], elements['b'], elements, 0.5)})
+    # 18-19. No scroll container at all: laid-out boxes, unchanged threshold.
+    elements = {'a': element('a', 0, 0, 100, 100, plain % 'a'),
+                'b': element('b', 0, 0, 100, 100, plain % 'b')}
+    cases.append(case('plain-no-scroll-overlap', '无滚动容器时 100% 重叠仍判遮挡',
+                      'fail', elements, 'a', 'b', 1.0))
+    elements = {'a': element('a', 0, 0, 100, 100, plain % 'a'),
+                'b': element('b', 10, 10, 80, 80, plain % 'b')}
+    cases.append(case('plain-no-scroll-containment',
+                      '无滚动容器时同级完全包含（面积 64%）仍判遮挡',
+                      'fail', elements, 'a', 'b', 1.0))
 
     return cases, elements
 

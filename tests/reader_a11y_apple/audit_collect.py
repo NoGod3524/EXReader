@@ -286,127 +286,101 @@ def overlap_ratio(first_box, second_box):
     return area / smaller, area
 
 
-def contains_box(outer, inner):
-    return (outer['x'] <= inner['x'] and outer['y'] <= inner['y']
-            and outer['x'] + outer['width'] >= inner['x'] + inner['width']
-            and outer['y'] + outer['height'] >= inner['y'] + inner['height'])
+def path_ancestor(outer, inner):
+    """True only when the semantic path proves outer is an ancestor of inner.
 
-
-def nested_child(outer, inner):
-    """Containment only excuses occlusion when the inner box is clearly smaller.
-
-    An identical or near-identical sibling pair also "contains" itself, and that is
-    exactly the overlap the threshold is meant to catch."""
-    outer_area = outer['width'] * outer['height']
-    inner_area = inner['width'] * inner['height']
-    if outer_area <= 0 or inner_area <= 0:
+    Geometry cannot prove a parent-child relationship: two independent siblings can
+    sit entirely inside one another. The only defensible exception is the recorded
+    accessibility path, where one element's token chain is a strict prefix of the
+    other's."""
+    outer_tokens = path_tokens(outer.get('path'))
+    inner_tokens = path_tokens(inner.get('path'))
+    if not outer_tokens or len(outer_tokens) >= len(inner_tokens):
         return False
-    return inner_area / outer_area <= 0.9
+    return inner_tokens[:len(outer_tokens)] == outer_tokens
 
 
 def classify_overlap(first, second, elements, threshold):
     """Decide whether two interactive elements really occlude each other.
 
-    Same scroll container with a recorded viewport: clip both by that shared
-    viewport, then compare what is visible. Same container without a recorded
-    viewport: true siblings cannot be scrolled apart, so their boxes are compared
-    directly; a pair nested at different depths stays undetermined. Different
-    containers: clip each side by its nearest recorded viewport, so scroll content
-    below the viewport cannot fake an overlap with an external control. Any pair
-    whose clip cannot be computed is reported as undetermined, never as clipped."""
+    Containers come from the recorded accessibility path. An element inside a
+    scroll view whose identifier is missing cannot be proven to share a viewport
+    with anything, so such a pair is undetermined: raw geometry is never reported
+    as measured visible occlusion.
+
+    * no scroll ancestor on either side: compare the laid-out boxes;
+    * same identified scroll container with a recorded viewport: clip both by that
+      viewport and compare what is visible;
+    * different containers: clip each side by its nearest recorded viewport;
+    * any unidentified scroll ancestor, or a viewport that was not recorded,
+      makes the pair undetermined.
+
+    A containment-only relationship is excused only when path_ancestor proves one
+    element is a real ancestor of the other. Siblings and cross-container pairs are
+    judged by the unchanged 50% threshold even when one box fully covers the other."""
     first_box = rect(first)
     second_box = rect(second)
     raw_ratio, _ = overlap_ratio(first_box, second_box)
     first_chain = scroll_chain(first.get('path'))
     second_chain = scroll_chain(second.get('path'))
-    # Distinguish "inside an unidentified scroll view" from "inside no scroll view":
-    # both would otherwise carry the empty id and look like one container.
-    first_container = ('scroll', first_chain[0]['id']) if first_chain else ('none',)
-    second_container = ('scroll', second_chain[0]['id']) if second_chain else ('none',)
-    same_container = first_container == second_container
-    if same_container:
-        in_scroll = bool(first_chain)
-        shared = first_chain[0] if in_scroll else None
-        viewport_known = False
-        if shared is not None and not shared['bare']:
-            viewport = elements.get(shared['id'])
-            viewport_known = (viewport is not None
-                              and rect(viewport)['width'] > 0 and rect(viewport)['height'] > 0)
-        first_parent = path_tokens(first.get('path'))[:-1]
-        second_parent = path_tokens(second.get('path'))[:-1]
-        siblings = first_parent == second_parent
-        if in_scroll and not viewport_known and not siblings:
-            # Same scroll container, one side nested deeper, viewport unknown: the
-            # visible parts cannot be located, so the pair stays undetermined.
+    anonymous = (any(ancestor['bare'] for ancestor in first_chain)
+                 or any(ancestor['bare'] for ancestor in second_chain))
+    first_container = ('none',) if not first_chain else ('scroll', first_chain[0]['id'])
+    second_container = ('none',) if not second_chain else ('scroll', second_chain[0]['id'])
+    same_container = (not anonymous) and first_container == second_container
+    if raw_ratio <= 0:
+        return {'verdict': 'none', 'same_container': same_container, 'raw_ratio': 0.0,
+                'visible_ratio': 0.0, 'detail': '布局框不相交'}
+    if same_container and first_chain:
+        viewport = elements.get(first_chain[0]['id'])
+        if viewport is None or rect(viewport)['width'] <= 0 or rect(viewport)['height'] <= 0:
             return {'verdict': 'undetermined', 'same_container': True, 'raw_ratio': raw_ratio,
                     'visible_ratio': 0.0,
-                    'detail': '同一滚动容器内但最近视口未记录，无法判断可见部分'}
-        if in_scroll and viewport_known:
-            first_box, first_status, first_detail = visible_box(first, elements)
-            second_box, second_status, second_detail = visible_box(second, elements)
-            if first_status != 'ok' or second_status != 'ok':
-                return {'verdict': 'undetermined', 'same_container': True, 'raw_ratio': raw_ratio,
-                        'visible_ratio': 0.0,
-                        'detail': first_detail if first_status != 'ok' else second_detail}
-            if first_box is None or second_box is None:
-                return {'verdict': 'excluded', 'same_container': True, 'raw_ratio': raw_ratio,
-                        'visible_ratio': 0.0, 'detail': '可视部分为空，滚动视口已裁掉该片段'}
-            visible_ratio, _ = overlap_ratio(first_box, second_box)
-            if ((contains_box(first_box, second_box) and nested_child(first_box, second_box))
-                    or (contains_box(second_box, first_box) and nested_child(second_box, first_box))):
-                return {'verdict': 'none', 'same_container': True, 'raw_ratio': raw_ratio,
-                        'visible_ratio': visible_ratio, 'detail': '一方可视区域包含另一方，不算遮挡'}
-            if visible_ratio <= 0:
-                return {'verdict': 'none', 'same_container': True, 'raw_ratio': raw_ratio,
-                        'visible_ratio': 0.0, 'detail': '同一容器内可视部分不相交'}
-            if visible_ratio > threshold:
-                return {'verdict': 'fail', 'same_container': True, 'raw_ratio': raw_ratio,
-                        'visible_ratio': visible_ratio,
-                        'detail': '同一容器内可视区域重叠面积占较小控件 %.0f%%' % (visible_ratio * 100)}
-            return {'verdict': 'none', 'same_container': True, 'raw_ratio': raw_ratio,
-                    'visible_ratio': visible_ratio,
-                    'detail': '同一容器内可视区域重叠 %.0f%% 低于阈值' % (visible_ratio * 100)}
-        # No scroll view between them (or viewport unknown but true siblings): the two
-        # boxes cannot be scrolled relative to each other, so compare them directly.
-        if ((contains_box(first_box, second_box) and nested_child(first_box, second_box))
-                or (contains_box(second_box, first_box) and nested_child(second_box, first_box))):
-            return {'verdict': 'none', 'same_container': True, 'raw_ratio': raw_ratio,
-                    'visible_ratio': raw_ratio, 'detail': '一方布局框包含另一方，不算遮挡'}
-        if raw_ratio > threshold:
-            return {'verdict': 'fail', 'same_container': True, 'raw_ratio': raw_ratio,
-                    'visible_ratio': raw_ratio,
-                    'detail': '同一容器内重叠面积占较小控件 %.0f%%' % (raw_ratio * 100)}
-        return {'verdict': 'none', 'same_container': True, 'raw_ratio': raw_ratio,
-                'visible_ratio': raw_ratio,
-                'detail': '同一容器内重叠 %.0f%% 低于阈值' % (raw_ratio * 100)}
-    if raw_ratio <= 0:
-        return {'verdict': 'none', 'same_container': False, 'raw_ratio': 0.0,
-                'visible_ratio': 0.0, 'detail': '布局框不相交'}
-    first_visible, first_status, first_detail = visible_box(first, elements)
-    second_visible, second_status, second_detail = visible_box(second, elements)
-    if first_status != 'ok' or second_status != 'ok':
-        return {'verdict': 'undetermined', 'same_container': False, 'raw_ratio': raw_ratio,
-                'visible_ratio': 0.0,
-                'detail': first_detail if first_status != 'ok' else second_detail}
-    if first_visible is None or second_visible is None:
-        return {'verdict': 'excluded', 'same_container': False, 'raw_ratio': raw_ratio,
-                'visible_ratio': 0.0, 'detail': '可视部分为空，滚动视口已裁掉该片段'}
-    if ((contains_box(first_visible, second_visible) and nested_child(first_visible, second_visible))
-            or (contains_box(second_visible, first_visible) and nested_child(second_visible, first_visible))):
-        return {'verdict': 'none', 'same_container': False, 'raw_ratio': raw_ratio,
-                'visible_ratio': 0.0, 'detail': '可视部分一方包含另一方，不算遮挡'}
-    visible_ratio, _ = overlap_ratio(first_visible, second_visible)
-    if visible_ratio <= 0:
+                    'detail': '同一滚动容器但视口未记录，无法判断可见部分'}
+        compared_first, first_status, first_detail = visible_box(first, elements)
+        compared_second, second_status, second_detail = visible_box(second, elements)
+        if first_status != 'ok' or second_status != 'ok':
+            return {'verdict': 'undetermined', 'same_container': True, 'raw_ratio': raw_ratio,
+                    'visible_ratio': 0.0,
+                    'detail': first_detail if first_status != 'ok' else second_detail}
+        if compared_first is None or compared_second is None:
+            return {'verdict': 'excluded', 'same_container': True, 'raw_ratio': raw_ratio,
+                    'visible_ratio': 0.0, 'detail': '可视部分为空，滚动视口已裁掉该片段'}
+        scope = '同一容器内可视区域'
+    elif same_container:
+        compared_first = first_box
+        compared_second = second_box
+        scope = '同一容器内'
+    else:
+        compared_first, first_status, first_detail = visible_box(first, elements)
+        compared_second, second_status, second_detail = visible_box(second, elements)
+        if first_status != 'ok' or second_status != 'ok':
+            return {'verdict': 'undetermined', 'same_container': False, 'raw_ratio': raw_ratio,
+                    'visible_ratio': 0.0,
+                    'detail': first_detail if first_status != 'ok' else second_detail}
+        if compared_first is None or compared_second is None:
+            return {'verdict': 'excluded', 'same_container': False, 'raw_ratio': raw_ratio,
+                    'visible_ratio': 0.0, 'detail': '可视部分为空，滚动视口已裁掉该片段'}
+        scope = '可视区域'
+    if path_ancestor(first, second) or path_ancestor(second, first):
+        return {'verdict': 'none', 'same_container': same_container, 'raw_ratio': raw_ratio,
+                'visible_ratio': overlap_ratio(compared_first, compared_second)[0],
+                'detail': '语义路径证明一方是另一方的祖先，按嵌套处理'}
+    compared_ratio, _ = overlap_ratio(compared_first, compared_second)
+    if compared_ratio <= 0:
+        if same_container:
+            return {'verdict': 'none', 'same_container': same_container, 'raw_ratio': raw_ratio,
+                    'visible_ratio': 0.0, 'detail': scope + '不相交'}
         return {'verdict': 'excluded', 'same_container': False, 'raw_ratio': raw_ratio,
                 'visible_ratio': 0.0,
                 'detail': '可视部分不相交，原始重叠全部落在滚动裁剪区外'}
-    if visible_ratio > threshold:
-        return {'verdict': 'fail', 'same_container': False, 'raw_ratio': raw_ratio,
-                'visible_ratio': visible_ratio,
-                'detail': '可视区域重叠面积占较小可视部分 %.0f%%' % (visible_ratio * 100)}
-    return {'verdict': 'none', 'same_container': False, 'raw_ratio': raw_ratio,
-            'visible_ratio': visible_ratio,
-            'detail': '可视区域重叠 %.0f%% 低于阈值' % (visible_ratio * 100)}
+    if compared_ratio > threshold:
+        return {'verdict': 'fail', 'same_container': same_container, 'raw_ratio': raw_ratio,
+                'visible_ratio': compared_ratio,
+                'detail': scope + '重叠面积占较小控件 %.0f%%' % (compared_ratio * 100)}
+    return {'verdict': 'none', 'same_container': same_container, 'raw_ratio': raw_ratio,
+            'visible_ratio': compared_ratio,
+            'detail': scope + '重叠 %.0f%% 低于阈值' % (compared_ratio * 100)}
 
 def evaluate_geometry(platform, step, spec, elements, window, policy, items, screenshot):
     tolerance = float(policy.get('clip_tolerance_pt', 2))
