@@ -119,3 +119,8 @@ Windows/Linux各264项检查、34个搜索场景全部通过，三个作业均�
 `docs/validation/reader-search.json` 记录实际云端运行。
 本轮只授予Windows/Linux上的本包接口，不含 macOS、宿主 UI、
 产品性能或六平台互通。
+
+搜索包随后正常合入阅读器候选，源码`8476d6b94ffff1fc7df04abacd9f2f9651a486df`、
+run`40064505462`同源五作业严格通过。Windows/Linux各264检查、34场景与原生同步、
+metadata投影、四格式原件传输及18个阅读捕获同次重跑，汇总重新检查原始探针、
+消费者/安装包哈希和跨平台结果。记录见[同源联验](validation/reader-search-joint.json)。

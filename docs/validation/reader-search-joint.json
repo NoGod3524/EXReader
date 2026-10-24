@@ -1,0 +1,137 @@
+{
+  "accepted": true,
+  "source_sha": "8476d6b94ffff1fc7df04abacd9f2f9651a486df",
+  "run_id": 40064505462,
+  "attempt": 1,
+  "artifacts": [
+    {
+      "id": 12548607016,
+      "name": "reader-commands-Linux-40064505462-1",
+      "size_in_bytes": 5194334,
+      "digest": "sha256:f3bb4012ac3b3fc00973959aeef4e620aafe3fade6d47c438258518c8e935ae5",
+      "expires_at": "2027-01-22T04:59:43Z"
+    },
+    {
+      "id": 12548538921,
+      "name": "reader-reading-v2-Linux-40064505462-1",
+      "size_in_bytes": 31562409,
+      "digest": "sha256:245353f6d523feaac23c8da87c2e8ae594d18ad02149d1ef07b5f409957e05da",
+      "expires_at": "2027-01-22T04:59:43Z"
+    },
+    {
+      "id": 12548881422,
+      "name": "reader-commands-Windows-40064505462-1",
+      "size_in_bytes": 6518327,
+      "digest": "sha256:42a36ad61363d2497e697b786d6014a333f492527157d99b7c911aaa5c77e8ac",
+      "expires_at": "2027-01-22T04:59:43Z"
+    },
+    {
+      "id": 12548862261,
+      "name": "reader-reading-v2-Windows-40064505462-1",
+      "size_in_bytes": 26060180,
+      "digest": "sha256:25cd095b7a222bb16ed5e2d89970b3259e53fd8cf797e58ada5bcb1840ca0c60",
+      "expires_at": "2027-01-22T04:59:43Z"
+    }
+  ],
+  "problems": [],
+  "sdk_changed": false,
+  "schema_changed": false,
+  "host_ui_accepted": false,
+  "webdav_roundtrip_accepted": true,
+  "search_package_accepted": true,
+  "search_platforms": {
+    "Linux": {
+      "checks": 264,
+      "cases": 34,
+      "measurements": [
+        {
+          "id": "epub-long-chapter",
+          "source_bytes": 1478719,
+          "projection_bytes": 1468499,
+          "hits": 1500,
+          "batches": 16,
+          "stream_chunks": 45,
+          "straddling_hits": 37,
+          "peak_rss_before": 17432576,
+          "peak_rss_after_sdk_stream_only": 18042880,
+          "peak_rss_after_search": 19910656,
+          "sdk_peak_parse_workspace_bytes": 6460624,
+          "sdk_windows_loaded": 1,
+          "sdk_windows_evicted": 0,
+          "module_bytes_scanned": 1468499,
+          "module_units_scanned": 16,
+          "module_peak_accounted_bytes": 109192,
+          "module_seen_sdk_peak_parse_workspace_bytes": 6460624,
+          "elapsed_ms": 948.425333,
+          "note": "single observation; not a performance claim; peak RSS is a process-wide monotone high-water mark"
+        }
+      ]
+    },
+    "Windows": {
+      "checks": 264,
+      "cases": 34,
+      "measurements": [
+        {
+          "id": "epub-long-chapter",
+          "source_bytes": 1478719,
+          "projection_bytes": 1468499,
+          "hits": 1500,
+          "batches": 16,
+          "stream_chunks": 45,
+          "straddling_hits": 37,
+          "peak_rss_before": 15065088,
+          "peak_rss_after_sdk_stream_only": 18149376,
+          "peak_rss_after_search": 20496384,
+          "sdk_peak_parse_workspace_bytes": 6460544,
+          "sdk_windows_loaded": 1,
+          "sdk_windows_evicted": 0,
+          "module_bytes_scanned": 1468499,
+          "module_units_scanned": 16,
+          "module_peak_accounted_bytes": 109184,
+          "module_seen_sdk_peak_parse_workspace_bytes": 6460544,
+          "elapsed_ms": 726.0378,
+          "note": "single observation; not a performance claim; peak RSS is a process-wide monotone high-water mark"
+        }
+      ]
+    }
+  },
+  "six_platform_accepted": false,
+  "complete_product": false,
+  "scope": "Windows/Linux SDK captures and original export over real native HTTPS fixture; no host UI",
+  "jobs": [
+    {
+      "id": 120784813829,
+      "name": "real v2 capture (ubuntu-22.04)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120784813911,
+      "name": "native / installed typed product commands (windows-2022)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120784813945,
+      "name": "real v2 capture (windows-2022)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120784813972,
+      "name": "native / installed typed product commands (ubuntu-22.04)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120785920181,
+      "name": "strict reading v2 evidence",
+      "conclusion": "success"
+    }
+  ],
+  "evidence_artifact": {
+    "id": 12548667016,
+    "name": "reader-reading-v2-evidence-40064505462-1",
+    "size_in_bytes": 1192,
+    "digest": "sha256:4fe0460fe47290e6b47df3d19b115e563c1ca4509ffc68703cb58b4ce5beba9b",
+    "expires_at": "2027-01-22T04:59:43Z"
+  },
+  "prior_search_record": "reader-search.json",
+  "prior_metadata_record": "reader-metadata-webdav.json"
+}
