@@ -103,13 +103,15 @@ final class ReaderAccessUITests: XCTestCase {
 
     private func readyReader() {
         var previous = "", stableSince = Date()
-        XCTAssertTrue(wait {
+        let ready = wait {
             guard self.node("reader.page").exists, !self.node("reader.busy").exists,
                   !self.text("reader.location").isEmpty else { previous = ""; return false }
             let value = self.text("reader.location") + self.text("reader.font.value") + String(describing: self.node("reader.page").frame)
             if value != previous { previous = value; stableSince = Date() }
             return Date().timeIntervalSince(stableSince) >= 0.6
-        })
+        }
+        if !ready { print("EXR production reader did not settle:\n\(app.debugDescription)") }
+        XCTAssertTrue(ready)
     }
 
     private func record(_ identifier: String, _ values: [String: Any] = [:]) {

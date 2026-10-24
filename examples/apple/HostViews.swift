@@ -442,8 +442,14 @@ struct ReaderScreen: View {
                     .accessibilityAddTraits(.isHeader)
                 Spacer()
                 if model.busy {
-                    Text("处理中…").font(.caption)
-                        .accessibilityIdentifier("reader.busy")
+                    if compactTools {
+                        Image(systemName: "hourglass").frame(width: 20, height: 20)
+                            .accessibilityLabel(Text("处理中…"))
+                            .accessibilityIdentifier("reader.busy")
+                    } else {
+                        Text("处理中…").font(.caption)
+                            .accessibilityIdentifier("reader.busy")
+                    }
                     Button { model.cancelWork() } label: { hostHeaderActionLabel("取消", symbol: "xmark", compact: compactTools) }
                         .accessibilityLabel(Text("取消"))
                         .accessibilityIdentifier("reader.cancel")
