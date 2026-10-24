@@ -248,6 +248,7 @@ public final class ReaderView extends View {
         // Keep UI bitmap resampling deterministic in one viewport-sized software layer.
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         setFocusable(true);
+        if(BuildConfig.READER_PREFERENCES)setFocusableInTouchMode(true);
         setClickable(true);
         setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_YES);
         selectionPaint.setColor(Color.argb(80, 21, 101, 192));
@@ -265,6 +266,7 @@ public final class ReaderView extends View {
         handler.removeCallbacks(longPressRunnable);
         down = false;
         page = snapshot;
+        if(snapshot!=null&&turnInput==4)requestFocus();
         if(BuildConfig.DEBUG) {
             debugBitmapIdentity=snapshot==null ? null : bitmapIdentity(snapshot.bitmap);
             acceptedToken++; renderChanged(); pointHash=null;
@@ -465,6 +467,7 @@ public final class ReaderView extends View {
         float y = event.getY();
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
+                if(turnInput==4)requestFocus();
                 down = true;
                 moved = false;
                 longPress = false;
