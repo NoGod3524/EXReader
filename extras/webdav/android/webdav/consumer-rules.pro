@@ -1,0 +1,2 @@
+-keep class org.exreader.webdav.Transport { *; }
+-keep class org.exreader.webdav.Transport$* { *; }
