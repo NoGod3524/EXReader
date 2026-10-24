@@ -25,6 +25,9 @@ static void product_shelf_search_changed(void) {
   settings_save();
 }
 static void product_shelf_dispatch(void) {
+#ifdef EXR_READER_DESKTOP_METADATA
+  if(g.metadata_dialog || g.metadata_running) return;
+#endif
   if(!g.shelf_need_refresh || !g.product_ready || g.product_pending || g.closing || g.job || g.pending) return;
   ULONGLONG now=GetTickCount64();
   if(now<product_shelf_due) { SetTimer(g.window,3,(UINT)(product_shelf_due-now),NULL);return; }
