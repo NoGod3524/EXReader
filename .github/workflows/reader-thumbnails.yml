@@ -1,0 +1,184 @@
+name: Reader thumbnails
+on:
+  push:
+    branches: [codex/reader-thumbnails]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  consumers:
+    name: thumbnail consumers (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-15]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Pin source, common start, protected SDK and product trees, and package path ownership
+        run: |
+          START=f43baf9182d75907c0cb5d6f77048f27bca8c950
+          K=9854061be331fe603a1822d9b2b36ee357154927
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$START" HEAD
+          git diff --exit-code "$K" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code "$START" HEAD -- apps/reader/store
+          allowed='^(apps/reader/thumbnails/|tests/reader_thumbnails/|\.github/workflows/reader-thumbnails\.yml$|docs/READER-THUMBNAILS\.md$|docs/validation/reader-thumbnails\.json$)'
+          changed=$(git diff --name-only "$START" HEAD)
+          bad=$(printf '%s\n' "$changed" | sed '/^$/d' | grep -Ev "$allowed" || true)
+          test -z "$bad" || { echo "unowned path: $bad"; exit 1; }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the existing build tool version
+        run: python -m pip install ninja==1.11.1.1
+      - name: Enter the native Windows compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install the frozen reading SDK once
+        run: |
+          set -o pipefail
+          mkdir -p build/thumb-logs
+          git rev-parse HEAD > build/thumb-logs/source.txt
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "T_WS=$ws" >> "$GITHUB_ENV"
+          cmake --preset reading-library 2>&1 | tee build/thumb-logs/sdk-configure.log
+          cmake --build --preset reading-library --parallel 4 2>&1 | tee build/thumb-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/thumb-logs/sdk-install.log
+      - name: Build and install the optional thumbnails package against the installed SDK
+        run: |
+          set -o pipefail
+          cmake -S apps/reader/thumbnails -B build/thumb -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DEXR_SDK="$T_WS/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$T_WS/build/thumb-stage" 2>&1 | tee build/thumb-logs/thumb-configure.log
+          cmake --build build/thumb --verbose 2>&1 | tee build/thumb-logs/thumb-build.log
+          cmake --install build/thumb 2>&1 | tee build/thumb-logs/thumb-install.log
+      - name: Compile isolated C11 and C++17 consumers from the installed packages only
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_thumbnails/consumer -B build/thumb-consumer -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_PREFIX_PATH="$T_WS/build/thumb-stage;$T_WS/build/reading-library/stage" 2>&1 | tee build/thumb-logs/consumer-configure.log
+          cmake --build build/thumb-consumer --verbose 2>&1 | tee build/thumb-logs/consumer-build.log
+      - name: Generate originals and run the installed consumers
+        run: |
+          set -o pipefail
+          exe=""
+          if [ "$RUNNER_OS" = Windows ]; then exe=".exe"; fi
+          python3 tests/reader_thumbnails/make_fixtures.py build/thumb-fixtures 2>&1 | tee build/thumb-logs/fixtures.log
+          # Keep exact allocation stacks in the job log even when the strict consumer fails.
+          set +e
+          python3 tests/reader_thumbnails/check_thumbnails.py --probe "build/thumb-consumer/thumb-probe$exe" --c-consumer "build/thumb-consumer/thumb-c-consumer$exe" --regress "build/thumb-consumer/thumb-regress$exe" --fault "build/thumb-consumer/thumb-fault$exe" --fixtures build/thumb-fixtures --repo-fixtures tests/fixtures --installed build/thumb-stage --output build/thumbnail-evidence 2>&1 | tee build/thumb-logs/checks.log
+          status=${PIPESTATUS[0]}
+          set -e
+          if [ "$RUNNER_OS" = Linux ] && [ -d build/thumbnail-evidence/fault-work ]; then
+            find build/thumbnail-evidence/fault-work -name 'point-*.txt' -exec sh -c 'grep -q "^TERMINATE" "$1" || exit 0; cat "$1"; grep -oE "\[0x[0-9a-f]+\]" "$1" | tr -d "[]" | xargs -r addr2line -Cfipe build/thumb-consumer/thumb-fault' sh {} \;
+          fi
+          exit "$status"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-thumbnails-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/thumb-logs/
+            build/thumb-fixtures/
+            build/thumbnail-evidence/
+            build/thumb-stage/
+            build/thumb-consumer/thumb-probe*
+            build/thumb-consumer/thumb-c-consumer*
+            build/thumb-consumer/thumb-regress*
+            build/thumb-consumer/thumb-fault*
+          if-no-files-found: error
+  sanitized:
+    name: sanitized probe (ubuntu-22.04)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Pin source, common start, protected SDK and product trees, and package path ownership
+        run: |
+          START=f43baf9182d75907c0cb5d6f77048f27bca8c950
+          K=9854061be331fe603a1822d9b2b36ee357154927
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$START" HEAD
+          git diff --exit-code "$K" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code "$START" HEAD -- apps/reader/store
+          allowed='^(apps/reader/thumbnails/|tests/reader_thumbnails/|\.github/workflows/reader-thumbnails\.yml$|docs/READER-THUMBNAILS\.md$|docs/validation/reader-thumbnails\.json$)'
+          changed=$(git diff --name-only "$START" HEAD)
+          bad=$(printf '%s\n' "$changed" | sed '/^$/d' | grep -Ev "$allowed" || true)
+          test -z "$bad" || { echo "unowned path: $bad"; exit 1; }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the existing build tool version
+        run: python -m pip install ninja==1.11.1.1
+      - name: Build and install the frozen reading SDK once, uninstrumented
+        run: |
+          set -o pipefail
+          mkdir -p build/thumb-logs
+          cmake --preset reading-library 2>&1 | tee build/thumb-logs/sdk-configure-asan.log
+          cmake --build --preset reading-library --parallel 4 2>&1 | tee build/thumb-logs/sdk-build-asan.log
+          cmake --install build/reading-library 2>&1 | tee build/thumb-logs/sdk-install-asan.log
+      - name: Build the package and the consumers with AddressSanitizer and UndefinedBehaviorSanitizer
+        run: |
+          set -o pipefail
+          ws=$PWD
+          SAN="-fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer -O1"
+          cmake -S apps/reader/thumbnails -B build/thumb-asan -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DEXR_SDK="$ws/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ws/build/thumb-asan-stage" -DCMAKE_CXX_FLAGS="$SAN" -DCMAKE_EXE_LINKER_FLAGS="$SAN" 2>&1 | tee build/thumb-logs/thumb-asan-configure.log
+          cmake --build build/thumb-asan --verbose 2>&1 | tee build/thumb-logs/thumb-asan-build.log
+          cmake --install build/thumb-asan 2>&1 | tee build/thumb-logs/thumb-asan-install.log
+          cmake -S tests/reader_thumbnails/consumer -B build/consumer-asan -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_PREFIX_PATH="$ws/build/thumb-asan-stage;$ws/build/reading-library/stage" -DCMAKE_C_FLAGS="$SAN" -DCMAKE_CXX_FLAGS="$SAN" -DCMAKE_EXE_LINKER_FLAGS="$SAN" 2>&1 | tee build/thumb-logs/consumer-asan-configure.log
+          cmake --build build/consumer-asan --verbose 2>&1 | tee build/thumb-logs/consumer-asan-build.log
+      - name: Run the probe under the sanitizers
+        env:
+          ASAN_OPTIONS: detect_leaks=1:abort_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: |
+          set -o pipefail
+          mkdir -p build/thumb-logs
+          python3 tests/reader_thumbnails/make_fixtures.py build/thumb-fixtures-asan > build/thumb-logs/fixtures-asan.log 2>&1
+          # The allocation-fault children execute the SDK blob/pixel cleanup paths,
+          # so leak checking includes failed operations rather than only the probe.
+          python3 tests/reader_thumbnails/check_thumbnails.py --probe build/consumer-asan/thumb-probe --c-consumer build/consumer-asan/thumb-c-consumer --regress build/consumer-asan/thumb-regress --fault build/consumer-asan/thumb-fault --fixtures build/thumb-fixtures-asan --repo-fixtures tests/fixtures --installed build/thumb-asan-stage --output build/asan-evidence 2>&1 | tee build/thumb-logs/checks-asan.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-thumbnails-sanitized-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/thumb-logs/
+            build/asan-evidence/
+          if-no-files-found: error
+  evidence:
+    name: strict thumbnail evidence
+    needs: [consumers, sanitized]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate all platform ZIPs and compare their outcomes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_thumbnails/check_artifacts.py build/thumbnail-artifact-evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-thumbnails-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/thumbnail-artifact-evidence/
+          if-no-files-found: error
