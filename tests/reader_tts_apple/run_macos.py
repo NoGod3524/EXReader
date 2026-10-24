@@ -64,12 +64,21 @@ def main():
     run('logic-build', ['cmake', '--build', logic])
     logic_run = run('logic-run', [logic / 'reader-tts-logic'], timeout=600, check=False)
     logic_stdout = logic_run.stdout
+    (out / 'logic-run.stdout.txt').write_text(logic_stdout + logic_run.stderr, encoding='utf-8')
+    if logic_run.returncode != 0:
+        print('---- logic suite output (tail) ----', flush=True)
+        print((logic_stdout + logic_run.stderr)[-20000:], flush=True)
+    assert 'RESULT_JSON_BEGIN' in logic_stdout, 'the logic suite printed no result block'
     start = logic_stdout.index('RESULT_JSON_BEGIN')
     end = logic_stdout.index('RESULT_JSON_END')
     logic_report = json.loads(logic_stdout[logic_stdout.index('{', start):logic_stdout.rindex('}', 0, end) + 1])
     (out / 'logic-result.json').write_text(json.dumps(logic_report, indent=2), encoding='utf-8')
-    assert logic_run.returncode == 0, 'logic suite reported a failing case'
-    assert logic_report['counts']['fail'] == 0, logic_report['counts']
+    if logic_run.returncode != 0 or logic_report['counts']['fail'] != 0:
+        failing = [case for case in logic_report['checks'] if case['status'] != 'pass']
+        print('---- failing logic cases ----', flush=True)
+        for case in failing:
+            print('%s %s: %s' % (case['status'], case['name'], case['detail']), flush=True)
+        raise SystemExit('logic suite reported a failing case: %s' % logic_report['counts'])
 
     # ---- installed-package probe (real backend) ----
     run('probe-configure', ['cmake', '-S', root / 'tests/reader_tts_apple', '-B', probe, *generator,
@@ -79,9 +88,17 @@ def main():
     assert probe_binary.is_file(), 'probe binary missing'
     probe_report_path = out / 'speech-result.json'
     probe_run = run('probe-run', [probe_binary, probe_report_path], timeout=900, check=False)
+    (out / 'probe-run.stdout.txt').write_text(probe_run.stdout + probe_run.stderr, encoding='utf-8')
+    if probe_run.returncode != 0:
+        print('---- installed probe output (tail) ----', flush=True)
+        print((probe_run.stdout + probe_run.stderr)[-20000:], flush=True)
     assert probe_report_path.is_file(), 'probe did not write a report'
     probe_report = check_report.load(probe_report_path)
-    assert probe_run.returncode == 0, 'probe reported a failing case'
+    if probe_run.returncode != 0 or probe_report['counts']['fail'] != 0:
+        for case in probe_report['checks']:
+            if case['status'] == 'fail':
+                print('fail %s: %s' % (case['name'], case['detail']), flush=True)
+        raise SystemExit('probe reported a failing case: %s' % (probe_report['counts'],))
 
     # ---- installed-package example ----
     run('example-configure', ['cmake', '-S', module_dir / 'examples', '-B', examples, *generator,

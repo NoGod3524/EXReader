@@ -819,7 +819,10 @@ int rtts_probe_run(const char *output_path) {
     }
 
     // ---- real PCM through the same installed platform engine ----
-    if (g_speech_available) {
+    // Offline rendering does not need an output route, so this runs whenever the
+    // system has an installed voice, even if live speakUtterance: callbacks never
+    // arrive on this machine.
+    if (g_voice_count > 0) {
       pcm = CapturePcm(kChinese, 25.0);
       Expect("probe.pcm-wav-captured", pcm.ok && pcm.bytes > 4096 && pcm.duration > 0.2 && pcm.rms > 0.0005,
              pcm.ok ? "bytes=" + Str(pcm.bytes) + " duration=" + std::to_string(pcm.duration) +
@@ -830,7 +833,7 @@ int rtts_probe_run(const char *output_path) {
         [data writeToFile:[NSString stringWithUTF8String:wav_path.c_str()] atomically:YES];
       }
     } else {
-      Pending("probe.pcm-wav-captured", g_speech_note);
+      Pending("probe.pcm-wav-captured", "no installed voice on this platform");
     }
 
     // ---- close and destroy ----

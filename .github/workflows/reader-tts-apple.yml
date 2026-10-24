@@ -83,6 +83,8 @@ jobs:
           path: |
             build/tts-apple-macos/result.json
             build/tts-apple-macos/logic-result.json
+            build/tts-apple-macos/logic-run.stdout.txt
+            build/tts-apple-macos/probe-run.stdout.txt
             build/tts-apple-macos/speech-result.json
             build/tts-apple-macos/speech-result.json.wav
             build/tts-apple-macos/audio-devices.txt
