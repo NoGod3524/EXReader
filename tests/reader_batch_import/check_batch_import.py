@@ -261,7 +261,7 @@ def main():
                      all("/" not in r for r in d1_candidates), d1_candidates)
 
         root_bytes = len(root.encode("utf-8"))
-        max_path = max(128, root_bytes + 20)
+        max_path = max(64, root_bytes + 1)
         scan_path = os.path.join(work, "scan-path.tsv")
         run([probe, "enumerate", "--root", root, "--recursive",
              "--max-path", str(max_path), "--out", scan_path])
@@ -273,7 +273,7 @@ def main():
 
         scan_pending = os.path.join(work, "scan-pending.tsv")
         run([probe, "enumerate", "--root", root, "--recursive",
-             "--max-pending", str(root_bytes + 512), "--out", scan_pending])
+             "--max-pending", str(root_bytes + 128), "--out", scan_pending])
         pending_meta, _ = parse_scan(scan_pending)
         checks.equal("pending.limit.truncated", pending_meta.get("truncated"), ["1"])
 
