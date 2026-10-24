@@ -68,8 +68,20 @@ final class ReaderAccessUITests: XCTestCase {
 
     private func tap(_ identifier: String) {
         XCTAssertTrue(node(identifier).waitForExistence(timeout: 60), identifier)
+        let toolbarAction = ["reader.first", "reader.previous", "reader.next", "reader.font.decrease",
+            "reader.font.increase", "reader.select", "reader.notes"].contains(identifier)
+        func viewport() -> CGRect {
+            let window = app.windows.firstMatch.frame.insetBy(dx: -2, dy: -2)
+            if node("account.form").exists { return window.intersection(node("account.form").frame) }
+            if toolbarAction, node("reader.tools.scroll").exists { return window.intersection(node("reader.tools.scroll").frame) }
+            return window
+        }
         for _ in 0..<12 {
-            if node(identifier).isHittable && app.windows.firstMatch.frame.insetBy(dx: -2, dy: -2).contains(node(identifier).frame) { break }
+            let frame = node(identifier).frame, bounds = viewport()
+            // AX can throw while computing a hit point for an offscreen
+            // button. Reach its actual viewport before asking for that point.
+            if !frame.isEmpty, bounds.contains(frame), node(identifier).isHittable { break }
+            print("EXR native reach \(identifier) frame=\(frame) viewport=\(bounds)")
             if node("account.form").exists {
                 let form = node("account.form")
                 let earlier = node(identifier).frame.midY < form.frame.midY
@@ -78,14 +90,16 @@ final class ReaderAccessUITests: XCTestCase {
 #else
                 if earlier { form.swipeDown() } else { form.swipeUp() }
 #endif
-            } else if node("reader.tools.scroll").exists {
+            } else if toolbarAction, node("reader.tools.scroll").exists {
                 let tools = node("reader.tools.scroll")
-                if node(identifier).frame.midX < tools.frame.midX { tools.swipeRight() } else { tools.swipeLeft() }
+                if !frame.isEmpty, frame.midX < tools.frame.midX { tools.swipeRight() } else { tools.swipeLeft() }
             } else { break }
         }
+        XCTAssertFalse(node(identifier).frame.isEmpty, identifier)
+        XCTAssertTrue(viewport().contains(node(identifier).frame), identifier)
         XCTAssertTrue(node(identifier).isHittable, identifier)
         XCTAssertTrue(app.windows.firstMatch.frame.insetBy(dx: -2, dy: -2).contains(node(identifier).frame), identifier)
-        XCTAssertTrue(wait { self.node(identifier).isEnabled && self.node(identifier).isHittable }, identifier)
+        XCTAssertTrue(wait { viewport().contains(self.node(identifier).frame) && self.node(identifier).isEnabled && self.node(identifier).isHittable }, identifier)
         node(identifier).tap()
     }
 

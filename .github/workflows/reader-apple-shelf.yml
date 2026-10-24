@@ -6,7 +6,7 @@ on:
     inputs:
       scope:
         type: choice
-        options: [full, recovery]
+        options: [full, recovery, production]
         default: full
   workflow_call:
     inputs:
@@ -102,6 +102,7 @@ jobs:
               print('platform=iOS Simulator,id=' + udid + '\n' + udid + '\n' + name + '\n' + runtime)
           PY
       - name: Exercise actual SwiftUI scrolling search and process restoration
+        if: inputs.scope != 'production'
         id: ui
         continue-on-error: true
         run: |
@@ -117,7 +118,7 @@ jobs:
             if test "$platform" = macos; then
               cases=(-only-testing:EXReaderHostUITests-macOS/ShelfUITests/test04TitleAuthorAndLiteralSearch -only-testing:EXReaderHostUITests-macOS/ShelfUITests/test05RapidSearchRefreshAndNativeViewport -only-testing:EXReaderHostUITests-macOS/ShelfUITests/test07StoredOriginalReadingAndFilteredReturn)
             else
-              cases=(-only-testing:EXReaderHostUITests-iOS/ShelfUITests/test06RotationBackgroundAndProcessRestore)
+              cases=(-only-testing:EXReaderHostUITests-iOS/ShelfUITests/test05RapidSearchRefreshAndNativeViewport -only-testing:EXReaderHostUITests-iOS/ShelfUITests/test06RotationBackgroundAndProcessRestore)
             fi
           fi
           xcodebuild test -project build/apple-shelf-project/EXReaderHost.xcodeproj -scheme "$scheme" \
@@ -126,7 +127,7 @@ jobs:
             -test-timeouts-enabled YES -default-test-execution-time-allowance 2700 -maximum-test-execution-time-allowance 2700 \
             EXR_SDK_DIR="$sdk" CODE_SIGNING_ALLOWED="$signing" 2>&1 | tee "build/apple-shelf-ui/$platform-xcodebuild.log"
       - name: Strict native evidence and original-byte identity
-        if: always() && inputs.scope != 'recovery'
+        if: always() && inputs.scope != 'recovery' && inputs.scope != 'production'
         id: evidence
         continue-on-error: true
         run: |
@@ -180,7 +181,7 @@ jobs:
             --xcresult "build/apple-shelf-ui/account/$platform.xcresult" --app "$app" --container "$container" \
             --output build/apple-shelf-ui/account/evidence
       - name: Verify production reader semantics and real compact-layout actions
-        if: inputs.scope != 'recovery' && steps.account_ui.outcome == 'success'
+        if: inputs.scope == 'production' || (inputs.scope != 'recovery' && steps.account_ui.outcome == 'success')
         id: production_access
         continue-on-error: true
         run: |
@@ -217,7 +218,7 @@ jobs:
           python3 tests/apple_host/accessibility/collect_access_ui.py --platform "$platform" \
             --root build/apple-shelf-ui/accessibility --app "$app" --output build/apple-shelf-ui/accessibility/evidence
       - name: Preserve raw native layout observations
-        if: always()
+        if: always() && inputs.scope != 'production'
         id: layout_trace
         continue-on-error: true
         run: |
@@ -231,17 +232,19 @@ jobs:
           cp "$folder/shelf-layout-trace.jsonl" build/apple-shelf-ui/layout-trace.jsonl
           test -s build/apple-shelf-ui/layout-trace.jsonl
           tail -n 80 build/apple-shelf-ui/layout-trace.jsonl
-      - name: Mark focused original-case execution as diagnostic only
-        if: always() && inputs.scope == 'recovery'
+      - name: Mark focused execution as diagnostic only
+        if: always() && (inputs.scope == 'recovery' || inputs.scope == 'production')
         env:
           UI_OUTCOME: ${{ steps.ui.outcome }}
+          PRODUCTION_OUTCOME: ${{ steps.production_access.outcome }}
         run: |
           python3 - <<'PY'
           import json, os
           from pathlib import Path
           value = {'diagnostic_only': True, 'accepted': False, 'source_sha': os.environ['GITHUB_SHA'],
                    'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
-                   'platform': '${{ matrix.platform }}', 'ui_outcome': os.environ['UI_OUTCOME']}
+                   'platform': '${{ matrix.platform }}', 'scope': '${{ inputs.scope }}',
+                   'ui_outcome': os.environ['UI_OUTCOME'], 'production_outcome': os.environ['PRODUCTION_OUTCOME']}
           Path('build/apple-shelf-ui/scope.json').write_text(json.dumps(value, indent=2) + '\n')
           print(json.dumps(value))
           PY
@@ -260,11 +263,11 @@ jobs:
           name: apple-shelf-ui-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/apple-shelf-ui/
           if-no-files-found: error
-      - if: always() && (steps.ui.outcome != 'success' || (inputs.scope == 'recovery' && steps.layout_trace.outcome != 'success') || (inputs.scope != 'recovery' && (steps.evidence.outcome != 'success' || steps.account_ui.outcome != 'success' || steps.production_access.outcome != 'success')))
+      - if: always() && ((inputs.scope == 'production' && steps.production_access.outcome != 'success') || (inputs.scope != 'production' && (steps.ui.outcome != 'success' || (inputs.scope == 'recovery' && steps.layout_trace.outcome != 'success') || (inputs.scope != 'recovery' && (steps.evidence.outcome != 'success' || steps.account_ui.outcome != 'success' || steps.production_access.outcome != 'success')))))
         run: exit 1
 
   summary:
-    if: inputs.scope != 'recovery'
+    if: inputs.scope != 'recovery' && inputs.scope != 'production'
     needs: [sdk, native, ui]
     runs-on: ubuntu-latest
     steps:

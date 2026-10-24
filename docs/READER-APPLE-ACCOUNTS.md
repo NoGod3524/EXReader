@@ -121,3 +121,11 @@ UI 用例、14 步骤亦通过，HTTPS 端收到 530 个请求、至少两轮完
 当前 epoch 的全部当前行真实测量和实际 viewport 时才允许 probe 路径确认；单行或
 缺行数据仍不能确认多行顺序，旧 epoch 的最后一行也不能凑齐。既有 native 具名检查
 增加这三个条件，原 16 项、原 UI 用例和 120 秒预算均保留。
+
+同源 iPhone 原 7 例、账号 3 例及 TLS collector 均通过。大字号的实际开书、旋转和
+翻页已通过，随后测试在尚未滚入屏幕的 A+ 上先查询 AX hittability，AX 直接以无效
+activation point 终止，尚未执行原来的滚动路径。后续先按真实窗口/工具栏 viewport
+检查位置，再实际滚动，最后仍要求完整落入 viewport、hittable 和真实点击；原 12 次
+滚动与 60 秒预算保留。`production` 诊断入口只运行既有生产语义用例，始终另记
+`diagnostic_only=true, accepted=false`，不生成完整联合验收；`full` 原七例与所有
+严格 collector 仍必须完整复验。`recovery` 的 iOS 选择也增加原 test05，保留 test06。
