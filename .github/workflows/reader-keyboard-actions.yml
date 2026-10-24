@@ -66,7 +66,7 @@ jobs:
         run: |
           $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
           $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
-          cmd /c "`$bat` >nul && set" | ForEach-Object {
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
             if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
           }
           'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
