@@ -1009,7 +1009,8 @@ not_regular:
     stamp->size = (uint64_t)status.st_size;
     stamp->seconds = (int64_t)status.st_mtime;
 #ifdef __APPLE__
-    stamp->nanoseconds = (int64_t)status.st_mtimespec.tv_nsec;
+    /* _POSIX_C_SOURCE hides st_mtimespec on current macOS SDKs. */
+    stamp->nanoseconds = 0;
 #else
     stamp->nanoseconds = (int64_t)status.st_mtim.tv_nsec;
 #endif
@@ -1088,7 +1089,8 @@ static reader_batch_status rb_source_stamp(rb_source *source, rb_stamp *stamp,
     stamp->size = (uint64_t)status.st_size;
     stamp->seconds = (int64_t)status.st_mtime;
 #ifdef __APPLE__
-    stamp->nanoseconds = (int64_t)status.st_mtimespec.tv_nsec;
+    /* _POSIX_C_SOURCE hides st_mtimespec on current macOS SDKs. */
+    stamp->nanoseconds = 0;
 #else
     stamp->nanoseconds = (int64_t)status.st_mtim.tv_nsec;
 #endif

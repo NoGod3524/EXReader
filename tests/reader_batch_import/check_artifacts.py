@@ -16,6 +16,11 @@ API = "https://api.github.com"
 EXPECTED = ("Windows", "Linux", "macOS")
 
 
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
 def request(path, token, accept="application/vnd.github+json"):
     req = urllib.request.Request(API + path, headers={
         "Authorization": "Bearer " + token,
@@ -25,6 +30,29 @@ def request(path, token, accept="application/vnd.github+json"):
     })
     with urllib.request.urlopen(req, timeout=120) as response:
         return response.read()
+
+
+def download_artifact(repo, artifact_id, token):
+    req = urllib.request.Request(
+        API + "/repos/{}/actions/artifacts/{}/zip".format(repo, artifact_id),
+        headers={
+            "Authorization": "Bearer " + token,
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "reader-batch-import-evidence",
+        })
+    opener = urllib.request.build_opener(NoRedirect)
+    try:
+        with opener.open(req, timeout=120) as response:
+            return response.read()
+    except urllib.error.HTTPError as exc:
+        if exc.code not in (301, 302, 303, 307, 308):
+            raise
+        location = exc.headers.get("Location")
+        if not location:
+            raise
+        with urllib.request.urlopen(location, timeout=120) as response:
+            return response.read()
 
 
 def list_artifacts(repo, run_id, token):
@@ -94,8 +122,7 @@ def main():
             record["failures"].append(name + ": bad expiry " + str(exc))
             record["ok"] = False
         try:
-            data = request("/repos/{}/actions/artifacts/{}/zip".format(
-                repo, artifact["id"]), token)
+            data = download_artifact(repo, artifact["id"], token)
         except urllib.error.HTTPError as exc:
             item["error"] = "download HTTP {}".format(exc.code)
             record["failures"].append(name + ": download failed")
