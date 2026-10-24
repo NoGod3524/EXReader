@@ -4,6 +4,9 @@ plugins {
 
 def exrSdk = project.findProperty('exrSdk') ?: ''
 def exrProduct = project.findProperty('exrProduct') ?: "${rootProject.projectDir}/../../stage/android-product"
+def exrSync = project.findProperty('exrSync') == 'true'
+def exrDav = project.findProperty('exrDav') ?: "${rootProject.projectDir}/../../stage/android-dav"
+def exrSideload = project.findProperty('exrSideload') ?: "${rootProject.projectDir}/../../stage/android-sideload"
 
 android {
     namespace 'org.exreader.host'
@@ -17,6 +20,7 @@ android {
         targetSdk 35
         versionCode 1
         versionName '0.1.0'
+        buildConfigField 'boolean', 'READER_SYNC', exrSync.toString()
         testInstrumentationRunner (project.findProperty('exrTestRunner') ?: 'org.exreader.host.CatalogStoreTest')
         ndk {
             abiFilters 'x86_64'
@@ -24,6 +28,7 @@ android {
         externalNativeBuild {
             cmake {
                 arguments "-DEXR_SDK=${exrSdk}", "-DEXR_PRODUCT=${exrProduct}", '-DANDROID_STL=c++_static'
+                arguments "-DEXR_HOST_SYNC=${exrSync ? 'ON' : 'OFF'}", "-DEXR_DAV=${exrDav}", "-DEXR_SIDELOAD=${exrSideload}"
             }
         }
     }
@@ -59,4 +64,21 @@ android {
     lint {
         abortOnError false
     }
+    if(exrSync) {
+        sourceSets {
+            debug {
+                manifest.srcFile '../../../tests/reader_host_session_android/debug/AndroidManifest.xml'
+                res.srcDir '../../../tests/reader_host_session_android/debug/res'
+                java.srcDir '../../../tests/reader_host_session_android/debug/java'
+            }
+            androidTest {
+                manifest.srcFile '../../../tests/reader_host_session_android/AndroidManifest.xml'
+                java.srcDir '../../../tests/reader_host_session_android/java'
+            }
+        }
+    }
+}
+dependencies {
+    implementation project(':webdav')
+    implementation project(':credentials')
 }

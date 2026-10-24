@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.22.1)
 project(exreader_host C CXX)
+option(EXR_HOST_SYNC "Install the optional native account/sync host integration" OFF)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -7,6 +8,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 if(NOT EXR_SDK)
   message(FATAL_ERROR "EXR_SDK must point at an installed EXReader SDK")
 endif()
+
 # The Android toolchain otherwise restricts package lookup to the NDK sysroot.
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
 list(APPEND CMAKE_PREFIX_PATH "${EXR_SDK}")
@@ -34,4 +36,20 @@ target_link_options(exreader_product PRIVATE -Wl,-z,max-page-size=16384 -Wl,--ex
   -Wl,-Bsymbolic -Wl,--trace-symbol=sqlite3_open_v2 "-Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/product-link.map")
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   target_compile_definitions(exreader_product PRIVATE READER_PRODUCT_FIXTURES=1)
+endif()
+
+if(EXR_HOST_SYNC)
+  list(APPEND CMAKE_PREFIX_PATH "${EXR_DAV}" "${EXR_SIDELOAD}")
+  find_package(EXReaderSession 0.1.0 EXACT CONFIG REQUIRED)
+  find_package(EXReaderSideload CONFIG REQUIRED)
+  target_sources(exreader_product PRIVATE sync_jni.cpp)
+  target_link_libraries(exreader_product PRIVATE EXReaderSession::reader_session)
+  target_compile_definitions(exreader_host PRIVATE READER_HOST_SYNC=1)
+  # The existing shared SDK also serves exreader-jni. Consume the installed
+  # public sideload archive without adding its static SDK dependency closure.
+  target_include_directories(exreader_host PRIVATE
+    $<TARGET_PROPERTY:EXReaderSideload::exr_sideload,INTERFACE_INCLUDE_DIRECTORIES>)
+  target_link_libraries(exreader_host PRIVATE $<TARGET_FILE:EXReaderSideload::exr_sideload> dl)
+  target_link_options(exreader_host PRIVATE -Wl,--exclude-libs,ALL
+    "-Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/sdk-host-link.map")
 endif()
