@@ -130,8 +130,16 @@ void lru_write(const fs::path& dir, const Bytes& png) {
     Thumb t;
     if (cover(c, b, png, s, t) != RTH_OK || !t.t.from_cache) fatal("lru-write touch was not a hit");
   }
+  const rth_stats before_close = stats_now(c);
+  std::string written;
+  {
+    std::ifstream in(dir / "rth-index.txt", std::ios::binary);
+    std::string line;
+    while (std::getline(in, line) && written.size() < 400) written += line + "|";
+  }
   rth_cache_close(c);
-  std::printf("SETUP lru-write wrote 8x8, 6x6, 4x4 and touched 8x8 then 4x4\n");
+  std::printf("SETUP lru-write entries %u stores %llu index_failures %llu index[%s]\n", before_close.entries,
+              (unsigned long long)before_close.stores, (unsigned long long)before_close.index_failures, written.c_str());
   std::fflush(stdout);
 }
 
@@ -144,8 +152,15 @@ void lru_verify(const fs::path& dir, const Bytes& png) {
   rth_status s4 = cover(c, b, png, 4, t4);
   rth_status s6 = cover(c, b, png, 6, t6);
   bool kept = s.entries == 2 && s8 == RTH_OK && t8.t.from_cache == 1 && s4 == RTH_OK && t4.t.from_cache == 1;
+  std::string index_dump;
+  {
+    std::ifstream in(dir / "rth-index.txt", std::ios::binary);
+    std::string line;
+    while (std::getline(in, line) && index_dump.size() < 400) index_dump += line + "|";
+  }
   check("regress: LRU recency written by one process survives an independent reopen", kept,
-        "entries " + num(s.entries) + " 8x8 " + (t8.t.from_cache ? "hit" : "miss") + " 4x4 " + (t4.t.from_cache ? "hit" : "miss"));
+        "entries " + num(s.entries) + " 8x8 " + (t8.t.from_cache ? "hit" : "miss") + " 4x4 " + (t4.t.from_cache ? "hit" : "miss") +
+            " index[" + index_dump + "]");
   check("regress: reopening with a smaller entry bound evicts the stale entry, not the touched ones",
         s6 == RTH_OK && t6.t.from_cache == 0, "6x6 from cache " + num((uint64_t)t6.t.from_cache));
   rth_cache_close(c);
