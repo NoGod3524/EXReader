@@ -936,7 +936,10 @@ def main():
             [('Cloud Only Conflict', 0)], 'a tombstone must keep the local copy and never resurrect it'
         assert sql('device-reading-b', 'SELECT count(*) FROM reader_books WHERE book_key=?', ('txt:' + 'd' * 64,))[0][0] == 0
         heads_after = revision_heads('device-reading-b', 'book', txt_key)
-        assert len(heads_after) == 3 and set(heads_after) == set(txt_heads) | set(concurrent_ids), heads_after
+        # Both competitors name the previous head as their parent, so exactly those two
+        # revisions are heads; the host may neither merge them nor add a third.
+        assert sorted(heads_after) == sorted(concurrent_ids), heads_after
+        assert txt_heads[0] not in heads_after, heads_after
         assert revision_heads('device-reading-b', 'book', epub_key) == epub_heads
         assert revision_heads('device-reading-b', 'book', planted_key) == [tombstone['id']]
         after_counts = {key: sql('device-reading-b', 'SELECT count(*) FROM reader_revisions WHERE entity_key=?', (key,))[0][0]
