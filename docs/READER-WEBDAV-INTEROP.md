@@ -82,6 +82,28 @@ libcurl `VERIFYPEER=1`、`VERIFYHOST=2`；主机名经 `/etc/hosts` 指向本机
 这些只作为最小复现与拟改共享文件（`extras/webdav/src/webdav.cpp`）交给root协调所有权；
 本包不修改该文件，也不为通过而放宽限额或改写断言。
 
+## 云端结果
+
+受测源码 `b870a2f1edc590019c0c76545969627e4de35a7d`，
+[run 40054114195](https://github.com/NoGod3524/EXReader/actions/runs/40054114195) attempt 1：
+
+| 服务 | job | 结果 | 工件 |
+| --- | --- | --- | --- |
+| Nextcloud 33.0.10（SabreDAV） | 120753145349 | 成功，33/33 | 12544812188，15685977字节 |
+| Apache httpd 2.4.68 mod_dav_fs | 120753145555 | 失败，32/33 | 12544677295，15587878字节 |
+
+汇总job 120754200175 对两份工件的身份、digest与原始access log重新核对均无问题，
+因Apache报告未通过而整体失败。失败项为
+`shard_with_2000_entries_is_listed_and_paged_by_cursor`：mod_dav_fs对恰好2000项的
+Depth:1应答为2001个response、24014个XML元素，客户端以“WebDAV XML structure limit exceeded”
+（`EXR_DAV_LIMIT`）整体拒绝——是明确拒绝而非截断，但文档声明的2000项分片上限对该服务不可达
+（约1666项即触顶）。该失败按原样保留，未改断言或限额；最小复现与拟改文件见
+[reader-webdav-interop.json](validation/reader-webdav-interop.json) 的 `findings_for_root`，
+待root协调 `extras/webdav/src/webdav.cpp` 的所有权。百分号子项整表拒绝在两服务上均复现。
+
+先前的 run 40053615279（`6df34306`）同样是Nextcloud成功、Apache同一项失败，汇总因工件根路径错误未能读取报告；
+它作为保留失败记录，不作为证据。
+
 ## 证据与限制
 
 工件 `reader-webdav-interop-<service>-<run>-<attempt>` 含 `result.json`、原始access/error/容器日志、
