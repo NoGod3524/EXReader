@@ -117,23 +117,14 @@ def main():
         host.key('ctrl+a')
         host.paste(str(root))
         digest = hashlib.sha256(str(root).encode()).hexdigest()
-        native_ready(lambda value: value.get('entry_sha256') == digest and value.get('selected_sha256') == digest and value.get('accept_sensitive') == '1')
+        native_ready(lambda value: value.get('entry_sha256') == digest and value.get('entry_focused') == '1')
+        # SELECT_FOLDER first navigates to a typed directory. Unlike OPEN, it
+        # cannot select/accept that path before this real native activation.
         host.key('Return')
-        # GTK may accept the selected folder immediately, or navigate into it.
-        end = time.monotonic() + 10
-        while time.monotonic() < end:
-            if observed().get('visible') == '1':
-                return
-            try:
-                node = element('Choose folder', {'push button'})
-                if bus.states(node).get('sensitive'):
-                    click_node(node)
-                    break
-            except TimeoutError:
-                if observed().get('visible') == '1':
-                    return
-                raise
-            time.sleep(.02)
+        native_ready(lambda value: observed().get('visible') == '1' or (value.get('selected_sha256') == digest and value.get('accept_sensitive') == '1'))
+        if observed().get('visible') == '1':
+            return
+        click('Choose folder', {'push button'})
         wait(lambda value: value['visible'] == '1')
 
     def close_dialog():
