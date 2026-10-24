@@ -1,0 +1,105 @@
+name: Reader localization
+on:
+  push:
+    branches: [codex/reader-localization]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  consumers:
+    name: localization consumers (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            platform: Linux
+          - os: windows-2022
+            platform: Windows
+          - os: macos-14
+            platform: macOS
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Pin source, fixed start, protected SDK, schema and path ownership
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD -- apps/reader/store/001_catalog.sql
+          if git diff --name-only f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD | grep -v -E '^(apps/reader/localization/|tests/reader_localization/|\.github/workflows/reader-localization\.yml$|docs/READER-LOCALIZATION\.md$|docs/validation/reader-localization\.json$)'; then
+            echo "files outside the J20 ownership list changed"; exit 1
+          fi
+      - name: Enter Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`$bat` >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install the optional localization package
+        run: |
+          mkdir -p build/loc-logs build/loc-fixtures build/localization-evidence
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "S_WS=$ws" >> "$GITHUB_ENV"
+          cmake -S apps/reader/localization -B build/loc -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/loc-stage" 2>&1 | tee build/loc-logs/package-configure.log
+          cmake --build build/loc --parallel 4 --verbose 2>&1 | tee build/loc-logs/package-build.log
+          cmake --install build/loc 2>&1 | tee build/loc-logs/package-install.log
+      - name: Compile isolated C and C++ consumers from the installed package only
+        run: |
+          cmake -S tests/reader_localization/consumer -B build/loc-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$S_WS/build/loc-stage" -DEXR_LOCALIZATION_SOURCE="$S_WS/apps/reader/localization/src" -DEXR_LOCALIZATION_INCLUDE="$S_WS/apps/reader/localization/include" 2>&1 | tee build/loc-logs/consumer-configure.log
+          cmake --build build/loc-consumer --verbose 2>&1 | tee build/loc-logs/consumer-build.log
+      - name: Freeze fixtures, then run the installed consumers and the hook worker
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_localization/make_localization_fixtures.py build/loc-fixtures 2>&1 | tee build/loc-logs/fixtures.log
+          python3 tests/reader_localization/check_localization.py --consumer "build/loc-consumer/localization-c-consumer$exe" --cpp "build/loc-consumer/localization-cpp-consumer$exe" --worker "build/loc-consumer/localization-worker$exe" --fixtures build/loc-fixtures --installed build/loc-stage --output build/localization-evidence --platform "${{ matrix.platform }}" 2>&1 | tee build/loc-logs/check.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-localization-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/loc-logs/
+            build/loc-fixtures/
+            build/localization-evidence/
+            build/loc-stage/
+            build/loc-consumer/localization-c-consumer*
+            build/loc-consumer/localization-cpp-consumer*
+            build/loc-consumer/localization-worker*
+            build/loc/CMakeCache.txt
+          if-no-files-found: error
+  evidence:
+    name: strict localization evidence
+    needs: [consumers]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: reader-localization-*
+          path: build/loc-artifacts
+      - name: Authenticate all three platform ZIPs and compare named outcomes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_localization/check_artifacts.py build/loc-summary
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-localization-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/loc-summary/
+          if-no-files-found: error
