@@ -4,7 +4,7 @@ on:
     inputs:
       mode:
         type: choice
-        options: [native, ui, anchor]
+        options: [native, ui, anchor, traversal]
         default: native
   workflow_call:
     inputs:
@@ -136,6 +136,9 @@ jobs:
           target=macos
           signing=YES
           cases=(-only-testing:EXReaderHostUITests-macOS/ShelfUITests/test01RealShelfAndBoundedInteractiveRows)
+          if test "$DIAGNOSTIC_MODE" = traversal; then
+            cases=(-only-testing:EXReaderHostUITests-macOS/ShelfUITests/test02ForwardTraversalOfAllOriginals)
+          fi
           if test "$DIAGNOSTIC_MODE" = anchor; then
             python3 - > "$root/destination.txt" <<'PY'
           import json, subprocess

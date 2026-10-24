@@ -222,6 +222,15 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
   Its scope remains `diagnostic_only: true`, `accepted: false`. Product code is
   frozen for the following same-source full shelf, import-mapping and original
   Apple workflows; complete acceptance is still pending.
+- The full `8f7069de3820446bee66bf7546ff961eaaef83c0` source passed import
+  mapping [40057792509](https://github.com/NoGod3524/EXReader/actions/runs/40057792509)
+  (all six jobs, catalog8/SDK16 and each platform 5 UI/22 steps/14 attachments)
+  and native [40057795558](https://github.com/NoGod3524/EXReader/actions/runs/40057795558)
+  (seven jobs). The new shelf macOS job `120765601566` passed six UI cases,
+  including refresh and restoration, but original case02 stopped during
+  pagination at issued geometry epoch 51. Artifact `12547132062` preserves
+  this failure. The following diagnostic runs only original macOS case02
+  and records pending visible frames, with product code and assertions unchanged.
 
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.
