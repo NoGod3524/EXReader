@@ -374,8 +374,14 @@ class Recorder:
 
 
 def atspi_version():
+    """Version string of the installed accessibility stack, best effort."""
     major = getattr(Atspi, 'MAJOR_VERSION', None)
     minor = getattr(Atspi, 'MINOR_VERSION', None)
-    if major is None or minor is None:
+    if major is not None and minor is not None:
+        return 'atspi %d.%d' % (major, minor)
+    try:
+        from gi.repository import Atk
+        return 'atk %d.%d (atspi major/minor unavailable)' % (Atk.MAJOR_VERSION,
+                                                              Atk.MINOR_VERSION)
+    except Exception:
         return 'unknown'
-    return '%d.%d' % (major, minor)

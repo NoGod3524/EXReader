@@ -47,8 +47,9 @@ class Audit:
         self.dynamic_gaps = []
 
     def check(self, name, ok, expected, actual, element='', severity='blocking',
-              reproduction=(), fix=''):
-        entry = {'name': name, 'pass': bool(ok), 'evaluated': True, 'severity': severity,
+              reproduction=(), fix='', evaluated=True):
+        entry = {'name': name, 'pass': bool(ok), 'evaluated': bool(evaluated),
+                 'severity': severity,
                  'expected': expected, 'actual': actual, 'element': element,
                  'reproduction': list(reproduction), 'minimal_fix': fix}
         self.checks.append(entry)
@@ -377,13 +378,18 @@ def main():
                                                       contract.NAMES['details'],
                                                       contract.NAMES['more']]
         missing = [entry for entry in expected_controls if entry not in names]
-        audit.check('shelf_tab_order_reaches_controls', not missing,
+        focused_steps = [entry for entry in sequence if entry['path']]
+        if not focused_steps:
+            audit.gap('No element carried the FOCUSED state during Tab traversal, so the focus '
+                      'order could not be evaluated')
+        audit.check('shelf_tab_order_reaches_controls', not missing and bool(focused_steps),
                     expected='Tab reaches every toolbar button, the search field, the details '
                              'button and the more menu button',
                     actual={'missing': missing, 'sequence': names},
                     element='window/%s' % contract.WINDOW_TITLE,
                     reproduction=['show the shelf with F2',
                                   'press Tab 26 times and read the FOCUSED element after each'],
+                    evaluated=bool(focused_steps),
                     fix='none when the sequence is complete')
 
         toolbar_seen = []
@@ -416,6 +422,7 @@ def main():
                             'action_row_visual_order': visual_order,
                             'action_row_extents': dict(boxes)},
                     element='window/%s' % contract.WINDOW_TITLE, severity='blocking',
+                    evaluated=bool(focused_steps),
                     reproduction=['show the shelf with F2',
                                   'press Tab and compare the focus order with the element '
                                   'extents reported by AT-SPI'],
@@ -724,6 +731,11 @@ def main():
                        and event.get('source_name') == after_text]
         same_element = (before is not None and after is not None
                         and a11y.path_of(after) == a11y.path_of(before))
+        evaluated = before is not None and bool(recorder.items)
+        if not evaluated:
+            audit.gap('The status element or the accessibility event stream was unavailable, so '
+                      'the status notification check could not be evaluated (events=%d, before=%r)'
+                      % (len(recorder.items), before_text))
         audit.check('status_message_exposed_as_name_change',
                     before is not None and after is not None and same_element
                     and before_text != after_text and bool(name_events),
@@ -739,6 +751,7 @@ def main():
                     element=snapshot(after)['path'],
                     reproduction=['read the status label name', 'import invalid.epub with F1',
                                   'read the label again and the delivered accessibility events'],
+                    evaluated=evaluated,
                     fix='the message is a plain label: use a GtkStatusbar (ATK_ROLE_STATUSBAR '
                         'plus Statusbar::text-pushed) so assistive clients that announce status '
                         'bars receive the change; GTK3 has no per-widget live region')
