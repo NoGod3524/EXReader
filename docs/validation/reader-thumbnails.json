@@ -5,6 +5,56 @@
   "sdk_freeze": "9854061be331fe603a1822d9b2b36ee357154927",
   "sdk_version": "3.40.0",
   "abi": 1,
+  "status": "root-reviewed native enumeration and ownership fixes, verified on three desktops with strict same-source leak and allocation-fault evidence",
+  "accepted": true,
+  "tested_source": "430c718b7a92cf8055e5c3775bdcb254e918419b",
+  "run": {"id": 40092824048, "attempt": 1, "workflow": ".github/workflows/reader-thumbnails.yml"},
+  "jobs": [
+    {"id": 120868839001, "name": "thumbnail consumers (ubuntu-22.04)", "conclusion": "success"},
+    {"id": 120868838955, "name": "thumbnail consumers (windows-2022)", "conclusion": "success"},
+    {"id": 120868838850, "name": "thumbnail consumers (macos-15)", "conclusion": "success"},
+    {"id": 120868838988, "name": "sanitized probe (ubuntu-22.04)", "conclusion": "success"},
+    {"id": 120872572483, "name": "strict thumbnail evidence", "conclusion": "success"}
+  ],
+  "artifacts": [
+    {"id": 12559642629, "name": "reader-thumbnails-Linux-40092824048-1", "bytes": 19685882, "digest": "sha256:d6ad9af5d326d898757d20343ac372e0058527867e09d0798769bc167d63af28", "expires_at": "2027-01-22T12:10:16Z"},
+    {"id": 12559956379, "name": "reader-thumbnails-Windows-40092824048-1", "bytes": 52345691, "digest": "sha256:4323f7c80a034020a53da7cd8d189dce651572fcd1d735fdf9da36eefc660664", "expires_at": "2027-01-22T12:10:16Z"},
+    {"id": 12559946968, "name": "reader-thumbnails-macOS-40092824048-1", "bytes": 14258129, "digest": "sha256:891571cbbde945759a82b5c8f7e855bb356d4f461610e30432ca7909fd41d2c6", "expires_at": "2027-01-22T12:10:16Z"},
+    {"id": 12559487241, "name": "reader-thumbnails-sanitized-40092824048-1", "bytes": 44922, "digest": "sha256:0ef3c2fa43e44596706c6059143d9e7e1c0bd75597548767f36d33f36176c458", "expires_at": "2027-01-22T12:10:16Z"},
+    {"id": 12560451051, "name": "reader-thumbnails-evidence-40092824048-1", "bytes": 2110, "digest": "sha256:e9976576051bee2d7908f46ead28c0f9b454fc7cf7c6e7b1ff90b414b0947984"}
+  ],
+  "checks": {
+    "linux": {"probe": 179, "regress": 11, "fault_sweeps": 3, "injected_open_store_library": [31, 42, 40], "terminations": 0},
+    "windows": {"probe": 178, "regress": 11, "fault_sweeps": 3, "injected_open_store_library": [17, 22, 21], "terminations": 0},
+    "macos": {"probe": 179, "regress": 11, "fault_sweeps": 3, "injected_open_store_library": [13, 25, 24], "terminations": 0},
+    "sanitized_linux": {"probe": 179, "regress": 11, "fault_sweeps": 3, "injected_open_store_library": [25, 38, 36], "terminations": 0}
+  },
+  "sanitizers": {"asan_options": "detect_leaks=1:abort_on_error=1", "ubsan_options": "halt_on_error=1:print_stacktrace=1", "scope": "package and installed consumers instrumented, frozen SDK uninstrumented; LeakSanitizer intercepts malloc for failed SDK blob/pixel cleanup paths"},
+  "review_fixes": [
+    "complete directory accounting or refusal, exclusive OS directory owner, failed deletions retained in byte and entry totals",
+    "RAII for partial cache, output pixels, decoded bitmap, borrowed SDK blob and store rollback",
+    "non-uniform pixel reference and 64x48 to 7x5 downscale; finish reads bmp.pixels rather than its output buffer",
+    "native directory handles replace the exact libstdc++ allocation/noexcept call site found by Actions stack traces",
+    "every allocation point includes index zero; every termination or nonzero child exit fails; active-cache C++ allocation counts and close/retry integrity are checked separately from C malloc leak evidence"
+  ],
+  "granted_platforms": ["linux", "windows", "macos"],
+  "performance_claimed": false,
+  "host_ui_accepted": false,
+  "six_platform_accepted": false,
+  "complete_product": false,
+  "sdk_changed": false,
+  "schema_changed": false,
+  "review_history": [
+    {"source": "bae50ff3", "run": 40088602169, "result": "failure; Linux open terminated and macOS store leaked map allocations"},
+    {"source": "b7bc49e38ca2deb41a47e4db76f8257ff38c169e", "run": 40089614222, "result": "retained earlier store rollback and child-spawn iteration"},
+    {"source": "c68b87dcc66766d1a7d7918e8958f258063d395c", "run": 40090050527, "result": "consumer failures, sanitized probe success"},
+    {"source": "b7e38e5ba403e1aef3b06a7cd827ec992a3a1dd6", "run": 40091225844, "result": "green but root rejected the fault grant: Linux counted eight terminations as passing"},
+    {"source": "b99034cde106868c50024058b6e9ad278be06cd3", "run": 40092109613, "result": "failure with exact allocation stacks locating the directory-iterator constructor"},
+    {"source": "7afa5982b36b73faf84375bddf5b69a2270d2dfb", "run": 40092373580, "result": "Linux test checks passed, diagnostic shell command failed on already-cleaned scratch; later superseded queued work cancelled"},
+    {"source": "b0ddaacad979d66dddb41f799e3670a2f1893188", "run": 40092639342, "result": "superseded queued work cancelled; original logs retained"},
+    {"source": "8d845f71ee1528b9dfbfd4076081d34f8f092865", "run": 40092723573, "result": "Linux consumers and full leak suite passed; superseded queued work cancelled before the final allocation-zero sweep"}
+  ],
+  "historical_record": {
   "status": "root review pending: exact allocation stacks exposed a terminating directory enumeration path; historical source and results below are preserved",
   "accepted": false,
   "historical_run_accepted": true,
@@ -130,5 +180,6 @@
       {"source": "ca7e70d6ea759ceb3447314512fbff88ccb94e7d", "run": 40083310974, "result": "build failure: std::errc has no wrong_type; the read handle now reports std::errc::invalid_argument"},
       {"source": "79dbe9b58f96219259db7aee1dc3f126b28a8774", "run": 40083552017, "result": "build failure: the probe cover helper takes width and height; two new calls passed one value"}
     ]
+  }
   }
 }
