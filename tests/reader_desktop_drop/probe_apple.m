@@ -216,8 +216,11 @@ int main(void) {
       report_expect("drag_types_registered",
           types && [types containsObject:NSPasteboardTypeFileURL], "file URL drag type registered");
     }
-    report_expect("attach_null_view", exr_drop_apple_attach(nil, &options, &target) == EXR_DROP_ARGUMENT,
-        "nil view refused");
+    {
+      exr_drop_apple_target *refused = NULL;
+      report_expect("attach_null_view", exr_drop_apple_attach(nil, &options, &refused) == EXR_DROP_ARGUMENT,
+          "nil view refused");
+    }
 
     /* ---- pasteboard reads -------------------------------------------- */
     pasteboard_urls(@[ [NSURL fileURLWithPath:g_file] ]);
