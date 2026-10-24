@@ -346,7 +346,7 @@ int main(int argc,char **argv){
   reflow_case(r,"txt","annotation","bm000000000000000000000000000001",locate(T,"Tail alpha"),locate(T,"Tail alpha"),"txt-bookmark-point");
   {/* Cross-document capture: real SDK quote from a different original. */
     observation ob;ob.o.str("id","txt-missing-cross-original").str("book","edited->txt").str("kind","highlight").str("sdk_capture","exr_anchor_create").str("mode","reflow_global");
-    exr_document *ed=nullptr;SDK(exr_library_document(A.lib,A.ids["edited"],&ed,&e_));size_t n=0;std::string et(exr_document_text(ed,&n),n);
+    exr_document *ed=nullptr;SDK(exr_library_document(A.lib,A.ids["edited"],&ed,&e_));size_t n=0;const char *etext=exr_document_text(ed,&n);std::string et(etext,n);
     size_t at=locate(et,"Edited quote appears only here.");exr_anchor a{};SDK(exr_anchor_create(ed,at,at+std::strlen("Edited quote appears only here."),&a,&e_));sel s=from(a);ob.capture(s);
     target t{"annotation","edited","a00000000000000000000000000000ed","reflow_global","","",0,"cross"};reader_rs_capture c{};c.mode=READER_RS_REFLOW_GLOBAL;c.anchor=&a;std::string wire;
     literal_and_adapter(ob,A,t,s,c,&wire);
@@ -364,7 +364,7 @@ int main(int argc,char **argv){
   /* ---- EPUB stored in memory/global mode: chapter-scoped reflow selector ---- */
   {
     exr_document *ga=nullptr,*gb=nullptr;SDK(exr_library_document(A.lib,mem_a,&ga,&e_));SDK(exr_library_document(B.lib,mem_b,&gb,&e_));
-    size_t n=0;std::string gt(exr_document_text(ga,&n),n);size_t at=locate(gt,"第二章节独有文字");
+    size_t n=0;const char *gtext=exr_document_text(ga,&n);std::string gt(gtext,n);size_t at=locate(gt,"第二章节独有文字");
     observation ob;ob.o.str("id","epub-global-chapter-scope").str("book","epub(memory import)").str("kind","highlight").str("sdk_capture","exr_anchor_create").str("mode","reflow_global");
     exr_anchor a{};SDK(exr_anchor_create(ga,at,at+std::strlen("第二章节独有文字"),&a,&e_));sel s=from(a);ob.capture(s);
     exr_anchor_match self{};SDK(exr_anchor_resolve_ex(ga,&a,nullptr,&self,&e_));ob.o.str("sender_resolve",state_name(self.state));
