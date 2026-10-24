@@ -97,7 +97,7 @@ def verify_producer(platform, entry, wanted, source_sha, run_id, attempt, artifa
     with zipfile.ZipFile(io.BytesIO(payload)) as archive:
         names = archive.namelist()
         artifacts_in_zip.extend(names)
-        report_name = next((name for name in names if name.endswith('result.json')), None)
+        report_name = next((name for name in names if name.rsplit('/', 1)[-1] == 'result.json'), None)
         require(report_name is not None, '%s carries no result.json (has %s)' % (wanted, names[:8]))
         report = json.loads(archive.read(report_name).decode('utf-8'))
         diagnose(platform, report)
@@ -109,8 +109,8 @@ def verify_producer(platform, entry, wanted, source_sha, run_id, attempt, artifa
         require(report['counts']['pass'] > 0, '%s carries no passing case' % wanted)
         pcm = (report.get('probe') or {}).get('pcm')
         if pcm:
-            wanted_wav = pcm.get('file') or '.wav'
-            wav_name = next((name for name in names if name.endswith(wanted_wav)), None)
+            wanted_wav = (pcm.get('file') or '.wav').rsplit('/', 1)[-1]
+            wav_name = next((name for name in names if name.rsplit('/', 1)[-1] == wanted_wav), None)
             require(wav_name is not None, '%s ships no %s' % (wanted, wanted_wav))
             wav = archive.read(wav_name)
             require(hashlib.sha256(wav).hexdigest() == pcm['sha256'],

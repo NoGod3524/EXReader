@@ -184,7 +184,7 @@ class AppleEngine final : public rtts::Engine {
     @autoreleasepool {
       NSString *identifier = [NSString stringWithUTF8String:id.c_str()];
       if (!identifier) return false;
-      return [AVSpeechSynthesisVoice voiceWithIdentifier:identifier] != nil;
+      return ResolveVoice(identifier) != nil;
     }
   }
 
@@ -200,7 +200,7 @@ class AppleEngine final : public rtts::Engine {
       AVSpeechUtterance *utterance = [AVSpeechUtterance speechUtteranceWithString:text];
       if (!voice.empty()) {
         NSString *identifier = [NSString stringWithUTF8String:voice.c_str()];
-        AVSpeechSynthesisVoice *chosen = identifier ? [AVSpeechSynthesisVoice voiceWithIdentifier:identifier] : nil;
+        AVSpeechSynthesisVoice *chosen = identifier ? ResolveVoice(identifier) : nil;
         if (!chosen) {
           if (native) *native = kNativeUnknownVoice;
           return false;
@@ -274,6 +274,19 @@ class AppleEngine final : public rtts::Engine {
   }
 
  private:
+  // The system may answer an unknown identifier with a placeholder voice, so an
+  // installed voice is only accepted when its own identifier matches the request
+  // exactly. Loading the identifier list is also what makes this independent of
+  // any private voice cache.
+  AVSpeechSynthesisVoice *ResolveVoice(NSString *identifier) {
+    if (!identifier) return nil;
+    NSArray<AVSpeechSynthesisVoice *> *installed = [AVSpeechSynthesisVoice speechVoices];
+    for (AVSpeechSynthesisVoice *voice in installed) {
+      if ([voice.identifier isEqualToString:identifier]) return voice;
+    }
+    return nil;
+  }
+
   bool MainThread(int *native) {
     if ([NSThread isMainThread]) return true;
     if (native) *native = kNativeWrongThread;

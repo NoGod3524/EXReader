@@ -66,6 +66,17 @@ jobs:
           done
       - name: Fixture-only tooling
         run: brew install ninja
+      - name: Best-effort virtual output device for live speech (evidence only, never a gate)
+        continue-on-error: true
+        run: |
+          if sudo -n true 2>/dev/null; then
+            HOMEBREW_NO_AUTO_UPDATE=1 NONINTERACTIVE=1 brew install --cask blackhole-2ch || true
+            sudo -n killall coreaudiod || true
+            sleep 3
+            HOMEBREW_NO_AUTO_UPDATE=1 NONINTERACTIVE=1 brew install switchaudio-osx || true
+            SwitchAudioSource -s "BlackHole 2ch" || true
+          fi
+          system_profiler SPAudioDataType || true
       - name: Audio inventory (evidence only, never a gate)
         continue-on-error: true
         run: |
@@ -116,6 +127,17 @@ jobs:
           done
       - name: Fixture-only tooling
         run: brew install ninja
+      - name: Best-effort virtual output device for live speech (evidence only, never a gate)
+        continue-on-error: true
+        run: |
+          if sudo -n true 2>/dev/null; then
+            HOMEBREW_NO_AUTO_UPDATE=1 NONINTERACTIVE=1 brew install --cask blackhole-2ch || true
+            sudo -n killall coreaudiod || true
+            sleep 3
+            HOMEBREW_NO_AUTO_UPDATE=1 NONINTERACTIVE=1 brew install switchaudio-osx || true
+            SwitchAudioSource -s "BlackHole 2ch" || true
+          fi
+          system_profiler SPAudioDataType || true
       - name: Build, boot, and run the installed probe in the simulator
         run: python3 tests/reader_tts_apple/run_ios.py
       - name: Upload iOS producer

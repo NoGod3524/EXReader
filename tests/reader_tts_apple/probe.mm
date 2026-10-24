@@ -843,9 +843,17 @@ int rtts_probe_run(const char *output_path) {
       const reader_tts_status second = reader_tts_request_close(handle, &close_error);
       Expect("probe.close-idempotent", first == READER_TTS_OK && second == READER_TTS_OK,
              "close returned " + Str((int)first) + "/" + Str((int)second));
+      // CLOSED is reached from the run loop, or from a later owner call once the
+      // 2 s deadline passes; pump instead of demanding it synchronously.
       reader_tts_snapshot closed_snapshot;
       std::memset(&closed_snapshot, 0, sizeof closed_snapshot);
-      reader_tts_observe(handle, &closed_snapshot, &close_error);
+      NSDate *closed_deadline = [NSDate dateWithTimeIntervalSinceNow:4.0];
+      for (;;) {
+        reader_tts_observe(handle, &closed_snapshot, &close_error);
+        if (closed_snapshot.state == READER_TTS_CLOSED) break;
+        if ([closed_deadline timeIntervalSinceNow] <= 0) break;
+        Pump(0.02);
+      }
       Expect("probe.closed-state", closed_snapshot.state == READER_TTS_CLOSED,
              "state is " + Str((int)closed_snapshot.state));
       reader_tts_voice_list after_close;
@@ -857,7 +865,13 @@ int rtts_probe_run(const char *output_path) {
           reader_tts_speak(handle, 200, kEnglish, std::strlen(kEnglish), nullptr, 1.0, &close_error);
       Expect("probe.speak-after-close", speak_after_close == READER_TTS_UNAVAILABLE,
              "returned " + Str((int)speak_after_close));
-      const reader_tts_status destroy_status = reader_tts_destroy(&handle, &close_error);
+      reader_tts_status destroy_status = reader_tts_destroy(&handle, &close_error);
+      if (destroy_status == READER_TTS_BUSY && handle != nullptr) {
+        // One more deadline turn, then destroy again: never a silent leak.
+        Pump(2.1);
+        reader_tts_observe(handle, &closed_snapshot, &close_error);
+        destroy_status = reader_tts_destroy(&handle, &close_error);
+      }
       Expect("probe.destroy-clears-pointer", destroy_status == READER_TTS_OK && handle == nullptr,
              "destroy returned " + Str((int)destroy_status));
     }
