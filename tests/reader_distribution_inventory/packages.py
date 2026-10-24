@@ -332,7 +332,7 @@ def external_from_symbols(own_archives, symbols):
             'unknown_count': len(unknown), 'unknown_sample': unknown[:16]}
 
 
-LIBRARY_FILE = None
+LIBRARY_SUFFIX = re.compile(r'[.](?:so(?:[.][0-9]+)*|dylib|tbd|a|lib)$', re.I)
 
 
 def library_name(base):
@@ -366,13 +366,17 @@ def link_evidence(tokens, archive_names, expected):
                     archives.append(base)
                 else:
                     system.append(canonical(name))
-            elif not part.startswith(('-', '/')) and re.search(
-                    r'[.](?:so(?:[.][0-9]+)*|dylib|tbd|a|lib)$', part, re.I):
-                base = part.replace('\\', '/').split('/')[-1]
-                if base in archive_names:
-                    archives.append(base)
-                else:
-                    system.append(library_name(base))
+                continue
+            base = part.replace('\\', '/').split('/')[-1]
+            if not base or part.startswith('-') or ':' in base:
+                # A linker flag such as /implib:name.lib, not a library.
+                continue
+            if not LIBRARY_SUFFIX.search(base):
+                continue
+            if base in archive_names:
+                archives.append(base)
+            else:
+                system.append(library_name(base))
         index += 1
     observed = sorted(set(system) | set(canonical(name) for name in frameworks))
     missing = sorted(name for name in expected if canonical(name) not in observed)
