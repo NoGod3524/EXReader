@@ -153,6 +153,9 @@ static void directory_open(GtkWidget *widget,gpointer unused) {
 #ifdef EXR_READER_ACCOUNT
   if(accounts_opened()) return;
 #endif
+#ifdef EXR_READER_DESKTOP_METADATA
+  if(metadata_dialog || metadata_running || collections_opened()) return;
+#endif
   GtkWidget *focus=gtk_window_get_focus(GTK_WINDOW(window));if(focus) directory.return_focus=g_object_ref(focus);
   directory.content=gtk_bin_get_child(GTK_BIN(window));gtk_widget_set_sensitive(directory.content,FALSE);
   directory.dialog=gtk_dialog_new_with_buttons("Directory and page entries",GTK_WINDOW(window),GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT,"_Close",GTK_RESPONSE_CLOSE,NULL);
