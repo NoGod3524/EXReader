@@ -132,11 +132,13 @@ try:
             original = private('reading-fixtures/' + row['file'])
             assert len(original) == row['bytes'] and hashlib.sha256(original).hexdigest() == row['sha256']
             sources.append({'phase': phase, 'file': row['file'], 'bytes': len(original), 'sha256': row['sha256']})
-        pid = adb('shell', 'pidof', package).decode().strip()
+        pid = subprocess.run(['adb', 'shell', 'pidof', package], capture_output=True, text=True, timeout=10).stdout.strip()
+        assert not pid or str(report['pid']) in pid.split()
         adb('shell', 'am', 'force-stop', package)
         after = subprocess.run(['adb', 'shell', 'pidof', package], capture_output=True, text=True, timeout=10).stdout.strip()
-        assert pid and not after
-        stops.append({'phase': phase, 'pid_before_stop': pid, 'pid_after_stop': after, 'requested': True})
+        assert not after
+        stops.append({'phase': phase, 'instrumentation_pid': report['pid'], 'pid_before_stop': pid,
+                      'ended_with_instrumentation': not bool(pid), 'pid_after_stop': after, 'requested': True})
     assert len({report['pid'] for report in reports}) == 3 and sum(report['count'] for report in reports) == 16 and kill
     accepted = True
 finally:
