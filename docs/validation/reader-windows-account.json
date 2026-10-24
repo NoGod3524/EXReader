@@ -1,4 +1,35 @@
 {
+  "accepted": true,
+  "source_sha": "c74e861b7dbe95e680b53f18bc63a764ae06fc4f",
+  "run_id": 40113587443,
+  "attempt": 1,
+  "job_id": 120930166046,
+  "summary_job_id": 120931870728,
+  "scope": "Windows account/capture and targeted native keyboard/UIA over TXT, bounded EPUB and PDF; retained product suites on the same source",
+  "sdk_candidate": "9854061be331fe603a1822d9b2b36ee357154927",
+  "product_schema": 1,
+  "checks": { "original_ui_actions": 158, "original_screenshots": 8, "product_ui": 10, "worker_cache_cases": 5, "bookshelf_ui": 13, "metadata_ui": 18, "account": 32, "targeted_keyboard_uia": 24 },
+  "strict_summary": { "accepted": true, "problems": [], "zip_payload_rehashed_in_actions": true },
+  "artifact": { "id": 12568060427, "name": "reader-windows-account-40113587443-1", "bytes": 44146885, "sha256": "3f7796b0f53126b3330996bafb99fb06c98e368134648108274be59acbbd7320", "expires_at": "2027-01-22T16:52:55Z" },
+  "summary_artifact": { "id": 12567920905, "name": "reader-windows-account-summary-40113587443-1", "bytes": 796, "sha256": "bf94a614819368a95c0fb4a7c7e46cd6c0f9b9bdb8fe1a3badf2a8f809807a60", "expires_at": "2027-01-22T16:52:55Z" },
+  "reading_capture_results": { "cases": 18, "found": 17, "ambiguous": 1, "mislocated": 0, "sdk_note_copies": 0, "exact_current_report": "account-ui/account-ui.json inside the source-bound producer artifact; old per-revision identities below are historical only" },
+  "targeted_uia": { "checks": 24, "failures": [], "formats": ["TXT", "bounded EPUB", "PDF"], "outside_page_nearest_caret": true, "independent_range_refs_and_snapshots": true, "unicode_combining_and_surrogates": true, "endpoint_crossing_and_int_min": true, "per_line_or_sdk_quad_geometry": true, "client_invalid_unit_hresult": -2147418113, "client_wrapper_methods_bypassed": ["CompareEndpoints target unwrap", "GetBoundingRectangles floating SAFEARRAY"] },
+  "retained_shelf_observation": { "original_assertions_unchanged": true, "originals": 2202, "cache_limit": 150, "wheel_iterations": 320, "coherence": "both real list replacement paths publish a native odd/even serial; only changed snapshots are retried; a stable bad row and the original worker timeout still fail" },
+  "provider_iteration_failures": [
+    { "run_id": 40094080436, "reason": "Shift+Tab returned to the original comment editor; the draft assertion incorrectly demanded a different editor" },
+    { "run_id": 40095466821, "reason": "EnableWindow cleared focus before the previous guard could restore it" },
+    { "run_id": 40109071435, "reason": "cancelling metadata scheduled an unnecessary refresh that disabled the restored command" },
+    { "run_id": 40109829474, "reason": "Python CompareEndpoints wrapper did not unwrap the target COM object" },
+    { "run_id": 40110638065, "reason": "probe required the server HRESULT from the public UIA client, whose enum transport returned E_UNEXPECTED; refusal and immutable endpoints remain required" },
+    { "run_id": 40111567097, "reason": "original shelf helper parsed rows across an asynchronous native list replacement" }
+  ],
+  "superseded_runs_cancelled": [40111464529, 40113516107],
+  "uncovered": ["Credential Manager UNAVAILABLE state", "screen-reader narration and full accessibility acceptance", "CONCURRENT/PENDING/tombstone test heads are planted directly rather than produced by a second remote peer", "cancel during receive/import", "a real user remote HTTPS collection", "product performance", "unified six-platform acceptance"],
+  "accessibility_accepted": false,
+  "screen_reader_verified": false,
+  "performance_accepted": false,
+  "complete_product": false,
+  "historical_account_record": {
   "source_sha": "dde92e8990ec14888b2f500d6000db596f03c601",
   "run_id": 40089084258,
   "attempt": 1,
@@ -272,4 +303,5 @@
     }
   ],
   "problems": []
+}
 }

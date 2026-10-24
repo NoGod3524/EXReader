@@ -1,5 +1,12 @@
 # Windows account, sync and receive controls
 
+Latest complete tested source: **`c74e861b7dbe95e680b53f18bc63a764ae06fc4f`**,
+run **`40113587443`**, attempt 1. Both the producer and strict summary succeeded:
+retained UI/product/worker/shelf/metadata **158/10/5/13/18**, account **32**, and
+native keyboard/UI Automation **24**. The strict summary rehashed this run's ZIP
+and returned `accepted=true, problems=[]`. The older account-only acceptance
+below remains historical evidence for its own source.
+
 The Win32 product host (`examples/reader.c`) gains an optional account feature
 behind `EXR_READER_WINDOWS_ACCOUNT`. It reuses only installed public modules:
 `reader_session_*`, `exr_credentials_*`, `exr_sideload_*`, the product
@@ -84,8 +91,8 @@ suggested fix was not the actual root cause, the real cause is noted below.
 | AN-02 | the comment editor's only neighbour names the list, not the editor | a real `标注内容(&M)` static immediately before the editor | same check |
 | KB-07 | a multiline edit answers `WM_GETDLGCODE` with `DLGC_WANTTAB`, so the dialog manager hands it Tab and it inserts a tab character | subclass answers `DLGC_WANTCHARS \| DLGC_WANTARROWS` only; `IsDialogMessage` traverses in and out | `comment_editor_releases_tab_and_shift_tab` |
 | KB-01 | consequence of KB-07 (the cycle was only closable by the audit's own resume) | the trap is gone, so the cycle closes by itself | `tab_order_visits_every_enabled_stop_once_and_closes` |
-| KB-06 / IM-06 | `host_update_controls` disables the command that already holds focus, and Windows parks focus on no window | a focus guard moves focus to the next enabled tab stop before the disable takes effect | `import_and_refresh_commands_keep_a_defined_focus_stop` |
-| OR-09 | the details dialog only re-activated the owner window; activating a window does not set keyboard focus | `WM_DESTROY` sets focus back on the invoking 详情 command | `details_dialog_returns_focus_to_its_invoking_command` |
+| KB-06 / IM-06 | `EnableWindow` can clear focus before the old guard checks it | restore lost focus with native dialog tab order, preserving an existing valid redirect or modal owner | `import_and_refresh_commands_keep_a_defined_focus_stop` |
+| OR-09 | cancelling a read-only details editor unnecessarily refreshed the shelf and disabled the just-focused command again | restore the invoking 详情 command; only actual save/discard completions request their own refresh | `details_dialog_returns_focus_to_its_invoking_command` |
 | OR-10 | **not a provider gap**: UI Automation reports each child's own enabled state, so blocking the parent window is invisible to it | the owner's children are disabled individually when a modal dialog opens and restored after it closes; a job finishing meanwhile re-applies the blocked state | `modal_background_commands_report_disabled_to_uia` |
 | IM-05 | `set_status` only called `SetWindowTextW` | one `EVENT_OBJECT_NAMECHANGE` per real text change (`NotifyWinEvent`) | `status_line_raises_a_native_change_event` |
 | RD-02 / KB-05 | the page is a custom control and the host answered no `WM_GETOBJECT` at all | `apps/reader/desktop/windows_accessibility.inc` implements a native provider (`IRawElementProviderSimple`, `ITextProvider`, `ITextRangeProvider`, `IValueProvider`) returned through `UiaReturnRawElementProvider`; the document text is the same page text the copy command reads and the selection range is the host's own selection | `page_exposes_text_through_a_native_text_pattern`, `page_selection_is_exposed_as_a_text_range` |
@@ -106,12 +113,13 @@ measurement (KB-02) and any screen-reader acceptance - no NVDA, Narrator or huma
 pass is part of this package. `screen_reader_verified` stays false in the
 regression record, and the full audit must be re-run by root after integration.
 
-### Real-input accessibility regression (11 checks)
+### Real-input accessibility regression (24 checks)
 
 `tests/reader_windows_account/check_a11y_ui.py` drives the packaged host with
-`SendInput` only (no `WM_COMMAND`, no `BM_CLICK`) and reads state through UI
-Automation and `GetGUIThreadInfo`; it aborts if the host is not the foreground
-window, so a misdirected key event can never look like a pass.
+`SendInput` and public UI Automation for the measured actions (no `WM_COMMAND`
+or `BM_CLICK`). Fixture paths and row selection use ordinary edit/list messages.
+The probe reads state through UI Automation and `GetGUIThreadInfo`; it aborts if
+the host is not foreground before keyboard input.
 
 1. `import_command_activates_from_the_keyboard`
 2. `shelf_search_and_comment_edits_expose_accessible_names`
@@ -124,6 +132,40 @@ window, so a misdirected key event can never look like a pass.
 9. `details_dialog_returns_focus_to_its_invoking_command`
 10. `main_commands_expose_alt_mnemonics`
 11. `tab_order_visits_every_enabled_stop_once_and_closes`
+12. `text_ranges_survive_interleaved_clone_compare_and_release`
+13. `stale_page_ranges_keep_their_text_and_refuse_to_select`
+14. `text_units_truncation_and_endpoints_follow_the_contract`
+15. `nonempty_move_normalizes_from_start_and_preserves_one_text_unit`
+16. `crossing_endpoints_follow_the_moved_endpoint_and_int_min_is_bounded`
+17. `unicode_character_units_preserve_combining_sequences_and_surrogate_pairs`
+18. `valid_unsupported_units_fall_forward_and_invalid_units_leave_the_range_unchanged`
+19. `range_get_children_returns_an_empty_com_array_in_the_correct_vtable_slot`
+20. `bounding_rectangles_describe_only_real_geometry`
+21. `range_from_point_uses_the_host_hit_test`
+22. `outside_page_points_return_the_nearest_degenerate_text_range`
+23. `pdf_text_geometry_hit_and_selection_use_the_rendered_regions`
+24. `bounded_epub_text_geometry_hit_and_selection_use_the_rendered_glyphs`
+
+Ranges own immutable frame snapshots and independent COM references. Character
+stops follow native Uniscribe; unsupported valid units fall forward, while
+crossing endpoints move the other endpoint too. Geometry comes from the real
+rendered SDK glyphs/PDF quads, clipped to the page. Point queries use those same
+clusters/regions, including outside-page points and bounded EPUB, without
+reopening a book or calling a worker-owned pager from UI Automation.
+
+The fixed Python client wrapper has two representation pitfalls: its
+`CompareEndpoints` fails to unwrap the target, and its rectangle helper converts
+the native double SAFEARRAY into integer `Rect` objects. The probe calls those
+same public COM methods directly. Invalid enum 99 is still required to fail and
+leave endpoints unchanged; the client returned `E_UNEXPECTED` on this runner,
+whereas the provider's direct guard returns `E_INVALIDARG`. No arbitrary exception
+or changed range is accepted.
+
+The retained shelf probe executes the original thirteen assertions unchanged.
+Its observation wrapper rejects row reads spanning an actual native list
+replacement using the list's before/after serial. Both list replacement paths
+publish that serial; a stable malformed row remains a failure. The original
+2202-book scale, 150-row ceiling, 320 wheel iterations and worker deadlines remain.
 ## Package verification
 
 `.github/workflows/reader-windows-account.yml` runs on `windows-2022` and first
@@ -238,7 +280,30 @@ Checks 30-31 plant the three explicit head states directly in the receiver's own
 product store and then drive the real sync: a book with two competing metadata
 heads, a book revision whose parent never arrives, and a tombstone over a
 previously projected cloud-only book.
-### Accepted run
+### Complete account and targeted UIA accepted run
+
+Tested source `c74e861b7dbe95e680b53f18bc63a764ae06fc4f`, run `40113587443`,
+attempt 1: producer `120930166046` and strict summary `120931870728` both success.
+The summary returned `accepted=true, problems=[]`, with all retained
+158/10/5/13/18 checks, account32 and targeted keyboard/UIA24 on this source.
+
+| artifact | id | bytes | SHA-256 |
+| --- | --- | --- | --- |
+| reader-windows-account-40113587443-1 | 12568060427 | 44146885 | `3f7796b0f53126b3330996bafb99fb06c98e368134648108274be59acbbd7320` |
+| reader-windows-account-summary-40113587443-1 | 12567920905 | 796 | `bf94a614819368a95c0fb4a7c7e46cd6c0f9b9bdb8fe1a3badf2a8f809807a60` |
+
+Both expire `2027-01-22T16:52:55Z`. The strict job downloaded and rehashed the
+producer ZIP and bound every retained report to the same source/run/attempt;
+upload digests match. No local build, test, syntax check or ZIP parsing was used.
+
+The failed provider iterations `40094080436`, `40095466821`, `40109071435`,
+`40109829474`, `40110638065` and `40111567097` remain in Actions. Their causes and
+the original account result are retained in the validation JSON. Only the
+superseded root runs `40111464529` and `40113516107` were cancelled; they are not
+passes. This result grants the named native/COM checks, not screen-reader speech,
+full accessibility, product performance or a unified product.
+
+### Earlier account/capture accepted run
 
 Source `dde92e8990ec14888b2f500d6000db596f03c601`, run `40089084258`, attempt 1,
 job `120857884310`: every step above succeeded, all 32 named account checks
