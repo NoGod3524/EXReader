@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "recorded_at_utc": "2026-10-24T23:32:35Z",
+  "recorded_at_utc": "2026-10-24T23:47:06Z",
   "current_cycle": 1,
   "completed_cycles": 0,
   "audit_interval": 5,
@@ -8,19 +8,19 @@
   "phase": "native_hosts_common_source_revalidation_and_windows_navigation_candidate",
   "host_integration_candidate": {
     "branch": "codex/reader-hosts-integration",
-    "source": "7adda19cb5dd4108d4b4a434a8f2bb619519529d",
-    "run": 40141520772,
+    "source": "f0c272c87b2402979292d0cd973d4f5e7a9f62fd",
+    "production_baseline": "e90c55885b95d14036b9ab2da6983b6cad01a779",
+    "run": 40143985644,
     "attempt": 1,
-    "status": "completed",
+    "status": "in_progress",
     "accepted": false,
     "pin_job_success": true,
-    "composition_all_three_jobs_and_strict_summary_success": true,
-    "windows_search_and_strict_summary_success": true,
+    "composition_all_three_jobs_and_strict_summary_success": false,
+    "windows_search_and_strict_summary_success": false,
+    "windows_navigation_included": true,
+    "android_preferences_controls_included": true,
     "gtk_palette_failures_remain_actual_failures": true,
-    "apple_host_not_yet_included": true,
-    "authentication_job": 121018373358,
-    "evidence_head": "6f78898b",
-    "problems": []
+    "apple_host_not_yet_included": true
   },
   "implementation_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "handoff_commit": "059a7b4fcd0de44674a30fadc7e0fded7cc47acd",
@@ -353,7 +353,36 @@
     "branch": "codex/reader-windows-navigation-ui",
     "source": "53dc10c6d8f609d5dcf2deccc9c6277c1e74b31a",
     "run": 40142663081,
-    "status": "in_progress",
-    "accepted": false
+    "status": "completed",
+    "accepted": true,
+    "evidence_head": "89252d4f1377c37917b2ad59cf54faa8103d6b67",
+    "navigation_ui_checks": 31,
+    "installed_f2_checks": 130
+  },
+  "last_authenticated_host_candidate": {
+    "branch": "codex/reader-hosts-integration",
+    "source": "7adda19cb5dd4108d4b4a434a8f2bb619519529d",
+    "run": 40141520772,
+    "attempt": 1,
+    "status": "completed",
+    "accepted": false,
+    "pin_job_success": true,
+    "composition_all_three_jobs_and_strict_summary_success": true,
+    "windows_search_and_strict_summary_success": true,
+    "gtk_palette_failures_remain_actual_failures": true,
+    "apple_host_not_yet_included": true,
+    "authentication_job": 121018373358,
+    "evidence_head": "6f78898b",
+    "problems": []
+  },
+  "claude_j05_resume": {
+    "branch": "codex/reader-apple-file-entry",
+    "last_failed_run": 40116197175,
+    "last_source": "a5f42e7a5602b91b7c9e2fce8699c4c41e49279d",
+    "instruction_sent": true,
+    "original_session_running_observed": true,
+    "new_package_created": false,
+    "model": "Sonnet 5.5 Medium",
+    "weekly_used_percent_observed": 79
   }
 }
