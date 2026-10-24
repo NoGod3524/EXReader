@@ -47,7 +47,7 @@ final class OrganizationPanel {
     OrganizationPanel(Activity activity,Executor worker,Supplier<BookStore> store,Runnable changed) {
         this.activity=activity;this.worker=worker;this.store=store;this.changed=changed;
         panel=new LinearLayout(activity);panel.setOrientation(LinearLayout.VERTICAL);panel.setPadding(12,12,12,12);panel.setBackgroundColor(0xffffffff);
-        panel.setContentDescription("Organize panel");panel.setVisibility(View.GONE);
+        panel.setContentDescription("Organize panel");panel.setClickable(true);panel.setVisibility(View.GONE);
         heading=new TextView(activity);heading.setTextSize(20);panel.addView(heading);
         search=new EditText(activity);search.setSingleLine(true);search.setHint("Search books");search.setContentDescription("Organize book search");
         LinearLayout navigation=row();
