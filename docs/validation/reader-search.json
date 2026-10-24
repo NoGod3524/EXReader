@@ -23,6 +23,45 @@
       {"id": 12547828468, "size_in_bytes": 5836550, "digest": "sha256:1afe3829a6395d23cb7a4c54e45102fa57ed5b3f57ea139aa2c41a3947eb2ad5"},
       {"id": 12548267146, "size_in_bytes": 372, "digest": "sha256:2682ff33171336e1342931d80b7f4959cd30ce9f4a223da9c0cc760fa1791b63"}
     ]
+  }, {
+    "source_sha": "523a91f0e8c11e4365e0eab7d3687bf05df2d2c0",
+    "run_id": 40063481308,
+    "attempt": 1,
+    "reason": "Probe initialization queried EPUB-only notes for TXT. Platform builds and C consumers passed; C++ probe and strict evidence failed.",
+    "jobs": [
+      {
+        "id": 120781745548,
+        "name": "search consumers (ubuntu-22.04)",
+        "conclusion": "failure"
+      },
+      {
+        "id": 120781745729,
+        "name": "search consumers (windows-2022)",
+        "conclusion": "failure"
+      },
+      {
+        "id": 120782459451,
+        "name": "strict search evidence",
+        "conclusion": "failure"
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 12548696047,
+        "size_in_bytes": 5851750,
+        "digest": "sha256:8f46790f1b86b2f0c43638f8c4a7b15b2e517cabee8f37537e7dde02a719b3a4"
+      },
+      {
+        "id": 12548566624,
+        "size_in_bytes": 7812044,
+        "digest": "sha256:95ead09dfea677f47b353132b3f2446d70f6d745cf7d37d3803436aac1c180bb"
+      },
+      {
+        "id": 12548014455,
+        "size_in_bytes": 370,
+        "digest": "sha256:7b759c0da2d073b9824c508ad82073177cc5d9598530962c4f706cbfbbd3b8c5"
+      }
+    ]
   }],
   "granted_platforms": [],
   "macos_accepted": false,
