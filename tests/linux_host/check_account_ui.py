@@ -454,7 +454,7 @@ def main():
                 data = path.read_bytes();assert not any(form in data for form in forms), 'credential leak in ' + str(path.relative_to(folder))
         assert not any(form in body for form in forms for body in entries.values())
         record('credentials_and_authorization_are_absent_from_profiles_product_databases_wire_and_all_evidence')
-        expected_checks = 45 if args.receive_fixtures else 23
+        expected_checks = 46 if args.receive_fixtures else 23
         assert len(checks) == expected_checks, len(checks)
         report.update(accepted=True, count=len(checks), local_originals=52, credential_leak_hits=0,
                       actual_secret_service='temporary unlocked then locked GNOME collection', native_https=True)
@@ -473,7 +473,9 @@ def main():
         shutil.rmtree(private, ignore_errors=True)
         os.environ.clear();os.environ.update(original_env)
         (folder / 'result.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
-    print(json.dumps({'accepted': report['accepted'], 'checks': len(checks), 'source_sha': os.environ['GITHUB_SHA']}))
+    print(json.dumps({'accepted': report['accepted'], 'checks': len(checks), 'source_sha': os.environ['GITHUB_SHA'],
+                      'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+                      'received': report.get('received')}))
 
 
 if __name__ == '__main__':

@@ -30,6 +30,7 @@ REQUIRED_CHECKS = [
     'received_remote_progress_is_resolved_without_writing_the_device_resume_position',
     'received_sdk_mapping_keeps_remote_title_author_and_favorite_instead_of_local_defaults',
     'received_public_sdk_readback_confirms_four_originals_and_zero_copied_product_annotations',
+    'received_mapped_conflict_book_stays_offline_readable_with_exact_original_and_unchanged_heads',
     'received_downloaded_book_reopens_offline_from_the_sdk_when_cache_and_server_are_unavailable',
 ]
 
@@ -130,6 +131,19 @@ def run_receive_checks(context):
         host.wait(lambda state: state['book'] == mapped(role) and state['reader_visible'] == 1 and not state['saving'], timeout=90)
         return dict(value, host_frame=host.read())
 
+    conflict_id = sql('SELECT sdk_book_id FROM reader_local_books WHERE book_key=?', (first,))[0][0]
+    conflict_title = sql('SELECT title FROM reader_books WHERE book_key=?', (first,))[0][0]
+    context['flags']['http'] = 503;before_requests = len(requests)
+    search(conflict_title);host.key('F2', 'Home', 'Return')
+    conflict_frame = host.wait(lambda state: state['book'] == conflict_id and state['reader_visible'] == 1 and not state['error'], timeout=60)
+    assert len(requests) == before_requests
+    assert protocol('heads', 'book', first)['heads'] == head_rows
+    assert sql("SELECT revision_id,body_json FROM reader_revisions WHERE entity_kind='book' AND entity_key=? ORDER BY revision_id", (first,)) == context['conflict_history']
+    context['flags']['http'] = 0
+    active_title = sql('SELECT b.title FROM reader_books b JOIN reader_local_books l USING(book_key) WHERE l.sdk_book_id=?', (active['book'],))[0][0]
+    search(active_title);host.key('F2', 'Home', 'Return')
+    host.wait(lambda state: state['book'] == active['book'] and state['start'] == active['start'] and not state['error'], timeout=60)
+
     cache = host.folder / 'profile/sync-work'
     txt_cache = cache / (manifest['txt']['sha256'] + '.txt')
     original_txt = txt_cache.read_bytes();txt_cache.write_bytes(b'corrupt original retained for diagnosis')
@@ -153,6 +167,10 @@ def run_receive_checks(context):
     retained_id = int(failed['imported_book'])
     assert retained_id > 0 and failed['import_created'] == '1' and not mapped('txt')
     assert host.read()['book'] == active['book'] and host.read()['start'] == active['start'] and failed['restore_failed'] == '0'
+    close_account();host.key('F5')
+    host.wait(lambda state: state['book'] == active['book'] and state['font'] == active['font'] + 2 and not state['error'], timeout=60)
+    host.key('F6');host.wait(lambda state: state['font'] == active['font'] and not state['error'], timeout=60)
+    open_account();ready(lambda state: state['import_pending'] == '1' and state['retry_enabled'] == '1')
     checked('received_sdk_commit_survives_product_mapping_failure_without_replacing_current_reading')
     sql('DROP TRIGGER received_mapping_failure')
     window();host.key('alt+t');observed['txt'] = opened('txt')
@@ -192,6 +210,8 @@ def run_receive_checks(context):
             if case['state'] == 'FOUND':
                 assert int(status) == 0 and int(state) == 1 and int(start) == case['start'] and int(end) == case['end'], case['id']
                 if case['mode'] == 'epub_chapter': assert int(part) == case['part'], case['id']
+                if case['mode'] == 'fixed_page':
+                    assert int(page) == json.loads(exact[rid])['payload']['location']['page'], case['id']
             else:
                 assert case['state'] == 'AMBIGUOUS' and int(status) == 6 and int(state) == 2, case['id']
         assert len(rows) == int(value['reading_rows']) and value['reading_more'] == '0'
@@ -216,6 +236,14 @@ def run_receive_checks(context):
         value = json.loads(inspected.stdout)
         assert value['notes'] == 0 and output.read_bytes() == (fixtures / manifest[role]['file']).read_bytes()
     checked('received_public_sdk_readback_confirms_four_originals_and_zero_copied_product_annotations')
+    output = folder / 'sdk-retained-local-conflict.original'
+    inspected = subprocess.run([str(args.inspect_consumer.resolve()), str(host.folder / 'profile/library.sqlite'), str(conflict_id), str(output)],
+                               capture_output=True, text=True, encoding='utf-8', timeout=60)
+    assert inspected.returncode == 0 and json.loads(inspected.stdout)['book'] == conflict_id
+    assert output.read_bytes() == context['originals'][first.split(':', 1)[1]]
+    assert protocol('heads', 'book', first)['heads'] == head_rows
+    assert sql("SELECT revision_id,body_json FROM reader_revisions WHERE entity_kind='book' AND entity_key=? ORDER BY revision_id", (first,)) == context['conflict_history']
+    checked('received_mapped_conflict_book_stays_offline_readable_with_exact_original_and_unchanged_heads')
     pdf_cache.unlink();context['flags']['http'] = 503
     before_requests = len(requests);host.launch();search(titles['pdf']);host.key('F2', 'Home', 'Return')
     host.wait(lambda state: state['book'] == ids['pdf'] and state['reader_visible'] == 1 and not state['error'], timeout=60)
@@ -223,7 +251,8 @@ def run_receive_checks(context):
     checked('received_downloaded_book_reopens_offline_from_the_sdk_when_cache_and_server_are_unavailable')
     context['flags']['http'] = 0
     open_account()
-    assert names == REQUIRED_CHECKS and len(names) == 22
+    assert names == REQUIRED_CHECKS and len(names) == 23
     return {'checks': names, 'selected_captures': len(expected), 'resolutions': resolutions,
             'found': sum(value['status'] == 0 for value in resolutions.values()), 'mislocated': 0,
+            'mapped_conflict_offline_frame': conflict_frame,
             'originals_read_back': 4, 'public_capture_seed_sha256': hashlib.sha256(seed_report.read_bytes()).hexdigest()}
