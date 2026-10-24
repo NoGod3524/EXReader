@@ -16,6 +16,13 @@ from preferences_fixtures import DEFAULTS, document, render
 
 COMMON_START = "c3511a011eefbf1fba1d20908f000cef22b1ced2"
 MAX_FILE = 65536
+REQUIRED_CASES = (
+    "defaults", "c-consumer", "cpp-consumer", "unicode-roundtrip", "field-boundaries",
+    "refusal-documents", "unknown-version-bytes", "failed-load-preserves", "cancelled-load",
+    "cancelled-save", "atomic-replace-failure", "kill-before-rename", "kill-after-rename",
+    "concurrent-callers", "legacy-import", "installed-header", "json-leading-zero-refusals",
+    "json-significant-fraction-digits", "optional-error-pointer-status-parity", "load-limit-ceiling",
+)
 cases = []
 
 
@@ -221,8 +228,8 @@ def main():
             path.write_text(render(DEFAULTS, {field: value}), encoding="utf-8")
             before = path.read_bytes()
             load_refusal(path, "FORMAT")
-            preserved = kv(run([WORKER, "preserve", "unused", "b", str(path)], 0))
-            if preserved.get("preserved") != "1" or path.read_bytes() != before:
+            preserved = run([WORKER, "preserve", "unused", "b", str(path)], 0)
+            if "preserved=1" not in preserved.stdout or path.read_bytes() != before:
                 raise CheckFailure("invalid number changed caller/file: " + field)
 
     def json_significant_fraction_digits():

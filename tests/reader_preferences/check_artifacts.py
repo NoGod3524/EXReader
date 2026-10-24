@@ -12,6 +12,8 @@ import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
 from check_parallel_integration import download_artifact_zip, fetch, pages, require
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from check_preferences import REQUIRED_CASES
 
 
 def main():
@@ -72,9 +74,10 @@ def main():
             require(report.get("source_sha") == source and int(report.get("run_id", 0)) == run_id and
                     int(report.get("attempt", 0)) == attempt, "report identity differs")
             require(report.get("granted_platform") == platform.lower(), "platform grant differs")
-            require(report.get("checks", 0) > 0 and len(report.get("cases", [])) > 0, "report is empty")
+            require(report.get("checks") == len(REQUIRED_CASES) and len(report.get("cases", [])) == len(REQUIRED_CASES), "required case count differs")
             require(bool(report.get("macos_accepted")) == (platform == "macOS"), "macOS grant differs")
             cases = sorted((case["name"], bool(case["ok"])) for case in report["cases"])
+            require({name for name, _ in cases} == set(REQUIRED_CASES), "required case identity differs")
             require(all(ok for _, ok in cases), "a named case failed")
             outcomes.append(cases)
             summary["artifacts"].append({key: artifact[key] for key in
