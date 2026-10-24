@@ -71,6 +71,8 @@ jobs:
           python3 tools/build_linux_host.py --sdk build/reading-library/stage --binary build/account-desktop/gtk-host/exreader-linux --output build/account-package
       - name: Preserve fixed bounded backend and 2202-book installed SDK checks
         run: |
+          mkdir -p build/desktop-evidence
+          cp build/account-logs/host-build.log build/desktop-evidence/build.log
           python3 tests/reader_catalog/check_desktop_sdk.py build/account-desktop
           python3 tests/linux_host/generate_fixed.py build/account-fixed-inputs
           build/account-desktop/gtk-host/exreader-linux-fixed-backend build/account-fixed.sqlite build/account-package/EXReader-Linux/Reader.otf build/account-fixed-inputs | tee build/account-logs/fixed-backend.log
