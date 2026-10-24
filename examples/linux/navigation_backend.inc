@@ -74,6 +74,7 @@ static void navigation_readonly(linux_reader *reader,const reader_command *comma
           if(owner->source.fixed_document) code=reader_navigation_open_pages(owner->source.fixed_document,&options,&owner->snapshot,&error);
           else if(owner->source.bounded) code=reader_navigation_open_publication(owner->source.publication,&options,&owner->snapshot,&error);
           else code=reader_navigation_open_document(owner->source.document,&options,&owner->snapshot,&error);
+          if(code==READER_NAVIGATION_OK) { int64_t source_id=owner->source.id;session_free(&owner->source);owner->source.id=source_id; }
         }
       }
     }
@@ -128,14 +129,16 @@ static reader_navigation_status navigation_resolve(gtk_navigation_owner *owner,r
    unchanged normalized range. Collapsed whitespace and half-surrogates refuse. */
 static int navigation_cfi_offset(const exr_document *document,const reader_navigation_target *target,size_t *offset) {
   size_t count,size;const exr_node *nodes=exr_document_nodes(document,&count);const char *text=exr_document_text(document,&size);
-  if(target->cfi_node>=count) return 0;const exr_node *node=&nodes[target->cfi_node];
+  if(target->cfi_node>=count) return 0;
+  const exr_node *node=&nodes[target->cfi_node];
   if(node->start>node->end || node->end>size) return 0;
   if(node->kind!=EXR_NODE_TEXT) {
     if(target->cfi_offset==READER_NAVIGATION_NONE) { *offset=node->start;return 1; }
     size_t child=node->first_child;
     for(uint64_t i=0;i<target->cfi_offset;i++) { if(child==SIZE_MAX || child>=count) return 0;child=nodes[child].next_sibling; }
     if(child==SIZE_MAX) { *offset=node->end;return 1; }
-    if(child>=count) return 0;*offset=nodes[child].start;return *offset<=size;
+    if(child>=count) return 0;
+    *offset=nodes[child].start;return *offset<=size;
   }
   if(!node->text || target->cfi_offset==READER_NAVIGATION_NONE) return 0;
   size_t raw=strlen(node->text),at=0;uint64_t units=0;
@@ -144,7 +147,8 @@ static int navigation_cfi_offset(const exr_document *document,const reader_navig
     unsigned char scalar=(unsigned char)node->text[at];size_t bytes=scalar<128 ? 1:scalar<224 ? 2:scalar<240 ? 3:4;
     unsigned added=bytes==4 ? 2:1;if(at+bytes>raw || units+added>target->cfi_offset) return 0;at+=bytes;units+=added;
   }
-  if(units!=target->cfi_offset) return 0;*offset=node->start+at;return 1;
+  if(units!=target->cfi_offset) return 0;
+  *offset=node->start+at;return 1;
 }
 typedef struct { const char *text;size_t size,at; } navigation_projection;
 static exr_status navigation_projection_chunk(void *opaque,const char *text,size_t size,exr_error *error) {
