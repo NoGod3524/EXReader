@@ -93,7 +93,7 @@ reading-state：`encode.v1_annotation_valid`、`encode.v2_point_valid`
 跨进程与 C ABI：`cross_process.revisions_reopen`（多个独立进程读写同一产品库）、
 `c_abi.parity`（C 与 C++ 消费者的默认值、状态名、加载/拒绝与 wire SHA 一致）。
 
-模糊与确定性：`fuzz.{preferences,wire_validate,wire_decode,wire_receive,wire_local}.invariants`
+模糊与确定性：`fuzz.{preferences,wire-validate,wire-decode,wire-receive,wire-local}.invariants`
 与 `determinism.<target>`。每个目标的不变式：
 
 - 状态落在文档集合内；错误消息在固定缓冲区内有 NUL 终止。
@@ -176,6 +176,9 @@ reading-state）与建议补丁方向。已经发现并保留的失败不会删�
   拒绝——所有 wire 种子共用同一个 revision id，接收第二个实体时命中同 ID 异字节的 COLLISION。
   这是夹具缺陷，不是产品缺陷：每个种子改为由 `sha256(entity_kind/entity_key/location_kind)`
   派生的独立 32 位十六进制 id，并保留该红轮与原始工件。
+- run `40128307559`（source `bade50ae`）：53 个具名结果全绿，但验收仍为 `false`——驱动按
+  `wire-validate` 这类带连字符的目标名登记 `fuzz.*`/`determinism.*`，而固定清单写成下划线，
+  于是 8 项“缺失 + 多余”同时成立。严格作业正确拒绝；清单与目标名统一为连字符后重跑。
 
 ## 验收状态
 

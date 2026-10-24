@@ -45,15 +45,15 @@ REQUIRED_CASES = [
     "cross_process.revisions_reopen",
     "c_abi.parity",
     "fuzz.preferences.invariants",
-    "fuzz.wire_validate.invariants",
-    "fuzz.wire_decode.invariants",
-    "fuzz.wire_receive.invariants",
-    "fuzz.wire_local.invariants",
+    "fuzz.wire-validate.invariants",
+    "fuzz.wire-decode.invariants",
+    "fuzz.wire-receive.invariants",
+    "fuzz.wire-local.invariants",
     "determinism.preferences",
-    "determinism.wire_validate",
-    "determinism.wire_decode",
-    "determinism.wire_receive",
-    "determinism.wire_local",
+    "determinism.wire-validate",
+    "determinism.wire-decode",
+    "determinism.wire-receive",
+    "determinism.wire-local",
 ]
 
 FUZZ_TARGETS = ["preferences", "wire-validate", "wire-decode", "wire-receive", "wire-local"]

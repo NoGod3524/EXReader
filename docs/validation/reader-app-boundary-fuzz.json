@@ -59,6 +59,14 @@
       "cause": "all wire seeds shared one revision id, so storing a second entity collided by ID",
       "owned_by": "this package",
       "action": "derive a distinct revision id per seed from its entity and location"
+    },
+    {
+      "run_id": 40128307559,
+      "attempt": 1,
+      "source_sha": "bade50ae59b88512fb2e89d8b2e5a658a247fa7c",
+      "cause": "the fixed case list used underscores while the driver names fuzz/determinism cases after the hyphenated target",
+      "owned_by": "this package",
+      "action": "align the fixed case list with the target names; all 53 named results were already green"
     }
   ],
   "problems": [
