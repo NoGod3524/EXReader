@@ -328,8 +328,12 @@ static void acct_job_accept(host_job *job) {
     } else if (ok) {
       wchar_t text[256];
       acct.recv_done = 1;
-      swprintf(text, 256, L"同步完成：已应用 %llu 项，导入 %llu 本；并发 %llu、墓碑 %llu 保持显式状态。",
-        (unsigned long long)o->projected, (unsigned long long)o->imported, (unsigned long long)o->concurrent, (unsigned long long)o->tombstones);
+      if (o->import_failed)
+        swprintf(text, 256, L"同步已完成，但 %llu 本原书的书目映射待恢复；正在自动修复，也可点击“刷新”。",
+          (unsigned long long)o->import_failed);
+      else
+        swprintf(text, 256, L"同步完成：已应用 %llu 项，导入 %llu 本；并发 %llu、墓碑 %llu 保持显式状态。",
+          (unsigned long long)o->projected, (unsigned long long)o->imported, (unsigned long long)o->concurrent, (unsigned long long)o->tombstones);
       acct_notice(text);
       if (o->import_failed) { /* repair mappings from the committed SDK imports */
         host_job *repair = job_new(JOB_PRODUCT_REPAIR);
@@ -351,7 +355,7 @@ static void acct_tick(void) {
     }
     if (acct.view.state == READER_SESSION_CLOSED) {
       if (reader_session_destroy(&acct.session) == READER_SESSION_OK) {
-        memset(&acct.view, 0, sizeof(acct.view)); acct.closing_session = 0;
+        memset(&acct.view, 0, sizeof(acct.view)); acct.closing_session = 0; acct.received_attempt = 0;
         if (g.closing) { finish_close(g.window); return; }
         if (acct.want_stage && !g.job && !g.pending) acct_begin_stage();
       }

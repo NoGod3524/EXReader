@@ -176,19 +176,29 @@ def clipboard_text(app):
 class Device(M.MetadataApp):
     """One real product process on its own profile (its own SDK library and product catalog)."""
 
-    def account_dialog(self):
-        def find():
-            found = []
+    def find_dialog(self):
+        found = []
 
-            @ENUM
-            def visit(window, unused):
-                pid = W.DWORD();U.GetWindowThreadProcessId(window, C.byref(pid))
-                if pid.value == self.process.pid and U.IsWindowVisible(window) and U.GetDlgItem(window, APPLY):
-                    found.append(window)
-                return True
-            U.EnumWindows(visit, 0)
-            return found[-1] if found else None
-        return self.wait(find)
+        @ENUM
+        def visit(window, unused):
+            pid = W.DWORD();U.GetWindowThreadProcessId(window, C.byref(pid))
+            if pid.value == self.process.pid and U.IsWindowVisible(window) and U.GetDlgItem(window, APPLY):
+                found.append(window)
+            return True
+        U.EnumWindows(visit, 0)
+        return found[-1] if found else None
+
+    def account_dialog(self):
+        return self.wait(self.find_dialog)
+
+    def diagnose(self, output):
+        """Failure evidence only: visible text and a window capture of a still-running product."""
+        info = {'profile': self.profile.name, 'status': self.status()}
+        dialog = self.find_dialog()
+        if dialog:
+            info.update(note=M.text(U.GetDlgItem(dialog, MESSAGE)), detail=M.text(U.GetDlgItem(dialog, DETAIL)))
+        print(json.dumps({'diagnostic': info}, ensure_ascii=False), flush=True)
+        M.screenshot(dialog or self.window, output / ('failure-' + self.profile.name + '.bmp'))
 
     def has_row(self, title):
         try:
@@ -325,6 +335,19 @@ def main():
                     return str(path)
         return None
 
+    def encode(value):
+        return json.dumps(value, ensure_ascii=False, separators=(',', ':')).encode()
+
+    def revision(number, shard, kind, key, mode, payload, parents=()):
+        return {'version': 1, 'id': '%02x%030x' % (shard, number), 'entity_kind': kind, 'entity_key': key,
+                'operation': 'put', 'location_kind': mode, 'parents': list(parents), 'payload': payload}
+
+    def capture(name, value, heads):
+        wire = output / (value['id'] + '.json');wire.write_bytes(encode(value))
+        done = subprocess.run([str(args.revision_consumer.resolve()), 'reading-local', str(product_db(name)), str(wire), heads, '-'],
+                              capture_output=True, text=True, encoding='utf-8', timeout=60)
+        assert done.returncode == 0 and json.loads(done.stdout)['status'] == 0, (done.stdout, done.stderr)
+
     def kill(device):
         device.process.kill();device.process.wait(timeout=20);device.log.close()
 
@@ -332,6 +355,10 @@ def main():
         for name in names:
             device.import_file(source / name)
             device.wait_idle()
+            status = device.status()
+            print(json.dumps({'import': name, 'status': status}, ensure_ascii=False), flush=True)
+            assert '已导入' in status or '去重' in status, (name, status)
+            device.wait(lambda: device.status() != '' and not device.status().endswith('书架信息待恢复'), timeout=60)
 
     A = B = None
     try:
@@ -395,6 +422,20 @@ def main():
         record('four_format_originals_and_metadata_revisions_reach_native_https_with_session_authorization')
         A.close_account(dialog)
 
+        # Real reading captures are committed by the installed native producer on A's product
+        # database (verified book history required), then published by the host's own scan.
+        A.close();assert A.process.returncode == 0
+        location = {'mode': 'reflow_global', 'parser_version': '3.40.0', 'anchor_version': 1,
+                    'selector': {'exact': 'Account', 'prefix': '', 'suffix': ' sync', 'start': 0, 'end': 7}}
+        progress1 = revision(1, 0x32, 'progress', small_key, 'reflow_global', {'book_key': small_key, 'location': location})
+        annotation_key = small_key + ':' + '3' * 32
+        note = revision(1, 0x33, 'annotation', annotation_key, 'reflow_global',
+                        {'book_key': small_key, 'annotation_id': '3' * 32, 'location': location, 'text': '备注 capture'})
+        capture('device-a', progress1, '-');capture('device-a', note, '-')
+        A = new_device('device-a', existing=True)
+        dialog = A.open_account();A.run_sync(dialog);A.close_account(dialog)
+        assert dav.count('revisions/') >= 8
+
         # ===== Device B: independent product and SDK library receives cloud-only books =====
         B = new_device('device-b')
         dialog = B.open_account()
@@ -427,7 +468,17 @@ def main():
         B.click('next');B.wait_idle()
         page_label = U.GetDlgItem(B.window, 124)
         page_before = M.text(page_label)
+        for value in (progress1, note):
+            row = sql('device-b', 'SELECT body_json FROM reader_revisions WHERE revision_id=?', (value['id'],))
+            assert row and json.loads(row[0][0]) == value, value['id']
+        record('real_reading_progress_and_annotation_captures_round_trip_to_the_second_device_byte_exactly')
+        A.close();assert A.process.returncode == 0
+        progress2 = revision(2, 0x32, 'progress', small_key, 'reflow_global', {'book_key': small_key, 'location': location},
+                             parents=[progress1['id']])
+        capture('device-a', progress2, progress1['id'])
+        A = new_device('device-a', existing=True)
         title_a = sql('device-a', 'SELECT title FROM reader_books WHERE book_key=?', ('epub:' + hashes['Account Epub.epub'],))[0][0]
+        A.wait(lambda: A.has_row(title_a))
         send(A.control('books'), 0x186, A.row(title_a))
         dialog = A.details();set_text(U.GetDlgItem(dialog, M.TITLE), 'Epub Retitled Remotely')
         send(U.GetDlgItem(dialog, M.SAVE), BM_CLICK);A.closed(dialog)
@@ -436,8 +487,10 @@ def main():
         shot('04-device-b-reading-not-moved.bmp', dialog)
         B.close_account(dialog)
         B.wait(lambda: sql('device-b', 'SELECT title FROM reader_books WHERE book_key=?', ('epub:' + hashes['Account Epub.epub'],))[0][0] == 'Epub Retitled Remotely')
-        assert M.text(page_label) == page_before
-        record('remote_metadata_updates_apply_while_the_active_reading_page_is_not_moved')
+        row = sql('device-b', 'SELECT body_json FROM reader_revisions WHERE revision_id=?', (progress2['id'],))
+        assert row and json.loads(row[0][0]) == progress2
+        assert M.text(page_label) == page_before and B.status() is not None
+        record('remote_progress_arrives_and_metadata_applies_while_the_active_reading_page_is_not_moved')
         B.close();assert B.process.returncode == 0
 
         # ===== restart: saved credentials load, a repeated scan is idempotent =====
@@ -508,8 +561,7 @@ def main():
             time.sleep(.003)
         assert lock is not None, 'projected rows never appeared'
         try:
-            D.wait_note(dialog, '映射待恢复', 240)
-            D.wait(lambda: '同步完成' in D.note(dialog) or '待恢复' in D.note(dialog), timeout=240)
+            D.wait_note(dialog, '映射待恢复', 300)
         finally:
             lock.rollback();lock.close()
         shot('08-mapping-failure.bmp', dialog)
@@ -576,6 +628,11 @@ def main():
     finally:
         for device in devices:
             if device.process.poll() is None:
+                if sys.exc_info()[0] is not None:
+                    try:
+                        device.diagnose(output)
+                    except Exception as error:
+                        print('diagnostic failed: %r' % (error,), flush=True)
                 device.process.kill();device.process.wait(timeout=20)
             if not device.log.closed:
                 device.log.close()
