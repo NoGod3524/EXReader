@@ -154,7 +154,9 @@ extern "C" exr_webdav_status exr_apple_http(const exr_apple_request *input,exr_w
         CFStreamCreateBoundPair(kCFAllocatorDefault,&stream,&output.value,(CFIndex)chunk_size);
         if(!stream||!output.value){if(stream)CFRelease(stream);return fail(error,EXR_DAV_MEMORY);}
         delegate->body=CFBridgingRelease(stream);
-        CFStreamClientContext signal{0,(__bridge void *)delegate,CFRetain,CFRelease,nullptr};
+        CFStreamClientContext signal{0,(__bridge void *)delegate,
+          [](void *value)->void *{return const_cast<void *>(CFRetain(value));},
+          [](void *value){CFRelease(value);},nullptr};
         if(!CFWriteStreamSetClient(output.value,kCFStreamEventCanAcceptBytes|kCFStreamEventErrorOccurred|kCFStreamEventEndEncountered,output_ready,&signal))
           return fail(error,EXR_DAV_IO);
         CFWriteStreamSetDispatchQueue(output.value,dispatch_get_global_queue(QOS_CLASS_UTILITY,0));
