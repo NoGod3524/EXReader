@@ -1,0 +1,16 @@
+{
+  "accepted": false,
+  "source_sha": null,
+  "fixed_base": "5d7da81495e545901f7fc802af00e0b779d1d8c4",
+  "original_f3_head": "f453af14852ad3d8833d27c0eb6888f804c12050",
+  "original_f3_tested_source": "6f33caf83bfb845e27db6382edc5ee100d8db954",
+  "fixed_hardened_f3_source": "ba25961961ae69222bfed4f7a98cb02bb1dc6847",
+  "fixed_preferences_tree": "a3e53123e861ac7ceb2c5fee4829288822229211",
+  "runs": [],
+  "pending": "first same-source Actions build and actual emulator execution",
+  "page_colors_accepted": false,
+  "complete_product": false,
+  "physical_device_execution": false,
+  "talkback_speech_accepted": false,
+  "performance_accepted": false
+}
