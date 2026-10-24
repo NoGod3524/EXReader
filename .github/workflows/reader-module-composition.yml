@@ -198,6 +198,7 @@ jobs:
             --consumer-source build/fresh/consumer \
             --source-root "$COMP_WS" \
             --scratch build/composition/scratch \
+            --generator Ninja \
             --output build/composition/gates
       - name: Preserve this attempt's evidence, logs and installed packages
         if: always()

@@ -84,6 +84,7 @@ static char *slurp(const char *path, size_t *size) {
 int main(int argc, char **argv) {
   const char *fixtures = NULL, *work = NULL, *report_path = NULL, *digest = NULL;
   char book_key[96];
+  char parser_version[160];
   char path[4096];
   char source[4096];
   char *data = NULL;
@@ -117,6 +118,7 @@ int main(int argc, char **argv) {
     return 2;
   }
   snprintf(book_key, sizeof book_key, "txt:%s", digest);
+  snprintf(parser_version, sizeof parser_version, "exreader-sdk-%s", exr_version());
   report = fopen(report_path, "wb");
   if (!report) return 2;
   fprintf(report, "{\"probe\":\"composition-c\",\"checks\":[");
@@ -267,6 +269,7 @@ int main(int argc, char **argv) {
         envelope.book_key = book_key;
         envelope.annotation_id = annotation_id;
         envelope.note_text = "c-composition";
+        envelope.parser_version = parser_version;
         memset(&reading_error, 0, sizeof reading_error);
         check(reader_rs_encode_v2(store, &envelope, &capture, 0, &wire, &bytes, &reading_error) == READER_RS_OK,
               "C reading v2 encodes the capture", reading_error.message);
