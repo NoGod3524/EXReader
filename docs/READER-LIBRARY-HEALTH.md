@@ -158,6 +158,48 @@ recomputes each ZIP digest, requires the same `head_sha`/`run_attempt`, checks
 the named jobs and the artifact validity window, and requires the three row
 digests and verdict counts to agree.
 
+## Acceptance record
+
+Tested source `a600cf3df53fdc8b97e47872e44f9b5c5ff6becb` (branch
+`codex/reader-library-health`), run
+[40125980818](https://github.com/NoGod3524/EXReader/actions/runs/40125980818)
+attempt 1, workflow `.github/workflows/reader-library-health.yml`. All four
+jobs succeeded. The evidence commit on top of that source changes this page and
+`docs/validation/reader-library-health.json` only.
+
+| Platform | Job | Artifact | Bytes | SHA-256 | Valid until |
+| --- | --- | --- | --- | --- | --- |
+| Linux | `120967348438` | `reader-library-health-Linux-40125980818-1` (`12573166855`) | 8554923 | `f39a75fed7f18e106428ed77841c04717b7e6ad189ba1227c43e79e6e36689f4` | 2027-01-22 |
+| Windows | `120967348623` | `reader-library-health-Windows-40125980818-1` (`12573401731`) | 5812423 | `549b2dab9fd17ff11758fde6c89b7d6c8cfb4cc97bb4686a641e2e7793706179` | 2027-01-22 |
+| macOS | `120967348588` | `reader-library-health-macOS-40125980818-1` (`12573501492`) | 7369301 | `68c71a9acd95db7c8df73d61a9c48b477d44b36edc56b5e36688c2be02707002` | 2027-01-22 |
+| Evidence | `120968255753` | `reader-library-health-evidence-40125980818-1` (`12573791344`) | 888 | `1b2b9a167464a4465449ad5070d09749348e41ea24f41c8209b6ba9b9e1a77bf` | 2027-01-22 |
+
+The strict evidence job authenticated all three ZIPs through the GitHub API,
+recomputed each digest, required the same `head_sha` and attempt, checked the
+named jobs and the artifact validity window, and compared the platform reports:
+
+- 2202 rows on every platform, one shared row digest
+  `88c481146e90464229df4963b9d338a5d46e58d5a59ceaa83ddf4a2674035fce`;
+- verdicts exactly `verified 2185, cloud_only 4, mapping_missing 4,
+  size_mismatch 4, hash_mismatch 4, limit_skipped 1`;
+- 37 aggregate checks per platform, zero failures;
+- the SQLite catalog and library files are byte-identical across platforms
+  (catalog `b6cc837a9ef11a9c…`, library `106d3de4c69842ef…`), and both are
+  unchanged before and after every consumer;
+- the installed C++ consumer reproduced the C rows and the reentry and
+  wrong-thread refusals.
+
+Measured bounds: 69 steps for 32 rows each, 315 steps for the 7-row replay,
+1614527 original bytes hashed per platform, and a 16,778,436-byte EPUB read with
+a 4096-byte buffer and peak growth 0 (Linux), 0 (Windows) and 1,490,944 bytes
+(macOS) against the 8 MiB budget.
+
+Original failures are retained as failed runs, not rewritten: the bounded-copy
+`-Werror` build (40123501809), the duplicated CBZ originals and missing scenario
+directories (40123963341), and two rounds of over-strict cancellation, row-limit
+and cursor-catalog expectations (40125446068, 40125579495). Each fix is a source
+or test change in the tested history above.
+
 ## Limits and non-goals
 
 - Not a host feature: no UI, action, navigation or scheduler integration.

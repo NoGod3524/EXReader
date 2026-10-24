@@ -5,20 +5,209 @@
   "branch": "codex/reader-library-health",
   "fixed_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "workflow": ".github/workflows/reader-library-health.yml",
-  "accepted": false,
-  "status": "awaiting the first same-source cloud run; every claim below is filled only from Actions evidence",
-  "tested_source_sha": null,
-  "run_id": null,
-  "attempt": null,
-  "jobs": [],
-  "artifacts": [],
-  "named_results": [],
-  "failed_attempts": [],
+  "accepted": true,
+  "tested_source_sha": "a600cf3df53fdc8b97e47872e44f9b5c5ff6becb",
+  "evidence_commit": "docs-only commit on top of the tested source; the tested source contains the complete package",
+  "run": {
+    "id": 40125980818,
+    "attempt": 1,
+    "conclusion": "success",
+    "jobs": [
+      {"id": 120967348438, "name": "library health consumers (ubuntu-22.04)", "conclusion": "success"},
+      {"id": 120967348623, "name": "library health consumers (windows-2022)", "conclusion": "success"},
+      {"id": 120967348588, "name": "library health consumers (macos-15)", "conclusion": "success"},
+      {"id": 120968255753, "name": "strict library health evidence", "conclusion": "success"}
+    ]
+  },
+  "artifacts": [
+    {
+      "id": 12573166855,
+      "name": "reader-library-health-Linux-40125980818-1",
+      "bytes": 8554923,
+      "digest": "sha256:f39a75fed7f18e106428ed77841c04717b7e6ad189ba1227c43e79e6e36689f4",
+      "expires_at": "2027-01-22T19:35:20Z"
+    },
+    {
+      "id": 12573401731,
+      "name": "reader-library-health-Windows-40125980818-1",
+      "bytes": 5812423,
+      "digest": "sha256:549b2dab9fd17ff11758fde6c89b7d6c8cfb4cc97bb4686a641e2e7793706179",
+      "expires_at": "2027-01-22T19:35:20Z"
+    },
+    {
+      "id": 12573501492,
+      "name": "reader-library-health-macOS-40125980818-1",
+      "bytes": 7369301,
+      "digest": "sha256:68c71a9acd95db7c8df73d61a9c48b477d44b36edc56b5e36688c2be02707002",
+      "expires_at": "2027-01-22T19:35:20Z"
+    },
+    {
+      "id": 12573791344,
+      "name": "reader-library-health-evidence-40125980818-1",
+      "bytes": 888,
+      "digest": "sha256:1b2b9a167464a4465449ad5070d09749348e41ea24f41c8209b6ba9b9e1a77bf",
+      "expires_at": "2027-01-22T19:35:20Z"
+    }
+  ],
+  "platforms": {
+    "linux": {
+      "runner": "ubuntu-22.04",
+      "job_id": 120967348438,
+      "artifact_id": 12573166855,
+      "probe_sha256": "9c111049a18b3de41354dc01e50a12c9830f03ea0b394eaf5454522a34de8988",
+      "probe_bytes": 8537152,
+      "cpp_consumer_sha256": "de67e412621a9fe9ee61f158c464ba3a21fea205cd7e75808d31da1837286b92",
+      "installed_files": 6,
+      "main": {"steps": 69, "repeat_steps": 315, "bytes_hashed": 1614527, "cpu_ms": 311.165},
+      "memory": {"original_bytes": 16778436, "peak_before": 22437888, "peak_after": 22437888, "growth": 0},
+      "aggregate_checks": 37,
+      "aggregate_failures": 0
+    },
+    "windows": {
+      "runner": "windows-2022",
+      "job_id": 120967348623,
+      "artifact_id": 12573401731,
+      "probe_sha256": "bdd2bfd8ad12f4c9e41c201e7e5aeb0f75c3c8605476505112af22b9ef20c35f",
+      "probe_bytes": 6094336,
+      "cpp_consumer_sha256": "b92d06904c7c200a62257b87c2e6ec1488e662bb9628371a76bb378761eefd0d",
+      "installed_files": 6,
+      "main": {"steps": 69, "repeat_steps": 315, "bytes_hashed": 1614527, "cpu_ms": 460.0},
+      "memory": {"original_bytes": 16778436, "peak_before": 7958528, "peak_after": 7958528, "growth": 0},
+      "aggregate_checks": 37,
+      "aggregate_failures": 0
+    },
+    "macos": {
+      "runner": "macos-15",
+      "job_id": 120967348588,
+      "artifact_id": 12573501492,
+      "probe_sha256": "e93cd5728bb24847e80ed0be5894ecb93a93cf0ab27bc08990407a279ee70ad9",
+      "probe_bytes": 6961272,
+      "cpp_consumer_sha256": "8ddd183c6a3e69b02afc5b18cd711ac179e4779a942e34c4436aa77e402c3815",
+      "installed_files": 6,
+      "main": {"steps": 69, "repeat_steps": 315, "bytes_hashed": 1614527, "cpu_ms": 151.556},
+      "memory": {"original_bytes": 16778436, "peak_before": 6733824, "peak_after": 8224768, "growth": 1490944},
+      "aggregate_checks": 37,
+      "aggregate_failures": 0
+    }
+  },
+  "rows": {
+    "count": 2202,
+    "digest": "88c481146e90464229df4963b9d338a5d46e58d5a59ceaa83ddf4a2674035fce",
+    "bytes_hashed": 1614527,
+    "verdicts": {
+      "verified": 2185,
+      "cloud_only": 4,
+      "mapping_missing": 4,
+      "source_unavailable": 0,
+      "size_mismatch": 4,
+      "read_failed": 0,
+      "hash_mismatch": 4,
+      "limit_skipped": 1
+    }
+  },
+  "cross_platform": {
+    "rows_digest_equal": true,
+    "catalog_db_sha256_prefix_equal": "b6cc837a9ef11a9c",
+    "library_db_sha256_prefix_equal": "106d3de4c69842ef",
+    "verified_by": "strict library health evidence job: API metadata, ZIP bytes and digest recomputation, named jobs, report identity and three-way row comparison"
+  },
+  "named_results": [
+    {"id": "main_open_pair", "passed": true, "detail": "opened the built product catalog and SDK library"},
+    {"id": "main_rows_delivered", "passed": true, "detail": "delivered 2202 of 2202 rows"},
+    {"id": "main_status_ok", "passed": true, "detail": "status=ok"},
+    {"id": "main_done_flag", "passed": true, "detail": "done=1 limit=0 stopped=0"},
+    {"id": "main_keyset_order", "passed": true, "detail": "delivered order strictly ascending"},
+    {"id": "main_identity_and_verdicts", "passed": true, "detail": "catalog identity per delivered row"},
+    {"id": "main_step_count", "passed": true, "detail": "steps=69 expected=69"},
+    {"id": "main_hashed_bytes_match_rows", "passed": true, "detail": "rows=1614527 steps=1614527"},
+    {"id": "main_verdict_distribution", "passed": true, "detail": "all verdict counts match"},
+    {"id": "main_repeat_step7", "passed": true, "detail": "rows=2202/2202 steps=315"},
+    {"id": "adversarial_plan", "passed": true, "detail": "44 prepared rows"},
+    {"id": "verdict_names_defined", "passed": true, "detail": "eight distinct verdict names"},
+    {"id": "status_names_defined", "passed": true, "detail": "eight distinct status names"},
+    {"id": "cancel_build", "passed": true, "detail": "40 mapped rows"},
+    {"id": "cancel_open", "passed": true, "detail": "opened pair"},
+    {"id": "cancel_reports_cancelled", "passed": true, "detail": "status=cancelled step_delivered=2 cursor=10 rows=10"},
+    {"id": "cancel_keeps_delivered_rows_only", "passed": true, "detail": "delivered rows match the first ten catalog rows"},
+    {"id": "cancel_resume_completes", "passed": true, "detail": "rows=40 cursor=40 status=ok"},
+    {"id": "cancel_mid_read_build", "passed": true, "detail": "one 300 KiB row"},
+    {"id": "cancel_mid_read_not_delivered", "passed": true, "detail": "status=cancelled delivered=0 rows=0 chunks=2"},
+    {"id": "cancel_mid_read_resume_verified", "passed": true, "detail": "status=ok rows=1 bytes=307200"},
+    {"id": "budget_build", "passed": true, "detail": "40 mapped rows"},
+    {"id": "budget_splits_steps_without_loss", "passed": true, "detail": "status=ok rows=40 steps=7 budget=6"},
+    {"id": "limit_build", "passed": true, "detail": "40 mapped rows"},
+    {"id": "limit_stops_at_max", "passed": true, "detail": "status=ok rows=12 cursor=12 hit=1"},
+    {"id": "limit_continues_to_done", "passed": true, "detail": "status=ok rows=40 cursor=40"},
+    {"id": "reentry_build", "passed": true, "detail": "11 mapped rows"},
+    {"id": "reentry_is_rejected", "passed": true, "detail": "status=ok rows=11 step=1 destroy=1 progress=11"},
+    {"id": "thread_build", "passed": true, "detail": "40 mapped rows"},
+    {"id": "wrong_thread_rejected", "passed": true, "detail": "spawned=1 step=thread destroy=thread delivered=0"},
+    {"id": "wrong_thread_owner_still_scans", "passed": true, "detail": "status=ok rows=40"},
+    {"id": "wrong_catalog_build", "passed": true, "detail": "two catalogs"},
+    {"id": "wrong_catalog_cursor_rejected", "passed": true, "detail": "status=argument delivered=0"},
+    {"id": "wrong_catalog_fresh_cursor_works", "passed": true, "detail": "status=ok rows=3"},
+    {"id": "change_build", "passed": true, "detail": "two mapped rows"},
+    {"id": "change_during_scan_reports_missing_source", "passed": true, "detail": "status=ok rows=2 delete=1 verdicts=1/3"},
+    {"id": "invalidate_build", "passed": true, "detail": "two rows plus one hidden original"},
+    {"id": "invalidate_mid_read_reports_failure", "passed": true, "detail": "status=ok rows=2 fired=1 delete=1 read=4096/307200 verdicts=6/1"},
+    {"id": "rescan_after_change_verified", "passed": true, "detail": "status=ok rows=2"},
+    {"id": "arguments_build", "passed": true, "detail": "two mapped rows"},
+    {"id": "argument_bounds_enforced", "passed": true, "detail": "all refusals hold"},
+    {"id": "memory_import", "passed": true, "detail": "streaming import of a 16778436-byte original"},
+    {"id": "memory_attach", "passed": true, "detail": "catalog identity recorded"},
+    {"id": "memory_bounded_read", "passed": true, "detail": "status=ok rows=1 read=16778436/16778436"},
+    {"id": "memory_peak_growth_bounded", "passed": true, "detail": "growth=0 budget=8388608 (Linux); 0 (Windows); 1490944 (macOS)"},
+    {"id": "cpp_create", "passed": true, "detail": "ok"},
+    {"id": "cpp_rows_delivered", "passed": true, "detail": "2202 of 2202"},
+    {"id": "cpp_identity_and_order", "passed": true, "detail": "identity=true order=true"},
+    {"id": "cpp_verdicts", "passed": true, "detail": "true"},
+    {"id": "cpp_done", "passed": true, "detail": "true"},
+    {"id": "cpp_repeat_identical", "passed": true, "detail": "2202 rows, steps 735"},
+    {"id": "cpp_reentry_refused", "passed": true, "detail": "reentry=true unexpected=false"},
+    {"id": "cpp_wrong_thread_refused", "passed": true, "detail": "thread"},
+    {"id": "cpp_destroy", "passed": true, "detail": "owner thread destroy"},
+    {"id": "library_and_catalog_unchanged", "passed": true, "detail": "catalog and library database bytes equal before and after the scan"},
+    {"id": "library_and_catalog_unchanged_after_consumers", "passed": true, "detail": "equal after the C++ consumer and every scenario"},
+    {"id": "originals_unchanged_after_run", "passed": true, "detail": "every fixture original keeps its manifest SHA-256"},
+    {"id": "fixture_manifest", "passed": true, "detail": "2206 generated files re-hashed with hashlib before the consumers ran"},
+    {"id": "cpp_rows_match_c", "passed": true, "detail": "C++ and C delivered rows are identical"}
+  ],
+  "failed_attempts": [
+    {
+      "run_id": 40123501809,
+      "source_sha": "816f2582a46aa051c5ebb1adf07cb9f185a87121",
+      "attempt": 1,
+      "stage": "library compile",
+      "reason": "-Werror=format-truncation rejected the bounded error copy (catalog_error.message is 256 bytes, the public message is 192)"
+    },
+    {
+      "run_id": 40123963341,
+      "source_sha": "e01469b3",
+      "attempt": 1,
+      "stage": "fixture build",
+      "reason": "546 generated CBZ files collapsed into 256 byte-identical archives, so reader_catalog_attach refused the duplicate identity at LH-2198; scenario work directories were also missing"
+    },
+    {
+      "run_id": 40125446068,
+      "source_sha": "2780a82e",
+      "attempt": 1,
+      "stage": "adversarial expectations",
+      "reason": "cancellation was expected after one page instead of after the bounded pages; the row limit reported limit_reached together with exhaustion; a released catalog address was reused by the next open"
+    },
+    {
+      "run_id": 40125579495,
+      "source_sha": "b487cace",
+      "attempt": 1,
+      "stage": "adversarial expectations",
+      "reason": "retained the row-limit and cursor-catalog expectations fixed in the tested source"
+    }
+  ],
   "not_covered": [
     "host UI, product actions and user-visible repair flows",
-    "catalog rows inserted or deleted while a step is running",
+    "catalog rows inserted or deleted while a step is running (keyset snapshot only)",
     "SDK private tables, schema migration and sync transport",
-    "performance or accessibility budgets for any host surface"
+    "performance or accessibility budgets for any host surface",
+    "any repair, download or re-import action: the package reports only"
   ],
   "complete_product": false,
   "host_wired": false,
