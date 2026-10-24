@@ -19,6 +19,14 @@
 #include <thread>
 #include <vector>
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+#else
+#include <sys/stat.h>
+#endif
+
 extern "C" {
 unsigned long long thumb_peak_rss(void);
 unsigned long long thumb_current_rss(void);
@@ -928,6 +936,180 @@ void test_owner() {
   rth_cache_close(c);
 }
 
+// Blocks deletion of a cache entry the way another program on this platform can:
+// on Windows by holding the file open without delete sharing, elsewhere by removing
+// write permission from the directory that contains it.
+struct Blocker {
+  fs::path dir;
+#ifdef _WIN32
+  HANDLE handle = INVALID_HANDLE_VALUE;
+#else
+  bool changed = false;
+#endif
+  explicit Blocker(const fs::path& d) : dir(d) {
+#ifdef _WIN32
+    for (const auto& it : fs::directory_iterator(d)) {
+      const std::string name = it.path().filename().string();
+      if (name.size() == 40 && name.compare(0, 4, "rth-") == 0 && name.compare(36, 4, ".rth") == 0) {
+        HANDLE h = ::CreateFileW(it.path().c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+                                 OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+        if (h != INVALID_HANDLE_VALUE) handle = h;
+        break;
+      }
+    }
+#else
+    changed = ::chmod(d.c_str(), 0500) == 0;
+#endif
+  }
+  bool active() const {
+#ifdef _WIN32
+    return handle != INVALID_HANDLE_VALUE;
+#else
+    return changed;
+#endif
+  }
+  void release() {
+#ifdef _WIN32
+    if (handle != INVALID_HANDLE_VALUE) {
+      ::CloseHandle(handle);
+      handle = INVALID_HANDLE_VALUE;
+    }
+#else
+    if (changed) {
+      ::chmod(dir.c_str(), 0700);
+      changed = false;
+    }
+#endif
+  }
+  ~Blocker() { release(); }
+  Blocker(const Blocker&) = delete;
+  Blocker& operator=(const Blocker&) = delete;
+};
+
+// Pixel-level regression on a genuinely non-uniform source. The expected bytes come
+// from make_fixtures.py, so a comparison here is a content comparison: sizes, a
+// non-null pointer or a uniform fill cannot satisfy it.
+void test_pixels() {
+  fs::path dir = fresh("pixels");
+  rth_cache* c = open_cache(dir);
+  const Bytes& src = fx["noise64x48.png"];
+  rth_book b = mk_book((int)EXR_EPUB, sha(src));
+  const uint32_t boxes[4][2] = {{64, 48}, {16, 12}, {31, 9}, {7, 5}};
+  bool all = true;
+  size_t distinct = 0;
+  std::string detail;
+  for (const auto& box : boxes) {
+    const Expect& e = expect_of("noise64x48", box[0], box[1]);
+    Thumb t;
+    const rth_status st = cover(c, b, src, box[0], box[1], t);
+    const bool equal = st == RTH_OK && t.t.width == e.ow && t.t.height == e.oh && t.px() == e.px;
+    for (size_t i = 0; i < e.px.size(); i += 4) {
+      bool seen = false;
+      for (size_t j = 0; j < i && !seen; j += 4) seen = std::memcmp(e.px.data() + j, e.px.data() + i, 4) == 0;
+      if (!seen) ++distinct;
+    }
+    if (!equal) { all = false; detail = num(box[0]) + "x" + num(box[1]) + " differs"; }
+  }
+  check("pixels: a non-uniform 64x48 source matches its independent reference at 64x48, 16x12, 31x9 and 7x5",
+        all && distinct >= 8, all ? "distinct reference texels " + num(distinct) : detail);
+  {
+    const Expect& e = expect_of("noise64x48", 7, 5);
+    Thumb t;
+    const rth_status st = cover(c, b, src, 7, 5, t);
+    bool alpha_varied = false;
+    for (size_t i = 4; i + 4 <= e.px.size() && !alpha_varied; i += 4) alpha_varied = e.px[i + 3] != e.px[3];
+    check("pixels: the 7x5 downscale is compared byte for byte and its reference carries more than one alpha level",
+          st == RTH_OK && t.px() == e.px && alpha_varied, "bytes " + num((uint64_t)e.px.size()));
+  }
+  rth_cache_close(c);
+}
+
+// An entry file that cannot be deleted is not free space: the store that needs its room
+// is refused, the accounting keeps the old bytes, and an independent walk of the
+// directory shows the hard caps still hold.
+void test_delete_failure() {
+  const Bytes& png = fx["grad16x8.png"];
+  const Bytes& alt = fx["swap16x8.png"];
+  rth_book b = mk_book((int)EXR_EPUB, sha(png));
+  rth_book b2 = mk_book((int)EXR_EPUB, sha(alt));
+  fs::path dir = fresh("delete-store");
+  rth_limits lim = rth_limits_defaults();
+  lim.max_entries = 1;
+  rth_cache* c = open_cache(dir, &lim);
+  { Thumb t; cover(c, b, png, 8, 8, t); }
+  const rth_stats before = stats_of(c);
+  uint64_t bytes_before = dir_bytes(dir);
+  {
+    Blocker blocker(dir);
+    Thumb t;
+    const rth_status st = cover(c, b2, alt, 8, 8, t);
+    const rth_stats after = stats_of(c);
+    size_t files = 0;
+    uint64_t bytes = 0;
+    for (const auto& it : fs::directory_iterator(dir)) {
+      const std::string n = it.path().filename().string();
+      if (n.size() == 40 && n.compare(0, 4, "rth-") == 0 && n.compare(36, 4, ".rth") == 0) {
+        ++files;
+        bytes += fs::file_size(it.path());
+      }
+    }
+    check("disk budget: an entry that cannot be deleted is not counted as freed; the store is refused and the caps hold",
+          blocker.active() && st == RTH_OK && t.t.pixels != nullptr && t.t.stored == 0 && after.delete_failures >= 1 &&
+              after.entries == before.entries && after.bytes == before.bytes && files == before.entries && bytes == bytes_before &&
+              files <= lim.max_entries && bytes <= lim.max_total_bytes,
+          "stored " + num((uint64_t)t.t.stored) + " delete_failures " + num(after.delete_failures) + " entries " + num(after.entries) +
+              " files " + num((uint64_t)files));
+  }
+  Thumb t2;
+  const rth_status st2 = cover(c, b2, alt, 8, 8, t2);
+  size_t files2 = 0;
+  uint64_t bytes2 = 0;
+  for (const auto& it : fs::directory_iterator(dir)) {
+    const std::string n = it.path().filename().string();
+    if (n.size() == 40 && n.compare(0, 4, "rth-") == 0 && n.compare(36, 4, ".rth") == 0) {
+      ++files2;
+      bytes2 += fs::file_size(it.path());
+    }
+  }
+  check("disk budget: after the block is released the same store succeeds and evicts the old entry",
+        st2 == RTH_OK && t2.t.stored == 1 && files2 == 1 && bytes2 <= lim.max_total_bytes, "files " + num((uint64_t)files2));
+  rth_cache_close(c);
+}
+
+// open must not return a cache while an own file it has to delete is still there.
+void test_open_delete_failure() {
+  fs::path dir = fresh("delete-open");
+  write_file(dir / "rth-owner.lock", Bytes());
+  const std::string bogus = "rth-" + std::string(32, 'c') + ".rth";
+  write_file(dir / bogus, Bytes(200, 0x21));
+  bool blocked = false;
+#ifdef _WIN32
+  HANDLE h = ::CreateFileW((dir / bogus).c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING,
+                           FILE_ATTRIBUTE_NORMAL, nullptr);
+  blocked = h != INVALID_HANDLE_VALUE;
+#else
+  blocked = ::chmod(dir.c_str(), 0500) == 0;
+#endif
+  rth_cache* c = reinterpret_cast<rth_cache*>(static_cast<std::uintptr_t>(1));
+  rth_error e;
+  std::memset(&e, 0, sizeof(e));
+  const rth_status st = rth_cache_open(dir.u8string().c_str(), nullptr, &c, &e);
+  const bool still_there = fs::exists(dir / bogus);
+  check("disk budget: open refuses to return a cache when a damaged entry cannot be deleted",
+        blocked && st == RTH_IO && c == nullptr && still_there, "status " + num((uint64_t)st) + " " + e.message);
+  if (st == RTH_OK && c) rth_cache_close(c);
+#ifdef _WIN32
+  if (blocked) ::CloseHandle(h);
+#else
+  if (blocked) ::chmod(dir.c_str(), 0700);
+#endif
+  c = open_cache(dir);
+  rth_stats s = stats_of(c);
+  check("disk budget: after the block is released the damaged entry is deleted and the cache opens",
+        s.entries == 0 && s.corrupt_rebuilt == 1 && !fs::exists(dir / bogus), "entries " + num(s.entries));
+  rth_cache_close(c);
+}
+
 // Bounded open: one pass, a candidate budget independent of the directory size, and
 // entry-by-entry retention instead of collecting the whole directory first.
 void test_bounded_open() {
@@ -1265,8 +1447,11 @@ int main(int argc, char** argv) {
   test_corruption();
   test_cancel();
   test_reopen();
+  test_pixels();
   test_bounded_open();
   test_disk_budget();
+  test_delete_failure();
+  test_open_delete_failure();
   test_owner_lock();
   test_scan_ceiling();
   test_publish();

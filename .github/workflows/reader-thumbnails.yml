@@ -92,6 +92,70 @@ jobs:
             build/thumb-consumer/thumb-regress*
             build/thumb-consumer/thumb-fault*
           if-no-files-found: error
+  sanitized:
+    name: sanitized probe (ubuntu-22.04)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Pin source, common start, protected SDK and product trees, and package path ownership
+        run: |
+          START=f43baf9182d75907c0cb5d6f77048f27bca8c950
+          K=9854061be331fe603a1822d9b2b36ee357154927
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$START" HEAD
+          git diff --exit-code "$K" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code "$START" HEAD -- apps/reader/store
+          allowed='^(apps/reader/thumbnails/|tests/reader_thumbnails/|\.github/workflows/reader-thumbnails\.yml$|docs/READER-THUMBNAILS\.md$|docs/validation/reader-thumbnails\.json$)'
+          changed=$(git diff --name-only "$START" HEAD)
+          bad=$(printf '%s\n' "$changed" | sed '/^$/d' | grep -Ev "$allowed" || true)
+          test -z "$bad" || { echo "unowned path: $bad"; exit 1; }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the existing build tool version
+        run: python -m pip install ninja==1.11.1.1
+      - name: Build and install the frozen reading SDK once, uninstrumented
+        run: |
+          set -o pipefail
+          mkdir -p build/thumb-logs
+          cmake --preset reading-library 2>&1 | tee build/thumb-logs/sdk-configure-asan.log
+          cmake --build --preset reading-library --parallel 4 2>&1 | tee build/thumb-logs/sdk-build-asan.log
+          cmake --install build/reading-library 2>&1 | tee build/thumb-logs/sdk-install-asan.log
+      - name: Build the package and the consumers with AddressSanitizer and UndefinedBehaviorSanitizer
+        run: |
+          set -o pipefail
+          ws=$PWD
+          SAN="-fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer -O1"
+          cmake -S apps/reader/thumbnails -B build/thumb-asan -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DEXR_SDK="$ws/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ws/build/thumb-asan-stage" -DCMAKE_CXX_FLAGS="$SAN" -DCMAKE_EXE_LINKER_FLAGS="$SAN" 2>&1 | tee build/thumb-logs/thumb-asan-configure.log
+          cmake --build build/thumb-asan --verbose 2>&1 | tee build/thumb-logs/thumb-asan-build.log
+          cmake --install build/thumb-asan 2>&1 | tee build/thumb-logs/thumb-asan-install.log
+          cmake -S tests/reader_thumbnails/consumer -B build/consumer-asan -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_PREFIX_PATH="$ws/build/thumb-asan-stage;$ws/build/reading-library/stage" -DCMAKE_C_FLAGS="$SAN" -DCMAKE_CXX_FLAGS="$SAN" -DCMAKE_EXE_LINKER_FLAGS="$SAN" 2>&1 | tee build/thumb-logs/consumer-asan-configure.log
+          cmake --build build/consumer-asan --verbose 2>&1 | tee build/thumb-logs/consumer-asan-build.log
+      - name: Run the probe under the sanitizers
+        env:
+          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: |
+          set -o pipefail
+          python3 tests/reader_thumbnails/make_fixtures.py build/thumb-fixtures-asan 2>&1 | tee build/thumb-logs/fixtures-asan.log
+          set +e
+          build/consumer-asan/thumb-probe --fixtures build/thumb-fixtures-asan --repo-fixtures tests/fixtures --work build/asan-work --report build/asan-evidence/probe.json 2>&1 | tee build/thumb-logs/probe-asan.log
+          status=$PIPESTATUS[0]
+          set -e
+          tail -n 1 build/thumb-logs/probe-asan.log
+          grep -q 'failures=0' build/thumb-logs/probe-asan.log
+          test "$status" = 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-thumbnails-sanitized-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/thumb-logs/
+            build/asan-evidence/
+          if-no-files-found: error
   evidence:
     name: strict thumbnail evidence
     needs: [consumers]

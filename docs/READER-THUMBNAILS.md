@@ -95,6 +95,12 @@ over the count/byte cap — so when the pass ends the directory itself satisfies
 with the atomic replace above; `open` removes the pre-0.1.0 temporaries at once and current-naming temporaries only when
 older than 600 s (a younger one may belong to a live process).
 
+**A failed deletion is not free space.** Removing an entry file is reported, not assumed: an entry whose file another handle keeps
+open without delete sharing (Windows) or whose directory lost write permission stays in the map with its bytes counted
+(`delete_failures`), a store that needs its room is refused (`stored == 0`, nothing added, the old entry kept), and
+`rth_cache_open` returns `RTH_IO` instead of handing back a cache while a damaged or oversized file it must delete is
+still there. `rth_cache_clear` reports the same failure. Unrelated files are never deleted.
+
 **Eviction and repair.** LRU eviction runs on count and bytes; recency persists across close and reopen (the index is
 published atomically on every change and at close). A damaged entry (bad magic, length, key, or payload digest) is
 deleted and counted in `corrupt_rebuilt`, then rebuilt from the source on the next request; a damaged or missing index
@@ -115,6 +121,12 @@ process and judged by an independent reopen with a smaller entry bound; a hard l
 (external bytes must stay byte-identical); a live cache's fresh temporary versus a stale one; an index that cannot be
 replaced atomically; re-entry refused by the statistics call; a directory far larger than the old scan budget; an
 unrepresentable directory path; and the owner lock across a live holder and a killed one.
+
+A second Linux job builds the package and the consumers with `-fsanitize=address,undefined` (the frozen SDK stays
+uninstrumented) and runs the same probe under both sanitizers, so the resampling, publish, scan and cache paths are
+executed with heap bounds and undefined behaviour checked, not only judged by sizes. Pixel assertions compare a
+genuinely non-uniform 64x48 source (transparent, half-transparent and opaque bands) byte for byte against the reference
+at 64x48, 16x12, 31x9 and 7x5.
 
 `thumb-fault` replaces the global `operator new/delete` inside its own binary and makes the n-th allocation throw, then
 walks every allocation point of `open`, of a cover that already holds thumbnail pixels, and of the borrowed-blob path,

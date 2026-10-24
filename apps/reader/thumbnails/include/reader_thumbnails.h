@@ -118,10 +118,14 @@ typedef struct {
      entries one successful open inspected, own_candidates the subset that are
      cache files of this module, scan_deleted the own entry files removed during
      that scan (damaged, over the count/byte cap, or larger than max_total_bytes),
-     and peak_retained_entries the largest entry map it ever held: at most max_entries
+     delete_failures counts entry files whose removal failed (a file another handle keeps
+     open without delete sharing, or a directory without write permission): such a file
+     is NOT counted as freed, so a store that needs its room is refused (stored == 0)
+     and open refuses the directory instead of returning a cache over the limits.
+     peak_retained_entries is the largest entry map it ever held: at most max_entries
      retained entries plus the one candidate being admitted (max_entries + 1), because
      the candidate takes part in the eviction choice. */
-  uint64_t index_failures, scanned_files, own_candidates, scan_deleted, peak_retained_entries;
+  uint64_t index_failures, scanned_files, own_candidates, scan_deleted, peak_retained_entries, delete_failures;
 } rth_stats;
 
 typedef struct rth_cache rth_cache;
