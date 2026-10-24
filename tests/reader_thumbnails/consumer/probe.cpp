@@ -950,7 +950,7 @@ void test_bounded_open() {
     rth_limits lim = rth_limits_defaults();
     lim.max_entries = 64;
     rth_cache* c = open_cache(dir, &lim);
-    for (uint32_t k = 4; k < 44; ++k) { Thumb t; cover(c, b, png, k, t); }
+    for (uint32_t k = 4; k < 44; ++k) { Thumb t; cover(c, b, png, k, k, t); }
     const uint32_t stored = stats_of(c).entries;
     rth_cache_close(c);
     lim.max_entries = 3;
@@ -1082,7 +1082,7 @@ void test_reentry() {
       rth_request r = req(8, 8);
       x->find_st = rth_cache_find(x->c, x->b, RTH_ORIGIN_AUTHOR_COVER, &r, &q.t, &x->found, &e);
       rth_cache_close(x->c);
-      x->cover_st = cover(x->c, *x->b, *x->png, 3, q);
+      x->cover_st = cover(x->c, *x->b, *x->png, 3, 3, q);
     }
     return 0;
   };
