@@ -38,9 +38,12 @@ extern "C" {
 
    Outputs: jsonl_path and markdown_path must resolve to distinct final targets.
    An alias of one target (dot segments, repeated separators, parent segments, a
-   case-folded Windows path, a symlinked directory, or an existing file reached
-   twice) is refused with ARGUMENT before any temporary file exists, so two
-   outputs can never be published over each other.
+   case-folded Windows path, a symlinked or junction directory parent, or an
+   existing file reached twice) is refused with ARGUMENT before any temporary
+   file exists, so two outputs can never be published over each other. The
+   comparison is by the platform's own identity: the file's device/inode or
+   volume/file id when it exists, otherwise the parent directory's identity plus
+   the final component, so parents that are links still resolve.
 
    JSONL (UTF-8, LF, one JSON object per line; see docs/READER-ANNOTATION-EXPORT.md):
    a header line, one "annotation" line per global annotation ID in ascending
