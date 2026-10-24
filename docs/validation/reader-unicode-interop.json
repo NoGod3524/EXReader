@@ -1,0 +1,351 @@
+{
+ "package": "G14",
+ "title": "Unicode paths, names and cross-platform product regression",
+ "fixture": "g14-unicode-interop-1",
+ "implementation_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+ "sdk_protected_tree": "9854061be331fe603a1822d9b2b36ee357154927",
+ "product_schema": "apps/reader/store/001_catalog.sql (application_id 1163416144, user_version 1), unchanged since the implementation start",
+ "accepted": {
+  "source": "180a0679f364b4cfbb23454f564f847b1ad4cde2",
+  "branch": "codex/reader-unicode-interop",
+  "workflow": "Unicode paths names and cross-platform product regression",
+  "workflow_path": ".github/workflows/reader-unicode-interop.yml",
+  "run": 40079696724,
+  "attempt": 1,
+  "event": "push",
+  "conclusion": "success",
+  "created_at": "2026-10-24T08:51:58Z",
+  "updated_at": "2026-10-24T08:53:18Z",
+  "url": "https://github.com/NoGod3524/EXReader/actions/runs/40079696724",
+  "jobs": [
+   {
+    "name": "installed Unicode consumers (windows-2022)",
+    "id": 120830478482,
+    "conclusion": "success",
+    "started": "2026-10-24T08:52:00Z",
+    "completed": "2026-10-24T08:53:09Z"
+   },
+   {
+    "name": "installed Unicode consumers (ubuntu-22.04)",
+    "id": 120830478619,
+    "conclusion": "success",
+    "started": "2026-10-24T08:52:00Z",
+    "completed": "2026-10-24T08:52:58Z"
+   },
+   {
+    "name": "installed Unicode consumers (macos-14)",
+    "id": 120830478637,
+    "conclusion": "success",
+    "started": "2026-10-24T08:52:15Z",
+    "completed": "2026-10-24T08:52:56Z"
+   },
+   {
+    "name": "cross-platform byte equality",
+    "id": 120830708480,
+    "conclusion": "success",
+    "started": "2026-10-24T08:53:11Z",
+    "completed": "2026-10-24T08:53:18Z"
+   }
+  ],
+  "hosts": {
+   "windows": {
+    "runner": "windows-2022",
+    "observer": {
+     "name": "unicode-consumer",
+     "records": 359,
+     "passed": 359,
+     "failed": 0,
+     "ok": true,
+     "sha256": "5e7fe71c8a0831406c68b36aedf7f0069036bb47a4cb1d54cb4ca4f0431851b9"
+    },
+    "c_abi_observer": {
+     "name": "unicode-c-consumer",
+     "records": 8,
+     "passed": 8,
+     "failed": 0,
+     "ok": true,
+     "sha256": "c717459cdbd4333d0890701f2b98f73782e73e9c4a26f8733d15bcffde92e84c"
+    },
+    "observations_sha256": {
+     "observations.txt": "acf30ac2619cd1f197e0ac63d72da3b1a9e52373f51001eee0d576af645ec8e1",
+     "c-observations.txt": "e0bf6c5b0412167c2b3103dc9003f1117f2eb5c5e29ff530aff68e8ec53e1927"
+    },
+    "fixture_sha256": {
+     "cases.bin": "006fdd57058d3fe4fa0d95eeaa7f90aa172c38aa558708cf4e17b204d9708a6c",
+     "expected.json": "d9007113ad3e7d1bf94d11da554c423eebddf4203987ebdbfcf1d57d5ecf50c4"
+    }
+   },
+   "linux": {
+    "runner": "ubuntu-22.04",
+    "observer": {
+     "name": "unicode-consumer",
+     "records": 359,
+     "passed": 359,
+     "failed": 0,
+     "ok": true,
+     "sha256": "17080452d9489f13ee11ddee90e05acedf37fc530ca6a213a5b084e9e70b4942"
+    },
+    "c_abi_observer": {
+     "name": "unicode-c-consumer",
+     "records": 8,
+     "passed": 8,
+     "failed": 0,
+     "ok": true,
+     "sha256": "99be47b895f205b21784af325534823c9f32ee4808494053a98c7fdbcbf89258"
+    },
+    "observations_sha256": {
+     "observations.txt": "acf30ac2619cd1f197e0ac63d72da3b1a9e52373f51001eee0d576af645ec8e1",
+     "c-observations.txt": "e0bf6c5b0412167c2b3103dc9003f1117f2eb5c5e29ff530aff68e8ec53e1927"
+    },
+    "fixture_sha256": {
+     "cases.bin": "006fdd57058d3fe4fa0d95eeaa7f90aa172c38aa558708cf4e17b204d9708a6c",
+     "expected.json": "d9007113ad3e7d1bf94d11da554c423eebddf4203987ebdbfcf1d57d5ecf50c4"
+    }
+   },
+   "macos": {
+    "runner": "macos-14",
+    "observer": {
+     "name": "unicode-consumer",
+     "records": 359,
+     "passed": 359,
+     "failed": 0,
+     "ok": true,
+     "sha256": "9154290aaacc1c4e0555e7ec0802e880d17a6747bd40e73c1f1f877db8e5b3bf"
+    },
+    "c_abi_observer": {
+     "name": "unicode-c-consumer",
+     "records": 8,
+     "passed": 8,
+     "failed": 0,
+     "ok": true,
+     "sha256": "4087d980d9030edd81cadd4cb24289bd44eed58c141f72442f3c94bb47899cdc"
+    },
+    "observations_sha256": {
+     "observations.txt": "acf30ac2619cd1f197e0ac63d72da3b1a9e52373f51001eee0d576af645ec8e1",
+     "c-observations.txt": "e0bf6c5b0412167c2b3103dc9003f1117f2eb5c5e29ff530aff68e8ec53e1927"
+    },
+    "fixture_sha256": {
+     "cases.bin": "006fdd57058d3fe4fa0d95eeaa7f90aa172c38aa558708cf4e17b204d9708a6c",
+     "expected.json": "d9007113ad3e7d1bf94d11da554c423eebddf4203987ebdbfcf1d57d5ecf50c4"
+    }
+   }
+  },
+  "areas": {
+   "note": "identical counts on all three hosts; one record is one frozen observation",
+   "total": {
+    "passed": 359,
+    "records": 359
+   },
+   "groups": {
+    "attach": {
+     "passed": 28,
+     "records": 28
+    },
+    "cmd": {
+     "passed": 58,
+     "records": 58
+    },
+    "esc": {
+     "passed": 9,
+     "records": 9
+    },
+    "find": {
+     "passed": 4,
+     "records": 4
+    },
+    "gb": {
+     "passed": 8,
+     "records": 8
+    },
+    "gbq": {
+     "passed": 1,
+     "records": 1
+    },
+    "group_find": {
+     "passed": 2,
+     "records": 2
+    },
+    "groups": {
+     "passed": 4,
+     "records": 4
+    },
+    "has_local": {
+     "passed": 2,
+     "records": 2
+    },
+    "local": {
+     "passed": 4,
+     "records": 4
+    },
+    "local_lookup": {
+     "passed": 4,
+     "records": 4
+    },
+    "membership": {
+     "passed": 2,
+     "records": 2
+    },
+    "meta": {
+     "passed": 5,
+     "records": 5
+    },
+    "page": {
+     "passed": 6,
+     "records": 6
+    },
+    "proj": {
+     "passed": 44,
+     "records": 44
+    },
+    "query": {
+     "passed": 7,
+     "records": 7
+    },
+    "remove_local": {
+     "passed": 1,
+     "records": 1
+    },
+    "removed": {
+     "passed": 2,
+     "records": 2
+    },
+    "rev": {
+     "passed": 77,
+     "records": 77
+    },
+    "rx": {
+     "passed": 49,
+     "records": 49
+    },
+    "utf16": {
+     "passed": 42,
+     "records": 42
+    }
+   }
+  },
+  "cross_platform": {
+   "platforms": [
+    "Linux",
+    "Windows",
+    "macOS"
+   ],
+   "ok": true,
+   "problems": 0,
+   "comparison": "parsed observations compared record by record and field by field",
+   "identical_observations": true,
+   "identical_fixtures": true
+  },
+  "artifacts": [
+   {
+    "name": "reader-unicode-interop-Windows-40079696724-1",
+    "id": 12554578167,
+    "bytes": 2168221,
+    "digest": "sha256:d7f257f34a4cd42ff89f8c68aef4e8d44b66cb50c61b4d4b4a7e473040a6bc39",
+    "expires_at": "2027-01-22T08:51:58Z"
+   },
+   {
+    "name": "reader-unicode-interop-Linux-40079696724-1",
+    "id": 12554338937,
+    "bytes": 1963520,
+    "digest": "sha256:30163ccb5e0a742497984cb7ca88385f181b2ef4cab9c0c60d5dc52c28bfcc9d",
+    "expires_at": "2027-01-22T08:51:58Z"
+   },
+   {
+    "name": "reader-unicode-interop-macOS-40079696724-1",
+    "id": 12554363746,
+    "bytes": 1780153,
+    "digest": "sha256:536f42924d65cd74a878f643727e8239aff2c76f2a5a798d869e41e9f0bdabc7",
+    "expires_at": "2027-01-22T08:51:58Z"
+   },
+   {
+    "name": "reader-unicode-interop-compare-40079696724-1",
+    "id": 12553754753,
+    "bytes": 2060,
+    "digest": "sha256:ef5e203b67828149e50ab0f62acb97595ecab08c1ac45c704b9b8cfae804f070",
+    "expires_at": "2027-01-22T08:51:58Z"
+   }
+  ],
+  "observed_guarantees": [
+   "reader_command_utf16 accepts the 42 frozen payloads it should accept and refuses NUL, unpaired surrogates, 16385 UTF-16 units, a 16388-byte result and a too small capacity, always leaving bytes=0",
+   "import rejects invalid UTF-8 (lone continuation, overlong, truncated, surrogate, above U+10FFFF), 4097 scalars, an unknown format, an uppercase digest, favorite=2, a byte length that disagrees with the retained original and an SDK ID already mapped to another original",
+   "typed commands keep created/applied, entity keys and revision digests exact; an exact retry is a 0/0 no-op before the stale-head check; a retained ID with different bytes is COLLISION; 4097 scalars is LIMIT; truncated UTF-8 is FORMAT; a delete without observed history is ARGUMENT; a missing book history is NEEDS_BOOK_BOOTSTRAP",
+   "catalog pages follow (sort_title, book_key) byte order for CJK, emoji, NFC, NFD, Hebrew, Russian, Arabic, RTL controls, reserved characters, tab/newline and an empty sort title, including 16384-byte and 12288-byte keys, in both directions and across continued keyset pages",
+   "search folds ASCII A-Z only: 'abc' hits 'ABC', 'UNI-with-diaeresis' (uppercase) does not hit the lowercase form, and an NFD query hits an NFD field because the bytes are exact",
+   "sub-shelves order by (ordinal,id), tags and series by id, members by (ordinal,book_key) or book_key, soft deletion hides rows, keeps the name, and exposes only removed groups",
+   "every retained revision is returned byte for byte with a SHA-256 that covers exactly those bytes; receipts with a wrong digest, a flipped byte, invalid UTF-8 or a truncation are refused without writing",
+   "a mirror database built only from received revisions and projected head by head reaches the same catalog state as the writer",
+   "closing and reopening both stores reproduces every recorded byte, key, order and selection state",
+   "JSON escape sequences are decoded for meaning (U+00E9, U+1F4DA, U+0009) while the retained revision bytes stay exactly as received",
+   "the whole session runs on a Unicode directory and database name supplied through reader_command_utf16, and both observers report identical observations on Windows, Linux and macOS"
+  ],
+  "not_granted": [
+   "typography, bidi visual ordering, line breaking and glyph selection are not measured",
+   "screen-reader or accessibility behaviour is not measured",
+   "the host side NFC conversion itself (NormalizeString or g_utf8_normalize) is not exercised; the frozen NFC form is supplied as the documented host input",
+   "the SDK-bound desktop adapter reader_catalog_sdk_* is not built; attach is called with host-verified frozen identity as documented",
+   "performance, CPU and the existing numeric budgets are untouched and unmeasured",
+   "no real user document and no legacy 1710 target is included in this package count"
+  ]
+ },
+ "earlier_runs": [
+  {
+   "run": 40077452184,
+   "source": "296f14d22a8fd710f5e2010377a8486d93630436",
+   "attempt": 1,
+   "conclusion": "failure",
+   "cause": "consumer called reader_catalog_remove_local with two arguments instead of three (all three hosts, same diagnostic)",
+   "resolved_by": "c36dd051"
+  },
+  {
+   "run": 40077722660,
+   "source": "c36dd0517c7cd14b48f10b8e8a0a3d4c2b08e60a",
+   "attempt": 1,
+   "conclusion": "failure",
+   "cause": "fixture generator raised KeyError 'sha': the modelled book dict lacked the original digest",
+   "resolved_by": "544b1335"
+  },
+  {
+   "run": 40078131000,
+   "source": "544b1335c76732c9bd645d2005ec082844e282e6",
+   "attempt": 1,
+   "conclusion": "failure",
+   "cause": "fixture generator raised KeyError 'path.workdir': path items were read from a removed aux namespace",
+   "resolved_by": "3ca59e32"
+  },
+  {
+   "run": 40078512406,
+   "source": "3ca59e320f4cbf60abbba47f025bf30637543b86",
+   "attempt": 1,
+   "conclusion": "failure",
+   "cause": "one of 359 records differed on all hosts: cmd.neg.collision reported UNSAFE because the fixture reused no retained revision ID, so the case never reached the collision branch; the checker also miscounted row fields",
+   "resolved_by": "a5e400c3",
+   "note": "the underlying observation was reproduced identically on all three hosts"
+  },
+  {
+   "run": 40078923261,
+   "source": "a5e400c3adbe878e5e11b0d07b55849198bc260a",
+   "attempt": 1,
+   "conclusion": "failure",
+   "cause": "all three consumer jobs passed 359/359 and 8/8, but the comparison found different frozen fixture digests: Windows wrote the JSON fixtures with CRLF line endings",
+   "resolved_by": "951d00bf"
+  },
+  {
+   "run": 40079346586,
+   "source": "951d00bf1fddfaa6e5e8b16b5d3745d7582f6fa2",
+   "attempt": 1,
+   "conclusion": "success",
+   "note": "first fully green run; superseded by the accepted run only because it does not print the named per-area counts and consumer digests"
+  }
+ ],
+ "package_files": [
+  "tests/reader_unicode_interop/fixtures.py",
+  "tests/reader_unicode_interop/check_interop.py",
+  "tests/reader_unicode_interop/compare_platforms.py",
+  "tests/reader_unicode_interop/consumer/CMakeLists.txt",
+  "tests/reader_unicode_interop/consumer/probe.cpp",
+  "tests/reader_unicode_interop/consumer/api.c",
+  ".github/workflows/reader-unicode-interop.yml",
+  "docs/READER-UNICODE-INTEROP.md",
+  "docs/validation/reader-unicode-interop.json"
+ ]
+}
