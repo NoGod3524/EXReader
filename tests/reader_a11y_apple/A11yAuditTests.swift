@@ -408,25 +408,35 @@ final class EXReaderA11yAuditTests: XCTestCase {
 #if os(iOS)
         throw XCTSkip("iOS full keyboard access is not enabled on the cloud simulator; keyboard path stays uncovered")
 #else
-        try step("a11y-18-keyboard-tab-path") {
+        try step("a11y-18-keyboard-path") {
             launch()
             ensureBooks()
             openBook("Sample.epub")
             let window = app.windows.firstMatch
             XCTAssertTrue(window.exists, "macOS host window missing")
             let candidates = keyboardCandidates()
-            XCTAssertFalse(candidates.isEmpty, "no identified controls to traverse")
-            var presses: [[String: Any]] = []
-            window.typeKey(.tab, modifierFlags: [])
-            for index in 0..<14 {
-                window.typeKey(.tab, modifierFlags: [])
-                RunLoop.current.run(until: Date().addingTimeInterval(0.3))
-                presses.append(["press": index + 1, "focused": focusedIdentifiers()])
-            }
-            audit.emitKeyboard(test: name, presses: presses, candidates: candidates, step: "reader.keyboard")
-            let focused = Array(Set(presses.flatMap { ($0["focused"] as? [String]) ?? [] })).sorted()
+            XCTAssertFalse(candidates.isEmpty, "no identified controls to probe")
             capture("reader.keyboard", screenshot: "a11y-18-reader-keyboard",
-                    detail: ["candidates": candidates, "focused_union": focused])
+                    detail: ["candidates": candidates])
+            var presses: [[String: Any]] = []
+            var sampled: [String] = [keyboardState()]
+            for index in 0..<16 {
+                window.typeKey(.tab, modifierFlags: [])
+                RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+                var record: [String: Any] = ["press": index + 1, "state": keyboardState()]
+                if (index + 1) % 4 == 0 {
+                    window.typeKey(.space, modifierFlags: [])
+                    RunLoop.current.run(until: Date().addingTimeInterval(0.9))
+                    let activated = keyboardState()
+                    record["activated_state"] = activated
+                    sampled.append(activated)
+                }
+                presses.append(record)
+            }
+            let distinct = Array(Set(sampled)).sorted()
+            audit.emitKeyboard(test: name, presses: presses, candidates: candidates,
+                               step: "reader.keyboard", distinctStates: distinct,
+                               changed: distinct.count > 1)
         }
 #endif
     }
@@ -450,15 +460,18 @@ final class EXReaderA11yAuditTests: XCTestCase {
         return identifiers
     }
 
-    private func focusedIdentifiers() -> [String] {
-        var identifiers: [String] = []
-        for control in app.buttons.allElementsBoundByIndex where control.hasFocus && !control.identifier.isEmpty {
-            identifiers.append(control.identifier)
-        }
-        for control in app.textFields.allElementsBoundByIndex where control.hasFocus && !control.identifier.isEmpty {
-            identifiers.append(control.identifier)
-        }
-        return identifiers
+    /// Observable reader state used by the keyboard probe: any change here means
+    /// a keyboard press actually drove the host, without claiming to know which
+    /// control owned focus.
+    private func keyboardState() -> String {
+        var parts: [String] = []
+        parts.append(element("library.title").exists ? "library" : "reader")
+        parts.append(axText("reader.location"))
+        parts.append(axText("reader.font.value"))
+        parts.append(axText("reader.status"))
+        if element("selection.title").exists { parts.append("selection-sheet") }
+        if element("notes.title").exists { parts.append("notes-sheet") }
+        return parts.joined(separator: "|")
     }
 #endif
 }

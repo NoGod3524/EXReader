@@ -121,7 +121,7 @@
         "iphone",
         "ipad"
       ],
-      "description": "Two fixture books imported through the visible import buttons",
+      "description": "两本夹具入架；书架行顺序取决于产品列表顺序，因此按行的 AX 名称核对书名，而不绑定下标",
       "required": [
         {
           "id": "library.title",
@@ -134,19 +134,18 @@
             "ScrollView",
             "Other"
           ],
-          "fix": "书架列表容器需要稳定的 AX 标识与滚动语义"
+          "fix": "列表容器本身没有名称，行名称承载内容；若需要可用 .accessibilityLabel(\"书架列表\")",
+          "name_nonempty": false
         },
         {
           "id": "library.book.0",
           "role": "Button",
-          "name_contains": "Sample.epub",
-          "fix": "书架行必须把书名与格式位置作为 AX 名称"
+          "fix": "书架行必须把书名与格式/位置作为 AX 名称"
         },
         {
           "id": "library.book.1",
           "role": "Button",
-          "name_contains": "Sample.pdf",
-          "fix": "书架行必须把书名与格式位置作为 AX 名称"
+          "fix": "书架行必须把书名与格式/位置作为 AX 名称"
         },
         {
           "id": "library.import.epub",
@@ -175,6 +174,10 @@
       "content_rules": [
         "library-title-trace",
         "library-book-index-identifier"
+      ],
+      "book_row_names": [
+        "Sample.epub",
+        "Sample.pdf"
       ]
     },
     "library.busy": {
@@ -990,9 +993,14 @@
       "macos"
     ],
     "blocking": true,
-    "expected": "macOS 全键盘访问（AppleKeyboardUIMode=3）下，阅读器控件可由 Tab 依次聚焦",
-    "fix": "若 0 个控件可聚焦，为控件补 .focusable()/keyboardShortcut，或在 HStack 外包 .focusSection()",
-    "partial_severity": "major"
+    "probe": "16 次 Tab，每第 4 次追加 Space；每次按键后采样可观察状态（位置/字号/状态/面板出现）",
+    "expected": "macOS 全键盘访问下，Tab/Space 能驱动阅读器，可观察状态必须出现变化",
+    "fix": "若 16 次按键完全无状态变化：为控制栏补 .focusable()/keyboardShortcut，或把 HStack 包进 .focusSection()",
+    "partial_severity": "major",
+    "focus_order": {
+      "verdict": "uncovered",
+      "reason": "本次 Xcode 的 XCUIElement 没有 hasFocus/焦点 API，逐控件焦点顺序不可观察；需全键盘访问人工走查"
+    }
   },
   "feature_gaps": [
     {
