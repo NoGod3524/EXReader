@@ -91,7 +91,7 @@ final class ReaderAccessUITests: XCTestCase {
 
     private func open(_ fixture: String, title: String? = nil) {
         if !fixture.isEmpty { tap(fixture) }
-        let predicate = title.map { NSPredicate(format: "identifier BEGINSWITH 'library.book.' AND label == %@", $0) }
+        let predicate = title.map { NSPredicate(format: "identifier BEGINSWITH 'library.book.' AND label BEGINSWITH %@", $0) }
             ?? NSPredicate(format: "identifier BEGINSWITH 'library.book.'")
         let book = app.buttons.matching(predicate).firstMatch
         XCTAssertTrue(book.waitForExistence(timeout: 90))
@@ -145,7 +145,7 @@ final class ReaderAccessUITests: XCTestCase {
         // Seed through the normal public import path before Actions changes
         // the device's actual content size. The stress launch hides fixtures.
         tap("library.import.epub")
-        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label == %@", "Sample.epub")).firstMatch.waitForExistence(timeout: 90))
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'library.book.' AND label BEGINSWITH %@", "Sample.epub")).firstMatch.waitForExistence(timeout: 90))
     }
 
     func test02CompactReaderActualTurnFontAndNotes() throws {
