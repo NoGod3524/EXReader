@@ -137,6 +137,13 @@ root读到`check_account_ui.py`的`capture()`只把Python手写v1 wire交给`rev
 
 ### 独立包最终复核与 Windows 继续回修
 
+### 后续固定交回与手动分包
+
+- 用户改为单包交回即可继续准备任务，root已推 `34ef34ada254519db8c76f62a4b2dadf46775e73` 的25个J包完整说明、共同约束及文件归属。实现均固定f43，不依赖未合入G包或主线活动文件；用户手动分发，root未派发。五轮审计与完成轮数不因文档准备增加。
+- Android搜索固定 `e764f08dea4986f11db183c5b17b41ddb5526bcc`，纯文档HEAD `6bbc49bffd2de66b562a6afc1b7e6a8b91ffa8fa`。root独立核 run `40111800432` attempt2/job `120925154490` success，原正式16和搜索15的同源码日志、工件 `12567530810`/118919384B/sha256 `188846a51dfc4b9ce2446a53fa0e5fb3fcc863b6393a0c454bb6e924bc1693fe` 与上传一致，Git差异仅两份文档。旧attempt1镜像下载失败日志留存、小ZIP目前404，不再宣称工件仍保留。owner已从固定e764另开原生目录UI，F2仅引入cbd7832b的不可变模块子树；不授予新导航UI。
+- GTK设置固定 `ce912f8c149e30cf3843e39258ae6889235495a0`，纯文档HEAD `8a5e8a68c627196116e80ea456f12165a4e3209c`。root核 run `40110581923` 实际日志：安装F3 20、原46/105/4/AT-SPI10同源通过；设置35全执行，33通过、整页背景及Dark阅读页2项仍失败。`accepted=false`，不能当整个设置包通过。owner转GTK搜索，35项原失败保留；本轮工件未做最终ZIP重散列，亦不扩大证据范围。
+- Windows `6c8d6462`/`40110638065` 实测已通过文本移动/端点/Unicode；无效枚举客户端返回E_UNEXPECTED而非server的E_INVALIDARG。公开客户端只承诺失败HRESULT；探针保留拒绝和端点不变并记录实际码，producer防御代码未改。后续 `fcf0d4be`/`40111567097` 停在原13项书架helper跨LB消息读取部分行；未走到新UIA，不继承其通过。root给两条真实列表替换路径加只读前后序号，专用wrapper仅在序号变化时重观察，稳定坏行仍失败；原13断言、2202规模、320轮滚动及worker时限不变。当前 `c74e861b7dbe95e680b53f18bc63a764ae06fc4f` 完整run `40113587443` 待结果。root只取消自己已被替代的 `40111464529` 和 `40113516107`，所有已失败运行未动。
+
 G01 追加实际回修：`d1324959`/`40109071435` 已证明 import/refresh 禁用后的焦点续接、状态事件、原生正文/选区及模态背景禁用均通过；下一处拒绝是取消详情后焦点未返回。root 源码核对发现 `WM_DESTROY` 对无修改的取消也安排刷新，立即再次禁用详情按钮。`809033d7` 删除该多余刷新，保存/放弃修改的完成路径保留各自刷新。`35b677340710cebe41043601a6052f1b2d5d76f3` 另将这一个焦点失败记录为严格失败后继续独立文本组，最终报告和进程仍拒绝，21 项及原预算不变；完整 run `40109829474` 在跑。未授予 provider 全部通过；当前探针仍以 TXT 为主，PDF/有界 EPUB 的点定位和区域证据须另外补齐后才能扩大范围。
 
 `40109829474` 后续终态保留 failure：详情取消焦点、COM clone/release 与跨页快照全部实际通过；失败是固定 `uiautomation==2.0.29` 的 `CompareEndpoints` 包装漏解包目标，`QueryInterface` 参数错误发生于产品调用之前。root 核对包装源码后改为同一公开 `IUIAutomationTextRange.CompareEndpoints` 的直接 COM 调用，原比较断言不变。另对照微软 `ITextProvider.RangeFromPoint` 要求（坐标外仍返回最近退化文字范围），修复原 mouse helper 会拒绝页面外及有界 EPUB 的问题：只用当前 SDK 渲染帧的 glyph clusters/固定页 quads 计算最近插入边，不重开/重解析或访问 worker pager。新增页面外、真实 PDF、有界 EPUB 的几何/点定位/选择与旧书范围拒绝检查，严格出口从21增加至24项。受测候选 `6c8d6462329b8345e53d115670059c0e747b1973` 的完整 run `40110638065` 已启动，结果待定；三格式或读屏均未提前授予。
