@@ -278,7 +278,9 @@ def main():
         host.key('Escape')
         wait(lambda value: value['visible'] == '0')
         import_book((args.fixtures / 'pages.cbz').resolve())
-        record('actual_cbz_opens_with_genuine_empty_sdk_text_snapshot', host.read()['fixed'] == 1 and host.read()['end'] == 0)
+        host.key('F4')
+        host.wait(lambda value: value['page'] == 1 and not value['saving'])
+        record('actual_cbz_opens_with_genuine_empty_sdk_text_snapshot', host.read()['fixed'] == 1 and host.read()['page'] == 1 and host.read()['end'] == 0)
         open_records()
         record('cbz_empty_snapshot_has_no_highlight_range_without_fabricating_text', observed()['has_range'] == '0' and not bus.states(element('Highlight selection', {'push button'})).get('sensitive'))
         action('Save progress')
@@ -287,7 +289,7 @@ def main():
         select(0)
         action('Open location')
         wait(lambda value: value['visible'] == '0')
-        record('cbz_page_id_point_requires_independent_and_current_found_before_navigation', observed()['match'] == '1' and host.read()['fixed'] == 1 and host.read()['page'] == 0)
+        record('cbz_page_id_point_requires_independent_and_current_found_before_navigation', observed()['match'] == '1' and host.read()['fixed'] == 1 and host.read()['page'] == 1)
         record('all_original_source_bytes_remain_unchanged', hashlib.sha256(source.read_bytes()).hexdigest() == original_sha)
         record('product_wire_records_remain_explicit_versions', bool(product_wires()))
         host.close()
@@ -344,6 +346,7 @@ def main():
         if host.log and not host.log.closed:
             host.log.close()
         (output / 'report.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
+        print(json.dumps({key: report[key] for key in ('reading_records_scope_passed', 'source_sha', 'run_id', 'attempt', 'checks_total', 'checks_failed', 'program_sha256')}, ensure_ascii=False), flush=True)
         bus.exit_bus()
 
 
