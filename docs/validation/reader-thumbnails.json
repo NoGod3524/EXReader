@@ -5,9 +5,34 @@
   "sdk_freeze": "9854061be331fe603a1822d9b2b36ee357154927",
   "sdk_version": "3.40.0",
   "abi": 1,
-  "status": "implemented; awaiting same-source cloud run",
-  "accepted": false,
-  "tested_source": null,
+  "status": "cloud-verified installed C11/C++17 consumers on Linux, Windows and macOS (this package only)",
+  "accepted": true,
+  "tested_source": "797774f283f17901161346a0938a0c0e81e4c118",
+  "run": {"id": 40078420397, "attempt": 1, "workflow": ".github/workflows/reader-thumbnails.yml"},
+  "jobs": [
+    {"id": 120826675611, "name": "thumbnail consumers (ubuntu-22.04)", "conclusion": "success"},
+    {"id": 120826675551, "name": "thumbnail consumers (windows-2022)", "conclusion": "success"},
+    {"id": 120826675462, "name": "thumbnail consumers (macos-15)", "conclusion": "success"},
+    {"id": 120827309865, "name": "strict thumbnail evidence", "conclusion": "success"}
+  ],
+  "artifacts": [
+    {"id": 12553199658, "name": "reader-thumbnails-Linux-40078420397-1", "bytes": 8281909, "digest": "sha256:28a42ec3932bdd10bb22882750f67840d55f5d670a8fb297cf2a671ad6aaa318", "expires_at": "2027-01-22T08:32:10Z"},
+    {"id": 12554082683, "name": "reader-thumbnails-Windows-40078420397-1", "bytes": 6008680, "digest": "sha256:157074498ecd8ce39fc91755763dce42c722f18b68f7271e868dcd3e5d41b659", "expires_at": "2027-01-22T08:32:10Z"},
+    {"id": 12553344359, "name": "reader-thumbnails-macOS-40078420397-1", "bytes": 7047774, "digest": "sha256:6f19b43200e6f06ff8ad92e3a3bdb1d8a08be32e4d60035dada64d10f64a5738", "expires_at": "2027-01-22T08:32:10Z"},
+    {"id": 12554800423, "name": "reader-thumbnails-evidence-40078420397-1", "bytes": 1118, "digest": "sha256:1d4215836f9a06a6a339d602accd35e495a6559cdebda2208861d0d6d76f1f60", "expires_at": "2027-01-22T08:32:10Z"}
+  ],
+  "consumers": ["thumb-c-consumer (C11, installed header + static library)", "thumb-probe (C++17, installed packages only)"],
+  "results": {
+    "checks_per_platform": "147 named checks on Linux/macOS, 146 on Windows (the thread-count check is Linux/macOS only); every check passed; the three platforms' check-name sets are equal apart from that one",
+    "covered": ["deterministic RGBA pixels against an independent expectation (10 scenarios, hit and miss)", "aspect and no-upscale", "alpha preservation", "missing cover placeholder (no stored cover, 8 MiB+ cover left in source, bounded file import)", "real PDF and CBZ first-page previews (generated originals with known colours, repository pdf-public.pdf and comic.cbz, library-owned and memory readers)", "cover versus preview labelling and separation", "edge/pixel/entry/byte limit refusals and 64-bit overflow-box refusal", "valid oversize PNGs (9000x1, 4100x4100)", "LRU by count and by bytes, persisted across reopen", "cross-book, cross-format, cross-parameter and cross-encoded-bytes mis-hit prevention", "six corruption forms detected at lookup and at reopen then rebuilt", "garbage/missing index, stale temporaries, foreign files untouched", "cancellation at every poll point for encoded, library, PDF and CBZ paths", "owner-thread and re-entry refusal", "original fixtures and stored library source bytes unchanged"],
+    "observed_sdk_behaviour": "A PNG whose IHDR declares 30000x30000 over invalid data is refused by exr_image_page_dimensions as a damaged header (EXR_FORMAT), not EXR_LIMIT; the first run asserted LIMIT and failed on all three platforms. The check now accepts a refusal status LIMIT or FORMAT before decode and separate valid oversize PNGs assert LIMIT strictly. The SDK also refuses to import an EPUB that declares a cover item whose file is missing, so the cover-less case uses a generated EPUB with no cover item."
+  },
+  "measurements_raw": {
+    "note": "Recorded numbers only; no performance is granted. RSS values are whole-process figures taken in the probe; process_peak_rss is cumulative across scenarios.",
+    "cover_3000x3000": {"cache_bytes": 16640, "decoded_bytes": 36000000, "process_peak_rss": {"linux": 80523264, "windows": 78184448, "macos": 96206848}},
+    "pdf_preview_100x50": {"cache_bytes_after_first_entry": 20193, "rendered_bytes": 20000},
+    "lru_4096_cap": {"cache_bytes": 3792}
+  },
   "interfaces": {
     "header": "reader_thumbnails.h",
     "cmake_target": "EXReaderThumbnails::reader_thumbnails",
@@ -15,5 +40,5 @@
     "product_sql_written": false,
     "sdk_private_sql_read": false
   },
-  "not_granted": ["product performance", "host UI integration", "six-platform interoperability", "release"]
+  "not_granted": ["product performance", "host UI integration", "six-platform interoperability", "release", "decoder total-memory bound (only max_source_pixels bounds it)", "streaming cover extraction for bounded EPUB imports (they store no cover)"]
 }
