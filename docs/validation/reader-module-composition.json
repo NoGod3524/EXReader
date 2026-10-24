@@ -1,22 +1,274 @@
 {
   "package": "G08 reader-module-composition",
+  "task": "optional modules installed into one prefix, fresh-directory C11 and C++ consumers, real composition",
   "branch": "codex/reader-module-composition",
   "implementation_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
-  "status": "not_yet_executed_on_this_source",
-  "granted_platforms": [],
+  "workflow": ".github/workflows/reader-module-composition.yml",
+  "status": "accepted",
+  "source_sha": "4b1a17ca24eab43a765a3e984a707061d012083a",
+  "run": {
+    "run_id": 40081552526,
+    "attempt": 1,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40081552526",
+    "aggregate_result": "docs/validation/reader-module-composition.json",
+    "jobs": {
+      "linux": "one-prefix composition (linux) — success",
+      "windows": "one-prefix composition (windows) — success",
+      "macos": "one-prefix composition (macos) — success",
+      "aggregate": "strict same-source composition report — success"
+    }
+  },
+  "granted_platforms": [
+    "linux",
+    "windows",
+    "macos"
+  ],
   "ungranted_platforms": [
     "android",
     "ios",
     "host-ui",
-    "performance"
+    "read-aloud",
+    "product-performance"
   ],
-  "source_sha": null,
-  "runs": [],
-  "items": [],
+  "platforms": {
+    "linux": {
+      "runner": "ubuntu-22.04",
+      "accepted": true,
+      "composition_items": 36,
+      "composition_failures": [],
+      "gate_items": 11,
+      "gate_failures": [],
+      "resolved_state": "FOUND",
+      "relocated_resolved_state": "FOUND",
+      "product_sqlite_providers": [
+        "libreader_catalog_sqlite.a"
+      ],
+      "c11_sqlite_providers": [
+        "libreader_catalog_sqlite.a"
+      ],
+      "directly_linked_amalgamations": [],
+      "session_sweeps": 1,
+      "network_pushed": 4,
+      "network_pulled": 4,
+      "webdav_journal": {
+        "requests": 640,
+        "objects": 2,
+        "revisions": 10,
+        "puts": 20,
+        "gets": 46,
+        "propfinds": 548,
+        "mkcols": 26
+      },
+      "consumer_sha256": {
+        "composition-c": {
+          "sha256": "7d8bb47dd5827e3329b59809a54a29694d135fa2800e039cf0c3eca5a673ccfd",
+          "items": 33
+        },
+        "composition-cxx": {
+          "sha256": "e7bff18e52782b4a8a2d0ff9f1bb99a39a0812f4cbbbaa74a147988895cc4eec",
+          "items": 82
+        },
+        "composition-c-relocated": {
+          "sha256": "7d8bb47dd5827e3329b59809a54a29694d135fa2800e039cf0c3eca5a673ccfd"
+        },
+        "composition-cxx-relocated": {
+          "sha256": "e7bff18e52782b4a8a2d0ff9f1bb99a39a0812f4cbbbaa74a147988895cc4eec",
+          "items": 82
+        }
+      },
+      "install_manifest_sha256": "04c642f0963dd267bb3ad97c3d1162e3039e9947e9fd0f4e95a54a7de47ff9bd",
+      "link_map_sha256": "d917051badc64ce7e3033e31c24cc872011933c47e8176930ef6fe86697d92c5",
+      "consumer_interface_sha256": "1a89860accc3549d842aeadcc8d3452e952c0ea36ea5bb5952c32c4cf331d21f",
+      "artifact": {
+        "id": 12555691365,
+        "name": "reader-module-composition-linux-40081552526-1",
+        "bytes": 410466,
+        "digest": "sha256:474afbfbd753834c3210bdc6cc523f6f36060bba82e2068a6fa5cd3035d53201",
+        "expires_at": "2027-01-22T09:20:19Z"
+      }
+    },
+    "windows": {
+      "runner": "windows-2022",
+      "accepted": true,
+      "composition_items": 36,
+      "composition_failures": [],
+      "gate_items": 11,
+      "gate_failures": [],
+      "resolved_state": "FOUND",
+      "relocated_resolved_state": "FOUND",
+      "product_sqlite_providers": [
+        "reader_catalog_sqlite.lib"
+      ],
+      "c11_sqlite_providers": [
+        "reader_catalog_sqlite.lib"
+      ],
+      "directly_linked_amalgamations": [],
+      "session_sweeps": 1,
+      "network_pushed": 4,
+      "network_pulled": 4,
+      "webdav_journal": {
+        "requests": 640,
+        "objects": 2,
+        "revisions": 10,
+        "puts": 20,
+        "gets": 46,
+        "propfinds": 548,
+        "mkcols": 26
+      },
+      "consumer_sha256": {
+        "composition-c": {
+          "sha256": "30188893ec4bf9d2f70535fbfbb18120199a3abab9a874136ffcb91d6350eff8",
+          "items": 33
+        },
+        "composition-cxx": {
+          "sha256": "2c053ee84d0e5319a4ed67832c0286ada8bc23858ff712e9a6c9d676bf9588b7",
+          "items": 82
+        },
+        "composition-c-relocated": {
+          "sha256": "b43f75ac544e7a0f1923dea08f0060f1cf3780226607fea9a607a02c261335ce"
+        },
+        "composition-cxx-relocated": {
+          "sha256": "cba6118544a01f825c5e28c8d17369ec1667e88d00304f98ba39bbf6a9662c72",
+          "items": 82
+        }
+      },
+      "install_manifest_sha256": "329130aba4501b727b0198517d84937bd21f588dbef546680aaaff3c5d7c5b7d",
+      "link_map_sha256": "7b816bc052fb76b6d8c979abe0755cf12c37531f65f5e7eb36ecd0c60ae7a7f0",
+      "consumer_interface_sha256": "59e3a3bb527d43db8233e59a04d790417a5b9aae62a4a6a3e2c0a0e26b564531",
+      "artifact": {
+        "id": 12555471324,
+        "name": "reader-module-composition-windows-40081552526-1",
+        "bytes": 1575641,
+        "digest": "sha256:23c3e1889326e79ebae62efc639556432b6d48adae5dc7039199adb2a20aebcf",
+        "expires_at": "2027-01-22T09:20:19Z"
+      }
+    },
+    "macos": {
+      "runner": "macos-15",
+      "accepted": true,
+      "composition_items": 36,
+      "composition_failures": [],
+      "gate_items": 11,
+      "gate_failures": [],
+      "resolved_state": "FOUND",
+      "relocated_resolved_state": "FOUND",
+      "product_sqlite_providers": [
+        "libreader_catalog_sqlite.a"
+      ],
+      "c11_sqlite_providers": [
+        "libreader_catalog_sqlite.a"
+      ],
+      "directly_linked_amalgamations": [],
+      "session_sweeps": 1,
+      "network_pushed": 4,
+      "network_pulled": 4,
+      "webdav_journal": {
+        "requests": 640,
+        "objects": 2,
+        "revisions": 10,
+        "puts": 20,
+        "gets": 46,
+        "propfinds": 548,
+        "mkcols": 26
+      },
+      "consumer_sha256": {
+        "composition-c": {
+          "sha256": "fcc6753036710e380ad753940aed984d6855a397f4f8f30c1c849beee5e8a4ff",
+          "items": 33
+        },
+        "composition-cxx": {
+          "sha256": "3b7639208ed37df4b6a5a613fd9743774ca6d9b75ae50ca2eaf5dcec4fe0161f",
+          "items": 82
+        },
+        "composition-c-relocated": {
+          "sha256": "fcc6753036710e380ad753940aed984d6855a397f4f8f30c1c849beee5e8a4ff"
+        },
+        "composition-cxx-relocated": {
+          "sha256": "3b7639208ed37df4b6a5a613fd9743774ca6d9b75ae50ca2eaf5dcec4fe0161f",
+          "items": 82
+        }
+      },
+      "install_manifest_sha256": "68add0652ab8b94dbc189fef09d7e8f2e5acd62804bdbd14561aa98a138c75e5",
+      "link_map_sha256": "bb2bef09a959b6572663a6dc6f9f0bb37b318f45b374c711586bec661e9524d6",
+      "consumer_interface_sha256": "0d697188f4d3f71ff441a54d68a82c6ea94166bded6c4d05a33350c438d1be82",
+      "artifact": {
+        "id": 12555107895,
+        "name": "reader-module-composition-macos-40081552526-1",
+        "bytes": 732733,
+        "digest": "sha256:6fd824fd43be03b049ed9db098575afc35a2b62cd7172349f4c00e9895b3b049",
+        "expires_at": "2027-01-22T09:20:19Z"
+      }
+    }
+  },
+  "named_composition_items": [
+    "the relocated consumer uses a different prefix path",
+    "the C11 consumer exits zero",
+    "the composed C++ consumer exits zero",
+    "the relocated consumer exits zero",
+    "the relocated C11 consumer exits zero",
+    "each prefix root received exactly one immutable original",
+    "the stored original carries the source identity",
+    "the stored original keeps its exact length",
+    "the stored original carries the source identity",
+    "the stored original keeps its exact length",
+    "the store holds exactly the revisions both runs acknowledged",
+    "every published revision leaf matches its own bytes",
+    "every published revision leaf matches its own bytes",
+    "every published revision leaf matches its own bytes",
+    "every published revision leaf matches its own bytes",
+    "every published revision leaf matches its own bytes",
+    "every published revision leaf matches its own bytes",
+    "every published revision leaf matches its own bytes",
+    "every published revision leaf matches its own bytes",
+    "every published revision leaf matches its own bytes",
+    "every published revision leaf matches its own bytes",
+    "the fixture served the composition",
+    "every request carried the session authorization",
+    "every PUT was conditional and immutable",
+    "every PROPFIND stayed bounded to depth one",
+    "both prefixes used their own root",
+    "the fixture used a real ephemeral port",
+    "the composed link graph has exactly one product SQLite provider",
+    "no second SQLite amalgamation object is linked directly",
+    "the C11 link graph has exactly one product SQLite provider",
+    "the C11 link graph links no second amalgamation object",
+    "the composed consumer reports a real FOUND resolve on the second SDK",
+    "the relocated consumer reproduces the same FOUND resolve",
+    "the C11 consumer reports no failure",
+    "the session completed a sweep",
+    "the transfer counters record both directions"
+  ],
+  "named_negative_gates": [
+    "the untouched prefix passes the include audit",
+    "a broken exported target is rejected at configure time",
+    "an absent declared dependency is rejected by find_package()",
+    "the duplicate-provider control configures",
+    "a second SQLite provider is refused by the linker",
+    "a leaked source include is rejected by the audit",
+    "the leaked prefix cannot pass the clean audit",
+    "the detector counts one GNU provider",
+    "the detector counts two GNU providers",
+    "the detector counts two MSVC providers",
+    "the detector sees a directly linked amalgamation"
+  ],
+  "original_failures_found_and_fixed": [
+    "workflow expression: ${{GITHUB_SHA}} is not a context path; the file was rejected before any job was created (run 40076808286)",
+    "default reading probe emitted CMake TRUE instead of JSON booleans (run 40078152122)",
+    "product headers must be probed as catalog.h and sqlite3.h, their exported include spelling (run 40078602882)",
+    "MSVC consumers must use the static runtime the installed modules were built with (run 40079052112)",
+    "ld64 has no -Map; it takes -map (run 40079052112)",
+    "the C++ report key was an integer named checks, not the check list (run 40079052112)",
+    "the SDK exposes normalized text, so its length is not the raw file size (run 40079563415)",
+    "the C consumer must supply the annotation id and the parser version (runs 40079563415 and 40080159007)",
+    "the SQLite detector treated an MSVC archive member as a directly linked object (run 40079563415)",
+    "CMake discovers <prefix>/lib/cmake/<name>* by glob, so a withheld package needs to leave that directory (run 40080743571)",
+    "$<TARGET_OBJECTS:...> was written as ${TARGET_OBJECTS:...} (run 40080743571)",
+    "the judge summary did not carry the second-SDK resolve state the aggregate verifies (run 40081175090)"
+  ],
   "notes": [
-    "This record is written before the first Actions execution and is replaced with the real per-item results of the same source, run and attempt.",
-    "No capability is granted from a successful configure, a report about a run, or another package's evidence."
+    "Every item below was decided by an installed consumer, the fixture request journal, the stored bytes or the final linker map; no configure-only result is reported as a run.",
+    "Android, iOS, host UI and product performance are outside this package and stay ungranted."
   ],
   "complete_product": false
 }
