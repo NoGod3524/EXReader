@@ -1,0 +1,99 @@
+name: Reader table-of-contents navigation
+on:
+  push:
+    branches: [codex/reader-navigation]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  consumers:
+    name: navigation consumers (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Pin source, common start, protected SDK and schema trees, and package path ownership
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor c3511a011eefbf1fba1d20908f000cef22b1ced2 HEAD
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code f32bb8aa18ed3de286900f19ce4230fd93435dd0 HEAD -- apps/reader/store/001_catalog.sql
+          if git diff --name-only c3511a011eefbf1fba1d20908f000cef22b1ced2 HEAD | grep -v -E '^(apps/reader/navigation/|tests/reader_navigation/|\.github/workflows/reader-navigation\.yml$|docs/READER-NAVIGATION\.md$|docs/validation/reader-navigation\.json$)'; then
+            echo "files outside the F2 ownership list changed"; exit 1
+          fi
+      - name: Enter Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install the frozen reading SDK once
+        run: |
+          mkdir -p build/navigation-logs
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "N_WS=$ws" >> "$GITHUB_ENV"
+          cmake --preset reading-library 2>&1 | tee build/navigation-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/navigation-logs/sdk-build.log
+          cmake --install build/reading-library
+      - name: Install the optional navigation package
+        run: |
+          cmake -S apps/reader/navigation -B build/navigation -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$N_WS/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$N_WS/build/navigation-stage" 2>&1 | tee build/navigation-logs/navigation-configure.log
+          cmake --build build/navigation --verbose 2>&1 | tee build/navigation-logs/navigation-build.log
+          cmake --install build/navigation 2>&1 | tee build/navigation-logs/navigation-install.log
+      - name: Compile isolated C and C++ consumers from the installed packages only
+        run: |
+          cmake -S tests/reader_navigation/consumer -B build/navigation-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$N_WS/build/navigation-stage;$N_WS/build/reading-library/stage" 2>&1 | tee build/navigation-logs/consumer-configure.log
+          cmake --build build/navigation-consumer --verbose 2>&1 | tee build/navigation-logs/consumer-build.log
+      - name: Run installed consumers against generated originals and record raw measurements
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_navigation/make_navigation_fixtures.py build/navigation-fixtures
+          python3 tests/reader_navigation/check_navigation.py --probe "build/navigation-consumer/navigation-probe$exe" --c-consumer "build/navigation-consumer/navigation-c-consumer$exe" --fixtures build/navigation-fixtures --installed build/navigation-stage --output build/navigation-evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-navigation-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/navigation-logs/
+            build/navigation-fixtures/
+            build/navigation-evidence/
+            build/navigation-stage/
+            build/navigation-consumer/navigation-probe*
+            build/navigation-consumer/navigation-c-consumer*
+            build/reading-library/CMakeCache.txt
+          if-no-files-found: error
+  evidence:
+    name: strict navigation evidence
+    needs: [consumers]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate both platform ZIPs and compare their outcomes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_navigation/check_artifacts.py build/navigation-artifact-evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-navigation-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/navigation-artifact-evidence/
+          if-no-files-found: error
