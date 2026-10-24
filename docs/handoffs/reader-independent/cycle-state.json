@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "recorded_at_utc": "2026-10-24T20:21:24Z",
+  "recorded_at_utc": "2026-10-24T20:45:43Z",
   "current_cycle": 1,
   "completed_cycles": 0,
   "audit_interval": 5,
@@ -52,9 +52,9 @@
       "branch": "codex/reader-apple-navigation-ui",
       "completed_ios_evidence_head": "254466e7",
       "ios_run": 40080841137,
-      "candidate": "ae30466a4bd72b343b90f94008373b24d2086b6f",
+      "candidate": "eb123aa82140eafbe5143f7b67a7f2f65e8544f0",
       "candidate_runs": [
-        40127300142
+        40130739432
       ],
       "passed_diagnostic_runs": [
         40107115391,
@@ -66,7 +66,7 @@
     },
     {
       "agent": "/root/handoff_validation",
-      "branch": "codex/reader-gtk-navigation-ui",
+      "branch": "codex/reader-gtk-reading-records-ui",
       "completed_receive_source": "ddaded9b81c2e51de4313919242f883246dd4426",
       "completed_receive_evidence_head": "8a7cab996f7b3a876254f16a90dab69bbeb9f15a",
       "completed_receive_run": 40087214516,
@@ -79,13 +79,18 @@
         "failed": 2
       },
       "settings_accepted": false,
-      "next_work": "complete_native_navigation_same_source_regression",
+      "next_work": "G03_G04_product_reading_records_native_UI",
       "pending_settings": [
         "whole_reading_page_background",
         "dark_reading_page"
       ],
       "current_navigation_source": "f31858c6df4a4bf753a0caac67bf229b17b22ef1",
-      "current_navigation_run": 40128621078
+      "current_navigation_run": 40128621078,
+      "navigation_evidence_head": "1ad762a0b68372c56b712d0129be8129d38b651f",
+      "navigation_ui_checks_passed": 29,
+      "navigation_backend_checks_passed": 58,
+      "whole_run_conclusion": "failure",
+      "whole_run_failures": ["whole_reading_page_background", "dark_reading_page"]
     },
     {
       "agent": "/root/main_android",
@@ -102,8 +107,8 @@
       "completed_search_attempt": 2,
       "completed_search_checks": 15,
       "next_work": "G03_G04_product_reading_records_native_UI",
-      "current_reading_source": "8ecd160d052b22b12cf7fd9e265b106fa017cdb5",
-      "current_reading_run": 40128548716
+      "current_reading_source": "dd0f884e8d5d7b6cde5090777b0959d65914ca80",
+      "current_reading_run": 40129989048
     }
   ],
   "claude_quota": {
@@ -258,8 +263,13 @@
   "root_windows_search": {
     "branch": "codex/reader-windows-search-ui",
     "accepted": false,
-    "source": "e4bddc310ba5a731596bd4d5b3b29a831cd4bf1b",
-    "next": "cloud build and initial TXT controls, followed by complete lifecycle and retained regressions",
-    "run": 40128929347
+    "source": "f4366ed0033ab5b3dac652424fbf07f790a01da3",
+    "next": "verify native shelf snapshot readiness before initial TXT import, then complete lifecycle and retained regressions",
+    "run": 40131176153,
+    "earlier_failed_runs": [40128929347, 40129875990, 40130496026],
+    "original_f1_checks_passed_per_run": 264,
+    "initial_host_checks_completed": 0,
+    "failure_phase": "wait-imported-row",
+    "first_artifact_read_only_diagnostic": 40130113080
   }
 }
