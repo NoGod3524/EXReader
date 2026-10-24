@@ -96,9 +96,14 @@ import CryptoKit
             let result = Result { try queue.sync { try catalog.shelf(query: query, anchor: anchor, before: before, inclusive: inclusive) } }
             if deferred { pending = { done(result) } } else { done(result) }
         }
+        var appendKeepsNativeOffset = true
         func layout(_ id: String) {
             paged.didScroll(revision: paged.restoreRevision)
+            let priorKeys = paged.rows.map(\.id), priorEpoch = paged.geometryRevision
             paged.observe([id: CGRect(x: 0, y: 0, width: 100, height: 40)], size: CGSize(width: 100, height: 100), revision: paged.geometryRevision)
+            if paged.rows.count > priorKeys.count && Array(paged.rows.prefix(priorKeys.count).map(\.id)) == priorKeys {
+                appendKeepsNativeOffset = appendKeepsNativeOffset && paged.geometryRevision == priorEpoch && !paged.needsScroll
+            }
         }
         func acknowledge() {
             for _ in 0..<4 {
@@ -118,7 +123,7 @@ import CryptoKit
             layout(first.id); acknowledge(); reverse.formUnion(paged.rows.map(\.id)); turns += 1
         }
         try check("production_state_bounds_both_real_traversals", visited.count == 2202 && reverse.count == 2202 &&
-            paged.rows.count <= 150 && paged.maximumRows == 150)
+            paged.rows.count <= 150 && paged.maximumRows == 150 && appendKeepsNativeOffset)
         let chosen = paged.rows[25]
         layout(chosen.id); paged.save()
         let saved = pageDefaults.data(forKey: "EXRShelfTop")

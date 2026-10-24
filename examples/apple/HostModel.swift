@@ -119,6 +119,9 @@ final class HostShelf: ObservableObject {
                 }
                 let retainedTop = replacing ? anchor :
                     (self.rows.first(where: { $0.id == self.awaitingLayoutKey })?.key ?? self.top)
+                // Appending within the cache changes no existing row position.
+                // A forced scroll here races an in-flight native drag/deceleration.
+                let shiftsExistingRows = replacing || previous || self.rows.count + page.count > 150
                 if !replacing && self.rows.count + page.count > 150,
                    let index = self.rows.firstIndex(where: { $0.key == self.top }) {
                     if (!previous && index < 50) || (previous && index + self.visible.count > self.rows.count - 50) { return }
@@ -138,9 +141,11 @@ final class HostShelf: ObservableObject {
                 }
                 self.maximumRows = max(self.maximumRows, self.rows.count)
                 self.appliedGeneration = token; self.appliedQuery = requested
-                self.restoreKey = retainedTop.flatMap { key in self.rows.contains(where: { $0.key == key }) ? key.key : nil } ?? self.rows.first?.id
-                self.awaitingLayoutKey = self.restoreKey
-                self.restoreRevision += 1
+                if shiftsExistingRows {
+                    self.restoreKey = retainedTop.flatMap { key in self.rows.contains(where: { $0.key == key }) ? key.key : nil } ?? self.rows.first?.id
+                    self.awaitingLayoutKey = self.restoreKey
+                    self.restoreRevision += 1
+                }
             }
         }
     }

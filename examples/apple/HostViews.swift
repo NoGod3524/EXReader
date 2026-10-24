@@ -87,7 +87,7 @@ private struct ShelfGeometryProbe: View {
             Color.clear.preference(key: ShelfGeometryKey.self, value: rowKey.map {
                 ShelfGeometry(frames: [$0: geometry.frame(in: .named("catalog-shelf"))], revision: revision)
             } ?? ShelfGeometry(size: geometry.size, revision: revision))
-        }.id(revision)
+        }
     }
 }
 
@@ -201,13 +201,13 @@ struct LibraryScreen: View {
                             .accessibilityLabel(Text("\(book.title)，\(book.author)，\(book.format.uppercased())"))
                             .id(book.id)
                             .padding(.horizontal, 8)
-                            .background(ShelfGeometryProbe(shelf: shelf, rowKey: book.id))
+                            .background(ShelfGeometryProbe(shelf: shelf, rowKey: book.id).id(shelf.geometryRevision))
                         }
                       }
                     }
                     .accessibilityIdentifier("library.list")
                     .coordinateSpace(name: "catalog-shelf")
-                    .background(ShelfGeometryProbe(shelf: shelf))
+                    .background(ShelfGeometryProbe(shelf: shelf).id(shelf.geometryRevision))
                     .onPreferenceChange(ShelfGeometryKey.self) { geometry in
                         shelf.observe(geometry.frames, size: geometry.size, revision: geometry.revision)
                         if geometry.revision == shelf.geometryRevision, geometry.size.width > 0, geometry.size.height > 0,
