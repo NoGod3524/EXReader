@@ -16,7 +16,7 @@ NAMES={'actualInstalledProviderAndJson','persistedNativeCreateIds','strictUtf16A
        'outboxFailureRollsBackAndRetries','membershipNeedsExplicitBookBootstrap','publicSdkBootstrapKeepsCurrentProductTitle',
        'shelfAndSeriesMembershipOrder','missingAndDeletedDependenciesRefused','mapFailureKeepsSdkAndCommittedBookCommand',
        'nativeRejectsWrongOwner','nativeRejectsClosedHandle','twoNativeOwnersCompeteOnOneObservedHead',
-       'sdkDatabaseRefusedWithoutModification'}
+       'sdkDatabaseRefusedWithoutModification','opensClosedLegacySystemCatalog'}
 
 
 def require(value,message):
@@ -71,8 +71,8 @@ def inspect(root,all_exits):
     expected=identity();require((root/'source.txt').read_text().strip()==expected['source_sha'],'checkout source differs')
     require((root/'device-api.txt').read_text().strip()=='34' and (root/'device-abi.txt').read_text().strip()=='x86_64','API34 x86_64 required')
     device=json.loads((root/'device-report.json').read_text());require(all(device.get(k)==v for k,v in expected.items()),'device source/run/attempt differs')
-    require(device['api']==34 and device['abi']=='x86_64' and device['count']==16 and device['failed']==0,'owner device execution failed')
-    checks=device['checks'];require(len(checks)==16 and {v['id'] for v in checks}==NAMES and all(v['pass'] is True for v in checks),'owner checks missing/duplicated/failed')
+    require(device['api']==34 and device['abi']=='x86_64' and device['count']==len(NAMES) and device['failed']==0,'owner device execution failed')
+    checks=device['checks'];require(len(checks)==len(NAMES) and {v['id'] for v in checks}==NAMES and all(v['pass'] is True for v in checks),'owner checks missing/duplicated/failed')
     names=[];reports={}
     for path in sorted((root/'owner-reports').rglob('*.xml')):
         tree=ET.fromstring(path.read_bytes());reports[str(path.relative_to(root))]=digest(path)
@@ -80,7 +80,7 @@ def inspect(root,all_exits):
         for case in tree.iter('testcase'):
             require(case.get('classname')=='org.exreader.host.ProductOwnerTest' and not any(case.find(k) is not None for k in ('failure','error','skipped')),'owner XML failure or unexpected class')
             names.append(case.get('name'))
-    require(len(names)==16 and set(names)==NAMES,'owner XML cases missing/duplicated')
+    require(len(names)==len(NAMES) and set(names)==NAMES,'owner XML cases missing/duplicated')
     source,proof=native(root/'native');provider=device['provider']
     require(provider[0]=='3.54.0' and provider[1]==provider[2]==source,'actual provider source/header differs')
     require(Path(provider[3]).name=='libexreader_product.so','actual runtime function is from another provider')
@@ -92,7 +92,7 @@ def inspect(root,all_exits):
         text=recovery.read_text();require('EXR_OWNER_RECOVERED recover-'+phase in text and re.search(r'^INSTRUMENTATION_CODE: -1\s*$',text,re.M) and 'EXR_OWNER_PHASE_FAILED' not in text,'native recovery failed')
         require(witness.read_text()==('1,1,0' if phase=='before' else '1,1,1'),'native three-write crash witness differs')
         phases[phase]={p.name:digest(p) for p in (seed,recovery,witness)}
-    result={**expected,'accepted':True,'problems':[],'owner_checks':16,'typed_kill_checks':2,
+    result={**expected,'accepted':True,'problems':[],'owner_checks':len(NAMES),'typed_kill_checks':2,
             'device_reports':reports,'native_proof':proof,'process_boundaries':phases,
             'native_owner_serial_catalog_revision_handles':2,'local_project_three_writes_atomic':True,
             'cross_handle_or_sdk_database_atomicity_claimed':False,'classification_ui_accepted':False,
