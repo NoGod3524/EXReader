@@ -66,10 +66,15 @@ def main():
         raise TimeoutError('missing native control: ' + name)
 
     def click_node(node):
-        rect = bus.extents(node)
-        assert rect and rect['width'] > 3 and rect['height'] > 3 and bus.states(node).get('sensitive'), bus.name(node)
-        command('xdotool', 'mousemove', '--sync', str(rect['x'] + rect['width'] // 2), str(rect['y'] + rect['height'] // 2))
-        command('xdotool', 'click', '1')
+        end = time.monotonic() + 10
+        while time.monotonic() < end:
+            rect = bus.extents(node)
+            if rect and rect['width'] > 3 and rect['height'] > 3 and bus.states(node).get('sensitive'):
+                command('xdotool', 'mousemove', '--sync', str(rect['x'] + rect['width'] // 2), str(rect['y'] + rect['height'] // 2))
+                command('xdotool', 'click', '1')
+                return
+            time.sleep(.02)
+        raise TimeoutError('native control not actionable: ' + bus.name(node) + ' ' + repr(bus.states(node)))
 
     def click(name, roles=None):
         click_node(element(name, roles))
@@ -112,7 +117,7 @@ def main():
                 if predicate(observed('native_import')):
                     return
                 time.sleep(.02)
-            print(json.dumps(dict(expected_path=str(root), expected_sha256=hashlib.sha256(str(root).encode()).hexdigest(), entries=[dict(name=bus.name(node), state=bus.states(node), text=bus.accessible_text(node)) for node in bus.walk(chooser) if bus.role(node) == 'text' and bus.states(node).get('showing')]), ensure_ascii=False), flush=True)
+            print(json.dumps(dict(expected_path=str(root), expected_sha256=hashlib.sha256(str(root).encode()).hexdigest(), controls=[dict(role=bus.role(node), name=bus.name(node), state=bus.states(node), text=bus.accessible_text(node)) for node in bus.walk(chooser) if bus.role(node) in ('text', 'push button') and bus.states(node).get('showing')]), ensure_ascii=False), flush=True)
             raise TimeoutError('folder chooser readiness: ' + repr(observed('native_import')))
         native_ready(lambda value: value.get('active') == '1')
         host.key('ctrl+l')
@@ -130,7 +135,7 @@ def main():
         # SELECT_FOLDER first navigates to a typed directory. Unlike OPEN, it
         # cannot select/accept that path before this real native activation.
         host.key('Return')
-        native_ready(lambda value: observed().get('visible') == '1' or (value.get('selected_sha256') == digest and value.get('accept_sensitive') == '1'))
+        native_ready(lambda value: observed().get('visible') == '1' or value.get('selected_sha256') == digest)
         if observed().get('visible') == '1':
             return
         click('Choose folder', {'push button'})
