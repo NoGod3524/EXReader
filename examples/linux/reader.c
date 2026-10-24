@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#ifdef EXR_READER_ACCOUNT
+#include <reader_session.h>
+#include <exr_credentials.h>
+#endif
 
 static GtkWidget *window,*image,*label,*shelf,*notes,*text,*comment,*stack,*bigger,*smaller;
 static size_t book_count,page_number,page_start,page_end,note_count,selection_start,selection_end,part;
@@ -26,6 +30,15 @@ static gboolean profile_writable;
 typedef struct { reader_command command;char *path,*comment;int generation,stop,shelf_generation; } host_job;
 typedef struct { reader_result value;reader_action action;int generation,profile_writable,shelf_generation; } host_result;
 static void stop_worker(void);
+#ifdef EXR_READER_ACCOUNT
+static void accounts_open(GtkWidget *,gpointer);
+static void accounts_apply(host_result *);
+static gboolean accounts_opened(void);
+static gboolean accounts_defer_exit(void);
+static char *accounts_observation(void);
+static void accounts_cleanup(void);
+static gboolean close_window(GtkWidget *,GdkEvent *,gpointer);
+#endif
 #ifdef EXR_READER_DESKTOP_METADATA
 static gboolean metadata_running;
 static GtkWidget *metadata_dialog,*metadata_title,*metadata_author,*metadata_favorite,*metadata_message;
@@ -105,6 +118,10 @@ static void state(void) {
 #ifdef EXR_READER_DESKTOP_METADATA
   char *organization=collections_observation();
   complete=g_strconcat(data,organization,NULL);g_free(data);g_free(organization);data=complete;
+#endif
+#ifdef EXR_READER_ACCOUNT
+  char *account=accounts_observation();
+  complete=g_strconcat(data,account,NULL);g_free(data);g_free(account);data=complete;
 #endif
   g_file_set_contents(state_path,data,-1,NULL);g_free(data);
 }
@@ -299,7 +316,9 @@ static void job_free(host_job *job) {
   g_free((gpointer)job->command.collection_parent);g_free((gpointer)job->command.collection_id);
   g_free((gpointer)job->command.collection_name);g_free((gpointer)job->command.collection_position);
   g_free((gpointer)job->command.collection_book_key);g_free((gpointer)job->command.collection_group_cursor);
-  g_free((gpointer)job->command.collection_member_cursor);g_free(job);
+  g_free((gpointer)job->command.collection_member_cursor);
+  g_free((gpointer)job->command.account_root);g_free((gpointer)job->command.account_id);
+  reader_secret_free((char *)job->command.account_user);reader_secret_free((char *)job->command.account_password);g_free(job);
 }
 static void queue_commit(void) {
   host_job *job=g_new0(host_job,1);job->generation=g_atomic_int_get(&generation);
@@ -310,6 +329,11 @@ static void queue_commit(void) {
 static void pixels_free(guchar *pixels,gpointer unused) { (void)unused;free(pixels); }
 static gboolean apply_result(gpointer data) {
   host_result *done=data;reader_result *result=&done->value;
+#ifdef EXR_READER_ACCOUNT
+  if(done->action>=READER_ACCOUNT_LOAD && done->action<=READER_ACCOUNT_STAGE_NEXT) {
+    accounts_apply(done);goto free_result;
+  }
+#endif
 #ifdef EXR_READER_DESKTOP_METADATA
   if(done->action>=READER_COLLECTIONS_LIST && done->action<=READER_COLLECTIONS_DISCARD) {
     collections_apply(done);goto free_result;
@@ -396,6 +420,9 @@ static gpointer work(gpointer font_path) {
 #ifdef EXR_READER_DESKTOP_METADATA
     barrier=barrier || (job->command.action>=READER_METADATA_PREPARE && job->command.action<=READER_COLLECTIONS_DISCARD);
 #endif
+#ifdef EXR_READER_ACCOUNT
+    barrier=barrier || (job->command.action>=READER_ACCOUNT_LOAD && job->command.action<=READER_ACCOUNT_STAGE_NEXT);
+#endif
     if(!barrier && job->generation!=g_atomic_int_get(&generation)) { job_free(job);continue; }
     worker_generation=barrier ? g_atomic_int_get(&generation):job->generation;
     host_result *result=g_new0(host_result,1);result->generation=job->generation;result->action=job->command.action;
@@ -409,6 +436,9 @@ static gpointer work(gpointer font_path) {
 }
 #ifdef EXR_READER_PRODUCT_CATALOG
 static void shelf_request(int direction,gboolean anchor) {
+#ifdef EXR_READER_ACCOUNT
+  if(accounts_opened()) return;
+#endif
 #ifdef EXR_READER_DESKTOP_METADATA
   if(collections_opened()) return;
 #endif
@@ -462,6 +492,9 @@ static void submit(reader_action action,int64_t id,const char *path,int size) {
 #include "metadata_ui.inc"
 #include "collections_ui.inc"
 #endif
+#ifdef EXR_READER_ACCOUNT
+#include "accounts_ui.inc"
+#endif
 static void open_id(int64_t id) { submit(READER_OPEN,id,NULL,font_size); }
 static void import_dialog(void) {
   if(busy || closing || save_failed) { state();return; }
@@ -510,6 +543,11 @@ static void action(GtkWidget *widget,gpointer name) {
 static gboolean key(GtkWidget *w,GdkEventKey *event,gpointer unused) {
   (void)w;(void)unused;
   if(choosing_file) return FALSE;
+#ifdef EXR_READER_ACCOUNT
+  if((event->state&GDK_CONTROL_MASK) && (event->state&GDK_SHIFT_MASK) && (event->keyval==GDK_KEY_A || event->keyval==GDK_KEY_a)) {
+    accounts_open(NULL,NULL);return TRUE;
+  }
+#endif
 #ifdef EXR_READER_DESKTOP_METADATA
   if((event->state&GDK_CONTROL_MASK) && (event->state&GDK_SHIFT_MASK) && (event->keyval==GDK_KEY_C || event->keyval==GDK_KEY_c)) {
     collections_open(NULL,NULL);return TRUE;
@@ -546,11 +584,17 @@ static gboolean page_painted(GtkWidget *widget,cairo_t *context,gpointer unused)
   (void)widget;(void)context;(void)unused;painted_generation=frame_generation;state();return FALSE;
 }
 static void stop_worker(void) {
+#ifdef EXR_READER_ACCOUNT
+  if(accounts_defer_exit()) return;
+#endif
   if(closing) return;
   closing=TRUE;g_atomic_int_inc(&generation);host_job *stop=g_new0(host_job,1);stop->stop=1;g_async_queue_push(queue,stop);state();
 }
 static gboolean close_window(GtkWidget *w,GdkEvent *event,gpointer unused) {
   (void)w;(void)event;(void)unused;
+#ifdef EXR_READER_ACCOUNT
+  if(accounts_defer_exit()) return TRUE;
+#endif
 #ifdef EXR_READER_DESKTOP_METADATA
   if(metadata_running) { close_after_save=TRUE;return TRUE; }
 #endif
@@ -630,6 +674,10 @@ int main(int argc,char **argv) {
   gtk_button_set_use_underline(GTK_BUTTON(more),TRUE);atk_object_set_name(gtk_widget_get_accessible(more),"More library actions");
   GtkWidget *menu=gtk_menu_new(),*organize=gtk_menu_item_new_with_label("Collections…");
   gtk_menu_shell_append(GTK_MENU_SHELL(menu),organize);g_signal_connect(organize,"activate",G_CALLBACK(collections_open),NULL);
+#ifdef EXR_READER_ACCOUNT
+  GtkWidget *account=gtk_menu_item_new_with_label("Account / Sync…");
+  gtk_menu_shell_append(GTK_MENU_SHELL(menu),account);g_signal_connect(account,"activate",G_CALLBACK(accounts_open),NULL);
+#endif
   gtk_widget_show_all(menu);gtk_menu_button_set_popup(GTK_MENU_BUTTON(more),menu);
   gtk_widget_set_tooltip_text(more,"Organize shelves, tags and series (Ctrl+Shift+C)");
   gtk_box_pack_end(GTK_BOX(shelf_actions),more,FALSE,FALSE,0);
@@ -673,6 +721,9 @@ int main(int argc,char **argv) {
   gtk_widget_show_all(window);gtk_window_present(GTK_WINDOW(window));queue=g_async_queue_new();
   thread=g_thread_new("reading",work,font_path);submit(last ? READER_OPEN:READER_SHELF,last,NULL,font_size);
   state();gtk_main();g_thread_join(thread);g_async_queue_unref(queue);
+#ifdef EXR_READER_ACCOUNT
+  accounts_cleanup();
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   g_free(shelf_query);g_free(shelf_top_key);g_free(shelf_selected_key);g_free(restore_key);
 #endif
