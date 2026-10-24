@@ -1,6 +1,6 @@
 @PACKAGE_INIT@
 include(CMakeFindDependencyMacro)
-if(NOT WIN32)
+if(NOT WIN32 AND NOT ANDROID)
   find_dependency(PkgConfig)
   pkg_check_modules(CURL REQUIRED IMPORTED_TARGET libcurl)
   find_dependency(LibXml2)
