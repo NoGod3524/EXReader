@@ -50,6 +50,22 @@ REQUIRED_CHECKS = ['%s: %s' % (case, name) for case in ('epub3-nav', 'epub2-ncx'
     'pages: every page is a root row with role page, its page id and no PDF outline text',
     'pages: each page row is confirmed on a second independently opened PDF', 'pages: another document is MISMATCH',
     'pages: more pages than max_nodes are refused', 'pages: the PDF bytes are unchanged',
+    'identity: different originals retain identical part paths and IDs',
+    'identity: a verified source snapshot opens',
+    'identity: open copies the source key and allows an independently opened identical original',
+    'identity: another original with identical directory is MISMATCH',
+    'identity: a wrong key is refused even for the original handle',
+    'identity: CFI resolution checks the actual source key',
+    'identity: missing resolve options and missing key are ARGUMENT',
+    'identity: parser version is part of the source key',
+    'identity: an unbound snapshot remains display-only',
+    'identity: empty oversized malformed UTF-8 and unterminated keys are refused',
+    'identity: one-byte and 255-byte UTF-8 keys roundtrip exactly',
+    'owner: all handle calls refuse another thread before SDK access and keep the handle',
+    'owner: the creating owner can still navigate after wrong-thread calls',
+    'identity: malformed options and outside row clear the target',
+    'identity: document resolution rejects a different original with the same chapters',
+    'identity: fixed pages reject another original with identical page IDs',
 ]
 
 
@@ -78,7 +94,10 @@ def main():
     manifest = json.loads((a.fixtures / 'manifest.json').read_text(encoding='utf-8'))
     for name, entry in manifest.items():
         assert sha256(a.fixtures / name) == entry['sha256'], name
-    result = subprocess.run([str(a.probe.resolve()), '--fixtures', str(a.fixtures.resolve()), '--report', str(out / 'probe.json')],
+    command = [str(a.probe.resolve()), '--fixtures', str(a.fixtures.resolve()), '--report', str(out / 'probe.json')]
+    for name, entry in manifest.items():
+        command += ['--source-key', name + '=' + entry['sha256']]
+    result = subprocess.run(command,
                             capture_output=True, text=True, encoding='utf-8', timeout=1500)
     (out / 'probe.log').write_text(result.stdout + '\n' + result.stderr, encoding='utf-8')
     print(result.stdout); print(result.stderr)

@@ -1,6 +1,6 @@
 {
   "accepted": false,
-  "status": "114 checks passed on Windows/Linux in one cloud run; source-identity audit remains open",
+  "status": "source-key and owner fix candidate awaits a full new same-source cloud run; prior 114-check evidence retained below",
   "package": "EXReaderNavigation 0.1.0",
   "common_start": "c3511a011eefbf1fba1d20908f000cef22b1ced2",
   "source_sha": "7a7d2de2a8e1baeaca7fc739898fa33cab1f8e00",
@@ -44,7 +44,7 @@
     "failures_per_platform": 1,
     "reason": "The custom publication fixture returned TXT without a chapter directory, so public fragment resolve rejected its chapter index. The fixture now constructs a real chapter with the public SDK; original PART_ONLY expectation retained and an independent SDK precondition check added."
   }],
-  "problems": ["The implementation compares only ordered part paths and IDs to identify the live source. Distinct books with identical directories are not yet distinguished; the public same-book contract is not fully verified by this run."],
+  "problems": ["The following candidate adds verified source-key binding and owner guards; its expanded regression set has not yet completed a same-source cloud run. The recorded 114-check run predates these production changes and does not grant them acceptance."],
   "granted_platforms": [],
   "macos_accepted": false,
   "performance_claimed": false,

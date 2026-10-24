@@ -60,8 +60,18 @@ SDK 未解析而本模块又只找到一个同路径 part 时同样返回 `UNRES
 ## 所有权、取消与重入
 
 快照句柄及其调用、`close` 在创建它的 owner 上使用；传入的 SDK 句柄只在调用期间借用。模块不创建线程。
+跨线程的所有句柄入口在读取 SDK 或 busy 状态之前返回 `ARGUMENT`；`close` 保留句柄，输出清空。
 `exr_control` 回调内再调用同一快照的任何函数返回 `BUSY`，状态不变（SDK 句柄自身的禁止重入规则也适用）。
 取消在每次 SDK 调用前后及每 256 行拷贝处轮询；`CANCELLED` 时无输出、无需释放。失败调用的输出一律为空。
+
+## 原书身份
+
+打开选项的 `source_key` 由宿主在验证原件后提供，推荐为 `format:原书SHA256@parser版本`，
+模块复制 1..255 字节的非空 UTF-8 key。resolve 选项必须提供当前 SDK 输入的已验证 key，
+逐字匹配快照的 key；不同原书或 parser 返回 `MISMATCH`，缺少/非法 key 返回 `ARGUMENT`。
+有序 part 路径/ID 仅作为附加目录一致性检查。模块不重新散列 SDK 隐藏的原件，宿主必须准确绑定 key 与句柄。
+未提供 key 的快照仍能独立展示目录，不能用于导航。独立重开的同一原书使用同一 key 可正常 resolve。
+公开头新增 key 字段后，调用者须按当前 `sizeof` 初始化选项，不复用旧选项布局。
 
 ## 云端验证（仅 GitHub Actions）
 
@@ -90,4 +100,6 @@ EPUB3 nav、EPUB2 NCX、嵌套与空目录、重复标题、非 ASCII 标题、�
 独立审查还发现身份检查仅比较 part 路径和 ID 的有序目录，不足以区分目录相同而内容不同的两本书。
 这轮原有套件成功保留，但 `docs/validation/reader-navigation.json` 的整体 `accepted` 继续为 false、
 `granted_platforms` 为空；须补上真实来源身份绑定及同目录换书负例，才能授予完整包契约。
+后续候选现已补入上述 key 绑定和 owner 守卫，以及同目录异原件、同页 ID 异 PDF、独立重开、
+错误/缺少 key、UTF-8/长度边界及所有入口跨线程回归；须待这份源码的完整同源云端结果。
 即便通过，也只授予本包接口：不含宿主 UI、产品性能、六平台互通、macOS，且 PDF/CBZ 无作者大纲。

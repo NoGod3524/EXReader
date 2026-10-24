@@ -8,6 +8,7 @@
 #include <memory>
 #include <new>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -81,6 +82,8 @@ struct unit { const char *path; const char *id; };
 }
 
 struct reader_navigation {
+  const std::thread::id owner=std::this_thread::get_id();
+  std::string source_key;
   reader_navigation_kind kind=READER_NAVIGATION_AUTHORED;
   reader_navigation_source source=READER_NAVIGATION_FROM_PUBLICATION;
   std::vector<row_data> rows;
@@ -93,11 +96,31 @@ namespace {
 struct busy_guard {
   reader_navigation &n;
   explicit busy_guard(reader_navigation &x):n(x){
+    if(n.owner!=std::this_thread::get_id())reject(READER_NAVIGATION_ARGUMENT,"Navigation requires its creating owner");
     if(n.busy)reject(READER_NAVIGATION_BUSY,"Reentrant call on a navigation snapshot");
     n.busy=1;
   }
   ~busy_guard(){n.busy=0;}
 };
+
+std::string source_key(const char *key,bool required){
+  if(!key){if(required)reject(READER_NAVIGATION_ARGUMENT,"A verified source key is required for navigation");return {};}
+  size_t size=0;while(size<=READER_NAVIGATION_SOURCE_KEY_MAX&&key[size])++size;
+  if(!size||size>READER_NAVIGATION_SOURCE_KEY_MAX)reject(READER_NAVIGATION_ARGUMENT,"Invalid source key length");
+  for(size_t i=0;i<size;){
+    unsigned char lead=(unsigned char)key[i++];uint32_t cp;size_t tail;
+    if(lead<0x80)continue;
+    if(lead>=0xc2&&lead<=0xdf){cp=lead&31;tail=1;}
+    else if(lead>=0xe0&&lead<=0xef){cp=lead&15;tail=2;}
+    else if(lead>=0xf0&&lead<=0xf4){cp=lead&7;tail=3;}
+    else reject(READER_NAVIGATION_ARGUMENT,"Source key must be UTF-8");
+    if(tail>size-i)reject(READER_NAVIGATION_ARGUMENT,"Source key must be UTF-8");
+    for(size_t j=0;j<tail;j++){unsigned char c=(unsigned char)key[i++];if((c&0xc0)!=0x80)reject(READER_NAVIGATION_ARGUMENT,"Source key must be UTF-8");cp=(cp<<6)|(c&63);}
+    if((tail==1&&cp<0x80)||(tail==2&&cp<0x800)||(tail==3&&cp<0x10000)||
+       (cp>=0xd800&&cp<=0xdfff)||cp>0x10ffff)reject(READER_NAVIGATION_ARGUMENT,"Source key must be UTF-8");
+  }
+  return std::string(key,size);
+}
 
 limits make_limits(const reader_navigation_options *o,canceller &c){
   limits l{READER_NAVIGATION_NODES_MAX,READER_NAVIGATION_DEPTH_MAX,READER_NAVIGATION_TEXT_MAX};
@@ -108,6 +131,7 @@ limits make_limits(const reader_navigation_options *o,canceller &c){
   if(o->max_nodes)l.nodes=o->max_nodes;
   if(o->max_depth)l.depth=o->max_depth;
   if(o->max_text_bytes)l.text=o->max_text_bytes;
+  (void)source_key(o->source_key,false);
   c.control=o->control;
   return l;
 }
@@ -248,11 +272,14 @@ struct target_holder {
   ~target_holder(){if(!keep)target_release(&t);}
 };
 
-void parse_resolve_options(const reader_navigation_resolve_options *o,canceller &c,uint64_t &explicit_part){
+void parse_resolve_options(const reader_navigation &n,const reader_navigation_resolve_options *o,canceller &c,uint64_t &explicit_part){
   explicit_part=NONE;
-  if(!o)return;
+  if(!o)reject(READER_NAVIGATION_ARGUMENT,"Resolve requires a verified source key");
   if(o->struct_size!=sizeof(*o))reject(READER_NAVIGATION_ARGUMENT,"options.struct_size differs from sizeof(reader_navigation_resolve_options)");
   c.control=o->control;explicit_part=o->explicit_part;
+  std::string supplied=source_key(o->source_key,true);
+  if(n.source_key.empty())reject(READER_NAVIGATION_ARGUMENT,"A display-only snapshot cannot resolve targets");
+  if(n.source_key!=supplied)reject(READER_NAVIGATION_MISMATCH,"The verified source or parser differs from the snapshot");
 }
 /* The live book must be the snapshot's book: same number of parts and the same ids and
    paths in order, or no verdict is given. */
@@ -373,6 +400,7 @@ reader_navigation_status reader_navigation_open_publication(exr_publication *pub
     std::vector<unit> units=publication_units(publication);
     std::unique_ptr<reader_navigation> n;
     authored_snapshot(READER_NAVIGATION_FROM_PUBLICATION,status,entries,count,se,units,l,c,n);
+    n->source_key=source_key(options?options->source_key:nullptr,false);
     *out=n.release();
     return soft{};
   });
@@ -393,6 +421,7 @@ reader_navigation_status reader_navigation_open_document(const exr_document *doc
     for(size_t i=0;i<chapters;i++)units.push_back({list[i].path,list[i].id});
     std::unique_ptr<reader_navigation> n;
     authored_snapshot(READER_NAVIGATION_FROM_DOCUMENT,status,entries,count,se,units,l,c,n);
+    n->source_key=source_key(options?options->source_key:nullptr,false);
     *out=n.release();
     return soft{};
   });
@@ -408,6 +437,7 @@ reader_navigation_status reader_navigation_open_pages(exr_fixed_document *docume
     if(count>l.nodes)reject(READER_NAVIGATION_LIMIT,"The book has more pages than the checked row limit");
     if(count&&!pages)reject(READER_NAVIGATION_SDK,"The SDK reported pages without a page directory");
     std::unique_ptr<reader_navigation> n(new reader_navigation);
+    n->source_key=source_key(options?options->source_key:nullptr,false);
     n->kind=READER_NAVIGATION_PAGES;n->source=READER_NAVIGATION_FROM_FIXED;n->part_count=count;
     std::vector<unit> units;units.reserve(count);
     for(size_t i=0;i<count;i++)units.push_back({nullptr,pages[i].id});
@@ -429,10 +459,10 @@ reader_navigation_status reader_navigation_open_pages(exr_fixed_document *docume
 }
 reader_navigation_status reader_navigation_info_get(reader_navigation *navigation,reader_navigation_info *info,
   reader_navigation_error *error){
+  if(info)std::memset(info,0,sizeof(*info));
   return call(error,[&]()->soft{
     if(!navigation||!info)reject(READER_NAVIGATION_ARGUMENT,"Missing snapshot or output");
     busy_guard g(*navigation);
-    std::memset(info,0,sizeof(*info));
     info->kind=navigation->kind;info->source=navigation->source;
     info->author_outline=navigation->kind==READER_NAVIGATION_AUTHORED&&!navigation->rows.empty()?1u:0u;
     info->node_count=navigation->rows.size();
@@ -446,6 +476,7 @@ reader_navigation_status reader_navigation_close(reader_navigation **navigation,
   return call(error,[&]()->soft{
     if(!navigation)reject(READER_NAVIGATION_ARGUMENT,"Missing snapshot pointer");
     if(!*navigation)return soft{};
+    if((*navigation)->owner!=std::this_thread::get_id())reject(READER_NAVIGATION_ARGUMENT,"Navigation requires its creating owner");
     if((*navigation)->busy)reject(READER_NAVIGATION_BUSY,"Cannot close a snapshot from inside its own call");
     delete *navigation;*navigation=nullptr;
     return soft{};
@@ -489,7 +520,7 @@ reader_navigation_status reader_navigation_resolve_publication(reader_navigation
     if(navigation->source!=READER_NAVIGATION_FROM_PUBLICATION||navigation->kind!=READER_NAVIGATION_AUTHORED)
       reject(READER_NAVIGATION_ARGUMENT,"The snapshot was not opened from a publication");
     need_row(*navigation,row);
-    canceller c;uint64_t explicit_part;parse_resolve_options(options,c,explicit_part);
+    canceller c;uint64_t explicit_part;parse_resolve_options(*navigation,options,c,explicit_part);
     std::vector<unit> units=publication_units(publication);
     verify_book(*navigation,units,row);
     c.poll();
@@ -529,7 +560,7 @@ reader_navigation_status reader_navigation_resolve_document(reader_navigation *n
     if(navigation->source!=READER_NAVIGATION_FROM_DOCUMENT||navigation->kind!=READER_NAVIGATION_AUTHORED)
       reject(READER_NAVIGATION_ARGUMENT,"The snapshot was not opened from a document");
     need_row(*navigation,row);
-    canceller c;uint64_t explicit_part;parse_resolve_options(options,c,explicit_part);
+    canceller c;uint64_t explicit_part;parse_resolve_options(*navigation,options,c,explicit_part);
     size_t chapters=0;const exr_chapter *list=exr_document_chapters(document,&chapters);
     std::vector<unit> units;units.reserve(chapters);
     for(size_t i=0;i<chapters;i++)units.push_back({list[i].path,list[i].id});
@@ -566,7 +597,7 @@ reader_navigation_status reader_navigation_resolve_page(reader_navigation *navig
     if(navigation->source!=READER_NAVIGATION_FROM_FIXED||navigation->kind!=READER_NAVIGATION_PAGES)
       reject(READER_NAVIGATION_ARGUMENT,"The snapshot was not opened from a fixed document's pages");
     need_row(*navigation,row);
-    canceller c;uint64_t explicit_part;parse_resolve_options(options,c,explicit_part);
+    canceller c;uint64_t explicit_part;parse_resolve_options(*navigation,options,c,explicit_part);
     size_t count=0;const exr_fixed_page *pages=exr_fixed_pages(document,&count);
     std::vector<unit> units;units.reserve(count);
     for(size_t i=0;i<count;i++)units.push_back({nullptr,pages[i].id});
@@ -590,9 +621,9 @@ reader_navigation_status reader_navigation_resolve_cfi(reader_navigation *naviga
     busy_guard g(*navigation);
     if(navigation->source!=READER_NAVIGATION_FROM_PUBLICATION||navigation->kind!=READER_NAVIGATION_AUTHORED)
       reject(READER_NAVIGATION_ARGUMENT,"The snapshot was not opened from a publication");
-    size_t size=std::strlen(cfi);
+    size_t size=0;while(size<=READER_NAVIGATION_CFI_MAX&&cfi[size])++size;
     if(!size||size>READER_NAVIGATION_CFI_MAX)reject(READER_NAVIGATION_ARGUMENT,"A CFI is 1..4096 bytes");
-    canceller c;uint64_t explicit_part;parse_resolve_options(options,c,explicit_part);
+    canceller c;uint64_t explicit_part;parse_resolve_options(*navigation,options,c,explicit_part);
     std::vector<unit> units=publication_units(publication);
     if(units.size()!=navigation->part_count||book_identity(units)!=navigation->identity)
       reject(READER_NAVIGATION_MISMATCH,"The live book is not the book this snapshot was taken from");

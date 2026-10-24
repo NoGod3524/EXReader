@@ -22,6 +22,7 @@ int main(void) {
   reader_navigation_page page;
   reader_navigation_target target;
   reader_navigation_resolve_options ro;
+  reader_navigation_options no;
   size_t i;
   if (strcmp(READER_NAVIGATION_VERSION, "0.1.0") || READER_NAVIGATION_PAGE_MAX != 100u ||
       READER_NAVIGATION_NODES_MAX != 10000u || READER_NAVIGATION_DEPTH_MAX != 64u) return 1;
@@ -32,7 +33,8 @@ int main(void) {
   pages[2].id = "c-c"; pages[2].label = "";
   input.struct_size = sizeof(input); input.title = "c"; input.pages = pages; input.page_count = 3; input.draw = draw_page;
   if (exr_fixed_create(&input, &doc, &sdk_error) != EXR_OK) return 2;
-  if (reader_navigation_open_pages(doc, NULL, &nav, &error) != READER_NAVIGATION_OK || !nav) return 3;
+  memset(&no, 0, sizeof(no)); no.struct_size = sizeof(no); no.source_key = "generated:fixed-c:v1";
+  if (reader_navigation_open_pages(doc, &no, &nav, &error) != READER_NAVIGATION_OK || !nav) return 3;
   if (reader_navigation_info_get(nav, &info, &error) != READER_NAVIGATION_OK) return 4;
   if (info.kind != READER_NAVIGATION_PAGES || info.author_outline != 0 || info.node_count != 3 || info.part_count != 3) return 5;
   memset(&page, 0xa5, sizeof(page));
@@ -45,7 +47,7 @@ int main(void) {
   reader_navigation_page_free(&page);
   if (page.rows || page.count) return 10;
   reader_navigation_page_free(&page);
-  if (reader_navigation_open_pages(doc, NULL, &nav, &error) != READER_NAVIGATION_OK) return 11;
+  if (reader_navigation_open_pages(doc, &no, &nav, &error) != READER_NAVIGATION_OK) return 11;
   if (reader_navigation_rows(nav, 0, 0, &page, &error) != READER_NAVIGATION_ARGUMENT || page.rows) return 12;
   if (reader_navigation_rows(nav, 0, 101, &page, &error) != READER_NAVIGATION_ARGUMENT || page.rows) return 13;
   if (reader_navigation_rows(nav, 4, 10, &page, &error) != READER_NAVIGATION_RANGE || page.rows) return 14;
@@ -54,6 +56,7 @@ int main(void) {
   if (reader_navigation_children(nav, READER_NAVIGATION_NONE, 0, 100, &page, &error) != READER_NAVIGATION_OK || page.count != 3) return 16;
   reader_navigation_page_free(&page);
   memset(&ro, 0, sizeof(ro)); ro.struct_size = sizeof(ro); ro.explicit_part = READER_NAVIGATION_NONE;
+  ro.source_key = no.source_key;
   if (reader_navigation_resolve_page(nav, 1, doc, &ro, &target, &error) != READER_NAVIGATION_OK) return 17;
   if (target.kind != READER_NAVIGATION_RESULT_PAGE || target.part != 1 || strcmp(target.part_id, "c-b") || target.part_path) return 18;
   reader_navigation_target_free(&target);

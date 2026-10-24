@@ -8,6 +8,7 @@ from pathlib import Path
 import sys
 import tempfile
 import zipfile
+from check_navigation import REQUIRED_CHECKS
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'tools'))
 from check_parallel_integration import download_artifact_zip, fetch, pages, require
 
@@ -45,6 +46,17 @@ def main():
                 require(report.get('accepted') is True and report['source_sha'] == source and int(report['run_id']) == run_id and int(report['attempt']) == attempt, 'report identity/refusal')
                 require(report['granted_platform'] == platform.lower() and report['macos_accepted'] is False and report['performance_claimed'] is False, 'platform grant differs')
                 require(report['checks'] > 0 and len(report['cases']) > 0, 'report is empty')
+                probe = json.loads(archive.read('navigation-evidence/probe.json'))
+                checks = probe['checks']; names = [c['name'] for c in checks]
+                require(probe['failures'] == 0 and report['checks'] == len(checks) and all(c['pass'] is True for c in checks), 'raw probe checks failed or differ')
+                require(len(names) == len(set(names)) and set(REQUIRED_CHECKS) <= set(names), 'required probe checks missing or duplicated')
+                require(probe['cases'] == report['cases'], 'raw navigation outcomes differ')
+                suffix = '.exe' if platform == 'Windows' else ''
+                for file, field in [('navigation-probe', 'probe_sha256'), ('navigation-c-consumer', 'c_consumer_sha256')]:
+                    require(hashlib.sha256(archive.read('navigation-consumer/' + file + suffix)).hexdigest() == report[field], 'actual installed consumer differs')
+                for installed in report['installed_files']:
+                    contents = archive.read('navigation-stage/' + installed['path'])
+                    require(len(contents) == installed['bytes'] and hashlib.sha256(contents).hexdigest() == installed['sha256'], 'actual installed package differs')
                 outcomes.append([{k: c[k] for k in ('id', 'rows', 'roots', 'depth_levels', 'text_bytes', 'ok', 'part_only', 'needs_host', 'unresolved', 'range', 'ambiguous', 'other', 'mislocated', 'digest')} for c in report['cases']])
             summary['artifacts'].append({k: artifact[k] for k in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')})
             summary['jobs'].append({k: job[k] for k in ('id', 'name', 'conclusion')})
@@ -53,6 +65,7 @@ def main():
         summary['accepted'] = True
     except Exception as error:
         summary['problems'].append(str(error))
+        summary['granted_platforms'] = []
     (out / 'result.json').write_text(json.dumps(summary, indent=2) + '\n', encoding='utf-8'); print(json.dumps(summary), flush=True)
     raise SystemExit(0 if summary['accepted'] else 1)
 

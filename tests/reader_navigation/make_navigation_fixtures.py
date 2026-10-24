@@ -95,7 +95,7 @@ def entry(archive, name, data):
     archive.writestr(info, data.encode('utf-8') if isinstance(data, str) else data)
 
 
-def epub(path, version=3, navigation=None, ncx=None, duplicate=False, toc=None):
+def epub(path, version=3, navigation=None, ncx=None, duplicate=False, toc=None, alternate=False):
     pages = {
         A: '<html xmlns="http://www.w3.org/1999/xhtml"><body><p id="start">A start</p><p id="again">A again</p>'
            '<p id="deep">A deep</p></body></html>',
@@ -109,6 +109,8 @@ def epub(path, version=3, navigation=None, ncx=None, duplicate=False, toc=None):
                'META-INF/container.xml': '<container xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles>'
                                          '<rootfile full-path="OPS/book.opf"/></rootfiles></container>'}
     entries.update(pages)
+    if alternate:
+        entries[A] = entries[A].replace('A start', 'B other')
     if navigation is not None:
         manifest += '<item id="nav" href="Nav/nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>'
         entries['OPS/Nav/nav.xhtml'] = navigation
@@ -125,7 +127,7 @@ def epub(path, version=3, navigation=None, ncx=None, duplicate=False, toc=None):
             entry(book, name, data)
 
 
-def pdf(path):
+def pdf(path, alternate=False):
     """Three pages and an authored /Outlines tree the module must never read."""
     count = 3
     font = 3 + count * 2
@@ -137,7 +139,7 @@ def pdf(path):
         objects.append((f'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 600 800] /Resources << /Font << /F1 {font} 0 R >> >> '
                         f'/Contents {3 + count + i} 0 R >>').encode())
     for i in range(count):
-        stream = f'BT /F1 12 Tf 36 720 Td (Page {i + 1}) Tj ET'.encode('ascii')
+        stream = f'BT /F1 12 Tf 36 720 Td ({"Leaf" if alternate else "Page"} {i + 1}) Tj ET'.encode('ascii')
         objects.append(f'<< /Length {len(stream)} >>\nstream\n'.encode() + stream + b'\nendstream')
     objects.append(b'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>')
     objects.append(f'<< /Type /Outlines /First {item} 0 R /Last {item} 0 R /Count 1 >>'.encode())
@@ -166,6 +168,7 @@ def rows(path, table, base):
 def main(folder):
     folder.mkdir(parents=True, exist_ok=False)
     epub(folder / 'nav3.epub', 3, navigation=NAV3)
+    epub(folder / 'same-directory.epub', 3, navigation=NAV3, alternate=True)
     epub(folder / 'ncx2.epub', 2, ncx=NCX2, toc='ncx')
     epub(folder / 'repeated.epub', 3, navigation=REPEATED_NAV, duplicate=True)
     epub(folder / 'empty.epub', 2)
@@ -174,6 +177,7 @@ def main(folder):
                                                '<a href="../Text/a.xhtml">&x;</a></li></ol></nav></html>')
     epub(folder / 'missing-ncx.epub', 2, ncx=NCX2, toc='absent')
     pdf(folder / 'pages.pdf')
+    pdf(folder / 'same-pages.pdf', alternate=True)
     rows(folder / 'nav3.tsv', NAV3_ROWS, NAV_BASE)
     rows(folder / 'ncx2.tsv', NCX2_ROWS, NCX_BASE)
     rows(folder / 'repeated.tsv', REPEATED_ROWS, NAV_BASE)

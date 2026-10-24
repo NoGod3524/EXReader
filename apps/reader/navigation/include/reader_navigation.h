@@ -14,6 +14,7 @@ extern "C" {
 #define READER_NAVIGATION_DEPTH_MAX 64u          /* levels: roots are depth 0, the deepest allowed is 63 */
 #define READER_NAVIGATION_TEXT_MAX 4194304u      /* total copied string bytes, terminators included */
 #define READER_NAVIGATION_CFI_MAX 4096u
+#define READER_NAVIGATION_SOURCE_KEY_MAX 255u
 #define READER_NAVIGATION_NONE UINT64_MAX        /* an absent/unresolved index; the SDK's SIZE_MAX */
 
 /* Table-of-contents snapshots and navigation targets over the frozen public SDK.
@@ -40,8 +41,16 @@ extern "C" {
    documents (PDF, CBZ) have no authored outline in the frozen SDK; open_pages gives
    a separate, clearly flagged by-page list that is never an author outline.
 
+   Identity: open can copy an optional verified source_key (1..255 UTF-8 bytes).
+   The host derives this from the exact original's format/SHA-256 and parser
+   version, after verification, and supplies the key of the live SDK input to
+   every resolve call. Matching part paths/IDs alone never establishes identity.
+   Without a key, a snapshot can be displayed but cannot resolve targets. The
+   module does not hash originals or verify a host's source_key claim itself.
+
    Owner rules: a snapshot handle, its queries and close are used from the owner that
-   opened it. Every SDK handle passed in is borrowed: open and resolve use it only
+   opened it. Another thread returns ARGUMENT before touching the SDK or busy
+   state, and a refused close keeps the handle. Every SDK handle passed in is borrowed: open and resolve use it only
    during the call, resolve additionally needs the live handle of the same book. Nothing
    here creates a thread. A call made from inside an exr_control callback of the same
    snapshot returns READER_NAVIGATION_BUSY and changes nothing; the SDK handle's own
@@ -97,6 +106,8 @@ typedef struct {
   uint32_t max_nodes;      /* 0: 10000; may only lower the maximum */
   uint32_t max_depth;      /* 0: 64; may only lower the maximum */
   uint64_t max_text_bytes; /* 0: 4194304; may only lower the maximum */
+  const char *source_key;  /* Optional verified original+parser identity, copied by open.
+                             NULL makes a read-only display snapshot; empty is invalid. */
 } reader_navigation_options;
 
 typedef struct reader_navigation reader_navigation;
@@ -194,11 +205,14 @@ typedef struct {
   uint64_t explicit_part; /* NONE, or the spine/chapter index the host chose among the
                              listed candidates for a repeated path; it must match the
                              row's own path (and the SDK part when the SDK gave one) */
+  const char *source_key; /* Required verified identity of the live SDK input. Must
+                            equal the snapshot's key, including parser version. */
 } reader_navigation_resolve_options;
 
 /* Verify one row against the live book and report its native target. *target is
-   cleared first. The snapshot's book identity (part count and the part's path and id)
-   must equal the live handle's, otherwise MISMATCH. EXTERNAL rows give NEEDS_HOST;
+   cleared first. Missing/invalid verified source keys give ARGUMENT; unequal keys
+   or a different ordered part directory give MISMATCH before reading a target.
+   Options are required to supply the live input's key. EXTERNAL rows give NEEDS_HOST;
    rows without href or without any matching part give UNRESOLVED; a path shared by
    several parts gives AMBIGUOUS unless explicit_part names one of them; the first
    match is never taken. Only publications and documents resolve local targets. */

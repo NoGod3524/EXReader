@@ -15,6 +15,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 namespace {
@@ -23,6 +24,11 @@ exr_error g_se;
 struct check_record { std::string name; bool pass; };
 std::vector<check_record> g_checks;
 int g_failures = 0;
+std::map<std::string, std::string> source_keys;
+std::string active_source_key = "generated:custom:v1";
+std::string key_for(const std::string &file) {
+  return file.substr(file.rfind('.') + 1) + ":" + source_keys.at(file) + "@exreader-sdk-" + exr_version();
+}
 void check(const std::string &name, bool ok) {
   g_checks.push_back({name, ok});
   if (!ok) { g_failures++; std::fprintf(stderr, "FAIL: %s\n", name.c_str()); }
@@ -72,11 +78,11 @@ struct tgt {
 };
 reader_navigation_resolve_options ropt(uint64_t explicit_part = NONE, const exr_control *c = nullptr) {
   reader_navigation_resolve_options o; std::memset(&o, 0, sizeof(o));
-  o.struct_size = sizeof(o); o.explicit_part = explicit_part; if (c) o.control = *c; return o;
+  o.struct_size = sizeof(o); o.explicit_part = explicit_part; o.source_key = active_source_key.c_str(); if (c) o.control = *c; return o;
 }
 reader_navigation_options nopt(uint32_t nodes = 0, uint32_t depth = 0, uint64_t text = 0, const exr_control *c = nullptr) {
   reader_navigation_options o; std::memset(&o, 0, sizeof(o));
-  o.struct_size = sizeof(o); o.max_nodes = nodes; o.max_depth = depth; o.max_text_bytes = text; if (c) o.control = *c; return o;
+  o.struct_size = sizeof(o); o.max_nodes = nodes; o.max_depth = depth; o.max_text_bytes = text; o.source_key = active_source_key.c_str(); if (c) o.control = *c; return o;
 }
 std::vector<row_copy> copy_page(const reader_navigation_page &p) {
   std::vector<row_copy> v;
@@ -160,12 +166,14 @@ std::vector<case_report> g_cases;
 
 /* ---------- one real EPUB: snapshot, TSV oracle, second-object confirmation ---------- */
 void epub_case(const std::string &id, const std::string &dir, const std::string &file, const std::string &tsv) {
+  active_source_key = key_for(file);
+  reader_navigation_options opening = nopt(); reader_navigation_resolve_options resolving = ropt();
   const std::string path = dir + "/" + file;
   uint64_t before = hash_bytes(slurp(path));
   std::vector<expect_row> want = read_tsv(dir + "/" + tsv);
   exr_publication *a = open_pub(path), *b = open_pub(path); /* b: independent second object */
   reader_navigation *nav = nullptr; reader_navigation_error e;
-  check(id + ": snapshot opens", reader_navigation_open_publication(a, nullptr, &nav, &e) == READER_NAVIGATION_OK && nav);
+  check(id + ": snapshot opens", reader_navigation_open_publication(a, &opening, &nav, &e) == READER_NAVIGATION_OK && nav);
   if (!nav) std::exit(2);
   reader_navigation_info info; reader_navigation_info_get(nav, &info, &e);
   size_t pc = 0; exr_publication_parts(a, &pc);
@@ -209,8 +217,8 @@ void epub_case(const std::string &id, const std::string &dir, const std::string 
   bool outcomes = true, nodes_ok = true, ids_ok = true, same_ab = true, amb_ok = true;
   for (size_t i = 0; i < want.size() && i < rows.size(); i++) {
     tgt ta, tb; reader_navigation_error ea, eb;
-    reader_navigation_status sa = reader_navigation_resolve_publication(nav, i, a, nullptr, &ta.t, &ea);
-    reader_navigation_status sb = reader_navigation_resolve_publication(nav, i, b, nullptr, &tb.t, &eb);
+    reader_navigation_status sa = reader_navigation_resolve_publication(nav, i, a, &resolving, &ta.t, &ea);
+    reader_navigation_status sb = reader_navigation_resolve_publication(nav, i, b, &resolving, &tb.t, &eb);
     std::string got = outcome_name(sa);
     if (got != want[i].outcome || sb != sa) {
       outcomes = false; rep.other++;
@@ -239,7 +247,7 @@ void epub_case(const std::string &id, const std::string &dir, const std::string 
       for (size_t k = 0; list && k < cand.size(); k++) list = ta.t.candidates[k] == cand[k];
       for (size_t k = 0; list && k < cand.size(); k++) {
         tgt te; reader_navigation_error ee;
-        reader_navigation_status se = reader_navigation_resolve_publication(nav, i, b, nullptr, &te.t, &ee);
+        reader_navigation_status se = reader_navigation_resolve_publication(nav, i, b, &resolving, &te.t, &ee);
         (void)se;
         reader_navigation_resolve_options o = ropt(cand[k]);
         reader_navigation_status s2 = reader_navigation_resolve_publication(nav, i, b, &o, &te.t, &ee);
@@ -284,18 +292,18 @@ void epub_case(const std::string &id, const std::string &dir, const std::string 
   check(id + ": children queries equal the original parent links", tree);
   /* The same snapshot is wrong for another book. */
   {
-    /* Same paths and ids would be the same book, so pick one with a different spine. */
+    /* Retain the original different-directory rejection as well as the new same-directory test. */
     exr_publication *other = open_pub(dir + (file == "repeated.epub" ? "/nav3.epub" : "/repeated.epub"));
     tgt t; reader_navigation_error ee;
     check(id + ": a different book is refused with MISMATCH", rows.empty() ||
-          reader_navigation_resolve_publication(nav, 0, other, nullptr, &t.t, &ee) == READER_NAVIGATION_MISMATCH);
+          reader_navigation_resolve_publication(nav, 0, other, &resolving, &t.t, &ee) == READER_NAVIGATION_MISMATCH);
     exr_publication_free(other);
   }
   /* Document source gives the same rows and resolves on the document's own nodes. */
   {
     exr_document *doc = nullptr; sdk(exr_document_open(path.c_str(), &doc, &g_se), "document_open");
     reader_navigation *dn = nullptr;
-    check(id + ": document snapshot opens", reader_navigation_open_document(doc, nullptr, &dn, &e) == READER_NAVIGATION_OK && dn);
+    check(id + ": document snapshot opens", reader_navigation_open_document(doc, &opening, &dn, &e) == READER_NAVIGATION_OK && dn);
     bool equal = false, resolved = true;
     if (dn) {
       std::vector<row_copy> drows = all_rows(dn, 100, nullptr);
@@ -306,7 +314,7 @@ void epub_case(const std::string &id, const std::string &dir, const std::string 
                 drows[i].target_class == rows[i].target_class;
       for (size_t i = 0; i < drows.size() && i < want.size(); i++) {
         tgt t; reader_navigation_error ee;
-        reader_navigation_status s = reader_navigation_resolve_document(dn, i, doc, nullptr, &t.t, &ee);
+        reader_navigation_status s = reader_navigation_resolve_document(dn, i, doc, &resolving, &t.t, &ee);
         std::string frag = fragment_of(rows[i].href);
         if (outcome_name(s) != want[i].outcome) resolved = false;
         if (s == READER_NAVIGATION_OK && !frag.empty() && (t.t.node == NONE || !doc_node_has_id(doc, t.t.node, frag))) resolved = false;
@@ -364,6 +372,8 @@ reader_navigation_status resolve_custom(reader_navigation *n, uint64_t row, cust
   return reader_navigation_resolve_publication(n, row, b.pub, &o, &t.t, &e);
 }
 void custom_cases() {
+  active_source_key = "generated:custom:v1";
+  reader_navigation_options opening = nopt(); reader_navigation_resolve_options resolving = ropt();
   const std::string a_umlaut = "Text/\xc3\xa4.xhtml";
   custom_book b;
   b.paths = {"Text/a.xhtml", a_umlaut, a_umlaut, "x.xhtml"}; b.ids = {"p0", "p1", "p2", "p3"};
@@ -391,10 +401,10 @@ void custom_cases() {
     exr_document_free(chapter);
   }
   reader_navigation *n = nullptr; reader_navigation_error e;
-  check("custom: snapshot opens", reader_navigation_open_publication(b.pub, nullptr, &n, &e) == READER_NAVIGATION_OK && n);
+  check("custom: snapshot opens", reader_navigation_open_publication(b.pub, &opening, &n, &e) == READER_NAVIGATION_OK && n);
   tgt t;
   check("custom: a path repeated in the spine is AMBIGUOUS and never the first match",
-        reader_navigation_resolve_publication(n, 0, b.pub, nullptr, &t.t, &e) == READER_NAVIGATION_AMBIGUOUS && t.t.part == NONE &&
+        reader_navigation_resolve_publication(n, 0, b.pub, &resolving, &t.t, &e) == READER_NAVIGATION_AMBIGUOUS && t.t.part == NONE &&
         t.t.candidate_count == 2 && t.t.candidates[0] == 1 && t.t.candidates[1] == 2);
   { tgt t2; check("custom: explicit spine index 2 resolves the second repeated item with its verbatim path",
         resolve_custom(n, 0, b, 2, t2, e) == READER_NAVIGATION_OK && t2.t.part == 2 && a_umlaut == t2.t.part_path && std::string(t2.t.part_id) == "p2" && t2.t.node == NONE); }
@@ -414,7 +424,7 @@ void custom_cases() {
     check("custom: a missing target is UNRESOLVED", resolve_custom(n, 13, b, NONE, t2, e) == READER_NAVIGATION_UNRESOLVED);
     check("custom: a row beyond the snapshot is RANGE", resolve_custom(n, 14, b, NONE, t2, e) == READER_NAVIGATION_RANGE); }
   /* CFI on a publication without the built-in EPUB provider is refused. */
-  { tgt t2; reader_navigation_status s = reader_navigation_resolve_cfi(n, b.pub, "/6/2!/4/2", nullptr, &t2.t, &e);
+  { tgt t2; reader_navigation_status s = reader_navigation_resolve_cfi(n, b.pub, "/6/2!/4/2", &resolving, &t2.t, &e);
     check("custom: a CFI without the EPUB provider fails and yields no target", s != READER_NAVIGATION_OK && t2.t.kind == 0);
     check("custom: an empty CFI is ARGUMENT", reader_navigation_resolve_cfi(n, b.pub, "", nullptr, &t2.t, &e) == READER_NAVIGATION_ARGUMENT);
     check("custom: a document-only call on a publication snapshot is ARGUMENT", reader_navigation_resolve_page(n, 0, nullptr, nullptr, &t2.t, &e) == READER_NAVIGATION_ARGUMENT); }
@@ -552,10 +562,12 @@ void open_cases(const std::string &dir) {
 
 /* ---------- CFI on the repeated-spine book ---------- */
 void cfi_cases(const std::string &dir) {
+  active_source_key = key_for("repeated.epub");
+  reader_navigation_options opening = nopt(); reader_navigation_resolve_options resolving = ropt();
   reader_navigation_error e;
   exr_publication *a = open_pub(dir + "/repeated.epub"), *b = open_pub(dir + "/repeated.epub");
   reader_navigation *n = nullptr;
-  check("cfi: snapshot opens", reader_navigation_open_publication(a, nullptr, &n, &e) == READER_NAVIGATION_OK && n);
+  check("cfi: snapshot opens", reader_navigation_open_publication(a, &opening, &n, &e) == READER_NAVIGATION_OK && n);
   std::vector<std::string> paths = part_paths(a);
   bool distinct = true, firm = true;
   for (size_t part = 0; part < 2 && part < paths.size(); part++) {
@@ -565,7 +577,7 @@ void cfi_cases(const std::string &dir) {
     exr_cfi_point pt = {text, 0, 0}; char *cfi = nullptr;
     if (text == SIZE_MAX || exr_publication_cfi_create(a, part, d, &pt, nullptr, &cfi, &g_se) != EXR_OK) { firm = false; exr_document_free(d); continue; }
     std::string original_text = nodes[text].text ? nodes[text].text : "";
-    tgt t; reader_navigation_status s = reader_navigation_resolve_cfi(n, b, cfi, nullptr, &t.t, &e);
+    tgt t; reader_navigation_status s = reader_navigation_resolve_cfi(n, b, cfi, &resolving, &t.t, &e);
     bool good = s == READER_NAVIGATION_OK && t.t.kind == READER_NAVIGATION_RESULT_CFI && t.t.part == part && t.t.part_path &&
                 paths[part] == t.t.part_path && t.t.cfi && std::string(cfi) == t.t.cfi && t.t.cfi_node != NONE;
     if (good) { /* the point's node, confirmed on a fresh load on the second object */
@@ -579,11 +591,11 @@ void cfi_cases(const std::string &dir) {
   }
   check("cfi: a CFI of each repeated spine item resolves to that spine index, not the first path match", distinct && firm);
   { tgt t; check("cfi: an invalid CFI is refused and yields no target",
-        reader_navigation_resolve_cfi(n, a, "/6/9999!/4/2", nullptr, &t.t, &e) != READER_NAVIGATION_OK && t.t.kind == 0 && !t.t.cfi);
+        reader_navigation_resolve_cfi(n, a, "/6/9999!/4/2", &resolving, &t.t, &e) != READER_NAVIGATION_OK && t.t.kind == 0 && !t.t.cfi);
     std::string huge(READER_NAVIGATION_CFI_MAX + 1, '1');
-    check("cfi: a CFI over 4096 bytes is ARGUMENT", reader_navigation_resolve_cfi(n, a, huge.c_str(), nullptr, &t.t, &e) == READER_NAVIGATION_ARGUMENT);
+    check("cfi: a CFI over 4096 bytes is ARGUMENT", reader_navigation_resolve_cfi(n, a, huge.c_str(), &resolving, &t.t, &e) == READER_NAVIGATION_ARGUMENT);
     exr_publication *other = open_pub(dir + "/nav3.epub");
-    check("cfi: a CFI against another book is MISMATCH", reader_navigation_resolve_cfi(n, other, "/6/2!/4/2", nullptr, &t.t, &e) == READER_NAVIGATION_MISMATCH);
+    check("cfi: a CFI against another book is MISMATCH", reader_navigation_resolve_cfi(n, other, "/6/2!/4/2", &resolving, &t.t, &e) == READER_NAVIGATION_MISMATCH);
     exr_publication_free(other); }
   reader_navigation_close(&n, &e); exr_publication_free(a); exr_publication_free(b);
 }
@@ -600,6 +612,8 @@ exr_fixed_document *make_fixed(const std::vector<std::string> &ids) {
   exr_fixed_document *d = nullptr; sdk(exr_fixed_create(&in, &d, &g_se), "fixed_create"); return d;
 }
 void page_cases(const std::string &dir) {
+  active_source_key = key_for("pages.pdf");
+  reader_navigation_options opening = nopt(); reader_navigation_resolve_options resolving = ropt();
   reader_navigation_error e;
   const std::string path = dir + "/pages.pdf"; std::vector<unsigned char> bytes = slurp(path); uint64_t before = hash_bytes(bytes);
   exr_fixed_open_options oo; std::memset(&oo, 0, sizeof(oo)); oo.struct_size = sizeof(oo);
@@ -607,7 +621,7 @@ void page_cases(const std::string &dir) {
   sdk(exr_fixed_open_memory(EXR_PDF, bytes.data(), bytes.size(), &oo, &a, &g_se), "pdf open");
   sdk(exr_fixed_open_memory(EXR_PDF, bytes.data(), bytes.size(), &oo, &b, &g_se), "pdf open second");
   reader_navigation *n = nullptr;
-  check("pages: a PDF gives a by-page snapshot", reader_navigation_open_pages(a, nullptr, &n, &e) == READER_NAVIGATION_OK && n);
+  check("pages: a PDF gives a by-page snapshot", reader_navigation_open_pages(a, &opening, &n, &e) == READER_NAVIGATION_OK && n);
   reader_navigation_info info; reader_navigation_info_get(n, &info, &e);
   size_t pc = 0; const exr_fixed_page *pages = exr_fixed_pages(a, &pc);
   check("pages: it is flagged as pages and never as an author outline", info.kind == READER_NAVIGATION_PAGES && info.author_outline == 0 &&
@@ -622,18 +636,100 @@ void page_cases(const std::string &dir) {
   bool located = true; std::vector<std::string> unique_ids;
   size_t pc2 = 0; const exr_fixed_page *pages2 = exr_fixed_pages(b, &pc2);
   for (size_t i = 0; i < rows.size(); i++) {
-    tgt t; reader_navigation_status s = reader_navigation_resolve_page(n, i, b, nullptr, &t.t, &e);
+    tgt t; reader_navigation_status s = reader_navigation_resolve_page(n, i, b, &resolving, &t.t, &e);
     located = located && s == READER_NAVIGATION_OK && t.t.kind == READER_NAVIGATION_RESULT_PAGE && t.t.part == i && !t.t.part_path &&
               i < pc2 && std::string(t.t.part_id) == pages2[i].id && t.t.node == NONE;
   }
   check("pages: each page row is confirmed on a second independently opened PDF", located);
   { exr_fixed_document *other = make_fixed({"x", "y", "z"}); tgt t;
-    check("pages: another document is MISMATCH", reader_navigation_resolve_page(n, 0, other, nullptr, &t.t, &e) == READER_NAVIGATION_MISMATCH);
+    check("pages: another document is MISMATCH", reader_navigation_resolve_page(n, 0, other, &resolving, &t.t, &e) == READER_NAVIGATION_MISMATCH);
     exr_fixed_free(other); }
   { reader_navigation_options o = nopt(2); reader_navigation *x = nullptr;
     check("pages: more pages than max_nodes are refused", reader_navigation_open_pages(a, &o, &x, &e) == READER_NAVIGATION_LIMIT && !x); }
   reader_navigation_close(&n, &e); exr_fixed_free(a); exr_fixed_free(b);
   check("pages: the PDF bytes are unchanged", hash_bytes(slurp(path)) == before);
+}
+
+void identity_cases(const std::string &dir) {
+  active_source_key = key_for("nav3.epub");
+  reader_navigation_options opening = nopt(); reader_navigation_resolve_options resolving = ropt();
+  reader_navigation_error e{};
+  exr_publication *a = open_pub(dir + "/nav3.epub"), *same = open_pub(dir + "/nav3.epub"), *other = open_pub(dir + "/same-directory.epub");
+  size_t an = 0, bn = 0; const exr_part *ap = exr_publication_parts(a, &an), *bp = exr_publication_parts(other, &bn);
+  bool directories = an == bn;
+  for (size_t i = 0; directories && i < an; ++i) directories = !std::strcmp(ap[i].path, bp[i].path) && !std::strcmp(ap[i].id, bp[i].id);
+  check("identity: different originals retain identical part paths and IDs", directories && slurp(dir + "/nav3.epub") != slurp(dir + "/same-directory.epub") && key_for("nav3.epub") != key_for("same-directory.epub"));
+  reader_navigation *n = nullptr;
+  std::string copied_key = active_source_key;
+  opening.source_key = copied_key.c_str();
+  check("identity: a verified source snapshot opens", reader_navigation_open_publication(a, &opening, &n, &e) == READER_NAVIGATION_OK && n);
+  if (!n) std::exit(2);
+  copied_key.assign("caller-buffer-changed");
+  { tgt t; check("identity: open copies the source key and allows an independently opened identical original", reader_navigation_resolve_publication(n, 0, same, &resolving, &t.t, &e) == READER_NAVIGATION_OK && t.t.part == 0 && node_has_id(same, 0, t.t.node, "start")); }
+  std::string other_key = key_for("same-directory.epub"); reader_navigation_resolve_options wrong = resolving; wrong.source_key = other_key.c_str();
+  { tgt t; check("identity: another original with identical directory is MISMATCH", reader_navigation_resolve_publication(n, 0, other, &wrong, &t.t, &e) == READER_NAVIGATION_MISMATCH && !t.t.kind && !t.t.part_path); }
+  { tgt t; check("identity: a wrong key is refused even for the original handle", reader_navigation_resolve_publication(n, 0, a, &wrong, &t.t, &e) == READER_NAVIGATION_MISMATCH && !t.t.kind); }
+  { tgt t; check("identity: CFI resolution checks the actual source key", reader_navigation_resolve_cfi(n, other, "/6/2!/4/2", &wrong, &t.t, &e) == READER_NAVIGATION_MISMATCH && !t.t.kind); }
+  { tgt t; reader_navigation_resolve_options missing = resolving; missing.source_key = nullptr;
+    check("identity: missing resolve options and missing key are ARGUMENT", reader_navigation_resolve_publication(n, 0, same, nullptr, &t.t, &e) == READER_NAVIGATION_ARGUMENT && !t.t.kind && reader_navigation_resolve_publication(n, 0, same, &missing, &t.t, &e) == READER_NAVIGATION_ARGUMENT && !t.t.kind); }
+  { std::string parser = active_source_key + "-changed-parser"; reader_navigation_resolve_options changed = resolving; changed.source_key = parser.c_str(); tgt t;
+    check("identity: parser version is part of the source key", reader_navigation_resolve_publication(n, 0, same, &changed, &t.t, &e) == READER_NAVIGATION_MISMATCH && !t.t.kind); }
+  { reader_navigation *display = nullptr; reader_navigation_info info{}; tgt t;
+    check("identity: an unbound snapshot remains display-only", reader_navigation_open_publication(a, nullptr, &display, &e) == READER_NAVIGATION_OK && display && reader_navigation_info_get(display, &info, &e) == READER_NAVIGATION_OK && info.node_count == 13 && reader_navigation_resolve_publication(display, 0, a, &resolving, &t.t, &e) == READER_NAVIGATION_ARGUMENT && !t.t.kind);
+    reader_navigation_close(&display, &e); }
+  { bool refused = true;
+    for (const std::string &bad : {std::string(), std::string(256, 'x'), std::string("\x80"), std::string("\xc0\x80"), std::string("\xed\xa0\x80"), std::string("\xf4\x90\x80\x80"), std::string("\xe2\x82")}) {
+      reader_navigation_options bad_open = nopt(); bad_open.source_key = bad.c_str(); reader_navigation *invalid = reinterpret_cast<reader_navigation *>(1);
+      refused = reader_navigation_open_publication(a, &bad_open, &invalid, &e) == READER_NAVIGATION_ARGUMENT && !invalid && refused;
+      reader_navigation_resolve_options bad_resolve = resolving; bad_resolve.source_key = bad.c_str(); tgt t;
+      refused = reader_navigation_resolve_publication(n, 0, a, &bad_resolve, &t.t, &e) == READER_NAVIGATION_ARGUMENT && !t.t.kind && refused;
+    }
+    std::vector<char> unterminated(256, 'x'); reader_navigation_options unterminated_open = nopt(); unterminated_open.source_key = unterminated.data(); reader_navigation *invalid = nullptr;
+    refused = reader_navigation_open_publication(a, &unterminated_open, &invalid, &e) == READER_NAVIGATION_ARGUMENT && !invalid && refused;
+    check("identity: empty oversized malformed UTF-8 and unterminated keys are refused", refused); }
+  { bool accepted = true;
+    for (const std::string &valid : {std::string("x"), std::string(255, 'k'), std::string(251, 'k') + "\xf0\x9f\x99\x82"}) {
+      reader_navigation_options key_open = nopt(); key_open.source_key = valid.c_str(); reader_navigation *bound = nullptr;
+      reader_navigation_resolve_options key_resolve = resolving; key_resolve.source_key = valid.c_str(); tgt t;
+      accepted = reader_navigation_open_publication(a, &key_open, &bound, &e) == READER_NAVIGATION_OK && bound && reader_navigation_resolve_publication(bound, 0, same, &key_resolve, &t.t, &e) == READER_NAVIGATION_OK && accepted;
+      reader_navigation_close(&bound, &e);
+    }
+    check("identity: one-byte and 255-byte UTF-8 keys roundtrip exactly", accepted); }
+  { bool owner_ok = false;
+    std::thread other_thread([&] {
+      reader_navigation_info info; std::memset(&info, 0xa5, sizeof(info)); reader_navigation_info blank{};
+      reader_navigation_page page{}; reader_navigation_error error{}; reader_navigation *copy = n;
+      bool ok = reader_navigation_info_get(n, &info, &error) == READER_NAVIGATION_ARGUMENT && !std::memcmp(&info, &blank, sizeof(info));
+      ok = reader_navigation_rows(n, 0, 1, &page, &error) == READER_NAVIGATION_ARGUMENT && !page.rows && !page.count && ok;
+      ok = reader_navigation_children(n, NONE, 0, 1, &page, &error) == READER_NAVIGATION_ARGUMENT && !page.rows && ok;
+      tgt t;
+      ok = reader_navigation_resolve_publication(n, 0, a, &resolving, &t.t, &error) == READER_NAVIGATION_ARGUMENT && !t.t.kind && ok;
+      ok = reader_navigation_resolve_document(n, 0, reinterpret_cast<exr_document *>(1), &resolving, &t.t, &error) == READER_NAVIGATION_ARGUMENT && !t.t.kind && ok;
+      ok = reader_navigation_resolve_page(n, 0, reinterpret_cast<exr_fixed_document *>(1), &resolving, &t.t, &error) == READER_NAVIGATION_ARGUMENT && !t.t.kind && ok;
+      ok = reader_navigation_resolve_cfi(n, a, "/6/2!/4/2", &resolving, &t.t, &error) == READER_NAVIGATION_ARGUMENT && !t.t.kind && ok;
+      owner_ok = reader_navigation_close(&copy, &error) == READER_NAVIGATION_ARGUMENT && copy == n && ok;
+    }); other_thread.join();
+    check("owner: all handle calls refuse another thread before SDK access and keep the handle", owner_ok);
+    tgt t; check("owner: the creating owner can still navigate after wrong-thread calls", reader_navigation_resolve_publication(n, 0, a, &resolving, &t.t, &e) == READER_NAVIGATION_OK); }
+  { reader_navigation_resolve_options bad_size = resolving; bad_size.struct_size--;
+    tgt t; check("identity: malformed options and outside row clear the target", reader_navigation_resolve_publication(n, 0, a, &bad_size, &t.t, &e) == READER_NAVIGATION_ARGUMENT && !t.t.kind && reader_navigation_resolve_publication(n, 13, a, &resolving, &t.t, &e) == READER_NAVIGATION_RANGE && !t.t.kind); }
+  exr_document *da = nullptr, *db = nullptr;
+  sdk(exr_document_open((dir + "/nav3.epub").c_str(), &da, &g_se), "identity document");
+  sdk(exr_document_open((dir + "/same-directory.epub").c_str(), &db, &g_se), "identity changed document");
+  opening = nopt(); reader_navigation *dn = nullptr;
+  { tgt t; check("identity: document resolution rejects a different original with the same chapters", reader_navigation_open_document(da, &opening, &dn, &e) == READER_NAVIGATION_OK && dn && reader_navigation_resolve_document(dn, 0, db, &wrong, &t.t, &e) == READER_NAVIGATION_MISMATCH && !t.t.kind); }
+  reader_navigation_close(&dn, &e); exr_document_free(da); exr_document_free(db);
+  reader_navigation_close(&n, &e); exr_publication_free(a); exr_publication_free(same); exr_publication_free(other);
+  std::vector<unsigned char> left = slurp(dir + "/pages.pdf"), right = slurp(dir + "/same-pages.pdf");
+  exr_fixed_open_options fo{}; fo.struct_size = sizeof(fo); exr_fixed_document *fa = nullptr, *fb = nullptr;
+  sdk(exr_fixed_open_memory(EXR_PDF, left.data(), left.size(), &fo, &fa, &g_se), "identity PDF");
+  sdk(exr_fixed_open_memory(EXR_PDF, right.data(), right.size(), &fo, &fb, &g_se), "identity changed PDF");
+  size_t fn = 0, gn = 0; const exr_fixed_page *fp = exr_fixed_pages(fa, &fn), *gp = exr_fixed_pages(fb, &gn); bool same_pages = fn == gn;
+  for (size_t i = 0; same_pages && i < fn; ++i) same_pages = !std::strcmp(fp[i].id, gp[i].id);
+  active_source_key = key_for("pages.pdf"); opening = nopt(); resolving = ropt();
+  std::string right_key = key_for("same-pages.pdf"); wrong = resolving; wrong.source_key = right_key.c_str();
+  { tgt t; check("identity: fixed pages reject another original with identical page IDs", same_pages && left != right && reader_navigation_open_pages(fa, &opening, &n, &e) == READER_NAVIGATION_OK && n && reader_navigation_resolve_page(n, 0, fb, &wrong, &t.t, &e) == READER_NAVIGATION_MISMATCH && !t.t.kind); }
+  reader_navigation_close(&n, &e); exr_fixed_free(fa); exr_fixed_free(fb);
 }
 
 void write_report(const std::string &path) {
@@ -659,6 +755,7 @@ int main(int argc, char **argv) {
   std::string dir, report;
   for (int i = 1; i + 1 < argc; i += 2) {
     std::string k = argv[i]; if (k == "--fixtures") dir = argv[i + 1]; else if (k == "--report") report = argv[i + 1];
+    else if (k == "--source-key") { std::string pair = argv[i + 1]; size_t at = pair.find('='); source_keys[pair.substr(0, at)] = pair.substr(at + 1); }
   }
   if (dir.empty() || report.empty()) { std::fprintf(stderr, "usage: navigation-probe --fixtures DIR --report FILE\n"); return 2; }
   std::memset(&g_se, 0, sizeof(g_se));
@@ -670,6 +767,7 @@ int main(int argc, char **argv) {
   limit_cases();
   cfi_cases(dir);
   page_cases(dir);
+  identity_cases(dir);
   write_report(report);
   std::printf("checks=%zu failures=%d\n", g_checks.size(), g_failures);
   return g_failures ? 1 : 0;
