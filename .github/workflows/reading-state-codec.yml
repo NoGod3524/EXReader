@@ -1,0 +1,107 @@
+name: Reading state codec isolation
+on:
+  push:
+    branches: [codex/reader-android-sync-session]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sdk:
+    name: real v2 capture (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require unchanged SDK and schema plus the accepted v1 audit ancestor
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor a403fee5f0cdb120840cd6fe0ef24e5fc2c0ce96 HEAD
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code f32bb8aa18ed3de286900f19ce4230fd93435dd0 HEAD -- apps/reader/store/001_catalog.sql
+      - name: Install Linux native HTTPS XML and SHA dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config
+      - name: Enter Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Install one product provider and separate current and actual legacy revisions
+        run: |
+          mkdir -p build/v2-logs build/v1-source
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "V2_WS=$ws" >> "$GITHUB_ENV"
+          cmake -S apps/reader/store/native -B build/v2-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/v2-product-stage"
+          cmake --build build/v2-product --parallel 4
+          cmake --install build/v2-product
+          cmake -S apps/reader/revisions -B build/v2-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$ws/build/v2-product-stage" -DCMAKE_INSTALL_PREFIX="$ws/build/v2-stage"
+          cmake --build build/v2-revisions --parallel 4
+          cmake --install build/v2-revisions
+          git archive 210403d121d6484a8fff4ea7ffd911efa3163535 apps/reader/revisions extras/opds | tar -x -C build/v1-source
+          cmake -S build/v1-source/apps/reader/revisions -B build/v1-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$ws/build/v2-product-stage" -DCMAKE_INSTALL_PREFIX="$ws/build/v1-stage"
+          cmake --build build/v1-revisions --parallel 4
+          cmake --install build/v1-revisions
+      - name: Build and install the frozen reading SDK once
+        run: |
+          cmake --preset reading-library 2>&1 | tee build/v2-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/v2-logs/sdk-build.log
+          cmake --install build/reading-library
+      - name: Install adapter against each revision implementation and compile isolated consumers
+        run: |
+          cmake -S apps/reader/reading-state -B build/v2-adapter -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$V2_WS/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$V2_WS/build/v2-stage;$V2_WS/build/v2-product-stage" -DCMAKE_INSTALL_PREFIX="$V2_WS/build/v2-stage"
+          cmake --build build/v2-adapter --verbose
+          cmake --install build/v2-adapter
+          cmake -S tests/reader_reading_v2/consumer -B build/v2-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$V2_WS/build/v2-stage;$V2_WS/build/v2-product-stage;$V2_WS/build/reading-library/stage"
+          cmake --build build/v2-consumer --verbose
+          cmake -S apps/reader/reading-state -B build/v1-adapter -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$V2_WS/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$V2_WS/build/v1-stage;$V2_WS/build/v2-product-stage" -DCMAKE_INSTALL_PREFIX="$V2_WS/build/v1-stage"
+          cmake --build build/v1-adapter --verbose
+          cmake --install build/v1-adapter
+          cmake -S tests/reader_reading_state/consumer -B build/v1-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$V2_WS/build/v1-stage;$V2_WS/build/v2-product-stage;$V2_WS/build/reading-library/stage"
+          cmake --build build/v1-consumer --verbose
+      - name: Preserve original 121 cases and verify v2 product round trips from real captures
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_reading_state/make_fixtures.py build/v2-fixtures
+          python3 tests/reader_reading_v2/check_sdk.py --probe "build/v2-consumer/reading-v2-probe$exe" --legacy-probe "build/v1-consumer/reading-state-probe$exe" --legacy-c-consumer "build/v1-consumer/reading-state-c-consumer$exe" --fixtures build/v2-fixtures --font tests/fixtures/fonts/primary.ttf --legacy-map build/v1-consumer/reading-state-link.map --link-map build/v2-consumer/reading-v2-link.map --output build/v2-sdk-evidence
+      - name: Installed codec-only C consumer and SDK-free link evidence
+        run: |
+          cmake -S tests/reader_reading_state_codec -B build/codec-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$V2_WS/build/v2-stage;$V2_WS/build/v2-product-stage;$V2_WS/build/reading-library/stage"
+          cmake --build build/codec-consumer --verbose
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_reading_state_codec/check_link.py --consumer "build/codec-consumer/reading-codec-consumer$exe" --map build/codec-consumer/codec.map --output build/codec-evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reading-codec-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/v2-logs/
+            build/v2-sdk-evidence/
+            build/codec-evidence/
+            build/codec-consumer/reading-codec-consumer*
+            build/codec-consumer/codec.map
+            build/v2-stage/
+            build/v1-stage/
+            build/v2-product-stage/
+            build/v2-consumer/reading-v2-probe*
+            build/v2-consumer/reading-v2-link.map
+            build/v1-consumer/reading-state-probe*
+            build/v1-consumer/reading-state-c-consumer*
+            build/v1-consumer/reading-state-link.map
+          if-no-files-found: error
