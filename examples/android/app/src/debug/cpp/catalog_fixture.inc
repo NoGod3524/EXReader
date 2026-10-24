@@ -1,11 +1,25 @@
 /* SPDX-License-Identifier: MIT
    Compiled into the same product provider only for the debug application.
    Instrumentation SQL never becomes a production owner endpoint. */
+#include <cstdio>
+#include <csignal>
+#include <unistd.h>
 namespace {
 struct fixture {sqlite3 *db=nullptr;std::thread::id thread=std::this_thread::get_id();~fixture(){if(db)sqlite3_close_v2(db);}};
 std::map<jlong,std::unique_ptr<fixture>> fixtures;
 std::mutex fixture_mutex;jlong fixture_sequence=0;
 thread_local bool interrupt_migration=false;
+thread_local std::string kill_witness;
+void kill_sql(sqlite3_context *context,int,sqlite3_value **){
+  sqlite3 *db=sqlite3_context_db_handle(context);sqlite3_stmt *statement=nullptr;
+  int status=sqlite3_prepare_v2(db,"SELECT (SELECT count(*) FROM reader_revisions),(SELECT count(*) FROM reader_outbox),(SELECT count(*) FROM reader_tags)",-1,&statement,nullptr);
+  FILE *output=std::fopen(kill_witness.c_str(),"wb");
+  if(output){if(status==SQLITE_OK&&sqlite3_step(statement)==SQLITE_ROW)std::fprintf(output,"%d,%d,%d",sqlite3_column_int(statement,0),sqlite3_column_int(statement,1),sqlite3_column_int(statement,2));std::fclose(output);}
+  sqlite3_finalize(statement);::kill(::getpid(),SIGKILL);
+}
+int kill_extension(sqlite3 *db,char **,const sqlite3_api_routines *){
+  return sqlite3_create_function_v2(db,"reader_test_kill",0,SQLITE_UTF8|SQLITE_INNOCUOUS,nullptr,kill_sql,nullptr,nullptr,nullptr);
+}
 int migration_authorizer(void *,int action,const char *table,const char *,const char *,const char *){
   if(interrupt_migration&&action==SQLITE_CREATE_TABLE&&table&&std::string(table)=="reader_book_shelves"){
     interrupt_migration=false;return SQLITE_DENY;
@@ -35,6 +49,10 @@ void fixture_bind(JNIEnv *env,sqlite3_stmt *s,jobjectArray args){
 #define FIXTURE_METHOD(name) Java_org_exreader_host_ProductFixture_##name
 extern "C" JNIEXPORT void JNICALL FIXTURE_METHOD(failNextMigration)(JNIEnv *env,jclass){
   try{database(sqlite3_auto_extension((void(*)(void))migration_extension),"Cannot install migration interruption");interrupt_migration=true;}
+  catch(const failure &e){report(env,e);}
+}
+extern "C" JNIEXPORT void JNICALL FIXTURE_METHOD(installKill)(JNIEnv *env,jclass,jstring path){
+  try{kill_witness=utf8(env,path);database(sqlite3_auto_extension((void(*)(void))kill_extension),"Cannot install killed-process boundary");}
   catch(const failure &e){report(env,e);}
 }
 extern "C" JNIEXPORT jlong JNICALL FIXTURE_METHOD(openNative)(JNIEnv *env,jclass,jstring path){

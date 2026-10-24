@@ -77,14 +77,14 @@ final class CatalogStore implements AutoCloseable {
     void attach(BookStore.VerifiedSource source) {
         requireOwner();
         NativeCatalog.attach(handle,source.format,source.sha256,source.bytes,source.book.id,source.location,
-                source.book.title,source.book.author,Normalizer.normalize(source.book.title,Normalizer.Form.NFC),source.book.favorite);
+                source.book.title,source.book.author,Normalizer.normalize(source.book.title,Normalizer.Form.NFC),source.book.favorite!=0);
     }
     /** Only a publicly verified retained SDK source may seed legacy book history. */
     NativeCatalog.Result bootstrap(BookStore.VerifiedSource source,String revision,String[] expected) {
         requireOwner();
         String[] current=NativeCatalog.metadata(handle,source.key);
         String title=source.book.title,author=source.book.author,sort=Normalizer.normalize(title,Normalizer.Form.NFC);
-        boolean favorite=source.book.favorite;
+        boolean favorite=source.book.favorite!=0;
         if(current!=null) {
             if(!source.format.equals(current[0]) || !source.sha256.equals(current[1]) || source.bytes!=Long.parseLong(current[2]))
                 throw new IllegalStateException("Product source identity conflicts with verified SDK original");

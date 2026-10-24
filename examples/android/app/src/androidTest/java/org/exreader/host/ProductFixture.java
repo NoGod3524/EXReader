@@ -39,6 +39,7 @@ final class ProductFixture implements AutoCloseable {
     private void check() { if(Thread.currentThread()!=owner || handle==0)throw new IllegalStateException("Fixture requires its owner"); }
     @Override public void close() { check();closeNative(handle);handle=0;opened.remove(path); }
     static native void failNextMigration();
+    static native void installKill(String witnessPath);
     private static native long openNative(String path);
     private static native void closeNative(long handle);
     private static native void execNative(long handle,String sql,Object[] args);
