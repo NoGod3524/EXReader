@@ -1,14 +1,31 @@
 {
   "accepted": false,
-  "navigation_scope_passed": false,
-  "status": "native readiness diagnostic passed all29; existing metadata/collections modal exclusion aligned before final full source",
+  "navigation_scope_passed": true,
+  "status": "same-source navigation and all retained functional scopes passed; two original strict settings page-palette failures remain",
   "baseline": "9762a7dd4ede02b11339105ccd64b8d187f5d6bf",
   "navigation_source": "cbd7832b914bddcf99e06a85962d301a00b47efa",
   "navigation_tree": "9395914832e191ad63f18f6188ca5044260d2f12",
-  "source_sha": "28cc589a1f6b2600c655cd3dfceb4ddc644f1b01",
-  "run_id": 40127001332,
+  "source_sha": "f31858c6df4a4bf753a0caac67bf229b17b22ef1",
+  "run_id": 40128621078,
   "attempt": 1,
-  "job_id": 120970467595,
+  "job_id": 120975335174,
+  "conclusion": "failure",
+  "diagnostic_only": false,
+  "sdk_anchor": "9854061be331fe603a1822d9b2b36ee357154927",
+  "program_sha256": "1012d8fd3ed87ac9296e761d754a0304fbcdca0875e84dd58920c5d066c5a776",
+  "results": {
+    "navigation_ui": {"executed": 29, "passed": 29, "failed": 0},
+    "navigation_backend": {"passed": 58},
+    "installed_navigation": {"passed": 130},
+    "retained_search": {"installed_checks": 264, "cases": 34, "backend_checks": 296, "ui_passed": 30, "ui_failed": 0},
+    "installed_preferences": {"passed_groups": 20},
+    "retained_account_receive": {"passed": 46},
+    "retained_ui": {"passed": 105, "reading": 20, "product": 5, "fixed": 24, "shelf": 14, "metadata": 15, "collections": 27},
+    "retained_fault_regressions": {"passed": 4},
+    "retained_targeted_atspi": {"passed": 10, "full_g13_accepted": false, "orca_accepted": false},
+    "retained_settings": {"executed": 35, "passed": 33, "failed": 2},
+    "desktop_ctest": {"passed": 4, "failed": 0}
+  },
   "diagnostic": {
     "source_sha": "8bf2b68dba205a63d7cdae78b2dd0f139c04ffb4",
     "run_id": 40124093566,
@@ -27,7 +44,15 @@
     "program_sha256": "fc8bfaebcf4d8955c02533a0b4cda553cc276d3f17d107db731d96bb587438a4",
     "artifact": {"id": 12572590346, "bytes": 21395505, "sha256": "4821140aa263e6ed13728b1db464f28e9d6c4b9d09b728a6fb807590b5129f73", "expires_at": "2027-01-22T19:10:39Z"}
   },
-  "artifacts": [],
+  "artifacts": [{
+    "id": 12574786910,
+    "name": "reader-gtk-navigation-40128621078-1",
+    "bytes": 42369097,
+    "sha256": "9f25b18f3e11cdd73458db12163f2e1a4e6c774a662c044a6cf6197e75755a21",
+    "expires_at": "2027-01-22T20:10:46Z",
+    "upload_log_matches_api_digest": true,
+    "source_sha": "f31858c6df4a4bf753a0caac67bf229b17b22ef1"
+  }],
   "focus_fix_diagnostic": {
     "source_sha": "bd32a6eef23317042c0755e193ffc9bb46a2b2f3",
     "run_id": 40126438508,
