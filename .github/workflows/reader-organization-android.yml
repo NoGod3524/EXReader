@@ -33,6 +33,8 @@ jobs:
           for suffix in ('owner-android/device-report.json','owner-android/native/inventory.json',
                          'organization-android/device-report.json','organization-android/instrumentation.txt',
                          'organization-android/ui-instrumentation.txt','organization-android/ui/validation.json','organization-android/ui/failure.xml',
+                         'organization-android/ui/refused_intent_kill_and_exact_ui_retry.json',
+                         'organization-android/phases/refused.json','organization-android/phases/verified.json',
                          'owner-android/seed-before.txt','owner-android/recover-before.txt','owner-android/witness-before.txt',
                          'owner-android/seed-after.txt','owner-android/recover-after.txt','owner-android/witness-after.txt'):
               matches=[p for p in root.rglob('*') if p.is_file() and p.as_posix().endswith(suffix)]
