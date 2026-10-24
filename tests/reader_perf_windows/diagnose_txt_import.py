@@ -166,6 +166,24 @@ def catalog_facts(profile, fixture):
     return facts
 
 
+def refresh_repair(host, expected_title, settle_s=2.5):
+    """Ask the product repair job to re-enumerate the public SDK library.
+
+    The repair attaches every book the SDK reports, so an orphaned original left
+    behind by a half-finished import would appear after this step even though the
+    import status was a failure.
+    """
+    started = perf.now_ms()
+    try:
+        host.wait_enabled('refresh', 30)
+        host.click('refresh')
+    except (TimeoutError, perf.MeasurementFault) as error:
+        return {'clicked': False, 'error': str(error)}
+    time.sleep(settle_s)
+    return {'clicked': True, 'elapsed_ms': round(perf.now_ms() - started, 3),
+            'probe_after_refresh': query(host, expected_title, 8.0)}
+
+
 def open_observed(host, title, wait_s):
     if not title:
         return {'attempted': False}
@@ -199,7 +217,7 @@ def open_observed(host, title, wait_s):
                 'status': host.status()}
 
 
-BISECT_MIB = (0.25, 0.5, 1, 2, 4, 8, 12, 16)
+BISECT_MIB = (0.25, 0.5, 1, 2, 4, 5, 6, 6.5, 7, 8, 12, 16)
 
 
 def sized_fixture(directory, mib):
@@ -244,9 +262,11 @@ def bisect_imports(host, directory, wait_s):
 
 def classify(run):
     facts = run['facts']
+    catalog = facts.get('catalog') or {}
     if not facts['import']['completed'] or facts['import']['status_indicates_failure']:
+        if (catalog.get('total_books') or 0) > 2202:
+            return 'rejected_but_sdk_orphan'
         return 'import_rejected'
-    catalog = facts['catalog']
     if not catalog.get('row'):
         return 'imported_not_in_catalog'
     if not (catalog.get('sha_matches_input') and catalog.get('bytes_match_input')):
@@ -316,6 +336,7 @@ def main():
                     break
             facts['observed_row'] = observed_row
             facts['observed_title'] = observed
+            facts['refresh'] = refresh_repair(host, expected_title)
             facts['open'] = open_observed(host, observed, ORIGINAL['open_wait_s'])
             facts['peak'] = host.close()
         except Exception as error:
