@@ -50,7 +50,7 @@ def main():
     records = distlib.scan_tree(args.stage, needles)
     hits = [hit for item in records for hit in item['hits']]
     distlib.require(not hits, 'build-machine paths remain in the sealed stage: ' + json.dumps(hits[:4]))
-    distlib.require(not any(item['drective_absolute'] for item in records),
+    distlib.require(not any(item.get('drective_absolute') for item in records),
                     'absolute .drectve directives remain in the sealed stage')
     sealed = distlib.seal_zip(args.stage, args.archive_out, epoch=args.epoch)
     reproducibility = None
@@ -76,8 +76,10 @@ def main():
               'epoch': args.epoch, 'reproducibility': reproducibility,
               'scan': {'files': len(records), 'debug_section_count':
                        sum(item.get('debug_section_count', 0) for item in records),
-                       'drective_absolute': 0, 'member_names_with_separator':
-                       sum(len(item.get('member_names_with_separator', [])) for item in records)},
+                       'drective_absolute':
+                       sum(len(item.get('drective_absolute') or []) for item in records),
+                       'member_names_with_separator':
+                       sum(len(item.get('member_names_with_separator') or []) for item in records)},
               'sanitization': {'rewritten': len(sanitize['rewritten']),
                                'refused': len(sanitize['refused']),
                                'stage_digest_after': sanitize['stage_digest_after']},
