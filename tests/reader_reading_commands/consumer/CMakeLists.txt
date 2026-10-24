@@ -14,7 +14,8 @@ find_package(EXReaderReadingCommands 0.1.0 EXACT CONFIG REQUIRED)
 find_package(EXReaderCommands 0.1.0 EXACT CONFIG REQUIRED)
 add_executable(reading-commands-probe probe.cpp)
 target_link_libraries(reading-commands-probe PRIVATE EXReaderReadingCommands::reader_reading_commands
-  EXReaderCommands::reader_commands EXReaderProductCatalog::reader_catalog_sqlite Threads::Threads)
+  EXReaderCommands::reader_commands EXReaderProductCatalog::reader_catalog_sqlite
+  EXReaderReadingState::reader_reading_state Threads::Threads)
 if(MSVC)
   target_link_options(reading-commands-probe PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/reading-commands-link.map")
   target_link_libraries(reading-commands-probe PRIVATE shell32)
@@ -26,4 +27,4 @@ endif()
 add_executable(reading-commands-c-consumer api.c)
 set_target_properties(reading-commands-c-consumer PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(reading-commands-c-consumer PRIVATE EXReaderReadingCommands::reader_reading_commands
-  EXReaderCommands::reader_commands EXReaderProductCatalog::reader_catalog_sqlite)
+  EXReaderCommands::reader_commands EXReaderProductCatalog::reader_catalog_sqlite EXReader::exr_core)

@@ -14,7 +14,8 @@ find_package(EXReaderAnnotationView 0.1.0 EXACT CONFIG REQUIRED)
 find_package(Threads REQUIRED)
 add_executable(annotation-view-probe probe.cpp)
 target_link_libraries(annotation-view-probe PRIVATE EXReaderAnnotationView::reader_annotation_view
-  EXReaderProductCatalog::reader_catalog EXReaderProductCatalog::reader_catalog_sqlite Threads::Threads)
+  EXReaderProductCatalog::reader_catalog EXReaderProductCatalog::reader_catalog_sqlite
+  EXReader::exr_library Threads::Threads)
 if(MSVC)
   target_link_options(annotation-view-probe PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/annotation-view-link.map")
 elseif(APPLE)
