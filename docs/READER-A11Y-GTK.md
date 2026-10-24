@@ -58,6 +58,11 @@ The dependency on the bridge is deliberate and asserted: the credential checks i
 and its first check fails loudly if the application never registers, instead of
 degrading into a silent pass.
 
+The audit does not unlock a Secret Service, so the account surface is observed in its
+session-only state (`credential_status = 2`). Names, roles, states, focus and the
+secret-field measurement do not depend on that state; the credential store behaviour
+itself belongs to the account owner's checks and is not re-claimed here.
+
 ## 3. Named checks
 
 `tests/reader_a11y_gtk/expectations.py` is the contract: every asserted name is

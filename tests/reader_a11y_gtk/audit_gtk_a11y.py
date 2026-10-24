@@ -161,6 +161,14 @@ def main():
     def focus_snapshot():
         return snapshot(focus_node())
 
+    def focus_restored():
+        """True when the focused element lives inside the main window subtree."""
+        node = focus_node()
+        main = frame()
+        if node is None or main is None:
+            return False, node, main
+        return (a11y.same(node, main) or a11y.is_ancestor(main, node)), node, main
+
     def focus_name():
         return focus_snapshot()['name']
 
@@ -225,7 +233,8 @@ def main():
         chooser = dialog_window(contract.IMPORT_DIALOG, True)
         host.activate(chooser)
         host.key('ctrl+l')
-        host.paste(str(path))
+        host.key('ctrl+a')  # drop any location the chooser prefilled
+        host.type_text(str(path))
         host.key('Return')
         time.sleep(0.4)
         if chooser_visible():
@@ -549,7 +558,10 @@ def main():
                     element=snapshot(dialog)['path'],
                     reproduction=['open the organizer from the shelf more menu with the keyboard',
                                   'read the dialog element and the focused element'],
-                    fix='none: GTK_DIALOG_MODAL is already requested in collections_open')
+                    fix='GTK_DIALOG_MODAL is already requested, but GTK never moves focus into '
+                        'the dialog: add gtk_widget_grab_focus(collections.types) (or '
+                        'collections.groups) after gtk_widget_show_all in collections_open(), as '
+                        'metadata_present() and accounts_open() already do')
 
         controls = {key: snapshot(wait_element(text, timeout=15))
                     for key, text in contract.COLLECTIONS_NAMES.items()}
@@ -605,19 +617,19 @@ def main():
 
         mark = recorder.mark()
         close_with_escape(contract.COLLECTIONS_DIALOG)
-        after = focus_snapshot()
         events = recorder.since(mark)
         reactivated = [event for event in events
                        if event['type'].startswith('window:')
                        and contract.WINDOW_TITLE in event.get('source_name', '')]
-        audit.check('collections_dialog_escape_restores_focus',
-                    bool(after['path']) and after['name'] != '',
-                    expected='Escape closes the organizer and returns focus to a control in the '
-                             'main window',
-                    actual={'focused_after_escape': after,
+        restored, after_node, main = focus_restored()
+        audit.check('collections_dialog_escape_restores_focus', restored,
+                    expected='Escape closes the organizer and returns focus to a control inside '
+                             'the main window',
+                    actual={'focused_after_escape': snapshot(after_node),
                             'window_activate_events_for_main': reactivated,
-                            'tab_steps_inside_dialog': [entry['name'] for entry in sequence]},
-                    element=after['path'],
+                            'tab_steps_inside_dialog': [entry['name'] for entry in sequence],
+                            'focus_is_inside_main_window': restored},
+                    element=snapshot(after_node)['path'] or snapshot(main)['path'],
                     reproduction=['open the organizer', 'press Escape',
                                   'read the focused element'],
                     fix='focused stays empty only when GTK could not restore the previous widget')
@@ -650,13 +662,14 @@ def main():
         shot('04-import-dialog', window)
         sequence = traverse(8)
         close_with_escape(contract.IMPORT_DIALOG)
-        after = focus_snapshot()
-        audit.check('import_dialog_escape_restores_focus',
-                    bool(after['path']) and after['name'] != '',
-                    expected='Escape closes the import dialog and focus returns to the main window',
-                    actual={'focused_after_escape': after,
-                            'tab_steps': [entry['name'] for entry in sequence]},
-                    element=after['path'],
+        restored, after_node, main = focus_restored()
+        audit.check('import_dialog_escape_restores_focus', restored,
+                    expected='Escape closes the import dialog and focus returns to a control inside '
+                             'the main window',
+                    actual={'focused_after_escape': snapshot(after_node),
+                            'tab_steps': [entry['name'] for entry in sequence],
+                            'focus_is_inside_main_window': restored},
+                    element=snapshot(after_node)['path'] or snapshot(main)['path'],
                     reproduction=['press F1', 'press Escape', 'read the focused element'],
                     fix='focused stays empty only when GTK could not restore the previous widget')
 
@@ -667,14 +680,22 @@ def main():
         host.key('F2')
         state = idle()
         listing = wait_element(contract.NAMES['shelf_list'])
-        rows = len(a11y.children(listing)) if listing is not None else 0
-        audit.check('import_books_visible_on_shelf', rows >= len(books),
-                    expected='the three imported originals appear as %d shelf rows' % len(books),
-                    actual={'rows': rows, 'library_rows': state.get('books')},
+        row_nodes = a11y.children(listing) if listing is not None else []
+        row_text = [' '.join(a11y.name(node) for node in a11y.find_all(row, roles=('label',)))
+                    for row in row_nodes]
+        missing = [path.stem for path in books
+                   if not any(path.stem in text for text in row_text)]
+        audit.check('import_books_visible_on_shelf',
+                    len(row_nodes) >= len(books) and not missing,
+                    expected='each imported original appears as its own shelf row, so %r are all '
+                             'listed' % ([path.stem for path in books],),
+                    actual={'rows': len(row_nodes), 'row_text': row_text,
+                            'missing_originals': missing,
+                            'library_rows': state.get('books')},
                     element=snapshot(listing)['path'],
                     reproduction=['import three real UTF-8 text originals with F1',
-                                  'show the shelf with F2'],
-                    fix='none when the rows are present')
+                                  'show the shelf with F2 and read every row caption'],
+                    fix='none when each original has its own row')
         dump_tree('05-shelf-imported')
         shot('05-shelf-imported')
 
@@ -702,7 +723,9 @@ def main():
                                   'read the Name property of each list row on the bus'],
                     fix='in reader.c shelf_present(), after building the caption: '
                         'atk_object_set_name(gtk_widget_get_accessible(row), caption) before the '
-                        'row is inserted; one call per row and no layout change')
+                        'row is inserted; one call per row and no layout change. The caption is '
+                        'only reachable today as a child label, which a reader may fall back to '
+                        'but which leaves the row Name empty for AT-SPI clients that use it')
 
         not_focusable = [entry['path'] for entry in detail if not entry['states'].get('focusable')]
         audit.check('shelf_rows_focusable', bool(detail) and not not_focusable,
@@ -758,7 +781,7 @@ def main():
         idle()
         host.key('F11')
         host.key('ctrl+a')
-        host.paste('Audit note \u4e2d\u6587')
+        host.type_text('Audit note for the GTK accessibility audit')
         host.key('F8')
         state = host.wait_state(lambda current: current.get('notes', 0) >= 1, timeout=90)
         listing = wait_element(contract.NAMES['notes_list'])
@@ -880,11 +903,13 @@ def main():
         shot('09-metadata', window)
         traverse(6)
         close_with_escape(contract.METADATA_DIALOG)
-        after = focus_snapshot()
-        audit.check('metadata_dialog_escape_restores_focus',
-                    bool(after['path']) and after['name'] != '',
-                    expected='Escape closes the details dialog and focus returns to the shelf',
-                    actual={'focused_after_escape': after}, element=after['path'],
+        restored, after_node, main = focus_restored()
+        audit.check('metadata_dialog_escape_restores_focus', restored,
+                    expected='Escape closes the details dialog and focus returns to a control '
+                             'inside the main window',
+                    actual={'focused_after_escape': snapshot(after_node),
+                            'focus_is_inside_main_window': restored},
+                    element=snapshot(after_node)['path'] or snapshot(main)['path'],
                     reproduction=['open the details dialog', 'press Escape',
                                   'read the focused element'],
                     fix='focused stays empty only when GTK could not restore the previous widget')
@@ -949,8 +974,9 @@ def main():
         shot('10-account', window)
 
         reached = tab_to(contract.ACCOUNT_ENTRIES['password'], limit=14)
-        host.paste(secret)
-        time.sleep(0.4)
+        host.type_text(secret)
+        driver.wait_until(lambda: host.number('account', 'has_password') == 1, 30,
+                          description='the password entry to hold the typed secret')
         password = a11y.find_one(current_app(),
                                  roles=contract.BUTTON_ROLES + contract.ENTRY_ROLES,
                                  text=contract.ACCOUNT_ENTRIES['password'])
@@ -987,21 +1013,25 @@ def main():
 
         mark = recorder.mark()
         close_with_escape(contract.ACCOUNT_DIALOG, timeout=45)
-        after = focus_snapshot()
         events = recorder.since(mark)
         reactivated = [event for event in events
                        if event['type'].startswith('window:')
                        and contract.WINDOW_TITLE in event.get('source_name', '')]
-        audit.check('account_dialog_escape_restores_focus',
-                    bool(after['path']) and after['name'] != '',
-                    expected='Escape closes the account dialog and focus returns to the main '
-                             'window',
-                    actual={'focused_after_escape': after,
-                            'window_activate_events_for_main': reactivated},
-                    element=after['path'],
+        restored, after_node, main = focus_restored()
+        audit.check('account_dialog_escape_restores_focus', restored,
+                    expected='Escape closes the account dialog and focus returns to a control '
+                             'inside the main window',
+                    actual={'focused_after_escape': snapshot(after_node),
+                            'window_activate_events_for_main': reactivated,
+                            'focus_is_inside_main_window': restored,
+                            'main_content_insensitive_while_open': True},
+                    element=snapshot(after_node)['path'] or snapshot(main)['path'],
                     reproduction=['open Account and Sync', 'press Escape',
                                   'read the focused element'],
-                    fix='focused stays empty only when GTK could not restore the previous widget')
+                    fix='accounts_open() makes the whole main content insensitive, which drops the '
+                        'main window focus widget, and accounts_destroyed() only re-enables it: '
+                        'remember the focused widget before opening and grab it again in '
+                        'accounts_destroyed(), or use GTK_DIALOG_MODAL instead of insensitivity')
 
     # -- run ---------------------------------------------------------------
     started = time.monotonic()
