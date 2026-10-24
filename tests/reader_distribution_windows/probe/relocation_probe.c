@@ -169,6 +169,13 @@ static void write_report(const probe_state *state, const char *path) {
     fprintf(stream, "%s\"%s\"", index ? "," : "", escaped);
   }
   fprintf(stream, "],\"passed\":%s}\n", state->failures == 0 ? "true" : "false");
+  if (state->failures) {
+    fprintf(stderr, "relocation probe failed: module=%s prefix=%s external=%u\n",
+            state->module_path, state->prefix, state->external_count);
+    for (unsigned index = 0; index < state->external_count; index++) {
+      fprintf(stderr, "  external module: %s\n", state->external[index]);
+    }
+  }
   fclose(stream);
 }
 

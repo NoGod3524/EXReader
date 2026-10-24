@@ -256,14 +256,19 @@ jobs:
         run: |
           PREFIX=$(cygpath -u "$PREFIX_M")
           OUT=$(cygpath -m "$PWD/build/dist")
+          echo "== consumer-c"
           ./build/reloc-consumer/distribution-consumer-c.exe "$PREFIX/examples/fonts/primary.ttf" \
             "$PREFIX/examples/books/layout.epub" "$OUT/c11.json"
+          echo "== consumer-cpp"
           ./build/reloc-consumer/distribution-consumer-cpp.exe "$OUT/cpp17.json"
+          echo "== relocation probe"
           ./build/reloc-consumer/relocation-probe.exe --prefix "$PREFIX_M" \
             --font "$PREFIX_M/examples/fonts/primary.ttf" --book "$PREFIX_M/examples/books/layout.epub" \
             --output "$OUT/probe.json"
+          echo "== reading-document"
           ./build/reloc-reading/reading-document.exe tests/fixtures/sample.txt tests/fixtures/fonts/primary.ttf \
             > "$OUT/document.json"
+          echo "== release identity"
           ./build/reloc-identity/release-identity.exe > build/dist/identity-raw.json
           python tools/check_corpus.py build/reloc-reading/reading-document.exe \
             tests/fixtures/fonts/primary.ttf tools/reading_core/smoke-manifest.json build/dist/corpus \

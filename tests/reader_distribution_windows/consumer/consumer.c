@@ -40,29 +40,36 @@ static int run(const char *font_path, const char *book_path, const char *output_
   exr_layout_config config = exr_layout_config_defaults();
   size_t parts = 0, pages = 0, text_bytes = 0, completed_parts = 0;
   int status = 1;
+  const char *stage = "font";
   config.page = (exr_layout_options){720, 1040, 36, 28, 1.5f, 10};
   if (exr_font_open(font_path, &font, &error) != EXR_OK) {
     goto done;
   }
+  stage = "publication";
   if (exr_publication_open(book_path, &publication, &error) != EXR_OK) {
     goto done;
   }
+  stage = "parts";
   if (!exr_publication_parts(publication, &parts) || parts == 0) {
     goto done;
   }
   for (size_t part = 0; part < parts; part++) {
     size_t length = 0;
+    stage = "load";
     if (exr_publication_load(publication, part, &document, &error) != EXR_OK) {
       goto done;
     }
+    stage = "text";
     if (!exr_document_text(document, &length) && length) {
       goto done;
     }
     text_bytes += length;
+    stage = "pager";
     if (exr_pager_create(document, font, &config, &pager, &error) != EXR_OK) {
       goto done;
     }
     for (;;) {
+      stage = "next";
       if (exr_pager_next(pager, &page, &error) != EXR_OK) {
         goto done;
       }
@@ -74,9 +81,11 @@ static int run(const char *font_path, const char *book_path, const char *output_
         page = NULL;
         break;
       }
+      stage = "render";
       if (exr_render_page_color(page, exr_layout_font(page), 0, &bitmap, &error) != EXR_OK) {
         goto done;
       }
+      stage = "bitmap";
       if (!bitmap.pixels || bitmap.width != 720 || bitmap.height != 1040 || bitmap.channels != 4) {
         goto done;
       }
@@ -106,6 +115,12 @@ done:
       return status;
     }
     escape(exr_version(), version, sizeof(version));
+    if (status != 0 || pages == 0 || text_bytes == 0) {
+      fprintf(stderr,
+              "consumer-c failed at %s: status=%d parts=%u completed=%u pages=%u text=%u error=%s\n",
+              stage, status, (unsigned)parts, (unsigned)completed_parts, (unsigned)pages,
+              (unsigned)text_bytes, error.message);
+    }
     fprintf(stream,
             "{\"schema\":\"reader-distribution-windows-consumer-v1\",\"consumer\":\"c11\","
             "\"sdk_version\":\"%s\",\"abi\":%u,\"status\":%d,\"parts\":%u,"

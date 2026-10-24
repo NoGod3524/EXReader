@@ -49,5 +49,10 @@ int main(int argc, char** argv) {
                escape(version.c_str()).c_str(), abi, config.page.width, config.page.height,
                passed ? "true" : "false");
   std::fclose(stream);
+  if (!passed) {
+    std::fprintf(stderr, "consumer-cpp failed: version=%s abi=%u layout=%d page=%.1fx%.1f\n",
+                 version.c_str(), abi, layout_valid ? 1 : 0, config.page.width,
+                 config.page.height);
+  }
   return passed ? 0 : 1;
 }
