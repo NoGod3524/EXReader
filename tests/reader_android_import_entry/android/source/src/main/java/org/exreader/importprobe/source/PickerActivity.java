@@ -12,8 +12,9 @@ public final class PickerActivity extends Activity {
         ClipData clip = ClipData.newRawUri("picked", SenderActivity.uriOf("txt-seekable"));
         clip.addItem(new ClipData.Item(SenderActivity.uriOf("epub")));
         clip.addItem(new ClipData.Item(SenderActivity.uriOf("pdf")));
-        Intent data = new Intent().setClipData(clip).setData(SenderActivity.uriOf("txt-seekable"))
-                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        Intent data = new Intent().setData(SenderActivity.uriOf("txt-seekable"));
+        data.setClipData(clip);
+        data.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         setResult(RESULT_OK, data);
         finish();
     }
