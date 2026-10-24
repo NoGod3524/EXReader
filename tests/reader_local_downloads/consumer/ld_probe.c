@@ -175,6 +175,10 @@ static void make_options(reader_ld_options *o, exr_library *library, reader_cata
   reader_ld_options_init(o);
   o->library = library; o->catalog = catalog; o->state_dir = state_dir;
   o->legacy_policy = policy && !strcmp(policy, "backup") ? READER_LD_LEGACY_BACKUP : READER_LD_LEGACY_REJECT;
+  {
+    const char *max_input = arg(argc, argv, "--max-input");
+    if (max_input) o->max_input_bytes = (uint64_t)strtoull(max_input, NULL, 10);
+  }
   o->is_busy = busy; o->busy_context = state;
   o->after_stage = hook; o->stage_context = state;
   o->control.cancelled = cancelled; o->control.context = state;

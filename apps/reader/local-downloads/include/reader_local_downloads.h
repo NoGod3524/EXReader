@@ -70,14 +70,28 @@ extern "C" {
    Reimport identity
    -----------------
    reader_ld_reimport copies the caller's file through one opened handle into
-   originals/<sha>.open while hashing the same bytes, verifies size and
-   SHA-256 against the book identity, imports that private copy, re-reads the
-   newly created SDK row and verifies its stored bytes before any mapping is
-   written. A pathname swapped after the hash therefore cannot change what is
-   stored, and a wrong-book row is deleted again instead of being mapped. For
-   a PDF the verified copy is kept as originals/<sha>.orig, because the fixed
-   page reader consumes that private file; it is removed only when this same
-   book is removed.
+   originals/<sha>.open while hashing the same bytes, bounded by the book's
+   own original length (and by the effective installed-sideload ceiling for
+   the format, which max_input_bytes may lower but never raise); nothing is
+   copied when the book itself cannot fit that ceiling, and a file that grows
+   while it is read is refused at that same bound, so the private copy can
+   never exceed the identity length. Size and SHA-256 must match the book, the
+   copy (or the published original) is handed to the installed sideload, the
+   newly created SDK row is re-read and its stored bytes verified, and only
+   then is the mapping written. A pathname swapped after the hash therefore
+   cannot change what is stored, and a wrong-book row is deleted again instead
+   of being mapped.
+
+   For a PDF the verified copy is published as originals/<sha>.orig BEFORE
+   anything is imported or mapped, so a host that blocks the publication (the
+   target is a directory, or the file is locked on Windows) fails the call with
+   no SDK row and no mapping left behind, and a plain retry succeeds once the
+   obstruction is gone. Note what the SDK does: its PDF file import maps the
+   path only while importing and stores the whole original in its own database
+   (books.source), so reading and reopening never depend on this file. The
+   retained copy is this module's own recovery artifact - the exact verified
+   original that a later restore can hand back without re-downloading - and it
+   is removed only when this same book is removed.
 
    Calling contract: run on the thread that owns the exr_library and the
    catalog. Release every exr_source / reader opened on the affected SDK rows
