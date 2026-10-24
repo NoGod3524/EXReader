@@ -77,6 +77,20 @@ private struct ShelfGeometryKey: PreferenceKey {
     }
 }
 
+private struct ShelfGeometryProbe: View {
+    @ObservedObject var shelf: HostShelf
+    var rowKey: String? = nil
+
+    var body: some View {
+        let revision = shelf.geometryRevision
+        GeometryReader { geometry in
+            Color.clear.preference(key: ShelfGeometryKey.self, value: rowKey.map {
+                ShelfGeometry(frames: [$0: geometry.frame(in: .named("catalog-shelf"))], revision: revision)
+            } ?? ShelfGeometry(size: geometry.size, revision: revision))
+        }.id(revision)
+    }
+}
+
 #if EXR_APPLE_SHELF_REVIEW
 private struct ShelfObservationView: View {
     let value: String
@@ -118,7 +132,6 @@ struct LibraryScreen: View {
     }
 
     var body: some View {
-        let geometryRevision = shelf.geometryRevision
         VStack(spacing: 0) {
             HStack {
                 Text("EXReader 书架").font(.title2).bold()
@@ -188,18 +201,13 @@ struct LibraryScreen: View {
                             .accessibilityLabel(Text("\(book.title)，\(book.author)，\(book.format.uppercased())"))
                             .id(book.id)
                             .padding(.horizontal, 8)
-                            .background(GeometryReader { geometry in
-                                Color.clear.preference(key: ShelfGeometryKey.self,
-                                    value: ShelfGeometry(frames: [book.id: geometry.frame(in: .named("catalog-shelf"))], revision: geometryRevision))
-                            })
+                            .background(ShelfGeometryProbe(shelf: shelf, rowKey: book.id))
                         }
                       }
                     }
                     .accessibilityIdentifier("library.list")
                     .coordinateSpace(name: "catalog-shelf")
-                    .background(GeometryReader { geometry in
-                        Color.clear.preference(key: ShelfGeometryKey.self, value: ShelfGeometry(size: geometry.size, revision: geometryRevision))
-                    }.id(geometryRevision))
+                    .background(ShelfGeometryProbe(shelf: shelf))
                     .onPreferenceChange(ShelfGeometryKey.self) { geometry in
                         shelf.observe(geometry.frames, size: geometry.size, revision: geometry.revision)
                         if geometry.revision == shelf.geometryRevision, geometry.size.width > 0, geometry.size.height > 0,
