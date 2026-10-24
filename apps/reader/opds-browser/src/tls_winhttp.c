@@ -41,7 +41,7 @@ static wchar_t *to_wide(const char *text) {
 }
 
 static wchar_t *header_line(const wchar_t *name, const wchar_t *value) {
-  size_t n = wcslen(name) + wcslen(value) + 4;
+  size_t n = wcslen(name) + wcslen(value) + 8;
   wchar_t *line = (wchar_t *)malloc(n * sizeof(*line));
   if (!line) return NULL;
   if (swprintf(line, n, L"%ls: %ls\r\n", name, value) < 0) { free(line); return NULL; }
