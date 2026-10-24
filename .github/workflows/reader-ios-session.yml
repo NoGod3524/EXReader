@@ -1,0 +1,47 @@
+name: Native iOS SDK account session
+on:
+  push:
+    branches: [codex/reader-ios-sync-session]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ios:
+    name: installed iOS SDK and actual account roundtrip
+    runs-on: macos-15
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require frozen SDK schema and explicit package ownership
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD -- apps/reader/store/001_catalog.sql
+          git diff --name-only f43baf9182d75907c0cb5d6f77048f27bca8c950 HEAD | while IFS= read -r path; do
+            case "$path" in tests/reader_ios_session/*|tests/reader_reading_v2/consumer/probe.cpp|tests/reader_reading_v2/check_webdav.py|.github/workflows/reader-ios-session.yml|docs/READER-IOS-SESSION.md|docs/validation/reader-ios-session.json) ;; *) echo "Unexpected path: $path"; exit 1;; esac
+          done
+      - name: Install fixture-only tools
+        run: |
+          brew install ninja openssl@3
+          echo "$(brew --prefix openssl@3)/bin" >> "$GITHUB_PATH"
+      - name: Actual public SDK originals reading anchors and background session
+        run: python3 tests/reader_ios_session/run_ios.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-ios-session-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/ios-session/logs/
+            build/ios-session/stage/
+            build/ios-session/fixtures/
+            build/ios-session/consumer/ReaderSessionProbe.app/
+            build/ios-session/consumer/session-link.map
+            build/ios-session/evidence/
+            build/ios-session/result.json
+            !build/ios-session/**/*.key
+          if-no-files-found: error

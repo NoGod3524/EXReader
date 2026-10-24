@@ -18,11 +18,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_sdk import EXPECTED
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'reader_reading_state'))
 from check_reading_state import sqlite_providers
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'webdav'))
+from cloud_native import trust_fixture_certificates
 
 
 def main():
     p = argparse.ArgumentParser()
     for name in ('probe', 'fixtures', 'font', 'link-map', 'output'): p.add_argument('--' + name, required=True, type=Path)
+    p.add_argument('--native-binary', type=Path)
+    p.add_argument('--timeout', type=int, default=180)
     a = p.parse_args(); assert os.environ.get('GITHUB_ACTIONS') == 'true'
     out = a.output.resolve(); out.mkdir(parents=True)
     certs = out / 'certificates'; certs.mkdir()
@@ -30,9 +34,7 @@ def main():
     subprocess.run(['openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '1',
                     '-keyout', str(key), '-out', str(cert), '-subj', '/CN=localhost',
                     '-addext', 'subjectAltName=DNS:localhost,IP:127.0.0.1'], check=True, capture_output=True)
-    subprocess.run(['certutil', '-addstore', '-f', 'Root', str(cert)] if os.name == 'nt' else
-                   ['sudo', 'cp', str(cert), '/usr/local/share/ca-certificates/reader-v2-roundtrip.crt'], check=True, capture_output=True)
-    if os.name != 'nt': subprocess.run(['sudo', 'update-ca-certificates'], check=True, capture_output=True)
+    trust_fixture_certificates((cert,), 'reader-v2-roundtrip-')
     secret = uuid.uuid4().hex
     auth = 'Basic ' + base64.b64encode(('reading-v2:' + secret).encode()).decode()
     entries, directories, requests = {}, {'/dav/'}, []
@@ -103,7 +105,7 @@ def main():
         for role, entry in manifest.items():
             assert hashlib.sha256((a.fixtures / entry['file']).read_bytes()).hexdigest() == entry['sha256']
             command += ['--sha', role + '=' + entry['sha256']]
-        done = subprocess.run(command, capture_output=True, text=True, encoding='utf-8', timeout=180,
+        done = subprocess.run(command, capture_output=True, text=True, encoding='utf-8', timeout=a.timeout,
                               env=dict(os.environ, READER_TEST_AUTH=auth))
         (out / 'probe.log').write_text(done.stdout + '\n' + done.stderr, encoding='utf-8')
         print(done.stdout); print(done.stderr); assert done.returncode == 0, 'native SDK/WebDAV roundtrip refused'
@@ -143,7 +145,13 @@ def main():
         assert all(r['if_none_match'] == '*' for r in requests if r['method'] == 'PUT')
         assert all(r['depth'] == '1' for r in requests if r['method'] == 'PROPFIND')
         assert any(r['method'] == 'PUT' and r['status'] == 412 for r in requests)
-        providers = sqlite_providers(a.link_map.read_text(encoding='utf-8', errors='replace'))
+        mapping = a.link_map.read_text(encoding='utf-8', errors='replace')
+        if sys.platform == 'darwin':
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'reader_revisions'))
+            from check_protocol import sqlite_provider
+            providers = sqlite_provider(mapping, '')
+        else:
+            providers = sqlite_providers(mapping)
         assert len(providers) == 1 and 'reader_catalog_sqlite' in providers[0], providers
         (out / 'native-requests.json').write_text(json.dumps(requests, indent=2) + '\n', encoding='utf-8')
         for path in out.rglob('*'):
@@ -154,7 +162,8 @@ def main():
                    'receiver_found': 17, 'receiver_mislocated': 0, 'originals_exported': 4, 'network_pushed': 22,
                    'metadata_projected': 4,
                    'network_pulled': report['network_pulled'], 'request_count': len(requests), 'sqlite_providers': providers,
-                   'consumer_sha256': hashlib.sha256(a.probe.read_bytes()).hexdigest(), 'sdk_changed': False,
+                   'consumer_sha256': hashlib.sha256((a.native_binary or a.probe).read_bytes()).hexdigest(), 'sdk_changed': False,
+                   'execution_platform': 'ios-simulator' if os.environ.get('EXR_DAV_IOS_UDID') else sys.platform,
                    'schema_changed': False, 'host_ui_accepted': False, 'six_platform_accepted': False, 'complete_product': False,
                    'scope': 'real SDK original export, native HTTPS fixture and second-library import/resolve'}
         (out / 'result.json').write_text(json.dumps(summary, indent=2) + '\n', encoding='utf-8'); print(json.dumps(summary), flush=True)

@@ -16,6 +16,9 @@ namespace {
 std::string final_wire,final_key;
 std::string webdav_root,transport_work;
 size_t network_pushed=0,network_pulled=0,originals_exported=0,metadata_projected=0;
+#ifdef READER_V2_SESSION_TEST
+void session_transfer(side &,side &);
+#endif
 std::string cached_original(const std::string &role){return transport_work+"/B-cache/"+shas[role]+"."+formats[role];}
 void project_received_books(){
   std::vector<reader_revision_info> rows;reader_revision_error error{};
@@ -59,6 +62,9 @@ struct network_side {
 #endif
 void transfer(side &from,side &to){
   if(webdav_root.empty()){flush(from,to);return;}
+#ifdef READER_V2_SESSION_TEST
+  session_transfer(from,to);return;
+#endif
 #ifdef READER_V2_WEBDAV_TEST
   auto outgoing=pending(from);if(outgoing.empty())fatal("native transport has no actual queued revisions");
   std::set<unsigned> shards;for(const auto &row:outgoing)shards.insert((unsigned)std::stoul(row.id.substr(0,2),nullptr,16));
@@ -125,7 +131,10 @@ void seed_books(){
   transfer(A,B);
 }
 }
-int main(int argc,char **argv){
+#ifndef READER_V2_ENTRY
+#define READER_V2_ENTRY main
+#endif
+int READER_V2_ENTRY(int argc,char **argv){
   if(v2_c_contract())fatal("v2 C ABI");
   std::string fixtures,font,work,report_path;
   for(int i=1;i+1<argc;i+=2){std::string k=argv[i],v=argv[i+1];
