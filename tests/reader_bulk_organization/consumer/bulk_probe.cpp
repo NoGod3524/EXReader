@@ -48,10 +48,13 @@ struct hooks {
     reader_revisions *store=nullptr;reader_revision_error e{};
     if(reader_revisions_open(db.c_str(),&store,&e)!=READER_REV_OK)std::exit(21);
     std::string key=book_key(index),sha=book_sha(index),title="concurrent-"+std::to_string(index);
-    reader_command_context context{store,nullptr,nullptr,0};
-    reader_book_command input{READER_COMMAND_PUT,key.c_str(),"txt",sha.c_str(),title.c_str(),"author",title.c_str(),(uint64_t)(100+index),0};
-    reader_command_result result{};reader_command_error ce{};
-    if(reader_command_apply_book(&context,&input,&result,&ce)!=READER_COMMAND_OK){std::fprintf(stderr,"fork refused: %d %d %s\n",(int)ce.code,(int)ce.revision.code,ce.message);std::exit(22);}
+    char id[33];if(reader_revision_new_id(id,&e)!=READER_REV_OK)std::exit(28);
+    /* A revision received from another device: no parents, concurrent with the local head. */
+    std::string wire="{\"version\":1,\"id\":\""+std::string(id)+"\",\"entity_kind\":\"book\",\"entity_key\":\""+key
+      +"\",\"operation\":\"put\",\"location_kind\":\"none\",\"parents\":[],\"payload\":{\"format\":\"txt\",\"source_sha256\":\""+sha
+      +"\",\"source_bytes\":"+std::to_string(100+index)+",\"title\":\""+title+"\",\"author\":\"author\",\"favorite\":false}}";
+    reader_revision_info info{};int created=0;
+    if(reader_revision_receive(store,wire.data(),wire.size(),nullptr,&info,&created,&e)!=READER_REV_OK||!created){std::fprintf(stderr,"fork refused: %d %s\n",(int)e.code,e.message);std::exit(22);}
     if(reader_revisions_close(&store,&e)!=READER_REV_OK)std::exit(23);
   }
   static int collect(void *context,const reader_revision_head *head){

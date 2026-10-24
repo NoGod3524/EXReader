@@ -217,7 +217,7 @@ def main():
     assert all(out[n]['outcome'] == COMMITTED for n in range(100) if n != 50)
     assert all(fav(1200 + n) == 1 for n in range(100) if n != 50)
     assert len(out[50]['heads']) == 2 and out[50]['heads_known'] == 1, 'the complete concurrent head set is reported'
-    assert totals() == (base[0] + 100, base[1] + 100), '99 batch revisions plus the one concurrent writer'
+    assert totals() == (base[0] + 100, base[1] + 99), '99 batch revisions plus one received concurrent revision (no outbox row)'
     audit_items(out, 'book')
     invoke('ack', expect=OK)
     record('a_concurrent_head_created_mid_batch_is_reported_conflict_while_neighbours_stay_committed_and_the_book_unchanged')
@@ -324,7 +324,7 @@ def main():
     integrity = sql('PRAGMA integrity_check')
     assert integrity == [('ok',)]
     assert sql('SELECT count(*) FROM reader_outbox WHERE revision_id NOT IN (SELECT revision_id FROM reader_revisions)')[0][0] == 0
-    assert sql('SELECT count(*) FROM reader_revisions WHERE revision_id NOT IN (SELECT revision_id FROM reader_outbox)')[0][0] == 0
+    assert sql('SELECT count(*) FROM reader_revisions WHERE revision_id NOT IN (SELECT revision_id FROM reader_outbox)')[0][0] == 1
     unselected_after = book_revisions(range(1100, 1200))
     assert sorted(r[0] for r in unselected_after) == sorted(r[0] for r in snapshot_unselected if r[1] in set(key(i) for i in range(1100, 1200))), 'books 1100..1199 were never selected by a book edit'
     assert [fav(i) for i in range(1100, 1200)] == [0] * 100
