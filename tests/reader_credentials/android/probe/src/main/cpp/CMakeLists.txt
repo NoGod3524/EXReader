@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: MIT
+cmake_minimum_required(VERSION 3.22)
+project(CredentialsProbe LANGUAGES C)
+set(CMAKE_C_STANDARD 11)
+set(suite ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../consumer)
+find_package(EXReaderCredentials 0.1 CONFIG REQUIRED)
+add_library(credentials_probe SHARED probe.c ${suite}/suite.c)
+target_include_directories(credentials_probe PRIVATE ${suite})
+target_compile_options(credentials_probe PRIVATE -Wall -Wextra)
+target_link_libraries(credentials_probe PRIVATE EXReaderCredentials::exr_credentials)

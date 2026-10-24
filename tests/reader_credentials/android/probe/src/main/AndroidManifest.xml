@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:label="Credentials probe" android:allowBackup="false" android:hasCode="true" />
+    <instrumentation
+        android:name=".CredentialsProbe"
+        android:targetPackage="org.exreader.credentials.probe" />
+</manifest>
