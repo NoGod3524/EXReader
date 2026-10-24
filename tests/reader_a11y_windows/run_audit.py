@@ -228,6 +228,12 @@ def main():
         if host.process is not None:
             close_info = host.close(reader, timeout=60)
             environment["close"] = close_info
+        environment["final_state"] = {"status": host.status(),
+                                      "page_label": host.page_label(),
+                                      "shelf_rows": host.list_text("books")[:6],
+                                      "enabled": {name: host.enabled(name) for name in
+                                                  ("open_button", "metadata_button",
+                                                   "font_inc", "zoom_inc", "shelf_refresh")}}
         environment["host_ini"] = host.read_ini()
         environment["data_dir_retained"] = bool(args.keep_data)
         trace.event("audit_finished", {"seconds": round(time.time() - started, 1)})
@@ -252,9 +258,9 @@ def print_diagnostics(recorder, environment, trace, report):
     print(json.dumps(environment, ensure_ascii=False, indent=2, default=str)[:6000])
     print("=== named results ===")
     for check in recorder.checks:
+        actual = (check["actual"] or "").replace("\n", " ")
         print("%-16s %-13s %-9s %s" % (check["id"], check["status"], check["severity"],
-                                       (check["actual"] or "").replace("
-", " ")[:260]))
+                                       actual[:260]))
     print("=== waits, dialogs and captures ===")
     for event in trace.events:
         if event["kind"] == "key":
@@ -286,7 +292,10 @@ def _open_first(session, recorder):
     session.dump("t01-shelf-loaded")
     session.shot("01-shelf-loaded")
     if not result.get("ok"):
-        raise RuntimeError("the first book did not open: %r" % (result,))
+        session.dump("t01b-open-failed")
+        session.shot("01b-open-failed")
+        raise RuntimeError("the first book did not open: %s"
+                           % json.dumps(result, ensure_ascii=False, default=str))
     session.dump("t02-reading")
 
 
@@ -300,7 +309,10 @@ def _open_fixed(session, recorder, fixtures, pdf_name, filter_text):
     names = flows.phase_search(session, recorder, filter_text, filter_text)
     opened = flows.select_and_open(session)
     if not opened.get("ok"):
-        raise RuntimeError("the fixed-page book did not open: %r" % (opened,))
+        session.dump("t04b-open-failed")
+        session.shot("04b-open-failed")
+        raise RuntimeError("the fixed-page book did not open: %s"
+                           % json.dumps(opened, ensure_ascii=False, default=str))
     session.dump("t04-reading-fixed")
     session.shot("04-reading-fixed")
     flows.phase_fixed(session, recorder)

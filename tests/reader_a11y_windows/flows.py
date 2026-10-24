@@ -237,20 +237,32 @@ def clear_search(s):
     return not s.host.text("shelf_search")
 
 
-def select_and_open(s):
+def select_and_open(s, attempts=2):
     """Select the first shelf row and open it with the keyboard only."""
+    rows = s.list_item_names("books")
     ok_list, stops = s.goto("books")
     if not ok_list:
-        return {"ok": False, "stage": "list", "stops": stops}
-    s.kb.press("home", note="select the first shelf row")
+        return {"ok": False, "stage": "list", "stops": stops, "rows": rows,
+                "status": s.status()}
     label_before = s.page_label()
-    ok_open, stops2 = s.activate("open_button")
-    if not ok_open:
-        return {"ok": False, "stage": "open", "stops": stops2}
-    changed = s.host.wait_for(lambda: s.page_label() != label_before, timeout=120, interval=0.25,
-                              label="page label changes after opening a book")
-    return {"ok": bool(changed), "label_before": label_before, "label_after": s.page_label(),
-            "stops": stops + stops2}
+    result = {"ok": False, "stage": "open", "rows": rows, "label_before": label_before,
+              "stops": stops, "status": s.status()}
+    for attempt in range(attempts):
+        s.kb.press("home", note="select the first shelf row")
+        ok_open, stops2 = s.activate("open_button")
+        result["stops"] = result["stops"] + stops2
+        result["open_focus"] = ok_open
+        if not ok_open:
+            continue
+        changed = s.host.wait_for(lambda: s.page_label() != label_before, timeout=90,
+                                  interval=0.25, label="page label changes after opening a book")
+        result["label_after"] = s.page_label()
+        result["status"] = s.status()
+        if changed:
+            result["ok"] = True
+            result["attempts"] = attempt + 1
+            return result
+    return result
 
 
 def phase_reading(s, r):
