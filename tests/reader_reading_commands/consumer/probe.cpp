@@ -541,8 +541,8 @@ int main(int argc,char **argv){
     /* pending parents: a remote revision whose parent has not arrived */
     entity pend=make_annotation(TB,new_id());std::string missing=new_id(),pid=new_id();
     std::string pw=raw_wire(pend,pid,"put",&hl->c,0,"pending",{missing},false);
-    reader_revision_info vi{};reader_revision_error ve{};int created=0;
-    expect(reader_revision_validate(store,pw.data(),pw.size(),nullptr,&vi,&ve)==READER_REV_OK&&reader_revision_receive(store,pw.data(),pw.size(),vi.sha256,&vi,&created,&ve)==READER_REV_OK&&created==1,"remote revision with a missing parent is retained");
+    reader_revision_info vi{},ri{};reader_revision_error ve{};int created=0;
+    expect(reader_revision_validate(store,pw.data(),pw.size(),nullptr,&vi,&ve)==READER_REV_OK&&reader_revision_receive(store,pw.data(),pw.size(),std::string(vi.sha256).c_str(),&ri,&created,&ve)==READER_REV_OK&&created==1,"remote revision with a missing parent is retained");
     reader_revision_state ps{};heads_of("annotation",pend.key,&ps);expect(ps.missing_parents>0&&!ps.projection_safe,"missing parent leaves the entity pending");
     pend.heads={pid};refused("heads","head with missing parents",pend,READER_RC_HIGHLIGHT,READER_RC_PUT,&hl->c,0,"x",READER_RC_UNSAFE);
     refused("heads","note edit over pending parents",pend,READER_RC_NOTE_TEXT,READER_RC_PUT,nullptr,0,"x",READER_RC_SOURCE);
@@ -591,7 +591,7 @@ int main(int argc,char **argv){
 
   /* ---- a failing commit leaves history and outbox together ---- */
   {
-    size_t at=locate(T,"Tail gamma"),len=std::strlen("Tail gamma");
+    size_t at=0,len=std::strlen("Tail gamma");
     exr_anchor probe{};exr_error pe{};if(exr_anchor_create(tdoc,0,5,&probe,&pe)==EXR_OK)exr_anchor_free(&probe);
     capture_ptr hl=reflow_cap(tdoc,locate(T,"Tail alpha"),locate(T,"Tail alpha")+len);(void)at;view want=hl->want();
     entity e=make_annotation(TB,new_id());std::string h1;commit("commit-failure","create",e,READER_RC_HIGHLIGHT,READER_RC_PUT,&hl->c,0,"base",&want,&h1);
