@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "originals": {
+    "txt": {"file": "book.txt", "bytes": null, "sha256": null},
+    "epub": {"file": "book.epub", "bytes": null, "sha256": null},
+    "pdf": {"file": "pages.pdf", "bytes": null, "sha256": null},
+    "cbz": {"file": "pages.cbz", "bytes": null, "sha256": null}
+  },
+  "strings": {
+    "title_txt": "Café — NFC",
+    "title_epub": "Café — NFD",
+    "title_pdf": "Война и мир",
+    "title_cbz": "📚 🙂 Emoji",
+    "author_txt": "云端作者",
+    "author_epub": "Amélie",
+    "author_pdf": "Лев Толстой",
+    "author_cbz": "Ada 👩",
+    "tag_root": "旅行",
+    "tag_a": "Путешествие",
+    "tag_b": "Voyage 🧳",
+    "tag_merge": "Merge ✓ Café",
+    "tag_tomb": "临时",
+    "tag_parent": "Parent é",
+    "tag_child": "Child é",
+    "shelf_name": "Русская полка",
+    "return_title_epub": "Война и мир — Café 🙂",
+    "return_quote": "开头中文段落"
+  },
+  "cases": [
+    {"id": "txt-progress-start", "state": "FOUND", "quote": ""},
+    {"id": "txt-progress-multibyte", "state": "FOUND", "quote": ""},
+    {"id": "txt-progress-end", "state": "FOUND", "quote": ""},
+    {"id": "txt-bookmark", "state": "FOUND", "quote": ""},
+    {"id": "txt-highlight", "state": "FOUND", "quote": "🙂"},
+    {"id": "txt-ambiguous", "state": "AMBIGUOUS", "quote": "AMBIGUOUS TARGET"},
+    {"id": "epub-global-highlight", "state": "FOUND", "quote": "第二章节独有文字"},
+    {"id": "epub-global-progress", "state": "FOUND", "quote": ""},
+    {"id": "epub-bookmark-part-0", "state": "FOUND", "quote": ""},
+    {"id": "epub-bookmark-part-1", "state": "FOUND", "quote": ""},
+    {"id": "epub-chapter-progress", "state": "FOUND", "quote": ""},
+    {"id": "epub-bookmark-part-2", "state": "FOUND", "quote": ""},
+    {"id": "pdf-highlight", "state": "FOUND", "quote": "Shared quote across pages."},
+    {"id": "pdf-bookmark", "state": "FOUND", "quote": ""},
+    {"id": "pdf-textless-bookmark", "state": "FOUND", "quote": ""},
+    {"id": "pdf-progress", "state": "FOUND", "quote": ""},
+    {"id": "cbz-bookmark", "state": "FOUND", "quote": ""},
+    {"id": "cbz-progress", "state": "FOUND", "quote": ""}
+  ]
+}

@@ -1,0 +1,301 @@
+name: Reader cross-OS relay
+on:
+  push:
+    branches: [codex/reader-cross-os-relay]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+env:
+  RELAY_SUFFIX: ${{ github.run_id }}-${{ github.run_attempt }}
+jobs:
+  guard:
+    name: guard
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Source, protected tree and path guard
+        run: bash tests/reader_cross_os_relay/guard.sh
+
+  plan:
+    name: plan
+    needs: guard
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: bash tests/reader_cross_os_relay/guard.sh
+      - name: Generate the originals once and compare them with the digests pinned in the repository
+        run: python3 tests/reader_cross_os_relay/relay.py plan --output build/relay-plan
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: relay-plan-${{ env.RELAY_SUFFIX }}
+          path: build/relay-plan/
+          if-no-files-found: error
+
+  build:
+    name: build (${{ matrix.name }})
+    needs: guard
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-22.04, name: Linux}
+          - {os: windows-2022, name: Windows}
+          - {os: macos-15, name: macOS}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: bash tests/reader_cross_os_relay/guard.sh
+      - name: Install Linux native TLS XML and SHA dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config
+      - name: Use Apple system native TLS XML and platform SHA with fixture-only OpenSSL CLI
+        if: runner.os == 'macOS'
+        run: |
+          brew install ninja pkg-config openssl@3
+          sdkroot=$(xcrun --sdk macosx --show-sdk-path)
+          mkdir -p build/apple-pkgconfig
+          version=$(/usr/bin/curl --version | awk 'NR==1 {print $2}')
+          cat > build/apple-pkgconfig/libcurl.pc <<EOF
+          prefix=$sdkroot/usr
+          Name: libcurl
+          Description: Apple SDK system libcurl
+          Version: $version
+          Libs: -L\${prefix}/lib -lcurl
+          Cflags:
+          EOF
+          echo "PKG_CONFIG_PATH=$PWD/build/apple-pkgconfig" >> "$GITHUB_ENV"
+          echo "CMAKE_PREFIX_PATH=$sdkroot/usr" >> "$GITHUB_ENV"
+          xcodebuild -version
+      - name: Enter Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Install product provider revisions native sync and the frozen SDK
+        run: |
+          mkdir -p build/relay-build/logs
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "R_WS=$ws" >> "$GITHUB_ENV"
+          cmake -S apps/reader/store/native -B build/r-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/r-product-stage"
+          cmake --build build/r-product --parallel 4
+          cmake --install build/r-product
+          cmake -S apps/reader/revisions -B build/r-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$ws/build/r-product-stage" -DCMAKE_INSTALL_PREFIX="$ws/build/r-stage"
+          cmake --build build/r-revisions --parallel 4
+          cmake --install build/r-revisions
+          cmake --preset reading-library 2>&1 | tee build/relay-build/logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/relay-build/logs/sdk-build.log
+          cmake --install build/reading-library
+          cmake -S apps/reader/reading-state -B build/r-adapter -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$ws/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$ws/build/r-stage;$ws/build/r-product-stage" -DCMAKE_INSTALL_PREFIX="$ws/build/r-stage"
+          cmake --build build/r-adapter --verbose
+          cmake --install build/r-adapter
+          cmake -S extras/sideload -B build/r-sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$ws/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ws/build/r-sideload-stage"
+          cmake --build build/r-sideload --verbose
+          cmake --install build/r-sideload
+          cmake -S extras/webdav -B build/r-dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/r-dav-stage"
+          cmake --build build/r-dav --verbose
+          cmake --install build/r-dav
+          cmake -S apps/reader/sync -B build/r-sync -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ws/build/r-dav-stage;$ws/build/r-stage;$ws/build/r-product-stage" -DCMAKE_INSTALL_PREFIX="$ws/build/r-sync-stage"
+          cmake --build build/r-sync --verbose
+          cmake --install build/r-sync
+      - name: Build and install the relay component then consume it from the install prefix
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then E=.exe; else E=; fi
+          cmake -S tests/reader_cross_os_relay/component -B build/r-relay -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$R_WS/build/r-relay-stage" 2>&1 | tee build/relay-build/logs/relay-configure.log
+          cmake --build build/r-relay --verbose 2>&1 | tee build/relay-build/logs/relay-build.log
+          cmake --install build/r-relay
+          cmake -S tests/reader_cross_os_relay/consumer -B build/r-relay-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$R_WS/build/r-relay-stage" 2>&1 | tee build/relay-build/logs/consumer-configure.log
+          cmake --build build/r-relay-consumer --verbose 2>&1 | tee build/relay-build/logs/consumer-build.log
+          mkdir -p build/relay-build/bin build/relay-build/consumer-work
+          c_exit=0
+          "build/r-relay-consumer/relay-c-consumer$E" || c_exit=$?
+          echo "$c_exit" > build/relay-build/c-consumer-exit.txt
+          "build/r-relay-consumer/relay-consumer$E" "$PWD/build/relay-build/consumer-work" "$PWD/build/relay-build/component-consumer.json" 2>&1 | tee build/relay-build/logs/component-consumer.log || true
+          cp "build/r-relay-consumer/relay-tool$E" build/relay-build/bin/
+      - name: Build the cross-OS relay probe from the installed packages
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then E=.exe; else E=; fi
+          P="$R_WS/build/r-dav-stage;$R_WS/build/r-sync-stage;$R_WS/build/r-sideload-stage;$R_WS/build/r-stage;$R_WS/build/r-product-stage;$R_WS/build/reading-library/stage"
+          cmake -S tests/reader_cross_os_relay/probe -B build/r-probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$P" 2>&1 | tee build/relay-build/logs/probe-configure.log
+          cmake --build build/r-probe --verbose 2>&1 | tee build/relay-build/logs/probe-build.log
+          cp "build/r-probe/relay-probe$E" build/relay-build/bin/
+          cp build/r-probe/relay-link.map build/relay-build/logs/
+      - name: Bind installed component consumers and executables to this source
+        run: |
+          python3 tests/reader_cross_os_relay/relay.py build-report --bin build/relay-build/bin --prefix build/r-relay-stage --consumer-json build/relay-build/component-consumer.json --c-exit "$(cat build/relay-build/c-consumer-exit.txt)" --output build/relay-build
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: relay-build-${{ matrix.name }}-${{ env.RELAY_SUFFIX }}
+          path: build/relay-build/
+          if-no-files-found: error
+
+  send:
+    name: send ${{ matrix.direction }}
+    needs: [plan, build]
+    runs-on: ${{ matrix.sender }}
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {direction: linux-to-windows, sender: ubuntu-22.04, sender_name: Linux}
+          - {direction: windows-to-linux, sender: windows-2022, sender_name: Windows}
+          - {direction: linux-to-macos, sender: ubuntu-22.04, sender_name: Linux}
+          - {direction: macos-to-linux, sender: macos-15, sender_name: macOS}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: bash tests/reader_cross_os_relay/guard.sh
+      - name: Runtime dependencies
+        run: |
+          if [ "$RUNNER_OS" = Linux ]; then sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev; fi
+          if [ "$RUNNER_OS" = macOS ]; then brew install openssl@3; echo "$(brew --prefix openssl@3)/bin" >> "$GITHUB_PATH"; fi
+      - uses: actions/download-artifact@v4
+        with:
+          name: relay-plan-${{ env.RELAY_SUFFIX }}
+          path: build/relay-plan
+      - uses: actions/download-artifact@v4
+        with:
+          name: relay-build-${{ matrix.sender_name }}-${{ env.RELAY_SUFFIX }}
+          path: build/relay-build
+      - name: Produce the relayed service directory with the sender operating system
+        run: |
+          chmod +x build/relay-build/bin/* || true
+          python3 tests/reader_cross_os_relay/relay.py send --direction "${{ matrix.direction }}" --bin build/relay-build/bin --font tests/fixtures/fonts/primary.ttf --fixtures build/relay-plan/fixtures --output build/relay-out/send
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: relay-send-${{ matrix.direction }}-${{ env.RELAY_SUFFIX }}
+          path: build/relay-out/send/
+          if-no-files-found: error
+
+  receive:
+    name: receive ${{ matrix.direction }}
+    needs: [build, send]
+    if: ${{ !cancelled() }}
+    runs-on: ${{ matrix.receiver }}
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {direction: linux-to-windows, receiver: windows-2022, receiver_name: Windows}
+          - {direction: windows-to-linux, receiver: ubuntu-22.04, receiver_name: Linux}
+          - {direction: linux-to-macos, receiver: macos-15, receiver_name: macOS}
+          - {direction: macos-to-linux, receiver: ubuntu-22.04, receiver_name: Linux}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: bash tests/reader_cross_os_relay/guard.sh
+      - name: Runtime dependencies
+        run: |
+          if [ "$RUNNER_OS" = Linux ]; then sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev; fi
+          if [ "$RUNNER_OS" = macOS ]; then brew install openssl@3; echo "$(brew --prefix openssl@3)/bin" >> "$GITHUB_PATH"; fi
+      - uses: actions/download-artifact@v4
+        with:
+          name: relay-send-${{ matrix.direction }}-${{ env.RELAY_SUFFIX }}
+          path: build/relay-in
+      - uses: actions/download-artifact@v4
+        with:
+          name: relay-build-${{ matrix.receiver_name }}-${{ env.RELAY_SUFFIX }}
+          path: build/relay-build
+      - name: Consume the relayed bytes with the receiver operating system and return a revision
+        run: |
+          chmod +x build/relay-build/bin/* || true
+          python3 tests/reader_cross_os_relay/relay.py receive --direction "${{ matrix.direction }}" --bin build/relay-build/bin --font tests/fixtures/fonts/primary.ttf --input build/relay-in --output build/relay-out/receive
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: relay-receive-${{ matrix.direction }}-${{ env.RELAY_SUFFIX }}
+          path: build/relay-out/receive/
+          if-no-files-found: error
+
+  confirm:
+    name: confirm ${{ matrix.direction }}
+    needs: [build, receive]
+    if: ${{ !cancelled() }}
+    runs-on: ${{ matrix.sender }}
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {direction: linux-to-windows, sender: ubuntu-22.04, sender_name: Linux}
+          - {direction: windows-to-linux, sender: windows-2022, sender_name: Windows}
+          - {direction: linux-to-macos, sender: ubuntu-22.04, sender_name: Linux}
+          - {direction: macos-to-linux, sender: macos-15, sender_name: macOS}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: bash tests/reader_cross_os_relay/guard.sh
+      - name: Runtime dependencies
+        run: |
+          if [ "$RUNNER_OS" = Linux ]; then sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev; fi
+          if [ "$RUNNER_OS" = macOS ]; then brew install openssl@3; echo "$(brew --prefix openssl@3)/bin" >> "$GITHUB_PATH"; fi
+      - uses: actions/download-artifact@v4
+        with:
+          name: relay-receive-${{ matrix.direction }}-${{ env.RELAY_SUFFIX }}
+          path: build/relay-in
+      - uses: actions/download-artifact@v4
+        with:
+          name: relay-build-${{ matrix.sender_name }}-${{ env.RELAY_SUFFIX }}
+          path: build/relay-build
+      - name: Original sender OS reads the returned tree with a fresh store
+        run: |
+          chmod +x build/relay-build/bin/* || true
+          python3 tests/reader_cross_os_relay/relay.py confirm --direction "${{ matrix.direction }}" --bin build/relay-build/bin --font tests/fixtures/fonts/primary.ttf --input build/relay-in --output build/relay-out/confirm
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: relay-confirm-${{ matrix.direction }}-${{ env.RELAY_SUFFIX }}
+          path: build/relay-out/confirm/
+          if-no-files-found: error
+
+  summary:
+    name: strict relay summary
+    needs: [guard, plan, build, send, receive, confirm]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: bash tests/reader_cross_os_relay/guard.sh
+      - name: Authenticate every ZIP and require both directions of both OS pairs from this source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_cross_os_relay/summary.py build/relay-summary
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: relay-summary-${{ env.RELAY_SUFFIX }}
+          path: build/relay-summary/
+          if-no-files-found: error

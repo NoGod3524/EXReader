@@ -1,0 +1,25 @@
+{
+  "package": "J22 reader cross-OS relay",
+  "branch": "codex/reader-cross-os-relay",
+  "start_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk_sha": "9854061be331fe603a1822d9b2b36ee357154927",
+  "accepted": false,
+  "tested_source_sha": null,
+  "run": null,
+  "attempt": null,
+  "directions": ["linux-to-windows", "windows-to-linux", "linux-to-macos", "macos-to-linux"],
+  "jobs": [],
+  "artifacts": [],
+  "consumer_sha256": {},
+  "original_failures": [],
+  "granted_scope": [],
+  "not_granted": [
+    "live six-device user cloud",
+    "host UI",
+    "simulator, emulator or real device",
+    "actual audio or speech",
+    "performance",
+    "accessibility"
+  ],
+  "note": "Initial record. Filled only from a real Actions run; a generated report is not functional acceptance."
+}
