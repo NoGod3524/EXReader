@@ -352,19 +352,63 @@ def main():
         done = subprocess.run(['cmdkey', '/list'], capture_output=True, text=True)
         return 'org.exreader.reader.webdav/' + identifier in done.stdout
 
-    def leak_scan(profile):
-        needles = [user.encode(), password.encode(), authorization.encode(), base64.b64encode((user + ':' + password).encode()),
-                   password.encode().hex().encode()]
+    # Every needle the on-disk scan looks for: the user, the password, the exact
+    # Authorization header and two encodings of the secret.
+    needles = [user.encode(), password.encode(), authorization.encode(),
+               base64.b64encode((user + ':' + password).encode()), password.encode().hex().encode()]
+    owner_locked = []
+
+    def exclusive_owner(path):
+        """Files a live host may legitimately hold with share mode 0.
+
+        The bound session keeps '<product>.sync-account' open exclusively for its whole
+        lifetime and SQLite keeps its journal/WAL exclusive. Nothing else may be
+        unreadable while a product runs, so any other denied read is a failure.
+        """
+        return path.name.endswith(('.sync-account', '.lock', '-journal', '-wal', '-shm'))
+
+    def leak_scan(profile, allow_owner_lock=True):
         for path in profile.rglob('*'):
-            if path.is_file() and path.stat().st_size < 64 * 1024 * 1024:
-                try:
-                    data = path.read_bytes()
-                except PermissionError:
-                    assert path.stat().st_size == 0 or path.suffix == ".lock", path  # exclusive owner lock files only
+            try:
+                if not path.is_file() or path.stat().st_size >= 64 * 1024 * 1024:
                     continue
-                if any(n in data for n in needles):
-                    return str(path)
+                data = path.read_bytes()
+            except PermissionError:
+                assert allow_owner_lock and exclusive_owner(path), path
+                if path not in owner_locked:
+                    owner_locked.append(path)
+                continue
+            if any(n in data for n in needles):
+                return str(path)
         return None
+
+    def read_after_exit(path):
+        deadline = time.monotonic() + 10
+        while True:
+            try:
+                return path.read_bytes()
+            except PermissionError:
+                assert time.monotonic() < deadline and exclusive_owner(path), 'still held after exit: ' + str(path)
+                time.sleep(.05)
+
+    def leak_scan_everything():
+        """Once every host has exited, not one byte of the secret may be readable."""
+        for device in devices:
+            assert device.process.poll() is not None, 'host still running: ' + device.profile.name
+        for path in owner_locked:
+            if path.exists():
+                assert not any(n in read_after_exit(path) for n in needles), str(path)
+        for device in devices:
+            if not device.profile.exists():
+                continue
+            for path in device.profile.rglob('*'):
+                try:
+                    if not path.is_file() or path.stat().st_size >= 64 * 1024 * 1024:
+                        continue
+                except PermissionError:
+                    assert exclusive_owner(path), path
+                    continue
+                assert not any(n in read_after_exit(path) for n in needles), str(path)
 
     def encode(value):
         return json.dumps(value, ensure_ascii=False, separators=(',', ':')).encode()
@@ -551,6 +595,7 @@ def main():
         assert not credential_listed(identifier) and not A.enabled(dialog, SYNC)
         record('forget_removes_the_credential_manager_record_and_disables_scanning')
         A.close_account(dialog)
+        A.close();assert A.process.returncode == 0
 
         # ===== fault round 1: network interruption, then explicit retry =====
         C1 = new_device('device-c')
@@ -583,6 +628,7 @@ def main():
         C1.wait_note(dialog, '同步完成', 240)
         record('network_cancel_is_visible_and_retry_resumes_to_completion')
         C1.close_account(dialog)
+        C1.close();assert C1.process.returncode == 0
 
         # ===== fault round 2: mapping failure after the SDK import, then repair =====
         D = new_device('device-d')
@@ -639,6 +685,7 @@ def main():
         E.run_sync(dialog)
         E.close_account(dialog)
         record('reopened_library_resumes_after_closing_mid_scan')
+        E.close();assert E.process.returncode == 0
 
         # ===== account isolation =====
         F = new_device('device-f')
@@ -650,6 +697,10 @@ def main():
         record('independent_account_root_sees_none_of_the_other_accounts_books')
         F.close_account(dialog);F.close()
 
+        # ===== every host has exited: no secret survives on disk =====
+        leak_scan_everything()
+        record('no_plaintext_credential_survives_any_product_shutdown')
+
         # ===== link graph =====
         graph = args.link_map.read_text(errors='replace')
         for needle in ('reader_session', 'exr_webdav', 'exr_credentials', 'exr_sideload', 'reader_revisions', 'sqlite3_open'):
@@ -659,11 +710,15 @@ def main():
         (output / 'dependents.txt').write_text(dependents)
         assert 'WINHTTP.dll' in dependents.upper().replace('WINHTTP.DLL', 'WINHTTP.dll') or 'winhttp' in dependents.lower()
         record('link_graph_contains_native_session_credentials_sideload_and_winhttp_without_webview')
-        assert len(checks) == 24, len(checks)
+        assert len(checks) == 25, len(checks)
         report = {'accepted': True, 'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
                   'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'checks': checks, 'count': len(checks),
                   'program_sha256': hashlib.sha256(args.candidate.read_bytes()).hexdigest(), 'screenshots': shots,
-                  'uncovered': ['Credential Manager UNAVAILABLE state', 'reading-capture round trip', 'screen reader'],
+                  'uncovered': ['Credential Manager UNAVAILABLE state',
+                                'screen-reader narration',
+                                'CONCURRENT, PENDING-parent and tombstone receive states are displayed but never provoked end to end',
+                                'cancel during receive/import (only cancel during the network scan is exercised)',
+                                'a real remote HTTPS collection (loopback TLS with a runner-local test CA only)'],
                   'complete_product': False}
         (output / 'account-ui.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
         print(json.dumps({'accepted': True, 'count': len(checks)}), flush=True)
