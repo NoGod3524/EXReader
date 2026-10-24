@@ -288,6 +288,7 @@ static int run_import(int argc, char **argv, int *exit_code) {
   unsigned long long cancel_calls = arg_u64(argc, argv, "--cancel-after-calls", 0);
   exr_library *library = NULL;
   exr_error sdk_error;
+  reader_batch_error batch_error;
   reader_batch_import_options options;
   cancel_state control;
   FILE *out;
@@ -311,6 +312,7 @@ static int run_import(int argc, char **argv, int *exit_code) {
     return 1;
   }
   memset(&sdk_error, 0, sizeof(sdk_error));
+  memset(&batch_error, 0, sizeof(batch_error));
   if (exr_library_open(library_path, &library, &sdk_error) != EXR_OK) {
     fprintf(stderr, "cannot open library: %s\n", sdk_error.message);
     *exit_code = 2;
@@ -353,11 +355,11 @@ static int run_import(int argc, char **argv, int *exit_code) {
       batch_items[i].format = items[offset + i].format;
     }
     status = reader_batch_import(library, batch_items, chunk, &options, &results,
-        &result_count, &sdk_error);
+        &result_count, &batch_error);
     fprintf(out, "aggregate\t%s\n", reader_batch_status_name(status));
     if (status == READER_BATCH_ARGUMENT || status == READER_BATCH_MEMORY ||
         status == READER_BATCH_INTERNAL) {
-      fprintf(stderr, "import: %s\n", sdk_error.message);
+      fprintf(stderr, "import: %s\n", batch_error.message);
       free(batch_items);
       reader_batch_results_free(results, result_count);
       *exit_code = 2;
@@ -476,6 +478,7 @@ static int run_metadata(int argc, char **argv, int *exit_code, int set) {
   exr_library *library = NULL;
   exr_book *books = NULL;
   exr_book *book;
+  char *replacement = NULL;
   size_t count = 0;
   exr_error error;
   FILE *out;
@@ -498,7 +501,18 @@ static int run_metadata(int argc, char **argv, int *exit_code, int set) {
     return 1;
   }
   if (set) {
-    book->title = (char *)(title ? title : book->title);
+    if (title) {
+      size_t length = strlen(title) + 1;
+      replacement = malloc(length);
+      if (!replacement) {
+        exr_books_free(books, count);
+        exr_library_close(library);
+        *exit_code = 2;
+        return 1;
+      }
+      memcpy(replacement, title, length);
+      book->title = replacement;
+    }
     book->favorite = favorite ? 1 : 0;
     if (exr_library_update(library, book, &error) != EXR_OK) {
       fprintf(stderr, "cannot update: %s\n", error.message);
