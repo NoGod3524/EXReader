@@ -49,7 +49,7 @@
 
 ## 目前保留给主线的工作
 
-Windows原生UIA与账号收口、GTK原生书内搜索/页面主题缺口、Android搜索UI、Apple正式书架/账号/语义检查由现有owner继续。四套宿主的接线和默认界面简化、G包/新包的共同源码集成由root协调，不再交给第二个writer。
+Windows账号与24项定向UIA已在`c74e861b7dbe95e680b53f18bc63a764ae06fc4f`/run`40113587443`通过，等待共同源码整合；Android搜索已交回，原owner接续目录导航。GTK原生书内搜索/页面主题缺口、Apple正式书架/账号/语义检查仍由现有owner继续。四套宿主的接线和默认界面简化、G包/新包的共同源码集成由root协调，不再交给第二个writer。
 
 [ownership.json](ownership.json)登记全部分支与白名单。单包交回后可继续准备下一包；只有完成共同源码验证的集成轮次才计数，五轮审计保持。
 

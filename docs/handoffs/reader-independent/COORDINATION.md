@@ -11,8 +11,8 @@
 | owner | 当前主线 | 独占工作树 |
 | --- | --- | --- |
 | `/root/handoff_modules` | iOS原生会话已交回；接续Apple正式宿主、账号和阅读状态 | iOS证据保留原工作树；当前写入`C:/Users/Oscar/.codex/worktrees/reader-apple-shelf/EXReader` |
-| `/root/handoff_validation` | GTK显式收取、原件导入与阅读状态接入 | `C:/Users/Oscar/.codex/worktrees/reader-gtk-receive/EXReader` |
-| `/root/main_android` | Android原生会话与阅读状态互通 | `C:/Users/Oscar/.codex/worktrees/reader-android-sync-session/EXReader` |
+| `/root/handoff_validation` | GTK原生书内搜索；保留设置35项中的2项真实失败 | `C:/Users/Oscar/.codex/worktrees/reader-gtk-receive/EXReader` |
+| `/root/main_android` | Android搜索已交回；接续原生目录导航 | `C:/Users/Oscar/.codex/worktrees/reader-android-sync-session/EXReader` |
 | root | 外部分包、额度与接入协调；每五轮综合审计和修复 | 本交接工作树及独立产品集成候选 |
 
 Android owner另独占本轮最小codec拆分：`apps/reader/reading-state/CMakeLists.txt`、`src/reading_state.cpp`、新增`src/reading_resolve.cpp`与必要私有头，以及确需调整的包配置。其他owner不并改这些文件。旧公共API、wire与冻结SDK不变；拆分仍须旧消费者和双owner链接隔离的云端证据。
@@ -20,11 +20,18 @@ Android owner另独占本轮最小codec拆分：`apps/reader/reading-state/CMake
 ## 每轮流程
 
 1. 核对真实主线、现有owner及运行状态，列出所有可独立交付的包。每包明确固定起点、唯一分支/工作树、允许路径、公共接口、验收出口和依赖；有写冲突的工作留在原owner或排在依赖之后。
-2. 从Claude界面读取五小时与周额度。按上一轮实际消耗、当前上下文大小和剩余调试工作粗估成本，预留至少10个百分点五小时额度、15个百分点周额度。额度未知或已进入余量时，不新增Claude工作；记录观察时间、实际百分比和分配决定。
-3. 在余量内优先分配给用户指定的Sonnet5.5 Medium；其他独立包交DeepSeek V4.1 Flash 1017 High、PTC。配置与完全权限只按实际界面登记。额度接近余量时，先要求Claude包保存checkpoint、停止新迭代；已启动Actions继续。接续交给另一模型前，必须确认原owner已停止，且记录代码、脏文件、run和剩余工作，禁止双owner同时写同一目录。
+2. 当前由用户手动分发。root交付可直接发送的完整任务页，登记为ready而非已派发；不自动操作Claude/DeepSeek或改变其权限。历史额度记录只代表当时观察，不能当作现在剩余额度。
+3. 用户选择每包的模型、会话和权限。若以后恢复自动调度，再实际读取五小时与周额度并保留原10/15个百分点余量。转交未完成包前确认原owner停止，固定代码、脏文件、run和剩余工作，禁止双owner同时写同一目录。
 4. 外部包实施、修复并交回完整source/文档HEAD/run/attempt/具名检查/工件身份及未覆盖范围。root核对源码、断言和真实云端状态；报告完成、模块通过和产品通过分别登记。原失败保留。
 5. 本轮所有包收口后，root在独立产品候选普通合入经审查的提交、处理宿主接线、整理文档，并对共同源码执行适用的组合与宿主回归。旧run只证明旧源码，不拼成新候选通过。尚有未闭合包、集成失败或范围被缩减时，本轮不计完成。
 6. 共同源码复验通过后，记录集成SHA、run与范围，`completed_cycles`才加一；以该候选准备后续依赖它的工作。无此依赖的新独立包可在单包交回时提前准备，不等待本轮结束。
+
+## 每次交回后的拆包动作
+
+1. 固定交回SHA与实际验收范围，先保留原失败，不把消息里的完成声明直接当共同源码通过。
+2. 立即重扫后续功能、平台适配、独立验证及分发准备，先对照已有G/J任务，避免同一需求重复交给两个writer。
+3. 不依赖未交付接口且不改活动owner文件的工作，完整写成独立任务页，列入手动队列；依赖尚未闭合的工作登记前置条件，不标成可立即开工。
+4. 用户可先发准备好的包。root继续审查和共同源码整合，不等新队列全部启动才推进主线；每五个完成集成轮次的暂停拆包审计照旧。
 
 ## 每五轮的审计
 

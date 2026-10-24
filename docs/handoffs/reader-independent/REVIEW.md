@@ -139,6 +139,8 @@ root读到`check_account_ui.py`的`capture()`只把Python手写v1 wire交给`rev
 
 ### 后续固定交回与手动分包
 
+- G01最终完整run `40113587443` attempt1：producer `120930166046`、严格汇总 `120931870728` 均success。root独立核原始日志，`accepted=true, problems=[]`；原UI158/product10/worker5/shelf13/metadata18/account32及定向键盘/UIA24全部通过，含TXT/PDF/有界EPUB实际几何与点定位。受测源码 `c74e861b7dbe95e680b53f18bc63a764ae06fc4f`，最终HEAD `8995ffbf421cf070e29c58f50f49d0a682fdca92` 已推远端，差异仅两份证据文档。producer工件 `12568060427`、44146885B、sha256 `3f7796b0f53126b3330996bafb99fb06c98e368134648108274be59acbbd7320`；summary `12567920905`、796B、sha256 `bf94a614819368a95c0fb4a7c7e46cd6c0f9b9bdb8fe1a3badf2a8f809807a60`，到期均2027-01-22T16:52:55Z。严格作业实际下载并重散列producer ZIP；root核元数据及上传日志，不在本地下载工件。该scope进入待集成；完整读屏、性能和六平台产品未授予。下列旧pending/失败记录保留为迭代历史。
+- 按用户“每交回即准备”修订协调流程：本次Windows交回后重核已有25个J包，仍可独立投放；不为增加包数重复分配已有需求。任务页实现起点与独占路径不改，派发由用户手动执行；主线三个owner继续Android导航、GTK搜索和Apple现存验收。
 - 用户改为单包交回即可继续准备任务，root已推 `34ef34ada254519db8c76f62a4b2dadf46775e73` 的25个J包完整说明、共同约束及文件归属。实现均固定f43，不依赖未合入G包或主线活动文件；用户手动分发，root未派发。五轮审计与完成轮数不因文档准备增加。
 - Android搜索固定 `e764f08dea4986f11db183c5b17b41ddb5526bcc`，纯文档HEAD `6bbc49bffd2de66b562a6afc1b7e6a8b91ffa8fa`。root独立核 run `40111800432` attempt2/job `120925154490` success，原正式16和搜索15的同源码日志、工件 `12567530810`/118919384B/sha256 `188846a51dfc4b9ce2446a53fa0e5fb3fcc863b6393a0c454bb6e924bc1693fe` 与上传一致，Git差异仅两份文档。旧attempt1镜像下载失败日志留存、小ZIP目前404，不再宣称工件仍保留。owner已从固定e764另开原生目录UI，F2仅引入cbd7832b的不可变模块子树；不授予新导航UI。
 - GTK设置固定 `ce912f8c149e30cf3843e39258ae6889235495a0`，纯文档HEAD `8a5e8a68c627196116e80ea456f12165a4e3209c`。root核 run `40110581923` 实际日志：安装F3 20、原46/105/4/AT-SPI10同源通过；设置35全执行，33通过、整页背景及Dark阅读页2项仍失败。`accepted=false`，不能当整个设置包通过。owner转GTK搜索，35项原失败保留；本轮工件未做最终ZIP重散列，亦不扩大证据范围。
