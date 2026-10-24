@@ -239,6 +239,21 @@ def _dumpbin_symbols(text, _strip_underscore):
     return [{'name': name, 'state': state} for name, state in sorted(seen)]
 
 
+DEFAULTLIB = re.compile(r'/DEFAULTLIB:"?([^"\s]+)"?', re.I)
+
+
+def _dumpbin_directives(text, _strip_underscore):
+    """dumpbin /directives lists the default libraries an archive asks for."""
+    names = {}
+    for line in text.splitlines():
+        for match in DEFAULTLIB.finditer(line):
+            name = match.group(1).strip()
+            if name.lower().endswith('.lib'):
+                name = name[:-4]
+            names[name.lower()] = True
+    return [{'name': name} for name in sorted(names)]
+
+
 def _ninja_link_entries(text):
     """The link command Ninja would run: the last command line that links objects."""
     lines = [line.strip() for line in text.splitlines() if line.strip()]
@@ -260,6 +275,7 @@ PARSERS = {
     'nm': _nm_entries,
     'dumpbin-symbols': _dumpbin_symbols,
     'ninja-link': lambda text, strip: _ninja_link_entries(text),
+    'dumpbin-directives': _dumpbin_directives,
 }
 
 
@@ -481,7 +497,27 @@ def private_path_blockers(hits, generic=None):
     return blockers
 
 
-def scan_forbidden(payload, inventory):
+SECRET_MARKERS = (b'PRIVATE KEY-----', b'AKIA', b'xoxb-', b'ghp_', b'sk_live_', b'password=',
+                  b'passwd=', b'api_key=', b'secret_key=', b'token=', b'Authorization: Basic')
+
+
+def scan_test_secrets(payload, prefix='prefix/', markers=SECRET_MARKERS):
+    """Test keys, tokens and passwords must never reach a distributed prefix."""
+    hits = []
+    for name in sorted(payload):
+        if not name.startswith(prefix):
+            continue
+        data = payload[name]
+        lowered = data.lower()
+        for marker in markers:
+            if marker in data or marker.lower() in lowered:
+                hits.append({'path': name[len(prefix):],
+                             'marker': marker.decode('ascii', 'replace')})
+                break
+    return hits
+
+
+def scan_forbidden(payload, inventory, allow_credentials=False):
     """Audio/GPL options, WebView, credential modules and the module switch set."""
     problems = []
     observations = {}
@@ -517,9 +553,9 @@ def scan_forbidden(payload, inventory):
     credential_files = [name for name in names if any(token in name.lower() for token in CREDENTIAL_TOKENS)]
     observations['credential_targets'] = credential_targets
     observations['credential_files'] = credential_files
-    if credential_targets:
+    if credential_targets and not allow_credentials:
         problems.append('credential module exported by the installed package: ' + repr(credential_targets))
-    if credential_files:
+    if credential_files and not allow_credentials:
         problems.append('credential module material installed: ' + repr(credential_files))
     for name in names:
         if name.endswith('lib/cmake/EXReader/EXReaderDependencies.cmake'):

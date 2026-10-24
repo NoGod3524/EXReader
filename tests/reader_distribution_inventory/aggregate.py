@@ -22,6 +22,8 @@ sys.path.insert(0, str(ROOT / 'tools'))
 sys.path.insert(0, str(HERE))
 import check_reading_licenses as registered
 import contract
+import inventory as sdk_inventory
+import packages
 import sbom
 
 WORKFLOW = '.github/workflows/reader-distribution-inventory.yml'
@@ -31,9 +33,12 @@ PLATFORMS = {'linux': ('ubuntu-22.04', 'Linux'), 'windows': ('windows-2022', 'Wi
              'macos': ('macos-15', 'Darwin')}
 PROFILES = ('reading-core', 'reading-library')
 DYNAMIC_KIND = {'Linux': 'readelf-dynamic', 'Windows': 'dumpbin-dependents', 'Darwin': 'otool'}
+COMBINED_PROFILE = 'combined'
+COMBINED_JOB = 'combined (%s)'
+COMBINED_ARTIFACT = 'reader-distribution-combined-%s-%s-%s'
 ARTIFACT_PATH = re.compile(
     r'^(?:stage/|tools/|probe/|logs/)'
-    r'|^(?:inventory|licenses|probe)(?:\.[a-z]+)*\.(?:json|log|exit)$')
+    r'|^(?:inventory|licenses|probe|combined)(?:\.[a-z]+)*\.(?:json|log|exit)$')
 
 
 def job_name(key, profile):
@@ -83,6 +88,204 @@ def load_schema(path):
     except ImportError:
         raise contract.InventoryError('jsonschema_unavailable') from None
     return jsonschema, contract.decode_json(Path(path).read_bytes())
+
+
+def verify_combined(key, payload, inventory, licenses_doc, run, components=None, switches=None,
+                    schemas=None):
+    """Re-derive the composed prefix (SDK plus thirteen packages) from the bytes."""
+    components = components if components is not None else registered.COMPONENTS
+    switches = switches if switches is not None else registered.preset_switches(ROOT, 'reading-library')
+    contract.need(inventory.get('schema') == 1, 'combined_schema')
+    contract.need(inventory.get('profile') == COMBINED_PROFILE, 'combined_profile')
+    contract.need(inventory.get('platform') == key, 'combined_platform')
+    contract.need(inventory.get('runner_os') == PLATFORMS[key][1], 'combined_runner')
+    contract.need(inventory.get('source_sha') == run['head_sha'], 'combined_source')
+    recorded = inventory.get('run') or {}
+    contract.need(str(recorded.get('id')) == str(run['id'])
+                  and str(recorded.get('attempt')) == str(run['run_attempt']), 'combined_run')
+    files = inventory.get('installed_files')
+    contract.need(type(files) is list and files, 'combined_file_list')
+    for name in payload:
+        contract.need(ARTIFACT_PATH.match(name) is not None, 'artifact_path')
+    problems = []
+    problems += contract.verify_installed(payload, files)
+    identity = inventory.get('identity') or {}
+    contract.need(identity.get('version') and identity.get('config_version') == identity.get('version')
+                  and identity.get('targets'), 'combined_identity')
+
+    def enabled(expression):
+        return registered.enabled(expression, switches)
+
+    expected = contract.expected_license_paths(components, enabled)
+    problems += contract.verify_license_materials(files, payload, expected, components)
+    checker = (inventory.get('license_materials') or {}).get('checker') or {}
+    contract.need(checker.get('source_sha') == run['head_sha'], 'combined_checker_source')
+    contract.need(licenses_doc.get('source_sha') == run['head_sha'], 'combined_licenses_source')
+    for field in ('release_ready', 'materials_check_passed'):
+        contract.need(bool(checker.get(field)) == bool(licenses_doc.get(field)),
+                      'combined_checker_' + field)
+    for field in ('failures', 'pending', 'mandatory_missing'):
+        contract.need(list(checker.get(field) or []) == list(licenses_doc.get(field) or []),
+                      'combined_checker_' + field)
+    contract.need(licenses_doc.get('release_ready') is True, 'combined_licenses_not_ready')
+
+    records = inventory.get('dependency_commands')
+    contract.need(type(records) is list and records, 'combined_records')
+    symbols, directives = {}, {}
+    for record in records:
+        path = record.get('raw_output_path')
+        contract.need(isinstance(path, str) and path in payload, 'dependency_output_missing')
+        try:
+            text = payload[path].decode('utf-8')
+        except UnicodeDecodeError:
+            raise contract.InventoryError('dependency_output_encoding') from None
+        contract.verify_dependency(record, text)
+        if record.get('kind') in contract.SYMBOL_KINDS:
+            contract.need(isinstance(record.get('archive'), str), 'symbol_record_archive')
+            symbols[record['archive']] = contract.symbol_summary(
+                contract.parse_entries(record['kind'], text, record.get('strip_underscore', False)))
+        elif record.get('kind') == 'dumpbin-directives':
+            contract.need(isinstance(record.get('archive'), str), 'directive_record_archive')
+            directives[record['archive']] = [entry['name'] for entry in record['entries']]
+
+    static = inventory.get('static_dependency') or {}
+    contract.need(contract.symbol_edges(symbols, symbols) == static.get('edges'), 'combined_edges')
+    by_path = {record['path']: record for record in files}
+    archives = static.get('archives') or []
+    for entry in archives:
+        record = by_path.get(entry['path'])
+        contract.need(record is not None and record['sha256'] == entry['sha256']
+                      and record['bytes'] == entry['bytes'], 'combined_archive_identity')
+        summary = symbols.get(entry['path'])
+        contract.need(summary is not None, 'combined_archive_symbols')
+        contract.need(contract.text_digest(summary['defined']) == entry['defined_sha256'],
+                      'combined_archive_defined')
+        contract.need(contract.text_digest(summary['undefined']) == entry['undefined_sha256'],
+                      'combined_archive_undefined')
+    contract.need({entry['path'] for entry in archives} == set(symbols), 'combined_archive_coverage')
+    sdk_expected = sorted(record['path'] for record in files
+                          if re.fullmatch(r'lib/(?:lib)?exr_.+[.](?:a|lib)', record['path']))
+    contract.need(sorted(static.get('sdk_archives') or []) == sdk_expected, 'combined_sdk_archives')
+    claimed_directives = static.get('directives') or {}
+    contract.need(sorted(claimed_directives) == sorted(directives), 'combined_directive_coverage')
+    for path in directives:
+        contract.need(claimed_directives[path] == directives[path], 'combined_directives')
+    archive_names = {entry['name'] for entry in archives}
+    index = {path: payload['stage/' + path] for path in by_path}
+
+    providers = packages.symbol_providers(symbols)
+    sections = {row.get('id'): row for row in inventory.get('packages') or []}
+    contract.need(sorted(sections) == sorted(packages.REGISTERED_IDS), 'combined_registered')
+    reconciled = []
+    for package in packages.PACKAGES:
+        section = sections[package['id']]
+        resolved = packages.resolve(package, index)
+        for field in ('version', 'version_source', 'config_files', 'headers', 'archives',
+                      'assets', 'licence', 'missing'):
+            contract.need(section.get(field) == resolved.get(field),
+                          'combined_package_' + field)
+        own = [entry['path'] for entry in resolved['archives']]
+        external = packages.external_from_symbols(own, symbols)
+        contract.need(section.get('external') == external, 'combined_package_external')
+        expected_system = [packages.canonical(name) for name in package['system'][key]]
+        contract.need(section.get('external_expected') == expected_system,
+                      'combined_package_expected')
+        contract.need(not section.get('external_missing'), 'combined_package_unmet')
+        claimed_bundled = section.get('bundled') or []
+        contract.need(len(claimed_bundled) == len(package['bundled']), 'combined_package_bundled')
+        for claimed, registered in zip(claimed_bundled, package['bundled']):
+            contract.need(claimed.get('library') == registered['library']
+                          and claimed.get('archive') == registered['archive']
+                          and claimed.get('material') == registered['material'],
+                          'combined_package_bundled')
+            contract.need(claimed.get('providers') == providers.get(registered['library'], []),
+                          'combined_package_providers')
+            contract.need(registered['archive'] in ' '.join(claimed['providers']),
+                          'combined_package_bundled_provider')
+            contract.need(registered['material'] in index, 'combined_package_bundled_material')
+        link = section.get('link') or {}
+        contract.need(bool(link.get('record')), 'combined_link_missing')
+        contract.need(any(record == link['record'] for record in records), 'combined_link_record')
+        tokens = [entry['name'] for entry in contract.parse_entries(
+            'ninja-link', payload[link['record']['raw_output_path']].decode('utf-8'))]
+        evidence = packages.link_evidence(tokens, archive_names, package['system'][key])
+        contract.need(evidence == section.get('link_evidence'), 'combined_link_evidence')
+        contract.need(not evidence['expected_missing'], 'combined_link_expected')
+        reconciled.append({'id': package['id'], 'version': resolved['version'],
+                           'version_source': resolved.get('version_source'),
+                           'archives': resolved['archives'],
+                           'licence': resolved['licence'],
+                           'external_expected': expected_system,
+                           'external_observed': section.get('external_observed'),
+                           'system_libraries': evidence['system_libraries'],
+                           'frameworks': evidence['frameworks']})
+
+    secrets = contract.scan_test_secrets(payload, 'stage/')
+    contract.need(not secrets, 'combined_test_secrets')
+    forbidden, observations = contract.scan_forbidden(
+        payload, {'config': {'cache_switches': inventory.get('config', {}).get('sdk_switches', {})},
+                  'identity': identity, 'dynamic_dependencies': {'entries': []}},
+        allow_credentials=True)
+    contract.need(not forbidden, 'combined_forbidden')
+    contract.need(observations == inventory.get('observations'), 'combined_observations')
+    credential = sorted(observations.get('credential_files') or [])
+    contract.need(credential and all(any(marker in path for marker in
+                                         ('exr_credentials', 'exreader-credentials',
+                                          'exreadercredentials'))
+                                    for path in credential), 'combined_credential_scope')
+    hits = contract.scan_private_paths(payload, contract.GENERIC_PRIVATE_PATHS)
+    leaked = sorted({hit['path'] for hit in hits})
+    contract.need(leaked == sorted({row['path'] for row in
+                                    (inventory.get('private_paths') or {}).get('hits') or []}),
+                  'combined_private_path_scan')
+    blockers = contract.private_path_blockers(hits)
+    contract.need(blockers == sorted(inventory.get('release_blockers') or []),
+                  'combined_release_blockers')
+
+    for name, validator in (('combined.spdx.json', sbom.validate_spdx),
+                            ('combined.cdx.json', sbom.validate_cyclonedx)):
+        contract.need(name in payload, 'combined_sbom_missing')
+        data = payload[name]
+        pinned = (inventory.get('sbom') or {}).get(name) or {}
+        contract.need(pinned.get('bytes') == len(data)
+                      and pinned.get('sha256') == contract.digest(data), 'combined_sbom_identity')
+        document = contract.decode_json(data)
+        structural = validator(document, inventory)
+        if structural:
+            error = contract.InventoryError('combined_sbom_structure')
+            error.detail = [name + ': ' + item for item in structural]
+            raise error
+        if schemas:
+            jsonschema, schema = schemas[name]
+            try:
+                jsonschema.validate(document, schema)
+            except jsonschema.ValidationError as error:
+                raise contract.InventoryError('combined_sbom_schema',
+                                              str(error.message)[:200]) from None
+
+    contract.need(not inventory.get('problems'), 'combined_problems')
+    contract.need(inventory.get('materials_complete') is True, 'combined_materials_complete')
+    contract.need(inventory.get('release_ready') == (not blockers), 'combined_release_ready_claim')
+    checks = inventory.get('checks') or []
+    contract.need(checks and all(check.get('status') in ('pass', 'blocked', 'reported')
+                                for check in checks), 'combined_check_status')
+    profiles = [packages.by_id(entry['id'])['system'][key] for entry in reconciled]
+    if problems:
+        error = contract.InventoryError('combined_problems')
+        error.detail = problems
+        raise error
+    return {'profile': COMBINED_PROFILE, 'platform': key, 'packages': reconciled,
+            'package_count': len(reconciled),
+            'checks': len(checks),
+            'checks_passed': sum(1 for check in checks if check['status'] == 'pass'),
+            'installed_files': len(files),
+            'installed_bytes': sum(record['bytes'] for record in files),
+            'archives': len(archives), 'symbol_edges': len(static.get('edges') or []),
+            'spdx_sha256': contract.digest(payload['combined.spdx.json']),
+            'cyclonedx_sha256': contract.digest(payload['combined.cdx.json']),
+            'identity': {field: identity.get(field) for field in ('version', 'abi', 'core_version')},
+            'release_blockers': blockers, 'release_ready': not blockers,
+            'granted': True}
 
 
 def verify_platform(key, profile, payload, inventory, licenses_doc, run, components=None, switches=None,
@@ -274,6 +477,7 @@ def collect(repo, run_id, attempt, sha, folder, retrospective, schemas):
         contract.need(run.get('status') == 'in_progress' and run.get('conclusion') is None,
                       'run_conclusion')
     expected_jobs = {job_name(key, profile) for key in PLATFORMS for profile in PROFILES}
+    expected_jobs |= {COMBINED_JOB % PLATFORMS[key][0] for key in PLATFORMS}
     contract.need({row['name'] for row in jobs} == expected_jobs | {PROTOCOL_JOB, REPORT_JOB}, 'job_set')
     for job in jobs:
         contract.need(job.get('run_id') == run_id and job.get('run_attempt') == attempt
@@ -335,13 +539,52 @@ def collect(repo, run_id, attempt, sha, folder, retrospective, schemas):
     contract.need(len(identities) == 1, 'identity_divergence')
     contract.need(names == {(key, profile) for key in PLATFORMS for profile in PROFILES},
                   'platform_set')
+    result['combined'] = {}
+    combined_blockers = []
+    for key in PLATFORMS:
+        name = COMBINED_ARTIFACT % (key, run_id, attempt)
+        artifact = contract.select(artifacts, name)
+        contract.artifact_identity(artifact, run, datetime.now(timezone.utc))
+        path = folder / ('%s.zip' % artifact['id'])
+        with path.open('wb') as target:
+            done = subprocess.run(['gh', 'api', '/repos/%s/actions/artifacts/%d/zip'
+                                   % (repo, artifact['id'])], stdout=target,
+                                  stderr=subprocess.PIPE, timeout=600)
+        contract.need(done.returncode == 0 and path.stat().st_size <= contract.MAX_ZIP,
+                      'combined_archive_download')
+        payload = normalise(contract.archive_files(path.read_bytes(), artifact))
+        job = contract.select(jobs, COMBINED_JOB % PLATFORMS[key][0])
+        done = subprocess.run(['gh', 'api', '--allow-escape-sequences',
+                               '/repos/%s/actions/jobs/%d/logs' % (repo, job['id'])],
+                              capture_output=True, timeout=300)
+        contract.need(done.returncode == 0 and 0 < len(done.stdout) <= contract.MAX_EXPANDED,
+                      'combined_job_log_download')
+        (folder / ('job-%d.log' % job['id'])).write_bytes(done.stdout)
+        log_sha = contract.upload_binding(done.stdout, artifact)
+        contract.need('combined.json' in payload and 'licenses.json' in payload,
+                      'combined_inventory_missing')
+        inventory = contract.decode_json(payload['combined.json'])
+        licenses_doc = contract.decode_json(payload['licenses.json'])
+        item = verify_combined(key, payload, inventory, licenses_doc, run, schemas=schemas)
+        item.update({'job_id': job['id'], 'job_source_sha': job['head_sha'],
+                     'producer_log_sha256': log_sha,
+                     'artifact': {field: artifact[field] for field in
+                                  ('id', 'name', 'size_in_bytes', 'digest', 'expired', 'expires_at')}})
+        result['combined'][key] = item
+        combined_blockers += item['release_blockers']
+        for note in inventory.get('not_covered') or []:
+            if note not in result['not_covered']:
+                result['not_covered'].append(note)
     for key in PLATFORMS:
         granted = [profile for profile in PROFILES
                    if result['platforms']['%s/%s' % (key, profile)]['granted']]
         result.setdefault('desktops', {})[key] = {'runner': PLATFORMS[key][0], 'granted': granted}
         contract.need(len(granted) == len(PROFILES), 'desktop_incomplete')
+    contract.need(sorted(result['combined']) == sorted(PLATFORMS), 'combined_set')
+    for key in PLATFORMS:
+        contract.need(result['combined'][key]['granted'], 'combined_incomplete')
     result['identity'] = dict(zip(('version', 'abi', 'core_version'), list(identities)[0]))
-    result['release_blockers'] = sorted(set(result['release_blockers']))
+    result['release_blockers'] = sorted(set(result['release_blockers'] + combined_blockers))
     result['inventory_generated'] = True
     result['materials_complete'] = True
     result['release_ready'] = not result['release_blockers']
@@ -378,7 +621,9 @@ def main():
             jsonschema, spdx_schema = load_schema(args.spdx_schema)
             _, cdx_schema = load_schema(args.cdx_schema)
             schemas = {'inventory.spdx.json': (jsonschema, spdx_schema),
-                       'inventory.cdx.json': (jsonschema, cdx_schema)}
+                       'inventory.cdx.json': (jsonschema, cdx_schema),
+                       'combined.spdx.json': (jsonschema, spdx_schema),
+                       'combined.cdx.json': (jsonschema, cdx_schema)}
         summary = collect(os.environ['GITHUB_REPOSITORY'],
                           args.run_id or int(os.environ['GITHUB_RUN_ID']),
                           args.attempt or int(os.environ['GITHUB_RUN_ATTEMPT']),
