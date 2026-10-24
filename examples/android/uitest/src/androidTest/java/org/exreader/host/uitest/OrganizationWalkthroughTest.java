@@ -84,6 +84,8 @@ public final class OrganizationWalkthroughTest {
                 detail.put("old_pid",oldPid).put("new_pid",newPid).put("verified",verified);
             });
         } finally {
+            if(cases.length()!=8)try{device.takeScreenshot(new File(output,"failure.png"));device.dumpWindowHierarchy(new File(output,"failure.xml"));}
+                catch(Exception capture){android.util.Log.w("OrganizationUI","Failure capture unavailable",capture);}
             JSONObject report=identity().put("cases",cases).put("count",8).put("passed",cases.length()).put("failed",cases.length()==8?0:1).put("skipped",0);
             Files.write(new File(output,"validation.json").toPath(),report.toString(2).getBytes(StandardCharsets.UTF_8));
         }
