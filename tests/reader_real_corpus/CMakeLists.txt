@@ -1,0 +1,18 @@
+cmake_minimum_required(VERSION 3.24)
+project(EXReaderRealCorpus LANGUAGES C)
+if(MSVC)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  add_compile_options(/utf-8)
+endif()
+if(EXR_SDK)
+  list(PREPEND CMAKE_PREFIX_PATH "${EXR_SDK}")
+endif()
+find_package(EXReader CONFIG REQUIRED)
+add_executable(exreader-real-corpus-consumer consumer.c)
+target_link_libraries(exreader-real-corpus-consumer PRIVATE EXReader::exreader)
+set_target_properties(exreader-real-corpus-consumer PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)
+if(WIN32)
+  add_custom_command(TARGET exreader-real-corpus-consumer POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      "$<TARGET_FILE:EXReader::exreader>" "$<TARGET_FILE_DIR:exreader-real-corpus-consumer>")
+endif()
