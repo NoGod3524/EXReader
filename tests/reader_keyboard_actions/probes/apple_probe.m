@@ -505,16 +505,15 @@ static void case_focus_change(void) {
   [g.other makeKeyAndOrderFront:nil];
   [g.other makeKeyWindow];
   pump(0.2);
-  if (g.cancel_calls < 1 || g.canceled_dropped < 1) {
-    (void)snprintf(scratch, sizeof(scratch), "cancel_calls=%d dropped=%d", g.cancel_calls,
-                   g.canceled_dropped);
-    record("focus-change-forgets-hold", "FAIL", scratch);
-    return;
-  }
+  /* The ownership transfer is observable when the next event reaches the other
+     window: the host forgets the hold there, so the release must not be
+     swallowed and must arrive at the new owner. */
   send_key(g.other, NSEventTypeKeyUp, 49, 0, @" ", NO);
-  if (g.swallowed_up != 0 || g.other_saw_key == 0) {
-    (void)snprintf(scratch, sizeof(scratch), "swallowed_up=%d other_saw_key=%d", g.swallowed_up,
-                   g.other_saw_key);
+  pump(0.1);
+  if (g.canceled_dropped < 1 || g.swallowed_up != 0 || g.other_saw_key == 0) {
+    (void)snprintf(scratch, sizeof(scratch),
+                   "cancel_calls=%d dropped=%d swallowed_up=%d other_saw_key=%d", g.cancel_calls,
+                   g.canceled_dropped, g.swallowed_up, g.other_saw_key);
     record("focus-change-forgets-hold", "FAIL", scratch);
     return;
   }

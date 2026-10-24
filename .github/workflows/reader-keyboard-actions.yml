@@ -52,7 +52,8 @@ jobs:
           sleep 2
           DISPLAY=:99 openbox --sm-disable &
           sleep 2
-          DISPLAY=:99 xdpyinfo | head -n 3
+          pgrep -a Xvfb
+          pgrep -a openbox || true
           echo "DISPLAY=:99" >> "$GITHUB_ENV"
           echo "GDK_BACKEND=x11" >> "$GITHUB_ENV"
           echo "GTK_A11Y=none" >> "$GITHUB_ENV"
