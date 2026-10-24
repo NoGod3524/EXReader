@@ -294,7 +294,7 @@ jobs:
                               'detail': {'returncode': completed.returncode,
                                          'stderr': completed.stderr.decode('utf-8', 'replace')[-400:]}})
           record('negative-probe-rejects-foreign-prefix', [
-              'build/reloc-consumer/relocation-probe.exe', '--prefix', prefix + '/missing-prefix',
+              prefix + '/bin/relocation-probe.exe', '--prefix', prefix + '/missing-prefix',
               '--font', prefix + '/examples/fonts/primary.ttf',
               '--book', prefix + '/examples/books/layout.epub',
               '--output', 'build/dist/rejected-probe.json'])
@@ -369,7 +369,6 @@ jobs:
             build/path-surface/
             build/reloc-consumer/distribution-consumer-c.exe
             build/reloc-consumer/distribution-consumer-cpp.exe
-            build/reloc-consumer/relocation-probe.exe
             build/reloc-reading/reading-document.exe
           if-no-files-found: error
           include-hidden-files: true
