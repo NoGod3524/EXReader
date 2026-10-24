@@ -296,6 +296,8 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
   That VStack identity override is removed; native ScrollView and source-key
   row identities now remain stable throughout the measured scroll handshake.
   The original macOS04/05/07 and both mobile06 cases resume focused validation.
+  Review-only current-epoch frame observations also update on rejection paths;
+  their publication never clears restoration or substitutes for exact ACK.
 
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.

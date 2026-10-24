@@ -147,6 +147,18 @@ final class HostShelf: ObservableObject {
 
     func observe(_ positions: [String: CGRect], size: CGSize, revision: Int) {
 #if EXR_APPLE_SHELF_REVIEW
+        if revision == geometryRevision {
+            let frames: [[String: Any]] = size.height > 0 ? positions
+                .filter { $0.value.maxY > 0 && $0.value.minY < size.height }
+                .sorted { $0.value.minY < $1.value.minY }.prefix(3).map {
+                    ["key": $0.key, "min_y": Double($0.value.minY), "max_y": Double($0.value.maxY)]
+                } : []
+            if reviewGeometryRevision != revision || !NSArray(array: reviewVisibleFrames).isEqual(to: frames) {
+                objectWillChange.send()
+                reviewGeometryRevision = revision
+                reviewVisibleFrames = frames
+            }
+        }
         if let awaitingLayoutKey {
             var trace: [String: Any] = ["incoming_epoch": revision, "expected_epoch": geometryRevision,
                 "issued_revision": issuedRestoreRevision, "needs_scroll": needsScroll,
@@ -168,12 +180,6 @@ final class HostShelf: ObservableObject {
         guard awaitingLayoutKey == nil || issuedRestoreRevision == restoreRevision else { return }
         let ordered = positions.filter { $0.value.maxY > 0 && $0.value.minY < size.height }
             .sorted { $0.value.minY < $1.value.minY }
-#if EXR_APPLE_SHELF_REVIEW
-        reviewGeometryRevision = revision
-        reviewVisibleFrames = ordered.prefix(3).map {
-            ["key": $0.key, "min_y": Double($0.value.minY), "max_y": Double($0.value.maxY)]
-        }
-#endif
         let newVisible = Set(ordered.map(\.key))
         guard let first = ordered.first, let index = rows.firstIndex(where: { $0.id == first.key }) else { return }
         let lastIndex = ordered.last.flatMap { last in rows.firstIndex(where: { $0.id == last.key }) } ?? index
