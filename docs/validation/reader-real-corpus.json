@@ -1,79 +1,1173 @@
 {
   "schema": 1,
   "package": "F5 reader real corpus",
-  "state": "awaiting-first-run",
+  "state": "executed",
   "accepted": false,
   "start_commit": "cdfe48231853d6e70fba2c41b42bdd187155901a",
   "branch": "codex/reader-real-corpus",
+  "source_commit": "278d63691a4c73e7aa932d71a40a5938c5427514",
   "manifest": "tests/reader_real_corpus/manifest.json",
-  "expected": {
-    "real_files": 18,
-    "formats": 9,
-    "per_format": 2
+  "manifest_sha256": "2651b03dc9df0f8605b0da561518cc3138cd072ac61d113ea831d4f77c6d7c69",
+  "sdk": {
+    "version": "3.40.0",
+    "abi": 1,
+    "install": "cmake --install build/sdk --prefix stage on each runner"
   },
-  "counts": {
-    "real_files": 18,
-    "accepted": 0,
-    "failed": 0,
-    "pending": 0,
-    "formats": {
-      "EPUB": {
-        "real": 2,
-        "accepted": 0,
-        "failed": 0,
-        "pending": 0
+  "pin_run": {
+    "run_id": 40065120271,
+    "commit": "51d8f18f1b756d66a1ef7ee6218b568987b47ccf",
+    "attempt": 1,
+    "artifact": {
+      "id": 12549355464,
+      "name": "reader-real-corpus-pin",
+      "bytes": 8201176,
+      "digest": "sha256:7f932d98798c63fadfbfcd44a216508ed2e4c85e13eb6c2af49d563ac6503849"
+    }
+  },
+  "acceptance_run": {
+    "run_id": 40067425188,
+    "attempt": 1,
+    "event": "push",
+    "conclusion": "failure",
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40067425188"
+  },
+  "aggregate": {
+    "accepted": false,
+    "artifact": {
+      "id": 12550400900,
+      "name": "reader-real-corpus-aggregate",
+      "bytes": 739,
+      "digest": "sha256:1c5835db54319e3c8db4372dc0522ca4ef11e18f7f739db48889805caf861c14"
+    }
+  },
+  "platforms": {
+    "Linux": {
+      "summary": {
+        "accepted": false,
+        "counts": {
+          "real_files": 18,
+          "accepted": 14,
+          "failed": 4,
+          "pending": 0,
+          "formats": {
+            "EPUB": {
+              "real": 2,
+              "accepted": 2,
+              "failed": 0,
+              "pending": 0
+            },
+            "TXT": {
+              "real": 2,
+              "accepted": 2,
+              "failed": 0,
+              "pending": 0
+            },
+            "PDF": {
+              "real": 2,
+              "accepted": 2,
+              "failed": 0,
+              "pending": 0
+            },
+            "HTML": {
+              "real": 2,
+              "accepted": 2,
+              "failed": 0,
+              "pending": 0
+            },
+            "FB2": {
+              "real": 2,
+              "accepted": 2,
+              "failed": 0,
+              "pending": 0
+            },
+            "DOCX": {
+              "real": 2,
+              "accepted": 2,
+              "failed": 0,
+              "pending": 0
+            },
+            "RTF": {
+              "real": 2,
+              "accepted": 0,
+              "failed": 2,
+              "pending": 0
+            },
+            "MOBI": {
+              "real": 2,
+              "accepted": 2,
+              "failed": 0,
+              "pending": 0
+            },
+            "CBZ": {
+              "real": 2,
+              "accepted": 0,
+              "failed": 2,
+              "pending": 0
+            }
+          }
+        }
       },
-      "TXT": {
-        "real": 2,
-        "accepted": 0,
-        "failed": 0,
-        "pending": 0
+      "artifact": {
+        "id": 12549588973,
+        "name": "reader-real-corpus-ubuntu-22.04",
+        "bytes": 18870856,
+        "digest": "sha256:1fdb9906453bf3fb7a24c0529f83f960e0b935e90db37aa894fd02d33c26f944"
       },
-      "PDF": {
-        "real": 2,
-        "accepted": 0,
-        "failed": 0,
-        "pending": 0
+      "program": {
+        "consumer_path": "build/reader-consumer/exreader-real-corpus-consumer",
+        "consumer_sha256": "a3670b29179748af0e76d1057fab9da403f64df130fe4cbeacd4915b1d10e2b5",
+        "font_path": "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "font_sha256": "690243adfefe0ce154b547db6205794bd30ac4277275179517a90994f4980648",
+        "sdk_versions": [
+          "3.40.0"
+        ],
+        "abi_versions": [
+          1
+        ]
+      }
+    },
+    "Windows": {
+      "summary": {
+        "accepted": false,
+        "counts": {
+          "real_files": 18,
+          "accepted": 12,
+          "failed": 6,
+          "pending": 0,
+          "formats": {
+            "EPUB": {
+              "real": 2,
+              "accepted": 2,
+              "failed": 0,
+              "pending": 0
+            },
+            "TXT": {
+              "real": 2,
+              "accepted": 2,
+              "failed": 0,
+              "pending": 0
+            },
+            "PDF": {
+              "real": 2,
+              "accepted": 2,
+              "failed": 0,
+              "pending": 0
+            },
+            "HTML": {
+              "real": 2,
+              "accepted": 2,
+              "failed": 0,
+              "pending": 0
+            },
+            "FB2": {
+              "real": 2,
+              "accepted": 0,
+              "failed": 2,
+              "pending": 0
+            },
+            "DOCX": {
+              "real": 2,
+              "accepted": 2,
+              "failed": 0,
+              "pending": 0
+            },
+            "RTF": {
+              "real": 2,
+              "accepted": 0,
+              "failed": 2,
+              "pending": 0
+            },
+            "MOBI": {
+              "real": 2,
+              "accepted": 2,
+              "failed": 0,
+              "pending": 0
+            },
+            "CBZ": {
+              "real": 2,
+              "accepted": 0,
+              "failed": 2,
+              "pending": 0
+            }
+          }
+        }
       },
-      "HTML": {
-        "real": 2,
-        "accepted": 0,
-        "failed": 0,
-        "pending": 0
+      "artifact": {
+        "id": 12550071895,
+        "name": "reader-real-corpus-windows-latest",
+        "bytes": 18871058,
+        "digest": "sha256:ab9fd44e6912f2a9ae397ec56b533e936eafb650b57f63cbb65983e937cfea16"
       },
-      "FB2": {
-        "real": 2,
-        "accepted": 0,
-        "failed": 0,
-        "pending": 0
-      },
-      "DOCX": {
-        "real": 2,
-        "accepted": 0,
-        "failed": 0,
-        "pending": 0
-      },
-      "RTF": {
-        "real": 2,
-        "accepted": 0,
-        "failed": 0,
-        "pending": 0
-      },
-      "MOBI": {
-        "real": 2,
-        "accepted": 0,
-        "failed": 0,
-        "pending": 0
-      },
-      "CBZ": {
-        "real": 2,
-        "accepted": 0,
-        "failed": 0,
-        "pending": 0
+      "program": {
+        "consumer_path": "build/reader-consumer/Release/exreader-real-corpus-consumer.exe",
+        "consumer_sha256": "758927428011e74b9f2d45d31c03641e163cb7aef9d1b45dbd3449582d47c17c",
+        "font_path": "C:/Windows/Fonts/arial.ttf",
+        "font_sha256": "5f9f2d8104ad5e69e1be8107224063dc8c36f9e24680b2f9be324244c0b424a1",
+        "sdk_versions": [
+          "3.40.0"
+        ],
+        "abi_versions": [
+          1
+        ]
       }
     }
   },
-  "runs": [],
-  "artifacts": [],
-  "note": "acceptance is false until the pinned manifest has been executed on Windows and Linux in the cloud; this file is not evidence by itself"
+  "formats": {
+    "EPUB": {
+      "real": 2,
+      "linux": {
+        "accepted": 2,
+        "failed": 0,
+        "pending": 0
+      },
+      "windows": {
+        "accepted": 2,
+        "failed": 0,
+        "pending": 0
+      },
+      "both_platforms": true
+    },
+    "TXT": {
+      "real": 2,
+      "linux": {
+        "accepted": 2,
+        "failed": 0,
+        "pending": 0
+      },
+      "windows": {
+        "accepted": 2,
+        "failed": 0,
+        "pending": 0
+      },
+      "both_platforms": true
+    },
+    "PDF": {
+      "real": 2,
+      "linux": {
+        "accepted": 2,
+        "failed": 0,
+        "pending": 0
+      },
+      "windows": {
+        "accepted": 2,
+        "failed": 0,
+        "pending": 0
+      },
+      "both_platforms": true
+    },
+    "HTML": {
+      "real": 2,
+      "linux": {
+        "accepted": 2,
+        "failed": 0,
+        "pending": 0
+      },
+      "windows": {
+        "accepted": 2,
+        "failed": 0,
+        "pending": 0
+      },
+      "both_platforms": true
+    },
+    "FB2": {
+      "real": 2,
+      "linux": {
+        "accepted": 2,
+        "failed": 0,
+        "pending": 0
+      },
+      "windows": {
+        "accepted": 0,
+        "failed": 2,
+        "pending": 0
+      },
+      "both_platforms": false
+    },
+    "DOCX": {
+      "real": 2,
+      "linux": {
+        "accepted": 2,
+        "failed": 0,
+        "pending": 0
+      },
+      "windows": {
+        "accepted": 2,
+        "failed": 0,
+        "pending": 0
+      },
+      "both_platforms": true
+    },
+    "RTF": {
+      "real": 2,
+      "linux": {
+        "accepted": 0,
+        "failed": 2,
+        "pending": 0
+      },
+      "windows": {
+        "accepted": 0,
+        "failed": 2,
+        "pending": 0
+      },
+      "both_platforms": false
+    },
+    "MOBI": {
+      "real": 2,
+      "linux": {
+        "accepted": 2,
+        "failed": 0,
+        "pending": 0
+      },
+      "windows": {
+        "accepted": 2,
+        "failed": 0,
+        "pending": 0
+      },
+      "both_platforms": true
+    },
+    "CBZ": {
+      "real": 2,
+      "linux": {
+        "accepted": 0,
+        "failed": 2,
+        "pending": 0
+      },
+      "windows": {
+        "accepted": 0,
+        "failed": 2,
+        "pending": 0
+      },
+      "both_platforms": false
+    }
+  },
+  "failures": {
+    "Linux": [
+      {
+        "id": "rtf-crowley-policy",
+        "format": "RTF",
+        "ops": [
+          "import",
+          "readback",
+          "open",
+          "metadata.title",
+          "metadata.entries",
+          "toc",
+          "pages.first",
+          "pages.middle",
+          "pages.last",
+          "pages.sequential",
+          "pages.back",
+          "find",
+          "anchor.capture",
+          "anchor.resolve",
+          "anchor.resolve_reopen",
+          "reopen"
+        ],
+        "detail": {
+          "kind": "reflow",
+          "parts": 0,
+          "pages": 0,
+          "reopen_pages": 0,
+          "import_error": "Invalid or unsupported RTF stream",
+          "open_error": "Invalid or unsupported RTF stream",
+          "title": "",
+          "toc_count": 0,
+          "toc_first": "",
+          "metadata_entries": 0,
+          "metadata_first_key": "",
+          "find": {
+            "query": "Policy and Procedure TTR",
+            "part": null,
+            "page": null,
+            "start": null,
+            "end": null
+          },
+          "anchor_state_same": "none",
+          "anchor_state_reopen": "none",
+          "anchor_reopen_error": "",
+          "first": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          },
+          "middle": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          },
+          "last": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          },
+          "back": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          }
+        }
+      },
+      {
+        "id": "rtf-micro-republics",
+        "format": "RTF",
+        "ops": [
+          "import",
+          "readback",
+          "open",
+          "metadata.title",
+          "metadata.entries",
+          "toc",
+          "pages.first",
+          "pages.middle",
+          "pages.last",
+          "pages.sequential",
+          "pages.back",
+          "find",
+          "anchor.capture",
+          "anchor.resolve",
+          "anchor.resolve_reopen",
+          "reopen"
+        ],
+        "detail": {
+          "kind": "reflow",
+          "parts": 0,
+          "pages": 0,
+          "reopen_pages": 0,
+          "import_error": "Invalid or unsupported RTF stream",
+          "open_error": "Invalid or unsupported RTF stream",
+          "title": "",
+          "toc_count": 0,
+          "toc_first": "",
+          "metadata_entries": 0,
+          "metadata_first_key": "",
+          "find": {
+            "query": "Micro Republics",
+            "part": null,
+            "page": null,
+            "start": null,
+            "end": null
+          },
+          "anchor_state_same": "none",
+          "anchor_state_reopen": "none",
+          "anchor_reopen_error": "",
+          "first": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          },
+          "middle": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          },
+          "last": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          },
+          "back": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          }
+        }
+      },
+      {
+        "id": "cbz-pepper-01",
+        "format": "CBZ",
+        "ops": [
+          "import",
+          "readback",
+          "open",
+          "metadata.title",
+          "metadata.entries",
+          "toc",
+          "pages.first",
+          "pages.middle",
+          "pages.last",
+          "pages.sequential",
+          "pages.back",
+          "find",
+          "anchor.capture",
+          "anchor.resolve",
+          "anchor.resolve_reopen",
+          "reopen"
+        ],
+        "detail": {
+          "kind": "fixed",
+          "parts": 0,
+          "pages": 0,
+          "reopen_pages": 0,
+          "import_error": "Unsafe CBZ member path",
+          "open_error": "Unsafe CBZ member path",
+          "title": "",
+          "toc_count": 0,
+          "toc_first": "",
+          "metadata_entries": 0,
+          "metadata_first_key": "",
+          "find": {
+            "query": "",
+            "part": null,
+            "page": null,
+            "start": null,
+            "end": null
+          },
+          "anchor_state_same": "none",
+          "anchor_state_reopen": "none",
+          "anchor_reopen_error": "",
+          "first": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          },
+          "middle": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          },
+          "last": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          },
+          "back": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          }
+        }
+      },
+      {
+        "id": "cbz-pepper-02",
+        "format": "CBZ",
+        "ops": [
+          "import",
+          "readback",
+          "open",
+          "metadata.title",
+          "metadata.entries",
+          "toc",
+          "pages.first",
+          "pages.middle",
+          "pages.last",
+          "pages.sequential",
+          "pages.back",
+          "find",
+          "anchor.capture",
+          "anchor.resolve",
+          "anchor.resolve_reopen",
+          "reopen"
+        ],
+        "detail": {
+          "kind": "fixed",
+          "parts": 0,
+          "pages": 0,
+          "reopen_pages": 0,
+          "import_error": "Unsafe CBZ member path",
+          "open_error": "Unsafe CBZ member path",
+          "title": "",
+          "toc_count": 0,
+          "toc_first": "",
+          "metadata_entries": 0,
+          "metadata_first_key": "",
+          "find": {
+            "query": "",
+            "part": null,
+            "page": null,
+            "start": null,
+            "end": null
+          },
+          "anchor_state_same": "none",
+          "anchor_state_reopen": "none",
+          "anchor_reopen_error": "",
+          "first": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          },
+          "middle": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          },
+          "last": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          },
+          "back": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          }
+        }
+      }
+    ],
+    "Windows": [
+      {
+        "id": "fb2-breter",
+        "format": "FB2",
+        "ops": [
+          "find",
+          "anchor.capture",
+          "anchor.resolve",
+          "anchor.resolve_reopen"
+        ],
+        "detail": {
+          "kind": "reflow",
+          "parts": 1,
+          "pages": 128,
+          "reopen_pages": 128,
+          "import_error": "",
+          "open_error": "",
+          "title": "Бретёр",
+          "toc_count": 0,
+          "toc_first": "",
+          "metadata_entries": 0,
+          "metadata_first_key": "",
+          "find": {
+            "query": "??????",
+            "part": null,
+            "page": null,
+            "start": null,
+            "end": null
+          },
+          "anchor_state_same": "none",
+          "anchor_state_reopen": "none",
+          "anchor_reopen_error": "",
+          "first": {
+            "outcome": "ok",
+            "width": 720,
+            "height": 1040,
+            "channels": 4,
+            "stride": 2880,
+            "fnv1a64": "bcc0e427c101e14d"
+          },
+          "middle": {
+            "outcome": "ok",
+            "width": 720,
+            "height": 1040,
+            "channels": 4,
+            "stride": 2880,
+            "fnv1a64": "cee9ac86ac7af29a"
+          },
+          "last": {
+            "outcome": "ok",
+            "width": 720,
+            "height": 1040,
+            "channels": 4,
+            "stride": 2880,
+            "fnv1a64": "822cd5e2be075595"
+          },
+          "back": {
+            "outcome": "ok",
+            "width": 720,
+            "height": 1040,
+            "channels": 4,
+            "stride": 2880,
+            "fnv1a64": "7cd895eee057afc9"
+          }
+        }
+      },
+      {
+        "id": "fb2-portraits",
+        "format": "FB2",
+        "ops": [
+          "find",
+          "anchor.capture",
+          "anchor.resolve",
+          "anchor.resolve_reopen"
+        ],
+        "detail": {
+          "kind": "reflow",
+          "parts": 1,
+          "pages": 65,
+          "reopen_pages": 65,
+          "import_error": "",
+          "open_error": "",
+          "title": "Три портрета",
+          "toc_count": 0,
+          "toc_first": "",
+          "metadata_entries": 0,
+          "metadata_first_key": "",
+          "find": {
+            "query": "???????",
+            "part": null,
+            "page": null,
+            "start": null,
+            "end": null
+          },
+          "anchor_state_same": "none",
+          "anchor_state_reopen": "none",
+          "anchor_reopen_error": "",
+          "first": {
+            "outcome": "ok",
+            "width": 720,
+            "height": 1040,
+            "channels": 4,
+            "stride": 2880,
+            "fnv1a64": "2e0b088fc722b4e7"
+          },
+          "middle": {
+            "outcome": "ok",
+            "width": 720,
+            "height": 1040,
+            "channels": 4,
+            "stride": 2880,
+            "fnv1a64": "6772a0cac807c408"
+          },
+          "last": {
+            "outcome": "ok",
+            "width": 720,
+            "height": 1040,
+            "channels": 4,
+            "stride": 2880,
+            "fnv1a64": "558f3d4d21d13735"
+          },
+          "back": {
+            "outcome": "ok",
+            "width": 720,
+            "height": 1040,
+            "channels": 4,
+            "stride": 2880,
+            "fnv1a64": "0231ad61a5b9aac3"
+          }
+        }
+      },
+      {
+        "id": "rtf-crowley-policy",
+        "format": "RTF",
+        "ops": [
+          "import",
+          "readback",
+          "open",
+          "metadata.title",
+          "metadata.entries",
+          "toc",
+          "pages.first",
+          "pages.middle",
+          "pages.last",
+          "pages.sequential",
+          "pages.back",
+          "find",
+          "anchor.capture",
+          "anchor.resolve",
+          "anchor.resolve_reopen",
+          "reopen"
+        ],
+        "detail": {
+          "kind": "reflow",
+          "parts": 0,
+          "pages": 0,
+          "reopen_pages": 0,
+          "import_error": "Invalid or unsupported RTF stream",
+          "open_error": "Invalid or unsupported RTF stream",
+          "title": "",
+          "toc_count": 0,
+          "toc_first": "",
+          "metadata_entries": 0,
+          "metadata_first_key": "",
+          "find": {
+            "query": "Policy and Procedure TTR",
+            "part": null,
+            "page": null,
+            "start": null,
+            "end": null
+          },
+          "anchor_state_same": "none",
+          "anchor_state_reopen": "none",
+          "anchor_reopen_error": "",
+          "first": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          },
+          "middle": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          },
+          "last": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          },
+          "back": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          }
+        }
+      },
+      {
+        "id": "rtf-micro-republics",
+        "format": "RTF",
+        "ops": [
+          "import",
+          "readback",
+          "open",
+          "metadata.title",
+          "metadata.entries",
+          "toc",
+          "pages.first",
+          "pages.middle",
+          "pages.last",
+          "pages.sequential",
+          "pages.back",
+          "find",
+          "anchor.capture",
+          "anchor.resolve",
+          "anchor.resolve_reopen",
+          "reopen"
+        ],
+        "detail": {
+          "kind": "reflow",
+          "parts": 0,
+          "pages": 0,
+          "reopen_pages": 0,
+          "import_error": "Invalid or unsupported RTF stream",
+          "open_error": "Invalid or unsupported RTF stream",
+          "title": "",
+          "toc_count": 0,
+          "toc_first": "",
+          "metadata_entries": 0,
+          "metadata_first_key": "",
+          "find": {
+            "query": "Micro Republics",
+            "part": null,
+            "page": null,
+            "start": null,
+            "end": null
+          },
+          "anchor_state_same": "none",
+          "anchor_state_reopen": "none",
+          "anchor_reopen_error": "",
+          "first": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          },
+          "middle": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          },
+          "last": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          },
+          "back": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          }
+        }
+      },
+      {
+        "id": "cbz-pepper-01",
+        "format": "CBZ",
+        "ops": [
+          "import",
+          "readback",
+          "open",
+          "metadata.title",
+          "metadata.entries",
+          "toc",
+          "pages.first",
+          "pages.middle",
+          "pages.last",
+          "pages.sequential",
+          "pages.back",
+          "find",
+          "anchor.capture",
+          "anchor.resolve",
+          "anchor.resolve_reopen",
+          "reopen"
+        ],
+        "detail": {
+          "kind": "fixed",
+          "parts": 0,
+          "pages": 0,
+          "reopen_pages": 0,
+          "import_error": "Unsafe CBZ member path",
+          "open_error": "Unsafe CBZ member path",
+          "title": "",
+          "toc_count": 0,
+          "toc_first": "",
+          "metadata_entries": 0,
+          "metadata_first_key": "",
+          "find": {
+            "query": "",
+            "part": null,
+            "page": null,
+            "start": null,
+            "end": null
+          },
+          "anchor_state_same": "none",
+          "anchor_state_reopen": "none",
+          "anchor_reopen_error": "",
+          "first": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          },
+          "middle": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          },
+          "last": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          },
+          "back": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          }
+        }
+      },
+      {
+        "id": "cbz-pepper-02",
+        "format": "CBZ",
+        "ops": [
+          "import",
+          "readback",
+          "open",
+          "metadata.title",
+          "metadata.entries",
+          "toc",
+          "pages.first",
+          "pages.middle",
+          "pages.last",
+          "pages.sequential",
+          "pages.back",
+          "find",
+          "anchor.capture",
+          "anchor.resolve",
+          "anchor.resolve_reopen",
+          "reopen"
+        ],
+        "detail": {
+          "kind": "fixed",
+          "parts": 0,
+          "pages": 0,
+          "reopen_pages": 0,
+          "import_error": "Unsafe CBZ member path",
+          "open_error": "Unsafe CBZ member path",
+          "title": "",
+          "toc_count": 0,
+          "toc_first": "",
+          "metadata_entries": 0,
+          "metadata_first_key": "",
+          "find": {
+            "query": "",
+            "part": null,
+            "page": null,
+            "start": null,
+            "end": null
+          },
+          "anchor_state_same": "none",
+          "anchor_state_reopen": "none",
+          "anchor_reopen_error": "",
+          "first": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          },
+          "middle": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          },
+          "last": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          },
+          "back": {
+            "outcome": "failed",
+            "width": 0,
+            "height": 0,
+            "channels": 0,
+            "stride": 0,
+            "fnv1a64": "0000000000000000"
+          }
+        }
+      }
+    ]
+  },
+  "boundary": {
+    "passed": true,
+    "checks": 3,
+    "fixtures": [
+      "empty.txt",
+      "truncated.epub",
+      "not-a-pdf.pdf"
+    ],
+    "counted_as_real": false
+  },
+  "notes": [
+    "accepted is false: RTF and CBZ have 0 accepted on both platforms; FB2 has 0 accepted on Windows because exact Cyrillic text search missed while Linux found it.",
+    "The summary keeps every failure and does not reclassify, delete or replace a sample after observation.",
+    "The 18 files are not counted toward the old 1710 target."
+  ],
+  "diagnostic_runs": [
+    {
+      "run_id": 40065415722,
+      "reason": "consumer emitted invalid JSON and reflow import used the file-only library entry point"
+    },
+    {
+      "run_id": 40066056769,
+      "reason": "render objects were emitted with a duplicate key; JSON was invalid"
+    },
+    {
+      "run_id": 40067009509,
+      "reason": "anchor words were not present as exact substrings in the DOCX/PDF/FB2 bodies"
+    }
+  ],
+  "findings": [
+    {
+      "id": "rtf-rejected",
+      "formats": [
+        "RTF"
+      ],
+      "platforms": [
+        "Linux",
+        "Windows"
+      ],
+      "files": [
+        "rtf-crowley-policy",
+        "rtf-micro-republics"
+      ],
+      "phenomenon": "exr_library_import and exr_document_open return EXR_FORMAT with 'Invalid or unsupported RTF stream'",
+      "suggestion": "tolerate trailing NUL padding and extend common Word 2013 control-word handling; keep the current expectations"
+    },
+    {
+      "id": "cbz-unsafe-path",
+      "formats": [
+        "CBZ"
+      ],
+      "platforms": [
+        "Linux",
+        "Windows"
+      ],
+      "files": [
+        "cbz-pepper-01",
+        "cbz-pepper-02"
+      ],
+      "phenomenon": "exr_library_import_file and exr_fixed_open return 'Unsafe CBZ member path' for real CBZ archives whose member names start with /",
+      "suggestion": "normalize a leading / to a relative member name for read-only page enumeration while retaining .. traversal rejection"
+    },
+    {
+      "id": "fb2-windows-find",
+      "formats": [
+        "FB2"
+      ],
+      "platforms": [
+        "Windows"
+      ],
+      "files": [
+        "fb2-breter",
+        "fb2-portraits"
+      ],
+      "phenomenon": "both documents open and paginate (128/65 pages) but exr_document_find misses the exact Cyrillic query that Linux finds and resolves",
+      "suggestion": "compare the Windows and Linux text projection and find path for the same bytes; do not reclassify the Windows result"
+    }
+  ]
 }
