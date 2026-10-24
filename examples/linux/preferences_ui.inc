@@ -356,13 +356,13 @@ static char *preferences_observation(void) {
   GtkWidget *accept=preferences_import_dialog ? gtk_dialog_get_widget_for_response(GTK_DIALOG(preferences_import_dialog),GTK_RESPONSE_ACCEPT):NULL;
   GtkWidget *focus=preferences_import_dialog ? gtk_window_get_focus(GTK_WINDOW(preferences_import_dialog)):NULL;
   char *entry_digest=GTK_IS_ENTRY(focus) ? g_compute_checksum_for_string(G_CHECKSUM_SHA256,gtk_entry_get_text(GTK_ENTRY(focus)),-1):g_strdup("");
-  char *value=g_strdup_printf("[preferences]\nvisible=%d\nrunning=%d\nload_status=%d\nsave_status=%d\nfont=%.3f\nline=%.3f\nparagraph=%.3f\nmargin=%.3f\ntheme=%u\nsystem_theme=%u\neffective_theme=%u\ndirection=%u\ninput=%u\nzoom=%u\nportal_version=%u\nportal_events=%u\nbitmap_width=%zu\nbitmap_height=%zu\ndeferred_closes=%u\nactions=%u\ngesture_events=%u\ngesture_turns=%u\n[native_import]\nvisible=%d\nselected_sha256=%s\naccept_sensitive=%d\nactive=%d\nentry_focused=%d\nentry_sha256=%s\n",
+  char *value=g_strdup_printf("[preferences]\nvisible=%d\nrunning=%d\nload_status=%d\nsave_status=%d\nfont=%.3f\nline=%.3f\nparagraph=%.3f\nmargin=%.3f\ntheme=%u\nsystem_theme=%u\neffective_theme=%u\ndirection=%u\ninput=%u\nzoom=%u\nportal_version=%u\nportal_events=%u\nbitmap_width=%zu\nbitmap_height=%zu\ndeferred_closes=%u\nactions=%u\ngesture_events=%u\ngesture_turns=%u\n[native_import]\nvisible=%d\nselected_sha256=%s\naccept_sensitive=%d\nactive=%d\nentry_focused=%d\nentry_sha256=%s\nfocus_type=%s\n",
     preferences.dialog!=NULL,preferences.running,preferences.load_status,preferences.save_status,(double)appearance.font_size,(double)appearance.line_spacing,
     (double)appearance.paragraph_spacing,(double)appearance.margin,appearance.theme,appearance_system_theme,
     (unsigned)reader_preferences_effective_theme(&appearance,(reader_preferences_theme)appearance_system_theme),appearance.page_turn_direction,appearance.page_turn_input,appearance.fixed_page_zoom,preferences.portal_version,preferences.portal_events,
     preferences.bitmap_width,preferences.bitmap_height,preferences.deferred_closes,preferences.actions,preferences.gesture_events,preferences.gesture_turns,
     preferences_import_dialog && gtk_widget_get_mapped(preferences_import_dialog),digest,accept && gtk_widget_is_sensitive(accept),
-    preferences_import_dialog && gtk_window_is_active(GTK_WINDOW(preferences_import_dialog)),GTK_IS_ENTRY(focus),entry_digest);
+    preferences_import_dialog && gtk_window_is_active(GTK_WINDOW(preferences_import_dialog)),GTK_IS_ENTRY(focus),entry_digest,focus ? G_OBJECT_TYPE_NAME(focus):"");
   g_free(entry_digest);g_free(digest);g_free(selected);return value;
 }
 static void preferences_import_changed(GtkFileChooser *chooser,gpointer unused) {
