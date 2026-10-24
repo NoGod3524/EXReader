@@ -216,8 +216,11 @@ def evaluate_required(platform, step, spec, elements, items, screenshot):
 
 def evaluate_geometry(platform, step, spec, elements, window, policy, items, screenshot):
     tolerance = float(policy.get('clip_tolerance_pt', 2))
-    blocking_min = float((policy.get('minimum_target_pt') or {}).get('blocking', 24))
-    advisory_min = float((policy.get('minimum_target_pt') or {}).get('advisory_ios', 44))
+    targets = policy.get('minimum_target_pt') or {}
+    blocking_min = float(targets.get('blocking', 24))
+    blocking_platforms = targets.get('blocking_platforms') or []
+    advisory_min = float(targets.get('advisory_ios', 44))
+    advisory_macos = float(targets.get('advisory_macos', 20))
     checked = []
     for identifier in spec.get('interactive') or []:
         element = elements.get(identifier)
@@ -253,7 +256,7 @@ def evaluate_geometry(platform, step, spec, elements, window, policy, items, scr
             items.append(make_item(platform, step, identifier, 'clipped', 'pass',
                                    '控件完整落在窗口内', 'frame 在窗口内', 'major', False, '', screenshot))
         smallest = min(box['width'], box['height'])
-        if smallest < blocking_min:
+        if platform in blocking_platforms and smallest < blocking_min:
             items.append(make_item(platform, step, identifier, 'target-size', 'fail',
                                    '控件不小于 %g pt（WCAG 2.5.8）' % blocking_min,
                                    '最小边 %.1f pt' % smallest, 'major', True,
@@ -262,11 +265,16 @@ def evaluate_geometry(platform, step, spec, elements, window, policy, items, scr
             items.append(make_item(platform, step, identifier, 'target-size', 'pass',
                                    '控件不小于 %g pt（WCAG 2.5.8）' % blocking_min,
                                    '最小边 %.1f pt' % smallest, 'minor', False, '', screenshot))
-            if platform != 'macos' and smallest < advisory_min:
+            if platform in ('iphone', 'ipad') and smallest < advisory_min:
                 items.append(make_item(platform, step, identifier, 'target-size-hig', 'fail',
                                        'iOS HIG 建议不小于 %g pt' % advisory_min,
                                        '最小边 %.1f pt' % smallest, 'minor', False,
                                        '按 HIG 放大到 44 pt 触控区', screenshot))
+            elif platform == 'macos' and smallest < advisory_macos:
+                items.append(make_item(platform, step, identifier, 'target-size-macos', 'fail',
+                                       'macOS 指针目标建议不小于 %g pt' % advisory_macos,
+                                       '最小边 %.1f pt' % smallest, 'minor', False,
+                                       '按 macOS 控件惯例放大（padding 或 frame(minWidth:minHeight:)）', screenshot))
     for left in range(len(checked)):
         for right in range(left + 1, len(checked)):
             first_id, first = checked[left]
