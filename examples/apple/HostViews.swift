@@ -62,6 +62,9 @@ struct HostRootView: View {
         .onReceive(resignPublisher) { _ in
             if !selfTesting { model.persistNow() }
         }
+        .onDisappear {
+            if !selfTesting { model.persistNow(); model.closeAccountSession() }
+        }
     }
 }
 
@@ -85,12 +88,25 @@ private struct ShelfGeometryProbe: View {
     @ObservedObject var shelf: HostShelf
     var rowKey: String? = nil
 
+    private func measure(_ geometry: GeometryProxy, revision: Int) {
+        let frame = geometry.frame(in: .named("catalog-shelf")), size = geometry.size
+        DispatchQueue.main.async {
+            shelf.measureProbe(key: rowKey, frame: frame, size: size, revision: revision)
+        }
+    }
+
     var body: some View {
         let revision = shelf.geometryRevision
         GeometryReader { geometry in
             Color.clear.preference(key: ShelfGeometryKey.self, value: rowKey.map {
                 ShelfGeometry(frames: [$0: geometry.frame(in: .named("catalog-shelf"))], revision: revision)
             } ?? ShelfGeometry(size: geometry.size, revision: revision))
+            // A scroll to an already aligned single row changes no rectangle.
+            // Its new native probe still reports the actual post-issue epoch.
+            .onAppear { measure(geometry, revision: revision) }
+            .onChange(of: revision) { value in measure(geometry, revision: value) }
+            .onChange(of: geometry.frame(in: .named("catalog-shelf"))) { _ in measure(geometry, revision: revision) }
+            .onChange(of: geometry.size) { _ in measure(geometry, revision: revision) }
         }
     }
 }

@@ -37,6 +37,10 @@ final class HostShelf: ObservableObject {
     private var firstLayoutUptime: TimeInterval?
     private var awaitingLayoutKey: String?
     private var issuedRestoreRevision = -1
+    private var probeRevision = -1
+    private var probePositions: [String: CGRect] = [:]
+    private var probeSize = CGSize.zero
+    private var probeFlushScheduled = false
     // Even epochs precede the native scroll; odd epochs follow its issue.
     var geometryRevision: Int { restoreRevision * 2 + (issuedRestoreRevision == restoreRevision ? 1 : 0) }
     var needsScroll: Bool { awaitingLayoutKey != nil && issuedRestoreRevision != restoreRevision }
@@ -147,6 +151,23 @@ final class HostShelf: ObservableObject {
                     self.restoreRevision += 1
                 }
             }
+        }
+    }
+
+    func measureProbe(key: String?, frame: CGRect, size: CGSize, revision: Int) {
+        guard revision == geometryRevision else { return }
+        if probeRevision != revision {
+            probeRevision = revision; probePositions = [:]; probeSize = .zero
+        }
+        if let key { probePositions[key] = frame } else { probeSize = size }
+        guard !probeFlushScheduled else { return }
+        probeFlushScheduled = true
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.probeFlushScheduled = false
+            guard self.probeRevision == self.geometryRevision else { return }
+            self.probePositions = self.probePositions.filter { key, _ in self.rows.contains(where: { $0.id == key }) }
+            self.observe(self.probePositions, size: self.probeSize, revision: self.probeRevision)
         }
     }
 
@@ -955,7 +976,8 @@ final class HostReaderModel: ObservableObject {
         do {
             let authorization = try accounts.authorization(for: profile)
             let cancel = HostCancelBox()
-            syncCancel = cancel; syncPreparing = true; accountSession.preparing = true
+            try accountSession.beginPreparation { cancel.cancel() }
+            syncCancel = cancel; syncPreparing = true
             prepareSyncPage(after: nil, profile: profile, authorization: authorization, cancel: cancel)
         } catch { errorText = describe(error) }
     }
@@ -978,7 +1000,7 @@ final class HostReaderModel: ObservableObject {
                     self.prepareSyncPage(after: page.last?.key, profile: profile, authorization: authorization, cancel: cancel)
                 } else {
                     DispatchQueue.main.async {
-                        self.syncPreparing = false; self.accountSession?.preparing = false
+                        self.syncPreparing = false; self.accountSession?.finishPreparation()
                         guard !cancel.isCancelled else { return }
                         do {
                             try self.accountSession?.start(profile: profile, directory: directory, authorization: authorization) { [weak self] in
@@ -989,7 +1011,7 @@ final class HostReaderModel: ObservableObject {
                 }
             } catch {
                 DispatchQueue.main.async {
-                    self.syncPreparing = false; self.accountSession?.preparing = false
+                    self.syncPreparing = false; self.accountSession?.finishPreparation()
                     if !cancel.isCancelled { self.errorText = self.describe(error) }
                 }
             }
