@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "recorded_at_utc": "2026-10-24T23:20:30Z",
+  "recorded_at_utc": "2026-10-24T23:32:35Z",
   "current_cycle": 1,
   "completed_cycles": 0,
   "audit_interval": 5,
@@ -11,13 +11,16 @@
     "source": "7adda19cb5dd4108d4b4a434a8f2bb619519529d",
     "run": 40141520772,
     "attempt": 1,
-    "status": "in_progress",
+    "status": "completed",
     "accepted": false,
     "pin_job_success": true,
-    "composition_all_three_jobs_and_strict_summary_success": false,
+    "composition_all_three_jobs_and_strict_summary_success": true,
     "windows_search_and_strict_summary_success": true,
     "gtk_palette_failures_remain_actual_failures": true,
-    "apple_host_not_yet_included": true
+    "apple_host_not_yet_included": true,
+    "authentication_job": 121018373358,
+    "evidence_head": "6f78898b",
+    "problems": []
   },
   "implementation_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "handoff_commit": "059a7b4fcd0de44674a30fadc7e0fded7cc47acd",
@@ -348,8 +351,8 @@
   },
   "windows_navigation_candidate": {
     "branch": "codex/reader-windows-navigation-ui",
-    "source": "0b433fa79aaf033e34f8e174ef6ab65c3f2b0fbc",
-    "run": 40142195528,
+    "source": "53dc10c6d8f609d5dcf2deccc9c6277c1e74b31a",
+    "run": 40142663081,
     "status": "in_progress",
     "accepted": false
   }

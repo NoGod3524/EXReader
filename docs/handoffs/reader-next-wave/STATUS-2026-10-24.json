@@ -1,15 +1,17 @@
 {
   "schema": 1,
-  "observed_at_utc": "2026-10-24T23:20:30Z",
+  "observed_at_utc": "2026-10-24T23:32:35Z",
   "packages": 19,
   "cloud_success": 19,
-  "returned_pending_root_review": 16,
+  "returned_pending_root_review": 15,
   "root_review_closed_awaiting_integration": [
     "J03",
     "J06",
     "J25"
   ],
-  "needs_further_work": [],
+  "needs_further_work": [
+    "J19"
+  ],
   "root_review_and_integration_complete": false,
   "tasks": [
     {
@@ -140,8 +142,9 @@
       "source": "2f4304c0a037e8f20b064bbfa248ea2e9371d436",
       "status": "completed",
       "conclusion": "success",
-      "root_state": "cloud_success_awaiting_root_review_and_integration",
-      "earlier_observed_failure_run": 40132713831
+      "root_state": "root_review_two_close_boundary_repairs_dispatched_to_original_owner",
+      "earlier_observed_failure_run": 40132713831,
+      "review": "J19-ROOT-REVIEW.md"
     },
     {
       "id": "J20",
