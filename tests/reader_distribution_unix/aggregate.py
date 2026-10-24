@@ -27,7 +27,8 @@ WORKFLOW = '.github/workflows/reader-distribution-unix.yml'
 PLATFORMS = ('linux', 'macos')
 JOB_NAMES = {'rejection protocol', 'unix (linux)', 'unix (macos)', 'same-source report'}
 REPORT_JOB = 'same-source report'
-REQUIRED_CHECKS = ('tree_inventory', 'install_layout', 'pkgconfig_contract', 'absolute_path_scan',
+REQUIRED_CHECKS = ('tree_inventory', 'install_layout', 'pkgconfig_contract', 'pkgconfig_directory',
+                   'absolute_path_scan',
                    'cmake_relocatable', 'document_bytes', 'licence_materials',
                    'duplicate_material', 'pkgconfig_query', 'installed_consumers',
                    'nine_format_smoke')

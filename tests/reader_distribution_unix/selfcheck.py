@@ -136,6 +136,21 @@ def pkgconfig_coverage():
     assert problems, 'missing component archive was accepted'
 
 
+@case('foreign-pkgconfig')
+def foreign_pkgconfig():
+    root = Path(tempfile.mkdtemp(prefix='j24-pc-'))
+    try:
+        (root / 'lib/pkgconfig').mkdir(parents=True)
+        (root / 'lib/pkgconfig/exreader.pc').write_text('prefix=${pcfiledir}/../..\n', encoding='utf-8')
+        (root / 'lib/pkgconfig/libwebp.pc').write_text(
+            'prefix=/home/runner/work/EXReader/build/webp\nName: libwebp\n', encoding='utf-8')
+        found = contract.foreign_pkgconfig(root)
+        assert [entry['path'] for entry in found] == ['lib/pkgconfig/libwebp.pc'], found
+        assert found[0]['absolute'] is True and found[0]['prefix'].startswith('/home/runner'), found
+    finally:
+        shutil.rmtree(root)
+
+
 @case('dedupe-plan')
 def dedupe_plan():
     records = [

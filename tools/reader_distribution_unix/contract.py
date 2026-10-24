@@ -308,6 +308,28 @@ def pc_contract(text, version, components, vendor, system):
             'fields': sorted(fields), 'variables': sorted(variables)}, problems
 
 
+def foreign_pkgconfig(root, keep='lib/pkgconfig/exreader.pc'):
+    """Record private-dependency pkg-config units that upstream installed with an
+    absolute prefix. They are never part of the public SDK contract: the private
+    archives they describe are already listed in Libs.private of exreader.pc."""
+    found = []
+    for directory in ('lib/pkgconfig', 'share/pkgconfig'):
+        base = Path(root) / directory
+        if not base.is_dir():
+            continue
+        for path in sorted(base.glob('*.pc')):
+            relative = path.relative_to(Path(root)).as_posix()
+            if relative == keep:
+                continue
+            text = path.read_text(encoding='utf-8', errors='replace')
+            match = re.search(r'^prefix=(.*)$', text, re.M)
+            prefix = match.group(1).strip() if match else None
+            found.append({'path': relative, 'bytes': path.stat().st_size,
+                          'sha256': digest(path), 'prefix': prefix,
+                          'absolute': bool(prefix and re.match(r'^(?:/|[A-Za-z]:[\\/])', prefix))})
+    return found
+
+
 def is_material(relative):
     return relative in MATERIAL_FILES or relative.startswith(MATERIAL_ROOTS)
 

@@ -17,6 +17,9 @@
    `vendordir`）都由 `prefix` 派生；`Libs`、`Libs.private`、`Cflags` 中不允许出现绝对安装路径或
    `-Wl,` 包装参数。审计同时用 `pkg-config --cflags --libs --static exreader` 反查：所有
    `-I`/`-L` 必须落在搬动后的前缀内，且组件归档、私有归档、`-pthread -lm` 齐全。
+   上游依赖构建（libwebp、aom、sharpyuv）还会把私有静态库的 `*.pc` 一并装进 `lib/pkgconfig`，
+   其 `prefix=` 是构建机的绝对路径。候选把这些私有单元移除并记录路径/字节/SHA-256/原 prefix 作为
+   缺陷证据，只保留公共的 `exreader.pc`；私有归档已由 `Libs.private` 覆盖，消费者不需要这些单元。
 3. **重复归档材料**：安装会同时写入 `LICENSE`、`THIRD_PARTY_NOTICES.md`（根与 `share/exreader/`）
    等字节相同的材料。候选按内容散列规划去重，只对 `docs/`、`share/`、`examples/`、`bindings/`
    与根许可/自述文件生效；组件归档、私有归档与公开头一律不参与。去重使用 `os.link` 保留每个路径，
@@ -53,7 +56,8 @@ Libs.private: -L${vendordir} -lexr_vendor_<name>... -pthread -lm [-ldl]
 
 - 守卫：`check_scope.sh`（HEAD==GITHUB_SHA、起点为祖先、冻结 SDK 树相等、产品 schema 相等、
   改动全在白名单）。
-- 协议：`selfcheck.py` 在合成夹具上跑 10 条判据（链接顺序、私有归档顺序、pkg-config 往返、
+- 协议：`selfcheck.py` 在合成夹具上跑 11 条判据（链接顺序、私有归档顺序、pkg-config 往返、
+  私有 pkg-config 绝对 prefix 识别、
   绝对 prefix/绝对库路径拒绝、组件覆盖、去重规划、树扫描、路径安全、封包/解包硬链接与篡改拒绝）。
 - 两平台（ubuntu-22.04、macos-15）：真实构建安装 → 许可材料 → 候选 → 搬迁 → C/C++ 消费者与
   九格式 smoke → `audit before` → 去重 → 重建重跑 → `audit after` → 前后一致 → 封包 → 解包校验

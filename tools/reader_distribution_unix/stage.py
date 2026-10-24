@@ -76,6 +76,12 @@ def build(profile, install, output, platform, runner_os, arch, licenses):
     pc_path.write_text(pc_text, encoding='utf-8')
     pc_fields, pc_problems = contract.pc_contract(pc_text, sdk_version, components, vendor, system)
     contract.need(not pc_problems, 'generated pkg-config unit is invalid: ' + '; '.join(pc_problems))
+    foreign = contract.foreign_pkgconfig(prefix)
+    for entry in foreign:
+        (prefix / entry['path']).unlink()
+    remaining = sorted(path.name for path in (prefix / 'lib/pkgconfig').glob('*.pc'))
+    contract.need(remaining == ['exreader.pc'],
+                  'private pkg-config units survived in lib/pkgconfig: ' + ' '.join(remaining))
 
     records = contract.walk(prefix)
     plan = contract.dedupe_plan(records)
@@ -102,6 +108,7 @@ def build(profile, install, output, platform, runner_os, arch, licenses):
                       'fields': pc_fields},
         'link_order': components,
         'component_targets': targets,
+        'foreign_pkgconfig': foreign,
         'private_archives': vendor,
         'system_libraries': system,
         'files': records,
@@ -126,6 +133,8 @@ def build(profile, install, output, platform, runner_os, arch, licenses):
         ('component_link_order', 'pass', ' '.join(components)),
         ('private_archives', 'pass', '%d archives in upstream order' % len(vendor)),
         ('pkgconfig_relative_prefix', 'pass', 'prefix is ${pcfiledir}/../.. with no absolute flag'),
+        ('upstream_pkgconfig_units', 'pass',
+         'removed %d private units that upstream installed with absolute prefixes' % len(foreign)),
         ('pkginfo_unit', 'pass', 'validated Name/Version/Cflags/Libs/Libs.private coverage'),
         ('licence_materials', 'pass', 'installed materials check reported release ready'),
         ('duplicate_material_plan', 'pass', '%d duplicate copies, %d bytes' % (len(plan), duplicate_bytes)),

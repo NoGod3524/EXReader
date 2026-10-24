@@ -246,6 +246,20 @@ def build_report(args):
         pc_problems.append('pkg-config prefix is not pcfiledir-relative')
     record('pkgconfig_contract', pc_problems, 'pcfiledir-relative prefix; no absolute install flag')
 
+    directory_problems = []
+    units = sorted(path.name for path in (prefix / 'lib/pkgconfig').glob('*.pc'))
+    if units != ['exreader.pc']:
+        directory_problems.append('lib/pkgconfig contains: ' + ' '.join(units))
+    foreign = stage.get('foreign_pkgconfig') or []
+    for entry in foreign:
+        if (prefix / entry.get('path', '')).exists():
+            directory_problems.append('private pkg-config unit survived: ' + str(entry.get('path')))
+        if entry.get('absolute') is not True:
+            directory_problems.append('recorded unit was not an absolute-prefix defect: ' +
+                                      str(entry.get('path')))
+    record('pkgconfig_directory', directory_problems,
+           '%d private dependency units with absolute prefixes removed' % len(foreign))
+
     hits = contract.scan_tokens(prefix, tokens + [prefix_text])
     record('absolute_path_scan', ['%s contains %s' % (hit['path'], hit['token']) for hit in hits],
            'no workspace, build or prefix token in %d installed text files' % sum(
