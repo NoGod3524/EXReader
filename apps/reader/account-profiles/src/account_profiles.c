@@ -809,11 +809,15 @@ ap_check_library(const char *product, const char *account_id, const char *root_u
                  "the product library has more than one hard link");
     return READER_ACCOUNT_PROFILES_UNSAFE_PATH;
   }
-  status = ap_join_path(binding, sizeof(binding), product, ".sync-account");
-  if (status != READER_ACCOUNT_PROFILES_OK) {
-    ap_error_set(error, READER_ACCOUNT_PROFILES_LIMIT, 0, 0,
-                 "the store path is too long for a binding path");
-    return status;
+  {
+    size_t product_length = strlen(product);
+    if (product_length + sizeof(".sync-account") > sizeof(binding)) {
+      ap_error_set(error, READER_ACCOUNT_PROFILES_LIMIT, 0, 0,
+                   "the store path is too long for a binding path");
+      return READER_ACCOUNT_PROFILES_LIMIT;
+    }
+    memcpy(binding, product, product_length);
+    memcpy(binding + product_length, ".sync-account", sizeof(".sync-account"));
   }
   status = ap_inspect_entry(binding, &kind, &size, &links, error);
   if (status != READER_ACCOUNT_PROFILES_OK) return status;
