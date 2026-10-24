@@ -437,7 +437,7 @@ CASES = [
      rewrite_link('webdav', drop='libcurl')),
     ('test secret in the prefix', 'combined_test_secrets',
      lambda f: f['payload'].__setitem__('stage/share/exreader-product/001_catalog.sql',
-                                        b'password=hunter2\n')),
+                                        b'-----BEGIN RSA PRIVATE KEY-----\n')),
     ('unregistered archive in the prefix', 'combined_archive_coverage',
      lambda f: f['payload'].__setitem__('stage/lib/reader_bogus'
                                         + extension(f['platform']), b'!<arch>\nbogus')),
