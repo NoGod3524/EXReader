@@ -250,6 +250,25 @@ def main():
         record('true_process_death_keeps_original_request_pending_without_auto_replay', observed()['pending'] == '1' and observed()['count'] == '2' and pending.read_bytes() == original_request)
         action('Confirm original save')
         record('explicit_retry_commits_exact_original_once_then_clears_own_request', observed()['pending'] == '0' and observed()['count'] == '3' and not pending.exists() and sdk_dump(True) == notes)
+        lock = sqlite3.connect(profile / 'library.sqlite.product.sqlite')
+        lock.execute('BEGIN IMMEDIATE')
+        click('Add bookmark', {'push button'})
+        click_node(element('Reading record text', {'text'}))
+        host.paste('finish the already-started save while closing')
+        host.key('alt+s')
+        end = time.monotonic() + 10
+        while time.monotonic() < end and not pending.exists():
+            time.sleep(.01)
+        assert pending.exists(), 'graceful close did not reach its durable save boundary'
+        command('wmctrl', '-ic', hex(int(host.window)))
+        lock.rollback()
+        lock.close()
+        returncode = host.process.wait(timeout=20)
+        host.log.close()
+        record('parent_close_after_durable_save_finishes_owner_transaction_before_exit', returncode == 0 and not pending.exists())
+        launch()
+        open_records()
+        record('graceful_close_save_is_retained_once_on_real_process_reopen', observed()['count'] == '4' and observed()['pending'] == '0' and sdk_dump(True) == notes)
         host.key('Escape')
         wait(lambda value: value['visible'] == '0')
         before = host.read()['frame_generation']

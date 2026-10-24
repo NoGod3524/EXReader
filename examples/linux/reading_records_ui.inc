@@ -183,6 +183,11 @@ static void reading_records_open(GtkWidget *button,gpointer unused) {
   if(preferences_opened()) return;
 #endif
   if(accounts_opened() || metadata_dialog || metadata_running || collections_opened()) return;
+  /* Snapshot the real visible selection before changing native focus or
+     sensitivity; GTK can retire its selection when the main tree is disabled. */
+  GtkTextIter start,end;records.has_range=page_text && gtk_text_buffer_get_selection_bounds(gtk_text_view_get_buffer(GTK_TEXT_VIEW(text)),&start,&end);
+  records.start=records.end=0;
+  if(records.has_range) { records.start=page_start+(size_t)(g_utf8_offset_to_pointer(page_text,gtk_text_iter_get_offset(&start))-page_text);records.end=page_start+(size_t)(g_utf8_offset_to_pointer(page_text,gtk_text_iter_get_offset(&end))-page_text); }
   GtkWidget *focus=gtk_window_get_focus(GTK_WINDOW(window));if(focus) records.return_focus=g_object_ref(focus);
   records.content=gtk_bin_get_child(GTK_BIN(window));gtk_widget_set_sensitive(records.content,FALSE);
   records.dialog=gtk_dialog_new_with_buttons("Reading records",GTK_WINDOW(window),GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT,"_Close",GTK_RESPONSE_CLOSE,NULL);
@@ -207,9 +212,6 @@ static void reading_records_open(GtkWidget *button,gpointer unused) {
   row=records_button_row(area);records.previous=records_button(row,"_Previous batch",G_CALLBACK(records_previous),NULL);records.more=records_button(row,"_Next batch",G_CALLBACK(records_more),NULL);
   records.refresh=records_button(row,"_Refresh records",G_CALLBACK(records_refresh),NULL);records.cancel=records_button(row,"Cancel operation",G_CALLBACK(records_cancel),NULL);
   row=records_button_row(area);records.retry=records_button(row,"Confirm original save",G_CALLBACK(records_retry_button),NULL);records.discard=records_button(row,"End save confirmation",G_CALLBACK(records_discard),NULL);
-  GtkTextIter start,end;records.has_range=page_text && gtk_text_buffer_get_selection_bounds(gtk_text_view_get_buffer(GTK_TEXT_VIEW(text)),&start,&end);
-  records.start=records.end=0;
-  if(records.has_range) { records.start=page_start+(size_t)(g_utf8_offset_to_pointer(page_text,gtk_text_iter_get_offset(&start))-page_text);records.end=page_start+(size_t)(g_utf8_offset_to_pointer(page_text,gtk_text_iter_get_offset(&end))-page_text); }
   records.token++;records.selected=SIZE_MAX;records.page.complete=1;records.pending=records.pending_error=FALSE;records.code=records.match=0;
   g_signal_connect(records.dialog,"destroy",G_CALLBACK(records_destroyed),NULL);g_signal_connect(records.dialog,"delete-event",G_CALLBACK(records_delete),NULL);
   g_signal_connect(records.dialog,"response",G_CALLBACK(records_response),NULL);g_signal_connect(records.dialog,"window-state-event",G_CALLBACK(records_background),NULL);
@@ -266,7 +268,7 @@ static gboolean reading_records_apply(host_result *done) {
   return TRUE;
 }
 static char *reading_records_observation(void) {
-  return g_strdup_printf("[reading_records]\nvisible=%d\nrunning=%d\ncount=%zu\ncomplete=%d\nbudget_stopped=%d\noutput_bytes=%zu\nwire_bytes=%zu\npending=%d\npending_error=%d\nprogress_state=%d\nprogress_deleted=%d\nselected=%zu\nprogress_selected=%d\ncode=%d\nmatch=%d\ntoken=%"G_GUINT64_FORMAT"\nactions=%u\nclosed=%u\n",
+  return g_strdup_printf("[reading_records]\nvisible=%d\nrunning=%d\ncount=%zu\ncomplete=%d\nbudget_stopped=%d\noutput_bytes=%zu\nwire_bytes=%zu\npending=%d\npending_error=%d\nprogress_state=%d\nprogress_deleted=%d\nselected=%zu\nprogress_selected=%d\ncode=%d\nmatch=%d\ntoken=%"G_GUINT64_FORMAT"\nactions=%u\nclosed=%u\nhas_range=%d\nrange_start=%zu\nrange_end=%zu\n",
     records.dialog!=NULL,records.running,records.page.count,records.page.complete,records.page.budget_stopped,records.page.output_bytes,records.page.wire_bytes,
-    records.pending,records.pending_error,records.progress_state,records.progress_deleted,records.selected,records.progress_selected,records.code,records.match,records.token,records.actions,records.closed);
+    records.pending,records.pending_error,records.progress_state,records.progress_deleted,records.selected,records.progress_selected,records.code,records.match,records.token,records.actions,records.closed,records.has_range,records.start,records.end);
 }
