@@ -45,6 +45,9 @@ def main():
                     require(report.get('accepted') is True and report['source_sha'] == source and int(report['run_id']) == run_id and int(report['attempt']) == attempt, 'report identity/refusal')
                     if kind == 'native':
                         require(report['count'] == 28 and len(set(report['checks'])) == 28, 'native cases missing')
+                        listing = json.loads(archive.read('reading-v2-annotations/result.json'))
+                        require(listing.get('accepted') is True and listing['source_sha'] == source and int(listing['run_id']) == run_id and int(listing['attempt']) == attempt, 'annotation page report identity/refusal')
+                        require(listing['count'] == 10 and len(set(listing['checks'])) == 10 and listing['entities'] == 235, 'annotation page cases missing')
                         for relative, count in [('sync-source-evidence/result.json', 77 if platform == 'Linux' else 76), ('sync-protocol-evidence/result.json', 59),
                                                 ('sync-evidence/result.json', 33), ('projection-evidence/result.json', 32), ('commands-evidence/result.json', 33), ('metadata-evidence/result.json', 29)]:
                             original = json.loads(archive.read(relative))
