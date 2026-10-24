@@ -227,6 +227,7 @@ jobs:
             --nested-lib build/path-surface/nested/nested.lib \
             --drective-lib build/path-surface/drective/drective.lib \
             --raw-run build/path-surface/raw-run.json --bare-run build/path-surface/bare-run.json \
+            --compile-flags build/dist/compile-flags.json \
             --output build/dist/surfaces.json
       - name: Extract the sealed archive outside the workspace and build installed consumers
         run: |

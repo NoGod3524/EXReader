@@ -53,6 +53,8 @@ def main():
     parser.add_argument('--drective-lib', type=Path, required=True)
     parser.add_argument('--raw-run', type=Path, required=True)
     parser.add_argument('--bare-run', type=Path, required=True)
+    parser.add_argument('--compile-flags', type=Path, required=True,
+                        help='selection report from probe_compile_flags.py')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     distlib.require(args.root, 'at least one --root is required')
@@ -71,10 +73,12 @@ def main():
                   {'debug_sections': facts['raw_obj']['debug_section_count'],
                    'hits': len(facts['raw_obj']['hits']),
                    'sections': facts['raw_obj']['debug_sections'][:3]})
-    relative_debug = (facts['bare_obj']['debug_section_count'] >= 1 and not facts['bare_obj']['hits'])
-    distlib.named(results, 'coff-debug-relative-spelling-avoids-root', relative_debug,
-                  {'debug_sections': facts['bare_obj']['debug_section_count'],
-                   'hits': len(facts['bare_obj']['hits'])})
+    selection = distlib.load_json(args.compile_flags)
+    distlib.named(results, 'pathmap-parameter-clears-coff-surface',
+                  selection.get('supported') is True and bool(selection.get('chosen')),
+                  {'chosen': selection.get('chosen'),
+                   'candidates': [(item.get('returncode'), item.get('hits'))
+                                  for item in selection.get('candidates', [])]})
 
     macro = flatten(raw_run.get('file_macro', ''))
     distlib.named(results, 'file-macro-control-is-absolute',
@@ -106,7 +110,11 @@ def main():
                   {'raw_lib_hits': len(facts['raw_lib']['hits']),
                    'drective': len(absolute)})
 
+    observations = {'relative_spelling_object_hits': len(facts['bare_obj']['hits']),
+                    'relative_spelling_debug_sections': facts['bare_obj']['debug_section_count'],
+                    'relative_spelling_file_macro': bare_run.get('file_macro')}
     report = {'schema': 'reader-distribution-windows-surfaces-v1', 'roots': args.root,
+              'observations': observations,
               'facts': {name: {key: value for key, value in item.items() if key != 'hits'} |
                         {'hits': item['hits'][:3], 'hit_count': len(item['hits'])}
                         for name, item in facts.items()},
@@ -114,7 +122,7 @@ def main():
     distlib.write_json(args.output, report)
     distlib.require_named_pass(
         results, ['coff-debug-control-records-absolute-path',
-                  'coff-debug-relative-spelling-avoids-root', 'file-macro-control-is-absolute',
+                  'pathmap-parameter-clears-coff-surface', 'file-macro-control-is-absolute',
                   'file-macro-relative-spelling-preserved', 'archive-member-names-audited',
                   'archive-drective-absolute-detected', 'control-surfaces-would-block-shipping'])
     print(json.dumps({'results': len(results), 'accepted': True}))
