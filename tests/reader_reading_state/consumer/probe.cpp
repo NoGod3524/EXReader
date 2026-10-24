@@ -39,6 +39,7 @@ void expect(bool ok,const std::string &name,const std::string &detail=""){
   if(!ok){failures++;std::fprintf(stderr,"FAIL %s %s\n",name.c_str(),detail.c_str());}
   checks.push_back(object().str("name",name).set("pass",boolean(ok)).str("detail",detail).dump());
 }
+void stage(const char *what){std::printf("stage: %s\n",what);std::fflush(stdout);}
 [[noreturn]] void fatal(const std::string &what){std::fprintf(stderr,"FATAL %s\n",what.c_str());std::exit(2);}
 std::string hexbytes(const char *p,size_t n){static const char h[]="0123456789abcdef";std::string o;for(size_t i=0;i<n;i++){o+=h[(unsigned char)p[i]>>4];o+=h[(unsigned char)p[i]&15];}return o;}
 const char *state_name(exr_anchor_state s){return s==EXR_ANCHOR_FOUND?"FOUND":s==EXR_ANCHOR_AMBIGUOUS?"AMBIGUOUS":s==EXR_ANCHOR_LEGACY?"LEGACY":"MISSING";}
@@ -313,13 +314,16 @@ int main(int argc,char **argv){
   parser_version=std::string("exreader-sdk-")+exr_version();
   A.lib_path=work+"/A-library.sqlite";A.product_path=work+"/A-product.sqlite";B.lib_path=work+"/B-library.sqlite";B.product_path=work+"/B-product.sqlite";
   open_side(A);open_side(B);
+  stage("opened libraries and catalogs");
   /* B imports an unrelated book first, so the same originals get different SDK IDs. */
   import(B,"spacer",EXR_TXT,false);
   for(side *s:{&A,&B}){import(*s,"txt",EXR_TXT,false);import(*s,"edited",EXR_TXT,false);import(*s,"epub",EXR_EPUB,true);import(*s,"pdf",EXR_PDF,true);import(*s,"cbz",EXR_CBZ,true);}
   int64_t mem_a=0,mem_b=0;{std::string data=read_file(paths["epub"]);SDK(exr_library_import(A.lib,EXR_EPUB,data.data(),data.size(),"epub-global",&mem_a,&e_));SDK(exr_library_import(B.lib,EXR_EPUB,data.data(),data.size(),"epub-global",&mem_b,&e_));}
   for(const char *role:{"txt","epub","pdf","cbz"})expect(A.ids[role]!=B.ids[role],std::string("independent SDK IDs differ for ")+role,num((unsigned long long)A.ids[role])+"/"+num((unsigned long long)B.ids[role]));
+  stage("imported originals");
   for(side *s:{&A,&B}){attach(*s,"txt","reflow_global");attach(*s,"epub","epub_chapter");attach(*s,"pdf","fixed_page");attach(*s,"cbz","fixed_page");}
 
+  stage("attached catalogs");
   /* ---- reflow TXT ---- */
   reflow r;r.ida=catalog_id(A,"txt");r.idb=catalog_id(B,"txt");
   SDK(exr_library_document(A.lib,r.ida,&r.a,&e_));SDK(exr_library_document(B.lib,r.idb,&r.b,&e_));
@@ -356,6 +360,7 @@ int main(int argc,char **argv){
   }
   {exr_anchor p{};exr_anchor_state ps{};SDK(exr_library_progress_get(B.lib,r.idb,&p,&ps,&e_));lifecycle.push_back(object().str("step","receiver-progress-after-cases").set("start",num(p.start)).str("state",state_name(ps)).dump());exr_anchor_free(&p);}
 
+  stage("reflow cases done");
   /* ---- EPUB stored in memory/global mode: chapter-scoped reflow selector ---- */
   {
     exr_document *ga=nullptr,*gb=nullptr;SDK(exr_library_document(A.lib,mem_a,&ga,&e_));SDK(exr_library_document(B.lib,mem_b,&gb,&e_));
@@ -372,6 +377,7 @@ int main(int argc,char **argv){
     exr_anchor_free(&a);exr_document_free(ga);exr_document_free(gb);cases.push_back(ob.o.dump());
   }
 
+  stage("global EPUB case done");
   /* ---- EPUB bounded chapter-local ---- */
   exr_font *fnt=nullptr;SDK(exr_font_open(font.c_str(),&fnt,&e_));
   {
@@ -438,6 +444,7 @@ int main(int argc,char **argv){
     exr_publication_free(pa);exr_publication_free(pb);
   }
 
+  stage("bounded EPUB cases done");
   /* ---- fixed PDF and CBZ ---- */
   auto fixed_book=[&](const std::string &role){
     int64_t ia=catalog_id(A,role),ib=catalog_id(B,role);exr_fixed_open_options o{};o.struct_size=sizeof(o);
@@ -498,6 +505,7 @@ int main(int argc,char **argv){
   };
   fixed_book("pdf");fixed_book("cbz");
 
+  stage("fixed cases done");
   /* ---- v1 lifecycle: identity, heads, tombstone, retry, offline order, separate recovery ---- */
   {
     const std::string aid="a00000000000000000000000000001fe",key=keys["txt"]+":"+aid;

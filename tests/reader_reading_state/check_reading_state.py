@@ -70,6 +70,9 @@ def main():
         command += ['--sha', f'{role}={item["sha256"]}']
     probe = run(command, out / 'probe.log')
     need(probe.returncode == 0, f'probe exit {probe.returncode}')
+    for name, result in (('c-consumer', c_run), ('probe', probe)):
+        text = f'--- {name} exit={result.returncode}\n{result.stdout[-4000:]}\n{result.stderr[-4000:]}'
+        print(text.encode('ascii', 'backslashreplace').decode('ascii'))
     report_path = out / 'report.json'
     if not report_path.exists():
         problems.append('probe wrote no report')
@@ -195,7 +198,7 @@ def main():
         'uncovered': UNCOVERED,
     }
     (out / 'summary.json').write_text(json.dumps(summary, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    print(json.dumps({'problems': problems, 'cases': len(cases), 'checks': summary['checks_total']}, ensure_ascii=False))
+    print(json.dumps(summary, ensure_ascii=True, indent=1))
     return 1 if problems else 0
 
 
