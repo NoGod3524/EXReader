@@ -85,7 +85,12 @@ class Keyboard(object):
         """
         if not self.hwnd:
             return False
-        if w32.foreground() != self.hwnd:
+        current = w32.foreground()
+        if current and int(w32.thread_id(current)[1]) == int(self._pid):
+            # The host's own dialog may hold the foreground; that is not a loss.
+            self.note_dialog()
+            return True
+        if current != self.hwnd:
             now = time.time()
             if now >= self._foreground_give_up_until:
                 brought = w32.bring_to_front(self.hwnd)

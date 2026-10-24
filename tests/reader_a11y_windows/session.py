@@ -145,8 +145,11 @@ class Session(object):
         if not dialog:
             return True
         for attempt in range(attempts):
-            self.focus_control("metadata_title")
+            inside = self.focus_control("metadata_title")
             self.kb.press("escape", note="close the host dialog (%s)" % label)
+            if not inside:
+                self.trace.event("dialog_focus_failed", {"label": label,
+                                                         "attempt": attempt})
             closed = self.host.wait_for(lambda: self.host.dialog_window() is None,
                                         timeout=10, interval=0.2,
                                         label="host dialog closes (%s)" % label)
