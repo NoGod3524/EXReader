@@ -28,8 +28,8 @@ MAX_WAV_BYTES = 64 * 1024 * 1024
 # label, phase, pinned check count, subprocess timeout in seconds
 PHASES = [
     ("basic", "basic", 45, 180),
-    ("speak", "speak", 21, 300),
-    ("unicode", "unicode", 12, 300),
+    ("speak", "speak", 22, 300),
+    ("unicode", "unicode", 18, 300),
     ("limits", "limits", 27, 420),
     ("control", "control", 28, 420),
     ("chunks", "chunks", 25, 900),
@@ -189,6 +189,7 @@ def main():
         record["exit"] = returncode
         record["checks"] = parsed["checks"]
         record["summaries"] = parsed["summaries"]
+        record["infos"] = parsed["infos"]
         record["installed"] = []
         ids = [row["id"] for row in parsed["checks"]]
         if parsed["unknown"]:
@@ -316,10 +317,25 @@ def main():
     report["probe"] = probe_record
     report["installed_files"] = installed
     report["capabilities"] = {"pause": True, "range": True}
+    info_values = {}
+    for record in phase_records:
+        for item in record.get("infos", []):
+            info_values[item["key"]] = item["value"]
+    range_events = info_values.get("range_events", 0)
+    range_capability = info_values.get("range_capability", 0)
+    report["engine"] = {"range_events": range_events, "range_capability": range_capability,
+                        "status_samples": info_values.get("engine_samples", 0),
+                        "event_calls": info_values.get("engine_event_calls", 0),
+                        "event_total": info_values.get("engine_event_total", 0)}
+    if range_events == 0:
+        report["not_exercised"].append(
+            "engine RANGE events: this runner's SAPI file output reported no word position "
+            "(capability bit withheld); the UTF-16 to UTF-8 byte map is covered by the map probe")
     report["audio_scope"] = {
         "synthesis": "SAPI voice rendered to 16-bit PCM mono 22050 Hz WAV",
         "playback_device": "not exercised (the runner has no audio endpoint)",
         "listening": "not verified",
+        "range_events": range_events,
     }
     report["accepted"] = failure is None and report["checks"] == report["expected_checks"] == report["passed"]
     if failure is not None:

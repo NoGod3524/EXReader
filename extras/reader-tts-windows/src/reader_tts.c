@@ -94,6 +94,17 @@ void exr_tts_remember(reader_tts *handle, reader_tts_status status) {
   LeaveCriticalSection(&handle->lock);
 }
 
+/* READER_TTS_CAN_PAUSE is always available on SAPI; RANGE only once this handle has
+   actually seen an engine word position, which some hosts (a file output on a machine
+   without an audio endpoint) never produce. */
+unsigned exr_tts_capabilities(reader_tts *handle) {
+  unsigned capabilities;
+  EnterCriticalSection(&handle->lock);
+  capabilities = READER_TTS_CAN_PAUSE | (handle->position_seen ? READER_TTS_CAN_REPORT_RANGE : 0u);
+  LeaveCriticalSection(&handle->lock);
+  return capabilities;
+}
+
 uint64_t exr_tts_active(reader_tts *handle) {
   uint64_t value;
   EnterCriticalSection(&handle->lock);
@@ -621,6 +632,28 @@ reader_tts_status reader_tts_windows_set_wav_output(reader_tts *handle, const wc
   status = exr_tts_send(handle, &command, 1);
   if (status == READER_TTS_OK) return succeed(handle, error);
   return fail(handle, error, status, handle->ack_native);
+}
+
+size_t reader_tts_windows_debug_map_utf16(const char *utf8, size_t bytes, size_t *offsets,
+                                          size_t capacity) {
+  wchar_t *text = NULL;
+  size_t units = 0, i;
+  size_t *unit_map = NULL;
+  reader_tts_status status;
+  if (!utf8 || bytes == 0 || !offsets) return 0;
+  status = validate_utf8(utf8, bytes);
+  if (status != READER_TTS_OK) return 0;
+  status = exr_tts_utf8_to_utf16(utf8, bytes, &text, &units, &unit_map);
+  if (status != READER_TTS_OK) return 0;
+  if (capacity < units + 1) {
+    exr_tts_release(text);
+    exr_tts_release(unit_map);
+    return 0;
+  }
+  for (i = 0; i <= units; i++) offsets[i] = unit_map[i];
+  exr_tts_release(text);
+  exr_tts_release(unit_map);
+  return units;
 }
 
 void reader_tts_windows_debug_engine_probe(reader_tts *handle, reader_tts_windows_engine_probe *out) {

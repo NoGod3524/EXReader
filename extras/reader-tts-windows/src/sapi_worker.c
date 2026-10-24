@@ -21,7 +21,6 @@
 #pragma warning(pop)
 #endif
 
-#define EXR_TTS_CAPS (READER_TTS_CAN_PAUSE | READER_TTS_CAN_REPORT_RANGE)
 #define EXR_TTS_POLL_MS 20u
 /* A freshly started utterance may still report SPRS_DONE for a moment; do not call
    it finished before the queued stream has been seen or this long has elapsed. */
@@ -360,7 +359,7 @@ static void release_sink(exr_tts_sink *sink) {
 
 static void publish_ready(reader_tts *handle) {
   if (exr_tts_closing(handle)) return;
-  exr_tts_publish(handle, READER_TTS_READY, READER_TTS_OK, EXR_TTS_CAPS, 0);
+  exr_tts_publish(handle, READER_TTS_READY, READER_TTS_OK, exr_tts_capabilities(handle), 0);
 }
 
 static void finish_request(reader_tts *handle, exr_tts_utterance *utterance,
@@ -385,7 +384,7 @@ static void finish_request(reader_tts *handle, exr_tts_utterance *utterance,
   utterance->saw_stream = 0;
   if (exr_tts_closing(handle)) return;
   if (status == READER_TTS_OK) publish_ready(handle);
-  else exr_tts_publish(handle, READER_TTS_READY, status, EXR_TTS_CAPS, 0);
+  else exr_tts_publish(handle, READER_TTS_READY, status, exr_tts_capabilities(handle), 0);
 }
 
 /* Publishes the engine's current word as a RANGE event in UTF-8 byte offsets. */
@@ -464,6 +463,9 @@ static void pump_status(reader_tts *handle, exr_tts_utterance *utterance) {
     for (index = 0; index < fetched; index++) {
       if (events[index].eEventId == SPEI_WORD_BOUNDARY) {
         utterance->saw_stream = 1;
+        EnterCriticalSection(&handle->lock);
+        handle->position_seen = 1;
+        LeaveCriticalSection(&handle->lock);
         report_word(handle, utterance, (ULONG)events[index].lParam, (ULONG)events[index].wParam);
         if (!utterance->speaking) return;
       } else if (events[index].eEventId == SPEI_END_INPUT_STREAM) {
@@ -473,6 +475,9 @@ static void pump_status(reader_tts *handle, exr_tts_utterance *utterance) {
     }
   }
   if (SUCCEEDED(hr) && status.ulInputWordLen > 0 && status.ulInputWordPos != utterance->last_word) {
+    EnterCriticalSection(&handle->lock);
+    handle->position_seen = 1;
+    LeaveCriticalSection(&handle->lock);
     utterance->last_word = status.ulInputWordPos;
     report_word(handle, utterance, status.ulInputWordPos, status.ulInputWordLen);
     if (!utterance->speaking) return;
@@ -588,7 +593,7 @@ static reader_tts_status start_speak(reader_tts *handle, exr_tts_utterance *utte
   }
   utterance->started_at = GetTickCount();
   utterance->speaking = 1;
-  exr_tts_publish(handle, READER_TTS_SPEAKING, READER_TTS_OK, EXR_TTS_CAPS, command->request_id);
+  exr_tts_publish(handle, READER_TTS_SPEAKING, READER_TTS_OK, exr_tts_capabilities(handle), command->request_id);
   return READER_TTS_OK;
 }
 
@@ -610,7 +615,7 @@ static int handle_command(reader_tts *handle, exr_tts_utterance *utterance, ISpV
         status = READER_TTS_IO;
         break;
       }
-      exr_tts_publish(handle, READER_TTS_PAUSED, READER_TTS_OK, EXR_TTS_CAPS, utterance->request_id);
+      exr_tts_publish(handle, READER_TTS_PAUSED, READER_TTS_OK, exr_tts_capabilities(handle), utterance->request_id);
       break;
     case EXR_TTS_CMD_RESUME:
       if (!*voice || !utterance->speaking) {
@@ -621,7 +626,7 @@ static int handle_command(reader_tts *handle, exr_tts_utterance *utterance, ISpV
         status = READER_TTS_IO;
         break;
       }
-      exr_tts_publish(handle, READER_TTS_SPEAKING, READER_TTS_OK, EXR_TTS_CAPS, utterance->request_id);
+      exr_tts_publish(handle, READER_TTS_SPEAKING, READER_TTS_OK, exr_tts_capabilities(handle), utterance->request_id);
       break;
     case EXR_TTS_CMD_STOP:
       if (!utterance->speaking) {
@@ -714,7 +719,7 @@ DWORD WINAPI exr_tts_worker_main(LPVOID parameter) {
   }
   if (!exr_tts_closing(handle)) {
     if (voice) {
-      exr_tts_publish(handle, READER_TTS_READY, READER_TTS_OK, EXR_TTS_CAPS, 0);
+      exr_tts_publish(handle, READER_TTS_READY, READER_TTS_OK, exr_tts_capabilities(handle), 0);
     } else {
       exr_tts_publish(handle, READER_TTS_SERVICE_UNAVAILABLE, READER_TTS_UNAVAILABLE, 0, 0);
     }

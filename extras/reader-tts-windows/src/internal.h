@@ -95,6 +95,9 @@ struct reader_tts {
   unsigned probe_samples;
   int probe_event_hresult;
   unsigned probe_event_calls, probe_event_total, probe_last_event_id;
+  /* Set once the engine reports a word position or a word-boundary event, i.e. only
+     then can this handle advertise READER_TTS_CAN_REPORT_RANGE. */
+  int position_seen;
 };
 
 /* reader_tts.c: accounting, validation, queue and owner-side plumbing. */
@@ -111,6 +114,7 @@ wchar_t *exr_tts_copy_wav_path(reader_tts *handle);
 int exr_tts_closing(reader_tts *handle);
 reader_tts_status exr_tts_utf8_to_utf16(const char *utf8, size_t bytes, wchar_t **text,
                                         size_t *units, size_t **unit_map);
+unsigned exr_tts_capabilities(reader_tts *handle);
 
 /* Process-wide debug hooks (declared in reader_tts_windows.h). */
 long exr_tts_debug_no_service(void);

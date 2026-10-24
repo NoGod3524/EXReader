@@ -42,6 +42,13 @@ typedef struct {
   uint32_t event_calls, event_total, last_event_id;
 } reader_tts_windows_engine_probe;
 void reader_tts_windows_debug_engine_probe(reader_tts *, reader_tts_windows_engine_probe *);
+/* Test-only: runs the package's own UTF-8 -> UTF-16 map on caller text and writes the
+   byte offset of every UTF-16 code unit plus the trailing end offset (count + 1
+   entries) into offsets. Returns the number of UTF-16 code units, or 0 for invalid
+   text, an empty text or a capacity smaller than count + 1. This is the exact table a
+   RANGE event is translated through. */
+size_t reader_tts_windows_debug_map_utf16(const char *utf8, size_t bytes, size_t *offsets,
+                                          size_t capacity);
 #ifdef __cplusplus
 }
 #endif

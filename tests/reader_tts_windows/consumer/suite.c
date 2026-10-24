@@ -212,6 +212,14 @@ static void tally_init(tally *t, uint64_t id, const char *text, size_t bytes) {
   t->last_kind = -1;
 }
 
+static int offsets_match(const size_t *actual, const size_t *expected, size_t count) {
+  size_t i;
+  for (i = 0; i < count; i++) {
+    if (actual[i] != expected[i]) return 0;
+  }
+  return 1;
+}
+
 static int utf8_boundary(const char *text, size_t bytes, size_t offset) {
   if (offset >= bytes) return 1;
   return ((unsigned char)text[offset] & 0xC0) != 0x80;
@@ -331,8 +339,8 @@ static void phase_basic(suite *s) {
   wait_state(handle, READER_TTS_READY, 30000, &snap);
   check_state(s, "basic.ready", snap.state, READER_TTS_READY);
   check_count(s, "basic.ready.request_id", snap.request_id, 0, 0);
-  check_count(s, "basic.ready.capabilities", snap.capabilities,
-              (unsigned long long)(READER_TTS_CAN_PAUSE | READER_TTS_CAN_REPORT_RANGE), 0);
+  check(s, "basic.ready.capabilities", (snap.capabilities & READER_TTS_CAN_PAUSE) == READER_TTS_CAN_PAUSE,
+        "pause capability advertised before the first request");
 
   memset(&voices, 0, sizeof voices);
   status = reader_tts_voices(handle, &voices, NULL);
@@ -469,7 +477,15 @@ static void phase_speak(suite *s) {
   check_count(s, "speak.finished_events", t.finished, 1, 0);
   check_count(s, "speak.failed_events", t.failed, 0, 0);
   check_count(s, "speak.stopped_events", t.stopped, 0, 0);
-  check_count(s, "speak.range_events", t.ranges, 8, 1);
+  {
+    int caps_range = (snap.capabilities & READER_TTS_CAN_REPORT_RANGE) ? 1 : 0;
+    info(s, "range_events", (unsigned long long)t.ranges);
+    info(s, "range_capability", (unsigned long long)caps_range);
+    snprintf(s->detail, sizeof s->detail, "ranges=%d capability=%d", t.ranges, caps_range);
+    check(s, "speak.range_capability", (t.ranges > 0) == caps_range, s->detail);
+    snprintf(s->detail, sizeof s->detail, "ranges=%d (min 8 when the engine reports positions)", t.ranges);
+    check(s, "speak.range_events", t.ranges > 0 ? t.ranges >= 8 : 1, s->detail);
+  }
   check(s, "speak.range_bounds", t.bad_range == 0, "ranges monotonic, in bounds, on UTF-8 boundaries");
   check_count(s, "speak.first_event_started", (unsigned long long)t.first_kind, READER_TTS_STARTED, 0);
   check_count(s, "speak.last_event_finished", (unsigned long long)t.last_kind, READER_TTS_FINISHED, 0);
@@ -525,6 +541,41 @@ static void phase_unicode(suite *s) {
     if ((unsigned char)UNICODE_TEXT[i] >= 0x80) multibyte = 1;
   }
   check(s, "unicode.input_non_ascii", multibyte, "-");
+  {
+    size_t offsets[16];
+    size_t units;
+    static const char ASCII3[] = "abc";
+    static const char ACUTE[] = "\xC3\xA9";
+    static const char CJK[] = "\xE6\xB1\x89\xE5\xAD\x97";
+    static const char EMOJI[] = "\xF0\x9F\x98\x80";
+    static const char MIXED[] = "a\xF0\x9F\x98\x80b";
+    static const char BAD[] = "\x80";
+    static const size_t ASCII_EXPECT[4] = { 0, 1, 2, 3 };
+    static const size_t ACUTE_EXPECT[2] = { 0, 2 };
+    static const size_t CJK_EXPECT[3] = { 0, 3, 6 };
+    static const size_t EMOJI_EXPECT[3] = { 0, 0, 4 };
+    static const size_t MIXED_EXPECT[5] = { 0, 1, 1, 5, 6 };
+    units = reader_tts_windows_debug_map_utf16(ASCII3, 3, offsets, 16);
+    snprintf(s->detail, sizeof s->detail, "units=%llu", (unsigned long long)units);
+    check(s, "unicode.map.ascii", units == 3 && offsets_match(offsets, ASCII_EXPECT, 4), s->detail);
+    units = reader_tts_windows_debug_map_utf16(ACUTE, 2, offsets, 16);
+    snprintf(s->detail, sizeof s->detail, "units=%llu", (unsigned long long)units);
+    check(s, "unicode.map.two_byte", units == 1 && offsets_match(offsets, ACUTE_EXPECT, 2), s->detail);
+    units = reader_tts_windows_debug_map_utf16(CJK, 6, offsets, 16);
+    snprintf(s->detail, sizeof s->detail, "units=%llu", (unsigned long long)units);
+    check(s, "unicode.map.cjk", units == 2 && offsets_match(offsets, CJK_EXPECT, 3), s->detail);
+    units = reader_tts_windows_debug_map_utf16(EMOJI, 4, offsets, 16);
+    snprintf(s->detail, sizeof s->detail, "units=%llu offsets=%llu,%llu,%llu",
+             (unsigned long long)units, (unsigned long long)offsets[0],
+             (unsigned long long)offsets[1], (unsigned long long)offsets[2]);
+    check(s, "unicode.map.surrogate_pair", units == 2 && offsets_match(offsets, EMOJI_EXPECT, 3), s->detail);
+    units = reader_tts_windows_debug_map_utf16(MIXED, 6, offsets, 16);
+    snprintf(s->detail, sizeof s->detail, "units=%llu", (unsigned long long)units);
+    check(s, "unicode.map.mixed", units == 4 && offsets_match(offsets, MIXED_EXPECT, 5), s->detail);
+    units = reader_tts_windows_debug_map_utf16(BAD, 1, offsets, 16);
+    snprintf(s->detail, sizeof s->detail, "units=%llu", (unsigned long long)units);
+    check(s, "unicode.map.invalid_rejected", units == 0, s->detail);
+  }
   announce_wav(s, "unicode", 1500);
   close_and_destroy(s, &handle, "unicode.closed");
   check_count(s, "unicode.allocations.released",
