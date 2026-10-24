@@ -17,7 +17,12 @@ Package: `EXReaderReadingCommands::reader_reading_commands` (static, installed, 
   note text (body edit). `operation`: put, delete (names only the capture mode), restore (real capture again).
 - The caller supplies the stable 32-hex lowercase `revision_id` and the complete observed head set
   (0..32 unique IDs). Stale, partial or superset heads are refused as `READER_RC_UNSAFE`; nothing is committed.
-  Only a new bookmark/highlight may leave `annotation_id` empty; it is allocated and returned for retries.
+  Only a new bookmark/highlight may leave `annotation_id` empty; it is allocated and returned.
+- A retried empty `annotation_id` never allocates a second identity: while building the command the module looks
+  the `revision_id` up in the product catalog and, when a revision is already retained under it, reuses that
+  revision's annotation identity (the host does not need to remember the first response). The rebuilt wire is then
+  the same bytes, so a lost response is an exact no-op. If the payload really differs it stays the revision
+  module's COLLISION; a retained ID of another entity or another book is `READER_RC_SOURCE`.
 - Exact retry (same ID, same inputs) is a no-op (`created == 0`), before the stale-head check, also
   after ack or after later edits. Same ID with different bytes is the revision module's COLLISION.
 - Note edit reads the retained revision itself (retry) or the single safe selected head that equals the
@@ -26,10 +31,16 @@ Package: `EXReaderReadingCommands::reader_reading_commands` (static, installed, 
   anchor version is kept, so a v1 head stays v1; no re-anchoring, rounding or relocation happens.
   A tombstone refuses an edit: restore is explicit and needs a real capture.
 - Text is strict UTF-8 (no NUL, overlong, surrogate or > U+10FFFF), at most 65536 bytes.
-- No SDK note copy, no SDK progress write and no current-page change. Product schema 1, wire v1, anchor v1/v2
-  and the revision module are untouched. One call uses the store's owner worker without callbacks, so there is no reentry.
-  Error text is fixed and at most 159 bytes; no input is echoed.
+- A product revision is never copied into SDK notes, and no SDK progress or SDK note write happens at all: the
+  revision module keeps reading entities as selected payloads. The current page is not changed by this module;
+  only a host that resolves a committed revision to the public `FOUND` result and gets an explicit user accept
+  may navigate. Product schema 1, wire v1, anchor v1/v2 and the revision module are untouched. One call uses the
+  store's owner worker without callbacks, so there is no reentry. Error text is fixed and at most 159 bytes;
+  no input is echoed.
 - Failures leave history and outbox unchanged, because the single transaction is the revision module's.
+- The probe replays the real lost-response path with an empty `annotation_id`: first commit, discarded result,
+  same `revision_id` and the same command again must return the original annotation ID and entity key with
+  `created == 0`, one history entry and one outbox row, no requeue after ack, and COLLISION for a different payload.
 
 ## Acceptance (GitHub Actions only)
 
@@ -47,9 +58,12 @@ product catalog, so the capture still encodes and validates and the failure land
 the exact pre-lock public readback, that no bytes were retained for that ID, and that retrying the same ID
 commits once.
 
-Not covered: host UI/adapters, other formats, applying a committed revision to the SDK, transport, and process
-kill during commit (revision-module scope). A catalog locked by `BEGIN EXCLUSIVE` cannot be read either, so
-that variant would fail in the selector instead of the commit and is not used as commit-failure evidence.
+Not covered: host UI/adapters, other formats, transport, and process kill during commit (revision-module scope).
+A catalog locked by `BEGIN EXCLUSIVE` cannot be read either, so that variant would fail in the selector instead
+of the commit and is not used as commit-failure evidence. Copying a product revision into SDK notes is not
+pending work of this package: reading entities stay selected payloads, and the current page is navigated only by
+a host that already has the public `FOUND` result and an explicit user accept, which this module neither
+performs nor authorizes.
 
 ## Accepted cloud run
 

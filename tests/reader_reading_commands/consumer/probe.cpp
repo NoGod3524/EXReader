@@ -589,6 +589,38 @@ int main(int argc,char **argv){
   }
   stage("retry done");
 
+  /* ---- a lost response is retried by the stable revision ID alone ---- */
+  {
+    size_t at=locate(T,"Tail beta"),len=std::strlen("Tail beta");capture_ptr hl=reflow_cap(tdoc,at,at+len);view want=hl->want();
+    entity e;e.book=TB;e.key=e.book; /* anonymous: the caller has no identity yet */
+    std::string rev=new_id();std::vector<std::string> none;
+    outcome first=run(READER_RC_HIGHLIGHT,READER_RC_PUT,e.book,"",&hl->c,0,"anonymous",&rev,none);
+    expect(first.st==READER_RC_OK&&first.res.created==1&&rev==first.res.revision_id&&first.res.annotation_id[0],
+      "anonymous create: the first commit returns its allocated annotation identity",describe(first));
+    const std::string aid=first.res.annotation_id,key=first.res.entity_key;
+    expect(!aid.empty()&&key==e.book+":"+aid&&outbox_count(rev)==1&&heads_of("annotation",key)==std::vector<std::string>{rev},
+      "anonymous create: one head and one outbox row under the returned identity");
+    back original=readback(rev);
+    expect(original.ok&&original.v.has_location&&sel_eq(original.v,want),"anonymous create: selector read back equals the SDK capture");
+    /* the response is lost: only the stable revision ID and the same command survive */
+    outcome again=run(READER_RC_HIGHLIGHT,READER_RC_PUT,e.book,"",&hl->c,0,"anonymous",&rev,none);
+    expect(again.st==READER_RC_OK&&again.res.created==0&&rev==again.res.revision_id&&aid==again.res.annotation_id&&key==again.res.entity_key,
+      "anonymous retry: the same ID and command re-derive the original annotation identity",describe(again));
+    expect(std::string(again.res.sha256)==original.info.sha256&&heads_of("annotation",key)==std::vector<std::string>{rev}&&outbox_count(rev)==1,
+      "anonymous retry: identical bytes, no second history entry or outbox row");
+    {reader_revision_error ae{};reader_revision_status as=reader_revision_ack(store,rev.c_str(),original.info.sha256,&ae);
+     expect(as==READER_REV_OK&&!outbox_count(rev),"anonymous retry: ack removes the outbox row");}
+    again=run(READER_RC_HIGHLIGHT,READER_RC_PUT,e.book,"",&hl->c,0,"anonymous",&rev,none);
+    expect(again.st==READER_RC_OK&&again.res.created==0&&aid==again.res.annotation_id&&!outbox_count(rev),
+      "anonymous retry after ack is a no-op and does not requeue",describe(again));
+    entity own=make_annotation(TB,aid);const std::string s0=state_text(own);
+    outcome clash=run(READER_RC_HIGHLIGHT,READER_RC_PUT,e.book,"",&hl->c,0,"different anonymous payload",&rev,none);
+    expect(clash.st==READER_RC_REVISION&&clash.err.revision.code==READER_REV_COLLISION&&clash.res.created==0&&state_text(own)==s0&&
+      heads_of("annotation",key)==std::vector<std::string>{rev},
+      "anonymous retry: the same ID with a different payload is a collision and changes nothing",describe(clash));
+    drain();
+  }
+
   /* ---- a failing commit leaves history and outbox together ---- */
   {
     size_t len=std::strlen("Tail gamma");
@@ -619,6 +651,25 @@ int main(int argc,char **argv){
       outcome retry=run(READER_RC_HIGHLIGHT,READER_RC_PUT,e.book,e.aid,&hl->c,0,"blocked put",rid,e.heads);
       expect(retry.st==READER_RC_OK&&retry.res.created==1&&outbox_count(rid)==1&&readback(rid).ok,"retry with the same ID after the failure commits once",describe(retry));
       e.heads={rid};
+    }
+    /* the same failure on the anonymous path: the caller keeps only its stable ID */
+    {
+      capture_ptr an=reflow_cap(tdoc,locate(T,"Tail beta"),locate(T,"Tail beta")+std::strlen("Tail beta"));
+      std::string rid=new_id();sqlite3 *second=nullptr;char *m2=nullptr;
+      bool again_locked=sqlite3_open_v2(product.c_str(),&second,SQLITE_OPEN_READWRITE,nullptr)==SQLITE_OK&&sqlite3_exec(second,"BEGIN IMMEDIATE",nullptr,nullptr,&m2)==SQLITE_OK;
+      sqlite3_free(m2);expect(again_locked,"a second connection holds the write lock for the anonymous retry");
+      if(again_locked){
+        std::vector<std::string> none;
+        outcome o2=run(READER_RC_HIGHLIGHT,READER_RC_PUT,e.book,"",&an->c,0,"anonymous blocked",&rid,none);
+        sqlite3_exec(second,"ROLLBACK",nullptr,nullptr,nullptr);
+        expect(o2.st==READER_RC_REVISION&&o2.err.revision.code==READER_REV_DATABASE&&o2.res.created==0&&!readback(rid).ok,
+          "an anonymous create blocked by the write lock fails and retains nothing",describe(o2));
+        outcome retry2=run(READER_RC_HIGHLIGHT,READER_RC_PUT,e.book,"",&an->c,0,"anonymous blocked",&rid,none);
+        expect(retry2.st==READER_RC_OK&&retry2.res.created==1&&retry2.res.annotation_id[0]&&outbox_count(rid)==1&&
+          heads_of("annotation",retry2.res.entity_key)==std::vector<std::string>{rid},
+          "the anonymous retry after a failed commit commits exactly once",describe(retry2));
+      }
+      sqlite3_close(second);
     }
     sqlite3_close(other);drain();
   }

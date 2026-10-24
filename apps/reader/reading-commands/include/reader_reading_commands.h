@@ -14,7 +14,9 @@ extern "C" {
    reader_revision_local_reading. It never writes SDK notes or progress,
    never changes the current page, never guesses an anchor from percentages or
    page numbers, and adds no entity. Calls use the store's owner worker
-   without reentry. Output and error text is fixed and bounded. */
+   without reentry. Output and error text is fixed and bounded. A product
+   revision is never copied into SDK notes; the host may navigate the current
+   page only after the public resolve result FOUND and an explicit user accept. */
 typedef enum {
   READER_RC_OK=0, READER_RC_ARGUMENT, READER_RC_MEMORY,
   READER_RC_ENCODE,      /* capture has no lossless wire form; encode.gap says why */
@@ -40,7 +42,10 @@ typedef struct {
 typedef struct {
   reader_rc_kind kind; reader_rc_operation operation;
   const char *book_key;
-  /* Progress: NULL/empty. Others: 32-hex ID; empty only creates (put, no heads). */
+  /* Progress: NULL/empty. Others: 32-hex ID; empty only creates (put, no heads) and
+     lets the module allocate it. A retry with the same revision_id and an empty ID
+     re-derives the identity of the revision already retained under that ID, so a
+     lost first response is an exact no-op instead of a second entity. */
   const char *annotation_id;
   /* Real public-SDK capture. Bookmark requires a point, highlight a nonempty
      range, progress either. Delete names only the mode. NOTE_TEXT ignores it
