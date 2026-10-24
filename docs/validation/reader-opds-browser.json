@@ -1,0 +1,27 @@
+{
+  "accepted": false,
+  "status": "implementation written; the first same-source cloud run has not been recorded yet",
+  "package": "EXReaderOpdsBrowser 0.1.0",
+  "common_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "branch": "codex/reader-opds-browser",
+  "source_sha": null,
+  "run_id": null,
+  "attempt": null,
+  "workflow": ".github/workflows/reader-opds-browser.yml",
+  "artifacts": [],
+  "jobs": [],
+  "cases": [],
+  "problems": [
+    "no GitHub Actions attempt has been recorded for this source yet"
+  ],
+  "retained_failures": [],
+  "granted": [],
+  "not_granted": [
+    "network phase behaviour",
+    "sdk owner import phase",
+    "host integration",
+    "release packaging"
+  ],
+  "sdk_changed": false,
+  "schema_changed": false
+}

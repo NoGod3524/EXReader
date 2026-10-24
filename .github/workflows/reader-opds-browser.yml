@@ -1,0 +1,132 @@
+name: Reader OPDS browser
+on:
+  push:
+    branches: ['codex/reader-opds-browser']
+    paths:
+      - 'apps/reader/opds-browser/**'
+      - 'tests/reader_opds_browser/**'
+      - '.github/workflows/reader-opds-browser.yml'
+      - 'docs/READER-OPDS-BROWSER.md'
+      - 'docs/validation/reader-opds-browser.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+env:
+  START: f43baf9182d75907c0cb5d6f77048f27bca8c950
+  SDK_TREE: 9854061be331fe603a1822d9b2b36ee357154927
+  PRODUCT_SQL: f32bb8aa18ed3de286900f19ce4230fd93435dd0
+jobs:
+  consumers:
+    name: opds consumers (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-15]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Pin source, common start, protected SDK and schema trees, and package ownership
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$START" HEAD
+          git diff --exit-code "$SDK_TREE" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code "$PRODUCT_SQL" HEAD -- apps/reader/store/001_catalog.sql
+          if git diff --name-only "$START" HEAD | grep -v -E '^(apps/reader/opds-browser/|tests/reader_opds_browser/|\.github/workflows/reader-opds-browser\.yml$|docs/READER-OPDS-BROWSER\.md$|docs/validation/reader-opds-browser\.json$)'; then
+            echo "files outside the J02 ownership list changed"; exit 1
+          fi
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install ninja and the TLS development package
+        run: |
+          python -m pip install ninja==1.11.1.1
+          if [ "$RUNNER_OS" = Linux ]; then
+            sudo apt-get update
+            sudo apt-get install -y libcurl4-openssl-dev
+          fi
+      - name: Enter the native Windows compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Prepare evidence and the workspace spelling
+        run: |
+          mkdir -p build/opds-evidence/logs
+          git rev-parse HEAD > build/opds-evidence/source.txt
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "WS=$ws" >> "$GITHUB_ENV"
+      - name: Build and install the frozen reading SDK
+        run: |
+          cmake --preset reading-library 2>&1 | tee build/opds-evidence/logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/opds-evidence/logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/opds-evidence/logs/sdk-install.log
+      - name: Install the unchanged sideload package
+        run: |
+          cmake -S extras/sideload -B build/sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$WS/build/sideload-stage" 2>&1 | tee build/opds-evidence/logs/sideload-configure.log
+          cmake --build build/sideload --parallel 4 2>&1 | tee build/opds-evidence/logs/sideload-build.log
+          cmake --install build/sideload 2>&1 | tee build/opds-evidence/logs/sideload-install.log
+      - name: Build and install the OPDS browser package
+        run: |
+          cmake -S apps/reader/opds-browser -B build/opds-browser -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$WS/build/sideload-stage" -DREADER_OPDS_BUILD_EXAMPLE=ON -DCMAKE_INSTALL_PREFIX="$WS/build/opds-browser-stage" 2>&1 | tee build/opds-evidence/logs/opds-configure.log
+          cmake --build build/opds-browser --parallel 4 2>&1 | tee build/opds-evidence/logs/opds-build.log
+          cmake --install build/opds-browser 2>&1 | tee build/opds-evidence/logs/opds-install.log
+      - name: Compile the installed consumers only
+        run: |
+          cmake -S tests/reader_opds_browser/consumer -B build/opds-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WS/build/opds-browser-stage;$WS/build/sideload-stage;$WS/build/reading-library/stage" 2>&1 | tee build/opds-evidence/logs/consumer-configure.log
+          cmake --build build/opds-consumer --parallel 4 2>&1 | tee build/opds-evidence/logs/consumer-build.log
+      - name: Run the fixture origins, the ephemeral test CA and both consumers
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python tests/reader_opds_browser/check_opds_browser.py \
+            --consumer "build/opds-consumer/opds-consumer$exe" \
+            --import-consumer "build/opds-consumer/opds-import-consumer$exe" \
+            --fixtures tests/fixtures \
+            --evidence build/opds-evidence 2>&1 | tee build/opds-evidence/logs/acceptance.log
+      - name: Preserve original evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-opds-browser-${{ runner.os == 'Linux' && 'linux' || runner.os == 'Windows' && 'windows' || 'macos' }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/opds-evidence/
+            build/opds-browser-stage/
+            build/reading-library/CMakeCache.txt
+            build/opds-consumer/CMakeCache.txt
+          if-no-files-found: error
+  evidence:
+    name: strict opds evidence
+    needs: [consumers]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate the three platform ZIPs and compare named outcomes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_opds_browser/check_artifacts.py build/opds-artifact-evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-opds-browser-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/opds-artifact-evidence/
+          if-no-files-found: error
