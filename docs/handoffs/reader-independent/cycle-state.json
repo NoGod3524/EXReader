@@ -44,6 +44,9 @@
       "root_takeover_writer": "/root",
       "external_owner_stopped_observed": true,
       "background_tasks_checked": "two read-only gh run view commands, no source writer",
+      "provider_candidate": "d13249598b4863a2a3eaded56eb199d26e60869e",
+      "provider_live_run": 40109071435,
+      "provider_preserved_failed_run": 40095466821,
       "tested_source": "dde92e8990ec14888b2f500d6000db596f03c601",
       "verified_run": 40089084258,
       "evidence_head": "be197da252683eae031a5660f294be94fa0209a7"
@@ -122,7 +125,11 @@
       "package_id": "G09",
       "owner": "DeepSeek Harness Flash1017 High PTC",
       "checkpoint": "4e140fec7b3d47ce624cecc6d239dc94833559a2",
-      "state": "original_application_module_inventory_scope_followup_sent",
+      "state": "root_review_passed_awaiting_joint_integration",
+      "tested_source": "93d2ad0db2d75af50eddc0843a4da9c7090a15aa",
+      "verified_run": 40095313750,
+      "evidence_head": "b7bdd62d02a6c85ab57ab7bc36b8b8212dfe090b",
+      "scope": "six SDK profiles plus three composed desktop prefixes of the original thirteen application packages; inventory and declared dependency interfaces, not package behavior or release readiness",
       "preserved_sdk_inventory_run": 40081161966,
       "new_dispatch_cycle": false
     },
@@ -130,7 +137,11 @@
       "package_id": "G16",
       "owner": "DeepSeek Harness Flash1017 High PTC",
       "checkpoint": "578d4155",
-      "state": "semantic_ancestor_containment_classifier_followup_running",
+      "state": "root_review_passed_audit_only_awaiting_joint_integration",
+      "tested_source": "16a0b2b5426fbf474601169ba1bcecca848fb231",
+      "verified_run": 40096206815,
+      "evidence_head": "c2e172d1da9352bee9e0b49003ca25f7e35aa829",
+      "scope": "three-target audit and 22-case classifier verified; accessibility_accepted=false with real findings retained",
       "preserved_audit_run": 40085956514,
       "new_dispatch_cycle": false
     }

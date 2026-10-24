@@ -135,6 +135,13 @@ root读到`check_account_ui.py`的`capture()`只把Python手写v1 wire交给`rev
 
 ## 后续审查队列
 
+### 独立包最终复核与 Windows 继续回修
+
+- G09 固定受测 `93d2ad0db2d75af50eddc0843a4da9c7090a15aa`，纯文档 HEAD `b7bdd62d02a6c85ab57ab7bc36b8b8212dfe090b`。root 独立核 run `40095313750` 的 11/11 作业及严格汇总原始日志：六 SDK 安装及 Windows/Linux/macOS 三组合 prefix 均有材料；每个组合含原交接的 13 包，88 项通过、另两项报告/阻断状态，`accepted=true`、`materials_complete=true`，仍 `release_ready=false`。实际 consumer 是空 main，真实链接行证明安装后的依赖接口，归档符号证明提供/引用关系；这些不能表述成每个库成员均被最终可执行文件抽取或包行为通过。九份安装共有 60 个不同路径命中文件仍待发布准备处理；原失败与原 SDK-only 交付保留。
+- G16 固定受测 `16a0b2b5426fbf474601169ba1bcecca848fb231`，纯文档 HEAD `c2e172d1da9352bee9e0b49003ca25f7e35aa829`。root 读新版判定器及 22 项回归：同级完全包含、20%/64%/80% 面积、跨容器包含均按可见重叠判定，仅有记录的语义祖先例外；未知滚动视口仍为未覆盖。run `40096206815` 八作业均成功。交回的是三目标审计材料与判定器，`accessibility_accepted=false`；真实阻断仍交 Apple 生产 owner 修复，不能用审计绿代替无障碍验收。
+- G01 root 候选 `143368103c3bec786d1d932dfcf625fde8910efb` 的完整 run `40095466821` 保留失败：原 158/10/5/13/18 及账户/capture 全部执行通过，新增键盘/UIA 在 import 禁用自身后真实焦点为空处拒绝，尚未执行到新文本范围组。根因是原 focus guard 在 `EnableWindow` 已清空焦点后直接返回。候选 `d13249598b4863a2a3eaded56eb199d26e60869e` 改为 native `GetNextDlgTabItem` 并保护已有有效焦点/模态 owner，完整 run `40109071435` 已启动。21 项尚未授予，冻结 SDK/原断言保持。
+
+
 root以干净`211a3bf320717c78f6b1565399212031d663db01`接管G01未验收的Windows provider收口：外部模型已在UI确认停止，两条后台仅为只读`gh run view`，无源文件writer。保留账户/capture已验收`dde92e89`、原失败`40094080436`和全部现有提交；root不将已知错误TextUnit/几何响应授予，也不让排队旧复审再次启动生产写入。原新UI回归的首次失败发生于Shift+Tab回到原note编辑器后，需按正确正反焦点路径核实其预期，而非避开该控件。
 
 G07根目录干净交付`e54c3ea9`由root追加纯文档修正`50f158d2`：传输设置1200/1500 ms与Windows端到端4.02 s分别陈述，既有下载<45 s、发布<30 s防挂起断言不变；不再宣称设置值为整个操作的严格上界。验证JSON保留原producer的预期字符串、原始结果及身份，另加解释字段，未运行新测试或改变受测源码。
