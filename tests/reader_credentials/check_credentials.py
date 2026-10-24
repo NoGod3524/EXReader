@@ -66,6 +66,7 @@ ANDROID_JAVA_CHECKS = {
 }
 CHECK_LINE = re.compile(r"^check (\S+) (pass|fail) (.*)$")
 PHASE_LINE = re.compile(r"^phase (\S+) (\d+)/(\d+)$")
+DETAIL = re.compile(r"^[A-Za-z0-9_=,.:/ -]{0,160}$")
 SECRET_MAX = 2048
 
 
@@ -127,7 +128,10 @@ class Run:
         for line in stdout.splitlines():
             m = CHECK_LINE.match(line.strip())
             if m:
-                checks.append({"id": m.group(1), "result": m.group(2), "detail": m.group(3)})
+                detail, result = m.group(3), m.group(2)
+                if not DETAIL.match(detail):  # only status words may appear; anything else fails
+                    detail, result = "<redacted unexpected bytes>", "fail"
+                checks.append({"id": m.group(1), "result": result, "detail": detail})
             m = PHASE_LINE.match(line.strip())
             if m:
                 summaries.append({"phase": m.group(1), "passed": int(m.group(2)), "total": int(m.group(3))})
@@ -403,6 +407,7 @@ try {{
             self.observations["ios_install"] = install.returncode
             self.log(f"[ios] boot={boot.returncode} install={install.returncode} {install.stderr.strip()[:400]}")
             container = Path(self.simctl("get_app_container", udid, bundle_id, "data").stdout.strip())
+            bundle = Path(self.simctl("get_app_container", udid, bundle_id, "app").stdout.strip())
             docs = container / "Documents"
             docs.mkdir(parents=True, exist_ok=True)
             for phase in ("suite", "reopen", "cleanup"):
@@ -410,10 +415,12 @@ try {{
                 result = docs / "credentials-result.txt"
                 if result.exists():
                     result.unlink()
-                launch = self.simctl("launch", "--console-pty", "--terminate-running-process", udid, bundle_id,
-                                     phase, "--io-dir", str(docs), timeout=300)
+                # spawn runs the signed bundle executable inside the simulator
+                # without SpringBoard, which refuses UI-less apps.
+                launch = self.simctl("spawn", udid, str(bundle / "CredentialsProbe"), phase, "--io-dir", str(docs),
+                                     timeout=300)
                 text = result.read_text(encoding="utf-8") if result.exists() else ""
-                self.log(f"[ios] launch {phase} rc={launch.returncode} result_file={result.exists()} "
+                self.log(f"[ios] spawn {phase} rc={launch.returncode} result_file={result.exists()} "
                          f"output={(launch.stdout + launch.stderr).strip()[-600:]!r}")
                 code = 0 if re.search(r"^phase ", text, re.M) else 1
                 self.record(phase, phase, code, text, launch.stdout + launch.stderr)

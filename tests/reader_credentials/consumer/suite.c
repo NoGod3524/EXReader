@@ -132,7 +132,7 @@ static void run_suite(runner *r, const suite_input *in) {
     *binary = secret(in, "binary"), *max = secret(in, "max"), *reopen = secret(in, "reopen");
   exr_credentials_store *store = NULL, *store2 = NULL, *probe = NULL;
   exr_credentials_status s, t, u;
-  char detail[160], more[160];
+  char detail[160] = "-", more[160] = "-";
   static uint8_t buffer[CAPACITY], oversize[EXR_CREDENTIALS_SECRET_MAX + 1];
   size_t length;
   int ok, i;
@@ -330,7 +330,7 @@ static void run_suite(runner *r, const suite_input *in) {
 
 int suite_run(const char *phase, const suite_input *in, suite_emit emit, void *context) {
   runner r = {emit, context, 0, 0};
-  char line[96], detail[160];
+  char line[96], detail[160] = "-";
   exr_credentials_store *store = NULL, *store2 = NULL;
   exr_credentials_status s, t, u;
   int ok, i;
