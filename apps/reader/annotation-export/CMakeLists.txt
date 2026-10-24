@@ -8,7 +8,7 @@ if(MSVC)
   add_compile_options(/utf-8)
 endif()
 # Optional package built only against installed packages: the unchanged product
-# revision store and reading-state decoder (which bring the frozen SDK). No
+# revision store and SDK-free reading-state decoder. No
 # SDK private header, SQL or second SQLite is used. Put the installed revision,
 # product, reading-state and SDK prefixes on CMAKE_PREFIX_PATH.
 find_package(EXReaderRevisions 0.3.0 EXACT CONFIG REQUIRED)
@@ -16,7 +16,7 @@ find_package(EXReaderReadingState 0.1.0 EXACT CONFIG REQUIRED)
 add_library(reader_annotation_export STATIC src/annotation_export.cpp)
 target_include_directories(reader_annotation_export PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_link_libraries(reader_annotation_export PUBLIC EXReaderReadingState::reader_reading_state
+target_link_libraries(reader_annotation_export PUBLIC EXReaderReadingState::reader_reading_state_codec
   EXReaderRevisions::reader_revisions)
 if(MSVC)
   target_compile_options(reader_annotation_export PRIVATE /W4 /WX)

@@ -9,13 +9,13 @@ if(MSVC)
   add_compile_options(/utf-8)
 endif()
 # Optional package over the installed, unchanged revision and reading-state
-# packages (and through them the frozen SDK). No SDK private header, SQL or
-# second SQLite is used here.
+# packages. The codec target carries no SDK runtime; a mobile host keeps its
+# existing SDK owner. No SDK private header, SQL or second SQLite is used here.
 find_package(EXReaderReadingState 0.1.0 EXACT CONFIG REQUIRED)
 add_library(reader_annotation_view STATIC src/annotation_view.cpp)
 target_include_directories(reader_annotation_view PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_link_libraries(reader_annotation_view PUBLIC EXReaderReadingState::reader_reading_state)
+target_link_libraries(reader_annotation_view PUBLIC EXReaderReadingState::reader_reading_state_codec)
 if(MSVC)
   target_compile_options(reader_annotation_view PRIVATE /W4 /WX)
 else()

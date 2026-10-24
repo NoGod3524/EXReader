@@ -11,7 +11,7 @@ find_package(EXReaderReadingState 0.1.0 EXACT CONFIG REQUIRED)
 add_library(reader_reading_commands STATIC src/reading_commands.cpp)
 target_include_directories(reader_reading_commands PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_link_libraries(reader_reading_commands PUBLIC EXReaderReadingState::reader_reading_state)
+target_link_libraries(reader_reading_commands PUBLIC EXReaderReadingState::reader_reading_state_codec)
 if(MSVC)
   target_compile_options(reader_reading_commands PRIVATE /W4 /WX)
 else()
