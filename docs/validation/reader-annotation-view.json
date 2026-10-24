@@ -132,6 +132,14 @@
   },
   "original_failures": [
     {
+      "run_id": "40077891293",
+      "attempt": 1,
+      "source_sha": "be015bb2efbfdb51692f7d983fdd0a7391838bdc",
+      "result": "failure on all three platforms",
+      "observed": "the probe exited with code 2 from its own fatal path within two seconds: reader_revision_receive requires the transport SHA-256, which the probe did not yet compute",
+      "fix_sha": "8ca07a80a025a3de09d259f1d20a08f29d04f2b4"
+    },
+    {
       "run_id": "40078549468",
       "attempt": 1,
       "source_sha": "8ca07a80a025a3de09d259f1d20a08f29d04f2b4",

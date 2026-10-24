@@ -81,6 +81,7 @@ Ubuntu 任务，用 AddressSanitizer 与 UBSan 重建本包与两个消费者并
 
 | run | 结果 | 实际观察 |
 | --- | --- | --- |
+| `40077891293` | 三平台失败 | 探针 2 秒内以 exit 2 走自己的 fatal 分支：`reader_revision_receive` 要求 transport SHA-256，探针当时还没算，`8ca07a80` 补上 |
 | `40078549468` | 三平台失败 | 探针以 SIGSEGV 结束（Linux -11、Windows 3221225477），没有报告，判定只能记 probe produced no report |
 | `40081992900` | 三平台失败 | 加了步骤留痕与 sanitizer 后定位：AddressSanitizer 报 SEGV，栈落在 `std::string::compare`，由 `probe.cpp:517` 进入 |
 
@@ -88,7 +89,7 @@ Ubuntu 任务，用 AddressSanitizer 与 UBSan 重建本包与两个消费者并
 `ids_of(ref[b]).begin(), ids_of(ref[b]).end()` 构造 `std::set`，两个 `ids_of` 调用是两次独立调用、返回两个不同的
 临时 vector，迭代器对不同容器，等于读已释放内存。三处同样写法（第 517、527、648 行）已改为先物化一份 id
 列表再构造集合与有序副本；`02ec0587` 之后同一套 56 项检查在 Release 与 ASan+UBSan 下都干净通过。
-这两个失败 run 的结论保留为同分支历史，不被新 run 覆盖。
+这三次失败 run 的结论保留为同分支历史，不被新 run 覆盖。
 
 ## 未授予
 
