@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "accepted": false,
+  "state": "candidate_not_yet_compiled",
+  "branch": "codex/reader-windows-search-ui",
+  "start": "3bcc6511",
+  "sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "tested_source": null,
+  "runs": [],
+  "complete_product": false,
+  "performance_accepted": false,
+  "screen_reader_accepted": false,
+  "physical_device_execution": false
+}

@@ -1,0 +1,87 @@
+name: Windows native in-book search UI candidate
+on:
+  push:
+    branches: [codex/reader-windows-search-ui]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  search:
+    name: installed F1 and initial native Windows search controls
+    runs-on: windows-2022
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate frozen SDK, original F1 and root-owned host paths
+        run: python3 tests/reader_windows_search/guard.py
+      - name: Enter the Windows native compiler environment
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Check source syntax in Actions
+        run: python3 -m py_compile tests/reader_windows_search/guard.py tests/reader_windows_search/check_ui.py
+      - name: Build and install the frozen SDK and one product provider
+        run: |
+          set -o pipefail
+          ws=$(cygpath -m "$PWD")
+          prefix="$ws/build/winsearch-stage"
+          echo "WS=$ws" >> "$GITHUB_ENV"
+          echo "WS_PREFIX=$prefix" >> "$GITHUB_ENV"
+          mkdir -p build/winsearch-logs
+          cmake --preset reading-library 2>&1 | tee build/winsearch-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/winsearch-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/winsearch-logs/sdk-install.log
+          cmake -S apps/reader/store/native -B build/ws-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/ws-product --parallel 4
+          ctest --test-dir build/ws-product --output-on-failure --no-tests=error --timeout 180
+          cmake --install build/ws-product
+      - name: Install unchanged public dependencies into one prefix
+        run: |
+          set -o pipefail
+          prefix="$WS_PREFIX"
+          for module in extras/webdav extras/credentials extras/sideload apps/reader/revisions apps/reader/commands apps/reader/desktop-metadata apps/reader/sync apps/reader/session apps/reader/reading-state apps/reader/search; do
+            name=$(basename "$module")
+            cmake -S "$module" -B "build/ws-$name" -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_PREFIX_PATH="$prefix;$WS/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee "build/winsearch-logs/$name-configure.log"
+            cmake --build "build/ws-$name" --parallel 4 --verbose 2>&1 | tee "build/winsearch-logs/$name-build.log"
+            cmake --install "build/ws-$name"
+          done
+      - name: Build actual account host with the optional native search UI
+        run: |
+          set -o pipefail
+          cmake -S apps/reader/windows-account -B build/ws-host -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage" -DREADER_METADATA_PREFIX="$WS_PREFIX" -DREADER_ACCOUNT_PREFIX="$WS_PREFIX" -DEXR_READER_WINDOWS_SEARCH=ON 2>&1 | tee build/winsearch-logs/host-configure.log
+          cmake --build build/ws-host --parallel 4 --verbose 2>&1 | tee build/winsearch-logs/host-build.log
+          cmake -S tests/reader_search/consumer -B build/ws-search-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage"
+          cmake --build build/ws-search-consumer --parallel 4 --verbose
+      - name: Execute installed original F1 C and C++ consumers
+        run: |
+          python3 tests/reader_search/make_search_fixtures.py build/ws-search-fixtures
+          python3 tests/reader_search/check_search.py --probe build/ws-search-consumer/search-probe.exe --c-consumer build/ws-search-consumer/search-c-consumer.exe --fixtures build/ws-search-fixtures --font tests/fixtures/fonts/primary.ttf --installed build/winsearch-stage --output build/ws-search-module-evidence
+      - name: Package and execute initial real Win32 TXT controls
+        run: |
+          python3 tools/build_windows_host.py --sdk build/reading-library/stage --binary build/ws-host/EXReaderProduct.exe --output build/ws-package --static-reading
+          python3 tests/reader_windows_search/check_ui.py --candidate build/ws-package/EXReader/EXReader.exe --font build/ws-package/EXReader/Reader.otf --output build/ws-search-ui
+      - name: Preserve source-bound initial evidence without granting broader scope
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-windows-search-initial-${{github.run_id}}-${{github.run_attempt}}
+          path: |
+            build/winsearch-logs/
+            build/ws-search-module-evidence/
+            build/ws-search-ui/
+            build/ws-host/windows-host.map
+            build/ws-host/CMakeCache.txt
+            build/ws-package/
+          if-no-files-found: error
