@@ -151,62 +151,93 @@ then authenticates the three same-run ZIPs through the GitHub API, re-computes
 their digests, and compares the report against the installed library, header and
 consumer bytes inside the same ZIP.
 
+## Root review fix (2026-10-24)
+
+`docs/handoffs/reader-next-wave/J06-ROOT-REVIEW.md` (at `2b1ca2d1`) found two
+contract gaps, both in `src/policy.c`:
+
+1. `external()` validated the whole target after the scheme with the query
+   rules, so `https://example.com/%0A` (and `%0D`, `%7F` in an authority, path
+   or fragment) still became `NEEDS_HOST`. Escapes are now checked per
+   component: only query data that precedes any fragment may carry encoded
+   C0/DEL bytes, which keeps the documented `mailto:…?body=x%0D%0Ay` positive.
+2. `internal()` validated fragment hex and controls but never decoded the
+   escapes, so `#a%FF` became an `INTERNAL` target. Fragments now run through the
+   same UTF-8 state machine as container paths: `#a%FF`, `#%E2%82` and `#%C0%AF`
+   are `BAD_ESCAPE`, while `#章节` and `#%E7%AB%A0%E8%8A%82` stay INTERNAL.
+
+The header comment, this document and the fixture table changed together. No
+URL or book parser was added, no SDK/schema/host file was touched, and the
+policy still returns metadata only.
+
 ## Cloud test evidence
 
-Tested source **e175a00fbf7f623993698a276e8f066c392ad061** on branch
-`codex/reader-external-link-policy`, run **40123584995** attempt **1**.
+Tested source **b3a018216e6a050fd3fc8425734512eebaf6887a** on branch
+`codex/reader-external-link-policy`, run **40134055434** attempt **1**.
 All four jobs succeeded; the final HEAD of the branch is a later docs-only
 `[skip ci]` commit and is not part of the tested source.
 
 | platform | named checks | job |
 | --- | --- | --- |
-| Linux (ubuntu-22.04) | 36/36 pass | 120960162825 |
-| Windows (windows-2022) | 36/36 pass | 120960162668 |
-| macOS (macos-15) | 36/36 pass | 120960162760 |
-| same-run artifact evidence | 3 ZIPs authenticated | 120964157535 |
+| Linux (ubuntu-22.04) | 37/37 pass | 120991693198 |
+| Windows (windows-2022) | 37/37 pass | 120991693242 |
+| macOS (macos-15) | 37/37 pass | 120991693317 |
+| same-run artifact evidence | 3 ZIPs authenticated | 120993822014 |
 
-Artifacts of that run (sha256 of the uploaded ZIP, retention until 2027-01-22T19:04:03Z):
+Artifacts of that run (sha256 of the uploaded ZIP, retention until 2027-01-22T21:24:13Z):
 
 | artifact | id | bytes | sha256 |
 | --- | --- | --- | --- |
-| reader-external-link-policy-Linux-40123584995-1 | 12571723825 | 421612 | 6a82469a2658f42447dc4f7417f5ab28b24e4194cf06c62673aa31ed504f4b29 |
-| reader-external-link-policy-Windows-40123584995-1 | 12572047455 | 858245 | 2a1d4d40be90b3e00a4a37edd7e7da332407cd240d00c1ee91b0a1a983ebbff2 |
-| reader-external-link-policy-macOS-40123584995-1 | 12572544145 | 384639 | 601e3505db9656e762808a74be6f297c416a9ec1a79a20bd0872523c4bea24fd |
-| reader-external-link-policy-summary-40123584995-1 | 12572590948 | 865 | 7bd4fbed6e2ee664f4e7b6dc7886b06e60353eb0b074aeb178f535184c97e22d |
+| reader-external-link-policy-Linux-40134055434-1 | 12576770797 | 424013 | fc442daa803628e0ada91e899d4b19d1781d138e14f9b2b4946a43335c7466a4 |
+| reader-external-link-policy-Windows-40134055434-1 | 12576581157 | 861964 | 94759a5ba30fafd185a32e78889b718bcfac73634b8785a72123ca4ac151ecb3 |
+| reader-external-link-policy-macOS-40134055434-1 | 12575853338 | 389753 | 8dd8271aef48c0a5e9bfd7654bfc0a913e34be3472eb681eeaf5aa2f86e9b4ec |
+| reader-external-link-policy-summary-40134055434-1 | 12575763518 | 867 | 33d846ba316cdbc64c712d79f7212e2ffab6d3982aa65277b9bc84ca193d0b40 |
 
 The evidence job downloaded each ZIP itself, recomputed its digest, rejected
 altered report variants, and matched `report.json` to the installed library,
 header and consumer bytes carried inside the same ZIP. It reported
 `artifact evidence ok: 3 artifacts`.
 
-Per platform: 127 default fixture cases, 7 custom-policy cases, 19 groups; the
-SDK hand-off saw 6 authored navigation entries with 4 INTERNAL targets all
-accepted by `exr_document_resolve` and the single NEEDS_HOST target refused by
-it; the static symbol audit found no network, process or file reference
-(110 symbols on Linux, 263 on Windows, 219 on macOS) and the negative control
-was detected in every run.
+Per platform: 138 default fixture cases, 7 custom-policy cases, 20 groups, of
+which the new `escape-boundary` group contributes 11 cases (five encoded-control
+negatives in authority/path/fragment, three bad UTF-8 fragments, two Unicode
+fragment positives and the retained mailto CRLF-query positive). The SDK hand-off
+still saw 6 authored entries with 4 INTERNAL targets accepted by
+`exr_document_resolve` and the single NEEDS_HOST target refused by it. The static
+symbol audit found no network, process or file reference (115 symbols on Linux,
+268 on Windows, 218 on macOS) and the negative control was detected every time.
+The installed header digest is `3d61caf8…c622893a` on all three platforms.
+
+## Superseded round and retained failures
+
+The previous module acceptance (source `e175a00f…`, run **40123584995**, 36
+named checks) is retained in the validation record but is **not** transferred to
+this source: the review fix changed external escape handling and fragment
+validation, and the installed header digest moved from `70deea67…` to
+`3d61caf8…`. Its artifacts (12571723825, 12572047455, 12572544145, summary
+12572590948) stay valid for that source only.
 
 Retained original failures (kept, not rewritten):
 
-- run **40122660917** (source ad378913): the C++ consumer was compiled with
-  the wrong version macro names on every platform, so all three jobs failed; artifacts
-  12572355548, 12571393229, 12571918268, 12571519608.
+- run **40122660917** (source ad378913): the C++ consumer was compiled with the
+  wrong version macro names on every platform, so all three jobs failed;
+  artifacts 12572355548, 12571393229, 12571918268, 12571519608.
 - run **40122960979** (source 1df6dd3c): the worker's never-cancel case still
-  polls four times and its lifetime case started allocation tracking after the
+  polled four times and its lifetime case started allocation tracking after the
   policy existed, and MSVC refused `strcpy` under /W4 /WX; Linux and Windows
-  failed. The macOS job of that superseded run was cancelled while still
-  queued so the fixed run could obtain a runner, so it produced no evidence;
-  artifacts 12572206174 and 12572311188.
+  failed. The macOS job of that superseded run was cancelled while still queued
+  so the fixed run could obtain a runner, so it produced no evidence; artifacts
+  12572206174 and 12572311188.
 
 ## Acceptance status
 
 | item | status |
 | --- | --- |
-| module behaviour (37 named checks) | cloud retest pending after the root review fix |
+| module behaviour (37 named checks) | **accepted** on Linux, Windows and macOS from run 40134055434, root review finding closed |
 | installed C and C++ consumers | **accepted** (five consumers built from the install prefix only) |
 | no network / process / file dependency | **static proof passed**, including a negative control |
 | actual hosts (Windows, GTK, Android, Apple) | **not wired**; owned by root and the host owners |
 | real device / emulator / performance / accessibility | **not in scope** of this package |
 | root review against the merged common source | **not done**; integration is not claimed |
 
-`docs/validation/reader-external-link-policy.json` carries the accepted record with the real run/attempt, jobs, artifacts and retained failures above.
+`docs/validation/reader-external-link-policy.json` carries the accepted record with the real run/attempt, jobs, artifacts, superseded round and retained failures above.

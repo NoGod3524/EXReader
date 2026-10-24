@@ -1,6 +1,6 @@
 {
   "accepted": true,
-  "status": "module scope accepted on Linux, Windows and macOS from one run; hosts remain unwired",
+  "status": "root review finding closed and module scope re-accepted on Linux, Windows and macOS from one run; hosts remain unwired, common-source integration not granted",
   "package": "EXReaderLinkPolicy 0.1.0",
   "abi": 1,
   "common_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
@@ -10,61 +10,69 @@
     "abi": 1
   },
   "branch": "codex/reader-external-link-policy",
-  "tested_source": "e175a00fbf7f623993698a276e8f066c392ad061",
+  "tested_source": "b3a018216e6a050fd3fc8425734512eebaf6887a",
   "tested_source_note": "the acceptance run tested this commit; the final HEAD of the branch is a docs-only [skip ci] commit on top of it",
-  "run_id": 40123584995,
+  "root_review": {
+    "record": "docs/handoffs/reader-next-wave/J06-ROOT-REVIEW.md at 2b1ca2d1",
+    "findings": [
+      "external() validated everything after the scheme with the query rules, so %0A/%0D/%7F in an authority, path or fragment still became NEEDS_HOST",
+      "internal() checked fragment hex and controls but never decoded the escapes, so #a%FF entered INTERNAL instead of BAD_ESCAPE"
+    ],
+    "fix": "escapes are now validated per URI component: query data (before any fragment) may carry encoded C0/DEL bytes, authority/path/fragment may not; fragments decode through the same UTF-8 state machine as container paths and report BAD_ESCAPE for invalid, truncated or overlong sequences. The public header comment, the contract document and the fixture table were updated together; no URL or book parser was added and the SDK/schema/hosts are untouched."
+  },
+  "run_id": 40134055434,
   "attempt": 1,
   "jobs": [
     {
-      "id": 120960162825,
+      "id": 120991693198,
       "name": "link policy consumers (Linux)",
       "conclusion": "success"
     },
     {
-      "id": 120960162668,
+      "id": 120991693242,
       "name": "link policy consumers (Windows)",
       "conclusion": "success"
     },
     {
-      "id": 120960162760,
+      "id": 120991693317,
       "name": "link policy consumers (macOS)",
       "conclusion": "success"
     },
     {
-      "id": 120964157535,
+      "id": 120993822014,
       "name": "strict same-run link policy evidence",
       "conclusion": "success"
     }
   ],
   "artifacts": [
     {
-      "id": 12571723825,
-      "name": "reader-external-link-policy-Linux-40123584995-1",
-      "size_in_bytes": 421612,
-      "digest": "sha256:6a82469a2658f42447dc4f7417f5ab28b24e4194cf06c62673aa31ed504f4b29",
-      "expires_at": "2027-01-22T19:04:03Z"
+      "id": 12576770797,
+      "name": "reader-external-link-policy-Linux-40134055434-1",
+      "size_in_bytes": 424013,
+      "digest": "sha256:fc442daa803628e0ada91e899d4b19d1781d138e14f9b2b4946a43335c7466a4",
+      "expires_at": "2027-01-22T21:24:13Z"
     },
     {
-      "id": 12572047455,
-      "name": "reader-external-link-policy-Windows-40123584995-1",
-      "size_in_bytes": 858245,
-      "digest": "sha256:2a1d4d40be90b3e00a4a37edd7e7da332407cd240d00c1ee91b0a1a983ebbff2",
-      "expires_at": "2027-01-22T19:04:03Z"
+      "id": 12576581157,
+      "name": "reader-external-link-policy-Windows-40134055434-1",
+      "size_in_bytes": 861964,
+      "digest": "sha256:94759a5ba30fafd185a32e78889b718bcfac73634b8785a72123ca4ac151ecb3",
+      "expires_at": "2027-01-22T21:24:13Z"
     },
     {
-      "id": 12572544145,
-      "name": "reader-external-link-policy-macOS-40123584995-1",
-      "size_in_bytes": 384639,
-      "digest": "sha256:601e3505db9656e762808a74be6f297c416a9ec1a79a20bd0872523c4bea24fd",
-      "expires_at": "2027-01-22T19:04:03Z"
+      "id": 12575853338,
+      "name": "reader-external-link-policy-macOS-40134055434-1",
+      "size_in_bytes": 389753,
+      "digest": "sha256:8dd8271aef48c0a5e9bfd7654bfc0a913e34be3472eb681eeaf5aa2f86e9b4ec",
+      "expires_at": "2027-01-22T21:24:13Z"
     }
   ],
   "evidence_artifact": {
-    "id": 12572590948,
-    "name": "reader-external-link-policy-summary-40123584995-1",
-    "size_in_bytes": 865,
-    "digest": "sha256:7bd4fbed6e2ee664f4e7b6dc7886b06e60353eb0b074aeb178f535184c97e22d",
-    "expires_at": "2027-01-22T19:04:03Z"
+    "id": 12575763518,
+    "name": "reader-external-link-policy-summary-40134055434-1",
+    "size_in_bytes": 867,
+    "digest": "sha256:33d846ba316cdbc64c712d79f7212e2ffab6d3982aa65277b9bc84ca193d0b40",
+    "expires_at": "2027-01-22T21:24:13Z"
   },
   "evidence_job_record": "check_artifacts.py authenticated all three same-run ZIPs (ids, bytes, sha256 digests, future expiry), rejected altered report variants, and matched report.json to the installed library, header and consumer bytes inside each ZIP: 'artifact evidence ok: 3 artifacts'",
   "named_checks": [
@@ -90,6 +98,7 @@
     "group-fragment-and-cfi",
     "group-escapes",
     "group-spaces",
+    "group-escape-boundary",
     "probe-limits",
     "probe-errors",
     "probe-lifetime",
@@ -105,16 +114,36 @@
     "no-network-or-process-symbols",
     "symbol-audit-negative-control"
   ],
-  "checks_per_platform": 36,
+  "checks_per_platform": 37,
   "checks_passed": {
-    "Linux": 36,
-    "Windows": 36,
-    "macOS": 36
+    "Linux": 37,
+    "Windows": 37,
+    "macOS": 37
   },
   "fixtures": {
-    "default_cases": 127,
+    "default_cases": 138,
     "custom_cases": 7,
-    "groups": 19
+    "groups": 20
+  },
+  "review_regressions": {
+    "group": "escape-boundary",
+    "cases": 11,
+    "negatives": [
+      "https://example.com/%0D",
+      "https://example.com/a%0Ab",
+      "https://example.com/%7F",
+      "https://example.com/#%0A",
+      "https://exa%0Ample.com/",
+      "#a%FF",
+      "#%E2%82",
+      "#%C0%AF"
+    ],
+    "positives": [
+      "#章节",
+      "#%E7%AB%A0%E8%8A%82",
+      "mailto:reader@example.com?body=x%0D%0Ay"
+    ],
+    "note": "the mailto CRLF body positive from the previous round is retained unchanged"
   },
   "consumers": [
     "link-probe",
@@ -125,9 +154,9 @@
   ],
   "sdk_handoff_evidence": "navigation-epub3.epub: 6 authored entries, 4 INTERNAL targets all resolved by exr_document_resolve, 1 NEEDS_HOST target refused by the SDK, CFI kept as INTERNAL/CFI",
   "symbol_audit_evidence": {
-    "Linux": 110,
-    "Windows": 263,
-    "macOS": 219,
+    "Linux": 115,
+    "Windows": 268,
+    "macOS": 218,
     "forbidden_hits": 0,
     "negative_control_hits": [
       "fopen",
@@ -136,14 +165,75 @@
       "system"
     ]
   },
-  "installed_header_sha256": "70deea677b6261dfbb24ff79f6369c867a38da09546f4816729c0e7b9d1a3364",
+  "installed_header_sha256": "3d61caf82f19e32f3abda52cc9b0c2c0f104e3146fcbb0f439b2aab0c622893a",
   "problems": [],
+  "superseded_rounds": [
+    {
+      "source": "e175a00fbf7f623993698a276e8f066c392ad061",
+      "run_id": 40123584995,
+      "attempt": 1,
+      "checks_per_platform": 36,
+      "status": "was accepted for its own source; its green is not transferred to the review fix, which changed external escape handling and fragment validation and therefore the installed header digest (70deea67… → 3d61caf8…)",
+      "jobs": [
+        {
+          "id": 120960162825,
+          "name": "link policy consumers (Linux)",
+          "conclusion": "success"
+        },
+        {
+          "id": 120960162668,
+          "name": "link policy consumers (Windows)",
+          "conclusion": "success"
+        },
+        {
+          "id": 120960162760,
+          "name": "link policy consumers (macOS)",
+          "conclusion": "success"
+        },
+        {
+          "id": 120964157535,
+          "name": "strict same-run link policy evidence",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12571723825,
+          "name": "reader-external-link-policy-Linux-40123584995-1",
+          "size_in_bytes": 421612,
+          "digest": "sha256:6a82469a2658f42447dc4f7417f5ab28b24e4194cf06c62673aa31ed504f4b29",
+          "expires_at": "2027-01-22T19:04:03Z"
+        },
+        {
+          "id": 12572047455,
+          "name": "reader-external-link-policy-Windows-40123584995-1",
+          "size_in_bytes": 858245,
+          "digest": "sha256:2a1d4d40be90b3e00a4a37edd7e7da332407cd240d00c1ee91b0a1a983ebbff2",
+          "expires_at": "2027-01-22T19:04:03Z"
+        },
+        {
+          "id": 12572544145,
+          "name": "reader-external-link-policy-macOS-40123584995-1",
+          "size_in_bytes": 384639,
+          "digest": "sha256:601e3505db9656e762808a74be6f297c416a9ec1a79a20bd0872523c4bea24fd",
+          "expires_at": "2027-01-22T19:04:03Z"
+        }
+      ],
+      "evidence_artifact": {
+        "id": 12572590948,
+        "name": "reader-external-link-policy-summary-40123584995-1",
+        "size_in_bytes": 865,
+        "digest": "sha256:7bd4fbed6e2ee664f4e7b6dc7886b06e60353eb0b074aeb178f535184c97e22d",
+        "expires_at": "2027-01-22T19:04:03Z"
+      }
+    }
+  ],
   "retained_failures": [
     {
       "source": "ad378913631aa70877ba4beebcf7ee909d5c6773",
       "run_id": 40122660917,
       "attempt": 1,
-      "summary": "all three platform consumers failed to compile the C++ consumer: the probe used READER_LINK_VERSION_STRING instead of the shipped READER_LINK_POLICY_VERSION_STRING macros",
+      "summary": "the C++ consumer was compiled with the wrong version macro names on every platform, so all three jobs failed",
       "jobs": [
         {
           "id": 120957380020,
@@ -201,7 +291,7 @@
       "source": "1df6dd3cc995e7546d7e46c94a53d1893230c17d",
       "run_id": 40122960979,
       "attempt": 1,
-      "summary": "Linux and Windows failed worker-cancel (the never-cancel case still polls four times) and worker-lifetime (allocation tracking started after the policy existed); Windows additionally refused strcpy under /W4 /WX. The macOS job of this superseded run was cancelled while still queued so the fixed run could get a runner; its queued job produced no evidence",
+      "summary": "worker-cancel and worker-lifetime expectations were wrong and MSVC refused strcpy under /W4 /WX; Linux and Windows failed. The macOS job of this superseded run was cancelled while still queued so the fixed run could obtain a runner and produced no evidence",
       "jobs": [
         {
           "id": 120958280278,
@@ -257,6 +347,6 @@
   "uncovered": [
     "product hosts (Windows, GTK, Android, Apple) are not wired to this package; that wiring belongs to root and the host owners",
     "no emulator, real device, performance or accessibility scope is claimed",
-    "README's shared constraints also require a root review against the merged common source before integration; that review has not happened"
+    "root review against the merged common source is still outstanding; integration is not claimed"
   ]
 }
