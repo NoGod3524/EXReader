@@ -213,6 +213,15 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
   probe now observes the shelf directly, so cached List rows rebuild their
   measurement body when the epoch changes. This replaces the parent-captured
   epoch and probe identity changes; the single-epoch reducer is retained.
+- `b903527f3859b3fe5662f92627e2fd16043e78d4` passed both unchanged iPad
+  cases in [40056898720](https://github.com/NoGod3524/EXReader/actions/runs/40056898720),
+  attempt 1: refresh in 105.701 seconds and rotation/direct restart/background
+  restart in 95.366 seconds. Exact source-key equality and the 150-row limit
+  passed. Artifact `12545554309` is 1,426,347 bytes with matching API/upload
+  digest `sha256:4dbdaae89a770a3cbaf05c86b8acf04c76b475b375e0c2b7abef4d6ed5810d23`.
+  Its scope remains `diagnostic_only: true`, `accepted: false`. Product code is
+  frozen for the following same-source full shelf, import-mapping and original
+  Apple workflows; complete acceptance is still pending.
 
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.
