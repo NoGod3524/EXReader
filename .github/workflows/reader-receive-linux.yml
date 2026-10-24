@@ -3,13 +3,43 @@ on:
   push:
     branches: [codex/reader-gtk-receive]
   workflow_dispatch:
+    inputs:
+      status_diagnostic_only:
+        type: boolean
+        default: false
+        description: Read retained status-event evidence without granting acceptance
 permissions:
   contents: read
+  actions: read
 defaults:
   run:
     shell: bash
 jobs:
+  status_diagnostic:
+    if: ${{ github.event.inputs.status_diagnostic_only == 'true' }}
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: reader-gtk-receive-40086097714-1
+          run-id: 40086097714
+          github-token: ${{ github.token }}
+          path: evidence
+      - name: Print actual retained AT-SPI property payloads without granting acceptance
+        run: |
+          python3 - <<'PY'
+          import collections,json,pathlib
+          folder=pathlib.Path('evidence/account-atspi-fixes')
+          events=json.loads((folder/'events.json').read_text())
+          report=json.loads((folder/'result.json').read_text())
+          print(json.dumps({'diagnostic_only':True,'accepted':False,'retained_source':report['source_sha'],'run_id':report['run_id']}))
+          print(json.dumps(collections.Counter(e['type'] for e in events),sort_keys=True))
+          for event in events:
+              if 'property-change' in event['type'] and event.get('source_role')=='label':
+                  print(json.dumps(event))
+          PY
   account:
+    if: ${{ github.event.inputs.status_diagnostic_only != 'true' }}
     name: GTK explicit receive and readable originals
     runs-on: ubuntu-22.04
     timeout-minutes: 65
