@@ -257,13 +257,13 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
             setStatus("Shelf refreshed");
         });
         rebuildView.setOnClickListener(view -> {
-            if(BuildConfig.READER_SEARCH)new AlertDialog.Builder(this).setTitle("阅读更多操作").setItems(new String[]{"书内搜索","Rebuild"},(dialog,which)->{
-                if(which==0){if(currentBook!=null&&current!=null&&operation==0&&!pageBusy)searchPanel.show(currentBook.id);else setStatus("请先完成当前阅读操作");}
-                else{saveInstancePrefs();recreate();}
-            }).show();
-            else{saveInstancePrefs();recreate();}
+            saveInstancePrefs();recreate();
         });
-        if(BuildConfig.READER_SEARCH){rebuildView.setText("更多");rebuildView.setContentDescription("阅读更多操作");}
+        View readerMore=findViewById(R.id.reader_more);readerMore.setVisibility(BuildConfig.READER_SEARCH?View.VISIBLE:View.GONE);
+        if(BuildConfig.READER_SEARCH&&!BuildConfig.DEBUG)rebuildView.setVisibility(View.GONE);
+        readerMore.setOnClickListener(view->new AlertDialog.Builder(this).setTitle("阅读更多操作").setItems(new String[]{"书内搜索"},(dialog,which)->{
+            if(currentBook!=null&&current!=null&&operation==0&&!pageBusy)searchPanel.show(currentBook.id);else setStatus("请先完成当前阅读操作");
+        }).show());
         backButton.setOnClickListener(view -> leaveReader());
         fontDown.setOnClickListener(view -> changeFont(-1));
         fontUp.setOnClickListener(view -> changeFont(1));

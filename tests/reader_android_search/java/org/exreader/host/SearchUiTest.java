@@ -73,11 +73,11 @@ public final class SearchUiTest extends Instrumentation {
     private void search(String value){start(value);settled();}
     private void zero(){long end=SystemClock.elapsedRealtime()+30000;while(SystemClock.elapsedRealtime()<end){if(NativeSearchProbe.live()==0)return;SystemClock.sleep(50);}throw new AssertionError("search native handle did not close");}
     private JSONObject frame()throws Exception {
-        for(AccessibilityWindowInfo window:getUiAutomation().getWindows()){
+        java.util.List<AccessibilityWindowInfo> windows=getUiAutomation().getWindows();try{for(AccessibilityWindowInfo window:windows){
             AccessibilityNodeInfo root=window.getRoot(),node=null;
             try{node=find(root,value->id(value,"reader_view"));if(node!=null){String value=node.getExtras().getString("exreader.frame","");if(!value.isEmpty())return new JSONObject(value);}}
-            finally{if(node!=null&&node!=root)node.recycle();if(root!=null)root.recycle();window.recycle();}
-        }
+            finally{if(node!=null&&node!=root)node.recycle();if(root!=null)root.recycle();}
+        }}finally{for(AccessibilityWindowInfo window:windows)window.recycle();}
         throw new AssertionError("actual ReaderView frame unavailable");
     }
     private JSONObject waitFrame(long book)throws Exception {long end=SystemClock.elapsedRealtime()+120000;while(SystemClock.elapsedRealtime()<end){try{JSONObject value=frame();if(value.optLong("book",-1)==book&&value.has("bitmap_identity"))return value;}catch(AssertionError notReady){}SystemClock.sleep(80);}throw new AssertionError("real book frame not ready");}
@@ -107,7 +107,7 @@ public final class SearchUiTest extends Instrumentation {
                 need(title!=null,"SDK book after import");books.put(row.getString("role"),new JSONObject().put("id",result.id).put("title",title).put("sha256",row.getString("sha256")).put("format",row.getString("format")));
                 need(context.getSharedPreferences("host",0).edit().putString("path_"+result.id,file.getAbsolutePath()).putLong("size_"+result.id,file.length()).commit(),"host original path registered");
             }
-            library.saveProgress(book("txt"),8);library.saveNote(book("txt"),0,0,0,"retained existing SDK note");
+            library.saveProgress(book("txt"),0);library.saveNote(book("txt"),0,0,0,"retained existing SDK note");
         }
         Files.write(new File(context.getFilesDir(),"search-books.json").toPath(),books.toString().getBytes(StandardCharsets.UTF_8));
     }
