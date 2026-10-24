@@ -24,8 +24,10 @@ if grep -rnE '#include[[:space:]]*[<"](exr|EXReader)/' extras/desktop-drop; then
   echo "the adapter must stay SDK-free and use only its own public header"
   exit 1
 fi
+# The installed module (src + public headers) must stay silent; the host
+# example under examples/ is a normal program and prints its own result.
 if grep -rnE '(^|[^A-Za-z0-9_])(printf|fprintf|puts|perror|syslog|NSLog|OutputDebugString[AW]?|g_print|g_warning)[[:space:]]*\(' \
-    extras/desktop-drop/src extras/desktop-drop/include extras/desktop-drop/examples; then
+    extras/desktop-drop/src extras/desktop-drop/include; then
   echo "installed module sources must not print or log"
   exit 1
 fi
