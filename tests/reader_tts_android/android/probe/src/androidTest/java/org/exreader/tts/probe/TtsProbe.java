@@ -222,8 +222,9 @@ public final class TtsProbe extends Instrumentation {
                 throw new AssertionError("audio directory could not be created");
             }
             if (output.exists() && !output.delete()) throw new AssertionError("stale audio file kept");
+            String voice = backend.localVoiceId();
             byte[] text = "Reader audio acceptance sample.".getBytes(StandardCharsets.UTF_8);
-            int outcome = backend.synthesizeToFile(text, null, 1.0, output.getAbsolutePath(), 60000);
+            int outcome = backend.synthesizeToFile(text, voice, 1.0, output.getAbsolutePath(), 60000);
             if (outcome != 0) throw new AssertionError("synthesizeToFile returned " + outcome);
             if (!output.isFile()) throw new AssertionError("no audio file was written");
             long bytes = output.length();
@@ -235,7 +236,8 @@ public final class TtsProbe extends Instrumentation {
                  .put("sha256", sha256(output))
                  .put("header", header)
                  .put("engine", backend.enginePackage() == null ? "" : backend.enginePackage())
-                 .put("voice", backend.defaultVoiceId() == null ? "" : backend.defaultVoiceId());
+                 .put("voice", voice == null ? "" : voice)
+                 .put("default_voice", backend.defaultVoiceId() == null ? "" : backend.defaultVoiceId());
             report.put("audio", audio);
             return "bytes=" + bytes + " header=" + header;
         } finally {

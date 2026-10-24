@@ -388,6 +388,34 @@ public final class Backend {
         release();
     }
 
+    /**
+     * Identifier of an installed local voice in the device language, or null
+     * when the engine is not ready or only offers voices that need a network
+     * connection. Audio-file hosts use it instead of a network voice.
+     */
+    public String localVoiceId() {
+        TextToSpeech current = engine;
+        if (current == null || initStatus != TextToSpeech.SUCCESS) return null;
+        Set<Voice> available;
+        try {
+            available = current.getVoices();
+        } catch (RuntimeException error) {
+            return null;
+        }
+        if (available == null) return null;
+        String language = java.util.Locale.getDefault().getLanguage();
+        Voice best = null;
+        for (Voice voice : available) {
+            if (voice.isNetworkConnectionRequired()) continue;
+            if (best == null) best = voice;
+            if (voice.getLocale() != null && language.equals(voice.getLocale().getLanguage())) {
+                best = voice;
+                break;
+            }
+        }
+        return best == null ? null : best.getName();
+    }
+
     /** Hard engine text ceiling in UTF-16 units, or -1 when no engine is ready. */
     public static int maxInputLength() {
         return TextToSpeech.getMaxSpeechInputLength();

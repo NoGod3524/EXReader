@@ -123,7 +123,14 @@ jobs:
         with:
           name: reader-tts-android-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            build/reader-tts-android/
+            build/reader-tts-android/engine/
+            build/reader-tts-android/none/
+            build/reader-tts-android/logs/
+            build/reader-tts-android/packages/
+            build/reader-tts-android/identity/
+            build/reader-tts-android/result.json
+            build/reader-tts-android/stage-debug/
+            build/reader-tts-android/stage-release/
             extras/reader-tts-android/android/tts/build/outputs/aar/
             tests/reader_tts_android/android/probe/build/outputs/apk/
             tests/reader_tts_android/android/baseline/build/outputs/apk/

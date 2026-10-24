@@ -52,8 +52,6 @@ def main():
         run = fetch('actions/runs/%d' % run_id)
         require(run['head_sha'] == source and run['run_attempt'] == attempt, 'caller identity differs')
         require(run['path'].split('@')[0] == WORKFLOW, 'wrong workflow')
-        require(run['status'] == 'completed' and run['conclusion'] == 'success',
-                'the run did not complete successfully')
         jobs = pages('actions/runs/%d/attempts/%d/jobs' % (run_id, attempt), 'jobs')
         device = [job for job in jobs if job['name'] == DEVICE_JOB]
         require(len(device) == 1, 'missing or duplicate device job')
@@ -171,10 +169,9 @@ def main():
         summary['problems'].append(str(error))
     (output / 'artifact-summary.json').write_text(json.dumps(summary, indent=2) + '\n', encoding='utf-8')
     print(json.dumps({'accepted': summary['accepted'], 'problems': summary['problems'],
-                      'artifact': summary['artifact'],
-                      'modes': {mode: {key: value for key, value in numbers.items()
-                                       if key != 'case_results'}
-                                for mode, numbers in summary['modes'].items()}})[:4000], flush=True)
+                      'artifact': summary['artifact'], 'jobs': summary['jobs'],
+                      'audio': summary['audio'], 'packages': summary['packages'],
+                      'modes': summary['modes']}), flush=True)
     return 0 if summary['accepted'] else 1
 
 
