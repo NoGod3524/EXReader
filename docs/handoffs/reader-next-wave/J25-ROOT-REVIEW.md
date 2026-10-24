@@ -19,3 +19,5 @@
 `aggregate_artifacts.py` 的 `summary-named-results-pass` 只要求results非空且所有status为pass；删除一个乃至保留唯一一个pass仍满足该条件。请复用 `verify_distribution.REQUIRED_RESULTS` 及固定必需负例名单，拒绝缺项、重复、未知/替代名称和错误状态，保留同源/run/attempt及真实ZIP重算。增加对真实报告形状的缺项/重复/替代名等拒绝回归。
 
 原owner唯一修改原工作树/原分支与本包白名单。所有构建、测试、语法、夹具与工件解析仅Actions；新源码完整重验，保留旧绿和失败，两份证据文档单独 `[skip ci]`。
+
+`2026-10-24T22:10Z` 已通过原DeepSeek会话派回，界面确认运行，保持Flash1017 / High / PTC / 完全权限。接续 `b34f71985ec2c7198711655c869def40e02c8eeb` / run `40138632294` 正在执行：协议作业已失败，Windows实测作业仍运行。未授新源码通过。

@@ -1,13 +1,14 @@
 {
   "schema": 1,
-  "observed_at_utc": "2026-10-24T22:00:00Z",
+  "observed_at_utc": "2026-10-24T22:30:00Z",
   "packages": 19,
   "cloud_success": 17,
-  "returned_pending_root_review": 16,
+  "returned_pending_root_review": 15,
+  "root_review_closed_awaiting_integration": ["J06"],
   "needs_further_work": [
     "J03",
-    "J06",
-    "J19"
+    "J19",
+    "J25"
   ],
   "root_review_and_integration_complete": false,
   "tasks": [
@@ -23,22 +24,22 @@
     {
       "id": "J03",
       "branch": "codex/reader-desktop-drop",
-      "latest_run": 40135689234,
-      "source": "03babdbe2d2a608c9a2c1c280b6a238e1b99dc1f",
-      "status": "in_progress",
-      "conclusion": "",
-      "root_state": "repair_windows_sanitizer_variant_build_failed_owner_continuing",
+      "latest_run": 40136297928,
+      "source": "5a0cd498ce4ec570f6cd52c6eca4d611431c1cc0",
+      "status": "completed",
+      "conclusion": "success",
+      "root_state": "second_root_review_subclass_coexistence_changes_needed_not_dispatched_after_computer_use_stop",
       "earlier_cloud_success_run": 40123821461,
       "review": "J03-ROOT-REVIEW.md"
     },
     {
       "id": "J06",
       "branch": "codex/reader-external-link-policy",
-      "latest_run": 40134055434,
-      "source": "b3a018216e6a050fd3fc8425734512eebaf6887a",
+      "latest_run": 40136807836,
+      "source": "6fd6031c178ca567ad7a9ae7351b053aa23e45f3",
       "status": "completed",
       "conclusion": "success",
-      "root_state": "second_root_review_query_fragment_fix_dispatched",
+      "root_state": "root_review_closed_awaiting_integration",
       "review": "J06-ROOT-REVIEW.md"
     },
     {
@@ -134,8 +135,8 @@
     {
       "id": "J19",
       "branch": "codex/reader-tts-linux",
-      "latest_run": 40135611342,
-      "source": "4262dfcd24c31a8ef8b613b622242f6a265f2b3a",
+      "latest_run": 40138462305,
+      "source": "2f4304c0a037e8f20b064bbfa248ea2e9371d436",
       "status": "in_progress",
       "conclusion": "",
       "root_state": "three_runtime_variants_passed_ubuntu2204_asan_in_progress",
@@ -180,12 +181,14 @@
     {
       "id": "J25",
       "branch": "codex/reader-distribution-windows",
-      "latest_run": 40135232301,
-      "source": "db7f13a323db4ea633db7660e20c92098e9c1bb4",
-      "status": "completed",
-      "conclusion": "success",
-      "root_state": "cloud_success_awaiting_root_review_and_integration",
-      "earlier_observed_failure_run": 40133712445
+      "latest_run": 40138632294,
+      "source": "b34f71985ec2c7198711655c869def40e02c8eeb",
+      "status": "in_progress",
+      "conclusion": "",
+      "root_state": "root_review_repairs_running_protocol_job_failed_windows_producer_running",
+      "earlier_cloud_success_run": 40135232301,
+      "earlier_observed_failure_run": 40133712445,
+      "review": "J25-ROOT-REVIEW.md"
     }
   ]
 }

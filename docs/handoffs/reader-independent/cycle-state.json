@@ -1,11 +1,22 @@
 {
   "schema": 1,
-  "recorded_at_utc": "2026-10-24T22:05:00Z",
+  "recorded_at_utc": "2026-10-24T22:30:00Z",
   "current_cycle": 1,
   "completed_cycles": 0,
   "audit_interval": 5,
   "next_audit_after_completed_cycle": 5,
-  "phase": "bounded_common_source_accepted_mobile_and_gtk_hosts_pending_integration_non_p0_migrated",
+  "phase": "bounded_g1_preserved_three_native_hosts_merged_common_source_revalidation_running",
+  "host_integration_candidate": {
+    "branch": "codex/reader-hosts-integration",
+    "source": "927201157d045f7ff994a1241a7e7703bc360fa3",
+    "run": 40138835223,
+    "attempt": 1,
+    "status": "in_progress",
+    "accepted": false,
+    "pin_job_success": true,
+    "gtk_palette_failures_remain_actual_failures": true,
+    "apple_host_not_yet_included": true
+  },
   "implementation_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "handoff_commit": "059a7b4fcd0de44674a30fadc7e0fded7cc47acd",
   "integration_source": "4e2dad0bc40aa5b523b98175f19fcb8ddde3eaa3",
@@ -71,7 +82,7 @@
     },
     {
       "agent": "/root/handoff_validation",
-      "branch": "codex/reader-gtk-reading-records-ui",
+      "branch": "codex/reader-gtk-batch-import-ui",
       "completed_receive_source": "ddaded9b81c2e51de4313919242f883246dd4426",
       "completed_receive_evidence_head": "8a7cab996f7b3a876254f16a90dab69bbeb9f15a",
       "completed_receive_run": 40087214516,
@@ -84,7 +95,8 @@
         "failed": 2
       },
       "settings_accepted": false,
-      "next_work": "G03_G04_product_reading_records_native_UI",
+      "next_work": "native_folder_batch_import_from_fixed_installed_F4_on_existing_worker",
+      "reading_evidence_head": "401729ba9537b58c8566372fb953384ce61381d7",
       "pending_settings": [
         "whole_reading_page_background",
         "dark_reading_page"
@@ -276,11 +288,12 @@
   "complete_product": false,
   "root_windows_search": {
     "branch": "codex/reader-windows-search-ui",
-    "accepted": false,
+    "accepted": true,
     "source": "0d74f24a7f378564cd72a8fa92acb78be0f54828",
-    "next": "same_source_complete_revalidation_after_legacy_count_schema_fix",
+    "evidence_head": "12f4f06cae2115fba90d3d43ebb0c291ea11e99a",
+    "next": "merged_into_native_host_candidate_for_new_same_source_validation",
     "run": 40136985552,
-    "run_status": "in_progress",
+    "run_status": "completed_success",
     "protocol_rejection_preflight_passed": true,
     "previous_full_host_success_source": "2de59ee96c5ade5f40c599148d60626791164791",
     "previous_full_host_success_run": 40135839283,
