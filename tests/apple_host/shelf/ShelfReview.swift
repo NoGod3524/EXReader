@@ -163,8 +163,36 @@ import CryptoKit
         paged.observe(restoredFrame, size: CGSize(width: 100, height: 100), revision: beforePrependEpoch)
         let oldPrependFrameRejected = paged.observation.contains("\"restoring_layout\":true")
         acknowledge()
+        let probes = HostShelf(defaults: UserDefaults(suiteName: "EXR.ShelfProbes.\(UUID().uuidString)")!)
+        probes.connect { query, anchor, before, inclusive, done in
+            done(Result { try queue.sync { try catalog.shelf(query: query, anchor: anchor, before: before, inclusive: inclusive) } })
+        }
+        let measuredRows = probes.rows
+        let oldProbeEpoch = probes.geometryRevision
+        probes.didScroll(revision: probes.restoreRevision)
+        let measuredEpoch = probes.geometryRevision
+        probes.measureProbe(key: nil, frame: .zero, size: CGSize(width: 100, height: 100), revision: measuredEpoch)
+        for (index, row) in measuredRows.dropLast().enumerated() {
+            probes.measureProbe(key: row.id, frame: CGRect(x: 0, y: CGFloat(index * 40), width: 100, height: 40),
+                size: CGSize(width: 100, height: 40), revision: measuredEpoch)
+        }
+        RunLoop.current.run(until: Date().addingTimeInterval(0.02))
+        let incompleteProbesRejected = probes.top == nil && probes.observation.contains("\"restoring_layout\":true")
+        let lastMeasured = measuredRows.last!
+        let lastMeasuredFrame = CGRect(x: 0, y: CGFloat((measuredRows.count - 1) * 40), width: 100, height: 40)
+        probes.measureProbe(key: lastMeasured.id, frame: lastMeasuredFrame, size: CGSize(width: 100, height: 40), revision: oldProbeEpoch)
+        RunLoop.current.run(until: Date().addingTimeInterval(0.02))
+        let staleLastProbeRejected = probes.top == nil && probes.observation.contains("\"restoring_layout\":true")
+        probes.measureProbe(key: lastMeasured.id, frame: lastMeasuredFrame, size: CGSize(width: 100, height: 40), revision: measuredEpoch)
+        let probeDeadline = Date().addingTimeInterval(1)
+        while probes.observation.contains("\"restoring_layout\":true") && Date() < probeDeadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.01))
+        }
+        let completeCurrentProbesAcknowledge = probes.top == measuredRows.first?.key &&
+            !probes.observation.contains("\"restoring_layout\":true")
         try check("layout_acknowledges_exact_restored_source", preScrollRejected && sameKeyOldEpochRejected && partialSnapshotRejected && requestsRealRetry &&
-            stillRestoring && prepended && oldPrependFrameRejected && paged.top == chosen.key &&
+            stillRestoring && prepended && oldPrependFrameRejected && incompleteProbesRejected && staleLastProbeRejected &&
+            completeCurrentProbesAcknowledge && paged.top == chosen.key &&
             !paged.observation.contains("\"restoring_layout\":true"))
         let terminal = try queue.sync { try catalog.shelf(query: "", anchor: nil, before: true) }
         let tailDefaults = UserDefaults(suiteName: "EXR.ShelfTail.\(UUID().uuidString)")!
