@@ -1,0 +1,21 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'org.exreader.sessionprobe'
+    compileSdk 35
+    ndkVersion '27.2.12479018'
+    defaultConfig {
+        applicationId 'org.exreader.sessionprobe'
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName '0.1.0'
+        testInstrumentationRunner 'org.exreader.sessionprobe.SessionProbe'
+        ndk { abiFilters 'x86_64' }
+        externalNativeBuild { cmake {
+            arguments '-DANDROID_STL=c++_static',"-DEXR_SDK=${rootDir}/../../../build/session-android/sdk-stage",
+                "-DCMAKE_PREFIX_PATH=${rootDir}/../../../build/session-android/sdk-stage;${rootDir}/../../../build/session-android/sideload-stage"
+        } }
+    }
+    externalNativeBuild { cmake { path '../../consumer/CMakeLists.txt'; version '3.31.1' } }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}
