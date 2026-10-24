@@ -154,17 +154,24 @@ end
   # INFOPLIST_KEY settings alone did not survive the cloud product generation.
   Xcodeproj::Plist.write_to_path({'EXRSourceSHA' => source_sha}, info_plist)
   app_settings(app, platform, deployment, info_plist)
-  if ARGV[2]
-    app.build_configurations.each do |config|
+  app.build_configurations.each do |config|
+    conditions = ['$(inherited)']
+    # Original UI acceptance retains its diagnostic observations. Accessibility
+    # regression uses the production semantic tree without debug identities.
+    conditions << 'EXR_APPLE_HOST_REVIEW' unless test_directory.include?('/accessibility/')
+    if ARGV[2]
       review = if test_directory.include?('/shelf/')
         'EXR_APPLE_SHELF_REVIEW'
       elsif test_directory.include?('/account/')
         'EXR_APPLE_ACCOUNT_REVIEW'
+      elsif test_directory.include?('/accessibility/')
+        nil
       else
         'EXR_APPLE_IMPORT_REVIEW'
       end
-      config.build_settings['SWIFT_ACTIVE_COMPILATION_CONDITIONS'] = '$(inherited) EXR_APPLE_HOST_REVIEW ' + review
+      conditions << review if review
     end
+    config.build_settings['SWIFT_ACTIVE_COMPILATION_CONDITIONS'] = conditions.join(' ')
   end
   embed_phase(app)
 

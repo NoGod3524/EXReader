@@ -147,6 +147,9 @@ import CryptoKit
         paged.didScroll(revision: paged.restoreRevision)
         paged.observe(restoredFrame, size: CGSize(width: 100, height: 100), revision: preScrollEpoch)
         let sameKeyOldEpochRejected = paged.observation.contains("\"restoring_layout\":true")
+        let priorTop = paged.top
+        paged.observe(restoredFrame, size: CGSize(width: 100, height: 100), revision: paged.geometryRevision, complete: false)
+        let partialSnapshotRejected = paged.top == priorTop && paged.observation.contains("\"restoring_layout\":true")
         if let wrong = paged.rows.dropFirst().first { layout(wrong.id) }
         let stillRestoring = paged.observation.contains("\"restoring_layout\":true")
         let beforePrependEpoch = paged.geometryRevision
@@ -156,7 +159,7 @@ import CryptoKit
         paged.observe(restoredFrame, size: CGSize(width: 100, height: 100), revision: beforePrependEpoch)
         let oldPrependFrameRejected = paged.observation.contains("\"restoring_layout\":true")
         acknowledge()
-        try check("layout_acknowledges_exact_restored_source", preScrollRejected && sameKeyOldEpochRejected &&
+        try check("layout_acknowledges_exact_restored_source", preScrollRejected && sameKeyOldEpochRejected && partialSnapshotRejected &&
             stillRestoring && prepended && oldPrependFrameRejected && paged.top == chosen.key &&
             !paged.observation.contains("\"restoring_layout\":true"))
         let terminal = try queue.sync { try catalog.shelf(query: "", anchor: nil, before: true) }

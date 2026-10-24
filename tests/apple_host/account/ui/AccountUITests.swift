@@ -39,6 +39,17 @@ final class AccountUITests: XCTestCase {
 
     private func tap(_ identifier: String) {
         XCTAssertTrue(node(identifier).waitForExistence(timeout: 30), identifier)
+        for _ in 0..<8 {
+            if node(identifier).isHittable { break }
+            let form = node("account.form")
+            guard form.exists else { break }
+            let earlier = node(identifier).frame.midY < form.frame.midY
+#if os(macOS)
+            form.scroll(byDeltaX: 0, deltaY: earlier ? 260 : -260)
+#else
+            if earlier { form.swipeDown() } else { form.swipeUp() }
+#endif
+        }
         XCTAssertTrue(wait { self.node(identifier).isHittable && self.node(identifier).isEnabled }, identifier)
         node(identifier).tap()
     }
