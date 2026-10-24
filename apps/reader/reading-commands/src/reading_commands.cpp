@@ -129,10 +129,10 @@ struct request {
     if(st==READER_REV_NOT_FOUND)return std::string();
     if(st!=READER_REV_OK)throw failure{READER_RC_REVISION,"Cannot read the retained revision",{},e};
     if(std::strcmp(info.entity_kind,"annotation"))refuse(READER_RC_SOURCE,"The retained revision ID belongs to another entity");
-    std::string key=info.entity_key;size_t colon=key.rfind(':');
-    if(colon==std::string::npos||key.size()-colon-1!=32||key.compare(0,colon,book_key))
+    std::string retained=info.entity_key;size_t colon=retained.rfind(':');
+    if(colon==std::string::npos||retained.size()-colon-1!=32||retained.compare(0,colon,book_key))
       refuse(READER_RC_SOURCE,"The retained revision belongs to another annotation");
-    std::string aid=key.substr(colon+1);
+    std::string aid=retained.substr(colon+1);
     if(!hex32(aid))refuse(READER_RC_SOURCE,"The retained revision has no annotation identity");
     return aid;
   }
