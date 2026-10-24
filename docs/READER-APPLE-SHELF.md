@@ -196,6 +196,14 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
   the immutable epoch from their body construction, instead of reading the
   current model epoch when an old closure runs. This completes the epoch boundary
   from row/bounds capture through reduction, scroll issue and acknowledgement.
+- The strict `dab62a00` candidate passed rotation/restoration but the refresh
+  case waited on a fresh layout after receiving 50 rows, with no visible rows
+  acknowledged, in [40054466745](https://github.com/NoGod3524/EXReader/actions/runs/40054466745).
+  Artifact `12545365590` preserves the failure. One restore task keyed by the
+  request revision now replaces the appearance/change hooks. Only the clear
+  geometry probes receive epoch identities, forcing a new native measurement;
+  the List and stable book-row identities are retained. No readiness or anchor
+  assertion is relaxed.
 
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.

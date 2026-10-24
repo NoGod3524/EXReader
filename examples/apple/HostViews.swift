@@ -106,9 +106,8 @@ struct LibraryScreen: View {
     @FocusState private var searchFocused: Bool
     @Environment(\.scenePhase) private var phase
 
-    private func restoreShelf(_ proxy: ScrollViewProxy) {
-        guard let key = shelf.restoreKey else { return }
-        let revision = shelf.restoreRevision
+    private func restoreShelf(_ proxy: ScrollViewProxy, revision: Int) {
+        guard revision == shelf.restoreRevision, let key = shelf.restoreKey else { return }
         DispatchQueue.main.async {
             guard shelf.restoreRevision == revision else { return }
             proxy.scrollTo(key, anchor: .top)
@@ -118,6 +117,7 @@ struct LibraryScreen: View {
 
     var body: some View {
         let geometryRevision = shelf.geometryRevision
+        let restoreRevision = shelf.restoreRevision
         VStack(spacing: 0) {
             HStack {
                 Text("EXReader 书架").font(.title2).bold()
@@ -189,7 +189,7 @@ struct LibraryScreen: View {
                             .background(GeometryReader { geometry in
                                 Color.clear.preference(key: ShelfGeometryKey.self,
                                     value: ShelfGeometry(frames: [book.id: geometry.frame(in: .named("catalog-shelf"))], revision: geometryRevision))
-                            })
+                            }.id(geometryRevision))
                         }
                     }
                     .accessibilityIdentifier("library.list")
@@ -197,10 +197,9 @@ struct LibraryScreen: View {
                     .coordinateSpace(name: "catalog-shelf")
                     .background(GeometryReader { geometry in
                         Color.clear.preference(key: ShelfGeometryKey.self, value: ShelfGeometry(size: geometry.size, revision: geometryRevision))
-                    })
+                    }.id(geometryRevision))
                     .onPreferenceChange(ShelfGeometryKey.self) { geometry in shelf.observe(geometry.frames, size: geometry.size, revision: geometry.revision) }
-                    .onAppear { restoreShelf(proxy) }
-                    .onChange(of: shelf.restoreRevision) { _ in restoreShelf(proxy) }
+                    .task(id: restoreRevision) { @MainActor in restoreShelf(proxy, revision: restoreRevision) }
                 }
             }
 
