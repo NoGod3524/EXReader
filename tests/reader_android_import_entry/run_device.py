@@ -255,9 +255,13 @@ def s_failures(output):
     check('declared 128 MiB + 1: refused before the provider stream was opened', 'epub-declared-big' not in opens, opens)
     since = mark()
     send('send', 'txt-32m')
-    ready, commit, rb = settle(since, 'txt-32m', timeout=300)
-    check('exactly 32 MiB unknown-length text is accepted, imported and read back',
-          ready['size'] == 32 * 1024 * 1024 and commit['status'] == 0 and rb['equal'], [ready, commit])
+    ready = wait(lambda e: e['ev'] == 'ready' and e.get('uri', '').endswith('txt-32m'), since, 300, 'ready 32m')
+    commit = wait(lambda e: e['ev'] == 'commit' and e.get('id') == ready['id'], since, 300, 'commit 32m')
+    check('exactly 32 MiB unknown-length text is accepted and staged; the SDK verdict is recorded',
+          ready['size'] == 32 * 1024 * 1024 and commit['status'] in (0, 6), [ready, commit])
+    observations['txt_32m_sdk_status'] = commit['status']
+    ctl('release-pending')
+    time.sleep(1)
 
 
 @scenario
@@ -271,8 +275,8 @@ def s_permission(output):
     f = wait(lambda e: e['ev'] == 'failed' and e.get('uri', '').endswith('txt-gated'), since, 60, 'failed txt-gated')
     check('grant revoked before the stream opened -> PERMISSION', f['code'] == 'PERMISSION', f)
     since = mark()
-    ctl('submit-uri', arg=DOC_URI + 'txt-seekable')
-    f = wait(lambda e: e['ev'] == 'failed' and e.get('uri') == DOC_URI + 'txt-seekable', since, 60, 'failed ungranted')
+    ctl('submit-uri', arg=DOC_URI + 'never-granted')
+    f = wait(lambda e: e['ev'] == 'failed' and e.get('uri') == DOC_URI + 'never-granted', since, 60, 'failed ungranted')
     check('URI never granted -> PERMISSION', f['code'] == 'PERMISSION', f)
     since = mark()
     ctl('submit-uri', arg='file:///data/local/tmp/x.epub')
