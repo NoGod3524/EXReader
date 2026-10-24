@@ -17,6 +17,7 @@
 #include "internal.h"
 
 #define RD_OVER 33u
+#define RD_COUNTER_IDS 10u
 
 /* Per-call preset storage. No global entry arrays: the thread case builds in
    several threads at once and must not share mutable state. */
@@ -145,7 +146,7 @@ static void fill_preset(reader_diag_input *in, const char *preset, preset_storag
     in->account_configured = READER_DIAG_TRI_YES;
     in->sync_enabled = READER_DIAG_TRI_YES;
     in->offline_mode = READER_DIAG_TRI_YES;
-    for (index = 0; index < READER_DIAG_MAX_COUNTER_ENTRIES; ++index, ++slot) {
+    for (index = 0; index < RD_COUNTER_IDS; ++index, ++slot) {
       storage->counters[slot].id = (uint32_t)(index + 1u);
       storage->counters[slot].value = READER_DIAG_MAX_COUNT;
     }
@@ -159,7 +160,7 @@ static void fill_preset(reader_diag_input *in, const char *preset, preset_storag
       }
     }
     in->counters = storage->counters;
-    in->counter_count = READER_DIAG_MAX_COUNTER_ENTRIES;
+    in->counter_count = RD_COUNTER_IDS;
     in->errors = storage->errors;
     in->error_count = READER_DIAG_MAX_ERROR_ENTRIES;
     return;
@@ -194,6 +195,7 @@ static void emit(reader_diag_status status, const reader_diag_error *error, int 
 
 #ifdef READER_DIAGNOSTIC_TEST_HOOKS
 static char g_pause_tag[4096];
+static int g_pause_mode; /* 0 none, 1 before the commit, 2 after the commit */
 
 static void sleep_ms(unsigned milliseconds) {
 #if defined(_WIN32)
@@ -215,12 +217,12 @@ static int file_exists(const char *path) {
 
 /* The parent creates "<marker>.go" to release the pause; the pause gives up after
    a minute so a paused worker can never hang the job. */
-static void pause_wait(const char *suffix) {
+static void pause_wait(int mode, const char *suffix) {
   char ready[4300];
   char go[4300];
   FILE *marker;
   unsigned spins;
-  if (g_pause_tag[0] == '\0') return;
+  if (g_pause_mode != mode || g_pause_tag[0] == '\0') return;
   (void)snprintf(ready, sizeof(ready), "%s.%s", g_pause_tag, suffix);
   (void)snprintf(go, sizeof(go), "%s.go", g_pause_tag);
   marker = fopen(ready, "wb");
@@ -234,8 +236,8 @@ static void pause_wait(const char *suffix) {
   }
 }
 
-void rd_test_pause_before_commit(void) { pause_wait("before"); }
-void rd_test_pause_after_commit(void) { pause_wait("after"); }
+void rd_test_pause_before_commit(void) { pause_wait(1, "before"); }
+void rd_test_pause_after_commit(void) { pause_wait(2, "after"); }
 #endif
 
 typedef struct {
@@ -453,6 +455,7 @@ static int command_pause(int argc, char **argv) {
   }
 #ifdef READER_DIAGNOSTIC_TEST_HOOKS
   (void)snprintf(g_pause_tag, sizeof(g_pause_tag), "%s", marker);
+  g_pause_mode = strcmp(argv[1], "pause-before") == 0 ? 1 : 2;
 #endif
   memset(&options, 0, sizeof(options));
   options.struct_size = (uint32_t)sizeof(options);

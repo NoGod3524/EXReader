@@ -242,7 +242,7 @@ def main():
         require(HEADER.is_file(), "installed header missing: %s" % HEADER)
         text = HEADER.read_text(encoding="utf-8")
         for name, expected in HEADER_CONTRACT.items():
-            match = re.search(r"#define\s+" + name + r"\s+(\d+)u?u?\b", text)
+            match = re.search(r"#define\s+" + name + r"\s+(\d+)[uUlL]*\b", text)
             require(match is not None, "installed header lacks " + name)
             value = int(match.group(1))
             require(value == expected,
@@ -399,7 +399,7 @@ def main():
         require(int(values["summary_size"]) <= limits["READER_DIAG_MAX_SUMMARY_BYTES"],
                 "summary over the hard limit")
         payload = load_json(json_path)
-        require(len(payload["counters"]) == 16, "max counters")
+        require(len(payload["counters"]) == 10, "max counters")
         require(len(payload["errors"]) == 32, "max errors")
         require(all(entry["value"] == MAX_COUNT for entry in payload["counters"]),
                 "max counter values")
@@ -602,9 +602,15 @@ def main():
         ready = Path(str(marker) + "." + suffix)
         deadline = time.time() + timeout
         while not ready.exists():
-            require(process.poll() is None,
-                    "paused write exited early rc=%r" % (process.returncode,))
-            require(time.time() < deadline, "paused write never signalled " + suffix)
+            if process.poll() is not None:
+                out, err = process.communicate()
+                raise CheckFailure("paused write exited early rc=%r %s %s" % (
+                    process.returncode, out[-400:], err[-400:]))
+            if time.time() > deadline:
+                process.kill()
+                out, err = process.communicate()
+                raise CheckFailure("paused write never signalled %s: %s %s" % (
+                    suffix, out[-400:], err[-400:]))
             time.sleep(0.05)
         time.sleep(0.25)
 

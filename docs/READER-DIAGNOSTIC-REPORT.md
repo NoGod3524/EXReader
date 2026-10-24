@@ -145,7 +145,7 @@ sign, no planted secret. The scanner reads the files, not a library flag.
 - Performance: no budget is claimed or measured; the report is bounded by the
   entry limits and the two output buffers.
 - output-limits exercises the overflow guard through the test-hook build only.
-  Contract-valid input cannot overflow (proved by max-entries-fit: 32 errors and
-  16 counters stay inside 8192/4096 bytes), so the guard exists to keep a future
+  Contract-valid input cannot overflow (proved by max-entries-fit: the full closed
+  counter set and 32 errors stay inside 8192/4096 bytes), so the guard exists to keep a future
   limit change from silently truncating.
 - Windows path length beyond MAX_PATH; POSIX filesystems without hard links.
