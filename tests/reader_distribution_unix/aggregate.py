@@ -264,6 +264,7 @@ def verify_platform(key, files, sha, run_id, attempt, output):
         workspace = Path(tempfile.mkdtemp(prefix='j24-report-'))
         try:
             archive_path = workspace / archives[0]
+            archive_path.parent.mkdir(parents=True, exist_ok=True)
             archive_path.write_bytes(archive_bytes)
             extracted = workspace / 'extracted'
             report = contract.extract(archive_path, extracted, manifest)
