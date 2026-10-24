@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "accepted": false,
+  "scope": "native Apple in-book search only",
+  "branch": "codex/reader-apple-search-ui",
+  "fixed_start": "a1a41b08a3661bb01170e37031913649b2b296db",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "sdk_abi": 1,
+  "search_module_tree": "2e09cb2945564f25085074a816b95472392df205",
+  "product_schema": 1,
+  "runs": [{
+    "id": 40118546762,
+    "attempt": 1,
+    "source_sha": "9caa882073d371ec79f07a1d4cf7a1235c096419",
+    "accepted": false,
+    "conclusion": "failure",
+    "search_native_checks": 10,
+    "search_native_passed": 10,
+    "failure": "Standalone catalog consumer could not compile a new return type belonging to HostSDK.swift. Fixed by returning a validated identity string, preserving the independent catalog build.",
+    "artifact_id": 12569452979,
+    "artifact_bytes": 1345938,
+    "artifact_digest": "sha256:beae1bac7eb424af7f4bac30151d3011c756f8d698721e6541fa1fef60fd7697"
+  }],
+  "platforms": {"macos": "pending", "iphone": "pending", "ipad": "pending"},
+  "physical_device_execution": false,
+  "performance_accepted": false,
+  "voiceover_accepted": false,
+  "same_source_joint_accepted": false,
+  "complete_product": false
+}

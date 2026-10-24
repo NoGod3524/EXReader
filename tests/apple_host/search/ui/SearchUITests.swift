@@ -53,7 +53,9 @@ final class SearchUITests: XCTestCase {
         tap("reader.search")
         let field = element("search.query")
         XCTAssertTrue(field.waitForExistence(timeout: 15))
-        field.tap(); field.typeText(value)
+        field.tap()
+        let prior = field.value as? String ?? ""
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: prior.count) + value)
         tap("search.find")
     }
     func testFindSelectAndProcessRestart() {

@@ -1488,7 +1488,7 @@ final class HostReaderModel: ObservableObject {
             do {
                 guard let session = self.session, let catalog = self.catalog,
                       session.book?.id == bookID else { throw HostError.invalidInput("书籍已切换") }
-                let key = try catalog.searchIdentity(sdkID: bookID).searchKey
+                let key = try catalog.searchSourceKey(sdkID: bookID)
                 guard boundSource == nil || boundSource == key else { throw HostError.invalidInput("原件身份已变化，请重新查找") }
 #if EXR_APPLE_HOST_REVIEW
                 let priorPoll = HostSDKReview.poll
@@ -1522,7 +1522,7 @@ final class HostReaderModel: ObservableObject {
         queue.async {
             do {
                 guard let session = self.session, let catalog = self.catalog,
-                      try catalog.searchIdentity(sdkID: hit.bookID).searchKey == hit.sourceKey else {
+                      try catalog.searchSourceKey(sdkID: hit.bookID) == hit.sourceKey else {
                     throw HostError.invalidInput("原件身份已变化")
                 }
                 let (candidate, snapshot) = try session.searchCandidate(hit, cancel: box)

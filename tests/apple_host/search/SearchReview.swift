@@ -39,7 +39,7 @@ import Darwin
             try Data(text.utf8).write(to: source)
             let (id, _) = try session.importBook(url: source, cancel: HostCancelBox(), catalog: catalog)
             _ = try session.open(bookID: id, cancel: HostCancelBox())
-            let key = try catalog.searchIdentity(sdkID: id).searchKey
+            let key = try catalog.searchSourceKey(sdkID: id)
             let baseline = try session.stateHash()
             func batch(_ resume: reader_search_cursor? = nil, query: String = "needle😀", sourceKey: String? = nil,
                        cancel: HostCancelBox = HostCancelBox(), using owner: HostLibrary? = nil) throws -> HostSearchBatch {
@@ -101,7 +101,7 @@ import Darwin
             check("bounded-epub-exact-spine-route") {
                 let (epubID, _) = try session.importBook(url: resources.appendingPathComponent("Bounded.epub"), cancel: HostCancelBox(), catalog: catalog)
                 _ = try session.open(bookID: epubID, cancel: HostCancelBox())
-                let sourceKey = try catalog.searchIdentity(sdkID: epubID).searchKey
+                let sourceKey = try catalog.searchSourceKey(sdkID: epubID)
                 let found = try HostSearchWorker.batch(library: library, font: font, bookID: epubID,
                     sourceKey: sourceKey, query: "opening", resume: nil, cancel: HostCancelBox())
                 try expect(found.hits.count == 3 && found.complete, "Duplicate spine occurrence omitted")
@@ -117,7 +117,7 @@ import Darwin
                 let query = String(text.trimmingCharacters(in: .whitespacesAndNewlines).prefix(3))
                 try expect(!query.isEmpty, "Fixture has no PDF text")
                 let found = try HostSearchWorker.batch(library: library, font: font, bookID: pdfID,
-                    sourceKey: catalog.searchIdentity(sdkID: pdfID).searchKey, query: query, resume: nil, cancel: HostCancelBox())
+                    sourceKey: catalog.searchSourceKey(sdkID: pdfID), query: query, resume: nil, cancel: HostCancelBox())
                 try expect(!found.hits.isEmpty && found.hits[0].mode == READER_SEARCH_FIXED, "PDF hit missing")
                 let (_, frame) = try session.searchCandidate(found.hits[0], cancel: HostCancelBox())
                 try expect(frame.pageText.contains(query), "Resolved PDF page differs")
@@ -131,6 +131,7 @@ import Darwin
                     images.append(String(cString: info.dli_fname))
                 }
                 try expect(Set(images).count == 1 && images[0].contains("libexreader"), "Search/resolver SDK image differs")
+                print("SEARCH_DSO_IMAGES \(images)")
             }
         }
         let failed = checks.filter { $0["passed"] as? Bool != true }.count
