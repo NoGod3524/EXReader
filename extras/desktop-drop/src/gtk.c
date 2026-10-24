@@ -73,12 +73,17 @@ exr_drop_status exr_drop_gtk_clipboard_request(GtkClipboard *clipboard, exr_drop
   if (!clipboard) return EXR_DROP_ARGUMENT;
   if (origin < EXR_DROP_ORIGIN_DROP || origin > EXR_DROP_ORIGIN_TEXT) return EXR_DROP_ARGUMENT;
   if (control && control->struct_size != sizeof(*control)) return EXR_DROP_ARGUMENT;
-  if (!gtk_clipboard_wait_is_available(clipboard)) return EXR_DROP_EMPTY;
   for (index = 0; index < sizeof(names) / sizeof(*names); index++) {
     GtkSelectionData *selection = gtk_clipboard_wait_for_contents(clipboard,
         gdk_atom_intern_static_string(names[index]));
     if (selection) {
-      exr_drop_status status = gtk_parse(index == 1, selection, origin, control, out);
+      exr_drop_status status;
+      /* The owner does not serve this target: try the next flavour. */
+      if (gtk_selection_data_get_length(selection) < 0) {
+        gtk_selection_data_free(selection);
+        continue;
+      }
+      status = gtk_parse(index == 1, selection, origin, control, out);
       gtk_selection_data_free(selection);
       return status;
     }

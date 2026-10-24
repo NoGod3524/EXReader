@@ -77,10 +77,19 @@ static void prepare_tree(void) {
   mkdir_one(leaf);
 }
 
+/* Set to 1 around the gnome-copied-files cases so the shared helpers parse the
+   gnome flavour; every other case uses text/uri-list. */
+static int g_gnome;
+
+static exr_drop_status parse_list(const char *payload, size_t size, exr_drop_request **out) {
+  return g_gnome ? exr_drop_request_from_gnome_files(payload, size, EXR_DROP_ORIGIN_TEXT, NULL, out)
+                 : exr_drop_request_from_uri_list(payload, size, EXR_DROP_ORIGIN_TEXT, NULL, out);
+}
+
 static void expect_items(const char *name, exr_drop_status want_status, const char *payload, size_t size,
     const spec *specs, size_t spec_count, size_t duplicates, size_t overflow) {
   exr_drop_request *request = NULL;
-  exr_drop_status status = exr_drop_request_from_uri_list(payload, size, EXR_DROP_ORIGIN_TEXT, NULL, &request);
+  exr_drop_status status = parse_list(payload, size, &request);
   char detail[480];
   exr_drop_request_info info;
   size_t index;
@@ -158,7 +167,7 @@ static void expect_items(const char *name, exr_drop_status want_status, const ch
 
 static void expect_status(const char *name, exr_drop_status want, const char *payload, size_t size) {
   exr_drop_request *request = NULL;
-  exr_drop_status status = exr_drop_request_from_uri_list(payload, size, EXR_DROP_ORIGIN_TEXT, NULL, &request);
+  exr_drop_status status = parse_list(payload, size, &request);
   char detail[256];
   if (status == want && request == NULL) {
     report_pass(name, exr_drop_status_name(status));
@@ -177,14 +186,22 @@ static int cancel_after_one(void *context) {
   return *seen > 1;
 }
 
+static int g_reentrant_ok;
 static int reentrant_cancel(void *context) {
   exr_drop_request *inner = NULL;
   exr_drop_status status;
   (void)context;
   status = exr_drop_request_from_uri_list("https://example.invalid/x", 25, EXR_DROP_ORIGIN_TEXT, NULL, &inner);
-  if (status != EXR_DROP_OK) return 1;
+  g_reentrant_ok = status == EXR_DROP_OK && inner != NULL;
+  if (inner) {
+    exr_drop_request_info info;
+    memset(&info, 0, sizeof(info));
+    info.struct_size = sizeof(info);
+    exr_drop_request_get_info(inner, &info);
+    g_reentrant_ok = g_reentrant_ok && info.item_count == 1;
+  }
   exr_drop_request_release(inner);
-  return 0;
+  return 1;
 }
 
 /* ---- worker thread --------------------------------------------------- */
@@ -263,7 +280,11 @@ int main(void) {
   one[0].status = EXR_DROP_ITEM_MISSING;
   one[0].path = native;
   {
+#ifdef _WIN32
+    size_t used = (size_t)snprintf(payload, sizeof(payload), "file:///");
+#else
     size_t used = (size_t)snprintf(payload, sizeof(payload), "file://");
+#endif
     for (index = 0; native[index] && used + 8 < sizeof(payload); index++) {
       unsigned char c = (unsigned char)native[index];
       if (c == '\\') {
@@ -278,6 +299,10 @@ int main(void) {
   }
   {
     char localhost_uri[2300];
+    join_native(native, sizeof(native), "a.txt");
+    to_uri(native, uri, sizeof(uri));
+    one[0].status = EXR_DROP_ITEM_FILE;
+    one[0].path = native;
     snprintf(localhost_uri, sizeof(localhost_uri), "file://localhost%s", uri + 7);
     expect_items("uri_localhost_is_local", EXR_DROP_OK, localhost_uri, strlen(localhost_uri), one, 1, 0, 0);
   }
@@ -337,10 +362,12 @@ int main(void) {
   expect_status("argument_null_with_size", EXR_DROP_ARGUMENT, NULL, 5);
   {
     char gnome[2300];
+    g_gnome = 1;
     snprintf(gnome, sizeof(gnome), "copy\n%s", uri);
     expect_items("gnome_copy_prefix", EXR_DROP_OK, gnome, strlen(gnome), one, 1, 0, 0);
     snprintf(gnome, sizeof(gnome), "cut\r\n%s\r\n", uri);
     expect_items("gnome_cut_prefix", EXR_DROP_OK, gnome, strlen(gnome), one, 1, 0, 0);
+    g_gnome = 0;
   }
 
   /* ---- limits ------------------------------------------------------- */
@@ -373,12 +400,28 @@ int main(void) {
     }
   }
   {
-    size_t used = (size_t)snprintf(payload, 16, "file:///");
-    while (used < EXR_DROP_MAX_PATH_BYTES + 100) payload[used++] = 'a';
-    payload[used] = 0;
-    one[0].status = EXR_DROP_ITEM_TOO_LONG;
-    one[0].path = NULL;
-    expect_items("limit_path_too_long", EXR_DROP_OK, payload, used, one, 1, 0, 0);
+    char *long_native = (char *)malloc(EXR_DROP_MAX_PATH_BYTES + 200);
+    char *long_uri = (char *)malloc(EXR_DROP_MAX_PATH_BYTES + 300);
+    if (!long_native || !long_uri) {
+      report_skip("limit_path_too_long", "allocation failed");
+    } else {
+      size_t used = 0;
+#ifdef _WIN32
+      long_native[used++] = 'C';
+      long_native[used++] = ':';
+      long_native[used++] = '\\';
+#else
+      long_native[used++] = '/';
+#endif
+      while (used < EXR_DROP_MAX_PATH_BYTES + 100) long_native[used++] = 'a';
+      long_native[used] = 0;
+      to_uri(long_native, long_uri, EXR_DROP_MAX_PATH_BYTES + 300);
+      one[0].status = EXR_DROP_ITEM_TOO_LONG;
+      one[0].path = NULL;
+      expect_items("limit_path_too_long", EXR_DROP_OK, long_uri, strlen(long_uri), one, 1, 0, 0);
+    }
+    free(long_native);
+    free(long_uri);
   }
 
   /* ---- cancellation and argument guards ----------------------------- */
@@ -402,10 +445,10 @@ int main(void) {
   request = NULL;
   if (exr_drop_request_from_uri_list(uri, strlen(uri), EXR_DROP_ORIGIN_TEXT, &control, &request)
           == EXR_DROP_CANCELLED
-      && request == NULL)
+      && request == NULL && g_reentrant_ok)
     report_pass("reentrant_parse_in_cancel", "nested parse inside the poll is safe");
   else {
-    report_fail("reentrant_parse_in_cancel", "nested parse changed the outcome");
+    report_fail("reentrant_parse_in_cancel", "nested parse or cancellation changed the outcome");
     exr_drop_request_release(request);
   }
   control.struct_size = sizeof(control) - 1;
