@@ -197,7 +197,19 @@ class Device(M.MetadataApp):
         dialog = self.find_dialog()
         if dialog:
             info.update(note=M.text(U.GetDlgItem(dialog, MESSAGE)), detail=M.text(U.GetDlgItem(dialog, DETAIL)))
+        windows = []
+
+        @ENUM
+        def visit(window, unused):
+            pid = W.DWORD();U.GetWindowThreadProcessId(window, C.byref(pid))
+            if pid.value == self.process.pid:
+                name = C.create_unicode_buffer(100);U.GetClassNameW(window, name, 100)
+                windows.append({'class': name.value, 'visible': bool(U.IsWindowVisible(window)), 'enabled': bool(U.IsWindowEnabled(window))})
+            return True
+        U.EnumWindows(visit, 0)
+        info['windows'] = windows
         print(json.dumps({'diagnostic': info}, ensure_ascii=False), flush=True)
+        M.screenshot(U.GetDesktopWindow(), output / ('failure-desktop-' + self.profile.name + '.bmp'))
         M.screenshot(dialog or self.window, output / ('failure-' + self.profile.name + '.bmp'))
 
     def has_row(self, title):
@@ -367,7 +379,7 @@ def main():
         A = new_device('device-a')
         assert U.GetDlgItem(A.window, ACCOUNT) and not U.GetDlgItem(A.window, APPLY) and not U.GetDlgItem(A.window, ROOT)
         record('default_shelf_has_one_secondary_account_entry_and_no_resident_account_controls')
-        import_books(A, ['AAA Large Text.txt', 'Account Comic.cbz', 'Account Epub.epub', 'Account Pdf.pdf', 'Remote Small.txt'])
+        import_books(A, ['Remote Small.txt', 'Account Comic.cbz', 'Account Epub.epub', 'Account Pdf.pdf', 'AAA Large Text.txt'])
         A.wait(lambda: len(sql('device-a', 'SELECT book_key FROM reader_books')) == 5)
         formats = sorted(f for f, in sql('device-a', 'SELECT format FROM reader_books'))
         assert formats == ['cbz', 'epub', 'pdf', 'txt', 'txt'], formats

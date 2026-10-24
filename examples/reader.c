@@ -2158,12 +2158,14 @@ static void layout_controls(void) {
       MoveWindow(row[i].window, row[i].x, button_y, row[i].w, button_h, TRUE);
   }
   MoveWindow(g.shelf_label, 8, content_top, left_width - 16, 18, TRUE);
-#ifdef EXR_READER_WINDOWS_ACCOUNT
-  MoveWindow(g.account_button, 1010, button_y, 44, button_h, TRUE);
-#endif
 #ifdef EXR_READER_DESKTOP_METADATA
   MoveWindow(g.shelf_label,8,content_top,left_width-104,18,TRUE);
   MoveWindow(g.metadata_button,left_width-88,content_top-2,80,22,TRUE);
+#endif
+#ifdef EXR_READER_WINDOWS_ACCOUNT
+  /* One small secondary entry beside the shelf title; it stays inside the left pane. */
+  MoveWindow(g.shelf_label,8,content_top,left_width-164,18,TRUE);
+  MoveWindow(g.account_button,left_width-148,content_top-2,56,22,TRUE);
 #endif
   books_height = (content_bottom - content_top - 30) * 45 / 100;
   if (books_height < 120) books_height = 120;
