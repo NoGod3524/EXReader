@@ -1137,8 +1137,9 @@ def main():
         assert reopened_20.command('start')['code'] == 0
         finished_20 = reopened_20.wait(4)
         assert finished_20['status'] == 0, finished_20
-        assert digest(manifest_20.read_bytes()) == binding_20
         assert counts_20() == (1, 0) and entries[path_20] == raw(tag_20)
+        # The live worker holds the binding file without sharing on Windows, so
+        # the binding is read back only once the process has exited.
         reopened_20.close()
         assert digest(manifest_20.read_bytes()) == binding_20
         record('same_account_reopen_after_forced_kill_resumes_without_rebinding',
@@ -1178,8 +1179,8 @@ def main():
         refused_21 = other_21.wait(5)
         assert refused_21['status'] == 4, refused_21
         assert len(requests) == before_21, requests[before_21:]
-        assert digest(manifest_21.read_bytes()) == binding_21
         other_21.close()
+        assert digest(manifest_21.read_bytes()) == binding_21
         assert counts_21() == (1, 1)
         record('different_account_after_forced_kill_is_refused_before_any_request',
                'A different account on the killed store is refused with the account status before any '
