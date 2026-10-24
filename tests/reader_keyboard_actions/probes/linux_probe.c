@@ -113,15 +113,13 @@ static const char *current_step = "startup";
 
 static void begin_case(const char *name) {
   current_step = name;
-  (void)fprintf(stdout, "STEP %s
-", name);
+  (void)fprintf(stdout, "STEP %s\n", name);
   (void)fflush(stdout);
 }
 
 static void on_watchdog(int signal_number) {
   (void)signal_number;
-  (void)fprintf(stderr, "watchdog: the probe exceeded its time budget in case %s
-", current_step);
+  (void)fprintf(stderr, "watchdog: the probe exceeded its time budget in case %s\n", current_step);
   (void)fflush(stderr);
   _exit(3);
 }
