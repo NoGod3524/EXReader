@@ -177,9 +177,11 @@ static exr_status collections_prepare_member(linux_reader *reader,const reader_c
   reader_metadata_snapshot_free(reader->collection_snapshot);reader->collection_snapshot=NULL;
   reader_metadata_error error={0};reader_metadata_status code=reader_metadata_prepare_membership(reader->metadata,producer,
     command->collection_id,command->collection_book_key,&reader->collection_snapshot,&error);
+  int bootstrapped=0;
   if(code==READER_METADATA_NEEDS_BOOTSTRAP) {
     reader_metadata_snapshot_free(reader->collection_snapshot);reader->collection_snapshot=NULL;
     exr_status status=collections_bootstrap_book(reader,command->collection_book_key,result);if(status!=EXR_OK) return status;
+    bootstrapped=1;
     code=reader_metadata_prepare_membership(reader->metadata,producer,command->collection_id,command->collection_book_key,
       &reader->collection_snapshot,&error);
   }
@@ -200,6 +202,7 @@ static exr_status collections_prepare_member(linux_reader *reader,const reader_c
   result->collection_membership_present=view->present;result->collection_membership_deleted=view->deleted;
   result->has_collections=1;result->collection_response=3;result->collection_kind=command->collection_kind;
   result->collection_operation=reader->collection_operation;result->collection_ordinal=view->membership.ordinal;
+  if(bootstrapped) snprintf(result->message,sizeof(result->message),"Original verified; book details are retained. Save applies this classification change; Cancel makes no membership change.");
   collections_next_token(reader,result);return EXR_OK;
 }
 static int collections_position(const char *text,uint64_t *value) {
