@@ -8,6 +8,14 @@
 #include <sys/types.h>
 #include <math.h>
 #include <errno.h>
+#ifdef EXR_READER_NAVIGATION
+#include <reader_navigation.h>
+#include <glib.h>
+#endif
+#ifdef EXR_READER_SEARCH
+#include <reader_search.h>
+#include <glib.h>
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
 #include "catalog_sdk.h"
 #include <fcntl.h>
@@ -24,6 +32,8 @@
 #include <exr_credentials.h>
 #include <exr_sideload.h>
 #include <exr_webdav.h>
+#include <reader_projection.h>
+#include <reader_reading_state.h>
 #endif
 
 #define PAGE_TEXT_LIMIT (1024u*1024u)
@@ -47,6 +57,20 @@ struct linux_reader {
   reader_session current;
   reader_session pending;
   int has_pending,pending_owns_session,pending_new_pager;
+#ifdef EXR_READER_NAVIGATION
+  void *navigation_data;
+  int navigation_pending;
+  uint64_t navigation_pending_token;
+#endif
+#ifdef EXR_READER_SEARCH
+  void *search_data;
+  int search_pending;
+  uint64_t search_pending_token;
+#endif
+#ifdef EXR_READER_PREFERENCES
+  reader_preferences appearance;
+  int appearance_enabled;
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   reader_catalog *catalog;
   char *catalog_path;
@@ -64,10 +88,22 @@ struct linux_reader {
 #endif
 #ifdef EXR_READER_ACCOUNT
   void *account_data;
+  void *received_data;
 #endif
 };
+typedef struct {int64_t id;int font,zoom;} reader_import_saved;
+static exr_status reader_import_suspend(linux_reader *,reader_import_saved *);
+static exr_status reader_import_resume(linux_reader *,const reader_import_saved *,reader_result *);
+#ifdef EXR_READER_NAVIGATION
+static void navigation_free(linux_reader *);
+#endif
+#ifdef EXR_READER_SEARCH
+static void search_free(linux_reader *);
+#endif
 #ifdef EXR_READER_ACCOUNT
 static void accounts_free(linux_reader *);
+static void received_free(linux_reader *);
+static void received_annotate_shelf(linux_reader *,reader_result *);
 #endif
 void reader_secret_free(char *value) {
   if(value) { volatile char *out=value;size_t size=strlen(value);while(size--) *out++=0;free(value); }
@@ -82,12 +118,36 @@ static void pending_discard(linux_reader *reader) {
   else if(reader->pending_new_pager) exr_pager_free(reader->pending.pager);
   memset(&reader->pending,0,sizeof(reader->pending));
   reader->has_pending=reader->pending_owns_session=reader->pending_new_pager=0;
+#ifdef EXR_READER_NAVIGATION
+  reader->navigation_pending=0;
+#endif
+#ifdef EXR_READER_SEARCH
+  reader->search_pending=0;
+#endif
 }
 void reader_result_free(reader_result *result) {
   size_t i;free(result->pixels);free(result->text);
+#ifdef EXR_READER_READING_RECORDS
+  reader_av_page_free(&result->records_page);
+  for(i=0;i<result->records_version_count;i++) { free(result->records_versions[i]);free(result->records_version_labels[i]); }
+  free(result->records_versions);free(result->records_version_labels);
+#endif
+#ifdef EXR_READER_NAVIGATION
+  for(i=0;i<result->navigation_count;i++) free(result->navigation_rows[i].label);
+  free(result->navigation_rows);free(result->navigation_candidates);
+#endif
+#ifdef EXR_READER_SEARCH
+  for(i=0;i<result->search_count;i++) free(result->search_rows[i].label);
+  free(result->search_rows);
+#endif
   free(result->metadata_title);free(result->metadata_author);
   free(result->account_id);free(result->account_root);
   reader_secret_free(result->account_user);reader_secret_free(result->account_password);
+  for(i=0;i<result->receive_conflict_count;i++) {
+    free(result->receive_conflicts[i].key);free(result->receive_conflicts[i].title);free(result->receive_conflicts[i].heads);
+  }
+  free(result->receive_conflicts);
+  free(result->receive_resolutions);
   for(i=0;i<result->collection_group_count;i++) {
     free(result->collection_groups[i].id);free(result->collection_groups[i].name);free(result->collection_groups[i].parent);
   }
@@ -133,7 +193,14 @@ exr_status linux_reader_open(const char *database,const char *font,const exr_con
 }
 void linux_reader_close(linux_reader *reader) {
   if(reader) {
+#ifdef EXR_READER_NAVIGATION
+    navigation_free(reader);
+#endif
+#ifdef EXR_READER_SEARCH
+    search_free(reader);
+#endif
 #ifdef EXR_READER_ACCOUNT
+    received_free(reader);
     accounts_free(reader);
 #endif
     pending_discard(reader);
@@ -226,7 +293,11 @@ static exr_status product_shelf(linux_reader *reader,const reader_command *comma
       shelf_exists,&result->shelf_after,&error);
     if(code) return EXR_DATABASE;
   }
-  result->shelf_direction=command->direction;result->has_shelf=1;return EXR_OK;
+  result->shelf_direction=command->direction;result->has_shelf=1;
+#ifdef EXR_READER_ACCOUNT
+  received_annotate_shelf(reader,result);
+#endif
+  return EXR_OK;
 }
 #endif
 #ifdef EXR_READER_DESKTOP_METADATA
@@ -235,6 +306,7 @@ static exr_status product_shelf(linux_reader *reader,const reader_command *comma
 #endif
 #ifdef EXR_READER_ACCOUNT
 #include "accounts.inc"
+#include "received.inc"
 #endif
 static size_t extent(reader_session *session) {
   size_t size=0;
@@ -250,6 +322,18 @@ static exr_status pager_create(linux_reader *reader,reader_session *session,size
                                exr_pager **out,exr_error *error) {
   exr_layout_config config=exr_layout_config_defaults();exr_status status;
   config.page=(exr_layout_options){520,640,28,(float)size,1.5f,8};config.control=reader->control;
+#ifdef EXR_READER_PREFERENCES
+  char css[256];
+  if(reader->appearance_enabled) {
+    const reader_preferences *p=&reader->appearance;
+    config.page=(exr_layout_options){520,640,p->margin,p->font_size,p->line_spacing,p->paragraph_spacing};
+    /* The public raster API currently fixes its canvas to white. Keep page ink
+       in the readable Light palette; interface Dark colors must not make pale
+       text on white paper. Full reading-page themes await a canvas API. */
+    const uint8_t *fg=p->light_foreground;
+    snprintf(css,sizeof(css),"*{color:#%02x%02x%02x%02x !important;}",fg[0],fg[1],fg[2],fg[3]);config.user_css=css;
+  }
+#endif
   if(session->bounded) {
     exr_chapter_options options=exr_chapter_options_defaults();options.window_bytes=16384;
     status=exr_publication_pager_create(session->publication,part,reader->font,&config,&options,out,error);
@@ -472,6 +556,26 @@ static exr_status open_book(linux_reader *reader,int64_t id,int size,int zoom,re
 done:
   exr_epub_location_free(&point);exr_anchor_free(&legacy);return status;
 }
+static exr_status reader_import_suspend(linux_reader *reader,reader_import_saved *saved) {
+  memset(saved,0,sizeof(*saved));
+  if(reader->has_pending) return EXR_ARGUMENT;
+  saved->id=reader->current.id;saved->font=reader->current.font;saved->zoom=reader->current.zoom;
+  /* Imports mutate SQLite and invalidate borrowed original sources. The last
+     accepted frame has already committed its real SDK anchor before this job. */
+  session_free(&reader->current);return EXR_OK;
+}
+static exr_status reader_import_resume(linux_reader *reader,const reader_import_saved *saved,reader_result *result) {
+  if(!saved->id) return EXR_OK;
+  reader_session restored={0};reader_result frame={0};exr_error error={0};
+  exr_control prior=reader->control;reader->control.cancelled=NULL;reader->control.progress=NULL;
+  exr_status status=open_book(reader,saved->id,saved->font,saved->zoom,&restored,&frame,&error);
+  reader->control=prior;result->receive_restored_book=saved->id;
+  if(status==EXR_OK) {
+    restored.page=frame.page;restored.start=frame.start;restored.end=frame.end;
+    reader->current=restored;result->receive_restored_part=restored.part;result->receive_restored_position=restored.position;
+  } else { session_free(&restored);result->receive_restore_failed=1; }
+  reader_result_free(&frame);return status;
+}
 static size_t file_read(void *context,size_t offset,void *bytes,size_t size) {
   FILE *file=context;if(fseeko(file,(off_t)offset,SEEK_SET)) return 0;return fread(bytes,1,size,file);
 }
@@ -603,12 +707,53 @@ done:
   exr_epub_notes_free(bounded,bounded ? count:0);exr_notes_free(legacy,legacy ? count:0);
   return status;
 }
+#ifdef EXR_READER_SEARCH
+#include "search_backend.inc"
+#endif
+#ifdef EXR_READER_NAVIGATION
+#include "navigation_backend.inc"
+#endif
+#ifdef EXR_READER_READING_RECORDS
+#include "reading_records_backend.inc"
+#endif
 void linux_reader_execute(linux_reader *reader,const reader_command *command,reader_result *result) {
   reader_session next=reader->current;exr_error error={0};exr_status status=cancel(reader);
   int owned_session=0,new_pager=0;int64_t id=command->book;size_t target=0;
   int wants_shelf=command->action==READER_SHELF || command->action==READER_OPEN || command->action==READER_IMPORT;
   memset(result,0,sizeof(*result));
+#ifdef EXR_READER_READING_RECORDS
+  if(command->action>=READER_RECORDS_LIST && command->action<=READER_RECORDS_HISTORY) {
+    records_execute(reader,command,result);return;
+  }
+#endif
+#ifdef EXR_READER_NAVIGATION
+  if(command->action>=READER_NAVIGATION_BEGIN && command->action<=READER_NAVIGATION_CLOSE && command->action!=READER_NAVIGATION_CHOOSE) {
+    navigation_readonly(reader,command,result);return;
+  }
+  if(command->action!=READER_NAVIGATION_CHOOSE) navigation_free(reader);
+#endif
+#ifdef EXR_READER_SEARCH
+  if(command->action>=READER_SEARCH_BEGIN && command->action<=READER_SEARCH_CLOSE && command->action!=READER_SEARCH_CHOOSE) {
+    search_readonly(reader,command,result);return;
+  }
+  if(command->action!=READER_SEARCH_CHOOSE) search_free(reader);
+#endif
+#ifdef EXR_READER_PREFERENCES
+  reader_preferences old_appearance=reader->appearance;int old_enabled=reader->appearance_enabled;
+  if(command->preferences_set) {
+    const reader_preferences *p=&command->preferences;
+    reader_preferences_error problem={0};
+    if(reader_preferences_validate(p,&problem)!=READER_PREFERENCES_OK ||
+       520-2*p->margin<p->font_size*1.5f || 640-2*p->margin<p->font_size*p->line_spacing) {
+      status=EXR_ARGUMENT;strcpy(result->message,"Settings do not fit this reader's 520 by 640 page; previous settings retained");goto done;
+    }
+    reader->appearance=*p;reader->appearance_enabled=1;
+  }
+#endif
 #ifdef EXR_READER_ACCOUNT
+  if(command->action>=READER_RECEIVE_BEGIN && command->action<=READER_RECEIVE_CONFLICTS_NEXT) {
+    received_execute(reader,command,result);return;
+  }
   if(command->action>=READER_ACCOUNT_LOAD && command->action<=READER_ACCOUNT_STAGE_NEXT) {
     accounts_execute(reader,command,result);return;
   }
@@ -642,14 +787,30 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
       else if(reader->pending_new_pager) exr_pager_free(reader->current.pager);
       reader->current=*pending;memset(pending,0,sizeof(*pending));
       reader->has_pending=reader->pending_owns_session=reader->pending_new_pager=0;
+#ifdef EXR_READER_NAVIGATION
+      reader->navigation_pending=0;
+#endif
+#ifdef EXR_READER_SEARCH
+      reader->search_pending=0;
+#endif
     }
     goto done;
   }
   pending_discard(reader);
   if(status!=EXR_OK) goto done;
   if(command->action==READER_SHELF) goto done;
+#ifdef EXR_READER_PREFERENCES
+  if(command->action==READER_SETTINGS && !next.id) goto preferences_saved;
+#endif
   if(command->action==READER_IMPORT || command->action==READER_OPEN) {
-    if(command->action==READER_IMPORT) status=import_book(reader,command->path,&id,&error);
+    if(command->action==READER_IMPORT) {
+      reader_import_saved saved={0};status=reader_import_suspend(reader,&saved);
+      if(status==EXR_OK) {
+        status=import_book(reader,command->path,&id,&error);
+        exr_status restored=reader_import_resume(reader,&saved,result);next=reader->current;
+        if(restored!=EXR_OK && status!=EXR_OK) strcpy(result->message,"Import did not finish; reopen the original book from its saved position");
+      }
+    }
     if(status!=EXR_OK) goto done;
     owned_session=1;memset(&next,0,sizeof(next));
     status=open_book(reader,id,command->font,command->zoom,&next,result,&error);
@@ -692,13 +853,33 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
     reader_result_free(&entries);
   } else if(command->action==READER_NOTE_JUMP) {
     status=jump_note(reader,&next,command->note,result,&error);new_pager=next.pager!=reader->current.pager;
-  } else if(command->action==READER_ZOOM) {
+  }
+#ifdef EXR_READER_SEARCH
+  else if(command->action==READER_SEARCH_CHOOSE) {
+    status=search_jump(reader,&next,command,result,&error);new_pager=next.pager!=reader->current.pager;
+  }
+#endif
+#ifdef EXR_READER_NAVIGATION
+  else if(command->action==READER_NAVIGATION_CHOOSE) {
+    status=navigation_jump(reader,&next,command,result,&error);new_pager=next.pager!=reader->current.pager;
+  }
+#endif
+#ifdef EXR_READER_READING_RECORDS
+  else if(command->action==READER_RECORDS_JUMP) {
+    status=records_jump(reader,&next,command,result,&error);new_pager=next.pager!=reader->current.pager;
+  }
+#endif
+  else if(command->action==READER_ZOOM || (command->action==READER_SETTINGS && next.fixed_document)) {
     if(!next.fixed_document || command->zoom<25 || command->zoom>400) status=EXR_ARGUMENT;
     else { next.zoom=command->zoom;status=render_fixed(reader,&next,next.page,result,&error); }
   } else if(command->action==READER_FONT && next.fixed_document) status=EXR_ARGUMENT;
-  else if(command->action==READER_FONT) {
+  else if(command->action==READER_FONT || command->action==READER_SETTINGS) {
     exr_anchor point={0};exr_anchor_match match;size_t position=next.position;
-    if(command->font<12 || command->font>48) status=EXR_ARGUMENT;
+    int minimum=12,maximum=48;
+#ifdef EXR_READER_PREFERENCES
+    if(command->preferences_set) { minimum=4;maximum=256; }
+#endif
+    if(command->font<minimum || command->font>maximum) status=EXR_ARGUMENT;
     else status=capture(reader,&next,position,position,&point,&error);
     if(status==EXR_OK) {
       next.pager=NULL;new_pager=1;status=pager_create(reader,&next,next.part,command->font,&next.pager,&error);
@@ -741,13 +922,40 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
     result->has_shelf=status==EXR_OK;
   }
   if(status==EXR_OK) status=cancel(reader);
+#ifdef EXR_READER_PREFERENCES
+preferences_saved:
+  if(status==EXR_OK && command->preferences_path) {
+    reader_preferences_error problem={0};reader_preferences_save_options options={0};options.struct_size=sizeof(options);
+    options.control.cancelled=reader->control.cancelled;options.control.context=reader->control.context;
+    reader_preferences_status saved=reader_preferences_save(&command->preferences,command->preferences_path,&options,&problem);
+    if(saved!=READER_PREFERENCES_OK) {
+      status=saved==READER_PREFERENCES_CANCELLED ? EXR_CANCELLED:EXR_IO;
+      snprintf(result->message,sizeof(result->message),"Settings save failed (%s); previous settings retained",reader_preferences_status_name(saved));
+    }
+  }
+  if(status==EXR_OK && command->preferences_set) { result->has_preferences=1;result->preferences=command->preferences; }
+  if(command->action==READER_SETTINGS && !next.id) goto done;
+#endif
   if(status==EXR_OK && result->has_frame) {
     next.page=result->page;next.start=result->start;next.end=result->end;
     result->position=next.position;reader->pending=next;reader->has_pending=1;
     reader->pending_owns_session=owned_session;reader->pending_new_pager=new_pager;
+#ifdef EXR_READER_SEARCH
+    reader->search_pending=command->action==READER_SEARCH_CHOOSE;
+    reader->search_pending_token=reader->search_pending ? command->search_token:0;
+#endif
     owned_session=new_pager=0;
+#ifdef EXR_READER_NAVIGATION
+    reader->navigation_pending=command->action==READER_NAVIGATION_CHOOSE;
+    reader->navigation_pending_token=reader->navigation_pending ? command->navigation_token:0;
+#endif
   }
 done:
+#ifdef EXR_READER_PREFERENCES
+  if(status!=EXR_OK && command->preferences_set) {
+    reader->appearance=old_appearance;reader->appearance_enabled=old_enabled;
+  }
+#endif
   if(owned_session) session_free(&next);
   else if(new_pager) exr_pager_free(next.pager);
   if(status!=EXR_OK) result->has_frame=0;

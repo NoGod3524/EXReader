@@ -1,0 +1,74 @@
+{
+  "accepted": false,
+  "search_scope_passed": true,
+  "status": "same-source search scope passed; retained settings have two strict page-palette failures",
+  "baseline": "ce912f8c149e30cf3843e39258ae6889235495a0",
+  "source_sha": "eb235427e6292413d624defadcce2e3c717032a5",
+  "run_id": 40119936719,
+  "attempt": 1,
+  "job_id": 120949078249,
+  "conclusion": "failure",
+  "diagnostic_only": false,
+  "sdk_anchor": "9854061be331fe603a1822d9b2b36ee357154927",
+  "program_sha256": "485a5bc611876cb543ef134f1dbef2e951023208bd531465b143446a7949228f",
+  "results": {
+    "search_ui": {"executed": 30, "passed": 30, "failed": 0},
+    "search_backend": {"passed": 296},
+    "installed_search": {"passed": 264, "cases": 34},
+    "installed_preferences": {"passed_groups": 20},
+    "retained_account_receive": {"passed": 46},
+    "retained_ui": {"passed": 105, "reading": 20, "product": 5, "fixed": 24, "shelf": 14, "metadata": 15, "collections": 27},
+    "retained_fault_regressions": {"passed": 4},
+    "retained_targeted_atspi": {"passed": 10, "full_g13_accepted": false, "orca_accepted": false},
+    "retained_settings": {"executed": 35, "passed": 33, "failed": 2},
+    "desktop_ctest": {"passed": 4, "failed": 0}
+  },
+  "diagnostic": {
+    "run_id": 40119251223,
+    "attempt": 1,
+    "job_id": 120946994305,
+    "conclusion": "success",
+    "diagnostic_only": true,
+    "accepted": false,
+    "search_scope_passed": true,
+    "ui_checks": {"executed": 30, "passed": 30, "failed": 0},
+    "backend_checks": 296,
+    "installed_search_checks": 264,
+    "installed_search_cases": 34,
+    "installed_preferences_groups": 20,
+    "program_sha256": "485a5bc611876cb543ef134f1dbef2e951023208bd531465b143446a7949228f",
+    "artifact": {
+      "id": 12570950329,
+      "bytes": 21418217,
+      "sha256": "1fe9e4519df7c2471be555c5e75c5d6e8e83616fa4a40503a70c3f722e823f02",
+      "expires_at": "2027-01-22T18:07:27Z"
+    }
+  },
+  "earlier_failed_runs": [
+    {"run_id": 40113989871, "source_sha": "edab920c6e1b25b161f1096947d1c34ae66453ca", "reason": "backend probe assumed frozen CBZ empty text was a provider error; explicit host refusal added without changing Search"},
+    {"run_id": 40115156309, "source_sha": "d5e8313772af7dbb677b05ddba5c36f5201c6c91", "reason": "UI probe treated selected character count as boolean; exact character and UTF-8 byte bounds now checked"},
+    {"run_id": 40116175431, "source_sha": "d480ca9446ee9dc92d9d999872cb896d7eee9dac", "reason": "first sixteen UI checks passed; subsequent native PDF chooser path not selected"},
+    {"run_id": 40117108629, "source_sha": "65d5619509ff6a0509f1dcfc5e232b0681fbbc1b", "reason": "new synchronous chooser observer reentered GTK location-mode transition and triggered check_save_entry assertion"},
+    {"run_id": 40117667176, "source_sha": "9c404f188d03404c9377364694a25a556aedbdf0", "reason": "after-focus callback remained inside GTK location-mode transition; replaced by coalesced idle snapshot and pure cached state"}
+  ],
+  "read_only_diagnostics": [
+    {"run_id": 40118305747, "accepted": false, "conclusion": "failure", "reason": "reader assumed optional failure-tree existed after host abort"},
+    {"run_id": 40118604990, "accepted": false, "conclusion": "success", "reason": "retained artifact inspected in Actions; actual GTK check_save_entry assertion identified"}
+  ],
+  "artifacts": [{
+    "id": 12570897982,
+    "name": "reader-gtk-search-40119936719-1",
+    "bytes": 41990425,
+    "sha256": "76b46b02588a543d27c6e18fe8c9a86fde036034c7855938b72b73e76502f9bb",
+    "expires_at": "2027-01-22T18:16:23Z",
+    "upload_log_matches_api_digest": true,
+    "source_sha": "eb235427e6292413d624defadcce2e3c717032a5"
+  }],
+  "pending_settings_checks": ["light_foreground_and_background_change_page_pixels", "dark_theme_and_palette_change_page_pixels"],
+  "whole_reading_page_palette_accepted": false,
+  "sdk_changed": false,
+  "schema_changed": false,
+  "performance_accepted": false,
+  "six_platform_accepted": false,
+  "complete_product": false
+}

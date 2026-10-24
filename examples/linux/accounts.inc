@@ -167,7 +167,7 @@ static exr_status accounts_load(account_owner *owner,const reader_command *comma
   result->account_credential_status=code;exr_status status=EXR_OK;
   if(code==EXR_CRED_OK) status=accounts_secret_result(owner,result,data,size,1);
   else snprintf(result->message,sizeof(result->message),"%s",code==EXR_CRED_UNAVAILABLE ?
-    "UNAVAILABLE: secure storage cannot be read. You can choose this app session only":
+    "Secure storage is unavailable. Choose this app session only":
     code==EXR_CRED_NOT_FOUND ? "No saved credentials for this account":"Secure storage could not be read; credentials were not used");
   exr_credentials_wipe(data,sizeof(data));return status;
 }
@@ -196,7 +196,7 @@ static exr_status accounts_set(account_owner *owner,const reader_command *comman
   } else {
     exr_credentials_wipe(data,size);free(data);
     snprintf(result->message,sizeof(result->message),"%s",code==EXR_CRED_UNAVAILABLE ?
-      "UNAVAILABLE: credentials were not saved. Choose this app session only":"Credentials were not saved; system storage reported an error");
+      "Secure storage is unavailable; credentials were not saved. Choose this app session only":"Credentials were not saved. Try again or use this app session only");
   }
   return EXR_OK;
 }

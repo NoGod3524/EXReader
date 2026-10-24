@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.24)
+project(GTKPreferencesConsumer LANGUAGES C)
+find_package(EXReaderPreferences 0.1.0 EXACT CONFIG REQUIRED)
+add_executable(gtk-preferences-load installed_load.c)
+target_compile_options(gtk-preferences-load PRIVATE -Wall -Wextra -Werror)
+target_link_libraries(gtk-preferences-load PRIVATE EXReaderPreferences::reader_preferences)
