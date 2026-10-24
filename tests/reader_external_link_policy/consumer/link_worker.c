@@ -154,7 +154,10 @@ static int mode_cancel(void) {
     printf("CHK\t%s\t%s\t%ld\t%ld\t%d\n", names[i], status_name(status), state.calls,
            rlp_test_live(), zeroed(&result) ? 1 : 0);
     if (thresholds[i] == 0) {
-      if (status != READER_LINK_OK || state.calls != 0 || result.action != READER_LINK_ACTION_REJECT)
+      /* No cancel: entry plus the two in-scan polls plus the pre-commit poll
+         still run, and the link is rejected without any commit of a host action. */
+      if (status != READER_LINK_OK || state.calls != 4 || result.action != READER_LINK_ACTION_REJECT ||
+          !result.display)
         failures++;
     } else {
       if (status != READER_LINK_CANCELLED || state.calls != thresholds[i] ||
@@ -191,15 +194,17 @@ static int mode_cancel(void) {
 }
 
 static int mode_lifetime(void) {
-  reader_link_policy* policy = create_default();
+  reader_link_policy* policy = NULL;
   reader_link_result result;
   char* input = (char*)malloc(24);
   const char expected[] = "ch2.xhtml#sec-1";
   size_t length = strlen(expected);
 
-  if (!policy || !input) { fprintf(stderr, "FATAL\tsetup failed\n"); return 2; }
-  memcpy(input, expected, length + 1);
+  if (!input) { fprintf(stderr, "FATAL\tsetup failed\n"); return 2; }
   rlp_test_begin(0);
+  policy = create_default();
+  if (!policy) { fprintf(stderr, "FATAL\tsetup failed\n"); return 2; }
+  memcpy(input, expected, length + 1);
   memset(&result, 0, sizeof(result));
   result.struct_size = (uint32_t)sizeof(result);
   if (reader_link_classify(policy, input, length, "OEBPS/text/ch1.xhtml", NULL, &result, NULL) !=

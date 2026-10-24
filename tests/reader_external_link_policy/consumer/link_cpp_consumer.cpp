@@ -97,10 +97,11 @@ int main() {
   {
     // RAII lifetime: the display string must survive the policy and the input.
     Policy policy = make_policy();
-    std::vector<char> input(64);
-    std::strcpy(input.data(), "https://example.com/cpp");
+    static const char kInput[] = "https://example.com/cpp";
+    std::vector<char> input(sizeof(kInput));
+    std::memcpy(input.data(), kInput, sizeof(kInput));
     Outcome out = classify(policy.get(), input.data(), "OEBPS/text/ch1.xhtml");
-    std::memset(input.data(), 0x7f, std::strlen("https://example.com/cpp"));
+    std::memset(input.data(), 0x7f, sizeof(kInput) - 1);
     policy.reset();
     verdict("cpp-raii-lifetime",
             out.status == READER_LINK_OK && out.action == READER_LINK_ACTION_NEEDS_HOST &&
