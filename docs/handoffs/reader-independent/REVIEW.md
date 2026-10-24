@@ -109,6 +109,8 @@ root已读其安装工作流、独立消费者CMake、prefix扫描和负例：�
 
 已实际向原G09 DeepSeek会话发送接续：保留六SDK及原负例，在固定起点已有13包上补Windows/Linux/macOS真实组合安装清单、SBOM、版本/头/归档/config散列、许可原文及实际静态/动态依赖材料，明确系统依赖和随包库。复用G08安装方法，不依赖移动G01–G06；reading默认无可选模块的断言保持，组合profile单独显式启用。新增漏模块/依赖/notice等拒绝项，最终同源完整复验后交回。原96处安装路径命中仍登记、`release_ready=false`，不为补报告改冻结SDK/发布流程或创建tag。
 
+root先修不触及冻结树的两份分发文档：`CONVERSION.md`与`WP7-SCRIPTS.md`的本机绝对示例路径改为`build/wp12-lite-corpus`与`build/wp7`。当前只是源码文档修正，旧工件不变；实际安装材料是否消除这两处命中须在共同源码重新生成清单后验证，归档/pkg-config路径仍待分发层处理。
+
 交付HEAD`cd0c7f9b8e3a9af53e30e53248d47ce959f1d0c8`，受测`20c6a1deec794b4902f0ae3a7140a17b19cef7fd`、run`40082869006`自报25项及原基线成功。
 
 root读到`check_account_ui.py`的`capture()`只把Python手写v1 wire交给`revision-consumer reading-local`；location的`exact/start/end`均为常量，没有公开SDK capture调用。原检查证明修订字节传输，不能授予“真实阅读capture往返”。要求保持旧传输断言，补四格式公开SDK真实捕获、v2编码、正式宿主TLS往返和第二SDK定位（优先复用既有18案例），并证明当前阅读/SDK notes不被自动写入。

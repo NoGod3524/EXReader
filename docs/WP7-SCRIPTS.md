@@ -107,15 +107,15 @@ License 1.1；完整许可 `licenses/noto-sans-test-fonts.txt`。合成字体为
 ## 6. 复现
 
 ```sh
-cmake -S . -B C:/Users/Oscar/exr-wp7-build -DCMAKE_BUILD_TYPE=Release
-cmake --build C:/Users/Oscar/exr-wp7-build --config Release --parallel 8
-ctest --test-dir C:/Users/Oscar/exr-wp7-build -C Release --output-on-failure
+cmake -S . -B build/wp7 -DCMAKE_BUILD_TYPE=Release
+cmake --build build/wp7 --config Release --parallel 8
+ctest --test-dir build/wp7 -C Release --output-on-failure
 ```
 
 WP7 专项：
 
 ```sh
-ctest --test-dir C:/Users/Oscar/exr-wp7-build -C Release -R native-wp7 --output-on-failure
+ctest --test-dir build/wp7 -C Release -R native-wp7 --output-on-failure
 python tools/wp7_sequences.py tests/fixtures/wp7/cases.json
 python tools/generate_wp7_test_fonts.py
 python tools/generate_wp7_reference.py
