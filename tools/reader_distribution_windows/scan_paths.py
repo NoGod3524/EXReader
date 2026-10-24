@@ -69,6 +69,8 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--require-clean', action='store_true',
                         help='exit nonzero on any hit, not only on binary hits')
+    parser.add_argument('--print-leaks', type=int, default=0,
+                        help='print this many leaking files with their surfaces')
     args = parser.parse_args()
     if not args.root and not args.zip:
         parser.error('Provide at least one --root or --zip target')
@@ -88,6 +90,26 @@ def main():
               'records': [{key: value for key, value in item.items() if key != 'hits'} |
                           {'hits': item['hits']} for item in records]}
     distlib.write_json(args.output, report)
+    if args.print_leaks:
+        leaking = sorted((item for item in records if item['hits']),
+                         key=lambda item: (-len(item['hits']), item['path']))
+        for item in leaking[:args.print_leaks]:
+            print('LEAK %-45s kind=%s hits=%d patterns=%s debug_sections=%d drective=%d members=%s' % (
+                item['path'], item['kind'], len(item['hits']),
+                ','.join(sorted({hit['pattern'] for hit in item['hits']})),
+                item.get('debug_section_count', 0), len(item.get('drective_absolute', [])),
+                item.get('member_names_sample', [])[:4]))
+            for hit in item['hits'][:2]:
+                print('     %s @%d %s' % (hit['pattern'], hit['offset'], hit['context'][:120]))
+        if len(leaking) > args.print_leaks:
+            print('LEAK ... %d more leaking files' % (len(leaking) - args.print_leaks))
+        by_suffix = {}
+        for item in leaking:
+            suffix = Path(item['path']).suffix.lower() or '<none>'
+            by_suffix[suffix] = by_suffix.get(suffix, 0) + len(item['hits'])
+        print('LEAK total_files=%d total_hits=%d by_suffix=%s' % (
+            len(leaking), sum(len(item['hits']) for item in leaking),
+            sorted(by_suffix.items(), key=lambda pair: -pair[1])[:8]))
     blocking = [hit for item in records for hit in item['hits'] if hit['class'] == 'binary']
     surfaces = ({'drective_absolute': summary['drective_absolute'],
                  'member_names_with_separator': summary['member_names_with_separator'],

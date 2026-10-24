@@ -94,12 +94,95 @@ jobs:
           cmake --version | head -1 | tee -a build/dist/toolchain.log
           ninja --version | tee -a build/dist/toolchain.log
           python --version | tee -a build/dist/toolchain.log
+      - name: Probe the external path-mapping capability of this compiler
+        run: |
+          WS=$(cygpath -m "$PWD")
+          SURF="$WS/build/path-surface"
+          echo "WS=$WS" >> "$GITHUB_ENV"
+          mkdir -p build/path-surface
+          cp tests/reader_distribution_windows/probe/path_surface.c build/path-surface/path_surface.c
+          FLAGS="/utf-8"
+          LOG=build/dist/pathmap-capability.log
+          if cl /nologo /c "/Fo$SURF/capability.obj" "/pathmap:$WS=exreader-src" "$SURF/path_surface.c" > "$LOG" 2>&1; then
+            {
+              echo 'PATHMAP_SUPPORTED=1'
+              printf 'COMPILE_FLAGS=%s /pathmap:%s=exreader-src\n' "$FLAGS" "$WS"
+            } >> "$GITHUB_ENV"
+            echo "path mapping is supported by this cl.exe"
+          else
+            {
+              echo 'PATHMAP_SUPPORTED=0'
+              printf 'COMPILE_FLAGS=%s\n' "$FLAGS"
+            } >> "$GITHUB_ENV"
+            echo "path mapping is unavailable; the leak inventory below is the blocking record"
+            cat "$LOG"
+          fi
       - name: Build and install the frozen reading-core profile
         run: |
-          cmake --preset reading-core 2>&1 | tee build/dist/configure.log
+          cmake --preset reading-core -DCMAKE_C_FLAGS="$COMPILE_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILE_FLAGS" 2>&1 | tee build/dist/configure.log
           cmake --build --preset reading-core 2>&1 | tee build/dist/build.log
           cmake --install build/reading-core 2>&1 | tee build/dist/install.log
           test -f build/reading-core/stage/include/exr/base.h
+      - name: Diagnose the leaking surfaces and the flags that produced them
+        if: always()
+        run: |
+          python tools/reader_distribution_windows/scan_paths.py --root build/reading-core/stage \
+            --label diagnostic --root-arg "$(cygpath -m "$PWD")" --print-leaks 25 \
+            --output build/dist/scan-diagnostic.json || true
+          ninja -C build/reading-core -t commands > build/dist/ninja-commands.txt 2>/dev/null || true
+          python - <<'PY'
+          import collections, json, pathlib, re, subprocess, sys
+          sys.path.insert(0, 'tools/reader_distribution_windows')
+          import distlib
+          source = pathlib.Path('build/dist/ninja-commands.txt')
+          lines = source.read_text(errors='replace').splitlines() if source.is_file() else []
+          flags = collections.Counter()
+          samples = {}
+          for line in lines:
+              for flag in ('/Zi', '/Z7', '/GL', '/O2', '/Ob2', '/MD', '/MT'):
+                  if flag in line:
+                      flags[flag] += 1
+                      samples.setdefault(flag, line[:700])
+          print(json.dumps({'commands': len(lines), 'flags': dict(flags)}))
+          for flag in ('/Zi', '/Z7', '/GL'):
+              if flag in samples:
+                  print('SAMPLE', flag, samples[flag])
+          completed = subprocess.run(['cl', '/?'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+          print('CL_HELP_HAS_PATHMAP', 'pathmap' in completed.stdout.lower())
+          candidate = None
+          for line in lines:
+              if ' /Zi ' in line and ' /c ' in line and 'aom' in line:
+                  candidate = line
+                  break
+          if candidate is None:
+              for line in lines:
+                  if ' /Zi ' in line and ' /c ' in line:
+                      candidate = line
+                      break
+          if candidate is None:
+              print('NO_DEBUG_COMMAND_FOUND')
+          else:
+              print('CANDIDATE', candidate[:600])
+              scratch = pathlib.Path('build/dist/flag-probe')
+              scratch.mkdir(parents=True, exist_ok=True)
+              def probe(tag, transform):
+                  command = re.sub(r'/Fo\S+', '/Fo' + str(scratch / (tag + '.obj')), candidate)
+                  command = transform(command)
+                  done = subprocess.run(command, shell=True, stdout=subprocess.PIPE,
+                                        stderr=subprocess.STDOUT, text=True)
+                  print('PROBE', tag, 'rc', done.returncode, done.stdout.strip()[:300])
+                  target = scratch / (tag + '.obj')
+                  if target.is_file():
+                      try:
+                          machine, sections = distlib.coff_section_names(target.read_bytes())
+                          print('PROBE_DEBUG_SECTIONS', tag,
+                                [item['name'] for item in sections if item['name'].startswith('.debug')])
+                      except ValueError as error:
+                          print('PROBE_PARSE_FAILED', tag, str(error))
+              probe('as-built', lambda value: value)
+              probe('no-debug', lambda value: re.sub(r'/Z[i7]\b', '', value))
+              probe('pathmap', lambda value: value + ' /pathmap:D:/a/EXReader/EXReader=EXReader-src')
+          PY
       - name: Scan the installed stage for build-machine paths
         run: |
           WS=$(cygpath -m "$PWD")

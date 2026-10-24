@@ -170,6 +170,14 @@ def _coff_sections(payload):
     return machine, result
 
 
+def coff_section_names(payload):
+    """Section names and per-section sizes of a standalone COFF object."""
+    require(payload[:2] in (b'\x64\x86', b'\x4c\x01', b'\xc4\x01', b'\xaa\x64'),
+            'not a COFF object under a known machine id')
+    machine, sections = _coff_sections(payload)
+    return machine, [{'name': item['name'], 'size': item['size']} for item in sections]
+
+
 def split_directives(text):
     directives, current, quoted = [], '', False
     for char in text:

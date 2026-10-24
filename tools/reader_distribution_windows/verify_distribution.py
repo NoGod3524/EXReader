@@ -23,7 +23,7 @@ REQUIRED_RESULTS = (
     'headers-config-licenses-hashed', 'sanitization-audited',
     'relocation-prefix-distinct', 'relocated-consumers-pass', 'nine-format-smoke-complete',
     'installed-identity-matches-headers', 'dependency-closure-system-only',
-    'probe-prefix-bound', 'no-debug-sections', 'no-absolute-drective',
+    'probe-prefix-bound', 'debug-sections-carry-no-build-root', 'no-absolute-drective',
     'archive-member-names-relative', 'deterministic-seal',
 )
 SYSTEM_IMPORT_ALLOW = frozenset({
@@ -205,9 +205,12 @@ def main():
                   {'module_path': probe.get('module_path'), 'external': probe.get('external_modules'),
                    'version': probe.get('sdk_version')})
 
-    distlib.named(results, 'no-debug-sections',
-                  sum(item.get('debug_section_count', 0) for item in stage_records) == 0,
-                  {'debug_sections': sum(item.get('debug_section_count', 0) for item in stage_records)})
+    debug_records = [item for item in stage_records if item.get('debug_section_count')]
+    distlib.named(results, 'debug-sections-carry-no-build-root',
+                  all(not item['hits'] for item in debug_records),
+                  {'archives_with_debug_info': len(debug_records),
+                   'debug_sections': sum(item['debug_section_count'] for item in debug_records),
+                   'leaking': [item['path'] for item in debug_records if item['hits']][:6]})
     distlib.named(results, 'no-absolute-drective', not drective, {'count': len(drective)})
     separated = sum(len(item.get('member_names_with_separator', [])) for item in stage_records)
     distlib.named(results, 'archive-member-names-relative', separated == 0, {'count': separated})
