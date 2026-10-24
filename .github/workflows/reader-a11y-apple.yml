@@ -1,0 +1,431 @@
+name: Reader Apple accessibility audit
+# G16: macOS / iPhone / iPad accessibility audit.
+# Only adds this package's files; it never edits the baseline Apple host, the
+# baseline project generator or the existing Apple workflows.
+on:
+  push:
+    branches: ['codex/reader-a11y-apple']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+env:
+  H9_SDK_BASELINE: 9854061be331fe603a1822d9b2b36ee357154927
+  A11Y_START_SHA: f43baf9182d75907c0cb5d6f77048f27bca8c950
+  A11Y_CONTRACT: tests/reader_a11y_apple/a11y_contract.json
+
+jobs:
+  frozen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require the frozen SDK, the product SQL and this package's whitelist
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git cat-file -e "$H9_SDK_BASELINE^{commit}"
+          git merge-base --is-ancestor "$A11Y_START_SHA" HEAD
+          git diff --exit-code "$H9_SDK_BASELINE" HEAD -- src include cmake CMakeLists.txt \
+            tests/fixtures bindings licenses tools/layers.json \
+            .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code "$A11Y_START_SHA" HEAD -- apps/reader/store/001_catalog.sql
+          changed=$(git diff --name-only "$A11Y_START_SHA" HEAD)
+          printf '%s\n' "$changed"
+          bad=$(printf '%s\n' "$changed" | grep -Ev '^(tests/reader_a11y_apple/|\.github/workflows/reader-a11y-apple\.yml$|docs/READER-A11Y-APPLE\.md$|docs/validation/reader-a11y-apple\.json$)' || true)
+          if [ -n "$bad" ]; then echo "paths outside this package: $bad"; exit 1; fi
+          echo "frozen SDK $H9_SDK_BASELINE, product SQL and whitelist verified for $GITHUB_SHA"
+
+  judge:
+    needs: frozen
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify this checkout is the run source
+        run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+      - name: Run the overlap judge regression (positive and negative cases)
+        run: python3 tests/reader_a11y_apple/a11y_overlap_regression.py --output build/judge/overlap-regression.json
+      - name: Show the judge verdict
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('build/judge/overlap-regression.json')
+          if not path.is_file():
+              print('OVERLAP_JUDGE=missing')
+          else:
+              report = json.loads(path.read_text())
+              print(json.dumps({'passed': report['passed'], 'cases': len(report['cases']),
+                                'failed': report['failed'],
+                                'legacy_v1_gap': report['legacy_v1_gap']}, indent=2, sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-a11y-apple-judge-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/judge/
+          if-no-files-found: error
+          retention-days: 30
+
+  sdk:
+    needs: frozen
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [macos, iphonesimulator]
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify this checkout is the run source
+        run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+      - name: Build and install the ${{ matrix.target }} SDK
+        run: |
+          set -euo pipefail
+          target="${{ matrix.target }}"
+          if [ "$target" = macos ]; then
+            cmake -S . -B "build/sdk-$target" -DCMAKE_BUILD_TYPE=Release \
+              -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AAC=OFF
+          else
+            cmake -S . -B "build/sdk-$target" -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT="$target" \
+              -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
+              -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF \
+              -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO -DEXR_ENABLE_AAC=OFF
+          fi
+          cmake --build "build/sdk-$target" --parallel 4
+          cmake --install "build/sdk-$target" --prefix "stage/$target"
+          test -f "stage/$target/lib/libexreader.dylib"
+          shasum -a 256 "stage/$target/lib/libexreader.dylib" | tee "stage/$target-identity.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reader-a11y-apple-sdk-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            stage/${{ matrix.target }}/
+            stage/${{ matrix.target }}-identity.txt
+          include-hidden-files: true
+          retention-days: 30
+
+  audit:
+    needs: [frozen, judge, sdk]
+    runs-on: macos-15
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos, iphone, ipad]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify this checkout is the run source
+        run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: reader-a11y-apple-sdk-*
+          path: sdk-artifact
+      - name: Stage the installed SDKs
+        run: |
+          set -euo pipefail
+          mkdir -p stage
+          for dir in sdk-artifact/*/; do
+            if [ -d "${dir}stage" ]; then
+              cp -R "${dir}stage/." stage/
+            else
+              cp -R "${dir}." stage/
+            fi
+          done
+          ls stage
+          test -f stage/macos/lib/libexreader.dylib
+          test -f stage/iphonesimulator/lib/libexreader.dylib
+      - name: Build the deterministic fixtures
+        run: python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
+      - name: Record the keyboard access fixture on the macOS host
+        if: matrix.platform == 'macos'
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          defaults write -g AppleKeyboardUIMode -int 3
+          defaults read -g AppleKeyboardUIMode | tee build/keyboard-ui-mode.txt
+      - name: Generate the audit project
+        run: |
+          set -euo pipefail
+          ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+          ruby tests/reader_a11y_apple/make_a11y_xcodeproj.rb build/a11y-project build/apple-resources
+          xcodebuild -project build/a11y-project/EXReaderA11y.xcodeproj -list
+      - name: Select destination and reset simulator state
+        id: destination
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          python3 - "${{ matrix.platform }}" > build/destination.txt <<'PY'
+          import json, subprocess, sys
+          platform = sys.argv[1]
+          if platform == 'macos':
+              print('platform=macOS')
+              print('macos')
+              print('macOS host')
+              print('macOS')
+              sys.exit()
+          prefix = 'iPhone' if platform == 'iphone' else 'iPad'
+          data = json.loads(subprocess.check_output(
+              ['xcrun', 'simctl', 'list', 'devices', 'available', '--json']))
+          best = None
+          for runtime, devices in data['devices'].items():
+              for device in devices:
+                  name = device['name']
+                  if not device.get('isAvailable') or not name.startswith(prefix):
+                      continue
+                  key = (runtime, name)
+                  if best is None or key > best[0]:
+                      best = (key, device, runtime)
+          if best is None:
+              sys.exit('no available ' + prefix + ' simulator')
+          print('platform=iOS Simulator,id=' + best[1]['udid'])
+          print(best[1]['udid'])
+          print(best[1]['name'])
+          print(best[2])
+          PY
+          cat build/destination.txt
+          if [ "${{ matrix.platform }}" != macos ]; then
+            udid=$(sed -n '2p' build/destination.txt)
+            xcrun simctl shutdown "$udid" >/dev/null 2>&1 || true
+            xcrun simctl erase "$udid"
+          fi
+      - name: Run the accessibility audit on ${{ matrix.platform }}
+        id: uitest
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          platform="${{ matrix.platform }}"
+          destination=$(sed -n '1p' build/destination.txt)
+          udid=$(sed -n '2p' build/destination.txt)
+          mkdir -p build/results
+          set +e
+          if [ "$platform" = macos ]; then
+            xcodebuild test \
+              -project build/a11y-project/EXReaderA11y.xcodeproj \
+              -scheme EXReaderA11y-macOS \
+              -destination "$destination" \
+              -derivedDataPath build/DerivedData \
+              -resultBundlePath "build/results/macos.xcresult" \
+              -parallel-testing-enabled NO \
+              -test-timeouts-enabled YES \
+              -default-test-execution-time-allowance 420 \
+              -maximum-test-execution-time-allowance 900 \
+              EXR_SDK_DIR="$PWD/stage/macos" \
+              CODE_SIGNING_ALLOWED=YES \
+              TEST_RUNNER_EXR_A11Y_PLATFORM="$platform" \
+              2>&1 | tee "build/results/macos-xcodebuild.log"
+            main_status=${PIPESTATUS[0]}
+            large_status=0
+            echo "not-applicable" > "build/results/macos-content-size.txt"
+          else
+            xcodebuild test \
+              -project build/a11y-project/EXReaderA11y.xcodeproj \
+              -scheme EXReaderA11y-iOS \
+              -destination "$destination" \
+              -derivedDataPath build/DerivedData \
+              -resultBundlePath "build/results/${platform}.xcresult" \
+              -parallel-testing-enabled NO \
+              -test-timeouts-enabled YES \
+              -default-test-execution-time-allowance 420 \
+              -maximum-test-execution-time-allowance 900 \
+              -skip-testing:EXReaderA11yUITests-iOS/EXReaderA11yAuditTests/test07DynamicTypeAudit \
+              EXR_SDK_DIR="$PWD/stage/iphonesimulator" \
+              CODE_SIGNING_ALLOWED=NO \
+              TEST_RUNNER_EXR_A11Y_PLATFORM="$platform" \
+              2>&1 | tee "build/results/${platform}-xcodebuild.log"
+            main_status=${PIPESTATUS[0]}
+            # The Dynamic Type audit needs a device-level content size category;
+            # the launch-argument override is not honoured by this runtime.
+            xcrun simctl boot "$udid" >/dev/null 2>&1 || true
+            xcrun simctl ui "$udid" content_size accessibility-extra-extra-extra-large || true
+            xcrun simctl ui "$udid" content_size | tee "build/results/${platform}-content-size.txt"
+            xcodebuild test \
+              -project build/a11y-project/EXReaderA11y.xcodeproj \
+              -scheme EXReaderA11y-iOS \
+              -destination "$destination" \
+              -derivedDataPath build/DerivedData \
+              -resultBundlePath "build/results/${platform}-large.xcresult" \
+              -parallel-testing-enabled NO \
+              -test-timeouts-enabled YES \
+              -default-test-execution-time-allowance 420 \
+              -maximum-test-execution-time-allowance 900 \
+              -only-testing:EXReaderA11yUITests-iOS/EXReaderA11yAuditTests/test07DynamicTypeAudit \
+              EXR_SDK_DIR="$PWD/stage/iphonesimulator" \
+              CODE_SIGNING_ALLOWED=NO \
+              TEST_RUNNER_EXR_A11Y_PLATFORM="$platform" \
+              2>&1 | tee "build/results/${platform}-large-xcodebuild.log"
+            large_status=${PIPESTATUS[0]}
+            xcrun simctl ui "$udid" content_size medium >/dev/null 2>&1 || true
+          fi
+          set -e
+          if [ "$main_status" != 0 ] || [ "$large_status" != 0 ]; then
+            echo "xcodebuild status main=$main_status large=$large_status"
+            exit 1
+          fi
+      - name: Export the screenshot attachments
+        if: always()
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          platform="${{ matrix.platform }}"
+          for bundle in "${platform}" "${platform}-large"; do
+            if [ -d "build/results/${bundle}.xcresult" ]; then
+              xcrun xcresulttool export attachments \
+                --path "build/results/${bundle}.xcresult" \
+                --output-path "build/results/${bundle}-attachments" || true
+            else
+              echo "no ${bundle} xcresult to export"
+            fi
+          done
+      - name: Collect the per-criterion audit evidence
+        id: collect
+        if: always()
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          platform="${{ matrix.platform }}"
+          if [ "$platform" = macos ]; then
+            sdk_target=macos
+            app=build/DerivedData/Build/Products/Debug/EXReaderHost.app
+            keyboard="$(defaults read -g AppleKeyboardUIMode 2>/dev/null || echo unknown)"
+          else
+            sdk_target=iphonesimulator
+            app=build/DerivedData/Build/Products/Debug-iphonesimulator/EXReaderHost.app
+            keyboard="not-applicable"
+          fi
+          mkdir -p "build/audit/${platform}"
+          logs=(--log "build/results/${platform}-xcodebuild.log")
+          bundles=(--xcresult "build/results/${platform}.xcresult")
+          shots=(--attachments "build/results/${platform}-attachments")
+          if [ -f "build/results/${platform}-large-xcodebuild.log" ]; then
+            logs+=(--log "build/results/${platform}-large-xcodebuild.log")
+            bundles+=(--xcresult "build/results/${platform}-large.xcresult")
+            shots+=(--attachments "build/results/${platform}-large-attachments")
+          fi
+          content_size="not-applicable"
+          if [ -f "build/results/${platform}-content-size.txt" ]; then
+            content_size=$(cat "build/results/${platform}-content-size.txt")
+          fi
+          python3 tests/reader_a11y_apple/audit_collect.py \
+            --platform "$platform" \
+            "${logs[@]}" \
+            --contract "$A11Y_CONTRACT" \
+            --output "build/audit/${platform}" \
+            --app "$app" \
+            "${bundles[@]}" \
+            "${shots[@]}" \
+            --content-size "$content_size" \
+            --destination-file build/destination.txt \
+            --fixtures build/apple-resources/manifest.json \
+            --sdk-root "stage/$sdk_target" \
+            --keyboard-ui-mode "$keyboard" \
+            --root .
+      - name: Stage the evidence for upload
+        if: always()
+        run: |
+          set -euo pipefail
+          mkdir -p build/upload
+          cp -R build/audit build/upload/ 2>/dev/null || true
+          cp -R build/results build/upload/ 2>/dev/null || true
+          cp build/destination.txt build/upload/ 2>/dev/null || true
+          cp build/keyboard-ui-mode.txt build/upload/ 2>/dev/null || true
+          cp build/results/*-content-size.txt build/upload/ 2>/dev/null || true
+          cp build/apple-resources/manifest.json build/upload/ 2>/dev/null || true
+          du -sh build/upload || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-a11y-apple-audit-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/upload/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Enforce execution of the audit on ${{ matrix.platform }}
+        if: always() && (steps.uitest.outcome != 'success' || steps.collect.outcome != 'success')
+        run: |
+          echo "the accessibility audit did not execute cleanly for ${{ matrix.platform }}"
+          exit 1
+
+  summary:
+    needs: [frozen, judge, sdk, audit]
+    if: always()
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: reader-a11y-apple-audit-*
+          path: build/artifacts
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: reader-a11y-apple-judge-*
+          path: build/judge-artifacts
+      - name: Join the per-target audit reports
+        run: |
+          set -euo pipefail
+          mkdir -p build/audit
+          while IFS= read -r report; do
+            platform=$(basename "$(dirname "$report")")
+            mkdir -p "build/audit/$platform"
+            cp "$report" "build/audit/$platform/report.json"
+            echo "joined $platform from $report"
+          done < <(find build/artifacts -type f -path '*/audit/*/report.json')
+          ls -R build/audit
+      - name: Reject missing, mismatched or stale evidence
+        id: gate
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          judge=$(find build/judge-artifacts -type f -name overlap-regression.json | head -n 1)
+          if [ -z "$judge" ]; then echo "overlap judge report missing"; exit 1; fi
+          cp "$judge" build/overlap-regression.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100" > build/artifacts.json
+          python3 tests/reader_a11y_apple/audit_gate.py \
+            --audit build/audit \
+            --contract "$A11Y_CONTRACT" \
+            --output build/validation \
+            --source-sha "$GITHUB_SHA" \
+            --run-id "$GITHUB_RUN_ID" \
+            --attempt "$GITHUB_RUN_ATTEMPT" \
+            --artifacts-json build/artifacts.json \
+            --judge-json build/overlap-regression.json \
+            --root .
+      - name: Publish the audit and acceptance facts
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('build/validation/reader-a11y-apple-summary.json')
+          if not path.is_file():
+              print('AUDIT_COMPLETED=false (no summary produced)')
+              print('ACCESSIBILITY_ACCEPTED=false')
+          else:
+              summary = json.loads(path.read_text())
+              print(json.dumps({'audit_completed': summary['audit_completed'],
+                                'accessibility_accepted': summary['accessibility_accepted'],
+                                'blocking_findings': summary['blocking_findings'],
+                                'findings': len(summary['findings']),
+                                'gaps': len(summary['gaps']),
+                                'uncovered': len(summary['uncovered']),
+                                'problems': summary['problems'],
+                                'platforms': summary['platforms']}, indent=2, sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-a11y-apple-validation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/validation/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Enforce the evidence result
+        if: always() && steps.gate.outcome != 'success'
+        run: exit 1
