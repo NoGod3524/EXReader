@@ -1,65 +1,65 @@
 {
   "accepted": true,
-  "status": "accepted after 20 named checks passed on Linux, Windows and macOS in one run, with identical catalog digests and identical case sets",
+  "status": "accepted: 21 named checks green on Linux, Windows and macOS in one run, identical case sets, one catalog digest, consumers and install bound by sha256",
   "package": "EXReaderLocalization 0.1.0",
   "common_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
-  "source_sha": "aafb8fd0881d89ac7e9ec3b140b97a8a753737b7",
-  "source_sha_note": "tested source; the only later commits on this branch are [skip ci] documentation commits recorded in evidence_head",
+  "source_sha": "6e7ba4b64fc3a05fbd6a960e81df1bb7ef58d42c",
+  "source_sha_note": "tested source; the only later commit on this branch is the [skip ci] documentation commit recorded in evidence_head",
   "branch": "codex/reader-localization",
   "workflow": ".github/workflows/reader-localization.yml",
-  "run_id": 40126739701,
+  "run_id": 40127576739,
   "attempt": 1,
-  "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/40126739701",
+  "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/40127576739",
   "jobs": [
     {
-      "id": 120969689921,
+      "id": 120972186225,
       "name": "localization consumers (ubuntu-22.04)",
       "conclusion": "success"
     },
     {
-      "id": 120969689761,
+      "id": 120972186447,
       "name": "localization consumers (windows-2022)",
       "conclusion": "success"
     },
     {
-      "id": 120969689917,
+      "id": 120972186462,
       "name": "localization consumers (macos-14)",
       "conclusion": "success"
     },
     {
-      "id": 120969842295,
+      "id": 120972308401,
       "name": "strict localization evidence",
       "conclusion": "success"
     }
   ],
   "artifacts": [
     {
-      "id": 12573417730,
-      "name": "reader-localization-Linux-40126739701-1",
-      "size_in_bytes": 92812,
-      "digest": "sha256:a7ef365591304d28e666c284b1c32afc2a6b6871bce04531e85f020c4ca98c9c",
-      "expires_at": "2027-01-22T19:45:29Z"
+      "id": 12572614368,
+      "name": "reader-localization-Linux-40127576739-1",
+      "size_in_bytes": 93387,
+      "digest": "sha256:39ed702db0f110020444a13a4735408775b0edbd2f5e5be448d2d9b041873a34",
+      "expires_at": "2027-01-22T19:56:48Z"
     },
     {
-      "id": 12573742538,
-      "name": "reader-localization-Windows-40126739701-1",
-      "size_in_bytes": 365723,
-      "digest": "sha256:62541dfe68662dd8cd6d77ff224878dc1eba9dd580e361601fbaa3bede77d961",
-      "expires_at": "2027-01-22T19:45:29Z"
+      "id": 12573289250,
+      "name": "reader-localization-Windows-40127576739-1",
+      "size_in_bytes": 366305,
+      "digest": "sha256:026528bbf601834c4fb80569a1fec2316a6013f27993a0a3b0e422fb493487ee",
+      "expires_at": "2027-01-22T19:56:48Z"
     },
     {
-      "id": 12573082645,
-      "name": "reader-localization-macOS-40126739701-1",
-      "size_in_bytes": 86373,
-      "digest": "sha256:7592ad41c0ea52ea1d2802accf1d1f3f1c1c598c32ab5a1e4c82cc279655ef2c",
-      "expires_at": "2027-01-22T19:45:29Z"
+      "id": 12573753868,
+      "name": "reader-localization-macOS-40127576739-1",
+      "size_in_bytes": 86950,
+      "digest": "sha256:23ec0fcf34c8fd3dd817e2d06be0f93f4519befbb22f0510b65f3540dbc3e851",
+      "expires_at": "2027-01-22T19:56:48Z"
     },
     {
-      "id": 12573482628,
-      "name": "reader-localization-summary-40126739701-1",
-      "size_in_bytes": 872,
-      "digest": "sha256:b23bad2900c14c16721235f8b4b6c7b75c3707ceaeab0555ead3a7909d679dce",
-      "expires_at": "2027-01-22T19:45:29Z"
+      "id": 12573354239,
+      "name": "reader-localization-summary-40127576739-1",
+      "size_in_bytes": 1388,
+      "digest": "sha256:d47f8e98b9ae386398d9f2e7c476898b31a71605207ea19d981763a5bcca8e2c",
+      "expires_at": "2027-01-22T19:56:48Z"
     }
   ],
   "problems": [],
@@ -77,10 +77,31 @@
     "value_bytes": 1024,
     "output_bytes": 2048
   },
+  "bindings": {
+    "Linux": {
+      "library": "f0c46d85e360342e4308c8e13ce908f055ffe7e433917d61cf9325f97e0109ac",
+      "c-consumer": "c75069c70f27c8b52954db2db2cde9ae0d7f5c85b69db3a8975719225acd17a9",
+      "cpp-consumer": "9ac8cfe420cd1d9dae37851221a31a5c8343266f027487f28e93b39d22420a25",
+      "worker": "41ecc01a7a29f637899ee0033d4623de3ebeaab728b3e7b0c065dbf3e14f8f89"
+    },
+    "Windows": {
+      "library": "742e176ae8cbadbd61d31a24a6a241feacaf933a1bdf4390fb816f4abfab1a5d",
+      "c-consumer": "fd5093064427212922dbfe42631d97b2565b091ee6f34aafb7dd1789167d6138",
+      "cpp-consumer": "1fca4f07e2b3702d9caea72e27d8b73599f680b8f863a185f28ebc2a937c5541",
+      "worker": "1f36f57c8f9b9c8e8d96391c3d4b3acff074bdeb4d98954aab7afd1326e113fc"
+    },
+    "macOS": {
+      "library": "f8a376e4e9f93584cd05b63b077e9540c903fba84f9a950989b93828b8fefc03",
+      "c-consumer": "37b6f056274921fc8307651e54a58c959f11151735b7a85bb9617d5807e93ab4",
+      "cpp-consumer": "af514ec56ae116e012fd4b5baf2b53a90f271a5a6fd69d0561338ed27add1570",
+      "worker": "f268d800a3aa43f66a6d002605b468e6e2f04f8a4a322ed61d8081db86152779"
+    }
+  },
   "named_cases": [
     "installed-package-layout",
     "installed-c-consumer",
     "installed-cpp-consumer",
+    "installed-consumer-binding",
     "abi-and-version",
     "limits-match-header",
     "hook-worker-manifest-parity",
@@ -101,19 +122,19 @@
   ],
   "named_case_results": {
     "linux": {
-      "passed": 20,
+      "passed": 21,
       "failed": 0
     },
     "windows": {
-      "passed": 20,
+      "passed": 21,
       "failed": 0
     },
     "macos": {
-      "passed": 20,
+      "passed": 21,
       "failed": 0
     }
   },
-  "checks_per_platform": 20,
+  "checks_per_platform": 21,
   "granted_platforms": [
     "linux",
     "windows",
@@ -135,6 +156,46 @@
     "performance, memory and CPU budgets beyond the documented constant bounds",
     "real-device, simulator, audio and text-to-speech behaviour: this package renders strings only",
     "any non-text platform surface; no WebView, no JS UI, no service, no sidecar"
+  ],
+  "superseded_accepted_runs": [
+    {
+      "run_id": 40126739701,
+      "attempt": 1,
+      "source_sha": "aafb8fd0881d89ac7e9ec3b140b97a8a753737b7",
+      "checks_per_platform": 20,
+      "catalog_digest": "41040fcc8a162eeecea1415dbee3710f708d3f0ffef0071aedb8bd291b5f4285",
+      "artifacts": [
+        {
+          "id": 12573417730,
+          "name": "reader-localization-Linux-40126739701-1",
+          "size_in_bytes": 92812,
+          "digest": "sha256:a7ef365591304d28e666c284b1c32afc2a6b6871bce04531e85f020c4ca98c9c",
+          "expires_at": "2027-01-22T19:45:29Z"
+        },
+        {
+          "id": 12573742538,
+          "name": "reader-localization-Windows-40126739701-1",
+          "size_in_bytes": 365723,
+          "digest": "sha256:62541dfe68662dd8cd6d77ff224878dc1eba9dd580e361601fbaa3bede77d961",
+          "expires_at": "2027-01-22T19:45:29Z"
+        },
+        {
+          "id": 12573082645,
+          "name": "reader-localization-macOS-40126739701-1",
+          "size_in_bytes": 86373,
+          "digest": "sha256:7592ad41c0ea52ea1d2802accf1d1f3f1c1c598c32ab5a1e4c82cc279655ef2c",
+          "expires_at": "2027-01-22T19:45:29Z"
+        },
+        {
+          "id": 12573482628,
+          "name": "reader-localization-summary-40126739701-1",
+          "size_in_bytes": 872,
+          "digest": "sha256:b23bad2900c14c16721235f8b4b6c7b75c3707ceaeab0555ead3a7909d679dce",
+          "expires_at": "2027-01-22T19:45:29Z"
+        }
+      ],
+      "note": "accepted with the original 20 cases; superseded by 40127576739 once the consumer/install sha256 binding case was added, because that run does not record binary digests"
+    }
   ],
   "retained_failures": [
     {
@@ -197,7 +258,7 @@
         "missing-base-translation",
         "catalog-corruption-refusal"
       ],
-      "cause": "reader_localization_parse_locale rejected the '-' region separator, so every zh-CN/en-US tag was UNKNOWN_LOCALE; the Windows job additionally failed the vcvars step and produced no artifact"
+      "cause": "reader_localization_parse_locale rejected the '-' region separator, so every zh-CN/en-US tag was UNKNOWN_LOCALE; the Windows job also failed the vcvars step and produced no artifact"
     },
     {
       "source_sha": "a6ac730d",
@@ -262,7 +323,7 @@
         "output-limit",
         "fallback-missing-translation"
       ],
-      "cause": "consumer fixture parsing decoded hex past the token separator, the C++ consumer passed pointers into destroyed temporaries, MSVC C4310 on a char cast, and the fallback fixture used a different argument than its expectation"
+      "cause": "fixture hex decoding ran past the token separator, the C++ consumer passed pointers into destroyed temporaries, MSVC C4310 on a char cast, and the fallback fixture used a different argument than its expectation"
     },
     {
       "source_sha": "67ced03d",
@@ -380,7 +441,7 @@
       "failed_cases": [
         "capacity-atomicity"
       ],
-      "cause": "the exact-capacity fixture was sized in characters, not UTF-8 bytes, so CJK rows were rendered into a buffer one byte too small"
+      "cause": "the exact-capacity fixture was sized in characters instead of UTF-8 bytes, so CJK rows were rendered into a buffer one byte too small"
     }
   ]
 }

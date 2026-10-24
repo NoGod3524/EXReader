@@ -263,12 +263,18 @@ Not claimed by this package:
 
 ## Runs and retained failures
 
-Accepted run: **40126739701 / attempt 1**, tested source
-`aafb8fd0881d89ac7e9ec3b140b97a8a753737b7`, 20/20 named checks green on
-Linux, Windows and macOS, identical case sets and one identical catalog digest
-`41040fcc8a162eeecea1415dbee3710f708d3f0ffef0071aedb8bd291b5f4285`. Every
-artifact id, byte count, `sha256` and expiry date is in
+Accepted run: **40127576739 / attempt 1**, tested source
+`6e7ba4b64fc3a05fbd6a960e81df1bb7ef58d42c`, 21/21 named checks green on
+Linux, Windows and macOS, identical case sets, one identical catalog digest
+`41040fcc8a162eeecea1415dbee3710f708d3f0ffef0071aedb8bd291b5f4285`, and the
+installed library, both installed consumers, the hook worker and the frozen
+fixtures bound by `sha256` on each platform. Every artifact id, byte count,
+`sha256`, expiry date and binary digest is in
 `docs/validation/reader-localization.json`.
+
+An earlier accepted run (40126739701, source `aafb8fd0`) covered the first 20
+checks; it is recorded as superseded because it does not carry the binary
+digests, and its artifacts stay available until 2027-01-22.
 
 Earlier failed runs on this branch are kept as evidence, with their jobs,
 artifacts, digests and the exact case that failed. None of them was repaired by
