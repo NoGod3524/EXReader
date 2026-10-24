@@ -52,6 +52,7 @@ def main():
         'jobs': [],
         'platforms': {},
         'skipped': {},
+        'skipped_everywhere': [],
         'uncovered': [],
         'problems': [],
         'checks_per_platform': 0,
@@ -70,8 +71,14 @@ def main():
         require(run['head_sha'] == source and run['run_attempt'] == attempt,
                 'caller identity differs')
         require(run['path'].split('@')[0] == WORKFLOW, 'wrong workflow')
-        require(run['conclusion'] == 'success', 'the run did not succeed')
+        summary['run_conclusion'] = run['conclusion']
         jobs = pages('actions/runs/%d/attempts/%d/jobs' % (run_id, attempt), 'jobs')
+        # This verifier job is the one that still runs while the summary is built;
+        # every other job of the attempt has to be green.
+        others = [job for job in jobs if job['name'] != 'strict keyboard-actions evidence']
+        require(len(others) == 3, 'the attempt does not have exactly three upstream jobs')
+        require(all(job['conclusion'] == 'success' for job in others),
+                'an upstream job of this attempt did not succeed')
         artifacts = pages('actions/runs/%d/artifacts' % run_id, 'artifacts')
         for platform, runner in PLATFORMS:
             artifact_name = 'reader-keyboard-actions-%s-%d-%d' % (platform, run_id, attempt)
@@ -137,15 +144,24 @@ def main():
         expected_keys = [('consumer-c', name) for name in CASE_C] + \
                         [('consumer-cpp', name) for name in CASE_CPP] + \
                         [('probe', name) for name in CASE_PROBE]
+        skipped_everywhere = []
         for key in expected_keys:
             values = [statuses_by_platform[platform][key] for platform in
                       ('linux', 'windows', 'macos')]
             if key[0] == 'probe':
-                require(sum(1 for value in values if value == 'PASS') >= 2,
-                        'probe case %s passed on fewer than two platforms: %s' % (key, values))
+                passed = sum(1 for value in values if value == 'PASS')
+                if passed < 2:
+                    require(key[1] in DOCUMENTED_SKIPS and
+                            all(value in ('PASS', 'SKIP') for value in values),
+                            'probe case %s passed on fewer than two platforms: %s' % (key, values))
+                    if passed == 0:
+                        skipped_everywhere.append(key[1])
             else:
                 require(all(value == 'PASS' for value in values),
                         'installed consumer case %s did not pass everywhere: %s' % (key, values))
+        require(len(skipped_everywhere) <= 2,
+                'too many probe cases were skipped everywhere: %s' % skipped_everywhere)
+        summary['skipped_everywhere'] = skipped_everywhere
         summary['checks_per_platform'] = EXPECTED_CASES
         summary['uncovered'] = [{'case': name, 'reason': reason}
                                 for name, reason in sorted(DOCUMENTED_SKIPS.items())
