@@ -25,6 +25,11 @@ def main():
         common += ['-DCMAKE_SYSTEM_NAME=iOS', '-DCMAKE_OSX_SYSROOT=' + args.target,
                    '-DCMAKE_OSX_ARCHITECTURES=arm64', '-DCMAKE_OSX_DEPLOYMENT_TARGET=15.0',
                    '-DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO']
+    # Cross compilation roots package searches in the Apple SDK. Explicit
+    # installed config paths keep product dependencies in this target's stage.
+    packages = ('EXReader', 'EXReaderProductCatalog', 'EXReaderRevisions', 'EXReaderCommands',
+                'EXReaderWebDAV', 'EXReaderSync', 'EXReaderSession', 'EXReaderCredentials', 'EXReaderReadingState')
+    common += ['-D' + name + '_DIR=' + str(stage / 'lib/cmake' / name) for name in packages]
     modules = [('catalog', 'apps/reader/store/native'), ('revisions', 'apps/reader/revisions'),
                ('commands', 'apps/reader/commands'), ('webdav', 'extras/webdav'),
                ('sync', 'apps/reader/sync'), ('session', 'apps/reader/session'),
