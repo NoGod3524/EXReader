@@ -14,6 +14,7 @@ static struct {
   unsigned portal_events,portal_version;
   unsigned deferred_closes;
   unsigned actions;
+  unsigned gesture_events,gesture_turns,press_frame;
   size_t bitmap_width,bitmap_height;
   double press_x,press_y;
   gboolean pressed;
@@ -330,11 +331,12 @@ static gboolean preferences_turn_key(GdkEventKey *event) {
 }
 static gboolean preferences_page_press(GtkWidget *widget,GdkEventButton *event,gpointer unused) {
   (void)widget;(void)unused;preferences.pressed=event->button==1 && !preferences_opened() && !busy && !saving;
-  preferences.press_x=event->x;preferences.press_y=event->y;return preferences.pressed;
+  preferences.press_x=event->x;preferences.press_y=event->y;preferences.press_frame=frame_generation;return preferences.pressed;
 }
 static gboolean preferences_page_release(GtkWidget *widget,GdkEventButton *event,gpointer unused) {
-  (void)unused;if(!preferences.pressed || event->button!=1) return FALSE;preferences.pressed=FALSE;
-  if(!book_id || busy || saving || preferences_opened()) return TRUE;
+  (void)unused;if(!preferences.pressed || event->button!=1) return FALSE;preferences.pressed=FALSE;preferences.gesture_events++;
+  if(!book_id || busy || saving || preferences_opened() || preferences.press_frame!=frame_generation ||
+     strcmp(gtk_stack_get_visible_child_name(GTK_STACK(stack)),"reader")) { state();return TRUE; }
   double dx=event->x-preferences.press_x,dy=event->y-preferences.press_y;
   int input=(int)appearance.page_turn_input,next=-1,vertical=appearance.page_turn_direction==READER_PREFERENCES_TURN_VERTICAL;
   double delta=vertical ? dy:dx;
@@ -344,15 +346,16 @@ static gboolean preferences_page_release(GtkWidget *widget,GdkEventButton *event
     next=vertical ? event->y>=gtk_widget_get_allocated_height(widget)/2.0:event->x>=gtk_widget_get_allocated_width(widget)/2.0;
     if(appearance.page_turn_direction==READER_PREFERENCES_TURN_RTL) next=!next;
   }
-  if(next>=0) submit(next ? READER_NEXT:READER_PREVIOUS,book_id,NULL,font_size);
+  if(next>=0) { preferences.gesture_turns++;submit(next ? READER_NEXT:READER_PREVIOUS,book_id,NULL,font_size); }
+  else state();
   return TRUE;
 }
 static char *preferences_observation(void) {
-  return g_strdup_printf("[preferences]\nvisible=%d\nrunning=%d\nload_status=%d\nsave_status=%d\nfont=%.3f\nline=%.3f\nparagraph=%.3f\nmargin=%.3f\ntheme=%u\nsystem_theme=%u\neffective_theme=%u\ndirection=%u\ninput=%u\nzoom=%u\nportal_version=%u\nportal_events=%u\nbitmap_width=%zu\nbitmap_height=%zu\ndeferred_closes=%u\nactions=%u\n",
+  return g_strdup_printf("[preferences]\nvisible=%d\nrunning=%d\nload_status=%d\nsave_status=%d\nfont=%.3f\nline=%.3f\nparagraph=%.3f\nmargin=%.3f\ntheme=%u\nsystem_theme=%u\neffective_theme=%u\ndirection=%u\ninput=%u\nzoom=%u\nportal_version=%u\nportal_events=%u\nbitmap_width=%zu\nbitmap_height=%zu\ndeferred_closes=%u\nactions=%u\ngesture_events=%u\ngesture_turns=%u\n",
     preferences.dialog!=NULL,preferences.running,preferences.load_status,preferences.save_status,(double)appearance.font_size,(double)appearance.line_spacing,
     (double)appearance.paragraph_spacing,(double)appearance.margin,appearance.theme,appearance_system_theme,
     (unsigned)reader_preferences_effective_theme(&appearance,(reader_preferences_theme)appearance_system_theme),appearance.page_turn_direction,appearance.page_turn_input,appearance.fixed_page_zoom,preferences.portal_version,preferences.portal_events,
-    preferences.bitmap_width,preferences.bitmap_height,preferences.deferred_closes,preferences.actions);
+    preferences.bitmap_width,preferences.bitmap_height,preferences.deferred_closes,preferences.actions,preferences.gesture_events,preferences.gesture_turns);
 }
 static void preferences_cleanup(void) {
   preferences.cleaned=TRUE;

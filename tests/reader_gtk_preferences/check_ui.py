@@ -140,17 +140,20 @@ def main():
             time.sleep(.05)
 
     def page_click(x_fraction=.8, y_fraction=.5):
+        before = int(observed()['gesture_events'])
         rectangle = bus.extents(element('Rendered page; selectable text is in the adjacent panel', {'image', 'icon'}))
         x, y = rectangle['x'] + int(rectangle['width'] * x_fraction), rectangle['y'] + int(rectangle['height'] * y_fraction)
-        command('xdotool', 'mousemove', '--sync', str(x), str(y));command('xdotool', 'click', '1');host.wait(lambda value: True)
+        command('xdotool', 'mousemove', '--sync', str(x), str(y));command('xdotool', 'click', '1')
+        wait(lambda value: int(value['gesture_events']) > before)
 
     def swipe(vertical=False, reverse=False):
+        before = int(observed()['gesture_events'])
         rectangle = bus.extents(element('Rendered page; selectable text is in the adjacent panel', {'image', 'icon'}))
         x, y = rectangle['x'] + rectangle['width'] // 2, rectangle['y'] + rectangle['height'] // 2
         delta = 100 if reverse else -100
         command('xdotool', 'mousemove', '--sync', str(x), str(y));command('xdotool', 'mousedown', '1')
         command('xdotool', 'mousemove', '--sync', str(x if vertical else x + delta), str(y + delta if vertical else y))
-        command('xdotool', 'mouseup', '1');host.wait(lambda value: True)
+        command('xdotool', 'mouseup', '1');wait(lambda value: int(value['gesture_events']) > before)
 
     try:
         assert bus.init()[0]
