@@ -8,6 +8,11 @@
 #include <sys/types.h>
 #include <math.h>
 #include <errno.h>
+#ifdef EXR_READER_BATCH_IMPORT
+#include <reader_batch_import.h>
+#include <glib/gstdio.h>
+#include <sys/stat.h>
+#endif
 #ifdef EXR_READER_NAVIGATION
 #include <reader_navigation.h>
 #include <glib.h>
@@ -57,6 +62,9 @@ struct linux_reader {
   reader_session current;
   reader_session pending;
   int has_pending,pending_owns_session,pending_new_pager;
+#ifdef EXR_READER_BATCH_IMPORT
+  void *batch_data;
+#endif
 #ifdef EXR_READER_NAVIGATION
   void *navigation_data;
   int navigation_pending;
@@ -94,6 +102,9 @@ struct linux_reader {
 typedef struct {int64_t id;int font,zoom;} reader_import_saved;
 static exr_status reader_import_suspend(linux_reader *,reader_import_saved *);
 static exr_status reader_import_resume(linux_reader *,const reader_import_saved *,reader_result *);
+#ifdef EXR_READER_BATCH_IMPORT
+static void batch_free(linux_reader *);
+#endif
 #ifdef EXR_READER_NAVIGATION
 static void navigation_free(linux_reader *);
 #endif
@@ -127,6 +138,9 @@ static void pending_discard(linux_reader *reader) {
 }
 void reader_result_free(reader_result *result) {
   size_t i;free(result->pixels);free(result->text);
+#ifdef EXR_READER_BATCH_IMPORT
+  free(result->batch_rows);
+#endif
 #ifdef EXR_READER_READING_RECORDS
   reader_av_page_free(&result->records_page);
   for(i=0;i<result->records_version_count;i++) { free(result->records_versions[i]);free(result->records_version_labels[i]); }
@@ -193,6 +207,9 @@ exr_status linux_reader_open(const char *database,const char *font,const exr_con
 }
 void linux_reader_close(linux_reader *reader) {
   if(reader) {
+#ifdef EXR_READER_BATCH_IMPORT
+    batch_free(reader);
+#endif
 #ifdef EXR_READER_NAVIGATION
     navigation_free(reader);
 #endif
@@ -716,11 +733,19 @@ done:
 #ifdef EXR_READER_READING_RECORDS
 #include "reading_records_backend.inc"
 #endif
+#ifdef EXR_READER_BATCH_IMPORT
+#include "batch_import_backend.inc"
+#endif
 void linux_reader_execute(linux_reader *reader,const reader_command *command,reader_result *result) {
   reader_session next=reader->current;exr_error error={0};exr_status status=cancel(reader);
   int owned_session=0,new_pager=0;int64_t id=command->book;size_t target=0;
   int wants_shelf=command->action==READER_SHELF || command->action==READER_OPEN || command->action==READER_IMPORT;
   memset(result,0,sizeof(*result));
+#ifdef EXR_READER_BATCH_IMPORT
+  if(command->action>=READER_BATCH_BEGIN && command->action<=READER_BATCH_CLOSE) {
+    batch_execute(reader,command,result);return;
+  }
+#endif
 #ifdef EXR_READER_READING_RECORDS
   if(command->action>=READER_RECORDS_LIST && command->action<=READER_RECORDS_HISTORY) {
     records_execute(reader,command,result);return;

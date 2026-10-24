@@ -1,0 +1,19 @@
+{
+  "accepted": false,
+  "batch_import_scope_passed": false,
+  "status": "pending_cloud_execution",
+  "base_source": "401729ba9537b58c8566372fb953384ce61381d7",
+  "sdk_frozen_source": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "sdk_abi": 1,
+  "fixed_batch_source": "ba25961961ae69222bfed4f7a98cb02bb1dc6847",
+  "batch_tree": "40ccc040a65970df056dfb635f247517f8c382df",
+  "sideload_tree": "40a8fcfdd70807f4d1ac4d8fd099f74d715ca40f",
+  "complete_product": false,
+  "settings_whole_page_palette_accepted": false,
+  "retained_sdk_failures": [
+    "light_foreground_and_background_change_page_pixels",
+    "dark_theme_and_palette_change_page_pixels"
+  ],
+  "runs": []
+}
