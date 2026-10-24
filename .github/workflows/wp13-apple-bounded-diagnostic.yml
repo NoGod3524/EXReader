@@ -3,12 +3,19 @@ on:
   push:
     branches: ['codex/r5-apple-bounded-diagnostic']
   workflow_dispatch:
+    inputs:
+      scope:
+        type: choice
+        options: [bounded, shelf]
+        default: bounded
 permissions:
   contents: read
+  actions: read
 env:
   H9_SDK_BASELINE: 9854061be331fe603a1822d9b2b36ee357154927
 jobs:
   diagnose:
+    if: github.event_name != 'workflow_dispatch' || inputs.scope != 'shelf'
     strategy:
       fail-fast: false
       matrix:
@@ -54,3 +61,6 @@ jobs:
       - name: Preserve the failure status
         if: steps.probe.outcome != 'success'
         run: exit 1
+  shelf:
+    if: github.event_name == 'workflow_dispatch' && inputs.scope == 'shelf'
+    uses: ./.github/workflows/reader-apple-shelf-diagnostic.yml
