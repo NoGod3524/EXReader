@@ -324,8 +324,7 @@ def main():
                        '%d hits' % len(secrets)))
 
     forbidden, observations = contract.scan_forbidden(
-        payload, {'config': {'cache_switches': switches}, 'identity': identity,
-                  'dynamic_dependencies': {'entries': []}}, allow_credentials=True)
+        payload, contract.forbidden_context(switches), allow_credentials=True)
     problems += forbidden
     credential_material = sorted(observations['credential_files'])
     credential_ok = bool(credential_material) and all(

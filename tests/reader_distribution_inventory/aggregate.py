@@ -228,8 +228,7 @@ def verify_combined(key, payload, inventory, licenses_doc, run, components=None,
     secrets = contract.scan_test_secrets(payload, 'stage/')
     contract.need(not secrets, 'combined_test_secrets')
     forbidden, observations = contract.scan_forbidden(
-        payload, {'config': {'cache_switches': inventory.get('config', {}).get('sdk_switches', {})},
-                  'identity': identity, 'dynamic_dependencies': {'entries': []}},
+        payload, contract.forbidden_context(inventory.get('config', {}).get('sdk_switches', {})),
         allow_credentials=True)
     contract.need(not forbidden, 'combined_forbidden')
     contract.need(observations == inventory.get('observations'), 'combined_observations')
