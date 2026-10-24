@@ -5,7 +5,7 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
+
 import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
 
-/** Executes the packaged migration with Android's own SQLite, including triggers. */
+/** Executes the packaged migration with the installed native product SQLite, including triggers. */
 public final class CatalogStoreTest extends Instrumentation {
     private Context context;
     private byte[] asset;
@@ -119,7 +119,7 @@ public final class CatalogStoreTest extends Instrumentation {
 
     public void cleanUp() {
         try {
-            for (File file : files) SQLiteDatabase.deleteDatabase(file);
+            for (File file : files) ProductFixture.deleteDatabase(file);
         } finally {
             files.clear();
         }
@@ -128,7 +128,7 @@ public final class CatalogStoreTest extends Instrumentation {
     public void createsAndReopensCatalog() throws Exception {
         File file = newFile();
         try (CatalogStore catalog = new CatalogStore(context, file)) {
-            SQLiteDatabase db = catalog.database();
+            ProductFixture db = ProductFixture.of(catalog);
             assertEquals(CatalogStore.APPLICATION_ID, scalar(db, "PRAGMA application_id"));
             assertEquals(1, scalar(db, "PRAGMA user_version"));
             assertEquals(1, scalar(db, "PRAGMA foreign_keys"));
@@ -138,10 +138,10 @@ public final class CatalogStoreTest extends Instrumentation {
             insertShelf(db, 1, null);
         }
         try (CatalogStore reopened = new CatalogStore(context, file)) {
-            assertEquals(1, scalar(reopened.database(), "SELECT count(*) FROM reader_shelves"));
-            assertEquals(1, scalar(reopened.database(), "PRAGMA foreign_keys"));
-            assertEquals("Shelf 1", text(reopened.database(), "SELECT name FROM reader_shelves"));
-            assertEquals("ok", text(reopened.database(), "PRAGMA integrity_check"));
+            assertEquals(1, scalar(ProductFixture.of(reopened), "SELECT count(*) FROM reader_shelves"));
+            assertEquals(1, scalar(ProductFixture.of(reopened), "PRAGMA foreign_keys"));
+            assertEquals("Shelf 1", text(ProductFixture.of(reopened), "SELECT name FROM reader_shelves"));
+            assertEquals("ok", text(ProductFixture.of(reopened), "PRAGMA integrity_check"));
         }
     }
 
@@ -153,14 +153,14 @@ public final class CatalogStoreTest extends Instrumentation {
         for (int i = 0; i < identities.length; i++) {
             File file = newFile();
             String table = i == 3 ? "sqliteXbooks" : "retained";
-            try (SQLiteDatabase db = openRaw(file)) {
+            try (ProductFixture db = openRaw(file)) {
                 db.execSQL("CREATE TABLE " + table + "(value TEXT NOT NULL)");
                 db.execSQL("INSERT INTO " + table + " VALUES(?)", new Object[]{"keep " + i});
                 db.execSQL("PRAGMA application_id=" + identities[i][0]);
                 db.execSQL("PRAGMA user_version=" + identities[i][1]);
             }
             rejects(SQLiteException.class, () -> { try (CatalogStore ignored = new CatalogStore(file, asset)) {} });
-            try (SQLiteDatabase db = openRaw(file)) {
+            try (ProductFixture db = openRaw(file)) {
                 assertEquals(identities[i][0], scalar(db, "PRAGMA application_id"));
                 assertEquals(identities[i][1], scalar(db, "PRAGMA user_version"));
                 assertEquals("keep " + i, text(db, "SELECT value FROM " + table));
@@ -173,7 +173,7 @@ public final class CatalogStoreTest extends Instrumentation {
 
     public void keepsCompleteShelfTriggers() throws Exception {
         try (CatalogStore catalog = new CatalogStore(context, newFile())) {
-            SQLiteDatabase db = catalog.database();
+            ProductFixture db = ProductFixture.of(catalog);
             for (int i = 1; i <= 8; i++) insertShelf(db, i, i == 1 ? null : id(i - 1));
             rejects(SQLiteException.class, () -> insertShelf(db, 9, id(8)));
             rejects(SQLiteException.class, () -> db.execSQL(
@@ -201,7 +201,7 @@ public final class CatalogStoreTest extends Instrumentation {
         String body = "{\"operation\":\"delete\"}";
         String bodyHash = sha256(body.getBytes(StandardCharsets.UTF_8));
         try (CatalogStore catalog = new CatalogStore(context, file)) {
-            SQLiteDatabase db = catalog.database();
+            ProductFixture db = ProductFixture.of(catalog);
             Object[] values = {revision, "book", "epub:" + zeros(64), "delete", body, bodyHash};
             db.execSQL("INSERT INTO reader_revisions VALUES(?,?,?,?,?,?)", values);
             db.execSQL("INSERT INTO reader_outbox(revision_id) VALUES(?)", new Object[]{revision});
@@ -213,36 +213,25 @@ public final class CatalogStoreTest extends Instrumentation {
             assertEquals(1, scalar(db, "SELECT count(*) FROM reader_tombstones"));
         }
         try (CatalogStore reopened = new CatalogStore(context, file)) {
-            assertEquals(body, text(reopened.database(), "SELECT body_json FROM reader_tombstones"));
-            assertEquals(bodyHash, text(reopened.database(), "SELECT body_sha256 FROM reader_revisions"));
-            assertEquals(revision, text(reopened.database(), "SELECT revision_id FROM reader_tombstones"));
+            assertEquals(body, text(ProductFixture.of(reopened), "SELECT body_json FROM reader_tombstones"));
+            assertEquals(bodyHash, text(ProductFixture.of(reopened), "SELECT body_sha256 FROM reader_revisions"));
+            assertEquals(revision, text(ProductFixture.of(reopened), "SELECT revision_id FROM reader_tombstones"));
         }
     }
 
     public void rollsBackInterruptedMigrationAndAllowsRetry() throws Exception {
         File file = newFile();
-        JSONObject broken = object();
-        JSONArray original = broken.getJSONArray("statements");
-        JSONArray statements = new JSONArray();
-        for (int i = 0; i < original.length(); i++) {
-            if (i == original.length() - 1) {
-                statements.put("CREATE TABLE reader_failure_probe(value INTEGER);\n");
-                statements.put("INSERT INTO missing_catalog_table VALUES(1);\n");
-            }
-            statements.put(original.getString(i));
-        }
-        broken.put("statements", statements);
-        byte[] brokenAsset = recomputeSourceIdentity(broken);
-        rejects(SQLiteException.class, () -> { try (CatalogStore ignored = new CatalogStore(file, brokenAsset)) {} });
-        try (SQLiteDatabase db = openRaw(file)) {
+        ProductFixture.failNextMigration();
+        rejects(SQLiteException.class, () -> { try (CatalogStore ignored = new CatalogStore(file, asset)) {} });
+        try (ProductFixture db = openRaw(file)) {
             assertEquals(0, scalar(db, "PRAGMA application_id"));
             assertEquals(0, scalar(db, "PRAGMA user_version"));
             assertEquals(0, scalar(db, "SELECT count(*) FROM sqlite_master WHERE name NOT GLOB 'sqlite_*'"));
             assertEquals("ok", text(db, "PRAGMA integrity_check"));
         }
         try (CatalogStore retried = new CatalogStore(context, file)) {
-            assertEquals(CatalogStore.APPLICATION_ID, scalar(retried.database(), "PRAGMA application_id"));
-            assertEquals(10, scalar(retried.database(), "SELECT count(*) FROM sqlite_master WHERE type='table'"));
+            assertEquals(CatalogStore.APPLICATION_ID, scalar(ProductFixture.of(retried), "PRAGMA application_id"));
+            assertEquals(10, scalar(ProductFixture.of(retried), "SELECT count(*) FROM sqlite_master WHERE type='table'"));
         }
     }
 
@@ -298,7 +287,7 @@ public final class CatalogStoreTest extends Instrumentation {
             AtomicReference<Throwable> queryError = new AtomicReference<>();
             AtomicReference<Throwable> closeError = new AtomicReference<>();
             Thread other = new Thread(() -> {
-                try { catalog.database(); } catch (Throwable error) { queryError.set(error); }
+                try { ProductFixture.of(catalog); } catch (Throwable error) { queryError.set(error); }
                 try { catalog.close(); } catch (Throwable error) { closeError.set(error); }
             }, "catalog-wrong-owner");
             other.start();
@@ -308,7 +297,7 @@ public final class CatalogStoreTest extends Instrumentation {
             assertTrue(queryError.get() instanceof IllegalStateException);
             assertNotNull(closeError.get());
             assertTrue(closeError.get() instanceof IllegalStateException);
-            assertEquals(1, scalar(catalog.database(), "PRAGMA user_version"));
+            assertEquals(1, scalar(ProductFixture.of(catalog), "PRAGMA user_version"));
         }
     }
 
@@ -357,25 +346,23 @@ public final class CatalogStoreTest extends Instrumentation {
 
     private static String id(int number) { return String.format(Locale.ROOT, "%032x", number); }
 
-    private static SQLiteDatabase openRaw(File file) {
-        return SQLiteDatabase.openDatabase(file.getAbsolutePath(), null,
-                SQLiteDatabase.OPEN_READWRITE | SQLiteDatabase.CREATE_IF_NECESSARY
-                        | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
+    private static ProductFixture openRaw(File file) {
+        return ProductFixture.open(file);
     }
 
-    private static void insertShelf(SQLiteDatabase db, int number, String parent) {
+    private static void insertShelf(ProductFixture db, int number, String parent) {
         db.execSQL("INSERT INTO reader_shelves(shelf_id,parent_id,name) VALUES(?,?,?)",
                 new Object[]{id(number), parent, "Shelf " + number});
     }
 
-    private static long scalar(SQLiteDatabase db, String sql) {
+    private static long scalar(ProductFixture db, String sql) {
         try (Cursor cursor = db.rawQuery(sql, null)) {
             assertTrue(cursor.moveToFirst());
             return cursor.getLong(0);
         }
     }
 
-    private static String text(SQLiteDatabase db, String sql, String... args) {
+    private static String text(ProductFixture db, String sql, String... args) {
         try (Cursor cursor = db.rawQuery(sql, args)) {
             assertTrue(cursor.moveToFirst());
             return cursor.getString(0);
@@ -418,3 +405,4 @@ public final class CatalogStoreTest extends Instrumentation {
         fail("Expected " + expected.getName());
     }
 }
+

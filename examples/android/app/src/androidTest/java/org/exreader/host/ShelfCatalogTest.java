@@ -67,6 +67,7 @@ public final class ShelfCatalogTest extends Instrumentation {
         } catch (Throwable error) { failures++; Log.e("EXRShelfTest","Setup failed",error); }
         finally {
             if (store!=null) store.close();
+            ProductFixture.closeAll();
             try { if(directory!=null)remove(directory); } catch(Exception error) { failures++; }
         }
         Bundle result=new Bundle();
@@ -177,9 +178,9 @@ public final class ShelfCatalogTest extends Instrumentation {
     private void hidesUnmappedAndDeletedProducts() throws Exception {
         CatalogStore.ShelfBook book=all("").get(0);
         try(CatalogStore product=new CatalogStore(context,new File(directory,"reader-catalog.db"))) {
-            product.database().execSQL("UPDATE reader_books SET deleted=1 WHERE book_key=?",new Object[]{book.key.bookKey});
+            ProductFixture.of(product).execSQL("UPDATE reader_books SET deleted=1 WHERE book_key=?",new Object[]{book.key.bookKey});
             require(store.localShelfBook(book.sdkBookId)==null && all("").size()==TOTAL-1,"deleted products hidden");
-            product.database().execSQL("UPDATE reader_books SET deleted=0 WHERE book_key=?",new Object[]{book.key.bookKey});
+            ProductFixture.of(product).execSQL("UPDATE reader_books SET deleted=0 WHERE book_key=?",new Object[]{book.key.bookKey});
             product.removeLocalBook(book.sdkBookId);
             require(store.localShelfBook(book.sdkBookId)==null && all("").size()==TOTAL-1,"unmapped products hidden");
         }
@@ -343,3 +344,4 @@ public final class ShelfCatalogTest extends Instrumentation {
         write(file,bytes.toByteArray());
     }
 }
+

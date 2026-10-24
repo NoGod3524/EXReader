@@ -5,7 +5,7 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
+
 import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
 import android.os.Process;
@@ -19,7 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Arrays;
 
-/** Real SDK and Android SQLite; also supports independent killed-process probes. */
+/** Real SDK and installed product SQLite; independent killed-process probes. */
 public final class ImportMappingTest extends Instrumentation {
     private Context context;
     private File directory;
@@ -66,7 +66,7 @@ public final class ImportMappingTest extends Instrumentation {
                 remove(directory); require(directory.mkdirs(), "test directory");
                 checks[index].run();
             } catch (Throwable error) { failed = error; }
-            finally { try { remove(directory); } catch (Throwable error) { if (failed == null) failed = error; } }
+            finally { try { ProductFixture.closeAll(); remove(directory); } catch (Throwable error) { if (failed == null) failed = error; } }
             Bundle completed = status(NAMES[index], index + 1);
             if (failed == null) { completed.putString("stream", "."); sendStatus(0, completed); }
             else {
@@ -118,10 +118,10 @@ public final class ImportMappingTest extends Instrumentation {
         for (byte b : digest.digest()) value.append(String.format(java.util.Locale.ROOT, "%02x", b));
         return value.toString();
     }
-    private static long number(SQLiteDatabase db, String sql, String... args) {
+    private static long number(ProductFixture db, String sql, String... args) {
         try (Cursor row = db.rawQuery(sql, args)) { require(row.moveToFirst(), "number row"); return row.getLong(0); }
     }
-    private static String value(SQLiteDatabase db, String sql, String... args) {
+    private static String value(ProductFixture db, String sql, String... args) {
         try (Cursor row = db.rawQuery(sql, args)) { require(row.moveToFirst(), "text row"); return row.getString(0); }
     }
     private static void equal(Object expected, Object actual) { require(expected.equals(actual), expected + " != " + actual); }
@@ -160,11 +160,11 @@ public final class ImportMappingTest extends Instrumentation {
             BookStore.VerifiedSource source = imported(store, text("one.txt", 2));
             store.finalizeImport(source); store.finalizeImport(source);
             try (CatalogStore catalog = catalog()) {
-                equal(1L, number(catalog.database(), "SELECT count(*) FROM reader_books"));
-                equal(source.book.id, number(catalog.database(), "SELECT sdk_book_id FROM reader_local_books"));
-                equal("reflow_global", value(catalog.database(), "SELECT location_kind FROM reader_local_books"));
-                equal(source.key, value(catalog.database(), "SELECT book_key FROM reader_books"));
-                equal(0L, number(catalog.database(), "SELECT count(*) FROM reader_revisions"));
+                equal(1L, number(ProductFixture.of(catalog), "SELECT count(*) FROM reader_books"));
+                equal(source.book.id, number(ProductFixture.of(catalog), "SELECT sdk_book_id FROM reader_local_books"));
+                equal("reflow_global", value(ProductFixture.of(catalog), "SELECT location_kind FROM reader_local_books"));
+                equal(source.key, value(ProductFixture.of(catalog), "SELECT book_key FROM reader_books"));
+                equal(0L, number(ProductFixture.of(catalog), "SELECT count(*) FROM reader_revisions"));
             }
         }
     }
@@ -174,10 +174,10 @@ public final class ImportMappingTest extends Instrumentation {
             BookStore.VerifiedSource first = imported(store, source); store.finalizeImport(first);
             store.saveNote(first.book.id, 0, 0, 6, "Keep SDK note");
             try (CatalogStore catalog = catalog()) {
-                catalog.database().execSQL("UPDATE reader_books SET title='User title',favorite=1,deleted=1");
-                catalog.database().execSQL("INSERT INTO reader_revisions VALUES(?,?,?,?,?,?)", new Object[]{
+                ProductFixture.of(catalog).execSQL("UPDATE reader_books SET title='User title',favorite=1,deleted=1");
+                ProductFixture.of(catalog).execSQL("INSERT INTO reader_revisions VALUES(?,?,?,?,?,?)", new Object[]{
                         "00000000000000000000000000000001", "book", first.key, "delete", "{}", "0".repeat(64)});
-                catalog.database().execSQL("INSERT INTO reader_outbox(revision_id) VALUES(?)",
+                ProductFixture.of(catalog).execSQL("INSERT INTO reader_outbox(revision_id) VALUES(?)",
                         new Object[]{"00000000000000000000000000000001"});
             }
             NativeLibrary.ImportResult duplicate = store.importFile(source.getPath(), 1, "Wrong replacement title");
@@ -185,10 +185,10 @@ public final class ImportMappingTest extends Instrumentation {
             store.finalizeImport(store.verifySource(duplicate.id, hash(source), source.length(), task()));
             equal(1, store.notes(first.book.id).size());
             try (CatalogStore catalog = catalog()) {
-                equal("User title", value(catalog.database(), "SELECT title FROM reader_books"));
-                equal(1L, number(catalog.database(), "SELECT deleted FROM reader_books"));
-                equal(1L, number(catalog.database(), "SELECT count(*) FROM reader_tombstones"));
-                equal(1L, number(catalog.database(), "SELECT count(*) FROM reader_outbox"));
+                equal("User title", value(ProductFixture.of(catalog), "SELECT title FROM reader_books"));
+                equal(1L, number(ProductFixture.of(catalog), "SELECT deleted FROM reader_books"));
+                equal(1L, number(ProductFixture.of(catalog), "SELECT count(*) FROM reader_tombstones"));
+                equal(1L, number(ProductFixture.of(catalog), "SELECT count(*) FROM reader_outbox"));
             }
         }
     }
@@ -213,7 +213,7 @@ public final class ImportMappingTest extends Instrumentation {
             long id = store.importFile(file.getPath(), 1, "Mismatch").id;
             rejects(java.io.IOException.class, () -> store.verifySource(id, "0".repeat(64), file.length(), task()));
             rejects(java.io.IOException.class, () -> store.verifySource(id, hash(file), file.length() + 1, task()));
-            try (CatalogStore catalog = catalog()) { equal(0L, number(catalog.database(), "SELECT count(*) FROM reader_books")); }
+            try (CatalogStore catalog = catalog()) { equal(0L, number(ProductFixture.of(catalog), "SELECT count(*) FROM reader_books")); }
             equal(1, store.books().size());
         }
     }
@@ -233,16 +233,16 @@ public final class ImportMappingTest extends Instrumentation {
             BookStore.VerifiedSource source = imported(store, text("committed.txt", 2));
             id = source.book.id; key = source.key;
             HostTask commit = task(); commit.commit(() -> {}); commit.cancel(); commit.check();
-            try (CatalogStore catalog = catalog()) { equal(0L, number(catalog.database(), "SELECT count(*) FROM reader_books")); }
+            try (CatalogStore catalog = catalog()) { equal(0L, number(ProductFixture.of(catalog), "SELECT count(*) FROM reader_books")); }
         }
         try (BookStore reopened = open(); CatalogStore catalog = catalog()) {
             equal(1, reopened.books().size()); require(!reopened.metadataRepairPending(), "repair succeeded");
-            equal(key, value(catalog.database(), "SELECT book_key FROM reader_local_books WHERE sdk_book_id=?", Long.toString(id)));
-            reopened.repairMissingMappings(); equal(1L, number(catalog.database(), "SELECT count(*) FROM reader_books"));
+            equal(key, value(ProductFixture.of(catalog), "SELECT book_key FROM reader_local_books WHERE sdk_book_id=?", Long.toString(id)));
+            reopened.repairMissingMappings(); equal(1L, number(ProductFixture.of(catalog), "SELECT count(*) FROM reader_books"));
         }
     }
     private void rejectLocalInsert(CatalogStore catalog) {
-        catalog.database().execSQL("CREATE TRIGGER mapping_failure BEFORE INSERT ON reader_local_books BEGIN SELECT RAISE(ABORT,'injected local mapping rejection'); END");
+        ProductFixture.of(catalog).execSQL("CREATE TRIGGER mapping_failure BEFORE INSERT ON reader_local_books BEGIN SELECT RAISE(ABORT,'injected local mapping rejection'); END");
     }
     private void rollsBackSqlFailureAndRepairsOnReopen() throws Exception {
         long id;
@@ -250,13 +250,13 @@ public final class ImportMappingTest extends Instrumentation {
             BookStore.VerifiedSource source = imported(store, text("rollback.txt", 2)); id = source.book.id;
             rejectLocalInsert(catalog); rejects(SQLiteException.class, () -> store.finalizeImport(source));
             require(store.metadataRepairPending(), "repair pending");
-            equal(0L, number(catalog.database(), "SELECT count(*) FROM reader_books"));
-            equal(0L, number(catalog.database(), "SELECT count(*) FROM reader_local_books"));
+            equal(0L, number(ProductFixture.of(catalog), "SELECT count(*) FROM reader_books"));
+            equal(0L, number(ProductFixture.of(catalog), "SELECT count(*) FROM reader_local_books"));
             equal(1, store.books().size());
-            catalog.database().execSQL("DROP TRIGGER mapping_failure");
+            ProductFixture.of(catalog).execSQL("DROP TRIGGER mapping_failure");
         }
         try (BookStore reopened = open(); CatalogStore catalog = catalog()) {
-            equal(id, number(catalog.database(), "SELECT sdk_book_id FROM reader_local_books"));
+            equal(id, number(ProductFixture.of(catalog), "SELECT sdk_book_id FROM reader_local_books"));
             require(!reopened.metadataRepairPending(), "reopened repair");
         }
     }
@@ -288,24 +288,24 @@ public final class ImportMappingTest extends Instrumentation {
         try (BookStore store = open(); CatalogStore catalog = catalog()) {
             BookStore.VerifiedSource source = imported(store, text("removed.txt", 2)); store.finalizeImport(source);
             store.deleteBook(source.book.id);
-            equal(0L, number(catalog.database(), "SELECT count(*) FROM reader_local_books"));
-            equal(1L, number(catalog.database(), "SELECT count(*) FROM reader_books"));
+            equal(0L, number(ProductFixture.of(catalog), "SELECT count(*) FROM reader_local_books"));
+            equal(1L, number(ProductFixture.of(catalog), "SELECT count(*) FROM reader_books"));
             equal(0, store.books().size());
             BookStore.VerifiedSource other = imported(store, text("replacement.txt", 2)); store.finalizeImport(other);
-            equal(other.key, value(catalog.database(), "SELECT book_key FROM reader_local_books"));
+            equal(other.key, value(ProductFixture.of(catalog), "SELECT book_key FROM reader_local_books"));
             // Simulated interruption after mapping delete and before SDK delete is repairable.
             catalog.removeLocalBook(other.book.id); store.repairMissingMappings();
-            equal(other.key, value(catalog.database(), "SELECT book_key FROM reader_local_books"));
+            equal(other.key, value(ProductFixture.of(catalog), "SELECT book_key FROM reader_local_books"));
         }
     }
     private void rejectsConflictingLocalIdentity() throws Exception {
         try (BookStore store = open(); CatalogStore catalog = catalog()) {
             BookStore.VerifiedSource first = imported(store, text("first.txt", 2)); store.finalizeImport(first);
             BookStore.VerifiedSource second = imported(store, text("second.txt", 2));
-            catalog.database().execSQL("UPDATE reader_local_books SET sdk_book_id=?", new Object[]{second.book.id});
+            ProductFixture.of(catalog).execSQL("UPDATE reader_local_books SET sdk_book_id=?", new Object[]{second.book.id});
             rejects(SQLiteException.class, () -> store.finalizeImport(second));
-            equal(first.key, value(catalog.database(), "SELECT book_key FROM reader_local_books"));
-            equal(1L, number(catalog.database(), "SELECT count(*) FROM reader_books"));
+            equal(first.key, value(ProductFixture.of(catalog), "SELECT book_key FROM reader_local_books"));
+            equal(1L, number(ProductFixture.of(catalog), "SELECT count(*) FROM reader_books"));
             equal(2, store.books().size());
         }
     }
@@ -329,7 +329,7 @@ public final class ImportMappingTest extends Instrumentation {
                 key = newest.key;
                 store.finalizeImport(newest);
                 try (CatalogStore catalog = new CatalogStore(context, new File(folder, "reader-catalog.db"))) {
-                    catalog.database().execSQL("UPDATE reader_books SET title='Keep product title',favorite=1");
+                    ProductFixture.of(catalog).execSQL("UPDATE reader_books SET title='Keep product title',favorite=1");
                 }
                 // Reverse source order proves canonical choice does not depend on enumeration.
                 store.finalizeImport(store.verifySource(second.id, hash(file), file.length(), task()));
@@ -342,14 +342,14 @@ public final class ImportMappingTest extends Instrumentation {
                  CatalogStore catalog = new CatalogStore(context, new File(folder, "reader-catalog.db"))) {
                 require(!reopened.metadataRepairPending(), "restarted canonical mapping");
                 equal(3, reopened.books().size());
-                equal(1L, number(catalog.database(), "SELECT count(*) FROM reader_books"));
-                equal(1L, number(catalog.database(), "SELECT count(*) FROM reader_local_books"));
-                equal(firstId, number(catalog.database(), "SELECT sdk_book_id FROM reader_local_books"));
+                equal(1L, number(ProductFixture.of(catalog), "SELECT count(*) FROM reader_books"));
+                equal(1L, number(ProductFixture.of(catalog), "SELECT count(*) FROM reader_local_books"));
+                equal(firstId, number(ProductFixture.of(catalog), "SELECT sdk_book_id FROM reader_local_books"));
                 equal(legacyOldest ? "reflow_global" : "epub_chapter",
-                        value(catalog.database(), "SELECT location_kind FROM reader_local_books"));
-                equal(key, value(catalog.database(), "SELECT book_key FROM reader_local_books"));
-                equal("Keep product title", value(catalog.database(), "SELECT title FROM reader_books"));
-                equal(1L, number(catalog.database(), "SELECT favorite FROM reader_books"));
+                        value(ProductFixture.of(catalog), "SELECT location_kind FROM reader_local_books"));
+                equal(key, value(ProductFixture.of(catalog), "SELECT book_key FROM reader_local_books"));
+                equal("Keep product title", value(ProductFixture.of(catalog), "SELECT title FROM reader_books"));
+                equal(1L, number(ProductFixture.of(catalog), "SELECT favorite FROM reader_books"));
             }
         }
     }
@@ -360,8 +360,8 @@ public final class ImportMappingTest extends Instrumentation {
         try (BookStore store = open(); CatalogStore catalog = catalog()) {
             NativeLibrary.ImportResult result = store.importFile(file.getPath(), 1, displayTitle);
             store.finalizeImport(store.verifySource(result.id, hash(file), file.length(), task()));
-            equal(displayTitle, value(catalog.database(), "SELECT title FROM reader_books"));
-            equal("Caf\u00e9 \u00c5", value(catalog.database(), "SELECT sort_title FROM reader_books"));
+            equal(displayTitle, value(ProductFixture.of(catalog), "SELECT title FROM reader_books"));
+            equal("Caf\u00e9 \u00c5", value(ProductFixture.of(catalog), "SELECT sort_title FROM reader_books"));
             equal(displayTitle, store.books().get(0).title);
         }
     }
@@ -379,7 +379,7 @@ public final class ImportMappingTest extends Instrumentation {
                 HostTask commit = task(); commit.commit(() -> {});
                 if (during) {
                     CatalogStore catalog = phaseCatalog = catalog();
-                    SQLiteDatabase db = catalog.database();
+                    ProductFixture db = ProductFixture.of(catalog);
                     db.beginTransaction();
                     db.execSQL("INSERT INTO reader_books(book_key,format,source_sha256,source_bytes,title,sort_title) VALUES(?,?,?,?,?,?)",
                             new Object[]{source.key, source.format, source.sha256, source.bytes, source.book.title, source.book.title});
@@ -394,17 +394,17 @@ public final class ImportMappingTest extends Instrumentation {
             require(phase.startsWith("recover-"), "known phase");
             require(new File(directory, "seed-ready").isFile(), "seed process reached committed SDK state");
             try (CatalogStore before = catalog()) {
-                equal(0L, number(before.database(), "SELECT count(*) FROM reader_books"));
-                equal(0L, number(before.database(), "SELECT count(*) FROM reader_local_books"));
+                equal(0L, number(ProductFixture.of(before), "SELECT count(*) FROM reader_books"));
+                equal(0L, number(ProductFixture.of(before), "SELECT count(*) FROM reader_local_books"));
             }
             try (BookStore reopened = open(); CatalogStore catalog = catalog()) {
                 require(!reopened.metadataRepairPending(), "recovered mapping"); equal(1, reopened.books().size());
-                equal(1L, number(catalog.database(), "SELECT count(*) FROM reader_local_books"));
+                equal(1L, number(ProductFixture.of(catalog), "SELECT count(*) FROM reader_local_books"));
                 BookStore.VerifiedSource source = reopened.verifySource(reopened.books().get(0).id,
                         hash(new File(directory, "published.txt")), new File(directory, "published.txt").length(), task());
-                equal(source.key, value(catalog.database(), "SELECT book_key FROM reader_local_books"));
-                reopened.repairMissingMappings(); equal(1L, number(catalog.database(), "SELECT count(*) FROM reader_books"));
-                equal("ok", value(catalog.database(), "PRAGMA integrity_check"));
+                equal(source.key, value(ProductFixture.of(catalog), "SELECT book_key FROM reader_local_books"));
+                reopened.repairMissingMappings(); equal(1L, number(ProductFixture.of(catalog), "SELECT count(*) FROM reader_books"));
+                equal("ok", value(ProductFixture.of(catalog), "PRAGMA integrity_check"));
             }
             result.putString("stream", "EXR_MAPPING_RECOVERED " + phase + "\n");
             finish(Activity.RESULT_OK, result);
@@ -414,3 +414,4 @@ public final class ImportMappingTest extends Instrumentation {
         }
     }
 }
+
