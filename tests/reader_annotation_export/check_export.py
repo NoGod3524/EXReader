@@ -575,9 +575,10 @@ def main():
         if derived == 'safe':
             assert graph['projection_safe'] is True and graph['deleted'] == case['expected']['tombstone'] and not graph['requires_restore'], (name, graph)
             assert graph['missing_parents'] == 0 and graph['foreign_parents'] == 0, (name, graph)
-        wire = bytes.fromhex(case['advance']['wire_hex'])
-        assert heads[0]['wire'].encode('utf-8') == wire and heads[0]['sha256'] == case['advance']['sha256'], ('advanced wire differs', name)
-        assert heads[0]['bytes'] == len(wire) and manual_wires(lines[1]) == [wire], ('second reader differs', name)
+        head_wire = wires[case['expected']['heads'][0]]
+        assert heads[0]['wire'].encode('utf-8') == head_wire, ('head wire differs', name)
+        assert heads[0]['sha256'] == hashlib.sha256(head_wire).hexdigest() and heads[0]['bytes'] == len(head_wire), ('head identity differs', name)
+        assert manual_wires(lines[1]) == [head_wire], ('second reader differs', name)
         want = dict(annotations=1, current=0, tombstones=0, pending_parents=0, concurrent=0, blocked_restore=0, head_wires=len(heads))
         if derived == 'safe':
             want['tombstones' if row['tombstone'] else 'current'] += 1
