@@ -26,6 +26,7 @@ jobs:
       PRESERVED_RUN: ${{ inputs.diagnostics_run }}
       PRESERVED_ATTEMPT: ${{ inputs.diagnostics_attempt }}
     steps:
+      - uses: actions/checkout@v4
       - name: Read the exact artifact identity from the preserved run
         env:
           GH_TOKEN: ${{ github.token }}
@@ -86,7 +87,7 @@ jobs:
             --source "$(cat preserved/build/a11y-android/source.txt)" \
             --run "${PRESERVED_RUN}" \
             --attempt "${PRESERVED_ATTEMPT}" \
-            --output preserved/check.json || true
+            --output preserved/check.json
   audit:
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.diagnostics_run == '' }}
     runs-on: ubuntu-latest
