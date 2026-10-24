@@ -169,6 +169,9 @@ exr_status provider_draw(void *context, size_t page, const double matrix[6], con
   const Op &op = g_ops[page];
   if(op.kind == DRAW_FAIL) return set_error(error, EXR_IO, "probe page provider failure");
   if(op.kind == DRAW_NONE || !op.image) return EXR_OK;
+  /* The draw sink takes a normalized texture transform: (u,v) in [0,1]^2 maps to
+     device pixels, as the CBZ page provider does with m * [width,0,0,height,0,0].
+     The page matrix places the image inside the page; matrix is page -> device. */
   double page_matrix[6] = {1, 0, 0, 1, 0, 0};
   if(op.kind == DRAW_IMAGE_ROT90) {
     /* Clockwise quarter turn inside the page: (x,y) -> (height - y, x). */
@@ -176,11 +179,15 @@ exr_status provider_draw(void *context, size_t page, const double matrix[6], con
     page_matrix[0] = 0; page_matrix[1] = 1; page_matrix[2] = -1; page_matrix[3] = 0;
     page_matrix[4] = height; page_matrix[5] = 0;
   }
-  double image_matrix[6];
-  compose(matrix, page_matrix, image_matrix);
+  const double normalized[6] = {static_cast<double>(op.image->width), 0, 0, static_cast<double>(op.image->height), 0, 0};
+  double placed[6], image_matrix[6];
+  compose(page_matrix, normalized, placed);
+  compose(matrix, placed, image_matrix);
   exr_image_layer layer{};
   layer.bitmap = *op.image;
-  layer.interpolate = 1;
+  /* Nearest sampling keeps the fixture pixels exact for unit scale and quarter
+     turns, so page-space quads stay comparable between rotations and scales. */
+  layer.interpolate = 0;
   return sink->image(sink->context, &layer, image_matrix, 1.0, error);
 }
 
@@ -921,7 +928,7 @@ int main(int argc, char **argv) {
     const bool ok = load == EXR_FORMAT && attached == nullptr && before == after && result == READER_OCR_OVERLAY_OK &&
       current == later && std::strcmp(later[0].id, "page-scan") == 0 && overlay.value != nullptr;
     check("document_untouched", ok, "memory=" + std::to_string(before) + "->" + std::to_string(after) +
-      " text_provider=" + status_name(load == EXR_FORMAT ? READER_OCR_OVERLAY_OK : READER_OCR_OVERLAY_ARGUMENT));
+      " sdk_status=" + std::to_string(static_cast<int>(load)) + " (EXR_FORMAT=5 means no text layer exists)");
     if(attached) exr_fixed_text_free(attached);
   }
   {
