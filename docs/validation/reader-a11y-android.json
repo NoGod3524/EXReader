@@ -35,8 +35,9 @@
     "digest": "sha256:5c723e84bc8790bc45c0d178f5f93ddddb9a5fb9e6308b072cc0349573f5baee",
     "expired": false,
     "created_at": "2026-10-24T09:48:38Z",
-    "reread_run": 40083655133,
+    "reread_runs": [40083655133, 40084066535],
     "reread_digest_matched": true,
+    "reread_evidence_rechecked": true,
     "contents": [
       "device/trees/*.xml",
       "device/trees/*.json",

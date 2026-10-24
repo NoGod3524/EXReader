@@ -21,7 +21,7 @@ another API level, RTL or a colour-contrast verdict.
 | audited source | `2bdfee69f82b5607bd5d43db7f80ea817640c1d5` |
 | run / attempt | `40082957400` / `1` (push, audit job `120840087102`, success) |
 | artefact | id `12556261406`, `reader-a11y-android-40082957400-1`, 44,086,158 bytes, `sha256:5c723e84bc8790bc45c0d178f5f93ddddb9a5fb9e6308b072cc0349573f5baee`, not expired |
-| artefact re-read | run `40083655133` downloaded that exact artefact on Actions; the recomputed digest matched |
+| artefact re-read | runs `40083655133` and `40084066535` downloaded that exact artefact on Actions; the downloader re-computed the same digest and the preserved evidence passed the same checker |
 | device | API 34, x86_64, `pixel_6` profile, `default` system image |
 | instrumented process | `org.exreader.host.a11y.test` (a separate APK; the host is untouched) |
 | installed host | read back from `pm path org.exreader.host`; byte-identical to the owner build record |
