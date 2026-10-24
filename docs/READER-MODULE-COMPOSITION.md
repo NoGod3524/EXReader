@@ -152,3 +152,33 @@ Every item is reported by name, per platform, in `evidence/result.json`;
 The workflow runs on `codex/reader-module-composition` pushes and on manual
 dispatch. Locally, only Git and source edits happen; every build, every Python
 execution and every fixture lives in GitHub Actions.
+
+## Recorded evidence
+
+Run [40081552526 attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40081552526)
+on source `4b1a17ca24eab43a765a3e984a707061d012083a` is the acceptance for this
+package. All four jobs succeeded: the three `one-prefix composition` jobs
+(ubuntu-22.04, windows-2022, macos-15) and the strict same-source aggregate.
+
+| Platform | Composition items | Gate items | Product SQLite provider in the final map | Second-SDK resolve | Session sweep |
+| --- | --- | --- | --- | --- | --- |
+| Linux (GNU ld map) | 36/36 | 11/11 | `libreader_catalog_sqlite.a` (one) | FOUND | 1 sweep, 256 shards |
+| Windows (MSVC map) | 36/36 | 11/11 | `reader_catalog_sqlite.lib` (one) | FOUND | 1 sweep, 256 shards |
+| macOS (ld64 map) | 36/36 | 11/11 | `libreader_catalog_sqlite.a` (one) | FOUND | 1 sweep, 256 shards |
+
+The composed consumers report 82 named items in C++ and 33 in C11 per platform;
+the relocated copies report the same totals from the moved prefix. One install
+manifest of 350 files with per-file SHA-256, one final link map and one consumer
+interface snapshot are retained per platform in the run artifacts;
+`docs/validation/reader-module-composition.json` records their digests together
+with the artifact ids, byte sizes and expiry.
+
+Defects this gate found in its own construction are recorded there too, so a
+reader can see what was actually wrong before acceptance: a rejected workflow
+expression, a CMake-generated JSON boolean, a header probed under the wrong
+include spelling, an MSVC runtime mismatch, an ld64 map flag, a report key that
+was a counter, a normalized text length compared against the raw file size, a
+missing annotation id and parser version in the C consumer, an archive member
+mistaken for a directly linked object, a withheld package still discoverable
+through the lib/cmake name glob, a TARGET_OBJECTS generator expression written
+with braces, and a summary that dropped the resolve state the aggregate checks.
