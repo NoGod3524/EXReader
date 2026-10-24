@@ -22,6 +22,13 @@ RETAINED = {
     'account-ui/account-ui.json': 32,
     'account-a11y/a11y-ui.json': 24,
 }
+# These unchanged producers predate the optional count field. Their named
+# arrays, source/run/attempt and exact expected lengths remain mandatory.
+LEGACY_NO_COUNT = {
+    'account-product10/product-result.json',
+    'account-worker5/worker-result.json',
+    'account-shelf-ui/shelf-result.json',
+}
 
 
 def names_from_source(file, variable):
@@ -31,13 +38,15 @@ def names_from_source(file, variable):
     raise ValueError('missing named check contract: ' + variable)
 
 
-def bound(report, expected, source, run, attempt):
+def bound(report, expected, source, run, attempt, *, legacy_no_count=False):
     require(report.get('accepted') is True and report.get('source_sha') == source and
             str(report.get('run_id')) == str(run) and str(report.get('attempt')) == str(attempt),
             'report source/run/attempt/acceptance mismatch')
     checks = report.get('checks')
     require(isinstance(checks, list) and all(isinstance(x, str) for x in checks) and
-            len(checks) == len(set(checks)) and report.get('count') == len(checks), 'bad named checks')
+            len(checks) == len(set(checks)), 'bad named checks')
+    require((legacy_no_count and 'count' not in report) or report.get('count') == len(checks),
+            'missing or incorrect check count')
     require((set(checks) == set(expected) and len(checks) == len(expected)) if isinstance(expected, list)
             else len(checks) == expected, 'missing or extra named checks')
     require(not report.get('problems') and not report.get('failures'), 'reported host failure')
@@ -49,7 +58,8 @@ def protocol_selftest(source, run, attempt):
             'checks': ['one', 'two'], 'count': 2, 'problems': []}
     mutations = [dict(accepted=False), dict(source_sha='0' * 40), dict(run_id='0'), dict(attempt='0'),
                  dict(checks=['one'], count=1), dict(checks=['one', 'one']), dict(count=3),
-                 dict(problems=['injected failure']), dict(checks=['one', 'two', 'extra'], count=3)]
+                 dict(problems=['injected failure']), dict(checks=['one', 'two', 'extra'], count=3),
+                 dict(checks=['one', 2]), dict(checks='one,two')]
     for mutation in mutations:
         bad = copy.deepcopy(good);bad.update(mutation)
         try:
@@ -58,7 +68,22 @@ def protocol_selftest(source, run, attempt):
             continue
         raise ValueError('validator accepted mutation: ' + repr(mutation))
     bound(good, ['one', 'two'], source, run, attempt)
-    return len(mutations)
+    legacy = copy.deepcopy(good);del legacy['count']
+    try:
+        bound(legacy, ['one', 'two'], source, run, attempt)
+    except ValueError:
+        pass
+    else:
+        raise ValueError('current report accepted without its mandatory count')
+    bound(legacy, ['one', 'two'], source, run, attempt, legacy_no_count=True)
+    for mutation in mutations:
+        bad = copy.deepcopy(legacy);bad.update(mutation)
+        try:
+            bound(bad, ['one', 'two'], source, run, attempt, legacy_no_count=True)
+        except ValueError:
+            continue
+        raise ValueError('legacy validator accepted mutation: ' + repr(mutation))
+    return 2 * len(mutations) + 1
 
 
 def main():
@@ -114,9 +139,22 @@ def main():
                 if 'review_sha256' in report:
                     require(report['review_sha256'] == review, 'report used another isolated worker')
             for path, count in RETAINED.items():
-                counts[path] = bound(load(path), count, source, run, attempt)
+                report = load(path)
+                try:
+                    counts[path] = bound(report, count, source, run, attempt,
+                                         legacy_no_count=path in LEGACY_NO_COUNT)
+                except ValueError as error:
+                    raise ValueError(path + ': ' + str(error)) from error
+                hash_key = 'binary_sha256' if path in (
+                    'account-worker5/worker-result.json', 'account-shelf-ui/shelf-result.json') else 'program_sha256'
+                if path != 'account-a11y/a11y-ui.json':
+                    require(report.get(hash_key) == (review if 'worker5/' in path else product),
+                            'retained report used another candidate: ' + path)
             keyboard = load('ws-search-keyboard/keyboard-uia.json')
             require(keyboard['transport'] == 'SendInput+UIAutomation' and keyboard['screen_reader_accepted'] is False, 'wrong keyboard evidence')
+            a11y = load('account-a11y/a11y-ui.json')
+            require(a11y.get('transport') == 'sendinput+uia' and a11y.get('screen_reader_verified') is False,
+                    'wrong retained accessibility transport or screen-reader claim')
             original = load('account-ui158/summary.json')
             require(original['passed'] is True and original['counts'] == {'steps': 158, 'passed': 158, 'failed': 0} and not original['errors'], 'original158 failed')
             evidence = load('account-ui158/wp13-windows-evidence.json')
@@ -150,4 +188,9 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    if sys.argv[1:] == ['--protocol-selftest']:
+        require(os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only')
+        print(json.dumps({'protocol_rejections': protocol_selftest(
+            os.environ['GITHUB_SHA'], os.environ['GITHUB_RUN_ID'], os.environ['GITHUB_RUN_ATTEMPT'])}))
+    else:
+        main()

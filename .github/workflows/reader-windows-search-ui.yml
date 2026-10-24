@@ -41,6 +41,8 @@ jobs:
           'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
       - name: Check source syntax in Actions
         run: python3 -m py_compile tests/reader_windows_search/guard.py tests/reader_windows_search/check_ui.py tests/reader_windows_search/check_formats.py tests/reader_windows_search/check_keyboard.py tests/reader_windows_search/verify.py
+      - name: Reject malformed current and legacy report contracts before building
+        run: python3 tests/reader_windows_search/verify.py --protocol-selftest
       - name: Build and install the frozen SDK and one product provider
         run: |
           set -o pipefail
