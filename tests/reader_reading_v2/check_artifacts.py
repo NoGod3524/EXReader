@@ -10,6 +10,8 @@ import tempfile
 import zipfile
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'tools'))
 from check_parallel_integration import download_artifact_zip, fetch, pages, require
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'reader_search'))
+from check_search import REQUIRED_CHECKS as SEARCH_CHECKS, REQUIRED_CASES as SEARCH_CASES
 
 
 def main():
@@ -18,7 +20,7 @@ def main():
     out = Path(sys.argv[1]); out.mkdir(parents=True)
     summary = {'accepted': False, 'source_sha': source, 'run_id': run_id, 'attempt': attempt,
                'artifacts': [], 'problems': [], 'sdk_changed': False, 'schema_changed': False,
-               'host_ui_accepted': False, 'webdav_roundtrip_accepted': False, 'six_platform_accepted': False, 'complete_product': False,
+               'host_ui_accepted': False, 'webdav_roundtrip_accepted': False, 'search_package_accepted': False, 'search_platforms': {}, 'six_platform_accepted': False, 'complete_product': False,
                'scope': 'Windows/Linux SDK captures and original export over real native HTTPS fixture; no host UI'}
     try:
         run = fetch(f'actions/runs/{run_id}')
@@ -26,6 +28,7 @@ def main():
         jobs = pages(f'actions/runs/{run_id}/attempts/{attempt}/jobs', 'jobs')
         artifacts = pages(f'actions/runs/{run_id}/artifacts', 'artifacts')
         normalized = []
+        searches = []
         for platform, runner in [('Linux', 'ubuntu-22.04'), ('Windows', 'windows-2022')]:
             for kind, name, job_name, path in [
                 ('native', f'reader-commands-{platform}-{run_id}-{attempt}', f'native / installed typed product commands ({runner})', 'reading-v2-protocol/result.json'),
@@ -58,6 +61,24 @@ def main():
                             require(original.get('accepted') is True and original['source_sha'] == source and len(original['checks']) == count, 'retained suite missing/refused ' + relative)
                     else:
                         require(report['legacy_checks'] == 121 and len(report['cases']) == 18 and report['receiver_found'] == 17 and report['receiver_mislocated'] == 0, 'SDK outcomes differ')
+                        search = json.loads(archive.read('v2-search-evidence/result.json'))
+                        require(search.get('accepted') is True and search['source_sha'] == source and int(search['run_id']) == run_id and int(search['attempt']) == attempt, 'search report identity/refusal')
+                        require(search['granted_platform'] == platform.lower() and search['host_ui_accepted'] is False and search['performance_claimed'] is False, 'search grant differs')
+                        raw = json.loads(archive.read('v2-search-evidence/probe.json'))
+                        require(raw['failures'] == 0 and search['checks'] == len(raw['checks']) and search['checks'] >= 264 and all(c['pass'] is True for c in raw['checks']), 'raw search probe refused or missing checks')
+                        require(set(SEARCH_CHECKS) <= {c['name'] for c in raw['checks']}, 'required search checks missing')
+                        require(search['cases'] == raw['cases'] and search['measurements'] == raw['measurements'], 'search summary differs from raw probe')
+                        case_ids = [c['id'] for c in raw['cases']]
+                        require(len(case_ids) == len(set(case_ids)) and set(SEARCH_CASES) <= set(case_ids) and len(case_ids) >= 34, 'search cases missing or duplicated')
+                        require(all(c['complete'] is True and c['other'] == 0 and c['mislocated'] == 0 for c in raw['cases']), 'search incomplete or mislocated')
+                        suffix = '.exe' if platform == 'Windows' else ''
+                        for executable, digest_key in [('search-probe', 'probe_sha256'), ('search-c-consumer', 'c_consumer_sha256')]:
+                            require(hashlib.sha256(archive.read('v2-search-consumer/' + executable + suffix)).hexdigest() == search[digest_key], 'search executable hash differs')
+                        for item in search['installed_files']:
+                            require(hashlib.sha256(archive.read('v2-search-stage/' + item['path'])).hexdigest() == item['sha256'] and archive.getinfo('v2-search-stage/' + item['path']).file_size == item['bytes'], 'installed search file hash/bytes differ')
+                        search_fields = ('id', 'mode', 'hits', 'batches', 'complete', 'found', 'ambiguous', 'other', 'mislocated', 'query_hex')
+                        searches.append([{k: c[k] for k in search_fields} for c in raw['cases']])
+                        summary['search_platforms'][platform] = {'checks': search['checks'], 'cases': len(case_ids), 'measurements': search['measurements']}
                         exported = json.loads(archive.read('v2-export-evidence/result.json'))
                         require(exported.get('accepted') is True and exported['source_sha'] == source and int(exported['run_id']) == run_id and int(exported['attempt']) == attempt, 'original export report identity/refusal')
                         require(exported['count'] == 14 and len(set(exported['checks'])) == 14 and set(exported['originals']) == {'txt', 'epub', 'pdf', 'cbz'}, 'original export cases missing')
@@ -71,7 +92,9 @@ def main():
                         normalized.append([{k: c[k] for k in ('id', 'mode', 'kind', 'part', 'start', 'end', 'state')} for c in report['cases']])
                 summary['artifacts'].append({k: artifact[k] for k in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')})
         require(len(normalized) == 2 and normalized[0] == normalized[1], 'platform capture outcomes differ')
+        require(len(searches) == 2 and searches[0] == searches[1], 'platform search outcomes differ')
         summary['webdav_roundtrip_accepted'] = True
+        summary['search_package_accepted'] = True
         summary['accepted'] = True
     except Exception as error:
         summary['problems'].append(str(error))
