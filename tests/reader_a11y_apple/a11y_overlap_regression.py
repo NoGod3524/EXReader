@@ -104,6 +104,12 @@ def build_cases():
                       'fail', elements, 'a', 'b', 1.0))
     elements = {'list': viewport,
                 'a': element('a', 0, 0, 100, 100, inside % 'a'),
+                'b': element('b', 5.3, 5.3, 89.4, 89.4, inside % 'b')}
+    cases.append(case('same-container-containment-80pct-area',
+                      '同级小控件面积约 80%（89.4x89.4 落在 100x100 内）且被 100% 覆盖 → fail',
+                      'fail', elements, 'a', 'b', 1.0))
+    elements = {'list': viewport,
+                'a': element('a', 0, 0, 100, 100, inside % 'a'),
                 'b': element('b', 27.65, 27.65, 44.7, 44.7, inside % 'b')}
     cases.append(case('same-container-containment-20pct-area',
                       '同级小控件面积约 20% 且完全被覆盖 → 仍 fail',
