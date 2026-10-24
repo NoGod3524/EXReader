@@ -56,10 +56,17 @@ static exr_status winsearch_status(reader_search_status code,const reader_search
   if(code==READER_SEARCH_SDK && error->sdk_code) return (exr_status)error->sdk_code;
   return EXR_ARGUMENT;
 }
+static int winsearch_cancel_check(void *context) {
+#ifdef EXR_HOST_WORKER_REVIEW
+  /* Existing isolated worker gate, reached by F1's actual control callback. */
+  review_pause(4,(host_job *)context);
+#endif
+  return job_cancel_check(context);
+}
 static exr_status winsearch_batch_run(host_job *job) {
   reader_search *search=NULL;reader_search_error error={0};reader_search_result result={0};
   reader_search_options options={0};reader_search_status code;
-  options.struct_size=sizeof(options);options.control=(exr_control){job_cancel_check,NULL,job};
+  options.struct_size=sizeof(options);options.control=(exr_control){winsearch_cancel_check,NULL,job};
   options.source_key=g.session.search_key;
   options.resume=job->search_has_resume ? &job->search_resume:NULL;
   if(g.session.fixed) code=reader_search_open_fixed(g.session.fixed_document,job->search_query,
@@ -72,6 +79,9 @@ static exr_status winsearch_batch_run(host_job *job) {
   } else code=reader_search_open_reflow(g.session.document,job->search_query,
     strlen(job->search_query),&options,&search,&error);
   if(code==READER_SEARCH_OK) code=reader_search_next(search,HOST_SEARCH_BATCH,&result,&error);
+#ifdef EXR_HOST_WORKER_REVIEW
+  if(code==READER_SEARCH_OK) review_pause(5,job);
+#endif
   exr_status status=winsearch_status(code,&error);
   if(status==EXR_OK) {
     for(size_t i=0;i<result.count;i++) {
