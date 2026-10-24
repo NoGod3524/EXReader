@@ -1,0 +1,1100 @@
+{
+  "schema": "reader-sync-resilience-record-v1",
+  "accepted": true,
+  "package": "G07 账号同步故障一致性专项",
+  "workflow": ".github/workflows/reader-sync-resilience.yml",
+  "implementation_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "source_sha": "79a4070059a0806ca91ce9b9092e5f71eca50e4e",
+  "run_id": 40079870542,
+  "attempt": 1,
+  "jobs": [
+    {
+      "id": 120830996325,
+      "name": "fault boundaries (ubuntu-22.04)",
+      "conclusion": "success",
+      "started_at": "2026-10-24T08:54:43Z",
+      "completed_at": "2026-10-24T08:58:36Z"
+    },
+    {
+      "id": 120830996147,
+      "name": "fault boundaries (windows-2022)",
+      "conclusion": "success",
+      "started_at": "2026-10-24T08:54:43Z",
+      "completed_at": "2026-10-24T08:57:23Z"
+    },
+    {
+      "id": 120830996357,
+      "name": "fault boundaries (macos-15)",
+      "conclusion": "success",
+      "started_at": "2026-10-24T08:56:17Z",
+      "completed_at": "2026-10-24T08:59:13Z"
+    },
+    {
+      "id": 120831849724,
+      "name": "strict same-source three-platform aggregate",
+      "conclusion": "success",
+      "started_at": "2026-10-24T08:59:15Z",
+      "completed_at": "2026-10-24T08:59:28Z"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12555105747,
+      "name": "reader-sync-resilience-Linux-40079870542-1",
+      "size_in_bytes": 2969210,
+      "digest": "sha256:2ea2905b9490ba3191568d1d03bf211f4fa03346eae9601d038a109693e06660",
+      "expired": false,
+      "expires_at": "2027-01-22T08:54:41Z"
+    },
+    {
+      "id": 12554886282,
+      "name": "reader-sync-resilience-Windows-40079870542-1",
+      "size_in_bytes": 2741000,
+      "digest": "sha256:78ab2a2f7b8e394ee8fd01d30e2e195cafd024dac29681232af6e8bed04b755a",
+      "expired": false,
+      "expires_at": "2027-01-22T08:54:41Z"
+    },
+    {
+      "id": 12554952204,
+      "name": "reader-sync-resilience-macOS-40079870542-1",
+      "size_in_bytes": 2572269,
+      "digest": "sha256:efdc7790188648aa1e8f9f552adf6f559a82a32d618e5f2754c6022b510182c4",
+      "expired": false,
+      "expires_at": "2027-01-22T08:54:41Z"
+    },
+    {
+      "id": 12555310099,
+      "name": "reader-sync-resilience-aggregate-40079870542-1",
+      "size_in_bytes": 1976,
+      "digest": "sha256:86b0d99357e4b21d140dfcee858f463e582d96190a04a336885d452a8766a20d",
+      "expired": false,
+      "expires_at": "2027-01-22T08:54:41Z"
+    }
+  ],
+  "native": {
+    "transport": "platform native HTTPS (WinHTTP on Windows, system libcurl build on Linux/macOS)",
+    "endpoint": "IPv4 loopback with verified certificate IP SAN DNS:localhost,IP:127.0.0.1",
+    "processes": "independent child processes; forced termination is SIGKILL or TerminateProcess, plus one self _Exit(7)"
+  },
+  "platforms": {
+    "linux": {
+      "artifact": "reader-sync-resilience-Linux-40079870542-1",
+      "boundaries": 21,
+      "original_session_checks": 20,
+      "report_sha256": "1d5a977fd2c1e6ee9e95d391f62746153130e99ed6c1ea2c44d0a71415dbc0cb",
+      "session_report_sha256": "5d747b4a76ef9b112ca138241599d8bf06e5a63646cba18c489a018a8c909c83",
+      "consumer_sha256": "6da09ecccce3228e9ceafef3eadc236565f30be1b6a4871493254170ce31f4eb",
+      "revision_consumer_sha256": "e4b781e7fea0bfd28231ea99194abe0192f0697deef5c88234dcac9a6b33e8a7",
+      "request_count": 2827,
+      "duration_seconds": 80.88,
+      "fault_boundaries_accepted": true,
+      "original_session_suite_preserved": true,
+      "three_platform_accepted": false
+    },
+    "win32": {
+      "artifact": "reader-sync-resilience-Windows-40079870542-1",
+      "boundaries": 21,
+      "original_session_checks": 20,
+      "report_sha256": "1aa393c3abf13f065f8475e449968d812bf85c6db31aad89a1c3610313eb26bf",
+      "session_report_sha256": "2f0e6fd3633ab67c7b7c27f8b5a018743b2ae14ac1146083ee83a891c690fd29",
+      "consumer_sha256": "ba43bac089587afe52003b680191d6989a4d69920aa41043a4ae0c42c3051a58",
+      "revision_consumer_sha256": "f216b3d69c810737f2a5e6abc4067d5bbf845abce8df75dc8301b4cd6513d756",
+      "request_count": 2827,
+      "duration_seconds": 45.34,
+      "fault_boundaries_accepted": true,
+      "original_session_suite_preserved": true,
+      "three_platform_accepted": false
+    },
+    "darwin": {
+      "artifact": "reader-sync-resilience-macOS-40079870542-1",
+      "boundaries": 21,
+      "original_session_checks": 20,
+      "report_sha256": "be671c998bc800209eeef1ca5590b3288e53e356797e8931cba802d74b7544ab",
+      "session_report_sha256": "9bea01ca42fc2b3afd7cd020f73457d9626c25819dc16dca621733b2bd35d9d1",
+      "consumer_sha256": "55a285b2d76be0ee6d43279e7052f3e5736a98e922bed8186aecf2008419ea0c",
+      "revision_consumer_sha256": "7823b3069ce087e2c48540ebc838f94c920ab0c77ade8d0ecb4b197c5cd64b3d",
+      "request_count": 2827,
+      "duration_seconds": 64.76,
+      "fault_boundaries_accepted": true,
+      "original_session_suite_preserved": true,
+      "three_platform_accepted": false
+    }
+  },
+  "boundaries": [
+    {
+      "index": 1,
+      "id": "put_committed_before_ack_response_withheld_then_kill_preserves_remote_bytes_and_outbox",
+      "expected": "A kill while the 201 is withheld leaves exactly the committed remote bytes and the unacknowledged outbox row; the next sweep replays conditionally (412), verifies by GET, acknowledges once and never rewrites the immutable object.",
+      "actual": {
+        "linux": {
+          "exit": {
+            "pid": 8021,
+            "returncode": -9,
+            "termination": "SIGKILL"
+          },
+          "expected_sha256": "58cfd4696684ffe63841038896017d81319151551cb4048cb3144bad5b01e754",
+          "outbox_after_kill": 1,
+          "outbox_after_resume": 0,
+          "public_read_heads": 1,
+          "pushed": 1,
+          "put_outcomes": [
+            201,
+            412
+          ],
+          "readback_exact": true,
+          "remote_sha256": "58cfd4696684ffe63841038896017d81319151551cb4048cb3144bad5b01e754"
+        },
+        "win32": {
+          "exit": {
+            "pid": 5768,
+            "returncode": 1,
+            "termination": "TerminateProcess"
+          },
+          "expected_sha256": "58cfd4696684ffe63841038896017d81319151551cb4048cb3144bad5b01e754",
+          "outbox_after_kill": 1,
+          "outbox_after_resume": 0,
+          "public_read_heads": 1,
+          "pushed": 1,
+          "put_outcomes": [
+            201,
+            412
+          ],
+          "readback_exact": true,
+          "remote_sha256": "58cfd4696684ffe63841038896017d81319151551cb4048cb3144bad5b01e754"
+        },
+        "darwin": {
+          "exit": {
+            "pid": 11000,
+            "returncode": -9,
+            "termination": "SIGKILL"
+          },
+          "expected_sha256": "58cfd4696684ffe63841038896017d81319151551cb4048cb3144bad5b01e754",
+          "outbox_after_kill": 1,
+          "outbox_after_resume": 0,
+          "public_read_heads": 1,
+          "pushed": 1,
+          "put_outcomes": [
+            201,
+            412
+          ],
+          "readback_exact": true,
+          "remote_sha256": "58cfd4696684ffe63841038896017d81319151551cb4048cb3144bad5b01e754"
+        }
+      }
+    },
+    {
+      "index": 2,
+      "id": "kill_during_original_upload_before_remote_commit_leaves_no_partial_remote_object",
+      "expected": "A kill inside the upload body leaves no remote object and no rewritten staged original; the only residue is a private transfer temporary that the next sweep never reuses.",
+      "actual": {
+        "linux": {
+          "exit": {
+            "pid": 8303,
+            "returncode": -9,
+            "termination": "SIGKILL"
+          },
+          "leftover_temporaries": [
+            ".reader-sync-3f237239aa424ec794e2ad88e8131715.tmp"
+          ],
+          "put_outcomes": [
+            "undelivered",
+            201
+          ],
+          "remote_object_absent": true,
+          "remote_sha256": "9ecab3bdc729ea8aab31e81e2c3a2de946711c41706ea4c0b9880b9cd1c74a38",
+          "staged_bytes": 936000,
+          "staged_sha256": "9ecab3bdc729ea8aab31e81e2c3a2de946711c41706ea4c0b9880b9cd1c74a38"
+        },
+        "win32": {
+          "exit": {
+            "pid": 6748,
+            "returncode": 1,
+            "termination": "TerminateProcess"
+          },
+          "leftover_temporaries": [
+            ".reader-sync-7d1a5bf016dc4ee7bea268df11a08305.tmp"
+          ],
+          "put_outcomes": [
+            "undelivered",
+            201
+          ],
+          "remote_object_absent": true,
+          "remote_sha256": "9ecab3bdc729ea8aab31e81e2c3a2de946711c41706ea4c0b9880b9cd1c74a38",
+          "staged_bytes": 936000,
+          "staged_sha256": "9ecab3bdc729ea8aab31e81e2c3a2de946711c41706ea4c0b9880b9cd1c74a38"
+        },
+        "darwin": {
+          "exit": {
+            "pid": 11007,
+            "returncode": -9,
+            "termination": "SIGKILL"
+          },
+          "leftover_temporaries": [
+            ".reader-sync-bf78b1e19f8648b48fb6eec620daaabb.tmp"
+          ],
+          "put_outcomes": [
+            "undelivered",
+            201
+          ],
+          "remote_object_absent": true,
+          "remote_sha256": "9ecab3bdc729ea8aab31e81e2c3a2de946711c41706ea4c0b9880b9cd1c74a38",
+          "staged_bytes": 936000,
+          "staged_sha256": "9ecab3bdc729ea8aab31e81e2c3a2de946711c41706ea4c0b9880b9cd1c74a38"
+        }
+      }
+    },
+    {
+      "index": 3,
+      "id": "replay_of_an_already_committed_immutable_revision_is_412_and_never_rewritten",
+      "expected": "Publishing a row that is already on the server is answered 412 and acknowledged only after a byte-identical GET; the remote object count and digest never change.",
+      "actual": {
+        "linux": {
+          "object_count_for_id": 1,
+          "outbox": 0,
+          "pushed": 1,
+          "put_outcomes": [
+            412
+          ],
+          "remote_sha256": "55cdb3224b1d2c795fbcf5918bb035888683d5b5a4214fa97df27240f2af9e35"
+        },
+        "win32": {
+          "object_count_for_id": 1,
+          "outbox": 0,
+          "pushed": 1,
+          "put_outcomes": [
+            412
+          ],
+          "remote_sha256": "55cdb3224b1d2c795fbcf5918bb035888683d5b5a4214fa97df27240f2af9e35"
+        },
+        "darwin": {
+          "object_count_for_id": 1,
+          "outbox": 0,
+          "pushed": 1,
+          "put_outcomes": [
+            412
+          ],
+          "remote_sha256": "55cdb3224b1d2c795fbcf5918bb035888683d5b5a4214fa97df27240f2af9e35"
+        }
+      }
+    },
+    {
+      "index": 4,
+      "id": "kill_during_verification_get_before_hash_keeps_remote_bytes_and_outbox",
+      "expected": "A kill inside the verification GET body cannot acknowledge; the retained row is replayed after restart and the immutable remote bytes are unchanged.",
+      "actual": {
+        "linux": {
+          "exit": {
+            "pid": 8603,
+            "returncode": -9,
+            "termination": "SIGKILL"
+          },
+          "outbox_after_kill": 1,
+          "outbox_after_resume": 0,
+          "put_outcomes": [
+            412,
+            412
+          ],
+          "remote_sha256": "ccb3e647ed233ce99da14445a71969642b26655d37e4c59f19ad4336f133ac2b"
+        },
+        "win32": {
+          "exit": {
+            "pid": 4212,
+            "returncode": 1,
+            "termination": "TerminateProcess"
+          },
+          "outbox_after_kill": 1,
+          "outbox_after_resume": 0,
+          "put_outcomes": [
+            412,
+            412
+          ],
+          "remote_sha256": "ccb3e647ed233ce99da14445a71969642b26655d37e4c59f19ad4336f133ac2b"
+        },
+        "darwin": {
+          "exit": {
+            "pid": 11087,
+            "returncode": -9,
+            "termination": "SIGKILL"
+          },
+          "outbox_after_kill": 1,
+          "outbox_after_resume": 0,
+          "put_outcomes": [
+            412,
+            412
+          ],
+          "remote_sha256": "ccb3e647ed233ce99da14445a71969642b26655d37e4c59f19ad4336f133ac2b"
+        }
+      }
+    },
+    {
+      "index": 5,
+      "id": "truncated_verification_get_is_refused_without_acknowledgement",
+      "expected": "A verification GET closed before its declared length is reported as a native transport failure with no acknowledgement and no remote mutation; the retry then acknowledges.",
+      "actual": {
+        "linux": {
+          "failure_dav_code": 3,
+          "failure_http_status": 0,
+          "failure_status": 3,
+          "outbox_after_failure": 1,
+          "outbox_after_retry": 0,
+          "retry_status": 0
+        },
+        "win32": {
+          "failure_dav_code": 3,
+          "failure_http_status": 0,
+          "failure_status": 3,
+          "outbox_after_failure": 1,
+          "outbox_after_retry": 0,
+          "retry_status": 0
+        },
+        "darwin": {
+          "failure_dav_code": 3,
+          "failure_http_status": 0,
+          "failure_status": 3,
+          "outbox_after_failure": 1,
+          "outbox_after_retry": 0,
+          "retry_status": 0
+        }
+      }
+    },
+    {
+      "index": 6,
+      "id": "kill_while_acknowledging_after_verified_get_never_duplicates_or_loses_work",
+      "expected": "A kill while the acknowledgement is blocked by an external exclusive database write lock either leaves the row pending or already acknowledged; both states converge on one remote object, one history row and an empty outbox after restart.",
+      "actual": {
+        "linux": {
+          "ack_window": "external BEGIN IMMEDIATE, no shared test hook",
+          "exit": {
+            "pid": 9181,
+            "returncode": -9,
+            "termination": "SIGKILL"
+          },
+          "history_after_kill": 1,
+          "object_count_for_id": 1,
+          "outbox_after_kill": 1,
+          "outbox_after_resume": 0,
+          "remote_sha256": "394071235dd65626b5a4bb1a1893668b2951c1bbbc04df8ba02f01673f67e737"
+        },
+        "win32": {
+          "ack_window": "external BEGIN IMMEDIATE, no shared test hook",
+          "exit": {
+            "pid": 4512,
+            "returncode": 1,
+            "termination": "TerminateProcess"
+          },
+          "history_after_kill": 1,
+          "object_count_for_id": 1,
+          "outbox_after_kill": 1,
+          "outbox_after_resume": 0,
+          "remote_sha256": "394071235dd65626b5a4bb1a1893668b2951c1bbbc04df8ba02f01673f67e737"
+        },
+        "darwin": {
+          "ack_window": "external BEGIN IMMEDIATE, no shared test hook",
+          "exit": {
+            "pid": 11223,
+            "returncode": -9,
+            "termination": "SIGKILL"
+          },
+          "history_after_kill": 1,
+          "object_count_for_id": 1,
+          "outbox_after_kill": 1,
+          "outbox_after_resume": 0,
+          "remote_sha256": "394071235dd65626b5a4bb1a1893668b2951c1bbbc04df8ba02f01673f67e737"
+        }
+      }
+    },
+    {
+      "index": 7,
+      "id": "abrupt_process_exit_after_outbox_commit_keeps_one_remote_object_and_no_pending_row",
+      "expected": "An abrupt exit after the acknowledgement keeps the committed object and the empty outbox; the restart republishes nothing and keeps a single immutable history row.",
+      "actual": {
+        "linux": {
+          "exit": {
+            "pid": 9463,
+            "returncode": 7,
+            "termination": "self exit without unwinding"
+          },
+          "object_count_for_id": 1,
+          "outbox_after_exit": 0,
+          "outbox_after_restart": 0,
+          "put_outcomes": [
+            201
+          ],
+          "remote_sha256": "5117d0d6aee8eb88e32107c35cb4ce724b04743944898c9dac33daab75119dee"
+        },
+        "win32": {
+          "exit": {
+            "pid": 236,
+            "returncode": 7,
+            "termination": "self exit without unwinding"
+          },
+          "object_count_for_id": 1,
+          "outbox_after_exit": 0,
+          "outbox_after_restart": 0,
+          "put_outcomes": [
+            201
+          ],
+          "remote_sha256": "5117d0d6aee8eb88e32107c35cb4ce724b04743944898c9dac33daab75119dee"
+        },
+        "darwin": {
+          "exit": {
+            "pid": 11331,
+            "returncode": 7,
+            "termination": "self exit without unwinding"
+          },
+          "object_count_for_id": 1,
+          "outbox_after_exit": 0,
+          "outbox_after_restart": 0,
+          "put_outcomes": [
+            201
+          ],
+          "remote_sha256": "5117d0d6aee8eb88e32107c35cb4ce724b04743944898c9dac33daab75119dee"
+        }
+      }
+    },
+    {
+      "index": 8,
+      "id": "kill_during_original_download_leaves_no_published_cache_identity",
+      "expected": "A kill inside the original body leaves no cache identity (no <sha>.<format> file) and no received revision; only private transfer temporaries remain, and the retry publishes the exact bytes atomically.",
+      "actual": {
+        "linux": {
+          "cache_identity_absent": true,
+          "cache_sha256": "11b406f08e0555ac4a61fe7e1e840a431c60225fa6ac1d2a67304b88a87f1a32",
+          "exit": {
+            "pid": 9735,
+            "returncode": -9,
+            "termination": "SIGKILL"
+          },
+          "history_after_kill": 0,
+          "leftover_temporaries": [
+            ".exr-webdav-f8c42ee107fe17607953e634ae14a83a.tmp",
+            ".reader-sync-ef994836c4444d57aa7e60bfe3f15c5d.tmp"
+          ],
+          "originals_verified": 1,
+          "remote_sha256": "11b406f08e0555ac4a61fe7e1e840a431c60225fa6ac1d2a67304b88a87f1a32"
+        },
+        "win32": {
+          "cache_identity_absent": true,
+          "cache_sha256": "11b406f08e0555ac4a61fe7e1e840a431c60225fa6ac1d2a67304b88a87f1a32",
+          "exit": {
+            "pid": 7644,
+            "returncode": 1,
+            "termination": "TerminateProcess"
+          },
+          "history_after_kill": 0,
+          "leftover_temporaries": [
+            ".exr-webdav-7644-2.tmp",
+            ".reader-sync-e5991a4b81774786b2c06a07c28fbab4.tmp"
+          ],
+          "originals_verified": 1,
+          "remote_sha256": "11b406f08e0555ac4a61fe7e1e840a431c60225fa6ac1d2a67304b88a87f1a32"
+        },
+        "darwin": {
+          "cache_identity_absent": true,
+          "cache_sha256": "11b406f08e0555ac4a61fe7e1e840a431c60225fa6ac1d2a67304b88a87f1a32",
+          "exit": {
+            "pid": 11336,
+            "returncode": -9,
+            "termination": "SIGKILL"
+          },
+          "history_after_kill": 0,
+          "leftover_temporaries": [
+            ".exr-webdav-8fb3595ced0f328451602d14f9fbc71a.tmp",
+            ".reader-sync-d6e014ac31704745be3473ac9ddaa224.tmp"
+          ],
+          "originals_verified": 1,
+          "remote_sha256": "11b406f08e0555ac4a61fe7e1e840a431c60225fa6ac1d2a67304b88a87f1a32"
+        }
+      }
+    },
+    {
+      "index": 9,
+      "id": "original_download_timeout_removes_private_temp_and_keeps_pending_identity",
+      "expected": "A transfer timeout inside the original download is reported as a bounded native transport failure, leaves no temporary and no partial identity, and the explicit retry publishes the exact bytes.",
+      "actual": {
+        "linux": {
+          "cache_sha256": "eac526ac023ed711ef3a185672adb48052ab3d0ab08dca164f536b86e5d1cfaf",
+          "elapsed_seconds": 1.57,
+          "failure_dav_code": 3,
+          "failure_http_status": 0,
+          "failure_status": 3,
+          "leftover_temporaries": [],
+          "timeout_ms": 1500
+        },
+        "win32": {
+          "cache_sha256": "eac526ac023ed711ef3a185672adb48052ab3d0ab08dca164f536b86e5d1cfaf",
+          "elapsed_seconds": 4.02,
+          "failure_dav_code": 3,
+          "failure_http_status": 0,
+          "failure_status": 3,
+          "leftover_temporaries": [],
+          "timeout_ms": 1500
+        },
+        "darwin": {
+          "cache_sha256": "eac526ac023ed711ef3a185672adb48052ab3d0ab08dca164f536b86e5d1cfaf",
+          "elapsed_seconds": 1.67,
+          "failure_dav_code": 3,
+          "failure_http_status": 0,
+          "failure_status": 3,
+          "leftover_temporaries": [],
+          "timeout_ms": 1500
+        }
+      }
+    },
+    {
+      "index": 10,
+      "id": "cached_original_identity_is_reverified_before_reuse",
+      "expected": "A same-length corrupted cache identity is refused with the hash status and is never overwritten behind the host, while the verified bytes keep the history unchanged.",
+      "actual": {
+        "linux": {
+          "cache_unchanged_after_refusal": true,
+          "corrupt_cache_sha256": "7c30d6427c65c0767b167d8e677b73305fb1a8d9ed9074d85287f0b7227d657e",
+          "corrupt_status": 5,
+          "expected_sha256": "a5d442a7c4cb520db93bb059c71452221e20bf2b08416059d65320cf8baf9628",
+          "history": 1
+        },
+        "win32": {
+          "cache_unchanged_after_refusal": true,
+          "corrupt_cache_sha256": "7c30d6427c65c0767b167d8e677b73305fb1a8d9ed9074d85287f0b7227d657e",
+          "corrupt_status": 5,
+          "expected_sha256": "a5d442a7c4cb520db93bb059c71452221e20bf2b08416059d65320cf8baf9628",
+          "history": 1
+        },
+        "darwin": {
+          "cache_unchanged_after_refusal": true,
+          "corrupt_cache_sha256": "7c30d6427c65c0767b167d8e677b73305fb1a8d9ed9074d85287f0b7227d657e",
+          "corrupt_status": 5,
+          "expected_sha256": "a5d442a7c4cb520db93bb059c71452221e20bf2b08416059d65320cf8baf9628",
+          "history": 1
+        }
+      }
+    },
+    {
+      "index": 11,
+      "id": "remote_original_with_wrong_bytes_is_never_published_as_local_identity",
+      "expected": "A remote original with the right length but the wrong digest is refused with the hash status, publishes no cache identity and receives no revision.",
+      "actual": {
+        "linux": {
+          "cache_identity_absent": true,
+          "expected_sha256": "e70166ccfaaacc3176d113b8e2483075d892e768ff42be08329aa549f4216bd4",
+          "failure_status": 5,
+          "history": 0,
+          "remote_sha256": "073452da31f67bf6078afd842a347980b8f0f67c680a445f384875fae4071aa8"
+        },
+        "win32": {
+          "cache_identity_absent": true,
+          "expected_sha256": "e70166ccfaaacc3176d113b8e2483075d892e768ff42be08329aa549f4216bd4",
+          "failure_status": 5,
+          "history": 0,
+          "remote_sha256": "073452da31f67bf6078afd842a347980b8f0f67c680a445f384875fae4071aa8"
+        },
+        "darwin": {
+          "cache_identity_absent": true,
+          "expected_sha256": "e70166ccfaaacc3176d113b8e2483075d892e768ff42be08329aa549f4216bd4",
+          "failure_status": 5,
+          "history": 0,
+          "remote_sha256": "073452da31f67bf6078afd842a347980b8f0f67c680a445f384875fae4071aa8"
+        }
+      }
+    },
+    {
+      "index": 12,
+      "id": "real_401_is_reported_without_acknowledgement_or_implicit_retry",
+      "expected": "A real 401 is reported as an authentication failure with the status preserved, no acknowledgement, no automatic replay, and the row is published only on an explicit retry.",
+      "actual": {
+        "linux": {
+          "failure_dav_code": 6,
+          "failure_http_status": 401,
+          "failure_status": 3,
+          "implicit_requests_during_wait": 0,
+          "outbox_after_failure": 1,
+          "rejected_requests": 1,
+          "retry_status": 0
+        },
+        "win32": {
+          "failure_dav_code": 6,
+          "failure_http_status": 401,
+          "failure_status": 3,
+          "implicit_requests_during_wait": 0,
+          "outbox_after_failure": 1,
+          "rejected_requests": 1,
+          "retry_status": 0
+        },
+        "darwin": {
+          "failure_dav_code": 6,
+          "failure_http_status": 401,
+          "failure_status": 3,
+          "implicit_requests_during_wait": 0,
+          "outbox_after_failure": 1,
+          "rejected_requests": 1,
+          "retry_status": 0
+        }
+      }
+    },
+    {
+      "index": 13,
+      "id": "real_403_is_reported_without_acknowledgement_or_implicit_retry",
+      "expected": "A real 403 stays a reported failure with the status preserved, no acknowledgement and no implicit replay; the retained row is published by an explicit retry.",
+      "actual": {
+        "linux": {
+          "failure_dav_code": 5,
+          "failure_http_status": 403,
+          "failure_status": 3,
+          "outbox_after_failure": 1,
+          "rejected_requests": 1,
+          "retry_status": 0
+        },
+        "win32": {
+          "failure_dav_code": 5,
+          "failure_http_status": 403,
+          "failure_status": 3,
+          "outbox_after_failure": 1,
+          "rejected_requests": 1,
+          "retry_status": 0
+        },
+        "darwin": {
+          "failure_dav_code": 5,
+          "failure_http_status": 403,
+          "failure_status": 3,
+          "outbox_after_failure": 1,
+          "rejected_requests": 1,
+          "retry_status": 0
+        }
+      }
+    },
+    {
+      "index": 14,
+      "id": "real_429_retry_after_is_not_followed_by_implicit_replay",
+      "expected": "A real 429 with Retry-After is surfaced with no acknowledgement and no request during the advertised interval; the explicit retry then publishes the immutable bytes once.",
+      "actual": {
+        "linux": {
+          "failure_http_status": 429,
+          "failure_status": 3,
+          "outbox_after_retry": 0,
+          "put_outcomes": [
+            429,
+            201
+          ],
+          "requests_during_retry_after": 0,
+          "retry_after": 2
+        },
+        "win32": {
+          "failure_http_status": 429,
+          "failure_status": 3,
+          "outbox_after_retry": 0,
+          "put_outcomes": [
+            429,
+            201
+          ],
+          "requests_during_retry_after": 0,
+          "retry_after": 2
+        },
+        "darwin": {
+          "failure_http_status": 429,
+          "failure_status": 3,
+          "outbox_after_retry": 0,
+          "put_outcomes": [
+            429,
+            201
+          ],
+          "requests_during_retry_after": 0,
+          "retry_after": 2
+        }
+      }
+    },
+    {
+      "index": 15,
+      "id": "real_503_during_publication_retains_outbox_and_republishes_on_explicit_retry",
+      "expected": "A real 503 during publication is reported, commits nothing remotely, keeps the outbox row and is not retried implicitly; the explicit retry publishes the exact bytes once.",
+      "actual": {
+        "linux": {
+          "failure_http_status": 503,
+          "failure_status": 3,
+          "outbox_after_retry": 0,
+          "put_outcomes": [
+            503,
+            201
+          ],
+          "remote_absent_after_failure": true,
+          "remote_sha256": "3c69c00e463e6717739326692806b301e0c67bc3632a33aca57d3f283762c5be",
+          "requests_during_retry_after": 0
+        },
+        "win32": {
+          "failure_http_status": 503,
+          "failure_status": 3,
+          "outbox_after_retry": 0,
+          "put_outcomes": [
+            503,
+            201
+          ],
+          "remote_absent_after_failure": true,
+          "remote_sha256": "3c69c00e463e6717739326692806b301e0c67bc3632a33aca57d3f283762c5be",
+          "requests_during_retry_after": 0
+        },
+        "darwin": {
+          "failure_http_status": 503,
+          "failure_status": 3,
+          "outbox_after_retry": 0,
+          "put_outcomes": [
+            503,
+            201
+          ],
+          "remote_absent_after_failure": true,
+          "remote_sha256": "3c69c00e463e6717739326692806b301e0c67bc3632a33aca57d3f283762c5be",
+          "requests_during_retry_after": 0
+        }
+      }
+    },
+    {
+      "index": 16,
+      "id": "mid_sweep_503_keeps_completed_shards_and_resumes_at_the_failed_shard",
+      "expected": "A real 503 in the middleware of the sweep keeps the 40 completed shards, reports the failed shard and resumes there on the next explicit start instead of restarting work.",
+      "actual": {
+        "linux": {
+          "attempt_at_failure": 1,
+          "completed_shards_after_restart": 256,
+          "completed_shards_at_failure": 40,
+          "failed_path_requests": 2,
+          "failure_http_status": 503,
+          "failure_status": 5,
+          "shard_at_failure": 40,
+          "sweeps_after_restart": 1
+        },
+        "win32": {
+          "attempt_at_failure": 1,
+          "completed_shards_after_restart": 256,
+          "completed_shards_at_failure": 40,
+          "failed_path_requests": 2,
+          "failure_http_status": 503,
+          "failure_status": 5,
+          "shard_at_failure": 40,
+          "sweeps_after_restart": 1
+        },
+        "darwin": {
+          "attempt_at_failure": 1,
+          "completed_shards_after_restart": 256,
+          "completed_shards_at_failure": 40,
+          "failed_path_requests": 2,
+          "failure_http_status": 503,
+          "failure_status": 5,
+          "shard_at_failure": 40,
+          "sweeps_after_restart": 1
+        }
+      }
+    },
+    {
+      "index": 17,
+      "id": "connection_reset_during_put_body_resolves_by_get_and_keeps_outbox",
+      "expected": "A connection reset inside the PUT body is treated as an ambiguous transport outcome: nothing is committed, the verification GET reports the object absent and the outbox row stays until an explicit retry publishes it.",
+      "actual": {
+        "linux": {
+          "failure_dav_code": 5,
+          "failure_http_status": 404,
+          "failure_status": 3,
+          "outbox_after_failure": 1,
+          "remote_absent_after_reset": true,
+          "remote_sha256": "99133b20f877c0208b9670b0ae00f4f18d21eca69d3cb236c184ae3298023eea",
+          "retry_status": 0
+        },
+        "win32": {
+          "failure_dav_code": 5,
+          "failure_http_status": 404,
+          "failure_status": 3,
+          "outbox_after_failure": 1,
+          "remote_absent_after_reset": true,
+          "remote_sha256": "99133b20f877c0208b9670b0ae00f4f18d21eca69d3cb236c184ae3298023eea",
+          "retry_status": 0
+        },
+        "darwin": {
+          "failure_dav_code": 5,
+          "failure_http_status": 404,
+          "failure_status": 3,
+          "outbox_after_failure": 1,
+          "remote_absent_after_reset": true,
+          "remote_sha256": "99133b20f877c0208b9670b0ae00f4f18d21eca69d3cb236c184ae3298023eea",
+          "retry_status": 0
+        }
+      }
+    },
+    {
+      "index": 18,
+      "id": "bounded_publication_timeout_leaves_no_remote_object_and_keeps_outbox",
+      "expected": "A stalling server is bounded by the configured transfer timeout instead of hanging, commits nothing, keeps the outbox row and lets an explicit retry publish the bytes.",
+      "actual": {
+        "linux": {
+          "elapsed_seconds": 1.39,
+          "failure_http_status": 404,
+          "failure_status": 3,
+          "outbox_after_failure": 1,
+          "remote_absent_after_timeout": true,
+          "remote_sha256": "1082925ed957911fa0c27de93f74df54337fa333f5ef429f744063da2deb37f0",
+          "retry_status": 0,
+          "timeout_ms": 1200
+        },
+        "win32": {
+          "elapsed_seconds": 4.02,
+          "failure_http_status": 404,
+          "failure_status": 3,
+          "outbox_after_failure": 1,
+          "remote_absent_after_timeout": true,
+          "remote_sha256": "1082925ed957911fa0c27de93f74df54337fa333f5ef429f744063da2deb37f0",
+          "retry_status": 0,
+          "timeout_ms": 1200
+        },
+        "darwin": {
+          "elapsed_seconds": 1.3,
+          "failure_http_status": 404,
+          "failure_status": 3,
+          "outbox_after_failure": 1,
+          "remote_absent_after_timeout": true,
+          "remote_sha256": "1082925ed957911fa0c27de93f74df54337fa333f5ef429f744063da2deb37f0",
+          "retry_status": 0,
+          "timeout_ms": 1200
+        }
+      }
+    },
+    {
+      "index": 19,
+      "id": "existing_immutable_object_with_foreign_bytes_is_not_overwritten_or_acked",
+      "expected": "A different body already stored at the immutable path is preserved byte for byte, the acknowledgement is refused with the hash status, and only the correct bytes let the replay acknowledge.",
+      "actual": {
+        "linux": {
+          "expected_sha256": "3c49bd9042e871bdd6014c85b8ccc2976ce77e909feb8677c78f86cb3411e2ec",
+          "failure_status": 5,
+          "foreign_bytes_preserved": true,
+          "foreign_sha256": "a3f5bcae1ad191e651f1892e62424a38b370dcb8f75a36ef8ee20e28fb517961",
+          "outbox_after_failure": 1,
+          "outbox_after_retry": 0,
+          "put_outcomes": [
+            412
+          ],
+          "retry_status": 0
+        },
+        "win32": {
+          "expected_sha256": "3c49bd9042e871bdd6014c85b8ccc2976ce77e909feb8677c78f86cb3411e2ec",
+          "failure_status": 5,
+          "foreign_bytes_preserved": true,
+          "foreign_sha256": "a3f5bcae1ad191e651f1892e62424a38b370dcb8f75a36ef8ee20e28fb517961",
+          "outbox_after_failure": 1,
+          "outbox_after_retry": 0,
+          "put_outcomes": [
+            412
+          ],
+          "retry_status": 0
+        },
+        "darwin": {
+          "expected_sha256": "3c49bd9042e871bdd6014c85b8ccc2976ce77e909feb8677c78f86cb3411e2ec",
+          "failure_status": 5,
+          "foreign_bytes_preserved": true,
+          "foreign_sha256": "a3f5bcae1ad191e651f1892e62424a38b370dcb8f75a36ef8ee20e28fb517961",
+          "outbox_after_failure": 1,
+          "outbox_after_retry": 0,
+          "put_outcomes": [
+            412
+          ],
+          "retry_status": 0
+        }
+      }
+    },
+    {
+      "index": 20,
+      "id": "same_account_reopen_after_forced_kill_resumes_without_rebinding",
+      "expected": "After a forced kill the same account and root reopen with no rebinding, the binding bytes stay identical, the retained row is acknowledged once and the history is intact.",
+      "actual": {
+        "linux": {
+          "binding_sha256": "adbb38ffd746c83089330f1cba27cb26deebf8c71594ea11b295b1e3ecb23a92",
+          "binding_unchanged": true,
+          "exit": {
+            "pid": 10422,
+            "returncode": -9,
+            "termination": "SIGKILL"
+          },
+          "outbox_after_resume": 0,
+          "pushed_on_resume": 1,
+          "remote_sha256": "5088a145df9e7516e7fe391a6f3beb24e44cab13178a42eac850b30b9b3cab4a"
+        },
+        "win32": {
+          "binding_sha256": "681eee5776fcbefd8f07c345300b1cb3b792ed83074b7a45e0a061026b8d5461",
+          "binding_unchanged": true,
+          "exit": {
+            "pid": 864,
+            "returncode": 1,
+            "termination": "TerminateProcess"
+          },
+          "outbox_after_resume": 0,
+          "pushed_on_resume": 1,
+          "remote_sha256": "5088a145df9e7516e7fe391a6f3beb24e44cab13178a42eac850b30b9b3cab4a"
+        },
+        "darwin": {
+          "binding_sha256": "d74f0d1772fa94bd360578ecfb2998c380ad666af15cb17ed45bf3c32101af73",
+          "binding_unchanged": true,
+          "exit": {
+            "pid": 11742,
+            "returncode": -9,
+            "termination": "SIGKILL"
+          },
+          "outbox_after_resume": 0,
+          "pushed_on_resume": 1,
+          "remote_sha256": "5088a145df9e7516e7fe391a6f3beb24e44cab13178a42eac850b30b9b3cab4a"
+        }
+      }
+    },
+    {
+      "index": 21,
+      "id": "different_account_after_forced_kill_is_refused_before_any_request",
+      "expected": "A different account on the killed store is refused with the account status before any request, the binding is not rewritten and the retained outbox row is untouched.",
+      "actual": {
+        "linux": {
+          "binding_unchanged": true,
+          "exit": {
+            "pid": 10962,
+            "returncode": -9,
+            "termination": "SIGKILL"
+          },
+          "outbox_after_refusal": 1,
+          "refusal_status": 4,
+          "requests_after_refusal": 0
+        },
+        "win32": {
+          "binding_unchanged": true,
+          "exit": {
+            "pid": 2416,
+            "returncode": 1,
+            "termination": "TerminateProcess"
+          },
+          "outbox_after_refusal": 1,
+          "refusal_status": 4,
+          "requests_after_refusal": 0
+        },
+        "darwin": {
+          "binding_unchanged": true,
+          "exit": {
+            "pid": 11775,
+            "returncode": -9,
+            "termination": "SIGKILL"
+          },
+          "outbox_after_refusal": 1,
+          "refusal_status": 4,
+          "requests_after_refusal": 0
+        }
+      }
+    }
+  ],
+  "determinism": {
+    "identical_remote_digests_across_platforms": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "identical_request_count": true,
+    "request_count": 2827,
+    "notes": "Every boundary produced the same remote SHA-256, PUT outcome sequence and status code on all three hosts; only the termination identity and wall-clock duration differ."
+  },
+  "original_session_suite": {
+    "source": "tests/reader_session/check_session.py (unchanged, 20 checks per platform)",
+    "ids": [
+      "c_abi_and_idle_creation_make_no_network_request",
+      "premature_destroy_is_nonblocking_busy_and_preserves_handle",
+      "background_worker_and_observation_remain_responsive_during_native_https",
+      "overlapping_sweeps_are_refused",
+      "cancelled_transfer_keeps_the_last_successful_cursor",
+      "same_product_account_is_exclusively_locked_across_processes",
+      "full_256_shards_and_100_record_continuation_are_actually_processed",
+      "remote_history_is_retained_without_sdk_writes_or_implicit_projection",
+      "a_new_sweep_discovers_insertions_preceding_an_old_cursor",
+      "offline_outbox_is_published_verified_and_acked_on_the_worker",
+      "wrong_staged_original_is_refused_without_acknowledging_the_outbox",
+      "repaired_private_original_is_hash_verified_published_and_acknowledged",
+      "another_independent_product_database_receives_the_same_history",
+      "persistent_account_binding_contains_no_authorization",
+      "account_or_root_changes_are_refused_before_network_and_preserve_history",
+      "same_account_reopens_after_process_shutdown_without_rebinding",
+      "network_failure_is_observed_without_an_automatic_retry_loop",
+      "explicit_retry_resumes_and_preserves_durable_history",
+      "invalid_account_identity_is_rejected_before_worker_creation",
+      "all_native_requests_keep_credentials_at_the_selected_origin_and_leave_no_transfer_temp"
+    ],
+    "retained": true,
+    "drifted": false
+  },
+  "uncovered": [
+    "atomic_rename_to_revision_receive_single_instruction_window",
+    "fixture_store_durability_before_response_flush",
+    "sqlite_page_torn_write_under_sigkill",
+    "host_ui_projection_and_other_platform_hosts",
+    "third_party_server_retry_and_backoff_policy"
+  ],
+  "failed_runs": [
+    {
+      "run_id": 40076301578,
+      "source_sha": "5d8c351c",
+      "result": "all three boundaries jobs failed at boundary 2",
+      "cause": "shared fixture namespace: a 256-shard sweep also pulled other boundaries' revisions, contaminating history counts",
+      "fix": "every device owns /<boundary>/ and all path helpers take its spec"
+    },
+    {
+      "run_id": 40076966322,
+      "source_sha": "6a34f2d3",
+      "result": "boundaries 1-11 passed on all three hosts; boundary 12 seed refused",
+      "cause": "revision-consumer requires 32 lowercase hex entity keys; 'g'*32 is invalid",
+      "fix": "distinct hex keys for boundaries 12-21"
+    },
+    {
+      "run_id": 40077850433,
+      "source_sha": "ab810bfc",
+      "result": "linux and macOS green; Windows failed at boundary 20",
+      "cause": "the live session worker opens <product>.sync-account without sharing, so reading it back raised PermissionError",
+      "fix": "read the binding only after the owning process exited"
+    },
+    {
+      "run_id": 40078460400,
+      "source_sha": "625bcd36",
+      "result": "all three boundaries jobs green; the aggregate found no reports",
+      "cause": "upload-artifact roots a multi-path artifact at build/, so the aggregate's assumed depth was wrong",
+      "fix": "bind each report to its artifact directory name, which also pins run/attempt"
+    },
+    {
+      "run_id": 40078978609,
+      "source_sha": "984a5b7a",
+      "result": "complete success; superseded by the log-emission commits"
+    },
+    {
+      "run_id": 40079404890,
+      "source_sha": "464466fd",
+      "result": "complete success; superseded by the log-emission commit"
+    }
+  ],
+  "granted": {
+    "fault_boundaries_accepted": true,
+    "original_session_suite_preserved": true,
+    "three_platform_accepted": true,
+    "host_ui_accepted": false,
+    "metadata_projection_accepted": false,
+    "six_platform_accepted": false,
+    "complete_product": false
+  },
+  "limitations": [
+    "The fixture is IPv4 loopback with a trusted test certificate; no third-party server and no real account secret.",
+    "Three native hosts only; the six SDK targets, host UI and metadata projection belong to other owners.",
+    "The 21 boundaries prove consistency at those named fault points only; the five documented uncovered windows stay unclaimed."
+  ]
+}
