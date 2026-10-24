@@ -1,0 +1,29 @@
+{
+  "accepted": false,
+  "status": "implementation committed; cloud acceptance not yet run for this source",
+  "package": "EXReaderKeyboardActions 0.1.0",
+  "common_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "source_sha": null,
+  "run_id": null,
+  "attempt": null,
+  "workflow": ".github/workflows/reader-keyboard-actions.yml",
+  "jobs": [],
+  "artifacts": [],
+  "platforms": {},
+  "skipped": {},
+  "uncovered": [],
+  "problems": [
+    "no cloud run has been authenticated for this source yet"
+  ],
+  "checks_per_platform": 41,
+  "granted_platforms": [],
+  "macos_accepted": false,
+  "host_ui_accepted": false,
+  "performance_claimed": false,
+  "six_platform_accepted": false,
+  "complete_product": false,
+  "sdk_changed": false,
+  "schema_changed": false,
+  "host_settings_changed": false,
+  "protected_trees_unchanged": true
+}
