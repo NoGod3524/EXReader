@@ -2205,6 +2205,7 @@ static void layout_controls(void) {
   MoveWindow(g.page_label, 8, content_bottom + 8, 330, 22, TRUE);
   MoveWindow(g.status, 346, content_bottom + 8, width - 354, 22, TRUE);
 }
+static int compute_view(void);
 #include "../apps/reader/desktop/windows_accessibility.inc"
 
 static int compute_view(void) {
@@ -2414,6 +2415,9 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
       return 0;
     case WM_GETOBJECT:
       return host_a11y_page_object(window, wparam, lparam);
+    case WM_NCDESTROY:
+      host_a11y_page_destroyed();
+      return DefWindowProcW(window, message, wparam, lparam);
     case HOST_A11Y_CALL: {
       /* A provider call from another thread runs here, on the UI thread. */
       host_a11y_task *task = (host_a11y_task *)lparam;
