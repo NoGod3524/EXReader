@@ -160,6 +160,12 @@ run`40067107414`保留：原16组继续通过，新增4组在云端失败，严�
 新增回归逐项确认失败加载保持调用者记录及文件不变，并保留原16组全部运行。
 固定实现须在同一source/run/attempt三平台20组及严格汇总通过后才授予审查验收。
 
+审查修复源码`1f51b4066cd705a670b3139061336c298e479081`，run
+[`40067465230`](https://github.com/NoGod3524/EXReader/actions/runs/40067465230)，attempt1，
+三平台各20/20、四作业全部成功；严格作业`120793748419`重新散列三ZIP并要求完整20个
+具名检查逐项成功、source/run/attempt一致及平台结果一致，`accepted=true, problems=[]`。
+原16组与新增4组同次执行，不拼原交付通过项；原三平台失败回归记录与工件均保留。
+
 2026-10-24，run [40065361635](https://github.com/NoGod3524/EXReader/actions/runs/40065361635)
 attempt 1 在 source `6f33caf83bfb845e27db6382edc5ee100d8db954` 上三平台通过：
 
