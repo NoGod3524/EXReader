@@ -54,7 +54,8 @@ jobs:
             libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config \
             at-spi2-core python3-gi gir1.2-atspi-2.0 gsettings-desktop-schemas \
             dbus xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil
-          python3 -c 'import gi; gi.require_version("Atspi", "2.0"); from gi.repository import Atspi; print("Atspi", Atspi.MAJOR_VERSION, Atspi.MINOR_VERSION)'
+          python3 -c 'import gi; gi.require_version("Atspi", "2.0"); from gi.repository import Atspi; from gi.repository import Atk; print("pygobject", gi.version_info, "atk", Atk.MAJOR_VERSION, Atk.MINOR_VERSION)'
+          dpkg-query -W at-spi2-core gir1.2-atspi-2.0 libatspi2.0-0 2>/dev/null || true
           ls -l /usr/libexec/at-spi2-registryd /usr/lib/at-spi2-core/at-spi-bus-launcher 2>/dev/null || true
       - name: Parse-check the audit harness
         run: |
