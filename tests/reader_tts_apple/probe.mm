@@ -16,6 +16,7 @@
 
 #import <AVFoundation/AVFoundation.h>
 #import <Foundation/Foundation.h>
+#import <TargetConditionals.h>
 
 #include <CommonCrypto/CommonDigest.h>
 
@@ -856,7 +857,7 @@ int rtts_probe_run(const char *output_path) {
   }
 }
 
-#ifndef TARGET_OS_IPHONE
+#if !TARGET_OS_IPHONE
 int main(int argc, char **argv) {
   const char *output = argc > 1 ? argv[1] : "result.json";
   return rtts_probe_run(output);

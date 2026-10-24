@@ -71,7 +71,6 @@ class FakeEngine : public Engine {
  private:
   Sink *SinkPtr() const { return sink_.load(); }
 
-  Sink *raw_sink_;  // for identity only; never dereferenced after detach
   std::atomic<Sink *> sink_;
   std::atomic<bool> detached_{false};
   FakeConfig config_;

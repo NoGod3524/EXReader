@@ -24,8 +24,7 @@ FakeConfig CurrentConfig() { return g_config; }
 FakeEngine *Instance() { return g_instance; }
 void ClearInstance() { g_instance = nullptr; }
 
-FakeEngine::FakeEngine(Sink *sink, const FakeConfig &config)
-    : raw_sink_(sink), sink_(sink), config_(config) {}
+FakeEngine::FakeEngine(Sink *sink, const FakeConfig &config) : sink_(sink), config_(config) {}
 
 FakeEngine::~FakeEngine() {
   if (g_instance == this) g_instance = nullptr;
