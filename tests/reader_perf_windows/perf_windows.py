@@ -783,7 +783,7 @@ def run_launch(cohort, index, context):
     record = {'launch_id': launch_id, 'cohort': cohort, 'index': index, 'ok': False,
               'faults': [], 'ops': {}, 'samples': [], 'window_ms': None,
               'started_utc': None, 'pid': None}
-    if cohort in ('cold_shelf', 'import'):
+    if cohort in ('cold_shelf', 'import', 'import_epub'):
         profile = work / 'profiles' / launch_id
         if profile.exists():
             shutil.rmtree(profile)
@@ -835,9 +835,14 @@ def run_launch(cohort, index, context):
                     lambda app: app.lb_count() == 50 and 'Shelf 0001' in app.lb_item(1),
                     lambda rows: len(rows) == 50 and numbered(rows) == list(range(50)))
                 record['ops']['reset_top'] = op_reset_top(host)
-            elif cohort == 'import':
-                fixture = context['fixture'](index)
-                planted = op_import(host, fixture, 'Perf Import %04d' % index)
+            elif cohort in ('import', 'import_epub'):
+                if cohort == 'import':
+                    fixture = context['txt_fixture'](index)
+                    title = context['txt_titles'][index]
+                else:
+                    fixture = context['fixture'](index)
+                    title = 'Perf Import %04d' % index
+                planted = op_import(host, fixture, title)
                 record['ops']['import'] = planted
                 for sample in planted['input_samples']:
                     record['samples'].append({
@@ -862,7 +867,7 @@ def run_launch(cohort, index, context):
             except Exception as error2:
                 record['faults'].append('close: %s' % error2)
     finally:
-        if cohort in ('cold_shelf', 'import') and profile.exists():
+        if cohort in ('cold_shelf', 'import', 'import_epub') and profile.exists():
             shutil.rmtree(profile, ignore_errors=True)
     return record
 
@@ -940,6 +945,36 @@ def prepare(context):
         prep['reading_peak'] = host.close()
     prep['reading_profile_bytes'] = profile_bytes(reading)
     return prep
+
+
+ORIGINAL_TXT = {
+    'kind': 'original 16 MiB single-document TXT (first-round fixture)',
+    'declared_size': 16 << 20,
+    'header': 'Perf Import %04d\n',
+    'block': 'Perf Import %04d line %04d keeps the import worker busy while input continues.\n',
+    'block_lines': 512,
+}
+
+
+def make_txt_fixture(directory, index):
+    """Byte-identical replay of the first-round 16 MiB single-document TXT.
+
+    The generator parameters are frozen here so the original input can be
+    replayed and its SHA-256 recorded; the first round did not get as far as
+    recording that digest because the probe failed before it could.
+    """
+    path = directory / ('Perf Import %04d.txt' % index)
+    if path.exists():
+        return path
+    header = ORIGINAL_TXT['header'] % index
+    unit = (header + ''.join(ORIGINAL_TXT['block'] % (index, number)
+                             for number in range(ORIGINAL_TXT['block_lines']))).encode()
+    with path.open('wb') as handle:
+        written = 0
+        while written < ORIGINAL_TXT['declared_size']:
+            handle.write(unit)
+            written += len(unit)
+    return path
 
 
 def make_fixture(directory, index, chapters=16, chapter_bytes=700 << 10):
@@ -1093,6 +1128,28 @@ def proposal(aggregates, cohort, metric, factor):
     return int(-(-value * factor // 1))
 
 
+def diagnosis_complete(txt_path):
+    diagnosis = (txt_path or {}).get('diagnosis') or {}
+    runs = diagnosis.get('runs') or []
+    if len(runs) < 3:
+        return False
+    for entry in runs:
+        facts = entry.get('facts') or {}
+        if not facts.get('fixture') or not facts.get('import') or not facts.get('probes'):
+            return False
+        if 'catalog' not in facts:
+            return False
+    return True
+
+
+def txt_accounted(records, context):
+    txt = [record for record in records if record['cohort'] == 'import']
+    if txt:
+        return all((record.get('ok') and
+                    (record['ops'].get('import') or {}).get('visible')) for record in txt)
+    return bool((context.get('skipped_cohorts') or {}).get('import'))
+
+
 def build_summary(context, records, aggregates, environment_doc, prep):
     measured = len(records)
     per_cohort = {}
@@ -1104,7 +1161,7 @@ def build_summary(context, records, aggregates, environment_doc, prep):
     turn_counts = [len(record['ops'].get('page_turns') or []) for record in records
                    if record['cohort'] == 'reading']
     input_samples = [(record['ops'].get('import') or {}).get('busy_input_samples') for record in records
-                     if record['cohort'] == 'import']
+                     if record['cohort'] in ('import', 'import_epub')]
     strategies = {'cold' if record['profile_strategy'] == 'fresh-sdk-library-copy' else 'warm'
                   for record in records}
     checks = {
@@ -1132,6 +1189,10 @@ def build_summary(context, records, aggregates, environment_doc, prep):
             resume.get('verified') is True for resume in resumes),
         'import_input_responsiveness_observed':
             bool(input_samples) and all(count and count >= 1 for count in input_samples),
+        'original_txt_input_identity_recorded':
+            bool(((context.get('txt_path') or {}).get('fixture') or {}).get('sha256')),
+        'original_txt_path_facts_separated': diagnosis_complete(context.get('txt_path')),
+        'original_txt_path_accounted_for': txt_accounted(records, context),
         'working_set_peak_observed': all(record.get('peak') for record in records),
         'artifact_identity_recorded': bool(environment_doc['artifacts']['exe_sha256']),
         'corpus_identity_recorded': bool((context.get('corpus') or {}).get('titles_and_bytes_exact')),
@@ -1181,6 +1242,8 @@ def build_summary(context, records, aggregates, environment_doc, prep):
         'problems': [{'launch_id': record['launch_id'], 'faults': record['faults']}
                      for record in records if not record.get('ok')],
         'aborted': context.get('aborted'),
+        'skipped_cohorts': context.get('skipped_cohorts') or {},
+        'txt_path': context.get('txt_path'),
         'performance_accepted': False,
         'performance_reason': 'This package measures the baseline host and proposes budgets only. '
                               'No numeric product budget is enforced here and no observed latency is '
@@ -1196,8 +1259,9 @@ def build_summary(context, records, aggregates, environment_doc, prep):
             'controlled; the cold/warm labels describe the profile strategy only.',
             'Cold launches copy the seeded SDK library file, so the product catalog is rebuilt on '
             'every cold launch; warm launches reuse the populated profile.',
-            'The import cohort imports one fixed multi-chapter EPUB (about 11 MiB, stored) per launch, '
-            'so its peak covers that import path and is reported separately from the shelf cohorts.',
+            'The import cohort replays the original 16 MiB single-document TXT and the import_epub '
+            'cohort imports one fixed multi-chapter EPUB (about 11 MiB, stored); each peak covers its '
+            'own import path and both are reported separately from the shelf cohorts.',
             'Book paging and continue-reading use one fixed packaged multi-page book in a separate '
             'profile; the 2202-original shelf corpus itself is unchanged.',
             'UI messages are delivered to the real native controls and serviced by the product UI '
@@ -1260,7 +1324,11 @@ def main():
     parser.add_argument('--seed', type=Path)
     parser.add_argument('--output', type=Path)
     parser.add_argument('--work', type=Path)
-    parser.add_argument('--cohorts', default='cold_shelf,warm_shelf,reading,import')
+    parser.add_argument('--cohorts', default='cold_shelf,warm_shelf,reading,import,import_epub')
+    parser.add_argument('--txt-diagnostic', type=Path,
+                        help='diagnosis.json from diagnose_txt_import.py (same run)')
+    parser.add_argument('--skip-cohorts', default='',
+                        help='comma separated cohorts to skip, with the reason in the summary')
     parser.add_argument('--launches-per-cohort', type=int, default=12)
     parser.add_argument('--max-failures', type=int, default=4,
                         help='stop observing after this many incomplete launches')
@@ -1296,16 +1364,52 @@ def main():
         subprocess.check_output(['git', 'show', 'HEAD:tests/windows_host/seed_shelf.c'])).hexdigest()
     environment_doc = environment(package, exe, font, seed, seed_source_sha)
 
+    diagnosis = None
+    if args.txt_diagnostic:
+        diagnosis_path = args.txt_diagnostic.resolve()
+        if not diagnosis_path.is_file():
+            raise SystemExit('missing TXT diagnosis: ' + str(diagnosis_path))
+        diagnosis = json.loads(diagnosis_path.read_text(encoding='utf-8'))
+
+    skipped = {name: 'requested on the command line'
+               for name in [item for item in args.skip_cohorts.split(',') if item]}
+    rejections = ('import_rejected', 'imported_not_in_catalog', 'catalog_identity_mismatch')
+    if diagnosis and diagnosis.get('verdict') in rejections:
+        skipped.setdefault('import', 'original TXT path rejected: diagnostic verdict %r'
+                           % diagnosis['verdict'])
+
+    catalog_titles = []
+    for entry in (diagnosis or {}).get('runs', []):
+        row = ((entry.get('facts') or {}).get('catalog') or {}).get('row') or {}
+        catalog_titles.append(row.get('title'))
+    txt_titles = []
+    for index in range(args.launches_per_cohort):
+        observed = catalog_titles[index] if index < len(catalog_titles) else None
+        txt_titles.append(observed if observed else 'Perf Import %04d' % index)
+
     context = {'package': package, 'exe': exe, 'font': font, 'output': output, 'work': work,
                'seed': seed, 'template': work / 'template',
                'reading_profile': work / 'profiles' / 'reading-profile',
-               'fixture': lambda index: make_fixture(work / 'fixtures', index)}
+               'fixture': lambda index: make_fixture(work / 'fixtures', index),
+               'txt_fixture': lambda index: make_txt_fixture(work / 'fixtures', index),
+               'txt_titles': txt_titles, 'skipped_cohorts': skipped,
+               'txt_path': {'verdict': (diagnosis or {}).get('verdict'),
+                            'fixture': {'kind': ((diagnosis or {}).get('input') or {}).get('kind'),
+                                        'sha256': ((diagnosis or {}).get('input') or {}).get('fixture_sha256'),
+                                        'bytes': ((diagnosis or {}).get('input') or {}).get('fixture_bytes'),
+                                        'parameters': ((diagnosis or {}).get('input') or {}).get('parameters')},
+                            'diagnosis_expected_title': (diagnosis or {}).get('expected_title'),
+                            'observed_titles': (diagnosis or {}).get('observed_titles'),
+                            'input_txt_parameters': ORIGINAL_TXT,
+                            'expected_titles_used': txt_titles,
+                            'diagnosis': diagnosis}}
     records, prep, aggregates, summary = [], {}, {}, {}
     failures = 0
     try:
         prep = prepare(context)
         context['corpus'] = prep['corpus']
-        for cohort in [name for name in args.cohorts.split(',') if name]:
+        for cohort in [name for name in args.cohorts.split(',')
+                       if name and name not in skipped]:
             for index in range(args.launches_per_cohort):
                 record = run_launch(cohort, index, context)
                 record.pop('_sampler', None)

@@ -76,9 +76,9 @@ jobs:
           'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
           'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
 
-      - name: Parse and self-check the measurement, gate and artifact recorder
+      - name: Parse and self-check the measurement, diagnosis, gate and artifact recorder
         run: |
-          python -m py_compile tests/reader_perf_windows/perf_windows.py tests/reader_perf_windows/verify_perf_windows.py tests/reader_perf_windows/record_artifact.py
+          python -m py_compile tests/reader_perf_windows/perf_windows.py tests/reader_perf_windows/diagnose_txt_import.py tests/reader_perf_windows/verify_perf_windows.py tests/reader_perf_windows/record_artifact.py
           python tests/reader_perf_windows/perf_windows.py --self-check | tee build/perf-gate/self-check.log
 
       - name: Build the installed reading SDK and the product catalog stack
@@ -127,9 +127,13 @@ jobs:
                             'exe_sha256': hashlib.sha256(exe.read_bytes()).hexdigest()}))
           PY
 
+      - name: Diagnose the original 16 MiB TXT import path with separated facts
+        run: |
+          python tests/reader_perf_windows/diagnose_txt_import.py --package build/desktop-windows-package/EXReader --seed build/desktop-sdk/reader-windows-shelf-seed.exe --output build/perf-txt-diagnosis --runs 3 2>&1 | tee build/perf-gate/txt-diagnosis.log
+
       - name: Observe the actual product host with real native controls
         run: |
-          python tests/reader_perf_windows/perf_windows.py --package build/desktop-windows-package/EXReader --seed build/desktop-sdk/reader-windows-shelf-seed.exe --output build/perf-windows --cohorts cold_shelf,warm_shelf,reading,import --launches-per-cohort 12 2>&1 | tee build/perf-gate/measurement.log
+          python tests/reader_perf_windows/perf_windows.py --package build/desktop-windows-package/EXReader --seed build/desktop-sdk/reader-windows-shelf-seed.exe --output build/perf-windows --cohorts cold_shelf,warm_shelf,reading,import,import_epub --launches-per-cohort 12 --txt-diagnostic build/perf-txt-diagnosis/diagnosis.json 2>&1 | tee build/perf-gate/measurement.log
 
       - name: Require complete same-source performance evidence
         if: always()
@@ -143,6 +147,7 @@ jobs:
           name: reader-perf-windows-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             build/perf-windows/
+            build/perf-txt-diagnosis/
             build/perf-gate/
             build/desktop-windows-package/build.json
             build/desktop-windows-package/report.json
