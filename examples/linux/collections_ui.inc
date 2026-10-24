@@ -20,12 +20,15 @@ static GtkWidget *collections_scroll(GtkWidget *child) {
   gtk_widget_set_vexpand(widget,TRUE);return widget;
 }
 static void collections_access(GtkWidget *widget,const char *name) { atk_object_set_name(gtk_widget_get_accessible(widget),name); }
-static gboolean collections_type_focus(GtkWidget *widget,GtkDirectionType direction,gpointer unused) {
-  (void)direction;(void)unused;
-  if(gtk_widget_is_focus(widget)) return FALSE;
+static void collections_type_grab_focus(GtkWidget *widget,gpointer unused) {
+  (void)unused;
   /* GTK3 grab_focus delegates to a private button absent from its ATK tree.
      Keep real keyboard focus on the public combo; its native bindings handle keys. */
-  gtk_window_set_focus(GTK_WINDOW(collections.dialog),widget);return TRUE;
+  GTK_WIDGET_CLASS(g_type_class_peek(GTK_TYPE_WIDGET))->grab_focus(widget);
+  g_signal_stop_emission_by_name(widget,"grab-focus");
+}
+static gboolean collections_type_mnemonic(GtkWidget *label,gboolean cycling,gpointer unused) {
+  (void)label;(void)cycling;(void)unused;gtk_widget_grab_focus(collections.types);return TRUE;
 }
 static gboolean collections_list_mnemonic(GtkWidget *label,gboolean cycling,gpointer target) {
   (void)label;(void)cycling;GtkWidget *list=target;
@@ -349,10 +352,11 @@ static void collections_open(GtkWidget *button,gpointer unused) {
   GtkWidget *area=gtk_dialog_get_content_area(GTK_DIALOG(collections.dialog));gtk_container_set_border_width(GTK_CONTAINER(area),12);
   GtkWidget *filters=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,8);collections.types=gtk_combo_box_text_new();
   gtk_widget_set_can_focus(collections.types,TRUE);
-  g_signal_connect(collections.types,"focus",G_CALLBACK(collections_type_focus),NULL);
+  g_signal_connect(collections.types,"grab-focus",G_CALLBACK(collections_type_grab_focus),NULL);
   for(int i=0;i<3;i++) gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(collections.types),(const char *[]) {"Shelves","Tags","Series"}[i]);
   gtk_combo_box_set_active(GTK_COMBO_BOX(collections.types),0);collections_access(collections.types,"Collection type");
   GtkWidget *type=gtk_label_new_with_mnemonic("_Type");gtk_label_set_mnemonic_widget(GTK_LABEL(type),collections.types);
+  g_signal_connect(type,"mnemonic-activate",G_CALLBACK(collections_type_mnemonic),NULL);
   gtk_box_pack_start(GTK_BOX(filters),type,FALSE,FALSE,0);gtk_box_pack_start(GTK_BOX(filters),collections.types,FALSE,FALSE,0);
   collections.removed=gtk_check_button_new_with_mnemonic("Re_moved");collections_access(collections.removed,"Removed collections");
   gtk_box_pack_start(GTK_BOX(filters),collections.removed,FALSE,FALSE,0);
