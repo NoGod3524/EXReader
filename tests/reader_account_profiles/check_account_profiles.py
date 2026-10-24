@@ -675,8 +675,8 @@ def case_binding_missing_refused():
     add(store_path, profile_id, account, "https://one.example/reader/", "one")
     values = plan(store_path, profile_id)
     Path(values["plan.product"]).write_bytes(b"SQLite format 3\x00" + b"\x00" * 96)
-    expect(activation_status(store_path, profile_id) == "BINDING",
-           "a non-empty unbound library was adopted")
+    actual = activation_status(store_path, profile_id)
+    expect(actual == "BINDING", "a non-empty unbound library -> %s" % actual)
 
 
 def case_binding_mismatch_refused():
@@ -684,14 +684,14 @@ def case_binding_mismatch_refused():
     profile_id, account = uuid_pair(87)
     add(store_path, profile_id, account, "https://one.example/reader/", "one")
     write_binding(store_path, profile_id, uuid_pair(88)[1], "https://one.example/reader/")
-    expect(activation_status(store_path, profile_id) == "BINDING",
-           "a library bound to another account was adopted")
+    actual = activation_status(store_path, profile_id)
+    expect(actual == "BINDING", "a library bound to another account -> %s" % actual)
     store_path = store("binding-url")
     profile_id, account = uuid_pair(89)
     add(store_path, profile_id, account, "https://one.example/reader/", "one")
     write_binding(store_path, profile_id, account, "https://two.example/reader/")
-    expect(activation_status(store_path, profile_id) == "BINDING",
-           "a library bound to another URL was adopted")
+    actual = activation_status(store_path, profile_id)
+    expect(actual == "BINDING", "a library bound to another URL -> %s" % actual)
 
 
 def case_binding_match_accepted():
@@ -699,8 +699,8 @@ def case_binding_match_accepted():
     profile_id, account = uuid_pair(90)
     add(store_path, profile_id, account, "https://one.example/reader/", "one")
     write_binding(store_path, profile_id, account, "https://one.example/reader/")
-    expect(activation_status(store_path, profile_id) == "OK",
-           "a library bound to this account was refused")
+    actual = activation_status(store_path, profile_id)
+    expect(actual == "OK", "a library bound to this account -> %s" % actual)
     process = run([PROBE, "verify", store_path, profile_id])
     expect(kv(process).get("verify") == "OK", "a bound library did not verify")
 
