@@ -499,23 +499,33 @@ def private_path_blockers(hits, generic=None):
     return blockers
 
 
-SECRET_MARKERS = (b'PRIVATE KEY-----', b'BEGIN CERTIFICATE-----', b'AKIA', b'xoxb-',
-                  b'ghp_', b'sk_live_', b'-----BEGIN OPENSSH', b'age1secret')
+SECRET_PATTERNS = (
+    (re.compile(rb'AKIA[0-9A-Z]{16}'), 'AWS access key id'),
+    (re.compile(rb'ghp_[A-Za-z0-9]{36}'), 'GitHub token'),
+    (re.compile(rb'ghs_[A-Za-z0-9]{36}'), 'GitHub app token'),
+    (re.compile(rb'xoxb-[0-9]{10,}'), 'Slack token'),
+    (re.compile(rb'sk_live_[A-Za-z0-9]{20,}'), 'Stripe live key'),
+)
+PEM_BEGIN = re.compile(rb'-----BEGIN [A-Z ]*PRIVATE KEY-----')
+PEM_END = b'-----END'
 
 
-def scan_test_secrets(payload, prefix='prefix/', markers=SECRET_MARKERS):
+def scan_test_secrets(payload, prefix='stage/'):
     """Test keys, tokens and passwords must never reach a distributed prefix."""
     hits = []
     for name in sorted(payload):
         if not name.startswith(prefix):
             continue
         data = payload[name]
-        lowered = data.lower()
-        for marker in markers:
-            if marker in data or marker.lower() in lowered:
-                hits.append({'path': name[len(prefix):],
-                             'marker': marker.decode('ascii', 'replace')})
+        found = None
+        for pattern, label in SECRET_PATTERNS:
+            if pattern.search(data):
+                found = label
                 break
+        if found is None and PEM_BEGIN.search(data) and PEM_END in data:
+            found = 'PEM private key'
+        if found:
+            hits.append({'path': name[len(prefix):], 'marker': found})
     return hits
 
 

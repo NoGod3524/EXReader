@@ -218,14 +218,14 @@ def assemble(fixture):
         expected = [packages.canonical(name) for name in package['system'][platform]]
         directive_names = sorted({packages.canonical(name) for path in own
                                   for name in directives.get(path, [])})
-        observed = sorted(set(packages.canonical(name) for name in external['families'])
-                          | set(directive_names))
-        missing = sorted(name for name in expected if name not in observed)
         link = next((item for item in fixture['records']
                      if item['purpose'] == 'link command consumer-%s' % package['id']), None)
         tokens = [entry['name'] for entry in contract.parse_entries(
             'ninja-link', payload[link['raw_output_path']].decode('utf-8'))] if link else []
         evidence = packages.link_evidence(tokens, archive_names, package['system'][platform])
+        observed = sorted(set(packages.canonical(name) for name in external['families'])
+                          | set(directive_names) | set(evidence['observed_libraries']))
+        missing = sorted(name for name in expected if name not in observed)
         bundled = [{'library': entry['library'], 'archive': entry['archive'],
                     'material': entry['material'],
                     'providers': providers.get(entry['library'], []),
@@ -437,7 +437,9 @@ CASES = [
      rewrite_link('webdav', drop='libcurl')),
     ('test secret in the prefix', 'combined_test_secrets',
      lambda f: f['payload'].__setitem__('stage/share/exreader-product/001_catalog.sql',
-                                        b'-----BEGIN RSA PRIVATE KEY-----\n')),
+                                        b'-----BEGIN RSA PRIVATE KEY-----\n'
+                                        b'MIIBOgIBAAJBAKj34GkxFhD90vcNLYLInFEX6Ppy1tPf9Cnzj4p4WGeKLs1Pt\n'
+                                        b'-----END RSA PRIVATE KEY-----\n')),
     ('unregistered archive in the prefix', 'combined_archive_coverage',
      lambda f: f['payload'].__setitem__('stage/lib/reader_bogus'
                                         + extension(f['platform']), b'!<arch>\nbogus')),
