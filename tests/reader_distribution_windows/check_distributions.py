@@ -249,6 +249,8 @@ def main():
         # 7. COFF archive surfaces: member names and absolute .drective directives.
         absolute = b'/DEFAULTLIB:"D:\\a\\EXReader\\EXReader\\vendor.lib"'
         member = coff_object('.drective', absolute)
+        print('object header', member[:28].hex(), 'sections',
+              distlib._coff_sections(member)[1], flush=True)
         library = root / 'surface.lib'
         library.write_bytes(make_archive([('control.obj', member)]))
         facts = distlib.scan_archive('surface.lib', library.read_bytes())
