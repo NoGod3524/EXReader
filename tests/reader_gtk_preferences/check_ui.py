@@ -87,11 +87,15 @@ def main():
     def combo(name, index):
         click(name, {'combo box'});key('Home', *(['Down'] * index), 'Return')
 
+    def button(mnemonic):
+        before = int(observed()['actions']);key('alt+' + mnemonic)
+        return wait(lambda value: int(value['actions']) > before)
+
     def save():
-        key('alt+s');return wait()
+        return button('s')
 
     def defaults():
-        key('alt+d');save();return wait()
+        button('d');save();return wait()
 
     def record(name, condition=True, observed_value=None):
         item = {'name': name, 'pass': bool(condition), 'observed': observed_value};checks.append(item)
@@ -198,11 +202,11 @@ def main():
         key('F5');wait();record('fixed_zoom_toolbar_updates_authoritative_record', installed()['zoom'] == 150)
         host.close();host.launch();app = bus.wait_application('exreader-linux');wait()
         record('new_process_reopens_saved_appearance_and_fixed_zoom', observed()['zoom'] == '150' and host.read()['zoom'] == 150)
-        open_settings();key('alt+i');save();close_settings()
+        open_settings();button('i');save();close_settings()
         record('legacy_import_is_explicit_and_keeps_original_values_available', installed()['font'] == 31 and installed()['zoom'] == 175)
         open_settings();defaults();close_settings()
         old = settings.read_bytes();current = dict(observed());settings.write_bytes(b'{broken')
-        open_settings();key('alt+r');wait();close_settings()
+        open_settings();button('r');close_settings()
         record('failed_reload_keeps_current_state_and_bad_file_bytes', observed()['font'] == current['font'] and settings.read_bytes() == b'{broken')
         settings.write_bytes(old);open_settings();field('Page margin', 1024);save()
         record('composed_geometry_refusal_preserves_file_and_active_values', settings.read_bytes() == old and observed()['margin'] == current['margin'])
