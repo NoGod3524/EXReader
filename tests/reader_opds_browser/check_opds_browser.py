@@ -8,6 +8,7 @@ named evidence. Nothing here runs on a developer machine by design: the trusted 
 the served bytes exist only for the duration of the job.
 """
 import argparse
+import hashlib
 import json
 import os
 import platform
@@ -21,6 +22,16 @@ from pathlib import Path
 
 CASE_ID = re.compile(r"^[a-z0-9_]+$")
 STAGED = re.compile(r"^(opds-[0-9a-f]{24}\.(epub|pdf|cbz)|import\.db.*)$")
+
+
+def file_identity(path):
+    digest = hashlib.sha256()
+    size = 0
+    with open(path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+            size += len(chunk)
+    return {"name": Path(path).name, "bytes": size, "sha256": digest.hexdigest()}
 
 
 def run(command, cwd=None):
@@ -211,6 +222,7 @@ def main():
     runner = os.environ.get("RUNNER_OS") or platform.system()
     platform_name = {"linux": "linux", "windows": "windows", "macos": "macos", "darwin": "macos"}.get(
         runner.lower(), runner.lower())
+    consumers = [file_identity(arguments.consumer), file_identity(arguments.import_consumer)]
     failed = [case["id"] for case in cases if not case.get("ok")]
     if failed:
         problems.append("failing cases: " + ", ".join(failed))
@@ -225,6 +237,7 @@ def main():
         "runner": runner,
         "checks": len(cases),
         "cases": cases,
+        "consumers": consumers,
         "origin_isolation": isolation,
         "staging_files": staging_files,
         "problems": problems,
