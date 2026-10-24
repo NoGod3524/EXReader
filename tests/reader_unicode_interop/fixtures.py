@@ -1278,6 +1278,8 @@ def main():
     for label in OPS + NEGATIVES:
         REVID[label] = ident("rev-" + label)
     REVID["retry.b3"] = REVID["put.b3"]
+    # the collision case reuses an already retained revision ID with different bytes
+    REVID["neg.collision"] = REVID["put.b1"]
     for label in OPS + NEGATIVES:
         AUX["rev." + label] = REVID[label]
 
