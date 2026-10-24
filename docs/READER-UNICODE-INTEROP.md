@@ -106,11 +106,42 @@ RTL 控制符（U+202B/202C/200F/2067/2069）、平台保留字符（`a/b\c:d*e?
 6. `compare` 作业下载三平台工件，`compare_platforms.py` 要求三份观测
    **逐记录逐字段相同**，且每份 per-platform 报告本身 `ok`、夹具摘要一致。
 
-### 云上结果
+### 云上结果（同一次 source/run/attempt）
 
-见 `docs/validation/reader-unicode-interop.json`：该文件只登记**同一次
-source/run/attempt** 的实际执行结果与工件身份，逐条区分"报告已完成"与
-"功能通过"。
+受测源码 `180a0679f364b4cfbb23454f564f847b1ad4cde2`，run **40079696724**，
+attempt **1**，四个作业全部 `success`；逐项明细与工件身份见
+[`docs/validation/reader-unicode-interop.json`](validation/reader-unicode-interop.json)。
+
+| 宿主 | 观察者记录 | C ABI 记录 | 观察文件 SHA-256（前 12 位） | 结论 |
+| --- | --- | --- | --- | --- |
+| windows-2022 | 359/359 | 8/8 | `acf30ac2619c` | 通过 |
+| ubuntu-22.04 | 359/359 | 8/8 | `acf30ac2619c` | 通过 |
+| macos-14 | 359/359 | 8/8 | `acf30ac2619c` | 通过 |
+
+- 三个宿主的 `observations.txt`（`acf30ac26…`）与 `c-observations.txt`
+  （`e0bf6c5b04…`）**逐字节相同**；
+- 冻结夹具 `cases.bin` = `006fdd57…`、`expected.json` = `d9007113…`，
+  三个宿主完全一致；
+- 命名分组（每个宿主相同）：`utf16` 42、`attach` 28、`cmd` 58、`page` 6、
+  `query` 7、`local` 4、`local_lookup` 4、`has_local` 2、`find` 4、
+  `meta` 5、`groups` 4、`removed` 2、`gb` 8、`gbq` 1、`membership` 2、
+  `group_find` 2、`rev` 77、`rx` 49、`proj` 44、`esc` 9、`remove_local` 1，
+  合计 **359**；
+- 消费者二进制（同一源码各自构建）：Windows `5e7fe71c…`、Linux `17080452…`、
+  macOS `9154290a…`；C 消费者 `c7174594…` / `99be47b8…` / `4087d980…`。
+
+### 本轮早期失败（保留，不转为通过）
+
+| run | 源码 | 原因 | 处置 |
+| --- | --- | --- | --- |
+| 40077452184 | `296f14d2` | 消费者 `reader_catalog_remove_local` 少一个参数（三平台同一诊断） | 修消费者 |
+| 40077722660 | `c36dd051` | 夹具 `KeyError: 'sha'`（模型缺原件摘要） | 修夹具 |
+| 40078131000 | `544b1335` | 夹具 `KeyError: 'path.workdir'`（路径项读已删除的 aux 命名空间） | 修夹具 |
+| 40078512406 | `3ca59e32` | 359 条里 1 条不符：`cmd.neg.collision` 报 UNSAFE 而非 COLLISION（夹具未复用既有修订 ID，未走到冲突分支）；同时校验器把 `rows` 误当行字段 | 修夹具与校验器，**断言未改** |
+| 40078923261 | `a5e400c3` | 三个消费者作业已 359/359、8/8，但比较作业发现夹具摘要不同：Windows 用 CRLF 写 JSON 夹具 | 统一 LF |
+
+这些失败只作为历史记录；本包的通过证据只取上表那一次
+source/run/attempt，且不把早期 run 的结果拼接到当前源码。
 
 ## 7. 本地复现（仅供审阅，不在本机执行）
 
