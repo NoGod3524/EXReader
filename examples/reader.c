@@ -2054,6 +2054,8 @@ static void import_path(const wchar_t *path, int dialog_fallback);
 static int save_progress(void);
 static void update_page_label(void);
 static void handle_job_complete(host_job *job);
+/* Used by the accessibility provider, which is compiled before this function. */
+static size_t point_offset(int x, int y, int at_end);
 
 static HWND make_button(HWND parent, int id, const wchar_t *text) {
   HWND window = CreateWindowExW(0, L"BUTTON", text,
