@@ -1158,8 +1158,9 @@ def build_summary(context, records, aggregates, environment_doc, prep):
          'proposal_ms': proposal(aggregates, 'reading', 'resume_ms', 1.5),
          'basis': 'launch-to-restored-page p95 plus 50% headroom; proposal only'},
         {'metric': 'input_during_import_p50_ms', 'cohort': 'import', 'statistic': 'p95',
-         'proposal_ms': proposal(aggregates, 'import', 'input_during_import_p50_ms', 4.0),
-         'basis': 'busy-window input round-trip p95 times four to cover a 100 ms line; proposal only'},
+         'proposal_ms': max(5, proposal(aggregates, 'import', 'input_during_import_p50_ms', 4.0) or 0),
+         'basis': 'busy-window input round-trip p95 times four, floored at 5 ms so a sub-millisecond '
+                  'sample cannot propose a sub-millisecond line; proposal only'},
         {'metric': 'peak_working_set_bytes', 'cohort': 'cold_shelf', 'statistic': 'p95',
          'proposal_bytes': proposal(aggregates, 'cold_shelf', 'peak_working_set_bytes', 1.25),
          'basis': 'shelf-only cold peak plus 25%; the import cohort buffer is excluded; proposal only'},
@@ -1195,8 +1196,9 @@ def build_summary(context, records, aggregates, environment_doc, prep):
             'controlled; the cold/warm labels describe the profile strategy only.',
             'Cold launches copy the seeded SDK library file, so the product catalog is rebuilt on '
             'every cold launch; warm launches reuse the populated profile.',
-            'The import cohort imports a fixed 16 MiB generated TXT per launch, so its peak working '
-            'set includes the host import buffer and is not comparable with the shelf cohorts.',
+            'The import cohort imports one fixed multi-chapter EPUB (about 11 MiB, stored) per launch, '
+            'so its peak working set includes the host import buffer and is not comparable with the '
+            'shelf cohorts.',
             'Book paging and continue-reading use one fixed packaged multi-page book in a separate '
             'profile; the 2202-original shelf corpus itself is unchanged.',
             'UI messages are delivered to the real native controls and serviced by the product UI '
