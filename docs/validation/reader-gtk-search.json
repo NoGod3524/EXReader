@@ -1,0 +1,16 @@
+{
+  "accepted": false,
+  "search_scope_passed": false,
+  "status": "written; not yet built or run",
+  "baseline": "ce912f8c149e30cf3843e39258ae6889235495a0",
+  "source_sha": null,
+  "run_id": null,
+  "attempt": null,
+  "artifacts": [],
+  "pending_settings_checks": ["light_foreground_and_background_change_page_pixels", "dark_theme_and_palette_change_page_pixels"],
+  "whole_reading_page_palette_accepted": false,
+  "sdk_changed": false,
+  "schema_changed": false,
+  "six_platform_accepted": false,
+  "complete_product": false
+}

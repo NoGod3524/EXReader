@@ -19,8 +19,12 @@ typedef enum { READER_SHELF, READER_OPEN, READER_IMPORT, READER_NEXT,
   READER_ACCOUNT_LOAD, READER_ACCOUNT_SET, READER_ACCOUNT_DELETE,
   READER_ACCOUNT_STAGE_BEGIN, READER_ACCOUNT_STAGE_NEXT,
   READER_RECEIVE_BEGIN, READER_RECEIVE_NEXT, READER_RECEIVE_OPEN,
-  READER_RECEIVE_CONFLICTS_BEGIN, READER_RECEIVE_CONFLICTS_NEXT, READER_SETTINGS } reader_action;
+  READER_RECEIVE_CONFLICTS_BEGIN, READER_RECEIVE_CONFLICTS_NEXT, READER_SETTINGS,
+  READER_SEARCH_BEGIN, READER_SEARCH_NEXT, READER_SEARCH_CHOOSE, READER_SEARCH_CLOSE } reader_action;
 typedef struct { int cancelled,current_bytes,total_bytes; } reader_account_control;
+#ifdef EXR_READER_SEARCH
+typedef struct { int request,phase,polls;void (*changed)(void *);void *context; } reader_search_control;
+#endif
 typedef struct {
   reader_action action;
   int64_t book,note;
@@ -43,6 +47,12 @@ typedef struct {
   int account_remember,account_saved_only;
   reader_account_control *account_control;
   const char *receive_key;
+#ifdef EXR_READER_SEARCH
+  uint64_t search_token;
+  size_t search_index;
+  const char *search_query;
+  reader_search_control *search_control;
+#endif
 #ifdef EXR_READER_PREFERENCES
   reader_preferences preferences;
   const char *preferences_path;
@@ -52,6 +62,9 @@ typedef struct {
 typedef struct { int64_t id;size_t part,start,end;char *text; } reader_note;
 typedef struct { char *key,*sort_title;int receive_kind;size_t receive_heads; } reader_shelf_cursor;
 typedef struct { char *key,*title,*heads;size_t head_count;int kind; } reader_received_conflict;
+#ifdef EXR_READER_SEARCH
+typedef struct { char *label;size_t unit,start,end;int mode; } reader_search_row;
+#endif
 typedef struct { char *id,*name,*parent;uint64_t ordinal;int deleted; } reader_collection_group;
 typedef struct { char *key,*title,*author;uint64_t ordinal;int64_t sdk_id; } reader_collection_member;
 typedef struct {
@@ -97,6 +110,12 @@ typedef struct {
   size_t receive_reading_rows,receive_reading_found,receive_reading_unresolved;
   int receive_reading_more;
   char *receive_resolutions;
+#ifdef EXR_READER_SEARCH
+  int has_search,search_complete,search_code,search_sdk_code,search_match;
+  uint64_t search_token;
+  reader_search_row *search_rows;
+  size_t search_count;
+#endif
 #ifdef EXR_READER_PREFERENCES
   reader_preferences preferences;
   int has_preferences;
