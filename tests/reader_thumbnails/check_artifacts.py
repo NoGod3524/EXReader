@@ -77,6 +77,39 @@ def main():
             require(values == base_fault, 'fault check names differ on ' + platform)
         summary['regress_check_names'] = base_regress
         summary['fault_check_names'] = base_fault
+        # Independently authenticate the same-source sanitized allocation-fault and
+        # full probe producer. A green consumer matrix cannot hide a failed leak check.
+        sanitizer_name = f'reader-thumbnails-sanitized-{run_id}-{attempt}'
+        matches = [a for a in artifacts if a['name'] == sanitizer_name]
+        require(len(matches) == 1, 'missing/duplicate sanitizer artifact')
+        artifact = matches[0]
+        matches = [j for j in jobs if j['name'] == 'sanitized probe (ubuntu-22.04)']
+        require(len(matches) == 1, 'missing/duplicate sanitizer job')
+        job = matches[0]
+        require(job['head_sha'] == source and job['run_attempt'] == attempt and job['conclusion'] == 'success',
+                'sanitizer job failed or different source')
+        require(not artifact['expired'] and artifact['size_in_bytes'] > 0 and artifact['workflow_run']['head_sha'] == source,
+                'sanitizer artifact identity differs')
+        with tempfile.TemporaryFile() as stream:
+            download_artifact_zip(artifact['id'], stream)
+            stream.seek(0)
+            data = stream.read()
+        require(len(data) == artifact['size_in_bytes'] and 'sha256:' + hashlib.sha256(data).hexdigest() == artifact['digest'],
+                'sanitizer ZIP bytes/digest differ')
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            report = json.loads(archive.read('asan-evidence/result.json'))
+        require(report.get('accepted') is True and report['source_sha'] == source and int(report['run_id']) == run_id and
+                int(report['attempt']) == attempt, 'sanitizer report identity/refusal')
+        require(comparable(sorted(report['check_names'])) == base and
+                sorted(report['regress_check_names']) == base_regress and sorted(report['fault_check_names']) == base_fault,
+                'sanitizer coverage differs from the ordinary consumers')
+        require(all(r['pass'] is True for r in report['fault_results']), 'sanitizer fault cases failed')
+        require(report['sanitizers']['asan_options'] == 'detect_leaks=1:abort_on_error=1' and
+                report['sanitizers']['ubsan_options'] == 'halt_on_error=1:print_stacktrace=1',
+                'sanitizer execution options differ')
+        summary['sanitizers'] = report['sanitizers']
+        summary['artifacts'].append({k: artifact[k] for k in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')})
+        summary['jobs'].append({k: job[k] for k in ('id', 'name', 'conclusion')})
         summary['accepted'] = True
     except Exception as error:
         summary['problems'].append(str(error))
