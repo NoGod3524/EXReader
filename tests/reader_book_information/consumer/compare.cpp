@@ -25,8 +25,6 @@ std::string quote(const std::string &text) {
   return out + "\"";
 }
 
-std::string quote(const char *text) { return text ? quote(std::string(text)) : std::string("null"); }
-
 std::string truncate(const std::string &text, size_t cap, bool *cut) {
   if (text.size() <= cap) { if (cut) *cut = false; return text; }
   size_t n = cap;

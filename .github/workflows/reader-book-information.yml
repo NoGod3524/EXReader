@@ -89,6 +89,14 @@ jobs:
           if [ "$RUNNER_OS" = Windows ]; then exe=".exe"; fi
           python3 tests/reader_book_information/make_fixtures.py --out build/bi-fixtures 2>&1 | tee build/bi-logs/fixtures.log
           python3 tests/reader_book_information/check_book_information.py --probe "build/bi-consumer/book-info-probe$exe" --compare "build/bi-consumer/book-info-compare$exe" --fixtures build/bi-fixtures --work build/bi-work --output build/bi-evidence/book-info-evidence --platform "$RUNNER_OS" 2>&1 | tee build/bi-logs/checks.log
+      - name: Print the snapshot report so any refusal is readable in the log
+        if: always()
+        run: |
+          if [ -f build/bi-evidence/book-info-evidence/report.json ]; then
+            python3 -c "import json;r=json.load(open('build/bi-evidence/book-info-evidence/report.json',encoding='utf-8'));print(json.dumps([{k:c[k] for k in ('name','ok','assertions','problems')} for c in r['checks']],ensure_ascii=False))"
+          else
+            echo "no report.json produced"
+          fi
       - name: Preserve fixture originals, both stores, packages and every failure
         if: always()
         uses: actions/upload-artifact@v4
