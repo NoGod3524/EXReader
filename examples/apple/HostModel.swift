@@ -36,6 +36,8 @@ final class HostShelf: ObservableObject {
     private let createdUptime = ProcessInfo.processInfo.systemUptime
     private var firstLayoutUptime: TimeInterval?
     private var awaitingLayoutKey: String?
+    private var issuedRestoreRevision = -1
+    var geometryRevision: Int { restoreRevision * 2 + (issuedRestoreRevision == restoreRevision ? 1 : 0) }
     private var pendingSave: DispatchWorkItem?
 #if EXR_APPLE_SHELF_REVIEW
     private var reviewVisibleFrames: [[String: Any]] = []
@@ -100,7 +102,8 @@ final class HostShelf: ObservableObject {
                     self.request(anchor: anchor, previous: true, inclusive: false, replacing: true)
                     return
                 }
-                let retainedTop = replacing ? anchor : self.top
+                let retainedTop = replacing ? anchor :
+                    (self.rows.first(where: { $0.id == self.awaitingLayoutKey })?.key ?? self.top)
                 if !replacing && self.rows.count + page.count > 150,
                    let index = self.rows.firstIndex(where: { $0.key == self.top }) {
                     if (!previous && index < 50) || (previous && index + self.visible.count > self.rows.count - 50) { return }
@@ -127,12 +130,13 @@ final class HostShelf: ObservableObject {
         }
     }
 
-    func observe(_ positions: [String: CGRect], size: CGSize) {
-        guard size.height > 0 else { return }
+    func observe(_ positions: [String: CGRect], size: CGSize, revision: Int) {
+        guard size.height > 0, revision == geometryRevision else { return }
         if viewportSize != .zero && viewportSize != size {
             viewportSize = size; restoreViewport(); return
         }
         viewportSize = size
+        guard awaitingLayoutKey == nil || issuedRestoreRevision == restoreRevision else { return }
         let ordered = positions.filter { $0.value.maxY > 0 && $0.value.minY < size.height }
             .sorted { $0.value.minY < $1.value.minY }
 #if EXR_APPLE_SHELF_REVIEW
@@ -189,9 +193,14 @@ final class HostShelf: ObservableObject {
     }
 
     func restoreViewport() {
-        restoreKey = top?.key ?? restoreKey
+        restoreKey = awaitingLayoutKey ?? top?.key ?? restoreKey
         awaitingLayoutKey = restoreKey
         restoreRevision += 1
+    }
+    func didScroll(revision: Int) {
+        guard revision == restoreRevision, issuedRestoreRevision != revision else { return }
+        issuedRestoreRevision = revision
+        viewportRevision += 1
     }
     func choose(_ book: HostShelfBook) { selected = book.id; defaults.set(book.id, forKey: "EXRShelfSelected"); save() }
     func save() {
@@ -220,6 +229,8 @@ final class HostShelf: ObservableObject {
         value["visible_frames"] = reviewVisibleFrames
         value["viewport_height"] = Double(viewportSize.height)
         value["requested_restore_key"] = restoreKey ?? ""
+        value["geometry_revision"] = geometryRevision
+        value["issued_restore_revision"] = issuedRestoreRevision
 #endif
         return (try? String(data: JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]), encoding: .utf8)) ?? "{}"
     }
