@@ -591,19 +591,31 @@ int main(int argc,char **argv){
 
   /* ---- a failing commit leaves history and outbox together ---- */
   {
-    size_t at=0,len=std::strlen("Tail gamma");
+    size_t len=std::strlen("Tail gamma");
     exr_anchor probe{};exr_error pe{};if(exr_anchor_create(tdoc,0,5,&probe,&pe)==EXR_OK)exr_anchor_free(&probe);
-    capture_ptr hl=reflow_cap(tdoc,locate(T,"Tail alpha"),locate(T,"Tail alpha")+len);(void)at;view want=hl->want();
+    capture_ptr hl=reflow_cap(tdoc,locate(T,"Tail alpha"),locate(T,"Tail alpha")+len);view want=hl->want();
     entity e=make_annotation(TB,new_id());std::string h1;commit("commit-failure","create",e,READER_RC_HIGHLIGHT,READER_RC_PUT,&hl->c,0,"base",&want,&h1);
+    /* The baseline is a public readback of the settled history, so it is taken
+       before the second connection locks the catalog: a locked catalog cannot be
+       read either, and a degraded snapshot would prove nothing about the commit. */
+    const std::string s0=state_text(e);
+    expect(heads_of("annotation",e.key)==std::vector<std::string>{h1}&&outbox_count(h1)==1,
+      "commit-failure: the pre-lock baseline is a settled public readback of head and outbox");
+    /* BEGIN IMMEDIATE takes the catalog write lock only: reads (encode, validate,
+       public readback) stay possible, so the block lands on the commit itself
+       rather than on the selector. */
     sqlite3 *other=nullptr;char *msg=nullptr;
-    bool locked=sqlite3_open_v2(product.c_str(),&other,SQLITE_OPEN_READWRITE,nullptr)==SQLITE_OK&&sqlite3_exec(other,"BEGIN EXCLUSIVE",nullptr,nullptr,&msg)==SQLITE_OK;
-    sqlite3_free(msg);expect(locked,"a second connection holds the product catalog exclusively");
+    bool locked=sqlite3_open_v2(product.c_str(),&other,SQLITE_OPEN_READWRITE,nullptr)==SQLITE_OK&&sqlite3_exec(other,"BEGIN IMMEDIATE",nullptr,nullptr,&msg)==SQLITE_OK;
+    sqlite3_free(msg);expect(locked,"a second connection holds the product catalog write lock");
     if(locked){
-      std::string s0=state_text(e),rid=new_id();
+      std::string rid=new_id();
       outcome o=run(READER_RC_HIGHLIGHT,READER_RC_PUT,e.book,e.aid,&hl->c,0,"blocked put",rid,e.heads);
       sqlite3_exec(other,"ROLLBACK",nullptr,nullptr,nullptr);
-      expect(o.st!=READER_RC_OK&&o.res.created==0,"commit blocked by a database lock fails",describe(o));
-      expect(state_text(e)==s0&&!readback(rid).ok,"failed commit leaves neither history nor outbox rows");
+      expect(o.st==READER_RC_REVISION&&o.err.revision.code==READER_REV_DATABASE&&o.res.created==0,
+        "commit blocked by a database lock fails",describe(o));
+      back kept=readback(rid);const std::string after=state_text(e);
+      expect(after==s0&&!kept.ok,"failed commit leaves neither history nor outbox rows",
+        (kept.ok?"retained bytes exist; ":"")+after+" vs "+s0);
       outcome retry=run(READER_RC_HIGHLIGHT,READER_RC_PUT,e.book,e.aid,&hl->c,0,"blocked put",rid,e.heads);
       expect(retry.st==READER_RC_OK&&retry.res.created==1&&outbox_count(rid)==1&&readback(rid).ok,"retry with the same ID after the failure commits once",describe(retry));
       e.heads={rid};

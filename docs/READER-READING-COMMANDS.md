@@ -41,5 +41,12 @@ blobs, notes and progress compared against a baseline. `check_artifacts.py` re-d
 and compares size, digest, upload log and identity. The result of a run belongs in
 `docs/validation/reader-reading-commands.json` and is granted only for the exact source, run and attempt named there.
 
-Not covered: host UI/adapters, other formats, applying a committed revision to the SDK, transport, process kill
-during commit (revision-module scope; a lock-induced commit failure is covered).
+A writer-blocked commit is covered end to end: a second connection holds `BEGIN IMMEDIATE` on the
+product catalog, so the capture still encodes and validates and the failure lands on the module's own
+`reader_revision_local_reading` write lock. The probe then proves the retained history, heads and outbox are
+the exact pre-lock public readback, that no bytes were retained for that ID, and that retrying the same ID
+commits once.
+
+Not covered: host UI/adapters, other formats, applying a committed revision to the SDK, transport, and process
+kill during commit (revision-module scope). A catalog locked by `BEGIN EXCLUSIVE` cannot be read either, so
+that variant would fail in the selector instead of the commit and is not used as commit-failure evidence.

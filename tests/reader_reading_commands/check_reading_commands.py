@@ -60,7 +60,8 @@ REQUIRED_CHECKS = [
     'retry after ack does not requeue', 'retry of the old create after a later edit stays a no-op',
     'retry: same ID with different bytes is a collision and changes nothing', 'retry uppercase revision ID: is refused', 'retry short revision ID: is refused',
     'stale second submit is rejected and history does not split', 'call from a non-owner thread is refused and writes nothing',
-    'a second connection holds the product catalog exclusively', 'commit blocked by a database lock fails',
+    'commit-failure: the pre-lock baseline is a settled public readback of head and outbox',
+    'a second connection holds the product catalog write lock', 'commit blocked by a database lock fails',
     'failed commit leaves neither history nor outbox rows', 'retry with the same ID after the failure commits once',
     'utf8 create: commits one new revision', 'utf8 valid text 0: commits one new revision', 'utf8 valid text 5: commits one new revision',
     'utf8 valid text 5: annotation text read back', 'utf8 invalid text: truncated lead: is refused', 'utf8 invalid text: overlong NUL: is refused',
@@ -78,7 +79,7 @@ UNCOVERED = [
     'HTML, FB2 and other formats: only TXT, EPUB (global and bounded), PDF and CBZ captures were exercised',
     'macOS/Linux/Windows desktop hosts, iOS/Android host adapters, UI and WebDAV transport; the module is a C ABI only',
     'SDK note and current-page application of a committed revision stays with the existing reading-state adapter and host',
-    'process kill in the middle of a commit is covered by the revision module acceptance, not repeated here; a lock-induced commit failure is',
+    'process kill in the middle of a commit is covered by the revision module acceptance, not repeated here; a writer-blocked (BEGIN IMMEDIATE) commit failure is covered in this probe',
 ]
 
 
