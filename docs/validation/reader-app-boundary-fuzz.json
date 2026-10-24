@@ -51,6 +51,14 @@
       "cause": "two named checks assumed a remote receive enqueues a local outbox row; the product contract says only local does",
       "owned_by": "this package",
       "action": "split into local pending-intent and receive-without-queue checks and add the wire-local fuzz target"
+    },
+    {
+      "run_id": 40127808793,
+      "attempt": 1,
+      "source_sha": "b66f5f9ce8cd4c6743eb252c19c3ff4376a981b2",
+      "cause": "all wire seeds shared one revision id, so storing a second entity collided by ID",
+      "owned_by": "this package",
+      "action": "derive a distinct revision id per seed from its entity and location"
     }
   ],
   "problems": [

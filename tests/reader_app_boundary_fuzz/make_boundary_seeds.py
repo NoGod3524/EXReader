@@ -7,6 +7,7 @@ outcome is written into manifest.json before any consumer reads it. The
 canonical preferences document mirrors the installed writer byte for byte, so a
 save/load round trip can be compared with the seed itself.
 """
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -154,10 +155,15 @@ def preferences_seeds():
     return seeds
 
 
+def rid(label):
+    """A stable, distinct 32-hex revision id per seed (shared ids collide)."""
+    return hashlib.sha256(label.encode("utf-8")).hexdigest()[:32]
+
+
 def envelope(entity_kind, entity_key, location_kind, payload, version=1):
     return {
         "version": version,
-        "id": HEX32,
+        "id": rid(entity_kind + "/" + entity_key + "/" + location_kind),
         "entity_kind": entity_kind,
         "entity_key": entity_key,
         "operation": "put",

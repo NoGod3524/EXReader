@@ -172,6 +172,10 @@ reading-state）与建议补丁方向。已经发现并保留的失败不会删�
   outbox（只有 `local` 入队），而测试却要求 receive 入队。已按契约拆成
   `pending_intent_local_then_ack` 与 `receive_idempotent_without_queue`，并新增 `wire-local`
   模糊与确定性目标；不是把失败改成“预期拒绝”。
+- run `40127808793`（source `b66f5f9c`）：52/53 绿，仅 `wire.receive_idempotent_without_queue`
+  拒绝——所有 wire 种子共用同一个 revision id，接收第二个实体时命中同 ID 异字节的 COLLISION。
+  这是夹具缺陷，不是产品缺陷：每个种子改为由 `sha256(entity_kind/entity_key/location_kind)`
+  派生的独立 32 位十六进制 id，并保留该红轮与原始工件。
 
 ## 验收状态
 
