@@ -75,7 +75,10 @@
       "new_owner": "DeepSeek Harness Flash1017 High PTC",
       "new_owner_started": true,
       "full_permissions_observed": true,
-      "state": "root_owns_exception_boundary_fix_external_owner_stopped",
+      "state": "root_review_passed_awaiting_joint_integration",
+      "tested_source": "430c718b7a92cf8055e5c3775bdcb254e918419b",
+      "verified_run": 40092824048,
+      "evidence_head": "46cab809",
       "root_takeover_checkpoint": "b7e38e5ba403e1aef3b06a7cd827ec992a3a1dd6",
       "root_takeover_writer": "/root",
       "external_owner_stopped_observed": true,
@@ -123,7 +126,7 @@
       "package_id": "G16",
       "owner": "DeepSeek Harness Flash1017 High PTC",
       "checkpoint": "578d4155",
-      "state": "scroll_viewport_classifier_regression_fix_running",
+      "state": "semantic_ancestor_containment_classifier_followup_running",
       "preserved_audit_run": 40085956514,
       "new_dispatch_cycle": false
     }

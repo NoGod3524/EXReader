@@ -2,7 +2,7 @@
 
 本记录不累计完成轮数。下列源码审查发现尚须Actions回归或修复；此前单包绿只证明当时的测试范围。所有包收口并在共同源码复验前，`completed_cycles=0`。
 
-## G02：缩略图，退回修复
+## G02：缩略图，root回修复审通过，待集成
 
 原交付HEAD `1168e2f46b812b683c4376a5a586e04c3bdfafbd`；受测`797774f283f17901161346a0938a0c0e81e4c118`，run`40078420397`。
 
@@ -22,6 +22,8 @@ root审读`apps/reader/thumbnails/src/thumbnails.cpp`与其消费者后发现：
 `a03020ae`已实际修正像素实参和删除失败计数；root继续读`b7bc49e3`的故障驱动发现，它把任意`TERMINATE`归为外部noexcept边界，数量不超过12即通过原“返回错误、无泄漏”检查，尚未给精确栈证明。已排队发送第四次复审：逐点子进程保留用于诊断，未分类终止不得通过；先定位生产/stdlib/测试自身，再修具体可分配noexcept调用。活跃cache拥有的合法内存与close后泄漏分开判，C++new计数不冒充C malloc/SDK blob的泄漏证明。此项未处理前不进入待集成队列，旧run继续保留。
 
 root已在外部UI确认G02模型停止，三个后台任务均为已结束的只读GitHub查询；以干净`b7e38e5b`接管异常修复。该源run`40091225844`虽五作业全绿，Linux原始日志实际将open的8次进程终止算为通过。root提交`b99034cd`恢复零终止要求，保留逐点子进程，在真实分配失败点捕获原生栈并经Actions解析；新run`40092109613`待结果。C++new计数只证明其覆盖的分配，Linux独立ASan/UBSan启用LeakSanitizer后复验C资源。旧绿不授予异常合同。
+
+最终受测`430c718b7a92cf8055e5c3775bdcb254e918419b`，纯文档HEAD`46cab809`。root独立核对run`40092824048`三个桌面producer、完整Linux ASan/UBSan/LeakSanitizer及严格四ZIP汇总五作业全success。Linux/macOS各179、Windows178原探针，11回归和3逐点故障；open/store/library注入点Linux31/42/40、Windows17/22/21、macOS13/25/24、sanitized25/38/36，全部零终止。具名非均匀像素、真实锁文件删除失败、目录硬预算、独占owner与崩溃重开、RAII重试及原有断言保持；严格汇总实际下载四ZIP校验source/run/attempt/大小/digest/有效期并比较相同检查集合，`accepted=true, problems=[]`。新HEAD仅两份证据文档差异已核。G02进入待集成队列，宿主UI、移动平台和性能预算不随本包授予。
 
 ## G04：标注列表，已进入待集成队列
 
@@ -132,6 +134,10 @@ root读到`check_account_ui.py`的`capture()`只把Python手写v1 wire交给`rev
 - G01新Windows provider尚未授予。root读固定`9955c472`发现range自身无refcount且Release直接free、页面各iface的IUnknown身份不一致、旧range读全局新frame、UTF16/任意TextUnit及几何响应不实。完整回修要求已排队交原owner；须真实COM生命周期/跨页/Unicode/实际UI回归和root复审，不以编译或一次GetText通过代替。
 
 ## 后续审查队列
+
+G07根目录干净交付`e54c3ea9`由root追加纯文档修正`50f158d2`：传输设置1200/1500 ms与Windows端到端4.02 s分别陈述，既有下载<45 s、发布<30 s防挂起断言不变；不再宣称设置值为整个操作的严格上界。验证JSON保留原producer的预期字符串、原始结果及身份，另加解释字段，未运行新测试或改变受测源码。
+
+G01固定`40112f49`已补真实range refs与页面快照。root对照微软官方Move/MoveEndpointByUnit/ExpandToEnclosingUnit文档发现第二层缺口：非空Move无条件折叠、cross endpoint夹回旧端点、不支持合法unit未向更大unit回退、Expand(Character)不展开空范围，且新probe断言复制了错误语义。跨行选择还只返回一个union矩形。已整理具体ASCII位置和跨行/Unicode反例交原owner；不能只以本轮新增测试通过授予。
 
 G16二审固定`59a21fd1`：新的`nested_child`以面积比<=0.9猜测父子，与语义路径无关；同级100×100与其坐标内80×80按钮会被三处分支当非遮挡，虽然较小按钮可见面积100%重叠。已交原owner收窄到有依据的真实祖先/同元素例外，补同级完全包含、跨滚动容器包含、真正父子及未知视口反例，50%阈值不改。当前`40090892898`三目标producer与judge全success、summary仍排队；不以该绿覆盖新盲区，不授予可访问性。
 
