@@ -148,21 +148,26 @@ static void apply_locked(reader_tts *h, int type) {
     }
     break;
   case SPD_EVENT_END:
-    if (!h->started) {
-      push_locked(h, h->active_id, READER_TTS_STARTED, READER_TTS_OK);
-      h->started = 1;
-    }
-    push_locked(h, h->active_id, READER_TTS_FINISHED, READER_TTS_OK);
-    finish_locked(h);
-    break;
   case SPD_EVENT_CANCEL:
-    /* A message the daemon cancels before it ever began was refused by the
-       platform: reporting STOPPED would claim a user stop that never happened.
-       An explicit host stop is the one case where STOPPED is the truth. */
-    if (h->started || h->want_stop)
+    /* Three different facts share these two callbacks:
+       - the host asked to stop: the terminal event is STOPPED, whether the daemon
+         reports the message as ended (espeak-ng does) or as cancelled;
+       - the daemon ended the message it had begun: FINISHED;
+       - the daemon cancelled a message that never began: the platform refused it,
+         so FAILED/IO, because nobody asked to stop it. */
+    if (h->want_stop) {
       push_locked(h, h->active_id, READER_TTS_STOPPED, READER_TTS_OK);
-    else
+    } else if (type == SPD_EVENT_END) {
+      if (!h->started) {
+        push_locked(h, h->active_id, READER_TTS_STARTED, READER_TTS_OK);
+        h->started = 1;
+      }
+      push_locked(h, h->active_id, READER_TTS_FINISHED, READER_TTS_OK);
+    } else if (h->started) {
+      push_locked(h, h->active_id, READER_TTS_STOPPED, READER_TTS_OK);
+    } else {
       push_locked(h, h->active_id, READER_TTS_FAILED, READER_TTS_IO);
+    }
     finish_locked(h);
     break;
   default:
