@@ -111,9 +111,13 @@ outside 0-65535, `?` or `:` inside an internal path, and two `#` characters.
 
 Percent escapes are validated per URI component. In an external target only the
 query may carry encoded C0/DEL bytes (a `mailto` body such as `x%0D%0Ay` is the
-documented positive case); the authority, the path and the fragment reject them.
-A `#` fragment keeps literal `/` and `:` because ids are opaque text, but its
-escapes must decode to valid UTF-8: `#a%FF` and `#%E2%82` are `BAD_ESCAPE`, and
+documented positive case), and that region ends at the first `#`: the authority,
+the path and the fragment itself reject encoded controls, so
+`https://example.com/?q=x#%0A` is rejected. A `?` inside the fragment is literal
+text and never starts query data, so `https://example.com/#a?b%0A` is rejected
+while `https://example.com/#a?b` is kept. A `#` fragment keeps literal `/` and
+`:` because ids are opaque text, but its escapes must decode to valid UTF-8:
+`#a%FF`, `#%E2%82` and `https://example.com/#%FF` are `BAD_ESCAPE`, and
 `#%E7%AB%A0%E8%8A%82` is an accepted INTERNAL fragment.
 
 `result.flags` reports `DISPLAY_UNSAFE` (display bytes contain invalid UTF-8 or
@@ -233,7 +237,7 @@ Retained original failures (kept, not rewritten):
 
 | item | status |
 | --- | --- |
-| module behaviour (37 named checks) | **accepted** on Linux, Windows and macOS from run 40134055434, root review finding closed |
+| module behaviour (37 named checks) | cloud retest pending after the second root review fix (query/fragment boundary) |
 | installed C and C++ consumers | **accepted** (five consumers built from the install prefix only) |
 | no network / process / file dependency | **static proof passed**, including a negative control |
 | actual hosts (Windows, GTK, Android, Apple) | **not wired**; owned by root and the host owners |
