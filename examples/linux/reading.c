@@ -24,6 +24,8 @@
 #include <exr_credentials.h>
 #include <exr_sideload.h>
 #include <exr_webdav.h>
+#include <reader_projection.h>
+#include <reader_reading_state.h>
 #endif
 
 #define PAGE_TEXT_LIMIT (1024u*1024u)
@@ -64,10 +66,16 @@ struct linux_reader {
 #endif
 #ifdef EXR_READER_ACCOUNT
   void *account_data;
+  void *received_data;
 #endif
 };
+typedef struct {int64_t id;int font,zoom;} reader_import_saved;
+static exr_status reader_import_suspend(linux_reader *,reader_import_saved *);
+static exr_status reader_import_resume(linux_reader *,const reader_import_saved *,reader_result *);
 #ifdef EXR_READER_ACCOUNT
 static void accounts_free(linux_reader *);
+static void received_free(linux_reader *);
+static void received_annotate_shelf(linux_reader *,reader_result *);
 #endif
 void reader_secret_free(char *value) {
   if(value) { volatile char *out=value;size_t size=strlen(value);while(size--) *out++=0;free(value); }
@@ -88,6 +96,11 @@ void reader_result_free(reader_result *result) {
   free(result->metadata_title);free(result->metadata_author);
   free(result->account_id);free(result->account_root);
   reader_secret_free(result->account_user);reader_secret_free(result->account_password);
+  for(i=0;i<result->receive_conflict_count;i++) {
+    free(result->receive_conflicts[i].key);free(result->receive_conflicts[i].title);free(result->receive_conflicts[i].heads);
+  }
+  free(result->receive_conflicts);
+  free(result->receive_resolutions);
   for(i=0;i<result->collection_group_count;i++) {
     free(result->collection_groups[i].id);free(result->collection_groups[i].name);free(result->collection_groups[i].parent);
   }
@@ -134,6 +147,7 @@ exr_status linux_reader_open(const char *database,const char *font,const exr_con
 void linux_reader_close(linux_reader *reader) {
   if(reader) {
 #ifdef EXR_READER_ACCOUNT
+    received_free(reader);
     accounts_free(reader);
 #endif
     pending_discard(reader);
@@ -226,7 +240,11 @@ static exr_status product_shelf(linux_reader *reader,const reader_command *comma
       shelf_exists,&result->shelf_after,&error);
     if(code) return EXR_DATABASE;
   }
-  result->shelf_direction=command->direction;result->has_shelf=1;return EXR_OK;
+  result->shelf_direction=command->direction;result->has_shelf=1;
+#ifdef EXR_READER_ACCOUNT
+  received_annotate_shelf(reader,result);
+#endif
+  return EXR_OK;
 }
 #endif
 #ifdef EXR_READER_DESKTOP_METADATA
@@ -235,6 +253,7 @@ static exr_status product_shelf(linux_reader *reader,const reader_command *comma
 #endif
 #ifdef EXR_READER_ACCOUNT
 #include "accounts.inc"
+#include "received.inc"
 #endif
 static size_t extent(reader_session *session) {
   size_t size=0;
@@ -472,6 +491,26 @@ static exr_status open_book(linux_reader *reader,int64_t id,int size,int zoom,re
 done:
   exr_epub_location_free(&point);exr_anchor_free(&legacy);return status;
 }
+static exr_status reader_import_suspend(linux_reader *reader,reader_import_saved *saved) {
+  memset(saved,0,sizeof(*saved));
+  if(reader->has_pending) return EXR_ARGUMENT;
+  saved->id=reader->current.id;saved->font=reader->current.font;saved->zoom=reader->current.zoom;
+  /* Imports mutate SQLite and invalidate borrowed original sources. The last
+     accepted frame has already committed its real SDK anchor before this job. */
+  session_free(&reader->current);return EXR_OK;
+}
+static exr_status reader_import_resume(linux_reader *reader,const reader_import_saved *saved,reader_result *result) {
+  if(!saved->id) return EXR_OK;
+  reader_session restored={0};reader_result frame={0};exr_error error={0};
+  exr_control prior=reader->control;reader->control.cancelled=NULL;reader->control.progress=NULL;
+  exr_status status=open_book(reader,saved->id,saved->font,saved->zoom,&restored,&frame,&error);
+  reader->control=prior;result->receive_restored_book=saved->id;
+  if(status==EXR_OK) {
+    restored.page=frame.page;restored.start=frame.start;restored.end=frame.end;
+    reader->current=restored;result->receive_restored_part=restored.part;result->receive_restored_position=restored.position;
+  } else { session_free(&restored);result->receive_restore_failed=1; }
+  reader_result_free(&frame);return status;
+}
 static size_t file_read(void *context,size_t offset,void *bytes,size_t size) {
   FILE *file=context;if(fseeko(file,(off_t)offset,SEEK_SET)) return 0;return fread(bytes,1,size,file);
 }
@@ -609,6 +648,9 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
   int wants_shelf=command->action==READER_SHELF || command->action==READER_OPEN || command->action==READER_IMPORT;
   memset(result,0,sizeof(*result));
 #ifdef EXR_READER_ACCOUNT
+  if(command->action>=READER_RECEIVE_BEGIN && command->action<=READER_RECEIVE_CONFLICTS_NEXT) {
+    received_execute(reader,command,result);return;
+  }
   if(command->action>=READER_ACCOUNT_LOAD && command->action<=READER_ACCOUNT_STAGE_NEXT) {
     accounts_execute(reader,command,result);return;
   }
@@ -649,7 +691,14 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
   if(status!=EXR_OK) goto done;
   if(command->action==READER_SHELF) goto done;
   if(command->action==READER_IMPORT || command->action==READER_OPEN) {
-    if(command->action==READER_IMPORT) status=import_book(reader,command->path,&id,&error);
+    if(command->action==READER_IMPORT) {
+      reader_import_saved saved={0};status=reader_import_suspend(reader,&saved);
+      if(status==EXR_OK) {
+        status=import_book(reader,command->path,&id,&error);
+        exr_status restored=reader_import_resume(reader,&saved,result);next=reader->current;
+        if(restored!=EXR_OK && status!=EXR_OK) strcpy(result->message,"Import did not finish; reopen the original book from its saved position");
+      }
+    }
     if(status!=EXR_OK) goto done;
     owned_session=1;memset(&next,0,sizeof(next));
     status=open_book(reader,id,command->font,command->zoom,&next,result,&error);
