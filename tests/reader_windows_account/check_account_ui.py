@@ -754,6 +754,12 @@ def main():
             assert origin.name == manifest[role]['file'] and len(data) == manifest[role]['bytes']
             assert hashlib.sha256(data).hexdigest() == manifest[role]['sha256'], role
         reading_keys = {'%s' % role: '%s:%s' % (role, manifest[role]['sha256']) for role in roles}
+        reading_prefix = '/reading/exreader-sync-v1/revisions/'
+
+        def published_revisions():
+            """Objects this second account root actually holds; dav.count covers /dav/ only."""
+            with dav.lock:
+                return sorted(path for path in dav.entries if path.startswith(reading_prefix))
         cases = [('txt', 'progress', 'txt-progress-start'), ('txt', 'progress', 'txt-progress-multibyte'),
                  ('txt', 'progress', 'txt-progress-end'), ('txt', 'annotation', 'txt-bookmark'),
                  ('txt', 'annotation', 'txt-highlight'), ('txt', 'annotation', 'txt-ambiguous'),
@@ -795,9 +801,12 @@ def main():
         dialog = RA.open_account()
         # Session-only credentials never survive a restart, so this host is re-entered.
         RA.fill(dialog, reading_root, user, password, False);RA.apply(dialog, '仅本次会话')
-        published = dav.count('revisions/')
+        published = published_revisions()
         RA.run_sync(dialog)
-        assert dav.count('revisions/') == published + len(cases), (published, dav.count('revisions/'))
+        after = published_revisions()
+        assert len(after) == len(published) + len(cases), (len(published), len(after))
+        for value in captured.values():
+            assert any(value['revision_id'] in path for path in after), value['case']
         RA.close_account(dialog)
         RA.close();assert RA.process.returncode == 0
         RB = new_device('device-reading-b')
