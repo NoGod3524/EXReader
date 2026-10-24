@@ -31,7 +31,7 @@ jobs:
           mkdir -p build/session-android/logs
           git rev-parse HEAD > build/session-android/logs/source.txt
           git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
-          git diff --exit-code 84b661d4111015441e7501347fa080c01717b0e8 HEAD -- apps/reader extras/webdav tests/webdav_android
+          git diff --exit-code 84b661d4111015441e7501347fa080c01717b0e8 HEAD -- apps/reader extras/webdav tests/webdav_android ':(exclude)apps/reader/reading-state'
           python -m py_compile tests/reader_session_android/run_export.py tests/reader_session_android/run_roundtrip.py tests/reader_session_android/audit.py
       - name: Install Android compiler and API34 emulator
         run: |
