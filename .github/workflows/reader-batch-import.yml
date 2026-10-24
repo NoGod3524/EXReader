@@ -118,6 +118,9 @@ jobs:
             build/rb-prefix/
             build/rb-consumer/batch-probe*
             build/rb-consumer/batch-cpp-consumer*
+            build/rb-consumer/batch-review-probe*
+            build/rb-tsan-consumer/batch-review-probe
+            build/rb-tsan-prefix/
             build/rb-consumer/CMakeCache.txt
             build/rb-adapter/CMakeCache.txt
           if-no-files-found: error
