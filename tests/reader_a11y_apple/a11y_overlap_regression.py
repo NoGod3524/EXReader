@@ -54,10 +54,10 @@ def build_cases():
     # 1. Two controls inside the same scroll view, both fully visible, 79% overlap.
     elements = {'list': viewport,
                 'a': element('a', 0, 0, 100, 100, inside % 'a'),
-                'b': element('b', 10, 10, 90, 90, inside % 'b')}
+                'b': element('b', 20, 10, 100, 100, inside % 'b')}
     cases.append({'id': 'same-container-visible-overlap',
-                  'description': '同一滚动容器内两个可见控件真实重叠 79%',
-                  'expected': 'fail', 'threshold_ratio': 0.79,
+                  'description': '同一滚动容器内两个可见控件真实重叠 72%（互不包含）',
+                  'expected': 'fail', 'threshold_ratio': 0.72,
                   'outcome': classify_overlap(elements['a'], elements['b'], elements, 0.5)})
 
     # 2. Same container, 20% overlap: below the unchanged threshold.
