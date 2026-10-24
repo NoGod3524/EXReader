@@ -138,6 +138,13 @@ def main():
         native_ready(lambda value: observed().get('visible') == '1' or value.get('selected_sha256') == digest)
         if observed().get('visible') == '1':
             return
+        # The first Enter may accept GTK's directory completion popup. Activate
+        # the still-focused location once more only if the real accept button
+        # remains disabled; no dialog response or file-picker state is injected.
+        if not bus.states(element('Choose folder', {'push button'})).get('sensitive'):
+            host.key('Return')
+            if observed().get('visible') == '1':
+                return
         click('Choose folder', {'push button'})
         wait(lambda value: value['visible'] == '1')
 
