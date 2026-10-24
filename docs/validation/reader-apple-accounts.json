@@ -1,0 +1,926 @@
+{
+  "schema_version": 1,
+  "accepted": false,
+  "same_source_joint_accepted": false,
+  "complete_product": false,
+  "six_target_interoperability_accepted": false,
+  "sdk": {
+    "source_sha": "9854061be331fe603a1822d9b2b36ee357154927",
+    "version": "3.40.0",
+    "abi": 1
+  },
+  "production_source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a",
+  "wp13": {
+    "run_id": 40109088412,
+    "attempt": 1,
+    "summary_job_id": 120922064482,
+    "accepted": true,
+    "gate_review_checks": 97,
+    "report": {
+      "accepted": true,
+      "platforms": {
+        "macos": {
+          "totals": {
+            "cases": 13,
+            "failed": 0,
+            "passed": 13,
+            "steps": 67
+          },
+          "attachment_count": 50,
+          "evidence_sha256": "10a00be07c54633677c346eaff4d2c6c4acc492c408d7b135ae69f40316d6a2f"
+        },
+        "iphone": {
+          "totals": {
+            "cases": 13,
+            "failed": 0,
+            "passed": 13,
+            "steps": 67
+          },
+          "attachment_count": 50,
+          "evidence_sha256": "ae568200afdaea037796b66795f5c0f16fe6bf194fd32b3e6a51c470bd6a8dc6"
+        },
+        "ipad": {
+          "totals": {
+            "cases": 13,
+            "failed": 0,
+            "passed": 13,
+            "steps": 67
+          },
+          "attachment_count": 50,
+          "evidence_sha256": "a28ca35bd6a23e7079907183f9b7e1079302aacafac89aed553ebaee7a82c589"
+        }
+      },
+      "problems": []
+    },
+    "artifacts": [
+      {
+        "id": 12566836517,
+        "name": "wp13-apple-validation",
+        "bytes": 80518,
+        "digest": "sha256:a6d120462fcebc414cd4aaf73b32085a8570247a376159d5ae170bee10a40864",
+        "expired": false,
+        "expires_at": "2026-11-23T16:21:43Z",
+        "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a"
+      },
+      {
+        "id": 12566795025,
+        "name": "wp13-apple-package",
+        "bytes": 137578882,
+        "digest": "sha256:bba04257a1a4b0644fad5008eb4ecb9ab3905b9e818987774e2953e84943c847",
+        "expired": false,
+        "expires_at": "2026-11-23T16:08:13Z",
+        "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a"
+      },
+      {
+        "id": 12566562341,
+        "name": "wp13-apple-iphone",
+        "bytes": 37415486,
+        "digest": "sha256:d60ca154e3fb9143bd4efc09ac4814c1a47e64f89b8b5bedb6bb3558c47a531e",
+        "expired": false,
+        "expires_at": "2026-11-23T16:16:07Z",
+        "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a"
+      },
+      {
+        "id": 12566321980,
+        "name": "wp13-apple-macos",
+        "bytes": 38373268,
+        "digest": "sha256:f1fe9fbb680de1b94afa9bf8327496acae24409a5b81a9a3966964208e4bccd0",
+        "expired": false,
+        "expires_at": "2026-11-23T16:08:29Z",
+        "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a"
+      },
+      {
+        "id": 12566128821,
+        "name": "wp13-apple-ipad",
+        "bytes": 46379455,
+        "digest": "sha256:7ba34cd4f677fe4e20c1a47163d0ec5f10bb697917e8bb63d832d003f8c669f6",
+        "expired": false,
+        "expires_at": "2026-11-23T16:16:51Z",
+        "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a"
+      },
+      {
+        "id": 12565980941,
+        "name": "wp13-apple-sdk-iphonesimulator",
+        "bytes": 20221476,
+        "digest": "sha256:8c2c9b6636bc40b94c876b8326f3cbbf876225c31f8780fd91d65bed52f48267",
+        "expired": false,
+        "expires_at": "2026-11-23T15:56:36Z",
+        "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a"
+      },
+      {
+        "id": 12565886413,
+        "name": "wp13-apple-sdk-iphoneos",
+        "bytes": 19916799,
+        "digest": "sha256:678742b3931a9341f909d6818efd8baf57bdaaa77e6b4b981f4e4ce6d399f593",
+        "expired": false,
+        "expires_at": "2026-11-23T15:56:27Z",
+        "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a"
+      },
+      {
+        "id": 12565808007,
+        "name": "wp13-apple-sdk-macos",
+        "bytes": 20215679,
+        "digest": "sha256:6ea24dfdb7abadf54df460c61ee4f58f43f0e27fc767c0da9e99c0217f47813e",
+        "expired": false,
+        "expires_at": "2026-11-23T15:58:14Z",
+        "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a"
+      }
+    ],
+    "jobs": [
+      {
+        "id": 120916829383,
+        "name": "sdk (iphonesimulator)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 120916829493,
+        "name": "sdk (iphoneos)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 120916829589,
+        "name": "sdk (macos)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 120917749489,
+        "name": "uitest (ipad)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 120917749492,
+        "name": "uitest (macos)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 120917749493,
+        "name": "package",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 120917749540,
+        "name": "uitest (iphone)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 120922064482,
+        "name": "summary",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "account_native": {
+    "job_id": 120917887550,
+    "report": {
+      "accepted": true,
+      "attempt": "1",
+      "book_key": "txt:dfded50cbe73c8b4f6516cf48d335d54e40634f9459b89b6608d453000bd2aad",
+      "checks": [
+        "stable_lowercase_profile_uuid",
+        "actual_keychain_roundtrip_after_profile_reopen",
+        "metadata_contains_no_authorization",
+        "insecure_root_rejected_without_profile_write",
+        "session_only_authorization_not_restored_from_disk",
+        "unreadable_metadata_blocks_create_and_credential_changes",
+        "metadata_size_checked_before_profile_or_secret_mutation",
+        "all_saved_profiles_remain_loadable_after_size_rejection",
+        "account_directories_are_isolated",
+        "bounded_product_sync_page",
+        "exact_public_sdk_original_export",
+        "existing_immutable_original_is_verified_and_reused",
+        "cancelled_preparation_preserves_the_valid_original",
+        "verified_bootstrap_is_idempotent_history_and_outbox",
+        "bootstrap_preserves_product_title_author",
+        "all_windows_share_one_account_controller",
+        "account_change_cancels_unstarted_preparation",
+        "native_account_sweep_completes",
+        "actual_256_shard_account_scan",
+        "main_runloop_active_during_native_https",
+        "closed_before_native_controller_release",
+        "verified_remote_ack_retains_history"
+      ],
+      "host_account_ui_accepted": false,
+      "main_thread_ticks": 72,
+      "physical_device_execution": false,
+      "run_id": "40109106732",
+      "shards": 256,
+      "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a",
+      "sweeps": 1,
+      "consumer_sha256": "1aed9995451fce661c86df43a0df48c34b93e8a9f7436de69cead91a23d4d349",
+      "authenticated_requests": 272,
+      "actual_shards": 256,
+      "remote_revisions": 1,
+      "verified_remote_originals": 1,
+      "secret_scan_passed": true
+    }
+  },
+  "shelf_full": {
+    "run_id": 40109106732,
+    "attempt": 1,
+    "summary_job_id": 120933040950,
+    "accepted": true,
+    "scope": "original seven shelf UI cases, anonymous account HTTPS/background flows, production semantics and actual compact-layout actions",
+    "report": {
+      "accepted": true,
+      "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a",
+      "run_id": "40109106732",
+      "attempt": "1",
+      "platforms": {
+        "macos": {
+          "ui_cases": 7,
+          "named_observations": 11,
+          "attachments": 14,
+          "originals": 2202,
+          "measurements": {
+            "process_peak_rss_bytes": 229097472,
+            "timing_scope": "actual native layout observations and screenshots; no display-FPS claim"
+          }
+        },
+        "ipad": {
+          "ui_cases": 7,
+          "named_observations": 11,
+          "attachments": 14,
+          "originals": 2202,
+          "measurements": {
+            "process_peak_rss_bytes": 401178624,
+            "timing_scope": "actual native layout observations and screenshots; no display-FPS claim"
+          }
+        },
+        "iphone": {
+          "ui_cases": 7,
+          "named_observations": 11,
+          "attachments": 14,
+          "originals": 2202,
+          "measurements": {
+            "process_peak_rss_bytes": 379584512,
+            "timing_scope": "actual native layout observations and screenshots; no display-FPS claim"
+          }
+        }
+      },
+      "sdk_startup_bounded": false,
+      "hard_performance_budget_accepted": false,
+      "problems": [],
+      "account_ui": {
+        "macos": {
+          "accepted": true,
+          "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a",
+          "run_id": "40109106732",
+          "attempt": "1",
+          "platform": "macos",
+          "cases": 3,
+          "named_steps": 14,
+          "attachments": 6,
+          "profiles": 4,
+          "actual_executable_sha256": "7627b9b502710c729ee9e892112f45aecce35f8b7fb3a5707067d1ba4a6ae80b",
+          "scope": "anonymous SwiftUI accounts, import isolation, real HTTPS and background close/retry",
+          "password_ui_accepted": false,
+          "network_sync_ui_accepted": true,
+          "https": {
+            "accepted": true,
+            "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a",
+            "run_id": "40109106732",
+            "attempt": "1",
+            "platform": "macos",
+            "root": "https://127.0.0.1:49198/dav/",
+            "actual_shards": 256,
+            "minimum_completed_sweeps": 2,
+            "requests": 530,
+            "verified_original_sha256": "0c54c6c969cb720875557d8f877d0733cc65dd1e80d74d098fb18ba65bf42bdb",
+            "verified_original_bytes": 7724,
+            "remote_revisions": 1,
+            "password_authentication_used": false
+          },
+          "physical_device_execution": false,
+          "voiceover_accepted": false
+        },
+        "ipad": {
+          "accepted": true,
+          "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a",
+          "run_id": "40109106732",
+          "attempt": "1",
+          "platform": "ipad",
+          "cases": 3,
+          "named_steps": 14,
+          "attachments": 6,
+          "profiles": 4,
+          "actual_executable_sha256": "222fc2e2d625c53c692a263cffac58da754be060695ec84d2558116fa4ffa8f3",
+          "scope": "anonymous SwiftUI accounts, import isolation, real HTTPS and background close/retry",
+          "password_ui_accepted": false,
+          "network_sync_ui_accepted": true,
+          "https": {
+            "accepted": true,
+            "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a",
+            "run_id": "40109106732",
+            "attempt": "1",
+            "platform": "ipad",
+            "root": "https://127.0.0.1:54059/dav/",
+            "actual_shards": 256,
+            "minimum_completed_sweeps": 2,
+            "requests": 530,
+            "verified_original_sha256": "0c54c6c969cb720875557d8f877d0733cc65dd1e80d74d098fb18ba65bf42bdb",
+            "verified_original_bytes": 7724,
+            "remote_revisions": 1,
+            "password_authentication_used": false
+          },
+          "physical_device_execution": false,
+          "voiceover_accepted": false
+        },
+        "iphone": {
+          "accepted": true,
+          "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a",
+          "run_id": "40109106732",
+          "attempt": "1",
+          "platform": "iphone",
+          "cases": 3,
+          "named_steps": 14,
+          "attachments": 6,
+          "profiles": 4,
+          "actual_executable_sha256": "222fc2e2d625c53c692a263cffac58da754be060695ec84d2558116fa4ffa8f3",
+          "scope": "anonymous SwiftUI accounts, import isolation, real HTTPS and background close/retry",
+          "password_ui_accepted": false,
+          "network_sync_ui_accepted": true,
+          "https": {
+            "accepted": true,
+            "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a",
+            "run_id": "40109106732",
+            "attempt": "1",
+            "platform": "iphone",
+            "root": "https://127.0.0.1:55624/dav/",
+            "actual_shards": 256,
+            "minimum_completed_sweeps": 2,
+            "requests": 530,
+            "verified_original_sha256": "0c54c6c969cb720875557d8f877d0733cc65dd1e80d74d098fb18ba65bf42bdb",
+            "verified_original_bytes": 7724,
+            "remote_revisions": 1,
+            "password_authentication_used": false
+          },
+          "physical_device_execution": false,
+          "voiceover_accepted": false
+        }
+      },
+      "production_access_ui": {
+        "macos": {
+          "accepted": true,
+          "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a",
+          "run_id": "40109106732",
+          "attempt": "1",
+          "platform": "macos",
+          "cases": 2,
+          "named_observations": 9,
+          "attachments": 4,
+          "scope": "production body/name semantics and actual reachable touch/scroll operations",
+          "actual_executable_sha256": "76a3ad64bfbd873c6495006bfc2ce228bc5e67c64946d6e9b497c7f195c729a2",
+          "dynamic_type_tested": false,
+          "voiceover_accepted": false,
+          "full_accessibility_accepted": false,
+          "focus_order_accepted": false,
+          "physical_device_execution": false,
+          "audible_announcements_verified": false,
+          "observations": {
+            "complete_actual_page_body": {
+              "body": "第 1 页：Unicode selection: A😀é中 👩🏽‍💻 🇺🇳. Exact source bytes must survive selection, copy and annotations."
+            },
+            "production_control_names_without_internal_hash": {
+              "decrease": "减小字号",
+              "increase": "增大字号",
+              "internal_hash_present": false
+            },
+            "actual_outer_hit_region_navigates_back": {
+              "back_frame": [
+                78,
+                172,
+                42,
+                20
+              ],
+              "tap_y_fraction": 0.1
+            },
+            "platform_text_size_fixture": {
+              "dynamic_type_tested": false
+            },
+            "compact_header_and_actual_page_inside_window": {
+              "back": [
+                78,
+                172,
+                42,
+                20
+              ],
+              "page": [
+                66,
+                198,
+                892,
+                310
+              ],
+              "window": [
+                62,
+                108,
+                900,
+                516
+              ]
+            },
+            "actual_page_turn_in_compact_layout": {},
+            "actual_font_change_after_reaching_toolbar_control": {},
+            "actual_notes_dialog_after_reaching_toolbar_control": {},
+            "actual_edge_back_after_toolbar_scroll": {}
+          }
+        },
+        "ipad": {
+          "accepted": true,
+          "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a",
+          "run_id": "40109106732",
+          "attempt": "1",
+          "platform": "ipad",
+          "cases": 2,
+          "named_observations": 9,
+          "attachments": 4,
+          "scope": "production body/name semantics and actual reachable touch/scroll operations",
+          "actual_executable_sha256": "1f9e47083d443a23d41ea5e0f71929fafae7065b782e19201dda71437a4fb3bb",
+          "dynamic_type_tested": true,
+          "voiceover_accepted": false,
+          "full_accessibility_accepted": false,
+          "focus_order_accepted": false,
+          "physical_device_execution": false,
+          "audible_announcements_verified": false,
+          "observations": {
+            "complete_actual_page_body": {
+              "body": "第 1 页：Unicode selection: A😀é中 👩🏽‍💻 🇺🇳. Exact source bytes must survive selection, copy and annotations."
+            },
+            "production_control_names_without_internal_hash": {
+              "decrease": "减小字号",
+              "increase": "增大字号",
+              "internal_hash_present": false
+            },
+            "actual_outer_hit_region_navigates_back": {
+              "back_frame": [
+                16,
+                92,
+                44,
+                44
+              ],
+              "tap_y_fraction": 0.1
+            },
+            "platform_text_size_fixture": {
+              "caption1_points": 43,
+              "dynamic_type_tested": true
+            },
+            "compact_header_and_actual_page_inside_window": {
+              "back": [
+                16,
+                103.5,
+                44,
+                44
+              ],
+              "page": [
+                4,
+                157,
+                1125,
+                363.5
+              ],
+              "window": [
+                0,
+                0,
+                1133,
+                744
+              ]
+            },
+            "actual_page_turn_in_compact_layout": {},
+            "actual_font_change_after_reaching_toolbar_control": {},
+            "actual_notes_dialog_after_reaching_toolbar_control": {},
+            "actual_edge_back_after_toolbar_scroll": {}
+          }
+        },
+        "iphone": {
+          "accepted": true,
+          "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a",
+          "run_id": "40109106732",
+          "attempt": "1",
+          "platform": "iphone",
+          "cases": 2,
+          "named_observations": 9,
+          "attachments": 4,
+          "scope": "production body/name semantics and actual reachable touch/scroll operations",
+          "actual_executable_sha256": "1f9e47083d443a23d41ea5e0f71929fafae7065b782e19201dda71437a4fb3bb",
+          "dynamic_type_tested": true,
+          "voiceover_accepted": false,
+          "full_accessibility_accepted": false,
+          "focus_order_accepted": false,
+          "physical_device_execution": false,
+          "audible_announcements_verified": false,
+          "observations": {
+            "complete_actual_page_body": {
+              "body": "第 1 页：Unicode selection: A😀é中 👩🏽‍💻 🇺🇳. Exact source bytes must survive selection, copy and annotations."
+            },
+            "production_control_names_without_internal_hash": {
+              "decrease": "减小字号",
+              "increase": "增大字号",
+              "internal_hash_present": false
+            },
+            "actual_outer_hit_region_navigates_back": {
+              "back_frame": [
+                16,
+                80,
+                44,
+                44
+              ],
+              "tap_y_fraction": 0.1
+            },
+            "platform_text_size_fixture": {
+              "caption1_points": 43,
+              "dynamic_type_tested": true
+            },
+            "compact_header_and_actual_page_inside_window": {
+              "back": [
+                16,
+                71.5,
+                44,
+                44
+              ],
+              "page": [
+                4,
+                125,
+                659,
+                51.5
+              ],
+              "window": [
+                0,
+                0,
+                667,
+                375
+              ]
+            },
+            "actual_page_turn_in_compact_layout": {},
+            "actual_font_change_after_reaching_toolbar_control": {},
+            "actual_notes_dialog_after_reaching_toolbar_control": {},
+            "actual_edge_back_after_toolbar_scroll": {}
+          }
+        }
+      }
+    },
+    "artifacts": [
+      {
+        "id": 12567632527,
+        "name": "apple-shelf-validation-40109106732-1",
+        "bytes": 2737,
+        "digest": "sha256:c4178b1787a59fe7c5bb6bd85920735c3702b8d427cddb4fddf95244d939a336",
+        "expired": false,
+        "expires_at": "2027-01-22T15:54:31Z",
+        "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a"
+      },
+      {
+        "id": 12567583852,
+        "name": "apple-shelf-ui-iphone-40109106732-1",
+        "bytes": 48416265,
+        "digest": "sha256:726ca19c87700bba53b0fe1dae81cebb0da4cfacf897bd94ba400aa2617cec8e",
+        "expired": false,
+        "expires_at": "2027-01-22T15:54:31Z",
+        "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a"
+      },
+      {
+        "id": 12567014356,
+        "name": "apple-shelf-ui-ipad-40109106732-1",
+        "bytes": 50628979,
+        "digest": "sha256:c951b41434da56a39722bc4c7475422bd918934979dc45e57889ba543f2da37e",
+        "expired": false,
+        "expires_at": "2027-01-22T15:54:31Z",
+        "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a"
+      },
+      {
+        "id": 12566773580,
+        "name": "apple-shelf-ui-macos-40109106732-1",
+        "bytes": 39053984,
+        "digest": "sha256:c83d6a61dfa181a48aa6cb6ca05c257ced258ccc66be3019f58b6b6c3061272f",
+        "expired": false,
+        "expires_at": "2027-01-22T15:54:31Z",
+        "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a"
+      },
+      {
+        "id": 12566666117,
+        "name": "apple-shelf-native-40109106732-1",
+        "bytes": 30988197,
+        "digest": "sha256:bdc98dc256d0bdf08ee213b07fcec1f8b4d2fc883282e0ff76730eded0e6700f",
+        "expired": false,
+        "expires_at": "2027-01-22T15:54:31Z",
+        "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a"
+      },
+      {
+        "id": 12566465050,
+        "name": "apple-shelf-sdk-macos-40109106732-1",
+        "bytes": 20215350,
+        "digest": "sha256:77116eb606b7ee65110a6deb6f6cf583c8baab0dbffe74da447c26c1e73c7832",
+        "expired": false,
+        "expires_at": "2027-01-22T15:54:31Z",
+        "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a"
+      },
+      {
+        "id": 12565363539,
+        "name": "apple-shelf-sdk-iphonesimulator-40109106732-1",
+        "bytes": 20221400,
+        "digest": "sha256:87a9d4a4d3c7d5fb2098eb19d063935860d79f2fb61fec69b76c0a0df7eaba4f",
+        "expired": false,
+        "expires_at": "2027-01-22T15:54:31Z",
+        "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a"
+      }
+    ],
+    "jobs": [
+      {
+        "id": 120916885085,
+        "name": "SDK iphonesimulator",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 120916885149,
+        "name": "SDK macos",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 120917887550,
+        "name": "native",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 120920644331,
+        "name": "Shelf UI macos",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 120920644357,
+        "name": "Shelf UI ipad",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 120920644373,
+        "name": "Shelf UI iphone",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 120933040950,
+        "name": "summary",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "mapping_delta": {
+    "source_sha": "695ee448043e1f041b8d43cb94d8a2bf62433441",
+    "run_id": 40110665075,
+    "attempt": 1,
+    "accepted": true,
+    "production_code_changed": false,
+    "pure_documentation": false,
+    "changed_paths_from_production_source": [
+      "tests/apple_host/import_mapping/ui/MappingUITests.swift",
+      "docs/READER-APPLE-ACCOUNTS.md"
+    ],
+    "reports": {
+      "iphone": {
+        "accepted": true,
+        "source_sha": "695ee448043e1f041b8d43cb94d8a2bf62433441",
+        "run_id": "40110665075",
+        "attempt": "1",
+        "platform": "iphone",
+        "ui_cases": 5,
+        "named_steps": 22,
+        "attachments": 14,
+        "mapping_rows": [
+          [
+            "txt:e0d8a713bc39b7fbbeec51a086c70f830d95cf42e7a4f1d9fcd1bd0a0629fc6c",
+            3008,
+            1,
+            "reflow_global"
+          ]
+        ],
+        "problems": []
+      },
+      "macos": {
+        "accepted": true,
+        "source_sha": "695ee448043e1f041b8d43cb94d8a2bf62433441",
+        "run_id": "40110665075",
+        "attempt": "1",
+        "platform": "macos",
+        "ui_cases": 5,
+        "named_steps": 22,
+        "attachments": 14,
+        "mapping_rows": [
+          [
+            "txt:e0d8a713bc39b7fbbeec51a086c70f830d95cf42e7a4f1d9fcd1bd0a0629fc6c",
+            3008,
+            1,
+            "reflow_global"
+          ]
+        ],
+        "problems": []
+      },
+      "ipad": {
+        "accepted": true,
+        "source_sha": "695ee448043e1f041b8d43cb94d8a2bf62433441",
+        "run_id": "40110665075",
+        "attempt": "1",
+        "platform": "ipad",
+        "ui_cases": 5,
+        "named_steps": 22,
+        "attachments": 14,
+        "mapping_rows": [
+          [
+            "txt:e0d8a713bc39b7fbbeec51a086c70f830d95cf42e7a4f1d9fcd1bd0a0629fc6c",
+            3008,
+            1,
+            "reflow_global"
+          ]
+        ],
+        "problems": []
+      }
+    },
+    "artifacts": [
+      {
+        "id": 12566911139,
+        "name": "apple-import-mapping-sdk-iphonesimulator-40110665075-1",
+        "bytes": 20221302,
+        "digest": "sha256:320d89dac3afdcdbb5312167053564a64ab207dbab3244b6d838f5868d3f20f5",
+        "expired": false,
+        "expires_at": "2027-01-22T16:14:54Z",
+        "source_sha": "695ee448043e1f041b8d43cb94d8a2bf62433441"
+      },
+      {
+        "id": 12566682743,
+        "name": "apple-import-mapping-ui-macos-40110665075-1",
+        "bytes": 30200048,
+        "digest": "sha256:b729dd2d5e153ec197e29e0c302a3dd647ecd72c60fedfa370661e9661e32e6e",
+        "expired": false,
+        "expires_at": "2027-01-22T16:14:54Z",
+        "source_sha": "695ee448043e1f041b8d43cb94d8a2bf62433441"
+      },
+      {
+        "id": 12566674096,
+        "name": "apple-import-mapping-ui-iphone-40110665075-1",
+        "bytes": 31142499,
+        "digest": "sha256:ffdbb82d439cb115e100e3454a2915a834cba4435d751a97a4081b017df54b56",
+        "expired": false,
+        "expires_at": "2027-01-22T16:14:54Z",
+        "source_sha": "695ee448043e1f041b8d43cb94d8a2bf62433441"
+      },
+      {
+        "id": 12566653913,
+        "name": "apple-import-mapping-ui-ipad-40110665075-1",
+        "bytes": 31863465,
+        "digest": "sha256:d43a58b4c9a8ea15a36609b26fea3687f0d48394880d0b844ea4d3cbceab74fa",
+        "expired": false,
+        "expires_at": "2027-01-22T16:14:54Z",
+        "source_sha": "695ee448043e1f041b8d43cb94d8a2bf62433441"
+      },
+      {
+        "id": 12566253496,
+        "name": "apple-import-mapping-sdk-macos-40110665075-1",
+        "bytes": 20215323,
+        "digest": "sha256:c6cfb6418bc6962e7082a207de39ebbf096d4fed8d6dc85f0ff4d78ca506ee03",
+        "expired": false,
+        "expires_at": "2027-01-22T16:14:54Z",
+        "source_sha": "695ee448043e1f041b8d43cb94d8a2bf62433441"
+      },
+      {
+        "id": 12566084616,
+        "name": "apple-import-mapping-native-40110665075-1",
+        "bytes": 2637810,
+        "digest": "sha256:6d74fb33a134df8a20562ddbd46e6345f3995fc22d25184551fdf914497d138b",
+        "expired": false,
+        "expires_at": "2027-01-22T16:14:54Z",
+        "source_sha": "695ee448043e1f041b8d43cb94d8a2bf62433441"
+      }
+    ],
+    "jobs": [
+      {
+        "id": 120921516374,
+        "name": "SDK iphonesimulator",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 120921516452,
+        "name": "SDK macos",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 120923033317,
+        "name": "native",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 120923273373,
+        "name": "Mapping UI macos",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 120923273376,
+        "name": "Mapping UI iphone",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 120923273378,
+        "name": "Mapping UI ipad",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "final_common_source_required": true,
+  "root_instruction": "Hand back fixed281 production evidence plus695 mapping probe delta; root reruns final common source. Do not claim all3same-source or repeat2202solelyforprobe/docchange.",
+  "production_scopes_accepted": true,
+  "reason": "Fixed281 production scopes and separately tested695 mapping probe delta; root reruns final common source.",
+  "diagnostic_runs": [
+    {
+      "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a",
+      "run_id": 40107115391,
+      "scope": "production",
+      "all_jobs_passed": true,
+      "accepted": false,
+      "diagnostic_only": true
+    },
+    {
+      "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a",
+      "run_id": 40107533231,
+      "scope": "recovery",
+      "all_jobs_passed": true,
+      "accepted": false,
+      "diagnostic_only": true
+    }
+  ],
+  "retained_failed_runs": [
+    {
+      "source_sha": "62aee485117276601e91c77079e46b95a0988d08",
+      "run_id": 40089317660,
+      "reason": "capacity probe used an invalid7800-byte WebDAV path"
+    },
+    {
+      "source_sha": "d154e3265bf47a0e99c382654b14edcc7c29820e",
+      "run_id": 40090970901,
+      "reason": "native account22 passed; original exact shelf refresh/restoration failed"
+    },
+    {
+      "source_sha": "7cbb27c921241d58cba2db4c903eb31364feb964",
+      "run_id": 40095423208,
+      "reason": "iPad original cancellation tap raced a naturally completed import"
+    },
+    {
+      "source_sha": "7cbb27c921241d58cba2db4c903eb31364feb964",
+      "run_id": 40095431000,
+      "reason": "Mac account background close and iPhone large-type initial relayout failed; iPad full chain passed"
+    },
+    {
+      "source_sha": "8a9b3a199b50545f903e97f634ec60940425278a",
+      "run_id": 40100343340,
+      "reason": "iPad unchanged post-scroll geometry epoch was not acknowledged; iPhone AX hit-point query ran before scrolling A+ into view"
+    },
+    {
+      "source_sha": "d386bbae76e81e1ba23487511b23c178c3091015",
+      "run_id": 40105896876,
+      "diagnostic_only": true,
+      "reason": "late idle multi-row probes overwrote complete ordering; cold-start search could be tapped before actionable"
+    },
+    {
+      "source_sha": "f249aec5f3f2849e2b542e65f4ece18ac64c538f",
+      "run_id": 40106331407,
+      "diagnostic_only": true,
+      "reason": "standalone iOS production diagnostic tried setting text size on a Shutdown simulator; no iOS test executed"
+    },
+    {
+      "source_sha": "281d18ead88a934f10020e7c1c32e6e35766af0a",
+      "run_id": 40109096548,
+      "reason": "mapping iPhone first gesture left books0/Ready with no import result; truncated trace does not distinguish absent delivery from startup busy rejection; other four cases passed"
+    }
+  ],
+  "limits": {
+    "physical_device_execution": false,
+    "password_ui_accepted": false,
+    "voiceover_accepted": false,
+    "full_accessibility_accepted": false,
+    "focus_order_accepted": false,
+    "audible_announcements_verified": false,
+    "sdk_startup_bounded": false,
+    "hard_performance_budget_accepted": false,
+    "received_catalog_projection_accepted": false,
+    "cached_original_reimport_accepted": false,
+    "product_reading_state_projection_accepted": false,
+    "small_iphone_maximum_text_landscape_page_height_points": 51.5,
+    "small_iphone_window": [
+      667,
+      375
+    ],
+    "system_caption1_points": 43
+  }
+}
