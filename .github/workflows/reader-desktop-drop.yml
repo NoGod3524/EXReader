@@ -145,6 +145,7 @@ jobs:
       - name: Build the lifecycle-hook and sanitizer acceptance variants
         run: |
           set -o pipefail
+          export MSYS2_ARG_CONV_EXCL='*'
           ws=$(cygpath -m "$PWD")
           cmake -S extras/desktop-drop -B build/desktop-drop/module-hooks -G Ninja -DCMAKE_BUILD_TYPE=Debug \
             -DEXR_DESKTOP_DROP_TEST_HOOKS=ON -DCMAKE_INSTALL_PREFIX="$ws/build/desktop-drop/stage-hooks" \

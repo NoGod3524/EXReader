@@ -32,6 +32,11 @@ typedef struct {
   exr_drop_status destroy_status;
 } capture;
 
+static CLIPFORMAT file_group_format(void) {
+  /* CFSTR_FILEDESCRIPTORW is a narrow literal in this SDK; the atom is wide. */
+  return (CLIPFORMAT)RegisterClipboardFormatW(L"FileGroupDescriptorW");
+}
+
 static void capture_reset(capture *state) {
   if (state->request) exr_drop_request_release(state->request);
   memset(state, 0, sizeof(*state));
@@ -57,8 +62,10 @@ static void on_drop(void *context, exr_drop_status status, exr_drop_request *req
         if (exr_drop_request_get_item(request, 0, &item) == EXR_DROP_OK) {
           state->first_status = item.status;
           if (item.path) {
-            strncpy(state->first_path, item.path, sizeof(state->first_path) - 1);
-            state->first_path[sizeof(state->first_path) - 1] = 0;
+            size_t copy = strlen(item.path);
+            if (copy >= sizeof(state->first_path)) copy = sizeof(state->first_path) - 1;
+            memcpy(state->first_path, item.path, copy);
+            state->first_path[copy] = 0;
           }
         }
       }
@@ -459,7 +466,6 @@ int main(void) {
   exr_drop_windows_target *target = NULL;
   exr_drop_target_options options;
   exr_drop_request *request = NULL;
-  exr_drop_request_info info;
   exr_drop_control control;
   int cancelled = 0;
   HGLOBAL memory;
@@ -872,7 +878,7 @@ int main(void) {
     if (object) object->lpVtbl->Release(object);
   }
   {
-    IDataObject *object = test_object_create(RegisterClipboardFormatW(CFSTR_FILEDESCRIPTORW),
+    IDataObject *object = test_object_create(file_group_format(),
         make_file_group(L"promised.epub"));
     capture_reset(&state);
     effect = 0;
@@ -884,7 +890,7 @@ int main(void) {
     if (object) object->lpVtbl->Release(object);
   }
   {
-    IDataObject *object = test_object_create(RegisterClipboardFormatW(L"EXRProbeUnsupported"),
+    IDataObject *object = test_object_create((CLIPFORMAT)RegisterClipboardFormatW(L"EXRProbeUnsupported"),
         make_wide(L"x", 1));
     capture_reset(&state);
     effect = DROPEFFECT_COPY;
@@ -949,7 +955,7 @@ int main(void) {
   }
   {
     static const unsigned char raw[4] = {1, 0, 0, 0}; /* cItems without a descriptor */
-    deliver_object(&state, "reject_file_group_short_header", RegisterClipboardFormatW(CFSTR_FILEDESCRIPTORW),
+    deliver_object(&state, "reject_file_group_short_header", file_group_format(),
         make_raw(raw, sizeof(raw)), EXR_DROP_PLATFORM, (exr_drop_item_status)0, 0);
   }
   {
@@ -963,7 +969,7 @@ int main(void) {
       wcsncpy_s(group->fgd[0].cFileName, 260, L"a.epub", _TRUNCATE);
       GlobalUnlock(memory);
       deliver_object(&state, "reject_file_group_beyond_allocation",
-          RegisterClipboardFormatW(CFSTR_FILEDESCRIPTORW), memory, EXR_DROP_PLATFORM, (exr_drop_item_status)0, 0);
+          file_group_format(), memory, EXR_DROP_PLATFORM, (exr_drop_item_status)0, 0);
     }
   }
   {
@@ -977,7 +983,7 @@ int main(void) {
       wcsncpy_s(group->fgd[0].cFileName, 260, L"a.epub", _TRUNCATE);
       GlobalUnlock(memory);
       deliver_object(&state, "reject_file_group_extreme_count",
-          RegisterClipboardFormatW(CFSTR_FILEDESCRIPTORW), memory, EXR_DROP_PLATFORM, (exr_drop_item_status)0, 0);
+          file_group_format(), memory, EXR_DROP_PLATFORM, (exr_drop_item_status)0, 0);
     }
   }
   {
@@ -989,7 +995,7 @@ int main(void) {
     } else {
       group->cItems = 0;
       GlobalUnlock(memory);
-      deliver_object(&state, "reject_file_group_empty", RegisterClipboardFormatW(CFSTR_FILEDESCRIPTORW),
+      deliver_object(&state, "reject_file_group_empty", file_group_format(),
           memory, EXR_DROP_UNSUPPORTED, (exr_drop_item_status)0, 0);
     }
   }

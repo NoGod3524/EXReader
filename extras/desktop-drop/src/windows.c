@@ -45,7 +45,8 @@ static size_t global_extent(HGLOBAL handle) {
 
 /* ---- payload extraction --------------------------------------------- */
 static CLIPFORMAT file_group_format(void) {
-  return RegisterClipboardFormatW(CFSTR_FILEDESCRIPTORW);
+  /* CFSTR_FILEDESCRIPTORW is a narrow literal in this SDK; the atom is wide. */
+  return (CLIPFORMAT)RegisterClipboardFormatW(L"FileGroupDescriptorW");
 }
 
 static exr_drop_status request_from_unicode_text(HGLOBAL handle, exr_drop_origin origin,
@@ -396,7 +397,8 @@ static HRESULT STDMETHODCALLTYPE win_Drop(IDropTarget *iface, IDataObject *objec
   return S_OK;
 }
 
-static const IDropTargetVtbl win_vtbl = {win_QueryInterface, win_AddRef, win_Release, win_DragEnter,
+/* Not const: the C form of IDropTarget::lpVtbl is a plain pointer. */
+static IDropTargetVtbl win_vtbl = {win_QueryInterface, win_AddRef, win_Release, win_DragEnter,
     win_DragOver, win_DragLeave, win_Drop};
 
 static void win_release_object(struct exr_drop_target *base) {
