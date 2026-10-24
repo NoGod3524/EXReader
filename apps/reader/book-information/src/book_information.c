@@ -417,7 +417,7 @@ reader_book_information_status reader_book_information_read(reader_catalog *cata
       v->identity = READER_BOOK_INFORMATION_IDENTITY_MISMATCH;
       v->verified_bytes = 0;
       v->verified_sha256 = NULL;
-      v->availability = READER_BOOK_INFORMATION_IDENTITY_MISMATCH;
+      v->availability = READER_BOOK_INFORMATION_LOCAL_MISMATCH;
       goto finish;
     }
     v->availability = READER_BOOK_INFORMATION_LOCAL_PRESENT;
