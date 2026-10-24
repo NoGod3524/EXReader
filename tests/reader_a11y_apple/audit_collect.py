@@ -317,8 +317,10 @@ def classify_overlap(first, second, elements, threshold):
     raw_ratio, _ = overlap_ratio(first_box, second_box)
     first_chain = scroll_chain(first.get('path'))
     second_chain = scroll_chain(second.get('path'))
-    first_container = first_chain[0]['id'] if first_chain else ''
-    second_container = second_chain[0]['id'] if second_chain else ''
+    # Distinguish "inside an unidentified scroll view" from "inside no scroll view":
+    # both would otherwise carry the empty id and look like one container.
+    first_container = ('scroll', first_chain[0]['id']) if first_chain else ('none',)
+    second_container = ('scroll', second_chain[0]['id']) if second_chain else ('none',)
     same_container = first_container == second_container
     if same_container:
         if ((contains_box(first_box, second_box) and nested_child(first_box, second_box))
