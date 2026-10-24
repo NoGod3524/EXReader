@@ -266,18 +266,65 @@ def main():
         log(detail)
         return 2
 
+    # libspeechd derives the same socket from XDG_RUNTIME_DIR as the daemon, so
+    # the default address is used. An explicit SPEECHD_ADDRESS was rejected by
+    # 0.11.1 ("Unknown or unsupported communication method") and disabled every
+    # connection, so it is never set here.
     test_env = dict(os.environ)
-    test_env["SPEECHD_ADDRESS"] = "unix_socket=%s" % sock
+    test_env.pop("SPEECHD_ADDRESS", None)
+
+    # libspeechd may resolve its default socket either from XDG_RUNTIME_DIR or
+    # from the per-user cache directory; keep both candidate defaults valid so a
+    # version difference cannot silently disable the connection.
+    fallback = os.path.join(os.path.expanduser("~"), ".cache", "speech-dispatcher",
+                            "speechd.sock")
+    if sock and not os.path.exists(fallback):
+        try:
+            os.makedirs(os.path.dirname(fallback), exist_ok=True)
+            os.symlink(sock, fallback)
+            env_note["fallback_socket_symlink"] = "%s -> %s" % (fallback, sock)
+        except OSError as exc:
+            env_note["fallback_socket_symlink"] = "not created: %s" % exc
 
     spd_say = shutil.which("spd-say")
+    env_note["preflight_spd_say_exit"] = None
     if spd_say:
         rc_say, out_say = run([spd_say, "-w", "-l", "en", "preflight"],
                               os.path.join(logs, "preflight-spd-say.log"), timeout=180,
                               env=test_env)
         env_note["preflight_spd_say_exit"] = rc_say
         env_note["preflight_spd_say_output"] = out_say.strip()[:400]
-    else:
-        env_note["preflight_spd_say_exit"] = None
+        if "Failed to connect" in out_say:
+            # Keep the exact truth about the address syntax in the evidence.
+            probes = {}
+            for label, value in (("unix_socket_equals", "unix_socket=%s" % sock),
+                                 ("unix_socket_colon", "unix_socket:%s" % sock),
+                                 ("raw_path", sock)):
+                probe_env = dict(test_env)
+                probe_env["SPEECHD_ADDRESS"] = value
+                rc_p, out_p = run([spd_say, "probe"],
+                                  os.path.join(logs, "address-probe-%s.log" % label),
+                                  timeout=60, env=probe_env)
+                probes[label] = {"exit": rc_p, "output": out_p.strip()[:200]}
+            env_note["speechd_address_probes"] = probes
+            detail = "the system client cannot reach the daemon at %s: %s" % (
+                sock, out_say.strip()[:200])
+            env_note["preflight"] = detail
+            payload = {
+                "schema": 1,
+                "package": "J19-reader-tts-linux",
+                "source_sha": args.source_sha,
+                "env": env_note,
+                "counts": {"pass": 0, "fail": 1, "skip": 0, "other": 0},
+                "cases": [{"name": "environment_daemon_connection", "phase": "startup",
+                           "status": "fail", "detail": detail}],
+                "problems": [detail],
+                "accepted": False,
+            }
+            with open(os.path.join(out_dir, "results.json"), "w") as f:
+                json.dump(payload, f, indent=2)
+            log(detail)
+            return 2
 
     phase_files = []
 
