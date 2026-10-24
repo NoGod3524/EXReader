@@ -96,8 +96,16 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p stage
-          cp -R sdk-artifact/*/stage/* stage/
+          for dir in sdk-artifact/*/; do
+            if [ -d "${dir}stage" ]; then
+              cp -R "${dir}stage/." stage/
+            else
+              cp -R "${dir}." stage/
+            fi
+          done
           ls stage
+          test -f stage/macos/lib/libexreader.dylib
+          test -f stage/iphonesimulator/lib/libexreader.dylib
       - name: Build the deterministic fixtures
         run: python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
       - name: Record the keyboard access fixture on the macOS host
