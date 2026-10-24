@@ -1,0 +1,374 @@
+{
+  "schema": "reader-android-native-owner-acceptance-v1",
+  "accepted": true,
+  "scope": "API34 x86_64 native product provider/owner and thin typed JNI; existing shelf preserved; classification UI remains separate",
+  "source_sha": "8f7c011aafd4d7f900ef42106fa41e2150a66d58",
+  "branch": "codex/reader-android-collections",
+  "pull_request": "https://github.com/NoGod3524/EXReader/pull/22",
+  "run_id": 40049878764,
+  "attempt": 1,
+  "job_id": 120739983611,
+  "workflow": ".github/workflows/reader-owner-android.yml",
+  "workflow_conclusion": "success",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_eight_protected_trees_unchanged": true,
+  "original_product_schema1": "f32bb8aa18ed3de286900f19ce4230fd93435dd0",
+  "product_schema1_unchanged": true,
+  "existing_budgets_unchanged": true,
+  "accepted_dependencies": {
+    "android_shelf": "e4600abd4b75d22f117483673cba2898e3ae628a",
+    "typed_commands": "d064b5bcf5ed91e9718204cb3d448d7f0807454a",
+    "gtk_query": "78774a61254fb66356a181e5c28caed9793da7ec",
+    "local_query": "3be2473e27faca4d2ebb1ac6d528ffbbfbb97846"
+  },
+  "device": {
+    "api": 34,
+    "abi": "x86_64",
+    "gradle_named_owner_checks": 17,
+    "manual_named_owner_checks": 17,
+    "typed_process_kill_checks": 2,
+    "original_functional_checks": 112,
+    "original_breakdown": {
+      "shelf_catalog": 12,
+      "shelf_ui": 10,
+      "catalog": 8,
+      "import_mapping": 14,
+      "old_process_recovery": 2,
+      "host": 66
+    },
+    "original_gate_checks": 87,
+    "original_gate_breakdown": {
+      "host": 48,
+      "bounded": 20,
+      "shelf": 19
+    },
+    "new_owner_evidence_gate_checks": 19,
+    "all_named_cases_passed": true,
+    "all_gate_cases_passed": true,
+    "no_skips": true
+  },
+  "contract": {
+    "production_system_sqlite_database_open": false,
+    "production_product_provider": "libexreader_product.so",
+    "sqlite_version": "3.54.0",
+    "actual_runtime_function_module_source_header_options_and_json_verified": true,
+    "single_product_sqlite_definition_link_map_verified": true,
+    "packaged_product_build_id_matches_unstripped_proof": true,
+    "reinstalled_application_hash_matches_original_application": true,
+    "release_fixture_functions_absent": true,
+    "native_catalog_revision_serial_handles": 2,
+    "creating_worker_enforced_in_java_and_native": true,
+    "closed_native_handles_refused": true,
+    "metadata_history_outbox_atomic_only_inside_local_project": true,
+    "cross_handle_or_sdk_database_atomicity_claimed": false,
+    "native_only_typed_wire_producer": true,
+    "strict_counted_utf16_standard_utf8": true,
+    "emoji_and_decomposed_text_preserved": true,
+    "lone_surrogates_and_nul_refused": true,
+    "stable_create_ids_preallocated_and_persisted_before_submission": true,
+    "android_api26_os_random": "Bionic arc4random_buf; shared UUID v4 bits and 32 lowercase hex retained",
+    "explicit_membership_needs_book_bootstrap_before_writes": true,
+    "bootstrap_public_sdk_format_sha_original_bytes_verified": true,
+    "bootstrap_current_product_title_author_favorite_sort_preserved": true,
+    "sdk_local_ids_in_generated_wire": false,
+    "committed_sdk_original_and_book_command_retained_on_later_map_failure": true,
+    "closed_legacy_system_provider_handoff_verified": true,
+    "canonical_nfc_sort_and_nfc_nfd_author_literal_search_preserved": true,
+    "page_limit": 50,
+    "cache_limit": 150,
+    "classification_ui_accepted": false,
+    "performance_accepted": false,
+    "physical_device_execution": false
+  },
+  "exact_evidence": {
+    "device_reports": {
+      "owner-reports/debug/TEST-emulator-5554 - 14-_app-.xml": {
+        "bytes": 2353,
+        "sha256": "e8b14b7069bace0b220e85e0ce401adb5c7691000de7d74d0fd1794f7148f304"
+      }
+    },
+    "native_proof": {
+      "identity": {
+        "source_sha": "8f7c011aafd4d7f900ef42106fa41e2150a66d58",
+        "run_id": "40049878764",
+        "attempt": "1"
+      },
+      "files": {
+        "debug.dynamic.txt": {
+          "bytes": 1394,
+          "sha256": "4fbf606c508c6a3c5c753732b5b75d6cf9da8fdda96d96942eb55802396c6c21"
+        },
+        "debug.map": {
+          "bytes": 1995601,
+          "sha256": "5e9dc95af2c00935a229db6ffdff30f0f55d2de75f31ffbac9c97d35f52455b6"
+        },
+        "debug.so": {
+          "bytes": 10167320,
+          "sha256": "591803eb33c036b2ac34796cf16a928ce95ebab35944b529f6696f0447bc2772"
+        },
+        "debug.symbols.txt": {
+          "bytes": 351950,
+          "sha256": "a26e8e93353bb9af3cccd36f12d6a032d4912e185bdb6c187dbc6beacf51f6bb"
+        },
+        "release.dynamic.txt": {
+          "bytes": 1389,
+          "sha256": "c1557755449f4409ec4e5187ac280701616ed58f9995ee61a66b3123a69f0b4d"
+        },
+        "release.map": {
+          "bytes": 1038222,
+          "sha256": "90ecb4ef13553dc1397a35683a33b39323b67072f70dd0632273b5a66ce36ac8"
+        },
+        "release.so": {
+          "bytes": 9682664,
+          "sha256": "4d183745021410b29b99637e7ec065f25717e17ee4e08e65f3140b424771245b"
+        },
+        "release.symbols.txt": {
+          "bytes": 161750,
+          "sha256": "f91368cd6046e3e25767a5fd75706d7c5c9123a1a68431f358351624cb39cc26"
+        },
+        "sqlite3.h": {
+          "bytes": 695737,
+          "sha256": "cd20a2877bc82b94e36c1093b727dd87cfa3c1d581aac6e240925535cbd90166"
+        }
+      }
+    },
+    "manual_instrumentation": {
+      "bytes": 10171,
+      "sha256": "2dc7b45046fdef78b9ee8ffebd1cd61c7ec9654ce3b2bfa0bf2a940e9ca7fd43"
+    },
+    "reinstalled_apks": {
+      "app-debug.apk": {
+        "bytes": 24277476,
+        "sha256": "75bf8aff5b9d52030ceaff3837685d96f088b161d8e1bebdb381362d22a0be6c"
+      },
+      "app-debug-androidTest.apk": {
+        "bytes": 63872,
+        "sha256": "532ec1ffd43ce9632fe34f5dc32a7fde31a0195010ed2cbb6fa65d3375ef4a71"
+      }
+    },
+    "process_boundaries": {
+      "before": {
+        "seed-before.txt": {
+          "bytes": 74,
+          "sha256": "cc376fcd260b55a01f82c04af5e0a9ead88516f600131a38bdea1a3e05b10a8d"
+        },
+        "recover-before.txt": {
+          "bytes": 92,
+          "sha256": "c0d833c425ee91787a07efb89810fdad725bf3f6bcbc9eb37127d4d68fd05b3b"
+        },
+        "witness-before.txt": {
+          "bytes": 5,
+          "sha256": "fdcc75483f5e22c93d36a3051dbe0fee0671d3bf55936a099d5724cb3ec307b0"
+        }
+      },
+      "after": {
+        "seed-after.txt": {
+          "bytes": 74,
+          "sha256": "cc376fcd260b55a01f82c04af5e0a9ead88516f600131a38bdea1a3e05b10a8d"
+        },
+        "recover-after.txt": {
+          "bytes": 91,
+          "sha256": "a203e53ed63e0606a735272a5cf35d9b61ff5c3d2048b318bbae67b75ab8861a"
+        },
+        "witness-after.txt": {
+          "bytes": 5,
+          "sha256": "f3176ea4064dc47ccab85eb06a79460c0a07325bfdc3da7863dbd974031ee89b"
+        }
+      }
+    },
+    "owner_gate_script_sha256": "8a179e998afb3c6ffab90d01330a9332e9747b26d43027533f1d4928e11a2a0a",
+    "owner_gate_ids": [
+      "positive",
+      "old_device_source",
+      "missing_device_case",
+      "duplicate_device_case",
+      "failed_device_case",
+      "wrong_native_runtime_provider",
+      "wrong_actual_sqlite_source",
+      "missing_provider_option",
+      "skipped_manual_owner_case",
+      "different_reinstalled_application",
+      "skipped_owner_xml",
+      "fixture_in_release",
+      "missing_link_provider_proof",
+      "wrong_three_write_crash_boundary",
+      "missing_successful_retry_after_kill",
+      "process_not_killed",
+      "old_112_rejected",
+      "missing_old_gate",
+      "restored_positive"
+    ]
+  },
+  "artifact": {
+    "id": 12543561795,
+    "name": "reader-owner-android-40049878764-1",
+    "size_in_bytes": 154102632,
+    "digest": "sha256:f84fe7a437f7750022bcfc8385ed585dbea2dd1f4e851e56389463479e100d12",
+    "head_sha": "8f7c011aafd4d7f900ef42106fa41e2150a66d58",
+    "expired_at_read": false,
+    "expires_at": "2027-01-22T01:27:37Z",
+    "digest_matches_upload_log": true
+  },
+  "same_source_shared_commands": {
+    "run_id": 40049880444,
+    "attempt": 1,
+    "conclusion": "success",
+    "platforms": [
+      {
+        "runner": "ubuntu-22.04",
+        "job_id": 120739988149,
+        "source_checks": 77,
+        "protocol_checks": 59,
+        "sync_checks": 33,
+        "projection_checks": 32,
+        "command_checks": 33,
+        "native_catalog_ctest": 1
+      },
+      {
+        "runner": "windows-2022",
+        "job_id": 120739988348,
+        "source_checks": 76,
+        "protocol_checks": 59,
+        "sync_checks": 33,
+        "projection_checks": 32,
+        "command_checks": 33,
+        "native_catalog_ctest": 1
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 12542509383,
+        "name": "reader-commands-Linux-40049880444-1",
+        "size_in_bytes": 3124547,
+        "digest": "sha256:974a9f57f73b4d1e4f8c7c5b37313ab3bc67b9a3a146ca24c355dc84fb9740da",
+        "head_sha": "8f7c011aafd4d7f900ef42106fa41e2150a66d58",
+        "expired_at_read": false,
+        "expires_at": "2027-01-22T01:27:38Z",
+        "digest_matches_upload_log": true
+      },
+      {
+        "id": 12542243819,
+        "name": "reader-commands-Windows-40049880444-1",
+        "size_in_bytes": 4145476,
+        "digest": "sha256:46aab90199dc3762ce3f63c1551f599de489eb7614851b64e036956be4bc742a",
+        "head_sha": "8f7c011aafd4d7f900ef42106fa41e2150a66d58",
+        "expired_at_read": false,
+        "expires_at": "2027-01-22T01:27:38Z",
+        "digest_matches_upload_log": true
+      }
+    ]
+  },
+  "same_source_shared_queries": {
+    "run_id": 40049881933,
+    "attempt": 1,
+    "conclusion": "success",
+    "original_groups": 12,
+    "query_groups": 10,
+    "ctest_passed_each": 2,
+    "platforms": [
+      {
+        "runner": "windows-2022",
+        "job_id": 120739991933
+      },
+      {
+        "runner": "macos-15",
+        "job_id": 120739992091
+      },
+      {
+        "runner": "ubuntu-22.04",
+        "job_id": 120739992126
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 12543315147,
+        "name": "desktop-shelf-query-Windows-40049881933-1",
+        "size_in_bytes": 161405,
+        "digest": "sha256:b3ed1541ba4bff211b10098683b4375502f706e0f09a37ebfdb38ce54d2a220f",
+        "head_sha": "8f7c011aafd4d7f900ef42106fa41e2150a66d58",
+        "expired_at_read": false,
+        "expires_at": "2027-01-22T01:27:39Z",
+        "digest_matches_upload_log": true
+      },
+      {
+        "id": 12542708428,
+        "name": "desktop-shelf-query-macOS-40049881933-1",
+        "size_in_bytes": 161231,
+        "digest": "sha256:fb370ef80abe77452cc422b5858b322fc7e032098f3263a2905ce31d7397e0d2",
+        "head_sha": "8f7c011aafd4d7f900ef42106fa41e2150a66d58",
+        "expired_at_read": false,
+        "expires_at": "2027-01-22T01:27:39Z",
+        "digest_matches_upload_log": true
+      },
+      {
+        "id": 12542698433,
+        "name": "desktop-shelf-query-Linux-40049881933-1",
+        "size_in_bytes": 160795,
+        "digest": "sha256:6e823387749357103db19a36724c3684aee44d0c5e7b7f8feba1d67a300798a4",
+        "head_sha": "8f7c011aafd4d7f900ef42106fa41e2150a66d58",
+        "expired_at_read": false,
+        "expires_at": "2027-01-22T01:27:39Z",
+        "digest_matches_upload_log": true
+      }
+    ],
+    "desktop_ui_credit": 0
+  },
+  "failure_iterations_retained": [
+    {
+      "run_id": 40044740705,
+      "source_sha": "30f9f229e077c99024617d47f3ab8a6fa888da3f",
+      "conclusion": "failure",
+      "reason": "NDK package search restricted to sysroot; fixed cross-installed package lookup",
+      "device_acceptance": false
+    },
+    {
+      "run_id": 40045040497,
+      "source_sha": "748b06acdbf61da8acb591b213a32256c9e53f92",
+      "conclusion": "failure",
+      "reason": "getrandom is not public at Android API26; switched Android-only OS RNG to Bionic",
+      "device_acceptance": false
+    },
+    {
+      "run_id": 40045395821,
+      "source_sha": "2c0ce960a14790626ed137ea0b84bfe9292b6b93",
+      "conclusion": "failure",
+      "owner_cases_passed": 16,
+      "owner_cases_total": 17,
+      "reason": "Legacy fixture omitted former NO_LOCALIZED_COLLATORS flag; migration guard correctly refused android_metadata",
+      "device_acceptance": false
+    },
+    {
+      "run_id": 40047434200,
+      "source_sha": "e036aa78c56cd413a00d20f4e0bc83c53d99463a",
+      "conclusion": "failure",
+      "owner_cases_passed": 17,
+      "owner_cases_total": 17,
+      "typed_kill_raw_checks_passed": 2,
+      "checker_accepted": false,
+      "reason": "Gradle uninstalled target before report collection; preserved device-report contained run-as unknown package; strict checker refused",
+      "device_acceptance": false
+    }
+  ],
+  "diagnostics_only": [
+    {
+      "run_id": 40049314736,
+      "job_id": 120738173873,
+      "conclusion": "success",
+      "scope": "Preserved non-JSON report and exact six process-phase originals"
+    },
+    {
+      "run_id": 40049815950,
+      "job_id": 120739783197,
+      "conclusion": "success",
+      "scope": "Preserved native proof, APK hash and packaged/unstripped build ID"
+    }
+  ],
+  "evidence_read_method": "GitHub connector metadata/decoded logs; artifact content diagnostics executed only on Actions",
+  "mixed_previous_failed_evidence_into_final_acceptance": false,
+  "local_build_test_syntax_fixture_benchmark_or_artifact_parse": false,
+  "sdk_database_writes_by_product_owner": false,
+  "merged": false,
+  "tag_or_release_created": false,
+  "complete_product": false,
+  "problems": []
+}

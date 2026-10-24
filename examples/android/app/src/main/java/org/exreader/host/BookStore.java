@@ -107,6 +107,10 @@ final class BookStore implements AutoCloseable {
         catch (RuntimeException error) { metadataRepairPending = true; throw error; }
     }
 
+    NativeCatalog.Result bootstrapBook(long id,String revision,String[] expected,HostTask task) throws IOException {
+        return catalog.bootstrap(verifySource(id,null,0,task),revision,expected);
+    }
+
     /** SDK is authoritative for bytes; retry only IDs absent from the local mapping. */
     void repairMissingMappings() {
         metadataRepairPending = false;
