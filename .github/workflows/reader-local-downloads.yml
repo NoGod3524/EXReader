@@ -1,0 +1,139 @@
+name: Reader local downloads
+on:
+  push:
+    branches: [codex/reader-local-downloads]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  local-downloads:
+    name: local downloads (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-15]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK and package path ownership
+        run: |
+          FIXED=f43baf9182d75907c0cb5d6f77048f27bca8c950
+          K=9854061be331fe603a1822d9b2b36ee357154927
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$FIXED" HEAD
+          git diff --exit-code "$K" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code "$FIXED" HEAD -- apps/reader/store extras/sideload
+          allowed='^(apps/reader/local-downloads/|tests/reader_local_downloads/|\.github/workflows/reader-local-downloads\.yml$|docs/READER-LOCAL-DOWNLOADS\.md$|docs/validation/reader-local-downloads\.json$)'
+          changed=$(git diff --name-only "$FIXED" HEAD)
+          bad=$(printf '%s\n' "$changed" | sed '/^$/d' | grep -Ev "$allowed" || true)
+          test -z "$bad" || { echo "unowned path: $bad"; exit 1; }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the existing build tool version
+        run: python -m pip install ninja==1.11.1.1
+      - name: Enter the native Windows compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Record source and configure the installed reading library
+        run: |
+          mkdir -p build/ld-logs
+          git rev-parse HEAD > build/ld-logs/source.txt
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "WS=$ws" >> "$GITHUB_ENV"
+          echo "LD_PREFIX=$ws/build/ld-prefix" >> "$GITHUB_ENV"
+          echo "LD_SDK=$ws/build/reading-library/stage" >> "$GITHUB_ENV"
+          cmake --preset reading-library 2>&1 | tee build/ld-logs/sdk-configure.log
+      - name: Build and install the frozen SDK
+        run: |
+          set -o pipefail
+          cmake --build --preset reading-library --parallel 4 2>&1 | tee build/ld-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/ld-logs/sdk-install.log
+      - name: Build and install the unchanged sideload package
+        run: |
+          set -o pipefail
+          cmake -S extras/sideload -B build/ld-sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$LD_SDK" -DCMAKE_INSTALL_PREFIX="$LD_PREFIX" 2>&1 | tee build/ld-logs/sideload-configure.log
+          cmake --build build/ld-sideload --parallel 4 2>&1 | tee build/ld-logs/sideload-build.log
+          cmake --install build/ld-sideload 2>&1 | tee build/ld-logs/sideload-install.log
+      - name: Build and install the unchanged product catalog package
+        run: |
+          set -o pipefail
+          cmake -S apps/reader/store/native -B build/ld-catalog -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$LD_PREFIX" 2>&1 | tee build/ld-logs/catalog-configure.log
+          cmake --build build/ld-catalog --target reader_catalog --parallel 4 2>&1 | tee build/ld-logs/catalog-build.log
+          cmake --install build/ld-catalog 2>&1 | tee build/ld-logs/catalog-install.log
+      - name: Build and install EXReaderLocalDownloads against installed packages only
+        run: |
+          set -o pipefail
+          cmake -S apps/reader/local-downloads -B build/ld-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$LD_SDK" -DCMAKE_PREFIX_PATH="$LD_PREFIX;$LD_SDK" -DCMAKE_INSTALL_PREFIX="$LD_PREFIX" 2>&1 | tee build/ld-logs/module-configure.log
+          cmake --build build/ld-module --parallel 4 2>&1 | tee build/ld-logs/module-build.log
+          cmake --install build/ld-module 2>&1 | tee build/ld-logs/module-install.log
+      - name: Compile the independent C and C++ consumers from installed packages
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_local_downloads/consumer -B build/ld-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$LD_PREFIX;$LD_SDK" 2>&1 | tee build/ld-logs/consumer-configure.log
+          cmake --build build/ld-consumer --parallel 4 2>&1 | tee build/ld-logs/consumer-build.log
+      - name: Judge removal, real process kills, recovery and re-import
+        run: |
+          set -o pipefail
+          exe=""; lib="libreader_local_downloads.a"
+          if [ "$RUNNER_OS" = Windows ]; then exe=".exe"; lib="reader_local_downloads.lib"; fi
+          python3 tests/reader_local_downloads/check_local_downloads.py --probe "build/ld-consumer/ld-probe$exe" --cpp "build/ld-consumer/ld-cpp-consumer$exe" --fixtures tests/fixtures --work build/ld-work --output build/ld-evidence --library "build/ld-prefix/lib/$lib" --path-extra "$LD_SDK/bin" --path-extra "$LD_SDK/lib" 2>&1 | tee build/ld-logs/checks.log
+      - name: Preserve source-bound consumers, databases and every failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-local-downloads-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/ld-logs/
+            build/ld-work/
+            build/ld-evidence/
+            build/ld-prefix/lib/
+            build/ld-prefix/include/
+            build/ld-consumer/ld-probe*
+            build/ld-consumer/ld-cpp-consumer*
+            build/ld-consumer/CMakeCache.txt
+            build/ld-module/CMakeCache.txt
+          if-no-files-found: error
+  evidence:
+    name: same-run artifact evidence
+    needs: local-downloads
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify artifact ids, bytes, digests and reports in the cloud
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p build/ld-artifact-evidence
+          curl -fsS -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs?per_page=100" > build/ld-artifact-evidence/jobs.json || true
+          python3 tests/reader_local_downloads/check_artifacts.py --output build/ld-artifact-evidence
+      - name: Preserve the artifact verification record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-local-downloads-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/ld-artifact-evidence/
+          if-no-files-found: error
