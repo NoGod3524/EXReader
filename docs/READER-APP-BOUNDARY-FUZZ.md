@@ -4,7 +4,7 @@
 源码在 `tests/reader_app_boundary_fuzz/`，工作流为
 `.github/workflows/reader-app-boundary-fuzz.yml`，证据在
 `docs/validation/reader-app-boundary-fuzz.json`。本文件说明契约与出口；
-**验收状态见末节，未通过云端实测前 `accepted=false`。**
+**验收状态见末节：本页记录的唯一授予来自 Linux ASan/UBSan/LeakSanitizer 云端实测。**
 
 固定起点 `f43baf9182d75907c0cb5d6f77048f27bca8c950`；冻结 SDK
 `9854061be331fe603a1822d9b2b36ee357154927`（3.40.0 / ABI 1）；产品
@@ -182,6 +182,22 @@ reading-state）与建议补丁方向。已经发现并保留的失败不会删�
 
 ## 验收状态
 
-**pending**：`accepted=false`。仅当同一 source/run/attempt 的 Linux 作业 48 项具名检查
-（含四个模糊目标与四个确定性回放）全部成功、严格作业重算 ZIP 与内容摘要一致后才更新
-`docs/validation/reader-app-boundary-fuzz.json`；本次记录之前任何生成物都不构成验收。
+**accepted=true（仅限本页所列 Linux 范围）**。受测源码
+`3c1ba88b27f837870fce703a3f475768c3c5425d`，run
+[`40129003487`](https://github.com/NoGod3524/EXReader/actions/runs/40129003487) attempt 1，
+两个作业均成功：`app boundary fuzz (ubuntu-22.04)`（`120976490577`；48 项要求 + 5 项确定性回放，
+共 53 个具名结果全部成功）与 `strict boundary evidence`（`120976999571`；重新下载同一 ZIP、
+重算 9,220,672 字节 / `sha256:5ce0a8d4…542f`，并核对五个 journal 摘要与行数、两个消费者
+二进制、三个安装头、三个安装静态库、种子清单身份与 run/attempt/job 归属）。
+
+| 工件 | ID | 字节 | sha256 | 有效期 |
+| --- | --- | --- | --- | --- |
+| Linux 运行件 | 12573961265 | 9,220,672 | `5ce0a8d4…542f` | 2027-01-22T20:16:00Z |
+| 严格汇总 | 12574706603 | 1,462 | `80574772…19cf` | 2027-01-22T20:16:00Z |
+
+证据提交（本文件与 `docs/validation/reader-app-boundary-fuzz.json`）标 `[skip ci]`；
+`git diff --name-only 3c1ba88b HEAD` 只有这两个文档路径，所以受测源码与最终 HEAD 的差异是
+纯文档差异，不包含源/测试改动。
+
+该授予只覆盖 Linux Clang ASan/UBSan/LeakSanitizer 上的本包接口与夹具；不包含 Windows、
+macOS、iOS、Android、GTK 宿主、宿主 UI、产品接线、同步或发布签名。

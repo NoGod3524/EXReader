@@ -1,20 +1,320 @@
 {
   "package": "J23 reader application boundary fuzz",
-  "accepted": false,
+  "accepted": true,
   "branch": "codex/reader-app-boundary-fuzz",
   "workflow": ".github/workflows/reader-app-boundary-fuzz.yml",
   "start_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "sdk_sha": "9854061be331fe603a1822d9b2b36ee357154927",
-  "source_sha": null,
-  "run_id": null,
-  "attempt": null,
-  "jobs": [],
-  "artifacts": [],
-  "cases": [],
-  "checks": 0,
+  "source_sha": "3c1ba88b27f837870fce703a3f475768c3c5425d",
+  "run_id": 40129003487,
+  "attempt": 1,
+  "jobs": [
+    {
+      "id": 120976490577,
+      "name": "app boundary fuzz (ubuntu-22.04)",
+      "conclusion": "success",
+      "started_at": "2026-10-24T20:16:02Z",
+      "completed_at": "2026-10-24T20:18:16Z"
+    },
+    {
+      "id": 120976999571,
+      "name": "strict boundary evidence",
+      "conclusion": "success",
+      "started_at": "2026-10-24T20:18:18Z",
+      "completed_at": "2026-10-24T20:18:36Z"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12573961265,
+      "name": "reader-app-boundary-fuzz-linux-40129003487-1",
+      "size_in_bytes": 9220672,
+      "digest": "sha256:5ce0a8d4c62e357f7f579c4dc5ca46723d3347747efa5d41be3fecb2b14d542f",
+      "expires_at": "2027-01-22T20:16:00Z"
+    },
+    {
+      "id": 12574706603,
+      "name": "reader-app-boundary-fuzz-summary-40129003487-1",
+      "size_in_bytes": 1462,
+      "digest": "sha256:8057477224323f764257a8a3ae5fe2bf1e599c0e4126b821ae38b861745b19cf",
+      "expires_at": "2027-01-22T20:16:00Z"
+    }
+  ],
+  "cases": [
+    {
+      "name": "preferences.seed_manifest",
+      "ok": true
+    },
+    {
+      "name": "wire.seed_manifest",
+      "ok": true
+    },
+    {
+      "name": "preferences.defaults",
+      "ok": true
+    },
+    {
+      "name": "preferences.roundtrip",
+      "ok": true
+    },
+    {
+      "name": "preferences.unknown_version_keeps_file",
+      "ok": true
+    },
+    {
+      "name": "preferences.limit_ceiling",
+      "ok": true
+    },
+    {
+      "name": "preferences.lower_limit",
+      "ok": true
+    },
+    {
+      "name": "preferences.nan_range",
+      "ok": true
+    },
+    {
+      "name": "preferences.truncated_format",
+      "ok": true
+    },
+    {
+      "name": "preferences.duplicate_key_format",
+      "ok": true
+    },
+    {
+      "name": "preferences.nul_string_format",
+      "ok": true
+    },
+    {
+      "name": "preferences.unknown_enum_format",
+      "ok": true
+    },
+    {
+      "name": "preferences.import_legacy_partial",
+      "ok": true
+    },
+    {
+      "name": "preferences.import_legacy_unknown_bits",
+      "ok": true
+    },
+    {
+      "name": "preferences.import_legacy_invalid_merge",
+      "ok": true
+    },
+    {
+      "name": "preferences.status_names",
+      "ok": true
+    },
+    {
+      "name": "preferences.unicode_path",
+      "ok": true
+    },
+    {
+      "name": "preferences.empty_path",
+      "ok": true
+    },
+    {
+      "name": "preferences.cross_process_reopen",
+      "ok": true
+    },
+    {
+      "name": "wire.seed_v1_progress_valid",
+      "ok": true
+    },
+    {
+      "name": "wire.seed_v2_epub_annotation_valid",
+      "ok": true
+    },
+    {
+      "name": "wire.unknown_field_format",
+      "ok": true
+    },
+    {
+      "name": "wire.duplicate_key_format",
+      "ok": true
+    },
+    {
+      "name": "wire.invalid_utf8_format",
+      "ok": true
+    },
+    {
+      "name": "wire.byte_limit",
+      "ok": true
+    },
+    {
+      "name": "wire.hash_mismatch",
+      "ok": true
+    },
+    {
+      "name": "wire.pending_intent_local_then_ack",
+      "ok": true
+    },
+    {
+      "name": "wire.receive_idempotent_without_queue",
+      "ok": true
+    },
+    {
+      "name": "wire.decode_v1_matches_seed",
+      "ok": true
+    },
+    {
+      "name": "wire.decode_not_reading_refused",
+      "ok": true
+    },
+    {
+      "name": "wire.validation_does_not_write",
+      "ok": true
+    },
+    {
+      "name": "encode.v1_annotation_valid",
+      "ok": true
+    },
+    {
+      "name": "encode.v2_point_valid",
+      "ok": true
+    },
+    {
+      "name": "encode.v1_chapter_scope_refused",
+      "ok": true
+    },
+    {
+      "name": "encode.v2_nul_refused",
+      "ok": true
+    },
+    {
+      "name": "encode.argument_refused",
+      "ok": true
+    },
+    {
+      "name": "cross_process.revisions_reopen",
+      "ok": true
+    },
+    {
+      "name": "c_abi.parity",
+      "ok": true
+    },
+    {
+      "name": "fuzz.preferences.invariants",
+      "ok": true
+    },
+    {
+      "name": "fuzz.wire-validate.invariants",
+      "ok": true
+    },
+    {
+      "name": "fuzz.wire-decode.invariants",
+      "ok": true
+    },
+    {
+      "name": "fuzz.wire-receive.invariants",
+      "ok": true
+    },
+    {
+      "name": "fuzz.wire-local.invariants",
+      "ok": true
+    },
+    {
+      "name": "determinism.preferences",
+      "ok": true
+    },
+    {
+      "name": "determinism.wire-validate",
+      "ok": true
+    },
+    {
+      "name": "determinism.wire-decode",
+      "ok": true
+    },
+    {
+      "name": "determinism.wire-receive",
+      "ok": true
+    },
+    {
+      "name": "determinism.wire-local",
+      "ok": true
+    },
+    {
+      "name": "replay.preferences",
+      "ok": true
+    },
+    {
+      "name": "replay.wire-validate",
+      "ok": true
+    },
+    {
+      "name": "replay.wire-decode",
+      "ok": true
+    },
+    {
+      "name": "replay.wire-receive",
+      "ok": true
+    },
+    {
+      "name": "replay.wire-local",
+      "ok": true
+    }
+  ],
+  "checks": 53,
   "required_checks": 48,
-  "fuzz": [],
-  "replay": [],
+  "fuzz": [
+    {
+      "target": "preferences",
+      "named_check": "fuzz.preferences.invariants",
+      "ok": true,
+      "journal_and_iterations": "re-hashed and line-counted by job 120976999571 from artifact 12573961265 (run/evidence/result.json)"
+    },
+    {
+      "target": "wire-validate",
+      "named_check": "fuzz.wire-validate.invariants",
+      "ok": true,
+      "journal_and_iterations": "re-hashed and line-counted by job 120976999571 from artifact 12573961265 (run/evidence/result.json)"
+    },
+    {
+      "target": "wire-decode",
+      "named_check": "fuzz.wire-decode.invariants",
+      "ok": true,
+      "journal_and_iterations": "re-hashed and line-counted by job 120976999571 from artifact 12573961265 (run/evidence/result.json)"
+    },
+    {
+      "target": "wire-receive",
+      "named_check": "fuzz.wire-receive.invariants",
+      "ok": true,
+      "journal_and_iterations": "re-hashed and line-counted by job 120976999571 from artifact 12573961265 (run/evidence/result.json)"
+    },
+    {
+      "target": "wire-local",
+      "named_check": "fuzz.wire-local.invariants",
+      "ok": true,
+      "journal_and_iterations": "re-hashed and line-counted by job 120976999571 from artifact 12573961265 (run/evidence/result.json)"
+    }
+  ],
+  "replay": [
+    {
+      "name": "replay.preferences",
+      "ok": true,
+      "deterministic": true
+    },
+    {
+      "name": "replay.wire-validate",
+      "ok": true,
+      "deterministic": true
+    },
+    {
+      "name": "replay.wire-decode",
+      "ok": true,
+      "deterministic": true
+    },
+    {
+      "name": "replay.wire-receive",
+      "ok": true,
+      "deterministic": true
+    },
+    {
+      "name": "replay.wire-local",
+      "ok": true,
+      "deterministic": true
+    }
+  ],
   "limits": {
     "iterations": 2500,
     "time_budget_ms": 90000,
@@ -25,7 +325,9 @@
     "undefined",
     "leak"
   ],
-  "granted_platforms": [],
+  "granted_platforms": [
+    "linux"
+  ],
   "windows_accepted": false,
   "macos_accepted": false,
   "android_accepted": false,
@@ -69,13 +371,17 @@
       "action": "align the fixed case list with the target names; all 53 named results were already green"
     }
   ],
-  "problems": [
-    "no cloud run has been granted yet"
-  ],
+  "problems": [],
   "uncovered": [
     "Windows, macOS, iOS, Android and GTK hosts were not built or run",
     "no host UI, theme observer, product wiring or synchronization client was exercised",
     "encode cases use explicit public selector values and do not load a document",
     "no release, tag or signed artifact was produced"
+  ],
+  "run_created_at": "2026-10-24T20:16:00Z",
+  "run_updated_at": "2026-10-24T20:18:36Z",
+  "notes": [
+    "The strict job re-downloaded the exact ZIP, recomputed its length and sha256, and matched five fuzz journals, both consumer binaries, three installed headers, three installed archives, the seed manifest and the run/job identity.",
+    "The tested source is 3c1ba88b; the evidence commit is documentation only and is marked [skip ci]."
   ]
 }
