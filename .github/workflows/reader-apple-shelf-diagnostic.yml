@@ -77,7 +77,7 @@ jobs:
           root = Path('build/apple-shelf-diagnostic')
           root.mkdir(parents=True)
           (root / 'sdk-origin.json').write_text(json.dumps(metadata, indent=2) + '\n')
-          if os.environ['DIAGNOSTIC_MODE'] in ('ui', 'anchor'):
+          if os.environ['DIAGNOSTIC_MODE'] != 'native':
               producer = fetch('actions/jobs/120730473650')
               require(producer['run_id'] == run and producer['conclusion'] == 'success' and
                       producer['name'] == 'native', 'Seed producer did not succeed')
