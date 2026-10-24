@@ -54,7 +54,7 @@ REQUIRED_REGRESS = [
     'regress: a stale temporary of the cache naming is removed by open',
     'regress: an index that cannot be atomically replaced is reported instead of silently accepted',
     'regress: re-entry from a control callback is refused by the cache statistics call',
-    'regress: a directory with many more candidates than the scan budget leaves the uninspected files untouched',
+    'regress: 1200 own candidates are cleaned in one pass and the unrelated files are left untouched',
     'regress: an unrepresentable directory path is refused with a status instead of an escaping exception',
     'regress: a second cache on one directory is refused while another process owns it',
     'regress: a killed owner\'s lock is released by the OS and the directory reopens',
