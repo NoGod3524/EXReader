@@ -805,21 +805,23 @@ bool store(rth_cache* c, const std::string& key, rth_origin origin, const unsign
     ++c->stats.store_failures;
     return false;  // no room could be freed: the caps still hold without this entry
   }
-  const auto inserted = c->entries.emplace(name, rth_cache::Entry{key, width, height, need, 0});
-  c->total += need;
-  // If anything below throws (the publish path allocates), the entry must not stay in
-  // the map: the map would then claim bytes that are not on disk.
+  // Constructed before anything can throw and without allocating (it only holds a
+  // pointer to the name): if the publish path throws, the entry must not stay in the
+  // map, because the map would then claim bytes that are not on disk.
   struct Rollback {
     rth_cache* cache;
-    std::string name;
+    const std::string* name;
     uint64_t bytes;
-    bool armed = true;
+    bool armed;
     ~Rollback() {
       if (!armed) return;
-      cache->entries.erase(name);
+      cache->entries.erase(*name);
       cache->total -= bytes;
     }
-  } rollback{c, name, need};
+  } rollback{c, &name, need, false};
+  const auto inserted = c->entries.emplace(name, rth_cache::Entry{key, width, height, need, 0});
+  c->total += need;
+  rollback.armed = true;
   std::error_code ec;
   if (!publish_file(c, c->dir / name, file.data(), file.size(), ec)) {
     rollback.armed = false;
