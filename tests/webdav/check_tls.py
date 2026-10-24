@@ -16,6 +16,7 @@ import threading
 import time
 from urllib.parse import urlsplit
 import zipfile
+from cloud_native import trust_fixture_certificates
 
 AUTH = 'Basic ' + base64.b64encode(b'fixture-user:fixture-password').decode()
 OK, ARG, MEMORY, IO, TLS, HTTP, AUTH_REQUIRED, CANCELLED, LIMIT, FORMAT, REDIRECT, EXISTS = range(12)
@@ -37,7 +38,8 @@ def main():
     installed = {str(path.relative_to(module_prefix)): {'bytes': path.stat().st_size,
                  'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
                  for path in sorted(module_prefix.rglob('*')) if path.is_file()}
-    dependencies = subprocess.check_output(['dumpbin', '/DEPENDENTS', str(consumer)] if os.name == 'nt' else ['ldd', str(consumer)], text=True)
+    dependencies = subprocess.check_output(['dumpbin', '/DEPENDENTS', str(consumer)] if os.name == 'nt' else
+                                           ['otool', '-L', str(consumer)] if sys.platform == 'darwin' else ['ldd', str(consumer)], text=True)
     assert not any(name in dependencies.lower() for name in ('webview', 'chromium', 'webkit', 'electron'))
     (folder / 'consumer-dependencies.txt').write_text(dependencies, encoding='utf-8')
     certificates = folder / 'certificates'
@@ -54,13 +56,7 @@ def main():
     key, trusted = certificate('trusted', 'localhost')
     bad_key, untrusted = certificate('untrusted', 'localhost')
     wrong_key, wrong_host = certificate('wrong-host', 'wrong.example')
-    if os.name == 'nt':
-        for cert in (trusted, wrong_host):
-            subprocess.run(['certutil', '-addstore', '-f', 'Root', str(cert)], check=True, capture_output=True)
-    else:
-        for cert in (trusted, wrong_host):
-            subprocess.run(['sudo', 'cp', str(cert), '/usr/local/share/ca-certificates/exr-dav-' + cert.name], check=True)
-        subprocess.run(['sudo', 'update-ca-certificates'], check=True, capture_output=True)
+    trust_fixture_certificates((trusted, wrong_host), 'exr-dav-')
 
     fixture = io.BytesIO()
     with zipfile.ZipFile(fixture, 'w') as book:

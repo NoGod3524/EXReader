@@ -18,6 +18,7 @@ import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'reader_sync'))
 from check_sync import raw, revision
+from cloud_native import trust_fixture_certificates
 
 
 def main():
@@ -34,10 +35,7 @@ def main():
     subprocess.run(['openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '1',
                     '-keyout', str(key), '-out', str(cert), '-subj', '/CN=localhost',
                     '-addext', 'subjectAltName=DNS:localhost,IP:127.0.0.1'], check=True, capture_output=True)
-    subprocess.run(['certutil', '-addstore', '-f', 'Root', str(cert)] if os.name == 'nt' else
-                   ['sudo', 'cp', str(cert), '/usr/local/share/ca-certificates/reader-session.crt'], check=True, capture_output=True)
-    if os.name != 'nt':
-        subprocess.run(['sudo', 'update-ca-certificates'], check=True, capture_output=True)
+    trust_fixture_certificates((cert,), 'reader-session-')
     secret = uuid.uuid4().hex
     auth = 'Basic ' + base64.b64encode(('session:' + secret).encode()).decode()
     entries, dirs, requests, checks = {}, {'/dav/', '/dav/exreader-sync-v1/',

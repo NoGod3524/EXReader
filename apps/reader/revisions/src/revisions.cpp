@@ -18,7 +18,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <bcrypt.h>
-#else
+#elif !defined(__APPLE__) && !defined(__ANDROID__)
 #include <sys/random.h>
 #endif
 
@@ -395,8 +395,8 @@ extern "C" reader_revision_status reader_revision_new_id(char out[33],reader_rev
   out[0]=0;unsigned char bytes[16];
 #ifdef _WIN32
   if(BCryptGenRandom(nullptr,bytes,sizeof(bytes),BCRYPT_USE_SYSTEM_PREFERRED_RNG)<0)reject(READER_REV_DATABASE,"System random ID generation failed");
-#elif defined(__ANDROID__)
-  /* Bionic's OS CSPRNG exists at minSdk 26; getrandom's public wrapper is API28. */
+#elif defined(__ANDROID__) || defined(__APPLE__)
+  /* Public OS CSPRNG on Apple and Bionic (Android minSdk 26). */
   arc4random_buf(bytes,sizeof(bytes));
 #else
   size_t used=0;while(used<sizeof(bytes)){ssize_t got=getrandom(bytes+used,sizeof(bytes)-used,0);if(got<0&&errno==EINTR)continue;if(got<=0)reject(READER_REV_DATABASE,"System random ID generation failed");used+=(size_t)got;}

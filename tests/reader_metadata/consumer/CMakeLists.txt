@@ -13,6 +13,8 @@ target_link_libraries(metadata-consumer PRIVATE EXReaderDesktopMetadata::reader_
 if(MSVC)
   target_link_options(metadata-consumer PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/metadata-link.map")
   target_link_libraries(metadata-consumer PRIVATE shell32)
+elseif(APPLE)
+  target_link_options(metadata-consumer PRIVATE "-Wl,-map,${CMAKE_CURRENT_BINARY_DIR}/metadata-link.map")
 else()
   target_link_options(metadata-consumer PRIVATE "-Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/metadata-link.map" "-Wl,--trace-symbol=sqlite3_open_v2")
 endif()
