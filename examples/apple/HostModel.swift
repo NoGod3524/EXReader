@@ -983,6 +983,10 @@ final class HostReaderModel: ObservableObject {
     @Published var showLibrary = true
     @Published var frameCount = 0
     @Published private(set) var uiTestTrace = ""
+#if EXR_APPLE_HOST_REVIEW
+    @Published private var uiTestCancellationReadyToken: Int?
+    var uiTestCancellationReady: Bool { busy && uiTestCancellationReadyToken == token }
+#endif
 #if EXR_APPLE_IMPORT_REVIEW
     @Published private(set) var importMappingProbe = ""
 #endif
@@ -1460,6 +1464,35 @@ final class HostReaderModel: ObservableObject {
             DispatchQueue.main.async { self.traceUITest("import-worker-begin source-token=\(myToken)") }
             let scoped = url.startAccessingSecurityScopedResource()
             defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+#if EXR_APPLE_HOST_REVIEW
+            let priorPoll = HostSDKReview.poll
+            let latch = CommandLine.arguments.contains("-EXRHoldSDKImportCancellation") && url.lastPathComponent == "Large.epub"
+            if latch {
+                var announced = false
+                HostSDKReview.poll = { [weak self] polled in
+                    guard polled === box else { priorPoll?(polled); return }
+                    if !announced {
+                        announced = true
+                        DispatchQueue.main.async { [weak self] in
+                            guard let self, self.token == myToken else { return }
+                            self.uiTestCancellationReadyToken = myToken
+                        }
+                    }
+                    // Hold at the real SDK cancellation callback, not a timed
+                    // guess about how quickly the remote UI driver can tap.
+                    while !polled.isCancelled { Thread.sleep(forTimeInterval: 0.05) }
+                }
+            }
+            defer {
+                if latch {
+                    HostSDKReview.poll = priorPoll
+                    DispatchQueue.main.async { [weak self] in
+                        guard let self, self.uiTestCancellationReadyToken == myToken else { return }
+                        self.uiTestCancellationReadyToken = nil
+                    }
+                }
+            }
+#endif
             do {
                 guard let session = self.session, let catalog = self.catalog else { throw HostError.invalidInput("书库未就绪") }
                 let (bookID, created) = try session.importBook(url: url, cancel: box, catalog: catalog)

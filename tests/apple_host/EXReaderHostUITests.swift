@@ -614,13 +614,14 @@ final class EXReaderHostUITests: XCTestCase {
 
     func test05CancellationAndRecovery() throws {
         try step("step33_launch_with_deterministic_slow_import") {
-            launch(extra: ["-EXRHostDelayMs", "2500"])
+            launch(extra: ["-EXRHostDelayMs", "2500", "-EXRHoldSDKImportCancellation", "1"])
             openLibrary()
             attach("18-library-slow-mode")
         }
         try step("step34_cancel_in_flight_import") {
             tapLibraryImport("library.import.large", timeout: 30)
             XCTAssertTrue(waitElement("library.cancel", 4).exists)
+            XCTAssertTrue(waitElement("library.cancel.ready", 4).exists, "the real SDK cancellation callback must be held")
             element("library.cancel").tap()
             XCTAssertTrue(waitLabel("library.status", contains: "已取消", 40))
             attach("19-import-cancelled")

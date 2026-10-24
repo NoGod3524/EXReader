@@ -213,6 +213,11 @@ struct LibraryScreen: View {
                 if model.busy {
                     Text("处理中…").font(.caption)
                         .accessibilityIdentifier("library.busy")
+#if EXR_APPLE_HOST_REVIEW
+                    if model.uiTestCancellationReady {
+                        Text("等待取消").font(.caption2).lineLimit(1).accessibilityIdentifier("library.cancel.ready")
+                    }
+#endif
                     Button { model.cancelWork() } label: { hostHeaderActionLabel("取消", symbol: "xmark", compact: compactLibrary) }
                         .accessibilityLabel(Text("取消"))
                         .accessibilityIdentifier("library.cancel")
