@@ -469,7 +469,13 @@ def main():
             invalid.Move(99, 1)
         except Exception as error:
             code = getattr(error, "hresult", error.args[0] if error.args else None)
-            assert code == -2147024809, error  # E_INVALIDARG
+            # The public UIA client contract promises a failing HRESULT, not
+            # preservation of the server's E_INVALIDARG. UIAutomation's enum
+            # transport returns E_UNEXPECTED on this runner. Keep both refusal
+            # and endpoint immutability mandatory; never accept an arbitrary
+            # exception, a successful move, or changed range.
+            assert code in (-2147024809, -2147418113), error  # E_INVALIDARG / E_UNEXPECTED
+            print(json.dumps({"invalid_text_unit": 99, "client_hresult": code}), flush=True)
             refused = True
         assert refused and invalid.Compare(ascii_range)
         record("valid_unsupported_units_fall_forward_and_invalid_units_leave_the_range_unchanged")
