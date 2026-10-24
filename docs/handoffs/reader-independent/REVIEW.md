@@ -135,6 +135,8 @@ root读到`check_account_ui.py`的`capture()`只把Python手写v1 wire交给`rev
 
 ## 后续审查队列
 
+root以干净`211a3bf320717c78f6b1565399212031d663db01`接管G01未验收的Windows provider收口：外部模型已在UI确认停止，两条后台仅为只读`gh run view`，无源文件writer。保留账户/capture已验收`dde92e89`、原失败`40094080436`和全部现有提交；root不将已知错误TextUnit/几何响应授予，也不让排队旧复审再次启动生产写入。原新UI回归的首次失败发生于Shift+Tab回到原note编辑器后，需按正确正反焦点路径核实其预期，而非避开该控件。
+
 G07根目录干净交付`e54c3ea9`由root追加纯文档修正`50f158d2`：传输设置1200/1500 ms与Windows端到端4.02 s分别陈述，既有下载<45 s、发布<30 s防挂起断言不变；不再宣称设置值为整个操作的严格上界。验证JSON保留原producer的预期字符串、原始结果及身份，另加解释字段，未运行新测试或改变受测源码。
 
 G01固定`40112f49`已补真实range refs与页面快照。root对照微软官方Move/MoveEndpointByUnit/ExpandToEnclosingUnit文档发现第二层缺口：非空Move无条件折叠、cross endpoint夹回旧端点、不支持合法unit未向更大unit回退、Expand(Character)不展开空范围，且新probe断言复制了错误语义。跨行选择还只返回一个union矩形。已整理具体ASCII位置和跨行/Unicode反例交原owner；不能只以本轮新增测试通过授予。
