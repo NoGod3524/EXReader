@@ -74,11 +74,11 @@ def main(output):
             problems.append(f'{name}: artifact head SHA differs from this source')
         archive = zipfile.ZipFile(io.BytesIO(data))
         names = archive.namelist()
-        summary_name = member(names, 'j15/evidence/summary.json')
-        report_name = member(names, 'j15/evidence/report.json')
-        results_name = member(names, 'j15/evidence/results.tsv')
-        manifest_name = member(names, 'j15/fixtures/manifest.json')
-        identity_name = member(names, 'j15/models/identity.json')
+        summary_name = member(names, 'evidence/summary.json')
+        report_name = member(names, 'evidence/report.json')
+        results_name = member(names, 'evidence/results.tsv')
+        manifest_name = member(names, 'fixtures/manifest.json')
+        identity_name = member(names, 'models/identity.json')
         missing = [label for label, value in (('summary', summary_name), ('report', report_name),
                                               ('results', results_name), ('manifest', manifest_name),
                                               ('model identity', identity_name)) if value is None]
@@ -135,7 +135,7 @@ def main(output):
         if (summary.get('checks_failed'), summary.get('checks_pending')) != (0, 0):
             problems.append(f'{name}: counts report failures or pending cases')
         for filename, claim in (summary.get('fixtures') or {}).items():
-            location = member(names, 'j15/fixtures/' + filename)
+            location = member(names, 'fixtures/' + filename)
             if not location:
                 problems.append(f'{name}: fixture {filename} was not uploaded')
             elif sha256(archive.read(location)) != claim['sha256']:
@@ -145,17 +145,17 @@ def main(output):
             if not claim or claim['sha256'] != image.get('sha256'):
                 problems.append(f'{name}: manifest image {key} is not bound to the uploaded fixture')
         for filename, claim in (summary.get('models') or {}).items():
-            location = member(names, 'j15/models/' + filename)
+            location = member(names, 'models/' + filename)
             if not location:
                 problems.append(f'{name}: model file {filename} was not uploaded')
             elif sha256(archive.read(location)) != claim['sha256']:
                 problems.append(f'{name}: model file {filename} digest differs from the summary')
         for filename, claim in (model_identity.get('files') or {}).items():
-            location = member(names, 'j15/models/' + filename)
+            location = member(names, 'models/' + filename)
             if not location or sha256(archive.read(location)) != claim:
                 problems.append(f'{name}: model identity for {filename} does not match the uploaded bytes')
         for key, claim in (summary.get('binaries') or {}).items():
-            location = member(names, 'j15/binaries/' + pathlib.Path(claim['path']).name)
+            location = member(names, 'binaries/' + pathlib.Path(claim['path']).name)
             if not location:
                 problems.append(f'{name}: consumer binary {key} was not uploaded')
             elif sha256(archive.read(location)) != claim['sha256']:
