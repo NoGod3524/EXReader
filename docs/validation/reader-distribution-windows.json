@@ -1,7 +1,7 @@
 {
-  "schema": "reader-distribution-windows-acceptance-v1",
+  "schema": "reader-distribution-windows-acceptance-v2",
   "accepted": true,
-  "scope": "Windows reading-core distribution: build-machine path removal, structural resource-object reduction, audited text rewrite, deterministic seal, relocated installed C/C++/native consumption, nine-format smoke, import and vendor closure",
+  "scope": "Windows reading-core distribution: build-machine path removal, structural resource-object reduction, relocatable pkg-config metadata proven by a real pkg-config and a real component link, bounded archive reading, deterministic seal, relocated installed C/C++/native consumption, nine-format smoke, import and vendor closure",
   "branch": "codex/reader-distribution-windows",
   "workflow": ".github/workflows/reader-distribution-windows.yml",
   "fixed_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
@@ -9,27 +9,57 @@
   "sdk_version": "3.40.0",
   "abi": 1,
   "original_product_schema1": "f32bb8aa18ed3de286900f19ce4230fd93435dd0",
-  "tested_source": "db7f13a323db4ea633db7660e20c92098e9c1bb4",
-  "run_id": 40135232301,
+  "tested_source": "e41c29ab0e33db0a61bc82560db7d0a08c7fee3f",
+  "run_id": 40140884244,
   "attempt": 1,
   "workflow_conclusion": "success",
+  "superseded_acceptance": {
+    "tested_source": "db7f13a323db4ea633db7660e20c92098e9c1bb4",
+    "run_id": 40135232301,
+    "kept_as_history": true,
+    "retired_because": "root review found placeholder pkg-config prefixes, a post-allocation unzip limit and a non-exhaustive aggregation contract"
+  },
   "jobs": {
-    "distribution_protocol": {"id": 120995245565, "conclusion": "success", "checks": "synthetic positive and refusal fixtures"},
-    "installed_relocation": {"id": 120995245773, "conclusion": "success", "runner": "windows-2022"},
-    "aggregate": {"id": 120995871137, "conclusion": "success"}
+    "distribution_protocol": {"id": 121012210618, "conclusion": "success", "checks": "synthetic positive and refusal fixtures, bounded archive reads, aggregation contract"},
+    "installed_relocation": {"id": 121012210738, "conclusion": "success", "runner": "windows-2022"},
+    "aggregate": {"id": 121013015407, "conclusion": "success"}
+  },
+  "review_fixes": {
+    "pkgconfig_relocation": {
+      "mode": "pcfiledir",
+      "files": 6,
+      "expression": "${pcfiledir}/../..",
+      "replacements": 6,
+      "residual_hits": 0,
+      "outside_paths": [],
+      "failed": [],
+      "tool": "C:\\ProgramData\\Chocolatey\\bin\\pkg-config.EXE",
+      "tool_version": "0.28",
+      "packages_queried": 6,
+      "validated": 6,
+      "prefix_inside_relocated_tree": true,
+      "consumer": {"package": "libwebp", "tag": "libwebp:webp-api", "library": "lib\\libwebp.lib", "libs": "-LD:/relocated/exreader-40140884244-1/prefix/lib -llibwebp", "api": "WebPGetDecoderVersion", "linked": true, "ran": true}
+    },
+    "bounded_archive_read": {
+      "declared_checks_before_read": ["entries<=20000", "entry<=min(limit,max_entry)", "total<=limit", "container<=2*limit", "names safe", "no duplicate or case alias", "no encryption"],
+      "streaming": "1 MiB blocks, sha256 and CRC32 verified, actual size must equal declared size",
+      "limit_bytes": 1073741824,
+      "negative_cases": ["zip-refuses-declared-oversize-before-reading", "zip-refuses-declared-per-entry-oversize", "zip-refuses-truncated-container", "zip-refuses-tampered-content", "zip-refuses-duplicate-members", "zip-refuses-case-aliased-members", "zip-accepts-honest-archive"],
+      "oversize_fixture_bytes": "under 4096 (declared size patched in the central directory only)"
+    },
+    "aggregation_contract": {
+      "required_results": 20,
+      "required_negatives": 4,
+      "shared_source": "verify_distribution.REQUIRED_RESULTS and verify_distribution.REQUIRED_NEGATIVES",
+      "rejections": ["missing", "duplicate", "substituted or unknown name", "failing status", "shortened negative list", "extra negative", "empty results", "cross-source", "cross-attempt"],
+      "protocol_cases": 12
+    }
   },
   "adopted_compile_parameters": [
     "/utf-8",
     "/experimental:deterministic",
     "/pathmap:D:\\a\\EXReader\\EXReader=exreader-src"
   ],
-  "path_mapping_probe": {
-    "candidates": 4,
-    "chosen_hits": 0,
-    "forward_slash_spelling_hits": 2,
-    "no_mapping_hits": 8,
-    "compiler_requirement": "cl D9007: /pathmap: requires /experimental:deterministic"
-  },
   "installed_stage_before": {
     "files": 262,
     "hits": 20,
@@ -37,12 +67,11 @@
     "binary_hits": 8,
     "archives": 27,
     "debug_sections": 919,
-    "leaking_files": 8,
-    "evidence": "run 40135232301 scan-stage.json plus the blocked runs 40127650342..40129913728"
+    "leaking_files": 8
   },
   "preparation": {
     "text_rewritten_files": 6,
-    "text_occurrences": 6,
+    "text_mode": "pcfiledir",
     "libraries_rebuilt": 2,
     "removed_members": 2,
     "residual_hits": 0,
@@ -50,10 +79,10 @@
   },
   "distribution": {
     "archive": "EXReader-reading-core-3.40.0-Windows-X64.zip",
-    "bytes": 8766490,
-    "sha256": "e2a17ce585b5e6a7b906441df1a53d1ea3c6d7e887f5feb03c07f66bfae5e67e",
+    "bytes": 8766461,
+    "sha256": "7ffe053de224b8ec2ceebf5825cc559b0b0974e5ad037493266fb27e9ce1be05",
     "entries": 262,
-    "stage_digest": "966c0d1aac93df5f4e2c059be181bb8b3fcba605376bffb539617ddab7cb0c9a",
+    "stage_digest": "38ecb5c8c73d8ab6cefb38853f884efb42b06c2e2360ba4fb2e749862c7b3852",
     "seal_reproducible": true,
     "published": false,
     "categories": {
@@ -67,10 +96,11 @@
     }
   },
   "relocation": {
-    "prefix": "d:/relocated/exreader-40135232301-1/prefix",
+    "prefix": "d:/relocated/exreader-40140884244-1/prefix",
     "outside_workspace": true,
     "consumers": {"c11": "pass", "cpp17": "pass", "document": "pass", "identity": "pass"},
-    "native_probe": "runs from <prefix>/bin and classifies every loaded module"
+    "native_probe": "runs from <prefix>/bin and classifies every loaded module",
+    "pkgconfig_component": "libwebp webp-api compiled, linked and executed through pkg-config output"
   },
   "nine_format_smoke": {"entries": 9, "passed": 9, "accepted": true},
   "dependencies": {
@@ -87,6 +117,7 @@
     "sanitization-audited", "resource-objects-removed", "relocation-prefix-distinct",
     "relocated-consumers-pass", "nine-format-smoke-complete",
     "installed-identity-matches-headers", "dependency-closure-system-only", "probe-prefix-bound",
+    "pkgconfig-metadata-relocatable", "pkgconfig-consumer-links-installed-library",
     "debug-sections-carry-no-build-root", "no-absolute-drective", "archive-member-names-relative",
     "deterministic-seal"
   ],
@@ -94,6 +125,11 @@
     "negative-probe-rejects-foreign-prefix", "negative-consumer-rejects-missing-book",
     "negative-scan-blocks-leaking-control", "negative-scan-blocks-absolute-drective"
   ],
+  "protocol_cases": {
+    "distribution_fixtures": "stage, seal, bounded archive and pkg-config relocation fixtures (all pass)",
+    "aggregation_fixtures": 12,
+    "note": "each fixture prints its case name in the protocol job log; the aggregation cases are enumerated in review_fixes.aggregation_contract.rejections"
+  },
   "surfaces": {
     "coff_debug_control_leaks": true,
     "pathmap_clears_coff_surface": true,
@@ -104,44 +140,49 @@
   },
   "artifacts": [
     {
-      "id": 12576243461,
-      "name": "reader-distribution-windows-40135232301-1",
-      "size_in_bytes": 15278092,
-      "digest": "sha256:3c1eaa9355ad20932dace24430476a6f13f44debb50fee003f8cd55f658b04a7",
-      "expires_at": "2027-01-22T21:40:09Z",
-      "head_sha": "db7f13a323db4ea633db7660e20c92098e9c1bb4"
+      "id": 12579131103,
+      "name": "reader-distribution-windows-40140884244-1",
+      "size_in_bytes": 15279596,
+      "digest": "sha256:53d3eb8516afd5b42eba44c2cc3e8351a35971c4caa59f086f0ffdf621b0569b",
+      "expires_at": "2027-01-22T22:59:59Z",
+      "head_sha": "e41c29ab0e33db0a61bc82560db7d0a08c7fee3f"
     },
     {
-      "id": 12575809265,
-      "name": "reader-distribution-windows-aggregate-40135232301-1",
-      "size_in_bytes": 1376,
-      "digest": "sha256:c87367ccc352fb287c4104c18ddcdc79f7e13fb5a3929332e4e437741756aef1",
-      "expires_at": "2027-01-22T21:40:09Z",
-      "head_sha": "db7f13a323db4ea633db7660e20c92098e9c1bb4"
+      "id": 12578238426,
+      "name": "reader-distribution-windows-aggregate-40140884244-1",
+      "size_in_bytes": 1411,
+      "digest": "sha256:3a2f215d0e702c3f4ab84efc6f8490251c660bd13bde9e5ce150292b225c40e6",
+      "expires_at": "2027-01-22T22:59:59Z",
+      "head_sha": "e41c29ab0e33db0a61bc82560db7d0a08c7fee3f"
     }
   ],
   "original_failures_retained": [
     "run 40127188138: workflow file rejected (plain scalar with ': ')",
     "run 40127479929: compiler probe exit code and missing-stage OSError",
-    "run 40129070364: 20 build-machine path hits in the installed stage (8 files: freetype/tiff resource objects and pkgconfig metadata)",
+    "run 40129070364: 20 build-machine path hits in the installed stage",
     "run 40129477513..40129913728: binary hits blocked the seal and the post-sanitize scan",
     "run 40130413261: sanitizer refused plain-text .pc surfaces it could not classify",
     "run 40131492186: git-bash rewrote /Fo,/utf-8 and resolved link to coreutils",
-    "run 40133405935: negative case still pointed at the workspace copy of the probe"
+    "run 40133405935: negative case still pointed at the workspace copy of the probe",
+    "run 40138632294: relocation triple unpacked as a pair",
+    "run 40138962274 / 40139995562 / 40140420208: pkg-config consumer link failed on an implicit object path and an escaped printf literal"
   ],
   "uncovered": [
     "Windows production host wiring (root owns it)",
     "reading-library profile, shared compatibility DLL, audio and text index components",
     "signing, tag, release and pull request merge",
-    "TIFF-specific smoke fixture (TIFF path covered by rebuild audit, link and closure only)",
+    "TIFF-specific smoke fixture (covered indirectly by rebuild audit, link and closure)",
+    "per-package compilation for the five .pc files other than libwebp",
     "cross-source or cross-attempt artifact reuse"
   ],
   "accepted_scope": [
     "build-machine path removal from the reading-core Windows distribution",
+    "relocatable pkg-config metadata proven by a real pkg-config and a real component link",
     "structural removal of vendor Windows resource objects with per-member and per-symbol audit",
+    "bounded archive reads with declared-size pre-checks and streamed CRC verification",
     "relocated installed C, C++ and native probe consumption",
     "nine-format installed smoke, import closure and vendor closure",
-    "same-run artifact re-aggregation with recomputed digests"
+    "same-run artifact re-aggregation against the fixed named-result contract"
   ],
   "problems": [],
   "merged": false,
