@@ -19,3 +19,20 @@ Apple 构建只显式链接安装后的 `libreader_navigation.a` 与既有动态
 源码、12 项 native 适配检查、6 个真实 UI 用例（macOS / iPhone / iPad）及同源工件汇总由 `reader-apple-navigation.yml` 执行。CFI 夹具先由安装 SDK 的公开创建接口生成合法目标，再写入真实 EPUB 作者目录；不猜测内部路径。原有完整回归只在最终稳定源码上执行，旧源码通过记录保持原归属。
 
 保留的早期运行：`eb123aa8` / `40130739432` 的 native 11/12，探针在独立连接提交后重用了已失效的原件 lease；`abdc772b` / `40131358600` 的 native 12/12、macOS UI 5/5、iPhone 与 iPad 各 4/5，失败集中于 iOS 列表行默认按钮样式把“子目录”点击同时作为父行跳转。断言与期限均保留。该源的原始 ZIP 与失败日志继续保留，更新源重新执行完整专项。
+
+## 同源云端验收
+
+受测源码 `1e86ddac59a415d18370ce40bdd0489622e9a896`，专项 [run 40132480954](https://github.com/NoGod3524/EXReader/actions/runs/40132480954) / attempt 1，7/7 作业成功。严格汇总 `120989689758` 实算六份生产者 ZIP 的大小与 SHA-256，核对每份实际程序及报告身份，`accepted=true`。原 SDK 八树与 schema1、F1/F2 树身份逐字门禁通过。
+
+| 范围 | 实际结果 |
+| --- | --- |
+| Swift owner 适配与独立 SDK 定位 | 12/12，含 32/32/6 分页、层级、重复 spine、明确章首确认、原件/产品只读、实际取消及重试、篡改节点拒绝、旧书拒绝、真实作者 CFI 与 surrogate/折叠拒绝、PDF/CBZ 页面身份 |
+| 容器原始报告 | 5/5，首个失败 stdout/stderr/退出码保留、重复路径拒绝、独立 always-trace、原超时与部分输出保留；无重试 |
+| macOS、iPhone、iPad 实际 UI | 各 6/6、23 个具名步骤、29 份原始附件；普通标题作者 CFI、层级与重开、32 项分页、明确重复章节选择、取消、PDF 页面入口均逐目标通过 |
+| 实际程序提供者 | 唯一安装后产品 SQLite、安装后 F1/F2、单一动态 SDK；原 7 个提供者反例保持 |
+
+同一源码随后只发起一次四套原回归：Search [40133477416](https://github.com/NoGod3524/EXReader/actions/runs/40133477416) 已 7/7，三目标各原 4 例 / 14 步骤 / 18 附件，native Search 11、catalog 8、mapping 16 全保留；WP13 [40133494188](https://github.com/NoGod3524/EXReader/actions/runs/40133494188) 已 8/8，三目标各原 13 例 / 67 步骤 / 50 附件，package 与原 97 个门禁反例完整通过，`problems=[]`。Mapping [40133512224](https://github.com/NoGod3524/EXReader/actions/runs/40133512224) 已 6/6，三目标各原 5 例 / 22 步骤 / 14 附件与原 native 全保留。
+
+Shelf [40133527618](https://github.com/NoGod3524/EXReader/actions/runs/40133527618)（`scope=full`）已结束：native 原 catalog8 / shelf16 / account22 与 2202 原件通过，macOS 和 iPhone 的书架7、账号3、生产语义2全部通过；iPad 书架6/7，`test07StoredOriginalReadingAndFilteredReturn` 失败，后续账号与生产语义跳过，汇总未授予。失败时当前 epoch 的真实单行 frame 已对齐 `min_y=0`，但原模型仍等待尚未发出的滚动命令，筛选原书返回一直处于恢复布局。容器定位成功，collector 与 always-trace 原件独立保留。该失败及 iPad 工件 `12577227656`（226856392 字节、`sha256:56181a157e13eefad8ce4c3d1d5427f31cae490dff1e5f9df6ad58bedaa7cc74`）不删改；修复后按新源码复验。
+
+完整作业、生产与失败工件 ID / 字节 / digest / 有效期见 [reader-apple-navigation.json](validation/reader-apple-navigation.json)。所有运行均在 Actions；本地仅源码与 Git 操作。授予范围是本包声明的原生 Apple 导航接口，性能、真机与完整产品均未授予。
