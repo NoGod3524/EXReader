@@ -1,7 +1,7 @@
 name: Desktop product public SDK bridge
 on:
   push:
-    branches: [codex/reader-desktop-catalog, codex/reader-gtk-fixed-pages, codex/reader-desktop-shelf, codex/reader-windows-shelf]
+    branches: [codex/reader-desktop-catalog, codex/reader-gtk-fixed-pages, codex/reader-desktop-shelf, codex/reader-windows-shelf, codex/reader-windows-metadata]
   workflow_dispatch:
   workflow_call:
 permissions:
@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ github.ref_name == 'codex/reader-windows-shelf' && fromJSON('["windows-2022"]') || fromJSON('["ubuntu-22.04","windows-2022"]') }}
+        os: ${{ (github.ref_name == 'codex/reader-windows-shelf' || github.ref_name == 'codex/reader-windows-metadata') && fromJSON('["windows-2022"]') || fromJSON('["ubuntu-22.04","windows-2022"]') }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -43,6 +43,7 @@ jobs:
             if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
           }
           'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
       - name: Install one product provider and native metadata command stack
         run: |
           if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
@@ -62,10 +63,8 @@ jobs:
           cmake -S apps/reader/desktop-metadata -B build/desktop-metadata -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
           cmake --build build/desktop-metadata --parallel 4
           cmake --install build/desktop-metadata
-          if [ "$RUNNER_OS" = Linux ]; then
-            cmake -S tests/reader_commands/consumer -B build/desktop-command-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
-            cmake --build build/desktop-command-consumer --parallel 4
-          fi
+          cmake -S tests/reader_commands/consumer -B build/desktop-command-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/desktop-command-consumer --parallel 4
       - name: Build and install unmodified reading-library SDK
         run: |
           mkdir -p build/desktop-evidence
@@ -106,6 +105,9 @@ jobs:
       - name: Actual product 2202-book native scrolling search recovery and import
         if: runner.os == 'Windows'
         run: python3 tests/windows_host/check_shelf_ui.py --candidate build/desktop-windows-package/EXReader/EXReader.exe --seed build/desktop-sdk/reader-windows-shelf-seed.exe --package build/desktop-windows-package/EXReader --output build/desktop-windows-shelf-ui
+      - name: Actual Windows typed book edits exact pending recovery and close barriers
+        if: runner.os == 'Windows'
+        run: python3 tests/windows_host/check_metadata_ui.py --candidate build/desktop-windows-package/EXReader/EXReader.exe --package build/desktop-windows-package/EXReader --command-consumer build/desktop-command-consumer/command-consumer.exe --output build/desktop-windows-metadata
       - name: Assemble the actual GTK host with the original pinned font
         if: runner.os == 'Linux'
         run: python3 tools/build_linux_host.py --sdk build/reading-library/stage --binary build/desktop-sdk/gtk-host/exreader-linux --output build/desktop-linux-package
@@ -170,5 +172,6 @@ jobs:
             build/desktop-windows-product/
             build/desktop-windows-shelf-worker/
             build/desktop-windows-shelf-ui/
+            build/desktop-windows-metadata/
             build/desktop-sdk/windows-host.map
           if-no-files-found: error

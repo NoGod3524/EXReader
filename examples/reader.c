@@ -30,6 +30,9 @@
 #ifdef EXR_READER_PRODUCT_CATALOG
 #include "catalog_sdk.h"
 #endif
+#ifdef EXR_READER_DESKTOP_METADATA
+#include <reader_metadata.h>
+#endif
 
 #define HOST_PATH 4096
 #define HOST_IMPORT_LIMIT ((size_t)96 * 1024 * 1024)
@@ -50,7 +53,10 @@ enum {
   IDC_ADD_NOTE, IDC_UPDATE_NOTE, IDC_DELETE_NOTE, IDC_JUMP_NOTE,
   IDC_FONT_DEC, IDC_FONT_INC, IDC_ZOOM_DEC, IDC_ZOOM_INC, IDC_CANCEL,
   IDC_SHELF_LABEL, IDC_BOOKS, IDC_NOTES_LABEL, IDC_NOTES, IDC_NOTE_EDIT,
-  IDC_PAGE, IDC_PAGE_LABEL, IDC_STATUS, IDC_SHELF_SEARCH, IDC_SHELF_REFRESH
+  IDC_PAGE, IDC_PAGE_LABEL, IDC_STATUS, IDC_SHELF_SEARCH, IDC_SHELF_REFRESH,
+  IDC_METADATA_BUTTON, IDC_METADATA_TITLE, IDC_METADATA_AUTHOR, IDC_METADATA_FAVORITE,
+  IDC_METADATA_SAVE, IDC_METADATA_CANCEL, IDC_METADATA_RETRY, IDC_METADATA_DISCARD,
+  IDC_METADATA_MESSAGE
 };
 
 #define WM_HOST_COMPLETE (WM_APP + 1)
@@ -136,6 +142,15 @@ typedef struct {
   int shelf_before,shelf_after,shelf_filter_pending,shelf_applying;
   int shelf_need_refresh,shelf_requested_direction,product_ready;
   unsigned shelf_max_cached,shelf_evicted,shelf_queries;
+#endif
+#ifdef EXR_READER_DESKTOP_METADATA
+  HWND metadata_button,metadata_dialog,metadata_title,metadata_author,metadata_favorite,metadata_message;
+  reader_metadata_snapshot *metadata_snapshot;
+  wchar_t *metadata_title_value,*metadata_author_value;
+  wchar_t metadata_notice[512];
+  char metadata_key[72];
+  int64_t metadata_book;
+  int metadata_running,metadata_recovery,metadata_editable,metadata_favorite_value;
 #endif
   wchar_t settings_path[HOST_PATH];
   wchar_t evidence_dir[HOST_PATH];
@@ -766,7 +781,18 @@ static void note_comment_write(const char *utf8) {
 /* ------------------------------------------------------------------ */
 
 enum { JOB_NONE = 0, JOB_OPEN, JOB_GO, JOB_LAYOUT, JOB_IMPORT, JOB_NOTE_ADD, JOB_NOTE_UPDATE, JOB_ROLLBACK, JOB_HIT, JOB_SAVE,
-  JOB_PRODUCT_ATTACH, JOB_PRODUCT_REPAIR, JOB_PRODUCT_DELETE, JOB_PRODUCT_SHELF };
+  JOB_PRODUCT_ATTACH, JOB_PRODUCT_REPAIR, JOB_PRODUCT_DELETE, JOB_PRODUCT_SHELF,
+  JOB_METADATA_PREPARE, JOB_METADATA_SAVE, JOB_METADATA_RETRY, JOB_METADATA_DISCARD };
+#ifdef EXR_READER_DESKTOP_METADATA
+static int metadata_job_kind(int kind) { return kind>=JOB_METADATA_PREPARE && kind<=JOB_METADATA_DISCARD; }
+#endif
+static int job_commit_barrier(int kind) {
+  return kind==JOB_SAVE
+#ifdef EXR_READER_DESKTOP_METADATA
+    || metadata_job_kind(kind)
+#endif
+  ;
+}
 #ifdef EXR_READER_PRODUCT_CATALOG
 static int product_job_kind(int kind) {
   return kind==JOB_PRODUCT_ATTACH || kind==JOB_PRODUCT_REPAIR || kind==JOB_PRODUCT_DELETE || kind==JOB_PRODUCT_SHELF;
@@ -826,6 +852,13 @@ struct host_job {
   exr_book *product_books;size_t product_book_count;
   host_shelf_cursor *product_cursors;
 #endif
+#ifdef EXR_READER_DESKTOP_METADATA
+  reader_metadata_snapshot *metadata_snapshot;
+  wchar_t *metadata_title_value,*metadata_author_value;
+  wchar_t *metadata_input_title,*metadata_input_author;
+  char metadata_key[72];
+  int metadata_favorite,metadata_conflict,metadata_has_view,metadata_has_pending,metadata_committed;
+#endif
 };
 
 static int job_cancel_flag(host_job *job) {
@@ -868,6 +901,11 @@ static host_job *job_new(int kind) {
 
 static void job_free(host_job *job) {
   if (!job) return;
+#ifdef EXR_READER_DESKTOP_METADATA
+  reader_metadata_snapshot_free(job->metadata_snapshot);
+  free(job->metadata_title_value);free(job->metadata_author_value);
+  free(job->metadata_input_title);free(job->metadata_input_author);
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   if(job->product_cursors) for(size_t i=0;i<job->product_book_count;i++) {
     free(job->product_cursors[i].key);free(job->product_cursors[i].sort_title);
@@ -898,6 +936,9 @@ static void job_release(host_job *job) {
 static void host_update_controls(void);
 static unsigned __stdcall job_thread(void *context);
 static exr_status job_run(host_job *job);
+#ifdef EXR_READER_DESKTOP_METADATA
+static void metadata_failed_to_start(host_job *job);
+#endif
 
 static void job_start(host_job *job) {
   uintptr_t handle;
@@ -906,6 +947,9 @@ static void job_start(host_job *job) {
   if (job->kind != JOB_HIT && job->kind != JOB_SAVE
 #ifdef EXR_READER_PRODUCT_CATALOG
       && !product_job_kind(job->kind)
+#endif
+#ifdef EXR_READER_DESKTOP_METADATA
+      && !metadata_job_kind(job->kind)
 #endif
   ) {
   dragging = 0;
@@ -924,6 +968,9 @@ static void job_start(host_job *job) {
     g.job = NULL;
     job->status = EXR_MEMORY;
     strcpy(job->error.message, "Cannot create host worker thread");
+#ifdef EXR_READER_DESKTOP_METADATA
+    if(metadata_job_kind(job->kind)) metadata_failed_to_start(job);
+#endif
     job_release(job);
     set_status(L"无法创建后台任务线程。");
     host_update_controls();
@@ -951,6 +998,11 @@ static void job_submit(host_job *job) {
     return;
   }
   if (g.job) {
+#ifdef EXR_READER_DESKTOP_METADATA
+    if(metadata_job_kind(g.job->kind)) {
+      job_release(job);set_status(L"正在提交书籍编辑，完成后可继续操作。");return;
+    }
+#endif
     if (g.job->kind != JOB_SAVE) job_supersede();
     else if (g.pending) { job_release(g.pending); g.pending = NULL; }
     g.pending = job;
@@ -966,7 +1018,7 @@ static void job_cancel_button(void) {
     g.pending = NULL;
   }
   if (g.job) {
-    if (g.job->kind == JOB_SAVE) { set_status(L"正在保存已接受的阅读位置，完成后可继续操作。"); return; }
+    if (job_commit_barrier(g.job->kind)) { set_status(L"正在保存已接受的操作，完成后可继续操作。"); return; }
     InterlockedExchange(&g.job->cancel, 1);
     set_status(L"已请求取消，等待当前任务释放 SDK 句柄…");
   } else {
@@ -1859,10 +1911,13 @@ static exr_status job_import(host_job *job) {
 #ifdef EXR_READER_PRODUCT_CATALOG
 #include EXR_READER_WINDOWS_PRODUCT_HEADER
 #endif
+#ifdef EXR_READER_DESKTOP_METADATA
+#include "../apps/reader/desktop/windows_metadata.inc"
+#endif
 static unsigned __stdcall job_thread(void *context) {
   host_job *job = context;
   job_pause(job);
-  if (job_cancel_flag(job) && job->kind != JOB_ROLLBACK)
+  if (job_cancel_flag(job) && job->kind != JOB_ROLLBACK && !job_commit_barrier(job->kind))
     job->status = EXR_CANCELLED;
   else
     job->status = job_run(job);
@@ -1876,6 +1931,9 @@ static unsigned __stdcall job_thread(void *context) {
   }
 #endif
   if (job->status == EXR_OK && job_cancel_flag(job) && job->kind != JOB_NOTE_ADD && job->kind != JOB_NOTE_UPDATE
+#ifdef EXR_READER_DESKTOP_METADATA
+      && !metadata_job_kind(job->kind)
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
       && !(job->kind==JOB_PRODUCT_DELETE && job->product_deleted)
 #endif
@@ -1920,6 +1978,10 @@ static exr_status job_run(host_job *job) {
     case JOB_ROLLBACK: return rollback_import(job);
     case JOB_HIT: return job_hit(job);
     case JOB_SAVE: return job_save(job);
+#ifdef EXR_READER_DESKTOP_METADATA
+    case JOB_METADATA_PREPARE: case JOB_METADATA_SAVE: case JOB_METADATA_RETRY: case JOB_METADATA_DISCARD:
+      return metadata_job_run(job);
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
     case JOB_PRODUCT_ATTACH: case JOB_PRODUCT_REPAIR: case JOB_PRODUCT_DELETE: case JOB_PRODUCT_SHELF: return product_job_run(job);
 #endif
@@ -1962,6 +2024,9 @@ static HWND make_static(HWND parent, int id, const wchar_t *text) {
   if (window) SendMessageW(window, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
   return window;
 }
+#ifdef EXR_READER_DESKTOP_METADATA
+#include "../apps/reader/desktop/windows_metadata_ui.inc"
+#endif
 
 static void create_controls(HWND parent) {
   g.import_label = make_static(parent, IDC_IMPORT_LABEL, L"导入路径");
@@ -1995,6 +2060,9 @@ static void create_controls(HWND parent) {
   SendMessageW(g.shelf_search,WM_SETFONT,(WPARAM)GetStockObject(DEFAULT_GUI_FONT),TRUE);
   SendMessageW(g.shelf_search,EM_SETLIMITTEXT,256,0);
   g.shelf_refresh=make_button(parent,IDC_SHELF_REFRESH,L"刷新");
+#ifdef EXR_READER_DESKTOP_METADATA
+  g.metadata_button=make_button(parent,IDC_METADATA_BUTTON,L"详情");
+#endif
   g.shelf_applying=1;
   wchar_t *shelf_query=host_wide(g.shelf_query ? g.shelf_query:"",g.shelf_query ? strlen(g.shelf_query):0);
   SetWindowTextW(g.shelf_search,shelf_query ? shelf_query:L"");free(shelf_query);g.shelf_applying=0;
@@ -2048,6 +2116,10 @@ static void layout_controls(void) {
       MoveWindow(row[i].window, row[i].x, button_y, row[i].w, button_h, TRUE);
   }
   MoveWindow(g.shelf_label, 8, content_top, left_width - 16, 18, TRUE);
+#ifdef EXR_READER_DESKTOP_METADATA
+  MoveWindow(g.shelf_label,8,content_top,left_width-104,18,TRUE);
+  MoveWindow(g.metadata_button,left_width-88,content_top-2,80,22,TRUE);
+#endif
   books_height = (content_bottom - content_top - 30) * 45 / 100;
   if (books_height < 120) books_height = 120;
   MoveWindow(g.books, 8, content_top + 20, left_width - 16, books_height, TRUE);
@@ -2964,9 +3036,15 @@ static void host_update_controls(void) {
 #ifdef EXR_READER_PRODUCT_CATALOG
   EnableWindow(g.shelf_refresh,!busy && !g.closing);
 #endif
+#ifdef EXR_READER_DESKTOP_METADATA
+  EnableWindow(g.metadata_button,!busy && !g.closing && g.product_ready && !g.product_pending && g.shelf_count>0);
+#endif
 }
 
 static void handle_job_complete(host_job *job) {
+#ifdef EXR_READER_DESKTOP_METADATA
+  if(metadata_job_kind(job->kind)) { metadata_job_accept(job);return; }
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   if(job->kind==JOB_PRODUCT_SHELF) {
     if(job_cancel_flag(job) && !g.closing && g.pending &&
@@ -3185,7 +3263,13 @@ static void handle_job_complete(host_job *job) {
 }
 
 static void host_command(int id) {
+#ifdef EXR_READER_DESKTOP_METADATA
+  if(g.metadata_running) { set_status(L"正在提交书籍编辑，已接受的结果将保留。");return; }
+#endif
   switch (id) {
+#ifdef EXR_READER_DESKTOP_METADATA
+    case IDC_METADATA_BUTTON: metadata_edit_selected();break;
+#endif
     case IDC_IMPORT_BUTTON: {
       wchar_t path[HOST_PATH];
       path[0] = 0;
@@ -4336,7 +4420,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
         g.pending = NULL;
       }
       if (g.job) {
-        if (g.job->kind != JOB_SAVE) InterlockedExchange(&g.job->cancel, 1);
+        if (!job_commit_barrier(g.job->kind)) InterlockedExchange(&g.job->cancel, 1);
         SetTimer(window, 2, 20000, NULL);
         host_update_controls();
         return 0;
@@ -4376,6 +4460,9 @@ static int register_host_classes(HINSTANCE instance) {
 static int message_loop(void) {
   MSG message;
   while (GetMessageW(&message, NULL, 0, 0) > 0) {
+#ifdef EXR_READER_DESKTOP_METADATA
+    if(g.metadata_dialog && IsDialogMessageW(g.metadata_dialog,&message)) continue;
+#endif
     if (g.window && IsDialogMessageW(g.window, &message)) continue;
     TranslateMessage(&message);
     DispatchMessageW(&message);
@@ -4388,7 +4475,7 @@ static void host_cleanup(void) {
   review_shutdown();
 #endif
   if (g.job) {
-    InterlockedExchange(&g.job->cancel, 1);
+    if(!job_commit_barrier(g.job->kind)) InterlockedExchange(&g.job->cancel, 1);
     if (g.job->thread && WaitForSingleObject(g.job->thread, 20000) != WAIT_OBJECT_0) ExitProcess(1);
     job_release(g.job);
     g.job = NULL;
@@ -4406,6 +4493,9 @@ static void host_cleanup(void) {
   notes_clear();
   shelf_clear();
   book_clear(&g.current);
+#ifdef EXR_READER_DESKTOP_METADATA
+  metadata_dialog_close();
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   free(g.shelf_query);g.shelf_query=NULL;
 #endif
