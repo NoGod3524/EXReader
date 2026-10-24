@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "package": "G09 产品依赖、许可证与离线分发清单",
+  "package": "G09 产品依赖、许可证与离线分发清单（SDK + 十三个可选应用包）",
   "accepted": true,
   "inventory_generated": true,
   "materials_complete": true,
@@ -8,44 +8,54 @@
   "scope": "Installed reading SDK file inventory, registered licence materials and observed static/dynamic dependencies on three desktop operating systems. Mobile packaging, host bundles, signing and publication are not covered.",
   "workflow": ".github/workflows/reader-distribution-inventory.yml",
   "branch": "codex/reader-distribution-inventory",
-  "source_sha": "f3b5c8f65d6a1d7db51364b897f81a995ce37c67",
+  "source_sha": "93d2ad0db2d75af50eddc0843a4da9c7090a15aa",
   "start_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
-  "run_id": 40081161966,
+  "run_id": 40095313750,
   "attempt": 1,
   "run_status": "completed",
   "run_conclusion": "success",
-  "verified_at": "2026-10-24T09:18:04.305367+00:00",
+  "verified_at": "2026-10-24T12:51:08.534314+00:00",
   "jobs": {
-    "rejection protocol": 120834840566,
-    "linux/reading-core": 120834897186,
-    "linux/reading-library": 120834897219,
-    "windows/reading-core": 120834897253,
-    "windows/reading-library": 120834897238,
-    "macos/reading-core": 120834897292,
-    "macos/reading-library": 120834897167,
-    "same-source report": 120835503732
+    "protocol": 120876184613,
+    "linux/reading-core": 120876212765,
+    "linux/reading-library": 120876212746,
+    "windows/reading-core": 120876212743,
+    "windows/reading-library": 120876212790,
+    "macos/reading-core": 120876212787,
+    "macos/reading-library": 120876212827,
+    "combined/linux": 120876212706,
+    "combined/windows": 120876212732,
+    "combined/macos": 120876212742,
+    "report": 120877173430
   },
   "protocol": {
-    "job_id": 120834840566,
-    "accepted_cases": 4,
-    "rejected_cases": 37,
-    "parser_checks": 4,
-    "artifact_rejections": 6,
-    "dependency_parsers": 9
+    "job_id": 120876184613,
+    "sdk_suite": {
+      "accepted_cases": 4,
+      "rejected_cases": 37,
+      "parser_checks": 4,
+      "artifact_rejections": 6,
+      "dependency_parsers": 10
+    },
+    "combined_suite": {
+      "accepted_cases": 3,
+      "rejected_cases": 25,
+      "registered_packages": 13
+    }
   },
   "identity": {
     "sdk_version": "3.40.0",
     "abi": 1,
     "core_version": "3.39.0",
-    "identical_on_all_six": true
+    "identical_on_all_nine": true
   },
   "installs": [
     {
       "platform": "linux",
       "profile": "reading-core",
-      "job_id": 120834897186,
-      "job_source_sha": "f3b5c8f65d6a1d7db51364b897f81a995ce37c67",
+      "job_id": 120876212765,
+      "job_source_sha": "93d2ad0db2d75af50eddc0843a4da9c7090a15aa",
       "installed_files": 262,
       "installed_bytes": 18541669,
       "archives": 21,
@@ -60,36 +70,26 @@
         "config_version": "3.40.0"
       },
       "artifact": {
-        "id": 12555386763,
-        "name": "reader-distribution-inventory-linux-reading-core-40081161966-1",
-        "bytes": 7009782,
-        "digest": "sha256:aabd023662b826e841bc559c99bc6255f20725bb81e2ee43145c4d734db47301",
-        "expires_at": "2027-01-22T09:14:23Z"
+        "id": 12560228214,
+        "name": "reader-distribution-inventory-linux-reading-core-40095313750-1",
+        "bytes": 7009765,
+        "digest": "sha256:7b3621e5b370d80345702fd6d489529f031cd324478d8ac0599276e2bf17a6bc",
+        "expires_at": "2027-01-22T12:46:21Z"
       },
-      "producer_log_sha256": "a594fb1f726c206c0637a5b59c8c1b306aec48f2d7d0ce0bcc3d8ae4667bdb3c",
+      "producer_log_sha256": "810b6f7923d86974fc7d6b1ca17740b39f9809838a48fd6bf38c0139806ebfba",
       "sbom": {
-        "spdx_sha256": "7f92dfc771040f1821e744a09fd7b9704711d5b62b37e5547329a03ee1bf2422",
-        "cyclonedx_sha256": "5096dae9e417880867b4de123b0ee1140dd5987c53df384aa3aa66016a3a310c"
+        "spdx_sha256": "64f0a9c98b716bbafe95a144a1d9fa2295b016a5840cff4c64fce6b66ed3a785",
+        "cyclonedx_sha256": "06b1ac9520ee47db90ea96b5b95465de32e277ed7454371909d2a95aabb53ce5"
       },
-      "release_blockers": [
-        "docs/CONVERSION.md ships a build-machine absolute path (C:/Users/)",
-        "docs/WP7-SCRIPTS.md ships a build-machine absolute path (C:/Users/)",
-        "lib/exreader/libexr_vendor_tiff.a ships a build-machine absolute path (/home/runner/)",
-        "lib/pkgconfig/aom.pc ships a build-machine absolute path (/home/runner/)",
-        "lib/pkgconfig/libsharpyuv.pc ships a build-machine absolute path (/home/runner/)",
-        "lib/pkgconfig/libwebp.pc ships a build-machine absolute path (/home/runner/)",
-        "lib/pkgconfig/libwebpdecoder.pc ships a build-machine absolute path (/home/runner/)",
-        "lib/pkgconfig/libwebpdemux.pc ships a build-machine absolute path (/home/runner/)",
-        "lib/pkgconfig/libwebpmux.pc ships a build-machine absolute path (/home/runner/)"
-      ],
+      "release_blockers": 9,
       "release_ready": false,
       "granted": true
     },
     {
       "platform": "linux",
       "profile": "reading-library",
-      "job_id": 120834897219,
-      "job_source_sha": "f3b5c8f65d6a1d7db51364b897f81a995ce37c67",
+      "job_id": 120876212746,
+      "job_source_sha": "93d2ad0db2d75af50eddc0843a4da9c7090a15aa",
       "installed_files": 265,
       "installed_bytes": 20442359,
       "archives": 23,
@@ -104,36 +104,26 @@
         "config_version": "3.40.0"
       },
       "artifact": {
-        "id": 12555381712,
-        "name": "reader-distribution-inventory-linux-reading-library-40081161966-1",
-        "bytes": 7846207,
-        "digest": "sha256:eafccceec7cb3f07591796bb925db504eb0fee745e04d3afa211d2dd3d1b107e",
-        "expires_at": "2027-01-22T09:14:23Z"
+        "id": 12560990895,
+        "name": "reader-distribution-inventory-linux-reading-library-40095313750-1",
+        "bytes": 7846205,
+        "digest": "sha256:c26231709ad4bb547ead12ff783f2c31eff39347d3c715993dad34abf7460763",
+        "expires_at": "2027-01-22T12:46:21Z"
       },
-      "producer_log_sha256": "30cc81f62ff01641af06cc8e7020efde815332afe74a37e3e9c5044debe39618",
+      "producer_log_sha256": "d184c179902932cfae22ac0c1a2ac295717eb068927c1115e5c2bb60bfda3e75",
       "sbom": {
-        "spdx_sha256": "17e8fc921000568326df6baf09006ea501935d49051a03e8e22cae27f6bd3249",
-        "cyclonedx_sha256": "c514ab20ba79b38ed55d48648ea6a729e667ecdfe306c443f965169be45ae4e5"
+        "spdx_sha256": "5280b75717c7c3421a07e1f20d42a0bef4a3d17795d4a2aac9d30b95f2f368ca",
+        "cyclonedx_sha256": "00cd6879e4a15a772a61e5719d00b432c2e663f86d9e0182dd198d8694cecc25"
       },
-      "release_blockers": [
-        "docs/CONVERSION.md ships a build-machine absolute path (C:/Users/)",
-        "docs/WP7-SCRIPTS.md ships a build-machine absolute path (C:/Users/)",
-        "lib/exreader/libexr_vendor_tiff.a ships a build-machine absolute path (/home/runner/)",
-        "lib/pkgconfig/aom.pc ships a build-machine absolute path (/home/runner/)",
-        "lib/pkgconfig/libsharpyuv.pc ships a build-machine absolute path (/home/runner/)",
-        "lib/pkgconfig/libwebp.pc ships a build-machine absolute path (/home/runner/)",
-        "lib/pkgconfig/libwebpdecoder.pc ships a build-machine absolute path (/home/runner/)",
-        "lib/pkgconfig/libwebpdemux.pc ships a build-machine absolute path (/home/runner/)",
-        "lib/pkgconfig/libwebpmux.pc ships a build-machine absolute path (/home/runner/)"
-      ],
+      "release_blockers": 9,
       "release_ready": false,
       "granted": true
     },
     {
       "platform": "windows",
       "profile": "reading-core",
-      "job_id": 120834897253,
-      "job_source_sha": "f3b5c8f65d6a1d7db51364b897f81a995ce37c67",
+      "job_id": 120876212743,
+      "job_source_sha": "93d2ad0db2d75af50eddc0843a4da9c7090a15aa",
       "installed_files": 262,
       "installed_bytes": 25597160,
       "archives": 21,
@@ -148,56 +138,26 @@
         "config_version": "3.40.0"
       },
       "artifact": {
-        "id": 12555386869,
-        "name": "reader-distribution-inventory-windows-reading-core-40081161966-1",
-        "bytes": 10839409,
-        "digest": "sha256:d4829ef87fe9d2659ef002eed115fa6b0012385e04d92fe118849dad3f3165ce",
-        "expires_at": "2027-01-22T09:14:23Z"
+        "id": 12560284508,
+        "name": "reader-distribution-inventory-windows-reading-core-40095313750-1",
+        "bytes": 10839347,
+        "digest": "sha256:af8535193c75c316bffbed85e83311db7319e936d538124586d789d9ff992d9b",
+        "expires_at": "2027-01-22T12:46:21Z"
       },
-      "producer_log_sha256": "37687fb9c0a267113c41ef43b326bcd07176d1b2b9b4b1c3165bdac243fef377",
+      "producer_log_sha256": "a8694282b2302db2fd4a8e7d8a4504cda221a86063ba7ea6d7cde31dc3cf6bf7",
       "sbom": {
-        "spdx_sha256": "2e4266384ed92382a64062d62726c3ae583f6a5a4b298a36dca28fb510e6f150",
-        "cyclonedx_sha256": "8b20460c5e4f7b5335c2e7bac89683184075810c8d5d97c78f80729b3480ff35"
+        "spdx_sha256": "5ba3cd698cac50586be1b0c8912b2063c6c6a86aad6e249648cdba585bf71b47",
+        "cyclonedx_sha256": "4dce05b3d391066103f7768861a8aab229452fcc0b3e2f5f4ed106ca7db8a337"
       },
-      "release_blockers": [
-        "docs/CONVERSION.md ships a build-machine absolute path (C:/Users/)",
-        "docs/WP7-SCRIPTS.md ships a build-machine absolute path (C:/Users/)",
-        "lib/aom.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exr_base.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exr_doc.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exr_formats.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exr_graphics.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exr_layout.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exr_pdf.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exr_render.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exr_text.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exreader/exr_vendor_aom.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exreader/exr_vendor_avif.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exreader/exr_vendor_expat.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exreader/exr_vendor_exr_crypto.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exreader/exr_vendor_exr_jpx.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exreader/exr_vendor_exr_lcms.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exreader/exr_vendor_freetype.lib ships a build-machine absolute path (C:\\Users\\, D:\\a\\)",
-        "lib/exreader/exr_vendor_miniz.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exreader/exr_vendor_sharpyuv.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exreader/exr_vendor_tiff.lib ships a build-machine absolute path (C:\\Users\\, D:\\a\\)",
-        "lib/exreader/exr_vendor_webp.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exreader/exr_vendor_webpdemux.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exreader/exr_vendor_zlibstatic.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/libsharpyuv.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/libwebp.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/libwebpdecoder.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/libwebpdemux.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/libwebpmux.lib ships a build-machine absolute path (D:\\a\\)"
-      ],
+      "release_blockers": 29,
       "release_ready": false,
       "granted": true
     },
     {
       "platform": "windows",
       "profile": "reading-library",
-      "job_id": 120834897238,
-      "job_source_sha": "f3b5c8f65d6a1d7db51364b897f81a995ce37c67",
+      "job_id": 120876212790,
+      "job_source_sha": "93d2ad0db2d75af50eddc0843a4da9c7090a15aa",
       "installed_files": 265,
       "installed_bytes": 29084761,
       "archives": 23,
@@ -212,58 +172,26 @@
         "config_version": "3.40.0"
       },
       "artifact": {
-        "id": 12555167866,
-        "name": "reader-distribution-inventory-windows-reading-library-40081161966-1",
-        "bytes": 12445680,
-        "digest": "sha256:474c5d8984d5af8df6bdf9daa0f43828a63d49c7d19c82fd47b8863aa0fb75cb",
-        "expires_at": "2027-01-22T09:14:23Z"
+        "id": 12560063652,
+        "name": "reader-distribution-inventory-windows-reading-library-40095313750-1",
+        "bytes": 12445794,
+        "digest": "sha256:2e661981d0847bc4339e3ae417d5dc8697a1905d93f82219b150a20a2d467918",
+        "expires_at": "2027-01-22T12:46:21Z"
       },
-      "producer_log_sha256": "2a4e156171b52fba0004e7079ca604c42cb2f6da47c03143dd3fb13f369182d3",
+      "producer_log_sha256": "df858a929dcd44f8f647b3bf8228c13baf6c486fa38e69db7cc12ab99df196cc",
       "sbom": {
-        "spdx_sha256": "88c0ac6fee078316fa04e95ec3c4e9a6ced7d642c93878c72caf7b7c17d8dfc4",
-        "cyclonedx_sha256": "1583c98311c2a59d356c5f6d5e065c60670e4945f25cd7d899f1c787cba9cd80"
+        "spdx_sha256": "af4bf36ce9e3bfe25cc76ad412ef1dcece6dae91f9291b9952fb803c21d3084c",
+        "cyclonedx_sha256": "b0a2df99ebb8987eca8d13eaf7a1d67d5efe9f70b83946db468569e9fa08ff47"
       },
-      "release_blockers": [
-        "docs/CONVERSION.md ships a build-machine absolute path (C:/Users/)",
-        "docs/WP7-SCRIPTS.md ships a build-machine absolute path (C:/Users/)",
-        "lib/aom.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exr_base.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exr_doc.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exr_formats.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exr_graphics.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exr_layout.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exr_library.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exr_pdf.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exr_render.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exr_text.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exreader/exr_vendor_aom.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exreader/exr_vendor_avif.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exreader/exr_vendor_expat.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exreader/exr_vendor_exr_crypto.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exreader/exr_vendor_exr_jpx.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exreader/exr_vendor_exr_lcms.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exreader/exr_vendor_exr_sqlite.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exreader/exr_vendor_freetype.lib ships a build-machine absolute path (C:\\Users\\, D:\\a\\)",
-        "lib/exreader/exr_vendor_miniz.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exreader/exr_vendor_sharpyuv.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exreader/exr_vendor_tiff.lib ships a build-machine absolute path (C:\\Users\\, D:\\a\\)",
-        "lib/exreader/exr_vendor_webp.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exreader/exr_vendor_webpdemux.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/exreader/exr_vendor_zlibstatic.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/libsharpyuv.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/libwebp.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/libwebpdecoder.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/libwebpdemux.lib ships a build-machine absolute path (D:\\a\\)",
-        "lib/libwebpmux.lib ships a build-machine absolute path (D:\\a\\)"
-      ],
+      "release_blockers": 31,
       "release_ready": false,
       "granted": true
     },
     {
       "platform": "macos",
       "profile": "reading-core",
-      "job_id": 120834897292,
-      "job_source_sha": "f3b5c8f65d6a1d7db51364b897f81a995ce37c67",
+      "job_id": 120876212787,
+      "job_source_sha": "93d2ad0db2d75af50eddc0843a4da9c7090a15aa",
       "installed_files": 262,
       "installed_bytes": 14859768,
       "archives": 21,
@@ -278,36 +206,26 @@
         "config_version": "3.40.0"
       },
       "artifact": {
-        "id": 12555516241,
-        "name": "reader-distribution-inventory-macos-reading-core-40081161966-1",
-        "bytes": 6343750,
-        "digest": "sha256:81e2b01d94cb61cec62f4c342cb8731f1887a0e74824cab0f55eca831857f9d6",
-        "expires_at": "2027-01-22T09:14:23Z"
+        "id": 12560692120,
+        "name": "reader-distribution-inventory-macos-reading-core-40095313750-1",
+        "bytes": 6343653,
+        "digest": "sha256:8fd2fd62358fab3df8c4b737f5074ed56502b9b454a0e66a3de246319d9d9f1c",
+        "expires_at": "2027-01-22T12:46:21Z"
       },
-      "producer_log_sha256": "fcc142a3eabd03f37ec6492890433df8c72c9abc04bafa314b1f29a168dfb3b1",
+      "producer_log_sha256": "99a12f31998829113aa0ba56b5bff85af06cfa28289188e7d3d6851e676354c3",
       "sbom": {
-        "spdx_sha256": "1ceefcdc6de512a0174d15315d2a8ab002de1148ba875da29a3fbf540e5445c6",
-        "cyclonedx_sha256": "2f381abc69c8b6c9cee2a44c5cbc86686019cc1b02677116a85f235f88cba808"
+        "spdx_sha256": "eecdc0ff0b01cacc67898efe4434a084d3ee5c81bf7a30b597f976c650bfdea1",
+        "cyclonedx_sha256": "e5f920469ec6ee02e91eff409282d7c4438ff7f8a4f80c2691a9f3449e4718e2"
       },
-      "release_blockers": [
-        "docs/CONVERSION.md ships a build-machine absolute path (C:/Users/)",
-        "docs/WP7-SCRIPTS.md ships a build-machine absolute path (C:/Users/)",
-        "lib/exreader/libexr_vendor_tiff.a ships a build-machine absolute path (/Users/runner/)",
-        "lib/pkgconfig/aom.pc ships a build-machine absolute path (/Users/runner/)",
-        "lib/pkgconfig/libsharpyuv.pc ships a build-machine absolute path (/Users/runner/)",
-        "lib/pkgconfig/libwebp.pc ships a build-machine absolute path (/Users/runner/)",
-        "lib/pkgconfig/libwebpdecoder.pc ships a build-machine absolute path (/Users/runner/)",
-        "lib/pkgconfig/libwebpdemux.pc ships a build-machine absolute path (/Users/runner/)",
-        "lib/pkgconfig/libwebpmux.pc ships a build-machine absolute path (/Users/runner/)"
-      ],
+      "release_blockers": 9,
       "release_ready": false,
       "granted": true
     },
     {
       "platform": "macos",
       "profile": "reading-library",
-      "job_id": 120834897167,
-      "job_source_sha": "f3b5c8f65d6a1d7db51364b897f81a995ce37c67",
+      "job_id": 120876212827,
+      "job_source_sha": "93d2ad0db2d75af50eddc0843a4da9c7090a15aa",
       "installed_files": 265,
       "installed_bytes": 16652242,
       "archives": 23,
@@ -322,32 +240,2042 @@
         "config_version": "3.40.0"
       },
       "artifact": {
-        "id": 12554849898,
-        "name": "reader-distribution-inventory-macos-reading-library-40081161966-1",
-        "bytes": 7189370,
-        "digest": "sha256:3a68e544fbc306044ef3d35e823fb0015abdfa7eafe0e68579c40e48a209d2be",
-        "expires_at": "2027-01-22T09:14:23Z"
+        "id": 12561006365,
+        "name": "reader-distribution-inventory-macos-reading-library-40095313750-1",
+        "bytes": 7189316,
+        "digest": "sha256:0886e909ff48228ef69f3ec5fd36e00f07d5ccbb38efc10742f6966e34a1bfaa",
+        "expires_at": "2027-01-22T12:46:21Z"
       },
-      "producer_log_sha256": "0947784010d2874efd3ea7cf060deb89c9cdd43d8ee183b18e6d4306a0a72107",
+      "producer_log_sha256": "9ca737816a0d82d47011dcd50d53cbb4ee2f4a559d9894ec66bf16743e8ffb37",
       "sbom": {
-        "spdx_sha256": "8d6e704427b4ab9e1cca1d1d1a68621317e59d4aa2d2b866bf37269bd7de0dc0",
-        "cyclonedx_sha256": "79581762da0a52a71b6df9f1daff8f7eae11fe42a33abf1806a16e12e84b7b40"
+        "spdx_sha256": "77c1269600aabb51e3aba329ff366c48c6626d2b6d8617aeb293e83319d629a3",
+        "cyclonedx_sha256": "b1bcebd844f1a02b5713b2c284da813fb4214a5b9cf5043cd7d6c3d8eb656bab"
       },
-      "release_blockers": [
-        "docs/CONVERSION.md ships a build-machine absolute path (C:/Users/)",
-        "docs/WP7-SCRIPTS.md ships a build-machine absolute path (C:/Users/)",
-        "lib/exreader/libexr_vendor_tiff.a ships a build-machine absolute path (/Users/runner/)",
-        "lib/pkgconfig/aom.pc ships a build-machine absolute path (/Users/runner/)",
-        "lib/pkgconfig/libsharpyuv.pc ships a build-machine absolute path (/Users/runner/)",
-        "lib/pkgconfig/libwebp.pc ships a build-machine absolute path (/Users/runner/)",
-        "lib/pkgconfig/libwebpdecoder.pc ships a build-machine absolute path (/Users/runner/)",
-        "lib/pkgconfig/libwebpdemux.pc ships a build-machine absolute path (/Users/runner/)",
-        "lib/pkgconfig/libwebpmux.pc ships a build-machine absolute path (/Users/runner/)"
-      ],
+      "release_blockers": 9,
       "release_ready": false,
       "granted": true
     }
   ],
+  "combined": [
+    {
+      "platform": "linux",
+      "profile": "combined",
+      "job_id": 120876212706,
+      "job_source_sha": "93d2ad0db2d75af50eddc0843a4da9c7090a15aa",
+      "installed_files": 350,
+      "installed_bytes": 24093888,
+      "archives": 44,
+      "symbol_edges": 87,
+      "checks": 90,
+      "checks_passed": 88,
+      "identity": {
+        "version": "3.40.0",
+        "abi": 1,
+        "core_version": "3.39.0"
+      },
+      "artifact": {
+        "id": 12560936421,
+        "name": "reader-distribution-combined-linux-40095313750-1",
+        "bytes": 9197595,
+        "digest": "sha256:9ad81d61fc8ce37fea820bd0f1e7a9b286c1a6b5dc3951358c90b92390488481",
+        "expires_at": "2027-01-22T12:46:21Z"
+      },
+      "producer_log_sha256": "8789b9715b4d3732debbe76afe98bc8cf16d3041365a27880c8d811cc146ddea",
+      "sbom": {
+        "spdx_sha256": "4000264229b4af5d9c27e6317015ef7bf028124496ff376ee1c79d700b79ff38",
+        "cyclonedx_sha256": "50b1435fc1df6043aac7591f5e39b46bfb88b87f6a1470b12fbe93d968ef943b"
+      },
+      "packages": [
+        {
+          "id": "catalog",
+          "project": "EXReaderProductCatalog",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/libreader_catalog.a",
+              "bytes": 55172,
+              "sha256": "1f6b1d0ac7866773e15e3413ac8fb48aa75fdf36c8cc5fc9d8f016989005a625"
+            },
+            {
+              "path": "lib/libreader_catalog_sqlite.a",
+              "bytes": 1771006,
+              "sha256": "af4d812c8009ade153abe06b8c06a113552b02c04d6237b769b3e8248d05f0e6"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/exreader-product/catalog.h",
+              "bytes": 8100,
+              "sha256": "0b50869888abf3803a2f1c5fa4fc424a54bf64a1f4a515ac80fa9ad167ff1b80"
+            },
+            {
+              "path": "include/exreader-product/sqlite3.h",
+              "bytes": 695737,
+              "sha256": "cd20a2877bc82b94e36c1093b727dd87cfa3c1d581aac6e240925535cbd90166"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [
+            {
+              "library": "sqlite3",
+              "archive": "reader_catalog_sqlite",
+              "material": "share/exreader-product/sqlite-public-domain.txt",
+              "providers": [
+                "lib/exreader/libexr_vendor_exr_sqlite.a",
+                "lib/libreader_catalog_sqlite.a"
+              ]
+            }
+          ],
+          "external_expected": [],
+          "external_observed": [
+            "dl",
+            "m",
+            "runtime"
+          ],
+          "system_libraries": [
+            "dl",
+            "m"
+          ],
+          "frameworks": [],
+          "external_unknown": 39
+        },
+        {
+          "id": "revisions",
+          "project": "EXReaderRevisions",
+          "version": "0.3.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/libreader_revisions.a",
+              "bytes": 223736,
+              "sha256": "391661f7229582aac900b7da115719ca206663d581277d9e6eb05e8f905d15e3"
+            },
+            {
+              "path": "lib/libreader_revision_hash.a",
+              "bytes": 22780,
+              "sha256": "81cf11ce8367a635af165ca9bc4d14971175a73ac5cb28a5b834b0699bd11767"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_revisions.h",
+              "bytes": 5765,
+              "sha256": "9f431ee4d19fd9931f5cc805d14451cfac247a4e161c0e41e8ebf5ece64c5269"
+            },
+            {
+              "path": "include/reader_projection.h",
+              "bytes": 5643,
+              "sha256": "0cd6ba9de0890bc1d70a969c57c104e0a5acf791eb4a49d13035f9a1ff95be60"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "dl",
+            "m",
+            "runtime"
+          ],
+          "system_libraries": [
+            "dl",
+            "m"
+          ],
+          "frameworks": [],
+          "external_unknown": 8
+        },
+        {
+          "id": "commands",
+          "project": "EXReaderCommands",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/libreader_commands.a",
+              "bytes": 67502,
+              "sha256": "0578b0dab40e8d4972fd0260dfb0e5f4dcf6458d91262e796a82407f9de5b8b9"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_commands.h",
+              "bytes": 3877,
+              "sha256": "2e702ab8eae7daf296280794088594ca3a072548c0be89dc4a4b4f417c647827"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "dl",
+            "m",
+            "runtime"
+          ],
+          "system_libraries": [
+            "dl",
+            "m"
+          ],
+          "frameworks": [],
+          "external_unknown": 0
+        },
+        {
+          "id": "desktop-metadata",
+          "project": "EXReaderDesktopMetadata",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/libreader_desktop_metadata.a",
+              "bytes": 140604,
+              "sha256": "7b814db92b69fc7cdc03c5466c588a7b7ab64bc94f4fc6aed9fe7ec42ae4ce13"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_metadata.h",
+              "bytes": 5521,
+              "sha256": "b8c9e1d7d4cbad9cc9c49d65a86e4b5eeea9f6a591fc30c2be6f0e72958e3bf3"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "dl",
+            "m",
+            "runtime"
+          ],
+          "system_libraries": [
+            "dl",
+            "m"
+          ],
+          "frameworks": [],
+          "external_unknown": 7
+        },
+        {
+          "id": "webdav",
+          "project": "EXReaderWebDAV",
+          "version": "0.2.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/libexr_webdav.a",
+              "bytes": 117758,
+              "sha256": "08d838c98e9830e209a3382dfb510fa3d063cc231b334c17734202c4e2e0ab32"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/exr_webdav.h",
+              "bytes": 4157,
+              "sha256": "f4ada6eff69d0aba2a6756b7ef656e182ca3f6c1f471e4dd5063e39eae9fbfc0"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "package",
+            "path": "share/exreader-webdav/LICENSE.txt",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [
+            "libcurl",
+            "libxml2"
+          ],
+          "external_observed": [
+            "libcurl",
+            "libxml2",
+            "runtime"
+          ],
+          "system_libraries": [
+            "libcurl",
+            "libxml2"
+          ],
+          "frameworks": [],
+          "external_unknown": 11
+        },
+        {
+          "id": "session",
+          "project": "EXReaderSession",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/libreader_session.a",
+              "bytes": 35978,
+              "sha256": "b514df94b163aae49923c2263eb4d03e520f821d241b8625202681e15a5136c3"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_session.h",
+              "bytes": 3220,
+              "sha256": "bacc561d48d7fe18eeb77ad788d4907b85579c883f46cb7947236b7cbf8b85d4"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "dl",
+            "libcrypto",
+            "libcurl",
+            "libxml2",
+            "m",
+            "runtime"
+          ],
+          "system_libraries": [
+            "dl",
+            "libcrypto",
+            "libcurl",
+            "libxml2",
+            "m"
+          ],
+          "frameworks": [],
+          "external_unknown": 8
+        },
+        {
+          "id": "sync",
+          "project": "EXReaderSync",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/libreader_sync.a",
+              "bytes": 101234,
+              "sha256": "148c7d1cc2ff273ff613da42b2b3b708bc5af102984d3d49f96af17deeb7b67b"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_sync.h",
+              "bytes": 2476,
+              "sha256": "3f7d06153b94ae97a6a1e8c622700ab8459c4589d65926fc53e4f488407d2665"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [
+            "libcrypto"
+          ],
+          "external_observed": [
+            "dl",
+            "libcrypto",
+            "libcurl",
+            "libxml2",
+            "m",
+            "runtime"
+          ],
+          "system_libraries": [
+            "dl",
+            "libcrypto",
+            "libcurl",
+            "libxml2",
+            "m"
+          ],
+          "frameworks": [],
+          "external_unknown": 1
+        },
+        {
+          "id": "credentials",
+          "project": "EXReaderCredentials",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/libexr_credentials.a",
+              "bytes": 12188,
+              "sha256": "89b9ba0f98178164e5d43a064320eaffcef6df01fc869101dfe4538fe4dd5bdb"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/exr_credentials.h",
+              "bytes": 3198,
+              "sha256": "ab4e90d9146634c85a39dbba6e9698bd58a2c1c1ad78df01d6c0db00641ea2d4"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "package",
+            "path": "share/exreader-credentials/LICENSE.txt",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [
+            "libsecret-1"
+          ],
+          "external_observed": [
+            "gio-2.0",
+            "glib-2.0",
+            "gobject-2.0",
+            "libsecret-1",
+            "runtime"
+          ],
+          "system_libraries": [
+            "gio-2.0",
+            "glib-2.0",
+            "gobject-2.0",
+            "libsecret-1"
+          ],
+          "frameworks": [],
+          "external_unknown": 13
+        },
+        {
+          "id": "reading-state",
+          "project": "EXReaderReadingState",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/libreader_reading_state.a",
+              "bytes": 67286,
+              "sha256": "074a8964b629b9b5694d268f605cc783f49fed1ed2f990cf10725a17ccddd28e"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_reading_state.h",
+              "bytes": 6834,
+              "sha256": "45a35845856996dfe896d725b6b234f561eeac101bcaf1d77530e2e1927bb642"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "dl",
+            "m",
+            "runtime"
+          ],
+          "system_libraries": [
+            "dl",
+            "m"
+          ],
+          "frameworks": [],
+          "external_unknown": 2
+        },
+        {
+          "id": "search",
+          "project": "EXReaderSearch",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/libreader_search.a",
+              "bytes": 37354,
+              "sha256": "b2f23fe583fa37d43e0a2ba3791d5e462cf540b56df51f4676f7c81ff1eea25e"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_search.h",
+              "bytes": 9354,
+              "sha256": "80e3dd7372992c15e63406c4f40b7095b1c0cafc04c445b71606407ec7065ab7"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "dl",
+            "m",
+            "runtime"
+          ],
+          "system_libraries": [
+            "dl",
+            "m"
+          ],
+          "frameworks": [],
+          "external_unknown": 2
+        },
+        {
+          "id": "preferences",
+          "project": "EXReaderPreferences",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/libreader_preferences.a",
+              "bytes": 41144,
+              "sha256": "d82b9bf7b261c010cd0e7c236677a71b5815aa483984d5d09094eb890aa24b69"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_preferences.h",
+              "bytes": 8521,
+              "sha256": "1bf595fd955e7064b09e9df2ed582da9da6b93592a3b3247da9b1759dad464c6"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "m",
+            "runtime"
+          ],
+          "system_libraries": [
+            "m"
+          ],
+          "frameworks": [],
+          "external_unknown": 11
+        },
+        {
+          "id": "batch-import",
+          "project": "EXReaderBatchImport",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/libreader_batch_import.a",
+              "bytes": 32406,
+              "sha256": "36f71b69cc7f7686615cfa22944314449e91ff71b416e2d14434fa778381992e"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_batch_import.h",
+              "bytes": 7661,
+              "sha256": "cd24b19dd86fce4f5afa0e1a0253acde1d517ddbb67c8271aefe84339cfd8d34"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "dl",
+            "m",
+            "runtime"
+          ],
+          "system_libraries": [
+            "dl",
+            "m"
+          ],
+          "frameworks": [],
+          "external_unknown": 19
+        },
+        {
+          "id": "sideload",
+          "project": "EXReaderSideload",
+          "version": null,
+          "version_source": "none",
+          "archives": [
+            {
+              "path": "lib/libexr_sideload.a",
+              "bytes": 13998,
+              "sha256": "673b28808b77d26aedb8fd999e93e945f40259db97e60e0d8c2fac2ddd27c82d"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/exr_sideload.h",
+              "bytes": 3427,
+              "sha256": "d12a5c820b392dc045a6e2a17f23222b0d334a76ee9bff78833d0907e2c58c0d"
+            }
+          ],
+          "config_files": 3,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "dl",
+            "m",
+            "runtime"
+          ],
+          "system_libraries": [
+            "dl",
+            "m"
+          ],
+          "frameworks": [],
+          "external_unknown": 10
+        }
+      ],
+      "release_blockers": 9,
+      "release_ready": false,
+      "granted": true
+    },
+    {
+      "platform": "windows",
+      "profile": "combined",
+      "job_id": 120876212732,
+      "job_source_sha": "93d2ad0db2d75af50eddc0843a4da9c7090a15aa",
+      "installed_files": 350,
+      "installed_bytes": 39660921,
+      "archives": 44,
+      "symbol_edges": 70,
+      "checks": 90,
+      "checks_passed": 88,
+      "identity": {
+        "version": "3.40.0",
+        "abi": 1,
+        "core_version": "3.39.0"
+      },
+      "artifact": {
+        "id": 12561245295,
+        "name": "reader-distribution-combined-windows-40095313750-1",
+        "bytes": 16593113,
+        "digest": "sha256:958d2bf9df4965e2bdb7afa68d8f2f5027fcdc6f3a8607b1ec022e1ff190481f",
+        "expires_at": "2027-01-22T12:46:21Z"
+      },
+      "producer_log_sha256": "054c86a69c2d61cf522413085576ccd92910c2b9c1d8c7860766afad181c4b16",
+      "sbom": {
+        "spdx_sha256": "bf31bfd17902487d89c44b6344e9560d9f2393ac3ad365168b7444ae7aa84806",
+        "cyclonedx_sha256": "0542eed2b2c8fdde78ef52378d3c737173e08cf41709e61a99e3f918f53b50bc"
+      },
+      "packages": [
+        {
+          "id": "catalog",
+          "project": "EXReaderProductCatalog",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/reader_catalog.lib",
+              "bytes": 89814,
+              "sha256": "e9a64b3e9b995e87a5b9afe57b23f3776ba78c07cc09b6a6f07f3627dc8e6b9e"
+            },
+            {
+              "path": "lib/reader_catalog_sqlite.lib",
+              "bytes": 3242620,
+              "sha256": "0b6d609d44766b574ac172a0ca5fcc6ff099a1bc6d11bb4ad9a1e07908d8e0db"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/exreader-product/catalog.h",
+              "bytes": 8100,
+              "sha256": "0b50869888abf3803a2f1c5fa4fc424a54bf64a1f4a515ac80fa9ad167ff1b80"
+            },
+            {
+              "path": "include/exreader-product/sqlite3.h",
+              "bytes": 695737,
+              "sha256": "cd20a2877bc82b94e36c1093b727dd87cfa3c1d581aac6e240925535cbd90166"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [
+            {
+              "library": "sqlite3",
+              "archive": "reader_catalog_sqlite",
+              "material": "share/exreader-product/sqlite-public-domain.txt",
+              "providers": [
+                "lib/exreader/exr_vendor_exr_sqlite.lib",
+                "lib/reader_catalog_sqlite.lib"
+              ]
+            }
+          ],
+          "external_expected": [],
+          "external_observed": [
+            "advapi32",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "libcmt",
+            "oldnames",
+            "ole32",
+            "oleaut32",
+            "runtime",
+            "shell32",
+            "sqlite3",
+            "user32",
+            "uuid",
+            "winspool"
+          ],
+          "system_libraries": [
+            "advapi32",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "ole32",
+            "oleaut32",
+            "shell32",
+            "user32",
+            "uuid",
+            "winspool"
+          ],
+          "frameworks": [],
+          "external_unknown": 37
+        },
+        {
+          "id": "revisions",
+          "project": "EXReaderRevisions",
+          "version": "0.3.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/reader_revisions.lib",
+              "bytes": 1267332,
+              "sha256": "9569d755d7de8866ac9af52089766ba3dc1d22afde782891680d15b6152c63fa"
+            },
+            {
+              "path": "lib/reader_revision_hash.lib",
+              "bytes": 46160,
+              "sha256": "11a8ad7f158544b67299ca89bc45058fecc7a9ddb5ee0e6f3747f13b19a3ca27"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_revisions.h",
+              "bytes": 5765,
+              "sha256": "9f431ee4d19fd9931f5cc805d14451cfac247a4e161c0e41e8ebf5ece64c5269"
+            },
+            {
+              "path": "include/reader_projection.h",
+              "bytes": 5643,
+              "sha256": "0cd6ba9de0890bc1d70a969c57c104e0a5acf791eb4a49d13035f9a1ff95be60"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "advapi32",
+            "bcrypt",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "libcmt",
+            "libcpmt",
+            "oldnames",
+            "ole32",
+            "oleaut32",
+            "runtime",
+            "shell32",
+            "sqlite3",
+            "user32",
+            "uuid",
+            "winspool"
+          ],
+          "system_libraries": [
+            "advapi32",
+            "bcrypt",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "ole32",
+            "oleaut32",
+            "shell32",
+            "user32",
+            "uuid",
+            "winspool"
+          ],
+          "frameworks": [],
+          "external_unknown": 9
+        },
+        {
+          "id": "commands",
+          "project": "EXReaderCommands",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/reader_commands.lib",
+              "bytes": 464690,
+              "sha256": "cfeca3273bad3a53c9be9d61023b6ba9743d6d2c21f2719c0d59b69879f7a36b"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_commands.h",
+              "bytes": 3877,
+              "sha256": "2e702ab8eae7daf296280794088594ca3a072548c0be89dc4a4b4f417c647827"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "advapi32",
+            "bcrypt",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "libcmt",
+            "libcpmt",
+            "oldnames",
+            "ole32",
+            "oleaut32",
+            "runtime",
+            "shell32",
+            "user32",
+            "uuid",
+            "winspool"
+          ],
+          "system_libraries": [
+            "advapi32",
+            "bcrypt",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "ole32",
+            "oleaut32",
+            "shell32",
+            "user32",
+            "uuid",
+            "winspool"
+          ],
+          "frameworks": [],
+          "external_unknown": 8
+        },
+        {
+          "id": "desktop-metadata",
+          "project": "EXReaderDesktopMetadata",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/reader_desktop_metadata.lib",
+              "bytes": 1020484,
+              "sha256": "2c645c5893981ad8b881ef5c217931f49c56628285e141961b30a69235ddc8bb"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_metadata.h",
+              "bytes": 5521,
+              "sha256": "b8c9e1d7d4cbad9cc9c49d65a86e4b5eeea9f6a591fc30c2be6f0e72958e3bf3"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "advapi32",
+            "bcrypt",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "libcmt",
+            "libcpmt",
+            "oldnames",
+            "ole32",
+            "oleaut32",
+            "runtime",
+            "shell32",
+            "user32",
+            "uuid",
+            "winspool"
+          ],
+          "system_libraries": [
+            "advapi32",
+            "bcrypt",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "ole32",
+            "oleaut32",
+            "shell32",
+            "user32",
+            "uuid",
+            "winspool"
+          ],
+          "frameworks": [],
+          "external_unknown": 20
+        },
+        {
+          "id": "webdav",
+          "project": "EXReaderWebDAV",
+          "version": "0.2.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/exr_webdav.lib",
+              "bytes": 815974,
+              "sha256": "a82f73e33370400a6bc37d6858f54923c39e30a4f114062509cbce6d998b970b"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/exr_webdav.h",
+              "bytes": 4157,
+              "sha256": "f4ada6eff69d0aba2a6756b7ef656e182ca3f6c1f471e4dd5063e39eae9fbfc0"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "package",
+            "path": "share/exreader-webdav/LICENSE.txt",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [
+            "winhttp",
+            "xmllite",
+            "shlwapi"
+          ],
+          "external_observed": [
+            "advapi32",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "libcmt",
+            "libcpmt",
+            "oldnames",
+            "ole32",
+            "oleaut32",
+            "runtime",
+            "shell32",
+            "shlwapi",
+            "user32",
+            "uuid",
+            "winhttp",
+            "winspool",
+            "xmllite"
+          ],
+          "system_libraries": [
+            "advapi32",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "ole32",
+            "oleaut32",
+            "shell32",
+            "shlwapi",
+            "user32",
+            "uuid",
+            "winhttp",
+            "winspool",
+            "xmllite"
+          ],
+          "frameworks": [],
+          "external_unknown": 11
+        },
+        {
+          "id": "session",
+          "project": "EXReaderSession",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/reader_session.lib",
+              "bytes": 441468,
+              "sha256": "f8bff6f5be8e22f517e9998ecfe97018919e84e3d58c03b7687ef76ddf41fb38"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_session.h",
+              "bytes": 3220,
+              "sha256": "bacc561d48d7fe18eeb77ad788d4907b85579c883f46cb7947236b7cbf8b85d4"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "advapi32",
+            "bcrypt",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "libcmt",
+            "libcpmt",
+            "oldnames",
+            "ole32",
+            "oleaut32",
+            "runtime",
+            "shell32",
+            "shlwapi",
+            "user32",
+            "uuid",
+            "winhttp",
+            "winspool",
+            "xmllite"
+          ],
+          "system_libraries": [
+            "advapi32",
+            "bcrypt",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "ole32",
+            "oleaut32",
+            "shell32",
+            "shlwapi",
+            "user32",
+            "uuid",
+            "winhttp",
+            "winspool",
+            "xmllite"
+          ],
+          "frameworks": [],
+          "external_unknown": 18
+        },
+        {
+          "id": "sync",
+          "project": "EXReaderSync",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/reader_sync.lib",
+              "bytes": 1465568,
+              "sha256": "a5ee609263edeb332e2b26aa2a8688ec0feab98f9aac3e274f7b4a826622ae6d"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_sync.h",
+              "bytes": 2476,
+              "sha256": "3f7d06153b94ae97a6a1e8c622700ab8459c4589d65926fc53e4f488407d2665"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [
+            "bcrypt"
+          ],
+          "external_observed": [
+            "advapi32",
+            "bcrypt",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "libcmt",
+            "libcpmt",
+            "oldnames",
+            "ole32",
+            "oleaut32",
+            "runtime",
+            "shell32",
+            "shlwapi",
+            "user32",
+            "uuid",
+            "winhttp",
+            "winspool",
+            "xmllite"
+          ],
+          "system_libraries": [
+            "advapi32",
+            "bcrypt",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "ole32",
+            "oleaut32",
+            "shell32",
+            "shlwapi",
+            "user32",
+            "uuid",
+            "winhttp",
+            "winspool",
+            "xmllite"
+          ],
+          "frameworks": [],
+          "external_unknown": 33
+        },
+        {
+          "id": "credentials",
+          "project": "EXReaderCredentials",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/exr_credentials.lib",
+              "bytes": 14440,
+              "sha256": "d97c2e3bd41c9e89cdae5835a97328abdd3f0c3c657b89693b426f1c8a7471cd"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/exr_credentials.h",
+              "bytes": 3198,
+              "sha256": "ab4e90d9146634c85a39dbba6e9698bd58a2c1c1ad78df01d6c0db00641ea2d4"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "package",
+            "path": "share/exreader-credentials/LICENSE.txt",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [
+            "advapi32"
+          ],
+          "external_observed": [
+            "advapi32",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "libcmt",
+            "oldnames",
+            "ole32",
+            "oleaut32",
+            "runtime",
+            "shell32",
+            "user32",
+            "uuid",
+            "winspool"
+          ],
+          "system_libraries": [
+            "advapi32",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "ole32",
+            "oleaut32",
+            "shell32",
+            "user32",
+            "uuid",
+            "winspool"
+          ],
+          "frameworks": [],
+          "external_unknown": 1
+        },
+        {
+          "id": "reading-state",
+          "project": "EXReaderReadingState",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/reader_reading_state.lib",
+              "bytes": 279438,
+              "sha256": "bf8553407c8f69faaca89590f5391405e691385dd97ecf10d8e277a6b7144c32"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_reading_state.h",
+              "bytes": 6834,
+              "sha256": "45a35845856996dfe896d725b6b234f561eeac101bcaf1d77530e2e1927bb642"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "advapi32",
+            "bcrypt",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "libcmt",
+            "libcpmt",
+            "oldnames",
+            "ole32",
+            "oleaut32",
+            "runtime",
+            "shell32",
+            "sqlite3",
+            "user32",
+            "uuid",
+            "winspool"
+          ],
+          "system_libraries": [
+            "advapi32",
+            "bcrypt",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "ole32",
+            "oleaut32",
+            "shell32",
+            "user32",
+            "uuid",
+            "winspool"
+          ],
+          "frameworks": [],
+          "external_unknown": 10
+        },
+        {
+          "id": "search",
+          "project": "EXReaderSearch",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/reader_search.lib",
+              "bytes": 296968,
+              "sha256": "9478f4e4ed32b0f185865c2121cc177ddf2038d1b5c8378e8aebac9bda508fb3"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_search.h",
+              "bytes": 9354,
+              "sha256": "80e3dd7372992c15e63406c4f40b7095b1c0cafc04c445b71606407ec7065ab7"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "advapi32",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "libcmt",
+            "libcpmt",
+            "oldnames",
+            "ole32",
+            "oleaut32",
+            "runtime",
+            "shell32",
+            "user32",
+            "uuid",
+            "winspool"
+          ],
+          "system_libraries": [
+            "advapi32",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "ole32",
+            "oleaut32",
+            "shell32",
+            "user32",
+            "uuid",
+            "winspool"
+          ],
+          "frameworks": [],
+          "external_unknown": 13
+        },
+        {
+          "id": "preferences",
+          "project": "EXReaderPreferences",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/reader_preferences.lib",
+              "bytes": 94504,
+              "sha256": "1fcfe7ee1b5cf25260f003d081bd660f8f867bba7ae428c36a4c55e414204b87"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_preferences.h",
+              "bytes": 8521,
+              "sha256": "1bf595fd955e7064b09e9df2ed582da9da6b93592a3b3247da9b1759dad464c6"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "advapi32",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "msvcrt",
+            "oldnames",
+            "ole32",
+            "oleaut32",
+            "runtime",
+            "shell32",
+            "user32",
+            "uuid",
+            "winspool"
+          ],
+          "system_libraries": [
+            "advapi32",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "ole32",
+            "oleaut32",
+            "shell32",
+            "user32",
+            "uuid",
+            "winspool"
+          ],
+          "frameworks": [],
+          "external_unknown": 10
+        },
+        {
+          "id": "batch-import",
+          "project": "EXReaderBatchImport",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/reader_batch_import.lib",
+              "bytes": 92522,
+              "sha256": "3d2fb8a22be469f4824fff401cd055285da2082e363ea83b93c16701263bdcff"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_batch_import.h",
+              "bytes": 7661,
+              "sha256": "cd24b19dd86fce4f5afa0e1a0253acde1d517ddbb67c8271aefe84339cfd8d34"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "advapi32",
+            "bcrypt",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "libcmt",
+            "oldnames",
+            "ole32",
+            "oleaut32",
+            "runtime",
+            "shell32",
+            "user32",
+            "uuid",
+            "winspool"
+          ],
+          "system_libraries": [
+            "advapi32",
+            "bcrypt",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "ole32",
+            "oleaut32",
+            "shell32",
+            "user32",
+            "uuid",
+            "winspool"
+          ],
+          "frameworks": [],
+          "external_unknown": 6
+        },
+        {
+          "id": "sideload",
+          "project": "EXReaderSideload",
+          "version": null,
+          "version_source": "none",
+          "archives": [
+            {
+              "path": "lib/exr_sideload.lib",
+              "bytes": 29856,
+              "sha256": "a5c8d47a5a1b2ca6bf70a8ec0be111feedff3547591a912644f08d14587c9f38"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/exr_sideload.h",
+              "bytes": 3427,
+              "sha256": "d12a5c820b392dc045a6e2a17f23222b0d334a76ee9bff78833d0907e2c58c0d"
+            }
+          ],
+          "config_files": 3,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "advapi32",
+            "bcrypt",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "libcmt",
+            "oldnames",
+            "ole32",
+            "oleaut32",
+            "runtime",
+            "shell32",
+            "user32",
+            "uuid",
+            "winspool"
+          ],
+          "system_libraries": [
+            "advapi32",
+            "bcrypt",
+            "comdlg32",
+            "gdi32",
+            "kernel32",
+            "ole32",
+            "oleaut32",
+            "shell32",
+            "user32",
+            "uuid",
+            "winspool"
+          ],
+          "frameworks": [],
+          "external_unknown": 6
+        }
+      ],
+      "release_blockers": 46,
+      "release_ready": false,
+      "granted": true
+    },
+    {
+      "platform": "macos",
+      "profile": "combined",
+      "job_id": 120876212742,
+      "job_source_sha": "93d2ad0db2d75af50eddc0843a4da9c7090a15aa",
+      "installed_files": 350,
+      "installed_bytes": 19940742,
+      "archives": 44,
+      "symbol_edges": 87,
+      "checks": 90,
+      "checks_passed": 88,
+      "identity": {
+        "version": "3.40.0",
+        "abi": 1,
+        "core_version": "3.39.0"
+      },
+      "artifact": {
+        "id": 12560612560,
+        "name": "reader-distribution-combined-macos-40095313750-1",
+        "bytes": 8489862,
+        "digest": "sha256:63ca00e9ec3b7140c8390f54501b0a95673897d3fd007cd523a57e0975e8109f",
+        "expires_at": "2027-01-22T12:46:21Z"
+      },
+      "producer_log_sha256": "42d45d782ad8e663c490f23c14ab1954ee36c2e1d151a94a00f5d32b247e2902",
+      "sbom": {
+        "spdx_sha256": "494f166733642bbd355c8e6ceb48e0347f7d228e556a4bc9aeb96b1b0492e0ae",
+        "cyclonedx_sha256": "72f39ea44ac11e23cf693e78b65fca3f5f8d14c6126e1ca79a00a519b58d6a9f"
+      },
+      "packages": [
+        {
+          "id": "catalog",
+          "project": "EXReaderProductCatalog",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/libreader_catalog.a",
+              "bytes": 49320,
+              "sha256": "7b20b16f8a042eda9ca611cc559a8c4f1a21d12dd6e7b4dc96b8c41c79184cef"
+            },
+            {
+              "path": "lib/libreader_catalog_sqlite.a",
+              "bytes": 1692832,
+              "sha256": "44d168099285a8eaa8727fc730fdce336b28297886158b150bb18337321baeda"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/exreader-product/catalog.h",
+              "bytes": 8100,
+              "sha256": "0b50869888abf3803a2f1c5fa4fc424a54bf64a1f4a515ac80fa9ad167ff1b80"
+            },
+            {
+              "path": "include/exreader-product/sqlite3.h",
+              "bytes": 695737,
+              "sha256": "cd20a2877bc82b94e36c1093b727dd87cfa3c1d581aac6e240925535cbd90166"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [
+            {
+              "library": "sqlite3",
+              "archive": "reader_catalog_sqlite",
+              "material": "share/exreader-product/sqlite-public-domain.txt",
+              "providers": [
+                "lib/exreader/libexr_vendor_exr_sqlite.a",
+                "lib/libreader_catalog_sqlite.a"
+              ]
+            }
+          ],
+          "external_expected": [],
+          "external_observed": [
+            "m",
+            "runtime"
+          ],
+          "system_libraries": [
+            "m"
+          ],
+          "frameworks": [],
+          "external_unknown": 60
+        },
+        {
+          "id": "revisions",
+          "project": "EXReaderRevisions",
+          "version": "0.3.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/libreader_revisions.a",
+              "bytes": 154064,
+              "sha256": "fc9c2a0577ab93f27a126905bac686fcf53ae74e7089765dc8c64575c78badf3"
+            },
+            {
+              "path": "lib/libreader_revision_hash.a",
+              "bytes": 18904,
+              "sha256": "1cf33a80079e04d647b52ba3e61e5dae5a490f28b69ae1a5a6aa5a78cec8ebc5"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_revisions.h",
+              "bytes": 5765,
+              "sha256": "9f431ee4d19fd9931f5cc805d14451cfac247a4e161c0e41e8ebf5ece64c5269"
+            },
+            {
+              "path": "include/reader_projection.h",
+              "bytes": 5643,
+              "sha256": "0cd6ba9de0890bc1d70a969c57c104e0a5acf791eb4a49d13035f9a1ff95be60"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "m",
+            "runtime"
+          ],
+          "system_libraries": [
+            "m"
+          ],
+          "frameworks": [],
+          "external_unknown": 6
+        },
+        {
+          "id": "commands",
+          "project": "EXReaderCommands",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/libreader_commands.a",
+              "bytes": 51368,
+              "sha256": "8b2b99e8a532f7e36290069241450bb05657481634073672207f46a6ea76ce8c"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_commands.h",
+              "bytes": 3877,
+              "sha256": "2e702ab8eae7daf296280794088594ca3a072548c0be89dc4a4b4f417c647827"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "m",
+            "runtime"
+          ],
+          "system_libraries": [
+            "m"
+          ],
+          "frameworks": [],
+          "external_unknown": 1
+        },
+        {
+          "id": "desktop-metadata",
+          "project": "EXReaderDesktopMetadata",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/libreader_desktop_metadata.a",
+              "bytes": 105368,
+              "sha256": "5d91964426d36002e8fb2b5740bc80a26d2b651bc637593a7453266b0b80f5e0"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_metadata.h",
+              "bytes": 5521,
+              "sha256": "b8c9e1d7d4cbad9cc9c49d65a86e4b5eeea9f6a591fc30c2be6f0e72958e3bf3"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "m",
+            "runtime"
+          ],
+          "system_libraries": [
+            "m"
+          ],
+          "frameworks": [],
+          "external_unknown": 9
+        },
+        {
+          "id": "webdav",
+          "project": "EXReaderWebDAV",
+          "version": "0.2.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/libexr_webdav.a",
+              "bytes": 69392,
+              "sha256": "a90a11137fa71950fb39eb94b2e2318d72796c507e8fa6c4289dec5bfe7e069c"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/exr_webdav.h",
+              "bytes": 4157,
+              "sha256": "f4ada6eff69d0aba2a6756b7ef656e182ca3f6c1f471e4dd5063e39eae9fbfc0"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "package",
+            "path": "share/exreader-webdav/LICENSE.txt",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [
+            "libcurl",
+            "libxml2"
+          ],
+          "external_observed": [
+            "libcurl",
+            "libxml2",
+            "runtime"
+          ],
+          "system_libraries": [
+            "libcurl",
+            "libxml2"
+          ],
+          "frameworks": [],
+          "external_unknown": 14
+        },
+        {
+          "id": "session",
+          "project": "EXReaderSession",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/libreader_session.a",
+              "bytes": 24904,
+              "sha256": "d907909a9db6779a7ba9fbf55c7f4d66cee885150db1667126b0f3b3c662952b"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_session.h",
+              "bytes": 3220,
+              "sha256": "bacc561d48d7fe18eeb77ad788d4907b85579c883f46cb7947236b7cbf8b85d4"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "libcurl",
+            "libxml2",
+            "m",
+            "runtime"
+          ],
+          "system_libraries": [
+            "libcurl",
+            "libxml2",
+            "m"
+          ],
+          "frameworks": [],
+          "external_unknown": 10
+        },
+        {
+          "id": "sync",
+          "project": "EXReaderSync",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/libreader_sync.a",
+              "bytes": 70608,
+              "sha256": "f26b9fcd0eba91372c4c0523e3a816ee3f70cebb0f5c75a3f070992ecea3a95d"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_sync.h",
+              "bytes": 2476,
+              "sha256": "3f7d06153b94ae97a6a1e8c622700ab8459c4589d65926fc53e4f488407d2665"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "libcrypto",
+            "libcurl",
+            "libxml2",
+            "m",
+            "runtime"
+          ],
+          "system_libraries": [
+            "libcurl",
+            "libxml2",
+            "m"
+          ],
+          "frameworks": [],
+          "external_unknown": 2
+        },
+        {
+          "id": "credentials",
+          "project": "EXReaderCredentials",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/libexr_credentials.a",
+              "bytes": 9072,
+              "sha256": "e2b30b63a5abad465212d4df108d6e529fcc038f7ac10571c82be0f6f11e7b8b"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/exr_credentials.h",
+              "bytes": 3198,
+              "sha256": "ab4e90d9146634c85a39dbba6e9698bd58a2c1c1ad78df01d6c0db00641ea2d4"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "package",
+            "path": "share/exreader-credentials/LICENSE.txt",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [
+            "Security",
+            "CoreFoundation"
+          ],
+          "external_observed": [
+            "CoreFoundation",
+            "Security",
+            "runtime"
+          ],
+          "system_libraries": [],
+          "frameworks": [
+            "CoreFoundation",
+            "Security"
+          ],
+          "external_unknown": 20
+        },
+        {
+          "id": "reading-state",
+          "project": "EXReaderReadingState",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/libreader_reading_state.a",
+              "bytes": 39720,
+              "sha256": "09670799e581c29c59e38fca44fb28ac3f7c1625273b732ea2e7d517956ac40f"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_reading_state.h",
+              "bytes": 6834,
+              "sha256": "45a35845856996dfe896d725b6b234f561eeac101bcaf1d77530e2e1927bb642"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "m",
+            "runtime"
+          ],
+          "system_libraries": [
+            "m"
+          ],
+          "frameworks": [],
+          "external_unknown": 1
+        },
+        {
+          "id": "search",
+          "project": "EXReaderSearch",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/libreader_search.a",
+              "bytes": 25352,
+              "sha256": "9656b39292058aac5d550ce5ae2ca033b47da28d3e0d1497e1ca973b1c282b92"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_search.h",
+              "bytes": 9354,
+              "sha256": "80e3dd7372992c15e63406c4f40b7095b1c0cafc04c445b71606407ec7065ab7"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "m",
+            "runtime"
+          ],
+          "system_libraries": [
+            "m"
+          ],
+          "frameworks": [],
+          "external_unknown": 1
+        },
+        {
+          "id": "preferences",
+          "project": "EXReaderPreferences",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/libreader_preferences.a",
+              "bytes": 31040,
+              "sha256": "5221f39f0ac4ebf481023e3e7850ac5643b1fb129a3105c5b9be1c0dab87860e"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_preferences.h",
+              "bytes": 8521,
+              "sha256": "1bf595fd955e7064b09e9df2ed582da9da6b93592a3b3247da9b1759dad464c6"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "m",
+            "runtime"
+          ],
+          "system_libraries": [
+            "m"
+          ],
+          "frameworks": [],
+          "external_unknown": 12
+        },
+        {
+          "id": "batch-import",
+          "project": "EXReaderBatchImport",
+          "version": "0.1.0",
+          "version_source": "config",
+          "archives": [
+            {
+              "path": "lib/libreader_batch_import.a",
+              "bytes": 25128,
+              "sha256": "321e18521894700eeb12f718c91b379ed52bfc8a607e531033d89633a6c75aa6"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/reader_batch_import.h",
+              "bytes": 7661,
+              "sha256": "cd24b19dd86fce4f5afa0e1a0253acde1d517ddbb67c8271aefe84339cfd8d34"
+            }
+          ],
+          "config_files": 4,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "m",
+            "runtime"
+          ],
+          "system_libraries": [
+            "m"
+          ],
+          "frameworks": [],
+          "external_unknown": 18
+        },
+        {
+          "id": "sideload",
+          "project": "EXReaderSideload",
+          "version": null,
+          "version_source": "none",
+          "archives": [
+            {
+              "path": "lib/libexr_sideload.a",
+              "bytes": 10080,
+              "sha256": "486d4aed4c52e7a7b5882e70b972706e2b4df07d99397594313107f82c5c8995"
+            }
+          ],
+          "headers": [
+            {
+              "path": "include/exr_sideload.h",
+              "bytes": 3427,
+              "sha256": "d12a5c820b392dc045a6e2a17f23222b0d334a76ee9bff78833d0907e2c58c0d"
+            }
+          ],
+          "config_files": 3,
+          "licence": {
+            "mode": "shared",
+            "path": "share/exreader/LICENSE",
+            "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+          },
+          "bundled": [],
+          "external_expected": [],
+          "external_observed": [
+            "m",
+            "runtime"
+          ],
+          "system_libraries": [
+            "m"
+          ],
+          "frameworks": [],
+          "external_unknown": 10
+        }
+      ],
+      "release_blockers": 9,
+      "release_ready": false,
+      "granted": true
+    }
+  ],
+  "profiles": {
+    "reading": "reading-core and reading-library install the SDK only: no audio codec, no WebView, no credential module, no optional application package",
+    "combined": "reading-library plus the thirteen optional application packages installed into one prefix, explicitly registered with their own archives, headers, package configuration and licence material"
+  },
   "sbom_schemas": {
     "spdx": "https://raw.githubusercontent.com/spdx/spdx-spec/v2.3/schemas/spdx-schema.json",
     "cyclonedx": "https://raw.githubusercontent.com/CycloneDX/specification/master/schema/bom-1.5.schema.json",
@@ -355,7 +2283,7 @@
       "spdx.schema.json",
       "jsf-0.82.schema.json"
     ],
-    "validation": "jsonschema 4.x validate against the published schemas in the report job"
+    "validation": "jsonschema 4.x against the published schemas in the report job, for all nine installs"
   },
   "licence_record": {
     "reused": "tools/check_reading_licenses.py (COMPONENTS) and the shared stage check",
@@ -372,11 +2300,12 @@
       "reading-core": 21,
       "reading-library": 22
     },
-    "checker_release_ready_on_all_six": true
+    "checker_release_ready_on_all_six_sdk_installs": true,
+    "optional_packages": "each of the thirteen packages resolves to an installed MIT text: webdav and credentials install their own copy, the other eleven rely on share/exreader/LICENSE in the same prefix"
   },
   "static_dependency": {
-    "method": "ar t / lib /list members, nm / dumpbin /symbols symbol sets, undefined-to-defined intersection, and the real Ninja link command of the installed-API probe",
-    "edges": {
+    "method": "ar t / lib /list members, nm -g / dumpbin /symbols symbol sets, dumpbin /directives, undefined-to-defined intersection, and the real Ninja link command of a consumer that links exactly one installed package",
+    "sdk_edges": {
       "reading-core": [
         41,
         41,
@@ -388,52 +2317,63 @@
         43
       ]
     },
+    "combined_edges": [
+      87,
+      70,
+      87
+    ],
     "order": [
       "linux",
       "macos",
       "windows"
     ],
     "unreferenced_archives": [],
-    "foreign_library_copies": 6,
-    "foreign_library_copies_note": "lib/libaom, lib/libsharpyuv, lib/libwebp, lib/libwebpdecoder, lib/libwebpdemux, lib/libwebpmux installed under their upstream names next to lib/exreader/libexr_vendor_*"
+    "foreign_library_copies": 6
   },
   "exclusions_verified": {
-    "audio_and_gpl_options": "EXR_ENABLE_AUDIO, EXR_ENABLE_MP3, EXR_ENABLE_AAC all OFF; no audio layer, archive or licence in any install",
-    "webview": "no web engine file, exported target or native dependency",
-    "test_credentials": "no credential module target or material",
-    "build_machine_paths": "none in either generated SBOM; 9/9/29/31/9/9 installed files still carry one"
+    "audio_and_gpl_options": "EXR_ENABLE_AUDIO, EXR_ENABLE_MP3, EXR_ENABLE_AAC all OFF in every install; no audio layer, archive or licence",
+    "webview": "no web engine file, exported target or native dependency in either profile",
+    "test_credentials": "the reading installs export no credential target; the combined prefix contains exactly the registered credential package and nothing else",
+    "test_secrets": "no PEM private key or access-key shape in any installed byte",
+    "build_machine_paths": "none in any generated SBOM; 60 distinct installed files still carry one (see release_blockers)"
   },
   "release_blockers": {
-    "docs": [
-      "docs/CONVERSION.md",
-      "docs/WP7-SCRIPTS.md"
-    ],
-    "linux_macos_metadata": [
-      "lib/pkgconfig/aom.pc",
-      "lib/pkgconfig/libsharpyuv.pc",
-      "lib/pkgconfig/libwebp.pc",
-      "lib/pkgconfig/libwebpdecoder.pc",
-      "lib/pkgconfig/libwebpdemux.pc",
-      "lib/pkgconfig/libwebpmux.pc"
-    ],
-    "archives": {
-      "linux": [
-        "lib/exreader/libexr_vendor_tiff.a"
-      ],
-      "macos": [
-        "lib/exreader/libexr_vendor_tiff.a"
-      ],
-      "windows_all": "every installed .lib: 21 core, 23 library"
-    },
     "counts": {
       "linux/reading-core": 9,
       "linux/reading-library": 9,
       "windows/reading-core": 29,
       "windows/reading-library": 31,
       "macos/reading-core": 9,
-      "macos/reading-library": 9
+      "macos/reading-library": 9,
+      "combined/linux": 9,
+      "combined/windows": 46,
+      "combined/macos": 9
     },
-    "owner": "root: the files are a shared document, the fetched projects' install rules and the protected build configuration"
+    "union_count": 60,
+    "classes": {
+      "docs": [
+        "docs/CONVERSION.md",
+        "docs/WP7-SCRIPTS.md"
+      ],
+      "linux_macos_metadata": [
+        "lib/pkgconfig/aom.pc",
+        "lib/pkgconfig/libsharpyuv.pc",
+        "lib/pkgconfig/libwebp.pc",
+        "lib/pkgconfig/libwebpdecoder.pc",
+        "lib/pkgconfig/libwebpdemux.pc",
+        "lib/pkgconfig/libwebpmux.pc"
+      ],
+      "archives": {
+        "linux": [
+          "lib/exreader/libexr_vendor_tiff.a"
+        ],
+        "macos": [
+          "lib/exreader/libexr_vendor_tiff.a"
+        ],
+        "windows": "every installed .lib, including the thirteen package archives"
+      }
+    },
+    "owner": "root: a shared document, the fetched projects' install rules and the protected build configuration"
   },
   "not_covered": [
     "Android, iOS and Apple native host packaging: separate owners, not built or packed here",
@@ -441,26 +2381,27 @@
     "Audio builds: EXR_ENABLE_AUDIO and the MP3/AAC codecs are excluded from the reading presets",
     "PDF editing, text index, shared compatibility library, JNI bindings, tools and test binaries",
     "Offline installer, code signing, notarization, tag, Release and store publication",
-    "Legal review: the registered licence identifiers are inventoried, not adjudicated"
+    "Legal review: the registered licence identifiers are inventoried, not adjudicated",
+    "Audio builds: EXR_ENABLE_AUDIO and the MP3/AAC codecs are excluded from every profile"
   ],
   "original_failures": [
     {
       "run_id": 40076871953,
       "attempt": 1,
       "result": "failure",
-      "reason": "protocol: first-party LICENSE and THIRD_PARTY_NOTICES.md copies were compared as license-directory material"
+      "reason": "protocol: first-party LICENSE and THIRD_PARTY_NOTICES.md compared as license-directory material"
     },
     {
       "run_id": 40077076410,
       "attempt": 1,
       "result": "failure",
-      "reason": "protocol: the per-component existence check still looked only at license-directory material"
+      "reason": "protocol: the per-component existence check still only looked at the license directory"
     },
     {
       "run_id": 40077307329,
       "attempt": 1,
       "result": "failure",
-      "reason": "protocol: five fixtures mutated the install without keeping a file record, and SBOM structures were reported without reasons"
+      "reason": "protocol: five fixtures mutated the install without keeping a file record; SBOM structures reported without reasons"
     },
     {
       "run_id": 40077611836,
@@ -472,44 +2413,142 @@
       "run_id": 40077966666,
       "attempt": 1,
       "result": "failure",
-      "reason": "protocol: COFF section symbols were parsed as linkable symbols"
+      "reason": "protocol: COFF section symbols parsed as linkable symbols"
     },
     {
       "run_id": 40078277226,
       "attempt": 1,
       "result": "failure",
-      "reason": "installs: the probe never prepended the install prefix; the Windows compiler environment used an unbraced env form"
+      "reason": "installs: the probe never prepended the install prefix; unbraced PowerShell env form"
     },
     {
       "run_id": 40078844006,
       "attempt": 1,
       "result": "failure",
-      "reason": "installs: identity, notice scope and symbol precedence defects in this package's own checks"
+      "reason": "installs: identity, notice scope and symbol precedence defects in this package checks"
     },
     {
       "run_id": 40079459218,
       "attempt": 1,
       "result": "failure",
-      "reason": "one install: the layout listing closed the pipeline early under pipefail; five other installs were green"
+      "reason": "one install: the layout listing closed the pipeline early under pipefail; five installs green"
     },
     {
       "run_id": 40079877588,
       "attempt": 1,
       "result": "success",
-      "reason": "superseded: accepted=true on all six installs before upstream-named library copies were recorded"
+      "reason": "superseded: six SDK installs accepted before upstream-named library copies were recorded"
     },
     {
       "run_id": 40080548788,
       "attempt": 1,
       "result": "failure",
       "reason": "installs: the archive scan unpacked four lists but initialised three"
+    },
+    {
+      "run_id": 40081161966,
+      "attempt": 1,
+      "result": "success",
+      "reason": "superseded: the six SDK installs accepted; the thirteen optional packages were still out of scope"
+    },
+    {
+      "run_id": 40090093085,
+      "attempt": 1,
+      "result": "failure",
+      "reason": "protocol: the SBOM licence table had no identifier for the optional packages"
+    },
+    {
+      "run_id": 40090316414,
+      "attempt": 1,
+      "result": "failure",
+      "reason": "protocol: a loop variable shadowed the licence module in the composed verifier"
+    },
+    {
+      "run_id": 40090749442,
+      "attempt": 1,
+      "result": "failure",
+      "reason": "protocol: the composed fixture licence entries lacked their source path"
+    },
+    {
+      "run_id": 40090953542,
+      "attempt": 1,
+      "result": "failure",
+      "reason": "protocol: directive entries and archive symbol defaults were incomplete in the fixture"
+    },
+    {
+      "run_id": 40091214370,
+      "attempt": 1,
+      "result": "failure",
+      "reason": "protocol: the composed section stored the link record in a different shape than the verifier read"
+    },
+    {
+      "run_id": 40091417689,
+      "attempt": 1,
+      "result": "failure",
+      "reason": "protocol: fixture observations were derived from a partial context"
+    },
+    {
+      "run_id": 40091586990,
+      "attempt": 1,
+      "result": "failure",
+      "reason": "protocol: the composed verifier read a claimed file that the artifact no longer contained"
+    },
+    {
+      "run_id": 40091754101,
+      "attempt": 1,
+      "result": "failure",
+      "reason": "protocol: credential material paths compared case-sensitively"
+    },
+    {
+      "run_id": 40091876911,
+      "attempt": 1,
+      "result": "failure",
+      "reason": "protocol: a pinned licence installed outside the license directory was reported missing"
+    },
+    {
+      "run_id": 40092058469,
+      "attempt": 1,
+      "result": "failure",
+      "reason": "composed: installed archive names carry the lib prefix; product version is absent for sideload; the WebDAV Android header is Android-only"
+    },
+    {
+      "run_id": 40092505702,
+      "attempt": 1,
+      "result": "failure",
+      "reason": "composed windows: the link line, not object directives, names winhttp and advapi32; secret markers matched code constants"
+    },
+    {
+      "run_id": 40093092263,
+      "attempt": 1,
+      "result": "failure",
+      "reason": "composed macos: ld64 refused the -needed_library target name; ubuntu and windows composed prefixes were green"
+    },
+    {
+      "run_id": 40093997798,
+      "attempt": 1,
+      "result": "cancelled",
+      "reason": "superseded by the ld64 fix before any job started"
+    },
+    {
+      "run_id": 40094346998,
+      "attempt": 1,
+      "result": "failure",
+      "reason": "composed: the flag filter also dropped absolute library paths"
+    },
+    {
+      "run_id": 40094880635,
+      "attempt": 1,
+      "result": "failure",
+      "reason": "report: the running report job was still reported as queued when the collector read it; all nine installs green"
     }
   ],
   "reproduction": [
     "bash tests/reader_distribution_inventory/check_scope.sh",
     "python3 tests/reader_distribution_inventory/check_inventory.py",
+    "python3 tests/reader_distribution_inventory/check_combined.py",
     "python3 tools/check_reading_licenses.py <profile> build/<profile> build/<profile>/stage build/<profile>/licenses.json --require-release-ready",
     "python3 tests/reader_distribution_inventory/inventory.py --profile <profile> --platform <platform> --runner-os <host> --build build/<profile> --stage build/<profile>/stage --licenses build/<profile>/licenses.json --consumer build/reading-consumer/reading-document --probe build/probe/probe --probe-build build/probe --output build/<profile>/inventory",
+    "python3 tests/reader_distribution_inventory/combined.py --prefix build/prefix --platform <platform> --runner-os <host> --sdk-build build/reading-library --sdk-licenses build/combined/licenses.json --consumers build/combined-consumers --output build/combined/inventory",
     "python3 tests/reader_distribution_inventory/aggregate.py --downloads build/downloads --output build/aggregate --spdx-schema <schema> --cdx-schema <schema> --run-id <run> --attempt 1 --source-sha <sha>"
   ]
 }
