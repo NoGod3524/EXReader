@@ -170,8 +170,9 @@ def main():
     installed = Path(args.installed)
     header = installed / 'include' / 'reader_jump_history.h'
     need(header.exists(), 'the installed package has no reader_jump_history.h')
-    libraries = sorted(str(p.relative_to(installed)) for p in installed.glob('lib/*'))
-    need(any('jump_history' in name for name in libraries), 'the installed package has no jump-history library')
+    libraries = sorted(p.relative_to(installed).as_posix() for p in installed.glob('lib/*'))
+    library = next((name for name in libraries if 'jump_history' in name), None)
+    need(library is not None, 'the installed package has no jump-history library')
 
     summary = {
         'identity': {key: os.environ.get(key) for key in
@@ -180,7 +181,7 @@ def main():
         'originals': manifest,
         'installed': {
             'header_sha256': sha(header) if header.exists() else None,
-            'library_sha256': sha(installed / 'lib' / next((n for n in libraries if 'jump_history' in n), 'missing')),
+            'library_sha256': sha(installed / library) if library else None,
             'files': libraries,
         },
         'probe_sha256': sha(args.probe),

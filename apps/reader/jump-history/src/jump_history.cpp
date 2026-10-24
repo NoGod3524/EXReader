@@ -188,7 +188,10 @@ extern "C" reader_jh_status reader_jh_item_at(reader_jh *h,size_t index,reader_j
 extern "C" reader_jh_status reader_jh_complete(reader_jh *h,const reader_jh_item *item,reader_jh_error *error){
   return guarded(h,error,[&]{
     if(!item)reject(READER_JH_ARGUMENT,"Missing item");
-    if(item->struct_version!=READER_JH_STRUCT_VERSION)reject(READER_JH_VERSION_UNSUPPORTED,"Unknown reader_jh_item version");
+    if(item->struct_version!=READER_JH_STRUCT_VERSION){
+      if(!item->struct_version)reject(READER_JH_ARGUMENT,"Item was not read by reader_jh_peek");
+      reject(READER_JH_VERSION_UNSUPPORTED,"Unknown reader_jh_item version");
+    }
     if(item->direction!=READER_JH_BACK&&item->direction!=READER_JH_FORWARD)reject(READER_JH_ARGUMENT,"Item was not read by reader_jh_peek");
     if(item->generation!=h->generation||h->list.empty())reject(READER_JH_STALE,"History changed after the item was read");
     size_t at=h->cursor;

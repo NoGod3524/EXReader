@@ -172,6 +172,15 @@ void add_move(const std::string &what,const char *direction,const reader_jh_stat
   lifecycle.push_back(object().str("step",what).str("direction",direction).set("from_cursor",numv(before.cursor))
     .set("to_cursor",numv(after.cursor)).set("generation",numv(after.generation)).set("count",numv(after.count)).str("detail",detail).dump());
 }
+/* The wire the history stores carries a transient revision ID that was never
+   inserted; read it back out of the JSON so the run can prove it is not a row. */
+std::string revision_id_of(const std::string &wire){
+  const std::string key="\"id\":\"";size_t at=wire.find(key);
+  if(at==std::string::npos)return std::string();
+  at+=key.size();size_t end=wire.find('"',at);
+  if(end==std::string::npos||end-at!=32)return std::string();
+  return wire.substr(at,32);
+}
 size_t locate(const std::string &text,const std::string &needle,int occurrence=0){
   size_t at=std::string::npos,from=0;
   for(int i=0;i<=occurrence;i++){at=text.find(needle,from);if(at==std::string::npos)fatal("fixture text lacks "+needle);from=at+1;}
@@ -205,12 +214,10 @@ struct revcount { size_t rows=0,outbox=0; };
 revcount revisions(){
   revcount c;reader_revision_error e{};
   for(const char *role:{"txt","epub","pdf","cbz"}){
-    for(const char *kind:{"progress","annotation"}){
-      size_t rows=0;reader_revision_state state{};
-      reader_revision_status status=reader_revision_heads(S.store,kind,keys[role].c_str(),count_head,&rows,&state,&e);
-      if(status!=READER_REV_OK&&status!=READER_REV_NOT_FOUND)fatal(std::string("heads: ")+e.message);
-      c.rows+=rows;
-    }
+    size_t rows=0;reader_revision_state state{};
+    reader_revision_status status=reader_revision_heads(S.store,"progress",keys[role].c_str(),count_head,&rows,&state,&e);
+    if(status!=READER_REV_OK&&status!=READER_REV_NOT_FOUND)fatal(std::string("heads: ")+e.message);
+    c.rows+=rows;
   }
   size_t out=0;if(reader_revision_outbox(S.store,100,count_outbox,&out,&e)!=READER_REV_OK)fatal(std::string("outbox: ")+e.message);
   c.outbox=out;return c;
@@ -218,7 +225,9 @@ revcount revisions(){
 struct sdkcount { size_t progress_found=0,notes=0,fixed_notes=0,epub_notes=0; };
 sdkcount sdk_state(){
   sdkcount c;exr_error e{};
-  for(const char *role:{"txt","epub","pdf","cbz"}){
+  /* Fixed-page books store page positions instead of a reflow selector, so the
+     reflow progress getter is asked only about the reflow and EPUB books. */
+  for(const char *role:{"txt","epub"}){
     exr_anchor a{};exr_anchor_state s=EXR_ANCHOR_MISSING;
     if(exr_library_progress_get(S.lib,S.ids[role],&a,&s,&e)!=EXR_OK)fatal(std::string("progress_get: ")+e.message);
     if(s==EXR_ANCHOR_FOUND)c.progress_found++;
@@ -521,6 +530,13 @@ int main(int argc,char **argv){
   {
     reader_jh_state s=snapshot(H);
     expect("the history still holds every recorded landing",s.count>=6,state_text(s));
+    reader_jh_item it=current_item(H);
+    std::string id=revision_id_of(it.wire?std::string(it.wire,it.wire_bytes):std::string());
+    char *bytes=nullptr;size_t size=0;reader_revision_info info{};reader_revision_error re{};
+    reader_revision_status st=id.empty()?READER_REV_FORMAT:reader_revision_get(S.store,id.c_str(),&bytes,&size,&info,&re);
+    expect("the transient position ID is not a stored product revision",!id.empty()&&st==READER_REV_NOT_FOUND,
+      "id="+(id.empty()?std::string("missing"):id)+" status="+numv((unsigned)st));
+    reader_revision_bytes_free(bytes);reader_jh_item_release(&it);
     closed(&H);
   }
   exr_anchor_free(&aTxt1);exr_anchor_free(&aTxt2);exr_anchor_free(&aEpub);

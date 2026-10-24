@@ -148,7 +148,8 @@ reader_jh_status reader_jh_item_at(reader_jh *,size_t index,reader_jh_item *,rea
 /* Moves the cursor onto a peeked item, only after the host has actually
    navigated to a FOUND resolve. STALE if any change happened since the peek.
    Not calling it is the cancellation: an unresolved, ambiguous or cancelled
-   target never moves the cursor. */
+   target never moves the cursor. A zeroed item is ARGUMENT; any other unknown
+   struct_version is VERSION_UNSUPPORTED. */
 reader_jh_status reader_jh_complete(reader_jh *,const reader_jh_item *,reader_jh_error *);
 /* Releases item.wire and zeroes the item. Safe on a zeroed item and on NULL. */
 void reader_jh_item_release(reader_jh_item *);
