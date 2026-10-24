@@ -433,6 +433,15 @@ static void pump_status(reader_tts *handle, exr_tts_utterance *utterance) {
      real out parameter, and the package never uses the value. */
   hr = utterance->voice->lpVtbl->GetStatus(utterance->voice, &status, &bookmark);
   if (bookmark) CoTaskMemFree(bookmark);
+  EnterCriticalSection(&handle->lock);
+  handle->probe_hresult = (int)hr;
+  handle->probe_running = (unsigned)status.dwRunningState;
+  handle->probe_word_pos = (unsigned)status.ulInputWordPos;
+  handle->probe_word_len = (unsigned)status.ulInputWordLen;
+  handle->probe_stream = (unsigned)status.ulCurrentStream;
+  handle->probe_last_queued = (unsigned)status.ulLastStreamQueued;
+  handle->probe_samples++;
+  LeaveCriticalSection(&handle->lock);
   if (!utterance->started) push_started(handle, utterance);
   if (!utterance->speaking) return;   /* the STARTED push may have ended the request */
   if (SUCCEEDED(hr)) {
@@ -536,6 +545,9 @@ static reader_tts_status start_speak(reader_tts *handle, exr_tts_utterance *utte
   utterance->text_bytes = command->text_bytes;
   utterance->request_id = command->request_id;
   utterance->last_word = 0;
+  EnterCriticalSection(&handle->lock);
+  handle->probe_samples = 0;
+  LeaveCriticalSection(&handle->lock);
   utterance->started = 0;
   utterance->saw_stream = 0;
   command->text = NULL;

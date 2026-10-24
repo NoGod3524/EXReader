@@ -29,6 +29,17 @@ long reader_tts_windows_debug_live_allocations(void);
 void reader_tts_windows_debug_simulate_no_service(int enabled);
 /* Delay the worker's initialisation of later handles so INITIALIZING is observable. */
 void reader_tts_windows_debug_init_delay_ms(unsigned ms);
+/* Last engine status the worker observed (test/diagnostic only; hosts must not call
+   it). samples counts the status queries of the last and current request, so a
+   report can prove the engine progress path really ran. */
+typedef struct {
+  int32_t hresult;
+  uint32_t running_state;
+  uint32_t word_position, word_length;
+  uint32_t current_stream, last_queued;
+  uint32_t samples;
+} reader_tts_windows_engine_probe;
+void reader_tts_windows_debug_engine_probe(reader_tts *, reader_tts_windows_engine_probe *);
 #ifdef __cplusplus
 }
 #endif

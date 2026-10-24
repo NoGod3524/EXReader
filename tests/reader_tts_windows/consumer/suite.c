@@ -474,6 +474,18 @@ static void phase_speak(suite *s) {
   check_count(s, "speak.first_event_started", (unsigned long long)t.first_kind, READER_TTS_STARTED, 0);
   check_count(s, "speak.last_event_finished", (unsigned long long)t.last_kind, READER_TTS_FINISHED, 0);
   check_count(s, "speak.foreign_events", (unsigned long long)foreign, 0, 0);
+  {
+    reader_tts_windows_engine_probe probe;
+    memset(&probe, 0, sizeof probe);
+    reader_tts_windows_debug_engine_probe(handle, &probe);
+    info(s, "engine_samples", (unsigned long long)probe.samples);
+    info(s, "engine_hresult", (unsigned long long)(uint32_t)probe.hresult);
+    info(s, "engine_running_state", (unsigned long long)probe.running_state);
+    info(s, "engine_word_pos", (unsigned long long)probe.word_position);
+    info(s, "engine_word_len", (unsigned long long)probe.word_length);
+    info(s, "engine_current_stream", (unsigned long long)probe.current_stream);
+    info(s, "engine_last_queued", (unsigned long long)probe.last_queued);
+  }
   reader_tts_observe(handle, &snap, NULL);
   check_state(s, "speak.state_ready", snap.state, READER_TTS_READY);
   check_count(s, "speak.idle_request_id", snap.request_id, 0, 0);

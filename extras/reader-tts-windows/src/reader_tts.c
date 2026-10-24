@@ -623,6 +623,19 @@ reader_tts_status reader_tts_windows_set_wav_output(reader_tts *handle, const wc
   return fail(handle, error, status, handle->ack_native);
 }
 
+void reader_tts_windows_debug_engine_probe(reader_tts *handle, reader_tts_windows_engine_probe *out) {
+  if (!handle || !out) return;
+  EnterCriticalSection(&handle->lock);
+  out->hresult = handle->probe_hresult;
+  out->running_state = handle->probe_running;
+  out->word_position = handle->probe_word_pos;
+  out->word_length = handle->probe_word_len;
+  out->current_stream = handle->probe_stream;
+  out->last_queued = handle->probe_last_queued;
+  out->samples = handle->probe_samples;
+  LeaveCriticalSection(&handle->lock);
+}
+
 reader_tts_status reader_tts_destroy(reader_tts **handle_pointer, reader_tts_error *error) {
   reader_tts *handle;
   if (error) { error->code = READER_TTS_OK; error->native_code = 0; }

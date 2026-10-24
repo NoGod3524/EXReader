@@ -89,6 +89,10 @@ struct reader_tts {
   size_t head, count;
   wchar_t *wav_path;
   volatile LONG close_requested;
+  /* Engine status of the last query, published for the package's acceptance probe. */
+  int probe_hresult;
+  unsigned probe_running, probe_word_pos, probe_word_len, probe_stream, probe_last_queued;
+  unsigned probe_samples;
 };
 
 /* reader_tts.c: accounting, validation, queue and owner-side plumbing. */
