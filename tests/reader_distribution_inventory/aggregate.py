@@ -233,10 +233,12 @@ def verify_combined(key, payload, inventory, licenses_doc, run, components=None,
     contract.need(not forbidden, 'combined_forbidden')
     contract.need(observations == inventory.get('observations'), 'combined_observations')
     credential = sorted(observations.get('credential_files') or [])
-    contract.need(credential and all(any(marker in path for marker in
-                                         ('exr_credentials', 'exreader-credentials',
-                                          'exreadercredentials'))
-                                    for path in credential), 'combined_credential_scope')
+    markers = ('exr_credentials', 'exreader-credentials', 'exreadercredentials')
+    foreign = [path for path in credential if not any(marker in path for marker in markers)]
+    if not credential or foreign:
+        error = contract.InventoryError('combined_credential_scope')
+        error.detail = foreign or ['no credential material in the prefix']
+        raise error
     hits = contract.scan_private_paths(payload, contract.GENERIC_PRIVATE_PATHS)
     leaked = sorted({hit['path'] for hit in hits})
     contract.need(leaked == sorted({row['path'] for row in
