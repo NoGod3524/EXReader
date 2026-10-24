@@ -3,6 +3,7 @@
 #include "../../examples/linux/reading.h"
 #include "../../apps/reader/desktop/catalog_sdk.h"
 #include <reader_batch_import.h>
+#include <sqlite3.h>
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <stdio.h>
@@ -94,10 +95,20 @@ int main(int argc,char **argv) {
   g_free(cancel_root);cancel_root=g_build_filename(argv[3],"closing",NULL);value.batch_root=cancel_root;value.action=READER_BATCH_BEGIN;value.batch_token++;
   run(reader,&value,&result);REQUIRE(result.batch_imported==1);close_batch(reader,&value,&result);
   reading=command(READER_SHELF);linux_reader_execute(reader,&reading,&result);REQUIRE(result.status==EXR_OK && result.has_shelf && result.book_count==38);reader_result_free(&result);
-  linux_reader_close(reader);inspect(argv[1],argv[4]);
+  /* A real competing product writer must never roll back committed SDK bytes. */
+  char *repair=g_build_filename(argv[3],"repair",NULL);value.batch_root=repair;value.action=READER_BATCH_BEGIN;value.batch_token++;
+  run(reader,&value,&result);REQUIRE(result.batch_imported==1 && result.batch_rows[0].committed);reader_result_free(&result);
+  char *product=g_strconcat(argv[1],".product.sqlite",NULL);sqlite3 *blocker=NULL;
+  REQUIRE(sqlite3_open(product,&blocker)==SQLITE_OK);g_free(product);
+  REQUIRE(sqlite3_exec(blocker,"BEGIN IMMEDIATE",NULL,NULL,NULL)==SQLITE_OK);
+  value.action=READER_BATCH_MAP;linux_reader_execute(reader,&value,&result);
+  REQUIRE(result.status==EXR_DATABASE && result.batch_done && result.batch_pending==1 && result.batch_rows[0].committed && !result.batch_rows[0].mapped);
+  reader_result_free(&result);REQUIRE(sqlite3_exec(blocker,"ROLLBACK",NULL,NULL,NULL)==SQLITE_OK);REQUIRE(sqlite3_close(blocker)==SQLITE_OK);
+  linux_reader_close(reader);
   /* Reopen does not restart enumeration and original mappings remain stable. */
   REQUIRE(linux_reader_open(argv[1],argv[2],&control,&reader,&error)==EXR_OK);linux_reader_execute(reader,&reading,&result);
-  REQUIRE(result.status==EXR_OK && result.has_shelf && result.book_count==38);reader_result_free(&result);linux_reader_close(reader);
-  g_free(root);g_free(book);g_free(cancel_root);g_free(changed);g_free(linked);
+  REQUIRE(result.status==EXR_OK && result.has_shelf && result.book_count==39);reader_result_free(&result);linux_reader_close(reader);
+  inspect(argv[1],argv[4]);
+  g_free(root);g_free(book);g_free(cancel_root);g_free(changed);g_free(linked);g_free(repair);
   printf("GTK_BATCH_BACKEND checks=%u all passed\n",checks);return 0;
 }

@@ -318,6 +318,14 @@ jobs:
             gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
             /usr/bin/python3 tests/reader_gtk_receive/check_atspi_fixes.py --payload build/account-package/EXReader-Linux --output build/account-atspi-fixes
           '
+      - name: Strict source bound folder scope and retained palette failures
+        if: always()
+        env:
+          BATCH_DIAGNOSTIC: ${{ github.event_name == 'push' || github.event.inputs.batch_diagnostic_only == 'true' }}
+        run: |
+          diagnostic=""
+          if [ "$BATCH_DIAGNOSTIC" = true ]; then diagnostic=--diagnostic; fi
+          python3 tests/reader_gtk_batch_import/check_evidence.py --build build $diagnostic
       - name: Preserve source-bound evidence and original logs without credentials or TLS private keys
         if: always()
         uses: actions/upload-artifact@v4
@@ -355,6 +363,7 @@ jobs:
             build/records-reading-sdk/
             build/records-backend/
             build/records-ui/
+            build/gtk-batch-evidence.json
             build/gtk-batch-backend/
             build/gtk-batch-ui/
             build/gtk-batch-original/

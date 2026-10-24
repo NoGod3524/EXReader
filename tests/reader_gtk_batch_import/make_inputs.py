@@ -40,6 +40,9 @@ def main(output):
     changed.mkdir()
     for name in ('one.txt', 'two.txt'):
         (changed / name).write_text('Original selected path %s.\n' % name)
+    repair = output / 'repair'
+    repair.mkdir()
+    (repair / 'Kept after catalog failure.txt').write_text('The SDK committed source survives a product writer failure.\n')
     files = []
     for path in sorted(output.rglob('*')):
         if path.is_file() and not path.is_symlink():

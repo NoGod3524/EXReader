@@ -103,7 +103,7 @@ static void batch_execute(linux_reader *reader,const reader_command *command,rea
     code=reader_batch_enumerate_open(&options,&batch->scan,&error);
     if(code!=READER_BATCH_OK) {
       result->status=batch_status(code,&error);result->batch_done=1;result->batch_cancelled=code==READER_BATCH_CANCELLED;
-      snprintf(result->message,sizeof(result->message),"%s",error.message);batch_free(reader);return;
+      g_strlcpy(result->message,error.message,sizeof(result->message));batch_free(reader);return;
     }
   } else if(!batch || command->batch_token!=batch->token) {
     result->status=EXR_ARGUMENT;result->batch_done=1;return;
@@ -125,7 +125,7 @@ static void batch_execute(linux_reader *reader,const reader_command *command,rea
     code=reader_batch_enumerate_next(batch->scan,&batch->items,&batch->count,&batch->complete,&batch->truncated,&error);
     if(code!=READER_BATCH_OK) {
       if(code==READER_BATCH_CANCELLED) batch_stop(batch);else { batch->done=1;result->status=batch_status(code,&error); }
-      snprintf(result->message,sizeof(result->message),"%s",error.message);batch_copy(batch,result);return;
+      g_strlcpy(result->message,error.message,sizeof(result->message));batch_copy(batch,result);return;
     }
     batch->seen+=batch->count;
     if(!batch->count) { batch->needs_map=1;batch_copy(batch,result);return; }
