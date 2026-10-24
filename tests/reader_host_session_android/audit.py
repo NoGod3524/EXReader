@@ -38,6 +38,8 @@ for variant in ('Debug','Release'):
             original_id=re.search(r'Build ID:\s*(\w+)',tool('llvm-readelf','-n',original));package_id=re.search(r'Build ID:\s*(\w+)',tool('llvm-readelf','-n',packaged));assert original_id and package_id and original_id[1]==package_id[1]
             prefix=a.output/(lower+'-'+library);Path(str(prefix)+'.map').write_text(mapping);Path(str(prefix)+'-symbols.txt').write_text(symbols);Path(str(prefix)+'-dynamic.txt').write_text(dynamic)
             if library=='exreader_host':
+                sdk_archives=sorted(path.name for path in Path('build/session-android/sdk-stage').rglob('*.a'))
+                assert sdk_archives and not any(name in mapping for name in sdk_archives),sdk_archives
                 assert 'libexr_sideload.a' in mapping and 'exr_sideload_export_original' in symbols
                 assert not re.search(r'\b(?:sqlite3_|exr_library_|exr_document_|exr_anchor_|exr_pager_)\w*\s*$',symbols,re.M)
                 assert 'libexr_library.a' not in mapping and 'exr_vendor_exr_sqlite' not in mapping and 'reader_catalog_sqlite' not in mapping

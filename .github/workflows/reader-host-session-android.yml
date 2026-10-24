@@ -3,13 +3,20 @@ on:
   push:
     branches: [codex/reader-android-sync-session]
   workflow_dispatch:
+    inputs:
+      inspect_retained:
+        description: Inspect the fixed retained failed UI artifact without executing tests
+        type: boolean
+        default: false
 permissions:
   contents: read
+  actions: read
 defaults:
   run:
     shell: bash
 jobs:
   android:
+    if: ${{ !inputs.inspect_retained }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -135,3 +142,13 @@ jobs:
             build/session-android/sideload-stage/
             tests/reader_session_android/android/session/build/outputs/apk/
           if-no-files-found: error
+  inspect:
+    if: ${{ inputs.inspect_retained }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect fixed failed UI evidence only on this Actions runner
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_host_session_android/inspect.py
