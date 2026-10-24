@@ -7,4 +7,6 @@ final class NativeSdk {
     static native long[] importFile(long owner,String path,int format);
     static native String[] exportOriginal(long owner,long book,String path,long cancelAt,long maximum);
     static native void close(long owner);
+    static native byte[][] inspect(long owner,long book);
+    static native long[] reopenAfterImport(long owner,long oldBook,String path,int format,boolean cancel);
 }
