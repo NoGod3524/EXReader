@@ -605,10 +605,16 @@ def main():
                     'explicit_restore': 'window_explicit_restore_unblocks_in_one_snapshot'}
 
     def window_gap():
+        nonlocal before_main
         for case in corpus['window']:
             window_case(dict(case, title=corpus['books'][case['book']]['title']))
             record(window_names[case['case']])
         assert leftovers(root / 'window') == []
+        # The harness itself committed the four advance revisions through a second
+        # process; baseline the store again here so every export that follows is
+        # still proven not to write it.
+        before_main = dump(main_db)
+        assert dump(small_db) == before_small
 
     # ---------- real output path aliases ----------
     def alias_gap():
@@ -707,7 +713,8 @@ def main():
     digests.update(window_digests)
     report = {'accepted': True, 'digests': digests, 'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
               'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'granted_platform': system, 'checks': checks, 'count': len(checks),
-              'skipped': skipped, 'cases': cases, 'wires': len(corpus['wires']), 'mass_annotations': 1234,
+              'skipped': skipped, 'cases': cases, 'wires': len(corpus['wires']), 'batch_wires': corpus['batch_wires'],
+              'mass_annotations': 1234, 'window_advance_revisions': len(corpus['window']),
               'database_unchanged': True, 'schema_changed': False, 'sdk_changed': False, 'host_ui_accepted': False,
               'import_or_conflict_resolution': False, 'performance_claimed': False}
     (root / 'result.json').write_text(json.dumps(report, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
