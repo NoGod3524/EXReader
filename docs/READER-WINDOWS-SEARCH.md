@@ -1,5 +1,17 @@
 # Windows 原生书内搜索候选
 
+## 最终同源验收
+
+源码 `0d74f24a7f378564cd72a8fa92acb78be0f54828` / [run 40136985552](https://github.com/NoGod3524/EXReader/actions/runs/40136985552) / attempt1 的生产作业 `121000479954` 与严格汇总 `121001965050` 均success，`accepted=true`、`problems=[]`。授予范围仅Windows原生书内搜索宿主及同源保留回归。
+
+新增TXT界面13、多格式/真实取消及生命周期25、真实键盘/UIA17项全过；原F1 264、原158动作、产品10、worker5、2202书架13、元数据18、账号32、旧键盘/UIA24也全部同源通过。23项当前/旧报告协议反例均被拒绝。最终汇总在Actions重下载实际ZIP，核对API和上传digest、字节数/有效期、source/run/attempt、全部报告及候选/隔离worker/原F1二进制身份。
+
+生产工件 `12577646849` 为53,723,789字节，SHA-256 `a0c9ac88d0fad4304bf680277958f4915a0886b0ba4dc60858a6dcb31778e4b3`；汇总工件 `12577651698` 为752字节，SHA-256 `8f0abcc985794da3febfd094af7badd1aff070f8b91db1c3d67b4786b5424bb4`，有效期均 `2027-01-22T22:04:34Z`。候选SHA-256 `9b033a4cc896b45185a8ec5b55af1a32a8746a62ce67ded95d70fd8780e39d96`；隔离worker `ba3ac9bb31b0db3f6b8b00e72f96e4f60475a724fe1b42e2285363525d13e698`。
+
+无OCR；纯图像CBZ搜索明确不支持，但其公开空文字快照可用于另行验收的页点书签/进度。性能、实际读屏播报、其它宿主与六目标成品未授予。下面保留各次原失败和修正过程，旧源码证据不替代本次共同源码。
+
+## 实现与保留历史
+
 从 G1 共同源码证据 HEAD `3bcc6511` 独立接续，分支 `codex/reader-windows-search-ui`。
 默认配置不加入搜索；Windows账号宿主显式开启 `EXR_READER_WINDOWS_SEARCH` 后消费安装后的原样F1。
 
