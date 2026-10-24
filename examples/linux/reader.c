@@ -607,7 +607,7 @@ static void import_dialog(void) {
   choosing_file=TRUE;
   int response=gtk_dialog_run(GTK_DIALOG(dialog));choosing_file=FALSE;
 #ifdef EXR_READER_PREFERENCES_UI
-  preferences_import_dialog=NULL;
+  preferences_import_dialog=NULL;preferences_import_schedule();
 #endif
   if(response==GTK_RESPONSE_ACCEPT) {
     char *path=gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));gtk_widget_destroy(dialog);

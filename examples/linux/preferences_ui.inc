@@ -18,6 +18,9 @@ static struct {
   size_t bitmap_width,bitmap_height;
   double press_x,press_y;
   gboolean pressed;
+  guint import_idle;
+  gboolean import_visible,import_active,import_entry,import_accept;
+  char import_selected[65],import_typed[65],import_focus[64];
 } preferences;
 static void preferences_style(void);
 static void preferences_queue(const reader_preferences *,gboolean);
@@ -351,40 +354,54 @@ static gboolean preferences_page_release(GtkWidget *widget,GdkEventButton *event
   return TRUE;
 }
 static char *preferences_observation(void) {
-  char *selected=preferences_import_dialog ? gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(preferences_import_dialog)):NULL;
-  char *digest=selected ? g_compute_checksum_for_string(G_CHECKSUM_SHA256,selected,-1):g_strdup("");
-  GtkWidget *accept=preferences_import_dialog ? gtk_dialog_get_widget_for_response(GTK_DIALOG(preferences_import_dialog),GTK_RESPONSE_ACCEPT):NULL;
-  GtkWidget *focus=preferences_import_dialog ? gtk_window_get_focus(GTK_WINDOW(preferences_import_dialog)):NULL;
-  char *entry_digest=GTK_IS_ENTRY(focus) ? g_compute_checksum_for_string(G_CHECKSUM_SHA256,gtk_entry_get_text(GTK_ENTRY(focus)),-1):g_strdup("");
   char *value=g_strdup_printf("[preferences]\nvisible=%d\nrunning=%d\nload_status=%d\nsave_status=%d\nfont=%.3f\nline=%.3f\nparagraph=%.3f\nmargin=%.3f\ntheme=%u\nsystem_theme=%u\neffective_theme=%u\ndirection=%u\ninput=%u\nzoom=%u\nportal_version=%u\nportal_events=%u\nbitmap_width=%zu\nbitmap_height=%zu\ndeferred_closes=%u\nactions=%u\ngesture_events=%u\ngesture_turns=%u\n[native_import]\nvisible=%d\nselected_sha256=%s\naccept_sensitive=%d\nactive=%d\nentry_focused=%d\nentry_sha256=%s\nfocus_type=%s\n",
     preferences.dialog!=NULL,preferences.running,preferences.load_status,preferences.save_status,(double)appearance.font_size,(double)appearance.line_spacing,
     (double)appearance.paragraph_spacing,(double)appearance.margin,appearance.theme,appearance_system_theme,
     (unsigned)reader_preferences_effective_theme(&appearance,(reader_preferences_theme)appearance_system_theme),appearance.page_turn_direction,appearance.page_turn_input,appearance.fixed_page_zoom,preferences.portal_version,preferences.portal_events,
     preferences.bitmap_width,preferences.bitmap_height,preferences.deferred_closes,preferences.actions,preferences.gesture_events,preferences.gesture_turns,
-    preferences_import_dialog && gtk_widget_get_mapped(preferences_import_dialog),digest,accept && gtk_widget_is_sensitive(accept),
-    preferences_import_dialog && gtk_window_is_active(GTK_WINDOW(preferences_import_dialog)),GTK_IS_ENTRY(focus),entry_digest,focus ? G_OBJECT_TYPE_NAME(focus):"");
-  g_free(entry_digest);g_free(digest);g_free(selected);return value;
+    preferences.import_visible,preferences.import_selected,preferences.import_accept,preferences.import_active,
+    preferences.import_entry,preferences.import_typed,preferences.import_focus);
+  return value;
+}
+static gboolean preferences_import_snapshot(gpointer unused) {
+  (void)unused;preferences.import_idle=0;
+  GtkWidget *dialog=preferences_import_dialog,*focus=dialog ? gtk_window_get_focus(GTK_WINDOW(dialog)):NULL;
+  GtkWidget *accept=dialog ? gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog),GTK_RESPONSE_ACCEPT):NULL;
+  /* GTK's Ctrl+L changes focus before it commits location_mode. Its public
+     get_filename must run after that native transition, never from set-focus. */
+  char *selected=dialog ? gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog)):NULL;
+  char *digest=selected ? g_compute_checksum_for_string(G_CHECKSUM_SHA256,selected,-1):g_strdup("");
+  char *typed=GTK_IS_ENTRY(focus) ? g_compute_checksum_for_string(G_CHECKSUM_SHA256,gtk_entry_get_text(GTK_ENTRY(focus)),-1):g_strdup("");
+  preferences.import_visible=dialog && gtk_widget_get_mapped(dialog);preferences.import_active=dialog && gtk_window_is_active(GTK_WINDOW(dialog));
+  preferences.import_entry=GTK_IS_ENTRY(focus);preferences.import_accept=accept && gtk_widget_is_sensitive(accept);
+  g_strlcpy(preferences.import_selected,digest,sizeof(preferences.import_selected));g_strlcpy(preferences.import_typed,typed,sizeof(preferences.import_typed));
+  g_strlcpy(preferences.import_focus,focus ? G_OBJECT_TYPE_NAME(focus):"",sizeof(preferences.import_focus));
+  g_free(typed);g_free(digest);g_free(selected);state();return G_SOURCE_REMOVE;
+}
+static void preferences_import_schedule(void) {
+  if(!preferences.cleaned && !preferences.import_idle) preferences.import_idle=g_idle_add(preferences_import_snapshot,NULL);
 }
 static void preferences_import_changed(GtkFileChooser *chooser,gpointer unused) {
-  (void)chooser;(void)unused;state();
+  (void)chooser;(void)unused;preferences_import_schedule();
 }
 static gboolean preferences_import_mapped(GtkWidget *widget,GdkEventAny *event,gpointer unused) {
-  (void)widget;(void)event;(void)unused;state();return FALSE;
+  (void)widget;(void)event;(void)unused;preferences_import_schedule();return FALSE;
 }
-static void preferences_import_entry(GtkEditable *entry,gpointer unused) { (void)entry;(void)unused;state(); }
+static void preferences_import_entry(GtkEditable *entry,gpointer unused) { (void)entry;(void)unused;preferences_import_schedule(); }
 static void preferences_import_focus(GtkWindow *dialog,GtkWidget *focus,gpointer unused) {
   (void)dialog;(void)unused;
   if(GTK_IS_ENTRY(focus) && !g_object_get_data(G_OBJECT(focus),"import-entry-observed")) {
     g_object_set_data(G_OBJECT(focus),"import-entry-observed",GINT_TO_POINTER(1));
     g_signal_connect(focus,"changed",G_CALLBACK(preferences_import_entry),NULL);
   }
-  state();
+  preferences_import_schedule();
 }
 static void preferences_import_activity(GObject *object,GParamSpec *property,gpointer unused) {
-  (void)object;(void)property;(void)unused;state();
+  (void)object;(void)property;(void)unused;preferences_import_schedule();
 }
 static void preferences_cleanup(void) {
   preferences.cleaned=TRUE;
+  if(preferences.import_idle) g_source_remove(preferences.import_idle);
   if(preferences.platform) { g_signal_handler_disconnect(preferences.platform,preferences.theme_watch);g_signal_handler_disconnect(preferences.platform,preferences.dark_watch); }
   g_clear_object(&preferences.portal);g_clear_object(&preferences.css);g_clear_object(&preferences.return_focus);g_clear_object(&preferences.resume_focus);g_free(preferences.path);
 }
