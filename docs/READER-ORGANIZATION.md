@@ -18,4 +18,21 @@
 云端 `reader-desktop-shelf.yml` 保留原 12 项目录与 10 项查询组，新增 15 项组织读取组：
 每类 2202 个分组及 2202 本书、父子分类、顺序并列、全部双向遍历、云端／本地过滤、
 删除依赖、文字筛选、非法参数与 owner 拒绝、现有索引范围，以及禁止任何写入的 authorizer。
-所有构建、夹具生成和测试仅在 Actions，尚待本轮源码的三平台结果。
+所有构建、夹具生成和测试仅在 Actions。
+
+## 原生接口验收
+
+受测源码 `4bfe09766d6a92445a09d7a66b47fa9eb59ab325`，
+[run 40046721924](https://github.com/NoGod3524/EXReader/actions/runs/40046721924)，
+attempt1，**3/3 作业成功**。Windows、Linux、macOS 均同次通过原12组、查询10组、
+新增组织读取15组；没有跳过、失败或缺项。
+
+| 平台 | 作业 | 工件 | 字节 |
+| --- | --- | --- | ---: |
+| Linux | `120730038191` | `12540829185` | 496409 |
+| Windows | `120730038574` | `12541956025` | 497029 |
+| macOS | `120730038421` | `12542090525` | 496841 |
+
+三份工件同 run／source／attempt、未过期；API 的大小和 SHA-256 与上传日志一致。
+各报告散列、完整工件 digest 见 [验收记录](validation/reader-organization-native.json)。
+只授予原生只读接口，`ui_accepted=false`、`complete_product=false`。
