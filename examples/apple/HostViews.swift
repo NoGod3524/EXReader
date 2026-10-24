@@ -77,20 +77,6 @@ private struct ShelfGeometryKey: PreferenceKey {
     }
 }
 
-private struct ShelfGeometryProbe: View {
-    @ObservedObject var shelf: HostShelf
-    var rowKey: String? = nil
-
-    var body: some View {
-        let revision = shelf.geometryRevision
-        GeometryReader { geometry in
-            Color.clear.preference(key: ShelfGeometryKey.self, value: rowKey.map {
-                ShelfGeometry(frames: [$0: geometry.frame(in: .named("catalog-shelf"))], revision: revision)
-            } ?? ShelfGeometry(size: geometry.size, revision: revision))
-        }
-    }
-}
-
 #if EXR_APPLE_SHELF_REVIEW
 private struct ShelfObservationView: View {
     let value: String
@@ -130,6 +116,7 @@ struct LibraryScreen: View {
     }
 
     var body: some View {
+        let geometryRevision = shelf.geometryRevision
         let restoreRevision = shelf.restoreRevision
         VStack(spacing: 0) {
             HStack {
@@ -174,7 +161,8 @@ struct LibraryScreen: View {
                 Spacer()
             } else {
                 ScrollViewReader { proxy in
-                    List {
+                    ScrollView {
+                      VStack(spacing: 0) {
                         ForEach(shelf.rows) { book in
                             Button {
                                 shelf.choose(book)
@@ -198,14 +186,19 @@ struct LibraryScreen: View {
                             .accessibilityIdentifier("library.book.\(book.sdkID - 1)")
                             .accessibilityLabel(Text("\(book.title)，\(book.author)，\(book.format.uppercased())"))
                             .id(book.id)
-                            .listRowInsets(EdgeInsets(top: 0, leading: 8, bottom: 0, trailing: 8))
-                            .background(ShelfGeometryProbe(shelf: shelf, rowKey: book.id))
+                            .padding(.horizontal, 8)
+                            .background(GeometryReader { geometry in
+                                Color.clear.preference(key: ShelfGeometryKey.self,
+                                    value: ShelfGeometry(frames: [book.id: geometry.frame(in: .named("catalog-shelf"))], revision: geometryRevision))
+                            })
                         }
+                      }
                     }
                     .accessibilityIdentifier("library.list")
-                    .listStyle(.plain)
                     .coordinateSpace(name: "catalog-shelf")
-                    .background(ShelfGeometryProbe(shelf: shelf))
+                    .background(GeometryReader { geometry in
+                        Color.clear.preference(key: ShelfGeometryKey.self, value: ShelfGeometry(size: geometry.size, revision: geometryRevision))
+                    })
                     .onPreferenceChange(ShelfGeometryKey.self) { geometry in shelf.observe(geometry.frames, size: geometry.size, revision: geometry.revision) }
                     .task(id: restoreRevision) { @MainActor in restoreShelf(proxy, revision: restoreRevision) }
                 }

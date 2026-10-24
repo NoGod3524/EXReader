@@ -3,6 +3,16 @@ on:
   push:
     branches: [codex/reader-apple-shelf]
   workflow_dispatch:
+    inputs:
+      scope:
+        type: choice
+        options: [full, recovery]
+        default: full
+  workflow_call:
+    inputs:
+      scope:
+        type: string
+        default: full
 permissions:
   contents: read
   actions: read
@@ -54,7 +64,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [macos, iphone, ipad]
+        platform: ${{ fromJSON(inputs.scope == 'recovery' && '["macos","ipad"]' || '["macos","iphone","ipad"]') }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
@@ -101,13 +111,21 @@ jobs:
           signing=NO
           if test "$platform" = macos; then scheme=EXReaderHost-macOS; sdk="$PWD/stage/macos"; signing=YES; fi
           destination=$(sed -n '1p' build/apple-shelf-ui/destination.txt)
+          cases=()
+          if test '${{ inputs.scope }}' = recovery; then
+            if test "$platform" = macos; then
+              cases=(-only-testing:EXReaderHostUITests-macOS/ShelfUITests/test02ForwardTraversalOfAllOriginals)
+            else
+              cases=(-only-testing:EXReaderHostUITests-iOS/ShelfUITests/test06RotationBackgroundAndProcessRestore)
+            fi
+          fi
           xcodebuild test -project build/apple-shelf-project/EXReaderHost.xcodeproj -scheme "$scheme" \
             -destination "$destination" -derivedDataPath build/ShelfDerivedData \
-            -resultBundlePath "build/apple-shelf-ui/$platform.xcresult" -parallel-testing-enabled NO \
+            -resultBundlePath "build/apple-shelf-ui/$platform.xcresult" -parallel-testing-enabled NO "${cases[@]}" \
             -test-timeouts-enabled YES -default-test-execution-time-allowance 2700 -maximum-test-execution-time-allowance 2700 \
             EXR_SDK_DIR="$sdk" CODE_SIGNING_ALLOWED="$signing" 2>&1 | tee "build/apple-shelf-ui/$platform-xcodebuild.log"
       - name: Strict native evidence and original-byte identity
-        if: always()
+        if: always() && inputs.scope != 'recovery'
         id: evidence
         continue-on-error: true
         run: |
@@ -127,16 +145,31 @@ jobs:
             --container "$container" --app "$app" --seed native-artifact/seed/shelf-seed.json \
             --sdk-root "stage/$target" --sdk-identity "sdk-artifacts/apple-shelf-sdk-$target-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT/build/sdk-identity.json" \
             --destination build/apple-shelf-ui/destination.txt
+      - name: Mark focused original-case execution as diagnostic only
+        if: always() && inputs.scope == 'recovery'
+        env:
+          UI_OUTCOME: ${{ steps.ui.outcome }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          value = {'diagnostic_only': True, 'accepted': False, 'source_sha': os.environ['GITHUB_SHA'],
+                   'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+                   'platform': '${{ matrix.platform }}', 'ui_outcome': os.environ['UI_OUTCOME']}
+          Path('build/apple-shelf-ui/scope.json').write_text(json.dumps(value, indent=2) + '\n')
+          print(json.dumps(value))
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: apple-shelf-ui-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/apple-shelf-ui/
           if-no-files-found: error
-      - if: always() && (steps.ui.outcome != 'success' || steps.evidence.outcome != 'success')
+      - if: always() && (steps.ui.outcome != 'success' || (inputs.scope != 'recovery' && steps.evidence.outcome != 'success'))
         run: exit 1
 
   summary:
+    if: inputs.scope != 'recovery'
     needs: [sdk, native, ui]
     runs-on: ubuntu-latest
     steps:

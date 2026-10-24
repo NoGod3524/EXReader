@@ -6,7 +6,7 @@ on:
     inputs:
       scope:
         type: choice
-        options: [bounded, shelf, shelf-ui, shelf-anchor, shelf-traversal]
+        options: [bounded, shelf, shelf-ui, shelf-anchor, shelf-traversal, shelf-recovery]
         default: bounded
 permissions:
   contents: read
@@ -62,7 +62,12 @@ jobs:
         if: steps.probe.outcome != 'success'
         run: exit 1
   shelf:
-    if: github.event_name == 'workflow_dispatch' && startsWith(inputs.scope, 'shelf')
+    if: github.event_name == 'workflow_dispatch' && startsWith(inputs.scope, 'shelf') && inputs.scope != 'shelf-recovery'
     uses: ./.github/workflows/reader-apple-shelf-diagnostic.yml
     with:
       mode: ${{ inputs.scope == 'shelf-traversal' && 'traversal' || inputs.scope == 'shelf-anchor' && 'anchor' || inputs.scope == 'shelf-ui' && 'ui' || 'native' }}
+  shelf-recovery:
+    if: github.event_name == 'workflow_dispatch' && inputs.scope == 'shelf-recovery'
+    uses: ./.github/workflows/reader-apple-shelf.yml
+    with:
+      scope: recovery
