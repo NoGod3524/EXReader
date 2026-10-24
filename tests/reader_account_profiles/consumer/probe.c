@@ -20,14 +20,21 @@ static void print_status(reader_account_profiles_status status,
   (void)printf("message=%s\n", error ? error->message : "");
 }
 
+static void copy_field(char *out, size_t capacity, const char *value) {
+  size_t length = value ? strlen(value) : 0u;
+  if (length >= capacity) length = capacity - 1u;
+  if (length) memcpy(out, value, length);
+  out[length] = '\0';
+}
+
 static void make_profile(reader_account_profile *profile, const char *id, const char *account,
                          const char *url, const char *name) {
   memset(profile, 0, sizeof(*profile));
   profile->struct_size = (uint32_t)sizeof(*profile);
-  (void)snprintf(profile->profile_id, sizeof(profile->profile_id), "%s", id);
-  (void)snprintf(profile->account_id, sizeof(profile->account_id), "%s", account);
-  (void)snprintf(profile->root_url, sizeof(profile->root_url), "%s", url);
-  (void)snprintf(profile->display_name, sizeof(profile->display_name), "%s", name);
+  copy_field(profile->profile_id, sizeof(profile->profile_id), id);
+  copy_field(profile->account_id, sizeof(profile->account_id), account);
+  copy_field(profile->root_url, sizeof(profile->root_url), url);
+  copy_field(profile->display_name, sizeof(profile->display_name), name);
 }
 
 static reader_account_profiles_status load_store(const char *store,
