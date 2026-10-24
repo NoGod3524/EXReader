@@ -9,7 +9,7 @@ static struct {
   reader_preferences pending;
   reader_preferences_legacy legacy;
   char *path;
-  gboolean running,awaiting_commit,want_close,exit_wanted,persist,refresh,cleaned;
+  gboolean running,awaiting_commit,want_close,exit_wanted,persist,cleaned;
   int load_status,save_status,portal_color;
   unsigned portal_events,portal_version;
   unsigned deferred_closes;
@@ -52,7 +52,6 @@ static void preferences_initialize(void) {
 }
 static void preferences_prepare(reader_command *command) {
   command->preferences_set=1;command->preferences=command->action==READER_SETTINGS ? preferences.pending:appearance;
-  command->system_theme=appearance_system_theme;
   if(command->action==READER_FONT) command->preferences.font_size=(float)command->font;
   if(command->action==READER_ZOOM) command->preferences.fixed_page_zoom=(uint32_t)command->zoom;
   if(command->action==READER_SETTINGS) {
@@ -63,6 +62,9 @@ static void preferences_prepare(reader_command *command) {
     preferences.running=TRUE;preferences.awaiting_commit=FALSE;
     if(preferences.dialog) {
       g_clear_object(&preferences.resume_focus);GtkWidget *focus=gtk_window_get_focus(GTK_WINDOW(preferences.dialog));
+      GtkWidget *combos[]={preferences.theme,preferences.direction,preferences.input};
+      for(size_t i=0;focus && i<G_N_ELEMENTS(combos);i++)
+        if(focus==combos[i] || gtk_widget_is_ancestor(focus,combos[i])) { focus=combos[i];break; }
       if(focus) preferences.resume_focus=g_object_ref(focus);
     }
   }
@@ -100,6 +102,8 @@ static void preferences_result(const reader_result *result,reader_action action)
   if(result->status==EXR_OK && result->has_preferences) {
     appearance=result->preferences;preferences_style();
     font_size=(int)lroundf(appearance.font_size);zoom_percent=(int)appearance.fixed_page_zoom;
+    if((action==READER_SETTINGS && preferences.persist) || action==READER_FONT || action==READER_ZOOM)
+      preferences.load_status=READER_PREFERENCES_OK;
   }
   if(result->status==EXR_OK && result->has_frame) { preferences.bitmap_width=result->width;preferences.bitmap_height=result->height; }
   if(action==READER_SETTINGS || action==READER_FONT || action==READER_ZOOM) {
@@ -121,8 +125,6 @@ static void preferences_result(const reader_result *result,reader_action action)
     if(preferences.want_close) preferences_close();
     if(preferences.exit_wanted && !busy && !saving && !closing) {
       preferences.exit_wanted=FALSE;close_window(window,NULL,NULL);
-    } else if(preferences.refresh && !busy && !saving && !save_failed && !closing && profile_writable) {
-      preferences.refresh=FALSE;preferences_queue(&appearance,FALSE);
     }
   }
   state();
@@ -171,10 +173,7 @@ static void preferences_platform_update(void) {
   }
   if(value!=appearance_system_theme) {
     appearance_system_theme=value;
-    if(appearance.theme==READER_PREFERENCES_THEME_SYSTEM) {
-      preferences_style();preferences.refresh=TRUE;
-      if(profile_writable && !busy && !saving && !save_failed) { preferences.refresh=FALSE;preferences_queue(&appearance,FALSE); }
-    }
+    if(appearance.theme==READER_PREFERENCES_THEME_SYSTEM) preferences_style();
     state();
   }
 }
@@ -306,7 +305,7 @@ static void preferences_open(GtkWidget *button,gpointer unused) {
   preferences.input=preferences_combo(grid,6,"Page turn input",inputs,4);preferences.zoom=preferences_spin(grid,7,"Fixed page zoom",25,400,25);gtk_spin_button_set_digits(GTK_SPIN_BUTTON(preferences.zoom),0);
   const char *colors[]={"Light foreground","Light background","Dark foreground","Dark background"};
   for(size_t i=0;i<4;i++) { preferences.colors[i]=preferences_field(grid,8+(int)i,colors[i],gtk_entry_new());gtk_entry_set_max_length(GTK_ENTRY(preferences.colors[i]),9); }
-  GtkWidget *notice=gtk_label_new("Layout fields apply to reflow. Fixed pages keep their original colors; zoom changes their scale.");
+  GtkWidget *notice=gtk_label_new("Theme changes the interface. Reading pages stay light; page themes are not available yet. Fixed pages keep their original colors.");
   gtk_label_set_line_wrap(GTK_LABEL(notice),TRUE);gtk_box_pack_start(GTK_BOX(area),notice,FALSE,FALSE,8);
   GtkWidget *actions=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,8);gtk_box_pack_start(GTK_BOX(area),actions,FALSE,FALSE,6);
   const char *names[]={"_Defaults","_Reload","_Import old appearance","_Save"};GCallback callbacks[]={G_CALLBACK(preferences_defaults),G_CALLBACK(preferences_reload),G_CALLBACK(preferences_import),G_CALLBACK(preferences_save)};

@@ -52,7 +52,6 @@ struct linux_reader {
 #ifdef EXR_READER_PREFERENCES
   reader_preferences appearance;
   int appearance_enabled;
-  uint32_t system_theme;
 #endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   reader_catalog *catalog;
@@ -279,10 +278,11 @@ static exr_status pager_create(linux_reader *reader,reader_session *session,size
   if(reader->appearance_enabled) {
     const reader_preferences *p=&reader->appearance;
     config.page=(exr_layout_options){520,640,p->margin,p->font_size,p->line_spacing,p->paragraph_spacing};
-    int dark=reader_preferences_effective_theme(p,(reader_preferences_theme)reader->system_theme)==READER_PREFERENCES_THEME_DARK;
-    const uint8_t *fg=dark ? p->dark_foreground:p->light_foreground,*bg=dark ? p->dark_background:p->light_background;
-    snprintf(css,sizeof(css),"*{color:#%02x%02x%02x%02x !important;}body{background-color:#%02x%02x%02x%02x !important;}",
-      fg[0],fg[1],fg[2],fg[3],bg[0],bg[1],bg[2],bg[3]);config.user_css=css;
+    /* The public raster API currently fixes its canvas to white. Keep page ink
+       in the readable Light palette; interface Dark colors must not make pale
+       text on white paper. Full reading-page themes await a canvas API. */
+    const uint8_t *fg=p->light_foreground;
+    snprintf(css,sizeof(css),"*{color:#%02x%02x%02x%02x !important;}",fg[0],fg[1],fg[2],fg[3]);config.user_css=css;
   }
 #endif
   if(session->bounded) {
@@ -665,7 +665,6 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
   memset(result,0,sizeof(*result));
 #ifdef EXR_READER_PREFERENCES
   reader_preferences old_appearance=reader->appearance;int old_enabled=reader->appearance_enabled;
-  uint32_t old_theme=reader->system_theme;
   if(command->preferences_set) {
     const reader_preferences *p=&command->preferences;
     reader_preferences_error problem={0};
@@ -673,7 +672,7 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
        520-2*p->margin<p->font_size*1.5f || 640-2*p->margin<p->font_size*p->line_spacing) {
       status=EXR_ARGUMENT;strcpy(result->message,"Settings do not fit this reader's 520 by 640 page; previous settings retained");goto done;
     }
-    reader->appearance=*p;reader->appearance_enabled=1;reader->system_theme=command->system_theme;
+    reader->appearance=*p;reader->appearance_enabled=1;
   }
 #endif
 #ifdef EXR_READER_ACCOUNT
@@ -849,7 +848,7 @@ preferences_saved:
 done:
 #ifdef EXR_READER_PREFERENCES
   if(status!=EXR_OK && command->preferences_set) {
-    reader->appearance=old_appearance;reader->appearance_enabled=old_enabled;reader->system_theme=old_theme;
+    reader->appearance=old_appearance;reader->appearance_enabled=old_enabled;
   }
 #endif
   if(owned_session) session_free(&next);

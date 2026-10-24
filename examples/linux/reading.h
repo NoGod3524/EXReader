@@ -47,7 +47,6 @@ typedef struct {
   reader_preferences preferences;
   const char *preferences_path;
   int preferences_set;
-  uint32_t system_theme;
 #endif
 } reader_command;
 typedef struct { int64_t id;size_t part,start,end;char *text; } reader_note;

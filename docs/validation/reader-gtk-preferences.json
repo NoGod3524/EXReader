@@ -1,6 +1,6 @@
 {
   "accepted": false,
-  "status": "implementation written; cloud execution pending",
+  "status": "cloud iteration in progress; actual reflow page background refused and retained",
   "baseline": "8a7cab996f7b3a876254f16a90dab69bbeb9f15a",
   "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
   "preferences_implementation": "1f51b4066cd705a670b3139061336c298e479081",
@@ -15,6 +15,7 @@
   "retained_fault_checks": 4,
   "retained_atspi_checks": 10,
   "whole_reflow_canvas_background_accepted": false,
+  "dark_reading_page_accepted": false,
   "g13_full_audit_accepted": false,
   "orca_accepted": false,
   "physical_device_execution": false,
