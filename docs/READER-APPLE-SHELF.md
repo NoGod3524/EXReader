@@ -239,6 +239,20 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
   limit and unchanged 2,700-second test allowance for original macOS case02
   and iPad case06. Their raw results declare diagnostic-only/accepted=false;
   the complete collector and summary run only in the unchanged full mode.
+- `96711a180f574bea7a1573445c40e4090e9467bf` passed the focused
+  [40060908432](https://github.com/NoGod3524/EXReader/actions/runs/40060908432),
+  attempt 1. Original macOS case02 completed both 2,202-original traversals in
+  825.160 seconds; original iPad case06 preserved the exact source key through
+  rotation and both process restarts in 153.369 seconds. SDK2, catalog8,
+  shelf16 and the actual standalone host build also passed. All five artifact
+  registrations match source/run/attempt and actual uploaded ZIP size/digest.
+  Mac artifact `12547812149` is 4,916,733 bytes,
+  `sha256:ddf80e95766dec996dde387c02bd54fbb4bd976464e23f9fe0de10ac6eb2a002`;
+  iPad artifact `12548120194` is 596,679 bytes,
+  `sha256:022f4e8f3ff5ea3a37b317ea1af9abc2c61e89cc72240c823abc2f88282c9549`.
+  Focused output remains diagnostic-only/accepted=false. Product code is now
+  fixed for one fresh same-source complete shelf, mapping and original Apple
+  run. The 150-row functional result grants no performance budget acceptance.
 
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.
