@@ -3,6 +3,7 @@
 #include <catalog.h>
 #include <sqlite3.h>
 #include <chrono>
+#include <atomic>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -67,6 +68,37 @@ int main(int argc,char **argv){try{
       std::thread other([&]{status=reader_metadata_pending(owner,&result,&error);});other.join();mode="inspect";
     }else if(args[1]=="second-owner"){
       reader_metadata_owner *other=nullptr;status=reader_metadata_open(args[2].c_str(),args[3].c_str(),&other,&error);if(other)return 5;mode="inspect";
+    }else if(args[1]=="snapshot-race"){
+      status=reader_metadata_prepare_group(owner,READER_GROUP_TAG,args.at(4).c_str(),&snapshot,&error);
+      if(status!=READER_METADATA_OK)return 8;
+      const reader_metadata_view *initial=reader_metadata_snapshot_view(snapshot);
+      if(!initial||initial->head_count!=1)return 9;
+      std::string first=initial->heads[0];reader_metadata_snapshot_free(snapshot);snapshot=nullptr;
+      std::atomic<int> writer_error{0};std::atomic<bool> started{false};
+      std::thread writer([&]{
+        reader_revisions *store=nullptr;reader_revision_error e{};
+        if(reader_revisions_open(args[2].c_str(),&store,&e)){writer_error=1;started=true;return;}
+        started=true;std::string parent=first;
+        for(int i=0;i<24;++i){
+          char next[33];if(reader_revision_new_id(next,&e)){writer_error=2;break;}
+          const char *head=parent.c_str();reader_command_context context{store,next,&head,1};
+          std::string name="v"+std::string(next);reader_group_command input{READER_COMMAND_PUT,READER_GROUP_TAG,args[4].c_str(),name.c_str(),nullptr,0};
+          reader_command_result committed{};reader_command_error command_error{};
+          if(reader_command_apply_group(&context,&input,&committed,&command_error)){writer_error=3;break;}
+          parent=next;std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        if(reader_revisions_close(&store,&e))writer_error=4;
+      });
+      while(!started)std::this_thread::yield();
+      int coherent=0,conflicts=0,mismatched=0;
+      for(int i=0;i<240;++i){
+        auto prepared=reader_metadata_prepare_group(owner,READER_GROUP_TAG,args[4].c_str(),&snapshot,&error);
+        if(prepared==READER_METADATA_OK){const auto *v=reader_metadata_snapshot_view(snapshot);if(!v||v->head_count!=1||v->group.name!="v"+std::string(v->heads[0]))++mismatched;else ++coherent;}
+        else if(prepared==READER_METADATA_CONFLICT)++conflicts;else ++mismatched;
+        reader_metadata_snapshot_free(snapshot);snapshot=nullptr;
+      }
+      writer.join();if(writer_error||mismatched||!coherent)return 10;
+      status=READER_METADATA_OK;extra=",\"coherent\":"+std::to_string(coherent)+",\"conflicts\":"+std::to_string(conflicts);mode="inspect";
     }else if(args[1]=="cleanup-denied"){
       status=reader_metadata_prepare_group(owner,READER_GROUP_TAG,nullptr,&snapshot,&error);
       reader_group_command input{READER_COMMAND_PUT,READER_GROUP_TAG,nullptr,"Committed cleanup refusal",nullptr,0};
