@@ -64,6 +64,7 @@ REQUIRED_CASES = (
 )
 
 PROBE = ""
+SESSION_PROOF = {}
 SESSION = ""
 WORKER = ""
 ROOT = Path()
@@ -803,6 +804,11 @@ def case_cross_account_real_session():
     expect(process.returncode == 0, "session consumer failed: %s" % process.stderr[-800:])
     line = [row for row in process.stdout.splitlines() if row.strip().startswith("{")][-1]
     values = json.loads(line)
+    SESSION_PROOF.clear()
+    SESSION_PROOF.update(values)
+    (ROOT / "session").mkdir(parents=True, exist_ok=True)
+    (ROOT / "session" / "session-consumer.json").write_text(
+        json.dumps(values, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     expect(values["prepare_a"] == 0 and values["prepare_b"] == 0, "a plan was refused")
     expect(values["distinct"] is True, "the two accounts share a product path")
     expect(values["create_a"] == 0, "the first session was not created")
@@ -910,6 +916,7 @@ def main():
             "file_bytes": 131072,
             "lock_timeout_ms": {"default": 2000, "maximum": 10000},
         },
+        "session_proof": SESSION_PROOF,
         "sdk_changed": False,
         "schema_changed": False,
         "product_sql_written": False,
