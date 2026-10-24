@@ -232,6 +232,20 @@ final class HostCatalog {
         return result
     }
 
+    func readingBook(sdkID: Int64) throws -> HostProductBook {
+        let (database, statement) = try prepare("SELECT b.book_key,b.format,b.source_sha256,b.source_bytes,b.title,b.author,b.sort_title,b.favorite,l.location_kind FROM reader_books b JOIN reader_local_books l USING(book_key) WHERE b.deleted=0 AND l.sdk_book_id=? LIMIT 2", [.integer(sdkID)])
+        defer { sqlite3_finalize(statement) }
+        try check(sqlite3_step(statement), database, expected: SQLITE_ROW)
+        guard let key = columnText(statement, 0), let format = columnText(statement, 1), let sha = columnText(statement, 2),
+              let title = columnText(statement, 4), let author = columnText(statement, 5), let sort = columnText(statement, 6),
+              let location = columnText(statement, 8), sqlite3_column_type(statement, 3) == SQLITE_INTEGER,
+              sqlite3_column_type(statement, 7) == SQLITE_INTEGER else { throw HostCatalogError.invalid("阅读记录原件映射无效") }
+        let value = HostProductBook(key: key, sdkID: sdkID, format: format, sha256: sha, bytes: sqlite3_column_int64(statement, 3),
+            title: title, author: author, sort: sort, favorite: sqlite3_column_int(statement, 7), locationKind: location)
+        try check(sqlite3_step(statement), database, expected: SQLITE_DONE)
+        return value
+    }
+
     func bootstrapVerified(_ book: HostProductBook, store: OpaquePointer) throws {
         var state = reader_revision_state(), error = reader_revision_error()
         let status = book.key.withCString { reader_revision_heads(store, "book", $0, nil, nil, &state, &error) }
