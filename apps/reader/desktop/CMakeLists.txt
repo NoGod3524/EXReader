@@ -123,6 +123,7 @@ if(EXR_READER_BUILD_GTK)
     target_link_libraries(exreader-linux-reading PRIVATE EXReaderCredentials::exr_credentials
       EXReaderSideload::exr_sideload EXReaderWebDAV::exr_webdav EXReaderReadingState::reader_reading_state)
     target_link_libraries(exreader-linux PRIVATE EXReaderSession::reader_session EXReaderCredentials::exr_credentials)
+    target_link_options(exreader-linux PRIVATE "-Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/gtk-account-host.map")
   endif()
   add_executable(reader-gtk-shelf-check ../../../tests/linux_host/shelf_backend.c)
   target_compile_options(reader-gtk-shelf-check PRIVATE -Wall -Wextra -Werror)

@@ -8,6 +8,27 @@ import sqlite3
 import subprocess
 import time
 
+REQUIRED_CHECKS = [
+    'received_seed_uses_four_exact_originals_and_eighteen_public_sdk_captures',
+    'received_scan_retains_exact_history_without_projecting_or_importing_books',
+    'received_explicit_native_action_projects_safe_metadata_in_bounded_owner_pages_without_sdk_import',
+    'received_unresolved_book_versions_remain_retained_and_visible_without_choosing_a_head',
+    'received_hash_mismatch_refuses_import_without_replacing_the_existing_reader_or_cache',
+    'received_symlink_cache_is_refused_without_following_or_modifying_its_target',
+    'received_txt_explicit_retry_imports_and_opens_the_verified_original',
+    'received_import_restores_the_preexisting_reader_before_the_explicit_book_switch',
+    'received_epub_original_opens_through_the_actual_bounded_native_host',
+    'received_missing_pdf_cache_drives_real_download_and_closed_before_owner_import',
+    'received_cbz_original_opens_through_the_actual_fixed_page_host',
+    *['received_' + role + '_selected_progress_and_annotations_resolve_through_public_v2_without_mislocation'
+      for role in ('txt', 'epub', 'pdf', 'cbz')],
+    'received_selected_heads_keep_the_other_progress_revisions_in_history_without_implicit_navigation',
+    'received_remote_progress_is_resolved_without_writing_the_device_resume_position',
+    'received_sdk_mapping_keeps_remote_title_author_and_favorite_instead_of_local_defaults',
+    'received_public_sdk_readback_confirms_four_originals_and_zero_copied_product_annotations',
+    'received_downloaded_book_reopens_offline_from_the_sdk_when_cache_and_server_are_unavailable',
+]
+
 
 def run_receive_checks(context):
     assert os.environ.get('GITHUB_ACTIONS') == 'true'
@@ -94,7 +115,7 @@ def run_receive_checks(context):
                   not state['shelf_restoring'] and state['books'] == 1, timeout=60)
 
     def activate(role):
-        search(titles[role]);host.key('Tab', 'Home', 'Return')
+        search(titles[role]);host.key('F2', 'Home', 'Return')
 
     def mapped(role):
         values = sql('SELECT sdk_book_id FROM reader_local_books WHERE book_key=?', (book_keys[role],))
@@ -104,7 +125,7 @@ def run_receive_checks(context):
         value = ready(lambda state: state['visible'] == '0' and mapped(role) > 0 and
                       int(state['imported_book']) == mapped(role), seconds=180)
         host.wait(lambda state: state['book'] == mapped(role) and state['reader_visible'] == 1 and not state['saving'], timeout=90)
-        return value
+        return dict(value, host_frame=host.read())
 
     cache = host.folder / 'profile/sync-work'
     txt_cache = cache / (manifest['txt']['sha256'] + '.txt')
@@ -152,14 +173,17 @@ def run_receive_checks(context):
             case = expected[rid]
             rows.append(rid);resolutions[rid] = dict(status=int(status), state=int(state), part=int(part), page=int(page), start=int(start), end=int(end))
             if case['state'] == 'FOUND':
-                assert int(status) == 0 and int(start) == case['start'] and int(end) == case['end'], case['id']
+                assert int(status) == 0 and int(state) == 1 and int(start) == case['start'] and int(end) == case['end'], case['id']
                 if case['mode'] == 'epub_chapter': assert int(part) == case['part'], case['id']
             else:
-                assert case['state'] == 'AMBIGUOUS' and int(status) == 6, case['id']
+                assert case['state'] == 'AMBIGUOUS' and int(status) == 6 and int(state) == 2, case['id']
         assert len(rows) == int(value['reading_rows']) and value['reading_more'] == '0'
         checked('received_' + role + '_selected_progress_and_annotations_resolve_through_public_v2_without_mislocation')
     assert set(resolutions) == set(expected) and len(expected) == 15
     checked('received_selected_heads_keep_the_other_progress_revisions_in_history_without_implicit_navigation')
+    assert observed['txt']['host_frame']['start'] == 0 and observed['epub']['host_frame']['part'] == 0
+    assert observed['pdf']['host_frame']['page'] == 0 and observed['cbz']['host_frame']['page'] == 0
+    checked('received_remote_progress_is_resolved_without_writing_the_device_resume_position')
     for role, key in book_keys.items():
         assert sql('SELECT title,author,favorite FROM reader_books WHERE book_key=?', (key,)) == [(titles[role], '远端作者 café', 1)]
     checked('received_sdk_mapping_keeps_remote_title_author_and_favorite_instead_of_local_defaults')
@@ -176,12 +200,13 @@ def run_receive_checks(context):
         assert value['notes'] == 0 and output.read_bytes() == (fixtures / manifest[role]['file']).read_bytes()
     checked('received_public_sdk_readback_confirms_four_originals_and_zero_copied_product_annotations')
     pdf_cache.unlink();context['flags']['http'] = 503
-    before_requests = len(requests);host.launch();search(titles['pdf']);host.key('Tab', 'Home', 'Return')
+    before_requests = len(requests);host.launch();search(titles['pdf']);host.key('F2', 'Home', 'Return')
     host.wait(lambda state: state['book'] == ids['pdf'] and state['reader_visible'] == 1 and not state['error'], timeout=60)
     assert len(requests) == before_requests and not pdf_cache.exists()
     checked('received_downloaded_book_reopens_offline_from_the_sdk_when_cache_and_server_are_unavailable')
     context['flags']['http'] = 0
     open_account()
+    assert names == REQUIRED_CHECKS and len(names) == 20
     return {'checks': names, 'selected_captures': len(expected), 'resolutions': resolutions,
             'found': sum(value['status'] == 0 for value in resolutions.values()), 'mislocated': 0,
             'originals_read_back': 4, 'public_capture_seed_sha256': hashlib.sha256(seed_report.read_bytes()).hexdigest()}

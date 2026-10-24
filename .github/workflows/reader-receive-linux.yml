@@ -72,7 +72,7 @@ jobs:
           cmake -S apps/reader/reading-state -B build/account-reading-state -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
           cmake --build build/account-reading-state --parallel 4
           cmake --install build/account-reading-state
-          cmake -S tests/reader_reading_v2/consumer -B build/account-reading-probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX"
+          cmake -S tests/reader_reading_v2/consumer -B build/account-reading-probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage"
           cmake --build build/account-reading-probe --parallel 4
           cmake -S tests/reader_gtk_receive -B build/account-inspect -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/reading-library/stage"
           cmake --build build/account-inspect --parallel 4
@@ -82,6 +82,7 @@ jobs:
         run: |
           cmake -S apps/reader/desktop -B build/account-desktop -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DREADER_METADATA_PREFIX="$ACCOUNT_PREFIX" -DREADER_ACCOUNT_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_FIXTURES="$PWD/tests/fixtures" -DEXR_READER_BUILD_GTK=ON -DEXR_LINUX_REVIEW_TESTS=ON -DEXR_LINUX_FIXED_TESTS=ON 2>&1 | tee build/account-logs/host-configure.log
           cmake --build build/account-desktop --parallel 4 --verbose 2>&1 | tee build/account-logs/host-build.log
+          python3 tests/reader_gtk_receive/check_link.py --map build/account-desktop/gtk-account-host.map --binary build/account-desktop/gtk-host/exreader-linux --output build/account-logs/host-link.json
           ctest --test-dir build/account-desktop --output-on-failure --no-tests=error --timeout 180 --output-junit "$PWD/build/account-logs/desktop-tests.xml"
           python3 -m py_compile tests/linux_host/check_account_ui.py
           python3 tools/build_linux_host.py --sdk build/reading-library/stage --binary build/account-desktop/gtk-host/exreader-linux --output build/account-package
@@ -133,6 +134,7 @@ jobs:
             build/account-desktop/organization-check/
             build/account-desktop/kill-*/
             build/account-desktop/sdk-link.map
+            build/account-desktop/gtk-account-host.map
             build/account-desktop/Testing/Temporary/LastTest.log
             build/account-desktop/CMakeCache.txt
             build/account-stage/
