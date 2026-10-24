@@ -1,0 +1,63 @@
+name: Android WebDAV native backend candidate
+on:
+  push:
+    branches: [codex/reader-webdav-android]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  platform-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Require frozen SDK and unchanged desktop DAV during platform investigation
+        run: |
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
+          git diff --exit-code 4d4e2be80f6dd103e4b39e739ef3813974acdf00 HEAD -- extras/webdav/src/webdav.cpp extras/webdav/include/exr_webdav.h extras/webdav/CMakeLists.txt
+      - name: Install Android tools and prepare a test-only CA on Actions
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "emulator" "system-images;android-34;default;x86_64"
+          python tests/webdav_android/fixture.py prepare --output build/webdav-android/fixture
+          mkdir -p tests/webdav_android/android/platform/src/debug/res/raw
+          cp build/webdav-android/fixture/public/ca.crt tests/webdav_android/android/platform/src/debug/res/raw/fixture_ca.crt
+          gradle -p tests/webdav_android/android --no-daemon --stacktrace :platform:assembleDebug :platform:assembleDebugAndroidTest :platform:assembleRelease
+      - name: Enable emulator acceleration
+        run: sudo chmod 666 /dev/kvm
+      - name: Probe actual public URLConnection methods and timeout behavior
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: python tests/webdav_android/run_platform.py --fixture build/webdav-android/fixture --output build/webdav-android/platform
+      - name: Preserve raw platform capability evidence and public certificates only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-webdav-android-platform-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/webdav-android/platform/
+            build/webdav-android/fixture/public/
+            build/webdav-android/fixture/requests.json
+            tests/webdav_android/android/platform/build/outputs/apk/
+          if-no-files-found: error
