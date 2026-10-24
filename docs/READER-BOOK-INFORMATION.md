@@ -56,12 +56,16 @@ void reader_book_information_free(reader_book_information *);
 | 解析器 | `parser_status`、`page_count_known`、`page_count`、`parser_title`、`epub_*`、`properties` | `exr_library_fixed_source` / `exr_library_epub_info_get` |
 
 未知就是未知：非定页格式的 `page_count_known=0`，空作者是 `author_known=0` 而不是
-"未知作者"，EPUB 没有公开标题就 `parser_title=NULL`。`location_kind` 只在存在本机映射
+"未知作者"，EPUB 没有公开标题就 `parser_title=NULL`。
+
+`parser_title` 是 fixed 文档提供方自己的标题，不是 PDF 的 Info `/Title`：
+CBZ 取 ComicInfo 的 `Title`；从库里读出的 PDF 没有提供方标题，因此为 NULL，PDF 的
+Info 标题只出现在 `properties` 的 `http://purl.org/dc/terms/title` 里。`location_kind` 只在存在本机映射
 时非空（云only行是空串）。视图不包含本机 SDK 书 ID：跨设备身份只有产品 `book_key`。
 
 | 格式 | 解析器字段 |
 | --- | --- |
-| `pdf`、`cbz` | 页数、标题、键值元数据（PDF Info 八个键 + XMP；ComicInfo 属性） |
+| `pdf`、`cbz` | 页数、fixed 提供方标题、键值元数据（PDF Info 八个键 + XMP；ComicInfo 属性） |
 | `epub` | 只有 bounded_storage / global_extent 存储模式；页数与标题保持未知 |
 | `txt`、`html`、`fb2`、`docx`、`rtf`、`mobi` | `NO_PUBLIC_FIELDS` |
 

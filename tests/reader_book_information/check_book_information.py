@@ -291,7 +291,9 @@ def case_identity_sha256(world, a):
     a.eq("plain.parser_status", view.get("parser_status"), PARSER_OK)
     a.eq("plain.page_count_known", view.get("page_count_known"), 1)
     a.eq("plain.page_count", view.get("page_count"), 3)
-    a.eq("plain.parser_title", view.get("parser_title"), "Plain title")
+    # A PDF read from the library has no provider document title: the Info title
+    # is a metadata property, not a fixed-document attribute.
+    a.eq("plain.parser_title", view.get("parser_title"), None)
     a.eq("plain.parser_title_truncated", view.get("parser_title_truncated"), 0)
     a.eq("plain.epub_mode_known", view.get("epub_mode_known"), 0)
     keys = world.manifest["pdf_info_keys"]
@@ -315,14 +317,18 @@ def case_unicode_fields(world, a):
     view = view_of(a, world.read(world.keys["unicode"], 1, 1), "unicode")
     expect_availability(a, view, "unicode", LOCAL_PRESENT, SHA256_IDENTITY)
     a.eq("unicode.product_title", view.get("title"), "产品标题：中文")
-    a.eq("unicode.parser_title", view.get("parser_title"), unicode_book["title"])
+    a.eq("unicode.parser_title", view.get("parser_title"), None)
     a.eq("unicode.page_count", view.get("page_count"), 2)
     keys = world.manifest["pdf_info_keys"]
     expect_properties(a, view, "unicode", [(keys["title"], unicode_book["title"]),
                                            (keys["author"], unicode_book["author"]),
                                            (keys["subject"], unicode_book["subject"])])
-    a.eq("unicode.parser_title_bytes", len((view.get("parser_title") or "").encode("utf-8")),
+    properties = view.get("properties") or []
+    a.eq("unicode.info_title_bytes",
+         len((properties[0].get("value") or "").encode("utf-8")) if properties else None,
          len(unicode_book["title"].encode("utf-8")))
+    a.eq("unicode.info_title_scalars", properties[0].get("value") if properties else None,
+         unicode_book["title"])
 
 
 def case_overlong_fields(world, a):
@@ -334,8 +340,8 @@ def case_overlong_fields(world, a):
     a.eq("long.title_scalars", title, "书" * 341)
     a.eq("long.author_truncated", view.get("author_truncated"), 1)
     a.eq("long.author_bytes", len(view.get("author", "")), 1024)
-    a.eq("long.parser_title_truncated", view.get("parser_title_truncated"), 1)
-    a.eq("long.parser_title", view.get("parser_title"), "A" * 1024)
+    a.eq("long.parser_title", view.get("parser_title"), None)
+    a.eq("long.parser_title_truncated", view.get("parser_title_truncated"), 0)
     keys = world.manifest["pdf_info_keys"]
     a.eq("long.property_count", view.get("property_count"), 3)
     properties = view.get("properties") or []
