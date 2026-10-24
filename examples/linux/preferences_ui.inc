@@ -248,7 +248,7 @@ static void preferences_fill(const reader_preferences *p) {
 }
 static void preferences_save(GtkWidget *button,gpointer unused) {
   (void)button;(void)unused;if(preferences.running) return;
-  preferences.actions++;state();
+  preferences.actions++;
   GtkWidget *numbers[]={preferences.font,preferences.line,preferences.paragraph,preferences.margin,preferences.zoom};
   for(size_t i=0;i<G_N_ELEMENTS(numbers);i++) gtk_spin_button_update(GTK_SPIN_BUTTON(numbers[i]));
   reader_preferences p=appearance;p.font_size=(float)gtk_spin_button_get_value(GTK_SPIN_BUTTON(preferences.font));
@@ -259,8 +259,8 @@ static void preferences_save(GtkWidget *button,gpointer unused) {
   uint8_t *colors[]={p.light_foreground,p.light_background,p.dark_foreground,p.dark_background};
   for(size_t i=0;i<4;i++) {
     const char *value=gtk_entry_get_text(GTK_ENTRY(preferences.colors[i]));size_t length=strlen(value);
-    if((length!=7 && length!=9) || value[0]!='#') { preferences_notice("Use #RRGGBB or #RRGGBBAA colors");return; }
-    for(size_t j=1;j<length;j++) if(g_ascii_xdigit_value(value[j])<0) { preferences_notice("Use hexadecimal colors");return; }
+    if((length!=7 && length!=9) || value[0]!='#') { preferences_notice("Use #RRGGBB or #RRGGBBAA colors");state();return; }
+    for(size_t j=1;j<length;j++) if(g_ascii_xdigit_value(value[j])<0) { preferences_notice("Use hexadecimal colors");state();return; }
     for(size_t j=0;j<4;j++) colors[i][j]=j==3 && length==7 ? 255:(uint8_t)(16*g_ascii_xdigit_value(value[1+2*j])+g_ascii_xdigit_value(value[2+2*j]));
   }
   preferences_queue(&p,TRUE);
@@ -278,8 +278,8 @@ static void preferences_reload(GtkWidget *button,gpointer unused) {
 static void preferences_import(GtkWidget *button,gpointer unused) {
   (void)button;(void)unused;reader_preferences p=appearance;reader_preferences_error problem={0};
   preferences.actions++;
-  if(!preferences.legacy.present) { preferences_notice("No old appearance settings were found");return; }
-  if(reader_preferences_import_legacy(&p,&preferences.legacy,NULL,&problem)!=READER_PREFERENCES_OK) { preferences_notice("Old appearance values were invalid; current settings retained");return; }
+  if(!preferences.legacy.present) { preferences_notice("No old appearance settings were found");state();return; }
+  if(reader_preferences_import_legacy(&p,&preferences.legacy,NULL,&problem)!=READER_PREFERENCES_OK) { preferences_notice("Old appearance values were invalid; current settings retained");state();return; }
   preferences_fill(&p);preferences_notice("Old font and zoom shown. Save to apply this explicit import");state();
 }
 static void preferences_open(GtkWidget *button,gpointer unused) {
