@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 project(WebDAVAndroidConsumer LANGUAGES C CXX)
-find_package(EXReaderWebDAV CONFIG REQUIRED)
+find_package(EXReaderWebDAV CONFIG REQUIRED NO_CMAKE_FIND_ROOT_PATH)
 add_library(webdav-consumer SHARED bridge.cpp consumer.c)
 target_compile_features(webdav-consumer PRIVATE c_std_11 cxx_std_17)
 set_target_properties(webdav-consumer PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)

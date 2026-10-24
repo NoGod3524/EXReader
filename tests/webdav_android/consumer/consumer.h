@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 struct dav_result {
-  int status,http,published,reentry,wrong_owner;
+  int status,http,published,reentry,wrong_owner,first_status;
   uint64_t bytes,count;
   char resource[4097],title[1025];
 };

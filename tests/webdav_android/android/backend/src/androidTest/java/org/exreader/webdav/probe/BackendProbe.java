@@ -30,7 +30,7 @@ public final class BackendProbe extends Instrumentation {
         if(raw==null)throw new AssertionError("Native consumer did not return");
         JSONObject result=new JSONObject(new String(raw,StandardCharsets.UTF_8));
         if(result.getInt("status")!=test.optInt("expected"))throw new AssertionError(test.getString("name")+" status="+result.getInt("status"));
-        for(String field:new String[]{"count","title","reentry","wrong_owner","http"})
+        for(String field:new String[]{"count","title","reentry","wrong_owner","http","first_status"})
             if(test.has(field)&&!test.get(field).toString().equals(result.get(field).toString()))throw new AssertionError(test.getString("name")+" field="+field);
         if(test.has("first_resource")&&!test.getString("first_resource").equals(result.getString("resource")))throw new AssertionError("Encoded first resource differs");
         if(result.getLong("clients")!=0||result.getLong("uploads")!=0||result.getLong("attached")!=result.getLong("detached"))throw new AssertionError("Native cleanup counters failed");

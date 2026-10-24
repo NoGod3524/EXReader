@@ -28,6 +28,9 @@ void dav_consume(const char *root,const char *auth,const char *directory,const c
   exr_webdav_control control={cancelled,progress,&state};memset(result,0,sizeof(*result));
   result->status=exr_webdav_create(&config,&client,&error);if(result->status)goto done;
   state.client=client;
+  if(!strcmp(action,"recover")){
+    result->first_status=exr_webdav_download_file(client,"error404",directory,filename,&control,&download,&error);
+  }
   if(!strcmp(action,"owner")){
     pthread_t worker;struct wrong_state other={client,0};
     if(pthread_create(&worker,NULL,wrong,&other)!=0){result->status=EXR_DAV_IO;goto done;}
