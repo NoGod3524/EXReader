@@ -34,6 +34,7 @@ def same(value,expected):require(all(value.get(k)==v for k,v in expected.items()
 
 def inspect(root,all_exits):
     expected=identity();same(read(root/'device-report.json'),expected);device=read(root/'device-report.json')
+    require(digest(root/'apks/app-debug.apk')==digest(Path('build/owner-android/apks/app-debug.apk')),'organization and original owner applications differ')
     require(device['api']==34 and device['abi']=='x86_64' and device['count']==8 and device['failed']==0,'organization device suite failed')
     require([v['id'] for v in device['checks']]==NAMES and all(v['pass'] is True for v in device['checks']),'native cases failed/missing/repeated')
     xml_cases=[];files={}

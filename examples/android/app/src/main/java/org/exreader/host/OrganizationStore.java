@@ -85,9 +85,12 @@ final class OrganizationStore {
         return new MemberEdit(kind,group,key,before,rows.length==0?0:Long.parseLong(rows[0][2]),rows.length!=0,bootstrap);
     }
     String submit(IntentJournal.Command command,IntentJournal.Command bootstrap,HostTask task) throws Exception {
-        task.check();journal.create(command,bootstrap);return retry(task);
+        synchronized(IntentJournal.LOCK) { task.check();journal.create(command,bootstrap);return retryLocked(task); }
     }
     String retry(HostTask task) throws Exception {
+        synchronized(IntentJournal.LOCK) { return retryLocked(task); }
+    }
+    private String retryLocked(HostTask task) throws Exception {
         IntentJournal.Pending pending=journal.read();if(pending==null)return "No saved intent";
         if(pending.bootstrap!=null&&!pending.bootstrapDone) {
             IntentJournal.Command b=pending.bootstrap;

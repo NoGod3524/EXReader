@@ -13,8 +13,12 @@ import org.json.JSONObject;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /** Installed-provider snapshots, exact durable intents and UI fixture phases. */
 public final class OrganizationTest extends Instrumentation {
@@ -69,6 +73,26 @@ public final class OrganizationTest extends Instrumentation {
         require(p.command.json().toString().equals(c.json().toString()),"complete fields and exact heads persisted");
         require(count("reader_revisions")==0,"persist precedes any command");
         for(String bad:new String[]{"\ud800","\udc00","a\0b"}){boolean refused=false;try{IntentJournal.Command.group(1,0,id(1),bad,"",0,new String[0]);}catch(IllegalArgumentException error){refused=true;}require(refused,"invalid Unicode refused before journal");}
+        store().journal.clear();String large=String.valueOf((char)1).repeat(4096),sha="a".repeat(64),key="txt:"+sha;
+        IntentJournal.Command bootstrap=new IntentJournal.Command(2,0,0,NativeCatalog.newId(),"",key,"","",0,new String[0],"txt",sha,1,large,large,large,false,1);
+        store().journal.create(IntentJournal.Command.member(1,0,id(1),key,0,new String[0]),bootstrap);
+        require(store().journal.read().bootstrap.title.equals(large)&&store().journal.read().bootstrap.sort.equals(large),"maximum escaped metadata remains recoverable");
+        android.content.SharedPreferences prefs=context.getSharedPreferences("organization",0);String raw=prefs.getString("pending",null),checksum=prefs.getString("pending_sha256",null);
+        try {
+            damaged(raw+" ",checksum);damaged(raw.substring(0,raw.length()/2),checksum);damaged("x".repeat(131073),checksum);
+            JSONObject wrongType=new JSONObject(raw);wrongType.getJSONObject("command").put("ordinal","0");String typed=wrongType.toString();damaged(typed,hash(typed));
+            JSONObject wrongPlan=new JSONObject(raw);wrongPlan.getJSONObject("bootstrap").put("book","txt:"+"b".repeat(64)).put("sha","b".repeat(64));String plan=wrongPlan.toString();damaged(plan,hash(plan));
+            JSONObject manyHeads=new JSONObject(raw);JSONArray heads=new JSONArray();for(int i=1;i<=33;i++)heads.put(id(i));manyHeads.getJSONObject("command").put("heads",heads);String excessive=manyHeads.toString();damaged(excessive,hash(excessive));
+            JSONObject incomplete=new JSONObject(raw);incomplete.remove("bootstrap");incomplete.put("unknown",JSONObject.NULL);String missing=incomplete.toString();damaged(missing,hash(missing));
+            require(count("reader_revisions")==0,"damaged recovery never publishes");
+        } finally { require(prefs.edit().putString("pending",raw).putString("pending_sha256",checksum).commit(),"restore original journal"); }
+        require(store().journal.read().bootstrap.author.equals(large),"valid large original remains recoverable after refusals");
+    }
+    private static String hash(String raw)throws Exception{StringBuilder result=new StringBuilder();for(byte value:MessageDigest.getInstance("SHA-256").digest(raw.getBytes(StandardCharsets.UTF_8)))result.append(String.format(java.util.Locale.ROOT,"%02x",value&255));return result.toString();}
+    private void damaged(String raw,String checksum)throws Exception{
+        android.content.SharedPreferences prefs=context.getSharedPreferences("organization",0);require(prefs.edit().putString("pending",raw).putString("pending_sha256",checksum).commit(),"persist damaged fixture");
+        boolean refused=false;try{store().journal.read();}catch(Exception expected){refused=true;}
+        require(refused&&raw.equals(prefs.getString("pending",null))&&checksum.equals(prefs.getString("pending_sha256",null)),"damaged intent refused without deleting pending");
     }
     private void staleRefusalRetainsExactRequest()throws Exception{
         group(1,1,"Before","",0);OrganizationStore.GroupEdit edit=store().group(1,id(1));
@@ -78,13 +102,24 @@ public final class OrganizationTest extends Instrumentation {
         String saved=store().journal.read().command.json().toString();require(saved.equals(stale.json().toString()),"stale identity/payload/heads unchanged");
         require(store().retry(task()).contains("refused")&&saved.equals(store().journal.read().command.json().toString()),"exact stale retry");
         require(count("reader_revisions")==2&&store().group(1,id(1)).group.name.equals("Newer"),"no stale metadata/history/outbox");
+        store().journal.clear();IntentJournal.Command[] competing={IntentJournal.Command.group(1,0,id(2),"First pending","",0,new String[0]),IntentJournal.Command.group(1,0,id(3),"Second pending","",0,new String[0])};
+        CountDownLatch start=new CountDownLatch(1);AtomicInteger savedCount=new AtomicInteger(),refusedCount=new AtomicInteger();AtomicReference<Throwable> failure=new AtomicReference<>();Thread[] workers=new Thread[2];
+        for(int i=0;i<2;i++){final int at=i;workers[i]=new Thread(()->{try{start.await();new IntentJournal(context.getSharedPreferences("organization",0)).create(competing[at],null);savedCount.incrementAndGet();}
+            catch(IllegalStateException expected){refusedCount.incrementAndGet();}catch(Throwable error){failure.set(error);}});workers[i].start();}
+        start.countDown();for(Thread worker:workers){worker.join(10000);require(!worker.isAlive(),"journal contender finished");}
+        require(failure.get()==null&&savedCount.get()==1&&refusedCount.get()==1,"overlapping Activity owners retain exactly one full intent");
+        IntentJournal.Pending retained=store().journal.read();require(retained.command.json().toString().equals(competing[0].json().toString())||retained.command.json().toString().equals(competing[1].json().toString()),"complete winning request remains");
     }
     private void bootstrapKeepsCurrentUserFields()throws Exception{
         group(1,1,"Tag","",0);CatalogStore.ShelfBook b=book("SDK title");
-        db().execSQL("UPDATE reader_books SET title=?,author=?,sort_title=?,favorite=1",new Object[]{"用户😀","Author edited","User sort"});
+        String large=String.valueOf((char)1).repeat(4096);
+        db().execSQL("UPDATE reader_books SET title=?,author=?,sort_title=?,favorite=1",new Object[]{"用户😀",large,large});
         OrganizationStore.MemberEdit edit=store().member(1,id(1),b,task());require(edit.bootstrap!=null,"explicit bootstrap plan");
-        require(store().submit(IntentJournal.Command.member(1,0,id(1),b.key.bookKey,0,edit.selection.heads),edit.bootstrap,task()).equals("Change committed"),"membership committed");
-        String[] m=NativeCatalog.metadata(owner(),b.key.bookKey);require(m[3].equals("用户😀")&&m[4].equals("Author edited")&&m[5].equals("User sort")&&m[6].equals("1"),"product fields preserved");
+        store().journal.create(IntentJournal.Command.member(1,0,id(1),b.key.bookKey,0,edit.selection.heads),edit.bootstrap);
+        books.close();books=new BookStore(context,new File(directory,"library.db"));
+        require(store().journal.read().bootstrap.author.equals(large)&&store().journal.read().bootstrap.sort.equals(large),"actual large product fields recovered after owner reopen");
+        require(store().retry(task()).equals("Change committed"),"membership committed");
+        String[] m=NativeCatalog.metadata(owner(),b.key.bookKey);require(m[3].equals("用户😀")&&m[4].equals(large)&&m[5].equals(large)&&m[6].equals("1"),"product fields preserved");
         require(count("reader_revisions")==3&&count("reader_book_tags")==1&&store().journal.read()==null,"one book and membership revision");
     }
     private void partialBootstrapSurvivesMembershipRefusal()throws Exception{

@@ -31,6 +31,8 @@ jobs:
           from pathlib import Path
           root=Path('preserved')
           for suffix in ('owner-android/device-report.json','owner-android/native/inventory.json',
+                         'organization-android/device-report.json','organization-android/instrumentation.txt',
+                         'organization-android/ui-instrumentation.txt','organization-android/ui/validation.json','organization-android/ui/failure.xml',
                          'owner-android/seed-before.txt','owner-android/recover-before.txt','owner-android/witness-before.txt',
                          'owner-android/seed-after.txt','owner-android/recover-after.txt','owner-android/witness-after.txt'):
               matches=[p for p in root.rglob('*') if p.is_file() and p.as_posix().endswith(suffix)]
@@ -190,8 +192,12 @@ jobs:
             mkdir -p build/organization-android
             gradle -p examples/android --no-daemon --stacktrace :app:connectedDebugAndroidTest -PexrSdk=$GITHUB_WORKSPACE/stage/android-x86_64 -PexrTestRunner=org.exreader.host.OrganizationTest -Pandroid.testInstrumentationRunnerArguments.class=org.exreader.host.OrganizationTest -Pandroid.testInstrumentationRunnerArguments.source_sha=$GITHUB_SHA -Pandroid.testInstrumentationRunnerArguments.run_id=$GITHUB_RUN_ID -Pandroid.testInstrumentationRunnerArguments.attempt=$GITHUB_RUN_ATTEMPT
             cp -r examples/android/app/build/outputs/androidTest-results/connected build/organization-android/reports
-            adb install -r -t build/owner-android/apks/app-debug.apk
-            adb install -r -t build/owner-android/apks/app-debug-androidTest.apk
+            mkdir -p build/organization-android/apks
+            cp examples/android/app/build/outputs/apk/debug/app-debug.apk build/organization-android/apks/
+            cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/organization-android/apks/
+            cmp build/owner-android/apks/app-debug.apk build/organization-android/apks/app-debug.apk
+            adb install -r -t build/organization-android/apks/app-debug.apk
+            adb install -r -t build/organization-android/apks/app-debug-androidTest.apk
             adb shell am instrument -w -r -e source_sha $GITHUB_SHA -e run_id $GITHUB_RUN_ID -e attempt $GITHUB_RUN_ATTEMPT org.exreader.host.test/org.exreader.host.OrganizationTest > build/organization-android/instrumentation.txt
             adb exec-out run-as org.exreader.host cat files/organization-report.json > build/organization-android/device-report.json
             adb shell pm clear org.exreader.host

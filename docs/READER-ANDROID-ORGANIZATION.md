@@ -12,6 +12,8 @@ An edit loads an immutable metadata/selection snapshot between complete observed
 
 The journal retains refusal and uncertain-response state. **Saved intent → Retry exact intent** reuses the same fields, heads and IDs. A committed book bootstrap followed by refused membership is recorded separately and retained; retry never substitutes fresh heads. **Discard and review** explicitly abandons the local recovery intent while preserving committed history. Publication catches outcomes inside `HostTask.commit`, so late cancellation cannot label a committed change canceled. Closing or destroying the Activity drops its UI callback; the worker finishes publication and retains recovery state.
 
+The local journal has a consistent 131072-character read/write bound and checks size before changing preferences. Schema1 limits each book field to 4096 scalars, so even three fully escaped control-character fields plus the complete command and head sets fit. A checksum covers the saved JSON; strict types, complete fields, head bounds and bootstrap identity are checked before retry. Damaged or oversized pending state is refused without deleting it. Journal access and publication share one process lock across briefly overlapping Activity owners.
+
 ## Actions validation
 
 Workflow `.github/workflows/reader-organization-android.yml` runs the unchanged owner17, two true kill/recovery probes, original112 functional cases, original87 strict gates and owner19 altered-evidence gates. It also verifies Release excludes the debug fixture, the sole installed product provider, native link/build identity and identical reinstalled application APK bytes.
@@ -23,3 +25,5 @@ Added real UI cases: More/create/edit/nested shelves; adding two real SDK books;
 `tools/check_reader_organization_android.py` rejects incomplete, duplicate, skipped, failed or mismatched evidence and requires every original exit. The separate organization gate corrupts native/UI/source/process/retry/screenshot/XML/original-owner evidence and requires refusal, restoring each original before the final positive check.
 
 Status: source implementation prepared; this document grants no acceptance before its Actions run completes.
+
+First diagnostic run `40054154616`, source `63ea3b8ebafb5c9fd77d18a3833265b5c67bd975`, completed the eight organization Gradle cases but failed before its manual run: the workflow reinstalled the owner runner APK, whose manifest did not declare `OrganizationTest`. The final strict gates correctly rejected the incomplete run. The correction retains and reinstalls the organization invocation's own test APK and compares its application APK byte-for-byte with the original owner application's APK. No acceptance evidence from this failed run is reused as final proof.
