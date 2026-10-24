@@ -116,6 +116,7 @@ def main():
     parser.add_argument("--import-consumer", required=True)
     parser.add_argument("--fixtures", required=True)
     parser.add_argument("--evidence", required=True)
+    parser.add_argument("--certs", default=None)
     parser.add_argument("--source-sha", default=os.environ.get("GITHUB_SHA", "local"))
     parser.add_argument("--run-id", default=os.environ.get("GITHUB_RUN_ID", "0"))
     parser.add_argument("--attempt", default=os.environ.get("GITHUB_RUN_ATTEMPT", "0"))
@@ -126,7 +127,7 @@ def main():
     work = evidence / "work"
     staging = work / "staging"
     staging.mkdir(parents=True, exist_ok=True)
-    certs = work / "certs"
+    certs = Path(arguments.certs) if arguments.certs else evidence.parent / "opds-certs"
     make_certs(certs)
     trust_ca(certs)
 
@@ -149,12 +150,13 @@ def main():
         network_cases = work / "network-cases.jsonl"
         import_cases = work / "import-cases.jsonl"
         network = subprocess.run([arguments.consumer, str(staging), bases["plain"], bases["tls"], bases["other"],
-                                  str(network_cases)], capture_output=True, text=True)
+                                  str(network_cases)], capture_output=True, text=True, encoding="utf-8",
+                                 errors="replace")
         (work / "network-consumer.log").write_text(
             "exit=%d\nstdout:\n%s\nstderr:\n%s\n" % (network.returncode, network.stdout, network.stderr),
             encoding="utf-8")
         import_result = subprocess.run([arguments.import_consumer, str(staging), bases["plain"], str(import_cases)],
-                                       capture_output=True, text=True)
+                                       capture_output=True, text=True, encoding="utf-8", errors="replace")
         (work / "import-consumer.log").write_text(
             "exit=%d\nstdout:\n%s\nstderr:\n%s\n" % (import_result.returncode, import_result.stdout,
                                                      import_result.stderr),

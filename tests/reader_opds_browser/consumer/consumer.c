@@ -170,10 +170,10 @@ int main(int argc, char **argv) {
   record("opds1_open", status == READER_OPDS_OK && catalog != NULL, "%s %s", reader_opds_status_name(status),
          error.message);
   if (catalog) {
-    int unicode = strstr(catalog->entries[0].title, "\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e") != NULL &&
-                  strstr(catalog->entries[0].title, "\xc3\x9cn\xc3\xafcode") != NULL;
+    int unicode = strstr(catalog->entries[0].title, "\346\227\245\346\234\254\350\252\236") != NULL &&
+                  strstr(catalog->entries[0].title, "\303\234n\303\257code") != NULL;
     int author = catalog->entries[0].author_count == 1 &&
-                 strstr(catalog->entries[0].authors[0], "L\xc3\xb8vstr\xc3\xb6m") != NULL;
+                 strstr(catalog->entries[0].authors[0], "L\303\270vstr\303\266m") != NULL;
     record("opds1_display_fields",
            catalog->version == 1 && catalog->entry_count == 3 && unicode && author &&
                catalog->entries[0].language[0] != 0 && catalog->entries[0].identifier[0] != 0 &&
@@ -270,9 +270,9 @@ int main(int argc, char **argv) {
   /* ---- search ---- */
   if (catalog) {
     reader_opds_page *found = NULL;
-    status = reader_opds_search(browser, catalog, "\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e book", NULL, &found, &error);
+    status = reader_opds_search(browser, catalog, "\346\227\245\346\234\254\350\252\236 book", NULL, &found, &error);
     record("search_opensearch_utf8",
-           status == READER_OPDS_OK && found && strstr(found->title, "\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e") != NULL &&
+           status == READER_OPDS_OK && found && strstr(found->title, "\346\227\245\346\234\254\350\252\236") != NULL &&
                strcmp(found->identity, catalog->identity) != 0,
            "%s title=%.60s", reader_opds_status_name(status), found ? found->title : "");
     reader_opds_page_free(found);

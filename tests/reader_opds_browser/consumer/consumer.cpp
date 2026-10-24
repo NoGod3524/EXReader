@@ -178,8 +178,6 @@ int main(int argc, char **argv) {
     status = reader_opds_import_staged(library, &staged, "tampered bytes", nullptr, &result, &sdk_error);
     recordf("import_digest_mismatch", tampered && status == EXR_IO && result.book_id == 0, "tampered=%d status=%d",
             tampered ? 1 : 0, static_cast<int>(status));
-    record("import_network_verified_not_readable", true,
-           "the network phase reported a structural envelope only; the SDK judged the bytes");
   }
 
   if (!acquire(browser, (std::string(argv[2]) + "/opds1/broken.xml").c_str(), 0, &broken, &error)) {

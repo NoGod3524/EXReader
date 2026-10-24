@@ -205,7 +205,7 @@ opds_status reader_opds_platform_tls_fetch(const opds_request *request, unsigned
   code = curl_easy_perform(handle);
   if (code == CURLE_OK) curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &response_code);
   if (code == CURLE_OK) curl_easy_getinfo(handle, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &length);
-  if (!ctx.head_called) deliver_head(&ctx);
+  if (!ctx.head_called && ctx.status != 0) deliver_head(&ctx);
   if (ctx.length < 0 && length >= 0) ctx.length = (long long)length;
   if (code == CURLE_OK) {
     status = OPDS_OK;
