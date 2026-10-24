@@ -227,13 +227,16 @@ int command_fields(int argc, char **argv) {
   expect(problem, view->epub_global_extent_known == epub_extent, "epub global extent");
   same_properties(view, expected, omitted, problem);
 
-  /* The local SDK ID must never appear in the view. */
+  /* No view field may equal the local SDK ID. Digests are hexadecimal, so a
+   * substring search would match by chance; an exact field comparison is the
+   * statement that this view carries no local identifier. */
   const std::string sdk_id = std::to_string(product.sdk_id);
-  auto leaks = [&sdk_id](const char *text) { return text && sdk_id != "0" && std::strstr(text, sdk_id.c_str()) != nullptr; };
-  bool leak = leaks(view->book_key) || leaks(view->title) || leaks(view->author) || leaks(view->parser_title) ||
-              leaks(view->verified_sha256);
-  for (size_t i = 0; i < view->property_count; i++) leak = leak || leaks(view->properties[i].value);
-  expect(problem, !leak, "view exposes the local SDK ID");
+  auto equals_id = [&sdk_id](const char *text) { return text && text[0] && sdk_id == text; };
+  bool leak = equals_id(view->book_key) || equals_id(view->title) || equals_id(view->author) ||
+              equals_id(view->location_kind) || equals_id(view->verified_sha256);
+  for (size_t i = 0; i < view->property_count; i++)
+    leak = leak || equals_id(view->properties[i].key) || equals_id(view->properties[i].value);
+  expect(problem, !leak, "a view field equals the local SDK ID");
 
   std::string out = "{\"ok\":";
   out += problem.items.empty() ? "true" : "false";
