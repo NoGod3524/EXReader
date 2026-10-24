@@ -14,6 +14,12 @@ target_include_directories(reader_sync PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_
 target_link_libraries(reader_sync PUBLIC EXReaderRevisions::reader_revisions EXReaderWebDAV::exr_webdav)
 if(WIN32)
   target_link_libraries(reader_sync PRIVATE bcrypt)
+elseif(ANDROID)
+  # The revision package already carries this streaming SHA implementation.
+  target_include_directories(reader_sync PRIVATE ../../../extras/opds/include ../../../extras/opds/src)
+  target_link_libraries(reader_sync PRIVATE EXReaderRevisions::reader_revision_hash)
+elseif(APPLE)
+  # CommonCrypto is provided by libSystem; no separate crypto package.
 else()
   find_package(OpenSSL REQUIRED COMPONENTS Crypto)
   target_link_libraries(reader_sync PRIVATE OpenSSL::Crypto)

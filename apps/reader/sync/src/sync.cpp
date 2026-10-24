@@ -16,6 +16,12 @@
 #define NOMINMAX
 #include <windows.h>
 #include <bcrypt.h>
+#elif defined(__APPLE__)
+#include <CommonCrypto/CommonDigest.h>
+#elif defined(__ANDROID__)
+extern "C" {
+#include <opds_internal.h>
+}
 #else
 #include <openssl/evp.h>
 #endif
@@ -31,6 +37,10 @@ std::string fresh(){char id[33];revision_check(reader_revision_new_id(id,nullptr
 class digest {
 #ifdef _WIN32
   BCRYPT_ALG_HANDLE algorithm=nullptr;BCRYPT_HASH_HANDLE hash=nullptr;std::vector<unsigned char> memory;
+#elif defined(__APPLE__)
+  CC_SHA256_CTX hash{};
+#elif defined(__ANDROID__)
+  opds_sha hash{};
 #else
   EVP_MD_CTX *hash=nullptr;
 #endif
@@ -40,6 +50,10 @@ public:
     if(BCryptOpenAlgorithmProvider(&algorithm,BCRYPT_SHA256_ALGORITHM,nullptr,0)<0)reject(READER_SYNC_IO,"Cannot create native SHA-256 provider");
     DWORD bytes=0,size=0;if(BCryptGetProperty(algorithm,BCRYPT_OBJECT_LENGTH,(PUCHAR)&size,sizeof(size),&bytes,0)<0){BCryptCloseAlgorithmProvider(algorithm,0);algorithm=nullptr;reject(READER_SYNC_IO,"Cannot size native SHA-256 state");}
     memory.resize(size);if(BCryptCreateHash(algorithm,&hash,memory.data(),size,nullptr,0,0)<0){BCryptCloseAlgorithmProvider(algorithm,0);algorithm=nullptr;reject(READER_SYNC_IO,"Cannot create native SHA-256 state");}
+#elif defined(__APPLE__)
+    if(CC_SHA256_Init(&hash)!=1)reject(READER_SYNC_IO,"Cannot create native SHA-256 state");
+#elif defined(__ANDROID__)
+    opds_sha_init(&hash);
 #else
     hash=EVP_MD_CTX_new();if(!hash||EVP_DigestInit_ex(hash,EVP_sha256(),nullptr)!=1){if(hash)EVP_MD_CTX_free(hash);hash=nullptr;reject(READER_SYNC_IO,"Cannot create native SHA-256 state");}
 #endif
@@ -47,24 +61,36 @@ public:
   ~digest(){
 #ifdef _WIN32
     if(hash)BCryptDestroyHash(hash);if(algorithm)BCryptCloseAlgorithmProvider(algorithm,0);
-#else
+#elif !defined(__APPLE__) && !defined(__ANDROID__)
     if(hash)EVP_MD_CTX_free(hash);
 #endif
   }
   void append(const void *data,size_t bytes){
 #ifdef _WIN32
     if(BCryptHashData(hash,(PUCHAR)data,(ULONG)bytes,0)<0)reject(READER_SYNC_IO,"Native SHA-256 update failed");
+#elif defined(__APPLE__)
+    /* The caller supplies one 64 KiB original-file chunk at a time. */
+    if(bytes>UINT32_MAX||CC_SHA256_Update(&hash,data,(CC_LONG)bytes)!=1)reject(READER_SYNC_IO,"Native SHA-256 update failed");
+#elif defined(__ANDROID__)
+    opds_sha_update(&hash,data,bytes);
 #else
     if(EVP_DigestUpdate(hash,data,bytes)!=1)reject(READER_SYNC_IO,"Native SHA-256 update failed");
 #endif
   }
-  std::string finish(){unsigned char out[32];
+  std::string finish(){
+#ifdef __ANDROID__
+    char out[65];opds_sha_final_hex(&hash,out);return out;
+#else
+    unsigned char out[32];
 #ifdef _WIN32
     if(BCryptFinishHash(hash,out,sizeof(out),0)<0)reject(READER_SYNC_IO,"Native SHA-256 finalization failed");
+#elif defined(__APPLE__)
+    if(CC_SHA256_Final(out,&hash)!=1)reject(READER_SYNC_IO,"Native SHA-256 finalization failed");
 #else
     unsigned count=0;if(EVP_DigestFinal_ex(hash,out,&count)!=1||count!=32)reject(READER_SYNC_IO,"Native SHA-256 finalization failed");
 #endif
     std::string s;const char *h="0123456789abcdef";for(unsigned char b:out){s+=h[b>>4];s+=h[b&15];}return s;
+#endif
   }
 };
 struct private_file {fs::path name;bool keep=false;explicit private_file(const fs::path &folder):name(folder/fs::u8path(".reader-sync-"+fresh()+".tmp")){}~private_file(){if(!keep){std::error_code e;fs::remove(name,e);}}};
