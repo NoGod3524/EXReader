@@ -135,12 +135,12 @@ def main():
                 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
 
     def page_click(x_fraction=.8, y_fraction=.5):
-        rectangle = bus.extents(element('Rendered page; selectable text is in the adjacent panel', {'image'}))
+        rectangle = bus.extents(element('Rendered page; selectable text is in the adjacent panel', {'image', 'icon'}))
         x, y = rectangle['x'] + int(rectangle['width'] * x_fraction), rectangle['y'] + int(rectangle['height'] * y_fraction)
         command('xdotool', 'mousemove', '--sync', str(x), str(y));command('xdotool', 'click', '1');host.wait(lambda value: True)
 
     def swipe(vertical=False, reverse=False):
-        rectangle = bus.extents(element('Rendered page; selectable text is in the adjacent panel', {'image'}))
+        rectangle = bus.extents(element('Rendered page; selectable text is in the adjacent panel', {'image', 'icon'}))
         x, y = rectangle['x'] + rectangle['width'] // 2, rectangle['y'] + rectangle['height'] // 2
         delta = 100 if reverse else -100
         command('xdotool', 'mousemove', '--sync', str(x), str(y));command('xdotool', 'mousedown', '1')
