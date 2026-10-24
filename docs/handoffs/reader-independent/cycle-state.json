@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "recorded_at_utc": "2026-10-24T12:13:04Z",
+  "recorded_at_utc": "2026-10-24T15:58:10Z",
   "current_cycle": 1,
   "completed_cycles": 0,
   "audit_interval": 5,
@@ -11,9 +11,9 @@
   "integration_source": null,
   "integration_runs": [],
   "mainline_owners": [
-    { "agent": "/root/handoff_modules", "branch": "codex/reader-apple-host-account", "completed_ios_evidence_head": "254466e7", "ios_run": 40080841137, "candidate": "d154e3265bf47a0e99c382654b14edcc7c29820e", "candidate_runs": [40090956076, 40090965656, 40090970901], "next_work": "real_https_background_retry_and_targeted_native_accessibility" },
-    { "agent": "/root/handoff_validation", "branch": "codex/reader-gtk-settings", "completed_receive_source": "ddaded9b81c2e51de4313919242f883246dd4426", "completed_receive_evidence_head": "8a7cab996f7b3a876254f16a90dab69bbeb9f15a", "completed_receive_run": 40087214516 },
-    { "agent": "/root/main_android", "branch": "codex/reader-android-search-ui", "completed_formal_ui_source": "ed9ff5ffc3608971bb19020f1ec07496a79d9710", "completed_formal_ui_runs": [40090470041, 40090470061, 40090470091], "delivery_head": "27b8daddf9649c28dc639c2bbd8f6032b1474c9b", "delivery_caveat": "HEAD also contains later unverified workflow changes; integrate the fixed tested source, not a claimed docs-only HEAD", "next_work": "native_search_ui_on_same_shared_sdk_owner" }
+    { "agent": "/root/handoff_modules", "branch": "codex/reader-apple-host-account", "completed_ios_evidence_head": "254466e7", "ios_run": 40080841137, "candidate": "281d18ead88a934f10020e7c1c32e6e35766af0a", "candidate_runs": [40109088412, 40109096548, 40109106732], "passed_diagnostic_runs": [40107115391, 40107533231], "candidate_accepted": false, "next_work": "final_same_source_original_shelf_account_and_production_semantics_regression" },
+    { "agent": "/root/handoff_validation", "branch": "codex/reader-gtk-settings", "completed_receive_source": "ddaded9b81c2e51de4313919242f883246dd4426", "completed_receive_evidence_head": "8a7cab996f7b3a876254f16a90dab69bbeb9f15a", "completed_receive_run": 40087214516, "candidate": "a3cec3657c398e215c0ef8d740601a4de2810745", "preserved_failed_run": 40096404519, "next_work": "diagnose_real_native_import_dialog_then_repeat_full_same_source_run", "pending_settings": ["whole_reading_page_background", "dark_reading_page"] },
+    { "agent": "/root/main_android", "branch": "codex/reader-android-search-ui", "completed_formal_ui_source": "ed9ff5ffc3608971bb19020f1ec07496a79d9710", "completed_formal_ui_runs": [40090470041, 40090470061, 40090470091], "delivery_head": "27b8daddf9649c28dc639c2bbd8f6032b1474c9b", "delivery_caveat": "HEAD also contains later unverified workflow changes; integrate the fixed tested source, not a claimed docs-only HEAD", "candidate": "18d5ce81a839bc9230d22dd48eb284ad132b749b", "candidate_run": 40109097666, "candidate_accepted": false, "next_work": "native_search_ui_on_same_shared_sdk_owner" }
   ],
   "claude_quota": {
     "observed_at_utc": "2026-10-24T09:10:35Z",
