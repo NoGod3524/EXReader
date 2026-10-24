@@ -56,6 +56,9 @@ Linux 77+59+33、Windows 76+59+33，两个同源工件未过期且 digest 与上
 详见[桌面有界书架](READER-DESKTOP-SHELF.md)。
 Android 产品库从完整 SQL 生成资产，在现有 owner worker 上打开独立
 `reader-catalog.db`，拒绝改写 SDK 或未知数据库。导入映射和有界书架的独立结果见上方。
+后续原生 owner 源码 `8f7c011aafd4d7f900ef42106fa41e2150a66d58` 已在 run
+`40049878764` 完整通过17项桥接、两次中断恢复、原112项功能与87项门禁及新增19项证据门禁；
+产品库使用与桌面一致的已安装原生provider。详见 [Android原生owner](READER-ANDROID-NATIVE-OWNER.md)。
 WebDAV [实施契约](WEBDAV-PROTOCOL.md)的网络与两端协议结果按各包证据分别登记。
 Apple owner 队列负责独立 `reader-catalog.db` 的生命周期，原生包、UI、Model 与
 Bounded 消费者使用同一完整 SQL。目录和导入映射的独立结果见
@@ -110,3 +113,4 @@ HTTPS、证书验证、跨源凭据隔离、远端载荷限额和临时文件原
 书架使用分页、虚拟化及有界缩略图缓存。帧时间、峰值内存和首次可交互预算需在产品实现后
 按固定设备／runner及固定书库规模测量并冻结；现有SDK性能结果不替代产品UI预算。
 OCR、TTS及商业获取继续作为独立可选模块推进。
+

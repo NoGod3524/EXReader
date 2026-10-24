@@ -23,6 +23,7 @@ typedef struct {
   int64_t sdk_book_id; /* Zero if no local SDK mapping exists. */
   int favorite;
   const char *author;
+  int deleted; /* Populated by metadata lookup; shelf queries remain active only. */
 } reader_catalog_row;
 /* Row strings are borrowed for this call only. Copy them before returning.
  * Return nonzero to stop delivery. No reentry on this catalog. */
@@ -99,6 +100,20 @@ int reader_catalog_groups_page(reader_catalog *, reader_catalog_group_kind, cons
 int reader_catalog_group_books_page(reader_catalog *, reader_catalog_group_kind, const char *group_id,
   const reader_catalog_member_cursor *, const char *query, int local_only, int direction, size_t limit,
   reader_catalog_group_book_visit, void *, reader_catalog_error *);
+/* Same bounded keyset implementation, restricted to local mappings. The host
+ * supplies NFC and NFD query forms; sort_title uses NFC and author uses both.
+ * inclusive applies only to the ascending restore cursor. Limit stays 1..200. */
+int reader_catalog_local_canonical_page(reader_catalog *,const char *cursor_title,const char *cursor_key,
+  const char *nfc,const char *nfd,int direction,int inclusive,size_t limit,
+  reader_catalog_visit,void *,reader_catalog_error *);
+/* At most one active mapped row. sdk_id>0 selects that ID (title must be NULL),
+ * otherwise exact_title is required. No unbounded host-side scans. */
+int reader_catalog_local_lookup(reader_catalog *,int64_t sdk_id,const char *exact_title,
+  reader_catalog_visit,void *,int *found,reader_catalog_error *);
+/* Current product fields including soft deletion, without requiring local map.
+ * Used only after the host has verified the public SDK retained original. */
+int reader_catalog_metadata(reader_catalog *,const char *book_key,
+  reader_catalog_visit,void *,int *found,reader_catalog_error *);
 const char *reader_catalog_migration(size_t *bytes);
 #ifdef __cplusplus
 }
