@@ -34,6 +34,7 @@ def main():
     report = {'accepted': False, 'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
               'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'checks': checks,
               'program_sha256': hashlib.sha256(host.binary.read_bytes()).hexdigest(),
+              'diagnostic_only': os.environ.get('GTK_PREFERENCES_DIAGNOSTIC_ONLY') == 'true',
               'scope': 'Linux GTK installed F3 settings and actual native effects',
               'sdk_changed': False, 'schema_changed': False, 'orca_accepted': False,
               'physical_device_execution': False, 'six_platform_accepted': False, 'complete_product': False}
@@ -267,7 +268,7 @@ def main():
         record('original_source_bytes_unchanged', hashlib.sha256(source.read_bytes()).hexdigest() == before_source)
         assert len(checks) == 35
         passed = sum(bool(item['pass']) for item in checks)
-        report.update(accepted=passed == len(checks), count=len(checks), passed=passed,
+        report.update(accepted=passed == len(checks) and not report['diagnostic_only'], count=len(checks), passed=passed,
                       failed=len(checks) - passed, preferences=installed(),
                       pending_fields=['light_background_on_reflow_canvas', 'dark_reading_page_palette'])
     finally:

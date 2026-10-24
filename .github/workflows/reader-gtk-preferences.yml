@@ -3,6 +3,11 @@ on:
   push:
     branches: [codex/reader-gtk-settings]
   workflow_dispatch:
+    inputs:
+      ui_diagnostic_only:
+        type: boolean
+        default: false
+        description: Diagnose new controls without granting retained-suite acceptance
 permissions:
   contents: read
 defaults:
@@ -111,6 +116,8 @@ jobs:
           mkdir -p build/account-shelf/profile
           build/account-desktop/reader-gtk-shelf-check build/account-shelf/profile/library.sqlite build/account-package/EXReader-Linux/Reader.otf | tee build/account-logs/shelf-backend.log
       - name: Actual settings controls geometry pixels gestures portal and persistence
+        env:
+          GTK_PREFERENCES_DIAGNOSTIC_ONLY: ${{ github.event.inputs.ui_diagnostic_only }}
         run: |
           mkdir -p build/gtk-atspi-client
           git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
@@ -128,7 +135,7 @@ jobs:
             /usr/bin/python3 tests/reader_gtk_preferences/check_ui.py --payload build/account-package/EXReader-Linux --output build/preferences-ui --consumer build/preferences-host-consumer/gtk-preferences-load --fixed-inputs build/account-fixed-inputs
           '
       - name: Real GTK secure save load delete unavailable session-only full library scan cancel retry and shutdown
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event.inputs.ui_diagnostic_only != 'true' }}
         run: |
           xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
             openbox >build/account-logs/account-openbox.log 2>&1 &
@@ -137,7 +144,7 @@ jobs:
             python3 tests/linux_host/check_account_ui.py --payload build/account-package/EXReader-Linux --metadata-consumer build/account-metadata-consumer/metadata-consumer --revision-consumer build/account-revision-consumer/revision-consumer --output build/account-ui --receive-fixtures build/account-receive-fixtures --reading-probe build/account-reading-probe/reading-v2-probe --inspect-consumer build/account-inspect/received-sdk-inspect
           '
       - name: Preserve twenty product five fixed twenty-four shelf fourteen metadata fifteen collections twenty-seven
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event.inputs.ui_diagnostic_only != 'true' }}
         run: |
           xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
             openbox >build/account-logs/openbox.log 2>&1 &
@@ -152,7 +159,7 @@ jobs:
             python3 tests/linux_host/check_collections_ui.py --payload build/account-package/EXReader-Linux --command-consumer build/account-command-consumer/command-consumer --output build/account-collections-ui
           '
       - name: Targeted real AT-SPI regressions for G13 production fixes
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.event.inputs.ui_diagnostic_only != 'true' }}
         run: |
           mkdir -p build/gtk-atspi-client
           git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py

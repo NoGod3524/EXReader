@@ -18,10 +18,10 @@ instances = []
 
 def key(self, *values):
     if self not in instances: instances.append(self)
-    trace.append({'keys': values, 'before': self.read()})
-    result = original(self, *values)
-    trace[-1]['after'] = self.read()
-    return result
+    for value in values:
+        trace.append({'key': value, 'before': self.read()})
+        original(self, value)
+        trace[-1]['after'] = self.read()
 
 
 Session.key = key
