@@ -1019,7 +1019,7 @@ final class HostLibrary {
             let existing = FileHandle(fileDescriptor: existingDescriptor, closeOnDealloc: true)
             defer { try? existing.close() }
             var status = stat()
-            guard fstat(existingDescriptor, &status) == 0, (Int32(status.st_mode) & S_IFMT) == S_IFREG,
+            guard fstat(existingDescriptor, &status) == 0, (UInt32(status.st_mode) & UInt32(S_IFMT)) == UInt32(S_IFREG),
                   status.st_size == book.bytes else { throw HostError.invalidResult("已有同步副本长度无效") }
             var total = 0, digest = SHA256()
             while Int64(total) < book.bytes {
