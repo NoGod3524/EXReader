@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
   require(std::strcmp(exr_version(), EXR_VERSION) == 0, "release-version");
   static_assert(sizeof(exr_error) > 0, "exr_error is complete");
   static_assert(sizeof(exr_bitmap) >= sizeof(void *) * 2, "exr_bitmap is complete");
-  exr_error error = {0};
+  exr_error error = exr_error();
   exr_document *document = NULL;
   require(exr_document_open("/nonexistent/exreader-j24-missing.epub", &document, &error) != EXR_OK
           && document == NULL, "missing-file-rejected");
