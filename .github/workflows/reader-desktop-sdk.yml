@@ -79,6 +79,9 @@ jobs:
       - name: Actual open worker survives cache eviction and cancelled candidate ownership
         if: runner.os == 'Windows'
         run: python3 tests/windows_host/check_shelf_worker.py --candidate build/desktop-sdk/EXReaderShelfReview.exe --package build/desktop-windows-package/EXReader --output build/desktop-windows-shelf-worker
+      - name: Actual product 2202-book native scrolling search recovery and import
+        if: runner.os == 'Windows'
+        run: python3 tests/windows_host/check_shelf_ui.py --candidate build/desktop-windows-package/EXReader/EXReader.exe --seed build/desktop-sdk/reader-windows-shelf-seed.exe --package build/desktop-windows-package/EXReader --output build/desktop-windows-shelf-ui
       - name: Assemble the actual GTK host with the original pinned font
         if: runner.os == 'Linux'
         run: python3 tools/build_linux_host.py --sdk build/reading-library/stage --binary build/desktop-sdk/gtk-host/exreader-linux --output build/desktop-linux-package
@@ -138,5 +141,6 @@ jobs:
             build/desktop-windows-ui/
             build/desktop-windows-product/
             build/desktop-windows-shelf-worker/
+            build/desktop-windows-shelf-ui/
             build/desktop-sdk/windows-host.map
           if-no-files-found: error

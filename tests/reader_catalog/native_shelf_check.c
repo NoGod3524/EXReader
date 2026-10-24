@@ -25,6 +25,9 @@ static int trace_connection(sqlite3 *db,char **message,const sqlite3_api_routine
 }
 static void sql(sqlite3 *db,const char *query) { CHECK(sqlite3_exec(db,query,NULL,NULL,NULL)==SQLITE_OK); }
 static void key_for(unsigned n,char key[72]) { snprintf(key,72,"txt:%064x",n); }
+static int receive_local(void *context,const reader_catalog_row *row) {
+  size_t *count=context;CHECK(row->sdk_book_id==10 || row->sdk_book_id==20);(*count)++;return 0;
+}
 typedef struct {
   reader_catalog *catalog;size_t count;int direction,stop,reenter,track;
   unsigned char seen[2501];char title[16385],key[72],author[16385];
@@ -124,7 +127,15 @@ int main(int argc,char **argv) {
   memset(&p,0,sizeof(p));p.catalog=catalog;p.direction=1;p.stop=p.reenter=1;
   CHECK(reader_catalog_query_page(catalog,NULL,NULL,NULL,1,200,receive,&p,NULL)==SQLITE_OK && p.count==1);
   PASS("callback_stop_and_query_reentry_refused");
-  range_plan(db,forward_sql);range_plan(db,reverse_sql);PASS("actual_forward_reverse_sql_uses_index_ranges");
+  range_plan(db,forward_sql);range_plan(db,reverse_sql);
+  size_t local_count=0;
+  CHECK(reader_catalog_local_page(catalog,NULL,NULL,NULL,1,50,receive_local,&local_count,NULL)==SQLITE_OK && local_count==0);
+  sql(db,"INSERT INTO reader_local_books(book_key,sdk_book_id,location_kind) SELECT book_key,CASE title WHEN 'Literal %_! title' THEN 20 ELSE 10 END,'reflow_global' FROM reader_books WHERE title='Literal %_! title' OR title='Renamed title'");
+  local_count=0;CHECK(reader_catalog_local_page(catalog,NULL,NULL,NULL,1,50,receive_local,&local_count,NULL)==SQLITE_OK && local_count==2);
+  local_count=0;CHECK(reader_catalog_local_page(catalog,NULL,NULL,"Literal %_!",-1,50,receive_local,&local_count,NULL)==SQLITE_OK && local_count==1);
+  sql(db,"DELETE FROM reader_local_books WHERE sdk_book_id=20");
+  local_count=0;CHECK(reader_catalog_local_page(catalog,NULL,NULL,"Literal %_!",1,50,receive_local,&local_count,NULL)==SQLITE_OK && local_count==0);
+  PASS("actual_forward_reverse_sql_uses_index_ranges");
   CHECK(groups==10 && !strcmp(sqlite3_libversion(),"3.54.0"));
   CHECK(sqlite3_close(db)==SQLITE_OK);CHECK(reader_catalog_close(&catalog,NULL)==SQLITE_OK);
   snprintf(path,sizeof(path),"%s/shelf-result.json",argv[1]);FILE *report=fopen(path,"wb");CHECK(report);

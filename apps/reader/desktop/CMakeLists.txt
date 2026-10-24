@@ -58,6 +58,8 @@ if(WIN32)
   endif()
   option(EXR_READER_WINDOWS_SHELF_TESTS "Build isolated worker/cache ownership regression, not installed" OFF)
   if(EXR_READER_WINDOWS_SHELF_TESTS)
+    add_executable(reader-windows-shelf-seed ../../../tests/windows_host/seed_shelf.c)
+    target_link_libraries(reader-windows-shelf-seed PRIVATE EXReader::exr_library)
     add_executable(EXReaderShelfReview WIN32 ../../../examples/reader.c)
     target_compile_definitions(EXReaderShelfReview PRIVATE EXR_READER_PRODUCT_CATALOG=1
       EXR_HOST_WORKER_REVIEW=1 EXR_HOST_SHELF_REVIEW=1

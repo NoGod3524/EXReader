@@ -11,7 +11,7 @@ import sys
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE / 'worker_review'))
 sys.path.insert(0, str(HERE))
-from check_worker import App
+from check_worker import App, U, set_text
 from make_fixtures import epub
 
 
@@ -53,10 +53,17 @@ def main():
         app.close()
         assert app.process.returncode == 0
         checks.append('normal_close_releases_worker_owned_metadata_and_handles')
+        app=App(args.candidate.resolve(),(args.package/'Reader.otf').resolve(),output/'profile',bounded=True,existing=True)
+        app.gate(5);set_text(U.GetDlgItem(app.window,126),'Shelf Worker First');app.stage(5)
+        app.open('Shelf Worker Second',wait=False);app.release();app.wait_idle()
+        assert app.q(10)==accepted and app.q(19)==accepted and app.q(13)==1 and app.q(305)==0
+        assert app.row('Shelf Worker First')==0
+        checks.append('interrupted_filter_retries_after_reading_without_replacing_active_book')
+        app.close()
     finally:
         if app.process.poll() is None:
             app.close()
-    assert len(checks) == 4
+    assert len(checks) == 5
     report = {'accepted': True, 'complete_product': False, 'windows_bounded_shelf_ui_accepted': False,
               'scope': 'worker result ownership before Windows bounded UI integration',
               'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],

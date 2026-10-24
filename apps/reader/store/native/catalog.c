@@ -267,9 +267,9 @@ static int deliver_rows(reader_catalog *c,sqlite3_stmt *s,reader_catalog_visit v
   }
   return status==SQLITE_DONE ? SQLITE_OK:db_error(c,status,e);
 }
-int reader_catalog_query_page(reader_catalog *c,const char *title,const char *key,
+static int query_page(reader_catalog *c,const char *title,const char *key,
                               const char *query,int direction,size_t limit,
-                              reader_catalog_visit visit,void *context,reader_catalog_error *e) {
+                              reader_catalog_visit visit,void *context,reader_catalog_error *e,int local_only) {
   sqlite3_stmt *s=NULL;int status=enter(c,e);char sql[1024];
   if(status!=SQLITE_OK) return status;
   if(!visit || limit==0 || limit>200 || (direction!=1 && direction!=-1) || (!!title!=!!key) ||
@@ -283,7 +283,7 @@ int reader_catalog_query_page(reader_catalog *c,const char *title,const char *ke
   const char *order=direction>0 ? " ORDER BY b.sort_title,b.book_key":" ORDER BY b.sort_title DESC,b.book_key DESC";
   /* Only constant SQL fragments are interpolated. User strings stay bound.
      Separate first/continuation plans preserve the actual index range. */
-  snprintf(sql,sizeof(sql),"SELECT b.book_key,b.title,b.format,b.sort_title,b.source_bytes,b.favorite,l.sdk_book_id,l.location_kind,b.author FROM reader_books b LEFT JOIN reader_local_books l ON l.book_key=b.book_key WHERE b.deleted=0%s%s%s LIMIT ?3",range,filter,order);
+  snprintf(sql,sizeof(sql),"SELECT b.book_key,b.title,b.format,b.sort_title,b.source_bytes,b.favorite,l.sdk_book_id,l.location_kind,b.author FROM reader_books b LEFT JOIN reader_local_books l ON l.book_key=b.book_key WHERE b.deleted=0%s%s%s%s LIMIT ?3",local_only ? " AND l.sdk_book_id IS NOT NULL":"",range,filter,order);
   status=prepare(c,sql,&s,e);
   if(status==SQLITE_OK && title) status=bind_text(c,s,1,title,e);
   if(status==SQLITE_OK && key) status=bind_text(c,s,2,key,e);
@@ -292,6 +292,14 @@ int reader_catalog_query_page(reader_catalog *c,const char *title,const char *ke
   if(status==SQLITE_OK) status=deliver_rows(c,s,visit,context,NULL,e);
 leave:
   sqlite3_finalize(s);c->active=0;return status;
+}
+int reader_catalog_query_page(reader_catalog *c,const char *title,const char *key,const char *query,
+  int direction,size_t limit,reader_catalog_visit visit,void *context,reader_catalog_error *e) {
+  return query_page(c,title,key,query,direction,limit,visit,context,e,0);
+}
+int reader_catalog_local_page(reader_catalog *c,const char *title,const char *key,const char *query,
+  int direction,size_t limit,reader_catalog_visit visit,void *context,reader_catalog_error *e) {
+  return query_page(c,title,key,query,direction,limit,visit,context,e,1);
 }
 int reader_catalog_page(reader_catalog *c,const char *title,const char *key,size_t limit,
                         reader_catalog_visit visit,void *context,reader_catalog_error *e) {

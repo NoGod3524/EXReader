@@ -35,7 +35,11 @@ static LRESULT review_message(HWND window, WPARAM code, LPARAM value) {
   if (code == 11) return (LRESULT)g.frame.page;
   if (code == 12) return (LRESULT)current_note_count();
   if (code == 13) return (LRESULT)g.shelf_count;
-  if (code == 14) return g.job || g.pending;
+  if (code == 14) return g.job || g.pending
+#ifdef EXR_HOST_SHELF_REVIEW
+    || g.shelf_need_refresh
+#endif
+    ;
   if (code == 15) return g.frame.fixed;
   if (code == 16) return g.selection.active ? (LRESULT)(g.selection.start < g.selection.end ? g.selection.end - g.selection.start : g.selection.start - g.selection.end) : 0;
   if (code == 17) return dragging;
@@ -45,7 +49,7 @@ static LRESULT review_message(HWND window, WPARAM code, LPARAM value) {
   if (code == 26) return (LRESULT)GetWindowThreadProcessId(window, NULL);
   if (code == 27) return InterlockedCompareExchange(&review_offset_calls, 0, 0);
   if (code == 28) return InterlockedCompareExchange(&review_offset_injected, 0, 0);
-  if (code >= 101 && code <= 104) {
+  if (code >= 101 && code <= 105) {
     wchar_t name[100];
     swprintf(name, 100, L"Local\\EXReaderWorkerReview-%lu", GetCurrentProcessId());
     if (!review_event) review_event = CreateEventW(NULL, TRUE, FALSE, name);
@@ -62,6 +66,7 @@ static LRESULT review_message(HWND window, WPARAM code, LPARAM value) {
   if (code == 301) { InterlockedExchange(&review_notes_fail, 1); return 1; }
   if (code == 302) { InterlockedExchange(&review_shelf_fail, 1); return 1; }
 #ifdef EXR_HOST_SHELF_REVIEW
+  if (code == 305) return g.shelf_filter_pending;
   if (code == 303) {
     shelf_clear();
     SendMessageW(g.books, LB_RESETCONTENT, 0, 0);
