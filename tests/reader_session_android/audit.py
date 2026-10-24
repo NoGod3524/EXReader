@@ -44,7 +44,7 @@ def main():
             for label,value in (('symbols',symbols),('dynamic',dynamic),('exports',exports)):(a.output/(prefix+'-'+label+'.txt')).write_text(value)
             assert len(re.findall(r'\bsqlite3_open_v2\s*$',symbols,re.M))==1
             assert 'libreader_catalog_sqlite.a' in mapping and 'sqlite3_open_v2' in mapping
-            assert 'exr_vendor_exr_sqlite' not in symbols and not re.search(r'\bexr_library_',symbols)
+            assert 'exr_vendor_exr_sqlite' not in mapping and not re.search(r'\bexr_library_',symbols)
             assert not re.search(r'NEEDED.*(?:sqlite|exreader|curl|xml|ssl|crypto)',dynamic,re.I)
             assert not re.search(r'\bsqlite3_open_v2\s*$',exports,re.M)
             assert ('exr_webdav_android_test_stats' in symbols)==(variant=='Debug' and 'session' in module)
