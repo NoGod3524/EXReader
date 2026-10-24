@@ -41,6 +41,40 @@ static CFMutableDictionaryRef item_query(const char *ns, const char *account) {
   return query;
 }
 
+#if TARGET_OS_OSX
+/* A locked legacy file keychain blocks SecItem on an unlock prompt even with
+   kSecUseAuthenticationUIFail, so refuse before searching: the default
+   keychain and every keychain in the search list must be unlocked. */
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+static int unlocked(SecKeychainRef keychain) {
+  SecKeychainStatus status = 0;
+  return SecKeychainGetStatus(keychain, &status) == errSecSuccess && (status & kSecUnlockStateStatus);
+}
+
+static int keychains_unlocked(void) {
+  SecKeychainRef keychain = NULL;
+  CFArrayRef list = NULL;
+  int ok;
+  CFIndex i;
+  if (SecKeychainCopyDefault(&keychain) != errSecSuccess || !keychain) return 0;
+  ok = unlocked(keychain);
+  CFRelease(keychain);
+  if (ok && SecKeychainCopySearchList(&list) == errSecSuccess && list) {
+    for (i = 0; ok && i < CFArrayGetCount(list); ++i)
+      ok = unlocked((SecKeychainRef)CFArrayGetValueAtIndex(list, i));
+    CFRelease(list);
+  } else {
+    ok = 0;
+  }
+  return ok;
+}
+#pragma clang diagnostic pop
+#define REQUIRE_UNLOCKED() do { if (!keychains_unlocked()) return EXR_CRED_UNAVAILABLE; } while (0)
+#else
+#define REQUIRE_UNLOCKED() do { } while (0)
+#endif
+
 static exr_credentials_status map_error(OSStatus status) {
   switch (status) {
     case errSecSuccess: return EXR_CRED_OK;
@@ -60,11 +94,12 @@ static exr_credentials_status map_error(OSStatus status) {
 
 exr_credentials_status exr_cred_backend_put(const char *ns, const char *account,
                                             const uint8_t *secret, size_t secret_length) {
-  CFMutableDictionaryRef query = item_query(ns, account);
-  CFMutableDictionaryRef update;
+  CFMutableDictionaryRef query, update;
   CFDataRef data;
   OSStatus status;
   int attempt;
+  REQUIRE_UNLOCKED();
+  query = item_query(ns, account);
   if (!query) return EXR_CRED_IO;
   data = CFDataCreate(kCFAllocatorDefault, secret, (CFIndex)secret_length);
   update = CFDictionaryCreateMutable(kCFAllocatorDefault, 0,
@@ -97,10 +132,12 @@ exr_credentials_status exr_cred_backend_put(const char *ns, const char *account,
 
 exr_credentials_status exr_cred_backend_get(const char *ns, const char *account,
                                             uint8_t *buffer, size_t capacity, size_t *out_length) {
-  CFMutableDictionaryRef query = item_query(ns, account);
+  CFMutableDictionaryRef query;
   CFTypeRef result = NULL;
   exr_credentials_status mapped;
   OSStatus status;
+  REQUIRE_UNLOCKED();
+  query = item_query(ns, account);
   if (!query) return EXR_CRED_IO;
   CFDictionarySetValue(query, kSecReturnData, kCFBooleanTrue);
   CFDictionarySetValue(query, kSecMatchLimit, kSecMatchLimitOne);
@@ -122,8 +159,10 @@ exr_credentials_status exr_cred_backend_get(const char *ns, const char *account,
 }
 
 exr_credentials_status exr_cred_backend_delete(const char *ns, const char *account) {
-  CFMutableDictionaryRef query = item_query(ns, account);
+  CFMutableDictionaryRef query;
   OSStatus status;
+  REQUIRE_UNLOCKED();
+  query = item_query(ns, account);
   if (!query) return EXR_CRED_IO;
   status = SecItemDelete(query);
   CFRelease(query);
