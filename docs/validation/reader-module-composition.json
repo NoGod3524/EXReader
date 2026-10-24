@@ -17,6 +17,13 @@
       "windows": "one-prefix composition (windows) — success",
       "macos": "one-prefix composition (macos) — success",
       "aggregate": "strict same-source composition report — success"
+    },
+    "aggregate_artifact": {
+      "id": 12554719227,
+      "name": "reader-module-composition-report-40081552526-1",
+      "bytes": 832,
+      "digest": "sha256:d94ee71be12d6bb4557a4b44f4b98e301231af88960d09bee10a47e2b5fd1295",
+      "expires_at": "2027-01-22T09:20:19Z"
     }
   },
   "granted_platforms": [
