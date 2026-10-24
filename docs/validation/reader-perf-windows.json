@@ -1,0 +1,220 @@
+{
+  "schema": 1,
+  "package": "G10 Windows product performance observation",
+  "implementation_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "tested_source_sha": "8278db213aaeb95d323fb914f5134708ef9b45ed",
+  "branch": "codex/reader-perf-windows",
+  "workflow": ".github/workflows/reader-perf-windows.yml",
+  "run": {
+    "id": 40081997953,
+    "attempt": 1,
+    "job_id": 120837289193,
+    "job": "windows-product-performance",
+    "runner": "windows-2022",
+    "conclusion": "success",
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40081997953"
+  },
+  "artifacts": [
+    {
+      "name": "reader-perf-windows-40081997953-1",
+      "id": 12555567007,
+      "size_in_bytes": 931744,
+      "digest": "sha256:6e81494c3fb584bba32b30cc0c752c73ade760b97e7c1875f7d0e5612892f803",
+      "expires_at": "2027-01-22T09:27:06Z",
+      "contents": [
+        "perf-windows/environment.json",
+        "perf-windows/preparation.json",
+        "perf-windows/per-launch.json",
+        "perf-windows/per-launch.jsonl",
+        "perf-windows/per-launch.csv",
+        "perf-windows/samples.csv",
+        "perf-windows/memory.csv",
+        "perf-windows/summary.json",
+        "perf-windows/verification.json",
+        "perf-windows/logs/*.log",
+        "perf-gate/*.log",
+        "desktop-windows-package/build.json"
+      ]
+    },
+    {
+      "name": "reader-perf-windows-identity-40081997953-1",
+      "contents": ["artifact-identity/artifact-identity.json", "artifact-identity.log"],
+      "identity_record": {
+        "artifact_id": 12555567007,
+        "size_in_bytes": 931744,
+        "digest": "sha256:6e81494c3fb584bba32b30cc0c752c73ade760b97e7c1875f7d0e5612892f803",
+        "expires_at": "2027-01-22T09:27:06Z",
+        "accepted": true,
+        "problems": []
+      }
+    }
+  ],
+  "environment": {
+    "os": "Windows-2022Server-10.0.20348-SP0",
+    "os_version": "10.0.20348",
+    "cpu": "AMD EPYC 7763 64-Core Processor",
+    "logical_processors": 4,
+    "page_size": 4096,
+    "memory_total_bytes": 17174360064,
+    "display": {
+      "screen_width_px": 1024,
+      "screen_height_px": 768,
+      "monitors": 1,
+      "dpi": 96,
+      "dpi_scale": 1.0,
+      "remote_session": false
+    },
+    "python": "3.12.10",
+    "disk_cache_controlled": false,
+    "background_load_controlled": false
+  },
+  "artifacts_identity": {
+    "exe": "EXReader.exe",
+    "exe_bytes": 7201280,
+    "exe_sha256": "91596e07cbaf96702c0e17ed8c18d0003b974bd4c73227187d937fd02ebe151a",
+    "font": "Reader.otf",
+    "font_bytes": 16437364,
+    "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+    "package_total_bytes": 23793834,
+    "package_files": 31,
+    "linkage": "static-reading",
+    "note": "The MSVC link output is not byte-reproducible across runs; this digest is the digest of the measured binary and is re-derived on every run."
+  },
+  "corpus": {
+    "originals": 2202,
+    "originals_source": "tests/windows_host/seed_shelf.c public-SDK seed program (unmodified)",
+    "seed_stdout": "{\"public_sdk_originals\":2202,\"created\":2202,\"accepted\":true}",
+    "seed_source_sha256": "dc791d15d3a48b7e154aafabe74dfa2a80007ae5703f24b397e11de8c32ee09e",
+    "seed_exe_sha256": "dd58aba59854d13b7ffd31727d6e70b2cb570c3728bd65e8a6fd4bbefb30e905",
+    "library_sha256": "c84d039f2dff708b2ab5f8f2d0dc4fd7cc13d7a9dc25dc426eface219211a1fb",
+    "library_bytes": 307200,
+    "product_catalog_sha256": "c8fd6ac5e9cbb277e1d746a4d381412254c028dd39eb6289d38c2917f8ed07cc",
+    "product_catalog_bytes": 1556480,
+    "originals_in_catalog": 2202,
+    "titles_and_bytes_exact": true,
+    "reading_fixture": "Sample-positive.epub",
+    "reading_fixture_sha256": "09e91434b252587031760eb0cf4421288fa0835b8ba7f4be807820c279b112e7",
+    "reading_fixture_bytes": 5960,
+    "import_fixture": "16-chapter stored EPUB, about 11 MiB, OPF title equals the expected shelf title",
+    "import_fixture_identity": "per launch in ops.import.fixture_sha256 / fixture_bytes"
+  },
+  "process_starts": {
+    "measured": 48,
+    "preparation": 2,
+    "total": 50,
+    "cohorts": {"cold_shelf": 12, "warm_shelf": 12, "reading": 12, "import": 12}
+  },
+  "measurement_semantics": {
+    "kind": "external end-to-end native UI latency",
+    "input_delivery": "SendMessageTimeoutW (SMTO_ABORTIFHUNG) to the real Win32 controls of the running product process",
+    "not": "SendInput-level hardware injection; no synthetic in-process call",
+    "frame_time_measured": false,
+    "frame_time_reason": "No in-application frame or present signal is exposed to the observing process; only control-level state transitions are timed.",
+    "poll_interval": "3 ms sleep plus one control round trip per probe"
+  },
+  "measurements": {
+    "cold_shelf": {
+      "profile": "fresh-sdk-library-copy (product catalog rebuilt each launch)",
+      "first_screen_interactive_ms": {"n": 12, "min": 5050.176, "p50": 5131.5075, "p95": 5318.891, "max": 5318.891},
+      "window_ms": {"n": 12, "min": 19.121, "p50": 23.1135, "p95": 24.28, "max": 24.28},
+      "rows_visible_ms": {"n": 12, "min": 5050.102, "p50": 5127.275, "p95": 5314.632, "max": 5314.632},
+      "shelf_next_page_ms": {"n": 12, "min": 114.754, "p50": 119.6945, "p95": 149.622, "max": 149.622},
+      "search_result_ms": {"n": 12, "min": 201.047, "p50": 206.6485, "p95": 222.297, "max": 222.297},
+      "search_clear_ms": {"n": 12, "min": 197.657, "p50": 201.5455, "p95": 218.728, "max": 218.728},
+      "peak_working_set_bytes": {"n": 12, "min": 40951808, "p50": 40960000, "p95": 40976384, "max": 40976384}
+    },
+    "warm_shelf": {
+      "profile": "shared-profile (populated product catalog)",
+      "first_screen_interactive_ms": {"n": 12, "min": 165.385, "p50": 177.5785, "p95": 192.311, "max": 192.311},
+      "window_ms": {"n": 12, "min": 20.861, "p50": 23.459, "p95": 24.459, "max": 24.459},
+      "shelf_next_page_ms": {"n": 12, "min": 113.278, "p50": 120.8125, "p95": 135.188, "max": 135.188},
+      "search_result_ms": {"n": 12, "min": 202.625, "p50": 209.954, "p95": 223.988, "max": 223.988},
+      "search_clear_ms": {"n": 12, "min": 200.271, "p50": 205.324, "p95": 218.208, "max": 218.208},
+      "peak_working_set_bytes": {"n": 12, "min": 40968192, "p50": 40972288, "p95": 40976384, "max": 40976384}
+    },
+    "reading": {
+      "profile": "shared reading profile (2202 originals plus the fixed packaged multi-page book)",
+      "open_ms": {"n": 1, "value": 42.444},
+      "book_page_turn_ms": {"n": 96, "min": 18.456, "p50": 29.3635, "p95": 38.947, "max": 43.784},
+      "resume_ms": {"n": 11, "min": 278.288, "p50": 574.739, "p95": 698.982, "max": 698.982},
+      "resume_pages_verified": 11,
+      "resume_pages_observed": ["[1, 9]", "[1, 17]", "[1, 25]", "[1, 33]", "[1, 41]", "[2, 3]", "[2, 11]", "[2, 19]", "[2, 27]", "[2, 35]", "[2, 43]"],
+      "peak_working_set_bytes": {"n": 12, "min": 47681536, "p50": 48211968, "p95": 48406528, "max": 48406528}
+    },
+    "import": {
+      "profile": "fresh-sdk-library-copy, one fixed multi-chapter EPUB imported per launch",
+      "first_screen_interactive_ms": {"n": 12, "min": 5071.16, "p50": 5143.8345, "p95": 5326.655, "max": 5326.655},
+      "import_ms": {"n": 12, "min": 581.383, "p50": 589.952, "p95": 599.664, "max": 599.664},
+      "input_roundtrip_during_import_p50_ms": {"n": 12, "min": 0.0795, "p50": 0.084, "p95": 0.087, "max": 0.087},
+      "input_roundtrip_during_import_max_ms": {"n": 12, "min": 2.493, "p50": 3.905, "p95": 9.615, "max": 9.615},
+      "busy_input_samples_per_launch": "55-58",
+      "input_timeouts": 0,
+      "imported_book_visible": 12,
+      "peak_working_set_bytes": {"n": 12, "min": 40955904, "p50": 40960000, "p95": 40976384, "max": 40976384}
+    }
+  },
+  "preparation": {
+    "first_screen_interactive_ms": 5638.308,
+    "window_ms": 18.347,
+    "controls_ms": 34.182,
+    "round_trip_ms": 4.549,
+    "peak_working_set_bytes": 40964096
+  },
+  "checks": {
+    "passed": 17,
+    "total": 17,
+    "names": [
+      "thirty_or_more_independent_process_starts",
+      "at_least_ten_launches_per_named_cohort",
+      "every_measured_launch_complete",
+      "cold_and_warm_strategies_recorded",
+      "window_appeared_each_launch",
+      "first_screen_interactive_observed_each_shelf_launch",
+      "shelf_pagination_observed",
+      "search_result_observed",
+      "eight_in_book_page_turns_per_reading_launch",
+      "continue_reading_observed",
+      "continue_reading_page_verified",
+      "import_input_responsiveness_observed",
+      "working_set_peak_observed",
+      "artifact_identity_recorded",
+      "corpus_identity_recorded",
+      "frame_time_not_measured",
+      "numeric_budget_not_enforced"
+    ]
+  },
+  "frame_time": {"measured": false, "reason": "No in-application frame or present signal exists on this path."},
+  "performance_accepted": false,
+  "budget_enforced": false,
+  "proposed_budgets": [
+    {"metric": "first_screen_interactive_ms", "cohort": "cold_shelf", "proposal_ms": 7979, "basis": "p95 x 1.5; proposal only"},
+    {"metric": "first_screen_interactive_ms", "cohort": "warm_shelf", "proposal_ms": 289, "basis": "p95 x 1.5; proposal only"},
+    {"metric": "shelf_next_page_ms", "cohort": "warm_shelf", "proposal_ms": 271, "basis": "p95 x 2 including wheel traversal; proposal only"},
+    {"metric": "search_result_ms", "cohort": "warm_shelf", "proposal_ms": 448, "basis": "p95 x 2 including the 200 ms host debounce; proposal only"},
+    {"metric": "book_page_turn_ms", "cohort": "reading", "proposal_ms": 78, "basis": "p95 x 2; not a frame-time budget; proposal only"},
+    {"metric": "resume_ms", "cohort": "reading", "proposal_ms": 1049, "basis": "p95 x 1.5; proposal only"},
+    {"metric": "input_during_import_p50_ms", "cohort": "import", "proposal_ms": 5, "basis": "p95 x 4 with a 5 ms floor; proposal only"},
+    {"metric": "peak_working_set_bytes", "cohort": "cold_shelf", "proposal_bytes": 51220480, "basis": "p95 x 1.25; proposal only"}
+  ],
+  "limits": [
+    "External end-to-end UI latency only; no in-application frame or present signal exists on this path.",
+    "Operating-system disk cache and co-tenant load on the shared cloud runner are not controlled; cold/warm describe the profile strategy only.",
+    "Cold launches copy the seeded SDK library file, so the product catalog is rebuilt on every cold launch; warm launches reuse the populated profile.",
+    "The import cohort imports one fixed multi-chapter EPUB (about 11 MiB, stored) per launch, so its peak covers that import path and is reported separately from the shelf cohorts.",
+    "Book paging and continue-reading use one fixed packaged multi-page book in a separate profile; the 2202-original shelf corpus itself is unchanged.",
+    "UI messages are delivered to the real native controls and serviced by the product UI thread; they are not SendInput-level hardware injection."
+  ],
+  "not_granted": [
+    "product performance acceptance (no numeric budget exists and none is enforced)",
+    "frame time, compositor timing or dropped-frame evidence",
+    "functional, screen-reader, physical-device or complete-product acceptance",
+    "any claim that an external end-to-end latency is an application frame time"
+  ],
+  "earlier_failed_runs": [
+    {"run": 40076519862, "reason": "packaging assertion compared the manifest digest to a byte count; artifact identity step had no token", "preserved": true},
+    {"run": 40077316443, "reason": "the main window was enumerable while its WM_CREATE was still creating the child controls", "preserved": true},
+    {"run": 40077882900, "reason": "the first screen measured the legacy SDK list; closing then interrupted the 2202-book catalog build (22 catalog rows)", "preserved": true},
+    {"run": 40078522386, "reason": "the TXT import fixture title did not match the derived title, so the post-import search timed out", "preserved": true},
+    {"run": 40079602783, "reason": "the 16 MiB single-document TXT import never became visible; replaced by a fixed multi-chapter EPUB", "preserved": true}
+  ]
+}
