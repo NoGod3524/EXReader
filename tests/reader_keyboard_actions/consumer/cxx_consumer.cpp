@@ -128,7 +128,9 @@ int named_dispatch() {
   reader_kbd_event up = make_event(READER_KBD_PHASE_UP, READER_KBD_KEY_CHAR, 'f', 0, 0);
   if (kbd.dispatch(up, context, &accepting_handler, &recorder, result) != READER_KBD_OK)
     return fail("dispatch up");
-  if (recorder.calls != 2 || result.reason != READER_KBD_REASON_KEY_UP_SWALLOWED)
+  /* A key-up produces no action, so the handler must not run for it. */
+  if (recorder.calls != 1 || result.disposition != READER_KBD_CONSUME ||
+      result.reason != READER_KBD_REASON_KEY_UP_SWALLOWED)
     return fail("key-up of a consumed down was not swallowed");
   /* A null handler must behave exactly like translate(). */
   if (kbd.dispatch(up, context, nullptr, nullptr, result) != READER_KBD_OK ||
