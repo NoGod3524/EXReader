@@ -3,6 +3,7 @@ plugins {
 }
 
 def exrSdk = project.findProperty('exrSdk') ?: ''
+def exrProduct = project.findProperty('exrProduct') ?: "${rootProject.projectDir}/../../stage/android-product"
 
 android {
     namespace 'org.exreader.host'
@@ -22,7 +23,7 @@ android {
         }
         externalNativeBuild {
             cmake {
-                arguments "-DEXR_SDK=${exrSdk}"
+                arguments "-DEXR_SDK=${exrSdk}", "-DEXR_PRODUCT=${exrProduct}", '-DANDROID_STL=c++_static'
             }
         }
     }

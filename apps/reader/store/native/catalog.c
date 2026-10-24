@@ -259,7 +259,7 @@ static int deliver_rows(reader_catalog *c,sqlite3_stmt *s,reader_catalog_visit v
     row.source_bytes=(uint64_t)sqlite3_column_int64(s,4);row.favorite=sqlite3_column_int(s,5);
     row.sdk_book_id=sqlite3_column_type(s,6)==SQLITE_NULL ? 0:sqlite3_column_int64(s,6);
     row.location_kind=(const char *)sqlite3_column_text(s,7);
-    row.author=(const char *)sqlite3_column_text(s,8);
+    row.author=(const char *)sqlite3_column_text(s,8);row.deleted=sqlite3_column_int(s,9);
     if(!row.book_key||!row.title||!row.format||!row.sort_title||!row.author)
       return fail(e,SQLITE_CORRUPT,"Catalog row lacks required text");
     if(count) (*count)++;
@@ -267,31 +267,42 @@ static int deliver_rows(reader_catalog *c,sqlite3_stmt *s,reader_catalog_visit v
   }
   return status==SQLITE_DONE ? SQLITE_OK:db_error(c,status,e);
 }
-int reader_catalog_query_page(reader_catalog *c,const char *title,const char *key,
-                              const char *query,int direction,size_t limit,
+static int query_page(reader_catalog *c,const char *title,const char *key,
+                              const char *query,const char *alternate,int direction,int inclusive,int local,size_t limit,
                               reader_catalog_visit visit,void *context,reader_catalog_error *e) {
   sqlite3_stmt *s=NULL;int status=enter(c,e);char sql[1024];
   if(status!=SQLITE_OK) return status;
   if(!visit || limit==0 || limit>200 || (direction!=1 && direction!=-1) || (!!title!=!!key) ||
-     (title && (!valid_text(title)||!valid_text(key))) || (query && !valid_text(query))) {
+     (title && (!valid_text(title)||!valid_text(key))) || (query && !valid_text(query)) || (alternate && !valid_text(alternate))) {
     status=fail(e,SQLITE_MISUSE,"Invalid bounded catalog query/cursor");goto leave;
   }
   const char *range=!title ? "":direction>0 ?
-    " AND (b.sort_title,b.book_key)>(?1,?2)":" AND (b.sort_title,b.book_key)<(?1,?2)";
-  const char *filter=query && query[0] ?
-    " AND (instr(lower(b.title),lower(?4))>0 OR instr(lower(b.author),lower(?4))>0)":"";
+    inclusive ? " AND (b.sort_title,b.book_key)>=(?1,?2)":" AND (b.sort_title,b.book_key)>(?1,?2)":" AND (b.sort_title,b.book_key)<(?1,?2)";
+  const char *filter=query && query[0] ? (alternate ?
+    " AND (instr(lower(b.sort_title),lower(?4))>0 OR instr(lower(b.author),lower(?4))>0 OR instr(lower(b.author),lower(?5))>0)":
+    " AND (instr(lower(b.title),lower(?4))>0 OR instr(lower(b.author),lower(?4))>0)"):"";
   const char *order=direction>0 ? " ORDER BY b.sort_title,b.book_key":" ORDER BY b.sort_title DESC,b.book_key DESC";
   /* Only constant SQL fragments are interpolated. User strings stay bound.
      Separate first/continuation plans preserve the actual index range. */
-  snprintf(sql,sizeof(sql),"SELECT b.book_key,b.title,b.format,b.sort_title,b.source_bytes,b.favorite,l.sdk_book_id,l.location_kind,b.author FROM reader_books b LEFT JOIN reader_local_books l ON l.book_key=b.book_key WHERE b.deleted=0%s%s%s LIMIT ?3",range,filter,order);
+  snprintf(sql,sizeof(sql),"SELECT b.book_key,b.title,b.format,b.sort_title,b.source_bytes,b.favorite,l.sdk_book_id,l.location_kind,b.author,b.deleted FROM reader_books b LEFT JOIN reader_local_books l ON l.book_key=b.book_key WHERE b.deleted=0%s%s%s%s LIMIT ?3",local ? " AND l.sdk_book_id IS NOT NULL":"",range,filter,order);
   status=prepare(c,sql,&s,e);
   if(status==SQLITE_OK && title) status=bind_text(c,s,1,title,e);
   if(status==SQLITE_OK && key) status=bind_text(c,s,2,key,e);
   if(status==SQLITE_OK) status=sqlite3_bind_int(s,3,(int)limit);
   if(status==SQLITE_OK && query && query[0]) status=bind_text(c,s,4,query,e);
+  if(status==SQLITE_OK && query && query[0] && alternate) status=bind_text(c,s,5,alternate,e);
   if(status==SQLITE_OK) status=deliver_rows(c,s,visit,context,NULL,e);
 leave:
   sqlite3_finalize(s);c->active=0;return status;
+}
+int reader_catalog_query_page(reader_catalog *c,const char *title,const char *key,const char *query,int direction,size_t limit,
+                              reader_catalog_visit visit,void *context,reader_catalog_error *e) {
+  return query_page(c,title,key,query,NULL,direction,0,0,limit,visit,context,e);
+}
+int reader_catalog_local_canonical_page(reader_catalog *c,const char *title,const char *key,const char *nfc,const char *nfd,
+    int direction,int inclusive,size_t limit,reader_catalog_visit visit,void *context,reader_catalog_error *e) {
+  if(!nfc||!nfd||(inclusive!=0&&inclusive!=1))return fail(e,SQLITE_MISUSE,"Missing canonical local shelf query");
+  return query_page(c,title,key,nfc,nfd,direction,inclusive,1,limit,visit,context,e);
 }
 int reader_catalog_page(reader_catalog *c,const char *title,const char *key,size_t limit,
                         reader_catalog_visit visit,void *context,reader_catalog_error *e) {
@@ -307,7 +318,7 @@ int reader_catalog_find(reader_catalog *c,const char *key,const char *query,
   }
   const char *filter=query && query[0] ?
     " AND (instr(lower(b.title),lower(?2))>0 OR instr(lower(b.author),lower(?2))>0)":"";
-  snprintf(sql,sizeof(sql),"SELECT b.book_key,b.title,b.format,b.sort_title,b.source_bytes,b.favorite,l.sdk_book_id,l.location_kind,b.author FROM reader_books b LEFT JOIN reader_local_books l ON l.book_key=b.book_key WHERE b.deleted=0 AND b.book_key=?1%s LIMIT 1",filter);
+  snprintf(sql,sizeof(sql),"SELECT b.book_key,b.title,b.format,b.sort_title,b.source_bytes,b.favorite,l.sdk_book_id,l.location_kind,b.author,b.deleted FROM reader_books b LEFT JOIN reader_local_books l ON l.book_key=b.book_key WHERE b.deleted=0 AND b.book_key=?1%s LIMIT 1",filter);
   status=prepare(c,sql,&s,e);
   if(status==SQLITE_OK) status=bind_text(c,s,1,key,e);
   if(status==SQLITE_OK && query && query[0]) status=bind_text(c,s,2,query,e);
@@ -316,3 +327,32 @@ int reader_catalog_find(reader_catalog *c,const char *key,const char *query,
 leave:
   sqlite3_finalize(s);c->active=0;return status;
 }
+
+static int lookup(reader_catalog *c,int mode,int64_t id,const char *value,
+                  reader_catalog_visit visit,void *context,int *found,reader_catalog_error *e) {
+  sqlite3_stmt *s=NULL;size_t count=0;int status=enter(c,e);char sql[640];
+  if(found)*found=0;
+  if(status!=SQLITE_OK)return status;
+  if(!found||!visit||(mode==0?id<=0:!valid_text(value))) {
+    status=fail(e,SQLITE_MISUSE,"Invalid typed catalog lookup");goto leave;
+  }
+  const char *where=mode==0?"b.deleted=0 AND l.sdk_book_id=?1":mode==1?
+    "b.deleted=0 AND l.sdk_book_id IS NOT NULL AND b.title=?1":"b.book_key=?1";
+  snprintf(sql,sizeof(sql),"SELECT b.book_key,b.title,b.format,b.sort_title,b.source_bytes,b.favorite,l.sdk_book_id,l.location_kind,b.author,b.deleted FROM reader_books b LEFT JOIN reader_local_books l ON l.book_key=b.book_key WHERE %s ORDER BY b.sort_title,b.book_key LIMIT 1",where);
+  status=prepare(c,sql,&s,e);
+  if(status==SQLITE_OK)status=mode==0?sqlite3_bind_int64(s,1,id):bind_text(c,s,1,value,e);
+  if(status==SQLITE_OK)status=deliver_rows(c,s,visit,context,&count,e);
+  if(status==SQLITE_OK)*found=count!=0;
+leave:
+  sqlite3_finalize(s);c->active=0;return status;
+}
+int reader_catalog_local_lookup(reader_catalog *c,int64_t id,const char *title,
+    reader_catalog_visit visit,void *context,int *found,reader_catalog_error *e) {
+  if(id<0||(id>0&&title))return fail(e,SQLITE_MISUSE,"Ambiguous local catalog lookup");
+  return lookup(c,id>0?0:1,id,title,visit,context,found,e);
+}
+int reader_catalog_metadata(reader_catalog *c,const char *key,
+    reader_catalog_visit visit,void *context,int *found,reader_catalog_error *e) {
+  return lookup(c,2,0,key,visit,context,found,e);
+}
+
