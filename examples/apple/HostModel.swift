@@ -629,6 +629,70 @@ final class HostSession {
         return (result, try result.renderSnapshot())
     }
 
+    func readingCapture(start: Int? = nil, end: Int? = nil, cancel: HostCancelBox) throws -> HostReadingCapture {
+        try cancel.check()
+        guard book != nil else { throw HostError.invalidInput("请先打开书籍") }
+        let lower = start ?? (fixed == nil ? readingOffset : 0), upper = end ?? lower
+        guard lower >= 0, upper >= lower else { throw HostError.invalidInput("阅读记录选文无效") }
+        if let fixed { return try HostReadingWorker.fixedCapture(fixed, page: page, start: lower, end: upper, cancel: cancel) }
+        guard let pager else { throw HostError.invalidInput("阅读记录分页尚未就绪") }
+        let selector = try pager.makeAnchor(start: lower, end: upper, cancel: cancel)
+        return HostReadingCapture(mode: publication == nil ? 1 : 2, part: max(0, part), path: currentPath, page: 0,
+            anchor: HostSearchAnchor(selector.raw), fixed: nil)
+    }
+
+    // Read/restore resolution never renders or writes SDK progress. Only the
+    // explicit jump caller subsequently commits an actual renderer candidate.
+    func readingResolution(_ wire: Data, catalog: HostCatalog, cancel: HostCancelBox) throws -> (HostReadingCapture, HostSearchHit) {
+        try cancel.check()
+        guard let book else { throw HostError.invalidInput("请先打开书籍") }
+        let decoded = try catalog.withHistory { try HostReadingWorker.decoded(wire, history: $0) }
+        let independent = try HostLibrary(path: library.path)
+        guard let verifiedBook = try independent.books().first(where: { $0.id == book.id }) else { throw HostError.invalidInput("原件已不可用") }
+        let original = try independent.sourceFingerprint(book: verifiedBook, cancel: cancel)
+        guard decoded.book == original.format + ":" + original.sha256,
+              try catalog.searchSourceKey(sdkID: book.id) == original.searchKey else { throw HostError.invalidInput("阅读记录不是当前原件") }
+        let input = decoded.capture, fresh: HostReadingCapture, unit: Int
+        let match: HostAnchorMatch
+        if verifiedBook.isFixed, input.mode == 3, let anchor = input.fixed {
+            let fixed = try independent.fixed(bookID: book.id, font: font, cancel: cancel)
+            let id = anchor.fields[0].map { String(decoding: $0, as: UTF8.self) } ?? ""
+            let choices = fixed.pageIDs.enumerated().filter { $0.element == id }
+            guard !id.isEmpty, choices.count == 1 else { throw HostError.invalidInput("固定页位置缺失或不唯一") }
+            unit = choices[0].offset
+            let text = try fixed.text(page: unit, cancel: cancel)
+            match = try anchor.withInput { try text.resolve($0, pageID: id, cancel: cancel) }
+            guard match.isFound, let range = match.range else { throw HostError.invalidInput("记录位置未精确匹配，保留当前页面") }
+            fresh = try HostReadingWorker.fixedCapture(fixed, page: unit, start: range.lowerBound, end: range.upperBound, cancel: cancel)
+        } else if input.mode == 2, !verifiedBook.isFixed, try independent.isBoundedEPUB(book: verifiedBook), let anchor = input.anchor {
+            let publication = try HostPublication(library: independent, bookID: book.id, cancel: cancel)
+            if decoded.version == 1 {
+                let choices = publication.parts.filter { $0.path == input.path && $0.reading }
+                guard choices.count == 1 else { throw HostError.invalidInput("旧版章节位置不唯一，保留记录") }
+                unit = choices[0].index
+            } else { unit = input.part; _ = try publication.route(unit, path: input.path) }
+            let pager = try HostPager(publication: publication, part: unit, font: font, width: Double(viewport.width),
+                height: Double(viewport.height), fontSize: fontSize, box: cancel)
+            match = try anchor.withInput { try pager.resolveInput($0, cancel: cancel) }
+            guard match.isFound, let range = match.range else { throw HostError.invalidInput("记录章节未精确匹配，保留当前页面") }
+            let actual = try pager.makeAnchor(start: range.lowerBound, end: range.upperBound, cancel: cancel)
+            fresh = HostReadingCapture(mode: 2, part: unit, path: input.path, page: 0, anchor: HostSearchAnchor(actual.raw), fixed: nil)
+        } else if input.mode == 1, !verifiedBook.isFixed, try !independent.isBoundedEPUB(book: verifiedBook), let anchor = input.anchor {
+            unit = 0
+            let document = try independent.document(bookID: book.id, cancel: cancel)
+            match = try anchor.withInput { try document.resolveInput($0, cancel: cancel) }
+            guard match.isFound, let range = match.range else { throw HostError.invalidInput("记录正文未精确匹配，保留当前页面") }
+            let actual = try document.makeAnchor(start: range.lowerBound, end: range.upperBound, cancel: cancel)
+            fresh = HostReadingCapture(mode: 1, part: 0, path: "", page: 0, anchor: HostSearchAnchor(actual.raw), fixed: nil)
+        } else { throw HostError.invalidInput("记录坐标模式与实际阅读模式不一致") }
+        try cancel.check()
+        let hit = HostSearchHit(mode: input.mode == 3 ? READER_SEARCH_FIXED : input.mode == 2 ? READER_SEARCH_EPUB : READER_SEARCH_REFLOW,
+            unit: unit, path: input.path, pageID: input.fixed?.fields[0].map { String(decoding: $0, as: UTF8.self) } ?? "",
+            pageLabel: "", sourceKey: original.searchKey, bookID: book.id,
+            anchor: input.anchor ?? HostSearchAnchor(exr_anchor()), fixed: try input.fixed ?? HostSearchFixedAnchor(exr_fixed_anchor()))
+        return (fresh, hit)
+    }
+
     // Keep the last usable frame/session if parsing, seeking, rendering or saving fails.
     private func changing(_ cancel: HostCancelBox, _ operation: () throws -> HostSnapshot) throws -> HostSnapshot {
         let old = (book, document, pager, fixed, page, readingOffset, fontSize, viewport, pageText, pageRange, currentCancel,
@@ -1070,6 +1134,7 @@ final class HostSession {
 final class HostReaderModel: ObservableObject {
     let search = HostSearchState()
     let navigation = HostNavigationState()
+    let readingRecords = HostReadingState()
     @Published var books: [HostBookRow] = []
     @Published var current: HostBookRow?
     @Published var image: CGImage?
@@ -1526,6 +1591,160 @@ final class HostReaderModel: ObservableObject {
         }
     }
 
+    func prepareReadingRecords() {
+        guard let current, !busy else { return }
+        readingRecords.bind(current.id)
+        loadReadingRecords()
+    }
+
+    private func performReading(_ status: String, cursor: reader_av_cursor? = nil,
+                                _ action: @escaping (HostSession, HostCatalog, URL, HostCancelBox) throws -> HostReadingHistory?) {
+        guard !busy, let bookID = current?.id, readingRecords.bookID == bookID else { return }
+        let generation = readingRecords.generation, (myToken, box) = begin()
+        readingRecords.running = true; readingRecords.status = "处理中…"
+        queue.async {
+            do {
+                guard let session = self.session, let catalog = self.catalog else { throw HostError.invalidInput("书库尚未就绪") }
+                try self.requireBook(bookID, session: session, cancel: box)
+                let root = try self.storageFolder()
+                let history = try action(session, catalog, root, box)
+                let book = try catalog.readingBook(sdkID: bookID)
+                let page = try HostReadingWorker.page(catalog: catalog, bookID: bookID, bookKey: book.key, from: cursor, cancel: box)
+                let progress = try HostReadingWorker.progress(catalog: catalog, bookID: bookID, bookKey: book.key)
+                let pending = try HostReadingWorker.pending(root: root)
+                DispatchQueue.main.async {
+                    guard myToken == self.token else { return }
+                    if generation == self.readingRecords.generation && self.readingRecords.bookID == bookID {
+                        self.readingRecords.rows = (cursor == nil ? progress.map { [$0] } ?? [] : []) + page.rows
+                        self.readingRecords.cursor = page.next; self.readingRecords.complete = page.complete
+                        self.readingRecords.pending = pending; self.readingRecords.status = status
+                        self.readingRecords.running = false
+                        self.readingRecords.versions = history?.versions ?? []
+                        self.readingRecords.restoring = history?.row
+                        self.readingRecords.restoreHeads = history?.heads ?? []
+                        self.statusText = status
+                    }
+                    self.finish()
+                }
+            } catch {
+                let pending = try? HostReadingWorker.pending(root: self.storageFolder())
+                DispatchQueue.main.async {
+                    guard myToken == self.token else { return }
+                    if generation == self.readingRecords.generation {
+                        self.readingRecords.running = false; self.readingRecords.status = self.describe(error)
+                        self.readingRecords.pending = pending
+                        self.errorText = self.describe(error)
+                    }
+                    self.finish()
+                }
+            }
+        }
+    }
+
+    func loadReadingRecords(next: Bool = false) {
+        if next && readingRecords.complete { return }
+        let cursor = next ? readingRecords.cursor : nil
+        performReading("本书的书签与标注", cursor: cursor) { _, _, _, _ in nil }
+    }
+
+    func saveReadingRecord(bookmark: Bool) {
+        performReading(bookmark ? "已添加书签" : "已保存阅读进度") { session, catalog, root, cancel in
+            let capture = try session.readingCapture(cancel: cancel)
+            let request = try HostReadingWorker.request(session: session, catalog: catalog, kind: bookmark ? 2 : 1,
+                operation: 0, mode: capture.mode, capture: capture, body: "", cancel: cancel)
+            _ = try HostReadingWorker.submit(request, session: session, catalog: catalog, root: root, cancel: cancel)
+            return nil
+        }
+    }
+
+    func highlightReadingRecord(start: Int, end: Int, context: HostSelectionContext) {
+        guard !busy, context == selectionContext, start >= context.baseOffset, end > start,
+              end - context.baseOffset <= context.text.utf8.count else { errorText = "选文已失效，请重新选择"; return }
+        if readingRecords.bookID != context.bookID { readingRecords.bind(context.bookID) }
+        performReading("已保存高亮到阅读记录") { session, catalog, root, cancel in
+            guard session.matches(context) else { throw HostError.invalidInput("选文页面已变化") }
+            let capture = try session.readingCapture(start: start, end: end, cancel: cancel)
+            let request = try HostReadingWorker.request(session: session, catalog: catalog, kind: 3, operation: 0,
+                mode: capture.mode, capture: capture, body: "", cancel: cancel)
+            _ = try HostReadingWorker.submit(request, session: session, catalog: catalog, root: root, cancel: cancel)
+            return nil
+        }
+    }
+
+    func editReadingRecord(_ row: HostReadingRow, body: String) {
+        guard row.safe, row.hasLocation, row.entityKind == "annotation", body.utf8.count <= 65536 else { return }
+        performReading("批注已保存") { session, catalog, root, cancel in
+            _ = try HostReadingWorker.selectedWire(catalog: catalog, row: row)
+            let request = try HostReadingWorker.request(session: session, catalog: catalog, kind: 4, operation: 0,
+                annotation: row.annotation, mode: row.mode, capture: nil, body: body, observedHeads: [row.revision], cancel: cancel)
+            _ = try HostReadingWorker.submit(request, session: session, catalog: catalog, root: root, cancel: cancel)
+            return nil
+        }
+    }
+
+    func deleteReadingRecord(_ row: HostReadingRow) {
+        guard row.safe, row.hasLocation else { return }
+        performReading("阅读记录已删除，保留历史版本") { session, catalog, root, cancel in
+            _ = try HostReadingWorker.selectedWire(catalog: catalog, row: row)
+            let request = try HostReadingWorker.request(session: session, catalog: catalog, kind: row.entityKind == "progress" ? 1 : 2,
+                operation: 1, annotation: row.annotation, mode: row.mode, capture: nil, body: "", observedHeads: [row.revision], cancel: cancel)
+            _ = try HostReadingWorker.submit(request, session: session, catalog: catalog, root: root, cancel: cancel)
+            return nil
+        }
+    }
+
+    func showReadingHistory(_ row: HostReadingRow) {
+        performReading("请选择要恢复的保留版本") { _, catalog, _, _ in try HostReadingWorker.history(catalog: catalog, row: row) }
+    }
+
+    func restoreReadingVersion(_ version: HostReadingVersion) {
+        guard let row = readingRecords.restoring, readingRecords.versions.contains(where: { $0.id == version.id }) else { return }
+        let heads = readingRecords.restoreHeads
+        performReading("已恢复阅读记录，当前页面保持不变") { session, catalog, root, cancel in
+            let (capture, _) = try session.readingResolution(version.wire, catalog: catalog, cancel: cancel)
+            let body = try catalog.withHistory { try HostReadingWorker.decoded(version.wire, history: $0).body }
+            let isPoint = capture.mode == 3 ? capture.fixed!.start == capture.fixed!.end : capture.anchor!.start == capture.anchor!.end
+            let request = try HostReadingWorker.request(session: session, catalog: catalog,
+                kind: row.entityKind == "progress" ? 1 : isPoint ? 2 : 3, operation: 2, annotation: row.annotation,
+                mode: capture.mode, capture: capture, body: body, observedHeads: heads, cancel: cancel)
+            _ = try HostReadingWorker.submit(request, session: session, catalog: catalog, root: root, cancel: cancel)
+            return nil
+        }
+    }
+
+    func replayReadingRequest() {
+        performReading("待完成阅读记录已确认保存") { session, catalog, root, cancel in
+            _ = try HostReadingWorker.replay(session: session, catalog: catalog, root: root, cancel: cancel); return nil
+        }
+    }
+    func discardReadingRequest(expected: String) {
+        performReading("已放弃这项待完成请求") { _, _, root, _ in
+            try HostReadingWorker.discard(root: root, expected: expected); return nil
+        }
+    }
+    func closeReadingRecords() {
+        if readingRecords.running { activeCancel?.cancel() }
+        readingRecords.bind(nil)
+    }
+    func jumpReadingRecord(_ row: HostReadingRow) {
+        guard !busy, row.safe, row.hasLocation, row.bookID == current?.id else { return }
+        let (myToken, box) = begin()
+        queue.async {
+            do {
+                guard let session = self.session, let catalog = self.catalog else { throw HostError.invalidInput("书库尚未就绪") }
+                try self.requireBook(row.bookID, session: session, cancel: box)
+                let wire = try HostReadingWorker.selectedWire(catalog: catalog, row: row)
+                let (_, hit) = try session.readingResolution(wire, catalog: catalog, cancel: box)
+                let (candidate, frame) = try session.searchCandidate(hit, cancel: box)
+                if self.completeFrame(frame, session: candidate, token: myToken, status: "已精确定位阅读记录") {
+                    self.session = candidate
+                }
+            } catch {
+                DispatchQueue.main.async { guard myToken == self.token else { return }; self.readingRecords.status = self.describe(error); self.finish() }
+            }
+        }
+    }
+
     func prepareSearch() {
         guard let current, !busy else { return }
         let key = "EXRSearchQuery.\(current.id)"
@@ -1686,6 +1905,7 @@ final class HostReaderModel: ObservableObject {
         guard !busy else { return }
         search.invalidate()
         navigation.invalidate()
+        readingRecords.bind(nil)
         let (myToken, box) = begin()
         statusText = "正在打开…"
         queue.async {
@@ -1984,6 +2204,7 @@ final class HostReaderModel: ObservableObject {
     func backToLibrary() {
         search.invalidate()
         navigation.invalidate()
+        readingRecords.bind(nil)
         token += 1
         let myToken = token
         activeCancel?.cancel()

@@ -389,6 +389,7 @@ struct ReaderScreen: View {
     @State private var showNotes = false
     @State private var showSearch = false
     @State private var showNavigation = false
+    @State private var showReadingRecords = false
 #if os(iOS)
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -447,6 +448,12 @@ struct ReaderScreen: View {
                     .accessibilityIdentifier("reader.title")
                     .accessibilityAddTraits(.isHeader)
                 Spacer()
+                Menu {
+                    Button("阅读记录") { model.prepareReadingRecords(); showReadingRecords = true }
+                        .accessibilityIdentifier("reader.records")
+                } label: { Image(systemName: "ellipsis").frame(width: 28, height: 28) }
+                    .accessibilityLabel(Text("更多阅读操作"))
+                    .accessibilityIdentifier("reader.more").disabled(model.busy)
                 if model.busy {
                     if compactTools {
                         Image(systemName: "hourglass").frame(width: 20, height: 20)
@@ -525,6 +532,7 @@ struct ReaderScreen: View {
         }
         .sheet(isPresented: $showSearch) { HostSearchSheet(model: model) }
         .sheet(isPresented: $showNavigation) { HostNavigationSheet(model: model) }
+        .sheet(isPresented: $showReadingRecords) { HostReadingRecordsSheet(model: model) }
         .onDisappear { model.detach() }
         .onChange(of: model.location) { value in hostAnnounce(value) }
         .onChange(of: model.statusText) { value in if !model.busy { hostAnnounce(value) } }
@@ -567,6 +575,12 @@ struct SelectionSheet: View {
                 .accessibilityIdentifier("selection.hint")
             Text(clipboard.isEmpty ? "剪贴板为空" : clipboard).font(.caption2)
                 .accessibilityIdentifier("selection.clipboard")
+            Button("保存高亮到阅读记录") {
+                guard let context, let (start, end) = byteRange() else { hint = "请先选择文字"; return }
+                model.highlightReadingRecord(start: context.baseOffset + start, end: context.baseOffset + end, context: context)
+                hint = "正在保存高亮…"
+            }.buttonStyle(.bordered).disabled(!isCurrent || model.busy || selectedText().isEmpty)
+                .accessibilityIdentifier("selection.reading-highlight")
             HStack(spacing: 12) {
                 Button("全选") { selection = NSRange(location: 0, length: page.length) }
                     .accessibilityIdentifier("selection.all")
