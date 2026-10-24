@@ -483,19 +483,21 @@ def main():
         record("range_get_children_returns_an_empty_com_array_in_the_correct_vtable_slot")
 
         # 11) geometry is real for text and empty for an empty range
-        rects = units.GetBoundingRectangles()
+        # Inspect the public COM SAFEARRAY of doubles. The Python convenience
+        # method converts it to Rect objects and truncates each coordinate.
+        rects = units.textRange.GetBoundingRectangles()
         assert len(rects) >= 8 and len(rects) % 4 == 0, rects
         assert all(rects[i + 2] > 0 and rects[i + 3] > 0 for i in range(0, len(rects), 4)), rects
         assert len({round(rects[i + 1], 2) for i in range(0, len(rects), 4)}) >= 2, rects
         single = units.Clone()
         single.ExpandToEnclosingUnit(0)
-        single_rects = single.GetBoundingRectangles()
+        single_rects = single.textRange.GetBoundingRectangles()
         assert len(single_rects) == 4 and single_rects[2] > 0, single_rects
         print(json.dumps({"full_page_rectangles": list(rects), "first_character_rectangle": list(single_rects)}), flush=True)
         collapsed = units.Clone()
         collapsed.MoveEndpointByRange(1, units, 0)  # end = range start
         assert collapsed.GetText(-1) == ""
-        assert len(collapsed.GetBoundingRectangles()) == 0
+        assert len(collapsed.textRange.GetBoundingRectangles()) == 0
         record("bounding_rectangles_describe_only_real_geometry")
 
         # 12) a point inside the page yields a range at that point
@@ -583,13 +585,13 @@ def main():
                 assert code == UIA_E_ELEMENTNOTAVAILABLE, error
                 refused = True
             assert refused, filename + " accepted selection from the previous book"
-            whole_rects = current.GetBoundingRectangles()
+            whole_rects = current.textRange.GetBoundingRectangles()
             assert len(whole_rects) >= 8 and len(whole_rects) % 4 == 0, whole_rects
             assert len({round(whole_rects[i + 1], 1) for i in range(0, len(whole_rects), 4)}) >= 2
             first = current.Clone()
             first.ExpandToEnclosingUnit(0)
             assert first.GetText(-1) == literal[0]
-            boxes = first.GetBoundingRectangles()
+            boxes = first.textRange.GetBoundingRectangles()
             assert len(boxes) == 4 and boxes[2] > 0 and boxes[3] > 0, boxes
             at = pattern.RangeFromPoint(int(boxes[0] + boxes[2] / 4), int(boxes[1] + boxes[3] / 2))
             assert at and at.GetText(-1) == ""
