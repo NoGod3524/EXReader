@@ -23,6 +23,17 @@ def scan(path, patterns):
     payload = Path(path).read_bytes()
     facts = distlib.scan_bytes(Path(path).name, payload, patterns)
     facts['sha256'] = distlib.digest_bytes(payload)
+    if facts['kind'] == 'file':
+        try:
+            machine, sections = distlib._coff_sections(payload)
+        except ValueError:
+            facts['debug_section_count'] = 0
+            facts['debug_sections'] = []
+            return facts
+        debug = [item['name'] for item in sections if item['name'].startswith('.debug')]
+        facts['debug_section_count'] = len(debug)
+        facts['debug_sections'] = debug
+        facts['coff_machines'] = [machine]
     return facts
 
 
