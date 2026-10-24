@@ -1052,7 +1052,7 @@ public final class A11yAuditTest {
         while (SystemClock.uptimeMillis() < end) {
             try {
                 // Platform dialogs and buttons render upper case; the label keeps its case.
-                UiObject2 value = device.findObject(By.textMatches("(?i)" + Pattern.quote(text)));
+                UiObject2 value = device.findObject(By.text(Pattern.compile("(?i)" + Pattern.quote(text))));
                 if (value != null && value.isEnabled()) {
                     value.click();
                     SystemClock.sleep(350);
