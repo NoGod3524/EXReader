@@ -24,12 +24,12 @@ jobs:
           git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
           git diff --exit-code d2b59e9e9b3ad3e3246c23926f0fbebbaa9515f8 HEAD -- apps/reader/store apps/reader/revisions apps/reader/commands apps/reader/desktop-metadata apps/reader/sync apps/reader/session apps/reader/reading-state extras
           git diff --name-only d2b59e9e9b3ad3e3246c23926f0fbebbaa9515f8 HEAD | while IFS= read -r path; do
-            case "$path" in examples/linux/accounts.inc|examples/linux/accounts_ui.inc|examples/linux/reader.c|examples/linux/reading.c|examples/linux/reading.h|examples/linux/received.inc|apps/reader/desktop/CMakeLists.txt|tests/linux_host/check_account_ui.py|tests/linux_host/receive_checks.py|tests/reader_gtk_receive/*|.github/workflows/reader-receive-linux.yml|docs/READER-GTK-RECEIVE.md|docs/validation/reader-gtk-receive.json) ;; *) echo "Unexpected path: $path"; exit 1;; esac
+            case "$path" in examples/linux/accounts.inc|examples/linux/accounts_ui.inc|examples/linux/collections_ui.inc|examples/linux/reader.c|examples/linux/reading.c|examples/linux/reading.h|examples/linux/received.inc|apps/reader/desktop/CMakeLists.txt|tests/linux_host/check_account_ui.py|tests/linux_host/receive_checks.py|tests/reader_gtk_receive/*|.github/workflows/reader-receive-linux.yml|docs/READER-GTK-RECEIVE.md|docs/validation/reader-gtk-receive.json) ;; *) echo "Unexpected path: $path"; exit 1;; esac
           done
       - name: Install native GTK TLS XML and Secret Service dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil
       - name: Build installed product metadata and account modules with one product provider
         run: |
           mkdir -p build/account-logs
@@ -120,6 +120,18 @@ jobs:
             python3 tests/linux_host/check_metadata_ui.py --payload build/account-package/EXReader-Linux --command-consumer build/account-command-consumer/command-consumer --output build/account-metadata-ui
             python3 tests/linux_host/check_collections_ui.py --payload build/account-package/EXReader-Linux --command-consumer build/account-command-consumer/command-consumer --output build/account-collections-ui
           '
+      - name: Targeted real AT-SPI regressions for G13 production fixes
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+          /usr/bin/python3 -m py_compile tests/reader_gtk_receive/check_atspi_fixes.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            openbox >build/account-logs/atspi-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            /usr/bin/python3 tests/reader_gtk_receive/check_atspi_fixes.py --payload build/account-package/EXReader-Linux --output build/account-atspi-fixes
+          '
       - name: Preserve source-bound evidence and original logs without credentials or TLS private keys
         if: always()
         uses: actions/upload-artifact@v4
@@ -146,6 +158,7 @@ jobs:
             build/account-metadata-ui/
             build/account-collections-ui/
             build/account-ui/
+            build/account-atspi-fixes/
             build/account-package/build.json
             build/account-package/runtime-dependencies.txt
             build/account-package/EXReader-Linux.tar.gz
