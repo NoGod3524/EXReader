@@ -79,7 +79,9 @@ def expected_counts(plan):
     imports = per_kind
     shelf = per_kind * 2
     per_import = plan['import_key_slots']
-    resizes = plan['imports_per_launch'] - plan['imports_per_launch'] // 2
+    resizes = plan['imports_per_launch'] - 1
+    if resizes < 0:
+        resizes = 0
     return {
         'startup_shelf_rows': shelf + imports,
         'startup_key_response': shelf,

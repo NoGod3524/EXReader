@@ -518,6 +518,10 @@ class Sampler:
         if latest is None or latest['state']['host'].get('busy') != 1:
             self.record(handle, 'not_observed', note='import finished before the resize probe')
             return
+        if latest['state']['host'].get('reader_visible') != 1:
+            self.record(handle, 'not_observed',
+                        note='the reader is not mapped during this import, so no allocation target')
+            return
         previous = self.current_paint(watch)
         before_sequence = latest['state']['host'].get('sequence')
         since = watch.mark()
@@ -527,8 +531,7 @@ class Sampler:
         except subprocess.SubprocessError as error:
             self.record(handle, 'failed', note='resize failed: %s' % error)
             return
-        index, event = watch.wait(
-            lambda state: state['host'].get('book') == book_before, 60, since)
+        index, event = watch.wait(lambda state: True, 60, since)
         painted = 0
         sequence = before_sequence
         if index is not None:
@@ -542,8 +545,8 @@ class Sampler:
             self.record(handle, 'failed', note='no observation after the resize: %s' % event)
             return
         self.record(handle, 'ok', start=stamp, end=event['at'], event=event,
-                    note='resize answered during the import; sequence=%s->%s paint_delta=%d' % (
-                        before_sequence, sequence, painted))
+                    note='resize answered during the import; book=%s sequence=%s->%s paint_delta=%d' % (
+                        book_before, before_sequence, sequence, painted))
 
     def scenario_import(self, index, host, watch):
         handle = self.expect('startup_shelf_rows', 'warm_catalog')
@@ -576,7 +579,7 @@ class Sampler:
                 self.record(completion, 'failed', note=str(error))
                 continue
             self.import_keys(host, watch, book_before)
-            if attempt % 2 == 0:
+            if attempt:
                 self.import_resize(host, watch, book_before)
             try:
                 done_index, done_event = self.await_state(

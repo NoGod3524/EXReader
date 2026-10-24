@@ -271,7 +271,10 @@ class Host:
         return stamp
 
     def paste(self, text):
-        subprocess.run(['xclip', '-selection', 'clipboard'], input=text.encode(), timeout=30, check=True)
+        # xclip forks an owner that outlives this call. Keep its stdio away from the
+        # step's pipe so the capture cannot be held open after the sampler exits.
+        subprocess.run(['xclip', '-selection', 'clipboard'], input=text.encode(), timeout=30, check=True,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return self.press('ctrl+v')
 
     def dialog_visible(self):
