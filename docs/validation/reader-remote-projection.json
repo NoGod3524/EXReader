@@ -1,0 +1,108 @@
+{
+  "accepted": true,
+  "source_sha": "2cbdd49ba9920afb5246e4b5b904e1ab28345169",
+  "run_id": 40061634535,
+  "attempt": 1,
+  "artifacts": [
+    {
+      "id": 12547820904,
+      "name": "reader-commands-Linux-40061634535-1",
+      "size_in_bytes": 5196341,
+      "digest": "sha256:970b5017c8de338b2bc4b9fabc537bf83d2306fd9cdb4272d7619e820c20c89f",
+      "expires_at": "2027-01-22T04:15:35Z"
+    },
+    {
+      "id": 12547960536,
+      "name": "reader-reading-v2-Linux-40061634535-1",
+      "size_in_bytes": 23758800,
+      "digest": "sha256:2795e0d30780ecfb0629cba4ef97092c5ce53d043d7732a126c0ceb2d5948d58",
+      "expires_at": "2027-01-22T04:15:35Z"
+    },
+    {
+      "id": 12547931334,
+      "name": "reader-commands-Windows-40061634535-1",
+      "size_in_bytes": 6517975,
+      "digest": "sha256:bd12ee476f97b0e1f5052ee6c151f147573178896711ddda631587e582008211",
+      "expires_at": "2027-01-22T04:15:35Z"
+    },
+    {
+      "id": 12547268192,
+      "name": "reader-reading-v2-Windows-40061634535-1",
+      "size_in_bytes": 20183799,
+      "digest": "sha256:831452da2c3b55c8f9c7f28dfc696193e87e83be853fcc4d0d163b4ebc49e6a1",
+      "expires_at": "2027-01-22T04:15:35Z"
+    }
+  ],
+  "problems": [],
+  "sdk_changed": false,
+  "schema_changed": false,
+  "host_ui_accepted": false,
+  "webdav_roundtrip_accepted": true,
+  "six_platform_accepted": false,
+  "complete_product": false,
+  "scope": "received entity discovery and expected-head-fenced metadata projection on Windows/Linux",
+  "entity_checks": [
+    "235_distinct_entities_cross_both_keyset_directions_without_kind_leakage",
+    "all_seven_kinds_are_discoverable_without_product_projection",
+    "safe_bytes_tombstones_and_all_unresolved_states_remain_distinct",
+    "callback_stop_and_boundary_cursors_do_not_skip_entities",
+    "typed_cursor_and_page_arguments_are_strict",
+    "page_and_title_respect_owner_and_callback_reentry",
+    "book_title_copy_preserves_exact_unormalized_wire_and_clears_errors",
+    "discovery_is_read_only_and_uses_existing_index_range_in_both_directions",
+    "discovery_snapshot_survives_real_concurrent_other_connection_commit",
+    "host_can_project_discovered_remote_book_with_explicit_nfc_without_new_history_or_ack",
+    "child_dependencies_remain_pending_until_host_explicitly_projects_safe_parent",
+    "changed_head_is_fenced_and_reading_entities_never_project_into_metadata"
+  ],
+  "checks_per_platform": 12,
+  "tag_entities": 235,
+  "kinds": 7,
+  "jobs": [
+    {
+      "id": 120776201144,
+      "name": "real v2 capture (ubuntu-22.04)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120776201280,
+      "name": "real v2 capture (windows-2022)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120776201301,
+      "name": "native / installed typed product commands (ubuntu-22.04)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120776201341,
+      "name": "native / installed typed product commands (windows-2022)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120777162291,
+      "name": "strict reading v2 evidence",
+      "conclusion": "success"
+    }
+  ],
+  "evidence_artifact": {
+    "id": 12547885712,
+    "node_id": "MDg6QXJ0aWZhY3QxMjU0Nzg4NTcxMg==",
+    "name": "reader-reading-v2-evidence-40061634535-1",
+    "size_in_bytes": 756,
+    "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12547885712",
+    "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12547885712/zip",
+    "expired": false,
+    "digest": "sha256:e8b6ecd78cec2ef9751ef55c83a1cdb35f236158952bd4e5f440cfca8c840b8b",
+    "created_at": "2026-10-24T04:20:35Z",
+    "updated_at": "2026-10-24T04:20:35Z",
+    "expires_at": "2027-01-22T04:15:35Z",
+    "workflow_run": {
+      "id": 40061634535,
+      "repository_id": 1421442522,
+      "head_repository_id": 1421442522,
+      "head_branch": "codex/reader-reading-v2",
+      "head_sha": "2cbdd49ba9920afb5246e4b5b904e1ab28345169"
+    }
+  }
+}
