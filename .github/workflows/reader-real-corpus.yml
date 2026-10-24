@@ -92,7 +92,7 @@ jobs:
       - name: Build the consumer against the installed SDK
         shell: bash
         run: |
-          cmake -S tests/reader_real_corpus -B build/reader-consumer -DEXR_SDK="$PWD/stage" -DCMAKE_BUILD_TYPE=Release
+          cmake -S tests/reader_real_corpus -B build/reader-consumer -DEXR_SDK="$GITHUB_WORKSPACE/stage" -DCMAKE_BUILD_TYPE=Release
           cmake --build build/reader-consumer --config Release --parallel 4
       - name: Run the real-document acceptance
         shell: bash
