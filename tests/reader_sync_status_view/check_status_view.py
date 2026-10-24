@@ -57,7 +57,7 @@ def main():
     lock = threading.Lock()
     entries = {}
     directories = {'/dav/', '/dav/exreader-sync-v1/', '/dav/exreader-sync-v1/revisions/'}
-    flags = {'pause': False, 'http': 0}
+    flags = {'pause': False, 'http': 0, 'pause_shard': '', 'pause_seen': False}
     blocked, release = threading.Event(), threading.Event()
     processes = []
 
@@ -143,6 +143,12 @@ def main():
                 flags['pause'] = False
                 blocked.set()
                 release.wait(30)
+            if flags['pause_shard'] and self.path == flags['pause_shard']:
+                if flags['pause_seen']:
+                    blocked.set()
+                    release.wait(30)
+                else:
+                    flags['pause_seen'] = True
             with lock:
                 exists = self.path in directories
                 children = [(x, True, 0) for x in directories if x.startswith(self.path) and
@@ -265,8 +271,9 @@ def main():
         first = Device('设备A')
         assert first.created == 0
         assert not requests
-        for number in range(40):
-            retain(revision(number + 1, shard=number, key='%032x' % (number + 1)))
+        # 105 revisions in one shard force a real mid-shard continuation cursor.
+        for number in range(105):
+            retain(revision(number + 1, shard=16, key='%032x' % (number + 1)))
 
         idle = capture_norev(first, 10)
         summary = idle['summary']
@@ -300,16 +307,24 @@ def main():
         first.wait(3, 60)
         record('running_capture_reports_syncing_phase_before_any_step_completes')
 
+        blocked.clear()
+        flags['pause_shard'] = '/dav/exreader-sync-v1/revisions/10/'
+        flags['pause_seen'] = False
         first.command('start')
-        first.wait_shards(3)
+        assert blocked.wait(60)
+        mid = capture(first, 10)['summary']
+        assert mid['phase'] == 1 and mid['pulled'] == 100, mid
+        assert mid['completed_shards'] == 16 and mid['cursor'], mid
         assert first.command('cancel')['status'] == 0
+        release.set()
         first.wait(3, 120)
+        flags['pause_shard'] = ''
         partial = first.counts()
-        assert 0 < partial[0] < 40, partial
+        assert partial[0] == 100, partial
         cancelled = capture(first, 100)['summary']
         assert cancelled['phase'] == 3 and cancelled['phase_text'] == 'cancelled', cancelled
         assert cancelled['resumable'] == 1 and cancelled['sweep_complete'] == 0
-        assert cancelled['cursor'] and cancelled['completed_shards'] < 256, cancelled
+        assert cancelled['cursor'] and cancelled['completed_shards'] == 16, cancelled
         assert cancelled['library_complete'] == 0
         record('cancelled_snapshot_keeps_cursor_and_partial_history_resumable')
 
@@ -321,7 +336,7 @@ def main():
         listed = {item['path'] for item in requests if item['method'] == 'PROPFIND'
                   and SHARD_DIRECTORY.match(item['path'])}
         assert len(listed) == 256, sorted(listed)[:5] + ['count=%d' % len(listed)]
-        assert first.counts() == (40, 0), first.counts()
+        assert first.counts() == (105, 0), first.counts()
         swept = capture(first, 100)['summary']
         assert swept['phase'] == 4 and swept['phase_text'] == 'sweep-complete', swept
         assert swept['sweep_complete'] == 1 and swept['library_complete'] == 0
@@ -385,7 +400,7 @@ def main():
             assert capture(first, 5, 1)['summary']['pending'] == 5
         after_digest = hashlib.sha256(Path(str(first.db)).read_bytes()).hexdigest()
         assert before_digest == after_digest, (before_digest, after_digest)
-        assert first.counts() == (47, 7), first.counts()
+        assert first.counts() == (112, 7), first.counts()
         record('repeated_captures_leave_product_storage_byte_identical')
 
         oversized = first.command('capture 101 0')
@@ -407,7 +422,7 @@ def main():
         first.command('start')
         pushed = first.wait(4, 300)
         assert pushed['sweeps'] >= 2
-        assert first.counts() == (47, 0), first.counts()
+        assert first.counts() == (112, 0), first.counts()
         record('bounded_page_records_are_published_and_acknowledged_by_the_real_session')
 
         source = '状态视图私有原件夹具\n'.encode()
