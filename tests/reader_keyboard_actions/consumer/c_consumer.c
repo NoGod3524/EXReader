@@ -7,6 +7,14 @@
 #include <stdio.h>
 #include <string.h>
 
+#if defined(_MSC_VER)
+/* The layout assertions and the expectation macros below are deliberately
+   constant expressions, which MSVC reports as C4127. /WX turns that into an
+   error, so the warning is disabled for this file only. */
+#pragma warning(push)
+#pragma warning(disable : 4127)
+#endif
+
 /* Installed-package C consumer. Expected values below were fixed before any run.
    Each named check prints "CHECK <name> PASS|FAIL <detail>". */
 static char detail[300];
@@ -795,5 +803,8 @@ int main(void) {
     if (!pass) ++failures;
   }
   (void)printf("c-consumer %s\n", failures ? "failed" : "ok");
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
   return failures ? 1 : 0;
 }
