@@ -50,3 +50,25 @@ commits once.
 Not covered: host UI/adapters, other formats, applying a committed revision to the SDK, transport, and process
 kill during commit (revision-module scope). A catalog locked by `BEGIN EXCLUSIVE` cannot be read either, so
 that variant would fail in the selector instead of the commit and is not used as commit-failure evidence.
+
+## Accepted cloud run
+
+Tested source `6ba1ad0d0c3c74dfc5c5267521f60dfd3210a48a` on `codex/reader-reading-commands`, run
+[40081701747](https://github.com/NoGod3524/EXReader/actions/runs/40081701747) attempt 1: success.
+
+| job | id | result |
+| --- | --- | --- |
+| reading commands (ubuntu-22.04) | 120836421578 | 1402 checks, 0 failures, 21 cases, 6 race rounds |
+| reading commands (windows-2022) | 120836421497 | 1402 checks, 0 failures, 21 cases, 6 race rounds |
+| reading commands (macos-15) | 120836421599 | 1402 checks, 0 failures, 21 cases, 6 race rounds |
+| same-run artifact evidence | 120837153821 | `problems: []`, three ZIPs re-verified inside Actions |
+
+Artifacts, each named with run and attempt and valid until 2027-01-22T09:22:34Z: Linux `12555347919`
+10,297,711 B `sha256:1ec3eda...cd9424`; Windows `12555602070` 8,529,139 B `sha256:dcf071f...7e1d7f6`;
+macOS `12555502324` 9,185,764 B `sha256:d7915e0...24fa88d`; evidence `12555273459` 1,886 B
+`sha256:6f7ce89...474f97b8`. The three systems produced byte-identical originals (txt, edited txt, epub,
+pdf, cbz, spacer) and exactly one vendored SQLite archive each.
+
+Earlier failing runs 40078160945 (`58fa6021`), 40078549084 (`03027bcb`) and 40079084692 (`b2d587f6`) stay
+recorded and are not reclassified. Host UI/adapters and applying a committed revision to the SDK remain
+outside this acceptance (`host_integration_accepted: false`).

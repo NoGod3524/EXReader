@@ -1,9 +1,409 @@
 {
   "schema": "reader-reading-commands-acceptance-v1",
-  "accepted": false,
-  "status": "pending_cloud_run",
+  "accepted": true,
+  "status": "cloud_accepted",
   "branch": "codex/reader-reading-commands",
   "start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "module": "EXReaderReadingCommands 0.1.0",
-  "note": "No run is granted yet. This record is replaced only with evidence from one source, run and attempt."
+  "tested_source": {
+    "sha": "6ba1ad0d0c3c74dfc5c5267521f60dfd3210a48a",
+    "head_equals_github_sha": true,
+    "start_is_ancestor": true,
+    "guard_job_step": "Require fixed start, frozen SDK, schema1 and the package file list",
+    "guard_result": "success on all three platforms",
+    "frozen_sdk_tree": "9854061be331fe603a1822d9b2b36ee357154927",
+    "unchanged_paths": [
+      "src",
+      "include",
+      "cmake",
+      "CMakeLists.txt",
+      "tests/fixtures",
+      "bindings",
+      ".github/workflows/native.yml",
+      ".github/workflows/reliability.yml",
+      "apps/reader/store",
+      "apps/reader/revisions",
+      "apps/reader/reading-state",
+      "apps/reader/commands",
+      "apps/reader/sync",
+      "docs/READER-REVISION-WIRE.md",
+      "apps/reader/store/001_catalog.sql"
+    ],
+    "package_diff": [
+      "apps/reader/reading-commands/CMakeLists.txt",
+      "apps/reader/reading-commands/EXReaderReadingCommandsConfig.cmake.in",
+      "apps/reader/reading-commands/include/reader_reading_commands.h",
+      "apps/reader/reading-commands/src/reading_commands.cpp",
+      "tests/reader_reading_commands/check_artifacts.py",
+      "tests/reader_reading_commands/check_reading_commands.py",
+      "tests/reader_reading_commands/consumer/CMakeLists.txt",
+      "tests/reader_reading_commands/consumer/api.c",
+      "tests/reader_reading_commands/consumer/probe.cpp",
+      "tests/reader_reading_commands/make_fixtures.py",
+      ".github/workflows/reader-reading-commands.yml",
+      "docs/READER-READING-COMMANDS.md",
+      "docs/validation/reader-reading-commands.json"
+    ]
+  },
+  "run": {
+    "id": "40081701747",
+    "attempt": 1,
+    "workflow": "Reader reading commands",
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40081701747",
+    "conclusion": "success",
+    "source": "6ba1ad0d0c3c74dfc5c5267521f60dfd3210a48a",
+    "created_at": "2026-10-24T09:22:34Z",
+    "completed_at": "2026-10-24T09:26:39Z"
+  },
+  "jobs": [
+    {
+      "name": "reading commands (ubuntu-22.04)",
+      "id": 120836421578,
+      "conclusion": "success"
+    },
+    {
+      "name": "reading commands (windows-2022)",
+      "id": 120836421497,
+      "conclusion": "success"
+    },
+    {
+      "name": "reading commands (macos-15)",
+      "id": 120836421599,
+      "conclusion": "success"
+    },
+    {
+      "name": "same-run artifact evidence",
+      "id": 120837153821,
+      "conclusion": "success"
+    }
+  ],
+  "systems": [
+    {
+      "runner": "ubuntu-22.04",
+      "job_id": 120836421578,
+      "checks_total": 1402,
+      "checks_failed": 0,
+      "cases": 21,
+      "race_rounds": 6,
+      "sdk_version": "3.40.0",
+      "parser_version": "exreader-sdk-3.40.0",
+      "sqlite": {
+        "version": "3.54.0",
+        "source_id": "2026-10-09 15:46:58 be8d059e9a49089ab2dce5ed26dd87aaf598fdc5fbe0b107c0dd758464bcd5e3",
+        "link_provider": "libreader_catalog_sqlite.a"
+      },
+      "probe_sha256": "e273fc1edfc8ef652a7715768491ffff402cd44fabbcc2883a12592bb3d8be3b",
+      "c_consumer_sha256": "b40dd72e965669c75bbafa59f3304ce466efd72a6a0e731e5825ef98784d97ae",
+      "summary_sha256": "34843747f794dfb82618bf3dd66bb0ae788b7116ee4037604b55d75c50e0ae15",
+      "report_sha256": "881ebc408536ec6ea5bc00bee24098a9d3f5d272724608c874085847e04864cf",
+      "artifact": {
+        "name": "reader-reading-commands-Linux-40081701747-1",
+        "id": 12555347919,
+        "bytes": 10297711,
+        "digest": "sha256:1ec3edae84beb888aa3cd492ed0fd0b35f2f369eeada7a09578b281de9cd9424",
+        "expires_at": "2027-01-22T09:22:34Z"
+      }
+    },
+    {
+      "runner": "windows-2022",
+      "job_id": 120836421497,
+      "checks_total": 1402,
+      "checks_failed": 0,
+      "cases": 21,
+      "race_rounds": 6,
+      "sdk_version": "3.40.0",
+      "parser_version": "exreader-sdk-3.40.0",
+      "sqlite": {
+        "version": "3.54.0",
+        "source_id": "2026-10-09 15:46:58 be8d059e9a49089ab2dce5ed26dd87aaf598fdc5fbe0b107c0dd758464bcd5e3",
+        "link_provider": "reader_catalog_sqlite.lib"
+      },
+      "summary_sha256": "c49f68de356be48f04d00c1409863b4b7fcd3f7e62ececf653b2e51c61ae9c00",
+      "report_sha256": "db9d7d0296c4e5c5d4e91cb5729b3fb13c3ea644a9dc2f52c1544262adf294a8",
+      "artifact": {
+        "name": "reader-reading-commands-Windows-40081701747-1",
+        "id": 12555602070,
+        "bytes": 8529139,
+        "digest": "sha256:dcf071f53849fa8bb6b3b58fc546648db45439378a8f462f68433358c7e1d7f6",
+        "expires_at": "2027-01-22T09:22:34Z"
+      }
+    },
+    {
+      "runner": "macos-15",
+      "job_id": 120836421599,
+      "checks_total": 1402,
+      "checks_failed": 0,
+      "cases": 21,
+      "race_rounds": 6,
+      "sdk_version": "3.40.0",
+      "parser_version": "exreader-sdk-3.40.0",
+      "sqlite": {
+        "version": "3.54.0",
+        "source_id": "2026-10-09 15:46:58 be8d059e9a49089ab2dce5ed26dd87aaf598fdc5fbe0b107c0dd758464bcd5e3",
+        "link_provider": "libreader_catalog_sqlite.a"
+      },
+      "summary_sha256": "d313a0828b88409c80318d93f2941f243276d50b88b2ae7cccdb782d0aec453e",
+      "report_sha256": "5b6598858d81f942e2c8c6500dda96fb409e3ae573645a8f96d228d97b2d4ef0",
+      "artifact": {
+        "name": "reader-reading-commands-macOS-40081701747-1",
+        "id": 12555502324,
+        "bytes": 9185764,
+        "digest": "sha256:d7915e00a9f1eef451ae088a3204f56d438b899038c9dd3b23cb84bd124fa88d",
+        "expires_at": "2027-01-22T09:22:34Z"
+      }
+    }
+  ],
+  "originals": {
+    "identical_across_systems": true,
+    "txt": {
+      "file": "book.txt",
+      "bytes": 636,
+      "sha256": "fcc117171436330ec0a2fa7ba24437593d77b30e96ba25cb2b9d8649ed0ac604"
+    },
+    "edited": {
+      "file": "book-edited.txt",
+      "bytes": 663,
+      "sha256": "a3fd2777a0091020bd583a5e5c7bf8063f5bae2d43fba2114f8eb0fabf570ad8"
+    },
+    "epub": {
+      "file": "book.epub",
+      "bytes": 1913,
+      "sha256": "99a21d3a73924d5b2efe4596076348b1eb7b00715ebc727737edd91f2f3bf50b"
+    },
+    "pdf": {
+      "file": "pages.pdf",
+      "bytes": 1560,
+      "sha256": "23f9dff3bc6bd85a19a9e24c6cb0390e17d7907af8c6b98c55273295386431ed"
+    },
+    "cbz": {
+      "file": "pages.cbz",
+      "bytes": 43936,
+      "sha256": "1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3"
+    },
+    "spacer": {
+      "file": "spacer.txt",
+      "bytes": 45,
+      "sha256": "bca6bef0f360d7af447351aff99b1683f0506d14c3dceb4731edb5baa55d55fc"
+    }
+  },
+  "module_versions": {
+    "revisions_version": "0.3.0",
+    "reading_state_version": "0.1.0",
+    "commands_version": "0.1.0"
+  },
+  "acceptance": [
+    {
+      "capability": "Installed-package consumption on Windows, Linux and macOS (C11 consumer plus C++ probe from installed packages only)",
+      "result": "pass",
+      "evidence": [
+        "job ubuntu-22.04 / windows-2022 / macos-15 steps 'Build and install reading state, typed commands and reading commands from installed packages only' and 'Compile independent C and C++ consumers from installed packages'",
+        "c-consumer exit 0"
+      ]
+    },
+    {
+      "capability": "Real public-SDK capture in TXT, EPUB global, EPUB bounded pager, PDF and CBZ with one product SQLite provider",
+      "result": "pass",
+      "evidence": [
+        "21 cases",
+        "single link provider per system",
+        "originals identical across systems"
+      ]
+    },
+    {
+      "capability": "UTF-8 boundaries on annotation text",
+      "result": "pass",
+      "evidence": [
+        "utf8 create: commits one new revision",
+        "utf8 valid text 0..5",
+        "utf8 invalid text: truncated lead / overlong NUL / surrogate / above U+10FFFF / truncated three-byte / stray continuation / oversize",
+        "utf8 missing text: is refused"
+      ]
+    },
+    {
+      "capability": "Repeated spine disambiguated by part plus path (no path-only or page-number guess)",
+      "result": "pass",
+      "evidence": [
+        "fixture spine repeats one path at two parts",
+        "the two repeated-spine captures share a path and differ by part",
+        "anchor v2 part index routes to the exact spine part",
+        "path alone is ambiguous for the repeated spine",
+        "epub-highlight-repeated-spine-first / -second cases"
+      ]
+    },
+    {
+      "capability": "Point and range kinds (bookmark point only, highlight non-empty range only, no percentage or page derivation)",
+      "result": "pass",
+      "evidence": [
+        "guard: bookmark from a range capture: is refused",
+        "guess: highlight from a point capture: is refused",
+        "guess: highlight without any capture: is refused",
+        "guess: legacy offset-only selector: is refused",
+        "guess: offsets that disagree with the quote: is refused",
+        "guess: delete with a located capture: is refused"
+      ]
+    },
+    {
+      "capability": "Wire v1 back-compat and reading anchor v1/v2",
+      "result": "pass",
+      "evidence": [
+        "anchor v1 revision commits through the unchanged module",
+        "v1 original reads back as anchor_version 1",
+        "v1-compat edit preserves the v1 selector and version",
+        "edited revision is still anchor_version 1",
+        "v1-compat delete over a v1 head",
+        "v1-compat restore writes a v2 anchor after the tombstone"
+      ]
+    },
+    {
+      "capability": "Every observed-head state: none, one, two concurrent, pending parents, stale, superset, unknown",
+      "result": "pass",
+      "evidence": [
+        "heads no history but a claimed head: is refused",
+        "heads empty set creates: commits one new revision",
+        "heads empty set over existing history: is refused",
+        "heads superset with an unknown head: is refused",
+        "heads single wrong head: is refused",
+        "heads single safe head advances: commits one new revision",
+        "heads stale head after advance: is refused",
+        "two concurrent children commit",
+        "heads one of two concurrent heads: is refused",
+        "heads complete concurrent set merges: commits one new revision",
+        "merge wire names both concurrent heads",
+        "heads head with missing parents: is refused",
+        "heads book without verified history: is refused"
+      ]
+    },
+    {
+      "capability": "Concurrency and stale submits across two real processes (6 rounds, one winner, no split)",
+      "result": "pass",
+      "evidence": [
+        "race_rounds 6 with exactly one winner and one refused loser per round",
+        "verify state heads == winner, revisions 2, outbox rows for entity 2, safe, deleted",
+        "stale second submit is rejected and history does not split",
+        "call from a non-owner thread is refused and writes nothing"
+      ]
+    },
+    {
+      "capability": "Tombstone then explicit restore (no implicit resurrection, no relocation)",
+      "result": "pass",
+      "evidence": [
+        "explicit delete: commits one new revision",
+        "explicit delete: tombstone carries no location",
+        "note edit over a tombstone: is refused",
+        "implicit put after delete: is refused",
+        "explicit restore: commits one new revision",
+        "explicit restore: selector read back equals the SDK capture"
+      ]
+    },
+    {
+      "capability": "Lost response retried with the same ID (exact no-op, no second history/outbox row)",
+      "result": "pass",
+      "evidence": [
+        "lost-response retry of the edit with the same ID is an exact no-op",
+        "retry: exact repeat with the same ID is a no-op",
+        "retry: no second history entry or outbox row",
+        "retry: ack removes only the outbox row",
+        "retry after ack does not requeue",
+        "retry of the old create after a later edit stays a no-op",
+        "retry: same ID with different bytes is a collision and changes nothing"
+      ]
+    },
+    {
+      "capability": "Failed commit leaves history and outbox together (writer-blocked commit)",
+      "result": "pass",
+      "evidence": [
+        "commit-failure: the pre-lock baseline is a settled public readback of head and outbox",
+        "a second connection holds the product catalog write lock",
+        "commit blocked by a database lock fails",
+        "failed commit leaves neither history nor outbox rows",
+        "retry with the same ID after the failure commits once"
+      ]
+    },
+    {
+      "capability": "Annotation body edit keeps the original selector and unknown ranges",
+      "result": "pass",
+      "evidence": [
+        "note-body edit keeps the selector: commits one new revision",
+        "note-body edit keeps the selector: selector read back equals the SDK capture",
+        "stored ambiguous selector is not relocated or rounded",
+        "ambiguous quote resolves AMBIGUOUS",
+        "txt-highlight-ambiguous-unknown-range case"
+      ]
+    },
+    {
+      "capability": "Every item judged through the public revision API (get/validate/decode/heads/selected/outbox), never from producer output",
+      "result": "pass",
+      "evidence": [
+        "each commit is revalidated from retained bytes and compared with the selected head",
+        "one new outbox row per commit",
+        "outbox rows are unique"
+      ]
+    },
+    {
+      "capability": "Source books, SDK notes and current progress unchanged; no SDK note copy, no current-page change",
+      "result": "pass",
+      "evidence": [
+        "source books, SDK notes and current progress are unchanged per case",
+        "after every command the source books, SDK notes and current progress equal the baseline"
+      ]
+    },
+    {
+      "capability": "Error text fixed and bounded; owner and no-reentry rules",
+      "result": "pass",
+      "evidence": [
+        "error text is fixed and bounded",
+        "call from a non-owner thread is refused and writes nothing"
+      ]
+    }
+  ],
+  "strict_verifier": {
+    "job_id": 120837153821,
+    "script": "tests/reader_reading_commands/check_artifacts.py",
+    "problems": [],
+    "reading_commands_accepted": true,
+    "checks": [
+      "one same-run ZIP per system",
+      "ZIP bytes and SHA-256 equal the API record",
+      "upload log digest, artifact ID and final size equal the downloaded ZIP",
+      "summary identity equals this source, run and attempt",
+      "report hash equals the summary",
+      "upstream judgement accepted",
+      "three systems generated identical original bytes"
+    ],
+    "evidence_artifact": {
+      "name": "reader-reading-commands-evidence-40081701747-1",
+      "id": 12555273459,
+      "bytes": 1886,
+      "digest": "sha256:6f7ce8935d6c15708948deea115e3920d8e43a6ca19d5193801aaa9e474f97b8",
+      "expires_at": "2027-01-22T09:22:34Z"
+    }
+  },
+  "preserved_failures": [
+    {
+      "run_id": 40078160945,
+      "source": "58fa602114cabd7a54dcf91e60bdfbd72394cc6b",
+      "conclusion": "failure",
+      "cause": "original first run, kept as-is"
+    },
+    {
+      "run_id": 40078549084,
+      "source": "03027bcbd9b6e7156da581f3278c5f3c83da31ab",
+      "conclusion": "failure",
+      "cause": "projection header missing from the reading commands include path"
+    },
+    {
+      "run_id": 40079084692,
+      "source": "b2d587f669b8675c5da47e417570aa6aae08bbb8",
+      "conclusion": "failure",
+      "cause": "Tail gamma fixture lookup and receive digest zeroing; after those fixes the only remaining failure was 'failed commit leaves neither history nor outbox rows' on all three systems"
+    }
+  ],
+  "host_integration_accepted": false,
+  "not_covered": [
+    "Host UI/adapters and applying a committed revision to the SDK (notes, current page) stay with the existing reading-state adapter and host",
+    "HTML, FB2 and other formats: only TXT, EPUB (global and bounded pager), PDF and CBZ captures were exercised",
+    "Process kill in the middle of a commit is the revision module's acceptance scope",
+    "A catalog locked with BEGIN EXCLUSIVE cannot be read at all, so that variant fails in the selector and is not used as commit-failure evidence"
+  ],
+  "note": "Granted only for source 6ba1ad0d0c3c74dfc5c5267521f60dfd3210a48a, run 40081701747, attempt 1, as re-verified inside Actions by check_artifacts.py. This evidence commit follows the tested source and changes only docs. Earlier failing runs stay recorded and are not converted into passes."
 }
