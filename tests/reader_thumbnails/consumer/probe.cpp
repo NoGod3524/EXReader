@@ -464,7 +464,11 @@ void test_limits() {
   {
     Thumb x;
     rth_status st = cover(c, b, fx["huge-dims.png"], 8, 8, x, nullptr, &err);
-    check("limits: an image declaring 30000x30000 is refused before decoding", st == RTH_LIMIT && !x.t.pixels && stats_of(c).peak_decoded_bytes == 0, err.message);
+    check("anomalous image: a PNG header declaring 30000x30000 over invalid data is refused before decoding (the SDK reports a damaged header)", (st == RTH_LIMIT || st == RTH_FORMAT) && !x.t.pixels && stats_of(c).peak_decoded_bytes == 0, err.message);
+    st = cover(c, b, fx["wide9000x1.png"], 8, 8, x, nullptr, &err);
+    check("limits: a valid 9000x1 PNG above the 8192 SDK edge limit is refused with a limit status before decoding", st == RTH_LIMIT && !x.t.pixels && stats_of(c).peak_decoded_bytes == 0, err.message);
+    st = cover(c, b, fx["big4100x4100.png"], 8, 8, x, nullptr, &err);
+    check("limits: a valid 4100x4100 PNG above 16,777,216 pixels is refused with a limit status before decoding", st == RTH_LIMIT && !x.t.pixels && stats_of(c).peak_decoded_bytes == 0, err.message);
     st = cover(c, b, fx["truncated.png"], 8, 8, x, nullptr, &err);
     check("anomalous image: a truncated PNG is refused as a format error", st == RTH_FORMAT && !x.t.pixels, err.message);
     st = cover(c, b, fx["badmagic.png"], 8, 8, x, nullptr, &err);

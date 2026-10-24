@@ -137,6 +137,8 @@ def main():
     huge = (b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', 30000, 30000, 8, 6, 0, 0, 0))
             + chunk(b'IDAT', zlib.compress(b'\0' * 16)) + chunk(b'IEND', b''))
     files['huge-dims.png'] = huge
+    files['wide9000x1.png'] = png(9000, 1, bytes((1, 2, 3, 255)) * 9000)
+    files['big4100x4100.png'] = png(4100, 4100, bytes((9, 8, 7, 255)) * (4100 * 4100))
     grad = files['grad16x8.png']
     files['truncated.png'] = grad[:len(grad) * 7 // 10]
     files['badmagic.png'] = b'not an image at all, just text\n' * 3
