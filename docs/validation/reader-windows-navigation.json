@@ -1,11 +1,14 @@
 {
   "schema": 1,
-  "accepted": false,
-  "state": "implementation_awaiting_first_cloud_run",
+  "accepted": true,
+  "state": "windows_native_directory_scope_authenticated",
   "baseline": "3917897e",
   "sdk": "9854061be331fe603a1822d9b2b36ee357154927",
-  "source": null,
-  "run": null,
+  "source": "53dc10c6d8f609d5dcf2deccc9c6277c1e74b31a",
+  "run": 40142663081,
+  "attempt": 1,
+  "conclusion": "success",
+  "branch": "codex/reader-windows-navigation-ui",
   "workflow": ".github/workflows/reader-windows-navigation-ui.yml",
   "complete_product": false,
   "six_platform_accepted": false,
@@ -13,5 +16,62 @@
   "performance_accepted": false,
   "sdk_changed": false,
   "schema_changed": false,
-  "previous_failures": []
+  "host_job": 121017462678,
+  "strict_job": 121019229843,
+  "checks": {
+    "navigation_ui": 31,
+    "installed_f2": 130,
+    "installed_f1": 264,
+    "search_txt": 13,
+    "search_formats_lifecycle": 25,
+    "search_keyboard_uia": 17,
+    "original_ui": 158,
+    "product": 10,
+    "worker": 5,
+    "shelf": 13,
+    "metadata": 18,
+    "account": 32,
+    "accessibility": 24,
+    "navigation_protocol_rejections": 33,
+    "original_search_protocol_rejections": 23
+  },
+  "navigation_without_search_compiles_and_links": true,
+  "consumer_sha256": "a3bc440804932082901b642676a7f120550f408c098ef34a77de69690d636bae",
+  "review_sha256": "4351c8700e67b4ff2cca4dd5fa89eeeeba3d271c389bbeef73ffd8b0b3755051",
+  "artifacts": [
+    {
+      "id": 12579198679,
+      "name": "reader-windows-search-initial-40142663081-1",
+      "bytes": 64293027,
+      "digest": "sha256:4025a77f565d6a283a41c79e2d5a5700a510db27b185fa5f5743cc97982ea183",
+      "expires_at": "2027-01-22T23:25:14Z"
+    },
+    {
+      "id": 12579836489,
+      "name": "reader-windows-search-summary-40142663081-1",
+      "bytes": 1425,
+      "digest": "sha256:ebe8ae8e2aa273fad5762df456fbc20a87c0acaa31ee917cc22ba9202e416506",
+      "expires_at": "2027-01-22T23:25:14Z"
+    }
+  ],
+  "previous_failures": [
+    {
+      "source": "0b433fa79aaf033e34f8e174ef6ab65c3f2b0fbc",
+      "run": 40142195528,
+      "attempt": 1,
+      "conclusion": "failure",
+      "native_job_passed": true,
+      "failed_job": 121018074784,
+      "failure": "strict validator expected a .lib suffix in MSVC map; replaced with actual public F2 symbols and F1 symbol absence"
+    }
+  ],
+  "review_fix_verified": "cancel-return-from-candidates-keeps-matching-model",
+  "not_granted": [
+    "frozen_sdk_whole_page_palette",
+    "pdf_author_outline",
+    "screen_reader_speech",
+    "physical_device",
+    "performance",
+    "six_target_product"
+  ]
 }
