@@ -91,8 +91,8 @@ reader_link_action expected_action(const char* text) {
 
 int main() {
   verdict("cpp-installed-header",
-          std::strcmp(READER_LINK_VERSION_STRING, "0.1.0") == 0 &&
-              READER_LINK_ABI_VERSION == 1u && READER_LINK_ACTION_NEEDS_HOST == 2);
+          std::strcmp(READER_LINK_POLICY_VERSION_STRING, "0.1.0") == 0 &&
+              READER_LINK_POLICY_ABI_VERSION == 1u && READER_LINK_ACTION_NEEDS_HOST == 2);
 
   {
     // RAII lifetime: the display string must survive the policy and the input.
