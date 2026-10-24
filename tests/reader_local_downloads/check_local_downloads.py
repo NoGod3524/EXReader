@@ -1042,12 +1042,14 @@ def s_pdf_private_original(ctx):
     removed_ok(env.run("remove", "--key", book.key), book)
     r = env.run("reimport", "--key", book.key, "--file", book.path).result
     same((r["status"], r["outcome"]), ("ok", "attached"), "PDF reimport: " + r["msg"])
+    book.ids[0] = int(r["id"])  # the reimport created a new SDK row
     stable = os.path.join(env.state, "originals", book.sha + ".orig")
     need(os.path.isfile(stable), "the PDF private original is retained")
     same(sha256_file(stable), book.sha, "retained PDF bytes")
     removed_ok(env.run("remove", "--key", other.key), other)
     r = env.run("reimport", "--key", other.key, "--file", other.path).result
     same((r["status"], r["outcome"]), ("ok", "attached"), "second PDF reimport")
+    other.ids[0] = int(r["id"])
     other_stable = os.path.join(env.state, "originals", other.sha + ".orig")
     need(os.path.isfile(other_stable), "the second PDF private original is retained")
     other_digest = sha256_file(other_stable)
@@ -1079,6 +1081,7 @@ def s_formats_all(ctx):
         new_id = int(r["id"])
         same(env.dump_sha(new_id), book.sha, kind + ": reimported bytes match the identity")
         same(env.catalog(book.key)[:3], (1, 1, new_id), kind + ": mapping back")
+        book.ids[0] = new_id  # the reimport created a new SDK row
         removed_ok(env.run("remove", "--key", book.key), book)
         same(env.dump_sha(neighbour.mapped), neighbour.sha, kind + ": neighbour readable")
         env.assert_state_clean()
