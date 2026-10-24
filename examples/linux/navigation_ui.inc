@@ -41,7 +41,8 @@ static void directory_release(void) {
 }
 static void directory_destroyed(GtkWidget *widget,gpointer unused) {
   (void)widget;(void)unused;directory.dialog=directory.list=directory.status=NULL;
-  if(directory.content) gtk_widget_set_sensitive(directory.content,TRUE);directory.content=NULL;
+  if(directory.content) gtk_widget_set_sensitive(directory.content,TRUE);
+  directory.content=NULL;
   g_clear_pointer(&directory.candidates,g_free);directory.candidate_count=0;
   if(!closing && !directory.suppress_focus) {
     gtk_window_present(GTK_WINDOW(window));

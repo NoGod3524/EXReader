@@ -3,7 +3,9 @@
 分支`codex/reader-gtk-navigation-ui`从Search最终证据HEAD
 `9762a7dd4ede02b11339105ccd64b8d187f5d6bf`接续。原样引入已验F2源码
 `cbd7832b914bddcf99e06a85962d301a00b47efa`的模块与原130项消费者；共享实现未改。
-当前仅完成源码，尚未编译；首次云端结果待登记。
+首次源码`2799df58`、run`40122987085`已通过F2原130项、Search264/34和F3 20，
+新宿主因四处misleading-indentation警告在原`-Werror`下编译拒绝；现将语句分行，不降低编译检查。
+后续运行结果待登记，尚未授予导航UI范围。
 
 可选`EXR_READER_GTK_NAVIGATION=ON`和安装前缀`READER_NAVIGATION_PREFIX`接入，默认关闭。
 原“更多”末尾及Ctrl+Shift+T打开原生模态目录，每层只显示当前32行，可打开条目、进入子级、返回或继续分页。
