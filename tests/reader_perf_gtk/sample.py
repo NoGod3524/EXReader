@@ -208,13 +208,17 @@ class Sampler:
                 package['tarball_bytes'] = path.stat().st_size
                 package['tarball_sha256'] = sha256_file(path)
         self.environment['package'] = package
+        # Host state lives beside the evidence directory: GTK, dbus and the window
+        # manager write hidden files into HOME, and the evidence bundle must contain
+        # exactly the files the artifact upload keeps.
+        state = self.output.parent / 'perf-host-state'
         host_environment = {
             'PATH': os.environ.get('PATH', '/usr/bin:/bin'),
             'DISPLAY': os.environ.get('DISPLAY', ':99'),
-            'HOME': str(self.output / 'host-home'),
-            'XDG_RUNTIME_DIR': str(self.output / 'host-runtime'),
-            'XDG_CACHE_HOME': str(self.output / 'host-cache'),
-            'XDG_CONFIG_HOME': str(self.output / 'host-config'),
+            'HOME': str(state / 'home'),
+            'XDG_RUNTIME_DIR': str(state / 'runtime'),
+            'XDG_CACHE_HOME': str(state / 'cache'),
+            'XDG_CONFIG_HOME': str(state / 'config'),
             'LANG': 'C.UTF-8',
             'LC_ALL': 'C.UTF-8',
             'GDK_BACKEND': 'x11',
