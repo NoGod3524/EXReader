@@ -186,14 +186,21 @@ static int command_attach(void) {
   book.location_kind = strcmp(arg_vector[9], "-") ? arg_vector[9] : NULL;
   book.sdk_book_id = (int64_t)strtoll(arg_vector[10], NULL, 10);
   book.favorite = arg_count > 11 ? atoi(arg_vector[11]) : 0;
-  status = reader_catalog_open(arg_vector[2], &catalog, &error);
-  if (status == 0) {
-    status = reader_catalog_attach(catalog, &book, &error);
-    reader_catalog_close(&catalog, &error);
+  {
+    char message[256];
+    memset(message, 0, sizeof(message));
+    status = reader_catalog_open(arg_vector[2], &catalog, &error);
+    if (status == 0) {
+      status = reader_catalog_attach(catalog, &book, &error);
+      memcpy(message, error.message, sizeof(message) - 1);
+      reader_catalog_close(&catalog, &error);
+    } else {
+      memcpy(message, error.message, sizeof(message) - 1);
+    }
+    printf("{\"status\":%d,\"message\":", status);
+    json_string(message);
+    printf("}\n");
   }
-  printf("{\"status\":%d,\"message\":", status);
-  json_string(error.message);
-  printf("}\n");
   return 0;
 }
 
@@ -202,14 +209,21 @@ static int command_unmap(void) {
   reader_catalog_error error;
   int status;
   memset(&error, 0, sizeof(error));
-  status = reader_catalog_open(arg_vector[2], &catalog, &error);
-  if (status == 0) {
-    status = reader_catalog_remove_local(catalog, (int64_t)strtoll(arg_vector[3], NULL, 10), &error);
-    reader_catalog_close(&catalog, &error);
+  {
+    char message[256];
+    memset(message, 0, sizeof(message));
+    status = reader_catalog_open(arg_vector[2], &catalog, &error);
+    if (status == 0) {
+      status = reader_catalog_remove_local(catalog, (int64_t)strtoll(arg_vector[3], NULL, 10), &error);
+      memcpy(message, error.message, sizeof(message) - 1);
+      reader_catalog_close(&catalog, &error);
+    } else {
+      memcpy(message, error.message, sizeof(message) - 1);
+    }
+    printf("{\"status\":%d,\"message\":", status);
+    json_string(message);
+    printf("}\n");
   }
-  printf("{\"status\":%d,\"message\":", status);
-  json_string(error.message);
-  printf("}\n");
   return 0;
 }
 

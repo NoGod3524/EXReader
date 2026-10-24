@@ -122,11 +122,11 @@ class World:
         self.storage = []
 
     # --- setup -------------------------------------------------------------
-    def import_book(self, name, fmt, mode):
+    def import_book(self, name, fmt, mode, alias=None):
         result = spawn(self.probe, ["import", self.library, fmt, self.manifest["books"][name]["path"], mode])
         if result.get("status") != OK or int(result.get("id", 0)) <= 0:
             raise Failure("import %s failed: %s" % (name, result))
-        self.ids[name] = int(result["id"])
+        self.ids[alias or name] = int(result["id"])
 
     def attach(self, fmt, digest, size, title, author, sdk_id, favorite=0, location=None):
         location = location or LOCATION.get(fmt, "reflow_global")
@@ -156,6 +156,9 @@ class World:
                                 ("tiny.txt", "txt", "memory"), ("large.txt", "txt", "memory"),
                                 ("swap-beta.pdf", "pdf", "memory")):
             self.import_book(name, fmt, mode)
+        # A second, distinct SDK row for the same bytes: one local SDK ID can map
+        # to only one product original, so the two wrong-book rows need two rows.
+        self.import_book("swap-beta.pdf", "pdf", "memory", alias="swap-beta.pdf.2")
 
         # Nine product-only rows: no local mapping exists after unmap().
         for index, fmt in enumerate(FORMATS):
@@ -201,7 +204,7 @@ class World:
         alpha = self.book("swap-alpha.pdf")
         self.keys["wrong_size"] = self.attach("pdf", hashlib.sha256(b"wrong-size").hexdigest(),
                                               beta["bytes"] + 1, "尺寸不符", "产品作者：辛",
-                                              self.ids["swap-beta.pdf"])
+                                              self.ids["swap-beta.pdf.2"])
         self.keys["wrong_bytes"] = self.attach("pdf", alpha["sha256"], alpha["bytes"], "内容不符",
                                                "产品作者：壬", self.ids["swap-beta.pdf"])
 
