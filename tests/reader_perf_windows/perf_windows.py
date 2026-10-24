@@ -1197,8 +1197,7 @@ def build_summary(context, records, aggregates, environment_doc, prep):
             'Cold launches copy the seeded SDK library file, so the product catalog is rebuilt on '
             'every cold launch; warm launches reuse the populated profile.',
             'The import cohort imports one fixed multi-chapter EPUB (about 11 MiB, stored) per launch, '
-            'so its peak working set includes the host import buffer and is not comparable with the '
-            'shelf cohorts.',
+            'so its peak covers that import path and is reported separately from the shelf cohorts.',
             'Book paging and continue-reading use one fixed packaged multi-page book in a separate '
             'profile; the 2202-original shelf corpus itself is unchanged.',
             'UI messages are delivered to the real native controls and serviced by the product UI '
