@@ -59,8 +59,8 @@ GROUPS = [
     ('discovery', ['propfind_depth_one_discovers_direct_children_only',
                    'utf8_and_space_names_list_as_normalized_encoded_resources',
                    'lowered_entry_and_listing_byte_ceilings_reject_instead_of_truncating']),
-    ('percent-child', ['percent_named_child_refuses_the_whole_listing_explicitly']),
-    ('percent-root', ['percent_encoded_root_is_refused_before_any_request']),
+    ('percent-child', ['literal_percent_child_lists_and_downloads_without_double_decoding']),
+    ('percent-root', ['literal_percent_root_is_supported_and_second_encoding_is_refused']),
     ('mkcol', ['mkcol_creates_accepts_existing_405_and_reports_missing_parent_409']),
     ('put', ['conditional_put_creates_once_then_412_without_changing_bytes',
              'preexisting_foreign_content_is_never_overwritten',
@@ -711,24 +711,14 @@ class Harness:
             observed = {}
             for entry in state['entries']:
                 component = entry['resource'].rstrip('/')
-                require(entry['display_name'] in (unquote(component), component), 'display name differs: %s' % entry)
+                require(entry['display_name'] == unquote(component), 'decoded display name differs: %s' % entry)
                 require(bool(entry['collection']) == entry['resource'].endswith('/'), 'collection flag differs')
                 require(entry['collection'] or entry['etag'] != '', 'server file ETag absent')
                 observed[unquote(component)] = {'display_name': entry['display_name'],
-                                                'decoded_by_server': entry['display_name'] == unquote(component),
+                                                'display_decoded': entry['display_name'] == unquote(component),
                                                 'bytes': entry['bytes'], 'has_size': entry['has_size']}
             sizes = {unquote(e['resource']): e['bytes'] for e in state['entries'] if not e['collection']}
             require(sizes == {'a b.txt': 11, '书.txt': len('中文名\n'.encode())}, 'file sizes differ: %s' % sizes)
-            undecoded = [k for k, v in observed.items() if not v['decoded_by_server'] and k != quote(k, safe='')]
-            if undecoded:
-                self.findings.append({
-                    'id': 'display_name_falls_back_to_percent_encoded_component',
-                    'severity': 'cosmetic', 'service': self.name,
-                    'summary': 'Server omits DAV:displayname; exr_webdav_list then returns the still-encoded '
-                               'path component as display_name (for example a%20b.txt).',
-                    'evidence': ['raw/listing-propfind.xml', 'check utf8_and_space_names_list_as_normalized_encoded_resources'],
-                    'proposed_shared_file': 'extras/webdav/src/webdav.cpp (exr_webdav_list display fallback)',
-                    'names': undecoded})
             return {'names': observed}
 
         def percent_child():
@@ -740,26 +730,32 @@ class Harness:
             (self.evidence / 'raw' / 'percent-propfind.xml').write_bytes(xml)
             mark = log.mark()
             v = h.consumer('dav-list', h.url(root), '', 0, 0)
-            require(v['status'] == DAV['argument'] and v['entries'] == [], 'percent child listing result: %s' % v)
+            require(v['status'] == 0 and {e['resource'] for e in v['entries']} == {'ok.txt', '100%25.txt'},
+                    'percent child listing result: %s' % v)
+            require(next(e for e in v['entries'] if e['resource'] == '100%25.txt')['display_name'] == '100%.txt',
+                    'percent display name differs')
+            download = self.work / 'percent-download'
+            download.mkdir()
+            got = h.consumer('dav-get', h.url(root), '100%25.txt', download, 'percent.txt', 0)
+            require(got['status'] == 0 and (download / 'percent.txt').read_bytes() == b'percent\n',
+                    'literal percent download differs')
             lines = log.module(mark)
-            require(find(lines, 'PROPFIND', root, (207,)), 'server did not answer the module listing')
-            self.findings.append({
-                'id': 'percent_named_child_refuses_entire_listing', 'severity': 'interop', 'service': self.name,
-                'summary': 'One child named 100%.txt (href 100%25.txt) makes exr_webdav_list return EXR_DAV_ARGUMENT '
-                           'for the whole collection, although the server answered 207. Sync namespaces never contain '
-                           'such names; a user book folder can.',
-                'minimal_repro': 'PUT <root>/ok.txt; PUT <root>/100%25.txt; exr_webdav_list(root,"") -> 1, empty',
-                'evidence': ['raw/percent-propfind.xml', 'http/access.log'],
-                'proposed_shared_file': 'extras/webdav/src/webdav.cpp (path()/exr_webdav_list per-entry policy)'})
-            return {'dav_status': v['status'], 'message': v['message']}
+            require(find(lines, 'PROPFIND', root, (207,)) and find(lines, 'GET', root + '100%25.txt', (200,)),
+                    'server did not record exact encoded percent requests')
+            return {'dav_status': v['status'], 'resource': '100%25.txt', 'display_name': '100%.txt', 'download_sha256': sha(b'percent\n')}
 
         def percent_root():
             client.mkcol(s.base + '100%25/')
+            client.put(s.base + '100%25/child.txt', b'percent root\n')
             mark = log.mark()
             v = h.consumer('dav-list', h.url(s.base + '100%25/'), '', 0, 0)
-            require(v['status'] == DAV['argument'], 'percent root accepted: %s' % v)
-            no_module_requests(mark)
-            return {'dav_status': v['status'], 'message': v['message'], 'server_collection_exists': True}
+            require(v['status'] == 0 and {e['resource'] for e in v['entries']} == {'child.txt'}, 'percent root differs: %s' % v)
+            require(find(log.module(mark), 'PROPFIND', s.base + '100%25/', (207,)), 'percent root request absent')
+            ambiguous_mark = log.mark()
+            refused = h.consumer('dav-list', h.url(s.base + '100%2520/'), '', 0, 0)
+            require(refused['status'] == DAV['argument'], 'second encoded root accepted: %s' % refused)
+            no_module_requests(ambiguous_mark)
+            return {'dav_status': v['status'], 'second_encoding_status': refused['status'], 'server_collection_exists': True}
 
         def lowered():
             root = state['listing']

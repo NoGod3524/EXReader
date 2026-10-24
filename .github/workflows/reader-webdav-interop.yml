@@ -1,7 +1,7 @@
 name: Reader WebDAV real-service interop
 on:
   push:
-    branches: [codex/reader-webdav-interop]
+    branches: [codex/reader-webdav-interop, codex/reader-webdav-compat]
   workflow_dispatch:
 permissions:
   contents: read
@@ -26,10 +26,12 @@ jobs:
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           start=210403d121d6484a8fff4ea7ffd911efa3163535
           git merge-base --is-ancestor "$start" HEAD
+          client=dfc711cc91d6059d6bd8b5062249dafd890fa6d9
+          git merge-base --is-ancestor "$client" HEAD
           git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
           git diff --exit-code f32bb8aa18ed3de286900f19ce4230fd93435dd0 HEAD -- apps/reader/store/001_catalog.sql
-          git diff --exit-code "$start" HEAD -- apps extras tests/webdav tests/reader_sync tests/reader_revisions
-          outside=$(git diff --name-only "$start" HEAD | grep -v -E '^(tests/reader_webdav_interop/|tools/check_reader_webdav_interop\.py$|\.github/workflows/reader-webdav-interop\.yml$|docs/READER-WEBDAV-INTEROP\.md$|docs/validation/reader-webdav-interop\.json$)' || true)
+          git diff --exit-code "$client" HEAD -- apps extras tests/webdav tests/reader_sync tests/reader_revisions
+          outside=$(git diff --name-only "$client" HEAD | grep -v -E '^(tests/reader_webdav_interop/|tools/check_reader_webdav_interop\.py$|\.github/workflows/reader-webdav-interop\.yml$|docs/READER-WEBDAV-INTEROP\.md$|docs/validation/reader-webdav-interop\.json$)' || true)
           if [ -n "$outside" ]; then echo "::error::changes outside this package: $outside"; exit 1; fi
       - name: Syntax-check package Python in the cloud
         run: python3 -m py_compile tests/reader_webdav_interop/run_interop.py tools/check_reader_webdav_interop.py
