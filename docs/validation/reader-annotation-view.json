@@ -1,18 +1,158 @@
 {
-  "accepted": false,
-  "status": "implemented; no cloud run recorded yet",
+  "accepted": true,
+  "status": "three desktop platforms accepted on one source, run and attempt; every named check passed",
   "package": "EXReaderAnnotationView 0.1.0",
+  "abi": "C",
   "common_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "branch": "codex/reader-annotation-view",
-  "source_sha": null,
-  "run_id": null,
-  "attempt": null,
-  "artifacts": [],
-  "jobs": [],
+  "source_sha": "02ec0587869a8ea036ffc9b3cbd9a780060fed72",
+  "run_id": "40082509106",
+  "attempt": 1,
+  "workflow": ".github/workflows/reader-annotation-view.yml",
+  "jobs": [
+    {
+      "name": "annotation view consumers (ubuntu-22.04)",
+      "id": 120838779049,
+      "result": "success"
+    },
+    {
+      "name": "annotation view consumers (windows-2022)",
+      "id": 120838779221,
+      "result": "success"
+    },
+    {
+      "name": "annotation view consumers (macos-15)",
+      "id": 120838779279,
+      "result": "success"
+    },
+    {
+      "name": "annotation view sanitizer diagnosis (ubuntu-22.04)",
+      "id": 120838779115,
+      "result": "success",
+      "note": "continue-on-error diagnostic only; the package and both consumers rebuilt with AddressSanitizer and UBSan and the same fixture reproduced a clean report"
+    },
+    {
+      "name": "strict annotation view evidence",
+      "id": 120843632167,
+      "result": "success"
+    }
+  ],
+  "checks": {
+    "total": 56,
+    "failed": 0,
+    "identical_report_sha256_on_all_three_platforms": "8426091fdf15f8ca4802d984854fed9a72d313d02ed528bb9946cc6752c19f49",
+    "report_complete_flag": true,
+    "product_digest_before_and_after": "9ca99c5659f2d94e",
+    "sdk_digest_before_and_after": "3d83453b6e778500",
+    "book_a_initial": 1203,
+    "book_a_final": 1205,
+    "history_revisions": 2237
+  },
+  "platforms": [
+    {
+      "os": "Linux",
+      "checks_total": 56,
+      "checks_failed": 0,
+      "accepted": true,
+      "probe_sha256": "7fc7382811750f5a27237a0229c04ada12001b577e8e3eb93a8bda5622a31e59",
+      "c_consumer_sha256": "925b2d79284885cb38d8a7aa2ef5d3ccfb10ae9956628d5abe0c6b9e5ffec641",
+      "link_map_sha256": "972a48dbce3922ed6cc78feeaaa18b9527327991b91b3bd7d0a464e3a4dd1dc9",
+      "c_consumer": "0.1.0 total=1205 safe=905 unavailable=300 tombstones=102 pages=13 bytes=313581 failed=0"
+    },
+    {
+      "os": "Windows",
+      "checks_total": 56,
+      "checks_failed": 0,
+      "accepted": true,
+      "probe_sha256": "dbb61a3eefd67a578d4f1505698a292759864611f07c3da864e1a051f20b93a5",
+      "c_consumer_sha256": "a6b39c2d239949ebf24a082d99c0d36f80e7850f584eedcaecb579dbe7788a4e",
+      "link_map_sha256": "a0faaaced619e636ea024e5759ebb101884225ef3d83f19745b52e86b1e3e630",
+      "c_consumer": "0.1.0 total=1205 safe=905 unavailable=300 tombstones=102 pages=13 bytes=313581 failed=0"
+    },
+    {
+      "os": "macOS",
+      "checks_total": 56,
+      "checks_failed": 0,
+      "accepted": true,
+      "probe_sha256": "e79e708e6f4f3f9c00d0ffad8e5de464030d6ea7f6f9e9c99ea4ab9ca24b6b2d",
+      "c_consumer_sha256": "b7bcbeacf94f17b0e70b2f2104b9b6eae7835a5f168fdd51dea80c49b4b2362f",
+      "link_map_sha256": "a7bbef9cf890717df8b16cc3f018d0062ee4963a7143ddaf5ea6f54c40da3f6b",
+      "c_consumer": "0.1.0 total=1205 safe=905 unavailable=300 tombstones=102 pages=13 bytes=313581 failed=0"
+    }
+  ],
+  "artifacts": [
+    {
+      "name": "reader-annotation-view-Linux-40082509106-1",
+      "id": 12555289510,
+      "bytes": 9538784,
+      "digest": "sha256:8dcfdf18bc671ba7350fb68d68e15afe21236a6d171a75ff334d1d86900d933b",
+      "summary_sha256": "4e61cba0c2dc2863f851d3fdbca83e018b8d7900f5a482f05448367354ac13df",
+      "report_sha256": "8426091fdf15f8ca4802d984854fed9a72d313d02ed528bb9946cc6752c19f49",
+      "expires_at": "2027-01-22T09:34:43Z"
+    },
+    {
+      "name": "reader-annotation-view-Windows-40082509106-1",
+      "id": 12556006943,
+      "bytes": 6787254,
+      "digest": "sha256:ea6a86269707053a2b6ee2a604ca1439c79b0c777884da6edc145bdaa2bf009f",
+      "summary_sha256": "ea53e09230858fd24960d379ce773e738108decdfe596d65858f01b2741761b8",
+      "report_sha256": "8426091fdf15f8ca4802d984854fed9a72d313d02ed528bb9946cc6752c19f49",
+      "expires_at": "2027-01-22T09:34:43Z"
+    },
+    {
+      "name": "reader-annotation-view-macOS-40082509106-1",
+      "id": 12555329821,
+      "bytes": 8404349,
+      "digest": "sha256:3c72a3656bd738e4074911af4f204ce72010d4b53aa36bb42f617d64d436543c",
+      "summary_sha256": "a79f121d7a69b5612708a79b4acfed801d45b4ba56b087530abb6773185cdec7",
+      "report_sha256": "8426091fdf15f8ca4802d984854fed9a72d313d02ed528bb9946cc6752c19f49",
+      "expires_at": "2027-01-22T09:34:43Z"
+    },
+    {
+      "name": "reader-annotation-view-asan-40082509106-1",
+      "id": 12555618253,
+      "bytes": 492084,
+      "digest": "sha256:27b2032b4955f8a88139b9b7d4ea40bf95d0f5527af914d9a2547a68f8f2cf8e",
+      "expires_at": "2027-01-22T09:34:43Z",
+      "diagnostic_only": true
+    },
+    {
+      "name": "reader-annotation-view-evidence-40082509106-1",
+      "id": 12556024236,
+      "bytes": 1342,
+      "digest": "sha256:e94cd17df1cfd249bfb29b35a415624ec24afc7c07f2f97da6fff4f45de4d73d",
+      "expires_at": "2027-01-22T09:34:43Z"
+    }
+  ],
+  "evidence_gate": {
+    "job": "strict annotation view evidence",
+    "three_desktop_platforms_accepted": true,
+    "problems": [],
+    "verified": "each same-run ZIP re-downloaded through the GitHub API, real size and SHA-256 compared with the API record, expiry checked, summary identity bound to this source/run/attempt and platform, report hash equal across the three platforms"
+  },
+  "original_failures": [
+    {
+      "run_id": "40078549468",
+      "attempt": 1,
+      "source_sha": "8ca07a80a025a3de09d259f1d20a08f29d04f2b4",
+      "result": "failure on all three platforms",
+      "observed": "the probe ended with SIGSEGV (-11 on Linux, 0xC0000005-3221225477 on Windows) and wrote no report, so the judge could only record 'probe produced no report'"
+    },
+    {
+      "run_id": "40081992900",
+      "attempt": 1,
+      "source_sha": "89f37528",
+      "result": "failure on all three platforms",
+      "observed": "the instrumented probe named the step and the new sanitizer job reported AddressSanitizer SEGV in std::string::compare, entered from probe.cpp:517: the expectation sets were built from the iterators of two distinct temporary vectors",
+      "root_cause": "probe.cpp built std::set values from ids_of(ref[b]).begin() and a second ids_of(ref[b]).end(); the two temporary vectors differ, so the pair of iterators was invalid",
+      "fix_sha": "02ec0587869a8ea036ffc9b3cbd9a780060fed72"
+    }
+  ],
   "not_granted": [
     "macOS/iOS/Android hosts beyond the macOS-15 desktop runner",
-    "host navigation, UI and accessibility",
-    "real devices and WebDAV transport",
-    "cross-device annotation synchronization"
+    "host navigation: this module never resolves or navigates; FOUND/MISSING/AMBIGUOUS/LEGACY are recorded by the host only",
+    "UI, accessibility, real devices and WebDAV transport",
+    "cross-device annotation synchronization",
+    "performance baseline for this package"
   ]
 }
