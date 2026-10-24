@@ -180,6 +180,7 @@ def build(platform='linux', profile='reading-core'):
                  'notice': {'notices_path': 'THIRD_PARTY_NOTICES.md', 'notices_sha256': '1' * 64,
                             'marker': 'miniz', 'described': True}}]},
         'static_dependency': {'sdk_archives': [SDK], 'archives': archives, 'edges': edges,
+                              'foreign_archives': [],
                               'unreferenced_archives': [], 'reachable_archives': [SDK, VENDOR],
                               'owners': {VENDOR: 'miniz'}, 'unreferenced_justified': {}},
         'link': {'record': link, 'distributed_archives': distributed, 'system_libraries': system},
@@ -300,6 +301,10 @@ CASES = [
      lambda f: f['inventory']['static_dependency'].__setitem__('sdk_archives', [])),
     ('unreferenced archive claim', 'unreferenced_archives',
      lambda f: f['inventory']['static_dependency'].__setitem__('unreferenced_archives', [VENDOR])),
+    ('foreign archive claim', 'foreign_archive',
+     lambda f: f['inventory']['static_dependency'].__setitem__(
+         'foreign_archives', [{'path': 'lib/libalpha.a', 'name': 'libalpha.a', 'bytes': 1,
+                               'sha256': '0' * 64, 'members': ['alpha.o']}])),
     ('reported check status', 'check_status',
      lambda f: f['inventory']['checks'].append({'id': 'x', 'status': 'unknown', 'detail': ''})),
     ('link distribution claim', 'link_distributed',

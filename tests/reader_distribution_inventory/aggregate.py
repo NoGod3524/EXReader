@@ -161,6 +161,18 @@ def verify_platform(key, profile, payload, inventory, licenses_doc, run, compone
                       'archive_defined_symbols')
         contract.need(contract.text_digest(summary['undefined']) == entry['undefined_sha256'],
                       'archive_undefined_symbols')
+    foreign = static.get('foreign_archives') or []
+    foreign_by_path = {entry['path']: entry for entry in foreign}
+    contract.need(len(foreign_by_path) == len(foreign), 'foreign_archive_duplicate')
+    for entry in foreign:
+        record = by_path.get(entry['path'])
+        contract.need(record is not None and record['sha256'] == entry['sha256']
+                      and record['bytes'] == entry['bytes'], 'foreign_archive_identity')
+    contract.need(sorted(foreign_by_path) == sorted(
+        record['path'] for record in files
+        if re.fullmatch(r'lib/[^/]+[.](?:a|lib)', record['path'])
+        and not re.fullmatch(r'lib/(?:lib)?exr_.+[.](?:a|lib)', record['path'])),
+        'foreign_archive_coverage')
     unreferenced = sorted(path for path in symbols if path not in sdk_expected
                           and not any(edge['to'] == path for edge in static.get('edges') or []))
     contract.need(unreferenced == sorted(static.get('unreferenced_archives') or []),
