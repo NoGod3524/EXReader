@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "originals": {
-    "txt": {"file": "book.txt", "bytes": null, "sha256": null},
-    "epub": {"file": "book.epub", "bytes": null, "sha256": null},
-    "pdf": {"file": "pages.pdf", "bytes": null, "sha256": null},
-    "cbz": {"file": "pages.cbz", "bytes": null, "sha256": null}
+    "txt": {"file": "book.txt", "bytes": 636, "sha256": "fcc117171436330ec0a2fa7ba24437593d77b30e96ba25cb2b9d8649ed0ac604"},
+    "epub": {"file": "book.epub", "bytes": 1913, "sha256": "99a21d3a73924d5b2efe4596076348b1eb7b00715ebc727737edd91f2f3bf50b"},
+    "pdf": {"file": "pages.pdf", "bytes": 1560, "sha256": "23f9dff3bc6bd85a19a9e24c6cb0390e17d7907af8c6b98c55273295386431ed"},
+    "cbz": {"file": "pages.cbz", "bytes": 43936, "sha256": "1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3"}
   },
   "strings": {
     "title_txt": "Café — NFC",
