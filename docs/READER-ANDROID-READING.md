@@ -26,7 +26,7 @@ G04以32项keyset页显示书签/高亮/笔记及tombstone。非SAFE状态只显
 
 私有请求文件的读写在进程内跨 Activity owner 串行；旧 owner 的自动清理必须匹配自己提交的 revision ID，避免旋转后的新请求被迟到的清理删除。显式“结束确认”才允许丢弃当前待确认请求。
 
-CBZ 在冻结 SDK 中没有 text provider，不能通过公开 fixed anchor 接口产生真实捕获；本面板明确报告不支持，不以空白捕获替代。空白 PDF 有公开空文本快照，其真实点捕获单独验证。固定 selector 中的 NUL 会原长传给 SDK；产品 wire 的现有限制仍由 G03/codec 明确拒绝，不截断后保存。
+本次受测 Android 宿主显式拒绝 CBZ 产品位置捕获，测试证明该拒绝不写入产品。此前把原因写成“冻结 SDK 没有 text provider”不准确：冻结 `src/cbz.c` 实际通过 `exr_fixed_text_create("",0,NULL,0,...)` 提供真实空文本快照。CBZ 点捕获及独立 FOUND 尚待该宿主的后续真实接线与运行，不能从本次拒绝证据推断 SDK 不支持。空白 PDF 的真实空快照点捕获已单独通过。固定 selector 中的 NUL 会原长传给 SDK；产品 wire 的现有限制仍由 G03/codec 明确拒绝，不截断后保存。
 
 旧导入 EPUB 的 global renderer 与现代 bounded chapter renderer 使用不同坐标。收到另一投影模式的产品 selector 时明确拒绝导航/恢复，不把章节字节偏移当作全书偏移；保留原修订和当前画面。专用夹具通过真实 legacy 导入及独立公开 pager 捕获第二章位置，再经 G03/G04 验证拒绝路径。
 

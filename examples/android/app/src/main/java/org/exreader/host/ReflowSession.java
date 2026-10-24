@@ -33,6 +33,14 @@ final class ReflowSession implements AutoCloseable {
     private long nativeNextCalls;
     private long recoveryCalls;
     private BoundedEpub bounded;
+    private ReadingPreferences appearance;
+
+    ReflowSession(BookStore store,long bookId,byte[] font,ReadingPreferences value) {
+        this(store,bookId,font,value.font);appearance=value;bounded.appearance=value;
+    }
+    ReflowSession(long bookId,String path,byte[] font,ReadingPreferences value) {
+        this(bookId,path,font,value.font);appearance=value;
+    }
 
     ReflowSession(BookStore store,long bookId,byte[] font,float size) {
         this.bookId=bookId; this.font=font; fontSize=size; document=null; text=null; title="EPUB";
@@ -90,10 +98,10 @@ final class ReflowSession implements AutoCloseable {
         EXReader.LayoutConfig config = new EXReader.LayoutConfig();
         config.width = PAGE_WIDTH;
         config.height = PAGE_HEIGHT;
-        config.margin = MARGIN;
+        config.margin = appearance==null?MARGIN:appearance.margin;
         config.fontSize = size;
-        config.lineHeight = 1.6f;
-        config.paragraphSpacing = 12f;
+        config.lineHeight = appearance==null?1.6f:appearance.line;
+        config.paragraphSpacing = appearance==null?12f:appearance.paragraph;
         config.documentCSS = true;
         config.embeddedFonts = true;
         config.direction = 0;
@@ -244,6 +252,7 @@ final class ReflowSession implements AutoCloseable {
                 bitmap.getWidth(), bitmap.getHeight(), starts, ends, null,
                 gx, baseline, advance, size, lineText, lineBounds, 0, bookId);
         snapshot.layoutFont=layoutFont;
+        if(appearance!=null){snapshot.layoutLine=appearance.line;snapshot.layoutParagraph=appearance.paragraph;snapshot.layoutMargin=appearance.margin;}
         return snapshot;
     }
 

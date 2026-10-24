@@ -4,6 +4,7 @@ option(EXR_HOST_SYNC "Install the optional native account/sync host integration"
 option(EXR_HOST_SEARCH "Install the optional public in-book search host integration" OFF)
 option(EXR_HOST_NAVIGATION "Install the optional public navigation host integration" OFF)
 option(EXR_HOST_READING "Install optional typed product reading UI integration" OFF)
+option(EXR_HOST_PREFERENCES "Install optional device-local reading settings" OFF)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -20,6 +21,15 @@ find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED)
 
 add_library(exreader_host SHARED exreader_host_jni.c)
 target_link_libraries(exreader_host PRIVATE EXReader::exreader)
+if(EXR_HOST_PREFERENCES)
+  if(NOT EXR_HOST_READING)
+    message(FATAL_ERROR "Reading settings require the public reading anchor bridge")
+  endif()
+  list(APPEND CMAKE_PREFIX_PATH "${EXR_PREFERENCES_PREFIX}")
+  find_package(EXReaderPreferences 0.1.0 EXACT CONFIG REQUIRED)
+  target_link_libraries(exreader_host PRIVATE EXReaderPreferences::reader_preferences)
+  target_compile_definitions(exreader_host PRIVATE READER_HOST_PREFERENCES=1)
+endif()
 target_compile_options(exreader_host PRIVATE -Wall -Wextra)
 target_link_options(exreader_host PRIVATE -Wl,-z,max-page-size=16384)
 
