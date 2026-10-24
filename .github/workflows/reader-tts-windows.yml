@@ -112,6 +112,16 @@ jobs:
             --probe build/tts/consumer/tts-probe.exe \
             --module-prefix build/tts/stage \
             --output build/tts
+      - name: Replay the speak phase under the debugger when it failed
+        if: failure()
+        shell: pwsh
+        run: |
+          $cdb = 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\cdb.exe'
+          if (-not (Test-Path $cdb)) { 'cdb absent' | Out-File build/tts/evidence/cdb.txt -Encoding utf8; exit 0 }
+          & $cdb -g -G -c '.logopen build\tts\evidence\cdb.txt; sxe av; g; !analyze -v; kv; q' build\tts\consumer\tts-consumer.exe speak --wav-dir build\tts\wav 2>&1 | Out-Null
+          if (Test-Path build/tts/evidence/cdb.txt) {
+            Get-Content build/tts/evidence/cdb.txt | Select-String -Pattern 'EXCEPTION_|FAULTING_|IMAGE_NAME|MODULE_NAME|SYMBOL_NAME|STACK_TEXT|sapi|tts-consumer|# ChildEBP' | Select-Object -First 60
+          } else { 'no cdb log' }
       - name: Collect crash evidence when the consumer died
         if: always()
         shell: pwsh

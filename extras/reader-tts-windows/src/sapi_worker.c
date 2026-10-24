@@ -424,6 +424,9 @@ static void push_started(reader_tts *handle, exr_tts_utterance *utterance) {
 }
 
 static void pump_status(reader_tts *handle, exr_tts_utterance *utterance) {
+  ISpEventSource *source = (ISpEventSource *)utterance->voice;
+  SPEVENT events[8];
+  ULONG fetched = 0, index;
   SPVOICESTATUS status;
   LPWSTR bookmark = NULL;
   HRESULT hr;
@@ -448,11 +451,23 @@ static void pump_status(reader_tts *handle, exr_tts_utterance *utterance) {
     if (status.ulCurrentStream != 0 && status.ulCurrentStream == status.ulLastStreamQueued) {
       utterance->saw_stream = 1;
     }
-    if (status.ulInputWordLen > 0 && status.ulInputWordPos != utterance->last_word) {
-      utterance->last_word = status.ulInputWordPos;
-      report_word(handle, utterance, status.ulInputWordPos, status.ulInputWordLen);
-      if (!utterance->speaking) return;
+  }
+  if (source && SUCCEEDED(source->lpVtbl->GetEvents(source, 8, events, &fetched))) {
+    for (index = 0; index < fetched; index++) {
+      if (events[index].eEventId == SPEI_WORD_BOUNDARY) {
+        utterance->saw_stream = 1;
+        report_word(handle, utterance, (ULONG)events[index].lParam, (ULONG)events[index].wParam);
+        if (!utterance->speaking) return;
+      } else if (events[index].eEventId == SPEI_END_INPUT_STREAM) {
+        finish_request(handle, utterance, READER_TTS_FINISHED, READER_TTS_OK);
+        return;
+      }
     }
+  }
+  if (SUCCEEDED(hr) && status.ulInputWordLen > 0 && status.ulInputWordPos != utterance->last_word) {
+    utterance->last_word = status.ulInputWordPos;
+    report_word(handle, utterance, status.ulInputWordPos, status.ulInputWordLen);
+    if (!utterance->speaking) return;
   }
   /* WaitUntilDone(0) is the engine's own "the output for this utterance has been
      completed" answer; dwRunningState alone can keep reporting "speaking" for a
@@ -670,6 +685,20 @@ DWORD WINAPI exr_tts_worker_main(LPVOID parameter) {
       ULONG count = 0;
       int native = 0;
       if (voice_count(&count, &native) != READER_TTS_OK) {
+        voice->lpVtbl->Release(voice);
+        voice = NULL;
+      }
+    }
+    if (voice) {
+      ISpNotifySource *notify_source = (ISpNotifySource *)voice;
+      ISpEventSource *events = (ISpEventSource *)voice;
+      ULONGLONG interest = SPFEI(SPEI_START_INPUT_STREAM) | SPFEI(SPEI_END_INPUT_STREAM)
+                         | SPFEI(SPEI_WORD_BOUNDARY);
+      /* SAPI queues interested events only once a notify connection exists, and the
+         engine's word position follows those boundaries. The package polls GetEvents
+         and never waits on SAPI's own event handle. */
+      if (FAILED(notify_source->lpVtbl->SetNotifyWin32Event(notify_source))
+          || FAILED(events->lpVtbl->SetInterest(events, interest, interest))) {
         voice->lpVtbl->Release(voice);
         voice = NULL;
       }
