@@ -13,6 +13,10 @@
 #include <string>
 #include <vector>
 #include <filesystem>
+#ifdef EXR_WEBDAV_APPLE_URLSESSION
+#include "apple_transport.h"
+#include <thread>
+#endif
 #ifdef __ANDROID__
 #if __ANDROID_API__ < 26
 #error "Android WebDAV requires API 26 or newer"
@@ -34,7 +38,9 @@
 #include <shlwapi.h>
 #else
 #ifndef __ANDROID__
+#ifndef EXR_WEBDAV_APPLE_URLSESSION
 #include <curl/curl.h>
+#endif
 #include <libxml/xmlreader.h>
 #endif
 #include <fcntl.h>
@@ -294,9 +300,24 @@ struct exr_webdav_client {
   bool android_active=false;
   jobject android_backend=nullptr;
 #endif
+#ifdef EXR_WEBDAV_APPLE_URLSESSION
+  std::thread::id apple_owner=std::this_thread::get_id();
+  bool apple_active=false;
+#endif
 };
 
 namespace {
+#ifdef EXR_WEBDAV_APPLE_URLSESSION
+struct apple_operation {
+  exr_webdav_client *client;
+  explicit apple_operation(exr_webdav_client *value):client(value){
+    if(client->apple_owner!=std::this_thread::get_id()||client->apple_active)
+      reject(EXR_DAV_ARGUMENT,"Native HTTPS client requires its creating worker without reentry");
+    client->apple_active=true;
+  }
+  ~apple_operation(){client->apple_active=false;}
+};
+#endif
 #ifdef _WIN32
 std::string header(HINTERNET request,DWORD kind) {
   DWORD bytes=0;WinHttpQueryHeaders(request,kind,NULL,NULL,&bytes,NULL);
@@ -345,6 +366,47 @@ response perform(exr_webdav_client &client,const url &u,const char *method,int e
 }
 #elif defined(__ANDROID__)
 #include "android_transport.inc"
+#elif defined(EXR_WEBDAV_APPLE_URLSESSION)
+response perform(exr_webdav_client &client,const url &u,const char *method,int expected,sink &s,clock_type::time_point deadline,upload *input=nullptr){
+  struct context {
+    sink *output;upload *input;int expected;response result{};
+    failure error{EXR_DAV_OK,"",0};
+  } state{&s,input,expected};
+  exr_apple_request request{};std::string target=full(u);
+  request.url=target.c_str();request.authorization=client.authorization.c_str();request.method=method;
+  request.timeout_ms=(unsigned)remaining(deadline);request.upload_bytes=input?input->length:0;request.context=&state;
+  request.cancelled=[](void *value){return stop(((context *)value)->output->control)?1:0;};
+  /* No C++ exception crosses the Objective-C language bridge. */
+  request.headers=[](void *value,int status,const char *location,const char *length){
+    auto &state=*(context *)value;
+    try{
+      state.result.status=status;state.result.location=location;
+      if(*length){state.result.length=number(trim(length));state.result.has_length=true;}
+      head(state.result,state.expected,*state.output);return EXR_DAV_OK;
+    }catch(const failure &error){state.error=error;return error.code;}
+    catch(...){state.error={EXR_DAV_MEMORY,"Cannot allocate HTTPS headers",0};return EXR_DAV_MEMORY;}
+  };
+  request.receive=[](void *value,const void *bytes,size_t count){
+    auto &state=*(context *)value;
+    try{state.output->append(bytes,count);return EXR_DAV_OK;}
+    catch(const failure &error){state.error=error;return error.code;}
+    catch(...){state.error={EXR_DAV_MEMORY,"Cannot allocate HTTPS body",0};return EXR_DAV_MEMORY;}
+  };
+  if(input)request.read=[](void *value,void *bytes,size_t capacity,size_t *count){
+    auto &state=*(context *)value;
+    try{*count=state.input->read(bytes,capacity);return EXR_DAV_OK;}
+    catch(const failure &error){state.error=error;return error.code;}
+    catch(...){state.error={EXR_DAV_MEMORY,"Cannot read upload source",0};return EXR_DAV_MEMORY;}
+  };
+  cancelled(s.control);exr_webdav_error error{};exr_webdav_status status=exr_apple_http(&request,&error);
+  if(state.error.code!=EXR_DAV_OK)throw state.error;
+  cancelled(s.control);
+  if(status!=EXR_DAV_OK)reject(status,"Native HTTPS transfer failed",error.http_status);
+  head(state.result,expected,s);
+  if(state.result.has_length&&!redirect(state.result.status)&&state.result.length!=s.received)
+    reject(EXR_DAV_IO,"Incomplete HTTPS response body");
+  return state.result;
+}
 #else
 struct curl_context { response r;sink *output;upload *input=nullptr;int expected;size_t header_bytes=0;failure error{EXR_DAV_OK,"",0}; };
 size_t curl_head(char *data,size_t size,size_t count,void *opaque) {
@@ -552,6 +614,9 @@ extern "C" void exr_webdav_free(exr_webdav_client *client) {
 #ifdef __ANDROID__
   if(!android_release(client))return;
 #endif
+#ifdef EXR_WEBDAV_APPLE_URLSESSION
+  if(client&&(client->apple_owner!=std::this_thread::get_id()||client->apple_active))return;
+#endif
   delete client;
 }
 extern "C" void exr_webdav_listing_free(exr_webdav_listing *listing) {
@@ -565,6 +630,8 @@ extern "C" exr_webdav_status exr_webdav_list(exr_webdav_client *client,const cha
     if(!client || !collection || !out) reject(EXR_DAV_ARGUMENT,"Missing collection request");
 #ifdef __ANDROID__
     android_operation operation(client);
+#elif defined(EXR_WEBDAV_APPLE_URLSESSION)
+    apple_operation operation(client);
 #endif
     std::string resource=path(collection,false);if(!resource.empty() && resource.back()!='/') reject(EXR_DAV_ARGUMENT,"Collection resource must end in slash");
     url current=client->root;current.path+=resource;std::vector<unsigned char> bytes;sink s{client->max_listing,0,control,&bytes,nullptr};
@@ -606,6 +673,8 @@ extern "C" exr_webdav_status exr_webdav_download_file(exr_webdav_client *client,
     if(!client || !resource || !directory || !filename || !out) reject(EXR_DAV_ARGUMENT,"Missing download request");
 #ifdef __ANDROID__
     android_operation operation(client);
+#elif defined(EXR_WEBDAV_APPLE_URLSESSION)
+    apple_operation operation(client);
 #endif
     std::string relative=path(resource,false);if(relative.empty() || relative.back()=='/') reject(EXR_DAV_ARGUMENT,"Download requires a file resource");
     cancelled(control);temporary file(directory,filename);sink s{client->max_download,0,control,nullptr,&file};url target=client->root;target.path+=relative;
@@ -617,6 +686,8 @@ extern "C" exr_webdav_status exr_webdav_make_collection(exr_webdav_client *clien
     if(!client||!collection)reject(EXR_DAV_ARGUMENT,"Missing immutable collection request");
 #ifdef __ANDROID__
     android_operation operation(client);
+#elif defined(EXR_WEBDAV_APPLE_URLSESSION)
+    apple_operation operation(client);
 #endif
     std::string relative=path(collection,false);if(relative.empty()||relative.back()!='/')reject(EXR_DAV_ARGUMENT,"A non-root collection resource is required");
     url target=client->root;target.path+=relative;std::vector<unsigned char> body;sink output{65536,0,control,&body,nullptr};
@@ -630,6 +701,8 @@ extern "C" exr_webdav_status exr_webdav_publish_file(exr_webdav_client *client,c
     if(!client||!resource)reject(EXR_DAV_ARGUMENT,"Missing immutable upload request");
 #ifdef __ANDROID__
     android_operation operation(client);
+#elif defined(EXR_WEBDAV_APPLE_URLSESSION)
+    apple_operation operation(client);
 #endif
     std::string relative=path(resource,false);if(relative.empty()||relative.back()=='/'||bytes>client->max_download)reject(EXR_DAV_ARGUMENT,"Invalid bounded immutable upload");
     upload input(name,bytes,control);url target=client->root;target.path+=relative;std::vector<unsigned char> body;sink output{65536,0,control,&body,nullptr};
