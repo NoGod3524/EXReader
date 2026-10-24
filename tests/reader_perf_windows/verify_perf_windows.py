@@ -23,7 +23,8 @@ ALLOWED = ('tests/reader_perf_windows/',
            'docs/validation/reader-perf-windows.json')
 SDK_PATHS = ('src', 'include', 'cmake', 'CMakeLists.txt', 'tests/fixtures', 'bindings',
              '.github/workflows/native.yml', '.github/workflows/reliability.yml')
-COHORTS = ('cold_shelf', 'warm_shelf', 'reading', 'import')
+COHORTS = ('cold_shelf', 'warm_shelf', 'reading', 'import', 'import_epub')
+TXT_REJECTIONS = ('import_rejected', 'imported_not_in_catalog', 'catalog_identity_mismatch')
 REQUIRED_CHECKS = (
     'thirty_or_more_independent_process_starts',
     'at_least_ten_launches_per_named_cohort',
@@ -37,6 +38,9 @@ REQUIRED_CHECKS = (
     'continue_reading_observed',
     'continue_reading_page_verified',
     'import_input_responsiveness_observed',
+    'original_txt_input_identity_recorded',
+    'original_txt_path_facts_separated',
+    'original_txt_path_accounted_for',
     'working_set_peak_observed',
     'artifact_identity_recorded',
     'corpus_identity_recorded',
@@ -120,9 +124,35 @@ def main():
     require(not summary.get('problems'), 'measurement recorded failing launches: %r'
             % (summary.get('problems'),))
     cohorts = summary.get('cohorts') or {}
-    require(set(cohorts) == set(COHORTS), 'named cohorts differ: %r' % (sorted(cohorts),))
+    skipped = summary.get('skipped_cohorts') or {}
+    txt_path = summary.get('txt_path') or {}
+    expected = set(COHORTS)
+    if txt_path.get('verdict') in TXT_REJECTIONS and skipped.get('import'):
+        expected.discard('import')
+    require(set(cohorts) == expected, 'named cohorts differ: %r (expected %r)'
+            % (sorted(cohorts), sorted(expected)))
     require(all(count >= args.per_cohort for count in cohorts.values()),
             'a named cohort holds fewer than %d measured launches: %r' % (args.per_cohort, cohorts))
+
+    # The original TXT input and its separated facts must be present in this run.
+    fixture = (txt_path.get('fixture') or {})
+    require(bool(fixture.get('sha256')) and isinstance(fixture.get('bytes'), int)
+            and fixture['bytes'] > 0, 'original TXT fixture identity is not recorded')
+    require(fixture.get('parameters') is not None,
+            'original TXT generator parameters are not recorded')
+    diagnosis = txt_path.get('diagnosis') or {}
+    runs = diagnosis.get('runs') or []
+    require(len(runs) >= 3, 'fewer than three TXT diagnostic runs')
+    require(bool(diagnosis.get('verdict')), 'TXT diagnostic verdict is missing')
+    for entry in runs:
+        facts = entry.get('facts') or {}
+        require(bool(facts.get('fixture')), 'diagnostic run lacks the input identity')
+        require(bool(facts.get('import')), 'diagnostic run lacks the import observation')
+        require('catalog' in facts, 'diagnostic run lacks the product catalog facts')
+        require(bool(facts.get('probes')), 'diagnostic run lacks the shelf query facts')
+    if skipped.get('import'):
+        require(txt_path.get('verdict') in TXT_REJECTIONS,
+                'the TXT cohort may only be skipped on a recorded rejection verdict')
 
     checks = summary.get('checks') or {}
     for name in REQUIRED_CHECKS:
@@ -165,7 +195,7 @@ def main():
         if record.get('cohort') == 'reading':
             require(len((record.get('ops') or {}).get('page_turns') or []) >= 8,
                     'reading launch holds fewer than eight page turns: ' + record.get('launch_id', '?'))
-        if record.get('cohort') == 'import':
+        if record.get('cohort') in ('import', 'import_epub'):
             planted = (record.get('ops') or {}).get('import') or {}
             require(planted.get('visible') is True and planted.get('fixture_sha256'),
                     'import launch lacks a visible fixed fixture: ' + record.get('launch_id', '?'))
