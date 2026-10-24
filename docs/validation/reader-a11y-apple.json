@@ -2,18 +2,18 @@
   "schema": 1,
   "package": "G16 Apple accessibility audit",
   "branch": "codex/reader-a11y-apple",
-  "source_sha": "29f03e233ee5e6c668d737f8236974648ce4333c",
+  "source_sha": "97cad3fd30ad95b2ff49084988868ad9f77cb104",
   "start_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
   "run": {
-    "id": "40085956514",
+    "id": "40094191862",
     "attempt": 1,
-    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40085956514"
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40094191862"
   },
   "workflow": ".github/workflows/reader-a11y-apple.yml",
   "contract": {
     "path": "tests/reader_a11y_apple/a11y_contract.json",
-    "sha256": "3ad5fb034aa9d27b224f8154158839eabe9027b7a275f209aa08b808cc913128"
+    "sha256": "0d330a6841831494a15fafbf1f318d8441cffd9bee0a068fca9b10b3105ed2f1"
   },
   "audit_completed": true,
   "accessibility_accepted": false,
@@ -30,9 +30,9 @@
       },
       "content_size": "not-applicable",
       "keyboard_ui_mode": "3",
-      "program_sha256": "bb9777ceca90ef1e6fd3ba616b6b934bb7e03555c05db6dbd78aeb72fb4d375e",
+      "program_sha256": "258898128067d41c2010130ceb84a552a7cd13d4802ba53be8d5c49681cd3976",
       "program_bytes": 58656,
-      "embedded_source_sha": "29f03e233ee5e6c668d737f8236974648ce4333c",
+      "embedded_source_sha": "97cad3fd30ad95b2ff49084988868ad9f77cb104",
       "sdk_sha256": "f0d15a63de7eb3ce9cd3961190fcaf81bea2813fd4538a9db08a6aad10b54e9d",
       "xcode": "Xcode 16.4\nBuild version 16F6",
       "steps": 14,
@@ -60,11 +60,11 @@
       "keyboard_ui_mode": "not-applicable",
       "program_sha256": "6e6ff64712addcee93283ffe23b391ca1982990b8c53a4b327848eb0d09b7c6f",
       "program_bytes": 39472,
-      "embedded_source_sha": "29f03e233ee5e6c668d737f8236974648ce4333c",
+      "embedded_source_sha": "97cad3fd30ad95b2ff49084988868ad9f77cb104",
       "sdk_sha256": "e41f9131ba4daf5c78db0502bc78610d4481d8f2a2df6c1f6879e7e2326ba9ce",
       "xcode": "Xcode 16.4\nBuild version 16F6",
       "steps": 15,
-      "pass": 433,
+      "pass": 434,
       "fail": 14,
       "blocking": 8,
       "blocked": 0,
@@ -88,7 +88,7 @@
       "keyboard_ui_mode": "not-applicable",
       "program_sha256": "6e6ff64712addcee93283ffe23b391ca1982990b8c53a4b327848eb0d09b7c6f",
       "program_bytes": 39472,
-      "embedded_source_sha": "29f03e233ee5e6c668d737f8236974648ce4333c",
+      "embedded_source_sha": "97cad3fd30ad95b2ff49084988868ad9f77cb104",
       "sdk_sha256": "e41f9131ba4daf5c78db0502bc78610d4481d8f2a2df6c1f6879e7e2326ba9ce",
       "xcode": "Xcode 16.4\nBuild version 16F6",
       "steps": 15,
@@ -179,7 +179,7 @@
       "actual": "最小边 20.5 pt",
       "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
       "screenshots": [
-        "83B9D49F-189B-4CB3-A238-E49518EF8201.png"
+        "CCE4F17D-AD14-4E61-BB8F-EF09A7FCCACE.png"
       ]
     },
     {
@@ -198,9 +198,9 @@
       "actual": "最小边 20.5 pt",
       "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
       "screenshots": [
-        "49327F08-A1D6-4F63-A6E5-C2D346766632.png",
-        "D385E31E-1647-49B3-ACBE-A8E63B2E7A2D.png",
-        "2652EE7F-9BA1-487F-9B64-D0EAC73D49EB.png"
+        "0A2B84A1-0A3A-4143-9D52-A79429242FC8.png",
+        "832D2ED2-AE00-48CD-A2C0-A9DC3333712F.png",
+        "9B30CF06-8EB2-4063-978F-363218FBDF8D.png"
       ]
     },
     {
@@ -217,7 +217,7 @@
       "actual": "isHittable=false（可能被遮挡或在窗口外）",
       "fix": "",
       "screenshots": [
-        "D385E31E-1647-49B3-ACBE-A8E63B2E7A2D.png"
+        "832D2ED2-AE00-48CD-A2C0-A9DC3333712F.png"
       ]
     },
     {
@@ -234,7 +234,7 @@
       "actual": "frame={\"height\": 20.5, \"width\": 34.0, \"x\": 16.0, \"y\": -34.5} window={\"height\": 375.0, \"width\": 667.0, \"x\": 0.0, \"y\": 0.0}",
       "fix": "为大字体/小窗口加滚动回退或压缩行距，避免控件溢出窗口",
       "screenshots": [
-        "D385E31E-1647-49B3-ACBE-A8E63B2E7A2D.png"
+        "832D2ED2-AE00-48CD-A2C0-A9DC3333712F.png"
       ]
     },
     {
@@ -251,7 +251,7 @@
       "actual": "frame={\"height\": 34.5, \"width\": 58.0, \"x\": 264.5, \"y\": 362.5} window={\"height\": 375.0, \"width\": 667.0, \"x\": 0.0, \"y\": 0.0}",
       "fix": "为大字体/小窗口加滚动回退或压缩行距，避免控件溢出窗口",
       "screenshots": [
-        "D385E31E-1647-49B3-ACBE-A8E63B2E7A2D.png"
+        "832D2ED2-AE00-48CD-A2C0-A9DC3333712F.png"
       ]
     },
     {
@@ -268,7 +268,7 @@
       "actual": "frame={\"height\": 34.5, \"width\": 70.0, \"x\": 332.5, \"y\": 362.5} window={\"height\": 375.0, \"width\": 667.0, \"x\": 0.0, \"y\": 0.0}",
       "fix": "为大字体/小窗口加滚动回退或压缩行距，避免控件溢出窗口",
       "screenshots": [
-        "D385E31E-1647-49B3-ACBE-A8E63B2E7A2D.png"
+        "832D2ED2-AE00-48CD-A2C0-A9DC3333712F.png"
       ]
     },
     {
@@ -345,7 +345,7 @@
       "actual": "高度 15.0pt / 窗口 667.0pt = 2.2%",
       "fix": "把导入按钮区折叠进菜单或滚动容器，给书架列表留出可读高度",
       "screenshots": [
-        "571C515B-4B3F-4EDA-B88F-D34D9926FFF9.png"
+        "2D373CFA-F6F2-4A4D-B20D-5F36D3A2C906.png"
       ]
     },
     {
@@ -362,7 +362,7 @@
       "actual": "高度 153.0pt / 窗口 667.0pt = 22.9%",
       "fix": "大字体下把控制区折叠成单行工具条或包进滚动容器，避免阅读面被压到几行",
       "screenshots": [
-        "9673B6DE-A2D1-4523-9D40-FE6E2B261D00.png"
+        "EAB2C62B-9267-41DB-9F59-9997F92C561B.png"
       ]
     },
     {
@@ -379,7 +379,7 @@
       "actual": "最小边 20.5 pt",
       "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
       "screenshots": [
-        "382106F8-A5DF-4E47-B7D0-BC2E91C2D7C1.png"
+        "292907A0-18F6-4340-9033-32EDF9BF6822.png"
       ]
     },
     {
@@ -398,9 +398,9 @@
       "actual": "最小边 20.5 pt",
       "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
       "screenshots": [
-        "FAE38DA4-65F2-4DF9-A25D-9DC9860172FC.png",
-        "0A97ADD8-BCD0-41D3-B312-E4AB8740F833.png",
-        "9E72CED2-7164-4F3D-9553-F9155DCC6116.png"
+        "D4D72B04-6647-4DF0-B4E0-EA7DE42292FA.png",
+        "3585EF0E-C3BF-40C5-A541-AB8EFA291D79.png",
+        "3008E2D2-F6BD-4BCB-B2C4-1B183CF73849.png"
       ]
     },
     {
@@ -899,36 +899,414 @@
   ],
   "artifacts": [
     {
-      "id": 12557730890,
-      "name": "reader-a11y-apple-validation-40085956514-1",
-      "size_in_bytes": 6235,
-      "digest": "sha256:fb5f7753f6157194605ef6885513cdddefd2016f2fd612161f27293dc1f7f1f1",
-      "expires_at": "2026-11-23T10:46:30Z",
+      "id": 12561051202,
+      "name": "reader-a11y-apple-audit-iphone-40094191862-1",
+      "size_in_bytes": 5247096,
+      "digest": "sha256:2e89332ed2e94ed2bad7e650162e2984159e3923d51c150b92ff7c7a6d3a0d76",
+      "expires_at": "2026-11-23T12:52:23Z",
       "expired": false
     },
     {
-      "id": 12557441388,
-      "name": "reader-a11y-apple-audit-macos-40085956514-1",
-      "size_in_bytes": 5556607,
-      "digest": "sha256:6ad1120762bd257530ee5f1183ee66799fb127b43490d7e5063b9231592d671d",
-      "expires_at": "2026-11-23T10:34:35Z",
+      "id": 12560975237,
+      "name": "reader-a11y-apple-audit-macos-40094191862-1",
+      "size_in_bytes": 5247283,
+      "digest": "sha256:4a74fdbab130783f42238ac35d6b54c89efb2e1ab9a35f86b291ebdbeba6ba3d",
+      "expires_at": "2026-11-23T12:41:18Z",
       "expired": false
     },
     {
-      "id": 12557223395,
-      "name": "reader-a11y-apple-audit-iphone-40085956514-1",
-      "size_in_bytes": 7650889,
-      "digest": "sha256:921d15b6906659a49c490a360ceb1b798bd30850f193ba14efb6e73432f5c6a1",
-      "expires_at": "2026-11-23T10:41:58Z",
+      "id": 12560876181,
+      "name": "reader-a11y-apple-validation-40094191862-1",
+      "size_in_bytes": 6526,
+      "digest": "sha256:399e63bb6ae929c3026f755817d12f566e8b7cefff894914554d0ef4b8e79451",
+      "expires_at": "2026-11-23T12:54:03Z",
       "expired": false
     },
     {
-      "id": 12556999698,
-      "name": "reader-a11y-apple-audit-ipad-40085956514-1",
-      "size_in_bytes": 12637861,
-      "digest": "sha256:3a4a88e5636df2ac8262c2419eca973e7a411a2b7c64669fc8e9aae7a61cefd2",
-      "expires_at": "2026-11-23T10:42:31Z",
+      "id": 12560189926,
+      "name": "reader-a11y-apple-audit-ipad-40094191862-1",
+      "size_in_bytes": 10321363,
+      "digest": "sha256:f6e04995d7c67b1a8f55ecf4545b6880d8acd2a1b59395d71b6d5d7108859042",
+      "expires_at": "2026-11-23T12:48:32Z",
       "expired": false
+    },
+    {
+      "id": 12560127906,
+      "name": "reader-a11y-apple-judge-40094191862-1",
+      "size_in_bytes": 2075,
+      "digest": "sha256:b24c0503282d36711d78473d31955521e6448da69bf60f978ccdb5a68c50d4ef",
+      "expires_at": "2026-11-23T12:30:27Z",
+      "expired": false
+    }
+  ],
+  "overlap_judge": {
+    "cases": [
+      {
+        "description": "同一滚动容器内两个可见控件真实重叠 72%（互不包含）",
+        "detail": "同一容器内可视区域重叠面积占较小控件 72%",
+        "expected": "fail",
+        "id": "same-container-visible-overlap",
+        "observed": "fail",
+        "passed": true,
+        "raw_ratio": 0.72,
+        "same_container": true,
+        "visible_ratio": 0.72
+      },
+      {
+        "description": "同一容器内 20% 重叠低于 50% 阈值",
+        "detail": "同一容器内可视区域重叠 20% 低于阈值",
+        "expected": "none",
+        "id": "same-container-below-threshold",
+        "observed": "none",
+        "passed": true,
+        "raw_ratio": 0.2,
+        "same_container": true,
+        "visible_ratio": 0.2
+      },
+      {
+        "description": "同一容器内 49% 重叠仍判通过",
+        "detail": "同一容器内可视区域重叠 49% 低于阈值",
+        "expected": "none",
+        "id": "threshold-49-percent",
+        "observed": "none",
+        "passed": true,
+        "raw_ratio": 0.49,
+        "same_container": true,
+        "visible_ratio": 0.49
+      },
+      {
+        "description": "同一容器内 51% 重叠判遮挡",
+        "detail": "同一容器内可视区域重叠面积占较小控件 51%",
+        "expected": "fail",
+        "id": "threshold-51-percent",
+        "observed": "fail",
+        "passed": true,
+        "raw_ratio": 0.51,
+        "same_container": true,
+        "visible_ratio": 0.51
+      },
+      {
+        "description": "同级同尺寸完全重合仍判遮挡",
+        "detail": "同一容器内可视区域重叠面积占较小控件 100%",
+        "expected": "fail",
+        "id": "same-container-containment-equal",
+        "observed": "fail",
+        "passed": true,
+        "raw_ratio": 1,
+        "same_container": true,
+        "visible_ratio": 1
+      },
+      {
+        "description": "同级 80x80 完全落在 100x100 内（面积 64%）：可见面积 100% 被覆盖 → fail",
+        "detail": "同一容器内可视区域重叠面积占较小控件 100%",
+        "expected": "fail",
+        "id": "same-container-containment-64pct-area",
+        "observed": "fail",
+        "passed": true,
+        "raw_ratio": 1,
+        "same_container": true,
+        "visible_ratio": 1
+      },
+      {
+        "description": "同级小控件面积约 20% 且完全被覆盖 → 仍 fail",
+        "detail": "同一容器内可视区域重叠面积占较小控件 100%",
+        "expected": "fail",
+        "id": "same-container-containment-20pct-area",
+        "observed": "fail",
+        "passed": true,
+        "raw_ratio": 1,
+        "same_container": true,
+        "visible_ratio": 1
+      },
+      {
+        "description": "语义路径证明父子关系（路径前缀）才豁免嵌套遮挡",
+        "detail": "语义路径证明一方是另一方的祖先，按嵌套处理",
+        "expected": "none",
+        "id": "path-proven-ancestor",
+        "observed": "none",
+        "passed": true,
+        "raw_ratio": 1,
+        "same_container": true,
+        "visible_ratio": 1
+      },
+      {
+        "description": "不同滚动容器里小控件被大控件完全覆盖（可见）→ fail",
+        "detail": "可视区域重叠面积占较小控件 100%",
+        "expected": "fail",
+        "id": "different-scroll-containers-full-containment",
+        "observed": "fail",
+        "passed": true,
+        "raw_ratio": 1,
+        "same_container": false,
+        "visible_ratio": 1
+      },
+      {
+        "description": "两个不同滚动容器的可见部分重叠 64%",
+        "detail": "可视区域重叠面积占较小控件 64%",
+        "expected": "fail",
+        "id": "different-scroll-containers-visible",
+        "observed": "fail",
+        "passed": true,
+        "raw_ratio": 0.64,
+        "same_container": false,
+        "visible_ratio": 0.64
+      },
+      {
+        "description": "滚动内容完全在视口外，与外部按钮不构成遮挡",
+        "detail": "可视部分为空，滚动视口已裁掉该片段",
+        "expected": "excluded",
+        "id": "different-scroll-containers-clipped",
+        "observed": "excluded",
+        "passed": true,
+        "raw_ratio": 0.75,
+        "same_container": false,
+        "visible_ratio": 0
+      },
+      {
+        "description": "滚动内容在 15 pt 视口之外，与外部按钮几何重叠但不遮挡",
+        "detail": "可视部分不相交，原始重叠全部落在滚动裁剪区外",
+        "expected": "excluded",
+        "id": "scroll-content-outside-viewport",
+        "observed": "excluded",
+        "passed": true,
+        "raw_ratio": 0.9148,
+        "same_container": false,
+        "visible_ratio": 0
+      },
+      {
+        "description": "滚动内容的可见部分与外部按钮重叠 87.5%",
+        "detail": "可视区域重叠面积占较小控件 88%",
+        "expected": "fail",
+        "id": "scroll-content-visible-overlap",
+        "observed": "fail",
+        "passed": true,
+        "raw_ratio": 0.875,
+        "same_container": false,
+        "visible_ratio": 0.875
+      },
+      {
+        "description": "嵌套滚动按最近视口裁剪（66.7%，不是外层的 75%）",
+        "detail": "可视区域重叠面积占较小控件 67%",
+        "expected": "fail",
+        "id": "nested-scroll-nearest-ancestor",
+        "observed": "fail",
+        "passed": true,
+        "raw_ratio": 0.75,
+        "same_container": false,
+        "visible_ratio": 0.6667
+      },
+      {
+        "description": "无标识滚动容器内的同级控件：视口不可证 → uncovered，不看 raw 几何",
+        "detail": "滚动祖先没有标识，视口未记录",
+        "expected": "undetermined",
+        "id": "bare-scroll-siblings-unknown-viewport",
+        "observed": "undetermined",
+        "passed": true,
+        "raw_ratio": 0.7,
+        "same_container": false,
+        "visible_ratio": 0
+      },
+      {
+        "description": "同一无标识滚动容器但层级不同 → uncovered",
+        "detail": "滚动祖先没有标识，视口未记录",
+        "expected": "undetermined",
+        "id": "bare-scroll-different-depth",
+        "observed": "undetermined",
+        "passed": true,
+        "raw_ratio": 0.7,
+        "same_container": false,
+        "visible_ratio": 0
+      },
+      {
+        "description": "滚动视口未记录 → uncovered，不声称已被裁剪",
+        "detail": "滚动视口 ghost 未出现在本步骤的语义树里",
+        "expected": "undetermined",
+        "id": "missing-scroll-viewport",
+        "observed": "undetermined",
+        "passed": true,
+        "raw_ratio": 0.7,
+        "same_container": false,
+        "visible_ratio": 0
+      },
+      {
+        "description": "无滚动容器时 100% 重叠仍判遮挡",
+        "detail": "同一容器内重叠面积占较小控件 100%",
+        "expected": "fail",
+        "id": "plain-no-scroll-overlap",
+        "observed": "fail",
+        "passed": true,
+        "raw_ratio": 1,
+        "same_container": true,
+        "visible_ratio": 1
+      },
+      {
+        "description": "无滚动容器时同级完全包含（面积 64%）仍判遮挡",
+        "detail": "同一容器内重叠面积占较小控件 100%",
+        "expected": "fail",
+        "id": "plain-no-scroll-containment",
+        "observed": "fail",
+        "passed": true,
+        "raw_ratio": 1,
+        "same_container": true,
+        "visible_ratio": 1
+      },
+      {
+        "description": "原 run 40085956514 的误判对：v1 直接 skip，v2 用已记录视口证明可视部分不相交",
+        "detail": "可视部分不相交，原始重叠全部落在滚动裁剪区外",
+        "expected": "excluded",
+        "id": "original-run-replay-29f03e23",
+        "legacy_v1": "skipped",
+        "observed": "excluded",
+        "passed": true,
+        "raw_ratio": 0.9148,
+        "same_container": false,
+        "visible_ratio": 0
+      },
+      {
+        "description": "24/44/20 pt、50% 重叠、2 pt 容差、20 pt 顺序容差保持不变",
+        "detail": "{\"clip_tolerance_pt\": 2, \"minimum_target_pt.advisory_ios\": 44, \"minimum_target_pt.advisory_macos\": 20, \"minimum_target_pt.blocking\": 24, \"overlap_threshold\": 0.5, \"reading_order_tolerance_pt\": 20}",
+        "expected": "unchanged",
+        "id": "policy-thresholds-unchanged",
+        "observed": "unchanged",
+        "passed": true
+      }
+    ],
+    "contract": "/home/runner/work/EXReader/EXReader/tests/reader_a11y_apple/a11y_contract.json",
+    "failed": [],
+    "judge": "overlap classifier",
+    "legacy_v1_gap": {
+      "case": "original-run-replay-29f03e23",
+      "current_verdict": "excluded",
+      "legacy_verdict": "skipped",
+      "raw_ratio": 0.9148,
+      "visible_ratio": 0
+    },
+    "passed": true,
+    "policy": {
+      "clip_tolerance_pt": 2,
+      "minimum_target_pt.advisory_ios": 44,
+      "minimum_target_pt.advisory_macos": 20,
+      "minimum_target_pt.blocking": 24,
+      "overlap_threshold": 0.5,
+      "reading_order_tolerance_pt": 20
+    },
+    "schema": 1,
+    "source_sha": "97cad3fd30ad95b2ff49084988868ad9f77cb104"
+  },
+  "history": [
+    {
+      "run": {
+        "id": "40085956514",
+        "attempt": 1,
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/40085956514"
+      },
+      "source_sha": "29f03e233ee5e6c668d737f8236974648ce4333c",
+      "status": "superseded",
+      "reason": "overlap v1 把任何含 ScrollView 的配对整对跳过；该 run 把 iPhone library.large_type 的 library.book.0|library.import.epub（原始重叠 91%）记为阻断遮挡，实际 15 pt 滚动视口把行裁掉、可视部分与按钮不相交",
+      "artifacts": [
+        {
+          "name": "reader-a11y-apple-audit-macos-40085956514-1",
+          "id": 12557441388,
+          "size_in_bytes": 5556607,
+          "digest": "sha256:6ad1120762bd257530ee5f1183ee66799fb127b43490d7e5063b9231592d671d",
+          "expires_at": "2026-11-23T10:34:35Z"
+        },
+        {
+          "name": "reader-a11y-apple-audit-iphone-40085956514-1",
+          "id": 12557223395,
+          "size_in_bytes": 7650889,
+          "digest": "sha256:921d15b6906659a49c490a360ceb1b798bd30850f193ba14efb6e73432f5c6a1",
+          "expires_at": "2026-11-23T10:41:58Z"
+        },
+        {
+          "name": "reader-a11y-apple-audit-ipad-40085956514-1",
+          "id": 12556999698,
+          "size_in_bytes": 12637861,
+          "digest": "sha256:3a4a88e5636df2ac8262c2419eca973e7a411a2b7c64669fc8e9aae7a61cefd2",
+          "expires_at": "2026-11-23T10:42:31Z"
+        },
+        {
+          "name": "reader-a11y-apple-validation-40085956514-1",
+          "id": 12557730890,
+          "size_in_bytes": 6235,
+          "digest": "sha256:fb5f7753f6157194605ef6885513cdddefd2016f2fd612161f27293dc1f7f1f1",
+          "expires_at": "2026-11-23T10:46:30Z"
+        }
+      ],
+      "superseded_findings": [
+        {
+          "platform": "iphone",
+          "state": "library.large_type",
+          "element": "library.book.0|library.import.epub",
+          "criterion": "overlap",
+          "severity": "major",
+          "blocking": true,
+          "actual": "重叠面积占较小控件 91%",
+          "verdict_rederived": "excluded",
+          "note": "library.list 视口 y=165 h=15；library.book.0 y=165 h=142；library.import.epub y=188 h=77.5，裁剪后可视部分无交集"
+        }
+      ]
+    },
+    {
+      "run": {
+        "id": "40090892898",
+        "attempt": 1,
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/40090892898"
+      },
+      "source_sha": "59a21fd1b1efb7cf35e17620502e13518ba29e6b",
+      "classifier": "v2",
+      "status": "superseded",
+      "reason": "v2 的包含豁免只按面积（<=90%）猜父子：同级 100x100 与 80x80 完全重合会被判成嵌套、返回 none，小控件 100% 被覆盖却不算遮挡。该 run 的 3 目标证据与 judge 报告保留，但不据此认定判定器正确",
+      "artifacts": [
+        {
+          "name": "reader-a11y-apple-audit-macos-40090892898-1",
+          "id": 12559113783,
+          "size_in_bytes": 5248282,
+          "digest": "sha256:39a371eebca0c53e926053a32dbd094b8025a6e4354b9d2a1c4b1ac2ae1ebaf0",
+          "expires_at": "2026-11-23T11:57:46Z"
+        },
+        {
+          "name": "reader-a11y-apple-audit-iphone-40090892898-1",
+          "id": 12558639393,
+          "size_in_bytes": 5245882,
+          "digest": "sha256:6183d4e48ff2a8c62a26d03e63154521b498d65db6b875eb5834f45d838445ae",
+          "expires_at": "2026-11-23T12:05:32Z"
+        },
+        {
+          "name": "reader-a11y-apple-audit-ipad-40090892898-1",
+          "id": 12559353887,
+          "size_in_bytes": 10369519,
+          "digest": "sha256:df74faaeb6f12e2ab8f74707b805d978ff4724995f3ce73db1de471a0e62e35f",
+          "expires_at": "2026-11-23T12:09:46Z"
+        },
+        {
+          "name": "reader-a11y-apple-judge-40090892898-1",
+          "id": 12558723252,
+          "size_in_bytes": 1885,
+          "digest": "sha256:3c1b1576899be9615f2d7b8220cfdc8844bd784b780cfb3738a0b52521348116",
+          "expires_at": "2026-11-23T11:41:27Z"
+        },
+        {
+          "name": "reader-a11y-apple-validation-40090892898-1",
+          "id": 12559654202,
+          "size_in_bytes": 6524,
+          "digest": "sha256:5f319b3733fb148ca51c8e6e67573d073d1f14b791c2fda02834a4c717c1c440",
+          "expires_at": "2026-11-23T12:25:51Z"
+        }
+      ],
+      "superseded_findings": [
+        {
+          "platform": "classification",
+          "state": "same-container-containment",
+          "element": "any sibling pair",
+          "criterion": "overlap containment exemption",
+          "severity": "major",
+          "blocking": false,
+          "actual": "面积 <= 90% 的完全包含被判 none",
+          "verdict_rederived": "fail",
+          "note": "v3 只在语义路径证明祖先时豁免；judge 的同级完全包含用例（同尺寸/64%/20% 面积）现在必须 fail"
+        }
+      ]
     }
   ],
   "limits": [
