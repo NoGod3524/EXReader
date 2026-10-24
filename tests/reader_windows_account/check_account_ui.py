@@ -946,11 +946,12 @@ def main():
                         for key in (txt_key, epub_key, planted_key)}
         assert after_counts == before_counts, (before_counts, after_counts)
         record('planted_concurrent_pending_and_tombstone_heads_stay_explicit_without_projection')
+        # The modal dialog owns the keyboard and (now truthfully) disables the owner
+        # commands, so the page is read after it closes, exactly as a user would.
+        RB.close_account(dialog)
         assert M.text(page_label) == page_before, 'received history must not move the open page'
-        # The receive note owns the status bar now; the reading surface itself is the evidence.
         RB.click('select');RB.click('copy')
         assert '阅读状态跨设备同步' in clipboard_text(RB), 'the conflicted local original must stay readable offline'
-        RB.close_account(dialog)
         RB.close();assert RB.process.returncode == 0
         record('conflicted_local_original_still_reads_offline_with_unchanged_heads_and_no_page_jump')
 
