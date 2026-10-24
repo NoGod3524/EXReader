@@ -105,6 +105,16 @@ struct LibraryScreen: View {
     @FocusState private var searchFocused: Bool
     @Environment(\.scenePhase) private var phase
 
+    private func restoreShelf(_ proxy: ScrollViewProxy) {
+        guard let key = shelf.restoreKey else { return }
+        let revision = shelf.restoreRevision
+        DispatchQueue.main.async {
+            guard shelf.restoreRevision == revision else { return }
+            proxy.scrollTo(key, anchor: .top)
+            shelf.didScroll(revision: revision)
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             HStack {
@@ -176,7 +186,7 @@ struct LibraryScreen: View {
                             .listRowInsets(EdgeInsets(top: 0, leading: 8, bottom: 0, trailing: 8))
                             .background(GeometryReader { geometry in
                                 Color.clear.preference(key: ShelfGeometryKey.self,
-                                    value: ShelfGeometry(frames: [book.id: geometry.frame(in: .named("catalog-shelf"))], revision: shelf.restoreRevision))
+                                    value: ShelfGeometry(frames: [book.id: geometry.frame(in: .named("catalog-shelf"))], revision: shelf.geometryRevision))
                             })
                         }
                     }
@@ -184,12 +194,11 @@ struct LibraryScreen: View {
                     .listStyle(.plain)
                     .coordinateSpace(name: "catalog-shelf")
                     .background(GeometryReader { geometry in
-                        Color.clear.preference(key: ShelfGeometryKey.self, value: ShelfGeometry(size: geometry.size, revision: shelf.restoreRevision))
+                        Color.clear.preference(key: ShelfGeometryKey.self, value: ShelfGeometry(size: geometry.size, revision: shelf.geometryRevision))
                     })
-                    .onPreferenceChange(ShelfGeometryKey.self) { geometry in shelf.observe(geometry.frames, size: geometry.size) }
-                    .onChange(of: shelf.restoreRevision) { _ in
-                        if let key = shelf.restoreKey { DispatchQueue.main.async { proxy.scrollTo(key, anchor: .top) } }
-                    }
+                    .onPreferenceChange(ShelfGeometryKey.self) { geometry in shelf.observe(geometry.frames, size: geometry.size, revision: geometry.revision) }
+                    .onAppear { restoreShelf(proxy) }
+                    .onChange(of: shelf.restoreRevision) { _ in restoreShelf(proxy) }
                 }
             }
 

@@ -97,7 +97,8 @@ import CryptoKit
             if deferred { pending = { done(result) } } else { done(result) }
         }
         func layout(_ id: String) {
-            paged.observe([id: CGRect(x: 0, y: 0, width: 100, height: 40)], size: CGSize(width: 100, height: 100))
+            paged.didScroll(revision: paged.restoreRevision)
+            paged.observe([id: CGRect(x: 0, y: 0, width: 100, height: 40)], size: CGSize(width: 100, height: 100), revision: paged.geometryRevision)
         }
         func acknowledge() {
             for _ in 0..<4 {
@@ -127,10 +128,23 @@ import CryptoKit
         try check("refresh_interruption_retains_saved_top_key", paged.loading && paged.rows.isEmpty &&
             saved != nil && pageDefaults.data(forKey: "EXRShelfTop") == saved)
         deferred = false; pending?(); pending = nil
+        let restoredFrame = [chosen.id: CGRect(x: 0, y: 0, width: 100, height: 40)]
+        let preScrollEpoch = paged.geometryRevision
+        paged.observe(restoredFrame, size: CGSize(width: 100, height: 100), revision: preScrollEpoch)
+        let preScrollRejected = paged.observation.contains("\"restoring_layout\":true")
+        paged.didScroll(revision: paged.restoreRevision)
+        paged.observe(restoredFrame, size: CGSize(width: 100, height: 100), revision: preScrollEpoch)
+        let sameKeyOldEpochRejected = paged.observation.contains("\"restoring_layout\":true")
         if let wrong = paged.rows.dropFirst().first { layout(wrong.id) }
         let stillRestoring = paged.observation.contains("\"restoring_layout\":true")
+        let beforePrependEpoch = paged.geometryRevision
+        paged.observe(restoredFrame, size: CGSize(width: 100, height: 100), revision: beforePrependEpoch)
+        let prepended = paged.geometryRevision != beforePrependEpoch && paged.rows.first?.id != chosen.id
+        paged.observe(restoredFrame, size: CGSize(width: 100, height: 100), revision: beforePrependEpoch)
+        let oldPrependFrameRejected = paged.observation.contains("\"restoring_layout\":true")
         acknowledge()
-        try check("layout_acknowledges_exact_restored_source", stillRestoring && paged.top == chosen.key &&
+        try check("layout_acknowledges_exact_restored_source", preScrollRejected && sameKeyOldEpochRejected &&
+            stillRestoring && prepended && oldPrependFrameRejected && paged.top == chosen.key &&
             !paged.observation.contains("\"restoring_layout\":true"))
         let terminal = try queue.sync { try catalog.shelf(query: "", anchor: nil, before: true) }
         let tailDefaults = UserDefaults(suiteName: "EXR.ShelfTail.\(UUID().uuidString)")!
@@ -140,12 +154,14 @@ import CryptoKit
         tail.connect { query, anchor, before, inclusive, done in
             done(Result { try queue.sync { try catalog.shelf(query: query, anchor: anchor, before: before, inclusive: inclusive) } })
         }
-        tail.observe([terminalTarget.id: CGRect(x: 0, y: 0, width: 100, height: 40)], size: CGSize(width: 100, height: 400))
+        tail.didScroll(revision: tail.restoreRevision)
+        tail.observe([terminalTarget.id: CGRect(x: 0, y: 0, width: 100, height: 40)], size: CGSize(width: 100, height: 400), revision: tail.geometryRevision)
         var clamped: [String: CGRect] = [:]
         for (index, row) in tail.rows.suffix(10).enumerated() {
             clamped[row.id] = CGRect(x: 0, y: CGFloat(index * 40), width: 100, height: 40)
         }
-        tail.observe(clamped, size: CGSize(width: 100, height: 400))
+        tail.didScroll(revision: tail.restoreRevision)
+        tail.observe(clamped, size: CGSize(width: 100, height: 400), revision: tail.geometryRevision)
         try check("terminal_viewport_clamp_keeps_real_visible_top", !tail.after && tail.top == tail.rows[tail.rows.count - 10].key &&
             !tail.observation.contains("\"restoring_layout\":true"))
         let tall = HostShelf(defaults: UserDefaults(suiteName: "EXR.ShelfTall.\(UUID().uuidString)")!)
@@ -153,11 +169,12 @@ import CryptoKit
             done(Result { try queue.sync { try catalog.shelf(query: query, anchor: anchor, before: before, inclusive: inclusive) } })
         }
         func tallLayout() {
+            tall.didScroll(revision: tall.restoreRevision)
             var positions: [String: CGRect] = [:]
             for (index, row) in tall.rows.prefix(60).enumerated() {
                 positions[row.id] = CGRect(x: 0, y: CGFloat(index * 40), width: 100, height: 40)
             }
-            tall.observe(positions, size: CGSize(width: 100, height: 2400))
+            tall.observe(positions, size: CGSize(width: 100, height: 2400), revision: tall.geometryRevision)
         }
         tallLayout(); tallLayout()
         try check("tall_native_viewport_prefetches_without_initial_scroll_range", tall.rows.count == 100 &&

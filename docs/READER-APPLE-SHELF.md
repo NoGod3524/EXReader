@@ -168,6 +168,17 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
   assertions failed; artifacts `12542868969` and `12542929679` are retained.
   A narrow two-case iPad diagnostic now records actual visible row geometry
   and requested versus observed source keys. It grants no acceptance.
+- [iPad diagnostic 40051595573](https://github.com/NoGod3524/EXReader/actions/runs/40051595573)
+  at `3db315ded146e1e1f953c2682b615499c99950dd` reproduced the two anchor failures.
+  The preserved seed mapped all four earlier mobile failures to an exact
+  50-row backward jump, matching a prefetched previous page. Artifact `12543462503`
+  preserves the geometry and requested/observed key trace. Restoration now has
+  separate scroll-issued and layout epochs: geometry captured before the scroll
+  cannot acknowledge the same key after a replacement or prepend. Pending
+  viewport changes keep the requested key. The native sixteen-check group now
+  also rejects same-key frames before issue, after issue with an old epoch, and
+  after a prepend before accepting the new frame. No delay or pixel tolerance
+  changes the acceptance conditions.
 
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.
