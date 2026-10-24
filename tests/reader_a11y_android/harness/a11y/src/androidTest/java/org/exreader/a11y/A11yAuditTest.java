@@ -432,52 +432,62 @@ public final class A11yAuditTest {
     private void rotation() throws Exception {
         JSONObject portrait = capture("22-reader-portrait");
         String before = pageLabel(portrait);
-        device.setOrientationLeft();
-        SystemClock.sleep(2000);
-        JSONObject landscape = waitAndCapture("23-reader-landscape", APP);
-        expect(landscape.getInt("display_width") > landscape.getInt("display_height"),
-                "rotation_not_applied", "The device must actually be in landscape for this case");
-        requireLayoutIntegrity(landscape);
-        requireTargetSize(landscape);
-        expect(pageLabel(landscape).equals(before), "rotation_lost_page",
-                "The reading position must survive the orientation change");
-        device.setOrientationNatural();
-        SystemClock.sleep(1500);
+        try {
+            device.setOrientationLeft();
+            SystemClock.sleep(2000);
+            JSONObject landscape = waitAndCapture("23-reader-landscape", APP);
+            expect(landscape.getInt("display_width") > landscape.getInt("display_height"),
+                    "rotation_not_applied", "The device must actually be in landscape for this case");
+            requireLayoutIntegrity(landscape);
+            requireTargetSize(landscape);
+            expect(pageLabel(landscape).equals(before), "rotation_lost_page",
+                    "The reading position must survive the orientation change");
+        } finally {
+            device.setOrientationNatural();
+            SystemClock.sleep(1500);
+        }
     }
 
     private void largeFont() throws Exception {
-        shell("settings put system font_scale 2.0");
-        SystemClock.sleep(2000);
-        relaunch("");
-        ensureShelf();
-        JSONObject shelf = waitAndCapture("24-shelf-font200", APP);
-        expect(fontScale() >= 1.9f, "font_scale_not_applied", "The platform must report font_scale 2.0");
-        requireNamed(shelf);
-        requireLayoutIntegrity(shelf);
-        requireTargetSize(shelf);
-        openFirstBook();
-        JSONObject reader = waitAndCapture("25-reader-font200", APP);
-        requireNamed(reader);
-        requireLayoutIntegrity(reader);
-        requireTargetSize(reader);
-        shell("settings put system font_scale 1.0");
-        SystemClock.sleep(1500);
-        relaunch("");
+        try {
+            shell("settings put system font_scale 2.0");
+            SystemClock.sleep(2000);
+            relaunch("");
+            ensureShelf();
+            JSONObject shelf = waitAndCapture("24-shelf-font200", APP);
+            expect(fontScale() >= 1.9f, "font_scale_not_applied", "The platform must report font_scale 2.0");
+            requireNamed(shelf);
+            requireLayoutIntegrity(shelf);
+            requireTargetSize(shelf);
+            openFirstBook();
+            JSONObject reader = waitAndCapture("25-reader-font200", APP);
+            requireNamed(reader);
+            requireLayoutIntegrity(reader);
+            requireTargetSize(reader);
+        } finally {
+            // A finding must not leak the platform configuration into the next case.
+            shell("settings put system font_scale 1.0");
+            SystemClock.sleep(1500);
+            relaunch("");
+        }
     }
 
     private void displayScaling() throws Exception {
-        shell("wm density 480");
-        SystemClock.sleep(2000);
-        relaunch("");
-        ensureShelf();
-        JSONObject shelf = waitAndCapture("26-shelf-density480", APP);
-        expect(density() >= 470, "density_override_not_applied", "The platform must report the 480 dpi override");
-        requireNamed(shelf);
-        requireLayoutIntegrity(shelf);
-        requireTargetSize(shelf);
-        shell("wm density reset");
-        SystemClock.sleep(1500);
-        relaunch("");
+        try {
+            shell("wm density 480");
+            SystemClock.sleep(2000);
+            relaunch("");
+            ensureShelf();
+            JSONObject shelf = waitAndCapture("26-shelf-density480", APP);
+            expect(density() >= 470, "density_override_not_applied", "The platform must report the 480 dpi override");
+            requireNamed(shelf);
+            requireLayoutIntegrity(shelf);
+            requireTargetSize(shelf);
+        } finally {
+            shell("wm density reset");
+            SystemClock.sleep(1500);
+            relaunch("");
+        }
     }
 
     // -------------------------------------------------------------- reporting
@@ -604,7 +614,8 @@ public final class A11yAuditTest {
         densityDpi = density();
         File xml = new File(trees, name + ".xml");
         File png = new File(shots, name + ".png");
-        assertTrue("window hierarchy dump failed: " + name, device.dumpWindowHierarchy(xml));
+        device.dumpWindowHierarchy(xml);
+        assertTrue("window hierarchy dump failed: " + name, xml.length() > 0);
         assertTrue("screenshot failed: " + name, device.takeScreenshot(png));
         AccessibilityNodeInfo root = root();
         assertNotNull("no active accessibility window: " + name, root);
