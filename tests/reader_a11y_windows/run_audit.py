@@ -72,6 +72,9 @@ LIMITATIONS = [
     "network features are out of scope.",
     "Keyboard transport is recorded per keystroke; modifier chords are only claimed as verified "
     "under the SendInput transport.",
+    "Where the product drops keyboard focus entirely, the audit records that as KB-06 and then "
+    "restores focus through its own thread attach (never a mouse) so the later flows can still be "
+    "measured; every recovery is a focus_recovery event in the key trace.",
 ]
 
 
@@ -222,12 +225,15 @@ def main():
                                steps=[traceback.format_exc().splitlines()[-1]])
                 audit_completed = False
 
+        environment["focus_recoveries"] = session.focus_recoveries
         static_checks(session, recorder, static)
     finally:
         close_info = {}
         if host.process is not None:
             close_info = host.close(reader, timeout=60)
             environment["close"] = close_info
+        environment["focus_recoveries_total"] = (0 if session is None
+                                                else session.focus_recoveries)
         environment["final_state"] = {"status": host.status(),
                                       "page_label": host.page_label(),
                                       "shelf_rows": host.list_text("books")[:6],

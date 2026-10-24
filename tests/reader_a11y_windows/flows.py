@@ -99,18 +99,28 @@ def phase_launch(s, r):
         fix="none needed while host_update_controls keeps the disable state")
 
 
+def edit_value(s, name):
+    """Text an edit control exposes, preferring the UIA value over window text."""
+    control = s.uia.control(s.locate(name).get("hwnd", 0))
+    if control is not None:
+        value, error = s.uia.value(control)
+        if value is not None:
+            return value
+    return s.host.text(name)
+
+
 def import_book(s, path_text, timeout=90):
     """Keyboard-only import: focus the path edit, type the path, activate 导入."""
     ok_edit, stops = s.goto("import_edit")
     if not ok_edit:
         return {"ok": False, "stage": "focus", "stops": stops}
     s.kb.type_text(path_text, note="type the book path like a user")
-    typed = s.host.text("import_edit")
+    typed = edit_value(s, "import_edit")
     ok_button, stops2 = s.goto("import_button")
     if not ok_button:
         return {"ok": False, "stage": "button", "stops": stops2, "typed": typed}
     s.kb.press("space", note="activate 导入 from the keyboard")
-    return {"ok": True, "typed": typed, "stops": stops + stops2}
+    return {"ok": True, "typed": typed, "stops": stops + stops2, "focus_after_space": s.focus_name()}
 
 
 def phase_import(s, r, epub_path):
@@ -148,6 +158,27 @@ def phase_import(s, r, epub_path):
         imported = s.host.wait_for(
             lambda: len(s.list_item_names("books")) > before, timeout=90, interval=0.25,
             label="shelf grows after the keyboard import")
+    focus_after = result.get("focus_after_space")
+    tab_attempts = []
+    if focus_after == "none":
+        for _ in range(2):
+            s.kb.press("tab", note="try to recover the lost focus with Tab")
+            tab_attempts.append(s.focus_name())
+    kept = focus_after not in ("none", None)
+    recovered = bool(tab_attempts) and tab_attempts[-1] not in ("none", None)
+    r.record(
+        "KB-06", "keyboard", "an activated command keeps keyboard focus reachable",
+        "blocking", "pass" if kept or recovered else "fail",
+        "after Space activates 导入 the product keeps a defined keyboard focus, or Tab restores it",
+        "focus immediately after Space=%r; after two Tabs=%r"
+        % (focus_after, tab_attempts),
+        steps=["Tab to 导入", "press Space", "read GetGUIThreadInfo(hwndFocus)", "press Tab twice"],
+        element=s.element("import_button"),
+        evidence={"focus_after_space": focus_after, "tab_attempts": tab_attempts},
+        fix="do not disable the command that has keyboard focus, or set focus back to it (or to the "
+            "next enabled control) in host_update_controls")
+    s.ensure_focus("the import command disabled itself and dropped focus")
+
     status_after = s.status()
     items = s.list_item_names("books")
     r.record(
@@ -176,13 +207,13 @@ def phase_import(s, r, epub_path):
         element=s.element("status"),
         fix="none needed for exposure; announcement is a separate check")
 
-    after_focus = s.focus_name()
+    after_focus = focus_after
     r.record(
         "IM-06", "import", "focus stays on the import command after the import",
         "moderate", "pass" if after_focus == "import_button" else "fail",
         "the keyboard focus remains on 导入, so the next key press is predictable",
-        "focused control after import=%r" % (after_focus,),
-        steps=["read GetGUIThreadInfo(hwndFocus) after the import completes"],
+        "focused control right after the import command ran=%r" % (after_focus,),
+        steps=["read GetGUIThreadInfo(hwndFocus) immediately after Space on 导入"],
         element=s.element("import_button"),
         fix="do not move focus from the importing command; announce completion instead")
 
