@@ -3,7 +3,9 @@ package org.exreader.tts.probe;
 
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ResolveInfo;
 import android.os.Build;
 import android.os.Bundle;
@@ -65,7 +67,7 @@ public final class TtsProbe extends Instrumentation {
                   .put("abi", Build.SUPPORTED_ABIS[0])
                   .put("fingerprint", Build.FINGERPRINT);
             report.put("engine_packages", engineInventory());
-            android.content.Context context = getTargetContext();
+            Context context = getTargetContext();
             NativeTts.setContext(context);
             NativeTts.setMode(engineExpected ? 1 : 0);
             JSONArray cases = new JSONArray();
@@ -73,6 +75,7 @@ public final class TtsProbe extends Instrumentation {
             if (count < 40) throw new AssertionError("case table shrank to " + count);
             for (int id = 0; id < count; id++) cases.put(runNative(id));
             cases.put(check("chunker_boundaries_and_surrogates", this::chunkerCheck));
+            cases.put(check("rotation_during_speaking", () -> rotationCheck(engineExpected)));
             cases.put(check("engine_identity_recorded", () -> identityCheck(report, engineExpected)));
             cases.put(check("synthesize_to_file_audio", () -> audioCheck(report, engineExpected)));
             report.put("cases", cases);
@@ -183,6 +186,50 @@ public final class TtsProbe extends Instrumentation {
         }
         if (!Chunker.chunk("", 4).isEmpty()) throw new AssertionError("empty text produced chunks");
         return "chunks=" + chunks.size() + " astral=" + wide.size();
+    }
+
+    /**
+     * Rotates a real Activity while a long request is speaking and requires the
+     * request to survive with exactly one terminal event.
+     */
+    private String rotationCheck(boolean engineExpected) throws Exception {
+        if (!engineExpected) throw new Skip("no engine installed");
+        int begin = NativeTts.rotationBegin();
+        if (begin == 2) throw new Skip("the engine could not start a rotation request");
+        if (begin != 0) throw new AssertionError("the rotation request was refused: " + begin);
+        Context context = getTargetContext();
+        int before = SessionActivity.creations();
+        Intent intent = new Intent(context, SessionActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
+        long deadline = System.currentTimeMillis() + 15000;
+        while (SessionActivity.creations() == before && System.currentTimeMillis() < deadline) {
+            Thread.sleep(50);
+        }
+        if (SessionActivity.creations() == before) {
+            throw new AssertionError("the probe activity did not start");
+        }
+        SessionActivity first = SessionActivity.current();
+        if (first == null) throw new AssertionError("no activity instance to rotate");
+        int creations = SessionActivity.creations();
+        runOnMainSync(() -> first.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));
+        deadline = System.currentTimeMillis() + 20000;
+        while (SessionActivity.creations() == creations && System.currentTimeMillis() < deadline) {
+            Thread.sleep(50);
+        }
+        boolean rotated = SessionActivity.creations() > creations;
+        SessionActivity latest = SessionActivity.current();
+        if (latest != null) {
+            runOnMainSync(() -> {
+                latest.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                latest.finish();
+            });
+        }
+        int finish = NativeTts.rotationFinish();
+        String detail = NativeTts.caseDetail();
+        if (!rotated) throw new AssertionError("the activity was not recreated by the rotation");
+        if (finish != 0) throw new AssertionError("the request did not survive the rotation: " + finish);
+        return "recreated=" + (SessionActivity.creations() - creations) + " " + (detail == null ? "" : detail);
     }
 
     private String identityCheck(JSONObject report, boolean engineExpected) throws Exception {

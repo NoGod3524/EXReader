@@ -82,9 +82,9 @@ starts at `accepted: false` and is only filled after the run below produced real
 3. Gradle: support AAR, `lintRelease`, the probe app (debug/release/androidTest) and
    a baseline app that carries the same library without the consumer.
 4. Emulator API 34 `google_apis_playstore` x86_64: one run with a real engine (real
-   `speak` callbacks and a real `synthesizeToFile` WAV), then every engine package
-   is removed and the probe runs again, so the missing-engine path is observed
-   rather than simulated.
+   `speak` callbacks, a real `synthesizeToFile` WAV, and a real Activity recreation
+   while one request is speaking), then every engine package is removed and the
+   probe runs again, so the missing-engine path is observed rather than simulated.
 5. Artifact upload of evidence, packages and logs; the `tts-artifact-summary` job
    downloads this run's ZIP through the API, recomputes its digest, checks
    source/run/attempt/name/bytes/expiry and compares the named case sets of the two

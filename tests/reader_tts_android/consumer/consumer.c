@@ -840,6 +840,69 @@ struct named_case {
   int (*run)(void);
 };
 
+/* Rotation support: a dedicated handle survives a real Activity recreation while
+   one long request is speaking. The probe app drives the configuration change
+   between the two calls, so the sequence cannot pass without a real rotation. */
+static reader_tts *g_rotation;
+static char *g_rotation_text;
+static uint64_t g_rotation_request;
+
+int exr_tts_consumer_rotation_begin(void) {
+  reader_tts_state state = READER_TTS_INITIALIZING;
+  if (!g_engine_mode) return 2;
+  if (g_rotation || g_rotation_text) return 1;
+  g_rotation_text = make_ascii(900);
+  if (!g_rotation_text) return 1;
+  if (reader_tts_create(NULL, &g_rotation, NULL) != READER_TTS_OK || !g_rotation) {
+    free(g_rotation_text);
+    g_rotation_text = NULL;
+    return 1;
+  }
+  if (wait_state(g_rotation, 30000, &state) != 0 || state != READER_TTS_READY) {
+    reader_tts_request_close(g_rotation, NULL);
+    if (wait_closed(g_rotation, 20000, &state) == 0) reader_tts_destroy(&g_rotation, NULL);
+    free(g_rotation_text);
+    g_rotation_text = NULL;
+    return 1;
+  }
+  g_rotation_request = next_id();
+  if (reader_tts_speak(g_rotation, g_rotation_request, g_rotation_text, 900, NULL, 2.0, NULL) !=
+      READER_TTS_OK) {
+    return 1;
+  }
+  return 0;
+}
+
+int exr_tts_consumer_rotation_finish(void) {
+  struct ledger log;
+  reader_tts_snapshot snapshot;
+  reader_tts_state state = READER_TTS_INITIALIZING;
+  int outcome = 0;
+  int result = 0;
+  if (!g_engine_mode) return 2;
+  if (!g_rotation) return 1;
+  memset(&log, 0, sizeof(log));
+  memset(&snapshot, 0, sizeof(snapshot));
+  if (reader_tts_observe(g_rotation, &snapshot, NULL) != READER_TTS_OK) {
+    result = 1;
+  } else if (snapshot.state == READER_TTS_CLOSED ||
+             snapshot.state == READER_TTS_SERVICE_UNAVAILABLE) {
+    result = 1;
+  }
+  outcome = collect(g_rotation, g_rotation_request, 45000, g_rotation_text, 900, &log);
+  if (outcome != 0 || log.started != 1 ||
+      log.finished + log.stopped + log.failed != 1 || log.foreign_unknown != 0) {
+    result = 1;
+  }
+  note("rotation state=%d started=%u ranges=%u terminal=%u; ", (int)snapshot.state,
+    log.started, log.ranges, log.finished + log.stopped + log.failed);
+  reader_tts_request_close(g_rotation, NULL);
+  if (wait_closed(g_rotation, 20000, &state) == 0) reader_tts_destroy(&g_rotation, NULL);
+  free(g_rotation_text);
+  g_rotation_text = NULL;
+  return result;
+}
+
 static const struct named_case g_cases[] = {
   { "initialize_null_argument", case_initialize_null_argument },
   { "create_before_bind_unavailable", case_create_before_bind_unavailable },

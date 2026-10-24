@@ -64,6 +64,16 @@ Java_org_exreader_tts_probe_NativeTts_caseDetail(JNIEnv *env, jclass) {
   return env->NewStringUTF(exr_tts_consumer_detail());
 }
 
+extern "C" JNIEXPORT jint JNICALL
+Java_org_exreader_tts_probe_NativeTts_rotationBegin(JNIEnv *, jclass) {
+  return (jint)exr_tts_consumer_rotation_begin();
+}
+
+extern "C" JNIEXPORT jint JNICALL
+Java_org_exreader_tts_probe_NativeTts_rotationFinish(JNIEnv *, jclass) {
+  return (jint)exr_tts_consumer_rotation_finish();
+}
+
 extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *, void *) {
   return JNI_VERSION_1_6;
 }

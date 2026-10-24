@@ -135,7 +135,8 @@ def main():
                 'the removed-engine run must not pass the audio case')
         for required_case in ('speak_started_and_finished', 'range_utf8_boundaries',
                               'stop_single_stopped', 'busy_while_active',
-                              'long_text_chunked_requests', 'voices_lifetime_after_destroy'):
+                              'long_text_chunked_requests', 'voices_lifetime_after_destroy',
+                              'rotation_during_speaking', 'chunker_boundaries_and_surrogates'):
             require(engine_cases.get(required_case) == 'pass',
                     required_case + ' did not pass with a real engine')
 

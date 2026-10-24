@@ -13,4 +13,6 @@ public final class NativeTts {
     public static native String caseName(int id);
     public static native int runCase(int id);
     public static native String caseDetail();
+    public static native int rotationBegin();
+    public static native int rotationFinish();
 }

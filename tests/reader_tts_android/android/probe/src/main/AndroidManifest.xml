@@ -4,5 +4,7 @@
             <action android:name="android.intent.action.TTS_SERVICE" />
         </intent>
     </queries>
-    <application android:label="Reader TTS Android probe" android:allowBackup="false" />
+    <application android:label="Reader TTS Android probe" android:allowBackup="false">
+        <activity android:name=".SessionActivity" android:exported="false" android:label="probe session" />
+    </application>
 </manifest>

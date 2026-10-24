@@ -18,6 +18,12 @@ int exr_tts_consumer_case(int id);
 /* Human readable detail of the last case; never contains request text. */
 const char *exr_tts_consumer_detail(void);
 
+/* Rotation pair driven by the probe app: begin starts one long request on a
+   dedicated handle, finish observes the surviving state and the single terminal
+   event after the Activity was really recreated. 0 pass, 1 fail, 2 skip. */
+int exr_tts_consumer_rotation_begin(void);
+int exr_tts_consumer_rotation_finish(void);
+
 /* Implemented by the host bridge (bridge.cpp). */
 int exr_tts_platform_bind_null(void);
 int exr_tts_platform_bind(void);
