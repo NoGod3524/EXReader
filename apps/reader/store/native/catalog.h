@@ -46,6 +46,11 @@ int reader_catalog_page(reader_catalog *, const char *after_title, const char *a
 int reader_catalog_query_page(reader_catalog *, const char *cursor_title, const char *cursor_key,
                               const char *query, int direction, size_t limit,
                               reader_catalog_visit, void *, reader_catalog_error *);
+/* Same keyset contract restricted to rows with a local SDK mapping. Hosts that
+ * show downloaded books use this; the global query still includes cloud-only metadata. */
+int reader_catalog_local_page(reader_catalog *, const char *cursor_title, const char *cursor_key,
+                              const char *query, int direction, size_t limit,
+                              reader_catalog_visit, void *, reader_catalog_error *);
 /* Find a stable visible key under the current filter before restoring a viewport.
  * Calls visit at most once; sets found=0 if deleted, missing or filtered out. */
 int reader_catalog_find(reader_catalog *, const char *book_key, const char *query,
