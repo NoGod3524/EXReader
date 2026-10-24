@@ -46,7 +46,7 @@ jobs:
               for name in names:
                   path=PurePosixPath(name);require(not path.is_absolute() and '..' not in path.parts and '\\' not in name,'unsafe ZIP path')
               def read(suffix):
-                  paths=[name for name in names if name.endswith(suffix)]
+                  paths=[name for name in names if ('/'+name).endswith(suffix)]
                   require(len(paths)==1,'missing or ambiguous '+suffix)
                   return archive.read(paths[0]).decode('utf-8','replace')
               item={'attempt':attempt,'artifact_id':artifact,'digest':digest}
