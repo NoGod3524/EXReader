@@ -3,6 +3,11 @@ on:
   push:
     branches: [codex/reader-hosts-integration]
   workflow_dispatch:
+    inputs:
+      verify_run:
+        type: string
+        default: ''
+        description: Read one preserved common-source run without granting this validator revision
 permissions:
   contents: read
 defaults:
@@ -31,12 +36,13 @@ jobs:
           from pathlib import Path
           import yaml
           document = yaml.load(Path('.github/workflows/reader-hosts-integration.yml').read_text(), Loader=yaml.BaseLoader)
-          assert set(document['jobs']) == {'pin', 'compose', 'aggregate', 'search', 'summary', 'gtk', 'android', 'hosts-summary'}
+          assert set(document['jobs']) == {'pin', 'compose', 'aggregate', 'search', 'summary', 'gtk', 'android', 'hosts-summary', 'inspect'}
           assert set(document['on']) == {'push', 'workflow_dispatch'}
           PY
           python3 tests/reader_hosts_integration/final.py --self-test
           python3 tests/reader_hosts_integration/aggregate.py windows --protocol-selftest
   compose:
+    if: ${{ github.event.inputs.verify_run == '' }}
     needs: pin
     name: one-prefix composition (${{matrix.key}})
     runs-on: ${{matrix.os}}
@@ -232,7 +238,7 @@ jobs:
   aggregate:
     name: strict same-source composition report
     needs: [compose]
-    if: always()
+    if: ${{ always() && github.event.inputs.verify_run == '' }}
     runs-on: ubuntu-22.04
     timeout-minutes: 20
     permissions:
@@ -255,6 +261,7 @@ jobs:
 
 
   search:
+    if: ${{ github.event.inputs.verify_run == '' }}
     needs: pin
     name: installed F1 and native Windows search controls and lifecycle
     runs-on: windows-2022
@@ -389,7 +396,7 @@ jobs:
             build/ws-package/
           if-no-files-found: error
   summary:
-    if: always()
+    if: ${{ always() && github.event.inputs.verify_run == '' }}
     needs: search
     name: same-source native Windows search artifact authentication
     runs-on: ubuntu-22.04
@@ -414,6 +421,7 @@ jobs:
           path: build/winsearch-summary/verified.json
           if-no-files-found: error
   gtk:
+    if: ${{ github.event.inputs.verify_run == '' }}
     needs: pin
     name: GTK G03 G04 reading records and retained native suites
     runs-on: ubuntu-22.04
@@ -722,6 +730,7 @@ jobs:
           if-no-files-found: error
 
   android:
+    if: ${{ github.event.inputs.verify_run == '' }}
     needs: pin
     runs-on: ubuntu-latest
     timeout-minutes: 120
@@ -887,7 +896,7 @@ jobs:
   hosts-summary:
     name: authenticate native hosts and retain actual palette failures
     needs: [compose, aggregate, search, summary, gtk, android]
-    if: always()
+    if: ${{ always() && github.event.inputs.verify_run == '' }}
     runs-on: ubuntu-22.04
     timeout-minutes: 20
     permissions:
@@ -908,5 +917,29 @@ jobs:
         if: always()
         with:
           name: reader-hosts-integration-summary-${{github.run_id}}-${{github.run_attempt}}
+          path: build/hosts-summary/result.json
+          if-no-files-found: error
+  inspect:
+    name: read one preserved common-source run without acceptance
+    needs: pin
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.verify_run != '' }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate the preserved source and reports with the repaired verifier
+        env:
+          GH_TOKEN: ${{github.token}}
+          INSPECT_RUN: ${{inputs.verify_run}}
+        run: python3 tests/reader_hosts_integration/final.py --inspect-run "$INSPECT_RUN"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-hosts-inspection-${{github.run_id}}-${{github.run_attempt}}
           path: build/hosts-summary/result.json
           if-no-files-found: error
