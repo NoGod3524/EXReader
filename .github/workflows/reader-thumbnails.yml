@@ -82,7 +82,7 @@ jobs:
           python3 tests/reader_thumbnails/check_thumbnails.py --probe "build/thumb-consumer/thumb-probe$exe" --c-consumer "build/thumb-consumer/thumb-c-consumer$exe" --regress "build/thumb-consumer/thumb-regress$exe" --fault "build/thumb-consumer/thumb-fault$exe" --fixtures build/thumb-fixtures --repo-fixtures tests/fixtures --installed build/thumb-stage --output build/thumbnail-evidence 2>&1 | tee build/thumb-logs/checks.log
           status=${PIPESTATUS[0]}
           set -e
-          if [ "$RUNNER_OS" = Linux ]; then
+          if [ "$RUNNER_OS" = Linux ] && [ -d build/thumbnail-evidence/fault-work ]; then
             find build/thumbnail-evidence/fault-work -name 'point-*.txt' -exec sh -c 'grep -q "^TERMINATE" "$1" || exit 0; cat "$1"; grep -oE "\[0x[0-9a-f]+\]" "$1" | tr -d "[]" | xargs -r addr2line -Cfipe build/thumb-consumer/thumb-fault' sh {} \;
           fi
           exit "$status"
