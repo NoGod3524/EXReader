@@ -75,7 +75,12 @@
       "new_owner": "DeepSeek Harness Flash1017 High PTC",
       "new_owner_started": true,
       "full_permissions_observed": true,
-      "state": "pixel_source_and_failed_eviction_code_fixed_noexcept_termination_gate_review_queued"
+      "state": "root_owns_exception_boundary_fix_external_owner_stopped",
+      "root_takeover_checkpoint": "b7e38e5ba403e1aef3b06a7cd827ec992a3a1dd6",
+      "root_takeover_writer": "/root",
+      "external_owner_stopped_observed": true,
+      "background_tasks_checked": "all_three_ended_read_only_gh_run_queries",
+      "preserved_review_run": 40091225844
     },
     {
       "package_id": "G06",
