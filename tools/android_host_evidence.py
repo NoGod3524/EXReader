@@ -32,6 +32,7 @@ SOURCE_PATHS += ['tools/reader_catalog_assets.py', 'apps/reader/store/001_catalo
 SOURCE_PATHS += ['apps/reader/store/native', 'apps/reader/revisions', 'apps/reader/commands',
                  '.github/workflows/reader-owner-android.yml', 'tools/check_reader_owner_android.py',
                  'tests/android_host/check_owner_evidence_gate.py']
+SOURCE_PATHS += ['.github/workflows/reader-organization-android.yml', 'tools/check_reader_organization_android.py']
 
 
 def ownership():
