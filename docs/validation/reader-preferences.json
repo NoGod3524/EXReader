@@ -1,0 +1,20 @@
+{
+  "accepted": false,
+  "status": "no cloud run recorded yet",
+  "package": "EXReaderPreferences 0.1.0",
+  "common_start": "c3511a011eefbf1fba1d20908f000cef22b1ced2",
+  "source_sha": null,
+  "run_id": null,
+  "attempt": null,
+  "artifacts": [],
+  "jobs": [],
+  "problems": ["Nothing has been built or run in GitHub Actions for this package; the fields above are filled only from a real run."],
+  "granted_platforms": [],
+  "macos_accepted": false,
+  "performance_claimed": false,
+  "host_ui_accepted": false,
+  "six_platform_accepted": false,
+  "complete_product": false,
+  "sdk_changed": false,
+  "schema_changed": false
+}
