@@ -840,7 +840,8 @@ ap_check_library(const char *product, const char *account_id, const char *root_u
   {
     unsigned char *data = NULL;
     size_t read_size = 0;
-      reader_account_profiles_control none;
+    int present = 0;
+    reader_account_profiles_control none;
     none.cancelled = NULL;
     none.context = NULL;
     status = ap_read_file(binding, AP_BINDING_LIMIT, &data, &read_size, &present, &none, error);
