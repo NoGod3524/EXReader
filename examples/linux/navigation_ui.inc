@@ -8,11 +8,22 @@ static struct {
   uint64_t token,parent,next,total,selected,pending_row,parents[64];unsigned depth,actions,closed;
   uint64_t *candidates;size_t candidate_count,candidate_first;
   int code,match,verified,kind;
+  guint focus_idle;
   reader_navigation_control control;
 } directory={.parent=READER_NAVIGATION_NONE,.next=READER_NAVIGATION_NONE,.selected=READER_NAVIGATION_NONE,.control={.changed=directory_progress}};
 static gboolean directory_progress_idle(gpointer unused) { (void)unused;state();return G_SOURCE_REMOVE; }
 static void directory_progress(void *unused) { (void)unused;g_idle_add(directory_progress_idle,NULL); }
 static gboolean directory_opened(void) { return directory.dialog!=NULL; }
+static gboolean directory_focus_after_rows(gpointer unused) {
+  (void)unused;directory.focus_idle=0;
+  if(directory.dialog && !directory.running) {
+    GtkWidget *focus=gtk_window_get_focus(GTK_WINDOW(directory.dialog));
+    if(!focus || focus==directory.cancel || focus==directory.children || focus==directory.open || focus==directory.back || focus==directory.more)
+      gtk_widget_grab_focus(directory.list);
+    state();
+  }
+  return G_SOURCE_REMOVE;
+}
 static void directory_message(const char *message) {
   if(directory.status) { gtk_label_set_text(GTK_LABEL(directory.status),message);atk_object_set_name(gtk_widget_get_accessible(directory.status),message); }
 }
@@ -41,6 +52,7 @@ static void directory_release(void) {
 }
 static void directory_destroyed(GtkWidget *widget,gpointer unused) {
   (void)widget;(void)unused;directory.dialog=directory.list=directory.status=NULL;
+  if(directory.focus_idle) { g_source_remove(directory.focus_idle);directory.focus_idle=0; }
   if(directory.content) gtk_widget_set_sensitive(directory.content,TRUE);
   directory.content=NULL;
   g_clear_pointer(&directory.candidates,g_free);directory.candidate_count=0;
@@ -174,6 +186,7 @@ static gboolean directory_apply(host_result *done) {
     directory_clear();directory.parent=result->navigation_parent;directory.next=result->navigation_next;directory.total=result->navigation_total;directory.kind=result->navigation_kind;
     for(size_t i=0;i<result->navigation_count;i++) { reader_navigation_ui_row *row=&result->navigation_rows[i];directory_row(row->index,row->label,row->children,FALSE); }
     gtk_widget_show_all(directory.list);
+    if(!directory.focus_idle) directory.focus_idle=g_idle_add(directory_focus_after_rows,NULL);
   } else if(result->navigation_candidate_count) {
     g_free(directory.candidates);directory.candidates=result->navigation_candidates;result->navigation_candidates=NULL;
     directory.candidate_count=result->navigation_candidate_count;directory.candidate_first=0;directory.candidate_mode=TRUE;directory_candidates();
@@ -181,7 +194,8 @@ static gboolean directory_apply(host_result *done) {
   directory_message(result->message);directory_controls();state();return TRUE;
 }
 static char *directory_observation(void) {
-  return g_strdup_printf("[directory]\nvisible=%d\nrunning=%d\ntoken=%"G_GUINT64_FORMAT"\nparent=%"G_GUINT64_FORMAT"\nnext=%"G_GUINT64_FORMAT"\ntotal=%"G_GUINT64_FORMAT"\ndepth=%u\ncode=%d\nmatch=%d\nverified=%d\nkind=%d\ncandidate_mode=%d\ncandidates=%zu\nactions=%u\nclosed=%u\nphase=%d\npolls=%d\n",
+  return g_strdup_printf("[directory]\nvisible=%d\nrunning=%d\ntoken=%"G_GUINT64_FORMAT"\nparent=%"G_GUINT64_FORMAT"\nnext=%"G_GUINT64_FORMAT"\ntotal=%"G_GUINT64_FORMAT"\ndepth=%u\ncode=%d\nmatch=%d\nverified=%d\nkind=%d\ncandidate_mode=%d\ncandidates=%zu\nselected=%"G_GUINT64_FORMAT"\nopen_sensitive=%d\nactive=%d\nactions=%u\nclosed=%u\nphase=%d\npolls=%d\n",
     directory.dialog!=NULL,directory.running,directory.token,directory.parent,directory.next,directory.total,directory.depth,directory.code,directory.match,directory.verified,directory.kind,
-    directory.candidate_mode,directory.candidate_count,directory.actions,directory.closed,g_atomic_int_get(&directory.control.phase),g_atomic_int_get(&directory.control.polls));
+    directory.candidate_mode,directory.candidate_count,directory.selected,directory.dialog && gtk_widget_is_sensitive(directory.open),
+    directory.dialog && gtk_window_is_active(GTK_WINDOW(directory.dialog)),directory.actions,directory.closed,g_atomic_int_get(&directory.control.phase),g_atomic_int_get(&directory.control.polls));
 }
