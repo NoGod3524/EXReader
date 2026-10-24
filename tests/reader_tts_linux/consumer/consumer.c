@@ -156,11 +156,21 @@ static void drain(reader_tts *h, uint64_t id, runstate *rs) {
     if (ev.request_id == id || id == 0) note_event(rs, &ev);
   }
 }
+/* Monotonic milliseconds, so a failure detail shows how long the case waited. */
+static long now_ms(void) {
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  return (long)ts.tv_sec * 1000L + ts.tv_nsec / 1000000L;
+}
+/* Speaks and waits; *speak_status always carries the submission result so a
+   failure detail can tell "rejected" from "started but never terminated". */
 static int run_request(reader_tts *h, uint64_t id, const char *text, size_t n, const char *voice,
-                       double rate, int timeout_ms, runstate *rs) {
+                       double rate, int timeout_ms, runstate *rs,
+                       reader_tts_status *speak_status) {
   reader_tts_error err;
   rs_init(rs);
-  if (reader_tts_speak(h, id, text, n, voice, rate, &err) != READER_TTS_OK) return 0;
+  *speak_status = reader_tts_speak(h, id, text, n, voice, rate, &err);
+  if (*speak_status != READER_TTS_OK) return 0;
   if (!await_started(h, id, timeout_ms, rs)) return 0;
   return await_terminal(h, id, timeout_ms, rs);
 }
@@ -238,10 +248,11 @@ static void phase_live(suite *s) {
   reader_tts_snapshot snap;
   reader_tts_voice_list list;
   reader_tts_voice_list scratch;
-  reader_tts_status st;
+  reader_tts_status st, spk;
   runstate rs;
   char text[TEXT_CAP];
   uint64_t id = 1, first_id;
+  long t0;
   int ok;
 
   memset(&err, 0, sizeof err);
@@ -282,9 +293,11 @@ static void phase_live(suite *s) {
 
   first_id = id;
   fill_ascii(text, 24, 'a');
-  ok = run_request(h, id, text, 24, NULL, 1.0, CASE_TIMEOUT_MS, &rs);
-  report(s, "speak_started_event", ok && rs.c.started == 1, "started=%d finished=%d failed=%d",
-         rs.c.started, rs.c.finished, rs.c.failed);
+  t0 = now_ms();
+  ok = run_request(h, id, text, 24, NULL, 1.0, CASE_TIMEOUT_MS, &rs, &spk);
+  report(s, "speak_started_event", ok && rs.c.started == 1,
+         "speak=%s started=%d finished=%d failed=%d ms=%ld", status_name(spk), rs.c.started,
+         rs.c.finished, rs.c.failed, now_ms() - t0);
   report(s, "speak_finished_event",
          ok && rs.c.finished == 1 && rs.c.failed == 0 && rs.c.stopped == 0 &&
              rs.term_status == READER_TTS_OK,
@@ -380,9 +393,14 @@ static void phase_live(suite *s) {
     const char *names[2] = {"speak_rate_low_accepted", "speak_rate_high_accepted"};
     int k;
     for (k = 0; k < 2; ++k) {
-      ok = run_request(h, ++id, text, 30, NULL, rates[k], CASE_TIMEOUT_MS, &rs);
-      report(s, names[k], ok && rs.c.finished == 1, "rate=%.1f finished=%d status=%s", rates[k],
-             rs.c.finished, status_name(rs.term_status));
+      /* a short utterance: the case is about the rate being accepted and the
+         request completing, not about how long the slowest rate takes */
+      t0 = now_ms();
+      ok = run_request(h, ++id, text, 8, NULL, rates[k], CASE_TIMEOUT_MS, &rs, &spk);
+      report(s, names[k], ok && rs.c.finished == 1,
+             "rate=%.1f speak=%s started=%d finished=%d stopped=%d failed=%d status=%s ms=%ld",
+             rates[k], status_name(spk), rs.c.started, rs.c.finished, rs.c.stopped, rs.c.failed,
+             status_name(rs.term_status), now_ms() - t0);
     }
   }
   st = reader_tts_speak(h, ++id, text, 30, NULL, 2.01, &err);
@@ -399,42 +417,43 @@ static void phase_live(suite *s) {
   report(s, "speak_unknown_voice_rejected", st == READER_TTS_ARGUMENT, "status=%s",
          status_name(st));
   if (list.count) {
-    ok = run_request(h, ++id, text, 30, list.voices[0].id, 1.0, CASE_TIMEOUT_MS, &rs);
-    report(s, "speak_known_voice_accepted", ok && rs.c.finished == 1, "voice=%s finished=%d",
-           list.voices[0].id, rs.c.finished);
-    ok = run_request(h, ++id, text, 30, NULL, 1.0, CASE_TIMEOUT_MS, &rs);
-    report(s, "voice_reset_after_custom", ok && rs.c.finished == 1, "finished=%d status=%s",
-           rs.c.finished, status_name(rs.term_status));
+    ok = run_request(h, ++id, text, 30, list.voices[0].id, 1.0, CASE_TIMEOUT_MS, &rs, &spk);
+    report(s, "speak_known_voice_accepted", ok && rs.c.finished == 1,
+           "voice=%s speak=%s finished=%d", list.voices[0].id, status_name(spk), rs.c.finished);
+    ok = run_request(h, ++id, text, 30, NULL, 1.0, CASE_TIMEOUT_MS, &rs, &spk);
+    report(s, "voice_reset_after_custom", ok && rs.c.finished == 1, "speak=%s finished=%d status=%s",
+           status_name(spk), rs.c.finished, status_name(rs.term_status));
   } else {
     report(s, "speak_known_voice_accepted", 0, "daemon listed no voice to select");
     report(s, "voice_reset_after_custom", 0, "daemon listed no voice to select");
   }
 
   fill_repeat(text, 36, "\xE6\x9C\x97\xE8\xAF\xBB\xE6\xB5\x8B\xE8\xAF\x95\xE3\x80\x82");
-  ok = run_request(h, ++id, text, 36, NULL, 2.0, CASE_TIMEOUT_MS, &rs);
-  report(s, "speak_cjk_text_finished", ok && rs.c.finished == 1 && rs.c.started == 1, "finished=%d",
-         rs.c.finished);
+  ok = run_request(h, ++id, text, 36, NULL, 2.0, CASE_TIMEOUT_MS, &rs, &spk);
+  report(s, "speak_cjk_text_finished", ok && rs.c.finished == 1 && rs.c.started == 1,
+         "speak=%s finished=%d", status_name(spk), rs.c.finished);
   {
     size_t n = fill_repeat(text, 32, "\xF0\x9F\x93\x96");
-    ok = run_request(h, ++id, text, n, NULL, 2.0, CASE_TIMEOUT_MS, &rs);
-    report(s, "speak_emoji_finished", ok && rs.c.finished == 1, "bytes=%zu finished=%d", n,
-           rs.c.finished);
+    ok = run_request(h, ++id, text, n, NULL, 2.0, CASE_TIMEOUT_MS, &rs, &spk);
+    report(s, "speak_emoji_finished", ok && rs.c.finished == 1, "bytes=%zu speak=%s finished=%d", n,
+           status_name(spk), rs.c.finished);
   }
   {
     size_t n = fill_repeat(text, 24, "e\xCC\x81");
-    ok = run_request(h, ++id, text, n, NULL, 2.0, CASE_TIMEOUT_MS, &rs);
-    report(s, "speak_combining_marks_finished", ok && rs.c.finished == 1, "bytes=%zu finished=%d", n,
-           rs.c.finished);
+    ok = run_request(h, ++id, text, n, NULL, 2.0, CASE_TIMEOUT_MS, &rs, &spk);
+    report(s, "speak_combining_marks_finished", ok && rs.c.finished == 1,
+           "bytes=%zu speak=%s finished=%d", n, status_name(spk), rs.c.finished);
   }
   /* The byte-boundary case runs last: it queues the longest utterance, and the
      daemon needs real time to synthesise and play it out. */
   {
     size_t n = fill_repeat(text, READER_TTS_DEFAULT_MAX_UTF8, "\xF0\x9F\x93\x96");
     rs_init(&rs);
+    t0 = now_ms();
     st = reader_tts_speak(h, ++id, text, n, NULL, 2.0, &err);
     ok = (st == READER_TTS_OK) && await_started(h, id, CASE_TIMEOUT_MS, &rs);
-    report(s, "speak_max_bytes_accepted", ok, "status=%s bytes=%zu scalars=%zu", status_name(st), n,
-           n / 4);
+    report(s, "speak_max_bytes_accepted", ok, "status=%s started=%d bytes=%zu scalars=%zu ms=%ld",
+           status_name(st), rs.c.started, n, n / 4, now_ms() - t0);
     reader_tts_stop(h, id, &err);
     await_terminal(h, id, 10000, &rs);
     drain(h, id, &rs);
@@ -687,7 +706,7 @@ static void phase_recover(suite *s) {
   reader_tts *h = NULL;
   reader_tts_config cfg;
   reader_tts_snapshot snap;
-  reader_tts_status st;
+  reader_tts_status st, spk;
   reader_tts_state end = READER_TTS_INITIALIZING;
   runstate rs;
   char text[64];
@@ -703,9 +722,9 @@ static void phase_recover(suite *s) {
          status_name(st), h ? state_name(snap.state) : "-");
   if (!h) return;
   fill_ascii(text, 20, 'r');
-  ok = run_request(h, 1, text, 20, NULL, 1.0, CASE_TIMEOUT_MS, &rs);
-  report(s, "recover_speak_finished", ok && rs.c.finished == 1, "finished=%d status=%s",
-         rs.c.finished, status_name(rs.term_status));
+  ok = run_request(h, 1, text, 20, NULL, 1.0, CASE_TIMEOUT_MS, &rs, &spk);
+  report(s, "recover_speak_finished", ok && rs.c.finished == 1, "speak=%s finished=%d status=%s",
+         status_name(spk), rs.c.finished, status_name(rs.term_status));
   st = reader_tts_request_close(h, &err);
   closed = wait_closed(h, 5000, &end);
   report(s, "recover_close_clean", st == READER_TTS_OK && closed, "state=%s", state_name(end));
@@ -720,7 +739,7 @@ static void phase_kill(suite *s, int spd_pid, const char *restart_cmd) {
   reader_tts_config cfg;
   reader_tts_snapshot snap;
   reader_tts_voice_list list;
-  reader_tts_status st;
+  reader_tts_status st, spk;
   reader_tts_state end = READER_TTS_INITIALIZING;
   runstate rs;
   char text[TEXT_CAP];
@@ -773,9 +792,10 @@ static void phase_kill(suite *s, int spd_pid, const char *restart_cmd) {
   } else {
     report(s, "kill_daemon_restart_command", 0, "no restart command supplied");
   }
-  ok = run_request(h, ++id, "recovered", 9, NULL, 1.0, CASE_TIMEOUT_MS, &rs);
-  report(s, "kill_daemon_same_handle_recovers", ok && rs.c.finished == 1, "finished=%d status=%s",
-         rs.c.finished, status_name(rs.term_status));
+  ok = run_request(h, ++id, "recovered", 9, NULL, 1.0, CASE_TIMEOUT_MS, &rs, &spk);
+  report(s, "kill_daemon_same_handle_recovers", ok && rs.c.finished == 1,
+         "speak=%s finished=%d status=%s", status_name(spk), rs.c.finished,
+         status_name(rs.term_status));
   st = reader_tts_request_close(h, &err);
   closed = wait_closed(h, 10000, &end);
   report(s, "kill_daemon_close_clean", st == READER_TTS_OK && closed, "state=%s", state_name(end));
