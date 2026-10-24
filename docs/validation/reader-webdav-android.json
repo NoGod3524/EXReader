@@ -1,0 +1,108 @@
+{
+  "accepted": true,
+  "scope": "optional Android WebDAV C ABI backend and immutable HTTPS primitives",
+  "base_sha": "4d4e2be80f6dd103e4b39e739ef3813974acdf00",
+  "accepted_source_sha": "7c27efec9bd5438f8869550dde0872c1f88782da",
+  "branch": "codex/reader-webdav-android",
+  "run_id": 40066284731,
+  "attempt": 1,
+  "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/40066284731",
+  "run_conclusion": "success",
+  "all_execution_on_actions": true,
+  "native_target_api": 26,
+  "device_api": 34,
+  "device_abi": "x86_64",
+  "jobs": {
+    "android": {"job_id": 120790124702, "conclusion": "success", "backend_checks": 91, "restart_checks": 4},
+    "linux": {"job_id": 120790124807, "conclusion": "success", "original_source_checks": 77, "compatibility_checks": 12},
+    "windows": {"job_id": 120790124808, "conclusion": "success", "original_source_checks": 76, "compatibility_checks": 12}
+  },
+  "artifacts": [
+    {"platform": "android", "id": 12549174247, "bytes": 3721895, "sha256": "ede65868492085ed347d3db41f2a5942e2f95751dd3b3301f4c8779782abf462"},
+    {"platform": "linux", "id": 12549452672, "bytes": 192020, "sha256": "216444b8d9e0163f8822cd3b7e435bfd1902060426ff55456102ff68ce575275"},
+    {"platform": "windows", "id": 12548644266, "bytes": 446070, "sha256": "604fec1f87f6ff86424d4b2b96fbb1a33364b27eb4aa2747ad268b8a0f631c51"}
+  ],
+  "platform_probe": {
+    "same_source": true,
+    "class": "com.android.okhttp.internal.huc.HttpsURLConnectionImpl",
+    "methods": {"GET": true, "PUT": true, "PROPFIND": false, "MKCOL": false},
+    "rejected_method_exception": "java.net.ProtocolException",
+    "trusted_tls_verified": true,
+    "configured_read_timeout_ms": 150,
+    "observed_read_timeout_ms": 162,
+    "write_elapsed_ms": 2133,
+    "write_bytes_sent": 16777216,
+    "write_result": "completed"
+  },
+  "contracts_verified": [
+    "installed C11 consumer using unchanged exr_webdav.h",
+    "API26 Debug and Release native compilation with -Wall -Wextra -Werror",
+    "same HTTPS origin and configured root containment",
+    "Depth 1 and bounded read redirects; no write redirects",
+    "2000 entries; 4 MiB listings; 128 MiB transfer ceiling; lowered limits",
+    "namespace and numeric/predefined XML references; UTF-8 metadata",
+    "DTD and custom/external entity refusal; XML depth/text/element budgets",
+    "TLS certificate and hostname verification; no foreign-origin requests",
+    "streaming and declared lengths; truncation; cancellation; total read/write deadline",
+    "atomic Android RENAME_NOREPLACE and existing local destination preservation",
+    "creating-worker ownership; callback reentry and wrong-owner free refusal",
+    "empty client/upload registries and balanced native attach/detach after each case",
+    "same-client error recovery; Activity destroyed while worker completes",
+    "immutable MKCOL; conditional exact-length PUT; duplicate 412; GET byte/hash verification",
+    "real force-stop after remote PUT commit, fresh-process exact retry and GET verification",
+    "Release fixture/CA/test-symbol scans and test-hook configuration refusal",
+    "no curl/libxml/OpenSSL/WebView native dependencies on Android",
+    "original Windows/Linux source and compat suites on the accepted source"
+  ],
+  "process_restart": {
+    "killed_after_server_commit": true,
+    "force_stop_pid": "2595",
+    "conditional_retry_status": 11,
+    "conditional_retry_http": 412,
+    "get_verified": true,
+    "payload_sha256": "61d1d9c5745bdaa4fab39240651bc242a5186b15393fd475082fcf6e84f400ab"
+  },
+  "secrets": {
+    "credential_input": "stdin into app-private input.json; removed after run",
+    "authorization_sha256": "a441b7c63ecfec3fb2818ac1674ec829d2bed7376590d619e5595bbfee336692",
+    "request_headers_redacted_to_sha256": true,
+    "foreign_requests": 0,
+    "saved_report_and_trace_secret_scan": true,
+    "tls_private_keys_uploaded": false,
+    "fixture_ca_debug_overlay_only": true
+  },
+  "packages": {
+    "support_aar": {"bytes": 8793, "sha256": "2c7f28113d31e185b0c5709525fb1125f2931600012af3f42dfde62877eca179", "includes_maven_runtimes": false},
+    "release_static_archive": {"bytes": 1602576, "sha256": "7eda88711ae97b4faac0934d99322613eae5b066f5fc7f3733920414adac3dbd"},
+    "baseline_apk": {"bytes": 1808, "sha256": "d03cff84ebb77a33a4918194f22f3aeded835a1d435a37ddf8c7b8009109bb75", "dex_method_references": 2},
+    "backend_apk": {"bytes": 1521720, "sha256": "a63c86fc1065283c3817557e4253ecf72dcfa97cf07ba37891f6424a49e705e9", "dex_method_references": 16585},
+    "apk_bytes_delta": 1519912,
+    "dex_method_references_delta": 16583,
+    "delta_scope": "minimal app versus C consumer plus native C++ runtime, backend and HTTP runtimes",
+    "release_boundaries_verified": true,
+    "runtime": [
+      {"module": "com.squareup.okhttp3:okhttp:4.12.0", "bytes": 789531, "sha256": "b1050081b14bb7a3a7e55a4d3ef01b5dcfabc453b4573a4fc019767191d5f4e0", "license": "Apache-2.0"},
+      {"module": "com.squareup.okio:okio-jvm:3.6.0", "bytes": 359580, "sha256": "67543f0736fc422ae927ed0e504b98bc5e269fda0d3500579337cb713da28412", "license": "Apache-2.0"},
+      {"module": "org.jetbrains.kotlin:kotlin-stdlib-common:1.9.10", "bytes": 225141, "sha256": "cde3341ba18a2ba262b0b7cf6c55b20c90e8d434e42c9a13e6a3f770db965a88", "license": "Apache-2.0"},
+      {"module": "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.10", "bytes": 959, "sha256": "ac6361bf9ad1ed382c2103d9712c47cdec166232b4903ed596e8876b0681c9b7", "license": "Apache-2.0"},
+      {"module": "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.10", "bytes": 965, "sha256": "a4c74d94d64ce1abe53760fe0389dd941f6fc558d0dab35e47c085a11ec80f28", "license": "Apache-2.0"},
+      {"module": "org.jetbrains.kotlin:kotlin-stdlib:1.9.10", "bytes": 1708006, "sha256": "55e989c512b80907799f854309f3bc7782c5b3d13932442d0379d5c472711504", "license": "Apache-2.0"},
+      {"module": "org.jetbrains:annotations:13.0", "bytes": 17536, "sha256": "ace2a10dc8e2d5fd34925ecac03e4988b2c0f851650c94b8cef49ba1bd111478", "license": "Apache-2.0"}
+    ],
+    "full_runtime_pom_evidence": "Android artifact/build/webdav-android/packages/packages.json"
+  },
+  "prior_platform_success": {
+    "source_sha": "3e2ee0d16190f45ff66082667d94b32edff17ead", "run_id": 40063813629, "attempt": 1, "job_id": 120782731170,
+    "artifact_id": 12548945431, "artifact_bytes": 22634, "artifact_sha256": "e0d4500f29ff89efde6ceb2de01f9bef86481fd2dccf68ae48cb9082a8fd63ad",
+    "backend_accepted": false
+  },
+  "retained_failures": [
+    {"source_sha": "470256ba75577c0922d8fdd0994631a22b899b2d", "run_id": 40063540291, "attempt": 1, "job_id": 120781918622, "reason": "shallow checkout could not resolve frozen SDK baseline", "artifact_id": null},
+    {"source_sha": "7e39e60e01d2250128b995d8ed685f26ef5398d9", "run_id": 40065199938, "attempt": 1, "job_id": 120786868514, "reason": "NDK system version was incorrectly treated as minimum Android API", "artifact_id": 12549067514, "artifact_sha256": "7b3281570660a077e0adac68d0b23945f52355e1ef759c6cdd0b4af1de6d18ec"},
+    {"source_sha": "25c75630444a5886b22ee2be79551bfdc7b159c1", "run_id": 40065346849, "attempt": 1, "job_id": 120787307572, "reason": "installed-package consumer search was rooted inside NDK sysroot", "artifact_id": 12549261220, "artifact_sha256": "496567661c542578c209b38095097935f77c2fe8643f85f9bb269b0a467a78da"},
+    {"source_sha": "02a90c5bef2fa4047db87215cf23b03b28d19bdc", "run_id": 40065592861, "attempt": 1, "job_id": 120788043993, "reason": "first complete download returned IO at Android hard-link publication", "artifact_id": 12548804245, "artifact_sha256": "f65cd7afa118afa7fdcab91705a9bd2f40554ff1a436e87e57b93628c8ffadb7"},
+    {"source_sha": "8af136b30ede11547e6a0d590b168d44ced56e31", "run_id": 40065954077, "attempt": 1, "job_id": 120789139336, "reason": "safe diagnostic confirmed Destination publication refused; prompted Android RENAME_NOREPLACE branch", "artifact_id": 12548823277, "artifact_sha256": "657929f4dbf0bdffd612ecd37f12b0db9c453ebc288e74c4e6e6e218089a5c9b"}
+  ],
+  "android_sync_ui_complete": false,
+  "full_reader_sync_session_integration_accepted": false
+}

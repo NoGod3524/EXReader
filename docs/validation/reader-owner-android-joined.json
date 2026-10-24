@@ -1,0 +1,122 @@
+{
+  "source_sha": "ae584ccfc4c241196bcf8e6513ae512b7ac0ca9e",
+  "run_id": "40052369289",
+  "attempt": "1",
+  "accepted": true,
+  "problems": [],
+  "owner_checks": 17,
+  "typed_kill_checks": 2,
+  "device_reports": {
+    "owner-reports/debug/TEST-emulator-5554 - 14-_app-.xml": {
+      "bytes": 2357,
+      "sha256": "29908c451bfa9f622b70f4123b1482d9f1e04bb9c5d98999e8fc2881fe47b3e0"
+    }
+  },
+  "native_proof": {
+    "identity": {
+      "source_sha": "ae584ccfc4c241196bcf8e6513ae512b7ac0ca9e",
+      "run_id": "40052369289",
+      "attempt": "1"
+    },
+    "files": {
+      "debug.dynamic.txt": {
+        "bytes": 1394,
+        "sha256": "89df558b2c572604b7f26119aae65232b3ab7bdf4f79026f636065fc547515bf"
+      },
+      "debug.map": {
+        "bytes": 1997507,
+        "sha256": "c40c729a1f86e03dfa022e2eb58cec62e45ffe91783bd2901259ad505fc24eee"
+      },
+      "debug.so": {
+        "bytes": 10209880,
+        "sha256": "e58ba6640753cf29312642d88d61c2565e83b26d8d1efc6bb996435ea3baae0f"
+      },
+      "debug.symbols.txt": {
+        "bytes": 352245,
+        "sha256": "62f5626fbbee2300b3ad626e2704b7bdcf640465475aa341a1908dfb233bfff0"
+      },
+      "release.dynamic.txt": {
+        "bytes": 1389,
+        "sha256": "c58612236f725d87b3387d6b32abf816bfed857427750f66d6f3812cfc2c8037"
+      },
+      "release.map": {
+        "bytes": 1038645,
+        "sha256": "7fd5f603eb1360cd7607ea5bd1ff03029bc35241a17edb4b8b4e21b588b5e6ff"
+      },
+      "release.so": {
+        "bytes": 9713376,
+        "sha256": "80a2734a7f82d8f54b338dfe720766e3970339d91fc75d8785cef3e63da450bc"
+      },
+      "release.symbols.txt": {
+        "bytes": 161783,
+        "sha256": "979115ba45041025a8407aeb4fc3452b22fb65eab688b7d7a84575b680666b2a"
+      },
+      "sqlite3.h": {
+        "bytes": 695737,
+        "sha256": "cd20a2877bc82b94e36c1093b727dd87cfa3c1d581aac6e240925535cbd90166"
+      }
+    }
+  },
+  "process_boundaries": {
+    "before": {
+      "seed-before.txt": {
+        "bytes": 74,
+        "sha256": "cc376fcd260b55a01f82c04af5e0a9ead88516f600131a38bdea1a3e05b10a8d"
+      },
+      "recover-before.txt": {
+        "bytes": 92,
+        "sha256": "c0d833c425ee91787a07efb89810fdad725bf3f6bcbc9eb37127d4d68fd05b3b"
+      },
+      "witness-before.txt": {
+        "bytes": 5,
+        "sha256": "fdcc75483f5e22c93d36a3051dbe0fee0671d3bf55936a099d5724cb3ec307b0"
+      }
+    },
+    "after": {
+      "seed-after.txt": {
+        "bytes": 74,
+        "sha256": "cc376fcd260b55a01f82c04af5e0a9ead88516f600131a38bdea1a3e05b10a8d"
+      },
+      "recover-after.txt": {
+        "bytes": 91,
+        "sha256": "a203e53ed63e0606a735272a5cf35d9b61ff5c3d2048b318bbae67b75ab8861a"
+      },
+      "witness-after.txt": {
+        "bytes": 5,
+        "sha256": "f3176ea4064dc47ccab85eb06a79460c0a07325bfdc3da7863dbd974031ee89b"
+      }
+    }
+  },
+  "manual_instrumentation": {
+    "bytes": 10171,
+    "sha256": "2dc7b45046fdef78b9ee8ffebd1cd61c7ec9654ce3b2bfa0bf2a940e9ca7fd43"
+  },
+  "reinstalled_apks": {
+    "app-debug.apk": {
+      "bytes": 24289236,
+      "sha256": "877cba97215e4bfbf855cf21c8347495a5cb40a7304df6f06c017e744cba8b85"
+    },
+    "app-debug-androidTest.apk": {
+      "bytes": 63872,
+      "sha256": "b2978ad73bc8b600777b5736f2a0a99cb42895f69ed2b1f8c36dd0e509066f98"
+    }
+  },
+  "native_owner_serial_catalog_revision_handles": 2,
+  "local_project_three_writes_atomic": true,
+  "cross_handle_or_sdk_database_atomicity_claimed": false,
+  "classification_ui_accepted": false,
+  "performance_accepted": false,
+  "physical_device_execution": false,
+  "complete_product": false,
+  "original_functional_checks": 112,
+  "original_gate_checks": 87,
+  "original_shelf_accepted": true,
+  "artifact": {
+    "id": 12545120144,
+    "name": "reader-owner-android-40052369289-1",
+    "size_in_bytes": 154273196,
+    "digest": "sha256:d573ff81d4029372d0efd58087569299ee22b99d8c19a7ae3209fd053a8b15cf",
+    "expired": false
+  },
+  "cloud_job": 120747606816
+}

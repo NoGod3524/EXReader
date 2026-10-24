@@ -3,6 +3,7 @@ plugins {
 }
 
 def exrSdk = project.findProperty('exrSdk') ?: ''
+def exrProduct = project.findProperty('exrProduct') ?: "${rootProject.projectDir}/../../stage/android-product"
 
 android {
     namespace 'org.exreader.host'
@@ -16,12 +17,13 @@ android {
         targetSdk 35
         versionCode 1
         versionName '0.1.0'
+        testInstrumentationRunner (project.findProperty('exrTestRunner') ?: 'org.exreader.host.CatalogStoreTest')
         ndk {
             abiFilters 'x86_64'
         }
         externalNativeBuild {
             cmake {
-                arguments "-DEXR_SDK=${exrSdk}"
+                arguments "-DEXR_SDK=${exrSdk}", "-DEXR_PRODUCT=${exrProduct}", '-DANDROID_STL=c++_static'
             }
         }
     }

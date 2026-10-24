@@ -1,0 +1,113 @@
+{
+  "schema": "reader-metadata-projection-acceptance-v1",
+  "accepted": true,
+  "scope": "Installed Windows/Linux restricted product metadata-history-outbox transactions and explicit selected revision snapshots",
+  "source_sha": "73d80201e538c00fcf9df95af96ce91a7bd41fc5",
+  "branch": "codex/reader-metadata-projection",
+  "run_id": 40040479157,
+  "attempt": 1,
+  "workflow": ".github/workflows/reader-projection.yml",
+  "workflow_conclusion": "success",
+  "required_sync_document_ancestor": "8c42a73ec7d07965d8cec1fce649548a9850d3c7",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_protected_trees_unchanged": true,
+  "original_product_schema1": "f32bb8aa18ed3de286900f19ce4230fd93435dd0",
+  "product_schema1_unchanged": true,
+  "revision_module_version": "0.3.0",
+  "platforms": [
+    {
+      "runner": "ubuntu-22.04",
+      "job_id": 120710121022,
+      "conclusion": "success",
+      "source_checks": 77,
+      "original_protocol_checks": 59,
+      "sync_checks": 33,
+      "projection_checks": 32,
+      "all_four_reports_accepted": true,
+      "native_catalog_ctest": {"passed": 1, "failed": 0},
+      "installed_c_cpp_consumers": true,
+      "artifact": {
+        "id": 12538877618,
+        "name": "reader-projection-Linux-40040479157-1",
+        "size_in_bytes": 3004257,
+        "digest": "sha256:39cc90323530745f5d069a4dc839fbc87f4a60126f35ec123aa6f983ceea3bcd",
+        "head_sha": "73d80201e538c00fcf9df95af96ce91a7bd41fc5",
+        "expired_at_read": false,
+        "expires_at": "2027-01-21T23:34:58Z",
+        "digest_matches_upload_log": true
+      }
+    },
+    {
+      "runner": "windows-2022",
+      "job_id": 120710121399,
+      "conclusion": "success",
+      "source_checks": 76,
+      "original_protocol_checks": 59,
+      "sync_checks": 33,
+      "projection_checks": 32,
+      "all_four_reports_accepted": true,
+      "native_catalog_ctest": {"passed": 1, "failed": 0},
+      "installed_c_cpp_consumers": true,
+      "artifact": {
+        "id": 12538494070,
+        "name": "reader-projection-Windows-40040479157-1",
+        "size_in_bytes": 3766184,
+        "digest": "sha256:8cf6d55a40e4074b5ff14b6ddab77d019ff2fb4b72b3d7c71648a695f38d73e3",
+        "head_sha": "73d80201e538c00fcf9df95af96ce91a7bd41fc5",
+        "expired_at_read": false,
+        "expires_at": "2027-01-21T23:34:58Z",
+        "digest_matches_upload_log": true
+      }
+    }
+  ],
+  "contract": {
+    "metadata_entities": ["book", "shelf", "tag", "series", "membership"],
+    "same_product_connection_transaction": true,
+    "expected_head_check_inside_write_transaction": true,
+    "new_parents_equal_current_expected_heads": true,
+    "same_id_exact_bytes_never_replays_metadata_or_requeues": true,
+    "same_id_different_bytes_refused": true,
+    "remote_projection_requires_current_complete_safe_unique_expected_head": true,
+    "remote_projection_adds_no_outbox_or_history": true,
+    "book_nfc_sort_is_host_derived_and_does_not_rewrite_wire": true,
+    "selected_states": ["MISSING", "PENDING_PARENTS", "CONCURRENT", "BLOCKED_RESTORE", "SAFE"],
+    "only_safe_selection_returns_wire": true,
+    "progress_annotation_authority": "Selected immutable original payload; public SDK FOUND required for user navigation",
+    "sdk_database_writes": false,
+    "active_reading_navigation": false,
+    "generic_sql_callback": false,
+    "entity_delete_is_soft": true,
+    "membership_delete_only_removes_derived_join": true,
+    "cascading_history_deletion": false,
+    "missing_or_deleted_dependency_refused": true,
+    "existing_schema_cycle_depth_identity_guards_preserved": true
+  },
+  "real_process_acceptance": {
+    "two_native_writers_compete_on_one_expected_head_only_one_commits": true,
+    "kill_after_history_outbox_before_metadata_recovers_all_or_none": true,
+    "kill_after_successful_commit_retains_all_three_and_exact_wire": true,
+    "retry_same_id_never_replays_metadata": true
+  },
+  "independent_readonly_review": {
+    "source_sha": "efc93a93083e9a8e4f870d8846cf41ede3b7c299",
+    "scope": "Transaction coverage, expected heads, exact-byte no-op, safe remote projection, cross-entity guards, selected snapshot and five states",
+    "blocking_findings": 0,
+    "implementation_unchanged_in_final_tested_source": true
+  },
+  "failure_iterations_retained": [
+    {
+      "run_id": 40040139115,
+      "source_sha": "efc93a93083e9a8e4f870d8846cf41ede3b7c299",
+      "conclusion": "failure",
+      "reason": "All 32 actual cases passed on each platform, but final fixed total was incorrectly 31 and strictly refused",
+      "fix": "Correct total to 32, preserve every case and rerun all suites on final source"
+    }
+  ],
+  "evidence_read_method": "GitHub connector run/jobs/artifacts and decoded job logs; no local artifact download or reaggregation",
+  "local_build_test_or_syntax_execution": false,
+  "mobile_provider_or_ui_accepted": false,
+  "platform_secure_storage_accepted": false,
+  "cross_sdk_database_atomicity_claimed": false,
+  "complete_product": false,
+  "problems": []
+}

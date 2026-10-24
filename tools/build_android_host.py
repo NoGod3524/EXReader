@@ -130,6 +130,25 @@ def patch_android_libraries(stage):
     return target
 
 
+def build_product(stage, build):
+    """Cross-install public product packages, never Android system SQLite."""
+    cmake = shutil.which('cmake')
+    common = ['-G', 'Ninja', '-DCMAKE_TOOLCHAIN_FILE=' + str(ndk_home() / 'build/cmake/android.toolchain.cmake'),
+              '-DANDROID_ABI=x86_64', '-DANDROID_PLATFORM=android-' + str(MIN_SDK),
+              '-DANDROID_STL=c++_static', '-DCMAKE_BUILD_TYPE=Release', '-DCMAKE_POSITION_INDEPENDENT_CODE=ON',
+              '-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH',
+              '-DCMAKE_INSTALL_PREFIX=' + str(stage), '-DCMAKE_PREFIX_PATH=' + str(stage),
+              '-DREADER_PRODUCT_PREFIX=' + str(stage)]
+    for name, source, target in (
+            ('catalog', 'apps/reader/store/native', 'reader_catalog'),
+            ('revisions', 'apps/reader/revisions', 'reader_revisions'),
+            ('commands', 'apps/reader/commands', 'reader_commands')):
+        location = build / name
+        run([cmake, '-S', ROOT / source, '-B', location, *common])
+        run([cmake, '--build', location, '--parallel', '4', '--target', target, '--verbose'])
+        run([cmake, '--install', location])
+
+
 def epub(path, title, chapters, stored=False, paths=None, order=None, raw_parts=None):
     """Deterministic EPUB 3 writer used for fixtures."""
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -306,13 +325,13 @@ def inspect_apk(apk):
     info = {}
     with zipfile.ZipFile(apk) as archive:
         names = [name for name in archive.namelist() if name.startswith('lib/')]
-        for required in ['lib/x86_64/libexreader.so', 'lib/x86_64/libexreader_jni.so',
+        for required in ['lib/x86_64/libexreader_product.so', 'lib/x86_64/libexreader.so', 'lib/x86_64/libexreader_jni.so',
                          'lib/x86_64/libexreader_host.so']:
             if required not in names:
                 raise SystemExit('APK is missing ' + required)
         if any(name.endswith('libexreader.so.1') for name in names):
             raise SystemExit('APK still contains the versioned engine name')
-        for name in ['lib/x86_64/libexreader.so', 'lib/x86_64/libexreader_jni.so',
+        for name in ['lib/x86_64/libexreader_product.so', 'lib/x86_64/libexreader.so', 'lib/x86_64/libexreader_jni.so',
                      'lib/x86_64/libexreader_host.so']:
             target = Path('/tmp') / Path(name).name
             target.write_bytes(archive.read(name))
@@ -391,6 +410,8 @@ def main():
         raise SystemExit('Preserve earlier build evidence: choose a fresh output directory')
     if not args.skip_sdk:
         build_sdk(stage, args.sdk_build.absolute())
+    product_stage = ROOT / 'stage/android-product'
+    build_product(product_stage, build / 'product')
     if not (stage / 'lib/libexreader_jni.so').is_file():
         raise SystemExit('the installed SDK is incomplete: ' + str(stage))
     patch_android_libraries(stage)
@@ -400,6 +421,8 @@ def main():
     font = fetch_font(ROOT / 'build/host-font-cache')
     assets = ANDROID / 'app/src/main/assets'
     assets.mkdir(parents=True, exist_ok=True)
+    run([sys.executable, ROOT / 'tools/reader_catalog_assets.py',
+         '--output', assets / 'reader-catalog-v1.json'])
     shutil.copyfile(font / 'Reader.otf', assets / 'Reader.otf')
     shutil.copyfile(font / 'OFL.txt', assets / 'OFL.txt')
 
@@ -442,6 +465,7 @@ def main():
         'artifacts': artifacts,
         'native': apk_native(Path(artifacts['app-debug.apk']['path'])),
         'sdk_files_sha256': inventory(stage),
+        'product_files_sha256': inventory(product_stage),
         'source_files_sha256': source_files(),
         'ownership': owned,
         'sdk_built': not args.skip_sdk,

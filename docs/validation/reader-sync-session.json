@@ -1,0 +1,119 @@
+{
+  "schema": "reader-session-acceptance-v1",
+  "accepted": true,
+  "source_sha": "45dbb92827161e7942291af68a6e739009068a7c",
+  "run_id": 40055415890,
+  "attempt": 1,
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "scope": "Installed native account-session worker on Windows/Linux only",
+  "jobs": [
+    {
+      "job_id": 120757216313,
+      "report": {
+        "accepted": true,
+        "source_sha": "45dbb92827161e7942291af68a6e739009068a7c",
+        "run_id": "40055415890",
+        "attempt": "1",
+        "platform": "linux",
+        "checks": [
+          "c_abi_and_idle_creation_make_no_network_request",
+          "premature_destroy_is_nonblocking_busy_and_preserves_handle",
+          "background_worker_and_observation_remain_responsive_during_native_https",
+          "overlapping_sweeps_are_refused",
+          "cancelled_transfer_keeps_the_last_successful_cursor",
+          "same_product_account_is_exclusively_locked_across_processes",
+          "full_256_shards_and_100_record_continuation_are_actually_processed",
+          "remote_history_is_retained_without_sdk_writes_or_implicit_projection",
+          "a_new_sweep_discovers_insertions_preceding_an_old_cursor",
+          "offline_outbox_is_published_verified_and_acked_on_the_worker",
+          "wrong_staged_original_is_refused_without_acknowledging_the_outbox",
+          "repaired_private_original_is_hash_verified_published_and_acknowledged",
+          "another_independent_product_database_receives_the_same_history",
+          "persistent_account_binding_contains_no_authorization",
+          "account_or_root_changes_are_refused_before_network_and_preserve_history",
+          "same_account_reopens_after_process_shutdown_without_rebinding",
+          "network_failure_is_observed_without_an_automatic_retry_loop",
+          "explicit_retry_resumes_and_preserves_durable_history",
+          "invalid_account_identity_is_rejected_before_worker_creation",
+          "all_native_requests_keep_credentials_at_the_selected_origin_and_leave_no_transfer_temp"
+        ],
+        "count": 20,
+        "consumer_sha256": "01ea766a591fcfca376a2dfb03d15c188a40d4fea70dca901c9eb21294e94a22",
+        "sdk_changed": false,
+        "schema_changed": false,
+        "metadata_projection_accepted": false,
+        "host_ui_accepted": false,
+        "six_platform_accepted": false,
+        "complete_product": false,
+        "fixture_endpoint": "IPv4 loopback with verified certificate IP SAN"
+      },
+      "artifact": {
+        "id": 12544948968,
+        "name": "reader-commands-Linux-40055415890-1",
+        "size_in_bytes": 4209492,
+        "digest": "sha256:8ae7c18aad5973dfa3ec79bbfedd8daf056420e87ebeae2047db2365cc92c6a2",
+        "expired": false,
+        "expires_at": "2027-01-22T02:44:18Z"
+      }
+    },
+    {
+      "job_id": 120757216433,
+      "report": {
+        "accepted": true,
+        "source_sha": "45dbb92827161e7942291af68a6e739009068a7c",
+        "run_id": "40055415890",
+        "attempt": "1",
+        "platform": "win32",
+        "checks": [
+          "c_abi_and_idle_creation_make_no_network_request",
+          "premature_destroy_is_nonblocking_busy_and_preserves_handle",
+          "background_worker_and_observation_remain_responsive_during_native_https",
+          "overlapping_sweeps_are_refused",
+          "cancelled_transfer_keeps_the_last_successful_cursor",
+          "same_product_account_is_exclusively_locked_across_processes",
+          "full_256_shards_and_100_record_continuation_are_actually_processed",
+          "remote_history_is_retained_without_sdk_writes_or_implicit_projection",
+          "a_new_sweep_discovers_insertions_preceding_an_old_cursor",
+          "offline_outbox_is_published_verified_and_acked_on_the_worker",
+          "wrong_staged_original_is_refused_without_acknowledging_the_outbox",
+          "repaired_private_original_is_hash_verified_published_and_acknowledged",
+          "another_independent_product_database_receives_the_same_history",
+          "persistent_account_binding_contains_no_authorization",
+          "account_or_root_changes_are_refused_before_network_and_preserve_history",
+          "same_account_reopens_after_process_shutdown_without_rebinding",
+          "network_failure_is_observed_without_an_automatic_retry_loop",
+          "explicit_retry_resumes_and_preserves_durable_history",
+          "invalid_account_identity_is_rejected_before_worker_creation",
+          "all_native_requests_keep_credentials_at_the_selected_origin_and_leave_no_transfer_temp"
+        ],
+        "count": 20,
+        "consumer_sha256": "463b22100896d9401ebb4c9f84f14778fd7abb44630f668ccfb3f882b1ccf2db",
+        "sdk_changed": false,
+        "schema_changed": false,
+        "metadata_projection_accepted": false,
+        "host_ui_accepted": false,
+        "six_platform_accepted": false,
+        "complete_product": false,
+        "fixture_endpoint": "IPv4 loopback with verified certificate IP SAN"
+      },
+      "artifact": {
+        "id": 12544859368,
+        "name": "reader-commands-Windows-40055415890-1",
+        "size_in_bytes": 5591226,
+        "digest": "sha256:9e791af104f6636625498f7b63df5aca7466d1c1da05640f2afb0132d6ba609e",
+        "expired": false,
+        "expires_at": "2027-01-22T02:44:18Z"
+      }
+    }
+  ],
+  "retained_failed_runs": [
+    40054436597,
+    40054927743
+  ],
+  "metadata_projection_accepted": false,
+  "sdk_original_export_accepted": false,
+  "host_ui_accepted": false,
+  "mobile_accepted": false,
+  "six_platform_accepted": false,
+  "complete_product": false
+}

@@ -1,0 +1,319 @@
+{
+  "accepted": true,
+  "source_sha": "f7e911c85e5fb27191159a3f3e084e5a4067c167",
+  "run_id": 40060616599,
+  "attempt": 1,
+  "artifacts": [
+    {
+      "id": 12546889218,
+      "name": "reader-commands-Linux-40060616599-1",
+      "size_in_bytes": 5155318,
+      "digest": "sha256:6a84bbfd5d3883e11b1483a8c9c49eda0f973b1714cd0dced4ada18e8ae9bd08",
+      "expires_at": "2027-01-22T04:00:34Z"
+    },
+    {
+      "id": 12547580425,
+      "name": "reader-reading-v2-Linux-40060616599-1",
+      "size_in_bytes": 23750457,
+      "digest": "sha256:1ddf0bf02b0329cbd80062ff00864f7b3e1215c51929313de8029c43e05f89cd",
+      "expires_at": "2027-01-22T04:00:34Z"
+    },
+    {
+      "id": 12547273091,
+      "name": "reader-commands-Windows-40060616599-1",
+      "size_in_bytes": 6479434,
+      "digest": "sha256:ec5294ca258d531d2a111cf00c69c5a186170b542fa87cd7a3aecace490d755e",
+      "expires_at": "2027-01-22T04:00:34Z"
+    },
+    {
+      "id": 12547720087,
+      "name": "reader-reading-v2-Windows-40060616599-1",
+      "size_in_bytes": 20181776,
+      "digest": "sha256:3789a34c41e75b6e507c45c457ff4dcddf5cf697871f491de2f6cd378472c07b",
+      "expires_at": "2027-01-22T04:00:34Z"
+    }
+  ],
+  "problems": [],
+  "sdk_changed": false,
+  "schema_changed": false,
+  "host_ui_accepted": false,
+  "webdav_roundtrip_accepted": true,
+  "six_platform_accepted": false,
+  "complete_product": false,
+  "scope": "Windows/Linux SDK captures and original export over real native HTTPS fixture; no host UI",
+  "platforms": {
+    "Windows": {
+      "accepted": true,
+      "source_sha": "f7e911c85e5fb27191159a3f3e084e5a4067c167",
+      "run_id": "40060616599",
+      "attempt": "1",
+      "platform": "win32",
+      "receiver_found": 17,
+      "receiver_mislocated": 0,
+      "originals_exported": 4,
+      "network_pushed": 22,
+      "network_pulled": 41,
+      "request_count": 380,
+      "sqlite_providers": [
+        "reader_catalog_sqlite.lib"
+      ],
+      "consumer_sha256": "4df3670ed9bb4f45c71a38a5cbc5f89f032c341c4365d11f3ee8b53be8960f54",
+      "sdk_changed": false,
+      "schema_changed": false,
+      "host_ui_accepted": false,
+      "six_platform_accepted": false,
+      "complete_product": false,
+      "scope": "real SDK original export, native HTTPS fixture and second-library import/resolve"
+    },
+    "Linux": {
+      "accepted": true,
+      "source_sha": "f7e911c85e5fb27191159a3f3e084e5a4067c167",
+      "run_id": "40060616599",
+      "attempt": "1",
+      "platform": "linux",
+      "receiver_found": 17,
+      "receiver_mislocated": 0,
+      "originals_exported": 4,
+      "network_pushed": 22,
+      "network_pulled": 41,
+      "request_count": 377,
+      "sqlite_providers": [
+        "libreader_catalog_sqlite.a"
+      ],
+      "consumer_sha256": "b510360d0226f6e833a838a2a0e3b97f846775da5ed284c1c4195c13fc35af64",
+      "sdk_changed": false,
+      "schema_changed": false,
+      "host_ui_accepted": false,
+      "six_platform_accepted": false,
+      "complete_product": false,
+      "scope": "real SDK original export, native HTTPS fixture and second-library import/resolve"
+    }
+  },
+  "cases": [
+    {
+      "id": "txt-progress-start",
+      "mode": "reflow_global",
+      "kind": "progress",
+      "part": 0,
+      "start": 0,
+      "end": 0,
+      "state": "FOUND"
+    },
+    {
+      "id": "txt-progress-multibyte",
+      "mode": "reflow_global",
+      "kind": "progress",
+      "part": 0,
+      "start": 48,
+      "end": 48,
+      "state": "FOUND"
+    },
+    {
+      "id": "txt-progress-end",
+      "mode": "reflow_global",
+      "kind": "progress",
+      "part": 0,
+      "start": 636,
+      "end": 636,
+      "state": "FOUND"
+    },
+    {
+      "id": "txt-bookmark",
+      "mode": "reflow_global",
+      "kind": "annotation",
+      "part": 0,
+      "start": 118,
+      "end": 118,
+      "state": "FOUND"
+    },
+    {
+      "id": "txt-highlight",
+      "mode": "reflow_global",
+      "kind": "annotation",
+      "part": 0,
+      "start": 48,
+      "end": 52,
+      "state": "FOUND"
+    },
+    {
+      "id": "txt-ambiguous",
+      "mode": "reflow_global",
+      "kind": "annotation",
+      "part": 0,
+      "start": 482,
+      "end": 498,
+      "state": "AMBIGUOUS"
+    },
+    {
+      "id": "epub-global-highlight",
+      "mode": "reflow_global",
+      "kind": "annotation",
+      "part": 0,
+      "start": 172,
+      "end": 196,
+      "state": "FOUND"
+    },
+    {
+      "id": "epub-global-progress",
+      "mode": "reflow_global",
+      "kind": "progress",
+      "part": 0,
+      "start": 172,
+      "end": 172,
+      "state": "FOUND"
+    },
+    {
+      "id": "epub-bookmark-part-0",
+      "mode": "epub_chapter",
+      "kind": "annotation",
+      "part": 0,
+      "start": 0,
+      "end": 0,
+      "state": "FOUND"
+    },
+    {
+      "id": "epub-bookmark-part-1",
+      "mode": "epub_chapter",
+      "kind": "annotation",
+      "part": 1,
+      "start": 0,
+      "end": 0,
+      "state": "FOUND"
+    },
+    {
+      "id": "epub-chapter-progress",
+      "mode": "epub_chapter",
+      "kind": "progress",
+      "part": 1,
+      "start": 0,
+      "end": 0,
+      "state": "FOUND"
+    },
+    {
+      "id": "epub-bookmark-part-2",
+      "mode": "epub_chapter",
+      "kind": "annotation",
+      "part": 2,
+      "start": 0,
+      "end": 0,
+      "state": "FOUND"
+    },
+    {
+      "id": "pdf-highlight",
+      "mode": "fixed_page",
+      "kind": "annotation",
+      "part": 0,
+      "start": 16,
+      "end": 42,
+      "state": "FOUND"
+    },
+    {
+      "id": "pdf-bookmark",
+      "mode": "fixed_page",
+      "kind": "annotation",
+      "part": 0,
+      "start": 16,
+      "end": 16,
+      "state": "FOUND"
+    },
+    {
+      "id": "pdf-textless-bookmark",
+      "mode": "fixed_page",
+      "kind": "annotation",
+      "part": 0,
+      "start": 0,
+      "end": 0,
+      "state": "FOUND"
+    },
+    {
+      "id": "pdf-progress",
+      "mode": "fixed_page",
+      "kind": "progress",
+      "part": 0,
+      "start": 0,
+      "end": 0,
+      "state": "FOUND"
+    },
+    {
+      "id": "cbz-bookmark",
+      "mode": "fixed_page",
+      "kind": "annotation",
+      "part": 0,
+      "start": 0,
+      "end": 0,
+      "state": "FOUND"
+    },
+    {
+      "id": "cbz-progress",
+      "mode": "fixed_page",
+      "kind": "progress",
+      "part": 0,
+      "start": 0,
+      "end": 0,
+      "state": "FOUND"
+    }
+  ],
+  "retained_checks_per_platform": {
+    "legacy_sdk": 121,
+    "v2_protocol_transactions": 28,
+    "annotation_keyset": 10,
+    "original_export": 14,
+    "session": 20,
+    "webdav_source": {
+      "Linux": 77,
+      "Windows": 76
+    },
+    "protocol": 59,
+    "sync": 33,
+    "projection": 32,
+    "commands": 33,
+    "metadata": 29
+  },
+  "jobs": [
+    {
+      "id": 120773096972,
+      "name": "real v2 capture (windows-2022)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120773097204,
+      "name": "native / installed typed product commands (windows-2022)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120773097207,
+      "name": "real v2 capture (ubuntu-22.04)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120773097251,
+      "name": "native / installed typed product commands (ubuntu-22.04)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120774100108,
+      "name": "strict reading v2 evidence",
+      "conclusion": "success"
+    }
+  ],
+  "evidence_artifact": {
+    "id": 12546914657,
+    "node_id": "MDg6QXJ0aWZhY3QxMjU0NjkxNDY1Nw==",
+    "name": "reader-reading-v2-evidence-40060616599-1",
+    "size_in_bytes": 759,
+    "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12546914657",
+    "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12546914657/zip",
+    "expired": false,
+    "digest": "sha256:b8b32a7faa3c1299dce04ca3d47e989057cf50dbfeb7587641ba81379b7b2469",
+    "created_at": "2026-10-24T04:05:30Z",
+    "updated_at": "2026-10-24T04:05:30Z",
+    "expires_at": "2027-01-22T04:00:34Z",
+    "workflow_run": {
+      "id": 40060616599,
+      "repository_id": 1421442522,
+      "head_repository_id": 1421442522,
+      "head_branch": "codex/reader-reading-v2",
+      "head_sha": "f7e911c85e5fb27191159a3f3e084e5a4067c167"
+    }
+  }
+}

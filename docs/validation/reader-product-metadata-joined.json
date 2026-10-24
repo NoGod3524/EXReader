@@ -1,0 +1,195 @@
+{
+  "accepted": true,
+  "source_sha": "ae584ccfc4c241196bcf8e6513ae512b7ac0ca9e",
+  "run_id": 40052298626,
+  "attempt": 1,
+  "scope": "same-source desktop shelves book metadata UI and native sync modules only",
+  "complete_product": false,
+  "performance_accepted": false,
+  "six_platform_accepted": false,
+  "artifacts": [
+    {
+      "id": 12542959948,
+      "name": "reader-commands-Linux-40052298626-1",
+      "size_in_bytes": 3217979,
+      "digest": "sha256:02c3b5b88e13d881b33c28bbc2426821e65389d66ea5c6c469d113a4f9c6aeb0",
+      "reports": {
+        "sync-source-evidence/result.json": {
+          "sha256": "38feb53fee05b6c7475dec8e9c66b2658c2665a2798ca2545b79fb85de130876",
+          "checks": 77
+        },
+        "sync-protocol-evidence/result.json": {
+          "sha256": "8f53c8ebecf8a338730c18e4e0bb51e011a6a35c0af46a37ae530f8789f05fda",
+          "checks": 59
+        },
+        "sync-evidence/result.json": {
+          "sha256": "914efb16f3b9f5103c2b7802b5db2dcdf1f7eb9d2e55bcb3bd42a67edbd23c77",
+          "checks": 33
+        },
+        "projection-evidence/result.json": {
+          "sha256": "1bb1c8de7b2015850d1a8fbbb428a0339cab11bc2f34e402066ff7a6b1f21aef",
+          "checks": 32
+        },
+        "commands-evidence/result.json": {
+          "sha256": "a52d3a21d21dd190c5fa8bcb81382a3c12ca762aeab1c42cab48a995bc2c19a8",
+          "checks": 33
+        },
+        "metadata-evidence/result.json": {
+          "sha256": "65d80a06aae910730739c2ddf5da719eb260e641fb49a17eb3e452e24965c160",
+          "checks": 29
+        }
+      }
+    },
+    {
+      "id": 12544335245,
+      "name": "reader-commands-Windows-40052298626-1",
+      "size_in_bytes": 4594485,
+      "digest": "sha256:e8aa39471d8a5eb6675289bc9c226bdc93e13d9ae6e61cc13a0677c011e79f54",
+      "reports": {
+        "sync-source-evidence/result.json": {
+          "sha256": "8e4c9f141b3c24ef5f7252012b0aaab54fb6abe75f4f8d441b36331439eda76c",
+          "checks": 76
+        },
+        "sync-protocol-evidence/result.json": {
+          "sha256": "082b831bbb0ee05335d0845bbfafb79495dc436ad8a4a371bcf0a61d38272665",
+          "checks": 59
+        },
+        "sync-evidence/result.json": {
+          "sha256": "eac5cbc88e00e7d8da493d465bfe3895287e2442f028b2f05136d2fe45d736fb",
+          "checks": 33
+        },
+        "projection-evidence/result.json": {
+          "sha256": "d4af81d3fe867f5d53c66b81a0508cdfd521f2222912370dcc0b0d8af95909c6",
+          "checks": 32
+        },
+        "commands-evidence/result.json": {
+          "sha256": "7acd3c2c58a68f27ce08797f063c30a7838c80d8f1a1be52cc8b9a7230a5a89a",
+          "checks": 33
+        },
+        "metadata-evidence/result.json": {
+          "sha256": "6f6f561a155886f645c13a4e4ad5f0e613c8abcded24119e01701195b72be36b",
+          "checks": 29
+        }
+      }
+    },
+    {
+      "id": 12544230714,
+      "name": "reader-desktop-sdk-Linux-40052298626-1",
+      "size_in_bytes": 38941486,
+      "digest": "sha256:6326c9ba87c391769b6b2b906e4f7cb1203385c3fd7166feec66bcb11285ee3d",
+      "reports": {
+        "desktop-sdk/verified.json": {
+          "sha256": "42e05d03a7f5090f1203390056da5b488fd2b9184dac43644e649b4bc308de40",
+          "checks": 9
+        },
+        "desktop-sdk/shelf-check/shelf-result.json": {
+          "sha256": "7d7bb1b0395de19b845e35a726732334a9111878ca49e23d2cdc67e2019c2a2b",
+          "checks": 10
+        },
+        "desktop-sdk/organization-check/organization-result.json": {
+          "sha256": "5a8345938d1c142fe403147e662ab096f133fa4b58194ef11548b29ac3f34783",
+          "checks": 15
+        },
+        "desktop-gtk-ui/report.json": {
+          "sha256": "f8c7451738c88c3473bf44f914a85e256dcd80a1dc2a75dfa5f89171836bb094",
+          "checks": 20
+        },
+        "desktop-gtk-product/product-result.json": {
+          "sha256": "2b724c4e76ef2a28f04a95320b74f671589afab84a111f4c3feb428f256aa133",
+          "checks": 5
+        },
+        "desktop-gtk-fixed/fixed-ui.json": {
+          "sha256": "d035538be21019b331016092840d1bd8e4e5151b1751245e124002287942eee5",
+          "checks": 24
+        },
+        "desktop-gtk-shelf/shelf-result.json": {
+          "sha256": "b837a75265ec51cfb0fdb57d63be7500a8a4734a5dc1abd9771d897f197c9b6d",
+          "checks": 14
+        },
+        "desktop-gtk-metadata/metadata-ui.json": {
+          "sha256": "9e1d41c5d1822c9225795ee09d59627c00672ad72732e7dafd08d8616491e819",
+          "checks": 15
+        },
+        "desktop-linux-package/build.json": {
+          "sha256": "5e0e2ec4c33b12d3d9fc8b611a73d8bc87c33d83df6a75f4097450788fea5460",
+          "checks": null
+        },
+        "desktop-gtk-regressions/regressions.json": {
+          "sha256": "bb119d539b991262878ef61747a24c4160f1d89790ea1cc47b38f317967a1ba8",
+          "checks": null
+        }
+      }
+    },
+    {
+      "id": 12544072192,
+      "name": "reader-desktop-sdk-Windows-40052298626-1",
+      "size_in_bytes": 39409368,
+      "digest": "sha256:777ea01c94fb3fcd2d387f7e0b7545b78458509fb21161bc29a0045130ea9ff6",
+      "reports": {
+        "desktop-sdk/verified.json": {
+          "sha256": "57559ca92ac129f9ed08fe62b79b35b76d401f67e614ed19ef8838d0a3920014",
+          "checks": 9
+        },
+        "desktop-sdk/shelf-check/shelf-result.json": {
+          "sha256": "7d7bb1b0395de19b845e35a726732334a9111878ca49e23d2cdc67e2019c2a2b",
+          "checks": 10
+        },
+        "desktop-sdk/organization-check/organization-result.json": {
+          "sha256": "5a8345938d1c142fe403147e662ab096f133fa4b58194ef11548b29ac3f34783",
+          "checks": 15
+        },
+        "desktop-windows-ui/wp13-windows-evidence.json": {
+          "sha256": "eddb7ac2ac002870321de673566ae4e7e0e10a63b05355c8639c1b79055cf9e0",
+          "checks": 9
+        },
+        "desktop-windows-product/product-result.json": {
+          "sha256": "a735f26ca550dc2102afafd370aa83ee875ee99e86ce47b205bf8ce36c6d81d3",
+          "checks": 10
+        },
+        "desktop-windows-shelf-worker/worker-result.json": {
+          "sha256": "0c51fccbc4f0d831698243349a9b92aac19652c26ffa48bd57753404c5d20319",
+          "checks": 5
+        },
+        "desktop-windows-shelf-ui/shelf-result.json": {
+          "sha256": "2c700b4ad87368652fc65f8a262ca99d407aed0fee98564705da463c333fb1b1",
+          "checks": 13
+        },
+        "desktop-windows-metadata/metadata-ui.json": {
+          "sha256": "25284c6aba86f78bc33ce02aae744d3cd40abae492a2752a3bfce55451ac8a98",
+          "checks": 18
+        }
+      }
+    }
+  ],
+  "problems": [],
+  "jobs": [
+    {
+      "id": 120747395440,
+      "name": "commands / installed typed product commands (windows-2022)",
+      "head_sha": "ae584ccfc4c241196bcf8e6513ae512b7ac0ca9e",
+      "run_attempt": 1,
+      "conclusion": "success"
+    },
+    {
+      "id": 120747395563,
+      "name": "desktop / desktop SDK (windows-2022)",
+      "head_sha": "ae584ccfc4c241196bcf8e6513ae512b7ac0ca9e",
+      "run_attempt": 1,
+      "conclusion": "success"
+    },
+    {
+      "id": 120747395596,
+      "name": "commands / installed typed product commands (ubuntu-22.04)",
+      "head_sha": "ae584ccfc4c241196bcf8e6513ae512b7ac0ca9e",
+      "run_attempt": 1,
+      "conclusion": "success"
+    },
+    {
+      "id": 120747395736,
+      "name": "desktop / desktop SDK (ubuntu-22.04)",
+      "head_sha": "ae584ccfc4c241196bcf8e6513ae512b7ac0ca9e",
+      "run_attempt": 1,
+      "conclusion": "success"
+    }
+  ]
+}

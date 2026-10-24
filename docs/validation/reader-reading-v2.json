@@ -1,0 +1,152 @@
+{
+  "accepted": true,
+  "source_sha": "4e59a0b87a7f36c011f9fb77522cad0cf1e1e970",
+  "run_id": 40058607905,
+  "attempt": 1,
+  "artifacts": [
+    {
+      "id": 12546900021,
+      "name": "reader-commands-Linux-40058607905-1",
+      "size_in_bytes": 4163864,
+      "digest": "sha256:51e22011f83fb3f247c1ed82baf1632fd79aaf517f3375f6b418490618706c82",
+      "expires_at": "2027-01-22T03:30:50Z"
+    },
+    {
+      "id": 12546446430,
+      "name": "reader-reading-v2-Linux-40058607905-1",
+      "size_in_bytes": 14871796,
+      "digest": "sha256:df279f32a2d85f07c7a871b513e1468dd7b7b969717713d7d3f93af9f5da2e41",
+      "expires_at": "2027-01-22T03:30:50Z"
+    },
+    {
+      "id": 12546786058,
+      "name": "reader-commands-Windows-40058607905-1",
+      "size_in_bytes": 5480839,
+      "digest": "sha256:801e1d7faa3d0a6953a8f3d759fe50e7d603eb2926706dfde4ad0a2b47c13056",
+      "expires_at": "2027-01-22T03:30:50Z"
+    },
+    {
+      "id": 12546197831,
+      "name": "reader-reading-v2-Windows-40058607905-1",
+      "size_in_bytes": 12540353,
+      "digest": "sha256:5c02a039dec8ff0c55b44ed981dd9218b899505a1de072a26a5ccc92d52b1b58",
+      "expires_at": "2027-01-22T03:30:50Z"
+    }
+  ],
+  "problems": [],
+  "sdk_changed": false,
+  "schema_changed": false,
+  "host_ui_accepted": false,
+  "webdav_roundtrip_accepted": false,
+  "six_platform_accepted": false,
+  "complete_product": false,
+  "annotation_page": {
+    "checks": 10,
+    "entities": 235,
+    "page_limit": 100,
+    "real_second_connection_snapshot": true
+  },
+  "jobs": [
+    {
+      "id": 120766999646,
+      "name": "real v2 capture (ubuntu-22.04)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120766999789,
+      "name": "real v2 capture (windows-2022)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120766999952,
+      "name": "native / installed typed product commands (ubuntu-22.04)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120766999985,
+      "name": "native / installed typed product commands (windows-2022)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120767921696,
+      "name": "strict reading v2 evidence",
+      "conclusion": "success"
+    }
+  ],
+  "evidence_artifact": {
+    "id": 12547020422,
+    "node_id": "MDg6QXJ0aWZhY3QxMjU0NzAyMDQyMg==",
+    "name": "reader-reading-v2-evidence-40058607905-1",
+    "size_in_bytes": 685,
+    "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12547020422",
+    "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12547020422/zip",
+    "expired": false,
+    "digest": "sha256:48e48aa6ac5beedb7a0688802ef73303f3b1301805b020db41178e3950e3fd8a",
+    "created_at": "2026-10-24T03:35:26Z",
+    "updated_at": "2026-10-24T03:35:26Z",
+    "expires_at": "2027-01-22T03:30:50Z",
+    "workflow_run": {
+      "id": 40058607905,
+      "repository_id": 1421442522,
+      "head_repository_id": 1421442522,
+      "head_branch": "codex/reader-reading-v2",
+      "head_sha": "4e59a0b87a7f36c011f9fb77522cad0cf1e1e970"
+    }
+  },
+  "prior_accepted_protocol_sdk": {
+    "accepted": true,
+    "source_sha": "818e362972a993b1c4a0a3ae1700cb1fd27fe7aa",
+    "run_id": 40057866028,
+    "attempt": 1,
+    "artifacts": [
+      {
+        "id": 12545938955,
+        "name": "reader-commands-Linux-40057866028-1",
+        "size_in_bytes": 4126956,
+        "digest": "sha256:9b2cd7a1f25af34716e4e84229c7a33333ad418a4bd334c8806e7f8e0cdc54cc",
+        "expires_at": "2027-01-22T03:20:01Z"
+      },
+      {
+        "id": 12546152995,
+        "name": "reader-reading-v2-Linux-40057866028-1",
+        "size_in_bytes": 14866847,
+        "digest": "sha256:12508cf27fe42d845d711708e631bce0a0530227f34e174102d318546ef6c5a7",
+        "expires_at": "2027-01-22T03:20:01Z"
+      },
+      {
+        "id": 12546108443,
+        "name": "reader-commands-Windows-40057866028-1",
+        "size_in_bytes": 5443028,
+        "digest": "sha256:1720f02c9adc14d1288a94ec91b94c0cd9d372b4bac868e11b37d4034830d2e8",
+        "expires_at": "2027-01-22T03:20:01Z"
+      },
+      {
+        "id": 12545374297,
+        "name": "reader-reading-v2-Windows-40057866028-1",
+        "size_in_bytes": 12532718,
+        "digest": "sha256:b5f5a7a14f47acf7baf59655bbcdcd78d91a4f7fe39c4790e9acdb2ce66cb620",
+        "expires_at": "2027-01-22T03:20:01Z"
+      }
+    ],
+    "problems": [],
+    "sdk_changed": false,
+    "schema_changed": false,
+    "host_ui_accepted": false,
+    "webdav_roundtrip_accepted": false,
+    "six_platform_accepted": false,
+    "complete_product": false,
+    "evidence_artifact_id": 12546271438,
+    "annotation_pages_accepted": false
+  },
+  "retained_failures": [
+    {
+      "source_sha": "9eca7944dc53015eff9ea1b822c422be0a918d54",
+      "run_id": 40057446587,
+      "accepted": false,
+      "problems": [
+        "fileno"
+      ],
+      "detail": "All four runtime jobs succeeded; strict evidence rejected BytesIO without OS descriptor. Replaced stream and reran entire same-source set."
+    }
+  ]
+}

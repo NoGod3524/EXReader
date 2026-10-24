@@ -1,0 +1,151 @@
+name: Reader folder batch import
+on:
+  push:
+    branches: [codex/reader-batch-import, codex/reader-batch-import-review]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  batch-import:
+    name: batch import (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-15]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK and package path ownership
+        run: |
+          FIXED=c3511a011eefbf1fba1d20908f000cef22b1ced2
+          K=9854061be331fe603a1822d9b2b36ee357154927
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$FIXED" HEAD
+          git diff --exit-code "$K" HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
+          git diff --exit-code "$FIXED" HEAD -- apps/reader/store/001_catalog.sql apps/reader/session apps/reader/commands apps/reader/revisions apps/reader/sync apps/reader/desktop apps/reader/desktop-metadata apps/reader/reading-state extras/sideload
+          allowed='^(apps/reader/batch-import/|tests/reader_batch_import/|\.github/workflows/reader-batch-import\.yml$|docs/READER-BATCH-IMPORT(-REVIEW)?\.md$|docs/validation/reader-batch-import(-review)?\.json$)'
+          changed=$(git diff --name-only "$FIXED" HEAD)
+          bad=$(printf '%s\n' "$changed" | sed '/^$/d' | grep -Ev "$allowed" || true)
+          test -z "$bad" || { echo "unowned path: $bad"; exit 1; }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the existing build tool version
+        run: python -m pip install ninja==1.11.1.1
+      - name: Enter the native Windows compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Record source and configure the installed reading library
+        run: |
+          mkdir -p build/rb-logs
+          git rev-parse HEAD > build/rb-logs/source.txt
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "WS=$ws" >> "$GITHUB_ENV"
+          echo "RB_PREFIX=$ws/build/rb-prefix" >> "$GITHUB_ENV"
+          echo "RB_SDK=$ws/build/reading-library/stage" >> "$GITHUB_ENV"
+          cmake --preset reading-library 2>&1 | tee build/rb-logs/sdk-configure.log
+      - name: Build and install the frozen SDK
+        run: |
+          set -o pipefail
+          cmake --build --preset reading-library --parallel 4 2>&1 | tee build/rb-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/rb-logs/sdk-install.log
+      - name: Build and install the unchanged sideload package
+        run: |
+          set -o pipefail
+          cmake -S extras/sideload -B build/rb-sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$RB_SDK" -DCMAKE_INSTALL_PREFIX="$RB_PREFIX" 2>&1 | tee build/rb-logs/sideload-configure.log
+          cmake --build build/rb-sideload --parallel 4 2>&1 | tee build/rb-logs/sideload-build.log
+          cmake --install build/rb-sideload 2>&1 | tee build/rb-logs/sideload-install.log
+      - name: Build and install EXReaderBatchImport against installed packages only
+        run: |
+          set -o pipefail
+          cmake -S apps/reader/batch-import -B build/rb-adapter -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$RB_SDK" -DCMAKE_PREFIX_PATH="$RB_PREFIX;$RB_SDK" -DCMAKE_INSTALL_PREFIX="$RB_PREFIX" 2>&1 | tee build/rb-logs/adapter-configure.log
+          cmake --build build/rb-adapter --parallel 4 2>&1 | tee build/rb-logs/adapter-build.log
+          cmake --install build/rb-adapter 2>&1 | tee build/rb-logs/adapter-install.log
+      - name: Compile independent C and C++ consumers from installed packages
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_batch_import/consumer -B build/rb-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$RB_PREFIX;$RB_SDK" 2>&1 | tee build/rb-logs/consumer-configure.log
+          cmake --build build/rb-consumer --parallel 4 2>&1 | tee build/rb-logs/consumer-build.log
+      - name: Generate the bounded folder tree and judge both phases
+        run: |
+          set -o pipefail
+          exe=""
+          if [ "$RUNNER_OS" = Windows ]; then exe=".exe"; fi
+          python3 tests/reader_batch_import/make_fixtures.py --fixtures tests/fixtures --out build/rb-fixtures 2>&1 | tee build/rb-logs/fixtures.log
+          python3 tests/reader_batch_import/check_batch_import.py --probe "build/rb-consumer/batch-probe$exe" --cxx "build/rb-consumer/batch-cpp-consumer$exe" --fixtures build/rb-fixtures --staging build/rb-staging --work build/rb-work --output build/rb-evidence 2>&1 | tee build/rb-logs/checks.log
+      - name: Exercise independent review regressions against the installed package
+        run: |
+          exe=""
+          if [ "$RUNNER_OS" = Windows ]; then exe=".exe"; fi
+          python3 tests/reader_batch_import/check_review.py --probe "build/rb-consumer/batch-review-probe$exe" --original-probe "build/rb-consumer/batch-probe$exe" --work build/rb-review-work --output build/rb-review-evidence
+      - name: Race-check independent SDK owners with an instrumented installed adapter
+        if: always() && runner.os == 'Linux'
+        run: |
+          mkdir -p build/rb-review-evidence
+          cmake -S apps/reader/batch-import -B build/rb-tsan-adapter -G Ninja -DCMAKE_BUILD_TYPE=Debug -DEXR_SDK="$RB_SDK" -DCMAKE_PREFIX_PATH="$RB_PREFIX;$RB_SDK" -DCMAKE_INSTALL_PREFIX="$WS/build/rb-tsan-prefix" -DCMAKE_C_FLAGS="-fsanitize=thread -g -O1 -fno-omit-frame-pointer" 2>&1 | tee build/rb-logs/tsan-adapter-configure.log
+          cmake --build build/rb-tsan-adapter --parallel 4 2>&1 | tee build/rb-logs/tsan-adapter-build.log
+          cmake --install build/rb-tsan-adapter
+          cmake -S tests/reader_batch_import/consumer -B build/rb-tsan-consumer -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="$WS/build/rb-tsan-prefix;$RB_PREFIX;$RB_SDK" -DCMAKE_C_FLAGS="-fsanitize=thread -g -O1 -fno-omit-frame-pointer" -DCMAKE_CXX_FLAGS="-fsanitize=thread -g -O1 -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread" 2>&1 | tee build/rb-logs/tsan-consumer-configure.log
+          cmake --build build/rb-tsan-consumer --target batch-review-probe --parallel 4 2>&1 | tee build/rb-logs/tsan-consumer-build.log
+          sudo sysctl vm.mmap_rnd_bits=28
+          TSAN_OPTIONS="halt_on_error=1:exitcode=66" build/rb-tsan-consumer/batch-review-probe concurrent build/rb-tsan-work 2>&1 | tee build/rb-review-evidence/tsan.txt
+      - name: Preserve source-bound originals, databases and every failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-batch-import-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/rb-logs/
+            build/rb-work/
+            build/rb-evidence/
+            build/rb-review-evidence/
+            build/rb-review-work/
+            build/rb-prefix/
+            build/rb-consumer/batch-probe*
+            build/rb-consumer/batch-cpp-consumer*
+            build/rb-consumer/batch-review-probe*
+            build/rb-tsan-consumer/batch-review-probe
+            build/rb-tsan-prefix/
+            build/rb-consumer/CMakeCache.txt
+            build/rb-adapter/CMakeCache.txt
+          if-no-files-found: error
+  evidence:
+    name: same-run artifact evidence
+    needs: batch-import
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify artifact ids, bytes, digests and reports in the cloud
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_batch_import/check_artifacts.py --output build/rb-artifact-evidence
+      - name: Preserve the artifact verification record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-batch-import-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/rb-artifact-evidence/
+          if-no-files-found: error

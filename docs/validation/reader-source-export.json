@@ -1,0 +1,199 @@
+{
+  "accepted": true,
+  "source_sha": "745c348380e3e2270ded933fe3252a7d364bf95b",
+  "run_id": 40059480968,
+  "attempt": 1,
+  "artifacts": [
+    {
+      "id": 12545709902,
+      "name": "reader-commands-Linux-40059480968-1",
+      "size_in_bytes": 4164077,
+      "digest": "sha256:2f307dec6249052fa5f5d4f59ea459f80a623071f895c1607593a154bdff58ba",
+      "expires_at": "2027-01-22T03:43:42Z"
+    },
+    {
+      "id": 12547420075,
+      "name": "reader-reading-v2-Linux-40059480968-1",
+      "size_in_bytes": 18914915,
+      "digest": "sha256:40d7e4747032fe51edf41bbb7e7e64046dc5f1e5b798d2b34d58ae60a0fe4c9f",
+      "expires_at": "2027-01-22T03:43:42Z"
+    },
+    {
+      "id": 12547056887,
+      "name": "reader-commands-Windows-40059480968-1",
+      "size_in_bytes": 5480806,
+      "digest": "sha256:7b4bd9d74d29faaaeace1fb5d19a1e9e3569c17f160ee89ad06045e337ba654f",
+      "expires_at": "2027-01-22T03:43:42Z"
+    },
+    {
+      "id": 12547370522,
+      "name": "reader-reading-v2-Windows-40059480968-1",
+      "size_in_bytes": 15601121,
+      "digest": "sha256:4a103dfdf7238416ef3c57679298aa68a95a61ae5526c5aac7b78dd893c38606",
+      "expires_at": "2027-01-22T03:43:42Z"
+    }
+  ],
+  "problems": [],
+  "sdk_changed": false,
+  "schema_changed": false,
+  "host_ui_accepted": false,
+  "webdav_roundtrip_accepted": false,
+  "six_platform_accepted": false,
+  "complete_product": false,
+  "scope": "optional public SDK original export plus retained product reading v2 checks on Windows/Linux",
+  "module": "EXReaderSideload",
+  "api": "exr_sideload_export_original",
+  "page_scope": "retained 235-entity annotation keysets",
+  "export_checks_per_platform": 14,
+  "buffer_bytes": 65536,
+  "max_original_bytes": 134217728,
+  "platform_reports": {
+    "Linux": {
+      "accepted": true,
+      "checks": [
+        "txt_original_atomic_utf8_path",
+        "epub_original_atomic_utf8_path",
+        "pdf_original_atomic_utf8_path",
+        "cbz_original_atomic_utf8_path",
+        "multichunk_original_matches_after_source_release",
+        "existing_destination_is_never_replaced",
+        "cancel_before_source_has_no_file",
+        "cancel_during_copy_removes_only_own_temporary",
+        "cancel_after_source_release_prevents_publication",
+        "limits_and_incomplete_arguments_do_not_publish",
+        "file_creation_failure_leaves_no_destination_or_temporary",
+        "concurrent_destination_creation_is_preserved_at_atomic_publish",
+        "foreign_owner_commit_invalidates_source_without_partial_publication",
+        "exported_original_remains_readable_after_sdk_owner_close"
+      ],
+      "count": 14,
+      "source_sha": "745c348380e3e2270ded933fe3252a7d364bf95b",
+      "run_id": "40059480968",
+      "attempt": "1",
+      "consumer_sha256": "30d0b7b6beb6f129459ba3130dcbc97ecbdaa1ed3b6bee65dd2b31624fb42571",
+      "originals": {
+        "txt": {
+          "bytes": 636,
+          "file": "book.txt",
+          "sha256": "fcc117171436330ec0a2fa7ba24437593d77b30e96ba25cb2b9d8649ed0ac604"
+        },
+        "epub": {
+          "bytes": 1913,
+          "file": "book.epub",
+          "sha256": "99a21d3a73924d5b2efe4596076348b1eb7b00715ebc727737edd91f2f3bf50b"
+        },
+        "pdf": {
+          "bytes": 1560,
+          "file": "pages.pdf",
+          "sha256": "23f9dff3bc6bd85a19a9e24c6cb0390e17d7907af8c6b98c55273295386431ed"
+        },
+        "cbz": {
+          "bytes": 43936,
+          "file": "pages.cbz",
+          "sha256": "1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3"
+        }
+      },
+      "sdk_changed": false,
+      "schema_changed": false,
+      "host_ui_accepted": false,
+      "webdav_roundtrip_accepted": false
+    },
+    "Windows": {
+      "accepted": true,
+      "checks": [
+        "txt_original_atomic_utf8_path",
+        "epub_original_atomic_utf8_path",
+        "pdf_original_atomic_utf8_path",
+        "cbz_original_atomic_utf8_path",
+        "multichunk_original_matches_after_source_release",
+        "existing_destination_is_never_replaced",
+        "cancel_before_source_has_no_file",
+        "cancel_during_copy_removes_only_own_temporary",
+        "cancel_after_source_release_prevents_publication",
+        "limits_and_incomplete_arguments_do_not_publish",
+        "file_creation_failure_leaves_no_destination_or_temporary",
+        "concurrent_destination_creation_is_preserved_at_atomic_publish",
+        "foreign_owner_commit_invalidates_source_without_partial_publication",
+        "exported_original_remains_readable_after_sdk_owner_close"
+      ],
+      "count": 14,
+      "source_sha": "745c348380e3e2270ded933fe3252a7d364bf95b",
+      "run_id": "40059480968",
+      "attempt": "1",
+      "consumer_sha256": "fa22a56478531f564a47ec57e688c3eb289242aae5c21a2293d9aa225e7eefb0",
+      "originals": {
+        "txt": {
+          "bytes": 636,
+          "file": "book.txt",
+          "sha256": "fcc117171436330ec0a2fa7ba24437593d77b30e96ba25cb2b9d8649ed0ac604"
+        },
+        "epub": {
+          "bytes": 1913,
+          "file": "book.epub",
+          "sha256": "99a21d3a73924d5b2efe4596076348b1eb7b00715ebc727737edd91f2f3bf50b"
+        },
+        "pdf": {
+          "bytes": 1560,
+          "file": "pages.pdf",
+          "sha256": "23f9dff3bc6bd85a19a9e24c6cb0390e17d7907af8c6b98c55273295386431ed"
+        },
+        "cbz": {
+          "bytes": 43936,
+          "file": "pages.cbz",
+          "sha256": "1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3"
+        }
+      },
+      "sdk_changed": false,
+      "schema_changed": false,
+      "host_ui_accepted": false,
+      "webdav_roundtrip_accepted": false
+    }
+  },
+  "jobs": [
+    {
+      "id": 120769664056,
+      "name": "real v2 capture (windows-2022)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120769664161,
+      "name": "real v2 capture (ubuntu-22.04)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120769664167,
+      "name": "native / installed typed product commands (ubuntu-22.04)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120769664266,
+      "name": "native / installed typed product commands (windows-2022)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120770534063,
+      "name": "strict reading v2 evidence",
+      "conclusion": "success"
+    }
+  ],
+  "evidence_artifact": {
+    "id": 12546926435,
+    "node_id": "MDg6QXJ0aWZhY3QxMjU0NjkyNjQzNQ==",
+    "name": "reader-reading-v2-evidence-40059480968-1",
+    "size_in_bytes": 685,
+    "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12546926435",
+    "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12546926435/zip",
+    "expired": false,
+    "digest": "sha256:326aa29e19effe569bf8647c9caddf43a0e6de5a29e1f88bbb74093967f4549b",
+    "created_at": "2026-10-24T03:48:08Z",
+    "updated_at": "2026-10-24T03:48:08Z",
+    "expires_at": "2027-01-22T03:43:42Z",
+    "workflow_run": {
+      "id": 40059480968,
+      "repository_id": 1421442522,
+      "head_repository_id": 1421442522,
+      "head_branch": "codex/reader-reading-v2",
+      "head_sha": "745c348380e3e2270ded933fe3252a7d364bf95b"
+    }
+  }
+}

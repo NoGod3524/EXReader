@@ -1,0 +1,110 @@
+name: Reader in-book search
+on:
+  push:
+    branches: [codex/reader-search, codex/reader-search-review]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  consumers:
+    name: search consumers (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Pin source, common start, protected SDK and schema trees, and package path ownership
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor c3511a011eefbf1fba1d20908f000cef22b1ced2 HEAD
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code f32bb8aa18ed3de286900f19ce4230fd93435dd0 HEAD -- apps/reader/store/001_catalog.sql
+          if git diff --name-only c3511a011eefbf1fba1d20908f000cef22b1ced2 HEAD | grep -v -E '^(apps/reader/search/|tests/reader_search/|\.github/workflows/reader-search\.yml$|docs/READER-SEARCH\.md$|docs/validation/reader-search\.json$)'; then
+            echo "files outside the F1 ownership list changed"; exit 1
+          fi
+      - name: Enter Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Install the one product provider and the unchanged revision module
+        run: |
+          mkdir -p build/search-logs
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "S_WS=$ws" >> "$GITHUB_ENV"
+          cmake -S apps/reader/store/native -B build/s-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/s-product-stage"
+          cmake --build build/s-product --parallel 4
+          cmake --install build/s-product
+          cmake -S apps/reader/revisions -B build/s-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$ws/build/s-product-stage" -DCMAKE_INSTALL_PREFIX="$ws/build/s-stage"
+          cmake --build build/s-revisions --parallel 4
+          cmake --install build/s-revisions
+      - name: Build and install the frozen reading SDK once
+        run: |
+          cmake --preset reading-library 2>&1 | tee build/search-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/search-logs/sdk-build.log
+          cmake --install build/reading-library
+      - name: Install the unchanged reading-state adapter and the optional search package
+        run: |
+          cmake -S apps/reader/reading-state -B build/s-adapter -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$S_WS/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$S_WS/build/s-stage;$S_WS/build/s-product-stage" -DCMAKE_INSTALL_PREFIX="$S_WS/build/s-stage"
+          cmake --build build/s-adapter --verbose
+          cmake --install build/s-adapter
+          cmake -S apps/reader/search -B build/search -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$S_WS/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$S_WS/build/search-stage" 2>&1 | tee build/search-logs/search-configure.log
+          cmake --build build/search --verbose 2>&1 | tee build/search-logs/search-build.log
+          cmake --install build/search 2>&1 | tee build/search-logs/search-install.log
+      - name: Compile isolated C and C++ consumers from the installed packages only
+        run: |
+          cmake -S tests/reader_search/consumer -B build/search-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$S_WS/build/search-stage;$S_WS/build/s-stage;$S_WS/build/s-product-stage;$S_WS/build/reading-library/stage" 2>&1 | tee build/search-logs/consumer-configure.log
+          cmake --build build/search-consumer --verbose 2>&1 | tee build/search-logs/consumer-build.log
+      - name: Run installed consumers against generated originals and record raw measurements
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_search/make_search_fixtures.py build/search-fixtures
+          python3 tests/reader_search/check_search.py --probe "build/search-consumer/search-probe$exe" --c-consumer "build/search-consumer/search-c-consumer$exe" --fixtures build/search-fixtures --font tests/fixtures/fonts/primary.ttf --installed build/search-stage --output build/search-evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-search-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/search-logs/
+            build/search-fixtures/
+            build/search-evidence/
+            build/search-stage/
+            build/search-consumer/search-probe*
+            build/search-consumer/search-c-consumer*
+            build/reading-library/CMakeCache.txt
+          if-no-files-found: error
+  evidence:
+    name: strict search evidence
+    needs: [consumers]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate both platform ZIPs and compare their outcomes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_search/check_artifacts.py build/search-artifact-evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-search-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/search-artifact-evidence/
+          if-no-files-found: error

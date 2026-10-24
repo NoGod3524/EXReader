@@ -1,0 +1,128 @@
+{
+  "schema": 1,
+  "scope": "API34 x86_64 production catalog shelf declared scope only",
+  "accepted": true,
+  "complete_product": false,
+  "physical_device_execution": false,
+  "source_sha": "ed0008d680a6838e2834dd2a8973dcf17a5d44d2",
+  "branch": "codex/reader-android-shelf",
+  "implementation_base": "19128dc5f5e4a3164416ffa17e63937a3894989b",
+  "sdk_frozen_source": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "sdk_abi": 1,
+  "sdk_schema": 7,
+  "product_application_id": "EXRP",
+  "product_schema": 1,
+  "workflow": ".github/workflows/reader-shelf-android.yml",
+  "run": {
+    "id": "40037805014",
+    "attempt": 1,
+    "job_id": "120701455062",
+    "conclusion": "success",
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40037805014"
+  },
+  "results": {
+    "source_identity_verified": true,
+    "protected_sdk_trees_unchanged": true,
+    "catalog": {"passed": 12, "failed": 0, "skipped": 0},
+    "real_sdk_sources": 2202,
+    "txt_sources": 2201,
+    "pdf_sources": 1,
+    "equal_title_sources": 130,
+    "shelf_ui": {"passed": 10, "failed": 0, "skipped": 0},
+    "original_catalog": {"passed": 8, "failed": 0, "skipped": 0},
+    "original_mapping": {"passed": 14, "failed": 0, "skipped": 0},
+    "original_process_recovery": {"passed": 2, "failed": 0},
+    "original_walkthrough": {"passed": 45, "failed": 0, "skipped": 0},
+    "original_review": {"passed": 10, "failed": 0, "skipped": 0},
+    "original_bounded": {"passed": 11, "failed": 0, "skipped": 0},
+    "original_sequence_strictly_required": {
+      "rendered_pages": 49,
+      "native_next_calls": 49,
+      "recovery_calls": 0
+    },
+    "original_gate": {"passed": 48, "expected": 48},
+    "original_bounded_gate": {"passed": 20, "expected": 20},
+    "shelf_gate": {"passed": 19, "positive": 2, "refusal_probes": 17},
+    "strict_summary": {"accepted": true, "ui_accepted": true, "problems": []}
+  },
+  "ui_bounds": {
+    "sql_page_limit": 50,
+    "cached_row_limit": 150,
+    "attached_row_limit": 50,
+    "created_row_view_limit": 100,
+    "real_visible_source_walk": 2202,
+    "layout_revision_required": true,
+    "stable_source_key_restore": true
+  },
+  "observations": {
+    "performance_accepted": false,
+    "first_interactive_ms": 1446.958732,
+    "window_count": 4,
+    "pid_count": 2,
+    "ordinary_completed_window_frames": 5084,
+    "completed_window_total_ms": {
+      "p50": 67.933388,
+      "p95": 118.454013,
+      "p99": 133.539427,
+      "max": 689.165058
+    },
+    "callback_drops": 0,
+    "total_pss_kib": {
+      "stable_samples": 211,
+      "original_reports_verified": 211,
+      "median": 36277,
+      "sampled_peak": 81889
+    },
+    "limits": [
+      "One fixed API34 default x86_64 emulator, 4 cores, 4096 MiB, pixel_6.",
+      "Completed Window callback durations are not display presentation times or isolated ListView costs.",
+      "Debug callback capture and external PSS polling add overhead.",
+      "Force-stop can retain newline-complete Window traces without stop records; callbacks are not a full frame census.",
+      "TOTAL PSS is sampled about once a second for the whole process; its peak is sampled, not continuous.",
+      "First interactive includes the existing startup SDK metadata enumeration and mapping repair.",
+      "No comparison to the earlier ABBA experiment and no new size or performance budget."
+    ]
+  },
+  "artifact": {
+    "id": "12538856596",
+    "name": "reader-shelf-android-40037805014-1",
+    "size_in_bytes": 107473231,
+    "digest": "sha256:891a57848a53baf67bebd7fa1b0cc9a14d5b74c3aab0766e2c5b2a71c23a22c5",
+    "expired_at_verification": false,
+    "expires_at": "2027-01-21T23:07:10Z",
+    "source_sha": "ed0008d680a6838e2834dd2a8973dcf17a5d44d2",
+    "run_id": "40037805014",
+    "metadata_and_upload_log_digest_match": true,
+    "metadata_and_upload_log_size_match": true
+  },
+  "prior_runs_retained": [
+    {"id": "40021039897", "result": "NDK download failed before compilation"},
+    {"id": "40021673050", "result": "Java field shadowing compilation failure"},
+    {"id": "40022562607", "result": "Author fixture rejected; frozen EPUB importer has no author extraction"},
+    {"id": "40023575299", "result": "UI 8 of 10; debounce and stale system-picker observation"},
+    {"id": "40032860158", "result": "Target app missing before process-recovery probe"},
+    {"id": "40033393345", "result": "Same missing target-app installation before process-recovery probe"},
+    {"id": "40034076410", "result": "Original Activity-rebuild test rejected generic loading title"},
+    {"id": "40036544464", "result": "Earlier 11-catalog-case source passed; not combined with final source"},
+    {"id": "40037631638", "result": "Canonical search source passed before PSS original-report gate; not combined with final source"}
+  ],
+  "boundaries": [
+    "Shelf presentation and product queries are bounded; existing SDK startup repair and selected-book lookup still enumerate metadata transiently.",
+    "No frozen SDK, bindings, product schema, import publication/rollback/repair protocol or BoundedEpub/JNI changes.",
+    "NFC title matching reuses sort_title; author matching binds NFC and NFD patterns without claiming arbitrary mixed normalization or Unicode case folding.",
+    "Physical devices, signing, TalkBack, network sync, conflicts and other platform UIs require their own acceptance."
+  ],
+  "execution": {
+    "builds_tests_fixture_generation_sql_and_artifact_processing": "GitHub Actions only",
+    "local_test_execution": false,
+    "local_artifact_download": false,
+    "pull_request_created": false
+  },
+  "suggested_stacked_base": {
+    "pull_request": 8,
+    "branch": "codex/reader-import-mapping",
+    "head_at_verification": "486d5e967556a64781499751862dc31218114761",
+    "difference_after_implementation_base": "docs/READER-IMPORT-MAPPING-ANDROID.md only"
+  }
+}

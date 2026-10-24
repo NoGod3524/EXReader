@@ -66,6 +66,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private ExecutorService worker;
     private BookStore store;
+    private OrganizationPanel organizationPanel;
     private SharedPreferences prefs;
 
     private LinearLayout shelfPanel;
@@ -102,9 +103,10 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     private Button cancelButton;
     private ReaderView readerView;
 
-    private final List<NativeLibrary.Book> books = new ArrayList<>();
-    private final List<String> shelfRows = new ArrayList<>();
-    private ArrayAdapter<String> shelfAdapter;
+    private CatalogShelf catalogShelf;
+    private ShelfWindowMetrics shelfMetrics;
+    private long activityStartedNs;
+    private EditText shelfSearch;
     private ArrayAdapter<String> noteAdapter;
     private List<?> shownNotes = new ArrayList<>();
     private final List<String> noteRows = new ArrayList<>();
@@ -140,6 +142,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     private String pendingSelected = "";
 
     @Override protected void onCreate(Bundle savedInstanceState) {
+        activityStartedNs=android.os.SystemClock.elapsedRealtimeNanos();
         super.onCreate(savedInstanceState);
         ownerEpoch = OWNER_EPOCH.incrementAndGet();
         prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
@@ -159,6 +162,8 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
 
         setContentView(R.layout.activity_main);
         bindViews();
+        shelfMetrics=ShelfWindowMetrics.start(this,activityStartedNs);
+        if(shelfMetrics!=null)catalogShelf.observeFirstInteractive(activityStartedNs);
         wireActions();
         readerView.setListener(this);
 
@@ -170,7 +175,11 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
 
         worker.execute(() -> {
             try {
-                store = new BookStore(new File(getFilesDir(), "library.db"));
+                // A previous Activity may still be compensating its unpublished insert.
+                synchronized (IMPORT_LOCK) {
+                    store = new BookStore(getApplicationContext(), new File(getFilesDir(), "library.db"));
+                }
+                if (store.metadataRepairPending()) postStatus("Metadata repair pending; originals retained");
             } catch (Throwable error) {
                 postStatus("Library error: " + message(error));
                 return;
@@ -215,14 +224,28 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         cancelButton = findViewById(R.id.cancel_button);
         readerView = findViewById(R.id.reader_view);
 
-        shelfAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, shelfRows);
-        bookList.setAdapter(shelfAdapter);
+        shelfSearch=findViewById(R.id.shelf_search);
+        ShelfStatusView shelfSummary=findViewById(R.id.shelf_summary);
+        catalogShelf=new CatalogShelf(this,bookList,shelfSearch,shelfSummary,prefs,
+                action->{ if (worker!=null) worker.execute(action); },
+                (query,anchor,before,inclusive,cancellation)->{
+                    if (store==null) throw new IllegalStateException("Library is still opening");
+                    return store.shelfPage(query,anchor,before,inclusive,cancellation);
+                },error->setStatus("Shelf error: "+message(error)));
+        shelfSummary.bind(catalogShelf);
         noteAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, noteRows);
         noteList.setAdapter(noteAdapter);
         statusText.setContentDescription("Status");
+        organizationPanel=new OrganizationPanel(this,action->{if(worker!=null)worker.execute(action);},()->store,()->catalogShelf.load());
     }
 
     private void wireActions() {
+        findViewById(R.id.more_button).setOnClickListener(view->new android.app.AlertDialog.Builder(this)
+                .setTitle("More").setItems(new String[]{"Organize"},(dialog,which)->organizationPanel.show(0)).show());
+        bookList.setOnItemLongClickListener((parent,view,position,id)->{
+            if(operation!=0||pageBusy||id<=0)return true;
+            new android.app.AlertDialog.Builder(this).setItems(new String[]{"Organize book"},(dialog,which)->organizationPanel.show(id)).show();return true;
+        });
         importButton.setOnClickListener(view -> startImport());
         refreshButton.setOnClickListener(view -> {
             loadShelf(false);
@@ -252,13 +275,16 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         });
         bookList.setOnItemClickListener((parent, view, position, id) -> {
             if (operation != 0 || pageBusy) return;
-            if (position < 0 || position >= books.size()) return;
-            NativeLibrary.Book book = books.get(position);
-            if (currentBook != null && currentBook.id == book.id && current != null) {
-                showReader(book);
+            if (position < 0 || position >= catalogShelf.getCount() || id<=0) return;
+            catalogShelf.save();
+            shelfSearch.clearFocus();
+            ((android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE))
+                    .hideSoftInputFromWindow(shelfSearch.getWindowToken(),0);
+            if (currentBook != null && currentBook.id == id && current != null) {
+                showReader(currentBook);
                 return;
             }
-            openBook(book.id, -1, -1);
+            openBook(id, -1, -1);
         });
         noteList.setOnItemClickListener((parent, view, position, id) -> {
             if (operation != 0 || pageBusy || currentBook == null ||
@@ -296,21 +322,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
 
     private void loadShelf(boolean maybeOpen) {
         if (worker == null) return;
-        worker.execute(() -> {
-            List<NativeLibrary.Book> loaded;
-            try {
-                loaded = store == null ? new ArrayList<>() : store.books();
-            } catch (Throwable error) {
-                postStatus("Shelf error: " + message(error));
-                return;
-            }
-            postUi(() -> {
-                books.clear();
-                books.addAll(loaded);
-                shelfRows.clear();
-                for (NativeLibrary.Book book : books) shelfRows.add(shelfRow(book));
-                shelfAdapter.notifyDataSetChanged();
-            });
+        postUi(() -> {
             if (maybeOpen) {
                 long target = restoreBook;
                 if (target <= 0) target = prefs.getLong("lastBook", 0);
@@ -319,18 +331,12 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                     final long openId = target;
                     final long openOffset = restoreOffset;
                     final int openPage = restorePage;
-                    postUi(() -> openBook(openId, openOffset, openPage));
+                    openBook(openId, openOffset, openPage);
                 } else {
-                    postUi(() -> showShelf(false));
+                    showShelf(false);
                 }
-            }
+            } else catalogShelf.load();
         });
-    }
-
-    private String shelfRow(NativeLibrary.Book book) {
-        long bytes = prefs.getLong("size_" + book.id, 0);
-        String position = book.fixed() ? "page " + (book.position + 1) : "offset " + book.position;
-        return book.title + "\n" + formatName(book.format) + " · " + humanBytes(bytes) + " · " + position;
     }
 
     private HostTask beginTask(int kind) {
@@ -347,7 +353,8 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     }
 
     private void setActionsEnabled(boolean enabled) {
-        for (View view : new View[]{importButton, refreshButton, bookList, fontDown, fontUp,
+        findViewById(R.id.more_button).setEnabled(enabled);
+        for (View view : new View[]{importButton, refreshButton, bookList, shelfSearch, fontDown, fontUp,
                 zoomDown, zoomUp, selectButton, notesButton, copyButton, annotateButton, readerView}) {
             view.setEnabled(enabled);
         }
@@ -393,18 +400,12 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
             setStatus("Library is still opening");
             return;
         }
-        NativeLibrary.Book book = null;
-        for (NativeLibrary.Book candidate : books) if (candidate.id == id) book = candidate;
-        if (book == null) {
-            setStatus("Book is missing from the shelf");
-            showShelf(false);
-            return;
-        }
-        final NativeLibrary.Book target = book;
+        CatalogStore.ShelfBook shown=catalogShelf.cachedBook(id);
+        final String displayTitle=shown==null ? "book" : shown.title;
         final HostTask task = beginTask(2);
         final long gen = generation;
         final float requestedFont = fontSize, requestedZoom = zoom;
-        showLoading("Opening " + target.title + "...", true);
+        showLoading("Opening " + displayTitle + "...", true);
         final long requestedOffset = offset;
         final int requestedPage = page;
         worker.execute(() -> {
@@ -413,8 +414,18 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
             PageLoad load = null;
             boolean accepted = false;
             String notice = null;
+            String resolvedTitle = displayTitle;
             try {
                 task.check();
+                CatalogStore.ShelfBook local=store.localShelfBook(id);
+                if (local==null) throw new IOException("Book is not available on this device");
+                resolvedTitle=local.title;
+                final String loadingTitle=local.title;
+                postUi(()->{if(gen==generation && activeTask==task)loadingText.setText("Opening "+loadingTitle+"...");});
+                // The frozen SDK exposes metadata as an enumeration; keep that read on its owner,
+                // only for the chosen book, instead of rebuilding the entire shelf on every refresh.
+                final NativeLibrary.Book target=store.find(id);
+                if (target==null) throw new IOException("Book is missing from the SDK library");
                 String path = prefs.getString("path_" + target.id, null);
                 boolean bounded = target.format==NativeLibrary.FORMAT_EPUB && store.bounded(target.id);
                 Log.i(TAG,"storage mode book="+target.id+" bounded="+bounded);
@@ -477,7 +488,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                     refreshNotesCount();
                 });
             } catch (Throwable error) {
-                taskFailed(gen, "Could not open " + target.title + ": ", error);
+                taskFailed(gen, "Could not open " + resolvedTitle + ": ", error);
             } finally {
                 if (load != null) load.close();
                 if (!accepted) {
@@ -994,7 +1005,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                         old.execSQL("DROP TABLE epub_notes"); old.execSQL("DROP TABLE epub_progress"); old.execSQL("DROP TABLE epub_bounded_books");
                         old.execSQL("PRAGMA user_version=6");
                     }
-                    store=new BookStore(file);
+                    store=new BookStore(getApplicationContext(),file);
                     try(android.database.sqlite.SQLiteDatabase current=android.database.sqlite.SQLiteDatabase.openDatabase(file.getPath(),null,android.database.sqlite.SQLiteDatabase.OPEN_READONLY);
                         android.database.Cursor cursor=current.rawQuery("PRAGMA user_version",null)) {
                         if(!cursor.moveToFirst() || cursor.getInt(0)!=7) throw new IllegalStateException("Schema migration did not reach 7");
@@ -1012,10 +1023,15 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         }
         String title = intent.getStringExtra("review_open_title");
         if (title != null) {
-            for (NativeLibrary.Book book : books) {
-                if (title.equals(book.title)) { openBook(book.id, -1, -1); return; }
-            }
-            setStatus("Review target is missing from the shelf");
+            worker.execute(()->{
+                try {
+                    CatalogStore.ShelfBook book=store.localShelfTitle(title);
+                    postUi(()->{
+                        if (book==null) setStatus("Review target is missing from the shelf");
+                        else openBook(book.sdkBookId,-1,-1);
+                    });
+                } catch (Throwable error) { postStatus("Review shelf: "+message(error)); }
+            });
         }
     }
 
@@ -1030,6 +1046,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
             long importedId = 0;
             boolean created = false;
             boolean published = false;
+            boolean metadataFinalized = false;
             try {
                 copied = copyUri(uri, name, task);
                 reviewGate("import-copied", task);
@@ -1054,14 +1071,15 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                 importedId = result.id;
                 created = result.created;
                 reviewGate("import-inserted", task);
+                BookStore.VerifiedSource verified = store.verifySource(importedId, copied.sha256, copied.bytes, task);
                 final long acceptedId = importedId;
                 final CopyResult resultCopy = copied;
                 final String oldPath = prefs.getString("path_" + acceptedId, null);
-                final boolean reused = !created && oldPath != null && new File(oldPath).isFile();
+                final boolean reused = !created && matchesOwnedCopy(oldPath, copied, task);
                 task.commit(() -> {
                     String acceptedPath = reused ? oldPath : path;
                     if (!prefs.edit().putString("path_" + acceptedId, acceptedPath)
-                            .putLong("size_" + acceptedId, new File(acceptedPath).length()).commit()) {
+                            .putLong("size_" + acceptedId, verified.bytes).commit()) {
                         throw new IOException("Could not persist the imported book path");
                     }
                 });
@@ -1069,6 +1087,9 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                 if (reused && resultCopy.owned && !path.equals(oldPath) && !resultCopy.file.delete()) {
                     Log.w(TAG, "Unused duplicate copy could not be removed");
                 }
+                reviewGate("import-published", task);
+                store.finalizeImport(verified);
+                metadataFinalized = true;
                 reviewGate("import-committed", task);
                 final boolean inserted = created;
                 postUi(() -> {
@@ -1085,10 +1106,11 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                 }
                 final Throwable failure = reported;
                 final boolean completed = published;
+                final boolean mapped = metadataFinalized;
                 postUi(() -> {
                     if (gen != generation) return;
                     finishTask(gen);
-                    setStatus(completed ? "Imported " + name : failure instanceof HostTask.Cancelled ?
+                    setStatus(completed ? "Imported " + name + (mapped ? "" : "; metadata repair pending: " + message(failure)) : failure instanceof HostTask.Cancelled ?
                             "Import canceled" : "Could not open " + name + ": " + message(failure));
                     loadShelf(false);
                 });
@@ -1100,7 +1122,37 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     private static final class CopyResult {
         final File file;
         final boolean owned;
-        CopyResult(File file, boolean owned) { this.file = file; this.owned = owned; }
+        final String sha256;
+        final long bytes;
+        CopyResult(File file, boolean owned, String sha256, long bytes) {
+            this.file = file; this.owned = owned; this.sha256 = sha256; this.bytes = bytes;
+        }
+    }
+
+    /** Preferences only suggest a reusable path; actual private bytes must match. */
+    private boolean matchesOwnedCopy(String path, CopyResult copy, HostTask task) throws IOException {
+        if (path == null) return false;
+        try {
+            File file = new File(path).getCanonicalFile();
+            File folder = new File(getFilesDir(), "books").getCanonicalFile();
+            if (!folder.equals(file.getParentFile()) || !file.isFile() || file.length() != copy.bytes) return false;
+            MessageDigest digest;
+            try { digest = MessageDigest.getInstance("SHA-256"); }
+            catch (Exception impossible) { throw new AssertionError(impossible); }
+            long bytes = 0;
+            try (InputStream input = new FileInputStream(file)) {
+                byte[] chunk = new byte[65536]; int read;
+                while ((read = input.read(chunk)) != -1) {
+                    task.check();
+                    bytes += read;
+                    if (bytes > copy.bytes) return false;
+                    digest.update(chunk, 0, read);
+                }
+            }
+            task.check();
+            return bytes == copy.bytes && copy.sha256.equals(hex(digest.digest()));
+        } catch (HostTask.Cancelled error) { throw error; }
+        catch (IOException inaccessible) { return false; }
     }
 
     private void rollbackImport(CopyResult copy, long id, boolean created) throws IOException {
@@ -1153,15 +1205,16 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
             throw new IOException("The selected file is empty");
         }
         String extension = extension(name);
-        File target = new File(folder, hex(digest.digest()) + (extension.isEmpty() ? "" : "." + extension));
+        String sourceHash = hex(digest.digest());
+        File target = new File(folder, sourceHash + (extension.isEmpty() ? "" : "." + extension));
         if (target.isFile()) {
             if (!temporary.delete()) throw new IOException("Cannot clean the duplicate temporary file");
-            return new CopyResult(target, false);
+            return new CopyResult(target, false, sourceHash, total);
         } else if (!temporary.renameTo(target)) {
             removeTemporary(temporary);
             throw new IOException("Cannot keep the app-owned copy");
         }
-        return new CopyResult(target, true);
+        return new CopyResult(target, true, sourceHash, total);
     }
 
     private static void removeTemporary(File temporary) throws IOException {
@@ -1323,6 +1376,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     }
 
     private void saveInstancePrefs() {
+        if (catalogShelf!=null) catalogShelf.save();
         prefs.edit().putLong("lastBook", bookId)
                 .putBoolean("lastReader", readerPanel.getVisibility() == View.VISIBLE)
                 .putFloat("font", fontSize).putFloat("zoom", zoom).apply();
@@ -1345,6 +1399,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     }
 
     @Override public void onBackPressed() {
+        if(organizationPanel!=null&&organizationPanel.visible()){organizationPanel.hide();return;}
         if (notesPanel.getVisibility() == View.VISIBLE) {
             hideNotes();
             return;
@@ -1357,6 +1412,9 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     }
 
     @Override protected void onDestroy() {
+        if(organizationPanel!=null)organizationPanel.close();
+        if (shelfMetrics!=null) shelfMetrics.close();
+        if (catalogShelf!=null) catalogShelf.close();
         destroyed = true;
         if (activeTask != null) activeTask.cancel();
         ++generation;

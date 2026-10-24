@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: MIT
+cmake_minimum_required(VERSION 3.24)
+project(EXReaderSession VERSION 0.1.0 LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if(MSVC)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  add_compile_options(/utf-8)
+endif()
+find_package(EXReaderSync 0.1.0 EXACT CONFIG REQUIRED)
+find_package(Threads REQUIRED)
+add_library(reader_session STATIC src/session.cpp)
+target_include_directories(reader_session PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+target_link_libraries(reader_session PUBLIC EXReaderSync::reader_sync PRIVATE Threads::Threads)
+if(MSVC)
+  target_compile_options(reader_session PRIVATE /W4 /WX)
+else()
+  target_compile_options(reader_session PRIVATE -Wall -Wextra -Werror)
+endif()
+include(CMakePackageConfigHelpers)
+install(TARGETS reader_session EXPORT EXReaderSessionTargets ARCHIVE DESTINATION lib)
+install(FILES include/reader_session.h DESTINATION include)
+install(EXPORT EXReaderSessionTargets NAMESPACE EXReaderSession:: DESTINATION lib/cmake/EXReaderSession)
+configure_package_config_file(EXReaderSessionConfig.cmake.in "${CMAKE_CURRENT_BINARY_DIR}/EXReaderSessionConfig.cmake"
+  INSTALL_DESTINATION lib/cmake/EXReaderSession)
+write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/EXReaderSessionConfigVersion.cmake"
+  VERSION ${PROJECT_VERSION} COMPATIBILITY SameMinorVersion)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/EXReaderSessionConfig.cmake" "${CMAKE_CURRENT_BINARY_DIR}/EXReaderSessionConfigVersion.cmake"
+  DESTINATION lib/cmake/EXReaderSession)

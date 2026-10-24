@@ -1,0 +1,245 @@
+{
+  "schema": 1,
+  "accepted": true,
+  "scope": "GTK native credentials and verified all-local-original preparation before native immutable-record scans",
+  "source_sha": "d88ed89d65ddbdad4eed0ba71e52dbba3c0611fe",
+  "run_id": 40068924227,
+  "attempt": 1,
+  "job_id": 120797949398,
+  "workflow": ".github/workflows/reader-account-linux.yml",
+  "host_baseline": "2cbdd49ba9920afb5246e4b5b904e1ab28345169",
+  "sdk_tree_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "sdk_abi": 1,
+  "packaged_program_sha256": "60dce4c781eb0b95176f9798a53688c6bc49e344f17f80c78ac13262a65daeb1",
+  "cloud": {
+    "status": "completed",
+    "conclusion": "success",
+    "job_count": 1,
+    "all_steps_success": true,
+    "artifact_count": 1
+  },
+  "artifact": {
+    "id": 12550344355,
+    "name": "reader-gtk-account-40068924227-1",
+    "size_in_bytes": 39689678,
+    "digest": "sha256:d98210dcc8cb2023cea49ec40f307f47b62ec602e41192295cd291458f952cab",
+    "expired": false,
+    "expires_at": "2027-01-22T06:07:06Z",
+    "run_id": 40068924227,
+    "source_sha": "d88ed89d65ddbdad4eed0ba71e52dbba3c0611fe"
+  },
+  "checks": {
+    "account": 23,
+    "original_gtk": 20,
+    "product_ui": 5,
+    "original_fault_regressions": 4,
+    "fixed_ui": 24,
+    "shelf_ui": 14,
+    "metadata_ui": 15,
+    "collections_ui": 27,
+    "desktop_ctest": 4,
+    "product_provider_ctest": 1
+  },
+  "account_check_names": [
+    "real_more_menu_and_keyboard_open_masked_native_account_controls",
+    "explicit_remember_uses_real_secret_service_and_persists_only_uuid_and_exact_root",
+    "new_actual_process_loads_saved_credentials_with_the_same_stable_account_id",
+    "back_during_local_preparation_cancels_owner_work_before_network_start",
+    "main_window_close_during_preparation_retires_queued_owner_work_before_shutdown",
+    "default_scan_stages_all_52_exact_originals_in_50_row_owner_pages_and_preserves_edited_metadata",
+    "finished_ui_reports_record_scan_only_without_claiming_readable_remote_books",
+    "disconnect_polls_closed_before_destroy_and_only_then_reenables_credentials",
+    "real_paused_tls_scan_leaves_gtk_responsive_and_cancel_is_nonblocking",
+    "explicit_retry_keeps_same_handle_and_remote_history_without_projecting_or_importing_it",
+    "server_failure_is_visible_and_only_explicit_retry_resumes_the_scan",
+    "verified_local_book_with_two_heads_stages_original_without_selecting_or_projecting_and_still_receives_remote_records",
+    "changing_exact_root_is_refused_without_network_or_rebinding",
+    "mismatching_existing_private_original_is_never_overwritten_and_prevents_network_start",
+    "back_waits_asynchronously_for_closed_and_reopening_loads_credentials",
+    "forget_deletes_real_system_record_and_restart_keeps_nonsecret_binding_only",
+    "durable_pending_metadata_refuses_staging_without_overwriting_the_journal",
+    "native_product_binding_rejects_a_different_uuid_before_any_http",
+    "locked_real_secret_service_reports_unavailable_and_does_not_claim_credentials_saved",
+    "explicit_session_only_choice_still_scans_with_secure_storage_unavailable",
+    "session_only_credentials_are_absent_after_actual_process_restart",
+    "application_close_defers_sdk_owner_shutdown_until_native_session_closed",
+    "credentials_and_authorization_are_absent_from_profiles_product_databases_wire_and_all_evidence"
+  ],
+  "fixture": {
+    "originals": 52,
+    "original_format": "txt",
+    "owner_page_limit": 50,
+    "copy_chunk_limit": 65536,
+    "original_limit_bytes": 134217728,
+    "real_native_https": true,
+    "real_secret_service": "isolated GNOME collection, unlocked then locked",
+    "conflicted_book_heads": 2,
+    "conflict_metadata_and_heads_preserved": true,
+    "conflict_bootstrap_or_projection": false,
+    "remote_record_received_with_local_book_conflict": true,
+    "credential_leak_hits": 0
+  },
+  "retained_failures": [
+    {
+      "run_id": 40063941677,
+      "attempt": 1,
+      "source_sha": "5cad2112fd74da4eea265a887415ef18155c46ae",
+      "conclusion": "failure",
+      "accepted": false,
+      "reason": "Legacy installed-consumer verifier required its fixed build log path.",
+      "artifact": {
+        "id": 12548304227,
+        "name": "reader-gtk-account-40063941677-1",
+        "size_in_bytes": 20005177,
+        "digest": "sha256:894fd704c7abf73531d5b50c136e13a1961ddd5a35e56d7fa6bdc763fae72184",
+        "expired": false
+      }
+    },
+    {
+      "run_id": 40064010888,
+      "attempt": 1,
+      "source_sha": "20cc0314975c5de96ee4e2c1cb87196c247d742c",
+      "conclusion": "failure",
+      "accepted": false,
+      "reason": "Same fixed legacy build log path missing.",
+      "artifact": {
+        "id": 12548048482,
+        "name": "reader-gtk-account-40064010888-1",
+        "size_in_bytes": 20005419,
+        "digest": "sha256:0b6138c56702f088e60fd529bb241942b08432d29a64624c0b711ef663f3a84a",
+        "expired": false
+      }
+    },
+    {
+      "run_id": 40064197851,
+      "attempt": 1,
+      "source_sha": "3e690526c55a354aa8a6d8bf5b10bc3f3b33e38d",
+      "conclusion": "failure",
+      "accepted": false,
+      "reason": "Modal account dialog blocked main-window close during preparation.",
+      "artifact": {
+        "id": 12548444417,
+        "name": "reader-gtk-account-40064197851-1",
+        "size_in_bytes": 39611530,
+        "digest": "sha256:f0b3ee01b41fb3863653b57c2d7400cacb2cf398f3fe7073ed5d097b4d560bee",
+        "expired": false
+      }
+    },
+    {
+      "run_id": 40065023405,
+      "attempt": 1,
+      "source_sha": "9e24b28f68de5b7c660ccd38addd0b3645952074",
+      "conclusion": "failure",
+      "accepted": false,
+      "reason": "Original font mutant precondition reached only page 1 before restart; explicit page 1 then page 2 waits preserve all assertions.",
+      "artifact": {
+        "id": 12548932693,
+        "name": "reader-gtk-account-40065023405-1",
+        "size_in_bytes": 38918029,
+        "digest": "sha256:bbf2ed8f08e0e4970b3004e909551cb1524cb7322d0731f1492aacac1c313b04",
+        "expired": false
+      }
+    },
+    {
+      "run_id": 40065023405,
+      "attempt": 2,
+      "source_sha": "9e24b28f68de5b7c660ccd38addd0b3645952074",
+      "conclusion": "failure",
+      "accepted": false,
+      "reason": "Preparation cancelled before any session; stale shelf callbacks accessed widgets during app destruction.",
+      "artifact": {
+        "id": 12549247926,
+        "name": "reader-gtk-account-40065023405-2",
+        "size_in_bytes": 39564824,
+        "digest": "sha256:419cbcf3d9ccc66e7d2bf6294819b3a794ea9d5873395348fa7d5640a7dda955",
+        "expired": false
+      }
+    },
+    {
+      "run_id": 40066728040,
+      "attempt": 1,
+      "source_sha": "4d9fc6183585b270a846b6779c737ac7ff457a36",
+      "conclusion": "failure",
+      "accepted": false,
+      "reason": "Cancel input checked before its acknowledgement; focus and bounded acknowledgement now explicit.",
+      "artifact": {
+        "id": 12550330388,
+        "name": "reader-gtk-account-40066728040-1",
+        "size_in_bytes": 39612135,
+        "digest": "sha256:a31bf00e39db43a4339d392a8982b8005c99f3000af419682abe1aef7daa0223",
+        "expired": false
+      }
+    },
+    {
+      "run_id": 40067554989,
+      "attempt": 1,
+      "source_sha": "e74d31935ab1c03906d8d00eb194c4be92a3fb8b",
+      "conclusion": "failure",
+      "accepted": false,
+      "reason": "Retry terminal predicate could read old FAILED; it now requires an advanced native attempt.",
+      "artifact": {
+        "id": 12550296121,
+        "name": "reader-gtk-account-40067554989-1",
+        "size_in_bytes": 39612818,
+        "digest": "sha256:ae4b5b6dbf53bd13f7087a51cb456e60c8db67bd25d22ce17f112ed5025dea2b",
+        "expired": false
+      }
+    },
+    {
+      "run_id": 40068286398,
+      "attempt": 1,
+      "source_sha": "c374e2dec9d4d01f92d65c3560251a4b49482336",
+      "conclusion": "failure",
+      "accepted": false,
+      "reason": "Back network-close test lacked explicit dialog focus and sampled a transient closing state; final check requires matched CLOSED generation.",
+      "artifact": {
+        "id": 12549758303,
+        "name": "reader-gtk-account-40068286398-1",
+        "size_in_bytes": 20520621,
+        "digest": "sha256:f7e45904fe3949c678b4eb16f0d29d6f5f900abdf8de8a6ab42a077e37c0aa15",
+        "expired": false
+      }
+    }
+  ],
+  "diagnostics": [
+    {
+      "run_id": 40066177416,
+      "conclusion": "failure",
+      "accepted": false,
+      "diagnostic_only": true,
+      "reason": "Initial archive-root suffix lookup failed."
+    },
+    {
+      "run_id": 40066307947,
+      "conclusion": "success",
+      "accepted": false,
+      "diagnostic_only": true
+    },
+    {
+      "run_id": 40066418937,
+      "conclusion": "success",
+      "accepted": false,
+      "diagnostic_only": true
+    }
+  ],
+  "execution": {
+    "builds": "GitHub Actions",
+    "tests": "GitHub Actions",
+    "fixtures": "GitHub Actions",
+    "artifact_processing": "GitHub Actions",
+    "local_build_or_test_execution": false,
+    "local_artifact_download": false
+  },
+  "limits": {
+    "platform": "Ubuntu 22.04 native GTK reference host",
+    "remote_metadata_projection_accepted": false,
+    "remote_sdk_import_accepted": false,
+    "full_library_complete": false,
+    "sdk_changed": false,
+    "product_schema_changed": false,
+    "shared_module_api_changed": false,
+    "performance_accepted": false,
+    "complete_product": false
+  }
+}
