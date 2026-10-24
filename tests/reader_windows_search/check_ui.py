@@ -19,6 +19,9 @@ U.GetPropW.argtypes = [W.HWND, W.LPCWSTR]
 U.GetPropW.restype = W.HANDLE
 U.IsChild.argtypes = [W.HWND, W.HWND]
 U.IsChild.restype = W.BOOL
+U.SetForegroundWindow.argtypes = [W.HWND]
+U.SetForegroundWindow.restype = W.BOOL
+U.GetForegroundWindow.restype = W.HWND
 REQUIRED = ['native-secondary-entry', 'query-has-no-sdk-local-row-id', 'exactly-32-results',
             'empty-final-batch-preserves-results', 'first-miss-is-empty', 'unicode-query',
             'utf8-query-limit', 'new-query-restarts-cursor', 'search-does-not-write-notes-or-history',
@@ -27,6 +30,28 @@ REQUIRED = ['native-secondary-entry', 'query-has-no-sdk-local-row-id', 'exactly-
 
 
 class SearchApp(M.MetadataApp):
+    def import_file(self, path):
+        # BM_CLICK requires an active parent. A runner console can take focus
+        # between process startup and the first import; do not silently send a
+        # click to an inactive/disabled button or retry a potentially accepted
+        # import. Read the actual native input and state before the single click.
+        self.wait_initial_shelf()
+        self.wait_idle()
+        def active():
+            U.SetForegroundWindow(self.window)
+            return U.GetForegroundWindow() == self.window
+        self.wait(active, timeout=10)
+        M.set_text(self.control('path'), str(path))
+        self.wait(lambda: U.IsWindowEnabled(self.control('import')))
+        assert text(self.control('path')) == str(path)
+        print(json.dumps({'import_dispatch': dict(path=text(self.control('path')),
+              enabled=bool(U.IsWindowEnabled(self.control('import'))),
+              active=U.GetForegroundWindow() == self.window,
+              shelf_snapshot=U.GetPropW(self.control('books'), 'EXReaderShelfSnapshot') or 0)},
+              ensure_ascii=True), flush=True)
+        self.click('import')
+        self.wait_idle()
+
     def wait_initial_shelf(self):
         def ready():
             serial = U.GetPropW(self.control('books'), 'EXReaderShelfSnapshot') or 0

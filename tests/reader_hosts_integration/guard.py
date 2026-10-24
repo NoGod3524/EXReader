@@ -14,7 +14,8 @@ DELIVERIES = {
 }
 ALLOWED = (
     'tests/reader_hosts_integration/', '.github/workflows/reader-hosts-integration.yml',
-    'tests/reader_windows_search/verify.py', 'docs/READER-HOSTS-INTEGRATION.md',
+    'tests/reader_windows_search/verify.py', 'tests/reader_windows_search/check_ui.py',
+    'docs/READER-HOSTS-INTEGRATION.md',
     'docs/validation/reader-hosts-integration.json',
 )
 
