@@ -125,9 +125,9 @@ int main(int argc, char **argv) {
   std::memset(&result, 0, sizeof result);
   result.struct_size = sizeof result;
   status = reader_opds_import_staged(library, &staged, "OPDS fixture again", nullptr, &result, &sdk_error);
-  recordf("import_duplicate_accepted", status == EXR_OK && result.book_id > 0 && result.book_id != first_book,
-          "status=%d first=%lld second=%lld", static_cast<int>(status), static_cast<long long>(first_book),
-          static_cast<long long>(result.book_id));
+  recordf("import_duplicate_reuses_book", status == EXR_OK && result.book_id == first_book && result.created == 0,
+          "status=%d first=%lld second=%lld created=%d", static_cast<int>(status),
+          static_cast<long long>(first_book), static_cast<long long>(result.book_id), result.created);
 
   {
     reader_opds_acquired descriptor = staged;
@@ -180,7 +180,7 @@ int main(int argc, char **argv) {
             tampered ? 1 : 0, static_cast<int>(status));
   }
 
-  if (!acquire(browser, (std::string(argv[2]) + "/opds1/broken.xml").c_str(), 0, &broken, &error)) {
+  if (!acquire(browser, (std::string(argv[2]) + "/opds1/broken.xml").c_str(), 0, &broken, &error, true)) {
     record("import_broken_acquire", false, error.message);
   } else {
     record("import_broken_acquire", true, broken.path);
