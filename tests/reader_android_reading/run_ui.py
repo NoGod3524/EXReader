@@ -114,7 +114,10 @@ try:
         save(phase + '-report.json', (json.dumps(report, ensure_ascii=False, indent=2) + '\n').encode())
         print(json.dumps({'phase': phase, 'expected': names, 'actual': report['checks'], 'failed_check': report.get('failed_check'),
                           'failure': report.get('failure'), 'failure_trace': report.get('failure_trace'), 'observations': report['observations']}, ensure_ascii=False), flush=True)
-        save(phase + '-logcat.txt', adb('logcat', '-d', '-v', 'threadtime', '-t', '3000'))
+        logcat = adb('logcat', '-d', '-v', 'threadtime', '-t', '3000')
+        save(phase + '-logcat.txt', logcat)
+        if report['passed'] is not True:
+            print('\n'.join(line for line in logcat.decode(errors='replace').splitlines() if 'EXRHost' in line or 'AndroidRuntime' in line), flush=True)
         for observation in report['observations']:
             image = private('reading-captures/' + observation['name'] + '.png')
             assert image.startswith(b'\x89PNG\r\n\x1a\n') and len(image) > 1000
