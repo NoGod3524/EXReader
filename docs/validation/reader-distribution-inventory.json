@@ -1,0 +1,515 @@
+{
+  "schema": 1,
+  "package": "G09 产品依赖、许可证与离线分发清单",
+  "accepted": true,
+  "inventory_generated": true,
+  "materials_complete": true,
+  "release_ready": false,
+  "scope": "Installed reading SDK file inventory, registered licence materials and observed static/dynamic dependencies on three desktop operating systems. Mobile packaging, host bundles, signing and publication are not covered.",
+  "workflow": ".github/workflows/reader-distribution-inventory.yml",
+  "branch": "codex/reader-distribution-inventory",
+  "source_sha": "f3b5c8f65d6a1d7db51364b897f81a995ce37c67",
+  "start_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "run_id": 40081161966,
+  "attempt": 1,
+  "run_status": "completed",
+  "run_conclusion": "success",
+  "verified_at": "2026-10-24T09:18:04.305367+00:00",
+  "jobs": {
+    "rejection protocol": 120834840566,
+    "linux/reading-core": 120834897186,
+    "linux/reading-library": 120834897219,
+    "windows/reading-core": 120834897253,
+    "windows/reading-library": 120834897238,
+    "macos/reading-core": 120834897292,
+    "macos/reading-library": 120834897167,
+    "same-source report": 120835503732
+  },
+  "protocol": {
+    "job_id": 120834840566,
+    "accepted_cases": 4,
+    "rejected_cases": 37,
+    "parser_checks": 4,
+    "artifact_rejections": 6,
+    "dependency_parsers": 9
+  },
+  "identity": {
+    "sdk_version": "3.40.0",
+    "abi": 1,
+    "core_version": "3.39.0",
+    "identical_on_all_six": true
+  },
+  "installs": [
+    {
+      "platform": "linux",
+      "profile": "reading-core",
+      "job_id": 120834897186,
+      "job_source_sha": "f3b5c8f65d6a1d7db51364b897f81a995ce37c67",
+      "installed_files": 262,
+      "installed_bytes": 18541669,
+      "archives": 21,
+      "symbol_edges": 41,
+      "dynamic_dependencies": 3,
+      "checks": 24,
+      "checks_passed": 22,
+      "identity": {
+        "version": "3.40.0",
+        "abi": 1,
+        "core_version": "3.39.0",
+        "config_version": "3.40.0"
+      },
+      "artifact": {
+        "id": 12555386763,
+        "name": "reader-distribution-inventory-linux-reading-core-40081161966-1",
+        "bytes": 7009782,
+        "digest": "sha256:aabd023662b826e841bc559c99bc6255f20725bb81e2ee43145c4d734db47301",
+        "expires_at": "2027-01-22T09:14:23Z"
+      },
+      "producer_log_sha256": "a594fb1f726c206c0637a5b59c8c1b306aec48f2d7d0ce0bcc3d8ae4667bdb3c",
+      "sbom": {
+        "spdx_sha256": "7f92dfc771040f1821e744a09fd7b9704711d5b62b37e5547329a03ee1bf2422",
+        "cyclonedx_sha256": "5096dae9e417880867b4de123b0ee1140dd5987c53df384aa3aa66016a3a310c"
+      },
+      "release_blockers": [
+        "docs/CONVERSION.md ships a build-machine absolute path (C:/Users/)",
+        "docs/WP7-SCRIPTS.md ships a build-machine absolute path (C:/Users/)",
+        "lib/exreader/libexr_vendor_tiff.a ships a build-machine absolute path (/home/runner/)",
+        "lib/pkgconfig/aom.pc ships a build-machine absolute path (/home/runner/)",
+        "lib/pkgconfig/libsharpyuv.pc ships a build-machine absolute path (/home/runner/)",
+        "lib/pkgconfig/libwebp.pc ships a build-machine absolute path (/home/runner/)",
+        "lib/pkgconfig/libwebpdecoder.pc ships a build-machine absolute path (/home/runner/)",
+        "lib/pkgconfig/libwebpdemux.pc ships a build-machine absolute path (/home/runner/)",
+        "lib/pkgconfig/libwebpmux.pc ships a build-machine absolute path (/home/runner/)"
+      ],
+      "release_ready": false,
+      "granted": true
+    },
+    {
+      "platform": "linux",
+      "profile": "reading-library",
+      "job_id": 120834897219,
+      "job_source_sha": "f3b5c8f65d6a1d7db51364b897f81a995ce37c67",
+      "installed_files": 265,
+      "installed_bytes": 20442359,
+      "archives": 23,
+      "symbol_edges": 46,
+      "dynamic_dependencies": 3,
+      "checks": 24,
+      "checks_passed": 22,
+      "identity": {
+        "version": "3.40.0",
+        "abi": 1,
+        "core_version": "3.39.0",
+        "config_version": "3.40.0"
+      },
+      "artifact": {
+        "id": 12555381712,
+        "name": "reader-distribution-inventory-linux-reading-library-40081161966-1",
+        "bytes": 7846207,
+        "digest": "sha256:eafccceec7cb3f07591796bb925db504eb0fee745e04d3afa211d2dd3d1b107e",
+        "expires_at": "2027-01-22T09:14:23Z"
+      },
+      "producer_log_sha256": "30cc81f62ff01641af06cc8e7020efde815332afe74a37e3e9c5044debe39618",
+      "sbom": {
+        "spdx_sha256": "17e8fc921000568326df6baf09006ea501935d49051a03e8e22cae27f6bd3249",
+        "cyclonedx_sha256": "c514ab20ba79b38ed55d48648ea6a729e667ecdfe306c443f965169be45ae4e5"
+      },
+      "release_blockers": [
+        "docs/CONVERSION.md ships a build-machine absolute path (C:/Users/)",
+        "docs/WP7-SCRIPTS.md ships a build-machine absolute path (C:/Users/)",
+        "lib/exreader/libexr_vendor_tiff.a ships a build-machine absolute path (/home/runner/)",
+        "lib/pkgconfig/aom.pc ships a build-machine absolute path (/home/runner/)",
+        "lib/pkgconfig/libsharpyuv.pc ships a build-machine absolute path (/home/runner/)",
+        "lib/pkgconfig/libwebp.pc ships a build-machine absolute path (/home/runner/)",
+        "lib/pkgconfig/libwebpdecoder.pc ships a build-machine absolute path (/home/runner/)",
+        "lib/pkgconfig/libwebpdemux.pc ships a build-machine absolute path (/home/runner/)",
+        "lib/pkgconfig/libwebpmux.pc ships a build-machine absolute path (/home/runner/)"
+      ],
+      "release_ready": false,
+      "granted": true
+    },
+    {
+      "platform": "windows",
+      "profile": "reading-core",
+      "job_id": 120834897253,
+      "job_source_sha": "f3b5c8f65d6a1d7db51364b897f81a995ce37c67",
+      "installed_files": 262,
+      "installed_bytes": 25597160,
+      "archives": 21,
+      "symbol_edges": 39,
+      "dynamic_dependencies": 2,
+      "checks": 24,
+      "checks_passed": 22,
+      "identity": {
+        "version": "3.40.0",
+        "abi": 1,
+        "core_version": "3.39.0",
+        "config_version": "3.40.0"
+      },
+      "artifact": {
+        "id": 12555386869,
+        "name": "reader-distribution-inventory-windows-reading-core-40081161966-1",
+        "bytes": 10839409,
+        "digest": "sha256:d4829ef87fe9d2659ef002eed115fa6b0012385e04d92fe118849dad3f3165ce",
+        "expires_at": "2027-01-22T09:14:23Z"
+      },
+      "producer_log_sha256": "37687fb9c0a267113c41ef43b326bcd07176d1b2b9b4b1c3165bdac243fef377",
+      "sbom": {
+        "spdx_sha256": "2e4266384ed92382a64062d62726c3ae583f6a5a4b298a36dca28fb510e6f150",
+        "cyclonedx_sha256": "8b20460c5e4f7b5335c2e7bac89683184075810c8d5d97c78f80729b3480ff35"
+      },
+      "release_blockers": [
+        "docs/CONVERSION.md ships a build-machine absolute path (C:/Users/)",
+        "docs/WP7-SCRIPTS.md ships a build-machine absolute path (C:/Users/)",
+        "lib/aom.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exr_base.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exr_doc.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exr_formats.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exr_graphics.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exr_layout.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exr_pdf.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exr_render.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exr_text.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exreader/exr_vendor_aom.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exreader/exr_vendor_avif.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exreader/exr_vendor_expat.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exreader/exr_vendor_exr_crypto.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exreader/exr_vendor_exr_jpx.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exreader/exr_vendor_exr_lcms.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exreader/exr_vendor_freetype.lib ships a build-machine absolute path (C:\\Users\\, D:\\a\\)",
+        "lib/exreader/exr_vendor_miniz.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exreader/exr_vendor_sharpyuv.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exreader/exr_vendor_tiff.lib ships a build-machine absolute path (C:\\Users\\, D:\\a\\)",
+        "lib/exreader/exr_vendor_webp.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exreader/exr_vendor_webpdemux.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exreader/exr_vendor_zlibstatic.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/libsharpyuv.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/libwebp.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/libwebpdecoder.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/libwebpdemux.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/libwebpmux.lib ships a build-machine absolute path (D:\\a\\)"
+      ],
+      "release_ready": false,
+      "granted": true
+    },
+    {
+      "platform": "windows",
+      "profile": "reading-library",
+      "job_id": 120834897238,
+      "job_source_sha": "f3b5c8f65d6a1d7db51364b897f81a995ce37c67",
+      "installed_files": 265,
+      "installed_bytes": 29084761,
+      "archives": 23,
+      "symbol_edges": 43,
+      "dynamic_dependencies": 2,
+      "checks": 24,
+      "checks_passed": 21,
+      "identity": {
+        "version": "3.40.0",
+        "abi": 1,
+        "core_version": "3.39.0",
+        "config_version": "3.40.0"
+      },
+      "artifact": {
+        "id": 12555167866,
+        "name": "reader-distribution-inventory-windows-reading-library-40081161966-1",
+        "bytes": 12445680,
+        "digest": "sha256:474c5d8984d5af8df6bdf9daa0f43828a63d49c7d19c82fd47b8863aa0fb75cb",
+        "expires_at": "2027-01-22T09:14:23Z"
+      },
+      "producer_log_sha256": "2a4e156171b52fba0004e7079ca604c42cb2f6da47c03143dd3fb13f369182d3",
+      "sbom": {
+        "spdx_sha256": "88c0ac6fee078316fa04e95ec3c4e9a6ced7d642c93878c72caf7b7c17d8dfc4",
+        "cyclonedx_sha256": "1583c98311c2a59d356c5f6d5e065c60670e4945f25cd7d899f1c787cba9cd80"
+      },
+      "release_blockers": [
+        "docs/CONVERSION.md ships a build-machine absolute path (C:/Users/)",
+        "docs/WP7-SCRIPTS.md ships a build-machine absolute path (C:/Users/)",
+        "lib/aom.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exr_base.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exr_doc.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exr_formats.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exr_graphics.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exr_layout.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exr_library.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exr_pdf.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exr_render.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exr_text.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exreader/exr_vendor_aom.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exreader/exr_vendor_avif.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exreader/exr_vendor_expat.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exreader/exr_vendor_exr_crypto.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exreader/exr_vendor_exr_jpx.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exreader/exr_vendor_exr_lcms.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exreader/exr_vendor_exr_sqlite.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exreader/exr_vendor_freetype.lib ships a build-machine absolute path (C:\\Users\\, D:\\a\\)",
+        "lib/exreader/exr_vendor_miniz.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exreader/exr_vendor_sharpyuv.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exreader/exr_vendor_tiff.lib ships a build-machine absolute path (C:\\Users\\, D:\\a\\)",
+        "lib/exreader/exr_vendor_webp.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exreader/exr_vendor_webpdemux.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/exreader/exr_vendor_zlibstatic.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/libsharpyuv.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/libwebp.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/libwebpdecoder.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/libwebpdemux.lib ships a build-machine absolute path (D:\\a\\)",
+        "lib/libwebpmux.lib ships a build-machine absolute path (D:\\a\\)"
+      ],
+      "release_ready": false,
+      "granted": true
+    },
+    {
+      "platform": "macos",
+      "profile": "reading-core",
+      "job_id": 120834897292,
+      "job_source_sha": "f3b5c8f65d6a1d7db51364b897f81a995ce37c67",
+      "installed_files": 262,
+      "installed_bytes": 14859768,
+      "archives": 21,
+      "symbol_edges": 41,
+      "dynamic_dependencies": 1,
+      "checks": 24,
+      "checks_passed": 22,
+      "identity": {
+        "version": "3.40.0",
+        "abi": 1,
+        "core_version": "3.39.0",
+        "config_version": "3.40.0"
+      },
+      "artifact": {
+        "id": 12555516241,
+        "name": "reader-distribution-inventory-macos-reading-core-40081161966-1",
+        "bytes": 6343750,
+        "digest": "sha256:81e2b01d94cb61cec62f4c342cb8731f1887a0e74824cab0f55eca831857f9d6",
+        "expires_at": "2027-01-22T09:14:23Z"
+      },
+      "producer_log_sha256": "fcc142a3eabd03f37ec6492890433df8c72c9abc04bafa314b1f29a168dfb3b1",
+      "sbom": {
+        "spdx_sha256": "1ceefcdc6de512a0174d15315d2a8ab002de1148ba875da29a3fbf540e5445c6",
+        "cyclonedx_sha256": "2f381abc69c8b6c9cee2a44c5cbc86686019cc1b02677116a85f235f88cba808"
+      },
+      "release_blockers": [
+        "docs/CONVERSION.md ships a build-machine absolute path (C:/Users/)",
+        "docs/WP7-SCRIPTS.md ships a build-machine absolute path (C:/Users/)",
+        "lib/exreader/libexr_vendor_tiff.a ships a build-machine absolute path (/Users/runner/)",
+        "lib/pkgconfig/aom.pc ships a build-machine absolute path (/Users/runner/)",
+        "lib/pkgconfig/libsharpyuv.pc ships a build-machine absolute path (/Users/runner/)",
+        "lib/pkgconfig/libwebp.pc ships a build-machine absolute path (/Users/runner/)",
+        "lib/pkgconfig/libwebpdecoder.pc ships a build-machine absolute path (/Users/runner/)",
+        "lib/pkgconfig/libwebpdemux.pc ships a build-machine absolute path (/Users/runner/)",
+        "lib/pkgconfig/libwebpmux.pc ships a build-machine absolute path (/Users/runner/)"
+      ],
+      "release_ready": false,
+      "granted": true
+    },
+    {
+      "platform": "macos",
+      "profile": "reading-library",
+      "job_id": 120834897167,
+      "job_source_sha": "f3b5c8f65d6a1d7db51364b897f81a995ce37c67",
+      "installed_files": 265,
+      "installed_bytes": 16652242,
+      "archives": 23,
+      "symbol_edges": 46,
+      "dynamic_dependencies": 1,
+      "checks": 24,
+      "checks_passed": 22,
+      "identity": {
+        "version": "3.40.0",
+        "abi": 1,
+        "core_version": "3.39.0",
+        "config_version": "3.40.0"
+      },
+      "artifact": {
+        "id": 12554849898,
+        "name": "reader-distribution-inventory-macos-reading-library-40081161966-1",
+        "bytes": 7189370,
+        "digest": "sha256:3a68e544fbc306044ef3d35e823fb0015abdfa7eafe0e68579c40e48a209d2be",
+        "expires_at": "2027-01-22T09:14:23Z"
+      },
+      "producer_log_sha256": "0947784010d2874efd3ea7cf060deb89c9cdd43d8ee183b18e6d4306a0a72107",
+      "sbom": {
+        "spdx_sha256": "8d6e704427b4ab9e1cca1d1d1a68621317e59d4aa2d2b866bf37269bd7de0dc0",
+        "cyclonedx_sha256": "79581762da0a52a71b6df9f1daff8f7eae11fe42a33abf1806a16e12e84b7b40"
+      },
+      "release_blockers": [
+        "docs/CONVERSION.md ships a build-machine absolute path (C:/Users/)",
+        "docs/WP7-SCRIPTS.md ships a build-machine absolute path (C:/Users/)",
+        "lib/exreader/libexr_vendor_tiff.a ships a build-machine absolute path (/Users/runner/)",
+        "lib/pkgconfig/aom.pc ships a build-machine absolute path (/Users/runner/)",
+        "lib/pkgconfig/libsharpyuv.pc ships a build-machine absolute path (/Users/runner/)",
+        "lib/pkgconfig/libwebp.pc ships a build-machine absolute path (/Users/runner/)",
+        "lib/pkgconfig/libwebpdecoder.pc ships a build-machine absolute path (/Users/runner/)",
+        "lib/pkgconfig/libwebpdemux.pc ships a build-machine absolute path (/Users/runner/)",
+        "lib/pkgconfig/libwebpmux.pc ships a build-machine absolute path (/Users/runner/)"
+      ],
+      "release_ready": false,
+      "granted": true
+    }
+  ],
+  "sbom_schemas": {
+    "spdx": "https://raw.githubusercontent.com/spdx/spdx-spec/v2.3/schemas/spdx-schema.json",
+    "cyclonedx": "https://raw.githubusercontent.com/CycloneDX/specification/master/schema/bom-1.5.schema.json",
+    "cyclonedx_auxiliary": [
+      "spdx.schema.json",
+      "jsf-0.82.schema.json"
+    ],
+    "validation": "jsonschema 4.x validate against the published schemas in the report job"
+  },
+  "licence_record": {
+    "reused": "tools/check_reading_licenses.py (COMPONENTS) and the shared stage check",
+    "registered_components": 22,
+    "active_components": {
+      "reading-core": 19,
+      "reading-library": 20
+    },
+    "registered_materials": {
+      "reading-core": 25,
+      "reading-library": 26
+    },
+    "installed_license_files": {
+      "reading-core": 21,
+      "reading-library": 22
+    },
+    "checker_release_ready_on_all_six": true
+  },
+  "static_dependency": {
+    "method": "ar t / lib /list members, nm / dumpbin /symbols symbol sets, undefined-to-defined intersection, and the real Ninja link command of the installed-API probe",
+    "edges": {
+      "reading-core": [
+        41,
+        41,
+        39
+      ],
+      "reading-library": [
+        46,
+        46,
+        43
+      ]
+    },
+    "order": [
+      "linux",
+      "macos",
+      "windows"
+    ],
+    "unreferenced_archives": [],
+    "foreign_library_copies": 6,
+    "foreign_library_copies_note": "lib/libaom, lib/libsharpyuv, lib/libwebp, lib/libwebpdecoder, lib/libwebpdemux, lib/libwebpmux installed under their upstream names next to lib/exreader/libexr_vendor_*"
+  },
+  "exclusions_verified": {
+    "audio_and_gpl_options": "EXR_ENABLE_AUDIO, EXR_ENABLE_MP3, EXR_ENABLE_AAC all OFF; no audio layer, archive or licence in any install",
+    "webview": "no web engine file, exported target or native dependency",
+    "test_credentials": "no credential module target or material",
+    "build_machine_paths": "none in either generated SBOM; 9/9/29/31/9/9 installed files still carry one"
+  },
+  "release_blockers": {
+    "docs": [
+      "docs/CONVERSION.md",
+      "docs/WP7-SCRIPTS.md"
+    ],
+    "linux_macos_metadata": [
+      "lib/pkgconfig/aom.pc",
+      "lib/pkgconfig/libsharpyuv.pc",
+      "lib/pkgconfig/libwebp.pc",
+      "lib/pkgconfig/libwebpdecoder.pc",
+      "lib/pkgconfig/libwebpdemux.pc",
+      "lib/pkgconfig/libwebpmux.pc"
+    ],
+    "archives": {
+      "linux": [
+        "lib/exreader/libexr_vendor_tiff.a"
+      ],
+      "macos": [
+        "lib/exreader/libexr_vendor_tiff.a"
+      ],
+      "windows_all": "every installed .lib: 21 core, 23 library"
+    },
+    "counts": {
+      "linux/reading-core": 9,
+      "linux/reading-library": 9,
+      "windows/reading-core": 29,
+      "windows/reading-library": 31,
+      "macos/reading-core": 9,
+      "macos/reading-library": 9
+    },
+    "owner": "root: the files are a shared document, the fetched projects' install rules and the protected build configuration"
+  },
+  "not_covered": [
+    "Android, iOS and Apple native host packaging: separate owners, not built or packed here",
+    "GTK/Linux, Windows and macOS native host bundles and their Noto Sans CJK host font",
+    "Audio builds: EXR_ENABLE_AUDIO and the MP3/AAC codecs are excluded from the reading presets",
+    "PDF editing, text index, shared compatibility library, JNI bindings, tools and test binaries",
+    "Offline installer, code signing, notarization, tag, Release and store publication",
+    "Legal review: the registered licence identifiers are inventoried, not adjudicated"
+  ],
+  "original_failures": [
+    {
+      "run_id": 40076871953,
+      "attempt": 1,
+      "result": "failure",
+      "reason": "protocol: first-party LICENSE and THIRD_PARTY_NOTICES.md copies were compared as license-directory material"
+    },
+    {
+      "run_id": 40077076410,
+      "attempt": 1,
+      "result": "failure",
+      "reason": "protocol: the per-component existence check still looked only at license-directory material"
+    },
+    {
+      "run_id": 40077307329,
+      "attempt": 1,
+      "result": "failure",
+      "reason": "protocol: five fixtures mutated the install without keeping a file record, and SBOM structures were reported without reasons"
+    },
+    {
+      "run_id": 40077611836,
+      "attempt": 1,
+      "result": "failure",
+      "reason": "protocol: the dumpbin dependency block ended on its blank separator line"
+    },
+    {
+      "run_id": 40077966666,
+      "attempt": 1,
+      "result": "failure",
+      "reason": "protocol: COFF section symbols were parsed as linkable symbols"
+    },
+    {
+      "run_id": 40078277226,
+      "attempt": 1,
+      "result": "failure",
+      "reason": "installs: the probe never prepended the install prefix; the Windows compiler environment used an unbraced env form"
+    },
+    {
+      "run_id": 40078844006,
+      "attempt": 1,
+      "result": "failure",
+      "reason": "installs: identity, notice scope and symbol precedence defects in this package's own checks"
+    },
+    {
+      "run_id": 40079459218,
+      "attempt": 1,
+      "result": "failure",
+      "reason": "one install: the layout listing closed the pipeline early under pipefail; five other installs were green"
+    },
+    {
+      "run_id": 40079877588,
+      "attempt": 1,
+      "result": "success",
+      "reason": "superseded: accepted=true on all six installs before upstream-named library copies were recorded"
+    },
+    {
+      "run_id": 40080548788,
+      "attempt": 1,
+      "result": "failure",
+      "reason": "installs: the archive scan unpacked four lists but initialised three"
+    }
+  ],
+  "reproduction": [
+    "bash tests/reader_distribution_inventory/check_scope.sh",
+    "python3 tests/reader_distribution_inventory/check_inventory.py",
+    "python3 tools/check_reading_licenses.py <profile> build/<profile> build/<profile>/stage build/<profile>/licenses.json --require-release-ready",
+    "python3 tests/reader_distribution_inventory/inventory.py --profile <profile> --platform <platform> --runner-os <host> --build build/<profile> --stage build/<profile>/stage --licenses build/<profile>/licenses.json --consumer build/reading-consumer/reading-document --probe build/probe/probe --probe-build build/probe --output build/<profile>/inventory",
+    "python3 tests/reader_distribution_inventory/aggregate.py --downloads build/downloads --output build/aggregate --spdx-schema <schema> --cdx-schema <schema> --run-id <run> --attempt 1 --source-sha <sha>"
+  ]
+}
