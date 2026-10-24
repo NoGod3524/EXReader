@@ -50,8 +50,9 @@ Linux 77+59+33、Windows 76+59+33，两个同源工件未过期且 digest 与上
 各通过 32 项新增检查；PR20 的具型命令在源码 `32c31768`、run `40042300722`
 两平台各通过 33 项新增检查，并保留前序检查。产品 metadata、修订与 outbox 在
 同一产品库事务提交，SDK 数据库独立。宿主 UI 和移动调用仍需各自接入验证。
-当前正建立 [产品预集成](READER-PRODUCT-INTEGRATION.md)，复验 Windows／Linux
-书架与共享同步模块的同源共存；尚无六目标同步闭环或平台安全凭据 UI 的验收。
+[产品预集成](READER-PRODUCT-INTEGRATION.md)已在共同源码 `bad72dd6`、run
+`40045484528` 通过 5/5 作业和云端严格汇总，确认 Windows／Linux 书架与共享同步
+模块的同源共存；尚无六目标同步闭环或平台安全凭据 UI 的验收。
 详见[桌面有界书架](READER-DESKTOP-SHELF.md)。
 Android 产品库从完整 SQL 生成资产，在现有 owner worker 上打开独立
 `reader-catalog.db`，拒绝改写 SDK 或未知数据库。导入映射和有界书架的独立结果见上方。
