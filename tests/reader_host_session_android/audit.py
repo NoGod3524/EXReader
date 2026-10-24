@@ -16,6 +16,17 @@ assert os.environ.get('GITHUB_ACTIONS')=='true'
 p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True)
 ndk=Path(os.environ['ANDROID_HOME'])/'ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin'
 def tool(name,*args):return subprocess.check_output([str(ndk/name),*map(str,args)],text=True)
+cache_path=Path('build/session-android/sdk/CMakeCache.txt');cache_text=cache_path.read_text()
+sdk_options={}
+for name in ('EXR_ENABLE_AUDIO','EXR_ENABLE_MP3','EXR_ENABLE_AAC','EXR_BUILD_SHARED_COMPAT','EXR_BUILD_JNI'):
+    values=re.findall(r'^'+name+r':BOOL=(ON|OFF)$',cache_text,re.M);assert len(values)==1,(name,values)
+    sdk_options[name]=values[0]
+assert sdk_options['EXR_ENABLE_AUDIO']=='ON' and sdk_options['EXR_ENABLE_AAC']=='OFF'
+installed_runtimes={}
+for name in ('libexreader.so','libexreader_jni.so'):
+    runtime=Path('build/session-android/sdk-stage/lib')/name;dynamic=tool('llvm-readelf','-d',runtime)
+    (a.output/('installed-'+name+'-dynamic.txt')).write_text(dynamic)
+    installed_runtimes[name]={'bytes':runtime.stat().st_size,'sha256':hashlib.sha256(runtime.read_bytes()).hexdigest(),'needed':re.findall(r'\(NEEDED\).*\[([^\]]+)\]',dynamic)}
 archive=Path('build/session-android/sideload-stage/lib/libexr_sideload.a')
 undefined=tool('llvm-nm','-u',archive);defined=tool('llvm-nm','--defined-only',archive)
 (a.output/'installed-sideload-undefined.txt').write_text(undefined);(a.output/'installed-sideload-defined.txt').write_text(defined)
@@ -29,12 +40,14 @@ for variant in ('Debug','Release'):
         system_directory=ndk.parent/'sysroot/usr/lib/x86_64-linux-android/26'
         system_names={path.name for path in system_directory.glob('*.so')}
         assert system_names and {'libc.so','libdl.so','libm.so'}<=system_names,system_directory
-        runtime_dependencies={}
+        runtime_dependencies={};runtime_files={}
         for name in sorted(runtime_names):
             runtime=a.output/(lower+'-runtime-'+name);runtime.write_bytes(package.read('lib/x86_64/'+name))
-            needed=re.findall(r'\(NEEDED\).*\[([^\]]+)\]',tool('llvm-readelf','-d',runtime))
+            dynamic=tool('llvm-readelf','-d',runtime);Path(str(runtime)+'-dynamic.txt').write_text(dynamic)
+            needed=re.findall(r'\(NEEDED\).*\[([^\]]+)\]',dynamic)
             assert not set(needed)-runtime_names-system_names,(variant,name,needed,runtime_names)
             runtime_dependencies[name]=needed
+            runtime_files[name]={'bytes':runtime.stat().st_size,'sha256':hashlib.sha256(runtime.read_bytes()).hexdigest()}
         assert 'libexreader_jni.so' in runtime_names and runtime_dependencies['libexreader_jni.so'].count('libexreader.so')==1
         jni=a.output/(lower+'-runtime-libexreader_jni.so')
         installed_jni_id=re.search(r'Build ID:\s*(\w+)',tool('llvm-readelf','-n',Path('build/session-android/sdk-stage/lib/libexreader_jni.so')))
@@ -76,5 +89,6 @@ for variant in ('Debug','Release'):
     checks[-1]['apk_sha256']=hashlib.sha256(apk.read_bytes()).hexdigest();checks[-1]['font_assets']=font_identity
     checks[-1]['jni_build_id']=packaged_jni_id[1];checks[-1]['jni_sha256']=hashlib.sha256(jni.read_bytes()).hexdigest();checks[-1]['runtime_dependencies']=runtime_dependencies
     checks[-1]['system_dependency_basis']=str(system_directory);checks[-1]['system_runtime_names']=sorted(system_names)
-result={**{key:os.environ[value] for key,value in [('source_sha','GITHUB_SHA'),('run_id','GITHUB_RUN_ID'),('attempt','GITHUB_RUN_ATTEMPT')]},'accepted':True,'checks':checks,'installed_sideload_sha256':hashlib.sha256(archive.read_bytes()).hexdigest(),'no_static_sdk_or_sqlite_in_host':True,'product_provider_isolated':True}
+    checks[-1]['runtime_files']=runtime_files
+result={**{key:os.environ[value] for key,value in [('source_sha','GITHUB_SHA'),('run_id','GITHUB_RUN_ID'),('attempt','GITHUB_RUN_ATTEMPT')]},'accepted':True,'checks':checks,'installed_sideload_sha256':hashlib.sha256(archive.read_bytes()).hexdigest(),'no_static_sdk_or_sqlite_in_host':True,'product_provider_isolated':True,'sdk_configuration':{'profile':'formal Android shared SDK configuration','desktop_reading_profile':False,'cache_sha256':hashlib.sha256(cache_path.read_bytes()).hexdigest(),'options':sdk_options,'installed_runtimes':installed_runtimes}}
 (a.output/'result.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result),flush=True)

@@ -142,6 +142,7 @@ jobs:
             build/webdav-android/fixture/public/
             build/webdav-android/fixture/requests.json
             build/session-android/sdk-stage/
+            build/session-android/sdk/CMakeCache.txt
             build/session-android/sideload-stage/
             tests/reader_session_android/android/session/build/outputs/apk/
           if-no-files-found: error
