@@ -1,0 +1,16 @@
+{
+  "accepted": false,
+  "status": "candidate_unexecuted",
+  "sdk_source": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "sdk_abi": 1,
+  "base": "1ad762a0b68372c56b712d0129be8129d38b651f",
+  "reading_records_scope_accepted": false,
+  "complete_product": false,
+  "performance_accepted": false,
+  "runs": [],
+  "retained_failures": [
+    "light_foreground_and_background_change_page_pixels",
+    "dark_theme_and_palette_change_page_pixels"
+  ]
+}

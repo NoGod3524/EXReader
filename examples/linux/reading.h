@@ -2,6 +2,10 @@
 #ifndef EXR_LINUX_READING_H
 #define EXR_LINUX_READING_H
 #include <exreader.h>
+#ifdef EXR_READER_READING_RECORDS
+#include <reader_annotation_view.h>
+#include <reader_reading_commands.h>
+#endif
 #ifdef EXR_READER_PREFERENCES
 #include <reader_preferences.h>
 #endif
@@ -22,7 +26,9 @@ typedef enum { READER_SHELF, READER_OPEN, READER_IMPORT, READER_NEXT,
   READER_RECEIVE_CONFLICTS_BEGIN, READER_RECEIVE_CONFLICTS_NEXT, READER_SETTINGS,
   READER_SEARCH_BEGIN, READER_SEARCH_NEXT, READER_SEARCH_CHOOSE, READER_SEARCH_CLOSE,
   READER_NAVIGATION_BEGIN, READER_NAVIGATION_ROWS, READER_NAVIGATION_CHOOSE,
-  READER_NAVIGATION_CLOSE } reader_action;
+  READER_NAVIGATION_CLOSE, READER_RECORDS_LIST, READER_RECORDS_SAVE,
+  READER_RECORDS_RETRY, READER_RECORDS_DISCARD, READER_RECORDS_HISTORY,
+  READER_RECORDS_JUMP } reader_action;
 typedef struct { int cancelled,current_bytes,total_bytes; } reader_account_control;
 #ifdef EXR_READER_NAVIGATION
 typedef struct { int request,phase,polls;void (*changed)(void *);void *context; } reader_navigation_control;
@@ -40,6 +46,11 @@ typedef struct {
   size_t page;
   const char *query,*cursor_title,*cursor_key,*anchor_key;
   int direction;
+#ifdef EXR_READER_READING_RECORDS
+  uint64_t records_token;
+  const char *records_after,*records_id,*records_head,*records_sha,*records_version,*records_text;
+  int records_kind,records_operation,records_progress;
+#endif
   const char *metadata_key,*metadata_title,*metadata_author;
   uint64_t metadata_token;
   int metadata_favorite;
@@ -125,6 +136,16 @@ typedef struct {
   size_t receive_reading_rows,receive_reading_found,receive_reading_unresolved;
   int receive_reading_more;
   char *receive_resolutions;
+#ifdef EXR_READER_READING_RECORDS
+  int has_records,records_pending,records_pending_error,records_created,records_code,records_match;
+  int records_progress_state,records_progress_deleted,records_history_complete;
+  size_t records_progress_revisions,records_progress_heads,records_progress_missing,records_progress_foreign;
+  uint64_t records_token;
+  char records_key[73],records_revision[33],records_annotation[33],records_progress_head[33],records_progress_sha[65];
+  reader_av_page records_page;
+  char **records_versions,**records_version_labels;
+  size_t records_version_count;
+#endif
 #ifdef EXR_READER_NAVIGATION
   int has_navigation,navigation_code,navigation_sdk_code,navigation_match,navigation_verified;
   int navigation_kind,navigation_author_outline;
