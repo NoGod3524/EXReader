@@ -27,7 +27,7 @@ jobs:
       - name: Read bounded device report and phase originals on Actions only
         run: |
           python3 - <<'PY'
-          import json
+          import hashlib, json, re, subprocess, zipfile
           from pathlib import Path
           root=Path('preserved')
           for suffix in ('owner-android/device-report.json','owner-android/native/inventory.json',
@@ -43,6 +43,36 @@ jobs:
                       value=json.loads(raw)
                       print(json.dumps({'path':suffix,'keys':list(value),'source':value.get('source_sha'),'failed':value.get('failed')}))
                   except Exception as error:print(json.dumps({'path':suffix,'parse_error':str(error)}))
+          proof=next(p for p in root.rglob('inventory.json') if p.parent.name=='native').parent
+          inventory=json.loads((proof/'inventory.json').read_text())
+          for name,value in inventory['files'].items():
+              raw=(proof/name).read_bytes()
+              assert len(raw)==value['bytes'] and hashlib.sha256(raw).hexdigest()==value['sha256'],name
+          for variant in ('debug','release'):
+              symbols=(proof/(variant+'.symbols.txt')).read_text()
+              mapping=(proof/(variant+'.map')).read_text()
+              dynamic=(proof/(variant+'.dynamic.txt')).read_text()
+              summary={'variant':variant,'sqlite_definitions':len(re.findall(r'\bsqlite3_open_v2\s*$',symbols,re.M)),
+                       'installed_provider_map':'libreader_catalog_sqlite.a' in mapping and 'sqlite3_open_v2' in mapping,
+                       'sdk_vendor':'exr_vendor_exr_sqlite' in symbols,
+                       'foreign_dependency':bool(re.search(r'NEEDED.*(?:sqlite|exreader)',dynamic,re.I)),
+                       'fixture_functions':'Java_org_exreader_host_ProductFixture_' in symbols}
+              print(json.dumps(summary))
+              assert summary['sqlite_definitions']==1 and summary['installed_provider_map'] and not summary['sdk_vendor'] and not summary['foreign_dependency']
+              assert summary['fixture_functions']==(variant=='debug')
+          apks=[p for p in root.rglob('app-debug.apk') if p.as_posix().endswith('examples/android/app/build/outputs/apk/debug/app-debug.apk')]
+          builds=[p for p in root.rglob('build.json') if p.as_posix().endswith('android-host/build.json')]
+          assert len(apks)==len(builds)==1
+          expected=json.loads(builds[0].read_text())['artifacts']['app-debug.apk']
+          raw=apks[0].read_bytes();assert len(raw)==expected['size'] and hashlib.sha256(raw).hexdigest()==expected['sha256']
+          packaged=Path('packaged-product.so')
+          with zipfile.ZipFile(apks[0]) as archive:packaged.write_bytes(archive.read('lib/x86_64/libexreader_product.so'))
+          ids=[]
+          for path in (packaged,proof/'debug.so'):
+              note=subprocess.check_output(['readelf','-n',str(path)],text=True)
+              ids.append(re.search(r'Build ID:\s*([0-9a-f]+)',note)[1])
+          assert ids[0]==ids[1]
+          print(json.dumps({'same_application_apk_hash':True,'packaged_product_matches_link_proof':True,'build_id':ids[0]}))
           PY
   android-shelf:
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.diagnostics_run == '' }}
@@ -142,9 +172,14 @@ jobs:
             cp build/shelf-android/device-abi.txt build/owner-android/device-abi.txt
             gradle -p examples/android --no-daemon --stacktrace :app:connectedDebugAndroidTest -PexrSdk=$GITHUB_WORKSPACE/stage/android-x86_64 -PexrTestRunner=org.exreader.host.ProductOwnerTest -Pandroid.testInstrumentationRunnerArguments.class=org.exreader.host.ProductOwnerTest -Pandroid.testInstrumentationRunnerArguments.source_sha=$GITHUB_SHA -Pandroid.testInstrumentationRunnerArguments.run_id=$GITHUB_RUN_ID -Pandroid.testInstrumentationRunnerArguments.attempt=$GITHUB_RUN_ATTEMPT
             cp -r examples/android/app/build/outputs/androidTest-results/connected build/owner-android/owner-reports
+            mkdir -p build/owner-android/apks
+            cp examples/android/app/build/outputs/apk/debug/app-debug.apk build/owner-android/apks/
+            cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/owner-android/apks/
+            adb install -r -t build/owner-android/apks/app-debug.apk
+            adb install -r -t build/owner-android/apks/app-debug-androidTest.apk
+            adb shell am instrument -w -r -e source_sha $GITHUB_SHA -e run_id $GITHUB_RUN_ID -e attempt $GITHUB_RUN_ATTEMPT org.exreader.host.test/org.exreader.host.ProductOwnerTest > build/owner-android/owner-instrumentation.txt
             adb exec-out run-as org.exreader.host cat files/product-owner-report.json > build/owner-android/device-report.json
-            adb install -r -t examples/android/app/build/outputs/apk/debug/app-debug.apk
-            adb install -r -t examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            test -s build/owner-android/device-report.json
             adb shell am instrument -w -r -e phase seed-before org.exreader.host.test/org.exreader.host.ProductOwnerTest > build/owner-android/seed-before.txt
             adb exec-out run-as org.exreader.host cat files/owner-kill-before/witness.txt > build/owner-android/witness-before.txt
             adb shell am instrument -w -r -e phase recover-before org.exreader.host.test/org.exreader.host.ProductOwnerTest > build/owner-android/recover-before.txt

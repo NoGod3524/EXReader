@@ -37,6 +37,8 @@ def main():
         edit(device,'wrong_native_runtime_provider',lambda v:v['provider'].__setitem__(3,'/system/lib64/libsqlite.so'))
         edit(device,'wrong_actual_sqlite_source',lambda v:v['provider'].__setitem__(1,'wrong'))
         edit(device,'missing_provider_option',lambda v:v['provider'].__setitem__(4,''))
+        alter(root/'owner-instrumentation.txt',lambda raw:raw.replace(b'INSTRUMENTATION_STATUS_CODE: 0',b'INSTRUMENTATION_STATUS_CODE: -3',1),'skipped_manual_owner_case')
+        alter(root/'apks/app-debug.apk',lambda raw:raw+b'altered APK','different_reinstalled_application')
         def skipped(raw):
             tree=ET.fromstring(raw);ET.SubElement(next(tree.iter('testcase')),'skipped');return ET.tostring(tree)
         xml=next((root/'owner-reports').rglob('*.xml'));alter(xml,skipped,'skipped_owner_xml')
