@@ -21,7 +21,7 @@ SDK固定为`9854061be331fe603a1822d9b2b36ee357154927`，SDK3.40.0／ABI1／sche
 当前阶段交付导入模块和产品存储基础：c2c75f99的云端run39980923147四作业已通过，
 详见[模块记录](validation/reader-modules-c2c75f9.json)。尚未交付新的产品UI或跨设备同步客户端。
 
-### 后续独立候选进度（未合并）
+### 后续独立候选进度（未合入默认分支）
 
 以上是默认分支起点，不等同于产品分支进度。后续以可独立审阅的草稿 PR 交付：
 PR4 模块基础、PR5/6 平台产品目录、PR8/12 导入映射、PR10 桌面目录桥接、
@@ -63,6 +63,27 @@ WebDAV [实施契约](WEBDAV-PROTOCOL.md)的网络与两端协议结果按各包
 Apple owner 队列负责独立 `reader-catalog.db` 的生命周期，原生包、UI、Model 与
 Bounded 消费者使用同一完整 SQL。目录和导入映射的独立结果见
 [Apple 导入映射](READER-IMPORT-MAPPING-APPLE.md)；新的有界书架尚未纳入本候选。
+
+### 最新产品候选接续
+
+共同产品metadata候选 `ae584ccf` 已通过Windows/Linux严格预集成及Android原生owner
+同源复验。其后的模块和界面按各自固定源码分别验收：
+
+- [真实WebDAV互操作](READER-WEBDAV-COMPAT.md)：Apache与Nextcloud各33项，
+  同源原生Windows/Linux回归通过，修复2000条真实目录的XML容量与百分号路径兼容。
+- [账号后台会话](READER-SYNC-SESSION.md)：Windows/Linux各20项，
+  真实HTTPS、256分片、取消重试和账号独占；尚未接入账号UI或SDK原件导出。
+- [阅读状态v2](READER-READING-V2.md)：`818e3629` 的Windows/Linux协议、
+  旧端拒收及SDK往返五作业同源严格通过；进度和点书签进入产品修订。
+  按书标注keyset分页候选 `4e59a0b8` 另行复验。
+- [GTK收藏整理](READER-GTK-COLLECTIONS.md)：`b9124fbd` 的27项新UI与全部保留
+  回归同次通过；已正常合入工作候选，支持子书架、标签、系列及显式恢复。
+- 平台凭据独立交付 `e2247deb`、run `40057087875` 五平台成功；
+  Windows不可用、iOS锁屏、Android Keystore故障保留未验证范围，严格证据复核另行接续。
+
+Apple有界书架与Android收藏整理仍等各自完整云端出口。随后需把已验收包合到同一源码
+复验，并完成SDK原件导出、下载导入与metadata投影调度、凭据/账号UI、真实阅读状态
+WebDAV往返及四套原生壳的列表/导航接入。以上独立结果不转移到尚未测试的组合源码。
 
 ## 并行工作包
 
