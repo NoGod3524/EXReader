@@ -154,6 +154,7 @@ def verify_combined(key, payload, inventory, licenses_doc, run, components=None,
     contract.need(contract.symbol_edges(symbols, symbols) == static.get('edges'), 'combined_edges')
     by_path = {record['path']: record for record in files}
     archives = static.get('archives') or []
+    contract.need({entry['path'] for entry in archives} == set(symbols), 'combined_archive_coverage')
     for entry in archives:
         record = by_path.get(entry['path'])
         contract.need(record is not None and record['sha256'] == entry['sha256']
@@ -164,7 +165,6 @@ def verify_combined(key, payload, inventory, licenses_doc, run, components=None,
                       'combined_archive_defined')
         contract.need(contract.text_digest(summary['undefined']) == entry['undefined_sha256'],
                       'combined_archive_undefined')
-    contract.need({entry['path'] for entry in archives} == set(symbols), 'combined_archive_coverage')
     sdk_expected = sorted(record['path'] for record in files
                           if re.fullmatch(r'lib/(?:lib)?exr_.+[.](?:a|lib)', record['path']))
     contract.need(sorted(static.get('sdk_archives') or []) == sdk_expected, 'combined_sdk_archives')
@@ -208,10 +208,10 @@ def verify_combined(key, payload, inventory, licenses_doc, run, components=None,
             contract.need(expected_bundled['material'] in index,
                           'combined_package_bundled_material')
         link = section.get('link') or {}
-        contract.need(bool(link.get('record')), 'combined_link_missing')
-        contract.need(any(record == link['record'] for record in records), 'combined_link_record')
+        contract.need(bool(link.get('raw_output_path')), 'combined_link_missing')
+        contract.need(any(record == link for record in records), 'combined_link_record')
         tokens = [entry['name'] for entry in contract.parse_entries(
-            'ninja-link', payload[link['record']['raw_output_path']].decode('utf-8'))]
+            'ninja-link', payload[link['raw_output_path']].decode('utf-8'))]
         evidence = packages.link_evidence(tokens, archive_names, package['system'][key])
         contract.need(evidence == section.get('link_evidence'), 'combined_link_evidence')
         contract.need(not evidence['expected_missing'], 'combined_link_expected')
