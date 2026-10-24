@@ -17,7 +17,7 @@ set_target_properties(search-c-consumer PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(search-c-consumer PRIVATE EXReaderSearch::reader_search)
 add_executable(search-probe probe.cpp peak.c)
 target_link_libraries(search-probe PRIVATE EXReaderSearch::reader_search EXReaderReadingState::reader_reading_state
-  EXReaderProductCatalog::reader_catalog EXReaderProductCatalog::reader_catalog_sqlite)
+  EXReaderProductCatalog::reader_catalog EXReaderProductCatalog::reader_catalog_sqlite Threads::Threads)
 if(WIN32)
   target_link_libraries(search-probe PRIVATE psapi)
 endif()
