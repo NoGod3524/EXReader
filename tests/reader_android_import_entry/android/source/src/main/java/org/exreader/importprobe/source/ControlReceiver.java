@@ -23,8 +23,7 @@ public final class ControlReceiver extends BroadcastReceiver {
                 context.revokeUriPermission(target, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                 try (java.io.FileOutputStream out = new java.io.FileOutputStream(new File(context.getFilesDir(), "revoke.log"), true)) {
                     out.write(("revoked " + target + " check="
-                            + context.checkUriPermission(target, -1, -1, Intent.FLAG_GRANT_READ_URI_PERMISSION) + "
-").getBytes());
+                            + context.checkUriPermission(target, -1, -1, Intent.FLAG_GRANT_READ_URI_PERMISSION) + "\n").getBytes());
                 } catch (java.io.IOException ignored) { }
                 break;
             case "reset-log":
