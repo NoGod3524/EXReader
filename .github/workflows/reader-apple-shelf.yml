@@ -179,8 +179,45 @@ jobs:
           python3 tests/apple_host/account/collect_account_ui.py --platform "$platform" \
             --xcresult "build/apple-shelf-ui/account/$platform.xcresult" --app "$app" --container "$container" \
             --output build/apple-shelf-ui/account/evidence
-      - name: Preserve raw application layout events in focused runs
-        if: always() && inputs.scope == 'recovery'
+      - name: Verify production reader semantics and real compact-layout actions
+        if: inputs.scope != 'recovery' && steps.account_ui.outcome == 'success'
+        id: production_access
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          platform='${{ matrix.platform }}'
+          scheme=EXReaderHost-iOS
+          suite=EXReaderHostUITests-iOS
+          sdk="$PWD/stage/iphonesimulator"
+          signing=NO
+          if test "$platform" = macos; then scheme=EXReaderHost-macOS; suite=EXReaderHostUITests-macOS; sdk="$PWD/stage/macos"; signing=YES; fi
+          destination=$(sed -n '1p' build/apple-shelf-ui/destination.txt)
+          udid=$(sed -n '2p' build/apple-shelf-ui/destination.txt)
+          mkdir -p build/apple-shelf-ui/accessibility
+          ruby tests/apple_host/make_xcodeproj.rb build/apple-access-project build/apple-resources tests/apple_host/accessibility/ui
+          if test "$platform" != macos; then
+            xcrun simctl ui "$udid" content_size large
+            trap 'xcrun simctl ui "$udid" content_size large >/dev/null 2>&1 || true' EXIT
+          fi
+          for part in semantics layout; do
+            testcase=test01ProductionBodyNamesAndActualEdgeTap
+            if test "$part" = layout; then
+              testcase=test02CompactReaderActualTurnFontAndNotes
+              if test "$platform" != macos; then xcrun simctl ui "$udid" content_size accessibility-extra-extra-extra-large; fi
+            fi
+            xcodebuild test -project build/apple-access-project/EXReaderHost.xcodeproj -scheme "$scheme" \
+              -destination "$destination" -derivedDataPath build/AccessDerivedData \
+              -resultBundlePath "build/apple-shelf-ui/accessibility/$part.xcresult" -parallel-testing-enabled NO \
+              "-only-testing:$suite/ReaderAccessUITests/$testcase" \
+              -test-timeouts-enabled YES -default-test-execution-time-allowance 180 -maximum-test-execution-time-allowance 300 \
+              EXR_SDK_DIR="$sdk" CODE_SIGNING_ALLOWED="$signing" 2>&1 | tee "build/apple-shelf-ui/accessibility/$part-xcodebuild.log"
+          done
+          app=build/AccessDerivedData/Build/Products/Debug-iphonesimulator/EXReaderHost.app
+          if test "$platform" = macos; then app=build/AccessDerivedData/Build/Products/Debug/EXReaderHost.app; fi
+          python3 tests/apple_host/accessibility/collect_access_ui.py --platform "$platform" \
+            --root build/apple-shelf-ui/accessibility --app "$app" --output build/apple-shelf-ui/accessibility/evidence
+      - name: Preserve raw native layout observations
+        if: always()
         id: layout_trace
         continue-on-error: true
         run: |
@@ -211,7 +248,7 @@ jobs:
       - name: Retain actual executable provider symbols and link maps
         if: always()
         run: |
-          for target in ShelfDerivedData AccountDerivedData; do
+          for target in ShelfDerivedData AccountDerivedData AccessDerivedData; do
             mkdir -p "build/apple-shelf-ui/product-provider/$target"
             if test -d "build/$target/Build/Products"; then
               find "build/$target/Build/Products" -type f \( -name '*.link.map*' -o -name product-link.json \) -exec cp '{}' "build/apple-shelf-ui/product-provider/$target/" \;
@@ -223,7 +260,7 @@ jobs:
           name: apple-shelf-ui-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/apple-shelf-ui/
           if-no-files-found: error
-      - if: always() && (steps.ui.outcome != 'success' || (inputs.scope == 'recovery' && steps.layout_trace.outcome != 'success') || (inputs.scope != 'recovery' && (steps.evidence.outcome != 'success' || steps.account_ui.outcome != 'success')))
+      - if: always() && (steps.ui.outcome != 'success' || (inputs.scope == 'recovery' && steps.layout_trace.outcome != 'success') || (inputs.scope != 'recovery' && (steps.evidence.outcome != 'success' || steps.account_ui.outcome != 'success' || steps.production_access.outcome != 'success')))
         run: exit 1
 
   summary:
@@ -270,6 +307,13 @@ jobs:
               assert str(row['run_id']) == run and str(row['attempt']) == attempt
               assert (row['cases'], row['named_steps'], row['attachments'], row['profiles']) == (3,14,6,4)
               assert row['password_ui_accepted'] is False and row['network_sync_ui_accepted'] is True
+          access_ui = [json.loads(path.read_text()) for path in Path('evidence').rglob('production-access-ui.json')]
+          assert len(access_ui) == 3 and {row['platform'] for row in access_ui} == {'macos','iphone','ipad'}
+          for row in access_ui:
+              assert row['accepted'] is True and row['source_sha'] == source
+              assert str(row['run_id']) == run and str(row['attempt']) == attempt
+              assert (row['cases'], row['named_observations'], row['attachments']) == (2,9,4)
+              assert row['voiceover_accepted'] is False and row['full_accessibility_accepted'] is False
           request = urllib.request.Request(f'https://api.github.com/repos/{os.environ["GITHUB_REPOSITORY"]}/actions/runs/{run}/artifacts?per_page=100',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
           data = json.load(urllib.request.urlopen(request))
           assert data['total_count'] == len(data['artifacts']) == 6
@@ -278,6 +322,7 @@ jobs:
               assert artifact['expired'] is False and artifact['size_in_bytes'] > 0 and re.fullmatch(r'sha256:[0-9a-f]{64}',artifact['digest'])
           result = {'accepted':True,'source_sha':source,'run_id':run,'attempt':attempt,'platforms':{row['platform']:{key:row[key] for key in ('ui_cases','named_observations','attachments','originals','measurements')} for row in reports},'artifacts':data['artifacts'],'sdk_startup_bounded':False,'hard_performance_budget_accepted':False,'problems':[]}
           result['account_ui'] = {row['platform']: row for row in account_ui}
+          result['production_access_ui'] = {row['platform']: row for row in access_ui}
           Path('shelf-summary.json').write_text(json.dumps(result,indent=2)+'\n')
           print(json.dumps(result))
           PY

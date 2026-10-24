@@ -7,6 +7,30 @@ import UIKit
 import AppKit
 #endif
 
+@ViewBuilder private func hostActionLabel(_ title: String) -> some View {
+#if os(iOS)
+    Text(title).frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())
+#else
+    Text(title)
+#endif
+}
+
+@ViewBuilder private func hostHeaderActionLabel(_ title: String, symbol: String, compact: Bool) -> some View {
+    if compact {
+        Image(systemName: symbol).font(.system(size: 20)).frame(width: 44, height: 44).contentShape(Rectangle())
+    } else { hostActionLabel(title) }
+}
+
+private func hostAnnounce(_ text: String) {
+    guard !text.isEmpty else { return }
+#if os(iOS)
+    UIAccessibility.post(notification: .announcement, argument: text)
+#else
+    NSAccessibility.post(element: NSApplication.shared, notification: .announcementRequested,
+                         userInfo: [.announcement: text, .priority: NSAccessibilityPriorityLevel.medium.rawValue])
+#endif
+}
+
 private func hostReadPasteboard() -> String {
 #if os(iOS)
     return UIPasteboard.general.string ?? ""
@@ -51,7 +75,9 @@ struct HostRootView: View {
                 ReaderScreen(model: model)
             }
         }
+#if os(macOS)
         .frame(minWidth: 380, minHeight: 460)
+#endif
         .onAppear {
             if !selfTesting { model.observeUITestScene(String(describing: phase)); model.start() }
         }
@@ -139,6 +165,18 @@ struct LibraryScreen: View {
     @StateObject private var shelf: HostShelf
     @FocusState private var searchFocused: Bool
     @Environment(\.scenePhase) private var phase
+#if os(iOS)
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+#endif
+
+    private var compactLibrary: Bool {
+#if os(iOS)
+        return verticalSizeClass == .compact || dynamicTypeSize.isAccessibilitySize
+#else
+        return false
+#endif
+    }
 
     init(model: HostReaderModel) {
         self.model = model
@@ -157,14 +195,26 @@ struct LibraryScreen: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("EXReader 书架").font(.title2).bold()
+                Text("EXReader 书架").font(compactLibrary ? .caption : .title2).bold().lineLimit(1)
                     .accessibilityIdentifier("library.title")
+                    .accessibilityAddTraits(.isHeader)
+#if EXR_APPLE_HOST_REVIEW
                     .accessibilityValue(Text(model.uiTestTrace))
+#endif
                 Spacer()
+                if compactLibrary {
+                    if let account = model.accountSession {
+                        HostSyncControls(session: account, preparing: model.syncPreparing, compact: true) { model.synchronizeAccount() }
+                    }
+                    Button { importing = true } label: { hostHeaderActionLabel("打开文件", symbol: "plus", compact: true) }
+                        .accessibilityLabel(Text("打开文件"))
+                        .accessibilityIdentifier("library.import.picker").disabled(model.busy)
+                }
                 if model.busy {
                     Text("处理中…").font(.caption)
                         .accessibilityIdentifier("library.busy")
-                    Button("取消") { model.cancelWork() }
+                    Button { model.cancelWork() } label: { hostHeaderActionLabel("取消", symbol: "xmark", compact: compactLibrary) }
+                        .accessibilityLabel(Text("取消"))
                         .accessibilityIdentifier("library.cancel")
                 }
             }
@@ -232,8 +282,9 @@ struct LibraryScreen: View {
                     .coordinateSpace(name: "catalog-shelf")
                     .background(ShelfGeometryProbe(shelf: shelf).id(shelf.geometryRevision))
                     .onPreferenceChange(ShelfGeometryKey.self) { geometry in
-                        shelf.observe(geometry.frames, size: geometry.size, revision: geometry.revision)
-                        if geometry.revision == shelf.geometryRevision, geometry.size.width > 0, geometry.size.height > 0,
+                        let complete = shelf.rows.allSatisfy { geometry.frames[$0.id] != nil }
+                        shelf.observe(geometry.frames, size: geometry.size, revision: geometry.revision, complete: complete)
+                        if complete, geometry.revision == shelf.geometryRevision, geometry.size.width > 0, geometry.size.height > 0,
                            let key = shelf.restoreKey, let frame = geometry.frames[key], !frame.isEmpty {
                             restoreShelf(proxy, revision: shelf.restoreRevision)
                         }
@@ -252,10 +303,11 @@ struct LibraryScreen: View {
             if !shelf.error.isEmpty {
                 Text(shelf.error).font(.caption).foregroundColor(.red).accessibilityIdentifier("library.shelf.error")
             }
-            if let account = model.accountSession {
+            if let account = model.accountSession, !compactLibrary {
                 HostSyncControls(session: account, preparing: model.syncPreparing) { model.synchronizeAccount() }
             }
 
+            if model.showsTestFixtures || !compactLibrary {
             VStack(spacing: 8) {
                 if model.showsTestFixtures {
                     HStack {
@@ -270,8 +322,10 @@ struct LibraryScreen: View {
                         Button("导入 PDF 示例") { model.importFixture("Sample", extension: "pdf") }
                             .accessibilityIdentifier("library.import.pdf")
                     }
-                    Button("打开文件…") { importing = true }
-                        .accessibilityIdentifier("library.import.picker")
+                    if !compactLibrary {
+                        Button("打开文件…") { importing = true }
+                            .accessibilityIdentifier("library.import.picker")
+                    }
                 }
                 if model.showsTestFixtures {
                     HStack {
@@ -289,6 +343,7 @@ struct LibraryScreen: View {
             .buttonStyle(.bordered)
             .disabled(model.busy)
             .padding(.vertical, 8)
+            }
 
             Text(model.statusText).font(.caption)
                 .accessibilityIdentifier("library.status")
@@ -308,7 +363,7 @@ struct LibraryScreen: View {
         }
         .onAppear { shelf.connect(model.loadShelf) }
         .onDisappear { shelf.save() }
-        .onChange(of: model.busy) { value in if !value { shelf.refresh() } }
+        .onChange(of: model.busy) { value in if !value { shelf.refresh(); hostAnnounce(model.statusText) } }
         .onChange(of: phase) { value in
             if value == .active { shelf.restoreViewport() } else { shelf.save() }
         }
@@ -327,19 +382,65 @@ struct ReaderScreen: View {
     @ObservedObject var model: HostReaderModel
     @State private var showSelection = false
     @State private var showNotes = false
+#if os(iOS)
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+#endif
+
+    private var compactTools: Bool {
+#if os(iOS)
+        return verticalSizeClass == .compact || dynamicTypeSize.isAccessibilitySize
+#else
+        return false
+#endif
+    }
+
+    private var pagingTools: some View {
+        HStack(spacing: 10) {
+            Button { model.firstPage() } label: { hostActionLabel("首页") }
+                .accessibilityIdentifier("reader.first")
+            Button { model.turn(-1) } label: { hostActionLabel("上一页") }
+                .accessibilityIdentifier("reader.previous")
+            Button { model.turn(1) } label: { hostActionLabel("下一页") }
+                .accessibilityIdentifier("reader.next")
+        }.buttonStyle(.bordered).disabled(model.busy)
+    }
+
+    private var fontTools: some View {
+        HStack(spacing: 10) {
+            Button { model.changeFont(-2) } label: { hostActionLabel("A-") }
+                .accessibilityIdentifier("reader.font.decrease").accessibilityLabel(Text("减小字号"))
+            Text("字号 \(model.fontSize)").font(.caption).lineLimit(1)
+                .accessibilityIdentifier("reader.font.value")
+            Button { model.changeFont(2) } label: { hostActionLabel("A+") }
+                .accessibilityIdentifier("reader.font.increase").accessibilityLabel(Text("增大字号"))
+        }.buttonStyle(.bordered).disabled(model.busy)
+    }
+
+    private var annotationTools: some View {
+        HStack(spacing: 10) {
+            Button { showSelection = true } label: { hostActionLabel("选文") }
+                .accessibilityIdentifier("reader.select")
+            Button { showNotes = true } label: { hostActionLabel("标注 \(model.notes.count)") }
+                .accessibilityIdentifier("reader.notes")
+        }.buttonStyle(.bordered).disabled(model.busy)
+    }
 
     var body: some View {
         VStack(spacing: 6) {
             HStack {
-                Button("书架") { model.backToLibrary() }
+                Button { model.backToLibrary() } label: { hostHeaderActionLabel("书架", symbol: "books.vertical", compact: compactTools) }
+                    .accessibilityLabel(Text("书架"))
                     .accessibilityIdentifier("reader.back")
-                Text(model.title).font(.headline).lineLimit(1)
+                Text(model.title).font(compactTools ? .caption : .headline).lineLimit(1)
                     .accessibilityIdentifier("reader.title")
+                    .accessibilityAddTraits(.isHeader)
                 Spacer()
                 if model.busy {
                     Text("处理中…").font(.caption)
                         .accessibilityIdentifier("reader.busy")
-                    Button("取消") { model.cancelWork() }
+                    Button { model.cancelWork() } label: { hostHeaderActionLabel("取消", symbol: "xmark", compact: compactTools) }
+                        .accessibilityLabel(Text("取消"))
                         .accessibilityIdentifier("reader.cancel")
                 }
             }
@@ -368,46 +469,28 @@ struct ReaderScreen: View {
             .padding(.horizontal, 4)
 
             HStack(spacing: 12) {
-                Text(model.location).font(.caption)
+                Text(model.location).font(.caption).lineLimit(1)
                     .accessibilityIdentifier("reader.location")
-                Text(model.progress).font(.caption)
+                Text(model.progress).font(.caption).lineLimit(1)
                     .accessibilityIdentifier("reader.progress")
+#if EXR_APPLE_HOST_REVIEW
                 Text("#\(model.stateHash)").font(.caption2).foregroundColor(.secondary)
                     .accessibilityIdentifier("reader.state")
+#endif
             }
 
-            HStack(spacing: 10) {
-                Button("首页") { model.firstPage() }
-                    .accessibilityIdentifier("reader.first")
-                Button("上一页") { model.turn(-1) }
-                    .accessibilityIdentifier("reader.previous")
-                Button("下一页") { model.turn(1) }
-                    .accessibilityIdentifier("reader.next")
+            if compactTools {
+                ScrollView(.horizontal) {
+                    HStack(spacing: 16) { pagingTools; fontTools; annotationTools }.padding(.horizontal, 8)
+                }.fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("reader.tools.scroll")
+            } else {
+                pagingTools
+                fontTools
+                annotationTools
             }
-            .buttonStyle(.bordered)
-            .disabled(model.busy)
 
-            HStack(spacing: 10) {
-                Button("A-") { model.changeFont(-2) }
-                    .accessibilityIdentifier("reader.font.decrease")
-                Text("字号 \(model.fontSize)").font(.caption)
-                    .accessibilityIdentifier("reader.font.value")
-                Button("A+") { model.changeFont(2) }
-                    .accessibilityIdentifier("reader.font.increase")
-            }
-            .buttonStyle(.bordered)
-            .disabled(model.busy)
-
-            HStack(spacing: 10) {
-                Button("选文") { showSelection = true }
-                    .accessibilityIdentifier("reader.select")
-                Button("标注 \(model.notes.count)") { showNotes = true }
-                    .accessibilityIdentifier("reader.notes")
-            }
-            .buttonStyle(.bordered)
-            .disabled(model.busy)
-
-            Text(model.statusText).font(.caption)
+            Text(model.statusText).font(.caption).lineLimit(compactTools ? 1 : 2)
                 .accessibilityIdentifier("reader.status")
             if !model.errorText.isEmpty {
                 Text(model.errorText).font(.caption).foregroundColor(.red)
@@ -421,6 +504,8 @@ struct ReaderScreen: View {
             NotesSheet(model: model)
         }
         .onDisappear { model.detach() }
+        .onChange(of: model.location) { value in hostAnnounce(value) }
+        .onChange(of: model.statusText) { value in if !model.busy { hostAnnounce(value) } }
     }
 }
 
@@ -448,6 +533,7 @@ struct SelectionSheet: View {
         VStack(spacing: 10) {
             Text("选择本页文字").font(.headline)
                 .accessibilityIdentifier("selection.title")
+                .accessibilityAddTraits(.isHeader)
             SelectableText(text: context?.text ?? "", revision: context?.frameCount ?? -1, selection: $selection)
                 .frame(minHeight: 240)
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.secondary.opacity(0.35)))
@@ -562,6 +648,7 @@ struct NotesSheet: View {
         VStack(spacing: 10) {
             Text("标注（\(model.notes.count)）").font(.headline)
                 .accessibilityIdentifier("notes.title")
+                .accessibilityAddTraits(.isHeader)
             if model.notes.isEmpty {
                 Text("暂无标注").foregroundColor(.secondary)
                     .accessibilityIdentifier("notes.empty")
@@ -639,6 +726,7 @@ struct EditNoteSheet: View {
         VStack(spacing: 12) {
             Text("编辑标注").font(.headline)
                 .accessibilityIdentifier("notes.edit.title")
+                .accessibilityAddTraits(.isHeader)
             TextField("标注内容", text: $draft)
                 .textFieldStyle(.roundedBorder)
                 .accessibilityIdentifier("notes.editor")

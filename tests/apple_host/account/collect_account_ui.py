@@ -85,6 +85,7 @@ def main():
     raw = (folder / 'accounts.json').read_bytes()
     require(0 < len(raw) <= 64 * 1024, 'persisted account metadata missing or over limit')
     profiles = json.loads(raw)
+    (args.output / 'accounts.json').write_bytes(raw)
     https = json.loads((args.output.parent / 'https-ui.json').read_text())
     require(https['accepted'] is True and https['source_sha'] == source and
             str(https['run_id']) == run and str(https['attempt']) == attempt and https['platform'] == args.platform,

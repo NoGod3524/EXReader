@@ -203,11 +203,14 @@ final class HostShelf: ObservableObject {
             self.probeFlushScheduled = false
             guard self.probeRevision == self.geometryRevision else { return }
             self.probePositions = self.probePositions.filter { key, _ in self.rows.contains(where: { $0.id == key }) }
+            // A row callback is a partial layout, not the complete visible
+            // ordering. Only a single-row shelf has an unambiguous first row.
+            guard self.rows.count == 1 else { return }
             self.observe(self.probePositions, size: self.probeSize, revision: self.probeRevision)
         }
     }
 
-    func observe(_ positions: [String: CGRect], size: CGSize, revision: Int) {
+    func observe(_ positions: [String: CGRect], size: CGSize, revision: Int, complete: Bool = true) {
         if size.height > 0, revision == geometryRevision {
             if probeRevision == revision, positions != probePositions {
                 lastProbeMovement = ProcessInfo.processInfo.systemUptime
@@ -216,7 +219,7 @@ final class HostShelf: ObservableObject {
             probeRevision = revision; probePositions = positions; probeSize = size
         }
 #if EXR_APPLE_SHELF_REVIEW
-        if revision == geometryRevision {
+        if complete, revision == geometryRevision {
             let frames: [[String: Any]] = size.height > 0 ? positions
                 .filter { $0.value.maxY > 0 && $0.value.minY < size.height }
                 .sorted { $0.value.minY < $1.value.minY }.prefix(3).map {
@@ -231,6 +234,7 @@ final class HostShelf: ObservableObject {
         if let awaitingLayoutKey {
             var trace: [String: Any] = ["incoming_epoch": revision, "expected_epoch": geometryRevision,
                 "issued_revision": issuedRestoreRevision, "needs_scroll": needsScroll,
+                "complete_snapshot": complete,
                 "frame_count": positions.count, "width": Double(size.width), "height": Double(size.height),
                 "target_key": awaitingLayoutKey]
             if let frame = positions[awaitingLayoutKey] {
@@ -246,6 +250,7 @@ final class HostShelf: ObservableObject {
             viewportSize = size; restoreViewport(); return
         }
         viewportSize = size
+        guard complete else { return }
         guard awaitingLayoutKey == nil || issuedRestoreRevision == restoreRevision else { return }
         let ordered = positions.filter { $0.value.maxY > 0 && $0.value.minY < size.height }
             .sorted { $0.value.minY < $1.value.minY }
@@ -769,8 +774,7 @@ final class HostSession {
 
     private func pageLabel(text: String, page: Int) -> String {
         let flat = text.replacingOccurrences(of: "\n", with: " ")
-        let snippet = String(flat.prefix(60))
-        return snippet.isEmpty ? "第 \(page) 页" : "第 \(page) 页：\(snippet)"
+        return flat.isEmpty ? "第 \(page) 页" : "第 \(page) 页：\(flat)"
     }
 
     func notes() throws -> [HostNoteRow] {
