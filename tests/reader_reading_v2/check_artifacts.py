@@ -64,6 +64,7 @@ def main():
                         transported = json.loads(archive.read('v2-webdav-evidence/result.json'))
                         require(transported.get('accepted') is True and transported['source_sha'] == source and int(transported['run_id']) == run_id and int(transported['attempt']) == attempt, 'SDK WebDAV report identity/refusal')
                         require(transported['originals_exported'] == 4 and transported['network_pushed'] == 22 and transported['network_pulled'] >= 22 and transported['request_count'] > 0, 'native transfer missing')
+                        require(transported['metadata_projected'] == 4, 'received metadata projection missing')
                         require(len(transported['cases']) == 18 and transported['receiver_found'] == 17 and transported['receiver_mislocated'] == 0, 'transported reading outcomes differ')
                         fields = ('id', 'mode', 'kind', 'part', 'start', 'end', 'state')
                         require([{k: c[k] for k in fields} for c in transported['cases']] == [{k: c[k] for k in fields} for c in report['cases']], 'native transport changes SDK capture outcomes')

@@ -15,8 +15,22 @@ extern "C" int v2_c_contract(void);
 namespace {
 std::string final_wire,final_key;
 std::string webdav_root,transport_work;
-size_t network_pushed=0,network_pulled=0,originals_exported=0;
+size_t network_pushed=0,network_pulled=0,originals_exported=0,metadata_projected=0;
 std::string cached_original(const std::string &role){return transport_work+"/B-cache/"+shas[role]+"."+formats[role];}
+void project_received_books(){
+  std::vector<reader_revision_info> rows;reader_revision_error error{};
+  if(reader_revision_entities_page(B.store,"book",nullptr,1,100,[](void *context,const reader_revision_entity_row *row){
+    if(row->selection.kind!=READER_SELECTION_SAFE||row->selection.graph.deleted)fatal("received book metadata is not safe");
+    ((std::vector<reader_revision_info> *)context)->push_back(row->info);return 0;
+  },&rows,&error)!=READER_REV_OK||rows.size()!=4)fatal("received book discovery");
+  for(const auto &row:rows){char *title=nullptr;
+    if(reader_revision_book_title(B.store,row.revision_id,&title,&error)!=READER_REV_OK)fatal("received book title");
+    // These fixture titles are ASCII and already NFC. Actual native hosts use
+    // their established Unicode normalization before this same fenced API.
+    if(reader_revision_project(B.store,"book",row.entity_key,row.revision_id,title,nullptr,&error)!=READER_REV_OK)fatal("received safe metadata projection");
+    reader_revision_bytes_free(title);++metadata_projected;
+  }
+}
 #ifdef READER_V2_WEBDAV_TEST
 static int original_path(void *opaque,const char *key,char *out,size_t capacity){
   std::string value=key;size_t colon=value.find(':');std::string path=*(std::string *)opaque+"/A-originals/"+value.substr(colon+1)+"."+value.substr(0,colon);
@@ -99,8 +113,14 @@ void roundtrip(const char *name,const char *role,const char *kind,const reader_r
 }
 void seed_books(){
   for(const char *role:{"txt","epub","pdf","cbz"}){
-    std::string id=new_id(),wire="{\"version\":1,\"id\":"+esc(id)+",\"entity_kind\":\"book\",\"entity_key\":"+esc(keys[role])+",\"operation\":\"put\",\"location_kind\":\"none\",\"parents\":[],\"payload\":{\"format\":"+esc(formats[role])+",\"source_sha256\":"+esc(shas[role])+",\"source_bytes\":"+num(sizes[role])+",\"title\":"+esc(role)+",\"author\":\"\",\"favorite\":false}}";
-    reader_revision_error error{};int created=0;if(reader_revision_local(A.store,wire.data(),wire.size(),nullptr,&created,&error)!=READER_REV_OK)fatal("book seed");
+    std::string title=webdav_root.empty()?std::string(role):"Remote "+std::string(role),author=webdav_root.empty()?"":"云端作者";
+    std::string id=new_id(),wire="{\"version\":1,\"id\":"+esc(id)+",\"entity_kind\":\"book\",\"entity_key\":"+esc(keys[role])+",\"operation\":\"put\",\"location_kind\":\"none\",\"parents\":[],\"payload\":{\"format\":"+esc(formats[role])+",\"source_sha256\":"+esc(shas[role])+",\"source_bytes\":"+num(sizes[role])+",\"title\":"+esc(title)+",\"author\":"+esc(author)+",\"favorite\":"+boolean(!webdav_root.empty())+"}}";
+    reader_revision_error error{};int created=0;
+    if(webdav_root.empty()){
+      if(reader_revision_local(A.store,wire.data(),wire.size(),nullptr,&created,&error)!=READER_REV_OK)fatal("book seed");
+    }else{int applied=0;
+      if(reader_revision_local_project(A.store,wire.data(),wire.size(),nullptr,0,title.c_str(),nullptr,&created,&applied,&error)!=READER_REV_OK||!created||!applied)fatal("atomic local book metadata and outbox");
+    }
   }
   transfer(A,B);
 }
@@ -130,9 +150,17 @@ int main(int argc,char **argv){
   }
   seed_books();
   if(!webdav_root.empty()){
+    project_received_books();
     auto original_paths=paths;for(const char *role:{"txt","epub","pdf","cbz"})paths[role]=cached_original(role);
     import(B,"txt",EXR_TXT,false);import(B,"epub",EXR_EPUB,true);import(B,"pdf",EXR_PDF,true);import(B,"cbz",EXR_CBZ,true);
     attach(B,"txt","reflow_global");attach(B,"epub","epub_chapter");attach(B,"pdf","fixed_page");attach(B,"cbz","fixed_page");paths=original_paths;
+    for(const char *role:{"txt","epub","pdf","cbz"}){
+      struct metadata_check {std::string title;int64_t sdk_id;bool ok=false;} observed{"Remote "+std::string(role),B.ids[role],false};int found=0;reader_catalog_error error{};
+      if(reader_catalog_find(B.catalog,keys[role].c_str(),nullptr,[](void *context,const reader_catalog_row *row){auto &v=*(metadata_check *)context;
+        v.ok=v.title==row->title&&row->favorite==1&&std::string(row->author)=="云端作者"&&v.sdk_id==row->sdk_book_id;return 0;
+      },&observed,&found,&error))fatal("received book catalog mapping");
+      expect(found&&observed.ok,"actual received original mapping preserves remote title author and favorite");
+    }
   }
   exr_document *ta=nullptr,*tb=nullptr;SDK(exr_library_document(A.lib,A.ids["txt"],&ta,&e_));SDK(exr_library_document(B.lib,B.ids["txt"],&tb,&e_));
   size_t text_bytes=0;const char *text=exr_document_text(ta,&text_bytes);std::string t(text,text_bytes);
@@ -201,6 +229,6 @@ int main(int argc,char **argv){
   expect(cases.size()==18&&receiver_found==17&&receiver_mislocated==0,"all eighteen real captures have exact expected outcomes");
   close_side(A);close_side(B);
   object report;report.set("cases",array(cases)).set("checks",array(checks)).set("failures",num(failures)).set("receiver_found",num(receiver_found)).set("receiver_mislocated",num(receiver_mislocated))
-    .set("native_webdav",boolean(!webdav_root.empty())).set("network_pushed",num(network_pushed)).set("network_pulled",num(network_pulled)).set("originals_exported",num(originals_exported));
+    .set("native_webdav",boolean(!webdav_root.empty())).set("network_pushed",num(network_pushed)).set("network_pulled",num(network_pulled)).set("originals_exported",num(originals_exported)).set("metadata_projected",num(metadata_projected));
   std::ofstream output(report_path,std::ios::binary);output<<report.dump()<<"\n";return failures?1:0;
 }
