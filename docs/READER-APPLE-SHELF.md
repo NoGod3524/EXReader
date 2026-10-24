@@ -179,6 +179,12 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
   also rejects same-key frames before issue, after issue with an old epoch, and
   after a prepend before accepting the new frame. No delay or pixel tolerance
   changes the acceptance conditions.
+- `b1407b097c25c392080b59800acf2a1952683d0c` passed catalog8 and all original
+  shelf16, including the strengthened old-epoch/same-key handoff sequence, in
+  [native diagnostic 40053282691](https://github.com/NoGod3524/EXReader/actions/runs/40053282691).
+  Artifact `12543369254` preserves this result; its outer scope is not accepted.
+  Geometry preference reduction also retains only one matching newest epoch,
+  so a newer viewport preference cannot relabel an older row frame.
 
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.

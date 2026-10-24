@@ -70,9 +70,10 @@ private struct ShelfGeometryKey: PreferenceKey {
     static var defaultValue = ShelfGeometry()
     static func reduce(value: inout ShelfGeometry, nextValue: () -> ShelfGeometry) {
         let next = nextValue()
+        guard next.revision >= value.revision else { return }
+        if next.revision > value.revision { value = next; return }
         value.frames.merge(next.frames) { _, newer in newer }
         if next.size.height > 0 { value.size = next.size }
-        value.revision = max(value.revision, next.revision)
     }
 }
 
