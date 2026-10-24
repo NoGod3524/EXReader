@@ -299,6 +299,10 @@ int reader_catalog_query_page(reader_catalog *c,const char *title,const char *ke
                               reader_catalog_visit visit,void *context,reader_catalog_error *e) {
   return query_page(c,title,key,query,NULL,direction,0,0,limit,visit,context,e);
 }
+int reader_catalog_local_page(reader_catalog *c,const char *title,const char *key,const char *query,int direction,size_t limit,
+                              reader_catalog_visit visit,void *context,reader_catalog_error *e) {
+  return query_page(c,title,key,query,NULL,direction,0,1,limit,visit,context,e);
+}
 int reader_catalog_local_canonical_page(reader_catalog *c,const char *title,const char *key,const char *nfc,const char *nfd,
     int direction,int inclusive,size_t limit,reader_catalog_visit visit,void *context,reader_catalog_error *e) {
   if(!nfc||!nfd||(inclusive!=0&&inclusive!=1))return fail(e,SQLITE_MISUSE,"Missing canonical local shelf query");

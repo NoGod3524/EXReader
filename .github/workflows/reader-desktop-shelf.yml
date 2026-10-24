@@ -1,7 +1,7 @@
 name: Desktop bounded catalog queries
 on:
   push:
-    branches: [codex/reader-desktop-shelf]
+    branches: [codex/reader-desktop-shelf, codex/reader-windows-shelf]
     paths:
       - apps/reader/store/native/**
       - tests/reader_catalog/**

@@ -50,7 +50,7 @@ enum {
   IDC_ADD_NOTE, IDC_UPDATE_NOTE, IDC_DELETE_NOTE, IDC_JUMP_NOTE,
   IDC_FONT_DEC, IDC_FONT_INC, IDC_ZOOM_DEC, IDC_ZOOM_INC, IDC_CANCEL,
   IDC_SHELF_LABEL, IDC_BOOKS, IDC_NOTES_LABEL, IDC_NOTES, IDC_NOTE_EDIT,
-  IDC_PAGE, IDC_PAGE_LABEL, IDC_STATUS
+  IDC_PAGE, IDC_PAGE_LABEL, IDC_STATUS, IDC_SHELF_SEARCH, IDC_SHELF_REFRESH
 };
 
 #define WM_HOST_COMPLETE (WM_APP + 1)
@@ -106,6 +106,9 @@ typedef struct {
 } host_session;
 
 typedef struct host_job host_job;
+#ifdef EXR_READER_PRODUCT_CATALOG
+typedef struct { char *key,*sort_title; } host_shelf_cursor;
+#endif
 
 typedef struct {
   HWND window, page, books, notes, note_edit, import_edit, status, page_label;
@@ -124,6 +127,15 @@ typedef struct {
   HANDLE product_lock;
   HANDLE product_profile_lock;
   int product_pending;
+  HWND shelf_search,shelf_refresh;
+  WNDPROC shelf_procedure;
+  host_shelf_cursor *shelf_cursors;
+  char *shelf_query;
+  char shelf_top_key[72],shelf_selected_key[72];
+  unsigned long shelf_generation;
+  int shelf_before,shelf_after,shelf_filter_pending,shelf_applying;
+  int shelf_need_refresh,shelf_requested_direction,product_ready;
+  unsigned shelf_max_cached,shelf_evicted,shelf_queries;
 #endif
   wchar_t settings_path[HOST_PATH];
   wchar_t evidence_dir[HOST_PATH];
@@ -184,6 +196,15 @@ static host_state g;
 static int dragging;
 #ifdef EXR_HOST_WORKER_REVIEW
 static int review_query_failure(int kind);
+#endif
+#ifdef EXR_READER_PRODUCT_CATALOG
+static void product_shelf_remember(void);
+static void product_shelf_dispatch(void);
+static void product_shelf_schedule(int direction,int reset);
+static void product_shelf_edges(void);
+static void product_shelf_accept(host_job *job);
+static void product_shelf_search_changed(void);
+static LRESULT CALLBACK product_shelf_procedure(HWND,UINT,WPARAM,LPARAM);
 #endif
 
 typedef exr_status (*host_progress_fn)(void *context, unsigned percent);
@@ -416,6 +437,17 @@ static int book_copy(exr_book *dst, const exr_book *src) {
   }
   return 1;
 }
+static exr_status local_book_copy(int64_t id,exr_book *out,exr_error *error) {
+  exr_book *books=NULL;size_t count=0,index;exr_status status;
+  memset(out,0,sizeof(*out));EnterCriticalSection(&g.library_lock);
+  status=exr_library_books(g.library,"",&books,&count,error);
+  if(status==EXR_OK) {
+    for(index=0;index<count && books[index].id!=id;index++) {}
+    if(index==count) status=EXR_ARGUMENT;
+    else if(!book_copy(out,&books[index])) status=EXR_MEMORY;
+  }
+  exr_books_free(books,count);LeaveCriticalSection(&g.library_lock);return status;
+}
 
 static void session_clear(host_session *session) {
   if (session->fixed_document) exr_fixed_free(session->fixed_document);
@@ -441,11 +473,28 @@ static void settings_load(void) {
   if (g.zoom_percent < HOST_ZOOM_MIN || g.zoom_percent > HOST_ZOOM_MAX) g.zoom_percent = 100;
   if (g.window_width < 900) g.window_width = 900;
   if (g.window_height < 600) g.window_height = 600;
+#ifdef EXR_READER_PRODUCT_CATALOG
+  wchar_t query[257],key[73];
+  GetPrivateProfileStringW(L"Shelf",L"Query",L"",query,257,g.settings_path);g.shelf_query=host_utf8(query);
+  GetPrivateProfileStringW(L"Shelf",L"TopKey",L"",key,73,g.settings_path);
+  char *utf8=host_utf8(key);if(utf8 && strlen(utf8)<sizeof(g.shelf_top_key)) strcpy(g.shelf_top_key,utf8);free(utf8);
+  GetPrivateProfileStringW(L"Shelf",L"SelectedKey",L"",key,73,g.settings_path);
+  utf8=host_utf8(key);if(utf8 && strlen(utf8)<sizeof(g.shelf_selected_key)) strcpy(g.shelf_selected_key,utf8);free(utf8);
+#endif
 }
 
 static void settings_save(void) {
   wchar_t number[64];
   if (!g.settings_path[0]) return;
+#ifdef EXR_READER_PRODUCT_CATALOG
+  product_shelf_remember();
+  wchar_t *query=host_wide(g.shelf_query ? g.shelf_query:"",g.shelf_query ? strlen(g.shelf_query):0);
+  WritePrivateProfileStringW(L"Shelf",L"Query",query ? query:L"",g.settings_path);free(query);
+  wchar_t *key=host_wide(g.shelf_top_key,strlen(g.shelf_top_key));
+  WritePrivateProfileStringW(L"Shelf",L"TopKey",key ? key:L"",g.settings_path);free(key);
+  key=host_wide(g.shelf_selected_key,strlen(g.shelf_selected_key));
+  WritePrivateProfileStringW(L"Shelf",L"SelectedKey",key ? key:L"",g.settings_path);free(key);
+#endif
   swprintf(number, 64, L"%d", g.font_percent);
   WritePrivateProfileStringW(L"Host", L"FontPercent", number, g.settings_path);
   swprintf(number, 64, L"%d", g.zoom_percent);
@@ -463,6 +512,12 @@ static void settings_save(void) {
 /* ------------------------------------------------------------------ */
 
 static void shelf_clear(void) {
+#ifdef EXR_READER_PRODUCT_CATALOG
+  if(g.shelf_cursors) for(size_t i=0;i<g.shelf_count;i++) {
+    free(g.shelf_cursors[i].key);free(g.shelf_cursors[i].sort_title);
+  }
+  free(g.shelf_cursors);g.shelf_cursors=NULL;
+#endif
   if (g.shelf) exr_books_free(g.shelf, g.shelf_count);
   g.shelf = NULL;
   g.shelf_count = 0;
@@ -498,6 +553,11 @@ static void shelf_display(const exr_book *book, wchar_t *out, size_t capacity) {
   const wchar_t *mark = (g.has_current && g.current.id == book->id) ? L" · 当前" : L"";
   wchar_t *title = book->title ? host_wide(book->title, strlen(book->title)) : NULL;
   wchar_t *author = book->author ? host_wide(book->author, strlen(book->author)) : NULL;
+#ifdef EXR_READER_PRODUCT_CATALOG
+  if(g.shelf_cursors) swprintf(out,capacity,L"《%ls》 — %ls · %ls%ls%ls",title ? title:L"Untitled",
+    author && author[0] ? author:L"未知作者",format_name(book->format),book->id ? L"":L" · 未下载",mark);
+  else
+#endif
   if (is_fixed_format(book->format))
     swprintf(out, capacity, L"《%ls》 — %ls · %ls · 第 %llu 页%ls",
              title ? title : L"Untitled",
@@ -514,6 +574,9 @@ static void shelf_display(const exr_book *book, wchar_t *out, size_t capacity) {
 }
 
 static exr_status reload_shelf(void) {
+#ifdef EXR_READER_PRODUCT_CATALOG
+  product_shelf_remember();
+#endif
   exr_book *books = NULL;
   size_t count = 0;
   exr_error error = {0};
@@ -532,6 +595,14 @@ static exr_status reload_shelf(void) {
     set_status(message);
     return status;
   }
+#ifdef EXR_READER_PRODUCT_CATALOG
+  if(count>50) {
+    exr_book *bounded=calloc(50,sizeof(*bounded));
+    if(!bounded) { exr_books_free(books,count);return EXR_MEMORY; }
+    for(i=0;i<50;i++) { bounded[i]=books[i];memset(&books[i],0,sizeof(*books)); }
+    exr_books_free(books,count);books=bounded;count=50;
+  }
+#endif
   shelf_clear();
   g.shelf = books;
   g.shelf_count = count;
@@ -695,10 +766,10 @@ static void note_comment_write(const char *utf8) {
 /* ------------------------------------------------------------------ */
 
 enum { JOB_NONE = 0, JOB_OPEN, JOB_GO, JOB_LAYOUT, JOB_IMPORT, JOB_NOTE_ADD, JOB_NOTE_UPDATE, JOB_ROLLBACK, JOB_HIT, JOB_SAVE,
-  JOB_PRODUCT_ATTACH, JOB_PRODUCT_REPAIR, JOB_PRODUCT_DELETE };
+  JOB_PRODUCT_ATTACH, JOB_PRODUCT_REPAIR, JOB_PRODUCT_DELETE, JOB_PRODUCT_SHELF };
 #ifdef EXR_READER_PRODUCT_CATALOG
 static int product_job_kind(int kind) {
-  return kind==JOB_PRODUCT_ATTACH || kind==JOB_PRODUCT_REPAIR || kind==JOB_PRODUCT_DELETE;
+  return kind==JOB_PRODUCT_ATTACH || kind==JOB_PRODUCT_REPAIR || kind==JOB_PRODUCT_DELETE || kind==JOB_PRODUCT_SHELF;
 }
 #endif
 
@@ -738,6 +809,7 @@ struct host_job {
   volatile LONG progress;
   int session_swapped;
   host_session candidate;
+  exr_book opened_book;
   exr_pager *candidate_pager;
   exr_layout_config candidate_config;
   char *comment;
@@ -748,6 +820,11 @@ struct host_job {
   int resolved_selection;
 #ifdef EXR_READER_PRODUCT_CATALOG
   int product_auto_open,product_deleted;
+  int product_shelf_direction,product_shelf_before,product_shelf_after;
+  unsigned long product_shelf_generation;
+  char *product_shelf_query,*product_cursor_title,*product_cursor_key,*product_anchor_key;
+  exr_book *product_books;size_t product_book_count;
+  host_shelf_cursor *product_cursors;
 #endif
 };
 
@@ -791,6 +868,13 @@ static host_job *job_new(int kind) {
 
 static void job_free(host_job *job) {
   if (!job) return;
+#ifdef EXR_READER_PRODUCT_CATALOG
+  if(job->product_cursors) for(size_t i=0;i<job->product_book_count;i++) {
+    free(job->product_cursors[i].key);free(job->product_cursors[i].sort_title);
+  }
+  free(job->product_cursors);exr_books_free(job->product_books,job->product_book_count);
+  free(job->product_shelf_query);free(job->product_cursor_title);free(job->product_cursor_key);free(job->product_anchor_key);
+#endif
   if (job->thread) CloseHandle(job->thread);
   frame_clear(&job->frame);
   if (job->has_anchor) {
@@ -799,6 +883,7 @@ static void job_free(host_job *job) {
     } else exr_anchor_free(&job->anchor);
   }
   session_clear(&job->candidate);
+  book_clear(&job->opened_book);
   exr_pager_free(job->candidate_pager);
   free(job->comment);
   free(job->part_path);
@@ -1280,15 +1365,27 @@ static exr_status job_open(host_job *job) {
   host_session session;
   exr_error error = {0};
   exr_status status;
-  int index = shelf_index(job->book_id);
   exr_book book;
   memset(&session, 0, sizeof(session));
   memset(&book, 0, sizeof(book));
-  if (index < 0) {
-    copy_wstring(job->message, 512, L"该书已不在书架中。");
+  /* The UI may evict or replace its metadata window while this worker runs.
+     The public SDK currently enumerates into a temporary worker-only array;
+     no pointer into that array or the UI cache survives this lookup. */
+  status=local_book_copy(job->book_id,&book,&error);
+  if (status != EXR_OK) {
+    job->error = error;
+    copy_wstring(job->message, 512, L"无法读取该书的本地信息。");
+    book_clear(&book);
+    return status;
+  }
+  if (job_cancel_flag(job)) {
+    book_clear(&book);
+    return EXR_CANCELLED;
+  }
+  if (book.id != job->book_id) {
+    book_clear(&book);
     return EXR_ARGUMENT;
   }
-  if (!book_copy(&book, &g.shelf[index])) return EXR_MEMORY;
   session.book_id = book.id;
   session.fixed = is_fixed_format(book.format);
   if (session.fixed) {
@@ -1372,6 +1469,7 @@ static exr_status job_open(host_job *job) {
   } else {
     session_clear(&session);
   }
+  if (status == EXR_OK) { job->opened_book = book; memset(&book, 0, sizeof(book)); }
   book_clear(&book);
   if (status != EXR_OK) job->error = error;
   return status;
@@ -1769,7 +1867,13 @@ static unsigned __stdcall job_thread(void *context) {
   else
     job->status = job_run(job);
 #ifdef EXR_HOST_WORKER_REVIEW
-  if (job->status == EXR_OK) review_pause(job->kind == JOB_OPEN ? 4 : job->kind == JOB_GO ? 2 : 0, job);
+  if (job->status == EXR_OK) {
+    int stage=job->kind==JOB_OPEN ? 4:job->kind==JOB_GO ? 2:0;
+#ifdef EXR_HOST_SHELF_REVIEW
+    if(job->kind==JOB_PRODUCT_SHELF) stage=5;
+#endif
+    review_pause(stage,job);
+  }
 #endif
   if (job->status == EXR_OK && job_cancel_flag(job) && job->kind != JOB_NOTE_ADD && job->kind != JOB_NOTE_UPDATE
 #ifdef EXR_READER_PRODUCT_CATALOG
@@ -1817,7 +1921,7 @@ static exr_status job_run(host_job *job) {
     case JOB_HIT: return job_hit(job);
     case JOB_SAVE: return job_save(job);
 #ifdef EXR_READER_PRODUCT_CATALOG
-    case JOB_PRODUCT_ATTACH: case JOB_PRODUCT_REPAIR: case JOB_PRODUCT_DELETE: return product_job_run(job);
+    case JOB_PRODUCT_ATTACH: case JOB_PRODUCT_REPAIR: case JOB_PRODUCT_DELETE: case JOB_PRODUCT_SHELF: return product_job_run(job);
 #endif
     default: return EXR_ARGUMENT;
   }
@@ -1885,6 +1989,17 @@ static void create_controls(HWND parent) {
                             WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
                             0, 0, 10, 10, parent, (HMENU)(INT_PTR)IDC_BOOKS, NULL, NULL);
   SendMessageW(g.books, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
+#ifdef EXR_READER_PRODUCT_CATALOG
+  g.shelf_search=CreateWindowExW(WS_EX_CLIENTEDGE,L"EDIT",L"",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,
+    0,0,10,10,parent,(HMENU)(INT_PTR)IDC_SHELF_SEARCH,NULL,NULL);
+  SendMessageW(g.shelf_search,WM_SETFONT,(WPARAM)GetStockObject(DEFAULT_GUI_FONT),TRUE);
+  SendMessageW(g.shelf_search,EM_SETLIMITTEXT,256,0);
+  g.shelf_refresh=make_button(parent,IDC_SHELF_REFRESH,L"刷新");
+  g.shelf_applying=1;
+  wchar_t *shelf_query=host_wide(g.shelf_query ? g.shelf_query:"",g.shelf_query ? strlen(g.shelf_query):0);
+  SetWindowTextW(g.shelf_search,shelf_query ? shelf_query:L"");free(shelf_query);g.shelf_applying=0;
+  g.shelf_procedure=(WNDPROC)SetWindowLongPtrW(g.books,GWLP_WNDPROC,(LONG_PTR)product_shelf_procedure);
+#endif
   g.notes_label = make_static(parent, IDC_NOTES_LABEL, L"标注（双击跳转）");
   g.notes = CreateWindowExW(WS_EX_CLIENTEDGE, L"LISTBOX", L"标注列表",
                             WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
@@ -1936,6 +2051,12 @@ static void layout_controls(void) {
   books_height = (content_bottom - content_top - 30) * 45 / 100;
   if (books_height < 120) books_height = 120;
   MoveWindow(g.books, 8, content_top + 20, left_width - 16, books_height, TRUE);
+#ifdef EXR_READER_PRODUCT_CATALOG
+  MoveWindow(g.shelf_search,8,content_top+20,left_width-78,24,TRUE);
+  MoveWindow(g.shelf_refresh,left_width-64,content_top+20,56,24,TRUE);
+  MoveWindow(g.books,8,content_top+48,left_width-16,books_height-28,TRUE);
+  if(g.product_ready) PostMessageW(g.window,WM_APP+31,0,0);
+#endif
   notes_top = content_top + 20 + books_height + 24;
   notes_height = content_bottom - 62 - notes_top;
   if (notes_height < 80) notes_height = 80;
@@ -2716,6 +2837,7 @@ static void open_selected_book(void) {
   job = job_new(JOB_OPEN);
   if (!job) { set_status(L"内存不足，无法打开书籍。"); return; }
   job->book_id = g.shelf[index].id;
+  if(job->book_id<=0) { job_release(job);set_status(L"此书尚未下载到本机。");return; }
   job->font_percent = g.font_percent;
   job_submit(job);
 }
@@ -2745,6 +2867,7 @@ static void delete_selected_book(void) {
     set_status(L"请先在书架中选择一本书。");return;
   }
   int64_t id=g.shelf[index].id;
+  if(id<=0) { set_status(L"此书没有可移除的本机原书。");return; }
 #ifdef EXR_READER_PRODUCT_CATALOG
   host_job *job=job_new(JOB_PRODUCT_DELETE);
   if(!job) { set_status(L"内存不足，无法删除书籍。");return; }
@@ -2791,26 +2914,22 @@ static void import_path(const wchar_t *path, int dialog_fallback) {
 }
 
 static int import_title_fallback(const wchar_t *path, int64_t id) {
-  int index = shelf_index(id);
-  exr_book *row;
-  exr_book copy;
+  exr_book copy={0};
   wchar_t stem[HOST_PATH];
   const wchar_t *base;
   wchar_t *dot;
   char *utf8;
   exr_error error = {0};
-  if (index < 0) { set_status(L"导入后的书架条目不可用，请刷新书架。"); return 0; }
-  row = &g.shelf[index];
-  if (row->title && row->title[0] && strcmp(row->title, "Untitled")) return 1;
+  if(local_book_copy(id,&copy,&error)!=EXR_OK) { set_status(L"无法读取已导入书籍的信息，原书仍保留。");return 0; }
+  if(copy.title && copy.title[0] && strcmp(copy.title,"Untitled")) { book_clear(&copy);return 1; }
   base = wcsrchr(path, L'\\');
   base = base ? base + 1 : path;
   copy_wstring(stem, HOST_PATH, base);
   dot = wcsrchr(stem, L'.');
   if (dot && dot != stem) *dot = 0;
-  if (!stem[0]) return 1;
+  if (!stem[0]) { book_clear(&copy);return 1; }
   utf8 = host_utf8(stem);
-  if (!utf8) { set_status(L"无法更新导入书籍标题。"); return 0; }
-  if (!book_copy(&copy, row)) { free(utf8); set_status(L"内存不足，无法更新书籍标题。"); return 0; }
+  if (!utf8) { book_clear(&copy);set_status(L"无法更新导入书籍标题。"); return 0; }
   free(copy.title);
   copy.title = utf8;
   EnterCriticalSection(&g.library_lock);
@@ -2842,13 +2961,28 @@ static void host_update_controls(void) {
   EnableWindow(g.zoom_dec, !busy && has && g.frame.fixed);
   EnableWindow(g.zoom_inc, !busy && has && g.frame.fixed);
   EnableWindow(g.cancel_button, busy || g.job != NULL);
+#ifdef EXR_READER_PRODUCT_CATALOG
+  EnableWindow(g.shelf_refresh,!busy && !g.closing);
+#endif
 }
 
 static void handle_job_complete(host_job *job) {
 #ifdef EXR_READER_PRODUCT_CATALOG
+  if(job->kind==JOB_PRODUCT_SHELF) {
+    if(job_cancel_flag(job) && !g.closing && g.pending &&
+       job->product_shelf_generation==g.shelf_generation) {
+      g.shelf_need_refresh=1;g.shelf_requested_direction=0;
+    }
+    if(!g.closing && !job_cancel_flag(job) && job->product_shelf_generation==g.shelf_generation) {
+      if(job->status==EXR_OK) product_shelf_accept(job);
+      else set_status(L"书架查询失败，保留当前列表；可刷新后重试。");
+    }
+    return;
+  }
   if(product_job_kind(job->kind)) {
-    if(job->status!=EXR_OK) g.product_pending=1;
-    else if(job->kind==JOB_PRODUCT_REPAIR) g.product_pending=0;
+    if(job->status!=EXR_OK) { g.product_pending=1;g.product_ready=0;g.shelf_need_refresh=0; }
+    else if(job->kind==JOB_PRODUCT_REPAIR) { g.product_pending=0;g.product_ready=1; }
+    if(job->status==EXR_OK && !g.product_pending) { g.product_ready=1;product_shelf_schedule(0,0); }
     if(job->kind==JOB_PRODUCT_DELETE && job->product_deleted) {
       show_deleted_book(job->book_id);return;
     }
@@ -2899,6 +3033,9 @@ static void handle_job_complete(host_job *job) {
       if (g.drive_mode) SetTimer(g.window, 1, 30, NULL);
     }
     if (refreshed != EXR_OK) return;
+#ifdef EXR_READER_PRODUCT_CATALOG
+    if(g.product_ready && !g.product_pending) product_shelf_schedule(0,0);
+#endif
     if (job->rollback_failed) set_status(job->message);
     else set_status(L"导入已取消；新建书架条目已回滚。");
     g.auto_open_imported = 0;
@@ -2923,10 +3060,10 @@ static void handle_job_complete(host_job *job) {
   if (job->status != EXR_OK) g.pending_selection = 0;
   if (job->status == EXR_OK) {
     if (job->kind == JOB_OPEN) {
-      int index = shelf_index(job->book_id);
-      if (job->session_swapped && job->have_frame && index >= 0 && job->candidate.book_id == job->book_id && job->frame.book_id == job->book_id) {
+      if (job->session_swapped && job->have_frame && job->candidate.book_id == job->book_id && job->frame.book_id == job->book_id) {
         exr_book next = {0};
-        if (book_copy(&next, &g.shelf[index])) {
+        if (job->opened_book.id == job->book_id) {
+          next = job->opened_book; memset(&job->opened_book, 0, sizeof(job->opened_book));
           session_clear(&g.session); g.session = job->candidate; memset(&job->candidate, 0, sizeof(job->candidate));
           book_clear(&g.current); g.current = next;
           g.has_current = 1;
@@ -2948,7 +3085,7 @@ static void handle_job_complete(host_job *job) {
             free(title);
           }
         } else {
-          set_status(L"内存不足，无法保存当前书籍信息。");
+          set_status(L"打开任务没有提供一致的书籍信息。");
         }
       } else {
         set_status(L"打开书籍失败：任务结果不完整。");
@@ -4088,6 +4225,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
 #ifdef EXR_HOST_WORKER_REVIEW
   if (message == WM_APP + 30) return review_message(window, wparam, lparam);
 #endif
+#ifdef EXR_READER_PRODUCT_CATALOG
+  if(message==WM_APP+31) { product_shelf_edges();return 0; }
+#endif
   switch (message) {
     case WM_CREATE:
       g.window = window;
@@ -4112,6 +4252,22 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
     case WM_COMMAND: {
       int id = LOWORD(wparam);
       int code = HIWORD(wparam);
+#ifdef EXR_READER_PRODUCT_CATALOG
+      if(id==IDC_SHELF_SEARCH && code==EN_CHANGE) {
+        if(!g.shelf_applying) product_shelf_search_changed();
+        return 0;
+      }
+      if(id==IDC_SHELF_REFRESH && code==BN_CLICKED) {
+        if(!g.job && !g.pending && !g.closing) {
+          product_shelf_remember();host_job *repair=job_new(JOB_PRODUCT_REPAIR);
+          if(repair) { g.product_ready=0;job_submit(repair); }
+        }
+        return 0;
+      }
+      if(id==IDC_BOOKS && code==LBN_SELCHANGE) {
+        product_shelf_remember();SetTimer(window,4,300,NULL);return 0;
+      }
+#endif
       if (id == IDC_BOOKS && code == LBN_DBLCLK) {
         open_selected_book();
         return 0;
@@ -4153,15 +4309,26 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       } else {
         host_update_controls();
       }
+#ifdef EXR_READER_PRODUCT_CATALOG
+      product_shelf_dispatch();host_update_controls();
+      if(!g.job && !g.pending) PostMessageW(window,WM_APP+31,0,0);
+#endif
       if (g.closing) finish_close(window);
       return 0;
     }
     case WM_TIMER:
+#ifdef EXR_READER_PRODUCT_CATALOG
+      if(wparam==3) { KillTimer(window,3);product_shelf_dispatch();return 0; }
+      if(wparam==4) { KillTimer(window,4);if(!g.closing) settings_save();return 0; }
+#endif
       if (wparam == 2 && g.closing && g.job) { ExitProcess(1); return 0; }
       if (wparam == 1 && g.drive_mode) drive_tick();
       return 0;
     case WM_CLOSE:
       if (g.closing) return 0;
+#ifdef EXR_READER_PRODUCT_CATALOG
+      product_shelf_remember();KillTimer(window,3);KillTimer(window,4);
+#endif
       g.closing = 1;
       KillTimer(window, 1);
       if (g.pending) {
@@ -4239,6 +4406,9 @@ static void host_cleanup(void) {
   notes_clear();
   shelf_clear();
   book_clear(&g.current);
+#ifdef EXR_READER_PRODUCT_CATALOG
+  free(g.shelf_query);g.shelf_query=NULL;
+#endif
   if (g.library) exr_library_close(g.library);
   g.library = NULL;
   exr_font_free(g.font);
@@ -4408,9 +4578,14 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
 #else
     import_path(book_path, 0);
 #endif
-  } else if (g.active_book_id > 0 && shelf_index(g.active_book_id) >= 0) {
+  } else if (g.active_book_id > 0
+#ifndef EXR_READER_PRODUCT_CATALOG
+             && shelf_index(g.active_book_id) >= 0
+#endif
+  ) {
     host_job *job = job_new(JOB_OPEN);
-    SendMessageW(g.books, LB_SETCURSEL, (WPARAM)shelf_index(g.active_book_id), 0);
+    int selected=shelf_index(g.active_book_id);
+    if(selected>=0) SendMessageW(g.books, LB_SETCURSEL, (WPARAM)selected, 0);
     if (job) {
       job->book_id = g.active_book_id;
       job->font_percent = g.font_percent;
