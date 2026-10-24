@@ -11,6 +11,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -23,6 +25,13 @@ jobs:
           gradle-version: '8.9'
       - name: Require frozen SDK and unchanged desktop DAV during platform investigation
         run: |
+          mkdir -p build/webdav-android/platform
+          git rev-parse HEAD > build/webdav-android/platform/source.txt
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          Path('build/webdav-android/platform/identity.json').write_text(json.dumps({key:os.environ[value] for key,value in [('source_sha','GITHUB_SHA'),('run_id','GITHUB_RUN_ID'),('attempt','GITHUB_RUN_ATTEMPT')]}))
+          PY
           git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
           git diff --exit-code 4d4e2be80f6dd103e4b39e739ef3813974acdf00 HEAD -- extras/webdav/src/webdav.cpp extras/webdav/include/exr_webdav.h extras/webdav/CMakeLists.txt
       - name: Install Android tools and prepare a test-only CA on Actions
