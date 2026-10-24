@@ -70,7 +70,8 @@ def run_swap(ctx, name):
     stored = None
     if r["status"] == "ok" and int(r["id"]) > 0:
         stored = env.dump_sha(int(r["id"]))
-    return {"swapped": "SWAP ok" in out.lines, "status": r["status"], "outcome": r["outcome"],
+    swapped = any(t.startswith("SWAP ok") for t in out.lines)
+    return {"swapped": swapped, "status": r["status"], "outcome": r["outcome"],
             "stored_matches_identity": stored == book.sha, "stored_sha": stored or ""}
 
 
