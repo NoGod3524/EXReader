@@ -8,6 +8,19 @@
   "attempt": null,
   "artifacts": [],
   "jobs": [],
+  "earlier_failed_runs": [{
+    "source_sha": "e3ebed25c88d60b8b57e5d5a37484a7adc420e5e",
+    "run_id": 40073175739,
+    "attempt": 1,
+    "observed_failed_job": 120810823444,
+    "reason": "Navigation implementation omitted the public exr/formats.h declarations for document navigation, resolve and navigation_free. Source and probe now include the installed public header; frozen SDK unchanged.",
+    "jobs": [
+      {"id": 120810823444, "platform": "linux", "conclusion": "failure"},
+      {"id": 120810823555, "platform": "windows", "conclusion": "failure"},
+      {"id": 120811322735, "role": "strict evidence", "conclusion": "failure"}
+    ],
+    "scope": "both platform compilation jobs failed and strict evidence refused; entire run retained"
+  }],
   "problems": ["Nothing has been built or run in GitHub Actions for this package; the fields above are filled only from a real run."],
   "granted_platforms": [],
   "macos_accepted": false,

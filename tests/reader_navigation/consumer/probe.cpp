@@ -4,6 +4,7 @@
    opened SDK object, never from the module's own paths. Cloud only. */
 #include <reader_navigation.h>
 #include <exr/core.h>
+#include <exr/formats.h>
 #include <exr/pdf.h>
 #include <cstdint>
 #include <cstdio>

@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "reader_navigation.h"
+#include <exr/formats.h>
 #include <cctype>
 #include <cstdio>
 #include <cstdlib>
