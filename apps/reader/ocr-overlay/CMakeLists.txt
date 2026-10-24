@@ -15,7 +15,7 @@ find_package(EXReaderOCR CONFIG REQUIRED)
 add_library(reader_ocr_overlay STATIC src/ocr_overlay.cpp)
 target_include_directories(reader_ocr_overlay PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
-target_link_libraries(reader_ocr_overlay PUBLIC EXReader::exr_core PRIVATE EXReaderOCR::exreader_ocr)
+target_link_libraries(reader_ocr_overlay PUBLIC EXReader::exr_core PRIVATE EXReader::exreader_ocr)
 if(MSVC)
   target_compile_options(reader_ocr_overlay PRIVATE /W4 /WX)
 else()
