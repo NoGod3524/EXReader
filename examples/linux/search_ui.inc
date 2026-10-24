@@ -111,6 +111,9 @@ static void inbook_open(GtkWidget *button,gpointer unused) {
   GtkWidget *focus=gtk_window_get_focus(GTK_WINDOW(window));if(focus) inbook.return_focus=g_object_ref(focus);
   inbook.content=gtk_bin_get_child(GTK_BIN(window));gtk_widget_set_sensitive(inbook.content,FALSE);
   inbook.dialog=gtk_dialog_new_with_buttons("Search within book",GTK_WINDOW(window),GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT,"_Close",GTK_RESPONSE_CLOSE,NULL);
+#ifdef EXR_READER_PREFERENCES_UI
+  gtk_style_context_add_class(gtk_widget_get_style_context(inbook.dialog),"exreader-appearance");
+#endif
   GtkWindowGroup *group=gtk_window_group_new();gtk_window_group_add_window(group,GTK_WINDOW(inbook.dialog));g_object_unref(group);
   GtkWidget *area=gtk_dialog_get_content_area(GTK_DIALOG(inbook.dialog));gtk_container_set_border_width(GTK_CONTAINER(area),12);
   inbook.entry=gtk_entry_new();gtk_entry_set_max_length(GTK_ENTRY(inbook.entry),4096);

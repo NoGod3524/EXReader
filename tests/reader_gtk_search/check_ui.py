@@ -68,14 +68,25 @@ def main():
         command('xdotool','windowactivate','--sync',window)
         def native_ready(predicate):
             while time.monotonic()<deadline:
+                assert host.process.poll() is None,'host exited during chooser transition: '+str(host.process.returncode)
                 value=observed('native_import')
                 if predicate(value):return
                 time.sleep(.02)
             raise TimeoutError('native import focus/input not ready: '+repr(observed('native_import')))
         native_ready(lambda value:value.get('visible')=='1' and value.get('active')=='1')
-        host.key('ctrl+l');native_ready(lambda value:value.get('entry_focused')=='1')
+        host.key('ctrl+l')
+        chooser=element('Import book',{'file chooser'})
+        location=None
+        while time.monotonic()<deadline:
+            location=next((node for node in bus.walk(chooser) if bus.role(node)=='text' and bus.states(node).get('showing') and bus.states(node).get('sensitive')),None)
+            if location:break
+            assert host.process.poll() is None,'host exited before native location entry'
+            time.sleep(.02)
+        assert location,'visible native location entry absent'
+        click_accessible(location);native_ready(lambda value:value.get('entry_focused')=='1')
         host.key('ctrl+a');host.paste(str(path));expected=hashlib.sha256(str(path).encode()).hexdigest()
         while time.monotonic()<deadline:
+            assert host.process.poll() is None,'host exited during source selection: '+str(host.process.returncode)
             value=observed('native_import')
             if value.get('visible')=='1' and value.get('entry_sha256')==expected and value.get('selected_sha256')==expected and value.get('accept_sensitive')=='1':break
             time.sleep(.02)
@@ -204,10 +215,13 @@ def main():
         record('all_original_fixture_bytes_remain_unchanged',all(hashlib.sha256(Path(path).read_bytes()).hexdigest()==digest for path,digest in originals.items()))
         report.update(search_scope_passed=True,count=len(checks),passed=len(checks),failed=0)
     finally:
+        if not report['search_scope_passed']:
+            report['host_returncode_before_cleanup']=host.process.poll() if host.process else None
+            report['failure_host']=host.read() if host.observe.exists() else {}
+            if (output/'application.log').exists():print((output/'application.log').read_text(errors='replace')[-6000:],flush=True)
         if host.process and host.process.poll() is None:
             if not report['search_scope_passed']:
                 if 'app' in locals():(output/'failure-tree.json').write_text(json.dumps(bus.dump(app),indent=2),encoding='utf-8')
-                print((output/'application.log').read_text(errors='replace')[-6000:],flush=True)
             host.process.kill();host.process.wait(timeout=15)
         if host.log:host.log.close()
         report['last_observation']=observed();(output/'result.json').write_text(json.dumps(report,indent=2),encoding='utf-8');bus.exit_bus()
