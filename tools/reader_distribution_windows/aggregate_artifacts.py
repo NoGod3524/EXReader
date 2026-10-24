@@ -82,12 +82,17 @@ def main():
     with zipfile.ZipFile(zip_path) as archive:
         archive.extractall(args.download_dir / 'content')
     content = args.download_dir / 'content'
-    summary_path = content / 'summary.json'
-    distribution_path = content / 'distribution.json'
-    distlib.require(summary_path.is_file() and distribution_path.is_file(),
-                    'artifact does not contain the summary and distribution reports')
-    summary = distlib.load_json(summary_path)
-    distribution = distlib.load_json(distribution_path)
+    # upload-artifact keeps the least common ancestor of the uploaded paths, so the
+    # reports sit under a preserved directory rather than at the artifact root.
+    summaries = list(content.rglob('summary.json'))
+    distributions = list(content.rglob('distribution.json'))
+    distlib.require(len(summaries) == 1 and len(distributions) == 1,
+                    'artifact must carry exactly one summary and one distribution report, found %d and %d'
+                    % (len(summaries), len(distributions)))
+    distlib.require(summaries[0].parent == distributions[0].parent,
+                    'summary and distribution reports are not from the same directory')
+    summary = distlib.load_json(summaries[0])
+    distribution = distlib.load_json(distributions[0])
     distlib.named(results, 'summary-source-bound', summary.get('source_sha') == args.source_sha and
                   summary.get('accepted') is True, summary.get('source_sha'))
     distlib.named(results, 'summary-same-run-and-attempt',
