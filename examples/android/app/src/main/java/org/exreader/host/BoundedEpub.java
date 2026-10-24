@@ -67,6 +67,13 @@ final class BoundedEpub implements AutoCloseable {
         if(hit.mode!=NativeSearch.EPUB)throw new IllegalArgumentException("Search chapter route mismatch");
         return resolvedPage(hit.chapterLocation(),0,size,task,false,false);
     }
+    PageLoad seekNavigation(NativeNavigation.Destination destination,HostTask task)throws Exception {
+        NativeNavigation.Result route=destination.result;int target=(int)route.part;
+        if(target<0||target>=parts.length||!parts[target][0].equals(route.path))throw new IllegalArgumentException("Navigation spine identity mismatch");
+        long candidate=open(target,size,task);
+        try{nativeCapture(candidate,target,route.offset);}catch(Exception|Error error){nativeClose(candidate);throw error;}
+        return prepareOn(candidate,target,0,-1,route.offset,size,task,false);
+    }
     private PageLoad resolvedPage(String[] location,int display,float value,HostTask task,boolean fallback,boolean recovery) throws Exception {
         int target=Integer.parseInt(location[0]); long candidate=open(target,value,task);
         try {

@@ -1,0 +1,16 @@
+{
+  "accepted": false,
+  "scope": "Android actual native directory and by-page UI over fixed installed Navigation, independent public SDK target verification and lifecycle",
+  "fixed_base": "e764f08dea4986f11db183c5b17b41ddb5526bcc",
+  "module_source": "cbd7832b914bddcf99e06a85962d301a00b47efa",
+  "module_tree": "9395914832e191ad63f18f6188ca5044260d2f12",
+  "source_sha": null,
+  "runs": [],
+  "all_execution_on_actions": true,
+  "fixed_pages_author_outline": false,
+  "cfi_mapping": "Public element/child boundaries or byte-identical raw/projection text at complete scalar boundaries; collapsed and surrogate-interior positions refused without navigation.",
+  "performance_accepted": false,
+  "physical_device": false,
+  "talkback_speech_accepted": false,
+  "complete_product": false
+}
