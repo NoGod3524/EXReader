@@ -670,25 +670,44 @@ bool read_header_only(const fs::path& p, const rth_limits& lim, Header& h, uint6
   return parse_header(buf, got, size, lim, h);
 }
 
-void drop_entry(rth_cache* c, const std::string& name) {
-  auto it = c->entries.find(name);
-  if (it != c->entries.end()) { c->total -= it->second.bytes; c->entries.erase(it); }
+// A file that is still on disk is not free space: the entry stays in the map with its
+// bytes counted when the removal fails, so the limits stay honest.
+bool remove_entry_file(rth_cache* c, const std::string& name) {
   std::error_code ec;
   fs::remove(c->dir / name, ec);
+  if (ec) {
+    ++c->stats.delete_failures;
+    return false;
+  }
+  return true;
 }
 
-void evict_lru(rth_cache* c) {
+bool drop_entry(rth_cache* c, const std::string& name) {
+  auto it = c->entries.find(name);
+  if (it == c->entries.end()) return remove_entry_file(c, name);
+  if (!remove_entry_file(c, name)) return false;
+  c->total -= it->second.bytes;
+  c->entries.erase(it);
+  return true;
+}
+
+bool evict_lru(rth_cache* c) {
   auto victim = c->entries.begin();
   for (auto it = c->entries.begin(); it != c->entries.end(); ++it)
     if (it->second.tick < victim->second.tick) victim = it;
-  std::string name = victim->first;
-  drop_entry(c, name);
+  const std::string name = victim->first;
+  if (!drop_entry(c, name)) return false;  // no eviction happened: do not claim one
   ++c->stats.evictions;
+  return true;
 }
 
-void make_room(rth_cache* c, uint64_t need) {
-  while (!c->entries.empty() && (c->entries.size() + 1 > c->limits.max_entries || c->total + need > c->limits.max_total_bytes))
-    evict_lru(c);
+// Returns false when the room cannot be made; the caller must then refuse to add.
+bool make_room(rth_cache* c, uint64_t need) {
+  while (!c->entries.empty() &&
+         (c->entries.size() + 1 > c->limits.max_entries || c->total + need > c->limits.max_total_bytes)) {
+    if (!evict_lru(c)) return false;
+  }
+  return true;
 }
 
 // ---- argument validation ----------------------------------------------------
@@ -747,7 +766,7 @@ bool lookup(rth_cache* c, const std::string& key, rth_thumbnail* out) {
     good = std::memcmp(digest, h.digest, 32) == 0;
   }
   if (!good) {
-    drop_entry(c, name);
+    drop_entry(c, name);  // a failure keeps the entry counted and is reported
     ++c->stats.corrupt_rebuilt;
     ++c->stats.misses;
     return false;
@@ -778,8 +797,14 @@ bool store(rth_cache* c, const std::string& key, rth_origin origin, const unsign
   file.insert(file.end(), pixels, pixels + payload);
   const uint64_t need = file.size();
   if (need > c->limits.max_total_bytes) { ++c->stats.rejected; return false; }
-  if (c->entries.count(name)) drop_entry(c, name);
-  make_room(c, need);  // room first: the map never holds more than max_entries
+  if (c->entries.count(name) && !drop_entry(c, name)) {
+    ++c->stats.store_failures;
+    return false;  // the old file is still there: do not add a second one
+  }
+  if (!make_room(c, need)) {
+    ++c->stats.store_failures;
+    return false;  // no room could be freed: the caps still hold without this entry
+  }
   const auto inserted = c->entries.emplace(name, rth_cache::Entry{key, width, height, need, 0});
   c->total += need;
   std::error_code ec;
@@ -873,7 +898,7 @@ rth_status finish(rth_cache* c, const std::string& key, rth_origin origin, const
   // Owned until the output box is filled: a cancellation, a store failure or an
   // allocation exception inside store leaves no pixels and no half-filled output.
   PixelOwner keep{raw};
-  if (!resample(raw, bmp.width, bmp.height, bmp.stride, ow, oh, raw, poll))
+  if (!resample(bmp.pixels, bmp.width, bmp.height, bmp.stride, ow, oh, raw, poll))
     return fail(err, RTH_CANCELLED, -1, "Cancelled");
   if (poll.check()) return fail(err, RTH_CANCELLED, -1, "Cancelled");
   const bool stored = store(c, key, origin, keep.p, ow, oh);
@@ -1038,13 +1063,13 @@ rth_status rth_cache_open(const char* directory, const rth_limits* limits, rth_c
       Header h;
       uint64_t size = 0;
       if (!read_header_only(it->path(), c->limits, h, size) || entry_name(h.key) != name) {
-        fs::remove(it->path(), fe);
+        if (!remove_entry_file(c, name)) return fail(error, RTH_IO, -1, "Cannot delete a damaged cache entry");
         ++deleted;
         ++c->stats.corrupt_rebuilt;
         continue;
       }
       if (size > c->limits.max_total_bytes) {
-        fs::remove(it->path(), fe);  // it could never coexist with the byte cap
+        if (!remove_entry_file(c, name)) return fail(error, RTH_IO, -1, "Cannot delete an oversized cache entry");
         ++deleted;
         continue;
       }
@@ -1059,7 +1084,7 @@ rth_status rth_cache_open(const char* directory, const rth_limits* limits, rth_c
       c->stats.peak_retained_entries =
           std::max<uint64_t>(c->stats.peak_retained_entries, static_cast<uint64_t>(c->entries.size()));
       while (!c->entries.empty() && (c->entries.size() > c->limits.max_entries || c->total > c->limits.max_total_bytes)) {
-        evict_lru(c);
+        if (!evict_lru(c)) return fail(error, RTH_IO, -1, "Cannot evict a cache entry to enforce the limits");
         ++deleted;
       }
     }
@@ -1090,7 +1115,9 @@ rth_status rth_cache_clear(rth_cache* c, rth_error* error) {
     std::vector<std::string> names;
     names.reserve(c->entries.size());
     for (const auto& kv : c->entries) names.push_back(kv.first);
-    for (const std::string& n : names) drop_entry(c, n);
+    for (const std::string& n : names) {
+      if (!drop_entry(c, n)) return fail(error, RTH_IO, -1, "Cannot delete a cache entry");
+    }
     if (!write_index(c)) return fail(error, RTH_IO, -1, "Cannot publish the cache index (atomic replace failed)");
     return ok(error);
   });

@@ -132,6 +132,12 @@ def main():
     add_image('wide300x100', 300, 100, lambda x, y: (12, 34, 56, 255))
     add_image('tall100x300', 100, 300, lambda x, y: (12, 34, 56, 255))
     add_image('small10x10', 10, 10, lambda x, y: (x * 20, y * 20, 100, 255))
+    # Genuinely non-uniform in every channel, with transparent, half-transparent and
+    # opaque bands: a downscale that reads the wrong buffer, or that ignores alpha
+    # weighting, cannot match this reference by accident.
+    add_image('noise64x48', 64, 48,
+              lambda x, y: ((x * 37 + y * 11) & 0xff, (x * 5 + y * 61) & 0xff, (x * 3 ^ y * 29) & 0xff,
+                            (255, 200, 140, 90, 30, 0)[(x // 3 + y // 2) % 6]))
     mid = bytes((200, 100, 50, 255)) * (3000 * 3000)
     files['mid3000x3000.png'] = png(3000, 3000, mid)
     huge = (b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', 30000, 30000, 8, 6, 0, 0, 0))
@@ -156,7 +162,8 @@ def main():
     (out / 'manifest.json').write_text(json.dumps(manifest, indent=2, sort_keys=True) + '\n', encoding='utf-8')
     lines = []
     for name, box in [('grad16x8', (8, 8)), ('grad16x8', (5, 5)), ('swap16x8', (8, 8)), ('alpha8x8', (4, 4)), ('alpha8x8', (3, 3)),
-                      ('alpha8x8', (8, 8)), ('small10x10', (64, 64)), ('small10x10', (4, 7)), ('wide300x100', (60, 60)), ('tall100x300', (60, 60))]:
+                      ('alpha8x8', (8, 8)), ('small10x10', (64, 64)), ('small10x10', (4, 7)), ('wide300x100', (60, 60)), ('tall100x300', (60, 60)),
+                      ('noise64x48', (64, 48)), ('noise64x48', (16, 12)), ('noise64x48', (7, 5)), ('noise64x48', (31, 9))]:
         width, height, rgba = pixels[name]
         ow, oh, data = thumb(rgba, width, height, *box)
         lines.append(f'{name} {box[0]} {box[1]} {ow} {oh} {data.hex()}')

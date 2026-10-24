@@ -16,7 +16,7 @@ REQUIRED_PREFIXES = {
     'version:': 1, 'sha256:': 2, 'exact:': 20, 'aspect:': 4, 'alpha:': 4, 'missing cover:': 5, 'library cover:': 4,
     'preview:': 13, 'origins:': 1, 'unchanged:': 2, 'limits:': 21, 'anomalous image:': 4, 'decoded bytes:': 2,
     'lru:': 6, 'mishit:': 9, 'corruption (': 24, 'recovery:': 6, 'cancel ': 10, 'reopen:': 7, 'owner:': 3,
-    'bounded open:': 5, 'disk budget:': 4, 'owner lock:': 2, 'publish:': 3, 're-entry:': 2,
+    'bounded open:': 5, 'disk budget:': 8, 'owner lock:': 2, 'publish:': 3, 're-entry:': 2, 'pixels:': 2,
 }
 # individually required behaviours (exact names)
 REQUIRED_EXACT = [
@@ -36,6 +36,9 @@ REQUIRED_EXACT = [
     'unchanged: every original fixture file is byte-identical after all operations',
     'owner: a call from another thread is refused and changes nothing',
     'bounded open: a reopen with max_entries=3 retains at most 3 while scanning, never 40',
+    'pixels: a non-uniform 64x48 source matches its independent reference at 64x48, 16x12, 31x9 and 7x5',
+    'disk budget: an entry that cannot be deleted is not counted as freed; the store is refused and the caps hold',
+    'disk budget: open refuses to return a cache when a damaged entry cannot be deleted',
     'bounded open: 1300 candidates are cleaned in one pass and the unrelated files are left untouched',
     'disk budget: an OK open leaves every own entry file inside max_entries=5 and max_total_bytes=4096',
     'disk budget: a directory above the scan ceiling is refused with RTH_LIMIT and no cache',
