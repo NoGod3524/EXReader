@@ -269,7 +269,26 @@ static void external(const char *t, size_t n, size_t colon, verdict *v) {
   for (i = 0; i < n; i++)
     if (t[i] == ' ') { reject(v, READER_LINK_REASON_SPACE); return; }
   if (!rest_len) { reject(v, READER_LINK_REASON_MALFORMED); return; }
-  if (!check_escapes(rest, rest_len, 1, &why)) { reject(v, why); return; }
+  {
+    size_t hash_at = SIZE_MAX, query = SIZE_MAX, k;
+    for (k = 0; k < rest_len; k++)
+      if (rest[k] == '#') { hash_at = k; break; }
+    /* A '?' only starts query data before the fragment; a '?' inside a
+       fragment is literal text. */
+    for (k = 0; k < (hash_at == SIZE_MAX ? rest_len : hash_at); k++)
+      if (rest[k] == '?') { query = k; break; }
+    /* Encoded controls are query data only (for example a mailto body); the
+       authority, path and fragment must never carry them. */
+    if (query == SIZE_MAX) {
+      if (!check_escapes(rest, rest_len, 0, &why)) { reject(v, why); return; }
+    } else {
+      if (!check_escapes(rest, query, 0, &why)) { reject(v, why); return; }
+      if (!check_escapes(rest + query + 1, rest_len - query - 1, 1, &why)) {
+        reject(v, why);
+        return;
+      }
+    }
+  }
   for (i = 0; i < rest_len; i++)
     if (rest[i] == '#') { hash = i; break; }
   if (hash != SIZE_MAX) {
@@ -348,6 +367,39 @@ static void external(const char *t, size_t n, size_t colon, verdict *v) {
   }
 }
 
+/* Validates fragment escapes like container paths: hex, no encoded control, and
+   the decoded bytes must be valid UTF-8. A fragment keeps literal '/' and ':'
+   because ids are opaque text, but a bad UTF-8 escape is a rejected link rather
+   than a display string the host would have to escape. */
+static int check_fragment_bytes(const char *s, size_t n, reader_link_reason *why) {
+  size_t i;
+  u8state st;
+  memset(&st, 0, sizeof(st));
+  for (i = 0; i < n; i++) {
+    unsigned char b = (unsigned char)s[i];
+    int done;
+    uint32_t cp = 0;
+    if (b == '%') {
+      unsigned v;
+      if (n - i < 3 || !is_hex((unsigned char)s[i + 1]) || !is_hex((unsigned char)s[i + 2])) {
+        *why = READER_LINK_REASON_BAD_ESCAPE;
+        return 0;
+      }
+      v = hex_value((unsigned char)s[i + 1]) * 16u + hex_value((unsigned char)s[i + 2]);
+      if (v == 0 || v < 0x20u || v == 0x7Fu) {
+        *why = READER_LINK_REASON_ENCODED_CONTROL;
+        return 0;
+      }
+      b = (unsigned char)v;
+      i += 2;
+    }
+    if (!u8_feed(&st, b, &done, &cp)) { *why = READER_LINK_REASON_BAD_ESCAPE; return 0; }
+    if (done && spoof_cp(cp)) { *why = READER_LINK_REASON_ENCODED_CONTROL; return 0; }
+  }
+  if (st.need) { *why = READER_LINK_REASON_BAD_ESCAPE; return 0; }
+  return 1;
+}
+
 /* Checks the percent-decoded bytes of a container path. */
 static int check_path_bytes(const char *s, size_t n, reader_link_reason *why) {
   size_t i;
@@ -398,7 +450,7 @@ static void internal(const char *t, size_t n, long base_dirs, verdict *v) {
     for (k = hash + 1; k < n; k++)
       if (t[k] == '#') { reject(v, READER_LINK_REASON_MALFORMED); return; }
     if (frag_len >= READER_LINK_INTERNAL_PART_LIMIT) { reject(v, READER_LINK_REASON_TOO_LONG); return; }
-    if (!check_escapes(t + hash + 1, frag_len, 0, &why)) { reject(v, why); return; }
+    if (!check_fragment_bytes(t + hash + 1, frag_len, &why)) { reject(v, why); return; }
   }
   if (path_end >= READER_LINK_INTERNAL_PART_LIMIT) { reject(v, READER_LINK_REASON_TOO_LONG); return; }
   if (path_end) {

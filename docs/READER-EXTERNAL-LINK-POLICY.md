@@ -109,6 +109,13 @@ double escapes (`%25XX`), absolute paths, protocol-relative `//`, path escape ab
 the container root, userinfo (`@`) or encoded authority, empty/duplicate labels, ports
 outside 0-65535, `?` or `:` inside an internal path, and two `#` characters.
 
+Percent escapes are validated per URI component. In an external target only the
+query may carry encoded C0/DEL bytes (a `mailto` body such as `x%0D%0Ay` is the
+documented positive case); the authority, the path and the fragment reject them.
+A `#` fragment keeps literal `/` and `:` because ids are opaque text, but its
+escapes must decode to valid UTF-8: `#a%FF` and `#%E2%82` are `BAD_ESCAPE`, and
+`#%E7%AB%A0%E8%8A%82` is an accepted INTERNAL fragment.
+
 `result.flags` reports `DISPLAY_UNSAFE` (display bytes contain invalid UTF-8 or
 controls and must be escaped before drawing), `NON_ASCII_HOST` (show punycode or warn)
 and `HAS_FRAGMENT`.
@@ -139,7 +146,7 @@ then compiles five independent consumers against the **installed** prefix only:
 | `link-unsafe-control` | negative control for the symbol audit; never executed |
 
 `check_link_policy.py` fixes every expectation before reading consumer output,
-runs each consumer, and writes `report.json` with 36 named outcomes. `check_artifacts.py`
+runs each consumer, and writes `report.json` with 37 named outcomes. `check_artifacts.py`
 then authenticates the three same-run ZIPs through the GitHub API, re-computes
 their digests, and compares the report against the installed library, header and
 consumer bytes inside the same ZIP.
@@ -195,7 +202,7 @@ Retained original failures (kept, not rewritten):
 
 | item | status |
 | --- | --- |
-| module behaviour (36 named checks) | **accepted** on Linux, Windows and macOS from run 40123584995 |
+| module behaviour (37 named checks) | cloud retest pending after the root review fix |
 | installed C and C++ consumers | **accepted** (five consumers built from the install prefix only) |
 | no network / process / file dependency | **static proof passed**, including a negative control |
 | actual hosts (Windows, GTK, Android, Apple) | **not wired**; owned by root and the host owners |
