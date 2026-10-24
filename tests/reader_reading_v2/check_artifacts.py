@@ -49,6 +49,9 @@ def main():
                         listing = json.loads(archive.read('reading-v2-annotations/result.json'))
                         require(listing.get('accepted') is True and listing['source_sha'] == source and int(listing['run_id']) == run_id and int(listing['attempt']) == attempt, 'annotation page report identity/refusal')
                         require(listing['count'] == 10 and len(set(listing['checks'])) == 10 and listing['entities'] == 235, 'annotation page cases missing')
+                        entities = json.loads(archive.read('reading-v2-entities/result.json'))
+                        require(entities.get('accepted') is True and entities['source_sha'] == source and int(entities['run_id']) == run_id and int(entities['attempt']) == attempt, 'remote entity discovery report identity/refusal')
+                        require(entities['count'] == 12 and len(set(entities['checks'])) == 12 and entities['tag_entities'] == 235 and entities['kinds'] == 7, 'remote entity discovery cases missing')
                         for relative, count in [('sync-source-evidence/result.json', 77 if platform == 'Linux' else 76), ('sync-protocol-evidence/result.json', 59),
                                                 ('sync-evidence/result.json', 33), ('projection-evidence/result.json', 32), ('commands-evidence/result.json', 33), ('metadata-evidence/result.json', 29), ('session-evidence/result.json', 20)]:
                             original = json.loads(archive.read(relative))
