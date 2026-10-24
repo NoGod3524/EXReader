@@ -66,10 +66,13 @@ def main():
         raise TimeoutError('missing native control: ' + name)
 
     def click_node(node):
+        if bus.role(node) == 'table cell':
+            component = node.get_component_iface()
+            assert component is not None and component.scroll_to(bus.Atspi.ScrollType.ANYWHERE), 'native cell cannot scroll into view: ' + bus.name(node)
         end = time.monotonic() + 10
         while time.monotonic() < end:
             rect = bus.extents(node)
-            if rect and rect['width'] > 3 and rect['height'] > 3 and bus.states(node).get('sensitive'):
+            if rect and rect['x'] >= 0 and rect['y'] >= 0 and rect['width'] > 3 and rect['height'] > 3 and bus.states(node).get('sensitive'):
                 command('xdotool', 'mousemove', '--sync', str(rect['x'] + rect['width'] // 2), str(rect['y'] + rect['height'] // 2))
                 command('xdotool', 'click', '1')
                 return
@@ -244,6 +247,8 @@ def main():
         report['batch_import_scope_passed'] = True
     except BaseException as error:
         report['error'] = repr(error)
+        annotation = repr(error).replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+        print('::error title=Native folder UI::' + annotation, flush=True)
         try:
             command('import', '-window', 'root', str(output / 'failure.png'))
             if app:

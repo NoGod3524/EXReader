@@ -128,6 +128,7 @@ static void folder_chooser_changed(GtkFileChooser *chooser,gpointer unused) { (v
 static void folder_open(GtkWidget *widget,gpointer unused) {
   (void)widget;(void)unused;
   if(folder.dialog) { gtk_window_present(GTK_WINDOW(folder.dialog));return; }
+  if(!profile_writable) { status(EXR_IO,"Library unavailable; reopen before importing a folder");return; }
   if(closing || folder_paused()) { status(EXR_OK,"Finish the current reading operation first");return; }
   GtkWidget *chooser=gtk_file_chooser_dialog_new("Import folder",GTK_WINDOW(window),GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
     "Cancel",GTK_RESPONSE_CANCEL,"Choose folder",GTK_RESPONSE_ACCEPT,NULL);
