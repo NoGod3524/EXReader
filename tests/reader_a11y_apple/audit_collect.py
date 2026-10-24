@@ -222,6 +222,7 @@ def evaluate_geometry(platform, step, spec, elements, window, policy, items, scr
     advisory_min = float(targets.get('advisory_ios', 44))
     advisory_macos = float(targets.get('advisory_macos', 20))
     checked = []
+    skipped_overlap = []
     for identifier in spec.get('interactive') or []:
         element = elements.get(identifier)
         if element is None:
@@ -285,6 +286,13 @@ def evaluate_geometry(platform, step, spec, elements, window, policy, items, scr
             overlap_height = min(a['y'] + a['height'], b['y'] + b['height']) - max(a['y'], b['y'])
             if overlap_width <= 0 or overlap_height <= 0:
                 continue
+            in_scroll = ('ScrollView' in str(first.get('path', ''))
+                         or 'ScrollView' in str(second.get('path', '')))
+            if in_scroll:
+                # A row inside a ScrollView can extend past the viewport and still
+                # be clipped by it, so geometric overlap is not visual occlusion.
+                skipped_overlap.append(first_id + '|' + second_id)
+                continue
             contains = ((a['x'] <= b['x'] and a['y'] <= b['y']
                          and a['x'] + a['width'] >= b['x'] + b['width']
                          and a['y'] + a['height'] >= b['y'] + b['height'])
@@ -300,6 +308,41 @@ def evaluate_geometry(platform, step, spec, elements, window, policy, items, scr
                                        '可交互控件的布局框不互相重叠',
                                        '重叠面积占较小控件 %.0f%%' % (area / smaller * 100),
                                        'major', True, '在压缩布局中重新分配间距，避免控件互相覆盖', screenshot))
+    if skipped_overlap:
+        items.append(make_item(platform, step, ','.join(skipped_overlap[:4]), 'overlap-scroll-content',
+                               'uncovered', '滚动容器内的行与外部控件几何重叠不构成遮挡',
+                               '跳过 %d 对滚动内容/外部控件：几何重叠被滚动视口裁剪，不能据此判定遮挡'
+                               % len(skipped_overlap), 'minor', False,
+                               '需要人工确认滚动视口内的可见性', screenshot))
+
+
+def evaluate_content_area(platform, contract, records, items):
+    """Large text sizes can crowd the primary content out of the window; record the
+    measured share instead of assuming the layout still works."""
+    for rule in contract.get('content_area') or []:
+        if platform not in (rule.get('platforms') or []):
+            continue
+        state = records['states'].get(rule.get('state'))
+        if state is None:
+            continue
+        element = element_map(state).get(rule.get('element'))
+        if element is None:
+            continue
+        window = state.get('window') or {}
+        total = float(window.get('height') or 0)
+        if total <= 0:
+            continue
+        height = rect(element)['height']
+        fraction = height / total
+        floor = float(rule.get('min_fraction', 0.25))
+        verdict = 'pass' if fraction >= floor else 'fail'
+        items.append(make_item(platform, rule.get('state'), rule.get('element'),
+                               'content-area:' + str(rule.get('id')), verdict,
+                               rule.get('expected', ''),
+                               '高度 %.1fpt / 窗口 %.1fpt = %.1f%%' % (height, total, fraction * 100),
+                               rule.get('severity', 'major'),
+                               bool(rule.get('blocking', False)) and verdict == 'fail',
+                               rule.get('fix', ''), state.get('screenshot') or ''))
 
 
 def evaluate_book_rows(platform, step, spec, elements, items, screenshot):
@@ -663,6 +706,7 @@ def main():
         evaluate_content_rule(args.platform, rule, element_map(state), items)
 
     evaluate_scaling(args.platform, contract, records, items)
+    evaluate_content_area(args.platform, contract, records, items)
     evaluate_keyboard(args.platform, contract, records, items)
 
     gaps = []

@@ -17,7 +17,8 @@
       "note": "WCAG 2.5.8 的 24 pt 下限按触控平台阻断；macOS 原生控件按指针平台惯例只做 20 pt 建议项，避免用 Web 门槛误判 AppKit 控件"
     },
     "clip_tolerance_pt": 2,
-    "reading_order_tolerance_pt": 20
+    "reading_order_tolerance_pt": 20,
+    "overlap_scope": "同一容器内的可交互控件才比较布局框；位于滚动容器内的行与外部控件的几何重叠会被滚动视口裁剪，不据此判定遮挡"
   },
   "states": {
     "library.empty": {
@@ -1248,6 +1249,36 @@
       ],
       "reason": "未驱动软键盘输入法；只审计 notes.editor 的可达性与名称",
       "owner": "apple"
+    }
+  ],
+  "content_area": [
+    {
+      "id": "shelf-content-area",
+      "state": "library.large_type",
+      "element": "library.list",
+      "platforms": [
+        "iphone",
+        "ipad"
+      ],
+      "min_fraction": 0.25,
+      "severity": "major",
+      "blocking": false,
+      "expected": "大字体下书架列表仍保留至少 25% 窗口高度（作者设定的设计下限，不是 WCAG 判据）",
+      "fix": "把导入按钮区折叠进菜单或滚动容器，给书架列表留出可读高度"
+    },
+    {
+      "id": "reader-content-area",
+      "state": "reader.large_type",
+      "element": "reader.page",
+      "platforms": [
+        "iphone",
+        "ipad"
+      ],
+      "min_fraction": 0.25,
+      "severity": "major",
+      "blocking": false,
+      "expected": "大字体下阅读面仍保留至少 25% 窗口高度（作者设定的设计下限，不是 WCAG 判据）",
+      "fix": "大字体下把控制区折叠成单行工具条或包进滚动容器，避免阅读面被压到几行"
     }
   ]
 }
