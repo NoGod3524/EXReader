@@ -79,6 +79,25 @@ static void *slurp(const char *path, size_t *size) {
   return data;
 }
 
+/* Whole-file 64-bit FNV-1a fingerprint plus size. It is only used to prove that
+ * one module call changed no byte of either store; it is not an identity. */
+static void fingerprint(const char *path, char out[48]) {
+  FILE *file;
+  unsigned char buffer[65536];
+  unsigned long long hash = 1469598103934665603ULL, size = 0;
+  size_t got;
+  if (!path || !strcmp(path, "-")) { strcpy(out, "-"); return; }
+  file = fopen(path, "rb");
+  if (!file) { strcpy(out, "unreadable"); return; }
+  while ((got = fread(buffer, 1, sizeof(buffer), file)) > 0) {
+    size_t i;
+    for (i = 0; i < got; i++) { hash ^= buffer[i]; hash *= 1099511628211ULL; }
+    size += (unsigned long long)got;
+  }
+  fclose(file);
+  snprintf(out, 48, "%llu:%016llx", size, hash);
+}
+
 typedef struct { int limit; int calls; } cancel_state;
 static int cancel_cb(void *context) {
   cancel_state *state = (cancel_state *)context;
@@ -204,6 +223,7 @@ static int command_read(void) {
   reader_catalog_error catalog_error;
   cancel_state state;
   exr_error sdk_error;
+  char catalog_before[48], catalog_after[48], library_before[48], library_after[48];
   int status, rc;
   memset(&error, 0, sizeof(error));
   memset(&catalog_error, 0, sizeof(catalog_error));
@@ -227,12 +247,22 @@ static int command_read(void) {
     printf("}\n");
     return 0;
   }
+  snapshot = NULL;
+  fingerprint(arg_vector[2], catalog_before);
+  fingerprint(arg_vector[3], library_before);
   status = (int)reader_book_information_read(catalog, library, arg_vector[4], &options,
                                              &snapshot, &error);
+  fingerprint(arg_vector[2], catalog_after);
+  fingerprint(arg_vector[3], library_after);
   view = reader_book_information_get(snapshot);
   printf("{\"status\":%d,\"catalog\":%d,\"sdk\":%d,\"polls\":%d,\"out\":%s,\"message\":",
          status, error.catalog_code, error.sdk_code, state.calls, view ? "true" : "false");
   json_string(error.message);
+  printf(",\"storage\":{\"catalog_before\":"); json_string(catalog_before);
+  printf(",\"catalog_after\":"); json_string(catalog_after);
+  printf(",\"library_before\":"); json_string(library_before);
+  printf(",\"library_after\":"); json_string(library_after);
+  printf("}");
   if (view) { printf(","); print_view(view); }
   printf("}\n");
   reader_book_information_free(snapshot);
