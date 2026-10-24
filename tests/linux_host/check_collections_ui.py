@@ -93,9 +93,9 @@ def main():
         window('Library collections');host.key('alt+F4');window('Library collections', False)
 
     def kind(value):
-        window('Library collections');host.key('alt+t', 'Home');ready()
-        for _ in range(value):
-            host.key('Down');ready()
+        window('Library collections');host.key('alt+t', 'Home');ready(lambda state: state['kind'] == '0')
+        for index in range(value):
+            host.key('Down');ready(lambda state: state['kind'] == str(index + 1))
         host.key('Tab');ready(lambda state: state['kind'] == str(value))
 
     def field(mnemonic, value):

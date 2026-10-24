@@ -4,6 +4,7 @@ static struct {
   GtkWidget *dialog,*editor,*recovery,*types,*removed,*groups,*members,*navigation,*selected_label,*target_label,*message;
   GtkWidget *previous_groups,*next_groups,*previous_members,*next_members,*enter,*up,*rename,*remove,*restore,*add,*detach,*position;
   GtkWidget *name,*ordinal,*editor_message;
+  GtkWidget *resume_focus;
   char *parent,*selected,*selected_name,*selected_parent,*navigation_parent,*target_key,*target_title,*editor_parent,*editor_book;
   char group_cursor[33],member_cursor[73];uint64_t group_ordinal,member_ordinal,token;
   int kind,trash,group_direction,member_direction,entity,operation,selected_deleted,dependency;
@@ -46,6 +47,7 @@ static void collections_close_editor(void) {
 }
 static void collections_destroyed(GtkWidget *widget,gpointer unused) {
   (void)widget;(void)unused;collections.closing=TRUE;collections.applying=TRUE;
+  g_clear_object(&collections.resume_focus);
   collections.dialog=collections.editor=collections.recovery=collections.types=collections.removed=NULL;
   collections.groups=collections.members=collections.navigation=collections.selected_label=collections.target_label=collections.message=NULL;
   collections.previous_groups=collections.next_groups=collections.previous_members=collections.next_members=NULL;
@@ -106,6 +108,9 @@ static void collections_queue(reader_action action) {
     command->collection_name=g_strdup(collections.name ? gtk_entry_get_text(GTK_ENTRY(collections.name)):"");
     command->collection_position=g_strdup(collections.ordinal ? gtk_entry_get_text(GTK_ENTRY(collections.ordinal)):"0");
   }
+  g_clear_object(&collections.resume_focus);
+  GtkWidget *focus=gtk_window_get_focus(GTK_WINDOW(collections.dialog));
+  if(focus) collections.resume_focus=g_object_ref(focus);
   metadata_running=busy=TRUE;gtk_widget_set_sensitive(collections.dialog,FALSE);
   if(collections.editor) gtk_widget_set_sensitive(collections.editor,FALSE);
   if(collections.recovery) gtk_widget_set_sensitive(collections.recovery,FALSE);
@@ -301,6 +306,9 @@ static void collections_apply(host_result *done) {
   reader_result *result=&done->value;metadata_running=busy=FALSE;
   if(!collections.dialog) { state();return; }
   gtk_widget_set_sensitive(collections.dialog,TRUE);
+  if(collections.resume_focus && gtk_widget_get_toplevel(collections.resume_focus)==collections.dialog)
+    gtk_widget_grab_focus(collections.resume_focus);
+  g_clear_object(&collections.resume_focus);
   if(collections.editor) gtk_widget_set_sensitive(collections.editor,TRUE);
   if(collections.recovery) gtk_widget_set_sensitive(collections.recovery,TRUE);
   if(result->metadata_pending) collections_show_recovery(result->message);
