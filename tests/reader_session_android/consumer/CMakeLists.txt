@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 3.24)
+project(ReaderSessionAndroidAcceptance LANGUAGES C CXX)
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
+find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED COMPONENTS library)
+find_package(EXReaderSideload CONFIG REQUIRED)
+add_library(session-sdk-owner SHARED sdk_owner.c)
+target_compile_features(session-sdk-owner PRIVATE c_std_11)
+target_link_libraries(session-sdk-owner PRIVATE EXReaderSideload::exr_sideload)
+target_compile_options(session-sdk-owner PRIVATE -Wall -Wextra -Werror -fvisibility=hidden)
+target_link_options(session-sdk-owner PRIVATE -Wl,--exclude-libs,ALL -Wl,-Bsymbolic
+  -Wl,-z,max-page-size=16384 "-Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/sdk-owner.map")
