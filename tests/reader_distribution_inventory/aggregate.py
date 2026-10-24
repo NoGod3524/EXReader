@@ -148,6 +148,8 @@ def verify_combined(key, payload, inventory, licenses_doc, run, components=None,
             contract.need(isinstance(record.get('archive'), str), 'directive_record_archive')
             directives[record['archive']] = [entry['name'] for entry in record['entries']]
 
+    for path in symbols:
+        directives.setdefault(path, [])
     static = inventory.get('static_dependency') or {}
     contract.need(contract.symbol_edges(symbols, symbols) == static.get('edges'), 'combined_edges')
     by_path = {record['path']: record for record in files}
