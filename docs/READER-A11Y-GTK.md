@@ -184,16 +184,16 @@ Authority: `docs/validation/reader-a11y-gtk.json` for this exact source, run and
 
 | Field | Value |
 | --- | --- |
-| Audited source (`HEAD == GITHUB_SHA`) | `b273377560a5dae1cd5087678eb772ae5a32885c` |
+| Audited source (`HEAD == GITHUB_SHA`) | `67e2f8c4941205c5581e82fd5a1469d18f696019` |
 | Fixed implementation start | `f43baf9182d75907c0cb5d6f77048f27bca8c950` |
 | Frozen SDK contract | `9854061be331fe603a1822d9b2b36ee357154927` (3.40.0, ABI 1) |
-| Run / attempt | 40080642796 / 1 |
-| Job | 120833279004, conclusion `failure` |
+| Run / attempt | 40082300842 / 1 |
+| Job | 120838169808, conclusion `failure` (the refusal gate) |
 | `audit_completed` | **true** — all 13 phases executed, all 32 checks evaluated |
 | `accessibility_accepted` | **false** — six blocking findings stand |
 | `orca_screen_reader_accepted` | false |
 | Checks | 32 recorded, 24 passed, 6 blocking, 2 advisory |
-| Artifact | `reader-a11y-gtk-40080642796-1`, id 12555112950, 18 620 995 bytes, sha256 `2e55e0cf1edb45a6ac59d57e6c1e8935b8106f8bef4240ba1141a8644dbf5ad8`, expires 2027-01-22 |
+| Artifact | `reader-a11y-gtk-40082300842-1`, id 12555254384, 18 608 097 bytes, sha256 `f93ce790edd167173f350a6b4a00b64fd2d5b47d852872916c54e4d6fc4aa140`, expires 2027-01-22 |
 
 The job is red **on purpose**: the last step is the refusal gate, and it exits 2 while a
 blocking finding exists. The audit step itself succeeded, and the artifact above is from
@@ -227,7 +227,7 @@ expected value and a minimal fix in `docs/validation/reader-a11y-gtk.json`.
 | 2 | `annotation_note_rows_named` | `…/scroll pane/viewport/list box[Saved notes; …]/list item[]` | note row `Name = ""`, text only in the child label | same call in `notes_present()` |
 | 3 | `tab_cycle_elements_named` | `frame[EXReader Linux]/panel/scroll pane[]` | the shelf viewport takes keyboard focus with `Name = ""` | name the `GtkScrolledWindow` the host creates for the shelf, page, notes and organizer lists |
 | 4 | `collections_dialog_identity` | `dialog[Library collections]` | modal dialog opens with **no** focused element inside it | `gtk_widget_grab_focus(collections.types)` in `collections_open()` |
-| 5 | `status_message_exposed_as_name_change` | `frame[EXReader Linux]/label[Reading operation failed; accepted page retained]` | the label name changes in place, but **0 of 1686** delivered events carry `accessible-name` for it | move the message to a `GtkStatusbar` (`ATK_ROLE_STATUSBAR`, `text-pushed`) |
+| 5 | `status_message_exposed_as_name_change` | `frame[EXReader Linux]/label[Reading operation failed; accepted page retained]` | the label name changes in place, but **0 of 1459** delivered events carry `accessible-name` for it | move the message to a `GtkStatusbar` (`ATK_ROLE_STATUSBAR`, `text-pushed`) |
 | 6 | `account_dialog_escape_restores_focus` | `frame[EXReader Linux]` | after `Escape` the main window is activated but nothing inside it is focused | remember the main-window focus widget and grab it in `accounts_destroyed()`, or use `GTK_DIALOG_MODAL` |
 
 ### Advisory findings
@@ -244,10 +244,13 @@ modelled or claimed here.
 
 ### Retained earlier runs
 
-Runs 40077115326, 40078328226, 40078531591 and 40079657024 are kept as history and are
-**not** counted as evidence. Their failures were harness defects (evidence-key mismatch,
-clipboard race, secret echoed into the keystroke record, readiness hung on
-`shelf_restoring`), and each was fixed by a later commit on the audited path above.
+Runs 40077115326, 40078328226, 40078531591, 40079657024, 40081341755 and 40081793354 are
+kept as history and are **not** counted as evidence. Their failures were harness defects
+(evidence-key mismatch, clipboard race, secret echoed into the keystroke record, readiness
+hung on `shelf_restoring`, rows read before the shelf handler inserted them, frames read
+before the window existed), and each was fixed by a later commit on the audited path above.
+Run 40081341755 also shows why the audit must not read a container immediately after a
+stack switch: it saw zero shelf rows in one phase and three in the next.
 
 ## 7. Limit of this package
 

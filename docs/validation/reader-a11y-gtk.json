@@ -1,21 +1,22 @@
 {
-  "source_sha": "b273377560a5dae1cd5087678eb772ae5a32885c",
+  "source_sha": "67e2f8c4941205c5581e82fd5a1469d18f696019",
   "start_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "sdk_contract": "9854061be331fe603a1822d9b2b36ee357154927",
   "sdk_version": "3.40.0",
   "sdk_abi": 1,
   "workflow": ".github/workflows/reader-a11y-gtk.yml",
-  "run_id": 40080642796,
+  "branch": "codex/reader-a11y-gtk",
+  "run_id": 40082300842,
   "attempt": 1,
   "job": {
-    "id": 120833279004,
+    "id": 120838169808,
     "name": "Real D-Bus AT-SPI tree, keystrokes and screenshots on Xvfb",
     "conclusion": "failure",
     "failure_is_the_refusal_gate": true,
-    "started_at": "2026-10-24T09:06:30Z",
-    "completed_at": "2026-10-24T09:11:42Z",
-    "audit_step_seconds": 124.5,
-    "note": "The audit step succeeded. The job is red because the final gate exits 2 while blocking findings stand; every artifact below was uploaded from that same run and attempt."
+    "started_at": "2026-10-24T09:31:38Z",
+    "completed_at": "2026-10-24T09:35:26Z",
+    "audit_seconds": 104.5,
+    "note": "The audit step and the report validator both succeeded. The job is red because the final refusal gate exits 2 while blocking findings stand; every artifact below comes from this same run and attempt."
   },
   "kind": "gtk-atspi-keyboard-audit",
   "scope": "GTK product host: shelf, import, organize, reading, annotation and account surfaces observed through AT-SPI with real X11 keystrokes",
@@ -424,11 +425,9 @@
         "after_text": "Reading operation failed; accepted page retained",
         "same_element": true,
         "property_change_events": [],
-        "event_total": 1686,
+        "event_total": 1459,
         "status_role": "label",
-        "status_attributes": {
-          "toolkit": "gtk"
-        }
+        "status_attributes": {}
       },
       "reproduction": [
         "read the status label name",
@@ -474,7 +473,7 @@
         },
         "window_activate_events_for_main": [
           {
-            "t": 1416.361,
+            "t": 484.685,
             "type": "window:activate",
             "detail1": "",
             "detail2": "",
@@ -495,10 +494,10 @@
   ],
   "gaps": [
     "Orca or any real screen reader speech output (no speech capture, no reader build)",
-    "AT-SPI live-region / announcement semantics: the audited GTK3 host sets no live region attribute and at-spi2-core on the runner predates object:announcement",
+    "AT-SPI live-region / announcement semantics: the GTK3 host marks no live region and the registry delivered no object:announcement event, so automatic announcement of the status text is not established either way",
     "Braille display output and BRLTTY integration",
     "Visible focus ring, contrast and theme rendering (WCAG 1.4.3/1.4.11/2.4.7)",
-    "Password-field semantics at the AT-SPI layer: GTK3 exports no password attribute, so an assistive client cannot be told that the field is secret before reading it",
+    "Password-field presentation beyond the ATK role: the audited entry reports the password-text role and the audit measures what its text exports, but how a screen reader masks or announces a secret field is not covered",
     "IME composition, caret browsing and selection announcement for the rendered page image",
     "Network-backed account scan states (preparing, scanning, cancel, retry) because this audit runs offline against a local library only",
     "Non-GTK hosts: Windows, Apple and Android surfaces are outside this package",
@@ -515,17 +514,22 @@
       "window:"
     ],
     "events_rejected": [],
-    "total_accessibility_events": 1686,
+    "total_accessibility_events": 1459,
     "status_label_name_change_events": 0,
     "status_label_before": "Ready",
     "status_label_after": "Reading operation failed; accepted page retained",
     "shelf_list_role": "list box",
     "shelf_row_role": "list item",
-    "shelf_rows_seen": 3,
+    "shelf_row_captions": [
+      "Alpha-shelf-book.txt",
+      "Beta-shelf-book.txt",
+      "Gamma-shelf-book.txt"
+    ],
     "search_entry_role": "text",
     "password_entry_role": "password text",
     "password_exported_text_length": 29,
     "password_secret_exported": false,
+    "password_field_marked_secret": true,
     "secret_leak_hits": 0,
     "phases_executed": [
       "bridge",
@@ -541,30 +545,58 @@
       "status-messages",
       "metadata-dialog",
       "account-dialog"
+    ],
+    "tab_cycle_roles": [
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "text",
+      "toggle button",
+      "push button",
+      "scroll pane",
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "text",
+      "toggle button",
+      "push button"
     ]
   },
   "evidence": {
     "tree_dumps": 12,
     "screenshots": 12,
     "keystroke_lines": 136,
-    "result_json_sha256": "c4b93a320095959c216e8b44764b487fd0d1f96db1040e7e6621afdf34644a5a",
-    "keys_log_sha256": "b5f66a44d6a01f78530bf0b365e9f31451ef2bd5e545ca0e97630f3fb479f8a3",
-    "application_log_sha256": "4c938914bf1cfd27bcd1952c1b1abbdb7a4cb732781443af5974e69652ddf35b",
+    "result_json_bytes": 85869,
+    "result_json_sha256": "c764ae2cb3f1db45f9d2da7faf29791247be7c01278038a869563dc17ab9d78d",
+    "keys_log_sha256": "a22d46b3329bf80f8940d34b23b9fec3e37e564650cbfdfae3ba58b15f4b071e",
+    "application_log_sha256": "33cf04f8673bd1ada4bc83d1843d48b55fc893d5df73d2d2199189b966ceb455",
     "program_sha256": "60dce4c781eb0b95176f9798a53688c6bc49e344f17f80c78ac13262a65daeb1",
-    "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
-    "result_json_bytes": 85835
+    "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b"
   },
   "artifacts": [
     {
-      "id": 12555112950,
-      "name": "reader-a11y-gtk-40080642796-1",
-      "bytes": 18620995,
-      "sha256": "2e55e0cf1edb45a6ac59d57e6c1e8935b8106f8bef4240ba1141a8644dbf5ad8",
-      "digest_source": "GitHub artifacts API digest for the uploaded archive",
-      "created_at": "2026-10-24T09:11:40Z",
-      "expires_at": "2027-01-22T09:06:28Z",
+      "id": 12555254384,
+      "name": "reader-a11y-gtk-40082300842-1",
+      "bytes": 18608097,
+      "sha256": "f93ce790edd167173f350a6b4a00b64fd2d5b47d852872916c54e4d6fc4aa140",
+      "digest_source": "GitHub artifacts API digest of the uploaded archive",
+      "created_at": "2026-10-24T09:31:36Z",
+      "expires_at": "2027-01-22T09:31:36Z",
       "expired_at_verification": false,
-      "contents": "build/a11y-evidence/{result.json,tree,shots,keys.log,application.log,state.ini,profile,corpus}, build/a11y-logs/*, build/a11y-package/{build.json,runtime-dependencies.txt,EXReader-Linux.tar.gz}, source-binding.txt"
+      "contents": "build/a11y-evidence/{result.json,tree/*.json,tree/*.txt,shots/*.png,keys.log,application.log,state.ini,profile,corpus}, build/a11y-logs/*, build/a11y-package/{build.json,runtime-dependencies.txt,EXReader-Linux.tar.gz}, source-binding.txt"
     }
   ],
   "retained_failed_runs": [
@@ -572,34 +604,46 @@
       "run_id": 40077115326,
       "attempt": 1,
       "source_sha": "3b958504e2357b45435662945e5ac9d04b59917e",
-      "outcome": "audit ran; gate refused because the report was invalid (evidence key mismatch). Retained, not counted as evidence."
+      "outcome": "harness defect: report evidence key mismatch, gate refused. Not counted."
     },
     {
       "run_id": 40078328226,
       "attempt": 1,
       "source_sha": "347ded0c",
-      "outcome": "cancelled by the concurrency group when the next commit pushed. Retained, not counted."
+      "outcome": "cancelled by the concurrency group when the next commit pushed. Not counted."
     },
     {
       "run_id": 40078531591,
       "attempt": 1,
       "source_sha": "4c617be6",
-      "outcome": "audit ran; xclip/paste and focus-restore measurement defects made four phases abort. Retained, not counted."
+      "outcome": "harness defect: clipboard paste race and focus-restore measurement. Not counted."
     },
     {
       "run_id": 40079657024,
       "attempt": 1,
       "source_sha": "e7c7b967",
-      "outcome": "audit ran; the keystroke record echoed the typed secret and the readiness predicate hung on shelf_restoring. Retained, not counted."
+      "outcome": "harness defect: typed secret echoed into the keystroke record; readiness hung on shelf_restoring. Not counted."
+    },
+    {
+      "run_id": 40081341755,
+      "attempt": 1,
+      "source_sha": "e8c30927",
+      "outcome": "harness defect: rows read before the shelf result handler inserted them. Not counted."
+    },
+    {
+      "run_id": 40081793354,
+      "attempt": 1,
+      "source_sha": "a912e1ef",
+      "outcome": "harness defect: bridge phase read frames before the window existed. Not counted."
     }
   ],
   "remaining_work": [
     "Orca or any real screen-reader speech pass is not granted: it needs a reader run with speech capture, which this package does not perform.",
-    "Six blocking findings are host defects: the GTK receiver owns reader.c and accounts_ui.inc and must decide the fixes listed in findings[].minimal_fix.",
-    "The organizer type selector stays outside the Tab cycle (advisory) and its mnemonic probe is inconclusive until the dialog takes initial focus.",
+    "The six blocking findings are host defects in examples/linux/reader.c and accounts_ui.inc; the GTK receiver must decide the fixes listed in findings[].minimal_fix.",
+    "The organizer type selector stays outside the Tab cycle (advisory); its mnemonic probe cannot be decided until the dialog takes initial focus.",
     "Network-backed account scan states (preparing, scanning, cancel, retry) remain uncovered because the audit runs offline.",
     "Windows, Apple and Android surfaces are outside this package.",
-    "Braille output, contrast/theme rendering, IME and caret browsing are recorded as gaps, not as passes."
+    "Braille output, contrast/theme rendering, IME and caret browsing are recorded as gaps, never as passes."
   ],
   "problems": []
 }
