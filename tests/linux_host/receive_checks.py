@@ -7,6 +7,8 @@ from pathlib import Path
 import sqlite3
 import subprocess
 import time
+from check_linux_host import command
+from check_sync import raw
 
 REQUIRED_CHECKS = [
     'received_seed_uses_four_exact_originals_and_eighteen_public_sdk_captures',
@@ -15,6 +17,8 @@ REQUIRED_CHECKS = [
     'received_unresolved_book_versions_remain_retained_and_visible_without_choosing_a_head',
     'received_hash_mismatch_refuses_import_without_replacing_the_existing_reader_or_cache',
     'received_symlink_cache_is_refused_without_following_or_modifying_its_target',
+    'received_sdk_commit_survives_product_mapping_failure_without_replacing_current_reading',
+    'received_mapping_retry_reuses_the_same_committed_sdk_book_without_a_second_insert',
     'received_txt_explicit_retry_imports_and_opens_the_verified_original',
     'received_import_restores_the_preexisting_reader_before_the_explicit_book_switch',
     'received_epub_original_opens_through_the_actual_bounded_native_host',
@@ -37,7 +41,6 @@ def run_receive_checks(context):
     open_account, close_account, disconnect, scan = (context[name] for name in ('open_account', 'close_account', 'disconnect', 'scan'))
     sql, protocol, record = (context[name] for name in ('sql', 'protocol', 'record'))
     entries, directories, requests = (context[name] for name in ('entries', 'directories', 'requests'))
-    command, raw = context['command'], context['raw']
     fixtures = args.receive_fixtures.resolve()
     manifest = json.loads((fixtures / 'manifest.json').read_text(encoding='utf-8'))
     work = folder / 'public-capture-seed';work.mkdir()
@@ -130,17 +133,31 @@ def run_receive_checks(context):
     cache = host.folder / 'profile/sync-work'
     txt_cache = cache / (manifest['txt']['sha256'] + '.txt')
     original_txt = txt_cache.read_bytes();txt_cache.write_bytes(b'corrupt original retained for diagnosis')
-    activate('txt');refused = ready(lambda state: state['visible'] == '1' and state['retry_enabled'] == '1')
+    before_attempt = int(account()['receive_attempt']);activate('txt')
+    refused = ready(lambda state: int(state['receive_attempt']) > before_attempt and state['visible'] == '1' and state['retry_enabled'] == '1')
     assert not mapped('txt') and txt_cache.read_bytes() == b'corrupt original retained for diagnosis'
     assert host.read()['book'] == active['book'] and host.read()['start'] == active['start']
     checked('received_hash_mismatch_refuses_import_without_replacing_the_existing_reader_or_cache')
     txt_cache.unlink();outside = folder / 'outside.txt';outside.write_bytes(original_txt);outside.chmod(0o600)
     txt_cache.symlink_to(outside)
-    window();host.key('alt+t');ready(lambda state: state['retry_enabled'] == '1')
+    before_attempt = int(account()['receive_attempt']);window();host.key('alt+t')
+    ready(lambda state: int(state['receive_attempt']) > before_attempt and state['retry_enabled'] == '1')
     assert not mapped('txt') and txt_cache.is_symlink() and outside.read_bytes() == original_txt
     checked('received_symlink_cache_is_refused_without_following_or_modifying_its_target')
     txt_cache.unlink();txt_cache.write_bytes(original_txt);txt_cache.chmod(0o600)
+    # The fixture alone rejects the product mapping after the SDK transaction.
+    # It is removed before retry; the production migration is unchanged.
+    sql("CREATE TRIGGER received_mapping_failure BEFORE INSERT ON reader_local_books BEGIN SELECT RAISE(ABORT,'fixture mapping failure'); END")
+    before_attempt = int(account()['receive_attempt']);window();host.key('alt+t')
+    failed = ready(lambda state: int(state['receive_attempt']) > before_attempt and state['import_pending'] == '1' and state['retry_enabled'] == '1')
+    retained_id = int(failed['imported_book'])
+    assert retained_id > 0 and failed['import_created'] == '1' and not mapped('txt')
+    assert host.read()['book'] == active['book'] and host.read()['start'] == active['start'] and failed['restore_failed'] == '0'
+    checked('received_sdk_commit_survives_product_mapping_failure_without_replacing_current_reading')
+    sql('DROP TRIGGER received_mapping_failure')
     window();host.key('alt+t');observed['txt'] = opened('txt')
+    assert mapped('txt') == retained_id and observed['txt']['import_created'] == '0'
+    checked('received_mapping_retry_reuses_the_same_committed_sdk_book_without_a_second_insert')
     checked('received_txt_explicit_retry_imports_and_opens_the_verified_original')
     assert int(observed['txt']['restored_book']) == active['book'] and int(observed['txt']['restored_position']) == active['position']
     assert observed['txt']['restore_failed'] == '0'
@@ -206,7 +223,7 @@ def run_receive_checks(context):
     checked('received_downloaded_book_reopens_offline_from_the_sdk_when_cache_and_server_are_unavailable')
     context['flags']['http'] = 0
     open_account()
-    assert names == REQUIRED_CHECKS and len(names) == 20
+    assert names == REQUIRED_CHECKS and len(names) == 22
     return {'checks': names, 'selected_captures': len(expected), 'resolutions': resolutions,
             'found': sum(value['status'] == 0 for value in resolutions.values()), 'mislocated': 0,
             'originals_read_back': 4, 'public_capture_seed_sha256': hashlib.sha256(seed_report.read_bytes()).hexdigest()}

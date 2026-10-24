@@ -1,6 +1,6 @@
 {
   "accepted": false,
-  "status": "two retained cloud refusals; corrected complete rerun pending",
+  "status": "three retained cloud refusals; corrected complete rerun pending",
   "baseline": "d2b59e9e9b3ad3e3246c23926f0fbebbaa9515f8",
   "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
   "source_sha": null,
@@ -22,7 +22,15 @@
     "attempt": 1,
     "job_id": 120833822016,
     "conclusion": "failure",
-    "reason": "Actual GTK link map used libexr_vendor_exr_sqlite.a instead of the installed product provider. GTK-account target now pulls the product provider before SDK vendor resolution; unchanged identity gate retained."
+    "reason": "Actual GTK link map used libexr_vendor_exr_sqlite.a instead of the installed product provider. GTK-account target now pulls the product provider before SDK vendor resolution; unchanged identity gate retained.",
+    "artifact": {"id": 12555226724, "size_in_bytes": 1525140, "digest": "sha256:888677da503befabebbbddab7a06082813917d0f6e28ee75ec5c2b11badb3d19"}
+  }, {
+    "source_sha": "f02ccca0f7cb5c80e7653a5d5daac7b7eb8423ff",
+    "run_id": 40081144545,
+    "attempt": 1,
+    "job_id": 120834788359,
+    "conclusion": "failure",
+    "reason": "Receive test helper tried to obtain module-level command/raw functions from main() locals. It now imports those existing helpers directly. This interim source also used -u SQLite ordering; final source removes that in favor of normal installed product target dependencies."
   }],
   "granted_platforms": [],
   "physical_device_execution": false,
