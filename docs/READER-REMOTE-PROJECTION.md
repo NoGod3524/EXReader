@@ -34,4 +34,9 @@ attempt1，五作业全部成功；两平台各12项通过，严格作业`120777
 
 后续HTTPS消费者进一步接入这条路径：A原子提交metadata+history+outbox，B收到
 四份book后先按SAFE head投影，再实际导入下载原件并建立本机映射，核对云端
-title/author/favorite不被导入默认值覆盖。这项端到端加强单独等新源码结果。
+title/author/favorite不被导入默认值覆盖。这项端到端加强已在源码
+`fb30036af7e23314f4d5949ebf219b92447d1bc9`、run`40062187051`、attempt1
+同源五作业全部通过；两平台各投影4本，22条修订及18个阅读捕获经真实原生HTTPS往返，
+17 FOUND/1预期歧义、零误定位。严格汇总重新核对四ZIP，`accepted=true, problems=[]`。
+工件与逐平台计数见[metadata往返验收](validation/reader-metadata-webdav.json)。
+这是原生消费者出口；宿主账号界面的分批调度、冲突呈现和刷新继续接入。
