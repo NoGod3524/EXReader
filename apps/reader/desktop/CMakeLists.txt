@@ -56,6 +56,17 @@ if(WIN32)
   if(MSVC)
     target_link_options(EXReaderProduct PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/windows-host.map")
   endif()
+  option(EXR_READER_WINDOWS_SHELF_TESTS "Build isolated worker/cache ownership regression, not installed" OFF)
+  if(EXR_READER_WINDOWS_SHELF_TESTS)
+    add_executable(reader-windows-shelf-seed ../../../tests/windows_host/seed_shelf.c)
+    target_link_libraries(reader-windows-shelf-seed PRIVATE EXReader::exr_library)
+    add_executable(EXReaderShelfReview WIN32 ../../../examples/reader.c)
+    target_compile_definitions(EXReaderShelfReview PRIVATE EXR_READER_PRODUCT_CATALOG=1
+      EXR_HOST_WORKER_REVIEW=1 EXR_HOST_SHELF_REVIEW=1
+      "EXR_READER_WINDOWS_PRODUCT_HEADER=\"${CMAKE_CURRENT_SOURCE_DIR}/windows_catalog.inc\""
+      "EXR_HOST_WORKER_REVIEW_HEADER=\"${CMAKE_CURRENT_SOURCE_DIR}/../../../tests/windows_host/worker_review/hooks.h\"")
+    target_link_libraries(EXReaderShelfReview PRIVATE reader_catalog_sdk EXReader::exr_core comdlg32 gdi32 shell32 user32)
+  endif()
 endif()
 if(EXR_READER_BUILD_GTK)
   if(NOT UNIX OR APPLE)
