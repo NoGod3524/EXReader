@@ -266,15 +266,23 @@ def main():
         probe_record["summary"] = summary
         if done.returncode != 0 or summary.get("result") != "pass":
             fail("probe_result", json.dumps(summary)[:200])
-        for key, expected in (("started", 1), ("finished", 1), ("failed", 0), ("stopped", 0), ("bad_range", 0)):
+        for key, expected in (("started", 1), ("finished", 1), ("failed", 0), ("stopped", 0)):
             if summary.get(key) != expected:
                 fail("probe_" + key, str(summary.get(key)))
-        if not isinstance(summary.get("ranges"), int) or summary.get("ranges", 0) < 5:
-            fail("probe_ranges", str(summary.get("ranges")))
+        probe_ranges = summary.get("ranges")
+        probe_capability = summary.get("capabilities", 0) & 2
+        if not isinstance(probe_ranges, int) or probe_ranges < 0:
+            fail("probe_ranges", str(probe_ranges))
+        elif probe_ranges == 0:
+            if probe_capability:
+                fail("probe_range_capability", "capability advertised without ranges")
+        elif probe_ranges < 5 or probe_capability == 0:
+            fail("probe_ranges", "%d ranges, capability=%d" % (probe_ranges, probe_capability))
         if summary.get("state_after") != "READY":
             fail("probe_state", str(summary.get("state_after")))
-        if summary.get("max_end", 0) <= 0 or summary.get("max_end", 0) > summary.get("text_bytes", 0):
-            fail("probe_range_bounds")
+        if probe_ranges:
+            if summary.get("max_end", 0) <= 0 or summary.get("max_end", 0) > summary.get("text_bytes", 0):
+                fail("probe_range_bounds")
         if summary.get("text_bytes") != len(probe_text):
             fail("probe_text_bytes", "%r vs %d" % (summary.get("text_bytes"), len(probe_text)))
         try:

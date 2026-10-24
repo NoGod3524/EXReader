@@ -153,13 +153,22 @@ int run(const char *text_path, const char *wav_path, double rate, const char *vo
     }
   }
   reader_tts_observe(handle, &snap, &error);
-  std::printf("{\"result\":\"%s\",\"voices\":%zu,\"started\":%d,\"ranges\":%d,\"finished\":%d,"
-              "\"failed\":%d,\"stopped\":%d,\"text_bytes\":%zu,\"max_end\":%zu,\"bad_range\":%d,"
-              "\"state_after\":\"%s\",\"capabilities\":%u,\"rate\":%.3f}\n",
-              (started == 1 && finished == 1 && failed == 0 && stopped == 0 && ranges > 0 && bad_range == 0
-               && snap.state == READER_TTS_READY) ? "pass" : "fail",
-              voices.count, started, ranges, finished, failed, stopped, text.size(), max_end, bad_range,
-              state_name(snap.state), snap.capabilities, rate);
+  {
+    /* RANGE is only claimed when the engine reports positions: either ranges arrive
+       with byte offsets inside the text, or the capability bit stays clear. */
+    const bool ranges_ok = ranges > 0
+      ? (ranges >= 5 && bad_range == 0 && max_end > 0 && max_end <= text.size())
+      : ((snap.capabilities & READER_TTS_CAN_REPORT_RANGE) == 0);
+    const bool consistent = ((snap.capabilities & READER_TTS_CAN_REPORT_RANGE) != 0) == (ranges > 0);
+    const bool pass = started == 1 && finished == 1 && failed == 0 && stopped == 0 && ranges_ok && consistent
+                      && snap.state == READER_TTS_READY;
+    std::printf("{\"result\":\"%s\",\"voices\":%zu,\"started\":%d,\"ranges\":%d,\"finished\":%d,"
+                "\"failed\":%d,\"stopped\":%d,\"text_bytes\":%zu,\"max_end\":%zu,\"bad_range\":%d,"
+                "\"state_after\":\"%s\",\"capabilities\":%u,\"rate\":%.3f}\n",
+                pass ? "pass" : "fail",
+                voices.count, started, ranges, finished, failed, stopped, text.size(), max_end, bad_range,
+                state_name(snap.state), snap.capabilities, rate);
+  }
   reader_tts_voice_list_free(&voices);
   reader_tts_request_close(handle, &error);
   for (waited = 0;; waited += 10) {
