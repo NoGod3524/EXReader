@@ -1,6 +1,10 @@
 # SPDX-License-Identifier: MIT
 """Build the installed package for the iOS Simulator and run the probe inside a
 real UIKit app, so AVSpeechSynthesizer is driven by an actual app main run loop.
+
+The same installed binary runs on an iPhone simulator (the report that is
+verified case by case) and on an iPad simulator (recorded as a second device
+result plus one summary case). Both are registered in the merged report.
 """
 import json
 import os
@@ -47,8 +51,10 @@ def main():
                              '-DCMAKE_INSTALL_PREFIX=' + str(stage)])
     run('module-build', ['cmake', '--build', module])
     run('module-install', ['cmake', '--install', module])
-    assert (stage / 'include/reader_tts.h').is_file(), 'installed header missing for the simulator'
-    assert (stage / 'include/reader_tts.h').read_bytes() == (module_dir / 'include/reader_tts.h').read_bytes()
+    installed_header = stage / 'include/reader_tts.h'
+    assert installed_header.is_file(), 'installed header missing for the simulator'
+    assert installed_header.read_bytes() == (module_dir / 'include/reader_tts.h').read_bytes(), \
+        'simulator install header differs from the source header'
 
     run('probe-configure', ['cmake', '-S', root / 'tests/reader_tts_apple', '-B', probe, *simulator,
                             '-DCMAKE_PREFIX_PATH=' + str(stage)])
@@ -68,73 +74,107 @@ def main():
                    if entry.get('isAvailable') and entry['identifier'].startswith('com.apple.CoreSimulator.SimRuntime.iOS-')),
                   key=lambda entry: tuple(int(part) for part in entry['version'].split('.')))
     types = json.loads(text('device-types', ['xcrun', 'simctl', 'list', 'devicetypes', '--json']))['devicetypes']
-    device_type = next(entry for entry in types if entry['name'].startswith('iPad'))
-    udid = text('create', ['xcrun', 'simctl', 'create', 'EXReader-TTS-' + os.environ['GITHUB_RUN_ID'],
-                           device_type['identifier'], runtime['identifier']])
-    try:
-        run('boot', ['xcrun', 'simctl', 'boot', udid])
-        run('boot-status', ['xcrun', 'simctl', 'bootstatus', udid, '-b'], timeout=1200)
-        run('install', ['xcrun', 'simctl', 'install', udid, app])
-        container = Path(text('container', ['xcrun', 'simctl', 'get_app_container', udid, BUNDLE_ID, 'data']))
-        documents = container / 'Documents'
-        run('launch', ['xcrun', 'simctl', 'launch', udid, BUNDLE_ID])
-        deadline = time.monotonic() + 600
-        done = documents / 'done.json'
-        while not done.is_file():
-            assert time.monotonic() < deadline, 'the simulator probe exceeded its deadline'
-            time.sleep(0.5)
-        exit_code = json.loads(done.read_text(encoding='utf-8'))['exit']
-        report_path = documents / 'result.json'
-        assert report_path.is_file(), 'the simulator probe wrote no report'
-        shutil.copy2(report_path, out / 'speech-result.json')
-        wav = documents / 'result.json.wav'
-        if wav.is_file():
-            shutil.copy2(wav, out / 'speech-result.json.wav')
-        probe_report = check_report.load(out / 'speech-result.json')
-        assert exit_code == 0, 'the simulator probe reported a failing case (%d)' % exit_code
+    iphone = next((entry for entry in types if entry['name'].startswith('iPhone 16')), None)
+    ipad = next((entry for entry in types if entry['name'] == 'iPad (A16)'), None) \
+        or next((entry for entry in types if entry['name'].startswith('iPad')), None)
+    assert iphone is not None and ipad is not None, 'no iPhone/iPad device type available'
 
-        merged = {
-            'schema': 1,
-            'platform': 'ios-simulator',
-            'execution_platform': 'ios-simulator',
-            'source_sha': os.environ['GITHUB_SHA'],
-            'run_id': int(os.environ['GITHUB_RUN_ID']),
-            'attempt': int(os.environ['GITHUB_RUN_ATTEMPT']),
+    def run_device(label, device_type):
+        udid = text('create-' + label, ['xcrun', 'simctl', 'create',
+                                       'EXReader-TTS-%s-%s' % (label, os.environ['GITHUB_RUN_ID']),
+                                       device_type['identifier'], runtime['identifier']])
+        try:
+            run('boot-' + label, ['xcrun', 'simctl', 'boot', udid])
+            run('boot-status-' + label, ['xcrun', 'simctl', 'bootstatus', udid, '-b'], timeout=1200)
+            run('install-' + label, ['xcrun', 'simctl', 'install', udid, app])
+            container = Path(text('container-' + label, ['xcrun', 'simctl', 'get_app_container', udid, BUNDLE_ID, 'data']))
+            documents = container / 'Documents'
+            run('launch-' + label, ['xcrun', 'simctl', 'launch', udid, BUNDLE_ID])
+            deadline = time.monotonic() + 600
+            done = documents / 'done.json'
+            while not done.is_file():
+                assert time.monotonic() < deadline, 'the %s simulator probe exceeded its deadline' % label
+                time.sleep(0.5)
+            exit_code = json.loads(done.read_text(encoding='utf-8'))['exit']
+            report_path = documents / 'result.json'
+            assert report_path.is_file(), 'the %s simulator probe wrote no report' % label
+            report_copy = out / ('speech-result-%s.json' % label)
+            shutil.copy2(report_path, report_copy)
+            wav_copy = out / ('speech-result-%s.json.wav' % label)
+            if (documents / 'result.json.wav').is_file():
+                shutil.copy2(documents / 'result.json.wav', wav_copy)
+            report = check_report.load(report_copy)
+            assert exit_code == 0, 'the %s simulator probe reported a failing case (%d)' % (label, exit_code)
+            return report, report_copy, wav_copy
+        finally:
+            subprocess.run(['xcrun', 'simctl', 'shutdown', udid], capture_output=True)
+            subprocess.run(['xcrun', 'simctl', 'delete', udid], capture_output=True)
+
+    phone_report, phone_path, phone_wav = run_device('iphone', iphone)
+    pad_report, pad_path, pad_wav = run_device('ipad', ipad)
+
+    merged = {
+        'schema': 1,
+        'platform': 'ios-simulator',
+        'execution_platform': 'ios-simulator',
+        'source_sha': os.environ['GITHUB_SHA'],
+        'run_id': int(os.environ['GITHUB_RUN_ID']),
+        'attempt': int(os.environ['GITHUB_RUN_ATTEMPT']),
+        'consumer_sha256': check_report.sha256_file(binary),
+        'speech_available': bool(phone_report.get('speech_available')),
+        'speech_note': phone_report.get('speech_note', ''),
+        'checks': list(phone_report['checks']),
+        'counts': dict(phone_report['counts']),
+        'os': phone_report.get('os'),
+        'arch': arch,
+        'runtime': {'name': runtime['name'], 'identifier': runtime['identifier']},
+        'device_type': iphone['name'],
+        'probe': {
             'consumer_sha256': check_report.sha256_file(binary),
-            'speech_available': bool(probe_report.get('speech_available')),
-            'speech_note': probe_report.get('speech_note', ''),
-            'checks': probe_report['checks'],
-            'counts': probe_report['counts'],
-            'os': probe_report.get('os'),
-            'arch': arch,
-            'runtime': {'name': runtime['name'], 'identifier': runtime['identifier']},
-            'device_type': device_type['name'],
-            'probe': {
-                'consumer_sha256': check_report.sha256_file(binary),
-                'dependencies': [line.strip() for line in dependencies.splitlines()[1:] if line.strip()],
-                'state_at_create': probe_report.get('state_at_create'),
-                'capabilities': probe_report.get('capabilities'),
-                'voice_count': probe_report.get('voice_count'),
-                'pcm': probe_report.get('pcm'),
-            },
-        }
-        check_report.verify_identity(merged, 'ios-simulator')
-        check_report.verify_checks(merged, 'probe')
-        check_report.verify_consumer(merged, binary)
-        wav_path = out / 'speech-result.json.wav'
-        if merged['probe'].get('pcm') and wav_path.is_file():
-            digest = check_report.sha256_file(wav_path)
-            assert digest == merged['probe']['pcm']['sha256'], 'PCM digest mismatch in the simulator'
-            merged['probe']['pcm']['recomputed_sha256'] = digest
-            merged['probe']['pcm']['file_bytes'] = wav_path.stat().st_size
-            merged['probe']['pcm']['file'] = wav_path.name
-        (out / 'result.json').write_text(json.dumps(merged, indent=2), encoding='utf-8')
-        print(json.dumps({'platform': 'ios-simulator', 'counts': merged['counts'],
-                          'speech_available': merged['speech_available'],
-                          'runtime': merged['runtime']['name']}), flush=True)
-    finally:
-        subprocess.run(['xcrun', 'simctl', 'shutdown', udid], capture_output=True)
-        subprocess.run(['xcrun', 'simctl', 'delete', udid], capture_output=True)
+            'dependencies': [line.strip() for line in dependencies.splitlines()[1:] if line.strip()],
+            'state_at_create': phone_report.get('state_at_create'),
+            'capabilities': phone_report.get('capabilities'),
+            'voice_count': phone_report.get('voice_count'),
+            'pcm': phone_report.get('pcm'),
+        },
+        'ipad': {
+            'device_type': ipad['name'],
+            'counts': pad_report['counts'],
+            'speech_available': pad_report.get('speech_available'),
+            'speech_note': pad_report.get('speech_note'),
+            'voice_count': pad_report.get('voice_count'),
+            'pcm': pad_report.get('pcm'),
+            'checks': pad_report['checks'],
+        },
+    }
+    # The iPad run is summarised as one named case: it must run and must not fail.
+    if pad_report['counts']['fail'] == 0:
+        merged['checks'].append({'name': 'probe.ipad-simulator-run', 'status': 'pass',
+                                 'detail': '%s, pass %d pending %d' % (ipad['name'], pad_report['counts']['pass'],
+                                                                       pad_report['counts']['pending'])})
+    else:
+        merged['checks'].append({'name': 'probe.ipad-simulator-run', 'status': 'fail',
+                                 'detail': 'iPad counts %s' % (pad_report['counts'],)})
+    counts = {'pass': 0, 'fail': 0, 'pending': 0}
+    for check in merged['checks']:
+        counts[check['status']] += 1
+    merged['counts'] = counts
+
+    check_report.verify_identity(merged, 'ios-simulator')
+    check_report.verify_checks(merged, 'probe')
+    check_report.verify_consumer(merged, binary)
+    if merged['probe'].get('pcm') and phone_wav.is_file():
+        digest = check_report.sha256_file(phone_wav)
+        assert digest == merged['probe']['pcm']['sha256'], 'PCM digest mismatch in the iPhone simulator'
+        merged['probe']['pcm']['recomputed_sha256'] = digest
+        merged['probe']['pcm']['file_bytes'] = phone_wav.stat().st_size
+        merged['probe']['pcm']['file'] = phone_wav.name
+    (out / 'result.json').write_text(json.dumps(merged, indent=2), encoding='utf-8')
+    print(json.dumps({'platform': 'ios-simulator', 'counts': merged['counts'],
+                      'iphone': iphone['name'], 'ipad': ipad['name'],
+                      'ipad_counts': pad_report['counts'],
+                      'speech_available': merged['speech_available'],
+                      'runtime': runtime['name']}), flush=True)
 
 
 if __name__ == '__main__':

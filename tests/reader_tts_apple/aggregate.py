@@ -113,7 +113,10 @@ def main():
             require(report['counts']['pass'] > 0, '%s carries no passing case' % wanted)
             pcm = (report.get('probe') or {}).get('pcm')
             if pcm:
-                wav_name = next((name for name in names if name.endswith('.wav')), None)
+                wanted_wav = pcm.get('file') or '.wav'
+                wav_name = next((name for name in names if name.endswith(wanted_wav)), None)
+                require(wav_name is not None,
+                        '%s ships no %s' % (wanted, wanted_wav))
                 require(wav_name is not None, '%s declares PCM but ships no wav' % wanted)
                 wav = archive.read(wav_name)
                 require('sha256:' + hashlib.sha256(wav).hexdigest() == 'sha256:' + pcm['sha256'],

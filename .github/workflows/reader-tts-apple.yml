@@ -124,8 +124,10 @@ jobs:
           if-no-files-found: error
           path: |
             build/tts-apple-ios/result.json
-            build/tts-apple-ios/speech-result.json
-            build/tts-apple-ios/speech-result.json.wav
+            build/tts-apple-ios/speech-result-iphone.json
+            build/tts-apple-ios/speech-result-iphone.json.wav
+            build/tts-apple-ios/speech-result-ipad.json
+            build/tts-apple-ios/speech-result-ipad.json.wav
             build/tts-apple-ios/logs/
 
   evidence:

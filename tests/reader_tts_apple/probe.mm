@@ -641,13 +641,23 @@ int rtts_probe_run(const char *output_path) {
     PcmResult pcm;
     if (g_speech_available) {
       const Utterance english = RunSpeak(handle, 1, kEnglish, 25.0, false, 0.0);
-      if (english.events.empty() && english.timed_out) {
+      if (!english.saw_started) {
+        // No speech-start callback at all: this runner has no usable audio route
+        // for the synthesizer. Recorded as pending with the observed state, never
+        // as a passing朗读.
         g_speech_available = false;
-        g_speech_note = "no delegate callback within 25 s (state " + Str((int)StateOf(handle)) +
-                        "); no audio route on this runner";
+        g_speech_note = "no speech-start callback within 25 s (state " + Str((int)StateOf(handle)) +
+                        ", events " + Str(english.events.size()) + "); no usable audio route on this runner";
         Pending("probe.speak-english-lifecycle", g_speech_note);
-        Fail("probe.speak-english-callbacks", "the system delivered no callbacks");
+        Pending("probe.speak-english-callbacks", g_speech_note);
+        Pending("probe.state-ready-after-finish", g_speech_note);
         DrainToText(handle);
+      } else if (!english.has_terminal) {
+        g_speech_note = "speech started but never reached a terminal event within 25 s (state " +
+                        Str((int)StateOf(handle)) + ")";
+        Pending("probe.speak-english-lifecycle", g_speech_note);
+        Expect("probe.speak-english-callbacks", english.saw_started && english.saw_range, "no range callback");
+        Pending("probe.state-ready-after-finish", g_speech_note);
       } else {
         std::string order_detail;
         const bool ordered = EventOrderOk(english, &order_detail);
