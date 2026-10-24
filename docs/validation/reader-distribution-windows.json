@@ -1,7 +1,7 @@
 {
   "schema": "reader-distribution-windows-acceptance-v1",
-  "accepted": false,
-  "scope": "Windows reading-core distribution: build-machine path removal, audited text rewrite, deterministic seal, relocated installed C/C++ consumption, nine-format smoke, import and vendor closure",
+  "accepted": true,
+  "scope": "Windows reading-core distribution: build-machine path removal, structural resource-object reduction, audited text rewrite, deterministic seal, relocated installed C/C++/native consumption, nine-format smoke, import and vendor closure",
   "branch": "codex/reader-distribution-windows",
   "workflow": ".github/workflows/reader-distribution-windows.yml",
   "fixed_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
@@ -9,28 +9,141 @@
   "sdk_version": "3.40.0",
   "abi": 1,
   "original_product_schema1": "f32bb8aa18ed3de286900f19ce4230fd93435dd0",
-  "tested_source": null,
-  "final_head": null,
-  "run_id": null,
-  "attempt": null,
-  "jobs": {},
-  "artifacts": [],
-  "named_results": [],
-  "negative_cases": [],
-  "distribution": null,
-  "relocation": null,
-  "dependencies": null,
-  "surfaces": null,
-  "accepted_scope": [],
+  "tested_source": "db7f13a323db4ea633db7660e20c92098e9c1bb4",
+  "run_id": 40135232301,
+  "attempt": 1,
+  "workflow_conclusion": "success",
+  "jobs": {
+    "distribution_protocol": {"id": 120995245565, "conclusion": "success", "checks": "synthetic positive and refusal fixtures"},
+    "installed_relocation": {"id": 120995245773, "conclusion": "success", "runner": "windows-2022"},
+    "aggregate": {"id": 120995871137, "conclusion": "success"}
+  },
+  "adopted_compile_parameters": [
+    "/utf-8",
+    "/experimental:deterministic",
+    "/pathmap:D:\\a\\EXReader\\EXReader=exreader-src"
+  ],
+  "path_mapping_probe": {
+    "candidates": 4,
+    "chosen_hits": 0,
+    "forward_slash_spelling_hits": 2,
+    "no_mapping_hits": 8,
+    "compiler_requirement": "cl D9007: /pathmap: requires /experimental:deterministic"
+  },
+  "installed_stage_before": {
+    "files": 262,
+    "hits": 20,
+    "text_hits": 12,
+    "binary_hits": 8,
+    "archives": 27,
+    "debug_sections": 919,
+    "leaking_files": 8,
+    "evidence": "run 40135232301 scan-stage.json plus the blocked runs 40127650342..40129913728"
+  },
+  "preparation": {
+    "text_rewritten_files": 6,
+    "text_occurrences": 6,
+    "libraries_rebuilt": 2,
+    "removed_members": 2,
+    "residual_hits": 0,
+    "refused": 0
+  },
+  "distribution": {
+    "archive": "EXReader-reading-core-3.40.0-Windows-X64.zip",
+    "bytes": 8766490,
+    "sha256": "e2a17ce585b5e6a7b906441df1a53d1ea3c6d7e887f5feb03c07f66bfae5e67e",
+    "entries": 262,
+    "stage_digest": "966c0d1aac93df5f4e2c059be181bb8b3fcba605376bffb539617ddab7cb0c9a",
+    "seal_reproducible": true,
+    "published": false,
+    "categories": {
+      "header": {"files": 30, "bytes": 314066, "sha256": "6c64969683c0aba9e1f279e639ee1db134dc8df73891a839c00204689033c6d3"},
+      "config": {"files": 13, "bytes": 43653, "sha256": "efa5204a6344cfdd1bd9a8e8cd5544fbd5e83ebc874c7fbeb02fdb1fa607c3f7"},
+      "license": {"files": 25, "bytes": 142790, "sha256": "cda458100dde12f90f2021ad1d4a96a96badad24b62dcd8014c9bf5391acedaf"},
+      "library": {"files": 33, "bytes": 22163445, "sha256": "d7b7a4c7ee8327d0c70ce0addd920dcd6fd79004b62d9163f80c7ff180a759f8"},
+      "doc": {"files": 21, "bytes": 1052830, "sha256": "57f33a0e4367898d6ef1e3ae4f5ae68dfb47a9ef36caa7ab771195d1f6eea592"},
+      "example": {"files": 133, "bytes": 1706749, "sha256": "54a93ef80bebaea8a6294dfd987861bd726978394404d497996b0fe4938ec8c1"},
+      "other": {"files": 7, "bytes": 162239, "sha256": "e2daca1a8c5aa3802114c554579de4ebed1ae67c198ee7379bedb69f42c8a99d"}
+    }
+  },
+  "relocation": {
+    "prefix": "d:/relocated/exreader-40135232301-1/prefix",
+    "outside_workspace": true,
+    "consumers": {"c11": "pass", "cpp17": "pass", "document": "pass", "identity": "pass"},
+    "native_probe": "runs from <prefix>/bin and classifies every loaded module"
+  },
+  "nine_format_smoke": {"entries": 9, "passed": 9, "accepted": true},
+  "dependencies": {
+    "checked_pe_files": 4,
+    "imports": 16,
+    "absolute_imports": 0,
+    "vendor_declared": 13,
+    "vendor_installed": 13,
+    "vendor_missing": []
+  },
+  "named_results": [
+    "source-identity-bound", "archive-matches-stage", "archive-tamper-evident",
+    "archive-content-scanned-clean", "stage-scanned-clean", "headers-config-licenses-hashed",
+    "sanitization-audited", "resource-objects-removed", "relocation-prefix-distinct",
+    "relocated-consumers-pass", "nine-format-smoke-complete",
+    "installed-identity-matches-headers", "dependency-closure-system-only", "probe-prefix-bound",
+    "debug-sections-carry-no-build-root", "no-absolute-drective", "archive-member-names-relative",
+    "deterministic-seal"
+  ],
+  "negative_cases": [
+    "negative-probe-rejects-foreign-prefix", "negative-consumer-rejects-missing-book",
+    "negative-scan-blocks-leaking-control", "negative-scan-blocks-absolute-drective"
+  ],
+  "surfaces": {
+    "coff_debug_control_leaks": true,
+    "pathmap_clears_coff_surface": true,
+    "file_macro_control_absolute": true,
+    "relative_spelling_still_records_working_directory": true,
+    "drective_absolute_detected": true,
+    "control_surfaces_would_block_shipping": true
+  },
+  "artifacts": [
+    {
+      "id": 12576243461,
+      "name": "reader-distribution-windows-40135232301-1",
+      "size_in_bytes": 15278092,
+      "digest": "sha256:3c1eaa9355ad20932dace24430476a6f13f44debb50fee003f8cd55f658b04a7",
+      "expires_at": "2027-01-22T21:40:09Z",
+      "head_sha": "db7f13a323db4ea633db7660e20c92098e9c1bb4"
+    },
+    {
+      "id": 12575809265,
+      "name": "reader-distribution-windows-aggregate-40135232301-1",
+      "size_in_bytes": 1376,
+      "digest": "sha256:c87367ccc352fb287c4104c18ddcdc79f7e13fb5a3929332e4e437741756aef1",
+      "expires_at": "2027-01-22T21:40:09Z",
+      "head_sha": "db7f13a323db4ea633db7660e20c92098e9c1bb4"
+    }
+  ],
+  "original_failures_retained": [
+    "run 40127188138: workflow file rejected (plain scalar with ': ')",
+    "run 40127479929: compiler probe exit code and missing-stage OSError",
+    "run 40129070364: 20 build-machine path hits in the installed stage (8 files: freetype/tiff resource objects and pkgconfig metadata)",
+    "run 40129477513..40129913728: binary hits blocked the seal and the post-sanitize scan",
+    "run 40130413261: sanitizer refused plain-text .pc surfaces it could not classify",
+    "run 40131492186: git-bash rewrote /Fo,/utf-8 and resolved link to coreutils",
+    "run 40133405935: negative case still pointed at the workspace copy of the probe"
+  ],
   "uncovered": [
     "Windows production host wiring (root owns it)",
     "reading-library profile, shared compatibility DLL, audio and text index components",
     "signing, tag, release and pull request merge",
+    "TIFF-specific smoke fixture (TIFF path covered by rebuild audit, link and closure only)",
     "cross-source or cross-attempt artifact reuse"
   ],
-  "problems": [
-    "No cloud run has been executed for this source yet; every named result is pending"
+  "accepted_scope": [
+    "build-machine path removal from the reading-core Windows distribution",
+    "structural removal of vendor Windows resource objects with per-member and per-symbol audit",
+    "relocated installed C, C++ and native probe consumption",
+    "nine-format installed smoke, import closure and vendor closure",
+    "same-run artifact re-aggregation with recomputed digests"
   ],
+  "problems": [],
   "merged": false,
   "tag_or_release_created": false,
   "signed": false,
