@@ -21,6 +21,9 @@ jobs:
     name: Win32 account sync receive and retained product suites
     runs-on: windows-2022
     timeout-minutes: 120
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      artifact_digest: ${{ steps.upload.outputs.artifact-digest }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -115,6 +118,7 @@ jobs:
       - name: Real Win32 account controls, native HTTPS, two devices, retry, isolation and close barriers
         run: python3 tests/reader_windows_account/check_account_ui.py --candidate build/account-package/EXReader/EXReader.exe --package build/account-package/EXReader --fixtures build/account-fixtures --revision-consumer build/account-revision-consumer/revision-consumer.exe --link-map build/account-host/windows-host.map --output build/account-ui
       - name: Preserve source-bound evidence, packaged EXE and link graph
+        id: upload
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -134,3 +138,34 @@ jobs:
             !build/**/*.key
             !build/**/profile/**/*.sqlite
           if-no-files-found: error
+  summary:
+    name: strict same-source summary
+    needs: account
+    if: ${{ always() && github.event.inputs.account_only != 'true' }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require the account job result and its uploaded artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACCOUNT_RESULT: ${{ needs.account.result }}
+          ARTIFACT_ID: ${{ needs.account.outputs.artifact_id }}
+          ARTIFACT_DIGEST: ${{ needs.account.outputs.artifact_digest }}
+        run: |
+          test "$ACCOUNT_RESULT" = success
+          test -n "$ARTIFACT_ID"
+          python3 tests/reader_windows_account/verify_summary.py --artifact-id "$ARTIFACT_ID" --upload-digest "$ARTIFACT_DIGEST" --account-checks 24 --output build/account-summary
+      - name: Preserve strict summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-windows-account-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/account-summary/verified.json
+          if-no-files-found: warn

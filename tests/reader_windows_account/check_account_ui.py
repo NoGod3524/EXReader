@@ -263,6 +263,7 @@ def main():
         parser.add_argument('--' + name, type=Path, required=True)
     args = parser.parse_args()
     assert os.name == 'nt' and os.environ.get('GITHUB_ACTIONS') == 'true'
+    sys.stdout.reconfigure(encoding='utf-8', errors='backslashreplace')
     output = args.output.resolve();output.mkdir(parents=True, exist_ok=False)
     checks, shots, devices = [], [], []
     user, password = 'u' + secrets.token_hex(12), 'p' + secrets.token_hex(24)
@@ -618,6 +619,7 @@ def main():
         (output / 'dependents.txt').write_text(dependents)
         assert 'WINHTTP.dll' in dependents.upper().replace('WINHTTP.DLL', 'WINHTTP.dll') or 'winhttp' in dependents.lower()
         record('link_graph_contains_native_session_credentials_sideload_and_winhttp_without_webview')
+        assert len(checks) == 24, len(checks)
         report = {'accepted': True, 'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
                   'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'checks': checks, 'count': len(checks),
                   'program_sha256': hashlib.sha256(args.candidate.read_bytes()).hexdigest(), 'screenshots': shots,
