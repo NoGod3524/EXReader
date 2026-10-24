@@ -39,7 +39,8 @@ def summarise(records):
     summary = {'files': len(records), 'bytes': sum(item['bytes'] for item in records),
                'text_hits': 0, 'binary_hits': 0, 'archives': 0, 'pe_files': 0,
                'debug_section_count': 0, 'drective_absolute': 0,
-               'member_names_with_separator': 0, 'categories': {}}
+               'member_names_with_separator': 0, 'member_names_escaping': 0,
+               'categories': {}}
     for item in records:
         summary['categories'].setdefault(item['category'], 0)
         summary['categories'][item['category']] += 1
@@ -50,10 +51,12 @@ def summarise(records):
             summary['debug_section_count'] += item['debug_section_count']
             summary['drective_absolute'] += len(item['drective_absolute'])
             summary['member_names_with_separator'] += len(item['member_names_with_separator'])
+            summary['member_names_escaping'] += len(item.get('member_names_escaping') or [])
         elif item['kind'] == 'pe':
             summary['pe_files'] += 1
     summary['hits'] = summary['text_hits'] + summary['binary_hits']
-    summary['accepted'] = summary['hits'] == 0 and summary['drective_absolute'] == 0
+    summary['accepted'] = (summary['hits'] == 0 and summary['drective_absolute'] == 0 and
+                          summary['member_names_escaping'] == 0)
     return summary
 
 
@@ -113,6 +116,7 @@ def main():
     blocking = [hit for item in records for hit in item['hits'] if hit['class'] == 'binary']
     surfaces = ({'drective_absolute': summary['drective_absolute'],
                  'member_names_with_separator': summary['member_names_with_separator'],
+                 'member_names_escaping': summary['member_names_escaping'],
                  'absolute_imports': sum(len(item.get('absolute_imports', [])) for item in records)})
     print(json.dumps({'files': summary['files'], 'hits': summary['hits'],
                       'text_hits': summary['text_hits'], 'binary_hits': summary['binary_hits'],

@@ -69,9 +69,24 @@ def dump_symbols(dumpbin, path):
     return names
 
 
-def rebuild(lib_tool, objects, output):
-    command = [lib_tool, '/nologo', '/OUT:' + str(output)] + [str(item) for item in objects]
-    done = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+def rebuild(lib_tool, folder, objects, output, response):
+    """Run lib.exe from the extraction folder with relative names.
+
+    Relative object arguments keep the recorded member names relative, so the
+    rebuilt archive cannot reintroduce an absolute path of its own.
+    """
+    folder = Path(folder)
+    output = Path(output)
+    arguments = ['/nologo', '/OUT:' + str(output.relative_to(folder))] + [
+        item.relative_to(folder).as_posix() for item in objects]
+    if sum(len(item) + 1 for item in arguments) > 6144:
+        response = Path(response)
+        response.write_text('\n'.join(arguments) + '\n', encoding='utf-8')
+        invocation = [lib_tool, '@' + str(response.relative_to(folder))]
+    else:
+        invocation = [lib_tool] + arguments
+    done = subprocess.run(invocation, cwd=str(folder), stdout=subprocess.PIPE,
+                          stderr=subprocess.STDOUT, text=True)
     distlib.require(done.returncode == 0 and Path(output).is_file(),
                     'lib.exe could not rebuild %s: %s' % (output, done.stdout[-400:]))
 
@@ -91,12 +106,16 @@ def reduce_library(path, lib_tool, dumpbin, patterns, workdir):
     folder.mkdir(parents=True, exist_ok=True)
     objects = []
     for member in keep:
-        name = member['name'] if member['name'].lower().endswith(('.obj', '.o')) else member['name'] + '.obj'
+        name = member['name'].replace('\\', '/')
+        distlib.require(name and not name.startswith('/') and '..' not in name.split('/'),
+                        'archive member name escapes its root: ' + member['name'])
+        name = name if name.lower().endswith(('.obj', '.o')) else name + '.obj'
         target = folder / name
+        target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(member['body'])
         objects.append(target)
     rebuilt = folder / 'rebuilt.lib'
-    rebuild(lib_tool, objects, rebuilt)
+    rebuild(lib_tool, folder, objects, rebuilt, folder / 'lib.rsp')
     payload = rebuilt.read_bytes()
     facts = distlib.scan_archive(path.name, payload)
     distlib.require(facts['debug_section_count'] >= 0, 'rebuilt archive is unreadable')
@@ -108,7 +127,9 @@ def reduce_library(path, lib_tool, dumpbin, patterns, workdir):
         if member['raw'] in LINKER_MEMBERS:
             continue
         surviving.add((member['name'], distlib.digest_bytes(member['body'])))
-    distlib.require(surviving == kept, 'rebuilt archive changed a kept member: ' + str(path))
+    distlib.require(surviving == kept,
+                    'rebuilt archive changed a kept member: %s (kept %d, surviving %d)' %
+                    (path, len(kept), len(surviving)))
     before_symbols = dump_symbols(dumpbin, path)
     distlib.require(before_symbols, 'dumpbin reported no defined symbols for ' + str(path))
     after_symbols = dump_symbols(dumpbin, rebuilt)

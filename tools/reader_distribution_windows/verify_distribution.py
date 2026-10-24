@@ -233,7 +233,9 @@ def main():
                    'leaking': [item['path'] for item in debug_records if item['hits']][:6]})
     distlib.named(results, 'no-absolute-drective', not drective, {'count': len(drective)})
     separated = sum(len(item.get('member_names_with_separator', [])) for item in stage_records)
-    distlib.named(results, 'archive-member-names-relative', separated == 0, {'count': separated})
+    escaping = sum(len(item.get('member_names_escaping') or []) for item in stage_records)
+    distlib.named(results, 'archive-member-names-relative', escaping == 0,
+                  {'escaping': escaping, 'relative_with_separator': separated})
     distlib.named(results, 'deterministic-seal',
                   (distribution.get('reproducibility') or {}).get('identical') is True,
                   distribution.get('reproducibility'))

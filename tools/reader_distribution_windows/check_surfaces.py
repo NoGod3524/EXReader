@@ -72,11 +72,17 @@ def main():
                   flatten(bare_run.get('file_macro', '')) == 'path_surface.c',
                   {'file_macro': bare_run.get('file_macro')})
 
-    names = (facts['raw_lib']['member_names_with_separator'] +
-             facts['nested_lib']['member_names_with_separator'])
-    distlib.named(results, 'archive-member-names-are-basenames', not names,
+    escaped = (facts['raw_lib'].get('member_names_escaping', []) +
+               facts['nested_lib'].get('member_names_escaping', []))
+    absolute_names = [name for name in facts['nested_lib']['member_names_sample']
+                      if len(name) > 2 and name[0].isalpha() and name[1] == ':' or
+                      name.startswith(('/', '\\')) or '..' in name.replace('\\', '/').split('/')]
+    distlib.named(results, 'archive-member-names-audited',
+                  not set(absolute_names) - set(escaped),
                   {'members': facts['raw_lib']['members'] + facts['nested_lib']['members'],
-                   'sample': facts['nested_lib']['member_names_sample'], 'separated': names[:4]})
+                   'sample': facts['nested_lib']['member_names_sample'],
+                   'separated': (facts['nested_lib']['member_names_with_separator'])[:4],
+                   'escaping': escaped[:4]})
 
     absolute = facts['drective_lib']['drective_absolute']
     distlib.named(results, 'archive-drective-absolute-detected', bool(absolute),
@@ -98,7 +104,7 @@ def main():
     distlib.require_named_pass(
         results, ['coff-debug-control-records-absolute-path',
                   'coff-debug-relative-spelling-avoids-root', 'file-macro-control-is-absolute',
-                  'file-macro-relative-spelling-preserved', 'archive-member-names-are-basenames',
+                  'file-macro-relative-spelling-preserved', 'archive-member-names-audited',
                   'archive-drective-absolute-detected', 'control-surfaces-would-block-shipping'])
     print(json.dumps({'results': len(results), 'accepted': True}))
     return 0

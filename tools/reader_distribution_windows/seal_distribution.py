@@ -79,7 +79,9 @@ def main():
                        'drective_absolute':
                        sum(len(item.get('drective_absolute') or []) for item in records),
                        'member_names_with_separator':
-                       sum(len(item.get('member_names_with_separator') or []) for item in records)},
+                       sum(len(item.get('member_names_with_separator') or []) for item in records),
+                       'member_names_escaping':
+                       sum(len(item.get('member_names_escaping') or []) for item in records)},
               'sanitization': {'rewritten': len(sanitize['rewritten']),
                                'refused': len(sanitize['refused']),
                                'stage_digest_after': sanitize['stage_digest_after']},

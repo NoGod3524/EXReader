@@ -218,7 +218,7 @@ def archive_members(payload):
     while position + 60 <= len(payload):
         header = payload[position:position + 60]
         require(header[58:60] == MEMBER_FMAG, 'invalid archive member header at %d' % position)
-        raw = header[0:16].decode('latin-1').rstrip()
+        raw = header[0:16].decode('latin-1').rstrip('\x00 ')
         size = int(header[48:58].decode('latin-1').strip() or '0')
         body = payload[position + 60:position + 60 + size]
         require(len(body) == size, 'truncated archive member ' + raw)
@@ -240,48 +240,39 @@ def archive_members(payload):
 
 def scan_archive(name, payload):
     """Member names, member COFF surfaces and .drectve directives of one archive."""
-    members, section_hits, directives, machines = [], [], [], set()
-    position, lookback = len(ARCHIVE_MAGIC), b''
-    require(payload[:len(ARCHIVE_MAGIC)] == ARCHIVE_MAGIC, 'not an archive: ' + name)
-    while position + 60 <= len(payload):
-        header = payload[position:position + 60]
-        require(header[58:60] == MEMBER_FMAG,
-                'invalid archive member header in %s at %d' % (name, position))
-        raw_name = header[0:16].decode('latin-1').rstrip()
-        size = int((header[48:58].decode('latin-1').strip() or '0'))
-        body_start = position + 60
-        body = payload[body_start:body_start + size]
-        require(len(body) == size, 'truncated member %s in %s' % (raw_name, name))
-        member_name = raw_name
-        if raw_name.startswith('/') and raw_name[1:].isdigit():
-            offset = int(raw_name[1:])
-            tail = payload.find(MEMBER_FMAG, 0)
-            text = lookback[offset:offset + 64] if lookback else ''
-            member_name = '<long-name:%s>' % (text.split(bytes([0]))[0].decode('latin-1') if text else raw_name)
-        members.append(member_name)
-        if raw_name not in ('/', '//') and body[:2] not in (bytes([0, 0]),):
-            try:
-                machine, sections = _coff_sections(body)
-                machines.add(machine)
-                for section in sections:
-                    if section['name'].startswith('.debug'):
-                        section_hits.append({'member': member_name, 'section': section['name'],
-                                             'bytes': section['size']})
-                    if section['name'] == '.drectve':
-                        span = body[section['offset']:section['offset'] + section['size']]
-                        for directive in split_directives(span.decode('latin-1')):
-                            offending = absolute_directive(directive)
-                            if offending:
-                                directives.append({'member': member_name, 'directive': directive,
-                                                   'absolute': offending})
-            except ValueError:
-                pass
-        position = body_start + size + (size & 1)
-    names = [item for item in members if not (item.startswith('/') or item.startswith('<long-name'))]
-    separated = [item for item in names if '\\' in item or '/' in item]
-    return {'kind': 'archive', 'members': len(members),
+    members = archive_members(payload)
+    names, section_hits, directives, machines = [], [], [], set()
+    for member in members:
+        if member['raw'] in ('/', '//'):
+            continue
+        names.append(member['name'])
+        body = member['body']
+        if body[:2] == bytes([0, 0]):
+            continue
+        try:
+            machine, sections = _coff_sections(body)
+        except ValueError:
+            continue
+        machines.add(machine)
+        for section in sections:
+            if section['name'].startswith('.debug'):
+                section_hits.append({'member': member['name'], 'section': section['name'],
+                                     'bytes': section['size']})
+            if section['name'] == '.drectve':
+                span = body[section['offset']:section['offset'] + section['size']]
+                for directive in split_directives(span.decode('latin-1')):
+                    offending = absolute_directive(directive)
+                    if offending:
+                        directives.append({'member': member['name'], 'directive': directive,
+                                           'absolute': offending})
+    separated = [item for item in names if '/' in item or '\\' in item]
+    escaping = [item for item in names
+                if item.startswith(('/', '\\')) or '..' in item.replace('\\', '/').split('/') or
+                (len(item) > 2 and item[0].isalpha() and item[1] == ':')]
+    return {'kind': 'archive', 'members': len(names),
             'member_names_sample': sorted(names)[:8],
             'member_names_with_separator': separated[:8],
+            'member_names_escaping': escaping[:8],
             'coff_machines': sorted(machines),
             'debug_section_count': len(section_hits),
             'debug_sections': section_hits[:8],
