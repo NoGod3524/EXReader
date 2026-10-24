@@ -14,6 +14,10 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#ifdef __ANDROID__
+#include <sys/syscall.h>
+#include <linux/fs.h>
+#endif
 #endif
 
 static exr_status failure(exr_error *error,exr_status code,const char *message) {
@@ -109,6 +113,11 @@ exr_status exr_sideload_export_original(exr_library *library,int64_t book_id,con
   status=poll(&control,offset,offset,error);if(status!=EXR_OK)goto cleanup;
 #ifdef _WIN32
   if(!MoveFileExW(temp,target,MOVEFILE_WRITE_THROUGH)){status=failure(error,EXR_IO,"Original export destination exists or publication failed");goto cleanup;}
+#elif defined(__ANDROID__)
+  /* App SELinux permits rename, not hard links. The NDK syscall entry keeps
+     API26 support; unsupported filesystems fail without a replacing fallback. */
+  if(syscall(SYS_renameat2,AT_FDCWD,temporary,AT_FDCWD,destination,RENAME_NOREPLACE)!=0){status=failure(error,EXR_IO,"Original export destination exists or publication failed");goto cleanup;}
+  temporary_created=0;
 #else
   /* link is an atomic no-replace publish on the same app-private filesystem. */
   if(link(temporary,destination)!=0){status=failure(error,EXR_IO,"Original export destination exists or publication failed");goto cleanup;}

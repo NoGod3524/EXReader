@@ -9,6 +9,7 @@ final class PageSnapshot {
     boolean bounded;
     int part = -1;
     String path;
+    String sourceKey;
     long textBase, boundedHandle;
     boolean preserveProgress;
     String restoreNotice;

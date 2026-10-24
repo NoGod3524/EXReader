@@ -1,0 +1,52 @@
+{
+  "accepted": false,
+  "scope": "formal Android single-account manual native sync, cancellation, background closure, secure credentials and explicit Receive UI",
+  "source_sha": null,
+  "runs": [],
+  "retained_failures": [
+    {
+      "source_sha": "652e1f5c195d9d3fb54b31dddfcfdf8750e08e8d",
+      "runs": [40084914813, 40084914664],
+      "reason": "UI candidate duplicated the existing MainActivity.onStop method; merge sync closure into the existing lifecycle method and preserve saveInstancePrefs. No assertions changed."
+    },
+    {
+      "source_sha": "2db9c240705fbe89579ea1bba5bb6e498f34aff5",
+      "runs": [40085974320],
+      "reason": "AGP replaces the test manifest runner, so the HostSyncTest APK did not register ProductOwnerTest. Build and preserve one test APK per runner, execute both suites, and clear only generated app fixture data between them. Shared-SDK Debug/Release link audits passed; no assertions changed."
+    },
+    {
+      "source_sha": "170d1f77d6e320c75fca25b047dbf117bd1d0c5f",
+      "runs": [40086660647],
+      "diagnostic_run": 40087476482,
+      "passed_before_failure": "first/secure-reopen/session-reopen: 12 checks, plus semantics polite status; feature-on original 18-capture shell, original host17+2 and DAV91+4 also passed",
+      "reason": "Organizer background remained in the device tree despite NO_HIDE_DESCENDANTS. Hide the fully covered shelf while the modal overlay is visible and restore its prior visibility, accessibility importance and focus on close. No assertions changed."
+    },
+    {
+      "source_sha": "4fc349c0bf8937d95f63ea35437026386e380680",
+      "runs": [40087607387],
+      "diagnostic_run": 40088346418,
+      "passed_before_failure": "12 account/Receive checks and first two semantics checks; Organizer background exclusion now passes",
+      "reason": "The SDK-only TXT seed omitted the formal host's path_<id>/size_<id> registration, so openBook correctly rejected the missing app-owned path before producing a reader frame. Register the generated private original as normal host import does, enlarge the generated text for genuine multipage traversal, and retain frame observations/failure check names. No production fix or relaxed assertion."
+    },
+    {
+      "source_sha": "b394e410048c6a093fcca133bec42c47275177f3",
+      "runs": [40088497379],
+      "passed_before_failure": "12 account/Receive checks and first two semantics checks",
+      "reason": "The failure tree reports The bundled font is missing: the direct-Gradle workflow omitted the normal host packaging step. Reuse unchanged tools/host_font.fetch and assert the pinned Reader.otf/OFL hashes in both Debug and Release APKs. The generated original path is now registered; no production change or assertion relaxation."
+    },
+    {
+      "source_sha": "18b4023c9d13627b6ed31a0f9de483b86e3f383d",
+      "runs": [40089211775],
+      "passed_before_failure": "12 account/Receive checks, first two semantics checks, and pinned Debug/Release font/license checks",
+      "reason": "The failure tree reports installed libexreader_jni.so absent from the APK. Copy that unchanged installed runtime to jniLibs while the existing imported shared SDK remains auto-packaged. Check JNI build identity, its shared SDK dependency, and all APK native runtime dependencies before device execution. No SDK/bindings source change or assertion relaxation."
+    },
+    {
+      "source_sha": "9fab23eac232ece06a98fd97b74848d02c2ac42c",
+      "runs": [40089930002],
+      "reason": "The new preflight's hand-written system-library list omitted public Android libOpenSLES.so used by the unchanged audio-enabled SDK. Derive allowed system names from the installed NDK API26 x86_64 public stubs; still reject every missing non-system runtime and retain JNI/source identity checks. Device checks were not reached."
+    }
+  ],
+  "reading_state_ui_accepted": false,
+  "physical_device": false,
+  "all_execution_on_actions": true
+}
