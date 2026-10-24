@@ -853,3 +853,6 @@ JNIEXPORT void JNICALL Java_org_exreader_host_NativeLibrary_nativeDeleteBook(
 #ifdef READER_HOST_SEARCH
 #include "search_jni.inc"
 #endif
+#ifdef READER_HOST_NAVIGATION
+#include "navigation_jni.inc"
+#endif

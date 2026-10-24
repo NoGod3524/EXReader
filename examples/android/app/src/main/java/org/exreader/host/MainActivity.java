@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Single-activity Android host. All SDK access runs on one worker thread; the UI
  * only receives immutable page snapshots and never touches a native handle.
  */
-public final class MainActivity extends Activity implements ReaderView.Listener,SyncController.Host,SearchPanel.Host {
+public final class MainActivity extends Activity implements ReaderView.Listener,SyncController.Host,SearchPanel.Host,NavigationPanel.Host {
     private static final String TAG = "EXRHost";
     private static final Object IMPORT_LOCK = new Object();
     private static final Object PROGRESS_LOCK = new Object();
@@ -70,6 +70,8 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     private SyncPanel syncPanel;
     private SearchPanel searchPanel;
     private NativeSearch search;
+    private NavigationPanel navigationPanel;
+    private NativeNavigation navigation;
     private SharedPreferences prefs;
 
     private LinearLayout shelfPanel;
@@ -242,6 +244,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         organizationPanel=new OrganizationPanel(this,action->{if(worker!=null)worker.execute(action);},()->store,()->catalogShelf.load());
         if(BuildConfig.READER_SYNC)syncPanel=new SyncPanel(this,this);
         if(BuildConfig.READER_SEARCH)searchPanel=new SearchPanel(this,this);
+        if(BuildConfig.READER_NAVIGATION)navigationPanel=new NavigationPanel(this,this);
     }
 
     private void wireActions() {
@@ -259,10 +262,10 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         rebuildView.setOnClickListener(view -> {
             saveInstancePrefs();recreate();
         });
-        View readerMore=findViewById(R.id.reader_more);readerMore.setVisibility(BuildConfig.READER_SEARCH?View.VISIBLE:View.GONE);
-        if(BuildConfig.READER_SEARCH&&!BuildConfig.DEBUG)rebuildView.setVisibility(View.GONE);
-        readerMore.setOnClickListener(view->new AlertDialog.Builder(this).setTitle("阅读更多操作").setItems(new String[]{"书内搜索"},(dialog,which)->{
-            if(currentBook!=null&&current!=null&&operation==0&&!pageBusy)searchPanel.show(currentBook.id);else setStatus("请先完成当前阅读操作");
+        View readerMore=findViewById(R.id.reader_more);readerMore.setVisibility(BuildConfig.READER_SEARCH||BuildConfig.READER_NAVIGATION?View.VISIBLE:View.GONE);
+        if((BuildConfig.READER_SEARCH||BuildConfig.READER_NAVIGATION)&&!BuildConfig.DEBUG)rebuildView.setVisibility(View.GONE);
+        readerMore.setOnClickListener(view->new AlertDialog.Builder(this).setTitle("阅读更多操作").setItems(BuildConfig.READER_NAVIGATION?(BuildConfig.READER_SEARCH?new String[]{"书内搜索","目录 / 按页入口"}:new String[]{"目录 / 按页入口"}):new String[]{"书内搜索"},(dialog,which)->{
+            if(currentBook!=null&&current!=null&&operation==0&&!pageBusy){if(BuildConfig.READER_SEARCH&&which==0)searchPanel.show(currentBook.id);else navigationPanel.show(currentBook.id);}else setStatus("请先完成当前阅读操作");
         }).show());
         backButton.setOnClickListener(view -> leaveReader());
         fontDown.setOnClickListener(view -> changeFont(-1));
@@ -350,6 +353,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
 
     private HostTask beginTask(int kind) {
         if(searchPanel!=null)searchPanel.close();
+        if(navigationPanel!=null)navigationPanel.close();
         if (activeTask != null) activeTask.cancel();
         final long gen = ++generation;
         HostTask task = new HostTask(() -> destroyed || generation != gen);
@@ -740,6 +744,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
 
     private void closeSessionsLocked() {
         closeSearchNative();
+        closeDirectoryNative();
         boolean closed = false;
         if (reflow != null) {
             reflow.close();
@@ -1415,12 +1420,14 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
 
     @Override protected void onStop() {
         if(searchPanel!=null)searchPanel.close();
+        if(navigationPanel!=null)navigationPanel.close();
         if(syncPanel!=null)syncPanel.background();
         super.onStop();
         saveInstancePrefs();
     }
 
     @Override public void onBackPressed() {
+        if(navigationPanel!=null&&navigationPanel.visible()){navigationPanel.close();return;}
         if(searchPanel!=null&&searchPanel.visible()){searchPanel.close();return;}
         if(organizationPanel!=null&&organizationPanel.visible()){organizationPanel.hide();return;}
         if (notesPanel.getVisibility() == View.VISIBLE) {
@@ -1436,6 +1443,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
 
     @Override protected void onDestroy() {
         if(searchPanel!=null)searchPanel.close();
+        if(navigationPanel!=null)navigationPanel.close();
         if(syncPanel!=null)syncPanel.close();
         if(organizationPanel!=null)organizationPanel.close();
         if (shelfMetrics!=null) shelfMetrics.close();
@@ -1458,6 +1466,27 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         super.onDestroy();
     }
 
+    private void closeDirectoryNative(){if(navigation!=null){navigation.close();navigation=null;}}
+    @Override public void releaseDirectory(){ExecutorService owner=worker;if(owner!=null&&!owner.isShutdown())owner.execute(this::closeDirectoryNative);}
+    private NativeNavigation.Control directoryControl(HostTask task){return new NativeNavigation.Control(task,getFilesDir(),BuildConfig.DEBUG&&getIntent().getBooleanExtra("exr_navigation_gate",false));}
+    @Override public void directory(long book,HostTask task,java.util.function.Consumer<NativeNavigation.Info> done,java.util.function.Consumer<Throwable> failed){
+        ExecutorService owner=worker;if(owner==null||destroyed){failed.accept(new HostTask.Cancelled());return;}
+        owner.execute(()->{try{task.check();closeDirectoryNative();navigation=new NativeNavigation(store,book,fontBytes(),task,directoryControl(task));NativeNavigation.Info info=navigation.info();task.check();done.accept(info);}catch(Throwable error){closeDirectoryNative();failed.accept(error);}});
+    }
+    @Override public void directoryPage(long book,long parent,long first,HostTask task,java.util.function.Consumer<NativeNavigation.Page> done,java.util.function.Consumer<Throwable> failed){
+        ExecutorService owner=worker;if(owner==null||destroyed){failed.accept(new HostTask.Cancelled());return;}
+        owner.execute(()->{try{task.check();if(navigation==null||navigation.book!=book)throw new HostTask.Cancelled();NativeNavigation.Page page=navigation.page(parent,first);task.check();done.accept(page);}catch(Throwable error){failed.accept(error);}});
+    }
+    @Override public void directoryResolve(long book,long row,long part,String cfi,HostTask task,java.util.function.Consumer<NativeNavigation.Destination> done,java.util.function.Consumer<Throwable> failed){
+        ExecutorService owner=worker;if(owner==null||destroyed){failed.accept(new HostTask.Cancelled());return;}
+        owner.execute(()->{try{task.check();if(navigation==null||navigation.book!=book)throw new HostTask.Cancelled();NativeNavigation.Destination target=navigation.resolve(store,row,part,cfi,fontBytes(),task,directoryControl(task));task.check();done.accept(target);}catch(Throwable error){failed.accept(error);}});
+    }
+    @Override public void navigateDirectory(NativeNavigation.Destination destination){
+        NativeNavigation.Result target=destination.result;
+        if((target.status!=NativeNavigation.OK&&target.status!=NativeNavigation.PART_ONLY)||currentBook==null||currentBook.id!=destination.book||current==null||operation!=0||pageBusy||target.part<0||target.part>Integer.MAX_VALUE||target.offset<0)return;
+        final boolean isFixed=current.fixed;final float scale=zoom;
+        runPage(task->{BookStore.VerifiedSource source=store.verifySource(destination.book,null,0,task);if(!(source.key+"@exreader-sdk-"+NativeNavigation.nativeParser()).equals(destination.key))throw new IOException("目录原件已改变");return isFixed?fixed.load((int)target.part,scale,task):reflow.seekNavigation(destination,task);},()->setStatus("已跳转到目录目标"),"目录目标不可用");
+    }
     private void closeSearchNative(){if(search!=null){search.close();search=null;}}
     @Override public void releaseSearch(){ExecutorService owner=worker;if(owner!=null&&!owner.isShutdown())owner.execute(this::closeSearchNative);}
     @Override public void scan(long book,String query,boolean next,HostTask task,java.util.function.Consumer<NativeSearch.Batch> done,java.util.function.Consumer<Throwable> failed){
