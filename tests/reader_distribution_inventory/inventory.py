@@ -95,7 +95,7 @@ def archive_key(name):
 
 
 def inventory_archives(stage):
-    sdk, vendor, other, foreign = [], [], []
+    sdk, vendor, other, foreign = [], [], [], []
     base = stage / 'lib'
     for path in sorted(base.iterdir()) if base.is_dir() else []:
         if path.is_file() and re.fullmatch(r'(?:lib)?exr_.+\.(?:a|lib)', path.name):
