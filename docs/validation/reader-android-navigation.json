@@ -1,10 +1,10 @@
 {
-  "accepted": false,
+  "accepted": true,
   "scope": "Android actual native directory and by-page UI over fixed installed Navigation, independent public SDK target verification and lifecycle",
   "fixed_base": "e764f08dea4986f11db183c5b17b41ddb5526bcc",
   "module_source": "cbd7832b914bddcf99e06a85962d301a00b47efa",
   "module_tree": "9395914832e191ad63f18f6188ca5044260d2f12",
-  "source_sha": null,
+  "source_sha": "d68d8e388730f0fbd9e86c70a422388be406391d",
   "runs": [{"run_id":40114452672,"attempt":1,"source_sha":"fd5734a548203da94702af26f558d2595a4898be","job_id":120932743744,"conclusion":"failure","navigation_groups_passed":14,"formal_ui_checks_passed":16,"search_ui_checks_passed":15,"old_suites_passed":true,"failed_check":"close_and_actual_rotation_cancel_stale_results","failure":"Probe called getLong(book) on a newly-created ReaderView before the actual book frame was ready. Await visible current reader/book/bitmap, keeping all rotation and storage assertions.","artifact_id":12568202066,"artifact_bytes":129562622,"artifact_sha256":"f3ea28e59e6f95c800618091ead81e6b8dce05c11d4d0ec0a68bf4dcaefac260"}],
   "all_execution_on_actions": true,
   "fixed_pages_author_outline": false,
@@ -12,5 +12,409 @@
   "performance_accepted": false,
   "physical_device": false,
   "talkback_speech_accepted": false,
-  "complete_product": false
+  "complete_product": false,
+  "producer": {
+    "source_sha": "d68d8e388730f0fbd9e86c70a422388be406391d",
+    "run_id": 40115551503,
+    "attempt": 1,
+    "job_id": 120935966789,
+    "conclusion": "success"
+  },
+  "artifact": {
+    "id": 12568127459,
+    "name": "reader-android-navigation-40115551503-1",
+    "bytes": 129689309,
+    "sha256": "a964ab12f94d2f6693d4aef35bf1bf55693cc6c37636ff418f42365910cc7214",
+    "expires_at": "2027-01-22T17:18:52Z",
+    "expired": false
+  },
+  "platform": {
+    "compile_api": 26,
+    "execution_api": 34,
+    "abi": "x86_64",
+    "emulator": true
+  },
+  "navigation_ui": {
+    "accepted": true,
+    "named_checks": 18,
+    "first_process_checks": 16,
+    "reopen_checks": 2,
+    "process_ids": [
+      6328,
+      6542
+    ],
+    "semantic_tree_png_pairs": 12,
+    "verified_original_rows": 12,
+    "native_live_at_phase_end": 0,
+    "required_checks": [
+      "installed_navigation_and_single_shared_sdk_provider",
+      "root_pagination_and_read_only_directory_preserve_actual_frame_and_stores",
+      "hierarchy_unicode_fragment_selects_independently_verified_part",
+      "external_targets_do_not_launch_or_change_reader",
+      "part_only_requires_explicit_start_confirmation",
+      "unresolved_and_container_escape_never_guess",
+      "plain_label_and_empty_authored_navigation",
+      "repeated_spine_needs_explicit_identity_and_never_first_match",
+      "full_cfi_from_public_sdk_resolves_again_and_navigates",
+      "surrogate_collapsed_and_corrupt_cfi_stay_unmoved",
+      "pdf_pages_are_not_authored_outline",
+      "cbz_pages_use_actual_page_ids",
+      "jni_boundaries_thread_and_verified_identity_are_enforced",
+      "cancel_real_resolve_then_close_and_retry_is_clean",
+      "close_and_actual_rotation_cancel_stale_results",
+      "background_releases_snapshot_and_manual_reopen_starts_at_root",
+      "process_reopen_has_no_snapshot_or_stale_destination",
+      "real_navigation_works_after_process_restart"
+    ],
+    "frames": [
+      {
+        "name": "paginated-directory",
+        "pid": 6328,
+        "view": 250287194,
+        "book": 1,
+        "index": 0,
+        "part": 0,
+        "font": 24,
+        "start": 0,
+        "end": 22,
+        "viewport_width": 1080,
+        "viewport_height": 1766,
+        "bitmap_argb_sha256": "46e13e405dd0fbc0b0e20a9fd67ec8a1fe5236c8691b3c9f0d2ec50895ee84dc"
+      },
+      {
+        "name": "nested-fragment-found",
+        "pid": 6328,
+        "view": 250287194,
+        "book": 1,
+        "index": 0,
+        "part": 1,
+        "font": 24,
+        "start": 0,
+        "end": 27,
+        "viewport_width": 1080,
+        "viewport_height": 1766,
+        "bitmap_argb_sha256": "11e6abcdd4f2f49a7f253092a43ce69b44f395c7a70688065c96022a4c65cc13"
+      },
+      {
+        "name": "ncx-fragment-found",
+        "pid": 6328,
+        "view": 250287194,
+        "book": 2,
+        "index": 0,
+        "part": 1,
+        "font": 24,
+        "start": 0,
+        "end": 13,
+        "viewport_width": 1080,
+        "viewport_height": 1766,
+        "bitmap_argb_sha256": "e5dc1d0ce03b01605940dbf9383ce29cfc1ccf9e2b16c575c7f91ad1295ce618"
+      },
+      {
+        "name": "part-only-confirmed",
+        "pid": 6328,
+        "view": 250287194,
+        "book": 1,
+        "index": 0,
+        "part": 2,
+        "font": 24,
+        "start": 0,
+        "end": 7,
+        "viewport_width": 1080,
+        "viewport_height": 1766,
+        "bitmap_argb_sha256": "62688379fc1dd0a1933262b257f13c39ef5f0ae96f6522bd85de66f1619c101d"
+      },
+      {
+        "name": "empty-directory",
+        "pid": 6328,
+        "view": 250287194,
+        "book": 4,
+        "index": 0,
+        "part": 0,
+        "font": 24,
+        "start": 0,
+        "end": 22,
+        "viewport_width": 1080,
+        "viewport_height": 1766,
+        "bitmap_argb_sha256": "46e13e405dd0fbc0b0e20a9fd67ec8a1fe5236c8691b3c9f0d2ec50895ee84dc"
+      },
+      {
+        "name": "repeated-spine-explicit",
+        "pid": 6328,
+        "view": 250287194,
+        "book": 3,
+        "index": 0,
+        "part": 1,
+        "font": 24,
+        "start": 0,
+        "end": 22,
+        "viewport_width": 1080,
+        "viewport_height": 1766,
+        "bitmap_argb_sha256": "46e13e405dd0fbc0b0e20a9fd67ec8a1fe5236c8691b3c9f0d2ec50895ee84dc"
+      },
+      {
+        "name": "cfi-found",
+        "pid": 6328,
+        "view": 250287194,
+        "book": 1,
+        "index": 0,
+        "part": 1,
+        "font": 24,
+        "start": 0,
+        "end": 27,
+        "viewport_width": 1080,
+        "viewport_height": 1766,
+        "bitmap_argb_sha256": "11e6abcdd4f2f49a7f253092a43ce69b44f395c7a70688065c96022a4c65cc13"
+      },
+      {
+        "name": "cfi-refused",
+        "pid": 6328,
+        "view": 250287194,
+        "book": 1,
+        "index": 0,
+        "part": 1,
+        "font": 24,
+        "start": 0,
+        "end": 27,
+        "viewport_width": 1080,
+        "viewport_height": 1766,
+        "bitmap_argb_sha256": "11e6abcdd4f2f49a7f253092a43ce69b44f395c7a70688065c96022a4c65cc13"
+      },
+      {
+        "name": "pdf-by-page",
+        "pid": 6328,
+        "view": 250287194,
+        "book": 5,
+        "index": 2,
+        "part": -1,
+        "font": null,
+        "start": 0,
+        "end": 6,
+        "viewport_width": 1080,
+        "viewport_height": 1766,
+        "bitmap_argb_sha256": "2a6df27ae943298f2bcbc96d5141b21f57a758db47f20f2d7aa2448b35a9100a"
+      },
+      {
+        "name": "cbz-by-page",
+        "pid": 6328,
+        "view": 250287194,
+        "book": 6,
+        "index": 1,
+        "part": -1,
+        "font": null,
+        "start": 0,
+        "end": 0,
+        "viewport_width": 1080,
+        "viewport_height": 1766,
+        "bitmap_argb_sha256": "1fe2d9fa7659d1a1c791af0d6461f7dcb1162725fba27ade91d889f253707ad3"
+      },
+      {
+        "name": "rotated-reader",
+        "pid": 6328,
+        "view": 88006385,
+        "book": 1,
+        "index": 0,
+        "part": 1,
+        "font": 24,
+        "start": 0,
+        "end": 27,
+        "viewport_width": 2146,
+        "viewport_height": 637,
+        "bitmap_argb_sha256": "11e6abcdd4f2f49a7f253092a43ce69b44f395c7a70688065c96022a4c65cc13"
+      },
+      {
+        "name": "reopened-navigation",
+        "pid": 6542,
+        "view": 233221176,
+        "book": 1,
+        "index": 0,
+        "part": 1,
+        "font": 24,
+        "start": 0,
+        "end": 27,
+        "viewport_width": 1080,
+        "viewport_height": 1766,
+        "bitmap_argb_sha256": "11e6abcdd4f2f49a7f253092a43ce69b44f395c7a70688065c96022a4c65cc13"
+      }
+    ]
+  },
+  "target_contract": {
+    "verified_original_key": "format:original_sha256@exreader-sdk-public_version",
+    "module_source_unchanged": true,
+    "module_tree": "9395914832e191ad63f18f6188ca5044260d2f12",
+    "second_independent_public_sdk_object_required": true,
+    "publication_offset_requires_complete_streamed_pager_projection_byte_equality": true,
+    "reader_font_and_layout_copied_for_projection_check": true,
+    "scalar_boundary_required": true,
+    "second_chapter_string_allocated": false,
+    "repeated_spine_requires_explicit_part": true,
+    "part_only_requires_explicit_confirmation_and_reverification": true,
+    "external_launch": false,
+    "fixed_page_list_author_outline": false,
+    "cfi_collapsed_or_surrogate_interior_refused": true,
+    "no_offset_or_page_hint_fallback": true,
+    "stale_choice_and_result_epoch_guards": true
+  },
+  "preserved_suites": {
+    "sdk_original_export": 8,
+    "native_groups": 12,
+    "actual_captures": 18,
+    "capture_found": 17,
+    "capture_ambiguous": 1,
+    "original_host_checks": 17,
+    "original_host_process_recovery_phases": 2,
+    "dav_checks": 91,
+    "dav_restart_cases": 4,
+    "formal_account_receive_ui_checks": 16,
+    "formal_account_receive_ui_processes": 4,
+    "search_ui_checks": 15,
+    "search_ui_processes": 2
+  },
+  "preserved_search_runtime": {
+    "installed_search_sha256": "624d7aa15bf3eb2baae172477652d63d4770c1cecdf676ae77fe4beac288cf3d",
+    "shared_sdk_single_provider": true,
+    "no_search_or_sdk_in_product_dso": true
+  },
+  "runtime_audit": {
+    "source_sha": "d68d8e388730f0fbd9e86c70a422388be406391d",
+    "run_id": "40115551503",
+    "attempt": "1",
+    "accepted": true,
+    "installed_navigation_sha256": "25d97e6c103ab6d6baa21859a42d428b84b7b099de9bbc25d2b8e5c62f442cad",
+    "shared_sdk_single_provider": true,
+    "no_navigation_or_sdk_in_product_dso": true,
+    "checks": [
+      {
+        "variant": "Debug",
+        "apk_bytes": 26710960,
+        "apk_sha256": "3ac514ed6fe691c48c4a995a33d63226022db041fe1e845d3e23b9ae44d61ffc",
+        "runtimes": {
+          "libexreader.so": {
+            "bytes": 5545208,
+            "sha256": "041ba9141a4b0c655545349ee61be8bc36abccfca872cb852a8677f6753dee8b",
+            "needed": [
+              "libOpenSLES.so",
+              "libm.so",
+              "libdl.so",
+              "libc.so"
+            ]
+          },
+          "libexreader_host.so": {
+            "bytes": 475808,
+            "sha256": "ef5586e484a0e0bfdf716af5fbd30fb1e73eea6d3af630ba6232b495759387fc",
+            "needed": [
+              "libexreader.so",
+              "libdl.so",
+              "libm.so",
+              "libc.so"
+            ]
+          },
+          "libexreader_jni.so": {
+            "bytes": 40392,
+            "sha256": "182ee0175ca883aa5a3cc5d985b215cba2808df508ab7381cb341423909981f2",
+            "needed": [
+              "libexreader.so",
+              "libm.so",
+              "libdl.so",
+              "libc.so"
+            ]
+          },
+          "libexreader_product.so": {
+            "bytes": 2632592,
+            "sha256": "0748136e2c71d5e603f8cd19e1fdc1224ad20809376b63385e48a073626a25ef",
+            "needed": [
+              "libdl.so",
+              "libm.so",
+              "libc.so"
+            ]
+          }
+        }
+      },
+      {
+        "variant": "Release",
+        "apk_bytes": 25657065,
+        "apk_sha256": "9b2fb382a02f643f7cf2a4f8c45bfe0853649620b0f1fea4660b026b9fad256e",
+        "runtimes": {
+          "libexreader.so": {
+            "bytes": 5545208,
+            "sha256": "041ba9141a4b0c655545349ee61be8bc36abccfca872cb852a8677f6753dee8b",
+            "needed": [
+              "libOpenSLES.so",
+              "libm.so",
+              "libdl.so",
+              "libc.so"
+            ]
+          },
+          "libexreader_host.so": {
+            "bytes": 351456,
+            "sha256": "9df2e68a46fc6eaf3d3e4ceb452ea473caa0d19abc7f0c1a63c476dff4cc8c8b",
+            "needed": [
+              "libexreader.so",
+              "libdl.so",
+              "libm.so",
+              "libc.so"
+            ]
+          },
+          "libexreader_jni.so": {
+            "bytes": 40392,
+            "sha256": "182ee0175ca883aa5a3cc5d985b215cba2808df508ab7381cb341423909981f2",
+            "needed": [
+              "libexreader.so",
+              "libm.so",
+              "libdl.so",
+              "libc.so"
+            ]
+          },
+          "libexreader_product.so": {
+            "bytes": 2076880,
+            "sha256": "dab40714c83fbf7f9181ebc261faacf0f0c753d57332734ada219d82c96d1f84",
+            "needed": [
+              "libdl.so",
+              "libm.so",
+              "libc.so"
+            ]
+          }
+        }
+      }
+    ],
+    "sdk_configuration": {
+      "profile": "formal Android shared SDK, not desktop reading-core preset",
+      "options": {
+        "EXR_ENABLE_AUDIO": "ON",
+        "EXR_ENABLE_MP3": "ON",
+        "EXR_ENABLE_AAC": "OFF",
+        "EXR_BUILD_JNI": "ON",
+        "EXR_BUILD_SHARED_COMPAT": "ON"
+      },
+      "actual_cache_sha256": "e597e6f5e1c0512fbff2be9c761a32c2a579d43db07d7c2d3abb7100b852366b",
+      "installed_runtimes": {
+        "libexreader.so": {
+          "bytes": 22258128,
+          "sha256": "42bb8b94f1226f7a0d446c0c996762379d18a1e42abb03e4a0e08423947f80c2",
+          "needed": [
+            "libOpenSLES.so",
+            "libm.so",
+            "libdl.so",
+            "libc.so"
+          ]
+        },
+        "libexreader_jni.so": {
+          "bytes": 176496,
+          "sha256": "917a4b480cdc8d4cf02b474a1d13d43ffecc2d33881f64dea6a2fda47a54c337",
+          "needed": [
+            "libexreader.so",
+            "libm.so",
+            "libdl.so",
+            "libc.so"
+          ]
+        }
+      },
+      "jni_requires_audio_pdf": true
+    }
+  },
+  "module_reference": {
+    "source_sha": "cbd7832b914bddcf99e06a85962d301a00b47efa",
+    "document_head": "13fd6dc1408fba0e71f5bc5a919e225a97c972c3",
+    "run_id": 40074866988,
+    "reference_scope": "Windows/Linux package interfaces, 130 each; Android UI is granted only by producer above"
+  }
 }

@@ -2,7 +2,19 @@
 
 固定宿主起点 `e764f08dea4986f11db183c5b17b41ddb5526bcc`；分支 `codex/reader-android-navigation-ui`。只原样引入 F2 源码 `cbd7832b914bddcf99e06a85962d301a00b47efa` 的 `apps/reader/navigation/`，树 `9395914832e191ad63f18f6188ca5044260d2f12`。不合入其分支历史。SDK 保护树与 Search 模块保持原样。
 
-当前未验收；[记录](validation/reader-android-navigation.json) 保持 `accepted:false`，等待本分支完整同源 Actions。所有编译、测试、语法检查、夹具和工件解析仅在 Actions 执行。
+本宿主的原生目录/按页 UI 已在 API34 x86_64 模拟器通过；[记录](validation/reader-android-navigation.json) 只授予下述可证明目标与生命周期范围。所有编译、测试、语法检查、夹具和工件解析仅在 Actions 执行。
+
+## 同源验收
+
+受测完整源码 **`d68d8e388730f0fbd9e86c70a422388be406391d`**，[run 40115551503](https://github.com/NoGod3524/EXReader/actions/runs/40115551503) attempt1，作业 **120935966789** 成功。原件导出8项、18实际捕获的12组、原宿主17+2、DAV91+4、正式账号/接收16项/4进程、书内搜索15项/2进程均在同源码重新执行通过；新增导航 **18/18**（16+2），真实进程 **6328 / 6542**。
+
+保存 **12** 套真实语义树/PNG；六份原件跨两阶段共12行散列复核。45个根条目以32+13实际分页；EPUB3与NCX的Unicode片段都实际到part1，明确接受PART_ONLY后到part2开头；重复路径明确选择第二章后实际part1；完整CFI再由独立公开对象复核并跳转，surrogate内部、折叠空白与损坏CFI保持原页。PDF实际index2、CBZ实际index1，PDF的作者Outlines标题不在列表。
+
+真实旋转期间取消正在解析的旧任务：View **250287194 → 88006385**，实际viewport **1080×1766 → 2146×637**；原件、SDK notes/progress与产品队列保持，复位旋转后Home/手动重开及真实进程重开后再次导航通过。目标跳转前，第二独立公开对象创建的pager已经按当前reader布局逐块与full-document文本比完全部字节，目标标量边界也核对；不假设两种投影天然相同。
+
+工件 `reader-android-navigation-40115551503-1`，ID **12568127459**，**129689309 B**，SHA-256 **`a964ab12f94d2f6693d4aef35bf1bf55693cc6c37636ff418f42365910cc7214`**，有效期 `2027-01-22T17:18:52Z`。包含原回归、正式16、搜索15和导航18的原始日志/报告/PNG，以及SDK实际cache、安装包、Debug/Release ELF、map、NEEDED和四套runner材料。
+
+Navigation安装归档SHA-256 `25d97e6c103ab6d6baa21859a42d428b84b7b099de9bbc25d2b8e5c62f442cad`。Debug/Release均只有原共享SDK provider，产品DSO不含Navigation/Search/SDK；四个运行库闭包按实际NDK API26公有stub核对。实际SDK cache SHA-256 `e597e6f5e1c0512fbff2be9c761a32c2a579d43db07d7c2d3abb7100b852366b`，AUDIO/MP3/JNI/SHARED为ON、AAC为OFF，仍是原Android共享JNI配置。
 
 首轮 `fd5734a548203da94702af26f558d2595a4898be` / run `40114452672` attempt1 编译、包材料/唯一SDK provider、旧全套、正式16与搜索15通过；新导航前14组通过。实际旋转创建新ReaderView时，探针把尚未装书的空帧直接 `getLong("book")`，抛 `No value for book`。测试改用有界等待当前可见ReaderView和实际book/bitmap就绪；原旋转、取消、帧与存储断言保留。另补上述独立pager投影逐字节证明后，以新source重新整轮验收。
 
