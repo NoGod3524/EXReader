@@ -252,17 +252,20 @@ def main():
         library = root / 'surface.lib'
         library.write_bytes(make_archive([('control.obj', member)]))
         facts = distlib.scan_archive('surface.lib', library.read_bytes())
-        assert facts['member_names_sample'] == ['control.obj']
-        assert not facts['member_names_with_separator']
-        assert facts['debug_section_count'] == 0
-        assert facts['drective_absolute'] and 'D:\\a\\' in facts['drective_absolute'][0]['absolute']
+        print('surface facts', json.dumps(facts, default=str)[:600], flush=True)
+        assert facts['member_names_sample'] == ['control.obj'], facts['member_names_sample']
+        assert not facts['member_names_with_separator'], facts['member_names_with_separator']
+        assert facts['debug_section_count'] == 0, facts['debug_section_count']
+        assert facts['drective_absolute'], facts['drective_absolute']
+        assert 'D:\\a\\' in facts['drective_absolute'][0]['absolute'], facts['drective_absolute']
         case('archive-reader-classifies-members-and-drective')
         debug_member = coff_object('.debug$S', b'\x04' + b'0' * 8 + b'D:\\a\\EXReader\\EXReader\\x.c' + bytes([0]))
         debug_library = root / 'debug.lib'
         debug_library.write_bytes(make_archive([('control.obj', debug_member)]))
         debug_facts = distlib.scan_archive('debug.lib', debug_library.read_bytes())
-        assert debug_facts['debug_section_count'] == 1
-        assert debug_facts['debug_sections'][0]['section'] == '.debug$S'
+        print('debug facts', json.dumps(debug_facts, default=str)[:600], flush=True)
+        assert debug_facts['debug_section_count'] == 1, debug_facts['debug_section_count']
+        assert debug_facts['debug_sections'][0]['section'] == '.debug$S', debug_facts['debug_sections']
         case('archive-reader-detects-debug-sections')
         for label, payload in (('archive-rejects-bad-magic', b'!<arch>' + bytes([10]) + b'x' * 61),
                                ('archive-rejects-truncated-member', b'!<arch>' + bytes([10]) + bytes(60))):
