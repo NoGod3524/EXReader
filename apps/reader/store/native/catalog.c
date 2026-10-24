@@ -411,6 +411,28 @@ int reader_catalog_groups_page(reader_catalog *c,reader_catalog_group_kind kind,
 leave:
   sqlite3_finalize(s);c->active=0;return status;
 }
+int reader_catalog_removed_groups_page(reader_catalog *c,reader_catalog_group_kind kind,
+  const char *cursor,int direction,size_t limit,reader_catalog_group_visit visit,
+  void *context,reader_catalog_error *e) {
+  sqlite3_stmt *s=NULL;char sql[640],range[96];const group_table *g=group_for(kind);
+  int status=enter(c,e);
+  if(status!=SQLITE_OK) return status;
+  if(!g || !visit || !limit || limit>200 || (direction!=1 && direction!=-1) ||
+     (cursor && !hex(cursor,32))) {
+    status=fail(e,SQLITE_MISUSE,"Invalid removed group cursor");goto leave;
+  }
+  range[0]=0;
+  if(cursor) snprintf(range,sizeof(range)," AND g.%s%s?1",g->id,direction>0?">":"<");
+  snprintf(sql,sizeof(sql),"SELECT g.%s,g.name,%s,%s,g.deleted FROM %s g WHERE g.deleted=1%s ORDER BY g.%s%s LIMIT ?2",
+    g->id,g->ordered_group?"g.parent_id":"NULL",g->ordered_group?"g.ordinal":"0",g->table,
+    range,g->id,direction>0?"":" DESC");
+  status=prepare(c,sql,&s,e);
+  if(status==SQLITE_OK && cursor) status=bind_text(c,s,1,cursor,e);
+  if(status==SQLITE_OK) status=sqlite3_bind_int(s,2,(int)limit);
+  if(status==SQLITE_OK) status=deliver_groups(c,s,visit,context,NULL,e);
+leave:
+  sqlite3_finalize(s);c->active=0;return status;
+}
 int reader_catalog_membership_find(reader_catalog *c,reader_catalog_group_kind kind,const char *id,
   const char *key,reader_catalog_membership_visit visit,void *context,int *found,reader_catalog_error *e) {
   sqlite3_stmt *s=NULL;char sql[768];const group_table *g=group_for(kind);int status=enter(c,e);

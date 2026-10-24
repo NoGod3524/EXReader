@@ -71,7 +71,7 @@ jobs:
               'callback_stop_and_query_reentry_refused',
               'actual_forward_reverse_sql_uses_index_ranges',
           }
-          for report, count in ((original, 12), (shelf, 10), (organization, 15)):
+          for report, count in ((original, 12), (shelf, 10), (organization, 16)):
               assert report['accepted'] is True and report['problems'] == []
               assert report['source_sha'] == os.environ['GITHUB_SHA']
               assert report['run_id'] == os.environ['GITHUB_RUN_ID']
@@ -85,7 +85,7 @@ jobs:
           assert organization['ui_accepted'] is False
           evidence = {'accepted': True, 'source_sha': os.environ['GITHUB_SHA'],
               'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
-              'original_groups': 12, 'query_groups': 10, 'organization_groups': 15, 'ui_credit': 0,
+              'original_groups': 12, 'query_groups': 10, 'organization_groups': 16, 'ui_credit': 0,
               'reports': {str(p): hashlib.sha256(p.read_bytes()).hexdigest()
                           for p in (root / 'original/result.json', root / 'shelf/shelf-result.json',
                                     root / 'organization/organization-result.json')}}
