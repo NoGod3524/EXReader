@@ -12,6 +12,7 @@ import sys
 import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'tools'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'linux_host'))
 from check_linux_host import Session, command
 
 
