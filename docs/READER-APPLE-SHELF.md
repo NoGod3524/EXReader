@@ -6,16 +6,17 @@ Both directions use exclusive keyset cursors; startup/refresh can include the
 saved top key. Title and author search binds an escaped literal `LIKE` value,
 including `%`, `_` and backslash. No SDK, binding or schema change is required.
 
-The native SwiftUI `List` retains at most three catalog pages, or 150 rows.
+The native SwiftUI `ScrollView` and `VStack` retain at most three catalog pages,
+or 150 rows; every bounded row belongs to the same geometry preference tree.
 Appending/prepending evicts only the opposite page when it cannot remove the
-currently visible rows. List geometry supplies the visible top source key;
+currently visible rows. Row geometry supplies the visible top source key;
 pagination, refresh and viewport changes restore that key. Query generation
 rejects late results. Search text, top source key and selected source key are
 saved separately from the reader's existing exact progress and annotation state.
 An interrupted same-query refresh retains its previously saved cursor. An idle
 visible source key is also saved after a short debounce, so process termination
 does not require a preceding background event to preserve the last settled view.
-At the global tail, a taller native List may be unable to keep the old top row
+At the global tail, a taller viewport may be unable to keep the old top row
 at the top. The host accepts its actual earlier first row only after observing
 both the requested row and terminal row in the viewport; it never invents an
 offscreen anchor. Search uses the same NFC/256-scalar bound at UI and SQL layers.
@@ -54,7 +55,7 @@ title/author bytes queried with canonically composed text.
 
 Native checks cover both complete keyset traversals, stable equal-title keys,
 title/author/literal/empty searches, inclusive restoration and a deterministically
-late query result. Independent UI input scrolls the production native List in
+late query result. Independent UI input scrolls the production native view in
 both directions, searches and refreshes it, resizes/rotates it, backgrounds and
 restarts the process, then opens an actual stored original and returns to its
 filtered shelf. Its collector checks all 2,202 stored source hashes against the
@@ -231,6 +232,13 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
   pagination at issued geometry epoch 51. Artifact `12547132062` preserves
   this failure. The following diagnostic runs only original macOS case02
   and records pending visible frames, with product code and assertions unchanged.
+- The stricter List-based recovery also stalled in original iPad cases02/06.
+  The implementation now uses one native SwiftUI `ScrollView`/`VStack` tree
+  for the already bounded 150 rows and removes the direct-observer row probes.
+  Focused manual recovery runs reuse the original full UI job's 70-minute
+  limit and unchanged 2,700-second test allowance for original macOS case02
+  and iPad case06. Their raw results declare diagnostic-only/accepted=false;
+  the complete collector and summary run only in the unchanged full mode.
 
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.
