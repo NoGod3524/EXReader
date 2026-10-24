@@ -1201,7 +1201,7 @@ static reader_batch_status rb_stage_file(const char *path, uint64_t limit,
     const char *staging_dir, const exr_control *control, char *temp_path,
     size_t temp_capacity, uint64_t *bytes, reader_batch_error *error) {
   rb_source source;
-  rb_stamp before, after;
+  rb_stamp before = {0, 0, 0}, after = {0, 0, 0};
   rb_file file = RB_BAD_FILE;
   unsigned char *buffer = NULL;
   reader_batch_status status;
@@ -1284,7 +1284,8 @@ static void rb_set_failed(reader_batch_result *result, reader_batch_status code,
   result->book_id = 0;
   result->message[0] = 0;
   if (message)
-    snprintf(result->message, sizeof(result->message), "%s", message);
+    snprintf(result->message, sizeof(result->message), "%.*s",
+        (int)sizeof(result->message) - 1, message);
 }
 
 static void rb_import_item(exr_library *library, const reader_batch_item *item,
