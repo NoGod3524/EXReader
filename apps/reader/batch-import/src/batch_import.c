@@ -1,4 +1,10 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(__linux__) && !defined(_GNU_SOURCE)
+#define _GNU_SOURCE 1
+#endif
+#ifdef __APPLE__
+#define _DARWIN_C_SOURCE 1
+#endif
 #ifndef _WIN32
 #define _POSIX_C_SOURCE 200809L
 #define _FILE_OFFSET_BITS 64
@@ -21,6 +27,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <stdatomic.h>
 #endif
 
 #define RB_COPY_CHUNK (64u * 1024u)
@@ -220,6 +227,90 @@ static char *rb_narrow(const wchar_t *wide, int *encoding) {
   }
   return text;
 }
+
+static wchar_t *rb_windows_path_view(wchar_t *path) {
+  wchar_t *cursor;
+  if (!wcsncmp(path, L"\\\\?\\UNC\\", 8)) {
+    path[6] = L'\\';
+    path += 6;
+  } else if (!wcsncmp(path, L"\\\\?\\", 4)) {
+    path += 4;
+  }
+  for (cursor = path; *cursor; cursor++) if (*cursor == L'/') *cursor = L'\\';
+  return path;
+}
+
+/* Verify the opened object, so a junction in an ancestor cannot redirect a
+   candidate outside its selected path. Expand DOS short names on both sides. */
+static int rb_windows_same_opened_path(HANDLE file, const wchar_t *path) {
+  DWORD full_size = GetFullPathNameW(path, 0, NULL, NULL), long_size, actual_size, got;
+  wchar_t *full = NULL, *expected = NULL, *actual = NULL;
+  int same = 0;
+  if (!full_size || full_size > READER_BATCH_MAX_PATH_BYTES + 8) return 0;
+  full = malloc(((size_t)full_size + 1) * sizeof(*full));
+  if (!full) goto finish;
+  got = GetFullPathNameW(path, full_size + 1, full, NULL);
+  if (!got || got > full_size) goto finish;
+  long_size = GetLongPathNameW(full, NULL, 0);
+  actual_size = GetFinalPathNameByHandleW(file, NULL, 0, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+  if (!long_size || !actual_size || long_size > READER_BATCH_MAX_PATH_BYTES + 8 ||
+      actual_size > READER_BATCH_MAX_PATH_BYTES + 8) goto finish;
+  expected = malloc(((size_t)long_size + 1) * sizeof(*expected));
+  actual = malloc(((size_t)actual_size + 1) * sizeof(*actual));
+  if (!expected || !actual) goto finish;
+  got = GetLongPathNameW(full, expected, long_size + 1);
+  if (!got || got > long_size) goto finish;
+  got = GetFinalPathNameByHandleW(file, actual, actual_size + 1,
+      FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+  if (!got || got > actual_size) goto finish;
+  same = CompareStringOrdinal(rb_windows_path_view(expected), -1,
+      rb_windows_path_view(actual), -1, TRUE) == CSTR_EQUAL;
+finish:
+  free(actual);
+  free(expected);
+  free(full);
+  if (!same) SetLastError(ERROR_REPARSE_TAG_INVALID);
+  return same;
+}
+#endif
+
+#ifndef _WIN32
+/* O_NOFOLLOW applies only to the final component. Anchor every intermediate
+   directory before opening its child, then retain the resulting descriptor. */
+static int rb_open_nofollow(const char *path, int leaf_flags) {
+  char *copy = rb_strdup(path), *part, *next;
+  int parent, opened, saved;
+#ifdef O_PATH
+  const int walk_flags = O_PATH | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC;
+#elif defined(O_SEARCH)
+  const int walk_flags = O_SEARCH | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC;
+#else
+  const int walk_flags = O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC;
+#endif
+  size_t length;
+  if (!copy) { errno = ENOMEM; return -1; }
+  length = strlen(path);
+  if (length && path[length - 1] == '/') leaf_flags |= O_DIRECTORY;
+  parent = open(path[0] == '/' ? "/" : ".", walk_flags);
+  if (parent < 0) { free(copy); return -1; }
+  part = copy;
+  while (*part == '/') part++;
+  if (!*part) { copy[0] = '.'; copy[1] = 0; part = copy; }
+  while (*part) {
+    next = strchr(part, '/');
+    if (next) { *next++ = 0; while (*next == '/') next++; }
+    opened = openat(parent, part, next && *next ? walk_flags :
+        O_RDONLY | O_NOFOLLOW | O_CLOEXEC | leaf_flags);
+    saved = errno;
+    close(parent);
+    if (opened < 0) { free(copy); errno = saved; return -1; }
+    parent = opened;
+    if (!next) break;
+    part = next;
+  }
+  free(copy);
+  return parent;
+}
 #endif
 
 static char *rb_canonical_root(const char *root, reader_batch_error *error) {
@@ -391,6 +482,17 @@ static reader_batch_status rb_open_current(reader_batch_enumerator *enumerator,
       return rb_fail(error, READER_BATCH_IO, EXR_IO,
           "Directory disappeared or is no longer a real directory");
     }
+    handle = CreateFileW(wide, FILE_READ_ATTRIBUTES,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING,
+        FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, NULL);
+    if (handle == INVALID_HANDLE_VALUE || !rb_windows_same_opened_path(handle, wide)) {
+      if (handle != INVALID_HANDLE_VALUE) CloseHandle(handle);
+      free(wide);
+      free(path);
+      return rb_fail(error, READER_BATCH_IO, EXR_IO,
+          "Directory path contains a redirected ancestor");
+    }
+    CloseHandle(handle);
     length = wcslen(wide);
     extra = (length && (wide[length - 1] == L'\\' || wide[length - 1] == L'/'))
         ? 2 : 3;
@@ -427,7 +529,7 @@ static reader_batch_status rb_open_current(reader_batch_enumerator *enumerator,
     int fd;
     struct stat status;
     DIR *directory;
-    fd = open(path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
+    fd = rb_open_nofollow(path, O_DIRECTORY);
     if (fd < 0) {
       free(path);
       return rb_fail(error, READER_BATCH_IO, EXR_IO,
@@ -489,6 +591,12 @@ static reader_batch_status rb_advance_directory(reader_batch_enumerator *enumera
   *opened = 0;
   rb_close_current(enumerator);
   while (enumerator->stack_count) {
+    /* Queued siblings were discovered before any of them was opened. */
+    if (enumerator->directories_seen >= enumerator->options.max_directories) {
+      enumerator->done = 1;
+      enumerator->truncated = 1;
+      return READER_BATCH_OK;
+    }
     rb_dir item = enumerator->stack[--enumerator->stack_count];
     reader_batch_error local;
     reader_batch_status status;
@@ -610,7 +718,7 @@ static int rb_next_entry(reader_batch_enumerator *enumerator, rb_entry *entry,
       enumerator->done = 1;
       return 0;
     }
-    if (lstat(full, &status) != 0) {
+    if (fstatat(dirfd(enumerator->dir), item->d_name, &status, AT_SYMLINK_NOFOLLOW) != 0) {
       free(full);
       if (errno != ENOENT && errno != ENOTDIR) enumerator->truncated = 1;
       continue;
@@ -947,11 +1055,17 @@ static reader_batch_status rb_source_open(const char *path, rb_source *source,
         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
         OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_SEQUENTIAL_SCAN,
         NULL);
-    free(wide);
-    if (source->handle == INVALID_HANDLE_VALUE)
+    if (source->handle == INVALID_HANDLE_VALUE) {
+      free(wide);
       return rb_fail(error, READER_BATCH_IO, EXR_IO,
           "Cannot open candidate (Windows error %lu)",
           (unsigned long)GetLastError());
+    }
+    if (!rb_windows_same_opened_path(source->handle, wide)) {
+      free(wide);
+      goto io_failure;
+    }
+    free(wide);
     type = GetFileType(source->handle);
     if (type != FILE_TYPE_DISK)
       goto not_regular;
@@ -986,7 +1100,7 @@ not_regular:
 #else
   {
     struct stat status;
-    source->fd = open(path, O_RDONLY | O_NOFOLLOW | O_CLOEXEC);
+    source->fd = rb_open_nofollow(path, 0);
     if (source->fd < 0) {
       if (errno == ELOOP)
         return rb_fail(error, READER_BATCH_ARGUMENT, EXR_FORMAT,
@@ -1009,8 +1123,7 @@ not_regular:
     stamp->size = (uint64_t)status.st_size;
     stamp->seconds = (int64_t)status.st_mtime;
 #ifdef __APPLE__
-    /* _POSIX_C_SOURCE hides st_mtimespec on current macOS SDKs. */
-    stamp->nanoseconds = 0;
+    stamp->nanoseconds = (int64_t)status.st_mtimespec.tv_nsec;
 #else
     stamp->nanoseconds = (int64_t)status.st_mtim.tv_nsec;
 #endif
@@ -1089,8 +1202,7 @@ static reader_batch_status rb_source_stamp(rb_source *source, rb_stamp *stamp,
     stamp->size = (uint64_t)status.st_size;
     stamp->seconds = (int64_t)status.st_mtime;
 #ifdef __APPLE__
-    /* _POSIX_C_SOURCE hides st_mtimespec on current macOS SDKs. */
-    stamp->nanoseconds = 0;
+    stamp->nanoseconds = (int64_t)status.st_mtimespec.tv_nsec;
 #else
     stamp->nanoseconds = (int64_t)status.st_mtim.tv_nsec;
 #endif
@@ -1106,7 +1218,11 @@ static int rb_stamp_equal(const rb_stamp *a, const rb_stamp *b) {
 
 static reader_batch_status rb_create_temp(const char *directory, char *path,
     size_t capacity, rb_file *file, reader_batch_error *error) {
-  static unsigned long counter;
+#ifdef _WIN32
+  static volatile LONG counter;
+#else
+  static atomic_ulong counter = ATOMIC_VAR_INIT(0);
+#endif
   unsigned long attempt;
   time_t now = time(NULL);
 #ifdef _WIN32
@@ -1115,8 +1231,13 @@ static reader_batch_status rb_create_temp(const char *directory, char *path,
   unsigned long process = (unsigned long)getpid();
 #endif
   for (attempt = 0; attempt < RB_TEMP_ATTEMPTS; attempt++) {
+#ifdef _WIN32
+    unsigned long serial = (unsigned long)InterlockedIncrement(&counter);
+#else
+    unsigned long serial = atomic_fetch_add_explicit(&counter, 1, memory_order_relaxed);
+#endif
     int written = snprintf(path, capacity, "%s%creader-batch-%ld-%lu-%lu-%lu.tmp",
-        directory, rb_sep(), (long)now, process, counter++, attempt);
+        directory, rb_sep(), (long)now, process, serial, attempt);
     if (written < 0 || (size_t)written >= capacity)
       return rb_fail(error, READER_BATCH_ARGUMENT, EXR_LIMIT,
           "Staging path exceeds the path limit");
