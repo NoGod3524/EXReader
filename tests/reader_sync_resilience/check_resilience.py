@@ -1231,8 +1231,10 @@ def main():
                   'request_count': len(requests),
                   'duration_seconds': round(time.monotonic() - started, 2)}
         (folder / 'result.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
-        print(json.dumps({'accepted': True, 'platform': sys.platform, 'checks': len(checks),
-                          'source_sha': os.environ['GITHUB_SHA']}), flush=True)
+        # The full record is also emitted into the job log so every documented
+        # expected/actual pair can be read from the run without re-parsing an
+        # artifact.
+        print(json.dumps(report, sort_keys=True), flush=True)
     finally:
         if sys.exc_info()[1] is not None:
             # A failed boundary must still leave the observable protocol trace
