@@ -147,6 +147,39 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  /* Every synthesis-voice query runs before the first stop/cancel: on
+     speech-dispatcher 0.11.1 a module that is wedged by a cancelled message never
+     answers LIST SYNTHESIS VOICES, so a voice query after a cancel blocks forever
+     (a fresh daemon clears it). Voice listing has nothing to do with cancels. */
+  {
+    size_t count = reader_tts_test_daemon_voice_count(h);
+    report(&s, "hook_voice_count_measured",
+           count != (size_t)-1 && count >= 1 && count <= READER_TTS_MAX_VOICES,
+           "count=%zu ceiling=%u", count, (unsigned)READER_TTS_MAX_VOICES);
+  }
+  {
+    reader_tts_voice_list list;
+    memset(&list, 0, sizeof list);
+    st = reader_tts_voices(h, &list, &err);
+    report(&s, "hook_voices_listed", st == READER_TTS_OK && list.count >= 1, "status=%d count=%zu",
+           (int)st, list.count);
+    reader_tts_voice_list_free(&list);
+  }
+  {
+    reader_tts_voice_list list;
+    memset(&list, 0, sizeof list);
+    reader_tts_test_fail_alloc(1); /* the array succeeds, the first string fails */
+    st = reader_tts_voices(h, &list, &err);
+    report(&s, "hook_alloc_fail_voices",
+           st == READER_TTS_MEMORY && list.voices == NULL && list.count == 0 &&
+               err.native_code != 0,
+           "status=%d count=%zu", (int)st, list.count);
+    st = reader_tts_voices(h, &list, &err);
+    report(&s, "hook_voices_after_alloc_failure", st == READER_TTS_OK && list.count >= 1,
+           "status=%d count=%zu", (int)st, list.count);
+    reader_tts_voice_list_free(&list);
+  }
+
   /* an early callback is buffered while the daemon id is still unknown */
   reader_tts_test_force_msg_id(4242);
   reader_tts_test_early_callback(0); /* begin */
@@ -183,22 +216,6 @@ int main(int argc, char **argv) {
            "first=%d second=%d state=%d", first_kind, second_kind, state_of(h));
   }
   settle(h, 800);
-
-  /* the daemon's real synthesis-voice list, measured before the ceiling is used */
-  {
-    size_t count = reader_tts_test_daemon_voice_count(h);
-    report(&s, "hook_voice_count_measured",
-           count != (size_t)-1 && count >= 1 && count <= READER_TTS_MAX_VOICES,
-           "count=%zu ceiling=%u", count, (unsigned)READER_TTS_MAX_VOICES);
-  }
-  {
-    reader_tts_voice_list list;
-    memset(&list, 0, sizeof list);
-    st = reader_tts_voices(h, &list, &err);
-    report(&s, "hook_voices_listed", st == READER_TTS_OK && list.count >= 1, "status=%d count=%zu",
-           (int)st, list.count);
-    reader_tts_voice_list_free(&list);
-  }
 
   /* a late callback of an older message must not touch the active request */
   memset(text, 'l', 2000);
@@ -254,21 +271,6 @@ int main(int argc, char **argv) {
            ok && started == 1 && terminal == (int)READER_TTS_FINISHED, "started=%d terminal=%d",
            started, terminal);
   }
-  {
-    reader_tts_voice_list list;
-    memset(&list, 0, sizeof list);
-    reader_tts_test_fail_alloc(1); /* the array succeeds, the first string fails */
-    st = reader_tts_voices(h, &list, &err);
-    report(&s, "hook_alloc_fail_voices",
-           st == READER_TTS_MEMORY && list.voices == NULL && list.count == 0 &&
-               err.native_code != 0,
-           "status=%d count=%zu", (int)st, list.count);
-    st = reader_tts_voices(h, &list, &err);
-    report(&s, "hook_voices_after_alloc_failure", st == READER_TTS_OK && list.count >= 1,
-           "status=%d count=%zu", (int)st, list.count);
-    reader_tts_voice_list_free(&list);
-  }
-
   st = reader_tts_request_close(h, &err);
   {
     int closed = 0;

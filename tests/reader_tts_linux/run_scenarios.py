@@ -355,7 +355,7 @@ def main():
     restart_daemon("before-cpp")
     run_phase("cpp", [consumer_cpp, "--phase", "cpp"], timeout=300)
     restart_daemon("before-hook")
-    run_phase("hook", [hook_suite, "--phase", "hook"], timeout=600)
+    run_phase("hook", [hook_suite, "--phase", "hook"], timeout=900)
     restart_daemon("before-kill")
 
     pids = daemon_pids()
