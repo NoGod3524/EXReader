@@ -16,14 +16,28 @@
 
 选项：已打开的产品 `reader_revisions*`（借用，须在创建它的工作线程调用，无回调重入）、`book_key`、可选 `book_title`
 （UTF-8，≤16384 字节；缺省时取该书唯一安全 book 头的标题，没有则无书名）、`jsonl_path`／`markdown_path`
-（至少一个，UTF-8，≤4096 字节，互不相同，不得以分隔符结尾）、`max_output_bytes`（每个文件；0＝64 MiB，上限 1 GiB）、
+（至少一个，UTF-8，≤4096 字节，不得以分隔符结尾；两路输出必须解析到**不同的最终目标**）、`max_output_bytes`（每个文件；0＝64 MiB，上限 1 GiB）、
 `cancel` 回调。状态：`OK/ARGUMENT/MEMORY/REVISION/DECODE/IO/LIMIT/CANCELLED`，错误含 `revision_code`、`rs_code`、`os_error`。
+
+两个输出在**创建任何临时文件之前**比较最终目标身份：Windows 用卷序号＋文件索引（两者都存在时）或 `GetFullPathNameW` 归一化后按序数忽略大小写比较；
+POSIX 用 `stat` 的 dev/ino（两者都存在时）或父目录 `realpath` ＋末段名比较。因此 `dir/out` 与 `dir/./out`、重复分隔符、
+`..` 段、Windows 大小写变体、指向同目录的符号链接、以及两条路径指向同一个已存在文件，都返回 `ARGUMENT`，既不写临时文件也不改动既有导出。
+
+重入：公开合同是“在创建它的工作线程调用、无重入”，而取消回调就在该线程内。从回调再次调用
+`reader_annotation_export_run` 属于重入：在检查任何路径、库或预算之前返回 `ARGUMENT`，**不清零调用方的 `stats`**，
+外层导出继续（或按回调自己的返回值正常取消），不会出现嵌套发布互相覆盖。
 
 ## 流式与内存
 
 按 `annotations_page`（升序 keyset，每页 100，每页一个读快照）取小行，不复制 wire；每个实体再按需
 `get` 单个修订。内存只有一页小行、一个实体的头列表和一个修订（≤1 MiB，JSON 转义后至多约 6 MiB），
-不持有整本书的标注。无安全唯一头的实体（待父、并发、阻止的隐式复活）用 `heads` 取全部头，逐个 `get`。
+不持有整本书的标注。无安全唯一头的实体（待父、并发、阻止的隐式复活）用 **一次** `heads` 取全部头与图，逐个 `get`。
+
+**单实体一个快照**：安全页行本身带着该页快照里的不可变头和同一张图，整段沿用；其余实体只调用一次 `heads`，
+并**按同一次返回的图**、用 `reader_projection.h` 的公开规则重新分类 `selection`，进而派生 `tombstone`、
+统计桶和 Markdown 状态。页读取与取头之间若有并发写者补齐父修订、显式合并、删除合并或显式恢复，导出的这条实体整条来自更晚的那一个快照，
+不会出现 `selection=concurrent` 却 `graph.projection_safe=true/heads=1`、或新 delete wire 配 `tombstone=false` 的混搭；
+头列表与 `graph.heads` 不一致时直接以 `REVISION` 拒绝。不同实体之间仍可能来自不同时刻。
 
 ## JSONL 格式（format_version 1）
 
@@ -63,10 +77,15 @@ Windows 用 `FlushFileBuffers`）后，POSIX `rename`、Windows `MoveFileExW(REP
 任何失败、取消或预算超限都删除临时文件，既有的有效导出保持不变。同时要两个输出时，两个临时文件都完整后才开始发布；
 若发布第二个时失败，第一个已发布，`stats.jsonl_published／markdown_published` 如实标出。
 取消回调在每页、每个实体、每个头和每次缓冲刷写时轮询。输出预算按字节精确计，超出返回 `LIMIT`。
+最终目标身份在临时文件创建之前判定，别名直接 `ARGUMENT`；从取消回调重入同一入口同样在创建任何东西之前被拒（见“接口”）。
 
 ## 限制
 
-- 导出看到的是各页快照和各实体取头时的状态；导出期间有写入时，不同实体可能来自不同时刻（单个实体内一致）。
+- 导出期间有写入时，不同实体可能来自不同时刻；**同一实体**的 selection／tombstone／graph／heads／统计／Markdown 来自同一个有效公开快照
+  （安全页行用该页快照，其余用同一次 `heads` 的图分类）。这一条由云端“第二进程窗口”验收，不是文档承诺。
+- 快照窗口用取消回调作为唯一阻塞点；模块与修订库都没有为它新增钩子。
+- 重入拒绝按线程判定；回调另起线程并使用另一个受测库不属于本合同的 no-reentry 范围，仍受修订库 owner 规则约束。
+- 路径身份只比较平台可给出的文件身份（卷/文件索引，或父目录 realpath＋末段名）；尚未存在、只能通过 reparse point 才等价的别名不做枚举。
 - 不核对书是否在书库、不解析 `FOUND`；偏移只是提示。
 - 原子性按单个文件；跨两个文件没有事务。目标须与临时文件在同一文件系统（同目录保证）。
 - Windows 超过 `MAX_PATH` 的路径取决于系统长路径设置；4096 字节是模块预算，不保证系统接受。
@@ -80,6 +99,12 @@ JSONL 由 Python `json` 和一个只依据上文编码规则手写的反转义�
 Markdown 由结构解析器读回并核对每个围栏内容、状态、位置字段，且证明围栏外没有可渲染标记；导出前后数据库转储和进度不变。
 覆盖：中文、emoji、组合字符、换行、引号、Markdown／HTML 样本、控制字符、非规范 wire（`\uXXXX` 代理对、空格、键序、`display_time`）、
 空导出、1234 条分页、anchor v1/v2、三种位置模式、冲突／墓碑／缺父／外来父／阻止复活、取消、预算边界、发布失败与写入失败。
+另外三类（本轮新增）：**单实体快照窗口**——四个窗口书各只有一条标注，导出在取消回调里阻塞于“页已读完、实体还没取头”的确定性握手上，
+由**第二进程**在同一产品库提交一条推进修订（父到达／显式合并／并发删除合并／显式恢复），再让导出继续；导出的 selection、tombstone、graph、heads、
+统计和 Markdown 必须全部来自那一个更晚的快照，且该头的 wire 逐字等于语料原字节。
+**路径别名**：点段、重复分隔符、`..` 段、Windows 大小写、POSIX 符号链接目录，全部在写临时文件之前被拒，既有导出不变、目标文件不产生；
+同目录两个真正不同的目标仍然正常发布（防过度拒绝）。
+**重入**：取消回调里嵌套调用同入口（含共享外层 stats、以及嵌套目标就是外层目标）一律被拒，外层照常完成或取消，不留临时文件。
 Windows 无 `RLIMIT_FSIZE`，其写入类失败由被占用目标的发布失败代表；POSIX 则用 `RLIMIT_FSIZE` 触发中途写失败。
 
 结果、工件和未授予的范围见 [validation/reader-annotation-export.json](validation/reader-annotation-export.json)；
@@ -87,14 +112,22 @@ Windows 无 `RLIMIT_FSIZE`，其写入类失败由被占用目标的发布失败
 
 ## 已验收结果
 
-受测源码 `d7ad100b67dca6d0cd0dae97262e5e1d419fd0b2` 的
-[run 40079793192](https://github.com/NoGod3524/EXReader/actions/runs/40079793192)（attempt 1）：
-Ubuntu 22.04、Windows 2022、macOS 15 三个消费者作业和严格汇总作业均成功。每个平台 19 项具名检查通过
-（写入失败项：Linux／macOS 为 `RLIMIT_FSIZE` 中途写失败，Windows 为被占用目标的发布失败，另一项在对应平台声明跳过）；
-语料 1332 份 wire，其中一本书 1234 条标注。10 个导出文件（JSONL 与 Markdown）的 SHA-256 在三个平台逐字相同。
+受测源码 `0b79307a41fc5152cf10f7c34e30573d2481aa08` 的
+[run 40085969696](https://github.com/NoGod3524/EXReader/actions/runs/40085969696)（attempt 1）：
+Ubuntu 22.04、Windows 2022、macOS 15 三个消费者作业和严格汇总作业均成功，每个平台 **25 项**具名检查通过
+（原 19 项含写入失败项：Linux／macOS 为 `RLIMIT_FSIZE` 中途写失败，Windows 为被占用目标的发布失败，另一项在对应平台声明跳过）。
+语料 1346 份 wire（批次 1342 ＋ 窗口推进 4），其中一本书 1234 条标注；18 个导出文件（10 个原有 ＋ 8 个窗口）的 SHA-256 在三个平台逐字相同。
 工件 ID、字节数、摘要、有效期和作业 ID 见 [validation/reader-annotation-export.json](validation/reader-annotation-export.json)。
 
-保留的两次原失败：`40078772023`（Windows MSVC C4310，在实现中修复）和 `40079424539`
-（严格汇总器错误地要求各平台检查名完全一致，修的是汇总器，实现字节未变）。失败工件未删改。
+保留的原失败与新增失败（均已修，断言未删、工件未删）：
+
+- `40078772023`：Windows MSVC C4310 常量截断，在实现中修复。
+- `40079424539`：严格汇总器错误地要求各平台检查名完全一致，修的是汇总器，实现字节未变。
+- `40083679976`（**修复前**，新回归先证明缺口）：三平台同时报出
+  `selection=pending_parents` 配 `graph{heads:1, projection_safe:true}`；点段别名一次导出同时报 `jsonl_published=1` 与 `markdown_published=1`（写进同一个文件）；
+  取消回调里的嵌套导出返回 OK 且 `jsonl_published=1`。
+- `40083884769`：实现已修，窗口检查拿“推进 wire”去比“头 wire”（父到达时头仍是原 child），测试修正。
+- `40085105713`：恢复窗口把保留修订数写成 5（实为 4），夹具修正。
+- `40085507969`：25 项全过，但 4 条推进修订使运行前的库基线失效；改为窗口段之后重新基线，未删除任何断言。
 
 未授予：宿主 UI、真机、读屏、性能、六端、导入与冲突解决。
