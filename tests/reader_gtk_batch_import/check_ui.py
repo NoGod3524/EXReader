@@ -36,10 +36,10 @@ def main():
     manifest = json.loads((source / 'manifest.json').read_text())
     expected = {row['sha256']: row['bytes'] for row in manifest['files'] if row['relative'].startswith('folder 书籍/') and row['relative'].endswith('.txt') and '/nested/' not in row['relative']}
 
-    def observed():
+    def observed(section='folder_import'):
         value = configparser.ConfigParser(interpolation=None)
         value.read(host.observe)
-        return dict(value['folder_import']) if value.has_section('folder_import') else {}
+        return dict(value[section]) if value.has_section(section) else {}
 
     def wait(predicate, seconds=35):
         end = time.monotonic() + seconds
@@ -77,6 +77,14 @@ def main():
 
     def launch():
         nonlocal app
+        end = time.monotonic() + 15
+        while time.monotonic() < end:
+            manager = subprocess.run(['wmctrl', '-m'], text=True, capture_output=True, timeout=2)
+            if manager.returncode == 0 and 'Name: Openbox' in manager.stdout:
+                break
+            time.sleep(.05)
+        else:
+            raise TimeoutError('Openbox fixture is not ready')
         host.launch()
         app = bus.wait_application('exreader-linux')
         host.wait(lambda value: not value['saving'])
@@ -93,12 +101,23 @@ def main():
             click_node(checkbox)
         native = command('xdotool', 'search', '--onlyvisible', '--name', '^Import folder$').splitlines()[-1]
         command('xdotool', 'windowactivate', '--sync', native)
+        def native_ready(predicate):
+            end = time.monotonic() + 15
+            while time.monotonic() < end:
+                if predicate(observed('native_import')):
+                    return
+                time.sleep(.02)
+            raise TimeoutError('folder chooser readiness: ' + repr(observed('native_import')))
+        native_ready(lambda value: value.get('active') == '1')
         host.key('ctrl+l')
         entries = [node for node in bus.walk(chooser) if bus.role(node) == 'text' and bus.states(node).get('showing') and bus.states(node).get('sensitive')]
         assert entries, 'native folder location entry missing'
         click_node(entries[0])
+        native_ready(lambda value: value.get('entry_focused') == '1')
         host.key('ctrl+a')
         host.paste(str(root))
+        digest = hashlib.sha256(str(root).encode()).hexdigest()
+        native_ready(lambda value: value.get('entry_sha256') == digest and value.get('selected_sha256') == digest and value.get('accept_sensitive') == '1')
         host.key('Return')
         # GTK may accept the selected folder immediately, or navigate into it.
         end = time.monotonic() + 10
