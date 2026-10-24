@@ -104,6 +104,19 @@ macOS ARM64/Linux各283检查、Windows282检查，覆盖HTTPS、修订、同步
 命令、恢复与账号会话。Apple使用系统随机源/CommonCrypto和系统libcurl/libxml2，
 SDK/schema不变。已正常合入工作候选；本包未授予iOS、Android同步或宿主账号UI，
 身份见[macOS原生同步](validation/reader-sync-apple.json)。
+正常合入macOS接入后的组合源码`867c8650`、run`40065943105`同源五作业严格通过，
+再次保留264搜索检查/34场景、全部原生套件及四格式原件/18阅读捕获的HTTPS往返。
+
+阅读设置F3原16组交付保留；root补回归后修复数值语法/有效数字、可空error状态及64 KiB
+上限，`1f51b406`、run`40067465230`三平台各20组、严格汇总四作业通过，已正常合入。
+Android WebDAV `7c27efec`、run`40066284731`同源三作业通过：API34 x86_64原生91组
+及真实重启4组，Linux77/Windows76与各12兼容检查；API26编译、Release扫描与包体增量
+单列在[验收记录](validation/reader-webdav-android.json)。已正常合入；尚未授予Android完整
+同步会话/SDK原件导出/宿主账号UI。上述两项在后续共同源码复验，不拼接旧结果。
+
+F4文件夹导入原`a85bbc5f`、run`40065922610`三平台668项交付已核实；root独立审查
+补出目录预算排队超界、父目录链接替换、并行计数及macOS复制修改观测缺口，原通过项保留，
+当前在独立审查分支修复并完整复验，未合入工作候选。
 
 Apple有界书架仍等完整云端出口。随后需把已验收包合到同一源码
 复验，并把已通过的原生原件/metadata/阅读状态WebDAV往返接入宿主的分批下载、
