@@ -8,7 +8,7 @@ from pathlib import Path
 import evidence
 import png
 import w32
-from host import CONTROLS, IDS
+from host import CONTROLS, IDS, TAB_ORDER
 
 
 class StepFailure(RuntimeError):
@@ -32,6 +32,8 @@ class Session(object):
         self.last_capture = None
         self.transport_probe = {}
         self.focus_recoveries = 0
+        self.focus_traps = 0
+        self.trap_evidence = []
 
     # -- identity -------------------------------------------------------------
     def refresh_names(self):
@@ -121,6 +123,43 @@ class Session(object):
                                            "count": self.focus_recoveries})
         return after
 
+    def next_tab_stop(self, after_name):
+        """The next enabled tab stop after *after_name*, in host creation order."""
+        order = [name for name in TAB_ORDER if self.host.control(name)]
+        if after_name not in order:
+            return None
+        for name in order[order.index(after_name) + 1:]:
+            hwnd = self.host.control(name)
+            if not hwnd:
+                continue
+            if not self.host.enabled(name):
+                continue
+            if not w32.user32.IsWindowVisible(hwnd):
+                continue
+            if not w32.has_style(hwnd, w32.WS_TABSTOP):
+                continue
+            return name
+        return None
+
+    def escape_trap(self, stalled):
+        """Resume at the next tab stop after a measured keyboard trap.
+
+        Tab and Shift+Tab both stay on *stalled*, which is the defect; the audit
+        still needs to reach the later controls, so it gives the next stop the
+        focus through its own thread attach and records that it did.
+        """
+        target = self.next_tab_stop(stalled)
+        hwnd = self.host.control(target) if target else 0
+        if not hwnd:
+            self.recover_focus("trap with no next stop after %r" % (stalled,))
+            return self.focus_name()
+        w32.attach_and_focus(self.host.hwnd, hwnd)
+        self.focus_traps += 1
+        self.trap_evidence.append({"stalled": stalled, "moved_to": target})
+        self.trace.event("focus_trap_escape", {"stalled": stalled, "moved_to": target,
+                                              "count": self.focus_traps})
+        return self.focus_name()
+
     def ensure_focus(self, reason):
         """Keep the audit able to send keys: recover only when focus is lost."""
         if self.focus_hwnd():
@@ -146,6 +185,9 @@ class Session(object):
             self.kb.press("tab", modifiers, note="retry after re-activating the host")
             after = self.focus_name()
             self.trace.event("focus_retry", {"before": before, "after": after})
+            if after == before:
+                self.trace.event("focus_trap", {"control": before, "backward": backward})
+                after = self.escape_trap(before)
         return after
 
     def goto(self, target, limit=64, note=None):

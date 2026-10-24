@@ -290,8 +290,19 @@ def has_style(hwnd, bit):
 
 
 def window_text(hwnd):
+    """Control text that also works across processes.
+
+    GetWindowText only answers for windows of the calling process; WM_GETTEXT is
+    marshalled by the system, so it is the reliable read for host controls.
+    """
     if not hwnd or not user32.IsWindow(hwnd):
         return ""
+    length = int(user32.SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0))
+    if 0 <= length <= 200000:
+        buffer = ctypes.create_unicode_buffer(length + 2)
+        user32.SendMessageW(hwnd, WM_GETTEXT, length + 1, ctypes.addressof(buffer))
+        if buffer.value or length == 0:
+            return buffer.value
     length = user32.GetWindowTextLengthW(hwnd)
     buffer = ctypes.create_unicode_buffer(length + 1)
     user32.GetWindowTextW(hwnd, buffer, length + 1)

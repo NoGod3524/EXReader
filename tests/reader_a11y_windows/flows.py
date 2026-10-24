@@ -854,15 +854,41 @@ def phase_details(s, r):
 
 def phase_keyboard(s, r):
     """Complete Tab order, reverse order, control coverage and UIA focus coherence."""
+    ok_note, note_stops = s.goto("note_edit")
+    forward = []
+    backward = []
+    if ok_note:
+        for _ in range(2):
+            s.kb.press("tab", note="probe for a keyboard trap")
+            forward.append(s.focus_name())
+        for _ in range(2):
+            s.kb.press("tab", ("shift",), note="probe the reverse direction of the trap")
+            backward.append(s.focus_name())
+    trapped = bool(forward) and all(name == "note_edit" for name in forward) and         all(name == "note_edit" for name in backward)
+    r.record(
+        "KB-07", "keyboard", "no control traps the Tab key",
+        "blocking", "pass" if ok_note and not trapped else "fail",
+        "Tab and Shift+Tab both leave the annotation comment field",
+        "focus reached the comment field=%s; after two Tabs=%r; after two Shift+Tabs=%r"
+        % (ok_note, forward, backward),
+        steps=["Tab to the annotation comment field", "press Tab twice", "press Shift+Tab twice",
+               "read the focused control after each press"],
+        element=s.element("note_edit"),
+        evidence={"forward": forward, "backward": backward, "stops": note_stops},
+        fix="return DLGC_WANTCHARS|DLGC_WANTARROWS without DLGC_WANTALLKEYS, or send Tab to the "
+            "dialog manager (IsDialogMessage) from the multiline edit so it does not insert a tab")
+    if ok_note:
+        s.escape_trap("note_edit")
+
     s.goto("import_edit")
     core, repeated = s.chain()
-    cycle_ok = bool(core) and repeated == core[0]
+    cycle_ok = bool(core) and repeated == core[0] and s.focus_traps == 0
     r.record(
         "KB-01", "keyboard", "Tab order is complete, ordered and closes into a cycle",
         "blocking", "pass" if cycle_ok and len(core) >= 10 else "fail",
         "repeated Tab visits every enabled stop once and returns to the first stop",
-        "stops=%d, repeated stop=%r, first stop=%r, order=%r"
-        % (len(core), repeated, core[0] if core else None, core),
+        "stops=%d, repeated stop=%r, first stop=%r, traps escaped=%d, order=%r"
+        % (len(core), repeated, core[0] if core else None, s.focus_traps, core),
         steps=["focus the first stop", "press Tab until a stop repeats"],
         element={"stops": core},
         evidence={"order": core, "repeated": repeated},
@@ -872,7 +898,7 @@ def phase_keyboard(s, r):
                if s.host.enabled(name) and name not in core]
     r.record(
         "KB-03", "keyboard", "every enabled command is reachable with Tab",
-        "blocking", "pass" if not missing else "fail",
+        "blocking", "pass" if not missing and len(core) >= 10 else "fail",
         "each enabled button appears in the Tab cycle, so no command needs a mouse",
         "enabled buttons missing from the cycle=%r (cycle length %d)" % (missing, len(core)),
         steps=["discover the Tab cycle", "compare it with the enabled command list"],
@@ -882,14 +908,14 @@ def phase_keyboard(s, r):
 
     reverse = []
     for _ in range(len(core)):
-        s.kb.press("tab", ("shift",), note="reverse Tab order")
-        reverse.append(s.focus_name())
+        reverse.append(s.tab_step(backward=True, note="reverse Tab order"))
     forward_reversed = list(reversed(core))
     r.record(
         "KB-02", "keyboard", "Shift+Tab reverses the same order",
-        "serious", "pass" if reverse == forward_reversed else "fail",
+        "serious", "pass" if reverse == forward_reversed and len(core) >= 10
+        and s.focus_traps == 0 else "fail",
         "Shift+Tab visits the same stops in exactly the reverse order",
-        "reverse=%r" % (reverse,),
+        "reverse=%r (forward order of %d stops)" % (reverse, len(core)),
         steps=["from the first stop press Shift+Tab once per stop"],
         element={"stops": reverse},
         evidence={"reverse": reverse, "forward_reversed": forward_reversed},

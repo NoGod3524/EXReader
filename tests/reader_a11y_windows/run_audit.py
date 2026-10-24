@@ -75,6 +75,8 @@ LIMITATIONS = [
     "Where the product drops keyboard focus entirely, the audit records that as KB-06 and then "
     "restores focus through its own thread attach (never a mouse) so the later flows can still be "
     "measured; every recovery is a focus_recovery event in the key trace.",
+    "Where a control traps Tab and Shift+Tab (KB-07), the audit records the trap and then resumes at "
+    "the next tab stop; every resume is a focus_trap_escape event in the key trace.",
 ]
 
 
@@ -226,6 +228,8 @@ def main():
                 audit_completed = False
 
         environment["focus_recoveries"] = session.focus_recoveries
+        environment["focus_traps"] = {"count": session.focus_traps,
+                                      "evidence": session.trap_evidence}
         static_checks(session, recorder, static)
     finally:
         close_info = {}
