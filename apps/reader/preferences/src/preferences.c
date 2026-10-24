@@ -7,11 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define RP_COLOR_LIGHT_FG 0x1au, 0x1au, 0x1au, 0xffu
-#define RP_COLOR_LIGHT_BG 0xffu, 0xffu, 0xffu, 0xffu
-#define RP_COLOR_DARK_FG 0xe6u, 0xe6u, 0xe6u, 0xffu
-#define RP_COLOR_DARK_BG 0x10u, 0x10u, 0x10u, 0xffu
-
 void rp_error_set(reader_preferences_error *error, reader_preferences_status status,
                   int system_error, size_t offset, const char *format, ...) {
   va_list args;
