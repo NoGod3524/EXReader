@@ -4,6 +4,13 @@
 
 ## 当前状态（2026-10-23）
 
+后续产品分包的 `reading-required` PR 入口只匹配目标默认分支 `codex/framework`；
+stacked feature PR 保留各自同源专项，以及未改动的 native/reading-core 通用检查，
+不再为每个堆叠层重复启动嵌套的十七作业。最终集成 PR、默认分支 push 和发布准备
+仍须实际通过完整十七作业、必需工件、source/run/attempt 和冻结预算严格汇总。
+规则25700819、发布者15368、无 bypass 及所有校验代码均不改变。旧分支要有序纳入
+该事件配置后才适用；已有运行不自动取消，专项结果不能替代默认或发布门禁。
+
 源码`fa540271ea8ad2d9af4cd31467699db2e50c640a`的[run39902467216](https://github.com/NoGod3524/EXReader/actions/runs/39902467216)
 已17/17作业成功，最终`reading-required`严格`accepted=true`、`problems=[]`。
 三平台六份SDK候选、固定八份真实语料、40进程/12参考页及冻结预算同次通过；
