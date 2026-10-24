@@ -6,6 +6,8 @@
 
 首轮源码 `44bd6d2b` 的 [run 40094753066](https://github.com/NoGod3524/EXReader/actions/runs/40094753066) 完成安装包/依赖审计、原 18/17+2/DAV 与原 16 项，新增搜索在测试种子的偏移 8 处被 SDK 拒绝，因为该 TXT 以中文开头。`85f3add0` 修正为边界 0，并保留原 Debug Rebuild 控件；新组尚未授予。失败及原件保留。
 
+第二轮 `85f3add0` / run `40095203666` 的原有回归与正式 16 项仍通过，新增 provider 项通过；搜索弹窗遮挡底层窗口后，测试无法从窗口列表取得真实 ReaderView 帧而失败。探针增加同一个存活 Activity 上真实 View 的主线程 accessibility extras 读取，保留原像素/页面/存储不变断言。搜索与独立 FOUND 解析同时改为复制当前阅读字号，并以先调到 28 再搜索的有界 EPUB 场景覆盖。
+
 ## 使用与行为
 
 启用 `-PexrSearch=true` 并提供已安装的 `exrSearchPrefix`。当前验证构建同时保留 `exrSync=true` 和原账号/接收功能。阅读页低频“更多”菜单提供“书内搜索”；没有增加常驻搜索栏。Debug 保留原 Rebuild 按钮、ID 与动作；启用搜索的 Release 隐藏该调试按钮，“更多”占用原位置。
@@ -15,6 +17,8 @@
 搜索、批次继续、取消与关闭只读源文件和 SDK。它们不改变当前页、SDK notes/progress、产品 history/outbox。只有用户明确选择结果、宿主用独立公开 SDK 对象重新解析为 FOUND 后才通过原 `runPage` 导航。MISSING/AMBIGUOUS/LEGACY 保留列表和原页，不用旧偏移、页提示或百分比兜底。EPUB 的 spine index 与 part path 一起保留；固定页按 page ID 找真实页面，不猜测页号。
 
 TXT 使用公开 document；有界 EPUB 使用 publication/font 和逐 spine 的公开 pager；PDF 逐页文字搜索。无文字 PDF 返回正常空结果，不做 OCR。CBZ 明确不支持文字搜索，不把拒绝伪装成空结果。
+
+搜索创建和独立 FOUND 解析使用发起时的当前阅读字号，沿用宿主原有页面尺寸、页边距与字体；不硬编码为初始 24。
 
 ## 所有权与包依赖
 

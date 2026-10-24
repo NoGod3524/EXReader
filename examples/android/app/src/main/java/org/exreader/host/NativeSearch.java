@@ -58,14 +58,14 @@ final class NativeSearch implements AutoCloseable {
     private final Thread owner=Thread.currentThread();
     final long bookId;final String key;
     private long handle;
-    NativeSearch(BookStore store,long bookId,String query,byte[] font,HostTask task,Control control)throws Exception {
+    NativeSearch(BookStore store,long bookId,String query,byte[] font,float size,HostTask task,Control control)throws Exception {
         store.searchOwner();validate(query);
         NativeLibrary.Book book=store.find(bookId);if(book==null)throw new IllegalStateException("书籍已不可用");
         if(book.format==NativeLibrary.FORMAT_CBZ)throw new Failure(UNSUPPORTED,0);
         BookStore.VerifiedSource source=store.verifySource(bookId,null,0,task);
         this.bookId=bookId;key=source.key+"|exreader-sdk-"+nativeVersion();
         int mode=book.fixed()?FIXED:source.location.equals("epub_chapter")?EPUB:REFLOW;
-        handle=nativeOpen(store.nativeLibrary().checked(),bookId,mode,key,query,font,control);
+        handle=nativeOpen(store.nativeLibrary().checked(),bookId,mode,key,query,font,size,control);
         if(handle==0)throw new IllegalStateException("搜索暂不可用");
     }
     static void validate(String query){
@@ -75,19 +75,19 @@ final class NativeSearch implements AutoCloseable {
     }
     private void owned(){if(Thread.currentThread()!=owner)throw new IllegalStateException("Search requires its SDK owner");if(handle==0)throw new IllegalStateException("Search is closed");}
     Batch next(Control control){owned();return nativeNext(handle,32,control);}
-    static Match resolve(BookStore store,long book,Hit hit,byte[] font,HostTask task)throws Exception {
+    static Match resolve(BookStore store,long book,Hit hit,byte[] font,float size,HostTask task)throws Exception {
         store.searchOwner();
         BookStore.VerifiedSource source=store.verifySource(book,null,0,task);
         String expected=source.key+"|exreader-sdk-"+nativeVersion();
         if(!expected.equals(hit.key))throw new IllegalStateException("书籍已改变，请重新搜索");
         int mode=source.book.fixed()?FIXED:source.location.equals("epub_chapter")?EPUB:REFLOW;
         if(source.book.format==NativeLibrary.FORMAT_CBZ||mode!=hit.mode)throw new IllegalStateException("搜索来源不匹配");
-        return new Match(nativeResolve(store.nativeLibrary().checked(),book,hit.mode,hit.unit,hit.start,hit.end,hit.route(),hit.bytes(),font,task));
+        return new Match(nativeResolve(store.nativeLibrary().checked(),book,hit.mode,hit.unit,hit.start,hit.end,hit.route(),hit.bytes(),font,size,task));
     }
     @Override public void close(){if(handle==0)return;owned();nativeClose(handle);handle=0;}
     private static native String nativeVersion();
-    private static native long nativeOpen(long library,long book,int mode,String key,String query,byte[] font,Control control);
+    private static native long nativeOpen(long library,long book,int mode,String key,String query,byte[] font,float size,Control control);
     private static native Batch nativeNext(long handle,int limit,Control control);
     private static native void nativeClose(long handle);
-    private static native long[] nativeResolve(long library,long book,int mode,long unit,long start,long end,String[] route,byte[][] selectors,byte[] font,HostTask task);
+    private static native long[] nativeResolve(long library,long book,int mode,long unit,long start,long end,String[] route,byte[][] selectors,byte[] font,float size,HostTask task);
 }
