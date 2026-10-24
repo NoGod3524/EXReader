@@ -79,6 +79,12 @@ std::string book(const std::string &s) {
   return format;
 }
 bool kind(const std::string &s){return s=="book"||s=="shelf"||s=="tag"||s=="series"||s=="membership"||s=="progress"||s=="annotation";}
+void entity_identity(const std::string &type,const std::string &key){
+  if(type=="book"||type=="progress")book(key);
+  else if(type=="shelf"||type=="tag"||type=="series")identifier(key);
+  else if(type=="annotation"){size_t colon=key.rfind(':');if(colon==std::string::npos)reject(READER_REV_FORMAT,"Invalid annotation identity");book(key.substr(0,colon));identifier(key.substr(colon+1));}
+  else {size_t first=key.find(':'),second=key.find(':',first==std::string::npos?0:first+1);if(first==std::string::npos||second==std::string::npos)reject(READER_REV_FORMAT,"Invalid membership identity");std::string group=key.substr(0,first);if(group!="shelf"&&group!="tag"&&group!="series")reject(READER_REV_FORMAT,"Invalid membership kind");identifier(key.substr(first+1,second-first-1));book(key.substr(second+1));}
+}
 struct value {std::string key,type,atom;std::vector<size_t> children;size_t depth=0;};
 struct json {
   std::vector<value> nodes;
@@ -174,10 +180,7 @@ revision parse(sqlite3 *db,const std::string &wire,const char *expected) {
   if(j.at(parents).children.size()>READER_REVISION_MAX_PARENTS)reject(READER_REV_LIMIT,"Parent set limit exceeded");
   std::set<std::string> seen;
   for(size_t p:j.at(parents).children){std::string id=j.string(p,32);identifier(id);if(id==r.id)reject(READER_REV_CYCLE,"A revision cannot parent itself");if(!seen.insert(id).second)reject(READER_REV_FORMAT,"Duplicate parent ID");r.parents.push_back(id);}
-  if(r.kind=="book"||r.kind=="progress")book(r.key);
-  else if(r.kind=="shelf"||r.kind=="tag"||r.kind=="series")identifier(r.key);
-  else if(r.kind=="annotation") {size_t colon=r.key.rfind(':');if(colon==std::string::npos)reject(READER_REV_FORMAT,"Invalid annotation identity");book(r.key.substr(0,colon));identifier(r.key.substr(colon+1));}
-  else {size_t first=r.key.find(':'),second=r.key.find(':',first==std::string::npos?0:first+1);if(first==std::string::npos||second==std::string::npos)reject(READER_REV_FORMAT,"Invalid membership identity");std::string group=r.key.substr(0,first);if(group!="shelf"&&group!="tag"&&group!="series")reject(READER_REV_FORMAT,"Invalid membership kind");identifier(r.key.substr(first+1,second-first-1));book(r.key.substr(second+1));}
+  entity_identity(r.kind,r.key);
   if(reading){std::string key=r.kind=="progress"?r.key:r.key.substr(0,r.key.rfind(':'));std::string format=book(key);if((r.location=="fixed_page")!=(format=="pdf"||format=="cbz")||(r.location=="epub_chapter"&&format!="epub"))reject(READER_REV_FORMAT,"Envelope location and book format disagree");}
   if(r.kind=="book"||r.kind=="progress")r.book_key=r.key;
   else if(r.kind=="annotation")r.book_key=r.key.substr(0,r.key.rfind(':'));
@@ -304,6 +307,10 @@ reader_selection_kind selection_kind(const graph &g){
   if(g.state.missing_parents||g.state.foreign_parents)return READER_SELECTION_PENDING_PARENTS;
   if(g.state.heads>1)return READER_SELECTION_CONCURRENT;
   return g.state.projection_safe?READER_SELECTION_SAFE:READER_SELECTION_BLOCKED_RESTORE;
+}
+void selected_payload(reader_revisions *store,const char *type,const std::string &key,reader_revision_selection &selection,reader_revision_info &out,std::string &body){
+  graph current(store->db,type,key);selection.graph=current.state;selection.kind=selection_kind(current);
+  if(selection.kind==READER_SELECTION_SAFE){revision r=retained(store,safe_head(current),&body);info(r,&out);}
 }
 bool product_exists(sqlite3 *db,const std::string &table,const std::string &column,const std::string &key,bool active=false){
   std::string sql="SELECT 1 FROM "+table+" WHERE "+column+"=?1"+(active?" AND deleted=0":"");statement q(db,sql.c_str());q.bind(1,key);return q.next()==SQLITE_ROW;
@@ -483,13 +490,41 @@ extern "C" reader_revision_status reader_revision_annotations_page(reader_revisi
     }
     for(const std::string &key:keys){
       std::string id=key.substr(prefix.size());identifier(id);
-      graph current(store->db,"annotation",key);reader_revision_annotation_row row{};
-      row.annotation_id=id.c_str();row.selection.graph=current.state;row.selection.kind=selection_kind(current);
-      std::string body;
-      if(row.selection.kind==READER_SELECTION_SAFE){revision r=retained(store,safe_head(current),&body);info(r,&row.info);row.wire=body.c_str();}
+      reader_revision_annotation_row row{};row.annotation_id=id.c_str();std::string body;
+      selected_payload(store,"annotation",key,row.selection,row.info,body);
+      if(row.selection.kind==READER_SELECTION_SAFE)row.wire=body.c_str();
       if(visit(context,&row))break;
     }
     tx.commit();
+  });
+}
+extern "C" reader_revision_status reader_revision_entities_page(reader_revisions *store,const char *type,const char *after_key,int direction,size_t limit,reader_revision_entity_fn visit,void *context,reader_revision_error *error){
+  return call(error,[&]{guard owner(store);
+    if(!type||!kind(type)||!visit||!limit||limit>100||(direction!=1&&direction!=-1))reject(READER_REV_ARGUMENT,"Entity page requires kind, callback, direction and limit 1..100");
+    if(after_key)entity_identity(type,after_key);
+    transaction tx(store->db,"BEGIN");std::vector<std::string> keys;
+    {
+      statement q(store->db,direction==1?
+        "SELECT DISTINCT entity_key FROM reader_revisions WHERE entity_kind=?1 AND entity_key>?2 ORDER BY entity_key LIMIT ?3":
+        "SELECT DISTINCT entity_key FROM reader_revisions WHERE entity_kind=?1 AND entity_key<?2 ORDER BY entity_key DESC LIMIT ?3");
+      q.bind(1,type);q.bind(2,after_key?after_key:direction==1?"":"\x7f");check(sqlite3_bind_int(q.s,3,(int)limit));
+      while(q.next()==SQLITE_ROW)keys.push_back(text(q.s,0));
+    }
+    for(const auto &key:keys){reader_revision_entity_row row{};row.entity_key=key.c_str();std::string body;
+      selected_payload(store,type,key,row.selection,row.info,body);
+      if(row.selection.kind==READER_SELECTION_SAFE)row.wire=body.c_str();
+      if(visit(context,&row))break;
+    }
+    tx.commit();
+  });
+}
+extern "C" reader_revision_status reader_revision_book_title(reader_revisions *store,const char *id,char **title,reader_revision_error *error){
+  if(title)*title=nullptr;
+  return call(error,[&]{guard owner(store);if(!id||!title)reject(READER_REV_ARGUMENT,"Book title requires retained revision and output");
+    std::string body;revision r=retained(store,id,&body);
+    if(r.kind!="book"||r.operation=="delete")reject(READER_REV_ARGUMENT,"Book title requires a non-delete book revision");
+    json j(store->db,body);std::string value=j.string(j.field(j.field(0,"payload"),"title"));
+    char *copy=(char *)std::malloc(value.size()+1);if(!copy)throw std::bad_alloc();std::memcpy(copy,value.c_str(),value.size()+1);*title=copy;
   });
 }
 extern "C" reader_revision_status reader_revision_outbox(reader_revisions *store,size_t limit,reader_revision_outbox_fn visit,void *context,reader_revision_error *error){return call(error,[&]{

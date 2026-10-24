@@ -57,6 +57,29 @@ typedef int (*reader_revision_annotation_fn)(void *,const reader_revision_annota
 reader_revision_status reader_revision_annotations_page(reader_revisions *,const char *book_key,
   const char *after_id,int direction,size_t limit,reader_revision_annotation_fn,void *,
   reader_revision_error *);
+
+typedef struct {
+  const char *entity_key; /* Borrowed typed global key; cursor within entity_kind. */
+  reader_revision_selection selection;
+  reader_revision_info info; /* Zero unless SAFE, including a safe tombstone. */
+  const char *wire; /* Exact original bytes only for SAFE. */
+} reader_revision_entity_row;
+typedef int (*reader_revision_entity_fn)(void *,const reader_revision_entity_row *);
+/* Enumerate one explicit kind in one read snapshot. after_key NULL starts at
+   either end; direction +/-1, limit 1..100. Includes unresolved/deleted entities
+   so the host can report conflicts or schedule safe metadata projection.
+   Copy callback data before applying: reentry is refused. Nonzero stops. On
+   error discard the page. Uses schema1's index; no writes/SDK work/OFFSET.
+   A later project call still checks its expected safe head transactionally. */
+reader_revision_status reader_revision_entities_page(reader_revisions *,const char *entity_kind,
+  const char *after_key,int direction,size_t limit,reader_revision_entity_fn,void *,
+  reader_revision_error *);
+/* Copy the exact title from one retained non-delete book revision for the
+   host's existing NFC sort conversion. Does not select a head or normalize.
+   project(expected_head) remains the authority before writing metadata.
+   Release the output with reader_revision_bytes_free; failure leaves NULL. */
+reader_revision_status reader_revision_book_title(reader_revisions *,const char *revision_id,
+  char **title,reader_revision_error *);
 #ifdef __cplusplus
 }
 #endif
