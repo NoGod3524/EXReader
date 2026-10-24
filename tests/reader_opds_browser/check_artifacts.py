@@ -65,7 +65,9 @@ def main():
             with zipfile.ZipFile(io.BytesIO(data)) as archive:
                 report = json.loads(archive.read('opds-evidence/result.json'))
                 names = [n for n in archive.namelist()
-                         if n.startswith('opds-consumer/') and not n.endswith('/')]
+                         if n.startswith('opds-consumer/') and not n.endswith('/') and
+                         Path(n).name in ('opds-consumer', 'opds-consumer.exe',
+                                          'opds-import-consumer', 'opds-import-consumer.exe')]
                 require(len(names) == 2, 'consumer binaries missing from ' + name)
                 embedded = {}
                 for entry in names:
