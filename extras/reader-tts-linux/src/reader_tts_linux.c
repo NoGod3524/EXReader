@@ -379,9 +379,17 @@ static int utf8_ok(const unsigned char *s, size_t n) {
   return 1;
 }
 
-/* Relative rate 0.5..2.0 -> Speech Dispatcher -100..100, piecewise linear. */
+/* Relative rate 0.5..2.0 -> Speech Dispatcher's percentage offset.
+   Speech Dispatcher's rate is "percent slower/faster than the module default":
+   0 leaves it unchanged and +100 asks for twice the speed, so a relative rate r
+   maps to round(100 * (r - 1)): 0.5 -> -50, 1.0 -> 0, 2.0 -> +100.
+   -100 is never sent: it asks the module for zero speed, and the daemon then
+   cancels the message before it starts (measured on speech-dispatcher 0.11.1
+   with espeak-ng: SPEAK at -100 produced an immediate CANCEL, no BEGIN). */
 static int map_rate(double r) {
-  double v = r <= 1.0 ? (r - 1.0) * 200.0 : (r - 1.0) * 100.0;
+  double v = (r - 1.0) * 100.0;
+  if (v > 100.0) v = 100.0;
+  if (v < -99.0) v = -99.0;
   return (int)(v < 0 ? v - 0.5 : v + 0.5);
 }
 

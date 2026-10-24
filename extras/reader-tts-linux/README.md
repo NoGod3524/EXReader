@@ -52,7 +52,7 @@ a platform code and never text. Summary of the parts a host must respect:
 | topic | behaviour |
 | --- | --- |
 | input | `speak` takes strict UTF-8, no NUL, 1 .. `max_utf8_bytes` (default and ceiling 16 KiB); text is copied, never borrowed; longer text is split by the host into new request ids |
-| rate | finite 0.5 .. 2.0, mapped piecewise-linearly to Speech Dispatcher -100 .. 100 (`0.5 -> -100`, `1.0 -> 0`, `2.0 -> 100`); a relative setting, not a duration ratio |
+| rate | finite 0.5 .. 2.0, mapped linearly to Speech Dispatcher's percentage rate offset `round(100 * (rate - 1))` (`0.5 -> -50`, `1.0 -> 0`, `2.0 -> +100`); -100 is never sent because the daemon cancels a zero-speed message; a relative setting, not a duration ratio |
 | voice | `NULL`/`""` = daemon default; an id the daemon does not list is `ARGUMENT`; after a named voice the next default request reconnects (libspeechd has no "restore default") |
 | requests | one active request; a second `speak` is `BUSY` and never interrupts; ids are remembered for the last `READER_TTS_ID_MEMORY` (256) requests |
 | events | bounded queue (`READER_TTS_EVENT_CAPACITY` = 128), one `STARTED` and exactly one of `FINISHED`/`STOPPED`/`FAILED` per started request; `RANGE` is never emitted (`CAN_REPORT_RANGE` unset, no UTF-16 progress is faked) |

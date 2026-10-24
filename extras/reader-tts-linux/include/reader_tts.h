@@ -130,9 +130,12 @@ void reader_tts_voice_list_free(reader_tts_voice_list *);
    bytes long, strict UTF-8, free of NUL, 1..max_utf8_bytes; the library copies
    it and never borrows the caller's buffer. voice_id NULL or "" selects the
    daemon's current default; an id the daemon does not list is ARGUMENT. rate is
-   finite in 0.5..2.0 and maps piecewise-linearly onto Speech Dispatcher's
-   -100..100 relative rate (0.5 -> -100, 1.0 -> 0, 2.0 -> 100); it is a relative
-   speaking-rate setting, not an exact duration ratio. One request may be active
+   finite in 0.5..2.0 and maps linearly onto Speech Dispatcher's percentage rate
+   offset, which is "percent slower or faster than the module default":
+   round(100 * (rate - 1)), i.e. 0.5 -> -50, 1.0 -> 0, 2.0 -> +100. -100 is
+   never sent because that asks the module for zero speed and the daemon cancels
+   the message instead of speaking it. A rate is a relative setting, not an exact
+   duration ratio. One request may be active
    at a time: a second speak returns BUSY and does not interrupt. The text is one
    chunk; longer text is split by the host into requests with new ids. */
 reader_tts_status reader_tts_speak(reader_tts *, uint64_t request_id,

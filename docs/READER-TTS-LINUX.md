@@ -67,8 +67,11 @@ build. Root owns host wiring; this package only proves the module.
 * **Capabilities.** `CAN_PAUSE` is reported (the backend implements it);
   `CAN_REPORT_RANGE` is never reported because Speech Dispatcher only reports
   message-level events and no UTF-16 progress is invented.
-* **Rate.** 0.5 .. 2.0 mapped piecewise-linearly to -100 .. 100. Relative, not a
-  duration ratio; no exact timing is claimed.
+* **Rate.** 0.5 .. 2.0 mapped linearly to Speech Dispatcher's percentage rate
+  offset `round(100 * (rate - 1))` (0.5 -> -50, 1.0 -> 0, 2.0 -> +100). -100 is
+  never sent: on speech-dispatcher 0.11.1 with espeak-ng it asks for zero speed
+  and the daemon answers SPEAK with an immediate CANCEL instead of a message.
+  Relative, not a duration ratio; no exact timing is claimed.
 
 ## 3. Reproduction (Actions only)
 
