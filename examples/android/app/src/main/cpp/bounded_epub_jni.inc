@@ -33,6 +33,15 @@ static exr_control host_task_control(JNIEnv *env,jobject task,host_control *cont
   if(type) (*env)->DeleteLocalRef(env,type);
   control.cancelled=host_cancelled; control.context=context; return control;
 }
+#if defined(READER_HOST_SEARCH) || defined(READER_HOST_NAVIGATION) || defined(READER_HOST_READING)
+static exr_status host_font_bytes(JNIEnv *env,jbyteArray input,exr_font **font,exr_error *error) {
+  jsize length=input?(*env)->GetArrayLength(env,input):0;jbyte *bytes;exr_font_input value={0};exr_status status;
+  if(length<=0||length>64*1024*1024)return EXR_ARGUMENT;
+  bytes=(*env)->GetByteArrayElements(env,input,NULL);if(!bytes)return EXR_MEMORY;
+  value.data=bytes;value.size=(size_t)length;status=exr_font_create(&value,1,font,error);
+  (*env)->ReleaseByteArrayElements(env,input,bytes,JNI_ABORT);return status;
+}
+#endif
 static int bounded_mode(JNIEnv *env,exr_library *store,int64_t book) {
   exr_library_epub_info info={sizeof(info),0,0}; exr_error error={0};
   exr_status status=exr_library_epub_info_get(store,book,&info,&error);

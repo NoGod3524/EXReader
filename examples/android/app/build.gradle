@@ -9,6 +9,7 @@ def exrSearch = project.findProperty('exrSearch') == 'true'
 def exrSearchPrefix = project.findProperty('exrSearchPrefix') ?: "${rootProject.projectDir}/../../stage/android-search"
 def exrNavigation = project.findProperty('exrNavigation') == 'true'
 def exrNavigationPrefix = project.findProperty('exrNavigationPrefix') ?: "${rootProject.projectDir}/../../stage/android-navigation"
+def exrReading = project.findProperty('exrReading') == 'true'
 def exrDav = project.findProperty('exrDav') ?: "${rootProject.projectDir}/../../stage/android-dav"
 def exrSideload = project.findProperty('exrSideload') ?: "${rootProject.projectDir}/../../stage/android-sideload"
 
@@ -27,6 +28,7 @@ android {
         buildConfigField 'boolean', 'READER_SYNC', exrSync.toString()
         buildConfigField 'boolean', 'READER_SEARCH', exrSearch.toString()
         buildConfigField 'boolean', 'READER_NAVIGATION', exrNavigation.toString()
+        buildConfigField 'boolean', 'READER_READING', exrReading.toString()
         testInstrumentationRunner (project.findProperty('exrTestRunner') ?: 'org.exreader.host.CatalogStoreTest')
         ndk {
             abiFilters 'x86_64'
@@ -37,6 +39,7 @@ android {
                 arguments "-DEXR_HOST_SYNC=${exrSync ? 'ON' : 'OFF'}", "-DEXR_DAV=${exrDav}", "-DEXR_SIDELOAD=${exrSideload}"
                 arguments "-DEXR_HOST_SEARCH=${exrSearch ? 'ON' : 'OFF'}", "-DEXR_SEARCH_PREFIX=${exrSearchPrefix}"
                 arguments "-DEXR_HOST_NAVIGATION=${exrNavigation ? 'ON' : 'OFF'}", "-DEXR_NAVIGATION_PREFIX=${exrNavigationPrefix}"
+                arguments "-DEXR_HOST_READING=${exrReading ? 'ON' : 'OFF'}"
             }
         }
     }
@@ -83,6 +86,12 @@ android {
                 manifest.srcFile '../../../tests/reader_host_session_android/AndroidManifest.xml'
                 java.srcDir '../../../tests/reader_host_session_android/java'
             }
+        }
+    }
+    if(exrReading) {
+        sourceSets {
+            debug { java.srcDir '../../../tests/reader_android_reading/debug/java' }
+            androidTest { java.srcDir '../../../tests/reader_android_reading/java' }
         }
     }
     if(exrNavigation) {

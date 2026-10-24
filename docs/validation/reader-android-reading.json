@@ -1,0 +1,17 @@
+{
+  "accepted": false,
+  "scope": "Android explicit product reading commands and annotation snapshots with real SDK capture, independent FOUND navigation, delete/restore and lifecycle",
+  "fixed_base": "d68d8e388730f0fbd9e86c70a422388be406391d",
+  "fixed_modules_source": "ba25961961ae69222bfed4f7a98cb02bb1dc6847",
+  "reading_commands_tree": "cf067b8be378d4195817d1106b81f358579e2280",
+  "annotation_view_tree": "9d30b6c54f61496010f647695dedd7ea7ab0c7c1",
+  "unchanged_reading_state_tree": "60127ae75fbac918237b1c8584e0f7ac2e6130a4",
+  "source_sha": null,
+  "runs": [],
+  "all_execution_on_actions": true,
+  "sdk_product_stores_separate": true,
+  "performance_accepted": false,
+  "physical_device": false,
+  "talkback_speech_accepted": false,
+  "complete_product": false
+}

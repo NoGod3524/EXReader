@@ -37,11 +37,7 @@ static void search_free(JNIEnv *env,host_search *search) {
   free(search);
 }
 static exr_status search_font(JNIEnv *env,jbyteArray input,exr_font **font,exr_error *error) {
-  jsize length=input?(*env)->GetArrayLength(env,input):0;jbyte *bytes;exr_font_input value={0};exr_status status;
-  if(length<=0||length>64*1024*1024)return EXR_ARGUMENT;
-  bytes=(*env)->GetByteArrayElements(env,input,NULL);if(!bytes)return EXR_MEMORY;
-  value.data=bytes;value.size=(size_t)length;status=exr_font_create(&value,1,font,error);
-  (*env)->ReleaseByteArrayElements(env,input,bytes,JNI_ABORT);return status;
+  return host_font_bytes(env,input,font,error);
 }
 static exr_control search_control(JNIEnv *env,host_search *search,jobject value) {
   jobject next=value?(*env)->NewGlobalRef(env,value):NULL;exr_control empty={0};
