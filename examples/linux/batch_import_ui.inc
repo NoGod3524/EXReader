@@ -20,10 +20,10 @@ static void folder_message(void) {
   if(!folder.dialog) return;
   char *message=g_strdup_printf("%"G_GUINT64_FORMAT" checked · %"G_GUINT64_FORMAT" added · %"G_GUINT64_FORMAT" exact duplicates · %"G_GUINT64_FORMAT" failed\n%s%s",
     folder.attempted,folder.imported,folder.duplicates,folder.failed,
-    folder.pending ? "Saved locally; catalog mappings pending. Reopen the library to retry.":
-    folder.done ? (folder.cancelled ? "Cancelled; committed books kept.":folder.truncated ? "Scan truncated by a limit or unreadable entry; some files omitted.":folder.complete ? "Scan completed.":"Import stopped; scan did not complete."):
+    folder.pending ? "Books saved; bookshelf update pending. Reopen the library to retry.":
+    folder.done ? (folder.cancelled ? "Cancelled; committed books kept.":folder.truncated ? "Scan stopped at a limit or unreadable folder; some files omitted.":folder.complete ? "Scan completed.":"Import stopped; scan did not complete."):
     g_atomic_int_get(&folder.control.cancelled) ? "Cancelling; committed books are kept…":"Importing; total unknown until scan ends…",
-    "\nShowing only the latest group (at most 32 files). Links and unsupported files are omitted; no skipped-file count is available.");
+    "\nOnly the latest 32 results are shown. Links and unsupported files are omitted.");
   gtk_label_set_text(GTK_LABEL(folder.message),message);g_free(message);
   gtk_widget_set_sensitive(folder.cancel,!folder.done && !g_atomic_int_get(&folder.control.cancelled));
   gtk_button_set_label(GTK_BUTTON(folder.close),folder.done ? "Close":"Stop and close");
@@ -98,7 +98,7 @@ static gboolean folder_apply(host_result *done) {
       const reader_batch_receipt *row=&result->batch_rows[i];
       const char *outcome=row->committed ? (row->created ? "Added":"Exact duplicate"):
         row->status==READER_BATCH_ITEM_CANCELLED ? "Cancelled":"Failed";
-      char *title=g_strdup_printf("%s · %s%s%s%s",row->path,outcome,row->committed ? row->mapped ? " · Catalog mapped":" · Catalog pending":"",
+      char *title=g_strdup_printf("%s · %s%s%s%s",row->path,outcome,row->committed ? row->mapped ? "":" · Bookshelf update pending":"",
         row->message[0] ? " · ":"",row->message);
       GtkWidget *label_row=gtk_label_new(title);gtk_label_set_xalign(GTK_LABEL(label_row),0);
       gtk_label_set_line_wrap(GTK_LABEL(label_row),TRUE);gtk_list_box_insert(GTK_LIST_BOX(folder.list),label_row,-1);g_free(title);
