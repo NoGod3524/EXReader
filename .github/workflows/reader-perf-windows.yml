@@ -1,0 +1,167 @@
+name: Reader Windows product performance observation
+
+on:
+  push:
+    branches: [codex/reader-perf-windows]
+    paths:
+      - 'tests/reader_perf_windows/**'
+      - '.github/workflows/reader-perf-windows.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: reader-perf-windows-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PERF_START_SHA: f43baf9182d75907c0cb5d6f77048f27bca8c950
+  SDK_SHA: 9854061be331fe603a1822d9b2b36ee357154927
+  PRODUCT_SQL_SHA: f32bb8aa18ed3de286900f19ce4230fd93435dd0
+  PYTHONIOENCODING: utf-8
+  PYTHONUTF8: '1'
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  windows-product-performance:
+    name: Windows product performance observation
+    runs-on: windows-2022
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Require the fixed start, untouched protected trees and this package's files only
+        run: |
+          mkdir -p build/perf-gate
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$PERF_START_SHA" HEAD
+          git diff --exit-code "$SDK_SHA" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code "$PRODUCT_SQL_SHA" HEAD -- apps/reader/store/001_catalog.sql
+          git rev-parse HEAD | tee build/perf-gate/head.txt
+          git log --oneline "$PERF_START_SHA"..HEAD | tee build/perf-gate/commits.txt
+          git diff --name-only "$PERF_START_SHA" HEAD | tee build/perf-gate/paths.txt
+          python - <<'PY'
+          from pathlib import Path
+          allowed = ('tests/reader_perf_windows/',
+                     '.github/workflows/reader-perf-windows.yml',
+                     'docs/READER-PERF-WINDOWS.md',
+                     'docs/validation/reader-perf-windows.json')
+          paths = [line.strip() for line in Path('build/perf-gate/paths.txt').read_text().splitlines() if line.strip()]
+          outside = [path for path in paths if not any(path == item or path.startswith(item) for item in allowed)]
+          if outside:
+              raise SystemExit('changes outside this package whitelist: ' + ', '.join(outside))
+          print('whitelisted paths: %d' % len(paths))
+          PY
+
+      - name: Enter the native Windows compiler environment
+        shell: pwsh
+        run: |
+          $programFiles = [Environment]::GetEnvironmentVariable('ProgramFiles(x86)')
+          $vswhere = Join-Path $programFiles 'Microsoft Visual Studio\Installer\vswhere.exe'
+          $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          $script = Join-Path $env:RUNNER_TEMP 'exreader-vcvars.bat'
+          Set-Content -LiteralPath $script -Encoding ascii -Value @('@echo off', ('call "' + $bat + '" >nul'), 'set')
+          & cmd.exe /c $script | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Parse and self-check the measurement, gate and artifact recorder
+        run: |
+          python -m py_compile tests/reader_perf_windows/perf_windows.py tests/reader_perf_windows/verify_perf_windows.py tests/reader_perf_windows/record_artifact.py
+          python tests/reader_perf_windows/perf_windows.py --self-check | tee build/perf-gate/self-check.log
+
+      - name: Build the installed reading SDK and the product catalog stack
+        run: |
+          ws=$(cygpath -m "$PWD")
+          echo "PERF_WORKSPACE=$ws" >> "$GITHUB_ENV"
+          prefix="$ws/build/desktop-product-stage"
+          echo "DESKTOP_PRODUCT_PREFIX=$prefix" >> "$GITHUB_ENV"
+          cmake -S apps/reader/store/native -B build/desktop-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee build/perf-gate/store-configure.log
+          cmake --build build/desktop-product --parallel 4 2>&1 | tee build/perf-gate/store-build.log
+          cmake --install build/desktop-product 2>&1 | tee build/perf-gate/store-install.log
+          cmake -S apps/reader/revisions -B build/desktop-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee build/perf-gate/revisions.log
+          cmake --build build/desktop-revisions --parallel 4 2>&1 | tee -a build/perf-gate/revisions.log
+          cmake --install build/desktop-revisions 2>&1 | tee -a build/perf-gate/revisions.log
+          cmake -S apps/reader/commands -B build/desktop-commands -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee build/perf-gate/commands.log
+          cmake --build build/desktop-commands --parallel 4 2>&1 | tee -a build/perf-gate/commands.log
+          cmake --install build/desktop-commands 2>&1 | tee -a build/perf-gate/commands.log
+          cmake -S apps/reader/desktop-metadata -B build/desktop-metadata -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee build/perf-gate/metadata.log
+          cmake --build build/desktop-metadata --parallel 4 2>&1 | tee -a build/perf-gate/metadata.log
+          cmake --install build/desktop-metadata 2>&1 | tee -a build/perf-gate/metadata.log
+          cmake --preset reading-library 2>&1 | tee build/perf-gate/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/perf-gate/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/perf-gate/sdk-install.log
+
+      - name: Compile the real Windows product host against the installed public SDK
+        run: |
+          ws="$PERF_WORKSPACE"
+          cmake -S apps/reader/desktop -B build/desktop-sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$ws/build/reading-library/stage" -DREADER_METADATA_PREFIX="$DESKTOP_PRODUCT_PREFIX" -DEXR_READER_FIXTURES="$ws/tests/fixtures" -DEXR_READER_WINDOWS_SHELF_TESTS=ON 2>&1 | tee build/perf-gate/host-configure.log
+          cmake --build build/desktop-sdk --parallel 4 2>&1 | tee build/perf-gate/host-build.log
+          ctest --test-dir build/desktop-sdk --output-on-failure --no-tests=error --timeout 180 --output-junit "$ws/build/perf-gate/host-tests.xml" 2>&1 | tee build/perf-gate/host-tests.log
+
+      - name: Package the actual product host and check its original self-test
+        run: |
+          python tools/build_windows_host.py --sdk build/reading-library/stage --binary build/desktop-sdk/EXReaderProduct.exe --output build/desktop-windows-package --static-reading 2>&1 | tee build/perf-gate/package.log
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          manifest = json.loads(Path('build/desktop-windows-package/build.json').read_text())
+          exe = Path('build/desktop-windows-package/EXReader/EXReader.exe')
+          assert manifest['passed'] is True and manifest['selftest_checks'] >= 26
+          assert manifest['files']['EXReader.exe'] == exe.stat().st_size
+          print(json.dumps({'selftest_checks': manifest['selftest_checks'],
+                            'sdk_version': manifest['sdk_version'],
+                            'linkage': manifest.get('linkage'),
+                            'exe_bytes': exe.stat().st_size,
+                            'exe_sha256': hashlib.sha256(exe.read_bytes()).hexdigest()}))
+          PY
+
+      - name: Observe the actual product host with real native controls
+        run: |
+          python tests/reader_perf_windows/perf_windows.py --package build/desktop-windows-package/EXReader --seed build/desktop-sdk/reader-windows-shelf-seed.exe --output build/perf-windows --cohorts cold_shelf,warm_shelf,reading,import --launches-per-cohort 12 2>&1 | tee build/perf-gate/measurement.log
+
+      - name: Require complete same-source performance evidence
+        if: always()
+        run: |
+          python tests/reader_perf_windows/verify_perf_windows.py --summary build/perf-windows/summary.json --package build/desktop-windows-package/EXReader --start "$PERF_START_SHA" --launches 30 --per-cohort 10 2>&1 | tee build/perf-gate/verify.log
+
+      - name: Upload the observation and its raw samples
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-perf-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/perf-windows/
+            build/perf-gate/
+            build/desktop-windows-package/build.json
+            build/desktop-windows-package/report.json
+            build/desktop-sdk/windows-host.map
+          if-no-files-found: error
+
+      - name: Record the uploaded artifact identity
+        if: always()
+        run: |
+          name="reader-perf-windows-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          curl -sS -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" -o build/artifacts.json
+          python tests/reader_perf_windows/record_artifact.py --artifacts build/artifacts.json --name "$name" --output build/artifact-identity/artifact-identity.json 2>&1 | tee build/artifact-identity.log
+
+      - name: Upload the artifact identity record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-perf-windows-identity-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/artifact-identity/
+            build/artifact-identity.log
+          if-no-files-found: warn
