@@ -302,7 +302,7 @@ public final class FileEntryStagingArea {
     static func hash(file path: String) -> String? {
         let descriptor = open(path, O_RDONLY | O_CLOEXEC)
         if descriptor < 0 { return nil }
-        defer { close(descriptor) }
+        defer { Darwin.close(descriptor) }
         var hasher = SHA256()
         let size = FileEntryLimits.copyChunkBytes
         let buffer = UnsafeMutableRawPointer.allocate(byteCount: size, alignment: 16)
@@ -351,7 +351,7 @@ public final class FileEntryStagingArea {
         // O_NONBLOCK keeps a FIFO from blocking open(); the kind check follows.
         let input = open(source.path, O_RDONLY | O_CLOEXEC | O_NONBLOCK)
         if input < 0 { return .failure(Self.fail("open-source")) }
-        defer { close(input) }
+        defer { Darwin.close(input) }
         var before = stat()
         if fstat(input, &before) != 0 { return .failure(Self.fail("stat-source")) }
         if (before.st_mode & 0o170000) != 0o100000 { return .failure(.notRegularFile) }
@@ -369,7 +369,7 @@ public final class FileEntryStagingArea {
         var outputOpen = true
         var keep = false
         defer {
-            if outputOpen { close(output) }
+            if outputOpen { Darwin.close(output) }
             if !keep { unlink(temp) }
         }
 
@@ -402,7 +402,7 @@ public final class FileEntryStagingArea {
             return .failure(.changedDuringCopy)
         }
         Self.sync(output)
-        if close(output) != 0 { outputOpen = false; return .failure(Self.fail("close-staged")) }
+        if Darwin.close(output) != 0 { outputOpen = false; return .failure(Self.fail("close-staged")) }
         outputOpen = false
 
         let digest = Self.hex(hasher.finalize())
@@ -427,7 +427,7 @@ public final class FileEntryStagingArea {
             return Self.writeAll(manifestOut, base, raw.count)
         }
         Self.sync(manifestOut)
-        close(manifestOut)
+        Darwin.close(manifestOut)
         if !wrote || rename(manifestTemp, manifestPath(id)) != 0 {
             let error = Self.fail("publish-manifest")
             unlink(manifestTemp)
@@ -437,7 +437,7 @@ public final class FileEntryStagingArea {
         let folder = open(directory.path, O_RDONLY | O_CLOEXEC)
         if folder >= 0 {
             Self.sync(folder)
-            close(folder)
+            Darwin.close(folder)
         }
         committed = true
         return .success(FileEntryRequest(id: id, stagedPath: dataFinal, displayName: displayName, byteCount: size,
