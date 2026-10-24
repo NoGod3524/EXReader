@@ -20,6 +20,7 @@ REQUIRED = ['ctrl-f-opens-native-search', 'initial-focus-is-named-query',
             'results-expose-selection-items', 'completed-next-and-cancel-disabled',
             'all-actions-have-native-accessible-names', 'tab-reaches-every-enabled-action',
             'shift-tab-returns-to-previous-control', 'uia-select-and-invoke-locate',
+            'focus-remains-in-search-after-locate',
             'escape-closes-and-returns-reading-focus', 'reopen-clears-transient-query',
             'empty-enter-refuses-query', 'real-escape-cancels-live-query',
             'second-escape-closes-after-cancel', 'keyboard-does-not-write-notes-or-history']
@@ -106,6 +107,10 @@ def main():
         element(U.GetDlgItem(d, OPEN)).GetInvokePattern().Invoke()
         app.wait(lambda: '已独立核对' in text(U.GetDlgItem(d, MESSAGE)));app.wait_idle()
         record('uia-select-and-invoke-locate', send(U.GetDlgItem(d, HITS), 0x188) == 2)
+        report['focus_after_locate'] = A.focus_of(app.process.pid)
+        report['foreground_after_locate'] = A.USER32.GetForegroundWindow()
+        record('focus-remains-in-search-after-locate', bool(report['focus_after_locate']) and
+               U.IsChild(d, report['focus_after_locate']) and U.IsWindowEnabled(report['focus_after_locate']))
         M.screenshot(d, out / 'search-accessible.bmp')
         phase = 'escape';A.tap(A.VK_ESCAPE);app.wait(lambda: not U.IsWindow(d))
         app.wait(lambda: A.focus_of(app.process.pid) == app.control('page'))
@@ -130,6 +135,9 @@ def main():
         report['accepted'] = True
     except Exception as e:
         problems.append(phase + ': ' + type(e).__name__ + ': ' + str(e));traceback.print_exc()
+        if app and app.process.poll() is None:
+            report['failure_focus'] = A.focus_of(app.process.pid)
+            report['failure_foreground'] = A.USER32.GetForegroundWindow()
     finally:
         if app:
             app.close()

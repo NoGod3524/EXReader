@@ -188,12 +188,21 @@ static exr_status winsearch_job(host_job *job) {
 }
 static void winsearch_controls(void) {
   if(!inbook.dialog) return;
+  HWND focused=GetFocus();
   int busy=inbook.running || g.job || g.pending || g.closing;
   EnableWindow(inbook.find,!busy);
   EnableWindow(inbook.next,!busy && inbook.have_cursor && !inbook.batch.complete);
   LRESULT selected=SendMessageW(inbook.rows,LB_GETCURSEL,0,0);
   EnableWindow(inbook.open,!busy && selected!=LB_ERR && (size_t)selected<inbook.batch.count);
   EnableWindow(inbook.cancel,inbook.running);
+  /* Disabling an invoked button can clear native keyboard focus. Keep Escape
+     and Tab available while the worker runs and after it publishes a result. */
+  if(focused && IsChild(inbook.dialog,focused) && !IsWindowEnabled(focused) &&
+     GetActiveWindow()==inbook.dialog) {
+    HWND current=GetFocus();
+    if(!current || current==focused || !IsWindowEnabled(current))
+      SetFocus(inbook.running ? inbook.cancel:inbook.query);
+  }
 }
 static void winsearch_cancel(void) {
   if(g.job && (g.job->kind==JOB_SEARCH_BATCH || g.job->kind==JOB_SEARCH_OPEN))
