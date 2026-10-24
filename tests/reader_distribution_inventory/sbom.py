@@ -45,6 +45,20 @@ LICENSES = {
     'pdfjs-data': ('Apache-2.0', 'Apache-2.0'),
     'pdf-calculator-names': ('LicenseRef-Adobe-Permission-Notice', 'LicenseRef-Adobe-Permission-Notice'),
     'noto-test-fonts': ('OFL-1.1', 'OFL-1.1'),
+    # First-party optional application packages: the same MIT grant as the SDK.
+    'catalog': ('MIT', 'MIT'),
+    'revisions': ('MIT', 'MIT'),
+    'commands': ('MIT', 'MIT'),
+    'desktop-metadata': ('MIT', 'MIT'),
+    'webdav': ('MIT', 'MIT'),
+    'session': ('MIT', 'MIT'),
+    'sync': ('MIT', 'MIT'),
+    'credentials': ('MIT', 'MIT'),
+    'reading-state': ('MIT', 'MIT'),
+    'search': ('MIT', 'MIT'),
+    'preferences': ('MIT', 'MIT'),
+    'batch-import': ('MIT', 'MIT'),
+    'sideload': ('MIT', 'MIT'),
 }
 DATA_ONLY = ('unicode', 'argyll-cmyk', 'adobe-glyph-list', 'pdfjs-data', 'pdf-calculator-names',
              'noto-test-fonts')
