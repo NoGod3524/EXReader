@@ -134,6 +134,20 @@ final class HostShelf: ObservableObject {
     }
 
     func observe(_ positions: [String: CGRect], size: CGSize, revision: Int) {
+#if EXR_APPLE_SHELF_REVIEW
+        if let awaitingLayoutKey {
+            var trace: [String: Any] = ["incoming_epoch": revision, "expected_epoch": geometryRevision,
+                "issued_revision": issuedRestoreRevision, "needs_scroll": needsScroll,
+                "frame_count": positions.count, "width": Double(size.width), "height": Double(size.height),
+                "target_key": awaitingLayoutKey]
+            if let frame = positions[awaitingLayoutKey] {
+                trace["target_frame"] = ["min_y": Double(frame.minY), "max_y": Double(frame.maxY),
+                    "width": Double(frame.width), "height": Double(frame.height)]
+            }
+            if let data = try? JSONSerialization.data(withJSONObject: trace, options: [.sortedKeys]),
+               let value = String(data: data, encoding: .utf8) { print("SHELF RAW GEOMETRY \(value)") }
+        }
+#endif
         guard size.height > 0, revision == geometryRevision else { return }
         if viewportSize != .zero && viewportSize != size {
             viewportSize = size; restoreViewport(); return
@@ -204,6 +218,9 @@ final class HostShelf: ObservableObject {
     func didScroll(revision: Int) {
         guard revision == restoreRevision, issuedRestoreRevision != revision else { return }
         issuedRestoreRevision = revision
+#if EXR_APPLE_SHELF_REVIEW
+        print("SHELF SCROLL ISSUED revision=\(revision) epoch=\(geometryRevision)")
+#endif
         viewportRevision += 1
     }
     func choose(_ book: HostShelfBook) { selected = book.id; defaults.set(book.id, forKey: "EXRShelfSelected"); save() }
