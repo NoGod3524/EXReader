@@ -145,7 +145,7 @@ public final class ReaderView extends View {
                 .put("anchor_sha256",pointHash==null?org.json.JSONObject.NULL:pointHash)
                 .put("anchor_kind",page.bounded?"bounded_point":page.fixed?"fixed_page":"source_offset")
                 .put("font",page.fixed?org.json.JSONObject.NULL:page.layoutFont).put("zoom",page.layoutZoom)
-                .put("line_spacing",page.layoutLine).put("paragraph_spacing",page.layoutParagraph).put("margin",page.layoutMargin).put("preferences_point",page.preferencesPoint)
+                .put("line_spacing",page.layoutLine).put("paragraph_spacing",page.layoutParagraph).put("margin",page.layoutMargin).put("preferences_point",page.preferencesPoint).put("preferences_range_end",page.preferencesRangeEnd)
                 .put("render_scale",page.renderScale).put("bitmap_width",page.bitmap.getWidth()).put("bitmap_height",page.bitmap.getHeight())
                 .put("glyph_font_first",page.glyphSize==null || page.glyphSize.length==0?org.json.JSONObject.NULL:page.glyphSize[0]);
             if(page!=null)state.put("actual_line_count",page.lineBounds==null?0:page.lineBounds.length)

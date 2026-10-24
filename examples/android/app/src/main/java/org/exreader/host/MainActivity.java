@@ -1658,9 +1658,20 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                     ReadingControl control=new ReadingControl(task,null,"preferences-location",false);
                     ReadingCapture point=NativeReadingSdk.capture(store,frame,frame.start,frame.start,fontBytes(),fontSize,path==null?null:new File(path),task,control);
                     NativeReadingSdk.Match resolved=NativeReadingSdk.resolve(store,book,point,fontBytes(),value.font,task,control);
+                    if(!resolved.found()&&resolved.state==NativeReadingSdk.AMBIGUOUS){
+                        // A repeated legacy chapter can make an empty page-start
+                        // point ambiguous. Capture a genuine visible range; it
+                        // must independently resolve uniquely at the same start.
+                        long limit=Math.min(frame.end,frame.start+65536L),end=frame.start;
+                        if(frame.end<=limit)end=frame.end;else for(long boundary:frame.ends)if(boundary>end&&boundary<=limit)end=boundary;
+                        if(end>frame.start){
+                            point=NativeReadingSdk.capture(store,frame,frame.start,end,fontBytes(),fontSize,path==null?null:new File(path),task,control);
+                            resolved=NativeReadingSdk.resolve(store,book,point,fontBytes(),value.font,task,control);
+                        }
+                    }
                     if(!resolved.found())throw new IOException("当前位置未精确定位，设置未保存");
                     candidate=frame.bounded?new ReflowSession(store,book,fontBytes(),value):new ReflowSession(book,path,fontBytes(),value);
-                    load=candidate.seekReading(resolved,task);if(load!=null)load.snapshot.preferencesPoint=resolved.start;
+                    load=candidate.seekReading(resolved,task);if(load!=null){load.snapshot.preferencesPoint=resolved.start;load.snapshot.preferencesRangeEnd=resolved.end;}
                 }
                 if(load==null)throw new IOException("没有可显示页面，设置未保存");
                 load.snapshot.sourceKey=frame.sourceKey;
