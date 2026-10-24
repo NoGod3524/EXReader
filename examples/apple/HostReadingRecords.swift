@@ -223,7 +223,7 @@ enum HostReadingWorker {
         try id.withCString { try hostCheck(exr_fixed_anchor_create($0, text.handle, start, end, &raw, &error), error) }
         defer { exr_fixed_anchor_free(&raw) }
         try cancel.check()
-        return HostReadingCapture(mode: 3, part: 0, path: "", page: page, anchor: nil, fixed: try HostSearchFixedAnchor(raw))
+        return HostReadingCapture(mode: 3, part: 0, path: "", page: page, anchor: nil, fixed: try HostSearchFixedAnchor(raw, maximumBytes: 65536))
     }
 
     static func decoded(_ wire: Data, history: OpaquePointer) throws -> (capture: HostReadingCapture, version: UInt64, book: String, body: String) {
@@ -240,7 +240,7 @@ enum HostReadingWorker {
             var raw = exr_fixed_anchor(); raw.start = Int(record.start); raw.end = Int(record.end)
             raw.page_id = record.page_id; raw.exact = record.exact; raw.prefix = record.prefix; raw.suffix = record.suffix
             raw.exact_size = record.exact_size; raw.prefix_size = record.prefix_size; raw.suffix_size = record.suffix_size
-            capture = HostReadingCapture(mode: 3, part: 0, path: "", page: Int(record.page), anchor: nil, fixed: try HostSearchFixedAnchor(raw))
+            capture = HostReadingCapture(mode: 3, part: 0, path: "", page: Int(record.page), anchor: nil, fixed: try HostSearchFixedAnchor(raw, maximumBytes: 65536))
         } else {
             var raw = exr_anchor(); raw.start = Int(record.start); raw.end = Int(record.end)
             raw.exact = record.exact; raw.prefix = record.prefix; raw.suffix = record.suffix; raw.chapter = record.chapter

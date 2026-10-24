@@ -1219,6 +1219,8 @@ final class HostReaderModel: ObservableObject {
     var shelfDefaults: UserDefaults { defaults }
 
     func closeAccountSession() {
+        activeCancel?.cancel()
+        readingRecords.bind(nil)
         syncCancel?.cancel()
         accountSession?.close()
     }
