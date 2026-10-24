@@ -428,7 +428,7 @@ int drive(const std::string& self, const std::string& mode, const fs::path& work
   long long points = 0, boundaries = 0, n = 0;
   bool finished = false;
   std::string bad;
-  for (n = 1; n <= 4096 && bad.empty(); ++n) {
+  for (n = 0; n <= 4096 && bad.empty(); ++n) {
     const fs::path rep = work / ("point-" + std::to_string(n) + ".txt");
     std::error_code ec;
     fs::remove(rep, ec);
@@ -447,7 +447,7 @@ int drive(const std::string& self, const std::string& mode, const fs::path& work
       std::string line;
       while (std::getline(in, line)) text += line + "\n";
     }
-    if (text.rfind("NOFAIL", 0) == 0) {
+    if (text.rfind("NOFAIL", 0) == 0 && code == 0) {
       finished = true;
       break;
     }
@@ -518,13 +518,14 @@ int main(int argc, char** argv) {
   fs::path repo;
   fs::path report_path;
   long long point = 0;
+  bool point_requested = false;
   for (int i = 1; i + 1 < argc; i += 2) {
     const std::string k = argv[i];
     if (k == "--mode") mode = argv[i + 1];
     else if (k == "--work") work = argv[i + 1];
     else if (k == "--fixtures") fixtures = argv[i + 1];
     else if (k == "--repo-fixtures") repo = argv[i + 1];
-    else if (k == "--n") point = std::atoll(argv[i + 1]);
+    else if (k == "--n") { point = std::atoll(argv[i + 1]); point_requested = true; }
     else if (k == "--report") report_path = argv[i + 1];
   }
   if (mode.empty() || work.empty() || fixtures.empty()) fatal("usage: --mode open|store|library --work DIR --fixtures DIR [--n K --report FILE]");
@@ -542,7 +543,7 @@ int main(int argc, char** argv) {
     g_report = std::fopen(report_path.u8string().c_str(), "wb");
     if (!g_report) fatal("cannot open the report file");
   }
-  if (point > 0) {
+  if (point_requested) {
     g_step = mode.c_str();
     g_last_n = point;
     if (mode == "open") return point_open(work, point);
