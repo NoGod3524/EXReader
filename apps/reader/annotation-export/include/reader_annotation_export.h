@@ -21,13 +21,26 @@ extern "C" {
    Sources: reader_revision_annotations_page (keyset, 100 per page, one read
    snapshot per page), reader_revision_heads / reader_revision_get for every
    entity without one safe head, and reader_rs_decode for the Markdown text.
-   The module never writes the product catalog, the revision store, the SDK
-   library, notes or reading progress, resolves no anchor, opens no book, uses no
-   network and never interprets HTML. It does not import and does not resolve
+   One entity is always described by one valid public snapshot: a safe page row
+   keeps its own immutable head and page graph, and any other entity is read once
+   through reader_revision_heads, with selection, tombstone, graph, head list,
+   statistics and Markdown all classified from that same returned graph by the
+   public rule of reader_projection.h. A writer that completes a parent, merges,
+   deletes or restores between the page and the heads read therefore cannot
+   produce a mixed record. Different entities may still come from different
+   moments. The module never writes the product catalog, the revision store, the
+   SDK library, notes or reading progress, resolves no anchor, opens no book, uses
+   no network and never interprets HTML. It does not import and does not resolve
    conflicts: every concurrent head is exported as it is.
 
    Streaming: only one page of 100 small rows, one entity's head list and one
    revision at a time are in memory, never a whole book's annotations.
+
+   Outputs: jsonl_path and markdown_path must resolve to distinct final targets.
+   An alias of one target (dot segments, repeated separators, parent segments, a
+   case-folded Windows path, a symlinked directory, or an existing file reached
+   twice) is refused with ARGUMENT before any temporary file exists, so two
+   outputs can never be published over each other.
 
    JSONL (UTF-8, LF, one JSON object per line; see docs/READER-ANNOTATION-EXPORT.md):
    a header line, one "annotation" line per global annotation ID in ascending
@@ -52,7 +65,10 @@ extern "C" {
    READER_ANNOTATION_EXPORT_LIMIT) and each path to 4096 UTF-8 bytes.
 
    Calls follow the owner rules of the borrowed reader_revisions handle: run from
-   the creating worker, without reentry. The cancel callback runs on that thread. */
+   the creating worker, without reentry. The cancel callback runs on that thread,
+   so a call from that callback is a reentry: it is refused with ARGUMENT and a
+   fixed message before any path, store or budget is examined, the caller's stats
+   is left untouched, and the outer run continues unchanged. */
 typedef enum {
   READER_ANNOTATION_EXPORT_OK=0,
   READER_ANNOTATION_EXPORT_ARGUMENT,   /* bad options, identity, path or title */
@@ -94,8 +110,9 @@ typedef struct {
   int jsonl_published, markdown_published;
 } reader_annotation_export_stats;
 
-/* Run one export. stats and error may be NULL; stats is zeroed first and is only
-   meaningful for outputs reported published. */
+/* Run one export. stats and error may be NULL; stats is zeroed first (a refused
+   reentrant call leaves it untouched) and is only meaningful for outputs reported
+   published. */
 reader_annotation_export_status reader_annotation_export_run(const reader_annotation_export_options *,
   reader_annotation_export_stats *,reader_annotation_export_error *);
 #ifdef __cplusplus

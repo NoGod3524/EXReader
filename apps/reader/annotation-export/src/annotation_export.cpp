@@ -16,6 +16,7 @@
 #else
 #include <errno.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #endif
 
@@ -25,6 +26,14 @@ struct failure {export_status code;int revision_code,rs_code,os_error;std::strin
 [[noreturn]] void fail(export_status code,const std::string &message,int revision_code=0,int rs_code=0,int os_error=0){
   throw failure{code,revision_code,rs_code,os_error,message};
 }
+/* One export per thread. The public header documents no reentry and the cancel
+   callback runs on this same thread, so a nested call is always a reentry. */
+thread_local unsigned export_depth=0;
+struct export_guard {
+  bool owner;
+  export_guard():owner(export_depth==0){if(owner)++export_depth;}
+  ~export_guard(){if(owner)--export_depth;}
+};
 int last_os_error(){
 #ifdef _WIN32
   return (int)GetLastError();
@@ -75,6 +84,82 @@ std::wstring wide(const std::string &s){
   std::wstring w((size_t)n,L'\0');
   MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,s.data(),(int)s.size(),&w[0],n);
   return w;
+}
+#endif
+
+/* ---- final output target identity ----
+   Two outputs that resolve to one final file would be published over each other:
+   the second atomic rename would silently replace the first while both report
+   published. This check runs before any temporary file exists and uses only the
+   platform's own file identity, so no alias form can reach the publication. */
+#ifdef _WIN32
+std::wstring absolute_path(const std::string &s){
+  std::wstring w=wide(s);
+  DWORD size=GetFullPathNameW(w.c_str(),0,nullptr,nullptr);
+  if(!size)return w;
+  std::wstring out((size_t)size,L'\0');
+  DWORD got=GetFullPathNameW(w.c_str(),size,&out[0],nullptr);
+  if(!got)return w;
+  out.resize(got);
+  /* Win32 ignores trailing dots and spaces of the final component. */
+  size_t end=out.size();
+  size_t slash=out.find_last_of(L"\\/");
+  size_t floor=slash==std::wstring::npos?0:slash+1;
+  while(end>floor&&(out[end-1]==L'.'||out[end-1]==L' '))--end;
+  out.resize(end);
+  return out;
+}
+bool same_target(const char *a,const char *b){
+  HANDLE x=CreateFileW(wide(a).c_str(),0,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,nullptr,
+                       OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS,nullptr);
+  HANDLE y=CreateFileW(wide(b).c_str(),0,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,nullptr,
+                       OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS,nullptr);
+  if(x!=INVALID_HANDLE_VALUE&&y!=INVALID_HANDLE_VALUE){
+    BY_HANDLE_FILE_INFORMATION first{},second{};
+    bool known=GetFileInformationByHandle(x,&first)&&GetFileInformationByHandle(y,&second);
+    CloseHandle(x);CloseHandle(y);
+    if(known)return first.dwVolumeSerialNumber==second.dwVolumeSerialNumber&&
+      first.nFileIndexHigh==second.nFileIndexHigh&&first.nFileIndexLow==second.nFileIndexLow;
+  }else{
+    if(x!=INVALID_HANDLE_VALUE)CloseHandle(x);
+    if(y!=INVALID_HANDLE_VALUE)CloseHandle(y);
+  }
+  std::wstring first=absolute_path(a),second=absolute_path(b);
+  return CompareStringOrdinal(first.c_str(),(int)first.size(),second.c_str(),(int)second.size(),TRUE)==CSTR_EQUAL;
+}
+#else
+std::string collapsed_path(const std::string &path){
+  std::vector<std::string> parts;
+  bool absolute=!path.empty()&&path[0]=='/';
+  size_t at=0;
+  while(at<=path.size()){
+    size_t end=path.find('/',at);if(end==std::string::npos)end=path.size();
+    std::string part=path.substr(at,end-at);
+    if(part==".."){if(!parts.empty()&&parts.back()!="..")parts.pop_back();else if(!absolute)parts.push_back("..");}
+    else if(!part.empty()&&part!=".")parts.push_back(part);
+    at=end+1;
+  }
+  std::string out=absolute?"/":"";
+  for(size_t k=0;k<parts.size();k++){if(k)out.push_back('/');out+=parts[k];}
+  return out;
+}
+std::string resolved_target(const char *path){
+  std::string text(path);
+  size_t cut=text.find_last_of('/');
+  std::string directory=cut==std::string::npos?std::string("."):cut==0?std::string("/"):text.substr(0,cut);
+  std::string leaf=cut==std::string::npos?text:text.substr(cut+1);
+  char *real=::realpath(directory.c_str(),nullptr);
+  if(!real)return collapsed_path(text);
+  std::string out(real);
+  ::free(real);
+  if(out!="/")out.push_back('/');
+  return out+leaf;
+}
+bool same_target(const char *a,const char *b){
+  struct stat first{},second{};
+  if(::stat(a,&first)==0&&::stat(b,&second)==0)
+    return first.st_dev==second.st_dev&&first.st_ino==second.st_ino;
+  return resolved_target(a)==resolved_target(b);
 }
 #endif
 
@@ -255,6 +340,16 @@ void md_fence(std::string &out,const char *p,size_t n){
 const char *mode_name(reader_rs_mode mode){
   return mode==READER_RS_REFLOW_GLOBAL?"reflow_global":mode==READER_RS_EPUB_CHAPTER?"epub_chapter":mode==READER_RS_FIXED_PAGE?"fixed_page":"unknown";
 }
+/* The public classification of one revision graph, exactly as
+   reader_projection.h and the page rows report it. Applying it to the graph that
+   came back from the same heads call is what keeps selection, tombstone, graph,
+   statistics and Markdown on one snapshot. */
+reader_selection_kind select_kind(const reader_revision_state &graph){
+  if(!graph.heads)return READER_SELECTION_MISSING;
+  if(graph.missing_parents||graph.foreign_parents)return READER_SELECTION_PENDING_PARENTS;
+  if(graph.heads>1)return READER_SELECTION_CONCURRENT;
+  return graph.projection_safe?READER_SELECTION_SAFE:READER_SELECTION_BLOCKED_RESTORE;
+}
 const char *selection_name(reader_selection_kind kind){
   switch(kind){
     case READER_SELECTION_SAFE:return "safe";
@@ -366,20 +461,31 @@ class exporter {
   void entity(const row_copy &row){
     const std::string key=book_+":"+row.id;
     std::vector<head_ref> heads;reader_revision_state graph{};
-    if(row.selection.kind==READER_SELECTION_SAFE){
+    reader_selection_kind kind=row.selection.kind;
+    if(kind==READER_SELECTION_SAFE){
+      /* A safe page row already carries its immutable head together with the
+         graph of that same page snapshot; nothing can change them later. */
       heads.push_back(head_ref{row.info.revision_id,row.info.operation,row.info.sha256});
       graph=row.selection.graph;
     }else{
+      /* One heads snapshot is the only source for this entity: its head list and
+         graph are read once, and selection/tombstone/statistics/Markdown are all
+         derived from that same graph instead of the earlier page row. A writer
+         that completes a parent, merges, deletes or restores between the page and
+         this read therefore cannot produce a mixed description. */
       head_collector collected;reader_revision_error e{};
       reader_revision_status s=reader_revision_heads(revisions_,"annotation",key.c_str(),collect_head,&collected,&graph,&e);
       if(collected.failed)fail(READER_ANNOTATION_EXPORT_MEMORY,"Out of memory while reading heads");
       if(s!=READER_REV_OK)fail(READER_ANNOTATION_EXPORT_REVISION,e.message,(int)s,0,e.sqlite_code);
       heads.swap(collected.heads);
       std::sort(heads.begin(),heads.end(),[](const head_ref &a,const head_ref &b){return a.id<b.id;});
+      kind=select_kind(graph);
     }
-    bool tombstone=row.selection.kind==READER_SELECTION_SAFE&&heads.size()==1&&heads[0].operation=="delete";
+    if((size_t)graph.heads!=heads.size())
+      fail(READER_ANNOTATION_EXPORT_REVISION,"The retained head list differs from its revision graph");
+    bool tombstone=kind==READER_SELECTION_SAFE&&heads.size()==1&&heads[0].operation=="delete";
     stats_.annotations++;
-    switch(row.selection.kind){
+    switch(kind){
       case READER_SELECTION_SAFE:if(tombstone)stats_.tombstones++;else stats_.current++;break;
       case READER_SELECTION_CONCURRENT:stats_.concurrent++;break;
       case READER_SELECTION_BLOCKED_RESTORE:stats_.blocked_restore++;break;
@@ -389,14 +495,14 @@ class exporter {
     if(json_){
       std::string line="{\"type\":\"annotation\",\"annotation_id\":";
       json_string(line,row.id);line+=",\"entity_key\":";json_string(line,key);
-      line+=std::string(",\"selection\":\"")+selection_name(row.selection.kind)+"\",\"tombstone\":"+(tombstone?"true":"false");
+      line+=std::string(",\"selection\":\"")+selection_name(kind)+"\",\"tombstone\":"+(tombstone?"true":"false");
       line+=",\"graph\":{\"revisions\":"+std::to_string(graph.revisions)+",\"heads\":"+std::to_string(graph.heads)+
         ",\"missing_parents\":"+std::to_string(graph.missing_parents)+",\"foreign_parents\":"+std::to_string(graph.foreign_parents)+
         ",\"projection_safe\":"+(graph.projection_safe?"true":"false")+",\"deleted\":"+(graph.deleted?"true":"false")+
         ",\"requires_restore\":"+(graph.requires_restore?"true":"false")+"},\"heads\":[";
       json_->put(line);
     }
-    if(markdown_)markdown_->put(markdown_entity(number,row,graph,tombstone,heads.size()));
+    if(markdown_)markdown_->put(markdown_entity(number,row.id,kind,graph,tombstone,heads.size()));
     for(size_t i=0;i<heads.size();i++){
       poll();
       wire_copy wire;reader_revision_info info{};reader_revision_error e{};
@@ -424,9 +530,10 @@ class exporter {
     }
     if(json_)json_->put("]}\n");
   }
-  std::string markdown_entity(size_t number,const row_copy &row,const reader_revision_state &graph,bool tombstone,size_t head_count){
-    std::string text="## 批注 "+std::to_string(number)+"\n\n- 标注标识：`"+row.id+"`\n- 状态：";
-    switch(row.selection.kind){
+  std::string markdown_entity(size_t number,const std::string &id,reader_selection_kind kind,
+                             const reader_revision_state &graph,bool tombstone,size_t head_count){
+    std::string text="## 批注 "+std::to_string(number)+"\n\n- 标注标识：`"+id+"`\n- 状态：";
+    switch(kind){
       case READER_SELECTION_SAFE:
         text+=tombstone?"已删除（墓碑；该批注当前没有位置和正文）":"当前批注（唯一的安全头）";break;
       case READER_SELECTION_CONCURRENT:
@@ -486,7 +593,8 @@ void validate(const reader_annotation_export_options *o){
   if(!o->jsonl_path&&!o->markdown_path)fail(READER_ANNOTATION_EXPORT_ARGUMENT,"At least one output path is required");
   if(o->jsonl_path)check_path(o->jsonl_path,"JSONL");
   if(o->markdown_path)check_path(o->markdown_path,"Markdown");
-  if(o->jsonl_path&&o->markdown_path&&std::strcmp(o->jsonl_path,o->markdown_path)==0)fail(READER_ANNOTATION_EXPORT_ARGUMENT,"Both outputs name the same path");
+  if(o->jsonl_path&&o->markdown_path&&same_target(o->jsonl_path,o->markdown_path))
+    fail(READER_ANNOTATION_EXPORT_ARGUMENT,"Both outputs resolve to the same final target");
   if(o->max_output_bytes>READER_ANNOTATION_EXPORT_HARD_MAX_BYTES)fail(READER_ANNOTATION_EXPORT_ARGUMENT,"Output budget exceeds the 1 GiB maximum");
 }
 void export_book(const reader_annotation_export_options &o,reader_annotation_export_stats &stats){
@@ -508,8 +616,21 @@ void export_book(const reader_annotation_export_options &o,reader_annotation_exp
 
 extern "C" reader_annotation_export_status reader_annotation_export_run(const reader_annotation_export_options *options,
   reader_annotation_export_stats *stats,reader_annotation_export_error *error){
+  /* The cancel callback runs on the export thread inside this call. A second
+     entry from that callback would open a second pair of temporaries and could
+     publish over the outer run, so it is refused before anything is touched:
+     the caller's stats stay exactly as the outer run left them. */
+  if(export_depth){
+    if(error){
+      std::memset(error,0,sizeof(*error));
+      error->code=READER_ANNOTATION_EXPORT_ARGUMENT;
+      std::snprintf(error->message,sizeof(error->message),"%s","Reentrant annotation export call is refused");
+    }
+    return READER_ANNOTATION_EXPORT_ARGUMENT;
+  }
   if(stats)std::memset(stats,0,sizeof(*stats));
   if(error)std::memset(error,0,sizeof(*error));
+  export_guard guard;
   reader_annotation_export_stats local{};
   export_status code=READER_ANNOTATION_EXPORT_OK;int revision_code=0,rs_code=0,os_error=0;std::string message;
   try{
