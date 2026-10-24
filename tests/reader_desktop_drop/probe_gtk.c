@@ -155,18 +155,33 @@ static int make_fixtures(void) {
 
 /* ---- threads --------------------------------------------------------- */
 typedef struct {
-  int attach_status;
-} attach_job;
+  GMainContext *context;
+  GMutex mutex;
+  GCond condition;
+  int ready;
+  int held;
+  int finishing;
+} hold_job;
 
-static gpointer attach_thread(gpointer data) {
-  attach_job *job = (attach_job *)data;
-  exr_drop_gtk_target *target = NULL;
+/* Another thread owns the default main context, as a running GTK loop would. */
+static gpointer hold_thread(gpointer data) {
+  hold_job *job = (hold_job *)data;
+  g_mutex_lock(&job->mutex);
+  job->held = g_main_context_acquire(job->context);
+  job->ready = 1;
+  g_cond_signal(&job->condition);
+  while (!job->finishing) g_cond_wait(&job->condition, &job->mutex);
+  g_mutex_unlock(&job->mutex);
+  if (job->held) g_main_context_release(job->context);
+  return NULL;
+}
+
+static int attach_status_from_main(exr_drop_gtk_target **out) {
   exr_drop_target_options options;
   memset(&options, 0, sizeof(options));
   options.struct_size = sizeof(options);
   options.on_drop = on_drop;
-  job->attach_status = (int)exr_drop_gtk_attach(g_window, &options, &target);
-  return NULL;
+  return (int)exr_drop_gtk_attach(g_window, &options, out);
 }
 static gpointer detach_thread(gpointer data) {
   exr_drop_gtk_target *target = (exr_drop_gtk_target *)data;
@@ -247,14 +262,29 @@ int main(int argc, char **argv) {
   report_expect("attach_null_widget", exr_drop_gtk_attach(NULL, &options, &target) == EXR_DROP_ARGUMENT,
       "NULL widget refused");
   {
-    attach_job job;
+    hold_job job;
     GThread *thread;
+    exr_drop_gtk_target *refused = NULL;
+    int status;
     memset(&job, 0, sizeof(job));
-    job.attach_status = -1;
-    thread = g_thread_new("attach", attach_thread, &job);
+    g_mutex_init(&job.mutex);
+    g_cond_init(&job.condition);
+    job.context = g_main_context_default();
+    thread = g_thread_new("hold-context", hold_thread, &job);
+    g_mutex_lock(&job.mutex);
+    while (!job.ready) g_cond_wait(&job.condition, &job.mutex);
+    g_mutex_unlock(&job.mutex);
+    status = attach_status_from_main(&refused);
+    report_expect("attach_while_context_owned",
+        job.held && status == (int)EXR_DROP_PLATFORM && refused == NULL,
+        "attaching while another thread owns the GTK main context is refused");
+    g_mutex_lock(&job.mutex);
+    job.finishing = 1;
+    g_cond_signal(&job.condition);
+    g_mutex_unlock(&job.mutex);
     g_thread_join(thread);
-    report_expect("attach_requires_main_thread", job.attach_status == (int)EXR_DROP_PLATFORM,
-        "a non-main GTK thread is refused");
+    g_mutex_clear(&job.mutex);
+    g_cond_clear(&job.condition);
   }
 
   case_clipboard_uri(&state, "clipboard_uri_one_file", uri_file, EXR_DROP_ITEM_FILE, expected_file, 1);
@@ -308,7 +338,9 @@ int main(int argc, char **argv) {
     control.struct_size = sizeof(control);
     control.cancelled = cancel_probe;
     control.context = &seen;
-    if (!clipboard_own(uri_file, NULL, NULL)) {
+    char two[3300];
+    snprintf(two, sizeof(two), "%s\r\n%s\r\n", uri_file, uri_unicode);
+    if (!clipboard_own(two, NULL, NULL)) {
       report_fail("clipboard_cancel", "clipboard ownership failed");
     } else {
       exr_drop_status status = exr_drop_gtk_clipboard_request(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD),

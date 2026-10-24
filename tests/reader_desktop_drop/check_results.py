@@ -39,7 +39,7 @@ PLATFORM_CASES = {
     ],
     "linux": [
         "gtk_init", "gtk_window_created", "fixtures_created", "attach_real_widget",
-        "drop_target_list_registered", "attach_null_widget", "attach_requires_main_thread",
+        "drop_target_list_registered", "attach_null_widget", "attach_while_context_owned",
         "clipboard_uri_one_file", "clipboard_uri_unicode_name", "clipboard_uri_directory",
         "clipboard_remote_url", "clipboard_remote_host", "clipboard_virtual_scheme", "clipboard_bad_percent",
         "clipboard_bad_utf8", "clipboard_too_long_path", "clipboard_item_cap", "clipboard_cancel",

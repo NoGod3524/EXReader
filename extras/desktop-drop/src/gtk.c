@@ -146,7 +146,15 @@ exr_drop_status exr_drop_gtk_attach(GtkWidget *widget, const exr_drop_target_opt
   if (!target) return EXR_DROP_ARGUMENT;
   *target = NULL;
   if (!widget || !GTK_IS_WIDGET(widget) || !drop_target_options_valid(options)) return EXR_DROP_ARGUMENT;
-  if (!g_main_context_is_owner(g_main_context_default())) return EXR_DROP_PLATFORM;
+  /* GTK may only be touched on the thread that owns the default main context:
+     either it is running our loop (is_owner) or no other thread holds it. */
+  {
+    GMainContext *context = g_main_context_default();
+    if (!g_main_context_is_owner(context)) {
+      if (!g_main_context_acquire(context)) return EXR_DROP_PLATFORM;
+      g_main_context_release(context);
+    }
+  }
   created = (gtk_target *)calloc(1, sizeof(*created));
   if (!created) return EXR_DROP_NO_MEMORY;
   drop_target_init(&created->base, options, gtk_owner_thread, gtk_release_object);
