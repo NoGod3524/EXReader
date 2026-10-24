@@ -22,6 +22,8 @@ batch-import      batch import            EXReaderBatchImport         0.1.0
 sideload          sideload and export     EXReaderSideload            0.1.0
 """
 
+import re
+
 MIT_SHARED = ('shared', 'share/exreader/LICENSE')
 MIT_OWN = ('package', None)
 
@@ -60,7 +62,8 @@ PACKAGES = [
      'system': {'linux': [], 'windows': [], 'macos': []}},
     {'id': 'webdav', 'name': 'EXReader WebDAV transport', 'project': 'EXReaderWebDAV',
      'find': 'EXReaderWebDAV', 'version': '0.2.0', 'source': 'extras/webdav',
-     'headers': ['include/exr_webdav.h', 'include/exr_webdav_android.h'],
+     'headers': ['include/exr_webdav.h'],
+     'android_only': ['include/exr_webdav_android.h'],
      'archives': ['exr_webdav'], 'assets': ['share/exreader-webdav/LICENSE.txt'],
      'config': 'lib/cmake/EXReaderWebDAV', 'licence': MIT_OWN,
      'target': 'EXReaderWebDAV::exr_webdav', 'bundled': [],
@@ -263,9 +266,12 @@ def resolve(package, index):
     for name in package['archives']:
         found = None
         for extension in ('.a', '.lib'):
-            candidate = 'lib/' + name + extension
-            if candidate in index:
-                found = candidate
+            for prefix in ('lib/', 'lib/lib'):
+                candidate = prefix + name + extension
+                if candidate in index:
+                    found = candidate
+                    break
+            if found:
                 break
         if found is None:
             missing.append('lib/' + name + '.a')
@@ -325,6 +331,21 @@ def external_from_symbols(own_archives, symbols):
             'unknown_count': len(unknown), 'unknown_sample': unknown[:16]}
 
 
+LIBRARY_FILE = None
+
+
+def library_name(base):
+    """Reduce an installed library file name to its canonical library identity."""
+    name = base
+    for extension in ('.so', '.dylib', '.tbd', '.a', '.lib'):
+        if extension in name:
+            name = name.split(extension)[0]
+            break
+    if name.startswith('lib'):
+        name = name[3:]
+    return canonical(name)
+
+
 def link_evidence(tokens, archive_names, expected):
     """Split one real link command: prefix archives, system libraries, frameworks."""
     archives, system, frameworks = [], [], []
@@ -344,12 +365,12 @@ def link_evidence(tokens, archive_names, expected):
                     archives.append(base)
                 else:
                     system.append(canonical(name))
-            elif part.lower().endswith(('.a', '.lib')):
+            elif re.search(r'[.](?:so(?:[.][0-9]+)*|dylib|tbd|a|lib)$', part, re.I):
                 base = part.replace('\\', '/').split('/')[-1]
                 if base in archive_names:
                     archives.append(base)
                 else:
-                    system.append(canonical(base[:-4] if base.lower().endswith('.lib') else base))
+                    system.append(library_name(base))
         index += 1
     observed = sorted(set(system) | set(canonical(name) for name in frameworks))
     missing = sorted(name for name in expected if canonical(name) not in observed)

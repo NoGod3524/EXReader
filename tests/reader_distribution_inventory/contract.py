@@ -499,8 +499,8 @@ def private_path_blockers(hits, generic=None):
     return blockers
 
 
-SECRET_MARKERS = (b'PRIVATE KEY-----', b'AKIA', b'xoxb-', b'ghp_', b'sk_live_', b'password=',
-                  b'passwd=', b'api_key=', b'secret_key=', b'token=', b'Authorization: Basic')
+SECRET_MARKERS = (b'PRIVATE KEY-----', b'BEGIN CERTIFICATE-----', b'AKIA', b'xoxb-',
+                  b'ghp_', b'sk_live_', b'-----BEGIN OPENSSH', b'age1secret')
 
 
 def scan_test_secrets(payload, prefix='prefix/', markers=SECRET_MARKERS):
