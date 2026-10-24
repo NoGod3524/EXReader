@@ -8,6 +8,9 @@ on:
       session:
         type: boolean
         default: false
+      reading_v2:
+        type: boolean
+        default: false
 permissions:
   contents: read
 defaults:
@@ -126,6 +129,21 @@ jobs:
         run: |
           if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
           python3 tests/reader_session/check_session.py --consumer "build/session-consumer/session-consumer$exe" --revision-consumer "build/sync-revision-consumer/revision-consumer$exe" --output build/session-evidence
+      - name: Build an actual immutable v1 validator against the same product provider
+        if: inputs.reading_v2 == true
+        run: |
+          mkdir -p build/reading-v1-source
+          git archive 210403d121d6484a8fff4ea7ffd911efa3163535 apps/reader/revisions extras/opds tests/reader_revisions/consumer | tar -x -C build/reading-v1-source
+          cmake -S build/reading-v1-source/apps/reader/revisions -B build/reading-v1-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$SYNC_WORKSPACE/build/sync-product-stage" -DCMAKE_INSTALL_PREFIX="$SYNC_WORKSPACE/build/reading-v1-stage"
+          cmake --build build/reading-v1-revisions --verbose
+          cmake --install build/reading-v1-revisions
+          cmake -S build/reading-v1-source/tests/reader_revisions/consumer -B build/reading-v1-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$SYNC_WORKSPACE/build/reading-v1-stage;$SYNC_WORKSPACE/build/sync-product-stage"
+          cmake --build build/reading-v1-consumer --verbose
+      - name: V2 transactions actual legacy refusal immutable bytes and process kill
+        if: inputs.reading_v2 == true
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_reading_v2/check_protocol.py --consumer "build/sync-revision-consumer/revision-consumer$exe" --legacy-consumer "build/reading-v1-consumer/revision-consumer$exe" --output build/reading-v2-protocol
       - name: Preserve source-bound evidence and installed modules without keys
         if: always()
         uses: actions/upload-artifact@v4
@@ -152,5 +170,7 @@ jobs:
             build/session-stage/
             build/session-evidence/
             build/session-consumer/session-consumer*
+            build/reading-v2-protocol/
+            build/reading-v1-consumer/revision-consumer*
           if-no-files-found: error
 

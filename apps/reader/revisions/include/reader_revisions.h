@@ -7,6 +7,7 @@
 extern "C" {
 #endif
 #define READER_REVISIONS_VERSION "0.3.0"
+#define READER_REVISION_ANCHOR_MAX_VERSION 2u
 #define READER_REVISION_MAX_BYTES ((size_t)1048576)
 #define READER_REVISION_MAX_PARENTS ((size_t)32)
 #define READER_REVISION_MAX_ENTITY_HISTORY ((size_t)4096)
@@ -47,7 +48,8 @@ typedef int (*reader_revision_outbox_fn)(void *,const reader_revision_outbox_row
 reader_revision_status reader_revisions_open(const char *utf8_path,reader_revisions **,reader_revision_error *);
 reader_revision_status reader_revisions_close(reader_revisions **,reader_revision_error *);
 reader_revision_status reader_revision_new_id(char out[33],reader_revision_error *);
-/* v1 strict JSON, at most 1 MiB/32 parents/32 levels/20000 values. Optional
+/* Strict v1 envelope with separate reading-anchor v1/v2 rules; at most
+   1 MiB/32 parents/32 levels/20000 values. Optional
    expected_sha256 verifies exact transport bytes; output never canonicalizes.
    Duplicate keys, malformed UTF-8, unknown fields and SDK-local IDs are refused. */
 reader_revision_status reader_revision_validate(reader_revisions *,const void *,size_t,

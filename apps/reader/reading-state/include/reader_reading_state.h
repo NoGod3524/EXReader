@@ -67,6 +67,11 @@ reader_rs_gap reader_rs_classify(const reader_rs_capture *);
    Release output with reader_rs_free. */
 reader_rs_status reader_rs_encode(reader_revisions *, const reader_rs_envelope *,
   const reader_rs_capture *, char **wire, size_t *bytes, reader_rs_error *);
+/* Explicit anchor v2: accepts genuine point captures, preserves reflow chapter
+   scope, and includes the supplied spine index for EPUB. Other modes ignore
+   part. Encoding validates bytes but does not insert or choose history. */
+reader_rs_status reader_rs_encode_v2(reader_revisions *, const reader_rs_envelope *,
+  const reader_rs_capture *, size_t part, char **wire, size_t *bytes, reader_rs_error *);
 void reader_rs_free(void *);
 
 /* Decoded copy of one revalidated v1 wire. has_location is zero for delete. */
@@ -77,6 +82,8 @@ typedef struct {
   uint64_t anchor_version, page, start, end;
   char *part_path, *page_id, *exact, *prefix, *suffix, *note_text;
   size_t exact_size, prefix_size, suffix_size;
+  uint64_t part; /* Present for anchor v2 EPUB, checked against path on resolve. */
+  char *chapter; /* Anchor v2 reflow scope; NULL is an explicit unscoped capture. */
 } reader_rs_record;
 reader_rs_status reader_rs_decode(reader_revisions *, const void *wire, size_t bytes,
   reader_rs_record *, reader_rs_error *);
@@ -88,6 +95,8 @@ reader_rs_status reader_rs_resolve_reflow(const exr_document *, const reader_rs_
   const exr_control *, exr_anchor_match *, reader_rs_error *);
 /* Exactly one spine part must carry part_path; a repeated path is ROUTE. */
 reader_rs_status reader_rs_epub_part(const exr_publication *, const char *part_path,
+  size_t *part, reader_rs_error *);
+reader_rs_status reader_rs_epub_record_part(const exr_publication *, const reader_rs_record *,
   size_t *part, reader_rs_error *);
 reader_rs_status reader_rs_resolve_epub(const exr_publication *, exr_pager *, size_t part,
   const reader_rs_record *, const exr_control *, exr_anchor_match *, reader_rs_error *);

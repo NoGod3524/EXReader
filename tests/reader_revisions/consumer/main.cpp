@@ -54,12 +54,15 @@ int main(int argc,char **argv){try{
       else if(action=="validate")status=reader_revision_validate(store,wire.data(),wire.size(),args.size()>4&&args[4]!="-"?args[4].c_str():nullptr,&info,&error);
       else status=reader_revision_local(store,wire.data(),wire.size(),&info,&created,&error);
       if(action=="crash-after-commit"&&status==READER_REV_OK){marker=args.at(4);pause_marker();}
-    }else if(action=="project-local"||action=="crash-project-before-metadata"||action=="crash-project-after-commit"){
+    }else if(action=="project-local"||action=="crash-project-before-metadata"||action=="crash-project-after-commit"||action=="reading-local"||action=="crash-reading-after-commit"){
       std::string wire=read(args.at(3));std::vector<std::string> expected;std::vector<const char *> heads;
       if(args.at(4)!="-"){size_t start=0;for(;;){size_t end=args[4].find(',',start);expected.push_back(args[4].substr(start,end==std::string::npos?end:end-start));if(end==std::string::npos)break;start=end+1;}}
       for(const auto &id:expected)heads.push_back(id.c_str());
-      status=reader_revision_local_project(store,wire.data(),wire.size(),heads.data(),heads.size(),args.at(5)=="-"?nullptr:args[5].c_str(),&info,&created,&applied,&error);
+      if(action=="reading-local"||action=="crash-reading-after-commit")
+        status=reader_revision_local_reading(store,wire.data(),wire.size(),heads.data(),heads.size(),&info,&created,&error);
+      else status=reader_revision_local_project(store,wire.data(),wire.size(),heads.data(),heads.size(),args.at(5)=="-"?nullptr:args[5].c_str(),&info,&created,&applied,&error);
       if(action=="crash-project-after-commit"&&status==READER_REV_OK){marker=args.at(6);pause_marker();}
+      if(action=="crash-reading-after-commit"&&status==READER_REV_OK){marker=args.at(6);pause_marker();}
     }else if(action=="project-remote"){
       status=reader_revision_project(store,args.at(3).c_str(),args.at(4).c_str(),args.at(5).c_str(),args.at(6)=="-"?nullptr:args[6].c_str(),&info,&error);
     }else if(action=="selected"){
