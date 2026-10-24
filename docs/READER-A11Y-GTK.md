@@ -74,11 +74,13 @@ GTK provides (focusable rows, modal dialogs, focus restoration, event delivery).
 | `shelf_search_entry` | entry named `Search bookshelf` with `EDITABLE` | blocking |
 | `shelf_tab_order_reaches_controls` | 26 real `Tab` presses reach all 13 shelf controls | blocking |
 | `shelf_tab_order_follows_visual_order` | focus order equals the extents-derived visual order | blocking |
+| `tab_cycle_elements_named` | every element that takes keyboard focus has a non-empty name | blocking |
 | `shelf_tab_order_cycles_without_trap` | focus returns to an already focused element | advisory |
 | `more_menu_items_named` | menu items `Collections…` and `Account / Sync…` | advisory |
 | `more_menu_keyboard_activation` | arrow keys plus `Return` open the organizer | blocking |
 | `collections_dialog_identity` | modal dialog named `Library collections`, focus inside | blocking |
 | `collections_dialog_controls_named` | type combo, removed check box, both lists, 14 buttons | blocking |
+| `collections_type_selector_reachable` | the type selector is in the Tab cycle or reachable by its mnemonic | advisory |
 | `collections_dialog_escape_restores_focus` | `Escape` closes and focus returns to the main window | blocking |
 | `import_dialog_identity_and_focus` | dialog named `Import book` with keyboard focus | blocking |
 | `import_dialog_escape_restores_focus` | `Escape` closes and focus returns | blocking |
@@ -94,7 +96,7 @@ GTK provides (focusable rows, modal dialogs, focus restoration, event delivery).
 | `metadata_dialog_escape_restores_focus` | `Escape` closes and focus returns to the shelf | blocking |
 | `account_dialog_identity_and_focus` | dialog `Account and Sync`, focus on `HTTPS WebDAV root` | blocking |
 | `account_entries_and_buttons_named` | three entries, two storage radios, seven buttons | blocking |
-| `account_password_secret_not_reachable_through_atspi` | the typed secret is not readable through `AtkText` | blocking |
+| `account_password_secret_not_reachable_through_atspi` | the typed secret is not readable through `AtkText`; the secret marker is recorded separately as a gap | blocking |
 | `account_dialog_escape_restores_focus` | `Escape` closes and focus returns | blocking |
 
 Severity policy, fixed before the run:

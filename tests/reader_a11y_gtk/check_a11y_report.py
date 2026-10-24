@@ -158,8 +158,10 @@ def check_report(report, root, expect):
         encoding='utf-8', errors='replace').splitlines() if line.strip()]
     if len(lines) < MIN_KEYS:
         raise Invalid('keys.log has %d keystrokes, fewer than %d' % (len(lines), MIN_KEYS))
-    if 'logs/application.log' not in evidence:
+    if 'application.log' not in evidence:
         raise Invalid('the host application log is missing')
+    if 'logs/window-tree.txt' not in evidence:
+        raise Invalid('the X11 window tree was not captured')
     if int(report.get('secret_leak_hits', -1)) != 0:
         raise Invalid('the secret typed into the password field leaked into evidence')
 
