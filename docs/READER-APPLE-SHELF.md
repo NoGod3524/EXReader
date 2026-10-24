@@ -140,6 +140,17 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
   Its outer scope remains `diagnostic_only: true`, `accepted: false`.
   The following complete candidate changes only this record and requires fresh
   shelf, import-mapping and original Apple acceptance on its own full source.
+- `8ed6f228fccc242dbcaf093dd595b81b4395370f`: import mapping
+  [40045317086](https://github.com/NoGod3524/EXReader/actions/runs/40045317086)
+  completed all six jobs, and the original Apple host
+  [40045317171](https://github.com/NoGod3524/EXReader/actions/runs/40045317171)
+  completed all eight jobs. These independent regressions do not accept the new shelf.
+  [Shelf 40045317110](https://github.com/NoGod3524/EXReader/actions/runs/40045317110)
+  passed catalog8/shelf16 and built the actual SwiftUI host, but macOS job
+  `120731101014` failed all seven UI cases while waiting for readiness. Failure
+  artifact `12543115466` is retained. The narrow macOS diagnostic now reports AX
+  decoding, visible-row and readiness conditions, using the authenticated SDK
+  and 2,202-original seed from this source. It grants no acceptance.
 
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.
