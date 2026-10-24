@@ -228,6 +228,7 @@ final class HostShelf: ObservableObject {
             // preference. Its new probes still measure actual geometry. A
             // partial set cannot establish the first visible row: require
             // every current row and the viewport from this same epoch.
+            guard self.rows.count == 1 || self.awaitingLayoutKey != nil else { return }
             guard !self.rows.isEmpty, self.probeSize.width > 0, self.probeSize.height > 0,
                   self.rows.allSatisfy({ self.probePositions[$0.id] != nil }) else { return }
             self.observe(self.probePositions, size: self.probeSize, revision: self.probeRevision)

@@ -129,3 +129,9 @@ activation point 终止，尚未执行原来的滚动路径。后续先按真实
 滚动与 60 秒预算保留。`production` 诊断入口只运行既有生产语义用例，始终另记
 `diagnostic_only=true, accepted=false`，不生成完整联合验收；`full` 原七例与所有
 严格 collector 仍必须完整复验。`recovery` 的 iOS 选择也增加原 test05，保留 test06。
+
+`d386bbae` / `40105896876` 的 native 8+16+22 通过，macOS 短回归 test05 又发现
+刷新后的 top 被改写；原断言保留失败。完整 probe fallback 原先还在恢复结束后更新
+空闲多行顺序，覆盖了完整 preference 的排序。后续将多行 fallback 限于确有待确认
+恢复时，确认后立即回到完整 preference 的普通滚动路径；native 另断言空闲 probe
+不能覆盖已确认 top。此修复仍待实际云端回归。

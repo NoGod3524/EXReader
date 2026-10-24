@@ -190,9 +190,15 @@ import CryptoKit
         }
         let completeCurrentProbesAcknowledge = probes.top == measuredRows.first?.key &&
             !probes.observation.contains("\"restoring_layout\":true")
+        for (index, row) in measuredRows.enumerated() {
+            probes.measureProbe(key: row.id, frame: CGRect(x: 0, y: CGFloat((index - 1) * 40), width: 100, height: 40),
+                size: CGSize(width: 100, height: 40), revision: measuredEpoch)
+        }
+        RunLoop.current.run(until: Date().addingTimeInterval(0.02))
+        let idleProbesCannotReplaceWholeOrdering = probes.top == measuredRows.first?.key
         try check("layout_acknowledges_exact_restored_source", preScrollRejected && sameKeyOldEpochRejected && partialSnapshotRejected && requestsRealRetry &&
             stillRestoring && prepended && oldPrependFrameRejected && incompleteProbesRejected && staleLastProbeRejected &&
-            completeCurrentProbesAcknowledge && paged.top == chosen.key &&
+            completeCurrentProbesAcknowledge && idleProbesCannotReplaceWholeOrdering && paged.top == chosen.key &&
             !paged.observation.contains("\"restoring_layout\":true"))
         let terminal = try queue.sync { try catalog.shelf(query: "", anchor: nil, before: true) }
         let tailDefaults = UserDefaults(suiteName: "EXR.ShelfTail.\(UUID().uuidString)")!
