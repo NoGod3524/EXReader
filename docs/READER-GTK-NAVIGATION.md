@@ -3,9 +3,10 @@
 分支`codex/reader-gtk-navigation-ui`从Search最终证据HEAD
 `9762a7dd4ede02b11339105ccd64b8d187f5d6bf`接续。原样引入已验F2源码
 `cbd7832b914bddcf99e06a85962d301a00b47efa`的模块与原130项消费者；共享实现未改。
-首次源码`2799df58`、run`40122987085`已通过F2原130项、Search264/34和F3 20，
-新宿主因四处misleading-indentation警告在原`-Werror`下编译拒绝；现将语句分行，不降低编译检查。
-后续运行结果待登记，尚未授予导航UI范围。
+源码`8bf2b68dba205a63d7cdae78b2dd0f139c04ffb4`的专项
+[40124093566](https://github.com/NoGod3524/EXReader/actions/runs/40124093566)已通过导航UI29/29、
+新后端58，以及F2原130项、Search264/34和F3 20。
+同源完整保留回归[40124481444](https://github.com/NoGod3524/EXReader/actions/runs/40124481444)正在执行。
 
 可选`EXR_READER_GTK_NAVIGATION=ON`和安装前缀`READER_NAVIGATION_PREFIX`接入，默认关闭。
 原“更多”末尾及Ctrl+Shift+T打开原生模态目录，每层只显示当前32行，可打开条目、进入子级、返回或继续分页。
@@ -25,6 +26,10 @@ CFI raw UTF-16只有完整scalar且raw/规范化节点文本相同时才能映�
 关闭、后台、换书和退出使请求失效，并由同一owner执行强制关闭barrier；旧行和旧CFI不能重新生效。
 不恢复未提交的目录对话框或CFI。冻结SDK、产品schema、F2、F3和Search公共模块保持原样。
 
+F2复制快照完成后立即释放创建它的SDK输入；常驻快照没有SDK指针，解析时才创建两个独立输入。
+大目录取消探针直接观察真实control阶段，不在打开后枚举或激活窗口消耗短任务窗口；
+只发送一次零延时快捷键，保持原15秒观察预算，没有延迟生产代码或重放操作。
+
 专项探针覆盖原F2夹具、45根条目32+13、Unicode层级、外部/越界/缺失目标、PART_ONLY、重复spine、完整CFI、
 PDF/CBZ真实页入口，以及实际控制轮询中的取消/Escape/最小化/父关闭/进程重开。
 稳定后同一源码复跑Search264/34、Search后端296/UI30、F3 20、原46+105+4+AT-SPI10与设置35。
@@ -32,3 +37,8 @@ PDF/CBZ真实页入口，以及实际控制轮询中的取消/Escape/最小化/�
 [Search证据](READER-GTK-SEARCH.md)。整体`accepted=false`。
 
 构建、语法检查、夹具、测试和工件解析仅在Actions；具体身份见[验证记录](validation/reader-gtk-navigation.json)。
+
+保留的失败：`2799df58`/run`40122987085`因四处misleading-indentation警告在原`-Werror`下编译拒绝；
+仅将语句分行，编译检查保持不变。`4ad9f45d`/run`40123371736`已通过导航/CFI/页入口场景，
+但取消探针额外的窗口枚举耗尽9000行快照工作窗口，观察时已是phase3/polls40；保留该轮失败，
+移除额外窗口操作后以新source重新执行。另以第二对象的原生SDK解析替代重复F2调用，并补精确位置断言。
