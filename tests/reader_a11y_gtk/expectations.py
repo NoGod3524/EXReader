@@ -144,12 +144,14 @@ CHECKS = [
 # never as passes, which is why ORCA_ACCEPTED stays false in every report.
 GAPS = [
     'Orca or any real screen reader speech output (no speech capture, no reader build)',
-    'AT-SPI live-region / announcement semantics: the audited GTK3 host sets no live '
-    'region attribute and at-spi2-core on the runner predates object:announcement',
+    'AT-SPI live-region / announcement semantics: the GTK3 host marks no live region and the '
+    'registry delivered no object:announcement event, so automatic announcement of the status '
+    'text is not established either way',
     'Braille display output and BRLTTY integration',
     'Visible focus ring, contrast and theme rendering (WCAG 1.4.3/1.4.11/2.4.7)',
-    'Password-field semantics at the AT-SPI layer: GTK3 exports no password attribute, '
-    'so an assistive client cannot be told that the field is secret before reading it',
+    'Password-field presentation beyond the ATK role: the audited entry reports the '
+    'password-text role and the audit measures what its text exports, but how a screen '
+    'reader masks or announces a secret field is not covered',
     'IME composition, caret browsing and selection announcement for the rendered page image',
     'Network-backed account scan states (preparing, scanning, cancel, retry) because this '
     'audit runs offline against a local library only',

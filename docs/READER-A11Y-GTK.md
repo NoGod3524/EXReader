@@ -58,6 +58,12 @@ The dependency on the bridge is deliberate and asserted: the credential checks i
 and its first check fails loudly if the application never registers, instead of
 degrading into a silent pass.
 
+Readiness follows the surface that is on screen: `reader.c` leaves `shelf_restoring`
+set while the reader is the visible child of the stack (it only clears on the next shelf
+pass), so the harness judges shelf bookkeeping only while the shelf is shown rather than
+waiting for a flag that belongs to the hidden surface. That host detail is recorded here
+because a naive readiness predicate aborts three phases on it.
+
 The audit does not unlock a Secret Service, so the account surface is observed in its
 session-only state (`credential_status = 2`). Names, roles, states, focus and the
 secret-field measurement do not depend on that state; the credential store behaviour
@@ -135,13 +141,14 @@ blocking finding stands.
 Recorded as explicit gaps, never as passes:
 
 - Orca or any real screen-reader speech output (no speech capture, no reader build).
-- AT-SPI live-region / announcement semantics: the GTK3 host sets no live region and
-  the runner's at-spi2-core predates `object:announcement`, so automatic
-  announcement of the status text is not established either way.
+- AT-SPI live-region / announcement semantics: the GTK3 host marks no live region and
+  the registry delivered no `object:announcement` event, so automatic announcement of
+  the status text is not established either way.
 - Braille output and BRLTTY integration.
 - Visible focus ring, contrast and theme rendering (WCAG 1.4.3, 1.4.11, 2.4.7).
-- Password-field semantics at the AT-SPI layer: the entry exports no attribute that
-  marks it as secret, so a client cannot know the field is masked before reading it.
+- Password-field presentation beyond the ATK role: the audited entry reports the
+  `password text` role and the audit measures what its text exports, but how a screen
+  reader masks or announces a secret field is not covered.
 - IME composition, caret browsing and selection announcement for the rendered page.
 - Network-backed account scan states (preparing, scanning, cancel, retry): the audit
   runs offline against a local library, so only the pre-session account surface is
@@ -167,15 +174,80 @@ blocking finding stands. Evidence is uploaded even on refusal:
 - `build/a11y-evidence/tree/*.json`, `tree/*.txt` — AT-SPI tree per phase
 - `build/a11y-evidence/shots/*.png` — screenshots per phase
 - `build/a11y-evidence/keys.log` — every keystroke with the focused accessible name
-- `build/a11y-evidence/logs/application.log`, `logs/window-tree.txt`
+- `build/a11y-evidence/application.log`, `logs/window-tree.txt`
 - `build/a11y-logs/*.log` — configure, build, audit and gate logs
 - `source-binding.txt`, `build/a11y-package/build.json` — source and binary identity
 
 ## 6. Recorded result
 
-Filled from the run recorded in `docs/validation/reader-a11y-gtk.json`; the validation
-file is the authority for the exact source, run, attempt, artifact identity and
-per-check outcome of a given run.
+Authority: `docs/validation/reader-a11y-gtk.json` for this exact source, run and attempt.
+
+| Field | Value |
+| --- | --- |
+| Audited source (`HEAD == GITHUB_SHA`) | `b273377560a5dae1cd5087678eb772ae5a32885c` |
+| Fixed implementation start | `f43baf9182d75907c0cb5d6f77048f27bca8c950` |
+| Frozen SDK contract | `9854061be331fe603a1822d9b2b36ee357154927` (3.40.0, ABI 1) |
+| Run / attempt | 40080642796 / 1 |
+| Job | 120833279004, conclusion `failure` |
+| `audit_completed` | **true** — all 13 phases executed, all 32 checks evaluated |
+| `accessibility_accepted` | **false** — six blocking findings stand |
+| `orca_screen_reader_accepted` | false |
+| Checks | 32 recorded, 24 passed, 6 blocking, 2 advisory |
+| Artifact | `reader-a11y-gtk-40080642796-1`, id 12555112950, 18 620 995 bytes, sha256 `2e55e0cf1edb45a6ac59d57e6c1e8935b8106f8bef4240ba1141a8644dbf5ad8`, expires 2027-01-22 |
+
+The job is red **on purpose**: the last step is the refusal gate, and it exits 2 while a
+blocking finding exists. The audit step itself succeeded, and the artifact above is from
+that same run and attempt. Nothing here is a skipped pass: every phase ran against the
+real GTK host on the accessibility bus, with 12 tree dumps, 12 screenshots and 136 real
+keystrokes preserved.
+
+### What passed
+
+Bridge and application identity; the shelf list (`list box`, name `Bookshelf`); all ten
+toolbar names with click actions; `Edit book details`; `More library actions`; the search
+entry (`text`, `EDITABLE`, name `Search bookshelf`); Tab reaching all 13 shelf controls;
+focus order matching the drawn order; no keyboard trap; both more-menu item names and
+keyboard activation; the organizer's four named controls and fourteen buttons; `Escape`
+closing the organizer and the file chooser with focus back inside the main window; three
+imported originals each appearing as their own row; rows reporting `FOCUSABLE`; the reader
+panel names (`image`, `text`, comment entry, saved-note list); Tab reaching the reader
+panels; the details dialog (modal, focus on `Book title`, three named controls, focus
+restored on `Escape`); the account dialog (focus on `HTTPS WebDAV root`, three named
+entries, both storage choices, seven buttons); and the password field (focus by Tab, ATK
+role `password text`, 29 exported characters that are **not** the typed secret).
+
+### Blocking findings
+
+Each one carries the native element path, the exact reproduction, the observed value, the
+expected value and a minimal fix in `docs/validation/reader-a11y-gtk.json`.
+
+| # | Check | Native element path | Actual | Minimal fix for the GTK owner |
+| --- | --- | --- | --- | --- |
+| 1 | `shelf_row_names` | `frame[EXReader Linux]/panel/scroll pane/viewport/list box[Bookshelf]/list item[]` (three rows) | every row exposes `Name = ""`; the caption only exists as a child label | `atk_object_set_name(gtk_widget_get_accessible(row), caption)` in `shelf_present()` |
+| 2 | `annotation_note_rows_named` | `…/scroll pane/viewport/list box[Saved notes; …]/list item[]` | note row `Name = ""`, text only in the child label | same call in `notes_present()` |
+| 3 | `tab_cycle_elements_named` | `frame[EXReader Linux]/panel/scroll pane[]` | the shelf viewport takes keyboard focus with `Name = ""` | name the `GtkScrolledWindow` the host creates for the shelf, page, notes and organizer lists |
+| 4 | `collections_dialog_identity` | `dialog[Library collections]` | modal dialog opens with **no** focused element inside it | `gtk_widget_grab_focus(collections.types)` in `collections_open()` |
+| 5 | `status_message_exposed_as_name_change` | `frame[EXReader Linux]/label[Reading operation failed; accepted page retained]` | the label name changes in place, but **0 of 1686** delivered events carry `accessible-name` for it | move the message to a `GtkStatusbar` (`ATK_ROLE_STATUSBAR`, `text-pushed`) |
+| 6 | `account_dialog_escape_restores_focus` | `frame[EXReader Linux]` | after `Escape` the main window is activated but nothing inside it is focused | remember the main-window focus widget and grab it in `accounts_destroyed()`, or use `GTK_DIALOG_MODAL` |
+
+### Advisory findings
+
+| Check | Actual | Minimal fix |
+| --- | --- | --- |
+| `collections_type_selector_reachable` | the `combo box[Collection type]` is outside the Tab cycle (cycle: `Removed collections → Root → scroll pane → New → scroll pane → Close`); the `Alt+T` probe returns no focus, which cannot be decided until the dialog takes initial focus | `gtk_widget_set_can_focus(collections.types, TRUE)` while keeping the mnemonic widget |
+| `account_dialog_declares_modality` | `dialog[Account and Sync]` reports `active` but not `modal`; the main content is made insensitive instead | pass `GTK_DIALOG_MODAL` to `gtk_dialog_new_with_buttons` in `accounts_open()` |
+
+Findings 1, 2 and 3 are the same class of defect: GTK3 leaves container accessibles
+unnamed and the host relies on the child label, so `Name` stays empty for every AT-SPI
+client that reads it. A reader may fall back to the child label — that fallback is not
+modelled or claimed here.
+
+### Retained earlier runs
+
+Runs 40077115326, 40078328226, 40078531591 and 40079657024 are kept as history and are
+**not** counted as evidence. Their failures were harness defects (evidence-key mismatch,
+clipboard race, secret echoed into the keystroke record, readiness hung on
+`shelf_restoring`), and each was fixed by a later commit on the audited path above.
 
 ## 7. Limit of this package
 
