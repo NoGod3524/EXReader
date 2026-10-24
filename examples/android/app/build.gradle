@@ -5,6 +5,8 @@ plugins {
 def exrSdk = project.findProperty('exrSdk') ?: ''
 def exrProduct = project.findProperty('exrProduct') ?: "${rootProject.projectDir}/../../stage/android-product"
 def exrSync = project.findProperty('exrSync') == 'true'
+def exrSearch = project.findProperty('exrSearch') == 'true'
+def exrSearchPrefix = project.findProperty('exrSearchPrefix') ?: "${rootProject.projectDir}/../../stage/android-search"
 def exrDav = project.findProperty('exrDav') ?: "${rootProject.projectDir}/../../stage/android-dav"
 def exrSideload = project.findProperty('exrSideload') ?: "${rootProject.projectDir}/../../stage/android-sideload"
 
@@ -21,6 +23,7 @@ android {
         versionCode 1
         versionName '0.1.0'
         buildConfigField 'boolean', 'READER_SYNC', exrSync.toString()
+        buildConfigField 'boolean', 'READER_SEARCH', exrSearch.toString()
         testInstrumentationRunner (project.findProperty('exrTestRunner') ?: 'org.exreader.host.CatalogStoreTest')
         ndk {
             abiFilters 'x86_64'
@@ -29,6 +32,7 @@ android {
             cmake {
                 arguments "-DEXR_SDK=${exrSdk}", "-DEXR_PRODUCT=${exrProduct}", '-DANDROID_STL=c++_static'
                 arguments "-DEXR_HOST_SYNC=${exrSync ? 'ON' : 'OFF'}", "-DEXR_DAV=${exrDav}", "-DEXR_SIDELOAD=${exrSideload}"
+                arguments "-DEXR_HOST_SEARCH=${exrSearch ? 'ON' : 'OFF'}", "-DEXR_SEARCH_PREFIX=${exrSearchPrefix}"
             }
         }
     }
@@ -75,6 +79,12 @@ android {
                 manifest.srcFile '../../../tests/reader_host_session_android/AndroidManifest.xml'
                 java.srcDir '../../../tests/reader_host_session_android/java'
             }
+        }
+    }
+    if(exrSearch) {
+        sourceSets {
+            debug { java.srcDir '../../../tests/reader_android_search/debug/java' }
+            androidTest { java.srcDir '../../../tests/reader_android_search/java' }
         }
     }
 }

@@ -63,6 +63,10 @@ final class BoundedEpub implements AutoCloseable {
         if(note.location==null) throw new IllegalArgumentException("Missing chapter annotation route");
         return resolvedPage(note.location,0,size,task,false,false);
     }
+    PageLoad seekSearch(NativeSearch.Hit hit,HostTask task)throws Exception {
+        if(hit.mode!=NativeSearch.EPUB)throw new IllegalArgumentException("Search chapter route mismatch");
+        return resolvedPage(hit.chapterLocation(),0,size,task,false,false);
+    }
     private PageLoad resolvedPage(String[] location,int display,float value,HostTask task,boolean fallback,boolean recovery) throws Exception {
         int target=Integer.parseInt(location[0]); long candidate=open(target,value,task);
         try {

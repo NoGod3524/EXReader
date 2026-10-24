@@ -1,0 +1,15 @@
+{
+  "accepted": false,
+  "scope": "Android installed Search package consumed by actual host controls, explicit FOUND navigation and lifecycle",
+  "fixed_base": "ed9ff5ffc3608971bb19020f1ec07496a79d9710",
+  "search_last_revision": "523a91f0e8c11e4365e0eab7d3687bf05df2d2c0",
+  "search_tree": "2e09cb2945564f25085074a816b95472392df205",
+  "source_sha": null,
+  "runs": [],
+  "retained_failures": [],
+  "all_execution_on_actions": true,
+  "performance_accepted": false,
+  "physical_device": false,
+  "talkback_speech_accepted": false,
+  "complete_product": false
+}

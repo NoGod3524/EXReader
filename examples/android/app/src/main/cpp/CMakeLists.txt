@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.22.1)
 project(exreader_host C CXX)
 option(EXR_HOST_SYNC "Install the optional native account/sync host integration" OFF)
+option(EXR_HOST_SEARCH "Install the optional public in-book search host integration" OFF)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -19,6 +20,21 @@ add_library(exreader_host SHARED exreader_host_jni.c)
 target_link_libraries(exreader_host PRIVATE EXReader::exreader)
 target_compile_options(exreader_host PRIVATE -Wall -Wextra)
 target_link_options(exreader_host PRIVATE -Wl,-z,max-page-size=16384)
+
+if(EXR_HOST_SEARCH)
+  list(APPEND CMAKE_PREFIX_PATH "${EXR_SEARCH_PREFIX}")
+  find_package(EXReaderSearch 0.1.0 EXACT CONFIG REQUIRED)
+  find_package(Threads REQUIRED)
+  target_compile_definitions(exreader_host PRIVATE READER_HOST_SEARCH=1)
+  target_include_directories(exreader_host PRIVATE
+    $<TARGET_PROPERTY:EXReaderSearch::reader_search,INTERFACE_INCLUDE_DIRECTORIES>)
+  # Keep the existing shared SDK provider; never link Search's static core closure.
+  target_link_libraries(exreader_host PRIVATE $<TARGET_FILE:EXReaderSearch::reader_search> Threads::Threads dl)
+  set_target_properties(exreader_host PROPERTIES LINKER_LANGUAGE CXX)
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(exreader_host PRIVATE READER_SEARCH_FIXTURES=1)
+  endif()
+endif()
 
 # Installed product modules use their own SQLite provider; the frozen SDK stays
 # in the original host library. Hide archive symbols against Android interpose.

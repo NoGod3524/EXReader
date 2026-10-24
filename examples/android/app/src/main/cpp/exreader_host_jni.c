@@ -5,6 +5,8 @@
 #include <exreader.h>
 #ifdef READER_HOST_SYNC
 #include <exr_sideload.h>
+#endif
+#if defined(READER_HOST_SYNC) || defined(READER_HOST_SEARCH)
 #include <dlfcn.h>
 #endif
 
@@ -847,3 +849,7 @@ JNIEXPORT void JNICALL Java_org_exreader_host_NativeLibrary_nativeDeleteBook(
   status = exr_library_delete(store, (int64_t)book_id, &error);
   if (status != EXR_OK) throw_status(env, status, &error, "Cannot remove the book");
 }
+
+#ifdef READER_HOST_SEARCH
+#include "search_jni.inc"
+#endif

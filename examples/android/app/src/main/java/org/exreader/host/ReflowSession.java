@@ -43,6 +43,9 @@ final class ReflowSession implements AutoCloseable {
     PageLoad seek(NativeLibrary.Note note,HostTask task) throws Exception {
         return bounded!=null?bounded.seek(note,task):seek(note.start,task);
     }
+    PageLoad seekSearch(NativeSearch.Hit hit,NativeSearch.Match match,HostTask task)throws Exception {
+        return bounded!=null?bounded.seekSearch(hit,task):seek(match.start,task);
+    }
     void saveProgress(PageSnapshot page) { bounded.saveProgress(page); }
     void saveBoundedNote(long id,long start,long end,String text) { bounded.saveNote(id,start,end,text); }
     void refreshSource() { if(bounded!=null) bounded.refresh(); }
