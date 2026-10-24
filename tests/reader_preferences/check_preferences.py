@@ -12,7 +12,7 @@ import sys
 import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from preferences_fixtures import DEFAULTS, document
+from preferences_fixtures import DEFAULTS, document, render
 
 COMMON_START = "c3511a011eefbf1fba1d20908f000cef22b1ced2"
 MAX_FILE = 65536
@@ -213,6 +213,50 @@ def main():
         if path.read_bytes() != before:
             raise CheckFailure("unknown version file changed")
 
+    def json_leading_zero_refusals():
+        for field, value in (("font_size", "024"), ("line_spacing", "01.6"),
+                             ("paragraph_spacing", "00"), ("margin", "00e0"),
+                             ("fixed_page_zoom", "0100"), ("format_version", "01")):
+            path = work / ("leading-zero-" + field + ".json")
+            path.write_text(render(DEFAULTS, {field: value}), encoding="utf-8")
+            before = path.read_bytes()
+            load_refusal(path, "FORMAT")
+            preserved = kv(run([WORKER, "preserve", "unused", "b", str(path)], 0))
+            if preserved.get("preserved") != "1" or path.read_bytes() != before:
+                raise CheckFailure("invalid number changed caller/file: " + field)
+
+    def json_significant_fraction_digits():
+        for field, value in (("font_size", "0.00000000000000001e19"),
+                             ("line_spacing", "0.000000000000000025e17"),
+                             ("paragraph_spacing", "0.00000000000000001e19"),
+                             ("margin", "0.00000000000000001")):
+            path = work / ("significant-fraction-" + field + ".json")
+            path.write_text(render(DEFAULTS, {field: value}), encoding="utf-8")
+            actual, expected = float(load_ok(path)[field]), float(value)
+            if actual <= 0 or abs(actual - expected) > abs(expected) * 1e-6:
+                raise CheckFailure("valid JSON number changed: %s=%s got %s" % (field, value, actual))
+
+    def error_pointer_status_parity():
+        for field, value in (("margin", "1e9999"), ("format_version", "4294967296")):
+            path = work / ("null-error-" + field + ".json")
+            path.write_text(render(DEFAULTS, {field: value}), encoding="utf-8")
+            load_refusal(path, "RANGE")
+            actual = kv(run([WORKER, "load-no-error", str(path)], 1))
+            if actual.get("status") != "RANGE" or actual.get("preserved") != "1":
+                raise CheckFailure("optional error pointer changes status/record: " + str(actual))
+
+    def load_limit_ceiling():
+        path = work / "caller-limit.json"
+        path.write_text(document() + " " * MAX_FILE, encoding="utf-8")
+        load_refusal(path, "LIMIT")
+        actual = kv(run([WORKER, "load-with-limit", str(path), str(MAX_FILE * 2)], 1))
+        if actual.get("status") != "ARGUMENT" or actual.get("preserved") != "1":
+            raise CheckFailure("caller can raise the documented file ceiling: " + str(actual))
+        path.write_text(document(), encoding="utf-8")
+        lowered = kv(run([WORKER, "load-with-limit", str(path), "32"], 1))
+        if lowered.get("status") != "LIMIT" or lowered.get("preserved") != "1":
+            raise CheckFailure("lowered caller limit is not preserved")
+
     def failed_load_preserves():
         process = run([WORKER, "preserve", str(work / "unused.json"), "b",
                        str(fixtures / "bad-enum.json")], 0)
@@ -318,6 +362,10 @@ def main():
     record("concurrent-callers", concurrent_callers)
     record("legacy-import", legacy_import)
     record("installed-header", installed_header)
+    record("json-leading-zero-refusals", json_leading_zero_refusals)
+    record("json-significant-fraction-digits", json_significant_fraction_digits)
+    record("optional-error-pointer-status-parity", error_pointer_status_parity)
+    record("load-limit-ceiling", load_limit_ceiling)
 
     passed = sum(1 for case in cases if case["ok"])
     failed = len(cases) - passed

@@ -1,7 +1,7 @@
 name: Reader preferences
 on:
   push:
-    branches: [codex/reader-preferences]
+    branches: [codex/reader-preferences, codex/reader-preferences-review]
   workflow_dispatch:
 permissions:
   contents: read

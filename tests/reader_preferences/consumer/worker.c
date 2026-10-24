@@ -141,6 +141,22 @@ static int run_main(int argc, char **argv) {
     return 0;
   }
 
+  if ((strcmp(argv[1], "load-no-error") == 0 && argc >= 3) ||
+      (strcmp(argv[1], "load-with-limit") == 0 && argc >= 4)) {
+    reader_preferences_load_options options;
+    int without_error = strcmp(argv[1], "load-no-error") == 0;
+    memset(&options, 0, sizeof(options));
+    options.struct_size = (uint32_t)sizeof(options);
+    if (!without_error) options.max_file_bytes = (size_t)strtoull(argv[3], NULL, 10);
+    p = make_preset("b");before = p;
+    status = reader_preferences_load(argv[2], &p, without_error ? NULL : &options,
+                                     without_error ? NULL : &error);
+    (void)printf("status=%s\npreserved=%d\n", reader_preferences_status_name(status),
+                 memcmp(&p, &before, sizeof(p)) == 0);
+    if (status == READER_PREFERENCES_OK) print_preferences(&p);
+    return status == READER_PREFERENCES_OK ? 0 : 1;
+  }
+
   if (strcmp(argv[1], "save") == 0 && argc >= 4) {
     p = make_preset(argv[3]);
     if (!parse_save_flags(argc, argv, 4)) return 2;
