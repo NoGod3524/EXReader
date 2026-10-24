@@ -14,4 +14,4 @@
 
 另有已披露的窗口销毁后再detach遗留COM引用：在接入长期运行宿主前应明确消除，或用真实生命周期证据证明无持续增长；不能把“泄漏很小”当作释放通过。
 
-上述是源码推导，本地未执行构建/测试。尚待派回原owner，root不并行修改其包工作树。
+上述是源码推导，本地未执行构建/测试。已在 DeepSeek Harness 原会话“J03 desktop-drop implementation and cloud acceptance”提交返修，界面确认“进行中/正在分析请求”；保持 Flash1017 / High / PTC / 完全权限，root不并行修改其包工作树。原owner的新源码 `03babdbe2d2a608c9a2c1c280b6a238e1b99dc1f` / run `40135689234` 已提交云端验收，结果尚未授予。
