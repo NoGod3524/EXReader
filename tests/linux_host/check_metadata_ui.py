@@ -81,8 +81,23 @@ def main():
         if toggle:
             host.key('alt+f')
 
-    def saved():
-        host.key('alt+t', 'Return');window('Book details', False);host.wait(lambda s: s['error'] == 0)
+    def saved_with_window_close_barrier(dialog):
+        lock = sqlite3.connect(catalog)
+        try:
+            lock.execute('BEGIN IMMEDIATE')
+            host.key('alt+t')
+            command('xdotool', 'key', '--clearmodifiers', 'Return')
+            end = time.monotonic() + 3
+            while not journal.exists():
+                assert time.monotonic() < end, 'typed intent did not reach durable staging'
+                time.sleep(.02)
+            assert host.read()['busy'] == 1
+            command('xdotool', 'windowclose', dialog)
+            window('Book details')
+            assert host.process.poll() is None
+        finally:
+            lock.rollback();lock.close()
+        window('Book details', False);host.wait(lambda s: s['error'] == 0)
 
     def kill():
         host.process.kill();host.process.wait(timeout=15)
@@ -104,7 +119,8 @@ def main():
         host.key('Escape');window('Book details', False)
         record('actual_editor_bootstraps_verified_original_preserving_existing_product_edits')
 
-        dialog = edit();set_values('Cafe\u0301 书名😀', '作者 😀', toggle=True);saved()
+        dialog = edit();set_values('Cafe\u0301 书名😀', '作者 😀', toggle=True);saved_with_window_close_barrier(dialog)
+        record('native_dialog_window_close_waits_for_the_metadata_commit_barrier')
         row = book();assert row[1:5] == ('Cafe\u0301 书名😀', '作者 😀', unicodedata.normalize('NFC', 'Cafe\u0301 书名😀'), 0)
         record('native_entries_and_favorite_control_commit_exact_unicode_metadata')
         assert counts() == (2, 2)
@@ -159,7 +175,7 @@ def main():
         shot('04-original-still-readable', host.window)
         record('original_public_sdk_reading_still_opens_after_metadata_and_recovery_operations')
         host.close()
-        assert len(checks) == 14
+        assert len(checks) == 15
         report = {'accepted': True, 'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
                   'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'checks': checks, 'count': len(checks),
                   'program_sha256': hashlib.sha256(host.binary.read_bytes()).hexdigest(), 'screenshots': shots,
