@@ -22,8 +22,9 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     assert os.environ.get('GITHUB_ACTIONS') == 'true'
-    os.environ.pop('NO_AT_BRIDGE', None)
-    os.environ['GTK_MODULES'] = 'gail:atk-bridge'
+    for name in ('NO_AT_BRIDGE', 'GTK_MODULES', 'AT_SPI_BUS_ADDRESS'):
+        os.environ.pop(name, None)
+    os.environ['GTK_A11Y'] = 'atspi'
     output = args.output.resolve();output.mkdir()
     host = Session((args.payload / 'bin/exreader-linux').resolve(),
                    (args.payload / 'Reader.otf').resolve(), output)
@@ -44,7 +45,7 @@ def main():
         while time.monotonic() < end:
             found = predicate()
             if found: return found
-            assert host.process.poll() is None
+            assert host.process is None or host.process.poll() is None
             time.sleep(.15)
         raise TimeoutError('AT-SPI predicate did not settle')
 
@@ -68,6 +69,7 @@ def main():
 
     try:
         assert bus.init()[0] and recorder.start()
+        wait(lambda: 'window id #' in command('xprop', '-root', '_NET_SUPPORTING_WM_CHECK'))
         host.launch();app = bus.wait_application('exreader-linux')
         host.dialog(source);host.wait(lambda state: state['book'] > 0 and not state['error'])
         key('F2');host.wait(lambda state: not state.get('shelf_loading') and not state.get('shelf_restoring'))
