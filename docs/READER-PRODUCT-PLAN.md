@@ -29,10 +29,37 @@ PR11 WebDAV 只读来源、PR13 GTK 固定页、PR14 修订历史/outbox，以�
 有界书架。各自只授予同源云端证据覆盖的范围，产品尚未完成联合验收。
 
 桌面目录查询 `a1e984315e1399ba96e4ef358030323d44362c81` 的 run `40035762258`
-已三平台通过。GTK 实际 2202 书有界界面已接入候选并复验，Windows 界面分页仍待接入；
-Android 与 Apple 大书架在独立复验，WebDAV 双向同步在验证真实两端协议。
-这些阶段尚无六目标共同源码、宿主数据投影联合事务或平台安全凭据 UI 的验收。
+已三平台通过。GTK 实际 2202 书有界界面源码 `dc7e0f6d`、run `40040335713`
+已通过十四项真实 UI 和全部保留回归，两作业同源成功。Windows 有界书架源码
+`f93ec5cd8154d82be63d8831e14547a27a597eca`、run `40043264202` 已独立通过：
+原 UI 158、产品 10、worker 5、有界书架 UI 13，覆盖 2202 本原书、50 行分页和
+150 行缓存。详见 [Windows 书架记录](READER-WINDOWS-SHELF.md)。
+Android 有界书架源码 `ed0008d680a6838e2834dd2a8973dcf17a5d44d2` 的 run
+`40037805014` 已同次通过：目录 12、真实 UI 10、原目录 8、导入映射 14、真实 kill
+2、原 45+10+11 及 49 页严格出口、原 48+20 门禁与本包 19 证据探针。工件
+`12538856596` 同源、107473231 字节、SHA-256
+`891a57848a53baf67bebd7fa1b0cc9a14d5b74c3aab0766e2c5b2a71c23a22c5`，未过期。
+仅授予 API34 x86_64 模拟器功能范围；`performance_accepted=false`，观测数据不是
+丝滑或真机性能验收。Apple 大书架仍在独立复验。WebDAV 双向同步二期
+[PR16](https://github.com/NoGod3524/EXReader/pull/16) 已独立交付：受测源码
+`0cb23a13fd23374b61ae7b9744173215aaf04660`，run `40038722770` 两平台同次成功；
+Linux 77+59+33、Windows 76+59+33，两个同源工件未过期且 digest 与上传日志一致。
+覆盖不可变原件、修订/outbox、真实 TLS/重试/并发/墓碑及 2202 原件全 256 分片；
+此包不授予宿主 metadata 投影、同步 UI、移动适配或真实用户云盘互操作。
+后续 PR18 的原子 metadata 投影已在源码 `73d80201`、run `40040479157` 两平台
+各通过 32 项新增检查；PR20 的具型命令在源码 `32c31768`、run `40042300722`
+两平台各通过 33 项新增检查，并保留前序检查。产品 metadata、修订与 outbox 在
+同一产品库事务提交，SDK 数据库独立。宿主 UI 和移动调用仍需各自接入验证。
+[产品预集成](READER-PRODUCT-INTEGRATION.md)已在共同源码 `bad72dd6`、run
+`40045484528` 通过 5/5 作业和云端严格汇总，确认 Windows／Linux 书架与共享同步
+模块的同源共存；尚无六目标同步闭环或平台安全凭据 UI 的验收。
 详见[桌面有界书架](READER-DESKTOP-SHELF.md)。
+Android 产品库从完整 SQL 生成资产，在现有 owner worker 上打开独立
+`reader-catalog.db`，拒绝改写 SDK 或未知数据库。导入映射和有界书架的独立结果见上方。
+WebDAV [实施契约](WEBDAV-PROTOCOL.md)的网络与两端协议结果按各包证据分别登记。
+Apple owner 队列负责独立 `reader-catalog.db` 的生命周期，原生包、UI、Model 与
+Bounded 消费者使用同一完整 SQL。目录和导入映射的独立结果见
+[Apple 导入映射](READER-IMPORT-MAPPING-APPLE.md)；新的有界书架尚未纳入本候选。
 
 ## 并行工作包
 

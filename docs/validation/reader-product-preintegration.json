@@ -1,0 +1,180 @@
+{
+  "accepted": true,
+  "source_sha": "bad72dd68602e2e80177de7fefd7a92ddeb4cae0",
+  "run_id": 40045484528,
+  "attempt": 1,
+  "scope": "same-source desktop shelves and native sync component preintegration only",
+  "complete_product": false,
+  "performance_accepted": false,
+  "six_platform_accepted": false,
+  "artifacts": [
+    {
+      "id": 12540563755,
+      "name": "reader-commands-Linux-40045484528-1",
+      "size_in_bytes": 3121788,
+      "digest": "sha256:a27546bdb6da908c5f772c90392e7d2ed774cb7794e2013d19e92ce538422f01",
+      "reports": {
+        "sync-source-evidence/result.json": {
+          "sha256": "70825e3654be5a86688cf7b525a18a9004e9bb260edf0eea82bdc5dc5d4fb1b6",
+          "checks": 77
+        },
+        "sync-protocol-evidence/result.json": {
+          "sha256": "0ad5e5ea628feac85cba1ec54315fa43911c5fff1bf009eedd33acc5ffd9e8cc",
+          "checks": 59
+        },
+        "sync-evidence/result.json": {
+          "sha256": "3a49f7ac2e51b339b27c0dcccefe07bedd95954d7872866876fdfc2196ce853d",
+          "checks": 33
+        },
+        "projection-evidence/result.json": {
+          "sha256": "8938795e3f53386f9c0e09f4a712eec7adb40d9a09c06ce77d7f09d1b3965481",
+          "checks": 32
+        },
+        "commands-evidence/result.json": {
+          "sha256": "62e21a751704fe7264179dcd7accd4adec235e0c4db7bbc92090e7f0369b7068",
+          "checks": 33
+        }
+      }
+    },
+    {
+      "id": 12540824600,
+      "name": "reader-commands-Windows-40045484528-1",
+      "size_in_bytes": 4143231,
+      "digest": "sha256:ad9784c52035b4bee39ab5e2842d7ae191fa431bddf605c7770a118841230b2e",
+      "reports": {
+        "sync-source-evidence/result.json": {
+          "sha256": "75f084fde3a387806348c38211b2dffe4bedb6bcaf7190a9c307aa0e1f1ee918",
+          "checks": 76
+        },
+        "sync-protocol-evidence/result.json": {
+          "sha256": "89d88da6e12d4ea28276ad3dc2e6d08e02c9cc865f145f0aefd603d6987a9689",
+          "checks": 59
+        },
+        "sync-evidence/result.json": {
+          "sha256": "09336cda4050d69d12d01745f7824655769843f77f2448afe4d4582b4d6aa16f",
+          "checks": 33
+        },
+        "projection-evidence/result.json": {
+          "sha256": "b6abf24e16350143ba6953835ce4431fe81adbc1a3cfcf47ff9a45b5b84902c1",
+          "checks": 32
+        },
+        "commands-evidence/result.json": {
+          "sha256": "0e7a0389485debc1edb6a353f201b42d85b27605275cfbbd8405d7aeb389a859",
+          "checks": 33
+        }
+      }
+    },
+    {
+      "id": 12541775063,
+      "name": "reader-desktop-sdk-Linux-40045484528-1",
+      "size_in_bytes": 37119095,
+      "digest": "sha256:1b3f8d9c605d95dd56af8883160978cf1037dca608cb88f2d8f5df2361d57376",
+      "reports": {
+        "desktop-sdk/verified.json": {
+          "sha256": "02fa5bae6b8f051be57c536b6aa9f268a90080e802f44ac59591261d4ac1b467",
+          "checks": 9
+        },
+        "desktop-sdk/shelf-check/shelf-result.json": {
+          "sha256": "29606a217118070a41a5570e549aa555e0c963ef09b3fe0f91599262a05cb3a1",
+          "checks": 10
+        },
+        "desktop-gtk-ui/report.json": {
+          "sha256": "b41d6f452b33d44eff6f3ad75cf2112ac27472a7af9815609db0e76fa3ce9ca8",
+          "checks": 20
+        },
+        "desktop-gtk-product/product-result.json": {
+          "sha256": "6ed9292bc7cf232ac43b2cf1c81ef251bb4399e07af621446dcc36d39b3f5145",
+          "checks": 5
+        },
+        "desktop-gtk-fixed/fixed-ui.json": {
+          "sha256": "199d93ec52d3c350443372152e64856a0059066ba26be5034e422e845708410c",
+          "checks": 24
+        },
+        "desktop-gtk-shelf/shelf-result.json": {
+          "sha256": "755dbdb60a623fe3298bb9c1cb408471569aaf964dcddd9ad29388bfbf62f835",
+          "checks": 14
+        },
+        "desktop-gtk-regressions/regressions.json": {
+          "sha256": "b39f5242b5535d1b6669851f8e1ad2f454b8b3e78429e7eb324a8fe5548c240c",
+          "checks": null
+        }
+      }
+    },
+    {
+      "id": 12541715405,
+      "name": "reader-desktop-sdk-Windows-40045484528-1",
+      "size_in_bytes": 36618850,
+      "digest": "sha256:a446de74e29b5566a3d9c4a8a9e51ff31d38185d50e1f715b6b9e75666dadbfc",
+      "reports": {
+        "desktop-sdk/verified.json": {
+          "sha256": "a3dd666e4cd5b5b5a2a27cc5f2858ba2d0817cbaecb259f0833c14eba29e9e8e",
+          "checks": 9
+        },
+        "desktop-sdk/shelf-check/shelf-result.json": {
+          "sha256": "29606a217118070a41a5570e549aa555e0c963ef09b3fe0f91599262a05cb3a1",
+          "checks": 10
+        },
+        "desktop-windows-ui/wp13-windows-evidence.json": {
+          "sha256": "75d3231c0bee7799f5d23ba092d74db77e950d6941796c2516217cd2f7b42115",
+          "checks": 9
+        },
+        "desktop-windows-product/product-result.json": {
+          "sha256": "fd8c3d78f0f7656e0f897c8839cd3bf50e07d34b7d9211433f92d2cc9b562ba3",
+          "checks": 10
+        },
+        "desktop-windows-shelf-worker/worker-result.json": {
+          "sha256": "a9f3e28c132eee8a591ac2a8e50804ea9e5bbccb4c06426a5da2cda321b253f6",
+          "checks": 5
+        },
+        "desktop-windows-shelf-ui/shelf-result.json": {
+          "sha256": "56db392654d67a14158eb702aa1b83fa0a97bc9208248f5003310f3211bcaedf",
+          "checks": 13
+        }
+      }
+    }
+  ],
+  "problems": [],
+  "jobs": [
+    {
+      "id": 120726103432,
+      "name": "desktop / desktop SDK (ubuntu-22.04)",
+      "head_sha": "bad72dd68602e2e80177de7fefd7a92ddeb4cae0",
+      "run_attempt": 1,
+      "conclusion": "success"
+    },
+    {
+      "id": 120726103493,
+      "name": "desktop / desktop SDK (windows-2022)",
+      "head_sha": "bad72dd68602e2e80177de7fefd7a92ddeb4cae0",
+      "run_attempt": 1,
+      "conclusion": "success"
+    },
+    {
+      "id": 120726103508,
+      "name": "commands / installed typed product commands (windows-2022)",
+      "head_sha": "bad72dd68602e2e80177de7fefd7a92ddeb4cae0",
+      "run_attempt": 1,
+      "conclusion": "success"
+    },
+    {
+      "id": 120726103530,
+      "name": "commands / installed typed product commands (ubuntu-22.04)",
+      "head_sha": "bad72dd68602e2e80177de7fefd7a92ddeb4cae0",
+      "run_attempt": 1,
+      "conclusion": "success"
+    }
+  ],
+  "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
+  "schema1_unchanged": true,
+  "workflow": ".github/workflows/reader-product-integration.yml",
+  "cloud_conclusion": "success",
+  "summary_job_id": 120727675306,
+  "rejection_test_methods": 6,
+  "summary_artifact": {
+    "id": 12541601218,
+    "name": "reader-product-preintegration-40045484528-1",
+    "size_in_bytes": 1932,
+    "digest": "sha256:1fa0af800a3f65675bc69263e55c33ed9e1cde1881f4048c80f81b8d5e792815"
+  },
+  "metadata_verification": "GitHub connector metadata and completed job logs; ZIPs verified only by Actions summary"
+}

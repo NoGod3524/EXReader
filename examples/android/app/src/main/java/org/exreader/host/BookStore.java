@@ -1,18 +1,131 @@
 // SPDX-License-Identifier: MIT
 package org.exreader.host;
 
+import android.content.Context;
+import android.os.CancellationSignal;
+import android.util.Log;
+
 import java.io.File;
+import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
 /** Worker-thread facade over the SDK library; no call is made from the UI thread. */
 final class BookStore implements AutoCloseable {
     private final NativeLibrary library;
+    private final CatalogStore catalog;
+    private boolean metadataRepairPending;
     NativeLibrary nativeLibrary() { return library; }
     boolean bounded(long bookId) { return library.bounded(bookId); }
 
-    BookStore(File database) {
-        library = new NativeLibrary(database.getAbsolutePath());
+    BookStore(Context context, File database) throws IOException {
+        CatalogStore openedCatalog = new CatalogStore(context,
+                new File(database.getParentFile(), "reader-catalog.db"));
+        NativeLibrary openedLibrary;
+        try {
+            openedLibrary = new NativeLibrary(database.getAbsolutePath());
+        } catch (RuntimeException | Error error) {
+            openedCatalog.close();
+            throw error;
+        }
+        catalog = openedCatalog;
+        library = openedLibrary;
+        try { repairMissingMappings(); }
+        catch (RuntimeException | Error error) {
+            try { library.close(); } catch (RuntimeException cleanup) { error.addSuppressed(cleanup); }
+            try { catalog.close(); } catch (RuntimeException cleanup) { error.addSuppressed(cleanup); }
+            throw error;
+        }
+    }
+
+    boolean metadataRepairPending() { return metadataRepairPending; }
+
+    List<CatalogStore.ShelfBook> shelfPage(String query, CatalogStore.ShelfKey anchor,
+                                          boolean before, boolean inclusive, CancellationSignal cancellation) {
+        return catalog.shelfPage(query, anchor, before, inclusive, cancellation);
+    }
+
+    CatalogStore.ShelfBook localShelfBook(long id) { return catalog.localShelfBook(id); }
+    CatalogStore.ShelfBook localShelfTitle(String title) { return catalog.localShelfTitle(title); }
+
+    static final class VerifiedSource {
+        final NativeLibrary.Book book;
+        final String format, sha256, key, location;
+        final long bytes;
+        VerifiedSource(NativeLibrary.Book book, String sha256, long bytes, String location) {
+            this.book = book;
+            this.format = MainActivity.formatName(book.format).toLowerCase(java.util.Locale.ROOT);
+            this.sha256 = sha256; this.bytes = bytes; this.key = format + ":" + sha256;
+            this.location = location;
+        }
+    }
+
+    VerifiedSource verifySource(long id, String expectedSha256, long expectedBytes, HostTask task)
+            throws IOException {
+        NativeLibrary.Book book = find(id);
+        if (book == null) throw new IOException("Imported SDK book is missing");
+        return verifySource(book, expectedSha256, expectedBytes, task);
+    }
+
+    private VerifiedSource verifySource(NativeLibrary.Book book, String expectedSha256,
+                                        long expectedBytes, HostTask task) throws IOException {
+        long id = book.id;
+        MessageDigest digest;
+        try { digest = MessageDigest.getInstance("SHA-256"); }
+        catch (NoSuchAlgorithmException impossible) { throw new AssertionError(impossible); }
+        long bytes;
+        try (NativeLibrary.Source source = library.source(id)) {
+            bytes = source.size;
+            if (expectedSha256 != null && bytes != expectedBytes)
+                throw new IOException("Copied and SDK source lengths differ");
+            byte[] chunk = new byte[65536];
+            for (long offset = 0; offset < bytes;) {
+                task.check();
+                int count = (int)Math.min(chunk.length, bytes - offset);
+                int read = source.read(offset, chunk, count);
+                if (read <= 0 || read > count) throw new IOException("Invalid SDK source read");
+                digest.update(chunk, 0, read); offset += read;
+            }
+        }
+        task.check();
+        StringBuilder hash = new StringBuilder(64);
+        for (byte value : digest.digest()) {
+            hash.append(Character.forDigit((value >>> 4) & 15, 16));
+            hash.append(Character.forDigit(value & 15, 16));
+        }
+        if (expectedSha256 != null && !expectedSha256.equals(hash.toString()))
+            throw new IOException("Copied and SDK original hashes differ");
+        String location = book.fixed() ? "fixed_page" : book.format == NativeLibrary.FORMAT_EPUB
+                && library.bounded(id) ? "epub_chapter" : "reflow_global";
+        return new VerifiedSource(book, hash.toString(), bytes, location);
+    }
+
+    void finalizeImport(VerifiedSource source) {
+        try { catalog.attach(source); }
+        catch (RuntimeException error) { metadataRepairPending = true; throw error; }
+    }
+
+    /** SDK is authoritative for bytes; retry only IDs absent from the local mapping. */
+    void repairMissingMappings() {
+        metadataRepairPending = false;
+        NativeLibrary.Book[] books;
+        try { books = library.books(); }
+        catch (RuntimeException error) {
+            metadataRepairPending = true;
+            Log.w("EXRHost", "Metadata repair pending; SDK book scan failed", error);
+            return;
+        }
+        for (NativeLibrary.Book book : books) {
+            try {
+                if (!catalog.hasLocalBook(book.id))
+                    catalog.attach(verifySource(book, null, 0, new HostTask(() -> false)));
+            } catch (IOException | RuntimeException error) {
+                metadataRepairPending = true;
+                Log.w("EXRHost", "Metadata repair pending for SDK book " + book.id, error);
+            }
+        }
     }
 
     List<NativeLibrary.Book> books() {
@@ -77,11 +190,14 @@ final class BookStore implements AutoCloseable {
     }
 
     void deleteBook(long bookId) {
+        // Remove first: a failed/interrupted SDK delete leaves a recoverable missing mapping.
+        catalog.removeLocalBook(bookId);
         library.deleteBook(bookId);
     }
 
     @Override
     public void close() {
-        library.close();
+        try { library.close(); }
+        finally { catalog.close(); }
     }
 }

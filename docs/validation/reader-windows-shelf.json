@@ -16,6 +16,6 @@
   "binary_sha256": "5a158ce5eda35e8644f65db4cf3886aecb8c4ae0408d49d6ea27316f5520b3e7",
   "worker_review_binary_sha256": "1f4f466d5f1274980ef3c9483822a286f61b468b3ab3275691153ff72b262ad6",
   "artifact": {"id": 12539874813, "name": "reader-desktop-sdk-Windows-40043264202-1", "bytes": 36618700, "sha256": "2045913dada11add083a652fef923a713381267b689116f38a60a11343b01161", "expired_at_verification": false},
-  "separate_query_run": {"id": 40043264180, "windows": "success", "linux": "success", "macos": "queued_at_verification"},
+  "separate_query_run": {"id": 40043264180, "windows": "success", "linux": "success", "macos": "success", "macos_job_id": 120719000164, "macos_initial_status_retained": "queued_at_verification"},
   "problems": []
 }

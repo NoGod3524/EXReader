@@ -1,0 +1,122 @@
+name: Native typed product commands
+on:
+  push:
+    branches: [codex/reader-commands]
+  workflow_dispatch:
+  workflow_call:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  sync:
+    name: installed typed product commands (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require accepted protocol ancestor and unchanged SDK/schema
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor b8cf8b432bea18bc07bdd19ffef22248d71bfe88 HEAD
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
+          git diff --exit-code f32bb8aa18ed3de286900f19ce4230fd93435dd0 HEAD -- apps/reader/store/001_catalog.sql
+      - name: Install Linux native TLS XML and SHA dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config
+      - name: Enter Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build install and test the original product provider
+        run: |
+          mkdir -p build/sync-logs
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "SYNC_WORKSPACE=$ws" >> "$GITHUB_ENV"
+          cmake -S apps/reader/store/native -B build/sync-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/sync-product-stage" 2>&1 | tee build/sync-logs/product-configure.log
+          cmake --build build/sync-product --verbose 2>&1 | tee build/sync-logs/product-build.log
+          ctest --test-dir build/sync-product --output-on-failure --no-tests=error --timeout 180
+          cmake --install build/sync-product 2>&1 | tee build/sync-logs/product-install.log
+      - name: Build and install the native TLS and revision modules
+        run: |
+          cmake -S extras/webdav -B build/sync-dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$SYNC_WORKSPACE/build/sync-dav-stage" 2>&1 | tee build/sync-logs/dav-configure.log
+          cmake --build build/sync-dav --verbose 2>&1 | tee build/sync-logs/dav-build.log
+          cmake --install build/sync-dav
+          cmake -S apps/reader/revisions -B build/sync-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$SYNC_WORKSPACE/build/sync-product-stage" -DCMAKE_INSTALL_PREFIX="$SYNC_WORKSPACE/build/sync-revision-stage" 2>&1 | tee build/sync-logs/revision-configure.log
+          cmake --build build/sync-revisions --verbose 2>&1 | tee build/sync-logs/revision-build.log
+          cmake --install build/sync-revisions
+          echo "SYNC_PREFIXES=$SYNC_WORKSPACE/build/sync-dav-stage;$SYNC_WORKSPACE/build/sync-revision-stage;$SYNC_WORKSPACE/build/sync-product-stage;$SYNC_WORKSPACE/build/sync-stage" >> "$GITHUB_ENV"
+      - name: Build and install sync and independent installed consumers
+        run: |
+          cmake -S apps/reader/sync -B build/sync -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$SYNC_PREFIXES" -DCMAKE_INSTALL_PREFIX="$SYNC_WORKSPACE/build/sync-stage" 2>&1 | tee build/sync-logs/sync-configure.log
+          cmake --build build/sync --verbose 2>&1 | tee build/sync-logs/sync-build.log
+          cmake --install build/sync
+          cmake -S tests/webdav/consumer -B build/sync-dav-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$SYNC_PREFIXES"
+          cmake --build build/sync-dav-consumer --verbose
+          cmake -S tests/reader_revisions/consumer -B build/sync-revision-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$SYNC_PREFIXES"
+          cmake --build build/sync-revision-consumer --verbose 2>&1 | tee build/sync-logs/revision-consumer-build.log
+          cmake -S tests/reader_sync/consumer -B build/sync-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$SYNC_PREFIXES"
+          cmake --build build/sync-consumer --verbose 2>&1 | tee build/sync-logs/sync-consumer-build.log
+      - name: Preserve original source 77 or 76 and protocol 59 checks
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/webdav/check_tls.py --consumer "build/sync-dav-consumer/webdav-consumer$exe" --module-prefix build/sync-dav-stage --output build/sync-source-evidence
+          python3 tests/reader_revisions/check_protocol.py --consumer "build/sync-revision-consumer/revision-consumer$exe" --c-consumer "build/sync-revision-consumer/revision-c-consumer$exe" --product-prefix build/sync-product-stage --revision-prefix build/sync-revision-stage --build-log build/sync-logs/revision-consumer-build.log --link-map build/sync-revision-consumer/revision-link.map --output build/sync-protocol-evidence
+      - name: Actual TLS two-client immutable publication and bounded discovery
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          "build/sync-consumer/sync-c-consumer$exe"
+          python3 tests/reader_sync/check_sync.py --consumer "build/sync-consumer/sync-consumer$exe" --revision-consumer "build/sync-revision-consumer/revision-consumer$exe" --output build/sync-evidence
+      - name: Actual atomic metadata expected-head and selected-payload acceptance
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_projection/check_projection.py --consumer "build/sync-revision-consumer/revision-consumer$exe" --output build/projection-evidence
+      - name: Build install and independently consume typed commands
+        run: |
+          cmake -S apps/reader/commands -B build/commands -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$SYNC_PREFIXES" -DCMAKE_INSTALL_PREFIX="$SYNC_WORKSPACE/build/commands-stage" 2>&1 | tee build/sync-logs/commands-configure.log
+          cmake --build build/commands --verbose 2>&1 | tee build/sync-logs/commands-build.log
+          cmake --install build/commands
+          cmake -S tests/reader_commands/consumer -B build/commands-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$SYNC_WORKSPACE/build/commands-stage;$SYNC_PREFIXES"
+          cmake --build build/commands-consumer --verbose 2>&1 | tee build/sync-logs/commands-consumer-build.log
+      - name: Installed C C++ typed transactions retries dependencies and strict Unicode
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_commands/check_commands.py --consumer "build/commands-consumer/command-consumer$exe" --c-consumer "build/commands-consumer/command-c-consumer$exe" --revision-consumer "build/sync-revision-consumer/revision-consumer$exe" --product-prefix build/sync-product-stage --link-map build/commands-consumer/command-link.map --build-log build/sync-logs/commands-consumer-build.log --output build/commands-evidence
+      - name: Preserve source-bound evidence and installed modules without keys
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-commands-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/sync-logs/
+            build/sync-source-evidence/
+            build/sync-protocol-evidence/
+            build/sync-evidence/
+            build/projection-evidence/
+            build/commands-evidence/
+            build/commands-stage/
+            build/commands-consumer/command-link.map
+            !build/**/certificates/*.key
+            build/sync-product-stage/
+            build/sync-revision-stage/
+            build/sync-dav-stage/
+            build/sync-stage/
+            build/sync-consumer/sync-consumer*
+          if-no-files-found: error
+

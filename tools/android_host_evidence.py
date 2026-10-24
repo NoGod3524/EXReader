@@ -28,6 +28,7 @@ SOURCE_PATHS = ['CMakeLists.txt', 'src', 'include', 'cmake', 'bindings/jni', 'ex
                 'tools/run_android_host_evidence.py', 'tools/host_font.py', 'tests/android_host',
                 '.github/workflows/wp13-android.yml']
 SOURCE_PATHS += ['.github/workflows/r5-android-bounded-candidate.yml']
+SOURCE_PATHS += ['tools/reader_catalog_assets.py', 'apps/reader/store/001_catalog.sql']
 
 
 def ownership():

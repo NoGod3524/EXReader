@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 """Build/run real Swift session regressions in GitHub Actions against installed SDK."""
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -26,10 +27,11 @@ def main():
     program = output/'model-review'
     command = ['xcrun', 'swiftc', '-swift-version', '5', '-parse-as-library',
                     '-D', 'EXR_APPLE_HOST_REVIEW',
-                    '-I', str(sdk/'include'), '-L', str(sdk/'lib'), '-lexreader',
+                    '-I', str(sdk/'include'), '-L', str(sdk/'lib'), '-lexreader', '-lsqlite3',
                     '-Xlinker', '-rpath', '-Xlinker', str(sdk/'lib'),
                     str(ROOT/'examples/apple/HostSDK.swift'),
                     str(ROOT/'examples/apple/HostModel.swift'),
+                    str(ROOT/'examples/apple/HostCatalog.swift'),
                     str(ROOT/'examples/apple/SelectableText.swift'),
                     str(ROOT/'tests/apple_host/review/ModelReview.swift'),
                     '-o', str(program)]
@@ -43,6 +45,13 @@ def main():
             report = output/'model-review.json'
             if report.is_file():
                 data = json.loads(report.read_text())
+                sources = ('examples/apple/HostSDK.swift', 'examples/apple/HostModel.swift',
+                           'examples/apple/HostCatalog.swift', 'examples/apple/SelectableText.swift',
+                           'tests/apple_host/review/ModelReview.swift', 'tools/check_apple_model_review.py',
+                           'apps/reader/store/001_catalog.sql')
+                data['source_files_sha256'] = {
+                    name: hashlib.sha256((ROOT/name).read_bytes()).hexdigest() for name in sources}
+                report.write_text(json.dumps(data, indent=2, sort_keys=True) + '\n')
                 print(json.dumps({'phase': phase, 'return_code': completed.returncode,
                                   'source_sha': data.get('source_sha'), 'run_id': data.get('run_id'),
                                   'accepted': data.get('accepted'), 'check_count': len(data.get('checks', []))}), flush=True)

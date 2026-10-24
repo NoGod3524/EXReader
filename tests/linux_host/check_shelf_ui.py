@@ -49,7 +49,7 @@ def main():
     def scroll(direction, predicate):
         # Real wheel events, not a host-only test command or SQL offset.
         command('xdotool', 'mousemove', '--window', host.window, '400', '500')
-        for _ in range(160):
+        for _ in range(320):
             subprocess.run(['xdotool', 'click', '--repeat', '8', '--delay', '15', str(5 if direction > 0 else 4)],
                            check=True, timeout=15)
             time.sleep(.08)
@@ -64,7 +64,11 @@ def main():
         initial = ready(lambda state: state['books'] == 50)
         assert initial['shelf_first_id'] == 1 and initial['shelf_last_id'] == 50
         checks.append('startup_actual_product_only_50_rows')
-        end = scroll(1, lambda state: state['shelf_last_id'] == 2202 and not state['shelf_after'])
+        command('xdotool', 'windowsize', '--sync', host.window, '1100', '3100')
+        ready(lambda state: state['books'] >= 100 and state['shelf_first_id'] == 1)
+        checks.append('tall_viewport_prefetches_beyond_first_50_without_scroll_range')
+        command('xdotool', 'windowsize', '--sync', host.window, '1040', '820')
+        end = scroll(1, lambda state: state['shelf_last_id'] == 2202 and not state['shelf_after'] and state['shelf_top_id'] > 2180)
         assert end['books'] <= 150 and end['shelf_evicted'] > 0 and end['shelf_before']
         checks.append('wheel_traverses_all_2202_with_150_row_cache')
         back = scroll(-1, lambda state: state['shelf_first_id'] == 1 and not state['shelf_before'])
@@ -116,6 +120,7 @@ def main():
         host.process.wait(timeout=30)
         assert host.process.returncode == 0
         host.log.close();host.launch()
+        host.key('F2')
         ready(lambda state: state['books'] == 1 and state['shelf_first_id'] == 101)
         checks.append('immediate_normal_close_persists_new_query_before_debounce')
         observations.append({'state': host.read(), 'process_status': Path(f'/proc/{host.process.pid}/status').read_text(),
@@ -126,7 +131,7 @@ def main():
             host.process.kill();host.process.wait(timeout=20)
         if host.log and not host.log.closed:
             host.log.close()
-    assert len(checks) == 13
+    assert len(checks) == 14
     report = {'accepted': True, 'complete_product': False, 'source_sha': os.environ['GITHUB_SHA'],
               'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
               'originals': 2202, 'page_size': 50, 'cache_limit': 150, 'checks': checks,
