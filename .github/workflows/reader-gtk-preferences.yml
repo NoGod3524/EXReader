@@ -141,7 +141,7 @@ jobs:
             openbox >build/account-logs/account-openbox.log 2>&1 &
             wm=$!
             trap "kill $wm || true" EXIT
-            python3 tests/linux_host/check_account_ui.py --payload build/account-package/EXReader-Linux --metadata-consumer build/account-metadata-consumer/metadata-consumer --revision-consumer build/account-revision-consumer/revision-consumer --output build/account-ui --receive-fixtures build/account-receive-fixtures --reading-probe build/account-reading-probe/reading-v2-probe --inspect-consumer build/account-inspect/received-sdk-inspect
+            python3 tests/reader_gtk_preferences/retain_account.py --payload build/account-package/EXReader-Linux --metadata-consumer build/account-metadata-consumer/metadata-consumer --revision-consumer build/account-revision-consumer/revision-consumer --output build/account-ui --receive-fixtures build/account-receive-fixtures --reading-probe build/account-reading-probe/reading-v2-probe --inspect-consumer build/account-inspect/received-sdk-inspect
           '
       - name: Preserve twenty product five fixed twenty-four shelf fourteen metadata fifteen collections twenty-seven
         if: ${{ !cancelled() && github.event.inputs.ui_diagnostic_only != 'true' }}
