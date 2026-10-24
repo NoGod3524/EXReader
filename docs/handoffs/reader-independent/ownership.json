@@ -1,0 +1,243 @@
+{
+  "implementation_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "tasks": [
+    {
+      "id": "G01",
+      "title": "Windows 账号、同步与收取界面",
+      "branch": "codex/reader-windows-account",
+      "application": "Claude Code",
+      "kind": "功能",
+      "priority": "P0",
+      "allowed_paths": [
+        "apps/reader/windows-account/**",
+        "apps/reader/desktop/windows_accounts*.inc",
+        "apps/reader/desktop/windows_catalog.inc",
+        "apps/reader/desktop/windows_shelf.inc",
+        "apps/reader/desktop/windows_metadata.inc",
+        "apps/reader/desktop/windows_metadata_ui.inc",
+        "examples/reader.c",
+        "tests/reader_windows_account/**",
+        ".github/workflows/reader-windows-account.yml",
+        "docs/READER-WINDOWS-ACCOUNT.md",
+        "docs/validation/reader-windows-account.json"
+      ]
+    },
+    {
+      "id": "G02",
+      "title": "封面、首屏预览与有界缩略图缓存",
+      "branch": "codex/reader-thumbnails",
+      "application": "Claude Code",
+      "kind": "功能",
+      "priority": "P0",
+      "allowed_paths": [
+        "apps/reader/thumbnails/**",
+        "tests/reader_thumbnails/**",
+        ".github/workflows/reader-thumbnails.yml",
+        "docs/READER-THUMBNAILS.md",
+        "docs/validation/reader-thumbnails.json"
+      ]
+    },
+    {
+      "id": "G03",
+      "title": "进度、书签、标注的产品具型命令",
+      "branch": "codex/reader-reading-commands",
+      "application": "Claude Code",
+      "kind": "功能",
+      "priority": "P0",
+      "allowed_paths": [
+        "apps/reader/reading-commands/**",
+        "tests/reader_reading_commands/**",
+        ".github/workflows/reader-reading-commands.yml",
+        "docs/READER-READING-COMMANDS.md",
+        "docs/validation/reader-reading-commands.json"
+      ]
+    },
+    {
+      "id": "G04",
+      "title": "按书书签与标注列表快照",
+      "branch": "codex/reader-annotation-view",
+      "application": "Claude Code",
+      "kind": "功能",
+      "priority": "P0",
+      "allowed_paths": [
+        "apps/reader/annotation-view/**",
+        "tests/reader_annotation_view/**",
+        ".github/workflows/reader-annotation-view.yml",
+        "docs/READER-ANNOTATION-VIEW.md",
+        "docs/validation/reader-annotation-view.json"
+      ]
+    },
+    {
+      "id": "G05",
+      "title": "标注 Markdown／JSONL 导出",
+      "branch": "codex/reader-annotation-export",
+      "application": "Claude Code",
+      "kind": "功能",
+      "priority": "P1",
+      "allowed_paths": [
+        "apps/reader/annotation-export/**",
+        "tests/reader_annotation_export/**",
+        ".github/workflows/reader-annotation-export.yml",
+        "docs/READER-ANNOTATION-EXPORT.md",
+        "docs/validation/reader-annotation-export.json"
+      ]
+    },
+    {
+      "id": "G06",
+      "title": "仅移除本机下载与中断恢复",
+      "branch": "codex/reader-local-downloads",
+      "application": "Claude Code",
+      "kind": "功能",
+      "priority": "P0",
+      "allowed_paths": [
+        "apps/reader/local-downloads/**",
+        "tests/reader_local_downloads/**",
+        ".github/workflows/reader-local-downloads.yml",
+        "docs/READER-LOCAL-DOWNLOADS.md",
+        "docs/validation/reader-local-downloads.json"
+      ]
+    },
+    {
+      "id": "G07",
+      "title": "账号同步故障一致性专项",
+      "branch": "codex/reader-sync-resilience",
+      "application": "DeepSeek Harness",
+      "kind": "测试",
+      "priority": "P0",
+      "allowed_paths": [
+        "tests/reader_sync_resilience/**",
+        ".github/workflows/reader-sync-resilience.yml",
+        "docs/READER-SYNC-RESILIENCE.md",
+        "docs/validation/reader-sync-resilience.json"
+      ]
+    },
+    {
+      "id": "G08",
+      "title": "可选模块同前缀安装与组成验证",
+      "branch": "codex/reader-module-composition",
+      "application": "DeepSeek Harness",
+      "kind": "测试",
+      "priority": "P0",
+      "allowed_paths": [
+        "tests/reader_module_composition/**",
+        ".github/workflows/reader-module-composition.yml",
+        "docs/READER-MODULE-COMPOSITION.md",
+        "docs/validation/reader-module-composition.json"
+      ]
+    },
+    {
+      "id": "G09",
+      "title": "产品依赖、许可证与离线分发清单",
+      "branch": "codex/reader-distribution-inventory",
+      "application": "DeepSeek Harness",
+      "kind": "发布准备",
+      "priority": "P1",
+      "allowed_paths": [
+        "tests/reader_distribution_inventory/**",
+        ".github/workflows/reader-distribution-inventory.yml",
+        "docs/READER-DISTRIBUTION-INVENTORY.md",
+        "docs/validation/reader-distribution-inventory.json"
+      ]
+    },
+    {
+      "id": "G10",
+      "title": "Windows 产品性能观测",
+      "branch": "codex/reader-perf-windows",
+      "application": "DeepSeek Harness",
+      "kind": "性能采样",
+      "priority": "P1",
+      "allowed_paths": [
+        "tests/reader_perf_windows/**",
+        ".github/workflows/reader-perf-windows.yml",
+        "docs/READER-PERF-WINDOWS.md",
+        "docs/validation/reader-perf-windows.json"
+      ]
+    },
+    {
+      "id": "G11",
+      "title": "GTK 产品性能观测",
+      "branch": "codex/reader-perf-gtk",
+      "application": "DeepSeek Harness",
+      "kind": "性能采样",
+      "priority": "P1",
+      "allowed_paths": [
+        "tests/reader_perf_gtk/**",
+        ".github/workflows/reader-perf-gtk.yml",
+        "docs/READER-PERF-GTK.md",
+        "docs/validation/reader-perf-gtk.json"
+      ]
+    },
+    {
+      "id": "G12",
+      "title": "Windows 键盘与无障碍审计",
+      "branch": "codex/reader-a11y-windows",
+      "application": "DeepSeek Harness",
+      "kind": "审计",
+      "priority": "P1",
+      "allowed_paths": [
+        "tests/reader_a11y_windows/**",
+        ".github/workflows/reader-a11y-windows.yml",
+        "docs/READER-A11Y-WINDOWS.md",
+        "docs/validation/reader-a11y-windows.json"
+      ]
+    },
+    {
+      "id": "G13",
+      "title": "GTK 键盘与无障碍审计",
+      "branch": "codex/reader-a11y-gtk",
+      "application": "DeepSeek Harness",
+      "kind": "审计",
+      "priority": "P1",
+      "allowed_paths": [
+        "tests/reader_a11y_gtk/**",
+        ".github/workflows/reader-a11y-gtk.yml",
+        "docs/READER-A11Y-GTK.md",
+        "docs/validation/reader-a11y-gtk.json"
+      ]
+    },
+    {
+      "id": "G14",
+      "title": "Unicode 路径、名称与跨平台产品回归",
+      "branch": "codex/reader-unicode-interop",
+      "application": "DeepSeek Harness",
+      "kind": "测试",
+      "priority": "P1",
+      "allowed_paths": [
+        "tests/reader_unicode_interop/**",
+        ".github/workflows/reader-unicode-interop.yml",
+        "docs/READER-UNICODE-INTEROP.md",
+        "docs/validation/reader-unicode-interop.json"
+      ]
+    },
+    {
+      "id": "G15",
+      "title": "Android 可访问性与大字体审计",
+      "branch": "codex/reader-a11y-android",
+      "application": "DeepSeek Harness",
+      "kind": "审计",
+      "priority": "P1",
+      "allowed_paths": [
+        "tests/reader_a11y_android/**",
+        ".github/workflows/reader-a11y-android.yml",
+        "docs/READER-A11Y-ANDROID.md",
+        "docs/validation/reader-a11y-android.json"
+      ]
+    },
+    {
+      "id": "G16",
+      "title": "macOS／iPhone／iPad 可访问性审计",
+      "branch": "codex/reader-a11y-apple",
+      "application": "DeepSeek Harness",
+      "kind": "审计",
+      "priority": "P1",
+      "allowed_paths": [
+        "tests/reader_a11y_apple/**",
+        ".github/workflows/reader-a11y-apple.yml",
+        "docs/READER-A11Y-APPLE.md",
+        "docs/validation/reader-a11y-apple.json"
+      ]
+    }
+  ]
+}
+
