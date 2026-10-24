@@ -5,7 +5,8 @@
   "sdk_freeze": "9854061be331fe603a1822d9b2b36ee357154927",
   "sdk_version": "3.40.0",
   "abi": 1,
-  "status": "source-complete; cloud run pending",
+  "status": "cloud-verified",
+  "tested_source": "a85bbc5fb817ab28c28512665efc19e7c13f5ff9",
   "interfaces": {
     "header": "reader_batch_import.h",
     "cmake_target": "EXReaderBatchImport::reader_batch_import",
@@ -43,73 +44,118 @@
       "maximum": 8388608
     }
   },
+  "cloud": {
+    "run_id": 40065922610,
+    "run_attempt": 1,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40065922610",
+    "jobs": {
+      "Windows": "success",
+      "Linux": "success",
+      "macOS": "success",
+      "same-run artifact evidence": "success"
+    },
+    "report_checks_per_platform": 668,
+    "report_ok": true,
+    "results": {
+      "scan_candidates": 40,
+      "imported": 38,
+      "duplicate": 1,
+      "failed": 1,
+      "failed_case": "broken.epub (EXR_FORMAT)"
+    },
+    "artifacts": [
+      {
+        "os": "Windows",
+        "id": 12548853049,
+        "bytes": 5471868,
+        "sha256": "65d2ab8e30ddbb5875f011075a6a231661826df92cef4544c0b0d7c273679116",
+        "expires_at": "2027-01-22T05:21:19Z",
+        "report_checks": 668
+      },
+      {
+        "os": "Linux",
+        "id": 12549292972,
+        "bytes": 8220252,
+        "sha256": "9e22ce643d08ed7a11e65bbe3c5cb499eb9e51c1287549bfce93940ae6872272",
+        "expires_at": "2027-01-22T05:21:19Z",
+        "report_checks": 668
+      },
+      {
+        "os": "macOS",
+        "id": 12548429750,
+        "bytes": 7045659,
+        "sha256": "01598657b8e41c6c7222cc5db6ae47c314814566ca447aa372fc47e05eed98a2",
+        "expires_at": "2027-01-22T05:21:19Z",
+        "report_checks": 668
+      }
+    ],
+    "evidence_artifact": {
+      "name": "reader-batch-import-evidence-40065922610-1",
+      "status": "all three artifacts downloaded and matched declared sha256"
+    }
+  },
   "checks": [
     {
       "name": "installed C/C++ consumers on Windows/Linux/macOS",
-      "status": "pending"
+      "status": "passed"
     },
     {
       "name": "nine real formats and azw3/MOBI",
-      "status": "pending"
+      "status": "passed"
     },
     {
       "name": "Unicode/space and multi-level paths",
-      "status": "pending"
+      "status": "passed"
     },
     {
       "name": "non-book, corrupt and directory-as-book rejected",
-      "status": "pending"
+      "status": "passed"
     },
     {
       "name": "symlink/junction/root escape rejected",
-      "status": "pending"
+      "status": "passed"
     },
     {
       "name": "post-enumeration modify/delete/link",
-      "status": "pending"
+      "status": "passed"
     },
     {
       "name": "depth/directory/candidate/path/pending limits report truncated",
-      "status": "pending"
+      "status": "passed"
     },
     {
       "name": "batch 1..100 and continuation",
-      "status": "pending"
+      "status": "passed"
     },
     {
       "name": "cancellation preserves committed results and metadata",
-      "status": "pending"
+      "status": "passed"
     },
     {
       "name": "exact duplicate reuses oldest book_id and created=0",
-      "status": "pending"
+      "status": "passed"
     },
     {
       "name": "existing storage mode preserved",
-      "status": "pending"
+      "status": "passed"
     },
     {
       "name": "public SDK readback matches source SHA-256",
-      "status": "pending"
+      "status": "passed"
     },
     {
       "name": "no product SQL tables",
-      "status": "pending"
+      "status": "passed"
     },
     {
       "name": "staging temp cleanup",
-      "status": "pending"
+      "status": "passed"
     }
   ],
-  "cloud": {
-    "run_id": null,
-    "run_attempt": null,
-    "artifacts": [],
-    "status": "pending"
-  },
   "limitations": [
     "System file picker and host product UI are out of scope.",
     "Product catalog/revision/outbox mapping is performed by root after the SDK result callback.",
-    "Cancellation cannot interrupt the public PDF SDK call itself; a result committed by that call is returned."
+    "Cancellation cannot interrupt the public PDF SDK call itself; a result committed by that call is returned.",
+    "The tested source is a85bbc5f; later documentation-only commits do not change the package."
   ]
 }
