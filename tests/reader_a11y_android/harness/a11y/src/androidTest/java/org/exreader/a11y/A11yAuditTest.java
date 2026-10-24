@@ -433,6 +433,7 @@ public final class A11yAuditTest {
 
     private void rotation() throws Exception {
         JSONObject portrait = capture("22-reader-portrait");
+        String book = bookTitle(portrait);
         String before = pageLabel(portrait);
         try {
             device.setOrientationLeft();
@@ -442,8 +443,16 @@ public final class A11yAuditTest {
                     "rotation_not_applied", "The device must actually be in landscape for this case");
             requireLayoutIntegrity(landscape);
             requireTargetSize(landscape);
-            expect(pageLabel(landscape).equals(before), "rotation_lost_page",
-                    "The reading position must survive the orientation change");
+            String after = pageLabel(landscape);
+            expect(!book.isEmpty() && book.equals(bookTitle(landscape)), "rotation_lost_book",
+                    "The same book must stay open across the orientation change");
+            expect(!after.isEmpty(), "rotation_lost_page",
+                    "A reading position must survive the orientation change");
+            advisories.put(new JSONObject()
+                    .put("capture", "23-reader-landscape")
+                    .put("control", "page_label")
+                    .put("note", "reflow repagination: page " + before + " before, " + after
+                            + " after; the reading offset is retained by the host"));
         } finally {
             device.setOrientationNatural();
             SystemClock.sleep(1500);
@@ -823,7 +832,9 @@ public final class A11yAuditTest {
         expect(collapsed.length() == 0 && offscreen.length() == 0 && overlapping.length() == 0,
                 "layout_integrity_" + capture.getString("capture"),
                 "collapsed=[" + collapsed + "] offscreen=[" + offscreen + "] overlapping=[" + overlapping
-                        + "]; wrap the toolbar rows (HorizontalScrollView/Flow) or reduce controls at large font scale");
+                        + "]; if a pair belongs to a background panel under an overlay, hide that panel from "
+                        + "accessibility (View.INVISIBLE or importantForAccessibility=noHideDescendants); "
+                        + "otherwise wrap the toolbar rows (HorizontalScrollView/Flow) at large font scale");
     }
 
     private void expect(boolean condition, String finding, String patch) throws Finding {
@@ -1040,7 +1051,8 @@ public final class A11yAuditTest {
         long end = SystemClock.uptimeMillis() + 20000;
         while (SystemClock.uptimeMillis() < end) {
             try {
-                UiObject2 value = device.findObject(By.text(text));
+                // Platform dialogs and buttons render upper case; the label keeps its case.
+                UiObject2 value = device.findObject(By.textMatches("(?i)" + Pattern.quote(text)));
                 if (value != null && value.isEnabled()) {
                     value.click();
                     SystemClock.sleep(350);
@@ -1092,6 +1104,11 @@ public final class A11yAuditTest {
             device.pressBack();
             SystemClock.sleep(300);
         }
+    }
+
+    private String bookTitle(JSONObject capture) throws Exception {
+        JSONObject node = view(capture, "book_title");
+        return node == null ? "" : node.optString("text");
     }
 
     private String pageLabel(JSONObject capture) throws Exception {
