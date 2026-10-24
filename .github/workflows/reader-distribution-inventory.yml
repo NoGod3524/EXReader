@@ -162,7 +162,8 @@ jobs:
             if [ -f "$file" ]; then cp "$file" "$art/logs/"; fi
           done
           if [ -f "build/probe/probe$EXE" ]; then cp "build/probe/probe$EXE" "$art/probe/"; fi
-          find "$art" -type f | sort | head -50
+          echo "artifact files: $(find "$art" -type f | wc -l)"
+          find "$art" -maxdepth 2 -type f | sort | sed -n '1,40p'
       - name: Preserve the installed SDK, recorded tool output and SBOM
         if: always()
         uses: actions/upload-artifact@v4
