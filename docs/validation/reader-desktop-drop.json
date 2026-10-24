@@ -1,10 +1,22 @@
 {
   "schema": 1,
-  "scope": "desktop file drop and paste adapter: portable strict parsers plus Windows HDROP/OLE drop target, GTK3 text/uri-list drop destination and AppKit NSPasteboard drag destination",
+  "scope": "desktop file drop and paste adapter: portable strict parsers plus Windows bounded HGLOBAL/OLE drop target, GTK3 text/uri-list drop destination and AppKit NSPasteboard drag destination",
   "accepted": true,
   "complete_product": false,
   "host_wiring": false,
   "interactive_drag_gesture": false,
+  "root_review": {
+    "record": "docs/handoffs/reader-next-wave/J03-ROOT-REVIEW.md",
+    "commit": "a66528ae",
+    "received_repairs": [
+      "request_from_unicode_text bounds wcsnlen by GlobalSize()/sizeof(wchar_t) and refuses a buffer without a NUL inside it",
+      "request_from_file_group checks the header size and that cItems is covered by the real descriptor array before indexing fgd[]",
+      "request_from_hdrop validates the DROPFILES header, the pFiles offset and a wide or ANSI list that terminates inside the allocation before the shell parses it",
+      "the Windows target installs one transparent window procedure so WM_DESTROY revokes the OLE registration and WM_NCDESTROY restores it, removing the COM reference that survived a window destroyed before detach",
+      "malformed buffers are proven safe by tiny/unterminated/odd-length/lying-count/out-of-range HGLOBAL negatives plus an AddressSanitizer build and a live-target hook build",
+      "the wide FileGroupDescriptorW clipboard atom is registered from an explicit wide literal (CFSTR_FILEDESCRIPTORW is narrow in this SDK)"
+    ]
+  },
   "implementation_base": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "sdk_frozen_source": "9854061be331fe603a1822d9b2b36ee357154927",
   "sdk_version": "3.40.0",
@@ -12,83 +24,83 @@
   "product_schema": 1,
   "branch": "codex/reader-desktop-drop",
   "workflow": ".github/workflows/reader-desktop-drop.yml",
-  "tested_source_sha": "f2c95f9a4cc013f294edc55fefe12b8da3d5a5a5",
-  "source_sha": "f2c95f9a4cc013f294edc55fefe12b8da3d5a5a5",
+  "tested_source_sha": "5a0cd498ce4ec570f6cd52c6eca4d611431c1cc0",
+  "source_sha": "5a0cd498ce4ec570f6cd52c6eca4d611431c1cc0",
   "documentation_only_delta": [
     "docs/READER-DESKTOP-DROP.md",
     "docs/validation/reader-desktop-drop.json"
   ],
   "run": {
-    "id": "40123821461",
+    "id": "40136297928",
     "attempt": 1,
     "conclusion": "success",
-    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40123821461",
-    "head_sha": "f2c95f9a4cc013f294edc55fefe12b8da3d5a5a5",
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40136297928",
+    "head_sha": "5a0cd498ce4ec570f6cd52c6eca4d611431c1cc0",
     "branch": "codex/reader-desktop-drop",
-    "created_at": "2026-10-24T19:07:06Z"
+    "created_at": "2026-10-24T21:54:59Z"
   },
   "jobs": [
     {
       "name": "guard",
-      "id": "120960870686",
+      "id": "120998422950",
       "conclusion": "success"
     },
     {
       "name": "drop (linux-gtk3)",
-      "id": "120960870540",
+      "id": "120998423026",
       "conclusion": "success"
     },
     {
       "name": "drop (windows-hdrop)",
-      "id": "120960870701",
+      "id": "120998422847",
       "conclusion": "success"
     },
     {
       "name": "drop (macos-pasteboard)",
-      "id": "120960870737",
+      "id": "120998423066",
       "conclusion": "success"
     },
     {
       "name": "same-run report",
-      "id": "120964707081",
+      "id": "120999389194",
       "conclusion": "success"
     }
   ],
   "artifacts": [
     {
       "platform": "windows",
-      "name": "reader-desktop-drop-windows-40123821461-1",
-      "id": "12572242559",
-      "bytes": 1400329,
-      "digest": "sha256:28f9f841fdc9a50e3066ddfbd94f4cf29cc5372d6a3e5f9450cb4385b908b15b",
-      "expires_at": "2027-01-22T19:07:07Z",
+      "name": "reader-desktop-drop-windows-40136297928-1",
+      "id": "12577100299",
+      "bytes": 12397988,
+      "digest": "sha256:7083e89f487d036a41567bad1f5aca808d165c8e878a53853a3658761782ed91",
+      "expires_at": "2027-01-22T21:54:59Z",
       "recomputed_and_matched_in_actions": true
     },
     {
       "platform": "linux",
-      "name": "reader-desktop-drop-linux-40123821461-1",
-      "id": "12571374475",
-      "bytes": 305884,
-      "digest": "sha256:1562100a58a490999eedaa3191fb317a6c835b6bf7c2ba6a0d00dc47bb0496b2",
-      "expires_at": "2027-01-22T19:07:07Z",
+      "name": "reader-desktop-drop-linux-40136297928-1",
+      "id": "12576449766",
+      "bytes": 306129,
+      "digest": "sha256:ecaa015a7747082c778c0adb541564099c407e6fdd00fe4f27e3477ff560ed74",
+      "expires_at": "2027-01-22T21:54:59Z",
       "recomputed_and_matched_in_actions": true
     },
     {
       "platform": "macos",
-      "name": "reader-desktop-drop-macos-40123821461-1",
-      "id": "12571909968",
-      "bytes": 395928,
-      "digest": "sha256:5e55051f4e93d1e8458329ab8331b05fda00e3eb50120f9534e202dc3f154b0c",
-      "expires_at": "2027-01-22T19:07:07Z",
+      "name": "reader-desktop-drop-macos-40136297928-1",
+      "id": "12576884782",
+      "bytes": 396149,
+      "digest": "sha256:721670a77465aff845dfa754f008bf9948c8c1e6a627c7ca2fd72c833b5023fd",
+      "expires_at": "2027-01-22T21:54:59Z",
       "recomputed_and_matched_in_actions": true
     },
     {
       "platform": "report",
-      "name": "reader-desktop-drop-report-40123821461-1",
-      "id": "12572214740",
-      "bytes": 828,
-      "digest": "sha256:874ae7b021161f9bc39f325eafe85abd7fd8a5ca3f9a1ce1bbd26c816825599b",
-      "expires_at": "2027-01-22T19:07:07Z",
+      "name": "reader-desktop-drop-report-40136297928-1",
+      "id": "12577700308",
+      "bytes": 834,
+      "digest": "sha256:d46a50b416e358643e602833682b7241fdf05b8ae4a82323ebcf6e51631e3018",
+      "expires_at": "2027-01-22T21:54:59Z",
       "recomputed_and_matched_in_actions": false
     }
   ],
@@ -111,13 +123,41 @@
         "windows",
         "linux",
         "macos"
-      ]
+      ],
+      "sanitizer_build_cases": 52
     },
     "windows_native": {
-      "cases": 31,
+      "cases": 49,
       "failed": 0,
-      "clipboard_cases_executed": true,
-      "ole_registration": true
+      "streams": [
+        "probe",
+        "probe-hooks.log",
+        "probe-asan.log"
+      ],
+      "sanitizer_scans": 5,
+      "address_sanitizer_clean": true,
+      "live_target_hook_reclaimed": true,
+      "window_proc_restored_after_detach": true,
+      "malformed_negatives": [
+        "reject_text_without_terminator",
+        "reject_text_odd_bytes",
+        "reject_text_short_global",
+        "reject_file_group_short_header",
+        "reject_file_group_beyond_allocation",
+        "reject_file_group_extreme_count",
+        "reject_file_group_empty",
+        "reject_hdrop_short_header",
+        "reject_hdrop_pfiles_out_of_range",
+        "reject_hdrop_pfiles_before_header",
+        "reject_hdrop_wide_unterminated",
+        "reject_hdrop_ansi_unterminated",
+        "reject_hdrop_wide_truncated_unit",
+        "reject_clipboard_hdrop_invalid_pfiles"
+      ],
+      "accepted_exact_fit": [
+        "accept_text_exact_terminator",
+        "accept_hdrop_ansi_list"
+      ]
     },
     "gtk3_native": {
       "cases": 28,
@@ -139,14 +179,53 @@
   "limits": [
     "One GitHub Actions runner per platform; no physical device and no interactive pointer drag.",
     "Windows drops are delivered through the adapter entry OLE calls for IDropTarget::Drop with a real shell data object (SHCreateDataObject) and synthetic COM objects; no pointer-device drag is started.",
+    "AddressSanitizer runs with detect_leaks=0; persistent COM reclamation is proven by the hook build's live-target counter instead of a heap-leak report.",
+    "The clipboard normalises CF_UNICODETEXT, so the clipboard negative is structural (HDROP pFiles outside the allocation); unterminated and odd-length text negatives run on the IDataObject route.",
     "GTK payloads travel through a real X11 clipboard under Xvfb and the installed drop destination; the drag gesture itself is not synthesised.",
-    "AppKit payloads travel through a real private NSPasteboard and an NSDraggingInfo double into the installed destination view; no NSWindow drag session is started.",
-    "Windows COM reclamation when the window is destroyed before detach leaves one small object owned by OLE."
+    "AppKit payloads travel through a real private NSPasteboard and an NSDraggingInfo double into the installed destination view; no NSWindow drag session is started."
+  ],
+  "previous_acceptance": {
+    "source_sha": "f2c95f9a4cc013f294edc55fefe12b8da3d5a5a5",
+    "run": "40123821461",
+    "note": "Kept as the first acceptance; superseded for the repaired source because it could not observe the allocation bounds, the narrow clipboard atom or the COM reference left by a destroyed window."
+  },
+  "rejected_runs": [
+    {
+      "run": "40122278887",
+      "revision": "7a477bdf",
+      "reason": "guard also scanned the host example"
+    },
+    {
+      "run": "40122803440",
+      "revision": "2a813e59",
+      "reason": "GTK clipboard API and six portable fixtures"
+    },
+    {
+      "run": "40123129432",
+      "revision": "745f152a",
+      "reason": "GTK main-context guard, cancel fixture and toolkit noise"
+    },
+    {
+      "run": "40123504735",
+      "revision": "cce4c045",
+      "reason": "probes clobbered their own target handles"
+    },
+    {
+      "run": "40135689234",
+      "revision": "03babdbe",
+      "reason": "MSYS mangled /fsanitize=address; narrow CFSTR_FILEDESCRIPTORW; const COM vtable"
+    },
+    {
+      "run": "40136007055",
+      "revision": "14b91fbc",
+      "reason": "clipboard normalises unterminated text, so that negative was not deterministic"
+    }
   ],
   "problems": [],
   "notes": [
     "Evidence was committed after the run with [skip ci]; the final HEAD adds only the two documentation files listed in documentation_only_delta.",
-    "Rejected intermediate runs 40122278887, 40122803440, 40123129432 and 40123504735 are recorded in docs/READER-DESKTOP-DROP.md with the correction each produced.",
+    "The Windows report binds the release, hook and AddressSanitizer probe streams plus the portable sanitizer run and five stderr scans, so every memory-safety and lifecycle claim is inside the attested artifact.",
+    "Hook counters are compiled out of the installed binary; the installed package exports only the documented public API.",
     "Host wiring, product acceptance and the shared-source re-verification remain with root."
   ]
 }
