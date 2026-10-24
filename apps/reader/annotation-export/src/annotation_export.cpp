@@ -109,21 +109,53 @@ std::wstring absolute_path(const std::string &s){
   out.resize(end);
   return out;
 }
+/* Volume/file id of one path as the file system itself sees it. Opening a
+   directory needs FILE_FLAG_BACKUP_SEMANTICS; this is the only identity that
+   resolves junction and symlink parents, which path strings never do. */
+bool object_identity(const std::wstring &path,DWORD &volume,DWORD &high,DWORD &low){
+  HANDLE handle=CreateFileW(path.c_str(),0,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,nullptr,
+                            OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS,nullptr);
+  if(handle==INVALID_HANDLE_VALUE)return false;
+  BY_HANDLE_FILE_INFORMATION info{};
+  bool known=GetFileInformationByHandle(handle,&info)!=0;
+  CloseHandle(handle);
+  if(!known)return false;
+  volume=info.dwVolumeSerialNumber;high=info.nFileIndexHigh;low=info.nFileIndexLow;
+  return true;
+}
+bool object_identity(const std::string &utf8,DWORD &volume,DWORD &high,DWORD &low){
+  return object_identity(wide(utf8),volume,high,low);
+}
+/* Parent name and final component of the absolute form; absolute_path already
+   applied Win32's trailing-dot/space handling to the final component. */
+bool split_target(const std::string &utf8,std::wstring &directory,std::wstring &leaf){
+  std::wstring full=absolute_path(utf8);
+  size_t slash=full.find_last_of(L"\\/");
+  if(slash==std::wstring::npos){directory=L".";leaf=full;return !full.empty();}
+  leaf=full.substr(slash+1);
+  directory=full.substr(0,slash);
+  if(directory.empty())directory=L"\\";
+  else if(directory.size()==2&&directory[1]==L':')directory+=L'\\';
+  return !leaf.empty();
+}
 bool same_target(const char *a,const char *b){
-  HANDLE x=CreateFileW(wide(a).c_str(),0,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,nullptr,
-                       OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS,nullptr);
-  HANDLE y=CreateFileW(wide(b).c_str(),0,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,nullptr,
-                       OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS,nullptr);
-  if(x!=INVALID_HANDLE_VALUE&&y!=INVALID_HANDLE_VALUE){
-    BY_HANDLE_FILE_INFORMATION first{},second{};
-    bool known=GetFileInformationByHandle(x,&first)&&GetFileInformationByHandle(y,&second);
-    CloseHandle(x);CloseHandle(y);
-    if(known)return first.dwVolumeSerialNumber==second.dwVolumeSerialNumber&&
-      first.nFileIndexHigh==second.nFileIndexHigh&&first.nFileIndexLow==second.nFileIndexLow;
-  }else{
-    if(x!=INVALID_HANDLE_VALUE)CloseHandle(x);
-    if(y!=INVALID_HANDLE_VALUE)CloseHandle(y);
+  /* Two existing files: their own volume/file id is the most direct identity and
+     also covers hard links and short names. */
+  DWORD av=0,ah=0,al=0,bv=0,bh=0,bl=0;
+  bool first_exists=object_identity(a,av,ah,al),second_exists=object_identity(b,bv,bh,bl);
+  if(first_exists&&second_exists)return av==bv&&ah==bh&&al==bl;
+  /* Otherwise: the same final component (case-insensitively) inside one parent
+     directory, compared by handle so a junction or symlinked parent resolves. A
+     leaf that does not exist yet cannot carry a short name of its own. */
+  std::wstring first_dir,first_leaf,second_dir,second_leaf;
+  if(split_target(a,first_dir,first_leaf)&&split_target(b,second_dir,second_leaf)&&
+     CompareStringOrdinal(first_leaf.c_str(),(int)first_leaf.size(),second_leaf.c_str(),(int)second_leaf.size(),TRUE)==CSTR_EQUAL){
+    DWORD fv=0,fh=0,fl=0,sv=0,sh=0,sl=0;
+    if(object_identity(first_dir,fv,fh,fl)&&object_identity(second_dir,sv,sh,sl))
+      return fv==sv&&fh==sh&&fl==sl;
   }
+  /* Last resort when a parent does not exist yet (creation would fail anyway):
+     the normalized absolute names, case-insensitively. */
   std::wstring first=absolute_path(a),second=absolute_path(b);
   return CompareStringOrdinal(first.c_str(),(int)first.size(),second.c_str(),(int)second.size(),TRUE)==CSTR_EQUAL;
 }
@@ -155,10 +187,29 @@ std::string resolved_target(const char *path){
   if(out!="/")out.push_back('/');
   return out+leaf;
 }
+bool split_target(const char *path,std::string &directory,std::string &leaf){
+  std::string text(path);
+  size_t cut=text.find_last_of('/');
+  if(cut==std::string::npos){directory=".";leaf=text;return !leaf.empty();}
+  directory=cut==0?std::string("/"):text.substr(0,cut);
+  leaf=text.substr(cut+1);
+  return !leaf.empty();
+}
 bool same_target(const char *a,const char *b){
+  /* Two existing files: their own device/inode is the most direct identity. */
   struct stat first{},second{};
   if(::stat(a,&first)==0&&::stat(b,&second)==0)
     return first.st_dev==second.st_dev&&first.st_ino==second.st_ino;
+  /* Otherwise the same final component inside one parent directory, compared by
+     the parent's own device/inode so a symlinked (or otherwise aliased) parent
+     resolves even when the leaf does not exist yet. */
+  std::string first_dir,first_leaf,second_dir,second_leaf;
+  if(split_target(a,first_dir,first_leaf)&&split_target(b,second_dir,second_leaf)&&first_leaf==second_leaf){
+    struct stat first_parent{},second_parent{};
+    if(::stat(first_dir.c_str(),&first_parent)==0&&::stat(second_dir.c_str(),&second_parent)==0)
+      return first_parent.st_dev==second_parent.st_dev&&first_parent.st_ino==second_parent.st_ino;
+  }
+  /* Last resort when a parent does not exist yet: the resolved names. */
   return resolved_target(a)==resolved_target(b);
 }
 #endif
