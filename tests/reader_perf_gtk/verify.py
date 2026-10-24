@@ -182,6 +182,8 @@ def main():
     for metric in CORE_METRICS:
         entry = report['metrics'].get(metric)
         require(entry is not None, 'metric missing from the report: ' + metric)
+        require(isinstance(entry, dict) and isinstance(entry.get('expected'), int)
+                and isinstance(entry.get('ok'), int), 'metric record is malformed: ' + metric)
         require(entry['expected'] > 0 and entry['ok'] >= entry['expected'],
                 'metric coverage differs: ' + metric)
         values = summary['metrics'][metric]

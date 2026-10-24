@@ -334,8 +334,9 @@ def main():
         'source_sha': source, 'run_id': run_id, 'attempt': attempt,
         'workflow': '.github/workflows/reader-perf-gtk.yml', 'platform': 'Linux',
         'launches': completed, 'samples': len(results),
-        'metrics': {name: {'expected': count, 'ok': coverage[name]['ok']}
-                    for name, count in sorted(coverage.items())},
+        'metrics': {name: {'expected': value['expected'], 'ok': value['ok'],
+                           'recorded': value['recorded']}
+                    for name, value in sorted(coverage.items())},
         'checks': checks,
         'problems': [row['name'] for row in checks if row['status'] != 'passed'],
         'grants': grants, 'limitations': LIMITATIONS,
