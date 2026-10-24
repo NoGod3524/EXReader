@@ -490,10 +490,15 @@ def collect(repo, run_id, attempt, sha, folder, retrospective, schemas):
         contract.need(job.get('run_id') == run_id and job.get('run_attempt') == attempt
                       and job.get('head_sha') == sha, 'job_origin')
         if job['name'] == REPORT_JOB and not retrospective:
-            contract.need(job.get('status') == 'in_progress', 'report_job_state')
-        else:
-            contract.need(job.get('status') == 'completed' and job.get('conclusion') == 'success',
-                          'job_conclusion')
+            contract.need(job.get('status') in ('in_progress', 'queued', 'waiting')
+                          and job.get('conclusion') is None, 'report_job_state')
+    unhealthy = [row['name'] for row in jobs
+                 if row['name'] != REPORT_JOB
+                 and not (row.get('status') == 'completed' and row.get('conclusion') == 'success')]
+    if unhealthy:
+        error = contract.InventoryError('job_conclusion')
+        error.detail = unhealthy
+        raise error
     folder.mkdir(parents=True, exist_ok=True)
     result = {'schema': 1, 'workflow': WORKFLOW, 'source_sha': sha, 'run_id': run_id,
               'attempt': attempt, 'retrospective': retrospective,
