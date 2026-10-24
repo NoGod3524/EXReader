@@ -3,6 +3,8 @@
 先读[共同约束](README.md)。固定实现起点：`f43baf9182d75907c0cb5d6f77048f27bca8c950`。
 各包有独占路径，能同时开工；没有要求16包彼此互等。
 
+持续执行按[协调流程](COORDINATION.md)推进；[轮次状态](cycle-state.json)只在实际合入和共同源码复验后累计完成轮数。
+
 | 包 | 任务 | 类型 | 优先级 | 分发 |
 | --- | --- | --- | --- | --- |
 | G01 | [Windows 账号、同步与收取界面](windows-account.md) | 功能 | P0 | Claude Code |

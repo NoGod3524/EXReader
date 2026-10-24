@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "recorded_at_utc": "2026-10-24T09:10:35Z",
+  "current_cycle": 1,
+  "completed_cycles": 0,
+  "audit_interval": 5,
+  "next_audit_after_completed_cycle": 5,
+  "phase": "implementing_and_reviewing",
+  "implementation_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "handoff_commit": "059a7b4fcd0de44674a30fadc7e0fded7cc47acd",
+  "integration_source": null,
+  "integration_runs": [],
+  "mainline_owners": [
+    { "agent": "/root/handoff_modules", "branch": "codex/reader-ios-sync-session" },
+    { "agent": "/root/handoff_validation", "branch": "codex/reader-gtk-receive" },
+    { "agent": "/root/main_android", "branch": "codex/reader-android-sync-session" }
+  ],
+  "claude_quota": {
+    "observed_at_utc": "2026-10-24T09:10:35Z",
+    "five_hour_used_percent": 99,
+    "reset_in_display": "2 hr 50 min",
+    "weekly_used_percent": null,
+    "weekly_status": "usage_page_loading_not_yet_revalidated",
+    "five_hour_reserve_percentage_points": 10,
+    "weekly_reserve_percentage_points": 15,
+    "new_dispatch_allowed": false,
+    "action": "stop_new_claude_dispatch_checkpoint_unfinished_packages_then_transfer_only_after_owner_stops"
+  },
+  "external_package_status": "all_16_started_individual_deliveries_under_review",
+  "owner_transfers": [
+    {
+      "package_id": "G01",
+      "previous_owner": "Claude Code Sonnet5.5 Medium",
+      "previous_owner_stopped": true,
+      "checkpoint": "3dbb4b2288862470492853c29382f00d22e1f003",
+      "checkpoint_dirty": false,
+      "preserved_live_runs": [40080415165, 40080392664],
+      "new_owner": "DeepSeek Harness Flash1017 High PTC",
+      "new_owner_ui_title": "[G01] Windows 账号、同步与收取",
+      "new_owner_started": true,
+      "full_permissions_observed": true
+    },
+    {
+      "package_id": "G03",
+      "previous_owner_stopped": true,
+      "checkpoint": "b2d587f669b8675c5da47e417570aa6aae08bbb8",
+      "new_owner_started": false,
+      "state": "pending_deepseek_transfer"
+    },
+    {
+      "package_id": "G04",
+      "previous_owner_stopped": true,
+      "checkpoint": "8ca07a80a025a3de09d259f1d20a08f29d04f2b4",
+      "new_owner_started": false,
+      "state": "pending_deepseek_transfer"
+    }
+  ],
+  "integrated_package_ids": [],
+  "audit_history": [],
+  "complete_product": false
+}
