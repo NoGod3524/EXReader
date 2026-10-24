@@ -418,6 +418,9 @@ public final class ReaderView extends View {
         float width = Math.max(1, getWidth() - 16f);
         float height = Math.max(1, getHeight() - 16f);
         fit = Math.min(width / page.bitmap.getWidth(), height / page.bitmap.getHeight());
+        // Native raster scale controls resolution. Keep the requested visual
+        // zoom instead of fitting that higher-resolution bitmap back down.
+        if(BuildConfig.READER_PREFERENCES&&page.fixed)fit*=page.layoutZoom;
         if (!(fit > 0f)) fit = 1f;
         offsetX = (getWidth() - page.bitmap.getWidth() * fit) / 2f;
         offsetY = (getHeight() - page.bitmap.getHeight() * fit) / 2f;
