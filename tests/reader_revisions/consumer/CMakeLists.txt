@@ -13,6 +13,8 @@ target_link_libraries(revision-consumer PRIVATE EXReaderRevisions::reader_revisi
 if(MSVC)
   target_link_options(revision-consumer PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/revision-link.map")
   target_link_libraries(revision-consumer PRIVATE shell32)
+elseif(APPLE)
+  target_link_options(revision-consumer PRIVATE "-Wl,-map,${CMAKE_CURRENT_BINARY_DIR}/revision-link.map")
 else()
   target_link_options(revision-consumer PRIVATE "-Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/revision-link.map" "-Wl,--trace-symbol=sqlite3_open_v2")
 endif()

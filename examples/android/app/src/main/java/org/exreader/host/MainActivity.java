@@ -66,6 +66,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private ExecutorService worker;
     private BookStore store;
+    private OrganizationPanel organizationPanel;
     private SharedPreferences prefs;
 
     private LinearLayout shelfPanel;
@@ -235,9 +236,16 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         noteAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, noteRows);
         noteList.setAdapter(noteAdapter);
         statusText.setContentDescription("Status");
+        organizationPanel=new OrganizationPanel(this,action->{if(worker!=null)worker.execute(action);},()->store,()->catalogShelf.load());
     }
 
     private void wireActions() {
+        findViewById(R.id.more_button).setOnClickListener(view->new android.app.AlertDialog.Builder(this)
+                .setTitle("More").setItems(new String[]{"Organize"},(dialog,which)->organizationPanel.show(0)).show());
+        bookList.setOnItemLongClickListener((parent,view,position,id)->{
+            if(operation!=0||pageBusy||id<=0)return true;
+            new android.app.AlertDialog.Builder(this).setItems(new String[]{"Organize book"},(dialog,which)->organizationPanel.show(id)).show();return true;
+        });
         importButton.setOnClickListener(view -> startImport());
         refreshButton.setOnClickListener(view -> {
             loadShelf(false);
@@ -345,6 +353,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     }
 
     private void setActionsEnabled(boolean enabled) {
+        findViewById(R.id.more_button).setEnabled(enabled);
         for (View view : new View[]{importButton, refreshButton, bookList, shelfSearch, fontDown, fontUp,
                 zoomDown, zoomUp, selectButton, notesButton, copyButton, annotateButton, readerView}) {
             view.setEnabled(enabled);
@@ -1390,6 +1399,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     }
 
     @Override public void onBackPressed() {
+        if(organizationPanel!=null&&organizationPanel.visible()){organizationPanel.hide();return;}
         if (notesPanel.getVisibility() == View.VISIBLE) {
             hideNotes();
             return;
@@ -1402,6 +1412,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     }
 
     @Override protected void onDestroy() {
+        if(organizationPanel!=null)organizationPanel.close();
         if (shelfMetrics!=null) shelfMetrics.close();
         if (catalogShelf!=null) catalogShelf.close();
         destroyed = true;

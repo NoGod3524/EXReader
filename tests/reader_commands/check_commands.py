@@ -10,6 +10,8 @@ import sqlite3
 import subprocess
 import sys
 import time
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'reader_revisions'))
+from check_protocol import sqlite_provider
 
 OK, ARG, BOOTSTRAP, REVISION = range(4)
 REV_DATABASE, REV_FORMAT, REV_LIMIT, REV_COLLISION, REV_UNSAFE, REV_OWNER = 3, 4, 5, 7, 10, 11
@@ -93,13 +95,7 @@ def main():
     source = re.search(r'#define SQLITE_SOURCE_ID\s+"([^"]+)"', header)[1]
     assert identity['sqlite_version'] == '3.54.0' and identity['sqlite_source_id'] == identity['header_source_id'] == source
     mapping = a.link_map.read_text(errors='replace')
-    if os.name == 'nt':
-        providers = [line.strip() for line in mapping.splitlines() if re.search(r'^\s*[0-9a-fA-F]+:[0-9a-fA-F]+\s+sqlite3_open_v2\s+', line)]
-        assert len(providers) == 1 and re.search(r'\breader_catalog_sqlite:sqlite3\.c\.obj\s*$', providers[0]), providers
-    else:
-        providers = re.findall(r'(\S+\.a\([^)]+\)): definition of sqlite3_open_v2\b', a.build_log.read_text())
-        assert len(providers) == 1 and providers[0].endswith('libreader_catalog_sqlite.a(sqlite3.c.o)'), providers
-    assert 'exr_vendor_exr_sqlite' not in mapping
+    providers = sqlite_provider(mapping, a.build_log.read_text())
     record('installed_cpp_uses_one_verified_product_sqlite_provider')
     cdb = folder / 'c-api.sqlite'
     subprocess.run([str(a.c_consumer.resolve()), str(cdb)], check=True, timeout=30)

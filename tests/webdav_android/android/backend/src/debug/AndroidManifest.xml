@@ -1,0 +1,5 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:networkSecurityConfig="@xml/fixture_network_security">
+        <activity android:name="org.exreader.webdav.probe.ExitActivity" android:exported="true" />
+    </application>
+</manifest>

@@ -5,6 +5,9 @@ on:
   workflow_dispatch:
   workflow_call:
     inputs:
+      platforms:
+        type: string
+        default: '["ubuntu-22.04","windows-2022"]'
       session:
         type: boolean
         default: false
@@ -24,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, windows-2022]
+        os: ${{ fromJSON(inputs.platforms || '["ubuntu-22.04","windows-2022"]') }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -40,6 +43,26 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config
+      - name: Use Apple system native TLS XML and platform SHA with fixture-only OpenSSL CLI
+        if: runner.os == 'macOS'
+        run: |
+          brew install ninja pkg-config openssl@3
+          sdkroot=$(xcrun --sdk macosx --show-sdk-path)
+          mkdir -p build/apple-pkgconfig
+          version=$(/usr/bin/curl --version | awk 'NR==1 {print $2}')
+          cat > build/apple-pkgconfig/libcurl.pc <<EOF
+          prefix=$sdkroot/usr
+          Name: libcurl
+          Description: Apple SDK system libcurl
+          Version: $version
+          Libs: -L\${prefix}/lib -lcurl
+          Cflags:
+          EOF
+          echo "PKG_CONFIG_PATH=$PWD/build/apple-pkgconfig" >> "$GITHUB_ENV"
+          echo "CMAKE_PREFIX_PATH=$sdkroot/usr" >> "$GITHUB_ENV"
+          echo "PATH=$(brew --prefix openssl@3)/bin:$PATH" >> "$GITHUB_ENV"
+          /usr/bin/curl --version
+          xcodebuild -version
       - name: Enter Windows native compiler environment
         if: runner.os == 'Windows'
         shell: pwsh
@@ -169,6 +192,14 @@ jobs:
             build/sync-dav-stage/
             build/sync-stage/
             build/sync-consumer/sync-consumer*
+            build/sync-dav-consumer/webdav-consumer*
+            build/sync-revision-consumer/revision-consumer*
+            build/sync-revision-consumer/revision-c-consumer*
+            build/commands-consumer/command-consumer*
+            build/commands-consumer/command-c-consumer*
+            build/metadata-consumer/metadata-consumer*
+            build/metadata-consumer/metadata-c-consumer*
+            build/apple-pkgconfig/
             build/session-stage/
             build/session-evidence/
             build/session-consumer/session-consumer*

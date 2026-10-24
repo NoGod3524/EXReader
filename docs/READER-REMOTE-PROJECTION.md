@@ -24,4 +24,19 @@ progress/annotation使用产品记录及公开SDK resolve，不能用metadata投
 候选在同源Windows/Linux原生作业验证235实体双向分页、七kind隔离、全部状态、
 所有权/重入、真实第二连接快照、原样NFD标题到宿主NFC、实际metadata投影、
 父依赖及分页后新head围栏，共12项。原32项投影、阅读协议/分页/导出/会话/HTTPS
-套件保留；当前等待此候选云端结果。
+套件保留。
+
+受测源码`2cbdd49ba9920afb5246e4b5b904e1ab28345169`，run`40061634535`，
+attempt1，五作业全部成功；两平台各12项通过，严格作业`120777162291`重新散列
+四ZIP并校验本包及全部保留报告，`accepted=true, problems=[]`。
+五工件同源、非空、未过期，完整身份见
+[接收发现与投影验收](validation/reader-remote-projection.json)。
+
+后续HTTPS消费者进一步接入这条路径：A原子提交metadata+history+outbox，B收到
+四份book后先按SAFE head投影，再实际导入下载原件并建立本机映射，核对云端
+title/author/favorite不被导入默认值覆盖。这项端到端加强已在源码
+`fb30036af7e23314f4d5949ebf219b92447d1bc9`、run`40062187051`、attempt1
+同源五作业全部通过；两平台各投影4本，22条修订及18个阅读捕获经真实原生HTTPS往返，
+17 FOUND/1预期歧义、零误定位。严格汇总重新核对四ZIP，`accepted=true, problems=[]`。
+工件与逐平台计数见[metadata往返验收](validation/reader-metadata-webdav.json)。
+这是原生消费者出口；宿主账号界面的分批调度、冲突呈现和刷新继续接入。

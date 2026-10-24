@@ -30,6 +30,23 @@ def revision(number, parents=(), key=TAG, kind='tag', operation='put', payload=N
     return value
 
 
+def sqlite_provider(mapping, build_log):
+    if os.name == 'nt':
+        providers = [line.strip() for line in mapping.splitlines() if re.search(r'^\s*[0-9a-fA-F]+:[0-9a-fA-F]+\s+sqlite3_open_v2\s+', line)]
+        assert len(providers) == 1 and re.search(r'\breader_catalog_sqlite:sqlite3\.c\.obj\s*$', providers[0]), providers
+    elif sys.platform == 'darwin':
+        objects = dict(re.findall(r'^\[\s*(\d+)\]\s+(.+)$', mapping, re.M))
+        definitions = re.findall(r'^0x[0-9a-fA-F]+\s+0x[0-9a-fA-F]+\s+\[\s*(\d+)\]\s+_sqlite3_open_v2\s*$', mapping, re.M)
+        assert len(definitions) == 1, definitions
+        providers = [objects.get(definitions[0], '')]
+        assert re.search(r'libreader_catalog_sqlite\.a(?:\[\d+\])?\(sqlite3\.c\.o\)$', providers[0]), providers
+    else:
+        providers = re.findall(r'(\S+\.a\([^)]+\)): definition of sqlite3_open_v2\b', build_log)
+        assert len(providers) == 1 and providers[0].endswith('libreader_catalog_sqlite.a(sqlite3.c.o)'), providers
+    assert 'exr_vendor_exr_sqlite' not in mapping
+    return providers
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--consumer', type=Path, required=True)
@@ -95,13 +112,7 @@ def main():
     subprocess.run([str(args.c_consumer.resolve())], check=True, timeout=30)
     record('installed_public_c_header_and_c_consumer')
     mapping = args.link_map.read_text(errors='replace')
-    if os.name == 'nt':
-        providers = [line.strip() for line in mapping.splitlines() if re.search(r'^\s*[0-9a-fA-F]+:[0-9a-fA-F]+\s+sqlite3_open_v2\s+', line)]
-        assert len(providers) == 1 and re.search(r'\breader_catalog_sqlite:sqlite3\.c\.obj\s*$', providers[0]), providers
-    else:
-        providers = re.findall(r'(\S+\.a\([^)]+\)): definition of sqlite3_open_v2\b', args.build_log.read_text())
-        assert len(providers) == 1 and providers[0].endswith('libreader_catalog_sqlite.a(sqlite3.c.o)'), providers
-    assert 'exr_vendor_exr_sqlite' not in mapping
+    providers = sqlite_provider(mapping, args.build_log.read_text())
     record('single_installed_product_sqlite_provider_no_sdk_vendor_or_system_fallback', {'provider': providers})
 
     first = wire('first', revision(101))

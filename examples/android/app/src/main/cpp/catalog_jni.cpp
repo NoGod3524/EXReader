@@ -106,6 +106,26 @@ jobjectArray command_result(JNIEnv *env,reader_command_status status,const reade
     result.entity_key,result.revision_id,std::to_string(result.created),std::to_string(result.applied),error.message});
 }
 int head(void *opaque,const reader_revision_head *value){static_cast<std::vector<std::string> *>(opaque)->emplace_back(value->revision_id);return 0;}
+struct organization_rows {std::vector<std::vector<std::string>> values;bool memory=false;};
+int copy_group(void *opaque,const reader_catalog_group_row *row){
+  auto &r=*static_cast<organization_rows *>(opaque);try{r.values.push_back({row->id,row->name,row->parent_id?row->parent_id:"",
+    std::to_string(row->ordinal),std::to_string(row->deleted)});return 0;}catch(...){r.memory=true;return 1;}
+}
+int copy_member(void *opaque,const reader_catalog_membership_row *row){
+  auto &r=*static_cast<organization_rows *>(opaque);try{r.values.push_back({row->group_id,row->book_key,std::to_string(row->ordinal),
+    std::to_string(row->group_deleted),std::to_string(row->book_deleted)});return 0;}catch(...){r.memory=true;return 1;}
+}
+int copy_group_book(void *opaque,const reader_catalog_group_book_row *row){
+  auto &r=*static_cast<organization_rows *>(opaque);const auto &b=row->book;try{r.values.push_back({b.book_key,b.sort_title,
+    std::to_string(b.sdk_book_id),b.title,b.author,b.format,std::to_string(b.source_bytes),std::to_string(row->ordinal)});
+    return 0;}catch(...){r.memory=true;return 1;}
+}
+jobjectArray organization_array(JNIEnv *env,const organization_rows &rows){
+  if(rows.memory)reject("java/lang/OutOfMemoryError","Cannot copy bounded organization rows");
+  jclass type=env->FindClass("[Ljava/lang/String;");pending(env);
+  jobjectArray result=env->NewObjectArray((jsize)rows.values.size(),type,nullptr);env->DeleteLocalRef(type);pending(env);
+  for(size_t i=0;i<rows.values.size();++i){auto row=strings(env,rows.values[i]);env->SetObjectArrayElement(result,(jsize)i,row);env->DeleteLocalRef(row);pending(env);}return result;
+}
 }
 using namespace product_jni;
 #define JNI_METHOD(name) Java_org_exreader_host_NativeCatalog_##name
@@ -168,6 +188,46 @@ extern "C" JNIEXPORT jobjectArray JNICALL JNI_METHOD(metadata)(JNIEnv *env,jclas
 extern "C" JNIEXPORT jobjectArray JNICALL JNI_METHOD(heads)(JNIEnv *env,jclass,jlong id,jstring kind,jstring key){return call(env,id,[&](owner &o)->jobjectArray{
   auto k=utf8(env,kind),v=utf8(env,key);std::vector<std::string> result;reader_revision_state state{};reader_revision_error e{};
   database(reader_revision_heads(o.revisions,k.c_str(),v.c_str(),head,&result,&state,&e),e.message);return strings(env,result);
+});}
+extern "C" JNIEXPORT jobjectArray JNICALL JNI_METHOD(selection)(JNIEnv *env,jclass,jlong id,jstring kind,jstring key){return call(env,id,[&](owner &o)->jobjectArray{
+  auto k=utf8(env,kind),v=utf8(env,key);reader_revision_selection selected{};reader_revision_info info{};reader_revision_error e{};
+  char *wire=nullptr;size_t bytes=0;auto status=reader_revision_selected(o.revisions,k.c_str(),v.c_str(),&wire,&bytes,&info,&selected,&e);
+  reader_revision_bytes_free(wire);
+  if(status!=READER_REV_OK&&status!=READER_REV_NOT_FOUND&&status!=READER_REV_UNSAFE)database(status,e.message);
+  std::vector<std::string> result{std::to_string(selected.kind),std::to_string(selected.graph.deleted),std::to_string(selected.graph.requires_restore)};
+  reader_revision_state state{};database(reader_revision_heads(o.revisions,k.c_str(),v.c_str(),head,&result,&state,&e),e.message);
+  // Separate revision reads may race an external receiver. Refuse a mixed snapshot.
+  if(state.heads!=selected.graph.heads||state.revisions!=selected.graph.revisions||state.deleted!=selected.graph.deleted||
+     state.projection_safe!=selected.graph.projection_safe||
+     (selected.kind==READER_SELECTION_SAFE&&(result.size()!=4||result[3]!=info.revision_id)))
+    reject("java/lang/IllegalStateException","Organization changed while reading; refresh");
+  return strings(env,result);
+});}
+extern "C" JNIEXPORT jboolean JNICALL JNI_METHOD(retained)(JNIEnv *env,jclass,jlong id,jstring revision){return call(env,id,[&](owner &o)->jboolean{
+  auto r=utf8(env,revision);reader_revision_info info{};reader_revision_error e{};char *wire=nullptr;size_t bytes=0;
+  auto status=reader_revision_get(o.revisions,r.c_str(),&wire,&bytes,&info,&e);reader_revision_bytes_free(wire);
+  if(status==READER_REV_NOT_FOUND)return JNI_FALSE;database(status,e.message);return JNI_TRUE;
+});}
+extern "C" JNIEXPORT jobjectArray JNICALL JNI_METHOD(groups)(JNIEnv *env,jclass,jlong id,jint kind,jstring parent,jstring cursor,jlong ordinal,jboolean before,jboolean removed){return call(env,id,[&](owner &o)->jobjectArray{
+  auto p=utf8(env,parent,true),c=utf8(env,cursor,true);reader_catalog_error e{};organization_rows rows;
+  reader_catalog_group_cursor anchor{(uint64_t)ordinal,c.c_str()};
+  int status=removed?reader_catalog_removed_groups_page(o.catalog,(reader_catalog_group_kind)kind,cursor?c.c_str():nullptr,before?-1:1,50,copy_group,&rows,&e):
+    reader_catalog_groups_page(o.catalog,(reader_catalog_group_kind)kind,p.empty()?nullptr:p.c_str(),cursor?&anchor:nullptr,before?-1:1,50,copy_group,&rows,&e);
+  database(status,e.message);return organization_array(env,rows);
+});}
+extern "C" JNIEXPORT jobjectArray JNICALL JNI_METHOD(groupFind)(JNIEnv *env,jclass,jlong id,jint kind,jstring key){return call(env,id,[&](owner &o)->jobjectArray{
+  auto k=utf8(env,key);reader_catalog_error e{};organization_rows rows;int found=0;
+  database(reader_catalog_group_find(o.catalog,(reader_catalog_group_kind)kind,k.c_str(),copy_group,&rows,&found,&e),e.message);return organization_array(env,rows);
+});}
+extern "C" JNIEXPORT jobjectArray JNICALL JNI_METHOD(members)(JNIEnv *env,jclass,jlong id,jint kind,jstring group,jstring cursor,jlong ordinal,jboolean before,jstring query){return call(env,id,[&](owner &o)->jobjectArray{
+  auto g=utf8(env,group),c=utf8(env,cursor,true),q=utf8(env,query);reader_catalog_error e{};organization_rows rows;
+  reader_catalog_member_cursor anchor{(uint64_t)ordinal,c.c_str()};
+  database(reader_catalog_group_books_page(o.catalog,(reader_catalog_group_kind)kind,g.c_str(),cursor?&anchor:nullptr,q.c_str(),0,before?-1:1,50,copy_group_book,&rows,&e),e.message);
+  return organization_array(env,rows);
+});}
+extern "C" JNIEXPORT jobjectArray JNICALL JNI_METHOD(memberFind)(JNIEnv *env,jclass,jlong id,jint kind,jstring group,jstring book){return call(env,id,[&](owner &o)->jobjectArray{
+  auto g=utf8(env,group),b=utf8(env,book);reader_catalog_error e{};organization_rows rows;int found=0;
+  database(reader_catalog_membership_find(o.catalog,(reader_catalog_group_kind)kind,g.c_str(),b.c_str(),copy_member,&rows,&found,&e),e.message);return organization_array(env,rows);
 });}
 extern "C" JNIEXPORT jobjectArray JNICALL JNI_METHOD(book)(JNIEnv *env,jclass,jlong id,jstring revision,jobjectArray heads,jint op,jstring key,jstring format,jstring sha,jlong bytes,jstring title,jstring author,jstring sort,jboolean favorite){return call(env,id,[&](owner &o)->jobjectArray{
   context c(env,o,revision,heads);auto k=utf8(env,key),f=utf8(env,format,true),h=utf8(env,sha,true),t=utf8(env,title,true),a=utf8(env,author,true),s=utf8(env,sort,true);
