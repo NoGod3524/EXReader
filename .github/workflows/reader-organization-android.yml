@@ -40,6 +40,11 @@ jobs:
                   print(json.dumps({'path':suffix,'matches':len(matches)}));continue
               raw=matches[0].read_bytes();text=raw.decode('utf-8',errors='replace')
               print(json.dumps({'path':suffix,'bytes':len(raw),'head':text[:1800]},ensure_ascii=True))
+              if suffix.endswith('failure.xml'):
+                  import xml.etree.ElementTree as ET
+                  nodes=[{key:node.get(key) for key in ('text','content-desc','resource-id','class','enabled','clickable')}
+                         for node in ET.fromstring(raw).iter('node') if node.get('package')=='org.exreader.host']
+                  print(json.dumps({'android_ui_nodes':nodes},ensure_ascii=True))
               if suffix.endswith('.json'):
                   try:
                       value=json.loads(raw)

@@ -19,6 +19,7 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /** Drives the actual native Android organization controls over real SDK books. */
 @RunWith(AndroidJUnit4.class)
@@ -104,7 +105,7 @@ public final class OrganizationWalkthroughTest {
     private void launch()throws Exception{device.executeShellCommand("am start -W -n "+APP+"/.MainActivity");assertNotNull(device.wait(Until.findObject(By.res(APP+":id/more_button")),20000));}
     private void open(){UiObject2 panel=device.findObject(By.desc("Organize panel"));if(panel!=null)return;clickText("More");clickText("Organize");ready();}
     private void kind(String name){clickText("Kind");clickText(name);ready();}
-    private void clickText(String text){UiObject2 view=device.wait(Until.findObject(By.text(text)),15000);assertNotNull("Missing "+text,view);assertTrue("Disabled "+text,view.isEnabled());view.click();}
+    private void clickText(String text){UiObject2 view=device.wait(Until.findObject(By.text(Pattern.compile(Pattern.quote(text),Pattern.CASE_INSENSITIVE|Pattern.UNICODE_CASE))),15000);assertNotNull("Missing "+text,view);assertTrue("Disabled "+text,view.isEnabled());view.click();}
     private void field(String hint,String text){UiObject2 view=device.wait(Until.findObject(By.desc(hint)),10000);assertNotNull(hint,view);view.setText(text);}
     private void ready(){
         long deadline=SystemClock.uptimeMillis()+20000;while(SystemClock.uptimeMillis()<deadline){
