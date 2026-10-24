@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "recorded_at_utc": "2026-10-24T20:45:43Z",
+  "recorded_at_utc": "2026-10-24T21:23:00Z",
   "current_cycle": 1,
   "completed_cycles": 0,
   "audit_interval": 5,
@@ -17,6 +17,7 @@
   "bounded_integration_run": 40118190108,
   "bounded_integration_attempt": 1,
   "non_p0_migration_record": "../reader-next-wave/migration-state.json",
+  "non_p0_latest_status": "../reader-next-wave/STATUS-2026-10-24.json",
   "integration_branch": "codex/reader-g1-integration",
   "candidate_merged_package_ids": [
     "G01",
@@ -52,15 +53,18 @@
       "branch": "codex/reader-apple-navigation-ui",
       "completed_ios_evidence_head": "254466e7",
       "ios_run": 40080841137,
-      "candidate": "eb123aa82140eafbe5143f7b67a7f2f65e8544f0",
+      "candidate": "1e86ddac59a415d18370ce40bdd0489622e9a896",
       "candidate_runs": [
-        40130739432
+        40132480954
       ],
       "passed_diagnostic_runs": [
         40107115391,
         40107533231
       ],
       "candidate_accepted": false,
+      "navigation_specific_accepted": true,
+      "navigation_ui_checks_per_target": 6,
+      "same_source_retained_regressions": [40133477416, 40133494188, 40133512224, 40133527618],
       "next_work": "native_F2_navigation_and_preserved_first_container_diagnostic",
       "search_evidence_head": "356c57a4c641f05e10cff13850e24bd94336454e"
     },
@@ -94,7 +98,7 @@
     },
     {
       "agent": "/root/main_android",
-      "branch": "codex/reader-android-reading-ui",
+      "branch": "codex/reader-android-preferences-ui",
       "completed_formal_ui_source": "ed9ff5ffc3608971bb19020f1ec07496a79d9710",
       "completed_formal_ui_runs": [
         40090470041,
@@ -106,9 +110,14 @@
       "completed_search_run": 40111800432,
       "completed_search_attempt": 2,
       "completed_search_checks": 15,
-      "next_work": "G03_G04_product_reading_records_native_UI",
-      "current_reading_source": "dd0f884e8d5d7b6cde5090777b0959d65914ca80",
-      "current_reading_run": 40129989048
+      "next_work": "F3_native_preferences_UI_with_fixed_hardened_module_tree",
+      "current_reading_source": "047648865e509d5835b7d6e1389681e314d94e28",
+      "current_reading_run": 40131364703,
+      "reading_evidence_head": "5d7da81495e545901f7fc802af00e0b779d1d8c4",
+      "reading_ui_checks_passed": 16,
+      "reading_scope": "API34 default x86_64 emulator only",
+      "preferences_fixed_source": "ba25961961ae69222bfed4f7a98cb02bb1dc6847",
+      "preferences_fixed_tree": "a3e53123e861ac7ceb2c5fee4829288822229211"
     }
   ],
   "claude_quota": {
@@ -263,13 +272,14 @@
   "root_windows_search": {
     "branch": "codex/reader-windows-search-ui",
     "accepted": false,
-    "source": "f4366ed0033ab5b3dac652424fbf07f790a01da3",
+    "source": "03c478ca270762052b7363da0118bd1ba9329f26",
     "next": "complete EPUB/PDF, cancellation/lifecycle, keyboard/UIA and retained regressions with strict artifact authentication",
-    "run": 40131176153,
-    "earlier_failed_runs": [40128929347, 40129875990, 40130496026],
+    "run": 40133851473,
+    "earlier_failed_runs": [40128929347, 40129875990, 40130496026, 40132096070, 40132804712],
     "original_f1_checks_passed_per_run": 264,
     "initial_host_checks_completed": 13,
     "initial_txt_run_conclusion": "success",
+    "initial_txt_run": 40131176153,
     "initial_txt_job": 120983017930,
     "initial_txt_artifact": 12575590677,
     "earlier_failure_phase": "wait-imported-row",

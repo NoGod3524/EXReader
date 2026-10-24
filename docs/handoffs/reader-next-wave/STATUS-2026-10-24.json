@@ -1,0 +1,187 @@
+{
+  "schema": 1,
+  "observed_at_utc": "2026-10-24T21:23:00Z",
+  "packages": 19,
+  "cloud_success": 17,
+  "returned_pending_root_review": 16,
+  "needs_further_work": [
+    "J06",
+    "J19",
+    "J25"
+  ],
+  "root_review_and_integration_complete": false,
+  "tasks": [
+    {
+      "id": "J02",
+      "branch": "codex/reader-opds-browser",
+      "latest_run": 40126660557,
+      "source": "dcf77c2776d7cdce180f303d2a85152cf538a8d6",
+      "status": "completed",
+      "conclusion": "success",
+      "root_state": "cloud_success_awaiting_root_review_and_integration"
+    },
+    {
+      "id": "J03",
+      "branch": "codex/reader-desktop-drop",
+      "latest_run": 40123821461,
+      "source": "f2c95f9a4cc013f294edc55fefe12b8da3d5a5a5",
+      "status": "completed",
+      "conclusion": "success",
+      "root_state": "cloud_success_awaiting_root_review_and_integration"
+    },
+    {
+      "id": "J06",
+      "branch": "codex/reader-external-link-policy",
+      "latest_run": 40123584995,
+      "source": "e175a00fbf7f623993698a276e8f066c392ad061",
+      "status": "completed",
+      "conclusion": "success",
+      "root_state": "root_review_changes_requested"
+    },
+    {
+      "id": "J07",
+      "branch": "codex/reader-jump-history",
+      "latest_run": 40125391353,
+      "source": "4ff8c803faec4d4bb351175290ad9f1cb9b82938",
+      "status": "completed",
+      "conclusion": "success",
+      "root_state": "cloud_success_awaiting_root_review_and_integration"
+    },
+    {
+      "id": "J08",
+      "branch": "codex/reader-keyboard-actions",
+      "latest_run": 40130358865,
+      "source": "f8e765b15932b6b738f709bd03b48c4f0d6b0c4f",
+      "status": "completed",
+      "conclusion": "success",
+      "root_state": "cloud_success_awaiting_root_review_and_integration"
+    },
+    {
+      "id": "J09",
+      "branch": "codex/reader-book-information",
+      "latest_run": 40127968068,
+      "source": "72fdc1a8976e95e615fe6bdd2c8fafcb651fa660",
+      "status": "completed",
+      "conclusion": "success",
+      "root_state": "cloud_success_awaiting_root_review_and_integration"
+    },
+    {
+      "id": "J12",
+      "branch": "codex/reader-sync-status-view",
+      "latest_run": 40124617915,
+      "source": "d427875579f714c0874c1b3cc5388b95a7f4e950",
+      "status": "completed",
+      "conclusion": "success",
+      "root_state": "cloud_success_awaiting_root_review_and_integration"
+    },
+    {
+      "id": "J13",
+      "branch": "codex/reader-account-profiles",
+      "latest_run": 40127110929,
+      "source": "b1c7467af0b9faf843b9ec988df49c0476c74ee9",
+      "status": "completed",
+      "conclusion": "success",
+      "root_state": "cloud_success_awaiting_root_review_and_integration"
+    },
+    {
+      "id": "J14",
+      "branch": "codex/reader-library-health",
+      "latest_run": 40125980818,
+      "source": "a600cf3df53fdc8b97e47872e44f9b5c5ff6becb",
+      "status": "completed",
+      "conclusion": "success",
+      "root_state": "cloud_success_awaiting_root_review_and_integration"
+    },
+    {
+      "id": "J15",
+      "branch": "codex/reader-ocr-overlay",
+      "latest_run": 40127504830,
+      "source": "614b14ab6d031c3571e8b60d7c3d615b33878867",
+      "status": "completed",
+      "conclusion": "success",
+      "root_state": "cloud_success_awaiting_root_review_and_integration"
+    },
+    {
+      "id": "J16",
+      "branch": "codex/reader-tts-windows",
+      "latest_run": 40130774683,
+      "source": "62fd2967dd742e9139ed43d327f9dea6273bd84a",
+      "status": "completed",
+      "conclusion": "success",
+      "root_state": "cloud_success_awaiting_root_review_and_integration"
+    },
+    {
+      "id": "J17",
+      "branch": "codex/reader-tts-apple",
+      "latest_run": 40129088735,
+      "source": "ecc51101c130502da59b0ffe5eca78dc80138e54",
+      "status": "completed",
+      "conclusion": "success",
+      "root_state": "cloud_success_awaiting_root_review_and_integration"
+    },
+    {
+      "id": "J18",
+      "branch": "codex/reader-tts-android",
+      "latest_run": 40126240859,
+      "source": "fe1eb58e2737aeeefbcdfe68e9ef6cff4db164f6",
+      "status": "completed",
+      "conclusion": "success",
+      "root_state": "cloud_success_awaiting_root_review_and_integration"
+    },
+    {
+      "id": "J19",
+      "branch": "codex/reader-tts-linux",
+      "latest_run": 40133477810,
+      "source": "27e5ca03039ea940fb9971a1ff304eb092073e53",
+      "status": "in_progress",
+      "conclusion": "",
+      "root_state": "runtime_tests_in_progress",
+      "earlier_observed_failure_run": 40132713831
+    },
+    {
+      "id": "J20",
+      "branch": "codex/reader-localization",
+      "latest_run": 40127576739,
+      "source": "6e7ba4b64fc3a05fbd6a960e81df1bb7ef58d42c",
+      "status": "completed",
+      "conclusion": "success",
+      "root_state": "cloud_success_awaiting_root_review_and_integration"
+    },
+    {
+      "id": "J21",
+      "branch": "codex/reader-diagnostic-report",
+      "latest_run": 40126181997,
+      "source": "7ee7ab8050fca0f471cc2321c3ccc2c1aaca2e6d",
+      "status": "completed",
+      "conclusion": "success",
+      "root_state": "cloud_success_awaiting_root_review_and_integration"
+    },
+    {
+      "id": "J23",
+      "branch": "codex/reader-app-boundary-fuzz",
+      "latest_run": 40129003487,
+      "source": "3c1ba88b27f837870fce703a3f475768c3c5425d",
+      "status": "completed",
+      "conclusion": "success",
+      "root_state": "cloud_success_awaiting_root_review_and_integration"
+    },
+    {
+      "id": "J24",
+      "branch": "codex/reader-distribution-unix",
+      "latest_run": 40130016878,
+      "source": "2f5677f13efc34b200af697f1b6f7bff2b656e3b",
+      "status": "completed",
+      "conclusion": "success",
+      "root_state": "cloud_success_awaiting_root_review_and_integration"
+    },
+    {
+      "id": "J25",
+      "branch": "codex/reader-distribution-windows",
+      "latest_run": 40133712445,
+      "source": "094db994c8cfab48d8212e66045aa039981ddd3f",
+      "status": "completed",
+      "conclusion": "failure",
+      "root_state": "relocated_consumer_failure"
+    }
+  ]
+}
