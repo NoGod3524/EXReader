@@ -8,6 +8,11 @@
       "source_sha": "652e1f5c195d9d3fb54b31dddfcfdf8750e08e8d",
       "runs": [40084914813, 40084914664],
       "reason": "UI candidate duplicated the existing MainActivity.onStop method; merge sync closure into the existing lifecycle method and preserve saveInstancePrefs. No assertions changed."
+    },
+    {
+      "source_sha": "2db9c240705fbe89579ea1bba5bb6e498f34aff5",
+      "runs": [40085974320],
+      "reason": "AGP replaces the test manifest runner, so the HostSyncTest APK did not register ProductOwnerTest. Build and preserve one test APK per runner, execute both suites, and clear only generated app fixture data between them. Shared-SDK Debug/Release link audits passed; no assertions changed."
     }
   ],
   "reading_state_ui_accepted": false,
