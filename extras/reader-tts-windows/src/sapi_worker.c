@@ -2,11 +2,14 @@
 /* SAPI 5 backend: one worker thread owns every COM object (ISpVoice, token
    enumeration, the optional WAV sink). It never calls the host, never allocates
    unbounded state and only publishes events into the bounded queue owned by
-   reader_tts.c. Everything the host sees is a pure value taken with reader_tts_poll.
+   reader_tts.c; everything the host sees is a pure value taken with reader_tts_poll.
 
-   Utterances are started with SPF_ASYNC so the worker stays responsive; pause,
-   resume and stop are executed on the same thread, which is why a stopped request
-   produces exactly one STOPPED event and no FINISHED for the old request. */
+   The utterance runs with SPF_ASYNC so the worker stays responsive, and progress is
+   read with ISpVoice::GetStatus: ulInputWordPos/ulInputWordLen are the engine's own
+   current word in the text it was given (not a clock estimate), which is what RANGE
+   events are made of. dwRunningState tells when the utterance is done, and
+   hrLastResult carries the engine's result for it, so a device or engine failure is
+   reported as FAILED instead of a silent success. */
 #include "internal.h"
 #include <stdlib.h>
 #include <string.h>
@@ -20,6 +23,9 @@
 
 #define EXR_TTS_CAPS (READER_TTS_CAN_PAUSE | READER_TTS_CAN_REPORT_RANGE)
 #define EXR_TTS_POLL_MS 20u
+/* A freshly started utterance may still report SPRS_DONE for a moment; do not call
+   it finished before the queued stream has been seen or this long has elapsed. */
+#define EXR_TTS_START_GRACE_MS 80u
 
 typedef struct {
   ISpStream *stream;
@@ -34,8 +40,11 @@ typedef struct {
   size_t *unit_map;
   size_t text_bytes;
   uint64_t request_id;
+  ULONG last_word;
+  DWORD started_at;
   int speaking;
   int started;
+  int saw_stream;
 } exr_tts_utterance;
 
 /* ---- small helpers ---- */
@@ -84,16 +93,16 @@ static char *utf16_to_utf8(const wchar_t *source) {
       buffer[out++] = (char)(0x80UL | (code & 0x3FUL));
     }
   }
-  buffer[out] = '\0';
+  buffer[out] = 0;
   return buffer;
 }
 
 /* SAPI 5 does not expose the Language attribute of every installed token (Windows
    Server 2022 exposes "Name" but not "Language" as a data-key value of the desktop
-   voices). When the attribute is missing, read the language that the installed token
-   id already names: Microsoft ids are TTS_MS_<lang>[_<region>]_<voice>_<version> and
+   voices). When the attribute is missing, read the language the installed token id
+   already names: Microsoft ids are TTS_MS_<lang>[_<region>]_<voice>_<version> and
    MSTTS_V110_<lang><region>_<voice>. Nothing is invented: an id without such a
-   segment yields no language. */
+   segment yields no language at all. */
 static char *language_from_token_id(const char *id) {
   const char *segment = NULL;
   size_t i, length = 0, split = 0, out = 0;
@@ -171,6 +180,7 @@ static reader_tts_status enumerate_voices(reader_tts_voice_list *list, int *nati
   ISpObjectTokenCategory *category = NULL;
   IEnumSpObjectTokens *tokens = NULL;
   ULONG count = 0, index = 0;
+  int out_of_memory = 0;
   HRESULT hr;
   reader_tts_voice *voices;
   list->voices = NULL;
@@ -195,8 +205,6 @@ static reader_tts_status enumerate_voices(reader_tts_voice_list *list, int *nati
     *native = 0;
     return READER_TTS_MEMORY;
   }
-  {
-    int out_of_memory = 0;
   for (;;) {
     ISpObjectToken *token = NULL;
     LPWSTR id = NULL, name = NULL, language = NULL;
@@ -212,11 +220,6 @@ static reader_tts_status enumerate_voices(reader_tts_voice_list *list, int *nati
       CoTaskMemFree(id);
     }
     if (SUCCEEDED(((ISpDataKey *)token)->lpVtbl->GetStringValue((ISpDataKey *)token, L"Name", &name)) && name) {
-      voices[index].name = utf16_to_utf8(name);
-      CoTaskMemFree(name);
-    } else if (SUCCEEDED(((ISpDataKey *)token)->lpVtbl->GetStringValue((ISpDataKey *)token, NULL, &name))
-               && name) {
-      /* Tokens whose friendly name lives in the default value only. */
       voices[index].name = utf16_to_utf8(name);
       CoTaskMemFree(name);
     }
@@ -263,7 +266,6 @@ static reader_tts_status enumerate_voices(reader_tts_voice_list *list, int *nati
     exr_tts_release(voices);
     *native = 0;
     return out_of_memory ? READER_TTS_MEMORY : READER_TTS_IO;
-  }
   }
   list->voices = voices;
   list->count = count;
@@ -369,28 +371,25 @@ static void finish_request(reader_tts *handle, exr_tts_utterance *utterance,
   utterance->text_units = 0;
   utterance->text_bytes = 0;
   utterance->request_id = 0;
+  utterance->last_word = 0;
   utterance->speaking = 0;
   utterance->started = 0;
+  utterance->saw_stream = 0;
   if (exr_tts_closing(handle)) return;
   if (status == READER_TTS_OK) publish_ready(handle);
   else exr_tts_publish(handle, READER_TTS_READY, status, EXR_TTS_CAPS, 0);
 }
 
-static void report_range(reader_tts *handle, exr_tts_utterance *utterance, const SPEVENT *source) {
+/* Publishes the engine's current word as a RANGE event in UTF-8 byte offsets. */
+static void report_word(reader_tts *handle, exr_tts_utterance *utterance, ULONG position, ULONG length) {
   exr_tts_queue_event event;
-  size_t start_units, length_units;
-  if (source->lParam < 0) {
-    finish_request(handle, utterance, READER_TTS_FAILED, READER_TTS_IO);
-    return;
-  }
-  start_units = (size_t)source->lParam;
-  length_units = (size_t)source->wParam;
-  if (start_units > utterance->text_units || length_units > utterance->text_units - start_units) {
-    /* SAPI reported a character position outside the text it was given. */
-    finish_request(handle, utterance, READER_TTS_FAILED, READER_TTS_IO);
-    return;
-  }
+  size_t start_units = (size_t)position, length_units = (size_t)length;
   if (length_units == 0) return;
+  if (start_units > utterance->text_units || length_units > utterance->text_units - start_units) {
+    /* SAPI reported a word outside the text it was given. */
+    finish_request(handle, utterance, READER_TTS_FAILED, READER_TTS_IO);
+    return;
+  }
   memset(&event, 0, sizeof event);
   event.request_id = utterance->request_id;
   event.kind = READER_TTS_RANGE;
@@ -404,39 +403,45 @@ static void report_range(reader_tts *handle, exr_tts_utterance *utterance, const
   }
 }
 
-static void pump_events(reader_tts *handle, exr_tts_utterance *utterance) {
-  ISpEventSource *source = (ISpEventSource *)utterance->voice;
-  SPEVENT events[8];
-  ULONG fetched = 0, index;
-  if (FAILED(source->lpVtbl->GetEvents(source, 8, events, &fetched))) return;
-  for (index = 0; index < fetched; index++) {
-    switch (events[index].eEventId) {
-      case SPEI_START_INPUT_STREAM:
-        if (!utterance->started) {
-          exr_tts_queue_event event;
-          memset(&event, 0, sizeof event);
-          event.request_id = utterance->request_id;
-          event.kind = READER_TTS_STARTED;
-          event.status = READER_TTS_OK;
-          utterance->started = 1;
-          if (exr_tts_push(handle, &event) != READER_TTS_OK) {
-            finish_request(handle, utterance, READER_TTS_FAILED, READER_TTS_LIMIT);
-            return;
-          }
-        }
-        break;
-      case SPEI_WORD_BOUNDARY:
-        if (utterance->started && utterance->speaking) report_range(handle, utterance, &events[index]);
-        break;
-      case SPEI_END_INPUT_STREAM:
-        /* Only the current utterance may finish; a stale end of a purged request is
-           dropped so it can never terminate the request that replaced it. */
-        if (utterance->speaking && utterance->started) {
-          finish_request(handle, utterance, READER_TTS_FINISHED, READER_TTS_OK);
-        }
-        return;
-      default:
-        break;
+static void push_started(reader_tts *handle, exr_tts_utterance *utterance) {
+  exr_tts_queue_event event;
+  memset(&event, 0, sizeof event);
+  event.request_id = utterance->request_id;
+  event.kind = READER_TTS_STARTED;
+  event.status = READER_TTS_OK;
+  utterance->started = 1;
+  if (exr_tts_push(handle, &event) != READER_TTS_OK) {
+    finish_request(handle, utterance, READER_TTS_FAILED, READER_TTS_LIMIT);
+  }
+}
+
+static void pump_status(reader_tts *handle, exr_tts_utterance *utterance) {
+  SPVOICESTATUS status;
+  HRESULT hr;
+  if (!utterance->voice || !utterance->speaking) return;
+  memset(&status, 0, sizeof status);
+  hr = utterance->voice->lpVtbl->GetStatus(utterance->voice, &status, NULL);
+  if (FAILED(hr)) {
+    finish_request(handle, utterance, READER_TTS_FAILED, READER_TTS_IO);
+    return;
+  }
+  if (!utterance->started) push_started(handle, utterance);
+  if (!utterance->speaking) return;   /* the STARTED push may have ended the request */
+  if (status.ulCurrentStream != 0 && status.ulCurrentStream == status.ulLastStreamQueued) {
+    utterance->saw_stream = 1;
+  }
+  if (status.ulInputWordLen > 0 && status.ulInputWordPos != utterance->last_word) {
+    utterance->last_word = status.ulInputWordPos;
+    report_word(handle, utterance, status.ulInputWordPos, status.ulInputWordLen);
+    if (!utterance->speaking) return;
+  }
+  if (status.dwRunningState & SPRS_DONE) {
+    DWORD elapsed = GetTickCount() - utterance->started_at;
+    if (!utterance->saw_stream && elapsed < EXR_TTS_START_GRACE_MS) return;
+    if (FAILED(status.hrLastResult)) {
+      finish_request(handle, utterance, READER_TTS_FAILED, READER_TTS_IO);
+    } else {
+      finish_request(handle, utterance, READER_TTS_FINISHED, READER_TTS_OK);
     }
   }
 }
@@ -504,8 +509,7 @@ static reader_tts_status start_speak(reader_tts *handle, exr_tts_utterance *utte
     utterance->sink.stream = fresh;
     utterance->sink.closed = 0;
   } else if (utterance->sink.stream) {
-    /* Returning from a WAV sink to the default audio device needs an endpoint;
-       without one SAPI answers with an error instead of a usable stream. */
+    /* Returning from a WAV sink to the default audio device needs an endpoint. */
     HRESULT restored = voice->lpVtbl->SetOutput(voice, NULL, FALSE);
     release_sink(&utterance->sink);
     if (FAILED(restored)) {
@@ -518,6 +522,9 @@ static reader_tts_status start_speak(reader_tts *handle, exr_tts_utterance *utte
   utterance->text_units = command->text_units;
   utterance->text_bytes = command->text_bytes;
   utterance->request_id = command->request_id;
+  utterance->last_word = 0;
+  utterance->started = 0;
+  utterance->saw_stream = 0;
   command->text = NULL;
   command->unit_map = NULL;
   hr = voice->lpVtbl->Speak(voice, utterance->text, SPF_ASYNC | SPF_PURGEBEFORESPEAK, NULL);
@@ -531,8 +538,8 @@ static reader_tts_status start_speak(reader_tts *handle, exr_tts_utterance *utte
     utterance->request_id = 0;
     return READER_TTS_IO;
   }
+  utterance->started_at = GetTickCount();
   utterance->speaking = 1;
-  utterance->started = 0;
   exr_tts_publish(handle, READER_TTS_SPEAKING, READER_TTS_OK, EXR_TTS_CAPS, command->request_id);
   return READER_TTS_OK;
 }
@@ -642,19 +649,7 @@ DWORD WINAPI exr_tts_worker_main(LPVOID parameter) {
         voice = NULL;
       }
     }
-    if (voice) {
-      ULONGLONG interest = SPFEI(SPEI_START_INPUT_STREAM) | SPFEI(SPEI_END_INPUT_STREAM)
-                         | SPFEI(SPEI_WORD_BOUNDARY);
-      ISpNotifySource *source = (ISpNotifySource *)voice;
-      ISpEventSource *events = (ISpEventSource *)voice;
-      /* The Win32-event notify connection makes SAPI queue the interest mask for
-         GetEvents; the package never waits on SAPI's own handle. */
-      if (FAILED(source->lpVtbl->SetNotifyWin32Event(source))
-          || FAILED(events->lpVtbl->SetInterest(events, interest, interest))) {
-        voice->lpVtbl->Release(voice);
-        voice = NULL;
-      }
-    }
+    if (voice) utterance.voice = voice;
   }
   if (!exr_tts_closing(handle)) {
     if (voice) {
@@ -665,17 +660,17 @@ DWORD WINAPI exr_tts_worker_main(LPVOID parameter) {
   }
   for (;;) {
     exr_tts_command command;
-    HANDLE waits[2];
-    DWORD count = 1, timeout = INFINITE, result;
+    HANDLE waits[1];
+    DWORD timeout = INFINITE, result;
     if (take_command(handle, &command)) {
       if (handle_command(handle, &utterance, &voice, &command)) break;
       continue;
     }
-    if (utterance.speaking) pump_events(handle, &utterance);
+    if (utterance.speaking) pump_status(handle, &utterance);
     if (exr_tts_closing(handle) && !utterance.speaking) break;
     waits[0] = handle->cmd_event;
     if (utterance.speaking) timeout = EXR_TTS_POLL_MS;
-    result = WaitForMultipleObjects(count, waits, FALSE, timeout);
+    result = WaitForMultipleObjects(1, waits, FALSE, timeout);
     if (result == WAIT_FAILED) break;
   }
   if (utterance.speaking) {

@@ -55,7 +55,7 @@ SPEAKING/PAUSED -> READY            （收到该请求终态）
 | `max_utf8_bytes` | 0 表示默认 16384；硬上限 16384，之上 → ARGUMENT；更小的值只降低本句柄上限 |
 | 超长文本 | `READER_TTS_LIMIT`，由宿主分块、每块用新 request id；不静默截断 |
 | UTF-8 | 严格校验：拒绝嵌入 NUL、不完整 scalar、过长编码、代理区、U+10FFFF 以上 → ARGUMENT |
-| RANGE | `start/end` 是本次输入文本的 **UTF-8 字节偏移**：SAPI 的 UTF-16 词边界经每请求映射表严格换算，即使落在代理对中间也只会得到字节边界；范围单调、落在 `[0, bytes)` 内；越界位置直接 `FAILED`+`IO`，不钳位成"看起来合理"的值 |
+| RANGE | `start/end` 是本次输入文本的 **UTF-8 字节偏移**：引擎当前词位置（`ISpVoice::GetStatus` 的 `ulInputWordPos`/`ulInputWordLen`，即它正在朗读的 UTF-16 码元区间）经每请求映射表严格换算，即使落在代理对中间也只会得到字节边界。位置是采样来的、不是时钟推算：短于轮询间隔的词可能被跳过，相邻范围可能被合并。范围单调、落在 `[0, bytes)` 内；越界位置直接 `FAILED`+`IO`，不钳位成"看起来合理"的值 |
 | 队列 | 最多 128 事件，其中 RANGE 最多 112；相邻（间隔 ≤1 字节空白）范围合并而不是增长队列；容量耗尽时 `poll`/`speak` 返回 `LIMIT`，句柄须关闭 |
 
 ## 速度与声音

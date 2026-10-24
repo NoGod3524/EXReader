@@ -11,8 +11,9 @@
  *    called reader_tts_create() (the owner); any other thread gets READER_TTS_OWNER
  *    and the handle is left exactly as it was. Windows needs no message loop on the
  *    owner: SAPI runs on a package-owned worker thread that never calls the host.
- *  - Nothing is ever delivered by callback. SAPI events are converted to pure values
- *    in a bounded internal queue and the host drains it with reader_tts_poll().
+ *  - Nothing is ever delivered by callback: the worker polls the engine and converts
+ *    progress into pure values in a bounded internal queue that the host drains with
+ *    reader_tts_poll().
  *  - Text passed to reader_tts_speak() is copied; the caller's buffer is free on
  *    return. The copy lives until that request's terminal event.
  *  - Strings in a reader_tts_voice_list belong to the list until
@@ -55,11 +56,14 @@
  *    READER_TTS_LIMIT: the host splits it and uses a new request id per chunk.
  *  - Text must be strict UTF-8 (no embedded NUL, no truncated scalar, no overlong form,
  *    no surrogate, nothing above U+10FFFF); anything else is ARGUMENT.
- *  - RANGE events carry UTF-8 byte offsets into the text that was passed in: the SAPI
- *    word boundary's UTF-16 code-unit range is converted through a per-request map, so
- *    start/end always fall on a byte boundary even inside a surrogate pair. Ranges are
- *    monotonic and inside [0, bytes); a backend position outside the text is FAILED
- *    with READER_TTS_IO, never clamped into a plausible value.
+ *  - RANGE events carry UTF-8 byte offsets into the text that was passed in: the
+ *    engine's current-word position (ISpVoice::GetStatus ulInputWordPos/Len, UTF-16
+ *    code units of the text that was spoken) is converted through a per-request map, so
+ *    start/end always fall on a byte boundary even inside a surrogate pair. The
+ *    position is sampled, not predicted from a clock: a word shorter than the poll
+ *    interval can be skipped, and neighbours may arrive merged. Ranges are monotonic
+ *    and inside [0, bytes); a reported position outside the text is FAILED with
+ *    READER_TTS_IO, never clamped into a plausible value.
  *  - The queue holds at most 128 events; at most 112 of them may be RANGE, and
  *    neighbours separated by at most one byte of whitespace are merged instead of
  *    growing the queue. Exhaustion is reported: poll()/speak() then answer
