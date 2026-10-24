@@ -1,0 +1,493 @@
+{
+  "accepted": true,
+  "scope": "Android API34 x86_64 emulator native SDK original export, isolated product session and TLS DAV roundtrip; no reading-state interoperability or host sync UI acceptance",
+  "source_sha": "506fd1ee70a196ebb1beeba7a33b13b4c953a8c1",
+  "run_id": 40079492588,
+  "attempt": 1,
+  "job_id": 120829870812,
+  "conclusion": "success",
+  "artifact": {
+    "id": 12554443962,
+    "bytes": 44473586,
+    "sha256": "c64fef521eb7a09dac6cb6cdf6dafce309dc3adf09673d56792955142cf8ec53",
+    "expires_at": "2027-01-22T08:48:46Z"
+  },
+  "all_execution_on_actions": true,
+  "native_link_audit": {
+    "source_sha": "506fd1ee70a196ebb1beeba7a33b13b4c953a8c1",
+    "run_id": "40079492588",
+    "attempt": "1",
+    "checks": [
+      {
+        "module": "tests/reader_session_android/android/session",
+        "variant": "Debug",
+        "build_id": "966e38ca6d85340c3adfd00bc5a09b288b0f10e8",
+        "packaged_sha256": "a28a91651e3273a70c813ceaf4f98ff6d394a41e8836a32080dff2f72a92e48d",
+        "installed_private_provider_unique": true
+      },
+      {
+        "module": "tests/reader_session_android/android/session",
+        "variant": "Release",
+        "build_id": "7fd143a2111c46873810141dc8106ebabc3ef950",
+        "packaged_sha256": "0cad9d3c7c570d8544dda3aa524b30bb7bc2bdd3c470edfef837670b9c196f55",
+        "installed_private_provider_unique": true
+      },
+      {
+        "module": "examples/android/app",
+        "variant": "Debug",
+        "build_id": "3f9e4953b3d52df8f0688fc474c5a8124d4b2171",
+        "packaged_sha256": "f0f1df707b5570db547dd414d1982deea752ba4cadfe72ffb2e763b4a8aa00b8",
+        "installed_private_provider_unique": true
+      },
+      {
+        "module": "examples/android/app",
+        "variant": "Release",
+        "build_id": "5261254bd75a27cc00b404621912034eef5e2bd8",
+        "packaged_sha256": "cf71d5201d8e540c3c5f287275d5a213141d086d215c17a29777f1873ae444ed",
+        "installed_private_provider_unique": true
+      }
+    ],
+    "accepted": true
+  },
+  "public_sdk_export": {
+    "source_sha": "506fd1ee70a196ebb1beeba7a33b13b4c953a8c1",
+    "run_id": "40079492588",
+    "attempt": "1",
+    "api": 34,
+    "abi": "x86_64",
+    "sdk_owner": "pool-2-thread-1",
+    "sha256": "8816f31ba2861e2a7ad907085905efdea5b458d26ed6fe4929ae21467ba1fa97",
+    "checks": [
+      {
+        "name": "fresh",
+        "ok": true,
+        "status": 0,
+        "expected": 0,
+        "bytes": 1048576,
+        "message": ""
+      },
+      {
+        "name": "existing",
+        "ok": true,
+        "status": 3,
+        "expected": 3,
+        "bytes": 0,
+        "message": "Original export destination exists or publication failed"
+      },
+      {
+        "name": "cancel-before",
+        "ok": true,
+        "status": 9,
+        "expected": 9,
+        "bytes": 0,
+        "message": "Original export cancelled before publication"
+      },
+      {
+        "name": "cancel-stream",
+        "ok": true,
+        "status": 9,
+        "expected": 9,
+        "bytes": 0,
+        "message": "Original export cancelled before publication"
+      },
+      {
+        "name": "limit",
+        "ok": true,
+        "status": 6,
+        "expected": 6,
+        "bytes": 0,
+        "message": "Original export exceeds its byte limit"
+      },
+      {
+        "name": "release-reopen-success",
+        "ok": true,
+        "import_status": 0,
+        "anchor_state": 1,
+        "anchor_start": 8,
+        "continued": true,
+        "old_source_readable": true
+      },
+      {
+        "name": "release-reopen-failure",
+        "ok": true,
+        "import_status": 5,
+        "anchor_state": 1,
+        "anchor_start": 8,
+        "continued": true,
+        "old_source_readable": true
+      },
+      {
+        "name": "release-reopen-cancel",
+        "ok": true,
+        "import_status": 9,
+        "anchor_state": 1,
+        "anchor_start": 8,
+        "continued": true,
+        "old_source_readable": true
+      }
+    ],
+    "ok": true
+  },
+  "session_roundtrip": {
+    "source_sha": "506fd1ee70a196ebb1beeba7a33b13b4c953a8c1",
+    "run_id": "40079492588",
+    "attempt": "1",
+    "accepted": true,
+    "checks": [
+      {
+        "name": "sdk_owner_public_import_export_verified_then_typed_metadata_commit",
+        "passed": true,
+        "original": {
+          "sha": "0f871f4448ad9afe70c8c47c355310c43260d2d5d792c5aac43ea3285e9473ee",
+          "bytes": 1084,
+          "format": "epub",
+          "sdk_id": 1,
+          "location": "epub_chapter",
+          "sdk": {
+            "title": "Native EPUB",
+            "author": "",
+            "position": 0,
+            "favorite": 0,
+            "format": 4,
+            "bounded": 1,
+            "books": 1,
+            "bytes": 1084
+          },
+          "key": "epub:0f871f4448ad9afe70c8c47c355310c43260d2d5d792c5aac43ea3285e9473ee",
+          "head": "9c904831539b47d992ae39f7a8150c52",
+          "bootstrap": "62ac7c8822dd49e68adbd377c0ad8713",
+          "metadata_committed": 1,
+          "pending": 0,
+          "ok": true,
+          "pid": 2369
+        }
+      },
+      {
+        "name": "actual_runtime_product_sqlite_provider",
+        "passed": true,
+        "provider": {
+          "version": "3.54.0",
+          "runtime_source": "2026-10-09 15:46:58 be8d059e9a49089ab2dce5ed26dd87aaf598fdc5fbe0b107c0dd758464bcd5e3",
+          "header_source": "2026-10-09 15:46:58 be8d059e9a49089ab2dce5ed26dd87aaf598fdc5fbe0b107c0dd758464bcd5e3",
+          "library": "/data/app/~~QhcdIa5-uRFj76eqm7N2nA==/org.exreader.sessionprobe-Z7rosiOArBHuB7_kfLIR0g==/base.apk!/lib/x86_64/libsession-product-owner.so",
+          "options": "ATOMIC_INTRINSICS=1;COMPILER=clang-18.0.3;DEFAULT_AUTOVACUUM;DEFAULT_CACHE_SIZE=-2000;DEFAULT_FILE_FORMAT=4;DEFAULT_FOREIGN_KEYS;DEFAULT_JOURNAL_SIZE_LIMIT=-1;DEFAULT_MMAP_SIZE=0;DEFAULT_PAGE_SIZE=4096;DEFAULT_PCACHE_INITSZ=20;DEFAULT_RECURSIVE_TRIGGERS;DEFAULT_SECTOR_SIZE=4096;DEFAULT_SYNCHRONOUS=2;DEFAULT_WAL_AUTOCHECKPOINT=1000;DEFAULT_WAL_SYNCHRONOUS=2;DEFAULT_WORKER_THREADS=0;DIRECT_OVERFLOW_READ;DQS=0;MALLOC_SOFT_LIMIT=1024;MAX_ATTACHED=10;MAX_COLUMN=2000;MAX_COMPOUND_SELECT=500;MAX_DEFAULT_PAGE_SIZE=8192;MAX_EXPR_DEPTH=1000;MAX_FUNCTION_ARG=1000;MAX_LENGTH=2147483647;MAX_LIKE_PATTERN_LENGTH=50000;MAX_MMAP_SIZE=0x7fff0000;MAX_PAGE_COUNT=0xfffffffe;MAX_PAGE_SIZE=65536;MAX_SCHEMA=10000000;MAX_SQL_LENGTH=1000000000;MAX_TRIGGER_DEPTH=1000;MAX_VARIABLE_NUMBER=32766;MAX_VDBE_OP=250000000;MAX_WORKER_THREADS=8;MUTEX_PTHREADS;OMIT_LOAD_EXTENSION;SYSTEM_MALLOC;TEMP_STORE=1;THREADSAFE=1",
+          "ok": true,
+          "pid": 2369
+        }
+      },
+      {
+        "name": "force_stop_after_server_commit_retries_412_get_before_outbox_ack",
+        "passed": true,
+        "old_pid": 2369,
+        "new_pid": 2526,
+        "finished": {
+          "code": 0,
+          "alive": true,
+          "state": 4,
+          "status": 0,
+          "attempt": 1,
+          "sweeps": 1,
+          "steps": 256,
+          "shard": 255,
+          "completed_shards": 256,
+          "pushed": 2,
+          "pulled": 2,
+          "originals_verified": 4,
+          "dav_code": 0,
+          "revision_code": 0,
+          "http_status": 0,
+          "full_library_complete": 0,
+          "ok": true,
+          "pid": 2526
+        }
+      },
+      {
+        "name": "receiver_explicit_safe_unique_projection_precedes_sdk_import",
+        "passed": true,
+        "received": {
+          "code": 0,
+          "alive": true,
+          "state": 4,
+          "status": 0,
+          "attempt": 1,
+          "sweeps": 1,
+          "steps": 256,
+          "shard": 255,
+          "completed_shards": 256,
+          "pushed": 0,
+          "pulled": 2,
+          "originals_verified": 2,
+          "dav_code": 0,
+          "revision_code": 0,
+          "http_status": 0,
+          "full_library_complete": 0,
+          "ok": true,
+          "pid": 2526
+        },
+        "catalog": {
+          "present": 1,
+          "key": "epub:0f871f4448ad9afe70c8c47c355310c43260d2d5d792c5aac43ea3285e9473ee",
+          "title": "同步书名😀É",
+          "author": "远端作者📚",
+          "sort_title": "同步书名😀É",
+          "format": "epub",
+          "location": "",
+          "bytes": 1084,
+          "sdk_id": 0,
+          "favorite": 1,
+          "deleted": 0
+        }
+      },
+      {
+        "name": "verified_remote_cache_sdk_owner_import_and_mapping_preserve_remote_metadata",
+        "passed": true,
+        "restored": {
+          "sdk_id": 1,
+          "created": 1,
+          "sdk": {
+            "title": "Native EPUB",
+            "author": "",
+            "position": 0,
+            "favorite": 0,
+            "format": 4,
+            "bounded": 1,
+            "books": 1,
+            "bytes": 1084
+          },
+          "sha": "0f871f4448ad9afe70c8c47c355310c43260d2d5d792c5aac43ea3285e9473ee",
+          "bytes": 1084,
+          "key": "epub:0f871f4448ad9afe70c8c47c355310c43260d2d5d792c5aac43ea3285e9473ee",
+          "location": "epub_chapter",
+          "ok": true,
+          "pid": 2526
+        },
+        "catalog": {
+          "present": 1,
+          "key": "epub:0f871f4448ad9afe70c8c47c355310c43260d2d5d792c5aac43ea3285e9473ee",
+          "title": "同步书名😀É",
+          "author": "远端作者📚",
+          "sort_title": "同步书名😀É",
+          "format": "epub",
+          "location": "epub_chapter",
+          "bytes": 1084,
+          "sdk_id": 1,
+          "favorite": 1,
+          "deleted": 0
+        }
+      },
+      {
+        "name": "multihead_retained_without_auto_selection_or_local_mapping_change",
+        "passed": true,
+        "selection": {
+          "status": 10,
+          "selection": 2,
+          "heads": 2,
+          "head": "",
+          "selected_title": "",
+          "catalog": {
+            "present": 1,
+            "key": "epub:0f871f4448ad9afe70c8c47c355310c43260d2d5d792c5aac43ea3285e9473ee",
+            "title": "同步书名😀É",
+            "author": "远端作者📚",
+            "sort_title": "同步书名😀É",
+            "format": "epub",
+            "location": "epub_chapter",
+            "bytes": 1084,
+            "sdk_id": 1,
+            "favorite": 1,
+            "deleted": 0
+          },
+          "ok": true,
+          "pid": 2526
+        }
+      },
+      {
+        "name": "wrong_account_and_root_refused_before_network",
+        "passed": true
+      },
+      {
+        "name": "auth_failure_corrected_by_closed_session_recreation",
+        "passed": true,
+        "failure": {
+          "code": 0,
+          "alive": true,
+          "state": 5,
+          "status": 5,
+          "attempt": 1,
+          "sweeps": 0,
+          "steps": 0,
+          "shard": 0,
+          "completed_shards": 0,
+          "pushed": 0,
+          "pulled": 0,
+          "originals_verified": 0,
+          "dav_code": 6,
+          "revision_code": 0,
+          "http_status": 401,
+          "full_library_complete": 0,
+          "ok": true,
+          "pid": 2526
+        }
+      },
+      {
+        "name": "cancel_nonblocking_destroy_busy_then_retry_close_destroy",
+        "passed": true,
+        "cancel_seconds": 0.06377158599997301,
+        "cancelled": {
+          "code": 0,
+          "alive": true,
+          "state": 3,
+          "status": 0,
+          "attempt": 1,
+          "sweeps": 0,
+          "steps": 0,
+          "shard": 0,
+          "completed_shards": 0,
+          "pushed": 0,
+          "pulled": 0,
+          "originals_verified": 0,
+          "dav_code": 7,
+          "revision_code": 0,
+          "http_status": 0,
+          "full_library_complete": 0,
+          "ok": true,
+          "pid": 2526
+        },
+        "retried": {
+          "code": 0,
+          "alive": true,
+          "state": 4,
+          "status": 0,
+          "attempt": 2,
+          "sweeps": 1,
+          "steps": 256,
+          "shard": 255,
+          "completed_shards": 256,
+          "pushed": 2,
+          "pulled": 2,
+          "originals_verified": 4,
+          "dav_code": 0,
+          "revision_code": 0,
+          "http_status": 0,
+          "full_library_complete": 0,
+          "ok": true,
+          "pid": 2526
+        }
+      },
+      {
+        "name": "sdk_and_product_files_distinct_and_native_lifecycle_balanced",
+        "passed": true,
+        "stats": {
+          "clients": 0,
+          "uploads": 0,
+          "attaches": 1378,
+          "detaches": 1378,
+          "ok": true,
+          "pid": 2526
+        },
+        "schemas": {
+          "A": {
+            "sdk_version": 7,
+            "product_version": 1,
+            "sdk_tables": [
+              "audio_marks",
+              "audio_resume",
+              "book_progress",
+              "books",
+              "epub_bounded_books",
+              "epub_notes",
+              "epub_progress",
+              "fixed_notes",
+              "notes"
+            ],
+            "product_tables": [
+              "reader_book_series",
+              "reader_book_shelves",
+              "reader_book_tags",
+              "reader_books",
+              "reader_local_books",
+              "reader_outbox",
+              "reader_revisions",
+              "reader_series",
+              "reader_shelves",
+              "reader_tags"
+            ]
+          },
+          "B": {
+            "sdk_version": 7,
+            "product_version": 1,
+            "sdk_tables": [
+              "audio_marks",
+              "audio_resume",
+              "book_progress",
+              "books",
+              "epub_bounded_books",
+              "epub_notes",
+              "epub_progress",
+              "fixed_notes",
+              "notes"
+            ],
+            "product_tables": [
+              "reader_book_series",
+              "reader_book_shelves",
+              "reader_book_tags",
+              "reader_books",
+              "reader_local_books",
+              "reader_outbox",
+              "reader_revisions",
+              "reader_series",
+              "reader_shelves",
+              "reader_tags"
+            ]
+          }
+        }
+      },
+      {
+        "name": "unchanged_original_product_owner_17_and_two_process_phases",
+        "passed": true,
+        "provider": [
+          "3.54.0",
+          "2026-10-09 15:46:58 be8d059e9a49089ab2dce5ed26dd87aaf598fdc5fbe0b107c0dd758464bcd5e3",
+          "2026-10-09 15:46:58 be8d059e9a49089ab2dce5ed26dd87aaf598fdc5fbe0b107c0dd758464bcd5e3",
+          "/data/app/~~AbkUhcHYNaXVcqKoOPQHxg==/org.exreader.host-52S0Uyyzewom6TK2F5MyTQ==/base.apk!/lib/x86_64/libexreader_product.so",
+          "ATOMIC_INTRINSICS=1;COMPILER=clang-18.0.3;DEFAULT_AUTOVACUUM;DEFAULT_CACHE_SIZE=-2000;DEFAULT_FILE_FORMAT=4;DEFAULT_FOREIGN_KEYS;DEFAULT_JOURNAL_SIZE_LIMIT=-1;DEFAULT_MMAP_SIZE=0;DEFAULT_PAGE_SIZE=4096;DEFAULT_PCACHE_INITSZ=20;DEFAULT_RECURSIVE_TRIGGERS;DEFAULT_SECTOR_SIZE=4096;DEFAULT_SYNCHRONOUS=2;DEFAULT_WAL_AUTOCHECKPOINT=1000;DEFAULT_WAL_SYNCHRONOUS=2;DEFAULT_WORKER_THREADS=0;DIRECT_OVERFLOW_READ;DQS=0;MALLOC_SOFT_LIMIT=1024;MAX_ATTACHED=10;MAX_COLUMN=2000;MAX_COMPOUND_SELECT=500;MAX_DEFAULT_PAGE_SIZE=8192;MAX_EXPR_DEPTH=1000;MAX_FUNCTION_ARG=1000;MAX_LENGTH=2147483647;MAX_LIKE_PATTERN_LENGTH=50000;MAX_MMAP_SIZE=0x7fff0000;MAX_PAGE_COUNT=0xfffffffe;MAX_PAGE_SIZE=65536;MAX_SCHEMA=10000000;MAX_SQL_LENGTH=1000000000;MAX_TRIGGER_DEPTH=1000;MAX_VARIABLE_NUMBER=32766;MAX_VDBE_OP=250000000;MAX_WORKER_THREADS=8;MUTEX_PTHREADS;OMIT_LOAD_EXTENSION;SYSTEM_MALLOC;TEMP_STORE=1;THREADSAFE=1"
+        ]
+      }
+    ],
+    "failure": null,
+    "active_document_or_pager_in_harness": false,
+    "reader_ui_accepted": false,
+    "physical_device": false
+  },
+  "unchanged_android_backend": {
+    "source_sha": "506fd1ee70a196ebb1beeba7a33b13b4c953a8c1",
+    "run_id": "40079492588",
+    "attempt": "1",
+    "accepted": true,
+    "api": 34,
+    "abi": "x86_64",
+    "backend_cases": 91,
+    "restart_cases": 4,
+    "process_killed_after_server_commit": true,
+    "force_stop_pid": "4620",
+    "immutable_payload_sha256": "61d1d9c5745bdaa4fab39240651bc242a5186b15393fd475082fcf6e84f400ab",
+    "authorization_sha256": "654f8411a87ab5d83ea7b4ee4e2deb861c58c098019ec1fb7bb01e12e4fab7c1",
+    "foreign_requests": 0,
+    "secret_scan": true,
+    "android_sync_ui_complete": false
+  },
+  "reading_state_dav_accepted": false,
+  "physical_device": false,
+  "retained_failures": [
+    {
+      "source_sha": "ca318e794f8a0aecce84887eba495fef5d0000b0",
+      "run_id": 40072691890,
+      "reason": "ProductOwnerTest runner was not registered in original host test APK; earlier session checks are historical only"
+    },
+    {
+      "source_sha": "c057c50b324c08bc3a0cb947281c275d60320009",
+      "run_id": 40072162039,
+      "reason": "earlier native link audit failure; retained, not accepted"
+    }
+  ]
+}
