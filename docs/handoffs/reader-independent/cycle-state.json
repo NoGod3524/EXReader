@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "recorded_at_utc": "2026-10-24T21:23:00Z",
+  "recorded_at_utc": "2026-10-24T22:05:00Z",
   "current_cycle": 1,
   "completed_cycles": 0,
   "audit_interval": 5,
@@ -65,7 +65,8 @@
       "navigation_specific_accepted": true,
       "navigation_ui_checks_per_target": 6,
       "same_source_retained_regressions": [40133477416, 40133494188, 40133512224, 40133527618],
-      "next_work": "native_F2_navigation_and_preserved_first_container_diagnostic",
+      "next_work": "finish_same_source_shelf_regression_then_native_G03_G04_reading_records",
+      "passed_retained_regression_runs": [40133477416, 40133494188, 40133512224],
       "search_evidence_head": "356c57a4c641f05e10cff13850e24bd94336454e"
     },
     {
@@ -93,6 +94,10 @@
       "navigation_evidence_head": "1ad762a0b68372c56b712d0129be8129d38b651f",
       "navigation_ui_checks_passed": 29,
       "navigation_backend_checks_passed": 58,
+      "reading_candidate_source": "98796b9bacea347c62baf6b5808122127093225c",
+      "reading_candidate_run": 40135514002,
+      "reading_ui_checks_passed": 30,
+      "cbz_second_page_capture_and_resolve_passed": true,
       "whole_run_conclusion": "failure",
       "whole_run_failures": ["whole_reading_page_background", "dark_reading_page"]
     },
@@ -272,10 +277,15 @@
   "root_windows_search": {
     "branch": "codex/reader-windows-search-ui",
     "accepted": false,
-    "source": "03c478ca270762052b7363da0118bd1ba9329f26",
-    "next": "complete EPUB/PDF, cancellation/lifecycle, keyboard/UIA and retained regressions with strict artifact authentication",
-    "run": 40133851473,
-    "earlier_failed_runs": [40128929347, 40129875990, 40130496026, 40132096070, 40132804712],
+    "source": "0d74f24a7f378564cd72a8fa92acb78be0f54828",
+    "next": "same_source_complete_revalidation_after_legacy_count_schema_fix",
+    "run": 40136985552,
+    "run_status": "in_progress",
+    "protocol_rejection_preflight_passed": true,
+    "previous_full_host_success_source": "2de59ee96c5ade5f40c599148d60626791164791",
+    "previous_full_host_success_run": 40135839283,
+    "previous_strict_summary_failure": "legacy_product_worker_shelf_reports_have_no_redundant_count_field",
+    "earlier_failed_runs": [40128929347, 40129875990, 40130496026, 40132096070, 40132804712, 40133851473, 40134550201, 40135839283],
     "original_f1_checks_passed_per_run": 264,
     "initial_host_checks_completed": 13,
     "initial_txt_run_conclusion": "success",

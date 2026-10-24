@@ -1,13 +1,13 @@
 {
   "schema": 1,
-  "observed_at_utc": "2026-10-24T21:23:00Z",
+  "observed_at_utc": "2026-10-24T22:00:00Z",
   "packages": 19,
   "cloud_success": 17,
   "returned_pending_root_review": 16,
   "needs_further_work": [
+    "J03",
     "J06",
-    "J19",
-    "J25"
+    "J19"
   ],
   "root_review_and_integration_complete": false,
   "tasks": [
@@ -23,20 +23,23 @@
     {
       "id": "J03",
       "branch": "codex/reader-desktop-drop",
-      "latest_run": 40123821461,
-      "source": "f2c95f9a4cc013f294edc55fefe12b8da3d5a5a5",
-      "status": "completed",
-      "conclusion": "success",
-      "root_state": "cloud_success_awaiting_root_review_and_integration"
+      "latest_run": 40135689234,
+      "source": "03babdbe2d2a608c9a2c1c280b6a238e1b99dc1f",
+      "status": "in_progress",
+      "conclusion": "",
+      "root_state": "repair_windows_sanitizer_variant_build_failed_owner_continuing",
+      "earlier_cloud_success_run": 40123821461,
+      "review": "J03-ROOT-REVIEW.md"
     },
     {
       "id": "J06",
       "branch": "codex/reader-external-link-policy",
-      "latest_run": 40123584995,
-      "source": "e175a00fbf7f623993698a276e8f066c392ad061",
+      "latest_run": 40134055434,
+      "source": "b3a018216e6a050fd3fc8425734512eebaf6887a",
       "status": "completed",
       "conclusion": "success",
-      "root_state": "root_review_changes_requested"
+      "root_state": "second_root_review_query_fragment_fix_dispatched",
+      "review": "J06-ROOT-REVIEW.md"
     },
     {
       "id": "J07",
@@ -131,11 +134,11 @@
     {
       "id": "J19",
       "branch": "codex/reader-tts-linux",
-      "latest_run": 40133477810,
-      "source": "27e5ca03039ea940fb9971a1ff304eb092073e53",
+      "latest_run": 40135611342,
+      "source": "4262dfcd24c31a8ef8b613b622242f6a265f2b3a",
       "status": "in_progress",
       "conclusion": "",
-      "root_state": "runtime_tests_in_progress",
+      "root_state": "three_runtime_variants_passed_ubuntu2204_asan_in_progress",
       "earlier_observed_failure_run": 40132713831
     },
     {
@@ -177,11 +180,12 @@
     {
       "id": "J25",
       "branch": "codex/reader-distribution-windows",
-      "latest_run": 40133712445,
-      "source": "094db994c8cfab48d8212e66045aa039981ddd3f",
+      "latest_run": 40135232301,
+      "source": "db7f13a323db4ea633db7660e20c92098e9c1bb4",
       "status": "completed",
-      "conclusion": "failure",
-      "root_state": "relocated_consumer_failure"
+      "conclusion": "success",
+      "root_state": "cloud_success_awaiting_root_review_and_integration",
+      "earlier_observed_failure_run": 40133712445
     }
   ]
 }

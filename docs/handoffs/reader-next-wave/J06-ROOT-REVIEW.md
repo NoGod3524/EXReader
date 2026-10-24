@@ -16,4 +16,4 @@
 
 源码 `b3a018216e6a050fd3fc8425734512eebaf6887a` / run `40134055434` 的三平台消费者及严格汇总已success。root逐字复核修补发现：`external()` 虽找出了 `hash_at`，但query分支仍用 `rest_len - query - 1` 校验query，将后续 `#fragment` 也当成允许控制字节的query数据，且之后只查重复#，没有重验fragment。因此 `https://example.com/?q=x#%0A` 仍会 `NEEDS_HOST`，违反该版本公开头刚明确的“query外的fragment拒绝编码控制字节”。
 
-应将query校验长度限制到首个#之前，并对#之后的fragment单独进行禁止编码控制字节的检查；保留合法query CRLF正例。至少增加“query+坏fragment”“query内合法CRLF+合法fragment”“fragment内?不是新query”具名正反例，再在原三平台及严格同轮认证中重验。此项尚待原owner收到第二次修补指令；新绿先保留，不授予共同源码合入。
+应将query校验长度限制到首个#之前，并对#之后的fragment单独进行禁止编码控制字节的检查；保留合法query CRLF正例。至少增加“query+坏fragment”“query内合法CRLF+合法fragment”“fragment内?不是新query”具名正反例，再在原三平台及严格同轮认证中重验。`2026-10-24T22:00Z` 已通过原DeepSeek会话发送第二次修补指令，界面确认“进行中”，owner正在分析同一query边界问题，模式仍Flash1017 / High / PTC / 完全权限；新绿先保留，不授予共同源码合入。
