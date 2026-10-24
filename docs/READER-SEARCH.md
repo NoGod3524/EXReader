@@ -119,3 +119,13 @@ Windows/Linux各264项检查、34个搜索场景全部通过，三个作业均�
 `docs/validation/reader-search.json` 记录实际云端运行。
 本轮只授予Windows/Linux上的本包接口，不含 macOS、宿主 UI、
 产品性能或六平台互通。
+
+## 后续独立交付对照
+
+原功能分支随后交付 `0fe2da68995ea1e6eb5772cb8338d49f7d863428`，
+文档 HEAD `b17fb4cadd81cfbac9327fb7eacf95aac542aa3a`，
+[run 40072778913](https://github.com/NoGod3524/EXReader/actions/runs/40072778913)
+三作业成功。该源码与本审查受测版本相比，未包含 `523a91f0` 增加的
+source_key 游标身份、游标边界及创建线程检查，对应探针也少21项。
+两份交付分别保留各自证据；集成候选继续使用本审查分支的264项版本，
+不得用原分支的243项通过覆盖已修复接口。后续共同源码仍须重新验证。
