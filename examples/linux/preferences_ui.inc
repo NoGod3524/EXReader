@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-/* Optional installed F3 settings. SDK and file operations remain on the owner. */
+/* Optional installed F3 settings. SDK work and atomic saves stay on the owner. */
 static struct {
   GtkWidget *dialog,*content,*return_focus,*message,*font,*line,*paragraph,*margin,*theme,*direction,*input,*zoom,*colors[4];
   GtkCssProvider *css;
@@ -307,7 +307,8 @@ static gboolean preferences_turn_key(GdkEventKey *event) {
     if(event->keyval==GDK_KEY_Down) next=1;else if(event->keyval==GDK_KEY_Up) next=0;
   } else if(event->keyval==GDK_KEY_Right) next=appearance.page_turn_direction==READER_PREFERENCES_TURN_LTR;
   else if(event->keyval==GDK_KEY_Left) next=appearance.page_turn_direction==READER_PREFERENCES_TURN_RTL;
-  if(next<0) return FALSE;submit(next ? READER_NEXT:READER_PREVIOUS,book_id,NULL,font_size);return TRUE;
+  if(next<0) return FALSE;
+  submit(next ? READER_NEXT:READER_PREVIOUS,book_id,NULL,font_size);return TRUE;
 }
 static gboolean preferences_page_press(GtkWidget *widget,GdkEventButton *event,gpointer unused) {
   (void)widget;(void)unused;preferences.pressed=event->button==1 && !preferences_opened() && !busy && !saving;
@@ -325,7 +326,8 @@ static gboolean preferences_page_release(GtkWidget *widget,GdkEventButton *event
     next=vertical ? event->y>=gtk_widget_get_allocated_height(widget)/2.0:event->x>=gtk_widget_get_allocated_width(widget)/2.0;
     if(appearance.page_turn_direction==READER_PREFERENCES_TURN_RTL) next=!next;
   }
-  if(next>=0) submit(next ? READER_NEXT:READER_PREVIOUS,book_id,NULL,font_size);return TRUE;
+  if(next>=0) submit(next ? READER_NEXT:READER_PREVIOUS,book_id,NULL,font_size);
+  return TRUE;
 }
 static char *preferences_observation(void) {
   return g_strdup_printf("[preferences]\nvisible=%d\nrunning=%d\nload_status=%d\nsave_status=%d\nfont=%.3f\nline=%.3f\nparagraph=%.3f\nmargin=%.3f\ntheme=%u\nsystem_theme=%u\neffective_theme=%u\ndirection=%u\ninput=%u\nzoom=%u\nportal_version=%u\nportal_events=%u\nbitmap_width=%zu\nbitmap_height=%zu\ndeferred_closes=%u\n",
