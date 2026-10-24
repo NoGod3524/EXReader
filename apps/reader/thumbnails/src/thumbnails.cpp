@@ -31,6 +31,7 @@
 #include <windows.h>
 #else
 #include <cerrno>
+#include <dirent.h>
 #include <fcntl.h>
 #include <sys/file.h>
 #include <sys/stat.h>
@@ -281,6 +282,76 @@ class OwnerLock {
   HANDLE handle_ = INVALID_HANDLE_VALUE;
 #else
   int fd_ = -1;
+#endif
+};
+
+// The libstdc++ directory_iterator error-code constructor allocates in a noexcept
+// path (Actions allocation stacks, b99034cd). Enumerate with the native handle so
+// allocation of each returned path can unwind through the public ABI guard.
+class DirectoryScan {
+ public:
+  ~DirectoryScan() {
+#ifdef _WIN32
+    if (handle_ != INVALID_HANDLE_VALUE) ::FindClose(handle_);
+#else
+    if (handle_) ::closedir(handle_);
+#endif
+  }
+  bool open(const fs::path& dir, std::error_code& ec) {
+#ifdef _WIN32
+    const fs::path pattern = dir / L"*";
+    handle_ = ::FindFirstFileW(pattern.c_str(), &data_);
+    if (handle_ != INVALID_HANDLE_VALUE) { first_ = true; return true; }
+    const DWORD code = ::GetLastError();
+    if (code == ERROR_FILE_NOT_FOUND) return true;  // empty directory
+    ec = std::error_code(static_cast<int>(code), std::system_category());
+#else
+    handle_ = ::opendir(dir.c_str());
+    if (handle_) return true;
+    ec = std::error_code(errno, std::system_category());
+#endif
+    return false;
+  }
+  bool next(fs::path& name, bool& regular, std::error_code& ec) {
+    for (;;) {
+#ifdef _WIN32
+      if (handle_ == INVALID_HANDLE_VALUE) return false;
+      if (first_) first_ = false;
+      else if (!::FindNextFileW(handle_, &data_)) {
+        const DWORD code = ::GetLastError();
+        if (code != ERROR_NO_MORE_FILES)
+          ec = std::error_code(static_cast<int>(code), std::system_category());
+        return false;
+      }
+      if (!::wcscmp(data_.cFileName, L".") || !::wcscmp(data_.cFileName, L"..")) continue;
+      name = data_.cFileName;
+      regular = !(data_.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT));
+#else
+      errno = 0;
+      const struct dirent* entry = ::readdir(handle_);
+      if (!entry) {
+        if (errno) ec = std::error_code(errno, std::system_category());
+        return false;
+      }
+      if (!std::strcmp(entry->d_name, ".") || !std::strcmp(entry->d_name, "..")) continue;
+      struct stat info;
+      if (::fstatat(::dirfd(handle_), entry->d_name, &info, AT_SYMLINK_NOFOLLOW) != 0) {
+        ec = std::error_code(errno, std::system_category());
+        return false;
+      }
+      name = entry->d_name;
+      regular = S_ISREG(info.st_mode);
+#endif
+      return true;
+    }
+  }
+ private:
+#ifdef _WIN32
+  HANDLE handle_ = INVALID_HANDLE_VALUE;
+  WIN32_FIND_DATAW data_{};
+  bool first_ = false;
+#else
+  DIR* handle_ = nullptr;
 #endif
 };
 
@@ -1058,20 +1129,19 @@ rth_status rth_cache_open(const char* directory, const rth_limits* limits, rth_c
     // a statement about an observed prefix.
     uint64_t inspected = 0, own = 0, deleted = 0;
     std::error_code it_ec;
-    for (fs::directory_iterator it(c->dir, it_ec), end; !it_ec && it != end; it.increment(it_ec)) {
+    DirectoryScan scan;
+    if (!scan.open(c->dir, it_ec)) return fail(error, RTH_IO, -1, "Cannot enumerate the cache directory");
+    fs::path file_name;
+    bool regular = false;
+    while (scan.next(file_name, regular, it_ec)) {
       ++inspected;
+      if (!regular) continue;
       std::error_code fe;
-      const fs::file_status status = it->symlink_status(fe);  // never follows a link
-      if (fe || !fs::is_regular_file(status)) continue;
-      std::string name;
-      try {
-        name = it->path().filename().u8string();
-      } catch (...) {
-        continue;  // a name this platform cannot represent is left untouched
-      }
-      if (legacy_temp_name(name)) { fs::remove(it->path(), fe); continue; }
+      const std::string name = file_name.u8string();
+      const fs::path path = c->dir / file_name;
+      if (legacy_temp_name(name)) { fs::remove(path, fe); continue; }
       if (session_temp_name(name)) {
-        if (temp_is_stale(it->path())) fs::remove(it->path(), fe);
+        if (temp_is_stale(path)) fs::remove(path, fe);
         continue;
       }
       if (!recognised_entry(name)) continue;
@@ -1079,7 +1149,7 @@ rth_status rth_cache_open(const char* directory, const rth_limits* limits, rth_c
         return fail(error, RTH_LIMIT, -1, "Cache directory holds more entry files than the scan ceiling");
       Header h;
       uint64_t size = 0;
-      if (!read_header_only(it->path(), c->limits, h, size) || entry_name(h.key) != name) {
+      if (!read_header_only(path, c->limits, h, size) || entry_name(h.key) != name) {
         if (!remove_entry_file(c, name)) return fail(error, RTH_IO, -1, "Cannot delete a damaged cache entry");
         ++deleted;
         ++c->stats.corrupt_rebuilt;
