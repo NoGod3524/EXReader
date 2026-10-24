@@ -67,22 +67,28 @@ performs nor authorizes.
 
 ## Accepted cloud run
 
-Tested source `6ba1ad0d0c3c74dfc5c5267521f60dfd3210a48a` on `codex/reader-reading-commands`, run
-[40081701747](https://github.com/NoGod3524/EXReader/actions/runs/40081701747) attempt 1: success.
+Tested source `7829ddff129e62d156db445af6c975ebf9166881` on `codex/reader-reading-commands`, run
+[40084536016](https://github.com/NoGod3524/EXReader/actions/runs/40084536016) attempt 1: success.
 
 | job | id | result |
 | --- | --- | --- |
-| reading commands (ubuntu-22.04) | 120836421578 | 1402 checks, 0 failures, 21 cases, 6 race rounds |
-| reading commands (windows-2022) | 120836421497 | 1402 checks, 0 failures, 21 cases, 6 race rounds |
-| reading commands (macos-15) | 120836421599 | 1402 checks, 0 failures, 21 cases, 6 race rounds |
-| same-run artifact evidence | 120837153821 | `problems: []`, three ZIPs re-verified inside Actions |
+| reading commands (ubuntu-22.04) | 120844636884 | 1413 checks, 0 failures, 21 cases, 6 race rounds |
+| reading commands (windows-2022) | 120844636825 | 1413 checks, 0 failures, 21 cases, 6 race rounds |
+| reading commands (macos-15) | 120844636709 | 1413 checks, 0 failures, 21 cases, 6 race rounds |
+| same-run artifact evidence | 120845396492 | `problems: []`, three ZIPs re-verified inside Actions |
 
-Artifacts, each named with run and attempt and valid until 2027-01-22T09:22:34Z: Linux `12555347919`
-10,297,711 B `sha256:1ec3eda...cd9424`; Windows `12555602070` 8,529,139 B `sha256:dcf071f...7e1d7f6`;
-macOS `12555502324` 9,185,764 B `sha256:d7915e0...24fa88d`; evidence `12555273459` 1,886 B
-`sha256:6f7ce89...474f97b8`. The three systems produced byte-identical originals (txt, edited txt, epub,
+Artifacts, each named with run and attempt and valid until 2027-01-22T10:05:35Z: Linux `12556980980`
+10,307,401 B `sha256:5a655ed...27a4c80`; Windows `12556162858` 8,541,728 B `sha256:8762e2b...666eb6db82`;
+macOS `12556443022` 9,194,007 B `sha256:6891d53...3bee05d27`; evidence `12556109656` 1,885 B
+`sha256:6a12d1f...41e813e82b`. The three systems produced byte-identical originals (txt, edited txt, epub,
 pdf, cbz, spacer) and exactly one vendored SQLite archive each.
 
-Earlier failing runs 40078160945 (`58fa6021`), 40078549084 (`03027bcb`) and 40079084692 (`b2d587f6`) stay
-recorded and are not reclassified. Host UI/adapters and applying a committed revision to the SDK remain
+The 11 checks added with the anonymous-identity fix are part of that 1413: the lost-response retry with an
+empty `annotation_id` (identity, bytes, single history/outbox row, no requeue after ack, payload collision) and
+the writer-blocked failure repeated on the anonymous path.
+
+Kept as history, never reclassified: runs 40078160945 (`58fa6021`), 40078549084 (`03027bcb`) and 40079084692
+(`b2d587f6`) failed; run 40083106725 (`8482302c`) failed to compile the new probe cases and run 40083763236
+(`4246c6d2`) hit MSVC C4458 in the module, both cancelled once their fix was pushed; run 40081701747
+(`6ba1ad0d`) succeeded before the identity fix and is not the current grant basis. Host UI/adapters stay
 outside this acceptance (`host_integration_accepted: false`).
