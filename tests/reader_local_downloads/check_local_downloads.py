@@ -973,10 +973,7 @@ def s_reimport_path_swap(ctx):
     same(env.dump_sha(new_id), book.sha, "imported bytes are the verified bytes")
     found, local, mapped, deleted = env.catalog(book.key)
     same((found, local, mapped), (1, new_id, 1), "mapping points at the verified row")
-    books = env.books()
-    for i in books:
-        if i != new_id:
-            need(same(env.dump_sha(i), other.sha) is None, "unrelated row changed")
+    same(env.dump_sha(other.mapped), other.sha, "unrelated row unchanged")
     env.assert_state_clean()
 
 
@@ -1058,7 +1055,13 @@ def s_pdf_private_original(ctx):
     need(os.path.isfile(other_stable), "another book's private original is untouched")
     same(sha256_file(other_stable), other_digest, "other private bytes unchanged")
     same(env.catalog(book.key)[:2], (1, 0), "global book kept without a local copy")
+    need(not os.path.exists(os.path.join(env.state, "intent.rdi")), "intent left behind")
+    need(not os.path.exists(os.path.join(env.state, "intent.tmp")), "intent temp left behind")
+    same(sorted(os.listdir(os.path.join(env.state, "originals"))), [other.sha + ".orig"],
+         "only the live book's private original remains")
+    removed_ok(env.run("remove", "--key", other.key), other)
     env.assert_state_clean()
+    same(env.catalog(other.key)[:2], (1, 0), "second book kept without a local copy")
 
 
 def s_formats_all(ctx):
