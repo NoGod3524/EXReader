@@ -12,7 +12,7 @@
   "artifacts": [],
   "cases": [],
   "checks": 0,
-  "required_checks": 45,
+  "required_checks": 48,
   "fuzz": [],
   "replay": [],
   "limits": {
@@ -35,6 +35,24 @@
   "sdk_changed": false,
   "schema_changed": false,
   "complete_product": false,
+  "retained_failures": [
+    {
+      "run_id": 40126457981,
+      "attempt": 1,
+      "source_sha": "229c13ea855814d1b8478a4ab501e984fdbf61af",
+      "cause": "the driver passed repository-relative fixture paths to consumers whose cwd was the work directory",
+      "owned_by": "this package",
+      "action": "resolve every consumer path to an absolute path"
+    },
+    {
+      "run_id": 40127234053,
+      "attempt": 1,
+      "source_sha": "39f644a5a9c44d35b62f47ef6fb4bff3d572f0cf",
+      "cause": "two named checks assumed a remote receive enqueues a local outbox row; the product contract says only local does",
+      "owned_by": "this package",
+      "action": "split into local pending-intent and receive-without-queue checks and add the wire-local fuzz target"
+    }
+  ],
   "problems": [
     "no cloud run has been granted yet"
   ],

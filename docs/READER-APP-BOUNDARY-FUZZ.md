@@ -65,7 +65,7 @@ revisions/reading-state 没有取消入口，测试不假装有。提交边界�
 `iter=<n> seed=<hex> base=<file> bytes=<n>` 并 flush，然后才执行被测调用——
 这就是崩溃后的确定性重放入口。
 
-## 具名检查（45 项，顺序与身份固定）
+## 具名检查（48 项，顺序与身份固定）
 
 设置文件：`preferences.seed_manifest`（13 个夹具的期望状态在消费者读之前固定）、
 `defaults`、`roundtrip`（保存字节与 canonical 逐字相同）、
@@ -79,8 +79,10 @@ revisions/reading-state 没有取消入口，测试不假装有。提交边界�
 wire：`wire.seed_manifest`（12 个夹具，含期望 SHA 与解码字段）、
 `seed_v1_progress_valid`、`seed_v2_epub_annotation_valid`、
 `unknown_field_format`、`duplicate_key_format`、`invalid_utf8_format`、
-`byte_limit`、`hash_mismatch`、`receive_pending_then_ack`
-（入队 → retry 固定 token → 错 SHA 拒 ack → 正确 ack 仅删队列 → 保留历史 → 重复接收幂等）、
+`byte_limit`、`hash_mismatch`、`pending_intent_local_then_ack`
+（local 入队 → retry 固定 token → 错 SHA 拒 ack → 正确 ack 仅删队列 → 保留历史 →
+重复 local 幂等且不重新入队）、`receive_idempotent_without_queue`
+（远端 receive 只保留历史、**不产生本机 outbox**，重复接收幂等）、
 `decode_v1_matches_seed`、`decode_not_reading_refused`、
 `validation_does_not_write`（库文件 SHA 不变、历史 0、outbox 0）。
 
@@ -91,14 +93,16 @@ reading-state：`encode.v1_annotation_valid`、`encode.v2_point_valid`
 跨进程与 C ABI：`cross_process.revisions_reopen`（多个独立进程读写同一产品库）、
 `c_abi.parity`（C 与 C++ 消费者的默认值、状态名、加载/拒绝与 wire SHA 一致）。
 
-模糊与确定性：`fuzz.{preferences,wire_validate,wire_decode,wire_receive}.invariants`
+模糊与确定性：`fuzz.{preferences,wire_validate,wire_decode,wire_receive,wire_local}.invariants`
 与 `determinism.<target>`。每个目标的不变式：
 
 - 状态落在文档集合内；错误消息在固定缓冲区内有 NUL 终止。
 - 失败时不修改调用者记录（preferences），不发布陈旧 `info`（revisions），
   不留下半填 `record`（reading-state）。
-- `receive`：`created` 为 0/1；失败或幂等时 outbox 行数不变；成功时恰好多一行，
-  且该行能被返回值中的 SHA 立即 ack 掉（历史保留）。
+- `receive`：`created` 为 0/1；成功或幂等时 outbox 行数都不变（远端到达不产生本机
+  pending），成功时能用返回值立即读回逐字节相同的原件。
+- `local`：`created` 为 0/1；成功时 outbox 恰好多一行，读回字节相同，且该行能被返回值中
+  的 SHA 立即 ack 掉（历史保留）；失败或幂等时 outbox 行数不变。
 - 每个真实崩溃/断言失败都从 journal 末行取回 `current.bin`，在两个全新进程中各重放一次，
   输出必须逐字相同，并作为 `replay.<target>` 具名结果记录。
 
@@ -118,7 +122,7 @@ reading-state：`encode.v1_annotation_valid`、`encode.v2_point_valid`
    跑具名检查、四个有界循环与全部回放。
 5. 工件：日志、种子清单、驱动输出（含 `evidence/result.json` 与每个 case 的观察）、
    两个消费者二进制、安装头与静态库。严格作业重新下载同一 ZIP，重算字节数与
-   sha256，逐项核对 45 个具名结果、四个 journal 摘要、消费者二进制摘要、安装头摘要、
+   sha256，逐项核对 48 个具名结果、五个 journal 摘要、消费者二进制摘要、安装头摘要、
    种子清单身份与 run/attempt/job 归属；任一缺项或跨源码即拒绝。
 
 ## 复现
@@ -158,8 +162,19 @@ reading-state）与建议补丁方向。已经发现并保留的失败不会删�
 - encode 用例直接构造公开 selector 值，未加载真实文档；不声称 selector 已被 SDK 解析。
 - 不修改冻结 SDK、产品 schema1、wire v1、anchor v1/v2，也不新增同步实体。
 
+## 已保留的红轮（未删除）
+
+- run `40126457981`（source `229c13ea`）：消费者以工作目录为 cwd 运行，而驱动把相对夹具路径
+  原样传入，导致所有文件类检查立即失败（`preferences.defaults` 等无文件检查仍绿）。修复为
+  解析绝对路径；原运行与工件保留。
+- run `40127234053`（source `39f644a5`）：41/45 绿。`wire.receive_pending_then_ack` 与
+  `cross_process.revisions_reopen` 暴露**本包自己的错误预期**：产品契约明确 `receive` 不产生
+  outbox（只有 `local` 入队），而测试却要求 receive 入队。已按契约拆成
+  `pending_intent_local_then_ack` 与 `receive_idempotent_without_queue`，并新增 `wire-local`
+  模糊与确定性目标；不是把失败改成“预期拒绝”。
+
 ## 验收状态
 
-**pending**：`accepted=false`。仅当同一 source/run/attempt 的 Linux 作业 45 项具名检查
+**pending**：`accepted=false`。仅当同一 source/run/attempt 的 Linux 作业 48 项具名检查
 （含四个模糊目标与四个确定性回放）全部成功、严格作业重算 ZIP 与内容摘要一致后才更新
 `docs/validation/reader-app-boundary-fuzz.json`；本次记录之前任何生成物都不构成验收。

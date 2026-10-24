@@ -423,17 +423,16 @@ class Driver:
         require(output["name"] == "HASH", "a wrong transport SHA was not refused as HASH")
         return {"status": output["name"]}
 
-    def case_wire_receive_ack(self):
-        database = self.fresh_db("receive")
-        seed = self.seeds["wire/v1_progress_reflow.json"]
+    def case_wire_local_pending(self):
+        database = self.fresh_db("local-pending")
         path = self.fixtures / "wire/v1_progress_reflow.json"
         digest = sha256_bytes(self.seed_bytes("wire/v1_progress_reflow.json"))
-        _, received, _ = self.consumer("wire-receive", str(database), str(path), digest)
-        require(received["name"] == "OK" and received["created"] == 1, "a valid revision was not queued")
-        require(received["sha256"] == digest, "the queued SHA differs")
-        identifier = received["revision_id"]
+        _, queued, _ = self.consumer("wire-local", str(database), str(path))
+        require(queued["name"] == "OK" and queued["created"] == 1, "a valid local revision was not queued")
+        require(queued["sha256"] == digest, "the queued SHA differs")
+        identifier = queued["revision_id"]
         _, outbox, _ = self.consumer("wire-outbox", str(database))
-        require(outbox["count"] == 1 and outbox["rows"][0]["id"] == identifier, "the outbox row is missing")
+        require(outbox["count"] == 1 and outbox["rows"][0]["id"] == identifier, "the pending row is missing")
         _, retried, _ = self.consumer("wire-retry", str(database), identifier, "3")
         require(retried["name"] == "OK", "retry failed")
         _, outbox, _ = self.consumer("wire-outbox", str(database))
@@ -454,11 +453,33 @@ class Driver:
         _, heads, _ = self.consumer("wire-heads", str(database), "progress", EPUB)
         require(heads["revisions"] == 1 and heads["heads"] == 1, "the retained history differs")
         require(heads["projection_safe"] == 1, "the retained history is not safe")
-        _, again, _ = self.consumer("wire-receive", str(database), str(path), digest)
-        require(again["name"] == "OK" and again["created"] == 0, "a duplicate receive was not idempotent")
+        _, again, _ = self.consumer("wire-local", str(database), str(path))
+        require(again["name"] == "OK" and again["created"] == 0, "a duplicate local write was not idempotent")
         _, outbox, _ = self.consumer("wire-outbox", str(database))
-        require(outbox["count"] == 0, "a duplicate receive requeued the revision")
+        require(outbox["count"] == 0, "a duplicate local write requeued the revision")
         return {"revision_id": identifier, "sha256": digest}
+
+    def case_wire_receive_no_queue(self):
+        database = self.fresh_db("receive-no-queue")
+        progress = self.fixtures / "wire/v1_progress_reflow.json"
+        annotation = self.fixtures / "wire/v1_annotation_reflow.json"
+        progress_sha = sha256_bytes(progress.read_bytes())
+        annotation_sha = sha256_bytes(annotation.read_bytes())
+        _, received, _ = self.consumer("wire-receive", str(database), str(progress), progress_sha)
+        require(received["name"] == "OK" and received["created"] == 1, "a remote revision was not stored")
+        identifier = received["revision_id"]
+        _, outbox, _ = self.consumer("wire-outbox", str(database))
+        require(outbox["count"] == 0, "a remote receive queued a local row")
+        retained = self.work / "received.json"
+        _, fetched, _ = self.consumer("wire-get", str(database), identifier, str(retained))
+        require(fetched["name"] == "OK" and retained.read_bytes() == progress.read_bytes(), "the remote bytes differ")
+        _, again, _ = self.consumer("wire-receive", str(database), str(progress), progress_sha)
+        require(again["name"] == "OK" and again["created"] == 0, "a duplicate remote receive was not idempotent")
+        _, other, _ = self.consumer("wire-receive", str(database), str(annotation), annotation_sha)
+        require(other["name"] == "OK" and other["created"] == 1, "a second remote entity was not stored")
+        _, outbox, _ = self.consumer("wire-outbox", str(database))
+        require(outbox["count"] == 0, "remote receives changed the pending queue")
+        return {"revision_id": identifier, "sha256": progress_sha}
 
     def case_wire_decode(self):
         database = self.fresh_db("decode")
@@ -515,8 +536,8 @@ class Driver:
         database = self.fresh_db("cross-process")
         digest = sha256_bytes(self.seed_bytes("wire/v1_progress_reflow.json"))
         path = self.fixtures / "wire/v1_progress_reflow.json"
-        _, received, _ = self.consumer("wire-receive", str(database), str(path), digest)
-        require(received["created"] == 1, "the first process did not receive")
+        _, received, _ = self.consumer("wire-local", str(database), str(path))
+        require(received["created"] == 1, "the first process did not queue")
         identifier = received["revision_id"]
         _, outbox, _ = self.consumer("wire-outbox", str(database))
         require(outbox["count"] == 1, "the second process lost the pending row")
@@ -729,7 +750,8 @@ class Driver:
         self.record("wire.invalid_utf8_format", lambda: self.case_wire_refusal("wire/invalid_utf8.json", "FORMAT"))
         self.record("wire.byte_limit", lambda: self.case_wire_refusal("wire/byte_limit.bin", "LIMIT"))
         self.record("wire.hash_mismatch", self.case_wire_hash_mismatch)
-        self.record("wire.receive_pending_then_ack", self.case_wire_receive_ack)
+        self.record("wire.pending_intent_local_then_ack", self.case_wire_local_pending)
+        self.record("wire.receive_idempotent_without_queue", self.case_wire_receive_no_queue)
         self.record("wire.decode_v1_matches_seed", self.case_wire_decode)
         self.record("wire.decode_not_reading_refused", self.case_decode_non_reading)
         self.record("wire.validation_does_not_write", self.case_validation_does_not_write)

@@ -22,7 +22,7 @@ from boundary_cases import REPLAY_CASES, REQUIRED_CASES  # noqa: E402
 
 WORKFLOW = ".github/workflows/reader-app-boundary-fuzz.yml"
 JOB = "app boundary fuzz (ubuntu-22.04)"
-TARGETS = ("preferences", "wire-validate", "wire-decode", "wire-receive")
+TARGETS = ("preferences", "wire-validate", "wire-decode", "wire-receive", "wire-local")
 INSTALLED = (
     ("include/reader_preferences.h", "reader_preferences.h"),
     ("include/reader_revisions.h", "reader_revisions.h"),

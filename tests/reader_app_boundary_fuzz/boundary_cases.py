@@ -32,7 +32,8 @@ REQUIRED_CASES = [
     "wire.invalid_utf8_format",
     "wire.byte_limit",
     "wire.hash_mismatch",
-    "wire.receive_pending_then_ack",
+    "wire.pending_intent_local_then_ack",
+    "wire.receive_idempotent_without_queue",
     "wire.decode_v1_matches_seed",
     "wire.decode_not_reading_refused",
     "wire.validation_does_not_write",
@@ -47,13 +48,15 @@ REQUIRED_CASES = [
     "fuzz.wire_validate.invariants",
     "fuzz.wire_decode.invariants",
     "fuzz.wire_receive.invariants",
+    "fuzz.wire_local.invariants",
     "determinism.preferences",
     "determinism.wire_validate",
     "determinism.wire_decode",
     "determinism.wire_receive",
+    "determinism.wire_local",
 ]
 
-FUZZ_TARGETS = ["preferences", "wire-validate", "wire-decode", "wire-receive"]
+FUZZ_TARGETS = ["preferences", "wire-validate", "wire-decode", "wire-receive", "wire-local"]
 
 # Deterministic replay names only exist when a run actually produced a case.
 REPLAY_CASES = ["replay." + target for target in FUZZ_TARGETS]

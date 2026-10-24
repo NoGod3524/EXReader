@@ -414,22 +414,44 @@ std::string wire_decode_observe(reader_revisions *store, const std::string &byte
   return out;
 }
 
+std::string readable_bytes(reader_revisions *store, const reader_revision_info &info,
+                              const std::string &expected) {
+  revision_bytes_guard retained;
+  size_t retained_bytes = 0;
+  reader_revision_info fetched{};
+  reader_revision_error error{};
+  reader_revision_status status = abi<reader_revision_status>(
+      "reader_revision_get", [&] {
+        return reader_revision_get(store, info.revision_id, &retained.value, &retained_bytes,
+                                   &fetched, &error);
+      });
+  require(status == READER_REV_OK && retained.value != nullptr,
+          "a retained revision is not readable");
+  require(std::string(retained.value, retained_bytes) == expected,
+          "the retained bytes differ from the input");
+  require(std::memcmp(&fetched, &info, sizeof(info)) == 0,
+          "the retained metadata differs from the accepted one");
+  return "readable";
+}
+
 /* Validate-then-receive: the module itself produces the transport SHA, so the
    loop never has to guess one. A refused validation uses a fixed wrong SHA so
-   the refusal path is still exercised. */
+   the refusal path is still exercised. Remote receive stores history only and
+   never queues a local outbox row. */
 std::string wire_receive_observe(reader_revisions *store, const std::string &bytes) {
   reader_revision_info validated{};
   reader_revision_error error{};
-  reader_revision_status status = abi<reader_revision_status>(
+  reader_revision_status validated_status = abi<reader_revision_status>(
       "reader_revision_validate", [&] {
         return reader_revision_validate(store, bytes.data(), bytes.size(), nullptr, &validated,
                                         &error);
       });
-  require(revision_known(static_cast<int>(status)),
+  require(revision_known(static_cast<int>(validated_status)),
           "pre-receive validate status is outside the documented set");
   const char *sha =
-      status == READER_REV_OK ? validated.sha256
-                              : "0000000000000000000000000000000000000000000000000000000000000000";
+      validated_status == READER_REV_OK
+          ? validated.sha256
+          : "0000000000000000000000000000000000000000000000000000000000000000";
   const outbox_observer before = read_outbox(store);
   reader_revision_info info{};
   reader_revision_error receive_error{};
@@ -445,12 +467,58 @@ std::string wire_receive_observe(reader_revisions *store, const std::string &byt
   require(std::memchr(receive_error.message, 0, sizeof(receive_error.message)) != nullptr,
           "receive error message is not NUL terminated");
   const outbox_observer after = read_outbox(store);
+  require(after.ids.size() == before.ids.size(),
+          "a remote receive changed the local pending queue");
   if (created) {
     require(received == READER_REV_OK, "a created revision reported a failure status");
-    require(after.ids.size() == before.ids.size() + 1,
-            "an accepted revision did not add exactly one pending row");
     require(std::memcmp(&info, &validated, sizeof(info)) == 0,
             "the accepted revision metadata differs from the validated one");
+    (void)readable_bytes(store, info, bytes);
+  }
+  std::string out;
+  number(out, "status", static_cast<long long>(received));
+  field(out, "name", quote(revision_name(received)));
+  field(out, "message",
+        quote(std::string(receive_error.message, std::strlen(receive_error.message))));
+  number(out, "created", created);
+  number(out, "validated_status", static_cast<long long>(validated_status));
+  append_info(out, info);
+  return out;
+}
+
+/* Local pending intent: a created local revision must add exactly one outbox
+   row, stay byte-identical when read back, and let one verified ack remove only
+   the queue row while history stays. */
+std::string wire_local_observe(reader_revisions *store, const std::string &bytes) {
+  reader_revision_info validated{};
+  reader_revision_error validate_error{};
+  reader_revision_status validated_status = abi<reader_revision_status>(
+      "reader_revision_validate", [&] {
+        return reader_revision_validate(store, bytes.data(), bytes.size(), nullptr, &validated,
+                                        &validate_error);
+      });
+  require(revision_known(static_cast<int>(validated_status)),
+          "pre-local validate status is outside the documented set");
+  const outbox_observer before = read_outbox(store);
+  reader_revision_info info{};
+  reader_revision_error local_error{};
+  int created = 0;
+  reader_revision_status status = abi<reader_revision_status>(
+      "reader_revision_local", [&] {
+        return reader_revision_local(store, bytes.data(), bytes.size(), &info, &created,
+                                     &local_error);
+      });
+  require(revision_known(static_cast<int>(status)),
+          "local status is outside the documented set");
+  require(created == 0 || created == 1, "local created flag is not a boolean");
+  require(std::memchr(local_error.message, 0, sizeof(local_error.message)) != nullptr,
+          "local error message is not NUL terminated");
+  const outbox_observer after = read_outbox(store);
+  if (created) {
+    require(status == READER_REV_OK, "a created local revision reported a failure status");
+    require(after.ids.size() == before.ids.size() + 1,
+            "an accepted local revision did not queue exactly one row");
+    (void)readable_bytes(store, info, bytes);
     reader_revision_error ack_error{};
     reader_revision_status acked = abi<reader_revision_status>(
         "reader_revision_ack", [&] {
@@ -462,14 +530,14 @@ std::string wire_receive_observe(reader_revisions *store, const std::string &byt
             "acknowledgement did not remove exactly the queued row");
   } else {
     require(after.ids.size() == before.ids.size(),
-            "a refused or duplicate receive changed the pending queue");
+            "a refused or duplicate local write changed the pending queue");
   }
   std::string out;
-  number(out, "status", static_cast<long long>(received));
-  field(out, "name", quote(revision_name(received)));
-  field(out, "message", quote(std::string(receive_error.message, std::strlen(receive_error.message))));
+  number(out, "status", static_cast<long long>(status));
+  field(out, "name", quote(revision_name(status)));
+  field(out, "message", quote(std::string(local_error.message, std::strlen(local_error.message))));
   number(out, "created", created);
-  number(out, "validated_status", static_cast<long long>(status));
+  number(out, "validated_status", static_cast<long long>(validated_status));
   append_info(out, info);
   return out;
 }
@@ -587,6 +655,7 @@ std::string observe(const std::string &target, case_context &context, const std:
   if (target == "wire-validate") return wire_validate_observe(context.store, bytes, nullptr);
   if (target == "wire-decode") return wire_decode_observe(context.store, bytes);
   if (target == "wire-receive") return wire_receive_observe(context.store, bytes);
+  if (target == "wire-local") return wire_local_observe(context.store, bytes);
   throw violation{"unknown fuzz target"};
 }
 
@@ -1109,7 +1178,8 @@ int command_fuzz(const std::vector<std::string> &args) {
                          std::stoull(args[9]), args[6], args[7], args[8]};
   const bool preferences_target = options.target == "preferences";
   require(preferences_target || options.target == "wire-validate" ||
-              options.target == "wire-decode" || options.target == "wire-receive",
+              options.target == "wire-decode" || options.target == "wire-receive" ||
+              options.target == "wire-local",
           "unknown fuzz target");
 
   const auto seeds = load_seeds(options.seeds);
