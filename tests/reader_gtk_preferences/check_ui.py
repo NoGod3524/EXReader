@@ -92,7 +92,10 @@ def main():
         return wait(lambda value: int(value['actions']) > before)
 
     def save():
-        return button('s')
+        result = button('s')
+        dialog = element('Reading settings', {'dialog'})
+        assert any(bus.name(node) and bus.is_ancestor(dialog, node) for node in bus.focused_all(app)), 'settings save lost exposed control focus'
+        return result
 
     def defaults():
         button('d');save();return wait()
@@ -121,6 +124,15 @@ def main():
         value = subprocess.run([str(args.consumer.resolve()), str(settings)], capture_output=True, text=True, timeout=30)
         assert value.returncode == 0, value.stdout + value.stderr
         return json.loads(value.stdout)
+
+    def panel_pixels(name, color):
+        path = shot(name);rectangle = bus.extents(element('Selectable page text', {'text'}))
+        frame = bus.extents(element('EXReader Linux', {'frame'}))
+        x, y = rectangle['x'] - frame['x'], rectangle['y'] - frame['y']
+        crop = Image.open(path).convert('RGB').crop((x, y, x + rectangle['width'], y + rectangle['height']))
+        count = sum(1 for pixel in crop.getdata() if max(abs(pixel[i] - color[i]) for i in range(3)) <= 3)
+        return {'matching_pixels': count, 'rectangle': rectangle, 'frame': frame,
+                'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
 
     def page_click(x_fraction=.8, y_fraction=.5):
         rectangle = bus.extents(element('Rendered page; selectable text is in the adjacent panel', {'image'}))
@@ -164,27 +176,36 @@ def main():
         record('fractional_font_is_applied_and_saved', observed()['font'] == '25.500' and installed()['font'] == 25.5)
         open_settings();defaults();field('Light foreground', '#D02020FF');field('Light background', '#FDF4DCFF');save();close_settings()
         fg = pixels('light-foreground', (208, 32, 32));bg = pixels('light-background', (253, 244, 220))
+        panel_fg = panel_pixels('light-panel-foreground', (208, 32, 32));panel_bg = panel_pixels('light-panel-background', (253, 244, 220))
         record('light_foreground_and_background_change_page_pixels', fg['matching_pixels'] > 100 and bg['matching_pixels'] > 1000,
                {'foreground': fg, 'background': bg, 'foreground_passed': fg['matching_pixels'] > 100,
-                'background_passed': bg['matching_pixels'] > 1000}, strict=False)
+                'background_passed': bg['matching_pixels'] > 1000,
+                'native_panel_foreground': panel_fg, 'native_panel_background': panel_bg}, strict=False)
         report['reflow_outer_margin'] = {'actual_pixel': bg['outer_margin_pixel'], 'requested_background': [253, 244, 220],
                                          'whole_page_background_accepted': bg['outer_margin_pixel'] == (253, 244, 220),
                                          'limitation': 'Public reflow renderer fixes the canvas to white; user CSS controls content background. No white-pixel replacement or image recoloring is performed.'}
         open_settings();field('Dark foreground', '#14E66EFF');field('Dark background', '#141E46FF');combo('Theme', 1);save();close_settings()
         fg = pixels('dark-foreground', (20, 230, 110));bg = pixels('dark-background', (20, 30, 70))
+        panel_fg = panel_pixels('dark-panel-foreground', (20, 230, 110));panel_bg = panel_pixels('dark-panel-background', (20, 30, 70))
         record('dark_theme_and_palette_change_page_pixels', fg['matching_pixels'] > 100 and bg['matching_pixels'] > 1000,
                {'foreground': fg, 'background': bg, 'foreground_passed': fg['matching_pixels'] > 100,
-                'background_passed': bg['matching_pixels'] > 1000}, strict=False)
+                'background_passed': bg['matching_pixels'] > 1000,
+                'native_panel_foreground': panel_fg, 'native_panel_background': panel_bg}, strict=False)
+        assert panel_fg['matching_pixels'] > 100 and panel_bg['matching_pixels'] > 1000, 'native dark panel palette did not apply'
         open_settings();combo('Theme', 2);save();close_settings()
         command('gsettings', 'set', 'org.gnome.desktop.interface', 'color-scheme', 'prefer-dark')
         dark = wait(lambda value: value['effective_theme'] == '2' and int(value['portal_events']) > 0)
-        dark_pixels = pixels('system-dark-foreground', (20, 230, 110))
+        dark_pixels = panel_pixels('system-dark-panel-background', (20, 30, 70))
+        dark_page = pixels('system-dark-light-page', (208, 32, 32))
         command('gsettings', 'set', 'org.gnome.desktop.interface', 'color-scheme', 'prefer-light')
         light = wait(lambda value: value['effective_theme'] == '1' and int(value['portal_events']) > int(dark['portal_events']))
-        light_pixels = pixels('system-light-foreground', (208, 32, 32))
+        light_pixels = panel_pixels('system-light-panel-background', (253, 244, 220))
+        light_page = pixels('system-light-light-page', (208, 32, 32))
         record('system_theme_tracks_real_portal_preference_changes', int(light['portal_version']) >= 1 and
-               dark_pixels['matching_pixels'] > 100 and light_pixels['matching_pixels'] > 100,
-               {'dark': dark, 'light': light, 'dark_pixels': dark_pixels, 'light_pixels': light_pixels})
+               dark_pixels['matching_pixels'] > 1000 and light_pixels['matching_pixels'] > 1000 and
+               dark_page['matching_pixels'] > 100 and light_page['matching_pixels'] > 100,
+               {'dark': dark, 'light': light, 'dark_interface_pixels': dark_pixels, 'light_interface_pixels': light_pixels,
+                'dark_state_light_page': dark_page, 'light_state_light_page': light_page, 'reading_page_dark_accepted': False})
         open_settings();defaults();close_settings()
         page_click();record('ltr_tap_turns_to_next_page', host.read()['page'] == 1)
         key('F3');host.wait(lambda value: value['page'] == 0)
@@ -248,7 +269,7 @@ def main():
         passed = sum(bool(item['pass']) for item in checks)
         report.update(accepted=passed == len(checks), count=len(checks), passed=passed,
                       failed=len(checks) - passed, preferences=installed(),
-                      pending_fields=['light_background_on_reflow_canvas', 'dark_background_on_reflow_canvas'])
+                      pending_fields=['light_background_on_reflow_canvas', 'dark_reading_page_palette'])
     finally:
         if profile.exists(): profile.chmod(0o700)
         if host.process and host.process.poll() is None:
