@@ -277,6 +277,12 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
   iPad also failed before restoration because Return had no keyboard focus;
   the test now waits for the real SwiftUI FocusState before keyboard actions,
   within its existing 120-second search deadline, and still sends Return.
+- `bd62adf2` focused run `40066612796` passed all SDK/native checks and the
+  real focus assertions. macOS04/07 passed, while macOS05 and both mobile06
+  cases still awaited a post-issue epoch. The iPhone raw-frame diagnostic now
+  logs incoming epoch, complete frame count, target frame, viewport size and
+  actual scroll issue order. This following observation-only candidate runs
+  only original iPhone06; default complete execution remains three platforms.
 
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.
