@@ -17,11 +17,10 @@ def load(name, path):
 
 mode = sys.argv.pop(1)
 if mode == 'windows':
-    original = load('host_windows_verifier', ROOT / 'reader_windows_search/verify.py')
+    original = load('host_windows_navigation_verifier', ROOT / 'reader_windows_navigation/verify.py')
     if sys.argv[1:] == ['--protocol-selftest']:
         assert os.environ.get('GITHUB_ACTIONS') == 'true'
-        print(original.protocol_selftest(os.environ['GITHUB_SHA'], os.environ['GITHUB_RUN_ID'],
-                                         os.environ['GITHUB_RUN_ATTEMPT']))
+        print(original.self_test())
     else:
         original.main(workflow_path=WORKFLOW)
 elif mode == 'composition':

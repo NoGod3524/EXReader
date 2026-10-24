@@ -4,17 +4,20 @@ import os
 from pathlib import Path
 import subprocess
 
-BASE = '33167f2faa6cabae6656b8c1089a799dc7e5549e'
+BASE = 'e90c55885b95d14036b9ab2da6983b6cad01a779'
 SDK = '9854061be331fe603a1822d9b2b36ee357154927'
 DELIVERIES = {
     'g1': '3bcc6511c928665c0889a33bc98cf5e1bfadaccc',
     'windows_search': '12f4f06cae2115fba90d3d43ebb0c291ea11e99a',
     'gtk_reading': '401729ba9537b58c8566372fb953384ce61381d7',
     'android_reading': '5d7da81495e545901f7fc802af00e0b779d1d8c4',
+    'windows_navigation': '89252d4f1377c37917b2ad59cf54faa8103d6b67',
+    'android_preferences': '91270f8e7b5a3085430992b97dd27f612666480a',
 }
 ALLOWED = (
     'tests/reader_hosts_integration/', '.github/workflows/reader-hosts-integration.yml',
     'tests/reader_windows_search/verify.py', 'tests/reader_windows_search/check_ui.py',
+    'tests/reader_windows_navigation/verify.py',
     'docs/READER-HOSTS-INTEGRATION.md',
     'docs/validation/reader-hosts-integration.json',
 )
@@ -37,8 +40,8 @@ def main():
                     'apps/reader/store/001_catalog.sql'], check=True)
     for path in git('diff', '--name-only', BASE, sha).splitlines():
         assert any(path.startswith(p) if p.endswith('/') else path == p for p in ALLOWED), path
-    # The only adopted module delta from G1 is Android's tested no-replace
-    # export publication. Neither the SDK nor the shared anchor codec changes.
+    # Native host changes are pinned to the exact ordinary-merge production
+    # tree. Only verifier/workflow/docs edits follow this reviewed merge.
     for path in ('apps', 'examples', 'extras'):
         subprocess.run(['git', 'diff', '--exit-code', BASE, sha, '--', path], check=True)
     report = dict(source_sha=sha, run_id=os.environ['GITHUB_RUN_ID'],

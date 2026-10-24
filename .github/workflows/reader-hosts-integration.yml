@@ -31,7 +31,7 @@ jobs:
       - name: Parse authored workflow and Python only in Actions
         run: |
           python3 -m pip install 'PyYAML==6.0.3'
-          python3 -m py_compile tests/reader_hosts_integration/guard.py tests/reader_hosts_integration/aggregate.py tests/reader_hosts_integration/final.py tests/reader_windows_search/verify.py
+          python3 -m py_compile tests/reader_hosts_integration/guard.py tests/reader_hosts_integration/aggregate.py tests/reader_hosts_integration/final.py tests/reader_windows_search/verify.py tests/reader_windows_navigation/verify.py tests/reader_windows_navigation/check_ui.py
           python3 - <<'PY'
           from pathlib import Path
           import yaml
@@ -261,8 +261,8 @@ jobs:
 
 
   search:
-    if: ${{ github.event.inputs.verify_run == '' }}
     needs: pin
+    if: ${{github.event.inputs.verify_run == ''}}
     name: installed F1 and native Windows search controls and lifecycle
     runs-on: windows-2022
     timeout-minutes: 90
@@ -309,7 +309,7 @@ jobs:
         run: |
           set -o pipefail
           prefix="$WS_PREFIX"
-          for module in extras/webdav extras/credentials extras/sideload apps/reader/revisions apps/reader/commands apps/reader/desktop-metadata apps/reader/sync apps/reader/session apps/reader/reading-state apps/reader/search; do
+          for module in extras/webdav extras/credentials extras/sideload apps/reader/revisions apps/reader/commands apps/reader/desktop-metadata apps/reader/sync apps/reader/session apps/reader/reading-state apps/reader/search apps/reader/navigation; do
             name=$(basename "$module")
             cmake -S "$module" -B "build/ws-$name" -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_PREFIX_PATH="$prefix;$WS/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee "build/winsearch-logs/$name-configure.log"
             cmake --build "build/ws-$name" --parallel 4 --verbose 2>&1 | tee "build/winsearch-logs/$name-build.log"
@@ -318,7 +318,7 @@ jobs:
       - name: Build actual account host with the optional native search UI
         run: |
           set -o pipefail
-          cmake -S apps/reader/windows-account -B build/ws-host -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage" -DREADER_METADATA_PREFIX="$WS_PREFIX" -DREADER_ACCOUNT_PREFIX="$WS_PREFIX" -DEXR_READER_WINDOWS_SEARCH=ON 2>&1 | tee build/winsearch-logs/host-configure.log
+          cmake -S apps/reader/windows-account -B build/ws-host -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage" -DREADER_METADATA_PREFIX="$WS_PREFIX" -DREADER_ACCOUNT_PREFIX="$WS_PREFIX" -DEXR_READER_WINDOWS_SEARCH=ON -DEXR_READER_WINDOWS_NAVIGATION=ON 2>&1 | tee build/winsearch-logs/host-configure.log
           cmake --build build/ws-host --parallel 4 --verbose 2>&1 | tee build/winsearch-logs/host-build.log
           cmake -S tests/reader_search/consumer -B build/ws-search-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage"
           cmake --build build/ws-search-consumer --parallel 4 --verbose
@@ -341,6 +341,22 @@ jobs:
         run: |
           python3 -m pip install "uiautomation==2.0.29"
           python3 tests/reader_windows_search/check_keyboard.py --candidate build/ws-package/EXReader/EXReader.exe --review build/ws-host/EXReaderShelfReview.exe --font build/ws-package/EXReader/Reader.otf --output build/ws-search-keyboard
+      - name: Compile navigation without optional search
+        run: |
+          set -o pipefail
+          cmake -S apps/reader/windows-account -B build/ws-navigation-only -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage" -DREADER_METADATA_PREFIX="$WS_PREFIX" -DREADER_ACCOUNT_PREFIX="$WS_PREFIX" -DEXR_READER_WINDOWS_SEARCH=OFF -DEXR_READER_WINDOWS_NAVIGATION=ON
+          cmake --build build/ws-navigation-only --parallel 4 --verbose
+      - name: Execute installed F2 and real native directory controls
+        run: |
+          set -o pipefail
+          python3 -m py_compile tests/reader_windows_navigation/guard.py tests/reader_windows_navigation/check_ui.py tests/reader_windows_navigation/verify.py
+          cmake -S tests/reader_navigation/consumer -B build/ws-navigation-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage"
+          cmake --build build/ws-navigation-consumer --parallel 4
+          python3 tests/reader_navigation/make_navigation_fixtures.py build/ws-navigation-fixtures
+          python3 tests/reader_navigation/check_navigation.py --probe build/ws-navigation-consumer/navigation-probe.exe --c-consumer build/ws-navigation-consumer/navigation-c-consumer.exe --fixtures build/ws-navigation-fixtures --installed build/winsearch-stage --output build/ws-navigation-module-evidence
+          cmake -S tests/reader_windows_navigation/consumer -B build/ws-navigation-cfi -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage"
+          cmake --build build/ws-navigation-cfi --parallel 4
+          python3 tests/reader_windows_navigation/check_ui.py --candidate build/ws-package/EXReader/EXReader.exe --review build/ws-host/EXReaderShelfReview.exe --font build/ws-package/EXReader/Reader.otf --cfi build/ws-navigation-cfi/navigation-fixture-cfi.exe --output build/ws-navigation-ui
       - name: Build retained installed consumers and authored fixtures
         id: retained_build
         if: ${{always() && steps.initial.outcome == 'success' && steps.formats.outcome == 'success' && steps.keyboard.outcome == 'success'}}
@@ -375,6 +391,13 @@ jobs:
           name: reader-windows-search-initial-${{github.run_id}}-${{github.run_attempt}}
           path: |
             build/winsearch-logs/
+            build/ws-navigation-module-evidence/
+            build/ws-navigation-ui/
+            build/ws-navigation-consumer/navigation-probe.exe
+            build/ws-navigation-consumer/navigation-c-consumer.exe
+            build/ws-navigation-cfi/navigation-fixture-cfi.exe
+            build/ws-navigation-only/windows-host.map
+            build/ws-navigation-only/EXReaderProduct.exe
             build/ws-search-module-evidence/
             build/ws-search-ui/
             build/ws-search-formats/
@@ -396,7 +419,7 @@ jobs:
             build/ws-package/
           if-no-files-found: error
   summary:
-    if: ${{ always() && github.event.inputs.verify_run == '' }}
+    if: ${{always() && github.event.inputs.verify_run == ''}}
     needs: search
     name: same-source native Windows search artifact authentication
     runs-on: ubuntu-22.04
@@ -418,7 +441,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: reader-windows-search-summary-${{github.run_id}}-${{github.run_attempt}}
-          path: build/winsearch-summary/verified.json
+          path: |
+            build/winsearch-summary/verified.json
+            build/winnav-summary/verified.json
           if-no-files-found: error
   gtk:
     if: ${{ github.event.inputs.verify_run == '' }}
@@ -730,8 +755,8 @@ jobs:
           if-no-files-found: error
 
   android:
-    if: ${{ github.event.inputs.verify_run == '' }}
     needs: pin
+    if: ${{ github.event.inputs.verify_run == '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -748,12 +773,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Authenticate exact integrated source and frozen public contracts
+      - name: Authenticate exact integrated native host production trees
         run: |
+          python3 tests/reader_hosts_integration/guard.py
           mkdir -p build/session-android/logs
           git rev-parse HEAD > build/session-android/logs/source.txt
-          python3 tests/reader_hosts_integration/guard.py
-          python -m py_compile tests/reader_session_android/run_export.py tests/reader_session_android/run_roundtrip.py tests/reader_session_android/audit.py tests/reader_host_session_android/run_ui.py tests/reader_host_session_android/audit.py tests/reader_android_search/fixtures.py tests/reader_android_search/audit.py tests/reader_android_search/run_ui.py tests/reader_android_navigation/fixtures.py tests/reader_android_navigation/fixture_module.py tests/reader_android_navigation/audit.py tests/reader_android_navigation/run_ui.py tests/reader_android_reading/fixtures.py tests/reader_android_reading/audit.py tests/reader_android_reading/run_ui.py
+          python3 -m py_compile tests/reader_android_preferences/audit.py tests/reader_android_preferences/run_ui.py tests/reader_session_android/run_export.py tests/reader_session_android/run_roundtrip.py tests/reader_session_android/audit.py tests/reader_host_session_android/run_ui.py tests/reader_host_session_android/audit.py tests/reader_android_search/fixtures.py tests/reader_android_search/audit.py tests/reader_android_search/run_ui.py tests/reader_android_navigation/fixtures.py tests/reader_android_navigation/fixture_module.py tests/reader_android_navigation/audit.py tests/reader_android_navigation/run_ui.py tests/reader_android_reading/fixtures.py tests/reader_android_reading/audit.py tests/reader_android_reading/run_ui.py
       - name: Install Android compiler and API34 emulator
         run: |
           sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
@@ -810,6 +835,10 @@ jobs:
             cmake -S "apps/reader/$module" -B "build/session-android/product-$label" -G Ninja -DCMAKE_TOOLCHAIN_FILE="$SESSION_TOOLCHAIN" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH -DEXR_SDK="$PWD/build/session-android/sdk-stage" -DREADER_PRODUCT_PREFIX="$product" -DCMAKE_PREFIX_PATH="$product;$PWD/build/session-android/sdk-stage;$PWD/build/webdav-android/stage-release" -DCMAKE_INSTALL_PREFIX="$product" 2>&1 | tee "build/session-android/logs/product-$label-configure.log"
             cmake --build "build/session-android/product-$label" --parallel 4 --target install 2>&1 | tee "build/session-android/logs/product-$label-build.log"
           done
+      - name: Install unchanged hardened F3 local settings package
+        run: |
+          cmake -S apps/reader/preferences -B build/android-preferences/preferences-build -G Ninja -DCMAKE_TOOLCHAIN_FILE="$SESSION_TOOLCHAIN" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/build/android-preferences/preferences-stage" 2>&1 | tee build/session-android/logs/preferences-configure.log
+          cmake --build build/android-preferences/preferences-build --parallel 4 --target install 2>&1 | tee build/session-android/logs/preferences-build.log
       - name: Compile SDK and product owners and unchanged Android transport tests
         run: |
           gradle -p tests/reader_session_android/android --no-daemon --stacktrace :session:assembleDebug :session:assembleDebugAndroidTest :session:assembleRelease 2>&1 | tee build/session-android/logs/gradle.log
@@ -820,25 +849,29 @@ jobs:
           mkdir -p examples/android/app/src/main/jniLibs/x86_64
           cp build/session-android/sdk-stage/lib/libexreader_jni.so examples/android/app/src/main/jniLibs/x86_64/libexreader_jni.so
           mkdir -p build/host-session-android/test-apks
-          gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrNavigation=true -PexrReading=true -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.ProductOwnerTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/original-runner-build.log
+          gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrNavigation=true -PexrReading=true -PexrPreferences=true -PexrPreferencesPrefix="$PWD/build/android-preferences/preferences-stage" -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.ProductOwnerTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/original-runner-build.log
           cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/host-session-android/test-apks/original-owner.apk
-          gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrNavigation=true -PexrReading=true -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.HostSyncTest :app:assembleDebug :app:assembleDebugAndroidTest :app:assembleRelease 2>&1 | tee build/session-android/logs/original-owner-build.log
+          gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrNavigation=true -PexrReading=true -PexrPreferences=true -PexrPreferencesPrefix="$PWD/build/android-preferences/preferences-stage" -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.HostSyncTest :app:assembleDebug :app:assembleDebugAndroidTest :app:assembleRelease 2>&1 | tee build/session-android/logs/original-owner-build.log
           cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/host-session-android/test-apks/host-sync.apk
-          gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrNavigation=true -PexrReading=true -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.SearchUiTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/search-ui-runner-build.log
+          gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrNavigation=true -PexrReading=true -PexrPreferences=true -PexrPreferencesPrefix="$PWD/build/android-preferences/preferences-stage" -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.SearchUiTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/search-ui-runner-build.log
           mkdir -p build/android-search/test-apks
           cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/android-search/test-apks/search-ui.apk
           mkdir -p build/android-navigation/test-apks
-          gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrNavigation=true -PexrReading=true -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.NavigationUiTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/navigation-ui-runner-build.log
+          gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrNavigation=true -PexrReading=true -PexrPreferences=true -PexrPreferencesPrefix="$PWD/build/android-preferences/preferences-stage" -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.NavigationUiTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/navigation-ui-runner-build.log
           cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/android-navigation/test-apks/navigation-ui.apk
           mkdir -p build/android-reading/test-apks
-          gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrNavigation=true -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrReading=true -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.ReadingUiTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/reading-ui-runner-build.log
+          gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrNavigation=true -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrReading=true -PexrPreferences=true -PexrPreferencesPrefix="$PWD/build/android-preferences/preferences-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.ReadingUiTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/reading-ui-runner-build.log
           cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/android-reading/test-apks/reading-ui.apk
+          mkdir -p build/android-preferences/test-apks
+          gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrNavigation=true -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrReading=true -PexrPreferences=true -PexrPreferencesPrefix="$PWD/build/android-preferences/preferences-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.PreferencesUiTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/preferences-ui-runner-build.log
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/android-preferences/test-apks/preferences-ui.apk
           cp build/host-session-android/test-apks/original-owner.apk examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
           python tests/reader_session_android/audit.py --output build/session-android/native
           python tests/reader_host_session_android/audit.py --output build/host-session-android/native
           python tests/reader_android_search/audit.py --output build/android-search/native
           python tests/reader_android_navigation/audit.py --output build/android-navigation/native
           python tests/reader_android_reading/audit.py --output build/android-reading/native
+          python tests/reader_android_preferences/audit.py --output build/android-preferences/native
       - name: Enable hosted runner emulator acceleration
         run: sudo chmod 666 /dev/kvm
       - name: Actual SDK owner import and public original export in Android private storage
@@ -865,12 +898,15 @@ jobs:
             python tests/reader_android_navigation/run_ui.py --fixtures build/android-navigation/fixtures --output build/android-navigation/ui
             adb install -r -t build/android-reading/test-apks/reading-ui.apk
             python tests/reader_android_reading/run_ui.py --fixtures build/android-reading/fixtures --output build/android-reading/ui
+            adb install -r -t build/android-preferences/test-apks/preferences-ui.apk
+            python tests/reader_android_preferences/run_ui.py --fixtures build/android-reading/fixtures --output build/android-preferences/ui
       - name: Preserve SDK consumer identity native logs and every export result
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: reader-android-reading-${{ github.run_id }}-${{ github.run_attempt }}
+          name: reader-android-preferences-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
+            build/android-preferences/
             build/android-reading/
             build/android-navigation/
             build/android-search/

@@ -56,14 +56,14 @@ def self_test():
   raise ValueError('accepted wrong navigation-only link map')
  return search_verify.protocol_selftest(source,run,attempt)+len(bads)+2
 
-def main():
+def main(workflow_path='.github/workflows/reader-windows-navigation-ui.yml'):
  require(os.environ.get('GITHUB_ACTIONS')=='true','Actions only')
  source=os.environ['GITHUB_SHA'];run=int(os.environ['GITHUB_RUN_ID']);attempt=int(os.environ['GITHUB_RUN_ATTEMPT'])
  if sys.argv[1:]==['--protocol-selftest']:
   print(json.dumps({'protocol_rejections':self_test()}));return
  # This first authenticates all unchanged F1, 158 original UI, product, shelf,
  # metadata, account, keyboard and worker checks, including their binary hashes.
- search_verify.main('.github/workflows/reader-windows-navigation-ui.yml')
+ search_verify.main(workflow_path)
  output=Path('build/winnav-summary');output.mkdir(parents=True,exist_ok=False)
  result=dict(accepted=False,source_sha=source,run_id=run,attempt=attempt,problems=[],complete_product=False,
   performance_accepted=False,screen_reader_accepted=False)

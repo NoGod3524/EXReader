@@ -165,7 +165,8 @@ def main():
         subprocess.run(['git', 'diff', '--exit-code', source, validator_source, '--',
                         'src', 'include', 'cmake', 'CMakeLists.txt', 'apps', 'examples', 'extras',
                         'tests/reader_gtk_reading_records', 'tests/reader_android_reading',
-                        'tests/reader_android_navigation', 'tests/reader_android_search'], check=True)
+                        'tests/reader_android_navigation', 'tests/reader_android_search',
+                        'tests/reader_windows_navigation', 'tests/reader_android_preferences'], check=True)
     else:
         require(len(sys.argv) == 1, 'unknown verifier arguments')
         source, run, attempt = validator_source, validation_run, int(os.environ['GITHUB_RUN_ATTEMPT'])
@@ -208,7 +209,7 @@ def main():
 
         for stem, job_name, leaf in (
                 ('reader-module-composition-report', 'strict same-source composition report', 'result.json'),
-                ('reader-windows-search-summary', 'same-source native Windows search artifact authentication', 'verified.json')):
+                ('reader-windows-search-summary', 'same-source native Windows search artifact authentication', 'winsearch-summary/verified.json')):
             bundle, _ = open_bundle(stem, job_name)
             report = bundle.report(leaf);identity(report, source, run, attempt)
             require(report.get('accepted') is True and report.get('problems') == [], 'strict summary did not accept')
@@ -221,6 +222,13 @@ def main():
                 require(report.get('original_ui158') == 158 and report.get('original_f1_checks') == 264 and
                         report.get('protocol_rejections') == 23, 'Windows retained scopes missing')
                 result['scopes']['windows_search'] = True
+                navigation = bundle.report('winnav-summary/verified.json');identity(navigation, source, run, attempt)
+                require(navigation.get('accepted') is True and navigation.get('problems') == [] and
+                        navigation.get('navigation_ui_checks') == 31 and navigation.get('original_f2_checks') == 130 and
+                        navigation.get('protocol_rejections') == 33 and navigation.get('original_f1_strict_preserved') is True and
+                        navigation['consumer_sha256'] == report['consumer_sha256'] and
+                        navigation['review_sha256'] == report['review_sha256'], 'Windows directory or original search proof missing')
+                result['scopes']['windows_navigation'] = True
 
         gtk, gtk_job = open_bundle('reader-gtk-reading-records', GTK_JOB, palette_job=True)
         records = gtk.report('records-ui/report.json');identity(records, source, run, attempt)
@@ -255,8 +263,8 @@ def main():
         result['scopes'].update(gtk_reading_records=True, gtk_search=True, gtk_navigation=True,
                                 gtk_preferences=not failures)
 
-        android, _ = open_bundle('reader-android-reading', 'android')
-        for feature, total, phases in (('reading', 16, 3), ('search', 15, 2), ('navigation', 18, 2)):
+        android, _ = open_bundle('reader-android-preferences', 'android')
+        for feature, total, phases in (('reading', 16, 3), ('search', 15, 2), ('navigation', 18, 2), ('preferences', 17, 3)):
             report = android.report('android-%s/ui/result.json' % feature);identity(report, source, run, attempt)
             require(report['accepted'] is True and report['checks'] == total and len(report['phases']) == phases and
                     report['api'] == 34 and report['abi'] == 'x86_64' and report['physical_device'] is False,
@@ -269,7 +277,20 @@ def main():
                 named(phase, len(expected[phase['phase']]), 'passed', 'count', expected=expected[phase['phase']])
             if feature == 'reading':
                 require(report['real_postcommit_kill'], 'real kill/retry evidence absent')
+            if feature == 'preferences':
+                require(report['page_colors_accepted'] is False and report['talkback_speech_accepted'] is False,
+                        'Android settings falsely grant page colors or speech')
+                stops = report['process_stops']
+                require(len(stops) == phases and all(not p['pid_after_stop'] for p in stops), 'Android settings real stops missing')
+                for phase in report['phases']:
+                    require(phase['page_colors_accepted'] is False, 'Android phase falsely grants colors')
+                    if phase['phase'] in ('first', 'night'):
+                        gap = phase['retained_color_failure']
+                        require(gap['accepted'] is False and gap['actual_corner_rgba'] != gap['requested_background_rgba'] and
+                                gap['user_css_attempted'] and gap['public_api_gap'], 'Android color gap was hidden')
         result['scopes']['android_reading_search_navigation_emulator'] = True
+        result['scopes']['android_preferences_controls_emulator'] = True
+        result['scopes']['android_page_colors'] = False
         result['accepted'] = not failures and not diagnostic
     except Exception as error:
         result['problems'].append(type(error).__name__ + ': ' + str(error))
