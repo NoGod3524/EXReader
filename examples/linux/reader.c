@@ -544,6 +544,7 @@ static gboolean key(GtkWidget *w,GdkEventKey *event,gpointer unused) {
   (void)w;(void)unused;
   if(choosing_file) return FALSE;
 #ifdef EXR_READER_ACCOUNT
+  if(accounts_opened()) return TRUE;
   if((event->state&GDK_CONTROL_MASK) && (event->state&GDK_SHIFT_MASK) && (event->keyval==GDK_KEY_A || event->keyval==GDK_KEY_a)) {
     accounts_open(NULL,NULL);return TRUE;
   }
