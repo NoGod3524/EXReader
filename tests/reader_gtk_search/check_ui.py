@@ -47,7 +47,7 @@ def main():
     def element(name,roles=None):
         deadline=time.monotonic()+20
         while time.monotonic()<deadline:
-            value=bus.find_one(app,text=name,roles=roles)
+            value=next((node for node in bus.walk(app) if (roles is None or bus.role(node) in roles) and bus.name(node)==name),None)
             if value:return value
             time.sleep(.05)
         raise TimeoutError('missing native control: '+name)
@@ -87,7 +87,7 @@ def main():
         click('In-book query',{'text'});host.key('ctrl+a');host.paste(text);before=int(observed()['actions'])
         host.key('alt+s');return wait(lambda value:int(value['actions'])>before)
 
-    def rows():return [row for row in bus.find_all(app,roles={'list item'}) if bus.name(row).startswith('Search result ')]
+    def rows():return [row for row in bus.children(element('In-book results')) if bus.role(row)=='list item' and bus.name(row).startswith('Search result ')]
 
     def choose(index):
         selected=next(row for row in rows() if bus.name(row).startswith('Search result '+str(index+1)+':'))
@@ -140,9 +140,9 @@ def main():
         selected=choose(0);record('selected_ambiguous_txt_result_does_not_jump',selected['match']=='2' and selected['visible']=='1' and frame()==before and storage()==saved)
         close_search();record('read_only_close_preserves_actual_page_pixels_and_storage',frame()==before and storage()==saved and image('after-search-close')==pixels)
         notes=storage(True);open_search();query('书内搜索');choose(0)
-        record('unicode_found_selection_uses_utf8_byte_boundaries',observed()['visible']=='0' and host.read()['selection_end']-host.read()['selection_start']==len('书内搜索'.encode()) and storage(True)==notes)
+        record('unicode_found_selection_uses_utf8_byte_boundaries',observed()['visible']=='0' and host.read()['selected']==len('书内搜索') and host.read()['selection_end']-host.read()['selection_start']==len('书内搜索'.encode()) and storage(True)==notes,frame())
         open_search();query('Z-hit 220');choose(0)
-        record('explicit_txt_found_navigates_after_independent_resolve',host.read()['book']==txt and host.read()['start']>before['start'] and host.read()['selected']==1 and storage(True)==notes)
+        record('explicit_txt_found_navigates_after_independent_resolve',host.read()['book']==txt and host.read()['start']>before['start'] and host.read()['selected']==len('Z-hit 220') and storage(True)==notes,{'frame':frame(),'selected_characters':host.read()['selected'],'notes_and_product_unchanged':storage(True)==notes})
         epub=import_book(args.fixtures/'book.epub')
         for target_font in (26,28):
             previous_generation=host.read()['generation'];host.key('F5')
@@ -151,12 +151,12 @@ def main():
         record('bounded_epub_has_distinct_repeated_spine_result_rows',result['count']=='4' and any('Part 3' in bus.name(row) for row in rows()) and frame()==prior)
         close_search();record('epub_query_preserves_current_28_font_pager_and_storage',frame()==prior and storage()==saved)
         open_search();query('SEARCHTOKEN');choose(3)
-        record('repeated_spine_found_navigation_keeps_explicit_unit_and_font',host.read()['book']==epub and host.read()['part']==2 and host.read()['font']==28 and host.read()['selected']==1)
+        record('repeated_spine_found_navigation_keeps_explicit_unit_and_font',host.read()['book']==epub and host.read()['part']==2 and host.read()['font']==28 and host.read()['selected']==len('SEARCHTOKEN'),frame())
         open_search();query('unique-b-only');choose(0)
         record('epub_unique_result_navigates_to_other_spine',host.read()['part']==1 and host.read()['font']==28)
         pdf=import_book(args.fixtures/'pages.pdf');prior=frame();saved=storage();open_search();result=query('Shared quote')
         record('fixed_text_search_paginates_pages_without_changing_reader',result['count']=='2' and frame()==prior and storage()==saved)
-        choose(1);record('fixed_found_uses_page_id_route_and_actual_sdk_frame',host.read()['book']==pdf and host.read()['page']==3 and host.read()['selected']==1)
+        choose(1);record('fixed_found_uses_page_id_route_and_actual_sdk_frame',host.read()['book']==pdf and host.read()['page']==3 and host.read()['selected']==len('Shared quote'),frame())
         prior=frame();saved=storage();open_search();query('selection target');selected=choose(0)
         record('fixed_ambiguous_result_has_no_offset_or_page_fallback',selected['match']=='2' and frame()==prior and storage()==saved);close_search()
         import_book(args.fixtures/'empty.pdf');prior=frame();saved=storage();open_search();result=query('word')
