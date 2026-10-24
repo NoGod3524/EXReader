@@ -56,8 +56,12 @@ def main():
     assert installed_header.read_bytes() == (module_dir / 'include/reader_tts.h').read_bytes(), \
         'simulator install header differs from the source header'
 
+    # Prefix search does not cross the sysroot boundary when targeting iOS, so the
+    # installed package directory is passed explicitly (same lesson as the
+    # retained reader-webdav-apple failure e39f5f3e).
     run('probe-configure', ['cmake', '-S', root / 'tests/reader_tts_apple', '-B', probe, *simulator,
-                            '-DCMAKE_PREFIX_PATH=' + str(stage)])
+                            '-DCMAKE_PREFIX_PATH=' + str(stage),
+                            '-DEXReaderTTSApple_DIR=' + str(stage / 'lib/cmake/EXReaderTTSApple')])
     run('probe-build', ['cmake', '--build', probe])
     app = probe / 'ReaderTTSProbe.app'
     binary = app / 'ReaderTTSProbe'

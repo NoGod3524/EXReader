@@ -82,7 +82,8 @@ def main():
 
     # ---- installed-package probe (real backend) ----
     run('probe-configure', ['cmake', '-S', root / 'tests/reader_tts_apple', '-B', probe, *generator,
-                            '-DCMAKE_PREFIX_PATH=' + str(stage)])
+                            '-DCMAKE_PREFIX_PATH=' + str(stage),
+                            '-DEXReaderTTSApple_DIR=' + str(stage / 'lib/cmake/EXReaderTTSApple')])
     run('probe-build', ['cmake', '--build', probe])
     probe_binary = probe / 'ReaderTTSProbe'
     assert probe_binary.is_file(), 'probe binary missing'
@@ -102,7 +103,8 @@ def main():
 
     # ---- installed-package example ----
     run('example-configure', ['cmake', '-S', module_dir / 'examples', '-B', examples, *generator,
-                              '-DCMAKE_PREFIX_PATH=' + str(stage)])
+                              '-DCMAKE_PREFIX_PATH=' + str(stage),
+                              '-DEXReaderTTSApple_DIR=' + str(stage / 'lib/cmake/EXReaderTTSApple')])
     run('example-build', ['cmake', '--build', examples])
     example_binary = examples / 'reader_tts_example'
     assert example_binary.is_file(), 'example binary missing'
