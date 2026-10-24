@@ -1,0 +1,102 @@
+name: Apple shelf native diagnostic only
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+env:
+  SDK_BASELINE: 9854061be331fe603a1822d9b2b36ee357154927
+jobs:
+  diagnostic:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require the unchanged SDK and schema
+        run: |
+          git diff --exit-code "$SDK_BASELINE" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code a6d7dd81eef36e83e004fdc381a565a2ffee5462 HEAD -- apps/reader/store/001_catalog.sql
+      - name: Recover the authenticated frozen macOS SDK in Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, io, json, os, sys, zipfile
+          from pathlib import Path, PurePosixPath
+          sys.path[:0] = ['tools', 'tests/apple_host']
+          from check_parallel_integration import download_artifact_zip, fetch, require
+          from evidence_contract import validate_sdk
+          require(os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions execution required')
+          source = '5f924754a9a089dd927e4dd5bfcbba1583e19c6f'
+          run, artifact, job = 40041333550, 12539811656, 120712857528
+          expected = 'sha256:86c6225402ac055ef1e428b1b894e6788601220e8c9fd927f379560f60335a26'
+          origin = fetch(f'actions/runs/{run}')
+          require(origin['head_sha'] == source and origin['run_attempt'] == 1 and
+                  origin['path'] == '.github/workflows/reader-apple-shelf.yml', 'SDK source run differs')
+          producer = fetch(f'actions/jobs/{job}')
+          require(producer['run_id'] == run and producer['conclusion'] == 'success' and
+                  producer['name'] == 'SDK macos', 'SDK producer did not succeed')
+          metadata = fetch(f'actions/artifacts/{artifact}')
+          require(metadata['id'] == artifact and metadata['name'] == f'apple-shelf-sdk-macos-{run}-1' and
+                  metadata['workflow_run']['id'] == run and metadata['workflow_run']['head_sha'] == source and
+                  metadata['expired'] is False and metadata['size_in_bytes'] == 18842318 and
+                  metadata['digest'] == expected, 'SDK artifact registration differs')
+          raw = download_artifact_zip(artifact)
+          require(len(raw) == metadata['size_in_bytes'] and
+                  'sha256:' + hashlib.sha256(raw).hexdigest() == expected, 'SDK ZIP size/digest differs')
+          with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+              names = archive.namelist()
+              require(len(names) == len(set(names)) and len(names) <= 300 and
+                      sum(item.file_size for item in archive.infolist()) <= 256 * 1024 * 1024 and
+                      all(not PurePosixPath(name).is_absolute() and '..' not in PurePosixPath(name).parts and
+                          '\\' not in name and ':' not in name for name in names), 'SDK ZIP entries refused')
+              archive.extractall('sdk-artifact')
+          identity = json.loads(Path('sdk-artifact/build/sdk-identity.json').read_text())
+          validate_sdk(Path('sdk-artifact/stage/macos'), identity, source, str(run), '1', 'macos')
+          root = Path('build/apple-shelf-diagnostic')
+          root.mkdir(parents=True)
+          (root / 'sdk-origin.json').write_text(json.dumps(metadata, indent=2) + '\n')
+          print(json.dumps({'diagnostic_only': True, 'accepted': False, 'sdk_artifact': artifact,
+              'sdk_source_sha': source, 'sdk_run_id': run, 'sdk_attempt': 1, 'zip_digest': expected}))
+          PY
+      - name: Compile and execute the unchanged native catalog and shelf checks
+        id: probe
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          root=build/apple-shelf-diagnostic
+          python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
+          xcrun swiftc -swift-version 5 -parse-as-library examples/apple/HostCatalog.swift tests/reader_catalog/apple_catalog_check.swift -lsqlite3 -o "$root/catalog-check"
+          "$root/catalog-check" apps/reader/store/001_catalog.sql "$root/catalog.json"
+          sdk="$PWD/sdk-artifact/stage/macos"
+          xcrun swiftc -swift-version 5 -parse-as-library -O -I "$sdk/include" -L "$sdk/lib" -lexreader -lsqlite3 \
+            -Xlinker -rpath -Xlinker "$sdk/lib" examples/apple/HostSDK.swift examples/apple/HostModel.swift \
+            examples/apple/HostCatalog.swift examples/apple/SelectableText.swift tests/apple_host/shelf/ShelfReview.swift \
+            -o "$root/shelf-review" 2>&1 | tee "$root/build.log"
+          "$root/shelf-review" build/apple-resources "$root/seed" 2>&1 | tee "$root/review.log"
+      - name: Mark the entire run as diagnostic without acceptance
+        if: always()
+        env:
+          PROBE_OUTCOME: ${{ steps.probe.outcome }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          root = Path('build/apple-shelf-diagnostic')
+          root.mkdir(parents=True, exist_ok=True)
+          report = {'diagnostic_only': True, 'accepted': False, 'source_sha': os.environ['GITHUB_SHA'],
+              'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+              'probe_outcome': os.environ['PROBE_OUTCOME'], 'sdk_baseline': os.environ['SDK_BASELINE']}
+          (root / 'scope.json').write_text(json.dumps(report, indent=2) + '\n')
+          print(json.dumps(report))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-shelf-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-shelf-diagnostic/
+          if-no-files-found: error
+      - if: always() && steps.probe.outcome != 'success'
+        run: exit 1

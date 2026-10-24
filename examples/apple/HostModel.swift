@@ -191,7 +191,9 @@ final class HostShelf: ObservableObject {
         // while a same-query refresh is temporarily between pages.
         guard appliedGeneration == generation, appliedQuery == query, awaitingLayoutKey == nil else { return }
         defaults.set(query, forKey: "EXRShelfQuery")
-        if let top, let bytes = try? JSONEncoder().encode(top) { defaults.set(bytes, forKey: "EXRShelfTop") }
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        if let top, let bytes = try? encoder.encode(top) { defaults.set(bytes, forKey: "EXRShelfTop") }
     }
 
     var observation: String {
