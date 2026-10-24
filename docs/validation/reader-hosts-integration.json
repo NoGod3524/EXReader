@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "accepted": false,
-  "state": "same_source_cloud_validation_in_progress",
+  "state": "first_source_finished_verifier_python_compatibility_fix_pending_revalidation",
   "tested_source": "927201157d045f7ff994a1241a7e7703bc360fa3",
   "branch": "codex/reader-hosts-integration",
   "merge_baseline": "33167f2faa6cabae6656b8c1089a799dc7e5549e",
@@ -11,7 +11,8 @@
       "id": 40138835223,
       "attempt": 1,
       "source": "927201157d045f7ff994a1241a7e7703bc360fa3",
-      "status": "in_progress",
+      "status": "completed",
+      "conclusion": "failure",
       "successful_jobs_observed": {
         "source_and_syntax": 121006040654,
         "composition_windows": 121006084542,
@@ -21,10 +22,14 @@
         "windows_search_host": 121006084745,
         "windows_search_strict_summary": 121007432619
       },
-      "still_running_jobs_observed": {
+      "completed_host_jobs": {
         "gtk": 121006084522,
         "android": 121006084557
       },
+      "gtk_only_failed_step": "Actual settings controls geometry pixels gestures portal and persistence",
+      "android_conclusion": "success",
+      "strict_host_summary": 121010251668,
+      "strict_host_summary_error": "Python 3.10 lacks hashlib.file_digest; all raw host reports retained for repaired Actions-only inspection",
       "overall_acceptance_not_granted": true
     }
   ],

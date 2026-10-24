@@ -16,3 +16,5 @@
 源码 `927201157d045f7ff994a1241a7e7703bc360fa3` 的 [run 40138835223](https://github.com/NoGod3524/EXReader/actions/runs/40138835223) / attempt1已实际启动。当前已确认源码/语法门禁、三桌面组合、组合严格汇总、Windows搜索及严格汇总success；GTK与Android仍运行，最终共同汇总尚待执行。这份状态记录不把运行中的作业当作通过。
 
 原严格Windows与三桌面组合验证器只显式改调用workflow身份，保留原全部工件认证；最终读取真实GTK/Android报告，核同源/同轮/逐项结果与实际二进制。工作流、语法、负例、构建、测试及所有工件处理仅Actions。
+
+首轮已终态：除GTK设置步骤外的全部生产作业通过，最后汇总遇到Python3.10不支持 `hashlib.file_digest`。改为标准分块SHA-256并在Actions前置自测已知摘要。原run及全部工件保留；新增只读诊断入口仅认证同一个原run，明确区分受测source与validator source、`diagnostic_only=true/accepted=false`，不拼接跨源码或跨attempt证据。正常新源码流程仍独立整轮运行。
