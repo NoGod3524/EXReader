@@ -7,7 +7,10 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import sys
 import zipfile
+sys.path.insert(0,'tools')
+from host_font import ASSETS
 
 assert os.environ.get('GITHUB_ACTIONS')=='true'
 p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True)
@@ -22,6 +25,8 @@ for variant in ('Debug','Release'):
     lower=variant.lower();apk=app/'build/outputs/apk'/lower/('app-'+lower+('-unsigned' if variant=='Release' else '')+'.apk')
     kinds=(variant,) if variant=='Debug' else ('Release','RelWithDebInfo')
     with zipfile.ZipFile(apk) as package:
+        font_identity={name:hashlib.sha256(package.read('assets/'+name)).hexdigest() for name in ASSETS}
+        assert all(font_identity[name]==expected for name,(_,expected) in ASSETS.items()),font_identity
         sdk_names=[n for n in package.namelist() if re.fullmatch(r'lib/x86_64/libexreader\.so(?:\.\d+)*',n)]
         assert len(sdk_names)==1,sdk_names
         sdk=a.output/(lower+'-sdk.so');sdk.write_bytes(package.read(sdk_names[0]))
@@ -53,6 +58,6 @@ for variant in ('Debug','Release'):
         if variant=='Release':
             forbidden=(b'host_sync_fixture_ca',b'host_sync_fixture_network_security',b'NativeSyncProbe',b'HostSyncTest',b'EXReader Android test-only CA')
             for item in package.infolist():assert not any(token in item.filename.encode()+package.read(item) for token in forbidden),item.filename
-    checks[-1]['apk_sha256']=hashlib.sha256(apk.read_bytes()).hexdigest()
+    checks[-1]['apk_sha256']=hashlib.sha256(apk.read_bytes()).hexdigest();checks[-1]['font_assets']=font_identity
 result={**{key:os.environ[value] for key,value in [('source_sha','GITHUB_SHA'),('run_id','GITHUB_RUN_ID'),('attempt','GITHUB_RUN_ATTEMPT')]},'accepted':True,'checks':checks,'installed_sideload_sha256':hashlib.sha256(archive.read_bytes()).hexdigest(),'no_static_sdk_or_sqlite_in_host':True,'product_provider_isolated':True}
 (a.output/'result.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result),flush=True)
