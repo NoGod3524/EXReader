@@ -577,6 +577,8 @@ def main():
     except Failure as error:
         setup_error = str(error)
 
+    if setup_error is not None:
+        print(json.dumps({"setup_error": setup_error}, ensure_ascii=False))
     if setup_error is None:
         for name, function in CASES:
             if function is None:
@@ -624,6 +626,9 @@ def main():
     (output / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"ok": report["ok"], "cases": report["case_count"], "assertions": report["assertions"],
                       "failed": [row["name"] for row in checks if not row["ok"]]}))
+    for row in checks:
+        if not row["ok"]:
+            print(json.dumps({"case": row["name"], "problems": row["problems"][:12]}, ensure_ascii=False))
     return 0 if report["ok"] else 1
 
 
