@@ -38,13 +38,34 @@ foreach(target IN ITEMS
   endif()
 endforeach()
 
-string(REPLACE ";" "\", \"" found_json "${found}")
-string(REPLACE ";" "\", \"" targets_json "${targets}")
+function(exr_json_list values out)
+  set(json "")
+  foreach(value IN LISTS values)
+    if(json)
+      string(APPEND json ", ")
+    endif()
+    string(APPEND json "\"" "${value}" "\"")
+  endforeach()
+  set(${out} "[${json}]" PARENT_SCOPE)
+endfunction()
+
+exr_json_list("${found}" found_json)
+exr_json_list("${targets}" targets_json)
+if(EXReader_core_FOUND)
+  set(core_found "true")
+else()
+  set(core_found "false")
+endif()
+if(EXReader_library_FOUND)
+  set(library_found "true")
+else()
+  set(library_found "false")
+endif()
 string(REPLACE "\\" "\\\\" version "${EXReader_VERSION}")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/sdk-only-report.json"
-  "{\"sdk_version\": \"${version}\", \"core_found\": ${EXReader_core_FOUND}, \"library_found\": ${EXReader_library_FOUND},\n"
-  " \"optional_packages_found\": [\"${found_json}\"],\n"
-  " \"optional_targets_visible\": [\"${targets_json}\"]}\n")
+  "{\"sdk_version\": \"${version}\", \"core_found\": ${core_found}, \"library_found\": ${library_found},\n"
+  " \"optional_packages_found\": ${found_json},\n"
+  " \"optional_targets_visible\": ${targets_json}}\n")
 
 add_executable(default-reading-consumer main.c)
 target_link_libraries(default-reading-consumer PRIVATE EXReader::exr_core)
