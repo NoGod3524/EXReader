@@ -1,0 +1,113 @@
+{
+  "schema": "reader-revisions-acceptance-v1",
+  "accepted": true,
+  "scope": "Installed Windows and Linux immutable revision graph and atomic local revision/outbox storage only",
+  "source_sha": "8d901f422d28679b910a14cf9d4ff4034893b55e",
+  "branch": "codex/reader-revisions",
+  "run_id": 40035634353,
+  "attempt": 1,
+  "workflow": ".github/workflows/reader-revisions.yml",
+  "workflow_conclusion": "success",
+  "required_ancestors": {
+    "webdav_document_head": "6d17e836a16a4c1d24391243bc15a6903367828f",
+    "native_catalog_document_head": "30885439ad52941f9d5790da85738160b67b4b20"
+  },
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_protected_trees_unchanged": true,
+  "original_product_schema1": "f32bb8aa18ed3de286900f19ce4230fd93435dd0",
+  "product_schema1_unchanged": true,
+  "product_sqlite": {
+    "version": "3.54.0",
+    "source_archive_sha256": "68e913b0fe8ec6b4e5f391c594a28872884e80d6cd042a1e50c957be46b5aa4d",
+    "provider": "EXReaderProductCatalog::reader_catalog_sqlite",
+    "installed_native_source_id_header_runtime_match": true,
+    "installed_native_compile_options_verified": true,
+    "installed_native_json_valid_json_tree_smoke": true,
+    "single_provider_link_map_verified": true,
+    "sdk_private_or_system_sqlite_fallback": false
+  },
+  "platforms": [
+    {
+      "runner": "windows-2022",
+      "job_id": 120694269709,
+      "conclusion": "success",
+      "protocol_checks": 59,
+      "protocol_accepted": true,
+      "native_catalog_ctest": {"passed": 1, "failed": 0},
+      "installed_c_consumer": true,
+      "installed_cpp_consumer": true,
+      "artifact": {
+        "id": 12536024009,
+        "name": "reader-revisions-Windows-40035634353-1",
+        "size_in_bytes": 3588039,
+        "digest": "sha256:8bb5737d974d03bb324e57f0d84bbb57e30208a1f565e9d57ff9755263b733d1",
+        "head_sha": "8d901f422d28679b910a14cf9d4ff4034893b55e",
+        "expired_at_read": false,
+        "expires_at": "2027-01-21T22:45:24Z",
+        "digest_matches_upload_log": true
+      }
+    },
+    {
+      "runner": "ubuntu-22.04",
+      "job_id": 120694270080,
+      "conclusion": "success",
+      "protocol_checks": 59,
+      "protocol_accepted": true,
+      "native_catalog_ctest": {"passed": 1, "failed": 0},
+      "installed_c_consumer": true,
+      "installed_cpp_consumer": true,
+      "artifact": {
+        "id": 12536209460,
+        "name": "reader-revisions-Linux-40035634353-1",
+        "size_in_bytes": 3095457,
+        "digest": "sha256:fe169481604c1f57e7e8f300a1d9c08e8d5e2b7009ddf0bf8734dfe5e7644ab7",
+        "head_sha": "8d901f422d28679b910a14cf9d4ff4034893b55e",
+        "expired_at_read": false,
+        "expires_at": "2027-01-21T22:45:24Z",
+        "digest_matches_upload_log": true
+      }
+    }
+  ],
+  "acceptance_includes": [
+    "Two independent processes exchange exact original revision bytes between distinct databases",
+    "Local revision and outbox share one commit; remote receive never enqueues",
+    "Same ID and same bytes is idempotent, including after ack; different bytes collide",
+    "Ack checks SHA and retains immutable history; retry retains original bytes and fixed status token",
+    "Concurrent heads and tombstones remain without clock selection or implicit resurrection",
+    "Reverse parent arrival, missing or foreign parents and explicit restore rules",
+    "Cycle closure and transaction fault rollback",
+    "Real process kills before outbox insertion and after successful commit with fresh-process recovery",
+    "Strict bounded JSON, duplicate keys, UTF-8, schema fields and explicit location-mode rejection",
+    "4096-revision deep chain uses iterative graph traversal; 4097th insert rolls back"
+  ],
+  "failure_iterations_retained": [
+    {
+      "source_sha": "1673c7b067fe624ed7b6ef89054fc6c8eee2c04d",
+      "run_id": 40035172644,
+      "conclusion": "failure",
+      "reason": "Strict signed/unsigned JSON integer comparison warning on both platforms",
+      "artifact_ids": [12537055680, 12536641844],
+      "fix_commit": "b5831300e0f58c27a47b0472e81ae76c95907de1"
+    },
+    {
+      "source_sha": "b5831300e0f58c27a47b0472e81ae76c95907de1",
+      "run_id": 40035325825,
+      "conclusion": "failure",
+      "reasons": [
+        "Linux installed C++ consumer exposed missing extern C in catalog public header",
+        "Windows original catalog test external connection had no busy timeout for transient COMMIT contention"
+      ],
+      "artifact_ids": [12537165617, 12536752645],
+      "fix_commit": "8d901f422d28679b910a14cf9d4ff4034893b55e"
+    }
+  ],
+  "evidence_read_method": "GitHub connector run/jobs/artifacts and decoded job logs; no local artifact download or reaggregation",
+  "local_build_test_or_syntax_execution": false,
+  "network_sync_implemented": false,
+  "entity_projection_or_sdk_writes_implemented": false,
+  "host_metadata_revision_joint_transaction_implemented": false,
+  "mobile_or_macos_acceptance": false,
+  "physical_device_execution": false,
+  "complete_product": false,
+  "problems": []
+}

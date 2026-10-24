@@ -19,8 +19,9 @@ static gint generation=1;
 static int worker_generation;
 static gboolean busy,saving,save_failed,closing,close_after_save;
 static gboolean choosing_file;
+static gboolean profile_writable;
 typedef struct { reader_command command;char *path,*comment;int generation,stop; } host_job;
-typedef struct { reader_result value;reader_action action;int generation; } host_result;
+typedef struct { reader_result value;reader_action action;int generation,profile_writable; } host_result;
 static void stop_worker(void);
 
 static void state(void) {
@@ -44,6 +45,9 @@ static void status(exr_status code,const char *message) {
   last_error=(int)code;gtk_label_set_text(GTK_LABEL(label),message);state();
 }
 static gboolean save_settings(void) {
+  /* No profile writes before the worker has successfully opened its library.
+     In product builds that also proves ownership of the profile lifetime lock. */
+  if(!profile_writable) return TRUE;
   GError *error=NULL;
   g_key_file_set_int64(settings,"reader","book",book_id);g_key_file_set_integer(settings,"reader","font",font_size);
   if(!g_key_file_save_to_file(settings,settings_path,&error)) {
@@ -85,6 +89,7 @@ static void pixels_free(guchar *pixels,gpointer unused) { (void)unused;free(pixe
 static gboolean apply_result(gpointer data) {
   host_result *done=data;reader_result *result=&done->value;
   if(done->generation!=g_atomic_int_get(&generation)) goto free_result;
+  profile_writable=done->profile_writable;
   if(result->has_shelf) shelf_present(result);
   if(done->action==READER_COMMIT) {
     gboolean retrying=save_failed;
@@ -138,6 +143,7 @@ static gpointer work(gpointer font_path) {
     if(job->command.action!=READER_COMMIT && job->generation!=g_atomic_int_get(&generation)) { job_free(job);continue; }
     worker_generation=job->command.action==READER_COMMIT ? g_atomic_int_get(&generation):job->generation;
     host_result *result=g_new0(host_result,1);result->generation=job->generation;result->action=job->command.action;
+    result->profile_writable=opened==EXR_OK;
     if(opened==EXR_OK) linux_reader_execute(reader,&job->command,&result->value);
     else { result->value.status=opened;strcpy(result->value.message,"Could not open library or font"); }
     g_idle_add(apply_result,result);job_free(job);

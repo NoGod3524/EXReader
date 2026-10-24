@@ -1,0 +1,44 @@
+name: Audit original enforcing CPU evidence
+on:
+  push:
+    branches: [codex/reading-cpu-enforcing-audit]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    name: audit-${{ matrix.run_id }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        run_id: ['40013452463', '40013457389', '40013462159', '40015227294', '40015233091', '40013585658']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Retain exact frozen code and budgets without changing the candidate
+        run: |
+          git fetch origin eb773e284c58aa8a474f09d780df8db610572e48
+          git diff --exit-code 220585e8248918096b9fc2c389ea5ad2389d388b HEAD -- tools/measure_reading_real.py tools/reading_real_environments.py tools/export_reading_cpu_baseline.py tools/join_reading_cpu_exports.py tools/check_parallel_integration.py tools/reading_required.py tests/reading_real docs/validation/reading-real-pixel-review.json docs/validation/reading-real-amd-epyc-9v45-pixel-review.json docs/validation/reading-real-intel-xeon-8573c-pixel-review.json src include cmake CMakeLists.txt tests/fixtures bindings
+      - name: Install existing retained image-byte inspector
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y python3-pil
+      - name: Audit existing original bytes and original environment only
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ORIGINAL_RUN: ${{ matrix.run_id }}
+        run: |
+          set -o pipefail
+          mkdir -p build/cpu-enforcing-audit
+          python3 tools/audit_reading_enforcing_runs.py --run-id "$ORIGINAL_RUN" --output build/cpu-enforcing-audit/result 2>&1 | tee build/cpu-enforcing-audit/audit.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cpu-enforcing-audit-${{ matrix.run_id }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/cpu-enforcing-audit/
+          if-no-files-found: error
+          retention-days: 30
