@@ -28,7 +28,7 @@ public final class ProductOwnerTest extends Instrumentation {
             "shelfAndSeriesMembershipOrder", "missingAndDeletedDependenciesRefused",
             "mapFailureKeepsSdkAndCommittedBookCommand", "nativeRejectsWrongOwner",
             "nativeRejectsClosedHandle", "twoNativeOwnersCompeteOnOneObservedHead",
-            "sdkDatabaseRefusedWithoutModification"};
+            "sdkDatabaseRefusedWithoutModification", "opensClosedLegacySystemCatalog"};
     private interface Check { void run() throws Exception; }
     private Context context;private Bundle arguments;private File directory;private CatalogStore catalog;
     private final JSONArray reports=new JSONArray();private String[] provider;
@@ -41,7 +41,7 @@ public final class ProductOwnerTest extends Instrumentation {
                 this::outboxFailureRollsBackAndRetries,this::membershipNeedsExplicitBookBootstrap,this::publicSdkBootstrapKeepsCurrentProductTitle,
                 this::shelfAndSeriesMembershipOrder,this::missingAndDeletedDependenciesRefused,this::mapFailureKeepsSdkAndCommittedBookCommand,
                 this::nativeRejectsWrongOwner,this::nativeRejectsClosedHandle,this::twoNativeOwnersCompeteOnOneObservedHead,
-                this::sdkDatabaseRefusedWithoutModification};
+                this::sdkDatabaseRefusedWithoutModification,this::opensClosedLegacySystemCatalog};
         int failed=0;
         for(int i=0;i<checks.length;i++){
             sendStatus(1,status(NAMES[i],i+1));Bundle result=status(NAMES[i],i+1);Throwable failure=null;
@@ -167,6 +167,24 @@ public final class ProductOwnerTest extends Instrumentation {
     }
     private void sdkDatabaseRefusedWithoutModification()throws Exception{
         realBook(false);File sdk=new File(directory,"library.db");byte[] before=Files.readAllBytes(sdk.toPath());rejects(SQLiteException.class,()->NativeCatalog.open(sdk.getAbsolutePath()));require(Arrays.equals(before,Files.readAllBytes(sdk.toPath())),"SDK bytes unchanged");
+    }
+    private void opensClosedLegacySystemCatalog()throws Exception{
+        BookStore.VerifiedSource source=realBook(false);File file=new File(directory,"closed-legacy.db");
+        // This is an offline migration fixture: close the former provider fully
+        // before any native product connection touches this particular file.
+        try(android.database.sqlite.SQLiteDatabase old=android.database.sqlite.SQLiteDatabase.openOrCreateDatabase(file,null)){
+            JSONArray migration=new JSONObject(new String(CatalogStore.readAsset(context),StandardCharsets.UTF_8)).getJSONArray("statements");
+            for(int i=0;i<migration.length();i++)old.execSQL(migration.getString(i));
+            old.execSQL("INSERT INTO reader_books(book_key,format,source_sha256,source_bytes,title,author,sort_title,favorite) VALUES(?,?,?,?,?,?,?,1)",
+                    new Object[]{source.key,source.format,source.sha256,source.bytes,"Legacy user title","Legacy author","Legacy user title"});
+            old.execSQL("INSERT INTO reader_local_books VALUES(?,?,?)",new Object[]{source.key,source.book.id,source.location});
+        }
+        try(CatalogStore migrated=new CatalogStore(context,file)){
+            equal("Legacy user title",migrated.localShelfBook(source.book.id).title);
+            equal("1",NativeCatalog.metadata(migrated.nativeOwner(),source.key)[6]);
+            ok(NativeCatalog.applyGroup(migrated.nativeOwner(),id(900),empty(),0,1,id(901),"After migration 😀",null,0));
+            equal(1,NativeCatalog.heads(migrated.nativeOwner(),"tag",id(901)).length);
+        }
     }
     private void phase(String phase){
         Bundle result=new Bundle();try{
