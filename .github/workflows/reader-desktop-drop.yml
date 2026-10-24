@@ -66,13 +66,15 @@ jobs:
       - name: Portable parser acceptance
         run: |
           set +e
-          build/desktop-drop/consumer/drop-check > build/desktop-drop/logs/portable.log 2>&1
+          build/desktop-drop/consumer/drop-check > build/desktop-drop/logs/portable.log \
+            2> build/desktop-drop/logs/portable-stderr.log
           echo "exit=$?" >> build/desktop-drop/logs/portable-exit.log
       - name: Real GTK3 drop destination and clipboard acceptance
         run: |
           set +e
           xvfb-run -a --server-args="-screen 0 1280x1024x24" \
-            build/desktop-drop/consumer/drop-probe > build/desktop-drop/logs/probe.log 2>&1
+            build/desktop-drop/consumer/drop-probe > build/desktop-drop/logs/probe.log \
+            2> build/desktop-drop/logs/probe-stderr.log
           echo "exit=$?" >> build/desktop-drop/logs/probe-exit.log
       - name: Bind cases to this source, run and binaries
         run: |
@@ -140,12 +142,14 @@ jobs:
       - name: Portable parser acceptance
         run: |
           set +e
-          ./build/desktop-drop/consumer/drop-check.exe > build/desktop-drop/logs/portable.log 2>&1
+          ./build/desktop-drop/consumer/drop-check.exe > build/desktop-drop/logs/portable.log \
+            2> build/desktop-drop/logs/portable-stderr.log
           echo "exit=$?" >> build/desktop-drop/logs/portable-exit.log
       - name: Real HDROP, OLE drop target and clipboard acceptance
         run: |
           set +e
-          ./build/desktop-drop/consumer/drop-probe.exe > build/desktop-drop/logs/probe.log 2>&1
+          ./build/desktop-drop/consumer/drop-probe.exe > build/desktop-drop/logs/probe.log \
+            2> build/desktop-drop/logs/probe-stderr.log
           echo "exit=$?" >> build/desktop-drop/logs/probe-exit.log
       - name: Bind cases to this source, run and binaries
         run: |
@@ -201,12 +205,14 @@ jobs:
       - name: Portable parser acceptance
         run: |
           set +e
-          build/desktop-drop/consumer/drop-check > build/desktop-drop/logs/portable.log 2>&1
+          build/desktop-drop/consumer/drop-check > build/desktop-drop/logs/portable.log \
+            2> build/desktop-drop/logs/portable-stderr.log
           echo "exit=$?" >> build/desktop-drop/logs/portable-exit.log
       - name: Real NSPasteboard and drag destination acceptance
         run: |
           set +e
-          build/desktop-drop/consumer/drop-probe > build/desktop-drop/logs/probe.log 2>&1
+          build/desktop-drop/consumer/drop-probe > build/desktop-drop/logs/probe.log \
+            2> build/desktop-drop/logs/probe-stderr.log
           echo "exit=$?" >> build/desktop-drop/logs/probe-exit.log
       - name: Bind cases to this source, run and binaries
         run: |
