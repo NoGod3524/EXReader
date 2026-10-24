@@ -53,6 +53,9 @@
 #define HOST_NOTE_PREVIEW 96
 #define HOST_PAGE_TEXT_LIMIT ((size_t)1024 * 1024)
 #define HOST_PAGE_GLYPH_LIMIT ((size_t)65536)
+#ifdef EXR_READER_WINDOWS_SEARCH
+#include "../apps/reader/desktop/windows_search_types.h"
+#endif
 
 enum {
   IDC_IMPORT_LABEL = 100, IDC_IMPORT_EDIT, IDC_IMPORT_BUTTON, IDC_OPEN_BUTTON,
@@ -121,6 +124,9 @@ typedef struct {
   exr_layout_config config;
   size_t page;
   size_t page_count;
+#ifdef EXR_READER_WINDOWS_SEARCH
+  char search_key[READER_SEARCH_SOURCE_KEY_MAX+1];
+#endif
 } host_session;
 
 typedef struct host_job host_job;
@@ -811,7 +817,8 @@ static void note_comment_write(const char *utf8) {
 enum { JOB_NONE = 0, JOB_OPEN, JOB_GO, JOB_LAYOUT, JOB_IMPORT, JOB_NOTE_ADD, JOB_NOTE_UPDATE, JOB_ROLLBACK, JOB_HIT, JOB_SAVE,
   JOB_PRODUCT_ATTACH, JOB_PRODUCT_REPAIR, JOB_PRODUCT_DELETE, JOB_PRODUCT_SHELF,
   JOB_METADATA_PREPARE, JOB_METADATA_SAVE, JOB_METADATA_RETRY, JOB_METADATA_DISCARD,
-  JOB_ACCOUNT_LOAD, JOB_ACCOUNT_SET, JOB_ACCOUNT_FORGET, JOB_ACCOUNT_STAGE, JOB_ACCOUNT_RECEIVE };
+  JOB_ACCOUNT_LOAD, JOB_ACCOUNT_SET, JOB_ACCOUNT_FORGET, JOB_ACCOUNT_STAGE, JOB_ACCOUNT_RECEIVE,
+  JOB_SEARCH_BATCH, JOB_SEARCH_OPEN };
 #ifdef EXR_READER_WINDOWS_ACCOUNT
 static int account_job_kind(int kind) { return kind>=JOB_ACCOUNT_LOAD && kind<=JOB_ACCOUNT_RECEIVE; }
 #endif
@@ -876,6 +883,14 @@ struct host_job {
   int rollback_failed;
   int note_fixed;
   int resolved_selection;
+#ifdef EXR_READER_WINDOWS_SEARCH
+  char *search_query;
+  unsigned long search_generation;
+  reader_search_cursor search_resume;
+  int search_has_resume;
+  host_search_batch search_batch;
+  host_search_hit search_hit;
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   int product_auto_open,product_deleted;
   int product_shelf_direction,product_shelf_before,product_shelf_after;
@@ -935,9 +950,23 @@ static host_job *job_new(int kind) {
   job->kind = kind;
   return job;
 }
+#ifdef EXR_READER_WINDOWS_SEARCH
+static void winsearch_hit_free(host_search_hit *hit);
+static void winsearch_batch_free(host_search_batch *batch);
+static exr_status winsearch_job(host_job *job);
+static void winsearch_accept(host_job *job);
+static void winsearch_close(void);
+static exr_status winsearch_identity(int64_t book, exr_format format, int fixed, int bounded,
+  char out[READER_SEARCH_SOURCE_KEY_MAX+1], const exr_control *control, exr_error *error);
+#endif
 
 static void job_free(host_job *job) {
   if (!job) return;
+#ifdef EXR_READER_WINDOWS_SEARCH
+  free(job->search_query);
+  winsearch_hit_free(&job->search_hit);
+  winsearch_batch_free(&job->search_batch);
+#endif
 #ifdef EXR_READER_DESKTOP_METADATA
   reader_metadata_snapshot_free(job->metadata_snapshot);
   free(job->metadata_title_value);free(job->metadata_author_value);
@@ -987,6 +1016,9 @@ static void job_start(host_job *job) {
   unsigned thread_id = 0;
   g.job = job;
   if (job->kind != JOB_HIT && job->kind != JOB_SAVE
+#ifdef EXR_READER_WINDOWS_SEARCH
+      && job->kind != JOB_SEARCH_BATCH
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
       && !product_job_kind(job->kind)
 #endif
@@ -1546,6 +1578,12 @@ static exr_status job_open(host_job *job) {
       if (status == EXR_OK) status = render_reflow(&session, page, &job->frame, &control, &error);
     }
   }
+#ifdef EXR_READER_WINDOWS_SEARCH
+  if(status==EXR_OK) {
+    exr_control control={job_cancel_check,NULL,job};
+    status=winsearch_identity(book.id,book.format,session.fixed,session.bounded,session.search_key,&control,&error);
+  }
+#endif
   if (status == EXR_OK && job_cancel_flag(job)) {
     session_clear(&session);
     book_clear(&book);
@@ -2026,6 +2064,9 @@ static exr_status job_run(host_job *job) {
     case JOB_ROLLBACK: return rollback_import(job);
     case JOB_HIT: return job_hit(job);
     case JOB_SAVE: return job_save(job);
+#ifdef EXR_READER_WINDOWS_SEARCH
+    case JOB_SEARCH_BATCH: case JOB_SEARCH_OPEN: return winsearch_job(job);
+#endif
 #ifdef EXR_READER_DESKTOP_METADATA
     case JOB_METADATA_PREPARE: case JOB_METADATA_SAVE: case JOB_METADATA_RETRY: case JOB_METADATA_DISCARD:
       return metadata_job_run(job);
@@ -2084,6 +2125,9 @@ static HWND make_static(HWND parent, int id, const wchar_t *text) {
 #ifdef EXR_READER_WINDOWS_ACCOUNT
 #include "../apps/reader/desktop/windows_accounts_ui.inc"
 #endif
+#ifdef EXR_READER_WINDOWS_SEARCH
+#include "../apps/reader/desktop/windows_search.inc"
+#endif
 
 static void create_controls(HWND parent) {
   g.import_label = make_static(parent, IDC_IMPORT_LABEL, L"导入路径");
@@ -2106,6 +2150,9 @@ static void create_controls(HWND parent) {
   g.zoom_dec = make_button(parent, IDC_ZOOM_DEC, L"缩放-");
   g.zoom_inc = make_button(parent, IDC_ZOOM_INC, L"缩放+");
   g.cancel_button = make_button(parent, IDC_CANCEL, L"取消(&X)");
+#ifdef EXR_READER_WINDOWS_SEARCH
+  inbook.button = make_button(parent, IDC_INBOOK, L"书内查找(&B)");
+#endif
   g.shelf_label = make_static(parent, IDC_SHELF_LABEL, L"书架");
   g.books = CreateWindowExW(WS_EX_CLIENTEDGE, L"LISTBOX", L"书架",
                             WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
@@ -2210,7 +2257,13 @@ static void layout_controls(void) {
   MoveWindow(g.note_edit, 8, content_bottom - 54, left_width - 16, 52, TRUE);
   MoveWindow(g.page, left_width + 4, content_top, width - left_width - 12, content_bottom - content_top - 4, TRUE);
   MoveWindow(g.page_label, 8, content_bottom + 8, 330, 22, TRUE);
+#ifdef EXR_READER_WINDOWS_SEARCH
+  MoveWindow(inbook.button, width-128, content_bottom+6, 120, 24, TRUE);
+#endif
   MoveWindow(g.status, 346, content_bottom + 8, width - 354, 22, TRUE);
+#ifdef EXR_READER_WINDOWS_SEARCH
+  MoveWindow(g.status,346,content_bottom+8,width-486,22,TRUE);
+#endif
 }
 static int compute_view(void);
 #include "../apps/reader/desktop/windows_accessibility.inc"
@@ -3139,6 +3192,9 @@ static void host_update_controls(void) {
 }
 
 static void handle_job_complete(host_job *job) {
+#ifdef EXR_READER_WINDOWS_SEARCH
+  if(job->kind==JOB_SEARCH_BATCH || job->kind==JOB_SEARCH_OPEN) { winsearch_accept(job);return; }
+#endif
 #ifdef EXR_READER_WINDOWS_ACCOUNT
   if(account_job_kind(job->kind)) { acct_job_accept(job);return; }
 #endif
@@ -3249,6 +3305,9 @@ static void handle_job_complete(host_job *job) {
           session_clear(&g.session); g.session = job->candidate; memset(&job->candidate, 0, sizeof(job->candidate));
           book_clear(&g.current); g.current = next;
           g.has_current = 1;
+#ifdef EXR_READER_WINDOWS_SEARCH
+          winsearch_close();
+#endif
           g.active_book_id = g.current.id;
           frame_move(&g.frame, &job->frame);
           memset(&g.selection, 0, sizeof(g.selection));
@@ -3367,6 +3426,9 @@ static void handle_job_complete(host_job *job) {
 }
 
 static void host_command(int id) {
+#ifdef EXR_READER_WINDOWS_SEARCH
+  if(id==IDC_INBOOK) { winsearch_show();return; }
+#endif
 #ifdef EXR_READER_DESKTOP_METADATA
   if(g.metadata_running) { set_status(L"正在提交书籍编辑，已接受的结果将保留。");return; }
 #endif
@@ -4508,6 +4570,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       product_shelf_dispatch();host_update_controls();
       if(!g.job && !g.pending) PostMessageW(window,WM_APP+31,0,0);
 #endif
+#ifdef EXR_READER_WINDOWS_SEARCH
+      winsearch_controls();
+#endif
       if (g.closing) finish_close(window);
       return 0;
     }
@@ -4524,6 +4589,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       return 0;
     case WM_CLOSE:
       if (g.closing) return 0;
+#ifdef EXR_READER_WINDOWS_SEARCH
+      winsearch_close();
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
       product_shelf_remember();KillTimer(window,3);KillTimer(window,4);
 #endif
@@ -4577,6 +4645,9 @@ static int register_host_classes(HINSTANCE instance) {
 static int message_loop(void) {
   MSG message;
   while (GetMessageW(&message, NULL, 0, 0) > 0) {
+#ifdef EXR_READER_WINDOWS_SEARCH
+    if(winsearch_translate(&message)) continue;
+#endif
 #ifdef EXR_READER_DESKTOP_METADATA
     if(g.metadata_dialog && IsDialogMessageW(g.metadata_dialog,&message)) continue;
 #endif
