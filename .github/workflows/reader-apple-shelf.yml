@@ -197,6 +197,10 @@ jobs:
           mkdir -p build/apple-shelf-ui/accessibility
           ruby tests/apple_host/make_xcodeproj.rb build/apple-access-project build/apple-resources tests/apple_host/accessibility/ui
           if test "$platform" != macos; then
+            if test '${{ inputs.scope }}' = production; then
+              xcrun simctl boot "$udid"
+              xcrun simctl bootstatus "$udid" -b
+            fi
             xcrun simctl ui "$udid" content_size large
             trap 'xcrun simctl ui "$udid" content_size large >/dev/null 2>&1 || true' EXIT
           fi

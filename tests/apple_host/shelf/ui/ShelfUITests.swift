@@ -113,7 +113,11 @@ final class ShelfUITests: XCTestCase {
     private func search(_ query: String) {
         let deadline = Date().addingTimeInterval(120)
         let field = element("library.search")
-        XCTAssertTrue(field.waitForExistence(timeout: max(0, deadline.timeIntervalSinceNow))); field.tap()
+        XCTAssertTrue(field.waitForExistence(timeout: max(0, deadline.timeIntervalSinceNow)))
+        XCTAssertTrue(wait(max(0, deadline.timeIntervalSinceNow)) {
+            field.isEnabled && self.app.windows.firstMatch.frame.insetBy(dx: -2, dy: -2).contains(field.frame) && field.isHittable
+        })
+        field.tap()
         XCTAssertTrue(wait(max(0, deadline.timeIntervalSinceNow)) { self.text("library.search.focus") == "focused" })
 #if os(macOS)
         field.typeKey("a", modifierFlags: .command)
