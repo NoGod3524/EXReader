@@ -1,7 +1,7 @@
 # 阅读状态 v2：root 实施决定
 
 决定采用 `READER-READING-STATE.md` 的版本化方向，补齐进度、点书签、无文字固定页、
-完整文档的章节作用域和重复 spine 路径。此文固定实施契约，尚未授予 v2 验收。
+完整文档的章节作用域和重复 spine 路径。Windows/Linux 的 v2 协议与 SDK 适配已验收。
 SDK K、公开 ABI 和产品 schema1 保持；产品修订与适配模块独立升级。
 
 ## wire 契约
@@ -54,9 +54,21 @@ SDK 负责原件、解析、布局与公开锚点解析；同步接收不创建�
 路由，以及只写产品历史/outbox的完整头集合事务。首次候选由
 `reader-reading-v2.yml` 在Windows/Linux运行：原有原生套件、旧版本真实拒收、28项
 新协议/事务检查、原121项SDK检查及18项v2真实捕获往返，再由云端下载四份工件核对。
-首次候选尚待云端结果；UI、真实WebDAV阅读状态传输和移动端仍未授予验收。
+UI、真实WebDAV阅读状态传输和移动端仍未授予验收。
 
 首轮源码 `9eca7944dc53015eff9ea1b822c422be0a918d54`、run `40057446587` 的四个
 运行作业均成功（两平台原生原套件+28、旧SDK121与v2真实18）。严格汇总因下载助手需要
 操作系统文件描述符而拒绝 `BytesIO`，记录 `accepted=false, problems=["fileno"]`，
 整包未获验收。汇总器改用临时文件；首轮结果及工件保留，不拼接下一轮结果。
+
+## 同源云端验收
+
+受测源码 `818e362972a993b1c4a0a3ae1700cb1fd27fe7aa`，run `40057866028`，
+attempt1，五作业全部成功。Windows/Linux 各保留全部原生原套件并通过28项新增
+协议/事务检查；各运行真实旧修订实现的121项SDK检查和18项v2捕获往返，
+17项FOUND、1项预期AMBIGUOUS、零误定位、零SDK笔记副本。
+
+严格汇总作业 `120765626670` 在云端下载并校验同run四份ZIP的大小和SHA-256，
+绑定源码、run、attempt、作业及报告身份，比较跨平台捕获结果，得到
+`accepted=true, problems=[]`。五份工件均非空、未过期，身份见
+[reader-reading-v2.json](validation/reader-reading-v2.json)。SDK和产品schema1未改。
