@@ -1,16 +1,665 @@
 {
-  "accepted": false,
-  "source_sha": null,
+  "accepted": true,
+  "scope": "Android installed F3 layout, actual visual fixed-page zoom, turn controls and atomic local persistence only",
+  "source_sha": "657ea2ccf37087b608155169a2fcecdf28fe8f33",
   "fixed_base": "5d7da81495e545901f7fc802af00e0b779d1d8c4",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
   "original_f3_head": "f453af14852ad3d8833d27c0eb6888f804c12050",
   "original_f3_tested_source": "6f33caf83bfb845e27db6382edc5ee100d8db954",
   "fixed_hardened_f3_source": "ba25961961ae69222bfed4f7a98cb02bb1dc6847",
   "fixed_preferences_tree": "a3e53123e861ac7ceb2c5fee4829288822229211",
-  "runs": [],
-  "pending": "first same-source Actions build and actual emulator execution",
+  "original_f3_tree": "bdcddad86ae3898c4cfbfbbb181777f9f55436d4",
+  "retained_hardening_paths": [
+    "apps/reader/preferences/include/reader_preferences.h",
+    "apps/reader/preferences/src/preferences.c",
+    "apps/reader/preferences/src/json.c"
+  ],
+  "preferences_module_modified": false,
+  "runs": [
+    {
+      "source_sha": "ae698fc07ad84f0aa14d45afb22a6dce78fbac4f",
+      "run_id": 40134576504,
+      "attempt": 1,
+      "job_id": 120993257256,
+      "conclusion": "failure",
+      "completed_new_first_checks": 6,
+      "failed_check": "bounded_and_legacy_epub_keep_projection_and_part",
+      "failure": "settings did not publish actual new frame",
+      "reason": "legacy empty page-start point was AMBIGUOUS; host refused before save; genuine visible-range capture/independent FOUND added",
+      "original_host16_search15_navigation18_reading16_passed": true,
+      "artifacts": [
+        {
+          "id": 12576802983,
+          "name": "reader-android-preferences-40134576504-1",
+          "bytes": 140923010,
+          "sha256": "152f0d7bf5912dca496f5836d3bbe80d26562dccf38a5b1724b5cb52fe5880c8",
+          "expires_at": "2027-01-22T21:31:11Z"
+        }
+      ]
+    },
+    {
+      "source_sha": "fcc03a2912c18bdf2dcbed6b1be3438041e013b3",
+      "run_id": 40134962323,
+      "attempt": 1,
+      "job_id": 120994418058,
+      "conclusion": "failure",
+      "completed_new_first_checks": 2,
+      "failed_check": "invalid_fields_keep_previous_file_model_and_pixels",
+      "failure": "search capture root",
+      "reason": "transient null accessibility root after dialog dismissal; bounded real-tree/PNG readiness added",
+      "original_host16_search15_navigation18_reading16_passed": true,
+      "artifacts": [
+        {
+          "id": 12576893557,
+          "name": "reader-android-preferences-40134962323-1",
+          "bytes": 140116677,
+          "sha256": "1ed8f048fcacbcd860f804d89f90e6c5dba2f384c237d6dd5b93c9306b3ba762",
+          "expires_at": "2027-01-22T21:36:22Z"
+        }
+      ]
+    },
+    {
+      "source_sha": "d4204c85b52eed8479d25e408a7f45c4c1f842ef",
+      "run_id": 40135708665,
+      "attempt": 1,
+      "job_id": 120996655999,
+      "conclusion": "failure",
+      "completed_new_first_checks": 10,
+      "failed_check": "hardware_input_ignores_touch_and_uses_actual_key_event",
+      "failure": "preferred actual gesture turned page",
+      "reason": "first hardware Down did not turn page; preceding 10 checks including genuine legacy visible-range FOUND passed",
+      "original_host16_search15_navigation18_reading16_passed": true,
+      "artifacts": [
+        {
+          "id": 12577640328,
+          "name": "reader-android-preferences-40135708665-1",
+          "bytes": 141317854,
+          "sha256": "f64afb833e1f07cba9f82280a14790f6a3e4343dff7e2e5e35ad6d961a50526e",
+          "expires_at": "2027-01-22T21:46:41Z"
+        }
+      ]
+    },
+    {
+      "source_sha": "64a1529f89f2f0647048c6e75d7ea3976f773709",
+      "run_id": 40136060088,
+      "attempt": 1,
+      "job_id": 120997700201,
+      "conclusion": "failure",
+      "completed_new_first_checks": 10,
+      "failed_check": "hardware_input_ignores_touch_and_uses_actual_key_event",
+      "failure": "preferred actual gesture turned page",
+      "reason": "same first hardware Down boundary; real semantic-root capture readiness fixed",
+      "original_host16_search15_navigation18_reading16_passed": true,
+      "artifacts": [
+        {
+          "id": 12577910674,
+          "name": "reader-android-preferences-40136060088-1",
+          "bytes": 141285280,
+          "sha256": "2293d8bb0840913bf1ec000deff6470f06858ad7dd5131c8b4cb4ea2df4383ba",
+          "expires_at": "2027-01-22T21:51:34Z"
+        }
+      ]
+    },
+    {
+      "source_sha": "3125c809f7f22bb0f58f1351744a82fd48f011ca",
+      "run_id": 40136405080,
+      "attempt": 1,
+      "job_id": 120998738476,
+      "conclusion": "failure",
+      "completed_new_first_checks": 10,
+      "failed_check": "hardware_input_ignores_touch_and_uses_actual_key_event",
+      "failure": "preferred actual gesture turned page",
+      "reason": "same hardware boundary; actual visual PDF/CBZ zoom scale and drawn-destination assertions passed",
+      "original_host16_search15_navigation18_reading16_passed": true,
+      "artifacts": [
+        {
+          "id": 12577861521,
+          "name": "reader-android-preferences-40136405080-1",
+          "bytes": 141302509,
+          "sha256": "ec72d7f66cb7eef4552eb4ad960c11e4fb8c8a1ae42c3d8fdb350ff4f32138f8",
+          "expires_at": "2027-01-22T21:56:30Z"
+        }
+      ]
+    },
+    {
+      "source_sha": "fad10927050b9ab2118afd9b48b01b7cef9b4d07",
+      "run_id": 40136859419,
+      "attempt": 1,
+      "job_id": 121000092857,
+      "conclusion": "failure",
+      "completed_new_first_checks": 10,
+      "failed_check": "hardware_input_ignores_touch_and_uses_actual_key_event",
+      "failure": "preferred actual gesture turned page",
+      "reason": "IME close/window focus alone did not resolve; Debug observed only ACTION_UP code20/input4/op0/focus=true; reader could not own focus in touch mode",
+      "original_host16_search15_navigation18_reading16_passed": true,
+      "artifacts": [
+        {
+          "id": 12577022550,
+          "name": "reader-android-preferences-40136859419-1",
+          "bytes": 141335934,
+          "sha256": "5541e338d87c8fb0249d950e466eaae63382dc139b8da297a54fc2dfef0bc340",
+          "expires_at": "2027-01-22T22:02:49Z"
+        }
+      ]
+    },
+    {
+      "source_sha": "8b3187564ec3159407f4322bfc034fdeeea2da7e",
+      "run_id": 40138155464,
+      "attempt": 1,
+      "job_id": 121004004692,
+      "conclusion": "cancelled",
+      "reason": "superseded before emulator execution by the same runtime code plus stricter actual restored-book bitmap readiness in the rotation probe",
+      "reading_ui_executed": false,
+      "artifacts": [
+        {
+          "id": 12576978102,
+          "name": "reader-android-preferences-40138155464-1",
+          "bytes": 20616067,
+          "sha256": "17b1d8ba30ca82a7bbccbc04ef2464eaa50aef286a5eb4b7759877263c22b5fb",
+          "expires_at": "2027-01-22T22:20:47Z"
+        }
+      ]
+    },
+    {
+      "source_sha": "657ea2ccf37087b608155169a2fcecdf28fe8f33",
+      "run_id": 40138266576,
+      "attempt": 1,
+      "job_id": 121004337573,
+      "conclusion": "success",
+      "new_checks": 17,
+      "artifact": {
+        "id": 12577914277,
+        "bytes": 141737458,
+        "sha256": "2bd1a2ac79ef6474bcf8cd272057184b435ac29e97dc4d04ed4261b6fc50c71c",
+        "expires_at": "2027-01-22T22:22:19Z"
+      },
+      "inherited": {
+        "host-session-android/ui/result.json": {
+          "accepted": true,
+          "checks": 16
+        },
+        "android-search/ui/result.json": {
+          "accepted": true,
+          "checks": 15
+        },
+        "android-navigation/ui/result.json": {
+          "accepted": true,
+          "checks": 18
+        },
+        "android-reading/ui/result.json": {
+          "accepted": true,
+          "checks": 16
+        }
+      }
+    }
+  ],
+  "ui": {
+    "source_sha": "657ea2ccf37087b608155169a2fcecdf28fe8f33",
+    "run_id": "40138266576",
+    "attempt": "1",
+    "accepted": true,
+    "scope": "declared Android local settings and controls only",
+    "checks": 17,
+    "captures": [
+      {
+        "phase": "first",
+        "name": "txt-relayout",
+        "bytes": 271497,
+        "sha256": "07396be153511642c0b436f64b014da3a6c84a4ab2e006fb6e9cb44c9e31a0da",
+        "nodes": 35
+      },
+      {
+        "phase": "first",
+        "name": "range-refused",
+        "bytes": 276617,
+        "sha256": "d3f887d5a420596d1e8e087216ff8451cf3e43e2127d42c07e57123a214e9abe",
+        "nodes": 35
+      },
+      {
+        "phase": "first",
+        "name": "cancel-retains-page",
+        "bytes": 272759,
+        "sha256": "32ead5549163668e5a4d557a82324d44d8e0ce0e9c819d2873f68a051b5afcdd",
+        "nodes": 35
+      },
+      {
+        "phase": "first",
+        "name": "epub-settings",
+        "bytes": 205311,
+        "sha256": "cba69df234662eed01f7e1d31c7c49aa177b08cd789f1bac7011485f837693e4",
+        "nodes": 29
+      },
+      {
+        "phase": "first",
+        "name": "legacy-settings",
+        "bytes": 288059,
+        "sha256": "f5dab58aff02d6e859925d8f58e4a5536a10c8489ca7a6977d66cbab9cffe15d",
+        "nodes": 32
+      },
+      {
+        "phase": "first",
+        "name": "pdf-zoom",
+        "bytes": 83958,
+        "sha256": "910c423d9f0df795468e4a6dfcedfd8877d25f321b3d14885920ccc044b2f997",
+        "nodes": 25
+      },
+      {
+        "phase": "first",
+        "name": "cbz-zoom",
+        "bytes": 55548,
+        "sha256": "115cdc9a5b83d22e97974a3b6cab09ebf11819e0f39050811118040344cf5b68",
+        "nodes": 23
+      },
+      {
+        "phase": "first",
+        "name": "dark-refused",
+        "bytes": 146413,
+        "sha256": "570849d6eebdc0238964725803f17103c8fce0ddac4cd95156d74e7ea01c1308",
+        "nodes": 36
+      },
+      {
+        "phase": "reopen",
+        "name": "reopen-settings",
+        "bytes": 141535,
+        "sha256": "af615b24f4ee12322b68f67ff8ac04ea1e701c036f363e0e6c41ffd4f12681ad",
+        "nodes": 31
+      },
+      {
+        "phase": "night",
+        "name": "night-settings",
+        "bytes": 150744,
+        "sha256": "c7c6baf956b2453753a8757189246df0c51d6195ce7d1db5044f93070d502243",
+        "nodes": 31
+      }
+    ],
+    "sources": [
+      {
+        "phase": "first",
+        "file": "search.txt",
+        "bytes": 4109,
+        "sha256": "3f934989c6fac53a72cacfc99369b7694b56447f80be0c3ef304913bce69c611"
+      },
+      {
+        "phase": "first",
+        "file": "search.epub",
+        "bytes": 1765,
+        "sha256": "a7a893ba1818907a5fa075565640af3c475e769def9dad9e9c9c3af0e73dab8e"
+      },
+      {
+        "phase": "first",
+        "file": "search.pdf",
+        "bytes": 1892,
+        "sha256": "9e2286aab0a355293872b9e022ba8328aee9391b5eb6ef60ed50718c4999fa85"
+      },
+      {
+        "phase": "first",
+        "file": "blank.pdf",
+        "bytes": 602,
+        "sha256": "0144a6054caabb0878db3271370ed83d0eda7a44200f891ce04338fc4d19161b"
+      },
+      {
+        "phase": "first",
+        "file": "search.cbz",
+        "bytes": 43936,
+        "sha256": "1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3"
+      },
+      {
+        "phase": "first",
+        "file": "long.epub",
+        "bytes": 1478719,
+        "sha256": "087d3376c83269be40cb4ed6009d2953443be80352718c9e0f2a5e88d5873e55"
+      },
+      {
+        "phase": "first",
+        "file": "legacy.epub",
+        "bytes": 1808,
+        "sha256": "a9c3b53daa16a9290814def3650c7d671826173685af53a5b9264e321590f07d"
+      },
+      {
+        "phase": "reopen",
+        "file": "search.txt",
+        "bytes": 4109,
+        "sha256": "3f934989c6fac53a72cacfc99369b7694b56447f80be0c3ef304913bce69c611"
+      },
+      {
+        "phase": "reopen",
+        "file": "search.epub",
+        "bytes": 1765,
+        "sha256": "a7a893ba1818907a5fa075565640af3c475e769def9dad9e9c9c3af0e73dab8e"
+      },
+      {
+        "phase": "reopen",
+        "file": "search.pdf",
+        "bytes": 1892,
+        "sha256": "9e2286aab0a355293872b9e022ba8328aee9391b5eb6ef60ed50718c4999fa85"
+      },
+      {
+        "phase": "reopen",
+        "file": "blank.pdf",
+        "bytes": 602,
+        "sha256": "0144a6054caabb0878db3271370ed83d0eda7a44200f891ce04338fc4d19161b"
+      },
+      {
+        "phase": "reopen",
+        "file": "search.cbz",
+        "bytes": 43936,
+        "sha256": "1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3"
+      },
+      {
+        "phase": "reopen",
+        "file": "long.epub",
+        "bytes": 1478719,
+        "sha256": "087d3376c83269be40cb4ed6009d2953443be80352718c9e0f2a5e88d5873e55"
+      },
+      {
+        "phase": "reopen",
+        "file": "legacy.epub",
+        "bytes": 1808,
+        "sha256": "a9c3b53daa16a9290814def3650c7d671826173685af53a5b9264e321590f07d"
+      },
+      {
+        "phase": "night",
+        "file": "search.txt",
+        "bytes": 4109,
+        "sha256": "3f934989c6fac53a72cacfc99369b7694b56447f80be0c3ef304913bce69c611"
+      },
+      {
+        "phase": "night",
+        "file": "search.epub",
+        "bytes": 1765,
+        "sha256": "a7a893ba1818907a5fa075565640af3c475e769def9dad9e9c9c3af0e73dab8e"
+      },
+      {
+        "phase": "night",
+        "file": "search.pdf",
+        "bytes": 1892,
+        "sha256": "9e2286aab0a355293872b9e022ba8328aee9391b5eb6ef60ed50718c4999fa85"
+      },
+      {
+        "phase": "night",
+        "file": "blank.pdf",
+        "bytes": 602,
+        "sha256": "0144a6054caabb0878db3271370ed83d0eda7a44200f891ce04338fc4d19161b"
+      },
+      {
+        "phase": "night",
+        "file": "search.cbz",
+        "bytes": 43936,
+        "sha256": "1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3"
+      },
+      {
+        "phase": "night",
+        "file": "long.epub",
+        "bytes": 1478719,
+        "sha256": "087d3376c83269be40cb4ed6009d2953443be80352718c9e0f2a5e88d5873e55"
+      },
+      {
+        "phase": "night",
+        "file": "legacy.epub",
+        "bytes": 1808,
+        "sha256": "a9c3b53daa16a9290814def3650c7d671826173685af53a5b9264e321590f07d"
+      }
+    ],
+    "process_stops": [
+      {
+        "phase": "first",
+        "instrumentation_pid": 7583,
+        "pid_before_stop": "",
+        "pid_after_stop": ""
+      },
+      {
+        "phase": "reopen",
+        "instrumentation_pid": 7783,
+        "pid_before_stop": "",
+        "pid_after_stop": ""
+      },
+      {
+        "phase": "night",
+        "instrumentation_pid": 7901,
+        "pid_before_stop": "",
+        "pid_after_stop": ""
+      }
+    ],
+    "api": 34,
+    "abi": "x86_64",
+    "physical_device": false,
+    "page_colors_accepted": false,
+    "performance_accepted": false,
+    "complete_product": false,
+    "talkback_speech_accepted": false,
+    "phases": [
+      {
+        "phase": "first",
+        "pid": 7583,
+        "passed": true,
+        "count": 15,
+        "checks": [
+          {
+            "name": "installed_f3_defaults_and_explicit_legacy_import",
+            "pass": true
+          },
+          {
+            "name": "txt_real_relayout_preserves_public_found_point",
+            "pass": true
+          },
+          {
+            "name": "invalid_fields_keep_previous_file_model_and_pixels",
+            "pass": true
+          },
+          {
+            "name": "sdk_composed_geometry_failure_keeps_last_settings",
+            "pass": true
+          },
+          {
+            "name": "cancel_prepublication_discards_candidate_and_file",
+            "pass": true
+          },
+          {
+            "name": "real_atomic_save_io_failure_keeps_accepted_page",
+            "pass": true
+          },
+          {
+            "name": "bounded_and_legacy_epub_keep_projection_and_part",
+            "pass": true
+          },
+          {
+            "name": "fixed_pdf_and_cbz_zoom_real_pixels_same_page",
+            "pass": true
+          },
+          {
+            "name": "rtl_and_vertical_taps_follow_saved_preferences",
+            "pass": true
+          },
+          {
+            "name": "swipe_only_ignores_taps_and_turns_on_vertical_swipe",
+            "pass": true
+          },
+          {
+            "name": "hardware_input_ignores_touch_and_uses_actual_key_event",
+            "pass": true
+          },
+          {
+            "name": "dark_page_gap_is_recorded_and_not_saved_as_success",
+            "pass": true
+          },
+          {
+            "name": "system_resolver_and_saved_light_system_preference",
+            "pass": true
+          },
+          {
+            "name": "unknown_version_truncation_and_oversize_load_preserve_bytes",
+            "pass": true
+          },
+          {
+            "name": "actual_rotation_cancels_unpublished_settings",
+            "pass": true
+          }
+        ],
+        "page_colors_accepted": false
+      },
+      {
+        "phase": "reopen",
+        "pid": 7783,
+        "passed": true,
+        "count": 1,
+        "checks": [
+          {
+            "name": "fresh_process_loads_saved_f3_and_actual_layout",
+            "pass": true
+          }
+        ],
+        "page_colors_accepted": false
+      },
+      {
+        "phase": "night",
+        "pid": 7901,
+        "passed": true,
+        "count": 1,
+        "checks": [
+          {
+            "name": "actual_system_dark_resolves_but_does_not_fake_page_palette",
+            "pass": true
+          }
+        ],
+        "page_colors_accepted": false
+      }
+    ],
+    "retained_color_failure": {
+      "accepted": false,
+      "requested_background_rgba": "101010ff",
+      "actual_corner_rgba": "ffffffff",
+      "user_css_attempted": "* { color: #e6e6e6; background-color: #101010; }",
+      "public_api_gap": "exr_layout_config has no page backdrop/foreground override; exr_render_page_ex accepts channels/control, not a palette"
+    }
+  },
+  "saved_files": [
+    {
+      "phase": "first",
+      "bytes": 390,
+      "sha256": "a841f7d1a53442253b383608496bda4c05d3194b12e219285bcd4e9afa3309ff"
+    },
+    {
+      "phase": "reopen",
+      "bytes": 390,
+      "sha256": "a841f7d1a53442253b383608496bda4c05d3194b12e219285bcd4e9afa3309ff"
+    },
+    {
+      "phase": "night",
+      "bytes": 390,
+      "sha256": "a841f7d1a53442253b383608496bda4c05d3194b12e219285bcd4e9afa3309ff"
+    }
+  ],
+  "actual_first_hardware_key_log": [
+    "10-24 22:32:48.456  7583  7583 I EXRHost : preferences key code=20 action=0 repeat=0 input=4 operation=0 selected=false focus=true",
+    "10-24 22:32:48.488  7583  7583 I EXRHost : preferences key code=20 action=1 repeat=0 input=4 operation=3 selected=false focus=true"
+  ],
+  "native": {
+    "source_sha": "657ea2ccf37087b608155169a2fcecdf28fe8f33",
+    "run_id": "40138266576",
+    "attempt": "1",
+    "accepted": true,
+    "archive_bytes": 160656,
+    "archive_sha256": "e3ffee5742820a47b0ddfa9f8ef098e1fe65adc39b1ae4db32ded067dcf39126",
+    "checks": [
+      {
+        "variant": "Debug",
+        "apk_bytes": 26895756,
+        "apk_sha256": "0d481a0cec23d0eaf0ce977c37379ce2a8ab8b00125e23dd1a336d08f828c9d6",
+        "libraries": {
+          "exreader_host": {
+            "bytes": 513336,
+            "sha256": "c70ea92b1647ce650737974fdcfdd7ad56a95a38e31f47713d718ddedd7be3d9",
+            "needed": [
+              "libexreader.so",
+              "libdl.so",
+              "libm.so",
+              "libc.so"
+            ]
+          },
+          "exreader_product": {
+            "bytes": 2735472,
+            "sha256": "3d3e64b0508c738618bf78cf87b9372809a0734441b17ca52bb0cc8876b53ea4",
+            "needed": [
+              "libdl.so",
+              "libm.so",
+              "libc.so"
+            ]
+          }
+        }
+      },
+      {
+        "variant": "Release",
+        "apk_bytes": 25808993,
+        "apk_sha256": "bd89cc305abb7fb95a7a9e81315d7c72c26ac6f17da8638222d9578a840bfdf6",
+        "libraries": {
+          "exreader_host": {
+            "bytes": 386896,
+            "sha256": "46769248d0cd88c1e7ae2f964eedba7221291f62bc2bf56b7c26f623fb38741d",
+            "needed": [
+              "libexreader.so",
+              "libdl.so",
+              "libm.so",
+              "libc.so"
+            ]
+          },
+          "exreader_product": {
+            "bytes": 2179656,
+            "sha256": "3009520150bf103dbca3703117f31a6189e8f9c856302b1a170cd91b1f34c334",
+            "needed": [
+              "libdl.so",
+              "libm.so",
+              "libc.so"
+            ]
+          }
+        }
+      }
+    ],
+    "single_existing_sdk_owner": true,
+    "unchanged_product_owner": true
+  },
+  "read_only_zip_verification": {
+    "source_sha": "9dc28784e28c010307b0bba4de7941fa76dfc325",
+    "run_id": 40139310222,
+    "attempt": 1,
+    "job_id": 121007466989,
+    "conclusion": "success",
+    "diagnostic_only": true,
+    "accepted": false,
+    "branch": "codex/reader-android-preferences-proof",
+    "merge_diagnostic_branch": false,
+    "verified": [
+      "original successful source/run/attempt/job",
+      "artifact ID, complete ZIP bytes/SHA-256 and expiry",
+      "all 17 named checks in three distinct processes",
+      "ten actual PNG identities",
+      "21 original byte/hash rows against archived seven fixtures",
+      "390-byte settings file identical across three phases",
+      "real first hardware ACTION_DOWN and following ACTION_UP",
+      "installed F3 archive and header",
+      "all inherited host16/search15/navigation18/reading16 from the same source"
+    ]
+  },
   "page_colors_accepted": false,
+  "retained_color_failure": {
+    "accepted": false,
+    "requested_background_rgba": "101010ff",
+    "actual_corner_rgba": "ffffffff",
+    "user_css_attempted": "* { color: #e6e6e6; background-color: #101010; }",
+    "public_api_gap": "exr_layout_config has no page backdrop/foreground override; exr_render_page_ex accepts channels/control, not a palette"
+  },
   "complete_product": false,
   "physical_device_execution": false,
   "talkback_speech_accepted": false,
-  "performance_accepted": false
+  "performance_accepted": false,
+  "limits": [
+    "API34 default x86_64 emulator only",
+    "requires exrPreferences=true and the existing public reading-anchor host integration",
+    "page foreground/background palette is not implemented; dark save is refused and system-dark reopen reports the real gap",
+    "fixed zoom above 100 percent is centered; panning remains separate",
+    "CBZ product point capture is still explicitly refused by the inherited Android reading host; SDK has a real empty text provider and host capability work is separate"
+  ],
+  "evidence_only_paths": [
+    "docs/READER-ANDROID-PREFERENCES.md",
+    "docs/validation/reader-android-preferences.json"
+  ]
 }
