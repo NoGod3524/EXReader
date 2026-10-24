@@ -1,0 +1,13 @@
+{
+  "accepted": false,
+  "status": "awaiting_first_specialized_cloud_run",
+  "start_sha": "356c57a4c641f05e10cff13850e24bd94336454e",
+  "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
+  "f2_source": "cbd7832b914bddcf99e06a85962d301a00b47efa",
+  "f2_tree": "9395914832e191ad63f18f6188ca5044260d2f12",
+  "runs": [],
+  "complete_product": false,
+  "physical_device_execution": false,
+  "performance_accepted": false,
+  "full_original_regressions_on_final_source": false
+}

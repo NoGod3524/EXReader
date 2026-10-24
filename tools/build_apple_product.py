@@ -29,13 +29,13 @@ def main():
     # installed config paths keep product dependencies in this target's stage.
     packages = ('EXReader', 'EXReaderProductCatalog', 'EXReaderRevisions', 'EXReaderCommands',
                 'EXReaderWebDAV', 'EXReaderSync', 'EXReaderSession', 'EXReaderCredentials', 'EXReaderReadingState',
-                'EXReaderSearch')
+                'EXReaderSearch', 'EXReaderNavigation')
     common += ['-D' + name + '_DIR=' + str(stage / 'lib/cmake' / name) for name in packages]
     modules = [('catalog', 'apps/reader/store/native'), ('revisions', 'apps/reader/revisions'),
                ('commands', 'apps/reader/commands'), ('webdav', 'extras/webdav'),
                ('sync', 'apps/reader/sync'), ('session', 'apps/reader/session'),
                ('credentials', 'extras/credentials'), ('reading-state', 'apps/reader/reading-state'),
-               ('search', 'apps/reader/search')]
+               ('search', 'apps/reader/search'), ('navigation', 'apps/reader/navigation')]
     for name, relative in modules:
         build = args.build.absolute() / name
         options = ['-DEXR_WEBDAV_APPLE_URLSESSION=ON'] if name == 'webdav' else []

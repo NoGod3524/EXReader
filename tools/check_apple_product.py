@@ -39,6 +39,15 @@ def inspect(binary, link_map):
                           'dependencies': dependencies}), flush=True)
         raise
     search_linked = bool(re.search(r'\b[Tt]\s+_reader_search_next\s*$', symbols, re.M))
+    navigation_linked = bool(re.search(r'\b[Tt]\s+_reader_navigation_children\s*$', symbols, re.M))
+    if navigation_linked:
+        providers = [line for line in mapping.splitlines()
+                     if 'libreader_navigation.a' in line and 'navigation.cpp.o' in line]
+        assert len(providers) == 1, 'installed F2 navigation object missing or duplicated'
+        assert re.search(r'\blibexreader(?:\.[0-9]+)*\.dylib', dependencies), 'navigation host lacks dynamic SDK'
+        assert re.search(r'\bU\s+_exr_publication_cfi_resolve\s*$', symbols, re.M), 'navigation resolver must come from dynamic SDK'
+        assert not re.search(r'\b[Tt]\s+_exr_(?:document_resolve|publication_cfi_resolve|publication_load)\s*$',
+                             symbols, re.M), 'navigation embedded a second SDK implementation'
     if search_linked:
         providers = [line for line in mapping.splitlines()
                      if 'libreader_search.a' in line and 'search.cpp.o' in line]
@@ -68,6 +77,7 @@ def inspect(binary, link_map):
             'sqlite_provider': provider, 'system_sqlite_fallback': False,
             'static_sdk_linked': False, 'reading_resolver_linked': False,
             'installed_search_linked': search_linked,
+            'installed_navigation_linked': navigation_linked,
             'dependencies': dependencies, 'negative_checks': rejected}
 
 

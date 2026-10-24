@@ -280,6 +280,14 @@ final class HostDocument {
     let text: Data
     let title: String
 
+    init(adopting document: OpaquePointer) {
+        handle = document
+        var size = 0
+        if let pointer = exr_document_text(document, &size), size > 0 { text = Data(bytes: pointer, count: size) }
+        else { text = Data() }
+        title = hostString(exr_document_title(document))
+    }
+
     init(library: HostLibrary, bookID: Int64, cancel: HostCancelBox? = nil) throws {
         try cancel?.check()
         var document: OpaquePointer?
@@ -390,6 +398,29 @@ final class HostPager {
 
     var extent: Int { document?.text.count ?? Int(exr_pager_chapter_statistics(pager).projection_bytes) }
     var statistics: exr_chapter_stats { exr_pager_chapter_statistics(pager) }
+
+    func verifyProjection(_ expected: Data, cancel: HostCancelBox) throws {
+        try bind(cancel)
+        guard extent == expected.count else { throw HostError.invalidInput("独立文档与实际分页文本长度不一致") }
+        if let document {
+            guard document.text == expected else { throw HostError.invalidInput("独立文档与实际分页文本不一致") }
+            return
+        }
+        var start = 0
+        while start < expected.count {
+            try cancel.check()
+            var end = min(start + 32768, expected.count)
+            while end < expected.count && (expected[end] & 0xc0) == 0x80 { end -= 1 }
+            guard end > start else { throw HostError.invalidInput("分页文本 UTF-8 边界无效") }
+            let owner = HostPageText()
+            var error = exr_error(), control = hostControl(cancel)
+            try hostCheck(exr_pager_read_text(pager, start, end, hostPageTextSink,
+                Unmanaged.passUnretained(owner).toOpaque(), &control, &error), error)
+            guard owner.data == expected[start..<end] else { throw HostError.invalidInput("独立文档与实际分页文本不一致") }
+            start = end
+        }
+        try cancel.check()
+    }
 
     func text(_ range: Range<Int>, cancel: HostCancelBox) throws -> String {
         if let document { return String(decoding: document.text[range], as: UTF8.self) }
