@@ -912,6 +912,17 @@ void reader_tts_test_fill_queue(reader_tts *h, size_t n) {
   for (i = 0; i < n; ++i) push_locked(h, 0xFFFFFFFFu, READER_TTS_FINISHED, READER_TTS_OK);
   pthread_mutex_unlock(&h->mu);
 }
+size_t reader_tts_test_daemon_voice_count(reader_tts *h) {
+  SPDVoice **v = list_voices(h);
+  size_t n = 0, i;
+  if (!v) return (size_t)-1;
+  for (i = 0; i < 1000000u; ++i) {
+    if (!v[i]) break;
+    ++n;
+  }
+  voices_free(v);
+  return n;
+}
 size_t reader_tts_test_queue_depth(reader_tts *h) {
   size_t d;
   pthread_mutex_lock(&h->mu);

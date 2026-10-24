@@ -20,7 +20,7 @@
   },
   "artifacts": [],
   "cases": {
-    "expected": 127,
+    "expected": 130,
     "pass": 0,
     "fail": 0,
     "skip": 0

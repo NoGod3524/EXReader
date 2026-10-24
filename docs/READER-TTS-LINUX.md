@@ -36,7 +36,7 @@ build. Root owns host wiring; this package only proves the module.
 | `tests/reader_tts_linux/consumer/` | installed-package C consumer, real daemon scenarios |
 | `tests/reader_tts_linux/consumer_cpp/` | installed-package C++ consumer (C ABI from C++, std::thread ownership, voice-list lifetime, unique_ptr deleter) |
 | `tests/reader_tts_linux/tts_hook_suite.c` | source-built fault-injection suite |
-| `tests/reader_tts_linux/expected_cases.json` | the 127 named cases, fixed before any result is read |
+| `tests/reader_tts_linux/expected_cases.json` | the 130 named cases, fixed before any result is read |
 | `tests/reader_tts_linux/run_scenarios.py` | owns the daemon lifecycle, merges and validates results |
 | `tests/reader_tts_linux/aggregate.py`, `check_aggregate.py` | strict same-run aggregation and its rejection regressions |
 | `tests/reader_tts_linux/check_scope.sh` | fixed start, frozen SDK, product SQL, whitelist and source invariants |
@@ -57,8 +57,9 @@ build. Root owns host wiring; this package only proves the module.
 * **Submission boundary.** `speak` copies the text, applies voice and rate, then
   submits with `spd_say`; a callback that races in before the daemon's message id
   is known is buffered and replayed, a callback for an older message is dropped.
-* **Limits.** 16 KiB per request (default = ceiling), 128 queued events, 4096
-  voices, 256 bytes per voice field, 256 remembered request ids. `speak` reserves
+* **Limits.** 16 KiB per request (default = ceiling), 128 queued events, 65536
+  voices (the espeak-ng module lists thousands), 256 bytes per voice field, 256
+  remembered request ids. `speak` reserves
   room for two events or fails with `LIMIT` and changes nothing.
 * **Capabilities.** `CAN_PAUSE` is reported (the backend implements it);
   `CAN_REPORT_RANGE` is never reported because Speech Dispatcher only reports
@@ -97,7 +98,7 @@ The report job re-runs `check_scope.sh`, runs the aggregation rejection
 regressions, then downloads this run's artifacts through the REST API, checks the
 artifact id/name tokens/byte size/sha256 digest/expiry, recomputes the ZIP digest,
 verifies the archived `files.sha256` against the archive contents, and re-validates
-all 127 named cases against `expected_cases.json`. Any mismatch is a rejection.
+all 130 named cases against `expected_cases.json`. Any mismatch is a rejection.
 
 ## 4. Scope of what may be claimed
 

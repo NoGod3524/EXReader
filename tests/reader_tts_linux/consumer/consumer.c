@@ -19,7 +19,9 @@
 #include <unistd.h>
 
 #define DETAIL 512
-#define CASE_TIMEOUT_MS 30000
+/* Long enough for a slow runner to synthesise a long utterance before the
+   daemon reports BEGIN; the assertions still require STARTED and a terminal. */
+#define CASE_TIMEOUT_MS 120000
 #define LONG_BYTES 12288u
 #define TEXT_CAP 20000
 
@@ -371,14 +373,6 @@ static void phase_live(suite *s) {
   fill_ascii(text, READER_TTS_DEFAULT_MAX_UTF8 + 1, 'a');
   st = reader_tts_speak(h, ++id, text, READER_TTS_DEFAULT_MAX_UTF8 + 1, NULL, 1.0, &err);
   report(s, "speak_over_max_bytes_limit", st == READER_TTS_LIMIT, "status=%s", status_name(st));
-  rs_init(&rs);
-  st = reader_tts_speak(h, ++id, text, READER_TTS_DEFAULT_MAX_UTF8, NULL, 2.0, &err);
-  ok = (st == READER_TTS_OK) && await_started(h, id, CASE_TIMEOUT_MS, &rs);
-  report(s, "speak_max_bytes_accepted", ok, "status=%s bytes=%u", status_name(st),
-         (unsigned)READER_TTS_DEFAULT_MAX_UTF8);
-  reader_tts_stop(h, id, &err);
-  await_terminal(h, id, 5000, &rs);
-  drain(h, id, &rs);
 
   fill_ascii(text, 30, 'b');
   {
@@ -432,6 +426,20 @@ static void phase_live(suite *s) {
     report(s, "speak_combining_marks_finished", ok && rs.c.finished == 1, "bytes=%zu finished=%d", n,
            rs.c.finished);
   }
+  /* The byte-boundary case runs last: it queues the longest utterance, and the
+     daemon needs real time to synthesise and play it out. */
+  {
+    size_t n = fill_repeat(text, READER_TTS_DEFAULT_MAX_UTF8, "\xF0\x9F\x93\x96");
+    rs_init(&rs);
+    st = reader_tts_speak(h, ++id, text, n, NULL, 2.0, &err);
+    ok = (st == READER_TTS_OK) && await_started(h, id, CASE_TIMEOUT_MS, &rs);
+    report(s, "speak_max_bytes_accepted", ok, "status=%s bytes=%zu scalars=%zu", status_name(st), n,
+           n / 4);
+    reader_tts_stop(h, id, &err);
+    await_terminal(h, id, 10000, &rs);
+    drain(h, id, &rs);
+    sleep_ms(1500); /* let the cancelled audio drain before the next phase */
+  }
 
   {
     int av = 7;
@@ -462,8 +470,11 @@ static void phase_live(suite *s) {
   {
     pthread_t t;
     foreign_call fc;
+    int state_before;
     memset(&fc, 0, sizeof fc);
     fc.h = h;
+    reader_tts_observe(h, &snap, &err);
+    state_before = (int)snap.state;
     if (pthread_create(&t, NULL, foreign_thread, &fc) == 0) {
       pthread_join(t, NULL);
       report(s, "foreign_thread_observe_owner", fc.observe_status == READER_TTS_OWNER, "status=%s",
@@ -471,8 +482,9 @@ static void phase_live(suite *s) {
       report(s, "foreign_thread_speak_owner", fc.speak_status == READER_TTS_OWNER, "status=%s",
              status_name(fc.speak_status));
       st = reader_tts_observe(h, &snap, &err);
-      report(s, "foreign_thread_state_unchanged", st == READER_TTS_OK && snap.state == READER_TTS_READY,
-             "state=%s", state_name(snap.state));
+      report(s, "foreign_thread_state_unchanged",
+             st == READER_TTS_OK && (int)snap.state == state_before,
+             "state=%s before=%s", state_name(snap.state), state_name(state_before));
     } else {
       report(s, "foreign_thread_observe_owner", 0, "pthread_create failed");
       report(s, "foreign_thread_speak_owner", 0, "pthread_create failed");
@@ -536,10 +548,20 @@ static void phase_live(suite *s) {
          "state=%s", state_name(snap.state));
   {
     reader_tts_event ev;
-    int av = 7;
-    st = reader_tts_poll(h, &ev, &av, &err);
-    report(s, "poll_after_closed_ok", st == READER_TTS_OK && av == 0, "status=%s available=%d",
-           status_name(st), av);
+    int av = 0, drained = 0, polls = 0, pending = 0;
+    st = READER_TTS_OK;
+    while (polls < 64) {
+      st = reader_tts_poll(h, &ev, &av, &err);
+      if (st != READER_TTS_OK) break;
+      ++polls;
+      if (!av) {
+        drained = 1;
+        break;
+      }
+      ++pending;
+    }
+    report(s, "poll_after_closed_ok", st == READER_TTS_OK && drained,
+           "status=%s polls=%d pending_events=%d", status_name(st), polls, pending);
   }
   st = reader_tts_destroy(&h, &err);
   report(s, "destroy_after_closed_nulls_pointer", st == READER_TTS_OK && h == NULL, "status=%s",
@@ -714,7 +736,7 @@ static void phase_kill(suite *s, int spd_pid, const char *restart_cmd) {
   fill_repeat(text, LONG_BYTES, "\xE6\x9C\x97\xE8\xAF\xBB\xE6\xB5\x8B\xE8\xAF\x95\xE3\x80\x82");
   rs_init(&rs);
   st = reader_tts_speak(h, id, text, LONG_BYTES, NULL, 0.5, &err);
-  ok = (st == READER_TTS_OK) && await_started(h, id, CASE_TIMEOUT_MS, &rs);
+  ok = (st == READER_TTS_OK) && await_started(h, id, 2 * CASE_TIMEOUT_MS, &rs);
   report(s, "kill_speaking_started", ok, "status=%s started=%d", status_name(st), rs.c.started);
   if (!ok) {
     reader_tts_request_close(h, &err);

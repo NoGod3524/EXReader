@@ -97,14 +97,17 @@ typedef struct {
    READER_TTS_EVENT_CAPACITY    queue ceiling; a request needs room for two
                                 events (STARTED plus one terminal) or speak
                                 fails with LIMIT and changes nothing.
-   READER_TTS_MAX_VOICES        voice count ceiling (LIMIT above this).
+   READER_TTS_MAX_VOICES        voice count ceiling (LIMIT above this). The
+                                espeak-ng module lists several thousand voices, so
+                                the ceiling is high; only the pointer array and the
+                                bounded strings are allocated.
    READER_TTS_MAX_VOICE_FIELD   bytes per id/name/language (LIMIT above this).
    READER_TTS_ID_MEMORY         request ids remembered per handle for reuse
                                 detection; an id reused after this many later
                                 requests is no longer detected. */
 #define READER_TTS_DEFAULT_MAX_UTF8 16384u
 #define READER_TTS_EVENT_CAPACITY 128u
-#define READER_TTS_MAX_VOICES 4096u
+#define READER_TTS_MAX_VOICES 65536u
 #define READER_TTS_MAX_VOICE_FIELD 256u
 #define READER_TTS_ID_MEMORY 256u
 

@@ -63,7 +63,8 @@ a platform code and never text. Summary of the parts a host must respect:
 ## Limits (enforced, not advisory)
 
 `READER_TTS_DEFAULT_MAX_UTF8` 16384 bytes, `READER_TTS_EVENT_CAPACITY` 128
-events, `READER_TTS_MAX_VOICES` 4096, `READER_TTS_MAX_VOICE_FIELD` 256 bytes,
+events, `READER_TTS_MAX_VOICES` 65536 (the espeak-ng module lists several
+thousand synthesis voices), `READER_TTS_MAX_VOICE_FIELD` 256 bytes,
 `READER_TTS_ID_MEMORY` 256 ids. A request needs room for two events before it
 starts, otherwise `speak` returns `LIMIT` and changes nothing.
 

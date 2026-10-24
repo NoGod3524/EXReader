@@ -333,6 +333,8 @@ def main():
         rc, _ = run(cmd + ["--output", out_file], os.path.join(logs, "%s.log" % name),
                     timeout=timeout, env=test_env)
         phase_files.append((name, out_file, rc))
+        # let the daemon drop any queued audio before the next process starts
+        time.sleep(2.0)
         return rc
 
     run_phase("live", [consumer, "--phase", "live"], timeout=900)

@@ -29,6 +29,9 @@ long reader_tts_test_msg_id(reader_tts *);
 void reader_tts_test_fill_queue(reader_tts *, size_t n);
 /* Events currently queued. */
 size_t reader_tts_test_queue_depth(reader_tts *);
+/* Number of voices the connected daemon lists (SIZE_MAX when it cannot answer).
+   Measures the real list length so the public ceiling has evidence behind it. */
+size_t reader_tts_test_daemon_voice_count(reader_tts *);
 #ifdef __cplusplus
 }
 #endif
