@@ -449,16 +449,24 @@ int main(int argc, char **argv) {
     check("recognize_page_pixel_quad_consistent", ok, note);
   }
   {
+    /* Use the run's own top confidence as the floor: everything must survive at
+       or above it, and at least one record must be dropped when scores vary. */
+    float top = 0;
+    size_t expected = 0;
+    for(size_t i = 0; i < baseline_items; i++) top = std::max(top, baseline_records[i].confidence);
+    for(size_t i = 0; i < baseline_items; i++) if(baseline_records[i].confidence >= top) expected++;
+    const bool varied = expected < baseline_items;
     reader_ocr_overlay_options filtered = options;
-    filtered.min_confidence = 90.0f;
+    filtered.min_confidence = std::min(100.0f, top);
     Overlay overlay;
     const Status result = reader_ocr_overlay_recognize_page(engine, document, 0, &filtered, &overlay.value, &error);
     bool ok = result == READER_OCR_OVERLAY_OK && overlay.value != nullptr;
     size_t count = 0;
     const reader_ocr_overlay_item *items = ok ? reader_ocr_overlay_items(overlay.value, &count) : nullptr;
-    ok = ok && count <= baseline_items;
-    for(size_t i = 0; ok && i < count; i++) ok = items[i].confidence >= 90.0f;
-    check("recognize_page_confidence_filter", ok, "kept=" + std::to_string(count) + " of " + std::to_string(baseline_items));
+    ok = ok && count == expected && (!varied || count < baseline_items);
+    for(size_t i = 0; ok && i < count; i++) ok = items[i].confidence >= filtered.min_confidence;
+    check("recognize_page_confidence_filter", ok, "floor=" + std::to_string(filtered.min_confidence) + " kept=" +
+      std::to_string(count) + " expected=" + std::to_string(expected) + " of " + std::to_string(baseline_items));
   }
   {
     int line_count = 0, word_count = 0;
