@@ -12,3 +12,57 @@ jobs:
       platforms: '["ubuntu-22.04","windows-2022","macos-15"]'
       session: true
       apple_urlsession: true
+  ios:
+    name: native iOS simulator HTTPS
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require frozen SDK schema and native-only transport scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor 84b661d4111015441e7501347fa080c01717b0e8 HEAD
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code 84b661d4111015441e7501347fa080c01717b0e8 HEAD -- apps/reader/store/001_catalog.sql
+          git diff --name-only 84b661d4111015441e7501347fa080c01717b0e8 HEAD | while IFS= read -r path; do
+            case "$path" in extras/webdav/*|tests/webdav/*|tests/reader_sync/check_apple_artifacts.py|.github/workflows/reader-commands.yml|.github/workflows/reader-webdav-apple.yml|docs/READER-WEBDAV-APPLE.md|docs/validation/reader-webdav-apple.json) ;; *) echo "Unexpected changed path: $path"; exit 1;; esac
+          done
+      - name: Install fixture-only tooling
+        run: |
+          brew install ninja openssl@3
+          echo "$(brew --prefix openssl@3)/bin" >> "$GITHUB_PATH"
+      - name: Installed native iOS consumer original 77 compatibility 12 and streamed-write 10
+        run: python3 tests/webdav/apple/run_ios.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-webdav-ios-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/webdav-ios/
+            !build/webdav-ios/**/*.key
+          if-no-files-found: error
+  evidence:
+    name: strict Foundation same-source evidence
+    needs: [native, ios]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate all four native producers and complete retained suites
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_sync/check_apple_artifacts.py build/webdav-apple-evidence --foundation
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-webdav-apple-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/webdav-apple-evidence/
+          if-no-files-found: error

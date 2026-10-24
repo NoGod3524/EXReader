@@ -158,6 +158,12 @@ jobs:
         run: |
           if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
           python3 tests/reader_session/check_session.py --consumer "build/session-consumer/session-consumer$exe" --revision-consumer "build/sync-revision-consumer/revision-consumer$exe" --output build/session-evidence
+      - name: Native Foundation immutable writes owner and callback lifetime
+        if: runner.os == 'macOS' && inputs.apple_urlsession == true
+        run: |
+          cmake -S tests/webdav/apple -B build/apple-dav-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$SYNC_PREFIXES"
+          cmake --build build/apple-dav-consumer --verbose
+          python3 tests/webdav/apple/check_transport.py --consumer build/apple-dav-consumer/WebDAVProbe --native-binary build/apple-dav-consumer/WebDAVProbe --output build/apple-dav-evidence
       - name: Build an actual immutable v1 validator against the same product provider
         if: inputs.reading_v2 == true
         run: |
@@ -207,6 +213,8 @@ jobs:
             build/metadata-consumer/metadata-consumer*
             build/metadata-consumer/metadata-c-consumer*
             build/apple-pkgconfig/
+            build/apple-dav-consumer/WebDAVProbe
+            build/apple-dav-evidence/
             build/session-stage/
             build/session-evidence/
             build/session-consumer/session-consumer*
