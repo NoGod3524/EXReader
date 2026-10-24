@@ -1,18 +1,18 @@
 {
   "accepted": true,
-  "status": "declared Linux GTK scope passed on the final common source",
+  "status": "declared Linux GTK receive and targeted AT-SPI fixes passed on the final common source",
   "baseline": "d2b59e9e9b3ad3e3246c23926f0fbebbaa9515f8",
   "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
-  "source_sha": "27ab57fd725816dd098c7031fa634efde83c63e5",
-  "run_id": 40082557686,
+  "source_sha": "ddaded9b81c2e51de4313919242f883246dd4426",
+  "run_id": 40087214516,
   "attempt": 1,
-  "jobs": [{"id": 120838919065, "conclusion": "success"}],
+  "jobs": [{"id": 120852486782, "conclusion": "success"}],
   "artifacts": [{
-    "id": 12556082372,
-    "name": "reader-gtk-receive-40082557686-1",
-    "size_in_bytes": 39973763,
-    "digest": "sha256:6928e6a7471c78f1658e88c87c17656de69df4b8fb165153fbe35d3523e084a7",
-    "expires_at": "2027-01-22T09:35:26Z"
+    "id": 12557658114,
+    "name": "reader-gtk-receive-40087214516-1",
+    "size_in_bytes": 40134196,
+    "digest": "sha256:abedea8e4ba9037986bef4189cfe786901b36742f3b75711e606f2c94f593363",
+    "expires_at": "2027-01-22T10:46:03Z"
   }],
   "results": {
     "original_account_checks": 23,
@@ -20,6 +20,7 @@
     "account_and_receive_checks": 46,
     "retained_gtk_ui_checks": 105,
     "retained_fault_checks": 4,
+    "targeted_atspi_checks": 10,
     "desktop_ctest": {"passed": 4, "total": 4},
     "product_ctest": {"passed": 1, "total": 1},
     "public_sdk_catalog_checks": 9,
@@ -37,10 +38,19 @@
     "wrong_location": 0,
     "sdk_annotations_copied": 0,
     "sqlite_provider": "libreader_catalog_sqlite.a",
-    "program_sha256": "665fbe70b4515786f37953c9407e94051f605071d46b02614ce6370947cb7178",
-    "host_link_map_sha256": "e1dfc42c9e83e50ad3f12dca39323d79e5168fcb2fec7ed44a8a403a9accd07f",
-    "public_capture_seed_report_sha256": "b32b202f7b1e7731573f638b7bf1e5631763189dcf25667ca03a6cb50c6ba7fd",
-    "original_ui_report_sha256": "284d15df7bf0a018047b269c8b0b6c1a19ea781d2b2090debc08cb836ba0130a"
+    "program_sha256": "ae3021bd0a3cc92112ba8df04f0b40047515e1521dbf4baa00dc07dc736e78b8",
+    "host_link_map_sha256": "bf6434fb7f56026423753a9b23f922c1f4e9ba2f86a267ad2e031187b1dbb7f5",
+    "public_capture_seed_report_sha256": "88c190486bd63928278a73ec6ec83e7e741f5d42f9c3e5fcf9caff4e2a495f8d",
+    "original_ui_report_sha256": "e63357c6cd307f178d6d8f3f715bce3d43ba7334414de9e862d1bcd915e2984d"
+  },
+  "targeted_atspi": {
+    "scope": "ten production regressions only; not the full G13 audit or Orca",
+    "helper_source": "67e2f8c4941205c5581e82fd5a1469d18f696019",
+    "checks": ["shelf_rows_named", "shelf_tab_stops_named", "collections_initial_focus", "collections_type_in_tab_cycle", "collections_scroll_containers_named", "account_declares_modal", "account_blocks_background_shortcuts", "account_escape_restores_internal_focus", "annotation_rows_named", "status_delivers_accessible_name_event"],
+    "passed": 10,
+    "status_identity": {"same_before_after_proxy": true, "event_proxy_matches": true, "before_name": "Ready", "after_name": "Reading operation failed; accepted page retained", "event_type": "object:property-change:accessible-name", "detail1": "", "matching_events": 2},
+    "g13_full_audit_accepted": false,
+    "orca_accepted": false
   },
   "retained_failures": [{
     "source_sha": "35fd6be84cf9b48c40ac940e490c57e2db0c1f8f",
@@ -67,7 +77,74 @@
     "reason": "Receive test helper tried to obtain module-level command/raw functions from main() locals. It now imports those existing helpers directly. This interim source also used -u SQLite ordering; final source removes that in favor of normal installed product target dependencies.",
     "artifact": {"id": 12555745967, "size_in_bytes": 20697428, "digest": "sha256:da2c25d49d45df6a74908cb39f4b27dc88e70d27d15ef07c9435986772c0d5ce"}
   }],
+  "retained_a11y_attempts": [{
+    "source_sha": "532d8ebb97a21a113cb1464b6014827c058e21a9",
+    "run_id": 40084158805,
+    "attempt": 1,
+    "job_id": 120843564458,
+    "conclusion": "failure",
+    "reason": "A GTK_DIALOG_MODAL grab blocked the original parent WM close during preparation. The original shutdown test rejected it; the final implementation scopes the real modal grab with a native GtkWindowGroup while keeping parent content insensitive.",
+    "artifact": {"id": 12556054692, "size_in_bytes": 20694231, "digest": "sha256:c7093789a5f2c6070875ca7665f0f0f69f2c151e19f52a80d428deb80416866e"}
+  }, {
+    "source_sha": "80f08190756c8a0bb7faee9ea365b14a63526abf",
+    "run_id": 40084649832,
+    "attempt": 1,
+    "job_id": 120844971908,
+    "conclusion": "failure",
+    "reason": "All original 46 account/receive, 105 UI and 4 fault checks passed, but targeted AT-SPI rejected the organizer's missing exposed initial focus. GTK3 ComboBox grab_focus delegates to a private button absent from its ATK tree.",
+    "artifact": {"id": 12557150609, "size_in_bytes": 40014275, "digest": "sha256:9a9c6271c08ba6241626fcfdab34781219acfaca533017c37cd765ff9e2d28c7"}
+  }, {
+    "source_sha": "9de1d27e862d77ce6bd15cd07c7c04d3cee90521",
+    "run_id": 40084737985,
+    "attempt": 1,
+    "job_id": 120845234420,
+    "conclusion": "failure",
+    "reason": "The expanded ten-check candidate retained the same real organizer focus defect. All original 46+105+4 and backends passed; targeted AT-SPI still refused initial focus.",
+    "artifact": {"id": 12557270812, "size_in_bytes": 40013850, "digest": "sha256:e99f2655e8aae0980866b853e173b8b0e3d76f431b98d9bffe1882df609b2f4e"}
+  }, {
+    "source_sha": "025628af7bc1cdf48fcb7ebd7a67f6831c06097c",
+    "run_id": 40085664907,
+    "attempt": 1,
+    "job_id": 120847957377,
+    "conclusion": "cancelled",
+    "reason": "Superseded after source review proved gtk_window_set_focus also invokes the ComboBox grab_focus override. Cancelled instead of granting this incomplete candidate.",
+    "artifact": {"id": 12557221930, "size_in_bytes": 39530833, "digest": "sha256:dc89aa95063c19c492ba10080c20fffe7635e0f868017ce0448f500a01161aee"}
+  }, {
+    "source_sha": "dc1fa2c1fd6a156f0471e66ec9bd29d97e56cfb6",
+    "run_id": 40086097714,
+    "attempt": 1,
+    "job_id": 120849244835,
+    "conclusion": "failure",
+    "reason": "Original 46+105+4 and all backends passed; targeted AT-SPI passed nine checks including real ComboBox focus and account modality. The last filter incorrectly expected the property name in detail1, although retained raw events contain object:property-change:accessible-name with the expected status label. The following Actions-only diagnostic confirms this test defect; no acceptance is transferred.",
+    "artifact": {"id": 12557467058, "size_in_bytes": 40134526, "digest": "sha256:f93d9d177e031c9543178462b0b6336d0ec96815137b244c26f71a9bab183d86"}
+  }],
+  "status_event_diagnostic": {
+    "source_sha": "2b0649d9af105f7e4b1ec5857ba994ad8f0fbacb",
+    "run_id": 40087119792,
+    "attempt": 1,
+    "job_id": 120852222790,
+    "diagnostic_only": true,
+    "accepted": false,
+    "retained_source_sha": "dc1fa2c1fd6a156f0471e66ec9bd29d97e56cfb6",
+    "retained_run_id": 40086097714,
+    "observed_event_type": "object:property-change:accessible-name",
+    "observed_detail1": "",
+    "observed_source_role": "label",
+    "observed_source_name": "Reading operation failed; accepted page retained",
+    "finding": "The actual property name is in event.type, not detail1. The targeted filter was corrected, and run 40087214516 passed the complete same-source checks with actual event-source identity. Original G13 findings remain preserved for the parent's later full audit."
+  },
   "earlier_passed_candidates": [{
+    "source_sha": "27ab57fd725816dd098c7031fa634efde83c63e5",
+    "run_id": 40082557686,
+    "attempt": 1,
+    "job_id": 120838919065,
+    "conclusion": "success",
+    "account_and_receive_checks": 46,
+    "retained_gtk_ui_checks": 105,
+    "retained_fault_checks": 4,
+    "artifact": {"id": 12556082372, "size_in_bytes": 39973763, "digest": "sha256:6928e6a7471c78f1658e88c87c17656de69df4b8fb165153fbe35d3523e084a7", "expires_at": "2027-01-22T09:35:26Z"},
+    "scope": "receive and public location resolution before targeted G13 production fixes; retained, not transferred to final source"
+  }, {
     "source_sha": "3a9084891f2aa49171bb5405629c67e832fab555",
     "run_id": 40081634220,
     "attempt": 1,
@@ -91,5 +168,5 @@
   "complete_product": false,
   "sdk_changed": false,
   "schema_changed": false,
-  "scope": "explicit GTK SAFE metadata receive, stable original import, mapped verified local conflict offline opening and read-only public v2 location resolution"
+  "scope": "explicit GTK SAFE metadata receive, stable original import, mapped verified local conflict offline opening, read-only public v2 location resolution and ten targeted native AT-SPI production regressions"
 }
