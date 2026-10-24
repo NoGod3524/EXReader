@@ -1,15 +1,44 @@
 {
-  "accepted": false,
-  "status": "no cloud run recorded yet",
+  "accepted": true,
   "package": "EXReaderSearch 0.1.0",
   "common_start": "c3511a011eefbf1fba1d20908f000cef22b1ced2",
-  "source_sha": null,
-  "run_id": null,
-  "attempt": null,
-  "artifacts": [],
-  "jobs": [],
-  "problems": ["Nothing has been built or run in GitHub Actions for this package; the fields above are filled only from a real run."],
-  "granted_platforms": [],
+  "source_sha": "0fe2da68995ea1e6eb5772cb8338d49f7d863428",
+  "run_id": 40072778913,
+  "attempt": 1,
+  "artifacts": [
+    {
+      "id": 12551683917,
+      "name": "reader-search-Linux-40072778913-1",
+      "size_in_bytes": 7810848,
+      "digest": "sha256:650a4d7da1e8a04571dc5452fb4672567b5fb441cbd309417167ebdde29f94fe",
+      "expires_at": "2027-01-22T07:05:38Z"
+    },
+    {
+      "id": 12552295425,
+      "name": "reader-search-Windows-40072778913-1",
+      "size_in_bytes": 5844220,
+      "digest": "sha256:023945331d91febf6c5af124f2e0f213d46cdf7738938cd88be1de48ef6ce67b",
+      "expires_at": "2027-01-22T07:05:38Z"
+    }
+  ],
+  "jobs": [
+    {"id": 120809612620, "name": "search consumers (ubuntu-22.04)", "conclusion": "success"},
+    {"id": 120809612831, "name": "search consumers (windows-2022)", "conclusion": "success"}
+  ],
+  "earlier_failed_runs": [
+    {"run_id": 40062703988, "source_sha": "db3d574798518f8b91339148a78d02620e8c993b", "reason": "probe seeded progress at a non-UTF-8 offset (test bug)"},
+    {"run_id": 40063436646, "source_sha": "0048f421", "reason": "probe called the EPUB-notes API on a TXT book (test bug)"},
+    {"run_id": 40072533973, "source_sha": "7b08e650", "reason": "probe called the global notes API on bounded EPUBs (test bug)"}
+  ],
+  "linux_checks": 243,
+  "granted_platforms": ["linux", "windows"],
+  "long_chapter_linux_single_observation": {
+    "projection_bytes": 1468499, "hits": 1500, "batches": 16, "stream_chunks": 45, "straddling_hits": 37,
+    "module_bytes_scanned": 1468499, "module_peak_accounted_bytes": 108928,
+    "sdk_peak_parse_workspace_bytes": 6460624,
+    "peak_rss_before": 17694720, "peak_rss_after_sdk_stream_only": 18067456, "peak_rss_after_search": 19853312,
+    "elapsed_ms": 769.07
+  },
   "macos_accepted": false,
   "performance_claimed": false,
   "host_ui_accepted": false,

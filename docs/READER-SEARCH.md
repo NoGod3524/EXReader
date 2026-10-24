@@ -3,7 +3,7 @@
 独立可选安装包，公开头 `reader_search.h`，仅依赖冻结 SDK（3.40.0、ABI1）的 `core` 组件。
 不读 SDK 私有 SQL，不依赖产品目录、修订或阅读状态模块，默认 reading 构建不含它。
 源码在 `apps/reader/search/`，测试在 `tests/reader_search/`，工作流为
-`.github/workflows/reader-search.yml`。本文件说明契约；**验收状态见末节，当前未获云端授予。**
+`.github/workflows/reader-search.yml`。本文件说明契约；验收状态见末节。
 
 ## 范围
 
@@ -90,6 +90,6 @@ RSS 是进程级单调高水位，所以“新增搜索内存”只能由模块�
 
 ## 验收状态
 
-`docs/validation/reader-search.json` 记录实际云端运行。在记录出现之前本包未获任何平台授予；
+`docs/validation/reader-search.json` 记录实际云端运行（run 40072778913，source 0fe2da68）：Linux 与 Windows 通过，此前三次失败均为探针自身错误，已在记录中保留。
 即使通过也只授予所列平台上的本包接口，不含 macOS（除非同源实际运行）、宿主 UI、
 产品性能或六平台互通。
