@@ -1,18 +1,113 @@
 {
-  "accepted": false,
-  "status": "pending first same-source cloud run",
+  "accepted": true,
+  "status": "accepted Linux/Windows/macOS installed C ABI package after a complete same-source cloud run; no host UI, import, conflict resolution or performance grant",
   "package": "EXReaderAnnotationExport 0.1.0",
   "common_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
-  "source_sha": null,
-  "run_id": null,
-  "attempt": null,
-  "artifacts": [],
-  "jobs": [],
+  "source_sha": "d7ad100b67dca6d0cd0dae97262e5e1d419fd0b2",
+  "run_id": 40079793192,
+  "attempt": 1,
+  "artifacts": [
+    {"id": 12555036254, "name": "reader-annotation-export-Linux-40079793192-1", "size_in_bytes": 9701271, "digest": "sha256:5a6d58aec73365beb0826cd722b57c1e80a9a1864fc69495a30ed0308aa1b19a", "expires_at": "2027-01-22T08:53:27Z"},
+    {"id": 12554771729, "name": "reader-annotation-export-Windows-40079793192-1", "size_in_bytes": 6158814, "digest": "sha256:6c69be805daa6dcc9e9badd13583ad70c31df759c986756800be5c903af27a6e", "expires_at": "2027-01-22T08:53:27Z"},
+    {"id": 12554174867, "name": "reader-annotation-export-macOS-40079793192-1", "size_in_bytes": 8562313, "digest": "sha256:8bd35bce9ed5f56b89805467402abe30b4d776960fc09617e8a2bb537e9e633d", "expires_at": "2027-01-22T08:53:27Z"},
+    {"id": 12554464097, "name": "reader-annotation-export-evidence-40079793192-1", "size_in_bytes": 948, "digest": "sha256:fec8cc6b0d390df2fe6b553be760b8141b23874ac7165345183a60319df6f4a5", "expires_at": "2027-01-22T08:53:27Z"}
+  ],
+  "jobs": [
+    {"id": 120830764059, "name": "annotation export (ubuntu-22.04)", "conclusion": "success"},
+    {"id": 120830764058, "name": "annotation export (windows-2022)", "conclusion": "success"},
+    {"id": 120830764019, "name": "annotation export (macos-15)", "conclusion": "success"},
+    {"id": 120831455873, "name": "same-run artifact evidence", "conclusion": "success"}
+  ],
   "problems": [],
+  "named_checks_per_platform": [
+    "c11_consumer_constants_and_argument_contract",
+    "corpus_wires_incl_ascii_and_reordered_encodings_accepted_by_product_store",
+    "txt_unicode_newline_quote_markdown_html_samples_roundtrip_exact_wire_and_visible_text",
+    "epub_and_pdf_modes_with_anchor_v1_and_v2_roundtrip",
+    "other_books_annotations_progress_and_book_records_never_leak",
+    "conflict_tombstone_missing_and_foreign_parent_states_keep_every_head_without_choosing",
+    "explicit_title_override_and_untitled_book_are_escaped_and_declared",
+    "empty_export_has_header_footer_and_title_only",
+    "thousand_plus_annotations_stream_across_keyset_pages_in_order_and_repeat_byte_identically",
+    "unicode_output_path_publishes_identical_bytes",
+    "successful_export_atomically_replaces_an_existing_file",
+    "cancellation_before_during_and_at_the_final_flush_keeps_previous_export_and_removes_temp_files",
+    "output_budget_is_exact_and_breach_keeps_previous_export",
+    "publish_failures_directory_target_missing_parent_and_partial_two_output_publish_are_reported_exactly",
+    "mid_stream_write_failure_rlimit_fsize_keeps_previous_export (Linux, macOS) | locked_target_publish_failure_keeps_previous_export (Windows)",
+    "invalid_options_paths_budgets_titles_book_keys_and_non_owner_calls_are_refused_without_writing",
+    "outputs_contain_no_absolute_paths_account_secrets_or_sdk_row_ids",
+    "database_and_progress_unchanged_after_every_export",
+    "same_bytes_from_an_independent_database_copy"
+  ],
+  "skipped": {
+    "linux": ["windows_locked_target_publish_failure"],
+    "darwin": ["windows_locked_target_publish_failure"],
+    "windows": ["posix_rlimit_fsize_mid_stream_write_failure (RLIMIT_FSIZE does not exist on Windows)"]
+  },
+  "corpus": {"wires": 1332, "mass_annotations": 1234, "small_database_wires": 49},
+  "output_sha256_identical_on_all_three_platforms": {
+    "txt.jsonl": "171133614fe8c302ce9183ca5d0106b0fb52b5cc3e1e51a15fb698faf2b4a33a",
+    "txt.md": "e102e95a078b8a2611bfda5f7239d792f5dc392187042b0bab25b1712a7ef0a6",
+    "epub.jsonl": "0866ec717462f4f960ef89ec2a152748b56da440346169d8fea02b553c9d1f3c",
+    "epub.md": "b13780be4e8abdb893a9590fc4f6eca80603fcfa3779bb42470d9288e2e3b3d5",
+    "pdf.jsonl": "25d0713cdedd4b1cc3511bf76eb4c3baecb3f5587cf24c6f17a5c8b231eb2aab",
+    "pdf.md": "0beb59044a07d86ac4d14a92cb8277252fca84fba9f726152b083a8e4a31cfd5",
+    "mass.jsonl": "d689923815e3ff7d6fca8d2434edb58ee3cc9b06a958baed7b70fae51c02b1f8",
+    "mass.md": "10c1b4d3709a75da600e6b390e9c03b29bb460fdf3d4d236e44bc3bc406f4c2c",
+    "empty.jsonl": "4779b396eb0f52003397f3033e56f08f39bb341c6ae2fa26c5b5b1583c3a7455",
+    "empty.md": "aefc0e530b77c83c29bcbda9d55752923663412a58bd4e5ec8dce5dec7a09832"
+  },
+  "retained_failures": [
+    {
+      "source_sha": "a5744a04751119da35dda43e5b58bc1dac8aee3d",
+      "run_id": 40078772023,
+      "attempt": 1,
+      "cause": "Windows MSVC C4310 (cast truncates constant value) on (char)0xE2 in the Markdown control-picture encoder; /WX refused it. Fixed in the implementation by byte-string literals; Linux and macOS passed all 19 checks at this source.",
+      "jobs": [
+        {"id": 120827736364, "platform": "linux", "conclusion": "success"},
+        {"id": 120827736584, "platform": "windows", "conclusion": "failure"},
+        {"id": 120827736634, "platform": "macos", "conclusion": "success"},
+        {"id": 120828423404, "role": "strict evidence", "conclusion": "failure"}
+      ],
+      "artifacts": [
+        {"id": 12554636347, "size_in_bytes": 9701197, "digest": "sha256:9ef3f9b04209b9890dcc42ba58a18790c6ddad4f4f43ba797be68427ca904fbf"},
+        {"id": 12554452062, "size_in_bytes": 8562188, "digest": "sha256:e3b50e0fc0a76f9efe781dd585754533f12a4ae338a7c68d6dbe5c17a80b4104"},
+        {"id": 12554337479, "size_in_bytes": 21520, "digest": "sha256:5f2ecc25271fef071d0d82a2f7b77181814e10b0874becbf71e8461a125854a6"},
+        {"id": 12554193036, "size_in_bytes": 692, "digest": "sha256:f49c97aefe194dd97411449e3cbd52195d2a0910395a67b17afe48af8bc07e0b"}
+      ]
+    },
+    {
+      "source_sha": "94481fd17787f9855a09d550f76e6ae83c539ccf",
+      "run_id": 40079424539,
+      "attempt": 1,
+      "cause": "All three platform jobs passed. The strict artifact aggregator wrongly required identical check-name sets although each platform deliberately runs exactly one of two write-failure checks (RLIMIT_FSIZE on POSIX, locked target on Windows); the aggregator, not the implementation or a test assertion, was fixed to compare the shared checks and require each platform's own one. Implementation bytes are unchanged between this source and the accepted one.",
+      "jobs": [
+        {"id": 120829670375, "platform": "linux", "conclusion": "success"},
+        {"id": 120829670555, "platform": "windows", "conclusion": "success"},
+        {"id": 120829670573, "platform": "macos", "conclusion": "success"},
+        {"id": 120830359253, "role": "strict evidence", "conclusion": "failure"}
+      ],
+      "artifacts": [
+        {"id": 12554846744, "size_in_bytes": 9701282, "digest": "sha256:3108b09421df86b2d02db3626e100ad5a80eca24e9b7592530f0bdaa18475bf9"},
+        {"id": 12554352354, "size_in_bytes": 6158800, "digest": "sha256:4e92ccbba320bf596b520ccd9a669d552a9e80f5786fbfd6ed0fb0355331277a"},
+        {"id": 12554347366, "size_in_bytes": 8562292, "digest": "sha256:b23c4f54694945d9fc27c3f1d6ba210ea5bd34524e8159a930d4ccc374acd28e"},
+        {"id": 12554807032, "size_in_bytes": 961, "digest": "sha256:f56ea5ab2a8475a70691a1d1642c6f9930ab0a79a5a6ed1043fb7edf6ffd574f"}
+      ]
+    }
+  ],
+  "limits": [
+    "export reads each page and each non-safe entity in its own snapshot; concurrent writers can make different entities reflect different moments",
+    "no anchor resolution, no SDK library access, no import, no conflict resolution",
+    "mid-stream write failure is exercised by RLIMIT_FSIZE on Linux/macOS and by a locked-target publish failure on Windows, not by the same mechanism on all three",
+    "Markdown is checked structurally by a purpose-built parser, not by a third-party CommonMark renderer",
+    "no real-device, screen-reader, host UI or performance claim"
+  ],
   "sdk_changed": false,
   "schema_changed": false,
   "host_ui_accepted": false,
   "import_or_conflict_resolution": false,
+  "performance_claimed": false,
   "six_platform_accepted": false,
   "complete_product": false
 }

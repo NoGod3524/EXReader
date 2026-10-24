@@ -84,3 +84,17 @@ Windows 无 `RLIMIT_FSIZE`，其写入类失败由被占用目标的发布失败
 
 结果、工件和未授予的范围见 [validation/reader-annotation-export.json](validation/reader-annotation-export.json)；
 本包不授予宿主 UI、六端、真机、性能、导入或冲突解决能力。
+
+## 已验收结果
+
+受测源码 `d7ad100b67dca6d0cd0dae97262e5e1d419fd0b2` 的
+[run 40079793192](https://github.com/NoGod3524/EXReader/actions/runs/40079793192)（attempt 1）：
+Ubuntu 22.04、Windows 2022、macOS 15 三个消费者作业和严格汇总作业均成功。每个平台 19 项具名检查通过
+（写入失败项：Linux／macOS 为 `RLIMIT_FSIZE` 中途写失败，Windows 为被占用目标的发布失败，另一项在对应平台声明跳过）；
+语料 1332 份 wire，其中一本书 1234 条标注。10 个导出文件（JSONL 与 Markdown）的 SHA-256 在三个平台逐字相同。
+工件 ID、字节数、摘要、有效期和作业 ID 见 [validation/reader-annotation-export.json](validation/reader-annotation-export.json)。
+
+保留的两次原失败：`40078772023`（Windows MSVC C4310，在实现中修复）和 `40079424539`
+（严格汇总器错误地要求各平台检查名完全一致，修的是汇总器，实现字节未变）。失败工件未删改。
+
+未授予：宿主 UI、真机、读屏、性能、六端、导入与冲突解决。
