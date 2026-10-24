@@ -1008,7 +1008,7 @@ rth_status rth_cache_open(const char* directory, const rth_limits* limits, rth_c
         }
       }
     }
-    // One pass over the directory with a bounded working set: at most max_entries
+    // One pass over the directory with a bounded working set: at most max_entries + 1
     // entries plus one name are held. Every own file is either adopted, or deleted
     // because it is damaged, larger than max_total_bytes, or over the count/byte cap;
     // when the pass ends the directory therefore holds no more own entry files or
@@ -1049,14 +1049,19 @@ rth_status rth_cache_open(const char* directory, const rth_limits* limits, rth_c
         continue;
       }
       const uint64_t tick = ticks.count(name) ? ticks[name] : 0;
-      const size_t held = c->entries.size();
-      make_room(c, size);  // room first: the map never grows past max_entries
-      deleted += static_cast<uint64_t>(held - c->entries.size());
       c->entries[name] = rth_cache::Entry{h.key, h.width, h.height, size, tick};
       c->total += size;
       c->clock = std::max(c->clock, tick);
+      // The candidate takes part in the eviction choice, so the entry with the oldest
+      // tick is the one that goes. The map therefore holds at most max_entries
+      // retained entries plus the one candidate being admitted, and that transient
+      // size is what peak_retained_entries reports.
       c->stats.peak_retained_entries =
           std::max<uint64_t>(c->stats.peak_retained_entries, static_cast<uint64_t>(c->entries.size()));
+      while (!c->entries.empty() && (c->entries.size() > c->limits.max_entries || c->total > c->limits.max_total_bytes)) {
+        evict_lru(c);
+        ++deleted;
+      }
     }
     if (it_ec) return fail(error, RTH_IO, -1, "Cannot enumerate the cache directory");
     c->stats.scanned_files = inspected;
