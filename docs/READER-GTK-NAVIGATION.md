@@ -7,6 +7,8 @@
 [40127001332](https://github.com/NoGod3524/EXReader/actions/runs/40127001332)在最初X11映射检查拒绝，尚未进入导航用例；
 该失败后的后续套件已取消并原样保留工件。现在明确等待Openbox测试环境就绪，并在启动失败时保存原生window tree/PID/WM属性；
 不改原30秒映射预算或PID/窗口身份匹配，不重启或重试应用。以下旧候选事实不转授给新源码。
+加入原生环境就绪条件及失败快照后的`53486d52`/run`40127877461`已29/29通过，
+包含真实选中/Open就绪、候选无默认项与完整生命周期；随后仅补与既有Search一致的metadata/collections模态互斥。
 源码`8bf2b68dba205a63d7cdae78b2dd0f139c04ffb4`的专项
 [40124093566](https://github.com/NoGod3524/EXReader/actions/runs/40124093566)已通过导航UI29/29、
 新后端58，以及F2原130项、Search264/34和F3 20。
