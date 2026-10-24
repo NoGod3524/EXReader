@@ -4,7 +4,9 @@
 
 Every expectation below was fixed before any binary was executed. The script
 refuses a suite whose named case set differs from the fixed set, refuses a FAIL,
-and only tolerates the SKIPs that are documented as uncovered. It writes
+and only tolerates the SKIPs that are documented as uncovered. Suite results are
+collected first so one refusal never hides the per-case table; the install-proof
+checks then decide acceptance together with the case outcomes. It writes
 keyboard-evidence/result.json for the artifact verifier."""
 import argparse
 import hashlib
@@ -13,7 +15,6 @@ import os
 from pathlib import Path
 import re
 import subprocess
-import sys
 
 COMMON_START = 'f43baf9182d75907c0cb5d6f77048f27bca8c950'
 PACKAGE = 'EXReaderKeyboardActions 0.1.0'
@@ -43,25 +44,10 @@ CASE_PROBE = (
 DOCUMENTED_SKIPS = {
     'ime-composing-passthrough': 'no input method is installed on a hosted runner',
     'reader-repeat-bounded': 'the runner did not auto-repeat the injected key',
-    'deactivate-cancels': 'the runner had no second window that could take activation',
+    'deactivate-cancels': 'the runner had no window that could take activation',
 }
 CASE_LINE = re.compile(r'^(CHECK|PROBE) (\S+) (PASS|FAIL|SKIP)(?: (.*))?$')
-
-
-def require(value, message):
-    if not value:
-        raise ValueError(message)
-
-
-def run(binary, log):
-    require(Path(binary).is_file(), 'missing binary ' + str(binary))
-    completed = subprocess.run([str(binary)], capture_output=True, text=True, timeout=900)
-    text = completed.stdout
-    log.parent.mkdir(parents=True, exist_ok=True)
-    log.write_text('$ %s\n%s\n[stderr]\n%s\n[exit %d]\n' % (binary, text, completed.stderr,
-                                                           completed.returncode),
-                   encoding='utf-8')
-    return completed.returncode, text, completed.stderr
+INCLUDE_LINE = re.compile(r'EXReaderKeyboardActions_DIR:PATH=(.*)')
 
 
 def parse(text, prefix, expected):
@@ -71,17 +57,29 @@ def parse(text, prefix, expected):
         if match is None or match.group(1) != prefix:
             continue
         name = match.group(2)
-        require(name not in cases, 'duplicate case ' + name)
+        if name in cases:
+            raise ValueError('duplicate case ' + name)
         cases[name] = (match.group(3), (match.group(4) or '').strip())
-    require(set(cases) == set(expected),
-            '%s case set differs: missing=%s extra=%s' % (prefix,
-                                                          sorted(set(expected) - set(cases)),
-                                                          sorted(set(cases) - set(expected))))
+    if set(cases) != set(expected):
+        raise ValueError('%s case set differs: missing=%s extra=%s' %
+                         (prefix, sorted(set(expected) - set(cases)),
+                          sorted(set(cases) - set(expected))))
     return cases
 
 
 def digest(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def collect(binary, log, prefix, expected):
+    if not Path(binary).is_file():
+        raise ValueError('missing binary ' + str(binary))
+    completed = subprocess.run([str(binary)], capture_output=True, text=True, timeout=900)
+    log.parent.mkdir(parents=True, exist_ok=True)
+    log.write_text('$ %s\n%s\n[stderr]\n%s\n[exit %d]\n' % (binary, completed.stdout,
+                                                           completed.stderr, completed.returncode),
+                   encoding='utf-8')
+    return parse(completed.stdout, prefix, expected), completed.returncode
 
 
 def main():
@@ -93,7 +91,7 @@ def main():
     parser.add_argument('--platform', required=True, choices=['Linux', 'Windows', 'macOS'])
     parser.add_argument('--stage', required=True, help='installed prefix')
     parser.add_argument('--build-log', required=True)
-    parser.add_argument('--configure-log', required=True)
+    parser.add_argument('--cache', required=True, help='consumer CMakeCache.txt')
     arguments = parser.parse_args()
 
     out = Path(arguments.output)
@@ -114,6 +112,7 @@ def main():
         'skipped': [],
         'uncovered': [],
         'problems': [],
+        'install_proof': {},
         'macos_accepted': False,
         'host_ui_accepted': False,
         'performance_claimed': False,
@@ -121,65 +120,83 @@ def main():
         'schema_changed': False,
         'binaries': {},
     }
-    try:
-        require(os.environ.get('GITHUB_ACTIONS') == 'true', 'cloud only')
-        require(Path(arguments.build_log).is_file(), 'missing consumer build log')
-        require(Path(arguments.configure_log).is_file(), 'missing consumer configure log')
-        build_log = Path(arguments.build_log).read_text(encoding='utf-8', errors='replace')
-        configure_log = Path(arguments.configure_log).read_text(encoding='utf-8', errors='replace')
-        require('apps/reader/keyboard-actions/include' not in build_log,
-                'the consumers compiled against the source tree, not the install prefix')
-        require(stage.name in build_log.replace('\\', '/'),
-                'the consumer build log never mentions the install prefix')
-        require('EXReaderKeyboardActions' in configure_log,
-                'the consumer configure log did not resolve the installed package')
-        for name in ('include/reader_keyboard_actions.h', 'include/reader_keyboard_actions.hpp',
-                     'lib/cmake/EXReaderKeyboardActions/EXReaderKeyboardActionsConfig.cmake'):
-            require((stage / name).is_file(), 'installed package is incomplete: ' + name)
+    if os.environ.get('GITHUB_ACTIONS') != 'true':
+        report['problems'].append('cloud only')
 
-        code_c, text_c, _ = run(arguments.c, out / 'c-consumer.log')
-        require(code_c == 0, 'the installed C consumer failed')
-        require('c-consumer ok' in text_c, 'the installed C consumer printed no verdict')
-        cases_c = parse(text_c, 'CHECK', CASE_C)
+    # 1. Collect the three suites first, so a refusal never hides the case table.
+    suites = (('consumer-c', arguments.c, out / 'c-consumer.log', 'CHECK', CASE_C),
+              ('consumer-cpp', arguments.cpp, out / 'cpp-consumer.log', 'CHECK', CASE_CPP),
+              ('probe', arguments.probe, out / 'probe.log', 'PROBE', CASE_PROBE))
+    collected = []
+    for suite, binary, log, prefix, expected in suites:
+        try:
+            cases, code = collect(binary, log, prefix, expected)
+            collected.append((suite, cases, code))
+        except Exception as error:  # noqa: BLE001 - a refusal is evidence
+            report['problems'].append('%s: %s' % (suite, error))
 
-        code_cpp, text_cpp, _ = run(arguments.cpp, out / 'cpp-consumer.log')
-        require(code_cpp == 0, 'the installed C++ consumer failed')
-        require('cpp-consumer ok' in text_cpp, 'the installed C++ consumer printed no verdict')
-        cases_cpp = parse(text_cpp, 'CHECK', CASE_CPP)
-
-        code_probe, text_probe, _ = run(arguments.probe, out / 'probe.log')
-        require('probe ' in text_probe, 'the native probe printed no verdict')
-        cases_probe = parse(text_probe, 'PROBE', CASE_PROBE)
-        require(code_probe == 0, 'the native probe reported a failure')
-
-        for suite, cases in (('consumer-c', cases_c), ('consumer-cpp', cases_cpp),
-                             ('probe', cases_probe)):
-            for name in sorted(cases):
-                status, detail = cases[name]
-                require(status != 'FAIL', '%s.%s failed: %s' % (suite, name, detail))
-                if status == 'SKIP':
-                    require(suite == 'probe', '%s.%s may not skip' % (suite, name))
-                    require(name in DOCUMENTED_SKIPS, 'undocumented skip ' + name)
+    # 2. Turn the collected cases into fixed named results.
+    for suite, cases, code in collected:
+        for name in sorted(cases):
+            status, detail = cases[name]
+            if status == 'FAIL':
+                report['problems'].append('%s.%s failed: %s' % (suite, name, detail))
+            if status == 'SKIP':
+                if suite != 'probe':
+                    report['problems'].append('%s.%s may not skip' % (suite, name))
+                elif name not in DOCUMENTED_SKIPS:
+                    report['problems'].append('undocumented skip ' + name)
+                else:
                     report['skipped'].append({'suite': suite, 'name': name, 'detail': detail})
                     report['uncovered'].append({'case': name,
                                                 'reason': DOCUMENTED_SKIPS[name]})
-                report['cases'].append({'suite': suite, 'name': name, 'status': status,
-                                        'detail': detail})
-        report['checks'] = len(report['cases'])
-        require(report['checks'] == len(CASE_C) + len(CASE_CPP) + len(CASE_PROBE),
-                'the executed case count differs from the fixed expectation')
-        report['macos_accepted'] = arguments.platform == 'macOS'
-        for label, path in (('c', arguments.c), ('cpp', arguments.cpp),
-                            ('probe', arguments.probe)):
+            report['cases'].append({'suite': suite, 'name': name, 'status': status,
+                                    'detail': detail})
+        if code != 0 and not any(c['suite'] == suite and c['status'] == 'FAIL'
+                                 for c in report['cases']):
+            report['problems'].append('%s exited %d without a named failure' % (suite, code))
+    report['checks'] = len(report['cases'])
+    if len(collected) == 3 and report['checks'] != len(CASE_C) + len(CASE_CPP) + len(CASE_PROBE):
+        report['problems'].append('the executed case count differs from the fixed expectation')
+
+    # 3. Prove the consumers were compiled from the installed prefix only.
+    try:
+        build_log = Path(arguments.build_log).read_text(encoding='utf-8', errors='replace')
+        cache = Path(arguments.cache).read_text(encoding='utf-8', errors='replace')
+        package_dir = None
+        for line in cache.splitlines():
+            match = INCLUDE_LINE.match(line.strip())
+            if match is not None:
+                package_dir = match.group(1).strip()
+        report['install_proof'] = {
+            'package_dir': package_dir,
+            'build_log_mentions_prefix': stage.name in build_log.replace('\\', '/'),
+            'source_include_absent': 'apps/reader/keyboard-actions/include' not in \
+                build_log.replace('\\', '/'),
+        }
+        if package_dir is None:
+            report['problems'].append('CMakeCache records no EXReaderKeyboardActions_DIR')
+        elif 'EXReaderKeyboardActions' not in package_dir.replace('\\', '/'):
+            report['problems'].append('EXReaderKeyboardActions_DIR is not the installed package')
+        if not report['install_proof']['build_log_mentions_prefix']:
+            report['problems'].append('the consumer build log never mentions the install prefix')
+        if not report['install_proof']['source_include_absent']:
+            report['problems'].append('the consumers compiled against the source tree')
+        for name in ('include/reader_keyboard_actions.h', 'include/reader_keyboard_actions.hpp',
+                     'lib/cmake/EXReaderKeyboardActions/EXReaderKeyboardActionsConfig.cmake'):
+            if not (stage / name).is_file():
+                report['problems'].append('installed package is incomplete: ' + name)
+    except Exception as error:  # noqa: BLE001 - a refusal is evidence
+        report['problems'].append('install proof: %s' % error)
+
+    for label, path in (('c', arguments.c), ('cpp', arguments.cpp), ('probe', arguments.probe)):
+        if Path(path).is_file():
             report['binaries'][label] = {'path': str(path), 'sha256': digest(path),
                                          'bytes': Path(path).stat().st_size}
-        report['accepted'] = True
-    except Exception as error:  # noqa: BLE001 - a refusal is evidence
-        report['problems'].append(str(error))
-
+    report['macos_accepted'] = arguments.platform == 'macOS'
+    report['accepted'] = not report['problems']
     (out / 'result.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
-    lines = ['# keyboard-actions ' + arguments.platform,
-             '',
+    lines = ['# keyboard-actions ' + arguments.platform, '',
              '- source: %s run %s attempt %s' % (report['source_sha'], report['run_id'],
                                                 report['attempt']),
              '- accepted: %s' % report['accepted'],

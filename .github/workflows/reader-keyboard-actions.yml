@@ -99,7 +99,7 @@ jobs:
             --platform "${{ matrix.platform }}" \
             --stage build/kbd-stage \
             --build-log build/kbd-logs/consumer-build.log \
-            --configure-log build/kbd-logs/consumer-configure.log 2>&1 | tee build/kbd-logs/check.log
+            --cache build/kbd-consumer/CMakeCache.txt 2>&1 | tee build/kbd-logs/check.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -108,6 +108,8 @@ jobs:
             build/kbd-logs/
             build/keyboard-evidence/
             build/kbd-stage/
+            build/kbd-consumer/CMakeCache.txt
+            build/kbd-probe/CMakeCache.txt
             build/kbd-consumer/keyboard-c-consumer*
             build/kbd-consumer/keyboard-cpp-consumer*
             build/kbd-probe/keyboard-probe*
