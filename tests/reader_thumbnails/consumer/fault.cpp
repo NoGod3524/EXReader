@@ -244,9 +244,13 @@ int point_store(const fs::path& root, const Bytes& png, long long n) {
   const bool no_leak = g_live == live_before;
   const bool clean_disk = count_entries(dir) == 0 && count_temps(dir) == 0;
   if (!reported || !empty_output || !no_leak || !clean_disk) {
+    const rth_stats now = stats_now(c);
     const std::string detail = "FAIL n=" + num(n) + " status=" + num((long long)st) + " escaped=" + num((long long)escaped) +
                                " live " + num(live_before) + "->" + num(g_live) + " entries=" + num((long long)count_entries(dir)) +
-                               " temps=" + num((long long)count_temps(dir)) + " msg=" + e.message;
+                               " temps=" + num((long long)count_temps(dir)) + " decoded=" + num((long long)now.last_decoded_bytes) +
+                               " stores=" + num((long long)now.stores) + " store_failures=" + num((long long)now.store_failures) +
+                               " index_failures=" + num((long long)now.index_failures) + " map_bytes=" + num((long long)now.bytes) +
+                               " msg=" + e.message;
     rth_cache_close(c);
     report(detail);
     return 1;

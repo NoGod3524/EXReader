@@ -131,7 +131,10 @@ at 64x48, 16x12, 31x9 and 7x5.
 `thumb-fault` replaces the global `operator new/delete` inside its own binary and makes the n-th allocation throw, then
 walks every allocation point of `open`, of a cover that already holds thumbnail pixels, and of the borrowed-blob path,
 counting live allocations: each failure must report a status, leave an empty output box, leak no cache/blob/pixels/
-temporary and leave the cache able to store on retry.
+temporary and leave the cache able to store on retry. Each point runs in its own child process, because
+`<filesystem>::increment(error_code&)` and `symlink_status(error_code&)` are `noexcept` and an injected failure inside
+those shims aborts instead of unwinding: such a child writes `TERMINATE` and the driver counts it as a noexcept boundary
+(bounded), while every other point must satisfy the assertions. The report states both counts.
 
 See `docs/validation/reader-thumbnails.json` for the run-bound results; nothing here grants product performance, host
 UI, six-platform or release status.
