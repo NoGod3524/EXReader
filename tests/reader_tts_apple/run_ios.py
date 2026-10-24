@@ -111,7 +111,11 @@ def main():
             for case in report['checks']:
                 if case['status'] != 'pass':
                     print('%s %s: %s' % (case['status'], case['name'], case['detail']), flush=True)
-            assert exit_code == 0, 'the %s simulator probe reported a failing case (%d)' % (label, exit_code)
+            if exit_code != 0:
+                # Publish the raw probe report so the evidence job can print the
+                # failing cases from the artifact (never treated as a pass).
+                shutil.copy2(report_copy, out / 'result.json')
+                raise SystemExit('the %s simulator probe reported a failing case (%d)' % (label, exit_code))
             return report, report_copy, wav_copy
         finally:
             subprocess.run(['xcrun', 'simctl', 'shutdown', udid], capture_output=True)

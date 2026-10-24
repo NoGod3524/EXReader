@@ -40,6 +40,35 @@ def main():
     def text(name, command, timeout=120):
         return run(name, command, timeout=timeout).stdout.strip()
 
+    state = {'logic': None, 'probe': None, 'consumer': ''}
+
+    def provisional(note):
+        """Write a parseable platform report even when a producer failed, so the
+        evidence job can print the failing cases from the artifact (never a pass)."""
+        checks = []
+        for key in ('logic', 'probe'):
+            if state[key]:
+                checks += state[key]['checks']
+        counts = {'pass': 0, 'fail': 0, 'pending': 0}
+        for check in checks:
+            counts[check['status']] = counts.get(check['status'], 0) + 1
+        probe = state['probe'] or {}
+        report = {
+            'schema': 1,
+            'platform': 'macos',
+            'execution_platform': 'macos-native',
+            'source_sha': os.environ['GITHUB_SHA'],
+            'run_id': int(os.environ['GITHUB_RUN_ID']),
+            'attempt': int(os.environ['GITHUB_RUN_ATTEMPT']),
+            'consumer_sha256': state['consumer'],
+            'speech_available': bool(probe.get('speech_available')),
+            'speech_note': probe.get('speech_note', ''),
+            'checks': checks,
+            'counts': counts,
+            'provisional_failure': note,
+        }
+        (out / 'result.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
+
     generator = ['-G', 'Ninja', '-DCMAKE_BUILD_TYPE=Release']
     module_dir = root / 'extras/reader-tts-apple'
 
@@ -73,11 +102,13 @@ def main():
     end = logic_stdout.index('RESULT_JSON_END')
     logic_report = json.loads(logic_stdout[logic_stdout.index('{', start):logic_stdout.rindex('}', 0, end) + 1])
     (out / 'logic-result.json').write_text(json.dumps(logic_report, indent=2), encoding='utf-8')
+    state['logic'] = logic_report
     if logic_run.returncode != 0 or logic_report['counts']['fail'] != 0:
         failing = [case for case in logic_report['checks'] if case['status'] != 'pass']
         print('---- failing logic cases ----', flush=True)
         for case in failing:
             print('%s %s: %s' % (case['status'], case['name'], case['detail']), flush=True)
+        provisional('logic suite reported failing cases')
         raise SystemExit('logic suite reported a failing case: %s' % logic_report['counts'])
 
     # ---- installed-package probe (real backend) ----
@@ -95,10 +126,13 @@ def main():
         print((probe_run.stdout + probe_run.stderr)[-20000:], flush=True)
     assert probe_report_path.is_file(), 'probe did not write a report'
     probe_report = check_report.load(probe_report_path)
+    state['probe'] = probe_report
+    state['consumer'] = check_report.sha256_file(probe_binary)
     if probe_run.returncode != 0 or probe_report['counts']['fail'] != 0:
         for case in probe_report['checks']:
             if case['status'] == 'fail':
                 print('fail %s: %s' % (case['name'], case['detail']), flush=True)
+        provisional('installed probe reported failing cases')
         raise SystemExit('probe reported a failing case: %s' % (probe_report['counts'],))
 
     # ---- installed-package example ----

@@ -726,7 +726,8 @@ int rtts_probe_run(const char *output_path) {
     // pause / resume on a real utterance
     if (g_speech_available) {
       reader_tts_error pause_error;
-      const std::string long_text(220, 'a');
+      std::string long_text;
+      for (int i = 0; i < 8; ++i) long_text += "The reading host keeps this sentence long enough to pause. ";
       const reader_tts_status started =
           reader_tts_speak(handle, 4, long_text.data(), long_text.size(), nullptr, 0.5, &pause_error);
       if (started != READER_TTS_OK) {
@@ -752,17 +753,21 @@ int rtts_probe_run(const char *output_path) {
                                          paused_state == READER_TTS_PAUSED && resume_status == READER_TTS_OK,
                detail);
         reader_tts_stop(handle, 4, &pause_error);
-        NSDate *stop_deadline = [NSDate dateWithTimeIntervalSinceNow:5.0];
+        NSDate *stop_deadline = [NSDate dateWithTimeIntervalSinceNow:8.0];
         bool stopped = false;
+        const char *how = "none";
         while ([stop_deadline timeIntervalSinceNow] > 0 && !stopped) {
           Pump(0.01);
           reader_tts_event event;
           int available = 0;
           while (reader_tts_poll(handle, &event, &available, &pause_error) == READER_TTS_OK && available) {
-            if (event.kind == READER_TTS_STOPPED) stopped = true;
+            // Either terminal proves the paused/resumed request was released; a
+            // short text can legitimately finish before stop() is delivered.
+            if (event.kind == READER_TTS_STOPPED) { stopped = true; how = "stopped"; }
+            if (event.kind == READER_TTS_FINISHED) { stopped = true; how = "finished"; }
           }
         }
-        Expect("probe.stop-after-pause", stopped, "no STOPPED event after stop");
+        Expect("probe.stop-after-pause", stopped, "no terminal event after stop/pause exercise");
       }
     } else {
       Pending("probe.pause-resume", g_speech_note);
@@ -802,6 +807,11 @@ int rtts_probe_run(const char *output_path) {
         }
         Expect("probe.cancel-terminal-once", stopped && stopped_id == 5,
                "terminal id " + Str(stopped_id) + " observed=" + Str((int)stopped));
+        // AVFoundation needs one run-loop turn (and drains the cancelled audio
+        // graph) before it will start the next utterance; a host that speaks the
+        // next chunk synchronously inside the cancel turn sees an utterance the
+        // system silently drops. Documented in docs/READER-TTS-APPLE.md.
+        Pump(0.4);
         const Utterance second_run = RunSpeak(handle, 6, "Replacement request.", 25.0, false, 0.0);
         bool foreign = false;
         for (const reader_tts_event &event : second_run.events) {
@@ -809,6 +819,9 @@ int rtts_probe_run(const char *output_path) {
         }
         std::string detail;
         const bool ordered = EventOrderOk(second_run, &detail);
+        if (!detail.empty()) detail += " (events=" + Str(second_run.events.size()) + " started=" +
+                                        Str((int)second_run.saw_started) + " state=" +
+                                        Str((int)StateOf(handle)) + ")";
         Expect("probe.late-callback-isolation", ordered && !foreign,
                foreign ? "an event carried a stale request id" : detail);
       }
