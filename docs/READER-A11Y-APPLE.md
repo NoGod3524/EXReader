@@ -66,6 +66,9 @@ v1 的工件与报告**保留不删**：`docs/validation/reader-a11y-apple.json`
    测试进程的 `caption1_pt` 确实变大，否则输出 `blocked`。
 5. **懒加载书架**：大字体下 `LazyVStack` 只构建可见行，按书名找行的探针会落空，所以大字体用例
    只要求“有书可开”，不绑定具体书名。
+6. **查询竞态**：宿主在书架/阅读器之间切换时，对已消失元素读 `label`/`isEnabled` 会让 `XCUITest` 抛
+   “No matches found”并终止用例。稳定态判定与文本读取因此改为**一次性 `snapshot()`**（原子读整棵树），
+   并对被丢弃的 tap 留一条带记录的 `EXR_A11Y_TAP_RETRY`。
 
 ### 受审步骤（18）
 
