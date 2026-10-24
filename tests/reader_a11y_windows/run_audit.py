@@ -316,7 +316,9 @@ def _open_fixed(session, recorder, fixtures, pdf_name, filter_text):
     if not closed or session.host.dialog_window():
         raise RuntimeError("a host dialog is still open, so the shelf is disabled; "
                            "the details phase left it behind")
-    pdf = Path(fixtures) / pdf_name
+    # The host runs with the payload as its working directory, so the fixture
+    # path must be absolute or the product cannot read it.
+    pdf = (Path(fixtures) / pdf_name).resolve()
     imported = flows.import_book(session, str(pdf))
     if not imported.get("ok"):
         raise RuntimeError("the fixed-page book could not be imported: %s"
@@ -324,8 +326,8 @@ def _open_fixed(session, recorder, fixtures, pdf_name, filter_text):
     grew = session.host.wait_for(lambda: len(session.list_item_names("books")) >= 2,
                                  timeout=90, interval=0.25, label="shelf holds both books")
     if not grew:
-        raise RuntimeError("the fixed-page book never reached the shelf: status=%r rows=%r"
-                           % (session.status(), session.list_item_names("books")))
+        raise RuntimeError("the fixed-page book never reached the shelf: path=%r status=%r rows=%r"
+                           % (str(pdf), session.status(), session.list_item_names("books")))
     names = flows.phase_search(session, recorder, filter_text, filter_text)
     opened = flows.select_and_open(session)
     if not opened.get("ok"):
