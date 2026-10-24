@@ -189,13 +189,15 @@ def main():
         current = ready(lambda state: state['member_count'] == '1')
         assert current['member_keys'] == book_key and current['member_ordinals'] == '5'
         record('membership_uses_stable_global_key_while_local_sdk_mapping_is_preserved')
-        host.key('alt+b', 'Home');member_editor('p', 2)
+        host.key('alt+b', 'Home');ready(lambda state: state['selected_member_key'] == book_key and state['member_position_enabled'] == '1')
+        member_editor('p', 2)
         assert sql('SELECT ordinal FROM reader_book_shelves WHERE shelf_id=? AND book_key=?', (child, book_key)) == [(2,)]
         record('native_membership_position_updates_order_without_recreating_the_book')
         host.key('alt+b', 'Home');member_editor('i');assert not sql('SELECT * FROM reader_book_shelves WHERE shelf_id=?', (child,))
         record('explicit_remove_membership_keeps_the_original_and_book_history')
-        member_editor('a')
-        assert ready()['member_keys'] == book_key and sql('SELECT count(*) FROM reader_books') == [(1,)]
+        member_editor('a', 2)
+        assert ready()['member_keys'] == book_key and ready()['member_ordinals'] == '2'
+        assert sql('SELECT count(*) FROM reader_books') == [(1,)]
         record('adding_a_removed_membership_explicitly_restores_its_tombstone_history')
 
         host.key('alt+d');window('Collection details');save_editor()
