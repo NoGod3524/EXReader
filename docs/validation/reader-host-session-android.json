@@ -1,0 +1,9 @@
+{
+  "accepted": false,
+  "scope": "formal Android single-account manual native sync, cancellation, background closure, secure credentials and explicit Receive UI",
+  "source_sha": null,
+  "runs": [],
+  "reading_state_ui_accepted": false,
+  "physical_device": false,
+  "all_execution_on_actions": true
+}

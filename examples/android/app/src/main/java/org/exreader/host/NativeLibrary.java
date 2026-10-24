@@ -103,6 +103,7 @@ public final class NativeLibrary implements AutoCloseable {
     public static String identity() {
         return nativeIdentity();
     }
+    static native String[] syncIdentity();
 
     public Book[] books() {
         String[][] rows = nativeBooks(checked());
@@ -135,6 +136,7 @@ public final class NativeLibrary implements AutoCloseable {
     }
 
     Source source(long bookId) { return new Source(nativeOpenSource(checked(), bookId)); }
+    long exportOriginal(long bookId,String destination,HostTask task) {return nativeExportOriginal(checked(),bookId,destination,task);}
     ImportResult importLegacyFile(String path,int format,String title) {
         long[] values=nativeImportFile(checked(),path,format,title,true,false);
         return new ImportResult(values[0],values[1]!=0);
@@ -239,6 +241,7 @@ public final class NativeLibrary implements AutoCloseable {
 
     private static native String nativeIdentity();
     private static native long[] nativeOpenSource(long handle, long bookId);
+    private static native long nativeExportOriginal(long handle,long bookId,String destination,HostTask task);
     private static native int nativeReadSource(long source, long offset, byte[] bytes, int count);
     private static native void nativeCloseSource(long source);
     private static native boolean nativeBounded(long handle,long bookId);

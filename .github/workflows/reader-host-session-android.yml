@@ -1,0 +1,131 @@
+name: Android formal account and receive UI
+on:
+  push:
+    branches: [codex/reader-android-sync-session]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Record identity and preserve frozen SDK schema and delivered packages
+        run: |
+          mkdir -p build/session-android/logs
+          git rev-parse HEAD > build/session-android/logs/source.txt
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
+          git diff --exit-code 84b661d4111015441e7501347fa080c01717b0e8 HEAD -- apps/reader extras/webdav tests/webdav_android ':(exclude)apps/reader/reading-state'
+          python -m py_compile tests/reader_session_android/run_export.py tests/reader_session_android/run_roundtrip.py tests/reader_session_android/audit.py tests/reader_host_session_android/run_ui.py tests/reader_host_session_android/audit.py
+      - name: Install Android compiler and API34 emulator
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "cmake;3.31.1" "cmake;3.22.1" "ndk;27.2.12479018" "ndk;27.0.12077973" "emulator" "system-images;android-34;default;x86_64"
+          python tests/webdav_android/fixture.py prepare --output build/webdav-android/fixture
+          for module in tests/reader_session_android/android/session tests/webdav_android/android/platform tests/webdav_android/android/backend; do
+            mkdir -p "$module/src/debug/res/raw"
+            cp build/webdav-android/fixture/public/ca.crt "$module/src/debug/res/raw/fixture_ca.crt"
+          done
+          mkdir -p tests/reader_session_android/android/session/src/debug/assets
+          cp tests/fixtures/sample.epub tests/reader_session_android/android/session/src/debug/assets/source.epub
+          python tests/reader_reading_state/make_fixtures.py build/session-android/reading-fixtures
+          cp -r build/session-android/reading-fixtures tests/reader_session_android/android/session/src/debug/assets/reading
+          cp tests/fixtures/fonts/primary.ttf tests/reader_session_android/android/session/src/debug/assets/reading/primary.ttf
+          mkdir -p tests/reader_host_session_android/debug/res/raw
+          cp build/webdav-android/fixture/public/ca.crt tests/reader_host_session_android/debug/res/raw/host_sync_fixture_ca.crt
+      - name: Build and install the frozen public library SDK targeting API26
+        run: |
+          toolchain="$ANDROID_HOME/ndk/27.2.12479018/build/cmake/android.toolchain.cmake"
+          echo "SESSION_TOOLCHAIN=$toolchain" >> "$GITHUB_ENV"
+          cmake -S . -B build/session-android/sdk -G Ninja -DCMAKE_TOOLCHAIN_FILE="$toolchain" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/build/session-android/sdk-stage" -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_JNI=ON -DEXR_ENABLE_LIBRARY=ON -DEXR_ENABLE_AUDIO=ON -DEXR_ENABLE_PDF=ON -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_PDF_CRYPTO=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_TEXT_INDEX=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF -DEXR_BUILD_SHARED_COMPAT=ON 2>&1 | tee build/session-android/logs/sdk-configure.log
+          cmake --build build/session-android/sdk --parallel 4 --target install 2>&1 | tee build/session-android/logs/sdk-build.log
+      - name: Install original sideload package and compile public SDK owner consumer
+        run: |
+          cmake -S extras/sideload -B build/session-android/sideload -G Ninja -DCMAKE_TOOLCHAIN_FILE="$SESSION_TOOLCHAIN" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE=Release -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH -DEXR_SDK="$PWD/build/session-android/sdk-stage" -DCMAKE_INSTALL_PREFIX="$PWD/build/session-android/sideload-stage" 2>&1 | tee build/session-android/logs/sideload-configure.log
+          cmake --build build/session-android/sideload --parallel 4 --target install 2>&1 | tee build/session-android/logs/sideload-build.log
+      - name: Install Android transport and product session packages with isolated SQLite
+        run: |
+          mkdir -p build/webdav-android/logs
+          for config in Debug Release; do
+            lower=$(echo "$config" | tr '[:upper:]' '[:lower:]')
+            if [ "$config" = Debug ]; then hooks=ON; else hooks=OFF; fi
+            cmake -S extras/webdav -B "build/webdav-android/native-$lower" -G Ninja -DCMAKE_TOOLCHAIN_FILE="$SESSION_TOOLCHAIN" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE="$config" -DEXR_WEBDAV_ANDROID_TESTING="$hooks" -DCMAKE_INSTALL_PREFIX="$PWD/build/webdav-android/stage-$lower" 2>&1 | tee "build/webdav-android/logs/$lower-configure.log"
+            cmake --build "build/webdav-android/native-$lower" --parallel 4 --target install 2>&1 | tee "build/webdav-android/logs/$lower-build.log"
+          done
+          product="$PWD/build/session-android/product-stage"
+          for module in store/native revisions commands desktop-metadata sync session reading-state; do
+            label=$(echo "$module" | tr / -)
+            cmake -S "apps/reader/$module" -B "build/session-android/product-$label" -G Ninja -DCMAKE_TOOLCHAIN_FILE="$SESSION_TOOLCHAIN" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH -DEXR_SDK="$PWD/build/session-android/sdk-stage" -DREADER_PRODUCT_PREFIX="$product" -DCMAKE_PREFIX_PATH="$product;$PWD/build/webdav-android/stage-release" -DCMAKE_INSTALL_PREFIX="$product" 2>&1 | tee "build/session-android/logs/product-$label-configure.log"
+            cmake --build "build/session-android/product-$label" --parallel 4 --target install 2>&1 | tee "build/session-android/logs/product-$label-build.log"
+          done
+      - name: Compile SDK and product owners and unchanged Android transport tests
+        run: |
+          gradle -p tests/reader_session_android/android --no-daemon --stacktrace :session:assembleDebug :session:assembleDebugAndroidTest :session:assembleRelease 2>&1 | tee build/session-android/logs/gradle.log
+          gradle -p tests/webdav_android/android --no-daemon --stacktrace :platform:assembleDebug :platform:assembleDebugAndroidTest :platform:assembleRelease :support:assembleDebug :support:assembleRelease :support:runtimeEvidence :backend:assembleDebug :backend:assembleDebugAndroidTest :backend:assembleRelease :baseline:assembleRelease 2>&1 | tee build/webdav-android/logs/gradle.log
+          python tests/webdav_android/audit.py --output build/webdav-android/packages
+          python tools/reader_catalog_assets.py --output examples/android/app/src/main/assets/reader-catalog-v1.json
+          gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.HostSyncTest :app:assembleDebug :app:assembleDebugAndroidTest :app:assembleRelease 2>&1 | tee build/session-android/logs/original-owner-build.log
+          python tests/reader_session_android/audit.py --output build/session-android/native
+          python tests/reader_host_session_android/audit.py --output build/host-session-android/native
+      - name: Enable hosted runner emulator acceleration
+        run: sudo chmod 666 /dev/kvm
+      - name: Actual SDK owner import and public original export in Android private storage
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            python tests/reader_session_android/run_export.py --output build/session-android/export
+            python tests/reader_session_android/run_roundtrip.py --fixture build/webdav-android/fixture --output build/session-android/roundtrip
+            python tests/webdav_android/run_platform.py --fixture build/webdav-android/fixture --output build/webdav-android/platform
+            cp build/webdav-android/fixture/requests.json build/webdav-android/platform/requests.json
+            python tests/webdav_android/run_backend.py --fixture build/webdav-android/fixture --output build/webdav-android/backend
+            python tests/reader_host_session_android/run_ui.py --fixture build/webdav-android/fixture --reading-fixtures build/session-android/reading-fixtures --output build/host-session-android/ui
+      - name: Preserve SDK consumer identity native logs and every export result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-host-session-android-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/host-session-android/
+            examples/android/app/build/outputs/apk/
+            build/session-android/logs/
+            build/session-android/export/
+            build/session-android/roundtrip/
+            build/session-android/native/
+            build/session-android/product-stage/
+            build/webdav-android/platform/
+            build/webdav-android/backend/
+            build/webdav-android/logs/
+            build/webdav-android/packages/
+            build/webdav-android/fixture/public/
+            build/webdav-android/fixture/requests.json
+            build/session-android/sdk-stage/
+            build/session-android/sideload-stage/
+            tests/reader_session_android/android/session/build/outputs/apk/
+          if-no-files-found: error

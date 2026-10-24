@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Single-activity Android host. All SDK access runs on one worker thread; the UI
  * only receives immutable page snapshots and never touches a native handle.
  */
-public final class MainActivity extends Activity implements ReaderView.Listener {
+public final class MainActivity extends Activity implements ReaderView.Listener,SyncController.Host {
     private static final String TAG = "EXRHost";
     private static final Object IMPORT_LOCK = new Object();
     private static final Object PROGRESS_LOCK = new Object();
@@ -67,6 +67,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     private ExecutorService worker;
     private BookStore store;
     private OrganizationPanel organizationPanel;
+    private SyncPanel syncPanel;
     private SharedPreferences prefs;
 
     private LinearLayout shelfPanel;
@@ -237,11 +238,12 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         noteList.setAdapter(noteAdapter);
         statusText.setContentDescription("Status");
         organizationPanel=new OrganizationPanel(this,action->{if(worker!=null)worker.execute(action);},()->store,()->catalogShelf.load());
+        if(BuildConfig.READER_SYNC)syncPanel=new SyncPanel(this,this);
     }
 
     private void wireActions() {
         findViewById(R.id.more_button).setOnClickListener(view->new android.app.AlertDialog.Builder(this)
-                .setTitle("More").setItems(new String[]{"Organize"},(dialog,which)->organizationPanel.show(0)).show());
+                .setTitle("More").setItems(BuildConfig.READER_SYNC?new String[]{"Organize","同步"}:new String[]{"Organize"},(dialog,which)->{if(which==0)organizationPanel.show(0);else syncPanel.show();}).show());
         bookList.setOnItemLongClickListener((parent,view,position,id)->{
             if(operation!=0||pageBusy||id<=0)return true;
             new android.app.AlertDialog.Builder(this).setItems(new String[]{"Organize book"},(dialog,which)->organizationPanel.show(id)).show();return true;
@@ -1411,7 +1413,10 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         super.onBackPressed();
     }
 
+    @Override protected void onStop(){if(syncPanel!=null)syncPanel.background();super.onStop();}
+
     @Override protected void onDestroy() {
+        if(syncPanel!=null)syncPanel.close();
         if(organizationPanel!=null)organizationPanel.close();
         if (shelfMetrics!=null) shelfMetrics.close();
         if (catalogShelf!=null) catalogShelf.close();
@@ -1431,6 +1436,31 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
             service.shutdown();
         }
         super.onDestroy();
+    }
+
+    @Override public void prepareOriginals(HostTask task,Runnable done,java.util.function.Consumer<Throwable> failed){
+        ExecutorService owner=worker;if(owner==null||destroyed){failed.accept(new HostTask.Cancelled());return;}
+        owner.execute(()->{try{task.check();if(store==null)throw new IOException("书库仍在打开");store.stageSyncOriginals(new File(getFilesDir(),"sync-originals"),getSharedPreferences("sync-requests",MODE_PRIVATE),task);task.check();done.run();}catch(Throwable error){failed.accept(error);}});
+    }
+    @Override public void receive(NativeSync.RemoteBook book,File cached,HostTask task,java.util.function.Consumer<Long> done,java.util.function.Consumer<Throwable> failed){
+        ExecutorService owner=worker;if(owner==null||destroyed||operation!=0||pageBusy){failed.accept(new IllegalStateException("请先完成当前操作"));return;}
+        owner.execute(()->{synchronized(IMPORT_LOCK){try{
+            task.check();if(destroyed||store==null)throw new HostTask.Cancelled();
+            String sort=java.text.Normalizer.normalize(book.title,java.text.Normalizer.Form.NFC);String product=new File(getFilesDir(),"reader-catalog.db").getAbsolutePath();
+            String[] selected=NativeSync.project(product,book.key,book.revision,sort);
+            if(selected==null||selected.length!=7||!selected[1].equals(book.key)||!selected[0].equals(book.format)||Long.parseLong(selected[4])!=book.bytes)throw new IOException("书籍的同步记录已改变，请刷新后重试");
+            if(cached.length()!=book.bytes||!BookStore.syncFileHash(cached,task).equals(book.sha))throw new IOException("接收的原件校验失败");
+            closeSessionsLocked();task.check();int format=0;for(int candidate=NativeLibrary.FORMAT_TXT;candidate<=NativeLibrary.FORMAT_CBZ;candidate++)if(formatName(candidate).equalsIgnoreCase(book.format))format=candidate;
+            if(format==0)throw new IOException("暂不支持这种书籍格式");
+            NativeLibrary.ImportResult imported=store.importFile(cached.getAbsolutePath(),format,book.title);
+            BookStore.VerifiedSource verified=store.verifySource(imported.id,book.sha,book.bytes,task);
+            task.commit(()->{
+                NativeSync.project(product,book.key,book.revision,sort);
+                if(!prefs.edit().putString("path_"+imported.id,cached.getAbsolutePath()).putLong("size_"+imported.id,book.bytes).commit())throw new IOException("接收记录保存失败，可重试");
+                store.finalizeImport(verified);
+            });
+            postUi(()->loadShelf(false));done.accept(imported.id);
+        }catch(Throwable error){failed.accept(error);}}});
     }
 
     @Override public void onTapZone(int delta) {
