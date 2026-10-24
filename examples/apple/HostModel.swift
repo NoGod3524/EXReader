@@ -39,6 +39,7 @@ final class HostShelf: ObservableObject {
     private var issuedRestoreRevision = -1
     // Even epochs precede the native scroll; odd epochs follow its issue.
     var geometryRevision: Int { restoreRevision * 2 + (issuedRestoreRevision == restoreRevision ? 1 : 0) }
+    var needsScroll: Bool { awaitingLayoutKey != nil && issuedRestoreRevision != restoreRevision }
     private var pendingSave: DispatchWorkItem?
 #if EXR_APPLE_SHELF_REVIEW
     private var reviewVisibleFrames: [[String: Any]] = []
