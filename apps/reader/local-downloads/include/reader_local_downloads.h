@@ -20,8 +20,7 @@ extern "C" {
    deletion tombstone is ever created.
 
    The SDK library and the product catalog have no shared transaction. Each
-   removal therefore records a private durable intent (state_dir/intent.rdi,
-   written by write-to-temp, flush and atomic replace) and advances it only
+   removal therefore records a private durable intent and advances it only
    after the previous step is verifiably complete:
 
      BEGUN     nothing destructive happened yet
@@ -34,13 +33,66 @@ extern "C" {
    reader_ld_recover rolls BEGUN/PREPARED back (no mapping change was made)
    and rolls UNMAPPED/DELETED forward. Every step is idempotent.
 
+   State directory (state_dir) contract
+   ------------------------------------
+   state_dir must be an existing real directory that this module owns. It is
+   opened without following links: a symbolic link, junction or other reparse
+   point is refused with READER_LD_IO, because clearing files through one
+   would delete another directory's data. Files created there are:
+
+     intent.rdi            strict bounded record, see below
+     intent.tmp            replaced atomically by intent.rdi
+     originals/<sha>.orig  verified export of the book being removed, and the
+                           retained private original of a reimported PDF
+     originals/<sha>.open  private staging copy used by one reimport call
+     legacy/<sha>-N.exrbackup  SDK backup under the backup policy
+
+   Every write removes the target entry first and then creates it exclusively,
+   so a pre-existing name, hard link or reparse point can never be truncated.
+   Cleanup is always per book: a removal only deletes the two files whose name
+   carries its own SHA-256, never the directory's other entries.
+
+   The intent record is exactly:
+
+     EXRLD1
+     stage=<1..4>
+     key=<format>:<64 lowercase hex>
+     bytes=<1..2^63-1>
+     mapped=<1..2^63-1>
+     ids=<id>[,<id>...]      one to eight positive integers, mapped included
+     check=<64 lowercase hex>   SHA-256 of every preceding byte
+
+   and nothing else: no unknown or duplicate field, no trailing byte, no
+   sign, digit suffix or empty element, and the file must end at its declared
+   bound. A damaged record is reported as READER_LD_CORRUPT_INTENT and left
+   untouched - neither database is read for it and nothing is repaired.
+
+   Reimport identity
+   -----------------
+   reader_ld_reimport copies the caller's file through one opened handle into
+   originals/<sha>.open while hashing the same bytes, verifies size and
+   SHA-256 against the book identity, imports that private copy, re-reads the
+   newly created SDK row and verifies its stored bytes before any mapping is
+   written. A pathname swapped after the hash therefore cannot change what is
+   stored, and a wrong-book row is deleted again instead of being mapped. For
+   a PDF the verified copy is kept as originals/<sha>.orig, because the fixed
+   page reader consumes that private file; it is removed only when this same
+   book is removed.
+
    Calling contract: run on the thread that owns the exr_library and the
    catalog. Release every exr_source / reader opened on the affected SDK rows
    and stop network tasks touching the original BEFORE calling; report
    anything still in use through is_busy. Deleting a row permanently
    invalidates sources previously opened on it. A failed or rejected call
    leaves the rows, mapping and metadata readable, so already-open sources
-   remain valid. No thread, watcher or network access is created. */
+   remain valid.
+
+   One stateful call at a time: a callback (after_stage, is_busy or the
+   cancellation hook) that calls reader_ld_remove, reader_ld_recover or
+   reader_ld_reimport again receives READER_LD_BUSY and changes nothing, and
+   the outer call stays recoverable. reader_ld_pending is read-only, may be
+   called from a callback, and always reports the last committed stage. No
+   thread, watcher or network access is created. */
 
 typedef enum {
   READER_LD_OK = 0,

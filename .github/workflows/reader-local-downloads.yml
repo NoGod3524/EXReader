@@ -82,17 +82,38 @@ jobs:
           cmake -S apps/reader/local-downloads -B build/ld-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$LD_SDK" -DCMAKE_PREFIX_PATH="$LD_PREFIX;$LD_SDK" -DCMAKE_INSTALL_PREFIX="$LD_PREFIX" 2>&1 | tee build/ld-logs/module-configure.log
           cmake --build build/ld-module --parallel 4 2>&1 | tee build/ld-logs/module-build.log
           cmake --install build/ld-module 2>&1 | tee build/ld-logs/module-install.log
+      - name: Build and install the previously tested implementation
+        run: |
+          set -o pipefail
+          prev=7817caa968ce9350ed1c6b3712d31a13c2da8fd8
+          rm -rf build/ld-old-src build/ld-old build/ld-old-prefix
+          mkdir -p build/ld-old-src build/ld-old-prefix
+          git archive "$prev" apps/reader/local-downloads | tar -x -C build/ld-old-src
+          cmake -S build/ld-old-src/apps/reader/local-downloads -B build/ld-old -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$LD_SDK" -DCMAKE_PREFIX_PATH="$LD_PREFIX;$LD_SDK" -DCMAKE_INSTALL_PREFIX="$WS/build/ld-old-prefix" 2>&1 | tee build/ld-logs/old-configure.log
+          cmake --build build/ld-old --parallel 4 2>&1 | tee build/ld-logs/old-build.log
+          cmake --install build/ld-old 2>&1 | tee build/ld-logs/old-install.log
       - name: Compile the independent C and C++ consumers from installed packages
         run: |
           set -o pipefail
           cmake -S tests/reader_local_downloads/consumer -B build/ld-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$LD_PREFIX;$LD_SDK" 2>&1 | tee build/ld-logs/consumer-configure.log
           cmake --build build/ld-consumer --parallel 4 2>&1 | tee build/ld-logs/consumer-build.log
+      - name: Compile the same consumers against the previous implementation
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_local_downloads/consumer -B build/ld-consumer-old -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WS/build/ld-old-prefix;$LD_PREFIX;$LD_SDK" 2>&1 | tee build/ld-logs/old-consumer-configure.log
+          cmake --build build/ld-consumer-old --parallel 4 2>&1 | tee build/ld-logs/old-consumer-build.log
       - name: Judge removal, real process kills, recovery and re-import
         run: |
           set -o pipefail
           exe=""; lib="libreader_local_downloads.a"
           if [ "$RUNNER_OS" = Windows ]; then exe=".exe"; lib="reader_local_downloads.lib"; fi
           python3 tests/reader_local_downloads/check_local_downloads.py --probe "build/ld-consumer/ld-probe$exe" --cpp "build/ld-consumer/ld-cpp-consumer$exe" --fixtures tests/fixtures --work build/ld-work --output build/ld-evidence --library "build/ld-prefix/lib/$lib" --path-extra "$LD_SDK/bin" --path-extra "$LD_SDK/lib" 2>&1 | tee build/ld-logs/checks.log
+      - name: Prove the previous build fails the identity and parser regressions
+        run: |
+          set -o pipefail
+          exe=""; lib="libreader_local_downloads.a"
+          if [ "$RUNNER_OS" = Windows ]; then exe=".exe"; lib="reader_local_downloads.lib"; fi
+          python3 tests/reader_local_downloads/check_regressions.py --old-probe "build/ld-consumer-old/ld-probe$exe" --new-probe "build/ld-consumer/ld-probe$exe" --cpp "build/ld-consumer/ld-cpp-consumer$exe" --fixtures tests/fixtures --work build/ld-regressions --output build/ld-regression-evidence --library "build/ld-prefix/lib/$lib" --path-extra "$LD_SDK/bin" --path-extra "$LD_SDK/lib" 2>&1 | tee build/ld-logs/regressions.log
       - name: Preserve source-bound consumers, databases and every failure
         if: always()
         uses: actions/upload-artifact@v4
@@ -108,6 +129,13 @@ jobs:
             build/ld-consumer/ld-cpp-consumer*
             build/ld-consumer/CMakeCache.txt
             build/ld-module/CMakeCache.txt
+            build/ld-consumer-old/ld-probe*
+            build/ld-consumer-old/CMakeCache.txt
+            build/ld-old/CMakeCache.txt
+            build/ld-old-prefix/lib/
+            build/ld-old-prefix/include/
+            build/ld-regression-evidence/
+            build/ld-regressions/
           if-no-files-found: error
   evidence:
     name: same-run artifact evidence

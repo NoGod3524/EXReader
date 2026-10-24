@@ -19,6 +19,16 @@ typedef struct {
   int held;
 } probe_state;
 
+/* Deterministic identity and reentrancy probes. */
+static int cancel_calls;
+static int swap_at;
+static const char *swap_from;
+static const char *swap_to;
+static const char *reenter;
+static int reenter_in_busy, reenter_done;
+static const char *reenter_key, *reenter_path, *reenter_state;
+static const reader_ld_options *reenter_options;
+
 static const char *arg(int argc, char **argv, const char *name) {
   int i;
   for (i = 2; i + 1 < argc; i++) if (!strcmp(argv[i], name)) return argv[i + 1];
@@ -87,9 +97,38 @@ static reader_catalog *open_catalog(const char *work) {
   return catalog;
 }
 
+static void run_reenter(void) {
+  reader_ld_result result;
+  reader_ld_error error;
+  reader_ld_status status;
+  if (!reenter || reenter_done) return;
+  reenter_done = 1;
+  reader_ld_result_init(&result);
+  memset(&error, 0, sizeof(error));
+  if (!strcmp(reenter, "pending")) {
+    reader_ld_pending_info info;
+    memset(&info, 0, sizeof(info)); info.struct_size = sizeof(info);
+    status = reader_ld_pending(reenter_state, &info, &error);
+    printf("REENTER op=pending status=%s pending=%d stage=%s\n",
+      reader_ld_status_name(status), info.pending, reader_ld_stage_name(info.stage));
+    fflush(stdout);
+    return;
+  }
+  if (!strcmp(reenter, "recover")) status = reader_ld_recover(reenter_options, &result, &error);
+  else if (!strcmp(reenter, "reimport"))
+    status = reader_ld_reimport(reenter_options, reenter_key, reenter_path, &result, &error);
+  else status = reader_ld_remove(reenter_options, reenter_key, &result, &error);
+  printf("REENTER op=%s status=%s outcome=%s msg=%s\n", reenter,
+    reader_ld_status_name(status), reader_ld_outcome_name(result.outcome),
+    status == READER_LD_OK ? "" : error.message);
+  fflush(stdout);
+}
+
 static void hook(void *context, reader_ld_stage stage) {
   probe_state *state = (probe_state *)context;
   printf("STAGE %s\n", reader_ld_stage_name(stage));
+  if (!reenter_in_busy) run_reenter();
+  fflush(stdout);
   if (state->kill_at && !strcmp(state->kill_at, reader_ld_stage_name(stage))) {
     printf("KILL %s\n", reader_ld_stage_name(stage));
     fflush(stdout);
@@ -100,9 +139,22 @@ static void hook(void *context, reader_ld_stage stage) {
 static int busy(void *context, const char *key, int64_t id) {
   probe_state *state = (probe_state *)context;
   (void)key;
+  if (reenter_in_busy) run_reenter();
   return state->busy_all || (state->held && id == state->hold_id);
 }
-static int cancelled(void *context) { return ((probe_state *)context)->cancel; }
+static int cancelled(void *context) {
+  probe_state *state = (probe_state *)context;
+  cancel_calls++;
+  if (swap_at && cancel_calls == swap_at && swap_from && swap_to) {
+    /* Replace the caller pathname while the module is between reading and
+       importing. The bytes that were hashed must still be the bytes stored. */
+    remove(swap_to);
+    printf("SWAP %s\n", rename(swap_from, swap_to) == 0 ? "ok" : "failed");
+    fflush(stdout);
+    swap_at = 0;
+  }
+  return state->cancel;
+}
 
 static void print_result(reader_ld_status status, const reader_ld_result *r, const reader_ld_error *e) {
   printf("RESULT status=%s outcome=%s id=%lld removed=%u skipped=%u notes=%u progress=%u backup=%s msg=%s\n",
@@ -339,11 +391,25 @@ static int cmd_remove(const char *work, int argc, char **argv, int recover, int 
   state.kill_at = arg(argc, argv, "--kill-at");
   state.cancel_at = arg(argc, argv, "--cancel-at");
   state.busy_all = flag(argc, argv, "--busy-all");
+  {
+    const char *at = arg(argc, argv, "--swap-at");
+    swap_at = at ? atoi(at) : 0;
+    swap_from = arg(argc, argv, "--swap-from");
+    swap_to = arg(argc, argv, "--swap-to");
+    cancel_calls = 0;
+    reenter = arg(argc, argv, "--reenter");
+    reenter_in_busy = flag(argc, argv, "--reenter-in-busy");
+    reenter_done = 0;
+    reenter_key = key;
+    reenter_path = arg(argc, argv, "--file");
+  }
   snprintf(state_dir, sizeof(state_dir), "%s/state", work);
   library = open_library(work);
   catalog = open_catalog(work);
   if (!library || !catalog) return 2;
   make_options(&options, library, catalog, state_dir, &state, argc, argv);
+  reenter_options = &options;
+  reenter_state = state_dir;
   reader_ld_result_init(&result);
   memset(&error, 0, sizeof(error));
   if (hold > 0) {
