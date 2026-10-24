@@ -8,6 +8,13 @@
   "source_sha": "79a4070059a0806ca91ce9b9092e5f71eca50e4e",
   "run_id": 40079870542,
   "attempt": 1,
+  "timeout_interpretation": {
+    "configuration_is_end_to_end_upper_bound": false,
+    "download_watchdog_seconds": 45,
+    "publication_watchdog_seconds": 30,
+    "windows_observed_seconds": 4.02,
+    "note": "The historical expected strings below are preserved from the producer. Native transport timeout settings and total operation elapsed time differ; only the existing watchdog assertions and measured results are granted, not a 1200/1500 ms end-to-end deadline or a product latency budget."
+  },
   "jobs": [
     {
       "id": 120830996325,

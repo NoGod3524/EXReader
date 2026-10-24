@@ -46,7 +46,7 @@
 | `partial_body` | 发 Content-Length 全长但只发前缀后扣住 | 验证 GET / 原件下载中途 kill |
 | `short_body_close` | 发一半后 RST | 截断响应不得被当作 ack 依据 |
 | `reset_mid_body` | 读一半 body 后 RST | 上传断连 |
-| `stall_before_headers` | 不回头、不回体 | timeout 上界 |
+| `stall_before_headers` | 不回头、不回体 | 原生传输超时及有限等待回归 |
 | 状态注入 | 401 / 403 / 429 / 503（可带 `Retry-After`） | 真实状态码 |
 
 kill 一律是 `SIGKILL`（POSIX）/ `TerminateProcess`（Windows）；`abort` 是自我 `_Exit(7)`。每条 kill 边界都记录 `pid / termination / returncode`。
@@ -282,7 +282,7 @@ kill 一律是 `SIGKILL`（POSIX）/ `TerminateProcess`（Windows）；`abort` �
 
 #### 18. `bounded_publication_timeout_leaves_no_remote_object_and_keeps_outbox`
 
-- 预期：A stalling server is bounded by the configured transfer timeout instead of hanging, commits nothing, keeps the outbox row and lets an explicit retry publish the bytes.
+- 判定范围：停滞请求返回失败且端到端耗时小于测试的 30 s 防挂起上限；不提交远端对象，outbox 保留，显式重试可发布精确字节。`timeout_ms=1200` 是传输配置，不能据此宣称整个操作在 1200 ms 内结束。
 - Linux：failure_status=3 · elapsed_seconds=1.39 · timeout_ms=1200 · remote_absent_after_timeout=true · outbox_after_failure=1
 - Windows：failure_status=3 · elapsed_seconds=4.02 · timeout_ms=1200 · remote_absent_after_timeout=true · outbox_after_failure=1
 - macOS：failure_status=3 · elapsed_seconds=1.3 · timeout_ms=1200 · remote_absent_after_timeout=true · outbox_after_failure=1
@@ -334,4 +334,4 @@ kill 一律是 `SIGKILL`（POSIX）/ `TerminateProcess`（Windows）；`abort` �
 
 - 夹具是 IPv4 回环 + 受信证书，不涉及真实第三方服务与真实账号；跨平台只覆盖三个原生宿主，不等于六目标 SDK。
 - 21 条边界证明的是**这些具体故障点上的一致性**，不外推到未列出的边界（见第 6 节）。
-- Windows 上 1200/1500 ms 的传输预算实测落在 4.02 s（WinHTTP 超时粒度）；Linux/macOS 分别 1.39/1.57 s 与 1.30/1.67 s，说明预算是“上界”而非“精确值”。
+- `timeout_ms` 配置与端到端耗时分别记录。Windows 用 `WinHttpSetTimeouts` 为各阶段设置超时，调用返回后的截止时间检查不能中断正在阻塞的系统调用；本轮 1200/1500 ms 配置下均观测到 4.02 s，Linux/macOS 分别为 1.39/1.57 s 与 1.30/1.67 s。这些值证明本轮故障会返回，并满足下载 <45 s、发布 <30 s 的既有防挂起断言；没有证明配置值是整个操作的严格上界，也没有授予产品延迟预算。原观测、断言和工件保持不变。
