@@ -57,7 +57,7 @@ macOS 的 `hasFocus`、匿名控件计数、窗口框、文本样式点值）；
 | `reader.with_note` | 标注保存后：标注计数与状态 | 三目标 |
 | `notes.sheet` | 标注列表：摘录、评论、状态、定位/编辑/删除 | 三目标 |
 | `notes.editor` | 编辑标注：输入框、保存、取消 | 三目标 |
-| `reader.large_type` | `UICTContentSizeCategoryAccessibilityExtraExtraExtraLarge` 下的阅读器 | iPhone/iPad |
+| `reader.large_type` | 设备内容尺寸类别为 `accessibility-extra-extra-extra-large` 时的阅读器 | iPhone/iPad |
 | `library.large_type` | 同上的书架 | iPhone/iPad |
 | `reader.landscape` | 旋转到横屏后的阅读器 | iPhone/iPad |
 | `reader.portrait` | 恢复竖屏后的阅读器 | iPhone/iPad |
@@ -67,18 +67,27 @@ macOS 的 `hasFocus`、匿名控件计数、窗口框、文本样式点值）；
 
 ## 3. 判据与阻断规则
 
-每个判据产出一条 item，`verdict` ∈ {`pass`, `fail`, `blocked`, `uncovered`, `gap`, `stale`}：
+每个判据产出一条 item，`verdict` ∈ {`pass`, `fail`, `blocked`, `uncovered`, `advisory`, `gap`, `stale`}：
 
-- **名称/角色**：声明元素必须出现；角色必须匹配；可访问名称（label，其次 value）不得为空。
+- **名称/角色**：声明元素必须出现；角色（映射后的 `XCUIElementType` 名称，见下）必须匹配；
+  可访问名称（label，其次 value）不得为空。`XCTest` 会把类型打印成 `XCUIElementType(rawValue: 48)`，
+  所以判据用固定映射表转成 `Button`/`StaticText`/`TextField`/`ScrollView`/`Other` 等稳定名称再比对。
 - **状态可见**：`enabled` 必须与声明一致（忙时禁用、取消后恢复）；禁用状态必须能被辅助技术观察到。
-- **可达性与截断**：可交互控件的布局框必须完整落在窗口内（容差 2 pt）、必须 `isHittable`、
-  最小边不小于 24 pt（WCAG 2.5.8，阻断）；iOS 上小于 44 pt 记 HIG 建议项（不阻断）。
+- **可达性与截断**：可交互控件的布局框必须完整落在窗口内（容差 2 pt）、必须 `isHittable`；
+  最小边不小于 24 pt（WCAG 2.5.8）在**触控平台（iPhone/iPad）阻断**。
+- **建议项（`advisory`，不阻断、不计入 finding）**：iOS 上 24–44 pt 的 HIG 触控建议，
+  以及 macOS 上小于 20 pt 的指针目标。门槛写在契约 `policy.minimum_target_pt`，
+  避免用 Web 的 24 pt 去误判 AppKit 控件。
 - **重叠**：同一步骤内可交互控件的布局框不得互相覆盖超过较小控件的 50%。
 - **阅读顺序**：声明的阅读序列必须与视觉纵向顺序一致（容差 20 pt）。
-- **Dynamic Type**：`reader.epub` → `reader.large_type` 同名元素高度必须增长（≥0.5 pt），
-  否则说明固定 frame/lineLimit 压制了字号缩放。
-- **键盘路径**：macOS 全键盘访问（`AppleKeyboardUIMode=3`）下 14 次 Tab 的焦点序列必须覆盖可交互控件；
-  若 XCUITest 完全观察不到 `AXFocused`，该项记为 `uncovered` 而不是伪造通过。
+- **书架行**：书架顺序属于产品决定，所以按**行名称**核对书名（`book_row_names`），不把书名绑到下标。
+- **Dynamic Type**：`reader.epub` → `reader.large_type` 同名元素高度必须增长（≥0.5 pt）。
+  判定前先校验装置是否生效：两个状态里 `caption1_pt` 必须变大；否则输出 `blocked`（装置未生效），
+  不拿它评判产品。
+- **键盘可操作性**：macOS 全键盘访问（`AppleKeyboardUIMode=3`）下按 16 次 Tab、每第 4 次追加 Space，
+  阅读器的可观察状态（位置/字号/状态/面板）必须出现变化；全程无变化即判 `fail`。
+- **焦点顺序**：本次 Xcode 的 `XCUIElement` 既不暴露 `hasFocus` 也没有等价焦点 API，
+  逐控件焦点顺序记为 `uncovered`，不伪造通过。
 
 结论分两步，互不冒充：
 
@@ -110,6 +119,7 @@ macOS 的 `hasFocus`、匿名控件计数、窗口框、文本样式点值）；
 - **VoiceOver 实际朗读、转子、提示音**：自动 XCUI 不等于 VoiceOver 通过。
 - **Reduce Motion / Bold Text / Increase Contrast / Differentiate Without Color**：runner 上无脚本化开关。
 - **iOS/iPadOS 全键盘访问路径**：模拟器未启用 Full Keyboard Access。
+- **macOS 逐控件焦点顺序**：`XCUIElement` 在本 Xcode 中不暴露焦点，只测到“键盘能否驱动阅读器”。
 - **macOS 大字体**：macOS 无系统 Dynamic Type 缩放，只有最小窗口压力证据。
 - **真机**：本包只在 Actions 的 macOS 宿主与模拟器执行。
 - **系统文件选择器面板**：不属于宿主 AX 树，且不接真实用户文件。
@@ -126,6 +136,11 @@ macOS 的 `hasFocus`、匿名控件计数、窗口框、文本样式点值）；
 3. `audit`（`macos`/`iphone`/`ipad` 三路并行）：生成独立审计工程（`make_a11y_xcodeproj.rb`，
    不带 `EXR_APPLE_HOST_REVIEW`/`EXR_APPLE_IMPORT_REVIEW`，受测的是普通宿主）、跑独立 UI 用例、
    导出截图附件、采集逐项证据，工件名 `reader-a11y-apple-audit-<platform>-<run>-<attempt>`。
+   iPhone/iPad 各跑两次：默认内容尺寸一次（跳过 `test07DynamicTypeAudit`），
+   再用 `xcrun simctl ui <udid> content_size accessibility-extra-extra-extra-large` 改设备字号后
+   只跑该用例一次（`-only-testing:`），最后复位为 `medium`。`simctl ui ... content_size` 的读数
+   作为“字体设置”写入证据；`-UIPreferredContentSizeCategoryName` 启动参数在当前 runtime 上不生效，
+   所以大字体必须由设备级设置给。
 4. `summary`：合流三份 `report.json`，用 `gh api` 核对工件身份（名称含 run/attempt、字节非零、
    `sha256:` 摘要、未过期），再输出 `reader-a11y-apple-summary.json` 与
    `reader-a11y-apple-validation-<run>-<attempt>` 工件。
