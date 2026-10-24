@@ -31,6 +31,10 @@ add_library(reader_catalog_sqlite ALIAS EXReaderProductCatalog::reader_catalog_s
 find_package(EXReaderCredentials 0.1.0 EXACT CONFIG REQUIRED)
 find_package(EXReaderSession 0.1.0 EXACT CONFIG REQUIRED)
 find_package(EXReaderSideload CONFIG REQUIRED)
+option(EXR_READER_WINDOWS_SEARCH "Enable the native bounded in-book search dialog" OFF)
+if(EXR_READER_WINDOWS_SEARCH)
+  find_package(EXReaderSearch 0.1.0 EXACT CONFIG REQUIRED)
+endif()
 set(DESKTOP "${CMAKE_CURRENT_SOURCE_DIR}/../desktop")
 set(ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../..")
 add_library(reader_catalog_sdk STATIC "${DESKTOP}/catalog_sdk.c")
@@ -47,6 +51,10 @@ function(reader_windows_account_host target)
     EXReaderDesktopMetadata::reader_desktop_metadata EXReaderSession::reader_session
     EXReaderCredentials::exr_credentials EXReaderSideload::exr_sideload
     comdlg32 gdi32 shell32 user32 advapi32 bcrypt normaliz)
+  if(EXR_READER_WINDOWS_SEARCH)
+    target_compile_definitions(${target} PRIVATE EXR_READER_WINDOWS_SEARCH=1)
+    target_link_libraries(${target} PRIVATE EXReaderSearch::reader_search)
+  endif()
 endfunction()
 
 reader_windows_account_host(EXReaderProduct)
