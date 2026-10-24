@@ -99,7 +99,8 @@ def main():
 
     for relative, source, fmt in NINE:
         copy_fixture(fixtures, root, relative, source)
-        record(files, root, relative, fmt)
+        record(files, root, relative, fmt,
+               duplicate_group="sample.epub" if relative == "sample.epub" else None)
 
     copy_fixture(fixtures, root, "重复/副本.epub", "sample.epub")
     record(files, root, "重复/副本.epub", "EPUB", duplicate_group="sample.epub")
