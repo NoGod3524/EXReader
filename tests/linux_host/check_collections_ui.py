@@ -210,7 +210,7 @@ def main():
         assert current['editor_accept'] == '0' and current['editor_parent'] == parent and counts() == before
         shot('02-restore-parent-required', dependency)
         record('removed_child_restore_refuses_deleted_parent_without_writing_anything')
-        host.key('alt+p');window('Collection details', False);ready(lambda state: state['selected_id'] == parent)
+        host.key('alt+v');window('Collection details', False);ready(lambda state: state['selected_id'] == parent)
         host.key('alt+s');window('Collection details');save_editor()
         choose_group(child);host.key('alt+s');window('Collection details');save_editor()
         assert sql('SELECT deleted FROM reader_shelves ORDER BY shelf_id') == [(0,), (0,)]

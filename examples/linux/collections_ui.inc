@@ -180,7 +180,7 @@ static void collections_show_editor(const reader_result *result) {
   gtk_widget_set_sensitive(collections.ordinal,ordered && (collections.operation==0 || (collections.entity==1 && collections.operation==2)));
   collections.editor_message=gtk_label_new(result->collection_dependency ? "Restore the parent collection first":result->collection_conflict ? "Versions differ; refresh before changing this collection":result->message);
   gtk_label_set_line_wrap(GTK_LABEL(collections.editor_message),TRUE);gtk_grid_attach(GTK_GRID(grid),collections.editor_message,0,line,2,1);
-  if(result->collection_dependency) gtk_dialog_add_button(GTK_DIALOG(collections.editor),"View _parent",3);
+  if(result->collection_dependency) gtk_dialog_add_button(GTK_DIALOG(collections.editor),"_View parent",3);
   gtk_dialog_set_response_sensitive(GTK_DIALOG(collections.editor),GTK_RESPONSE_ACCEPT,!result->collection_dependency && !result->collection_conflict);
   gtk_dialog_set_default_response(GTK_DIALOG(collections.editor),GTK_RESPONSE_ACCEPT);
   g_signal_connect(collections.editor,"response",G_CALLBACK(collections_editor_response),NULL);
