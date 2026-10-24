@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import secrets
+import re
 import sqlite3
 import ssl
 import subprocess
@@ -122,6 +123,7 @@ def main():
                                'apps/reader/store/001_catalog.sql'], capture_output=True, text=True, timeout=180,
                               env=dict(os.environ, READER_ACCOUNT_TEST_PASSWORD=password))
         (folder / 'consumer.log').write_text(done.stdout + done.stderr)
+        (folder / 'requests.json').write_text(json.dumps(requests, indent=2) + '\n')
         assert done.returncode == 0, (done.returncode, (done.stdout + done.stderr)[-2000:])
         report = json.loads((folder / 'account/account.json').read_text())
         assert report['accepted'] is True and report['checks'] == CHECKS
@@ -129,8 +131,9 @@ def main():
         assert str(report['run_id']) == os.environ['GITHUB_RUN_ID'] and str(report['attempt']) == os.environ['GITHUB_RUN_ATTEMPT']
         assert report['sweeps'] == 1 and report['shards'] == 256 and report['main_thread_ticks'] >= 10
         assert requests and all(row['authenticated'] for row in requests)
-        shards = {row['path'] for row in requests if row['method'] == 'PROPFIND' and '/revisions/' in row['path']}
-        assert len(shards) == 256
+        shards = {row['path'] for row in requests if row['method'] == 'PROPFIND' and
+                  re.fullmatch(r'/dav/exreader-sync-v1/revisions/[0-9a-f]{2}/', row['path'])}
+        assert shards == {'/dav/exreader-sync-v1/revisions/%02x/' % shard for shard in range(256)}, sorted(shards)
         revisions = [body for path, body in entries.items() if '/revisions/' in path and path.endswith('.json')]
         assert len(revisions) == 1
         revision = json.loads(revisions[0]); assert revision['entity_kind'] == 'book'
