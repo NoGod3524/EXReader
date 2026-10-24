@@ -4,6 +4,10 @@ on:
     branches: [codex/reader-commands, codex/reader-desktop-metadata]
   workflow_dispatch:
   workflow_call:
+    inputs:
+      session:
+        type: boolean
+        default: false
 permissions:
   contents: read
 defaults:
@@ -109,6 +113,19 @@ jobs:
         run: |
           if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
           python3 tests/reader_metadata/check_metadata.py --consumer "build/metadata-consumer/metadata-consumer$exe" --c-consumer "build/metadata-consumer/metadata-c-consumer$exe" --command-consumer "build/commands-consumer/command-consumer$exe" --product-prefix build/sync-product-stage --link-map build/metadata-consumer/metadata-link.map --build-log build/sync-logs/metadata-consumer-build.log --output build/metadata-evidence
+      - name: Build and install the optional native account session and C consumer
+        if: inputs.session == true
+        run: |
+          cmake -S apps/reader/session -B build/session -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$SYNC_PREFIXES" -DCMAKE_INSTALL_PREFIX="$SYNC_WORKSPACE/build/session-stage" 2>&1 | tee build/sync-logs/session-configure.log
+          cmake --build build/session --verbose 2>&1 | tee build/sync-logs/session-build.log
+          cmake --install build/session
+          cmake -S tests/reader_session/consumer -B build/session-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$SYNC_WORKSPACE/build/session-stage;$SYNC_PREFIXES"
+          cmake --build build/session-consumer --verbose 2>&1 | tee build/sync-logs/session-consumer-build.log
+      - name: Actual asynchronous native account sweeps cancellation retry and isolation
+        if: inputs.session == true
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_session/check_session.py --consumer "build/session-consumer/session-consumer$exe" --revision-consumer "build/sync-revision-consumer/revision-consumer$exe" --output build/session-evidence
       - name: Preserve source-bound evidence and installed modules without keys
         if: always()
         uses: actions/upload-artifact@v4
@@ -132,5 +149,7 @@ jobs:
             build/sync-dav-stage/
             build/sync-stage/
             build/sync-consumer/sync-consumer*
+            build/session-stage/
+            build/session-evidence/
           if-no-files-found: error
 
