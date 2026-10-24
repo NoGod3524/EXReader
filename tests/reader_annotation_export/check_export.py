@@ -626,28 +626,54 @@ def main():
         base_path = str(al)
         sep = os.sep
         canonical = base_path + sep + 'x.jsonl'
-        aliases = [('dot-segment', canonical, base_path + sep + '.' + sep + 'x.jsonl'),
-                   ('duplicate-separator', canonical, base_path + sep + sep + 'x.jsonl')]
+        # (label, target, alias, existing bytes preserved through the refusal or None)
+        aliases = [('dot-segment', canonical, base_path + sep + '.' + sep + 'x.jsonl', None),
+                   ('duplicate-separator', canonical, base_path + sep + sep + 'x.jsonl', None)]
         (al / 'sub').mkdir()
-        aliases.append(('parent-segment', canonical, base_path + sep + 'sub' + sep + '..' + sep + 'x.jsonl'))
+        aliases.append(('parent-segment', canonical, base_path + sep + 'sub' + sep + '..' + sep + 'x.jsonl', None))
         if system == 'windows':
-            aliases.append(('case-folded', canonical, base_path + sep + 'X.JSONL'))
+            aliases.append(('case-folded', canonical, base_path + sep + 'X.JSONL', None))
         else:
             (al / 'real').mkdir()
             os.symlink('real', str(al / 'link'))
             aliases.append(('symlinked-directory', base_path + sep + 'real' + sep + 'x.jsonl',
-                            base_path + sep + 'link' + sep + 'x.jsonl'))
-        for label, canon, alias in aliases:
+                            base_path + sep + 'link' + sep + 'x.jsonl', None))
+        # one existing valid export reached twice is one final file
+        existing = al / 'y.jsonl'
+        assert export(main_db, TXT, existing, None)['status'] == S_OK
+        existing_bytes = existing.read_bytes()
+        aliases.append(('existing-file-dot-segment', str(existing), base_path + sep + '.' + sep + 'y.jsonl', str(existing)))
+        if system == 'windows':
+            aliases.append(('existing-file-case-folded', str(existing), base_path + sep + 'Y.JSONL', str(existing)))
+            # Two junctions over one directory with a leaf that does not exist yet:
+            # GetFullPathNameW cannot resolve the parent, so only the directory's own
+            # handle identity proves both names are one final file.
+            junction_real, junction_link = al / 'junction-real', al / 'junction-link'
+            junction_real.mkdir()
+            made = subprocess.run('mklink /J "{}" "{}"'.format(junction_link, junction_real),
+                                  shell=True, capture_output=True)
+            assert made.returncode == 0, ('junction creation failed', made.returncode, made.stdout, made.stderr)
+            probe = junction_real / 'junction-probe'
+            probe.write_bytes(b'probe')
+            assert (junction_link / 'junction-probe').exists(), 'the junction does not resolve to its parent'
+            probe.unlink()
+            aliases.append(('junction-parent', str(junction_real / 'z.jsonl'), str(junction_link / 'z.jsonl'), None))
+        for label, canon, alias, preserved in aliases:
             r = run(['export', main_db, TXT, '-', hexs(canon), hexs(alias), 0])
             assert r['status'] == S_ARGUMENT, ('alias not refused', label, r)
             assert r['stats']['jsonl_published'] == 0 and r['stats']['markdown_published'] == 0, (label, r['stats'])
-            assert not Path(canon).exists() and not Path(alias).exists(), ('alias wrote a file', label)
+            if preserved is None:
+                assert not Path(canon).exists() and not Path(alias).exists(), ('alias wrote a file', label)
+            else:
+                assert Path(preserved).read_bytes() == existing_bytes, label + ': existing export changed'
             assert keep_jsonl.read_bytes() == good_jsonl and keep_md.read_bytes() == good_md, label + ': existing export changed'
             assert leftovers(al) == [], label + ': temporary file left behind'
             cases.append({'id': 'alias-' + label, 'status': r['status'], 'os_error': r['os_error']})
         r = export(main_db, TXT, al / 'a.jsonl', al / 'b.jsonl')
         assert r['status'] == S_OK and (al / 'a.jsonl').exists() and (al / 'b.jsonl').exists(), ('distinct targets refused', r)
         assert leftovers(al) == []
+        if system == 'windows':
+            os.rmdir(str(al / 'junction-link'))
         record('path_aliases_that_resolve_to_one_target_are_refused_before_writing')
 
     # ---------- reentrant export from the cancel callback ----------
