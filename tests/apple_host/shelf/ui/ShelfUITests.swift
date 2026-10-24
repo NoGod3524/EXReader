@@ -7,10 +7,12 @@ import AppKit
 final class ShelfUITests: XCTestCase {
     private var app: XCUIApplication!
     private var observations: [[String: Any]] = []
+    private var lastReadDiagnostic = ""
     override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication()
         observations = []
+        lastReadDiagnostic = ""
         app.launchArguments = ["-EXRShelfSeed"]
         app.launch()
     }
@@ -31,8 +33,15 @@ final class ShelfUITests: XCTestCase {
         return node.label.isEmpty ? (node.value as? String) ?? "" : node.label
     }
     private func state() -> [String: Any]? {
-        guard let data = text("library.shelf.state").data(using: .utf8) else { return nil }
-        return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+        guard let node = try? element("library.shelf.state").snapshot() else { return nil }
+        let raw = node.label.isEmpty ? (node.value as? String) ?? "" : node.label
+        guard let data = raw.data(using: .utf8) else { return nil }
+        do { return try JSONSerialization.jsonObject(with: data) as? [String: Any] }
+        catch {
+            let detail = "SHELF AX decode failed label_chars=\(node.label.count) value_chars=\((node.value as? String)?.count ?? -1) raw_chars=\(raw.count) error=\(error) tail=\(String(raw.suffix(100)).debugDescription)"
+            if detail != lastReadDiagnostic { print(detail); lastReadDiagnostic = detail }
+            return nil
+        }
     }
     private func wait(_ timeout: TimeInterval = 60, _ condition: () -> Bool) -> Bool {
         let deadline = Date().addingTimeInterval(timeout)
@@ -45,14 +54,25 @@ final class ShelfUITests: XCTestCase {
     private func ready(_ query: String) -> [String: Any] {
         var accepted: [String: Any] = [:], previous = ""
         var stableAt = Date()
+        var polls = 0
         XCTAssertTrue(wait(120) {
-            guard let value = self.state(), value["query"] as? String == query,
+            polls += 1
+            let candidate = self.state()
+            guard let value = candidate, value["query"] as? String == query,
                   value["loading"] as? Bool == false,
                   value["restoring_layout"] as? Bool == false,
                   value["generation"] as? Int == value["applied_generation"] as? Int,
                   let keys = value["keys"] as? [String], let visible = value["visible_keys"] as? [String],
-                  keys.isEmpty || (!visible.isEmpty && !(value["top_key"] as? String ?? "").isEmpty) else { previous = ""; return false }
+                  keys.isEmpty || (!visible.isEmpty && !(value["top_key"] as? String ?? "").isEmpty) else {
+                if polls == 1 || polls % 20 == 0 {
+                    print("SHELF READY rejected decoded=\(candidate != nil) query=\(String(describing: candidate?["query"])) loading=\(String(describing: candidate?["loading"])) restoring=\(String(describing: candidate?["restoring_layout"])) gen=\(String(describing: candidate?["generation"] as? Int))/\(String(describing: candidate?["applied_generation"] as? Int)) keys=\((candidate?["keys"] as? [String])?.count ?? -1) visible=\((candidate?["visible_keys"] as? [String])?.count ?? -1) top=\(String(describing: candidate?["top_key"]))")
+                }
+                previous = ""; return false
+            }
             let signature = [value["top_key"] as? String ?? "", visible.joined(separator: "|"), keys.joined(separator: "|")].joined(separator: ";")
+            if polls == 1 || polls % 20 == 0 {
+                print("SHELF READY eligible same_signature=\(signature == previous) stable_ms=\(Date().timeIntervalSince(stableAt) * 1000) visible=\(visible.count) keys=\(keys.count)")
+            }
             if signature != previous { previous = signature; stableAt = Date() }
             accepted = value
             return Date().timeIntervalSince(stableAt) >= 0.35
