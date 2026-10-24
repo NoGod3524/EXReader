@@ -155,6 +155,31 @@ python3 tests/reader_book_information/check_book_information.py \
 拒绝；记录见 `docs/validation/reader-book-information.json` 的
 `failure_iterations_retained`。
 
+## 同次云端证据
+
+受测源码：`72fdc1a8976e95e615fe6bdd2c8fafcb651fa660`（本分支，run
+`40127968068` / attempt `1`，workflow `.github/workflows/reader-book-information.yml`，
+结论 success）。三个桌面平台的作业与产物全部来自这一次 run：
+
+| runner | job | 具名用例 | 断言 | 工件 | 字节 | SHA-256 | 有效期 |
+| --- | ---: | ---: | ---: | --- | ---: | --- | --- |
+| windows-2022 | 120973358790 | 22/22 | 699 | 12574555079 `reader-book-information-Windows-40127968068-1` | 7340273 | `f58294c8…c5837` | 2027-01-22T20:02:03Z |
+| ubuntu-22.04 | 120973358746 | 22/22 | 699 | 12574360053 `reader-book-information-Linux-40127968068-1` | 9116213 | `5526558b…dca4d2` | 2027-01-22T20:02:03Z |
+| macos-15 | 120973358730 | 22/22 | 699 | 12573524988 `reader-book-information-macOS-40127968068-1` | 7934170 | `16c5f080…9393eb` | 2027-01-22T20:02:03Z |
+
+同次汇总作业 `same-run artifact evidence`（job `120974206183`）在该 run 内通过 API
+重新枚举、下载、解包并重算三个 ZIP 的 SHA-256，核对报告身份（source/run/attempt/
+platform）、22 个具名裁决与跨平台一致性；记录工件 12573584981，749 字节，
+`sha256:25164312e3d32cb9a8651dac5133e53d4f55afb557d7bff66373985780ff4d2e`，
+有效期 2027-01-22T20:02:03Z。
+
+在此之前有 11 次失败或取消的 run，原因与修复提交逐条记录在
+`docs/validation/reader-book-information.json` 的 `failure_iterations_retained`；
+没有任何断言被删除、语料被替换或失败被改写成预期拒绝。
+
+验收提交只改本文与 `docs/validation/reader-book-information.json`，标 `[skip ci]`；
+受测源码与最终 HEAD 的差异因此只有这两个文档文件。
+
 ## 未覆盖范围
 
 - 加密 PDF 的 `PASSWORD_REQUIRED`：本包不生成加密夹具，该分支只有代码路径，没有实测。
