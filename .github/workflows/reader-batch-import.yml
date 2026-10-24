@@ -29,7 +29,7 @@ jobs:
           git merge-base --is-ancestor "$FIXED" HEAD
           git diff --exit-code "$K" HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
           git diff --exit-code "$FIXED" HEAD -- apps/reader/store/001_catalog.sql apps/reader/session apps/reader/commands apps/reader/revisions apps/reader/sync apps/reader/desktop apps/reader/desktop-metadata apps/reader/reading-state extras/sideload
-          allowed='^(apps/reader/batch-import/|tests/reader_batch_import/|\.github/workflows/reader-batch-import\.yml$|docs/READER-BATCH-IMPORT\.md$|docs/validation/reader-batch-import\.json$)'
+          allowed='^(apps/reader/batch-import/|tests/reader_batch_import/|\.github/workflows/reader-batch-import\.yml$|docs/READER-BATCH-IMPORT(-REVIEW)?\.md$|docs/validation/reader-batch-import(-review)?\.json$)'
           changed=$(git diff --name-only "$FIXED" HEAD)
           bad=$(printf '%s\n' "$changed" | sed '/^$/d' | grep -Ev "$allowed" || true)
           test -z "$bad" || { echo "unowned path: $bad"; exit 1; }
