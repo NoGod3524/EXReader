@@ -128,6 +128,13 @@ GTK账号与全库本地准备 `d88ed89d`、run`40068924227` 已通过并正常�
 接收投影、SDK导入和缓存缺失后的下载调度继续接续，见
 [GTK账号记录](validation/reader-gtk-account.json)。
 
+F5真实文件独立复核仍拒绝：原交付Windows12/18、Linux14/18。
+审查源码`80946aa4`、run`40070449808`确认原Windows进程参数已损坏俄文查询；
+修复消费者UTF-16→UTF-8入口后，两平台均14/18，SDK源码未改。
+RTF两份与CBZ两份仍失败，不更换文件或改成预期拒绝；18份不计入旧1710目标。
+该分支未合入工作候选，兼容性与路径策略另行处理，见
+[F5审查记录](https://github.com/NoGod3524/EXReader/blob/1ea0e160bc1805619c222bd121028cc1373d50e3/docs/READER-REAL-CORPUS-REVIEW.md)。
+
 Apple有界书架仍等完整云端出口。随后需把已验收包合到同一源码
 复验，并把已通过的原生原件/metadata/阅读状态WebDAV往返接入宿主的分批下载、
 投影调度、凭据/账号UI及四套原生壳的列表/导航。以上独立结果不转移到尚未测试的组合源码。
