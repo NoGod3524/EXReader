@@ -14,6 +14,9 @@ on:
       reading_v2:
         type: boolean
         default: false
+      apple_urlsession:
+        type: boolean
+        default: false
 permissions:
   contents: read
 defaults:
@@ -85,7 +88,9 @@ jobs:
           cmake --install build/sync-product 2>&1 | tee build/sync-logs/product-install.log
       - name: Build and install the native TLS and revision modules
         run: |
-          cmake -S extras/webdav -B build/sync-dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$SYNC_WORKSPACE/build/sync-dav-stage" 2>&1 | tee build/sync-logs/dav-configure.log
+          apple_native=OFF
+          if [ "$RUNNER_OS" = macOS ] && [ "${{ inputs.apple_urlsession }}" = true ]; then apple_native=ON; fi
+          cmake -S extras/webdav -B build/sync-dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_WEBDAV_APPLE_URLSESSION="$apple_native" -DCMAKE_INSTALL_PREFIX="$SYNC_WORKSPACE/build/sync-dav-stage" 2>&1 | tee build/sync-logs/dav-configure.log
           cmake --build build/sync-dav --verbose 2>&1 | tee build/sync-logs/dav-build.log
           cmake --install build/sync-dav
           cmake -S apps/reader/revisions -B build/sync-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$SYNC_WORKSPACE/build/sync-product-stage" -DCMAKE_INSTALL_PREFIX="$SYNC_WORKSPACE/build/sync-revision-stage" 2>&1 | tee build/sync-logs/revision-configure.log
@@ -107,6 +112,7 @@ jobs:
         run: |
           if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
           python3 tests/webdav/check_tls.py --consumer "build/sync-dav-consumer/webdav-consumer$exe" --module-prefix build/sync-dav-stage --output build/sync-source-evidence
+          python3 tests/webdav/check_compat.py --consumer "build/sync-dav-consumer/webdav-consumer$exe" --output build/sync-compat-evidence
           python3 tests/reader_revisions/check_protocol.py --consumer "build/sync-revision-consumer/revision-consumer$exe" --c-consumer "build/sync-revision-consumer/revision-c-consumer$exe" --product-prefix build/sync-product-stage --revision-prefix build/sync-revision-stage --build-log build/sync-logs/revision-consumer-build.log --link-map build/sync-revision-consumer/revision-link.map --output build/sync-protocol-evidence
       - name: Actual TLS two-client immutable publication and bounded discovery
         run: |
@@ -152,6 +158,12 @@ jobs:
         run: |
           if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
           python3 tests/reader_session/check_session.py --consumer "build/session-consumer/session-consumer$exe" --revision-consumer "build/sync-revision-consumer/revision-consumer$exe" --output build/session-evidence
+      - name: Native Foundation immutable writes owner and callback lifetime
+        if: runner.os == 'macOS' && inputs.apple_urlsession == true
+        run: |
+          cmake -S tests/webdav/apple -B build/apple-dav-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$SYNC_PREFIXES"
+          cmake --build build/apple-dav-consumer --verbose
+          python3 tests/webdav/apple/check_transport.py --consumer build/apple-dav-consumer/WebDAVProbe --native-binary build/apple-dav-consumer/WebDAVProbe --output build/apple-dav-evidence
       - name: Build an actual immutable v1 validator against the same product provider
         if: inputs.reading_v2 == true
         run: |
@@ -177,6 +189,7 @@ jobs:
           path: |
             build/sync-logs/
             build/sync-source-evidence/
+            build/sync-compat-evidence/
             build/sync-protocol-evidence/
             build/sync-evidence/
             build/projection-evidence/
@@ -200,6 +213,8 @@ jobs:
             build/metadata-consumer/metadata-consumer*
             build/metadata-consumer/metadata-c-consumer*
             build/apple-pkgconfig/
+            build/apple-dav-consumer/WebDAVProbe
+            build/apple-dav-evidence/
             build/session-stage/
             build/session-evidence/
             build/session-consumer/session-consumer*

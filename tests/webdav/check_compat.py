@@ -10,19 +10,19 @@ import ssl
 import subprocess
 import sys
 import threading
+from cloud_native import trust_fixture_certificates
 
 
 def main():
     p = argparse.ArgumentParser(); p.add_argument('--consumer', type=Path, required=True); p.add_argument('--output', type=Path, required=True)
+    p.add_argument('--native-binary', type=Path)
     a = p.parse_args(); assert os.environ.get('GITHUB_ACTIONS') == 'true'
     folder = a.output.resolve(); folder.mkdir(parents=True)
     certs = folder / 'certificates'; certs.mkdir()
     key, cert = certs / 'compat.key', certs / 'compat.crt'
     subprocess.run(['openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '1', '-keyout', str(key),
                     '-out', str(cert), '-subj', '/CN=localhost', '-addext', 'subjectAltName=DNS:localhost,IP:127.0.0.1'], check=True, capture_output=True)
-    subprocess.run(['certutil', '-addstore', '-f', 'Root', str(cert)] if os.name == 'nt' else
-                   ['sudo', 'cp', str(cert), '/usr/local/share/ca-certificates/reader-dav-compat.crt'], check=True, capture_output=True)
-    if os.name != 'nt': subprocess.run(['sudo', 'update-ca-certificates'], check=True, capture_output=True)
+    trust_fixture_certificates((cert,), 'reader-dav-compat-')
     payload = '真实原生请求\n'.encode(); requests, checks = [], []
 
     def response(href, extra=False, pad=0):
@@ -98,7 +98,9 @@ def main():
         assert len(checks) == 12
         report = {'accepted': True, 'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
                   'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'platform': sys.platform, 'checks': checks, 'count': len(checks),
-                  'consumer_sha256': hashlib.sha256(a.consumer.read_bytes()).hexdigest(), 'listing_bytes_ceiling': 4 * 1024 * 1024,
+                  'consumer_sha256': hashlib.sha256((a.native_binary or a.consumer).read_bytes()).hexdigest(),
+                  'execution_platform': 'ios-simulator' if os.environ.get('EXR_DAV_IOS_UDID') else sys.platform,
+                  'listing_bytes_ceiling': 4 * 1024 * 1024,
                   'entry_ceiling': 2000, 'xml_per_response_elements': 32, 'xml_outside_response_elements': 128,
                   'real_service_interop_accepted': False, 'complete_product': False}
         (folder / 'result.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8'); print(json.dumps(report), flush=True)
