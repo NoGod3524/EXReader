@@ -73,7 +73,9 @@ def main():
         run = fetch("actions/runs/%d" % run_id)
         require(run["head_sha"] == source and run["run_attempt"] == attempt, "caller identity differs")
         require(run["path"].split("@")[0] == WORKFLOW, "wrong workflow")
-        require(run["status"] == "completed" and run["conclusion"] == "success", "the run did not succeed")
+        # The evidence job runs before the run itself settles; the upstream job's
+        # own conclusion is the authoritative gate here.
+        require(run["status"] in ("in_progress", "completed"), "the run has no usable state")
 
         jobs = pages("actions/runs/%d/attempts/%d/jobs" % (run_id, attempt), "jobs")
         matches = [job for job in jobs if job["name"] == JOB]

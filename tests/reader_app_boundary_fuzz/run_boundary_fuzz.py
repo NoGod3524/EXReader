@@ -55,7 +55,7 @@ def describe(value):
 class Driver:
     def __init__(self, arguments):
         self.arguments = arguments
-        self.root = Path(arguments.output)
+        self.root = Path(arguments.output).resolve()
         self.work = self.root / "work"
         self.evidence = self.root / "evidence"
         self.observations = self.evidence / "observations"
@@ -63,7 +63,7 @@ class Driver:
             directory.mkdir(parents=True, exist_ok=True)
         self.consumer_path = str(Path(arguments.consumer).resolve())
         self.c_consumer_path = str(Path(arguments.c_consumer).resolve())
-        self.fixtures = Path(arguments.fixtures)
+        self.fixtures = Path(arguments.fixtures).resolve()
         self.manifest = json.loads((self.fixtures / "manifest.json").read_text(encoding="utf-8"))
         self.seeds = {item["file"]: item for item in self.manifest["seeds"]}
         self.cases = []
@@ -134,7 +134,10 @@ class Driver:
         (self.observations / (name + ".json")).write_text(
             json.dumps(entry, indent=2) + "\n", encoding="utf-8"
         )
-        print(json.dumps({"case": name, "ok": entry["ok"]}), flush=True)
+        line = {"case": name, "ok": entry["ok"]}
+        if not entry["ok"]:
+            line["detail"] = entry["detail"]["error"][:600]
+        print(json.dumps(line), flush=True)
         return entry["ok"]
 
     # ------------------------------------------------------------ fixtures
