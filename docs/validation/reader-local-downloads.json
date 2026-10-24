@@ -5,16 +5,47 @@
   "sdk_freeze": "9854061be331fe603a1822d9b2b36ee357154927",
   "sdk_version": "3.40.0",
   "abi": 1,
-  "status": "unverified",
-  "tested_source": null,
-  "cloud": null,
-  "granted": [],
+  "status": "cloud-verified",
+  "tested_source": "7817caa968ce9350ed1c6b3712d31a13c2da8fd8",
+  "original_failure": {
+    "run_id": 40079065398,
+    "run_attempt": 1,
+    "source": "27f46d2a73fcd8343ecd827d055ec2dcc492bc9b",
+    "summary": "Linux compile failed (-Werror=format-truncation: backup path 1200 bytes into a 1024-byte field); the evidence job failed with it. Windows and macOS passed 31/31 on that source. Fixed in 7817caa by sizing the field; this run is not used for acceptance."
+  },
+  "cloud": {
+    "run_id": 40079478242,
+    "run_attempt": 1,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40079478242",
+    "jobs": {
+      "macos-15": "success (120829827482)",
+      "ubuntu-22.04": "success (120829827667)",
+      "windows-2022": "success (120829827690)",
+      "same-run artifact evidence": "success (120830543439)"
+    },
+    "checks_per_platform": 31,
+    "report_ok": true,
+    "artifacts": [
+      {"name": "reader-local-downloads-Linux-40079478242-1", "id": 12555090603, "bytes": 9416454, "digest": "sha256:a21df516912d83fe4c1db4bb06d7eee2e5352bbce266f57d2fb565b574560436", "expires_at": "2027-01-22T08:48:32Z"},
+      {"name": "reader-local-downloads-macOS-40079478242-1", "id": 12554986207, "bytes": 8234163, "digest": "sha256:47dd809d7da06a97167420fa403cccbefeb443df80376616ce55488d3d21c279", "expires_at": "2027-01-22T08:48:32Z"},
+      {"name": "reader-local-downloads-Windows-40079478242-1", "id": 12554543078, "bytes": 7139984, "digest": "sha256:91b7ebebc9c172963878f20d5307cbce16c979c83325ad4d6d542b0a41120eca", "expires_at": "2027-01-22T08:48:32Z"},
+      {"name": "reader-local-downloads-evidence-40079478242-1", "id": 12554162944, "bytes": 2967, "digest": "sha256:b7505a5297686d6b9865f07f77a839694aac6a551541975411e3cf47a392fba4", "expires_at": "2027-01-22T08:48:32Z"}
+    ],
+    "consumer_probe_sha256": {
+      "Windows": "b39e513ac27449aed0449c4432d47d2b9689e73f42ab317a210495b68cf0bae4",
+      "Linux": "30b2b59e0631e1755382006e45c87abe87a888790daa232969d48bb669020c4b",
+      "macOS": "d3cd27db19710fe9322218d13148445e9c9c7eb2bc00ef5f53051f696036646a"
+    }
+  },
+  "granted": [
+    "Windows/Linux/macOS installed C and C++ consumers (31 named checks each: cloud-only, downloaded txt/epub/cbz, repeat request, duplicate SDK ids, legacy notes/progress, busy/held source, disk and mapping failure, cancellation, corrupt intent, identity/missing-row refusal, re-import)",
+    "real process termination (_exit in the durable-stage hook) at begun, prepared, unmapped, deleted and cleaned, then reopen and recovery in fresh processes",
+    "product books/shelves/tags/series/revisions/outbox/tombstones and a simulated remote object tree unchanged, compared independently in Python"
+  ],
   "not_granted": [
-    "Windows installed consumer",
-    "Linux installed consumer",
-    "macOS installed consumer",
-    "real process kill/reopen at every durable stage",
     "host integration (G01) and UI wiring",
+    "kill timing inside a single SDK call or inside the OS flush (only stage boundaries are killed)",
+    "PDF originals and very large libraries (backup policy copies the whole SDK library)",
     "real device or screen-reader evidence"
   ]
 }
