@@ -133,7 +133,7 @@ def main():
         record('missing_fragment_requires_explicit_part_start_confirmation',observed()['code']=='13' and frame()==prior and storage()==saved)
         action('alt+p');record('explicit_part_start_is_reverified_and_found',observed()['visible']=='0' and observed()['match']=='1' and host.read()['part']==2)
         book=import_book(args.fixtures/'repeated.epub');prior=frame();saved=storage();open_directory();choose(0)
-        record('repeated_spine_lists_all_explicit_candidates_without_jumping',observed()['candidate_mode']=='1' and [bus.name(n) for n in rows()]==['Spine item 1','Spine item 2'] and frame()==prior and storage()==saved)
+        record('repeated_spine_lists_all_explicit_candidates_without_jumping',observed()['candidate_mode']=='1' and observed()['selected']==str(2**64-1) and observed()['open_sensitive']=='0' and [bus.name(n) for n in rows()]==['Spine item 1','Spine item 2'] and all(not bus.states(n).get('selected') for n in rows()) and frame()==prior and storage()==saved)
         choose(1,True);record('second_repeated_spine_item_remains_second_after_found',observed()['visible']=='0' and host.read()['book']==book and host.read()['part']==1 and observed()['match']=='1')
         book=import_book(args.fixtures/'ncx2.epub');open_directory();select(0);action('alt+h');choose(1)
         record('actual_ncx_unicode_fragment_uses_same_public_verification',observed()['visible']=='0' and host.read()['book']==book and host.read()['part']==1)

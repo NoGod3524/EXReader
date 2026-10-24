@@ -10,6 +10,7 @@
   "attempt": 1,
   "job_id": 120962859429,
   "diagnostic": {
+    "source_sha": "8bf2b68dba205a63d7cdae78b2dd0f139c04ffb4",
     "run_id": 40124093566,
     "attempt": 1,
     "job_id": 120961689217,
@@ -27,6 +28,19 @@
     "artifact": {"id": 12572590346, "bytes": 21395505, "sha256": "4821140aa263e6ed13728b1db464f28e9d6c4b9d09b728a6fb807590b5129f73", "expires_at": "2027-01-22T19:10:39Z"}
   },
   "artifacts": [],
+  "focus_fix_diagnostic": {
+    "source_sha": "bd32a6eef23317042c0755e193ffc9bb46a2b2f3",
+    "run_id": 40126438508,
+    "attempt": 1,
+    "job_id": 120968784158,
+    "conclusion": "success",
+    "diagnostic_only": true,
+    "accepted": false,
+    "ui_passed": 29,
+    "backend_passed": 58,
+    "program_sha256": "b0400d03b418fb0d15c06fbbe7d3d60d2b8bf3572846fc0aa0845210dd423c66",
+    "artifact": {"id": 12573722502, "bytes": 21395500, "sha256": "8c7eaecdb6846b93c3d9676284bf6830564aacf99d6a1d43d5516b4b07beff7d", "expires_at": "2027-01-22T19:41:24Z"}
+  },
   "read_only_diagnostics": [{"run_id": 40126131632, "job_id": 120967828785, "diagnostic_only": true, "accepted": false, "conclusion": "success", "reason": "retained failure-tree proved active modal, unselected NCX row, no focused widget and insensitive Open button"}],
   "earlier_failed_runs": [
     {"run_id": 40122987085, "attempt": 1, "job_id": 120958359181, "source_sha": "2799df5885631b2c3f948dd60853d97f055e0720", "reason": "four misleading-indentation warnings in new GTK host code rejected under original -Wall -Wextra -Werror; statements separated, warnings remain errors", "artifact": {"id": 12572121611, "bytes": 1899854, "sha256": "c12b5de18f7283bf89981c1234cfa8784945ab9f0941e0f30bec76dd3902787e", "expires_at": "2027-01-22T18:56:15Z"}},
