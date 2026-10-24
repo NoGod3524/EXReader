@@ -332,14 +332,27 @@ struct custom_book {
   std::vector<std::string> paths, ids, labels, hrefs, bases, roles; std::vector<exr_part> parts; std::vector<exr_navigation> nav;
   std::vector<size_t> parents, partsel; exr_publication *pub = nullptr;
 };
-exr_status custom_load(void *, size_t, exr_document **out, exr_error *e) { return exr_document_open_memory(EXR_TXT, "A", 1, out, e); }
+exr_status custom_load(void *context, size_t part, exr_document **out, exr_error *e) {
+  const custom_book &book = *(const custom_book *)context;
+  const exr_node_input nodes[] = {
+    {EXR_NODE_DOCUMENT, SIZE_MAX, "document", nullptr, nullptr, 0},
+    {EXR_NODE_CHAPTER, 0, "chapter", nullptr, nullptr, 0},
+    {EXR_NODE_PARAGRAPH, 1, "p", nullptr, nullptr, 0},
+    {EXR_NODE_TEXT, 2, nullptr, "A", nullptr, 0}
+  };
+  const exr_chapter_input chapter = {book.ids[part].c_str(), book.paths[part].c_str(), 1, 1};
+  exr_document_input input{};
+  input.title = "custom chapter"; input.nodes = nodes; input.node_count = 4;
+  input.chapters = &chapter; input.chapter_count = 1;
+  return exr_document_create(&input, out, e);
+}
 void build(custom_book &b) {
   b.parts.clear(); b.nav.clear();
   for (size_t i = 0; i < b.paths.size(); i++) b.parts.push_back({b.ids[i].c_str(), b.paths[i].c_str(), "", 1});
   for (size_t i = 0; i < b.labels.size(); i++)
     b.nav.push_back({b.parents[i], b.partsel[i], b.labels[i].c_str(), b.hrefs[i].c_str(), b.bases[i].c_str(), b.roles[i].c_str()});
   exr_publication_input in; std::memset(&in, 0, sizeof(in));
-  in.title = "custom"; in.parts = b.parts.data(); in.part_count = b.parts.size(); in.load = custom_load;
+  in.title = "custom"; in.parts = b.parts.data(); in.part_count = b.parts.size(); in.load = custom_load; in.context = &b;
   in.navigation = b.nav.empty() ? nullptr : b.nav.data(); in.navigation_count = b.nav.size();
   sdk(exr_publication_create(&in, &b.pub, &g_se), "publication_create");
 }
@@ -369,6 +382,14 @@ void custom_cases() {
   add(b, SIZE_MAX, SIZE_MAX, "bad escape", "%zz.xhtml");                             /* 12 */
   add(b, SIZE_MAX, SIZE_MAX, "missing", "../Text/none.xhtml");                       /* 13 */
   build(b);
+  {
+    exr_document *chapter = nullptr;
+    sdk(exr_publication_load(b.pub, 1, &chapter, &g_se), "custom chapter load");
+    size_t resource = SIZE_MAX, node = SIZE_MAX;
+    check("custom: the independent SDK fixture has a chapter and reports a missing fragment",
+      exr_document_resolve(chapter, 0, "#x", &resource, &node, &g_se) == EXR_OK && node == SIZE_MAX);
+    exr_document_free(chapter);
+  }
   reader_navigation *n = nullptr; reader_navigation_error e;
   check("custom: snapshot opens", reader_navigation_open_publication(b.pub, nullptr, &n, &e) == READER_NAVIGATION_OK && n);
   tgt t;

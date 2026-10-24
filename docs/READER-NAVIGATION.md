@@ -65,7 +65,7 @@ SDK 未解析而本模块又只找到一个同路径 part 时同样返回 `UNRES
 
 ## 云端验证（仅 GitHub Actions）
 
-Windows/Linux 安装后的 C 与 C++ 消费者，只链接 `EXReaderNavigation`（及其 SDK `core`），不链接产品模块。覆盖：
+Windows/Linux 安装后的 C 与 C++ 消费者链接 `EXReaderNavigation`（及其 SDK `core`）；C++ 探针另链接已安装 `pdf` 组件以打开真实 PDF，不链接产品模块。覆盖：
 EPUB3 nav、EPUB2 NCX、嵌套与空目录、重复标题、非 ASCII 标题、相对路径与片段、重复 spine、外部目标、
 未解析 part、越界/损坏、分页、深度/节点/文字限额、取消（逐个轮询点）、重入、CFI，
 以及快照在 SDK 释放后的寿命。期望来自夹具生成器手写的 TSV，而非模块自身；
@@ -74,5 +74,10 @@ EPUB3 nav、EPUB2 NCX、嵌套与空目录、重复标题、非 ASCII 标题、�
 
 ## 验收状态
 
-`docs/validation/reader-navigation.json` 为 `accepted: false`：本包尚无云端运行。
+`docs/validation/reader-navigation.json` 仍为 `accepted: false`。
+首轮 `e3ebed25` / run `40073175739` 两平台因缺少公开 `exr/formats.h` 声明编译失败，原运行保留。
+第二轮 `3c0ffdd9` / run `40073375893` 两平台构建和 C 消费者通过，但 C++ 探针各 113 项中有一项失败：
+自定义 publication 的加载器返回无 chapter 的 TXT，不能用于公开 fragment resolve。
+探针现改为用 `exr_document_create` 构造带真实章节路径的文档，另先独立核对缺失片段的 SDK 返回值；
+原 `PART_ONLY` 断言保留，模块生产源码与冻结 SDK 未变。后续结果仅按实际云端运行登记。
 即便通过，也只授予本包接口：不含宿主 UI、产品性能、六平台互通、macOS，且 PDF/CBZ 无作者大纲。

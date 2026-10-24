@@ -34,6 +34,7 @@ REQUIRED_CHECKS = ['%s: %s' % (case, name) for case in ('epub3-nav', 'epub2-ncx'
     'custom: explicit spine index 2 resolves the second repeated item with its verbatim path',
     'custom: explicit index of another path is MISMATCH', 'custom: explicit index beyond the book is RANGE',
     'custom: a missing fragment keeps the part and no node (PART_ONLY)',
+    'custom: the independent SDK fixture has a chapter and reports a missing fragment',
     'custom: a row without href is UNRESOLVED',
     'custom: one path match that the SDK left unresolved is not guessed',
     'custom: cancelling at every poll point of resolve yields CANCELLED and no target',

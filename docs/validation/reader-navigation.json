@@ -1,6 +1,6 @@
 {
   "accepted": false,
-  "status": "no cloud run recorded yet",
+  "status": "cloud iteration pending after preserved first compile and second fixture failures",
   "package": "EXReaderNavigation 0.1.0",
   "common_start": "c3511a011eefbf1fba1d20908f000cef22b1ced2",
   "source_sha": null,
@@ -20,8 +20,19 @@
       {"id": 120811322735, "role": "strict evidence", "conclusion": "failure"}
     ],
     "scope": "both platform compilation jobs failed and strict evidence refused; entire run retained"
+  }, {
+    "source_sha": "3c0ffdd9a6c86ff7187ae6629bc9db952c5fc82f",
+    "run_id": 40073375893,
+    "attempt": 1,
+    "jobs": [
+      {"id": 120811427609, "platform": "linux", "conclusion": "failure"},
+      {"id": 120811427726, "platform": "windows", "conclusion": "failure"}
+    ],
+    "checks_per_platform": 113,
+    "failures_per_platform": 1,
+    "reason": "The custom publication fixture returned TXT without a chapter directory, so public fragment resolve rejected its chapter index. The fixture now constructs a real chapter with the public SDK; original PART_ONLY expectation retained and an independent SDK precondition check added."
   }],
-  "problems": ["Nothing has been built or run in GitHub Actions for this package; the fields above are filled only from a real run."],
+  "problems": ["No complete same-source cloud run has accepted this package yet."],
   "granted_platforms": [],
   "macos_accepted": false,
   "performance_claimed": false,
