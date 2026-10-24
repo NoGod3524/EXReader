@@ -81,8 +81,12 @@ int main(int argc,char **argv) {
     linux_reader_execute(reader,&value,&jumped);REQUIRE(jumped.status==EXR_OK && jumped.has_frame && jumped.fixed && jumped.page==0 && jumped.records_match==EXR_ANCHOR_FOUND);commit(reader,&jumped);reader_result_free(&jumped);reader_result_free(&result);
     path=g_build_filename(folder,"pages.cbz",NULL);g_free(folder);value=command(READER_IMPORT,0);value.path=path;linux_reader_execute(reader,&value,&result);g_free(path);
     REQUIRE(result.status==EXR_OK && result.has_frame && result.fixed);book=result.book;commit(reader,&result);reader_result_free(&result);
-    save(reader,book,READER_RC_BOOKMARK,"CBZ must not invent text",&result);REQUIRE(result.status==EXR_UNSUPPORTED && !result.records_created && !result.records_pending && !result.has_frame);reader_result_free(&result);
-    list(reader,book,&result);REQUIRE(result.records_page.count==0 && result.records_page.complete);reader_result_free(&result);
+    save(reader,book,READER_RC_BOOKMARK,"CBZ public empty snapshot point",&result);REQUIRE(result.status==EXR_OK && result.records_created && !result.records_pending && !result.has_frame);reader_result_free(&result);
+    list(reader,book,&result);REQUIRE(result.records_page.count==1 && result.records_page.complete && result.records_page.items[0].mode==READER_AV_MODE_FIXED && result.records_page.items[0].exact_size==0);
+    item=&result.records_page.items[0];value=command(READER_RECORDS_JUMP,book);value.records_id=item->annotation_id;value.records_head=item->revision_id;value.records_sha=item->sha256;
+    linux_reader_execute(reader,&value,&jumped);REQUIRE(jumped.status==EXR_OK && jumped.has_frame && jumped.fixed && jumped.page==0 && jumped.records_match==EXR_ANCHOR_FOUND);commit(reader,&jumped);reader_result_free(&jumped);reader_result_free(&result);
+    save(reader,book,READER_RC_PROGRESS,"",&result);REQUIRE(result.status==EXR_OK && result.records_created && !result.has_frame);reader_result_free(&result);
+    list(reader,book,&result);REQUIRE(result.records_progress_state==READER_SELECTION_SAFE && !result.records_progress_deleted);reader_result_free(&result);
   } else if(!strcmp(argv[4],"first")) {
     list(reader,book,&result);REQUIRE(result.records_page.count==0 && result.records_page.complete);REQUIRE(result.records_progress_state==READER_SELECTION_MISSING);reader_result_free(&result);
     save(reader,book,READER_RC_PROGRESS,"",&result);REQUIRE(result.status==EXR_OK && result.records_created && !result.records_pending && !result.has_frame);reader_result_free(&result);
