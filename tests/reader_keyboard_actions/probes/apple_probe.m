@@ -23,6 +23,7 @@ typedef struct {
   NSView *area;
   NSTextField *field;
   NSWindow *last_window;
+  const char *dispatch_path;
   int modal_open;
   int force_active;
   int cancel_calls;
@@ -39,7 +40,7 @@ typedef struct {
   int other_saw_key;
 } host_state;
 
-static host_state g;
+static host_state g = {.dispatch_path = "none"};
 static char scratch[512];
 static int failures;
 static int passes;
@@ -229,7 +230,16 @@ static void send_key(NSWindow *window, NSEventType type, unsigned short code,
                      NSEventModifierFlags flags, NSString *characters, BOOL is_repeat) {
   @autoreleasepool {
     NSEvent *event = make_event(type, code, flags, characters, is_repeat, window);
-    [NSApp sendEvent:event];
+    /* Use the application dispatch path whenever the window owns the keyboard;
+       a window that a hosted runner never made key still receives the event
+       through its own sendEvent:, which is the same AppKit dispatch. */
+    if ([NSApp keyWindow] == window || g.modal_open != 0) {
+      g.dispatch_path = "application";
+      [NSApp sendEvent:event];
+    } else {
+      g.dispatch_path = "window";
+      [window sendEvent:event];
+    }
   }
   pump(0.05);
 }
@@ -255,8 +265,10 @@ static void case_ready(void) {
     return;
   }
   (void)snprintf(scratch, sizeof(scratch),
-                 "a real NSWindow receives NSEvents (isKeyWindow=%d appActive=%d note=%s)",
+                 "a real NSWindow receives NSEvents (isKeyWindow=%d appActive=%d dispatch=%s "
+                 "note=%s)",
                  [g.window isKeyWindow] ? 1 : 0, [NSApp isActive] ? 1 : 0,
+                 g.dispatch_path != NULL ? g.dispatch_path : "none",
                  g.force_active != 0 ? "runner refused activation, host flag derived from the "
                                        "ordered-front window"
                                      : "key window");
@@ -280,7 +292,10 @@ static void case_page_next(void) {
     record("reader-page-next-consumed", "FAIL", scratch);
     return;
   }
-  record("reader-page-next-consumed", "PASS", "a real right-arrow NSEvent became the next page");
+  (void)snprintf(scratch, sizeof(scratch),
+                 "a real right-arrow NSEvent became the next page (dispatch=%s)",
+                 g.dispatch_path != NULL ? g.dispatch_path : "none");
+  record("reader-page-next-consumed", "PASS", scratch);
 }
 
 static void case_page_previous(void) {
@@ -485,7 +500,9 @@ static void case_focus_change(void) {
     record("focus-change-forgets-hold", "FAIL", "Space did not produce a page action");
     return;
   }
+  [g.other orderFrontRegardless];
   [g.other makeKeyAndOrderFront:nil];
+  [g.other makeKeyWindow];
   pump(0.2);
   if (g.cancel_calls < 1 || g.canceled_dropped < 1) {
     (void)snprintf(scratch, sizeof(scratch), "cancel_calls=%d dropped=%d", g.cancel_calls,
