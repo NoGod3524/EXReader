@@ -67,11 +67,53 @@
 （SDK 版本、ABI、消费者散列、字体散列、运行/尝试 ID、清单散列）。任一下载散列不符、超时、
 进程异常、读回字节不一致或结果与固定预期不符，整个批次拒绝通过，但其余文件继续采集。
 
-## 5. 当前结果
+## 5. 当前结果（已执行）
 
-首次 pin 与验收运行完成后在此登记实际 run/attempt、工件 ID 与 SHA-256；在结果出现前，
-`docs/validation/reader-real-corpus.json` 保持 `accepted:false`。本包的 18 份不计入旧
-1710 目标，也不改变 1710 的历史完成数。
+- 固定清单 SHA-256：`2651b03dc9df0f8605b0da561518cc3138cd072ac61d113ea831d4f77c6d7c69`
+- pin run `40065120271`（attempt 1，commit `51d8f18f`），工件 `reader-real-corpus-pin`
+  id `12549355464`、8,201,176 字节、`sha256:7f932d98798c63fadfbfcd44a216508ed2e4c85e13eb6c2af49d563ac6503849`；
+  18 份 final URL、字节与 SHA-256 全部与声明一致。
+- 验收 run [`40067425188`](https://github.com/NoGod3524/EXReader/actions/runs/40067425188)
+  （attempt 1，源码 `278d63691a4c73e7aa932d71a40a5938c5427514`），Windows 与 Linux 同一清单、
+  同一源码、各自构建安装 SDK 3.40.0/ABI 1；两个平台工件各约 18.87 MB。
+- 严格汇总 **`accepted:false`**。没有把失败、跳过或缺项写成通过。
+
+| 格式 | 真实文件 | Linux 已验收/失败 | Windows 已验收/失败 | 两平台同时通过 |
+| --- | --- | --- | --- | --- |
+| EPUB | 2 | 2 / 0 | 2 / 0 | 是 |
+| TXT | 2 | 2 / 0 | 2 / 0 | 是 |
+| PDF | 2 | 2 / 0 | 2 / 0 | 是 |
+| HTML | 2 | 2 / 0 | 2 / 0 | 是 |
+| FB2 | 2 | 2 / 0 | 0 / 2 | 否 |
+| DOCX | 2 | 2 / 0 | 2 / 0 | 是 |
+| RTF | 2 | 0 / 2 | 0 / 2 | 否 |
+| MOBI | 2 | 2 / 0 | 2 / 0 | 是 |
+| CBZ | 2 | 0 / 2 | 0 / 2 | 否 |
+
+汇总：Linux 14/18 通过、Windows 12/18 通过；18 份全部执行，无超时、无 pending、无进程异常。
+边界夹具 3/3 干净拒绝（空 TXT、截断 EPUB、伪 PDF），不计入真实文件数。
+
+### 已保留的失败与最小复现身份
+
+1. **RTF 两份均被拒绝**（两平台）。输入 `rtf-crowley-policy`（63,797 字节，
+   `de6126e8…`）与 `rtf-micro-republics`（36,814 字节，`6fb43626…`）；公开
+   `exr_library_import` 与 `exr_document_open` 均返回 `EXR_FORMAT`，消息
+   “Invalid or unsupported RTF stream”。两份都是真实 Word/WordPad 文档；Micro 文件末尾带 NUL，
+   Crowley 文件含 Word 2013 控制流。建议：容忍流末尾 NUL 填充并补齐常见 Word 控制词；修复前不改变预期。
+2. **CBZ 两份均被拒绝**（两平台）。输入 `cbz-pepper-01`（1,078,314 字节，`02e28b6d…`）与
+   `cbz-pepper-02`（2,276,638 字节，`f4476b66…`）；`exr_library_import_file` 与
+   `exr_fixed_open` 返回 “Unsafe CBZ member path”。ZIP 成员名以 `/` 开头，属真实发行包常见写法。
+   建议：只读枚举时把前导 `/` 归一化为相对路径，同时保留 `..` 越界拒绝；修复前保留失败。
+3. **Windows FB2 文本查找不一致**。两份 FB2 在 Windows 均能打开、分页、绘制（128 页 / 65 页），
+   但 `exr_document_find` 对 `Бретёр`、`портрет` 未命中；Linux 同一源码、同一字节命中并完成
+   capture/resolve。最小复现：`fb2-breter`（196,462 字节，`8a62c0fb…`）、
+   `fb2-portraits`（424,614 字节，`10f67190…`）。建议核对 Windows 的文本投影/查找路径；
+   不把 Windows 结果改成预期拒绝。
+4. 诊断运行 `40065415722`、`40066056769`、`40067009509` 的失败来自消费者 JSON 拼接、
+   重排格式导入路径和锚点词选择，已修正；它们不作为验收证据，原结果仍在云端保留。
+   最终验收只使用 `40067425188` 的工件。
+
+本包 18 份不计入旧 1710 目标，也不改变 1710 的历史完成数（仍为 0/1710）。
 
 ## 6. SDK 问题上报
 
