@@ -30,3 +30,11 @@
 首轮已终态：除GTK设置步骤外的全部生产作业通过，最后汇总遇到Python3.10不支持 `hashlib.file_digest`。改为标准分块SHA-256并在Actions前置自测已知摘要。原run及全部工件保留；新增只读诊断入口仅认证同一个原run，明确区分受测source与validator source、`diagnostic_only=true/accepted=false`，不拼接跨源码或跨attempt证据。正常新源码流程仍独立整轮运行。
 
 后续源码 `f09148ba` / run `40140496079` 的 Windows 初始导入点击未生效，尚未进入搜索测试。探针原来只等待书架和按钮就绪，没有保证 BM_CLICK 的父窗口处于激活状态。`7adda19c` 在唯一一次点击前激活真实窗口、回读输入并记录按钮与书架状态；这一新源码的全部 Windows 搜索、账号和原有套件已通过。生产 `apps/examples/extras` 仍与合并基点逐字相同，两个失败 run 均保留。
+
+## 新增导航与排版设置的共同候选
+
+在上述已认证来源上普通合入 Windows 目录导航证据 HEAD `89252d4f1377c37917b2ad59cf54faa8103d6b67`（source `53dc10c6` / run `40142663081`）和 Android 设置证据 HEAD `91270f8e7b5a3085430992b97dd27f612666480a`（source `657ea2cc` / run `40138266576`）。新生产基点为 `e90c55885b95d14036b9ab2da6983b6cad01a779`，SDK、schema、wire 和锚点格式继续冻结。
+
+新共同轮将原样重跑 Windows 导航31项、F2安装消费者130项及全部原Windows套件，并由同轮ZIP同时认证原搜索和新增目录报告；Android改跑已交回的设置完整作业，包含原Reading16/Search15/Nav18和新增Prefs17。Android仍明确保留 `page_colors_accepted=false`，不把记录公开API缺口的检查算作页面配色通过。
+
+在新共同轮终态并完成认证之前，本文上面的分项通过只归属 `7adda19c`，新增两宿主的独立通过分别归属它们自己的受测源码。尚未合入Apple新宿主、GTK批量导入或Android新CBZ包。
