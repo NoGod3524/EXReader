@@ -111,11 +111,227 @@ kill 一律是 `SIGKILL`（POSIX）/ `TerminateProcess`（Windows）；`abort` �
 
 工件命名：`reader-sync-resilience-<runner.os>-<run_id>-<attempt>`、`reader-sync-resilience-aggregate-<run_id>-<attempt>`。
 
-## 8. 本轮结果
+## 8. 本轮结果（实际证据）
 
-（本轮 run 完成后按实际工件回填：source SHA、run/attempt/job、逐平台逐项结果、工件 id/字节/digest/有效期、原失败与剩余工作。）
+### 8.1 受测源与运行
+
+| 项 | 值 |
+| --- | --- |
+| 完整受测 source SHA | `79a4070059a0806ca91ce9b9092e5f71eca50e4e` |
+| run / attempt | `40079870542` / `1` |
+| workflow | `.github/workflows/reader-sync-resilience.yml` |
+| 固定实现起点 | `f43baf9182d75907c0cb5d6f77048f27bca8c950`（祖先，门禁校验） |
+| SDK 保护树 | `9854061be331fe603a1822d9b2b36ee357154927`（逐字相等） |
+| 产品 schema / 共享模块 | 未改（`apps/reader/store`、`session`、`sync`、`revisions`、`extras/webdav`、`extras/opds` 逐字相等） |
+| 三个平台请求总数 | 各 2827（三平台完全一致） |
+
+### 8.2 作业
+
+| job id | 名称 | 结论 | 起止（UTC） |
+| --- | --- | --- | --- |
+| 120830996325 | fault boundaries (ubuntu-22.04) | success | 08:54:43 → 08:58:36 |
+| 120830996147 | fault boundaries (windows-2022) | success | 08:54:43 → 08:57:23 |
+| 120830996357 | fault boundaries (macos-15) | success | 08:56:17 → 08:59:13 |
+| 120831849724 | strict same-source three-platform aggregate | success | 08:59:15 → 08:59:28 |
+
+### 8.3 工件身份（带 run/attempt，非空字节、有效期、SHA-256）
+
+| 名称 | id | 字节 | SHA-256（上传日志一致） | 过期 |
+| --- | --- | --- | --- | --- |
+| `reader-sync-resilience-Linux-40079870542-1` | 12555105747 | 2969210 | `sha256:2ea2905b9490ba3191568d1d03bf211f4fa03346eae9601d038a109693e06660` | 2027-01-22 |
+| `reader-sync-resilience-Windows-40079870542-1` | 12554886282 | 2741000 | `sha256:78ab2a2f7b8e394ee8fd01d30e2e195cafd024dac29681232af6e8bed04b755a` | 2027-01-22 |
+| `reader-sync-resilience-macOS-40079870542-1` | 12554952204 | 2572269 | `sha256:efdc7790188648aa1e8f9f552adf6f559a82a32d618e5f2754c6022b510182c4` | 2027-01-22 |
+| `reader-sync-resilience-aggregate-40079870542-1` | 12555310099 | 1976 | `sha256:86b0d99357e4b21d140dfcee858f463e582d96190a04a336885d452a8766a20d` | 2027-01-22 |
+
+工件内不含私钥（`!build/**/certificates/*.key`，汇总作业再次断言无 `*.key`）。
+
+### 8.4 平台摘要（严格汇总实算）
+
+| 平台 | 21 条边界 | 原 20 项 | 请求数 | 用时(s) | `result.json` SHA-256 | 原 20 项报告 SHA-256 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Linux | 21/21 | 20/20 | 2827 | 80.88 | `1d5a977f...c0cb` | `5d747b4a...9c83` |
+| Windows | 21/21 | 20/20 | 2827 | 45.34 | `1aa393c3...26bf` | `2f0e6fd3...fd29` |
+| macOS | 21/21 | 20/20 | 2827 | 64.76 | `be671c99...44ab` | `9bea01ca...d9d1` |
+
+消费者身份：Linux `6da09ecc…`、Windows `ba43bac0…`、macOS `55a285b2…`；协议 owner 的 `revision-consumer` 同源构建。
+平台报告均自报 `three_platform_accepted: false`，只有汇总作业给出 `three_platform_accepted: true`。
+
+### 8.5 逐项实测
+
+退出身份为真实进程：POSIX 为 `SIGKILL`（rc=-9），Windows 为 `TerminateProcess`（rc=1），第 7 条为自我 `_Exit(7)`。
+完整 expected/actual 见 `docs/validation/reader-sync-resilience.json` 与各平台工件内 `resilience-evidence/result.json`。
+
+#### 1. `put_committed_before_ack_response_withheld_then_kill_preserves_remote_bytes_and_outbox`
+
+- 预期：A kill while the 201 is withheld leaves exactly the committed remote bytes and the unacknowledged outbox row; the next sweep replays conditionally (412), verifies by GET, acknowledges once and never rewrites the immutable object.
+- Linux：exit=pid 8021, SIGKILL, rc=-9 · put_outcomes=[201,412] · outbox_after_kill=1 · outbox_after_resume=0 · public_read_heads=1 · readback_exact=true
+- Windows：exit=pid 5768, TerminateProcess, rc=1 · put_outcomes=[201,412] · outbox_after_kill=1 · outbox_after_resume=0 · public_read_heads=1 · readback_exact=true
+- macOS：exit=pid 11000, SIGKILL, rc=-9 · put_outcomes=[201,412] · outbox_after_kill=1 · outbox_after_resume=0 · public_read_heads=1 · readback_exact=true
+
+#### 2. `kill_during_original_upload_before_remote_commit_leaves_no_partial_remote_object`
+
+- 预期：A kill inside the upload body leaves no remote object and no rewritten staged original; the only residue is a private transfer temporary that the next sweep never reuses.
+- Linux：exit=pid 8303, SIGKILL, rc=-9 · put_outcomes=["undelivered",201] · remote_object_absent=true · leftover_temporaries=[".reader-sync-3f237239aa424ec794e2ad88e8131715.tmp"] · staged_bytes=936000
+- Windows：exit=pid 6748, TerminateProcess, rc=1 · put_outcomes=["undelivered",201] · remote_object_absent=true · leftover_temporaries=[".reader-sync-7d1a5bf016dc4ee7bea268df11a08305.tmp"] · staged_bytes=936000
+- macOS：exit=pid 11007, SIGKILL, rc=-9 · put_outcomes=["undelivered",201] · remote_object_absent=true · leftover_temporaries=[".reader-sync-bf78b1e19f8648b48fb6eec620daaabb.tmp"] · staged_bytes=936000
+
+#### 3. `replay_of_an_already_committed_immutable_revision_is_412_and_never_rewritten`
+
+- 预期：Publishing a row that is already on the server is answered 412 and acknowledged only after a byte-identical GET; the remote object count and digest never change.
+- Linux：put_outcomes=[412] · object_count_for_id=1 · outbox=0 · pushed=1
+- Windows：put_outcomes=[412] · object_count_for_id=1 · outbox=0 · pushed=1
+- macOS：put_outcomes=[412] · object_count_for_id=1 · outbox=0 · pushed=1
+
+#### 4. `kill_during_verification_get_before_hash_keeps_remote_bytes_and_outbox`
+
+- 预期：A kill inside the verification GET body cannot acknowledge; the retained row is replayed after restart and the immutable remote bytes are unchanged.
+- Linux：exit=pid 8603, SIGKILL, rc=-9 · put_outcomes=[412,412] · outbox_after_kill=1 · outbox_after_resume=0
+- Windows：exit=pid 4212, TerminateProcess, rc=1 · put_outcomes=[412,412] · outbox_after_kill=1 · outbox_after_resume=0
+- macOS：exit=pid 11087, SIGKILL, rc=-9 · put_outcomes=[412,412] · outbox_after_kill=1 · outbox_after_resume=0
+
+#### 5. `truncated_verification_get_is_refused_without_acknowledgement`
+
+- 预期：A verification GET closed before its declared length is reported as a native transport failure with no acknowledgement and no remote mutation; the retry then acknowledges.
+- Linux：failure_status=3 · failure_dav_code=3 · failure_http_status=0 · outbox_after_failure=1 · outbox_after_retry=0
+- Windows：failure_status=3 · failure_dav_code=3 · failure_http_status=0 · outbox_after_failure=1 · outbox_after_retry=0
+- macOS：failure_status=3 · failure_dav_code=3 · failure_http_status=0 · outbox_after_failure=1 · outbox_after_retry=0
+
+#### 6. `kill_while_acknowledging_after_verified_get_never_duplicates_or_loses_work`
+
+- 预期：A kill while the acknowledgement is blocked by an external exclusive database write lock either leaves the row pending or already acknowledged; both states converge on one remote object, one history row and an empty outbox after restart.
+- Linux：exit=pid 9181, SIGKILL, rc=-9 · outbox_after_kill=1 · history_after_kill=1 · outbox_after_resume=0 · object_count_for_id=1
+- Windows：exit=pid 4512, TerminateProcess, rc=1 · outbox_after_kill=1 · history_after_kill=1 · outbox_after_resume=0 · object_count_for_id=1
+- macOS：exit=pid 11223, SIGKILL, rc=-9 · outbox_after_kill=1 · history_after_kill=1 · outbox_after_resume=0 · object_count_for_id=1
+
+#### 7. `abrupt_process_exit_after_outbox_commit_keeps_one_remote_object_and_no_pending_row`
+
+- 预期：An abrupt exit after the acknowledgement keeps the committed object and the empty outbox; the restart republishes nothing and keeps a single immutable history row.
+- Linux：exit=pid 9463, self exit without unwinding, rc=7 · outbox_after_exit=0 · put_outcomes=[201] · object_count_for_id=1 · outbox_after_restart=0
+- Windows：exit=pid 236, self exit without unwinding, rc=7 · outbox_after_exit=0 · put_outcomes=[201] · object_count_for_id=1 · outbox_after_restart=0
+- macOS：exit=pid 11331, self exit without unwinding, rc=7 · outbox_after_exit=0 · put_outcomes=[201] · object_count_for_id=1 · outbox_after_restart=0
+
+#### 8. `kill_during_original_download_leaves_no_published_cache_identity`
+
+- 预期：A kill inside the original body leaves no cache identity (no <sha>.<format> file) and no received revision; only private transfer temporaries remain, and the retry publishes the exact bytes atomically.
+- Linux：exit=pid 9735, SIGKILL, rc=-9 · history_after_kill=0 · leftover_temporaries=[".exr-webdav-f8c42ee107fe17607953e634ae14a83a.tmp",".reader-sync-ef994836c4444d57aa7e60bfe3f15c5d.tmp"] · originals_verified=1
+- Windows：exit=pid 7644, TerminateProcess, rc=1 · history_after_kill=0 · leftover_temporaries=[".exr-webdav-7644-2.tmp",".reader-sync-e5991a4b81774786b2c06a07c28fbab4.tmp"] · originals_verified=1
+- macOS：exit=pid 11336, SIGKILL, rc=-9 · history_after_kill=0 · leftover_temporaries=[".exr-webdav-8fb3595ced0f328451602d14f9fbc71a.tmp",".reader-sync-d6e014ac31704745be3473ac9ddaa224.tmp"] · originals_verified=1
+
+#### 9. `original_download_timeout_removes_private_temp_and_keeps_pending_identity`
+
+- 预期：A transfer timeout inside the original download is reported as a bounded native transport failure, leaves no temporary and no partial identity, and the explicit retry publishes the exact bytes.
+- Linux：failure_status=3 · failure_dav_code=3 · elapsed_seconds=1.57 · timeout_ms=1500 · leftover_temporaries=[]
+- Windows：failure_status=3 · failure_dav_code=3 · elapsed_seconds=4.02 · timeout_ms=1500 · leftover_temporaries=[]
+- macOS：failure_status=3 · failure_dav_code=3 · elapsed_seconds=1.67 · timeout_ms=1500 · leftover_temporaries=[]
+
+#### 10. `cached_original_identity_is_reverified_before_reuse`
+
+- 预期：A same-length corrupted cache identity is refused with the hash status and is never overwritten behind the host, while the verified bytes keep the history unchanged.
+- Linux：corrupt_status=5 · cache_unchanged_after_refusal=true · history=1
+- Windows：corrupt_status=5 · cache_unchanged_after_refusal=true · history=1
+- macOS：corrupt_status=5 · cache_unchanged_after_refusal=true · history=1
+
+#### 11. `remote_original_with_wrong_bytes_is_never_published_as_local_identity`
+
+- 预期：A remote original with the right length but the wrong digest is refused with the hash status, publishes no cache identity and receives no revision.
+- Linux：failure_status=5 · cache_identity_absent=true · history=0
+- Windows：failure_status=5 · cache_identity_absent=true · history=0
+- macOS：failure_status=5 · cache_identity_absent=true · history=0
+
+#### 12. `real_401_is_reported_without_acknowledgement_or_implicit_retry`
+
+- 预期：A real 401 is reported as an authentication failure with the status preserved, no acknowledgement, no automatic replay, and the row is published only on an explicit retry.
+- Linux：failure_status=3 · failure_dav_code=6 · failure_http_status=401 · rejected_requests=1 · implicit_requests_during_wait=0
+- Windows：failure_status=3 · failure_dav_code=6 · failure_http_status=401 · rejected_requests=1 · implicit_requests_during_wait=0
+- macOS：failure_status=3 · failure_dav_code=6 · failure_http_status=401 · rejected_requests=1 · implicit_requests_during_wait=0
+
+#### 13. `real_403_is_reported_without_acknowledgement_or_implicit_retry`
+
+- 预期：A real 403 stays a reported failure with the status preserved, no acknowledgement and no implicit replay; the retained row is published by an explicit retry.
+- Linux：failure_status=3 · failure_dav_code=5 · failure_http_status=403 · rejected_requests=1 · outbox_after_failure=1
+- Windows：failure_status=3 · failure_dav_code=5 · failure_http_status=403 · rejected_requests=1 · outbox_after_failure=1
+- macOS：failure_status=3 · failure_dav_code=5 · failure_http_status=403 · rejected_requests=1 · outbox_after_failure=1
+
+#### 14. `real_429_retry_after_is_not_followed_by_implicit_replay`
+
+- 预期：A real 429 with Retry-After is surfaced with no acknowledgement and no request during the advertised interval; the explicit retry then publishes the immutable bytes once.
+- Linux：failure_status=3 · failure_http_status=429 · put_outcomes=[429,201] · requests_during_retry_after=0 · outbox_after_retry=0
+- Windows：failure_status=3 · failure_http_status=429 · put_outcomes=[429,201] · requests_during_retry_after=0 · outbox_after_retry=0
+- macOS：failure_status=3 · failure_http_status=429 · put_outcomes=[429,201] · requests_during_retry_after=0 · outbox_after_retry=0
+
+#### 15. `real_503_during_publication_retains_outbox_and_republishes_on_explicit_retry`
+
+- 预期：A real 503 during publication is reported, commits nothing remotely, keeps the outbox row and is not retried implicitly; the explicit retry publishes the exact bytes once.
+- Linux：failure_status=3 · failure_http_status=503 · put_outcomes=[503,201] · remote_absent_after_failure=true · requests_during_retry_after=0
+- Windows：failure_status=3 · failure_http_status=503 · put_outcomes=[503,201] · remote_absent_after_failure=true · requests_during_retry_after=0
+- macOS：failure_status=3 · failure_http_status=503 · put_outcomes=[503,201] · remote_absent_after_failure=true · requests_during_retry_after=0
+
+#### 16. `mid_sweep_503_keeps_completed_shards_and_resumes_at_the_failed_shard`
+
+- 预期：A real 503 in the middleware of the sweep keeps the 40 completed shards, reports the failed shard and resumes there on the next explicit start instead of restarting work.
+- Linux：failure_status=5 · failure_http_status=503 · completed_shards_at_failure=40 · shard_at_failure=40 · completed_shards_after_restart=256 · sweeps_after_restart=1
+- Windows：failure_status=5 · failure_http_status=503 · completed_shards_at_failure=40 · shard_at_failure=40 · completed_shards_after_restart=256 · sweeps_after_restart=1
+- macOS：failure_status=5 · failure_http_status=503 · completed_shards_at_failure=40 · shard_at_failure=40 · completed_shards_after_restart=256 · sweeps_after_restart=1
+
+#### 17. `connection_reset_during_put_body_resolves_by_get_and_keeps_outbox`
+
+- 预期：A connection reset inside the PUT body is treated as an ambiguous transport outcome: nothing is committed, the verification GET reports the object absent and the outbox row stays until an explicit retry publishes it.
+- Linux：failure_status=3 · failure_dav_code=5 · failure_http_status=404 · remote_absent_after_reset=true · outbox_after_failure=1 · retry_status=0
+- Windows：failure_status=3 · failure_dav_code=5 · failure_http_status=404 · remote_absent_after_reset=true · outbox_after_failure=1 · retry_status=0
+- macOS：failure_status=3 · failure_dav_code=5 · failure_http_status=404 · remote_absent_after_reset=true · outbox_after_failure=1 · retry_status=0
+
+#### 18. `bounded_publication_timeout_leaves_no_remote_object_and_keeps_outbox`
+
+- 预期：A stalling server is bounded by the configured transfer timeout instead of hanging, commits nothing, keeps the outbox row and lets an explicit retry publish the bytes.
+- Linux：failure_status=3 · elapsed_seconds=1.39 · timeout_ms=1200 · remote_absent_after_timeout=true · outbox_after_failure=1
+- Windows：failure_status=3 · elapsed_seconds=4.02 · timeout_ms=1200 · remote_absent_after_timeout=true · outbox_after_failure=1
+- macOS：failure_status=3 · elapsed_seconds=1.3 · timeout_ms=1200 · remote_absent_after_timeout=true · outbox_after_failure=1
+
+#### 19. `existing_immutable_object_with_foreign_bytes_is_not_overwritten_or_acked`
+
+- 预期：A different body already stored at the immutable path is preserved byte for byte, the acknowledgement is refused with the hash status, and only the correct bytes let the replay acknowledge.
+- Linux：failure_status=5 · put_outcomes=[412] · foreign_bytes_preserved=true · outbox_after_retry=0
+- Windows：failure_status=5 · put_outcomes=[412] · foreign_bytes_preserved=true · outbox_after_retry=0
+- macOS：failure_status=5 · put_outcomes=[412] · foreign_bytes_preserved=true · outbox_after_retry=0
+
+#### 20. `same_account_reopen_after_forced_kill_resumes_without_rebinding`
+
+- 预期：After a forced kill the same account and root reopen with no rebinding, the binding bytes stay identical, the retained row is acknowledged once and the history is intact.
+- Linux：exit=pid 10422, SIGKILL, rc=-9 · binding_unchanged=true · outbox_after_resume=0 · pushed_on_resume=1
+- Windows：exit=pid 864, TerminateProcess, rc=1 · binding_unchanged=true · outbox_after_resume=0 · pushed_on_resume=1
+- macOS：exit=pid 11742, SIGKILL, rc=-9 · binding_unchanged=true · outbox_after_resume=0 · pushed_on_resume=1
+
+#### 21. `different_account_after_forced_kill_is_refused_before_any_request`
+
+- 预期：A different account on the killed store is refused with the account status before any request, the binding is not rewritten and the retained outbox row is untouched.
+- Linux：exit=pid 10962, SIGKILL, rc=-9 · refusal_status=4 · requests_after_refusal=0 · outbox_after_refusal=1
+- Windows：exit=pid 2416, TerminateProcess, rc=1 · refusal_status=4 · requests_after_refusal=0 · outbox_after_refusal=1
+- macOS：exit=pid 11775, SIGKILL, rc=-9 · refusal_status=4 · requests_after_refusal=0 · outbox_after_refusal=1
+
+### 8.6 跨平台一致性
+
+21 条边界的远端对象 SHA-256、PUT 结果序列与模块状态码在三平台**逐字一致**；仅终止身份与耗时不同。
+这条一致性由汇总作业逐份报告复算，不是人工比对。
+
+### 8.7 原失败（全部保留，未删断言）
+
+| run | source | 结果 | 根因 | 处置 |
+| --- | --- | --- | --- | --- |
+| 40076301578 | 5d8c351c | 三平台均在第 2 条失败 | 共用夹具命名空间：一次 256-shard 扫描把别的边界的 revision 也拉进了 history | 每个设备独占 `/<boundary>/`，路径助手均取设备描述 |
+| 40076966322 | 6a34f2d3 | 1–11 通过，第 12 条 seed 被拒 | `revision-consumer` 要求 32 位小写十六进制 entity key，`'g'*32` 非法 | 12–21 改用互异十六进制 key |
+| 40077850433 | ab810bfc | Linux/macOS 通过，Windows 第 20 条失败 | 活着的 worker 以零共享方式占用 `<product>.sync-account`，回读抛 `PermissionError` | 绑定文件只在属主进程退出后回读 |
+| 40078460400 | 625bcd36 | 三平台通过，汇总未找到报告 | `upload-artifact` 以 `build/` 为根打包多路径工件，汇总假定的层级不对 | 以工件目录名（内含 run/attempt）绑定报告 |
+| 40078978609 | 984a5b7a | 全绿（被日志输出提交取代） | — | — |
+| 40079404890 | 464466fd | 全绿（被逐项记录输出提交取代） | — | — |
+
+### 8.8 交付与未完成
+
+- 交付：`tests/reader_sync_resilience/**`（21 条边界、阶段握手夹具、独立 `resilience-consumer`、逐平台验收、严格汇总）、`.github/workflows/reader-sync-resilience.yml`、本文件、`docs/validation/reader-sync-resilience.json`。
+- 未授予：宿主 UI、元数据投影、六目标 SDK、Android/iOS 宿主、真实第三方服务与真实账号（见第 6 节与 `granted` 字段）。
+- 未完成/待 root：统一审查与普通合并、与其他 15 路的共同源码复验；本包未发现需修改共享实现的缺陷，因此没有提交共享补丁。
 
 ## 9. 限制
 
 - 夹具是 IPv4 回环 + 受信证书，不涉及真实第三方服务与真实账号；跨平台只覆盖三个原生宿主，不等于六目标 SDK。
 - 21 条边界证明的是**这些具体故障点上的一致性**，不外推到未列出的边界（见第 6 节）。
+- Windows 上 1200/1500 ms 的传输预算实测落在 4.02 s（WinHTTP 超时粒度）；Linux/macOS 分别 1.39/1.57 s 与 1.30/1.67 s，说明预算是“上界”而非“精确值”。
