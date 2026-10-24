@@ -317,6 +317,10 @@ def main():
         assert not element(control(102)).IsEnabled, "blocked import still reports enabled"
         record("modal_background_commands_report_disabled_to_uia")
         tap(VK_ESCAPE)
+        print(json.dumps({"details_after_escape": {"dialog": dialog_of(process.pid),
+                          "focus": focus_of(process.pid), "expected": control(128),
+                          "enabled": bool(USER32.IsWindowEnabled(control(128))),
+                          "status": window_text(control(125))}}, ensure_ascii=False), flush=True)
         wait(lambda: focus_of(process.pid) == control(128), 20, "focus back on details")
         record("details_dialog_returns_focus_to_its_invoking_command")
 
