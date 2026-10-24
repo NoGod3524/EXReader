@@ -56,7 +56,13 @@ def collect(repo, run_id, attempt, sha, folder, retrospective):
             detail = done.stderr.decode("utf-8", "replace")
             status = re.search(r"HTTP (\d{3})", detail)
             kind = "rate_limit" if "rate limit" in detail.lower() else "access" if "accessible" in detail.lower() else "other"
-            raise EvidenceError("job_log_download_" + (status[1] if status else "unknown") + "_" + kind)
+            safe = re.sub(r"https?://\S+", "<url>", detail)
+            for token in (os.environ.get("GH_TOKEN"), os.environ.get("GITHUB_TOKEN")):
+                if token:
+                    safe = safe.replace(token, "<redacted>")
+            error = EvidenceError("job_log_download_" + (status[1] if status else "unknown") + "_" + kind)
+            error.diagnostic = safe[-300:]
+            raise error
         need(len(done.stdout) <= MAX_EXPANDED, "job_log_size")
         logs[job["id"]] = done.stdout
         (folder / f"job-{job['id']}.log").write_bytes(done.stdout)
@@ -85,7 +91,7 @@ def main():
     except Exception as error:
         summary["error"] = str(error) if isinstance(error, EvidenceError) else type(error).__name__
         if isinstance(error, EvidenceError):
-            for name in ("platform", "phase"):
+            for name in ("platform", "phase", "diagnostic"):
                 if hasattr(error, name):
                     summary[name] = getattr(error, name)
     text = json.dumps(summary, ensure_ascii=False, indent=2) + "\n"
