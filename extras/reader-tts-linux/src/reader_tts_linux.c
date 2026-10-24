@@ -74,6 +74,29 @@ static reader_tts *g_conn_owner;
 static int g_alloc_budget = -1;
 static long g_force_msg;
 static int g_early_kind = -1;
+/* Real interleaving point for the close handover: the closer blocks here, with the
+   connection slot still held and the old event thread still alive, until the test
+   opens the gate. */
+static pthread_mutex_t g_gate_mu = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t g_gate_cv = PTHREAD_COND_INITIALIZER;
+static int g_gate_armed;
+static int g_gate_waiting;
+static int g_gate_open;
+
+static void hook_close_gate_wait(void) {
+  pthread_mutex_lock(&g_gate_mu);
+  if (!g_gate_armed) {
+    pthread_mutex_unlock(&g_gate_mu);
+    return;
+  }
+  g_gate_waiting = 1;
+  pthread_cond_broadcast(&g_gate_cv);
+  while (g_gate_armed && !g_gate_open) pthread_cond_wait(&g_gate_cv, &g_gate_mu);
+  g_gate_waiting = 0;
+  g_gate_armed = 0;
+  g_gate_open = 0;
+  pthread_mutex_unlock(&g_gate_mu);
+}
 
 static void *xcalloc(size_t n, size_t s) {
   if (g_alloc_budget == 0) {
@@ -246,18 +269,28 @@ static SPDConnection *conn_of(reader_tts *h) {
 }
 
 /* Releases the connection. Callers must have cleared any active request first so
-   that stragglers are dropped: the callback slot is released before the close so
-   no new callback enters the handle, and spd_close joins libspeechd's thread, so
-   nothing is in flight when this returns. */
+   that stragglers are dropped.
+
+   The process-wide callback slot is kept until spd_close() has joined
+   libspeechd's event thread. Releasing it earlier would let another handle take
+   the slot and open a second connection while the old event thread is still
+   alive: the shared callback would route that thread's events to the new owner,
+   and the module's "one connection per process" rule would be broken. No lock
+   the callbacks need (g_mu or the handle mutex) is held across spd_close. */
 static void drop_conn(reader_tts *h) {
   SPDConnection *c;
-  slot_release(h);
   pthread_mutex_lock(&h->mu);
   c = h->conn;
   h->conn = NULL;
   h->voice_custom = 0;
   pthread_mutex_unlock(&h->mu);
-  if (c) spd_close(c);
+#ifdef READER_TTS_TEST_HOOKS
+  /* Test-only interleaving point: the slot is still owned here and the old event
+     thread is still alive. No lock is held while waiting. */
+  hook_close_gate_wait();
+#endif
+  if (c) spd_close(c); /* joins libspeechd's event thread */
+  slot_release(h);     /* only now may another handle take the connection */
 }
 
 /* The daemon is gone or refused to talk: end the active request explicitly and
@@ -910,22 +943,46 @@ static void *closer_main(void *arg) {
 
 reader_tts_status reader_tts_request_close(reader_tts *h, reader_tts_error *e) {
   reader_tts_status s = entry(h, e);
+  reader_tts_state previous;
+  int rc;
   if (s) return s;
   pthread_mutex_lock(&h->mu);
   if (closing_locked(h)) {
     pthread_mutex_unlock(&h->mu);
     return succeed(e);
   }
+  previous = h->state;
   h->state = READER_TTS_CLOSING;
   h->last_status = READER_TTS_OK;
   pthread_mutex_unlock(&h->mu);
   h->closer_running = 0;
-  if (pthread_create(&h->closer, NULL, closer_main, h) == 0) {
+
+  rc = pthread_create(&h->closer, NULL, closer_main, h);
+  if (rc == 0) {
     h->closer_running = 1;
-  } else {
-    closer_main(h); /* no thread available: finish on this call, still closed */
+    return succeed(e);
   }
-  return succeed(e);
+
+  /* No release thread was created, so nothing would advance CLOSING. Closing on
+     this thread would block the owner inside spd_close() and break the promise
+     that request_close never blocks, so the call is undone instead: the request,
+     its queued events and the connection stay exactly as they were, and the owner
+     may retry. The state is restored under the mutex the callbacks take, so a
+     terminal event that arrived in this window is neither lost nor able to revive
+     a finished request. */
+  pthread_mutex_lock(&h->mu);
+  if (h->state == READER_TTS_CLOSING) {
+    if (h->active) {
+      h->state = previous; /* nothing ended meanwhile: put back what was there */
+    } else if (previous == READER_TTS_SERVICE_UNAVAILABLE || h->conn == NULL) {
+      h->state = READER_TTS_SERVICE_UNAVAILABLE;
+    } else {
+      h->state = READER_TTS_READY; /* the request ended while the close failed */
+    }
+  }
+  h->last_status = READER_TTS_MEMORY;
+  pthread_mutex_unlock(&h->mu);
+  return fail(e, READER_TTS_MEMORY, rc);
 }
 
 reader_tts_status reader_tts_destroy(reader_tts **handle, reader_tts_error *e) {
@@ -958,6 +1015,47 @@ static int hook_event_type(int kind) {
   }
 }
 void reader_tts_test_fail_alloc(int nth) { g_alloc_budget = nth; }
+int reader_tts_test_conn_present(reader_tts *h) {
+  int present;
+  pthread_mutex_lock(&h->mu);
+  present = h->conn != NULL;
+  pthread_mutex_unlock(&h->mu);
+  return present;
+}
+int reader_tts_test_slot_owner(reader_tts *h) {
+  int owned;
+  pthread_mutex_lock(&g_mu);
+  owned = (g_conn_owner == h);
+  pthread_mutex_unlock(&g_mu);
+  return owned;
+}
+void reader_tts_test_dispatch_stale(long msg_id, int kind) {
+  /* Exactly what libspeechd's event thread does: the shared path, current owner
+     only, no per-handle hint. */
+  pthread_mutex_lock(&g_mu);
+  if (g_conn_owner) record_event(g_conn_owner, msg_id, hook_event_type(kind));
+  pthread_mutex_unlock(&g_mu);
+}
+void reader_tts_test_arm_close_gate(void) {
+  pthread_mutex_lock(&g_gate_mu);
+  g_gate_armed = 1;
+  g_gate_open = 0;
+  g_gate_waiting = 0;
+  pthread_mutex_unlock(&g_gate_mu);
+}
+int reader_tts_test_close_gate_waiting(void) {
+  int waiting;
+  pthread_mutex_lock(&g_gate_mu);
+  waiting = g_gate_waiting;
+  pthread_mutex_unlock(&g_gate_mu);
+  return waiting;
+}
+void reader_tts_test_open_close_gate(void) {
+  pthread_mutex_lock(&g_gate_mu);
+  g_gate_open = 1;
+  pthread_cond_broadcast(&g_gate_cv);
+  pthread_mutex_unlock(&g_gate_mu);
+}
 void reader_tts_test_inject(reader_tts *h, long msg_id, int kind) {
   record_event(h, msg_id, hook_event_type(kind));
 }

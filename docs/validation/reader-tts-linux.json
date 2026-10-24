@@ -2,289 +2,169 @@
   "schema": 1,
   "id": "J19",
   "package": "reader-tts-linux",
-  "accepted": true,
-  "accepted_reason": "one run, four platform jobs, 552 named case executions, strict same-run artifact aggregation accepted",
+  "accepted": false,
+  "accepted_reason": "root review rework: two close-boundary gaps fixed in source; the four-configuration run and its strict aggregation are pending",
   "source": {
     "fixed_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
     "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
     "sdk_version": "3.40.0 / ABI 1",
     "branch": "codex/reader-tts-linux",
-    "tested_sha": "2f4304c0a037e8f20b064bbfa248ea2e9371d436",
-    "evidence_commit_note": "this file is committed on top of the tested SHA and changes docs only"
+    "tested_sha": null,
+    "note": "filled by the [skip ci] evidence commit that follows the rework run"
   },
-  "workflow": {
-    "file": ".github/workflows/reader-tts-linux.yml",
+  "rework": {
+    "review": "docs/handoffs/reader-next-wave/J19-ROOT-REVIEW.md at 4adac9c4",
+    "gaps": [
+      {
+        "id": "close-thread-failure",
+        "previous_behaviour": "reader_tts_request_close() called closer_main() on the calling thread when pthread_create() failed, closing the socket and joining the event thread on the owner's thread and leaving no way back",
+        "now": "the call changes nothing and fails with MEMORY (native_code = the pthread_create error); the request, its queued events and the connection stay, the state is restored under the callback mutex without reviving a finished request, and the owner may retry",
+        "evidence": [
+          "hook_close_thread_failure_status (real EAGAIN from pthread_create via RLIMIT_NPROC)",
+          "hook_close_thread_failure_keeps_request (state, request id, connection, slot and queue depth unchanged)",
+          "hook_close_thread_failure_destroy_busy (destroy still refuses)",
+          "hook_close_gate_reached + hook_close_handover_after_join (the retry closes normally)"
+        ]
+      },
+      {
+        "id": "slot-handover",
+        "previous_behaviour": "drop_conn() released the process-wide callback slot before spd_close(), so another handle could take the slot and open a second connection while the old libspeechd event thread was still alive",
+        "now": "the slot is kept until spd_close() has joined the old event thread; no lock the callbacks need is held across the close",
+        "evidence": [
+          "hook_close_gate_slot_still_owned (slot still held inside the real close)",
+          "hook_close_gate_blocks_other_owner (a second owner cannot connect or speak)",
+          "hook_close_gate_destroy_busy (the closing handle is not destroyable)",
+          "hook_close_handover_after_join + hook_close_new_owner_connects (the new owner connects only after the join)",
+          "hook_close_stale_callback_ignored (a stale callback does not touch the new request)"
+        ]
+      }
+    ],
+    "new_named_cases": 17,
+    "cases_expected": 155
+  },
+  "previous_acceptance": {
+    "note": "kept as the last accepted evidence; superseded by the rework run",
+    "tested_sha": "2f4304c0a037e8f20b064bbfa248ea2e9371d436",
     "run_id": 40138462305,
     "run_attempt": 1,
-    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40138462305",
     "conclusion": "success",
     "jobs": {
-      "guard": {
-        "id": 121004930945,
-        "conclusion": "success"
+      "guard": 121004930945,
+      "tts-linux (ubuntu-2404-release)": 121004951274,
+      "tts-linux (ubuntu-2404-asan)": 121004951352,
+      "tts-linux (ubuntu-2204-release)": 121004951325,
+      "tts-linux (ubuntu-2204-asan)": 121004951356,
+      "same-run aggregation": 121010696804
+    },
+    "artifacts": [
+      {
+        "key": "ubuntu-2204-release",
+        "id": 12577903441,
+        "bytes": 51120,
+        "zip_sha256": "5df3e0a9c4e45b8b49dbcbd68c7df85a399f6783eaef3b7865d5ddad61682c38",
+        "expires_at": "2027-01-22T22:25:03Z"
       },
-      "tts-linux (ubuntu-2404-release)": {
-        "id": 121004951274,
-        "conclusion": "success",
-        "image": "Ubuntu 24.04.5 LTS",
-        "speech_dispatcher": "0.12.0-rc2"
+      {
+        "key": "ubuntu-2204-asan",
+        "id": 12579025224,
+        "bytes": 137394,
+        "zip_sha256": "b715770a3bdeeb6eca22ffa7ad51f6482b7fa51d2cfe8baf50e44af42d7de555",
+        "expires_at": "2027-01-22T22:25:03Z"
       },
-      "tts-linux (ubuntu-2404-asan)": {
-        "id": 121004951352,
-        "conclusion": "success",
-        "image": "Ubuntu 24.04.5 LTS",
-        "speech_dispatcher": "0.12.0-rc2",
-        "sanitizers": "ASan + UBSan"
+      {
+        "key": "ubuntu-2404-release",
+        "id": 12577197975,
+        "bytes": 50821,
+        "zip_sha256": "1fde0746d651668a6b638e06c92a5b5189272a73cdaffd971ac71c203731ea71",
+        "expires_at": "2027-01-22T22:25:03Z"
       },
-      "tts-linux (ubuntu-2204-release)": {
-        "id": 121004951325,
-        "conclusion": "success",
-        "image": "Ubuntu 22.04.5 LTS",
-        "speech_dispatcher": "0.11.1"
+      {
+        "key": "ubuntu-2404-asan",
+        "id": 12577038289,
+        "bytes": 125856,
+        "zip_sha256": "99669f69437221aa184f8ae17f10bb63049ecd3ebb2775dc39478af4b7eed8d5",
+        "expires_at": "2027-01-22T22:25:03Z"
       },
-      "tts-linux (ubuntu-2204-asan)": {
-        "id": 121004951356,
-        "conclusion": "success",
-        "image": "Ubuntu 22.04.5 LTS",
-        "speech_dispatcher": "0.11.1",
-        "sanitizers": "ASan + UBSan"
-      },
-      "same-run aggregation": {
-        "id": 121010696804,
-        "conclusion": "success"
+      {
+        "key": "report",
+        "id": 12579130182,
+        "bytes": 344822,
+        "zip_sha256": "b8e31aaeaff3a3a851d97e557d354197964bae5cdbac23c98e7ff1cec5211388",
+        "expires_at": "2027-01-22T22:25:03Z"
       }
-    }
-  },
-  "artifacts": [
-    {
-      "key": "ubuntu-2204-release",
-      "id": 12577903441,
-      "bytes": 51120,
-      "zip_sha256": "5df3e0a9c4e45b8b49dbcbd68c7df85a399f6783eaef3b7865d5ddad61682c38",
-      "api_digest": "sha256:5df3e0a9c4e45b8b49dbcbd68c7df85a399f6783eaef3b7865d5ddad61682c38",
-      "expires_at": "2027-01-22T22:25:03Z",
-      "cases": 138,
-      "pass": 138,
-      "fail": 0,
-      "skip": 0
-    },
-    {
-      "key": "ubuntu-2204-asan",
-      "id": 12579025224,
-      "bytes": 137394,
-      "zip_sha256": "b715770a3bdeeb6eca22ffa7ad51f6482b7fa51d2cfe8baf50e44af42d7de555",
-      "api_digest": "sha256:b715770a3bdeeb6eca22ffa7ad51f6482b7fa51d2cfe8baf50e44af42d7de555",
-      "expires_at": "2027-01-22T22:25:03Z",
-      "cases": 138,
-      "pass": 138,
-      "fail": 0,
-      "skip": 0
-    },
-    {
-      "key": "ubuntu-2404-release",
-      "id": 12577197975,
-      "bytes": 50821,
-      "zip_sha256": "1fde0746d651668a6b638e06c92a5b5189272a73cdaffd971ac71c203731ea71",
-      "api_digest": "sha256:1fde0746d651668a6b638e06c92a5b5189272a73cdaffd971ac71c203731ea71",
-      "expires_at": "2027-01-22T22:25:03Z",
-      "cases": 138,
-      "pass": 138,
-      "fail": 0,
-      "skip": 0
-    },
-    {
-      "key": "ubuntu-2404-asan",
-      "id": 12577038289,
-      "bytes": 125856,
-      "zip_sha256": "99669f69437221aa184f8ae17f10bb63049ecd3ebb2775dc39478af4b7eed8d5",
-      "api_digest": "sha256:99669f69437221aa184f8ae17f10bb63049ecd3ebb2775dc39478af4b7eed8d5",
-      "expires_at": "2027-01-22T22:25:03Z",
-      "cases": 138,
-      "pass": 138,
-      "fail": 0,
-      "skip": 0
-    },
-    {
-      "key": "report",
-      "id": 12579130182,
-      "bytes": 344822,
-      "zip_sha256": "b8e31aaeaff3a3a851d97e557d354197964bae5cdbac23c98e7ff1cec5211388",
-      "api_digest": "sha256:b8e31aaeaff3a3a851d97e557d354197964bae5cdbac23c98e7ff1cec5211388",
-      "expires_at": "2027-01-22T22:25:03Z"
-    }
-  ],
-  "consumers": {
-    "ubuntu-2204-release": {
-      "reader-tts-consumer": {
-        "sha256": "f83822ca2792f00466fe98ee002854dc8d0a0bbf9a62033a90c45027890e6a2b",
-        "bytes": 60720
-      },
-      "reader-tts-consumer-cpp": {
-        "sha256": "bc0c6030ada42d712f2cee827c3f77f6e13a31754bc64c34c969dbf0630c868a",
-        "bytes": 50664
-      },
-      "tts-hook-suite": {
-        "sha256": "74bd9e88dbca39303146795aa054e856d89b64ef0b8190c7adfef942ca4fcd9f",
-        "bytes": 43880
-      }
-    },
-    "ubuntu-2204-asan": {
-      "reader-tts-consumer": {
-        "sha256": "0f119b9b9f7e01f3268876b7fdea5b743333b86c0e163f53f38fc0f7e36639fa",
-        "bytes": 515184
-      },
-      "reader-tts-consumer-cpp": {
-        "sha256": "f763d82e41e0c6116314bf716098b3ecc3c02e63409fc11aa65168a851f7555e",
-        "bytes": 595632
-      },
-      "tts-hook-suite": {
-        "sha256": "8a26a5440efa78bc3c52d3b31ccb9df8ae5251ed7e8aa7d51f7ea9566ebdca53",
-        "bytes": 377720
-      }
-    },
-    "ubuntu-2404-release": {
-      "reader-tts-consumer": {
-        "sha256": "3d066131b2bc0a4e9625a14237b812fee925bbcb0538ae1ee9d49ee1ef4bc99f",
-        "bytes": 60824
-      },
-      "reader-tts-consumer-cpp": {
-        "sha256": "0dc793b7b07c0f563f166f32d4c98c320d46673f9155468c9c92ca3e70d7a60e",
-        "bytes": 50824
-      },
-      "tts-hook-suite": {
-        "sha256": "08a2d635789f34e023180c44144637f2728f949e586f71d99b2084e90c36e467",
-        "bytes": 43872
-      }
-    },
-    "ubuntu-2404-asan": {
-      "reader-tts-consumer": {
-        "sha256": "5fa7bf7124925dd03a4813dae3a694e5079480604b72efafa1c808a17bfb34af",
-        "bytes": 481936
-      },
-      "reader-tts-consumer-cpp": {
-        "sha256": "a0f5bd1f06098f5f64a039f8431c5b2c38e9a5d1ea0ef7c78187268bc6503832",
-        "bytes": 566096
-      },
-      "tts-hook-suite": {
-        "sha256": "a82d397d2b14e8d7b3bb7b81ad0cadd9256b62d110370f8847edcc38bd01e491",
-        "bytes": 346048
-      }
-    }
-  },
-  "cases": {
-    "expected": 138,
-    "per_platform": {
-      "live": 70,
-      "pause": 12,
-      "cpp": 11,
-      "hook": 22,
-      "kill": 12,
-      "down": 7,
-      "recover": 4
-    },
-    "executions": 552,
-    "pass": 552,
-    "fail": 0,
-    "skip": 0,
-    "aggregation_rejections": 39,
-    "aggregation_rejection_failures": 0
-  },
-  "scope": {
-    "module_behaviour": "granted: 138 named cases on 4 platform jobs against the real system daemon",
-    "actual_audio": "not covered: the runner has a null audio sink; no listening test is possible",
-    "pause_resume": "granted as daemon state transitions and event bookkeeping, not as audible behaviour",
-    "host_integration": "not covered: root wires the GTK host",
-    "platforms": [
-      "ubuntu-22.04.5 x86_64 / speech-dispatcher 0.11.1",
-      "ubuntu-24.04.5 x86_64 / speech-dispatcher 0.12.0-rc2"
     ],
-    "sanitizers": "ASan + UBSan on both images for the library, both consumers and the fault-injection suite",
-    "performance": "not measured for this package",
-    "accessibility": "not claimed by this package"
+    "cases": {
+      "expected": 138,
+      "executions": 552,
+      "pass": 552,
+      "fail": 0,
+      "skip": 0
+    },
+    "aggregation_rejections": 39
   },
-  "platform_defects": [
-    {
-      "platform": "speech-dispatcher 0.11.1 (Ubuntu 22.04)",
-      "behaviour": "a cancelled message can leave the espeak-ng module wedged: later SPEAKs are accepted but never produce an event, and LIST SYNTHESIS VOICES never answers until the daemon is restarted",
-      "handling": "each phase runs on its own daemon, pause/resume is its own scenario, voice queries run before any cancel; registered here instead of changing an expectation"
-    }
-  ],
   "failures_history": [
     {
       "run_id": 40124635826,
-      "tested_sha": "b191e57f",
-      "failure": "-Werror=format-truncation on the consumer /proc path buffer",
+      "failure": "-Wformat-truncation on the consumer /proc path buffer",
       "fix_commit": "2d6239b5"
     },
     {
       "run_id": 40125071124,
-      "tested_sha": "2d6239b5",
-      "failure": "SPEECHD_ADDRESS override rejected by libspeechd 0.11.1; the library never connected",
+      "failure": "SPEECHD_ADDRESS override rejected by libspeechd 0.11.1",
       "fix_commit": "ca2f9307"
     },
     {
       "run_id": 40125748485,
-      "tested_sha": "ca2f9307",
       "failure": "voices LIMIT (13362 voices listed), hook event order, long-utterance backlog",
       "fix_commit": "b9c03ce5"
     },
     {
       "run_id": 40126679643,
-      "tested_sha": "b9c03ce5",
       "failure": "rate round-trip probe blocked after SIGKILL and disturbed playback",
       "fix_commit": "5550a575"
     },
     {
       "run_id": 40127692686,
-      "tested_sha": "5550a575",
       "failure": "an audio case failed without naming the terminal kind",
       "fix_commit": "431e9bbd"
     },
     {
       "run_id": 40128347109,
-      "tested_sha": "431e9bbd",
       "failure": "rate 0.5 cancelled at the daemon's -100 endpoint",
       "fix_commit": "c51c9cf1"
     },
     {
       "run_id": 40129061386,
-      "tested_sha": "c51c9cf1",
       "failure": "still cancelled; bisect added to separate rate from request state",
       "fix_commit": "b32cebac"
     },
     {
       "run_id": 40129612797,
-      "tested_sha": "b32cebac",
-      "failure": "cancel (not rate) is the trigger; test reused a request id",
+      "failure": "cancel (not rate) is the trigger; the test reused a request id",
       "fix_commit": "18eb191c"
     },
     {
       "run_id": 40130205438,
-      "tested_sha": "18eb191c",
       "failure": "explicit stop ended with FINISHED because the daemon reports a cancelled message as END",
       "fix_commit": "98672235"
     },
     {
       "run_id": 40130822607,
-      "tested_sha": "98672235",
       "failure": "24.04 green; on 22.04 a cancelled message wedges the module",
       "fix_commit": "ca330266"
     },
     {
       "run_id": 40132122033,
-      "tested_sha": "ca330266",
-      "failure": "wedge survives CANCEL+STOP",
+      "failure": "the wedge survives CANCEL+STOP",
       "fix_commit": "27e5ca03"
     },
     {
       "run_id": 40132713831,
-      "tested_sha": "27e5ca03",
       "failure": "22.04 ASan hung in a voice query after a cancel and reported a libspeechd getline leak",
       "fix_commit": "4262dfcd"
     },
     {
       "run_id": 40135611342,
-      "tested_sha": "4262dfcd",
       "failure": "all four jobs green; aggregation looked for results.json at the archive root",
       "fix_commit": "2f4304c0"
     }
@@ -294,7 +174,7 @@
     "a daemon that accepts the socket and then hangs (no client-side timeout)",
     "distributions other than Ubuntu 22.04/24.04 and non-x86_64 hosts",
     "GTK host wiring and the default reading configuration",
-    "two handles using the daemon at the same time"
+    "two handles using the daemon at the same time (now gated: the second handle waits for the join)"
   ],
-  "as_of": "2026-10-24T22:52:35Z"
+  "as_of": "2026-10-24T23:40:00Z"
 }

@@ -32,6 +32,21 @@ size_t reader_tts_test_queue_depth(reader_tts *);
 /* Number of voices the connected daemon lists (SIZE_MAX when it cannot answer).
    Measures the real list length so the public ceiling has evidence behind it. */
 size_t reader_tts_test_daemon_voice_count(reader_tts *);
+
+/* Close-boundary observations. */
+/* 1 while this handle still holds a live daemon connection. */
+int reader_tts_test_conn_present(reader_tts *);
+/* 1 while this handle owns the process-wide callback slot. */
+int reader_tts_test_slot_owner(reader_tts *);
+/* Feed one callback through the shared path libspeechd's event thread uses (no
+   per-handle hint), so a stale message from an old connection can be replayed. */
+void reader_tts_test_dispatch_stale(long msg_id, int kind);
+/* Real interleaving point inside the connection release: the closer stops after it
+   has taken the connection out of the handle and before spd_close() joins the old
+   event thread, with the process-wide slot still held and no lock held. */
+void reader_tts_test_arm_close_gate(void);
+int reader_tts_test_close_gate_waiting(void);
+void reader_tts_test_open_close_gate(void);
 #ifdef __cplusplus
 }
 #endif

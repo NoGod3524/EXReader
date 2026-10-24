@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/resource.h>
 #include <time.h>
 
 typedef struct {
@@ -73,6 +74,39 @@ static void settle(reader_tts *h, int ms) {
   sleep_ms(ms);
   drain_all(h);
 }
+/* Makes the next pthread_create really fail: RLIMIT_NPROC counts the tasks of the
+   real uid, and this process already has more than one, so a lower soft limit makes
+   clone() - and therefore pthread_create() - return EAGAIN. Restored immediately
+   afterwards. Returns 0 when the limit cannot be lowered (for example as root,
+   where the kernel bypasses RLIMIT_NPROC). */
+static int squeeze_thread_limit(struct rlimit *saved) {
+  struct rlimit cur;
+  if (getrlimit(RLIMIT_NPROC, saved) != 0) return 0;
+  cur = *saved;
+  if (cur.rlim_max != RLIM_INFINITY && cur.rlim_max < 2) return 0;
+  cur.rlim_cur = 1;
+  if (cur.rlim_max != RLIM_INFINITY && cur.rlim_cur > cur.rlim_max) return 0;
+  return setrlimit(RLIMIT_NPROC, &cur) == 0;
+}
+static void restore_thread_limit(const struct rlimit *saved) {
+  (void)setrlimit(RLIMIT_NPROC, saved);
+}
+/* Waits up to timeout_ms for a condition to become true. */
+static int wait_until(int timeout_ms, int (*predicate)(reader_tts *), reader_tts *h) {
+  int waited = 0;
+  while (waited <= timeout_ms) {
+    if (predicate(h)) return 1;
+    sleep_ms(2);
+    waited += 2;
+  }
+  return 0;
+}
+static int pred_closed(reader_tts *h) { return state_of(h) == READER_TTS_CLOSED; }
+static int pred_gate_waiting(reader_tts *h) {
+  (void)h;
+  return reader_tts_test_close_gate_waiting();
+}
+
 /* Waits for STARTED and then a terminal event of this request. */
 static int run_request(reader_tts *h, uint64_t id, const char *text, size_t n, double rate,
                        int timeout_ms, int *started, int *terminal) {
@@ -271,6 +305,127 @@ int main(int argc, char **argv) {
            ok && started == 1 && terminal == (int)READER_TTS_FINISHED, "started=%d terminal=%d",
            started, terminal);
   }
+  /* ---------------------------------------------------------- close boundary --
+     Two failures of the close path, both driven through the real code: no thread
+     for the release (a genuine EAGAIN from pthread_create via RLIMIT_NPROC), and a
+     second owner that must not receive the connection before the old event thread
+     has been joined. */
+  {
+    const uint64_t long_id = 501;
+    struct rlimit saved;
+    reader_tts_snapshot snap;
+    size_t depth_before;
+    int squeezed;
+    memset(text, 'c', 1200);
+    st = reader_tts_speak(h, long_id, text, 1200, NULL, 0.5, &err);
+    got = (st == READER_TTS_OK) ? next_event(h, 120000, &ev) : 0;
+    report(&s, "hook_close_baseline_started", got == 1 && ev.request_id == long_id,
+           "status=%d kind=%d", (int)st, (int)ev.kind);
+
+    memset(&snap, 0, sizeof snap);
+    reader_tts_observe(h, &snap, &err);
+    depth_before = reader_tts_test_queue_depth(h);
+    squeezed = squeeze_thread_limit(&saved);
+    st = reader_tts_request_close(h, &err);
+    report(&s, "hook_close_thread_failure_status",
+           squeezed && st == READER_TTS_MEMORY && err.code == READER_TTS_MEMORY &&
+               err.native_code != 0,
+           "squeezed=%d status=%d native=%d", squeezed, (int)st, err.native_code);
+    {
+      reader_tts_snapshot after;
+      memset(&after, 0, sizeof after);
+      reader_tts_observe(h, &after, &err);
+      report(&s, "hook_close_thread_failure_keeps_request",
+             after.state == READER_TTS_SPEAKING && after.request_id == long_id &&
+                 reader_tts_test_conn_present(h) && reader_tts_test_slot_owner(h) &&
+                 reader_tts_test_queue_depth(h) == depth_before,
+             "state=%d id=%llu conn=%d slot=%d depth=%zu/%zu", (int)after.state,
+             (unsigned long long)after.request_id, reader_tts_test_conn_present(h),
+             reader_tts_test_slot_owner(h), reader_tts_test_queue_depth(h), depth_before);
+    }
+    st = reader_tts_destroy(&h, &err);
+    report(&s, "hook_close_thread_failure_destroy_busy",
+           st == READER_TTS_BUSY && h != NULL, "status=%d", (int)st);
+    restore_thread_limit(&saved);
+
+    /* second owner exists, but the first handle still holds the connection */
+    {
+      reader_tts *h2 = NULL;
+      reader_tts_error err2;
+      reader_tts_status st2;
+      memset(&err2, 0, sizeof err2);
+      st2 = reader_tts_create(&cfg, &h2, &err2);
+      report(&s, "hook_close_second_handle_unavailable",
+             st2 == READER_TTS_OK && h2 != NULL &&
+                 state_of(h2) == READER_TTS_SERVICE_UNAVAILABLE &&
+                 !reader_tts_test_slot_owner(h2),
+             "status=%d state=%d", (int)st2, h2 ? state_of(h2) : -1);
+
+      reader_tts_test_arm_close_gate();
+      st = reader_tts_request_close(h, &err);
+      got = wait_until(20000, pred_gate_waiting, h);
+      report(&s, "hook_close_gate_reached", st == READER_TTS_OK && got == 1,
+             "status=%d at_gate=%d", (int)st, got);
+      report(&s, "hook_close_gate_slot_still_owned", reader_tts_test_slot_owner(h),
+             "slot_owner_is_old=%d", reader_tts_test_slot_owner(h));
+      if (h2) {
+        st2 = reader_tts_speak(h2, 601, "blocked", 7, NULL, 1.0, &err2);
+        report(&s, "hook_close_gate_blocks_other_owner",
+               st2 == READER_TTS_UNAVAILABLE && !reader_tts_test_slot_owner(h2),
+               "status=%d new_owner_slot=%d", (int)st2, reader_tts_test_slot_owner(h2));
+      } else {
+        report(&s, "hook_close_gate_blocks_other_owner", 0, "no second handle");
+      }
+      st = reader_tts_destroy(&h, &err);
+      report(&s, "hook_close_gate_destroy_busy", st == READER_TTS_BUSY && h != NULL,
+             "status=%d", (int)st);
+
+      reader_tts_test_open_close_gate();
+      got = wait_until(20000, pred_closed, h);
+      report(&s, "hook_close_handover_after_join", got == 1 && !reader_tts_test_slot_owner(h),
+             "closed=%d old_owner_slot=%d", got, reader_tts_test_slot_owner(h));
+      got = next_event(h, 5000, &ev);
+      report(&s, "hook_close_terminal_preserved",
+             got == 1 && ev.request_id == long_id && ev.kind == READER_TTS_STOPPED,
+             "kind=%d id=%llu", (int)ev.kind, (unsigned long long)ev.request_id);
+
+      if (h2) {
+        memset(text, 'h', 400);
+        st2 = reader_tts_speak(h2, 601, text, 400, NULL, 0.5, &err2);
+        got = (st2 == READER_TTS_OK) ? next_event(h2, 120000, &ev) : 0;
+        report(&s, "hook_close_new_owner_connects",
+               st2 == READER_TTS_OK && got == 1 && ev.request_id == 601 &&
+                   ev.kind == READER_TTS_STARTED,
+               "status=%d kind=%d", (int)st2, (int)ev.kind);
+        report(&s, "hook_close_slot_owned_by_new_owner", reader_tts_test_slot_owner(h2),
+               "new_owner_slot=%d", reader_tts_test_slot_owner(h2));
+        reader_tts_test_dispatch_stale(reader_tts_test_msg_id(h) + 7, 1); /* stale END */
+        got = next_event(h2, 700, &ev);
+        report(&s, "hook_close_stale_callback_ignored",
+               got == 0 && state_of(h2) == READER_TTS_SPEAKING,
+               "extra_event=%d state=%d", got, state_of(h2));
+        got = next_event(h2, 120000, &ev);
+        report(&s, "hook_close_new_owner_finishes",
+               got == 1 && ev.request_id == 601 && ev.kind == READER_TTS_FINISHED,
+               "kind=%d", (int)ev.kind);
+        st2 = reader_tts_request_close(h2, &err2);
+        got = wait_until(20000, pred_closed, h2);
+        report(&s, "hook_close_new_owner_clean", st2 == READER_TTS_OK && got == 1,
+               "status=%d closed=%d", (int)st2, got);
+        st2 = reader_tts_destroy(&h2, &err2);
+        report(&s, "hook_close_second_handle_destroyed", st2 == READER_TTS_OK && h2 == NULL,
+               "status=%d", (int)st2);
+      } else {
+        report(&s, "hook_close_new_owner_connects", 0, "no second handle");
+        report(&s, "hook_close_slot_owned_by_new_owner", 0, "no second handle");
+        report(&s, "hook_close_stale_callback_ignored", 0, "no second handle");
+        report(&s, "hook_close_new_owner_finishes", 0, "no second handle");
+        report(&s, "hook_close_new_owner_clean", 0, "no second handle");
+        report(&s, "hook_close_second_handle_destroyed", 0, "no second handle");
+      }
+    }
+  }
+
   st = reader_tts_request_close(h, &err);
   {
     int closed = 0;

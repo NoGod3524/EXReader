@@ -54,7 +54,8 @@ extern "C" {
    READER_TTS_UNAVAILABLE  daemon missing, gone, or handle closed
    READER_TTS_UNSUPPORTED  the daemon rejected a native capability
    READER_TTS_IO        the daemon answered with an error
-   READER_TTS_MEMORY    allocation failure
+   READER_TTS_MEMORY    allocation failure, or a library resource (the release
+                        thread) could not be created; nothing changed
    READER_TTS_LIMIT     a documented hard limit would be exceeded
    native_code is the libspeechd/errno value when there is one, else 0. */
 
@@ -174,8 +175,16 @@ reader_tts_status reader_tts_observe(reader_tts *, reader_tts_snapshot *, reader
 reader_tts_status reader_tts_poll(reader_tts *, reader_tts_event *, int *available, reader_tts_error *);
 /* request_close: non-blocking and idempotent. Moves to CLOSING, stops the active
    request with one STOPPED event, and releases the connection from a library
-   thread; the state becomes CLOSED only after the daemon connection and its
-   event thread are gone. */
+   thread; the state becomes CLOSED only after the daemon connection and its event
+   thread are gone. The process-wide connection slot is handed to another handle
+   only after that thread has been joined.
+
+   When the release thread cannot be created the call changes nothing and fails
+   with READER_TTS_MEMORY (native_code = the thread creation error): the active
+   request, its queued events and the connection stay as they were, the state is
+   put back to what it was (or READY when the request ended in that window), and
+   the owner may retry. Closing is never done on the calling thread, so this
+   function never blocks. */
 reader_tts_status reader_tts_request_close(reader_tts *, reader_tts_error *);
 /* destroy: BUSY (pointer kept, nothing changed) until the state is CLOSED; then
    frees the handle and sets *handle to NULL. */
