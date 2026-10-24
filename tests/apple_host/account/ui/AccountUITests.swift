@@ -51,7 +51,9 @@ final class AccountUITests: XCTestCase {
         field.typeText(root + "\n")
     }
 
-    private func selected(_ root: String) -> Bool { node("account.choose").value as? String == root }
+    private func selected(_ root: String) -> Bool {
+        node("account.choose").label == (root == "本地书库" ? root : "云盘书库，" + root)
+    }
 
     private func create(_ root: String) {
         tap("account.choose")

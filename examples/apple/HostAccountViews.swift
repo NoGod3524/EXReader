@@ -10,7 +10,7 @@ struct HostAccountRoot: View {
             HStack {
                 Button(accounts.current == nil ? "本地书库" : "云盘书库") { choosing = true }
                     .accessibilityIdentifier("account.choose")
-                    .accessibilityValue(accounts.current?.root ?? "本地书库")
+                    .accessibilityLabel(Text(accounts.current.map { "云盘书库，" + $0.root } ?? "本地书库"))
                 Spacer()
             }.padding(.horizontal).padding(.top, 8)
             HostRootView(profile: accounts.current, accounts: accounts).id(accounts.current?.id ?? "local")
