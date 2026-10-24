@@ -90,7 +90,7 @@ attempt1，五作业全部成功。两平台各通过新增10项及全部原28�
 核对本页新增报告与原有全部报告，得到 `accepted=true, problems=[]`。
 此前 `818e3629` 的验收身份及首轮失败保留在同一记录；本次结果只归属 `4e59a0b8`。
 
-## 原件导出与真实HTTPS接续（候选）
+## 原件导出与真实HTTPS接续
 
 新增独立安装后消费者，复用侧载导出、原生WebDAV/sync和公开SDK。
 A先从SDK导出四格式原书，经条件PUT和回读核验发布；B初始只有无关占位书，
@@ -101,4 +101,13 @@ A先从SDK导出四格式原书，经条件PUT和回读核验发布；B初始只
 核对原件字节、22份不可变修订、请求记录、If-None-Match/Depth、outbox仅在回读验证
 之后清空、第二SDK真实导入、17个FOUND/1个预期AMBIGUOUS/零误定位，以及远端
 不改当前进度和不创建SDK笔记副本。账号后台会话原20项也在同次原生作业保留。
-这部分等待新候选云端结果；不授予真实用户云盘、平台账号UI或六目标验收。
+受测源码 `f7e911c85e5fb27191159a3f3e084e5a4067c167`，run `40060616599`，
+attempt1，五作业全部成功。Windows/Linux各4份实际导出/下载/导入原件、22份修订
+条件发布/回读/ack、18个真实捕获、17 FOUND/1预期AMBIGUOUS/零误定位。
+Windows记录380次原生请求，Linux377次；每端实际pull41次，含幂等重读。
+后台session20及所有原source/protocol/sync/projection/commands/metadata检查同次通过。
+
+严格作业 `120774100108` 实算四份上游ZIP并核对原SDK、导出、分页、账号会话与
+HTTPS报告及跨平台定位结果，`accepted=true, webdav_roundtrip_accepted=true,
+problems=[]`。身份见[真实阅读HTTPS验收](validation/reader-reading-webdav.json)。
+范围是原生HTTPS夹具及两个SDK库；真实用户云盘、平台账号UI和六目标仍待验收。
