@@ -1525,7 +1525,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                 capture=NativeReadingSdk.capture(store,frame,start,end,fontBytes(),size,originalPath==null?null:new File(originalPath),task,readingControl(task,"capture"));mode=capture.mode;if(!progress&&id.isEmpty())id=ReadingRequests.newId();
             }
             ReadingRequests.Pending pending=new ReadingRequests.Pending(book,key,id,ReadingRequests.newId(),ReadingRequests.newId(),heads,action.kind,action.operation,mode,capture,action.body);task.check();readingRequests().save(pending);
-            try{task.check();return commitReading(pending,task);}catch(HostTask.Cancelled cancelled){readingRequests().clear();throw cancelled;}
+            try{task.check();return commitReading(pending,task);}catch(HostTask.Cancelled cancelled){readingRequests().clear(pending.revision);throw cancelled;}
         },done,failed);
     }
     private NativeReadingProduct.Result commitReading(ReadingRequests.Pending pending,HostTask task)throws Exception {
@@ -1533,7 +1533,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         task.commit(()->{String[] selection=NativeCatalog.selection(store.productOwner(),"book",pending.book);if("0".equals(selection[0])){NativeCatalog.Result bootstrap=store.bootstrapBook(pending.sdkBook,pending.bootstrap,new String[0],task);if(bootstrap.status!=NativeCatalog.Result.OK)throw new IOException("Book metadata could not be prepared for the reading request");}
             result[0]=NativeReadingProduct.apply(store,pending.revision,pending.expected,pending.kind,pending.operation,pending.book,pending.id,pending.mode,pending.capture,pending.body);
         });
-        ReadingControl committed=readingControl(task,"committed");committed.check();committed.check();committed.check();readingRequests().clear();return result[0];
+        ReadingControl committed=readingControl(task,"committed");committed.check();committed.check();committed.check();readingRequests().clear(pending.revision);return result[0];
     }
     @Override public void readingRetry(long book,HostTask task,java.util.function.Consumer<NativeReadingProduct.Result> done,java.util.function.Consumer<Throwable> failed){
         readingCall(task,()->{ReadingRequests.Pending pending=readingRequests().read();if(pending==null||pending.sdkBook!=book||!readingBook(book,task).equals(pending.book))throw new IOException("Open the original book for this pending request");return commitReading(pending,task);},done,failed);
