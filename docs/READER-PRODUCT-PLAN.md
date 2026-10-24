@@ -48,6 +48,9 @@ Linux 77+59+33、Windows 76+59+33，两个同源工件未过期且 digest 与上
 Android 产品库从完整 SQL 生成资产，在现有 owner worker 上打开独立
 `reader-catalog.db`，拒绝改写 SDK 或未知数据库。导入映射和有界书架的独立结果见上方。
 WebDAV [实施契约](WEBDAV-PROTOCOL.md)的网络与两端协议结果按各包证据分别登记。
+Apple owner 队列负责独立 `reader-catalog.db` 的生命周期，原生包、UI、Model 与
+Bounded 消费者使用同一完整 SQL。目录和导入映射的独立结果见
+[Apple 导入映射](READER-IMPORT-MAPPING-APPLE.md)；新的有界书架尚未纳入本候选。
 
 ## 并行工作包
 

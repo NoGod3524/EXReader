@@ -76,6 +76,7 @@ def main():
     shutil.copyfile(out/'Sample.epub', out/'Repeated.epub')
     make_unique_sample(out/'Sample.epub')
     shutil.copyfile(ROOT/'tests/fixtures/pdf-public.pdf', out/'Sample.pdf')
+    shutil.copyfile(ROOT/'apps/reader/store/001_catalog.sql', out/'reader-catalog-v1.sql')
     (out/'Broken.epub').write_bytes(b'not a valid epub payload\n' * 8)
     make_epub(out/'Large.epub', 48, 65536)
     make_unicode_epub(out/'Unicode.epub')

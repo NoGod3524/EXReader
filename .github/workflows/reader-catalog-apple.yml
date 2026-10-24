@@ -1,0 +1,77 @@
+name: Apple product catalog
+on:
+  push:
+    branches: [codex/reader-apple-catalog]
+  pull_request:
+    paths:
+      - apps/reader/store/**
+      - examples/apple/**
+      - tests/reader_catalog/**
+      - tests/apple_host/**
+      - tools/build_apple_host.py
+      - tools/check_apple_model_review.py
+      - .github/workflows/reader-catalog-apple.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  catalog:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require unchanged frozen SDK
+        run: git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
+      - name: Record source and installed Apple compiler
+        run: |
+          mkdir -p build/apple-catalog
+          git rev-parse HEAD > build/apple-catalog/source.txt
+          xcodebuild -version > build/apple-catalog/xcode.txt
+          xcrun swiftc --version > build/apple-catalog/swift.txt
+      - name: Execute the production adapter with system SQLite
+        run: |
+          xcrun swiftc -swift-version 5 -parse-as-library examples/apple/HostCatalog.swift tests/reader_catalog/apple_catalog_check.swift -lsqlite3 -o build/apple-catalog/check
+          build/apple-catalog/check apps/reader/store/001_catalog.sql build/apple-catalog/result.json
+      - name: Require all eight original adapter checks from this run
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          report = json.loads(Path('build/apple-catalog/result.json').read_text())
+          expected = {
+              'createsAndReopensCatalog', 'rejectsForeignDatabasesWithoutChangingData',
+              'keepsCompleteShelfTriggers', 'retainsImmutableRevisionsAndTombstones',
+              'rollsBackInterruptedMigrationAndAllowsRetry', 'rejectsInvalidMigrationInput',
+              'usesBoundedBusyTimeout', 'closesExplicitlyAndRejectsReuse',
+          }
+          assert report['accepted'] is True and report['problems'] == []
+          assert report['source_sha'] == os.environ['GITHUB_SHA']
+          assert str(report['run_id']) == os.environ['GITHUB_RUN_ID']
+          assert str(report['attempt']) == os.environ['GITHUB_RUN_ATTEMPT']
+          checks = report['checks']
+          assert len(checks) == len(expected) and {item['id'] for item in checks} == expected
+          assert all(item['passed'] is True for item in checks)
+          sql = Path('apps/reader/store/001_catalog.sql').read_bytes()
+          assert report['schema_sha256'] == hashlib.sha256(sql).hexdigest()
+          assert report['schema_bytes'] == len(sql)
+          print(json.dumps({'accepted': True, 'source_sha': report['source_sha'],
+              'checks': len(checks), 'scope': 'macOS production catalog adapter only'}))
+          PY
+      - name: Compile the same production adapter for Apple mobile targets
+        run: |
+          for platform in iphoneos iphonesimulator; do
+            sdk=$(xcrun --sdk "$platform" --show-sdk-path)
+            target=arm64-apple-ios15.0
+            if test "$platform" = iphonesimulator; then target=arm64-apple-ios15.0-simulator; fi
+            xcrun --sdk "$platform" swiftc -swift-version 5 -parse-as-library -sdk "$sdk" -target "$target" -c examples/apple/HostCatalog.swift -o "build/apple-catalog/catalog-$platform.o"
+            xcrun --sdk "$platform" --show-sdk-version > "build/apple-catalog/sdk-$platform.txt"
+          done
+      - name: Preserve adapter reports and cross-compilation outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-catalog-apple-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-catalog/
+          if-no-files-found: error

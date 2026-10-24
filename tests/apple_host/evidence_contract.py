@@ -58,7 +58,7 @@ LEGACY_CHECKS = '''epub_width epub_height epub_pixels epub_text library_insert l
 MODEL_CHECKS = '''open_real_source cancelled_turn_keeps_frame_and_recovers precise_progress_is_atomic resize_keeps_exact_offset invalid_resize_keeps_viewport_and_frame cancelled_font_change_recovers failed_save_rolls_back_page_and_numeric_progress failed_save_rolls_back_font_and_viewport persistence_failure_is_reported failed_open_keeps_previous_session cancelled_candidate_keeps_previous_book reopen_uses_exact_saved_offset selection_context_rejects_wrong_book_page_and_text unicode_scalar_ranges_are_exact cross_book_notes_query_failure_clears_previous_book same_book_notes_query_failure_preserves_list_and_recovers pending_viewport_handoff_has_no_idle_frame cancel_pending_viewport_keeps_frame_and_recovers'''.split()
 BOUNDED_CHECKS = '''source_import_marks_unknown_extent duplicate_preserves_storage_mode source_import_pre_cancel_is_atomic source_import_mid_cancel_and_late_rollback publication_rebinds_stable_source_control repeated_spine_path_keeps_part_identity cross_chapter_next_and_previous same_part_notes_crud_and_cross_part_jump font_resize_reopen_restores_part_and_point ambiguous_restore_preserves_selector invalid_part_path_rejected original_repeated_fixture_refuses_ambiguous_note legacy_memory_import_keeps_global_progress schema6_upgrade_preserves_legacy_original_progress_notes long_chapter_tail_text_without_snapshot'''.split()
 SDK_CHECKS = set('''position-preserves-latest-metadata import-pre-cancel-preserves-library import-oversize-rejected-before-read import-cancel-during-bounded-read import-late-cancel-removes-new-row import-late-cancel-preserves-reused-row import-rollback-failure-reports-retained-row pager-rebinds-after-creator-cancel pager-current-token-controls-cache-hit pager-render-polls-current-token pager-seek-propagates-real-limit pager-seek-verifies-target-range-and-eof snapshot-pager-anchor-uses-document-api fixed-render-polls-current-token fixed-text-polls-current-token fixed-reuses-after-cancel fixed-comment-update-keeps-reflow-note-separate fixed-notes-propagates-cancellation fixed-notes-text-failure-is-propagated publication-cancel-ordering embedded-nul-note-is-rejected'''.split())
-FIXTURES = {'Sample.epub', 'Sample.pdf', 'Large.epub', 'Broken.epub', 'Reader.otf', 'OFL.txt', 'Unicode.epub', 'Bounded.epub', 'BoundedLong.epub', 'Repeated.epub'}
+FIXTURES = {'Sample.epub', 'Sample.pdf', 'Large.epub', 'Broken.epub', 'Reader.otf', 'OFL.txt', 'Unicode.epub', 'Bounded.epub', 'BoundedLong.epub', 'Repeated.epub', 'reader-catalog-v1.sql'}
 
 
 class Rejected(ValueError):
@@ -453,6 +453,9 @@ def validate_package(root, source, run_id, attempt, sdks):
 
 def validate_review_reports(root, source, run_id, attempt, sdk, fixtures):
     root = Path(root)
+    source_root = Path(__file__).resolve().parents[2]
+    require(fixtures.get('reader-catalog-v1.sql') == digest(source_root/'apps/reader/store/001_catalog.sql'),
+            'product catalog resource differs from original migration')
     model_root = root/'model-review'
     model = load(model_root/'model-review.json')
     validate_identity(model, source, run_id, attempt, job='package')
@@ -464,7 +467,13 @@ def validate_review_reports(root, source, run_id, attempt, sdk, fixtures):
             'model program identity mismatch')
     require(model.get('sdk_files_sha256') == sdk['files_sha256'], 'model review SDK identity mismatch')
     require(model.get('fixtures') == {name: fixtures[name] for name in
-            ('Sample.epub', 'Sample.pdf', 'Unicode.epub', 'Reader.otf')}, 'model fixture identity mismatch')
+            ('Sample.epub', 'Sample.pdf', 'Unicode.epub', 'Reader.otf', 'reader-catalog-v1.sql')}, 'model fixture identity mismatch')
+    model_sources = ('examples/apple/HostSDK.swift', 'examples/apple/HostModel.swift',
+                     'examples/apple/HostCatalog.swift', 'examples/apple/SelectableText.swift',
+                     'tests/apple_host/review/ModelReview.swift', 'tools/check_apple_model_review.py',
+                     'apps/reader/store/001_catalog.sql')
+    require(model.get('source_files_sha256') == {name: digest(source_root/name) for name in model_sources},
+            'model consumer source identity mismatch')
     sdk_root = root/'sdk-review'
     identity = load(sdk_root/'sdk-review-identity.json')
     validate_identity(identity, source, run_id, attempt, job='package')
@@ -509,10 +518,11 @@ def validate_review_reports(root, source, run_id, attempt, sdk, fixtures):
             all(c.get('passed') is True for c in bounded['checks']), 'bounded consumer checks incomplete')
     require(bounded.get('program_sha256') == digest(bounded_root/'bounded-review') and
             bounded.get('sdk_files_sha256') == sdk['files_sha256'], 'bounded consumer SDK/program identity mismatch')
-    require(bounded.get('fixtures') == {n: fixtures[n] for n in ('Bounded.epub', 'BoundedLong.epub', 'Unicode.epub', 'Reader.otf', 'Repeated.epub')},
+    require(bounded.get('fixtures') == {n: fixtures[n] for n in ('Bounded.epub', 'BoundedLong.epub', 'Unicode.epub', 'Reader.otf', 'Repeated.epub', 'reader-catalog-v1.sql')},
             'bounded consumer fixture identity mismatch')
     sources = ('examples/apple/HostSDK.swift', 'examples/apple/HostModel.swift', 'examples/apple/SelectableText.swift',
-               'tests/apple_host/bounded_review/BoundedReview.swift', 'tests/apple_host/run_bounded_review.py')
+               'examples/apple/HostCatalog.swift', 'tests/apple_host/bounded_review/BoundedReview.swift',
+               'tests/apple_host/run_bounded_review.py', 'apps/reader/store/001_catalog.sql')
     require(bounded.get('source_files_sha256') == {p: digest(source_root/p) for p in sources}, 'bounded consumer source mismatch')
     require(load(bounded_root/'consumer/bounded-review.json').get('checks') == bounded['checks'] and
             load(bounded_root/'consumer/bounded-review.json').get('measurements') == bounded.get('measurements'), 'bounded consumer raw result mismatch')
