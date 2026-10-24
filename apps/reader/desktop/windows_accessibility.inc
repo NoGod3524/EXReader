@@ -28,9 +28,12 @@
 #include <uiautomationclient.h>
 #include <oleacc.h>
 #include <wctype.h>
+#include <usp10.h>
+#include <limits.h>
 #pragma comment(lib, "uiautomationcore.lib")
 #pragma comment(lib, "oleacc.lib")
 #pragma comment(lib, "oleaut32.lib")
+#pragma comment(lib, "usp10.lib")
 
 #define HOST_A11Y_CALL (WM_APP + 40)
 
@@ -48,6 +51,7 @@ struct host_a11y_snapshot {
   size_t base;   /* first byte offset of this page in the frame coordinate system */
   size_t bytes;  /* UTF-8 byte length of the page text */
   wchar_t *text;
+  unsigned char *boundaries; /* native Uniscribe character/word stops */
   int units;
 };
 
@@ -86,9 +90,6 @@ static LONG host_a11y_snapshot_addref(host_a11y_snapshot *snapshot);
 static void host_a11y_snapshot_release(host_a11y_snapshot *snapshot);
 static int host_a11y_clamp_unit(const host_a11y_snapshot *snapshot, int value);
 static HRESULT host_a11y_advance(const host_a11y_snapshot *snapshot, enum TextUnit unit, int value, int forward, int *out);
-static int host_a11y_char_next(const wchar_t *text, int units, int at);
-static int host_a11y_char_prev(const wchar_t *text, int units, int at);
-static int host_a11y_word(wchar_t c);
 static size_t host_a11y_bytes_of(const wchar_t *text, int units);
 static host_a11y_range *host_a11y_range_new(host_a11y_page *owner, host_a11y_snapshot *snapshot, int start, int end);
 static ULONG STDMETHODCALLTYPE host_a11y_range_addref(ITextRangeProvider *self);
@@ -97,7 +98,6 @@ static host_a11y_range *host_a11y_range_of(ITextRangeProvider *other);
 
 /* ---- UI-thread marshalling -------------------------------------------- */
 static int host_a11y_ui_current(void) {
-  if (!host_a11y_ui_thread) host_a11y_ui_thread = GetCurrentThreadId();
   return host_a11y_ui_thread == GetCurrentThreadId();
 }
 
@@ -111,6 +111,14 @@ static int host_a11y_on_ui(host_a11y_task_fn fn, void *context) {
   task.context = context;
   SendMessageW(g.page, HOST_A11Y_CALL, 0, (LPARAM)&task);
   return 1;
+}
+
+typedef struct { HWND window; BOOL focused, enabled; } host_a11y_window_state;
+static void host_a11y_window_task(void *context) {
+  host_a11y_window_state *state = (host_a11y_window_state *)context;
+  state->window = g.page;
+  state->focused = GetFocus() == g.page;
+  state->enabled = IsWindowEnabled(g.page);
 }
 
 /* ---- page text: the public SDK projection, exactly as the copy path reads it */
@@ -131,6 +139,7 @@ static int host_a11y_page_text(const char **utf8, size_t *bytes, size_t *base) {
 static void host_a11y_snapshot_free(host_a11y_snapshot *snapshot) {
   if (!snapshot) return;
   free(snapshot->text);
+  free(snapshot->boundaries);
   free(snapshot);
 }
 
@@ -142,11 +151,40 @@ static void host_a11y_snapshot_release(host_a11y_snapshot *snapshot) {
   if (snapshot && !InterlockedDecrement(&snapshot->refs)) host_a11y_snapshot_free(snapshot);
 }
 
+static int host_a11y_make_boundaries(host_a11y_snapshot *snapshot) {
+  SCRIPT_ITEM *items;
+  SCRIPT_LOGATTR *attributes;
+  int count = 0, i;
+  snapshot->boundaries = (unsigned char *)calloc((size_t)snapshot->units + 1, 1);
+  if (!snapshot->boundaries) return 0;
+  snapshot->boundaries[0] = snapshot->boundaries[snapshot->units] = 3;
+  if (!snapshot->units) return 1;
+  items = (SCRIPT_ITEM *)calloc((size_t)snapshot->units + 1, sizeof(*items));
+  attributes = (SCRIPT_LOGATTR *)calloc((size_t)snapshot->units, sizeof(*attributes));
+  if (!items || !attributes) { free(items); free(attributes); return 0; }
+  if (FAILED(ScriptItemize(snapshot->text, snapshot->units, snapshot->units + 1, NULL, NULL, items, &count))) {
+    free(items); free(attributes); return 0;
+  }
+  for (i = 0; i < count; ++i) {
+    int from = items[i].iCharPos, length = items[i + 1].iCharPos - from;
+    if (FAILED(ScriptBreak(snapshot->text + from, length, &items[i].a, attributes + from))) {
+      free(items); free(attributes); return 0;
+    }
+  }
+  for (i = 1; i < snapshot->units; ++i)
+    snapshot->boundaries[i] = (unsigned char)((attributes[i].fCharStop ? 1 : 0) |
+                                             (attributes[i].fWordStop && attributes[i].fCharStop && !attributes[i].fWhiteSpace ? 2 : 0));
+  free(items);
+  free(attributes);
+  return 1;
+}
+
 static host_a11y_snapshot *host_a11y_snapshot_build(void) {
   const char *utf8; size_t bytes, base;
   host_a11y_snapshot *snapshot;
   int units;
   if (!host_a11y_page_text(&utf8, &bytes, &base)) return NULL;
+  if (bytes > INT_MAX - 1) return NULL;
   units = MultiByteToWideChar(CP_UTF8, 0, utf8, (int)bytes, NULL, 0);
   if (units < 0) return NULL;
   snapshot = (host_a11y_snapshot *)calloc(1, sizeof(*snapshot));
@@ -159,6 +197,7 @@ static host_a11y_snapshot *host_a11y_snapshot_build(void) {
   }
   snapshot->refs = 1;
   snapshot->units = units;
+  if (!host_a11y_make_boundaries(snapshot)) { host_a11y_snapshot_free(snapshot); return NULL; }
   snapshot->base = base;
   snapshot->bytes = bytes;
   snapshot->generation = g.frame.generation;
@@ -191,47 +230,19 @@ static void host_a11y_acquire_task(void *context) {
   host_a11y_snapshot_addref(*out);
 }
 
-static host_a11y_snapshot *host_a11y_acquire(void) {
-  host_a11y_snapshot *snapshot = NULL;
-  if (!host_a11y_on_ui(host_a11y_acquire_task, &snapshot)) return NULL;
-  return snapshot;
-}
-
 /* ---- UTF-16 helpers ---------------------------------------------------- */
-static int host_a11y_is_high(wchar_t c) { return c >= 0xD800 && c <= 0xDBFF; }
-static int host_a11y_is_low(wchar_t c) { return c >= 0xDC00 && c <= 0xDFFF; }
-
-static int host_a11y_char_next(const wchar_t *text, int units, int at) {
-  if (at < 0) at = 0;
-  if (at >= units) return units;
-  at++;
-  if (at < units && host_a11y_is_high(text[at - 1]) && host_a11y_is_low(text[at])) at++;
-  return at;
+/* Unsupported valid text units fall forward to the next supported larger unit,
+   as required by the UIA TextRange contract. No new text parser is involved. */
+static int host_a11y_unit(enum TextUnit unit) {
+  if (unit == TextUnit_Character) return TextUnit_Character;
+  if (unit == TextUnit_Format || unit == TextUnit_Word) return TextUnit_Word;
+  if (unit >= TextUnit_Line && unit <= TextUnit_Document) return TextUnit_Document;
+  return -1;
 }
 
-static int host_a11y_char_prev(const wchar_t *text, int units, int at) {
-  if (at > units) at = units;
-  if (at <= 0) return 0;
-  at--;
-  if (at > 0 && host_a11y_is_low(text[at]) && host_a11y_is_high(text[at - 1])) at--;
-  return at;
-}
-
-static int host_a11y_word(wchar_t c) {
-  return !iswspace(c) && c != L',' && c != L'.' && c != L';' && c != L':' && c != L'!' &&
-         c != L'?' && c != L'\u3002' && c != L'\uff0c' && c != L'\uff1b' && c != L'\uff1a';
-}
-
-static int host_a11y_word_next(const wchar_t *text, int units, int at) {
-  while (at < units && !host_a11y_word(text[at])) at = host_a11y_char_next(text, units, at);
-  while (at < units && host_a11y_word(text[at])) at = host_a11y_char_next(text, units, at);
-  return at;
-}
-
-static int host_a11y_word_prev(const wchar_t *text, int units, int at) {
-  while (at > 0 && !host_a11y_word(text[at - 1])) at = host_a11y_char_prev(text, units, at);
-  while (at > 0 && host_a11y_word(text[at - 1])) at = host_a11y_char_prev(text, units, at);
-  return at;
+static int host_a11y_boundary(const host_a11y_snapshot *snapshot, int unit, int at) {
+  if (at == 0 || at == snapshot->units) return 1;
+  return (snapshot->boundaries[at] & (unit == TextUnit_Character ? 1 : 2)) != 0;
 }
 
 /* UTF-8 byte length of the first 'units' UTF-16 characters. */
@@ -251,16 +262,27 @@ static int host_a11y_clamp_unit(const host_a11y_snapshot *snapshot, int value) {
 static HRESULT host_a11y_advance(const host_a11y_snapshot *snapshot, enum TextUnit unit, int value, int forward, int *out) {
   int at = value;
   if (!snapshot) return UIA_E_ELEMENTNOTAVAILABLE;
-  switch (unit) {
-    case TextUnit_Character: at = forward ? host_a11y_char_next(snapshot->text, snapshot->units, at)
-                                          : host_a11y_char_prev(snapshot->text, snapshot->units, at); break;
-    case TextUnit_Word: at = forward ? host_a11y_word_next(snapshot->text, snapshot->units, at)
-                                     : host_a11y_word_prev(snapshot->text, snapshot->units, at); break;
-    case TextUnit_Document: at = forward ? snapshot->units : 0; break;
-    default: return E_INVALIDARG; /* line/paragraph/page/format are not measurable here */
+  if (host_a11y_unit(unit) < 0) return E_INVALIDARG;
+  unit = (enum TextUnit)host_a11y_unit(unit);
+  at = host_a11y_clamp_unit(snapshot, at);
+  if (unit == TextUnit_Document) at = forward ? snapshot->units : 0;
+  else if (forward && at < snapshot->units) {
+    do { ++at; } while (at < snapshot->units && !host_a11y_boundary(snapshot, unit, at));
+  } else if (!forward && at > 0) {
+    do { --at; } while (at > 0 && !host_a11y_boundary(snapshot, unit, at));
   }
   *out = at;
   return S_OK;
+}
+
+static void host_a11y_unit_span(const host_a11y_snapshot *snapshot, enum TextUnit unit,
+                                int point, int *start, int *end) {
+  int at = host_a11y_clamp_unit(snapshot, point);
+  if (unit == TextUnit_Document) { *start = 0; *end = snapshot->units; return; }
+  if (at == snapshot->units && at) host_a11y_advance(snapshot, unit, at, 0, &at);
+  while (at > 0 && !host_a11y_boundary(snapshot, unit, at)) --at;
+  *start = at;
+  host_a11y_advance(snapshot, unit, at, 1, end);
 }
 
 /* ---- element identity -------------------------------------------------- */
@@ -342,11 +364,12 @@ static HRESULT STDMETHODCALLTYPE host_a11y_simple_property(IRawElementProviderSi
   if (id == UIA_HelpTextPropertyId) return host_a11y_bstr(out, L"\u9009\u62e9\u6587\u5b57\u540e\u53ef\u590d\u5236\u5f15\u7528\u6216\u6dfb\u52a0\u6807\u6ce8");
   if (id == UIA_ControlTypePropertyId) { out->vt = VT_I4; out->lVal = UIA_DocumentControlTypeId; return S_OK; }
   if (id == UIA_IsKeyboardFocusablePropertyId) { out->vt = VT_BOOL; out->boolVal = VARIANT_TRUE; return S_OK; }
-  if (id == UIA_HasKeyboardFocusPropertyId) {
-    out->vt = VT_BOOL; out->boolVal = (GetFocus() == g.page) ? VARIANT_TRUE : VARIANT_FALSE; return S_OK;
-  }
-  if (id == UIA_IsEnabledPropertyId) {
-    out->vt = VT_BOOL; out->boolVal = (g.page && IsWindowEnabled(g.page)) ? VARIANT_TRUE : VARIANT_FALSE; return S_OK;
+  if (id == UIA_HasKeyboardFocusPropertyId || id == UIA_IsEnabledPropertyId) {
+    host_a11y_window_state state = {0};
+    if (!host_a11y_on_ui(host_a11y_window_task, &state) || !state.window) return UIA_E_ELEMENTNOTAVAILABLE;
+    out->vt = VT_BOOL;
+    out->boolVal = (id == UIA_HasKeyboardFocusPropertyId ? state.focused : state.enabled) ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
   }
   if (id == UIA_IsControlElementPropertyId || id == UIA_IsContentElementPropertyId ||
       id == UIA_IsTextPatternAvailablePropertyId || id == UIA_IsValuePatternAvailablePropertyId) {
@@ -446,7 +469,7 @@ static HRESULT STDMETHODCALLTYPE host_a11y_range_select(ITextRangeProvider *self
 static HRESULT STDMETHODCALLTYPE host_a11y_range_add_to_selection(ITextRangeProvider *self);
 static HRESULT STDMETHODCALLTYPE host_a11y_range_remove_from_selection(ITextRangeProvider *self);
 static HRESULT STDMETHODCALLTYPE host_a11y_range_scroll(ITextRangeProvider *self, BOOL align);
-static HRESULT STDMETHODCALLTYPE host_a11y_range_text_pattern(ITextRangeProvider *self, ITextProvider **out);
+static HRESULT STDMETHODCALLTYPE host_a11y_range_children(ITextRangeProvider *self, SAFEARRAY **out);
 
 static ITextRangeProviderVtbl host_a11y_range_vtbl = {
   host_a11y_range_query, host_a11y_range_addref, host_a11y_range_release,
@@ -456,7 +479,7 @@ static ITextRangeProviderVtbl host_a11y_range_vtbl = {
   host_a11y_range_text, host_a11y_range_move, host_a11y_range_move_endpoint,
   host_a11y_range_move_endpoint_by_range, host_a11y_range_select,
   host_a11y_range_add_to_selection, host_a11y_range_remove_from_selection,
-  host_a11y_range_scroll, host_a11y_range_text_pattern
+  host_a11y_range_scroll, host_a11y_range_children
 };
 
 static HRESULT STDMETHODCALLTYPE host_a11y_range_clone(ITextRangeProvider *self, ITextRangeProvider **out) {
@@ -486,8 +509,11 @@ static HRESULT STDMETHODCALLTYPE host_a11y_range_compare_endpoints(ITextRangePro
   host_a11y_range *a = (host_a11y_range *)self, *b;
   int left, right;
   if (!result) return E_INVALIDARG;
+  if ((endpoint != TextPatternRangeEndpoint_Start && endpoint != TextPatternRangeEndpoint_End) ||
+      (other_endpoint != TextPatternRangeEndpoint_Start && other_endpoint != TextPatternRangeEndpoint_End)) return E_INVALIDARG;
   b = host_a11y_range_of(other);
   if (!b) return E_INVALIDARG;
+  if (a->snapshot != b->snapshot) { host_a11y_range_release(&b->iface); return E_INVALIDARG; }
   left = endpoint == TextPatternRangeEndpoint_Start ? a->start : a->end;
   right = other_endpoint == TextPatternRangeEndpoint_Start ? b->start : b->end;
   host_a11y_range_release(&b->iface);
@@ -498,45 +524,38 @@ static HRESULT STDMETHODCALLTYPE host_a11y_range_compare_endpoints(ITextRangePro
 static HRESULT STDMETHODCALLTYPE host_a11y_range_expand(ITextRangeProvider *self, enum TextUnit unit) {
   host_a11y_range *range = (host_a11y_range *)self;
   const host_a11y_snapshot *snapshot = range->snapshot;
-  int start, end;
   if (!snapshot) return UIA_E_ELEMENTNOTAVAILABLE;
-  start = host_a11y_clamp_unit(snapshot, range->start);
-  end = host_a11y_clamp_unit(snapshot, range->end);
-  if (unit == TextUnit_Character) { range->start = start; range->end = end; return S_OK; }
-  if (unit == TextUnit_Word) {
-    int word_start = start, word_end = end;
-    while (word_start > 0 && host_a11y_word(snapshot->text[word_start - 1])) word_start--;
-    while (word_end < snapshot->units && host_a11y_word(snapshot->text[word_end])) word_end++;
-    range->start = word_start;
-    range->end = word_end;
-    return S_OK;
-  }
-  if (unit == TextUnit_Document) { range->start = 0; range->end = snapshot->units; return S_OK; }
-  return E_INVALIDARG;
+  if (host_a11y_unit(unit) < 0) return E_INVALIDARG;
+  host_a11y_unit_span(snapshot, (enum TextUnit)host_a11y_unit(unit), range->start, &range->start, &range->end);
+  return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE host_a11y_range_move(ITextRangeProvider *self, enum TextUnit unit, int count, int *moved) {
   host_a11y_range *range = (host_a11y_range *)self;
   const host_a11y_snapshot *snapshot = range->snapshot;
-  int at, steps, done = 0, next;
-  HRESULT result;
-  if (moved) *moved = 0;
+  int at, end, done = 0, next, nonempty;
+  int64_t steps;
+  if (!moved) return E_INVALIDARG;
+  *moved = 0;
   if (!snapshot) return UIA_E_ELEMENTNOTAVAILABLE;
+  if (host_a11y_unit(unit) < 0) return E_INVALIDARG;
   if (!count) return S_OK;
-  if (!(unit == TextUnit_Character || unit == TextUnit_Word || unit == TextUnit_Document)) return E_INVALIDARG;
-  at = count > 0 ? range->end : range->start;
-  steps = count > 0 ? count : -count;
+  unit = (enum TextUnit)host_a11y_unit(unit);
+  nonempty = range->start != range->end;
+  at = range->start;
+  if (nonempty) host_a11y_unit_span(snapshot, unit, at, &at, &end);
+  steps = count > 0 ? (int64_t)count : -(int64_t)count;
   while (done < steps) {
-    result = host_a11y_advance(snapshot, unit, at, count > 0, &next);
-    if (result != S_OK) return result;
-    if (next == at) break;
+    host_a11y_advance(snapshot, unit, at, count > 0, &next);
+    if (next == at || (nonempty && next == snapshot->units)) break;
     at = next;
     done++;
   }
-  /* TextPatternRange.Move collapses the range onto the point it reached. */
+  end = at;
+  if (nonempty) host_a11y_advance(snapshot, unit, at, 1, &end);
   range->start = at;
-  range->end = at;
-  if (moved) *moved = count > 0 ? done : -done;
+  range->end = end;
+  *moved = count > 0 ? done : -done;
   return S_OK;
 }
 
@@ -544,27 +563,28 @@ static HRESULT STDMETHODCALLTYPE host_a11y_range_move_endpoint(ITextRangeProvide
     enum TextUnit unit, int count, int *moved) {
   host_a11y_range *range = (host_a11y_range *)self;
   const host_a11y_snapshot *snapshot = range->snapshot;
-  int at, steps, done = 0, next;
-  HRESULT result;
-  if (moved) *moved = 0;
+  int at, done = 0, next;
+  int64_t steps;
+  if (!moved) return E_INVALIDARG;
+  *moved = 0;
   if (!snapshot) return UIA_E_ELEMENTNOTAVAILABLE;
+  if (host_a11y_unit(unit) < 0 ||
+      (endpoint != TextPatternRangeEndpoint_Start && endpoint != TextPatternRangeEndpoint_End)) return E_INVALIDARG;
   if (!count) return S_OK;
-  if (!(unit == TextUnit_Character || unit == TextUnit_Word || unit == TextUnit_Document)) return E_INVALIDARG;
   at = endpoint == TextPatternRangeEndpoint_Start ? range->start : range->end;
-  steps = count > 0 ? count : -count;
+  steps = count > 0 ? (int64_t)count : -(int64_t)count;
   while (done < steps) {
-    result = host_a11y_advance(snapshot, unit, at, count > 0, &next);
-    if (result != S_OK) return result;
+    host_a11y_advance(snapshot, unit, at, count > 0, &next);
     if (next == at) break;
     at = next;
     done++;
   }
   if (endpoint == TextPatternRangeEndpoint_Start) {
     range->start = at;
-    if (range->start > range->end) range->start = range->end;
+    if (range->start > range->end) range->end = at;
   } else {
     range->end = at;
-    if (range->end < range->start) range->end = range->start;
+    if (range->end < range->start) range->start = at;
   }
   if (moved) *moved = count > 0 ? done : -done;
   return S_OK;
@@ -574,6 +594,8 @@ static HRESULT STDMETHODCALLTYPE host_a11y_range_move_endpoint_by_range(ITextRan
     ITextRangeProvider *other, enum TextPatternRangeEndpoint other_endpoint) {
   host_a11y_range *a = (host_a11y_range *)self, *b;
   int value;
+  if ((endpoint != TextPatternRangeEndpoint_Start && endpoint != TextPatternRangeEndpoint_End) ||
+      (other_endpoint != TextPatternRangeEndpoint_Start && other_endpoint != TextPatternRangeEndpoint_End)) return E_INVALIDARG;
   b = host_a11y_range_of(other);
   if (!b) return E_INVALIDARG;
   if (a->snapshot != b->snapshot) { host_a11y_range_release(&b->iface); return E_INVALIDARG; }
@@ -581,10 +603,10 @@ static HRESULT STDMETHODCALLTYPE host_a11y_range_move_endpoint_by_range(ITextRan
   host_a11y_range_release(&b->iface);
   if (endpoint == TextPatternRangeEndpoint_Start) {
     a->start = value;
-    if (a->start > a->end) a->start = a->end;
+    if (a->start > a->end) a->end = value;
   } else {
     a->end = value;
-    if (a->end < a->start) a->end = a->start;
+    if (a->end < a->start) a->start = value;
   }
   return S_OK;
 }
@@ -637,7 +659,6 @@ static HRESULT STDMETHODCALLTYPE host_a11y_range_text(ITextRangeProvider *self, 
   host_a11y_range *range = (host_a11y_range *)self;
   const host_a11y_snapshot *snapshot = range->snapshot;
   int from, to, at, count;
-  wchar_t *buffer;
   if (!out) return E_INVALIDARG;
   *out = NULL;
   if (!snapshot) { *out = SysAllocString(L""); return *out ? S_OK : E_OUTOFMEMORY; }
@@ -648,14 +669,14 @@ static HRESULT STDMETHODCALLTYPE host_a11y_range_text(ITextRangeProvider *self, 
     /* maxLength counts characters; a surrogate pair is one character. */
     at = from;
     count = 0;
-    while (at < to && count < max) { at = host_a11y_char_next(snapshot->text, to, at); count++; }
+    while (at < to && count < max) {
+      host_a11y_advance(snapshot, TextUnit_Character, at, 1, &at);
+      if (at > to) at = to;
+      count++;
+    }
     to = at;
   }
-  buffer = (wchar_t *)calloc((size_t)(to - from) + 1, sizeof(wchar_t));
-  if (!buffer) return E_OUTOFMEMORY;
-  if (to > from) memcpy(buffer, snapshot->text + from, (size_t)(to - from) * sizeof(wchar_t));
-  *out = SysAllocString(buffer);
-  free(buffer);
+  *out = SysAllocStringLen(snapshot->text + from, (UINT)(to - from));
   return *out ? S_OK : E_OUTOFMEMORY;
 }
 
@@ -667,12 +688,12 @@ static HRESULT STDMETHODCALLTYPE host_a11y_range_element(ITextRangeProvider *sel
   return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE host_a11y_range_text_pattern(ITextRangeProvider *self, ITextProvider **out) {
-  host_a11y_range *range = (host_a11y_range *)self;
+static HRESULT STDMETHODCALLTYPE host_a11y_range_children(ITextRangeProvider *self, SAFEARRAY **out) {
+  (void)self;
   if (!out) return E_INVALIDARG;
-  host_a11y_addref(range->owner);
-  *out = &range->owner->text;
-  return S_OK;
+  /* The final ITextRangeProvider slot is GetChildren, not GetTextProvider. */
+  *out = SafeArrayCreateVector(VT_UNKNOWN, 0, 0);
+  return *out ? S_OK : E_OUTOFMEMORY;
 }
 
 /* ---- operations that act on the live frame ----------------------------- */
@@ -699,22 +720,43 @@ static void host_a11y_select_task(void *context) {
   g.selection.page = g.frame.page;
   g.selection.fixed = g.frame.fixed;
   g.selection.active = start < end;
+  if (GetFocus() != g.page) SetFocus(g.page);
   InvalidateRect(g.page, NULL, FALSE);
   host_a11y_page_changed(1);
   task->result = S_OK;
+}
+
+static int host_a11y_append_rect(RECT *boxes, size_t *count, const RECT *piece, const RECT *clip, int same_line) {
+  RECT visible;
+  if (!IntersectRect(&visible, piece, clip)) return 0;
+  if (same_line && *count) {
+    RECT *last = &boxes[*count - 1];
+    if (visible.left < last->left) last->left = visible.left;
+    if (visible.top < last->top) last->top = visible.top;
+    if (visible.right > last->right) last->right = visible.right;
+    if (visible.bottom > last->bottom) last->bottom = visible.bottom;
+  } else boxes[(*count)++] = visible;
+  return 1;
 }
 
 static void host_a11y_rect_task(void *context) {
   host_a11y_frame_task *task = (host_a11y_frame_task *)context;
   host_a11y_snapshot *snapshot = task->range->snapshot;
   size_t start, end;
-  int have = 0;
-  RECT box, piece;
+  RECT *boxes = NULL;
+  RECT piece, clip, bitmap;
+  POINT origin = {0};
+  size_t used = 0;
   double *data;
   SAFEARRAY *array;
   task->result = UIA_E_ELEMENTNOTAVAILABLE;
   task->rects = NULL;
-  if (!host_a11y_snapshot_matches(snapshot) || !g.page) return;
+  if (!host_a11y_snapshot_matches(snapshot) || !g.page || !compute_view()) return;
+  GetClientRect(g.page, &clip);
+  bitmap.left = g.view.dx; bitmap.top = g.view.dy;
+  bitmap.right = bitmap.left + (LONG)(g.frame.bitmap.width * g.view.scale);
+  bitmap.bottom = bitmap.top + (LONG)(g.frame.bitmap.height * g.view.scale);
+  if (!IntersectRect(&clip, &clip, &bitmap)) return;
   start = snapshot->base + host_a11y_bytes_of(snapshot->text, task->range->start);
   end = snapshot->base + host_a11y_bytes_of(snapshot->text, task->range->end);
   if (end < start) end = start;
@@ -729,9 +771,14 @@ static void host_a11y_rect_task(void *context) {
   if (!g.frame.fixed) {
     const exr_glyph *glyphs = NULL;
     size_t count = 0, i;
+    double last_baseline = 0;
+    int have_line = 0;
     if (g.frame.bounded) { glyphs = g.frame.glyphs; count = g.frame.glyph_count; }
     else if (g.frame.hit_layout) glyphs = exr_layout_glyphs(g.frame.hit_layout, &count);
     if (!glyphs || g.session.page != g.frame.page || g.session.book_id != g.frame.book_id) return;
+    if (count > SIZE_MAX / sizeof(*boxes) || count > ULONG_MAX / 4) { task->result = E_OUTOFMEMORY; return; }
+    boxes = (RECT *)calloc(count ? count : 1, sizeof(*boxes));
+    if (!boxes) { task->result = E_OUTOFMEMORY; return; }
     for (i = 0; i < count; i++) {
       const exr_glyph *glyph = &glyphs[i];
       int left, top, width, height;
@@ -742,12 +789,9 @@ static void host_a11y_rect_task(void *context) {
       width = (int)(glyph->advance * g.view.scale); if (width < 1) width = 1;
       height = (int)(glyph->size * 1.25 * g.view.scale); if (height < 1) height = 1;
       piece.left = left; piece.top = top; piece.right = left + width; piece.bottom = top + height;
-      if (!have) { box = piece; have = 1; }
-      else {
-        if (piece.left < box.left) box.left = piece.left;
-        if (piece.top < box.top) box.top = piece.top;
-        if (piece.right > box.right) box.right = piece.right;
-        if (piece.bottom > box.bottom) box.bottom = piece.bottom;
+      if (host_a11y_append_rect(boxes, &used, &piece, &clip, have_line && fabs(glyph->baseline - last_baseline) < 0.5)) {
+        last_baseline = glyph->baseline;
+        have_line = 1;
       }
     }
   } else {
@@ -758,42 +802,49 @@ static void host_a11y_rect_task(void *context) {
     if (!g.frame.fixed_text || g.session.page != g.frame.page) return;
     if (exr_fixed_text_select(g.frame.fixed_text, start, end, NULL, &regions, &count, &error) != EXR_OK) return;
     if (exr_viewport_create(&g.frame.geometry, g.frame.render_scale, &viewport, &error) != EXR_OK) { exr_free(regions); return; }
+    if (count > SIZE_MAX / sizeof(*boxes) || count > ULONG_MAX / 4) {
+      exr_free(regions); task->result = E_OUTOFMEMORY; return;
+    }
+    boxes = (RECT *)calloc(count ? count : 1, sizeof(*boxes));
+    if (!boxes) { exr_free(regions); task->result = E_OUTOFMEMORY; return; }
     for (i = 0; i < count; i++) {
       int j;
       for (j = 0; j < 4; j++) {
         double sx = regions[i].quad[j * 2], sy = regions[i].quad[j * 2 + 1];
         double vx = viewport.matrix[0] * sx + viewport.matrix[2] * sy + viewport.matrix[4];
         double vy = viewport.matrix[1] * sx + viewport.matrix[3] * sy + viewport.matrix[5];
-        piece.left = piece.right = g.view.dx + (LONG)(vx * g.view.scale);
-        piece.top = piece.bottom = g.view.dy + (LONG)(vy * g.view.scale);
-        if (!have) { box = piece; have = 1; }
+        LONG px = g.view.dx + (LONG)(vx * g.view.scale);
+        LONG py = g.view.dy + (LONG)(vy * g.view.scale);
+        if (!j) { piece.left = piece.right = px; piece.top = piece.bottom = py; }
         else {
-          if (piece.left < box.left) box.left = piece.left;
-          if (piece.top < box.top) box.top = piece.top;
-          if (piece.right > box.right) box.right = piece.right;
-          if (piece.bottom > box.bottom) box.bottom = piece.bottom;
+          if (px < piece.left) piece.left = px;
+          if (py < piece.top) piece.top = py;
+          if (px > piece.right) piece.right = px;
+          if (py > piece.bottom) piece.bottom = py;
         }
       }
+      /* Each SDK text quad supplies its own visible region; never union separate
+         lines or PDF columns into one rectangle containing unrelated whitespace. */
+      host_a11y_append_rect(boxes, &used, &piece, &clip, 0);
     }
     exr_free(regions);
   }
-  if (!have) return;
-  {
-    POINT corners[2];
-    corners[0].x = box.left; corners[0].y = box.top;
-    corners[1].x = box.right; corners[1].y = box.bottom;
-    ClientToScreen(g.page, &corners[0]);
-    ClientToScreen(g.page, &corners[1]);
-    box.left = corners[0].x; box.top = corners[0].y;
-    box.right = corners[1].x; box.bottom = corners[1].y;
+  array = SafeArrayCreateVector(VT_R8, 0, (ULONG)(used * 4));
+  if (!array) { free(boxes); task->result = E_OUTOFMEMORY; return; }
+  if (FAILED(SafeArrayAccessData(array, (void **)&data))) {
+    free(boxes); SafeArrayDestroy(array); task->result = E_OUTOFMEMORY; return;
   }
-  array = SafeArrayCreateVector(VT_R8, 0, 4);
-  if (!array) { task->result = E_OUTOFMEMORY; return; }
-  if (FAILED(SafeArrayAccessData(array, (void **)&data))) { SafeArrayDestroy(array); task->result = E_OUTOFMEMORY; return; }
-  data[0] = (double)box.left;
-  data[1] = (double)box.top;
-  data[2] = (double)(box.right - box.left);
-  data[3] = (double)(box.bottom - box.top);
+  ClientToScreen(g.page, &origin);
+  {
+    size_t i;
+    for (i = 0; i < used; ++i) {
+      data[i * 4] = (double)(boxes[i].left + origin.x);
+      data[i * 4 + 1] = (double)(boxes[i].top + origin.y);
+      data[i * 4 + 2] = (double)(boxes[i].right - boxes[i].left);
+      data[i * 4 + 3] = (double)(boxes[i].bottom - boxes[i].top);
+    }
+  }
+  free(boxes);
   SafeArrayUnaccessData(array);
   task->rects = array;
   task->result = S_OK;
@@ -818,7 +869,6 @@ static HRESULT STDMETHODCALLTYPE host_a11y_range_select(ITextRangeProvider *self
   task.result = UIA_E_ELEMENTNOTAVAILABLE;
   if (!host_a11y_on_ui(host_a11y_select_task, &task)) return UIA_E_ELEMENTNOTAVAILABLE;
   if (task.result != S_OK) return task.result;
-  if (g.page && GetFocus() != g.page) SetFocus(g.page);
   return S_OK;
 }
 
@@ -833,11 +883,20 @@ static HRESULT STDMETHODCALLTYPE host_a11y_range_remove_from_selection(ITextRang
   return UIA_E_INVALIDOPERATION;
 }
 
+static void host_a11y_scroll_task(void *context) {
+  host_a11y_frame_task *task = (host_a11y_frame_task *)context;
+  /* This control fits the complete current page in its client area. Its live
+     page ranges need no scrolling; an old page must never navigate a new one. */
+  task->result = host_a11y_snapshot_matches(task->range->snapshot) ? S_OK : UIA_E_ELEMENTNOTAVAILABLE;
+}
+
 static HRESULT STDMETHODCALLTYPE host_a11y_range_scroll(ITextRangeProvider *self, BOOL align) {
-  host_a11y_range *range = (host_a11y_range *)self;
+  host_a11y_frame_task task = {0};
   (void)align;
-  if (!range->snapshot) return UIA_E_ELEMENTNOTAVAILABLE;
-  return host_a11y_snapshot_matches(range->snapshot) ? S_OK : UIA_E_ELEMENTNOTAVAILABLE;
+  task.range = (host_a11y_range *)self;
+  task.result = UIA_E_ELEMENTNOTAVAILABLE;
+  if (!host_a11y_on_ui(host_a11y_scroll_task, &task)) return UIA_E_ELEMENTNOTAVAILABLE;
+  return task.result;
 }
 
 /* ---- text provider ------------------------------------------------------ */
@@ -902,6 +961,8 @@ static void host_a11y_selection_task(void *context) {
     b = g.selection.end;
     if (a > b) { size_t swap = a; a = b; b = swap; }
     if (a < page_base) a = page_base;
+    if (a > page_base + bytes) a = page_base + bytes;
+    if (b < page_base) b = page_base;
     if (b > page_base + bytes) b = page_base + bytes;
     if (b < a) b = a;
     start = MultiByteToWideChar(CP_UTF8, 0, utf8, (int)(a - page_base), NULL, 0);
@@ -1075,8 +1136,15 @@ static LRESULT host_a11y_page_object(HWND window, WPARAM wparam, LPARAM lparam) 
   if ((LONG)lparam != UiaRootObjectId) return DefWindowProcW(window, WM_GETOBJECT, wparam, lparam);
   element = host_a11y_ensure_element();
   if (!element) return 0;
-  host_a11y_addref(element);
   return UiaReturnRawElementProvider(window, wparam, lparam, &element->simple);
+}
+
+static void host_a11y_page_destroyed(void) {
+  host_a11y_page *element = host_a11y_element;
+  host_a11y_element = NULL;
+  host_a11y_snapshot_release(host_a11y_current);
+  host_a11y_current = NULL;
+  if (element) { UiaDisconnectProvider(&element->simple); host_a11y_release(element); }
 }
 
 static void host_a11y_page_changed(int selection_only) {

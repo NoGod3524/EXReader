@@ -177,7 +177,9 @@ def main():
     profile = output / "profile"; profile.mkdir()
     source = output / "Accessibility book.txt"
     marker = "A11Y marker alpha beta gamma."
-    source.write_bytes((marker + " " + "Second sentence for the page range. " * 40 + "\n").encode())
+    unit_text = "abcdef alpha beta gamma e\u0301😀中 "
+    source.write_bytes((marker + "\n" + "".join(
+        f"{row:04d} {unit_text}Second sentence for the page range.\n" for row in range(55))).encode("utf-8"))
     checks = []
 
     def record(name):
@@ -254,7 +256,7 @@ def main():
         assert after_tab and after_tab != control(122), after_tab
         tap(VK_TAB, (VK_SHIFT,))
         after_back = focus_of(process.pid)
-        assert after_back and after_back != control(122), after_back
+        assert after_back == control(122), (after_tab, after_back, control(122))
         record("comment_editor_releases_tab_and_shift_tab")
 
         # 3) import and refresh keep a defined focus stop when they disable themselves
@@ -340,7 +342,7 @@ def main():
         assert survivors[-1].GetText(-1) == full_text
         del survivors
         assert pattern.DocumentRange.GetText(-1) == full_text
-        assert not process.poll(), "the host died while ranges were interleaved"
+        assert process.poll() is None, "the host died while ranges were interleaved"
         record("text_ranges_survive_interleaved_clone_compare_and_release")
 
         # 9) an old frame's range reads its own snapshot and refuses to select
@@ -365,14 +367,17 @@ def main():
         assert refused, "a stale range selected inside the new frame"
         record("stale_page_ranges_keep_their_text_and_refuse_to_select")
 
-        # 10) text units, truncation and endpoint clamping on real unicode
+        # 10) text units and truncation. Expected ranges follow Microsoft's UIA
+        # contract, not the provider implementation: nonempty Move spans one unit,
+        # degenerate Move stays degenerate, and crossing endpoints move both ends.
         #     UIA enums: Character 0, Word 2, Document 6; endpoints Start 0, End 1.
         units = fresh
         assert 1 <= len(units.GetText(1)) <= 2
         assert units.GetText(0) == ""
         assert units.GetText(-1) == fresh_text
         cursor = units.Clone()
-        assert cursor.Move(0, -10**6) == 0
+        cursor.MoveEndpointByRange(1, units, 0)
+        assert cursor.Move(0, -(2**31)) == 0
         assert cursor.GetText(-1) == ""
         assert cursor.Move(6, 1) == 1
         assert cursor.GetText(-1) == ""
@@ -385,10 +390,79 @@ def main():
         assert clip.CompareEndpoints(1, units, 1) == 0
         record("text_units_truncation_and_endpoints_follow_the_contract")
 
+        ascii_range = units.FindText("abcdef", False, False)
+        assert ascii_range and ascii_range.GetText(-1) == "abcdef", fresh_text
+        move = ascii_range.Clone()
+        assert move.Move(0, 1) == 1
+        assert move.GetText(-1) == "b", move.GetText(-1)
+        assert move.Move(0, -1) == -1
+        assert move.GetText(-1) == "a", move.GetText(-1)
+        word = units.FindText("alpha beta", False, False)
+        assert word
+        word.ExpandToEnclosingUnit(2)
+        assert word.GetText(-1).strip() == "alpha", word.GetText(-1)
+        assert word.Move(2, 1) == 1
+        assert word.GetText(-1).strip() == "beta", word.GetText(-1)
+        record("nonempty_move_normalizes_from_start_and_preserves_one_text_unit")
+
+        crossing = ascii_range.Clone()
+        crossing.MoveEndpointByRange(1, ascii_range, 0)
+        assert crossing.MoveEndpointByUnit(0, 0, 1) == 1
+        assert crossing.MoveEndpointByUnit(1, 0, 1) == 1
+        assert crossing.GetText(-1) == "b"
+        assert crossing.MoveEndpointByUnit(0, 0, 2) == 2
+        assert crossing.GetText(-1) == ""
+        target = ascii_range.Clone()
+        assert target.MoveEndpointByUnit(0, 0, 3) == 3
+        assert crossing.CompareEndpoints(0, target, 0) == 0
+        crossing.MoveEndpointByRange(0, ascii_range, 1)
+        assert crossing.CompareEndpoints(0, ascii_range, 1) == 0
+        assert crossing.CompareEndpoints(1, ascii_range, 1) == 0
+        assert crossing.MoveEndpointByUnit(1, 0, -(2**31)) < 0
+        assert crossing.CompareEndpoints(0, units, 0) == 0
+        assert crossing.CompareEndpoints(1, units, 0) == 0
+        record("crossing_endpoints_follow_the_moved_endpoint_and_int_min_is_bounded")
+
+        unicode_range = units.FindText("e\u0301😀中", False, False)
+        assert unicode_range, fresh_text
+        unicode_range.ExpandToEnclosingUnit(0)
+        assert unicode_range.GetText(-1) == "e\u0301", unicode_range.GetText(-1)
+        assert unicode_range.GetText(1) == "e\u0301"
+        assert unicode_range.Move(0, 1) == 1
+        assert unicode_range.GetText(-1) == "😀", unicode_range.GetText(-1)
+        assert unicode_range.GetText(1) == "😀"
+        assert unicode_range.Move(0, 1) == 1
+        assert unicode_range.GetText(-1) == "中", unicode_range.GetText(-1)
+        record("unicode_character_units_preserve_combining_sequences_and_surrogate_pairs")
+
+        for smaller in (1, 3, 4, 5):  # Format -> Word; Line/Paragraph/Page -> Document
+            fallback, reference = ascii_range.Clone(), ascii_range.Clone()
+            fallback.ExpandToEnclosingUnit(smaller)
+            reference.ExpandToEnclosingUnit(2 if smaller == 1 else 6)
+            assert fallback.Compare(reference), smaller
+        invalid = ascii_range.Clone()
+        refused = False
+        try:
+            invalid.Move(99, 1)
+        except Exception as error:
+            code = getattr(error, "hresult", error.args[0] if error.args else None)
+            assert code == -2147024809, error  # E_INVALIDARG
+            refused = True
+        assert refused and invalid.Compare(ascii_range)
+        record("valid_unsupported_units_fall_forward_and_invalid_units_leave_the_range_unchanged")
+        assert len(units.GetChildren()) == 0
+        record("range_get_children_returns_an_empty_com_array_in_the_correct_vtable_slot")
+
         # 11) geometry is real for text and empty for an empty range
         rects = units.GetBoundingRectangles()
-        assert len(rects) >= 4, rects
-        assert rects[2] > 0 and rects[3] > 0, rects
+        assert len(rects) >= 8 and len(rects) % 4 == 0, rects
+        assert all(rects[i + 2] > 0 and rects[i + 3] > 0 for i in range(0, len(rects), 4)), rects
+        assert len({round(rects[i + 1], 2) for i in range(0, len(rects), 4)}) >= 2, rects
+        single = units.Clone()
+        single.ExpandToEnclosingUnit(0)
+        single_rects = single.GetBoundingRectangles()
+        assert len(single_rects) == 4 and single_rects[2] > 0, single_rects
+        print(json.dumps({"full_page_rectangles": list(rects), "first_character_rectangle": list(single_rects)}), flush=True)
         collapsed = units.Clone()
         collapsed.MoveEndpointByRange(1, units, 0)  # end = range start
         assert collapsed.GetText(-1) == ""
@@ -399,9 +473,11 @@ def main():
         bounds = page.BoundingRectangle
         range_from_point = getattr(pattern, "RangeFromPoint", None)
         assert range_from_point is not None, "uiautomation has no RangeFromPoint"
-        point_range = range_from_point(int(bounds.left) + 40, int(bounds.top) + 40)
+        point_range = range_from_point(int(single_rects[0] + single_rects[2] / 2),
+                                      int(single_rects[1] + single_rects[3] / 2))
         assert point_range is not None
-        assert point_range.Move(0, 1) == 1
+        point_range.ExpandToEnclosingUnit(0)
+        assert point_range.GetText(-1) == single.GetText(-1), (point_range.GetText(-1), single.GetText(-1))
         record("range_from_point_uses_the_host_hit_test")
 
         # 13) one clean Tab cycle over every enabled stop
