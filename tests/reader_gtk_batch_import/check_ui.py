@@ -198,6 +198,10 @@ def main():
         record('reopened_bookshelf_keeps_canonical_product_mappings', min(len(closed), 50) <= host.read()['books'] <= min(len(closed), 150))
         host.close()
         record('reopen_keeps_all_original_identities_stable', inspect('final-originals') == closed)
+        unchanged = all((source / row['relative']).is_file() and hashlib.sha256((source / row['relative']).read_bytes()).hexdigest() == row['sha256'] for row in manifest['files'])
+        record('enumeration_staging_and_import_never_mutate_any_source_file', unchanged)
+        allowed = {row['sha256']: row['bytes'] for row in manifest['files'] if row['relative'].startswith(('folder 书籍/', 'cancel/', 'closing/')) and row['relative'].endswith('.txt') and '/nested/' not in row['relative']}
+        record('every_cancel_and_shutdown_original_is_a_byte_exact_selected_regular_file', all(allowed.get(row['sha256']) == row['bytes'] for row in closed))
         report['batch_import_scope_passed'] = True
     except BaseException as error:
         report['error'] = repr(error)

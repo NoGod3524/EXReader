@@ -62,6 +62,8 @@ static gboolean folder_tick(gpointer unused) {
     if(folder.want_close && !folder.release_queued) { folder.release_queued=1;folder_queue(READER_BATCH_CLOSE,NULL,0); }
     else if(!folder.done && !folder.release_queued) folder_queue(folder.map ? READER_BATCH_MAP:READER_BATCH_NEXT,NULL,0);
   }
+  if(folder.done && !folder.running && !folder.want_close) { folder.timer=0;return G_SOURCE_REMOVE; }
+  state();
   return G_SOURCE_CONTINUE;
 }
 static void folder_cancel(GtkWidget *widget,gpointer unused) {
@@ -72,6 +74,11 @@ static void folder_close(GtkWidget *widget,gpointer unused) {
   if(!folder.has_owner && folder.dialog) {
     gtk_widget_destroy(folder.dialog);folder.dialog=folder.list=folder.message=folder.progress=folder.cancel=folder.close=NULL;state();
   }
+  if(folder.has_owner && !folder.timer) folder.timer=g_timeout_add(80,folder_tick,NULL);
+}
+static gboolean folder_key(GtkWidget *widget,GdkEventKey *event,gpointer unused) {
+  if(event->keyval==GDK_KEY_Escape) { folder_close(widget,unused);return TRUE; }
+  return FALSE;
 }
 static gboolean folder_delete(GtkWidget *widget,GdkEvent *event,gpointer unused) {
   (void)event;folder_close(widget,unused);return TRUE;
@@ -91,7 +98,7 @@ static gboolean folder_apply(host_result *done) {
       const reader_batch_receipt *row=&result->batch_rows[i];
       const char *outcome=row->committed ? (row->created ? "Added":"Exact duplicate"):
         row->status==READER_BATCH_ITEM_CANCELLED ? "Cancelled":"Failed";
-      char *title=g_strdup_printf("%s · %s%s%s%s",row->path,outcome,row->committed ? row->mapped ? " · In bookshelf":" · Catalog pending":"",
+      char *title=g_strdup_printf("%s · %s%s%s%s",row->path,outcome,row->committed ? row->mapped ? " · Catalog mapped":" · Catalog pending":"",
         row->message[0] ? " · ":"",row->message);
       GtkWidget *label_row=gtk_label_new(title);gtk_label_set_xalign(GTK_LABEL(label_row),0);
       gtk_label_set_line_wrap(GTK_LABEL(label_row),TRUE);gtk_list_box_insert(GTK_LIST_BOX(folder.list),label_row,-1);g_free(title);
@@ -138,7 +145,7 @@ static void folder_open(GtkWidget *widget,gpointer unused) {
   folder.seen=folder.attempted=folder.imported=folder.duplicates=folder.failed=folder.pending=0;
   folder.rows=folder.max_rows=0;folder.done=folder.complete=folder.truncated=folder.cancelled=folder.map=folder.want_close=folder.release_queued=0;
   folder.has_owner=1;
-  folder.dialog=gtk_dialog_new_with_buttons("Folder import",GTK_WINDOW(window),GTK_DIALOG_DESTROY_WITH_PARENT,NULL);
+  folder.dialog=gtk_dialog_new_with_buttons("Folder import",GTK_WINDOW(window),GTK_DIALOG_DESTROY_WITH_PARENT,NULL,NULL);
   gtk_window_set_default_size(GTK_WINDOW(folder.dialog),620,420);
   GtkWidget *content=gtk_dialog_get_content_area(GTK_DIALOG(folder.dialog));
   folder.message=gtk_label_new(NULL);gtk_label_set_line_wrap(GTK_LABEL(folder.message),TRUE);gtk_label_set_xalign(GTK_LABEL(folder.message),0);
@@ -151,6 +158,7 @@ static void folder_open(GtkWidget *widget,gpointer unused) {
   folder.close=gtk_dialog_add_button(GTK_DIALOG(folder.dialog),"Stop and close",2);
   g_signal_connect(folder.cancel,"clicked",G_CALLBACK(folder_cancel),NULL);g_signal_connect(folder.close,"clicked",G_CALLBACK(folder_close),NULL);
   g_signal_connect(folder.dialog,"delete-event",G_CALLBACK(folder_delete),NULL);
+  g_signal_connect(folder.dialog,"key-press-event",G_CALLBACK(folder_key),NULL);
   folder_message();gtk_widget_show_all(folder.dialog);folder_queue(READER_BATCH_BEGIN,root,include);g_free(root);
   folder.timer=g_timeout_add(80,folder_tick,NULL);
 }
