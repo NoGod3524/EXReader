@@ -117,9 +117,14 @@ struct reader_health_scanner {
 static reader_health_status health_fail(reader_health_error *e, reader_health_status code,
                                         int detail, const char *message) {
   if (e) {
+    size_t length = 0;
     e->code = code;
     e->detail_code = detail;
-    snprintf(e->message, sizeof(e->message), "%s", message);
+    if (message) {
+      while (message[length] && length + 1 < sizeof(e->message)) length++;
+      memcpy(e->message, message, length);
+    }
+    e->message[length] = 0;
   }
   return code;
 }
