@@ -135,7 +135,7 @@ jobs:
   evidence:
     name: strict same-source evidence
     needs: [macos, ios]
-    if: always() && needs.macos.result == 'success' && needs.ios.result == 'success'
+    if: always()
     runs-on: ubuntu-22.04
     timeout-minutes: 20
     permissions:

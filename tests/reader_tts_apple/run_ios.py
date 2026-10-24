@@ -108,6 +108,9 @@ def main():
             if (documents / 'result.json.wav').is_file():
                 shutil.copy2(documents / 'result.json.wav', wav_copy)
             report = check_report.load(report_copy)
+            for case in report['checks']:
+                if case['status'] != 'pass':
+                    print('%s %s: %s' % (case['status'], case['name'], case['detail']), flush=True)
             assert exit_code == 0, 'the %s simulator probe reported a failing case (%d)' % (label, exit_code)
             return report, report_copy, wav_copy
         finally:
