@@ -63,6 +63,7 @@ import CReaderProduct
             let fingerprint = try library.sourceFingerprint(book: book)
             try catalog.attach(format: fingerprint.format, sha256: fingerprint.sha256, bytes: fingerprint.bytes,
                                title: "Remote title preserved", author: "Account author", sdkID: book.id, locationKind: "reflow_global")
+            try catalog.execute("UPDATE reader_books SET favorite=1")
             let page = try catalog.syncPage()
             try check("bounded_product_sync_page", page.count == 1 && page.count <= 50 && page[0].sdkID == book.id)
             let target = directory.appendingPathComponent("sync-originals", isDirectory: true)
@@ -78,7 +79,7 @@ import CReaderProduct
             try catalog.withHistory { try catalog.bootstrapVerified(page[0], store: $0) }
             try catalog.withHistory { try catalog.bootstrapVerified(page[0], store: $0) }
             try check("verified_bootstrap_is_idempotent_history_and_outbox", catalog.scalar("SELECT count(*) FROM reader_revisions") == 1 && catalog.scalar("SELECT count(*) FROM reader_outbox") == 1)
-            try check("bootstrap_preserves_product_title_author", catalog.text("SELECT title||'|'||author FROM reader_books") == "Remote title preserved|Account author")
+            try check("bootstrap_preserves_product_title_author", catalog.text("SELECT title||'|'||author||'|'||favorite FROM reader_books") == "Remote title preserved|Account author|1")
             bookKey = page[0].key
         }
         let session = accounts.controller(for: profile)

@@ -136,6 +136,7 @@ def main():
         revision = json.loads(revisions[0]); assert revision['entity_kind'] == 'book'
         assert revision['entity_key'] == report['book_key'] and revision['payload']['title'] == 'Remote title preserved'
         assert revision['payload']['author'] == 'Account author'
+        assert revision['payload']['favorite'] is True
         original = b'Actual Apple account original. Exact retained bytes.\n'
         assert len([body for body in entries.values() if body == original]) == 1
         databases = list((folder / 'account/accounts').glob('*/reader-catalog.db'))
