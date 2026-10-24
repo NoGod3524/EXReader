@@ -45,6 +45,9 @@ Linux 77+59+33、Windows 76+59+33，两个同源工件未过期且 digest 与上
 不授予宿主 metadata 投影、同步 UI、移动适配或真实用户云盘互操作。
 这些阶段尚无六目标共同源码、宿主数据投影联合事务或平台安全凭据 UI 的验收。
 详见[桌面有界书架](READER-DESKTOP-SHELF.md)。
+Android 产品库从完整 SQL 生成资产，在现有 owner worker 上打开独立
+`reader-catalog.db`，拒绝改写 SDK 或未知数据库。导入映射和有界书架的独立结果见上方。
+WebDAV [实施契约](WEBDAV-PROTOCOL.md)的网络与两端协议结果按各包证据分别登记。
 
 ## 并行工作包
 
