@@ -212,7 +212,10 @@ def main():
         action('Open location')
         wait(lambda value: value['visible'] == '0')
         record('only_explicit_location_action_accepts_independent_found_frame', host.read()['frame_generation'] > frame['frame_generation'] and sdk_dump(True) == notes)
-        host.key('F7', 'ctrl+Home', 'ctrl+shift+Right')
+        command('xdotool', 'windowactivate', '--sync', host.window)
+        click('Selectable page text', {'text'})
+        host.key('ctrl+Home', 'ctrl+shift+Right')
+        host.wait(lambda value: value['selected'] > 0)
         open_records()
         editor('Highlight selection', 'range 笔记 🙂')
         record('real_utf8_selection_creates_product_highlight_without_sdk_note_copy', observed()['count'] == '2' and any('range 笔记 🙂' in bus.name(row) for row in rows()) and sdk_dump(True) == notes)
@@ -297,12 +300,20 @@ def main():
             report['diagnostic_error'] = repr(diagnostics)
         raise
     finally:
+        report['checks_total'] = len(checks)
+        report['checks_failed'] = sum(not value['passed'] for value in checks)
+        report['last_observation'] = observed()
+        if not report['reading_records_scope_passed']:
+            report['host_state'] = host.read() if host.observe.exists() else {}
+            if (host.folder / 'application.log').exists():
+                print((host.folder / 'application.log').read_text(errors='replace')[-6000:], flush=True)
         if host.process and host.process.poll() is None:
             host.process.kill()
             host.process.wait(timeout=10)
         if host.log and not host.log.closed:
             host.log.close()
         (output / 'report.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
+        bus.exit_bus()
 
 
 if __name__ == '__main__':

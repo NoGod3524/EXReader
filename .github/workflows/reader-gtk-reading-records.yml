@@ -101,6 +101,20 @@ jobs:
           python3 tests/reader_reading_commands/make_fixtures.py build/records-command-fixtures
           python3 tests/reader_reading_commands/check_reading_commands.py --probe build/records-reader_reading_commands-consumer/reading-commands-probe --c-consumer build/records-reader_reading_commands-consumer/reading-commands-c-consumer --fixtures build/records-command-fixtures --font tests/fixtures/fonts/primary.ttf --output build/records-commands-installed --link-map build/records-reader_reading_commands-consumer/reading-commands-link.map
           python3 tests/reader_annotation_view/check_annotation_view.py --probe build/records-reader_annotation_view-consumer/annotation-view-probe --c-consumer build/records-reader_annotation_view-consumer/annotation-view-c-consumer --output build/records-view-installed --link-map build/records-reader_annotation_view-consumer/annotation-view-link.map
+      - name: Preserve the original 121 legacy checks and eighteen real v2 captures
+        run: |
+          mkdir -p build/records-legacy-source
+          git archive 210403d121d6484a8fff4ea7ffd911efa3163535 apps/reader/revisions extras/opds | tar -x -C build/records-legacy-source
+          legacy="$PWD/build/records-legacy-stage"
+          cmake -S build/records-legacy-source/apps/reader/revisions -B build/records-legacy-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$ACCOUNT_PREFIX" -DCMAKE_INSTALL_PREFIX="$legacy"
+          cmake --build build/records-legacy-revisions --parallel 4
+          cmake --install build/records-legacy-revisions
+          cmake -S apps/reader/reading-state -B build/records-legacy-adapter -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$legacy;$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$legacy"
+          cmake --build build/records-legacy-adapter --parallel 4
+          cmake --install build/records-legacy-adapter
+          cmake -S tests/reader_reading_state/consumer -B build/records-legacy-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$legacy;$ACCOUNT_PREFIX;$PWD/build/reading-library/stage"
+          cmake --build build/records-legacy-consumer --parallel 4
+          python3 tests/reader_reading_v2/check_sdk.py --probe build/account-reading-probe/reading-v2-probe --legacy-probe build/records-legacy-consumer/reading-state-probe --legacy-c-consumer build/records-legacy-consumer/reading-state-c-consumer --fixtures build/account-receive-fixtures --font tests/fixtures/fonts/primary.ttf --legacy-map build/records-legacy-consumer/reading-state-link.map --link-map build/account-reading-probe/reading-v2-link.map --output build/records-reading-sdk
       - name: Install unchanged F3 and run all twenty installed package checks
         run: |
           cmake -S apps/reader/preferences -B build/preferences-package -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
@@ -306,6 +320,7 @@ jobs:
             build/gtk-search-fixtures/
             build/records-commands-installed/
             build/records-view-installed/
+            build/records-reading-sdk/
             build/records-backend/
             build/records-ui/
             build/gtk-navigation-installed/
