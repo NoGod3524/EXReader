@@ -72,6 +72,7 @@ final class ProbeHost implements ImportOwner {
             if (entry == null) { log("command-refused", "cmd", cmd); return; }
             switch (cmd) {
                 case "hold": hold = "on".equals(arg); log("hold", "on", hold); break;
+                case "release-pending": for (ReadyRequest r : entry.pendingReady()) entry.release(r); log("released-pending"); break;
                 case "commit-pending": for (ReadyRequest r : entry.pendingReady()) commitOne(r); break;
                 case "cancel-all": closeAndRecreate(); break;
                 case "status": log("status", "maxChunk", entry.maxChunkBytes(), "pending", entry.pendingReady().size(), "handle", handle != 0); break;

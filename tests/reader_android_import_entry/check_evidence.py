@@ -29,7 +29,7 @@ REQUIRED_SCENARIOS = [
     'failure pdf-lie -> UNSUPPORTED_FORMAT, no file left',
     'failure empty -> EMPTY, no file left',
     'declared 128 MiB + 1: refused before the provider stream was opened',
-    'exactly 32 MiB unknown-length text is accepted, imported and read back',
+    'exactly 32 MiB unknown-length text is accepted and staged; the SDK verdict is recorded',
     'grant revoked before the stream opened -> PERMISSION',
     'URI never granted -> PERMISSION',
     'file:// URI refused as ARGUMENT',
