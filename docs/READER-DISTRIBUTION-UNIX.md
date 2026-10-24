@@ -82,3 +82,28 @@ gh run list --workflow=reader-distribution-unix.yml --branch codex/reader-distri
 受测源码、run/attempt、工件 ID/字节/digest/有效期与逐项结果记录在
 [validation/reader-distribution-unix.json](validation/reader-distribution-unix.json)；验收前
 `accepted=false`，真实运行后按实际范围回填。
+## 本轮结果（2026-10-24，run 40130016878 attempt 1）
+
+受测源码 `2f5677f13efc34b200af697f1b6f7bff2b656e3b`，四作业全部成功：`rejection protocol`
+（11/11 协议判据）、`unix (linux)`、`unix (macos)`、`same-source report`（accepted=true、problems=[]）。
+
+| 平台 | 安装文件/字节 | pkg-config SHA-256 | 去重 | 归档字节 | 归档 SHA-256 |
+| --- | --- | --- | --- | ---: | --- |
+| Linux/X64 | 257 / 18,540,390 | `1a5fa363…` | 4 组 / 46,583 B | 6,426,196 | `1f55f73f…` |
+| macOS/ARM64 | 257 / 14,858,502 | `cae96587…` | 4 组 / 46,583 B | 5,661,697 | `7aafa4ef…` |
+
+两平台各有 6 个上游私有 pkg-config 单元（libwebp/aom/sharpyuv）因绝对 prefix 被移除并记录；
+搬迁后 C 消费者输出 3.40.0/ABI 1、`layout.epub` 1 页、291 字节正文、720×1040 RGBA → PNG 18,974 字节，
+C++ 消费者编译 14 个头文件并通过同一路径；九格式 smoke 在去重前、去重后、解包后均 9/9；
+三份审计各 13 条判据全部通过；去重前后与解包前后的 PNG 摘要、逐项计数器与 smoke 结果完全一致。
+
+工件（均同 run/attempt，Actions API 读回）：linux ZIP `12574438658`/6,539,950 B/
+`sha256:6deef361…`；macos ZIP `12573872540`/5,767,126 B/`sha256:00d2c7f1…`；protocol ZIP
+`12574348478`/491 B；report ZIP `12574308810`/24,591,741 B；有效期 2027-01-22T20:29:38Z。
+上述工件在 GitHub Actions 内下载、解包与重算，未在本地下载分析。
+
+先前 7 次失败的 run（组件归档名、C++ 错误记录初始化、私有 pkg-config 绝对 prefix、flag 归一化、
+汇总未绑定变量、归档目录缺失、位图尺寸在释放后读取）原样保留在
+[validation/reader-distribution-unix.json](validation/reader-distribution-unix.json) 的
+`failures_preserved`，未用旧绿拼新源码。证据文档之后仅剩 `[skip ci]` 文档提交，受测 SHA 与最终 HEAD
+之间没有源码/测试/工作流差异。
