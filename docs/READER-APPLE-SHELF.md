@@ -185,6 +185,17 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
   Artifact `12543369254` preserves this result; its outer scope is not accepted.
   Geometry preference reduction also retains only one matching newest epoch,
   so a newer viewport preference cannot relabel an older row frame.
+- The same `b1407b09` source passed both unchanged iPad refresh/restoration
+  cases in [40053288311](https://github.com/NoGod3524/EXReader/actions/runs/40053288311),
+  with the same requested and observed key through rotation and both process restarts.
+  Artifact `12544094428` preserves that diagnostic result. The stricter reducer
+  at `3c234680f8dadd220b58d0a680f4637ca79182d0` passed restoration but exposed a
+  missing fresh epoch during pagination in
+  [40053450590](https://github.com/NoGod3524/EXReader/actions/runs/40053450590);
+  failure artifact `12544846559` is retained. Geometry closures now capture
+  the immutable epoch from their body construction, instead of reading the
+  current model epoch when an old closure runs. This completes the epoch boundary
+  from row/bounds capture through reduction, scroll issue and acknowledgement.
 
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.
