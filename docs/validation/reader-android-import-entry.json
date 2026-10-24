@@ -1,0 +1,46 @@
+{
+  "work_package": "J04",
+  "branch": "codex/reader-android-import-entry",
+  "start_commit": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "source_sha": "4b7ba6f3729ee3dde534e36258bf7cc1e2ee9507",
+  "run": {
+    "id": "40140183174",
+    "attempt": 1,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40140183174",
+    "jobs": {
+      "guards": "success",
+      "android": "success",
+      "summary": "success"
+    }
+  },
+  "device": {
+    "kind": "emulator",
+    "api": 34,
+    "abi": "x86_64"
+  },
+  "required_checks": 31,
+  "checks_passed": 78,
+  "checks_failed": 0,
+  "artifact_sha256": {
+    "identity.json": "5687295cde17c1fe55d78faa84e7a1095d5ed2f41cca85a3578075520b6b218d",
+    "packages.json": "a8a6c275ba4615e904f249cdb19af3e930cc74a782232c3c125ac7532e2b0f84",
+    "results.json": "366c1cbb188a4090e9f3d5d6083848ab6e75c977f3e50803e8c8b70ff11df1ee",
+    "stage.json": "4bae735dfaec4c8c4c1182ac698a82d7cbc36fd540eb820ea231aba11e425432"
+  },
+  "observations": {
+    "txt_32m_sdk_status": 6,
+    "note": "exactly 32 MiB TXT stages; SDK memory import returns EXR_LIMIT"
+  },
+  "history": [
+    "run 40115834320 failed: Java compile (InterruptedIOException)",
+    "run 40138536331: 46 passed 3 failed (reliable-pipe error unseen, revoke ignored, TXT SDK dedupe assumption)",
+    "run 40139643202: remaining failures were test assumptions (never-granted URI reused a granted doc; 32 MiB SDK verdict)"
+  ],
+  "scope_not_covered": [
+    "physical devices",
+    "other API levels or ABIs",
+    "audio/speech",
+    "system DocumentsUI picker (self-built picker Activity used)",
+    "third-party cloud providers"
+  ]
+}

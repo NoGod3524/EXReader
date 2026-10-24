@@ -63,15 +63,18 @@ Intent授权覆盖接收任务：须在finish接收Activity之前调用`submit`�
 `.github/workflows/reader-android-import-entry.yml`在同一提交上运行三个作业：
 `guards`（路径白名单、受保护树与固定起点逐字节相同、源码守卫，每条守卫先以具名正反例自测）、
 `android`（API26 Debug／Release编译；API34 x86_64模拟器上以自建`DocumentsProvider`和真实分享Intent执行场景，
-再由已安装SDK导入并回读）、`summary`（`check_evidence.py`要求所有工件同一commit／run／attempt，三十一项必需检查
+再由已安装SDK导入并回读）、`summary`（`check_evidence.py`要求所有工件同一commit／run／attempt，三十一项必需检查（模拟器共78项检查）
 全部存在且通过，否则失败）。生成报告本身不构成通过。
 
 模拟器场景包括：非seekable管道短读（1～37字节写入）、未知长度、声明长度、声明与实际不符、provider中途报错、
 恰为32 MiB与超出32／128 MiB、拒绝在读取前打开的超限声明、打开前撤销授权与从未授权、`file:` URI、
 停滞时取消、`close()`中途取消并可重建、返回键关闭界面后复制完成、横屏旋转后恰好交付一次、
 复制中途`force-stop`后临时文件被清除、发布后`force-stop`再启动由`pendingReady`恢复并导入、
-重投去重（已暂存与SDK精确重复）、provider名字只是提示、64 KiB读取上限。
+重投去重（已暂存的相同内容只留一个文件；EPUB重投时SDK精确重复返回`created=0`，TXT的SDK去重未单独验收）、provider名字只是提示、64 KiB读取上限。
 
 范围：仅API34 x86_64模拟器；未在真机、其他API级别或其他ABI上运行；不涉及音频或朗读；
 `DocumentsProvider`为本包自建，未接触第三方云盘提供器；未验证`ACTION_OPEN_DOCUMENT`的系统文档选择器界面
 （以本包自建的选择器Activity返回含授权的结果代替）；未进行带外部存储权限的旧式文件路径访问（刻意不支持）。
+
+已知SDK行为：恰为32 MiB的TXT可完整暂存，但SDK内存导入返回`EXR_LIMIT`（状态6）；入口不改写该结论，文件保留给宿主决定释放。
+模拟器验收记录见[validation/reader-android-import-entry.json](validation/reader-android-import-entry.json)。
