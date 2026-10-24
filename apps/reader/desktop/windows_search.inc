@@ -37,18 +37,6 @@ static int winsearch_hit_copy(host_search_hit *out,const host_search_hit *h) {
 fail:
   winsearch_hit_free(out);return 0;
 }
-static exr_status winsearch_identity(int64_t book,exr_format format,int fixed,int bounded,
-  char out[READER_SEARCH_SOURCE_KEY_MAX+1],const exr_control *control,exr_error *error) {
-  char digest[65];uint64_t bytes=0;
-  EnterCriticalSection(&g.library_lock);
-  exr_status status=reader_catalog_sdk_original_identity(g.library,book,control,digest,&bytes,error);
-  LeaveCriticalSection(&g.library_lock);
-  if(status!=EXR_OK) return status;
-  snprintf(out,READER_SEARCH_SOURCE_KEY_MAX+1,"sdk3.40.0:projection1:%d:%d:%s:%llu",
-    (int)format,fixed ? READER_SEARCH_FIXED:bounded ? READER_SEARCH_EPUB:READER_SEARCH_REFLOW,
-    digest,(unsigned long long)bytes);
-  return EXR_OK;
-}
 static exr_status winsearch_status(reader_search_status code,const reader_search_error *error) {
   if(code==READER_SEARCH_OK) return EXR_OK;
   if(code==READER_SEARCH_CANCELLED) return EXR_CANCELLED;
@@ -67,7 +55,7 @@ static exr_status winsearch_batch_run(host_job *job) {
   reader_search *search=NULL;reader_search_error error={0};reader_search_result result={0};
   reader_search_options options={0};reader_search_status code;
   options.struct_size=sizeof(options);options.control=(exr_control){winsearch_cancel_check,NULL,job};
-  options.source_key=g.session.search_key;
+  options.source_key=g.session.source_key;
   options.resume=job->search_has_resume ? &job->search_resume:NULL;
   if(g.session.fixed) code=reader_search_open_fixed(g.session.fixed_document,job->search_query,
     strlen(job->search_query),&options,&search,&error);
@@ -101,25 +89,6 @@ static exr_status winsearch_batch_run(host_job *job) {
   if(status!=EXR_OK) { winsearch_batch_free(&job->search_batch);snprintf(job->error.message,sizeof(job->error.message),"%s",error.message); }
   return status;
 }
-static exr_status winsearch_fresh(host_job *job,host_session *out) {
-  exr_status status;exr_error *error=&job->error;
-  memset(out,0,sizeof(*out));out->book_id=job->book_id;out->fixed=g.session.fixed;out->bounded=g.session.bounded;
-  out->config=g.session.config;
-  EnterCriticalSection(&g.library_lock);
-  if(out->fixed) {
-    exr_fixed_open_options options={0};options.struct_size=sizeof(options);options.fallback_font=g.font;
-    options.control=(exr_control){job_cancel_check,NULL,job};
-    status=exr_library_fixed_source(g.library,job->book_id,&options,&out->fixed_document,error);
-  } else if(out->bounded) {
-    exr_source source={0};status=exr_library_source(g.library,job->book_id,&source,error);
-    if(status==EXR_OK) {
-      source.control=(exr_control){job_cancel_check,NULL,job};
-      status=exr_publication_open_source(&source,&out->publication,error);
-      if(status!=EXR_OK) source.release(source.context);
-    }
-  } else status=exr_library_document(g.library,job->book_id,&out->document,error);
-  LeaveCriticalSection(&g.library_lock);return status;
-}
 static exr_status winsearch_fixed_resolve(exr_fixed_document *doc,const host_search_hit *hit,
   const exr_control *control,size_t *page,exr_anchor_match *match,exr_error *error) {
   size_t count=0,found=SIZE_MAX;
@@ -140,7 +109,7 @@ static exr_status winsearch_fixed_resolve(exr_fixed_document *doc,const host_sea
 static exr_status winsearch_open_run(host_job *job) {
   host_session fresh={0};host_search_hit *hit=&job->search_hit;
   exr_control control={job_cancel_check,NULL,job};exr_anchor_match match={0};
-  exr_status status=winsearch_fresh(job,&fresh);size_t target=0;
+  exr_status status=winreader_fresh(job,&fresh);size_t target=0;
   if(status==EXR_OK && hit->mode==READER_SEARCH_FIXED && fresh.fixed)
     status=winsearch_fixed_resolve(fresh.fixed_document,hit,&control,&target,&match,&job->error);
   else if(status==EXR_OK && hit->mode==READER_SEARCH_EPUB && fresh.bounded) {
@@ -175,9 +144,9 @@ static exr_status winsearch_open_run(host_job *job) {
 static exr_status winsearch_job(host_job *job) {
   if(!g.session.active || job->book_id!=g.session.book_id || job->book_id!=g.current.id) return EXR_CANCELLED;
   exr_control control={job_cancel_check,NULL,job};char key[READER_SEARCH_SOURCE_KEY_MAX+1];
-  exr_status status=winsearch_identity(job->book_id,g.current.format,g.session.fixed,g.session.bounded,key,&control,&job->error);
+  exr_status status=winreader_identity(job->book_id,g.current.format,g.session.fixed,g.session.bounded,key,&control,&job->error);
   if(status!=EXR_OK) return status;
-  if(strcmp(key,g.session.search_key)) {
+  if(strcmp(key,g.session.source_key)) {
     snprintf(job->error.message,sizeof(job->error.message),"The original changed; reopen the book before searching");return EXR_ARGUMENT;
   }
   if(g.current.format==EXR_CBZ) {

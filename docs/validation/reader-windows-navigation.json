@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "accepted": false,
+  "state": "implementation_awaiting_first_cloud_run",
+  "baseline": "3917897e",
+  "sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "source": null,
+  "run": null,
+  "workflow": ".github/workflows/reader-windows-navigation-ui.yml",
+  "complete_product": false,
+  "six_platform_accepted": false,
+  "screen_reader_accepted": false,
+  "performance_accepted": false,
+  "sdk_changed": false,
+  "schema_changed": false,
+  "previous_failures": []
+}
