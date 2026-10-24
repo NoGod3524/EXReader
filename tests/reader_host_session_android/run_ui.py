@@ -92,7 +92,7 @@ def main():
             for key,value in identity.items():command.extend(('-e',key,value))
             raw=adb(*command,package+'.test/'+package+'.HostSyncTest',timeout=300);save(phase+'-instrumentation.txt',raw)
             report=json.loads(adb('exec-out','run-as',package,'cat','files/host-ui-'+phase+'.json'));save(phase+'-report.json',(json.dumps(report,ensure_ascii=False,indent=2)+'\n').encode())
-            print(json.dumps({'phase':phase,'passed':report.get('passed'),'checks':report.get('checks'),'failure_class':report.get('failure_class'),'failure':report.get('failure')},ensure_ascii=False),flush=True)
+            print(json.dumps({'phase':phase,'passed':report.get('passed'),'expected_checks':expected[phase],'actual_checks':report.get('checks'),'failure_class':report.get('failure_class'),'failure':report.get('failure')},ensure_ascii=False),flush=True)
             stop.set();thread.join(10);assert not thread.is_alive() and not monitor_failure,monitor_failure
             assert all(report.get(key)==value for key,value in identity.items()) and report['phase']==phase and report['passed'] is True
             assert [row['name'] for row in report['checks']]==expected[phase] and all(row['pass'] is True for row in report['checks'])
