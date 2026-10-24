@@ -1,0 +1,35 @@
+{
+  "accepted": false,
+  "status": "implementation written; cloud acceptance not yet run",
+  "package": "EXReaderLinkPolicy 0.1.0",
+  "abi": 1,
+  "common_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk": {
+    "commit": "9854061be331fe603a1822d9b2b36ee357154927",
+    "version": "3.40.0",
+    "abi": 1
+  },
+  "source_sha": null,
+  "branch": "codex/reader-external-link-policy",
+  "run_id": null,
+  "attempt": null,
+  "jobs": [],
+  "artifacts": [],
+  "problems": [
+    "cloud acceptance has not run for this branch yet"
+  ],
+  "checks_per_platform": 36,
+  "granted_platforms": [],
+  "module_accepted": false,
+  "host_ui_accepted": false,
+  "performance_claimed": false,
+  "device_accepted": false,
+  "sdk_changed": false,
+  "schema_changed": false,
+  "protected_trees_unchanged": null,
+  "uncovered": [
+    "product hosts (Windows, GTK, Android, Apple) are not wired to this package",
+    "no emulator, real device, performance or accessibility scope is claimed",
+    "the package has no network, file or process behaviour to exercise"
+  ]
+}
