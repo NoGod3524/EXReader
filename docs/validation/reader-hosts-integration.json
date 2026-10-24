@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "accepted": false,
+  "state": "merged_candidate_cloud_validation_pending",
+  "branch": "codex/reader-hosts-integration",
+  "merge_baseline": "33167f2faa6cabae6656b8c1089a799dc7e5549e",
+  "sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "runs": [],
+  "retained_palette_failures": [
+    "light_foreground_and_background_change_page_pixels",
+    "dark_theme_and_palette_change_page_pixels"
+  ],
+  "complete_product": false,
+  "performance_accepted": false,
+  "six_target_product_accepted": false,
+  "screen_reader_speech_accepted": false,
+  "physical_device_accepted": false
+}

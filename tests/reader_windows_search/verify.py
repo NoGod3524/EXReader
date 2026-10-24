@@ -86,7 +86,7 @@ def protocol_selftest(source, run, attempt):
     return 2 * len(mutations) + 1
 
 
-def main():
+def main(workflow_path='.github/workflows/reader-windows-search-ui.yml'):
     require(os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only')
     source = os.environ['GITHUB_SHA'];run = int(os.environ['GITHUB_RUN_ID']);attempt = int(os.environ['GITHUB_RUN_ATTEMPT'])
     out = Path('build/winsearch-summary');out.mkdir(parents=True, exist_ok=False)
@@ -96,7 +96,7 @@ def main():
         require(os.environ['SEARCH_RESULT'] == 'success', 'native Windows job did not pass')
         info = fetch('actions/runs/%d' % run)
         require(info['head_sha'] == source and info['run_attempt'] == attempt and
-                info['path'].split('@')[0] == '.github/workflows/reader-windows-search-ui.yml', 'wrong workflow identity')
+                info['path'].split('@')[0] == workflow_path, 'wrong workflow identity')
         jobs = fetch('actions/runs/%d/attempts/%d/jobs?per_page=100' % (run, attempt))['jobs']
         matches = [j for j in jobs if j['name'] == 'installed F1 and native Windows search controls and lifecycle']
         require(len(matches) == 1 and matches[0]['head_sha'] == source and matches[0]['conclusion'] == 'success', 'wrong native job')
