@@ -6,6 +6,7 @@ import io
 import json
 import os
 from pathlib import Path
+import re
 import sys
 import tempfile
 import zipfile
@@ -91,6 +92,18 @@ def main():
             require(all(ok for _, ok in cases), "a named case failed")
             digests[platform] = report.get("catalog_digest", "")
             require(len(digests[platform]) == 64, "catalog digest missing")
+            bindings = report.get("bindings") or {}
+            require({"header", "library", "c-consumer", "cpp-consumer", "worker"} <= set(bindings),
+                    "consumer or install binding is missing")
+            for name, entry in bindings.items():
+                require(int(entry.get("bytes", 0)) > 0, "bound artifact %s is empty" % name)
+                require(re.fullmatch(r"[0-9a-f]{64}", str(entry.get("sha256", ""))) is not None,
+                        "bound artifact %s has no digest" % name)
+            require(bindings["c-consumer"]["sha256"] != bindings["worker"]["sha256"],
+                    "the C consumer and the worker share a digest")
+            summary.setdefault("bindings", {})[platform] = {
+                name: bindings[name]["sha256"] for name in
+                ("library", "c-consumer", "cpp-consumer", "worker")}
             outcomes.append(cases)
             summary["artifacts"].append({key: artifact[key] for key in
                                          ("id", "name", "size_in_bytes", "digest", "expires_at")})

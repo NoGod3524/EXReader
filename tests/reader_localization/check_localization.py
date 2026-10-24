@@ -8,6 +8,7 @@ shipped library must report or refuse, and compares every byte against
 expectations frozen before the consumers started.
 """
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -27,6 +28,7 @@ REQUIRED_CASES = (
     "installed-package-layout",
     "installed-c-consumer",
     "installed-cpp-consumer",
+    "installed-consumer-binding",
     "abi-and-version",
     "limits-match-header",
     "hook-worker-manifest-parity",
@@ -135,6 +137,14 @@ def text_hex(text):
     return text.encode("utf-8").hex() if text else "-"
 
 
+def sha256_file(path):
+    digest = hashlib.sha256()
+    with open(path, "rb") as stream:
+        for block in iter(lambda: stream.read(1 << 20), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--consumer", required=True)
@@ -228,6 +238,45 @@ def main():
         process = run([cpp], 0)
         require("FAIL " not in process.stdout, "installed C++ consumer reported failures")
         require("CONSUMER\tcpp\t0\tfailures" in process.stdout, "C++ consumer summary missing")
+
+    def installed_consumer_binding():
+        """The installed consumers must be configured against the installed
+        prefix, and every consumed binary and resource is recorded by digest so
+        a hand-off can name exactly what ran."""
+        consumer_directory = Path(consumer).parent
+        cache = consumer_directory / "CMakeCache.txt"
+        require(cache.is_file(), "consumer CMake cache missing")
+        text = cache.read_text(encoding="utf-8", errors="replace")
+        require("CMAKE_PREFIX_PATH" in text, "consumer was not configured with a prefix path")
+        match = re.search(r"^EXReaderLocalization_DIR:[^=]*=(.+)$", text, re.MULTILINE)
+        require(match is not None, "installed package directory is not in the consumer cache")
+        configured = Path(match.group(1).strip())
+        expected = (installed / "lib" / "cmake" / "EXReaderLocalization").resolve()
+        require(configured.resolve() == expected,
+                "consumer resolved the package from %s, not %s" % (configured, expected))
+        bindings = {}
+        candidates = [("header", installed / "include" / "reader_localization.h"),
+                      ("c-consumer", Path(consumer)),
+                      ("cpp-consumer", Path(cpp)),
+                      ("worker", Path(worker))]
+        for library in sorted((installed / "lib").iterdir()):
+            if library.is_file() and (library.name.startswith("reader_localization") or
+                                      library.name.startswith("libreader_localization")):
+                candidates.append(("library", library))
+        for name, path in candidates:
+            require(path.is_file(), "bound artifact missing: %s" % path)
+            size = path.stat().st_size
+            require(size > 0, "bound artifact is empty: %s" % path)
+            bindings[name] = {"path": str(path), "bytes": size, "sha256": sha256_file(path)}
+        for fixture_file in sorted(fixtures.iterdir()):
+            if fixture_file.is_file():
+                bindings["fixture:" + fixture_file.name] = {
+                    "path": str(fixture_file), "bytes": fixture_file.stat().st_size,
+                    "sha256": sha256_file(fixture_file)}
+        require("library" in bindings, "installed library was not bound")
+        require(bindings["c-consumer"]["sha256"] != bindings["worker"]["sha256"],
+                "the installed consumer and the hook worker are the same binary")
+        state["bindings"] = bindings
 
     def abi_and_version():
         header = read_header()
@@ -441,6 +490,7 @@ def main():
     record("installed-package-layout", installed_layout)
     record("installed-c-consumer", installed_c)
     record("installed-cpp-consumer", installed_cpp)
+    record("installed-consumer-binding", installed_consumer_binding)
     record("abi-and-version", abi_and_version)
     record("limits-match-header", limits_match_header)
     record("hook-worker-manifest-parity", hook_worker_manifest_parity)
@@ -475,6 +525,7 @@ def main():
         "templates": len(state.get("templates", [])),
         "limits": state.get("limits", {}),
         "library_files": state.get("library_files", []),
+        "bindings": state.get("bindings", {}),
         "checks": len(cases),
         "cases": cases,
         "problems": problems,

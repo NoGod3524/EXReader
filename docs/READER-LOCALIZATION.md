@@ -221,7 +221,8 @@ or parsed locally.
 Named cases (identical on every platform):
 
 `installed-package-layout`, `installed-c-consumer`, `installed-cpp-consumer`,
-`abi-and-version`, `limits-match-header`, `hook-worker-manifest-parity`,
+`installed-consumer-binding`, `abi-and-version`, `limits-match-header`,
+`hook-worker-manifest-parity`,
 `catalog-coverage-zh-en`, `catalog-template-parity`,
 `catalog-digest-cross-implementation`, `format-matrix-zh`, `format-matrix-en`,
 `refusal-arity-and-kind`, `refusal-malformed-utf8`, `value-limit-boundary`,
