@@ -283,6 +283,11 @@ unchanged. Frozen SDK: `9854061be331fe603a1822d9b2b36ee357154927`.
   logs incoming epoch, complete frame count, target frame, viewport size and
   actual scroll issue order. This following observation-only candidate runs
   only original iPhone06; default complete execution remains three platforms.
+- `7d25b0ce` run `40068171653` reproduced iPhone06 pending layout, but the
+  application's stdout was not forwarded to the XCTest runner log. The
+  following observation-only candidate writes review events to the test
+  application's own trace file and copies it from the resolved simulator
+  container in Actions. Missing trace data fails the focused diagnostic.
 
 All compilation, syntax checks, test execution, SQL and artifact processing run
 in GitHub Actions. Physical devices and VoiceOver remain separate acceptance.
