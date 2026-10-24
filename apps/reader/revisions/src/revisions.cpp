@@ -126,23 +126,38 @@ struct json {
   }
 };
 struct revision {std::string id,kind,key,operation,location,sha,book_key;std::vector<std::string> parents;size_t bytes=0;uint64_t source_bytes=0;};
-void selector(const json &j,size_t index) {
-  j.fields(index,{"exact","prefix","suffix","start","end"});
-  j.string(j.field(index,"exact"),65536,65536,true);j.string(j.field(index,"prefix"),4096);j.string(j.field(index,"suffix"),4096);
+bool selector(const json &j,size_t index,uint64_t version,const std::string &mode) {
+  if(version==2&&mode=="reflow_global")j.fields(index,{"exact","prefix","suffix","start","end","chapter"});
+  else j.fields(index,{"exact","prefix","suffix","start","end"});
+  std::string exact=j.string(j.field(index,"exact"),65536,65536,version==1);
+  j.string(j.field(index,"prefix"),version==2?128:4096,version==2?32:65536);
+  j.string(j.field(index,"suffix"),version==2?128:4096,version==2?32:65536);
   uint64_t start=j.integer(j.field(index,"start")),end=j.integer(j.field(index,"end"));if(end<start)reject(READER_REV_FORMAT,"Selector end precedes start");
+  if(version==2){
+    if(end-start!=exact.size())reject(READER_REV_FORMAT,"Selector span differs from quote bytes");
+    if(mode=="reflow_global"){
+      size_t chapter=j.field(index,"chapter");if(j.at(chapter).type!="null")j.string(chapter,1024,1024,true);
+    }
+  }
+  return exact.empty();
 }
 void location(const json &j,size_t index,const revision &r,const std::string &book_key) {
   std::string format=book(book_key),mode=j.string(j.field(index,"mode"),16);
   if(mode!=r.location)reject(READER_REV_FORMAT,"Location mode differs from revision envelope");
-  if(mode=="epub_chapter")j.fields(index,{"mode","parser_version","anchor_version","part_path","selector"});
+  uint64_t version=j.integer(j.field(index,"anchor_version"));
+  if(version!=1&&version!=2)reject(READER_REV_FORMAT,"Unsupported anchor version");
+  if(mode=="epub_chapter"&&version==2)j.fields(index,{"mode","parser_version","anchor_version","part_path","part","selector"});
+  else if(mode=="epub_chapter")j.fields(index,{"mode","parser_version","anchor_version","part_path","selector"});
   else if(mode=="reflow_global")j.fields(index,{"mode","parser_version","anchor_version","selector"});
   else if(mode=="fixed_page")j.fields(index,{"mode","parser_version","anchor_version","page_id","page","selector"});
   else reject(READER_REV_FORMAT,"Unknown reading location mode");
-  j.string(j.field(index,"parser_version"),64,64,true);if(j.integer(j.field(index,"anchor_version"))!=1)reject(READER_REV_FORMAT,"Unsupported anchor version");
+  j.string(j.field(index,"parser_version"),64,64,true);
   if((mode=="fixed_page")!=(format=="pdf"||format=="cbz") || (mode=="epub_chapter"&&format!="epub"))reject(READER_REV_FORMAT,"Book format and reading location disagree");
   if(mode=="epub_chapter")j.string(j.field(index,"part_path"),1024,1024,true);
+  if(mode=="epub_chapter"&&version==2)j.integer(j.field(index,"part"));
   if(mode=="fixed_page"){j.string(j.field(index,"page_id"),256,256,true);j.integer(j.field(index,"page"));}
-  selector(j,j.field(index,"selector"));
+  bool point=selector(j,j.field(index,"selector"),version,mode);
+  if(version==2&&r.kind=="progress"&&!point)reject(READER_REV_FORMAT,"Progress requires a point selector");
 }
 revision parse(sqlite3 *db,const std::string &wire,const char *expected) {
   if(wire.size()<2 || wire.size()>READER_REVISION_MAX_BYTES)reject(READER_REV_LIMIT,"Revision byte limit exceeded");
@@ -404,6 +419,23 @@ extern "C" reader_revision_status reader_revision_local_project(reader_revisions
     store_revision(store,r,wire,true);graph after(store->db,r.kind,r.key);
     if(safe_head(after)!=r.id)reject(READER_REV_UNSAFE,"Local revision did not form a complete safe unique head");
     apply_product(store,r,wire,sort_title);tx.commit();info(r,out);if(created)*created=1;if(applied)*applied=1;
+  });
+}
+extern "C" reader_revision_status reader_revision_local_reading(reader_revisions *store,const void *bytes,size_t count,const char *const *expected,size_t expected_count,reader_revision_info *out,int *created,reader_revision_error *error){
+  if(created)*created=0;
+  if(out)std::memset(out,0,sizeof(*out));
+  return call(error,[&]{guard owner(store);if(expected_count>32||(expected_count&&!expected))reject(READER_REV_ARGUMENT,"Expected head set must contain at most 32 IDs");
+    std::string wire=wire_input(bytes,count);revision r=parse(store->db,wire,nullptr);
+    if(r.kind!="progress"&&r.kind!="annotation")reject(READER_REV_ARGUMENT,"Reading transaction requires progress or annotation");
+    transaction tx(store->db);
+    if(already_retained(store,r,wire)){tx.commit();info(r,out);return;}
+    std::set<std::string> observed;for(size_t n=0;n<expected_count;n++){if(!expected[n])reject(READER_REV_ARGUMENT,"Missing expected head ID");identifier(expected[n]);if(!observed.insert(expected[n]).second)reject(READER_REV_ARGUMENT,"Duplicate expected head ID");}
+    graph before(store->db,r.kind,r.key);std::set<std::string> parents(r.parents.begin(),r.parents.end());
+    if(head_ids(before)!=observed||parents!=observed)reject(READER_REV_UNSAFE,"Expected heads or new parent set differs from current history");
+    graph original(store->db,"book",r.book_key);if(!original.original_bytes)reject(READER_REV_NOT_FOUND,"Verified original book metadata has not arrived");
+    store_revision(store,r,wire,true);graph after(store->db,r.kind,r.key);
+    if(safe_head(after)!=r.id)reject(READER_REV_UNSAFE,"Reading revision did not form a complete safe unique head");
+    tx.commit();info(r,out);if(created)*created=1;
   });
 }
 extern "C" reader_revision_status reader_revision_project(reader_revisions *store,const char *entity_kind,const char *entity_key,const char *expected,const char *sort_title,reader_revision_info *out,reader_revision_error *error){

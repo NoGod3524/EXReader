@@ -68,9 +68,9 @@ void require_capture(const reader_rs_capture *c){
   if(!a||a->start==SIZE_MAX||a->end<a->start||(a->exact&&a->end-a->start!=std::strlen(a->exact)))reject(READER_RS_ARGUMENT,"Text capture is not an SDK selector");
   if(c->mode==READER_RS_EPUB_CHAPTER&&(!c->part_path||!c->part_path[0]))reject(READER_RS_ARGUMENT,"EPUB capture requires its exact part path");
 }
-std::string location(const reader_rs_capture *c,const char *parser){
+std::string location(const reader_rs_capture *c,const char *parser,unsigned version,size_t part){
   std::string out="{\"mode\":";quote(out,mode_name(c->mode));
-  out+=",\"parser_version\":";quote(out,parser);out+=",\"anchor_version\":1";
+  out+=",\"parser_version\":";quote(out,parser);out+=",\"anchor_version\":"+std::to_string(version);
   const char *exact,*prefix,*suffix;size_t exact_size,prefix_size,suffix_size,start,end;
   if(c->mode==READER_RS_FIXED_PAGE){
     const exr_fixed_anchor *a=c->fixed;
@@ -78,13 +78,15 @@ std::string location(const reader_rs_capture *c,const char *parser){
     exact=a->exact;prefix=a->prefix;suffix=a->suffix;exact_size=a->exact_size;prefix_size=a->prefix_size;suffix_size=a->suffix_size;start=a->start;end=a->end;
   }else{
     const exr_anchor *a=c->anchor;
-    if(c->mode==READER_RS_EPUB_CHAPTER){out+=",\"part_path\":";quote(out,c->part_path);}
+    if(c->mode==READER_RS_EPUB_CHAPTER){out+=",\"part_path\":";quote(out,c->part_path);if(version==2)out+=",\"part\":"+std::to_string((unsigned long long)part);}
     exact=a->exact;prefix=a->prefix?a->prefix:"";suffix=a->suffix?a->suffix:"";
     exact_size=std::strlen(exact);prefix_size=std::strlen(prefix);suffix_size=std::strlen(suffix);start=a->start;end=a->end;
   }
   out+=",\"selector\":{\"exact\":";quote(out,exact,exact_size);
   out+=",\"prefix\":";quote(out,prefix,prefix_size);out+=",\"suffix\":";quote(out,suffix,suffix_size);
-  out+=",\"start\":"+std::to_string((unsigned long long)start)+",\"end\":"+std::to_string((unsigned long long)end)+"}}";
+  out+=",\"start\":"+std::to_string((unsigned long long)start)+",\"end\":"+std::to_string((unsigned long long)end);
+  if(version==2&&c->mode==READER_RS_REFLOW_GLOBAL){out+=",\"chapter\":";if(c->anchor->chapter)quote(out,c->anchor->chapter);else out+="null";}
+  out+="}}";
   return out;
 }
 char *copy(const std::string &s){char *out=(char *)std::malloc(s.size()+1);if(!out)throw std::bad_alloc();std::memcpy(out,s.data(),s.size());out[s.size()]=0;return out;}
@@ -114,6 +116,7 @@ void field(char *out,size_t capacity,const std::string &value){if(value.size()>=
 void require_selector(const reader_rs_record *r,reader_rs_mode mode){
   if(!r||!r->has_location||r->mode!=mode||!r->exact)reject(READER_RS_ARGUMENT,"Record has no selector for this reading mode");
   if(r->end<r->start||r->end-r->start!=r->exact_size)reject(READER_RS_ARGUMENT,"Wire offset hints disagree with the quote length");
+  if(r->start>SIZE_MAX||r->end>SIZE_MAX)reject(READER_RS_ARGUMENT,"Selector exceeds this host's address range");
 }
 void require_note(const reader_rs_record *r,reader_rs_mode mode){
   if(!r||std::strcmp(r->entity_kind,"annotation")||!std::strcmp(r->operation,"delete"))reject(READER_RS_ARGUMENT,"Only annotation put/restore records create SDK notes");
@@ -127,7 +130,7 @@ void found(const exr_anchor_match &m){if(m.state!=EXR_ANCHOR_FOUND)reject(READER
 void resolve_reflow(const exr_document *doc,const reader_rs_record *r,const exr_control *control,exr_anchor_match *match){
   if(!doc||!match)reject(READER_RS_ARGUMENT,"Missing document or match output");
   require_selector(r,READER_RS_REFLOW_GLOBAL);
-  exr_anchor a=text_anchor(r,nullptr);exr_error e{};
+  exr_anchor a=text_anchor(r,r->anchor_version==2?r->chapter:nullptr);exr_error e{};
   check_sdk(exr_anchor_resolve_ex(doc,&a,control,match,&e),"Public reflow resolve failed");found(*match);
 }
 size_t epub_part(const exr_publication *pub,const char *path){
@@ -137,10 +140,18 @@ size_t epub_part(const exr_publication *pub,const char *path){
   if(hits!=1)reject(READER_RS_IDENTITY,hits?"EPUB part path repeats in the spine; part is ambiguous":"EPUB part path is absent from this package",READER_RS_GAP_ROUTE);
   return part;
 }
+size_t record_part(const exr_publication *pub,const reader_rs_record *r){
+  if(!pub||!r||r->mode!=READER_RS_EPUB_CHAPTER||!r->part_path)reject(READER_RS_ARGUMENT,"Missing EPUB record route");
+  if(r->anchor_version==1)return epub_part(pub,r->part_path);
+  size_t count=0;const exr_part *parts=exr_publication_parts(pub,&count);
+  if(r->anchor_version!=2||r->part>=count||!parts[r->part].path||std::strcmp(parts[r->part].path,r->part_path))
+    reject(READER_RS_IDENTITY,"EPUB spine index and path disagree",READER_RS_GAP_ROUTE);
+  return (size_t)r->part;
+}
 void resolve_epub(const exr_publication *pub,exr_pager *pager,size_t part,const reader_rs_record *r,const exr_control *control,exr_anchor_match *match){
   if(!pager||!match)reject(READER_RS_ARGUMENT,"Missing pager or match output");
   require_selector(r,READER_RS_EPUB_CHAPTER);
-  if(epub_part(pub,r->part_path)!=part)reject(READER_RS_IDENTITY,"Pager part differs from the record part path",READER_RS_GAP_ROUTE);
+  if(record_part(pub,r)!=part)reject(READER_RS_IDENTITY,"Pager part differs from the record part path",READER_RS_GAP_ROUTE);
   exr_anchor a=text_anchor(r,r->part_path);exr_error e{};
   check_sdk(exr_pager_anchor_resolve(pager,&a,control,match,&e),"Public bounded-pager resolve failed");found(*match);
 }
@@ -170,7 +181,7 @@ extern "C" reader_rs_gap reader_rs_classify(const reader_rs_capture *capture){
   return gap_of(capture);
 }
 extern "C" void reader_rs_free(void *memory){std::free(memory);}
-extern "C" reader_rs_status reader_rs_encode(reader_revisions *store,const reader_rs_envelope *v,const reader_rs_capture *c,char **wire,size_t *bytes,reader_rs_error *error){
+static reader_rs_status encode(reader_revisions *store,const reader_rs_envelope *v,const reader_rs_capture *c,unsigned version,size_t part,char **wire,size_t *bytes,reader_rs_error *error){
   if(wire)*wire=nullptr;
   if(bytes)*bytes=0;
   return call(error,[&]{
@@ -190,11 +201,21 @@ extern "C" reader_rs_status reader_rs_encode(reader_revisions *store,const reade
     else{
       require_capture(c);
       reader_rs_gap gap=gap_of(c);
-      if(gap!=READER_RS_GAP_NONE)reject(READER_RS_NOT_REPRESENTABLE,"SDK capture has no lossless wire v1 selector",gap);
+      if(version==1&&gap!=READER_RS_GAP_NONE)reject(READER_RS_NOT_REPRESENTABLE,"SDK capture has no lossless wire v1 selector",gap);
+      if(version==2){
+        if(c->mode!=READER_RS_FIXED_PAGE&&!c->anchor->exact)reject(READER_RS_NOT_REPRESENTABLE,"Legacy offsets are not a v2 capture",READER_RS_GAP_LEGACY);
+        if(c->mode==READER_RS_EPUB_CHAPTER&&c->anchor->chapter&&std::strcmp(c->anchor->chapter,c->part_path))
+          reject(READER_RS_NOT_REPRESENTABLE,"Captured chapter and EPUB route disagree",READER_RS_GAP_ROUTE);
+        if(c->mode==READER_RS_FIXED_PAGE){const exr_fixed_anchor *a=c->fixed;
+          if((a->exact_size&&std::memchr(a->exact,0,a->exact_size))||(a->prefix_size&&std::memchr(a->prefix,0,a->prefix_size))||
+             (a->suffix_size&&std::memchr(a->suffix,0,a->suffix_size)))reject(READER_RS_NOT_REPRESENTABLE,"NUL selector bytes are not representable",READER_RS_GAP_NUL);
+        }
+        if(gap==READER_RS_GAP_LIMIT||gap==READER_RS_GAP_ROUTE)reject(READER_RS_NOT_REPRESENTABLE,"Capture route exceeds the wire contract",gap);
+      }
       if(!v->parser_version)reject(READER_RS_ARGUMENT,"Parser version is required for a location");
       out+="{\"book_key\":";quote(out,v->book_key);
       if(annotation){out+=",\"annotation_id\":";quote(out,v->annotation_id);}
-      out+=",\"location\":"+location(c,v->parser_version);
+      out+=",\"location\":"+location(c,v->parser_version,version,part);
       if(annotation){out+=",\"text\":";quote(out,v->note_text);}
       out+='}';
     }
@@ -203,9 +224,15 @@ extern "C" reader_rs_status reader_rs_encode(reader_revisions *store,const reade
     *wire=copy(out);*bytes=out.size();
   });
 }
+extern "C" reader_rs_status reader_rs_encode(reader_revisions *store,const reader_rs_envelope *v,const reader_rs_capture *c,char **wire,size_t *bytes,reader_rs_error *error){
+  return encode(store,v,c,1,0,wire,bytes,error);
+}
+extern "C" reader_rs_status reader_rs_encode_v2(reader_revisions *store,const reader_rs_envelope *v,const reader_rs_capture *c,size_t part,char **wire,size_t *bytes,reader_rs_error *error){
+  return encode(store,v,c,2,part,wire,bytes,error);
+}
 extern "C" void reader_rs_record_free(reader_rs_record *r){
   if(!r)return;
-  std::free(r->part_path);std::free(r->page_id);std::free(r->exact);std::free(r->prefix);std::free(r->suffix);std::free(r->note_text);
+  std::free(r->part_path);std::free(r->page_id);std::free(r->exact);std::free(r->prefix);std::free(r->suffix);std::free(r->note_text);std::free(r->chapter);
   std::memset(r,0,sizeof(*r));
 }
 extern "C" reader_rs_status reader_rs_decode(reader_revisions *store,const void *wire,size_t bytes,reader_rs_record *out,reader_rs_error *error){
@@ -219,7 +246,8 @@ extern "C" reader_rs_status reader_rs_decode(reader_revisions *store,const void 
       "json_extract(?1,'$.payload.location.page_id'),json_extract(?1,'$.payload.location.page'),"
       "json_extract(?1,'$.payload.location.selector.exact'),json_extract(?1,'$.payload.location.selector.prefix'),"
       "json_extract(?1,'$.payload.location.selector.suffix'),json_extract(?1,'$.payload.location.selector.start'),"
-      "json_extract(?1,'$.payload.location.selector.end'),json_extract(?1,'$.payload.text')");
+      "json_extract(?1,'$.payload.location.selector.end'),json_extract(?1,'$.payload.text'),"
+      "json_extract(?1,'$.payload.location.part'),json_extract(?1,'$.payload.location.selector.chapter')");
     if(sqlite3_bind_text64(q.s,1,w.data(),w.size(),SQLITE_TRANSIENT,SQLITE_UTF8)!=SQLITE_OK||sqlite3_step(q.s)!=SQLITE_ROW)reject(READER_RS_MEMORY,"Cannot read validated wire JSON");
     field(out->entity_kind,sizeof(out->entity_kind),info.entity_kind);field(out->operation,sizeof(out->operation),info.operation);
     field(out->book_key,sizeof(out->book_key),info.book_key);
@@ -235,6 +263,8 @@ extern "C" reader_rs_status reader_rs_decode(reader_revisions *store,const void 
     out->exact=column(q.s,6,&out->exact_size);out->prefix=column(q.s,7,&out->prefix_size);out->suffix=column(q.s,8,&out->suffix_size);
     out->start=(uint64_t)sqlite3_column_int64(q.s,9);out->end=(uint64_t)sqlite3_column_int64(q.s,10);
     out->note_text=column(q.s,11);
+    if(present(q.s,12))out->part=(uint64_t)sqlite3_column_int64(q.s,12);
+    out->chapter=column(q.s,13);
   });
   if(status!=READER_RS_OK)reader_rs_record_free(out);
   return status;
@@ -248,6 +278,10 @@ extern "C" reader_rs_status reader_rs_epub_part(const exr_publication *pub,const
 }
 extern "C" reader_rs_status reader_rs_resolve_epub(const exr_publication *pub,exr_pager *pager,size_t part,const reader_rs_record *r,const exr_control *control,exr_anchor_match *match,reader_rs_error *error){
   return call(error,[&]{resolve_epub(pub,pager,part,r,control,match);});
+}
+extern "C" reader_rs_status reader_rs_epub_record_part(const exr_publication *pub,const reader_rs_record *r,size_t *part,reader_rs_error *error){
+  if(part)*part=SIZE_MAX;
+  return call(error,[&]{if(!part)reject(READER_RS_ARGUMENT,"Missing EPUB part output");*part=record_part(pub,r);});
 }
 extern "C" reader_rs_status reader_rs_fixed_page(exr_fixed_document *doc,const char *page_id,size_t *page,reader_rs_error *error){
   if(page)*page=SIZE_MAX;

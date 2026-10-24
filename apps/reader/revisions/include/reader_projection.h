@@ -19,6 +19,12 @@ typedef struct {reader_selection_kind kind;reader_revision_state graph;} reader_
 reader_revision_status reader_revision_local_project(reader_revisions *,const void *wire,size_t,
   const char *const *expected_heads,size_t expected_count,const char *book_sort_title,
   reader_revision_info *,int *created,int *applied,reader_revision_error *);
+/* Product-owned progress/annotation history+outbox only, with the same complete
+   expected-head check and exact-retry semantics. Requires retained verified
+   book history. No metadata projection, SDK note copy or current-page write. */
+reader_revision_status reader_revision_local_reading(reader_revisions *,const void *wire,size_t,
+  const char *const *expected_heads,size_t expected_count,
+  reader_revision_info *,int *created,reader_revision_error *);
 /* Read current graph and apply only its complete, safe unique expected_head
    in one product transaction. No history/outbox/SDK write. Missing product
    dependencies remain pending; constraints never weaken or rewrite history.
