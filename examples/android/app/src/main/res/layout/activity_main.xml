@@ -59,6 +59,7 @@
             android:hint="Search title or author"
             android:contentDescription="Search title or author"
             android:singleLine="true"
+            android:minHeight="48dp"
             android:inputType="text"
             android:imeOptions="actionSearch" />
 
@@ -72,6 +73,7 @@
 
         <TextView
             android:id="@+id/status_text"
+            android:accessibilityLiveRegion="polite"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
@@ -223,6 +225,7 @@
 
         <TextView
             android:id="@+id/reader_status"
+            android:accessibilityLiveRegion="polite"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="24dp"

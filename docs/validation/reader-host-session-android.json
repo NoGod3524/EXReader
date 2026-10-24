@@ -3,6 +3,13 @@
   "scope": "formal Android single-account manual native sync, cancellation, background closure, secure credentials and explicit Receive UI",
   "source_sha": null,
   "runs": [],
+  "retained_failures": [
+    {
+      "source_sha": "652e1f5c195d9d3fb54b31dddfcfdf8750e08e8d",
+      "runs": [40084914813, 40084914664],
+      "reason": "UI candidate duplicated the existing MainActivity.onStop method; merge sync closure into the existing lifecycle method and preserve saveInstancePrefs. No assertions changed."
+    }
+  ],
   "reading_state_ui_accepted": false,
   "physical_device": false,
   "all_execution_on_actions": true

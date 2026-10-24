@@ -20,7 +20,7 @@ def main():
     a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True)
     identity={key:os.environ[value] for key,value in [('source_sha','GITHUB_SHA'),('run_id','GITHUB_RUN_ID'),('attempt','GITHUB_RUN_ATTEMPT')]}
     user='host-'+secrets.token_hex(16);password=secrets.token_hex(32);authorization='Basic '+base64.b64encode((user+':'+password).encode()).decode();sensitive=[value.encode() for value in (user,password,authorization)]
-    server=Dav(a.fixture,authorization);package='org.exreader.host';phases=[];scans=[];boundaries=[];accepted=False
+    server=Dav(a.fixture,authorization);package='org.exreader.host';phases=[];scans=[];boundaries=[];captures=[];accepted=False
     def adb(*args,input=None,timeout=90):return subprocess.check_output(['adb',*map(str,args)],input=input,stderr=subprocess.STDOUT,timeout=timeout)
     def write_private(name,body):adb('shell',f"run-as {package} sh -c 'cat > files/{name}'",input=body)
     def private_exists(name):return subprocess.run(['adb','exec-out','run-as',package,'test','-f','files/'+name],capture_output=True,timeout=10).returncode==0
@@ -56,7 +56,8 @@ def main():
     expected={
         'first':['public_sdk_seed_then_real_activity','real_settings_secure_storage','ui_cancel_blocked_native_request_then_retry','explicit_receive_preserves_sdk_and_product','receive_exact_retry_does_not_duplicate','explicit_close_waits_for_closed_then_destroy'],
         'secure-reopen':['secure_credentials_and_originals_survive_process_restart','background_close_does_not_wait_on_ui','manual_sync_after_background_reopens_owned_session','forget_credentials_keeps_library_and_binding','explicit_session_only_credentials'],
-        'session-reopen':['session_only_credential_not_restored_after_kill']}
+        'session-reopen':['session_only_credential_not_restored_after_kill'],
+        'semantics':['polite_status_semantics','organizer_hides_covered_shelf_semantics','reader_semantic_scroll_changes_real_page','font_value_and_large_font_controls']}
     try:
         adb('reverse',f'tcp:{server.server.server_port}',f'tcp:{server.server.server_port}')
         for phase in expected:
@@ -70,7 +71,7 @@ def main():
                     blocked=server.blocked if phase=='first' else listing_blocked
                     marker='host-ui-put-blocked' if phase=='first' else 'host-ui-listing-blocked'
                     reply='host-ui-cancel-clicked' if phase=='first' else 'host-ui-background-requested'
-                    if phase=='session-reopen':return
+                    if phase in ('session-reopen','semantics'):return
                     deadline=time.monotonic()+90
                     while not stop.is_set() and time.monotonic()<deadline and not blocked.wait(.1):pass
                     if stop.is_set():return
@@ -93,17 +94,34 @@ def main():
             assert [row['name'] for row in report['checks']]==expected[phase] and all(row['pass'] is True for row in report['checks'])
             assert ('HOST_SYNC_UI_PASS '+phase).encode() in raw and b'INSTRUMENTATION_CODE: -1' in raw
             assert report['count']==len(expected[phase]);phases.append(report)
+            if phase=='semantics':
+                def nodes(tree):
+                    yield tree
+                    for child in tree.get('children',[]):yield from nodes(child)
+                observations=report['observations'];assert [row['name'] for row in observations]==['shelf-status','organizer','reader-before','reader-after-forward','reader-toolbar','large-font-organizer']
+                observed={row['name']:list(nodes(row['tree'])) for row in observations}
+                def named(rows,key):return [row for row in rows if row.get('id','').endswith('/'+key)]
+                assert named(observed['shelf-status'],'status_text')[0]['live_region']==1
+                assert all(not named(observed[name],key) for name in ('organizer','large-font-organizer') for key in ('import_button','more_button','shelf_search'))
+                before=named(observed['reader-before'],'reader_view')[0];after=named(observed['reader-after-forward'],'reader_view')[0]
+                assert before['actions']&4096 and before['actions']&8192 and before['description']!=after['description']
+                assert named(observed['reader-toolbar'],'font_up')[0]['state'] and named(observed['reader-toolbar'],'reader_status')[0]['live_region']==1
+                assert observations[-1]['font_scale']>=1.9
+                (a.output/'captures').mkdir(exist_ok=True)
+                for row in observations:
+                    image=adb('exec-out','run-as',package,'cat','files/host-ui-captures/'+row['name']+'.png');assert image.startswith(b'\x89PNG\r\n\x1a\n') and len(image)>1000
+                    save('captures/'+row['name']+'.png',image);captures.append({'name':row['name'],'bytes':len(image),'sha256':hashlib.sha256(image).hexdigest(),'nodes':row['nodes'],'font_scale':row['font_scale']})
             scan_private();save(phase+'-logcat.txt',adb('logcat','-d','-v','threadtime','-t','2500'))
             save(phase+'-screen.png',adb('exec-out','screencap','-p'))
-            if phase=='session-reopen':assert len(server.requests)==before_requests,'session-only secret unexpectedly reused after kill'
-        assert len({phase['pid'] for phase in phases})==3 and len(boundaries)==2
+            if phase in ('session-reopen','semantics'):assert len(server.requests)==before_requests,'session-only secret unexpectedly reused after kill'
+        assert len({phase['pid'] for phase in phases})==4 and len(boundaries)==2
         assert all(request['authorization_sha256']==hashlib.sha256(authorization.encode()).hexdigest() for request in server.requests)
         assert all(request['path'].startswith('/dav/') for request in server.requests)
         accepted=True
     finally:
         server.release.set();listing_release.set();server.server.shutdown();server.server.server_close()
         report={**identity,'accepted':accepted,'phases':phases,'checks':sum(phase['count'] for phase in phases),'boundaries':boundaries,'storage_scan':scans,
-                'requests':server.requests,'same_shared_sdk_runtime_asserted':accepted,'product_provider_isolated':accepted,'host_account_receive_ui_accepted':accepted,
+                'requests':server.requests,'captures':captures,'same_shared_sdk_runtime_asserted':accepted,'product_provider_isolated':accepted,'host_account_receive_ui_accepted':accepted,'targeted_semantics_accepted':accepted,'accessibility_accepted':False,
                 'reading_state_ui_accepted':False,'physical_device':False,'api':34,'abi':'x86_64'}
         save('result.json',(json.dumps(report,ensure_ascii=False,indent=2)+'\n').encode());print(json.dumps({**identity,'accepted':accepted,'checks':report['checks'],'phases':len(phases)}),flush=True)
 

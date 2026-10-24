@@ -17,3 +17,9 @@ Session 自有后台 worker；界面不借用 SDK 指针。原件先在既有 SD
 云端工作流保留原 18 捕获、原宿主 17 项与两个进程中断恢复、SDK 原件导出和 Android DAV 检查，并增加实际 Activity 操作、Keystore 跨进程读取、受阻请求取消、后台关闭/重开、显式 Receive、精确重试、凭据移除及仅本次凭据的重启丢失。fixture CA 与 native registry 探针只进入 Debug；Release 单独检查。
 
 本阶段不授予产品标注界面、用户显式采纳阅读状态、真机或六平台产品互通。后续按主线固定模块源接入这些功能。
+
+## 定向语义修复
+
+G15 的固定源码 `2bdfee69`、[producer 40082957400](https://github.com/NoGod3524/EXReader/actions/runs/40082957400) 完成了 15 项审计，保留 11 pass / 4 fail、`accessibility_accepted:false`。本宿主按其实际观察修复四处根因：两个状态区声明 polite；ReaderView 暴露并处理前后翻页动作；字号/缩放控件在 API30+ 声明当前值，API26 使用内容描述回退；Organizer 模态显示时移走背景输入焦点并从语义树隐藏书架，关闭后恢复，不改内部排版。
+
+新账号面板使用原生 AlertDialog。自有云端出口增加四项定向语义与真实 200% 系统字号检查，保留原始节点树和截图。这些检查仍不授予完整 G15 审计、TalkBack 语音或真机通过；完整 G15 将在主线同源集成后重跑。

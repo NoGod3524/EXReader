@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
-/* Installed product/session APIs only: deliberately no SDK headers or handle. */
+/* Installed product/session/codec APIs; SDK selectors cross only as values.
+   This owner never receives an SDK handle or calls an SDK function. */
 #include <reader_session.h>
 #include <reader_metadata.h>
 #include <reader_reading_state.h>

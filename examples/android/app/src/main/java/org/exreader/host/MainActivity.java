@@ -514,7 +514,11 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         bookTitle.setText(currentBook == null ? "" : currentBook.title);
         pageLabel.setText(pageSummary(load));
         fontLabel.setText("Size " + (int) fontSize);
+        describeValue(fontDown,"Decrease font size",fontLabel.getText());
+        describeValue(fontUp,"Increase font size",fontLabel.getText());
         zoomLabel.setText(String.format(Locale.US, "Zoom %.2f", zoom));
+        describeValue(zoomDown,"Zoom out",zoomLabel.getText());
+        describeValue(zoomUp,"Zoom in",zoomLabel.getText());
         boolean isFixed = current.fixed;
         fontDown.setVisibility(isFixed ? View.GONE : View.VISIBLE);
         fontUp.setVisibility(isFixed ? View.GONE : View.VISIBLE);
@@ -526,6 +530,11 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         Log.i(TAG, "metric {\"event\":\"page\",\"book\":" + bookId + ",\"page\":" + (current.index + 1)
                 + ",\"fixed\":" + isFixed + ",\"bytes\":" + current.bitmapBytes
                 + ",\"ms\":" + load.millis + "}");
+    }
+
+    private static void describeValue(View view,String label,CharSequence value){
+        if(Build.VERSION.SDK_INT>=30){view.setContentDescription(label);view.setStateDescription(value);}
+        else view.setContentDescription(label+". "+value);
     }
 
     private String pageSummary(PageLoad load) {
@@ -1396,6 +1405,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     }
 
     @Override protected void onStop() {
+        if(syncPanel!=null)syncPanel.background();
         super.onStop();
         saveInstancePrefs();
     }
@@ -1412,8 +1422,6 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         }
         super.onBackPressed();
     }
-
-    @Override protected void onStop(){if(syncPanel!=null)syncPanel.background();super.onStop();}
 
     @Override protected void onDestroy() {
         if(syncPanel!=null)syncPanel.close();
