@@ -8,6 +8,10 @@
 #include <sys/types.h>
 #include <math.h>
 #include <errno.h>
+#ifdef EXR_READER_SEARCH
+#include <reader_search.h>
+#include <glib.h>
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
 #include "catalog_sdk.h"
 #include <fcntl.h>
@@ -49,6 +53,11 @@ struct linux_reader {
   reader_session current;
   reader_session pending;
   int has_pending,pending_owns_session,pending_new_pager;
+#ifdef EXR_READER_SEARCH
+  void *search_data;
+  int search_pending;
+  uint64_t search_pending_token;
+#endif
 #ifdef EXR_READER_PREFERENCES
   reader_preferences appearance;
   int appearance_enabled;
@@ -76,6 +85,9 @@ struct linux_reader {
 typedef struct {int64_t id;int font,zoom;} reader_import_saved;
 static exr_status reader_import_suspend(linux_reader *,reader_import_saved *);
 static exr_status reader_import_resume(linux_reader *,const reader_import_saved *,reader_result *);
+#ifdef EXR_READER_SEARCH
+static void search_free(linux_reader *);
+#endif
 #ifdef EXR_READER_ACCOUNT
 static void accounts_free(linux_reader *);
 static void received_free(linux_reader *);
@@ -94,9 +106,16 @@ static void pending_discard(linux_reader *reader) {
   else if(reader->pending_new_pager) exr_pager_free(reader->pending.pager);
   memset(&reader->pending,0,sizeof(reader->pending));
   reader->has_pending=reader->pending_owns_session=reader->pending_new_pager=0;
+#ifdef EXR_READER_SEARCH
+  reader->search_pending=0;
+#endif
 }
 void reader_result_free(reader_result *result) {
   size_t i;free(result->pixels);free(result->text);
+#ifdef EXR_READER_SEARCH
+  for(i=0;i<result->search_count;i++) free(result->search_rows[i].label);
+  free(result->search_rows);
+#endif
   free(result->metadata_title);free(result->metadata_author);
   free(result->account_id);free(result->account_root);
   reader_secret_free(result->account_user);reader_secret_free(result->account_password);
@@ -150,6 +169,9 @@ exr_status linux_reader_open(const char *database,const char *font,const exr_con
 }
 void linux_reader_close(linux_reader *reader) {
   if(reader) {
+#ifdef EXR_READER_SEARCH
+    search_free(reader);
+#endif
 #ifdef EXR_READER_ACCOUNT
     received_free(reader);
     accounts_free(reader);
@@ -658,11 +680,20 @@ done:
   exr_epub_notes_free(bounded,bounded ? count:0);exr_notes_free(legacy,legacy ? count:0);
   return status;
 }
+#ifdef EXR_READER_SEARCH
+#include "search_backend.inc"
+#endif
 void linux_reader_execute(linux_reader *reader,const reader_command *command,reader_result *result) {
   reader_session next=reader->current;exr_error error={0};exr_status status=cancel(reader);
   int owned_session=0,new_pager=0;int64_t id=command->book;size_t target=0;
   int wants_shelf=command->action==READER_SHELF || command->action==READER_OPEN || command->action==READER_IMPORT;
   memset(result,0,sizeof(*result));
+#ifdef EXR_READER_SEARCH
+  if(command->action>=READER_SEARCH_BEGIN && command->action<=READER_SEARCH_CLOSE && command->action!=READER_SEARCH_CHOOSE) {
+    search_readonly(reader,command,result);return;
+  }
+  if(command->action!=READER_SEARCH_CHOOSE) search_free(reader);
+#endif
 #ifdef EXR_READER_PREFERENCES
   reader_preferences old_appearance=reader->appearance;int old_enabled=reader->appearance_enabled;
   if(command->preferences_set) {
@@ -712,6 +743,9 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
       else if(reader->pending_new_pager) exr_pager_free(reader->current.pager);
       reader->current=*pending;memset(pending,0,sizeof(*pending));
       reader->has_pending=reader->pending_owns_session=reader->pending_new_pager=0;
+#ifdef EXR_READER_SEARCH
+      reader->search_pending=0;
+#endif
     }
     goto done;
   }
@@ -772,7 +806,13 @@ void linux_reader_execute(linux_reader *reader,const reader_command *command,rea
     reader_result_free(&entries);
   } else if(command->action==READER_NOTE_JUMP) {
     status=jump_note(reader,&next,command->note,result,&error);new_pager=next.pager!=reader->current.pager;
-  } else if(command->action==READER_ZOOM || (command->action==READER_SETTINGS && next.fixed_document)) {
+  }
+#ifdef EXR_READER_SEARCH
+  else if(command->action==READER_SEARCH_CHOOSE) {
+    status=search_jump(reader,&next,command,result,&error);new_pager=next.pager!=reader->current.pager;
+  }
+#endif
+  else if(command->action==READER_ZOOM || (command->action==READER_SETTINGS && next.fixed_document)) {
     if(!next.fixed_document || command->zoom<25 || command->zoom>400) status=EXR_ARGUMENT;
     else { next.zoom=command->zoom;status=render_fixed(reader,&next,next.page,result,&error); }
   } else if(command->action==READER_FONT && next.fixed_document) status=EXR_ARGUMENT;
@@ -843,6 +883,10 @@ preferences_saved:
     next.page=result->page;next.start=result->start;next.end=result->end;
     result->position=next.position;reader->pending=next;reader->has_pending=1;
     reader->pending_owns_session=owned_session;reader->pending_new_pager=new_pager;
+#ifdef EXR_READER_SEARCH
+    reader->search_pending=command->action==READER_SEARCH_CHOOSE;
+    reader->search_pending_token=reader->search_pending ? command->search_token:0;
+#endif
     owned_session=new_pager=0;
   }
 done:
