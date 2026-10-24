@@ -36,7 +36,14 @@ never writes reading progress, an SDK note, a product revision or a catalog row.
 
 One entry is the exact reading-state wire that the **installed** revision
 validator accepted - a `progress` `put` with a location, anchor version 1 or 2 -
-plus a private canonical location key derived from the decoded wire. The key
+plus a private canonical location key derived from the decoded wire.
+
+A reading position is a **point**, not a selection: the installed validator
+refuses a progress record whose quote is non-empty ("Progress requires a point
+selector"), so every stored landing has `start == end`, an empty quote and the
+SDK's 32-scalar prefix/suffix context. A host that tries to store a highlight
+range gets `READER_JH_REVISION` and an untouched history - that is a property of
+the shared wire, not of this component, and the cloud consumer proves it. The key
 covers mode, `book_key`, `part_path`, the EPUB spine index, `page_id`, page, start/end and the
 quote/prefix/suffix bytes. It deliberately excludes the transient revision ID,
 the parser version and the anchor version, so two captures of one place compare
@@ -121,8 +128,13 @@ accounted bytes, generation and totals. `NOT_REPRESENTABLE`, `REVISION`,
 | one entry | 32768 accounted bytes (wire + book key + canonical key) |
 
 Accounting is `book_key + canonical location key + wire` per entry. A request outside
-the caps is `READER_JH_LIMIT`; it is never clamped silently. A position above the
-byte budget is `READER_JH_TOO_LARGE`.
+the caps is `READER_JH_LIMIT`; it is never clamped silently. An entry above the
+per-entry cap, or above the byte budget, is `READER_JH_TOO_LARGE`.
+
+Because a legitimate entry is bounded (68-byte book key, at most a 1024-byte EPUB
+part path, 32-scalar context and its wire), one real position cannot exceed the
+4 KiB byte floor on its own. The budget is therefore proven by eviction, and the
+per-entry cap directly through `reader_jh_commit_wire`.
 
 ### What the component never does
 
