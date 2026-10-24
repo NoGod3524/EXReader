@@ -159,6 +159,13 @@ class Dav:
             return sum(1 for p in self.entries if p.startswith('/dav/exreader-sync-v1/' + prefix))
 
 
+def blind_text(window, text):
+    """Windows refuses cross-process WM_GETTEXT on a masked password edit, so only WM_SETTEXT is verified."""
+    units = len(text.encode('utf-16-le')) // 2 + 1
+    value = C.create_unicode_buffer(text, units)
+    assert send(window, 0xC, 0, C.addressof(value)), 'Password edit rejected WM_SETTEXT'
+
+
 def clipboard_text(app):
     U.OpenClipboard.argtypes = [W.HWND];U.GetClipboardData.argtypes = [W.UINT];U.GetClipboardData.restype = W.HANDLE
     kernel = C.WinDLL('kernel32');kernel.GlobalLock.argtypes = [W.HANDLE];kernel.GlobalLock.restype = C.c_void_p
@@ -249,7 +256,7 @@ class Device(M.MetadataApp):
         if user is not None:
             set_text(U.GetDlgItem(dialog, USER), user)
         if password is not None:
-            set_text(U.GetDlgItem(dialog, PASSWORD), password)
+            blind_text(U.GetDlgItem(dialog, PASSWORD), password)
         if remember is not None and bool(send(U.GetDlgItem(dialog, REMEMBER), BM_GETCHECK) == 1) != remember:
             send(U.GetDlgItem(dialog, REMEMBER), BM_CLICK)
 

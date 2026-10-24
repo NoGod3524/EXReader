@@ -17,7 +17,7 @@ typedef struct {
   acct_book page[50];
   size_t count, index;
   char *cursor_title, *cursor_key, *last_title, *last_key;
-  uint64_t seen, prepared, existing, pending, failed, bootstraps;
+  uint64_t seen, prepared, existing, pending, failed, bootstraps, rseen;
   int rkind;
   char after[260];
   uint64_t projected, concurrent, pending_parents, blocked, tombstones, project_failed;
@@ -519,7 +519,7 @@ static int acct_cloud_visit(void *context, const reader_catalog_row *row) {
   free(o->last_title); free(o->last_key);
   o->last_title = host_strdup(row->sort_title); o->last_key = host_strdup(row->book_key);
   if (!o->last_title || !o->last_key) return 1;
-  o->seen++;
+  o->rseen++;
   if (row->sdk_book_id || row->deleted) return 0;
   acct_book *book = &o->page[o->count++];
   book->key = host_strdup(row->book_key); book->sort = host_strdup(row->sort_title);
@@ -581,10 +581,10 @@ static exr_status acct_import_step(host_job *job) {
     if (!path) return EXR_MEMORY;
     int code = reader_catalog_open(path, &catalog, &error); free(path);
     for (int guard = 0; !code && !o->count && guard < 64; guard++) {
-      uint64_t before = o->seen;
+      uint64_t before = o->rseen;
       code = reader_catalog_page(catalog, o->cursor_title, o->cursor_key, 50, acct_cloud_visit, o, &error);
       if (code) break;
-      if (o->seen == before) { o->rkind = 6; break; } /* no further rows */
+      if (o->rseen == before) { o->rkind = 6; break; } /* no further rows */
       free(o->cursor_title); free(o->cursor_key);
       o->cursor_title = o->last_title; o->cursor_key = o->last_key; o->last_title = o->last_key = NULL;
     }
@@ -602,7 +602,7 @@ static exr_status acct_receive_job(host_job *job) {
     if (status != EXR_OK) return status;
     if (!acct_directory(acct.work, 1)) { acct_text(job, L"同步缓存目录不可用。"); return EXR_IO; }
     acct_page_clear(o); free(o->cursor_title); free(o->cursor_key); o->cursor_title = o->cursor_key = NULL;
-    o->rkind = 0; o->after[0] = 0; o->seen = 0;
+    o->rkind = 0; o->after[0] = 0; o->rseen = 0;
     o->projected = o->concurrent = o->pending_parents = o->blocked = o->tombstones = o->project_failed = 0;
     o->imported = o->import_waiting = o->import_failed = 0;
     o->receiving = 1;
@@ -612,7 +612,7 @@ static exr_status acct_receive_job(host_job *job) {
   if (o->rkind < 5) {
     status = acct_project_step(job);
     if (status == EXR_OK && o->rkind == 5) { /* entering the import phase */
-      free(o->cursor_title); free(o->cursor_key); o->cursor_title = o->cursor_key = NULL; o->seen = 0;
+      free(o->cursor_title); free(o->cursor_key); o->cursor_title = o->cursor_key = NULL; o->rseen = 0;
     }
   } else if (o->rkind == 5) status = acct_import_step(job);
   else status = EXR_OK;
