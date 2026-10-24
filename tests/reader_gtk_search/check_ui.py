@@ -63,16 +63,24 @@ def main():
         value={'name':name,'pass':bool(condition),'observed':actual};checks.append(value);print(json.dumps(value),flush=True);assert condition,value
 
     def import_book(path):
-        path=path.resolve();before=host.read()['generation'];host.key('F1')
+        path=path.resolve();before=host.read()['generation'];deadline=time.monotonic()+30;host.key('F1')
         window=command('xdotool','search','--sync','--onlyvisible','--name','^Import book$').splitlines()[-1]
-        command('xdotool','windowactivate','--sync',window);host.key('ctrl+l');host.paste(str(path))
-        expected=hashlib.sha256(str(path).encode()).hexdigest();deadline=time.monotonic()+30
+        command('xdotool','windowactivate','--sync',window)
+        def native_ready(predicate):
+            while time.monotonic()<deadline:
+                value=observed('native_import')
+                if predicate(value):return
+                time.sleep(.02)
+            raise TimeoutError('native import focus/input not ready: '+repr(observed('native_import')))
+        native_ready(lambda value:value.get('visible')=='1' and value.get('active')=='1')
+        host.key('ctrl+l');native_ready(lambda value:value.get('entry_focused')=='1')
+        host.key('ctrl+a');host.paste(str(path));expected=hashlib.sha256(str(path).encode()).hexdigest()
         while time.monotonic()<deadline:
             value=observed('native_import')
-            if value.get('visible')=='1' and value.get('selected_sha256')==expected and value.get('accept_sensitive')=='1':break
+            if value.get('visible')=='1' and value.get('entry_sha256')==expected and value.get('selected_sha256')==expected and value.get('accept_sensitive')=='1':break
             time.sleep(.02)
         else:raise TimeoutError('native source selection not ready: '+repr(observed('native_import')))
-        host.key('Return');host.wait(lambda value:value['generation']>before and not value['saving'] and observed('native_import').get('visible')=='0')
+        host.key('Return');host.wait(lambda value:value['generation']>before and not value['saving'] and observed('native_import').get('visible')=='0',timeout=max(.1,deadline-time.monotonic()))
         assert not host.read()['error'];return host.read()['book']
 
     def open_search():
@@ -86,6 +94,15 @@ def main():
     def query(text):
         click('In-book query',{'text'});host.key('ctrl+a');host.paste(text);before=int(observed()['actions'])
         host.key('alt+s');return wait(lambda value:int(value['actions'])>before)
+
+    def active_long_scan():
+        # These controls live for this dialog. Capture native cancel bounds
+        # before scanning so accessibility enumeration cannot consume the scan.
+        cancel_bounds=bus.extents(element('Cancel search',{'push button'}))
+        click('In-book query',{'text'});host.paste('ABSENT_QUERY_FOR_FULL_CHAPTER_SCAN')
+        before_actions=int(observed()['actions']);host.key('alt+s')
+        scanning=wait(lambda value:value['phase']=='2' and int(value['polls'])>0 and int(value['actions'])>before_actions,idle=False,seconds=10)
+        return scanning,cancel_bounds
 
     def rows():return [row for row in bus.children(element('In-book results')) if bus.role(row)=='list item' and bus.name(row).startswith('Search result ')]
 
@@ -164,13 +181,19 @@ def main():
         import_book(args.fixed_inputs/'Pages.cbz');prior=frame();saved=storage();open_search();result=query('word')
         record('cbz_no_text_provider_is_visible_sdk_refusal',result['code']=='4' and result['count']=='0' and frame()==prior and storage()==saved);close_search()
         import_book(args.fixtures/'cancel.epub');prior=frame();saved=storage();open_search()
-        click('In-book query',{'text'});host.paste('ABSENT_QUERY_FOR_FULL_CHAPTER_SCAN');before_actions=int(observed()['actions']);host.key('alt+s')
-        scanning=wait(lambda value:value['phase']=='2' and int(value['polls'])>0 and int(value['actions'])>before_actions,idle=False,seconds=10)
-        click('Cancel search',{'push button'});cancelled=wait(lambda value:value['running']=='0' and value['code']=='5')
+        scanning,cancel_bounds=active_long_scan()
+        command('xdotool','mousemove','--sync',str(cancel_bounds['x']+cancel_bounds['width']//2),str(cancel_bounds['y']+cancel_bounds['height']//2));command('xdotool','click','1')
+        cancelled=wait(lambda value:value['running']=='0' and value['code']=='5')
         record('actual_module_control_poll_cancels_without_mutating_reading',int(scanning['polls'])>0 and frame()==prior and storage()==saved,{'during':scanning,'after':cancelled})
         close_search();open_search();record('closed_query_is_not_resumed_or_repopulated',observed()['count']=='0' and observed()['complete']=='1')
-        click('In-book query',{'text'});host.paste('ABSENT_QUERY_FOR_FULL_CHAPTER_SCAN');host.key('alt+s')
-        wait(lambda value:value['phase']=='2' and int(value['polls'])>0,idle=False,seconds=10)
+        active_long_scan();close_search()
+        record('escape_during_actual_module_scan_retires_search_and_keeps_reader',frame()==prior and storage()==saved and observed()['count']=='0')
+        open_search();active_long_scan();command('wmctrl','-ic',hex(int(host.window)))
+        close_code=host.process.wait(timeout=20);host.log.close()
+        record('parent_window_close_during_actual_scan_retires_owner_before_exit',close_code==0 and observed()['visible']=='0' and storage()==saved)
+        host.launch();app=bus.wait_application('exreader-linux');wait();prior=frame()
+        record('real_reopen_after_active_search_close_has_no_query_or_storage_change',observed()['visible']=='0' and observed()['count']=='0' and storage()==saved)
+        open_search();active_long_scan()
         command('xdotool','windowminimize',host.window);wait(lambda value:value['visible']=='0')
         command('xdotool','windowmap',host.window);command('xdotool','windowactivate','--sync',host.window)
         record('background_minimize_cancels_and_dismisses_without_resume',frame()==prior and storage()==saved and observed()['count']=='0')

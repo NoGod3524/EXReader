@@ -601,6 +601,8 @@ static void import_dialog(void) {
   g_signal_connect(dialog,"selection-changed",G_CALLBACK(preferences_import_changed),NULL);
   g_signal_connect(dialog,"current-folder-changed",G_CALLBACK(preferences_import_changed),NULL);
   g_signal_connect(dialog,"map-event",G_CALLBACK(preferences_import_mapped),NULL);
+  g_signal_connect(dialog,"set-focus",G_CALLBACK(preferences_import_focus),NULL);
+  g_signal_connect(dialog,"notify::is-active",G_CALLBACK(preferences_import_activity),NULL);
 #endif
   choosing_file=TRUE;
   int response=gtk_dialog_run(GTK_DIALOG(dialog));choosing_file=FALSE;
