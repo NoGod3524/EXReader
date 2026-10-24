@@ -5,6 +5,7 @@ import argparse
 from datetime import datetime, timezone
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -51,7 +52,12 @@ def collect(repo, run_id, attempt, sha, folder, retrospective):
         job = select(jobs, job_name)
         done = subprocess.run(["gh", "api", f"/repos/{repo}/actions/jobs/{job['id']}/logs"],
                               capture_output=True, timeout=180)
-        need(done.returncode == 0 and len(done.stdout) <= MAX_EXPANDED, "job_log_download")
+        if done.returncode != 0:
+            detail = done.stderr.decode("utf-8", "replace")
+            status = re.search(r"HTTP (\d{3})", detail)
+            kind = "rate_limit" if "rate limit" in detail.lower() else "access" if "accessible" in detail.lower() else "other"
+            raise EvidenceError("job_log_download_" + (status[1] if status else "unknown") + "_" + kind)
+        need(len(done.stdout) <= MAX_EXPANDED, "job_log_size")
         logs[job["id"]] = done.stdout
         (folder / f"job-{job['id']}.log").write_bytes(done.stdout)
     return verify(run, jobs, artifacts, archives, logs, repo, sha, run_id, attempt, retrospective)
