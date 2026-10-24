@@ -35,7 +35,7 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           root=Path('previous/account-ui')
-          for name in ('application.log','state.ini','result.json'):
+          for name in ('primary/application.log','primary/state.ini','result.json'):
               path=root/name
               print('===',name,'===')
               print(path.read_text(errors='replace')[-18000:] if path.exists() else 'not produced')
