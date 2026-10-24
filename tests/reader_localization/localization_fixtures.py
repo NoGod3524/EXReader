@@ -317,9 +317,14 @@ def refusal_rows():
     return rows
 
 def capacity_exact_rows():
+    """One row per message whose capacity is exactly the measured byte size.
+
+    The size is a byte count: a zh-CN template with CJK text is longer in UTF-8
+    bytes than in characters, and the library reports bytes.
+    """
     rows = []
-    for message_id, _group, kinds, _zh, _en in MESSAGES:
-        length = len(render(_zh, kinds)) + 1
+    for message_id, _group, kinds, zh_text, _en in MESSAGES:
+        length = len(render(zh_text, kinds).encode("utf-8")) + 1
         rows.append((message_id, "zh-CN", spec_for(kinds), str(length), "OK"))
     return rows
 
