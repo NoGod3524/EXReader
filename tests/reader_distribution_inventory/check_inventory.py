@@ -244,9 +244,16 @@ def mutate_sbom(fixture, name, mutate):
     fixture['inventory']['sbom'][name] = {'bytes': len(data), 'sha256': contract.digest(data)}
 
 
-def declared_blocker(fixture):
-    fixture['payload']['stage/docs/NOTES.md'] = b'/home/runner/work/EXReader/EXReader\n'
+def add_file(fixture, path, data):
+    """Add an installed file the way a real install would, then re-derive."""
+    fixture['payload']['stage/' + path] = data
+    fixture['inventory']['installed_files'].append(record(path, data))
+    fixture['inventory']['installed_files'].sort(key=lambda item: item['path'])
     refresh(fixture)
+
+
+def declared_blocker(fixture):
+    add_file(fixture, 'docs/NOTES.md', b'/home/runner/work/EXReader/EXReader\n')
     fixture['inventory']['checks'].append({'id': 'inclusions.no_machine_paths',
                                            'status': 'blocked', 'detail': '1 file'})
 
@@ -265,7 +272,7 @@ CASES = [
     ('altered license text', 'installed license differs from its registered pin',
      lambda f: f['payload'].__setitem__('stage/' + LICENSES + 'miniz/LICENSE', b'edited\n')),
     ('unregistered license material', 'unregistered installed license material',
-     lambda f: f['payload'].__setitem__('stage/' + LICENSES + 'extra/LICENSE', b'extra\n')),
+     lambda f: add_file(f, LICENSES + 'extra/LICENSE', b'extra\n')),
     ('missing file in the SBOM', 'spdx file coverage',
      lambda f: mutate_sbom(f, 'inventory.spdx.json', lambda doc: doc['files'].pop())),
     ('wrong SBOM hash', 'spdx file checksum',
@@ -305,9 +312,10 @@ CASES = [
     ('dynamic entries claim', 'dynamic_entries',
      lambda f: f['inventory']['dynamic_dependencies'].__setitem__('entries', [])),
     ('audio switch enabled', 'audio codec switch is not OFF',
-     lambda f: f['inventory']['config']['cache_switches'].__setitem__('EXR_ENABLE_AUDIO', 'ON')),
+     lambda f: (f['inventory']['config']['cache_switches'].__setitem__('EXR_ENABLE_AUDIO', 'ON'),
+                refresh(f))),
     ('undeclared private path', 'release_blockers',
-     lambda f: (f['payload'].__setitem__('stage/docs/NOTES.md', b'/home/runner/work/x\n'), refresh(f),
+     lambda f: (add_file(f, 'docs/NOTES.md', b'/home/runner/work/x\n'),
                 f['inventory'].__setitem__('release_blockers', []),
                 f['inventory'].__setitem__('release_ready', True))),
     ('inventory problems', 'inventory_problems',
