@@ -2,10 +2,19 @@
   "package": "J14",
   "module": "library-health",
   "schema": 1,
-  "branch": "codex/reader-library-health",
+  "branch": "codex/reader-library-health-review",
   "fixed_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "workflow": ".github/workflows/reader-library-health.yml",
-  "accepted": true,
+  "accepted": false,
+  "root_review_candidate": {
+    "source": "10b038a55fabea493e3ef858d3171e8c65a54f0b",
+    "run": 40163483001,
+    "accepted": false,
+    "state": "queued_three_desktop_original_consumers_and_cancel_boundary_regressions",
+    "new_required_checks": ["cancel_final_progress_not_delivered", "cancel_callback_reentry_is_rejected"],
+    "previous_source_accepted": true,
+    "previous_evidence_head": "71f271eb48b2c15f1be18be6fc140a620163cf82"
+  },
   "tested_source_sha": "a600cf3df53fdc8b97e47872e44f9b5c5ff6becb",
   "evidence_commit": "docs-only commit on top of the tested source; the tested source contains the complete package",
   "run": {
