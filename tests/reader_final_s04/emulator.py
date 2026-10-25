@@ -315,14 +315,6 @@ class Driver:
                    and identity.group(3) == 'x86_64',
                    {'label': label, 'derived_version': self.derived['sdk_version']})
 
-        maps = self.run_as('cat', '/proc/%s/maps' % pid).decode('utf-8', 'replace')
-        self.save('proc-maps.txt', maps)
-        ranges = apk_executable_ranges(self.apk, ('libexreader_host.so', 'libexreader_jni.so'))
-        loaded = loaded_native_mappings(maps, self.observed['installed']['path'], ranges)
-        self.check('native_libraries_loaded_from_package',
-                   all(loaded.values()),
-                   {'mapping_rows': loaded, 'apk_executable_file_ranges': ranges})
-
         screenshot = self.adb('exec-out', 'screencap', '-p', binary=True)
         self.save('screenshots/01-launch.png', screenshot)
 
@@ -415,6 +407,19 @@ class Driver:
                    {'open_path': self.observed.get('open_path')})
         self.observed['first_page'] = opened
         self.check('book_opened_with_native_page', opened['page'] >= 1, opened)
+
+        # EXReader.Pager initializes the SDK JNI library when the first book opens;
+        # an empty shelf has loaded only the host bridge. Check both after real use.
+        reading_pid = self.shell('pidof', PACKAGE).strip()
+        if not re.fullmatch(r'\d+', reading_pid):
+            raise Refusal('expected one live host PID after opening the book')
+        maps = self.run_as('cat', '/proc/%s/maps' % reading_pid).decode('utf-8', 'replace')
+        self.save('proc-maps.txt', maps)
+        ranges = apk_executable_ranges(self.apk, ('libexreader_host.so', 'libexreader_jni.so'))
+        loaded = loaded_native_mappings(maps, self.observed['installed']['path'], ranges)
+        self.check('native_libraries_loaded_from_package',
+                   all(loaded.values()),
+                   {'pid': reading_pid, 'mapping_rows': loaded, 'apk_executable_file_ranges': ranges})
 
         page = opened['page']
         pages = [page]
