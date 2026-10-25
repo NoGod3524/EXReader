@@ -1,0 +1,85 @@
+name: GTK actual sensitive image frame proof
+
+on:
+  push:
+    branches: [codex/reader-gtk-navigation-frame-proof]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  gtk:
+    name: Actual GTK new sensitive draw and unchanged 29 navigation conditions
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Compile authored syntax and pin the exact reviewed observation exception
+        run: |
+          python3 -m pip install 'Pillow==11.3.0'
+          python3 -m py_compile tests/reader_gtk_navigation/frame_proof.py tests/reader_gtk_navigation/check_ui.py tests/reader_hosts_integration/probe_navigation.py
+          python3 tests/reader_gtk_navigation/frame_proof.py guard
+      - name: Install real GTK build native window accessibility and independent original OCR tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libglib2.0-dev libgtk-3-dev libsecret-1-dev libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil dbus-x11 tesseract-ocr
+      - name: Authenticate the immutable original failure ZIP state screenshot ROI and dialog controls
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_hosts_integration/probe_navigation.py 40177143143
+      - name: Build the actual fully configured host and retain installed F2 and actual backend checks
+        run: python3 tests/reader_gtk_navigation/frame_proof.py build
+      - name: Execute all 29 original exact native navigation conditions after actual sensitive image repaint
+        env:
+          GTK_NAVIGATION_DIAGNOSTIC_ONLY: 'false'
+          GTK_NAVIGATION_PROGRAM_SOURCE: ${{ github.sha }}
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/frame-proof/openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_gtk_navigation/check_ui.py --payload build/frame-proof/package/EXReader-Linux --fixtures build/frame-proof/fixtures --fixed-inputs build/frame-proof/fixed-inputs --output build/frame-proof/ui
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-gtk-navigation-frame-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/frame-proof/
+            build/navigation-probe/input.json
+            build/navigation-probe/original-report.json
+            build/navigation-probe/original-pixel-difference.json
+            build/navigation-probe/original-state.ini
+            build/navigation-probe/original-*.png
+          if-no-files-found: error
+  strict:
+    name: Authenticate exact new GTK binary image crops draw barrier and raw original failure
+    needs: gtk
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Independently authenticate same-run raw ZIP and reject false draw grants
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 -m pip install 'Pillow==11.3.0'
+          python3 tests/reader_gtk_navigation/frame_proof.py aggregate
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-gtk-navigation-frame-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/frame-proof-summary/verified.json
+          if-no-files-found: error
