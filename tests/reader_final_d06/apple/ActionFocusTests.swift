@@ -9,7 +9,19 @@ final class ActionFocusTests: XCTestCase {
  }
  func node(_ id:String)->XCUIElement {app.descendants(matching:.any).matching(identifier:id).firstMatch}
  func wait(_ predicate:()->Bool)->Bool {let end=Date().addingTimeInterval(90);while Date()<end {if predicate(){return true};RunLoop.current.run(until:Date().addingTimeInterval(0.2))};return predicate()}
- func tap(_ id:String) {XCTAssertTrue(wait{self.node(id).exists && self.node(id).isEnabled && self.node(id).isHittable},id);node(id).tap()}
+ // Reuse the owner accessibility driver's real viewport reachability rule.
+ // Toolbar search/directory are horizontally scrollable on compact iPhone.
+ func tap(_ id:String) {
+  XCTAssertTrue(node(id).waitForExistence(timeout:60),id)
+  let toolbar=["reader.first","reader.previous","reader.next","reader.font.decrease","reader.font.increase","reader.select","reader.notes","reader.search","reader.navigation"].contains(id)
+  func viewport()->CGRect {let window=app.windows.firstMatch.frame.insetBy(dx:-2,dy:-2);return toolbar && node("reader.tools.scroll").exists ? window.intersection(node("reader.tools.scroll").frame) : window}
+  for _ in 0..<12 {
+   let frame=node(id).frame
+   if !frame.isEmpty && viewport().contains(frame) && node(id).isHittable {break}
+   if toolbar && node("reader.tools.scroll").exists {let tools=node("reader.tools.scroll");if !frame.isEmpty && frame.midX<tools.frame.midX {tools.swipeRight()} else {tools.swipeLeft()}} else {break}
+  }
+  XCTAssertTrue(wait{viewport().contains(self.node(id).frame) && self.node(id).isEnabled && self.node(id).isHittable},id);node(id).tap()
+ }
  func text(_ id:String)->String {let n=node(id);return n.label.isEmpty ? (n.value as? String ?? "") : n.label}
  func mark(_ name:String) {steps.append(name);let tree=XCTAttachment(string:app.debugDescription);tree.name=name+"-tree";tree.lifetime = .keepAlways;add(tree);let shot=XCTAttachment(screenshot:app.screenshot());shot.name=name;shot.lifetime = .keepAlways;add(shot);print("D06_ACTION "+name)}
  func testRepresentativeActions() {
@@ -17,6 +29,7 @@ final class ActionFocusTests: XCTestCase {
   XCTAssertTrue(wait{self.node("library.title").exists && !self.node("library.busy").exists});mark("shelf")
   tap("library.import.epub");XCTAssertTrue(wait{self.node("library.book.0").exists && !self.node("library.busy").exists});mark("import-fixture-native-entry")
   tap("library.book.0");XCTAssertTrue(wait{self.node("reader.page").exists && !self.node("reader.busy").exists});mark("open")
+  XCTAssertFalse(node("reader.state").exists,"production semantic tree unexpectedly exposes HOST_REVIEW state")
   let before=text("reader.location");tap("reader.next");XCTAssertTrue(wait{!self.node("reader.busy").exists && self.text("reader.location") != before});mark("next-page")
   tap("reader.search");XCTAssertTrue(node("search.query").waitForExistence(timeout:15));node("search.query").tap();node("search.query").typeText("D06_UNMATCHED_TOKEN");XCTAssertTrue((node("search.query").value as? String ?? "").contains("D06_UNMATCHED_TOKEN"));mark("search-text-focus")
   tap("search.find");XCTAssertTrue(wait{self.text("search.status").contains("没有匹配结果")});mark("search-result")

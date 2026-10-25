@@ -61,3 +61,12 @@ artifact from 40203714083. The SDK producer is 72c6, target app macOS is 15dab a
 72c6; no collective success is inherited from the failed producer run. All Apple builds
 explicitly disable signing. If macOS XCTest requires signing, its refusal is retained,
 not bypassed. Native query typing tests focused input; no external keyboard grant.
+
+Apple configuration correction for final run: the round-two directory `.../apple`
+selects `EXR_APPLE_HOST_REVIEW` and `EXR_APPLE_IMPORT_REVIEW` in the unchanged owner
+generator, in addition to page theme. Those retained Apple artifacts are **review builds**,
+not default/production semantic-tree evidence. Final-run test sources are staged in an
+owned Actions `.../accessibility/ui` directory; the generated project is hashed and an
+explicit assertion rejects either review macro. The XCTest also rejects `reader.state`.
+Compact toolbar reachability follows the existing accessibility driver's native viewport
+scroll rule, extended to the actual search/directory buttons. No hidden control API is used.

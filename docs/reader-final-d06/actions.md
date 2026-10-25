@@ -124,3 +124,59 @@ external-keyboard regression to reproduce with source/current binary held fixed.
 Allowed conventions: Cmd on macOS vs Ctrl elsewhere; Android system Back vs desktop
 Escape/Alt+Left; touchscreen actions need not expose desktop shortcut keys. No production
 patch is proposed here; owners receive precise route/context and retained failures.
+
+### Android exact route supplement (baseline source, not runtime grants)
+
+- `MainActivity.java:293` import button listener opens the native import flow;
+  `readerMore` listener at 307 builds `阅读更多操作` from enabled build features and
+  dispatches `阅读设置`, `书内搜索`, `目录 / 按页入口`, `阅读记录` to the corresponding panel.
+  `backButton` at 311 calls `leaveReader`; page controls use `turnPage`.
+- `SearchPanel.show` creates `AlertDialog("书内搜索")`; `搜索` calls `scan(false)`,
+  `更多结果` calls `scan(true)`, row click calls `choose` only while `!busy`.
+  `controls` disables input/list/start while busy, enables cancel only while busy,
+  enables more only while idle and incomplete. `scan` begins with `if(busy)return`.
+  `closed` increments epoch, cancels the task, releases search; no explicit focus
+  restoration appears there. Native AlertDialog default focus therefore remains to
+  be observed, not source-assumed. Repeat-submit has a source guard, no cross-host
+  runtime grant yet.
+- `NavigationPanel.show` creates `目录 / 按页入口`; `上一级`, `下一批条目`, `CFI 位置`,
+  `取消读取`, and `关闭` have separate callbacks. CFI confirmation `定位` calls
+  `resolve(-1,-1,input,false)`; `返回` dismisses choice. Ambiguous targets require
+  `明确选择章节`; missing fragments require `仅打开章节开头` vs `不跳转`.
+  `controls` disables rows while busy and enables CFI only for publication sources.
+  `closed` cancels task, closes outstanding choice and releases directory; actual
+  native return focus pending.
+- `ReadingPanel.show` creates `阅读记录`; list row invokes `detail` only idle.
+  `edit` creates `添加书签` / `标注选中文本` / `编辑记录文字` with `保存` and `返回`.
+  Save validates encoding, clears/dismisses choice, then writes a typed action.
+  Destructive `删除此记录？` and `恢复此版本？` are explicit separate confirmation
+  dialogs; `epoch` / `current(stamp)` guard stale callbacks.
+- `PreferencesPanel:51–57` creates `阅读设置` with `应用` and `取消`; dismiss hides
+  IME and posts `reader_view.requestFocus`. Negative button calls `close`, positive
+  has its explicit apply callback. This is an intended focus route, not proof that
+  current focus actually becomes reader on all rotation/dialog paths.
+
+### Focus restoration and modifier-specific source findings
+
+GTK native owner restoration is explicit (not a generic toolkit promise):
+`search_ui.inc:49–50` restores visible/sensitive saved return focus, fallback selectable
+text; `navigation_ui.inc:64–65` restores sensitive same-window return focus, fallback
+text; `reading_records_ui.inc:63–64` uses visible/sensitive return focus, fallback text.
+`accounts_ui.inc:70–71` and `preferences_ui.inc:91–92` restore their return focus,
+fallback bookshelf search. Initial focus is search entry, directory/records list,
+account root, preferences font respectively. Runtime compact focus trace is the check
+on these source intentions; source-level fallbacks do not grant all interrupted paths.
+
+**D06-06 / P1 hypothesis, unique owner Windows host event-routing owner:**
+`winrecords_translate` accepts Ctrl+L without rejecting Shift or Alt; search Ctrl+F and
+navigation Ctrl+G reject Shift but do not reject Alt. Settings Ctrl+, similarly checks
+Control only. Thus J08's exact-modifier/AltGr exclusion cannot be assumed for the real
+host. Reproduce with focused edit field + Ctrl+Alt+F (or an actual AltGr-producing layout)
+and compare with plain editing; expected text ownership vs actual global shortcut must
+be observed before calling this a confirmed input-loss defect. No key remapping patch.
+
+`examples/apple/ReaderApp.swift` contains only WindowGroup/HostAccountRoot; the inspected
+Apple tree has no custom keyDown/onKeyPress/UIKeyCommand/keyboardShortcut event routes.
+Native text controls retain platform defaults, but this does not supply absent explicit
+reader navigation shortcuts. macOS menu defaults and Full Keyboard Access remain an
+actual-execution scope separate from the touch/typed-field representative test.

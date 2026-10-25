@@ -18,10 +18,17 @@ jobs:
       - run: |
           python3 -m py_compile tests/reader_final_d06/*.py
           python3 tests/reader_final_d06/audit.py
+          python3 tests/reader_final_d06/contract.py
+      - name: Authenticate and retain original second-round Apple failures
+        env:
+          GH_TOKEN: ${{github.token}}
+        run: python3 tests/reader_final_d06/prior_failure.py
       - uses: actions/upload-artifact@v4
         with:
           name: d06-source-${{github.run_id}}-${{github.run_attempt}}
-          path: build/d06/source-index.json
+          path: |
+            build/d06/source-index.json
+            build/d06/prior-failures.json
   native:
     needs: guard
     strategy:

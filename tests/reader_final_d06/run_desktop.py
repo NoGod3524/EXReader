@@ -13,11 +13,15 @@ def run(name,script,args):
   result=subprocess.run(command,cwd=target,stdout=log,stderr=subprocess.STDOUT)
  results.append(dict(name=name,returncode=result.returncode,command=command))
  print(json.dumps(results[-1]),flush=True)
+ if result.returncode:print('\n'.join((out/(name+'.log')).read_text(errors='replace').splitlines()[-90:]),flush=True)
 programs={}
 try:
  if host=='windows':
   binary=find('ws-package/EXReader/EXReader.exe');review=find('ws-host/EXReaderShelfReview.exe');font=find('ws-package/EXReader/Reader.otf');compact=find('compact-host/EXReaderProduct.exe')
   programs={name:{'path':str(p),'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for name,p in [('default',binary),('compact',compact),('review',review)]}
+  identity=json.loads(find('windows-341-identity.json').read_text())
+  assert identity['sdk_source']=='edddc463c06ed5731195cdb8f06b2df6dff7699e' and identity['sdk_version']=='3.41.0' and identity['sdk_abi']==1
+  assert identity['files']['packaged_production']['sha256']==programs['default']['sha256'] and identity['files']['shelf_review']['sha256']==programs['review']['sha256']
   run('windows-default-keyboard',target/'tests/reader_windows_search/check_keyboard.py',['--candidate',binary,'--review',review,'--font',font,'--output',out/'windows-default-keyboard'])
   run('windows-text-repeat',root/'tests/reader_final_d06/windows_focus.py',['--target',target,'--candidate',binary,'--font',font,'--output',out/'windows-text-repeat'])
   fixtures=out/'windows-fixtures'
@@ -32,6 +36,6 @@ try:
   run('gtk-compact',target/'tests/reader_gtk_compact/check_ui.py',['--payload',payload,'--fixtures',fixture,'--output',out/'gtk-compact'])
 finally:
  report=dict(harness_sha=os.environ['GITHUB_SHA'],target_sha=subprocess.check_output(['git','-C',str(target),'rev-parse','HEAD'],text=True).strip(),producer=json.loads((out/(host+'-producer-identity.json')).read_text()),run_id=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],host=host,programs=programs,executions=results,accepted=bool(results) and all(r['returncode']==0 for r in results),keyboard_accepted=False,complete_product=False,screen_reader_accepted=False)
- report['files']={str(p.relative_to(out)):{'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in out.rglob('*') if p.is_file() and '-producer' not in str(p.relative_to(out)) and p.suffix in ('.json','.bmp','.png','.log','.txt')}
+ report['files']={p.relative_to(out).as_posix():{'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in out.rglob('*') if p.is_file() and '-producer' not in str(p.relative_to(out)) and p.suffix in ('.json','.bmp','.png','.log','.txt')}
  (out/(host+'-execution.json')).write_text(json.dumps(report,indent=2));print(json.dumps(report),flush=True)
 assert report['accepted'], 'Real native driver failure retained; product not accepted'
