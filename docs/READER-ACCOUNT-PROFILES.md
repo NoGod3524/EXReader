@@ -204,3 +204,9 @@ Root still owns host wiring and the joint re-verification on common source.
 
 新增两个安装消费者场景：prepare完成后真实替换originals为符号链接/Windows junction，verify必须UNSAFE_PATH且不触碰目标；整个activation在独立堆分配中填满非NUL，必须INVALID，Linux另在ASan/UBSan下执行。原40项及真实session跨账号隔离、所有严格工件认证保留；当前候选待Actions同源验证，原交回的通过不转授。
 
+## Root 修复验收
+
+source `10bbfe06669b57b11a35aa931402b0f846b3f7b7` / [run 40155371601](https://github.com/NoGod3524/EXReader/actions/runs/40155371601) / attempt1 四作业success：Linux、Windows、macOS各42项全部通过，Linux ASan/UBSan实际执行非NUL堆plan负例，无内存或未定义行为错误。prepare后原件目录替换、目标不变以及既有真实session跨账号隔离均通过。
+
+strict job `121057196212` 重新认证三个真实同源码同attempt作业与ZIP、42项原始结果，9个篡改报告负例全部拒绝，`accepted=true`、`problems=[]`。后续证据HEAD仅改本文及JSON。复审关闭，等待共同源码及宿主账号切换接入；SDK/schema/wire/anchor未改。
+
