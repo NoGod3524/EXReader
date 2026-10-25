@@ -2,15 +2,193 @@
   "schema": 1,
   "id": "J19",
   "package": "reader-tts-linux",
-  "accepted": false,
-  "accepted_reason": "root review rework: two close-boundary gaps fixed in source; the four-configuration run and its strict aggregation are pending",
+  "accepted": true,
+  "accepted_reason": "root-review rework verified: one run, four platform jobs, 620 named case executions, strict same-run artifact aggregation accepted",
   "source": {
     "fixed_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
     "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
     "sdk_version": "3.40.0 / ABI 1",
     "branch": "codex/reader-tts-linux",
-    "tested_sha": null,
-    "note": "filled by the [skip ci] evidence commit that follows the rework run"
+    "tested_sha": "0ee0bd0dcfa1b9646613d6b2a56e0a0aa49671a2",
+    "rework_trigger": "docs/handoffs/reader-next-wave/J19-ROOT-REVIEW.md at 4adac9c4",
+    "evidence_commit_note": "this file is committed on top of the tested SHA and changes docs only"
+  },
+  "workflow": {
+    "file": ".github/workflows/reader-tts-linux.yml",
+    "run_id": 40143498768,
+    "run_attempt": 1,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40143498768",
+    "conclusion": "success",
+    "jobs": {
+      "guard": {
+        "id": 121019921692,
+        "conclusion": "success"
+      },
+      "tts-linux (ubuntu-2404-release)": {
+        "id": 121019956628,
+        "conclusion": "success",
+        "image": "Ubuntu 24.04.5 LTS",
+        "speech_dispatcher": "0.12.0-rc2"
+      },
+      "tts-linux (ubuntu-2404-asan)": {
+        "id": 121019956661,
+        "conclusion": "success",
+        "image": "Ubuntu 24.04.5 LTS",
+        "speech_dispatcher": "0.12.0-rc2",
+        "sanitizers": "ASan + UBSan"
+      },
+      "tts-linux (ubuntu-2204-release)": {
+        "id": 121019956767,
+        "conclusion": "success",
+        "image": "Ubuntu 22.04.5 LTS",
+        "speech_dispatcher": "0.11.1"
+      },
+      "tts-linux (ubuntu-2204-asan)": {
+        "id": 121019956685,
+        "conclusion": "success",
+        "image": "Ubuntu 22.04.5 LTS",
+        "speech_dispatcher": "0.11.1",
+        "sanitizers": "ASan + UBSan"
+      },
+      "same-run aggregation": {
+        "id": 121025198294,
+        "conclusion": "success"
+      }
+    }
+  },
+  "artifacts": [
+    {
+      "key": "ubuntu-2204-release",
+      "id": 12579897071,
+      "bytes": 52121,
+      "zip_sha256": "94d72a0faaedfb613002271213d80e3dd90c19107ef9d4c07c1b62aa1fb275a5",
+      "api_digest": "sha256:94d72a0faaedfb613002271213d80e3dd90c19107ef9d4c07c1b62aa1fb275a5",
+      "expires_at": "2027-01-22T23:37:31Z",
+      "cases": 155,
+      "pass": 155,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "key": "ubuntu-2204-asan",
+      "id": 12580059493,
+      "bytes": 139287,
+      "zip_sha256": "0e129224e84daa02fc48c331e6e5f5e4abe750c2802b5719fc5155c3e5d9b255",
+      "api_digest": "sha256:0e129224e84daa02fc48c331e6e5f5e4abe750c2802b5719fc5155c3e5d9b255",
+      "expires_at": "2027-01-22T23:37:31Z",
+      "cases": 155,
+      "pass": 155,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "key": "ubuntu-2404-release",
+      "id": 12579542489,
+      "bytes": 51882,
+      "zip_sha256": "495ea88c46a1210b67b5827b1f48f628df6bea325287c371892d1b9e0feff94d",
+      "api_digest": "sha256:495ea88c46a1210b67b5827b1f48f628df6bea325287c371892d1b9e0feff94d",
+      "expires_at": "2027-01-22T23:37:31Z",
+      "cases": 155,
+      "pass": 155,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "key": "ubuntu-2404-asan",
+      "id": 12580130648,
+      "bytes": 127399,
+      "zip_sha256": "db8aa9c6d1e489097f98cbc35b380ad2c73e82072d7e6a91426b67a2c082d26e",
+      "api_digest": "sha256:db8aa9c6d1e489097f98cbc35b380ad2c73e82072d7e6a91426b67a2c082d26e",
+      "expires_at": "2027-01-22T23:37:31Z",
+      "cases": 155,
+      "pass": 155,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "key": "report",
+      "id": 12580980028,
+      "bytes": 350348,
+      "zip_sha256": "34fb33134474bb56540789418fa4a8e87efbefff758c4e081fdbf57cc59bf80b",
+      "api_digest": "sha256:34fb33134474bb56540789418fa4a8e87efbefff758c4e081fdbf57cc59bf80b",
+      "expires_at": "2027-01-22T23:37:31Z"
+    }
+  ],
+  "consumers": {
+    "ubuntu-2204-release": {
+      "reader-tts-consumer": {
+        "sha256": "7caa73d36bf02ee00da7fc0f9a7b3b2be657c72554bc6f3279373058bf23ffdd",
+        "bytes": 60720
+      },
+      "reader-tts-consumer-cpp": {
+        "sha256": "9c3bb2aabfff1c46b44626bf9f83e6c8995344796a7904b187ee41f99ec1cf28",
+        "bytes": 50664
+      },
+      "tts-hook-suite": {
+        "sha256": "afdb625e81317ab2844ac4fc366a4d16b05af405f65aec61faa7116cbd3e0e68",
+        "bytes": 48848
+      }
+    },
+    "ubuntu-2204-asan": {
+      "reader-tts-consumer": {
+        "sha256": "6338b98ea6c3607cc28045a19cef384df5235f4c51dc623bac9b090b45bf9e35",
+        "bytes": 516352
+      },
+      "reader-tts-consumer-cpp": {
+        "sha256": "b3a1a49f0cd2b5cbe3212ac90ce392b35833e9f2c7afa0950dd5e1b4048dd9be",
+        "bytes": 600896
+      },
+      "tts-hook-suite": {
+        "sha256": "e02ff211031f4a82f3d516d1ab5c1e420f4911a5b7428f854d1d051212d5afc0",
+        "bytes": 409248
+      }
+    },
+    "ubuntu-2404-release": {
+      "reader-tts-consumer": {
+        "sha256": "80864b3baefebc962cf19bd99028ef8c02403ca0bd7ab7f8366ad69fad442db3",
+        "bytes": 60824
+      },
+      "reader-tts-consumer-cpp": {
+        "sha256": "b4846396fd15b43e425c17743e2d4513a21ee5ea6db2b5ada8cb30a1738c13fb",
+        "bytes": 50824
+      },
+      "tts-hook-suite": {
+        "sha256": "17588f81ae13503663aa2382073fb10fee7b00a72de6aad7ca35014a335eccb2",
+        "bytes": 48848
+      }
+    },
+    "ubuntu-2404-asan": {
+      "reader-tts-consumer": {
+        "sha256": "38489f18248b20ff1efc67515fa1b6037142a1ec94abaae052ca10252e8c9f54",
+        "bytes": 483016
+      },
+      "reader-tts-consumer-cpp": {
+        "sha256": "4b1b91c0245735ee1b5f6d4a6dab73b81f29e05a6f50dc5e099493ca1f24f551",
+        "bytes": 567176
+      },
+      "tts-hook-suite": {
+        "sha256": "fcaf4ae91a03ca02831a5c15b910a8db64a9f48b49e305c019de67e6bfb808a0",
+        "bytes": 368944
+      }
+    }
+  },
+  "cases": {
+    "expected": 155,
+    "per_platform": {
+      "live": 70,
+      "pause": 12,
+      "cpp": 11,
+      "hook": 39,
+      "kill": 12,
+      "down": 7,
+      "recover": 4
+    },
+    "executions": 620,
+    "pass": 620,
+    "fail": 0,
+    "skip": 0,
+    "aggregation_rejections": 39,
+    "aggregation_rejection_failures": 0
   },
   "rework": {
     "review": "docs/handoffs/reader-next-wave/J19-ROOT-REVIEW.md at 4adac9c4",
@@ -42,12 +220,57 @@
     "new_named_cases": 17,
     "cases_expected": 155
   },
+  "close_boundary_evidence": {
+    "release thread creation failure": {
+      "injection": "RLIMIT_NPROC lowered to 1 for the duration of the call (a real EAGAIN from pthread_create), restored immediately",
+      "observed": {
+        "hook_close_thread_failure_status": "squeezed=1 status=7 native=11",
+        "hook_close_thread_failure_keeps_request": "state=2 id=501 conn=1 slot=1 depth=0/0",
+        "hook_close_thread_failure_destroy_busy": "status=3",
+        "hook_close_handover_after_join": "closed=1 old_owner_slot=0 (the retry closes normally)"
+      }
+    },
+    "connection handover": {
+      "mechanism": "test gate inside the real release: slot still held, old event thread still alive, no lock held",
+      "observed": {
+        "hook_close_gate_slot_still_owned": "slot_owner_is_old=1",
+        "hook_close_gate_blocks_other_owner": "status=4 new_owner_slot=0",
+        "hook_close_gate_destroy_busy": "status=3",
+        "hook_close_terminal_preserved": "kind=3 id=501",
+        "hook_close_new_owner_connects": "kind=0",
+        "hook_close_slot_owned_by_new_owner": "new_owner_slot=1",
+        "hook_close_stale_callback_ignored": "extra_event=0 state=2",
+        "hook_close_new_owner_finishes": "kind=2"
+      }
+    }
+  },
+  "scope": {
+    "module_behaviour": "granted: 155 named cases on 4 platform jobs against the real system daemon",
+    "close_boundaries": "granted: real thread-creation failure and the real handover interleaving, both driven through the production code",
+    "actual_audio": "not covered: the runner has a null audio sink; no listening test is possible",
+    "pause_resume": "granted as daemon state transitions and event bookkeeping, not as audible behaviour",
+    "host_integration": "not covered: root wires the GTK host",
+    "platforms": [
+      "ubuntu-22.04.5 x86_64 / speech-dispatcher 0.11.1",
+      "ubuntu-24.04.5 x86_64 / speech-dispatcher 0.12.0-rc2"
+    ],
+    "sanitizers": "ASan + UBSan on both images for the library, both consumers and the fault-injection suite",
+    "performance": "not measured for this package",
+    "accessibility": "not claimed by this package"
+  },
   "previous_acceptance": {
-    "note": "kept as the last accepted evidence; superseded by the rework run",
+    "note": "last acceptance before the root review; kept as history, not as a claim about the current source",
     "tested_sha": "2f4304c0a037e8f20b064bbfa248ea2e9371d436",
     "run_id": 40138462305,
     "run_attempt": 1,
     "conclusion": "success",
+    "cases": {
+      "expected": 138,
+      "executions": 552,
+      "pass": 552,
+      "fail": 0,
+      "skip": 0
+    },
     "jobs": {
       "guard": 121004930945,
       "tts-linux (ubuntu-2404-release)": 121004951274,
@@ -93,13 +316,6 @@
         "expires_at": "2027-01-22T22:25:03Z"
       }
     ],
-    "cases": {
-      "expected": 138,
-      "executions": 552,
-      "pass": 552,
-      "fail": 0,
-      "skip": 0
-    },
     "aggregation_rejections": 39
   },
   "failures_history": [
@@ -167,6 +383,12 @@
       "run_id": 40135611342,
       "failure": "all four jobs green; aggregation looked for results.json at the archive root",
       "fix_commit": "2f4304c0"
+    },
+    {
+      "review": "J19-ROOT-REVIEW at 4adac9c4",
+      "failure": "request_close closed synchronously on the owner thread when thread creation failed; drop_conn released the connection slot before joining the old event thread",
+      "fix_commit": "0ee0bd0d",
+      "run_id": 40143498768
     }
   ],
   "not_covered": [
@@ -174,7 +396,7 @@
     "a daemon that accepts the socket and then hangs (no client-side timeout)",
     "distributions other than Ubuntu 22.04/24.04 and non-x86_64 hosts",
     "GTK host wiring and the default reading configuration",
-    "two handles using the daemon at the same time (now gated: the second handle waits for the join)"
+    "two handles using the daemon at the same time (the second handle now waits for the old connection's join and the interleaving is tested; concurrent use is still refused by design)"
   ],
-  "as_of": "2026-10-24T23:40:00Z"
+  "as_of": "2026-10-25T00:05:08Z"
 }

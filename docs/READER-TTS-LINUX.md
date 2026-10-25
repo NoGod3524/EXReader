@@ -36,7 +36,7 @@ build. Root owns host wiring; this package only proves the module.
 | `tests/reader_tts_linux/consumer/` | installed-package C consumer, real daemon scenarios |
 | `tests/reader_tts_linux/consumer_cpp/` | installed-package C++ consumer (C ABI from C++, std::thread ownership, voice-list lifetime, unique_ptr deleter) |
 | `tests/reader_tts_linux/tts_hook_suite.c` | source-built fault-injection suite |
-| `tests/reader_tts_linux/expected_cases.json` | the 138 named cases, fixed before any result is read |
+| `tests/reader_tts_linux/expected_cases.json` | the 155 named cases, fixed before any result is read |
 | `tests/reader_tts_linux/run_scenarios.py` | owns the daemon lifecycle, merges and validates results |
 | `tests/reader_tts_linux/aggregate.py`, `check_aggregate.py` | strict same-run aggregation and its rejection regressions |
 | `tests/reader_tts_linux/check_scope.sh` | fixed start, frozen SDK, product SQL, whitelist and source invariants |
@@ -54,6 +54,12 @@ build. Root owns host wiring; this package only proves the module.
 * **Memory.** Inputs are copied; voices are library-owned and released by
   `reader_tts_voice_list_free` (which may be called after the handle is gone);
   errors carry a status plus a platform code, never message text or input bytes.
+* **Close boundary.** `request_close` never closes on the calling thread: when the
+  release thread cannot be created the call changes nothing and fails with
+  `MEMORY` (native_code = the pthread_create error), the owner may retry, and the
+  process-wide connection slot is handed to another handle only after the old
+  libspeechd event thread has been joined. No lock the callbacks need is held
+  across the close.
 * **Stop, then speak.** The espeak-ng module keeps tearing a cancelled message
   down after SPEAK is cancelled; a message submitted inside that window is
   cancelled by the daemon before it begins (measured: a 0.5-rate request issued
@@ -114,7 +120,7 @@ The report job re-runs `check_scope.sh`, runs the aggregation rejection
 regressions, then downloads this run's artifacts through the REST API, checks the
 artifact id/name tokens/byte size/sha256 digest/expiry, recomputes the ZIP digest,
 verifies the archived `files.sha256` against the archive contents, and re-validates
-all 138 named cases against `expected_cases.json`. Any mismatch is a rejection.
+all 155 named cases against `expected_cases.json`. Any mismatch is a rejection.
 
 ## 4. Scope of what may be claimed
 
@@ -151,75 +157,104 @@ Separately granted, never merged into one "TTS works" statement:
 
 ## 6. Evidence
 
-Everything below belongs to one run. The artifacts were downloaded back through the
-Actions REST API by the report job, their ZIP digests were recomputed, and all 138
-named cases were re-validated against `expected_cases.json` before the run was
-marked accepted.
+Current acceptance: run [40143498768](https://github.com/NoGod3524/EXReader/actions/runs/40143498768)
+attempt 1 at `0ee0bd0dcfa1b9646613d6b2a56e0a0aa49671a2`. The artifacts were
+downloaded back through the Actions REST API by the report job, their ZIP digests
+were recomputed, and all 155 named cases were re-validated against
+`expected_cases.json` before the run was marked accepted. The previous acceptance
+(run 40138462305 at `2f4304c0`) is kept unchanged in §6.8.
 
 ### 6.1 Tested source
 
 | field | value |
 | --- | --- |
-| tested source SHA | `2f4304c0a037e8f20b064bbfa248ea2e9371d436` (branch `codex/reader-tts-linux`) |
+| tested source SHA | `0ee0bd0dcfa1b9646613d6b2a56e0a0aa49671a2` (branch `codex/reader-tts-linux`) |
 | fixed start | `f43baf9182d75907c0cb5d6f77048f27bca8c950` |
 | frozen SDK | `9854061be331fe603a1822d9b2b36ee357154927` (3.40.0 / ABI 1) |
-| workflow run / attempt | [40138462305](https://github.com/NoGod3524/EXReader/actions/runs/40138462305) / 1, conclusion `success` |
-| guard job | `121004930945` success (fixed start, protected trees, product SQL blob, whitelist, source invariants) |
-| report job | `121010696804` success, aggregation `accepted=true`, 552 case executions |
+| rework trigger | root review `docs/handoffs/reader-next-wave/J19-ROOT-REVIEW.md` at `4adac9c4` |
+| workflow run / attempt | [40143498768](https://github.com/NoGod3524/EXReader/actions/runs/40143498768) / 1, conclusion `success` |
+| guard job | `121019921692` success (fixed start, protected trees, product SQL blob, whitelist, source invariants) |
+| report job | `121025198294` success, aggregation `accepted=true`, 620 case executions |
 
 This evidence file is committed on top of the tested SHA; that commit changes
 documentation only (`docs/`), so the tested source stays
-`2f4304c0a037e8f20b064bbfa248ea2e9371d436`.
+`0ee0bd0dcfa1b9646613d6b2a56e0a0aa49671a2`.
 
-### 6.2 Platform jobs (each 138/138 named cases, 0 fail, 0 skip)
+### 6.2 Platform jobs (each 155/155 named cases, 0 fail, 0 skip)
 
-| job | job id | image | Speech Dispatcher | libspeechd-dev |
-| --- | --- | --- | --- | --- |
-| ubuntu-2404-release | `121004951274` | Ubuntu 24.04.5 LTS | speech-dispatcher 0.12.0-rc2 | see artifact `pkg-logs/libspeechd-version.log` |
-| ubuntu-2404-asan | `121004951352` | Ubuntu 24.04.5 LTS | speech-dispatcher 0.12.0-rc2 | same |
-| ubuntu-2204-release | `121004951325` | Ubuntu 22.04.5 LTS | speech-dispatcher 0.11.1 | same |
-| ubuntu-2204-asan | `121004951356` | Ubuntu 22.04.5 LTS | speech-dispatcher 0.11.1 | same |
+| job | job id | image | Speech Dispatcher |
+| --- | --- | --- | --- |
+| ubuntu-2404-release | `121019956628` | Ubuntu 24.04.5 LTS | speech-dispatcher 0.12.0-rc2 |
+| ubuntu-2404-asan | `121019956661` | Ubuntu 24.04.5 LTS | speech-dispatcher 0.12.0-rc2 |
+| ubuntu-2204-release | `121019956767` | Ubuntu 22.04.5 LTS | speech-dispatcher 0.11.1 |
+| ubuntu-2204-asan | `121019956685` | Ubuntu 22.04.5 LTS | speech-dispatcher 0.11.1 |
 
 ASan (leak detection with the documented suppressions) and UBSan with
-`-fno-sanitize-recover=all` are enabled in the two `*-asan` jobs for the library,
-both consumers and the fault-injection suite.
+`-fno-sanitize-recover=all` cover the library, both consumers and the
+fault-injection suite in the two `*-asan` jobs.
 
 ### 6.3 Artifacts of this run
 
 | job | artifact id | bytes | sha256 (recomputed ZIP) | expires |
 | --- | --- | --- | --- | --- |
-| ubuntu-2204-release | `12577903441` | 51120 | `5df3e0a9c4e45b8b49dbcbd68c7df85a399f6783eaef3b7865d5ddad61682c38` | 2027-01-22T22:25:03Z |
-| ubuntu-2204-asan | `12579025224` | 137394 | `b715770a3bdeeb6eca22ffa7ad51f6482b7fa51d2cfe8baf50e44af42d7de555` | 2027-01-22T22:25:03Z |
-| ubuntu-2404-release | `12577197975` | 50821 | `1fde0746d651668a6b638e06c92a5b5189272a73cdaffd971ac71c203731ea71` | 2027-01-22T22:25:03Z |
-| ubuntu-2404-asan | `12577038289` | 125856 | `99669f69437221aa184f8ae17f10bb63049ecd3ebb2775dc39478af4b7eed8d5` | 2027-01-22T22:25:03Z |
-| report (summary + rejections + downloaded ZIPs) | `12579130182` | 344822 | `b8e31aaeaff3a3a851d97e557d354197964bae5cdbac23c98e7ff1cec5211388` | 2027-01-22T22:25:03Z |
+| ubuntu-2204-release | `12579897071` | 52121 | `94d72a0faaedfb613002271213d80e3dd90c19107ef9d4c07c1b62aa1fb275a5` | 2027-01-22T23:37:31Z |
+| ubuntu-2204-asan | `12580059493` | 139287 | `0e129224e84daa02fc48c331e6e5f5e4abe750c2802b5719fc5155c3e5d9b255` | 2027-01-22T23:37:31Z |
+| ubuntu-2404-release | `12579542489` | 51882 | `495ea88c46a1210b67b5827b1f48f628df6bea325287c371892d1b9e0feff94d` | 2027-01-22T23:37:31Z |
+| ubuntu-2404-asan | `12580130648` | 127399 | `db8aa9c6d1e489097f98cbc35b380ad2c73e82072d7e6a91426b67a2c082d26e` | 2027-01-22T23:37:31Z |
+| report (summary, rejections, downloaded ZIPs) | `12580980028` | 350348 | `34fb33134474bb56540789418fa4a8e87efbefff758c4e081fdbf57cc59bf80b` | 2027-01-22T23:37:31Z |
 
-Each platform artifact carries `evidence/results.json` (named cases, environment,
-consumer digests), `evidence/files.sha256`, the six per-phase JSON files and logs,
-`pkg-logs/` (configure/build/install/consumer logs, CMake caches, libspeechd header
-digest) and the installed prefix `stage/` (header, `libreader_tts.a`, CMake package
-files, `LICENSE.txt`).
-
-The report job's rejection regressions ran 39 offline fixtures (sound and mutated:
-wrong source/run/attempt, expired or zero-byte artifact, malformed digest,
-tampered ZIP, tampered and unpacked manifests, missing/duplicate/unexpected cases,
-missing detail, flat and prefixed layouts) and every mutation was rejected.
+Each platform artifact carries `evidence/results.json`, `evidence/files.sha256`,
+the seven per-phase JSON files and logs, `pkg-logs/` and the installed prefix
+`stage/`. The report job's rejection regressions again ran 39 offline fixtures
+(sound and mutated: wrong source/run/attempt, expired or zero-byte artifact,
+malformed digest, tampered ZIP, tampered and unpacked manifests, missing,
+duplicate or unexpected cases, missing detail, flat and prefixed layouts) and every
+mutation was rejected.
 
 ### 6.4 Named results
 
-138 cases per platform, 552 executions in total, all `pass`:
+155 cases per platform, 620 executions in total, all `pass`:
 
 | phase | cases | what it proves |
 | --- | --- | --- |
 | live | 70 | create/observe/voices, request lifecycle, UTF-8/limit/rate/voice validation, owner-thread rejection, second handle, close/destroy, voice-list lifetime, config ceilings |
 | pause | 12 | pause/resume transitions and idempotence, two cycles, stop after resume, close |
-| cpp | 11 | the same ABI from C++ (owner thread from std::thread, voice list outliving the handle, full cycle) |
-| hook | 22 | early-callback buffering, late-callback filtering, queue ceiling, allocation failures, measured voice count |
+| cpp | 11 | the same ABI from C++ (owner thread from std::thread, voice list outliving the handle) |
+| hook | 39 | early-callback buffering, late-callback filtering, queue ceiling, allocation failures, measured voice count, and the two close boundaries below |
 | kill | 12 | daemon SIGKILLed mid-utterance: FAILED/UNAVAILABLE, no autospawn, restart and same-handle recovery |
 | down | 7 | no daemon: CREATE OK with SERVICE_UNAVAILABLE, voices/speak UNAVAILABLE, no autospawn, clean close |
 | recover | 4 | daemon back: a fresh process connects, speaks, closes |
 
-### 6.5 Failing runs and what each one fixed
+### 6.5 The two close-boundary fixes (from the root review)
+
+**Release thread creation failure.** A real `EAGAIN` from `pthread_create` is
+produced by lowering `RLIMIT_NPROC` to 1 for the duration of the call (this process
+already has more tasks than that) and restoring it immediately:
+
+| case | observed |
+| --- | --- |
+| `hook_close_thread_failure_status` | `squeezed=1 status=7 native=11` — MEMORY with the pthread error, nothing else |
+| `hook_close_thread_failure_keeps_request` | `state=2 id=501 conn=1 slot=1 depth=0/0` — still SPEAKING on the same request, connection and slot still held, queue unchanged |
+| `hook_close_thread_failure_destroy_busy` | `status=3` — destroy still refuses (BUSY) |
+| `hook_close_gate_reached` … `hook_close_handover_after_join` | the retry closes normally once a thread can be created |
+
+**Connection handover.** The slot is released only after `spd_close()` has joined
+the old event thread. A gate inside the real release (slot held, old thread alive,
+no lock held) lets the test interleave a second owner:
+
+| case | observed |
+| --- | --- |
+| `hook_close_second_handle_unavailable` | `status=0 state=7` — the second handle exists but owns nothing |
+| `hook_close_gate_slot_still_owned` | `slot_owner_is_old=1` |
+| `hook_close_gate_blocks_other_owner` | `status=4 new_owner_slot=0` — UNAVAILABLE, cannot take the slot |
+| `hook_close_gate_destroy_busy` | `status=3` — the closing handle is not destroyable |
+| `hook_close_handover_after_join` | `closed=1 old_owner_slot=0` |
+| `hook_close_terminal_preserved` | `kind=3 id=501` — the interrupted request's STOPPED survived the close |
+| `hook_close_new_owner_connects` / `hook_close_slot_owned_by_new_owner` | `kind=0`, `new_owner_slot=1` — the new owner connects only after the join |
+| `hook_close_stale_callback_ignored` | `extra_event=0 state=2` — a stale callback does not disturb the new request |
+| `hook_close_new_owner_finishes` | `kind=2` — the new request completes normally |
+
+### 6.6 Failing runs and what each one fixed
 
 Every failure is preserved in its own run; nothing was deleted, widened or turned
 into an expected rejection.
@@ -239,21 +274,33 @@ into an expected rejection.
 | [40132122033](https://github.com/NoGod3524/EXReader/actions/runs/40132122033) (`ca330266`) | the wedge survived CANCEL+STOP | pause/resume moved to their own phase (`27e5ca03`) |
 | [40132713831](https://github.com/NoGod3524/EXReader/actions/runs/40132713831) (`27e5ca03`) | three of four jobs green; 22.04 ASan hung in a voice query after a cancel and reported a libspeechd `getline` leak | voice queries before any cancel, `leak:__getdelim` with that evidence (`4262dfcd`) |
 | [40135611342](https://github.com/NoGod3524/EXReader/actions/runs/40135611342) (`4262dfcd`) | all four platform jobs passed, but the aggregation looked for `results.json` at the archive root | evidence directory located inside the artifact, manifest scoped, both layouts in the rejection tests (`2f4304c0`) |
-| [40138462305](https://github.com/NoGod3524/EXReader/actions/runs/40138462305) (`2f4304c0`) | — | accepted: 4 jobs × 138 cases, 0 fail, 0 skip |
+| [40138462305](https://github.com/NoGod3524/EXReader/actions/runs/40138462305) (`2f4304c0`) | first full acceptance (138 cases, four jobs) — superseded by the root review below | kept as §6.8 |
+| root review at `4adac9c4` | `request_close` could close synchronously on the owner thread when thread creation failed; `drop_conn` released the connection slot before joining the old event thread | this rework (`0ee0bd0d`), 17 new cases in §6.5 |
 
-### 6.6 Platform defect on speech-dispatcher 0.11.1 (recorded, not worked around)
+### 6.7 Platform defect on speech-dispatcher 0.11.1 (recorded, not worked around)
 
 On Ubuntu 22.04 (speech-dispatcher 0.11.1) a cancelled message can leave the
 espeak-ng module wedged: the daemon keeps accepting SPEAK (the client gets no
-event at all afterwards) and never answers LIST SYNTHESIS VOICES. A fresh daemon
-clears it. The package handles this the only honest way - the pause/resume
-scenario runs on its own daemon, the driver restarts the daemon between phases,
-and voice queries run before any cancel - and the behaviour is registered here as a
-platform defect rather than hidden behind a changed expectation. The library's own
-behaviour (stop, refusal classification, cancellation bookkeeping) is verified on
-both versions.
+event afterwards) and never answers LIST SYNTHESIS VOICES. A fresh daemon clears
+it. The package handles this the only honest way - the pause/resume scenario runs
+on its own daemon, the driver restarts the daemon between phases, and voice
+queries run before any cancel - and the behaviour is registered here as a platform
+defect rather than hidden behind a changed expectation.
 
-### 6.7 What is still not covered
+### 6.8 Previous acceptance (kept unchanged)
+
+Run [40138462305](https://github.com/NoGod3524/EXReader/actions/runs/40138462305)
+attempt 1 at `2f4304c0a037e8f20b064bbfa248ea2e9371d436`: four platform jobs each
+155-minus-17 = 138 named cases (the case set before this rework), 552 executions,
+0 fail, 0 skip, aggregation accepted. Jobs `121004930945`, `121004951274`,
+`121004951352`, `121004951325`, `121004951356`, `121010696804`; artifacts
+`12577903441` (51120 B, `5df3e0a9…82c38`), `12579025224` (137394 B,
+`b715770a…7de555`), `12577197975` (50821 B, `1fde0746…31ea71`), `12577038289`
+(125856 B, `99669f69…eed8d5`), `12579130182` (344822 B, `b8e31aae…5211388`), all
+valid until 2027-01-22T22:25:03Z. Those two close-boundary defects existed in that
+source; the run itself is preserved as history, not as a claim about this code.
+
+### 6.9 What is still not covered
 
 * Audible output, voice quality and listening tests: the runner has a null audio
   sink; only the daemon's begin/end/cancel handling is observed.
@@ -261,5 +308,6 @@ both versions.
   timeout exists (documented), so such a call can block inside libspeechd.
 * Distributions other than Ubuntu 22.04/24.04, and non-x86_64 hosts.
 * GTK host wiring and the default reading configuration (root's work).
-* Two handles using the daemon at the same time (one connection per process, by
-  design).
+* Two handles *using* the daemon at the same time: the second handle is now
+  guaranteed to wait for the old connection's join, and the interleaving is tested,
+  but concurrent use is still refused by design.
