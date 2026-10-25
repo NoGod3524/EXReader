@@ -28,6 +28,7 @@ jobs:
       - name: Authenticate original ZIP programs and installed packages
         run: |
           python -m compileall -q tests/reader_dot_wave2/d12
+          python tests/reader_dot_wave2/d12/prior.py
           python tests/reader_dot_wave2/d12/prepare.py
           python -m pip install uiautomation==2.0.29
       - name: Build unchanged public SDK consumer with explicit harness identity
@@ -50,4 +51,25 @@ jobs:
             build/d12/consumer/windows-peer-owner.exe
             build/d12/consumer/windows-peer-owner.map
             build/d12/evidence/
+          if-no-files-found: error
+  authenticate:
+    needs: windows
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 9321de84eb9c8d3d57cafbeaa8b0a28fe2a26a08
+          path: target
+      - name: Authenticate own original ZIP and all actual scope values
+        run: python tests/reader_dot_wave2/d12/authenticate.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d12-auth-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/d12-auth/
           if-no-files-found: error

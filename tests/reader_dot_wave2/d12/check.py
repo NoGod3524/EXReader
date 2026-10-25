@@ -27,6 +27,13 @@ def labels(d):
   n=send(box,0x18A,i);buf=C.create_unicode_buffer(n+1);send(box,0x189,i,C.addressof(buf));rows.append(buf.value)
  return rows
 class App(account.Device):
+ def __init__(self,*args,**kwargs):
+  super().__init__(*args,**kwargs)
+  # Initial native shelf refresh can overlap account load; observe the published
+  # even shelf serial before opening the account, never retry a dispatched action.
+  U.GetPropW.argtypes=[W.HWND,W.LPCWSTR];U.GetPropW.restype=W.HANDLE
+  self.wait(lambda:(U.GetPropW(self.control("books"),"EXReaderShelfSnapshot") or 0)>=2 and (U.GetPropW(self.control("books"),"EXReaderShelfSnapshot") or 0)%2==0 and U.IsWindowEnabled(self.control("import")),timeout=90)
+  self.wait_idle()
  def record_dialog(self):
   def find():
    found=[]
