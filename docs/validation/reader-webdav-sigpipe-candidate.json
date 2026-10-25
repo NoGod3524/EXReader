@@ -1,0 +1,119 @@
+{
+  "accepted": true,
+  "scope": "installed WebDAV transport reset-peer signal boundary and unchanged original native suites",
+  "base_source": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+  "tested_source": "8cc57c078f50c7e81bd2a75620a4acf9b23bb456",
+  "branch": "codex/reader-webdav-sigpipe-candidate",
+  "run_id": 40220541331,
+  "attempt": 1,
+  "conclusion": "success",
+  "module_version": "0.2.0",
+  "complete_product": false,
+  "host_accepted": false,
+  "physical_device_execution": false,
+  "android_executed": false,
+  "ios_executed": false,
+  "metadata_source": "GitHub API artifact metadata and same-run Actions job logs",
+  "profiles": [
+    {
+      "profile": "linux-curl",
+      "job_id": 121250959510,
+      "conclusion": "success",
+      "original_tls_checks": 77,
+      "original_compat_checks": 12,
+      "reset_signal_cases": 15,
+      "consumer_sha256": "5ef872dca50700dd4a3a9a2f6acaadcc8bd41d374ff6ab5a503493312fe55d09",
+      "artifact": {
+        "id": 12609023668,
+        "name": "webdav-sigpipe-linux-curl-40220541331-1",
+        "bytes": 190811,
+        "digest": "sha256:7fa334ef502f6c3e982a046b053943b3073a746824e26883ed7e20389bff9a97",
+        "expires_at": "2027-01-23T18:17:32Z"
+      },
+      "original_module_negative_control": {
+        "source": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+        "separately_built_original_module": true,
+        "actual_sigpipe_process_exits": 8,
+        "attempts": 8
+      }
+    },
+    {
+      "profile": "windows-winhttp",
+      "job_id": 121250959790,
+      "conclusion": "success",
+      "original_tls_checks": 76,
+      "original_compat_checks": 12,
+      "reset_signal_cases": 6,
+      "consumer_sha256": "a9f4de71f93ad2bd7338a43eca7fa6c2426ba9dcd352b576c84bf03c8a8b459a",
+      "artifact": {
+        "id": 12608943895,
+        "name": "webdav-sigpipe-windows-winhttp-40220541331-1",
+        "bytes": 425880,
+        "digest": "sha256:627b322714580965c407766525b9cf03ced99d5b24693d4be61bd5a5c7464089",
+        "expires_at": "2027-01-23T18:17:32Z"
+      },
+      "backend_source_unchanged": true,
+      "posix_signal_checks": false
+    },
+    {
+      "profile": "macos-curl",
+      "job_id": 121250959620,
+      "conclusion": "success",
+      "original_tls_checks": 77,
+      "original_compat_checks": 12,
+      "reset_signal_cases": 15,
+      "consumer_sha256": "63a02ab3ab64680d921d9876987003e88c6170c0cf49c3ff11fb37d903ff4f5a",
+      "artifact": {
+        "id": 12609192389,
+        "name": "webdav-sigpipe-macos-curl-40220541331-1",
+        "bytes": 173890,
+        "digest": "sha256:db89410a9620f203754ea03f5ee9917797a991380548e70e6161588bb7778b17",
+        "expires_at": "2027-01-23T18:17:32Z"
+      }
+    },
+    {
+      "profile": "macos-urlsession",
+      "job_id": 121250959707,
+      "conclusion": "success",
+      "original_tls_checks": 77,
+      "original_compat_checks": 12,
+      "reset_signal_cases": 12,
+      "consumer_sha256": "690ac3d9c851c0f5f22e46a8eeb60eb009be8095dc0a3f028d633e46262af0e2",
+      "artifact": {
+        "id": 12608438576,
+        "name": "webdav-sigpipe-macos-urlsession-40220541331-1",
+        "bytes": 194015,
+        "digest": "sha256:a21ae3494d9941e252c1b82422cc1adbc4c9a29049603e2ab369ea233ec0feb0",
+        "expires_at": "2027-01-23T18:17:32Z"
+      },
+      "backend_source_unchanged": true,
+      "other_thread_curl_guard_check": false
+    }
+  ],
+  "earlier_failed_runs": [
+    {
+      "run_id": 40220267962,
+      "attempt": 1,
+      "source": "3e80195c8013970a21156f5df181ae6209bee70a",
+      "conclusion": "failure",
+      "failures": [
+        "Linux new consumer relied on body progress to trigger another thread; reset may arrive before body progress",
+        "Windows new consumer getenv warning was fatal without its CRT-warning define"
+      ],
+      "production_signal_guard_changed_after_this_run": false,
+      "partial_success_not_spliced": true
+    }
+  ],
+  "original_c03_failure": {
+    "run_id": 40219386136,
+    "source": "1c7e0a5c7e8b1d3e6229eb446945b62f43f0bfb9",
+    "returncode": -13,
+    "accepted_as_success": false,
+    "c03_original_test_source_unchanged_by_candidate": true
+  },
+  "pending": [
+    "root C03 combination rerun with its original reset, stall and cancellation assertions",
+    "Android and iOS transport execution is outside this candidate",
+    "root final-product and same-source host/interoperability acceptance"
+  ]
+}
