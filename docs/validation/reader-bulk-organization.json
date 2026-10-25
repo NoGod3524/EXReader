@@ -1,0 +1,47 @@
+{
+  "root_review": {
+    "accepted": true,
+    "state": "three_desktop_21_checks_and_strict_summary_passed_awaiting_host_integration",
+    "source": "fd2c88e3c5f0f0c7a7bd8698e7efb3825079bd41",
+    "run": 40159996464,
+    "attempt": 1,
+    "checks_per_platform": 21,
+    "protocol_rejections": 9,
+    "jobs": {"Linux": 121069354554, "Windows": 121069354700, "macOS": 121069354737, "evidence": 121069632086},
+    "expires_at": "2027-01-23T03:55:34Z",
+    "artifacts": [
+      {"platform": "Windows", "id": 12586485984, "bytes": 5302606, "sha256": "b60a5b357b59b7ae4a209bc02a56c4e106ec76ecc20c527e614ee8470f698158"},
+      {"platform": "Linux", "id": 12586470989, "bytes": 4433123, "sha256": "5d16d7543a923b07c1b88ce5d5e77c33678ec64f21f034bfa27849e65063c702"},
+      {"platform": "macOS", "id": 12586190675, "bytes": 4236995, "sha256": "4955ab67c9aa2b5ff252a108e5912c808adacbf4fb82fc9baf176966d9700d88"},
+      {"platform": "strict", "id": 12585911723, "bytes": 785, "sha256": "3476119e947cf6eaf04f8c7fc6c09bac6da2e8c8d664520c649c17153650c76b"}
+    ],
+    "prior_repair_source": "93594d8c24b110469d2f3f47ff3e4a78314f8138",
+    "prior_repair_run": 40159702796,
+    "preserved_probe_failure": {"source": "742d1a437a16f854fcc8713c85eea4942e95ded9", "run": 40159870482, "reason": "new bulk-error consistency assertion was incorrectly applied to the fixture seed JSON, which has no bulk error object"},
+    "prior_repair_result": "three_desktop_21_checks_and_strict_summary_success"
+  },
+  "package": "EXReaderBulkOrganization",
+  "version": "0.1.0",
+  "fixed_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk_freeze": "9854061be331fe603a1822d9b2b36ee357154927",
+  "status": "cloud-verified-native-module",
+  "tested_source": "e51f31624e4331329e0abe6faf4d3f5b3e79ff45",
+  "run": {"id": 40139763379, "attempt": 1, "workflow": "reader-bulk-organization.yml",
+          "jobs": {"ubuntu-22.04": "success", "windows-2022": "success", "macos-15": "success", "same-run artifact evidence": "success"}},
+  "checks_per_platform": 20,
+  "limits": {"batch_max": 100, "heads_max": 32, "journal_max_bytes": 524288},
+  "claims": {"atomic_batch": false, "threads_created": false, "schema_or_wire_changed": false, "host_ui_wired": false},
+  "artifacts": [
+    {"name": "reader-bulk-organization-Linux-40139763379-1", "id": 12577064691, "bytes": 4400017, "sha256": "9915a294a9c2923ceaa05b9df02cc6e49e8d7adce10a44232a22cfda51078320", "expires_at": "2027-01-22T22:43:21Z"},
+    {"name": "reader-bulk-organization-Windows-40139763379-1", "id": 12577229619, "bytes": 5289101, "sha256": "28cf137e242cb0b3712abbc0e703588c2ac8a5768f9a5ac2ce4900fd9dc4494b", "expires_at": "2027-01-22T22:43:21Z"},
+    {"name": "reader-bulk-organization-macOS-40139763379-1", "id": 12578496171, "bytes": 4228833, "sha256": "391e5f783a39b15b6e9354f1a990a0d35bd84ba758df967dcda6040bee84bc49", "expires_at": "2027-01-22T22:43:21Z"},
+    {"name": "reader-bulk-organization-evidence-40139763379-1", "id": 12578760852, "bytes": 768, "sha256": "0b9410a0155b428defb120df9a24fcb951460b5bf10e245e2a977ad310e3ce4e", "expires_at": "2027-01-22T22:43:21Z"}
+  ],
+  "earlier_failures_retained": [
+    {"run": 40138360813, "cause": "MSVC min macro in bulk.cpp; fork injection refused by local command path (UNSAFE)"},
+    {"run": 40138674699, "cause": "same fork refusal, reason surfaced by diagnostic"},
+    {"run": 40139094578, "cause": "received revision needs transport SHA-256"},
+    {"run": 40139434828, "cause": "platform jobs passed; artifact verifier expected 19 checks, report has 20"}
+  ],
+  "scope_not_covered": ["host UI wiring", "real account or user documents", "simulator/desktop/device runs", "audio/speech", "product performance", "TSan or other sanitizers"]
+}

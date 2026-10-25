@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: MIT
+cmake_minimum_required(VERSION 3.24)
+project(ReaderBulkInstalledConsumer LANGUAGES C CXX)
+set(CMAKE_CXX_STANDARD 17)
+if(MSVC)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  add_compile_options(/utf-8)
+endif()
+# Everything comes from installed packages; no source of the module is reachable.
+find_package(EXReaderBulkOrganization 0.1.0 EXACT CONFIG REQUIRED)
+add_executable(bulk-probe bulk_probe.cpp)
+target_link_libraries(bulk-probe PRIVATE EXReaderBulkOrganization::reader_bulk
+  EXReaderProductCatalog::reader_catalog EXReaderProductCatalog::reader_catalog_sqlite)
+if(MSVC)
+  target_link_options(bulk-probe PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/bulk-link.map")
+  target_link_libraries(bulk-probe PRIVATE shell32)
+elseif(APPLE)
+  target_link_options(bulk-probe PRIVATE "-Wl,-map,${CMAKE_CURRENT_BINARY_DIR}/bulk-link.map")
+else()
+  target_link_options(bulk-probe PRIVATE "-Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/bulk-link.map")
+endif()
+# A plain C translation unit proves the header is a C ABI.
+add_executable(bulk-c-consumer api.c)
+set_target_properties(bulk-c-consumer PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(bulk-c-consumer PRIVATE EXReaderBulkOrganization::reader_bulk EXReaderProductCatalog::reader_catalog)
