@@ -66,6 +66,9 @@ def main():
         else:
             command(['osascript', '-e', 'tell application "System Events" to tell appearance preferences to set dark mode to ' + ('true' if style == 'dark' else 'false')])
 
+    if udid:
+        command(['open', '-a', 'Simulator', '--args', '-CurrentDeviceUDID', udid])
+        command(['xcrun', 'simctl', 'bootstatus', udid, '-b'], timeout=180)
     appearance('light')
     arguments = ['xcodebuild', 'test', '-project', args.project.absolute(), '-scheme', scheme,
                  '-destination', destination, '-derivedDataPath', 'build/ThemeDerivedData', '-resultBundlePath', out / 'theme.xcresult',

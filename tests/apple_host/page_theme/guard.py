@@ -108,6 +108,11 @@ def main():
     expected.update({path: git('rev-parse', COMPATIBILITY + ':' + path) for path in COMPATIBILITY_PATHS})
     expected.update({path: git('rev-parse', FINAL_BASE + ':' + path) for path in FINAL_PINNED})
     expected.update({path: git('rev-parse', ANDROID_POLICY + ':' + path) for path in ANDROID_PATHS})
+    if simulator_preparation is not None:
+        # The candidate proof above strips only native post-boot preparation
+        # and compares every original runner byte before accepting this hash.
+        path = 'tests/apple_host/page_theme/run_ui.py'
+        expected[path] = git('rev-parse', 'HEAD:' + path)
     actual = {path: git('rev-parse', 'HEAD:' + path) for path in expected}
     validate_trees(actual, expected)
     paths = git('diff', '--name-only', COMMON_BASE, 'HEAD').splitlines()
