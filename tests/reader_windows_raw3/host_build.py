@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import time
 
 ROOT=Path(__file__).resolve().parents[2]
 OUT=ROOT/'build/windows-raw3-host'
@@ -28,6 +29,54 @@ def run(argv,name,timeout=1800):
 def configure(source,build,options,name):
     run(['cmake','-S',source,'-B',build,'-G','Ninja','-DCMAKE_BUILD_TYPE=Release',*options],name+'-configure')
     run(['cmake','--build',build,'--parallel','4','--verbose'],name+'-build')
+
+
+def owner_run(exe,mode,work,pdf,*extra):
+    run([exe,mode,work,pdf,*extra],'owner-'+work.name+'-'+mode,300)
+    report=json.loads((work/('report-'+mode+'.json')).read_text(encoding='utf-8'))
+    if (report.get('ok') is not True or report.get('source_sha')!=os.environ['GITHUB_SHA']
+            or report.get('program_sha256')!=hashlib.sha256(exe.read_bytes()).hexdigest()
+            or not report.get('checks') or any(c.get('pass') is not True for c in report['checks'])):
+        raise RuntimeError('Owner evidence rejected: '+str(work)+' '+mode)
+    return report
+
+
+def killed_owner(exe,legacy_exe,work,pdf,phase,legacy=False):
+    work.mkdir()
+    marker=work/'phase.json'
+    args=[exe,'legacy-child' if legacy else 'child',work,pdf]
+    if not legacy:args.append(str(phase))
+    args.append(marker)
+    with (OUT/'logs'/('owner-'+work.name+'-child.log')).open('w',encoding='utf-8') as log:
+        child=subprocess.Popen([str(v) for v in args],cwd=ROOT,stdout=log,stderr=subprocess.STDOUT)
+        try:
+            deadline=time.monotonic()+180
+            evidence=None
+            while time.monotonic()<deadline:
+                if child.poll() is not None:raise RuntimeError('Owner exited before kill marker')
+                try:evidence=json.loads(marker.read_text(encoding='utf-8'))
+                except (FileNotFoundError,json.JSONDecodeError):pass
+                if evidence is not None:break
+                time.sleep(0.1)
+            if (not evidence or evidence.get('pid')!=child.pid or evidence.get('phase')!=phase
+                    or evidence.get('pending_bytes',0)<=0
+                    or len(evidence.get('pending_sha256',''))!=64
+                    or evidence.get('private_magic')!=('EXRRD001' if legacy else 'EXRRD002')):
+                raise RuntimeError('Missing or invalid flushed owner kill marker')
+            child.kill()  # Windows TerminateProcess, outside the real owner.
+            child.wait(timeout=30)
+        finally:
+            if child.poll() is None:
+                child.kill()
+                child.wait(timeout=30)
+    (work/'external-kill.json').write_text(json.dumps(dict(marker=evidence,exit_code=child.returncode,
+        terminated_by_driver=True),indent=2)+'\n',encoding='utf-8')
+    if legacy:
+        owner_run(legacy_exe,'reject-legacy-private',work,pdf)
+        owner_run(legacy_exe,'legacy-retry',work,pdf)
+    else:
+        owner_run(legacy_exe,'reject-private',work,pdf)
+        owner_run(exe,'verify-child',work,pdf,str(phase))
 
 
 def main():
@@ -64,6 +113,15 @@ def main():
                  '-DEXR_READER_WINDOWS_PREFERENCES=ON','-DEXR_READER_WINDOWS_COMPACT=ON',
                  '-DEXR_READER_PREFS_COMMIT_REVIEW_BUILD=ON']
         configure(ROOT/'apps/reader/windows-account',host,options,name+'-actual-host')
+        owner=OUT/(name+'-owner-probe')
+        configure(ROOT/'tests/reader_windows_raw3/owner-probe',owner,
+                  ['-DCMAKE_PREFIX_PATH='+prefix,'-DEXR_SDK='+str(sdk),
+                   '-DPROBE_RAW='+('ON' if raw else 'OFF')],name+'-owner-probe')
+        owner_run(owner/'windows-owner-probe.exe','suite',OUT/(name+'-owner-suite'),
+                  ROOT/'tests/fixtures/pdf-public-text.pdf')
+        if raw:
+            owner_run(owner/'windows-owner-probe.exe','fresh',OUT/(name+'-owner-suite'),
+                      ROOT/'tests/fixtures/pdf-public-text.pdf')
         bulk=OUT/(name+'-bulk-consumer')
         configure(ROOT/'tests/reader_windows_raw3/bulk-consumer',bulk,
                   ['-DCMAKE_PREFIX_PATH='+prefix,'-DPROBE_RAW='+('ON' if raw else 'OFF')],name+'-bulk-consumer')
@@ -76,8 +134,15 @@ def main():
                   for target in ('EXReaderProduct','EXReaderShelfReview')}
         profiles.append(dict(profile=name,programs=binaries,bulk_original_checks=len(original['checks']),
                              bulk_original_report=str((OUT/(name+'-bulk-evidence')/'report.json').relative_to(OUT))))
+    raw_exe=OUT/'raw-owner-probe/windows-owner-probe.exe'
+    old_exe=OUT/'legacy-owner-probe/windows-owner-probe.exe'
+    pdf=ROOT/'tests/fixtures/pdf-public-text.pdf'
+    for phase in (2,3):
+        killed_owner(raw_exe,old_exe,OUT/('owner-kill-'+str(phase)),pdf,phase)
+    killed_owner(old_exe,raw_exe,OUT/'owner-legacy-kill',pdf,2,legacy=True)
     result=dict(source_sha=os.environ['GITHUB_SHA'],run_id=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],
                 installed_host_build_passed=True,original_bulk_profiles_passed=True,profiles=profiles,
+                actual_owner_profiles_passed=True,actual_owner_process_kill_recovery_passed=True,
                 host_raw3_accepted=False,scope='actual installed host build/link and original bulk regressions; no actual host UI/raw record grant')
     (OUT/'report.json').write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps(result),flush=True)
