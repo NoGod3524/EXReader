@@ -94,6 +94,19 @@ reader_revision_status reader_revision_retry(reader_revisions *,const char *revi
    retained SHA, removes only the outbox row, and never deletes history. */
 reader_revision_status reader_revision_ack(reader_revisions *,const char *revision_id,
   const char *expected_sha256,reader_revision_error *);
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+/* Explicit raw-capability store. Legacy APIs refuse raw stores; close and free are shared. */
+reader_revision_status reader_revisions_open_raw_v3(const char *path,reader_revisions **out,reader_revision_error *error);
+reader_revision_status reader_revision_validate_raw_v3(reader_revisions *store,const void *bytes,size_t count,const char *expected,reader_revision_info *out,reader_revision_error *error);
+reader_revision_status reader_revision_local_raw_v3(reader_revisions *store,const void *bytes,size_t count,reader_revision_info *out,int *created,reader_revision_error *error);
+reader_revision_status reader_revision_receive_raw_v3(reader_revisions *store,const void *bytes,size_t count,const char *expected,reader_revision_info *out,int *created,reader_revision_error *error);
+reader_revision_status reader_revision_get_raw_v3(reader_revisions *store,const char *id,char **wire,size_t *bytes,reader_revision_info *out,reader_revision_error *error);
+reader_revision_status reader_revision_heads_raw_v3(reader_revisions *store,const char *entity_kind,const char *entity_key,reader_revision_head_fn visit,void *context,reader_revision_state *out,reader_revision_error *error);
+reader_revision_status reader_revision_book_identity_raw_v3(reader_revisions *store,const char *key,uint64_t *bytes,reader_revision_error *error);
+reader_revision_status reader_revision_outbox_raw_v3(reader_revisions *store,size_t limit,reader_revision_outbox_fn visit,void *context,reader_revision_error *error);
+reader_revision_status reader_revision_retry_raw_v3(reader_revisions *store,const char *id,reader_revision_status reason,reader_revision_error *error);
+reader_revision_status reader_revision_ack_raw_v3(reader_revisions *store,const char *id,const char *expected,reader_revision_error *error);
+#endif
 #ifdef __cplusplus
 }
 #endif

@@ -13,7 +13,7 @@ else()
   find_package(EXReaderAnnotationView 0.1.0 EXACT CONFIG REQUIRED)
   find_package(EXReaderReadingCommands 0.1.0 EXACT CONFIG REQUIRED)
 endif()
-add_executable(selector-bytes probe.cpp api.c)
+add_executable(selector-bytes probe.cpp api.c base_api.c)
 target_link_libraries(selector-bytes PRIVATE EXReaderAnnotationView::reader_annotation_view
   EXReaderReadingCommands::reader_reading_commands EXReaderReadingState::reader_reading_state
   EXReaderProductCatalog::reader_catalog_sqlite)
