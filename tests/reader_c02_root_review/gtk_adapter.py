@@ -71,6 +71,7 @@ class TraceWatch(OriginalWatch):
           independent_failure=self.file_events.failure,
           scope='diagnostic side channel only; no event or snapshot feeds original wait/predicate; latest snapshots can miss overwritten states')
         B.K.write_json(self.folder/'diagnostic-timeline.json',value)
+        WATCHES.pop(str(self.folder.resolve()),None)
 
 
 def watch_for(host):return WATCHES.get(str(host.folder.resolve()))

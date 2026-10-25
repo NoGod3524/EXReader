@@ -1,6 +1,6 @@
 {
   "accepted": false,
-  "status": "two full failures retained; natural startup input contract validated; original resume/import measurements incomplete",
+  "status": "two full failures sealed; final diagnostic full round authorized after source review; original measurements remain incomplete",
   "latest_run": {
     "source": "bac5606fa8a6efa395a88c148b28ff25d52185ec",
     "run_id": 40238597205, "attempt": 1, "conclusion": "failure",
