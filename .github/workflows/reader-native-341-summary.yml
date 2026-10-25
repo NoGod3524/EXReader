@@ -1,7 +1,7 @@
 name: Collect complete fixed-source native foundation leaves
 on:
   push:
-    branches: [codex/reader-hosts-341-final, codex/reader-native-341-protocol, codex/reader-native-341-windows-contract, codex/reader-native-341-source-preflight]
+    branches: [codex/reader-hosts-341-final, codex/reader-native-341-protocol, codex/reader-native-341-windows-contract, codex/reader-native-341-source-preflight, codex/reader-native-341-verifier-fix]
   workflow_dispatch:
     inputs:
       mode:

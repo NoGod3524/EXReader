@@ -12,6 +12,10 @@ def run_tests():
         except (ValueError,KeyError,TypeError):rejected.append(label);return
         raise AssertionError('accepted protocol negative: '+label)
     source='a'*40;ref=dict(run_id=123,attempt=2)
+    a.validate_verifier_delta([]);a.validate_verifier_delta(sorted(a.VERIFIER_ONLY_PATHS))
+    for path in ('examples/reader.c','apps/reader/revisions/src/revisions.cpp','src/raster.c',
+                 'tests/reader_windows_341/verify.py','.github/workflows/reader-apple-search.yml','tests/reader_hosts_341/source_paths.py'):
+        refuse('verifier-changes-original-'+path,lambda path=path:a.validate_verifier_delta([path]))
     manifest=dict(source_sha=source,runs={key:None for key in a.REQUIRED})
     a.validate_input(manifest,source)
     wrong=copy.deepcopy(manifest);wrong['runs'].pop('windows_atomic13');refuse('missing-required-windows',lambda:a.validate_input(wrong,source))
@@ -115,6 +119,25 @@ def run_tests():
     wrong=copy.deepcopy(theme_artifacts)
     next(row for row in wrong if '-fast-import-' in row['name'])['name']=fast['name'].replace('-123-2','-123-1')
     refuse('old-attempt-fast-import-artifact',lambda:verify_theme(ar=wrong))
+    search_contract=a.SPECS['apple_search']
+    search_jobs=copy.deepcopy(theme_jobs[:6]+theme_jobs[-1:])
+    search_jobs[-1]['name']=search_contract['summary_job']
+    for job in search_jobs[:2]:job['steps'][0]['name']=search_contract['guard'][0]
+    search_artifacts=[]
+    for i,name in enumerate(sorted(a.expected_names('apple_search',search_contract,123,2))):
+        row=copy.deepcopy(artifacts[0]);row.update(id=200+i,name=name,
+            created_at='2026-01-01T00:03:30Z' if name==search_contract['summary_name'].format(run=123,attempt=2) else '2026-01-01T00:01:30Z')
+        search_artifacts.append(row)
+    def verify_search(j):return a.validate_metadata('apple_search',search_contract,ref,dict(run,path=search_contract['workflow']),j,search_artifacts,source)
+    verify_search(search_jobs)
+    wrong=copy.deepcopy(search_jobs)
+    for job in wrong[:2]:job['steps'][0]['name']='Authenticate exact common-source host merge'
+    refuse('old-skipped-Apple-guard-name',lambda:verify_search(wrong))
+    for key in a.APPLE:
+        if key=='page_theme':continue
+        contract=a.SPECS['apple_'+key]
+        workflow=(a.ROOT/contract['workflow']).read_text(encoding='utf-8')
+        a.require('name: '+contract['guard'][0] in workflow,'Apple common guard name differs from actual unchanged caller')
     refuse('unreviewed-windows-schema',lambda:a.basic_summary('windows_full_f3',android,source,ref))
     file_names=('production','packaged_production','f3_production','shelf_review','atomic_review','old_veto_control','baseline',
                 'production_map','atomic_map','control_map','baseline_map','host_cache','baseline_cache','sdk_header','sdk_config',
@@ -168,7 +191,7 @@ def run_tests():
     wrong=copy.deepcopy(result);wrong['leaves'].pop('windows_full_f3');refuse('drop-required-slot-to-green',lambda:a.finish(wrong))
     wrong=copy.deepcopy(result);wrong['product_conditions'].pop('apple_to_android');refuse('drop-required-peer-condition',lambda:a.finish(wrong))
     a.require(a.SPECS['apple_mapping']['summary_name'] is None and len(a.expected_names('apple_mapping',a.SPECS['apple_mapping'],123,2))==6,'mapping summary invented')
-    a.require(len(rejected)==82,'a protocol refusal control was omitted')
+    a.require(len(rejected)==89,'a protocol refusal control was omitted')
     print('native upper collector protocol negatives: '+str(len(rejected))+' actual rejections; synthetic fixtures only',flush=True)
 
 

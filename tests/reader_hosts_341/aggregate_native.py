@@ -24,6 +24,9 @@ PRODUCT_REQUIRED=('apple_record_compatibility','android_to_apple','apple_to_andr
 # Product peer contracts still require separate actual common-source evidence.
 WINDOWS_CONTRACTS={}
 PRODUCT_CONTRACTS={name:None for name in PRODUCT_REQUIRED}
+VERIFIER_ONLY_PATHS={
+ 'tests/reader_hosts_341/aggregate_native.py','tests/reader_hosts_341/test_aggregate_native.py',
+ '.github/workflows/reader-native-341-summary.yml','docs/READER-NATIVE-341-COLLECTOR.md'}
 SCOPES={
  'composition':'fixed-source 26 optional packages plus SDK: 27 installed package configs',
  'gtk41':'Linux GTK 3.41 full retained suites and explicit actual owner record pair',
@@ -70,7 +73,7 @@ for key in APPLE:
     name=None if key=='mapping' else ('wp13-apple-validation' if key=='wp13' else
          stem+('-validation' if key=='shelf' else '-summary')+'-{run}-{attempt}')
     report='wp13-apple-summary.json' if key=='wp13' else 'shelf-summary.json' if key=='shelf' else 'summary.json'
-    SPECS['apple_'+key]=spec(workflow,count,summary,name,report,(),guard=('Authenticate exact common-source host merge',3 if key=='wp13' else 2))
+    SPECS['apple_'+key]=spec(workflow,count,summary,name,report,(),guard=('Authenticate isolated SDK3.41 Apple page-theme candidate',3 if key=='wp13' else 2))
 
 
 def positive(value):return type(value) is int and value>0
@@ -377,14 +380,25 @@ def collect(manifest,source):
     return finish(result)
 
 
+def validate_verifier_delta(paths):
+    require(set(paths)<=VERIFIER_ONLY_PATHS,'verifier changed a producer, original judge, SDK, schema or production path')
+
+
 def source_guard(source):
-    require(source==os.environ['GITHUB_SHA'],'collector checkout must be the exact fixed leaf source')
+    verifier=os.environ['GITHUB_SHA']
+    actual=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+    require(actual==verifier,'actual verifier checkout differs from declared verifier source')
+    subprocess.run(['git','merge-base','--is-ancestor',source,verifier],check=True)
+    changed=subprocess.check_output(['git','diff','--name-only',source,verifier],text=True).splitlines()
+    validate_verifier_delta(changed)
     subprocess.run(['git','merge-base','--is-ancestor',BASE,source],check=True)
     subprocess.run(['git','diff','--exit-code',BASE,source,'--','apps','examples','extras','tools'],check=True)
     subprocess.run(['git','diff','--exit-code',SDK,source,'--','src','include','cmake','CMakeLists.txt','bindings','tests/fixtures','licenses'],check=True)
     subprocess.run(['git','diff','--exit-code',SCHEMA_OWNER,source,'--','apps/reader/store/001_catalog.sql'],check=True)
     header=subprocess.check_output(['git','show',source+':apps/reader/revisions/include/reader_revisions.h'],text=True)
     require('#define READER_REVISION_ANCHOR_MAX_VERSION 2u' in header,'this collector has not adopted raw selector v3')
+    return dict(producer_source=source,verifier_source=verifier,verifier_only_changed_paths=changed,
+                original_producers_and_judges_unchanged=True)
 
 
 def main():
@@ -396,8 +410,9 @@ def main():
     require(args.source and re.fullmatch('[0-9a-f]{40}',args.source),'supply one full source SHA')
     folder=ROOT/'build/native-341-summary';folder.mkdir(parents=True,exist_ok=True)
     try:
-        source_guard(args.source)
+        boundary=source_guard(args.source)
         result=collect(json.loads(os.environ['NATIVE_RUN_TABLE']),args.source)
+        result['verifier_boundary']=boundary
     except Exception as error:
         result=collect(dict(source_sha=args.source,runs={key:None for key in REQUIRED}),args.source)
         result['problems'].append('source/input preflight: '+type(error).__name__+': '+str(error).split('?')[0][:500]);finish(result)
