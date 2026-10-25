@@ -954,6 +954,7 @@ struct host_job {
 #ifdef EXR_READER_WINDOWS_PREFERENCES
   reader_preferences prefs;
   int prefs_valid,prefs_persist,system_theme;
+  volatile LONG prefs_committed;
 #endif
 };
 
@@ -2217,6 +2218,9 @@ static unsigned __stdcall job_thread(void *context) {
   }
 #endif
   if (job->status == EXR_OK && job_cancel_flag(job) && job->kind != JOB_NOTE_ADD && job->kind != JOB_NOTE_UPDATE
+#if defined(EXR_READER_WINDOWS_PREFERENCES) && !defined(EXR_PREFS_OLD_CANCEL_VETO_CONTROL)
+      && !InterlockedCompareExchange(&job->prefs_committed, 0, 0)
+#endif
 #ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
       && !winio_kind(job->kind)
 #endif
