@@ -1,0 +1,2825 @@
+{
+  "package": "D03",
+  "branch": "codex/reader-final-d03",
+  "tested_harness_sha": "81a67f582ddfe8906b64e6eef4e7969127415ba8",
+  "target_sha": "9fc407a5cce5a0bfe644a60bd8dc29f84dea6d0e",
+  "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "sdk_version": "3.41.0",
+  "sdk_abi": 1,
+  "core_version": "3.40.0",
+  "run_id": 40218375669,
+  "attempt": 1,
+  "jobs": [
+    {
+      "id": 121244359634,
+      "name": "GTK native scale audit",
+      "conclusion": "success"
+    },
+    {
+      "id": 121247583314,
+      "name": "Authenticate ZIP and same-source coverage",
+      "conclusion": "failure",
+      "reason": "Final audit-completeness refusal, after successful authentication and negative checks"
+    }
+  ],
+  "primary_artifact": {
+    "id": 12609036554,
+    "name": "reader-final-d03-40218375669-1",
+    "size_in_bytes": 35146853,
+    "expires_at": "2026-11-08T18:03:36Z",
+    "sha256": "a60100c94b4033f236536efb2274cfd4fd38727e51e9fc63e31bd970187d4496",
+    "raw_bytes_rehashed_inside_actions": true
+  },
+  "verification_artifact": {
+    "id": 12609126714,
+    "name": "reader-final-d03-verification-40218375669-1",
+    "size_in_bytes": 74463,
+    "sha256": "454cc592f81888a441acd4c08682e94f4680138164fa59fc2be4ace1b887d609",
+    "expires_at": "2026-11-08T18:03:57Z",
+    "raw_bytes_rehashed_inside_actions": false,
+    "digest_provenance": "upload log and GitHub metadata; not a second independent download"
+  },
+  "accepted": false,
+  "audit_completed": false,
+  "keyboard_accepted": false,
+  "contrast_accepted": false,
+  "screen_reader_accepted": false,
+  "complete_product": false,
+  "failed_rounds": 3,
+  "retry_cap_reached": true,
+  "negative_mutations_rejected": 104,
+  "credential_pattern_scan": "pass",
+  "prior_runs": [
+    {
+      "run_id": "40215023319",
+      "attempt": 1,
+      "harness_sha": "834e9c57be3b9dc4c9da26be0175747250e64d19",
+      "artifact": 12607068775,
+      "bytes": 16884,
+      "sha256": "fd8cadb416022865ea96f4cd9f5766183a7c9366ed0acb5fb40311e679ff38b1",
+      "expires_at": "2026-11-08T17:11:48Z",
+      "reason": "Missing xrdb executable during environment readback; actual OFF and ON build succeeded but no host audit ran"
+    },
+    {
+      "run_id": "40215548145",
+      "attempt": 1,
+      "harness_sha": "12bd1f1e0caf939b847804c62369963a46df9563",
+      "artifact": 12607494079,
+      "bytes": 8973262,
+      "sha256": "2b05d86f1c05527ad9fe1c8fcac6c9eada70c51e6d5f833f6bb475384cace6c4",
+      "expires_at": "2026-11-08T17:44:47Z",
+      "configurations": [
+        {
+          "configuration": "OFF-normal",
+          "audit_completed": false,
+          "program_sha256": "13db7c15064481a2bf1bab4cb5f2c054f2845ba599c7f91ee8b5dfa9ca593ea9",
+          "failed_checks": [
+            "import-open-completed",
+            "next-page",
+            "search-completed",
+            "directory-completed",
+            "records-completed",
+            "text-notes-completed",
+            "book-details-completed"
+          ],
+          "import_failure_tree_sha256": "e32681019c60bd5f3271df8551ecb01be5589687c95b68bc807ef7eda200ccbe"
+        },
+        {
+          "configuration": "OFF-scale2",
+          "audit_completed": false,
+          "program_sha256": "13db7c15064481a2bf1bab4cb5f2c054f2845ba599c7f91ee8b5dfa9ca593ea9",
+          "failed_checks": [
+            "import-open-completed",
+            "next-page",
+            "search-completed",
+            "directory-completed",
+            "records-completed",
+            "text-notes-completed",
+            "book-details-completed"
+          ],
+          "import_failure_tree_sha256": "0cb0e8965ea478b3bdb4061af582a368c01ce1d473ad44d577e1e805fb2e4c29"
+        },
+        {
+          "configuration": "OFF-dark",
+          "audit_completed": false,
+          "program_sha256": "13db7c15064481a2bf1bab4cb5f2c054f2845ba599c7f91ee8b5dfa9ca593ea9",
+          "failed_checks": [
+            "import-open-completed",
+            "next-page",
+            "search-completed",
+            "directory-completed",
+            "records-completed",
+            "text-notes-completed",
+            "book-details-completed"
+          ],
+          "import_failure_tree_sha256": "994b14f36a4db99acf936e8678059da88f0016ba128c9eecd16cb7cde76907bf"
+        },
+        {
+          "configuration": "OFF-large",
+          "audit_completed": false,
+          "program_sha256": "13db7c15064481a2bf1bab4cb5f2c054f2845ba599c7f91ee8b5dfa9ca593ea9",
+          "failed_checks": [
+            "import-open-completed",
+            "next-page",
+            "search-completed",
+            "directory-completed",
+            "records-completed",
+            "text-notes-completed",
+            "book-details-completed"
+          ],
+          "import_failure_tree_sha256": "bcbc96e68b2c433ac9c214450274b5b35667239ae457b4029a897834f75df787"
+        },
+        {
+          "configuration": "ON-normal",
+          "audit_completed": false,
+          "program_sha256": "409eb3e8d74717730323e4d8dd81ed5eb8da9c4696401840877d929c5fc257eb",
+          "failed_checks": [
+            "import-open-completed",
+            "next-page",
+            "search-completed",
+            "directory-completed",
+            "records-completed",
+            "text-notes-completed",
+            "book-details-completed",
+            "fixed-menu-union-completed"
+          ],
+          "import_failure_tree_sha256": "d82f0b0ebbb2ffadc6636f88319dd0c97277a66f3ce949781752a5d8ee642de8"
+        },
+        {
+          "configuration": "ON-scale2",
+          "audit_completed": false,
+          "program_sha256": "409eb3e8d74717730323e4d8dd81ed5eb8da9c4696401840877d929c5fc257eb",
+          "failed_checks": [
+            "import-open-completed",
+            "next-page",
+            "search-completed",
+            "directory-completed",
+            "records-completed",
+            "text-notes-completed",
+            "book-details-completed",
+            "fixed-menu-union-completed"
+          ],
+          "import_failure_tree_sha256": "fe0e8ea32bd463923e78110868ed610d53833946987e76394969577edc5983d8"
+        },
+        {
+          "configuration": "ON-dark",
+          "audit_completed": false,
+          "program_sha256": "409eb3e8d74717730323e4d8dd81ed5eb8da9c4696401840877d929c5fc257eb",
+          "failed_checks": [
+            "import-open-completed",
+            "next-page",
+            "search-completed",
+            "directory-completed",
+            "records-completed",
+            "text-notes-completed",
+            "book-details-completed",
+            "fixed-menu-union-completed"
+          ],
+          "import_failure_tree_sha256": "3e2adfcc8c2c87393e1ea270f279a8180403adc8369cdcf4b122590be41669e5"
+        },
+        {
+          "configuration": "ON-large",
+          "audit_completed": false,
+          "program_sha256": "409eb3e8d74717730323e4d8dd81ed5eb8da9c4696401840877d929c5fc257eb",
+          "failed_checks": [
+            "import-open-completed",
+            "next-page",
+            "search-completed",
+            "directory-completed",
+            "records-completed",
+            "text-notes-completed",
+            "book-details-completed"
+          ],
+          "import_failure_tree_sha256": "6ae30c6537db479de7d54aff6c3d0f339f6f5276f86b820e149ef128f6db999f"
+        }
+      ],
+      "reason": "Chooser real import did not finish; downstream reader checks cannot diagnose product. Verifier separately failed signed-redirect authentication with HTTP 401."
+    }
+  ],
+  "configurations": [
+    {
+      "configuration": "OFF-normal",
+      "program_sha256": "13db7c15064481a2bf1bab4cb5f2c054f2845ba599c7f91ee8b5dfa9ca593ea9",
+      "raw_report_audit_completed": false,
+      "raw_check_count": 25,
+      "raw_passed": 24,
+      "raw_failed": [
+        "records-completed"
+      ],
+      "adjudicated_records_initial_focus_accepted": false,
+      "adjudication": "Raw bool(focused) check erroneously accepted main-window focus; actual target is not Reading records. Immutable raw result preserved, not promoted to accessibility acceptance.",
+      "environment": {
+        "gtk": [
+          3,
+          24,
+          33
+        ],
+        "theme": "Adwaita",
+        "font": "Sans 11",
+        "xft_dpi": 98304,
+        "gdk_window_scale": 1,
+        "screen_resolution": 96,
+        "screen": [
+          2560,
+          1920
+        ],
+        "env": {
+          "GTK_THEME": "Adwaita",
+          "GDK_SCALE": "1",
+          "GDK_DPI_SCALE": "1",
+          "XDG_CONFIG_HOME": "/home/runner/work/_temp/d03-OFF-normal"
+        },
+        "readback_source": "Same-environment GTK probe window and settings; actual host bounds, focus and name/role/state are separately obtained through AT-SPI. No in-process host DPI instrumentation."
+      },
+      "geometry": [
+        {
+          "name": "shelf",
+          "geometry": "WINDOW=8388611\nX=745\nY=577\nWIDTH=1072\nHEIGHT=820\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        },
+        {
+          "name": "page-turn",
+          "geometry": "WINDOW=8388611\nX=745\nY=577\nWIDTH=1072\nHEIGHT=820\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        },
+        {
+          "name": "notes-panel",
+          "geometry": "WINDOW=8388611\nX=745\nY=577\nWIDTH=1072\nHEIGHT=820\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        },
+        {
+          "name": "small-window",
+          "geometry": "WINDOW=8388611\nX=745\nY=577\nWIDTH=1072\nHEIGHT=600\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        }
+      ],
+      "measured_color_pair": {
+        "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/filler[]#0/text[Search bookshelf]#0",
+        "region": {
+          "x": 744,
+          "y": 621,
+          "width": 908,
+          "height": 34
+        },
+        "colors": [
+          [
+            26975,
+            [
+              255,
+              255,
+              255
+            ]
+          ],
+          [
+            3688,
+            [
+              53,
+              132,
+              228
+            ]
+          ]
+        ],
+        "ratio": 3.7687294221773,
+        "algorithm": "WCAG relative sRGB luminance of two most frequent actual region colors",
+        "limitation": "Not a verified text/background pair; not a contrast acceptance grant"
+      },
+      "color_pair_adjudication": "Two dominant pixel colors only, not a verified text/background pair; no WCAG grant.",
+      "named_checks": [
+        {
+          "name": "bridge",
+          "passed": true
+        },
+        {
+          "name": "scale-readback",
+          "passed": true
+        },
+        {
+          "name": "compact-mode",
+          "passed": true
+        },
+        {
+          "name": "tab-forward-reverse",
+          "passed": true
+        },
+        {
+          "name": "tab-focus-names",
+          "passed": true
+        },
+        {
+          "name": "import-cancel",
+          "passed": true
+        },
+        {
+          "name": "keyboard-import-open",
+          "passed": true
+        },
+        {
+          "name": "next-page",
+          "passed": true
+        },
+        {
+          "name": "search-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Search within book]#1/filler[]#0/text[In-book query]#0",
+              "name": "In-book query",
+              "role": "text",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true,
+                "editable": true,
+                "single_line": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "search-escape",
+          "passed": true
+        },
+        {
+          "name": "directory-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Directory and page entries]#1/filler[]#0/scroll pane[]#1",
+              "name": "",
+              "role": "scroll pane",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "directory-escape",
+          "passed": true
+        },
+        {
+          "name": "records-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/filler[]#0/push button[Import F1]#0",
+              "name": "Import F1",
+              "role": "push button",
+              "states": {
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "record-save",
+          "passed": true,
+          "actual": [
+            "Bookmark 7b04431c · D03 bookmark · location not checked",
+            "Bookmark 7b04431c · D03 bookmark · location not checked"
+          ]
+        },
+        {
+          "name": "records-completed",
+          "passed": false
+        },
+        {
+          "name": "settings-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Reading settings]#1/filler[]#0/panel[]#0/spin button[Font size]#22",
+              "name": "Font size",
+              "role": "spin button",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true,
+                "editable": true,
+                "single_line": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "settings-escape",
+          "passed": true
+        },
+        {
+          "name": "collections-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Library collections]#1/filler[]#0/filler[]#0/combo box[Collection type]#1",
+              "name": "Collection type",
+              "role": "combo box",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "collections-types-keyboard",
+          "passed": true
+        },
+        {
+          "name": "collections-escape",
+          "passed": true
+        },
+        {
+          "name": "account-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Account and Sync]#1/filler[]#0/panel[]#1/text[HTTPS WebDAV root]#6",
+              "name": "HTTPS WebDAV root",
+              "role": "text",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true,
+                "editable": true,
+                "single_line": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "account-escape",
+          "passed": true
+        },
+        {
+          "name": "text-note-keyboard",
+          "passed": true
+        },
+        {
+          "name": "return-shelf-search",
+          "passed": true
+        },
+        {
+          "name": "details-escape",
+          "passed": true
+        }
+      ],
+      "findings": [
+        {
+          "name": "records",
+          "error": "TimeoutError('timed out waiting for closed Reading records (last=False)')",
+          "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/EXReader/EXReader/tests/reader_final_d03/audit.py\", line 52, in phase\n    try:fn();capture(name)\n  File \"/home/runner/work/EXReader/EXReader/tests/reader_final_d03/audit.py\", line 137, in dialog\n    host.key('Escape');wait_until(lambda:not nodes(title),15,description='closed '+title)\n  File \"/home/runner/work/EXReader/EXReader/tests/reader_a11y_gtk/driver.py\", line 33, in wait_until\n    raise TimeoutError('timed out waiting for %s (last=%r)' % (description, last))\nTimeoutError: timed out waiting for closed Reading records (last=False)\n",
+          "target_sha": "9fc407a5cce5a0bfe644a60bd8dc29f84dea6d0e",
+          "reproduction": "Keys in keys.log; phase records",
+          "root_cause": "Unconfirmed host or harness failure",
+          "minimal_suggestion": "Inspect failure PNG, tree, and exact key trace before owner fix"
+        },
+        {
+          "name": "records-completed",
+          "passed": false,
+          "actual": "TimeoutError('timed out waiting for closed Reading records (last=False)')",
+          "expected": "phase completed",
+          "target_sha": "9fc407a5cce5a0bfe644a60bd8dc29f84dea6d0e",
+          "reproduction": "Run OFF OFF-normal; see keys.log and records-completed snapshot",
+          "root_cause": "Unconfirmed; inspect actual tree and keyboard trace",
+          "minimal_suggestion": "Owner to inspect GTK focus/geometry handling; no production edits in D03"
+        }
+      ],
+      "pending": [
+        "Orca and human speech/braille experience",
+        "Human verification of visible focus rings, clipping and overlap",
+        "Whole UI text/non-text contrast; measured pixel pairs do not establish foreground/background semantics",
+        "Physical desktop and compositor scaling beyond Xvfb",
+        "Compact-only four More parents not applicable to default OFF"
+      ]
+    },
+    {
+      "configuration": "OFF-scale2",
+      "program_sha256": "13db7c15064481a2bf1bab4cb5f2c054f2845ba599c7f91ee8b5dfa9ca593ea9",
+      "raw_report_audit_completed": false,
+      "raw_check_count": 25,
+      "raw_passed": 24,
+      "raw_failed": [
+        "records-completed"
+      ],
+      "adjudicated_records_initial_focus_accepted": false,
+      "adjudication": "Raw bool(focused) check erroneously accepted main-window focus; actual target is not Reading records. Immutable raw result preserved, not promoted to accessibility acceptance.",
+      "environment": {
+        "gtk": [
+          3,
+          24,
+          33
+        ],
+        "theme": "Adwaita",
+        "font": "Sans 11",
+        "xft_dpi": 98304,
+        "gdk_window_scale": 2,
+        "screen_resolution": 96,
+        "screen": [
+          1280,
+          960
+        ],
+        "env": {
+          "GTK_THEME": "Adwaita",
+          "GDK_SCALE": "2",
+          "GDK_DPI_SCALE": "1",
+          "XDG_CONFIG_HOME": "/home/runner/work/_temp/d03-OFF-scale2"
+        },
+        "readback_source": "Same-environment GTK probe window and settings; actual host bounds, focus and name/role/state are separately obtained through AT-SPI. No in-process host DPI instrumentation."
+      },
+      "geometry": [
+        {
+          "name": "shelf",
+          "geometry": "WINDOW=8388611\nX=209\nY=167\nWIDTH=2144\nHEIGHT=1640\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        },
+        {
+          "name": "page-turn",
+          "geometry": "WINDOW=8388611\nX=209\nY=167\nWIDTH=2144\nHEIGHT=1640\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        },
+        {
+          "name": "notes-panel",
+          "geometry": "WINDOW=8388611\nX=209\nY=167\nWIDTH=2144\nHEIGHT=1640\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        },
+        {
+          "name": "small-window",
+          "geometry": "WINDOW=8388611\nX=209\nY=167\nWIDTH=2144\nHEIGHT=600\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        }
+      ],
+      "measured_color_pair": {
+        "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/filler[]#0/text[Search bookshelf]#0",
+        "region": {
+          "x": 104,
+          "y": 137,
+          "width": 908,
+          "height": 34
+        },
+        "colors": [
+          [
+            3676,
+            [
+              245,
+              244,
+              243
+            ]
+          ],
+          [
+            3502,
+            [
+              0,
+              0,
+              0
+            ]
+          ]
+        ],
+        "ratio": 19.116981852189063,
+        "algorithm": "WCAG relative sRGB luminance of two most frequent actual region colors",
+        "limitation": "Not a verified text/background pair; not a contrast acceptance grant"
+      },
+      "color_pair_adjudication": "Not a valid target-region contrast measurement: logical AT-SPI coordinates were used without physical-pixel transform.",
+      "named_checks": [
+        {
+          "name": "bridge",
+          "passed": true
+        },
+        {
+          "name": "scale-readback",
+          "passed": true
+        },
+        {
+          "name": "compact-mode",
+          "passed": true
+        },
+        {
+          "name": "tab-forward-reverse",
+          "passed": true
+        },
+        {
+          "name": "tab-focus-names",
+          "passed": true
+        },
+        {
+          "name": "import-cancel",
+          "passed": true
+        },
+        {
+          "name": "keyboard-import-open",
+          "passed": true
+        },
+        {
+          "name": "next-page",
+          "passed": true
+        },
+        {
+          "name": "search-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Search within book]#1/filler[]#0/text[In-book query]#0",
+              "name": "In-book query",
+              "role": "text",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true,
+                "editable": true,
+                "single_line": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "search-escape",
+          "passed": true
+        },
+        {
+          "name": "directory-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Directory and page entries]#1/filler[]#0/scroll pane[]#1",
+              "name": "",
+              "role": "scroll pane",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "directory-escape",
+          "passed": true
+        },
+        {
+          "name": "records-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/filler[]#0/push button[Import F1]#0",
+              "name": "Import F1",
+              "role": "push button",
+              "states": {
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "record-save",
+          "passed": true,
+          "actual": [
+            "Bookmark d7f9fc31 · D03 bookmark · location not checked",
+            "Bookmark d7f9fc31 · D03 bookmark · location not checked"
+          ]
+        },
+        {
+          "name": "records-completed",
+          "passed": false
+        },
+        {
+          "name": "settings-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Reading settings]#1/filler[]#0/panel[]#0/spin button[Font size]#22",
+              "name": "Font size",
+              "role": "spin button",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true,
+                "editable": true,
+                "single_line": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "settings-escape",
+          "passed": true
+        },
+        {
+          "name": "collections-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Library collections]#1/filler[]#0/filler[]#0/combo box[Collection type]#1",
+              "name": "Collection type",
+              "role": "combo box",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "collections-types-keyboard",
+          "passed": true
+        },
+        {
+          "name": "collections-escape",
+          "passed": true
+        },
+        {
+          "name": "account-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Account and Sync]#1/filler[]#0/panel[]#1/text[HTTPS WebDAV root]#6",
+              "name": "HTTPS WebDAV root",
+              "role": "text",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true,
+                "editable": true,
+                "single_line": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "account-escape",
+          "passed": true
+        },
+        {
+          "name": "text-note-keyboard",
+          "passed": true
+        },
+        {
+          "name": "return-shelf-search",
+          "passed": true
+        },
+        {
+          "name": "details-escape",
+          "passed": true
+        }
+      ],
+      "findings": [
+        {
+          "name": "records",
+          "error": "TimeoutError('timed out waiting for closed Reading records (last=False)')",
+          "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/EXReader/EXReader/tests/reader_final_d03/audit.py\", line 52, in phase\n    try:fn();capture(name)\n  File \"/home/runner/work/EXReader/EXReader/tests/reader_final_d03/audit.py\", line 137, in dialog\n    host.key('Escape');wait_until(lambda:not nodes(title),15,description='closed '+title)\n  File \"/home/runner/work/EXReader/EXReader/tests/reader_a11y_gtk/driver.py\", line 33, in wait_until\n    raise TimeoutError('timed out waiting for %s (last=%r)' % (description, last))\nTimeoutError: timed out waiting for closed Reading records (last=False)\n",
+          "target_sha": "9fc407a5cce5a0bfe644a60bd8dc29f84dea6d0e",
+          "reproduction": "Keys in keys.log; phase records",
+          "root_cause": "Unconfirmed host or harness failure",
+          "minimal_suggestion": "Inspect failure PNG, tree, and exact key trace before owner fix"
+        },
+        {
+          "name": "records-completed",
+          "passed": false,
+          "actual": "TimeoutError('timed out waiting for closed Reading records (last=False)')",
+          "expected": "phase completed",
+          "target_sha": "9fc407a5cce5a0bfe644a60bd8dc29f84dea6d0e",
+          "reproduction": "Run OFF OFF-scale2; see keys.log and records-completed snapshot",
+          "root_cause": "Unconfirmed; inspect actual tree and keyboard trace",
+          "minimal_suggestion": "Owner to inspect GTK focus/geometry handling; no production edits in D03"
+        }
+      ],
+      "pending": [
+        "Orca and human speech/braille experience",
+        "Human verification of visible focus rings, clipping and overlap",
+        "Whole UI text/non-text contrast; measured pixel pairs do not establish foreground/background semantics",
+        "Physical desktop and compositor scaling beyond Xvfb",
+        "Compact-only four More parents not applicable to default OFF"
+      ]
+    },
+    {
+      "configuration": "OFF-dark",
+      "program_sha256": "13db7c15064481a2bf1bab4cb5f2c054f2845ba599c7f91ee8b5dfa9ca593ea9",
+      "raw_report_audit_completed": false,
+      "raw_check_count": 25,
+      "raw_passed": 24,
+      "raw_failed": [
+        "records-completed"
+      ],
+      "adjudicated_records_initial_focus_accepted": false,
+      "adjudication": "Raw bool(focused) check erroneously accepted main-window focus; actual target is not Reading records. Immutable raw result preserved, not promoted to accessibility acceptance.",
+      "environment": {
+        "gtk": [
+          3,
+          24,
+          33
+        ],
+        "theme": "Adwaita-dark",
+        "font": "Sans 16",
+        "xft_dpi": 98304,
+        "gdk_window_scale": 1,
+        "screen_resolution": 96,
+        "screen": [
+          2560,
+          1920
+        ],
+        "env": {
+          "GTK_THEME": "Adwaita-dark",
+          "GDK_SCALE": "1",
+          "GDK_DPI_SCALE": "1",
+          "XDG_CONFIG_HOME": "/home/runner/work/_temp/d03-OFF-dark"
+        },
+        "readback_source": "Same-environment GTK probe window and settings; actual host bounds, focus and name/role/state are separately obtained through AT-SPI. No in-process host DPI instrumentation."
+      },
+      "geometry": [
+        {
+          "name": "shelf",
+          "geometry": "WINDOW=8388611\nX=593\nY=577\nWIDTH=1376\nHEIGHT=820\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        },
+        {
+          "name": "page-turn",
+          "geometry": "WINDOW=8388611\nX=593\nY=577\nWIDTH=1376\nHEIGHT=820\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        },
+        {
+          "name": "notes-panel",
+          "geometry": "WINDOW=8388611\nX=593\nY=577\nWIDTH=1376\nHEIGHT=820\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        },
+        {
+          "name": "small-window",
+          "geometry": "WINDOW=8388611\nX=593\nY=577\nWIDTH=1376\nHEIGHT=600\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        }
+      ],
+      "measured_color_pair": {
+        "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/filler[]#0/text[Search bookshelf]#0",
+        "region": {
+          "x": 592,
+          "y": 631,
+          "width": 1175,
+          "height": 36
+        },
+        "colors": [
+          [
+            37293,
+            [
+              255,
+              255,
+              255
+            ]
+          ],
+          [
+            4764,
+            [
+              53,
+              132,
+              228
+            ]
+          ]
+        ],
+        "ratio": 3.7687294221773,
+        "algorithm": "WCAG relative sRGB luminance of two most frequent actual region colors",
+        "limitation": "Not a verified text/background pair; not a contrast acceptance grant"
+      },
+      "color_pair_adjudication": "Two dominant pixel colors only, not a verified text/background pair; no WCAG grant.",
+      "named_checks": [
+        {
+          "name": "bridge",
+          "passed": true
+        },
+        {
+          "name": "scale-readback",
+          "passed": true
+        },
+        {
+          "name": "compact-mode",
+          "passed": true
+        },
+        {
+          "name": "tab-forward-reverse",
+          "passed": true
+        },
+        {
+          "name": "tab-focus-names",
+          "passed": true
+        },
+        {
+          "name": "import-cancel",
+          "passed": true
+        },
+        {
+          "name": "keyboard-import-open",
+          "passed": true
+        },
+        {
+          "name": "next-page",
+          "passed": true
+        },
+        {
+          "name": "search-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Search within book]#1/filler[]#0/text[In-book query]#0",
+              "name": "In-book query",
+              "role": "text",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true,
+                "editable": true,
+                "single_line": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "search-escape",
+          "passed": true
+        },
+        {
+          "name": "directory-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Directory and page entries]#1/filler[]#0/scroll pane[]#1",
+              "name": "",
+              "role": "scroll pane",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "directory-escape",
+          "passed": true
+        },
+        {
+          "name": "records-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/filler[]#0/push button[Import F1]#0",
+              "name": "Import F1",
+              "role": "push button",
+              "states": {
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "record-save",
+          "passed": true,
+          "actual": [
+            "Bookmark 8cdfb36f · D03 bookmark · location not checked",
+            "Bookmark 8cdfb36f · D03 bookmark · location not checked"
+          ]
+        },
+        {
+          "name": "records-completed",
+          "passed": false
+        },
+        {
+          "name": "settings-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Reading settings]#1/filler[]#0/panel[]#0/spin button[Font size]#22",
+              "name": "Font size",
+              "role": "spin button",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true,
+                "editable": true,
+                "single_line": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "settings-escape",
+          "passed": true
+        },
+        {
+          "name": "collections-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Library collections]#1/filler[]#0/filler[]#0/combo box[Collection type]#1",
+              "name": "Collection type",
+              "role": "combo box",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "collections-types-keyboard",
+          "passed": true
+        },
+        {
+          "name": "collections-escape",
+          "passed": true
+        },
+        {
+          "name": "account-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Account and Sync]#1/filler[]#0/panel[]#1/text[HTTPS WebDAV root]#6",
+              "name": "HTTPS WebDAV root",
+              "role": "text",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true,
+                "editable": true,
+                "single_line": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "account-escape",
+          "passed": true
+        },
+        {
+          "name": "text-note-keyboard",
+          "passed": true
+        },
+        {
+          "name": "return-shelf-search",
+          "passed": true
+        },
+        {
+          "name": "details-escape",
+          "passed": true
+        }
+      ],
+      "findings": [
+        {
+          "name": "records",
+          "error": "TimeoutError('timed out waiting for closed Reading records (last=False)')",
+          "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/EXReader/EXReader/tests/reader_final_d03/audit.py\", line 52, in phase\n    try:fn();capture(name)\n  File \"/home/runner/work/EXReader/EXReader/tests/reader_final_d03/audit.py\", line 137, in dialog\n    host.key('Escape');wait_until(lambda:not nodes(title),15,description='closed '+title)\n  File \"/home/runner/work/EXReader/EXReader/tests/reader_a11y_gtk/driver.py\", line 33, in wait_until\n    raise TimeoutError('timed out waiting for %s (last=%r)' % (description, last))\nTimeoutError: timed out waiting for closed Reading records (last=False)\n",
+          "target_sha": "9fc407a5cce5a0bfe644a60bd8dc29f84dea6d0e",
+          "reproduction": "Keys in keys.log; phase records",
+          "root_cause": "Unconfirmed host or harness failure",
+          "minimal_suggestion": "Inspect failure PNG, tree, and exact key trace before owner fix"
+        },
+        {
+          "name": "records-completed",
+          "passed": false,
+          "actual": "TimeoutError('timed out waiting for closed Reading records (last=False)')",
+          "expected": "phase completed",
+          "target_sha": "9fc407a5cce5a0bfe644a60bd8dc29f84dea6d0e",
+          "reproduction": "Run OFF OFF-dark; see keys.log and records-completed snapshot",
+          "root_cause": "Unconfirmed; inspect actual tree and keyboard trace",
+          "minimal_suggestion": "Owner to inspect GTK focus/geometry handling; no production edits in D03"
+        }
+      ],
+      "pending": [
+        "Orca and human speech/braille experience",
+        "Human verification of visible focus rings, clipping and overlap",
+        "Whole UI text/non-text contrast; measured pixel pairs do not establish foreground/background semantics",
+        "Physical desktop and compositor scaling beyond Xvfb",
+        "Compact-only four More parents not applicable to default OFF"
+      ]
+    },
+    {
+      "configuration": "OFF-large",
+      "program_sha256": "13db7c15064481a2bf1bab4cb5f2c054f2845ba599c7f91ee8b5dfa9ca593ea9",
+      "raw_report_audit_completed": false,
+      "raw_check_count": 25,
+      "raw_passed": 24,
+      "raw_failed": [
+        "records-completed"
+      ],
+      "adjudicated_records_initial_focus_accepted": false,
+      "adjudication": "Raw bool(focused) check erroneously accepted main-window focus; actual target is not Reading records. Immutable raw result preserved, not promoted to accessibility acceptance.",
+      "environment": {
+        "gtk": [
+          3,
+          24,
+          33
+        ],
+        "theme": "HighContrast",
+        "font": "Sans 20",
+        "xft_dpi": 98304,
+        "gdk_window_scale": 1,
+        "screen_resolution": 96,
+        "screen": [
+          2560,
+          1920
+        ],
+        "env": {
+          "GTK_THEME": "HighContrast",
+          "GDK_SCALE": "1",
+          "GDK_DPI_SCALE": "1",
+          "XDG_CONFIG_HOME": "/home/runner/work/_temp/d03-OFF-large"
+        },
+        "readback_source": "Same-environment GTK probe window and settings; actual host bounds, focus and name/role/state are separately obtained through AT-SPI. No in-process host DPI instrumentation."
+      },
+      "geometry": [
+        {
+          "name": "shelf",
+          "geometry": "WINDOW=8388611\nX=486\nY=577\nWIDTH=1590\nHEIGHT=820\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        },
+        {
+          "name": "page-turn",
+          "geometry": "WINDOW=8388611\nX=486\nY=577\nWIDTH=1590\nHEIGHT=820\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        },
+        {
+          "name": "notes-panel",
+          "geometry": "WINDOW=8388611\nX=486\nY=577\nWIDTH=1590\nHEIGHT=820\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        },
+        {
+          "name": "small-window",
+          "geometry": "WINDOW=8388611\nX=486\nY=577\nWIDTH=1590\nHEIGHT=600\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        }
+      ],
+      "measured_color_pair": {
+        "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/filler[]#0/text[Search bookshelf]#0",
+        "region": {
+          "x": 485,
+          "y": 643,
+          "width": 1358,
+          "height": 42
+        },
+        "colors": [
+          [
+            51261,
+            [
+              255,
+              255,
+              255
+            ]
+          ],
+          [
+            5520,
+            [
+              27,
+              106,
+              203
+            ]
+          ]
+        ],
+        "ratio": 5.288906053345469,
+        "algorithm": "WCAG relative sRGB luminance of two most frequent actual region colors",
+        "limitation": "Not a verified text/background pair; not a contrast acceptance grant"
+      },
+      "color_pair_adjudication": "Two dominant pixel colors only, not a verified text/background pair; no WCAG grant.",
+      "named_checks": [
+        {
+          "name": "bridge",
+          "passed": true
+        },
+        {
+          "name": "scale-readback",
+          "passed": true
+        },
+        {
+          "name": "compact-mode",
+          "passed": true
+        },
+        {
+          "name": "tab-forward-reverse",
+          "passed": true
+        },
+        {
+          "name": "tab-focus-names",
+          "passed": true
+        },
+        {
+          "name": "import-cancel",
+          "passed": true
+        },
+        {
+          "name": "keyboard-import-open",
+          "passed": true
+        },
+        {
+          "name": "next-page",
+          "passed": true
+        },
+        {
+          "name": "search-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Search within book]#1/filler[]#0/text[In-book query]#0",
+              "name": "In-book query",
+              "role": "text",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true,
+                "editable": true,
+                "single_line": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "search-escape",
+          "passed": true
+        },
+        {
+          "name": "directory-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Directory and page entries]#1/filler[]#0/scroll pane[]#1",
+              "name": "",
+              "role": "scroll pane",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "directory-escape",
+          "passed": true
+        },
+        {
+          "name": "records-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/filler[]#0/push button[Import F1]#0",
+              "name": "Import F1",
+              "role": "push button",
+              "states": {
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "record-save",
+          "passed": true,
+          "actual": [
+            "Bookmark 8658d2a1 · D03 bookmark · location not checked",
+            "Bookmark 8658d2a1 · D03 bookmark · location not checked"
+          ]
+        },
+        {
+          "name": "records-completed",
+          "passed": false
+        },
+        {
+          "name": "settings-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Reading settings]#1/filler[]#0/panel[]#0/spin button[Font size]#22",
+              "name": "Font size",
+              "role": "spin button",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true,
+                "editable": true,
+                "single_line": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "settings-escape",
+          "passed": true
+        },
+        {
+          "name": "collections-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Library collections]#1/filler[]#0/filler[]#0/combo box[Collection type]#1",
+              "name": "Collection type",
+              "role": "combo box",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "collections-types-keyboard",
+          "passed": true
+        },
+        {
+          "name": "collections-escape",
+          "passed": true
+        },
+        {
+          "name": "account-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Account and Sync]#1/filler[]#0/panel[]#1/text[HTTPS WebDAV root]#6",
+              "name": "HTTPS WebDAV root",
+              "role": "text",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true,
+                "editable": true,
+                "single_line": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "account-escape",
+          "passed": true
+        },
+        {
+          "name": "text-note-keyboard",
+          "passed": true
+        },
+        {
+          "name": "return-shelf-search",
+          "passed": true
+        },
+        {
+          "name": "details-escape",
+          "passed": true
+        }
+      ],
+      "findings": [
+        {
+          "name": "records",
+          "error": "TimeoutError('timed out waiting for closed Reading records (last=False)')",
+          "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/EXReader/EXReader/tests/reader_final_d03/audit.py\", line 52, in phase\n    try:fn();capture(name)\n  File \"/home/runner/work/EXReader/EXReader/tests/reader_final_d03/audit.py\", line 137, in dialog\n    host.key('Escape');wait_until(lambda:not nodes(title),15,description='closed '+title)\n  File \"/home/runner/work/EXReader/EXReader/tests/reader_a11y_gtk/driver.py\", line 33, in wait_until\n    raise TimeoutError('timed out waiting for %s (last=%r)' % (description, last))\nTimeoutError: timed out waiting for closed Reading records (last=False)\n",
+          "target_sha": "9fc407a5cce5a0bfe644a60bd8dc29f84dea6d0e",
+          "reproduction": "Keys in keys.log; phase records",
+          "root_cause": "Unconfirmed host or harness failure",
+          "minimal_suggestion": "Inspect failure PNG, tree, and exact key trace before owner fix"
+        },
+        {
+          "name": "records-completed",
+          "passed": false,
+          "actual": "TimeoutError('timed out waiting for closed Reading records (last=False)')",
+          "expected": "phase completed",
+          "target_sha": "9fc407a5cce5a0bfe644a60bd8dc29f84dea6d0e",
+          "reproduction": "Run OFF OFF-large; see keys.log and records-completed snapshot",
+          "root_cause": "Unconfirmed; inspect actual tree and keyboard trace",
+          "minimal_suggestion": "Owner to inspect GTK focus/geometry handling; no production edits in D03"
+        }
+      ],
+      "pending": [
+        "Orca and human speech/braille experience",
+        "Human verification of visible focus rings, clipping and overlap",
+        "Whole UI text/non-text contrast; measured pixel pairs do not establish foreground/background semantics",
+        "Physical desktop and compositor scaling beyond Xvfb",
+        "Compact-only four More parents not applicable to default OFF"
+      ]
+    },
+    {
+      "configuration": "ON-normal",
+      "program_sha256": "409eb3e8d74717730323e4d8dd81ed5eb8da9c4696401840877d929c5fc257eb",
+      "raw_report_audit_completed": true,
+      "raw_check_count": 27,
+      "raw_passed": 27,
+      "raw_failed": [],
+      "adjudicated_records_initial_focus_accepted": false,
+      "adjudication": "Raw bool(focused) check erroneously accepted main-window focus; actual target is not Reading records. Immutable raw result preserved, not promoted to accessibility acceptance.",
+      "environment": {
+        "gtk": [
+          3,
+          24,
+          33
+        ],
+        "theme": "Adwaita",
+        "font": "Sans 11",
+        "xft_dpi": 98304,
+        "gdk_window_scale": 1,
+        "screen_resolution": 96,
+        "screen": [
+          2560,
+          1920
+        ],
+        "env": {
+          "GTK_THEME": "Adwaita",
+          "GDK_SCALE": "1",
+          "GDK_DPI_SCALE": "1",
+          "XDG_CONFIG_HOME": "/home/runner/work/_temp/d03-ON-normal"
+        },
+        "readback_source": "Same-environment GTK probe window and settings; actual host bounds, focus and name/role/state are separately obtained through AT-SPI. No in-process host DPI instrumentation."
+      },
+      "geometry": [
+        {
+          "name": "shelf",
+          "geometry": "WINDOW=8388611\nX=761\nY=577\nWIDTH=1040\nHEIGHT=820\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        },
+        {
+          "name": "page-turn",
+          "geometry": "WINDOW=8388611\nX=761\nY=577\nWIDTH=1040\nHEIGHT=820\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        },
+        {
+          "name": "notes-panel",
+          "geometry": "WINDOW=8388611\nX=761\nY=577\nWIDTH=1040\nHEIGHT=820\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        },
+        {
+          "name": "small-window",
+          "geometry": "WINDOW=8388611\nX=761\nY=577\nWIDTH=800\nHEIGHT=600\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        }
+      ],
+      "measured_color_pair": {
+        "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/text[Search bookshelf]#0",
+        "region": {
+          "x": 760,
+          "y": 637,
+          "width": 800,
+          "height": 34
+        },
+        "colors": [
+          [
+            23735,
+            [
+              255,
+              255,
+              255
+            ]
+          ],
+          [
+            3256,
+            [
+              53,
+              132,
+              228
+            ]
+          ]
+        ],
+        "ratio": 3.7687294221773,
+        "algorithm": "WCAG relative sRGB luminance of two most frequent actual region colors",
+        "limitation": "Not a verified text/background pair; not a contrast acceptance grant"
+      },
+      "color_pair_adjudication": "Two dominant pixel colors only, not a verified text/background pair; no WCAG grant.",
+      "named_checks": [
+        {
+          "name": "bridge",
+          "passed": true
+        },
+        {
+          "name": "scale-readback",
+          "passed": true
+        },
+        {
+          "name": "compact-mode",
+          "passed": true
+        },
+        {
+          "name": "tab-forward-reverse",
+          "passed": true
+        },
+        {
+          "name": "tab-focus-names",
+          "passed": true
+        },
+        {
+          "name": "import-cancel",
+          "passed": true
+        },
+        {
+          "name": "keyboard-import-open",
+          "passed": true
+        },
+        {
+          "name": "next-page",
+          "passed": true
+        },
+        {
+          "name": "more-text-leaves",
+          "passed": true
+        },
+        {
+          "name": "search-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Search within book]#1/filler[]#0/text[In-book query]#0",
+              "name": "In-book query",
+              "role": "text",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true,
+                "editable": true,
+                "single_line": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "search-escape",
+          "passed": true
+        },
+        {
+          "name": "directory-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Directory and page entries]#1/filler[]#0/scroll pane[]#1",
+              "name": "",
+              "role": "scroll pane",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "directory-escape",
+          "passed": true
+        },
+        {
+          "name": "records-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/filler[]#0/toggle button[More reader actions]#2",
+              "name": "More reader actions",
+              "role": "toggle button",
+              "states": {
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "record-save",
+          "passed": true,
+          "actual": [
+            "Bookmark 861da8fe · D03 bookmark · location not checked",
+            "Bookmark 861da8fe · D03 bookmark · location not checked"
+          ]
+        },
+        {
+          "name": "records-escape",
+          "passed": true
+        },
+        {
+          "name": "settings-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Reading settings]#1/filler[]#0/panel[]#0/spin button[Font size]#22",
+              "name": "Font size",
+              "role": "spin button",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true,
+                "editable": true,
+                "single_line": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "settings-escape",
+          "passed": true
+        },
+        {
+          "name": "collections-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Library collections]#1/filler[]#0/filler[]#0/combo box[Collection type]#1",
+              "name": "Collection type",
+              "role": "combo box",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "collections-types-keyboard",
+          "passed": true
+        },
+        {
+          "name": "collections-escape",
+          "passed": true
+        },
+        {
+          "name": "account-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Account and Sync]#1/filler[]#0/panel[]#1/text[HTTPS WebDAV root]#6",
+              "name": "HTTPS WebDAV root",
+              "role": "text",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true,
+                "editable": true,
+                "single_line": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "account-escape",
+          "passed": true
+        },
+        {
+          "name": "text-note-keyboard",
+          "passed": true
+        },
+        {
+          "name": "return-shelf-search",
+          "passed": true
+        },
+        {
+          "name": "details-escape",
+          "passed": true
+        },
+        {
+          "name": "more-22-leaves",
+          "passed": true
+        }
+      ],
+      "findings": [],
+      "pending": [
+        "Orca and human speech/braille experience",
+        "Human verification of visible focus rings, clipping and overlap",
+        "Whole UI text/non-text contrast; measured pixel pairs do not establish foreground/background semantics",
+        "Physical desktop and compositor scaling beyond Xvfb"
+      ]
+    },
+    {
+      "configuration": "ON-scale2",
+      "program_sha256": "409eb3e8d74717730323e4d8dd81ed5eb8da9c4696401840877d929c5fc257eb",
+      "raw_report_audit_completed": true,
+      "raw_check_count": 27,
+      "raw_passed": 27,
+      "raw_failed": [],
+      "adjudicated_records_initial_focus_accepted": false,
+      "adjudication": "Raw bool(focused) check erroneously accepted main-window focus; actual target is not Reading records. Immutable raw result preserved, not promoted to accessibility acceptance.",
+      "environment": {
+        "gtk": [
+          3,
+          24,
+          33
+        ],
+        "theme": "Adwaita",
+        "font": "Sans 11",
+        "xft_dpi": 98304,
+        "gdk_window_scale": 2,
+        "screen_resolution": 96,
+        "screen": [
+          1280,
+          960
+        ],
+        "env": {
+          "GTK_THEME": "Adwaita",
+          "GDK_SCALE": "2",
+          "GDK_DPI_SCALE": "1",
+          "XDG_CONFIG_HOME": "/home/runner/work/_temp/d03-ON-scale2"
+        },
+        "readback_source": "Same-environment GTK probe window and settings; actual host bounds, focus and name/role/state are separately obtained through AT-SPI. No in-process host DPI instrumentation."
+      },
+      "geometry": [
+        {
+          "name": "shelf",
+          "geometry": "WINDOW=8388611\nX=241\nY=167\nWIDTH=2080\nHEIGHT=1640\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        },
+        {
+          "name": "page-turn",
+          "geometry": "WINDOW=8388611\nX=241\nY=167\nWIDTH=2080\nHEIGHT=1640\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        },
+        {
+          "name": "notes-panel",
+          "geometry": "WINDOW=8388611\nX=241\nY=167\nWIDTH=2080\nHEIGHT=1640\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        },
+        {
+          "name": "small-window",
+          "geometry": "WINDOW=8388611\nX=241\nY=167\nWIDTH=800\nHEIGHT=600\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        }
+      ],
+      "measured_color_pair": {
+        "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/text[Search bookshelf]#0",
+        "region": {
+          "x": 120,
+          "y": 153,
+          "width": 400,
+          "height": 34
+        },
+        "colors": [
+          [
+            4046,
+            [
+              0,
+              0,
+              0
+            ]
+          ],
+          [
+            2716,
+            [
+              255,
+              255,
+              255
+            ]
+          ]
+        ],
+        "ratio": 21,
+        "algorithm": "WCAG relative sRGB luminance of two most frequent actual region colors",
+        "limitation": "Not a verified text/background pair; not a contrast acceptance grant"
+      },
+      "color_pair_adjudication": "Not a valid target-region contrast measurement: logical AT-SPI coordinates were used without physical-pixel transform.",
+      "named_checks": [
+        {
+          "name": "bridge",
+          "passed": true
+        },
+        {
+          "name": "scale-readback",
+          "passed": true
+        },
+        {
+          "name": "compact-mode",
+          "passed": true
+        },
+        {
+          "name": "tab-forward-reverse",
+          "passed": true
+        },
+        {
+          "name": "tab-focus-names",
+          "passed": true
+        },
+        {
+          "name": "import-cancel",
+          "passed": true
+        },
+        {
+          "name": "keyboard-import-open",
+          "passed": true
+        },
+        {
+          "name": "next-page",
+          "passed": true
+        },
+        {
+          "name": "more-text-leaves",
+          "passed": true
+        },
+        {
+          "name": "search-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Search within book]#1/filler[]#0/text[In-book query]#0",
+              "name": "In-book query",
+              "role": "text",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true,
+                "editable": true,
+                "single_line": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "search-escape",
+          "passed": true
+        },
+        {
+          "name": "directory-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Directory and page entries]#1/filler[]#0/scroll pane[]#1",
+              "name": "",
+              "role": "scroll pane",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "directory-escape",
+          "passed": true
+        },
+        {
+          "name": "records-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/filler[]#0/toggle button[More reader actions]#2",
+              "name": "More reader actions",
+              "role": "toggle button",
+              "states": {
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "record-save",
+          "passed": true,
+          "actual": [
+            "Bookmark e0721230 · D03 bookmark · location not checked",
+            "Bookmark e0721230 · D03 bookmark · location not checked"
+          ]
+        },
+        {
+          "name": "records-escape",
+          "passed": true
+        },
+        {
+          "name": "settings-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Reading settings]#1/filler[]#0/panel[]#0/spin button[Font size]#22",
+              "name": "Font size",
+              "role": "spin button",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true,
+                "editable": true,
+                "single_line": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "settings-escape",
+          "passed": true
+        },
+        {
+          "name": "collections-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Library collections]#1/filler[]#0/filler[]#0/combo box[Collection type]#1",
+              "name": "Collection type",
+              "role": "combo box",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "collections-types-keyboard",
+          "passed": true
+        },
+        {
+          "name": "collections-escape",
+          "passed": true
+        },
+        {
+          "name": "account-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Account and Sync]#1/filler[]#0/panel[]#1/text[HTTPS WebDAV root]#6",
+              "name": "HTTPS WebDAV root",
+              "role": "text",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true,
+                "editable": true,
+                "single_line": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "account-escape",
+          "passed": true
+        },
+        {
+          "name": "text-note-keyboard",
+          "passed": true
+        },
+        {
+          "name": "return-shelf-search",
+          "passed": true
+        },
+        {
+          "name": "details-escape",
+          "passed": true
+        },
+        {
+          "name": "more-22-leaves",
+          "passed": true
+        }
+      ],
+      "findings": [],
+      "pending": [
+        "Orca and human speech/braille experience",
+        "Human verification of visible focus rings, clipping and overlap",
+        "Whole UI text/non-text contrast; measured pixel pairs do not establish foreground/background semantics",
+        "Physical desktop and compositor scaling beyond Xvfb"
+      ]
+    },
+    {
+      "configuration": "ON-dark",
+      "program_sha256": "409eb3e8d74717730323e4d8dd81ed5eb8da9c4696401840877d929c5fc257eb",
+      "raw_report_audit_completed": true,
+      "raw_check_count": 27,
+      "raw_passed": 27,
+      "raw_failed": [],
+      "adjudicated_records_initial_focus_accepted": false,
+      "adjudication": "Raw bool(focused) check erroneously accepted main-window focus; actual target is not Reading records. Immutable raw result preserved, not promoted to accessibility acceptance.",
+      "environment": {
+        "gtk": [
+          3,
+          24,
+          33
+        ],
+        "theme": "Adwaita-dark",
+        "font": "Sans 16",
+        "xft_dpi": 98304,
+        "gdk_window_scale": 1,
+        "screen_resolution": 96,
+        "screen": [
+          2560,
+          1920
+        ],
+        "env": {
+          "GTK_THEME": "Adwaita-dark",
+          "GDK_SCALE": "1",
+          "GDK_DPI_SCALE": "1",
+          "XDG_CONFIG_HOME": "/home/runner/work/_temp/d03-ON-dark"
+        },
+        "readback_source": "Same-environment GTK probe window and settings; actual host bounds, focus and name/role/state are separately obtained through AT-SPI. No in-process host DPI instrumentation."
+      },
+      "geometry": [
+        {
+          "name": "shelf",
+          "geometry": "WINDOW=8388611\nX=761\nY=577\nWIDTH=1040\nHEIGHT=820\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        },
+        {
+          "name": "page-turn",
+          "geometry": "WINDOW=8388611\nX=761\nY=577\nWIDTH=1040\nHEIGHT=820\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        },
+        {
+          "name": "notes-panel",
+          "geometry": "WINDOW=8388611\nX=761\nY=577\nWIDTH=1040\nHEIGHT=820\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        },
+        {
+          "name": "small-window",
+          "geometry": "WINDOW=8388611\nX=761\nY=577\nWIDTH=800\nHEIGHT=600\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        }
+      ],
+      "measured_color_pair": {
+        "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/text[Search bookshelf]#0",
+        "region": {
+          "x": 760,
+          "y": 647,
+          "width": 800,
+          "height": 34
+        },
+        "colors": [
+          [
+            23701,
+            [
+              255,
+              255,
+              255
+            ]
+          ],
+          [
+            3256,
+            [
+              53,
+              132,
+              228
+            ]
+          ]
+        ],
+        "ratio": 3.7687294221773,
+        "algorithm": "WCAG relative sRGB luminance of two most frequent actual region colors",
+        "limitation": "Not a verified text/background pair; not a contrast acceptance grant"
+      },
+      "color_pair_adjudication": "Two dominant pixel colors only, not a verified text/background pair; no WCAG grant.",
+      "named_checks": [
+        {
+          "name": "bridge",
+          "passed": true
+        },
+        {
+          "name": "scale-readback",
+          "passed": true
+        },
+        {
+          "name": "compact-mode",
+          "passed": true
+        },
+        {
+          "name": "tab-forward-reverse",
+          "passed": true
+        },
+        {
+          "name": "tab-focus-names",
+          "passed": true
+        },
+        {
+          "name": "import-cancel",
+          "passed": true
+        },
+        {
+          "name": "keyboard-import-open",
+          "passed": true
+        },
+        {
+          "name": "next-page",
+          "passed": true
+        },
+        {
+          "name": "more-text-leaves",
+          "passed": true
+        },
+        {
+          "name": "search-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Search within book]#1/filler[]#0/text[In-book query]#0",
+              "name": "In-book query",
+              "role": "text",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true,
+                "editable": true,
+                "single_line": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "search-escape",
+          "passed": true
+        },
+        {
+          "name": "directory-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Directory and page entries]#1/filler[]#0/scroll pane[]#1",
+              "name": "",
+              "role": "scroll pane",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "directory-escape",
+          "passed": true
+        },
+        {
+          "name": "records-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/filler[]#0/toggle button[More reader actions]#2",
+              "name": "More reader actions",
+              "role": "toggle button",
+              "states": {
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "record-save",
+          "passed": true,
+          "actual": [
+            "Bookmark 15e414e1 · D03 bookmark · location not checked",
+            "Bookmark 15e414e1 · D03 bookmark · location not checked"
+          ]
+        },
+        {
+          "name": "records-escape",
+          "passed": true
+        },
+        {
+          "name": "settings-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Reading settings]#1/filler[]#0/panel[]#0/spin button[Font size]#22",
+              "name": "Font size",
+              "role": "spin button",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true,
+                "editable": true,
+                "single_line": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "settings-escape",
+          "passed": true
+        },
+        {
+          "name": "collections-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Library collections]#1/filler[]#0/filler[]#0/combo box[Collection type]#1",
+              "name": "Collection type",
+              "role": "combo box",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "collections-types-keyboard",
+          "passed": true
+        },
+        {
+          "name": "collections-escape",
+          "passed": true
+        },
+        {
+          "name": "account-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Account and Sync]#1/filler[]#0/panel[]#1/text[HTTPS WebDAV root]#6",
+              "name": "HTTPS WebDAV root",
+              "role": "text",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true,
+                "editable": true,
+                "single_line": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "account-escape",
+          "passed": true
+        },
+        {
+          "name": "text-note-keyboard",
+          "passed": true
+        },
+        {
+          "name": "return-shelf-search",
+          "passed": true
+        },
+        {
+          "name": "details-escape",
+          "passed": true
+        },
+        {
+          "name": "more-22-leaves",
+          "passed": true
+        }
+      ],
+      "findings": [],
+      "pending": [
+        "Orca and human speech/braille experience",
+        "Human verification of visible focus rings, clipping and overlap",
+        "Whole UI text/non-text contrast; measured pixel pairs do not establish foreground/background semantics",
+        "Physical desktop and compositor scaling beyond Xvfb"
+      ]
+    },
+    {
+      "configuration": "ON-large",
+      "program_sha256": "409eb3e8d74717730323e4d8dd81ed5eb8da9c4696401840877d929c5fc257eb",
+      "raw_report_audit_completed": true,
+      "raw_check_count": 27,
+      "raw_passed": 27,
+      "raw_failed": [],
+      "adjudicated_records_initial_focus_accepted": false,
+      "adjudication": "Raw bool(focused) check erroneously accepted main-window focus; actual target is not Reading records. Immutable raw result preserved, not promoted to accessibility acceptance.",
+      "environment": {
+        "gtk": [
+          3,
+          24,
+          33
+        ],
+        "theme": "HighContrast",
+        "font": "Sans 20",
+        "xft_dpi": 98304,
+        "gdk_window_scale": 1,
+        "screen_resolution": 96,
+        "screen": [
+          2560,
+          1920
+        ],
+        "env": {
+          "GTK_THEME": "HighContrast",
+          "GDK_SCALE": "1",
+          "GDK_DPI_SCALE": "1",
+          "XDG_CONFIG_HOME": "/home/runner/work/_temp/d03-ON-large"
+        },
+        "readback_source": "Same-environment GTK probe window and settings; actual host bounds, focus and name/role/state are separately obtained through AT-SPI. No in-process host DPI instrumentation."
+      },
+      "geometry": [
+        {
+          "name": "shelf",
+          "geometry": "WINDOW=8388611\nX=761\nY=577\nWIDTH=1040\nHEIGHT=820\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        },
+        {
+          "name": "page-turn",
+          "geometry": "WINDOW=8388611\nX=761\nY=577\nWIDTH=1040\nHEIGHT=820\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        },
+        {
+          "name": "notes-panel",
+          "geometry": "WINDOW=8388611\nX=761\nY=577\nWIDTH=1040\nHEIGHT=820\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        },
+        {
+          "name": "small-window",
+          "geometry": "WINDOW=8388611\nX=761\nY=577\nWIDTH=800\nHEIGHT=600\nSCREEN=0\n",
+          "screen_pixels": [
+            2560,
+            1920
+          ],
+          "offscreen_candidates": []
+        }
+      ],
+      "measured_color_pair": {
+        "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/text[Search bookshelf]#0",
+        "region": {
+          "x": 760,
+          "y": 659,
+          "width": 800,
+          "height": 34
+        },
+        "colors": [
+          [
+            23693,
+            [
+              255,
+              255,
+              255
+            ]
+          ],
+          [
+            3252,
+            [
+              27,
+              106,
+              203
+            ]
+          ]
+        ],
+        "ratio": 5.288906053345469,
+        "algorithm": "WCAG relative sRGB luminance of two most frequent actual region colors",
+        "limitation": "Not a verified text/background pair; not a contrast acceptance grant"
+      },
+      "color_pair_adjudication": "Two dominant pixel colors only, not a verified text/background pair; no WCAG grant.",
+      "named_checks": [
+        {
+          "name": "bridge",
+          "passed": true
+        },
+        {
+          "name": "scale-readback",
+          "passed": true
+        },
+        {
+          "name": "compact-mode",
+          "passed": true
+        },
+        {
+          "name": "tab-forward-reverse",
+          "passed": true
+        },
+        {
+          "name": "tab-focus-names",
+          "passed": true
+        },
+        {
+          "name": "import-cancel",
+          "passed": true
+        },
+        {
+          "name": "keyboard-import-open",
+          "passed": true
+        },
+        {
+          "name": "next-page",
+          "passed": true
+        },
+        {
+          "name": "more-text-leaves",
+          "passed": true
+        },
+        {
+          "name": "search-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Search within book]#1/filler[]#0/text[In-book query]#0",
+              "name": "In-book query",
+              "role": "text",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true,
+                "editable": true,
+                "single_line": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "search-escape",
+          "passed": true
+        },
+        {
+          "name": "directory-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Directory and page entries]#1/filler[]#0/scroll pane[]#1",
+              "name": "",
+              "role": "scroll pane",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "directory-escape",
+          "passed": true
+        },
+        {
+          "name": "records-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/filler[]#0/toggle button[More reader actions]#2",
+              "name": "More reader actions",
+              "role": "toggle button",
+              "states": {
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "record-save",
+          "passed": true,
+          "actual": [
+            "Bookmark 83fc4e1d · D03 bookmark · location not checked",
+            "Bookmark 83fc4e1d · D03 bookmark · location not checked"
+          ]
+        },
+        {
+          "name": "records-escape",
+          "passed": true
+        },
+        {
+          "name": "settings-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Reading settings]#1/filler[]#0/panel[]#0/spin button[Font size]#22",
+              "name": "Font size",
+              "role": "spin button",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true,
+                "editable": true,
+                "single_line": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "settings-escape",
+          "passed": true
+        },
+        {
+          "name": "collections-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Library collections]#1/filler[]#0/filler[]#0/combo box[Collection type]#1",
+              "name": "Collection type",
+              "role": "combo box",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "collections-types-keyboard",
+          "passed": true
+        },
+        {
+          "name": "collections-escape",
+          "passed": true
+        },
+        {
+          "name": "account-dialog-focus",
+          "passed": true,
+          "actual": [
+            {
+              "path": "application[exreader-linux]#0/dialog[Account and Sync]#1/filler[]#0/panel[]#1/text[HTTPS WebDAV root]#6",
+              "name": "HTTPS WebDAV root",
+              "role": "text",
+              "states": {
+                "enabled": true,
+                "visible": true,
+                "showing": true,
+                "focused": true,
+                "focusable": true,
+                "sensitive": true,
+                "editable": true,
+                "single_line": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "account-escape",
+          "passed": true
+        },
+        {
+          "name": "text-note-keyboard",
+          "passed": true
+        },
+        {
+          "name": "return-shelf-search",
+          "passed": true
+        },
+        {
+          "name": "details-escape",
+          "passed": true
+        },
+        {
+          "name": "more-22-leaves",
+          "passed": true
+        }
+      ],
+      "findings": [],
+      "pending": [
+        "Orca and human speech/braille experience",
+        "Human verification of visible focus rings, clipping and overlap",
+        "Whole UI text/non-text contrast; measured pixel pairs do not establish foreground/background semantics",
+        "Physical desktop and compositor scaling beyond Xvfb"
+      ]
+    }
+  ],
+  "additional_review_findings": [
+    "Reading records initial focus is outside the dialog in all eight configurations; raw presence-only check is too weak.",
+    "Directory dialog initial focus is on an unnamed scroll pane in all eight configurations.",
+    "At 2x, AT-SPI logical extents and physical screenshots were compared without a calibrated transform; offscreen counts and crop attribution are not accepted.",
+    "Visible focus rings, clipping/overlap and semantic text contrast are not visually verified; Orca/human reader not run."
+  ],
+  "docs_only_seal": "Final commit contains documentation only; exact seal SHA is reported in HANDOFF delivery rather than self-referenced here.",
+  "evidence_authenticated": true,
+  "scope_claims_trust_raw_pass_counts": false,
+  "adjudication": {
+    "check_has_focus_is_not_focus_in_modal": true,
+    "revoked_check": "records-dialog-focus",
+    "revoked_in_configurations": [
+      "OFF-normal",
+      "OFF-scale2",
+      "OFF-dark",
+      "OFF-large",
+      "ON-normal",
+      "ON-scale2",
+      "ON-dark",
+      "ON-large"
+    ],
+    "basis": "Recorded focused paths belong to main frame, not dialog[Reading records]; states omit sensitive/enabled.",
+    "geometry_2x": "indeterminate",
+    "contrast_2x": "indeterminate",
+    "required_assertions_invalid": true,
+    "audit_completed": false
+  }
+}
