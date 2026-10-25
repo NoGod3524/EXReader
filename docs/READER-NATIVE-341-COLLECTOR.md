@@ -1,6 +1,6 @@
 # Fixed-source native workflow upper collector — preparation
 
-Status: **source prepared; no syntax/protocol/acceptance execution yet**.
+Status: **Actions syntax and 63 synthetic refusal cases passed; native collection pending**.
 Starting root source is `5e8b132626cfe7540f675285787d24bf488857a8`.
 Only this collector, its synthetic refusal tests, its new workflow and this
 document change. Callers, production, original collectors and leaf judges stay
@@ -10,7 +10,9 @@ unchanged. The raw-selector v3 prototype is not adopted.
 
 The input supplies one full common source SHA and one explicit `{run_id,attempt}`
 per leaf. Platform fragments, implicit latest attempts, reused run IDs, missing
-required keys and alternate artifact selections are rejected.
+required keys and alternate artifact selections are rejected. The two Windows
+slots alone may share the identical whole run and attempt; no third scope or
+different attempt may reuse that run.
 
 | Required key | Original complete workflow/scope |
 | --- | --- |
@@ -25,7 +27,7 @@ required keys and alternate artifact selections are rejected.
 | `apple_shelf` | Complete shelf workflow and its actual validation artifact |
 | `apple_mapping` | Complete six-job/six-artifact mapping workflow and original per-artifact collectors |
 | `apple_wp13` | Complete eight-job WP13 workflow and original gate-reviewed validation |
-| `apple_page_theme` | Complete SDK3.41 explicit page-theme workflow; never substituted by record compatibility |
+| `apple_page_theme` | Complete eight-job SDK3.41 explicit page-theme workflow, including native ON37/OFF10, mixed-version5, three UI platforms and initialization/publication2 |
 
 The two Windows slots remain required `None` contracts. They always stay
 `pending` and block the foundation's `accepted` flag, even if another internal
@@ -121,17 +123,26 @@ actual complete run. The already accepted composition source `b5e49d17` /
    that boundary, exact SDK `eddd…`, unchanged schema1 and actual MAX2 header.
 2. Pin both real Windows contracts and their exact strict summary validators.
    If full-F3 and atomic13 genuinely share one complete workflow/run, explicitly
-   review a narrow shared-run contract; default duplicate-run rejection remains.
+   use the reviewed two-slot identical-run/attempt exception; all other duplicate-run rejection remains.
 3. Confirm the final callers preserve the listed workflow/job/artifact names,
    actual source-guard step names and original strict schemas. Any required
    identity adaptation must be explicit; no required scope may be dropped.
 4. Configure separate product-fact adapters only after reviewing actual common
    source record/peer evidence. History never replaces these conditions.
-5. Run the new synthetic protocol checks in Actions, then collect only after all
-   required complete same-source leaves finish. The test suite contains 57
-   planned negative controls for missing/failed/foreign/duplicate/old-attempt/
-   wrong-scope evidence, not reader acceptance cases. None has been run locally.
+5. Collect only after all required complete same-source leaves finish. The
+   protocol suite now contains 63 negative controls for missing/failed/foreign/
+   duplicate/old-attempt/wrong-scope evidence, including absent theme-native or
+   initialization/publication reports. These are synthetic collector checks.
 
-This branch is preparation only and uses `[skip ci]`. The workflow's push event
-on the eventual root branch only registers its identity: the collector job is
-manual-dispatch-only. No long producer workflow is launched by this collector.
+## Executed protocol evidence
+
+Source `e3e5cc6ddf7f0b219eae79a61fa13a3122f2029d`,
+[run 40193435537](https://github.com/NoGod3524/EXReader/actions/runs/40193435537)
+attempt 1: protocol job success. Actions compiled both Python sources and
+reported `63 actual rejections; synthetic fixtures only`. No local checks ran.
+The collection job was skipped as intended; no native leaf or product was
+accepted by this run.
+
+Push runs the cheap protocol job. Manual dispatch defaults to `mode=protocol`;
+only explicit `mode=collect` runs the authenticated collection after protocol
+passes. No long producer workflow is launched by this collector.
