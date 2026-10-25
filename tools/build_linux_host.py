@@ -16,6 +16,8 @@ ROOT = Path(__file__).resolve().parents[1]
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--sdk', type=Path, required=True)
+    parser.add_argument('--sdk-version', choices=('3.40.0', '3.41.0'), default='3.40.0',
+                        help='Exact SDK version; the frozen default remains 3.40.0')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--binary', type=Path, help='Package this already-built native consumer instead of rebuilding the reference host')
     args = parser.parse_args()
@@ -31,11 +33,12 @@ def main():
         shutil.copy2(args.binary.resolve(strict=True), payload/'bin/exreader-linux')
     else:
         subprocess.run(['cmake', '-S', str(ROOT/'examples/linux'), '-B', str(build),
-                        '-DEXR_SDK='+str(args.sdk.resolve()), '-DCMAKE_BUILD_TYPE=Release'], check=True)
+                        '-DEXR_SDK='+str(args.sdk.resolve()), '-DEXR_SDK_VERSION='+args.sdk_version,
+                        '-DCMAKE_BUILD_TYPE=Release'], check=True)
         subprocess.run(['cmake', '--build', str(build), '--parallel', '4'], check=True)
         subprocess.run(['cmake', '--install', str(build), '--prefix', str(payload)], check=True)
     identity = subprocess.check_output([str(payload/'bin/exreader-linux'), '--version'], text=True).strip()
-    if identity != '3.40.0 1':
+    if identity != args.sdk_version + ' 1':
         raise RuntimeError('Installed host reports an unexpected SDK or ABI')
     dependencies = subprocess.check_output(['ldd', str(payload/'bin/exreader-linux')], text=True)
     (output/'runtime-dependencies.txt').write_text(dependencies)
