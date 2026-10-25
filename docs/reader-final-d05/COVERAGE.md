@@ -33,3 +33,15 @@ end-to-end entry; a blocked prerequisite stays failed/unverified, never accepted
 Physical keyboard hardware, actual TalkBack speech/gestures, physical Android,
 other APIs/locales and release-signing behavior remain pending. Debug owner APK is
 the only runtime scope; it is not a release/product grant.
+
+## Retained execution history
+
+Round 1: harness `5a8dd7e66a00a5262f61bf118574c42e03a811d4`, run
+40215041256 attempt 1, audit job 121234243011 failed at tool installation:
+`sdkmanager: command not found` (17:09:02 UTC). Build/emulator never ran; no
+artifact was produced because the output folder was empty. Raw log remains at
+https://github.com/NoGod3524/EXReader/actions/runs/40215041256/job/121234243011 .
+Classification: harness environment setup, not a product failure. Round 2 uses
+the existing audit's absolute Android SDK tool path and retains setup logging.
+Also fixed filename sanitization for a TOC label containing `/`; no case IDs,
+semantic labels, product source or assertions changed.

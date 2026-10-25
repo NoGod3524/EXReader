@@ -27,6 +27,7 @@ jobs:
           unexpected="$(git diff --name-only "$base" HEAD | grep -vE '^(tests/reader_final_d05/|docs/reader-final-d05/|docs/validation/reader-final-d05.json$|\.github/workflows/reader-final-d05.yml$|HANDOFF-RESULT.md$)' || true)"
           test -z "$unexpected" || { echo "$unexpected"; exit 1; }
           mkdir -p build/final-d05
+          printf '%s\n' "$GITHUB_SHA" > build/final-d05/harness-source.txt
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -36,11 +37,16 @@ jobs:
           gradle-version: '8.9'
       - name: Install pinned tools and actual API34 default image
         run: |
-          sdkmanager 'platforms;android-35' 'build-tools;35.0.0' 'build-tools;34.0.0' 'ndk;27.0.12077973' 'cmake;3.22.1' 'system-images;android-34;default;x86_64' 'emulator'
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-35' 'build-tools;35.0.0' 'build-tools;34.0.0' 'ndk;27.0.12077973' 'cmake;3.22.1' 'system-images;android-34;default;x86_64' 'emulator' 2>&1 | tee build/final-d05/tools.log
           sudo apt-get update -qq
           sudo apt-get install -y patchelf
           python3 -m pip install ninja==1.11.1.1
-          cp "$ANDROID_HOME/system-images/android-34/default/x86_64/source.properties" build/final-d05/image-source.properties
+          cp "$sdk/system-images/android-34/default/x86_64/source.properties" build/final-d05/image-source.properties
       - name: Build unchanged formal default and independent audits
         env:
           ANDROID_CANDIDATE_SDK_BASE: 0889f7d1e9a537c6c1b05456547e016b26e1cd85

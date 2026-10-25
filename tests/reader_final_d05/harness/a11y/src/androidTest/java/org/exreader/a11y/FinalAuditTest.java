@@ -40,7 +40,7 @@ public class FinalAuditTest {
         return new JSONObject().put("id",value(n.getViewIdResourceName())).put("text",value(n.getText())).put("description",value(n.getContentDescription())).put("class",value(n.getClassName())).put("hint",value(n.getHintText())).put("state",value(n.getStateDescription())).put("clickable",n.isClickable()).put("focusable",n.isFocusable()).put("focused",n.isFocused()).put("selected",n.isSelected()).put("enabled",n.isEnabled()).put("visible",n.isVisibleToUser()).put("scrollable",n.isScrollable()).put("bounds",new JSONArray(Arrays.asList(r.left,r.top,r.right,r.bottom))).put("actions",actions).put("children",kids);
     }
     JSONObject capture(String name)throws Exception {
-        String base=String.format("%03d-%s",sequence++,name);last=base;
+        String base=String.format("%03d-%s",sequence++,name.replace('/','_'));last=base;
         require(d.takeScreenshot(new File(out,base+".png")),"screenshot missing");d.dumpWindowHierarchy(new File(out,base+".xml"));
         AccessibilityNodeInfo root=InstrumentationRegistry.getInstrumentation().getUiAutomation().getRootInActiveWindow();require(root!=null,"no active root");
         JSONObject j=new JSONObject().put("name",base).put("tree",node(root)).put("width",d.getDisplayWidth()).put("height",d.getDisplayHeight()).put("font_scale",shell("settings get system font_scale").trim()).put("density",shell("wm density")).put("pid",shell("pidof "+app).trim()).put("activity",shell("dumpsys activity activities"));write(base+".json",j.toString(2));return j;
