@@ -19,6 +19,7 @@ int c06_c_api(void){
     reader_ai3_stats s3;reader_ai3_error e3;reader_ai3_options o3;
     if(strcmp(READER_ANNOTATION_EXPORT_RAW3_VERSION,"0.2.0")!=0||READER_ANNOTATION_EXPORT_RAW3_FORMAT_VERSION!=1u)return 4;
     if(strcmp(READER_ANNOTATION_IMPORT_RAW3_VERSION,"0.2.0")!=0||strcmp(READER_ANNOTATION_IMPORT_RAW3_FORMAT,READER_ANNOTATION_EXPORT_RAW3_FORMAT)!=0)return 5;
+    if(sizeof(s3.fingerprint)!=65u||sizeof(o3.confirm_fingerprint)!=65u)return 10;
     memset(&stats,0xa5,sizeof(stats));memset(&error,0xa5,sizeof(error));
     if(reader_annotation_export_raw3_run(NULL,&stats,&error)!=READER_ANNOTATION_EXPORT_ARGUMENT||!error.message[0])return 6;
     memset(&s3,0xa5,sizeof(s3));memset(&e3,0xa5,sizeof(e3));

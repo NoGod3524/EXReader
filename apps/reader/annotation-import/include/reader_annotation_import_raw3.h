@@ -20,7 +20,9 @@ extern "C" {
    PREVIEW is read-only: the whole file is copied once into a private anonymous
    spool and completely validated (format, hashes, wire identity, independently
    decoded location, original identity, public FOUND callback, collisions)
-   without any write. COMMIT requires confirm_fingerprint == the preview's
+   without any write. fingerprint is the complete input byte stream's SHA-256,
+   as 64 lowercase hexadecimal bytes followed by NUL. COMMIT requires
+   confirm_fingerprint == the preview's
    stats.fingerprint, re-validates the same way, and only then replays the spool
    with one public reader_revision_receive_raw_v3 per head (each its own
    transaction; cancellation or a rejected item keeps earlier commits and reports
@@ -83,7 +85,7 @@ typedef struct {
   const char *target_book_key;       /* host confirmed original format:sha256 */
   reader_ai3_mode mode;
   uint64_t max_input_bytes;          /* 0 = 16 MiB; hard 64 MiB */
-  uint64_t confirm_fingerprint;      /* COMMIT: stats.fingerprint of the preview */
+  char confirm_fingerprint[65];      /* COMMIT: full SHA-256 stats.fingerprint of the preview */
   uint64_t resume_index;             /* COMMIT: flattened head ordinal, default 0 */
   reader_ai3_resolve_policy policy;
   reader_ai3_resolve_fn resolve;
@@ -95,7 +97,8 @@ typedef struct {
   uint64_t input_bytes, annotations, head_wires, omitted_history;
   uint64_t found, unresolved, null_preserved, would_create, would_duplicate;
   uint64_t created, duplicates, committed, next_index;
-  uint64_t source_bytes, fingerprint;
+  uint64_t source_bytes;
+  char fingerprint[65];             /* Complete input byte stream SHA-256; valid only if validated. */
   int validated, found_checked, complete_product_accepted;
 } reader_ai3_stats;
 typedef struct {

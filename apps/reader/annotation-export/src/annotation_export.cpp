@@ -441,9 +441,8 @@ struct record_guard {
   ~record_guard(){reader_rs_record_free(&record);}
 };
 
-/* The legacy entry and the explicit raw3 entry share one engine. A raw store
-   refuses every legacy API and a legacy store refuses every raw API, so a wrong
-   entry fails with REVISION before any output file exists. */
+/* Wrong-store refusals retain the legacy entry's ARGUMENT mapping. The raw3
+   entry checks its capability before creating outputs and reports REVISION. */
 reader_revision_status api_page(bool raw,reader_revisions *r,const char *book,const char *after,size_t limit,
   reader_revision_annotation_fn fn,void *context,reader_revision_error *e){
 #ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
@@ -784,6 +783,15 @@ reader_annotation_export_status run_export(bool raw,const reader_annotation_expo
   export_status code=READER_ANNOTATION_EXPORT_OK;int revision_code=0,rs_code=0,os_error=0;std::string message;
   try{
     validate(options);
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+    if(raw){
+      /* Check before opening either sink, also for Markdown-only exports. A
+         JSON header must not be the only place that enforces raw capability. */
+      uint64_t source_bytes=0;reader_revision_error e{};
+      reader_revision_status s=reader_revision_book_identity_raw_v3(options->revisions,options->book_key,&source_bytes,&e);
+      if(s!=READER_REV_OK&&s!=READER_REV_NOT_FOUND)fail(READER_ANNOTATION_EXPORT_REVISION,e.message,(int)s,0,e.sqlite_code);
+    }
+#endif
     export_book(*options,local,raw);
   }catch(const failure &f){
     code=f.code;revision_code=f.revision_code;rs_code=f.rs_code;os_error=f.os_error;message=f.message;

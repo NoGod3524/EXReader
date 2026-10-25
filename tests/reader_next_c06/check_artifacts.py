@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: MIT
 """Actions-only strict same-source evidence for the C06 consumer jobs."""
 import hashlib
+from datetime import datetime, timezone
 import io
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import sys
 import tempfile
 import zipfile
@@ -37,7 +38,9 @@ def main():
             matches = [j for j in jobs if j['name'] == job_name]
             require(len(matches) == 1, 'missing/duplicate job ' + job_name); job = matches[0]
             require(job['head_sha'] == source and job['run_attempt'] == attempt and job['conclusion'] == 'success', 'upstream failed or different source: ' + job_name)
-            require(not artifact['expired'] and artifact['size_in_bytes'] > 0 and artifact['workflow_run']['head_sha'] == source, 'artifact identity differs')
+            require(not artifact['expired'] and artifact['size_in_bytes'] > 0 and artifact['workflow_run']['head_sha'] == source and
+                    artifact['workflow_run']['id'] == run_id and
+                    datetime.fromisoformat(artifact['expires_at'].replace('Z', '+00:00')) > datetime.now(timezone.utc), 'artifact identity/expiry differs')
             with tempfile.TemporaryFile() as stream:
                 download_artifact_zip(artifact['id'], stream)
                 stream.seek(0); data = stream.read()
@@ -45,11 +48,40 @@ def main():
             with zipfile.ZipFile(io.BytesIO(data)) as archive:
                 names = archive.namelist()
                 require(len(names) == len(set(names)), 'duplicate ZIP member')
+                require(all(not PurePosixPath(n).is_absolute() and '..' not in PurePosixPath(n).parts and
+                            '\\' not in n and ':' not in n for n in names), 'unsafe ZIP member')
                 found = [n for n in names if n == 'result.json' or n.endswith('/result.json')]
                 require(len(found) == 1, 'result.json missing or ambiguous')
                 report = json.loads(archive.read(found[0]))
+                root = found[0][:-len('result.json')]
+                def matches(member, digest):
+                    require(hashlib.sha256(archive.read(root + member)).hexdigest() == digest,
+                            'retained output/program/log digest differs: ' + member)
+                for member, digest in report.get('raw_outputs', {}).items():
+                    matches('raw/out/' + member, digest)
+                for key, member in (('jsonl', 'legacy-off/legacy.jsonl'), ('markdown', 'legacy-off/legacy.md')):
+                    matches(member, report['legacy_outputs'][key])
+                for index, book in enumerate(report.get('mac_records', {}).get('books', [])):
+                    matches('mac/out/' + str(index) + '.jsonl', book['jsonl_sha256'])
+                for consumer in ('raw', 'off'):
+                    executable = consumer + '-consumer/c06-probe' + ('.exe' if platform == 'Windows' else '')
+                    matches(executable, report['consumers'][consumer])
+                for member, digest in report.get('logs', {}).items():
+                    matches(member, digest)
             require(report.get('accepted') is True and report['source_sha'] == source and int(report['run_id']) == run_id and int(report['attempt']) == attempt, 'report identity/refusal')
             require(report['count'] == len(report['checks']) > 0 and len(set(report['checks'])) == len(report['checks']) and not report['failed'], 'check list empty, duplicated or failed')
+            required = {'preview fingerprint is independent full-input SHA-256',
+                        'preview confirmation binds header metadata as well as retained head wires',
+                        'commit callbacks preserve preflight FOUND NULL and deletion classifications',
+                        'cancelled preview exposes no validated fingerprint and writes nothing',
+                        'repeating the import is an exact duplicate with no history change',
+                        'anchor1 and anchor2 resolve FOUND through the public SDK',
+                        'raw export capability refusal is REVISION before markdown output',
+                        'raw export capability refusal is REVISION before both output',
+                        'export cancellation preserves both previous outputs',
+                        'real Mac annotation heads were exported'}
+            require(required <= set(report['checks']) and len(report['raw_outputs']) == 8 and
+                    report['mac_records']['books'], 'required root-review cases or output inventory omitted')
             require(report['legacy_default_kept'] is True and report['sdk_changed'] is False and report['schema_changed'] is False and report['adopted'] is False, 'report claims differ')
             peer = report['mac_records']['peer']
             require(all(peer[k] == v for k, v in MAC.items()) and peer['attempt'] == 1, 'certified Mac records were not consumed')

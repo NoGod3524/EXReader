@@ -25,7 +25,7 @@
 | 文件格式 | `format=exreader-annotation-export`，版本 1 | `format=exreader-annotation-export-raw3`，版本 1，模块 0.2.0 |
 | store | `reader_revisions_open` | `reader_revisions_open_raw_v3` |
 
-互斥矩阵（全部由测试覆盖，失败时零写入、零输出文件）：旧导出遇 raw store→`ARGUMENT`（旧导出把修订库 ARGUMENT 原样映射，`revision_code=1`）；raw 导出遇旧 store→同样 `ARGUMENT`；
+互斥矩阵（云端测试必须全量覆盖，失败时零写入、零输出文件）：旧导出遇 raw store→`ARGUMENT`（旧导出把修订库 ARGUMENT 原样映射，`revision_code=1`）；raw 导出遇旧 store→`REVISION`（`revision_code=1`，与新增公开头的原契约一致；JSON、Markdown 与双输出均在创建临时文件之前统一检查）；
 旧导入遇 raw 文件→`FORMAT`（格式名不同）；raw 导入遇旧文件→`FORMAT`；旧导入遇 raw store→`REVISION`；raw 导入遇旧 store→`REVISION`；
 CMake `find_package(... EXACT)` 使 0.1.0/0.2.0 与 0.3.0/0.4.0 的混装在配置期失败。
 
@@ -60,9 +60,10 @@ UTF-8、LF、每行一个 JSON 对象，三类行；键序固定。`location` �
 
 入口 `reader_annotation_import_raw3_run(options, stats, error)`，`options.mode`：
 
-* `READER_AI3_PREVIEW`：只读。文件被拷入私有匿名 spool，**完整校验**后返回统计与逐头回调；不调用任何写 API。返回 `stats.fingerprint`
-  （对 book_key 与每个头的 revision_id＋sha256 的 64 位 FNV-1a，仅作“同一文件”一致性确认，不是安全摘要）。
-* `READER_AI3_COMMIT`：必须带 `confirm_fingerprint`==预览返回值（不等或为 0 → `UNCONFIRMED`，零写入）。提交前再次对**本次** spool 做完整校验并重算指纹。
+* `READER_AI3_PREVIEW`：只读。文件被拷入私有匿名 spool，逐头验证时产生回调，完整校验通过后 `validated=1`，返回最终统计与 `stats.fingerprint`；不调用任何写 API。
+  指纹是**完整输入字节流 SHA-256**，包含标题、图元数据、位置、wire 和 footer，以 64 个小写十六进制字符和结尾 NUL 存入 `char[65]`。未完整验证、取消或预览失败不返回有效指纹。
+  使用现有 thumbnails 实现的原字节副本作 64 KiB 增量摘要，没有新增加密依赖、整文件聚合或解析器；云端逐字固定来源，并独立用 Python `hashlib.sha256` 比对实际输入。
+* `READER_AI3_COMMIT`：必须带完整 `confirm_fingerprint`==预览返回值（缺少或不等 → `UNCONFIRMED`，零写入）。提交前再次对**本次** spool 做完整校验并重算完整摘要，合法的标题或其他元数据变化也必须重新预览。
 
 校验顺序（任何一步失败都发生在第一次 receive 之前）：
 
@@ -85,7 +86,7 @@ UTF-8、LF、每行一个 JSON 对象，三类行；键序固定。`location` �
 * 校验阶段的任何失败／取消：零写入。
 * 提交阶段取消或某项被公开 API 拒绝：之前已提交的项**保留**（每项独立事务，不回滚）；`stats.next_index` 给出下一个头序号，
   可用 `resume_index` 在**同一输入、同一 store**上继续；`resume_index` 不认证另一份文件（所以仍要求 `confirm_fingerprint` 并全文重新校验）。
-* 提交后图读取失败：该项仍记为已提交，游标前进。回调抛出异常被捕获为 `CALLBACK`，已报告的提交不撤销。
+* 提交后图读取失败：该项仍记为已提交，游标前进。回调抛出异常被捕获为 `CALLBACK`，已报告的提交不撤销。提交回调保留预检的逐头 FOUND／NULL／显式未核验分类；结果向量受 65536 头上限限制，随本次调用成功、取消或失败一起销毁，不跨调用缓存。
 
 所有权与资源：store、选项、字符串、回调借用到调用返回；须在 store 创建线程调用、不可重入（重入返回 `ARGUMENT` 且不重置外层 stats）；
 spool 为私有匿名（POSIX `tmpfile`；Windows `CREATE_NEW`＋`DELETE_ON_CLOSE`）；源文件必须是常规非链接文件，只读一次；成功、取消、异常都关闭句柄。
@@ -105,3 +106,11 @@ spool 为私有匿名（POSIX `tmpfile`；Windows `CREATE_NEW`＋`DELETE_ON_CLOS
 
 宿主 UI 接线；移动端／Apple 端构建；对 Mac 来源记录的 FOUND（Mac 数据缺少对应的 SDK 文档句柄，使用显式 ALREADY_VERIFIED 并如实标注）；
 性能；真机；最终 root 对新 portable 契约的审查与接纳（由 root 负责）。
+
+## 7. Root 审查修复（尚待云端验证）
+
+独立分支 `codex/reader-next-c06-root-review` 从原第三轮受测 `1015f2ca397c6411e6f67fc061ce64ee2e57384c` 建立，不修改原 Claude worktree。原三轮失败 `40227792202`、`40228225687`、`40228668273` 均保留，不能视为导入器已运行。
+
+源码审查修复三个问题：raw 导出 Markdown-only capability 状态不一致；预览指纹没有覆盖完整输入；提交回调丢失预检 FOUND 分类。新 raw ABI 尚未授予，确认字段明确改为完整 `char[65]` SHA-256；旧接口、旧头、旧导入源码前缀、默认格式与默认行为保持。
+
+根审查 CI 将完整重跑全部原阶段和新增拒绝例，最多三轮；本地未执行语法、构建、测试或工件处理。此节当前仅记录源码准备，不授予任何平台。

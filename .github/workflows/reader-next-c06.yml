@@ -1,7 +1,7 @@
-name: Reader next C06 raw3 portable annotations
+name: Reader next C06 root review raw3 portable annotations
 on:
   push:
-    branches: [codex/reader-next-c06]
+    branches: [codex/reader-next-c06-root-review]
   workflow_dispatch:
 permissions:
   contents: read

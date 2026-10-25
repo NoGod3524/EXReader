@@ -178,8 +178,11 @@ static void raw_seed(const fs::path &pdf_path,const fs::path &work){
   receive_wire(sender.p,true,legacy_encode(encoder.p,2,rid(),amb_key(),std::string(32,'a'),ac,"ambiguous"));
   std::cout<<"KEYS "<<key<<" "<<tkey<<" "<<amb_key()<<" "<<key2<<std::endl;
 }
-static void raw_export(bool raw,const std::string &path,const std::string &book,const char *jsonl,const char *md,uint64_t budget){
+static uint64_t g_export_polls=0,g_export_cancel_after=0;
+static int export_cancel(void *){return g_export_cancel_after&&++g_export_polls>=g_export_cancel_after;}
+static void raw_export(bool raw,const std::string &path,const std::string &book,const char *jsonl,const char *md,uint64_t budget,uint64_t cancel_after){
   store s(path,raw);reader_annotation_export_options o{};o.struct_size=sizeof(o);o.revisions=s.p;o.book_key=book.c_str();o.jsonl_path=jsonl;o.markdown_path=md;o.max_output_bytes=budget;
+  g_export_polls=0;g_export_cancel_after=cancel_after;o.cancel=export_cancel;
   reader_annotation_export_stats st{};reader_annotation_export_error er{};auto code=reader_annotation_export_raw3_run(&o,&st,&er);
   print_status((int)code,er.message);std::cout<<"REVISION "<<er.revision_code<<" RS "<<er.rs_code<<std::endl;
   std::cout<<"STATS "<<st.annotations<<" "<<st.head_wires<<" "<<st.jsonl_published<<" "<<st.markdown_published<<" "<<st.jsonl_bytes<<" "<<st.markdown_bytes<<std::endl;
@@ -201,12 +204,13 @@ static int item_cb(void *,const reader_ai3_item *item){
   ++g_items;return g_cancel_after&&g_items>=g_cancel_after;
 }
 static void raw_import(bool raw,const std::string &path,const std::string &book,const char *jsonl,const std::string &action,const std::string &policy,
-                       uint64_t fingerprint,uint64_t resume,uint64_t cancel_after,const char *pdf_path){
+                       const char *fingerprint,uint64_t resume,uint64_t cancel_after,const char *pdf_path,uint64_t input_budget){
   store s(path,raw);std::unique_ptr<fixed> pdf;std::unique_ptr<text_book> txt,amb;
   if(pdf_path&&std::strcmp(pdf_path,"-")){pdf.reset(new fixed(fs::u8path(pdf_path)));g_pdf=pdf.get();txt.reset(new text_book(TXT_TEXT,2,6));g_txt=txt.get();amb.reset(new text_book(amb_text(),400,402));g_amb=amb.get();}
   reader_ai3_options o{};o.struct_size=sizeof(o);o.revisions=s.p;o.jsonl_path=jsonl;o.target_book_key=book.c_str();
+  o.max_input_bytes=input_budget;
   o.mode=action=="commit"?READER_AI3_COMMIT:READER_AI3_PREVIEW;o.policy=policy=="verified"?READER_AI3_RESOLVE_ALREADY_VERIFIED:READER_AI3_RESOLVE_REQUIRED;
-  o.confirm_fingerprint=fingerprint;o.resume_index=resume;o.resolve=(policy=="verified"||policy=="nocallback")?nullptr:resolve_cb;o.item=item_cb;g_items=0;g_cancel_after=cancel_after;
+  std::snprintf(o.confirm_fingerprint,sizeof(o.confirm_fingerprint),"%s",fingerprint);o.resume_index=resume;o.resolve=(policy=="verified"||policy=="nocallback")?nullptr:resolve_cb;o.item=item_cb;g_items=0;g_cancel_after=cancel_after;
   reader_ai3_stats st{};reader_ai3_error er{};auto code=reader_annotation_import_raw3_run(&o,&st,&er);
   print_status((int)code,er.message);std::cout<<"REVISION "<<er.revision_code<<" RS "<<er.rs_code<<" LINE "<<er.line<<" ITEM_INDEX "<<er.item_index<<std::endl;
   std::cout<<"STATS validated="<<st.validated<<" annotations="<<st.annotations<<" head_wires="<<st.head_wires<<" omitted="<<st.omitted_history<<" found="<<st.found
@@ -226,8 +230,8 @@ int main(int argc,char **argv){try{
   if(mode=="make-store"&&argc>=5){make_store(raw_kind(argv[2]),argv[3],argc,argv,4);return 0;}
 #ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
   if(mode=="raw-seed"&&argc==4){raw_seed(fs::u8path(argv[2]),fs::u8path(argv[3]));return 0;}
-  if(mode=="raw-export"&&argc>=8){raw_export(raw_kind(argv[2]),argv[3],argv[4],argv[5],std::strcmp(argv[6],"-")?argv[6]:nullptr,argc>=8?std::strtoull(argv[7],nullptr,10):0);return 0;}
-  if(mode=="raw-import"&&argc==12){raw_import(raw_kind(argv[2]),argv[3],argv[4],argv[5],argv[6],argv[7],std::strtoull(argv[8],nullptr,10),std::strtoull(argv[9],nullptr,10),std::strtoull(argv[10],nullptr,10),argv[11]);return 0;}
+  if(mode=="raw-export"&&(argc==8||argc==9)){raw_export(raw_kind(argv[2]),argv[3],argv[4],std::strcmp(argv[5],"-")?argv[5]:nullptr,std::strcmp(argv[6],"-")?argv[6]:nullptr,std::strtoull(argv[7],nullptr,10),argc==9?std::strtoull(argv[8],nullptr,10):0);return 0;}
+  if(mode=="raw-import"&&(argc==12||argc==13)){raw_import(raw_kind(argv[2]),argv[3],argv[4],argv[5],argv[6],argv[7],argv[8],std::strtoull(argv[9],nullptr,10),std::strtoull(argv[10],nullptr,10),argv[11],argc==13?std::strtoull(argv[12],nullptr,10):0);return 0;}
 #endif
   std::cerr<<"unknown mode or arguments"<<std::endl;return 2;
 }catch(const std::exception &e){std::cerr<<"FAIL "<<e.what()<<std::endl;return 1;}}

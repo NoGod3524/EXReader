@@ -208,13 +208,13 @@ extern "C" reader_annotation_import_status reader_annotation_import_run(const re
    this section reuses its private strict parser, spool and source opener. ---- */
 #include "reader_annotation_import_raw3.h"
 #include <reader_selector_bytes_detail.h>
+#include <vector>
+#include "portable_sha256.h"
 namespace {
 struct failure3 {reader_ai3_status code;const char *text;int revision;int rs;};
 [[noreturn]] void fail3(reader_ai3_status c,const char *s,int r=0,int rs=0){throw failure3{c,s,r,rs};}
 void poll3(const reader_ai3_options &o){if(o.cancel){int stop=0;try{stop=o.cancel(o.context);}catch(...){fail(READER_AI_CALLBACK,"Cancel callback threw");}if(stop)fail(READER_AI_CANCELLED,"Import cancelled; previous commits retained");}}
 void notify3(const reader_ai3_options &o,const reader_ai3_item &item){if(o.item){int stop=0;try{stop=o.item(o.context,&item);}catch(...){fail(READER_AI_CALLBACK,"Item callback threw");}if(stop)fail(READER_AI_CANCELLED,"Item callback cancelled; any reported commit retained");}}
-const uint64_t kFnvBasis=0xcbf29ce484222325ull,kFnvPrime=0x100000001b3ull;
-uint64_t fnv(uint64_t h,const std::string &s){for(unsigned char c:s){h^=c;h*=kFnvPrime;}return h;}
 const size_t kLocationLimit=(size_t)1<<19;
 struct record_holder {
   reader_rs_record r{};
@@ -271,12 +271,13 @@ std::string raw_value(parser &p){
 }
 class importer3 {
  public:
-  const reader_ai3_options &o;reader_ai3_stats &stats;reader_ai3_error &error;uint64_t store_bytes;uint64_t fp=kFnvBasis;
+  const reader_ai3_options &o;reader_ai3_stats &stats;reader_ai3_error &error;uint64_t store_bytes;
+  std::vector<reader_ai3_found> resolutions; // Bounded by the public 65536-head limit.
   uint64_t found=0,unresolved=0,nulls=0,create=0,dup=0;
   importer3(const reader_ai3_options &a,reader_ai3_stats &s,reader_ai3_error &e,uint64_t bytes):o(a),stats(s),error(e),store_bytes(bytes){}
   void scan(FILE *f,bool apply){
     parser p(f);counts c;std::set<std::string> ids;std::string previous;const std::string target=o.target_book_key;
-    if(!apply){fp=fnv(kFnvBasis,target+"\n");found=unresolved=nulls=create=dup=0;}
+    if(!apply){resolutions.clear();found=unresolved=nulls=create=dup=0;}
     p.ch('{');p.key("type",true);need(p.str(16)=="header","First line must be header");
     p.key("format");need(p.str(64)==READER_ANNOTATION_IMPORT_RAW3_FORMAT,"Not a raw3 portable export (format name differs)");
     p.key("format_version");need(p.number()==1,"Unknown raw3 export format version");
@@ -337,13 +338,13 @@ class importer3 {
               if(yes==1){state=READER_AI3_FOUND_YES;++found;}else{state=READER_AI3_FOUND_NO;++unresolved;}}
           }
           if(exists)++dup;else ++create;
-          fp=fnv(fp,rid+":"+sha+"\n");
+          resolutions.push_back(state);
           if(o.mode==READER_AI3_PREVIEW){
             reader_ai3_item item{};item.index=c.heads;item.info=info;item.found=state;item.outcome=exists?READER_AI3_EXACT_DUPLICATE:READER_AI3_NEW;
             notify3(o,item);
           }
         }else if(c.heads>=o.resume_index){
-          reader_ai3_item item{};item.index=c.heads;item.info=info;int made=0;
+          reader_ai3_item item{};item.index=c.heads;item.info=info;item.found=resolutions[(size_t)c.heads];int made=0;
           status=reader_revision_receive_raw_v3(o.revisions,wire.data(),wire.size(),sha.c_str(),&item.info,&made,&re);
           if(status!=READER_REV_OK)item.info=info;
           item.revision_code=status;item.created=made;item.committed=status==READER_REV_OK;item.exact_duplicate=item.committed&&!made;
@@ -362,7 +363,7 @@ class importer3 {
       need(o.resume_index<=c.heads,"Resume cursor is beyond input");
       stats.annotations=c.annotations;stats.head_wires=c.heads;stats.omitted_history=c.omitted;stats.validated=1;
       stats.found=found;stats.unresolved=unresolved;stats.null_preserved=nulls;stats.would_create=create;stats.would_duplicate=dup;
-      stats.source_bytes=store_bytes;stats.fingerprint=fp;stats.found_checked=o.policy==READER_AI3_RESOLVE_REQUIRED;
+      stats.source_bytes=store_bytes;stats.found_checked=o.policy==READER_AI3_RESOLVE_REQUIRED;
       stats.next_index=o.mode==READER_AI3_COMMIT?o.resume_index:0;
     }
   }
@@ -378,13 +379,17 @@ void execute3(const reader_ai3_options &o,reader_ai3_stats &stats,reader_ai3_err
   if(rs==READER_REV_NOT_FOUND)fail3(READER_AI3_IDENTITY,"Target store retains no original identity for this book");
   if(rs!=READER_REV_OK)fail(READER_AI_REVISION,"Raw store/original identity check rejected before input I/O",rs);
   file source,spool;open_source(source,path.c_str());open_spool(spool);uint64_t budget=o.max_input_bytes?o.max_input_bytes:READER_ANNOTATION_IMPORT_DEFAULT_MAX_BYTES;
+  reader_ai3_detail::Sha256 fingerprint;fingerprint.init();
   char buffer[65536];for(;;){poll3(o);size_t n=std::fread(buffer,1,sizeof(buffer),source.p);if(std::ferror(source.p))fail(READER_AI_IO,"Cannot read input",0,errno);if(n>budget-stats.input_bytes)fail(READER_AI_LIMIT,"Input exceeds configured byte budget");if(!n)break;
     if(std::fwrite(buffer,1,n,spool.p)!=n)fail(READER_AI_IO,"Cannot write private spool",0,errno);
+    fingerprint.update(buffer,n);
     stats.input_bytes+=n;}
   if(std::fflush(spool.p)||std::fseek(spool.p,0,SEEK_SET))fail(READER_AI_IO,"Cannot rewind private spool",0,errno);
   importer3 run(o,stats,error,original);run.scan(spool.p,false);
+  unsigned char digest[32];fingerprint.finish(digest);const char *digits="0123456789abcdef";
+  for(size_t i=0;i<32;i++){stats.fingerprint[2*i]=digits[digest[i]>>4];stats.fingerprint[2*i+1]=digits[digest[i]&15];}
   if(o.mode==READER_AI3_PREVIEW)return;
-  if(o.confirm_fingerprint==0||o.confirm_fingerprint!=stats.fingerprint)fail3(READER_AI3_UNCONFIRMED,"Commit requires the fingerprint of the previewed file");
+  if(o.confirm_fingerprint[64]!=0||std::memcmp(o.confirm_fingerprint,stats.fingerprint,65))fail3(READER_AI3_UNCONFIRMED,"Commit requires the full SHA-256 fingerprint of the previewed file");
   if(stats.unresolved)fail3(READER_AI3_UNRESOLVED,"At least one head is not a public FOUND; nothing was written");
   if(std::fseek(spool.p,0,SEEK_SET))fail(READER_AI_IO,"Cannot rewind verified spool",0,errno);
   run.scan(spool.p,true);

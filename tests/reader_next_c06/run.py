@@ -31,8 +31,8 @@ ENV = dict(os.environ)
 ENV['C06_TXT_SHA'] = TXT_SHA
 CHECKS, FAILED = [], []
 # probe status codes (see the two public headers)
-EX_OK, EX_ARGUMENT, EX_REVISION, EX_LIMIT = 0, 1, 3, 5
-AI_OK, AI_ARGUMENT, AI_FORMAT, AI_REVISION, AI_CANCELLED, AI_IDENTITY, AI_UNRESOLVED, AI_UNCONFIRMED = 0, 1, 4, 6, 7, 9, 10, 11
+EX_OK, EX_ARGUMENT, EX_REVISION, EX_LIMIT, EX_CANCELLED = 0, 1, 3, 6, 7
+AI_OK, AI_ARGUMENT, AI_FORMAT, AI_LIMIT, AI_REVISION, AI_CANCELLED, AI_IDENTITY, AI_UNRESOLVED, AI_UNCONFIRMED = 0, 1, 4, 5, 6, 7, 9, 10, 11
 LOC_KEYS = ['mode', 'parser_version', 'anchor_version', 'page_id', 'page', 'part_path', 'part', 'chapter', 'start', 'end',
             'exact', 'prefix', 'suffix']
 
@@ -140,7 +140,7 @@ class Result:
     def stats(self):
         text = self.value('STATS') or ''
         if '=' in text:
-            return {k: int(v) for k, v in (item.split('=') for item in text.split())}
+            return {k: v if k == 'fingerprint' else int(v) for k, v in (item.split('=') for item in text.split())}
         return [int(x) for x in text.split()]
 
     @property
@@ -256,11 +256,12 @@ def parse_export(path, book, source_bytes, counts):
     for a in annotations:
         for h in a['heads']:
             wire = h['wire'].encode('utf-8')
-            expect(list(h) == ['revision_id', 'operation', 'sha256', 'bytes', 'location', 'wire'], 'head key order')
-            expect(hashlib.sha256(wire).hexdigest() == h['sha256'] and len(wire) == h['bytes'], 'head wire sha/bytes self-check')
-            expect(h['location'] == expected_location(h['wire']), 'independent location equals wire', (h['location'], expected_location(h['wire'])))
+            identity = book + '/' + h['revision_id']
+            expect(list(h) == ['revision_id', 'operation', 'sha256', 'bytes', 'location', 'wire'], 'head key order ' + identity)
+            expect(hashlib.sha256(wire).hexdigest() == h['sha256'] and len(wire) == h['bytes'], 'head wire sha/bytes self-check ' + identity)
+            expect(h['location'] == expected_location(h['wire']), 'independent location equals wire ' + identity, (h['location'], expected_location(h['wire'])))
             if h['location'] is not None:
-                expect(list(h['location']) == LOC_KEYS, 'location key order')
+                expect(list(h['location']) == LOC_KEYS, 'location key order ' + identity)
             heads.append((a['annotation_id'], h, wire))
     expect(footer['type'] == 'footer' and footer['complete'] is True and footer['annotations'] == len(annotations)
            and footer['head_wires'] == len(heads), 'footer proves completeness ' + book[:8], footer)
@@ -296,6 +297,11 @@ def guards():
     expect(current.startswith(original), 'fixed legacy importer source is a byte prefix of the new file')
     original = subprocess.run(['git', 'show', IMPORT_SOURCE + ':apps/reader/annotation-import/include/reader_annotation_import.h'], cwd=ROOT, capture_output=True, check=True).stdout
     expect((ROOT / 'apps/reader/annotation-import/include/reader_annotation_import.h').read_bytes() == original, 'legacy import header byte-identical')
+    thumbnail = subprocess.run(['git', 'show', START + ':apps/reader/thumbnails/src/thumbnails.cpp'], cwd=ROOT, capture_output=True, check=True).stdout
+    copied = (ROOT / 'apps/reader/annotation-import/src/portable_sha256.h').read_bytes()
+    def sha_struct(data):
+        return data.split(b'struct Sha256 {', 1)[1].split(b'\n};', 1)[0]
+    expect(sha_struct(thumbnail) == sha_struct(copied), 'streaming SHA-256 implementation byte-identical to fixed thumbnails source')
     expect(subprocess.run(['git', 'diff', '--quiet', START, 'HEAD', '--', 'apps/reader/annotation-export/include/reader_annotation_export.h'], cwd=ROOT).returncode == 0,
            'legacy export header byte-identical')
     pdf = ROOT / 'tests/fixtures/pdf-public-text.pdf'
@@ -362,9 +368,20 @@ def raw_phase(raw, off, pdf, work):
     old_on_raw = probe(raw, 'old-export', 'raw', sender, keys['pdf'], out / 'wrong-old.jsonl', out / 'wrong-old.md', label='old-export-on-raw')
     expect(old_on_raw.status == EX_ARGUMENT and old_on_raw.value('REVISION').split()[0] == '1' and not (out / 'wrong-old.jsonl').exists() and not (out / 'wrong-old.md').exists(), 'legacy export refuses a raw store with no output', old_on_raw.text)
     raw_on_old = probe(raw, 'raw-export', 'legacy', legacy_store, 'txt:' + TXT_SHA, out / 'wrong-raw.jsonl', '-', 0, label='raw-export-on-legacy')
-    expect(raw_on_old.status == EX_ARGUMENT and raw_on_old.value('REVISION').split()[0] == '1' and not (out / 'wrong-raw.jsonl').exists(), 'raw export refuses a legacy store with no output', raw_on_old.text)
+    expect(raw_on_old.status == EX_REVISION and raw_on_old.value('REVISION').split()[0] == '1' and not (out / 'wrong-raw.jsonl').exists(), 'raw export refuses a legacy store with no output', raw_on_old.text)
+    for selection, jsonl, md in (('markdown', '-', out / 'wrong-raw.md'),
+                                 ('both', out / 'wrong-raw-both.jsonl', out / 'wrong-raw-both.md')):
+        wrong = probe(raw, 'raw-export', 'legacy', legacy_store, 'txt:' + TXT_SHA, jsonl, md, 0, label='raw-export-on-legacy-' + selection)
+        expect(wrong.status == EX_REVISION and wrong.value('REVISION').split()[0] == '1' and
+               all(not Path(path).exists() for path in (jsonl, md) if str(path) != '-'),
+               'raw export capability refusal is REVISION before ' + selection + ' output', wrong.text)
     tiny = probe(raw, 'raw-export', 'raw', sender, keys['pdf'], out / 'tiny.jsonl', '-', 100, label='export-budget')
     expect(tiny.status == EX_LIMIT and not (out / 'tiny.jsonl').exists(), 'output budget breach publishes nothing', tiny.text)
+    keep_json, keep_md = out / 'keep.jsonl', out / 'keep.md'
+    keep_json.write_bytes(b'previous-json\n'); keep_md.write_bytes(b'previous-markdown\n')
+    cancelled_export = probe(raw, 'raw-export', 'raw', sender, keys['pdf'], keep_json, keep_md, 0, 1, label='export-cancel')
+    expect(cancelled_export.status == EX_CANCELLED and keep_json.read_bytes() == b'previous-json\n' and keep_md.read_bytes() == b'previous-markdown\n',
+           'export cancellation preserves both previous outputs', cancelled_export.text)
     legacy_file = work / 'legacy-format.jsonl'
     shutil.copyfile(work.parent / 'legacy-off/legacy.jsonl', legacy_file)
     raw_recv_txt = work / 'raw-recv-txt.sqlite'
@@ -397,9 +414,29 @@ def raw_phase(raw, off, pdf, work):
            'preview reports real public FOUND, NULL preserved, omitted history', preview.text)
     expect(dump(pdf_recv) == base_dump, 'preview writes nothing')
     fingerprint = s['fingerprint']
-    for label, value in (('missing', 0), ('wrong', fingerprint ^ 1)):
+    expect(fingerprint == sha(out / 'pdf.jsonl'), 'preview fingerprint is independent full-input SHA-256', fingerprint)
+    for padding in (0, 55, 56, 63, 65537):
+        padded = work / f'sha-boundary-{padding}.jsonl'
+        prefix = padding if padding > 64 else (padding - (out / 'pdf.jsonl').stat().st_size) % 64
+        padded.write_bytes(b' ' * prefix + (out / 'pdf.jsonl').read_bytes())
+        boundary = probe(raw, 'raw-import', 'raw', pdf_recv, keys['pdf'], padded, 'preview', 'required', 0, 0, 0, pdf, label='sha-boundary-' + str(padding))
+        expect(boundary.status == AI_OK and boundary.stats['fingerprint'] == sha(padded) and dump(pdf_recv) == base_dump,
+               'preview SHA-256 covers chunk and padding boundary ' + str(padding), boundary.text)
+    for label, value in (('missing', 0), ('wrong', ('0' if fingerprint[0] != '0' else '1') + fingerprint[1:])):
         refused = probe(raw, 'raw-import', 'raw', pdf_recv, keys['pdf'], out / 'pdf.jsonl', 'commit', 'required', value, 0, 0, pdf, label='pdf-commit-' + label)
         expect(refused.status == AI_UNCONFIRMED and dump(pdf_recv) == base_dump, f'commit with {label} preview fingerprint is refused with zero writes', refused.text)
+    changed_header = mutate(out / 'pdf.jsonl', work / 'changed-title.jsonl', lambda t: t.replace('"book_title":"actual PDF"', '"book_title":"changed PDF"', 1))
+    changed = probe(raw, 'raw-import', 'raw', pdf_recv, keys['pdf'], changed_header, 'commit', 'required', fingerprint, 0, 0, pdf, label='changed-title-confirmation')
+    expect(changed.status == AI_UNCONFIRMED and dump(pdf_recv) == base_dump,
+           'preview confirmation binds header metadata as well as retained head wires', changed.text)
+    preview_cancel = probe(raw, 'raw-import', 'raw', pdf_recv, keys['pdf'], out / 'pdf.jsonl', 'preview', 'required', 0, 0, 2, pdf, label='pdf-preview-cancel')
+    expect(preview_cancel.status == AI_CANCELLED and preview_cancel.stats['validated'] == 0 and
+           preview_cancel.stats['fingerprint'] == '' and dump(pdf_recv) == base_dump,
+           'cancelled preview exposes no validated fingerprint and writes nothing', preview_cancel.text)
+    for budget, status in ((1, AI_LIMIT), (64 * 1024 * 1024 + 1, AI_ARGUMENT)):
+        limited = probe(raw, 'raw-import', 'raw', pdf_recv, keys['pdf'], out / 'pdf.jsonl', 'preview', 'required', 0, 0, 0, pdf, budget, label='input-budget-' + str(budget))
+        expect(limited.status == status and dump(pdf_recv) == base_dump,
+               'input byte budget refusal ' + str(budget) + ' writes nothing', limited.text)
     cancelled = probe(raw, 'raw-import', 'raw', pdf_recv, keys['pdf'], out / 'pdf.jsonl', 'commit', 'required', fingerprint, 0, 2, pdf, label='pdf-commit-cancel')
     expect(cancelled.status == AI_CANCELLED and cancelled.stats['committed'] == 2 and cancelled.stats['next_index'] == 2 and len(cancelled.items) == 2,
            'cancel keeps earlier commits and reports next_index', cancelled.text)
@@ -411,6 +448,8 @@ def raw_phase(raw, off, pdf, work):
            'receiver holds exactly the exported head bytes plus the book, no forged ancestor')
     expect([i['outcome'] for i in cancelled.items] == [3, 3] and [i['outcome'] for i in resumed.items] == [0, 3],
            'real receiving graph is reported per item (missing parents are not forged)', (cancelled.items, resumed.items))
+    expect([i['found'] for i in cancelled.items + resumed.items] == [1, 1, 3, 0],
+           'commit callbacks preserve preflight FOUND NULL and deletion classifications', (cancelled.items, resumed.items))
     after = dump(pdf_recv)
     again = probe(raw, 'raw-import', 'raw', pdf_recv, keys['pdf'], out / 'pdf.jsonl', 'commit', 'required', fingerprint, 0, 0, pdf, label='pdf-commit-repeat')
     expect(again.status == AI_OK and again.stats['committed'] == 4 and again.stats['created'] == 0 and again.stats['duplicates'] == 4 and dump(pdf_recv) == after,
@@ -547,30 +586,32 @@ def mac_phase(raw, work):
         rows = [json.loads(line) for line in data]
         heads = [(r['annotation_id'], h, h['wire'].encode()) for r in rows if r['type'] == 'annotation' for h in r['heads']]
         for _, h, wire in heads:
-            expect(h['location'] == expected_location(h['wire']) and hashlib.sha256(wire).hexdigest() == h['sha256'], 'Mac record location independently equals its wire')
+            expect(h['location'] == expected_location(h['wire']) and hashlib.sha256(wire).hexdigest() == h['sha256'], 'Mac record location independently equals its wire ' + book + '/' + h['revision_id'])
             if h['location']:
                 totals['versions'].add(h['location']['anchor_version'])
                 if h['location']['exact'] == {'size': 0, 'base64': None}:
                     totals['null_heads'] += 1
         totals['heads'] += len(heads)
         receiver_db = work / f'receiver-{index}.db'
-        expect(probe(raw, 'make-store', 'raw', receiver_db, *files).exit == 0, 'Mac receiver seeded with the original book revisions')
+        expect(probe(raw, 'make-store', 'raw', receiver_db, *files).exit == 0, 'Mac receiver seeded with the original book revisions ' + book)
         clean = dump(receiver_db)
         required = probe(raw, 'raw-import', 'raw', receiver_db, book, out / f'{index}.jsonl', 'preview', 'nocallback', 0, 0, 0, '-', label=f'mac-required-{index}')
-        expect(required.status == AI_ARGUMENT and dump(receiver_db) == clean, 'required FOUND policy without a resolver is refused', required.text)
+        expect(required.status == AI_ARGUMENT and dump(receiver_db) == clean, 'required FOUND policy without a resolver is refused ' + book, required.text)
         preview = probe(raw, 'raw-import', 'raw', receiver_db, book, out / f'{index}.jsonl', 'preview', 'verified', 0, 0, 0, '-', label=f'mac-preview-{index}')
-        expect(preview.status == AI_OK and preview.stats['found_checked'] == 0 and preview.stats['head_wires'] == len(heads), 'Mac preview validates the real records', preview.text)
+        expect(preview.status == AI_OK and preview.stats['found_checked'] == 0 and preview.stats['head_wires'] == len(heads), 'Mac preview validates the real records ' + book, preview.text)
+        expect(preview.stats['fingerprint'] == sha(out / f'{index}.jsonl') and dump(receiver_db) == clean,
+               'Mac preview SHA-256 and readonly state ' + book, preview.text)
         if heads:
-            nul = mutate(out / f'{index}.jsonl', work / f'null-negative-{index}.jsonl', lambda t: t.replace('"base64":null', '"base64":""', 1)) \
+            nul = mutate(out / f'{index}.jsonl', work / f'null-negative-{index}.jsonl', lambda t: t.replace('"exact":{"size":0,"base64":null}', '"exact":{"size":0,"base64":""}', 1)) \
                 if any(h['location'] and h['location']['exact']['base64'] is None for _, h, _ in heads) else None
             if nul:
                 bad = probe(raw, 'raw-import', 'raw', receiver_db, book, nul, 'preview', 'verified', 0, 0, 0, '-', label=f'mac-null-negative-{index}')
-                expect(bad.status == AI_FORMAT and dump(receiver_db) == clean, 'real Mac NULL turned into empty is rejected with zero writes', bad.text)
+                expect(bad.status == AI_FORMAT and dump(receiver_db) == clean, 'real Mac NULL turned into empty is rejected with zero writes ' + book, bad.text)
         commit = probe(raw, 'raw-import', 'raw', receiver_db, book, out / f'{index}.jsonl', 'commit', 'verified', preview.stats['fingerprint'], 0, 0, '-', label=f'mac-commit-{index}')
-        expect(commit.status == AI_OK, 'Mac records committed by explicit confirmation', commit.text)
+        expect(commit.status == AI_OK, 'Mac records committed by explicit confirmation ' + book, commit.text)
         stored = revisions(receiver_db)
         expect(all(stored.get(h['revision_id']) == w for _, h, w in heads) and len(stored) == len(book_wires) + len(heads),
-               'Mac head bytes round-trip exactly with no forged ancestor')
+               'Mac head bytes round-trip exactly with no forged ancestor ' + book)
         summary.setdefault('books', []).append({'book': book, 'heads': len(heads), 'jsonl_sha256': sha(out / f'{index}.jsonl')})
     expect(totals['heads'] >= 1, 'real Mac annotation heads were exported', totals)
     if 'annotation' in null_kinds:
