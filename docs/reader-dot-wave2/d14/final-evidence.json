@@ -1,0 +1,1359 @@
+{
+  "accepted": false,
+  "artifact_authentication": true,
+  "iterations": [
+    {
+      "harness": "5f76251e6ab906740151ed60ca5fc034ce050bbf",
+      "run": "40225172916",
+      "attempt": "1",
+      "accepted": false,
+      "artifact_authentication": true,
+      "jobs": [
+        {
+          "id": 121264892526,
+          "run_id": 40225172916,
+          "workflow_name": "D14 bounded native lifecycle and resource observations",
+          "head_branch": "codex/reader-dot-d14",
+          "run_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/runs/40225172916",
+          "run_attempt": 1,
+          "node_id": "CR_kwDOVLl92s8AAAAcO_Nqbg",
+          "head_sha": "5f76251e6ab906740151ed60ca5fc034ce050bbf",
+          "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/jobs/121264892526",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40225172916/job/121264892526",
+          "status": "completed",
+          "conclusion": "failure",
+          "created_at": "2026-10-25T19:15:34Z",
+          "started_at": "2026-10-25T19:15:36Z",
+          "completed_at": "2026-10-25T19:18:56Z",
+          "name": "lifecycle (gtk)",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-25T19:15:37Z",
+              "completed_at": "2026-10-25T19:15:37Z"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-25T19:15:37Z",
+              "completed_at": "2026-10-25T19:15:40Z"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-25T19:15:40Z",
+              "completed_at": "2026-10-25T19:15:42Z"
+            },
+            {
+              "name": "Owned source boundary and negative controls",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-25T19:15:42Z",
+              "completed_at": "2026-10-25T19:15:42Z"
+            },
+            {
+              "name": "Native Windows compiler environment",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 5,
+              "started_at": "2026-10-25T19:15:42Z",
+              "completed_at": "2026-10-25T19:15:42Z"
+            },
+            {
+              "name": "Linux desktop dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-25T19:15:42Z",
+              "completed_at": "2026-10-25T19:16:08Z"
+            },
+            {
+              "name": "Build real fixed compact target",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-25T19:16:08Z",
+              "completed_at": "2026-10-25T19:18:47Z"
+            },
+            {
+              "name": "Windows two real stages, at most 45 minutes total",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 8,
+              "started_at": "2026-10-25T19:18:47Z",
+              "completed_at": "2026-10-25T19:18:47Z"
+            },
+            {
+              "name": "GTK two real stages, at most 45 minutes total",
+              "status": "completed",
+              "conclusion": "failure",
+              "number": 9,
+              "started_at": "2026-10-25T19:18:47Z",
+              "completed_at": "2026-10-25T19:18:51Z"
+            },
+            {
+              "name": "Preserve build logs after product writers finish",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-25T19:18:51Z",
+              "completed_at": "2026-10-25T19:18:51Z"
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-25T19:18:51Z",
+              "completed_at": "2026-10-25T19:18:54Z"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21,
+              "started_at": "2026-10-25T19:18:54Z",
+              "completed_at": "2026-10-25T19:18:54Z"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 22,
+              "started_at": "2026-10-25T19:18:54Z",
+              "completed_at": "2026-10-25T19:18:54Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23,
+              "started_at": "2026-10-25T19:18:54Z",
+              "completed_at": "2026-10-25T19:18:54Z"
+            }
+          ],
+          "check_run_url": "https://api.github.com/repos/NoGod3524/EXReader/check-runs/121264892526",
+          "labels": [
+            "ubuntu-22.04"
+          ],
+          "runner_id": 1000010261,
+          "runner_name": "GitHub Actions 1000010261",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions"
+        },
+        {
+          "id": 121264892872,
+          "run_id": 40225172916,
+          "workflow_name": "D14 bounded native lifecycle and resource observations",
+          "head_branch": "codex/reader-dot-d14",
+          "run_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/runs/40225172916",
+          "run_attempt": 1,
+          "node_id": "CR_kwDOVLl92s8AAAAcO_NryA",
+          "head_sha": "5f76251e6ab906740151ed60ca5fc034ce050bbf",
+          "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/jobs/121264892872",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40225172916/job/121264892872",
+          "status": "completed",
+          "conclusion": "failure",
+          "created_at": "2026-10-25T19:15:34Z",
+          "started_at": "2026-10-25T19:15:36Z",
+          "completed_at": "2026-10-25T19:20:22Z",
+          "name": "lifecycle (windows)",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-25T19:15:37Z",
+              "completed_at": "2026-10-25T19:15:37Z"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-25T19:15:37Z",
+              "completed_at": "2026-10-25T19:15:45Z"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-25T19:15:45Z",
+              "completed_at": "2026-10-25T19:15:51Z"
+            },
+            {
+              "name": "Owned source boundary and negative controls",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-25T19:15:51Z",
+              "completed_at": "2026-10-25T19:15:52Z"
+            },
+            {
+              "name": "Native Windows compiler environment",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-25T19:15:52Z",
+              "completed_at": "2026-10-25T19:15:59Z"
+            },
+            {
+              "name": "Linux desktop dependencies",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 6,
+              "started_at": "2026-10-25T19:15:59Z",
+              "completed_at": "2026-10-25T19:15:59Z"
+            },
+            {
+              "name": "Build real fixed compact target",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-25T19:15:59Z",
+              "completed_at": "2026-10-25T19:19:39Z"
+            },
+            {
+              "name": "Windows two real stages, at most 45 minutes total",
+              "status": "completed",
+              "conclusion": "failure",
+              "number": 8,
+              "started_at": "2026-10-25T19:19:39Z",
+              "completed_at": "2026-10-25T19:20:14Z"
+            },
+            {
+              "name": "GTK two real stages, at most 45 minutes total",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 9,
+              "started_at": "2026-10-25T19:20:14Z",
+              "completed_at": "2026-10-25T19:20:14Z"
+            },
+            {
+              "name": "Preserve build logs after product writers finish",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-25T19:20:14Z",
+              "completed_at": "2026-10-25T19:20:14Z"
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-25T19:20:14Z",
+              "completed_at": "2026-10-25T19:20:17Z"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21,
+              "started_at": "2026-10-25T19:20:17Z",
+              "completed_at": "2026-10-25T19:20:19Z"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 22,
+              "started_at": "2026-10-25T19:20:19Z",
+              "completed_at": "2026-10-25T19:20:21Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23,
+              "started_at": "2026-10-25T19:20:21Z",
+              "completed_at": "2026-10-25T19:20:21Z"
+            }
+          ],
+          "check_run_url": "https://api.github.com/repos/NoGod3524/EXReader/check-runs/121264892872",
+          "labels": [
+            "windows-2022"
+          ],
+          "runner_id": 1000010262,
+          "runner_name": "GitHub Actions 1000010262",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions"
+        },
+        {
+          "id": 121266036593,
+          "run_id": 40225172916,
+          "workflow_name": "D14 bounded native lifecycle and resource observations",
+          "head_branch": "codex/reader-dot-d14",
+          "run_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/runs/40225172916",
+          "run_attempt": 1,
+          "node_id": "CR_kwDOVLl92s8AAAAcPATfcQ",
+          "head_sha": "5f76251e6ab906740151ed60ca5fc034ce050bbf",
+          "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/jobs/121266036593",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40225172916/job/121266036593",
+          "status": "in_progress",
+          "conclusion": null,
+          "created_at": "2026-10-25T19:20:23Z",
+          "started_at": "2026-10-25T19:20:24Z",
+          "completed_at": null,
+          "name": "authenticate",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-25T19:20:25Z",
+              "completed_at": "2026-10-25T19:20:26Z"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-25T19:20:26Z",
+              "completed_at": "2026-10-25T19:20:28Z"
+            },
+            {
+              "name": "Authenticate both original ZIPs and reject partial lifecycle scope",
+              "status": "in_progress",
+              "conclusion": null,
+              "number": 3,
+              "started_at": "2026-10-25T19:20:28Z",
+              "completed_at": null
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "pending",
+              "conclusion": null,
+              "number": 4,
+              "started_at": null,
+              "completed_at": null
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "pending",
+              "conclusion": null,
+              "number": 8,
+              "started_at": null,
+              "completed_at": null
+            }
+          ],
+          "check_run_url": "https://api.github.com/repos/NoGod3524/EXReader/check-runs/121266036593",
+          "labels": [
+            "ubuntu-22.04"
+          ],
+          "runner_id": 1000010265,
+          "runner_name": "GitHub Actions 1000010265",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions"
+        }
+      ],
+      "platforms": {
+        "windows": {
+          "authenticated": true,
+          "accepted": false,
+          "artifact_id": 12610907470,
+          "bytes": 18199212,
+          "sha256": "e78d4ad9a9d36a8472ed722346a466019dc23b1483917f770eae7daa262914ca",
+          "expires_at": "2027-01-23T19:15:34Z",
+          "name": "d14-windows-40225172916-1",
+          "identity": {
+            "platform": "windows",
+            "target": "9321de84eb9c8d3d57cafbeaa8b0a28fe2a26a08",
+            "harness": "5f76251e6ab906740151ed60ca5fc034ce050bbf",
+            "run": "40225172916",
+            "attempt": "1",
+            "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+            "program": "EXReaderProduct.exe",
+            "program_sha256": "c401a6bf2b2e3e2eedbac7678eff5c9e099f360c18f1ef6d8a2f0a4a49348178",
+            "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b"
+          },
+          "completed_cycles": 12
+        },
+        "gtk": {
+          "authenticated": true,
+          "accepted": false,
+          "artifact_id": 12611221601,
+          "bytes": 18535415,
+          "sha256": "2b08cbeadce70e2868c13ff375d6ea7ec05322b2dfb7079670d4d8c2b2600673",
+          "expires_at": "2027-01-23T19:15:34Z",
+          "name": "d14-gtk-40225172916-1",
+          "identity": {
+            "platform": "gtk",
+            "target": "803098e9df1a365a9b8e206805c2d179aca8501f",
+            "harness": "5f76251e6ab906740151ed60ca5fc034ce050bbf",
+            "run": "40225172916",
+            "attempt": "1",
+            "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+            "program": "exreader-linux",
+            "program_sha256": "f1213d208a31f77f2444292488c8ce964d9ffb992d80bf19ebbd8a771c585adf",
+            "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b"
+          },
+          "completed_cycles": 0
+        }
+      }
+    },
+    {
+      "harness": "c466aa835b412555cadd5a3734ea766f366b925a",
+      "run": "40226184382",
+      "attempt": "1",
+      "accepted": false,
+      "artifact_authentication": true,
+      "jobs": [
+        {
+          "id": 121267939430,
+          "run_id": 40226184382,
+          "workflow_name": "D14 bounded native lifecycle and resource observations",
+          "head_branch": "codex/reader-dot-d14",
+          "run_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/runs/40226184382",
+          "run_attempt": 1,
+          "node_id": "CR_kwDOVLl92s8AAAAcPCHoZg",
+          "head_sha": "c466aa835b412555cadd5a3734ea766f366b925a",
+          "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/jobs/121267939430",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40226184382/job/121267939430",
+          "status": "completed",
+          "conclusion": "failure",
+          "created_at": "2026-10-25T19:28:20Z",
+          "started_at": "2026-10-25T19:28:21Z",
+          "completed_at": "2026-10-25T19:31:58Z",
+          "name": "lifecycle (gtk)",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-25T19:28:22Z",
+              "completed_at": "2026-10-25T19:28:22Z"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-25T19:28:23Z",
+              "completed_at": "2026-10-25T19:28:25Z"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-25T19:28:25Z",
+              "completed_at": "2026-10-25T19:28:27Z"
+            },
+            {
+              "name": "Owned source boundary and negative controls",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-25T19:28:27Z",
+              "completed_at": "2026-10-25T19:28:28Z"
+            },
+            {
+              "name": "Inspect both preserved first-attempt failures before rerun",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-25T19:28:28Z",
+              "completed_at": "2026-10-25T19:28:29Z"
+            },
+            {
+              "name": "Native Windows compiler environment",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 6,
+              "started_at": "2026-10-25T19:28:29Z",
+              "completed_at": "2026-10-25T19:28:29Z"
+            },
+            {
+              "name": "Linux desktop dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-25T19:28:29Z",
+              "completed_at": "2026-10-25T19:28:48Z"
+            },
+            {
+              "name": "Build real fixed compact target",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-25T19:28:48Z",
+              "completed_at": "2026-10-25T19:31:25Z"
+            },
+            {
+              "name": "Windows two real stages, at most 45 minutes total",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 9,
+              "started_at": "2026-10-25T19:31:25Z",
+              "completed_at": "2026-10-25T19:31:25Z"
+            },
+            {
+              "name": "GTK two real stages, at most 45 minutes total",
+              "status": "completed",
+              "conclusion": "failure",
+              "number": 10,
+              "started_at": "2026-10-25T19:31:25Z",
+              "completed_at": "2026-10-25T19:31:55Z"
+            },
+            {
+              "name": "Preserve build logs after product writers finish",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-25T19:31:55Z",
+              "completed_at": "2026-10-25T19:31:55Z"
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-25T19:31:55Z",
+              "completed_at": "2026-10-25T19:31:57Z"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23,
+              "started_at": "2026-10-25T19:31:57Z",
+              "completed_at": "2026-10-25T19:31:57Z"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24,
+              "started_at": "2026-10-25T19:31:57Z",
+              "completed_at": "2026-10-25T19:31:57Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25,
+              "started_at": "2026-10-25T19:31:57Z",
+              "completed_at": "2026-10-25T19:31:57Z"
+            }
+          ],
+          "check_run_url": "https://api.github.com/repos/NoGod3524/EXReader/check-runs/121267939430",
+          "labels": [
+            "ubuntu-22.04"
+          ],
+          "runner_id": 1000010276,
+          "runner_name": "GitHub Actions 1000010276",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions"
+        },
+        {
+          "id": 121267939674,
+          "run_id": 40226184382,
+          "workflow_name": "D14 bounded native lifecycle and resource observations",
+          "head_branch": "codex/reader-dot-d14",
+          "run_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/runs/40226184382",
+          "run_attempt": 1,
+          "node_id": "CR_kwDOVLl92s8AAAAcPCHpWg",
+          "head_sha": "c466aa835b412555cadd5a3734ea766f366b925a",
+          "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/jobs/121267939674",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40226184382/job/121267939674",
+          "status": "completed",
+          "conclusion": "success",
+          "created_at": "2026-10-25T19:28:20Z",
+          "started_at": "2026-10-25T19:28:22Z",
+          "completed_at": "2026-10-25T19:33:37Z",
+          "name": "lifecycle (windows)",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-25T19:28:23Z",
+              "completed_at": "2026-10-25T19:28:25Z"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-25T19:28:25Z",
+              "completed_at": "2026-10-25T19:28:33Z"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-25T19:28:33Z",
+              "completed_at": "2026-10-25T19:28:39Z"
+            },
+            {
+              "name": "Owned source boundary and negative controls",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-25T19:28:39Z",
+              "completed_at": "2026-10-25T19:28:40Z"
+            },
+            {
+              "name": "Inspect both preserved first-attempt failures before rerun",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 5,
+              "started_at": "2026-10-25T19:28:40Z",
+              "completed_at": "2026-10-25T19:28:40Z"
+            },
+            {
+              "name": "Native Windows compiler environment",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-25T19:28:40Z",
+              "completed_at": "2026-10-25T19:28:47Z"
+            },
+            {
+              "name": "Linux desktop dependencies",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 7,
+              "started_at": "2026-10-25T19:28:47Z",
+              "completed_at": "2026-10-25T19:28:47Z"
+            },
+            {
+              "name": "Build real fixed compact target",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-25T19:28:47Z",
+              "completed_at": "2026-10-25T19:32:20Z"
+            },
+            {
+              "name": "Windows two real stages, at most 45 minutes total",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-25T19:32:20Z",
+              "completed_at": "2026-10-25T19:33:28Z"
+            },
+            {
+              "name": "GTK two real stages, at most 45 minutes total",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 10,
+              "started_at": "2026-10-25T19:33:28Z",
+              "completed_at": "2026-10-25T19:33:28Z"
+            },
+            {
+              "name": "Preserve build logs after product writers finish",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-25T19:33:28Z",
+              "completed_at": "2026-10-25T19:33:29Z"
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-25T19:33:29Z",
+              "completed_at": "2026-10-25T19:33:32Z"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23,
+              "started_at": "2026-10-25T19:33:32Z",
+              "completed_at": "2026-10-25T19:33:34Z"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24,
+              "started_at": "2026-10-25T19:33:34Z",
+              "completed_at": "2026-10-25T19:33:36Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25,
+              "started_at": "2026-10-25T19:33:36Z",
+              "completed_at": "2026-10-25T19:33:36Z"
+            }
+          ],
+          "check_run_url": "https://api.github.com/repos/NoGod3524/EXReader/check-runs/121267939674",
+          "labels": [
+            "windows-2022"
+          ],
+          "runner_id": 1000010277,
+          "runner_name": "GitHub Actions 1000010277",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions"
+        },
+        {
+          "id": 121269188892,
+          "run_id": 40226184382,
+          "workflow_name": "D14 bounded native lifecycle and resource observations",
+          "head_branch": "codex/reader-dot-d14",
+          "run_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/runs/40226184382",
+          "run_attempt": 1,
+          "node_id": "CR_kwDOVLl92s8AAAAcPDT5HA",
+          "head_sha": "c466aa835b412555cadd5a3734ea766f366b925a",
+          "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/jobs/121269188892",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40226184382/job/121269188892",
+          "status": "in_progress",
+          "conclusion": null,
+          "created_at": "2026-10-25T19:33:37Z",
+          "started_at": "2026-10-25T19:33:39Z",
+          "completed_at": null,
+          "name": "authenticate",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-25T19:33:39Z",
+              "completed_at": "2026-10-25T19:33:40Z"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "in_progress",
+              "conclusion": null,
+              "number": 2,
+              "started_at": "2026-10-25T19:33:40Z",
+              "completed_at": null
+            },
+            {
+              "name": "Authenticate both original ZIPs and reject partial lifecycle scope",
+              "status": "pending",
+              "conclusion": null,
+              "number": 3,
+              "started_at": null,
+              "completed_at": null
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "pending",
+              "conclusion": null,
+              "number": 4,
+              "started_at": null,
+              "completed_at": null
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "pending",
+              "conclusion": null,
+              "number": 8,
+              "started_at": null,
+              "completed_at": null
+            }
+          ],
+          "check_run_url": "https://api.github.com/repos/NoGod3524/EXReader/check-runs/121269188892",
+          "labels": [
+            "ubuntu-22.04"
+          ],
+          "runner_id": 1000010286,
+          "runner_name": "GitHub Actions 1000010286",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions"
+        }
+      ],
+      "platforms": {
+        "windows": {
+          "authenticated": true,
+          "accepted": true,
+          "artifact_id": 12611541837,
+          "bytes": 18806004,
+          "sha256": "52b10f32a2602c3642f49d5f7a74cac0da14558897b260b90c04c1d752780801",
+          "expires_at": "2027-01-23T19:28:19Z",
+          "name": "d14-windows-40226184382-1",
+          "identity": {
+            "platform": "windows",
+            "target": "9321de84eb9c8d3d57cafbeaa8b0a28fe2a26a08",
+            "harness": "c466aa835b412555cadd5a3734ea766f366b925a",
+            "run": "40226184382",
+            "attempt": "1",
+            "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+            "program": "EXReaderProduct.exe",
+            "program_sha256": "9af8fe95c85232a92654447f1b1c6b385da3bb6126108a42e578c3e0509ee003",
+            "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+            "sdk_version": "3.41.0",
+            "sdk_header_sha256": "461f33b1f17c4650229935630179d369b715b5a9a24d2181f3f653864bed47a0"
+          },
+          "completed_cycles": 24
+        },
+        "gtk": {
+          "authenticated": true,
+          "accepted": false,
+          "artifact_id": 12610978837,
+          "bytes": 18690847,
+          "sha256": "cf7ef529ac99d7c04b844e46a70a963ebef88c4edf6c9d79e602bdee1c87dae1",
+          "expires_at": "2027-01-23T19:28:19Z",
+          "name": "d14-gtk-40226184382-1",
+          "identity": {
+            "platform": "gtk",
+            "target": "803098e9df1a365a9b8e206805c2d179aca8501f",
+            "harness": "c466aa835b412555cadd5a3734ea766f366b925a",
+            "run": "40226184382",
+            "attempt": "1",
+            "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+            "program": "exreader-linux",
+            "program_sha256": "f1213d208a31f77f2444292488c8ce964d9ffb992d80bf19ebbd8a771c585adf",
+            "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+            "sdk_version": "3.41.0",
+            "sdk_header_sha256": "461f33b1f17c4650229935630179d369b715b5a9a24d2181f3f653864bed47a0"
+          },
+          "completed_cycles": 4
+        }
+      }
+    },
+    {
+      "harness": "b85046c37456ca8e33138ff19fa4fcfb2425bcdb",
+      "run": "40226870656",
+      "attempt": "1",
+      "accepted": false,
+      "artifact_authentication": true,
+      "jobs": [
+        {
+          "id": 121269985432,
+          "run_id": 40226870656,
+          "workflow_name": "D14 bounded native lifecycle and resource observations",
+          "head_branch": "codex/reader-dot-d14",
+          "run_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/runs/40226870656",
+          "run_attempt": 1,
+          "node_id": "CR_kwDOVLl92s8AAAAcPEEgmA",
+          "head_sha": "b85046c37456ca8e33138ff19fa4fcfb2425bcdb",
+          "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/jobs/121269985432",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40226870656/job/121269985432",
+          "status": "completed",
+          "conclusion": "success",
+          "created_at": "2026-10-25T19:37:00Z",
+          "started_at": "2026-10-25T19:37:02Z",
+          "completed_at": "2026-10-25T19:54:28Z",
+          "name": "lifecycle (windows)",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-25T19:37:03Z",
+              "completed_at": "2026-10-25T19:37:03Z"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-25T19:37:04Z",
+              "completed_at": "2026-10-25T19:37:11Z"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-25T19:37:11Z",
+              "completed_at": "2026-10-25T19:37:17Z"
+            },
+            {
+              "name": "Owned source boundary and negative controls",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-25T19:37:17Z",
+              "completed_at": "2026-10-25T19:37:19Z"
+            },
+            {
+              "name": "Inspect both preserved first-attempt failures before rerun",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 5,
+              "started_at": "2026-10-25T19:37:19Z",
+              "completed_at": "2026-10-25T19:37:19Z"
+            },
+            {
+              "name": "Native Windows compiler environment",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-10-25T19:37:19Z",
+              "completed_at": "2026-10-25T19:37:26Z"
+            },
+            {
+              "name": "Linux desktop dependencies",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 7,
+              "started_at": "2026-10-25T19:37:26Z",
+              "completed_at": "2026-10-25T19:37:26Z"
+            },
+            {
+              "name": "Build real fixed compact target",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-25T19:37:26Z",
+              "completed_at": "2026-10-25T19:41:04Z"
+            },
+            {
+              "name": "Windows two real stages, at most 45 minutes total",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-25T19:41:04Z",
+              "completed_at": "2026-10-25T19:54:19Z"
+            },
+            {
+              "name": "GTK two real stages, at most 45 minutes total",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 10,
+              "started_at": "2026-10-25T19:54:19Z",
+              "completed_at": "2026-10-25T19:54:19Z"
+            },
+            {
+              "name": "Preserve build logs after product writers finish",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-25T19:54:19Z",
+              "completed_at": "2026-10-25T19:54:20Z"
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-25T19:54:20Z",
+              "completed_at": "2026-10-25T19:54:23Z"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23,
+              "started_at": "2026-10-25T19:54:23Z",
+              "completed_at": "2026-10-25T19:54:25Z"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24,
+              "started_at": "2026-10-25T19:54:25Z",
+              "completed_at": "2026-10-25T19:54:26Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25,
+              "started_at": "2026-10-25T19:54:26Z",
+              "completed_at": "2026-10-25T19:54:27Z"
+            }
+          ],
+          "check_run_url": "https://api.github.com/repos/NoGod3524/EXReader/check-runs/121269985432",
+          "labels": [
+            "windows-2022"
+          ],
+          "runner_id": 1000010291,
+          "runner_name": "GitHub Actions 1000010291",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions"
+        },
+        {
+          "id": 121269985619,
+          "run_id": 40226870656,
+          "workflow_name": "D14 bounded native lifecycle and resource observations",
+          "head_branch": "codex/reader-dot-d14",
+          "run_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/runs/40226870656",
+          "run_attempt": 1,
+          "node_id": "CR_kwDOVLl92s8AAAAcPEEhUw",
+          "head_sha": "b85046c37456ca8e33138ff19fa4fcfb2425bcdb",
+          "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/jobs/121269985619",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40226870656/job/121269985619",
+          "status": "completed",
+          "conclusion": "failure",
+          "created_at": "2026-10-25T19:37:00Z",
+          "started_at": "2026-10-25T19:37:02Z",
+          "completed_at": "2026-10-25T19:48:23Z",
+          "name": "lifecycle (gtk)",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-25T19:37:03Z",
+              "completed_at": "2026-10-25T19:37:04Z"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-10-25T19:37:04Z",
+              "completed_at": "2026-10-25T19:37:07Z"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-10-25T19:37:07Z",
+              "completed_at": "2026-10-25T19:37:10Z"
+            },
+            {
+              "name": "Owned source boundary and negative controls",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-10-25T19:37:10Z",
+              "completed_at": "2026-10-25T19:37:10Z"
+            },
+            {
+              "name": "Inspect both preserved first-attempt failures before rerun",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-10-25T19:37:10Z",
+              "completed_at": "2026-10-25T19:37:17Z"
+            },
+            {
+              "name": "Native Windows compiler environment",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 6,
+              "started_at": "2026-10-25T19:37:17Z",
+              "completed_at": "2026-10-25T19:37:17Z"
+            },
+            {
+              "name": "Linux desktop dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-25T19:37:17Z",
+              "completed_at": "2026-10-25T19:37:40Z"
+            },
+            {
+              "name": "Build real fixed compact target",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-25T19:37:40Z",
+              "completed_at": "2026-10-25T19:40:16Z"
+            },
+            {
+              "name": "Windows two real stages, at most 45 minutes total",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 9,
+              "started_at": "2026-10-25T19:40:16Z",
+              "completed_at": "2026-10-25T19:40:16Z"
+            },
+            {
+              "name": "GTK two real stages, at most 45 minutes total",
+              "status": "completed",
+              "conclusion": "failure",
+              "number": 10,
+              "started_at": "2026-10-25T19:40:16Z",
+              "completed_at": "2026-10-25T19:48:16Z"
+            },
+            {
+              "name": "Preserve build logs after product writers finish",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-10-25T19:48:16Z",
+              "completed_at": "2026-10-25T19:48:16Z"
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-10-25T19:48:16Z",
+              "completed_at": "2026-10-25T19:48:19Z"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23,
+              "started_at": "2026-10-25T19:48:19Z",
+              "completed_at": "2026-10-25T19:48:19Z"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24,
+              "started_at": "2026-10-25T19:48:19Z",
+              "completed_at": "2026-10-25T19:48:19Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25,
+              "started_at": "2026-10-25T19:48:19Z",
+              "completed_at": "2026-10-25T19:48:19Z"
+            }
+          ],
+          "check_run_url": "https://api.github.com/repos/NoGod3524/EXReader/check-runs/121269985619",
+          "labels": [
+            "ubuntu-22.04"
+          ],
+          "runner_id": 1000010292,
+          "runner_name": "GitHub Actions 1000010292",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions"
+        },
+        {
+          "id": 121274207985,
+          "run_id": 40226870656,
+          "workflow_name": "D14 bounded native lifecycle and resource observations",
+          "head_branch": "codex/reader-dot-d14",
+          "run_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/runs/40226870656",
+          "run_attempt": 1,
+          "node_id": "CR_kwDOVLl92s8AAAAcPIGO8Q",
+          "head_sha": "b85046c37456ca8e33138ff19fa4fcfb2425bcdb",
+          "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/jobs/121274207985",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40226870656/job/121274207985",
+          "status": "in_progress",
+          "conclusion": null,
+          "created_at": "2026-10-25T19:54:28Z",
+          "started_at": "2026-10-25T19:54:30Z",
+          "completed_at": null,
+          "name": "authenticate",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-10-25T19:54:31Z",
+              "completed_at": "2026-10-25T19:54:31Z"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "in_progress",
+              "conclusion": null,
+              "number": 2,
+              "started_at": "2026-10-25T19:54:31Z",
+              "completed_at": null
+            },
+            {
+              "name": "Authenticate both original ZIPs and reject partial lifecycle scope",
+              "status": "pending",
+              "conclusion": null,
+              "number": 3,
+              "started_at": null,
+              "completed_at": null
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "pending",
+              "conclusion": null,
+              "number": 4,
+              "started_at": null,
+              "completed_at": null
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "pending",
+              "conclusion": null,
+              "number": 8,
+              "started_at": null,
+              "completed_at": null
+            }
+          ],
+          "check_run_url": "https://api.github.com/repos/NoGod3524/EXReader/check-runs/121274207985",
+          "labels": [
+            "ubuntu-22.04"
+          ],
+          "runner_id": 1000010409,
+          "runner_name": "GitHub Actions 1000010409",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions"
+        }
+      ],
+      "platforms": {
+        "windows": {
+          "authenticated": true,
+          "accepted": true,
+          "artifact_id": 12612032207,
+          "bytes": 18828408,
+          "sha256": "54944f80d3c6c5b47a535d2ecf21fa8f9e58ef57655b96331c2097c87c71a4e8",
+          "expires_at": "2027-01-23T19:37:00Z",
+          "name": "d14-windows-40226870656-1",
+          "identity": {
+            "platform": "windows",
+            "target": "9321de84eb9c8d3d57cafbeaa8b0a28fe2a26a08",
+            "harness": "b85046c37456ca8e33138ff19fa4fcfb2425bcdb",
+            "run": "40226870656",
+            "attempt": "1",
+            "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+            "program": "EXReaderProduct.exe",
+            "program_sha256": "406b79cb1362e2344eda26123afa9a174e86128e8da9beb3384dad3b6a250d81",
+            "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+            "sdk_version": "3.41.0",
+            "sdk_header_sha256": "461f33b1f17c4650229935630179d369b715b5a9a24d2181f3f653864bed47a0"
+          },
+          "completed_cycles": 24
+        },
+        "gtk": {
+          "authenticated": true,
+          "accepted": false,
+          "artifact_id": 12612330807,
+          "bytes": 18981931,
+          "sha256": "ba12e1f70741e4a0d63d814a9e5d921a16f2c67764e24ca1a6597948444616ae",
+          "expires_at": "2027-01-23T19:37:00Z",
+          "name": "d14-gtk-40226870656-1",
+          "identity": {
+            "platform": "gtk",
+            "target": "803098e9df1a365a9b8e206805c2d179aca8501f",
+            "harness": "b85046c37456ca8e33138ff19fa4fcfb2425bcdb",
+            "run": "40226870656",
+            "attempt": "1",
+            "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+            "program": "exreader-linux",
+            "program_sha256": "f1213d208a31f77f2444292488c8ce964d9ffb992d80bf19ebbd8a771c585adf",
+            "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+            "sdk_version": "3.41.0",
+            "sdk_header_sha256": "461f33b1f17c4650229935630179d369b715b5a9a24d2181f3f653864bed47a0"
+          },
+          "completed_cycles": 12
+        }
+      }
+    }
+  ],
+  "final": {
+    "windows": {
+      "target": "9321de84eb9c8d3d57cafbeaa8b0a28fe2a26a08",
+      "harness": "b85046c37456ca8e33138ff19fa4fcfb2425bcdb",
+      "run": "40226870656",
+      "attempt": "1",
+      "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+      "program_sha256": "406b79cb1362e2344eda26123afa9a174e86128e8da9beb3384dad3b6a250d81",
+      "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+      "sdk_version": "3.41.0",
+      "sdk_header_sha256": "461f33b1f17c4650229935630179d369b715b5a9a24d2181f3f653864bed47a0",
+      "accepted": true,
+      "completed_cycles": 24,
+      "duration_seconds": 794.266,
+      "originals": {
+        "fixtures/Comic.cbz": "6d271e3d2a6cc96839ed57f3dea8c9a33923c8a8c79a1a8c6b02ff1fcb46682c",
+        "fixtures/D14 EPUB.epub": "b94f535687840e1a9114c8b44b94010a167f32a9aa7622d38817a3a9bd8eeca2",
+        "fixtures/Fixed.pdf": "e8f3b803d3440552cfa9a3fa8bd8e6f1fb7f61362ad404ece92ff4c478f70d53",
+        "fixtures/Processing.txt": "18a90b761f3d0694cc1054eadff07e3662c1946cabbd30cc22b5078a6f0efd5b",
+        "fixtures/Reading.txt": "e66ffb31f0391b2a9b657766b66ee347f9da2299c8e72ffe5b16bef29d004630",
+        "fixtures/fixed/Broken.cbz": "def632dce02e8c703fc96a38d11fc810a5c1f78083aebdf9d13a6bd893a87a75",
+        "fixtures/fixed/Broken.pdf": "6d689ba9522127c0c759535f5adb7f2c8f182ac280d94eab93cb54e5ec598fa0",
+        "fixtures/fixed/Pages.cbz": "6d271e3d2a6cc96839ed57f3dea8c9a33923c8a8c79a1a8c6b02ff1fcb46682c",
+        "fixtures/fixed/Pages.pdf": "e8f3b803d3440552cfa9a3fa8bd8e6f1fb7f61362ad404ece92ff4c478f70d53",
+        "fixtures/fixed/Repeated.pdf": "3993646941f735c542de65417836ef057881838bf4ce420b8d415df6a7445968",
+        "fixtures/fixed/Rotated.pdf": "f7470188f6d9fabb16513bc12b51570fc785c55b55833d020a73a68ea2b35251",
+        "fixtures/fixed/Too-large.pdf": "bdf7fbb54387c24608fd757a1b31c32cabcd7b6bee8ff3345c897139fffc072a"
+      },
+      "environment": {
+        "os": "Windows-2022Server-10.0.20348-SP0",
+        "cpu": "AMD64 Family 25 Model 1 Stepping 1, AuthenticAMD",
+        "logical_cpus": 4
+      },
+      "resource_samples": 1555,
+      "completed_actions": 244,
+      "stages": [
+        {
+          "stage": 1,
+          "pid": 7248,
+          "create_time": 1792957265.1260548,
+          "exit_code": 0,
+          "completed_cycles": 12,
+          "completed_dwells": 12,
+          "dwell_seconds": 360.7800000000001
+        },
+        {
+          "stage": 2,
+          "pid": 6636,
+          "create_time": 1792957661.9605684,
+          "exit_code": 0,
+          "completed_cycles": 12,
+          "completed_dwells": 12,
+          "dwell_seconds": 360.7639999999998
+        }
+      ]
+    },
+    "gtk": {
+      "target": "803098e9df1a365a9b8e206805c2d179aca8501f",
+      "harness": "b85046c37456ca8e33138ff19fa4fcfb2425bcdb",
+      "run": "40226870656",
+      "attempt": "1",
+      "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+      "program_sha256": "f1213d208a31f77f2444292488c8ce964d9ffb992d80bf19ebbd8a771c585adf",
+      "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+      "sdk_version": "3.41.0",
+      "sdk_header_sha256": "461f33b1f17c4650229935630179d369b715b5a9a24d2181f3f653864bed47a0",
+      "accepted": false,
+      "completed_cycles": 12,
+      "duration_seconds": 476.46603058799997,
+      "originals": {
+        "fixtures/Reading.txt": "e66ffb31f0391b2a9b657766b66ee347f9da2299c8e72ffe5b16bef29d004630",
+        "fixtures/Processing.txt": "18a90b761f3d0694cc1054eadff07e3662c1946cabbd30cc22b5078a6f0efd5b",
+        "fixtures/Fixed.pdf": "e8f3b803d3440552cfa9a3fa8bd8e6f1fb7f61362ad404ece92ff4c478f70d53",
+        "fixtures/Comic.cbz": "06fd7f322498abef550032e7ef34dac5a7e81f80b64225c5233b477ce419b4db",
+        "fixtures/D14 EPUB.epub": "a370ee1dd7676d26b6b0fc944015c887a5d2fdb0751bc9a83ce1aab148c48d09",
+        "fixtures/fixed/Rotated.pdf": "f7470188f6d9fabb16513bc12b51570fc785c55b55833d020a73a68ea2b35251",
+        "fixtures/fixed/Broken.pdf": "6d689ba9522127c0c759535f5adb7f2c8f182ac280d94eab93cb54e5ec598fa0",
+        "fixtures/fixed/Broken.cbz": "def632dce02e8c703fc96a38d11fc810a5c1f78083aebdf9d13a6bd893a87a75",
+        "fixtures/fixed/Too-large.pdf": "bdf7fbb54387c24608fd757a1b31c32cabcd7b6bee8ff3345c897139fffc072a",
+        "fixtures/fixed/Pages.pdf": "e8f3b803d3440552cfa9a3fa8bd8e6f1fb7f61362ad404ece92ff4c478f70d53",
+        "fixtures/fixed/Pages.cbz": "06fd7f322498abef550032e7ef34dac5a7e81f80b64225c5233b477ce419b4db",
+        "fixtures/fixed/Repeated.pdf": "3993646941f735c542de65417836ef057881838bf4ce420b8d415df6a7445968"
+      },
+      "environment": {
+        "os": "Linux-6.8.0-1064-azure-x86_64-with-glibc2.35",
+        "cpu": "x86_64",
+        "logical_cpus": 4
+      },
+      "resource_samples": 873,
+      "completed_actions": 120,
+      "stages": [
+        {
+          "stage": 1,
+          "pid": 10086,
+          "create_time": 1792957218.48,
+          "exit_code": -9,
+          "completed_cycles": 12,
+          "completed_dwells": 12,
+          "dwell_seconds": 360.4817065619998
+        }
+      ],
+      "failed_scope": "1/close_processing: phase2 not observed before 10s timeout; observed phase3 running0 complete1 polls1 code0 count0. Cleanup timeout20s then forced kill -9. Stage2 absent; 123 planned checks missing. Not product-crash evidence."
+    }
+  },
+  "claims": {
+    "performance_accepted": false,
+    "physical_device_accepted": false,
+    "screenreader_accepted": false,
+    "leak_free_claim": false
+  }
+}

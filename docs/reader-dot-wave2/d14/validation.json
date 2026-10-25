@@ -1,1 +1,15 @@
-{"accepted":false,"executed":false,"performance_accepted":false,"physical_device_accepted":false,"screenreader_accepted":false,"leak_free_claim":false}
+{
+  "executed": true,
+  "accepted": false,
+  "artifact_authentication": true,
+  "iterations_used": 3,
+  "iterations_limit": 3,
+  "tested_commit": "b85046c37456ca8e33138ff19fa4fcfb2425bcdb",
+  "final_run": 40226870656,
+  "windows_bounded_lifecycle_accepted": true,
+  "gtk_bounded_lifecycle_accepted": false,
+  "performance_accepted": false,
+  "physical_device_accepted": false,
+  "screenreader_accepted": false,
+  "leak_free_claim": false
+}

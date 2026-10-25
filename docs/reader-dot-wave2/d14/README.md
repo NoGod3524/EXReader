@@ -1,6 +1,6 @@
 # D14 bounded native lifecycle observations
 
-Not yet executed: `accepted=false`. This package owns only new D14 paths.
+Three Actions iterations completed; global `accepted=false`. Windows bounded lifecycle passed; GTK failed the in-flight-close precondition and did not start stage two. Both final original ZIPs authenticated. See `HANDOFF-RESULT-D14.md` and `final-evidence.json`. This package owns only new D14 paths.
 
 ## Frozen identities
 
