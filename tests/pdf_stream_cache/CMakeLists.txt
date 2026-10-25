@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 project(PDFStreamCacheRegression LANGUAGES C)
-find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED COMPONENTS core pdf)
+find_package(EXReader 3.41.0 EXACT CONFIG REQUIRED COMPONENTS core pdf)
 add_executable(pdf-stream-cache consumer.c)
 target_link_libraries(pdf-stream-cache PRIVATE EXReader::exreader)
 set_target_properties(pdf-stream-cache PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)
