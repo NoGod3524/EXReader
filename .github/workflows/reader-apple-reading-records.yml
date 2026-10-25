@@ -1,0 +1,212 @@
+name: Apple native product reading records
+on:
+  workflow_dispatch:
+    inputs:
+      scope:
+        type: choice
+        options: [full, entry]
+        default: full
+permissions:
+  contents: read
+  actions: read
+env:
+  SDK_BASELINE: 9854061be331fe603a1822d9b2b36ee357154927
+jobs:
+  sdk:
+    name: Frozen SDK and installed reading modules ${{ matrix.target }}
+    runs-on: macos-15
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [macos, iphonesimulator]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate exact common-source host merge
+        if: github.ref_name == 'codex/reader-hosts-integration'
+        run: python3 tests/reader_hosts_integration/guard.py
+      - name: Require fixed SDK schema and exact G03 G04 and codec trees
+        if: github.ref_name != 'codex/reader-hosts-integration'
+        run: |
+          git diff --exit-code "$SDK_BASELINE" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code a6d7dd81eef36e83e004fdc381a565a2ffee5462 HEAD -- apps/reader/store/001_catalog.sql
+          test "$(git rev-parse HEAD:apps/reader/search)" = 2e09cb2945564f25085074a816b95472392df205
+          test "$(git rev-parse HEAD:apps/reader/navigation)" = 9395914832e191ad63f18f6188ca5044260d2f12
+          test "$(git rev-parse HEAD:apps/reader/reading-commands)" = cf067b8be378d4195817d1106b81f358579e2280
+          test "$(git rev-parse HEAD:apps/reader/annotation-view)" = 9d30b6c54f61496010f647695dedd7ea7ab0c7c1
+          test "$(git rev-parse HEAD:apps/reader/reading-state)" = 60127ae75fbac918237b1c8584e0f7ac2e6130a4
+          git merge-base --is-ancestor f5d25b4c71ea39bd22bebea4eedfee16ca178c35 HEAD
+          while IFS= read -r path; do
+            case "$path" in
+              apps/reader/reading-commands/*|apps/reader/annotation-view/*|examples/apple/HostReadingRecords.swift|examples/apple/HostReadingRecordViews.swift|examples/apple/HostModel.swift|examples/apple/HostCatalog.swift|examples/apple/HostSDK.swift|examples/apple/HostSearch.swift|examples/apple/HostViews.swift|examples/apple/product/ReaderProduct.h|tests/apple_host/reading/*|tests/apple_host/make_xcodeproj.rb|tools/build_apple_product.py|tools/apple_swift.py|tools/check_apple_product.py|.github/workflows/reader-apple-reading-records.yml|.github/workflows/reader-apple-reading-records-diagnostic.yml|.github/workflows/reader-apple-navigation.yml|docs/READER-APPLE-READING-RECORDS.md|docs/validation/reader-apple-reading-records.json) ;;
+              docs/READER-APPLE-NAVIGATION.md|docs/validation/reader-apple-navigation.json) ;;
+              *) echo "Unowned change: $path"; exit 1 ;;
+            esac
+          done < <(git diff --name-only f5d25b4c71ea39bd22bebea4eedfee16ca178c35 HEAD)
+      - name: Build unchanged public SDK and install optional products
+        run: |
+          target='${{ matrix.target }}'
+          options=()
+          if test "$target" = iphonesimulator; then
+            options=(-DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO)
+          fi
+          cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AAC=OFF "${options[@]}"
+          cmake --build build/sdk --parallel 4
+          cmake --install build/sdk --prefix "stage/$target"
+          python3 tools/build_apple_product.py --sdk "stage/$target" --target "$target" --build build/product
+          python3 tests/apple_host/evidence_contract.py sdk --root "stage/$target" --platform "$target" --output build/sdk-identity.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-reading-sdk-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            stage/${{ matrix.target }}/
+            build/sdk-identity.json
+          include-hidden-files: true
+          if-no-files-found: error
+  native:
+    name: Native reading records and durable requests
+    needs: sdk
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: apple-reading-sdk-macos-${{ github.run_id }}-${{ github.run_attempt }}
+          path: sdk-artifact
+      - name: Prepare fixtures and compile the actual owner bridge
+        run: |
+          set -o pipefail
+          mkdir -p build/apple-reading-native
+          python3 -m compileall -q tests/apple_host/reading tests/apple_host/navigation tests/apple_host/resolve_container.py tools/build_apple_product.py tools/apple_swift.py tools/check_apple_product.py
+          python3 tests/apple_host/navigation/test_container_reports.py 2>&1 | tee build/apple-reading-native/container-checks.log
+          python3 tests/apple_host/reading/run_native.py --sdk sdk-artifact/stage/macos --resources build/apple-resources \
+            --output build/apple-reading-native
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-reading-native-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-reading-native/
+          if-no-files-found: error
+  ui:
+    name: Reading UI ${{ matrix.platform }}
+    needs: [sdk, native]
+    runs-on: macos-15
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos, iphone, ipad]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: apple-reading-sdk-*
+          path: sdk-artifacts
+      - name: Build separate reading records UI project and select real destination
+        run: |
+          mkdir -p stage build/apple-reading-ui
+          cp -R sdk-artifacts/*/stage/* stage/
+          python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
+          python3 tests/apple_host/navigation/prepare_navigation_fixture.py --resources build/apple-resources
+          sdk="$PWD/stage/macos"
+          cc -I "$sdk/include" tests/apple_host/navigation/make_cfi.c -L "$sdk/lib" -lexreader \
+            -Wl,-rpath,"$sdk/lib" -o build/apple-reading-ui/make-cfi
+          build/apple-reading-ui/make-cfi build/apple-resources/Sample.epub > build/apple-reading-ui/authored-cfi.txt
+          python3 tests/apple_host/navigation/prepare_navigation_fixture.py --resources build/apple-resources --cfi build/apple-reading-ui/authored-cfi.txt
+          python3 tests/apple_host/reading/prepare_reading_fixture.py --resources build/apple-resources
+          ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+          ruby tests/apple_host/make_xcodeproj.rb build/apple-reading-project build/apple-resources tests/apple_host/reading/ui
+          python3 - '${{ matrix.platform }}' > build/apple-reading-ui/destination.txt <<'PY'
+          import json, subprocess, sys
+          platform = sys.argv[1]
+          if platform == 'macos':
+              print('platform=macOS\nmacos\nmacOS host\nmacOS')
+          else:
+              prefix = 'iPhone' if platform == 'iphone' else 'iPad'
+              data = json.loads(subprocess.check_output(['xcrun', 'simctl', 'list', 'devices', 'available', '--json']))
+              choices = [(runtime, device['name'], device['udid']) for runtime, devices in data['devices'].items()
+                         for device in devices if device.get('isAvailable') and device['name'].startswith(prefix)]
+              runtime, name, udid = max(choices)
+              subprocess.run(['xcrun', 'simctl', 'shutdown', udid], check=False, capture_output=True)
+              subprocess.run(['xcrun', 'simctl', 'erase', udid], check=True)
+              print('platform=iOS Simulator,id=' + udid + '\n' + udid + '\n' + name + '\n' + runtime)
+          PY
+      - name: Actual records selection notes deletion restoration and real process termination
+        id: ui
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          platform='${{ matrix.platform }}'
+          scheme=EXReaderHost-iOS
+          sdk="$PWD/stage/iphonesimulator"
+          signing=NO
+          if test "$platform" = macos; then scheme=EXReaderHost-macOS; sdk="$PWD/stage/macos"; signing=YES; fi
+          destination=$(sed -n '1p' build/apple-reading-ui/destination.txt)
+          cases=()
+          if test '${{ inputs.scope }}' = entry; then
+            cases=("-only-testing:$scheme/ReadingUITests/testProgressBookmarkAndRestart")
+            if test "$platform" = macos; then cases=(-only-testing:EXReaderHostUITests-macOS/ReadingUITests/testProgressBookmarkAndRestart); else cases=(-only-testing:EXReaderHostUITests-iOS/ReadingUITests/testProgressBookmarkAndRestart); fi
+          fi
+          xcodebuild test -project build/apple-reading-project/EXReaderHost.xcodeproj -scheme "$scheme" \
+            -destination "$destination" -derivedDataPath build/ReadingDerivedData \
+            -resultBundlePath "build/apple-reading-ui/$platform.xcresult" -parallel-testing-enabled NO "${cases[@]}" \
+            -test-timeouts-enabled YES -default-test-execution-time-allowance 180 -maximum-test-execution-time-allowance 300 \
+            EXR_SDK_DIR="$sdk" CODE_SIGNING_ALLOWED="$signing" 2>&1 | tee "build/apple-reading-ui/$platform-xcodebuild.log"
+      - name: Require exact raw reading records evidence and installed providers
+        if: always() && inputs.scope != 'entry'
+        id: evidence
+        continue-on-error: true
+        run: |
+          platform='${{ matrix.platform }}'
+          target=iphonesimulator
+          app=build/ReadingDerivedData/Build/Products/Debug-iphonesimulator/EXReaderHost.app
+          if test "$platform" = macos; then
+            target=macos
+            app=build/ReadingDerivedData/Build/Products/Debug/EXReaderHost.app
+          fi
+          python3 tests/apple_host/reading/collect_reading_evidence.py --platform "$platform" \
+            --xcresult "build/apple-reading-ui/$platform.xcresult" --output build/apple-reading-ui/evidence \
+            --app "$app" --sdk-root "stage/$target" --fixtures build/apple-resources/manifest.json \
+            --sdk-identity "sdk-artifacts/apple-reading-sdk-$target-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT/build/sdk-identity.json" \
+            --destination build/apple-reading-ui/destination.txt
+      - name: Record diagnostic scope without granting acceptance
+        if: always() && inputs.scope == 'entry'
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          Path('build/apple-reading-ui/diagnostic.json').write_text(json.dumps({
+              'diagnostic_only': True, 'accepted': False, 'source_sha': os.environ['GITHUB_SHA'],
+              'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+              'scope': 'actual native entry plus progress/bookmark/restart case only'}) + '\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-reading-ui-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-reading-ui/
+          if-no-files-found: error
+      - if: always() && (steps.ui.outcome != 'success' || (inputs.scope != 'entry' && steps.evidence.outcome != 'success'))
+        run: exit 1
+  summary:
+    name: Strict same-source reading records summary
+    if: always() && inputs.scope != 'entry'
+    needs: [sdk, native, ui]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Recheck completed jobs original ZIP identity and raw reports
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_host/reading/summarize.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-reading-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-reading-summary/
+          if-no-files-found: error

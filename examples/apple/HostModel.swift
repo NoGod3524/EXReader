@@ -3,7 +3,387 @@ import Foundation
 import CoreGraphics
 import CryptoKit
 import CEXReader
+import CReaderProduct
 import Combine
+import Darwin
+
+// Product shelf state is independent of SDK pagination and its owner handles.
+// Only three catalog pages are retained; async results carry a query generation.
+final class HostShelf: ObservableObject {
+    typealias Loader = (String, HostShelfKey?, Bool, Bool, @escaping (Result<[HostShelfBook], Error>) -> Void) -> Void
+    @Published private(set) var rows: [HostShelfBook] = []
+    @Published var query = ""
+    @Published private(set) var loading = false
+    @Published private(set) var error = ""
+    @Published private(set) var restoreRevision = 0
+    @Published private var viewportRevision = 0
+    private(set) var restoreKey: String?
+    private(set) var top: HostShelfKey?
+    private(set) var before = false
+    private(set) var after = false
+    private(set) var generation = 0
+    private(set) var appliedGeneration = -1
+    private(set) var discarded = 0
+    private(set) var maximumRows = 0
+    private(set) var selected: String?
+    private var loader: Loader?
+    private var debounce: DispatchWorkItem?
+    private var visible = Set<String>()
+    private let defaults: UserDefaults
+    private var appliedQuery = ""
+    private var lastLayout: TimeInterval?
+    private var layoutIntervals: [Double] = []
+    private var viewportSize = CGSize.zero
+    private let createdUptime = ProcessInfo.processInfo.systemUptime
+    private var firstLayoutUptime: TimeInterval?
+    private var awaitingLayoutKey: String?
+    private var issuedRestoreRevision = -1
+    private var probeRevision = -1
+    private var probePositions: [String: CGRect] = [:]
+    private var probeSize = CGSize.zero
+    private var probeFlushScheduled = false
+    private var lastProbeMovement: TimeInterval?
+    private var pendingPage: (() -> Void)?
+    private var pendingPageWork: DispatchWorkItem?
+    private var restoreRetryWork: DispatchWorkItem?
+    // Even epochs precede the native scroll; odd epochs follow its issue.
+    var geometryRevision: Int { restoreRevision * 2 + (issuedRestoreRevision == restoreRevision ? 1 : 0) }
+    var needsScroll: Bool { awaitingLayoutKey != nil && issuedRestoreRevision != restoreRevision }
+    private var pendingSave: DispatchWorkItem?
+#if EXR_APPLE_SHELF_REVIEW
+    private var reviewVisibleFrames: [[String: Any]] = []
+    private var reviewGeometryRevision = -1
+
+    private func recordReviewTrace(_ line: String) {
+        guard let root = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }
+        let folder = root.appendingPathComponent("EXReader", isDirectory: true)
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let url = folder.appendingPathComponent("shelf-layout-trace.jsonl")
+        if !FileManager.default.fileExists(atPath: url.path) { FileManager.default.createFile(atPath: url.path, contents: nil) }
+        guard let handle = try? FileHandle(forWritingTo: url) else { return }
+        defer { try? handle.close() }
+        _ = try? handle.seekToEnd()
+        try? handle.write(contentsOf: Data((line + "\n").utf8))
+    }
+#endif
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        query = defaults.string(forKey: "EXRShelfQuery") ?? ""
+        selected = defaults.string(forKey: "EXRShelfSelected")
+        if let data = defaults.data(forKey: "EXRShelfTop") { top = try? JSONDecoder().decode(HostShelfKey.self, from: data) }
+    }
+    deinit { debounce?.cancel(); pendingSave?.cancel(); pendingPageWork?.cancel(); restoreRetryWork?.cancel() }
+
+    func connect(_ load: @escaping Loader) {
+        guard loader == nil else { return }
+        loader = load
+        reset(anchor: top)
+    }
+
+    func search() {
+        debounce?.cancel()
+        pendingPageWork?.cancel(); pendingPage = nil
+        restoreRetryWork?.cancel()
+        query = String(String.UnicodeScalarView(query.precomposedStringWithCanonicalMapping.unicodeScalars.prefix(256)))
+        generation += 1
+        rows = []; visible = []; top = nil; awaitingLayoutKey = nil; before = false; after = false; loading = true
+        defaults.removeObject(forKey: "EXRShelfTop")
+        defaults.set(query, forKey: "EXRShelfQuery")
+        let work = DispatchWorkItem { [weak self] in self?.reset(anchor: nil) }
+        debounce = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18, execute: work)
+    }
+
+    func refresh() {
+        guard loader != nil else { return }
+        save()
+        reset(anchor: top)
+    }
+
+    private func reset(anchor: HostShelfKey?) {
+        pendingPageWork?.cancel(); pendingPage = nil
+        restoreRetryWork?.cancel()
+        generation += 1; loading = false; error = ""
+        rows = []; visible = []; awaitingLayoutKey = nil; before = false; after = false
+        request(anchor: anchor, previous: false, inclusive: true, replacing: true)
+    }
+
+    private func request(anchor: HostShelfKey?, previous: Bool, inclusive: Bool, replacing: Bool) {
+        guard !loading, let loader else { return }
+        loading = true
+        let token = generation, requested = query
+        loader(requested, anchor, previous, inclusive) { [weak self] result in
+            self?.receive(result, token: token, requested: requested, anchor: anchor, previous: previous, replacing: replacing)
+        }
+    }
+
+    private func receive(_ result: Result<[HostShelfBook], Error>, token: Int, requested: String,
+                         anchor: HostShelfKey?, previous: Bool, replacing: Bool, settled: Bool = false) {
+        guard generation == token, query == requested else { discarded += 1; return }
+        loading = false
+        switch result {
+            case .failure(let error): self.error = error.localizedDescription
+            case .success(let page):
+                guard page.count <= 50 else { self.error = "书架分页超过上限"; return }
+                if !replacing && page.isEmpty {
+                    if previous { self.before = false } else { self.after = false }
+                    if self.awaitingLayoutKey != nil { self.restoreRevision += 1 }
+                    return
+                }
+                if replacing && page.isEmpty && anchor != nil && !previous {
+                    self.request(anchor: anchor, previous: true, inclusive: false, replacing: true)
+                    return
+                }
+                // A prepend/eviction moves existing rows. Wait for measured
+                // native movement to stop before changing those coordinates.
+                if !replacing, previous || self.rows.count + page.count > 150, !settled,
+                   let lastProbeMovement, ProcessInfo.processInfo.systemUptime - lastProbeMovement < 0.15 {
+                    loading = true
+                    pendingPage = { [weak self] in
+                        self?.receive(result, token: token, requested: requested, anchor: anchor,
+                                      previous: previous, replacing: replacing, settled: true)
+                    }
+                    schedulePendingPage()
+                    return
+                }
+                let retainedTop = replacing ? anchor :
+                    (self.rows.first(where: { $0.id == self.awaitingLayoutKey })?.key ?? self.top)
+                // Appending within the cache changes no existing row position.
+                // A forced scroll here races an in-flight native drag/deceleration.
+                let shiftsExistingRows = replacing || previous || self.rows.count + page.count > 150
+                if !replacing && self.rows.count + page.count > 150,
+                   let index = self.rows.firstIndex(where: { $0.key == self.top }) {
+                    if (!previous && index < 50) || (previous && index + self.visible.count > self.rows.count - 50) { return }
+                }
+                if replacing {
+                    self.rows = page
+                    self.before = anchor != nil && (!previous || page.count == 50)
+                    self.after = !previous && page.count == 50
+                } else if previous {
+                    self.rows.insert(contentsOf: page, at: 0)
+                    self.before = page.count == 50
+                    if self.rows.count > 150 { self.rows.removeLast(self.rows.count - 150); self.after = true }
+                } else {
+                    self.rows.append(contentsOf: page)
+                    self.after = page.count == 50
+                    if self.rows.count > 150 { self.rows.removeFirst(self.rows.count - 150); self.before = true }
+                }
+                self.maximumRows = max(self.maximumRows, self.rows.count)
+                self.appliedGeneration = token; self.appliedQuery = requested
+                if shiftsExistingRows {
+                    self.restoreKey = retainedTop.flatMap { key in self.rows.contains(where: { $0.key == key }) ? key.key : nil } ?? self.rows.first?.id
+                    self.awaitingLayoutKey = self.restoreKey
+                    self.restoreRevision += 1
+                }
+        }
+    }
+
+    private func schedulePendingPage() {
+        guard pendingPage != nil else { return }
+        pendingPageWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            let apply = self.pendingPage; self.pendingPage = nil; apply?()
+        }
+        pendingPageWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: work)
+    }
+
+    private func scheduleRestoreRetry() {
+        guard let target = awaitingLayoutKey, issuedRestoreRevision == restoreRevision else { return }
+        restoreRetryWork?.cancel()
+        let token = generation, revision = restoreRevision
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, self.generation == token, self.restoreRevision == revision,
+                  self.awaitingLayoutKey == target, !self.loading else { return }
+            if let movement = self.lastProbeMovement, ProcessInfo.processInfo.systemUptime - movement < 0.15 {
+                self.scheduleRestoreRetry(); return
+            }
+            // An early native scroll can be superseded by the content-size
+            // update. Reissue it after motion stops; only real layout can ack.
+            self.restoreRevision += 1
+        }
+        restoreRetryWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: work)
+    }
+
+    func measureProbe(key: String?, frame: CGRect, size: CGSize, revision: Int) {
+        guard revision == geometryRevision else { return }
+        if probeRevision != revision {
+            probeRevision = revision; probePositions = [:]; probeSize = .zero
+        }
+        if let key {
+            if probePositions[key] != frame { lastProbeMovement = ProcessInfo.processInfo.systemUptime; schedulePendingPage() }
+            probePositions[key] = frame
+        } else { probeSize = size }
+        guard !probeFlushScheduled else { return }
+        probeFlushScheduled = true
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.probeFlushScheduled = false
+            guard self.probeRevision == self.geometryRevision else { return }
+            self.probePositions = self.probePositions.filter { key, _ in self.rows.contains(where: { $0.id == key }) }
+            // An already-aligned native scroll can emit no changed whole
+            // preference. Its new probes still measure actual geometry. A
+            // partial set cannot establish the first visible row: require
+            // every current row and the viewport from this same epoch.
+            guard self.rows.count == 1 || self.awaitingLayoutKey != nil else { return }
+            guard !self.rows.isEmpty, self.probeSize.width > 0, self.probeSize.height > 0,
+                  self.rows.allSatisfy({ self.probePositions[$0.id] != nil }) else { return }
+            self.observe(self.probePositions, size: self.probeSize, revision: self.probeRevision)
+        }
+    }
+
+    func observe(_ positions: [String: CGRect], size: CGSize, revision: Int, complete: Bool = true) {
+        if size.height > 0, revision == geometryRevision {
+            if probeRevision == revision, positions != probePositions {
+                lastProbeMovement = ProcessInfo.processInfo.systemUptime
+                schedulePendingPage()
+            }
+            probeRevision = revision; probePositions = positions; probeSize = size
+        }
+#if EXR_APPLE_SHELF_REVIEW
+        if complete, revision == geometryRevision {
+            let frames: [[String: Any]] = size.height > 0 ? positions
+                .filter { $0.value.maxY > 0 && $0.value.minY < size.height }
+                .sorted { $0.value.minY < $1.value.minY }.prefix(3).map {
+                    ["key": $0.key, "min_y": Double($0.value.minY), "max_y": Double($0.value.maxY)]
+                } : []
+            if reviewGeometryRevision != revision || !NSArray(array: reviewVisibleFrames).isEqual(to: frames) {
+                objectWillChange.send()
+                reviewGeometryRevision = revision
+                reviewVisibleFrames = frames
+            }
+        }
+        if let awaitingLayoutKey {
+            var trace: [String: Any] = ["incoming_epoch": revision, "expected_epoch": geometryRevision,
+                "issued_revision": issuedRestoreRevision, "needs_scroll": needsScroll,
+                "complete_snapshot": complete,
+                "frame_count": positions.count, "width": Double(size.width), "height": Double(size.height),
+                "target_key": awaitingLayoutKey]
+            if let frame = positions[awaitingLayoutKey] {
+                trace["target_frame"] = ["min_y": Double(frame.minY), "max_y": Double(frame.maxY),
+                    "width": Double(frame.width), "height": Double(frame.height)]
+            }
+            if let data = try? JSONSerialization.data(withJSONObject: trace, options: [.sortedKeys]),
+               let value = String(data: data, encoding: .utf8) { recordReviewTrace("SHELF RAW GEOMETRY \(value)") }
+        }
+#endif
+        guard size.height > 0, revision == geometryRevision else { return }
+        if viewportSize != .zero && viewportSize != size {
+            viewportSize = size; restoreViewport(); return
+        }
+        viewportSize = size
+        guard complete else { return }
+        let ordered = positions.filter { $0.value.maxY > 0 && $0.value.minY < size.height }
+            .sorted { $0.value.minY < $1.value.minY }
+        if let target = awaitingLayoutKey, issuedRestoreRevision != restoreRevision {
+            // Rebuilding identical filtered content can leave the native list
+            // already aligned without emitting a changed aggregate preference.
+            // Full current geometry can prove that no scroll is needed.
+            guard !loading, generation == appliedGeneration, query == appliedQuery,
+                  size.width > 0, !rows.isEmpty,
+                  rows.allSatisfy({ positions[$0.id] != nil }),
+                  ordered.first?.key == target, let frame = positions[target],
+                  frame.width > 0, frame.height > 0, abs(frame.minY) <= 1 else { return }
+        }
+        let newVisible = Set(ordered.map(\.key))
+        guard let first = ordered.first, let index = rows.firstIndex(where: { $0.id == first.key }) else { return }
+        let lastIndex = ordered.last.flatMap { last in rows.firstIndex(where: { $0.id == last.key }) } ?? index
+        let acknowledged = awaitingLayoutKey != nil
+        if let awaitingLayoutKey {
+            if first.key != awaitingLayoutKey {
+                // Native List clamps an old top near the global end when a
+                // taller viewport cannot align that row at the top. Confirm
+                // only real visible target + terminal-row geometry.
+                guard let target = positions[awaitingLayoutKey], target.maxY > 0, target.minY < size.height,
+                      let last = rows.last, let tail = positions[last.id], tail.maxY > 0,
+                      tail.maxY <= size.height + 1 else { scheduleRestoreRetry(); return }
+                if after {
+                    if !loading { request(anchor: last.key, previous: false, inclusive: false, replacing: false) }
+                    return
+                }
+                restoreKey = first.key
+            }
+            restoreRetryWork?.cancel()
+            self.awaitingLayoutKey = nil
+        }
+        if firstLayoutUptime == nil, !loading, generation == appliedGeneration {
+            firstLayoutUptime = ProcessInfo.processInfo.systemUptime
+        }
+        if acknowledged || visible != newVisible || top != rows[index].key {
+            let now = ProcessInfo.processInfo.systemUptime
+            if let lastLayout { layoutIntervals.append((now - lastLayout) * 1000) }
+            if layoutIntervals.count > 512 { layoutIntervals.removeFirst(layoutIntervals.count - 512) }
+            self.lastLayout = now
+            visible = newVisible
+            viewportRevision += 1
+            pendingSave?.cancel()
+            let token = generation, key = rows[index].key
+            let work = DispatchWorkItem { [weak self] in
+                guard let self, self.generation == token, self.top == key else { return }
+                self.save()
+            }
+            pendingSave = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
+        }
+        top = rows[index].key
+        guard !loading, appliedGeneration == generation else { return }
+        if after && lastIndex >= rows.count - 12, let last = rows.last {
+            request(anchor: last.key, previous: false, inclusive: false, replacing: false)
+        } else if before && index < 12, let first = rows.first {
+            request(anchor: first.key, previous: true, inclusive: false, replacing: false)
+        }
+    }
+
+    func restoreViewport() {
+        restoreKey = awaitingLayoutKey ?? top?.key ?? restoreKey
+        awaitingLayoutKey = restoreKey
+        restoreRevision += 1
+    }
+    func didScroll(revision: Int) {
+        guard revision == restoreRevision, issuedRestoreRevision != revision else { return }
+        issuedRestoreRevision = revision
+#if EXR_APPLE_SHELF_REVIEW
+        recordReviewTrace("SHELF SCROLL ISSUED revision=\(revision) epoch=\(geometryRevision)")
+#endif
+        viewportRevision += 1
+    }
+    func choose(_ book: HostShelfBook) { selected = book.id; defaults.set(book.id, forKey: "EXRShelfSelected"); save() }
+    func save() {
+        // Never pair a new query with an old viewport, or clear a valid anchor
+        // while a same-query refresh is temporarily between pages.
+        guard appliedGeneration == generation, appliedQuery == query, awaitingLayoutKey == nil else { return }
+        defaults.set(query, forKey: "EXRShelfQuery")
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        if let top, let bytes = try? encoder.encode(top) { defaults.set(bytes, forKey: "EXRShelfTop") }
+    }
+
+    var observation: String {
+        var usage = rusage()
+        getrusage(RUSAGE_SELF, &usage)
+        var value: [String: Any] = ["query": query, "generation": generation, "applied_generation": appliedGeneration,
+            "loading": loading, "restoring_layout": awaitingLayoutKey != nil,
+            "cached_rows": rows.count, "max_cached_rows": maximumRows,
+            "page_limit": 50, "cache_limit": 150, "has_before": before, "has_after": after,
+            "top_key": top?.key ?? "", "selected_key": selected ?? "", "discarded": discarded,
+            "keys": rows.map(\.id), "visible_keys": rows.filter { visible.contains($0.id) }.map(\.id),
+            "layout_revision": viewportRevision, "process_peak_rss_bytes": usage.ru_maxrss,
+            "shelf_created_to_first_visible_layout_ms": firstLayoutUptime.map { ($0 - createdUptime) * 1000 } ?? -1,
+            "layout_observation_intervals_ms": layoutIntervals]
+#if EXR_APPLE_SHELF_REVIEW
+        value["visible_frames"] = reviewVisibleFrames
+        value["observed_geometry_revision"] = reviewGeometryRevision
+        value["viewport_height"] = Double(viewportSize.height)
+        value["requested_restore_key"] = restoreKey ?? ""
+        value["geometry_revision"] = geometryRevision
+        value["issued_restore_revision"] = issuedRestoreRevision
+#endif
+        return (try? String(data: JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]), encoding: .utf8)) ?? "{}"
+    }
+}
 
 struct HostSelectionContext: Equatable {
     let bookID: Int64
@@ -130,7 +510,9 @@ final class HostSession {
     private var currentPath: String { publication?.parts.first(where: { $0.index == part })?.path ?? "" }
 
     func listBooks(_ storedBooks: [HostBook]? = nil) throws -> [HostBookRow] {
-        try (storedBooks ?? library.books()).map { book in
+        // The public SDK enumeration is still transiently unbounded. Do not
+        // retain its complete metadata array in the UI's compatibility rows.
+        try (storedBooks ?? library.books()).prefix(50).map { book in
             let detail: String
             if try library.isBoundedEPUB(book: book) {
                 if let saved = try library.epubProgress(bookID: book.id) { detail = "EPUB · 第 \(saved.part + 1) 章" }
@@ -153,6 +535,162 @@ final class HostSession {
     func candidate() -> HostSession {
         HostSession(library: library, font: font, slowDelay: slowDelay,
                     viewport: viewport, fontSize: fontSize)
+    }
+
+    // The old reader is untouched until a fresh SDK instance has FOUND the
+    // copied selector. Opening for resolution does not restore or write progress.
+    func searchCandidate(_ hit: HostSearchHit, cancel: HostCancelBox) throws -> (HostSession, HostSnapshot) {
+        try cancel.check()
+        guard book?.id == hit.bookID else { throw HostError.invalidInput("书籍已切换，请重新查找") }
+        let independent = try HostLibrary(path: library.path)
+        guard let target = try independent.books().first(where: { $0.id == hit.bookID }),
+              try independent.sourceFingerprint(book: target, cancel: cancel).searchKey == hit.sourceKey else {
+            throw HostError.invalidInput("原件身份已变化，请重新查找")
+        }
+        let result = HostSession(library: independent, font: font, slowDelay: slowDelay,
+                                 viewport: viewport, fontSize: fontSize)
+        try result.begin(cancel)
+        result.book = target
+        let match: HostAnchorMatch
+        if target.isFixed, hit.mode == READER_SEARCH_FIXED {
+            let fixed = try independent.fixed(bookID: target.id, font: font, cancel: cancel)
+            let pages = fixed.pageIDs.enumerated().filter { $0.element.utf8.elementsEqual(hit.pageID.utf8) }
+            guard pages.count == 1, !hit.pageID.isEmpty else { throw HostError.invalidInput("页面目标缺失或不唯一") }
+            let selectedPage = pages[0].offset
+            let text = try fixed.text(page: selectedPage, cancel: cancel)
+            match = try hit.fixed.withInput { try text.resolve($0, pageID: hit.pageID, cancel: cancel) }
+            result.fixed = fixed; result.page = selectedPage
+        } else if hit.mode == READER_SEARCH_EPUB, try independent.isBoundedEPUB(book: target) {
+            let publication = try HostPublication(library: independent, bookID: target.id, cancel: cancel)
+            _ = try publication.route(hit.unit, path: hit.path)
+            result.publication = publication; result.part = hit.unit
+            try result.rebuildPager(width: Double(viewport.width), height: Double(viewport.height), font: fontSize, cancel: cancel)
+            guard let pager = result.pager else { throw HostError.invalidResult("章节分页不可用") }
+            match = try hit.anchor.withInput { try pager.resolveInput($0, cancel: cancel) }
+        } else if hit.mode == READER_SEARCH_REFLOW, !target.isFixed, try !independent.isBoundedEPUB(book: target) {
+            let document = try independent.document(bookID: target.id, cancel: cancel)
+            result.document = document
+            match = try hit.anchor.withInput { try document.resolveInput($0, cancel: cancel) }
+        } else { throw HostError.invalidInput("搜索模式与书籍不一致") }
+        guard match.isFound, let range = match.range else { throw HostError.invalidInput("选文未精确匹配；保留当前页面") }
+        try cancel.check()
+        if result.fixed == nil {
+            result.readingOffset = range.lowerBound
+            if result.pager == nil {
+                try result.rebuildPager(width: Double(viewport.width), height: Double(viewport.height), font: fontSize, cancel: cancel)
+            } else { result.page = try result.pager!.pageIndex(for: range.lowerBound, cancel: cancel) }
+        }
+        return (result, try result.renderSnapshot())
+    }
+
+    func navigationCandidate(_ selection: HostNavigationSelection, acceptPart: Bool,
+                             cancel: HostCancelBox) throws -> (HostSession, HostSnapshot) {
+        try cancel.check()
+        guard book?.id == selection.bookID,
+              selection.resolution.status == READER_NAVIGATION_OK ||
+                (acceptPart && selection.resolution.status == READER_NAVIGATION_PART_ONLY) else {
+            throw HostError.invalidInput("目录目标尚未确认")
+        }
+        let independent = try HostLibrary(path: library.path)
+        guard let targetBook = try independent.books().first(where: { $0.id == selection.bookID }),
+              try independent.sourceFingerprint(book: targetBook, cancel: cancel).searchKey == selection.sourceKey else {
+            throw HostError.invalidInput("原件身份已变化，请重新打开目录")
+        }
+        let result = HostSession(library: independent, font: font, slowDelay: slowDelay, viewport: viewport, fontSize: fontSize)
+        try result.begin(cancel); result.book = targetBook
+        let target = selection.resolution.target
+        if targetBook.isFixed {
+            let fixed = try independent.fixed(bookID: targetBook.id, font: font, cancel: cancel)
+            guard target.kind == READER_NAVIGATION_RESULT_PAGE.rawValue, target.row == selection.row,
+                  target.part == selection.row, target.part < UInt64(fixed.pageCount), !target.partID.isEmpty,
+                  fixed.pageIDs.filter({ $0.utf8.elementsEqual(target.partID.utf8) }).count == 1,
+                  fixed.pageIDs[Int(target.part)].utf8.elementsEqual(target.partID.utf8) else { throw HostError.invalidInput("独立页面身份不一致") }
+            result.fixed = fixed; result.page = Int(target.part)
+        } else {
+            let publication: HostPublication?
+            let document: HostDocument?
+            if try independent.isBoundedEPUB(book: targetBook) {
+                publication = try HostPublication(library: independent, bookID: targetBook.id, cancel: cancel); document = nil
+            } else { publication = nil; document = try independent.document(bookID: targetBook.id, cancel: cancel) }
+            let (proof, offset) = try HostNavigationWorker.verify(selection, publication: publication, document: document, cancel: cancel)
+            let anchor = try proof.makeAnchor(start: offset, end: offset, cancel: cancel)
+            result.publication = publication; result.document = document
+            result.part = publication == nil ? -1 : Int(target.part); result.readingOffset = offset
+            try result.rebuildPager(width: Double(viewport.width), height: Double(viewport.height), font: fontSize, cancel: cancel)
+            guard let pager = result.pager else { throw HostError.invalidResult("目录目标分页不可用") }
+            try pager.verifyProjection(proof.text, cancel: cancel)
+            let match = try pager.resolve(anchor, cancel: cancel)
+            guard match.isFound, match.range?.lowerBound == offset else {
+                throw HostError.invalidInput("目录目标未精确匹配，保留当前页面")
+            }
+            result.page = try pager.pageIndex(for: offset, cancel: cancel)
+        }
+        try cancel.check()
+        return (result, try result.renderSnapshot())
+    }
+
+    func readingCapture(start: Int? = nil, end: Int? = nil, cancel: HostCancelBox) throws -> HostReadingCapture {
+        try cancel.check()
+        guard book != nil else { throw HostError.invalidInput("请先打开书籍") }
+        let lower = start ?? (fixed == nil ? readingOffset : 0), upper = end ?? lower
+        guard lower >= 0, upper >= lower else { throw HostError.invalidInput("阅读记录选文无效") }
+        if let fixed { return try HostReadingWorker.fixedCapture(fixed, page: page, start: lower, end: upper, cancel: cancel) }
+        guard let pager else { throw HostError.invalidInput("阅读记录分页尚未就绪") }
+        let selector = try pager.makeAnchor(start: lower, end: upper, cancel: cancel)
+        return HostReadingCapture(mode: publication == nil ? 1 : 2, part: max(0, part), path: currentPath, page: 0,
+            anchor: HostSearchAnchor(selector.raw), fixed: nil)
+    }
+
+    // Read/restore resolution never renders or writes SDK progress. Only the
+    // explicit jump caller subsequently commits an actual renderer candidate.
+    func readingResolution(_ wire: Data, catalog: HostCatalog, cancel: HostCancelBox) throws -> (HostReadingCapture, HostSearchHit) {
+        try cancel.check()
+        guard let book else { throw HostError.invalidInput("请先打开书籍") }
+        let decoded = try catalog.withHistory { try HostReadingWorker.decoded(wire, history: $0) }
+        let independent = try HostLibrary(path: library.path)
+        guard let verifiedBook = try independent.books().first(where: { $0.id == book.id }) else { throw HostError.invalidInput("原件已不可用") }
+        let original = try independent.sourceFingerprint(book: verifiedBook, cancel: cancel)
+        guard decoded.book == original.format + ":" + original.sha256,
+              try catalog.searchSourceKey(sdkID: book.id) == original.searchKey else { throw HostError.invalidInput("阅读记录不是当前原件") }
+        let input = decoded.capture, fresh: HostReadingCapture, unit: Int
+        let match: HostAnchorMatch
+        if verifiedBook.isFixed, input.mode == 3, let anchor = input.fixed {
+            let fixed = try independent.fixed(bookID: book.id, font: font, cancel: cancel)
+            let id = anchor.fields[0].map { String(decoding: $0, as: UTF8.self) } ?? ""
+            let choices = fixed.pageIDs.enumerated().filter { $0.element.utf8.elementsEqual(id.utf8) }
+            guard !id.isEmpty, choices.count == 1 else { throw HostError.invalidInput("固定页位置缺失或不唯一") }
+            unit = choices[0].offset
+            let text = try fixed.text(page: unit, cancel: cancel)
+            match = try anchor.withInput { try text.resolve($0, pageID: id, cancel: cancel) }
+            guard match.isFound, let range = match.range else { throw HostError.invalidInput("记录位置未精确匹配，保留当前页面") }
+            fresh = try HostReadingWorker.fixedCapture(fixed, page: unit, start: range.lowerBound, end: range.upperBound, cancel: cancel)
+        } else if input.mode == 2, !verifiedBook.isFixed, try independent.isBoundedEPUB(book: verifiedBook), let anchor = input.anchor {
+            let publication = try HostPublication(library: independent, bookID: book.id, cancel: cancel)
+            if decoded.version == 1 {
+                let choices = publication.parts.filter { $0.path.utf8.elementsEqual(input.path.utf8) && $0.reading }
+                guard choices.count == 1 else { throw HostError.invalidInput("旧版章节位置不唯一，保留记录") }
+                unit = choices[0].index
+            } else { unit = input.part; _ = try publication.route(unit, path: input.path) }
+            let pager = try HostPager(publication: publication, part: unit, font: font, width: Double(viewport.width),
+                height: Double(viewport.height), fontSize: fontSize, box: cancel)
+            match = try anchor.withInput { try pager.resolveInput($0, cancel: cancel) }
+            guard match.isFound, let range = match.range else { throw HostError.invalidInput("记录章节未精确匹配，保留当前页面") }
+            let actual = try pager.makeAnchor(start: range.lowerBound, end: range.upperBound, cancel: cancel)
+            fresh = HostReadingCapture(mode: 2, part: unit, path: input.path, page: 0, anchor: HostSearchAnchor(actual.raw), fixed: nil)
+        } else if input.mode == 1, !verifiedBook.isFixed, try !independent.isBoundedEPUB(book: verifiedBook), let anchor = input.anchor {
+            unit = 0
+            let document = try independent.document(bookID: book.id, cancel: cancel)
+            match = try anchor.withInput { try document.resolveInput($0, cancel: cancel) }
+            guard match.isFound, let range = match.range else { throw HostError.invalidInput("记录正文未精确匹配，保留当前页面") }
+            let actual = try document.makeAnchor(start: range.lowerBound, end: range.upperBound, cancel: cancel)
+            fresh = HostReadingCapture(mode: 1, part: 0, path: "", page: 0, anchor: HostSearchAnchor(actual.raw), fixed: nil)
+        } else { throw HostError.invalidInput("记录坐标模式与实际阅读模式不一致") }
+        try cancel.check()
+        let hit = HostSearchHit(mode: input.mode == 3 ? READER_SEARCH_FIXED : input.mode == 2 ? READER_SEARCH_EPUB : READER_SEARCH_REFLOW,
+            unit: unit, path: input.path, pageID: input.fixed?.fields[0].map { String(decoding: $0, as: UTF8.self) } ?? "",
+            pageLabel: "", sourceKey: original.searchKey, bookID: book.id,
+            anchor: input.anchor ?? HostSearchAnchor(exr_anchor()), fixed: try input.fixed ?? HostSearchFixedAnchor(exr_fixed_anchor()))
+        return (fresh, hit)
     }
 
     // Keep the last usable frame/session if parsing, seeking, rendering or saving fails.
@@ -427,8 +965,7 @@ final class HostSession {
 
     private func pageLabel(text: String, page: Int) -> String {
         let flat = text.replacingOccurrences(of: "\n", with: " ")
-        let snippet = String(flat.prefix(60))
-        return snippet.isEmpty ? "第 \(page) 页" : "第 \(page) 页：\(snippet)"
+        return flat.isEmpty ? "第 \(page) 页" : "第 \(page) 页：\(flat)"
     }
 
     func notes() throws -> [HostNoteRow] {
@@ -595,6 +1132,9 @@ final class HostSession {
 }
 
 final class HostReaderModel: ObservableObject {
+    let search = HostSearchState()
+    let navigation = HostNavigationState()
+    let readingRecords = HostReadingState()
     @Published var books: [HostBookRow] = []
     @Published var current: HostBookRow?
     @Published var image: CGImage?
@@ -607,12 +1147,18 @@ final class HostReaderModel: ObservableObject {
     @Published var fontSize = 28
     @Published var statusText = "就绪"
     @Published var errorText = ""
+    @Published private(set) var productIndexPending = false
     @Published var stateHash = "—"
     @Published var busy = false
+    @Published private(set) var syncPreparing = false
     @Published var notes: [HostNoteRow] = []
     @Published var showLibrary = true
     @Published var frameCount = 0
     @Published private(set) var uiTestTrace = ""
+#if EXR_APPLE_HOST_REVIEW
+    @Published private var uiTestCancellationReadyToken: Int?
+    var uiTestCancellationReady: Bool { busy && uiTestCancellationReadyToken == token }
+#endif
 #if EXR_APPLE_IMPORT_REVIEW
     @Published private(set) var importMappingProbe = ""
 #endif
@@ -627,6 +1173,7 @@ final class HostReaderModel: ObservableObject {
     private var catalog: HostCatalog?
     private var token = 0
     private var activeCancel: HostCancelBox?
+    private var syncCancel: HostCancelBox?
     private var started = false
     private var lastViewport = CGSize.zero
     private var viewportWork: DispatchWorkItem?
@@ -638,10 +1185,20 @@ final class HostReaderModel: ObservableObject {
     private var pendingViewport: ViewportRequest?
     private var viewportWaiting = false
     private var viewportGeneration = 0
-    private let defaults = UserDefaults.standard
+    private let defaults: UserDefaults
+    private let accountProfile: HostAccountProfile?
+    private let accounts: HostAccounts?
+    let accountSession: HostAccountSession?
     private let testFixtures = ProcessInfo.processInfo.arguments.contains("-EXRUITestFixtures")
     private let freshState = ProcessInfo.processInfo.arguments.contains("-EXRFreshState")
     private var slowDelay: Double = 0
+
+    init(profile: HostAccountProfile? = nil, accounts: HostAccounts? = nil) {
+        self.accountProfile = profile
+        self.accounts = accounts
+        self.accountSession = profile.flatMap { accounts?.controller(for: $0) }
+        self.defaults = profile.flatMap { UserDefaults(suiteName: "org.exreader.account." + $0.id) } ?? .standard
+    }
 
     deinit {
         let ownedCatalog = catalog
@@ -651,6 +1208,64 @@ final class HostReaderModel: ObservableObject {
     }
 
     var showsTestFixtures: Bool { testFixtures }
+    var shelfDefaults: UserDefaults { defaults }
+
+    func closeAccountSession() {
+        activeCancel?.cancel()
+        readingRecords.bind(nil)
+        syncCancel?.cancel()
+        accountSession?.close()
+    }
+
+    func synchronizeAccount() {
+        guard !busy, !syncPreparing, let profile = accountProfile, let accounts, let accountSession,
+              !accountSession.running, !accountSession.preparing else { return }
+        do {
+            let authorization = try accounts.authorization(for: profile)
+            let cancel = HostCancelBox()
+            try accountSession.beginPreparation { cancel.cancel() }
+            syncCancel = cancel; syncPreparing = true
+            prepareSyncPage(after: nil, profile: profile, authorization: authorization, cancel: cancel)
+        } catch { errorText = describe(error) }
+    }
+
+    private func prepareSyncPage(after: String?, profile: HostAccountProfile, authorization: Data, cancel: HostCancelBox) {
+        queue.async {
+            do {
+                try cancel.check()
+                guard let session = self.session, let catalog = self.catalog else { throw HostError.invalidInput("书库尚未就绪") }
+                let directory = try self.storageFolder()
+                let page = try catalog.syncPage(after: after)
+                try catalog.withHistory { history in
+                    for book in page {
+                        try session.library.exportSyncOriginal(bookID: book.sdkID,
+                            expected: HostSourceFingerprint(format: book.format, sha256: book.sha256, bytes: book.bytes),
+                            directory: directory.appendingPathComponent("sync-originals", isDirectory: true), cancel: cancel)
+                        try catalog.bootstrapVerified(book, store: history)
+                    }
+                }
+                try cancel.check()
+                if page.count == 50 {
+                    self.prepareSyncPage(after: page.last?.key, profile: profile, authorization: authorization, cancel: cancel)
+                } else {
+                    DispatchQueue.main.async {
+                        self.syncPreparing = false; self.accountSession?.finishPreparation()
+                        guard !cancel.isCancelled else { return }
+                        do {
+                            try self.accountSession?.start(profile: profile, directory: directory, authorization: authorization) { [weak self] in
+                                self?.statusText = "本轮云盘扫描结束；阅读位置保持不变"
+                            }
+                        } catch { self.errorText = self.describe(error) }
+                    }
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.syncPreparing = false; self.accountSession?.finishPreparation()
+                    if !cancel.isCancelled { self.errorText = self.describe(error) }
+                }
+            }
+        }
+    }
 
     private func traceUITest(_ event: String) {
         guard testFixtures else { return }
@@ -703,6 +1318,19 @@ final class HostReaderModel: ObservableObject {
                 guard let migration = Bundle.main.url(forResource: HostCatalog.resourceName, withExtension: "sql") else {
                     throw HostError.invalidInput("缺少原始产品书库迁移资源")
                 }
+#if EXR_APPLE_SHELF_REVIEW
+                if ProcessInfo.processInfo.arguments.contains("-EXRShelfSeed"),
+                   !FileManager.default.fileExists(atPath: folder.appendingPathComponent("library.sqlite").path) {
+                    for (resource, destination) in [("ShelfSeed-library", "library.sqlite"), ("ShelfSeed-reader-catalog", "reader-catalog.db")] {
+                        let ext = resource == "ShelfSeed-library" ? "sqlite" : "db"
+                        guard let source = Bundle.main.url(forResource: resource, withExtension: ext) else {
+                            throw HostError.invalidInput("缺少实际 SDK 原件书库")
+                        }
+                        try FileManager.default.copyItem(at: source, to: folder.appendingPathComponent(destination))
+                    }
+                    for key in ["EXRLastBook", "EXRShelfQuery", "EXRShelfTop", "EXRShelfSelected"] { self.defaults.removeObject(forKey: key) }
+                }
+#endif
                 let catalog = try HostCatalog(path: folder.appendingPathComponent("reader-catalog.db"),
                                               migrationURL: migration, ownerQueue: self.queue)
 #if EXR_APPLE_IMPORT_REVIEW
@@ -735,14 +1363,16 @@ final class HostReaderModel: ObservableObject {
                 self.refreshImportMappingProbe(catalog, folder: folder)
 #endif
                 let lastID = (self.defaults.object(forKey: "EXRLastBook") as? NSNumber)?.int64Value
+                let lastPresent = lastID.map { id in storedBooks.contains(where: { $0.id == id }) } ?? false
                 DispatchQueue.main.async {
                     self.traceUITest("startup-publish rows=\(rows.count)")
                     self.books = rows
+                    self.productIndexPending = !repairProblems.isEmpty
                     self.busy = false
                     if !repairProblems.isEmpty {
                         self.errorText = "产品索引待修复：" + repairProblems.joined(separator: "；")
                         self.statusText = "书籍已保留，产品索引待修复"
-                    } else if let lastID, rows.contains(where: { $0.id == lastID }) {
+                    } else if let lastID, lastPresent {
                         self.openBook(id: lastID)
                     } else {
                         self.busy = false
@@ -801,10 +1431,12 @@ final class HostReaderModel: ObservableObject {
     private func storageFolder() throws -> URL {
         let base = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
                                                appropriateFor: nil, create: true)
-        return base.appendingPathComponent("EXReader", isDirectory: true)
+        let root = base.appendingPathComponent("EXReader", isDirectory: true)
+        return accountProfile?.directory(in: root) ?? root
     }
 
     private func stateFileURL() throws -> URL {
+        if accountProfile != nil { return try storageFolder().appendingPathComponent("host-state.json") }
 #if os(iOS)
         let folder = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask,
                                                  appropriateFor: nil, create: true)
@@ -819,7 +1451,9 @@ final class HostReaderModel: ObservableObject {
         return error.localizedDescription
     }
 
-    private func begin() -> (Int, HostCancelBox) {
+    private func begin(preserveNavigation: Bool = false) -> (Int, HostCancelBox) {
+        search.cancel()
+        if !preserveNavigation { navigation.cancel() }
         activeCancel?.cancel()
         token += 1
         let box = HostCancelBox()
@@ -959,13 +1593,338 @@ final class HostReaderModel: ObservableObject {
         }
     }
 
+    func prepareReadingRecords() {
+        guard let current, !busy else { return }
+        readingRecords.bind(current.id)
+        loadReadingRecords()
+    }
+
+    private func performReading(_ status: String, cursor: reader_av_cursor? = nil,
+                                _ action: @escaping (HostSession, HostCatalog, URL, HostCancelBox) throws -> HostReadingHistory?) {
+        guard !busy, let bookID = current?.id, readingRecords.bookID == bookID else { return }
+        let generation = readingRecords.generation, (myToken, box) = begin()
+        readingRecords.running = true; readingRecords.status = "处理中…"
+        queue.async {
+            do {
+                guard let session = self.session, let catalog = self.catalog else { throw HostError.invalidInput("书库尚未就绪") }
+                try self.requireBook(bookID, session: session, cancel: box)
+                let root = try self.storageFolder()
+#if EXR_APPLE_HOST_REVIEW
+                let beforeSave = HostReadingWorker.afterDurableSave, beforeCommit = HostReadingWorker.afterCommit
+                func holdAtNativeBoundary(_ boundary: String) throws {
+                    DispatchQueue.main.async { self.readingRecords.nativeBoundary = boundary }
+                    while !box.isCancelled { Thread.sleep(forTimeInterval: 0.05) }
+                    throw HostError.cancelled
+                }
+                if ProcessInfo.processInfo.arguments.contains("-EXRKillReadingAfterSave") {
+                    HostReadingWorker.afterDurableSave = { try holdAtNativeBoundary("private-save") }
+                }
+                if ProcessInfo.processInfo.arguments.contains("-EXRKillReadingAfterCommit") {
+                    HostReadingWorker.afterCommit = { try holdAtNativeBoundary("post-commit") }
+                }
+                defer { HostReadingWorker.afterDurableSave = beforeSave; HostReadingWorker.afterCommit = beforeCommit }
+#endif
+                let history = try action(session, catalog, root, box)
+                let book = try catalog.readingBook(sdkID: bookID)
+                let page = try HostReadingWorker.page(catalog: catalog, bookID: bookID, bookKey: book.key, from: cursor, cancel: box)
+                let progress = try HostReadingWorker.progress(catalog: catalog, bookID: bookID, bookKey: book.key)
+                let pending = try HostReadingWorker.pending(root: root)
+                DispatchQueue.main.async {
+                    guard myToken == self.token else { return }
+                    if generation == self.readingRecords.generation && self.readingRecords.bookID == bookID {
+                        if cursor == nil || !page.rows.isEmpty {
+                            self.readingRecords.rows = (cursor == nil ? progress.map { [$0] } ?? [] : []) + page.rows
+                        }
+                        self.readingRecords.cursor = page.next; self.readingRecords.complete = page.complete
+                        self.readingRecords.pending = pending; self.readingRecords.status = status
+                        self.readingRecords.running = false
+                        self.readingRecords.versions = history?.versions ?? []
+                        self.readingRecords.restoring = history?.row
+                        self.readingRecords.restoreHeads = history?.heads ?? []
+                        self.statusText = status
+                    }
+                    self.finish()
+                }
+            } catch {
+                let pending = try? HostReadingWorker.pending(root: self.storageFolder())
+                DispatchQueue.main.async {
+                    guard myToken == self.token else { return }
+                    if generation == self.readingRecords.generation {
+                        self.readingRecords.running = false; self.readingRecords.status = self.describe(error)
+                        self.readingRecords.pending = pending
+                        self.errorText = self.describe(error)
+                    }
+                    self.finish()
+                }
+            }
+        }
+    }
+
+    func loadReadingRecords(next: Bool = false) {
+        if next && readingRecords.complete { return }
+        let cursor = next ? readingRecords.cursor : nil
+        performReading("本书的书签与标注", cursor: cursor) { _, _, _, _ in nil }
+    }
+
+    func saveReadingRecord(bookmark: Bool) {
+        performReading(bookmark ? "已添加书签" : "已保存阅读进度") { session, catalog, root, cancel in
+            let capture = try session.readingCapture(cancel: cancel)
+            let request = try HostReadingWorker.request(session: session, catalog: catalog, kind: bookmark ? 2 : 1,
+                operation: 0, mode: capture.mode, capture: capture, body: "", cancel: cancel)
+            _ = try HostReadingWorker.submit(request, session: session, catalog: catalog, root: root, cancel: cancel)
+            return nil
+        }
+    }
+
+    func highlightReadingRecord(start: Int, end: Int, context: HostSelectionContext) {
+        guard !busy, context == selectionContext, start >= context.baseOffset, end > start,
+              end - context.baseOffset <= context.text.utf8.count else { errorText = "选文已失效，请重新选择"; return }
+        if readingRecords.bookID != context.bookID { readingRecords.bind(context.bookID) }
+        performReading("已保存高亮到阅读记录") { session, catalog, root, cancel in
+            guard session.matches(context) else { throw HostError.invalidInput("选文页面已变化") }
+            let capture = try session.readingCapture(start: start, end: end, cancel: cancel)
+            let request = try HostReadingWorker.request(session: session, catalog: catalog, kind: 3, operation: 0,
+                mode: capture.mode, capture: capture, body: "", cancel: cancel)
+            _ = try HostReadingWorker.submit(request, session: session, catalog: catalog, root: root, cancel: cancel)
+            return nil
+        }
+    }
+
+    func editReadingRecord(_ row: HostReadingRow, body: String) {
+        guard row.safe, row.hasLocation, row.entityKind == "annotation", body.utf8.count <= 65536 else { return }
+        performReading("批注已保存") { session, catalog, root, cancel in
+            _ = try HostReadingWorker.selectedWire(catalog: catalog, row: row)
+            let request = try HostReadingWorker.request(session: session, catalog: catalog, kind: 4, operation: 0,
+                annotation: row.annotation, mode: row.mode, capture: nil, body: body, observedHeads: [row.revision], cancel: cancel)
+            _ = try HostReadingWorker.submit(request, session: session, catalog: catalog, root: root, cancel: cancel)
+            return nil
+        }
+    }
+
+    func deleteReadingRecord(_ row: HostReadingRow) {
+        guard row.safe, row.hasLocation else { return }
+        performReading("阅读记录已删除，保留历史版本") { session, catalog, root, cancel in
+            _ = try HostReadingWorker.selectedWire(catalog: catalog, row: row)
+            let request = try HostReadingWorker.request(session: session, catalog: catalog, kind: row.entityKind == "progress" ? 1 : 2,
+                operation: 1, annotation: row.annotation, mode: row.mode, capture: nil, body: "", observedHeads: [row.revision], cancel: cancel)
+            _ = try HostReadingWorker.submit(request, session: session, catalog: catalog, root: root, cancel: cancel)
+            return nil
+        }
+    }
+
+    func showReadingHistory(_ row: HostReadingRow) {
+        performReading("请选择要恢复的保留版本") { _, catalog, _, _ in try HostReadingWorker.history(catalog: catalog, row: row) }
+    }
+
+    func restoreReadingVersion(_ version: HostReadingVersion) {
+        guard let row = readingRecords.restoring, readingRecords.versions.contains(where: { $0.id == version.id }) else { return }
+        let heads = readingRecords.restoreHeads
+        performReading("已恢复阅读记录，当前页面保持不变") { session, catalog, root, cancel in
+            let (capture, _) = try session.readingResolution(version.wire, catalog: catalog, cancel: cancel)
+            let body = try catalog.withHistory { try HostReadingWorker.decoded(version.wire, history: $0).body }
+            let isPoint = capture.mode == 3 ? capture.fixed!.start == capture.fixed!.end : capture.anchor!.start == capture.anchor!.end
+            let request = try HostReadingWorker.request(session: session, catalog: catalog,
+                kind: row.entityKind == "progress" ? 1 : isPoint ? 2 : 3, operation: 2, annotation: row.annotation,
+                mode: capture.mode, capture: capture, body: body, observedHeads: heads, cancel: cancel)
+            _ = try HostReadingWorker.submit(request, session: session, catalog: catalog, root: root, cancel: cancel)
+            return nil
+        }
+    }
+
+    func replayReadingRequest() {
+        performReading("待完成阅读记录已确认保存") { session, catalog, root, cancel in
+            _ = try HostReadingWorker.replay(session: session, catalog: catalog, root: root, cancel: cancel); return nil
+        }
+    }
+    func discardReadingRequest(expected: String) {
+        performReading("已放弃这项待完成请求") { _, _, root, _ in
+            try HostReadingWorker.discard(root: root, expected: expected); return nil
+        }
+    }
+    func closeReadingRecords() {
+        if readingRecords.running { activeCancel?.cancel() }
+        readingRecords.bind(nil)
+    }
+    func jumpReadingRecord(_ row: HostReadingRow) {
+        guard !busy, row.safe, row.hasLocation, row.bookID == current?.id else { return }
+        let (myToken, box) = begin()
+        queue.async {
+            do {
+                guard let session = self.session, let catalog = self.catalog else { throw HostError.invalidInput("书库尚未就绪") }
+                try self.requireBook(row.bookID, session: session, cancel: box)
+                let wire = try HostReadingWorker.selectedWire(catalog: catalog, row: row)
+                let (_, hit) = try session.readingResolution(wire, catalog: catalog, cancel: box)
+                let (candidate, frame) = try session.searchCandidate(hit, cancel: box)
+                if self.completeFrame(frame, session: candidate, token: myToken, status: "已精确定位阅读记录") {
+                    self.session = candidate
+                }
+            } catch {
+                DispatchQueue.main.async { guard myToken == self.token else { return }; self.readingRecords.status = self.describe(error); self.finish() }
+            }
+        }
+    }
+
+    func prepareSearch() {
+        guard let current, !busy else { return }
+        let key = "EXRSearchQuery.\(current.id)"
+        search.bind(bookID: current.id, query: defaults.string(forKey: key) ?? "")
+    }
+
+    func prepareNavigation() {
+        guard let current, !busy else { return }
+        navigation.bind(current.id); loadNavigation()
+    }
+
+    func loadNavigation(parent: UInt64 = UInt64.max, first: UInt64 = 0) {
+        guard !busy, let bookID = current?.id, navigation.bookID == bookID else { return }
+        let boundKey = navigation.key
+        let (epoch, box) = navigation.begin()
+        queue.async {
+            do {
+                guard let session = self.session, session.book?.id == bookID, let catalog = self.catalog else {
+                    throw HostError.invalidInput("书籍已切换")
+                }
+                let key = try catalog.searchSourceKey(sdkID: bookID)
+                guard boundKey == nil || boundKey == key else { throw HostError.invalidInput("原件身份已变化，请重新打开目录") }
+#if EXR_APPLE_HOST_REVIEW
+                let previous = HostSDKReview.poll
+                let hold = CommandLine.arguments.contains("-EXRHoldNavigationCancellation")
+                if hold {
+                    HostSDKReview.poll = { polled in
+                        guard polled === box, HostNavigationWorker.reviewInsideSnapshot else { previous?(polled); return }
+                        DispatchQueue.main.async { self.navigation.reviewCancellationReady(generation: epoch) }
+                        while !polled.isCancelled { Thread.sleep(forTimeInterval: 0.05) }
+                    }
+                }
+                defer { if hold { HostSDKReview.poll = previous } }
+#endif
+                let page = try HostNavigationWorker.page(library: session.library, font: session.font, bookID: bookID,
+                    key: key, parent: parent, first: first, cancel: box)
+                DispatchQueue.main.async {
+                    guard self.current?.id == bookID else { return }
+                    self.navigation.accept(page, key: key, generation: epoch)
+                }
+            } catch { DispatchQueue.main.async { self.navigation.fail(error, generation: epoch) } }
+        }
+    }
+
+    func selectNavigation(row: UInt64, explicitPart: UInt64 = UInt64.max, acceptPart: Bool = false, cfi: String = "") {
+        guard !busy, !navigation.running, let bookID = current?.id, navigation.bookID == bookID,
+              let key = navigation.key, cfi.isEmpty || (cfi.utf8.count <= 4096 && !cfi.utf8.contains(0)) else { return }
+        let (myToken, box) = begin(preserveNavigation: true)
+        let (epoch, _) = navigation.begin(box: box)
+        statusText = "正在核对目录目标…"
+        queue.async {
+            do {
+                guard let session = self.session, let catalog = self.catalog, session.book?.id == bookID,
+                      try catalog.searchSourceKey(sdkID: bookID) == key else { throw HostError.invalidInput("书籍身份已变化") }
+                let selection = try HostNavigationWorker.resolve(library: session.library, font: session.font,
+                    bookID: bookID, key: key, row: row, explicitPart: explicitPart, cfi: cfi, cancel: box)
+                if selection.resolution.status == READER_NAVIGATION_AMBIGUOUS ||
+                    (selection.resolution.status == READER_NAVIGATION_PART_ONLY && !acceptPart) {
+                    DispatchQueue.main.async {
+                        guard myToken == self.token else { return }
+                        self.navigation.propose(selection, generation: epoch); self.finish()
+                    }
+                    return
+                }
+                let (candidate, snapshot) = try session.navigationCandidate(selection, acceptPart: acceptPart, cancel: box)
+                if self.completeFrame(snapshot, session: candidate, token: myToken, status: "已精确定位目录目标") {
+                    self.session = candidate
+                    DispatchQueue.main.async { self.navigation.didCommit(generation: epoch) }
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    guard myToken == self.token else { return }
+                    self.navigation.fail(error, generation: epoch); self.fail(error)
+                }
+            }
+        }
+    }
+
+    func findInBook(restart: Bool = true) {
+        guard !busy, let bookID = current?.id, search.bookID == bookID,
+              !search.running, restart || !search.complete else { return }
+        let query = search.query
+        guard !query.isEmpty, query.utf8.count <= 4096, !query.utf8.contains(0) else { return }
+        defaults.set(query, forKey: "EXRSearchQuery.\(bookID)")
+        let resume = restart ? nil : search.cursor
+        let boundSource = restart ? nil : search.sourceKey
+        let (epoch, box) = search.begin(restart: restart)
+        queue.async {
+            do {
+                guard let session = self.session, let catalog = self.catalog,
+                      session.book?.id == bookID else { throw HostError.invalidInput("书籍已切换") }
+                let key = try catalog.searchSourceKey(sdkID: bookID)
+                guard boundSource == nil || boundSource == key else { throw HostError.invalidInput("原件身份已变化，请重新查找") }
+#if EXR_APPLE_HOST_REVIEW
+                let priorPoll = HostSDKReview.poll
+                let hold = CommandLine.arguments.contains("-EXRHoldSearchCancellation")
+                if hold {
+                    HostSDKReview.poll = { polled in
+                        guard polled === box, HostSearchWorker.reviewInsideNext else { priorPoll?(polled); return }
+                        DispatchQueue.main.async { self.search.reviewCancellationReady(generation: epoch) }
+                        while !polled.isCancelled { Thread.sleep(forTimeInterval: 0.05) }
+                    }
+                }
+                defer { if hold { HostSDKReview.poll = priorPoll } }
+#endif
+                let batch = try HostSearchWorker.batch(library: session.library, font: session.font,
+                    bookID: bookID, sourceKey: key, query: query, resume: resume, cancel: box)
+                DispatchQueue.main.async {
+                    guard self.current?.id == bookID else { return }
+                    self.search.accept(batch, key: key, generation: epoch)
+                }
+            } catch {
+                DispatchQueue.main.async { self.search.fail(error, generation: epoch) }
+            }
+        }
+    }
+
+    func selectSearchHit(_ hit: HostSearchHit) {
+        guard !busy, !search.running, current?.id == hit.bookID, search.bookID == hit.bookID,
+              search.sourceKey == hit.sourceKey, search.rows.contains(where: { $0.id == hit.id }) else { return }
+        let (myToken, box) = begin()
+        statusText = "正在精确定位…"
+        queue.async {
+            do {
+                guard let session = self.session, let catalog = self.catalog,
+                      try catalog.searchSourceKey(sdkID: hit.bookID) == hit.sourceKey else {
+                    throw HostError.invalidInput("原件身份已变化")
+                }
+                let (candidate, snapshot) = try session.searchCandidate(hit, cancel: box)
+                if self.completeFrame(snapshot, session: candidate, token: myToken, status: "已精确定位选文") {
+                    self.session = candidate
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    guard myToken == self.token else { return }
+                    self.fail(error)
+                }
+            }
+        }
+    }
+
     func openBook(id: Int64) {
-        guard let row = books.first(where: { $0.id == id }) else { return }
-        openBook(row)
+        openBook(HostBookRow(id: id, title: "", detail: "", isFixed: false, position: 0))
+    }
+
+    func loadShelf(query: String, anchor: HostShelfKey?, before: Bool, inclusive: Bool,
+                   completion: @escaping (Result<[HostShelfBook], Error>) -> Void) {
+        queue.async {
+            let result = Result { () throws -> [HostShelfBook] in
+                guard let catalog = self.catalog else { throw HostError.invalidInput("产品书库未就绪") }
+                return try catalog.shelf(query: query, anchor: anchor, before: before, inclusive: inclusive)
+            }
+            DispatchQueue.main.async { completion(result) }
+        }
     }
 
     func openBook(_ row: HostBookRow) {
         guard !busy else { return }
+        search.invalidate()
+        navigation.invalidate()
+        readingRecords.bind(nil)
         let (myToken, box) = begin()
         statusText = "正在打开…"
         queue.async {
@@ -996,6 +1955,35 @@ final class HostReaderModel: ObservableObject {
             DispatchQueue.main.async { self.traceUITest("import-worker-begin source-token=\(myToken)") }
             let scoped = url.startAccessingSecurityScopedResource()
             defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+#if EXR_APPLE_HOST_REVIEW
+            let priorPoll = HostSDKReview.poll
+            let latch = CommandLine.arguments.contains("-EXRHoldSDKImportCancellation") && url.lastPathComponent == "Large.epub"
+            if latch {
+                var announced = false
+                HostSDKReview.poll = { [weak self] polled in
+                    guard polled === box else { priorPoll?(polled); return }
+                    if !announced {
+                        announced = true
+                        DispatchQueue.main.async { [weak self] in
+                            guard let self, self.token == myToken else { return }
+                            self.uiTestCancellationReadyToken = myToken
+                        }
+                    }
+                    // Hold at the real SDK cancellation callback, not a timed
+                    // guess about how quickly the remote UI driver can tap.
+                    while !polled.isCancelled { Thread.sleep(forTimeInterval: 0.05) }
+                }
+            }
+            defer {
+                if latch {
+                    HostSDKReview.poll = priorPoll
+                    DispatchQueue.main.async { [weak self] in
+                        guard let self, self.uiTestCancellationReadyToken == myToken else { return }
+                        self.uiTestCancellationReadyToken = nil
+                    }
+                }
+            }
+#endif
             do {
                 guard let session = self.session, let catalog = self.catalog else { throw HostError.invalidInput("书库未就绪") }
                 let (bookID, created) = try session.importBook(url: url, cancel: box, catalog: catalog)
@@ -1018,6 +2006,7 @@ final class HostReaderModel: ObservableObject {
                     DispatchQueue.main.async {
                         guard myToken == self.token else { return }
                         if case .success(let books) = rows { self.books = books }
+                        self.productIndexPending = true
                         self.errorText = self.describe(error)
                         self.statusText = "书籍已保存，产品索引待修复"
                         self.finish()
@@ -1232,6 +2221,9 @@ final class HostReaderModel: ObservableObject {
     }
 
     func backToLibrary() {
+        search.invalidate()
+        navigation.invalidate()
+        readingRecords.bind(nil)
         token += 1
         let myToken = token
         activeCancel?.cancel()
@@ -1302,6 +2294,8 @@ final class HostReaderModel: ObservableObject {
     }
 
     func detach() {
+        search.cancel()
+        navigation.cancel()
         activeCancel?.cancel()
         persistNow()
     }

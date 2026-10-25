@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import Foundation
 import CryptoKit
-import SQLite3
+import CReaderSQLite
 
 private struct CatalogCheckFailure: Error {
     let message: String

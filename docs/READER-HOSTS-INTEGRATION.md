@@ -1,5 +1,22 @@
 # 原生宿主共同源码候选
 
+## 最新共同轮与后续候选
+
+原程序目录诊断最终 run `40162074331` 通过29项，包括实际扫描中关闭父窗口。程序仍为 `e4356a6e` 工件中的原始二进制，测试 source 为 `cb7497dd`；初两轮诊断 `40161497966`、`40161675780` 的失败保留。窄交付 `600ef981` 只修目录输入驱动：读取实时 AT-SPI 主窗口焦点，再要求新 action、可见扫描阶段及非零 poll，保留全部业务断言。
+
+生产候选已普通合入 Apple records `25eeb6aa`，共同基点 `2c5a6cbb`，尚未授予共同源码。其独立 records full run `40160552435` 已通过；旧 WP13 回归随后发现 iPhone 横屏选文关闭按钮被新增按钮挤出屏幕，Apple owner 正修复并重跑原断言。共同分支为原六套 Apple workflow 增加精确来源守卫入口，保留原分支守卫及全部构建、UI、工件认证。Actions额外核对六文件除守卫入口外与固定原版逐项相同。
+
+source `e4356a6e13223469fdf3b2f3d5171a6e99ab10a6` / run `40159425518` 已终态 failure。
+本轮最终认证确认三桌面18包组合和Windows搜索/目录/records32及其原回归；GTK目录 required step 失败，不能称为仅两项palette失败。
+GTK新批范围的包内认证已核 UI27、原668、review4、后端684、真实receipt分配故障3场景/2次及records30；保留目录失败，strict仍为false。
+Android作业已success，但共同最终认证在GTK处拒绝，未到达原始Pan截图/原件的最终重新认证，不把旧Pan proof转授本轮。
+
+目录失败仍是第四次扫描：15秒内未观测到phase2，最后实测visible=1、running=0、phase3、40次poll、9000项，parent-close断言尚未执行。root已保留全部断言，补GTK实际焦点确认、fresh action条件和扫描状态时间序列；run `40161497966`仅复用已重新散列的本轮原程序做诊断，明确分开program source与test source，不授予当前生产候选。
+
+后续候选普通合入 `2df6040666635bcd7b0349b035b8f4885757fdd0`，用真实owner存活位处理无需MAP的枚举分配失败；新增第4场景、累计3次分配失败。尚未共同复验。此前 `c49f24ab` / run `40159238563` 因root复制的GTK sideload pin仍是旧树而中止，已核差异仅为此前验过的Android专属无覆盖导出修复，并固定正确树；原轮保留。
+
+下文此前各节仍分别归其固定source。
+
 候选分支 `codex/reader-hosts-integration`；当前未验收，不能拼接原分支绿灯。直接普通merge保留以下来源及其失败历史：
 
 | 来源 | 固定交回HEAD | 原范围 |

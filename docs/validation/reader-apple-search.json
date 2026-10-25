@@ -1,0 +1,592 @@
+{
+  "schema": 1,
+  "accepted": true,
+  "scope": "declared native Apple search interfaces and four actual UI scenarios only",
+  "branch": "codex/reader-apple-search-ui",
+  "fixed_start": "a1a41b08a3661bb01170e37031913649b2b296db",
+  "tested_source_sha": "ae30466a4bd72b343b90f94008373b24d2086b6f",
+  "original_regression_source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "sdk_abi": 1,
+  "search_module_tree": "2e09cb2945564f25085074a816b95472392df205",
+  "product_schema": 1,
+  "search_acceptance": {
+    "source_sha": "ae30466a4bd72b343b90f94008373b24d2086b6f",
+    "accepted": true,
+    "run_id": 40127300142,
+    "attempt": 1,
+    "jobs": 7,
+    "summary_job": 120973959131,
+    "native": {
+      "job_id": 120971988719,
+      "search_checks": 11,
+      "catalog_checks": 8,
+      "mapping_checks": 16
+    },
+    "ui": {
+      "macos": {
+        "job_id": 120972250695,
+        "cases": 4,
+        "steps": 14,
+        "attachments": 18
+      },
+      "iphone": {
+        "job_id": 120972250600,
+        "cases": 4,
+        "steps": 14,
+        "attachments": 18
+      },
+      "ipad": {
+        "job_id": 120972250650,
+        "cases": 4,
+        "steps": 14,
+        "attachments": 18
+      }
+    },
+    "producer_zip_bytes_and_digests_rechecked_in_cloud": true,
+    "provider_proof": {
+      "native_macos_dladdr_symbols": 4,
+      "distinct_sdk_images": 1,
+      "all_targets_installed_search_archive_and_dynamic_sdk_verified": true
+    },
+    "exact_full_final_window": {
+      "fixture": "32 independently declared literal occurrences in the actual EPUB",
+      "first_batch": {
+        "count": 32,
+        "complete": false
+      },
+      "next_batch": {
+        "count": 0,
+        "complete": true
+      },
+      "ui_rows_after_eof": 32,
+      "retained_result_independently_resolves_found": true,
+      "first_zero_hit_keeps_no_rows": true
+    }
+  },
+  "baseline_search_acceptance": {
+    "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab",
+    "accepted": true,
+    "run_id": 40120637548,
+    "attempt": 1,
+    "jobs": 7,
+    "summary_job": 120954273946,
+    "native_search_checks": 10,
+    "per_target": {
+      "cases": 3,
+      "steps": 10,
+      "attachments": 13
+    }
+  },
+  "original_regressions": {
+    "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab",
+    "wp13": {
+      "accepted": true,
+      "run_id": 40121800002,
+      "attempt": 1,
+      "jobs": 8,
+      "summary_job": 120960953773,
+      "gate_review_checks": 97,
+      "per_target": {
+        "cases": 13,
+        "steps": 67,
+        "attachments": 50
+      },
+      "package": {
+        "sdk_checks": 21,
+        "model_checks": 18,
+        "bounded_checks": 15
+      }
+    },
+    "mapping": {
+      "accepted": true,
+      "run_id": 40121823546,
+      "attempt": 1,
+      "jobs": 6,
+      "per_target": {
+        "cases": 5,
+        "steps": 22,
+        "attachments": 14
+      }
+    },
+    "shelf": {
+      "accepted": false,
+      "status": "completed_failure",
+      "run_id": 40121809402,
+      "attempt": 1,
+      "jobs": {
+        "success": 5,
+        "failure": 1,
+        "skipped": 1
+      },
+      "native": {
+        "catalog": 8,
+        "shelf": 16,
+        "accounts": 22,
+        "originals": 2202,
+        "authenticated_requests": 272,
+        "actual_shards": 256,
+        "main_runloop_ticks": 80,
+        "secret_scan_passed": true
+      },
+      "macos": {
+        "accepted": true,
+        "shelf": {
+          "cases": 7,
+          "observations": 11,
+          "attachments": 14,
+          "originals": 2202
+        },
+        "accounts": {
+          "cases": 3,
+          "steps": 14,
+          "attachments": 6,
+          "profiles": 4,
+          "https_requests": 530,
+          "completed_256_shard_sweeps": 2,
+          "verified_original_bytes": 7724
+        },
+        "production_semantics": {
+          "cases": 2,
+          "observations": 9,
+          "attachments": 4
+        }
+      },
+      "iphone": {
+        "accepted": true,
+        "shelf": {
+          "cases": 7,
+          "observations": 11,
+          "attachments": 14,
+          "originals": 2202
+        },
+        "accounts": {
+          "cases": 3,
+          "steps": 14,
+          "attachments": 6,
+          "profiles": 4,
+          "https_requests": 530,
+          "completed_256_shard_sweeps": 2,
+          "verified_original_bytes": 7724
+        },
+        "production_semantics": {
+          "cases": 2,
+          "observations": 9,
+          "attachments": 4
+        }
+      },
+      "ipad": {
+        "accepted": false,
+        "job_id": 120956111430,
+        "actual_shelf_ui_cases_passed": 7,
+        "evidence_collection_accepted": false,
+        "accounts_executed": false,
+        "production_semantics_executed": false,
+        "failure": "Container resolver failed before evidence collection. The always layout-trace step later resolved the same simulator data successfully and overwrote container.json, so the initial command error is unavailable. No shelf UI assertion failed, but the missing evidence is not accepted."
+      },
+      "summary": "skipped after producer failure"
+    }
+  },
+  "resolved_items": [
+    {
+      "id": "exact-full-final-batch",
+      "source_sha": "ae30466a4bd72b343b90f94008373b24d2086b6f",
+      "proof_native": "exact-full-window-and-first-zero",
+      "proof_ui": "testExactly32HitsKeepFinalWindow",
+      "targets": [
+        "macos",
+        "iphone",
+        "ipad"
+      ],
+      "detail": "An empty EOF batch retains the last 32 rows and completion label; a retained result is still selectable through independent FOUND. A first empty search retains no rows."
+    }
+  ],
+  "collection_followup": {
+    "status": "requires final common-source evidence workflow fix",
+    "first_report_must_be_preserved": true,
+    "phase_specific_report_paths_recommended": true,
+    "source_or_deadline_relaxation": false,
+    "detail": "Use separate resolver observations for collection and layout trace. Preserve the first failure rather than overwriting it; final root source will perform the combined regression acceptance."
+  },
+  "diagnostic": {
+    "branch": "codex/reader-apple-search-evidence",
+    "source_sha": "1ebe38394fce3b5e72af49195f569af8d0ad03d8",
+    "run_id": 40126749435,
+    "job_id": 120969715613,
+    "diagnostic_only": true,
+    "accepted": false,
+    "origin_source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab",
+    "origin_run_id": 40121809402,
+    "origin_artifact_id": 12573195290,
+    "retained_report": {
+      "status": "resolved",
+      "started_at": "2026-10-24T19:25:49.309820+00:00",
+      "initial_state": "Booted",
+      "final_state": "Booted",
+      "successful_simctl_commands": 4
+    },
+    "earlier_failed_diagnostic": {
+      "source_sha": "fccc8e108e06057741af8763f2a5954cc82e35f0",
+      "run_id": 40126542485,
+      "reason": "Incorrectly assumed the retained report still had status=failed; the follow-up preserved source/run/attempt and archive identity checks while observing the actual later resolved report."
+    }
+  },
+  "earlier_failed_runs": [
+    {
+      "id": 40118546762,
+      "attempt": 1,
+      "source_sha": "9caa882073d371ec79f07a1d4cf7a1235c096419",
+      "accepted": false,
+      "search_native_checks_passed": 10,
+      "failure": "Standalone catalog consumer could not compile a new SDK-owned return type. Returning a validated identity string preserves its independent build.",
+      "artifact": {
+        "id": 12569452979,
+        "bytes": 1345938,
+        "digest": "sha256:beae1bac7eb424af7f4bac30151d3011c756f8d698721e6541fa1fef60fd7697"
+      }
+    },
+    {
+      "id": 40119168327,
+      "attempt": 1,
+      "source_sha": "a20738b4fcafe4ed609e81ebb8bf6a498772a4a2",
+      "accepted": false,
+      "native_search": "10/10",
+      "original_catalog": "8/8",
+      "original_mapping": "16/16",
+      "ui": {
+        "macos": "3/3",
+        "iphone": "3/3",
+        "ipad": "2/3"
+      },
+      "failure": "iPad timed out waiting for a transient status after selecting the unique result. Later probes check the actual changed location, matching rendered text and empty error.",
+      "qualification": "The cancellation latch could stop while opening a publication, so this run grants no cancellation inside reader_search_next.",
+      "artifact": {
+        "id": 12570064376,
+        "bytes": 113893655,
+        "digest": "sha256:78f455538a5db353eb4cad90d200b587cf6f3fc6b34f4de9c16b83c49c362dd6",
+        "expires_at": "2027-01-22T18:06:22Z"
+      }
+    },
+    {
+      "id": 40120046954,
+      "attempt": 1,
+      "source_sha": "d10a1c397c0a6b3168a9f97dd4b4c29ad0bea958",
+      "accepted": false,
+      "producer_jobs": "6/6 success",
+      "ui_per_target": "3/3",
+      "failure": "Strict summary urllib artifact redirect returned HTTP 401; producer results were not transferred."
+    },
+    {
+      "id": 40120406632,
+      "attempt": 1,
+      "source_sha": "a166402a073f144014e36da6f764e1c2f353ce7d",
+      "accepted": false,
+      "producer_jobs": "6/6 success",
+      "ui_per_target": "3/3",
+      "failure": "Same HTTP 401 artifact transport failure. b0549807 reuses the existing gh download helper; assertions, budgets and deadlines remain unchanged."
+    }
+  ],
+  "artifact_records": {
+    "40120637548": [
+      {
+        "id": 12571765308,
+        "name": "apple-search-sdk-macos-40120637548-1",
+        "bytes": 20242395,
+        "digest": "sha256:c15048efcb587e16b055b026205efb8257a1d179ce1d36e19c8a85aeae8c9dd6",
+        "expires_at": "2027-01-22T18:25:33Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      },
+      {
+        "id": 12571745748,
+        "name": "apple-search-ui-macos-40120637548-1",
+        "bytes": 30472641,
+        "digest": "sha256:0b902fecdff0aa90e037f44001e82be1fb1e4f9bbac677540b1e09019597c623",
+        "expires_at": "2027-01-22T18:25:33Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      },
+      {
+        "id": 12571283407,
+        "name": "apple-search-ui-ipad-40120637548-1",
+        "bytes": 33956196,
+        "digest": "sha256:0ff873929221374aac7117bcf609dc1f35e62ffa02887a4826470d9bea97fb1d",
+        "expires_at": "2027-01-22T18:25:33Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      },
+      {
+        "id": 12571137917,
+        "name": "apple-search-ui-iphone-40120637548-1",
+        "bytes": 30146701,
+        "digest": "sha256:88511c76b2af5d935b3e541e3c7486064188d6b78a583dc516957613877f8b5c",
+        "expires_at": "2027-01-22T18:25:33Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      },
+      {
+        "id": 12571023649,
+        "name": "apple-search-summary-40120637548-1",
+        "bytes": 92305,
+        "digest": "sha256:5435932f5cdaa50ffe6e4e970ad51c84ee6f25531fac8a80f4a0d80c1f995ef6",
+        "expires_at": "2027-01-22T18:25:33Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      },
+      {
+        "id": 12570947645,
+        "name": "apple-search-native-40120637548-1",
+        "bytes": 4029842,
+        "digest": "sha256:2609062a65d7200d79f779a3ff94fac0cd7af82663309f280e4802642ebb2103",
+        "expires_at": "2027-01-22T18:25:33Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      },
+      {
+        "id": 12570717257,
+        "name": "apple-search-sdk-iphonesimulator-40120637548-1",
+        "bytes": 20248600,
+        "digest": "sha256:65909d18c6750c5003453735e4c53a4b1a8d4403d219db56031fa2a1c0fb0daa",
+        "expires_at": "2027-01-22T18:25:33Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      }
+    ],
+    "40121800002": [
+      {
+        "id": 12572571354,
+        "name": "wp13-apple-package",
+        "bytes": 137980081,
+        "digest": "sha256:dcec57c83ad115d9856376f42dadd5dd143cfd806c32722b1cfb4a009b7049f1",
+        "expires_at": "2026-11-23T19:02:20Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      },
+      {
+        "id": 12572469272,
+        "name": "wp13-apple-validation",
+        "bytes": 81506,
+        "digest": "sha256:38289fe15a2997fd23f3d4df3c8a822752690bb689dd89b1391c65fbaa6dd3c5",
+        "expires_at": "2026-11-23T19:20:36Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      },
+      {
+        "id": 12572410682,
+        "name": "wp13-apple-macos",
+        "bytes": 38510948,
+        "digest": "sha256:5ada67e41bdda189d34520b9c2eb0580284e3701d83e67d262098300ca1ea11b",
+        "expires_at": "2026-11-23T18:54:23Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      },
+      {
+        "id": 12572322433,
+        "name": "wp13-apple-iphone",
+        "bytes": 37805772,
+        "digest": "sha256:4c509b50cebaeeab3454f0efb43267265f27dab3d3af28e7f879a697e978888f",
+        "expires_at": "2026-11-23T19:07:14Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      },
+      {
+        "id": 12572172052,
+        "name": "wp13-apple-ipad",
+        "bytes": 46671699,
+        "digest": "sha256:8caf7cbfdaf125fe960b139f9da8d4321fad3e84b49f5f8c1d9eeeb0c210b39f",
+        "expires_at": "2026-11-23T19:03:39Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      },
+      {
+        "id": 12571671738,
+        "name": "wp13-apple-sdk-iphoneos",
+        "bytes": 19943720,
+        "digest": "sha256:f38ed89beccee3ec7f4849de550e87a07d433bdd2cef2a7ac5cc9462ed18dc3e",
+        "expires_at": "2026-11-23T18:42:46Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      },
+      {
+        "id": 12571357285,
+        "name": "wp13-apple-sdk-iphonesimulator",
+        "bytes": 20248594,
+        "digest": "sha256:21d1957aed26d9817cbef7404a57f715781266d8e37d04589f6fc54df8c636b1",
+        "expires_at": "2026-11-23T18:43:19Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      },
+      {
+        "id": 12571114241,
+        "name": "wp13-apple-sdk-macos",
+        "bytes": 20242391,
+        "digest": "sha256:753e245b7b9193c3893a3067da35c606dbcdbf91aea5b5e79b5447bf05b61d03",
+        "expires_at": "2026-11-23T18:43:48Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      }
+    ],
+    "40121809402": [
+      {
+        "id": 12573330148,
+        "name": "apple-shelf-ui-macos-40121809402-1",
+        "bytes": 39262551,
+        "digest": "sha256:6b885e314ddd5473b55bf88a14e13961d049a651dfaf835b357fd9aab8bf5a35",
+        "expires_at": "2027-01-22T18:40:50Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      },
+      {
+        "id": 12573312336,
+        "name": "apple-shelf-ui-iphone-40121809402-1",
+        "bytes": 48505083,
+        "digest": "sha256:a1a056ebe988d074153b2ce2d183468a907ae52f75fbebae34c9238466576863",
+        "expires_at": "2027-01-22T18:40:50Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      },
+      {
+        "id": 12573195290,
+        "name": "apple-shelf-ui-ipad-40121809402-1",
+        "bytes": 15066720,
+        "digest": "sha256:b9efd3a7eccc8c55cb0bf2058c3cb55f9e44d2cf0d569bb0e9ac6120cf99f6f6",
+        "expires_at": "2027-01-22T18:40:50Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      },
+      {
+        "id": 12571457308,
+        "name": "apple-shelf-native-40121809402-1",
+        "bytes": 31096169,
+        "digest": "sha256:498ee0275a8c335f52c9e37bf5452a35c281cce0e5d2cd9c3cb034b7a0cc97eb",
+        "expires_at": "2027-01-22T18:40:50Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      },
+      {
+        "id": 12571343989,
+        "name": "apple-shelf-sdk-macos-40121809402-1",
+        "bytes": 20242289,
+        "digest": "sha256:bc34474d7a9f1e443874e23aa3eece3bc67ab68fc368f528017dd01268f77da8",
+        "expires_at": "2027-01-22T18:40:50Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      },
+      {
+        "id": 12571184304,
+        "name": "apple-shelf-sdk-iphonesimulator-40121809402-1",
+        "bytes": 20248534,
+        "digest": "sha256:371feced834985118b32f3a47297080ddd18511b03f2da7ea1f492887f103e42",
+        "expires_at": "2027-01-22T18:40:50Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      }
+    ],
+    "40121823546": [
+      {
+        "id": 12572438521,
+        "name": "apple-import-mapping-ui-iphone-40121823546-1",
+        "bytes": 31277848,
+        "digest": "sha256:859e0d75fc145308c9b6a8cafeb9de5b6729e6077f96a8a2797b0536fbe5ae1f",
+        "expires_at": "2027-01-22T18:41:01Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      },
+      {
+        "id": 12571929095,
+        "name": "apple-import-mapping-ui-ipad-40121823546-1",
+        "bytes": 31973082,
+        "digest": "sha256:55853bcb494da705d098e75c52be5642b39ed59751a22b7d90e09db4a7ea3a16",
+        "expires_at": "2027-01-22T18:41:01Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      },
+      {
+        "id": 12571774154,
+        "name": "apple-import-mapping-ui-macos-40121823546-1",
+        "bytes": 30323609,
+        "digest": "sha256:c5adf289df373863b211672f95537c39beb949d9a565a5873109aa5c0005806b",
+        "expires_at": "2027-01-22T18:41:01Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      },
+      {
+        "id": 12571034813,
+        "name": "apple-import-mapping-native-40121823546-1",
+        "bytes": 2682413,
+        "digest": "sha256:0ca324d2c509bfa1257c6035945b57268934fe1971826a5d76a95767130adea6",
+        "expires_at": "2027-01-22T18:41:01Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      },
+      {
+        "id": 12571004477,
+        "name": "apple-import-mapping-sdk-macos-40121823546-1",
+        "bytes": 20242220,
+        "digest": "sha256:2b44a2a2ea195d5d50d7e7b8f31f37c3c2c1205c88ff1578489c7ee5d03d717e",
+        "expires_at": "2027-01-22T18:41:01Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      },
+      {
+        "id": 12570759695,
+        "name": "apple-import-mapping-sdk-iphonesimulator-40121823546-1",
+        "bytes": 20248322,
+        "digest": "sha256:2ec3332bc771c3998eaf13f041510e6f169e6c7fe64f69c66af5ca6d7f209549",
+        "expires_at": "2027-01-22T18:41:01Z",
+        "source_sha": "b05498073d6e0a0189da60ae8481a8ee1aef26ab"
+      }
+    ],
+    "40127300142": [
+      {
+        "id": 12574520025,
+        "name": "apple-search-summary-40127300142-1",
+        "bytes": 93683,
+        "digest": "sha256:357c2334e5b74033e203dd94177083f4d7356e4e634952000d4976b7e274624d",
+        "expires_at": "2027-01-22T19:52:59Z",
+        "source_sha": "ae30466a4bd72b343b90f94008373b24d2086b6f"
+      },
+      {
+        "id": 12574085277,
+        "name": "apple-search-ui-iphone-40127300142-1",
+        "bytes": 31725788,
+        "digest": "sha256:c8412a0585d73ed0a2167a079be542697155c08ed2ccf959805d38a355f65bdf",
+        "expires_at": "2027-01-22T19:52:59Z",
+        "source_sha": "ae30466a4bd72b343b90f94008373b24d2086b6f"
+      },
+      {
+        "id": 12573774133,
+        "name": "apple-search-ui-macos-40127300142-1",
+        "bytes": 31769778,
+        "digest": "sha256:0e87bd86144667056916eca957bc852d7020cc4745ce46855ddbe4a08a04c611",
+        "expires_at": "2027-01-22T19:52:59Z",
+        "source_sha": "ae30466a4bd72b343b90f94008373b24d2086b6f"
+      },
+      {
+        "id": 12573134397,
+        "name": "apple-search-sdk-iphonesimulator-40127300142-1",
+        "bytes": 20248785,
+        "digest": "sha256:9a576b2e7f71592626483341892bea4c84cb1dcba01402fef58f2413a0722870",
+        "expires_at": "2027-01-22T19:52:59Z",
+        "source_sha": "ae30466a4bd72b343b90f94008373b24d2086b6f"
+      },
+      {
+        "id": 12572914716,
+        "name": "apple-search-ui-ipad-40127300142-1",
+        "bytes": 37342853,
+        "digest": "sha256:6d4e383eaafb3ed8d8e2138c8ef32a7a68c53aebe767797bf2567498d62f7c49",
+        "expires_at": "2027-01-22T19:52:59Z",
+        "source_sha": "ae30466a4bd72b343b90f94008373b24d2086b6f"
+      },
+      {
+        "id": 12572913885,
+        "name": "apple-search-sdk-macos-40127300142-1",
+        "bytes": 20242428,
+        "digest": "sha256:4c995e1ac3349d8144a9531686e8fdb88f4d1c9d7ec1272ca035f86807bd1bb6",
+        "expires_at": "2027-01-22T19:52:59Z",
+        "source_sha": "ae30466a4bd72b343b90f94008373b24d2086b6f"
+      },
+      {
+        "id": 12572819070,
+        "name": "apple-search-native-40127300142-1",
+        "bytes": 4039145,
+        "digest": "sha256:6a76e02e31ffe503b452bc6f9a17185167b2c1b096e5b7640527f7b47c8afb56",
+        "expires_at": "2027-01-22T19:52:59Z",
+        "source_sha": "ae30466a4bd72b343b90f94008373b24d2086b6f"
+      }
+    ],
+    "40126749435": [
+      {
+        "id": 12573492642,
+        "name": "apple-container-diagnostic-40126749435-1",
+        "bytes": 24523,
+        "digest": "sha256:8932747cc15cddd58e413a7e475d73396bf6cfe1bc33a57cb362729ea0714daf",
+        "expires_at": "2027-01-22T19:45:36Z",
+        "source_sha": "1ebe38394fce3b5e72af49195f569af8d0ad03d8"
+      }
+    ]
+  },
+  "original_regression_credit_transferred_to_new_search_source": false,
+  "apple_same_source_regressions_accepted": false,
+  "same_source_joint_accepted": false,
+  "root_common_source_validation_pending": true,
+  "physical_device_execution": false,
+  "performance_accepted": false,
+  "voiceover_accepted": false,
+  "complete_product": false
+}
