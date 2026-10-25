@@ -27,6 +27,7 @@ jobs:
         run: |
           python3 -m py_compile tests/reader_next_c07/*.py
           python3 tests/reader_next_c07/test_capture_contract.py
+          python3 tests/reader_next_c07/seal_check.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
