@@ -73,10 +73,11 @@ class Driver:
 
     # ---------------------------------------------------------------- tools
 
-    def consumer(self, *arguments, expect_success=True):
+    def consumer(self, *arguments, expect_success=True, timeout=900):
         command = [self.consumer_path] + [str(item) for item in arguments]
         completed = subprocess.run(
-            command, cwd=str(self.work), capture_output=True, text=True, timeout=900
+            command, cwd=str(self.work), capture_output=True, text=True,
+            errors="replace", timeout=timeout,
         )
         output = (completed.stdout or "").strip().splitlines()
         parsed = None
@@ -574,6 +575,42 @@ class Driver:
         require(output["sha256"] == sha256_bytes(wire.read_bytes()), "the C wire SHA differs")
         return {"c_status": output["name"]}
 
+    def case_negative_controls(self):
+        """Real sanitizer/runtime failures must surface as failures, not rejects."""
+        expectations = {
+            "heap-overflow": ("AddressSanitizer", lambda code: code != 0),
+            "signed-overflow": ("runtime error", lambda code: code != 0),
+            "leak": ("LeakSanitizer", lambda code: code == 23),
+            "abort": ("", lambda code: code == -6),
+            "terminate": ("", lambda code: code == -6),
+            "exit-code": ("", lambda code: code == 7),
+        }
+        observed = {}
+        for kind, (signature, check) in expectations.items():
+            command = [self.consumer_path, "selftest", kind]
+            completed = subprocess.run(
+                command, cwd=str(self.work), capture_output=True, text=True,
+                errors="replace", timeout=120,
+            )
+            require(check(completed.returncode), "%s ended with unexpected code %d" % (kind, completed.returncode))
+            require(signature in completed.stderr, "%s did not report %r" % (kind, signature))
+            try:
+                self.consumer("selftest", kind)
+            except AssertionError:
+                pass
+            else:
+                raise AssertionError("the driver accepted a failing selftest " + kind)
+            observed[kind] = completed.returncode
+        started = time.time()
+        try:
+            self.consumer("selftest", "hang", timeout=3)
+        except subprocess.TimeoutExpired:
+            observed["hang"] = "timeout"
+        else:
+            raise AssertionError("a hanging child was not stopped by the timeout")
+        require(time.time() - started < 30, "the timeout did not fire promptly")
+        return observed
+
     # ------------------------------------------------------------- fuzzing
 
     def fuzz(self, target):
@@ -583,11 +620,27 @@ class Driver:
         seeds_dir.mkdir(exist_ok=True)
         for name, item in self.seeds.items():
             if item.get("fuzz") and item["kind"] == ("preferences" if target == "preferences" else "wire"):
+                require(item["status"] == "OK" and item["bytes"] > 0, name + " is not a nonempty legal seed")
+                require((self.fixtures / name).stat().st_size == item["bytes"], name + " differs from its manifest size")
                 shutil.copyfile(self.fixtures / name, seeds_dir / Path(name).name)
         require(any(seeds_dir.iterdir()), "no fuzz seeds for " + target)
         journal = directory / "journal.log"
         current = directory / "current.bin"
-        status, summary, completed = self.consumer(
+        if journal.exists():
+            journal.unlink()
+        try:
+            status, summary, completed = self.fuzz_child(target, seeds_dir, journal, current, directory)
+        except subprocess.TimeoutExpired:
+            lines = journal.read_text(encoding="utf-8", errors="replace").splitlines() if journal.exists() else []
+            self.fuzz_runs.append({"target": target, "iterations": 0, "stop": "timeout",
+                                   "journal_lines": len(lines), "exit": "timeout"})
+            replay_ok = self.replay_case(target) if current.exists() else "no case"
+            raise AssertionError("fuzz target %s exceeded its hard timeout; last journal line %s; replay %s"
+                                 % (target, lines[-1] if lines else "none", replay_ok))
+        return self.fuzz_finish(target, journal, current, status, summary, completed)
+
+    def fuzz_child(self, target, seeds_dir, journal, current, directory):
+        return self.consumer(
             "fuzz",
             target,
             str(seeds_dir),
@@ -598,8 +651,12 @@ class Driver:
             str(directory),
             str(self.arguments.budget_ms),
             expect_success=False,
+            timeout=self.arguments.budget_ms // 1000 + 300,
         )
-        lines = journal.read_text(encoding="utf-8").splitlines() if journal.exists() else []
+
+    def fuzz_finish(self, target, journal, current, status, summary, completed):
+        directory = journal.parent
+        lines = journal.read_text(encoding="utf-8", errors="replace").splitlines() if journal.exists() else []
         entry = {
             "target": target,
             "iterations": int(summary.get("iterations", 0)) if summary else 0,
@@ -619,6 +676,7 @@ class Driver:
                 "fuzz target %s exited %d (%s); last journal line %s; replay %s"
                 % (target, status, (summary or {}).get("violation", completed.stdout.strip()[-400:]), last, replay_ok)
             )
+        require(summary is not None and summary.get("target") == target, "fuzz target %s printed no summary" % target)
         require(entry["iterations"] > 0, "fuzz target %s ran no case" % target)
         require(
             entry["stop"] == "iterations" or entry["iterations"] > 50,
@@ -789,6 +847,7 @@ class Driver:
         self.record("cross_process.revisions_reopen", self.case_cross_process_revisions)
         self.record("c_abi.parity", self.case_c_abi_parity)
 
+        self.record("harness.crash_and_exit_negative_controls", self.case_negative_controls)
         for target in FUZZ_TARGETS:
             self.record("fuzz." + target + ".invariants", lambda target=target: self.fuzz(target))
         for target in FUZZ_TARGETS:

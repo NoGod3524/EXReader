@@ -1,7 +1,7 @@
 name: Reader application boundary fuzz
 on:
   push:
-    branches: [codex/reader-app-boundary-fuzz]
+    branches: [codex/reader-app-boundary-fuzz, codex/reader-app-boundary-fuzz-review]
   workflow_dispatch:
 permissions:
   contents: read

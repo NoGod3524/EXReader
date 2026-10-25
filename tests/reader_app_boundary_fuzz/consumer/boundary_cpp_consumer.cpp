@@ -21,6 +21,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -168,9 +169,14 @@ std::string preferences_observe(const std::string &bytes, const std::string &pat
   reader_preferences_status status = abi<reader_preferences_status>(
       "reader_preferences_load",
       [&] { return reader_preferences_load(path.c_str(), &value, pointer, &error); });
-  require(preferences_known(static_cast<int>(status)), "load status is outside the documented set");
+  require(preferences_input_ok(static_cast<int>(status)) ||
+              (limit > 65536 && status == READER_PREFERENCES_ARGUMENT),
+          "load status is an environment or argument failure, not a content refusal");
   require(std::memchr(error.message, 0, sizeof(error.message)) != nullptr,
           "load error message is not NUL terminated");
+  std::string after_bytes;
+  require(read_file(path, after_bytes) && after_bytes == bytes,
+          "a load modified or removed the settings file");
   const bool changed = std::memcmp(&before, &value, sizeof(value)) != 0;
   if (status != READER_PREFERENCES_OK) {
     require(!changed, "a failed load modified the caller record");
@@ -196,6 +202,18 @@ std::string preferences_observe(const std::string &bytes, const std::string &pat
 
 bool revision_known(int value) { return value >= 0 && value <= 12; }
 bool reading_known(int value) { return value >= 0 && value <= 7; }
+/* Mutated input may be refused for content, never for an environment or
+   resource reason: MEMORY, DATABASE, SDK, OWNER, NOT_FOUND and IO/ARGUMENT/
+   CANCELLED on a real, readable, non-null case are defects, not expected rejects. */
+bool preferences_input_ok(int value) {
+  return value == 0 || value == 3 || value == 4 || value == 5 || value == 7;
+}
+bool revision_input_ok(int value) {
+  return revision_known(value) && value != 2 && value != 3 && value != 11 && value != 12;
+}
+bool reading_input_ok(int value) {
+  return reading_known(value) && value != 2 && value != 3;
+}
 
 const char *revision_name(reader_revision_status status) {
   switch (status) {
@@ -329,7 +347,7 @@ std::string wire_validate_observe(reader_revisions *store, const std::string &by
         return reader_revision_validate(store, bytes.data(), bytes.size(), expected, &info,
                                         &error);
       });
-  require(revision_known(static_cast<int>(status)),
+  require(revision_input_ok(static_cast<int>(status)),
           "validate status is outside the documented set");
   require(std::memchr(error.message, 0, sizeof(error.message)) != nullptr,
           "validate error message is not NUL terminated");
@@ -357,7 +375,7 @@ std::string wire_decode_observe(reader_revisions *store, const std::string &byte
   reader_rs_status status = abi<reader_rs_status>("reader_rs_decode", [&] {
     return reader_rs_decode(store, bytes.data(), bytes.size(), &record, &error);
   });
-  require(reading_known(static_cast<int>(status)),
+  require(reading_input_ok(static_cast<int>(status)),
           "decode status is outside the documented set");
   require(std::memchr(error.message, 0, sizeof(error.message)) != nullptr,
           "decode error message is not NUL terminated");
@@ -446,7 +464,7 @@ std::string wire_receive_observe(reader_revisions *store, const std::string &byt
         return reader_revision_validate(store, bytes.data(), bytes.size(), nullptr, &validated,
                                         &error);
       });
-  require(revision_known(static_cast<int>(validated_status)),
+  require(revision_input_ok(static_cast<int>(validated_status)),
           "pre-receive validate status is outside the documented set");
   const char *sha =
       validated_status == READER_REV_OK
@@ -461,7 +479,7 @@ std::string wire_receive_observe(reader_revisions *store, const std::string &byt
         return reader_revision_receive(store, bytes.data(), bytes.size(), sha, &info, &created,
                                        &receive_error);
       });
-  require(revision_known(static_cast<int>(received)),
+  require(revision_input_ok(static_cast<int>(received)),
           "receive status is outside the documented set");
   require(created == 0 || created == 1, "receive created flag is not a boolean");
   require(std::memchr(receive_error.message, 0, sizeof(receive_error.message)) != nullptr,
@@ -497,7 +515,7 @@ std::string wire_local_observe(reader_revisions *store, const std::string &bytes
         return reader_revision_validate(store, bytes.data(), bytes.size(), nullptr, &validated,
                                         &validate_error);
       });
-  require(revision_known(static_cast<int>(validated_status)),
+  require(revision_input_ok(static_cast<int>(validated_status)),
           "pre-local validate status is outside the documented set");
   const outbox_observer before = read_outbox(store);
   reader_revision_info info{};
@@ -508,7 +526,7 @@ std::string wire_local_observe(reader_revisions *store, const std::string &bytes
         return reader_revision_local(store, bytes.data(), bytes.size(), &info, &created,
                                      &local_error);
       });
-  require(revision_known(static_cast<int>(status)),
+  require(revision_input_ok(static_cast<int>(status)),
           "local status is outside the documented set");
   require(created == 0 || created == 1, "local created flag is not a boolean");
   require(std::memchr(local_error.message, 0, sizeof(local_error.message)) != nullptr,
@@ -1250,6 +1268,38 @@ int command_fuzz(const std::vector<std::string> &args) {
   return 0;
 }
 
+/* Negative controls for the harness itself: each kind is a real runtime
+   failure that the driver must classify as a failure, never as a refusal. */
+int command_selftest(const std::vector<std::string> &args) {
+  require(args.size() >= 3, "selftest needs a kind");
+  const std::string &kind = args[2];
+  if (kind == "heap-overflow") {
+    char *block = static_cast<char *>(std::malloc(8));
+    volatile char *sink = block;
+    sink[8 + args.size()] = 1;
+    std::free(block);
+    return 0;
+  }
+  if (kind == "signed-overflow") {
+    volatile int value = 2147483647;
+    value = value + static_cast<int>(args.size());
+    return value == 0 ? 0 : 0;
+  }
+  if (kind == "leak") {
+    static void *volatile kept;
+    kept = std::malloc(4096);
+    kept = nullptr;
+    return 0;
+  }
+  if (kind == "abort") std::abort();
+  if (kind == "terminate") throw 7;
+  if (kind == "exit-code") return 7;
+  if (kind == "hang") {
+    for (;;) std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
+  throw violation{"unknown selftest kind"};
+}
+
 int command_replay(const std::vector<std::string> &args) {
   require(args.size() >= 4, "replay needs a target, a case file and a work directory");
   const std::string target = args[2];
@@ -1300,6 +1350,7 @@ int main(int argc, char **argv) {
     if (command == "encode") return command_encode(args);
     if (command == "fuzz") return command_fuzz(args);
     if (command == "replay") return command_replay(args);
+    if (command == "selftest") return command_selftest(args);
     emit("\"usage\":\"unknown command\"");
     return 2;
   } catch (const violation &problem) {

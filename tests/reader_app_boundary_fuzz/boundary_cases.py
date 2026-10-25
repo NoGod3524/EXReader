@@ -44,6 +44,7 @@ REQUIRED_CASES = [
     "encode.argument_refused",
     "cross_process.revisions_reopen",
     "c_abi.parity",
+    "harness.crash_and_exit_negative_controls",
     "fuzz.preferences.invariants",
     "fuzz.wire-validate.invariants",
     "fuzz.wire-decode.invariants",

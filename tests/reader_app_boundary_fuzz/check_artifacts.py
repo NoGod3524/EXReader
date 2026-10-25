@@ -169,6 +169,26 @@ def main():
             require(manifest.get("generated_by", "").endswith("make_boundary_seeds.py"),
                     "the seed manifest identity differs")
             require(len(manifest.get("seeds", [])) == 25, "the seed count differs")
+            for item in manifest["seeds"]:
+                payload = archive.read(member(archive, "seeds/" + item["file"]))
+                require(len(payload) == item["bytes"], "seed bytes differ from the manifest: " + item["file"])
+            fuzz_seeds = [item for item in manifest["seeds"] if item["fuzz"]]
+            require(fuzz_seeds and all(item["bytes"] > 0 and item["status"] == "OK" for item in fuzz_seeds),
+                    "a fuzz seed is empty or not legal")
+            limits = report.get("limits", {})
+            require(limits.get("iterations") == 2500 and limits.get("time_budget_ms") == 90000,
+                    "the fixed iteration/time budget was changed")
+            for target in TARGETS:
+                entry = fuzz[target]
+                require(entry.get("exit") == 0, "fuzz target %s exited abnormally" % target)
+                require(entry["stop"] == "iterations" or entry["iterations"] > 50,
+                        "fuzz target %s stopped almost immediately" % target)
+            cache = archive.read(member(archive, "logs/consumer-CMakeCache.txt")).decode("utf-8", "replace")
+            require("fsanitize=address,undefined" in cache, "the consumers were not built with the sanitizers")
+            negative = by_name["harness.crash_and_exit_negative_controls"]["detail"]
+            require(negative.get("leak") == 23 and negative.get("hang") == "timeout" and
+                    negative.get("abort") == -6 and negative.get("exit-code") == 7,
+                    "the negative controls did not observe the real failures")
 
         summary["accepted"] = True
         summary["granted_platforms"] = ["linux"]
