@@ -131,3 +131,5 @@ run/attempt 内逐个下载三份归档，重算 SHA-256 与 API digest 比对�
 
 线程统计修正 source `4ba603437c0f4f7bedd166e09891bbeb14789820` / run `40154953728` 三平台22项及严格汇总全通过。复核原报告仍有 `metadata_wait_positive_covered=false`，原检查只比较零值。现用真实独立session播种缺少book metadata的progress删除修订，跑完整256分片，必须观察到正数pending-metadata、视图精确镜像并保留未确认outbox；strict要求该正例覆盖标记。模块实现不变，这一补齐版本仍需新同源整轮。
 
+补齐首轮 `7b70faf6` / run `40156517005` 三平台均在新夹具播种时被原修订validator拒绝：progress删除也必须显式`location_kind=reflow_global`，原helper默认none。本次仅修夹具的既有公开契约字段，validator与实际pending正数断言保留，原失败不删。
+
