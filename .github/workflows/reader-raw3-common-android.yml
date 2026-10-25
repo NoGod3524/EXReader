@@ -39,6 +39,7 @@ jobs:
           python tests/reader_android_page_theme/candidate.py
           python tests/reader_android_record_interop/candidate.py
           python tests/reader_android_raw3/candidate.py
+          python tests/reader_android_navigation_cache/adapter.py prepare
           python -m py_compile build/android-page-theme/candidate/preferences_run_ui.py
           python -m py_compile tests/reader_android_host_import/run_ui.py tests/reader_android_host_import/check_evidence.py
           python -m py_compile tests/reader_android_fixed_pan/fixtures.py tests/reader_android_fixed_pan/run_ui.py tests/reader_android_cbz_reading/fixtures.py tests/reader_android_cbz_reading/audit.py tests/reader_android_cbz_reading/run_ui.py tests/reader_android_preferences/audit.py tests/reader_android_preferences/run_ui.py tests/reader_session_android/run_export.py tests/reader_session_android/run_roundtrip.py tests/reader_session_android/audit.py tests/reader_host_session_android/run_ui.py tests/reader_host_session_android/audit.py tests/reader_android_search/fixtures.py tests/reader_android_search/audit.py tests/reader_android_search/run_ui.py tests/reader_android_navigation/fixtures.py tests/reader_android_navigation/fixture_module.py tests/reader_android_navigation/audit.py tests/reader_android_navigation/run_ui.py tests/reader_android_reading/fixtures.py tests/reader_android_reading/audit.py tests/reader_android_reading/run_ui.py
@@ -123,8 +124,9 @@ jobs:
           mkdir -p build/android-search/test-apks
           cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/android-search/test-apks/search-ui.apk
           mkdir -p build/android-navigation/test-apks
-          gradle -p examples/android --no-daemon --stacktrace -PexrRecordInterop=true -PexrPageTheme=true -PexrHostImport=true -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrNavigation=true -PexrReading=true -PexrPreferences=true -PexrPreferencesPrefix="$PWD/build/android-preferences/preferences-stage" -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.NavigationUiTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/navigation-ui-runner-build.log
+          gradle -I "$PWD/tests/reader_android_navigation_cache/init.gradle" -p examples/android --no-daemon --stacktrace -PexrRecordInterop=true -PexrPageTheme=true -PexrHostImport=true -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrNavigation=true -PexrReading=true -PexrPreferences=true -PexrPreferencesPrefix="$PWD/build/android-preferences/preferences-stage" -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.NavigationUiTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/navigation-ui-runner-build.log
           cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/android-navigation/test-apks/navigation-ui.apk
+          python tests/reader_android_navigation_cache/adapter.py build
           mkdir -p build/android-reading/test-apks
           gradle -p examples/android --no-daemon --stacktrace -PexrRecordInterop=true -PexrPageTheme=true -PexrHostImport=true -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrNavigation=true -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrReading=true -PexrPreferences=true -PexrPreferencesPrefix="$PWD/build/android-preferences/preferences-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.ReadingUiTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/reading-ui-runner-build.log
           cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/android-reading/test-apks/reading-ui.apk
@@ -207,6 +209,7 @@ jobs:
             python tests/reader_android_search/run_ui.py --fixtures build/android-search/fixtures --output build/android-search/ui
             adb install -r -t build/android-navigation/test-apks/navigation-ui.apk
             python tests/reader_android_navigation/run_ui.py --fixtures build/android-navigation/fixtures --output build/android-navigation/ui
+            python tests/reader_android_navigation_cache/adapter.py runtime
             adb install -r -t build/android-reading/test-apks/reading-ui.apk
             python tests/reader_android_reading/run_ui.py --fixtures build/android-reading/fixtures --output build/android-reading/ui
             adb install -r -t build/android-preferences/test-apks/preferences-ui.apk
@@ -320,6 +323,7 @@ jobs:
         run: |
           python -m pip install Pillow==11.1.0
           python tests/reader_raw3_common_android/strict.py
+          python tests/reader_android_navigation_cache/adapter.py strict
       - uses: actions/upload-artifact@v4
         with:
           name: reader-android-raw3-summary-${{ github.run_id }}-${{ github.run_attempt }}
