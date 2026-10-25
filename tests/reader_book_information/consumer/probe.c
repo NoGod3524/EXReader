@@ -269,8 +269,8 @@ static int command_read(void) {
   fingerprint(arg_vector[2], catalog_after);
   fingerprint(arg_vector[3], library_after);
   view = reader_book_information_get(snapshot);
-  printf("{\"status\":%d,\"catalog\":%d,\"sdk\":%d,\"polls\":%d,\"out\":%s,\"message\":",
-         status, error.catalog_code, error.sdk_code, state.calls, view ? "true" : "false");
+  printf("{\"status\":%d,\"error_status\":%d,\"catalog\":%d,\"sdk\":%d,\"polls\":%d,\"out\":%s,\"message\":",
+         status, (int)error.status, error.catalog_code, error.sdk_code, state.calls, view ? "true" : "false");
   json_string(error.message);
   printf(",\"storage\":{\"catalog_before\":"); json_string(catalog_before);
   printf(",\"catalog_after\":"); json_string(catalog_after);

@@ -1,166 +1,276 @@
 {
-  "schema": "reader-book-information-acceptance-v1",
-  "package": "EXReaderBookInformation 0.1.0",
-  "accepted": true,
-  "accepted_scope": "Installed Windows, Linux and macOS snapshot fields, availability/identity classes, cancellation, thread/reentrancy rules and per-call store immutability",
-  "not_accepted_scope": ["host information panel wiring", "editing", "metadata module", "physical devices", "accessibility", "performance", "power"],
-  "fixed_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
-  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
-  "sdk_version": "3.40.0",
-  "sdk_abi": 1,
-  "branch": "codex/reader-book-information",
-  "workflow": ".github/workflows/reader-book-information.yml",
-  "source_sha": "72fdc1a8976e95e615fe6bdd2c8fafcb651fa660",
-  "run_id": 40127968068,
-  "attempt": 1,
-  "workflow_conclusion": "success",
-  "sdk_protected_trees_unchanged": true,
-  "product_schema1_unchanged": true,
-  "path_allowlist_enforced": true,
-  "guards": {
-    "head_equals_github_sha": true,
-    "fixed_start_is_ancestor": true,
-    "protected_trees_compared_against_frozen_sdk": ["src", "include", "cmake", "CMakeLists.txt", "tests/fixtures", ".github/workflows/native.yml", ".github/workflows/reliability.yml", "bindings"],
-    "product_paths_compared_against_fixed_start": ["apps/reader/store/001_catalog.sql", "apps/reader/store/native", "apps/reader/session", "apps/reader/commands", "apps/reader/revisions", "apps/reader/sync", "apps/reader/desktop", "apps/reader/desktop-metadata", "apps/reader/reading-state", "apps/reader/preferences", "apps/reader/search", "apps/reader/batch-import", "docs/handoffs"],
-    "owned_paths": ["apps/reader/book-information/", "tests/reader_book_information/", ".github/workflows/reader-book-information.yml", "docs/READER-BOOK-INFORMATION.md", "docs/validation/reader-book-information.json"]
-  },
-  "installed_consumers": ["C probe (probe.c)", "C++ independent recomputation and thread probe (compare.cpp)"],
-  "build_sources": {
-    "sdk": "cmake --preset reading-library (frozen 9854061b, 3.40.0 / ABI 1)",
-    "product_catalog": "apps/reader/store/native (unchanged EXReaderProductCatalog 0.1.0)",
-    "package": "apps/reader/book-information installed into a private prefix; consumers compiled only from that prefix"
-  },
-  "platforms": [
-    {
-      "runner": "windows-2022",
-      "job_id": 120973358790,
-      "conclusion": "success",
-      "named_cases": 22,
-      "assertions": 699,
-      "artifact": {
-        "id": 12574555079,
-        "name": "reader-book-information-Windows-40127968068-1",
-        "size_in_bytes": 7340273,
-        "digest": "sha256:f58294c8030e0a3dfefa3b92ad07a72128c0293645a46ab467a48e48e82c5837",
-        "expires_at": "2027-01-22T20:02:03Z",
-        "expired_at_read": false
-      }
-    },
-    {
-      "runner": "ubuntu-22.04",
-      "job_id": 120973358746,
-      "conclusion": "success",
-      "named_cases": 22,
-      "assertions": 699,
-      "artifact": {
-        "id": 12574360053,
-        "name": "reader-book-information-Linux-40127968068-1",
-        "size_in_bytes": 9116213,
-        "digest": "sha256:5526558b5fa7c3f3a177a0299550456456a42c9b73755b759f7ff3f553dca4d2",
-        "expires_at": "2027-01-22T20:02:03Z",
-        "expired_at_read": false
-      }
-    },
-    {
-      "runner": "macos-15",
-      "job_id": 120973358730,
-      "conclusion": "success",
-      "named_cases": 22,
-      "assertions": 699,
-      "artifact": {
-        "id": 12573524988,
-        "name": "reader-book-information-macOS-40127968068-1",
-        "size_in_bytes": 7934170,
-        "digest": "sha256:16c5f080058cdff19395037080d5606b1b63a4c5ae8434387a60b469385393eb",
-        "expires_at": "2027-01-22T20:02:03Z",
-        "expired_at_read": false
-      }
-    }
-  ],
-  "same_run_evidence": {
-    "job_id": 120974206183,
-    "conclusion": "success",
-    "method": "workflow evidence job re-listed run/jobs/artifacts through the API, downloaded and unzipped every platform ZIP in the cloud, recomputed the SHA-256 of the downloaded bytes, rejected missing/duplicate/cross-source artifacts and required the same 22 named verdicts on all three platforms",
-    "artifact": {
-      "id": 12573584981,
-      "name": "reader-book-information-evidence-40127968068-1",
-      "size_in_bytes": 749,
-      "digest": "sha256:25164312e3d32cb9a8651dac5133e53d4f55afb557d7bff66373985780ff4d2e",
-      "expires_at": "2027-01-22T20:02:03Z"
-    },
-    "reported_platform_digests": {
-      "Windows": "sha256:f58294c8030e0a3dfefa3b92ad07a72128c0293645a46ab467a48e48e82c5837",
-      "Linux": "sha256:5526558b5fa7c3f3a177a0299550456456a42c9b73755b759f7ff3f553dca4d2",
-      "macOS": "sha256:16c5f080058cdff19395037080d5606b1b63a4c5ae8434387a60b469385393eb"
-    }
-  },
-  "named_cases": [
-    "nine-formats-cloud-metadata",
-    "cloud-row-without-library",
-    "local-identity-sha256",
-    "local-identity-size-only",
-    "local-unicode-fields",
-    "local-overlong-fields",
-    "cbz-property-cap",
-    "pdf-pages-without-info",
-    "epub-storage-modes",
-    "reflow-no-public-fields",
-    "local-mapping-missing",
-    "wrong-book-size-mismatch",
-    "wrong-book-bytes-mismatch",
-    "size-only-identity-limit",
-    "local-unchecked-without-library",
-    "cancel-at-every-poll",
-    "snapshot-readable-after-sdk-close",
-    "independent-public-api-comparison",
-    "foreign-thread-and-immutable-view",
-    "reentrant-cancel-callback",
-    "argument-and-error-contract",
-    "stores-unchanged"
-  ],
-  "named_results": {
-    "Windows": "22/22 pass, 699 assertions",
-    "Linux": "22/22 pass, 699 assertions",
-    "macOS": "22/22 pass, 699 assertions"
-  },
-  "acceptance_includes": [
-    "Nine product-only formats read with no SDK object: cloud-only availability, no identity claim, no parser fields",
-    "Local mapping missing, identity by size only and identity by SHA-256 are distinct, and a wrong book of equal or unequal size is refused",
-    "PDF pages/Info metadata, CBZ ComicInfo properties, EPUB bounded/global storage modes and reflow no-public-fields are separated from product fields",
-    "Non-ASCII titles, authors and property values survive both providers round trip",
-    "Text caps cut only at UTF-8 scalar boundaries with flags; the 32-property cap counts omissions instead of dropping them silently",
-    "Cancellation at every poll position of a verified parsed read, including inside the SDK call, returns CANCELLED with no snapshot",
-    "The snapshot stays readable after the catalog, library, source and fixed document are closed",
-    "A second C++ consumer recomputes every field from the public catalog and SDK APIs and compares it with the snapshot",
-    "Foreign-thread use is refused, the view is immutable and pointer-stable, and a cancel callback that re-enters is refused as REENTRANT",
-    "Every read leaves both stores byte-identical in-process (whole-file FNV-1a plus size around the module call)"
-  ],
-  "failure_iterations_retained": [
-    {"source_sha": "c4db463019bdcb9797da5f95463421a002bcaee3", "run_id": 40122856889, "conclusion": "cancelled", "reason": "commit message amended before the guard ran; superseded, kept for the record"},
-    {"source_sha": "753e1bad72b85fd088d1a8805c9c2c2fa3ad04da", "run_id": 40123025712, "conclusion": "failure", "reason": "public header declared READER_BOOK_INFORMATION_IDENTITY_MISMATCH twice (gcc error, MSVC C2365); macOS job cancelled after the two failures", "fix_commit": "bdca8d6803169835ac7b06cf6165b5130e5ae2bf"},
-    {"source_sha": "bdca8d6803169835ac7b06cf6165b5130e5ae2bf", "run_id": 40123912979, "conclusion": "failure", "reason": "compare.cpp kept an unused quote(const char*) overload, rejected by -Werror=unused-function", "fix_commit": "1803a64b8b0c2ccb0f5d0540d6cd774b03090a95"},
-    {"source_sha": "1803a64b8b0c2ccb0f5d0540d6cd774b03090a95", "run_id": 40124712723, "conclusion": "failure", "reason": "the 240000-paragraph cancellation fixture exceeded the SDK document node budget, so every case reported a setup failure at import (EXR_LIMIT)"},
-    {"source_sha": "eba22b1957180f0ebb6c943083962dd09d091210", "run_id": 40125395665, "conclusion": "failure", "reason": "fixture generator wrote str instead of bytes: TypeError before any case ran", "fix_commit": "f859fa7a6d133c1c6cd01f111e515cd5a07946cb"},
-    {"source_sha": "f859fa7a6d133c1c6cd01f111e515cd5a07946cb", "run_id": 40125941944, "conclusion": "failure", "reason": "two product rows were mapped to one local SDK ID; reader_catalog_attach refused with SQLITE_CONSTRAINT (19)"},
-    {"source_sha": "d0bb85ce27dfc3b7b72b13887f6dda725dfd6749", "run_id": 40126141739, "conclusion": "failure", "reason": "same single-SDK-row conflict re-confirmed on all three platforms", "fix_commit": "679f83421abdc04478e8ea3ac439c393b15de592"},
-    {"source_sha": "679f83421abdc04478e8ea3ac439c393b15de592", "run_id": 40126581093, "conclusion": "failure", "reason": "harness crashed on a NULL parser_title (AttributeError) and wrote no report", "fix_commit": "3054f3a3f79ba49cc1581d43d74ab606f69ff5f3"},
-    {"source_sha": "3054f3a3f79ba49cc1581d43d74ab606f69ff5f3", "run_id": 40127154959, "conclusion": "failure", "reason": "the fb2 book_key prefix was rejected as malformed; PDF parser_title was asserted to carry the Info title; the SDK-ID leak check matched by substring inside hexadecimal digests"},
-    {"source_sha": "ad565dd87ac3f4152037ddaf74cf7ff1e57d5f69", "run_id": 40127301828, "conclusion": "failure", "reason": "the fb2 prefix and leak-check defects were still present; only the PDF title expectations had been corrected"},
-    {"source_sha": "c55cf2dbf751849abfa1946c77805ba49f014ba2", "run_id": 40127480624, "conclusion": "failure", "reason": "all three platform jobs succeeded; the evidence job rejected every ZIP because the digest comparison compared 'sha256:'+digest with the hex half", "fix_commit": "72fdc1a8976e95e615fe6bdd2c8fafcb651fa660"}
-  ],
-  "tested_source_sha": "72fdc1a8976e95e615fe6bdd2c8fafcb651fa660",
-  "final_head_relation": "the evidence commit on top of the tested source changes only docs/READER-BOOK-INFORMATION.md and docs/validation/reader-book-information.json and carries [skip ci]",
-  "evidence_read_method": "GitHub API run/job/artifact listing and job logs; the accepted run's ZIPs were downloaded, unzipped and re-hashed inside the workflow evidence job, never on this workstation",
-  "uncovered": [
-    "encrypted PDF PASSWORD_REQUIRED branch: no encrypted fixture is generated",
-    "soft-deleted product row (deleted=1): no public product API sets reader_books.deleted",
-    "invalid UTF-8 product or SDK text: both providers reject it before this module sees it",
-    "host information panel, editing and metadata module: root-owned wiring",
-    "real device, accessibility, performance and power passes: not granted"
-  ],
-  "local_build_test_or_syntax_execution": false,
-  "host_ui_accepted": false,
-  "physical_device_execution": false,
+  "accepted": false,
+  "state": "root_review_parser_error_propagation_pending_actions",
+  "branch": "codex/reader-book-information-review",
+  "source_sha": null,
+  "run_id": null,
+  "sdk": "9854061be331fe603a1822d9b2b36ee357154927",
   "complete_product": false,
-  "problems": []
+  "previous_authenticated_delivery": {
+    "schema": "reader-book-information-acceptance-v1",
+    "package": "EXReaderBookInformation 0.1.0",
+    "accepted": true,
+    "accepted_scope": "Installed Windows, Linux and macOS snapshot fields, availability/identity classes, cancellation, thread/reentrancy rules and per-call store immutability",
+    "not_accepted_scope": [
+      "host information panel wiring",
+      "editing",
+      "metadata module",
+      "physical devices",
+      "accessibility",
+      "performance",
+      "power"
+    ],
+    "fixed_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+    "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+    "sdk_version": "3.40.0",
+    "sdk_abi": 1,
+    "branch": "codex/reader-book-information",
+    "workflow": ".github/workflows/reader-book-information.yml",
+    "source_sha": "72fdc1a8976e95e615fe6bdd2c8fafcb651fa660",
+    "run_id": 40127968068,
+    "attempt": 1,
+    "workflow_conclusion": "success",
+    "sdk_protected_trees_unchanged": true,
+    "product_schema1_unchanged": true,
+    "path_allowlist_enforced": true,
+    "guards": {
+      "head_equals_github_sha": true,
+      "fixed_start_is_ancestor": true,
+      "protected_trees_compared_against_frozen_sdk": [
+        "src",
+        "include",
+        "cmake",
+        "CMakeLists.txt",
+        "tests/fixtures",
+        ".github/workflows/native.yml",
+        ".github/workflows/reliability.yml",
+        "bindings"
+      ],
+      "product_paths_compared_against_fixed_start": [
+        "apps/reader/store/001_catalog.sql",
+        "apps/reader/store/native",
+        "apps/reader/session",
+        "apps/reader/commands",
+        "apps/reader/revisions",
+        "apps/reader/sync",
+        "apps/reader/desktop",
+        "apps/reader/desktop-metadata",
+        "apps/reader/reading-state",
+        "apps/reader/preferences",
+        "apps/reader/search",
+        "apps/reader/batch-import",
+        "docs/handoffs"
+      ],
+      "owned_paths": [
+        "apps/reader/book-information/",
+        "tests/reader_book_information/",
+        ".github/workflows/reader-book-information.yml",
+        "docs/READER-BOOK-INFORMATION.md",
+        "docs/validation/reader-book-information.json"
+      ]
+    },
+    "installed_consumers": [
+      "C probe (probe.c)",
+      "C++ independent recomputation and thread probe (compare.cpp)"
+    ],
+    "build_sources": {
+      "sdk": "cmake --preset reading-library (frozen 9854061b, 3.40.0 / ABI 1)",
+      "product_catalog": "apps/reader/store/native (unchanged EXReaderProductCatalog 0.1.0)",
+      "package": "apps/reader/book-information installed into a private prefix; consumers compiled only from that prefix"
+    },
+    "platforms": [
+      {
+        "runner": "windows-2022",
+        "job_id": 120973358790,
+        "conclusion": "success",
+        "named_cases": 22,
+        "assertions": 699,
+        "artifact": {
+          "id": 12574555079,
+          "name": "reader-book-information-Windows-40127968068-1",
+          "size_in_bytes": 7340273,
+          "digest": "sha256:f58294c8030e0a3dfefa3b92ad07a72128c0293645a46ab467a48e48e82c5837",
+          "expires_at": "2027-01-22T20:02:03Z",
+          "expired_at_read": false
+        }
+      },
+      {
+        "runner": "ubuntu-22.04",
+        "job_id": 120973358746,
+        "conclusion": "success",
+        "named_cases": 22,
+        "assertions": 699,
+        "artifact": {
+          "id": 12574360053,
+          "name": "reader-book-information-Linux-40127968068-1",
+          "size_in_bytes": 9116213,
+          "digest": "sha256:5526558b5fa7c3f3a177a0299550456456a42c9b73755b759f7ff3f553dca4d2",
+          "expires_at": "2027-01-22T20:02:03Z",
+          "expired_at_read": false
+        }
+      },
+      {
+        "runner": "macos-15",
+        "job_id": 120973358730,
+        "conclusion": "success",
+        "named_cases": 22,
+        "assertions": 699,
+        "artifact": {
+          "id": 12573524988,
+          "name": "reader-book-information-macOS-40127968068-1",
+          "size_in_bytes": 7934170,
+          "digest": "sha256:16c5f080058cdff19395037080d5606b1b63a4c5ae8434387a60b469385393eb",
+          "expires_at": "2027-01-22T20:02:03Z",
+          "expired_at_read": false
+        }
+      }
+    ],
+    "same_run_evidence": {
+      "job_id": 120974206183,
+      "conclusion": "success",
+      "method": "workflow evidence job re-listed run/jobs/artifacts through the API, downloaded and unzipped every platform ZIP in the cloud, recomputed the SHA-256 of the downloaded bytes, rejected missing/duplicate/cross-source artifacts and required the same 22 named verdicts on all three platforms",
+      "artifact": {
+        "id": 12573584981,
+        "name": "reader-book-information-evidence-40127968068-1",
+        "size_in_bytes": 749,
+        "digest": "sha256:25164312e3d32cb9a8651dac5133e53d4f55afb557d7bff66373985780ff4d2e",
+        "expires_at": "2027-01-22T20:02:03Z"
+      },
+      "reported_platform_digests": {
+        "Windows": "sha256:f58294c8030e0a3dfefa3b92ad07a72128c0293645a46ab467a48e48e82c5837",
+        "Linux": "sha256:5526558b5fa7c3f3a177a0299550456456a42c9b73755b759f7ff3f553dca4d2",
+        "macOS": "sha256:16c5f080058cdff19395037080d5606b1b63a4c5ae8434387a60b469385393eb"
+      }
+    },
+    "named_cases": [
+      "nine-formats-cloud-metadata",
+      "cloud-row-without-library",
+      "local-identity-sha256",
+      "local-identity-size-only",
+      "local-unicode-fields",
+      "local-overlong-fields",
+      "cbz-property-cap",
+      "pdf-pages-without-info",
+      "epub-storage-modes",
+      "reflow-no-public-fields",
+      "local-mapping-missing",
+      "wrong-book-size-mismatch",
+      "wrong-book-bytes-mismatch",
+      "size-only-identity-limit",
+      "local-unchecked-without-library",
+      "cancel-at-every-poll",
+      "snapshot-readable-after-sdk-close",
+      "independent-public-api-comparison",
+      "foreign-thread-and-immutable-view",
+      "reentrant-cancel-callback",
+      "argument-and-error-contract",
+      "stores-unchanged"
+    ],
+    "named_results": {
+      "Windows": "22/22 pass, 699 assertions",
+      "Linux": "22/22 pass, 699 assertions",
+      "macOS": "22/22 pass, 699 assertions"
+    },
+    "acceptance_includes": [
+      "Nine product-only formats read with no SDK object: cloud-only availability, no identity claim, no parser fields",
+      "Local mapping missing, identity by size only and identity by SHA-256 are distinct, and a wrong book of equal or unequal size is refused",
+      "PDF pages/Info metadata, CBZ ComicInfo properties, EPUB bounded/global storage modes and reflow no-public-fields are separated from product fields",
+      "Non-ASCII titles, authors and property values survive both providers round trip",
+      "Text caps cut only at UTF-8 scalar boundaries with flags; the 32-property cap counts omissions instead of dropping them silently",
+      "Cancellation at every poll position of a verified parsed read, including inside the SDK call, returns CANCELLED with no snapshot",
+      "The snapshot stays readable after the catalog, library, source and fixed document are closed",
+      "A second C++ consumer recomputes every field from the public catalog and SDK APIs and compares it with the snapshot",
+      "Foreign-thread use is refused, the view is immutable and pointer-stable, and a cancel callback that re-enters is refused as REENTRANT",
+      "Every read leaves both stores byte-identical in-process (whole-file FNV-1a plus size around the module call)"
+    ],
+    "failure_iterations_retained": [
+      {
+        "source_sha": "c4db463019bdcb9797da5f95463421a002bcaee3",
+        "run_id": 40122856889,
+        "conclusion": "cancelled",
+        "reason": "commit message amended before the guard ran; superseded, kept for the record"
+      },
+      {
+        "source_sha": "753e1bad72b85fd088d1a8805c9c2c2fa3ad04da",
+        "run_id": 40123025712,
+        "conclusion": "failure",
+        "reason": "public header declared READER_BOOK_INFORMATION_IDENTITY_MISMATCH twice (gcc error, MSVC C2365); macOS job cancelled after the two failures",
+        "fix_commit": "bdca8d6803169835ac7b06cf6165b5130e5ae2bf"
+      },
+      {
+        "source_sha": "bdca8d6803169835ac7b06cf6165b5130e5ae2bf",
+        "run_id": 40123912979,
+        "conclusion": "failure",
+        "reason": "compare.cpp kept an unused quote(const char*) overload, rejected by -Werror=unused-function",
+        "fix_commit": "1803a64b8b0c2ccb0f5d0540d6cd774b03090a95"
+      },
+      {
+        "source_sha": "1803a64b8b0c2ccb0f5d0540d6cd774b03090a95",
+        "run_id": 40124712723,
+        "conclusion": "failure",
+        "reason": "the 240000-paragraph cancellation fixture exceeded the SDK document node budget, so every case reported a setup failure at import (EXR_LIMIT)"
+      },
+      {
+        "source_sha": "eba22b1957180f0ebb6c943083962dd09d091210",
+        "run_id": 40125395665,
+        "conclusion": "failure",
+        "reason": "fixture generator wrote str instead of bytes: TypeError before any case ran",
+        "fix_commit": "f859fa7a6d133c1c6cd01f111e515cd5a07946cb"
+      },
+      {
+        "source_sha": "f859fa7a6d133c1c6cd01f111e515cd5a07946cb",
+        "run_id": 40125941944,
+        "conclusion": "failure",
+        "reason": "two product rows were mapped to one local SDK ID; reader_catalog_attach refused with SQLITE_CONSTRAINT (19)"
+      },
+      {
+        "source_sha": "d0bb85ce27dfc3b7b72b13887f6dda725dfd6749",
+        "run_id": 40126141739,
+        "conclusion": "failure",
+        "reason": "same single-SDK-row conflict re-confirmed on all three platforms",
+        "fix_commit": "679f83421abdc04478e8ea3ac439c393b15de592"
+      },
+      {
+        "source_sha": "679f83421abdc04478e8ea3ac439c393b15de592",
+        "run_id": 40126581093,
+        "conclusion": "failure",
+        "reason": "harness crashed on a NULL parser_title (AttributeError) and wrote no report",
+        "fix_commit": "3054f3a3f79ba49cc1581d43d74ab606f69ff5f3"
+      },
+      {
+        "source_sha": "3054f3a3f79ba49cc1581d43d74ab606f69ff5f3",
+        "run_id": 40127154959,
+        "conclusion": "failure",
+        "reason": "the fb2 book_key prefix was rejected as malformed; PDF parser_title was asserted to carry the Info title; the SDK-ID leak check matched by substring inside hexadecimal digests"
+      },
+      {
+        "source_sha": "ad565dd87ac3f4152037ddaf74cf7ff1e57d5f69",
+        "run_id": 40127301828,
+        "conclusion": "failure",
+        "reason": "the fb2 prefix and leak-check defects were still present; only the PDF title expectations had been corrected"
+      },
+      {
+        "source_sha": "c55cf2dbf751849abfa1946c77805ba49f014ba2",
+        "run_id": 40127480624,
+        "conclusion": "failure",
+        "reason": "all three platform jobs succeeded; the evidence job rejected every ZIP because the digest comparison compared 'sha256:'+digest with the hex half",
+        "fix_commit": "72fdc1a8976e95e615fe6bdd2c8fafcb651fa660"
+      }
+    ],
+    "tested_source_sha": "72fdc1a8976e95e615fe6bdd2c8fafcb651fa660",
+    "final_head_relation": "the evidence commit on top of the tested source changes only docs/READER-BOOK-INFORMATION.md and docs/validation/reader-book-information.json and carries [skip ci]",
+    "evidence_read_method": "GitHub API run/job/artifact listing and job logs; the accepted run's ZIPs were downloaded, unzipped and re-hashed inside the workflow evidence job, never on this workstation",
+    "uncovered": [
+      "encrypted PDF PASSWORD_REQUIRED branch: no encrypted fixture is generated",
+      "soft-deleted product row (deleted=1): no public product API sets reader_books.deleted",
+      "invalid UTF-8 product or SDK text: both providers reject it before this module sees it",
+      "host information panel, editing and metadata module: root-owned wiring",
+      "real device, accessibility, performance and power passes: not granted"
+    ],
+    "local_build_test_or_syntax_execution": false,
+    "host_ui_accepted": false,
+    "physical_device_execution": false,
+    "complete_product": false,
+    "problems": []
+  }
 }
