@@ -158,6 +158,9 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
           script: |
+            adb install -r -t examples/android/app/build/outputs/apk/debug/app-debug.apk
+            adb install -r -t build/android-host-import/test-apks/host-import-ui.apk
+            python tests/reader_android_host_import/run_ui.py --output build/android-host-import/ui
             python tests/reader_session_android/run_export.py --output build/session-android/export
             python tests/reader_session_android/run_roundtrip.py --fixture build/webdav-android/fixture --output build/session-android/roundtrip
             python tests/webdav_android/run_platform.py --fixture build/webdav-android/fixture --output build/webdav-android/platform
@@ -177,8 +180,7 @@ jobs:
             python tests/reader_android_cbz_reading/run_ui.py --fixtures build/android-cbz-reading/fixtures --output build/android-cbz-reading/ui
             adb install -r -t build/android-fixed-pan/test-apks/fixed-pan-ui.apk
             python tests/reader_android_fixed_pan/run_ui.py --fixtures build/android-fixed-pan/fixtures --output build/android-fixed-pan/ui
-            adb install -r -t build/android-host-import/test-apks/host-import-ui.apk
-            python tests/reader_android_host_import/run_ui.py --output build/android-host-import/ui
+
       - name: Preserve SDK consumer identity native logs and every export result
         if: always()
         uses: actions/upload-artifact@v4
