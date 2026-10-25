@@ -627,9 +627,16 @@ def check_suite(base_junit, candidate_junit, out_path):
             result[case.get("name")] = status
         return result
 
+    checks = Checks("original-suite")
+    missing = [name for name in (base_junit, candidate_junit) if not Path(name).is_file()]
+    checks.require("junit_present", not missing, {"missing": missing})
+    if missing:
+        payload = checks.payload({})
+        write_json(out_path, payload)
+        print(json.dumps({"checks": payload["check_count"], "failed": payload["failed"]}))
+        return 1
     base = parse(base_junit)
     candidate = parse(candidate_junit)
-    checks = Checks("original-suite")
     checks.require("same_test_set", sorted(base) == sorted(candidate),
                    {"base": len(base), "candidate": len(candidate)})
     changed = sorted(name for name in set(base) & set(candidate) if base[name] != candidate[name])
@@ -649,6 +656,9 @@ def summary(parts, out_path, stage_context):
     total = 0
     preexisting = {}
     for part in parts:
+        if not Path(part).is_file():
+            checks.require("part_present:" + Path(part).name, False, {"path": str(part)})
+            continue
         payload = read_json(part)
         total += payload.get("check_count", 0)
         for item in payload.get("checks", []):
