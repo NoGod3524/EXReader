@@ -7,7 +7,7 @@ from pathlib import Path
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
-BASE = 'a07ad38b9ae0b9e1d7b7b3f4c0a9510b614e4795'
+BASE = '9321de84eb9c8d3d57cafbeaa8b0a28fe2a26a08'
 ORIGINAL = 'f355525b74ae261db536c56200e46643919ef323'
 OLD_WORKFLOW = '.github/workflows/reader-windows-compact.yml'
 WORKFLOW = '.github/workflows/reader-windows-raw3-original-full.yml'
