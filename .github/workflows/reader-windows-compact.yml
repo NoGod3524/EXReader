@@ -1,0 +1,341 @@
+name: Windows native compact library and reading candidate
+on:
+  push:
+    branches: [codex/reader-windows-compact]
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Preflight only or complete native Windows regression
+        type: choice
+        options: [preflight, full]
+        default: preflight
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  preflight:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Pin exact common production and unchanged original judges
+        run: |
+          python3 -m pip install PyYAML==6.0.3
+          python3 tests/reader_windows_compact/guard.py
+      - name: Parse common wrappers and original strict refusal protocols in Actions
+        run: |
+          python3 -m py_compile tests/reader_windows_341/guard.py tests/reader_windows_341/identity.py tests/reader_windows_341/verify.py tests/reader_windows_341/catalog.py
+          python3 tests/reader_windows_341/catalog.py --self-test
+          python3 tests/reader_windows_preferences/verify.py --protocol-selftest
+          python3 tests/reader_windows_preferences/verify_commit.py --self-test
+          python3 tests/reader_windows_341/verify.py --self-test
+          python3 -m py_compile tests/reader_windows_compact/*.py
+          python3 tests/reader_windows_compact/verify.py --self-test
+  search:
+    needs: preflight
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'full'
+    name: installed F1 and native Windows search controls and lifecycle
+    runs-on: windows-2022
+    timeout-minutes: 240
+    outputs:
+      artifact_id: ${{steps.upload.outputs.artifact-id}}
+      artifact_digest: ${{steps.upload.outputs.artifact-digest}}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate the fixed source, frozen trees and the additive SDK candidate
+        run: |
+          python3 -m pip install PyYAML==6.0.3
+          python3 tests/reader_windows_compact/guard.py
+      - name: Enter the Windows native compiler environment
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Check source syntax in Actions
+        run: python3 -m py_compile tests/reader_windows_search/guard.py tests/reader_windows_search/check_ui.py tests/reader_windows_search/check_formats.py tests/reader_windows_search/check_keyboard.py tests/reader_windows_search/verify.py
+      - name: Check preferences syntax and strict protocol in Actions
+        run: |
+          python3 tests/reader_windows_341/catalog.py --self-test
+          python3 -m py_compile tests/reader_windows_preferences/guard.py tests/reader_windows_preferences/make_fixtures.py tests/reader_windows_preferences/check_ui.py tests/reader_windows_preferences/verify.py
+          python3 tests/reader_windows_preferences/verify.py --protocol-selftest
+      - name: Check records syntax and strict protocol in Actions
+        run: |
+          python3 -m py_compile tests/reader_windows_records/guard.py tests/reader_windows_records/check_ui.py tests/reader_windows_records/verify.py
+          python3 tests/reader_windows_records/verify.py --protocol-selftest
+      - name: Reject malformed current and legacy report contracts before building
+        run: python3 tests/reader_windows_navigation/verify.py --protocol-selftest
+      - name: Build and install common SDK3.41 and one product provider
+        run: |
+          set -o pipefail
+          ws=$(cygpath -m "$PWD")
+          prefix="$ws/build/winsearch-stage"
+          echo "WS=$ws" >> "$GITHUB_ENV"
+          echo "WS_PREFIX=$prefix" >> "$GITHUB_ENV"
+          mkdir -p build/winsearch-logs
+          cmake --preset reading-library -B build/reading-library -DCMAKE_INSTALL_PREFIX="$ws/build/reading-library/stage" 2>&1 | tee build/winsearch-logs/sdk-configure.log
+          cmake --build build/reading-library --parallel 4 2>&1 | tee build/winsearch-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/winsearch-logs/sdk-install.log
+          cmake -S apps/reader/store/native -B build/ws-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/ws-product --parallel 4
+          ctest --test-dir build/ws-product --output-on-failure --no-tests=error --timeout 180
+          cmake --install build/ws-product
+      - name: Install unchanged public dependencies into one prefix
+        run: |
+          set -o pipefail
+          prefix="$WS_PREFIX"
+          for module in extras/webdav extras/credentials extras/sideload apps/reader/revisions apps/reader/commands apps/reader/desktop-metadata apps/reader/sync apps/reader/session apps/reader/reading-state apps/reader/reading-commands apps/reader/annotation-view apps/reader/search apps/reader/navigation apps/reader/cloud-import apps/reader/bulk-organization apps/reader/preferences; do
+            name=$(basename "$module")
+            cmake -S "$module" -B "build/ws-$name" -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$WS/build/reading-library/stage" -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_PREFIX_PATH="$prefix;$WS/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee "build/winsearch-logs/$name-configure.log"
+            cmake --build "build/ws-$name" --parallel 4 --verbose 2>&1 | tee "build/winsearch-logs/$name-build.log"
+            cmake --install "build/ws-$name"
+          done
+      - name: Build actual account host with the optional native search UI
+        env:
+          MSYS_NO_PATHCONV: '1'
+        run: |
+          set -o pipefail
+          cmake -S apps/reader/windows-account -B build/ws-host -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$WS/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage" -DREADER_METADATA_PREFIX="$WS_PREFIX" -DREADER_ACCOUNT_PREFIX="$WS_PREFIX" -DEXR_READER_WINDOWS_SEARCH=ON -DEXR_READER_WINDOWS_NAVIGATION=ON -DEXR_READER_WINDOWS_RECORDS=ON -DEXR_READER_WINDOWS_IMPORT_ORGANIZE=ON -DEXR_READER_WINDOWS_PREFERENCES=ON -DEXR_READER_PREFS_COMMIT_REVIEW_BUILD=ON -DCMAKE_EXE_LINKER_FLAGS=/MAP 2>&1 | tee build/winsearch-logs/host-configure.log
+          cmake --build build/ws-host --parallel 4 --verbose 2>&1 | tee build/winsearch-logs/host-build.log
+          cmake -S tests/reader_search/consumer -B build/ws-search-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage"
+          cmake --build build/ws-search-consumer --parallel 4 --verbose
+      - name: Build installed cloud import and bulk independent consumers
+        run: |
+          for module in reader_webdav_import reader_bulk_organization; do
+            consumer="tests/$module/consumer"
+            if test "$module" = reader_webdav_import; then consumer=tests/reader_windows_341/cloud-consumer; fi
+            cmake -S "$consumer" -B "build/wio-$module" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage"
+            cmake --build "build/wio-$module" --parallel 4 --verbose
+          done
+      - name: Retain J01 and J10 named module regressions
+        run: |
+          set -o pipefail
+          python3 tests/reader_webdav_import/check_cloud_import.py --probe build/wio-reader_webdav_import/cloud-probe.exe --cxx build/wio-reader_webdav_import/cloud-cpp-consumer.exe --review-probe build/wio-reader_webdav_import/cloud-review-probe.exe --fixtures tests/fixtures --module-prefix build/winsearch-stage --output build/wio-cloud-module
+          python3 tests/reader_bulk_organization/check_bulk.py --probe build/wio-reader_bulk_organization/bulk-probe.exe --c-consumer build/wio-reader_bulk_organization/bulk-c-consumer.exe --link-map build/wio-reader_bulk_organization/bulk-link.map --output build/wio-bulk-module
+      - name: Execute installed original F1 C and C++ consumers
+        run: |
+          python3 tests/reader_search/make_search_fixtures.py build/ws-search-fixtures
+          python3 tests/reader_search/check_search.py --probe build/ws-search-consumer/search-probe.exe --c-consumer build/ws-search-consumer/search-c-consumer.exe --fixtures build/ws-search-fixtures --font tests/fixtures/fonts/primary.ttf --installed build/winsearch-stage --output build/ws-search-module-evidence
+      - name: Package and execute initial real Win32 TXT controls
+        id: initial
+        run: |
+          python3 tools/build_windows_host.py --sdk build/reading-library/stage --binary build/ws-host/EXReaderProduct.exe --output build/ws-package --static-reading
+          python3 tests/reader_windows_search/check_ui.py --candidate build/ws-package/EXReader/EXReader.exe --font build/ws-package/EXReader/Reader.otf --output build/ws-search-ui
+      - name: Execute EPUB, PDF, provider refusal and live cancellation on the shared native host
+        id: formats
+        run: |
+          python3 tests/reader_windows_search/check_formats.py --candidate build/ws-package/EXReader/EXReader.exe --review build/ws-host/EXReaderShelfReview.exe --font build/ws-package/EXReader/Reader.otf --fixtures build/ws-search-fixtures --output build/ws-search-formats
+      - name: Execute real keyboard and UI Automation search controls
+        id: keyboard
+        if: ${{always() && steps.initial.outcome == 'success'}}
+        run: |
+          python3 -m pip install "uiautomation==2.0.29"
+          python3 tests/reader_windows_search/check_keyboard.py --candidate build/ws-package/EXReader/EXReader.exe --review build/ws-host/EXReaderShelfReview.exe --font build/ws-package/EXReader/Reader.otf --output build/ws-search-keyboard
+      - name: Compile navigation without optional search
+        run: |
+          set -o pipefail
+          cmake -S apps/reader/windows-account -B build/ws-navigation-only -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$WS/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage" -DREADER_METADATA_PREFIX="$WS_PREFIX" -DREADER_ACCOUNT_PREFIX="$WS_PREFIX" -DEXR_READER_WINDOWS_SEARCH=OFF -DEXR_READER_WINDOWS_NAVIGATION=ON
+          cmake --build build/ws-navigation-only --parallel 4 --verbose
+      - name: Execute installed F2 and real native directory controls
+        run: |
+          set -o pipefail
+          python3 -m py_compile tests/reader_windows_navigation/guard.py tests/reader_windows_navigation/check_ui.py tests/reader_windows_navigation/verify.py
+          cmake -S tests/reader_navigation/consumer -DEXR_SDK_VERSION=3.41.0 -B build/ws-navigation-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage"
+          cmake --build build/ws-navigation-consumer --parallel 4
+          python3 tests/reader_navigation/make_navigation_fixtures.py build/ws-navigation-fixtures
+          python3 tests/reader_navigation/check_navigation.py --probe build/ws-navigation-consumer/navigation-probe.exe --c-consumer build/ws-navigation-consumer/navigation-c-consumer.exe --fixtures build/ws-navigation-fixtures --installed build/winsearch-stage --output build/ws-navigation-module-evidence
+          cmake -S tests/reader_windows_341/cfi-consumer -B build/ws-navigation-cfi -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage"
+          cmake --build build/ws-navigation-cfi --parallel 4
+          python3 tests/reader_windows_navigation/check_ui.py --candidate build/ws-package/EXReader/EXReader.exe --review build/ws-host/EXReaderShelfReview.exe --font build/ws-package/EXReader/Reader.otf --cfi build/ws-navigation-cfi/navigation-fixture-cfi.exe --output build/ws-navigation-ui
+      - name: Build retained installed consumers and authored fixtures
+        id: retained_build
+        if: ${{always() && steps.initial.outcome == 'success' && steps.formats.outcome == 'success' && steps.keyboard.outcome == 'success'}}
+        run: |
+          for module in commands revisions; do
+            cmake -S "tests/reader_$module/consumer" -B "build/account-$module-consumer" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage"
+            cmake --build "build/account-$module-consumer" --parallel 4
+          done
+          cmake -S tests/reader_windows_account/consumer -B build/account-capture -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage"
+          cmake --build build/account-capture --parallel 4
+          python3 tests/windows_host/make_fixtures.py --output build/account-fixtures
+          python3 tests/reader_reading_state/make_fixtures.py build/account-reading-fixtures
+      - name: Execute native reading records and real process recovery
+        if: ${{always() && steps.retained_build.outcome == 'success'}}
+        run: |
+          python3 tests/reader_windows_records/check_ui.py --candidate build/ws-package/EXReader/EXReader.exe --review build/ws-host/EXReaderShelfReview.exe --font build/ws-package/EXReader/Reader.otf --capture-probe build/account-capture/reading-capture-probe.exe --revision-consumer build/account-revisions-consumer/revision-consumer.exe --output build/ws-records-ui
+      - name: Real native cloud selection and batch organization controls
+        if: ${{always() && steps.retained_build.outcome == 'success'}}
+        run: |
+          python3 -m py_compile tests/reader_windows_import_organize/check_ui.py tests/reader_windows_import_organize/verify.py
+          python3 tests/reader_windows_import_organize/check_ui.py --candidate build/ws-package/EXReader/EXReader.exe --font build/ws-package/EXReader/Reader.otf --fixtures tests/fixtures --cloud-probe build/wio-reader_webdav_import/cloud-probe.exe --command-consumer build/account-commands-consumer/command-consumer.exe --revision-consumer build/account-revisions-consumer/revision-consumer.exe --output build/wio-ui
+      - name: Run every retained Windows account host regression
+        if: ${{always() && steps.retained_build.outcome == 'success'}}
+        env:
+          EXREADER_HOST_ACCEPTANCE: '1'
+        run: |
+          set -o pipefail
+          python3 tests/windows_host/check_evidence.py --package build/ws-package/EXReader --sdk build/reading-library/stage --manifest build/ws-package/build.json --fixtures build/account-fixtures --selftest-report build/ws-package/report.json --consumer-binary build/ws-host/EXReaderProduct.exe --static-link-map build/ws-host/windows-host.map --output build/account-negative
+          python3 tools/check_windows_host.py --package build/ws-package/EXReader --output build/account-ui158 --sdk build/reading-library/stage --manifest build/ws-package/build.json --steps tests/windows_host --fixtures build/account-fixtures --selftest-report build/ws-package/report.json --consumer-binary build/ws-host/EXReaderProduct.exe --static-link-map build/ws-host/windows-host.map
+          python3 tests/reader_windows_341/catalog.py --package build/ws-package/EXReader --original-evidence build/account-ui158 --fixtures build/account-fixtures --output build/account-product10
+          python3 tests/windows_host/check_shelf_worker.py --candidate build/ws-host/EXReaderShelfReview.exe --package build/ws-package/EXReader --output build/account-worker5
+          python3 tests/reader_windows_account/run_retained_shelf.py --candidate build/ws-package/EXReader/EXReader.exe --seed build/ws-host/reader-windows-shelf-seed.exe --package build/ws-package/EXReader --output build/account-shelf-ui
+          python3 tests/windows_host/check_metadata_ui.py --candidate build/ws-package/EXReader/EXReader.exe --package build/ws-package/EXReader --command-consumer build/account-commands-consumer/command-consumer.exe --output build/account-metadata-ui
+          python3 tests/reader_windows_account/check_account_ui.py --candidate build/ws-package/EXReader/EXReader.exe --package build/ws-package/EXReader --fixtures build/account-fixtures --revision-consumer build/account-revisions-consumer/revision-consumer.exe --capture-probe build/account-capture/reading-capture-probe.exe --reading-fixtures build/account-reading-fixtures --reading-font tests/fixtures/fonts/primary.ttf --link-map build/ws-host/windows-host.map --output build/account-ui
+          python3 tests/reader_windows_account/check_a11y_ui.py --candidate build/ws-package/EXReader/EXReader.exe --package build/ws-package/EXReader --fixtures build/account-reading-fixtures --output build/account-a11y
+      - name: Independently compile the frozen 3.40 option-off pixel baseline
+        run: |
+          set -euo pipefail
+          mkdir -p build/frozen-sdk
+          git archive 9854061be331fe603a1822d9b2b36ee357154927 | tar -x -C build/frozen-sdk
+          sdk="$WS/build/baseline-library/stage"
+          prefix="$WS/build/baseline-prefix"
+          cmake --preset reading-library -S build/frozen-sdk -B build/baseline-library -DCMAKE_INSTALL_PREFIX="$sdk"
+          cmake --build build/baseline-library --parallel 4
+          cmake --install build/baseline-library
+          cmake -S apps/reader/store/native -B build/baseline-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/baseline-product --parallel 4
+          cmake --install build/baseline-product
+          for module in extras/webdav extras/credentials extras/sideload apps/reader/revisions apps/reader/commands apps/reader/desktop-metadata apps/reader/sync apps/reader/session apps/reader/reading-state apps/reader/reading-commands apps/reader/annotation-view apps/reader/search apps/reader/navigation apps/reader/cloud-import apps/reader/bulk-organization; do
+            name=$(basename "$module")
+            cmake -S "$module" -B "build/baseline-$name" -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.40.0 -DEXR_SDK="$sdk" -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_PREFIX_PATH="$prefix;$sdk" -DCMAKE_INSTALL_PREFIX="$prefix"
+            cmake --build "build/baseline-$name" --parallel 4
+            cmake --install "build/baseline-$name"
+          done
+          cmake -S apps/reader/windows-account -B build/baseline-host -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.40.0 -DEXR_SDK="$sdk" -DCMAKE_PREFIX_PATH="$prefix;$sdk" -DREADER_METADATA_PREFIX="$prefix" -DREADER_ACCOUNT_PREFIX="$prefix" -DEXR_READER_WINDOWS_SEARCH=ON -DEXR_READER_WINDOWS_NAVIGATION=ON -DEXR_READER_WINDOWS_RECORDS=ON -DEXR_READER_WINDOWS_IMPORT_ORGANIZE=ON
+          cmake --build build/baseline-host --parallel 4
+          python3 tools/build_windows_host.py --sdk "$sdk" --binary build/baseline-host/EXReaderProduct.exe --output build/baseline-package --static-reading
+          cp -R build/ws-package build/wprefs-package
+          mkdir -p build/wprefs-host
+          cp build/ws-host/windows-host.map build/wprefs-host/windows-host.map
+          cp build/ws-host/CMakeCache.txt build/wprefs-host/CMakeCache.txt
+      - name: Execute real native F3 settings, page theme and persistence
+        id: preferences
+        run: |
+          python3 -m pip install "uiautomation==2.0.29"
+          python3 tests/reader_windows_preferences/make_fixtures.py --output build/wprefs-fixtures
+          python3 tests/reader_windows_preferences/check_ui.py --candidate build/wprefs-package/EXReader/EXReader.exe --baseline build/baseline-package/EXReader/EXReader.exe --font build/wprefs-package/EXReader/Reader.otf --fixtures build/wprefs-fixtures --output build/wprefs-ui
+      - name: All thirteen actual atomic commit checks and old-veto negative control on SDK3.41
+        run: |
+          python3 tests/reader_windows_preferences/check_commit.py --candidate build/ws-host/EXReaderPreferencesCommitReview.exe --control build/ws-host/EXReaderPreferencesCancelControl.exe --font build/ws-package/EXReader/Reader.otf --fixtures build/wprefs-fixtures --output build/wprefs-commit-ui
+      - name: Build the independent compact candidate against the same installed providers
+        run: |
+          cmake -S apps/reader/windows-account -B build/compact-host -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$WS/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage" -DREADER_METADATA_PREFIX="$WS_PREFIX" -DREADER_ACCOUNT_PREFIX="$WS_PREFIX" -DEXR_READER_WINDOWS_SEARCH=ON -DEXR_READER_WINDOWS_NAVIGATION=ON -DEXR_READER_WINDOWS_RECORDS=ON -DEXR_READER_WINDOWS_IMPORT_ORGANIZE=ON -DEXR_READER_WINDOWS_PREFERENCES=ON -DEXR_READER_WINDOWS_COMPACT=ON
+          cmake --build build/compact-host --target EXReaderProduct
+          python3 tests/reader_windows_compact/check_ui.py --candidate build/compact-host/EXReaderProduct.exe --font build/ws-package/EXReader/Reader.otf --fixtures build/wprefs-fixtures --output build/compact-ui
+      - name: Record exact SDK program control provider maps and enabled options
+        run: python3 tests/reader_windows_341/identity.py
+      - name: Preserve source-bound initial evidence without granting broader scope
+        id: upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-windows-search-initial-${{github.run_id}}-${{github.run_attempt}}
+          path: |
+            build/windows-341-guard/
+            build/compact-ui/
+            build/compact-host/EXReaderProduct.exe
+            build/compact-host/windows-host.map
+            build/compact-host/CMakeCache.txt
+            build/windows-341-identity.json
+            build/windows-341-catalog-adapter.json
+            build/reading-library/stage/include/exr/base.h
+            build/reading-library/stage/lib/cmake/EXReader/EXReaderConfig.cmake
+            build/reading-library/stage/lib/cmake/EXReader/EXReaderConfigVersion.cmake
+            build/baseline-library/stage/include/exr/base.h
+            build/baseline-library/stage/lib/cmake/EXReader/EXReaderConfig.cmake
+            build/baseline-library/stage/lib/cmake/EXReader/EXReaderConfigVersion.cmake
+            build/baseline-package/
+            build/baseline-host/windows-host.map
+            build/baseline-host/CMakeCache.txt
+            build/ws-host/EXReaderPreferencesCommitReview.exe
+            build/ws-host/EXReaderPreferencesCancelControl.exe
+            build/ws-host/*.map
+            build/wprefs-commit-ui/
+            build/account-commands-consumer/command-consumer.exe
+            build/wio-ui/
+            build/wio-cloud-module/
+            build/wio-bulk-module/
+            build/wio-reader_webdav_import/*.exe
+            build/wio-reader_bulk_organization/*.exe
+            build/wio-reader_bulk_organization/bulk-link.map
+            !build/**/*.key
+            build/winsearch-logs/
+            build/ws-records-ui/
+            build/account-capture/reading-capture-probe.exe
+            build/account-revisions-consumer/revision-consumer.exe
+            build/ws-navigation-module-evidence/
+            build/ws-navigation-ui/
+            build/ws-navigation-consumer/navigation-probe.exe
+            build/ws-navigation-consumer/navigation-c-consumer.exe
+            build/ws-navigation-cfi/navigation-fixture-cfi.exe
+            build/ws-navigation-only/windows-host.map
+            build/ws-navigation-only/EXReaderProduct.exe
+            build/ws-search-module-evidence/
+            build/ws-search-ui/
+            build/ws-search-formats/
+            build/ws-search-keyboard/
+            build/ws-search-consumer/search-probe.exe
+            build/ws-search-consumer/search-c-consumer.exe
+            build/ws-host/EXReaderShelfReview.exe
+            build/ws-host/EXReaderProduct.exe
+            build/account-negative/
+            build/account-ui158/
+            build/account-product10/
+            build/account-worker5/
+            build/account-shelf-ui/
+            build/account-metadata-ui/
+            build/account-ui/
+            build/account-a11y/
+            build/ws-host/windows-host.map
+            build/ws-host/CMakeCache.txt
+            build/ws-package/
+            build/wprefs-ui/
+            build/wprefs-package/
+            build/wprefs-host/windows-host.map
+            build/wprefs-host/CMakeCache.txt
+            build/wprefs-fixtures/
+          if-no-files-found: error
+  summary:
+    if: always() && github.event_name == 'workflow_dispatch' && inputs.mode == 'full'
+    needs: search
+    name: same-source native Windows search artifact authentication
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate candidate and isolated worker evidence from this exact run
+        env:
+          GH_TOKEN: ${{github.token}}
+          SEARCH_RESULT: ${{needs.search.result}}
+          ARTIFACT_ID: ${{needs.search.outputs.artifact_id}}
+          UPLOAD_DIGEST: ${{needs.search.outputs.artifact_digest}}
+        run: python3 tests/reader_windows_compact/verify.py
+      - name: Preserve strict summary including rejections
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-windows-search-summary-${{github.run_id}}-${{github.run_attempt}}
+          path: |
+            build/winsearch-summary/verified.json
+            build/winnav-summary/verified.json
+            build/winrecords-summary/verified.json
+            build/wprefs-summary/verified.json
+            build/windows-341-summary/full-f3.json
+            build/windows-341-summary/atomic13.json
+            build/compact-summary/result.json
+          if-no-files-found: error
+
