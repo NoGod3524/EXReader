@@ -11,7 +11,7 @@ on:
       verify_run:
         type: string
         default: ''
-        description: Rehash one original same-source desktop run without recompiling its unchanged SDK
+        description: Original desktop run to rehash without recompiling, or asan for the instrumented original suite and new API
 permissions:
   contents: read
 defaults:
@@ -114,10 +114,64 @@ jobs:
             build/candidate-consumer/page-background*
             build/candidate-stage/include/exr/
           if-no-files-found: error
+  sanitizer:
+    if: inputs.verify_run == 'asan'
+    name: original native suite and background API under ASan UBSan
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    env:
+      ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+      UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Preserve authorized scope and actual tested SDK production tree
+        run: |
+          python3 tests/sdk_page_background/guard.py
+          git diff --exit-code edddc463c06ed5731195cdb8f06b2df6dff7699e HEAD -- src include cmake CMakeLists.txt tests/fixtures tests/sdk_page_background/probe.c
+      - name: Build and execute the unchanged native suite with both sanitizers
+        run: |
+          mkdir -p build/background-sanitizer
+          cmake -S . -B build/sanitized-sdk -G Ninja -DCMAKE_BUILD_TYPE=Debug -DEXR_SANITIZE=ON -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AAC=OFF
+          cmake --build build/sanitized-sdk --parallel 4
+          ctest --test-dir build/sanitized-sdk --output-on-failure --no-tests=error --timeout 180 --output-junit "$PWD/build/background-sanitizer/native-junit.xml"
+          cmake --install build/sanitized-sdk --prefix "$PWD/build/sanitized-stage"
+      - name: Exercise installed background API colors images and every cancellation point under both sanitizers
+        run: |
+          cmake -S tests/sdk_page_background -B build/sanitized-consumer -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="$PWD/build/sanitized-stage" '-DCMAKE_C_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer' '-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address,undefined'
+          cmake --build build/sanitized-consumer --parallel 4
+          python3 tests/sdk_page_background/make_fixture.py build/background-sanitizer/long.epub
+          build/sanitized-consumer/page-background tests/fixtures build/background-sanitizer/frames.bin build/background-sanitizer/long.epub | tee build/background-sanitizer/probe.json
+          cp build/sanitized-consumer/page-background build/background-sanitizer/page-background
+          cp build/sanitized-sdk/CMakeCache.txt build/background-sanitizer/sdk-cache.txt
+          cp build/sanitized-consumer/CMakeCache.txt build/background-sanitizer/consumer-cache.txt
+          python3 - <<'PY'
+          import hashlib, json, os, xml.etree.ElementTree as ET
+          from pathlib import Path
+          root = Path('build/background-sanitizer')
+          probe = json.loads((root/'probe.json').read_bytes())
+          tests = ET.parse(root/'native-junit.xml').getroot()
+          assert len(tests.findall('testcase')) == 164 and not tests.findall('.//failure') and not tests.findall('.//error')
+          assert probe['accepted'] is True and probe['sdk'] == '3.41.0' and probe['abi'] == 1 and probe['cases'] == 12 and probe['checks'] >= 580
+          result = dict(source_sha=os.environ['GITHUB_SHA'], run_id=os.environ['GITHUB_RUN_ID'], attempt=os.environ['GITHUB_RUN_ATTEMPT'],
+                        accepted=True, native_tests=164, probe=probe, asan=True, ubsan=True,
+                        consumer_sha256=hashlib.sha256((root/'page-background').read_bytes()).hexdigest(),
+                        performance_accepted=False, complete_product=False)
+          (root/'result.json').write_text(json.dumps(result, indent=2)+'\n');print(json.dumps(result))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sdk-page-background-sanitized-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/background-sanitizer/
+            build/sanitized-sdk/Testing/Temporary/LastTest.log
+          if-no-files-found: error
   evidence:
     name: strict background candidate evidence
     needs: desktop
-    if: always()
+    if: always() && inputs.verify_run != 'asan'
     runs-on: ubuntu-22.04
     permissions:
       contents: read
