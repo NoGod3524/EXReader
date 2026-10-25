@@ -46,6 +46,7 @@ def main():
     with archive.open('rb') as stream:digest=hashlib.file_digest(stream,'sha256').hexdigest()
     need(archive.stat().st_size==artifact['size_in_bytes'] and artifact['digest']=='sha256:'+digest,'Original ZIP bytes/digest')
     network_verified=False
+    peer_records_verified=False
     with zipfile.ZipFile(archive) as z:
         names=z.namelist()
         need(len(names)==len(set(names)),'Duplicate ZIP names')
@@ -110,12 +111,36 @@ def main():
             shards={row['path'] for row in requests if row['method']=='PROPFIND' and row['path'].startswith('/dav/exreader-sync-v1/revisions/') and len(row['path'].removeprefix('/dav/exreader-sync-v1/revisions/'))==3}
             need(shards=={'/dav/exreader-sync-v1/revisions/%02x/'%i for i in range(256)},'Complete native shard scan')
             network_verified=True
+        if root.get('actual_received_owner_all11_two_processes_passed') is True:
+            need(network_verified,'Missing actual network receive before owner proof')
+            manifest=json.loads(member('windows-raw3-host/mac-network-receive/mac/sender/manifest.json'))
+            records={r['revision_id']:r for r in manifest['reading_records']}
+            wire_hashes={r['id']:r['sha256'] for r in manifest['revisions']}
+            need(len(records)==11,'Complete original capture set')
+            expected=member('windows-raw3-host/mac-network-receive/peer-owner/expected.bin')
+            program=member('windows-raw3-host/peer-owner-build/windows-peer-owner.exe')
+            pids=set()
+            for phase in ('first','reopen'):
+                value=report('mac-network-receive/peer-owner/'+phase+'.json')
+                need(value['accepted'] is True and not value['failure'] and value['source_sha']==args.source and str(value['run_id'])==str(args.run) and int(value['attempt'])==attempt,'Received owner identity/acceptance')
+                need(value['sdk_version']=='3.41.0' and value['owner_source_sha256']==owner_hash and value['program_sha256']==hashlib.sha256(program).hexdigest(),'Received owner actual program/SDK')
+                need(value['expected_sha256']==hashlib.sha256(expected).hexdigest() and value['manifest_sha256']==proof['manifest_sha256'],'Original capture expectations')
+                need(value['product_before'] and value['product_before']==value['product_after'] and value['sdk_before'] and value['sdk_before']==value['sdk_after'],'Received owner state changed')
+                need(value['actual_owner_reads_and_FOUND']==11 and len(value['records'])==11 and {r['revision_id'] for r in value['records']}==set(records),'Complete actual owner resolution set')
+                need(value['pid']>0 and value['pid'] not in pids,'Distinct real receiver processes');pids.add(value['pid'])
+                for row in value['records']:
+                    original=records[row['revision_id']]
+                    need(row['wire_sha256']==wire_hashes[row['revision_id']] and row['role']==original['role'] and row['kind']==original['kind'],'Original record identity')
+                    need(row['owner_READ_callback_calls']==0 and row['independent_sdk_callback_calls']==1,'READ is not itself FOUND')
+                    need(all(row[key] is True for key in ('actual_owner_READ','found','retained_manifest_capture_equal','fresh_capture_equal','NULL_callback_negative_refused')),'Actual independent record results')
+                need(value['same_source_bidirectional'] is False and value['complete_product'] is False and value['host_ui_accepted'] is False,'Received owner scope overstated')
+            peer_records_verified=True
     archive.unlink()
     result=dict(accepted=True,complete_product=False,source=args.source,producer_run=args.run,attempt=attempt,
                 producer_job=job['id'],artifact=artifact,zip_sha256=digest,owner_reports=len(modes),
                 scope='installed Windows profiles, original compact22 and bulk21, real owner and process recovery only',
                 whole_original_OFF_F3_atomic13=False,network_receive=network_verified,same_source_bidirectional=False,
-                all_reading_records_FOUND=False)
+                all_reading_records_FOUND=peer_records_verified)
     (out/'report.json').write_text(json.dumps(result,indent=2)+'\n',encoding='utf-8')
     print(json.dumps(result))
 
