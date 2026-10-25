@@ -110,6 +110,7 @@ jobs:
           if [ -f build/s13/sdk-candidate/bin/exreader.dll ]; then sdk_library=build/s13/sdk-candidate/bin/exreader.dll; fi
           python tests/reader_next_s13/run.py program --file "$probe_base" --file "$probe_candidate" \
             --file "$sdk_library" --out build/s13/reports/programs.json
+          cat build/s13/reports/programs.json | tee build/s13/logs/programs.log
           python tests/reader_next_s13/run.py run-fixtures --dir build/s13/fixtures/cases \
             --candidate "$probe_candidate" --base "$probe_base" --out build/s13/fixtures/reports
       - name: Run the two fixed real CBZ files in separate processes

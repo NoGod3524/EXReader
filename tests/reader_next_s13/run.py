@@ -225,6 +225,10 @@ def collect(real_path, out_dir):
         print("%s: %d members, %d candidates, %d leading-slash, %d leading-slash candidates" %
               (entry["id"], len(members), record["candidate_count"], record["leading_slash_count"],
                record["leading_slash_candidate_count"]))
+        for member in members:
+            print("  member %-40r candidate=%s leading_slash=%s directory=%s bytes=%d" %
+                  (member["name_display"], member["candidate"], member["leading_slash"],
+                   member["directory"], member["uncompressed"]))
     write_json(directory / "inventory.json", {"schema": 1, "real": str(real_path), "files": records})
     return 0
 
@@ -352,6 +356,17 @@ def run_real(real_path, inputs, base, candidate, out, databases):
                 database.unlink()
             call_probe(candidate, ["--probe", path, str(database)],
                        Path(out) / ("candidate-%s-run%d.json" % (entry["id"], run)))
+    for entry in real["files"]:
+        for run in (1, 2):
+            report = read_json(Path(out) / ("candidate-%s-run%d.json" % (entry["id"], run)))
+            ids = report.get("ids", [])
+            print(json.dumps({"file": entry["id"], "run": run, "open": report.get("open", {}).get("status"),
+                              "message": report.get("open", {}).get("message", ""),
+                              "pages": report.get("page_count"), "first": ids[:2], "last": ids[-2:],
+                              "render": report.get("render"), "probe_exit": report.get("_probe_exit")}))
+        base = read_json(Path(out) / ("base-%s.json" % entry["id"]))
+        print(json.dumps({"file": entry["id"], "base_open": base.get("open", {}),
+                          "base_pages": base.get("page_count")}))
     print(json.dumps({"real": len(real["files"])}))
     return 0
 
