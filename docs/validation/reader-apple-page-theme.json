@@ -8,6 +8,17 @@
   "sdk_core_version": "3.40.0",
   "source_sha": null,
   "runs": [],
+  "record_compatibility_delivery": "a67ad5e62f3b87e83bc9b775fa499cf30fda0cf4",
+  "record_compatibility_tested_source": "898e773c322fdd8d82184cacb0ce23c983af2edf",
+  "superseded_runs": [
+    {"source_sha": "6d53f3c09ddea3ea4f065846dbc53897d3668fcb", "run_id": "40173693127", "attempt": 1, "group": "navigation", "native_started_before_cancel": true, "status": "cancelled", "accepted": false},
+    {"source_sha": "6d53f3c09ddea3ea4f065846dbc53897d3668fcb", "run_id": "40173695508", "attempt": 1, "group": "search", "native_started_before_cancel": true, "status": "cancelled", "accepted": false},
+    {"source_sha": "6d53f3c09ddea3ea4f065846dbc53897d3668fcb", "run_id": "40173697469", "attempt": 1, "group": "records", "native_started_before_cancel": false, "status": "cancelled", "accepted": false},
+    {"source_sha": "6d53f3c09ddea3ea4f065846dbc53897d3668fcb", "run_id": "40173699601", "attempt": 1, "group": "shelf", "native_started_before_cancel": false, "status": "cancelled", "accepted": false},
+    {"source_sha": "6d53f3c09ddea3ea4f065846dbc53897d3668fcb", "run_id": "40173701701", "attempt": 1, "group": "mapping", "native_started_before_cancel": false, "status": "cancelled", "accepted": false},
+    {"source_sha": "6d53f3c09ddea3ea4f065846dbc53897d3668fcb", "run_id": "40173703786", "attempt": 1, "group": "wp13", "native_started_before_cancel": false, "status": "cancelled", "accepted": false}
+  ],
+  "isolated_pre_compatibility_run": {"source_sha": "6d53f3c09ddea3ea4f065846dbc53897d3668fcb", "run_id": "40173677171", "attempt": 1, "accepted_for_final_source": false},
   "earlier_failed_runs": [
     {
       "source_sha": "c2530f54ab43a6a085d5f6afd6c830ed95d05d9a",

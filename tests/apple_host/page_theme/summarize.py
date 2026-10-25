@@ -61,7 +61,9 @@ def main():
                 sdk = report('build/sdk-identity.json'); guard = report('build/apple-page-theme/guard.json')
                 require(sdk['sdk_version'] == '3.41.0' and sdk['abi'] == 1 and
                         guard['candidate_input_authenticated'] is True and guard['theme_accepted'] is False and
-                        guard['sdk_source'] == 'edddc463c06ed5731195cdb8f06b2df6dff7699e' and len(guard['negative_checks']) >= 70,
+                        guard['sdk_source'] == 'edddc463c06ed5731195cdb8f06b2df6dff7699e' and
+                        guard['record_compatibility_delivery'] == 'a67ad5e62f3b87e83bc9b775fa499cf30fda0cf4' and
+                        len(guard['negative_checks']) == 78,
                         'SDK or source guard differs')
                 reports = {'sdk': sdk, 'guard': guard}
             elif artifact['name'].startswith('apple-theme-native-'):

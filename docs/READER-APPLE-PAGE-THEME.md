@@ -29,3 +29,11 @@
 - `eea3087c2ef27b9d45e00333ef0a16e586a0ac6e` / [40172575970](https://github.com/NoGod3524/EXReader/actions/runs/40172575970) attempt 1：SDK 两目标、OFF 10/ON 37、十个协议负例、macOS 四场景和 iPad 四场景及 collector 全部通过。iPhone 在初次 `simctl list devices available` 的 45 秒冷启动等待上超时，尚未进入 Xcode，因此整轮仍拒绝。后续把该独立启动等待设为 180 秒，job 总时限仍为 35 分钟；所有业务断言、原六流程和原预算保持原样。早期失败也保存命令诊断，Xcode 失败会打印保留日志尾部。
 
 原 navigation/search/reading-records/shelf/import-mapping/WP13 流程仅添加候选分支守卫、显式 SDK 版本与开关环境。原业务步骤、消费者、collector、strict summary 原样保留；旧色彩断言不改。
+
+## 最终共同源与点记录兼容
+
+最终候选普通合入独立点记录兼容交付 `a67ad5e62f3b87e83bc9b775fa499cf30fda0cf4`。该交付的受测生产源是 `898e773c322fdd8d82184cacb0ce23c983af2edf`，证据与范围见 [Apple 点记录兼容](READER-APPLE-RECORD-COMPATIBILITY.md)。它只改变实际 Apple owner 的两处 parser guard，保留原件核验、FOUND、复捕获、wire、存储标签和请求身份。
+
+主题守卫把 `HostReadingRecords.swift`、兼容测试目录、兼容工作流及两份证据文档精确固定到该交付的树，并要求其祖先关系；不把整个文件开放为可任意改动。SDK 树仍精确固定到 `edddc463`，其他产品模块保持原树。78 个守卫负例覆盖六原流程字节归一化、所有冻结树和越权路径。
+
+`6d53f3c09ddea3ea4f065846dbc53897d3668fcb` 的六原运行被这项真实生产 owner 改动取代，逐项确认 source 后取消并保留记录。navigation/search 的 native 已开始，其余四组尚未开始业务；取消既不计为失败也不计为验收。主题运行 [40173677171](https://github.com/NoGod3524/EXReader/actions/runs/40173677171) 保留到终态，作为该旧源的隔离对照，不向合入兼容后的新源转授。
