@@ -383,6 +383,7 @@ def main():
         'header_pure_insertions': True,
         'inserted_header_lines': len(added.splitlines()),
         'default_install_has_no_raw_symbol': True,
+        'default_equals_baseline': default_equivalence,
         'mixed_install_negatives': negatives,
         'programs': programs,
         'host_wiring_accepted': False,
