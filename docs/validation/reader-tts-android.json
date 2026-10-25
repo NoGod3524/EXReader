@@ -2,14 +2,18 @@
   "accepted": true,
   "scope": "optional Android system TextToSpeech backend for the frozen reader TTS C ABI (READER_TTS_VERSION 0.1.0)",
   "base_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
-  "branch": "codex/reader-tts-android",
+  "branch": "codex/reader-tts-android-review",
+  "original_delivery_branch": "codex/reader-tts-android",
+  "original_delivery_head": "5993381e4507cffb7c63465642c2052f5760deb3",
+  "original_delivery_note": "the delivery head of the original package branch is unchanged by this review; it is the acceptance commit over fe1eb58e",
   "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
   "product_schema_baseline": "f32bb8aa18ed3de286900f19ce4230fd93435dd0",
-  "accepted_source_sha": "fe1eb58e2737aeeefbcdfe68e9ef6cff4db164f6",
-  "evidence_doc_commit_note": "this commit changes docs/validation/reader-tts-android.json only; the tested source is the SHA above and the branch head difference is documentation only",
-  "run_id": 40126240859,
+  "accepted_source_sha": "8ada05117d1e22cd8529c7345e9af4ccfbb35c51",
+  "previous_accepted_source_sha": "fe1eb58e2737aeeefbcdfe68e9ef6cff4db164f6",
+  "evidence_doc_commit_note": "this commit changes docs/validation/reader-tts-android.json and docs/READER-TTS-ANDROID.md only; the tested source is the SHA above and the final head difference is documentation only",
+  "run_id": 40170544552,
   "attempt": 1,
-  "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/40126240859",
+  "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/40170544552",
   "run_conclusion": "success",
   "all_execution_on_actions": true,
   "native_target_api": 26,
@@ -23,13 +27,13 @@
   "default_voice": "en-US-language",
   "jobs": {
     "device": {
-      "id": 120968163321,
+      "id": 121100309217,
       "name": "tts-android-device",
       "conclusion": "success",
-      "head_sha": "fe1eb58e2737aeeefbcdfe68e9ef6cff4db164f6"
+      "head_sha": "8ada05117d1e22cd8529c7345e9af4ccfbb35c51"
     },
     "summary": {
-      "id": 120969585448,
+      "id": 121101447475,
       "name": "tts-artifact-summary",
       "conclusion": "success"
     }
@@ -37,28 +41,38 @@
   "artifacts": [
     {
       "purpose": "device evidence, installed packages and logs",
-      "id": 12573062623,
-      "name": "reader-tts-android-40126240859-1",
-      "bytes": 346395,
-      "sha256": "2224a5404b8df6c089422ae7948ac2830ac3b2637c061be11cf071984b2d09a2",
-      "api_digest": "sha256:2224a5404b8df6c089422ae7948ac2830ac3b2637c061be11cf071984b2d09a2",
-      "expires_at": "2027-01-22T19:38:45Z"
+      "id": 12589543789,
+      "name": "reader-tts-android-40170544552-1",
+      "bytes": 364387,
+      "sha256": "3ef610cf3c10ae4faa8172dfee5b1a26da7c2cb80c1a7bb25bbc152d7342b336",
+      "api_digest": "sha256:3ef610cf3c10ae4faa8172dfee5b1a26da7c2cb80c1a7bb25bbc152d7342b336",
+      "expires_at": "2027-01-23T06:50:32Z"
     },
     {
       "purpose": "strict same-run summary",
-      "id": 12572643201,
-      "name": "reader-tts-android-summary-40126240859-1",
-      "bytes": 1817,
-      "sha256": "46adb696677a53d3225b01b5352c147c8bbef4b41356c8ba543a5dd1d9ca3c2b",
-      "api_digest": "sha256:46adb696677a53d3225b01b5352c147c8bbef4b41356c8ba543a5dd1d9ca3c2b",
-      "expires_at": "2027-01-22T19:38:45Z"
+      "id": 12590205946,
+      "name": "reader-tts-android-summary-40170544552-1",
+      "bytes": 1929,
+      "sha256": "eb506ae0f026f4f2fee7277ed67696d1aa0d3f7fee9b9df62ad550180f87758a",
+      "api_digest": "sha256:eb506ae0f026f4f2fee7277ed67696d1aa0d3f7fee9b9df62ad550180f87758a",
+      "expires_at": "2027-01-23T06:50:32Z"
     }
   ],
+  "review_fixes": [
+    "stop and request_close end the active request themselves: the accepted request keeps exactly one STOPPED event even when the engine never reports the interrupted utterance, and the handle returns to READY instead of staying STOPPING with every later speak refused as BUSY",
+    "a repeated terminal callback for an already ended request is dropped, so onDone plus onStop from one engine cannot produce two terminals for one request",
+    "an utterance id that is not decimal or that overflows uint64 is ignored instead of wrapping onto a different request id",
+    "callback entries pin the handle for their whole duration, so a destroy that runs next to a late callback cannot free the ring or the lock under it; a callback for a destroyed cookie is refused",
+    "reader_tts_voices reported the engine voice id in both id and name; name now carries the localized locale name of the voice",
+    "an empty voice_id re-selects the engine default voice instead of inheriting the voice of an earlier explicit request",
+    "the per-request text kept for UTF-16 to UTF-8 range conversion is released when a request ends or a new one starts",
+    "documented the real thread split (framework init callback on the process main thread, utterance callbacks on engine binder threads, request calls synchronous on the owner thread)"
+  ],
   "named_results": {
-    "total_cases_per_run": 46,
+    "total_cases_per_run": 52,
     "engine_present": {
-      "cases": 46,
-      "passed": 45,
+      "cases": 52,
+      "passed": 51,
       "skipped": 1,
       "results": {
         "initialize_null_argument": "pass",
@@ -94,25 +108,31 @@
         "stop_completed_request_ok": "pass",
         "stop_unknown_id_argument": "pass",
         "late_events_keep_request_id": "pass",
+        "duplicate_terminal_dropped": "pass",
+        "overflow_utterance_id_ignored": "pass",
         "pause_unsupported_state_unchanged": "pass",
         "resume_unsupported_state_unchanged": "pass",
         "service_unavailable_when_engine_missing": "skip",
         "voices_lifetime_after_destroy": "pass",
+        "stale_callback_after_destroy_ignored": "pass",
         "destroy_wrong_owner_rejected": "pass",
         "long_text_chunked_requests": "pass",
+        "stop_and_close_single_terminal": "pass",
         "close_idempotent_and_refuses_new_requests": "pass",
         "no_events_after_closed": "pass",
         "destroy_until_closed_and_null": "pass",
         "chunker_boundaries_and_surrogates": "pass",
         "rotation_during_speaking": "pass",
         "engine_identity_recorded": "pass",
-        "synthesize_to_file_audio": "pass"
+        "synthesize_to_file_audio": "pass",
+        "voice_names_match_engine": "pass",
+        "voice_selection_returns_to_default": "pass"
       }
     },
     "engine_removed": {
-      "cases": 46,
+      "cases": 52,
       "passed": 32,
-      "skipped": 14,
+      "skipped": 20,
       "results": {
         "initialize_null_argument": "pass",
         "create_before_bind_unavailable": "pass",
@@ -147,19 +167,25 @@
         "stop_completed_request_ok": "skip",
         "stop_unknown_id_argument": "pass",
         "late_events_keep_request_id": "skip",
+        "duplicate_terminal_dropped": "skip",
+        "overflow_utterance_id_ignored": "skip",
         "pause_unsupported_state_unchanged": "pass",
         "resume_unsupported_state_unchanged": "pass",
         "service_unavailable_when_engine_missing": "pass",
         "voices_lifetime_after_destroy": "skip",
+        "stale_callback_after_destroy_ignored": "skip",
         "destroy_wrong_owner_rejected": "pass",
         "long_text_chunked_requests": "skip",
+        "stop_and_close_single_terminal": "skip",
         "close_idempotent_and_refuses_new_requests": "pass",
         "no_events_after_closed": "pass",
         "destroy_until_closed_and_null": "pass",
         "chunker_boundaries_and_surrogates": "pass",
         "rotation_during_speaking": "skip",
         "engine_identity_recorded": "pass",
-        "synthesize_to_file_audio": "skip"
+        "synthesize_to_file_audio": "skip",
+        "voice_names_match_engine": "skip",
+        "voice_selection_returns_to_default": "skip"
       }
     }
   },
@@ -171,21 +197,21 @@
     "engine": "com.google.android.tts",
     "voice": "en-AU-language",
     "on_device_pull_digest_matches": true,
-    "judgements": "bytes and container header only; no spoken-output quality is claimed"
+    "judgements": "bytes and container header only, plus the synthesized voice state reported by the engine; no spoken-output quality is claimed"
   },
   "packages": {
-    "aar_bytes": 10740,
-    "aar_sha256": "6bd16540f3d984905012a4f348d5ef408462ddff8a0cbb9293ab8d8d98c0797e",
+    "aar_bytes": 11131,
+    "aar_sha256": "ad13b0436022dcff4f000c5c056971fcb16c4768372d0992847d87ca5117bce4",
     "aar_native_libraries": [],
-    "probe_debug_apk_bytes": 74142,
-    "probe_debug_apk_sha256": "a8a4589793d2bc84e754466cc6280674d55705bc4b17f988a69f22250e8135f6",
-    "baseline_apk_bytes": 8372,
-    "apk_bytes_delta": 65770,
+    "probe_debug_apk_bytes": 84302,
+    "probe_debug_apk_sha256": "171fe06f550898aee190a9e05b5e3ce1da82b4cecb75f193947a60369de8f6f9",
+    "baseline_apk_bytes": 8572,
+    "apk_bytes_delta": 75730,
     "probe_native_libraries": [
       {
         "entry": "lib/x86_64/libtts-consumer.so",
-        "bytes": 52280,
-        "sha256": "334a85a3fc5178a020b73aec62bf9fd6f123b1e51d06a081e8b48aa21e59845b"
+        "bytes": 62440,
+        "sha256": "8f6fae6d53a24a64b2b57099cfaa2138f6df87bb666f4e0af0c36271769b4516"
       }
     ],
     "runtime_dependencies": []
@@ -198,12 +224,17 @@
     "strict UTF-8 refusal: overlong, incomplete, encoded surrogate, embedded NUL",
     "rate bounds, request id monotonicity, one active request and BUSY on replacement",
     "byte limit lowering, engine text ceiling and event-queue reserve refusal without truncation",
-    "STARTED plus exactly one FINISHED/STOPPED/FAILED per accepted request; no duplicate terminal",
-    "UTF-8 byte offsets for RANGE events with the capability bit published only after a real range callback",
+    "STARTED plus exactly one FINISHED/STOPPED/FAILED per accepted request; a repeated terminal callback for the same request is dropped",
+    "stop ends the request itself: exactly one STOPPED, no FINISHED and no FAILED afterwards, request id cleared, handle READY for the next request",
+    "close while a request is speaking leaves exactly one STOPPED and then CLOSED",
+    "utf8 offsets for RANGE events with the capability bit published only after a real range callback",
     "pause/resume UNSUPPORTED with unchanged state and no CAN_PAUSE capability",
-    "voice listing without an engine download, list lifetime after handle destroy, null-safe free",
+    "voice listing without an engine download: id, localized locale name and BCP 47 language for every installed voice, compared element by element with the engine's own voice objects",
+    "an explicit voice id sticks for its request and an empty voice id returns the engine to its default voice",
+    "voice list lifetime after handle destroy, null-safe free, voices refused without an engine",
     "request_close idempotent, refuses new work, reaches CLOSED only after the engine release callback",
-    "destroy BUSY until CLOSED, then NULL; late engine callbacks ignored after close",
+    "destroy BUSY until CLOSED, then NULL; a callback carrying a destroyed handle cookie is refused and does not reach a later handle",
+    "an utterance id above the request id range or not decimal is ignored instead of being wrapped",
     "one long request survives a real Activity recreation (rotation) with one terminal event",
     "long text spoken as bounded chunks with one terminal event each and no byte loss",
     "real synthesizeToFile WAV from the installed engine with matching on-device and published digest",
@@ -234,23 +265,57 @@
       "job": "tts-artifact-summary",
       "reason": "device job passed with 45 named cases but the summary demanded the enclosing run be completed and successful, which cannot hold while the summary job itself runs",
       "artifact_id": null
+    },
+    {
+      "run_id": 40169096857,
+      "attempt": 1,
+      "source_sha": "98911701212b29db67578ad47b8bc4cdf7681550",
+      "job": "tts-android-device",
+      "reason": "review fix did not compile: android.speech.tts.Voice has no getLocalizedName() accessor",
+      "artifact_id": null
+    },
+    {
+      "run_id": 40169276410,
+      "attempt": 1,
+      "source_sha": "397664bc8918d5cf75976dde921a8bcb47ed1ad4",
+      "job": "tts-android-device",
+      "reason": "two named cases failed: voice_selection_returns_to_default assumed the engine voice is unset before the first explicit voice, and rotation_during_speaking failed without observable detail",
+      "artifact_id": null
+    },
+    {
+      "run_id": 40169702520,
+      "attempt": 1,
+      "source_sha": "870cf0839942c9641c361d234fcade1691152456",
+      "job": "tts-android-device",
+      "reason": "voice_selection_returns_to_default reported \"a fresh handle already selected 'en-US-language'\": the framework itself selects the engine default voice while it connects",
+      "artifact_id": null
+    },
+    {
+      "run_id": 40170099201,
+      "attempt": 1,
+      "source_sha": "fb4889b8455062bc9e955c3618658687ca04c5b4",
+      "job": "tts-android-device",
+      "reason": "rotation_during_speaking observed state=SPEAKING started=1 ranges=123 terminal=0: the 900 character request was still being synthesized after the 45 s wait, so the wait was shorter than the real utterance",
+      "artifact_id": null
     }
   ],
   "prior_success": {
-    "run_id": 40125579469,
+    "run_id": 40126240859,
     "attempt": 1,
-    "source_sha": "3bed74a4ef5eaa6507159c8761fadcb9b0b49318",
-    "artifact_id": 12573506191,
-    "artifact_bytes": 342299,
-    "artifact_sha256": "101336132c830621129828de086e618b0058a8b96d62fff35a7a2c80ce18dd99",
-    "note": "45 named cases without the rotation case; kept because the accepted source adds the rotation case on top of it"
+    "source_sha": "fe1eb58e2737aeeefbcdfe68e9ef6cff4db164f6",
+    "artifact_id": 12573062623,
+    "artifact_bytes": 346395,
+    "artifact_sha256": "2224a5404b8df6c089422ae7948ac2830ac3b2637c061be11cf071984b2d09a2",
+    "note": "the original delivery acceptance with 46 named cases; retained because it is the source the review started from"
   },
   "not_covered": [
     "Android host product wiring, background playback, audio focus, media session and haptics",
-    "spoken-output quality and latency on a real handset; only engine callbacks and rendered bytes are evidence",
+    "spoken-output quality and latency on a real handset; only engine callbacks, the rendered bytes and the engine's own voice state are evidence",
     "engines other than com.google.android.tts on the acceptance image",
     "a genuine engine-level FAILED terminal event and the Java release failure path; no reliable way to make the installed engine fail mid-utterance",
     "concurrent handles sharing one engine process beyond the eight-handle limit check",
+    "the destroy-versus-in-flight-callback window is closed by pinning the handle, but no deterministic in-process reproduction of the old free exists without an ASAN build or a fabricating engine",
+    "voice timbre: that the engine really spoke with the selected voice is only observed through the engine's reported current voice, not through the audio content",
     "battery, thermal and long-session behaviour"
   ],
   "real_device_accepted": false,

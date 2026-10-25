@@ -1,11 +1,15 @@
 # J18: Android system TextToSpeech backend
 
-Status: accepted on an API 34 emulator with a real engine, run 40126240859 at source
-`fe1eb58e2737aeeefbcdfe68e9ef6cff4db164f6`. The evidence record is
+Status: accepted by the independent package review on an API 34 emulator with a real
+engine, run 40170544552 at source `8ada05117d1e22cd8529c7345e9af4ccfbb35c51` (branch
+`codex/reader-tts-android-review`). The original delivery acceptance (run 40126240859 at
+`fe1eb58e2737aeeefbcdfe68e9ef6cff4db164f6`, head `5993381e4507cffb7c63465642c2052f5760deb3`,
+46 named cases) is retained in the same evidence record. The evidence record is
 `docs/validation/reader-tts-android.json`; this document commit changes documentation only.
 
 * Fixed start: `f43baf9182d75907c0cb5d6f77048f27bca8c950`
-* Branch: `codex/reader-tts-android` (no merge, no tag, no release, no default branch)
+* Branch: `codex/reader-tts-android-review` (review), delivery branch `codex/reader-tts-android`
+  (unchanged, no merge, no tag, no release, no default branch)
 * Frozen interface: `docs/handoffs/reader-next-wave/tts-contract.md` (`READER_TTS_VERSION "0.1.0"`)
 * Protected SDK `9854061be331fe603a1822d9b2b36ee357154927` (3.40.0 / ABI 1) and product
   schema 1 are unchanged; this package links no SDK component.
@@ -118,31 +122,64 @@ Status: accepted on an API 34 emulator with a real engine, run 40126240859 at so
 Local runs are deliberately impossible: `run_device.py` and `verify_evidence.py` both
 require `GITHUB_ACTIONS=true`, and the CMake package refuses non-Android targets.
 
+## Review findings and fixes
+
+The independent review audited the native adapter, the Android library and the evidence logic
+against the frozen contract. These concrete package defects were fixed and are covered by the
+named cases below:
+
+| Finding | Fix | Case |
+| --- | --- | --- |
+| `stop` left the handle in `STOPPING` until the engine reported the interrupted utterance; an engine that never reports left the request active forever, so every later `speak` returned BUSY | the platform-accepted stop ends the request itself with its one `STOPPED` event and returns the handle to READY | `stop_and_close_single_terminal`, `stop_single_stopped` |
+| `request_close` while a request was speaking could leave that accepted request without any terminal event, because the release callback can win the race with the engine's own stop callback | close ends the active request with exactly one `STOPPED` before CLOSED | `stop_and_close_single_terminal` |
+| a second terminal callback for one request (`onDone` then `onStop`, or a late callback) was queued as a second terminal | one terminal per request id; later ones are dropped | `duplicate_terminal_dropped`, `stop_single_stopped` |
+| an engine utterance id above `UINT64_MAX` wrapped onto a different request id | non-decimal and overflowing ids are ignored | `overflow_utterance_id_ignored` |
+| a late callback could run concurrently with `destroy`, which freed the lock and the ring under it | callback entries pin the handle, the last unpin frees it, a destroyed cookie is refused | `stale_callback_after_destroy_ignored` |
+| `reader_tts_voices` wrote the engine voice id into both `id` and `name`, so a host could only show internal ids | `name` is the localized locale name of the voice | `voice_names_match_engine` |
+| an explicit `voice_id` stayed selected for the handle, so a later request with an empty `voice_id` spoke with the stale voice instead of the engine default | an empty `voice_id` re-selects the engine default voice | `voice_selection_returns_to_default` |
+| the text kept for UTF-16 to UTF-8 range conversion stayed resident when a request ended without a terminal callback | it is released when a request ends or the next one starts | `range_utf8_boundaries`, `voice_selection_returns_to_default` |
+| the class documentation claimed every engine mutation runs on the private `HandlerThread` | documented the real split: framework init on the process main thread, utterance callbacks on engine binder threads, request calls synchronous on the owner thread | documentation only |
+
+Nothing outside the package changed: the production reader host, the shared TTS contract, the
+other platform adapters, the SDK tree and the product schema are untouched, and the original
+delivery branch `codex/reader-tts-android` was not written to.
+
 ## Acceptance record
 
-* Tested source: `fe1eb58e2737aeeefbcdfe68e9ef6cff4db164f6`; run 40126240859, attempt 1, both
-  jobs success (`tts-android-device` 120968163321, `tts-artifact-summary` 120969585448).
-* Artifact `reader-tts-android-40126240859-1` id 12573062623, 346395 bytes,
-  sha256 `2224a5404b8df6c089422ae7948ac2830ac3b2637c061be11cf071984b2d09a2`,
-  expires 2027-01-22T19:38:45Z; the summary job re-downloaded it through the API, recomputed
-  the digest and compared this run's identity.
-* Named outcomes: 46 cases per run. With `com.google.android.tts` installed 45 pass and one
-  skips (the missing-engine case); after every engine package was removed 32 pass and 14 skip
+* Tested source: `8ada05117d1e22cd8529c7345e9af4ccfbb35c51`; run 40170544552, attempt 1, both
+  jobs success (`tts-android-device` 121100309217, `tts-artifact-summary` 121101447475).
+* Artifact `reader-tts-android-40170544552-1` id 12589543789, 364387 bytes,
+  sha256 `3ef610cf3c10ae4faa8172dfee5b1a26da7c2cb80c1a7bb25bbc152d7342b336`,
+  expires 2027-01-23T06:50:32Z; the summary job re-downloaded it through the API, recomputed
+  the digest and compared this run's source, run, attempt, name, bytes and expiry.
+* Named outcomes: 52 cases per run. With `com.google.android.tts` installed 51 pass and one
+  skips (the missing-engine case); after every engine package was removed 32 pass and 20 skip
   (the engine-dependent cases), including a real `service_unavailable_when_engine_missing` pass.
+  The new cases are `duplicate_terminal_dropped`, `overflow_utterance_id_ignored`,
+  `stale_callback_after_destroy_ignored`, `stop_and_close_single_terminal`,
+  `voice_names_match_engine` and `voice_selection_returns_to_default`; every original case is
+  kept with its original assertions.
 * Audio: `files/audio/tts-sample.wav`, 91244 bytes, RIFF/WAVE, sha256
   `83f66b0e6de2231a14b994c4d21260ac5d5d773d376274d6546e5582e6164987`, produced by
-  `synthesizeToFile` with the local voice `en-AU-language`; the digest computed on the device and
-  the digest of the published file match.
-* Packages: AAR 10740 bytes (no native libraries), probe debug APK 74142 bytes with
-  `lib/x86_64/libtts-consumer.so` 52280 bytes, baseline APK 8372 bytes, delta 65770 bytes,
-  no Maven runtime dependencies.
-* Retained failures (not deleted): run 40123986906 (JNI environment argument missing),
-  run 40124242333 (androidTest APK path), run 40124745606 (summary job demanded an already
-  completed run), and the earlier success run 40125579469 which covers the same cases without
-  the rotation case.
+  `synthesizeToFile` with the local voice `en-AU-language` while the engine default voice is
+  `en-US-language`; the digest computed on the device and the digest of the published file match.
+* Packages: AAR 11131 bytes (no native libraries), probe debug APK 84302 bytes with
+  `lib/x86_64/libtts-consumer.so` 62440 bytes, baseline APK 8572 bytes, delta 75730 bytes,
+  no Maven runtime dependencies; the summary artifact
+  `reader-tts-android-summary-40170544552-1` is id 12590205946, 1929 bytes, sha256
+  `eb506ae0f026f4f2fee7277ed67696d1aa0d3f7fee9b9df62ad550180f87758a`.
+* Retained failures (not deleted): runs 40123986906 (JNI environment argument missing),
+  40124242333 (androidTest APK path) and 40124745606 (summary job demanded an already completed
+  run) from the original delivery; 40169096857, 40169276410, 40169702520 and 40170099201 from
+  this review (`android.speech.tts.Voice` has no display-name accessor; a wrong assumption about
+  the engine voice state before the first explicit voice; a missing diagnostic detail; and a
+  rotation wait shorter than the headless emulator's real synthesis). The original success runs
+  40126240859 and 40125579469 remain recorded.
 * Not covered: host product wiring, background playback, audio focus, media session, haptics,
   spoken quality on a handset, a genuine engine-level FAILED terminal event and the release
-  failure path, other engines, and long-session thermal behaviour.
+  failure path, other engines, voice timbre (only the engine's reported voice state and the
+  rendered bytes are observed), a deterministic reproduction of the destroy-versus-callback
+  window without an ASAN build, and long-session thermal behaviour.
 
 ## Scope boundaries
 
