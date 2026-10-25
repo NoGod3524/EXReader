@@ -67,6 +67,8 @@ def main():
                         except (ValueError, UnicodeDecodeError):
                             value = data.decode('utf-8', 'replace')
                         entry['files'][name] = value
+                        if run == 40234424624 and basename == 'compare.json':
+                            print('C04-ROOT-COMPARE ' + json.dumps({'artifact': artifact['name'], 'files': value['files']}, ensure_ascii=False), flush=True)
             record['artifacts'].append(entry)
             # Never concatenate boundary-base.err and boundary-cand.err: an
             # expected base refusal must remain distinguishable from candidate failure.
