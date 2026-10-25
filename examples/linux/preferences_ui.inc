@@ -180,7 +180,7 @@ static gboolean preferences_theme_refresh(gpointer unused) {
   (void)unused;
   if(preferences.cleaned || closing || !book_id || fixed || appearance.theme!=READER_PREFERENCES_THEME_SYSTEM ||
      preferences.page_system_theme==(int)appearance_system_theme) {
-    preferences.theme_idle=0;state();return G_SOURCE_REMOVE;
+    preferences.theme_idle=0;if(!preferences.cleaned && !closing) state();return G_SOURCE_REMOVE;
   }
   if(preferences_theme_ready()) {
     preferences.theme_idle=0;preferences_queue(&appearance,FALSE);state();return G_SOURCE_REMOVE;
