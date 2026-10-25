@@ -184,7 +184,7 @@ jobs:
             adb install -r -t build/android-cbz-reading/test-apks/cbz-reading-ui.apk
             python tests/reader_android_cbz_reading/run_ui.py --fixtures build/android-cbz-reading/fixtures --output build/android-cbz-reading/ui
             adb install -r -t build/android-fixed-pan/test-apks/fixed-pan-ui.apk
-            python tests/reader_android_fixed_pan/run_ui.py --fixtures build/android-fixed-pan/fixtures --output build/android-fixed-pan/ui
+            python build/android-page-theme/candidate/fixed_pan_run_ui.py --fixtures build/android-fixed-pan/fixtures --output build/android-fixed-pan/ui
 
       - name: Preserve SDK consumer identity native logs and every export result
         if: always()

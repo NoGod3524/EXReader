@@ -60,4 +60,12 @@ runner = runner[:start] + '''        for image in report['theme_frames']:
 ''' + runner[end:]
 runner = runner.replace("'page_colors_accepted': False", "'page_colors_accepted': True")
 write_copy(source, out/'preferences_run_ui.py', runner)
+source = Path('tests/reader_android_fixed_pan/run_ui.py')
+runner = source.read_text()
+marker = "        for observation in report['observations']:"
+assert runner.count(marker) == 1
+runner = runner.replace(marker, '''        if report['passed'] is not True:
+            print(json.dumps({'fixed_pan_failure_last_frame': report['observations'][-1].get('frame') if report['observations'] else None, 'selection_gestures': report.get('selection_gestures', [])}, ensure_ascii=False), flush=True)
+''' + marker)
+write_copy(source, out/'fixed_pan_run_ui.py', runner)
 (out/'expectation-diff.json').write_text(json.dumps({'sdk':'3.41.0','original_f3_checks':17,'replacement_checks':['sdk341_dark_page_actual_palette_saved','sdk341_actual_system_dark_frame_palette'],'changes':changes},indent=2)+'\n')
