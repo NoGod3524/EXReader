@@ -1,5 +1,14 @@
 # WebDAV 选书下载与侧载导入
 
+## Root 复审候选（待新的 Actions 结果）
+
+复审分支 `codex/reader-cloud-import-review` 保留原43项运行记录；下面的修改尚未获得该旧source的授予。
+修复可空诊断指针、发布前一次性准备文件所有权、显式/派生标题分配失败被静默忽略，以及删除失败虚报成功。
+新增实际删除拒绝与恢复、前三个所有权分配点失败、两种标题分配失败和空诊断参数用例。
+原安装后 C/C++ 消费者保留；附加故障探针仅拦截同一适配器源码的分配，不拦截 SDK 或网络后端。
+若系统拒绝删除，`staging_removed=0`、`*staged` 保留供 discard 重试，已提交书的成功回执不变。
+所有 `error` 输出可传 NULL。三平台和真实上游作业/二进制摘要由新的 Actions 轮次认证。
+
 `apps/reader/cloud-import` 是独立的静态 C11 适配包 `EXReaderCloudImport` 0.1.0。
 它把已有的 WebDAV 目录浏览、选中远端文件、下载到私有 staging 和侧载导入串成两个显式分开的阶段。
 它不新增网络后端、账号库、自动同步、宿主界面或产品映射，也不改变冻结 SDK
@@ -35,7 +44,7 @@ list(client, "books/")  ->  用户选中 entry(resource, display_name, bytes)
   `resource`＝列表返回的根相对资源；`display_name`＝远端名称（UTF-8，≤1024 字节）；
   `format`＝九种之一或 `EXR_CUSTOM`（由扩展名推断：epub pdf cbz txt html htm fb2 docx rtf mobi azw azw3）；
   `expected_bytes`＝列表声明长度（0 未知）；`max_bytes`（只能降低上限）；`staging_dir`＝宿主稳定私有目录；`control`。
-- **输出**：成功时 `*staged` 为新值，持有一个已发布、完整、已记录 SHA-256 的普通文件；其他状态 `*staged=NULL`。
+- **输出**：成功时 `*staged` 为新值，持有一个已发布、完整、已记录 SHA-256 的普通文件；其他状态清理后为 NULL。若系统拒绝清理已发布副本，保留非 NULL 所有权供 discard 重试，不可当作成功下载导入。
 - **所有权**：`resource`、`display_name`、`staging_dir` 只借用到调用返回，名称被复制进 staged。
   staged 由 `reader_cloud_import` 或 `reader_cloud_staged_discard` 释放；accessor 返回的指针到那时为止有效。
 - **本地文件名**：模块生成 `cloud-<16 位十六进制>.<扩展>`；远端名称、路径、ETag 都不参与本地路径。
@@ -56,7 +65,7 @@ list(client, "books/")  ->  用户选中 entry(resource, display_name, bytes)
 - **标题**：`options.title`，缺省取远端名称去掉可识别扩展名；含控制字符的远端名称不当作标题，改用书内元数据。
 - **提交边界**：`exr_sideload_import_file` 返回成功即 `committed=1`（`created` 区分新书与精确重复、`book_id` 持久），
   之后的取消请求不改变结果。SDK 自身取消或回滚为 `CANCELLED`／`IMPORT`，`committed=0`。
-- **清理**：除 `READER_CLOUD_ARGUMENT` 外，调用消耗 staged：无论成功或失败都只删除 staging 副本、释放值并置 `*staged=NULL`。
+- **清理**：除 `READER_CLOUD_ARGUMENT` 外，调用尝试消费 staged：只删除 staging 副本，成功后释放值并置 NULL。删除失败时 `staging_removed=0`、staged 仍归调用方，宿主恢复权限/关闭占用后重试 discard；提交成功的回执仍保留。
   任何路径都不删除 SDK 书行；精确重复命中旧书时保留其标题、阅读进度、标注与存储模式。
 - **上限**：沿用侧载契约——EPUB／CBZ／PDF 128 MiB 流式，其他六种重排格式 32 MiB；
   请求或导入选项只能降低。声明长度超限在发出任何网络请求前拒绝；无声明长度时由进度回调在越线时中止下载。

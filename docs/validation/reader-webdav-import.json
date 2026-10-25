@@ -1,4 +1,10 @@
 {
+  "root_review_candidate": {
+    "branch": "codex/reader-cloud-import-review",
+    "accepted": false,
+    "state": "source_and_fault_checks_written_awaiting_actions",
+    "original_cloud_scope_remains_at_source": "a0eb0c7b91eb34d6e577ac581b419ce1da8729df"
+  },
   "package": "EXReaderCloudImport",
   "version": "0.1.0",
   "fixed_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",

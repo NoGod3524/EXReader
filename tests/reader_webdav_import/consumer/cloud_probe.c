@@ -11,6 +11,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef _WIN32
+#include <sys/stat.h>
+#endif
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -186,6 +189,9 @@ static int run_transfer(void) {
   exr_error sdk_error;
   char path[4096];
   int do_import = (int)get_u64("import", 1);
+#ifdef _WIN32
+  HANDLE cleanup_lock = INVALID_HANDLE_VALUE;
+#endif
 
   memset(&state, 0, sizeof(state));
   state.net_bytes = get_u64("cancel_net", ~0ull);
@@ -217,7 +223,8 @@ static int run_transfer(void) {
   request.control.progress = progress;
   request.control.context = &state;
   memset(&error, 0, sizeof(error));
-  status = reader_cloud_download(client, &request, &staged, &error);
+  status = reader_cloud_download(client, &request, &staged,
+      get_u64("null_error", 0) ? NULL : &error);
   printf(",");
   emit_error("download", &error, status);
   printf(",\"staged\":%d", staged != NULL);
@@ -239,6 +246,9 @@ static int run_transfer(void) {
     do_import = 0;
   }
   if (staged && do_import) {
+#ifdef READER_CLOUD_REVIEW_INJECTED
+    printf(",\"review_before_import\":%lu", review_allocations);
+#endif
     if (strcmp(get("tamper", ""), "") != 0) {
       snprintf(path, sizeof(path), "%s", reader_cloud_staged_path(staged));
       printf(",\"tamper_result\":%d", tamper(path, get("tamper", "")));
@@ -258,6 +268,17 @@ static int run_transfer(void) {
     memset(&result, 0, sizeof(result));
     result.struct_size = sizeof(result);
     memset(&error, 0, sizeof(error));
+    if (get_u64("block_cleanup", 0)) {
+#ifdef _WIN32
+      wchar_t wide[4096];
+      if (MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, path, -1, wide, 4096) <= 0) return 1;
+      cleanup_lock = CreateFileW(wide, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+          NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+      if (cleanup_lock == INVALID_HANDLE_VALUE) return 1;
+#else
+      if (chmod(request.staging_dir, 0500)) return 1;
+#endif
+    }
     status = reader_cloud_import(library, &staged, &options, &result, &error);
     printf(",");
     emit_error("import", &error, status);
@@ -265,9 +286,24 @@ static int run_transfer(void) {
         "\"staging_file_exists\":%d,\"polls\":%llu",
         result.committed, result.created, (long long)result.book_id, result.staging_removed,
         staged == NULL, file_exists(path), state.polls);
+    if (get_u64("block_cleanup", 0)) {
+      reader_cloud_staged_discard(&staged);
+      printf(",\"blocked_discard_retained\":%d", staged != NULL);
+#ifdef _WIN32
+      CloseHandle(cleanup_lock);
+#else
+      if (chmod(request.staging_dir, 0700)) return 1;
+#endif
+      reader_cloud_staged_discard(&staged);
+      printf(",\"cleanup_retry_consumed\":%d,\"cleanup_retry_file_exists\":%d",
+          staged == NULL, file_exists(path));
+    }
     exr_library_close(library);
   }
   if (staged) reader_cloud_staged_discard(&staged);
+#ifdef READER_CLOUD_REVIEW_INJECTED
+  printf(",\"review_allocations\":%lu", review_allocations);
+#endif
   printf("}\n");
   return 0;
 }

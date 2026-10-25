@@ -1,7 +1,7 @@
 name: Reader WebDAV download and sideload import
 on:
   push:
-    branches: [codex/reader-webdav-import]
+    branches: [codex/reader-webdav-import, codex/reader-cloud-import-review]
   workflow_dispatch:
 permissions:
   contents: read
@@ -88,7 +88,7 @@ jobs:
           set -o pipefail
           exe=""
           if [ "$RUNNER_OS" = Windows ]; then exe=".exe"; fi
-          python3 tests/reader_webdav_import/check_cloud_import.py --probe "build/wi-consumer/cloud-probe$exe" --cxx "build/wi-consumer/cloud-cpp-consumer$exe" --fixtures tests/fixtures --module-prefix build/wi-prefix --output build/wi-evidence 2>&1 | tee build/wi-logs/checks.log
+          python3 tests/reader_webdav_import/check_cloud_import.py --probe "build/wi-consumer/cloud-probe$exe" --cxx "build/wi-consumer/cloud-cpp-consumer$exe" --review-probe "build/wi-consumer/cloud-review-probe$exe" --fixtures tests/fixtures --module-prefix build/wi-prefix --output build/wi-evidence 2>&1 | tee build/wi-logs/checks.log
       - name: Preserve source-bound logs, installed files and every case record
         if: always()
         uses: actions/upload-artifact@v4
@@ -102,6 +102,7 @@ jobs:
             build/wi-prefix/
             build/wi-consumer/cloud-probe*
             build/wi-consumer/cloud-cpp-consumer*
+            build/wi-consumer/cloud-review-probe*
             build/wi-consumer/CMakeCache.txt
             build/wi-adapter/CMakeCache.txt
           if-no-files-found: error
