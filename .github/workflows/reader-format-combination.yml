@@ -71,6 +71,50 @@ jobs:
             build/format/argv-report/
             build/format/argv-build/bin/
           if-no-files-found: error
+  previous:
+    if: github.event_name == 'push' || inputs.scope == 'inspect'
+    needs: preflight
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate both failed-round producer ZIPs and inspect their actual components
+        run: python tests/reader_format_candidate/inspect_previous.py round1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: format-previous-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/format/previous/
+          if-no-files-found: error
+  loader:
+    if: github.event_name == 'push' || inputs.scope == 'inspect'
+    needs: preflight
+    runs-on: windows-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Reproduce missing DLL using a real authenticated S13 binary, then deploy the exact runtime
+        run: python tests/reader_format_candidate/inspect_previous.py loader
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: format-loader-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/format/loader-proof/
+          if-no-files-found: error
   corpus:
     if: inputs.scope == 'full'
     needs: preflight

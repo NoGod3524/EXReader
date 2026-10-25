@@ -12,6 +12,7 @@ import time
 import xml.etree.ElementTree as ET
 from common import (ROOT, HERE, WORK, SDK, BASE, PATCHES, guard, identity, git, write, strict_json,
                     original_manifest, manifest_contract, load_module, artifact, file_hash, digest)
+from runtime import deploy
 
 EVIDENCE = WORK / 'evidence'
 COMMANDS = []
@@ -113,6 +114,8 @@ def f5_panel(f5, entries, corpus, consumer, font, label, expected_sdk, wrapped):
         original = corpus/entry['path']
         assert original.is_file() and original.stat().st_size==entry['source']['bytes'] and file_hash(original)==entry['source']['sha256']
         result = f5.run_one(dict(entry,path=str(original.resolve())),root,consumer.resolve(),font.resolve(),600)
+        # Preserve raw process output before any adapter/provenance assertion.
+        write(root/'results'/entry['id']/'process.json', result)
         result['manifest_path'] = entry['path']; result['input_sha256'] = file_hash(original)
         if wrapped:
             query = re.findall(r'^FORMAT_QUERY_UTF8_HEX ([0-9a-f]*)$',result['stderr'],re.M)
@@ -175,6 +178,8 @@ def producer():
     for variant in ('base','candidate'):
         configure(WORK/'vendor/rtf',WORK/('rtf-'+variant),stages[variant])
         configure(WORK/'vendor/cbz',WORK/('cbz-'+variant),stages[variant])
+        # Match the explicit runtime deployment in the original S13 workflow.
+        write(WORK/'logs'/('cbz-'+variant+'-runtime.json'), {'libraries': deploy(stages[variant], WORK/('cbz-'+variant)/'bin')})
     configure(HERE,WORK/'adapter-candidate',stages['candidate'],('-DFORMAT_ORIGINAL_CONSUMER='+str(WORK/'vendor/f5/consumer.c'),))
     assert file_hash(WORK/'adapter-candidate/f5-consumer-original.c')=='f2b5d06d1fb1450c74317b537164ca97b60d7826806175066b597335d342cf96'
     configure(WORK/'vendor/f5',WORK/'original-consumer',stages['base'])

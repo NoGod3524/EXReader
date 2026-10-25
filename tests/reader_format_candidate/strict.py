@@ -97,6 +97,12 @@ def main():
         for variant in ('base','candidate'):
             library=root/'prefixes'/variant/('bin/exreader.dll' if platform=='windows' else 'lib/libexreader.so')
             assert file_hash(library)==by_name['sdk-'+variant]['sha256']
+            deployment=strict_json((root/'logs'/('cbz-'+variant+'-runtime.json')).read_bytes())['libraries']
+            if platform=='windows':
+                actual=[row for row in deployment if row['name'].lower()=='exreader.dll']
+                assert len(actual)==1 and actual[0]['sha256']==by_name['sdk-'+variant]['sha256'] and actual[0]['bytes']==by_name['sdk-'+variant]['bytes']
+            else:
+                assert deployment==[]
         args=strict_json((root/'argv/report.json').read_bytes())
         assert args['ok'] and len(args['vectors'])==len(VECTORS)
         assert all(row['case']==index and row['ok'] and row['argv_hex']==[value.encode('utf-8').hex() for value in VECTORS[index]] for index,row in enumerate(args['vectors']))
@@ -110,6 +116,8 @@ def main():
             accepted=[]
             for entry,row in zip(entries,panel['files']):
                 assert row['manifest_path']==entry['path'] and row['input_sha256']==entry['source']['sha256']
+                raw_process=strict_json((root/'panels'/label/'results'/entry['id']/'process.json').read_bytes())
+                assert all(raw_process[field]==row[field] for field in ('stdout','stderr','result','command','exit_code','mismatches','readback_verified'))
                 output_lines=[line for line in row['stdout'].splitlines() if line.strip()]
                 assert output_lines and strict_json(output_lines[-1])==row['result']
                 mismatches=f5.compare_expectations(entry['expect'],row['result'])
