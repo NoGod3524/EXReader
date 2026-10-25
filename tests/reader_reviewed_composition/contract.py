@@ -62,8 +62,11 @@ def validate(doc,binary_hashes,source,run,attempt,platform):
  history=load_module('reader_jump_history','check_artifacts.py');hs=doc['original/history/summary.json'];history.authenticate_checks(doc['original/history/report.json'],hs)
  require(hs.get('checks_total')==149,'reviewed history original count differs')
  require(hs.get('jump_history_module_accepted') is True and not hs.get('problems') and hs.get('checks_failed')==0,'jump history failed')
+ require(hs.get('platform')==platform and hs.get('host_wiring_accepted') is False,'history platform or scope differs')
+ nw=hs.get('no_write',{});require(all(nw.get(k)==0 for k in ('revision_rows','outbox_rows','sdk_progress_records','sdk_notes','sdk_fixed_notes','sdk_epub_notes')) and nw.get('databases_unchanged') is True and nw.get('control_write_changed') is True,'history no-write proof differs')
  require(hs['probe_sha256']==binary_hashes['jump-history-probe'] and hs['c_consumer_sha256']==binary_hashes['jump-history-c-consumer'],'history binaries differ')
  keyboard=load_module('reader_keyboard_actions','check_keyboard.py');kr=doc['original/keyboard/result.json'];require(kr.get('accepted') is True and not kr.get('problems'),'keyboard failed')
+ require(kr.get('package')==keyboard.PACKAGE and kr.get('common_start')==keyboard.COMMON_START and kr.get('granted_platform')==platform.lower() and kr.get('checks')==41,'keyboard package, platform or count differs')
  for label,name in [('c','keyboard-c-consumer'),('cpp','keyboard-cpp-consumer'),('probe','keyboard-probe')]:require(kr['binaries'][label]['sha256']==binary_hashes[name],'keyboard actual binary differs '+name)
  statuses={}
  for row in kr.get('cases',[]):
@@ -73,8 +76,10 @@ def validate(doc,binary_hashes,source,run,attempt,platform):
  for suite,names in [('consumer-c',keyboard.CASE_C),('consumer-cpp',keyboard.CASE_CPP),('probe',keyboard.CASE_PROBE)]:
   require({name for s,name in statuses if s==suite}==set(names),'keyboard required cases differ')
  info=load_module('reader_book_information','check_book_information.py');ir=doc['original/information/report.json'];require(ir.get('ok') is True,'book-info failed');named(ir.get('checks',[]),'ok',info.REQUIRED_CASES)
+ require(ir.get('platform')==platform and not ir.get('skipped') and ir.get('complete_product') is False and ir.get('host_ui_accepted') is False,'book-info platform or scope differs')
  require(all(c.get('assertions',0)>0 and not c.get('problems') for c in ir['checks']),'book-info incomplete assertions')
  status=load_module('reader_sync_status_view','aggregate.py');sr=doc['original/status/result.json'];require(sr.get('accepted') is True and len(sr.get('checks',[]))==len(set(sr.get('checks',[]))) and set(sr.get('checks',[]))==status.REQUIRED and sr.get('metadata_wait_positive_covered') is True,'status cases failed or changed')
+ require(sr.get('platform')==status.PLATFORMS[platform] and sr.get('count')==len(sr['checks']),'status platform or count differs')
  require(sr['consumer_sha256']==binary_hashes['status-view-consumer'] and sr['c_consumer_sha256']==binary_hashes['status-view-c-consumer'],'status binaries differ')
  profiles=load_module('reader_account_profiles','check_artifacts.py');profiles.verify_report(doc['original/profiles/result.json'],source,str(run),str(attempt),platform)
  return dict(original_composition_items=len(doc['evidence/result.json']['items']),shared_flow_items=len(required),cloud=len(doc['original/cloud/result.json']['checks']),bulk=len(doc['original/bulk/report.json']['checks']),link=len(doc['original/link/report.json']['checks']),history=hs['checks_total'],keyboard=len(kr['cases']),keyboard_skips=kr.get('skipped',[]),information_cases=len(ir['checks']),information_assertions=ir['assertions'],status=len(sr['checks']),profiles=doc['original/profiles/result.json']['checks'])
@@ -90,4 +95,5 @@ def validate_files(manifest,read):
   elif path in RAW:binary_hashes[path]=digest(data)
   elif path.startswith('binaries/'):binary_hashes[path.split('/')[-1]]=digest(data)
   elif path.endswith('sanitizer.txt'):require(data==b'failures=0\n','original sanitizer failure')
+ require(documents['original/history/summary.json'].get('report_sha256')==manifest['files']['original/history/report.json']['sha256'],'history raw report differs from original summary')
  return documents,binary_hashes
