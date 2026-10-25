@@ -5,35 +5,203 @@
   "title": "六目标导入入口真实回归矩阵",
   "branch": "codex/reader-fw-s06",
   "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
-  "tested_implementation_source": null,
+  "tested_implementation_source": "e1580354d7c3e11dabe351eb63049a686b651821",
   "docs_archive_source": null,
+  "docs_archive_note": "This file and MATRIX.md are the docs-only commit on top of e1580354; its own SHA is the branch tip reported in HANDOFF-RESULT.md, because a file cannot contain the hash of the commit that introduces it.",
   "workflow": ".github/workflows/reader-final-s06.yml",
-  "run": null,
-  "jobs": [],
-  "artifacts": [],
+  "run": {
+    "id": 40215584275,
+    "attempt": 1,
+    "event": "push",
+    "head_sha": "e1580354d7c3e11dabe351eb63049a686b651821",
+    "conclusion": "success",
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40215584275"
+  },
+  "jobs": [
+    {
+      "id": 121235891876,
+      "name": "ownership, syntax and compiler protocol",
+      "conclusion": "success"
+    },
+    {
+      "id": 121235946182,
+      "name": "import entry (windows)",
+      "conclusion": "success"
+    },
+    {
+      "id": 121235946186,
+      "name": "import entry (linux)",
+      "conclusion": "success"
+    },
+    {
+      "id": 121235946248,
+      "name": "import entry (macos)",
+      "conclusion": "success"
+    },
+    {
+      "id": 121237344599,
+      "name": "strict same-run matrix",
+      "conclusion": "success"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12607790219,
+      "name": "reader-final-s06-guard-40215584275-1",
+      "bytes": 47834,
+      "sha256": "2eb8cbcf62934219e0569e386f6ddd6942a338f114b7d287ff1bb2668bbc3c9a",
+      "expires_at": "2027-01-23T17:15:29Z"
+    },
+    {
+      "id": 12607316814,
+      "name": "reader-final-s06-evidence-windows-40215584275-1",
+      "bytes": 3042428,
+      "sha256": "81e325678bf26045691dc37cd3cd0ebda3ec1621ac17d76a5212460895ceeb9b",
+      "expires_at": "2027-01-23T17:15:29Z"
+    },
+    {
+      "id": 12607780698,
+      "name": "reader-final-s06-evidence-linux-40215584275-1",
+      "bytes": 4078229,
+      "sha256": "2a4c0d2d62fe578d3de8eea68b13d87a97409081fa4bd0456d91f085963db13e",
+      "expires_at": "2027-01-23T17:15:29Z"
+    },
+    {
+      "id": 12607456931,
+      "name": "reader-final-s06-evidence-macos-40215584275-1",
+      "bytes": 3484464,
+      "sha256": "a04dea76f7db27d4515f4524e6b48e1a429a98501f5c087b3eaffb8f981e191e",
+      "expires_at": "2027-01-23T17:15:29Z"
+    },
+    {
+      "id": 12607262286,
+      "name": "reader-final-s06-report-40215584275-1",
+      "bytes": 2425,
+      "sha256": "b47985c53b22de0fbaeac92f287e2fb7341ad08557ef545a12d79da541224e10",
+      "expires_at": "2027-01-23T17:15:29Z"
+    }
+  ],
+  "program_hashes": {
+    "note": "SHA-256 of the preserved probe binary and of its JSONL stream, re-hashed by the compiler from the same artifact.",
+    "windows": {
+      "probe_sha256": "a68506b8f0b512badbbe1022efe59887a30b94c769197362510e9d059027a715",
+      "probe_bytes": 6063616,
+      "probe_stream_sha256": "e5a83b974b9f7be9fc809cb2d3bb3279e32d6529b8be6946ddbb1ba71f4fb6bf",
+      "probe_stream_bytes": 5741
+    },
+    "linux": {
+      "probe_sha256": "b504bcb734833af8a225a440d512420f84035999aae60e5c10301a653fdee700",
+      "probe_bytes": 8509608,
+      "probe_stream_sha256": "13f7558887b4747d6fa9f7126e13fec603cead1cd595416a56380a8cf9bc778b",
+      "probe_stream_bytes": 5746
+    },
+    "macos": {
+      "probe_sha256": "ea4ecc31999668ed824cd8b601438aa90425876df59d54bd2b0e862b0bc16f80",
+      "probe_bytes": 6948896,
+      "probe_stream_sha256": "80c2f4143adcfb8fadd67011ef1f58334c83fe3b8dbcfcbc8f534760a70d6099",
+      "probe_stream_bytes": 5751
+    }
+  },
+  "original_sha256": {
+    "note": "SHA-256 of the pinned fixture bytes; the probe proves the stored original, the exported private original and the HTTPS-downloaded copy all carry exactly these bytes.",
+    "sample.txt": "fe0e65a92ff83503015b42253a17ac643e4894058a062bb532ba61aaf5bf583b",
+    "sample.html": "84ebc6d4e40f98bed2508da58af36e41b8a1f82d0d927fbc583f8711f196e780",
+    "sample.fb2": "f3e4be6678d5ac24a6cced469953120c400f43046240474d525d44c229f0007c",
+    "sample.epub": "0f871f4448ad9afe70c8c47c355310c43260d2d5d792c5aac43ea3285e9473ee",
+    "sample.docx": "1abfda17db19d48555806c2b09f4f1133dd037415ac8b163eb7859342f3cd0b6",
+    "sample.rtf": "b562f2d11654d60850a8b57715ee7160771918519c71152c7cc2048750cb20e9",
+    "sample.mobi": "2a3d3b81e652a6ef7a7daedb131d0ec38827e431ffc6e3b8a4c1bf2ee8510bed",
+    "pdf-public.pdf": "4f6fdc7b4dc13363aae532953ccf863c6be853c3c8b63de4718bc45dafbeb49d",
+    "comic.cbz": "08df7ceb8771ab82610651c2299072b8fc299d3f8fba3996ee6e12054ea6701f"
+  },
   "matrix": {
     "spec": "tests/reader_final_s06/matrix_spec.json",
     "targets": 6,
     "cells_per_target": 7,
-    "measured_targets": [],
+    "cell_results": {
+      "pass": 21,
+      "fail": 0,
+      "pending": 21,
+      "blocked": 0
+    },
+    "accepted": true,
+    "complete": false,
+    "measured_targets": [
+      "windows",
+      "linux",
+      "macos"
+    ],
     "pending_targets": [
       "android",
       "iphone",
       "ipad"
     ],
-    "result": "not_run"
+    "cases_per_target": 38,
+    "spec_selftest": {
+      "cases": 12,
+      "failed": 0,
+      "note": "ten refusals plus one acceptance, run in the guard job"
+    }
   },
-  "checked": [],
-  "failures": [],
+  "checked": {
+    "per_target": [
+      "local_file: private stable path import, UTF-8/space path import, borrowed random-read source route, exact original read-back",
+      "system_open_share: the probe owns the real clipboard/pasteboard payload and reads it back through the installed adapter, imports the delivered path, ignores a directory, rejects a missing path, reports two entries",
+      "cloud_download_to_sideload: HTTPS download from the pinned commit equals the pinned fixture byte for byte, the downloaded copy imports as a new book, and the same original already in the library is deduplicated",
+      "duplicate_same_original: same path and renamed copy both created=0 with the same id, title/progress/note preserved, a cancelled duplicate keeps the old book and its bytes",
+      "bad_file: truncated, garbage, empty and missing inputs are each rejected explicitly with zero new rows and the existing original still readable",
+      "nine_formats_original_identity: nine formats import, read back exactly, deduplicate on a second import, export a byte-identical private original, and survive a library reopen",
+      "entry_cancel_and_reopen: cancel before commit yields zero rows on the memory and the stream route, a second export never replaces the existing file, committed books and originals survive a reopen"
+    ],
+    "observed": {
+      "windows": "38 cases pass, summary failed=0; CF_HDROP delivered D:\\a\\EXReader\\EXReader\\build\\s06-evidence\\windows\\handoff\\pasted.epub as kind 1 (FILE)",
+      "linux": "38 cases pass, summary failed=0; GTK text/uri-list round trip delivered the same absolute path as kind 1 (FILE)",
+      "macos": "38 cases pass, summary failed=0; NSPasteboard file URL delivered the same absolute path as kind 1 (FILE)"
+    }
+  },
+  "failures": [
+    {
+      "run": 40214566799,
+      "attempt": 1,
+      "conclusion": "failure",
+      "job": 121232804941,
+      "step": "Compile the tooling and run the negative compiler protocol",
+      "cause": "The compiler self-test asserted an extra global problem for a failed required case; the compiler records a failed cell instead. 11 of 12 protocol cases passed, refuses_failed_required_case failed.",
+      "resolution": "The self-test now asserts the failed cell set directly."
+    },
+    {
+      "run": 40214791827,
+      "attempt": 1,
+      "conclusion": "failure",
+      "jobs": [
+        {
+          "id": 121233507310,
+          "name": "import entry (windows)",
+          "cause": "DROPFILES undeclared: the shim did not include <shlobj.h>."
+        },
+        {
+          "id": 121233507381,
+          "name": "import entry (macos)",
+          "cause": "exr_drop_apple_request_from_pasteboard undeclared: the shim did not include <exr_desktop_drop_apple.h>."
+        },
+        {
+          "id": 121234926268,
+          "name": "strict same-run matrix",
+          "cause": "Correctly refused: windows and macos declared measurable but produced no evidence."
+        }
+      ],
+      "kept": "The linux job of the same run already reported 38 of 38 cases passing; that run is not mixed into the accepted result."
+    }
+  ],
   "not_verified": [
-    "android host entry (content VIEW / SEND / SEND_MULTIPLE / ACTION_OPEN_DOCUMENT through a real DocumentsProvider)",
-    "iphone simulator document-open and share handoff",
-    "ipad simulator document-open and share handoff",
+    "android host entry (content VIEW / SEND / SEND_MULTIPLE / ACTION_OPEN_DOCUMENT through a real DocumentsProvider) - pending, owned by the J04 producer",
+    "iphone simulator document-open and share handoff - pending",
+    "ipad simulator document-open and share handoff - pending",
     "physical device, screen reader, USB transfer and performance budgets",
-    "native picker interaction and a pointer-device drag gesture",
+    "native file-picker interaction and a pointer-device drag gesture (the handoff is the clipboard/pasteboard route)",
     "the cloud-import transport product path (owned by the cloud-import producers)"
   ],
-  "accepted": false,
+  "accepted": true,
   "task_wide_accepted": false,
-  "note": "Written before the first Actions run. accepted stays false and tested_implementation_source stays null until the same-run evidence and artifact identities are recorded here."
+  "acceptance_scope": "The three measured desktop targets, seven cells each, 38 named cases per target, all from run 40215584275 attempt 1. The mobile targets grant nothing and the unified product acceptance remains with root."
 }
