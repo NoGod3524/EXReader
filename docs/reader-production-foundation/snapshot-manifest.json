@@ -1,0 +1,90 @@
+{
+  "schema": 1,
+  "accepted": false,
+  "complete_product": false,
+  "host_wiring_accepted": false,
+  "status": "local source and Git draft awaiting root review; no new execution",
+  "production_origin": "1a6d98ed613c61ffea4267f01f83e2c49b1c02f6",
+  "current_base": "1a6d98ed613c61ffea4267f01f83e2c49b1c02f6",
+  "payload_commits": [
+    "a19e996ed8dbab20eeb716da774f9fa286d196d8",
+    "57f20af13364ff0bb5aa8cab6225ce1f24807def"
+  ],
+  "payload_review_anchor": "57f20af13364ff0bb5aa8cab6225ce1f24807def",
+  "exact_ownership_rule": "Expand only the fixed snapshot Git objects below; review diff production_origin..payload_review_anchor, never grant an arbitrary prefix allowlist",
+  "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "frozen_340_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_target_guard_blob": "98d0c8ddaf006591014203141f1faf650cc3ba4c",
+  "packages": [
+    {
+      "id": "C06",
+      "tested_source": "909d05c31afdce27a7d8fbe861ead89f5b4552cf",
+      "snapshot_source": "8bf3c904862a7ff47768b7d4c707337999d5c5cd",
+      "historical_run": 40230743482,
+      "historical_attempt": 1,
+      "paths": ["apps/reader/annotation-export", "apps/reader/annotation-import", "tests/reader_next_c06", "docs/reader-next-c06", ".github/workflows/reader-next-c06.yml"],
+      "module_trees": {"apps/reader/annotation-export": "07145ef6eb29d4d2a38230961a1c5ce1710312d2", "apps/reader/annotation-import": "7baa152a029e84bf735059749d8efbacc188ed2d"},
+      "scope": "Linux/Windows independent raw0.2 portable annotation interfaces"
+    },
+    {
+      "id": "S14",
+      "tested_source": "c7205a9da1c11c0cc23fb04920dbd7a8071659d8",
+      "snapshot_source": "393399477ea68f149cfd323c6a6ce970445415ab",
+      "historical_run": 40237292306,
+      "historical_attempt": 1,
+      "paths": ["apps/reader/font-library", "tests/reader_next_s14", "docs/reader-next-s14", ".github/workflows/reader-next-s14.yml", "HANDOFF-RESULT-S14.md"],
+      "module_trees": {"apps/reader/font-library": "98e588b1922b22de35d86f0688a9c5f6d9447a30"},
+      "scope": "SDK3.41 Linux/Windows/macOS and frozen SDK3.40 Linux optional font package"
+    },
+    {
+      "id": "S15",
+      "tested_source": "1ca21a1a52b565c1e4de5f79a8e10921c0c77b46",
+      "snapshot_source": "3fc87a2aadb3425a2826ff6dc3f2a74db934045c",
+      "historical_run": 40236846254,
+      "historical_attempt": 1,
+      "paths": ["apps/reader/original-export", "tests/reader_next_s15", "docs/reader-next-s15", ".github/workflows/reader-next-s15.yml", "HANDOFF-RESULT-S15.md"],
+      "module_trees": {"apps/reader/original-export": "88f95c6d7d0a3ff4881fbe06b8f7b757f92c188a"},
+      "scope": "SDK3.41 Linux/Windows/macOS and frozen SDK3.40 Linux original export with source/installed provenance"
+    },
+    {
+      "id": "S16",
+      "tested_source": "28df223d1df2aa3e551ad4796d5e7615bd706d8e",
+      "snapshot_source": "33beb37ddef85b12cbc9262560b952d6f004198b",
+      "implementation_unchanged_from": "1f588ca880e8dde7c8293a2769e3663194194acd",
+      "historical_run": 40236387400,
+      "historical_attempt": 1,
+      "paths": ["apps/reader/jump-history", "tests/reader_next_s16", "docs/reader-next-s16", ".github/workflows/reader-next-s16.yml", "HANDOFF-RESULT-S16.md"],
+      "required_review_docs": ["docs/reader-next-s16/ROOT-REVIEW.md", "docs/reader-next-s16/root-review-validation.json"],
+      "module_trees": {"apps/reader/jump-history": "e9b4cf5b9874ed32ca44572c2f23f9ff09487e98"},
+      "scope": "Linux/Windows default/raw installed jump-history package and hardened compatibility/binary evidence"
+    },
+    {
+      "id": "S17",
+      "tested_source": "537460e563874de1237d2e9d9bf2b0ca130c64d9",
+      "snapshot_source": "abd3d841bdd091ae9a98a4dddb43f7507c31e27a",
+      "historical_run": 40230047146,
+      "historical_attempt": 1,
+      "paths": ["apps/reader/sync-status-view", "tests/reader_next_s17", "docs/reader-next-s17", ".github/workflows/reader-next-s17.yml", "HANDOFF-RESULT-S17.md"],
+      "module_trees": {"apps/reader/sync-status-view": "6780fd18868621f99e21de61a04a1fac0c847d20"},
+      "scope": "Linux/Windows independent read-only raw session0.2 sync status package"
+    }
+  ],
+  "protected_base_trees": {
+    "apps/reader/revisions": "c22bbb3723bdf2b97d6d91455fcad8e4bdeebe6a",
+    "apps/reader/reading-state": "71345514f49ccea58be84bdf489af822ae60e24e",
+    "apps/reader/commands": "30b447f281f5a4b09cd862ddcfcf2741b9f26b79",
+    "apps/reader/reading-commands": "49217b9facb0c95f60dff3b4e6e446580ad876e2",
+    "apps/reader/annotation-view": "bec12a4448bf59442fae4619b2aeaae2cb7a204d",
+    "apps/reader/sync": "8557d1226125b38c920f098b29082a28c7e9378d",
+    "apps/reader/session": "fec577272693671529586a689045777b46f6736a",
+    "apps/reader/store": "3ab354380947344c4792e8839d8b7180fa07d479",
+    "examples": "9dc31b80872962a401b1b266eda014a23c6ed054",
+    "apps/reader/desktop": "2c8d039db2e43b5d543c05d1993d94447f6a1e88"
+  },
+  "default_entry_paths_unchanged": ["CMakeLists.txt", "CMakePresets.json"],
+  "new_plan_document_paths": ["docs/reader-production-foundation/PLAN.md", "docs/reader-production-foundation/snapshot-manifest.json"],
+  "old_guards_modified": false,
+  "new_ci_started": false,
+  "local_build_test_syntax_fixture_or_artifact_processing": false,
+  "base_promotion_rule": "Only root-authenticated same-source Actions acceptance may designate the next scope-limited BASE; never the snapshot import itself"
+}
