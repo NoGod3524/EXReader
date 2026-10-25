@@ -81,10 +81,23 @@ def main():
                 value, after = F.document(profile)
                 frame = app.page_shot(role + '-stage-' + str(stage) + '.bmp', output) if filename else None
                 expected = initial if stage == 11 else next_value
-                assert value[key] == expected, dict(role=role,stage=stage,key=key,actual=value[key],expected=expected,status=app.status())
+                facts = dict(role=role,stage=stage,key=key,actual=value[key],expected=expected,status=app.status())
+                if filename:
+                    assert before_frame[:2] == frame[:2], 'viewport size changed'
+                    width, height = frame[:2]
+                    changed_rgb = [index // 4 for index in range(0, len(frame[2]), 4)
+                                   if frame[2][index:index+3] != before_frame[2][index:index+3]]
+                    facts.update(changed_rgb_pixels=len(changed_rgb),
+                                 changed_alpha_bytes=sum(a != b for a,b in zip(frame[2][3::4],before_frame[2][3::4])),
+                                 changed_bounds=([min(n%width for n in changed_rgb),min(n//width for n in changed_rgb),
+                                                  max(n%width for n in changed_rgb),max(n//width for n in changed_rgb)] if changed_rgb else None),
+                                 changed_interior_pixels=sum(3<=n%width<width-3 and 3<=n//width<height-3 for n in changed_rgb))
+                result.setdefault('boundary_observations', []).append(facts)
+                print('COMMIT_BOUNDARY ' + json.dumps(facts), flush=True)
+                assert value[key] == expected, facts
                 assert (after == before) == (stage == 11)
                 if filename:
-                    assert (frame == before_frame) == (stage == 11)
+                    assert (frame == before_frame) == (stage == 11), facts
                 app.open_dialog()
                 assert float(F.text(app.field(field))) == expected
                 app.close_dialog()
