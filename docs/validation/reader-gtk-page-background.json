@@ -11,7 +11,7 @@
   "sdk_abi": 1,
   "sdk_foundation_run": 40164920053,
   "sdk_foundation_scope": "Linux installed API and frozen pixel oracle only",
-  "shared_version_support": "f5f7f92a330aa30759125778626e956ac4a4374a",
+  "shared_version_support": "f680aeaddfb1ecc67ead353554f5b91a5703f72f",
   "shared_version_support_host_validation_pending": true,
   "original_settings_test_source": "687def68862649479ce536d619c7b37ba2d2cc4b",
   "original_settings_checks_retained": 35,
