@@ -17,6 +17,7 @@ COMPATIBILITY = 'e8ed25c1cd7ccb33405611e27f9ad47fba8c9e34'
 ANDROID_POLICY = 'b1a7b7891cd394671842164a07a86c8e316dace3'
 OLD_SDK = '9854061be331fe603a1822d9b2b36ee357154927'
 BRANCH = 'codex/reader-hosts-341-final'
+SIMULATOR_BRANCH = 'codex/reader-apple-simulator-ready'
 WORKFLOWS = ('reader-apple-navigation.yml', 'reader-apple-search.yml',
              'reader-apple-reading-records.yml', 'reader-apple-shelf.yml',
              'reader-apple-import-mapping.yml', 'wp13-apple.yml')
@@ -43,6 +44,7 @@ OWNED |= set(COMPATIBILITY_PATHS)
 ANDROID_PATHS = tuple('examples/android/app/src/main/java/org/exreader/host/' + name
                       for name in ('NativeReadingSdk.java', 'NativeCbz.java', 'ReadingParserPolicy.java'))
 OWNED |= set(ANDROID_PATHS)
+OWNED.add('.github/workflows/reader-apple-simulator-ready.yml')
 OWNED |= {'.github/workflows/reader-apple-shelf-publication.yml', '.github/workflows/reader-apple-hosts-preflight.yml',
           'docs/READER-APPLE-SHELF-PUBLICATION.md', 'docs/validation/reader-apple-shelf-publication.json',
           'docs/READER-APPLE-HOSTS-FINAL.md', 'docs/validation/reader-apple-hosts-final.json'}
@@ -90,7 +92,11 @@ def validate_paths(paths):
 
 def main():
     require(os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only')
-    require(os.environ.get('GITHUB_REF_NAME') == BRANCH, 'isolated candidate branch required')
+    require(os.environ.get('GITHUB_REF_NAME') in (BRANCH, SIMULATOR_BRANCH), 'isolated candidate branch required')
+    simulator_preparation = None
+    if os.environ['GITHUB_REF_NAME'] == SIMULATOR_BRANCH:
+        from simulator_ready import validate_candidate
+        simulator_preparation = validate_candidate(ROOT)
     require(git('rev-parse', 'HEAD') == os.environ['GITHUB_SHA'], 'checkout source differs')
     subprocess.run(['git', '-C', str(ROOT), 'merge-base', '--is-ancestor', BASE, 'HEAD'], check=True)
     subprocess.run(['git', '-C', str(ROOT), 'merge-base', '--is-ancestor', COMPATIBILITY, 'HEAD'], check=True)
@@ -151,6 +157,8 @@ def main():
               'android_java_policy_source': ANDROID_POLICY, 'actual_android_host_interop_accepted': False,
               'legacy_workflows_unchanged': list(WORKFLOWS), 'negative_checks': checks,
               'protected_trees': expected, 'complete_product': False}
+    if simulator_preparation is not None:
+        output['simulator_preparation'] = simulator_preparation
     destination = ROOT / 'build/apple-page-theme/guard.json'
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(output, indent=2, sort_keys=True) + '\n')
