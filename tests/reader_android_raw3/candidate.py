@@ -13,6 +13,8 @@ end = source.index('    private JSONObject tree(',start)
 source = source[:start] + Path('tests/reader_android_record_interop/public_state.java.inc').read_text(encoding='utf-8') + '\n' + source[end:]
 cases = Path('tests/reader_android_record_interop/record_cases.java.inc').read_text(encoding='utf-8')
 changes = [
+    ('launch();until(node->id(node,"sdk_label")&&text(node).contains("3.41.0"),null,"actual initialized SDK owner",120000);',
+     'launch();until(node->(id(node,"sdk_label")&&text(node).contains("3.41.0"))||id(node,"reader_view"),null,"actual initialized shelf or restored reader",120000);need(owner(store->{store.nativeLibrary().checked();family(store);return NativeReadingSdk.parser();}).equals("exreader-sdk-3.41.0"),"actual initialized SDK owner reports the frozen native parser");'),
     ('NativeReadingProduct.Result result=NativeReadingProduct.apply(store,request,parents,kind,NativeReadingProduct.PUT,capture.bookKey,annotation,capture.mode,capture,kind==NativeReadingProduct.BOOKMARK?"Android actual sender point":"");',
      'NativeReadingProduct.Result result=NativeReadingProduct.applyVersioned(store,request,parents,kind,NativeReadingProduct.PUT,capture.bookKey,annotation,capture.mode,capture,kind==NativeReadingProduct.BOOKMARK?"Android actual sender point":"",capture.mode==ReadingCapture.FIXED?3:2);'),
     ('actual.capture.parser.equals("exreader-sdk-3.41.0"),"actual typed stored reading recapture',

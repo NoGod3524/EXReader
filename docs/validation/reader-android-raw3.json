@@ -51,6 +51,17 @@
       "preceding_raw_checks_passed": 18,
       "actual_mac_null_second_fresh_process_ui_refusal_passed": true,
       "actual_source_versions_1_and_2_restore_passed": true
+    },
+    {
+      "source_sha": "9498f3ed469a37063f0106c106ddaa08b2cfdce0",
+      "run_id": 40205927667,
+      "attempt": 1,
+      "android_job": 121206723756,
+      "protocol_job": 121206723917,
+      "failed_phase": "reopen-ui-initialization",
+      "reason": "The real kill boundary completed, but the shared test precondition looked only for the shelf SDK label while the actual host restored the PDF reader. The isolated raw test now accepts either initialized UI and directly checks the real SDK owner, native parser and seven raw providers. Original default and protocol suites remain unchanged.",
+      "preceding_raw_checks_passed": 18,
+      "real_kill_boundary_completed": true
     }
   ],
   "scope": "explicit API34 default x86_64 Android raw3 native host candidate",
