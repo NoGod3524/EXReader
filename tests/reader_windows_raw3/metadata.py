@@ -1,5 +1,6 @@
 """Build both installed metadata profiles and retain the entire original29-check suite."""
 import json
+import hashlib
 import os
 from pathlib import Path
 import subprocess
@@ -56,7 +57,9 @@ def main():
         report=json.loads((result/'result.json').read_text(encoding='utf-8'))
         if report['accepted'] is not True or report['count']!=29:
             raise RuntimeError('Original metadata checks incomplete')
-        rows.append(dict(profile=name,original_checks=29,profile_open_passed=True))
+        binaries={target:hashlib.sha256((consumer/(target+suffix)).read_bytes()).hexdigest()
+                  for target in ('metadata-consumer','metadata-c-consumer','command-consumer','metadata-profile')}
+        rows.append(dict(profile=name,original_checks=29,profile_open_passed=True,binaries=binaries))
     # Actual mixed-family configure attempts, never imported-target edits.
     for raw,dependency in ((False,'raw'),(True,'legacy')):
         name='raw-with-legacy' if raw else 'legacy-with-raw'

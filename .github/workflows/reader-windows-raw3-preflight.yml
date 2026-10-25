@@ -5,6 +5,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 jobs:
   source-preflight:
     runs-on: ubuntu-latest
@@ -42,4 +43,21 @@ jobs:
         with:
           name: windows-raw3-metadata-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/windows-raw3-metadata/
+          if-no-files-found: error
+  metadata-summary:
+    if: always()
+    needs: [source-preflight, installed-metadata]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate complete same-source jobs original ZIPs and actual installed consumers
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_windows_raw3/metadata_strict.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-raw3-metadata-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/windows-raw3-metadata-summary/
           if-no-files-found: error
