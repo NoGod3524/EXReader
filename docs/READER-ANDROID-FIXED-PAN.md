@@ -1,6 +1,6 @@
 # Android 固定页视口平移
 
-固定起点 `6b43e83537aa6b03bda889d258fe73c0e317acb1`；分支 `codex/reader-android-fixed-pan`。重启前源码检查点 `d199f0dc67ed929ad7c5a3fe8edb855ef50f1f67` 已推送；云端仍在执行，`accepted=false`，尚不授予新增范围。
+固定起点 `6b43e83537aa6b03bda889d258fe73c0e317acb1`；分支 `codex/reader-android-fixed-pan`。重启前受测源码 `d199f0dc67ed929ad7c5a3fe8edb855ef50f1f67` 的云端运行已自然结束为 failure；旧 92 项 UI 同源通过，新 Pan 尚未验收，`accepted=false`。
 
 ## 原生页面配色的真实缺口
 
@@ -18,11 +18,12 @@
 
 原 SDK/transport、Host16、Search15、Navigation18、Reading16、Preferences17 与 CBZ10 全部在同一源码保留。构建、语法、夹具生成、测试及工件解析仅 Actions。真机、TalkBack语音、配色、性能与六平台完整产品独立跟踪。
 
-## 重启前检查点（2026-10-25 00:35:15 UTC）
+## 重启前检查点（2026-10-25 00:40:57 UTC）
 
-- 工作区 `C:/Users/Oscar/.codex/worktrees/reader-android-sync-session/EXReader`；功能分支 `codex/reader-android-fixed-pan`。源码 HEAD 与 origin 均为 `d199f0dc67ed929ad7c5a3fe8edb855ef50f1f67`，源码、测试、工作流均已提交推送，工作树干净。本次随后仅提交这两份检查点文档，提交信息含 `[skip ci]`，精确文档 HEAD 由交回消息列出。
-- [run 40146403326](https://github.com/NoGod3524/EXReader/actions/runs/40146403326)，attempt 1，job `121028566204`，该时刻为 `in_progress`、conclusion 为 null。完整宿主/测试 APK 编译及原生审计已结束，正在 `Actual SDK owner import and public original export in Android private storage`。尚未读取终态逐项结果，不能认定 Pan8 或继承 UI 套件通过。
-- 该云端任务保持原样运行；不停止、不重跑，不另开新轮。已有 CBZ 完整交付仍是起点 `6b43e835`，不受本次未验收平移影响。
+- 工作区 `C:/Users/Oscar/.codex/worktrees/reader-android-sync-session/EXReader`；功能分支 `codex/reader-android-fixed-pan`。源码、测试、工作流已提交推送。受测源码是 `d199f0dc67ed929ad7c5a3fe8edb855ef50f1f67`；上一次纯文档检查点 `5e1d839c55615ad44a5d92461637804098ef67bc` 已用 `git ls-remote` 确认在远端，工作树当时干净。本次随后提交最小诊断留存修正与这两份文档，信息含 `[skip ci]`，精确最终 HEAD 由交回消息列出。
+- [run 40146403326](https://github.com/NoGod3524/EXReader/actions/runs/40146403326)，attempt 1，job `121028566204`，已自然 `completed/failure`。完整宿主/测试 APK 编译及原生审计通过；Host16、Search15、Navigation18、Reading16、Preferences17、CBZ10 共 92 项 UI 同源通过。新 Pan 首阶段在 `json.loads(private('fixed-pan-ui-first.json'))` 报 `JSONDecodeError`，新授予检查为 0；尚未定位仪器化根因，不能据此断言 SDK 或平移实现故障。
+- 原工件 `12580498901`，146190324 B，SHA-256 `51d6ea82c9ccc4f9ca0f7fc960826d986c924b544cdc303ed7f66848adfaceda`，有效期 `2027-01-23T00:21:56Z`，保留未改。已保存原 `first-instrumentation.txt`；旧驱动在解析报告前未保存 raw report/logcat，故当前日志不足定位。最小留存修正现先保存原报告字节与 logcat，解码失败时打印原仪器化与原字节；所有验收断言保留。该修正尚未执行，不为它新开运行。
+- 运行未被停止或重跑，没有另开新轮。已有 CBZ 完整交付仍是起点 `6b43e835`，不受本次未验收平移影响。
 - 首轮 `e2f177f5` / run `40145782695` 在去掉新四象限清单里无关的旧 PDF 搜索预期后取消，原工件 `12580996162` 保留。`1c7e1634` / run `40145939682` 在 ReaderView 平移条件少一右括号处编译失败，原工件 `12580242735` 保留；`d199f0dc` 已修该语法错误，未改测试断言。完整字节/散列见 [检查点 JSON](validation/reader-android-fixed-pan.json)。
 
-下个真实动作：重启后先只读查上述既有 run/job 的实际终态，再读原始日志/工件。若失败，按真实错误修最小根因并保留旧失败；若 success，逐项确认新 first7 + reopen1 及全旧套件。随后再开独立 `codex/reader-android-fixed-pan-proof` 诊断分支，在 Actions 下载原 ZIP 核对身份并独立解码保存的系统截图，严格复查 9 个角像素、15 份 PNG、14 次原件身份和两个真实进程。可参考此前只读 CBZ proof source `234389f986f8ea8c83d1b8e3c6e0f8174c3469a6`；Pan 报告字段为 `display_pixels`、`pan_frames`，检查名从本包 `run_ui.py` 的 `expected` 读取。诊断必须保持 `diagnostic_only=true, accepted=false`，不得合入 `*-proof`。只有原运行及独立证据完成后才把本包 accepted 改为 true。
+下个真实动作：重启后在 Actions 只读下载上述原 ZIP，核对完整身份后读取 `android-fixed-pan/ui/first-instrumentation.txt` 及实际留存文件，定位原仪器化/报告生成根因；本地不下载或解析 ZIP。随后按真实错误做最小修正，以包含诊断留存修正的源码跑完整同源整轮，保留所有旧断言与失败原件。只有新 first7 + reopen1 和全旧套件真实成功后，再开独立 `codex/reader-android-fixed-pan-proof`，在 Actions 独立解码保存的系统截图并严格复查 9 个角像素、15 份 PNG、14 次原件身份和两个真实进程。可参考此前只读 CBZ proof source `234389f986f8ea8c83d1b8e3c6e0f8174c3469a6`；Pan 报告字段为 `display_pixels`、`pan_frames`，检查名从本包 `run_ui.py` 的 `expected` 读取。诊断保持 `diagnostic_only=true, accepted=false`，不得合入 `*-proof`。本次不启动上述后续云端工作。

@@ -4,15 +4,17 @@
   "fixed_base": "6b43e83537aa6b03bda889d258fe73c0e317acb1",
   "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
   "checkpoint": {
-    "observed_at_utc": "2026-10-25T00:35:15Z",
+    "observed_at_utc": "2026-10-25 00:40:57 UTC",
     "branch": "codex/reader-android-fixed-pan",
     "workspace": "C:/Users/Oscar/.codex/worktrees/reader-android-sync-session/EXReader",
     "source_head": "d199f0dc67ed929ad7c5a3fe8edb855ef50f1f67",
     "source_origin_head": "d199f0dc67ed929ad7c5a3fe8edb855ef50f1f67",
     "source_worktree_clean": true,
     "all_source_tests_workflow_committed_and_pushed": true,
-    "reason": "user requested restart-safe checkpoint; no new feature or cloud round; running cloud job left unchanged",
-    "checkpoint_commit": "subsequent evidence-only [skip ci] commit; exact final HEAD supplied in handback"
+    "reason": "user requested restart-safe checkpoint; original live run naturally completed failure; no new cloud round started",
+    "checkpoint_commit": "subsequent [skip ci] commit contains only original raw-report/log preservation in the new test driver and these checkpoint docs; exact final HEAD supplied in handback",
+    "previous_checkpoint_head": "5e1d839c55615ad44a5d92461637804098ef67bc",
+    "previous_checkpoint_remote_head": "5e1d839c55615ad44a5d92461637804098ef67bc"
   },
   "runs": [
     {
@@ -54,26 +56,50 @@
       "run_id": 40146403326,
       "attempt": 1,
       "job_id": 121028566204,
-      "status": "in_progress",
-      "conclusion": null,
-      "active_step": "Actual SDK owner import and public original export in Android private storage",
+      "status": "completed",
+      "conclusion": "failure",
       "builds_and_native_audits_completed": true,
-      "ui_acceptance_not_yet_observed": true,
-      "artifact": null
+      "checks": 0,
+      "inherited_ui": {
+        "host": 16,
+        "search": 15,
+        "navigation": 18,
+        "reading": 16,
+        "preferences": 17,
+        "cbz_reading": 10,
+        "total": 92,
+        "all_passed": true
+      },
+      "failure": "new Pan first phase report could not be decoded: json.decoder.JSONDecodeError at run_ui.py json.loads(private(...)); instrumentation-level root cause not yet read",
+      "artifacts": [
+        {
+          "id": 12580498901,
+          "name": "reader-android-fixed-pan-40146403326-1",
+          "bytes": 146190324,
+          "sha256": "51d6ea82c9ccc4f9ca0f7fc960826d986c924b544cdc303ed7f66848adfaceda",
+          "expires_at": "2027-01-23T00:21:56Z"
+        }
+      ]
     }
   ],
-  "pending": "read terminal state of run 40146403326; no local builds/tests/syntax/artifact parsing",
+  "pending": "Actions-only read of original 40146403326 ZIP first-instrumentation.txt to diagnose missing/invalid private report; Pan remains unaccepted",
   "next_actions": [
-    "Read run 40146403326 and job 121028566204 metadata; preserve that existing run and wait for its actual terminal state.",
-    "Only after terminal state, read its real logs and artifact metadata; if failure fix the named root cause without weakening assertions, then run a complete same-source round after restart.",
-    "If success, require Pan8 (first7/reopen1) and unchanged Host16/Search15/Navigation18/Reading16/Preferences17/CBZ10 plus original SDK/transport results.",
-    "After restart create a separate codex/reader-android-fixed-pan-proof diagnostic branch if success: download the exact original ZIP in Actions, verify id/bytes/full SHA/expiry/source/run, decode the saved screenshot PNGs independently and strictly compare all nine planned corner pixels; verify 15 PNG captures, 14 original source identities and two process PIDs plus inherited results.",
-    "Then update only evidence docs with real accepted result; never merge a *-proof branch or grant page colors/physical-device/TalkBack/performance/full-product scope."
+    "After restart, use Actions-only read-only diagnostic work to inspect artifact 12580498901 first-instrumentation.txt and available output files; verify exact ZIP id/bytes/digest/source before reading. Do not locally download or parse it.",
+    "Identify and fix the actual instrumentation/report-generation root cause. No Pan check is granted; the JSON decode failure alone does not establish an SDK or panning fault.",
+    "Run the full source after the unexecuted raw-report/log preservation change and any real root-cause fix; preserve original failed run/artifact and every old Host/Search/Nav/Reading/Prefs/CBZ assertion.",
+    "On actual success, require Pan8 (first7/reopen1) and unchanged 92 UI checks plus original SDK/transport results; only then open a separate proof diagnostic branch to verify original ZIP and independently decode saved screenshots.",
+    "Never merge a *-proof branch or grant page colors/physical-device/TalkBack/performance/full-product scope."
   ],
   "prior_completed_cbz_head": "6b43e83537aa6b03bda889d258fe73c0e317acb1",
   "page_colors_accepted": false,
   "physical_device_execution": false,
   "talkback_speech_accepted": false,
   "performance_accepted": false,
-  "complete_product": false
+  "complete_product": false,
+  "unexecuted_minimal_diagnostic_fix": {
+    "path": "tests/reader_android_fixed_pan/run_ui.py",
+    "change": "save raw report bytes and logcat before JSON parsing; print original instrumentation/raw report when decode fails; all acceptance assertions retained",
+    "tested": false,
+    "new_cloud_run_started": false
+  }
 }
