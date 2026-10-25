@@ -1,0 +1,84 @@
+{
+  "schema": 1,
+  "product_source": null,
+  "entries": [
+    {
+      "scope": "default_ui", "platform": "windows", "kind": "native_host",
+      "run_id": 40201283788, "attempt": 1, "workflow": ".github/workflows/reader-windows-compact.yml",
+      "source_sha": "eab342ef456be4a8a1811e5249e3c217d906ce8a",
+      "jobs": ["preflight", "installed F1 and native Windows search controls and lifecycle", "same-source native Windows search artifact authentication"],
+      "artifacts": [
+        {"id": 12602637196, "name": "reader-windows-search-summary-40201283788-1", "bytes": 9142, "sha256": "66cae39b5cc7aebbf08119245679ab74251705253eaa4878517685c09ca3927e"},
+        {"id": 12601764928, "name": "reader-windows-search-initial-40201283788-1", "bytes": 169964880, "sha256": "4e158bdda8c18561b972b85d22ea8e71c6c6dcdc997b3f23a55747fc195954d3"}
+      ]
+    },
+    {
+      "scope": "default_ui", "platform": "gtk", "kind": "native_host",
+      "run_id": 40206458217, "attempt": 1, "workflow": ".github/workflows/reader-gtk-compact.yml",
+      "source_sha": "57203a52aee439be5194ee0a4b13563a975e8daf",
+      "jobs": ["preflight", "GTK 3.41 complete retained suites and actual owner record compatibility", "Authenticate candidate canvas raw ZIP and source-bound reports", "Authenticate distinct compact ON and complete original OFF scopes"],
+      "artifacts": [
+        {"id": 12605108334, "name": "reader-gtk-341-final-summary-40206458217-1", "bytes": 15706, "sha256": "9e5b43cb209b151eb1042722d31fc7f02c431194ef3779a1482179410b3559d5"},
+        {"id": 12604909051, "name": "reader-gtk-compact-summary-40206458217-1", "bytes": 19348, "sha256": "4533df7c38b597b70645f4c764f0c602468593c567b86b6e07968e3ce4244044"},
+        {"id": 12604604561, "name": "reader-gtk-341-final-40206458217-1", "bytes": 112659381, "sha256": "8d6c52593dd2017a6e13ffc2cf75fd3fd4546cdf3a5179b0da5afd55ac1fb685"}
+      ]
+    },
+    {
+      "scope": "host", "platform": "android", "kind": "emulator",
+      "run_id": 40207467982, "attempt": 1, "workflow": ".github/workflows/reader-android-raw3.yml",
+      "source_sha": "4a04a9cc74dde67f755c87e87b278d63a254a3ac",
+      "jobs": ["protocol", "android", "summary"],
+      "artifacts": [
+        {"id": 12604863663, "name": "reader-android-raw3-summary-40207467982-1", "bytes": 3328, "sha256": "03b8c54ea4b8e15a379d10bd508b09cc80b25cecf2fb90fff5e73e7773bf98f7"},
+        {"id": 12604412857, "name": "reader-android-record-bundle-40207467982-1", "bytes": 16618, "sha256": "616552b26869f532870467a450a85813080f502c054765fcdbcc06c2979cb2d4"},
+        {"id": 12604233206, "name": "reader-android-raw3-bundle-40207467982-1", "bytes": 18682, "sha256": "a38bffdb57ca35699e21b902def18a9d584a6055b7fbef41995e61b240c6168c"},
+        {"id": 12604412854, "name": "reader-android-raw3-40207467982-1", "bytes": 113970957, "sha256": "c3db2ad1a2e31bc53d01620f2ef90e02a976e3b4f90ac76ed2e179c7c9052805"}
+      ]
+    },
+    {
+      "scope": "host", "platform": "macos", "kind": "native_host",
+      "run_id": 40196978163, "attempt": 1, "workflow": ".github/workflows/reader-apple-raw3.yml",
+      "source_sha": "15dab6b2270dc296ed6239db67ced2e22d255e65",
+      "jobs": ["Actual macOS raw host and original controls", "summary"],
+      "artifacts": [
+        {"id": 12601910101, "name": "apple-raw3-summary-40196978163-1", "bytes": 509, "sha256": "ff5bf72b40c5481b82fa5ed2e4992d5db62b424e804b1b419f9a0eee87196f9c"},
+        {"id": 12600789926, "name": "apple-raw3-native-40196978163-1", "bytes": 77056135, "sha256": "92be56ffa04d7c334d4811a42821a314089b4f8ae01746f0dfdf456b5eab9bd5"}
+      ]
+    },
+    {
+      "scope": "bidirectional", "direction": "android_to_apple", "kind": "native_host",
+      "run_id": 40210925809, "attempt": 1, "workflow": ".github/workflows/reader-apple-raw3-android-receive.yml",
+      "source_sha": "5062d5cd570eb9be9449e790895b5430d344d11d",
+      "jobs": ["Actual macOS raw host and original controls", "Original unchanged macOS strict summary", "Actual authenticated Android to macOS receive", "summary"],
+      "artifacts": [
+        {"id": 12606241221, "name": "apple-raw3-summary-40210925809-1", "bytes": 509, "sha256": "efe414989943cfa344146104306582ff5903133272b05f43ada7099221eb4db1"},
+        {"id": 12606012685, "name": "apple-raw3-android-receive-summary-40210925809-1", "bytes": 1075, "sha256": "08f89ffabac221789efb58cbd3aa277abe9075f3744ce6f1d1d8bcfbfdbf7297"},
+        {"id": 12605778060, "name": "apple-raw3-android-receive-40210925809-1", "bytes": 41839337, "sha256": "e7d56df798b8d7cfe6b4c2682cf621a8f1139450ba73867cd8739bbb9d2cc136"},
+        {"id": 12605523032, "name": "apple-raw3-native-40210925809-1", "bytes": 77055617, "sha256": "101e88a6b3f6493fee5c320d1c5a6c3d2b512095f2bef4eed7e025bb20384ee5"}
+      ]
+    },
+    {
+      "scope": "modules", "platform": "modules", "kind": "native_host",
+      "run_id": 40209325599, "attempt": 1, "workflow": ".github/workflows/reader-windows-raw3-preflight.yml",
+      "source_sha": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+      "jobs": ["source-preflight", "installed-metadata (ubuntu-latest)", "installed-metadata (windows-2022)", "metadata-summary"],
+      "artifacts": [
+        {"id": 12604303499, "name": "windows-raw3-metadata-summary-40209325599-1", "bytes": 710, "sha256": "56274c57e5df447c3d8ff43513866dd864d05743199a76782ee5e342fbc8e896"},
+        {"id": 12604133762, "name": "windows-raw3-source-only-40209325599-1", "bytes": 473, "sha256": "a7b31592635e86121026845fcfd4e1afb6872e3367e2e4d9093967b35f0407a6"},
+        {"id": 12604774056, "name": "windows-raw3-metadata-Linux-40209325599-1", "bytes": 18344581, "sha256": "c765225c86e83cf1f7b31028e487456086a81138d4a52980f294f24f18c06514"},
+        {"id": 12604173715, "name": "windows-raw3-metadata-Windows-40209325599-1", "bytes": 22463059, "sha256": "5e9057311636460c2c38463bcb59ab83042e94be6402f2a108c70029bc357d03"}
+      ]
+    }
+  ],
+  "negative_controls": [
+    {
+      "scope": "host", "platform": "ios", "kind": "emulator",
+      "run_id": 40203714083, "attempt": 1, "workflow": ".github/workflows/reader-apple-raw3-ios.yml",
+      "source_sha": "72c6bbdd14ebf3be453fa7f0da81119d52675eb5",
+      "jobs": ["Installed SDK and exact raw products macos", "Installed SDK and exact raw products iphonesimulator", "Actual raw iOS UI iphone", "Actual raw iOS UI ipad", "summary"],
+      "artifacts": [
+        {"id": 12603109164, "name": "apple-raw3-ios-ipad-40203714083-1", "bytes": 186160503, "sha256": "ea028247733536a7864f133b446cd54b41f0aecc76db51befaafaf2f117e61af"}
+      ]
+    }
+  ]
+}

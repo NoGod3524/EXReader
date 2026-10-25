@@ -1,0 +1,56 @@
+name: Reader final C01 product evidence gate
+on:
+  push:
+    branches: [codex/reader-fw-c01]
+    paths:
+      - tests/reader_final_c01/**
+      - docs/reader-final-c01/run-table.json
+      - .github/workflows/reader-final-c01.yml
+  workflow_dispatch:
+    inputs:
+      run_table:
+        description: Optional root-supplied JSON run table; empty uses docs/reader-final-c01/run-table.json
+        type: string
+        required: false
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: reader-final-c01
+  cancel-in-progress: false
+jobs:
+  protocol:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Parse the gate and exercise synthetic refusal controls
+        run: |
+          python -m py_compile tests/reader_final_c01/final_gate.py tests/reader_final_c01/test_final_gate.py
+          python tests/reader_final_c01/final_gate.py --self-test
+  collect:
+    needs: protocol
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate the real partial run table and derive live refusal controls
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_TABLE: ${{ inputs.run_table }}
+        run: |
+          table=docs/reader-final-c01/run-table.json
+          if [ -n "$RUN_TABLE" ]; then printf '%s' "$RUN_TABLE" > "$RUNNER_TEMP/table.json"; table="$RUNNER_TEMP/table.json"; fi
+          python tests/reader_final_c01/final_gate.py --table "$table" --derived-controls
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-final-c01-result-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-final-c01/result.json
+          if-no-files-found: error
