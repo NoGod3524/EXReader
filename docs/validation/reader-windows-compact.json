@@ -1,5 +1,16 @@
 {
-  "accepted": false,
+  "accepted": true,
+  "source": "eab342ef456be4a8a1811e5249e3c217d906ce8a",
+  "run": 40201283788,
+  "attempt": 1,
+  "compact_checks": 22,
+  "compact_program_sha256": "37caa77499e94ed060a2fc71f503fbf22be8abf2f3bb943af59890d785dcc7ff",
+  "jobs": {"preflight":121192805744,"native":121192850915,"strict":121197293392},
+  "artifacts": [
+    {"id":12601764928,"name":"reader-windows-search-initial-40201283788-1","bytes":169964880,"digest":"sha256:4e158bdda8c18561b972b85d22ea8e71c6c6dcdc997b3f23a55747fc195954d3","expires_at":"2027-01-23T14:14:14Z"},
+    {"id":12602637196,"name":"reader-windows-search-summary-40201283788-1","bytes":9142,"digest":"sha256:66cae39b5cc7aebbf08119245679ab74251705253eaa4878517685c09ca3927e","expires_at":"2027-01-23T14:14:14Z"}
+  ],
+  "original_OFF_full_F3_and_atomic13_accepted": true,
   "branch": "codex/reader-windows-compact",
   "base": "25bc0c67971f81491f50e0a3caaaf7e509bb7e35",
   "runs": [
