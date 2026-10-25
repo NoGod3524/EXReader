@@ -9,9 +9,10 @@ assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip() 
 subprocess.run(['git', 'merge-base', '--is-ancestor', BASE, 'HEAD'], check=True)
 paths = subprocess.check_output(['git', 'diff', '--name-only', BASE, 'HEAD'], text=True).splitlines()
 direct = {'src/raster.c', 'include/exr/render.h', 'include/exr/base.h', 'CMakeLists.txt', 'cmake/versions.cmake',
-          '.github/workflows/sdk-page-background.yml', 'docs/SDK-PAGE-BACKGROUND.md'}
+          '.github/workflows/sdk-page-background.yml', '.github/workflows/sdk-page-background-mobile.yml',
+          'docs/SDK-PAGE-BACKGROUND.md'}
 for path in paths:
-    if path in direct or path.startswith('tests/sdk_page_background/'):
+    if path in direct or path.startswith(('tests/sdk_page_background/', 'tests/sdk_page_background_mobile/')):
         continue
     assert path.startswith(('examples/', 'tests/')) and path.endswith('/CMakeLists.txt'), path
     original = subprocess.check_output(['git', 'show', BASE + ':' + path], text=True)

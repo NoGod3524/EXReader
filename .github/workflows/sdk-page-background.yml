@@ -2,6 +2,10 @@ name: Additive SDK page background candidate
 on:
   push:
     branches: [codex/sdk-page-background]
+    paths-ignore:
+      - 'tests/sdk_page_background_mobile/**'
+      - '.github/workflows/sdk-page-background-mobile.yml'
+      - 'docs/**'
   workflow_dispatch:
     inputs:
       verify_run:
