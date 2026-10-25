@@ -3,6 +3,11 @@ on:
   push:
     branches: [codex/reader-gtk-drop-import-ui]
   workflow_dispatch:
+    inputs:
+      recheck_legacy_report:
+        description: Reauthenticate frozen 722eb438 raw ZIP with corrected legacy schema handling; no builds
+        type: boolean
+        default: false
 permissions:
   contents: read
   actions: read
@@ -12,6 +17,7 @@ defaults:
 jobs:
   account:
     name: GTK book file drop paste and retained native suites
+    if: ${{ inputs.recheck_legacy_report != true }}
     runs-on: ubuntu-22.04
     timeout-minutes: 65
     steps:
@@ -417,15 +423,20 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Authenticate finished same-source attempt and every bound report
         env:
           GH_TOKEN: ${{ github.token }}
+          GTK_DROP_RECHECK_LEGACY: ${{ inputs.recheck_legacy_report }}
         run: python3 tests/reader_gtk_drop_import/aggregate.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: reader-gtk-drop-summary-${{ github.run_id }}-${{ github.run_attempt }}
-          path: build/gtk-drop-summary/verified.json
+          path: |
+            build/gtk-drop-summary/verified.json
+            build/gtk-drop-recheck/gtk-drop-evidence.json
           if-no-files-found: error
 
 
