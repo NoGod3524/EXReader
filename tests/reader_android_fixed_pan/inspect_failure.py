@@ -15,6 +15,14 @@ source = 'd199f0dc67ed929ad7c5a3fe8edb855ef50f1f67'
 artifact = 12580498901
 size = 146190324
 digest = 'sha256:51d6ea82c9ccc4f9ca0f7fc960826d986c924b544cdc303ed7f66848adfaceda'
+case = os.environ.get('FAILURE_CASE') or 'original'
+assert case in ('original', 'viewport')
+if case == 'viewport':
+    run = 40154163799
+    source = '094d475e2d8860c30ffcc2fb903d5aa9747706e9'
+    artifact = 12584082874
+    size = 146820764
+    digest = 'sha256:bac698dcac07a4917e36412ada410213ef93a1ac2701d56f5a072b534019fd60'
 api = 'https://api.github.com/repos/NoGod3524/EXReader'
 headers = {'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json', 'User-Agent': 'EXReader-pan-diagnosis'}
 
@@ -55,7 +63,24 @@ assert archive.getinfo(found[0]).file_size < 1024**2
 print(json.dumps({'diagnostic_only': True, 'accepted': False, 'source': source, 'run': run, 'artifact': artifact, 'digest': digest, 'path': found[0]}), flush=True)
 print(archive.read(found[0]).decode('utf-8', errors='replace'), flush=True)
 print(json.dumps({'retained_pan_files': [name for name in names if 'android-fixed-pan/ui/' in name]}), flush=True)
+reports = [name for name in names if name.endswith('android-fixed-pan/ui/first-report.json')]
+if reports:
+    assert len(reports) == 1 and archive.getinfo(reports[0]).file_size < 8 * 1024**2
+    report = json.loads(archive.read(reports[0]))
+    assert report['source_sha'] == source and report['run_id'] == str(run) and report['attempt'] == '1'
+    def selected(tree):
+        result = []
+        if tree.get('id', '').endswith('/selection_status'):
+            result.append(tree.get('text'))
+        for child in tree.get('children', []):
+            result.extend(selected(child))
+        return result
+    print(json.dumps({'diagnostic_only': True, 'accepted': False, 'checks': report['checks'],
+                      'failure': report.get('failure'), 'observations': [
+                          {'name': item['name'], 'selected': selected(item['tree']), 'frame': item.get('frame')}
+                          for item in report['observations']]}, ensure_ascii=False), flush=True)
 if os.environ.get('PREPARE_REPLAY') == 'true':
+    assert case == 'original'
     folder = Path('build/android-fixed-pan-replay')
     folder.mkdir(parents=True, exist_ok=True)
     for suffix, output in [('examples/android/app/build/outputs/apk/debug/app-debug.apk', 'host.apk'),
