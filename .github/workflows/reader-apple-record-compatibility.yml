@@ -1,7 +1,7 @@
 name: Apple actual old record upgrade compatibility
 on:
   push:
-    branches: [codex/reader-apple-record-compatibility]
+    branches: [codex/reader-apple-record-compatibility, codex/reader-parser-tag-interop]
   workflow_dispatch:
 permissions:
   contents: read
