@@ -207,3 +207,11 @@ strict boolean successful unique case outcomes with count consistency. Executabl
 negative cases run in Actions before the strict real-artifact authentication.
 Original cases and historical failures remain intact. No new platform, host UI,
 performance or real-device scope is claimed. No local builds or tests were run.
+
+Further transport tracing found that POSIX libcurl inherited ambient proxy variables
+although the public API promises no proxy. It now explicitly disables proxies;
+the real HTTP/TLS consumer subprocesses run with poisoned proxy variables and no
+NO_PROXY exception. Windows already uses explicit no-proxy transport. These
+changes require fresh three-platform CI. A hard wall-clock deadline for slow
+streaming responses remains unverified across native transports; the existing
+connection/read/low-speed limits are not promoted to such a claim.
