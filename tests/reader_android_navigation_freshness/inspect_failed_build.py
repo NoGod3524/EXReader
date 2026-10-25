@@ -25,7 +25,8 @@ body = api(f'actions/artifacts/{ARTIFACT}/zip', raw=True)
 need(len(body) == SIZE and hashlib.sha256(body).hexdigest() == DIGEST, 'diagnostic ZIP bytes differ')
 with zipfile.ZipFile(io.BytesIO(body)) as archive:
     names = archive.namelist()
-    for suffix in ('trace-probe-build.log', 'original-control/result.json'):
+    for suffix in ('trace-probe-build.log', 'original-control/result.json',
+                   'original-apk-trace/first-instrumentation.txt', 'original-apk-trace/runner.log'):
         matches = [name for name in names if name == suffix or name.endswith('/' + suffix)]
         need(len(matches) == 1, 'requested original diagnostic member absent or duplicated: ' + suffix)
         data = archive.read(matches[0]); need(len(data) <= 512 * 1024, 'unexpected diagnostic log size')
