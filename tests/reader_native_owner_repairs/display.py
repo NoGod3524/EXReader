@@ -4,6 +4,7 @@ from ctypes import wintypes as W
 import json
 import os
 from pathlib import Path
+import time
 
 
 class DISPLAY(C.Structure):
@@ -73,7 +74,13 @@ def main():
                     break
         actual = current()
         area = W.RECT()
-        assert user.SystemParametersInfoW(0x30, 0, C.byref(area), 0)
+        deadline = time.monotonic() + 10
+        while True:
+            actual = current()
+            assert user.SystemParametersInfoW(0x30, 0, C.byref(area), 0)
+            if area.right - area.left >= 1060 and area.bottom - area.top >= 660 or time.monotonic() >= deadline:
+                break
+            time.sleep(.1)
         report['actual_mode'] = fields(actual)
         report['actual_work_area'] = [area.left, area.top, area.right, area.bottom]
         assert actual.width >= 1280 and actual.height >= 900 and area.right - area.left >= 1060 and area.bottom - area.top >= 660, 'runner cannot provide a real supported display for the unchanged original compact22 minimum assertions'

@@ -68,4 +68,32 @@ bodies execute unchanged. The new native judge includes rejection controls.
 The separate original GTK OFF35 and Windows OFF F3 atomic13 suites are not
 part of this new entry and are explicitly recorded as not rerun. This entry
 does not grant full product, six-platform, screen reader, DPI or contrast
-acceptance. No cloud round has completed yet.
+acceptance.
+
+## First complete round: retained failure
+
+Source `627e51c645f3e46216c93131fcadd0933a8158a1`, run `40239866130` /
+attempt 1 failed. Windows legacy host built and original compact reached
+16/22; the old expanded-window assertion requires width >=1060 on a runner
+whose actual work area is 1024 wide. The owner now caps minimum bounds at the
+real work area, so the old assertion's environment prerequisite is no longer
+met. Its source/assertion is unchanged. The second round enumerates supported
+native display modes, applies one and requires actual mode/work-area readback;
+dedicated bounds cases still use actual 1024x728 and 800x600 work areas.
+
+GTK's unchanged complete raw/legacy owner, kill and original Mac11/NULL receive
+suites succeeded. Its original compact45 passed; all four D09 environments
+completed with zero findings. The added legacy keyboard/menu focus setup
+then timed out waiting for `native_import`, a preferences-only observation
+absent in the legacy build. This was a harness prerequisite failure; it grants
+no new legacy focus scope. The fix reads native chooser text/button through
+AT-SPI and activates the actual Import button once with keyboard input. The
+raw build additionally retains its native observation cross-check.
+
+Original failed producer ZIPs are retained: Windows `12616860904`, 186318428 B,
+SHA256 `0400dc4d5ed7e2cec2197a30d2233b217cd1cd095ec14ddaf185282648bd71e1`;
+GTK `12616449468`, 128094969 B,
+SHA256 `2a6f987f7a3adae21453e95a4c17deeaa4088ce6d01dd0952a339634e7db9665`.
+The strict job refused the failed producers. No package acceptance is granted
+from this round. The tuple/list source-evidence fix and stricter public SDK
+snapshot/negative checks were prepared by static review and have not run yet.
