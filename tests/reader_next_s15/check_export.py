@@ -92,23 +92,27 @@ try:
         passcase(name)
     summary['install_graph'] = report['cases']
 
-    # Fresh installed C consumer: C ABI, exact version, single owner, real export.
+    # Fresh installed C consumer: C ABI, exact version, single owner.
     c1 = subprocess.run([str(c_consumer)], capture_output=True, timeout=120)
     (raw / 'c-consumer.txt').write_bytes(c1.stdout + c1.stderr)
     require(c1.returncode == 0, 'C ABI consumer: ' + c1.stderr.decode(errors='replace'))
     cabi = json.loads(c1.stdout)
     require(cabi['c_abi'] == 1 and cabi['version'] == '3.41.0' and cabi['abi'] == 1, 'C ABI identity'); passcase('installed_c_abi')
+
+    call(['seed', db, fixtures, product])
+    manifest = json.loads((fixtures / 'manifest.json').read_text())
+
+    # The same installed C consumer exports a real original byte-exactly.
     cdir = output / 'c-consumer'; cdir.mkdir()
     c2 = subprocess.run([str(c_consumer), str(db), str(cdir)], capture_output=True, timeout=180)
     (raw / 'c-consumer-export.txt').write_bytes(c2.stdout + c2.stderr)
     require(c2.returncode == 0, 'C ABI export: ' + c2.stderr.decode(errors='replace'))
     cexp = json.loads(c2.stdout)
-    manifest = json.loads((fixtures / 'manifest.json').read_text())
     require(cexp['hash'] == manifest[0]['sha256'] and cexp['bytes'] == manifest[0]['bytes'], 'C consumer hash/size')
     require(Path(cexp['path']).read_bytes() == (fixtures / 'book.txt').read_bytes(), 'C consumer original bytes')
     passcase('installed_c_abi_real_export')
 
-    call(['seed', db, fixtures, product]); call(['inspect', db, output / 'before', product])
+    call(['inspect', db, output / 'before', product])
     sdk_db_before = sha(db); product_before = sha(product)
 
     # Nine non-streamed (memory-imported) originals exported byte-exactly.
