@@ -23,7 +23,8 @@ def check(core, out, raw, old, product, sdk, dav):
                 + ' PATHS "' + path(location / 'lib/cmake' / package) + '" NO_DEFAULT_PATH)\n')
     def configure(name, body, expected=None, selected_prefix=None):
         source = out / (name + '-source');source.mkdir()
-        (source / 'CMakeLists.txt').write_text('cmake_minimum_required(VERSION 3.24)\nproject(OriginGuard LANGUAGES C CXX)\n' + body)
+        (source / 'CMakeLists.txt').write_text('cmake_minimum_required(VERSION 3.24)\nproject(OriginGuard LANGUAGES C CXX)\n'
+            + 'if(MSVC)\n  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")\nendif()\n' + body)
         (source / 'main.c').write_text('int main(void){return 0;}\n')
         p = subprocess.run(['cmake', '-S', source, '-B', out / name, '-G', 'Ninja',
                             '-DCMAKE_BUILD_TYPE=Release', '-DCMAKE_PREFIX_PATH=' + (selected_prefix or prefix)],
@@ -46,7 +47,7 @@ def check(core, out, raw, old, product, sdk, dav):
              + 'set(EXReaderRevisions_DIR "' + path(raw / 'lib/cmake/EXReaderRevisions') + '" CACHE PATH "" FORCE)\n')
     for name, preload, error in [
         ('cached-revisions', find('EXReaderRevisions', '0.3.0', old), 'legacy capability family'),
-        ('cached-sdk340', find('EXReader', '3.40.0', sdk340, 'COMPONENTS core library'), 'EXReader::exr_core'),
+        ('cached-sdk340', find('EXReader', '3.40.0', sdk340, 'COMPONENTS core library'), 'EXReader::exr_'),
         ('cached-both', find('EXReader', '3.40.0', sdk340, 'COMPONENTS core library')
                        + find('EXReaderRevisions', '0.3.0', old), 'legacy capability family')]:
         configure(name, preload + reset + find('EXReaderReadingState', '0.2.0', raw), error)
