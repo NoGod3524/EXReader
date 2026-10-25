@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import subprocess
 
-BASE = '84a69b0e1e8ab8407042a68d97ea3f2d1591a887'
+BASE = '2c5a6cbb087c43abd7643e0085b3300fde95f125'
 SDK = '9854061be331fe603a1822d9b2b36ee357154927'
 DELIVERIES = {
     'g1': '3bcc6511c928665c0889a33bc98cf5e1bfadaccc',
@@ -17,9 +17,17 @@ DELIVERIES = {
     'windows_reading_records': '2dcd325b31590bbb5374842e6c7f26fa2dcedd21',
     'gtk_batch_import': '2df6040666635bcd7b0349b035b8f4885757fdd0',
     'android_fixed_pan': 'c5f55fbedcd15a910a40626624e997b58f8fd1b6',
+    'gtk_navigation_driver': '600ef981fb44acd91dca618850a25d1725de18f7',
+    'apple_reading_records_candidate': '25eeb6aaccdc50e670f0aaea73631818bc0551f8',
 }
 ALLOWED = (
     'tests/reader_hosts_integration/', '.github/workflows/reader-hosts-integration.yml',
+    '.github/workflows/reader-apple-reading-records.yml',
+    '.github/workflows/reader-apple-navigation.yml',
+    '.github/workflows/reader-apple-search.yml',
+    '.github/workflows/reader-apple-shelf.yml',
+    '.github/workflows/reader-apple-import-mapping.yml',
+    '.github/workflows/wp13-apple.yml',
     'tests/reader_windows_search/verify.py', 'tests/reader_windows_search/check_ui.py',
     'tests/reader_windows_navigation/verify.py',
     'tests/reader_windows_records/verify.py',
