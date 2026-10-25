@@ -4,7 +4,7 @@ import json
 import os
 from pathlib import Path
 import shutil
-from contract import BINARIES,REPORTS,RAW,SANITIZER,digest,validate,validate_files
+from contract import BINARIES,REPORTS,RAW,SANITIZER,INSTALLED,digest,validate,validate_files
 assert os.environ.get('GITHUB_ACTIONS')=='true','Actions only'
 p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);a=p.parse_args();out=a.output.resolve();out.mkdir(parents=True,exist_ok=True)
 manifest=dict(source_sha=os.environ['GITHUB_SHA'],run_id=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],runner_os=os.environ['RUNNER_OS'],accepted=False,files={},problems=[])
@@ -13,6 +13,13 @@ try:
  for name in ['composition-c','composition-cxx','reviewed-flow']:
   sources[name]=Path('build/fresh/build')/(name+suffix);sources[name+'-relocated']=Path('build/relocated/build')/(name+suffix)
  suites=json.loads((out/'original/suites.json').read_text())
+ scan=json.loads((out/'prefix-scan-relocated.json').read_text());install=json.loads((out/'install-all.json').read_text());(out/'installed').mkdir(exist_ok=True)
+ for name,(package,kind) in INSTALLED.items():
+  paths=scan['packages'][package][kind]
+  if len(paths)!=1:raise ValueError('ambiguous original installed proof '+name)
+  data=(Path('build/prefix-relocated')/paths[0]).read_bytes()
+  if digest(data)!=install[paths[0]]['sha256']:raise ValueError('relocation changed installed bytes '+name)
+  (out/'installed'/name).write_bytes(data)
  for suite in suites['suites']:sources.update({name:Path(path) for name,path in suite['binaries'].items()})
  (out/'binaries').mkdir(exist_ok=True)
  for name in BINARIES:shutil.copyfile(sources[name],out/'binaries'/name)

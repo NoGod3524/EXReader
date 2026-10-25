@@ -6,11 +6,13 @@ from datetime import datetime,timezone
 import io
 import json
 import os
+import re
 from pathlib import Path
 import sys
 import tempfile
 import zipfile
 from contract import BINARIES,REPORTS,RAW,SANITIZER,digest,identity,require,validate,validate_files
+from check_prefix import PACKAGES
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'tools'))
 from check_parallel_integration import download_artifact_zip,fetch,pages
 WORKFLOW='.github/workflows/reader-reviewed-composition.yml'
@@ -20,15 +22,17 @@ def authenticate_run(run,jobs,source,run_id,attempt):
  expected={'one-prefix composition ('+key+')' for key,_ in PLATFORMS}
  producers=[j for j in jobs if j.get('name') in expected]
  require(len(producers)==3 and {j['name'] for j in producers}==expected,'missing/duplicate upstream jobs')
+ require(all(j.get('id',0)>0 for j in producers) and len({j['id'] for j in producers})==3,'missing/duplicate upstream job IDs')
  for job in producers:
   require((job.get('head_sha'),str(job.get('run_id')),str(job.get('run_attempt')),job.get('status'),job.get('conclusion'))==(source,str(run_id),str(attempt),'completed','success'),'upstream not completed/success on this source/run/attempt')
  return producers
 def authenticate_artifact(artifacts,name,source,run_id):
+ require(len({a.get('id') for a in artifacts})==len(artifacts),'duplicate artifact IDs')
  matches=[a for a in artifacts if a.get('name')==name];require(len(matches)==1,'missing/duplicate artifact '+name);a=matches[0]
- require(a.get('id',0)>0 and a.get('size_in_bytes',0)>0 and not a.get('expired'),'empty/expired artifact')
+ require(type(a.get('id')) is int and a['id']>0 and type(a.get('size_in_bytes')) is int and a['size_in_bytes']>0 and a.get('expired') is False,'empty/expired artifact')
  require(datetime.fromisoformat(a['expires_at'].replace('Z','+00:00'))>datetime.now(timezone.utc),'expired artifact timestamp')
  require(a.get('workflow_run',{}).get('head_sha')==source and str(a['workflow_run'].get('id'))==str(run_id),'artifact source/run differs')
- require(isinstance(a.get('digest'),str) and len(a['digest'])==71 and a['digest'].startswith('sha256:'),'API digest absent')
+ require(re.fullmatch(r'sha256:[0-9a-f]{64}',a.get('digest') or '') is not None,'API digest absent or malformed')
  return a
 def check_zip_bytes(data,artifact):require(len(data)==artifact['size_in_bytes'] and 'sha256:'+digest(data)==artifact['digest'],'downloaded ZIP size/digest differs')
 def archive_root(names):
@@ -42,7 +46,7 @@ def archive_root(names):
  return prefix
 def self_test():
  run=dict(id=1,head_sha='source',run_attempt=2,path=WORKFLOW)
- jobs=[dict(id=i,name='one-prefix composition ('+key+')',head_sha='source',run_id=1,run_attempt=2,status='completed',conclusion='success') for i,(key,_) in enumerate(PLATFORMS)]
+ jobs=[dict(id=i,name='one-prefix composition ('+key+')',head_sha='source',run_id=1,run_attempt=2,status='completed',conclusion='success') for i,(key,_) in enumerate(PLATFORMS,1)]
  authenticate_run(run,jobs,'source',1,2)
  count=0
  def rejected(fn):
@@ -52,16 +56,17 @@ def self_test():
   raise AssertionError('tampered control accepted')
  for field,value in [('head_sha','foreign'),('run_attempt',3),('path','other.yml')]:
   changed=dict(run);changed[field]=value;rejected(lambda:authenticate_run(changed,jobs,'source',1,2))
- for field,value in [('head_sha','foreign'),('run_id',7),('run_attempt',3),('status','in_progress'),('conclusion','failure')]:
+ for field,value in [('id',2),('head_sha','foreign'),('run_id',7),('run_attempt',3),('status','in_progress'),('conclusion','failure')]:
   changed=copy.deepcopy(jobs);changed[0][field]=value;rejected(lambda:authenticate_run(run,changed,'source',1,2))
  rejected(lambda:authenticate_run(run,jobs[:-1],'source',1,2));rejected(lambda:authenticate_run(run,jobs+[jobs[0]],'source',1,2))
  names=['bundle.json']+REPORTS+RAW+['binaries/'+n for n in BINARIES];archive_root(names)
  rejected(lambda:archive_root(names+[names[1]]));rejected(lambda:archive_root(names+['other/bundle.json']));rejected(lambda:archive_root(names+['other/evidence/result.json']));rejected(lambda:archive_root(names[:-1]));rejected(lambda:archive_root(names+['../evil']))
  artifact=dict(id=1,name='a',size_in_bytes=3,expired=False,expires_at='2099-01-01T00:00:00Z',workflow_run=dict(id=1,head_sha='source'),digest='sha256:'+digest(b'zip'))
  authenticate_artifact([artifact],'a','source',1);check_zip_bytes(b'zip',artifact)
- for field,value in [('expired',True),('size_in_bytes',0),('digest',None),('expires_at','2000-01-01T00:00:00Z')]:
+ for field,value in [('expired',True),('expired',None),('id',True),('size_in_bytes',0),('digest',None),('digest','sha256:'+'z'*64),('expires_at','2000-01-01T00:00:00Z')]:
   changed=dict(artifact);changed[field]=value;rejected(lambda:authenticate_artifact([changed],'a','source',1))
  rejected(lambda:authenticate_artifact([artifact,artifact],'a','source',1));rejected(lambda:check_zip_bytes(b'bad',artifact))
+ rejected(lambda:authenticate_artifact([artifact,dict(artifact,name='other')],'a','source',1))
  records={p:b'{}' for p in REPORTS+RAW};records['original/history/summary.json']=json.dumps(dict(report_sha256=digest(b'{}'))).encode();records.update({'binaries/'+n:b'bin' for n in BINARIES});manifest=dict(files={p:dict(bytes=len(v),sha256=digest(v)) for p,v in records.items()})
  validate_files(manifest,records.__getitem__)
  changed=copy.deepcopy(manifest);changed['files'].pop(REPORTS[0]);rejected(lambda:validate_files(changed,records.__getitem__))
@@ -79,6 +84,7 @@ def main():
  a.output.mkdir(parents=True,exist_ok=True);a.downloads.mkdir(parents=True,exist_ok=True)
  source=os.environ['GITHUB_SHA'];run_id=os.environ['GITHUB_RUN_ID'];attempt=os.environ['GITHUB_RUN_ATTEMPT']
  result=dict(accepted=False,source_sha=source,run_id=run_id,attempt=attempt,jobs=[],artifacts=[],platforms={},problems=[],host_ui_accepted=False,performance_accepted=False,android_accepted=False,ios_accepted=False,complete_product=False)
+ result.update(acceptance_scope='fixed-source 22-package installed composition only',packages=sorted(PACKAGES),task_wide_accepted=False,task_gap='The handoff names an 18-package baseline; the fixed source names only 13 optional packages plus EXReader. Five unspecified baseline packages are not invented or granted.')
  try:
   result['negative_controls']=self_test()
   run=fetch('actions/runs/'+run_id);jobs=pages('actions/runs/'+run_id+'/attempts/'+attempt+'/jobs','jobs');result['jobs']=authenticate_run(run,jobs,source,run_id,attempt)
