@@ -24,6 +24,97 @@ struct ThemeReview {
         } }
         return result
     }
+    static func preserveSolidPatch(_ original: HostSnapshot, _ themed: HostSnapshot, _ rgba: UInt32) throws {
+        let before = try bytes(original), after = try bytes(themed), image = original.image!
+        let expected: [UInt8] = [UInt8(rgba >> 24), UInt8((rgba >> 16) & 255), UInt8((rgba >> 8) & 255), UInt8(rgba & 255)]
+        // A foreground change can round antialiased edge pixels differently.
+        // Compare a real solid interior, excluding those text-edge pixels.
+        for y in 0..<(image.height - 8) { for x in 0..<(image.width - 8) {
+            let start = y * image.bytesPerRow + x * 4
+            if !before[start..<(start + 4)].elementsEqual(expected) { continue }
+            var solid = true
+            for row in 0..<8 { for column in 0..<8 {
+                let i = (y + row) * image.bytesPerRow + (x + column) * 4
+                if !before[i..<(i + 4)].elementsEqual(expected) { solid = false; break }
+            }; if !solid { break } }
+            if solid {
+                for row in 0..<8 {
+                    let i = (y + row) * image.bytesPerRow + x * 4
+                    try expect(before[i..<(i + 32)] == after[i..<(i + 32)], "Authored solid interior pixels changed")
+                }
+                print("THEME_SOLID_PATCH", String(format: "%08x", rgba), "x=", x, "y=", y)
+                return
+            }
+        } }
+        throw HostError.invalidResult("Authored solid interior not present in real original bitmap")
+    }
+#if EXR_APPLE_PAGE_THEME
+    static func pump(_ condition: () -> Bool) throws {
+        let end = Date().addingTimeInterval(30)
+        while Date() < end {
+            if condition() { return }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.01))
+        }
+        throw HostError.invalidResult("Theme model did not finish its real owner candidate")
+    }
+    static func reviewModel(_ resources: URL, _ output: URL) throws -> [[String: Any]] {
+        let library = try HostLibrary(path: output.appendingPathComponent("model-library.sqlite"))
+        let font = try HostFont(data: Data(contentsOf: resources.appendingPathComponent("Reader.otf")))
+        let session = HostSession(library: library, font: font, slowDelay: 0, viewport: CGSize(width: 480, height: 640), fontSize: 28)
+        let (id, _) = try session.importBook(url: resources.appendingPathComponent("Theme.txt"), cancel: HostCancelBox())
+        _ = try session.open(bookID: id, cancel: HostCancelBox())
+        let frame = try session.turn(1, cancel: HostCancelBox()), model = HostReaderModel()
+        try model.installReviewSession(session, snapshot: frame, catalogMigration: resources.appendingPathComponent("reader-catalog-v1.sql"))
+        let hash = try session.stateHash(), initial = model.frameCount
+        let defaults = [UserDefaults.standard.string(forKey: "EXRFontSize"), UserDefaults.standard.string(forKey: "EXRLastBook")]
+        defer { HostSDKReview.event = nil; HostSDKReview.poll = nil }
+        let ready = DispatchSemaphore(value: 0), release = DispatchSemaphore(value: 0)
+        var held = false
+        HostSDKReview.event = { event in
+            guard event == "page-theme-rendered", !held else { return }
+            held = true; ready.signal()
+            guard release.wait(timeout: .now() + 15) == .success else { throw HostError.invalidResult("Theme review release missing") }
+        }
+        model.changePageTheme(.dark)
+        try pump { ready.wait(timeout: .now()) == .success }
+        try expect(model.busy && model.frameCount == initial && model.pageThemeChoice == .original, "Unaccepted theme published early")
+        model.changePageTheme(.light)
+        model.observePageThemeEnvironment(dark: true)
+        model.changePageTheme(.system)
+        model.observePageThemeEnvironment(dark: false)
+        model.observePageThemeEnvironment(dark: true)
+        release.signal()
+        try pump { !model.busy && model.pageThemeChoice == .system }
+        HostSDKReview.event = nil
+        try expect(model.pageThemePalette == HostPagePalette.resolve(.system, systemDark: true) && model.frameCount == initial + 1,
+                   "Busy notifications did not coalesce to the latest palette or stale epoch published")
+        try expect(try session.stateHash() == hash && defaults == [UserDefaults.standard.string(forKey: "EXRFontSize"), UserDefaults.standard.string(forKey: "EXRLastBook")],
+                   "Theme model saved old settings or SDK state")
+        var checks: [[String: Any]] = [["id": "model:latest-system-notification-only", "passed": true]]
+        let prior = model.pageThemeObservation, count = model.frameCount
+        HostSDKReview.event = { if $0 == "page-theme-rendered" { throw HostError.invalidResult("Injected theme owner failure") } }
+        model.changePageTheme(.light)
+        try pump { !model.busy }
+        HostSDKReview.event = nil
+        try expect(model.pageThemeObservation == prior && model.frameCount == count && !model.errorText.isEmpty,
+                   "Failed owner candidate replaced accepted pixels")
+        model.changePageTheme(.light)
+        try pump { !model.busy && model.pageThemeChoice == .light }
+        try expect(model.errorText.isEmpty && model.frameCount == count + 1, "Theme retry did not recover")
+        checks.append(["id": "model:failure-preserves-frame-and-retry", "passed": true])
+        let accepted = model.pageThemeObservation, acceptedCount = model.frameCount
+        HostSDKReview.event = { event in
+            if event == "page-theme-rendered" { DispatchQueue.main.sync { model.cancelWork() } }
+        }
+        model.changePageTheme(.dark)
+        try pump { !model.busy }
+        HostSDKReview.event = nil
+        try expect(model.pageThemeObservation == accepted && model.frameCount == acceptedCount, "Cancelled theme published")
+        try expect(try session.stateHash() == hash, "Model cancel changed SDK progress")
+        checks.append(["id": "model:cancel-preserves-accepted-frame", "passed": true])
+        return checks
+    }
+#endif
     static func main() throws {
         let env = ProcessInfo.processInfo.environment
         guard env["GITHUB_ACTIONS"] == "true" else { throw HostError.invalidInput("Actions only") }
@@ -73,8 +164,10 @@ struct ThemeReview {
                             try expect(try bytes(next).prefix(4) == Data([UInt8(expected >> 24), UInt8((expected >> 16) & 255), UInt8((expected >> 8) & 255), UInt8(expected & 255)]), "Canvas pixel differs")
                             try expect(try count(next, palette.foreground!) > 0, "Actual text foreground missing")
                             if name == "ThemeAuthored.epub" {
-                                try expect(try count(frame, 0x223344ff) > 0 && count(next, 0x223344ff) == count(frame, 0x223344ff), "Author background changed")
+                                print("THEME_AUTHORED_COUNTS original=\(try count(frame, 0x223344ff)) themed=\(try count(next, 0x223344ff))")
+                                try preserveSolidPatch(frame, next, 0x223344ff)
                                 try expect(try count(frame, 0xc02040ff) > 0 && count(next, 0xc02040ff) == count(frame, 0xc02040ff), "Embedded image changed")
+                                try preserveSolidPatch(frame, next, 0xc02040ff)
                             }
                         }
                     }
@@ -117,6 +210,9 @@ struct ThemeReview {
                 session.close()
             }
         }
+#if EXR_APPLE_PAGE_THEME
+        checks += try reviewModel(resources, output)
+#endif
         let enabled: Bool
 #if EXR_APPLE_PAGE_THEME
         enabled = true

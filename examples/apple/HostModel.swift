@@ -1246,12 +1246,12 @@ final class HostReaderModel: ObservableObject {
         return "\(pageThemeChoice.rawValue)|\(corner)|\(hash)|\(pageBaseOffset)|\(location)"
     }
 
-    func requestPageThemeSystemReview() {
+    func requestPageThemeSystemReview(dark: Bool) {
         guard testFixtures else { return }
         do {
             let path = try stateFileURL().deletingLastPathComponent().appendingPathComponent("page-theme-system-request.json")
             try JSONSerialization.data(withJSONObject: ["source_sha": Bundle.main.object(forInfoDictionaryKey: "EXRSourceSHA") as? String ?? "",
-                "request": "dark-then-light", "choice": pageThemeChoice.rawValue]).write(to: path, options: .atomic)
+                "requested_appearance": dark ? "dark" : "light", "choice": pageThemeChoice.rawValue]).write(to: path, options: .atomic)
         } catch { errorText = describe(error) }
     }
 #endif
@@ -1298,7 +1298,7 @@ final class HostReaderModel: ObservableObject {
             } catch {
                 DispatchQueue.main.async {
                     guard myToken == self.token else { return }
-                    self.errorText = self.describe(error); self.finish()
+                    self.fail(error)
                 }
             }
         }
