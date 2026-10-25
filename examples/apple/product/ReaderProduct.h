@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include <exreader.h>
 #include <catalog.h>
 #include <reader_commands.h>
 #include <reader_session.h>

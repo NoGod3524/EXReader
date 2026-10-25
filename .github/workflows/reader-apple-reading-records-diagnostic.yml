@@ -24,7 +24,7 @@ jobs:
           test "$(git rev-parse HEAD:apps/reader/reading-state)" = 60127ae75fbac918237b1c8584e0f7ac2e6130a4
           test "$(git rev-parse HEAD:apps/reader/search)" = 2e09cb2945564f25085074a816b95472392df205
           test "$(git rev-parse HEAD:apps/reader/navigation)" = 9395914832e191ad63f18f6188ca5044260d2f12
-      - name: Build installed packages and compile real macOS host
+      - name: Build installed packages and real macOS Xcode app and test bundle
         run: |
           set -o pipefail
           mkdir -p build/apple-reading-diagnostic
@@ -33,18 +33,20 @@ jobs:
           cmake --install build/sdk --prefix stage/macos
           python3 tools/build_apple_product.py --sdk stage/macos --target macos --build build/product
           sdk="$PWD/stage/macos"
-          python3 tools/apple_swift.py --sdk "$sdk" -- -swift-version 5 -parse-as-library -O -D EXR_APPLE_HOST_REVIEW \
-            -I "$sdk/include" -L "$sdk/lib" -lexreader -Xlinker -rpath -Xlinker "$sdk/lib" \
-            examples/apple/*.swift bindings/swift/EXReader.swift -o build/apple-reading-diagnostic/EXReaderHost \
-            2>&1 | tee build/apple-reading-diagnostic/compile.log
           python3 tests/apple_host/reading/run_native.py --sdk "$sdk" --resources build/apple-reading-resources \
             --output build/apple-reading-diagnostic/native
+          ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+          ruby tests/apple_host/make_xcodeproj.rb build/apple-reading-diagnostic-project build/apple-reading-resources tests/apple_host/reading/ui
+          xcodebuild build-for-testing -project build/apple-reading-diagnostic-project/EXReaderHost.xcodeproj \
+            -scheme EXReaderHost-macOS -destination platform=macOS -derivedDataPath build/ReadingDiagnosticDerivedData \
+            EXR_SDK_DIR="$sdk" CODE_SIGNING_ALLOWED=YES 2>&1 | tee build/apple-reading-diagnostic/compile.log
+          cp build/ReadingDiagnosticDerivedData/Build/Products/Debug/product-link.json build/apple-reading-diagnostic/xcode-product-link.json
           python3 - <<'PY'
           import json, os
           from pathlib import Path
           value = {'diagnostic_only': True, 'accepted': False, 'source_sha': os.environ['GITHUB_SHA'],
                    'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
-                   'scope': 'macOS host compilation and native preflight only; no formal native/UI grant'}
+                   'scope': 'macOS Xcode app/test-bundle build and native preflight only; no formal native/UI grant'}
           Path('build/apple-reading-diagnostic/report.json').write_text(json.dumps(value, indent=2) + '\n')
           print(json.dumps(value))
           PY
