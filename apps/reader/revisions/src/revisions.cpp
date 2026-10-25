@@ -88,7 +88,11 @@ void entity_identity(const std::string &type,const std::string &key){
   else if(type=="annotation"){size_t colon=key.rfind(':');if(colon==std::string::npos)reject(READER_REV_FORMAT,"Invalid annotation identity");book(key.substr(0,colon));identifier(key.substr(colon+1));}
   else {size_t first=key.find(':'),second=key.find(':',first==std::string::npos?0:first+1);if(first==std::string::npos||second==std::string::npos)reject(READER_REV_FORMAT,"Invalid membership identity");std::string group=key.substr(0,first);if(group!="shelf"&&group!="tag"&&group!="series")reject(READER_REV_FORMAT,"Invalid membership kind");identifier(key.substr(first+1,second-first-1));book(key.substr(second+1));}
 }
-struct value {std::string key,type,atom;std::vector<size_t> children;size_t depth=0;std::string path;};
+struct value {std::string key,type,atom;std::vector<size_t> children;size_t depth=0;
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+  std::string path{};
+#endif
+};
 struct json {
   std::vector<value> nodes;
   json(sqlite3 *db,const std::string &wire,bool raw=false) {
@@ -98,12 +102,15 @@ struct json {
     std::map<int64_t,size_t> ids;
     while(query.next()==SQLITE_ROW) {
       if(nodes.size()>=20000)reject(READER_REV_LIMIT,"Revision JSON value limit exceeded");
-      size_t index=nodes.size();value n{text(query.s,2),text(query.s,3),text(query.s,4),{},0,{}};
-      if(n.key.size()>128)reject(READER_REV_LIMIT,"Revision JSON key limit exceeded");
-      unicode(n.key);if(n.type=="text")unicode(n.atom);
+      size_t index=nodes.size();value n{text(query.s,2),text(query.s,3),text(query.s,4),{},0};
+      if(n.key.size()>128||(!raw&&n.atom.size()>65536))reject(READER_REV_LIMIT,"Revision JSON string limit exceeded");
+      if(!raw){unicode(n.key);if(n.type=="text")unicode(n.atom);}
       if(sqlite3_column_type(query.s,1)!=SQLITE_NULL){
         auto parent=ids.find(sqlite3_column_int64(query.s,1));if(parent==ids.end())reject(READER_REV_FORMAT,"Invalid JSON traversal");
-        value &p=nodes[parent->second];n.depth=p.depth+1;n.path=p.path+"."+n.key;
+        value &p=nodes[parent->second];n.depth=p.depth+1;
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+        if(raw)n.path=p.path+"."+n.key;
+#endif
         if(n.depth>=32)reject(READER_REV_LIMIT,"Revision JSON depth limit exceeded");
         if(p.type=="object")for(size_t child:p.children)if(nodes[child].key==n.key)reject(READER_REV_FORMAT,"Duplicate JSON object key");
         p.children.push_back(index);
@@ -118,6 +125,7 @@ struct json {
       (void)raw;
 #endif
       if(n.atom.size()>atom_limit)reject(READER_REV_LIMIT,"Revision JSON string limit exceeded");
+      if(raw){unicode(n.key);if(n.type=="text")unicode(n.atom);}
       ids.emplace(sqlite3_column_int64(query.s,0),index);nodes.push_back(std::move(n));
     }
     if(nodes.empty() || nodes[0].type!="object")reject(READER_REV_FORMAT,"Revision must be an object");
