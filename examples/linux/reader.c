@@ -69,6 +69,9 @@ static void preferences_prepare(reader_command *);
 static void preferences_result(const reader_result *,reader_action);
 static gboolean preferences_busy(void);
 static gboolean preferences_opened(void);
+#ifdef EXR_READER_PAGE_BACKGROUND
+static gboolean preferences_theme_ready(void);
+#endif
 static void preferences_exit(void);
 static char *preferences_observation(void);
 #endif
@@ -710,6 +713,30 @@ static void import_dialog(void) {
 #endif
 #ifdef EXR_READER_DROP_IMPORT_UI
 #include "drop_import_ui.inc"
+#endif
+#if defined(EXR_READER_PAGE_BACKGROUND) && defined(EXR_READER_PREFERENCES_UI)
+static gboolean preferences_theme_ready(void) {
+  if(!profile_writable || busy || saving || save_failed || choosing_file || shelf_loading || preferences_opened() || preferences_busy()) return FALSE;
+#ifdef EXR_READER_BATCH_IMPORT_UI
+  if(folder.dialog || folder.has_owner) return FALSE;
+#endif
+#ifdef EXR_READER_READING_RECORDS_UI
+  if(reading_records_opened()) return FALSE;
+#endif
+#ifdef EXR_READER_NAVIGATION_UI
+  if(directory_opened()) return FALSE;
+#endif
+#ifdef EXR_READER_SEARCH_UI
+  if(inbook_opened()) return FALSE;
+#endif
+#ifdef EXR_READER_DESKTOP_METADATA
+  if(metadata_running || collections_opened()) return FALSE;
+#endif
+#ifdef EXR_READER_ACCOUNT
+  if(accounts_opened()) return FALSE;
+#endif
+  return TRUE;
+}
 #endif
 static void focus_list(GtkWidget *box) {
   GtkListBoxRow *row=gtk_list_box_get_selected_row(GTK_LIST_BOX(box));if(!row) row=gtk_list_box_get_row_at_index(GTK_LIST_BOX(box),0);

@@ -19,6 +19,10 @@ static struct {
   double press_x,press_y;
   gboolean pressed;
   guint import_idle;
+#ifdef EXR_READER_PAGE_BACKGROUND
+  guint theme_idle;
+  int page_system_theme;
+#endif
   gboolean import_visible,import_active,import_entry,import_accept;
   char import_selected[65],import_typed[65],import_focus[64];
 } preferences;
@@ -56,6 +60,9 @@ static void preferences_initialize(void) {
 }
 static void preferences_prepare(reader_command *command) {
   command->preferences_set=1;command->preferences=command->action==READER_SETTINGS ? preferences.pending:appearance;
+#ifdef EXR_READER_PAGE_BACKGROUND
+  command->preferences_system_theme=(int)appearance_system_theme;
+#endif
   if(command->action==READER_FONT) command->preferences.font_size=(float)command->font;
   if(command->action==READER_ZOOM) command->preferences.fixed_page_zoom=(uint32_t)command->zoom;
   if(command->action==READER_SETTINGS) {
@@ -110,6 +117,9 @@ static void preferences_result(const reader_result *result,reader_action action)
       preferences.load_status=READER_PREFERENCES_OK;
   }
   if(result->status==EXR_OK && result->has_frame) { preferences.bitmap_width=result->width;preferences.bitmap_height=result->height; }
+#ifdef EXR_READER_PAGE_BACKGROUND
+  if(result->status==EXR_OK && result->has_frame && !result->fixed) preferences.page_system_theme=result->page_system_theme;
+#endif
   if(action==READER_SETTINGS || action==READER_FONT || action==READER_ZOOM) {
     preferences.save_status=(int)result->status;
     preferences.awaiting_commit=result->status==EXR_OK && result->has_frame;
@@ -165,6 +175,19 @@ static void preferences_style(void) {
   gtk_css_provider_load_from_data(preferences.css,css,-1,NULL);
   gtk_style_context_add_class(gtk_widget_get_style_context(window),"exreader-appearance");
 }
+#ifdef EXR_READER_PAGE_BACKGROUND
+static gboolean preferences_theme_refresh(gpointer unused) {
+  (void)unused;
+  if(preferences.cleaned || closing || !book_id || fixed || appearance.theme!=READER_PREFERENCES_THEME_SYSTEM ||
+     preferences.page_system_theme==(int)appearance_system_theme) {
+    preferences.theme_idle=0;state();return G_SOURCE_REMOVE;
+  }
+  if(preferences_theme_ready()) {
+    preferences.theme_idle=0;preferences_queue(&appearance,FALSE);state();return G_SOURCE_REMOVE;
+  }
+  return G_SOURCE_CONTINUE;
+}
+#endif
 static void preferences_platform_update(void) {
   if(preferences.cleaned) return;
   guint value=READER_PREFERENCES_THEME_LIGHT;
@@ -177,7 +200,12 @@ static void preferences_platform_update(void) {
   }
   if(value!=appearance_system_theme) {
     appearance_system_theme=value;
-    if(appearance.theme==READER_PREFERENCES_THEME_SYSTEM) preferences_style();
+    if(appearance.theme==READER_PREFERENCES_THEME_SYSTEM) {
+      preferences_style();
+#ifdef EXR_READER_PAGE_BACKGROUND
+      if(!preferences.theme_idle) preferences.theme_idle=g_timeout_add(80,preferences_theme_refresh,NULL);
+#endif
+    }
     state();
   }
 }
@@ -361,7 +389,13 @@ static char *preferences_observation(void) {
     preferences.bitmap_width,preferences.bitmap_height,preferences.deferred_closes,preferences.actions,preferences.gesture_events,preferences.gesture_turns,
     preferences.import_visible,preferences.import_selected,preferences.import_accept,preferences.import_active,
     preferences.import_entry,preferences.import_typed,preferences.import_focus);
+#ifdef EXR_READER_PAGE_BACKGROUND
+  char *theme=g_strdup_printf("[page_background]\npage_system_theme=%d\ntheme_refresh_pending=%d\n",
+    preferences.page_system_theme,preferences.theme_idle!=0);
+  char *complete=g_strconcat(value,theme,NULL);g_free(value);g_free(theme);return complete;
+#else
   return value;
+#endif
 }
 static gboolean preferences_import_snapshot(gpointer unused) {
   (void)unused;preferences.import_idle=0;
@@ -402,6 +436,9 @@ static void preferences_import_activity(GObject *object,GParamSpec *property,gpo
 static void preferences_cleanup(void) {
   preferences.cleaned=TRUE;
   if(preferences.import_idle) g_source_remove(preferences.import_idle);
+#ifdef EXR_READER_PAGE_BACKGROUND
+  if(preferences.theme_idle) g_source_remove(preferences.theme_idle);
+#endif
   if(preferences.platform) { g_signal_handler_disconnect(preferences.platform,preferences.theme_watch);g_signal_handler_disconnect(preferences.platform,preferences.dark_watch); }
   g_clear_object(&preferences.portal);g_clear_object(&preferences.css);g_clear_object(&preferences.return_focus);g_clear_object(&preferences.resume_focus);g_free(preferences.path);
 }
