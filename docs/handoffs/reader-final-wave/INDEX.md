@@ -3,7 +3,7 @@
 实现固定从 `0889f7d1e9a537c6c1b05456547e016b26e1cd85` 起；文档HEAD不是实现起点。先读[共同约束](README.md)。
 
 Claude恰好3包（Sonnet5.5/medium，后台完全权限），Dot7包由用户手动发送，其余12包给DeepSeek（V4.1 Flash1017/high/PTC，后台完全权限）。本批独立于旧J/G包；旧模块先复用，不重复实现。
-当前实际dispatch状态见root的本机dispatch ledger，任务完成只认真实source/run/原工件；本页分工不代表验收通过。
+已实际确认Claude3个后台会话busy，以及DeepSeek12个持久session/进程均存活并执行PTC工具，实际模型selection为deepseek-account/deepseek-flash/high。Dot7包等用户手动投放。状态和日志见root本机dispatch ledger；开工不代表验收通过。
 
 ## Dot：请分别发给七个会话
 

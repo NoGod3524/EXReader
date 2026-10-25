@@ -130,7 +130,7 @@
       "document": "S01.md",
       "branch": "codex/reader-fw-s01",
       "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
-      "status": "launching_background",
+      "status": "running_background",
       "runtime_scope": "new_paths_only",
       "production_writer": false
     },
@@ -141,7 +141,7 @@
       "document": "S02.md",
       "branch": "codex/reader-fw-s02",
       "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
-      "status": "launching_background",
+      "status": "running_background",
       "runtime_scope": "new_paths_only",
       "production_writer": false
     },
@@ -152,7 +152,7 @@
       "document": "S03.md",
       "branch": "codex/reader-fw-s03",
       "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
-      "status": "launching_background",
+      "status": "running_background",
       "runtime_scope": "new_paths_only",
       "production_writer": false
     },
@@ -163,7 +163,7 @@
       "document": "S04.md",
       "branch": "codex/reader-fw-s04",
       "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
-      "status": "launching_background",
+      "status": "running_background",
       "runtime_scope": "new_paths_only",
       "production_writer": false
     },
@@ -174,7 +174,7 @@
       "document": "S05.md",
       "branch": "codex/reader-fw-s05",
       "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
-      "status": "launching_background",
+      "status": "running_background",
       "runtime_scope": "new_paths_only",
       "production_writer": false
     },
@@ -185,7 +185,7 @@
       "document": "S06.md",
       "branch": "codex/reader-fw-s06",
       "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
-      "status": "launching_background",
+      "status": "running_background",
       "runtime_scope": "new_paths_only",
       "production_writer": false
     },
@@ -196,7 +196,7 @@
       "document": "S07.md",
       "branch": "codex/reader-fw-s07",
       "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
-      "status": "launching_background",
+      "status": "running_background",
       "runtime_scope": "new_paths_only",
       "production_writer": false
     },
@@ -207,7 +207,7 @@
       "document": "S08.md",
       "branch": "codex/reader-fw-s08",
       "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
-      "status": "launching_background",
+      "status": "running_background",
       "runtime_scope": "new_paths_only",
       "production_writer": false
     },
@@ -218,7 +218,7 @@
       "document": "S09.md",
       "branch": "codex/reader-fw-s09",
       "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
-      "status": "launching_background",
+      "status": "running_background",
       "runtime_scope": "new_paths_only",
       "production_writer": false
     },
@@ -229,7 +229,7 @@
       "document": "S10.md",
       "branch": "codex/reader-fw-s10",
       "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
-      "status": "launching_background",
+      "status": "running_background",
       "runtime_scope": "new_paths_only",
       "production_writer": false
     },
@@ -240,7 +240,7 @@
       "document": "S11.md",
       "branch": "codex/reader-fw-s11",
       "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
-      "status": "launching_background",
+      "status": "running_background",
       "runtime_scope": "new_paths_only",
       "production_writer": false
     },
@@ -251,7 +251,7 @@
       "document": "S12.md",
       "branch": "codex/reader-fw-s12",
       "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
-      "status": "launching_background",
+      "status": "running_background",
       "runtime_scope": "new_paths_only",
       "production_writer": false
     }
