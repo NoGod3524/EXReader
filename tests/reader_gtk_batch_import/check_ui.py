@@ -29,6 +29,9 @@ def main():
     output = args.output.resolve()
     output.mkdir()
     source = args.fixtures.resolve()
+    if args.chooser_only:
+        for index in range(80):
+            (source.parent / ('aaa-native-picker-%03d' % index)).mkdir(exist_ok=True)
     assert args.chooser_only or args.backend is not None
     backend = args.backend.resolve() if args.backend else None
     host = Session((args.payload / 'bin/exreader-linux').resolve(), (args.payload / 'Reader.otf').resolve(), output)
@@ -66,9 +69,6 @@ def main():
         raise TimeoutError('missing native control: ' + name)
 
     def click_node(node):
-        if bus.role(node) == 'table cell':
-            component = node.get_component_iface()
-            assert component is not None and component.scroll_to(bus.Atspi.ScrollType.ANYWHERE), 'native cell cannot scroll into view: ' + bus.name(node)
         end = time.monotonic() + 10
         while time.monotonic() < end:
             rect = bus.extents(node)
@@ -76,6 +76,18 @@ def main():
                 command('xdotool', 'mousemove', '--sync', str(rect['x'] + rect['width'] // 2), str(rect['y'] + rect['height'] // 2))
                 command('xdotool', 'click', '1')
                 return
+            if bus.role(node) == 'table cell':
+                # GTK's Atspi Component.scroll_to is unsupported on this cell
+                # backend. Scroll the actual directory viewport with the wheel.
+                parent = node.get_parent()
+                for _ in range(8):
+                    if parent is None or bus.role(parent) in ('tree table', 'table'):
+                        break
+                    parent = parent.get_parent()
+                bounds = bus.extents(parent) if parent else None
+                assert bounds and bounds['x'] >= 0 and bounds['y'] >= 0, 'native directory viewport unavailable'
+                command('xdotool', 'mousemove', '--sync', str(bounds['x'] + bounds['width'] // 2), str(bounds['y'] + bounds['height'] // 2))
+                command('xdotool', 'click', '--repeat', '4', '--delay', '20', '5')
             time.sleep(.02)
         raise TimeoutError('native control not actionable: ' + bus.name(node) + ' ' + repr(bus.states(node)))
 
