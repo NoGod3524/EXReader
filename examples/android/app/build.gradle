@@ -98,6 +98,7 @@ android {
             androidTest {
                 java.srcDir '../../../tests/reader_android_reading/java'
                 java.srcDir '../../../tests/reader_android_cbz_reading/java'
+                java.srcDir '../../../tests/reader_android_fixed_pan/java'
             }
         }
     }
