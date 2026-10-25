@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.24)
 project(GTKRecordCompatibility LANGUAGES C CXX)
+# The real owner is a subdirectory. Its imported package targets must also be
+# visible to this parent-directory source probe, without editing that owner.
+set(CMAKE_FIND_PACKAGE_TARGETS_GLOBAL TRUE)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GLIB REQUIRED IMPORTED_TARGET GLOBAL glib-2.0)
 if(NOT HOST_SOURCE OR NOT EXR_SDK OR NOT MODULE_PREFIX)
   message(FATAL_ERROR "Explicit owner source and two installed prefixes required")
 endif()

@@ -31,7 +31,7 @@ def command(label, args, cwd=ROOT, timeout=1800):
     print(done.stdout[-12000:], flush=True)
     if done.returncode:
         print(done.stderr[-12000:], flush=True)
-        raise RuntimeError(label + ' exited ' + str(done.returncode))
+        raise RuntimeError(label + ' exited ' + str(done.returncode) + '\n' + done.stdout[-4000:] + '\n' + done.stderr[-4000:])
 
 
 def cmake(label, source, binary, *, prefix=None, sdk=None, version=None, owner=None, install=False):
