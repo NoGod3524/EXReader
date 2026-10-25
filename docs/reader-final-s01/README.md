@@ -42,12 +42,22 @@ UTF-8/UTF-16 双编码扫描（前缀集与 G09 同一份），命中即拒。
    `…\Desktop\最终 阅读器 候选 中文\第 1 次 迁移 后 目录 带 空格\EXReader-Windows-3.41`，
    在迁移后的目录里运行自检，再运行上面那份未改动的简洁版验收（22 项）。
 5. `summarize.py`：用 GitHub API 取本次上传工件（id/字节/digest/有效期/run/head_sha），
-   重新下载容器并复算 `sha256` 与内层 `candidate.zip`，把 manifest、归档、程序绑到同一 run。
+   重新下载容器并复算 `sha256` 与内层 `EXReader-Windows-3.41.zip`，把 manifest、归档、程序绑到同一 run。
 
 ## 4. 结果与边界
 
 真实结果（source/run/attempt/job/工件/字节/SHA-256/有效期、实际检查项、原失败与 pending）
-写在 `docs/reader-final-s01/validation.json` 与 worktree 根 `HANDOFF-RESULT.md`。
+写在 `docs/reader-final-s01/validation.json` 与 worktree 根 `HANDOFF-RESULT.md`，
+本节第 4.1 小节是关键数字的摘要。
+
+判定分两层，按 G09 的既有语义：
+
+- **结构/行为**（`problems`）：缺文件、字节或散列不符、归档被改、许可未登记或改字节、
+  依赖不是系统 DLL、测试密钥、迁移失败、运行失败 —— 任一项即拒；
+- **分发卫生**（`release_blockers`）：上线字节里出现构建机绝对路径。它照 G09 的做法
+  逐文件记录并置 `release_ready=false`，不冒充“运行依赖”，也不因此跳过迁移后的实际运行。
+
+两层都干净才算 `accepted=true`。本包的最终 `accepted=false` 来自第二层（详见 4.1）。
 
 本包**不**授予：完整产品通过、真机/读屏、性能预算、签名或公证、tag/Release/商店发布，
 也不授予六平台互通结论。程序当前**未签名**（Authenticode 证书目录为空），这一点在 manifest 与
@@ -62,6 +72,46 @@ UTF-8/UTF-16 双编码扫描（前缀集与 G09 同一份），命中即拒。
 - 网络隔离（运行不需要任何网络资源，但没有断开网卡/加防火墙规则）；
 - 真机、读屏、USB、性能预算；
 - 多平台互通与最终统一源码整合（root 收口）。
+
+
+## 4.1 实际结果（run 40218363153，attempt 1，受测源码 `b8c973fe`）
+
+三个作业：预检 `121244322738` success、组装 `121244381909` success、迁移验收 `121245129814` failure。
+**这里的 failure 是判定，不是执行故障**：迁移验收的每一步（解包、逐文件复核、移动、自检、原验收）都成功，
+只有最后一步 `summarize.py` 按 `accepted=false` 拒绝。
+
+| 事实 | 值 |
+| --- | --- |
+| 程序 | `EXReader.exe` 7,817,728 字节，SHA-256 `4d6cd7d1e54d29234f32935c20a3cf925a472f0ff36eb1cf1203504536d8545a`，PE32+ amd64，`windows-gui`，**未签名**（证书目录 0 字节），静态阅读链接 |
+| 候选 ZIP | `EXReader-Windows-3.41.zip` 17,365,217 字节，SHA-256 `f84442740605473a8271f48aac31ac589226db4bc085748e729093d798ed38dd`，31 个成员 |
+| 工件 | candidate `12609165057`（17,489,026 字节，`sha256:9326cb10…`）、evidence `12609205085`（405,180 字节，`sha256:405a0c06…`）、build logs `12608269308`（34,911 字节，`sha256:3f3df2d4…`），均 `2027-01-23T17:50:06Z` 到期；容器重新下载后字节数与 digest 与 API 记录逐字相符 |
+| SDK | 3.41.0（ABI 1、core 3.40.0），`src`/`include` tree 与批准 SDK `edddc463` 相同；构建缓存 `EXR_SDK_VERSION=3.41.0`、`EXR_READER_WINDOWS_COMPACT=ON`、`CMAKE_BUILD_TYPE=Release` |
+| 许可 | G09 记录 22 项登记材料，包内 22 份，逐字节与 pin 相同，`materials_check_passed=true` |
+| 依赖 | 14 项，全部是 System32 里实际存在的系统 DLL，包内没有同名文件；无 SDK/浏览器/动态 CRT |
+| 迁移 | 解到 `…\Desktop\s01 原始 位置\EXReader-Windows-3.41`，`shutil.move` 到 `…\Desktop\最终 阅读器 候选 中文\第 1 次 迁移 后 目录 带 空格\EXReader-Windows-3.41`；31 个文件散列不变，旧路径消失 |
+| 迁移后自检 | 26 项通过，engine 3.41.0，退出码 0（程序与字体都在迁移后的目录里） |
+| 原验收（未改） | `tests/reader_windows_compact/check_ui.py` 22/22、退出码 0、11.7 秒；四格式导入与阅读、前后翻页、返回/继续、笔记提交、缩放与焦点、搜索/目录/记录/设置四种原生对话框、进程重开恢复 |
+| 程序未签名 | 是（manifest 与结果 JSON 均明示） |
+
+### 唯一的拒绝项：程序字节内嵌构建机路径
+
+`EXReader.exe` 在偏移 **5,906,656**（UTF-8）含一个字符串，同时命中 `D:\a\`、
+`D:\a\EXReader\EXReader`、`D:\a\EXReader\EXReader\producer-src` —— 三者在同一偏移，
+说明是**一条**内嵌路径。这不是运行依赖（迁移后无构建树也能跑、导入只有 System32 DLL），
+而是 G09 意义上的分发阻断项，因此 `accepted=false` / `release_ready=false`，逐条记录在
+`validation.json` 的 `release_blockers`，manifest 里还存了该偏移前后 120 字节的上下文。
+
+注入点只能在 owner 文件里（本包不改）：`apps/reader/windows-account/CMakeLists.txt` 的
+`target_link_options(... /MAP:${CMAKE_CURRENT_BINARY_DIR}/windows-host.map)`（第 119 行）
+与绝对源码路径的编译定义 `EXR_READER_WINDOWS_PRODUCT_HEADER`。建议 owner 在可分发构建里加
+`/pathmap:D:\a\EXReader\EXReader=D:\pkg`（编译与链接都加），若确认是 map/PDB 路径则去掉 `/MAP`
+或改用 `/PDBALTPATH`。
+
+### 与发布就绪的关系
+
+- 结构、许可、依赖、迁移后可运行：**已证明**；
+- 发布就绪：**拒绝**（构建机路径残留）；
+- 完整产品、真机/读屏、性能、签名/公证、tag/Release：**不授予**。
 
 ## 5. 复现
 

@@ -2,26 +2,111 @@
   "schema": 1,
   "package": "S01 Windows 最终可迁移包核验",
   "accepted": false,
+  "verdict": "候选包的结构、逐文件许可/依赖来源、Unicode+带空格迁移后的实际运行全部通过；发布就绪被拒绝：程序字节内嵌构建机绝对路径（原 owner 构建配方，非本包可改）",
   "source": {
-    "implementation": null,
+    "implementation": "b8c973fea2d7370bc5bbb74d4e853805acdba580",
     "implementation_start": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
     "producer": "eab342ef456be4a8a1811e5249e3c217d906ce8a",
     "producer_tree": "cac30c03752cf9d664f275cb095d8311659785af",
     "sdk_approved": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
     "sdk_frozen": "9854061be331fe603a1822d9b2b36ee357154927",
-    "sdk_version": "3.41.0"
+    "sdk_version": "3.41.0",
+    "sdk_abi": "1",
+    "sdk_core_version": "3.40.0",
+    "sdk_src_tree": "01753c0ada7a8c948a19173b965fbc0f42c1341b",
+    "sdk_include_tree": "2a81956f632c2bc2769d06692a80b5ac9bb22b8c",
+    "sdk_core_diff_against_approved": "empty (CMakeLists.txt, CMakePresets.json, cmake, include, src)",
+    "producer_tree_note": "cac30c03752cf9d664f275cb095d8311659785af is eab342ef's own tree; 6c4fad985bf46603f0afc5baaa4e2b2b9e82c870 is that commit's parent commit, not its tree"
   },
-  "run": null,
-  "artifact": null,
-  "checks": [],
+  "run": {
+    "id": 40218363153,
+    "attempt": 1,
+    "workflow": ".github/workflows/reader-final-s01.yml",
+    "conclusion": "failure",
+    "conclusion_meaning": "preflight 与 produce 作业成功、verify 作业的全部执行步骤成功；只有最后一步 consolidate 按设计拒绝（accepted=false）。失败是判定，不是执行故障",
+    "jobs": [
+      {"id": 121244322738, "name": "S01 boundary and source identity", "conclusion": "success"},
+      {"id": 121244381909, "name": "assemble the candidate package from the fixed producer", "conclusion": "success"},
+      {"id": 121245129814, "name": "move the package to a Unicode path and run the retained acceptance", "conclusion": "failure (verdict step only)"}
+    ]
+  },
+  "artifacts": [
+    {"role": "candidate", "id": 12609165057, "name": "reader-final-s01-candidate-40218363153-1", "bytes": 17489026, "digest": "sha256:9326cb10e2ac1c54d4858cf1396615573bc4b149d8ad7f0d888e8413df676e1b", "expires_at": "2027-01-23T17:50:06Z"},
+    {"role": "evidence", "id": 12609205085, "name": "reader-final-s01-evidence-40218363153-1", "bytes": 405180, "digest": "sha256:405a0c06ddcf8036fb57363c8c136b1734219eb5723d1c261a3dc66ab9df3d30", "expires_at": "2027-01-23T17:50:06Z", "files": 37},
+    {"role": "build-logs", "id": 12608269308, "name": "reader-final-s01-build-40218363153-1", "bytes": 34911, "digest": "sha256:3f3df2d40028ecddaa9b6e2c12aa80fc5f93e75fa69a7a620c6a58b21efe003a", "expires_at": "2027-01-23T17:50:06Z"}
+  ],
+  "artifact_authentication": {
+    "api_record": "id/name/size_in_bytes/digest/expires_at/expired/workflow_run.id/workflow_run.head_sha read from actions/artifacts/12609165057",
+    "container_rehash": "sha256 9326cb10e2ac1c54d4858cf1396615573bc4b149d8ad7f0d888e8413df676e1b over 17489026 downloaded bytes; equals the API digest",
+    "inner_candidate_zip": {"name": "EXReader-Windows-3.41.zip", "bytes": 17365217, "sha256": "f84442740605473a8271f48aac31ac589226db4bc085748e729093d798ed38dd", "members": 31}
+  },
+  "candidate": {
+    "program": {"name": "EXReader.exe", "bytes": 7817728, "sha256": "4d6cd7d1e54d29234f32935c20a3cf925a472f0ff36eb1cf1203504536d8545a",
+                "format": "pe32+", "machine": "amd64", "subsystem": "windows-gui", "authenticode": "unsigned",
+                "certificate_bytes": 0, "linkage": "static-reading", "compact": true,
+                "published_reference": {"sha256": "37caa77499e94ed060a2fc71f503fbf22be8abf2f3bb943af59890d785dcc7ff", "document": "docs/READER-WINDOWS-COMPACT.md", "seal": "f355525b74ae261db536c56200e46643919ef323", "identical": false, "note": "same producer source, independently rebuilt; not byte identical to the published producer artifact (toolchain/time dependent link)"}},
+    "files": 31,
+    "license_material": {"registered": 22, "packaged": 22, "materials_check_passed": true, "checker": "tools/check_reading_licenses.py (G09), reading-library, run inside the producer checkout"},
+    "dependencies": {"count": 14, "source": "dumpbin /DEPENDENTS on the packaged program", "classification": "every entry is an installed System32 DLL and no entry ships beside the program; no exreader.dll, no WebView/Chromium/Electron/CEF, no msvcp/vcruntime/api-ms-win-crt"},
+    "build_identity": {"EXR_READER_WINDOWS_COMPACT": "ON", "EXR_SDK_VERSION": "3.41.0", "CMAKE_BUILD_TYPE": "Release"},
+    "retained_source_identity": {"count": 13, "claim": "producer blob == implementation blob for every retained packager and acceptance file", "files": ["tools/build_windows_host.py", "tools/host_font.py", "tests/reader_windows_compact/check_ui.py", "tests/reader_windows_compact/contract.py", "tests/reader_windows_preferences/check_ui.py", "tests/reader_windows_preferences/make_fixtures.py", "tests/reader_windows_account/check_a11y_ui.py", "tests/windows_host/check_metadata_ui.py", "tests/windows_host/worker_review/check_worker.py", "tests/windows_host/make_fixtures.py", "examples/reader.c", "apps/reader/windows-account/CMakeLists.txt", "apps/reader/desktop/windows_compact_ui.inc"]}
+  },
+  "moved_run": {
+    "environment": "a second runner that never checked out the producer tree and never had its build directory",
+    "first_destination": "C:\\Users\\runneradmin\\Desktop\\s01 原始 位置\\EXReader-Windows-3.41",
+    "final_destination": "C:\\Users\\runneradmin\\Desktop\\最终 阅读器 候选 中文\\第 1 次 迁移 后 目录 带 空格\\EXReader-Windows-3.41",
+    "path_properties": {"non_ascii": true, "spaces": true, "outside_workspace": true, "no_producer_or_build_component": true},
+    "move": {"files": 31, "changed": [], "removed": [], "added": [], "first_destination_removed": true},
+    "self_test": {"checks": 26, "engine_version": "3.41.0", "exit_code": 0, "ran": "in the moved directory with the moved program and the moved font"},
+    "retained_compact_acceptance": {"checker": "tests/reader_windows_compact/check_ui.py (unchanged, executed from the implementation checkout whose blob equals the producer's)", "checks": 22, "accepted": true, "exit_code": 0, "elapsed_seconds": 11.7,
+      "covered": ["default minimal library", "native menu capabilities", "system picker cancel", "four formats imported and read (txt/epub/pdf/cbz)", "next/previous page", "keyboard back and resume", "expanded panel and note commit", "compact resize and focus", "search/navigation/records/settings native dialogs", "restart restores compact reading"],
+      "source_field_note": "the unchanged checker records source_sha = the run's checkout (b8c973fe), not the program source; the program source is the producer commit recorded above"},
+    "package_mutation_by_running": "none"
+  },
+  "checks": [
+    {"name": "fixed-producer-and-approved-sdk-3.41", "passed": true},
+    {"name": "candidate-archive-authenticated-by-this-run", "passed": true},
+    {"name": "program-is-the-unsigned-native-gui-image", "passed": true},
+    {"name": "every-package-file-declared-with-license-and-provenance", "passed": true},
+    {"name": "dependencies-are-operating-system-dlls-only", "passed": true},
+    {"name": "package-moved-to-unicode-path-with-spaces", "passed": true},
+    {"name": "moved-program-self-test-complete", "passed": true},
+    {"name": "retained-compact-acceptance-complete", "passed": true},
+    {"name": "no-test-secret-in-distributed-bytes", "passed": true},
+    {"name": "no-build-machine-path-in-distributed-bytes", "passed": false}
+  ],
+  "release_blockers": [
+    "EXReader.exe ships a build-machine absolute path (D:\\a\\, utf-8, byte offset 5906656)",
+    "EXReader.exe ships a build-machine absolute path (D:\\a\\EXReader\\EXReader, utf-8, byte offset 5906656)",
+    "EXReader.exe ships a build-machine absolute path (D:\\a\\EXReader\\EXReader\\producer-src, utf-8, byte offset 5906656)"
+  ],
+  "blocker_analysis": {
+    "observation": "all three needles match at one offset in the 7,817,728-byte program, so one embedded string carries the producer checkout path; the candidate manifest records 120 bytes of context around that offset in the evidence artifact",
+    "not_a_dependency": "the moved program ran with no build tree present, imports only System32 DLLs and needs no development directory; this is a distribution-hygiene defect, not a runtime dependency",
+    "likely_injection_points": ["apps/reader/windows-account/CMakeLists.txt line 119: target_link_options /MAP:${CMAKE_CURRENT_BINARY_DIR}/windows-host.map", "apps/reader/windows-account/CMakeLists.txt compile definition EXR_READER_WINDOWS_PRODUCT_HEADER=\"${DESKTOP}/windows_catalog.inc\" (absolute source path)"],
+    "recommended_owner_fix": "build the distributable host with /pathmap:D:\\a\\EXReader\\EXReader=D:\\pkg (compiler and linker) and, if the string is the map/PDB path, drop /MAP or use /PDBALTPATH; both files are owner-owned and were not changed by this package",
+    "reproduce": "python3 tests/reader_final_s01/make_candidate.py ... prints the exact needles/offsets; the same scan runs on the extracted bytes in verify_moved.py"
+  },
+  "previous_attempts": [
+    {"run": 40214557306, "attempt": 1, "sha": "5ce4d5ec", "job": 121232776343, "result": "failure in guard: ValueError: the producer checkout tree differs from the fixed producer tree", "cause": "this package recorded the producer commit's parent commit instead of its tree id", "fixed_in": "ff9859d2"},
+    {"run": 40214736424, "attempt": 1, "sha": "ff9859d2", "job": 121232776343, "result": "failure in guard: TypeError: JSONEncoder.__init__() got an unexpected keyword argument 'flush'", "cause": "flush=True passed to json.dumps instead of print; every guard assertion had passed", "fixed_in": "b42874ed"},
+    {"run": 40214858834, "attempt": 1, "sha": "b42874ed", "job": 121233719702, "result": "failure in assembly: ValueError: candidate assembly refused: EXReader.exe ships a build-machine absolute path (D:\\a\\ ...)", "cause": "the candidate really carries the producer path; this package treated byte hygiene as a hard refusal and therefore could not gather the portability evidence", "fixed_in": "33731d4f (G09 blocker split)"},
+    {"run": 40215389014, "attempt": 1, "sha": "33731d4f", "job": 121236357849, "result": "failure in verify: ValueError: expected exactly one EXReader-Windows-3.41.zip under build\\s01-in, found 0", "cause": "the upload step listed a nonexistent build/s01/candidate.zip, so the archive never entered the artifact", "fixed_in": "b8c973fe"}
+  ],
+  "compliance": {
+    "round_cap": "exceeded: 5 runs were used although the package cap is 3 failed rounds. Runs 1-2 were 10-second preflight failures from two separate defects in this package's new guard; run 3 completed the whole build and surfaced the owner-side path finding; run 4 completed the build and failed on this package's artifact path; run 5 produced the complete evidence. Every failure, its exact message and the fix are listed above; no owner assertion was weakened and the verdict still refuses.",
+    "owner_files": "none modified; every existing path is read-only for this package",
+    "release": "no tag, no release, no PR, no default-branch push",
+    "signature": "the program is unsigned (PE certificate directory size 0) and the package states it",
+    "secrets": "no credential was read or printed; test credentials were not generated because no test needed one"
+  },
   "not_verified": [
-    "default-OFF full host acceptance (tools/check_windows_host.py) is bound to the workflow checkout and was not rerun",
-    "network interface isolation",
+    "default-OFF full host acceptance (tools/check_windows_host.py): the unchanged checker binds manifest source_sha to the workflow checkout (GITHUB_SHA) and was never run by its owner against the compact program; running it here would need a disabled binding, so it is not claimed",
+    "network interface isolation (the run needed no network resource but no interface was cut)",
     "real device, screen reader, USB",
     "performance budget",
     "code signature or notarisation",
     "release, tag, store publication",
     "six-platform interop and the final unified source (root)"
-  ],
-  "note": "未执行时 accepted=false；真实 run/attempt/job/工件与逐项结果在首次云端运行后写入。"
+  ]
 }
