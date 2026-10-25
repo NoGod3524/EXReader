@@ -185,10 +185,50 @@ def main():
          '--output',OUT/'mac-network-receive'],'actual-account-window-mac-receive',900)
     network=json.loads((OUT/'mac-network-receive/report.json').read_text(encoding='utf-8'))
     if network.get('accepted') is not True:raise RuntimeError('Actual Mac network receive failed')
+    peer_build=OUT/'peer-owner-build'
+    configure(ROOT/'tests/reader_windows_raw3/peer-owner',peer_build,
+              ['-DEXR_SDK='+str(sdk),'-DCMAKE_PREFIX_PATH='+';'.join(map(str,(OUT/'raw-stage',product,sdk)))],
+              'actual-received-peer-owner')
+    packet=OUT/'mac-network-receive/mac/sender'
+    evidence=OUT/'mac-network-receive/peer-owner'
+    expected=evidence/'expected.bin'
+    run([sys.executable,ROOT/'tests/reader_windows_raw3/peer-owner/prepare.py',
+         '--packet',packet,'--output',expected],'actual-peer-expectations')
+    manifest=json.loads((packet/'manifest.json').read_text(encoding='utf-8'))
+    expected_ids={r['revision_id'] for r in manifest['reading_records']}
+    wire_hashes={r['id']:r['sha256'] for r in manifest['revisions']}
+    peer_program=peer_build/'windows-peer-owner.exe'
+    program_hash=hashlib.sha256(peer_program.read_bytes()).hexdigest()
+    owner_hash=hashlib.sha256((ROOT/'apps/reader/desktop/windows_records_owner.cpp').read_bytes()).hexdigest()
+    previous_pid=None
+    for label in ('first','reopen'):
+        path=evidence/(label+'.json')
+        run([peer_program,OUT/'mac-network-receive/profile',packet,expected,
+             ROOT/'build/host-font-cache/Reader.otf',path],'actual-peer-owner-'+label,300)
+        peer=json.loads(path.read_text(encoding='utf-8'))
+        if (peer.get('accepted') is not True or peer.get('source_sha')!=os.environ['GITHUB_SHA']
+                or str(peer.get('run_id'))!=os.environ['GITHUB_RUN_ID'] or str(peer.get('attempt'))!=os.environ['GITHUB_RUN_ATTEMPT']
+                or peer.get('actual_owner_reads_and_FOUND')!=11 or peer.get('program_sha256')!=program_hash
+                or peer.get('owner_source_sha256')!=owner_hash or peer.get('failure')
+                or peer.get('expected_sha256')!=hashlib.sha256(expected.read_bytes()).hexdigest()
+                or not peer.get('product_before') or peer['product_before']!=peer.get('product_after')
+                or not peer.get('sdk_before') or peer['sdk_before']!=peer.get('sdk_after')
+                or peer.get('pid',0)<=0 or peer['pid']==previous_pid):
+            raise RuntimeError('Actual received owner identity/state/refusal: '+label)
+        rows=peer.get('records',[])
+        if len(rows)!=11 or {r['revision_id'] for r in rows}!=expected_ids:
+            raise RuntimeError('Incomplete original Mac capture set')
+        for row in rows:
+            if (row['wire_sha256']!=wire_hashes[row['revision_id']] or row['owner_READ_callback_calls']!=0
+                    or row['independent_sdk_callback_calls']!=1 or any(row.get(key) is not True for key in
+                    ('actual_owner_READ','found','retained_manifest_capture_equal','fresh_capture_equal','NULL_callback_negative_refused'))):
+                raise RuntimeError('Actual received record did not independently resolve/recapture')
+        previous_pid=peer['pid']
     result=dict(source_sha=os.environ['GITHUB_SHA'],run_id=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],
                 installed_host_build_passed=True,original_bulk_profiles_passed=True,profiles=profiles,
                 actual_owner_profiles_passed=True,actual_owner_process_kill_recovery_passed=True,
                 actual_account_window_mac_receive_passed=True,
+                actual_received_owner_all11_two_processes_passed=True,
                 host_raw3_accepted=False,scope='actual installed host build/link, original compact UI and bulk regressions, and owner recovery; no complete host/interoperability grant')
     (OUT/'report.json').write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps(result),flush=True)
