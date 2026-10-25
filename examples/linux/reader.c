@@ -147,6 +147,9 @@ static GtkWidget *compact_library_controls,*compact_reading_controls,*compact_co
 static GtkWidget *compact_details,*compact_page_focus,*compact_larger,*compact_smaller;
 static int64_t compact_resume;
 static void action(GtkWidget *,gpointer);
+#ifdef EXR_READER_READING_RECORDS_UI
+static void compact_records_open(GtkWidget *,gpointer);
+#endif
 static GtkWidget *compact_button(GtkWidget *box,const char *title,const char *name,GCallback callback,gpointer data) {
   GtkWidget *button=gtk_button_new_with_label(title);
   atk_object_set_name(gtk_widget_get_accessible(button),name);
@@ -213,7 +216,7 @@ static void compact_toolbar(GtkWidget *toolbar) {
   compact_item(reading,"Directory / page entries…",G_CALLBACK(directory_open),NULL);
 #endif
 #ifdef EXR_READER_READING_RECORDS_UI
-  compact_item(reading,"Reading records…",G_CALLBACK(reading_records_open),NULL);
+  compact_item(reading,"Reading records…",G_CALLBACK(compact_records_open),NULL);
 #endif
 #ifdef EXR_READER_PREFERENCES_UI
   compact_item(reading,"Reading settings…",G_CALLBACK(preferences_open),NULL);
@@ -807,6 +810,13 @@ static void submit(reader_action action,int64_t id,const char *path,int size) {
 #endif
 #ifdef EXR_READER_READING_RECORDS_UI
 #include "reading_records_ui.inc"
+#ifdef EXR_READER_GTK_COMPACT
+static void compact_records_open(GtkWidget *button,gpointer unused) {
+  reading_records_open(button,unused);
+  /* The initial list is disabled by its asynchronous owner request. */
+  if(records.dialog) gtk_widget_grab_focus(gtk_dialog_get_widget_for_response(GTK_DIALOG(records.dialog),GTK_RESPONSE_CLOSE));
+}
+#endif
 #endif
 static void open_id(int64_t id) { submit(READER_OPEN,id,NULL,font_size); }
 static void import_dialog(void) {
