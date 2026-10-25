@@ -1,0 +1,9 @@
+{
+  "status": "candidate_only_not_accepted",
+  "native_source": "b11b0dd3b1354134dc1c82525e7e8578f3633758",
+  "optional_package_source": "ef73c27252304fc857cc3e76338ee31e59b75d70",
+  "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "frozen_source": "9854061be331fe603a1822d9b2b36ee357154927",
+  "runtime_accepted": false,
+  "note": "Native owner round2 and optional shared-install still pending/failed; preserve all old results. Seed adds two platform-owned CMake include points only."
+}

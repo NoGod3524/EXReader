@@ -1,0 +1,149 @@
+{
+  "accepted": true,
+  "scope": "explicit raw0.2 portable annotation package interfaces on Linux and Windows only",
+  "source_sha": "909d05c31afdce27a7d8fbe861ead89f5b4552cf",
+  "branch": "codex/reader-next-c06-root-review",
+  "review_start": "1015f2ca397c6411e6f67fc061ce64ee2e57384c",
+  "package_start": "e67d87cbeabb2457e0852f681ef0b27b2c0da4d8",
+  "fixed_legacy_import_source": "9c7e276f13f42cb61a32507c36d1c22c4489bd01",
+  "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "run_id": 40230743482,
+  "attempt": 1,
+  "conclusion": "success",
+  "root_rounds_used": 2,
+  "root_round_limit": 3,
+  "jobs": [
+    {"id": 121281725233, "name": "c06 raw3 portable (ubuntu-22.04)", "checks": 216, "conclusion": "success"},
+    {"id": 121281725092, "name": "c06 raw3 portable (windows-2022)", "checks": 216, "conclusion": "success"},
+    {"id": 121282776628, "name": "same-run artifact evidence", "conclusion": "success"}
+  ],
+  "artifacts": [
+    {
+      "id": 12613090660,
+      "name": "reader-next-c06-Linux-40230743482-1",
+      "size_in_bytes": 6214242,
+      "digest": "sha256:67e202bc1272f0b9cd6fe44e28ca3aab736f98c8a58da5fac69fefaef81d1010",
+      "expires_at": "2027-01-23T20:26:05Z"
+    },
+    {
+      "id": 12612149598,
+      "name": "reader-next-c06-Windows-40230743482-1",
+      "size_in_bytes": 5757969,
+      "digest": "sha256:d15112b655a2a84ceb9834f721dc9084d677e346ae1ac06f31d9789d44032b72",
+      "expires_at": "2027-01-23T20:26:05Z"
+    },
+    {
+      "id": 12613710230,
+      "name": "reader-next-c06-evidence-40230743482-1",
+      "size_in_bytes": 616,
+      "digest": "sha256:496c32c10f7d70e2617497e957187b567952855e966b3b55503a5e9ec9064ef0",
+      "expires_at": "2027-01-23T20:26:05Z"
+    }
+  ],
+  "strict_summary": {
+    "accepted": true,
+    "problems": [],
+    "cross_platform_identical_exports": true,
+    "producer_zips_downloaded_and_authenticated_in_actions": true,
+    "retained_export_program_and_log_hashes_recomputed_in_actions": true,
+    "exact_complete_unique_platform_check_sets_equal": true
+  },
+  "root_fixes": [
+    "Raw export checks legacy/raw store capability before creating JSON, Markdown or both output sinks; raw wrong-store refusal is REVISION with revision_code=1, legacy refusal mapping remains ARGUMENT.",
+    "New raw preview and confirmation fields are char[65] full-input SHA-256, replacing the unaccepted 64-bit FNV candidate ABI. The original SHA implementation is reused byte-for-byte from the fixed thumbnails source, with no new crypto dependency.",
+    "Commit callbacks retain the bounded per-head preflight FOUND, typed NULL, deletion or explicit NOT_CHECKED classification; state lives only for the current call.",
+    "Probe status constants match the public export enum; repeated checks use exact book/revision identities; platform library check IDs use stable logical module identities.",
+    "Strict evidence authenticates actual archive output, program and log bytes as well as report identities and cross-platform equality."
+  ],
+  "legacy_default_kept": true,
+  "legacy_public_headers_unchanged": true,
+  "legacy_import_source_prefix_unchanged": true,
+  "legacy_baseline_default_raw_build_output_bytes_identical": true,
+  "schema_changed": false,
+  "sdk_changed": false,
+  "wire_envelope": 1,
+  "default_selector_max": 2,
+  "fingerprint": {
+    "algorithm": "SHA-256",
+    "coverage": "complete private spool input bytes, including header metadata, graph, location, exact wires and footer",
+    "encoding": "64 lowercase hexadecimal bytes followed by NUL in char[65]",
+    "independent_python_hashlib_comparison": true,
+    "padding_boundaries": [0, 55, 56, 63],
+    "extra_leading_bytes_for_chunk_boundary": 65537,
+    "valid_header_change_rejects_previous_confirmation_before_writes": true
+  },
+  "mac_records": {
+    "source_sha": "15dab6b2270dc296ed6239db67ced2e22d255e65",
+    "run_id": 40196978163,
+    "attempt": 1,
+    "artifact_id": 12600789926,
+    "zip_sha256": "92be56ffa04d7c334d4811a42821a314089b4f8ae01746f0dfdf456b5eab9bd5",
+    "operations_database_sha256": "4731ac025a34c435b8b7cc50ba128e0c484c736c2fde6d3ae5658593ed9f3389",
+    "books": 2,
+    "annotation_heads": 3,
+    "typed_null_heads": 1,
+    "null_revision_ids": ["2a490dc51d514032a2815e802c8b3f48"],
+    "source_anchor_versions": [1, 2, 3],
+    "exact_head_bytes_roundtrip": true,
+    "null_changed_to_allocated_empty_refused": true,
+    "forged_ancestors": false,
+    "resolve_policy": "ALREADY_VERIFIED",
+    "found_checked": false,
+    "mac_origin_public_found_accepted": false,
+    "export_jsonl_sha256": [
+      "a2574e65e1b256f65325dcea2131e0cdbd172ee06dda87eb79f587698e849b0a",
+      "a1b54f0c8210377f3b117e70fef31a06b97cf15298e494b225b14f845bb6d9da"
+    ]
+  },
+  "previous_failed_runs": [
+    {
+      "owner": "original Claude package round 1",
+      "source_sha": "bb6e83e0d09256d4b9883b2f083b1e124bfd7037",
+      "run_id": 40227792202,
+      "attempt": 1,
+      "conclusion": "failure",
+      "reason": "Probe default-library raw-string assertion rejected a Markdown literal.",
+      "artifact_ids": [12611796618, 12612001997, 12612006203]
+    },
+    {
+      "owner": "original Claude package round 2",
+      "source_sha": "178b1351fcb162d9faa606d195e574b8eba530fc",
+      "run_id": 40228225687,
+      "attempt": 1,
+      "conclusion": "failure",
+      "reason": "Probe expected REVISION for legacy export on raw store, but unchanged legacy mapping is ARGUMENT/revision_code=1.",
+      "artifact_ids": [12611548199, 12611792207, 12612491872]
+    },
+    {
+      "owner": "original Claude package round 3",
+      "source_sha": "1015f2ca397c6411e6f67fc061ce64ee2e57384c",
+      "run_id": 40228668273,
+      "attempt": 1,
+      "conclusion": "failure",
+      "reason": "Probe expected ARGUMENT for raw export on legacy store; the new raw header specifies REVISION. The import phase did not execute.",
+      "artifact_ids": [12611877471, 12612592211, 12611962526]
+    },
+    {
+      "owner": "root review round 1",
+      "source_sha": "24f151847a01ff9422859b537c78dfcf42c44290",
+      "run_id": 40230274472,
+      "attempt": 1,
+      "conclusion": "failure",
+      "reason": "Both complete producers passed 213 checks; strict rejected platform-specific .a/.lib filenames in logical check IDs.",
+      "artifact_ids": [12613070468, 12612619847, 12612841284]
+    }
+  ],
+  "original_worktree_untouched": true,
+  "root_local_execution": {"syntax": false, "builds": false, "tests": false, "artifact_download_or_parsing": false},
+  "upstream_reported_local_ast_parse_violation_count": 1,
+  "unverified": [
+    "Public FOUND of real Mac-origin records: explicit ALREADY_VERIFIED, found_checked=0.",
+    "Windows long paths, Apple/Android builds, performance and host UI.",
+    "65536-head and 1 MiB single-wire maximum-size stress fixtures."
+  ],
+  "adopted": false,
+  "host_ui": false,
+  "physical_device_execution": false,
+  "performance_accepted": false,
+  "complete_product": false
+}

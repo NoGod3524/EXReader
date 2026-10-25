@@ -6,7 +6,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+#define READER_SYNC_VIEW_VERSION "0.2.0"
+#else
 #define READER_SYNC_VIEW_VERSION "0.1.0"
+#endif
 /* Hard upper bound of one captured snapshot's pending list and of row_limit. */
 #define READER_SYNC_VIEW_MAX_ROWS ((size_t)100)
 #define READER_SYNC_VIEW_DEFAULT_ROWS ((size_t)100)
@@ -77,6 +81,16 @@ typedef struct reader_sync_view_snapshot reader_sync_view_snapshot;
  * revisions). These are separate reads, not one transaction: each is internally
  * consistent, the background worker may advance between them. Never use the
  * result to ack, retry or publish anything.
+ *
+ * Capability: the installed profile decides which revisions entry point reads the
+ * pending list and the heads. The default profile reads a handle opened by
+ * reader_revisions_open; the explicit raw profile (READER_SYNC_VIEW_VERSION
+ * "0.2.0", compiled with EXR_READER_SELECTOR_BYTES_CANDIDATE) reads a handle
+ * opened by reader_revisions_open_raw_v3. No private handle field is inspected:
+ * a handle from the other family is refused by reader_revisions itself and this
+ * then fails with READER_SYNC_VIEW_REVISIONS and revision_code
+ * READER_REV_ARGUMENT, leaving *out NULL. Snapshot fields, counters and phases
+ * are identical in both profiles.
  *
  * Threading: with revisions non-NULL call on the thread that opened it and never
  * from inside one of its callbacks (reader_revisions rejects that reentry; this

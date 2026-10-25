@@ -63,7 +63,10 @@ void number_of(std::string &k,unsigned long long v){k+=std::to_string(v);k+='|';
 /* Identity of a place, never of a revision: the transient revision ID, the
    parser version and the anchor version are excluded so two captures of one
    place compare equal. The EPUB spine index and the fixed page ID are included,
-   so a repeated spine path stays an unambiguous place. */
+   so a repeated spine path stays an unambiguous place. An anchor v3 wire is the
+   explicit byte form of the same selector, so it also records selector presence:
+   identical offsets with a NULL context and with an allocated empty context are
+   two different stored wires and never collapse into one entry. */
 std::string location_key(const reader_rs_record &r){
   std::string k;number_of(k,(unsigned)r.mode);
   part_of(k,r.book_key,std::strlen(r.book_key));
@@ -71,6 +74,10 @@ std::string location_key(const reader_rs_record &r){
   number_of(k,r.part);
   part_of(k,r.page_id,r.page_id?std::strlen(r.page_id):0);
   number_of(k,r.page);number_of(k,r.start);number_of(k,r.end);
+  /* Anchor v3 keeps the selector as explicit bytes: presence and length are part
+     of the identity, so a NULL context never becomes an allocated empty one and
+     an embedded NUL never ends a selector. v1/v2 keep the identical key. */
+  if(r.anchor_version==3){number_of(k,r.exact?1:0);number_of(k,r.prefix?1:0);number_of(k,r.suffix?1:0);}
   part_of(k,r.exact,r.exact_size);part_of(k,r.prefix,r.prefix_size);part_of(k,r.suffix,r.suffix_size);
   number_of(k,r.chapter?1:0);part_of(k,r.chapter,r.chapter?std::strlen(r.chapter):0);
   return k;
@@ -79,10 +86,16 @@ struct record_guard { reader_rs_record record{}; ~record_guard(){reader_rs_recor
 reader_jh_result make_result(const reader_jh *h,reader_jh_outcome outcome,size_t evicted,size_t truncated){
   reader_jh_result r{};r.outcome=outcome;r.entry_id=h->list[h->cursor].id;r.evicted=evicted;r.truncated=truncated;r.generation=h->generation;return r;
 }
-void commit_wire(reader_jh *h,reader_revisions *store,reader_jh_kind kind,std::string wire,reader_jh_result *result){
+void commit_wire(reader_jh *h,reader_revisions *store,reader_jh_kind kind,std::string wire,reader_jh_result *result,bool raw){
   if(!store||!result||kind<READER_JH_PAGE||kind>READER_JH_TOC||wire.empty())reject(READER_JH_ARGUMENT,"Missing revision store, kind, wire or result");
   record_guard g;reader_rs_error re{};
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+  reader_rs_status rs=raw?reader_rs_decode_raw_v3(store,wire.data(),wire.size(),&g.record,&re)
+                        :reader_rs_decode(store,wire.data(),wire.size(),&g.record,&re);
+#else
+  (void)raw; /* the default install has no raw entry point, so raw is always false */
   reader_rs_status rs=reader_rs_decode(store,wire.data(),wire.size(),&g.record,&re);
+#endif
   if(rs==READER_RS_REVISION)reject(READER_JH_REVISION,"Revision module refused the position wire",rs,re.gap,re.revision_code);
   if(rs==READER_RS_MEMORY)reject(READER_JH_MEMORY,"Cannot decode the position wire",rs);
   if(rs!=READER_RS_OK)reject(READER_JH_ARGUMENT,"Cannot decode the position wire",rs,re.gap,re.revision_code);
@@ -170,16 +183,47 @@ extern "C" reader_jh_status reader_jh_commit(reader_jh *h,reader_revisions *stor
       reject(READER_JH_ARGUMENT,"Capture is not usable as a position",rs,re.gap);
     }
     std::string wire(owned.get(),n);
-    commit_wire(h,store,p->kind,std::move(wire),result);
+    commit_wire(h,store,p->kind,std::move(wire),result,false);
   });
 }
 extern "C" reader_jh_status reader_jh_commit_wire(reader_jh *h,reader_revisions *store,reader_jh_kind kind,const void *wire,size_t bytes,reader_jh_result *result,reader_jh_error *error){
   return guarded(h,error,[&]{
     if(!wire||!bytes)reject(READER_JH_ARGUMENT,"Missing position wire");
     if(bytes>READER_JH_MAX_ENTRY_BYTES)reject(READER_JH_TOO_LARGE,"Position wire exceeds the entry byte limit");
-    commit_wire(h,store,kind,std::string((const char *)wire,bytes),result);
+    commit_wire(h,store,kind,std::string((const char *)wire,bytes),result,false);
   });
 }
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+extern "C" reader_jh_status reader_jh_commit_fixed_v3(reader_jh *h,reader_revisions *store,const reader_jh_position *p,reader_jh_result *result,reader_jh_error *error){
+  return guarded(h,error,[&]{
+    if(!store||!p||!p->capture||!p->book_key||!p->parser_version||!result)reject(READER_JH_ARGUMENT,"Missing revision store, position or result");
+    if(p->kind<READER_JH_PAGE||p->kind>READER_JH_TOC)reject(READER_JH_ARGUMENT,"Landing kind must be page, search or table of contents");
+    char id[33];reader_revision_error ie{};
+    if(reader_revision_new_id(id,&ie)!=READER_REV_OK)reject(READER_JH_REVISION,"Cannot create a transient revision ID",READER_RS_OK,READER_RS_GAP_NONE,(int)ie.code);
+    reader_rs_envelope env{};env.revision_id=id;env.operation="put";env.entity_kind="progress";env.book_key=p->book_key;env.parser_version=p->parser_version;
+    char *bytes=nullptr;size_t n=0;reader_rs_error re{};
+    /* Anchor v3 is fixed_page only; the installed raw encoder refuses every
+       other capture before any byte is produced. */
+    reader_rs_status rs=reader_rs_encode_fixed_v3(store,&env,p->capture,&bytes,&n,&re);
+    std::unique_ptr<char,decltype(&reader_rs_free)> owned(bytes,&reader_rs_free);
+    if(rs!=READER_RS_OK){
+      if(rs==READER_RS_NOT_REPRESENTABLE)reject(READER_JH_NOT_REPRESENTABLE,"Capture has no lossless raw position wire",rs,re.gap);
+      if(rs==READER_RS_REVISION)reject(READER_JH_REVISION,"Revision module refused the position wire",rs,re.gap,re.revision_code);
+      if(rs==READER_RS_MEMORY)reject(READER_JH_MEMORY,"Cannot encode the position wire",rs);
+      reject(READER_JH_ARGUMENT,"Capture is not usable as a raw position",rs,re.gap);
+    }
+    std::string wire(owned.get(),n);
+    commit_wire(h,store,p->kind,std::move(wire),result,true);
+  });
+}
+extern "C" reader_jh_status reader_jh_commit_wire_raw_v3(reader_jh *h,reader_revisions *store,reader_jh_kind kind,const void *wire,size_t bytes,reader_jh_result *result,reader_jh_error *error){
+  return guarded(h,error,[&]{
+    if(!wire||!bytes)reject(READER_JH_ARGUMENT,"Missing position wire");
+    if(bytes>READER_JH_MAX_ENTRY_BYTES)reject(READER_JH_TOO_LARGE,"Position wire exceeds the entry byte limit");
+    commit_wire(h,store,kind,std::string((const char *)wire,bytes),result,true);
+  });
+}
+#endif
 extern "C" reader_jh_status reader_jh_peek(reader_jh *h,reader_jh_direction direction,reader_jh_item *out,reader_jh_error *error){
   if(out)std::memset(out,0,sizeof(*out));
   return guarded(h,error,[&]{

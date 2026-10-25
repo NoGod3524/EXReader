@@ -8,6 +8,16 @@
 extern "C" {
 #endif
 #define READER_JH_VERSION "0.1.0"
+/* The installed package family. 0.2.0 is the explicit raw candidate install
+   (EXReaderJumpHistory 0.2.0 built with EXR_READER_SELECTOR_BYTES_CANDIDATE=ON);
+   0.1.0 is the default legacy install. The legacy ABI/wire version above and
+   READER_JH_STRUCT_VERSION stay the same in both installs, so every original
+   consumer assertion and every original structure layout is unchanged. */
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+#define READER_JH_INSTALL_VERSION "0.2.0"
+#else
+#define READER_JH_INSTALL_VERSION "0.1.0"
+#endif
 #define READER_JH_STRUCT_VERSION 1u
 #define READER_JH_DEFAULT_ENTRIES 64u
 #define READER_JH_MAX_ENTRIES 256u          /* hard cap, never clamped silently */
@@ -164,6 +174,38 @@ typedef struct {
 } reader_jh_state;
 /* Zero-initialize *out; a non-zero struct_version must be the current one. */
 reader_jh_status reader_jh_state_get(reader_jh *,reader_jh_state *,reader_jh_error *);
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+/* Explicit raw candidate entry points, installed as EXReaderJumpHistory 0.2.0.
+   They are the only calls that name anchor version 3, and they only accept a
+   raw-capability revision store (reader_revisions_open_raw_v3). The default
+   calls above keep the legacy behaviour in this install too: reader_jh_commit
+   still refuses a v3 wire and a raw store, so a module and a store of different
+   families never mix in either direction.
+
+   Identity: an anchor v3 selector is bytes, not a C string. The canonical
+   location key records the presence and the byte length of exact/prefix/suffix,
+   so an embedded NUL never ends a selector, a NULL context is a different place
+   than an allocated empty one, and every decoded byte is reproduced exactly.
+   The wire itself is stored unchanged; decoding is reader_rs_decode_raw_v3,
+   which also accepts the retained v1/v2 wires these calls can replay, and the
+   host resolves a v3 target only through reader_rs_resolve_fixed_v3. A wire
+   whose selector has no navigable exact bytes (a NULL expression) is refused
+   with READER_JH_ARGUMENT instead of being emptied: the component never
+   navigates an unknown or NULL selector.
+
+   reader_jh_commit_fixed_v3 encodes a fixed_page capture with
+   reader_rs_encode_fixed_v3 (anchor v3, unchanged envelope and schema 1). It
+   never inserts. reader_jh_commit_wire_raw_v3 stores a wire the raw validator
+   accepts, including a retained v1/v2 wire whose anchor version and bytes are
+   preserved exactly. Both follow every rule of the calls above: same landing
+   coalescing and UNCHANGED, forward truncation, bounded eviction, accounting,
+   atomic refusals, item copy semantics and owner-thread rules. A store of the
+   other family is refused with READER_JH_REVISION and changes nothing. */
+reader_jh_status reader_jh_commit_fixed_v3(reader_jh *,reader_revisions *,const reader_jh_position *,
+  reader_jh_result *,reader_jh_error *);
+reader_jh_status reader_jh_commit_wire_raw_v3(reader_jh *,reader_revisions *,reader_jh_kind kind,
+  const void *wire,size_t bytes,reader_jh_result *,reader_jh_error *);
+#endif
 #ifdef __cplusplus
 }
 #endif

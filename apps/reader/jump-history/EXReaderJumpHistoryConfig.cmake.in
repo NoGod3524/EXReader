@@ -1,5 +1,15 @@
 @PACKAGE_INIT@
 include(CMakeFindDependencyMacro)
 find_dependency(Threads)
-find_dependency(EXReaderReadingState 0.1.0 EXACT CONFIG)
+find_dependency(EXReaderReadingState @EXR_READING_STATE_VERSION@ EXACT CONFIG)
 include("${CMAKE_CURRENT_LIST_DIR}/EXReaderJumpHistoryTargets.cmake")
+
+# RAW-CANDIDATE ORIGIN GUARD: append-only; never changes imported targets.
+if(@EXR_READER_SELECTOR_BYTES_CANDIDATE@)
+  _exr_raw_guard_target(EXReaderReadingState::reader_reading_state_codec "${EXReaderReadingState_DIR}"
+    reader_reading_state.h READER_READING_STATE_VERSION 0.2.0 TRUE)
+  _exr_raw_guard_target(EXReaderReadingState::reader_reading_state "${EXReaderReadingState_DIR}"
+    reader_reading_state.h READER_READING_STATE_VERSION 0.2.0 FALSE)
+  _exr_raw_guard_target(EXReaderJumpHistory::reader_jump_history "${CMAKE_CURRENT_LIST_DIR}"
+    reader_jump_history.h READER_JH_INSTALL_VERSION 0.2.0 TRUE)
+endif()
