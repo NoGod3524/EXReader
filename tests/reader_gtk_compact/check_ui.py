@@ -21,11 +21,11 @@ REQUIRED=('empty-library','empty-continue-disabled','import-cancel','txt-page','
  'search-dialog','directory-dialog','records-dialog','settings-dialog','details-dialog','collections-dialog',
  'account-dialog','folder-cancel','paste-duplicate','save-retry-entry','cancel-entry','library-search',
  'back-to-library','continue-reading','closed-library-preserves-last','reopen-library','reopen-continue',
- 'four-source-files-unchanged')
+ 'four-source-files-unchanged','txt-turn-pages','epub-turn-pages','pdf-turn-pages','cbz-turn-pages','pdf-zoom-menu')
 MENU_ENTRIES=('Search within book…','Directory / page entries…','Reading records…','Reading settings…',
  'Larger text','Smaller text','Show or hide text and notes','Select page text','Add note from selection',
  'Saved notes','Comment','Delete selected note','Book details…','Collections…','Account / Sync…',
- 'Import file…','Import folder…','Paste book files','Retry saving position','Cancel current operation')
+ 'Import file…','Import folder…','Paste book files','Retry saving position','Cancel current operation','Zoom in','Zoom out')
 
 
 def digest(path):return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -141,6 +141,28 @@ def main():
         host.key('Return');host.wait(lambda state:state['generation']>before and state['reader_visible']==1 and not state['saving'])
         wait(lambda:not nodes('Import book',{'file chooser'}));assert host.read()['error']==0
 
+    def turn_pages(kind):
+        before=tuple(host.read()[key] for key in ('part','page','start'))
+        def turn(name):
+            generation=host.read()['generation'];click(name)
+            return host.wait(lambda value:value['generation']>generation and not value['saving'])
+        value=turn('Previous page')
+        assert value['error']==1 and tuple(value[key] for key in ('part','page','start'))==before
+        positions=[before];parts={before[0]}
+        for _ in range(64):
+            value=turn('Next page');position=tuple(value[key] for key in ('part','page','start'))
+            if value['error']==1:
+                assert position==positions[-1];break
+            assert value['error']==0 and position!=positions[-1]
+            positions.append(position);parts.add(position[0])
+        else:raise AssertionError('own compact fixture exceeded its 64-page functional sweep bound')
+        assert len(positions)>=manifest[kind]['min_units']
+        if kind in ('pdf','cbz'):assert len(positions)==manifest[kind]['pages']
+        if kind=='epub':assert len(parts)==manifest[kind]['parts']
+        for target in reversed(positions[:-1]):
+            value=turn('Previous page');assert value['error']==0 and tuple(value[key] for key in ('part','page','start'))==target
+        record(kind+'-turn-pages',host.read()['error']==0,dict(units=len(positions),parts=len(parts),first_boundary_rejected=True,last_boundary_rejected=True))
+
     try:
         assert bus.init()[0]
         host.launch();app=bus.wait_application('exreader-linux');idle()
@@ -153,6 +175,7 @@ def main():
         source=args.fixtures/manifest['txt']['path'];import_path(source)
         primary(True);record('reader-primary-controls',True,headers[-1]);screenshot('reading-txt')
         record('txt-page',host.read()['fixed']==0 and host.read()['book']>0 and host.read()['frame_generation']>0)
+        turn_pages('txt')
         record('default-tools-hidden',not nodes('Selectable page text') and not nodes('Annotation comment') and host.read()['compact_tools_open']==0)
         value=focus_snapshot('txt-page');record('page-keyboard-focus',any(row['name']=='Reading page' for row in value))
         host.key('alt+m');element('Reading',{'menu item'});host.key('Home','Right');element('Search within book…',{'menu item'})
@@ -205,6 +228,10 @@ def main():
             host.key('F2');host.wait(lambda value:value['reader_visible']==0)
             import_path(args.fixtures/manifest[kind]['path'],via_menu=kind=='epub')
             screenshot('reading-'+kind);record(kind+'-page',host.read()['fixed']==int(manifest[kind]['fixed']) and host.read()['book']>0)
+            turn_pages(kind)
+            if kind=='pdf':
+                zoom=host.read()['zoom'];menu('Reading','Zoom in');host.wait(lambda value:value['zoom']>zoom and not value['saving'])
+                menu('Reading','Zoom out');host.wait(lambda value:value['zoom']==zoom and not value['saving']);record('pdf-zoom-menu')
         before=host.read()['book'];host.key('F2');host.wait(lambda value:value['reader_visible']==0);screenshot('library-four-formats')
         host.close();host.launch();app=bus.wait_application('exreader-linux');idle()
         record('reopen-library',host.read()['reader_visible']==0 and host.read()['compact_resume']==before)
