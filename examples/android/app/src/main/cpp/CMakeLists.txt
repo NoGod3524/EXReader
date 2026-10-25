@@ -11,7 +11,7 @@ endif()
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
 list(APPEND CMAKE_PREFIX_PATH "${EXR_SDK}")
 set(EXReader_DIR "${EXR_SDK}/lib/cmake/EXReader" CACHE PATH "Installed EXReader package" FORCE)
-find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED)
+find_package(EXReader 3.41.0 EXACT CONFIG REQUIRED)
 
 add_library(exreader_host SHARED exreader_host_jni.c)
 target_link_libraries(exreader_host PRIVATE EXReader::exreader)

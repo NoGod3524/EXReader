@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 project(EXReaderRealCorpus LANGUAGES C)
-find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED COMPONENTS core pdf)
+find_package(EXReader 3.41.0 EXACT CONFIG REQUIRED COMPONENTS core pdf)
 add_executable(r2-document ../../tools/check_document.c)
 add_executable(r2-location location.c)
 foreach(target r2-document r2-location)
