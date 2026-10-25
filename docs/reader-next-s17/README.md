@@ -145,3 +145,11 @@ python tests/reader_next_s17/strict.py   # 同 source/run/attempt 的工件身�
 `@
 
 两个脚本都要求 `GITHUB_ACTIONS=true`；本包遵守"仅 Actions"，本地不跑构建与测试。
+
+## Root独立审查轮（尚未通过）
+
+原三轮失败保留。本轮从封存HEAD c91ef21e独立分支重新审查，模块实现不变：
+修复汇总器读取旧报告不存在的adopted字段，改为严格核对原合同的host_ui_accepted和product_wiring_accepted；
+raw报告仍须明确adopted=false/actual_hosts=false，并把完整检查数固定为legacy22/raw20。
+修复GitHub artifacts端点，增加producer completed和准确run_attempt核对；五项混装拒绝仍全部执行。
+没有把缺失字段默认当作false，没有放宽任何状态或冻结预算。本地不执行任何语法、构建或测试。

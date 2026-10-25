@@ -2,7 +2,7 @@
 name: Reader next S17 raw sync status view
 on:
   push:
-    branches: [codex/reader-next-s17]
+    branches: [codex/reader-next-s17-root-review]
   workflow_dispatch:
 permissions:
   contents: read

@@ -214,13 +214,20 @@ def main():
     reports = {}
     for name in ['frozen-legacy-acceptance', 'raw-acceptance']:
         report = json.loads((OUT / name / 'result.json').read_text(encoding='utf-8'))
-        assert report['accepted'] and not report['adopted']
+        assert report['accepted'] is True and report['host_ui_accepted'] is False
+        if name == 'frozen-legacy-acceptance':
+            # This unchanged report has no adopted field. Validate the actual
+            # published contract rather than inventing a missing false value.
+            assert report['product_wiring_accepted'] is False
+        else:
+            assert report['adopted'] is False and report['actual_hosts'] is False
+        assert report['count'] == len(report['checks'])
         assert (report['source_sha'], report['run_id'], report['attempt']) == (
             os.environ['GITHUB_SHA'], os.environ['GITHUB_RUN_ID'], os.environ['GITHUB_RUN_ATTEMPT'])
         reports[name] = {'count': report['count'], 'checks': report['checks'],
                          'sha256': hashlib.sha256((OUT / name / 'result.json').read_bytes()).hexdigest()}
-    assert reports['raw-acceptance']['count'] >= 15
-    assert reports['frozen-legacy-acceptance']['count'] >= 15
+    assert reports['raw-acceptance']['count'] == 20
+    assert reports['frozen-legacy-acceptance']['count'] == 22
 
     logs = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(OUT.glob('*.log'))}
     result = {'accepted': True, 'adopted': False, 'source_sha': os.environ['GITHUB_SHA'],

@@ -46,12 +46,13 @@ def main():
     record = get('actions/runs/' + run + '/attempts/' + attempt)
     assert record['head_sha'] == source and record['run_attempt'] == int(attempt)
     jobs = get('actions/runs/' + run + '/attempts/' + attempt + '/jobs?per_page=100')['jobs']
-    artifacts = get('actions/runs/' + run + '/attempts/' + attempt + '/artifacts?per_page=100')['artifacts']
+    artifacts = get('actions/runs/' + run + '/artifacts?per_page=100')['artifacts']
     platforms, retained = [], []
     for platform, runner in [('Linux', 'ubuntu-22.04'), ('Windows', 'windows-2022')]:
         job = [entry for entry in jobs if entry['name'] == JOB + runner + ')']
         assert len(job) == 1 and job[0]['conclusion'] == 'success', (runner, [entry['name'] for entry in jobs])
-        assert job[0]['head_sha'] == source
+        assert job[0]['head_sha'] == source and job[0]['status'] == 'completed'
+        assert str(job[0]['run_attempt']) == attempt
         found = [entry for entry in artifacts
                  if entry['name'] == 'reader-next-s17-' + platform + '-' + run + '-' + attempt]
         assert len(found) == 1, [entry['name'] for entry in artifacts]
