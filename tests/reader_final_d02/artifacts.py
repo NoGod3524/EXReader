@@ -6,13 +6,21 @@ import os
 from pathlib import Path
 import sys
 import urllib.request
+import urllib.parse
 import zipfile
 from contract import *
 REPO = 'NoGod3524/EXReader'
+class SafeRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        redirected=super().redirect_request(req,fp,code,msg,headers,newurl)
+        if urllib.parse.urlsplit(req.full_url).netloc != urllib.parse.urlsplit(newurl).netloc:
+            redirected.remove_header("Authorization")
+        return redirected
+OPENER=urllib.request.build_opener(SafeRedirect())
 def sha(p): return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 def api(route, raw=False):
     req=urllib.request.Request('https://api.github.com/repos/'+REPO+'/'+route, headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'], 'Accept':'application/vnd.github+json'})
-    with urllib.request.urlopen(req,timeout=180) as response: value=response.read()
+    with OPENER.open(req,timeout=180) as response: value=response.read()
     return value if raw else json.loads(value)
 def download(identifier, destination, expected_run, expected_sha, expected_digest=None, expected_size=None):
     meta=api('actions/artifacts/'+str(identifier))

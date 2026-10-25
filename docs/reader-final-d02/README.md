@@ -28,3 +28,5 @@ Only `.github/workflows/reader-final-d02.yml` on `codex/reader-final-d02` invoke
 ### Historical failures retained, not mixed with D02
 
 G12 run 40084309431 measured unnamed search/note fields, missing page text provider, focus loss and Tab traps; no inference of persistence is made until D02 observations. Producer prior failed runs 40198400279 (dependency), 40199103895 (readiness), 40199849523 (fixed-page parser), 40200467006 (Ctrl+L conflict), and canceled 40197968923 (geometry) remain in target `docs/validation/reader-windows-compact.json` unchanged. These do not count as D02 retries and are never combined with D02 successes.
+
+D02 first failed run: 40215115650 attempt 1, harness `01eae40b444c0414fca3e5256f1d188d709b5380`, native job 121234467615. Guard/syntax passed; producer raw ZIP redirect returned HTTP401 because urllib retained GitHub Authorization across hosts. No UI checks ran. Fix strips that header only on cross-host redirects to the already-authorized signed artifact URL; authentication, ZIP digest and expiration checks remain mandatory.
