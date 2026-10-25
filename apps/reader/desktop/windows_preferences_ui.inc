@@ -441,3 +441,8 @@ static void prefs_translate(MSG *message) {
   if (!(GetKeyState(VK_CONTROL) & 0x8000)) return;
   if (message->wParam == VK_OEM_COMMA) { prefs_show(); message->message = WM_NULL; }
 }
+
+/* The dialog is gone: take at most one deferred system-appearance re-render. */
+static void prefs_dialog_closed(void) {
+  prefs_pump();
+}
