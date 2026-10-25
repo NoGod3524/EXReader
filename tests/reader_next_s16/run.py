@@ -317,11 +317,12 @@ def main():
                                 '-DCMAKE_BUILD_TYPE=Release',
                                 '-DCMAKE_PREFIX_PATH=' + ';'.join(map(str, [on, product, sdk]))],
                                'negative-original-consumer-against-raw', 'EXReaderJumpHistory'))
+    # A complete copy of the default install with only the adapter version file
+    # rewritten: every archive and header exists, so only the build-time
+    # capability guard can refuse this mixed family.
     fake_prefix = OUT / 'negatives/faked-prefix'
-    fake = fake_prefix / 'lib/cmake/EXReaderReadingState'
-    fake.parent.mkdir(parents=True)
-    shutil.copytree(off / 'lib/cmake/EXReaderReadingState', fake)
-    version_file = fake / 'EXReaderReadingStateConfigVersion.cmake'
+    shutil.copytree(off, fake_prefix)
+    version_file = fake_prefix / 'lib/cmake/EXReaderReadingState/EXReaderReadingStateConfigVersion.cmake'
     text = version_file.read_text(encoding='utf-8')
     assert 'set(PACKAGE_VERSION "0.1.0")' in text
     version_file.write_text(text.replace('set(PACKAGE_VERSION "0.1.0")', 'set(PACKAGE_VERSION "0.2.0")'),
