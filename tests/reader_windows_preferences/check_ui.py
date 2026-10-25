@@ -27,7 +27,7 @@ sys.path.insert(0, str(ROOT / 'tests/reader_windows_account'))
 import check_a11y_ui as A
 
 MESSAGE, TOGGLE = 278, 279
-PAGE, STATUS = 123, 125
+PAGE, PAGE_LABEL, STATUS = 123, 124, 125
 FONT, LINE, PARAGRAPH, MARGIN, THEME, DIRECTION, INPUT, ZOOM = 261, 262, 263, 264, 265, 266, 267, 268
 LIGHT_FG, LIGHT_BG, DARK_FG, DARK_BG = 269, 270, 271, 272
 APPLY, DEFAULTS, IMPORT, REBUILD, CLOSE = 273, 274, 275, 276, 277
@@ -229,7 +229,9 @@ class App(M.MetadataApp):
         return text(U.GetDlgItem(self.dialog(), MESSAGE))
 
     def label(self):
-        return text(self.control('page'))
+        # The page control itself carries a static caption; the visible page
+        # and size text lives in the separate label beside it.
+        return text(U.GetDlgItem(self.window, PAGE_LABEL))
 
     def status(self):
         return text(self.control('status'))
