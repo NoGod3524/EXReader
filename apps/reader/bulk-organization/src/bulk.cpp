@@ -1,5 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 #include "reader_bulk.h"
+#ifdef EXR_READER_BULK_RAW3
+#define reader_bulk_open reader_bulk_open_raw_v3
+#define reader_revisions_open reader_revisions_open_raw_v3
+#define reader_revision_get reader_revision_get_raw_v3
+#endif
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
@@ -509,6 +514,13 @@ extern "C" reader_bulk_status reader_bulk_open(reader_metadata_owner *owner,cons
     *out=handle.release();return READER_BULK_OK;
   });
 }
+#ifdef EXR_READER_BULK_RAW3
+#undef reader_bulk_open
+extern "C" reader_bulk_status reader_bulk_open(reader_metadata_owner *,const char *,const char *,reader_bulk **out,reader_bulk_error *error){
+  if(out)*out=nullptr;
+  return call(error,[&]() -> reader_bulk_status {reject(READER_BULK_ARGUMENT,"Raw bulk requires explicit raw open");});
+}
+#endif
 extern "C" reader_bulk_status reader_bulk_close(reader_bulk **handle,reader_bulk_error *error){
   return call(error,[&]{
     if(!handle)reject(READER_BULK_ARGUMENT,"Missing bulk handle pointer");

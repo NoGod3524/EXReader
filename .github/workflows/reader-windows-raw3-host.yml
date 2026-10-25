@@ -1,0 +1,30 @@
+name: Windows actual installed raw3 host candidate
+on:
+  push:
+    branches: [codex/reader-windows-raw3-candidate]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  host:
+    runs-on: windows-2022
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Authenticate exact SDK raw packages codec and unchanged default source
+        run: |
+          python -m compileall -q tests/reader_windows_raw3
+          python tests/reader_windows_raw3/guard.py
+      - name: Build actual SDK packages and both Win32 profiles and retain full original bulk checks
+        run: python tests/reader_windows_raw3/host_build.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-installed-raw3-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/windows-raw3-host/
+            build/windows-raw3-preflight/
+          if-no-files-found: error

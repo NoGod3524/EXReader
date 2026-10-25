@@ -67,7 +67,7 @@ def main():
         raise RuntimeError('Checkout differs')
     for source in (COMPOSED,WINDOWS,RAW,CODEC):
         subprocess.run(['git','merge-base','--is-ancestor',source,'HEAD'], cwd=ROOT, check=True)
-    owned = {'.github/workflows/reader-windows-raw3-preflight.yml','docs/READER-WINDOWS-RAW3.md',
+    owned = {'.github/workflows/reader-windows-raw3-preflight.yml','.github/workflows/reader-windows-raw3-host.yml','docs/READER-WINDOWS-RAW3.md',
              'apps/reader/desktop-metadata/CMakeLists.txt','apps/reader/desktop-metadata/EXReaderDesktopMetadataConfig.cmake.in',
              'apps/reader/desktop-metadata/include/reader_metadata.h','apps/reader/desktop-metadata/src/metadata.cpp',
              'examples/reader.c','apps/reader/windows-account/CMakeLists.txt',
@@ -75,6 +75,8 @@ def main():
              'apps/reader/desktop/windows_raw3_apis.h','apps/reader/desktop/reading_capture_bytes.h',
              '.github/workflows/reader-private-capture.yml','docs/READER-PRIVATE-CAPTURE.md',
              'docs/validation/reader-private-capture.json'}
+    owned.update('apps/reader/bulk-organization/'+path for path in (
+        'CMakeLists.txt','EXReaderBulkOrganizationConfig.cmake.in','include/reader_bulk.h','src/bulk.cpp'))
     changed = git('diff','--name-only',COMPOSED,'HEAD').splitlines()
     if not all(p in owned or p.startswith(('tests/reader_windows_raw3/','tests/reader_private_capture/')) for p in changed):
         raise RuntimeError('Changed path outside metadata candidate and source composition')

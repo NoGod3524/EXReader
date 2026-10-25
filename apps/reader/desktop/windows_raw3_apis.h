@@ -8,6 +8,13 @@
 #include <reader_projection.h>
 #include <reader_reading_commands.h>
 #include <reader_annotation_view.h>
+#ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
+#include <reader_bulk.h>
+#if !defined(EXR_READER_BULK_RAW3)
+#error Raw Windows batch operations require the raw bulk package
+#endif
+#define reader_bulk_open reader_bulk_open_raw_v3
+#endif
 #if !defined(EXR_READER_SELECTOR_BYTES_CANDIDATE) || !defined(EXR_READER_METADATA_RAW3)
 #error Raw Windows host requires the exact installed raw module family
 #endif

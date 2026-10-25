@@ -1,4 +1,18 @@
 @PACKAGE_INIT@
 include(CMakeFindDependencyMacro)
-find_dependency(EXReaderDesktopMetadata 0.1.0 EXACT CONFIG)
+find_dependency(EXReaderDesktopMetadata @EXR_BULK_METADATA_VERSION@ EXACT CONFIG)
 include("${CMAKE_CURRENT_LIST_DIR}/EXReaderBulkOrganizationTargets.cmake")
+get_target_property(_bulk_metadata_defs EXReaderDesktopMetadata::reader_desktop_metadata INTERFACE_COMPILE_DEFINITIONS)
+if(@EXR_READER_SELECTOR_BYTES_CANDIDATE@)
+  if(NOT "EXR_READER_METADATA_RAW3=1" IN_LIST _bulk_metadata_defs)
+    message(FATAL_ERROR "Raw bulk organization cannot consume legacy metadata")
+  endif()
+  _exr_raw_guard_target(EXReaderDesktopMetadata::reader_desktop_metadata "${EXReaderDesktopMetadata_DIR}"
+    reader_metadata.h READER_METADATA_VERSION 0.2.0 TRUE)
+  _exr_raw_guard_target(EXReaderBulkOrganization::reader_bulk "${CMAKE_CURRENT_LIST_DIR}"
+    reader_bulk.h READER_BULK_VERSION 0.2.0 TRUE)
+else()
+  if("EXR_READER_METADATA_RAW3=1" IN_LIST _bulk_metadata_defs)
+    message(FATAL_ERROR "Legacy bulk organization cannot consume raw metadata")
+  endif()
+endif()

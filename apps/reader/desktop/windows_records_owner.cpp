@@ -265,6 +265,7 @@ fields prepare(store &s,const book &b,const winrecords_request &r) {
  if(r.kind==READER_RC_NOTE_TEXT) {
   need(!old.empty()&&reader_rs_decode(s.revisions,old.data(),old.size(),&retained.value,&error)==READER_RS_OK&&
        retained.value.has_location,"Current note source is unavailable");
+  need(admitted_parser(retained.value.parser_version),"Current note parser version is unsupported");
   need(retained.value.mode!=READER_RS_FIXED_PAGE||retained.value.exact!=nullptr,"NULL location cannot be edited");
   actual.value.mode=retained.value.mode;
  }
