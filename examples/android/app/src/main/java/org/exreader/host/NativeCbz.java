@@ -40,7 +40,7 @@ final class NativeCbz implements AutoCloseable {
     int identity(){return System.identityHashCode(this);}
     Frame render(int page,double scale,HostTask task)throws Exception{task.check();Frame frame=nativeRender(checked(),page,scale,task);task.check();if(!pageId(page).equals(frame.pageId))throw new IllegalStateException("CBZ renderer page identity changed");return frame;}
     NativeReadingSdk.Match resolve(ReadingCapture capture,HostTask task)throws Exception{
-        checked();task.check();if(capture==null||capture.mode!=ReadingCapture.FIXED||!sourceKey.equals(capture.bookKey)||!NativeReadingSdk.parser().equals(capture.parser))throw new IllegalArgumentException("CBZ source or parser identity differs");
+        checked();task.check();if(capture==null||capture.mode!=ReadingCapture.FIXED||!sourceKey.equals(capture.bookKey)||!NativeReadingSdk.acceptsParser(capture.parser))throw new IllegalArgumentException("CBZ source or parser identity differs");
         NativeReadingSdk.Match match=nativeResolve(handle,capture.pageId,capture.start,capture.end,capture.bytes(),task);task.check();
         if(match.found()&&(!sourceKey.equals(match.recaptured.bookKey)||!pageId((int)match.unit).equals(match.recaptured.pageId)))throw new IllegalStateException("Current CBZ renderer returned another source/page");return match;
     }

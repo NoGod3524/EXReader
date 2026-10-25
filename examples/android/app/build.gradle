@@ -12,6 +12,7 @@ def exrNavigationPrefix = project.findProperty('exrNavigationPrefix') ?: "${root
 def exrReading = project.findProperty('exrReading') == 'true'
 def exrPreferences = project.findProperty('exrPreferences') == 'true'
 def exrPageTheme = project.findProperty('exrPageTheme') == 'true'
+def exrRecordInterop = project.findProperty('exrRecordInterop') == 'true'
 def exrPreferencesPrefix = project.findProperty('exrPreferencesPrefix') ?: "${rootProject.projectDir}/../../stage/android-preferences"
 def exrDav = project.findProperty('exrDav') ?: "${rootProject.projectDir}/../../stage/android-dav"
 def exrSideload = project.findProperty('exrSideload') ?: "${rootProject.projectDir}/../../stage/android-sideload"
@@ -47,6 +48,7 @@ android {
                 arguments "-DEXR_HOST_READING=${exrReading ? 'ON' : 'OFF'}"
                 arguments "-DEXR_HOST_PREFERENCES=${exrPreferences ? 'ON' : 'OFF'}", "-DEXR_PREFERENCES_PREFIX=${exrPreferencesPrefix}"
                 arguments "-DEXR_HOST_PAGE_THEME=${exrPageTheme ? 'ON' : 'OFF'}"
+                arguments "-DEXR_ANDROID_RECORD_INTEROP_REVIEW=${exrRecordInterop ? 'ON' : 'OFF'}"
             }
         }
     }
@@ -127,6 +129,10 @@ android {
         sourceSets.androidTest.java.srcDir '../../../tests/reader_android_host_import/java'
     }
     if(exrPageTheme) { sourceSets.androidTest.java.srcDir '../../../tests/reader_android_page_theme/java' }
+    if(exrRecordInterop) {
+        sourceSets.debug.java.srcDir '../../../tests/reader_android_record_interop/debug/java'
+        sourceSets.androidTest.java.srcDir '../../../tests/reader_android_record_interop/java'
+    }
 }
 dependencies {
     implementation project(':webdav')
