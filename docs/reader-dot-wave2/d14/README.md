@@ -18,7 +18,7 @@ three rounds per stage; TXT, EPUB, PDF and CBZ each round. Each cycle must compl
 open, forward, backward, library, resume, search open/close, directory open/close,
 records open/close, settings open/close and native picker cancel, in that order.
 24 completed cycles (240 cycle actions), never attempted cycles. Stage one then
-imports a fixed 9 MB scanning TXT, starts real search, observes actual processing,
+imports a fixed 3 MB scanning TXT, starts real search, observes actual processing,
 and closes the host; stage two must be a distinct PID and prove no query replay.
 Final stage must still complete all four formats and cleanly exit. Originals must
 remain byte-identical. Only native import and ordinary implicit progress saves are
@@ -44,3 +44,23 @@ lifecycle or artifact-authentication pass.
 
 Entry points: `reader-dot-d14.yml`, `build.py`, `run.py`, platform drivers,
 `contract.py`, `authenticate.py`. Existing target helper code is read-only.
+
+## Retained iteration 1 / explicit fixture amendment
+
+Run `40225172916`, attempt 1, harness `5f76251e6ab906740151ed60ca5fc034ce050bbf`
+was terminal failure. Windows 12 completed cycles / 120 cycle actions, 67 resource
+samples, PID 5148, clean cleanup exit 0, but the extra line-heavy 9 MB TXT did not
+appear and the close-processing action failed; stage 2 did not run. The original
+9 MB processing fixture and its failure remain in the original authenticated ZIP.
+It is not retrospectively accepted. Prior frozen Windows perf documentation
+records line-heavy >=7 MiB TXT as EXR_LIMIT. Iteration 2 changes this extra workload
+to 60,000 lines / 3 MB, retaining the exact ordinary four-format cycle plan, and
+waits for an observed shelf row rather than assuming import-idle means row-ready.
+The original 9 MB import capability remains ungranted; original ZIP diagnosis is
+printed early in Actions. GTK built correctly but its driver module name collided
+with PyGObject's legacy `gtk` sentinel before launch (zero cycles). The fix loads
+our platform modules under explicit unique names. No product edits.
+
+Iteration 2 also records actual installed SDK header identity, corrects GDI query
+handle rights, forces authored TXT LF bytes, binds each launched executable hash,
+and records read-only absence of pending files and annotation rows per cycle.

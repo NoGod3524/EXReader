@@ -29,6 +29,7 @@ run('cmake','-S',source,'-B','build/d14-host','-G','Ninja','-DCMAKE_BUILD_TYPE=R
 run('cmake','--build','build/d14-host','--target',target,'--parallel','4','--verbose')
 shutil.copy2(root/'build/d14-host'/program,out/Path(program).name)
 shutil.copy2(root/'build/d14-host/CMakeCache.txt',out/'CMakeCache.txt')
+shutil.copy2(sdk/'include/exr/base.h',out/'sdk-base.h')
 sys.path.insert(0,str(root/'tools'));from host_font import fetch
 font=fetch(str(root/'build/d14-font'))
 shutil.copy2(root/'build/d14-font/Reader.otf',out/'Reader.otf')
@@ -40,6 +41,6 @@ maker.epub(out/'fixtures/D14 EPUB.epub','D14 EPUB','<p>D14 independently authore
 run(sys.executable,'tests/linux_host/generate_fixed.py',out/'fixtures/fixed')
 shutil.copyfile(out/'fixtures/fixed/Pages.pdf',out/'fixtures/Fixed.pdf')
 shutil.copyfile(out/'fixtures/fixed/Pages.cbz',out/'fixtures/Comic.cbz')
-(out/'fixtures/Reading.txt').write_text('D14 bounded native reading, cancellation, and durable progress.\n\n'*160,encoding='utf-8')
-(out/'fixtures/Processing.txt').write_text('D14 real chapter scanning without any review gates.\n'*180000,encoding='utf-8')
-write(out/'build-identity.json',dict(platform=platform,target=TARGETS[platform],harness=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],sdk_source=SDK,program=Path(program).name,program_sha256=digest(out/Path(program).name),font_sha256=digest(out/'Reader.otf')))
+(out/'fixtures/Reading.txt').write_text('D14 bounded native reading, cancellation, and durable progress.\n\n'*160,encoding='utf-8',newline='\n')
+(out/'fixtures/Processing.txt').write_text('D14 real chapter scanning without any review gates.\n'*60000,encoding='utf-8',newline='\n')
+write(out/'build-identity.json',dict(platform=platform,target=TARGETS[platform],harness=os.environ['GITHUB_SHA'],run=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],sdk_source=SDK,program=Path(program).name,program_sha256=digest(out/Path(program).name),font_sha256=digest(out/'Reader.otf'),sdk_version='3.41.0',sdk_header_sha256=digest(out/'sdk-base.h')))

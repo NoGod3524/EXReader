@@ -31,7 +31,12 @@ class Driver:
         a=self.app
         N.command(a,46001);a.wait(lambda:N.visible(a,119))
         if importing:N.picker(a,path)
-        a.focus();send(a.control('books'),0x186,a.row(path.stem));a.click('open');a.wait_idle(timeout=30)
+        a.focus()
+        def found_row():
+            try:return a.row(path.stem)+1
+            except AssertionError:return None
+        selected=a.wait(found_row,timeout=30)-1
+        send(a.control('books'),0x186,selected);a.click('open');a.wait_idle(timeout=30)
         a.wait(lambda:N.visible(a,123));assert a.label()
     def forward(self):
         self.before_page=self.app.label();self.app.click('next');self.app.wait_idle(timeout=30)

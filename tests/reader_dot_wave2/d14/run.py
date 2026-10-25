@@ -1,5 +1,5 @@
 """Two real process stages; successful complete cycles alone increment counts."""
-import argparse,importlib,json,os,platform as platform_module,subprocess,sys,threading,time,traceback
+import argparse,importlib.util,json,os,platform as platform_module,sqlite3,subprocess,sys,threading,time,traceback
 from pathlib import Path
 import psutil
 from contract import ACTIONS,FORMATS,ROUNDS,SDK,digest,write,validate
@@ -25,14 +25,26 @@ def sample(stage,pid):
                     k=C.WinDLL('kernel32',use_last_error=True);u=C.WinDLL('user32',use_last_error=True)
                     k.OpenProcess.argtypes=[W.DWORD,W.BOOL,W.DWORD];k.OpenProcess.restype=W.HANDLE;k.CloseHandle.argtypes=[W.HANDLE]
                     u.GetGuiResources.argtypes=[W.HANDLE,W.DWORD];u.GetGuiResources.restype=W.DWORD
-                    h=k.OpenProcess(0x1000,False,pid);assert h
-                    try:row.update(handles=proc.num_handles(),gdi=u.GetGuiResources(h,0))
+                    h=k.OpenProcess(0x400,False,pid);assert h
+                    try:
+                        C.set_last_error(0);gdi=u.GetGuiResources(h,0);assert gdi or C.get_last_error()==0
+                        row.update(handles=proc.num_handles(),gdi=gdi)
                     finally:k.CloseHandle(h)
                 else:row['fds']=proc.num_fds()
             report['resources'].append(row)
         except psutil.NoSuchProcess:return
         except Exception:report['sampler_errors'].append(traceback.format_exc());return
         stop.wait(.5)
+
+def profile_audit():
+    profile=out/'profile';pending=[p.relative_to(profile).as_posix() for p in profile.rglob('*.pending')]
+    annotations={}
+    for path in profile.glob('*.sqlite'):
+        with sqlite3.connect(path.as_uri()+'?mode=ro',uri=True,timeout=5) as db:
+            tables=[r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table' AND (name LIKE '%note%' OR name LIKE '%annotation%')")]
+            for table in tables:annotations[path.name+'/'+table]=db.execute('SELECT count(*) FROM "'+table.replace('"','""')+'"').fetchone()[0]
+    value=dict(pending=pending,annotations=annotations);assert not pending and not any(annotations.values()),value
+    return value
 
 def action(identifier,fn,after_state=True):
     assert time.monotonic()-started<2640,'bounded lifecycle deadline'
@@ -45,13 +57,15 @@ def action(identifier,fn,after_state=True):
         row.update(status='failed',error=traceback.format_exc(),finished_seconds=time.monotonic()-started);save();raise
 
 try:
-    module=importlib.import_module(args.platform);driver=module.Driver(out,out/identity['program'],out/'Reader.otf')
+    spec=importlib.util.spec_from_file_location('d14_platform_'+args.platform,Path(__file__).with_name(args.platform+'.py'));module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    driver=module.Driver(out,out/identity['program'],out/'Reader.otf')
     for stage in (1,2):
         process=driver.launch(stage);proc=psutil.Process(process.pid)
         current_stage=dict(stage=stage,pid=process.pid,create_time=proc.create_time(),exe=proc.exe(),program_sha256=digest(proc.exe()),exit_code=None,completed_cycles=0)
         assert current_stage['program_sha256']==identity['program_sha256']
         report['stages'].append(current_stage);stop.clear();sampler=threading.Thread(target=sample,args=(stage,process.pid),daemon=True);sampler.start()
-        if stage==2:action('2/no_replay',driver.no_replay,False)
+        if stage==2:
+            action('2/no_replay',driver.no_replay,False);report['reopen_profile_audit']=profile_audit()
         for round_ in range(ROUNDS):
             for kind in FORMATS:
                 base=f'{stage}/{round_}/{kind}'
@@ -61,7 +75,8 @@ try:
                     else:fn=getattr(driver,name)
                     action(base+'/'+name,fn)
                 current_stage['completed_cycles']+=1;report['completed_cycles']+=1
-                write(out/f'stage-{stage}-round-{round_}-{kind}.json',driver.snapshot(f'stage-{stage}-round-{round_}-{kind}'));save()
+                snapshot=driver.snapshot(f'stage-{stage}-round-{round_}-{kind}');snapshot['profile_audit']=profile_audit()
+                write(out/f'stage-{stage}-round-{round_}-{kind}.json',snapshot);save()
         if stage==1:action('1/close_processing',lambda:driver.close_processing(out/'fixtures/Processing.txt'),False)
         else:action('2/final_close',driver.close,False)
         stop.set();sampler.join(timeout=5);current_stage['exit_code']=process.poll();save()

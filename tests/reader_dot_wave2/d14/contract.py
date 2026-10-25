@@ -29,6 +29,7 @@ def validate(v,identity):
     stages=v['stages'];assert [s['stage'] for s in stages]==[1,2] and len({s['pid'] for s in stages})==2,'missing/duplicate process stage'
     for s in stages:
         assert s['exit_code']==0 and s['completed_cycles']==ROUNDS*4
+        assert s['program_sha256']==identity['program_sha256'],'actual process program mismatch'
         samples=[r for r in v['resources'] if r['stage']==s['stage']]
         assert len(samples)>=2 and all(r['pid']==s['pid'] and r['create_time']==s['create_time'] for r in samples),'resource/PID mismatch'
         assert all(all(type(r[k]) in (int,float) and r[k]>=0 for k in ('rss_bytes','cpu_user_seconds','cpu_system_seconds','threads','handles' if v['platform']=='windows' else 'fds')) for r in samples)
@@ -40,7 +41,7 @@ def validate(v,identity):
 def selftest():
     identity=dict(platform='gtk',harness='h'*40,run='1',attempt='1',target=TARGETS['gtk'],program_sha256='a'*64)
     v=dict(identity,sdk_source=SDK,plan=dict(stages=2,rounds=ROUNDS,formats=list(FORMATS),actions=list(ACTIONS),ceiling_seconds=2700),failures=[],sampler_errors=[],duration_seconds=10,completed_cycles=24,performance_accepted=False,physical_device_accepted=False,screenreader_accepted=False,leak_free_claim=False)
-    v['stages']=[dict(stage=s,pid=s,create_time=s,exit_code=0,completed_cycles=12) for s in (1,2)]
+    v['stages']=[dict(stage=s,pid=s,create_time=s,exit_code=0,completed_cycles=12,program_sha256=identity['program_sha256']) for s in (1,2)]
     v['resources']=[dict(stage=s,pid=s,create_time=s,rss_bytes=1,cpu_user_seconds=0,cpu_system_seconds=0,threads=1,fds=1) for s in (1,2) for _ in range(2)]
     v['actions']=[dict(id=i,status='completed',after={},stage=int(i[0]) if i[0].isdigit() else None,pid=int(i[0]) if i[0].isdigit() else None) for i in expected()]
     validate(v,identity)

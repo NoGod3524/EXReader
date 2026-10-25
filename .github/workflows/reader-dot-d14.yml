@@ -51,6 +51,11 @@ jobs:
           paths=subprocess.check_output(['git','diff','--name-only','0889f7d1e9a537c6c1b05456547e016b26e1cd85','HEAD'],text=True).splitlines()
           assert all(any(p.startswith(a) for a in allowed) for p in paths),paths
           PY
+      - name: Inspect both preserved first-attempt failures before rerun
+        if: matrix.platform == 'gtk'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_dot_wave2/d14/diagnose_previous.py
       - name: Native Windows compiler environment
         if: matrix.platform == 'windows'
         shell: pwsh

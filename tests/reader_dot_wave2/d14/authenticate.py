@@ -29,6 +29,7 @@ try:
                 assert all(identity[k]==report[k] for k in ('harness','run','attempt')) and identity['platform']==platform and identity['target']==TARGETS[platform]
                 assert hashlib.sha256(z.read(identity['program'])).hexdigest()==identity['program_sha256']
                 assert hashlib.sha256(z.read('Reader.otf')).hexdigest()==identity['font_sha256']
+                assert hashlib.sha256(z.read('sdk-base.h')).hexdigest()==identity['sdk_header_sha256'] and identity['sdk_version']=='3.41.0'
                 record.update(authenticated=True,identity=identity,completed_cycles=v['completed_cycles'],stages=v['stages'],failed_actions=[r for r in v['actions'] if r['status']!='completed'],failures=v['failures'],resources=len(v['resources']))
                 write(out/(platform+'-report.json'),v)
                 validate(v,identity)
