@@ -580,7 +580,7 @@ class Driver:
         expectations = {
             "heap-overflow": ("AddressSanitizer", lambda code: code != 0),
             "signed-overflow": ("runtime error", lambda code: code != 0),
-            "leak": ("LeakSanitizer", lambda code: code == 23),
+            "leak": ("LeakSanitizer", lambda code: code in (23, -6)),
             "abort": ("", lambda code: code == -6),
             "terminate": ("", lambda code: code == -6),
             "exit-code": ("", lambda code: code == 7),

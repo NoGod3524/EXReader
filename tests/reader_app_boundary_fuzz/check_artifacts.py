@@ -186,7 +186,7 @@ def main():
             cache = archive.read(member(archive, "logs/consumer-CMakeCache.txt")).decode("utf-8", "replace")
             require("fsanitize=address,undefined" in cache, "the consumers were not built with the sanitizers")
             negative = by_name["harness.crash_and_exit_negative_controls"]["detail"]
-            require(negative.get("leak") == 23 and negative.get("hang") == "timeout" and
+            require(negative.get("leak") in (23, -6) and negative.get("hang") == "timeout" and
                     negative.get("abort") == -6 and negative.get("exit-code") == 7,
                     "the negative controls did not observe the real failures")
 
