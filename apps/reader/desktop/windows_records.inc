@@ -270,7 +270,7 @@ static void winrecords_show(void) {
   records.dialog=CreateWindowExW(WS_EX_CONTROLPARENT,type.lpszClassName,L"阅读记录",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX,
     CW_USEDEFAULT,CW_USEDEFAULT,820,650,g.window,NULL,type.hInstance,NULL);if(!records.dialog) return;
   HWND window=records.dialog;records.book_id=g.current.id;records.generation++;records.running=records.history=0;
-  HWND label=make_static(window,0,L"书签、划线、笔记和阅读位置(&R)");MoveWindow(label,12,12,780,22,TRUE);
+  HWND label=make_static(window,0,L"阅读记录：书签、划线、笔记和位置(&R)");MoveWindow(label,12,12,780,22,TRUE);
   records.rows=CreateWindowExW(WS_EX_CLIENTEDGE,L"LISTBOX",L"阅读记录",WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_VSCROLL|LBS_NOTIFY|LBS_NOINTEGRALHEIGHT,
     12,38,780,270,window,(HMENU)(INT_PTR)IDC_RECORDS_ROWS,NULL,NULL);
   SendMessageW(records.rows,WM_SETFONT,(WPARAM)GetStockObject(DEFAULT_GUI_FONT),TRUE);
