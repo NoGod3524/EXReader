@@ -1929,9 +1929,17 @@ final class HostReaderModel: ObservableObject {
     func editReadingRecord(_ row: HostReadingRow, body: String) {
         guard row.safe, row.hasLocation, row.entityKind == "annotation", body.utf8.count <= 65536 else { return }
         performReading("批注已保存") { session, catalog, root, cancel in
+#if EXR_APPLE_RAW3
+            let retained = try HostReadingWorker.selectedWire(catalog: catalog, row: row)
+            let sourceVersion = try catalog.withHistory { try HostReadingWorker.decoded(retained, history: $0).version }
+            let request = try HostReadingWorker.request(session: session, catalog: catalog, kind: 4, operation: 0,
+                annotation: row.annotation, mode: row.mode, capture: nil, body: body, observedHeads: [row.revision],
+                anchorVersion: sourceVersion, cancel: cancel)
+#else
             _ = try HostReadingWorker.selectedWire(catalog: catalog, row: row)
             let request = try HostReadingWorker.request(session: session, catalog: catalog, kind: 4, operation: 0,
                 annotation: row.annotation, mode: row.mode, capture: nil, body: body, observedHeads: [row.revision], cancel: cancel)
+#endif
             _ = try HostReadingWorker.submit(request, session: session, catalog: catalog, root: root, cancel: cancel)
             return nil
         }
@@ -1957,11 +1965,18 @@ final class HostReaderModel: ObservableObject {
         let heads = readingRecords.restoreHeads
         performReading("已恢复阅读记录，当前页面保持不变") { session, catalog, root, cancel in
             let (capture, _) = try session.readingResolution(version.wire, catalog: catalog, cancel: cancel)
-            let body = try catalog.withHistory { try HostReadingWorker.decoded(version.wire, history: $0).body }
+            let source = try catalog.withHistory { try HostReadingWorker.decoded(version.wire, history: $0) }
             let isPoint = capture.mode == 3 ? capture.fixed!.start == capture.fixed!.end : capture.anchor!.start == capture.anchor!.end
+#if EXR_APPLE_RAW3
             let request = try HostReadingWorker.request(session: session, catalog: catalog,
                 kind: row.entityKind == "progress" ? 1 : isPoint ? 2 : 3, operation: 2, annotation: row.annotation,
-                mode: capture.mode, capture: capture, body: body, observedHeads: heads, cancel: cancel)
+                mode: capture.mode, capture: capture, body: source.body, observedHeads: heads,
+                anchorVersion: source.version, cancel: cancel)
+#else
+            let request = try HostReadingWorker.request(session: session, catalog: catalog,
+                kind: row.entityKind == "progress" ? 1 : isPoint ? 2 : 3, operation: 2, annotation: row.annotation,
+                mode: capture.mode, capture: capture, body: source.body, observedHeads: heads, cancel: cancel)
+#endif
             _ = try HostReadingWorker.submit(request, session: session, catalog: catalog, root: root, cancel: cancel)
             return nil
         }

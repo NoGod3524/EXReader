@@ -1,0 +1,23 @@
+{
+  "accepted": false,
+  "adopted": false,
+  "branch": "codex/reader-apple-raw3",
+  "source_sha": null,
+  "base": "896420028fa3923f3713afb673f56b913f93373f",
+  "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "core": "0737d03c1316295a210aa527833c05054d29c1d4",
+  "family": "56793e7ca4f8ecdc5f2d9c3394fce4e201aca275",
+  "family_run": 40192929457,
+  "family_credit_transferred_to_host": false,
+  "runs": [],
+  "default_raw_enabled": false,
+  "default_max_anchor_version": 2,
+  "schema": 1,
+  "revision_wire_envelope": 1,
+  "old_private_request_writer": 2,
+  "new_private_request_version": 2,
+  "new_private_request_explicit_anchor_versions": [1, 2, 3],
+  "actual_android_interop_accepted": false,
+  "physical_device_execution": false,
+  "complete_product": false
+}
