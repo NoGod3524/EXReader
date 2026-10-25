@@ -1,7 +1,40 @@
 {
   "schema": 1,
-  "recorded_at_utc": "2026-10-25T12:35:00Z",
+  "recorded_at_utc": "2026-10-25T14:58:38Z",
   "latest_checkpoint": {
+    "checkpoint_1458": {
+      "common_source": "25bc0c67971f81491f50e0a3caaaf7e509bb7e35",
+      "common_unique_workflows": {"passed":9,"failed":2,"complete_product_accepted":false},
+      "windows_compact": {
+        "tested_source":"eab342ef456be4a8a1811e5249e3c217d906ce8a",
+        "sealed_head":"f355525b74ae261db536c56200e46643919ef323",
+        "run":40201283788,"attempt":1,"conclusion":"success","compact_checks":22,
+        "original_OFF_full_F3_and_atomic13_accepted":true,"common_adopted":false,
+        "raw_artifact":{"id":12601764928,"bytes":169964880,"sha256":"4e158bdda8c18561b972b85d22ea8e71c6c6dcdc997b3f23a55747fc195954d3"},
+        "summary_artifact":{"id":12602637196,"bytes":9142,"sha256":"66cae39b5cc7aebbf08119245679ab74251705253eaa4878517685c09ca3927e"}
+      },
+      "independent_verifier": {
+        "tested_source":"122edf576250e161a51baa3ce1cdfd1840cbf1a6",
+        "head":"af86975a","protocol_run":40200787138,"refusals":89,"conclusion":"success",
+        "partial_collection_run":40200984011,"verified_slots":7,"accepted":false,
+        "producer_source_remains_25bc":true,"original_producers_and_judges_unchanged":true,
+        "boundary":"only aggregate_native.py, test_aggregate_native.py, reader-native-341-summary.yml and READER-NATIVE-341-COLLECTOR.md"
+      },
+      "apple_common_failures": {
+        "records_run":40195374154,"original_failure_preserved":true,
+        "movie_inspection_run":40203788769,"movie_inspection_conclusion":"success",
+        "movie_observation":"empty shelf and ready status persist after real CBZ tap; callback trace is not recoverable from movie",
+        "observational_reproduction_source":"f2230cf1","scope":"new diagnostic only; original production, fixture and assertions preserved",
+        "theme_complete_rerun":40203445172,"theme_conclusion":"failure",
+        "theme_failure":"FastImportUITests.swift:85 waits for reader page containing C00P000W00 after imported shelf row already passed; distinct from records empty shelf"
+      },
+      "active_candidates": {
+        "gtk_compact":{"source":"34bd903a","run":40204507162,"state":"in_progress","production_pin":"a7bcf0483fb52ecf9cd3cdf7dda07a4aa742f174","diagnostic_run":40204389861,"diagnostic":"actual submenu parent role menu; leaf menu item"},
+        "android_raw3":{"source":"ade3fbffe928534891d9f91cb1fc44a994342501","run":40204041412,"state":"pending_final_result"},
+        "apple_ios_raw3":{"source":"72c6bbdd14ebf3be453fa7f0da81119d52675eb5","run":40203714083,"state":"pending_final_result"},
+        "apple_macos_raw3":{"tested_source":"15dab6b2270dc296ed6239db67ced2e22d255e65","sealed_head":"44eabdc86b3b84d986f81dbaf8cee92b1829cea8","run":40196978163,"conclusion":"success","sender_wires":15,"originals":4,"records":11}
+      }
+    },
     "R6_readonly_revalidation": {
       "pull_request": 3,
       "state": "MERGED",

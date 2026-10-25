@@ -12,12 +12,12 @@
     "apple_shelf": {"run_id": 40195379460, "attempt": 1},
     "apple_mapping": {"run_id": 40195381359, "attempt": 1},
     "apple_wp13": {"run_id": 40195383243, "attempt": 1},
-    "apple_page_theme": {"run_id": 40195384977, "attempt": 1}
+    "apple_page_theme": {"run_id": 40203445172, "attempt": 1}
   },
   "product_conditions": {
     "apple_record_compatibility": null,
     "android_to_apple": null,
     "apple_to_android": null
   },
-  "history": []
+  "history": [{"label":"apple_page_theme_original_failure","source_sha":"25bc0c67971f81491f50e0a3caaaf7e509bb7e35","run_id":40195384977,"attempt":1,"scope":"full original run refused: simctl appearance exceeded original45s before build; new complete rerun also failed separately"}]
 }
