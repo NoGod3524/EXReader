@@ -80,6 +80,16 @@ reader_revision_status reader_revision_entities_page(reader_revisions *,const ch
    Release the output with reader_revision_bytes_free; failure leaves NULL. */
 reader_revision_status reader_revision_book_title(reader_revisions *,const char *revision_id,
   char **title,reader_revision_error *);
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+/* Explicit candidate APIs: store capability is immutable; legacy APIs refuse raw stores. */
+reader_revision_status reader_revision_local_project_raw_v3(reader_revisions *store,const void *bytes,size_t count,const char *const *expected,size_t expected_count,const char *sort_title,reader_revision_info *out,int *created,int *applied,reader_revision_error *error);
+reader_revision_status reader_revision_local_reading_raw_v3(reader_revisions *store,const void *bytes,size_t count,const char *const *expected,size_t expected_count,reader_revision_info *out,int *created,reader_revision_error *error);
+reader_revision_status reader_revision_project_raw_v3(reader_revisions *store,const char *entity_kind,const char *entity_key,const char *expected,const char *sort_title,reader_revision_info *out,reader_revision_error *error);
+reader_revision_status reader_revision_selected_raw_v3(reader_revisions *store,const char *entity_kind,const char *entity_key,char **wire,size_t *bytes,reader_revision_info *out,reader_revision_selection *selection,reader_revision_error *error);
+reader_revision_status reader_revision_annotations_page_raw_v3(reader_revisions *store,const char *book_key,const char *after_id,int direction,size_t limit,reader_revision_annotation_fn visit,void *context,reader_revision_error *error);
+reader_revision_status reader_revision_entities_page_raw_v3(reader_revisions *store,const char *type,const char *after_key,int direction,size_t limit,reader_revision_entity_fn visit,void *context,reader_revision_error *error);
+reader_revision_status reader_revision_book_title_raw_v3(reader_revisions *store,const char *id,char **title,reader_revision_error *error);
+#endif
 #ifdef __cplusplus
 }
 #endif

@@ -1,0 +1,286 @@
+{
+  "accepted": true,
+  "source_sha": "56793e7ca4f8ecdc5f2d9c3394fce4e201aca275",
+  "run_id": "40192929457",
+  "attempt": "1",
+  "adopted": false,
+  "platforms": [
+    {
+      "platform": "Linux",
+      "producer_job": 121167606543,
+      "artifact": {
+        "id": 12599236409,
+        "name": "reader-raw-store-companions-Linux-40192929457-1",
+        "digest": "sha256:1517edc360ed5ef3916af24e50c6cb6ab36a656e99890b2c9f48f47954f453a5",
+        "size_in_bytes": 30471463,
+        "expires_at": "2027-01-23T12:24:02Z"
+      },
+      "original_regressions": {
+        "off-command-regression": 33,
+        "raw-command-regression": 33,
+        "off-reader_sync": 33,
+        "raw-reader_sync": 33,
+        "off-reader_session": 20,
+        "raw-reader_session": 20
+      },
+      "tls_checks": 9,
+      "profile_checks": [
+        "genuine-3.40.0-runtime",
+        "genuine-original-untagged-0.3-default-accepted",
+        "cached-revisions-refused",
+        "cached-sdk340-refused",
+        "cached-both-refused",
+        "caller-unset-cannot-bypass",
+        "relocated-accepted",
+        "canonical-alias-accepted"
+      ]
+    },
+    {
+      "platform": "Windows",
+      "producer_job": 121167606664,
+      "artifact": {
+        "id": 12599007043,
+        "name": "reader-raw-store-companions-Windows-40192929457-1",
+        "digest": "sha256:56f0128943b64e13ca82143aa750618281a0dd161f29b1606b73e35a2f0e58e0",
+        "size_in_bytes": 40843614,
+        "expires_at": "2027-01-23T12:24:02Z"
+      },
+      "original_regressions": {
+        "off-command-regression": 33,
+        "raw-command-regression": 33,
+        "off-reader_sync": 33,
+        "raw-reader_sync": 33,
+        "off-reader_session": 20,
+        "raw-reader_session": 20
+      },
+      "tls_checks": 9,
+      "profile_checks": [
+        "genuine-3.40.0-runtime",
+        "genuine-original-untagged-0.3-default-accepted",
+        "cached-revisions-refused",
+        "cached-sdk340-refused",
+        "cached-both-refused",
+        "caller-unset-cannot-bypass",
+        "relocated-accepted",
+        "canonical-alias-accepted"
+      ]
+    }
+  ],
+  "cross_platform_exact_wires_equal": true,
+  "scope": "explicit installed commands/sync/session raw-store companion candidate only",
+  "actual_hosts": false,
+  "actual_android_apple_interop": false,
+  "complete_product": false,
+  "base": "0737d03c1316295a210aa527833c05054d29c1d4",
+  "branch": "codex/reader-raw-store-companions",
+  "sdk": {
+    "candidate_version": "3.41.0",
+    "protected_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+    "old_source": "9854061be331fe603a1822d9b2b36ee357154927",
+    "old_runtime": "3.40.0"
+  },
+  "family": {
+    "Revisions": "0.4.0",
+    "ReadingState": "0.2.0",
+    "ReadingCommands": "0.2.0",
+    "AnnotationView": "0.2.0",
+    "Commands": "0.2.0",
+    "Sync": "0.2.0",
+    "Session": "0.2.0",
+    "WebDAV": "0.2.0",
+    "ProductCatalog": "0.1.0"
+  },
+  "flag": "EXR_READER_SELECTOR_BYTES_CANDIDATE=ON",
+  "default_flag": "OFF",
+  "legacy_anchor_max_version": 2,
+  "core_template_sha256": "416c7b35f75ed1819b5eb79eda2bd32dce4a6cc0f799a53f891912f17cdf0cf0",
+  "ownership_replacement_sha256": "e535198fa0d3af57be6961d0d3665106e7fa17bbf01f821669b5402e40fc2daf",
+  "core_same_run": {
+    "accepted": true,
+    "adopted": false,
+    "source_sha": "56793e7ca4f8ecdc5f2d9c3394fce4e201aca275",
+    "run_id": "40192929457",
+    "attempt": "1",
+    "scope": "explicit installed core codec/revisions/commands/typed-view candidate only",
+    "platforms": [
+      {
+        "platform": "Linux",
+        "producer_job": 121167606543,
+        "artifact": {
+          "id": 12599081639,
+          "name": "reader-selector-bytes-Linux-40192929457-1",
+          "digest": "sha256:5d9bc2c1c49ec3a2b1db6313e2e21617784aae44d0834d4ec38821e820f89e15",
+          "size_in_bytes": 51305849,
+          "expires_at": "2027-01-23T12:24:02Z"
+        },
+        "protocol_checks": 30,
+        "graph_checks": 11,
+        "pdf_sha256": "5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc"
+      },
+      {
+        "platform": "Windows",
+        "producer_job": 121167606664,
+        "artifact": {
+          "id": 12599261570,
+          "name": "reader-selector-bytes-Windows-40192929457-1",
+          "digest": "sha256:e301dffd0b74a9839f2e77709117451ebd05cb9c390de65a3a4d88c37d0b663f",
+          "size_in_bytes": 55358531,
+          "expires_at": "2027-01-23T12:24:02Z"
+        },
+        "protocol_checks": 30,
+        "graph_checks": 11,
+        "pdf_sha256": "5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc"
+      }
+    ],
+    "cross_platform_wire_equal": true,
+    "actual_android_apple_interop": false,
+    "physical_device": false,
+    "complete_product": false
+  },
+  "summary_job": 121170438510,
+  "artifacts": [
+    {
+      "digest": "sha256:e301dffd0b74a9839f2e77709117451ebd05cb9c390de65a3a4d88c37d0b663f",
+      "expired": false,
+      "expires_at": "2027-01-23T12:24:02Z",
+      "id": 12599261570,
+      "name": "reader-selector-bytes-Windows-40192929457-1",
+      "size_in_bytes": 55358531,
+      "workflow_run": {
+        "head_branch": "codex/reader-raw-store-companions",
+        "head_repository_id": 1421442522,
+        "head_sha": "56793e7ca4f8ecdc5f2d9c3394fce4e201aca275",
+        "id": 40192929457,
+        "repository_id": 1421442522
+      }
+    },
+    {
+      "digest": "sha256:1517edc360ed5ef3916af24e50c6cb6ab36a656e99890b2c9f48f47954f453a5",
+      "expired": false,
+      "expires_at": "2027-01-23T12:24:02Z",
+      "id": 12599236409,
+      "name": "reader-raw-store-companions-Linux-40192929457-1",
+      "size_in_bytes": 30471463,
+      "workflow_run": {
+        "head_branch": "codex/reader-raw-store-companions",
+        "head_repository_id": 1421442522,
+        "head_sha": "56793e7ca4f8ecdc5f2d9c3394fce4e201aca275",
+        "id": 40192929457,
+        "repository_id": 1421442522
+      }
+    },
+    {
+      "digest": "sha256:5d9bc2c1c49ec3a2b1db6313e2e21617784aae44d0834d4ec38821e820f89e15",
+      "expired": false,
+      "expires_at": "2027-01-23T12:24:02Z",
+      "id": 12599081639,
+      "name": "reader-selector-bytes-Linux-40192929457-1",
+      "size_in_bytes": 51305849,
+      "workflow_run": {
+        "head_branch": "codex/reader-raw-store-companions",
+        "head_repository_id": 1421442522,
+        "head_sha": "56793e7ca4f8ecdc5f2d9c3394fce4e201aca275",
+        "id": 40192929457,
+        "repository_id": 1421442522
+      }
+    },
+    {
+      "digest": "sha256:56f0128943b64e13ca82143aa750618281a0dd161f29b1606b73e35a2f0e58e0",
+      "expired": false,
+      "expires_at": "2027-01-23T12:24:02Z",
+      "id": 12599007043,
+      "name": "reader-raw-store-companions-Windows-40192929457-1",
+      "size_in_bytes": 40843614,
+      "workflow_run": {
+        "head_branch": "codex/reader-raw-store-companions",
+        "head_repository_id": 1421442522,
+        "head_sha": "56793e7ca4f8ecdc5f2d9c3394fce4e201aca275",
+        "id": 40192929457,
+        "repository_id": 1421442522
+      }
+    },
+    {
+      "digest": "sha256:f30e93ac7b7f5095158e0cd74337eb5e205e4f4b09378046cab8063d3485dbcc",
+      "expired": false,
+      "expires_at": "2027-01-23T12:24:02Z",
+      "id": 12598633775,
+      "name": "reader-raw-store-companions-summary-40192929457-1",
+      "size_in_bytes": 1676,
+      "workflow_run": {
+        "head_branch": "codex/reader-raw-store-companions",
+        "head_repository_id": 1421442522,
+        "head_sha": "56793e7ca4f8ecdc5f2d9c3394fce4e201aca275",
+        "id": 40192929457,
+        "repository_id": 1421442522
+      }
+    }
+  ],
+  "jobs": [
+    {
+      "id": 121167606543,
+      "name": "candidate (ubuntu-22.04)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/40192929457/job/121167606543"
+    },
+    {
+      "id": 121167606664,
+      "name": "candidate (windows-2022)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/40192929457/job/121167606664"
+    },
+    {
+      "id": 121170438510,
+      "name": "summary",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/40192929457/job/121170438510"
+    }
+  ],
+  "actual_wire_count": 11,
+  "actual_tls_checks_per_platform": 9,
+  "pdf_sha256": "5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc",
+  "core_config_appendices_only": true,
+  "off_new_symbols_absent": true,
+  "earlier_runs": [
+    {
+      "run_id": 40190661899,
+      "source": "b3165e90173632172b777e27b12f4cb4378fc77a",
+      "conclusion": "cancelled",
+      "reason": "Static review found SDK core is an interface; stopped before wasting further sampling."
+    },
+    {
+      "run_id": 40190906663,
+      "source": "c4e74232d29807a229a9c416f005a136c6589a0f",
+      "conclusion": "failure",
+      "reason": "New guard had not accounted for the no-shared exreader aggregate interface."
+    },
+    {
+      "run_id": 40191315854,
+      "source": "da6f7241fb0aa6c633713857735feb650ab53bdb",
+      "conclusion": "failure",
+      "reason": "New Sync header lacked version macro; Windows dynamic core template read used locale encoding and corrupted emoji fixture."
+    },
+    {
+      "run_id": 40191789670,
+      "source": "aeeedf068a3e095be97ffdc813a84f94dee11c1c",
+      "conclusion": "failure",
+      "windows": "success",
+      "reason": "Linux new seven-consumer build log emitted seven SQLite traces into the unchanged single-command checker."
+    },
+    {
+      "run_id": 40192474330,
+      "source": "40a26619526c073daa8ccfcbc2459f69ad238c6d",
+      "conclusion": "success",
+      "reason": "Complete 7-profile intermediate candidate; final source adds original untagged 0.3 default positive as profile 8."
+    }
+  ],
+  "pending": [
+    "actual Android/Apple raw3 host adoption",
+    "macOS companion execution",
+    "positive raw3 codec execution against SDK 3.40",
+    "six-platform interoperability",
+    "complete product"
+  ]
+}

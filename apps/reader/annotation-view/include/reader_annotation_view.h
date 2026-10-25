@@ -7,7 +7,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+#define READER_ANNOTATION_VIEW_VERSION "0.2.0"
+#else
 #define READER_ANNOTATION_VIEW_VERSION "0.1.0"
+#endif
 #define READER_AV_BATCH_MAX 100u
 /* One SAFE item is built from one retained revision of at most 1 MiB, and every
    decoded string is a substring of it, so an item never exceeds this plus its
@@ -155,12 +159,22 @@ typedef struct {
    is borrowed. *out is NULL on failure. options may be NULL. */
 reader_av_status reader_av_open(reader_revisions *store,const char *book_key,const reader_av_options *options,
   reader_av_view **out,reader_av_error *error);
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+reader_av_status reader_av_open_raw_v3(reader_revisions *,const char *,const reader_av_options *,
+  reader_av_view **,reader_av_error *);
+#endif
 /* Start of the list in one direction; pure, always allowed. */
 reader_av_status reader_av_cursor_start(const reader_av_view *view,int direction,reader_av_cursor *cursor,reader_av_error *error);
 /* One snapshot page after `from`, limit 1..100. *page is zeroed first; on a
    non-OK status it stays empty and from is unchanged. */
 reader_av_status reader_av_page_get(reader_av_view *view,const reader_av_cursor *from,size_t limit,
   reader_av_page *page,reader_av_error *error);
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+/* Nullable selector tags are copied exactly; NULL exact never grants content
+   availability or FOUND. Resolution remains the host's explicit public SDK call. */
+reader_av_status reader_av_page_get_raw_v3(reader_av_view *,const reader_av_cursor *,size_t,
+  reader_av_page *,reader_av_error *);
+#endif
 /* Host bookkeeping after its own SDK resolve; never touches anything else. */
 reader_av_status reader_av_page_set_resolution(reader_av_page *page,size_t index,reader_av_resolution resolution,
   reader_av_error *error);
