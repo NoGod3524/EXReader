@@ -78,6 +78,22 @@ struct HostRootView: View {
                 ReaderScreen(model: model)
             }
         }
+#if EXR_APPLE_HOST_REVIEW
+        .overlay(alignment: .topTrailing) {
+            if model.reviewInitializationHoldEnabled {
+                VStack {
+                    Text(model.reviewInitializationObservation).font(.system(size: 2)).lineLimit(1)
+                        .accessibilityIdentifier("initialization.state")
+                    if model.reviewInitializationHeld {
+                        Button("尝试初始化前导入") { model.reviewTryImportBeforeInitialization() }
+                            .accessibilityIdentifier("initialization.try-import")
+                        Button("继续实际初始化") { model.reviewReleaseInitialization() }
+                            .accessibilityIdentifier("initialization.release")
+                    }
+                }.padding(4)
+            }
+        }
+#endif
 #if os(macOS)
         .frame(minWidth: 380, minHeight: 460)
 #endif
@@ -386,14 +402,37 @@ struct LibraryScreen: View {
                 }
             }
 #endif
+#if EXR_APPLE_HOST_REVIEW
+            if model.reviewFastImportEnabled {
+                Button("单回合真实快速导入") { model.reviewImportFixtureInOneMainTurn() }
+                    .disabled(!model.reviewFastImportReady)
+                    .accessibilityIdentifier("library.fast-import-run")
+                Text(model.reviewFastImportObservation).font(.system(size: 2)).lineLimit(1)
+                    .accessibilityIdentifier("library.fast-import-state")
+            }
+#endif
             if !model.errorText.isEmpty {
                 Text(model.errorText).font(.caption).foregroundColor(.red)
                     .accessibilityIdentifier("library.error")
             }
         }
-        .onAppear { shelf.connect(model.loadShelf) }
+        .disabled(!model.libraryReady)
+        .onAppear {
+            shelf.connect(model.loadShelf)
+#if EXR_APPLE_HOST_REVIEW
+            model.observeReviewLibraryBusy(model.busy)
+#endif
+        }
         .onDisappear { shelf.save() }
-        .onChange(of: model.busy) { value in if !value { shelf.refresh(); hostAnnounce(model.statusText) } }
+        // Book publication is a commit signal even when a fast busy cycle is
+        // coalesced into one SwiftUI frame.
+        .onReceive(model.$books) { _ in shelf.refresh() }
+        .onChange(of: model.busy) { value in
+#if EXR_APPLE_HOST_REVIEW
+            model.observeReviewLibraryBusy(value)
+#endif
+            if !value { shelf.refresh(); hostAnnounce(model.statusText) }
+        }
         .onChange(of: phase) { value in
             if value == .active { shelf.restoreViewport() } else { shelf.save() }
         }

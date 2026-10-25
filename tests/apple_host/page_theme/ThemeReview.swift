@@ -142,12 +142,15 @@ struct ThemeReview {
                 let source = resources.appendingPathComponent(name), original = try Data(contentsOf: source)
                 let (id, _) = try session.importBook(url: source, cancel: HostCancelBox(), catalog: catalog)
                 var frame = try session.open(bookID: id, cancel: HostCancelBox())
-                if name == "Theme.txt" || name == "ThemeText.epub" { frame = try session.turn(1, cancel: HostCancelBox()) }
+                if name == "Theme.txt" || name == "ThemeText.epub" || (frame.pageCount ?? 0) > 1 {
+                    frame = try session.turn(1, cancel: HostCancelBox())
+                }
                 let initial = try bytes(frame), capture = try session.readingCapture(cancel: HostCancelBox()), hash = try session.stateHash()
                 let counts = try productCounts(), notes = try session.notes().count
                 originals[name] = SHA256.hash(data: initial).map { String(format: "%02x", $0) }.joined()
                 try check(name + ":original") {
                     try expect((name != "Theme.txt" && name != "ThemeText.epub") || (capture.anchor?.start ?? 0) > 0, "Nonzero fixture failed to move")
+                    try expect((frame.pageCount ?? 0) <= 1 || capture.page > 0, "Fixed fixture did not retain a nonzero page")
                     try initial.write(to: output.appendingPathComponent(name + ".original.rgba"))
                 }
 #if EXR_APPLE_PAGE_THEME

@@ -1,0 +1,31 @@
+name: Apple real fast import publication regression
+on:
+  push:
+    branches: [codex/reader-apple-shelf-publication]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+env:
+  EXR_APPLE_SDK_VERSION: '3.41.0'
+  EXR_APPLE_PAGE_THEME: 'ON'
+jobs:
+  consumer:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Real owner fast import against authenticated frozen installed SDK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 -m py_compile tests/apple_host/page_theme/fast_import/run.py
+          python3 tests/apple_host/page_theme/fast_import/run.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-shelf-publication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-shelf-publication/
+          if-no-files-found: error
