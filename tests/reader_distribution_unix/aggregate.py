@@ -309,7 +309,7 @@ def verify_platform(key, files, sha, run_id, attempt, output):
         issues.append('archive manifest does not belong to this duplicate-removal report')
     if manifest.get('duplicate_bytes_retained_once') != dedupe.get('bytes_saved'):
         issues.append('archive manifest records another duplicate saving')
-    if archives and manifest.get('root') != archives[0][:-len('.tar.gz')]:
+    if archives and manifest.get('root') != Path(archives[0]).name[:-len('.tar.gz')]:
         issues.append('archive root differs from its file name')
     if type(identity.get('epoch')) is not int:
         issues.append('archive identity records no source epoch')

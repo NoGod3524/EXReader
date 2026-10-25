@@ -435,7 +435,7 @@ def seal(prefix, output, name, epoch, identity):
     archive = output / name
     members = []
     with archive.open('xb') as destination, gzip.GzipFile(
-            fileobj=destination, filename='', mtime=epoch) as compressed:
+            fileobj=destination, filename='', mtime=epoch, mode='wb') as compressed:
         with tarfile.open(fileobj=compressed, mode='w') as tar:
             root = PurePosixPath(name[:-len('.tar.gz')]) if name.endswith('.tar.gz') else PurePosixPath(name)
             for record in records:
