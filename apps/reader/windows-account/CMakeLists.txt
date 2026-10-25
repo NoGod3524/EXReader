@@ -75,7 +75,7 @@ if(EXR_READER_WINDOWS_RECORDS)
 endif()
 if(EXR_READER_WINDOWS_RAW3)
   foreach(_target EXReaderRevisions::reader_revisions EXReaderReadingState::reader_reading_state_codec
-      EXReaderReadingState::reader_reading_state EXReaderReadingCommands::reader_reading_commands
+      EXReaderReadingCommands::reader_reading_commands
       EXReaderAnnotationView::reader_annotation_view EXReaderCommands::reader_commands
       EXReaderSync::reader_sync EXReaderSession::reader_session EXReaderDesktopMetadata::reader_desktop_metadata)
     get_target_property(_raw_defs ${_target} INTERFACE_COMPILE_DEFINITIONS)
@@ -83,6 +83,8 @@ if(EXR_READER_WINDOWS_RAW3)
       message(FATAL_ERROR "Raw Windows dependency belongs to the legacy family: ${_target}")
     endif()
   endforeach()
+  _exr_raw_guard_target(EXReaderReadingState::reader_reading_state "${EXReaderReadingState_DIR}"
+    reader_reading_state.h READER_READING_STATE_VERSION 0.2.0 FALSE)
 endif()
 if(EXR_READER_WINDOWS_NAVIGATION)
   find_package(EXReaderNavigation 0.1.0 EXACT CONFIG REQUIRED)

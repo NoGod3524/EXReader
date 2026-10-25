@@ -59,6 +59,14 @@ struct store {
 struct wire {char *data=nullptr;size_t size=0;~wire(){reader_revision_bytes_free(data);}};
 struct encoded {char *data=nullptr;size_t size=0;~encoded(){reader_rs_free(data);}};
 struct record {reader_rs_record value{};~record(){reader_rs_record_free(&value);}};
+#ifdef EXR_READER_WINDOWS_RAW3
+bool admitted_parser(const char *recorded) {
+ if(!recorded)return false;
+ if(!std::strcmp(recorded,exr_version()))return true;
+ return !std::strcmp(exr_version(),"3.41.0")&&(!std::strcmp(recorded,"3.40.0")||
+  !std::strcmp(recorded,"exreader-sdk-3.40.0")||!std::strcmp(recorded,"exreader-sdk-3.41.0"));
+}
+#endif
 struct capture {
  reader_rs_capture value{};exr_anchor anchor{};exr_fixed_anchor fixed{};size_t part=0;
  ~capture(){exr_anchor_free(&anchor);exr_fixed_anchor_free(&fixed);}
@@ -111,6 +119,7 @@ void shape(const fields &p) {
  auto writer=number(p[WRITER_VERSION]),source=number(p[SOURCE_VERSION]),version=number(p[PRIVATE_VERSION]);
  need((version==1&&writer==2&&source==0)||(version==2&&writer>=1&&writer<=3&&source>=1&&source<=3),
       "Invalid private request version or explicit writer/source");
+ need(version!=2||op!=READER_RC_RESTORE||writer==source,"Restore must preserve its exact source version");
 #endif
 }
 std::vector<unsigned char> pack(const fields &p) {
@@ -238,6 +247,9 @@ fields prepare(store &s,const book &b,const winrecords_request &r) {
   need(reader_revision_get(s.revisions,r.version,&version.data,&version.size,&previous,nullptr)==READER_REV_OK&&
    std::string(previous.entity_key)==info.entity_key&&std::string(previous.book_key)==b.key&&std::strcmp(previous.operation,"delete"),"Retained version belongs to another record");
   need(reader_rs_decode(s.revisions,version.data,version.size,&retained.value,&error)==READER_RS_OK&&retained.value.has_location,"Retained selector is unavailable");
+#ifdef EXR_READER_WINDOWS_RAW3
+  need(admitted_parser(retained.value.parser_version),"Retained parser version is unsupported");
+#endif
   need(r.capture!=nullptr,"Missing renderer capture");
   auto found=r.capture(r.context,&retained.value,&actual.value,&actual.anchor,&actual.fixed,&actual.part);
   need(found==EXR_OK,"Restore location was not independently found",found);
@@ -310,6 +322,9 @@ void apply(store &s,const book &b,const winrecords_request &r,const fields &p,wi
   }
 #endif
   from_record(decoded.value,captured,a,f);
+#ifdef EXR_READER_WINDOWS_RAW3
+  if(operation==READER_RC_DELETE) {captured.anchor=nullptr;captured.fixed=nullptr;}
+#endif
  }
  uint64_t bytes=0;auto identity=reader_revision_book_identity(s.revisions,b.key.c_str(),&bytes,nullptr);
  if(identity==READER_REV_NOT_FOUND) {
@@ -395,6 +410,9 @@ void read_record(store &s,const book &b,const winrecords_request &r,winrecords_r
  auto bytes=selected(s,b.key,r.progress_target!=0,z(r.annotation_id),r.head,r.sha256,info,graph);
  need(graph.kind==READER_SELECTION_SAFE&&!graph.graph.deleted&&!bytes.empty(),"Record is not a safe live location");
  need(reader_rs_decode(s.revisions,bytes.data(),bytes.size(),&out.record,nullptr)==READER_RS_OK,"Saved selector cannot be decoded");
+#ifdef EXR_READER_WINDOWS_RAW3
+ need(admitted_parser(out.record.parser_version),"Saved parser version is unsupported");
+#endif
 }
 void history(store &s,const book &b,const winrecords_request &r,winrecords_response &out) {
  reader_revision_info info{};reader_revision_selection graph{};
@@ -411,6 +429,10 @@ void history(store &s,const book &b,const winrecords_request &r,winrecords_respo
    if(queue.size()==128){stopped=true;break;}queue.push_back(parent);}
   if(std::strcmp(previous.operation,"delete")) {
    record decoded;need(reader_rs_decode(s.revisions,held.data,held.size,&decoded.value,nullptr)==READER_RS_OK&&decoded.value.has_location,"Historical selector is unavailable");
+#ifdef EXR_READER_WINDOWS_RAW3
+   if(!admitted_parser(decoded.value.parser_version)||
+      (decoded.value.mode==READER_RS_FIXED_PAGE&&!decoded.value.exact))continue;
+#endif
    size_t index=out.version_count++;copy(out.versions[index],33,id);
    std::string label=z(decoded.value.note_text);if(label.empty())label=z(decoded.value.exact);if(label.empty())label="Saved reading location";
    if(label.size()>240){size_t n=240;while(n&&((unsigned char)label[n]&192)==128)n--;label.resize(n);label+="…";}
