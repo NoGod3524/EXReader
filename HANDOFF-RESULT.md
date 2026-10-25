@@ -8,4 +8,6 @@
   - `reader-android-raw3-40207467982-1` id 12604412854，113970957 B，sha256 `c3db2ad1a2e31bc53d01620f2ef90e02a976e3b4f90ac76ed2e179c7c9052805`，2027-01-23T15:33:00Z 到期
   - `reader-android-page-theme-40207467982-1` id 12604537792，133598571 B，sha256 `9ea2858145313296d39792d867794db1be687eb70dec38f155dcd1dfe156bf06`，同日到期（同 run 的 `sdk-stage`，用于 JNI 身份比对）
 - 候选 APK：`build/android-raw3/apks/host-debug.apk`（debug；商店/签名/真机不在范围）
-- 未验证：全部检查（尚无 Actions run）；未做真机、商店签名、性能预算、dex 逐方法语义审计。
+- 历史失败（保留原样）：run 40214594172 / attempt 1（source d37a9bc6）static job 被我自己的「APK JNI 字节 == sdk-stage 字节」断言拒绝
+  （apk 288b0efe… vs stage 88ebe479…）；根因是 Gradle 打包 strip 预置 jniLibs，不是 producer 缺陷；改为导出集合 + ELF section 内容比对，producer 工件与源码未动。
+- 未验证：真机、商店/签名、性能预算、dex 逐方法语义审计；第 2 轮（strip 修复后）尚待执行。

@@ -368,6 +368,18 @@ class Driver:
                        if isinstance(value, dict)),
                    progress)
 
+        # The app itself persisted lastBook/lastReader when it opened the book. If
+        # that write never reached disk, restore the recorded values explicitly and
+        # say so; the reading record itself is never synthesized.
+        persisted = self.prefs()
+        self.save('shared_prefs-before-offline.xml', persisted)
+        restore_input = 'app'
+        if b'lastReader' not in persisted or b'name="lastBook"' not in persisted:
+            self.shell('am', 'force-stop', PACKAGE)
+            self.inject_prefs(book_id)
+            restore_input = 'injected'
+        self.observed['restore_input'] = restore_input
+
         self.shell('settings', 'put', 'global', 'airplane_mode_on', '1')
         self.shell('am', 'broadcast', '-a', 'android.intent.action.AIRPLANE_MODE', '--ez', 'state', 'true')
         self.shell('svc', 'wifi', 'disable')

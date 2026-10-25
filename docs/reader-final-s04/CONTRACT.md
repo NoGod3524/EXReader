@@ -14,6 +14,13 @@
 | 原 SDK | 同一 run/attempt 的 `build/session-android/sdk-stage`（3.41.0 头 + `libexreader_jni.so`），不重建 APK |
 
 APK 字节来自上述已认证 ZIP 的 `build/android-raw3/apks/host-debug.apk`；不替换成当前分支 HEAD 的重建产物。
+两条摘要分开 pin：`candidate_sha256`（APK 本身）与 `sdk_jni_sha256`（同 run 装出的 `sdk-stage` 原件）、`apk_jni_sha256`（打包进 APK 的 strip 后副本）。
+
+## 第一轮 CI 的原失败（保留，不掩盖）
+
+run `40214594172` / attempt 1（source `d37a9bc6`）在 static job 失败：本条最初把「APK 内 `libexreader_jni.so` 字节 == sdk-stage 字节」当作身份断言，
+实测 `288b0efe…`（APK）≠ `88ebe479…`（stage）。根因是 **Android 打包会 strip 预置 jniLibs**，不是 producer 缺陷：改为导出集合 + ELF section 内容比对（走的是同一份编译产物），
+producer 工件与 producer 源码一行未动。
 
 ## 抽取方式（为什么不是手填期望值）
 
@@ -31,7 +38,7 @@ producer 源码一变就是**拒绝**（`producer_source_sealed` / `documented_e
 | ABI | `lib/` 只有 x86_64；每个 .so 是 ELF64 x86-64 DYN；runtime ABI 由设备 `ro.product.cpu.abi` 复核 |
 | 权限 | 合并后 uses-permission **恰好** `android.permission.INTERNET`；任何增删即拒绝（不重定基线） |
 | 组件 | 只有 1 个 activity、exported=true、allowBackup=false、debug manifest 的 networkSecurityConfig 在位 |
-| SDK/JNI 身份 | APK 内 `lib/x86_64/libexreader_jni.so` 字节 == 同 run sdk-stage 的同一文件；C 源码里每个 `Java_org_exreader_*` 符号在出货 .so 中导出；`JNI_OnLoad` 存在；`3.41.0` 字符串在出货库里 |
+| SDK/JNI 身份 | APK 内 `lib/x86_64/libexreader_jni.so` 与同 run `sdk-stage` 的同一文件比对：导出集合（`Java_org_exreader_*` + `JNI_*`）完全相等，且按 ELF section 内容逐一相等（跳过 symbol/string table）——**不比对字节**，因为 Gradle 打包会对预置 jniLibs 做 strip（第 1 轮 CI 的原失败即由此而来，见 `validation.json`）；C 源码里每个 `Java_org_exreader_*` 符号在出货 .so 中导出；`JNI_OnLoad` 存在；`3.41.0` 字符串在出货库里 |
 | 资源 | resources.arsc、`res/layout/activity_main.xml` 存在；`assets/reader-catalog-v1.json` == 用 `tools/reader_catalog_assets.py` 从 `apps/reader/store/001_catalog.sql`（pin 的 blob）重生成的结果；`assets/Reader.otf` == `tools/host_font.py` 的 pin |
 | 签名 | apksigner 验签通过、单签名者、v2/v3 之一在场、证书 DN 含 `Android Debug`（release/商店签名不在范围） |
 | 对照 APK | default-OFF 的 `baseline/host-debug.apk` 与候选字节不同、包名/versionCode/权限相同（证明候选确实来自 raw3 family 而非默认 OFF） |

@@ -7,14 +7,13 @@ and the signature identity against the debug-only policy. Any permission drift
 or source drift is a refusal, not a re-baseline.
 """
 import argparse
-import io
+import hashlib
 import os
 import pathlib
 import re
 import struct
 import subprocess
 import sys
-import tempfile
 import zipfile
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
@@ -24,6 +23,7 @@ import expectations
 
 ELF_MACHINE = {3: 'x86', 62: 'x86-64', 40: 'arm', 183: 'aarch64'}
 ELF_TYPE = {2: 'EXEC', 3: 'DYN'}
+ELF_SKIP = (0, 2, 3, 8)  # SHT_NULL, SHT_SYMTAB, SHT_STRTAB, SHT_NOBITS
 
 
 def parse_badging(text):
@@ -73,6 +73,39 @@ def elf_identity(path):
             'type': ELF_TYPE.get(kind, str(kind))}
 
 
+def elf_sections(path):
+    """Section-name to content digest, skipping symbol/string tables and NOBITS.
+
+    Android packaging strips the prebuilt JNI blob, so byte equality with the
+    installed SDK staging cannot hold; the surviving section contents can.
+    """
+    with open(path, 'rb') as handle:
+        data = handle.read()
+    if data[:4] != b'\x7fELF' or data[4] != 2:
+        raise SystemExit('expected a 64-bit ELF: ' + str(path))
+    shoff = struct.unpack_from('<Q', data, 0x28)[0]
+    shentsize = struct.unpack_from('<H', data, 0x3a)[0]
+    shnum = struct.unpack_from('<H', data, 0x3c)[0]
+    shstrndx = struct.unpack_from('<H', data, 0x3e)[0]
+
+    def header(index):
+        base = shoff + index * shentsize
+        name, kind, flags, addr, offset, size = struct.unpack_from('<IIQQQQ', data, base)
+        return name, kind, offset, size
+
+    _, _, strings_offset, strings_size = header(shstrndx)
+    strings = data[strings_offset:strings_offset + strings_size]
+    sections = {}
+    for index in range(shnum):
+        name_offset, kind, offset, size = header(index)
+        end = strings.find(b'\0', name_offset)
+        name = strings[name_offset:end].decode('utf-8', 'replace')
+        if kind in ELF_SKIP:
+            continue
+        sections[name] = hashlib.sha256(data[offset:offset + size]).hexdigest()
+    return sections
+
+
 def dynamic_symbols(path, readelf):
     text = common.run([readelf, '-W', '--dyn-syms', '--wide', str(path)])
     names = set()
@@ -87,7 +120,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--contract', type=pathlib.Path,
                         default=pathlib.Path('docs/reader-final-s04/apk-contract.json'))
-    parser.add_argument('--inventory', type=pathlib.Path, default=pathlib.Path('build/s04-authenticate/inventory.json'))
+    parser.add_argument('--inventory', type=pathlib.Path,
+                        default=pathlib.Path('build/s04-authenticate/inventory.json'))
     parser.add_argument('--output', type=pathlib.Path, default=pathlib.Path('build/s04-static'))
     args = parser.parse_args()
     common.require_actions()
@@ -114,8 +148,7 @@ def main():
     def record(name, passed, observed=None, detail=None, mandatory=True):
         checks.append({'name': name, 'pass': bool(passed), 'observed': observed,
                        'detail': detail, 'mandatory': mandatory})
-        if mandatory and not passed:
-            raise SystemExit('S04 static refusal: ' + name + ' — ' + str(observed))
+        print(json_line(name, passed, observed), flush=True)
 
     record('producer_source_sealed', sealed['sealed'] and sealed['checked'] > 0, sealed)
     documented = contract.get('expected') or {}
@@ -127,6 +160,8 @@ def main():
     record('documented_expectations_match_source', not drift, drift,
            'the sealed expectation table must equal what the producer source says')
     record('candidate_present', candidate.is_file(), {'path': str(candidate)})
+    if not candidate.is_file():
+        raise SystemExit('the authenticated candidate APK is missing: ' + str(candidate))
 
     # --- sealed APK identity: refuse substitution before looking inside ---------
     observed_pins = {
@@ -136,15 +171,8 @@ def main():
         'test_apk_sha256': common.sha256_file(test_apk) if test_apk else None,
         'release_apk_sha256': common.sha256_file(release) if release else None,
         'sdk_jni_sha256': common.sha256_file(sdk_jni) if sdk_jni else None,
+        'apk_jni_sha256': None,
     }
-    for key, value in observed_pins.items():
-        pinned = pins.get(key)
-        if pinned is None:
-            record('pin_' + key + '_derived', allow_derive, {'observed': value, 'allow_derive': allow_derive},
-                   'the sealed contract has no pin yet')
-        else:
-            record('pin_' + key, pinned == value, {'sealed': pinned, 'observed': value})
-
     # --- ZIP structure ---------------------------------------------------------
     with zipfile.ZipFile(candidate) as archive:
         names = archive.namelist()
@@ -157,10 +185,9 @@ def main():
         libs = {}
         for name in names:
             if name.startswith('lib/') and name.endswith('.so'):
-                parts = name.split('/')
-                libs.setdefault(parts[1], []).append(name)
-        apk_jni = archive.read('lib/' + derived['abis'][0] + '/libexreader_jni.so') \
-            if 'lib/' + derived['abis'][0] + '/libexreader_jni.so' in names else None
+                libs.setdefault(name.split('/')[1], []).append(name)
+        jni_name = 'lib/' + derived['abis'][0] + '/libexreader_jni.so'
+        apk_jni = archive.read(jni_name) if jni_name in names else None
         assets = {name: common.sha256_bytes(archive.read(name))
                   for name in names if name.startswith('assets/')}
         catalog_asset = archive.read('assets/reader-catalog-v1.json') \
@@ -168,52 +195,87 @@ def main():
         font_asset = archive.read('assets/' + derived['font_asset']['name']) \
             if 'assets/' + derived['font_asset']['name'] in names else None
         dex_entries = [name for name in names if re.match(r'classes\d*\.dex$', name)]
+    if apk_jni is not None:
+        observed_pins['apk_jni_sha256'] = common.sha256_bytes(apk_jni)
     common.write_json(args.output / 'apk-entries.json', entries)
     record('apk_zip_integrity', bad is None and names_unique, {'entries': len(names), 'testzip': bad})
-    record('apk_manifest_and_index_present',
-           blob[:4] == b'\x00\x00\x08\x00' or blob[:2] == b'\x03\x00', {'manifest_bytes': len(blob)})
+    record('apk_manifest_present', blob[:2] == b'\x03\x00', {'manifest_bytes': len(blob)})
     record('apk_resources_index_present', resources is not None and len(resources) > 8,
            {'resources_bytes': len(resources) if resources else 0})
     record('apk_dex_present', len(dex_entries) >= 1, {'dex': dex_entries})
-    record('apk_abi_set', sorted(libs) == derived['abis'], {'observed': sorted(libs),
-                                                            'derived': derived['abis']})
+    record('apk_abi_set', sorted(libs) == derived['abis'],
+           {'observed': sorted(libs), 'derived': derived['abis']})
     record('apk_jni_present', apk_jni is not None and len(apk_jni) > 0,
-           {'libs': sorted(name for names2 in libs.values() for name in names2)})
+           {'libs': sorted(name for rows in libs.values() for name in rows)})
+
+    for key, value in observed_pins.items():
+        if key == 'apk_jni_sha256' and value is None:
+            record('pin_' + key, False, {'observed': None}, 'the packaged JNI blob is absent')
+            continue
+        pinned = pins.get(key)
+        if pinned is None:
+            record('pin_' + key + '_derived', allow_derive,
+                   {'observed': value, 'allow_derive': allow_derive},
+                   'the sealed contract has no pin yet')
+        else:
+            record('pin_' + key, pinned == value, {'sealed': pinned, 'observed': value})
 
     # --- JNI/SDK identity ------------------------------------------------------
+    extracted = args.output / 'libs'
+    extracted.mkdir(exist_ok=True)
+    identities = {}
+    library_symbols = {}
+    for abi, rows in sorted(libs.items()):
+        for name in rows:
+            with zipfile.ZipFile(candidate) as archive:
+                data = archive.read(name)
+            target = extracted / pathlib.PurePosixPath(name).name
+            target.write_bytes(data)
+            identities[name] = dict(elf_identity(target), bytes=len(data),
+                                    sha256=common.sha256_bytes(data))
+            library_symbols[name] = dynamic_symbols(target, readelf)
+    common.write_json(args.output / 'apk-libs.json', identities)
+    symbols = set().union(*library_symbols.values()) if library_symbols else set()
+    expected_symbols = set(derived['jni_symbols'])
+    missing = sorted(expected_symbols - symbols)
+    record('jni_symbols_complete', bool(expected_symbols) and not missing,
+           {'derived': len(expected_symbols), 'exported': len(symbols), 'missing': missing[:20]})
+    record('jni_onload_exported', 'JNI_OnLoad' in symbols,
+           {'sampled': sorted(s for s in symbols if s.startswith('JNI_'))[:5]})
+    record('jni_elf_x86_64', bool(identities) and all(
+        row['machine'] == 'x86-64' and row['type'] == 'DYN' for row in identities.values()),
+           {name: {'machine': row['machine'], 'type': row['type']} for name, row in identities.items()})
     if apk_jni is not None and sdk_jni is not None:
-        record('jni_blob_equals_same_run_sdk_stage',
-               common.sha256_bytes(apk_jni) == common.sha256_file(sdk_jni),
-               {'apk': common.sha256_bytes(apk_jni), 'sdk_stage': common.sha256_file(sdk_jni),
-                'sdk_stage_path': str(sdk_jni)})
-        extracted = args.output / 'libs'
-        extracted.mkdir(exist_ok=True)
-        symbols = set()
-        identities = {}
-        for abi, entries_abi in sorted(libs.items()):
-            for name in entries_abi:
-                with zipfile.ZipFile(candidate) as archive:
-                    data = archive.read(name)
-                target = extracted / pathlib.PurePosixPath(name).name
-                target.write_bytes(data)
-                identities[name] = dict(elf_identity(target), bytes=len(data),
-                                        sha256=common.sha256_bytes(data))
-                symbols |= dynamic_symbols(target, readelf)
-        common.write_json(args.output / 'apk-libs.json', identities)
-        expected_symbols = set(derived['jni_symbols'])
-        missing = sorted(expected_symbols - symbols)
-        record('jni_symbols_complete', not missing,
-               {'derived': len(expected_symbols), 'exported': len(symbols), 'missing': missing[:20]})
-        record('jni_onload_exported', 'JNI_OnLoad' in symbols,
-               {'sampled': sorted(s for s in symbols if s.startswith('JNI_'))[:5]})
-        record('jni_elf_x86_64', all(row['machine'] == 'x86-64' and row['type'] == 'DYN'
-                                     for row in identities.values()),
-               {name: {'machine': row['machine'], 'type': row['type']} for name, row in identities.items()})
-        sdk_version_bytes = derived['sdk_version'].encode()
-        version_hits = sum(1 for name in libs[derived['abis'][0]]
-                           if sdk_version_bytes in (extracted / pathlib.PurePosixPath(name).name).read_bytes())
-        record('sdk_version_string_in_shipped_libs', version_hits >= 1,
-               {'version': derived['sdk_version'], 'libraries': version_hits})
+        apk_lib = extracted / 'libexreader_jni.so'
+        stage_symbols = dynamic_symbols(sdk_jni, readelf)
+        apk_exports = {s for s in library_symbols.get(jni_name, set()) if s.startswith(('Java_', 'JNI_'))}
+        stage_exports = {s for s in stage_symbols if s.startswith(('Java_', 'JNI_'))}
+        record('jni_exports_match_same_run_sdk',
+               bool(stage_exports) and apk_exports == stage_exports,
+               {'stage': len(stage_exports), 'apk': len(apk_exports),
+                'missing': sorted(stage_exports - apk_exports)[:10],
+                'extra': sorted(apk_exports - stage_exports)[:10]},
+               'packaging strips the blob, so identity is proven by exports plus section contents')
+        apk_sections = elf_sections(apk_lib)
+        stage_sections = elf_sections(sdk_jni)
+        shared = sorted(set(apk_sections) & set(stage_sections))
+        differing = [name for name in shared if apk_sections[name] != stage_sections[name]]
+        code = [name for name in ('.text', '.rodata') if name in shared]
+        record('jni_same_build_as_same_run_sdk',
+               bool(code) and not differing
+               and all(apk_sections[name] == stage_sections[name] for name in code),
+               {'shared_sections': len(shared), 'code_sections': code, 'differing': differing[:10],
+                'removed_by_packaging': sorted(set(stage_sections) - set(apk_sections))[:10],
+                'apk_only_sections': sorted(set(apk_sections) - set(stage_sections))[:10],
+                'apk_sha256': identities[jni_name]['sha256'],
+                'stage_sha256': common.sha256_file(sdk_jni),
+                'apk_bytes': identities[jni_name]['bytes'],
+                'stage_bytes': sdk_jni.stat().st_size})
+    sdk_version_bytes = derived['sdk_version'].encode()
+    version_hits = [name for name, row in identities.items()
+                    if sdk_version_bytes in (extracted / pathlib.PurePosixPath(name).name).read_bytes()]
+    record('sdk_version_string_in_shipped_libs', len(version_hits) >= 1,
+           {'version': derived['sdk_version'], 'libraries': version_hits})
 
     # --- manifest identity through aapt2 --------------------------------------
     badging_text = common.run([aapt2, 'dump', 'badging', str(candidate)])
@@ -237,7 +299,8 @@ def main():
                {'derived': derived['compileSdk'], 'observed': badging['compileSdkVersion']})
     record('manifest_native_code', badging['native_code'] == derived['abis'],
            {'derived': derived['abis'], 'observed': badging['native_code']})
-    record('manifest_launchable_activity', badging['launchable_activity'] == derived['launchable_activity'],
+    record('manifest_launchable_activity',
+           badging['launchable_activity'] == derived['launchable_activity'],
            {'derived': derived['launchable_activity'], 'observed': badging['launchable_activity']})
     record('permissions_unchanged', badging['uses_permission'] == derived['permissions'],
            {'derived': derived['permissions'], 'observed': badging['uses_permission']},
@@ -256,22 +319,22 @@ def main():
            derived['debug_network_security'] == ('networkSecurityConfig' in xmltree),
            {'derived': derived['debug_network_security'],
             'observed': 'networkSecurityConfig' in xmltree})
-    record('manifest_no_extra_permission_attribute',
+    record('manifest_permission_elements',
            len(re.findall(r'E: uses-permission', xmltree)) == len(derived['permissions']),
            {'elements': len(re.findall(r'E: uses-permission', xmltree))})
 
     # --- signature identity ---------------------------------------------------
-    signature = common.run([apksigner, 'verify', '--verbose', '--print-certs', str(candidate)], check=False)
+    signature = common.run([apksigner, 'verify', '--verbose', '--print-certs', str(candidate)],
+                           check=False)
     (args.output / 'apksigner.txt').write_text(signature)
     signers, schemes = parse_certs(signature)
-    verified = 'Verifies' in signature and 'DOES NOT VERIFY' not in signature
-    record('signature_verifies', verified, {'schemes': schemes, 'signers': len(signers)})
-    record('signature_single_signer', len(signers) == 1, {'signers': len(signers)})
+    record('signature_verifies', 'Verifies' in signature and 'DOES NOT VERIFY' not in signature,
+           {'schemes': schemes, 'signers': len(signers)})
+    record('signature_single_signer', len(signers) == 1, {'signers': sorted(signers)})
     dn = next(iter(signers.values()), {}).get('dn', '')
     record('signature_debug_only', 'Android Debug' in dn, {'dn': dn},
            'only the debug candidate is in scope; store/signing authority is not granted')
-    record('signature_v2_or_v3', any(schemes.get(key) for key in schemes),
-           {'schemes': schemes})
+    record('signature_v2_or_v3', any(schemes.get(key) for key in schemes), {'schemes': schemes})
 
     # --- resources and assets identity ---------------------------------------
     record('resource_layout_present', 'res/layout/activity_main.xml' in names,
@@ -301,27 +364,36 @@ def main():
                (baseline_badging['package'], baseline_badging['versionCode'],
                 baseline_badging['uses_permission']) ==
                (badging['package'], badging['versionCode'], badging['uses_permission']),
-               {'package': baseline_badging['package'], 'versionCode': baseline_badging['versionCode'],
+               {'package': baseline_badging['package'],
+                'versionCode': baseline_badging['versionCode'],
                 'permissions': baseline_badging['uses_permission']})
 
+    failed = [check['name'] for check in checks if check['mandatory'] and not check['pass']]
     report = {'identity': common.identity(), 'producer_source': producer_sha,
               'contract_source': str(args.contract), 'allow_derive': allow_derive,
               'pins_sealed': {key: pins.get(key) for key in observed_pins},
-              'observed_pins': observed_pins, 'derived': {key: derived[key] for key in
-                                                          ('applicationId', 'versionCode', 'versionName',
-                                                           'minSdk', 'targetSdk', 'compileSdk', 'abis',
-                                                           'permissions', 'sdk_version',
-                                                           'launchable_activity')},
+              'observed_pins': observed_pins,
+              'derived': {key: derived[key] for key in
+                          ('applicationId', 'versionCode', 'versionName', 'minSdk', 'targetSdk',
+                           'compileSdk', 'abis', 'permissions', 'sdk_version',
+                           'launchable_activity')},
               'checks': checks, 'checks_total': len(checks),
               'checks_passed': sum(1 for check in checks if check['pass']),
-              'accepted': all(check['pass'] for check in checks),
+              'failed_checks': failed,
+              'accepted': not failed,
               'debug_candidate_only': True, 'store_channel': False,
               'physical_device': False, 'signing_authority': False,
               'asset_digests': assets}
     common.write_json(args.output / 'static-report.json', report)
     common.write_json(args.output / 'observed-pins.json', observed_pins)
-    print(common.read_json(args.output / 'static-report.json')['checks_total'])
-    print('static checks passed: %d/%d' % (report['checks_passed'], report['checks_total']))
+    print(json_line('summary', not failed, {'failed': failed, 'checks': len(checks)}), flush=True)
+    if failed:
+        raise SystemExit('S04 static refusal: ' + ', '.join(failed))
+
+
+def json_line(name, passed, observed):
+    import json
+    return json.dumps({'check': name, 'pass': bool(passed), 'observed': observed}, default=str)
 
 
 if __name__ == '__main__':

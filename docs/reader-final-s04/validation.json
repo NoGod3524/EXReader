@@ -1,9 +1,19 @@
 {
   "package": "S04",
   "accepted": false,
-  "reason": "not yet executed",
+  "reason": "round 1 refused by the verifier's own byte-equality assumption; strip-aware identity check now in place, round 2 pending",
   "start": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
   "producer_source": "4a04a9cc74dde67f755c87e87b278d63a254a3ac",
   "producer_run": 40207467982,
-  "complete_product": false
+  "producer_attempt": 1,
+  "complete_product": false,
+  "runs": [
+    {
+      "source": "d37a9bc6fbedb9e164a2a50aee4dd92098cba8fa",
+      "run": 40214594172,
+      "attempt": 1,
+      "result": "static refusal: jni_blob_equals_same_run_sdk_stage (apk 288b0efe…, sdk-stage 88ebe479…); root cause: Gradle strips packaged prebuilt jniLibs, verifier assertion fixed; producer artifact unchanged",
+      "accepted": false
+    }
+  ]
 }
