@@ -28,6 +28,13 @@ EXPECT = {
     'replay-before': ('new-compatible', 'replay-before', '3.40.0', 1),
     'kill-after': ('old-original', 'kill-after', '3.40.0', None),
     'replay-after': ('new-compatible', 'replay-after', '3.40.0', 1),
+    'old-prefixed-produce': ('old-original', 'produce-prefixed', 'exreader-sdk-3.40.0', 8),
+    'old-prefixed-accept': ('new-compatible', 'consume', 'exreader-sdk-3.40.0', 9),
+    'old-prefixed-original-reject': ('new-original', 'refuse', 'exreader-sdk-3.40.0', 9),
+    'old-prefixed-original340-reject': ('old-original', 'refuse', 'exreader-sdk-3.40.0', 9),
+    'new-prefixed-produce': ('new-compatible', 'produce-prefixed', 'exreader-sdk-3.41.0', 8),
+    'new-prefixed-accept': ('new-compatible', 'consume', 'exreader-sdk-3.41.0', 9),
+    'new-prefixed-original-reject': ('new-original', 'refuse', 'exreader-sdk-3.41.0', 9),
 }
 
 
@@ -39,8 +46,14 @@ def identity(value, source, run, attempt):
 def validate(result, read, source, run, attempt):
     identity(result, source, run, attempt)
     require(result.get('accepted') is True and result.get('host_ui_accepted') is False and
-            result.get('physical_device_accepted') is False and result.get('downgrade_accepted') is False,
+            result.get('physical_device_accepted') is False and result.get('downgrade_accepted') is False and
+            result.get('actual_android_host_interop_accepted') is False,
             'invalid acceptance scope')
+    java_cases = result.get('java_policy_cases', [])
+    observed = [line.removeprefix('CASE ') for line in read('java-policy-check.log').decode().splitlines() if line.startswith('CASE ')]
+    require(len(java_cases) == len(set(java_cases)) == 20 and java_cases == observed and
+            {'desktop-current-spelling', 'android-old-upgrade', 'old-runtime-no-new-bare-admission',
+             'future-prefixed', 'duplicate-prefix'} <= set(java_cases), 'known Android policy cases missing')
     require(result['sdks'] == {'old': ['3.40.0', '9854061be331fe603a1822d9b2b36ee357154927'],
                                'new': ['3.41.0', 'edddc463c06ed5731195cdb8f06b2df6dff7699e']}, 'SDK source pair changed')
     require(set(result['programs']) == {'old-original', 'new-original', 'new-compatible'}, 'missing owner controls')
@@ -70,12 +83,16 @@ def validate(result, read, source, run, attempt):
         require(raw['accepted'] is True and raw['mode'] == mode and raw['producer_parser'] == tag and
                 raw['sdk'] == result['programs'][program]['sdk'] and raw['pid'] == phase['pid'] and
                 len(raw['checks']) == count and len(set(raw['checks'])) == count, 'actual phase report differs')
+        require(raw['public_android_spelling_fixture'] is (mode == 'produce-prefixed'), 'fixture origin misrepresented')
         if mode in ('consume', 'refuse'):
             require(len(raw['records']) == 8 and all(r['parser'] == tag for r in raw['records']), 'retained genuine parser missing')
             wire_sets[name] = {(r['revision'], r['sha256'], r['bytes'], r['book'], r['parser']) for r in raw['records']}
     require(wire_sets['old-control'] == wire_sets['new-original-rejection'] == wire_sets['new-upgrade'],
             'upgrade used substitute records or rewrote wire')
     require(wire_sets['new-control'] == wire_sets['old-downgrade-rejection'], 'downgrade used substitute records')
+    require(wire_sets['old-prefixed-accept'] == wire_sets['old-prefixed-original-reject'] ==
+            wire_sets['old-prefixed-original340-reject'], 'old prefixed fixture identity differs')
+    require(wire_sets['new-prefixed-accept'] == wire_sets['new-prefixed-original-reject'], 'current prefixed fixture identity differs')
     for label in ('old', 'new'):
         raw = json.loads(read('original-' + label + '/consumer/reading-review.json'))
         identity(raw, source, run, attempt)
@@ -133,7 +150,8 @@ def main():
                    artifact={k: artifact[k] for k in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')},
                    native_phases=len(EXPECT), original_owner_cases_per_sdk=19, protocol_rejections=len(mutations),
                    upgrade_direction='3.40.0-to-3.41.0', host_ui_accepted=False, downgrade_accepted=False,
-                   physical_device_accepted=False)
+                   physical_device_accepted=False, android_policy_checks=len(result['java_policy_cases']),
+                   actual_android_host_interop_accepted=False)
     output = Path('build/apple-record-summary')
     output.mkdir(parents=True)
     (output / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')

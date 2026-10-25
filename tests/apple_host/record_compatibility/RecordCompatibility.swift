@@ -15,6 +15,34 @@ import Darwin
     static func need(_ condition: Bool, _ message: String) throws {
         if !condition { throw HostError.invalidResult(message) }
     }
+    // Public G03 fixture with the exact Android formatter spelling. This is
+    // deliberately identified as a protocol fixture, not an Android UI run.
+    static func submitFixture(_ request: HostReadingRequest, catalog: HostCatalog) throws -> reader_rc_result {
+        try catalog.withHistory { history in
+            try hostProductStrings([request.revision, request.parser, request.bookKey, request.annotation, request.body] + request.heads) { strings in
+                let expected = Array(strings.dropFirst(5))
+                return try expected.withUnsafeBufferPointer { buffer in
+                    var context = reader_rc_context(); context.store = history
+                    context.revision_id = strings[0]; context.parser_version = strings[1]
+                    context.expected_heads = buffer.baseAddress; context.expected_count = buffer.count
+                    var command = reader_rc_command()
+                    command.kind = request.kind == 1 ? READER_RC_PROGRESS : READER_RC_BOOKMARK
+                    command.operation = READER_RC_PUT; command.book_key = strings[2]
+                    command.annotation_id = request.kind == 1 ? nil : strings[3]
+                    command.text = request.kind == 1 ? nil : strings[4]; command.part = request.capture!.part
+                    return try request.capture!.withRaw { capture in
+                        try withUnsafePointer(to: capture) { pointer in
+                            command.capture = pointer
+                            var result = reader_rc_result(), error = reader_rc_error()
+                            try need(reader_rc_apply(&context, &command, &result, &error) == READER_RC_OK,
+                                     "Public G03 tag fixture was refused")
+                            return result
+                        }
+                    }
+                }
+            }
+        }
+    }
     static func main() throws {
         let args = CommandLine.arguments, env = ProcessInfo.processInfo.environment
         guard env["GITHUB_ACTIONS"] == "true", args.count == 6 else { throw HostError.invalidInput("Actions-only compatibility probe") }
@@ -32,16 +60,30 @@ import Darwin
             let session = HostSession(library: library, font: font, slowDelay: 0,
                 viewport: CGSize(width: 480, height: 640), fontSize: 28)
             let manifest = root.appendingPathComponent("saved-records.json")
-            if mode == "produce" {
+            if mode == "produce" || mode == "produce-prefixed" {
                 var saved: [Saved] = []
                 for name in ["Records.txt", "Bounded.epub", "Sample.pdf", "NavigationPages.cbz"] {
                     let (id, _) = try session.importBook(url: resources.appendingPathComponent(name), cancel: HostCancelBox(), catalog: catalog)
                     _ = try session.open(bookID: id, cancel: HostCancelBox())
                     let capture = try session.readingCapture(cancel: HostCancelBox())
-                    for kind in [1, 2] {
-                        let request = try HostReadingWorker.request(session: session, catalog: catalog, kind: kind,
+                    if mode == "produce-prefixed" {
+                        let seed = try HostReadingWorker.request(session: session, catalog: catalog, kind: 1,
                             operation: 0, mode: capture.mode, capture: capture, body: "", cancel: HostCancelBox())
-                        let result = try HostReadingWorker.submit(request, session: session, catalog: catalog, root: root, cancel: HostCancelBox())
+                        _ = try HostReadingWorker.submit(seed, session: session, catalog: catalog, root: root, cancel: HostCancelBox())
+                    }
+                    for kind in [1, 2] {
+                        var request = try HostReadingWorker.request(session: session, catalog: catalog, kind: kind,
+                            operation: 0, mode: capture.mode, capture: capture, body: "", cancel: HostCancelBox())
+                        let result: reader_rc_result
+                        if mode == "produce-prefixed" {
+                            try need(expected == "exreader-sdk-" + String(cString: exr_version()), "Fixture tag is not the real runtime's Android spelling")
+                            var object = try JSONSerialization.jsonObject(with: JSONEncoder().encode(request)) as! [String: Any]
+                            object["parser"] = expected
+                            request = try JSONDecoder().decode(HostReadingRequest.self, from: JSONSerialization.data(withJSONObject: object))
+                            result = try Self.submitFixture(request, catalog: catalog)
+                        } else {
+                            result = try HostReadingWorker.submit(request, session: session, catalog: catalog, root: root, cancel: HostCancelBox())
+                        }
                         try need(result.created == 1 && request.parser == expected, "Producer did not commit actual host request/parser")
                         let wire = try catalog.withHistory { try HostReadingWorker.retained($0, revision: request.revision).0 }
                         saved.append(Saved(filename: name, request: request, wire: wire))
@@ -134,6 +176,7 @@ import Darwin
         }
         let result: [String: Any] = ["accepted": true, "mode": mode, "checks": checks, "records": wires,
             "sdk": String(cString: exr_version()), "producer_parser": expected, "pid": ProcessInfo.processInfo.processIdentifier,
+            "public_android_spelling_fixture": mode == "produce-prefixed",
             "source_sha": env["GITHUB_SHA"] ?? "", "run_id": env["GITHUB_RUN_ID"] ?? "", "attempt": env["GITHUB_RUN_ATTEMPT"] ?? "",
             "host_ui_accepted": false, "physical_device_accepted": false]
         try JSONSerialization.data(withJSONObject: result, options: [.sortedKeys, .prettyPrinted]).write(to: report, options: .atomic)
