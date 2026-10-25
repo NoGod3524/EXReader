@@ -61,15 +61,15 @@ def focus_regression(d12, name, exe):
                      and U.IsWindowVisible(h)), None)
 
     try:
-        for small in (False, True):
+        for width, height, label in ((original.right - original.left, original.bottom - original.top, 'default'),
+                                    (1024, 728, '1024'), (800, 600, 'small')):
             area = W.RECT(original.left, original.top,
-                          min(original.right, original.left + 800) if small else original.right,
-                          min(original.bottom, original.top + 600) if small else original.bottom)
+                          min(original.right, original.left + width),
+                          min(original.bottom, original.top + height))
             assert U.SystemParametersInfoW(0x2F, 0, C.byref(area), 0), 'actual temporary work area request failed'
             actual = W.RECT()
             assert U.SystemParametersInfoW(0x30, 0, C.byref(actual), 0)
             assert list((actual.left, actual.top, actual.right, actual.bottom)) == [area.left, area.top, area.right, area.bottom]
-            label = 'small' if small else 'default'
             app = P.App(exe, ROOT / 'build/host-font-cache/Reader.otf', folder / ('profile-' + label))
             app.wait_idle()
             bounds = w32.window_rect(app.window)
@@ -83,7 +83,7 @@ def focus_regression(d12, name, exe):
             resized = w32.window_rect(app.window)
             row['minimum_resize_outer'] = resized
             assert resized[2] - resized[0] <= area.right - area.left and resized[3] - resized[1] <= area.bottom - area.top, row
-            if small:
+            if label != 'default':
                 app.close()
                 app = None
                 continue

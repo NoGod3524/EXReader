@@ -48,7 +48,7 @@ def inspect_source():
                   run_id=os.environ['GITHUB_RUN_ID'], attempt=os.environ['GITHUB_RUN_ATTEMPT'],
                   base_sha=BASE, legacy_guard_executed=False, accepted=False,
                   runtime_accepted=False, source_preflight_passed=True,
-                  owner_sha256=owners, changed_paths=rows,
+                  owner_sha256=owners, changed_paths=[list(row) for row in rows],
                   frozen_scope='All base paths other than eight enumerated native owner files remain byte-identical, including SDK, seven raw packages, schemas, budgets and original tests')
     return result
 
@@ -69,6 +69,8 @@ def main():
         else:
             raise RuntimeError('source-policy negative accepted')
     report['negative_controls'] = refused
+    if json.loads(json.dumps(report)) != report:
+        raise RuntimeError('source evidence must round-trip without changing value types')
     folder = ROOT / 'build/native-owner-preflight'
     folder.mkdir(parents=True, exist_ok=True)
     (folder / (os.environ['GITHUB_JOB'] + '.json')).write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')

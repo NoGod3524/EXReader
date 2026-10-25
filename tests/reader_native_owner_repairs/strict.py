@@ -72,8 +72,9 @@ def native_windows(value, read, source_sha, run, attempt):
             and value['original_d12_acceptance_reused'] is False, 'native Windows scope/state differs')
     require(value['historical_primitive_source'] == D12
             and value['historical_primitive_sha256'] == hashlib.sha256(source(D12, 'tests/reader_dot_wave2/d12/check.py')).hexdigest(), 'exact D12 primitive source differs')
+    require(read('native-owner-reuse/check.py', 1024**2) == source(D12, 'tests/reader_dot_wave2/d12/check.py'), 'executed original D12 source bytes differ')
     require(len(value['focus']) == 2 and {r['profile'] for r in value['focus']} == {'legacy', 'raw'}, 'both Windows selector profiles required')
-    expected_focus = {'initial-default', 'initial-small'} | {view + '-' + title for view in ('reading', 'shelf') for title in ('search', 'navigation', 'records', 'preferences')}
+    expected_focus = {'initial-default', 'initial-1024', 'initial-small'} | {view + '-' + title for view in ('reading', 'shelf') for title in ('search', 'navigation', 'records', 'preferences')}
     for result in value['focus']:
         require(result['accepted'] is True and len(result['observations']) == len(expected_focus)
                 and {r['name'] for r in result['observations']} == expected_focus, 'full native focus/bounds set missing')
@@ -123,6 +124,19 @@ def native_windows(value, read, source_sha, run, attempt):
                 and result['history_unchanged'] is True and result['history_after_reopen_actions_unchanged'] is True
                 and result['public_sdk_and_all_product_rows_unchanged'] is True
                 and all(c['enabled'] is False for c in result['controls'].values()), 'NULL action or read-only state regression')
+    state_program = hashlib.sha256(read('native-owner-public/owner-public-state.exe', 128 * 1024**2)).hexdigest()
+    actual_owner = guard.inspect_source()['owner_sha256']['apps/reader/desktop/windows_records_owner.cpp']
+    for group in ('positive', 'null'):
+        snapshots = [json.loads(read('native-owner-windows/evidence/public-state-' + group + '-' + phase + '.json'))
+                     for phase in ('before', 'after-first', 'after-reopen')]
+        require(len({r['pid'] for r in snapshots}) == 3 and all(r['pid'] > 0 for r in snapshots), 'fresh public SDK readback processes missing')
+        for snapshot in snapshots:
+            identity(snapshot, source_sha, run, attempt)
+            require(snapshot['program_sha256'] == state_program and snapshot['owner_source_sha256'] == actual_owner,
+                    'actual compiled public SDK state reader differs')
+        require(all(r['sdk_public_state'] == snapshots[0]['sdk_public_state'] for r in snapshots), 'GUI changed public SDK progress or notes')
+        if group == 'null':
+            require(all(r['product_readonly_state'] == snapshots[0]['product_readonly_state'] for r in snapshots), 'NULL GUI changed product rows')
     inventory(value, read, 'native-owner-windows/')
 
 
@@ -139,12 +153,36 @@ def source_provenance(archive, source_sha, run, attempt, root, network_verified,
         expected = guard.inspect_source()
         require(all(stored[k] == v for k, v in expected.items()), 'fresh explicit changed-owner proof differs')
         require(len(stored['negative_controls']) == 8 and all(r['rejected'] is True for r in stored['negative_controls']), 'source-policy refusal controls missing')
+        display = json.loads(read('native-owner-preflight/display.json'))
+        identity(display, source_sha, run, attempt)
+        require(display['accepted'] is True and display['actual_mode']['width'] >= 1280
+                and display['actual_mode']['height'] >= 900 and display['actual_work_area'][2] - display['actual_work_area'][0] >= 1060,
+                'actual supported display mode not established for unchanged original compact22')
         value = json.loads(read('native-owner-windows/report.json', 16 * 1024**2))
         native_windows(value, read, source_sha, run, attempt)
         mutations = [dict(accepted=False), dict(positive=[]), dict(null=[]), dict(focus=[]), dict(source_sha='foreign')]
+        candidates = []
         for mutation in mutations:
             bad = copy.deepcopy(value)
             bad.update(mutation)
+            candidates.append(bad)
+        for transform in (
+            lambda v: v['positive'][0].__setitem__('public_sdk_unchanged', False),
+            lambda v: v['positive'][0]['records'].pop(),
+            lambda v: v['null'][0]['controls'][next(iter(v['null'][0]['controls']))].__setitem__('enabled', True),
+            lambda v: v['null'][0].__setitem__('public_sdk_and_all_product_rows_unchanged', False),
+            lambda v: v['focus'][0].__setitem__('program_sha256', '0' * 64),
+            lambda v: v['focus'][0]['observations'][0].__setitem__('outer', [0, 0, 99999, 99999]),
+        ):
+            bad = copy.deepcopy(value)
+            transform(bad)
+            candidates.append(bad)
+        highlighted = next((i, j) for i, group in enumerate(value['positive'])
+                           for j, row in enumerate(group['records']) if row['after']['selection_bytes'] > 0)
+        bad = copy.deepcopy(value)
+        bad['positive'][highlighted[0]]['records'][highlighted[1]]['after']['selection_active'] = 0
+        candidates.append(bad)
+        for bad in candidates:
             try:
                 native_windows(bad, read, source_sha, run, attempt)
             except (ValueError, KeyError, AssertionError):
@@ -152,7 +190,7 @@ def source_provenance(archive, source_sha, run, attempt, root, network_verified,
             raise RuntimeError('native Windows judge admitted missing/foreign scope')
     return dict(guard_kind='native-owner-repairs', source_sha=source_sha, actual_owner_changed=True,
                 legacy_guard_executed=False, original_auth_body_preserved=True, native_gui_accepted=True,
-                native_negative_controls=len(mutations), off_f3_atomic13_rerun=False)
+                native_negative_controls=len(candidates), off_f3_atomic13_rerun=False)
 
 
 def gtk_proof(run, attempt, source_sha):
@@ -201,6 +239,15 @@ def gtk_proof(run, attempt, source_sha):
         projection = bundle.report('native-owner-reuse/d09/projection.json')
         require(projection['historical_source'] == D09 and projection['source_sha'] == source_sha
                 and projection['reverse_projection_exact'] is True and projection['historical_acceptance_reused'] is False, 'D09 source projection differs')
+        original_audit = source(D09, 'tests/reader_dot_wave2/d09/audit.py').decode()
+        before = "TARGET='803098e9df1a365a9b8e206805c2d179aca8501f'"
+        after = "TARGET=os.environ['GITHUB_SHA']"
+        require(original_audit.count(before) == 1, 'exact original D09 target declaration missing')
+        actual_audit = read('native-owner-reuse/d09/audit.py', 1024**2)
+        require(actual_audit.decode() == original_audit.replace(before, after)
+                and projection['historical_sha256'] == hashlib.sha256(original_audit.encode()).hexdigest()
+                and projection['adapted_sha256'] == hashlib.sha256(actual_audit).hexdigest(), 'D09 original business source changed outside explicit target assignment')
+        require(read('native-owner-reuse/d09/contract.py', 1024**2) == contract_raw, 'executed original D09 contract changed')
         for config in ('normal', 'scale2', 'dark', 'large'):
             report = bundle.report('native-owner-d09-' + config + '/result.json')
             identity(dict(source_sha=report['harness_sha'], run_id=report['run_id'], attempt=report['attempt']), source_sha, run, attempt)
@@ -218,9 +265,15 @@ def gtk_proof(run, attempt, source_sha):
             identity(report, source_sha, run, attempt)
             require(report['accepted'] is True and report['exit_code'] == 0 and report['profile'] == profile
                     and len(report['observations']) == 4 and {r['route'] for r in report['observations']} == {'shortcut', 'menu', 'shortcut-reopen', 'menu-reopen'}, 'both GTK native entry routes and reopen required')
+            actual_program = program if profile == 'raw' else hashlib.sha256(read('native-owner-gtk-legacy-package/EXReader-Linux/bin/exreader-linux', 128 * 1024**2)).hexdigest()
+            require(report['program_sha256'] == actual_program, 'GTK focus used another actual program')
+            cache = read('gtk-raw3/' + profile + '-owner/CMakeCache.txt', 2 * 1024**2).decode()
+            require('EXR_READER_GTK_RAW3:BOOL=' + ('ON' if profile == 'raw' else 'OFF') in cache,
+                    'actual GTK selector build profile differs')
             for row in report['observations']:
                 require(row['passed'] is True and len(row['modal']) == 3
                         and all(semantics['modal_focus_ok'](v) for v in row['modal']), 'GTK modal focus rejected')
+                require(any(v['descendant'] is True and all(v['states'].get(k) is True for k in ('enabled', 'sensitive', 'visible', 'showing', 'focused')) for v in row['after']), 'GTK dismissal did not return usable native focus')
             inventory(report, read, folder)
         proof = dict(accepted=True, source_sha=source_sha, run_id=run, attempt=attempt,
                      guard_kind='native-owner-repairs', legacy_guard_executed=False,

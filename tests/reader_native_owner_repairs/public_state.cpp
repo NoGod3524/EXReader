@@ -18,6 +18,8 @@ int main(int argc,char **argv) {
     std::ofstream stream(output,std::ios::binary);
     stream<<"{\"source_sha\":"<<quote(PROBE_SOURCE_SHA)<<",\"owner_source_sha256\":"<<quote(PROBE_OWNER_SHA)
       <<",\"program_sha256\":"<<quote(program)<<",\"pid\":"<<GetCurrentProcessId()
+      <<",\"run_id\":"<<quote(std::getenv("GITHUB_RUN_ID")?std::getenv("GITHUB_RUN_ID"):"")
+      <<",\"attempt\":"<<quote(std::getenv("GITHUB_RUN_ATTEMPT")?std::getenv("GITHUB_RUN_ATTEMPT"):"")
       <<",\"sdk_public_state\":"<<quote(sdk)<<",\"product_readonly_state\":"<<quote(product)<<"}\n";
     stream.flush();need(bool(stream),"state report write");
     return 0;

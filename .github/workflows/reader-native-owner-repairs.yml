@@ -21,6 +21,10 @@ jobs:
           if ($LASTEXITCODE) { throw 'syntax failed' }
           python tests/reader_native_owner_repairs/guard.py
           if ($LASTEXITCODE) { throw 'explicit owner policy failed' }
+      - name: Select and read back an actually supported display for original compact22 bounds
+        run: |
+          python tests/reader_native_owner_repairs/display.py
+          if ($LASTEXITCODE) { throw 'actual native display mode unavailable for unchanged original suite' }
       - name: Complete unchanged installed host owner bulk compact and real Mac packet suites
         env:
           GH_TOKEN: ${{ github.token }}
