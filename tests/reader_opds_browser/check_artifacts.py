@@ -13,12 +13,40 @@ import os
 import sys
 import tempfile
 import zipfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'tools'))
 from check_parallel_integration import download_artifact_zip, fetch, pages, require  # noqa: E402
 
 PLATFORMS = [('linux', 'ubuntu-22.04'), ('windows', 'windows-2022'), ('macos', 'macos-15')]
+
+
+def validate_job(job, source, run_id, attempt):
+    require(job.get('head_sha') == source and job.get('run_id') == run_id and
+            job.get('run_attempt') == attempt, 'job identity differs')
+    require(job.get('status') == 'completed' and job.get('conclusion') == 'success',
+            'job not completed successfully')
+
+
+def validate_members(names):
+    require(len(names) == len(set(names)), 'duplicate ZIP member')
+    for name in names:
+        path = PurePosixPath(name)
+        require(not path.is_absolute() and '..' not in path.parts and
+                '\\' not in name and ':' not in name and str(path) == name.rstrip('/'),
+                'unsafe or ambiguous ZIP member')
+    reports = [n for n in names if PurePosixPath(n).name == 'result.json']
+    require(reports == ['opds-evidence/result.json'], 'missing or duplicate report')
+
+
+def validate_cases(report):
+    cases = report.get('cases', [])
+    ids = [c.get('id') for c in cases]
+    require(len(cases) >= 60 and report.get('checks') == len(cases), 'case count differs')
+    require(all(isinstance(i, str) and i for i in ids) and len(set(ids)) == len(ids),
+            'invalid or duplicate case ID')
+    require(all(c.get('ok') is True for c in cases), 'failed or malformed case')
+    return [[c['id'], c['ok']] for c in cases]
 
 
 def main():
@@ -49,12 +77,11 @@ def main():
             matches = [j for j in jobs if j['name'] == job_name]
             require(len(matches) == 1, 'missing/duplicate job ' + job_name)
             job = matches[0]
-            require(job['head_sha'] == source and int(job['run_attempt']) == attempt,
-                    'job identity differs for ' + job_name)
-            require(job['conclusion'] == 'success', 'job failed: ' + job_name)
+            validate_job(job, source, run_id, attempt)
             require(not artifact['expired'] and artifact['size_in_bytes'] > 0,
                     'artifact expired or empty: ' + name)
             require(artifact['workflow_run']['head_sha'] == source, 'artifact source differs: ' + name)
+            require(artifact['workflow_run']['id'] == run_id, 'artifact run differs: ' + name)
             with tempfile.TemporaryFile() as stream:
                 download_artifact_zip(artifact['id'], stream)
                 stream.seek(0)
@@ -63,6 +90,7 @@ def main():
             require('sha256:' + hashlib.sha256(data).hexdigest() == artifact['digest'],
                     'ZIP digest differs: ' + name)
             with zipfile.ZipFile(io.BytesIO(data)) as archive:
+                validate_members(archive.namelist())
                 report = json.loads(archive.read('opds-evidence/result.json'))
                 names = [n for n in archive.namelist()
                          if n.startswith('opds-consumer/') and not n.endswith('/') and
@@ -74,6 +102,13 @@ def main():
                     payload = archive.read(entry)
                     embedded[Path(entry).name] = (len(payload), hashlib.sha256(payload).hexdigest())
                 reported = {c['name']: (int(c['bytes']), c['sha256']) for c in report['consumers']}
+                require(len(report['consumers']) == len(reported) == 2,
+                        'duplicate consumer identity')
+                expected = {'opds-consumer', 'opds-import-consumer'}
+                if platform == 'windows':
+                    expected = {n + '.exe' for n in expected}
+                require(set(embedded) == expected and all(v[0] > 0 for v in embedded.values()),
+                        'wrong or empty consumer binaries')
                 require(embedded == reported, 'consumer binaries differ from the report: ' + name)
             require(report.get('accepted') is True, 'report refused: ' + name)
             require(report['source_sha'] == source, 'report source differs: ' + name)
@@ -86,7 +121,7 @@ def main():
             require(report['origin_isolation']['plain_requests_with_authorization'] == 0,
                     'credentials reached the plain origin: ' + name)
             require(report['origin_isolation']['tls_requests'] > 0, 'no TLS request served: ' + name)
-            outcomes[platform] = [[c['id'], bool(c['ok'])] for c in report['cases']]
+            outcomes[platform] = validate_cases(report)
             summary['artifacts'].append({k: artifact[k] for k in
                                          ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')})
             summary['jobs'].append({k: job[k] for k in ('id', 'name', 'conclusion')})

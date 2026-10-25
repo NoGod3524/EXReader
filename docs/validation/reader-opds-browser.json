@@ -1,650 +1,660 @@
 {
-  "accepted": true,
-  "status": "accepted Linux/Windows/macOS installed-consumer interfaces, with the executed consumer binaries bound to each platform artifact",
-  "package": "EXReaderOpdsBrowser 0.1.0",
-  "common_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
-  "branch": "codex/reader-opds-browser",
-  "source_sha": "dcf77c2776d7cdce180f303d2a85152cf538a8d6",
-  "run_id": 40126660557,
-  "attempt": 1,
-  "workflow": ".github/workflows/reader-opds-browser.yml",
-  "artifacts": [
-    {
-      "id": 12573492675,
-      "name": "reader-opds-browser-linux-40126660557-1",
-      "size_in_bytes": 4275700,
-      "digest": "sha256:ae999f0990a4cdd0a1627df46736c5a580bb94e59988061ff2b63f3696db7d65",
-      "expires_at": "2027-01-22T19:44:27Z"
-    },
-    {
-      "id": 12573277935,
-      "name": "reader-opds-browser-windows-40126660557-1",
-      "size_in_bytes": 3386286,
-      "digest": "sha256:3fb40aa1d4f95117f1af87a2c78828791001d817e77cd2ea37fd2f66cb13210d",
-      "expires_at": "2027-01-22T19:44:27Z"
-    },
-    {
-      "id": 12573547771,
-      "name": "reader-opds-browser-macos-40126660557-1",
-      "size_in_bytes": 3665408,
-      "digest": "sha256:50c97a59d8194bea9995399c880d9ff9220bccf8b74a65aeea08643bb69f41d4",
-      "expires_at": "2027-01-22T19:44:27Z"
-    },
-    {
-      "id": 12573537844,
-      "name": "reader-opds-browser-evidence-40126660557-1",
-      "size_in_bytes": 1623,
-      "digest": "sha256:2cf6c368cf8ed9634cf71b17fd2e5d9192621a87c8a267c45c4330fdd3398ad3",
-      "expires_at": "2027-01-22T19:44:27Z"
-    }
-  ],
-  "jobs": [
-    {
-      "id": 120969458912,
-      "name": "opds consumers (ubuntu-22.04)",
-      "conclusion": "success"
-    },
-    {
-      "id": 120969458897,
-      "name": "opds consumers (windows-2022)",
-      "conclusion": "success"
-    },
-    {
-      "id": 120969458713,
-      "name": "opds consumers (macos-15)",
-      "conclusion": "success"
-    },
-    {
-      "id": 120970046951,
-      "name": "strict opds evidence",
-      "conclusion": "success"
-    }
-  ],
-  "checks": 60,
-  "cases": [
-    {
-      "id": "browser_create",
-      "ok": true
-    },
-    {
-      "id": "opds1_open",
-      "ok": true
-    },
-    {
-      "id": "opds1_display_fields",
-      "ok": true
-    },
-    {
-      "id": "opds1_identity",
-      "ok": true
-    },
-    {
-      "id": "opds1_cursor_format",
-      "ok": true
-    },
-    {
-      "id": "opds1_snapshot_links",
-      "ok": true
-    },
-    {
-      "id": "opds1_link_classes",
-      "ok": true
-    },
-    {
-      "id": "opds1_free_link",
-      "ok": true
-    },
-    {
-      "id": "opds1_facets",
-      "ok": true
-    },
-    {
-      "id": "opds1_search_advertised",
-      "ok": true
-    },
-    {
-      "id": "opds1_feed_links",
-      "ok": true
-    },
-    {
-      "id": "opds1_next_page",
-      "ok": true
-    },
-    {
-      "id": "opds1_next_third_page",
-      "ok": true
-    },
-    {
-      "id": "opds1_loop_refused",
-      "ok": true
-    },
-    {
-      "id": "cursor_stale_after_advance",
-      "ok": true
-    },
-    {
-      "id": "cursor_wrong_value",
-      "ok": true
-    },
-    {
-      "id": "cursor_other_feed_refused",
-      "ok": true
-    },
-    {
-      "id": "search_opensearch_utf8",
-      "ok": true
-    },
-    {
-      "id": "search_terms_refused",
-      "ok": true
-    },
-    {
-      "id": "opds2_snapshot",
-      "ok": true
-    },
-    {
-      "id": "opds2_navigation",
-      "ok": true
-    },
-    {
-      "id": "opds2_facet_counts",
-      "ok": true
-    },
-    {
-      "id": "opds2_search_template",
-      "ok": true
-    },
-    {
-      "id": "acquire_free_epub",
-      "ok": true
-    },
-    {
-      "id": "acquire_duplicate",
-      "ok": true
-    },
-    {
-      "id": "staged_discard",
-      "ok": true
-    },
-    {
-      "id": "discard_foreign_name",
-      "ok": true
-    },
-    {
-      "id": "acquire_buy_refused",
-      "ok": true
-    },
-    {
-      "id": "acquire_borrow_refused",
-      "ok": true
-    },
-    {
-      "id": "acquire_protected_refused",
-      "ok": true
-    },
-    {
-      "id": "acquire_priced_refused",
-      "ok": true
-    },
-    {
-      "id": "acquire_indirect_refused",
-      "ok": true
-    },
-    {
-      "id": "acquire_sample_refused",
-      "ok": true
-    },
-    {
-      "id": "acquire_fake_extension_mismatch",
-      "ok": true
-    },
-    {
-      "id": "acquire_broken_published",
-      "ok": true
-    },
-    {
-      "id": "acquire_cancel",
-      "ok": true
-    },
-    {
-      "id": "browser_usable_after_cancel",
-      "ok": true
-    },
-    {
-      "id": "busy_reentry",
-      "ok": true
-    },
-    {
-      "id": "limits_max_pages",
-      "ok": true
-    },
-    {
-      "id": "limits_lowered_entries",
-      "ok": true
-    },
-    {
-      "id": "staging_required",
-      "ok": true
-    },
-    {
-      "id": "auth_origin_accepted",
-      "ok": true
-    },
-    {
-      "id": "cross_origin_redirect",
-      "ok": true
-    },
-    {
-      "id": "cross_origin_credentials_dropped",
-      "ok": true
-    },
-    {
-      "id": "auth_required",
-      "ok": true
-    },
-    {
-      "id": "tls_available",
-      "ok": true
-    },
-    {
-      "id": "tls_open",
-      "ok": true
-    },
-    {
-      "id": "tls_acquire",
-      "ok": true
-    },
-    {
-      "id": "import_acquire",
-      "ok": true
-    },
-    {
-      "id": "import_ok",
-      "ok": true
-    },
-    {
-      "id": "import_duplicate_reuses_book",
-      "ok": true
-    },
-    {
-      "id": "import_descriptor_size_mismatch",
-      "ok": true
-    },
-    {
-      "id": "import_media_type_refused",
-      "ok": true
-    },
-    {
-      "id": "import_descriptor_required",
-      "ok": true
-    },
-    {
-      "id": "import_digest_mismatch",
-      "ok": true
-    },
-    {
-      "id": "import_broken_acquire",
-      "ok": true
-    },
-    {
-      "id": "import_broken_rejected_by_sdk",
-      "ok": true
-    },
-    {
-      "id": "import_cancelled_before_commit",
-      "ok": true
-    },
-    {
-      "id": "import_library_usable_after_failure",
-      "ok": true
-    },
-    {
-      "id": "import_library_open",
-      "ok": true
-    }
-  ],
-  "consumers": {
-    "linux": [
-      [
-        "opds-consumer",
-        147920,
-        "632c959389471ffb1eaf4df341ca215b228ca0e21bebe9ac127caca02403d281"
-      ],
-      [
-        "opds-import-consumer",
-        8582504,
-        "c61ab8b59bbcba654404d8b36af7634ec6b3a06c5a34740287acd2f462bc44e7"
-      ]
-    ],
-    "windows": [
-      [
-        "opds-consumer.exe",
-        292352,
-        "411b903244bb6a3e7f7c53bb10ccfa5ff8f807b3cf777f66728a5dbcb8c7c499"
-      ],
-      [
-        "opds-import-consumer.exe",
-        6133760,
-        "cbee3c7d60748223096954a60ab0d6ff0198162fccc05c1c83b58828409f0d95"
-      ]
-    ],
-    "macos": [
-      [
-        "opds-consumer",
-        158816,
-        "caefeaac03394d8615b0c38d3483497864f7a4f060d1431b5a1d6c5465303974"
-      ],
-      [
-        "opds-import-consumer",
-        7000312,
-        "2032fa5abb763ff5288c9aa105b4f820843be72decd9e5e4196b6bc98c0dcdef"
-      ]
-    ]
-  },
-  "installed_package": {
-    "note": "Each artifact carries the installed prefix the consumers were linked against (opds-browser-stage/lib plus the SDK and sideload stages' CMakeCache) and the two consumer executables whose SHA-256 the strict job recomputed from the ZIP.",
-    "consumer_sources": "tests/reader_opds_browser/consumer/{consumer.c,consumer.cpp,CMakeLists.txt} at the tested source"
-  },
-  "origin_isolation": {
-    "requests": 36,
-    "plain_requests_with_authorization": 0,
-    "auth_requests": 2,
-    "auth_requests_with_authorization": 1,
-    "tls_requests": 2
-  },
-  "staging_files": [
-    "import.db",
-    "opds-0af7967242fdc453f914a2a6.epub",
-    "opds-4ef290ae052442fd072dc628.epub"
-  ],
-  "granted": [
-    "network_phase",
-    "sdk_owner_import",
-    "linux",
-    "windows",
-    "macos",
-    "consumer_binary_binding"
-  ],
-  "not_granted": [
-    "host integration (root owns the product hosts)",
-    "PDF and CBZ import through the SDK (only envelope, staging and EPUB import are exercised)",
-    "performance, CPU, accessibility and real-device claims",
-    "release packaging, signing and tags"
-  ],
-  "superseded_accepted_run": {
-    "source_sha": "7c2b274e021b95b65438ad37abca6d5bc15a7adc",
-    "run_id": 40125592894,
+  "accepted": false,
+  "status": "T07 new source pending Actions acceptance",
+  "review_start": "3ca9d9fed564dbcba11fc95a034244c5cfe8c762",
+  "branch": "codex/dot-opds-browser-review",
+  "prior_evidence": {
+    "accepted": true,
+    "status": "accepted Linux/Windows/macOS installed-consumer interfaces, with the executed consumer binaries bound to each platform artifact",
+    "package": "EXReaderOpdsBrowser 0.1.0",
+    "common_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+    "branch": "codex/reader-opds-browser",
+    "source_sha": "dcf77c2776d7cdce180f303d2a85152cf538a8d6",
+    "run_id": 40126660557,
     "attempt": 1,
-    "note": "passed all four jobs before the consumer binaries were bound into the evidence; kept as history, not as the accepted source"
+    "workflow": ".github/workflows/reader-opds-browser.yml",
+    "artifacts": [
+      {
+        "id": 12573492675,
+        "name": "reader-opds-browser-linux-40126660557-1",
+        "size_in_bytes": 4275700,
+        "digest": "sha256:ae999f0990a4cdd0a1627df46736c5a580bb94e59988061ff2b63f3696db7d65",
+        "expires_at": "2027-01-22T19:44:27Z"
+      },
+      {
+        "id": 12573277935,
+        "name": "reader-opds-browser-windows-40126660557-1",
+        "size_in_bytes": 3386286,
+        "digest": "sha256:3fb40aa1d4f95117f1af87a2c78828791001d817e77cd2ea37fd2f66cb13210d",
+        "expires_at": "2027-01-22T19:44:27Z"
+      },
+      {
+        "id": 12573547771,
+        "name": "reader-opds-browser-macos-40126660557-1",
+        "size_in_bytes": 3665408,
+        "digest": "sha256:50c97a59d8194bea9995399c880d9ff9220bccf8b74a65aeea08643bb69f41d4",
+        "expires_at": "2027-01-22T19:44:27Z"
+      },
+      {
+        "id": 12573537844,
+        "name": "reader-opds-browser-evidence-40126660557-1",
+        "size_in_bytes": 1623,
+        "digest": "sha256:2cf6c368cf8ed9634cf71b17fd2e5d9192621a87c8a267c45c4330fdd3398ad3",
+        "expires_at": "2027-01-22T19:44:27Z"
+      }
+    ],
+    "jobs": [
+      {
+        "id": 120969458912,
+        "name": "opds consumers (ubuntu-22.04)",
+        "conclusion": "success"
+      },
+      {
+        "id": 120969458897,
+        "name": "opds consumers (windows-2022)",
+        "conclusion": "success"
+      },
+      {
+        "id": 120969458713,
+        "name": "opds consumers (macos-15)",
+        "conclusion": "success"
+      },
+      {
+        "id": 120970046951,
+        "name": "strict opds evidence",
+        "conclusion": "success"
+      }
+    ],
+    "checks": 60,
+    "cases": [
+      {
+        "id": "browser_create",
+        "ok": true
+      },
+      {
+        "id": "opds1_open",
+        "ok": true
+      },
+      {
+        "id": "opds1_display_fields",
+        "ok": true
+      },
+      {
+        "id": "opds1_identity",
+        "ok": true
+      },
+      {
+        "id": "opds1_cursor_format",
+        "ok": true
+      },
+      {
+        "id": "opds1_snapshot_links",
+        "ok": true
+      },
+      {
+        "id": "opds1_link_classes",
+        "ok": true
+      },
+      {
+        "id": "opds1_free_link",
+        "ok": true
+      },
+      {
+        "id": "opds1_facets",
+        "ok": true
+      },
+      {
+        "id": "opds1_search_advertised",
+        "ok": true
+      },
+      {
+        "id": "opds1_feed_links",
+        "ok": true
+      },
+      {
+        "id": "opds1_next_page",
+        "ok": true
+      },
+      {
+        "id": "opds1_next_third_page",
+        "ok": true
+      },
+      {
+        "id": "opds1_loop_refused",
+        "ok": true
+      },
+      {
+        "id": "cursor_stale_after_advance",
+        "ok": true
+      },
+      {
+        "id": "cursor_wrong_value",
+        "ok": true
+      },
+      {
+        "id": "cursor_other_feed_refused",
+        "ok": true
+      },
+      {
+        "id": "search_opensearch_utf8",
+        "ok": true
+      },
+      {
+        "id": "search_terms_refused",
+        "ok": true
+      },
+      {
+        "id": "opds2_snapshot",
+        "ok": true
+      },
+      {
+        "id": "opds2_navigation",
+        "ok": true
+      },
+      {
+        "id": "opds2_facet_counts",
+        "ok": true
+      },
+      {
+        "id": "opds2_search_template",
+        "ok": true
+      },
+      {
+        "id": "acquire_free_epub",
+        "ok": true
+      },
+      {
+        "id": "acquire_duplicate",
+        "ok": true
+      },
+      {
+        "id": "staged_discard",
+        "ok": true
+      },
+      {
+        "id": "discard_foreign_name",
+        "ok": true
+      },
+      {
+        "id": "acquire_buy_refused",
+        "ok": true
+      },
+      {
+        "id": "acquire_borrow_refused",
+        "ok": true
+      },
+      {
+        "id": "acquire_protected_refused",
+        "ok": true
+      },
+      {
+        "id": "acquire_priced_refused",
+        "ok": true
+      },
+      {
+        "id": "acquire_indirect_refused",
+        "ok": true
+      },
+      {
+        "id": "acquire_sample_refused",
+        "ok": true
+      },
+      {
+        "id": "acquire_fake_extension_mismatch",
+        "ok": true
+      },
+      {
+        "id": "acquire_broken_published",
+        "ok": true
+      },
+      {
+        "id": "acquire_cancel",
+        "ok": true
+      },
+      {
+        "id": "browser_usable_after_cancel",
+        "ok": true
+      },
+      {
+        "id": "busy_reentry",
+        "ok": true
+      },
+      {
+        "id": "limits_max_pages",
+        "ok": true
+      },
+      {
+        "id": "limits_lowered_entries",
+        "ok": true
+      },
+      {
+        "id": "staging_required",
+        "ok": true
+      },
+      {
+        "id": "auth_origin_accepted",
+        "ok": true
+      },
+      {
+        "id": "cross_origin_redirect",
+        "ok": true
+      },
+      {
+        "id": "cross_origin_credentials_dropped",
+        "ok": true
+      },
+      {
+        "id": "auth_required",
+        "ok": true
+      },
+      {
+        "id": "tls_available",
+        "ok": true
+      },
+      {
+        "id": "tls_open",
+        "ok": true
+      },
+      {
+        "id": "tls_acquire",
+        "ok": true
+      },
+      {
+        "id": "import_acquire",
+        "ok": true
+      },
+      {
+        "id": "import_ok",
+        "ok": true
+      },
+      {
+        "id": "import_duplicate_reuses_book",
+        "ok": true
+      },
+      {
+        "id": "import_descriptor_size_mismatch",
+        "ok": true
+      },
+      {
+        "id": "import_media_type_refused",
+        "ok": true
+      },
+      {
+        "id": "import_descriptor_required",
+        "ok": true
+      },
+      {
+        "id": "import_digest_mismatch",
+        "ok": true
+      },
+      {
+        "id": "import_broken_acquire",
+        "ok": true
+      },
+      {
+        "id": "import_broken_rejected_by_sdk",
+        "ok": true
+      },
+      {
+        "id": "import_cancelled_before_commit",
+        "ok": true
+      },
+      {
+        "id": "import_library_usable_after_failure",
+        "ok": true
+      },
+      {
+        "id": "import_library_open",
+        "ok": true
+      }
+    ],
+    "consumers": {
+      "linux": [
+        [
+          "opds-consumer",
+          147920,
+          "632c959389471ffb1eaf4df341ca215b228ca0e21bebe9ac127caca02403d281"
+        ],
+        [
+          "opds-import-consumer",
+          8582504,
+          "c61ab8b59bbcba654404d8b36af7634ec6b3a06c5a34740287acd2f462bc44e7"
+        ]
+      ],
+      "windows": [
+        [
+          "opds-consumer.exe",
+          292352,
+          "411b903244bb6a3e7f7c53bb10ccfa5ff8f807b3cf777f66728a5dbcb8c7c499"
+        ],
+        [
+          "opds-import-consumer.exe",
+          6133760,
+          "cbee3c7d60748223096954a60ab0d6ff0198162fccc05c1c83b58828409f0d95"
+        ]
+      ],
+      "macos": [
+        [
+          "opds-consumer",
+          158816,
+          "caefeaac03394d8615b0c38d3483497864f7a4f060d1431b5a1d6c5465303974"
+        ],
+        [
+          "opds-import-consumer",
+          7000312,
+          "2032fa5abb763ff5288c9aa105b4f820843be72decd9e5e4196b6bc98c0dcdef"
+        ]
+      ]
+    },
+    "installed_package": {
+      "note": "Each artifact carries the installed prefix the consumers were linked against (opds-browser-stage/lib plus the SDK and sideload stages' CMakeCache) and the two consumer executables whose SHA-256 the strict job recomputed from the ZIP.",
+      "consumer_sources": "tests/reader_opds_browser/consumer/{consumer.c,consumer.cpp,CMakeLists.txt} at the tested source"
+    },
+    "origin_isolation": {
+      "requests": 36,
+      "plain_requests_with_authorization": 0,
+      "auth_requests": 2,
+      "auth_requests_with_authorization": 1,
+      "tls_requests": 2
+    },
+    "staging_files": [
+      "import.db",
+      "opds-0af7967242fdc453f914a2a6.epub",
+      "opds-4ef290ae052442fd072dc628.epub"
+    ],
+    "granted": [
+      "network_phase",
+      "sdk_owner_import",
+      "linux",
+      "windows",
+      "macos",
+      "consumer_binary_binding"
+    ],
+    "not_granted": [
+      "host integration (root owns the product hosts)",
+      "PDF and CBZ import through the SDK (only envelope, staging and EPUB import are exercised)",
+      "performance, CPU, accessibility and real-device claims",
+      "release packaging, signing and tags"
+    ],
+    "superseded_accepted_run": {
+      "source_sha": "7c2b274e021b95b65438ad37abca6d5bc15a7adc",
+      "run_id": 40125592894,
+      "attempt": 1,
+      "note": "passed all four jobs before the consumer binaries were bound into the evidence; kept as history, not as the accepted source"
+    },
+    "retained_failures": [
+      {
+        "source_sha": "4e873f2256329ed4cc73ee39166ed7b457ddc5f6",
+        "run_id": 40123942977,
+        "attempt": 1,
+        "reason": "installed consumer did not compile: greedy hex escapes in the consumer's UTF-8 fixtures",
+        "jobs": [
+          {
+            "id": 120961235054,
+            "name": "opds consumers (ubuntu-22.04)",
+            "platform": "linux",
+            "conclusion": "failure"
+          },
+          {
+            "id": 120961234815,
+            "name": "opds consumers (windows-2022)",
+            "platform": "windows",
+            "conclusion": "failure"
+          },
+          {
+            "id": 120961235039,
+            "name": "opds consumers (macos-15)",
+            "platform": "macos",
+            "conclusion": "failure"
+          },
+          {
+            "id": 120964614783,
+            "name": "strict opds evidence",
+            "conclusion": "failure"
+          }
+        ],
+        "artifacts": [
+          {
+            "id": 12572567733,
+            "name": "reader-opds-browser-windows-40123942977-1",
+            "size_in_bytes": 193333,
+            "digest": "sha256:3e781fe11909d75c61cd88f9618352b6d29e792b9402bb6aff6022e1b9760b73"
+          },
+          {
+            "id": 12572392856,
+            "name": "reader-opds-browser-linux-40123942977-1",
+            "size_in_bytes": 143969,
+            "digest": "sha256:14b8b681e94ac9a266b05fcf90ab6c5e401c7a1e6f34106fc2af3753d8c6e5c5"
+          },
+          {
+            "id": 12572234580,
+            "name": "reader-opds-browser-macos-40123942977-1",
+            "size_in_bytes": 125622,
+            "digest": "sha256:e6e44fb485029294c21fba6f2259e03c504a65c2c953aaf24c8c3b7a20ba0884"
+          },
+          {
+            "id": 12572159751,
+            "name": "reader-opds-browser-evidence-40123942977-1",
+            "size_in_bytes": 391,
+            "digest": "sha256:0bccd05ce51aa0cd659e7959dca7ca95d691e591295b8e5ee7fccd7cd0a29de4"
+          }
+        ]
+      },
+      {
+        "source_sha": "469114466a6d06ab79bded79608e2a40fdea7f37",
+        "run_id": 40124481258,
+        "attempt": 1,
+        "reason": "import expectations were wrong (the SDK reuses the identical book row), the C++ consumer tripped the no-replace policy, the WinHTTP header buffer was one byte short, and the macOS fixture server stalled in HTTPServer.getfqdn",
+        "jobs": [
+          {
+            "id": 120962857000,
+            "name": "opds consumers (ubuntu-22.04)",
+            "platform": "linux",
+            "conclusion": "failure"
+          },
+          {
+            "id": 120962857014,
+            "name": "opds consumers (windows-2022)",
+            "platform": "windows",
+            "conclusion": "failure"
+          },
+          {
+            "id": 120962856894,
+            "name": "opds consumers (macos-15)",
+            "platform": "macos",
+            "conclusion": "failure"
+          },
+          {
+            "id": 120965334432,
+            "name": "strict opds evidence",
+            "conclusion": "failure"
+          }
+        ],
+        "artifacts": [
+          {
+            "id": 12572920217,
+            "name": "reader-opds-browser-windows-40124481258-1",
+            "size_in_bytes": 202440,
+            "digest": "sha256:0faa56744c4386f88c6f5241162eae98cafec6a876af27559d0f0ab312edf2b5"
+          },
+          {
+            "id": 12572099089,
+            "name": "reader-opds-browser-linux-40124481258-1",
+            "size_in_bytes": 136249,
+            "digest": "sha256:bd9bc9c91d8d9264d3ac6e2f2650cb71f5f7701c7e36407ac41eb9c62085249b"
+          },
+          {
+            "id": 12572334941,
+            "name": "reader-opds-browser-macos-40124481258-1",
+            "size_in_bytes": 126023,
+            "digest": "sha256:2962f119203a7cb1ddab87fe1c88a63238ea3e6c406b4cf4b2dfd9d09de6421e"
+          },
+          {
+            "id": 12572559828,
+            "name": "reader-opds-browser-evidence-40124481258-1",
+            "size_in_bytes": 389,
+            "digest": "sha256:4d1177d44e7d3729edb89a91d67920dac6752bc7b644378e07707be72e3a5616"
+          }
+        ]
+      },
+      {
+        "source_sha": "eef730898feef9574ebffb2a820ddc440635296f",
+        "run_id": 40124883828,
+        "attempt": 1,
+        "reason": "superseded by the WinHTTP buffer and import-expectation fixes before it could pass; retained as a failed attempt",
+        "jobs": [
+          {
+            "id": 120964072546,
+            "name": "opds consumers (ubuntu-22.04)",
+            "platform": "linux",
+            "conclusion": "failure"
+          },
+          {
+            "id": 120964072856,
+            "name": "opds consumers (windows-2022)",
+            "platform": "windows",
+            "conclusion": "failure"
+          },
+          {
+            "id": 120964072784,
+            "name": "opds consumers (macos-15)",
+            "platform": "macos",
+            "conclusion": "failure"
+          },
+          {
+            "id": 120966356516,
+            "name": "strict opds evidence",
+            "conclusion": "failure"
+          }
+        ],
+        "artifacts": [
+          {
+            "id": 12572715888,
+            "name": "reader-opds-browser-linux-40124883828-1",
+            "size_in_bytes": 136316,
+            "digest": "sha256:de66fc0b0dd4e014aa2abe8c5e3599a894b4a932ee5ed32643a0de15b756c40f"
+          },
+          {
+            "id": 12572578237,
+            "name": "reader-opds-browser-windows-40124883828-1",
+            "size_in_bytes": 202405,
+            "digest": "sha256:537a6efa2434a3ce018fd782c83e4f2cd009757c367a4c81cdd689499bd4c38b"
+          },
+          {
+            "id": 12573176020,
+            "name": "reader-opds-browser-macos-40124883828-1",
+            "size_in_bytes": 125985,
+            "digest": "sha256:b70f0fd7986624ba604b9c00b43d412fec47d6e31c9947067d4424067ddc13da"
+          },
+          {
+            "id": 12572584132,
+            "name": "reader-opds-browser-evidence-40124883828-1",
+            "size_in_bytes": 391,
+            "digest": "sha256:90b1eabb8f0abd610e2979f84a9e618d11123167c7e4366a735f1a9506f44ec6"
+          }
+        ]
+      },
+      {
+        "source_sha": "f82c01342ab04d1506cc06d250bcc6628fba3551",
+        "run_id": 40125267330,
+        "attempt": 1,
+        "reason": "cancelled on purpose once its content was superseded by 7c2b274e; its two consumer jobs had already passed but the run is not claimed as evidence",
+        "jobs": [
+          {
+            "id": 120965224288,
+            "name": "opds consumers (ubuntu-22.04)",
+            "platform": "linux",
+            "conclusion": "success"
+          },
+          {
+            "id": 120965224409,
+            "name": "opds consumers (windows-2022)",
+            "platform": "windows",
+            "conclusion": "success"
+          },
+          {
+            "id": 120965224394,
+            "name": "opds consumers (macos-15)",
+            "platform": "macos",
+            "conclusion": "cancelled"
+          },
+          {
+            "id": 120966646516,
+            "name": "strict opds evidence",
+            "conclusion": "failure"
+          }
+        ],
+        "artifacts": [
+          {
+            "id": 12573715126,
+            "name": "reader-opds-browser-linux-40125267330-1",
+            "size_in_bytes": 136306,
+            "digest": "sha256:81c068c8695a6db40a69fc0674588e1ea76227c3550c20550d0d7405b4a5b0ab"
+          },
+          {
+            "id": 12573190680,
+            "name": "reader-opds-browser-windows-40125267330-1",
+            "size_in_bytes": 202334,
+            "digest": "sha256:7934730ac01851b2a6540206eb692f50adf55e666e0bd46ba81084ce8a4fa2c3"
+          },
+          {
+            "id": 12573400832,
+            "name": "reader-opds-browser-macos-40125267330-1",
+            "size_in_bytes": 2364,
+            "digest": "sha256:f9baf25c2c77f9123b76796cf2b795c4256acf85a46033db9ac68105bfac497b"
+          },
+          {
+            "id": 12573435938,
+            "name": "reader-opds-browser-evidence-40125267330-1",
+            "size_in_bytes": 668,
+            "digest": "sha256:e3f15c51db4fb611d51721c8cb9bc948c705b15cab55ad20191e759d5b6aa917"
+          }
+        ]
+      },
+      {
+        "source_sha": "935e47a97a99cb2eaf76e6b6a9e839cf1472768d",
+        "run_id": 40126530848,
+        "attempt": 1,
+        "reason": "cancelled on purpose: the evidence job matched build/opds-consumer/CMakeCache.txt as a third consumer entry, fixed before it finished",
+        "jobs": [],
+        "artifacts": [
+          {
+            "id": 12573796088,
+            "name": "reader-opds-browser-windows-40126530848-1",
+            "size_in_bytes": 20194,
+            "digest": "sha256:35dbc802f1b81c5fe1980bd67dc538c9e37e04d63aca0b7620920020f4b99d1a"
+          },
+          {
+            "id": 12573517448,
+            "name": "reader-opds-browser-macos-40126530848-1",
+            "size_in_bytes": 3665418,
+            "digest": "sha256:ada5041063a075799a802bdd4650697dd61f1f72931745fb49f26539fc469d35"
+          },
+          {
+            "id": 12573497471,
+            "name": "reader-opds-browser-linux-40126530848-1",
+            "size_in_bytes": 4275544,
+            "digest": "sha256:11762541149b4c220cde5c8b19a1b857fec6e1d146e9ec10c1878816b0da11fb"
+          },
+          {
+            "id": 12573407703,
+            "name": "reader-opds-browser-evidence-40126530848-1",
+            "size_in_bytes": 390,
+            "digest": "sha256:6686a6cabcc8b272fb78dda7c9e5118165678af220f8c73eda472e18353b0792"
+          }
+        ]
+      }
+    ],
+    "evidence_commit": {
+      "note": "This record and the package document are committed after the run with [skip ci]; no source, test, workflow or fixture byte changes, so the tested source stays dcf77c27 and the branch head differs only in docs/.",
+      "source_tested": "dcf77c2776d7cdce180f303d2a85152cf538a8d6",
+      "skip_ci": true
+    },
+    "sdk_changed": false,
+    "schema_changed": false
   },
-  "retained_failures": [
-    {
-      "source_sha": "4e873f2256329ed4cc73ee39166ed7b457ddc5f6",
-      "run_id": 40123942977,
-      "attempt": 1,
-      "reason": "installed consumer did not compile: greedy hex escapes in the consumer's UTF-8 fixtures",
-      "jobs": [
-        {
-          "id": 120961235054,
-          "name": "opds consumers (ubuntu-22.04)",
-          "platform": "linux",
-          "conclusion": "failure"
-        },
-        {
-          "id": 120961234815,
-          "name": "opds consumers (windows-2022)",
-          "platform": "windows",
-          "conclusion": "failure"
-        },
-        {
-          "id": 120961235039,
-          "name": "opds consumers (macos-15)",
-          "platform": "macos",
-          "conclusion": "failure"
-        },
-        {
-          "id": 120964614783,
-          "name": "strict opds evidence",
-          "conclusion": "failure"
-        }
-      ],
-      "artifacts": [
-        {
-          "id": 12572567733,
-          "name": "reader-opds-browser-windows-40123942977-1",
-          "size_in_bytes": 193333,
-          "digest": "sha256:3e781fe11909d75c61cd88f9618352b6d29e792b9402bb6aff6022e1b9760b73"
-        },
-        {
-          "id": 12572392856,
-          "name": "reader-opds-browser-linux-40123942977-1",
-          "size_in_bytes": 143969,
-          "digest": "sha256:14b8b681e94ac9a266b05fcf90ab6c5e401c7a1e6f34106fc2af3753d8c6e5c5"
-        },
-        {
-          "id": 12572234580,
-          "name": "reader-opds-browser-macos-40123942977-1",
-          "size_in_bytes": 125622,
-          "digest": "sha256:e6e44fb485029294c21fba6f2259e03c504a65c2c953aaf24c8c3b7a20ba0884"
-        },
-        {
-          "id": 12572159751,
-          "name": "reader-opds-browser-evidence-40123942977-1",
-          "size_in_bytes": 391,
-          "digest": "sha256:0bccd05ce51aa0cd659e7959dca7ca95d691e591295b8e5ee7fccd7cd0a29de4"
-        }
-      ]
-    },
-    {
-      "source_sha": "469114466a6d06ab79bded79608e2a40fdea7f37",
-      "run_id": 40124481258,
-      "attempt": 1,
-      "reason": "import expectations were wrong (the SDK reuses the identical book row), the C++ consumer tripped the no-replace policy, the WinHTTP header buffer was one byte short, and the macOS fixture server stalled in HTTPServer.getfqdn",
-      "jobs": [
-        {
-          "id": 120962857000,
-          "name": "opds consumers (ubuntu-22.04)",
-          "platform": "linux",
-          "conclusion": "failure"
-        },
-        {
-          "id": 120962857014,
-          "name": "opds consumers (windows-2022)",
-          "platform": "windows",
-          "conclusion": "failure"
-        },
-        {
-          "id": 120962856894,
-          "name": "opds consumers (macos-15)",
-          "platform": "macos",
-          "conclusion": "failure"
-        },
-        {
-          "id": 120965334432,
-          "name": "strict opds evidence",
-          "conclusion": "failure"
-        }
-      ],
-      "artifacts": [
-        {
-          "id": 12572920217,
-          "name": "reader-opds-browser-windows-40124481258-1",
-          "size_in_bytes": 202440,
-          "digest": "sha256:0faa56744c4386f88c6f5241162eae98cafec6a876af27559d0f0ab312edf2b5"
-        },
-        {
-          "id": 12572099089,
-          "name": "reader-opds-browser-linux-40124481258-1",
-          "size_in_bytes": 136249,
-          "digest": "sha256:bd9bc9c91d8d9264d3ac6e2f2650cb71f5f7701c7e36407ac41eb9c62085249b"
-        },
-        {
-          "id": 12572334941,
-          "name": "reader-opds-browser-macos-40124481258-1",
-          "size_in_bytes": 126023,
-          "digest": "sha256:2962f119203a7cb1ddab87fe1c88a63238ea3e6c406b4cf4b2dfd9d09de6421e"
-        },
-        {
-          "id": 12572559828,
-          "name": "reader-opds-browser-evidence-40124481258-1",
-          "size_in_bytes": 389,
-          "digest": "sha256:4d1177d44e7d3729edb89a91d67920dac6752bc7b644378e07707be72e3a5616"
-        }
-      ]
-    },
-    {
-      "source_sha": "eef730898feef9574ebffb2a820ddc440635296f",
-      "run_id": 40124883828,
-      "attempt": 1,
-      "reason": "superseded by the WinHTTP buffer and import-expectation fixes before it could pass; retained as a failed attempt",
-      "jobs": [
-        {
-          "id": 120964072546,
-          "name": "opds consumers (ubuntu-22.04)",
-          "platform": "linux",
-          "conclusion": "failure"
-        },
-        {
-          "id": 120964072856,
-          "name": "opds consumers (windows-2022)",
-          "platform": "windows",
-          "conclusion": "failure"
-        },
-        {
-          "id": 120964072784,
-          "name": "opds consumers (macos-15)",
-          "platform": "macos",
-          "conclusion": "failure"
-        },
-        {
-          "id": 120966356516,
-          "name": "strict opds evidence",
-          "conclusion": "failure"
-        }
-      ],
-      "artifacts": [
-        {
-          "id": 12572715888,
-          "name": "reader-opds-browser-linux-40124883828-1",
-          "size_in_bytes": 136316,
-          "digest": "sha256:de66fc0b0dd4e014aa2abe8c5e3599a894b4a932ee5ed32643a0de15b756c40f"
-        },
-        {
-          "id": 12572578237,
-          "name": "reader-opds-browser-windows-40124883828-1",
-          "size_in_bytes": 202405,
-          "digest": "sha256:537a6efa2434a3ce018fd782c83e4f2cd009757c367a4c81cdd689499bd4c38b"
-        },
-        {
-          "id": 12573176020,
-          "name": "reader-opds-browser-macos-40124883828-1",
-          "size_in_bytes": 125985,
-          "digest": "sha256:b70f0fd7986624ba604b9c00b43d412fec47d6e31c9947067d4424067ddc13da"
-        },
-        {
-          "id": 12572584132,
-          "name": "reader-opds-browser-evidence-40124883828-1",
-          "size_in_bytes": 391,
-          "digest": "sha256:90b1eabb8f0abd610e2979f84a9e618d11123167c7e4366a735f1a9506f44ec6"
-        }
-      ]
-    },
-    {
-      "source_sha": "f82c01342ab04d1506cc06d250bcc6628fba3551",
-      "run_id": 40125267330,
-      "attempt": 1,
-      "reason": "cancelled on purpose once its content was superseded by 7c2b274e; its two consumer jobs had already passed but the run is not claimed as evidence",
-      "jobs": [
-        {
-          "id": 120965224288,
-          "name": "opds consumers (ubuntu-22.04)",
-          "platform": "linux",
-          "conclusion": "success"
-        },
-        {
-          "id": 120965224409,
-          "name": "opds consumers (windows-2022)",
-          "platform": "windows",
-          "conclusion": "success"
-        },
-        {
-          "id": 120965224394,
-          "name": "opds consumers (macos-15)",
-          "platform": "macos",
-          "conclusion": "cancelled"
-        },
-        {
-          "id": 120966646516,
-          "name": "strict opds evidence",
-          "conclusion": "failure"
-        }
-      ],
-      "artifacts": [
-        {
-          "id": 12573715126,
-          "name": "reader-opds-browser-linux-40125267330-1",
-          "size_in_bytes": 136306,
-          "digest": "sha256:81c068c8695a6db40a69fc0674588e1ea76227c3550c20550d0d7405b4a5b0ab"
-        },
-        {
-          "id": 12573190680,
-          "name": "reader-opds-browser-windows-40125267330-1",
-          "size_in_bytes": 202334,
-          "digest": "sha256:7934730ac01851b2a6540206eb692f50adf55e666e0bd46ba81084ce8a4fa2c3"
-        },
-        {
-          "id": 12573400832,
-          "name": "reader-opds-browser-macos-40125267330-1",
-          "size_in_bytes": 2364,
-          "digest": "sha256:f9baf25c2c77f9123b76796cf2b795c4256acf85a46033db9ac68105bfac497b"
-        },
-        {
-          "id": 12573435938,
-          "name": "reader-opds-browser-evidence-40125267330-1",
-          "size_in_bytes": 668,
-          "digest": "sha256:e3f15c51db4fb611d51721c8cb9bc948c705b15cab55ad20191e759d5b6aa917"
-        }
-      ]
-    },
-    {
-      "source_sha": "935e47a97a99cb2eaf76e6b6a9e839cf1472768d",
-      "run_id": 40126530848,
-      "attempt": 1,
-      "reason": "cancelled on purpose: the evidence job matched build/opds-consumer/CMakeCache.txt as a third consumer entry, fixed before it finished",
-      "jobs": [],
-      "artifacts": [
-        {
-          "id": 12573796088,
-          "name": "reader-opds-browser-windows-40126530848-1",
-          "size_in_bytes": 20194,
-          "digest": "sha256:35dbc802f1b81c5fe1980bd67dc538c9e37e04d63aca0b7620920020f4b99d1a"
-        },
-        {
-          "id": 12573517448,
-          "name": "reader-opds-browser-macos-40126530848-1",
-          "size_in_bytes": 3665418,
-          "digest": "sha256:ada5041063a075799a802bdd4650697dd61f1f72931745fb49f26539fc469d35"
-        },
-        {
-          "id": 12573497471,
-          "name": "reader-opds-browser-linux-40126530848-1",
-          "size_in_bytes": 4275544,
-          "digest": "sha256:11762541149b4c220cde5c8b19a1b857fec6e1d146e9ec10c1878816b0da11fb"
-        },
-        {
-          "id": 12573407703,
-          "name": "reader-opds-browser-evidence-40126530848-1",
-          "size_in_bytes": 390,
-          "digest": "sha256:6686a6cabcc8b272fb78dda7c9e5118165678af220f8c73eda472e18353b0792"
-        }
-      ]
-    }
-  ],
-  "evidence_commit": {
-    "note": "This record and the package document are committed after the run with [skip ci]; no source, test, workflow or fixture byte changes, so the tested source stays dcf77c27 and the branch head differs only in docs/.",
-    "source_tested": "dcf77c2776d7cdce180f303d2a85152cf538a8d6",
-    "skip_ci": true
-  },
-  "sdk_changed": false,
-  "schema_changed": false
+  "local_tests_run": false,
+  "remaining": [
+    "new-source three-platform consumers and strict evidence"
+  ]
 }
