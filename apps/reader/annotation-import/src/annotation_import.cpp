@@ -143,14 +143,16 @@ class importer {
         reader_revision_status status=reader_revision_validate(o.revisions,wire.data(),wire.size(),sha.c_str(),&info,&re);
         if(status!=READER_REV_OK)fail(READER_AI_REVISION,"Public wire validation rejected input",status);
         need(rid==info.revision_id&&op==info.operation&&key==info.entity_key&&std::strcmp(info.entity_kind,"annotation")==0&&std::strcmp(info.book_key,o.target_book_key)==0,"Head metadata differs from exact wire identity");
-        if(g.projection_safe)need(g.deleted==(op=="delete"),"Safe head operation differs from graph");
+        if(g.projection_safe)need((g.deleted!=0)==(op=="delete"),"Safe head operation differs from graph");
         if(!apply){
           wire_guard old;size_t size=0;reader_revision_info prior{};status=reader_revision_get(o.revisions,rid.c_str(),&old.data,&size,&prior,&re);
           if(status==READER_REV_OK){if(size!=wire.size()||std::memcmp(old.data,wire.data(),size))fail(READER_AI_REVISION,"Existing revision ID has different exact wire",READER_REV_COLLISION);}
           else if(status!=READER_REV_NOT_FOUND)fail(READER_AI_REVISION,"Cannot inspect existing revision",status);
         }else if(c.heads>=o.resume_index){
           reader_annotation_import_item item{};item.index=c.heads;item.info=info;int made=0;
-          status=reader_revision_receive(o.revisions,wire.data(),wire.size(),sha.c_str(),&item.info,&made,&re);item.revision_code=status;item.created=made;item.committed=status==READER_REV_OK;item.exact_duplicate=item.committed&&!made;
+          status=reader_revision_receive(o.revisions,wire.data(),wire.size(),sha.c_str(),&item.info,&made,&re);
+          if(status!=READER_REV_OK){item.info=info;} // receive clears its output on failure; retain the preflight identity.
+          item.revision_code=status;item.created=made;item.committed=status==READER_REV_OK;item.exact_duplicate=item.committed&&!made;
           if(item.committed){stats.committed++;stats.created+=(uint64_t)made;stats.duplicates+=(uint64_t)!made;stats.next_index=c.heads+1;
             reader_revision_status gs=reader_revision_heads(o.revisions,"annotation",key.c_str(),nullptr,nullptr,&item.graph,&re);
             if(gs!=READER_REV_OK){item.revision_code=gs;item.outcome=READER_AI_REJECTED;notify(o,item);fail(READER_AI_REVISION,"Committed item but graph read failed",gs);}

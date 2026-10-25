@@ -36,6 +36,9 @@ def report_check(r,source,run,attempt,platform):
     require(set(r['checks'])==REQUIRED and len(r['checks'])==len(REQUIRED)==r['checks_count'] and set(r['required'])==REQUIRED,'required named cases')
     require(r['problems']==[] and len(r['gaps'])>=3 and r['host_ui_accepted'] is False and r['sdk_changed'] is False and r['schema_changed'] is False,'report claims')
 
+def zip_identity(data,a):
+    require(len(data)==a['size_in_bytes'] and 'sha256:'+hashlib.sha256(data).hexdigest()==a.get('digest'),'ZIP size/API digest mismatch')
+
 def zip_members(data):
     archive=zipfile.ZipFile(io.BytesIO(data));names=archive.namelist()
     require(len(names)==len(set(names)) and all(not n.startswith('/') and '..' not in Path(n).parts for n in names),'duplicate/unsafe ZIP member')
@@ -61,7 +64,7 @@ def main():
             metadata(a,j,source,run,attempt,name,jobname)
             with tempfile.TemporaryFile() as stream:
                 download_artifact_zip(a['id'],stream);stream.seek(0);data=stream.read()
-            sha=hashlib.sha256(data).hexdigest();require(len(data)==a['size_in_bytes'] and 'sha256:'+sha==a.get('digest'),'ZIP size/API digest mismatch')
+            sha=hashlib.sha256(data).hexdigest();zip_identity(data,a)
             with zip_members(data) as z:
                 r=parse_json(z.read('ai-evidence/result.json'));report_check(r,source,run,attempt,platform)
                 for p,tree in r['module_trees'].items():
@@ -76,12 +79,19 @@ def main():
                 require(r['package_files'] and any(p.endswith(('.a','.lib')) for p in r['package_files']),'installed static package absent')
                 for p,identity in r['package_files'].items():
                     content=z.read('ai-import-stage/'+p);require(len(content)==identity['bytes']>0 and hashlib.sha256(content).hexdigest()==identity['sha256'],'installed package mismatch')
+                require(r['original_exporter_files'] and any(p.endswith(('.a','.lib')) for p in r['original_exporter_files']),'original installed exporter absent')
+                for p,identity in r['original_exporter_files'].items():
+                    content=z.read('ai-export-stage/'+p);require(len(content)==identity['bytes']>0 and hashlib.sha256(content).hexdigest()==identity['sha256'],'original exporter binary mismatch')
                 if label=='Linux':
                     negatives=result['verifier_negative_checks']
                     for key,value in [('source_sha','0'*40),('attempt',attempt+1),('accepted',True),('measured_capability_passed',False),('checks',r['checks'][:-1]),('checks',r['checks']+[r['checks'][0]])]:
                         bad=copy.deepcopy(r);bad[key]=value;rejects(lambda:report_check(bad,source,run,attempt,platform),'report_'+key+'_'+str(len(negatives)),negatives)
                     for key,value in [('expired',True),('size_in_bytes',0),('expires_at','2000-01-01T00:00:00Z')]:
                         bad=copy.deepcopy(a);bad[key]=value;rejects(lambda:metadata(bad,j,source,run,attempt,name,jobname),'artifact_'+key,negatives)
+                    bad=copy.deepcopy(a);bad['digest']='sha256:'+'0'*64;rejects(lambda:zip_identity(data,bad),'wrong_api_digest',negatives)
+                    bad=copy.deepcopy(a);bad['size_in_bytes']+=1;rejects(lambda:zip_identity(data,bad),'wrong_zip_size',negatives)
+                    bad=copy.deepcopy(j);bad['run_attempt']=attempt+1;rejects(lambda:metadata(a,bad,source,run,attempt,name,jobname),'producer_wrong_attempt',negatives)
+                    bad=copy.deepcopy(j);bad['head_sha']='0'*40;rejects(lambda:metadata(a,bad,source,run,attempt,name,jobname),'producer_wrong_source',negatives)
                     bad=copy.deepcopy(j);bad['status']='in_progress';rejects(lambda:metadata(a,bad,source,run,attempt,name,jobname),'producer_incomplete',negatives)
                     rejects(lambda:parse_json(b'{"x":1,"x":2}'),'duplicate_json_key',negatives)
                     buf=io.BytesIO()
@@ -90,7 +100,7 @@ def main():
                     buf=io.BytesIO()
                     with zipfile.ZipFile(buf,'w') as fake:fake.writestr('unrelated','{}')
                     rejects(lambda:zip_members(buf.getvalue()),'missing_zip_report',negatives)
-            result['artifacts'].append({**{k:a[k] for k in ['id','name','size_in_bytes','digest','expires_at']},'recomputed_zip_sha256':sha,'checks_count':r['checks_count'],'binaries':r['binaries'],'module_trees':r['module_trees']})
+            result['artifacts'].append({**{k:a[k] for k in ['id','name','size_in_bytes','digest','expires_at']},'recomputed_zip_sha256':sha,'checks_count':r['checks_count'],'binaries':r['binaries'],'module_trees':r['module_trees'],'original_exporter_files':r['original_exporter_files']})
             result['jobs'].append({k:j[k] for k in ['id','name','head_sha','run_attempt','status','conclusion']})
         result['evidence_verified']=True
     except Exception as error:result['problems'].append(str(error))

@@ -22,7 +22,7 @@ rejected during whole-file preflight, even if it occurs at the end of the file.
 One regular, non-symlink input is opened. A private spool is filled once under a
 16MiB default /64MiB hard budget and then validated completely. Commit replays
 that SAME private spool, never a reopened input path. A decoded wire is bounded
-by the public1MiB maximum; the parser streams fields/heads without aggregating a
+by the public1MiB maximum (up to two wire buffers during existing-ID comparison); the parser streams fields/heads without aggregating a
 JSONL line or the file. At most65536 unique32-byte revision IDs are tracked.
 The POSIX anonymous spool is unlinked immediately; Windows uses an unpredictable
 publicly generated ID with CREATE_NEW, no sharing and DELETE_ON_CLOSE, refusing a
@@ -42,7 +42,7 @@ or cancellation similarly cannot undo an already reported commit.
 
 Retry from zero is safe: public receive does not duplicate history or requeue
 outbox. `next_index` can resume on the SAME stable input and store, but it is not
-a content-authentication token. All resumed inputs are fully revalidated before
+a content-authentication token. Concurrent external writers can still cause a later per-item public rejection; validation is not a store-wide lock. All resumed inputs are fully revalidated before
 any receive. Owner/thread checks precede input I/O; importer reentry is refused
 without resetting the outer stats. Callbacks must not mutate or close the store.
 

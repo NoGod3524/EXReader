@@ -27,6 +27,7 @@ REQUIRED = {
  'resume_beyond_input', 'empty_original_export', 'original_concurrent_tombstone_restore',
  'all_invalid_files_leave_existing_database_bytes_unchanged', 'metadata_delivered_not_persisted',
  'receiver_fault_retains_prior_state', 'nonregular_source_rejected',
+ 'rejected_item_keeps_wire_identity', 'preflight_cancel_no_mutation', 'callback_exception_preserves_cursor', 'file_exact_budget', 'actual_overlong_wire_string',
 }
 
 def digest(p): return hashlib.sha256(Path(p).read_bytes()).hexdigest()
@@ -39,7 +40,7 @@ def run(argv):
     return [json.loads(x) for x in p.stdout.splitlines()]
 def main():
     require(os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only')
-    a=argparse.ArgumentParser(); a.add_argument('--probe',required=True);a.add_argument('--c-consumer',required=True);a.add_argument('--fixtures',required=True);a.add_argument('--output',required=True);a.add_argument('--package',required=True);v=a.parse_args()
+    a=argparse.ArgumentParser(); a.add_argument('--probe',required=True);a.add_argument('--c-consumer',required=True);a.add_argument('--fixtures',required=True);a.add_argument('--output',required=True);a.add_argument('--package',required=True);a.add_argument('--export-package',required=True);v=a.parse_args()
     out=Path(v.output).resolve();out.mkdir(parents=True);probe=Path(v.probe).resolve();c_consumer=Path(v.c_consumer).resolve();fixtures=Path(v.fixtures).resolve();package=Path(v.package).resolve()
     checks=[];cases=[]
     report={'accepted':False,'measured_capability_passed':False,'source_sha':os.environ['GITHUB_SHA'],'run_id':int(os.environ['GITHUB_RUN_ID']),'attempt':int(os.environ['GITHUB_RUN_ATTEMPT']),'platform':sys.platform,'checks':checks,'cases':cases,'gaps':['G05 exports only heads: omitted non-head revision wires cannot be reconstructed from JSONL','Advisory book_title/graph/selection metadata is exposed by callbacks, not persisted as invented entities','No host import UI; desktop installed consumer validation only'],'problems':[],'host_ui_accepted':False,'sdk_changed':False,'schema_changed':False}
@@ -47,7 +48,7 @@ def main():
     def cmd(*args):
         result=run([probe,*args]);cases.append({'argv':[str(x) for x in args],'result':result});return result
     def export(db,book,name):
-        p=out/name;cmd('export',db,book,p,'Original title 🙂');return p
+        p=out/name;cmd('export',db,book,p,'Original title 🙂'.encode().hex());return p
     def imp(db,path,*args,book=None): return cmd('import',db,book or txt,path,*args)
     def reject(name,data,*args,book=None):
         p=out/(name+'.jsonl');p.write_bytes(data);before=digest(existing);r=imp(existing,p,*args,book=book);last=r[-1]
@@ -75,6 +76,9 @@ def main():
         cmd('receive',target,fixtures/'small.batch');completed=export(target,txt,'parents-arrived.jsonl');checked('public_parent_arrival_restores_original_graph',completed.read_bytes()==raw)
         r=imp(existing,original)[-1];complete=export(existing,txt,'complete-again.jsonl');checked('complete_target_roundtrip',r['created']==0 and complete.read_bytes()==raw)
         checked('original_concurrent_tombstone_restore',any(x['selection']=='concurrent' for x in rows[1:-1]) and any(x['tombstone'] for x in rows[1:-1]) and any(h['operation']=='restore' for x in rows[1:-1] for h in x['heads']))
+        before=digest(existing);r=imp(existing,original,'cancel_after=1')[-1];checked('preflight_cancel_no_mutation',r['status']==7 and r['committed']==0 and r['validated']==0 and digest(existing)==before)
+        r=imp(out/'throw.db',original,'throw_item')[-1];checked('callback_exception_preserves_cursor',r['status']==8 and r['committed']==1 and r['next']==1)
+        r=imp(existing,original,'limit='+str(len(raw)))[-1];checked('file_exact_budget',r['status']==0 and r['duplicates']==len(heads(rows)))
         cancel=out/'cancel.db';r=imp(cancel,original,'stop=1')[-1];checked('cancel_preserves_commit_and_cursor',r['status']==7 and r['committed']==1 and r['created']==1 and r['next']==1)
         r=imp(cancel,original,'resume=1')[-1];checked('cancel_resume_exactly_once',r['status']==0 and r['created']==len(heads(rows))-1 and r['next']==len(heads(rows)))
         killed=out/'killed.db';marker=out/'committed.marker';log=out/'kill.stdout';err=out/'kill.stderr'
@@ -91,6 +95,12 @@ def main():
         r=imp(existing,original,'thread')[-1];checked('owner_thread_rejected',r['status']==6 and r['revision_code']==11 and r['committed']==0)
         r=imp(existing,original,'reenter')[-1];checked('callback_reentry_rejected_without_stats_reset',r['status']==0 and r['nested']==1 and r['duplicates']==len(heads(rows)))
         empty=export(source,'txt:'+'f'*64,'empty.jsonl');r=imp(out/'empty.db',empty,book='txt:'+'f'*64)[-1];checked('empty_original_export',r['status']==0 and r['validated']==1 and r['heads']==0)
+        # Most target heads are ABSENT: a buggy eager receive would visibly
+        # mutate this existing library before a late footer/collision rejection.
+        existing=out/'negative-existing.db';negative_batch=out/'negative-seed.batch'
+        conflict_id=rows[-2]['heads'][0]['revision_id']
+        negative_batch.write_bytes(b''.join(w['sha256'].encode()+b' '+bytes.fromhex(w['wire_hex'])+b'\n' for w in corpus['wires'] if w['revision_id']==conflict_id or w['entity_kind'] in ('book','progress')))
+        cmd('receive',existing,negative_batch)
         # Every malformed file is checked against the SAME pre-existing library bytes.
         reject('duplicate_json_header',raw.replace(b'"type":"header"',b'"type":"header","type":"header"',1))
         reject('duplicate_json_graph',raw.replace(b'"revisions":1,',b'"revisions":1,"revisions":1,',1))
@@ -111,6 +121,7 @@ def main():
         reject('bad_escape',raw.replace(b'Original title',b'\\qOriginal title',1));reject('bad_utf8',raw.replace(b'Original title',b'\xffOriginal title',1));reject('bad_surrogate',raw.replace(b'Original title',b'\\ud800Original title',1))
         reject('unknown_entity_field',raw.replace(b'"tombstone":',b'"unknown":1,"tombstone":',1))
         malformed=json.loads(json.dumps(rows));malformed[1]['heads'][0]['bytes']=1048577;reject('wire_limit',encode(malformed))
+        malformed=json.loads(json.dumps(rows));malformed[1]['heads'][0]['bytes']=1048576;malformed[1]['heads'][0]['wire']=' '*1048577;reject('actual_overlong_wire_string',encode(malformed))
         reject('file_budget',raw,'limit='+str(len(raw)-1));reject('hard_budget',raw,'limit=67108865');reject('resume_beyond_input',raw,'resume=999999')
         checked('all_invalid_files_leave_existing_database_bytes_unchanged')
         # Real platform failure: POSIX enforces file-size zero at post-validation;
@@ -121,9 +132,10 @@ def main():
         if sys.platform=='win32':
             import sqlite3
             connection=sqlite3.connect(fault);connection.execute('BEGIN IMMEDIATE')
-            try:r=imp(fault,original)[-1]
+            try:fault_result=imp(fault,original);r=fault_result[-1]
             finally:connection.rollback();connection.close()
-        else:r=imp(fault,original,'fault')[-1]
+        else:fault_result=imp(fault,original,'fault');r=fault_result[-1]
+        checked('rejected_item_keeps_wire_identity',any(x.get('item')==0 and x.get('id')==rows[1]['heads'][0]['revision_id'] and x['committed']==0 for x in fault_result))
         checked('receiver_fault_retains_prior_state',r['status']!=0 and r['committed']==0 and digest(fault)==baseline)
         link=out/'nonregular-input.jsonl';link.mkdir()
         r=imp(existing,link)[-1];checked('nonregular_source_rejected',r['status']==3 and r['committed']==0)
@@ -139,7 +151,9 @@ def main():
     report['checks_count']=len(checks);report['required']=sorted(REQUIRED)
     report['binaries']={p.name:{'bytes':p.stat().st_size,'sha256':digest(p)} for p in [probe,c_consumer] if p.exists()}
     report['package_files']={str(p.relative_to(package)):{'bytes':p.stat().st_size,'sha256':digest(p)} for p in package.rglob('*') if p.is_file()}
+    export_package=Path(v.export_package).resolve()
+    report['original_exporter_files']={str(p.relative_to(export_package)):{'bytes':p.stat().st_size,'sha256':digest(p)} for p in export_package.rglob('*') if p.is_file()}
     report['module_trees']={p:subprocess.check_output(['git','rev-parse','HEAD:'+p],text=True).strip() for p in ['apps/reader/annotation-export','apps/reader/revisions','apps/reader/reading-state','tests/reader_annotation_export','apps/reader/annotation-import','tests/reader_annotation_import']}
-    (out/'result.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8');print(json.dumps(report,ensure_ascii=False),flush=True)
+    (out/'result.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8');print(json.dumps(report),flush=True)
     raise SystemExit(0 if report['measured_capability_passed'] else 1)
 if __name__=='__main__':main()

@@ -13,8 +13,8 @@ extern "C" {
    book parser, SQL, projection, clock selection, SDK notes or progress writes.
    All bytes are copied from ONE regular-file handle into a private anonymous
    spool, bounded before validation. The spool is completely validated before
-   ANY receive, then replayed without reopening the source. Memory holds one
-   wire (<= public 1 MiB limit) plus <=65536 32-byte revision IDs.
+   ANY receive, then replayed without reopening the source. Memory holds at most two
+   wire buffers (each <= public 1 MiB limit) plus <=65536 32-byte revision IDs.
 
    Every receive is its own public revision transaction. Cancellation never
    rolls back earlier commits. Retry the same file from zero (exact duplicates

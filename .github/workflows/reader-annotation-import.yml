@@ -87,7 +87,9 @@ jobs:
           cmake --build build/ai-import --verbose
           cmake --install build/ai-import
           cmake -S apps/reader/annotation-import -B build/ai-default-off -G Ninja
+          cmake --build build/ai-default-off
           test ! -f build/ai-default-off/libreader_annotation_import.a
+          test ! -f build/ai-default-off/reader_annotation_import.lib
       - name: Compile independent C and C++ consumers from installed packages only
         run: |
           set -o pipefail
@@ -99,7 +101,7 @@ jobs:
           exe=""
           if [ "$RUNNER_OS" = Windows ]; then exe=".exe"; fi
           python tests/reader_annotation_export/make_fixtures.py build/ai-fixtures 2>&1 | tee build/ai-logs/fixtures.log
-          python tests/reader_annotation_import/check_import.py --probe "build/ai-consumer/annotation-import-probe$exe" --c-consumer "build/ai-consumer/annotation-import-c$exe" --fixtures build/ai-fixtures --output build/ai-evidence --package build/ai-import-stage 2>&1 | tee build/ai-logs/checks.log
+          python tests/reader_annotation_import/check_import.py --probe "build/ai-consumer/annotation-import-probe$exe" --c-consumer "build/ai-consumer/annotation-import-c$exe" --fixtures build/ai-fixtures --output build/ai-evidence --package build/ai-import-stage --export-package build/ai-export-stage 2>&1 | tee build/ai-logs/checks.log
       - name: Preserve source-bound corpus, databases, outputs, packages and every failure
         if: always()
         uses: actions/upload-artifact@v4
@@ -129,6 +131,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Require fixed start, frozen SDK, schema1, unchanged shared modules and package path ownership
+        run: |
+          START=a826a65c9c66e43620eff61b49cb79f941a3c953
+          K=9854061be331fe603a1822d9b2b36ee357154927
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$START" HEAD
+          git diff --exit-code "$K" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code "$START" HEAD -- apps/reader/store apps/reader/revisions apps/reader/reading-state apps/reader/sync apps/reader/commands apps/reader/annotation-export tests/reader_annotation_export docs/READER-REVISION-WIRE.md
+          allowed='^(apps/reader/annotation-import/|tests/reader_annotation_import/|\.github/workflows/reader-annotation-import\.yml$|docs/READER-ANNOTATION-IMPORT\.md$|docs/validation/reader-annotation-import\.json$)'
+          changed=$(git diff --name-only "$START" HEAD)
+          bad=$(printf '%s\n' "$changed" | sed '/^$/d' | grep -Ev "$allowed" || true)
+          test -z "$bad" || { echo "unowned path: $bad"; exit 1; }
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
