@@ -102,6 +102,10 @@ def main():
         match = re.search(r'GTK_BATCH_BACKEND checks=(\d+) all passed', log)
         assert match and int(match[1]) > 600, log[-2000:]
         report['backend_checks'] = int(match[1])
+        faults = load('gtk-batch-owner-faults/report.json', count=3, grant='ok')
+        assert faults['allocation_failures'] == 2
+        assert {row['name'] for row in faults['checks']} == {'allocation-failure-map-close', 'allocation-failure-direct-close', 'empty-directory-map-close'}
+        report['owner_fault_scenarios'] = 3
         report['batch_import_scope_passed'] = True
         if not args.diagnostic:
             load('records-ui/report.json', count=30, grant='reading_records_scope_passed')
