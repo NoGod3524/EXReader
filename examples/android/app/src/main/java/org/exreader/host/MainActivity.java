@@ -210,6 +210,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                 }
                 // A previous Activity may still be compensating its unpublished insert.
                 synchronized (IMPORT_LOCK) {
+                    cleanImportTemporaries();
                     store = new BookStore(getApplicationContext(), new File(getFilesDir(), "library.db"));
                 }
                 if (store.metadataRepairPending()) postStatus("Metadata repair pending; originals retained");
@@ -1262,6 +1263,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                 total += count;
                 if (total > MAX_INPUT_BYTES) throw new IOException("File exceeds 32 MiB limit");
                 output.write(buffer, 0, count);
+                if(total==count)reviewGate("import-stable-partial",task);
                 digest.update(buffer, 0, count);
             }
             output.getFD().sync();
@@ -1298,6 +1300,16 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     private static void removeTemporary(File temporary) throws IOException {
         if (temporary.exists() && !temporary.delete())
             throw new IOException("Import cleanup failed; retained temporary source " + temporary.getName());
+    }
+
+    /** Called under IMPORT_LOCK, after any previous Activity's import has finished. */
+    private void cleanImportTemporaries() throws IOException {
+        File folder=new File(getFilesDir(),"books").getCanonicalFile();
+        File[] files=folder.listFiles();
+        if(files==null)return;
+        for(File file:files)if(file.getName().matches("import-[0-9]+\\.part")&&file.isFile()
+                &&file.getAbsoluteFile().equals(file.getCanonicalFile())&&!file.delete())
+            throw new IOException("Cannot clean a previous unfinished private book copy");
     }
 
     private String queryName(Uri uri) {

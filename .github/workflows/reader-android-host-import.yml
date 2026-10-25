@@ -38,6 +38,7 @@ jobs:
           git diff --name-only 96623448058a1379536c4092f4517f1da8612230 HEAD | while IFS= read -r path; do
             case "$path" in examples/android/*|tests/reader_android_host_import/*|.github/workflows/reader-android-host-import.yml|docs/READER-ANDROID-HOST-IMPORT.md|docs/validation/reader-android-host-import.json) ;; *) echo "Unexpected Android host import path: $path"; exit 1 ;; esac
           done
+          python -m py_compile tests/reader_android_host_import/run_ui.py tests/reader_android_host_import/check_evidence.py
           python -m py_compile tests/reader_android_fixed_pan/fixtures.py tests/reader_android_fixed_pan/run_ui.py tests/reader_android_cbz_reading/fixtures.py tests/reader_android_cbz_reading/audit.py tests/reader_android_cbz_reading/run_ui.py tests/reader_android_preferences/audit.py tests/reader_android_preferences/run_ui.py tests/reader_session_android/run_export.py tests/reader_session_android/run_roundtrip.py tests/reader_session_android/audit.py tests/reader_host_session_android/run_ui.py tests/reader_host_session_android/audit.py tests/reader_android_search/fixtures.py tests/reader_android_search/audit.py tests/reader_android_search/run_ui.py tests/reader_android_navigation/fixtures.py tests/reader_android_navigation/fixture_module.py tests/reader_android_navigation/audit.py tests/reader_android_navigation/run_ui.py tests/reader_android_reading/fixtures.py tests/reader_android_reading/audit.py tests/reader_android_reading/run_ui.py
       - name: Install Android compiler and API34 emulator
         run: |
@@ -216,7 +217,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Authenticate this exact producer ZIP and all 117 same-source checks
+      - name: Authenticate this exact producer ZIP and all 119 same-source checks
         env:
           GH_TOKEN: ${{ github.token }}
         run: python tests/reader_android_host_import/check_evidence.py

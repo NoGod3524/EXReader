@@ -19,6 +19,8 @@ expected = {
     'first': ['real_VIEW_epub_uses_existing_owner_stable_original_and_product_mapping', 'real_SEND_pdf_retains_original_after_staging_release', 'SEND_MULTIPLE_unknown_length_short_reads_and_untrusted_name', 'duplicate_redelivery_preserves_ids_paths_revisions_and_outbox', 'real_system_DocumentsUI_SAF_selects_granted_provider_document', 'rotation_during_real_provider_copy_keeps_single_process_controller', 'rotation_during_host_SDK_task_acknowledges_old_owner_and_retries_ready', 'user_cancel_before_publication_rolls_back_sdk_and_preserves_product', 'provider_midstream_error_and_underreported_size_never_publish_prefix', '128MiB_staging_does_not_raise_32MiB_host_reading_limit'],
     'kill-copy': ['prepare_real_process_kill_during_unfinished_provider_copy'],
     'recover-copy': ['fresh_process_cleans_partial_and_requires_real_URI_redelivery'],
+    'kill-stable': ['prepare_real_process_kill_with_unfinished_stable_host_copy'],
+    'recover-stable': ['fresh_process_removes_stable_copy_partial_and_recovers_private_ready'],
     'kill-ready': ['prepare_real_process_kill_after_staging_before_host_publication'],
     'recover-ready': ['fresh_process_recovers_ready_without_provider_URI_permission', 'replayed_intent_after_recovery_is_exactly_idempotent'],
     'kill-published': ['prepare_real_process_kill_after_stable_path_publication'],
@@ -44,7 +46,7 @@ def reset():
 
 pattern = b'0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ \n'
 fixtures = {}
-for role, length in [('short', 300000), ('evil', 1000), ('seekable', 70000), ('slow', 2 * 1024 * 1024), ('rotating', 11000), ('ready', 8000), ('published', 9000)]:
+for role, length in [('short', 300000), ('evil', 1000), ('seekable', 70000), ('slow', 2 * 1024 * 1024), ('rotating', 11000), ('stable', 12000), ('ready', 8000), ('published', 9000)]:
     body = (pattern * ((length + len(pattern) - 1) // len(pattern)))[:length]
     fixtures[role] = {'bytes': len(body), 'sha256': hashlib.sha256(body).hexdigest()}
 for role, name in [('epub', 'cover-import.epub'), ('pdf', 'pdf-public.pdf')]:
@@ -79,12 +81,21 @@ try:
                     break
                 time.sleep(.1)
             boundary = json.loads(private('host-import-' + phase + '.json'))
+            if boundary['passed'] is not True:
+                output, _ = process.communicate(timeout=30)
+                save(phase + '-instrumentation.txt', output)
+                save(phase + '-failed-report.json', json.dumps(boundary, ensure_ascii=False, indent=2).encode())
+                save(phase + '-logcat.txt', adb('logcat', '-d', '-v', 'threadtime', '-t', '4000'))
+                print(json.dumps(boundary, ensure_ascii=False), flush=True)
+                raise AssertionError('device boundary check failed')
             before = adb('shell', 'pidof', package).decode().strip()
             assert boundary['passed'] is True and str(boundary['pid']) in before.split()
             adb('shell', 'am', 'force-stop', package)
             after = subprocess.run(['adb', 'shell', 'pidof', package], capture_output=True, text=True, timeout=10).stdout.strip()
             assert not after
             boundary_stop = {'phase': phase, 'instrumentation_pid': boundary['pid'], 'pid_before_stop': before, 'pid_after_stop': after, 'force_stop': True, 'held_boundary': True}
+            document = {'kill-copy': 'txt-slow', 'kill-stable': 'txt-stable', 'kill-ready': 'txt-ready', 'kill-published': 'txt-published'}[phase]
+            adb('shell', 'am', 'broadcast', '-f', '32', '-n', source + '/.ControlReceiver', '--es', 'cmd', 'revoke', '--es', 'doc', document)
             output, _ = process.communicate(timeout=30)
             process = subprocess.CompletedProcess(command, process.returncode, output)
         else:

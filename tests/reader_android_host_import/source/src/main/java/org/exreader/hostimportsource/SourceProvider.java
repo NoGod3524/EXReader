@@ -32,6 +32,7 @@ public final class SourceProvider extends DocumentsProvider {
         {"txt-cancel", "Cancel.txt", "text/plain", "7000"},
         {"txt-rotating", "Rotating.txt", "text/plain", "11000"},
         {"txt-ready", "Ready.txt", "text/plain", "8000"},
+        {"txt-stable", "StablePartial.txt", "text/plain", "12000"},
         {"txt-published", "Published.txt", "text/plain", "9000"},
         {"txt-short", "Short Reads.txt", "text/plain", "-1"},
         {"txt-short-b", "Copy of Short.txt", "text/plain", "-1"},
@@ -132,6 +133,7 @@ public final class SourceProvider extends DocumentsProvider {
             case "txt-cancel": return generatedFile(documentId, 7000);
             case "txt-rotating": return generatedFile(documentId, 11000);
             case "txt-ready": return generatedFile(documentId, 8000);
+            case "txt-stable": return generatedFile(documentId, 12000);
             case "txt-published": return generatedFile(documentId, 9000);
             case "epub-declared-big": throw new FileNotFoundException("a declared-oversize document must never be opened");
             default: return pipe(documentId);

@@ -37,7 +37,7 @@ with zipfile.ZipFile(io.BytesIO(body)) as archive:
         info = archive.getinfo(name)
         assert 0 < info.file_size <= maximum
         return archive.read(name)
-    for path, count in [('host-session-android', 16), ('android-search', 15), ('android-navigation', 18), ('android-reading', 16), ('android-preferences', 17), ('android-cbz-reading', 10), ('android-fixed-pan', 8), ('android-host-import', 17)]:
+    for path, count in [('host-session-android', 16), ('android-search', 15), ('android-navigation', 18), ('android-reading', 16), ('android-preferences', 17), ('android-cbz-reading', 10), ('android-fixed-pan', 8), ('android-host-import', 19)]:
         raw = read(path + '/ui/result.json')
         report = json.loads(raw)
         assert all(report.get(key) == value for key, value in identity.items())
@@ -49,13 +49,13 @@ with zipfile.ZipFile(io.BytesIO(body)) as archive:
             assert all(row['pass'] is True for row in phase['checks'])
         if path == 'android-host-import':
             assert report['reading_limit_bytes'] == 32 * 1024**2
-            assert len(report['phases']) == 7 and len({phase['pid'] for phase in report['phases']}) == 7
+            assert len(report['phases']) == 9 and len({phase['pid'] for phase in report['phases']}) == 9
             held = [stop for stop in report['process_stops'] if stop.get('held_boundary')]
-            assert len(held) == 3 and all(str(stop['instrumentation_pid']) in stop['pid_before_stop'].split() and not stop['pid_after_stop'] for stop in held)
+            assert len(held) == 4 and all(str(stop['instrumentation_pid']) in stop['pid_before_stop'].split() and not stop['pid_after_stop'] for stop in held)
             assert any(capture['name'] == 'system-documentsui' and capture['package'] == 'com.android.documentsui' for capture in report['captures'])
         reports.append({'suite': path, 'checks': count, 'report_sha256': hashlib.sha256(raw).hexdigest()})
     apk = read('examples/android/app/build/outputs/apk/debug/app-debug.apk', 128 * 1024**2)
-result = {**identity, 'accepted': True, 'scope': 'API34 default x86_64 Android actual host imports and unchanged inherited suites only', 'checks': 117, 'producer_job': producer['id'], 'artifact': {key: artifact[key] for key in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')}, 'apk_sha256': hashlib.sha256(apk).hexdigest(), 'reports': reports, 'physical_device': False, 'third_party_cloud_provider': False, 'complete_product': False, 'performance_accepted': False}
+result = {**identity, 'accepted': True, 'scope': 'API34 default x86_64 Android actual host imports and unchanged inherited suites only', 'checks': 119, 'producer_job': producer['id'], 'artifact': {key: artifact[key] for key in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')}, 'apk_sha256': hashlib.sha256(apk).hexdigest(), 'reports': reports, 'physical_device': False, 'third_party_cloud_provider': False, 'complete_product': False, 'performance_accepted': False}
 output = Path('build/android-host-import-summary/summary.json')
 output.parent.mkdir(parents=True, exist_ok=True)
 output.write_text(json.dumps(result, indent=2) + '\n')
