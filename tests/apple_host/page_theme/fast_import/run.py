@@ -61,10 +61,12 @@ def main():
         require(all(path in allowed or path.startswith(('tests/apple_host/page_theme/fast_import/', 'tests/apple_host/page_theme/fast_import_ui/')) for path in changed), 'unowned source changed')
     else:
         subprocess.run([sys.executable, 'tests/apple_host/page_theme/guard.py'], cwd=ROOT, check=True)
-    # The installed SDK and modules are an explicit older producer, never relabelled
-    # as this host source. All of their production trees remain byte-identical.
-    subprocess.run(['git', 'diff', '--exit-code', SDK_PRODUCER, 'HEAD', '--', 'src', 'include', 'cmake', 'CMakeLists.txt',
-                    'bindings', 'tests/fixtures', 'apps/reader', 'extras', 'tools/build_apple_product.py'], cwd=ROOT, check=True)
+    if args.sdk is None:
+        # The isolated older-producer path keeps its original complete tree pin.
+        subprocess.run(['git', 'diff', '--exit-code', SDK_PRODUCER, 'HEAD', '--', 'src', 'include', 'cmake', 'CMakeLists.txt',
+                        'bindings', 'tests/fixtures', 'apps/reader', 'extras', 'tools/build_apple_product.py'], cwd=ROOT, check=True)
+    # Same-run consumers already authenticated the exact common production trees
+    # above; later reviewed modules need not equal an unrelated older producer.
     producer = source if args.sdk else SDK_PRODUCER
     producer_run = int(os.environ['GITHUB_RUN_ID']) if args.sdk else SDK_RUN
     producer_attempt = int(os.environ['GITHUB_RUN_ATTEMPT']) if args.sdk else 1

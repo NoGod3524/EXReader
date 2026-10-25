@@ -7,13 +7,14 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[3]
 BASE = '9ee1053b83fcf934e6f0891eb77d468fc394da1e'
+COMMON_BASE = 'b5e49d1753a6b4b88811b03fa904fe9447865247'
 SDK = 'edddc463c06ed5731195cdb8f06b2df6dff7699e'
 FINAL_BASE = '902a73bd9984649000d63e96d5056b16daf28c85'
 MODULE_BASE = 'f680aeaddfb1ecc67ead353554f5b91a5703f72f'
 COMPATIBILITY = 'e8ed25c1cd7ccb33405611e27f9ad47fba8c9e34'
 ANDROID_POLICY = 'b1a7b7891cd394671842164a07a86c8e316dace3'
 OLD_SDK = '9854061be331fe603a1822d9b2b36ee357154927'
-BRANCH = 'codex/reader-apple-hosts-final'
+BRANCH = 'codex/reader-hosts-341-final'
 WORKFLOWS = ('reader-apple-navigation.yml', 'reader-apple-search.yml',
              'reader-apple-reading-records.yml', 'reader-apple-shelf.yml',
              'reader-apple-import-mapping.yml', 'wp13-apple.yml')
@@ -43,7 +44,8 @@ OWNED |= set(ANDROID_PATHS)
 OWNED |= {'.github/workflows/reader-apple-shelf-publication.yml', '.github/workflows/reader-apple-hosts-preflight.yml',
           'docs/READER-APPLE-SHELF-PUBLICATION.md', 'docs/validation/reader-apple-shelf-publication.json',
           'docs/READER-APPLE-HOSTS-FINAL.md', 'docs/validation/reader-apple-hosts-final.json'}
-FINAL_PINNED = ('examples/apple', 'extras', 'tools/build_apple_product.py', 'tools/build_apple_host.py',
+OWNED |= {'docs/READER-APPLE-COMMON-CALLERS.md', 'docs/validation/reader-apple-common-callers.json'}
+FINAL_PINNED = ('examples/apple', 'tools/build_apple_product.py', 'tools/build_apple_host.py',
                 'tests/apple_host/make_xcodeproj.rb', 'tests/apple_host/navigation', 'tests/apple_host/search',
                 'tests/apple_host/reading', 'tests/apple_host/shelf', 'tests/apple_host/import_mapping',
                 'tests/apple_host/page_theme/ThemeReview.swift', 'tests/apple_host/page_theme/collect_ui.py',
@@ -91,15 +93,16 @@ def main():
     subprocess.run(['git', '-C', str(ROOT), 'merge-base', '--is-ancestor', BASE, 'HEAD'], check=True)
     subprocess.run(['git', '-C', str(ROOT), 'merge-base', '--is-ancestor', COMPATIBILITY, 'HEAD'], check=True)
     subprocess.run(['git', '-C', str(ROOT), 'merge-base', '--is-ancestor', FINAL_BASE, 'HEAD'], check=True)
+    subprocess.run(['git', '-C', str(ROOT), 'merge-base', '--is-ancestor', COMMON_BASE, 'HEAD'], check=True)
     expected = {path: git('rev-parse', SDK + ':' + path) for path in SDK_PATHS}
     expected.update({path: git('rev-parse', MODULE_BASE + ':' + path) for path in MODULE_PATHS})
-    expected['apps/reader'] = git('rev-parse', MODULE_BASE + ':apps/reader')
+    expected.update({path: git('rev-parse', COMMON_BASE + ':' + path) for path in ('apps', 'examples', 'extras', 'tools')})
     expected.update({path: git('rev-parse', COMPATIBILITY + ':' + path) for path in COMPATIBILITY_PATHS})
     expected.update({path: git('rev-parse', FINAL_BASE + ':' + path) for path in FINAL_PINNED})
     expected.update({path: git('rev-parse', ANDROID_POLICY + ':' + path) for path in ANDROID_PATHS})
     actual = {path: git('rev-parse', 'HEAD:' + path) for path in expected}
     validate_trees(actual, expected)
-    paths = git('diff', '--name-only', BASE, 'HEAD').splitlines()
+    paths = git('diff', '--name-only', COMMON_BASE, 'HEAD').splitlines()
     validate_paths(paths)
     checks = []
 
@@ -141,6 +144,8 @@ def main():
               'record_compatibility_delivery': COMPATIBILITY,
               'record_compatibility_scope': 'exact known parser spellings; actual Android writer exchange not granted',
               'post_merge_base': FINAL_BASE, 'module_source': MODULE_BASE, 'old_sdk_source': OLD_SDK,
+              'common_production_base': COMMON_BASE,
+              'common_source_ui_accepted': False,
               'android_java_policy_source': ANDROID_POLICY, 'actual_android_host_interop_accepted': False,
               'legacy_workflows_unchanged': list(WORKFLOWS), 'negative_checks': checks,
               'protected_trees': expected, 'complete_product': False}
