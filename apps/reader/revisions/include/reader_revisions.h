@@ -6,7 +6,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+#define READER_REVISIONS_VERSION "0.4.0"
+#else
 #define READER_REVISIONS_VERSION "0.3.0"
+#endif
 #define READER_REVISION_ANCHOR_MAX_VERSION 2u
 #define READER_REVISION_MAX_BYTES ((size_t)1048576)
 #define READER_REVISION_MAX_PARENTS ((size_t)32)
