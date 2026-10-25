@@ -1,0 +1,151 @@
+name: Reader next C08 independent public SDK readback
+on:
+  push:
+    branches: [codex/reader-next-c08]
+    paths:
+      - 'tests/reader_next_c08/**'
+      - '.github/workflows/reader-next-c08.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  static:
+    name: C08 guards, validator self-test, authenticated inputs and consumer build
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Path ownership guard with its own negative self-test
+        run: |
+          mkdir -p build/c08-logs build/c08-upload/static
+          python3 tests/reader_next_c08/guard.py --fixed e67d87cbeabb2457e0852f681ef0b27b2c0da4d8 --output build/c08-upload/static/guards 2>&1 | tee build/c08-logs/guard.log
+      - name: Syntax-check the package in the cloud
+        run: |
+          python3 -m py_compile tests/reader_next_c08/*.py
+          bash -n tests/reader_next_c08/build_consumer.sh
+          bash -n tests/reader_next_c08/run_emulator.sh
+      - name: Validator refuses SQL or file-scan only evidence
+        run: |
+          python3 tests/reader_next_c08/validate.py --selftest --output build/c08-upload/static/validate-selftest.json 2>&1 | tee build/c08-logs/validate-selftest.log
+      - name: Authenticate the frozen producer run, attempt, job and artifact bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 tests/reader_next_c08/authenticate.py --output build/c08-authenticate 2>&1 | tee build/c08-logs/authenticate.log
+      - name: Install the Android NDK
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "ndk;27.2.12479018"
+          echo "ANDROID_NDK_ROOT=$sdk/ndk/27.2.12479018" >> "$GITHUB_ENV"
+      - name: Build the independent public C ABI consumer
+        run: |
+          bash tests/reader_next_c08/build_consumer.sh build/c08-consumer build/c08-authenticate/inventory.json 2>&1 | tee build/c08-logs/build-consumer.log
+      - name: Preserve static evidence under one upload root
+        if: always()
+        run: |
+          mkdir -p build/c08-upload/static
+          cp -r build/c08-authenticate/attestation.json build/c08-authenticate/inventory.json build/c08-upload/static/ || true
+          mkdir -p build/c08-upload/static/authenticate
+          cp build/c08-authenticate/attestation.json build/c08-authenticate/inventory.json build/c08-upload/static/authenticate/ || true
+          cp -r build/c08-consumer/consumer-build.json build/c08-upload/static/ || true
+          cp -r build/c08-logs build/c08-upload/static/logs || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-next-c08-static-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c08-upload/
+          if-no-files-found: warn
+
+  emulator:
+    name: C08 real UI import and independent public-API readback on a fresh emulator
+    needs: static
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate the same producer artifacts again in this job
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p build/c08-logs
+          python3 tests/reader_next_c08/authenticate.py --output build/c08-authenticate 2>&1 | tee build/c08-logs/authenticate-emulator.log
+      - name: Install the Android NDK and build the consumer in this job
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "ndk;27.2.12479018"
+          export ANDROID_NDK_ROOT="$sdk/ndk/27.2.12479018"
+          bash tests/reader_next_c08/build_consumer.sh build/c08-consumer build/c08-authenticate/inventory.json 2>&1 | tee build/c08-logs/build-consumer-emulator.log
+      - name: Enable hosted runner emulator acceleration
+        run: sudo chmod 666 /dev/kvm
+      - name: Real UI import, page 3, close, and public-API readback after close, fresh reopen and offline reopen
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: bash tests/reader_next_c08/run_emulator.sh
+      - name: Preserve emulator evidence under one upload root
+        if: always()
+        run: |
+          mkdir -p build/c08-upload/emulator/authenticate
+          cp -r build/c08-emulator/. build/c08-upload/emulator/ || true
+          cp build/c08-authenticate/attestation.json build/c08-authenticate/inventory.json build/c08-upload/emulator/authenticate/ || true
+          cp build/c08-consumer/consumer-build.json build/c08-consumer/c08_consumer build/c08-upload/emulator/ || true
+          cp -r build/c08-logs build/c08-upload/emulator/logs || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-next-c08-emulator-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c08-upload/
+          if-no-files-found: warn
+
+  summary:
+    name: C08 cross-job identity and result
+    needs: [static, emulator]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: reader-next-c08-*
+          path: build/in
+          merge-multiple: true
+      - name: Join only identical source, run, attempt and producer artifacts
+        run: |
+          python3 tests/reader_next_c08/summary.py --static build/in/static --emulator build/in/emulator --output build/c08-summary
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-next-c08-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c08-summary/
+          if-no-files-found: warn
