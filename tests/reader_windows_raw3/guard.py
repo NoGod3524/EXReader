@@ -67,7 +67,7 @@ def main():
         raise RuntimeError('Checkout differs')
     for source in (COMPOSED,WINDOWS,RAW,CODEC):
         subprocess.run(['git','merge-base','--is-ancestor',source,'HEAD'], cwd=ROOT, check=True)
-    owned = {'.github/workflows/reader-windows-raw3-preflight.yml','.github/workflows/reader-windows-raw3-host.yml','.github/workflows/reader-windows-raw3-authenticate.yml','docs/READER-WINDOWS-RAW3.md',
+    owned = {'.github/workflows/reader-windows-raw3-original-full.yml','.github/workflows/reader-windows-raw3-preflight.yml','.github/workflows/reader-windows-raw3-host.yml','.github/workflows/reader-windows-raw3-authenticate.yml','docs/READER-WINDOWS-RAW3.md',
              'apps/reader/desktop-metadata/CMakeLists.txt','apps/reader/desktop-metadata/EXReaderDesktopMetadataConfig.cmake.in',
              'apps/reader/desktop-metadata/include/reader_metadata.h','apps/reader/desktop-metadata/src/metadata.cpp',
              'examples/reader.c','apps/reader/windows-account/CMakeLists.txt',
