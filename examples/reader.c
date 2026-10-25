@@ -1069,7 +1069,7 @@ static void job_start(host_job *job) {
   uintptr_t handle;
   unsigned thread_id = 0;
   g.job = job;
-  if (job->kind != JOB_HIT && job->kind != JOB_SAVE
+  if (job->kind != JOB_HIT && job->kind != JOB_SAVE && job->kind != JOB_IMPORT_ORGANIZE
 #ifdef EXR_READER_WINDOWS_SEARCH
       && job->kind != JOB_SEARCH_BATCH
 #endif

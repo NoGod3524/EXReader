@@ -28,8 +28,9 @@ typedef struct {
   reader_bulk_error bulk_error;
   reader_bulk_summary summary;
   reader_bulk_item_result results[READER_BULK_MAX_BATCH];
+  char superseded_bootstrap[33];
   winio_group groups[200];size_t group_count;
-  int mapped,receipt_saved;
+  int mapped,receipt_saved,prepared,bootstrap_pending;
 } winio_job;
 static void winio_job_free(winio_job *value);
 static int winio_modal_blocked(void);
