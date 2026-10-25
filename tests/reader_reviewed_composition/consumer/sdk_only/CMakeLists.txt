@@ -20,6 +20,8 @@ list(PREPEND CMAKE_PREFIX_PATH "${EXR_MODULE_PREFIX}")
 find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED COMPONENTS core library)
 
 set(optional_packages
+  EXReaderThumbnails EXReaderReadingCommands EXReaderAnnotationView
+  EXReaderAnnotationExport EXReaderLocalDownloads
   EXReaderCloudImport
   EXReaderBulkOrganization
   EXReaderLinkPolicy
@@ -40,6 +42,9 @@ foreach(package IN LISTS optional_packages)
   endif()
 endforeach()
 foreach(target IN ITEMS
+  EXReaderThumbnails::reader_thumbnails EXReaderReadingCommands::reader_reading_commands
+  EXReaderAnnotationView::reader_annotation_view EXReaderAnnotationExport::reader_annotation_export
+  EXReaderLocalDownloads::reader_local_downloads
   EXReaderCloudImport::reader_cloud_import
   EXReaderBulkOrganization::reader_bulk
   EXReaderLinkPolicy::reader_link_policy

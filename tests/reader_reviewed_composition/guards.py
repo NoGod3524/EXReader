@@ -25,6 +25,15 @@ for module,sha in DELIVERIES.items():
  assert git('rev-parse','HEAD:apps/reader/'+module)==git('rev-parse',sha+':apps/reader/'+module),module
 for folder in ('apps','examples','extras'):
  assert git('rev-parse','HEAD:'+folder)==git('rev-parse',MERGE+':'+folder),folder
+REVIEW_BASE='386b2cdf5071ccde299c04f5941eaee69c9b77bd'
+G1_COMMON='a826a65c9c66e43620eff61b49cb79f941a3c953'
+subprocess.run(['git','merge-base','--is-ancestor',REVIEW_BASE,'HEAD'],check=True)
+for module,test in [('thumbnails','reader_thumbnails'),('reading-commands','reader_reading_commands'),
+                    ('annotation-view','reader_annotation_view'),('annotation-export','reader_annotation_export'),
+                    ('local-downloads','reader_local_downloads')]:
+ for path in ['apps/reader/'+module,'tests/'+test]:
+  assert git('rev-parse','HEAD:'+path)==git('rev-parse',REVIEW_BASE+':'+path)==git('rev-parse',G1_COMMON+':'+path),path
+assert git('rev-parse','HEAD:tests/reader_g1_integration')==git('rev-parse',G1_COMMON+':tests/reader_g1_integration')
 paths=git('diff','--name-only',MERGE,'HEAD').splitlines()
 allowed=('tests/reader_reviewed_composition/', '.github/workflows/reader-reviewed-composition.yml','docs/READER-REVIEWED-COMPOSITION.md','docs/validation/reader-reviewed-composition.json')
 assert all(p.startswith(allowed[0]) or p in allowed[1:] for p in paths),paths

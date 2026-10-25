@@ -1,7 +1,7 @@
 name: Reader reviewed composition
 on:
   push:
-    branches: [codex/dot-reviewed-composition]
+    branches: [codex/dot-reviewed-composition, codex/reader-reviewed-composition-review]
   workflow_dispatch:
 permissions:
   contents: read
@@ -43,6 +43,10 @@ jobs:
           git merge-base --is-ancestor "$MERGE_POINT" HEAD
           git diff --exit-code "$MERGE_POINT" HEAD -- apps examples extras
           python3 tests/reader_reviewed_composition/guards.py
+      - name: Check the extended evidence protocol and phase orchestrator in Actions
+        run: |
+          python3 -m py_compile tests/reader_reviewed_composition/g1.py tests/reader_reviewed_composition/g1_suites.py
+          python3 tests/reader_reviewed_composition/check_artifacts.py --self-test
       - name: Install Linux native TLS XML keyring and SHA dependencies
         if: runner.os == 'Linux'
         run: |
@@ -133,6 +137,11 @@ jobs:
           build_module metadata apps/reader/desktop-metadata
           build_module session apps/reader/session
           build_module reading-state apps/reader/reading-state -DEXR_SDK="$prefix"
+          build_module thumbnails apps/reader/thumbnails -DEXR_SDK="$prefix"
+          build_module reading-commands apps/reader/reading-commands
+          build_module annotation-view apps/reader/annotation-view
+          build_module annotation-export apps/reader/annotation-export
+          build_module local-downloads apps/reader/local-downloads -DEXR_SDK="$prefix"
           build_module cloud-import apps/reader/cloud-import -DEXR_SDK="$prefix"
           build_module bulk-organization apps/reader/bulk-organization -DEXR_SDK="$prefix"
           build_module link-policy apps/reader/link-policy -DEXR_SDK="$prefix"
@@ -170,6 +179,8 @@ jobs:
         id: original_suites
         continue-on-error: true
         run: python3 tests/reader_reviewed_composition/suites.py --prefix "$COMP_PREFIX" --output build/composition/original
+      - name: Retain the complete original G1 chain and judges before relocation
+        run: python3 tests/reader_reviewed_composition/g1_suites.py --prefix "$COMP_PREFIX" --phase fresh
       - name: Relocate the prefix and rebuild the same consumers from the new path
         run: |
           set -o pipefail
@@ -189,6 +200,8 @@ jobs:
           cmake --build build/relocated/build --verbose 2>&1 | tee build/composition/logs/relocated-build.log
           cp build/relocated/build/composition-interface.json build/composition/interface-relocated.json
           python3 "$COMPOSITION_TESTS/check_prefix.py" --prefix "$COMP_WS/build/prefix-relocated" --source-root "$COMP_WS" --interface build/composition/interface-relocated.json --expect clean --scan-output build/composition/prefix-scan-relocated.json
+      - name: Retain the complete original G1 chain and judges after relocation
+        run: python3 tests/reader_reviewed_composition/g1_suites.py --prefix "$COMP_PREFIX_RELOCATED" --phase relocated
       - name: Judge the composed flow with a real TLS WebDAV fixture
         run: |
           set -o pipefail

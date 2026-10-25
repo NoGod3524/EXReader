@@ -18,6 +18,8 @@ import sys
 from pathlib import Path
 
 MODULES = [
+    'EXReaderThumbnails', 'EXReaderReadingCommands', 'EXReaderAnnotationView',
+    'EXReaderAnnotationExport', 'EXReaderLocalDownloads',
     'EXReaderCloudImport',
     'EXReaderBulkOrganization',
     'EXReaderLinkPolicy',
@@ -35,6 +37,11 @@ MODULES = [
 
 # package -> (public headers, library name fragments)
 PACKAGES = {
+    'EXReaderThumbnails': (['include/reader_thumbnails.h'], ['reader_thumbnails']),
+    'EXReaderReadingCommands': (['include/reader_reading_commands.h'], ['reader_reading_commands']),
+    'EXReaderAnnotationView': (['include/reader_annotation_view.h'], ['reader_annotation_view']),
+    'EXReaderAnnotationExport': (['include/reader_annotation_export.h'], ['reader_annotation_export']),
+    'EXReaderLocalDownloads': (['include/reader_local_downloads.h'], ['reader_local_downloads']),
     'EXReaderCloudImport': (['include/reader_cloud_import.h'], ['reader_cloud_import']),
     'EXReaderBulkOrganization': (['include/reader_bulk.h'], ['reader_bulk']),
     'EXReaderLinkPolicy': (['include/reader_link_policy.h'], ['reader_link_policy']),
@@ -63,7 +70,7 @@ PACKAGES = {
     'EXReaderCredentials': (['include/exr_credentials.h'], ['exr_credentials']),
 }
 
-MODULE_HEADERS = ['reader_cloud_import.h','reader_bulk.h','reader_link_policy.h','reader_jump_history.h','reader_keyboard_actions.h','reader_book_information.h','reader_sync_view.h','reader_account_profiles.h','reader_revisions.h', 'reader_projection.h', 'reader_commands.h',
+MODULE_HEADERS = ['reader_thumbnails.h', 'reader_reading_commands.h', 'reader_annotation_view.h', 'reader_annotation_export.h', 'reader_local_downloads.h', 'reader_cloud_import.h','reader_bulk.h','reader_link_policy.h','reader_jump_history.h','reader_keyboard_actions.h','reader_book_information.h','reader_sync_view.h','reader_account_profiles.h','reader_revisions.h', 'reader_projection.h', 'reader_commands.h',
                   'reader_metadata.h', 'reader_reading_state.h', 'reader_search.h',
                   'reader_session.h', 'reader_sync.h', 'reader_preferences.h',
                   'reader_batch_import.h', 'exr_sideload.h', 'exr_webdav.h',
