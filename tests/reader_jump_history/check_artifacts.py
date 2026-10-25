@@ -7,6 +7,7 @@ exact source, run and attempt, and checks that the uploaded probe binary is the
 one the summary hashed. Nothing here runs on a developer machine.
 """
 import hashlib
+import copy
 import io
 import json
 import os
@@ -15,12 +16,50 @@ import sys
 import time
 import zipfile
 from pathlib import Path
+from check_jump_history import REQUIRED
 
 PLATFORMS = ('Linux', 'Windows', 'macOS')
+WORKFLOW = '.github/workflows/reader-jump-history.yml'
 # The database fingerprints contain the runner's own paths, so only the counts
 # and the two verdicts are comparable across runners.
 STABLE_NO_WRITE = ('revision_rows', 'outbox_rows', 'sdk_progress_records', 'sdk_notes', 'sdk_fixed_notes',
                    'sdk_epub_notes', 'databases_unchanged', 'control_write_changed')
+
+
+def authenticate_jobs(metadata, jobs, source, run, attempt):
+    if (str(metadata.get('id')), metadata.get('head_sha'), str(metadata.get('run_attempt')),
+        metadata.get('path', '').split('@')[0]) != (run, source, attempt, WORKFLOW):
+        raise ValueError('run source, attempt or workflow differs')
+    expected = {'jump history consumers (' + platform + ')' for platform in PLATFORMS}
+    upstream = [job for job in jobs if job.get('name') != 'strict jump-history evidence']
+    if len(upstream) != 3 or {job.get('name') for job in upstream} != expected:
+        raise ValueError('missing or duplicate platform job')
+    for job in upstream:
+        if (job.get('head_sha'), str(job.get('run_attempt')), job.get('status'), job.get('conclusion')) != (
+                source, attempt, 'completed', 'success'):
+            raise ValueError('upstream job failed, unfinished or belongs to another source/attempt')
+
+
+def protocol_selftest():
+    metadata = dict(id=7, head_sha='source', run_attempt=1, path=WORKFLOW)
+    jobs = [dict(name='jump history consumers (' + platform + ')', head_sha='source',
+                 run_attempt=1, status='completed', conclusion='success') for platform in PLATFORMS]
+    authenticate_jobs(metadata, jobs, 'source', '7', '1')
+    rejected = 0
+    for key, value in (('id', 8), ('head_sha', 'foreign'), ('run_attempt', 2), ('path', 'foreign.yml')):
+        bad = dict(metadata);bad[key] = value
+        try: authenticate_jobs(bad, jobs, 'source', '7', '1')
+        except ValueError: rejected += 1
+        else: raise AssertionError('accepted foreign ' + key)
+    cases = [jobs[:-1], jobs + [jobs[0]]]
+    for key, value in (('head_sha', 'foreign'), ('run_attempt', 2), ('status', 'in_progress'),
+                       ('conclusion', 'failure'), ('conclusion', 'skipped'), ('name', jobs[1]['name'])):
+        bad = copy.deepcopy(jobs);bad[0][key] = value;cases.append(bad)
+    for bad in cases:
+        try: authenticate_jobs(metadata, bad, 'source', '7', '1')
+        except ValueError: rejected += 1
+        else: raise AssertionError('accepted invalid upstream jobs')
+    print(json.dumps(dict(protocol_negative_cases=rejected, accepted=True)))
 
 
 def api(path, binary=False):
@@ -38,8 +77,12 @@ def api(path, binary=False):
 def main(output):
     repo, run, attempt, source = (os.environ[k] for k in
                                  ('GITHUB_REPOSITORY', 'GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT', 'GITHUB_SHA'))
-    listed = api('repos/' + repo + '/actions/runs/' + run + '/artifacts?per_page=100')['artifacts']
     problems, records = [], []
+    metadata = api('repos/' + repo + '/actions/runs/' + run)
+    jobs = api('repos/' + repo + '/actions/runs/' + run + '/attempts/' + attempt + '/jobs?per_page=100')['jobs']
+    try: authenticate_jobs(metadata, jobs, source, run, attempt)
+    except ValueError as error: problems.append(str(error))
+    listed = api('repos/' + repo + '/actions/runs/' + run + '/artifacts?per_page=100')['artifacts']
     for platform in PLATFORMS:
         name = 'reader-jump-history-' + platform + '-' + run + '-' + attempt
         found = [a for a in listed if a['name'] == name]
@@ -67,6 +110,13 @@ def main(output):
             continue
         summary = json.loads(archive.read(summary_name))
         report_bytes = archive.read(report_name)
+        report = json.loads(report_bytes)
+        checks = report.get('checks', [])
+        check_names = [check.get('name') for check in checks]
+        if (not checks or len(check_names) != len(set(check_names)) or
+                not set(REQUIRED).issubset(check_names) or any(check.get('pass') is not True for check in checks) or
+                summary.get('checks_total') != len(checks)):
+            problems.append(name + ': raw named checks missing, duplicated, failing or miscounted')
         report_sha = hashlib.sha256(report_bytes).hexdigest()
         probe_sha = hashlib.sha256(archive.read(binary_name)).hexdigest()
         identity = summary.get('identity', {})
@@ -114,7 +164,7 @@ def main(output):
               'cases_total': records[0].get('cases_total') if records else None,
               'checks_total': records[0].get('checks_total') if records else None,
               'moves': records[0].get('moves') if records else None,
-              'jump_history_module_accepted': not problems, 'host_wiring_accepted': False, 'problems': problems}
+              'jobs': jobs, 'jump_history_module_accepted': not problems, 'host_wiring_accepted': False, 'problems': problems}
     Path(output).mkdir(parents=True, exist_ok=True)
     (Path(output) / 'jump-history-evidence.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     print(json.dumps(result, ensure_ascii=False, indent=2))
@@ -122,4 +172,7 @@ def main(output):
 
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv[1]))
+    if sys.argv[1:] == ['--protocol-selftest']:
+        protocol_selftest()
+    else:
+        sys.exit(main(sys.argv[1]))
