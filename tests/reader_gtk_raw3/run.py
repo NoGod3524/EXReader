@@ -162,8 +162,10 @@ def network(phases):
     reports=[]
     def receive(label,selected,books,index,mode):
         server=fixture(ROOT/('build/'+label+'-tls-private'),OUT/(label+'-tls.py'))
+        request_log=OUT/(label+'-requests.json')
         try:
             populate(server,selected,books)
+            remote_before={key:hashlib.sha256(data).hexdigest() for key,data in server.entries.items()}
             environment=dict(os.environ,GTK_RAW3_DAV_URL=server.url,GTK_RAW3_DAV_AUTH=server.auth)
             script='openbox > "$2/openbox.log" 2>&1 & wm=$!; trap "kill $wm || true" EXIT; python3 tests/reader_gtk_raw3/account_ui.py --payload "$1" --output "$2/account"'
             # The owner creates its private profile; keep window-manager logs separate.
@@ -182,10 +184,13 @@ def network(phases):
             finally:connection.close()
             assert len(retained)==len(selected) and all(retained[rid]==data for rid,digest,data in selected)
             assert server.requests and all(row['authenticated'] for row in server.requests)
-            request_log=OUT/(label+'-requests.json');request_log.write_text(json.dumps(server.requests,indent=2)+'\n')
+            shards={row['path'].split('/')[-2] for row in server.requests if row['method']=='PROPFIND' and '/exreader-sync-v1/revisions/' in row['path']}
+            assert shards=={'%02x'%number for number in range(256)}
+            assert remote_before=={key:hashlib.sha256(data).hexdigest() for key,data in server.entries.items()}
             reports.append(dict(label=label,session=value,wire_count=len(selected),originals=len(books),
-              immutable_wires_unchanged=True,requests=request_log.name,actual_gtk_ui_executed=True))
-        finally:server.close()
+              immutable_wires_unchanged=True,remote_bytes_unchanged=True,actual_http_shards=len(shards),requests=request_log.name,actual_gtk_ui_executed=True))
+        finally:
+            request_log.write_text(json.dumps(server.requests,indent=2)+'\n');server.close()
     receive('mac11',wires,originals,OUT/'mac-peer/sender/books.tsv','receive')
     retained={rid:(json.loads(data),digest,data) for rid,data,digest in operations}
     null_id=proof['null_revision_ids'][0];null=retained[null_id][0];book=null['payload']['book_key'];needed=set()
