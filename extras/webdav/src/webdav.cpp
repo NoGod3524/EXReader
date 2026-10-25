@@ -40,6 +40,9 @@
 #ifndef __ANDROID__
 #ifndef EXR_WEBDAV_APPLE_URLSESSION
 #include <curl/curl.h>
+#include <pthread.h>
+#include <signal.h>
+#include <time.h>
 #endif
 #include <libxml/xmlreader.h>
 #endif
@@ -408,6 +411,40 @@ response perform(exr_webdav_client &client,const url &u,const char *method,int e
   return state.result;
 }
 #else
+/* NOSIGNAL keeps libcurl from changing process-wide handlers. TLS backends
+   can still write a close_notify to a reset peer, including during cleanup.
+   Mask only this worker and retain any signal already pending on entry. */
+class sigpipe_scope {
+  sigset_t set{},previous{};
+  bool was_pending=false;
+public:
+  sigpipe_scope() {
+    sigemptyset(&set);sigaddset(&set,SIGPIPE);
+    if(pthread_sigmask(SIG_BLOCK,&set,&previous))reject(EXR_DAV_IO,"Cannot guard native HTTPS worker signals");
+    sigset_t pending{};
+    if(sigpending(&pending)) {
+      pthread_sigmask(SIG_SETMASK,&previous,nullptr);
+      reject(EXR_DAV_IO,"Cannot inspect native HTTPS worker signals");
+    }
+    was_pending=sigismember(&pending,SIGPIPE)==1;
+  }
+  sigpipe_scope(const sigpipe_scope &)=delete;
+  sigpipe_scope &operator=(const sigpipe_scope &)=delete;
+  ~sigpipe_scope() noexcept {
+    sigset_t pending{};
+    if(!was_pending&&!sigpending(&pending)&&sigismember(&pending,SIGPIPE)==1) {
+#ifdef __APPLE__
+      /* Darwin has no sigtimedwait. A pipe error queues SIGPIPE to this
+         blocked worker; another worker cannot consume that directed signal. */
+      int received=0;sigwait(&set,&received);
+#else
+      timespec zero{};
+      while(sigtimedwait(&set,nullptr,&zero)<0&&errno==EINTR) {}
+#endif
+    }
+    pthread_sigmask(SIG_SETMASK,&previous,nullptr);
+  }
+};
 struct curl_context { response r;sink *output;upload *input=nullptr;int expected;size_t header_bytes=0;failure error{EXR_DAV_OK,"",0}; };
 size_t curl_head(char *data,size_t size,size_t count,void *opaque) {
   auto &c=*(curl_context *)opaque;size_t n=size*count;
@@ -438,6 +475,7 @@ size_t curl_body(char *data,size_t size,size_t count,void *opaque) {
 int curl_progress(void *opaque,curl_off_t,curl_off_t,curl_off_t,curl_off_t) { return stop(((curl_context *)opaque)->output->control) ? 1:0; }
 size_t curl_read(char *data,size_t size,size_t count,void *opaque){auto &c=*(curl_context *)opaque;try{return c.input->read(data,size*count);}catch(const failure &e){c.error=e;return CURL_READFUNC_ABORT;}catch(...){c.error={EXR_DAV_MEMORY,"Cannot read upload source",0};return CURL_READFUNC_ABORT;}}
 response perform(exr_webdav_client &client,const url &u,const char *method,int expected,sink &s,clock_type::time_point deadline,upload *input=nullptr) {
+  sigpipe_scope signals; /* Before handle: restored after curl_easy_cleanup. */
   static const CURLcode initialized=curl_global_init(CURL_GLOBAL_DEFAULT);
   if(initialized!=CURLE_OK) reject(EXR_DAV_IO,"Cannot initialize native HTTPS transport");
   std::unique_ptr<CURL,decltype(&curl_easy_cleanup)> handle(curl_easy_init(),curl_easy_cleanup);

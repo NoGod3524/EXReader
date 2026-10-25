@@ -2,6 +2,7 @@
 include(CMakeFindDependencyMacro)
 if(NOT WIN32 AND NOT ANDROID)
   if(NOT @EXR_WEBDAV_APPLE_URLSESSION@)
+    find_dependency(Threads)
     find_dependency(PkgConfig)
     pkg_check_modules(CURL REQUIRED IMPORTED_TARGET libcurl)
   endif()
