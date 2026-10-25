@@ -1,7 +1,7 @@
 name: Reader jump history
 on:
   push:
-    branches: [codex/reader-jump-history]
+    branches: [codex/reader-jump-history, codex/reader-jump-history-review]
   workflow_dispatch:
 permissions:
   contents: read

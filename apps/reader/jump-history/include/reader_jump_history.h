@@ -84,7 +84,7 @@ typedef enum {
 } reader_jh_outcome;
 typedef struct {
   reader_jh_outcome outcome;
-  uint64_t entry_id;       /* id of the entry that is now current */
+  uint64_t entry_id;       /* opaque process-local ticket; never reuse across histories */
   size_t evicted;          /* oldest entries dropped by this call to honor the limits */
   size_t truncated;        /* forward entries dropped by this call */
   uint64_t generation;
@@ -147,6 +147,8 @@ reader_jh_status reader_jh_peek(reader_jh *,reader_jh_direction,reader_jh_item *
 reader_jh_status reader_jh_item_at(reader_jh *,size_t index,reader_jh_item *,reader_jh_error *);
 /* Moves the cursor onto a peeked item, only after the host has actually
    navigated to a FOUND resolve. STALE if any change happened since the peek.
+   An item from another history, including one since closed, is STALE even
+   when both histories contain identical positions and generations.
    Not calling it is the cancellation: an unresolved, ambiguous or cancelled
    target never moves the cursor. A zeroed item is ARGUMENT; any other unknown
    struct_version is VERSION_UNSUPPORTED. */

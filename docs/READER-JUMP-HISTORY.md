@@ -217,3 +217,11 @@ that embedded each runner's own path. Nothing here runs on a developer machine.
 - Dependence on other J packages or on the unmerged G03/G04 search/TOC hosts.
 - Real user libraries, private cloud storage and real accounts.
 - Latency/CPU budgets: only the documented entry and byte caps are enforced.
+# Root 复审接续
+
+从原交回 `496b426219d8b9ff50329c4a3a0336ae742acd94` 独立建立 `codex/reader-jump-history-review`，原 owner 工作树不改。源码复审发现两个缺陷：每个 history 从1开始的 entry ID 会让另一实例的 peek 在 generation/index 相同时被接纳；编码 wire 转入 `std::string` 时若分配抛错，原 `reader_rs_free` 无法执行。
+
+修复以进程内不复用的原子 entry ticket 约束完成操作，不改公开结构或 wire；内存耗尽路径用原释放器的 RAII 托管。新增相同位置、不同位置、关闭后重建三种实例混用检查，拒绝后核 state 不变且自己的 ticket 仍能使用。旧139项、四格式、无写入控制和三平台安装消费者保留。
+
+当前修复尚待 Actions 验证，原 run `40125391353` 的通过仍只归原 source `4ff8c803faec4d4bb351175290ad9f1cb9b82938`，不能转授当前候选。
+
