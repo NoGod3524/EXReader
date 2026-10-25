@@ -50,7 +50,7 @@ static exr_status winrecords_capture(void *context,const reader_rs_record *histo
   } else if(status==EXR_OK && g.session.bounded) {
     size_t count=0;const exr_part *parts=exr_publication_parts(g.session.publication,&count);
     if(!parts||unit>=count) status=EXR_ARGUMENT;
-    if(status==EXR_OK) status=exr_pager_anchor_create(current?current:g.session.pager,start,end,anchor,&job->error);
+    if(status==EXR_OK) status=exr_pager_anchor_create(current?current:g.session.pager,start,end,&control,anchor,&job->error);
     out->mode=READER_RS_EPUB_CHAPTER;out->anchor=anchor;out->part_path=status==EXR_OK?parts[unit].path:NULL;
   } else if(status==EXR_OK) {
     status=exr_anchor_create(g.session.document,start,end,anchor,&job->error);
