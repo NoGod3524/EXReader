@@ -658,13 +658,18 @@ def main():
         for header in ('reader_annotation_export.h', 'reader_annotation_import.h'):
             expect((baseline / 'include' / header).read_bytes() == (off / 'include' / header).read_bytes(), 'default installed header byte-identical ' + header)
         expect(not (off / 'include/reader_annotation_export_raw3.h').exists() and not (off / 'include/reader_annotation_import_raw3.h').exists(), 'default install has no raw3 header')
+        checked_default_modules = set()
         for lib in (off / 'lib').glob('*annotation*'):
+            module = 'annotation-export' if 'annotation_export' in lib.stem else 'annotation-import' if 'annotation_import' in lib.stem else None
+            expect(module is not None and module not in checked_default_modules, 'default library module identity ' + str(module), lib.name)
+            checked_default_modules.add(module)
             blob = lib.read_bytes()
             hits = {n.decode(): blob.count(n) for n in (b'reader_annotation_export_raw3_run', b'reader_annotation_import_raw3_run', b'reader_revision_get_raw_v3',
                                                         b'reader_rs_decode_raw_v3', b'reader_revision_heads_raw_v3', b'exreader-annotation-export-raw3')}
             loose = {n.decode(): [blob[max(0, i - 40):i + 40] for i in [blob.find(n)]] for n in (b'raw3', b'_raw_v3') if n in blob}
             result.setdefault('default_library_loose_matches', {})[lib.name] = {k: repr(v) for k, v in loose.items()}
-            expect(not any(hits.values()), 'default library has no raw symbols ' + lib.name, hits)
+            expect(not any(hits.values()), 'default library has no raw symbols ' + module, hits)
+        expect(checked_default_modules == {'annotation-export', 'annotation-import'}, 'both default installed libraries checked', sorted(checked_default_modules))
         hashes = {name: legacy_phase(name, exe, OUT / (f'legacy-{name}')) for name, exe in exes.items()}
         expect(hashes['baseline'] == hashes['off'] == hashes['raw'], 'legacy export bytes identical in baseline, default and raw-enabled builds', hashes)
         digests, keys = raw_phase(exes['raw'], exes['off'], pdf, OUT / 'raw')

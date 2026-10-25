@@ -88,7 +88,10 @@ def main():
             reports.append(report)
             summary['artifacts'].append({k: artifact[k] for k in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')})
             summary['jobs'].append({k: job[k] for k in ('id', 'name', 'conclusion')})
-        require(all(set(r['checks']) == set(reports[0]['checks']) for r in reports), 'platform check lists differ')
+        for report in reports[1:]:
+            require(set(report['checks']) == set(reports[0]['checks']),
+                    'platform check lists differ: ' + repr({'missing': sorted(set(reports[0]['checks']) - set(report['checks'])),
+                                                            'extra': sorted(set(report['checks']) - set(reports[0]['checks']))}))
         require(all(r['raw_outputs'] == reports[0]['raw_outputs'] and r['legacy_outputs'] == reports[0]['legacy_outputs'] for r in reports), 'platform export bytes differ')
         require(all(r['mac_records']['books'] == reports[0]['mac_records']['books'] for r in reports), 'platform Mac export bytes differ')
         summary['cross_platform_identical_exports'] = True
