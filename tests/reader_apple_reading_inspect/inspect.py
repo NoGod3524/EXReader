@@ -30,7 +30,7 @@ def main():
         workflow = '.github/workflows/reader-apple-page-theme.yml'
         artifact_name = 'apple-theme-fast-import-' if target == 'fast-import' else 'apple-theme-ui-iphone-'
         CASE = 'testFastOwnerImportPublishesWithoutBusyTransition' if target == 'fast-import' else 'test'
-        bundle_name = 'ipad.xcresult' if target == 'fast-import' else 'iphone.xcresult'
+        bundle_name = 'ipad.xcresult' if target == 'fast-import' else 'theme.xcresult'
     require(os.environ.get('GITHUB_ACTIONS')=='true','Actions only')
     out=ROOT/'build/apple-reading-original-inspect';out.mkdir(parents=True,exist_ok=False)
     result=dict(accepted=False,diagnostic_only=True,original_source=SOURCE,original_run=RUN,original_attempt=1,
