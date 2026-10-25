@@ -246,13 +246,13 @@ def build_report(args):
            '%d files; every recorded digest is present' % len(records))
 
     mode_problems, executable_files = [], 0
-    staged_mode = {record['path']: bool(record.get('executable')) for record in stage['files']}
-    for record in records:
-        if record['path'] not in staged_mode:
+    staged_mode = {entry['path']: bool(entry.get('executable')) for entry in stage['files']}
+    for entry in records:
+        if entry['path'] not in staged_mode:
             continue
-        if bool(record['executable']) != staged_mode[record['path']]:
-            mode_problems.append('%s no longer matches its staged permission bit' % record['path'])
-        executable_files += 1 if record['executable'] else 0
+        if bool(entry['executable']) != staged_mode[entry['path']]:
+            mode_problems.append('%s no longer matches its staged permission bit' % entry['path'])
+        executable_files += 1 if entry['executable'] else 0
     record('executable_modes', mode_problems,
            '%d executable files keep the staged permission bit' % executable_files)
 
