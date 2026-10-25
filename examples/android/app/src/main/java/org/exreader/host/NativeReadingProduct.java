@@ -23,9 +23,14 @@ final class NativeReadingProduct {
         store.searchOwner();byte[] text=kind==PROGRESS||operation==DELETE?null:ReadingCapture.encode(body,65536);
         return new Result(nativeApply(store.productOwner(),request,expected,kind,operation,book,id,mode,capture==null?null:capture.numbers(),capture==null?null:capture.route(),capture==null?null:capture.bytes(),text));
     }
+    static Result applyVersioned(BookStore store,String request,String[] expected,int kind,int operation,String book,String id,int mode,ReadingCapture capture,String body,int anchorVersion){
+        store.searchOwner();byte[] text=kind==PROGRESS||operation==DELETE?null:ReadingCapture.encode(body,65536);
+        return new Result(nativeApplyVersioned(store.productOwner(),request,expected,kind,operation,book,id,mode,capture==null?null:capture.numbers(),capture==null?null:capture.route(),capture==null?null:capture.bytes(),text,anchorVersion));
+    }
     private static native Page nativePage(long owner,String book,String after,boolean before,ReadingControl control);
     private static native ReadingRecord nativeSelected(long owner,String book,String id,String expected,boolean progress,ReadingControl control);
     private static native byte[] nativeRetained(long owner,String book,String id,String revision,boolean progress,ReadingControl control);
     private static native ReadingVersion nativeVersion(long owner,String book,String id,String revision,boolean progress,ReadingControl control);
     private static native String[] nativeApply(long owner,String request,String[] expected,int kind,int operation,String book,String id,int mode,long[] numbers,String[] route,byte[][] selectors,byte[] body);
+    private static native String[] nativeApplyVersioned(long owner,String request,String[] expected,int kind,int operation,String book,String id,int mode,long[] numbers,String[] route,byte[][] selectors,byte[] body,int anchorVersion);
 }

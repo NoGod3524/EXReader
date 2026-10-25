@@ -33,6 +33,9 @@ static std::string text(JNIEnv *env,jstring value,bool optional=false){return pr
 static jbyteArray bytes(JNIEnv *env,const char *value,size_t size){if(!value)return nullptr;jbyteArray result=env->NewByteArray(static_cast<jsize>(size));pending(env);if(size)env->SetByteArrayRegion(result,0,static_cast<jsize>(size),reinterpret_cast<const jbyte *>(value));pending(env);return result;}
 static jobjectArray strings(JNIEnv *env,const std::array<const char *,5> &values){jclass type=env->FindClass("java/lang/String");pending(env);jobjectArray result=env->NewObjectArray(5,type,nullptr);pending(env);for(size_t i=0;i<values.size();i++)if(values[i]){jstring string=product_jni::string(env,values[i]);env->SetObjectArrayElement(result,static_cast<jsize>(i),string);env->DeleteLocalRef(string);pending(env);}return result;}
 static jobject capture(JNIEnv *env,const std::string &book,const reader_av_item &item){
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+  if(item.anchor_version==3&&!item.exact)return nullptr;
+#endif
   if(!item.has_location)return nullptr;local_frame frame(env);jclass byte_type=env->FindClass("[B");pending(env);jobjectArray selected=env->NewObjectArray(3,byte_type,nullptr);pending(env);
   const char *data[]={item.exact,item.prefix,item.suffix};size_t size[]={item.exact_size,item.prefix_size,item.suffix_size};for(size_t i=0;i<3;i++){jbyteArray copy=bytes(env,data[i],size[i]);env->SetObjectArrayElement(selected,static_cast<jsize>(i),copy);if(copy)env->DeleteLocalRef(copy);pending(env);}
   jlong values[]={item.mode,item.mode==READER_AV_MODE_EPUB?(item.has_part?static_cast<jlong>(item.part):-1):item.mode==READER_AV_MODE_FIXED?static_cast<jlong>(item.page):0,static_cast<jlong>(item.start),static_cast<jlong>(item.end)};jlongArray numeric=env->NewLongArray(4);pending(env);env->SetLongArrayRegion(numeric,0,4,values);pending(env);
@@ -83,7 +86,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_exreader_host_NativeReadingProduct
     reader_av_item fields{};capture_fields(fields,r);jobject captured=capture(env,key,fields);jstring body=product_jni::string(env,r.note_text?r.note_text:""),version=product_jni::string(env,retained.info.revision_id),sha=product_jni::string(env,retained.info.sha256),operation=product_jni::string(env,retained.info.operation);jbyteArray original=bytes(env,retained.value,retained.bytes);jclass type=env->FindClass("org/exreader/host/ReadingVersion");pending(env);jmethodID constructor=env->GetMethodID(type,"<init>","(Lorg/exreader/host/ReadingCapture;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[B)V");pending(env);jobject result=env->NewObject(type,constructor,captured,body,version,sha,operation,original);pending(env);c.poll();return frame.keep(result);
   });
 }
-extern "C" JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeReadingProduct_nativeApply(JNIEnv *env,jclass,jlong handle,jstring request,jobjectArray expected,jint kind,jint operation,jstring book,jstring id,jint mode,jlongArray numeric,jobjectArray route,jobjectArray selectors,jbyteArray body){
+static jobjectArray reading_apply(JNIEnv *env,jlong handle,jstring request,jobjectArray expected,jint kind,jint operation,jstring book,jstring id,jint mode,jlongArray numeric,jobjectArray route,jobjectArray selectors,jbyteArray body,jint anchor_version){
   return product_jni::call(env,handle,[&](product_jni::owner &owner)->jobjectArray{
     using namespace reading_product;std::string rid=text(env,request),key=text(env,book),annotation=text(env,id,true);std::vector<std::string> heads;std::vector<const char *> pointers;jsize count=expected?env->GetArrayLength(expected):0;if(count>32)reject("java/lang/IllegalArgumentException","Observed reading heads exceed their limit");heads.reserve(static_cast<size_t>(count));for(jsize i=0;i<count;i++){jstring value=static_cast<jstring>(env->GetObjectArrayElement(expected,i));heads.push_back(text(env,value));env->DeleteLocalRef(value);}for(const auto &head:heads)pointers.push_back(head.c_str());
     std::string note=input_bytes(env,body,65536,true);if(note.find('\0')!=std::string::npos)reject("java/lang/IllegalArgumentException","Reading body contains NUL");
@@ -99,8 +102,21 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeReadingPr
       else{for(const auto &value:copied)if(value.find('\0')!=std::string::npos)reject("java/lang/IllegalArgumentException","Reflow reading selector contains NUL");anchor.start=static_cast<size_t>(values[2]);anchor.end=static_cast<size_t>(values[3]);anchor.exact=has[0]?const_cast<char *>(copied[0].c_str()):nullptr;anchor.prefix=has[1]?const_cast<char *>(copied[1].c_str()):nullptr;anchor.suffix=has[2]?const_cast<char *>(copied[2].c_str()):nullptr;anchor.chapter=present[4]?const_cast<char *>(fields[4].c_str()):nullptr;capture.anchor=&anchor;}
       command.capture=&capture;
     }
-    reader_rc_result result{};reader_rc_error error{};auto status=reader_rc_apply(&context,&command,&result,&error);return product_jni::strings(env,{std::to_string(status),std::to_string(error.encode.gap),std::to_string(error.revision.code),result.entity_key,result.annotation_id,result.revision_id,result.sha256,std::to_string(result.bytes),result.created?"1":"0"});
+    reader_rc_result result{};reader_rc_error error{};
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+    auto status=reader_rc_apply_raw_v3(&context,&command,static_cast<unsigned>(anchor_version),&result,&error);
+#else
+    if(anchor_version!=2)reject("java/lang/IllegalArgumentException","Default reading writer requires version 2");
+    auto status=reader_rc_apply(&context,&command,&result,&error);
+#endif
+    return product_jni::strings(env,{std::to_string(status),std::to_string(error.encode.gap),std::to_string(error.revision.code),result.entity_key,result.annotation_id,result.revision_id,result.sha256,std::to_string(result.bytes),result.created?"1":"0"});
   });
+}
+extern "C" JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeReadingProduct_nativeApply(JNIEnv *env,jclass,jlong handle,jstring request,jobjectArray expected,jint kind,jint operation,jstring book,jstring id,jint mode,jlongArray numeric,jobjectArray route,jobjectArray selectors,jbyteArray body){
+  return reading_apply(env,handle,request,expected,kind,operation,book,id,mode,numeric,route,selectors,body,2);
+}
+extern "C" JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeReadingProduct_nativeApplyVersioned(JNIEnv *env,jclass,jlong handle,jstring request,jobjectArray expected,jint kind,jint operation,jstring book,jstring id,jint mode,jlongArray numeric,jobjectArray route,jobjectArray selectors,jbyteArray body,jint anchor_version){
+  return reading_apply(env,handle,request,expected,kind,operation,book,id,mode,numeric,route,selectors,body,anchor_version);
 }
 #ifdef READER_READING_FIXTURES
 extern "C" JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeReadingProbe_identity(JNIEnv *env,jclass){

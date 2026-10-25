@@ -1,0 +1,15 @@
+{
+  "accepted": false,
+  "adopted": false,
+  "base": "3c8c9eabbd9e8a5001db10b7a1a92cf69be1c223",
+  "family": "0793b26256e1397ba0f60d27de7d090fad61af81",
+  "family_source": "56793e7ca4f8ecdc5f2d9c3394fce4e201aca275",
+  "merge": "09377761748cd5549bc864e932e5edd38019142b",
+  "source_sha": null,
+  "runs": [],
+  "scope": "explicit API34 default x86_64 Android raw3 native host candidate",
+  "incoming_apple_status": "pending",
+  "bidirectional_interoperability_accepted": false,
+  "physical_device": false,
+  "complete_product": false
+}
