@@ -1,6 +1,6 @@
 # Fixed-source native workflow upper collector — preparation
 
-Status: **Actions syntax and 82 synthetic refusal cases passed; native collection pending**.
+Status: **Actions syntax and 89 synthetic refusal cases passed; native collection incomplete**.
 Starting root source is `5e8b132626cfe7540f675285787d24bf488857a8`.
 Only this collector, its synthetic refusal tests, its new workflow and this
 document change. Callers, production, original collectors and leaf judges stay
@@ -97,8 +97,9 @@ product acceptance stay `false`, including when every foundation leaf passes.
 
 ## Input shape
 
-Use the same final SHA for workflow dispatch, checkout, `source_sha` input and
-the table's `source_sha`. Supply all twelve keys; use `null` for genuinely
+Use the same producer SHA for every leaf run, the `source_sha` input and the
+table's `source_sha`. A descendant verifier checkout may differ only in the
+four upper-verifier paths listed below. Supply all twelve keys; use `null` for genuinely
 pending work, not an older run. No default old evidence is preloaded.
 
 ```json
@@ -137,7 +138,7 @@ actual complete run. The already accepted composition source `b5e49d17` /
 4. Configure separate product-fact adapters only after reviewing actual common
    source record/peer evidence. History never replaces these conditions.
 5. Collect only after all required complete same-source leaves finish. The
-   protocol suite now contains 82 negative controls for missing/failed/foreign/
+   protocol suite now contains 89 negative controls for missing/failed/foreign/
    duplicate/old-attempt/wrong-scope evidence, including absent theme-native or
    initialization/publication reports. These are synthetic collector checks.
 
@@ -181,3 +182,39 @@ Source `4643354a61c8b46afb4e788681c99f109fb6fe50`,
 attempt 1, authenticated the workflow through Actions and passed the existing
 82-case protocol job. The source-preflight job stayed skipped on this push;
 this run does not prove the six source guards passed.
+
+## Actual source preflight and verifier correction
+
+Common producer source `25bc0c67971f81491f50e0a3caaaf7e509bb7e35` passed
+all six complete source guards and protocol82 in
+[40195153704](https://github.com/NoGod3524/EXReader/actions/runs/40195153704), attempt 1.
+The eleven complete producer workflows are independently tied to that source.
+
+Initial actual collection
+[40200356244](https://github.com/NoGod3524/EXReader/actions/runs/40200356244)
+remained rejected with incomplete leaves and the genuine iPhone reading failure.
+It also exposed an upper-verifier defect: the six older Apple suites were
+checked using the legacy common-guard label, while their actual SDK3.41 guard
+is named `Authenticate isolated SDK3.41 Apple page-theme candidate`.
+The legacy guard is deliberately skipped on this SDK3.41 branch.
+
+Verifier source `122edf576250e161a51baa3ce1cdfd1840cbf1a6` passed
+[40200787138](https://github.com/NoGod3524/EXReader/actions/runs/40200787138),
+attempt 1, with 89 actual synthetic refusals. The new positive Apple metadata
+case requires the real guard name and checks that it exists in each unchanged
+caller. An old-name control is rejected.
+
+The verifier is now independently versioned. All twelve producer slots still
+require exactly one identical producer source. The verifier must descend from
+that source and may change only:
+
+- `tests/reader_hosts_341/aggregate_native.py`
+- `tests/reader_hosts_341/test_aggregate_native.py`
+- `.github/workflows/reader-native-341-summary.yml`
+- this document
+
+Any producer, original judge, SDK, schema, source pin or production-file change
+refuses collection; six new negative controls exercise these boundaries.
+`source_sha` continues to name the actual producer source; `verifier_source`
+names the separate verifier checkout, with the exact changed-path inventory in
+`verifier_boundary`. No producer execution is attributed to the verifier SHA.
