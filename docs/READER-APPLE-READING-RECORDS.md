@@ -74,9 +74,15 @@ UI 实际看到私有请求落盘/产品提交后的原生观测，再由 UI run
 `1f2f3cbc4605a008558f2bda74ddfcdcd74ffef8`；后续证据提交 `9c8b47412b410fa1882f330e85efa7dbc15a17cc`
 只修改本页和验收 JSON。此次重启 checkpoint 同样只修改两份证据文档。
 
-当前 `40147125432` 的真实 Xcode/native 预检 job `121030738895` 仍在云端执行；
-同源 Shelf focused recovery `40147139532` 的 SDK jobs `121030784612` / `121030784790` 仍在执行。
-电脑重启后先读取这些既有 run，不重复 dispatch、不取消云端任务。
+重启后核对：`40147125432` 的真实 Xcode/native 预检 job `121030738895` 已 success；
+同源 Shelf focused recovery `40147139532` 的 SDK/native 与 macOS 已 success，iPhone/iPad 失败。
+iPad 原05/07通过，原06重开恢复时 `restoring_layout=true`、`issued_restore_revision=-1`，
+目标仍在屏幕外；iPhone 原05的 UI query 超时，原06同样未发真实恢复 scroll，原07通过。
+保留失败，不授予恢复或 records UI。
+
+`109dd671bf4a39f44433129e28d1a471a8765eb1` 改为订阅实际 Published restore 请求，
+在主线程下一轮读取已赋值 revision 并拒绝过期请求，再执行原生 scroll；只有后续真实几何可确认恢复。
+新 recovery `40153506967` 已启动，原用例断言未放宽；该轮尚无最终结果。
 
 旧 `f5d25b4c` 的 Shelf full `40140560610` 保留为失败：macOS/iPhone 完整通过，iPad 原02已遍历
 2202份原件并原07通过，原06在进程重开后目标仍在屏幕外，真实 native scroll 未发出。

@@ -130,6 +130,27 @@
   ],
   "shelf_recovery_attempts": [
     {
+      "source_sha": "1f2f3cbc4605a008558f2bda74ddfcdcd74ffef8",
+      "run_id": 40147139532,
+      "attempt": 1,
+      "diagnostic_only": true,
+      "accepted": false,
+      "status": "failure",
+      "native_job": 121031320930,
+      "passed_ui_jobs": {"macos": 121032026863},
+      "failed_ui_jobs": {"iphone": 121032026860, "ipad": 121032026855},
+      "reason": "iPad05/07 passed,06 process restoration never issued native scroll (issued_restore_revision=-1). iPhone05 query timeout,06 same restoration failure,07 passed. Preserve assertions; native restore delivery repaired in109dd671, not yet accepted"
+    },
+    {
+      "source_sha": "109dd671bf4a39f44433129e28d1a471a8765eb1",
+      "run_id": 40153506967,
+      "attempt": 1,
+      "diagnostic_only": true,
+      "accepted": false,
+      "status": "in_progress",
+      "scope": "unchanged focused three-target native shelf restoration cases"
+    },
+    {
       "source_sha": "9d9a9dc085bc79848d974fd6e1cd7f716927f8f1",
       "run_id": 40145621010,
       "attempt": 1,
