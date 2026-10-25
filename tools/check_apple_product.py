@@ -24,7 +24,7 @@ def validate(dependencies, symbols, link_map):
     return providers[0]
 
 
-def inspect(binary, link_map):
+def inspect(binary, link_map, selector_bytes_candidate=False):
     dependencies = subprocess.check_output(['otool', '-L', str(binary)], text=True)
     symbols = subprocess.check_output(['nm', '-g', str(binary)], text=True)
     mapping = Path(link_map).read_text()
@@ -67,6 +67,18 @@ def inspect(binary, link_map):
         assert not re.search(r'\b[Tt]\s+_exr_(?:document_free|anchor_free|anchor_resolve_ex|pager_create)\s*$',
                              symbols, re.M), 'search embedded a second SDK implementation'
     rejected = []
+    if selector_bytes_candidate:
+        for symbol, archive, unit in (
+            ('reader_revisions_open_raw_v3', 'reader_revisions', 'revisions'),
+            ('reader_rs_decode_raw_v3', 'reader_reading_state_codec', 'reading_state'),
+            ('reader_rc_apply_raw_v3', 'reader_reading_commands', 'reading_commands'),
+            ('reader_av_page_get_raw_v3', 'reader_annotation_view', 'annotation_view'),
+            ('reader_command_apply_book_raw_v3', 'reader_commands', 'commands'),
+            ('reader_sync_step_raw_v3', 'reader_sync', 'sync'),
+            ('reader_session_create_raw_v3', 'reader_session', 'session')):
+            definitions = re.findall(r'(?m)^.*\b[Tt]\s+_' + symbol + r'\s*$', symbols)
+            providers = [line for line in mapping.splitlines() if 'lib' + archive + '.a' in line and unit + '.cpp.o' in line]
+            assert len(definitions) == len(providers) == 1, 'missing/duplicate actual raw provider: ' + symbol
     wrong_owner = re.sub(r'(?m)^(0x[0-9a-fA-F]+\s+0x[0-9a-fA-F]+\s+\[\s*)\d+(\]\s+_sqlite3_open_v2\s*)$',
                          r'\g<1>999999\2', mapping)
     cases = [('system_sqlite', dependencies + '\n/usr/lib/libsqlite3.dylib', symbols, mapping),
@@ -84,6 +96,7 @@ def inspect(binary, link_map):
         else:
             raise AssertionError('accepted altered provider evidence: ' + name)
     return {'accepted': True, 'binary_sha256': hashlib.sha256(Path(binary).read_bytes()).hexdigest(),
+            'selector_bytes_candidate': selector_bytes_candidate,
             'sqlite_provider': provider, 'system_sqlite_fallback': False,
             'static_sdk_linked': False, 'reading_resolver_linked': False,
             'installed_search_linked': search_linked,

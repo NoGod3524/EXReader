@@ -3,7 +3,11 @@
 #define READER_READING_COMMANDS_H
 #include <reader_projection.h>
 #include <reader_reading_state.h>
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+#define READER_READING_COMMANDS_VERSION "0.2.0"
+#else
 #define READER_READING_COMMANDS_VERSION "0.1.0"
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -71,6 +75,17 @@ typedef struct {
 
 reader_rc_status reader_rc_apply(const reader_rc_context *, const reader_rc_command *,
   reader_rc_result *, reader_rc_error *);
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+/* Explicit candidate fixed_page writer. New captures use anchor3; NOTE_TEXT
+   keeps the selected source's actual version and nullable selector tags. */
+reader_rc_status reader_rc_apply_fixed_v3(const reader_rc_context *,const reader_rc_command *,
+  reader_rc_result *,reader_rc_error *);
+/* Raw-capability store with an explicit output anchor version 1/2/3. Used to
+   restore an old selected source without silently upgrading its representation.
+   NOTE_TEXT always preserves its source version. Delete has no anchor version. */
+reader_rc_status reader_rc_apply_raw_v3(const reader_rc_context *,const reader_rc_command *,
+  unsigned anchor_version,reader_rc_result *,reader_rc_error *);
+#endif
 #ifdef __cplusplus
 }
 #endif

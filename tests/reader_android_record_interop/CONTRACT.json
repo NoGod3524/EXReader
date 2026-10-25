@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "description": "Bundle contract; metadata is descriptive and never re-encodes committed revision files.",
+  "sender": {
+    "platform": "android or macos",
+    "source_sha": "full Git source SHA",
+    "run_id": "decimal string",
+    "attempt": "decimal string",
+    "apk_sha256": "Android actual installed base.apk SHA-256; absent on macos",
+    "program_sha256": "macOS actual executing owner executable SHA-256; absent on android",
+    "sdk_dso_sha256": "actual loaded unique SDK shared library bytes SHA-256",
+    "exr_version": "actual exr_version(), initially 3.41.0",
+    "parser_version": "actual native writer tag, exreader-sdk-3.41.0 on Android / 3.41.0 on macOS"
+  },
+  "originals": [{"role":"txt|epub|pdf|cbz","file":"originals/role.ext","format":"txt|epub|pdf|cbz","book_key":"format:original_sha256","bytes":1,"sha256":"64 lowercase hex"}],
+  "revisions": [{"file":"revisions/id.json","id":"32 lowercase hex","entity_kind":"book|progress|annotation","entity_key":"exact envelope entity key","book_key":"exact original book key","parents":[],"bytes":1,"sha256":"exact complete original wire SHA-256"}],
+  "reading_records": [{"revision_id":"actual selected committed reading revision id","role":"txt|epub|pdf|cbz","kind":"progress|bookmark|highlight","mode":1,"anchor_version":1,"capture":{"numbers":["mode decimal","unit decimal","start decimal","end decimal"],"route":["book_key","actual parser","part_path or null","page_id or null","chapter or null"],"selectors":["exact base64 or null","prefix base64 or null","suffix base64 or null"]}}],
+  "rules": [
+    "All files are safe relative bundle paths; no absolute path, traversal, symlink or duplicate file.",
+    "All originals and every complete ancestor, including actual book entity wire, must be included.",
+    "Revision files are exact bytes returned from public retained APIs; no JSON canonicalization or parser substitution.",
+    "Integers inside capture.numbers are decimal strings; capture.selectors preserve null versus empty base64.",
+    "Capture reflects the real stored decoded G03 location, not a reauthored receiver oracle.",
+    "Receiver uses public receive on every original revision byte then real typed reading decode and SDK resolve.",
+    "Android incoming without a real macOS sender bundle remains pending; protocol fixtures cannot grant interoperability."
+  ]
+}

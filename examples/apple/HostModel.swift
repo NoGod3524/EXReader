@@ -705,6 +705,9 @@ final class HostSession {
     // explicit jump caller subsequently commits an actual renderer candidate.
     func readingResolution(_ wire: Data, catalog: HostCatalog, cancel: HostCancelBox) throws -> (HostReadingCapture, HostSearchHit) {
         try cancel.check()
+#if EXR_APPLE_RAW3_REVIEW && EXR_APPLE_HOST_REVIEW
+        let reviewStateBefore = try stateHash()
+#endif
         guard let book else { throw HostError.invalidInput("请先打开书籍") }
         let decoded = try catalog.withHistory { try HostReadingWorker.decoded(wire, history: $0) }
         let independent = try HostLibrary(path: library.path)
@@ -750,6 +753,9 @@ final class HostSession {
             unit: unit, path: input.path, pageID: input.fixed?.fields[0].map { String(decoding: $0, as: UTF8.self) } ?? "",
             pageLabel: "", sourceKey: original.searchKey, bookID: book.id,
             anchor: input.anchor ?? HostSearchAnchor(exr_anchor()), fixed: try input.fixed ?? HostSearchFixedAnchor(exr_fixed_anchor()))
+#if EXR_APPLE_RAW3_REVIEW && EXR_APPLE_HOST_REVIEW
+        try HostRaw3Review.resolution(wire: wire, original: input, fresh: fresh, session: self, before: reviewStateBefore)
+#endif
         return (fresh, hit)
     }
 
@@ -1848,6 +1854,9 @@ final class HostReaderModel: ObservableObject {
 #if EXR_APPLE_HOST_REVIEW
                 let beforeSave = HostReadingWorker.afterDurableSave, beforeCommit = HostReadingWorker.afterCommit
                 func holdAtNativeBoundary(_ boundary: String) throws {
+#if EXR_APPLE_RAW3_REVIEW
+                    try HostRaw3Review.audit(session: session, catalog: catalog, root: root, event: boundary)
+#endif
                     DispatchQueue.main.async { self.readingRecords.nativeBoundary = boundary }
                     while !box.isCancelled { Thread.sleep(forTimeInterval: 0.05) }
                     throw HostError.cancelled
@@ -1865,6 +1874,9 @@ final class HostReaderModel: ObservableObject {
                 let page = try HostReadingWorker.page(catalog: catalog, bookID: bookID, bookKey: book.key, from: cursor, cancel: box)
                 let progress = try HostReadingWorker.progress(catalog: catalog, bookID: bookID, bookKey: book.key)
                 let pending = try HostReadingWorker.pending(root: root)
+#if EXR_APPLE_RAW3_REVIEW && EXR_APPLE_HOST_REVIEW
+                try HostRaw3Review.audit(session: session, catalog: catalog, root: root, event: status)
+#endif
                 DispatchQueue.main.async {
                     guard myToken == self.token else { return }
                     if generation == self.readingRecords.generation && self.readingRecords.bookID == bookID {
@@ -1883,6 +1895,11 @@ final class HostReaderModel: ObservableObject {
                 }
             } catch {
                 let pending = try? HostReadingWorker.pending(root: self.storageFolder())
+#if EXR_APPLE_RAW3_REVIEW && EXR_APPLE_HOST_REVIEW
+                if let session = self.session, let catalog = self.catalog, let root = try? self.storageFolder() {
+                    try? HostRaw3Review.audit(session: session, catalog: catalog, root: root, event: "action-failed")
+                }
+#endif
                 DispatchQueue.main.async {
                     guard myToken == self.token else { return }
                     if generation == self.readingRecords.generation {
@@ -1929,9 +1946,17 @@ final class HostReaderModel: ObservableObject {
     func editReadingRecord(_ row: HostReadingRow, body: String) {
         guard row.safe, row.hasLocation, row.entityKind == "annotation", body.utf8.count <= 65536 else { return }
         performReading("批注已保存") { session, catalog, root, cancel in
+#if EXR_APPLE_RAW3
+            let retained = try HostReadingWorker.selectedWire(catalog: catalog, row: row)
+            let sourceVersion = try catalog.withHistory { try HostReadingWorker.decoded(retained, history: $0).version }
+            let request = try HostReadingWorker.request(session: session, catalog: catalog, kind: 4, operation: 0,
+                annotation: row.annotation, mode: row.mode, capture: nil, body: body, observedHeads: [row.revision],
+                anchorVersion: sourceVersion, cancel: cancel)
+#else
             _ = try HostReadingWorker.selectedWire(catalog: catalog, row: row)
             let request = try HostReadingWorker.request(session: session, catalog: catalog, kind: 4, operation: 0,
                 annotation: row.annotation, mode: row.mode, capture: nil, body: body, observedHeads: [row.revision], cancel: cancel)
+#endif
             _ = try HostReadingWorker.submit(request, session: session, catalog: catalog, root: root, cancel: cancel)
             return nil
         }
@@ -1957,11 +1982,18 @@ final class HostReaderModel: ObservableObject {
         let heads = readingRecords.restoreHeads
         performReading("已恢复阅读记录，当前页面保持不变") { session, catalog, root, cancel in
             let (capture, _) = try session.readingResolution(version.wire, catalog: catalog, cancel: cancel)
-            let body = try catalog.withHistory { try HostReadingWorker.decoded(version.wire, history: $0).body }
+            let source = try catalog.withHistory { try HostReadingWorker.decoded(version.wire, history: $0) }
             let isPoint = capture.mode == 3 ? capture.fixed!.start == capture.fixed!.end : capture.anchor!.start == capture.anchor!.end
+#if EXR_APPLE_RAW3
             let request = try HostReadingWorker.request(session: session, catalog: catalog,
                 kind: row.entityKind == "progress" ? 1 : isPoint ? 2 : 3, operation: 2, annotation: row.annotation,
-                mode: capture.mode, capture: capture, body: body, observedHeads: heads, cancel: cancel)
+                mode: capture.mode, capture: capture, body: source.body, observedHeads: heads,
+                anchorVersion: source.version, cancel: cancel)
+#else
+            let request = try HostReadingWorker.request(session: session, catalog: catalog,
+                kind: row.entityKind == "progress" ? 1 : isPoint ? 2 : 3, operation: 2, annotation: row.annotation,
+                mode: capture.mode, capture: capture, body: source.body, observedHeads: heads, cancel: cancel)
+#endif
             _ = try HostReadingWorker.submit(request, session: session, catalog: catalog, root: root, cancel: cancel)
             return nil
         }

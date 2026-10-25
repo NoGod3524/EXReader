@@ -1,0 +1,89 @@
+name: Independent actual iPhone iPad raw3 host candidate
+on:
+  push:
+    branches: [codex/reader-apple-raw3-ios]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+env:
+  EXR_APPLE_SDK_VERSION: '3.41.0'
+  EXR_APPLE_PAGE_THEME: 'ON'
+  EXR_APPLE_RAW3: 'OFF'
+jobs:
+  sdk:
+    name: Installed SDK and exact raw products ${{ matrix.target }}
+    runs-on: macos-15
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [macos, iphonesimulator]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Exact source ownership and preserved original controls
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_host/raw3/ios/reading/guard.py
+      - name: Actions syntax and actual independent installed family
+        run: |
+          python3 -m compileall -q tests/apple_host/raw3/ios
+          python3 tests/apple_host/raw3/ios/reading/build_sdk.py --target '${{ matrix.target }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: raw3-ios-sdk-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/raw3-ios-sdk/${{ matrix.target }}/sdk/
+            build/raw3-ios-sdk/${{ matrix.target }}/raw-products/
+            build/raw3-ios-sdk/${{ matrix.target }}/sdk-identity.json
+            build/raw3-ios-sdk/${{ matrix.target }}/raw-identity.json
+          include-hidden-files: true
+          if-no-files-found: error
+  ui:
+    name: Actual raw iOS UI ${{ matrix.platform }}
+    needs: sdk
+    runs-on: macos-15
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [iphone, ipad]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: raw3-ios-sdk-*
+          path: sdk-input
+      - name: Original Xcode generator dependency
+        run: ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+      - name: Complete original OFF UI and actual raw records private replay native HTTPS
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_host/raw3/ios/reading/driver.py --platform '${{ matrix.platform }}' --sdk-input sdk-input
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-raw3-ios-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/raw3-ios/${{ matrix.platform }}/evidence/
+          include-hidden-files: true
+          if-no-files-found: error
+  summary:
+    if: always()
+    needs: [sdk, ui]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Strict original ZIP and complete actual two-simulator evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_host/raw3/ios/reading/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-raw3-ios-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/raw3-ios-summary/summary.json
+          if-no-files-found: error

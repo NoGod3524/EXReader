@@ -28,6 +28,9 @@ def main():
     parser.add_argument('--sdk', type=Path, required=True)
     parser.add_argument('--platform', choices=['macos', 'simulator', 'iphoneos'], required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--product-prefix', type=Path)
+    parser.add_argument('--selector-bytes-candidate', action='store_true',
+                        default=os.environ.get('EXR_APPLE_RAW3', 'OFF') == 'ON')
     parser.add_argument('--sdk-version', choices=('3.40.0', '3.41.0'),
                         default=os.environ.get('EXR_APPLE_SDK_VERSION', '3.40.0'))
     parser.add_argument('--page-theme', action='store_true', default=os.environ.get('EXR_APPLE_PAGE_THEME', 'OFF') == 'ON',
@@ -37,6 +40,8 @@ def main():
         parser.error('Unsupported explicit Apple SDK version')
     if os.environ.get('EXR_APPLE_PAGE_THEME', 'OFF') not in ('OFF', 'ON'):
         parser.error('EXR_APPLE_PAGE_THEME must be explicitly OFF or ON')
+    if os.environ.get('EXR_APPLE_RAW3', 'OFF') not in ('OFF', 'ON'):
+        parser.error('EXR_APPLE_RAW3 must be explicitly OFF or ON')
     if sys.platform != 'darwin':
         parser.error('The Apple SDK build requires a macOS host')
     sdk, output = args.sdk.absolute(), args.output.absolute()
@@ -67,18 +72,21 @@ def main():
     sources = sorted((ROOT/'examples/apple').glob('*.swift'))
     command = ['xcrun', '--sdk', native_sdk, 'swiftc', '-swift-version', '5', '-O', '-parse-as-library',
                '-sdk', sdk_path, '-target', target, '-I', sdk/'include', '-L', sdk/'lib',
-               '-lexreader', *product_flags(sdk), '-Xlinker', '-rpath', '-Xlinker', rpath,
+               '-lexreader', *product_flags(sdk, args.product_prefix, args.selector_bytes_candidate), '-Xlinker', '-rpath', '-Xlinker', rpath,
                ROOT/'bindings/swift/EXReader.swift', *sources, '-o', executable,
                '-Xlinker', '-map', '-Xlinker', output/'product-link.map']
+    if args.selector_bytes_candidate and args.product_prefix:
+        command[4:4] = ['-I', str(args.product_prefix.absolute() / 'include')]
     if args.page_theme:
         command += ['-D', 'EXR_APPLE_PAGE_THEME']
     run(*command)
-    (output/'product-link.json').write_text(json.dumps(inspect_product(executable, output/'product-link.map'), indent=2)+'\n')
+    (output/'product-link.json').write_text(json.dumps(inspect_product(executable, output/'product-link.map', args.selector_bytes_candidate), indent=2)+'\n')
     source_sha = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], text=True).strip()
     info = {'CFBundleExecutable': 'EXReader', 'CFBundleIdentifier': 'org.exreader.host',
             'CFBundleName': 'EXReader', 'CFBundleDisplayName': 'EXReader',
             'CFBundlePackageType': 'APPL', 'CFBundleVersion': '1',
-            'CFBundleShortVersionString': version, 'EXRSourceSHA': source_sha}
+            'CFBundleShortVersionString': version, 'EXRSourceSHA': source_sha,
+            'EXRRawSelectorEnabled': args.selector_bytes_candidate}
     if mobile:
         info.update({'MinimumOSVersion': '15.0', 'LSRequiresIPhoneOS': True,
                      'UIApplicationSceneManifest': {'UIApplicationSupportsMultipleScenes': True},
@@ -114,6 +122,7 @@ def main():
     run('codesign', '--force', '--deep', '--sign', '-', app)
     manifest = {'schema': 1, 'source_sha': source_sha, 'sdk_version': version,
                 'page_theme_enabled': args.page_theme,
+                'selector_bytes_candidate': args.selector_bytes_candidate,
                 'platform': args.platform, 'target': target, 'bundle': str(app),
                 'signing': 'ad-hoc; device installation requires the owner signing identity',
                 'files': {str(p.relative_to(app)): hashlib.sha256(p.read_bytes()).hexdigest()
