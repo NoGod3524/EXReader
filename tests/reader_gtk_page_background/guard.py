@@ -30,11 +30,13 @@ def main():
     own = {'examples/linux/CMakeLists.txt', 'examples/linux/reading.h', 'examples/linux/reading.c',
            'examples/linux/reader.c', 'examples/linux/preferences_ui.inc', '.github/workflows/reader-gtk-page-background.yml',
            'docs/READER-GTK-PAGE-BACKGROUND.md', 'docs/validation/reader-gtk-page-background.json'}
+    sdk_owned = set(git('diff', '--name-only', '9854061be331fe603a1822d9b2b36ee357154927', SDK).splitlines())
     for path in git('diff', '--name-only', DEPENDENCY_MERGE, 'HEAD').splitlines():
         if path in own or path.startswith('tests/reader_gtk_page_background/'):
             continue
         # Later root delivery paths must match its exact bytes, not a wildcard.
-        assert git('rev-parse', 'HEAD:' + path) == git('rev-parse', VERSION_SUPPORT + ':' + path), path
+        owner = SDK if path in sdk_owned else VERSION_SUPPORT
+        assert git('rev-parse', 'HEAD:' + path) == git('rev-parse', owner + ':' + path), path
     print('GTK_PAGE_BACKGROUND_GUARD fixed candidate SDK, exact shared version support and unchanged old tests passed')
 
 
