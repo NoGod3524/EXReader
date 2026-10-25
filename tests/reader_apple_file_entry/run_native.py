@@ -106,10 +106,22 @@ def run_binary(args, name, work, logs, udid):
     command = [str(Path(args.out) / name), str(work), str(result)]
     if udid:
         command = ["xcrun", "simctl", "spawn", udid] + command
-    done = sh(command, timeout=1500)
-    (logs / f"run-{name}.log").write_text(done.stdout + done.stderr, encoding="utf-8")
-    lines = result.read_text(encoding="utf-8").splitlines() if result.exists() else []
-    return done.returncode, lines
+    log = logs / f"run-{name}.log"
+    with log.open("w", encoding="utf-8") as stream:
+        process = subprocess.Popen(command, stdout=stream, stderr=subprocess.STDOUT, text=True)
+        try:
+            code = process.wait(timeout=420)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait()
+            code = -9
+            stream.write("\nTIMEOUT: killed after 420 s\n")
+    # The result file only exists after a complete run; the streamed log keeps partial progress.
+    source = result if result.exists() else log
+    lines = source.read_text(encoding="utf-8").splitlines()
+    print(f"--- {name} exit {code} ---")
+    print("\n".join(log.read_text(encoding="utf-8").splitlines()[-60:]))
+    return code, lines
 
 
 def parse(lines):
