@@ -1,258 +1,468 @@
 {
-  "package": "J22 reader cross-OS relay",
-  "branch": "codex/reader-cross-os-relay",
-  "start_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "package": "T03 reader cross-OS relay review",
+  "branch": "codex/dot-cross-os-relay-review",
+  "start_sha": "9ff063dcc6b898fb0c776edabadf743919045a7d",
   "sdk_sha": "9854061be331fe603a1822d9b2b36ee357154927",
   "accepted": true,
-  "tested_source_sha": "908aa002e3ceb76fdce7f8a5b79f7773ee11d4ab",
-  "run": 40146644907,
+  "tested_source_sha": "696dfaebdce42a53217d8df66a469a9578a92095",
+  "run": 40164760850,
   "attempt": 1,
-  "directions": [
-    "linux-to-windows",
-    "windows-to-linux",
-    "linux-to-macos",
-    "macos-to-linux"
+  "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/40164760850",
+  "status": "completed",
+  "conclusion": "success",
+  "evidence_commit": "This docs-only [skip ci] commit; resolve its full SHA from Git. The tested source is the parent commit.",
+  "evidence_diff_from_tested": [
+    "docs/READER-CROSS-OS-RELAY.md",
+    "docs/validation/reader-cross-os-relay.json"
+  ],
+  "review_findings": [
+    "Fixed strict summary's missing completed/run/runner-platform job authentication and artifact workflow_run.id/expiry authentication.",
+    "Reject duplicate or unsafe ZIP members, duplicate/nested result reports, duplicate JSON keys, missing reports, tampered ZIP bytes and raw inventory members.",
+    "Independently bind pinned four-format originals, immutable send/return tree members and both transport byte streams across all four directions.",
+    "Bind each peer identity (source/run/attempt/OS/direction/stage) to actual installed probe/tool builds, and bind actual C and C++ consumer binaries.",
+    "Reject unknown/duplicate component check statuses and missing or substituted SDK capture identities; inspect raw public-SDK probe reports.",
+    "Stop the receiving path before serving if native or independent inventory verification fails; bind peer plan and transport digest before serving."
   ],
   "jobs": [
     {
-      "id": 121029299408,
+      "id": 121083432465,
       "name": "guard",
-      "conclusion": "success"
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40164760850,
+      "source_sha": "696dfaebdce42a53217d8df66a469a9578a92095",
+      "attempt": 1
     },
     {
-      "id": 121029328236,
+      "id": 121083455193,
       "name": "build (macOS)",
-      "conclusion": "success"
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40164760850,
+      "source_sha": "696dfaebdce42a53217d8df66a469a9578a92095",
+      "attempt": 1
     },
     {
-      "id": 121029328241,
-      "name": "plan",
-      "conclusion": "success"
-    },
-    {
-      "id": 121029328286,
-      "name": "build (Linux)",
-      "conclusion": "success"
-    },
-    {
-      "id": 121029328296,
+      "id": 121083455195,
       "name": "build (Windows)",
-      "conclusion": "success"
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40164760850,
+      "source_sha": "696dfaebdce42a53217d8df66a469a9578a92095",
+      "attempt": 1
     },
     {
-      "id": 121030041501,
+      "id": 121083455220,
+      "name": "plan",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40164760850,
+      "source_sha": "696dfaebdce42a53217d8df66a469a9578a92095",
+      "attempt": 1
+    },
+    {
+      "id": 121083455266,
+      "name": "build (Linux)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40164760850,
+      "source_sha": "696dfaebdce42a53217d8df66a469a9578a92095",
+      "attempt": 1
+    },
+    {
+      "id": 121085299374,
       "name": "send linux-to-macos",
-      "conclusion": "success"
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40164760850,
+      "source_sha": "696dfaebdce42a53217d8df66a469a9578a92095",
+      "attempt": 1
     },
     {
-      "id": 121030041503,
-      "name": "send linux-to-windows",
-      "conclusion": "success"
-    },
-    {
-      "id": 121030041536,
-      "name": "send macos-to-linux",
-      "conclusion": "success"
-    },
-    {
-      "id": 121030041545,
+      "id": 121085299393,
       "name": "send windows-to-linux",
-      "conclusion": "success"
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40164760850,
+      "source_sha": "696dfaebdce42a53217d8df66a469a9578a92095",
+      "attempt": 1
     },
     {
-      "id": 121030234974,
-      "name": "receive macos-to-linux",
-      "conclusion": "success"
+      "id": 121085299395,
+      "name": "send linux-to-windows",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40164760850,
+      "source_sha": "696dfaebdce42a53217d8df66a469a9578a92095",
+      "attempt": 1
     },
     {
-      "id": 121030234994,
-      "name": "receive windows-to-linux",
-      "conclusion": "success"
+      "id": 121085299411,
+      "name": "send macos-to-linux",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40164760850,
+      "source_sha": "696dfaebdce42a53217d8df66a469a9578a92095",
+      "attempt": 1
     },
     {
-      "id": 121030235012,
-      "name": "receive linux-to-macos",
-      "conclusion": "success"
-    },
-    {
-      "id": 121030235018,
+      "id": 121085842325,
       "name": "receive linux-to-windows",
-      "conclusion": "success"
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40164760850,
+      "source_sha": "696dfaebdce42a53217d8df66a469a9578a92095",
+      "attempt": 1
     },
     {
-      "id": 121030448336,
+      "id": 121085842338,
+      "name": "receive windows-to-linux",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40164760850,
+      "source_sha": "696dfaebdce42a53217d8df66a469a9578a92095",
+      "attempt": 1
+    },
+    {
+      "id": 121085842340,
+      "name": "receive linux-to-macos",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40164760850,
+      "source_sha": "696dfaebdce42a53217d8df66a469a9578a92095",
+      "attempt": 1
+    },
+    {
+      "id": 121085842349,
+      "name": "receive macos-to-linux",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40164760850,
+      "source_sha": "696dfaebdce42a53217d8df66a469a9578a92095",
+      "attempt": 1
+    },
+    {
+      "id": 121088098794,
       "name": "confirm linux-to-windows",
-      "conclusion": "success"
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40164760850,
+      "source_sha": "696dfaebdce42a53217d8df66a469a9578a92095",
+      "attempt": 1
     },
     {
-      "id": 121030448337,
-      "name": "confirm linux-to-macos",
-      "conclusion": "success"
-    },
-    {
-      "id": 121030448349,
+      "id": 121088098795,
       "name": "confirm windows-to-linux",
-      "conclusion": "success"
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40164760850,
+      "source_sha": "696dfaebdce42a53217d8df66a469a9578a92095",
+      "attempt": 1
     },
     {
-      "id": 121030448450,
+      "id": 121088098803,
+      "name": "confirm linux-to-macos",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40164760850,
+      "source_sha": "696dfaebdce42a53217d8df66a469a9578a92095",
+      "attempt": 1
+    },
+    {
+      "id": 121088099000,
       "name": "confirm macos-to-linux",
-      "conclusion": "success"
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40164760850,
+      "source_sha": "696dfaebdce42a53217d8df66a469a9578a92095",
+      "attempt": 1
     },
     {
-      "id": 121030635510,
+      "id": 121089753718,
       "name": "strict relay summary",
-      "conclusion": "success"
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40164760850,
+      "source_sha": "696dfaebdce42a53217d8df66a469a9578a92095",
+      "attempt": 1
     }
   ],
   "artifacts": [
     {
-      "id": 12581326765,
-      "name": "relay-plan-40146644907-1",
-      "size_in_bytes": 4523,
-      "digest": "sha256:9d201c019bc8d238efbcf77d577fcadf005e04588ea2ae6af7802e1a2c8b4758",
-      "expires_at": "2027-01-23T00:25:38Z"
+      "id": 12588155793,
+      "name": "relay-plan-40164760850-1",
+      "size_in_bytes": 4524,
+      "digest": "sha256:609315db878c3b92771c93a4fb23947f3e1e44fdc61c5e4a553bd2d40a089a1b",
+      "expires_at": "2027-01-23T05:13:46Z"
     },
     {
-      "id": 12580448097,
-      "name": "relay-build-Linux-40146644907-1",
-      "size_in_bytes": 4788488,
-      "digest": "sha256:493b163fe77c2925f49e6b161f8aa1c04e7fcd5ae90ff3ac9817225ea224028f",
-      "expires_at": "2027-01-23T00:25:38Z"
+      "id": 12587589381,
+      "name": "relay-build-Linux-40164760850-1",
+      "size_in_bytes": 4883005,
+      "digest": "sha256:745fd328d54acaa075e2ed5c186f3f6a7d40d72cc323a780c19ce4d2b8644eb3",
+      "expires_at": "2027-01-23T05:13:46Z"
     },
     {
-      "id": 12580663311,
-      "name": "relay-build-Windows-40146644907-1",
-      "size_in_bytes": 4371659,
-      "digest": "sha256:61fa7e3478898d5ff756d83752a39ff1959e1879bc896155fe029fd182f4e2a1",
-      "expires_at": "2027-01-23T00:25:38Z"
+      "id": 12587956469,
+      "name": "relay-build-Windows-40164760850-1",
+      "size_in_bytes": 4708432,
+      "digest": "sha256:8a81bd70fc79b16a42eed905e018d524e48a0129f9b727d96678218ada3a0ba0",
+      "expires_at": "2027-01-23T05:13:46Z"
     },
     {
-      "id": 12580353239,
-      "name": "relay-build-macOS-40146644907-1",
-      "size_in_bytes": 4267412,
-      "digest": "sha256:4d6f3a550727f4fe5c624222373a89c86e730a6c3725bd0628cb0b82e1ac30db",
-      "expires_at": "2027-01-23T00:25:38Z"
+      "id": 12588470790,
+      "name": "relay-build-macOS-40164760850-1",
+      "size_in_bytes": 4332099,
+      "digest": "sha256:b3ee0446537f682c187298e905f3dcecb87e6f04380ea2e911cf89032077b39f",
+      "expires_at": "2027-01-23T05:13:46Z"
     },
     {
-      "id": 12580188553,
-      "name": "relay-send-linux-to-windows-40146644907-1",
-      "size_in_bytes": 36514,
-      "digest": "sha256:c00c20d93672142ca7d72fb8f81d1e026965408eeef95d09bf34b1ec68892a22",
-      "expires_at": "2027-01-23T00:25:38Z"
+      "id": 12588515737,
+      "name": "relay-send-linux-to-windows-40164760850-1",
+      "size_in_bytes": 36581,
+      "digest": "sha256:73344549cb9bd6d7b413792def3e3743f92680e4fafbbeb4006b011ff4054cab",
+      "expires_at": "2027-01-23T05:13:46Z"
     },
     {
-      "id": 12580683503,
-      "name": "relay-receive-linux-to-windows-40146644907-1",
-      "size_in_bytes": 46474,
-      "digest": "sha256:1301e3029a9b2fa3dd6f6ae70a7e111a0b27503161281c2dba1b1c88cfa2e6ba",
-      "expires_at": "2027-01-23T00:25:38Z"
+      "id": 12588645790,
+      "name": "relay-receive-linux-to-windows-40164760850-1",
+      "size_in_bytes": 46575,
+      "digest": "sha256:6a7b201369ca4e900b3eeb6104705f22393e2c81aef49e1db148a320e49ee8b0",
+      "expires_at": "2027-01-23T05:13:46Z"
     },
     {
-      "id": 12580868318,
-      "name": "relay-confirm-linux-to-windows-40146644907-1",
-      "size_in_bytes": 13795,
-      "digest": "sha256:8f75e6e20b58bf94277a15dd6a277e75b4bbd74b717d34dfe9ca5e71c50f8140",
-      "expires_at": "2027-01-23T00:25:38Z"
+      "id": 12588093170,
+      "name": "relay-confirm-linux-to-windows-40164760850-1",
+      "size_in_bytes": 13819,
+      "digest": "sha256:844c2dd8d566de6476815b0cd1f9d716816267e237f6b74803c1f8c143a046e6",
+      "expires_at": "2027-01-23T05:13:46Z"
     },
     {
-      "id": 12581182564,
-      "name": "relay-send-windows-to-linux-40146644907-1",
-      "size_in_bytes": 36551,
-      "digest": "sha256:9571c18c268d93e45e691b84e046f284a94aaa378b62168d360951c08e0694d9",
-      "expires_at": "2027-01-23T00:25:38Z"
+      "id": 12588570605,
+      "name": "relay-send-windows-to-linux-40164760850-1",
+      "size_in_bytes": 36614,
+      "digest": "sha256:8ded00f1966b108bdbeee9da482cc0df9f9af2fbc78217fc6513279d36ebdc20",
+      "expires_at": "2027-01-23T05:13:46Z"
     },
     {
-      "id": 12580543159,
-      "name": "relay-receive-windows-to-linux-40146644907-1",
-      "size_in_bytes": 46363,
-      "digest": "sha256:f19c9c7524320ca6dc175413c7047db8ceaa6d218b76f9ffeeec9be0f6babbc0",
-      "expires_at": "2027-01-23T00:25:38Z"
+      "id": 12587678018,
+      "name": "relay-receive-windows-to-linux-40164760850-1",
+      "size_in_bytes": 46498,
+      "digest": "sha256:9a29e5e9d5eb99049f49106944fc858379bec94a7520b5204fc487f77f33c6dd",
+      "expires_at": "2027-01-23T05:13:46Z"
     },
     {
-      "id": 12580848221,
-      "name": "relay-confirm-windows-to-linux-40146644907-1",
-      "size_in_bytes": 13863,
-      "digest": "sha256:b0c039ac9d71733f97dc719623dc7ec411d774b8db4b71cd6e0b0cca5c8610ee",
-      "expires_at": "2027-01-23T00:25:38Z"
+      "id": 12588602155,
+      "name": "relay-confirm-windows-to-linux-40164760850-1",
+      "size_in_bytes": 13877,
+      "digest": "sha256:a8ca5a74b15a097c269d110759947b572084ad9be15a66cc014c5137aafc429d",
+      "expires_at": "2027-01-23T05:13:46Z"
     },
     {
-      "id": 12580753276,
-      "name": "relay-send-linux-to-macos-40146644907-1",
-      "size_in_bytes": 36538,
-      "digest": "sha256:8b9b618f528c1501d05f6e6c7f4d1a9a746472dcd579c5502b0ed51c90e7893f",
-      "expires_at": "2027-01-23T00:25:38Z"
+      "id": 12587997005,
+      "name": "relay-send-linux-to-macos-40164760850-1",
+      "size_in_bytes": 36583,
+      "digest": "sha256:aacca6419b492a6200166fcc5f793cd95e07380414d47bf26c101c22304a697c",
+      "expires_at": "2027-01-23T05:13:46Z"
     },
     {
-      "id": 12580498323,
-      "name": "relay-receive-linux-to-macos-40146644907-1",
-      "size_in_bytes": 46487,
-      "digest": "sha256:fc013390c1f7dd8bc1a93e6cbcdd93511bc6795d560fb1afdc74957e7a56095c",
-      "expires_at": "2027-01-23T00:25:38Z"
+      "id": 12588482486,
+      "name": "relay-receive-linux-to-macos-40164760850-1",
+      "size_in_bytes": 46473,
+      "digest": "sha256:a62bc41e955d0ae0ab3748ad040b1a3b81800b644a18d1d99888bc2136ed5fec",
+      "expires_at": "2027-01-23T05:13:46Z"
     },
     {
-      "id": 12580428479,
-      "name": "relay-confirm-linux-to-macos-40146644907-1",
-      "size_in_bytes": 13839,
-      "digest": "sha256:5ff514bb796a42494770b9fc529165e03affe58f5cb4043957570aca8a89715f",
-      "expires_at": "2027-01-23T00:25:38Z"
+      "id": 12588502374,
+      "name": "relay-confirm-linux-to-macos-40164760850-1",
+      "size_in_bytes": 13822,
+      "digest": "sha256:d4f2c9531c11c4bf2b10cd010a5e647a3aa6abce8db24626417c5dd8afd8992d",
+      "expires_at": "2027-01-23T05:13:46Z"
     },
     {
-      "id": 12580558074,
-      "name": "relay-send-macos-to-linux-40146644907-1",
-      "size_in_bytes": 36527,
-      "digest": "sha256:0f25b954623c36b06ee3d9a700580720126b7b1428ab4cb9dd8f9326561e8f22",
-      "expires_at": "2027-01-23T00:25:38Z"
+      "id": 12588127026,
+      "name": "relay-send-macos-to-linux-40164760850-1",
+      "size_in_bytes": 36545,
+      "digest": "sha256:d8c95543a2dd4a4edd363d1f8510338792a6e23c4d0d5d6b6fd3772847654199",
+      "expires_at": "2027-01-23T05:13:46Z"
     },
     {
-      "id": 12581132890,
-      "name": "relay-receive-macos-to-linux-40146644907-1",
-      "size_in_bytes": 46504,
-      "digest": "sha256:aee4bba18ee54b1a69295d7cfcedd34e64faae487ee2efb247647254f7d7c924",
-      "expires_at": "2027-01-23T00:25:38Z"
+      "id": 12587727826,
+      "name": "relay-receive-macos-to-linux-40164760850-1",
+      "size_in_bytes": 46550,
+      "digest": "sha256:0295f5065ddc4db1d791ce9cfc68a902f8d63de53dd589a52506a8856254802f",
+      "expires_at": "2027-01-23T05:13:46Z"
     },
     {
-      "id": 12581282617,
-      "name": "relay-confirm-macos-to-linux-40146644907-1",
-      "size_in_bytes": 13812,
-      "digest": "sha256:58a1b04b941094eb83fe1714eabcf9296388d17bdb1f7f8e8e2087974af7e115",
-      "expires_at": "2027-01-23T00:25:38Z"
+      "id": 12588802773,
+      "name": "relay-confirm-macos-to-linux-40164760850-1",
+      "size_in_bytes": 13811,
+      "digest": "sha256:c5627e841015e518cadc66f6fa782353cee7e4afa024d64b1eefc65a9919147c",
+      "expires_at": "2027-01-23T05:13:46Z"
     }
   ],
+  "summary_artifact": {
+    "id": 12588673127,
+    "name": "relay-summary-40164760850-1",
+    "size_in_bytes": 2250,
+    "digest": "sha256:303b247951ebab7fbd26ef8b24e9a78b2ed694b039160157ce7a9df8cb69fa2c",
+    "expires_at": "2027-01-23T05:13:46Z",
+    "expired": false
+  },
   "consumer_sha256": {
     "Linux": {
-      "relay_probe": "1aeb3f9c42fee0d8b655088db113966e7a72be8de71c01f5c96ce095d0790bde",
-      "relay_tool": "d3e68400eab7bfd84b246f3cd7097db2c77971896f63fc51cbf322eaf14a684f",
-      "component_checks": 33,
-      "failures": 0,
-      "skips": 0
+      "probe_sha256": "1aeb3f9c42fee0d8b655088db113966e7a72be8de71c01f5c96ce095d0790bde",
+      "tool_sha256": "d3e68400eab7bfd84b246f3cd7097db2c77971896f63fc51cbf322eaf14a684f",
+      "cpp_consumer_sha256": "aec7b65f2c0c108d21fa891b4246352b27e4ab65f62f1ed7c880863a35c9be15",
+      "c_consumer_sha256": "d9d49575dbaa4d8ba91eb4dbfc11ab9ced7c8ffd892216528b4f986eb9beec88",
+      "component_checks_count": 33,
+      "component_failures": 0,
+      "component_skips": 0,
+      "c_consumer_exit": 0
     },
     "Windows": {
-      "relay_probe": "26331dc77570fe5130232918a8457f4f23e0ff4b5f355c2494ccc5278134df4f",
-      "relay_tool": "5974296e1f187647ba75addcca4b081cce9499f0caaf0fedc6b796188166be6f",
-      "component_checks": 33,
-      "failures": 0,
-      "skips": 1
+      "probe_sha256": "4e26960396b5e0afe6c78529ef95f39397c9ad80a67d376a01c1f5667f2507ca",
+      "tool_sha256": "a9178716e90ee03d4e16b749e1c6c1e16fcb10b39318af66be7cf39624a8fb07",
+      "cpp_consumer_sha256": "3c930f857575561b992dd426081c810f5df86753756a40600a3ef273d7ff4b9d",
+      "c_consumer_sha256": "6187ec7ed1dc20467387d03031c4ae0d3f54171afd07cffdf4147e7fc5ffe239",
+      "component_checks_count": 33,
+      "component_failures": 0,
+      "component_skips": 1,
+      "c_consumer_exit": 0
     },
     "macOS": {
-      "relay_probe": "e3f74e10e5d76cb302af47b947abd364beefdf8095251bcf0e7fdba19aa63fa0",
-      "relay_tool": "40afa3bf86878e57aa41cac1a8f8b1560df8cbca4ad2fb878c0ba65db1a9b3fc",
-      "component_checks": 33,
-      "failures": 0,
-      "skips": 0
+      "probe_sha256": "e3f74e10e5d76cb302af47b947abd364beefdf8095251bcf0e7fdba19aa63fa0",
+      "tool_sha256": "40afa3bf86878e57aa41cac1a8f8b1560df8cbca4ad2fb878c0ba65db1a9b3fc",
+      "cpp_consumer_sha256": "c5b9752dba6a8c788e467607b65ff13e3af02178932b3477b6de04d5e0837fa8",
+      "c_consumer_sha256": "c554884b3d2a194a0eb6c71d7f881f970ce21bbc103848e2285d5ee372038b3a",
+      "component_checks_count": 33,
+      "component_failures": 0,
+      "component_skips": 0,
+      "c_consumer_exit": 0
     }
   },
+  "summary": {
+    "accepted": true,
+    "problems": [],
+    "upstream_zip_count": 16,
+    "upstream_zip_bytes_and_sha256_recomputed_in_actions": true,
+    "summary_artifact_verification": "API metadata and Actions upload log; not recursively rehashed by itself."
+  },
+  "named_results": {
+    "strict_rejection_invocations": 59,
+    "strict_rejection_distinct_log_labels": 58,
+    "strict_rejection_labels": [
+      "missing direction",
+      "missing send stage",
+      "other run id",
+      "other attempt",
+      "other source",
+      "wrong OS for a stage",
+      "failed check",
+      "foreign tree",
+      "unchanged return tree",
+      "missing mislocation evidence",
+      "probe not built here",
+      "component negative case missing",
+      "scope overclaim",
+      "package other source",
+      "package other run",
+      "package other attempt",
+      "package fake peer",
+      "package different binary",
+      "component unknown status",
+      "component duplicate check",
+      "capture duplicate identity",
+      "API job status",
+      "API job conclusion",
+      "API job run_id",
+      "API job run_attempt",
+      "API job head_sha",
+      "API job labels",
+      "API artifact expired",
+      "API artifact size_in_bytes",
+      "API artifact digest",
+      "API artifact expires_at",
+      "API artifact workflow_run",
+      "API artifact workflow_run",
+      "ZIP bytes tampered",
+      "ZIP length differs",
+      "duplicate JSON report key",
+      "actual consumer binary tampered",
+      "duplicate ZIP report",
+      "nested report",
+      "missing report",
+      "traversal ZIP member",
+      "backslash ZIP member",
+      "database ZIP member",
+      "symlink ZIP member",
+      "raw tree altered",
+      "raw tree missing",
+      "raw tree extra",
+      "inventory digest forged",
+      "duplicate inventory member",
+      "raw SDK report receiver_mislocated",
+      "raw SDK report cases",
+      "raw SDK report checks",
+      "raw SDK report reopens",
+      "receive rejects peer source_sha",
+      "receive rejects peer run_id",
+      "receive rejects peer attempt",
+      "receive rejects peer os",
+      "receive rejects peer transport_sha256",
+      "native inventory failure stops serving"
+    ],
+    "strict_label_note": "The API artifact workflow_run label occurs twice: foreign run ID and foreign source SHA.",
+    "native_component_checks_per_os": 33,
+    "native_component_failures": 0,
+    "pure_c_consumer_exit": 0,
+    "windows_optional_skips": 1,
+    "directions": [
+      "linux-to-macos",
+      "linux-to-windows",
+      "macos-to-linux",
+      "windows-to-linux"
+    ],
+    "stages_per_direction": [
+      "send",
+      "receive",
+      "confirm"
+    ],
+    "original_formats": [
+      "txt",
+      "epub",
+      "pdf",
+      "cbz"
+    ],
+    "captures_per_receive_and_confirm": {
+      "FOUND": 17,
+      "AMBIGUOUS": 1,
+      "mislocated": 0
+    },
+    "retained_behaviors": [
+      "pinned original SHA-256 and size",
+      "NFC/NFD/Russian/emoji metadata",
+      "conflict merge",
+      "pending parents and reopen",
+      "tombstones",
+      "cancellation and retry",
+      "returned book edit",
+      "returned membership delete",
+      "returned highlight located by public SDK"
+    ]
+  },
+  "review_run_failures": [],
   "original_failures": [
     "run 40139319049 (7ff0a7d8): plan failed by design before the digests were pinned; Linux/macOS builds failed at artifact upload because of a scratch file named with a double quote",
     "run 40139621500 (e168fd62): all receive/confirm jobs failed - my probe demanded zero pending counters after each shard instead of after the full sweep, and expected the merged tag to remain conflicted",
     "run 40142080783 (5ebe5611): Windows receive/confirm hung to the 600 s timeout ; changed to 127.0.0.1 off macOS (suspected IPv6-first localhost delay, not separately proven) and the next run passed",
     "run 40146089096 (9f2c7077): all stages passed, summary rejected because the receive result lacked the consumed inventory digest"
   ],
+  "evidence_collection": "GitHub Actions API metadata and Actions-emitted summary log only. No artifacts were downloaded, unpacked or parsed locally during T03; all builds, executable tests, syntax execution, fixtures, services and ZIP verification ran in Actions.",
   "granted_scope": [
-    "installed exr_relay component plus installed C/C++ consumers on Linux, Windows and macOS (31 named cases each, pure C consumer exit 0)",
-    "artifact-relayed Linux->Windows, Windows->Linux, Linux->macOS, macOS->Linux: send, receive-with-return, confirm, same source/run/attempt",
-    "four original formats by pinned SHA-256; Unicode NFC/NFD/Russian/emoji metadata; 17 FOUND + 1 planted ambiguity, zero mislocated; conflict, tombstone, pending parent; cancel-retry and store reopen",
-    "strict same-source summary with 13 built-in rejection self-tests"
+    "Installed C/C++ component consumers and public-SDK probe on Linux, Windows and macOS.",
+    "Four artifact-relayed HTTPS directions, each send/receive-with-return/confirm, at the same source/run/attempt.",
+    "Authenticated raw-byte/inventory/transport/peer chain and strict negative cases."
   ],
   "not_granted": [
     "live six-device user cloud",
@@ -260,12 +470,286 @@
     "simulator, emulator or real device",
     "actual audio or speech",
     "performance",
-    "accessibility"
+    "accessibility",
+    "iOS/Android",
+    "non-WinHTTP Windows backends",
+    "Apache/Nextcloud interoperability",
+    "production cloud/device synchronization"
   ],
-  "note": "Initial record. Filled only from a real Actions run; a generated report is not functional acceptance.",
-  "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/40146644907",
-  "summary": {
+  "remaining_gaps": [
+    "This is artifact-relayed cross-OS compatibility, not live six-device product synchronization.",
+    "No host UI, mobile/simulator/real-device, actual audio/speech, performance or accessibility credit.",
+    "Root must integrate and run common-source acceptance; this branch is not merged."
+  ],
+  "historical_J22_delivery": {
+    "package": "J22 reader cross-OS relay",
+    "branch": "codex/reader-cross-os-relay",
+    "start_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+    "sdk_sha": "9854061be331fe603a1822d9b2b36ee357154927",
     "accepted": true,
-    "problems": []
+    "tested_source_sha": "908aa002e3ceb76fdce7f8a5b79f7773ee11d4ab",
+    "run": 40146644907,
+    "attempt": 1,
+    "directions": [
+      "linux-to-windows",
+      "windows-to-linux",
+      "linux-to-macos",
+      "macos-to-linux"
+    ],
+    "jobs": [
+      {
+        "id": 121029299408,
+        "name": "guard",
+        "conclusion": "success"
+      },
+      {
+        "id": 121029328236,
+        "name": "build (macOS)",
+        "conclusion": "success"
+      },
+      {
+        "id": 121029328241,
+        "name": "plan",
+        "conclusion": "success"
+      },
+      {
+        "id": 121029328286,
+        "name": "build (Linux)",
+        "conclusion": "success"
+      },
+      {
+        "id": 121029328296,
+        "name": "build (Windows)",
+        "conclusion": "success"
+      },
+      {
+        "id": 121030041501,
+        "name": "send linux-to-macos",
+        "conclusion": "success"
+      },
+      {
+        "id": 121030041503,
+        "name": "send linux-to-windows",
+        "conclusion": "success"
+      },
+      {
+        "id": 121030041536,
+        "name": "send macos-to-linux",
+        "conclusion": "success"
+      },
+      {
+        "id": 121030041545,
+        "name": "send windows-to-linux",
+        "conclusion": "success"
+      },
+      {
+        "id": 121030234974,
+        "name": "receive macos-to-linux",
+        "conclusion": "success"
+      },
+      {
+        "id": 121030234994,
+        "name": "receive windows-to-linux",
+        "conclusion": "success"
+      },
+      {
+        "id": 121030235012,
+        "name": "receive linux-to-macos",
+        "conclusion": "success"
+      },
+      {
+        "id": 121030235018,
+        "name": "receive linux-to-windows",
+        "conclusion": "success"
+      },
+      {
+        "id": 121030448336,
+        "name": "confirm linux-to-windows",
+        "conclusion": "success"
+      },
+      {
+        "id": 121030448337,
+        "name": "confirm linux-to-macos",
+        "conclusion": "success"
+      },
+      {
+        "id": 121030448349,
+        "name": "confirm windows-to-linux",
+        "conclusion": "success"
+      },
+      {
+        "id": 121030448450,
+        "name": "confirm macos-to-linux",
+        "conclusion": "success"
+      },
+      {
+        "id": 121030635510,
+        "name": "strict relay summary",
+        "conclusion": "success"
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 12581326765,
+        "name": "relay-plan-40146644907-1",
+        "size_in_bytes": 4523,
+        "digest": "sha256:9d201c019bc8d238efbcf77d577fcadf005e04588ea2ae6af7802e1a2c8b4758",
+        "expires_at": "2027-01-23T00:25:38Z"
+      },
+      {
+        "id": 12580448097,
+        "name": "relay-build-Linux-40146644907-1",
+        "size_in_bytes": 4788488,
+        "digest": "sha256:493b163fe77c2925f49e6b161f8aa1c04e7fcd5ae90ff3ac9817225ea224028f",
+        "expires_at": "2027-01-23T00:25:38Z"
+      },
+      {
+        "id": 12580663311,
+        "name": "relay-build-Windows-40146644907-1",
+        "size_in_bytes": 4371659,
+        "digest": "sha256:61fa7e3478898d5ff756d83752a39ff1959e1879bc896155fe029fd182f4e2a1",
+        "expires_at": "2027-01-23T00:25:38Z"
+      },
+      {
+        "id": 12580353239,
+        "name": "relay-build-macOS-40146644907-1",
+        "size_in_bytes": 4267412,
+        "digest": "sha256:4d6f3a550727f4fe5c624222373a89c86e730a6c3725bd0628cb0b82e1ac30db",
+        "expires_at": "2027-01-23T00:25:38Z"
+      },
+      {
+        "id": 12580188553,
+        "name": "relay-send-linux-to-windows-40146644907-1",
+        "size_in_bytes": 36514,
+        "digest": "sha256:c00c20d93672142ca7d72fb8f81d1e026965408eeef95d09bf34b1ec68892a22",
+        "expires_at": "2027-01-23T00:25:38Z"
+      },
+      {
+        "id": 12580683503,
+        "name": "relay-receive-linux-to-windows-40146644907-1",
+        "size_in_bytes": 46474,
+        "digest": "sha256:1301e3029a9b2fa3dd6f6ae70a7e111a0b27503161281c2dba1b1c88cfa2e6ba",
+        "expires_at": "2027-01-23T00:25:38Z"
+      },
+      {
+        "id": 12580868318,
+        "name": "relay-confirm-linux-to-windows-40146644907-1",
+        "size_in_bytes": 13795,
+        "digest": "sha256:8f75e6e20b58bf94277a15dd6a277e75b4bbd74b717d34dfe9ca5e71c50f8140",
+        "expires_at": "2027-01-23T00:25:38Z"
+      },
+      {
+        "id": 12581182564,
+        "name": "relay-send-windows-to-linux-40146644907-1",
+        "size_in_bytes": 36551,
+        "digest": "sha256:9571c18c268d93e45e691b84e046f284a94aaa378b62168d360951c08e0694d9",
+        "expires_at": "2027-01-23T00:25:38Z"
+      },
+      {
+        "id": 12580543159,
+        "name": "relay-receive-windows-to-linux-40146644907-1",
+        "size_in_bytes": 46363,
+        "digest": "sha256:f19c9c7524320ca6dc175413c7047db8ceaa6d218b76f9ffeeec9be0f6babbc0",
+        "expires_at": "2027-01-23T00:25:38Z"
+      },
+      {
+        "id": 12580848221,
+        "name": "relay-confirm-windows-to-linux-40146644907-1",
+        "size_in_bytes": 13863,
+        "digest": "sha256:b0c039ac9d71733f97dc719623dc7ec411d774b8db4b71cd6e0b0cca5c8610ee",
+        "expires_at": "2027-01-23T00:25:38Z"
+      },
+      {
+        "id": 12580753276,
+        "name": "relay-send-linux-to-macos-40146644907-1",
+        "size_in_bytes": 36538,
+        "digest": "sha256:8b9b618f528c1501d05f6e6c7f4d1a9a746472dcd579c5502b0ed51c90e7893f",
+        "expires_at": "2027-01-23T00:25:38Z"
+      },
+      {
+        "id": 12580498323,
+        "name": "relay-receive-linux-to-macos-40146644907-1",
+        "size_in_bytes": 46487,
+        "digest": "sha256:fc013390c1f7dd8bc1a93e6cbcdd93511bc6795d560fb1afdc74957e7a56095c",
+        "expires_at": "2027-01-23T00:25:38Z"
+      },
+      {
+        "id": 12580428479,
+        "name": "relay-confirm-linux-to-macos-40146644907-1",
+        "size_in_bytes": 13839,
+        "digest": "sha256:5ff514bb796a42494770b9fc529165e03affe58f5cb4043957570aca8a89715f",
+        "expires_at": "2027-01-23T00:25:38Z"
+      },
+      {
+        "id": 12580558074,
+        "name": "relay-send-macos-to-linux-40146644907-1",
+        "size_in_bytes": 36527,
+        "digest": "sha256:0f25b954623c36b06ee3d9a700580720126b7b1428ab4cb9dd8f9326561e8f22",
+        "expires_at": "2027-01-23T00:25:38Z"
+      },
+      {
+        "id": 12581132890,
+        "name": "relay-receive-macos-to-linux-40146644907-1",
+        "size_in_bytes": 46504,
+        "digest": "sha256:aee4bba18ee54b1a69295d7cfcedd34e64faae487ee2efb247647254f7d7c924",
+        "expires_at": "2027-01-23T00:25:38Z"
+      },
+      {
+        "id": 12581282617,
+        "name": "relay-confirm-macos-to-linux-40146644907-1",
+        "size_in_bytes": 13812,
+        "digest": "sha256:58a1b04b941094eb83fe1714eabcf9296388d17bdb1f7f8e8e2087974af7e115",
+        "expires_at": "2027-01-23T00:25:38Z"
+      }
+    ],
+    "consumer_sha256": {
+      "Linux": {
+        "relay_probe": "1aeb3f9c42fee0d8b655088db113966e7a72be8de71c01f5c96ce095d0790bde",
+        "relay_tool": "d3e68400eab7bfd84b246f3cd7097db2c77971896f63fc51cbf322eaf14a684f",
+        "component_checks": 33,
+        "failures": 0,
+        "skips": 0
+      },
+      "Windows": {
+        "relay_probe": "26331dc77570fe5130232918a8457f4f23e0ff4b5f355c2494ccc5278134df4f",
+        "relay_tool": "5974296e1f187647ba75addcca4b081cce9499f0caaf0fedc6b796188166be6f",
+        "component_checks": 33,
+        "failures": 0,
+        "skips": 1
+      },
+      "macOS": {
+        "relay_probe": "e3f74e10e5d76cb302af47b947abd364beefdf8095251bcf0e7fdba19aa63fa0",
+        "relay_tool": "40afa3bf86878e57aa41cac1a8f8b1560df8cbca4ad2fb878c0ba65db1a9b3fc",
+        "component_checks": 33,
+        "failures": 0,
+        "skips": 0
+      }
+    },
+    "original_failures": [
+      "run 40139319049 (7ff0a7d8): plan failed by design before the digests were pinned; Linux/macOS builds failed at artifact upload because of a scratch file named with a double quote",
+      "run 40139621500 (e168fd62): all receive/confirm jobs failed - my probe demanded zero pending counters after each shard instead of after the full sweep, and expected the merged tag to remain conflicted",
+      "run 40142080783 (5ebe5611): Windows receive/confirm hung to the 600 s timeout ; changed to 127.0.0.1 off macOS (suspected IPv6-first localhost delay, not separately proven) and the next run passed",
+      "run 40146089096 (9f2c7077): all stages passed, summary rejected because the receive result lacked the consumed inventory digest"
+    ],
+    "granted_scope": [
+      "installed exr_relay component plus installed C/C++ consumers on Linux, Windows and macOS (31 named cases each, pure C consumer exit 0)",
+      "artifact-relayed Linux->Windows, Windows->Linux, Linux->macOS, macOS->Linux: send, receive-with-return, confirm, same source/run/attempt",
+      "four original formats by pinned SHA-256; Unicode NFC/NFD/Russian/emoji metadata; 17 FOUND + 1 planted ambiguity, zero mislocated; conflict, tombstone, pending parent; cancel-retry and store reopen",
+      "strict same-source summary with 13 built-in rejection self-tests"
+    ],
+    "not_granted": [
+      "live six-device user cloud",
+      "host UI",
+      "simulator, emulator or real device",
+      "actual audio or speech",
+      "performance",
+      "accessibility"
+    ],
+    "note": "Initial record. Filled only from a real Actions run; a generated report is not functional acceptance.",
+    "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/40146644907",
+    "summary": {
+      "accepted": true,
+      "problems": []
+    }
   }
 }

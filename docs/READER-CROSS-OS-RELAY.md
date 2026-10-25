@@ -6,8 +6,32 @@
 `codex/dot-cross-os-relay-review`。下方 J22 历史证据只属于其原受测源码，不能授予复审修改。
 确认并修复：汇总未拒绝重复 ZIP/JSON、未完整认证完成状态/实际 run/平台、包身份与原始字节链未被独立汇总约束，
 以及接收端本地清单校验失败后仍继续启动服务的问题。保留原 13 项汇总负例与所有原生用例，增加拒绝例；
-同时保存并绑定实际安装后 C/C++ 消费者、probe 和 tool 二进制。新源码的验收等待 Actions 实际运行。
+同时保存并绑定实际安装后 C/C++ 消费者、probe 和 tool 二进制。
 本次不在本地运行构建、测试、语法检查、夹具、服务，也不下载或解析工件。
+
+复审受测源码 **`696dfaebdce42a53217d8df66a469a9578a92095`**，
+[run 40164760850 / attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40164760850)
+全部 **18 个作业 completed/success**；严格汇总 job **121089753718** 输出 `accepted=true, problems=[]`。
+四方向均完成 send、receive-with-return、confirm；公开 SDK 在接收端和确认端各回读 18 类捕获，
+17 FOUND / 1 planted AMBIGUOUS / 0 mislocated。三平台原生消费者各 33 项检查、0 失败；Windows 1 项允许跳过，
+纯 C 消费者各退出 0。旧 13 项汇总拒绝测试全部保留，现有 59 次拒绝测试通过（58 个不同日志标签；
+`API artifact workflow_run` 分别覆盖错 run 与错 source）。
+
+严格汇总在 Actions 内逐一下载并重算 **16 个上游 ZIP** 的字节数/SHA-256，对照 API digest，
+认证 17 个上游作业的 source/run/attempt、完成状态与 runner 平台；同时核实原始目录成员、
+不可变原件、双方传输记录及 C/C++ consumer/probe/tool 四种实际二进制。
+汇总工件 `relay-summary-40164760850-1`：ID `12588673127`，2250 字节，
+API/上传日志 SHA-256 `303b247951ebab7fbd26ef8b24e9a78b2ed694b039160157ce7a9df8cb69fa2c`，
+有效期 `2027-01-23T05:13:46Z`；该汇总工件不宣称由自身递归重算。
+完整作业、上游工件 ID/大小/digest/有效期、二进制散列及拒绝测试名称见验收 JSON。
+
+本轮只有一次 Actions run，无新失败；macOS 排队不是测试失败。历史失败和 J22 本地工件读取披露保留在下文及
+验收 JSON 的 `historical_J22_delivery`。最终 `[skip ci]` 证据提交相对受测源码仅改变本文和验收 JSON，
+未把文档 HEAD 当成新的受测源码。证据来自 GitHub API 与 Actions 汇总日志，不作本地工件下载/解析。
+仍仅授予制品中继跨 OS 兼容：不授予实时六设备云同步、UI、iOS/Android、模拟器/真机、音频/朗读、
+性能或无障碍；本分支未合入，交 root 做共同源码集成验收。
+
+## 原 J22 交付历史（以下证据不归复审源码）
 
 固定起点 `f43baf9182d75907c0cb5d6f77048f27bca8c950`，SDK `9854061b…`/3.40.0/ABI 1，
 产品 schema1 与既有 wire v1、reading anchor v1/v2 均不改。只增加
