@@ -28,7 +28,8 @@ def load(out):
       meta['workflow_run']['head_sha']==SOURCE and meta['workflow_run']['id']==RUN,'Mac artifact identity differs')
     bundle=Bundle(meta);out.mkdir(parents=True,exist_ok=False)
     try:
-        report=bundle.report('result.json');require(report['accepted'] and report['source_sha']==SOURCE and str(report['run_id'])==str(RUN) and str(report['attempt'])=='1','foreign Mac report')
+        root=bundle.zip.getinfo('result.json');require(root.file_size<=8*1024**2,'Mac root report too large')
+        report=json.loads(bundle.zip.read(root));require(report['accepted'] and report['source_sha']==SOURCE and str(report['run_id'])==str(RUN) and str(report['attempt'])=='1','foreign Mac report')
         for path,entry in report['files'].items():
             data=bundle.bytes(path,128*1024**2)
             require(len(data)==entry['bytes'] and hashlib.sha256(data).hexdigest()==entry['sha256'],'Mac inventoried member differs')

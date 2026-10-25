@@ -17,6 +17,9 @@ def validate(value,source,run,attempt):
     identity(value,source,run,attempt)
     require(value.get('accepted') is True and value.get('built') is True,'raw owner build or cases incomplete')
     require(all(value.get(key) is False for key in ('complete_product','performance_accepted','six_platform_accepted','physical_device_execution')),'broader raw grant')
+    profiles=value.get('profile_refusals',[])
+    require(len(profiles)==4 and {r['name'] for r in profiles}=={'raw-host-old-family','legacy-host-raw-family','escaped-header','escaped-archive'} and
+      all(r['rejected'] is True and r['exit_code']==1 for r in profiles),'actual installed family/origin refusals missing')
     phases=value.get('phases',[]);names={row['label'] for row in phases}
     expected={'raw-seed','raw-reopen','raw-retry-before','raw-verify-before','raw-retry-after','raw-verify-after','legacy-seed','raw-retained-v1-v2',
       'legacy-exact-raw-retry-before','legacy-exact-raw-retry-after','mac11-owner','mac11-reopen','mac-null-owner','mac-null-reopen'}
@@ -28,6 +31,7 @@ def validate(value,source,run,attempt):
     require(len(refusal)==2 and {r['stage'] for r in refusal}=={'before','after'} and all(r['legacy_exit']==1 and r['pending_bytes']>0 for r in refusal),'legacy native intent refusal missing')
     network=value.get('network',{});peer=network.get('peer',{})
     require(peer.get('artifact',{}).get('id')==12600789926 and peer.get('source_sha')=='15dab6b2270dc296ed6239db67ced2e22d255e65' and
+      peer.get('run_id')==40196978163 and peer.get('attempt')==1 and peer.get('artifact',{}).get('digest')=='sha256:92be56ffa04d7c334d4811a42821a314089b4f8ae01746f0dfdf456b5eab9bd5' and
       peer.get('reading_records')==11 and peer.get('wire_count')==15 and peer.get('original_count')==4,'authentic Mac packet missing')
     rows=network.get('phases',[])
     require(len(rows)==2 and {row['label'] for row in rows}=={'mac11','mac-null'} and
@@ -38,7 +42,7 @@ def validate(value,source,run,attempt):
 
 def selftest():
     # Refusal protocol is exercised against the real completed raw report below.
-    return [('accepted',False),('built',False),('phases',[]),('kills',[]),('legacy_native_pending_refusals',[]),('network',{})]
+    return [('accepted',False),('built',False),('phases',[]),('kills',[]),('legacy_native_pending_refusals',[]),('network',{}),('profile_refusals',[])]
 
 
 def main():
@@ -71,7 +75,9 @@ def main():
         try:
             value=raw.report('result.json');validate(value,source,run,attempt)
             negatives=0
-            for key,replacement in selftest()+[(key,True) for key in ('complete_product','performance_accepted','six_platform_accepted','physical_device_execution')]:
+            mutations=selftest()+[(key,True) for key in ('complete_product','performance_accepted','six_platform_accepted','physical_device_execution')]+[
+              ('source_sha','foreign'),('run_id',0),('attempt',0)]
+            for key,replacement in mutations:
                 bad=copy.deepcopy(value);bad[key]=replacement
                 try:validate(bad,source,run,attempt)
                 except (ValueError,KeyError,TypeError):negatives+=1;continue
@@ -83,6 +89,9 @@ def main():
                   all(item['passed'] is True for item in report['checks']),'actual owner process checks incomplete')
             spec=importlib.util.spec_from_file_location('raw_actual_compact_ui',ROOT/'tests/reader_gtk_compact/aggregate.py');compact=importlib.util.module_from_spec(spec);spec.loader.exec_module(compact)
             binary=raw.bytes('package/EXReader-Linux/bin/exreader-linux',64*1024**2);program=hashlib.sha256(binary).hexdigest()
+            require(program!=old['on_program_sha256'],'raw actual program substituted with legacy compact program')
+            cache=raw.bytes('raw-owner/CMakeCache.txt',2*1024**2).decode()
+            require('EXR_READER_GTK_RAW3:BOOL=ON' in cache and 'EXR_SDK_VERSION:STRING=3.41.0' in cache,'actual raw host/SDK flags absent')
             ui=raw.report('raw-ui/report.json');count=compact.validate_ui(ui,source,run,attempt,program);require(count==45,'raw compact UI cases changed')
             mapping=raw.bytes('raw-owner/actual-owner/gtk-account-host.map',32*1024**2)
             for symbol in (b'reader_revisions_open_raw_v3',b'reader_metadata_open_raw_v3',b'reader_session_create_raw_v3',b'reader_rs_decode_raw_v3',
