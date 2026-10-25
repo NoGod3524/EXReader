@@ -24,18 +24,20 @@ def main():
     source, run, attempt = (os.environ[key] for key in ('GITHUB_SHA', 'GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT'))
     expected_jobs = {'SDK3.41 and installed products macos', 'SDK3.41 and installed products iphonesimulator',
                      'Original OFF ON pixels and theme transaction checks', 'Real page theme UI macos',
-                     'Real page theme UI iphone', 'Real page theme UI ipad'}
+                     'Real page theme UI iphone', 'Real page theme UI ipad',
+                     'Real initialization and same-turn import publication'}
     jobs = fetch('actions/runs/' + run + '/attempts/' + attempt + '/jobs?per_page=100')
     producers = [row for row in jobs['jobs'] if row['name'] in expected_jobs]
-    require(jobs['total_count'] == 7 and len(producers) == 6 and {row['name'] for row in producers} == expected_jobs,
+    require(jobs['total_count'] == 8 and len(producers) == 7 and {row['name'] for row in producers} == expected_jobs,
             'missing/duplicate producer job')
     require(all(row['status'] == 'completed' and row['conclusion'] == 'success' and row['head_sha'] == source and
                 row['run_attempt'] == int(attempt) for row in producers), 'producer failed or source/attempt differs')
     artifact_names = {'apple-theme-sdk-' + target + '-' + run + '-' + attempt for target in ('macos', 'iphonesimulator')}
     artifact_names |= {'apple-theme-native-' + run + '-' + attempt}
+    artifact_names |= {'apple-theme-fast-import-' + run + '-' + attempt}
     artifact_names |= {'apple-theme-ui-' + target + '-' + run + '-' + attempt for target in ('macos', 'iphone', 'ipad')}
     artifacts = fetch('actions/runs/' + run + '/artifacts?per_page=100')
-    require(artifacts['total_count'] == 6 and {row['name'] for row in artifacts['artifacts']} == artifact_names,
+    require(artifacts['total_count'] == 7 and {row['name'] for row in artifacts['artifacts']} == artifact_names,
             'missing/duplicate/foreign artifact')
     now = datetime.datetime.now(datetime.timezone.utc); retained = []
     for artifact in artifacts['artifacts']:
@@ -62,8 +64,12 @@ def main():
                 require(sdk['sdk_version'] == '3.41.0' and sdk['abi'] == 1 and
                         guard['candidate_input_authenticated'] is True and guard['theme_accepted'] is False and
                         guard['sdk_source'] == 'edddc463c06ed5731195cdb8f06b2df6dff7699e' and
-                        guard['record_compatibility_delivery'] == 'a67ad5e62f3b87e83bc9b775fa499cf30fda0cf4' and
-                        len(guard['negative_checks']) == 78,
+                        guard['record_compatibility_delivery'] == 'e8ed25c1cd7ccb33405611e27f9ad47fba8c9e34' and
+                        guard['post_merge_base'] == '902a73bd9984649000d63e96d5056b16daf28c85' and
+                        guard['module_source'] == 'f680aeaddfb1ecc67ead353554f5b91a5703f72f' and
+                        guard['android_java_policy_source'] == 'b1a7b7891cd394671842164a07a86c8e316dace3' and
+                        guard['actual_android_host_interop_accepted'] is False and
+                        len(guard['negative_checks']) == len(set(guard['negative_checks'])) == 57 + len(guard['protected_trees']),
                         'SDK or source guard differs')
                 reports = {'sdk': sdk, 'guard': guard}
             elif artifact['name'].startswith('apple-theme-native-'):
@@ -84,6 +90,16 @@ def main():
                     require(provider['static_sdk_linked'] is False and provider['binary_sha256'] == value['binaries'][mode]['sha256'] ==
                             hashlib.sha256(archive.read('theme-review-' + mode)).hexdigest(), 'native executable/provider differs')
                 reports['native'] = value; reports['protocol'] = protocol
+            elif artifact['name'].startswith('apple-theme-fast-import-'):
+                value = report('report.json')
+                require(value['accepted_fast_import_fixture_only'] is True and len(value['cases']) == 2 and
+                        all(row['result'] == 'Passed' for row in value['cases']) and
+                        value['sdk_producer_source'] == source and value['sdk_producer_run'] == int(run) and
+                        value['sdk_producer_attempt'] == int(attempt) and value['provider']['static_sdk_linked'] is False,
+                        'same-source initialization/publication fixtures incomplete')
+                require(hashlib.sha256(archive.read('program/EXReaderHost.app/EXReaderHost')).hexdigest() ==
+                        value['provider']['binary_sha256'], 'initialization/publication executable differs')
+                reports['initialization_and_publication'] = value
             else:
                 value = report('evidence/theme-ui.json')
                 require(value['accepted'] is True and len(value['cases']) == len(value['observations']) == 4 and

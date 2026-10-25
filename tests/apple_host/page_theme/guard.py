@@ -8,8 +8,12 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[3]
 BASE = '9ee1053b83fcf934e6f0891eb77d468fc394da1e'
 SDK = 'edddc463c06ed5731195cdb8f06b2df6dff7699e'
-COMPATIBILITY = 'a67ad5e62f3b87e83bc9b775fa499cf30fda0cf4'
-BRANCH = 'codex/reader-apple-page-theme'
+FINAL_BASE = '902a73bd9984649000d63e96d5056b16daf28c85'
+MODULE_BASE = 'f680aeaddfb1ecc67ead353554f5b91a5703f72f'
+COMPATIBILITY = 'e8ed25c1cd7ccb33405611e27f9ad47fba8c9e34'
+ANDROID_POLICY = 'b1a7b7891cd394671842164a07a86c8e316dace3'
+OLD_SDK = '9854061be331fe603a1822d9b2b36ee357154927'
+BRANCH = 'codex/reader-apple-hosts-final'
 WORKFLOWS = ('reader-apple-navigation.yml', 'reader-apple-search.yml',
              'reader-apple-reading-records.yml', 'reader-apple-shelf.yml',
              'reader-apple-import-mapping.yml', 'wp13-apple.yml')
@@ -33,6 +37,23 @@ OWNED = {'examples/apple/HostModel.swift', 'examples/apple/HostSDK.swift', 'exam
          'docs/READER-APPLE-PAGE-THEME.md', 'docs/validation/reader-apple-page-theme.json'}
 OWNED |= {'.github/workflows/' + name for name in WORKFLOWS}
 OWNED |= set(COMPATIBILITY_PATHS)
+ANDROID_PATHS = tuple('examples/android/app/src/main/java/org/exreader/host/' + name
+                      for name in ('NativeReadingSdk.java', 'NativeCbz.java', 'ReadingParserPolicy.java'))
+OWNED |= set(ANDROID_PATHS)
+OWNED |= {'.github/workflows/reader-apple-shelf-publication.yml', '.github/workflows/reader-apple-hosts-preflight.yml',
+          'docs/READER-APPLE-SHELF-PUBLICATION.md', 'docs/validation/reader-apple-shelf-publication.json',
+          'docs/READER-APPLE-HOSTS-FINAL.md', 'docs/validation/reader-apple-hosts-final.json'}
+FINAL_PINNED = ('examples/apple', 'extras', 'tools/build_apple_product.py', 'tools/build_apple_host.py',
+                'tests/apple_host/make_xcodeproj.rb', 'tests/apple_host/navigation', 'tests/apple_host/search',
+                'tests/apple_host/reading', 'tests/apple_host/shelf', 'tests/apple_host/import_mapping',
+                'tests/apple_host/page_theme/ThemeReview.swift', 'tests/apple_host/page_theme/collect_ui.py',
+                'tests/apple_host/page_theme/prepare_fixtures.py', 'tests/apple_host/page_theme/run_native.py',
+                'tests/apple_host/page_theme/run_ui.py', 'tests/apple_host/page_theme/test_protocol.py',
+                'tests/apple_host/page_theme/ui', 'tests/apple_host/page_theme/fast_import_ui')
+FINAL_PINNED += tuple('tests/apple_host/' + name for name in (
+    'EXReaderHostUITests.swift', 'accessibility', 'account', 'assemble_validation.py', 'bounded_review',
+    'collect_evidence.py', 'evidence_contract.py', 'prepare_fixtures.py', 'resolve_container.py',
+    'review', 'review_evidence_gate.py', 'run_bounded_review.py', 'run_sdk_review.py', 'sdk_review'))
 
 
 def require(value, message):
@@ -69,9 +90,13 @@ def main():
     require(git('rev-parse', 'HEAD') == os.environ['GITHUB_SHA'], 'checkout source differs')
     subprocess.run(['git', '-C', str(ROOT), 'merge-base', '--is-ancestor', BASE, 'HEAD'], check=True)
     subprocess.run(['git', '-C', str(ROOT), 'merge-base', '--is-ancestor', COMPATIBILITY, 'HEAD'], check=True)
+    subprocess.run(['git', '-C', str(ROOT), 'merge-base', '--is-ancestor', FINAL_BASE, 'HEAD'], check=True)
     expected = {path: git('rev-parse', SDK + ':' + path) for path in SDK_PATHS}
-    expected.update({path: git('rev-parse', BASE + ':' + path) for path in MODULE_PATHS})
+    expected.update({path: git('rev-parse', MODULE_BASE + ':' + path) for path in MODULE_PATHS})
+    expected['apps/reader'] = git('rev-parse', MODULE_BASE + ':apps/reader')
     expected.update({path: git('rev-parse', COMPATIBILITY + ':' + path) for path in COMPATIBILITY_PATHS})
+    expected.update({path: git('rev-parse', FINAL_BASE + ':' + path) for path in FINAL_PINNED})
+    expected.update({path: git('rev-parse', ANDROID_POLICY + ':' + path) for path in ANDROID_PATHS})
     actual = {path: git('rev-parse', 'HEAD:' + path) for path in expected}
     validate_trees(actual, expected)
     paths = git('diff', '--name-only', BASE, 'HEAD').splitlines()
@@ -114,7 +139,9 @@ def main():
               'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'candidate_input_authenticated': True,
               'sdk_source': SDK, 'sdk_version': '3.41.0', 'sdk_abi': 1, 'theme_accepted': False,
               'record_compatibility_delivery': COMPATIBILITY,
-              'record_compatibility_scope': 'independent macOS exact-source point-record owner evidence only',
+              'record_compatibility_scope': 'exact known parser spellings; actual Android writer exchange not granted',
+              'post_merge_base': FINAL_BASE, 'module_source': MODULE_BASE, 'old_sdk_source': OLD_SDK,
+              'android_java_policy_source': ANDROID_POLICY, 'actual_android_host_interop_accepted': False,
               'legacy_workflows_unchanged': list(WORKFLOWS), 'negative_checks': checks,
               'protected_trees': expected, 'complete_product': False}
     destination = ROOT / 'build/apple-page-theme/guard.json'

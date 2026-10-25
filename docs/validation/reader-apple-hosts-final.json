@@ -1,0 +1,27 @@
+{
+  "accepted": false,
+  "branch": "codex/reader-apple-hosts-final",
+  "source_sha": null,
+  "post_merge_base": "902a73bd9984649000d63e96d5056b16daf28c85",
+  "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "old_sdk_source": "9854061be331fe603a1822d9b2b36ee357154927",
+  "module_source": "f680aeaddfb1ecc67ead353554f5b91a5703f72f",
+  "publication_delivery": "897f8973c1a8c74fa5aaf9a470d02e6914faeded",
+  "parser_delivery": "e8ed25c1cd7ccb33405611e27f9ad47fba8c9e34",
+  "android_java_policy_source": "b1a7b7891cd394671842164a07a86c8e316dace3",
+  "actual_android_host_interop_accepted": false,
+  "runs": [],
+  "historical_source": "f4aa876c4e077201ade122c6a558a90731327daa",
+  "historical_runs": [
+    {"group": "theme", "id": 40174318190, "attempt": 2, "conclusion": "failure", "reason": "iPhone pre-Xcode appearance command exceeded unchanged 45-second timeout"},
+    {"group": "navigation", "id": 40174363253, "attempt": 1, "conclusion": "failure", "reason": "iPad first import has no library row"},
+    {"group": "search", "id": 40174365142, "attempt": 1, "conclusion": "failure", "reason": "iPad first import has no library row"},
+    {"group": "records", "id": 40174367348, "attempt": 1, "conclusion": "failure", "reason": "iPad first import has no library row"},
+    {"group": "shelf", "id": 40174369194, "attempt": 1, "conclusion": "success"},
+    {"group": "mapping", "id": 40174370909, "attempt": 1, "conclusion": "success"},
+    {"group": "wp13", "id": 40174372884, "attempt": 1, "conclusion": "success"}
+  ],
+  "diagnostic_run": 40181597278,
+  "physical_device_execution": false,
+  "complete_product": false
+}

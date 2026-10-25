@@ -1,0 +1,27 @@
+name: Apple final host source preflight
+on:
+  push:
+    branches: [codex/reader-apple-hosts-final]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Exact merged production pins and unchanged original six suites
+        run: python3 tests/apple_host/page_theme/guard.py
+      - name: Syntax checks reserved for Actions
+        run: |
+          python3 -m compileall -q tests/apple_host/page_theme tests/apple_host/record_compatibility tools/build_apple_host.py tools/build_apple_product.py
+          ruby -c tests/apple_host/make_xcodeproj.rb
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-hosts-final-preflight-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-page-theme/guard.json
+          if-no-files-found: error
