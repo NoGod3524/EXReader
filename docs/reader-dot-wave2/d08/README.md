@@ -1,6 +1,6 @@
 # D08 — fresh-source Windows audit
 
-Not executed: `accepted=false`. Target 9321de84eb9c8d3d57cafbeaa8b0a28fe2a26a08, harness base 0889f7d1e9a537c6c1b05456547e016b26e1cd85, approved SDK edddc463c06ed5731195cdb8f06b2df6dff7699e. Build fresh installed compact ON/raw3 OFF/review OFF program; record caches, Ninja flags, compile commands, map and executable. No owner changes.
+Final audit executed in run40226179285/1 at harnessd885475a6eb93677055b27d168a7f50e601bf6b4; native and strict jobs succeeded, but `accepted=false`. See `HANDOFF-RESULT-D08.md` for final identities, all failures, incomplete scopes and original ZIP authentication. Target 9321de84eb9c8d3d57cafbeaa8b0a28fe2a26a08, harness base 0889f7d1e9a537c6c1b05456547e016b26e1cd85, approved SDK edddc463c06ed5731195cdb8f06b2df6dff7699e. Build fresh installed compact ON/raw3 OFF/review OFF program; record caches, Ninja flags, compile commands, map and executable. No owner changes.
 
 12 requested configurations: 100/150/200 × normal/high contrast × original/default and 700×480 requested size. Requested DPI is not measured DPI: mismatches fail coverage. Native SendInput drives picker/import/open, reading search/directory/records/settings, shelf return and independent shelf search. Modal focus must be an enabled visible descendant, not an arbitrary nonzero HWND. Actual per-control client screenshots avoid screen/client coordinate mixing; sampled foreground/background pixels retain coordinates/counts. No whole-interface contrast or glyph clipping grant without sufficient evidence.
 

@@ -1,1 +1,2560 @@
-{"accepted":false,"executed":false,"screen_reader_accepted":false}
+{
+  "package": "D08",
+  "accepted": false,
+  "evidence_authentication_verified": true,
+  "keyboard_accepted": false,
+  "contrast_accepted": false,
+  "screen_reader_accepted": false,
+  "physical_accepted": false,
+  "harness_sha": "d885475a6eb93677055b27d168a7f50e601bf6b4",
+  "target_sha": "9321de84eb9c8d3d57cafbeaa8b0a28fe2a26a08",
+  "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "run_id": 40226179285,
+  "attempt": 1,
+  "jobs": [
+    {
+      "id": 121267922718,
+      "name": "d08-native",
+      "conclusion": "success"
+    },
+    {
+      "id": 121270374447,
+      "name": "d08-strict",
+      "conclusion": "success"
+    }
+  ],
+  "program_sha256": "77eb216cae2f48556811c507a9505de5bb6cee57b40c52714ce13c82bfa105b5",
+  "configuration": "compact ON; raw3 OFF; preference-review OFF",
+  "artifacts": [
+    {
+      "id": 12610794664,
+      "bytes": 24944030,
+      "sha256": "c3e48e80c3678aa1a68fe04bdc043d32d8ccb37783ac584fc3158386da3ead5f",
+      "expires_at": "2026-11-24T19:38:27Z",
+      "authentication": "original ZIP downloaded and authenticated only inside same-run strict Actions"
+    },
+    {
+      "id": 12611760570,
+      "bytes": 249824,
+      "sha256": "b55b28cc9391db42a3c666e17b62eb1752ddf9fd5e733f92e1e3d1640336e3c3",
+      "expires_at": "2026-11-24T19:38:50Z",
+      "authentication": "upload digest and API metadata, not recursively downloaded"
+    }
+  ],
+  "configurations": [
+    {
+      "configuration": "100-normal-default",
+      "checks": {
+        "dpi": "pass",
+        "layout": "fail",
+        "contrast": "pending",
+        "import-open": "pass",
+        "search": "pass",
+        "directory": "pass",
+        "records": "pass",
+        "settings": "pass",
+        "return-focus": "pass"
+      },
+      "shelf_search": {
+        "status": "fail",
+        "actual": {
+          "focus": [
+            {
+              "hwnd": 328422,
+              "parent": 393822,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找文字(Q)",
+                "name_source": "com",
+                "control_type": "EditControl",
+                "control_type_id": 50004,
+                "class_name": "Edit",
+                "automation_id": "171",
+                "localized_type": "edit",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+q",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 1464,
+                "native_hwnd": 328422,
+                "rect": [
+                  288,
+                  197,
+                  692,
+                  223
+                ]
+              }
+            },
+            {
+              "hwnd": 197370,
+              "parent": 393822,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找(F)",
+                "name_source": "com",
+                "control_type": "ButtonControl",
+                "control_type_id": 50000,
+                "class_name": "Button",
+                "automation_id": "172",
+                "localized_type": "button",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+f",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 1464,
+                "native_hwnd": 197370,
+                "rect": [
+                  704,
+                  197,
+                  812,
+                  223
+                ]
+              }
+            },
+            {
+              "hwnd": 328422,
+              "parent": 393822,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找文字(Q)",
+                "name_source": "com",
+                "control_type": "EditControl",
+                "control_type_id": 50004,
+                "class_name": "Edit",
+                "automation_id": "171",
+                "localized_type": "edit",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+q",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 1464,
+                "native_hwnd": 328422,
+                "rect": [
+                  288,
+                  197,
+                  692,
+                  223
+                ]
+              }
+            }
+          ],
+          "before": {
+            "hwnd": 393284,
+            "parent": 327866,
+            "descendant": true,
+            "visible": true,
+            "enabled": true,
+            "uia": {
+              "name": "《Reading sample》 — 未知作者 · TXT",
+              "name_source": "com",
+              "control_type": "ListItemControl",
+              "control_type_id": 50007,
+              "class_name": "",
+              "automation_id": "",
+              "localized_type": "list item",
+              "enabled": true,
+              "keyboard_focusable": true,
+              "has_focus": true,
+              "offscreen": false,
+              "help_text": "",
+              "access_key": "",
+              "accelerator_key": "",
+              "framework": "",
+              "process_id": 1464,
+              "native_hwnd": 0,
+              "rect": [
+                22,
+                125,
+                1022,
+                138
+              ]
+            }
+          },
+          "after": {
+            "hwnd": 66120,
+            "parent": 327866,
+            "descendant": true,
+            "visible": false,
+            "enabled": true,
+            "uia": {
+              "name": "阅读区域",
+              "name_source": "com",
+              "control_type": "DocumentControl",
+              "control_type_id": 50030,
+              "class_name": "EXReaderPage",
+              "automation_id": "IDC_PAGE",
+              "localized_type": "正文",
+              "enabled": true,
+              "keyboard_focusable": true,
+              "has_focus": true,
+              "offscreen": false,
+              "help_text": "选择文字后可复制引用或添加标注",
+              "access_key": "",
+              "accelerator_key": "",
+              "framework": "Win32",
+              "process_id": 1464,
+              "native_hwnd": 66120,
+              "rect": [
+                20,
+                99,
+                1024,
+                744
+              ]
+            }
+          },
+          "dialog": 393822,
+          "closed": true
+        },
+        "snapshots": [
+          "0094-100-normal-default-shelf-search-tab.json",
+          "0095-100-normal-default-shelf-search-closed.json"
+        ]
+      },
+      "dpi": {
+        "window_dpi": 96,
+        "monitor_scale": {
+          "hresult": 0,
+          "scale_percent": 100
+        },
+        "awareness": 0
+      },
+      "contrast_readback": {
+        "set_return": true,
+        "flags": 126
+      },
+      "contrast_samples": 75,
+      "measured_pairs": 49,
+      "measured_ratios": [
+        18.427342383975944,
+        21
+      ],
+      "loaded_modules": 38,
+      "loaded_modules_error": null,
+      "screenshots": 96
+    },
+    {
+      "configuration": "100-normal-small",
+      "checks": {
+        "dpi": "pass",
+        "layout": "pass",
+        "contrast": "pending",
+        "import-open": "pass",
+        "search": "pass",
+        "directory": "pass",
+        "records": "pass",
+        "settings": "pass",
+        "return-focus": "pass"
+      },
+      "shelf_search": {
+        "status": "fail",
+        "actual": {
+          "focus": [
+            {
+              "hwnd": 197400,
+              "parent": 328316,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找文字(Q)",
+                "name_source": "com",
+                "control_type": "EditControl",
+                "control_type_id": 50004,
+                "class_name": "Edit",
+                "automation_id": "171",
+                "localized_type": "edit",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+q",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 1152,
+                "native_hwnd": 197400,
+                "rect": [
+                  262,
+                  171,
+                  666,
+                  197
+                ]
+              }
+            },
+            {
+              "hwnd": 524904,
+              "parent": 328316,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找(F)",
+                "name_source": "com",
+                "control_type": "ButtonControl",
+                "control_type_id": 50000,
+                "class_name": "Button",
+                "automation_id": "172",
+                "localized_type": "button",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+f",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 1152,
+                "native_hwnd": 524904,
+                "rect": [
+                  678,
+                  171,
+                  786,
+                  197
+                ]
+              }
+            },
+            {
+              "hwnd": 197400,
+              "parent": 328316,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找文字(Q)",
+                "name_source": "com",
+                "control_type": "EditControl",
+                "control_type_id": 50004,
+                "class_name": "Edit",
+                "automation_id": "171",
+                "localized_type": "edit",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+q",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 1152,
+                "native_hwnd": 197400,
+                "rect": [
+                  262,
+                  171,
+                  666,
+                  197
+                ]
+              }
+            }
+          ],
+          "before": {
+            "hwnd": 196796,
+            "parent": 131664,
+            "descendant": true,
+            "visible": true,
+            "enabled": true,
+            "uia": {
+              "name": "《Reading sample》 — 未知作者 · TXT",
+              "name_source": "com",
+              "control_type": "ListItemControl",
+              "control_type_id": 50007,
+              "class_name": "",
+              "automation_id": "",
+              "localized_type": "list item",
+              "enabled": true,
+              "keyboard_focusable": true,
+              "has_focus": true,
+              "offscreen": false,
+              "help_text": "",
+              "access_key": "",
+              "accelerator_key": "",
+              "framework": "",
+              "process_id": 1152,
+              "native_hwnd": 0,
+              "rect": [
+                22,
+                125,
+                678,
+                138
+              ]
+            }
+          },
+          "after": {
+            "hwnd": 197174,
+            "parent": 131664,
+            "descendant": true,
+            "visible": false,
+            "enabled": true,
+            "uia": {
+              "name": "阅读区域",
+              "name_source": "com",
+              "control_type": "DocumentControl",
+              "control_type_id": 50030,
+              "class_name": "EXReaderPage",
+              "automation_id": "IDC_PAGE",
+              "localized_type": "正文",
+              "enabled": true,
+              "keyboard_focusable": true,
+              "has_focus": true,
+              "offscreen": false,
+              "help_text": "选择文字后可复制引用或添加标注",
+              "access_key": "",
+              "accelerator_key": "",
+              "framework": "Win32",
+              "process_id": 1152,
+              "native_hwnd": 197174,
+              "rect": [
+                20,
+                99,
+                680,
+                436
+              ]
+            }
+          },
+          "dialog": 328316,
+          "closed": true
+        },
+        "snapshots": [
+          "0190-100-normal-small-shelf-search-tab.json",
+          "0191-100-normal-small-shelf-search-closed.json"
+        ]
+      },
+      "dpi": {
+        "window_dpi": 96,
+        "monitor_scale": {
+          "hresult": 0,
+          "scale_percent": 100
+        },
+        "awareness": 0
+      },
+      "contrast_readback": {
+        "set_return": true,
+        "flags": 126
+      },
+      "contrast_samples": 75,
+      "measured_pairs": 49,
+      "measured_ratios": [
+        18.427342383975944,
+        21
+      ],
+      "loaded_modules": 37,
+      "loaded_modules_error": null,
+      "screenshots": 96
+    },
+    {
+      "configuration": "100-high-default",
+      "checks": {
+        "dpi": "pass",
+        "layout": "fail",
+        "contrast": "pending",
+        "import-open": "pass",
+        "search": "pass",
+        "directory": "pass",
+        "records": "pass",
+        "settings": "pass",
+        "return-focus": "pass"
+      },
+      "shelf_search": {
+        "status": "fail",
+        "actual": {
+          "focus": [
+            {
+              "hwnd": 393908,
+              "parent": 590286,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找文字(Q)",
+                "name_source": "com",
+                "control_type": "EditControl",
+                "control_type_id": 50004,
+                "class_name": "Edit",
+                "automation_id": "171",
+                "localized_type": "edit",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+q",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 6648,
+                "native_hwnd": 393908,
+                "rect": [
+                  262,
+                  171,
+                  666,
+                  197
+                ]
+              }
+            },
+            {
+              "hwnd": 524946,
+              "parent": 590286,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找(F)",
+                "name_source": "com",
+                "control_type": "ButtonControl",
+                "control_type_id": 50000,
+                "class_name": "Button",
+                "automation_id": "172",
+                "localized_type": "button",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+f",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 6648,
+                "native_hwnd": 524946,
+                "rect": [
+                  678,
+                  171,
+                  786,
+                  197
+                ]
+              }
+            },
+            {
+              "hwnd": 393908,
+              "parent": 590286,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找文字(Q)",
+                "name_source": "com",
+                "control_type": "EditControl",
+                "control_type_id": 50004,
+                "class_name": "Edit",
+                "automation_id": "171",
+                "localized_type": "edit",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+q",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 6648,
+                "native_hwnd": 393908,
+                "rect": [
+                  262,
+                  171,
+                  666,
+                  197
+                ]
+              }
+            }
+          ],
+          "before": {
+            "hwnd": 524356,
+            "parent": 197200,
+            "descendant": true,
+            "visible": true,
+            "enabled": true,
+            "uia": {
+              "name": "《Reading sample》 — 未知作者 · TXT",
+              "name_source": "com",
+              "control_type": "ListItemControl",
+              "control_type_id": 50007,
+              "class_name": "",
+              "automation_id": "",
+              "localized_type": "list item",
+              "enabled": true,
+              "keyboard_focusable": true,
+              "has_focus": true,
+              "offscreen": false,
+              "help_text": "",
+              "access_key": "",
+              "accelerator_key": "",
+              "framework": "",
+              "process_id": 6648,
+              "native_hwnd": 0,
+              "rect": [
+                22,
+                125,
+                1022,
+                138
+              ]
+            }
+          },
+          "after": {
+            "hwnd": 197192,
+            "parent": 197200,
+            "descendant": true,
+            "visible": false,
+            "enabled": true,
+            "uia": {
+              "name": "阅读区域",
+              "name_source": "com",
+              "control_type": "DocumentControl",
+              "control_type_id": 50030,
+              "class_name": "EXReaderPage",
+              "automation_id": "IDC_PAGE",
+              "localized_type": "正文",
+              "enabled": true,
+              "keyboard_focusable": true,
+              "has_focus": true,
+              "offscreen": false,
+              "help_text": "选择文字后可复制引用或添加标注",
+              "access_key": "",
+              "accelerator_key": "",
+              "framework": "Win32",
+              "process_id": 6648,
+              "native_hwnd": 197192,
+              "rect": [
+                20,
+                99,
+                1024,
+                744
+              ]
+            }
+          },
+          "dialog": 590286,
+          "closed": true
+        },
+        "snapshots": [
+          "0286-100-high-default-shelf-search-tab.json",
+          "0287-100-high-default-shelf-search-closed.json"
+        ]
+      },
+      "dpi": {
+        "window_dpi": 96,
+        "monitor_scale": {
+          "hresult": 0,
+          "scale_percent": 100
+        },
+        "awareness": 0
+      },
+      "contrast_readback": {
+        "set_return": true,
+        "flags": 127
+      },
+      "contrast_samples": 75,
+      "measured_pairs": 49,
+      "measured_ratios": [
+        21
+      ],
+      "loaded_modules": 37,
+      "loaded_modules_error": null,
+      "screenshots": 96
+    },
+    {
+      "configuration": "100-high-small",
+      "checks": {
+        "dpi": "pass",
+        "layout": "pass",
+        "contrast": "pending",
+        "import-open": "pass",
+        "search": "pass",
+        "directory": "pass",
+        "records": "pass",
+        "settings": "pass",
+        "return-focus": "pass"
+      },
+      "shelf_search": {
+        "status": "fail",
+        "actual": {
+          "focus": [
+            {
+              "hwnd": 852618,
+              "parent": 852598,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找文字(Q)",
+                "name_source": "com",
+                "control_type": "EditControl",
+                "control_type_id": 50004,
+                "class_name": "Edit",
+                "automation_id": "171",
+                "localized_type": "edit",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+q",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 7416,
+                "native_hwnd": 852618,
+                "rect": [
+                  236,
+                  145,
+                  640,
+                  171
+                ]
+              }
+            },
+            {
+              "hwnd": 983762,
+              "parent": 852598,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找(F)",
+                "name_source": "com",
+                "control_type": "ButtonControl",
+                "control_type_id": 50000,
+                "class_name": "Button",
+                "automation_id": "172",
+                "localized_type": "button",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+f",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 7416,
+                "native_hwnd": 983762,
+                "rect": [
+                  652,
+                  145,
+                  760,
+                  171
+                ]
+              }
+            },
+            {
+              "hwnd": 852618,
+              "parent": 852598,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找文字(Q)",
+                "name_source": "com",
+                "control_type": "EditControl",
+                "control_type_id": 50004,
+                "class_name": "Edit",
+                "automation_id": "171",
+                "localized_type": "edit",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+q",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 7416,
+                "native_hwnd": 852618,
+                "rect": [
+                  236,
+                  145,
+                  640,
+                  171
+                ]
+              }
+            }
+          ],
+          "before": {
+            "hwnd": 459064,
+            "parent": 524506,
+            "descendant": true,
+            "visible": true,
+            "enabled": true,
+            "uia": {
+              "name": "《Reading sample》 — 未知作者 · TXT",
+              "name_source": "com",
+              "control_type": "ListItemControl",
+              "control_type_id": 50007,
+              "class_name": "",
+              "automation_id": "",
+              "localized_type": "list item",
+              "enabled": true,
+              "keyboard_focusable": true,
+              "has_focus": true,
+              "offscreen": false,
+              "help_text": "",
+              "access_key": "",
+              "accelerator_key": "",
+              "framework": "",
+              "process_id": 7416,
+              "native_hwnd": 0,
+              "rect": [
+                22,
+                125,
+                678,
+                138
+              ]
+            }
+          },
+          "after": {
+            "hwnd": 328082,
+            "parent": 524506,
+            "descendant": true,
+            "visible": false,
+            "enabled": true,
+            "uia": {
+              "name": "阅读区域",
+              "name_source": "com",
+              "control_type": "DocumentControl",
+              "control_type_id": 50030,
+              "class_name": "EXReaderPage",
+              "automation_id": "IDC_PAGE",
+              "localized_type": "正文",
+              "enabled": true,
+              "keyboard_focusable": true,
+              "has_focus": true,
+              "offscreen": false,
+              "help_text": "选择文字后可复制引用或添加标注",
+              "access_key": "",
+              "accelerator_key": "",
+              "framework": "Win32",
+              "process_id": 7416,
+              "native_hwnd": 328082,
+              "rect": [
+                20,
+                99,
+                680,
+                436
+              ]
+            }
+          },
+          "dialog": 852598,
+          "closed": true
+        },
+        "snapshots": [
+          "0382-100-high-small-shelf-search-tab.json",
+          "0383-100-high-small-shelf-search-closed.json"
+        ]
+      },
+      "dpi": {
+        "window_dpi": 96,
+        "monitor_scale": {
+          "hresult": 0,
+          "scale_percent": 100
+        },
+        "awareness": 0
+      },
+      "contrast_readback": {
+        "set_return": true,
+        "flags": 127
+      },
+      "contrast_samples": 75,
+      "measured_pairs": 49,
+      "measured_ratios": [
+        21
+      ],
+      "loaded_modules": 37,
+      "loaded_modules_error": null,
+      "screenshots": 96
+    },
+    {
+      "configuration": "150-normal-default",
+      "checks": {
+        "dpi": "fail",
+        "layout": "fail",
+        "contrast": "pending",
+        "import-open": "pass",
+        "search": "pass",
+        "directory": "pass",
+        "records": "pass",
+        "settings": "pass",
+        "return-focus": "pass"
+      },
+      "shelf_search": {
+        "status": "fail",
+        "actual": {
+          "focus": [
+            {
+              "hwnd": 1114756,
+              "parent": 983790,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找文字(Q)",
+                "name_source": "com",
+                "control_type": "EditControl",
+                "control_type_id": 50004,
+                "class_name": "Edit",
+                "automation_id": "171",
+                "localized_type": "edit",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+q",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 1188,
+                "native_hwnd": 1114756,
+                "rect": [
+                  236,
+                  145,
+                  640,
+                  171
+                ]
+              }
+            },
+            {
+              "hwnd": 852614,
+              "parent": 983790,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找(F)",
+                "name_source": "com",
+                "control_type": "ButtonControl",
+                "control_type_id": 50000,
+                "class_name": "Button",
+                "automation_id": "172",
+                "localized_type": "button",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+f",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 1188,
+                "native_hwnd": 852614,
+                "rect": [
+                  652,
+                  145,
+                  760,
+                  171
+                ]
+              }
+            },
+            {
+              "hwnd": 1114756,
+              "parent": 983790,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找文字(Q)",
+                "name_source": "com",
+                "control_type": "EditControl",
+                "control_type_id": 50004,
+                "class_name": "Edit",
+                "automation_id": "171",
+                "localized_type": "edit",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+q",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 1188,
+                "native_hwnd": 1114756,
+                "rect": [
+                  236,
+                  145,
+                  640,
+                  171
+                ]
+              }
+            }
+          ],
+          "before": {
+            "hwnd": 393612,
+            "parent": 393730,
+            "descendant": true,
+            "visible": true,
+            "enabled": true,
+            "uia": {
+              "name": "《Reading sample》 — 未知作者 · TXT",
+              "name_source": "com",
+              "control_type": "ListItemControl",
+              "control_type_id": 50007,
+              "class_name": "",
+              "automation_id": "",
+              "localized_type": "list item",
+              "enabled": true,
+              "keyboard_focusable": true,
+              "has_focus": true,
+              "offscreen": false,
+              "help_text": "",
+              "access_key": "",
+              "accelerator_key": "",
+              "framework": "",
+              "process_id": 1188,
+              "native_hwnd": 0,
+              "rect": [
+                22,
+                125,
+                1022,
+                138
+              ]
+            }
+          },
+          "after": {
+            "hwnd": 328272,
+            "parent": 393730,
+            "descendant": true,
+            "visible": false,
+            "enabled": true,
+            "uia": {
+              "name": "阅读区域",
+              "name_source": "com",
+              "control_type": "DocumentControl",
+              "control_type_id": 50030,
+              "class_name": "EXReaderPage",
+              "automation_id": "IDC_PAGE",
+              "localized_type": "正文",
+              "enabled": true,
+              "keyboard_focusable": true,
+              "has_focus": true,
+              "offscreen": false,
+              "help_text": "选择文字后可复制引用或添加标注",
+              "access_key": "",
+              "accelerator_key": "",
+              "framework": "Win32",
+              "process_id": 1188,
+              "native_hwnd": 328272,
+              "rect": [
+                20,
+                99,
+                1024,
+                744
+              ]
+            }
+          },
+          "dialog": 983790,
+          "closed": true
+        },
+        "snapshots": [
+          "0478-150-normal-default-shelf-search-tab.json",
+          "0479-150-normal-default-shelf-search-closed.json"
+        ]
+      },
+      "dpi": {
+        "window_dpi": 96,
+        "monitor_scale": {
+          "hresult": 0,
+          "scale_percent": 100
+        },
+        "awareness": 0
+      },
+      "contrast_readback": {
+        "set_return": true,
+        "flags": 126
+      },
+      "contrast_samples": 75,
+      "measured_pairs": 49,
+      "measured_ratios": [
+        18.427342383975944,
+        21
+      ],
+      "loaded_modules": 37,
+      "loaded_modules_error": null,
+      "screenshots": 96
+    },
+    {
+      "configuration": "150-normal-small",
+      "checks": {
+        "dpi": "fail",
+        "layout": "pass",
+        "contrast": "pending",
+        "import-open": "pass",
+        "search": "pass",
+        "directory": "pass",
+        "records": "pass",
+        "settings": "pass",
+        "return-focus": "pass"
+      },
+      "shelf_search": {
+        "status": "fail",
+        "actual": {
+          "focus": [
+            {
+              "hwnd": 524950,
+              "parent": 983742,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找文字(Q)",
+                "name_source": "com",
+                "control_type": "EditControl",
+                "control_type_id": 50004,
+                "class_name": "Edit",
+                "automation_id": "171",
+                "localized_type": "edit",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+q",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 7324,
+                "native_hwnd": 524950,
+                "rect": [
+                  184,
+                  93,
+                  588,
+                  119
+                ]
+              }
+            },
+            {
+              "hwnd": 1179834,
+              "parent": 983742,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找(F)",
+                "name_source": "com",
+                "control_type": "ButtonControl",
+                "control_type_id": 50000,
+                "class_name": "Button",
+                "automation_id": "172",
+                "localized_type": "button",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+f",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 7324,
+                "native_hwnd": 1179834,
+                "rect": [
+                  600,
+                  93,
+                  708,
+                  119
+                ]
+              }
+            },
+            {
+              "hwnd": 524950,
+              "parent": 983742,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找文字(Q)",
+                "name_source": "com",
+                "control_type": "EditControl",
+                "control_type_id": 50004,
+                "class_name": "Edit",
+                "automation_id": "171",
+                "localized_type": "edit",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+q",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 7324,
+                "native_hwnd": 524950,
+                "rect": [
+                  184,
+                  93,
+                  588,
+                  119
+                ]
+              }
+            }
+          ],
+          "before": {
+            "hwnd": 524476,
+            "parent": 656056,
+            "descendant": true,
+            "visible": true,
+            "enabled": true,
+            "uia": {
+              "name": "《Reading sample》 — 未知作者 · TXT",
+              "name_source": "com",
+              "control_type": "ListItemControl",
+              "control_type_id": 50007,
+              "class_name": "",
+              "automation_id": "",
+              "localized_type": "list item",
+              "enabled": true,
+              "keyboard_focusable": true,
+              "has_focus": true,
+              "offscreen": false,
+              "help_text": "",
+              "access_key": "",
+              "accelerator_key": "",
+              "framework": "",
+              "process_id": 7324,
+              "native_hwnd": 0,
+              "rect": [
+                22,
+                125,
+                678,
+                138
+              ]
+            }
+          },
+          "after": {
+            "hwnd": 786894,
+            "parent": 656056,
+            "descendant": true,
+            "visible": false,
+            "enabled": true,
+            "uia": {
+              "name": "阅读区域",
+              "name_source": "com",
+              "control_type": "DocumentControl",
+              "control_type_id": 50030,
+              "class_name": "EXReaderPage",
+              "automation_id": "IDC_PAGE",
+              "localized_type": "正文",
+              "enabled": true,
+              "keyboard_focusable": true,
+              "has_focus": true,
+              "offscreen": false,
+              "help_text": "选择文字后可复制引用或添加标注",
+              "access_key": "",
+              "accelerator_key": "",
+              "framework": "Win32",
+              "process_id": 7324,
+              "native_hwnd": 786894,
+              "rect": [
+                20,
+                99,
+                680,
+                436
+              ]
+            }
+          },
+          "dialog": 983742,
+          "closed": true
+        },
+        "snapshots": [
+          "0574-150-normal-small-shelf-search-tab.json",
+          "0575-150-normal-small-shelf-search-closed.json"
+        ]
+      },
+      "dpi": {
+        "window_dpi": 96,
+        "monitor_scale": {
+          "hresult": 0,
+          "scale_percent": 100
+        },
+        "awareness": 0
+      },
+      "contrast_readback": {
+        "set_return": true,
+        "flags": 126
+      },
+      "contrast_samples": 75,
+      "measured_pairs": 49,
+      "measured_ratios": [
+        18.427342383975944,
+        21
+      ],
+      "loaded_modules": 37,
+      "loaded_modules_error": null,
+      "screenshots": 96
+    },
+    {
+      "configuration": "150-high-default",
+      "checks": {
+        "dpi": "fail",
+        "layout": "fail",
+        "contrast": "pending",
+        "import-open": "pass",
+        "search": "pass",
+        "directory": "pass",
+        "records": "pass",
+        "settings": "pass",
+        "return-focus": "pass"
+      },
+      "shelf_search": {
+        "status": "fail",
+        "actual": {
+          "focus": [
+            {
+              "hwnd": 1245816,
+              "parent": 787092,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找文字(Q)",
+                "name_source": "com",
+                "control_type": "EditControl",
+                "control_type_id": 50004,
+                "class_name": "Edit",
+                "automation_id": "171",
+                "localized_type": "edit",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+q",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 3304,
+                "native_hwnd": 1245816,
+                "rect": [
+                  158,
+                  67,
+                  562,
+                  93
+                ]
+              }
+            },
+            {
+              "hwnd": 852708,
+              "parent": 787092,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找(F)",
+                "name_source": "com",
+                "control_type": "ButtonControl",
+                "control_type_id": 50000,
+                "class_name": "Button",
+                "automation_id": "172",
+                "localized_type": "button",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+f",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 3304,
+                "native_hwnd": 852708,
+                "rect": [
+                  574,
+                  67,
+                  682,
+                  93
+                ]
+              }
+            },
+            {
+              "hwnd": 1245816,
+              "parent": 787092,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找文字(Q)",
+                "name_source": "com",
+                "control_type": "EditControl",
+                "control_type_id": 50004,
+                "class_name": "Edit",
+                "automation_id": "171",
+                "localized_type": "edit",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+q",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 3304,
+                "native_hwnd": 1245816,
+                "rect": [
+                  158,
+                  67,
+                  562,
+                  93
+                ]
+              }
+            }
+          ],
+          "before": {
+            "hwnd": 524684,
+            "parent": 721592,
+            "descendant": true,
+            "visible": true,
+            "enabled": true,
+            "uia": {
+              "name": "《Reading sample》 — 未知作者 · TXT",
+              "name_source": "com",
+              "control_type": "ListItemControl",
+              "control_type_id": 50007,
+              "class_name": "",
+              "automation_id": "",
+              "localized_type": "list item",
+              "enabled": true,
+              "keyboard_focusable": true,
+              "has_focus": true,
+              "offscreen": false,
+              "help_text": "",
+              "access_key": "",
+              "accelerator_key": "",
+              "framework": "",
+              "process_id": 3304,
+              "native_hwnd": 0,
+              "rect": [
+                22,
+                125,
+                1022,
+                138
+              ]
+            }
+          },
+          "after": {
+            "hwnd": 721518,
+            "parent": 721592,
+            "descendant": true,
+            "visible": false,
+            "enabled": true,
+            "uia": {
+              "name": "阅读区域",
+              "name_source": "com",
+              "control_type": "DocumentControl",
+              "control_type_id": 50030,
+              "class_name": "EXReaderPage",
+              "automation_id": "IDC_PAGE",
+              "localized_type": "正文",
+              "enabled": true,
+              "keyboard_focusable": true,
+              "has_focus": true,
+              "offscreen": false,
+              "help_text": "选择文字后可复制引用或添加标注",
+              "access_key": "",
+              "accelerator_key": "",
+              "framework": "Win32",
+              "process_id": 3304,
+              "native_hwnd": 721518,
+              "rect": [
+                20,
+                99,
+                1024,
+                744
+              ]
+            }
+          },
+          "dialog": 787092,
+          "closed": true
+        },
+        "snapshots": [
+          "0670-150-high-default-shelf-search-tab.json",
+          "0671-150-high-default-shelf-search-closed.json"
+        ]
+      },
+      "dpi": {
+        "window_dpi": 96,
+        "monitor_scale": {
+          "hresult": 0,
+          "scale_percent": 100
+        },
+        "awareness": 0
+      },
+      "contrast_readback": {
+        "set_return": true,
+        "flags": 127
+      },
+      "contrast_samples": 75,
+      "measured_pairs": 49,
+      "measured_ratios": [
+        21
+      ],
+      "loaded_modules": 37,
+      "loaded_modules_error": null,
+      "screenshots": 96
+    },
+    {
+      "configuration": "150-high-small",
+      "checks": {
+        "dpi": "fail",
+        "layout": "pass",
+        "contrast": "pending",
+        "import-open": "pass",
+        "search": "pass",
+        "directory": "pass",
+        "records": "pass",
+        "settings": "pass",
+        "return-focus": "pass"
+      },
+      "shelf_search": {
+        "status": "fail",
+        "actual": {
+          "focus": [
+            {
+              "hwnd": 1507918,
+              "parent": 1114732,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找文字(Q)",
+                "name_source": "com",
+                "control_type": "EditControl",
+                "control_type_id": 50004,
+                "class_name": "Edit",
+                "automation_id": "171",
+                "localized_type": "edit",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+q",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 7396,
+                "native_hwnd": 1507918,
+                "rect": [
+                  288,
+                  197,
+                  692,
+                  223
+                ]
+              }
+            },
+            {
+              "hwnd": 1180288,
+              "parent": 1114732,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找(F)",
+                "name_source": "com",
+                "control_type": "ButtonControl",
+                "control_type_id": 50000,
+                "class_name": "Button",
+                "automation_id": "172",
+                "localized_type": "button",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+f",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 7396,
+                "native_hwnd": 1180288,
+                "rect": [
+                  704,
+                  197,
+                  812,
+                  223
+                ]
+              }
+            },
+            {
+              "hwnd": 1507918,
+              "parent": 1114732,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找文字(Q)",
+                "name_source": "com",
+                "control_type": "EditControl",
+                "control_type_id": 50004,
+                "class_name": "Edit",
+                "automation_id": "171",
+                "localized_type": "edit",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+q",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 7396,
+                "native_hwnd": 1507918,
+                "rect": [
+                  288,
+                  197,
+                  692,
+                  223
+                ]
+              }
+            }
+          ],
+          "before": {
+            "hwnd": 524876,
+            "parent": 1245802,
+            "descendant": true,
+            "visible": true,
+            "enabled": true,
+            "uia": {
+              "name": "《Reading sample》 — 未知作者 · TXT",
+              "name_source": "com",
+              "control_type": "ListItemControl",
+              "control_type_id": 50007,
+              "class_name": "",
+              "automation_id": "",
+              "localized_type": "list item",
+              "enabled": true,
+              "keyboard_focusable": true,
+              "has_focus": true,
+              "offscreen": false,
+              "help_text": "",
+              "access_key": "",
+              "accelerator_key": "",
+              "framework": "",
+              "process_id": 7396,
+              "native_hwnd": 0,
+              "rect": [
+                22,
+                125,
+                678,
+                138
+              ]
+            }
+          },
+          "after": {
+            "hwnd": 590226,
+            "parent": 1245802,
+            "descendant": true,
+            "visible": false,
+            "enabled": true,
+            "uia": {
+              "name": "阅读区域",
+              "name_source": "com",
+              "control_type": "DocumentControl",
+              "control_type_id": 50030,
+              "class_name": "EXReaderPage",
+              "automation_id": "IDC_PAGE",
+              "localized_type": "正文",
+              "enabled": true,
+              "keyboard_focusable": true,
+              "has_focus": true,
+              "offscreen": false,
+              "help_text": "选择文字后可复制引用或添加标注",
+              "access_key": "",
+              "accelerator_key": "",
+              "framework": "Win32",
+              "process_id": 7396,
+              "native_hwnd": 590226,
+              "rect": [
+                20,
+                99,
+                680,
+                436
+              ]
+            }
+          },
+          "dialog": 1114732,
+          "closed": true
+        },
+        "snapshots": [
+          "0766-150-high-small-shelf-search-tab.json",
+          "0767-150-high-small-shelf-search-closed.json"
+        ]
+      },
+      "dpi": {
+        "window_dpi": 96,
+        "monitor_scale": {
+          "hresult": 0,
+          "scale_percent": 100
+        },
+        "awareness": 0
+      },
+      "contrast_readback": {
+        "set_return": true,
+        "flags": 127
+      },
+      "contrast_samples": 75,
+      "measured_pairs": 49,
+      "measured_ratios": [
+        21
+      ],
+      "loaded_modules": 37,
+      "loaded_modules_error": null,
+      "screenshots": 96
+    },
+    {
+      "configuration": "200-normal-default",
+      "checks": {
+        "dpi": "fail",
+        "layout": "fail",
+        "contrast": "pending",
+        "import-open": "pass",
+        "search": "pass",
+        "directory": "pass",
+        "records": "pass",
+        "settings": "pass",
+        "return-focus": "pass"
+      },
+      "shelf_search": {
+        "status": "fail",
+        "actual": {
+          "focus": [
+            {
+              "hwnd": 1377040,
+              "parent": 1311354,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找文字(Q)",
+                "name_source": "com",
+                "control_type": "EditControl",
+                "control_type_id": 50004,
+                "class_name": "Edit",
+                "automation_id": "171",
+                "localized_type": "edit",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+q",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 1896,
+                "native_hwnd": 1377040,
+                "rect": [
+                  262,
+                  171,
+                  666,
+                  197
+                ]
+              }
+            },
+            {
+              "hwnd": 1114822,
+              "parent": 1311354,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找(F)",
+                "name_source": "com",
+                "control_type": "ButtonControl",
+                "control_type_id": 50000,
+                "class_name": "Button",
+                "automation_id": "172",
+                "localized_type": "button",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+f",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 1896,
+                "native_hwnd": 1114822,
+                "rect": [
+                  678,
+                  171,
+                  786,
+                  197
+                ]
+              }
+            },
+            {
+              "hwnd": 1377040,
+              "parent": 1311354,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找文字(Q)",
+                "name_source": "com",
+                "control_type": "EditControl",
+                "control_type_id": 50004,
+                "class_name": "Edit",
+                "automation_id": "171",
+                "localized_type": "edit",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+q",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 1896,
+                "native_hwnd": 1377040,
+                "rect": [
+                  262,
+                  171,
+                  666,
+                  197
+                ]
+              }
+            }
+          ],
+          "before": {
+            "hwnd": 655756,
+            "parent": 917722,
+            "descendant": true,
+            "visible": true,
+            "enabled": true,
+            "uia": {
+              "name": "《Reading sample》 — 未知作者 · TXT",
+              "name_source": "com",
+              "control_type": "ListItemControl",
+              "control_type_id": 50007,
+              "class_name": "",
+              "automation_id": "",
+              "localized_type": "list item",
+              "enabled": true,
+              "keyboard_focusable": true,
+              "has_focus": true,
+              "offscreen": false,
+              "help_text": "",
+              "access_key": "",
+              "accelerator_key": "",
+              "framework": "",
+              "process_id": 1896,
+              "native_hwnd": 0,
+              "rect": [
+                22,
+                125,
+                1022,
+                138
+              ]
+            }
+          },
+          "after": {
+            "hwnd": 983640,
+            "parent": 917722,
+            "descendant": true,
+            "visible": false,
+            "enabled": true,
+            "uia": {
+              "name": "阅读区域",
+              "name_source": "com",
+              "control_type": "DocumentControl",
+              "control_type_id": 50030,
+              "class_name": "EXReaderPage",
+              "automation_id": "IDC_PAGE",
+              "localized_type": "正文",
+              "enabled": true,
+              "keyboard_focusable": true,
+              "has_focus": true,
+              "offscreen": false,
+              "help_text": "选择文字后可复制引用或添加标注",
+              "access_key": "",
+              "accelerator_key": "",
+              "framework": "Win32",
+              "process_id": 1896,
+              "native_hwnd": 983640,
+              "rect": [
+                20,
+                99,
+                1024,
+                744
+              ]
+            }
+          },
+          "dialog": 1311354,
+          "closed": true
+        },
+        "snapshots": [
+          "0862-200-normal-default-shelf-search-tab.json",
+          "0863-200-normal-default-shelf-search-closed.json"
+        ]
+      },
+      "dpi": {
+        "window_dpi": 96,
+        "monitor_scale": {
+          "hresult": 0,
+          "scale_percent": 100
+        },
+        "awareness": 0
+      },
+      "contrast_readback": {
+        "set_return": true,
+        "flags": 126
+      },
+      "contrast_samples": 75,
+      "measured_pairs": 49,
+      "measured_ratios": [
+        18.427342383975944,
+        21
+      ],
+      "loaded_modules": 37,
+      "loaded_modules_error": null,
+      "screenshots": 96
+    },
+    {
+      "configuration": "200-normal-small",
+      "checks": {
+        "dpi": "fail",
+        "layout": "pass",
+        "contrast": "pending",
+        "import-open": "pass",
+        "search": "pass",
+        "directory": "pass",
+        "records": "pass",
+        "settings": "pass",
+        "return-focus": "pass"
+      },
+      "shelf_search": {
+        "status": "fail",
+        "actual": {
+          "focus": [
+            {
+              "hwnd": 1572932,
+              "parent": 1311176,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找文字(Q)",
+                "name_source": "com",
+                "control_type": "EditControl",
+                "control_type_id": 50004,
+                "class_name": "Edit",
+                "automation_id": "171",
+                "localized_type": "edit",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+q",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 652,
+                "native_hwnd": 1572932,
+                "rect": [
+                  236,
+                  145,
+                  640,
+                  171
+                ]
+              }
+            },
+            {
+              "hwnd": 1245562,
+              "parent": 1311176,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找(F)",
+                "name_source": "com",
+                "control_type": "ButtonControl",
+                "control_type_id": 50000,
+                "class_name": "Button",
+                "automation_id": "172",
+                "localized_type": "button",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+f",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 652,
+                "native_hwnd": 1245562,
+                "rect": [
+                  652,
+                  145,
+                  760,
+                  171
+                ]
+              }
+            },
+            {
+              "hwnd": 1572932,
+              "parent": 1311176,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找文字(Q)",
+                "name_source": "com",
+                "control_type": "EditControl",
+                "control_type_id": 50004,
+                "class_name": "Edit",
+                "automation_id": "171",
+                "localized_type": "edit",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+q",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 652,
+                "native_hwnd": 1572932,
+                "rect": [
+                  236,
+                  145,
+                  640,
+                  171
+                ]
+              }
+            }
+          ],
+          "before": {
+            "hwnd": 721672,
+            "parent": 1573626,
+            "descendant": true,
+            "visible": true,
+            "enabled": true,
+            "uia": {
+              "name": "《Reading sample》 — 未知作者 · TXT",
+              "name_source": "com",
+              "control_type": "ListItemControl",
+              "control_type_id": 50007,
+              "class_name": "",
+              "automation_id": "",
+              "localized_type": "list item",
+              "enabled": true,
+              "keyboard_focusable": true,
+              "has_focus": true,
+              "offscreen": false,
+              "help_text": "",
+              "access_key": "",
+              "accelerator_key": "",
+              "framework": "",
+              "process_id": 652,
+              "native_hwnd": 0,
+              "rect": [
+                22,
+                125,
+                678,
+                138
+              ]
+            }
+          },
+          "after": {
+            "hwnd": 1180318,
+            "parent": 1573626,
+            "descendant": true,
+            "visible": false,
+            "enabled": true,
+            "uia": {
+              "name": "阅读区域",
+              "name_source": "com",
+              "control_type": "DocumentControl",
+              "control_type_id": 50030,
+              "class_name": "EXReaderPage",
+              "automation_id": "IDC_PAGE",
+              "localized_type": "正文",
+              "enabled": true,
+              "keyboard_focusable": true,
+              "has_focus": true,
+              "offscreen": false,
+              "help_text": "选择文字后可复制引用或添加标注",
+              "access_key": "",
+              "accelerator_key": "",
+              "framework": "Win32",
+              "process_id": 652,
+              "native_hwnd": 1180318,
+              "rect": [
+                20,
+                99,
+                680,
+                436
+              ]
+            }
+          },
+          "dialog": 1311176,
+          "closed": true
+        },
+        "snapshots": [
+          "0958-200-normal-small-shelf-search-tab.json",
+          "0959-200-normal-small-shelf-search-closed.json"
+        ]
+      },
+      "dpi": {
+        "window_dpi": 96,
+        "monitor_scale": {
+          "hresult": 0,
+          "scale_percent": 100
+        },
+        "awareness": 0
+      },
+      "contrast_readback": {
+        "set_return": true,
+        "flags": 126
+      },
+      "contrast_samples": 75,
+      "measured_pairs": 49,
+      "measured_ratios": [
+        18.427342383975944,
+        21
+      ],
+      "loaded_modules": 37,
+      "loaded_modules_error": null,
+      "screenshots": 96
+    },
+    {
+      "configuration": "200-high-default",
+      "checks": {
+        "dpi": "fail",
+        "layout": "fail",
+        "contrast": "pending",
+        "import-open": "pass",
+        "search": "pass",
+        "directory": "pass",
+        "records": "pass",
+        "settings": "pass",
+        "return-focus": "pass"
+      },
+      "shelf_search": {
+        "status": "fail",
+        "actual": {
+          "focus": [
+            {
+              "hwnd": 1704568,
+              "parent": 1245976,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找文字(Q)",
+                "name_source": "com",
+                "control_type": "EditControl",
+                "control_type_id": 50004,
+                "class_name": "Edit",
+                "automation_id": "171",
+                "localized_type": "edit",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+q",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 2100,
+                "native_hwnd": 1704568,
+                "rect": [
+                  236,
+                  145,
+                  640,
+                  171
+                ]
+              }
+            },
+            {
+              "hwnd": 1245920,
+              "parent": 1245976,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找(F)",
+                "name_source": "com",
+                "control_type": "ButtonControl",
+                "control_type_id": 50000,
+                "class_name": "Button",
+                "automation_id": "172",
+                "localized_type": "button",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+f",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 2100,
+                "native_hwnd": 1245920,
+                "rect": [
+                  652,
+                  145,
+                  760,
+                  171
+                ]
+              }
+            },
+            {
+              "hwnd": 1704568,
+              "parent": 1245976,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找文字(Q)",
+                "name_source": "com",
+                "control_type": "EditControl",
+                "control_type_id": 50004,
+                "class_name": "Edit",
+                "automation_id": "171",
+                "localized_type": "edit",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+q",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 2100,
+                "native_hwnd": 1704568,
+                "rect": [
+                  236,
+                  145,
+                  640,
+                  171
+                ]
+              }
+            }
+          ],
+          "before": {
+            "hwnd": 786828,
+            "parent": 1639162,
+            "descendant": true,
+            "visible": true,
+            "enabled": true,
+            "uia": {
+              "name": "《Reading sample》 — 未知作者 · TXT",
+              "name_source": "com",
+              "control_type": "ListItemControl",
+              "control_type_id": 50007,
+              "class_name": "",
+              "automation_id": "",
+              "localized_type": "list item",
+              "enabled": true,
+              "keyboard_focusable": true,
+              "has_focus": true,
+              "offscreen": false,
+              "help_text": "",
+              "access_key": "",
+              "accelerator_key": "",
+              "framework": "",
+              "process_id": 2100,
+              "native_hwnd": 0,
+              "rect": [
+                22,
+                125,
+                1022,
+                138
+              ]
+            }
+          },
+          "after": {
+            "hwnd": 787114,
+            "parent": 1639162,
+            "descendant": true,
+            "visible": false,
+            "enabled": true,
+            "uia": {
+              "name": "阅读区域",
+              "name_source": "com",
+              "control_type": "DocumentControl",
+              "control_type_id": 50030,
+              "class_name": "EXReaderPage",
+              "automation_id": "IDC_PAGE",
+              "localized_type": "正文",
+              "enabled": true,
+              "keyboard_focusable": true,
+              "has_focus": true,
+              "offscreen": false,
+              "help_text": "选择文字后可复制引用或添加标注",
+              "access_key": "",
+              "accelerator_key": "",
+              "framework": "Win32",
+              "process_id": 2100,
+              "native_hwnd": 787114,
+              "rect": [
+                20,
+                99,
+                1024,
+                744
+              ]
+            }
+          },
+          "dialog": 1245976,
+          "closed": true
+        },
+        "snapshots": [
+          "1054-200-high-default-shelf-search-tab.json",
+          "1055-200-high-default-shelf-search-closed.json"
+        ]
+      },
+      "dpi": {
+        "window_dpi": 96,
+        "monitor_scale": {
+          "hresult": 0,
+          "scale_percent": 100
+        },
+        "awareness": 0
+      },
+      "contrast_readback": {
+        "set_return": true,
+        "flags": 127
+      },
+      "contrast_samples": 75,
+      "measured_pairs": 49,
+      "measured_ratios": [
+        21
+      ],
+      "loaded_modules": 37,
+      "loaded_modules_error": null,
+      "screenshots": 96
+    },
+    {
+      "configuration": "200-high-small",
+      "checks": {
+        "dpi": "fail",
+        "layout": "pass",
+        "contrast": "pending",
+        "import-open": "pass",
+        "search": "pass",
+        "directory": "pass",
+        "records": "pass",
+        "settings": "pass",
+        "return-focus": "pass"
+      },
+      "shelf_search": {
+        "status": "fail",
+        "actual": {
+          "focus": [
+            {
+              "hwnd": 1311518,
+              "parent": 1507990,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找文字(Q)",
+                "name_source": "com",
+                "control_type": "EditControl",
+                "control_type_id": 50004,
+                "class_name": "Edit",
+                "automation_id": "171",
+                "localized_type": "edit",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+q",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 3036,
+                "native_hwnd": 1311518,
+                "rect": [
+                  184,
+                  93,
+                  588,
+                  119
+                ]
+              }
+            },
+            {
+              "hwnd": 1573520,
+              "parent": 1507990,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找(F)",
+                "name_source": "com",
+                "control_type": "ButtonControl",
+                "control_type_id": 50000,
+                "class_name": "Button",
+                "automation_id": "172",
+                "localized_type": "button",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+f",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 3036,
+                "native_hwnd": 1573520,
+                "rect": [
+                  600,
+                  93,
+                  708,
+                  119
+                ]
+              }
+            },
+            {
+              "hwnd": 1311518,
+              "parent": 1507990,
+              "descendant": true,
+              "visible": true,
+              "enabled": true,
+              "uia": {
+                "name": "查找文字(Q)",
+                "name_source": "com",
+                "control_type": "EditControl",
+                "control_type_id": 50004,
+                "class_name": "Edit",
+                "automation_id": "171",
+                "localized_type": "edit",
+                "enabled": true,
+                "keyboard_focusable": true,
+                "has_focus": true,
+                "offscreen": false,
+                "help_text": "",
+                "access_key": "Alt+q",
+                "accelerator_key": "",
+                "framework": "Win32",
+                "process_id": 3036,
+                "native_hwnd": 1311518,
+                "rect": [
+                  184,
+                  93,
+                  588,
+                  119
+                ]
+              }
+            }
+          ],
+          "before": {
+            "hwnd": 1049198,
+            "parent": 2228718,
+            "descendant": true,
+            "visible": true,
+            "enabled": true,
+            "uia": {
+              "name": "《Reading sample》 — 未知作者 · TXT",
+              "name_source": "com",
+              "control_type": "ListItemControl",
+              "control_type_id": 50007,
+              "class_name": "",
+              "automation_id": "",
+              "localized_type": "list item",
+              "enabled": true,
+              "keyboard_focusable": true,
+              "has_focus": true,
+              "offscreen": false,
+              "help_text": "",
+              "access_key": "",
+              "accelerator_key": "",
+              "framework": "",
+              "process_id": 3036,
+              "native_hwnd": 0,
+              "rect": [
+                22,
+                125,
+                678,
+                138
+              ]
+            }
+          },
+          "after": {
+            "hwnd": 852370,
+            "parent": 2228718,
+            "descendant": true,
+            "visible": false,
+            "enabled": true,
+            "uia": {
+              "name": "阅读区域",
+              "name_source": "com",
+              "control_type": "DocumentControl",
+              "control_type_id": 50030,
+              "class_name": "EXReaderPage",
+              "automation_id": "IDC_PAGE",
+              "localized_type": "正文",
+              "enabled": true,
+              "keyboard_focusable": true,
+              "has_focus": true,
+              "offscreen": false,
+              "help_text": "选择文字后可复制引用或添加标注",
+              "access_key": "",
+              "accelerator_key": "",
+              "framework": "Win32",
+              "process_id": 3036,
+              "native_hwnd": 852370,
+              "rect": [
+                20,
+                99,
+                680,
+                436
+              ]
+            }
+          },
+          "dialog": 1507990,
+          "closed": true
+        },
+        "snapshots": [
+          "1150-200-high-small-shelf-search-tab.json",
+          "1151-200-high-small-shelf-search-closed.json"
+        ]
+      },
+      "dpi": {
+        "window_dpi": 96,
+        "monitor_scale": {
+          "hresult": 0,
+          "scale_percent": 100
+        },
+        "awareness": 0
+      },
+      "contrast_readback": {
+        "set_return": true,
+        "flags": 127
+      },
+      "contrast_samples": 75,
+      "measured_pairs": 49,
+      "measured_ratios": [
+        21
+      ],
+      "loaded_modules": 37,
+      "loaded_modules_error": null,
+      "screenshots": 96
+    }
+  ],
+  "raw_values": "All control pixel coordinates/counts, window/client/control coordinates, native/UIA snapshots, loaded modules and file hashes remain in authenticated original raw report.json and observations. This document transcribes completed Actions summary log output; it does not replace original raw evidence.",
+  "negative_controls": [
+    "wrong-dpi",
+    "main-window-modal-focus",
+    "missing-screenshot",
+    "incomplete-configuration"
+  ],
+  "complete_iterations": 2,
+  "remaining_scopes": [
+    "real 150/200 display scales",
+    "whole UI calibrated text/focus contrast",
+    "glyph clipping",
+    "localized focus rings",
+    "Narrator",
+    "screen-reader speech",
+    "physical keyboard/display",
+    "full search-result/directory/record/settings functionality",
+    "later delay-loaded DLL inventory"
+  ],
+  "seal": {
+    "kind": "docs-only [skip ci]",
+    "final_docs_sha": "containing commit; full SHA delivered externally in D08-status.md and final handoff",
+    "not_new_runtime_evidence": true
+  }
+}
