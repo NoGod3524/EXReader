@@ -1,0 +1,262 @@
+name: Reader reviewed composition
+on:
+  push:
+    branches: [codex/dot-reviewed-composition]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+env:
+  START_SHA: e4356a6e13223469fdf3b2f3d5171a6e99ab10a6
+  MERGE_POINT: b143a861ef951a90c99e9c136cec47395aa700d2
+  FROZEN_SDK: 9854061be331fe603a1822d9b2b36ee357154927
+  COMPOSITION_TESTS: tests/reader_reviewed_composition
+jobs:
+  compose:
+    name: one-prefix composition (${{matrix.key}})
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            key: linux
+          - os: windows-2022
+            key: windows
+          - os: macos-15
+            key: macos
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require this source, the frozen SDK, schema1 and this package's own paths
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.sha }}"
+          git merge-base --is-ancestor "$START_SHA" HEAD
+          git diff --exit-code "$FROZEN_SDK" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings \
+            .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code "$START_SHA" HEAD -- apps/reader/store/001_catalog.sql
+          git merge-base --is-ancestor "$MERGE_POINT" HEAD
+          git diff --exit-code "$MERGE_POINT" HEAD -- apps examples extras
+          python3 tests/reader_reviewed_composition/guards.py
+      - name: Install Linux native TLS XML keyring and SHA dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev libsecret-1-dev pkg-config ninja-build libgtk-3-dev libxtst-dev xvfb openbox
+          Xvfb :99 -screen 0 1280x1024x24 &
+          sleep 2
+          DISPLAY=:99 openbox --sm-disable &
+          echo "DISPLAY=:99" >> "$GITHUB_ENV"
+          echo "GDK_BACKEND=x11" >> "$GITHUB_ENV"
+          echo "NO_AT_BRIDGE=1" >> "$GITHUB_ENV"
+      - name: Use Apple system native TLS XML and platform frameworks
+        if: runner.os == 'macOS'
+        run: |
+          brew install ninja pkg-config openssl@3
+          sdkroot=$(xcrun --sdk macosx --show-sdk-path)
+          mkdir -p build/apple-pkgconfig
+          version=$(/usr/bin/curl --version | awk 'NR==1 {print $2}')
+          cat > build/apple-pkgconfig/libcurl.pc <<EOF
+          prefix=${sdkroot}/usr
+          Name: libcurl
+          Description: Apple SDK system libcurl
+          Version: ${version}
+          Libs: -L\${prefix}/lib -lcurl
+          Cflags:
+          EOF
+          echo "PKG_CONFIG_PATH=${PWD}/build/apple-pkgconfig" >> "$GITHUB_ENV"
+          echo "PATH=$(brew --prefix openssl@3)/bin:${PATH}" >> "$GITHUB_ENV"
+          /usr/bin/curl --version
+      - name: Enter Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vswhere = 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe'
+          $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c ('"{0}" >nul && set' -f $bat) | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install the default reading SDK into the composition prefix
+        run: |
+          set -o pipefail
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "COMP_WS=$ws" >> "$GITHUB_ENV"
+          mkdir -p build/composition/logs
+          prefix="$ws/build/prefix"
+          echo "COMP_PREFIX=$prefix" >> "$GITHUB_ENV"
+          cmake --preset reading-library -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee build/composition/logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/composition/logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/composition/logs/sdk-install.log
+      - name: Record the SDK-only snapshot of the prefix
+        run: |
+          set -o pipefail
+          python3 - <<'PY'
+          import os, shutil
+          prefix = os.environ['COMP_PREFIX']
+          snapshot = os.environ['COMP_WS'] + '/build/prefix-sdk-only'
+          shutil.copytree(prefix, snapshot)
+          print('sdk-only snapshot at', snapshot)
+          PY
+          python3 "$COMPOSITION_TESTS/check_prefix.py" --manifest "$COMP_PREFIX" \
+            --manifest-output build/composition/install-sdk.json
+      - name: Install every optional module into the same prefix
+        run: |
+          set -o pipefail
+          prefix="$COMP_PREFIX"
+          logs=build/composition/logs
+          build_module() {
+            name="$1"; source="$2"; shift 2
+            cmake -S "$source" -B "build/module-$name" -G Ninja -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix" -DCMAKE_MSVC_RUNTIME_LIBRARY="MultiThreaded$<$<CONFIG:Debug>:Debug>" "$@" \
+              2>&1 | tee "$logs/$name-configure.log"
+            cmake --build "build/module-$name" --verbose 2>&1 | tee "$logs/$name-build.log"
+            cmake --install "build/module-$name" 2>&1 | tee "$logs/$name-install.log"
+          }
+          build_module product apps/reader/store/native
+          build_module revisions apps/reader/revisions -DREADER_PRODUCT_PREFIX="$prefix"
+          build_module webdav extras/webdav
+          build_module sideload extras/sideload -DEXR_SDK="$prefix"
+          build_module credentials extras/credentials
+          build_module search apps/reader/search -DEXR_SDK="$prefix"
+          build_module preferences apps/reader/preferences
+          build_module batch-import apps/reader/batch-import -DEXR_SDK="$prefix"
+          build_module sync apps/reader/sync
+          build_module commands apps/reader/commands
+          build_module metadata apps/reader/desktop-metadata
+          build_module session apps/reader/session
+          build_module reading-state apps/reader/reading-state -DEXR_SDK="$prefix"
+          build_module cloud-import apps/reader/cloud-import -DEXR_SDK="$prefix"
+          build_module bulk-organization apps/reader/bulk-organization -DEXR_SDK="$prefix"
+          build_module link-policy apps/reader/link-policy -DEXR_SDK="$prefix"
+          build_module jump-history apps/reader/jump-history -DEXR_SDK="$prefix"
+          build_module keyboard-actions apps/reader/keyboard-actions -DEXR_SDK="$prefix"
+          build_module book-information apps/reader/book-information -DEXR_SDK="$prefix"
+          build_module sync-status-view apps/reader/sync-status-view -DEXR_SDK="$prefix"
+          build_module account-profiles apps/reader/account-profiles -DEXR_SDK="$prefix"
+
+      - name: Audit the composed prefix and the default reading snapshot
+        run: |
+          set -o pipefail
+          python3 "$COMPOSITION_TESTS/check_prefix.py" --manifest "$COMP_PREFIX" \
+            --manifest-output build/composition/install-all.json
+          source_root="$COMP_WS"
+          python3 "$COMPOSITION_TESTS/check_prefix.py" --prefix "$COMP_PREFIX" --source-root "$source_root" \
+            --expect clean --scan-output build/composition/prefix-scan.json
+          cmake -S "$COMPOSITION_TESTS/consumer/sdk_only" -B build/sdk-only -G Ninja \
+            -DEXR_MODULE_PREFIX="$COMP_WS/build/prefix-sdk-only"
+          cmake --build build/sdk-only --verbose
+          python3 "$COMPOSITION_TESTS/check_prefix.py" --sdk-snapshot "$COMP_WS/build/prefix-sdk-only" \
+            --sdk-report build/sdk-only/sdk-only-report.json --snapshot-output build/composition/sdk-only.json
+      - name: Build the fresh-directory C11 and C++ consumers from the installed prefix only
+        run: |
+          set -o pipefail
+          mkdir -p build/fresh
+          cp -R "$COMPOSITION_TESTS/consumer" build/fresh/consumer
+          cmake -S build/fresh/consumer -B build/fresh/build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DEXR_MODULE_PREFIX="$COMP_PREFIX" 2>&1 | tee build/composition/logs/consumer-configure.log
+          cmake --build build/fresh/build --verbose 2>&1 | tee build/composition/logs/consumer-build.log
+          cp build/fresh/build/composition-interface.json build/composition/interface.json
+          cp build/fresh/build/composition-link.map build/composition/composition-link.map
+          cp build/fresh/build/composition-c-link.map build/composition/composition-c-link.map
+      - name: Run every original module consumer and unchanged judgement against the common prefix
+        id: original_suites
+        continue-on-error: true
+        run: python3 tests/reader_reviewed_composition/suites.py --prefix "$COMP_PREFIX" --output build/composition/original
+      - name: Relocate the prefix and rebuild the same consumers from the new path
+        run: |
+          set -o pipefail
+          python3 - <<'PY'
+          import os, shutil
+          prefix = os.environ['COMP_PREFIX']
+          relocated = os.environ['COMP_WS'] + '/build/prefix-relocated'
+          shutil.move(prefix, relocated)
+          print('relocated prefix at', relocated)
+          PY
+          echo "COMP_PREFIX_RELOCATED=$COMP_WS/build/prefix-relocated" >> "$GITHUB_ENV"
+          mkdir -p build/relocated
+          cp -R "$COMPOSITION_TESTS/consumer" build/relocated/consumer
+          cmake -S build/relocated/consumer -B build/relocated/build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DEXR_MODULE_PREFIX="$COMP_WS/build/prefix-relocated" \
+            2>&1 | tee build/composition/logs/relocated-configure.log
+          cmake --build build/relocated/build --verbose 2>&1 | tee build/composition/logs/relocated-build.log
+          cp build/relocated/build/composition-interface.json build/composition/interface-relocated.json
+      - name: Judge the composed flow with a real TLS WebDAV fixture
+        run: |
+          set -o pipefail
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 "$COMPOSITION_TESTS/check_composition.py" \
+            --c-consumer "build/fresh/build/composition-c$exe" \
+            --cxx-consumer "build/fresh/build/composition-cxx$exe" \
+            --relocated-c-consumer "build/relocated/build/composition-c$exe" \
+            --relocated-cxx-consumer "build/relocated/build/composition-cxx$exe" \
+            --link-map build/fresh/build/composition-link.map \
+            --c-link-map build/fresh/build/composition-c-link.map \
+            --prefix "$COMP_PREFIX" \
+            --relocated-prefix "$COMP_PREFIX_RELOCATED" \
+            --fixtures tests/fixtures \
+            --interface build/composition/interface-relocated.json \
+            --manifest build/composition/install-all.json \
+            --output build/composition/evidence
+      - name: Run the shared owner and session flow before and after prefix relocation
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_reviewed_composition/check_reviewed.py --probe "build/fresh/build/reviewed-flow$exe" --relocated "build/relocated/build/reviewed-flow$exe" --fixtures tests/fixtures --output build/composition/reviewed
+      - name: Reject a broken target, an absent dependency, a second SQLite and a leaked include
+        run: |
+          set -o pipefail
+          python3 "$COMPOSITION_TESTS/check_gates.py" \
+            --prefix "$COMP_PREFIX_RELOCATED" \
+            --consumer-source build/fresh/consumer \
+            --source-root "$COMP_WS" \
+            --scratch build/composition/scratch \
+            --generator Ninja \
+            --output build/composition/gates
+      - name: Bind all original reports and the actual installed consumer binaries
+        if: always()
+        run: python3 tests/reader_reviewed_composition/bundle.py --output build/composition
+      - name: Require all original suites to pass without dropping failures
+        if: always()
+        run: test "${{ steps.original_suites.outcome }}" = success
+      - name: Preserve this attempt's evidence, logs and installed packages
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-reviewed-composition-${{matrix.key}}-${{github.run_id}}-${{github.run_attempt}}
+          path: |
+            build/composition/
+            !build/composition/**/*.key
+            !build/composition/**/scratch/
+            !build/composition/**/certificates/**
+            !build/composition/original/work/**
+          if-no-files-found: error
+  aggregate:
+    name: strict same-source composition report
+    needs: [compose]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject incomplete, failing, foreign-source or duplicate summaries
+        run: python3 tests/reader_reviewed_composition/check_artifacts.py --self-test
+      - name: Authenticate every platform ZIP and bind each summary to this run
+        env:
+          GH_TOKEN: ${{github.token}}
+        run: python3 tests/reader_reviewed_composition/check_artifacts.py --downloads build/composition-zips --output build/composition-aggregate
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-reviewed-composition-report-${{github.run_id}}-${{github.run_attempt}}
+          path: build/composition-aggregate/
+          if-no-files-found: error

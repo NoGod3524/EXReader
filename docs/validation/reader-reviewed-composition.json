@@ -1,0 +1,12 @@
+{
+  "accepted": false,
+  "status": "implementation_pending_actions",
+  "fixed_start": "e4356a6e13223469fdf3b2f3d5171a6e99ab10a6",
+  "merge_point": "b143a861ef951a90c99e9c136cec47395aa700d2",
+  "tested_sha": null,
+  "host_ui_accepted": false,
+  "performance_accepted": false,
+  "complete_product": false,
+  "failures": [],
+  "remaining_gaps": ["Cloud execution and strict same-run evidence pending"]
+}
