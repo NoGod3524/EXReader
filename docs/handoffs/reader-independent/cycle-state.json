@@ -1,11 +1,11 @@
 {
   "schema": 1,
-  "recorded_at_utc": "2026-10-25T02:28:45Z",
+  "recorded_at_utc": "2026-10-25T03:10:05Z",
   "current_cycle": 1,
   "completed_cycles": 0,
   "audit_interval": 5,
   "next_audit_after_completed_cycle": 5,
-  "phase": "resumed_three_host_owners_windows_records_accepted_and_integration_running",
+  "phase": "windows_records_and_android_cbz_common_scopes_authenticated_j_reviews_continuing",
   "host_integration_candidate": {
     "branch": "codex/reader-hosts-integration",
     "source": "f0c272c87b2402979292d0cd973d4f5e7a9f62fd",
@@ -403,23 +403,31 @@
     "head": "6b43e83537aa6b03bda889d258fe73c0e317acb1",
     "run": 40143936053,
     "proof_run": 40144799161,
-    "integrated": false
+    "integrated": true
   },
   "reboot_checkpoint": "REBOOT-2026-10-25.md",
   "resume_first_existing_run": 40147139532,
   "latest_host_candidate": {
     "source": "15926e56034e26916b1e585cd9d907825379f17f",
     "run": 40154395150,
-    "status": "in_progress",
+    "status": "completed",
     "accepted": false,
     "production_baseline": "e0c28defc7f2113cb4ccdab5dfe1d2b072915a82",
-    "windows_records_delivery": "2dcd325b31590bbb5374842e6c7f26fa2dcedd21"
+    "windows_records_delivery": "2dcd325b31590bbb5374842e6c7f26fa2dcedd21",
+    "conclusion": "failure",
+    "authentication_job": 121056256969,
+    "problems": [],
+    "retained_failures": [
+      "dark_theme_and_palette_change_page_pixels",
+      "light_foreground_and_background_change_page_pixels"
+    ],
+    "evidence_head": "79c08516f71ac64185b963c2b22ecff87f41d782"
   },
   "windows_records_accepted": {
     "source": "fdd625f3a45907a178db07ac8d0e4c06a635321d",
     "run": 40153457202,
     "checks": 32,
     "accepted": true,
-    "scope": "Windows records only; common-source candidate pending"
+    "scope": "Windows records independently and in common source 15926e56"
   }
 }

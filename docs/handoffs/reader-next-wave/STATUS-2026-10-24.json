@@ -1,9 +1,9 @@
 {
   "schema": 1,
-  "observed_at_utc": "2026-10-25T02:36:50Z",
+  "observed_at_utc": "2026-10-25T03:10:05Z",
   "packages": 19,
   "cloud_success": 19,
-  "returned_pending_root_review": 12,
+  "returned_pending_root_review": 11,
   "root_review_closed_awaiting_integration": [
     "J03",
     "J06",
@@ -11,11 +11,10 @@
     "J19",
     "J08",
     "J07",
-    "J09"
-  ],
-  "needs_further_work": [
+    "J09",
     "J13"
   ],
+  "needs_further_work": [],
   "root_review_and_integration_complete": false,
   "tasks": [
     {
@@ -97,8 +96,9 @@
       "root_state": "root_strict_evidence_repair_actions_pending",
       "review": "J12-ROOT-REVIEW.md",
       "review_branch": "codex/reader-sync-status-review",
-      "repair_source": "3178736b4c4f30d54faffc759da55dddec0ad86b",
-      "repair_run": 40154693490
+      "repair_source": "b6eaf3898a59f41d1cd7453f30107e6cba3f1e27",
+      "repair_run": 40154693490,
+      "repair_state": "positive_metadata_and_pending_row_fixture_owner_corrected_actions_pending"
     },
     {
       "id": "J13",
@@ -107,8 +107,12 @@
       "source": "b1c7467af0b9faf843b9ec988df49c0476c74ee9",
       "status": "completed",
       "conclusion": "success",
-      "root_state": "root_review_activation_and_uuid_boundary_repairs_required",
-      "review": "J13-ROOT-REVIEW.md"
+      "root_state": "root_review_closed_awaiting_integration",
+      "review": "J13-ROOT-REVIEW.md",
+      "review_branch": "codex/reader-account-profiles-review",
+      "repair_source": "10bbfe06669b57b11a35aa931402b0f846b3f7b7",
+      "repair_run": 40155371601,
+      "review_head": "a0746156b37db7cd750fb805899a616ef2c6a80f"
     },
     {
       "id": "J14",
