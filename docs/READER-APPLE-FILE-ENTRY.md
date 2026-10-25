@@ -75,4 +75,18 @@ Inbox原件在暂存成功后是否删除由宿主决定，建议只在SDK导入
 
 ## 验收
 
-见`.github/workflows/reader-apple-file-entry.yml`与[验收记录](validation/reader-apple-file-entry.json)。
+受测源码`cb0dcfc854ea33caa7b86750279344a6e3515f2d`，
+[run40147364965](https://github.com/NoGod3524/EXReader/actions/runs/40147364965)（attempt 1）七作业同次成功：
+范围/负例守卫、macOS与iOS模拟器SDK、三个原生目标（macOS、iPhone 11模拟器、iPad Pro模拟器，Xcode 16.4，iOS 26.2）、同源严格汇总。
+每个目标运行已安装模块的探针33项加安装后消费者15项，共48项，0失败0跳过；
+消费者用公开SDK与已安装sideload模块导入九种格式并回读原字节，另验证去重、取消后重试、坏字节失败保留暂存、重开书库回读。
+探针覆盖多文件部分失败、只读/无权限/移动/撤销、复制中截断与增长、取消、close、重开恢复、孤儿清理、篡改检测、限额、Inbox。
+汇总核对三份工件的名称、同源SHA、run/attempt、有效期、ZIP内二进制摘要与安装模块，并运行33个证据正反例。
+工件ID/字节/SHA-256见[验收记录](validation/reader-apple-file-entry.json)。
+
+保留的失败：run40116197175（编译冲突）、40143622985（FIFO协调挂起）、40145777002（FIFO挂起与Unicode名规范化）、
+40146792227（一个测试计数错误）。每次均已修复并在后继源码上重跑。
+
+**仍为pending、未实测**：真实iCloud Drive/第三方File Provider下载（仅经测试接缝验证“未下载”）、系统选择器界面交互（只编译）、
+沙盒应用中的真实安全作用域URL（真实启停对普通URL返回false，配对经接缝验证）、Files/Finder文件共享实际投递、真机、macOS App Sandbox。
+本记录只授予本包模块；宿主接线、产品界面和六平台互通由root验证。
