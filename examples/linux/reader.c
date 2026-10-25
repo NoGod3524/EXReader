@@ -142,6 +142,107 @@ static gboolean shelf_check_edges(gpointer unused) {
 }
 #endif
 
+#ifdef EXR_READER_GTK_COMPACT
+static GtkWidget *compact_library_controls,*compact_reading_controls,*compact_continue;
+static GtkWidget *compact_details,*compact_page_focus,*compact_larger,*compact_smaller;
+static int64_t compact_resume;
+static void action(GtkWidget *,gpointer);
+static GtkWidget *compact_button(GtkWidget *box,const char *title,const char *name,GCallback callback,gpointer data) {
+  GtkWidget *button=gtk_button_new_with_label(title);
+  atk_object_set_name(gtk_widget_get_accessible(button),name);
+  gtk_box_pack_start(GTK_BOX(box),button,FALSE,FALSE,0);
+  g_signal_connect(button,"clicked",callback,data);return button;
+}
+static GtkWidget *compact_item(GtkWidget *menu,const char *title,GCallback callback,gpointer data) {
+  GtkWidget *item=gtk_menu_item_new_with_label(title);
+  gtk_menu_shell_append(GTK_MENU_SHELL(menu),item);
+  g_signal_connect(item,"activate",callback,data);return item;
+}
+static GtkWidget *compact_submenu(GtkWidget *menu,const char *title) {
+  GtkWidget *item=gtk_menu_item_new_with_label(title),*child=gtk_menu_new();
+  gtk_menu_item_set_submenu(GTK_MENU_ITEM(item),child);gtk_menu_shell_append(GTK_MENU_SHELL(menu),item);return child;
+}
+static void compact_sync(void) {
+  if(!stack || !compact_library_controls) return;
+  const char *name=gtk_stack_get_visible_child_name(GTK_STACK(stack));
+  gboolean reading=name && !strcmp(name,"reader");
+  gtk_widget_set_visible(compact_library_controls,!reading);
+  gtk_widget_set_visible(compact_reading_controls,reading);
+  gtk_widget_set_sensitive(compact_continue,compact_resume>0);
+  if(compact_larger) gtk_menu_item_set_label(GTK_MENU_ITEM(compact_larger),fixed ? "Zoom in":"Larger text");
+  if(compact_smaller) gtk_menu_item_set_label(GTK_MENU_ITEM(compact_smaller),fixed ? "Zoom out":"Smaller text");
+}
+static void compact_stack_changed(GObject *object,GParamSpec *property,gpointer unused) {
+  (void)object;(void)property;(void)unused;compact_sync();
+  const char *name=gtk_stack_get_visible_child_name(GTK_STACK(stack));
+  if(name && !strcmp(name,"reader")) { if(compact_page_focus) gtk_widget_grab_focus(compact_page_focus); }
+#ifdef EXR_READER_PRODUCT_CATALOG
+  else if(search) gtk_widget_grab_focus(search);
+#endif
+}
+static void compact_toolbar(GtkWidget *toolbar) {
+  gtk_container_set_border_width(GTK_CONTAINER(toolbar),8);
+  compact_library_controls=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,6);
+  compact_reading_controls=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,6);
+  gtk_box_pack_start(GTK_BOX(toolbar),compact_library_controls,TRUE,TRUE,0);
+  gtk_box_pack_start(GTK_BOX(toolbar),compact_reading_controls,TRUE,TRUE,0);
+  compact_button(compact_library_controls,"Import","Import book",G_CALLBACK(action),(gpointer)"import");
+  compact_continue=compact_button(compact_library_controls,"Continue","Continue reading",G_CALLBACK(action),(gpointer)"resume");
+  compact_button(compact_reading_controls,"Library","Back to library",G_CALLBACK(action),(gpointer)"shelf");
+  compact_button(compact_reading_controls,"Previous","Previous page",G_CALLBACK(action),(gpointer)"previous");
+  compact_button(compact_reading_controls,"Next","Next page",G_CALLBACK(action),(gpointer)"next");
+#ifdef EXR_READER_NAVIGATION_UI
+  compact_button(compact_reading_controls,"Contents","Contents / pages",G_CALLBACK(directory_open),NULL);
+#endif
+  GtkWidget *more=gtk_menu_button_new(),*menu=gtk_menu_new();
+  gtk_button_set_label(GTK_BUTTON(more),"_More");gtk_button_set_use_underline(GTK_BUTTON(more),TRUE);
+  atk_object_set_name(gtk_widget_get_accessible(more),"More reader actions");
+  gtk_box_pack_end(GTK_BOX(toolbar),more,FALSE,FALSE,0);
+  GtkWidget *reading=compact_submenu(menu,"Reading");
+#ifdef EXR_READER_SEARCH_UI
+  compact_item(reading,"Search within book…",G_CALLBACK(inbook_open),NULL);
+#endif
+#ifdef EXR_READER_NAVIGATION_UI
+  compact_item(reading,"Directory / page entries…",G_CALLBACK(directory_open),NULL);
+#endif
+#ifdef EXR_READER_READING_RECORDS_UI
+  compact_item(reading,"Reading records…",G_CALLBACK(reading_records_open),NULL);
+#endif
+#ifdef EXR_READER_PREFERENCES_UI
+  compact_item(reading,"Reading settings…",G_CALLBACK(preferences_open),NULL);
+#endif
+  compact_larger=compact_item(reading,"Larger text",G_CALLBACK(action),(gpointer)"bigger");
+  compact_smaller=compact_item(reading,"Smaller text",G_CALLBACK(action),(gpointer)"smaller");
+  GtkWidget *annotations=compact_submenu(menu,"Text and notes");
+  compact_item(annotations,"Show or hide text and notes",G_CALLBACK(action),(gpointer)"details");
+  compact_item(annotations,"Select page text",G_CALLBACK(action),(gpointer)"text");
+  compact_item(annotations,"Add note from selection",G_CALLBACK(action),(gpointer)"note");
+  compact_item(annotations,"Saved notes",G_CALLBACK(action),(gpointer)"notes");
+  compact_item(annotations,"Comment",G_CALLBACK(action),(gpointer)"comment");
+  compact_item(annotations,"Delete selected note",G_CALLBACK(action),(gpointer)"delete");
+#ifdef EXR_READER_DESKTOP_METADATA
+  GtkWidget *library=compact_submenu(menu,"Library");
+  compact_item(library,"Book details…",G_CALLBACK(metadata_edit),NULL);
+  compact_item(library,"Collections…",G_CALLBACK(collections_open),NULL);
+#ifdef EXR_READER_ACCOUNT
+  compact_item(library,"Account / Sync…",G_CALLBACK(accounts_open),NULL);
+#endif
+#endif
+  GtkWidget *imports=compact_submenu(menu,"Import");
+  compact_item(imports,"Import file…",G_CALLBACK(action),(gpointer)"import");
+#ifdef EXR_READER_BATCH_IMPORT_UI
+  compact_item(imports,"Import folder…",G_CALLBACK(folder_open),NULL);
+#endif
+#ifdef EXR_READER_DROP_IMPORT_UI
+  compact_item(imports,"Paste book files",G_CALLBACK(file_input_paste),NULL);
+#endif
+  compact_item(menu,"Retry saving position",G_CALLBACK(action),(gpointer)"save");
+  compact_item(menu,"Cancel current operation",G_CALLBACK(action),(gpointer)"cancel");
+  gtk_widget_show_all(menu);gtk_menu_button_set_popup(GTK_MENU_BUTTON(more),menu);
+  gtk_widget_show_all(compact_library_controls);gtk_widget_show_all(compact_reading_controls);
+  gtk_widget_set_no_show_all(compact_library_controls,TRUE);gtk_widget_set_no_show_all(compact_reading_controls,TRUE);
+}
+#endif
 static void state(void) {
   if(!state_path || !window || gtk_widget_in_destruction(window)) return;
   GtkTextIter a,b;size_t selected=0;
@@ -155,6 +256,11 @@ static void state(void) {
     position,projection_bytes,index_bytes,workspace_bytes,windows_evicted,snapshot_bytes,
     !strcmp(gtk_stack_get_visible_child_name(GTK_STACK(stack)),"reader"),fixed,zoom_percent,fixed_pages);
   char *complete=g_strconcat(data,metrics,NULL);g_free(data);g_free(metrics);data=complete;
+#ifdef EXR_READER_GTK_COMPACT
+  char *compact_metrics=g_strdup_printf("compact=1\ncompact_tools_open=%d\ncompact_resume=%"G_GINT64_FORMAT"\n",
+    compact_details && gtk_widget_get_visible(compact_details),compact_resume);
+  complete=g_strconcat(data,compact_metrics,NULL);g_free(data);g_free(compact_metrics);data=complete;
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   int64_t first_id=0,last_id=0,top_id=0;GtkWidget *top=shelf_top_row();
   GList *rows=gtk_container_get_children(GTK_CONTAINER(shelf));
@@ -229,7 +335,11 @@ static gboolean save_settings(void) {
      In product builds that also proves ownership of the profile lifetime lock. */
   if(!profile_writable) return TRUE;
   GError *error=NULL;
+#ifdef EXR_READER_GTK_COMPACT
+  g_key_file_set_int64(settings,"reader","book",book_id>0 ? book_id:compact_resume);
+#else
   g_key_file_set_int64(settings,"reader","book",book_id);
+#endif
 #ifndef EXR_READER_PREFERENCES_UI
   g_key_file_set_integer(settings,"reader","font",font_size);
   g_key_file_set_integer(settings,"reader","zoom",zoom_percent);
@@ -540,6 +650,9 @@ static gboolean apply_result(gpointer data) {
     g_free(page_text);page_text=result->text;result->text=NULL;
     gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(text)),page_text,(int)result->text_size);
     gtk_stack_set_visible_child_name(GTK_STACK(stack),"reader");
+#ifdef EXR_READER_GTK_COMPACT
+    compact_resume=book_id;compact_sync();
+#endif
     if(result->select_range) {
       GtkTextBuffer *buffer=gtk_text_view_get_buffer(GTK_TEXT_VIEW(text));GtkTextIter a,b;size_t end=MIN(result->selected_end,page_end);
       if(result->selected_start>=page_start && result->selected_start<=end) {
@@ -763,6 +876,16 @@ static void action(GtkWidget *widget,gpointer name) {
 #ifdef EXR_READER_DESKTOP_METADATA
   if(metadata_running) { status(EXR_OK,"Finishing a book edit; its accepted result will be retained");return; }
 #endif
+#ifdef EXR_READER_GTK_COMPACT
+  if(!strcmp(a,"resume")) { if(compact_resume>0) open_id(compact_resume);return; }
+  if(!strcmp(a,"details")) {
+    gboolean visible=!gtk_widget_get_visible(compact_details);gtk_widget_set_visible(compact_details,visible);
+    if(!visible && compact_page_focus) gtk_widget_grab_focus(compact_page_focus);
+    state();return;
+  }
+  if(!strcmp(a,"text") || !strcmp(a,"note") || !strcmp(a,"notes") || !strcmp(a,"delete") || !strcmp(a,"comment"))
+    gtk_widget_show(compact_details);
+#endif
   if(!strcmp(a,"import")) import_dialog();
   else if(!strcmp(a,"shelf")) {
     gtk_stack_set_visible_child_name(GTK_STACK(stack),"shelf");focus_list(shelf);
@@ -936,6 +1059,9 @@ int main(int argc,char **argv) {
   int zoom=g_key_file_get_integer(settings,"reader","zoom",NULL);if(zoom>=25 && zoom<=400) zoom_percent=zoom;
 #endif
   int64_t last=g_key_file_get_int64(settings,"reader","book",NULL);
+#ifdef EXR_READER_GTK_COMPACT
+  compact_resume=last;
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   shelf_query=g_key_file_get_string(settings,"shelf","query",NULL);
   if(!shelf_query || !g_utf8_validate(shelf_query,-1,NULL) || g_utf8_strlen(shelf_query,-1)>256) {
@@ -956,6 +1082,9 @@ int main(int argc,char **argv) {
   gtk_window_set_title(GTK_WINDOW(window),"EXReader Linux");gtk_window_set_default_size(GTK_WINDOW(window),1040,820);
   GtkWidget *root=gtk_box_new(GTK_ORIENTATION_VERTICAL,6),*toolbar=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,4);
   gtk_container_add(GTK_CONTAINER(window),root);gtk_box_pack_start(GTK_BOX(root),toolbar,FALSE,FALSE,0);
+#ifdef EXR_READER_GTK_COMPACT
+  compact_toolbar(toolbar);
+#else
   const char *names[]={"import","shelf","previous","next","bigger","smaller","text","note","notes","delete"};
   const char *titles[]={"Import F1","Shelf F2","Previous F3","Next F4","A+ F5","A− F6","Text F7","Add note F8","Notes F9","Delete F10"};
   for(size_t i=0;i<G_N_ELEMENTS(names);i++) {
@@ -979,6 +1108,7 @@ int main(int argc,char **argv) {
     if(i==4) bigger=button;else if(i==5) smaller=button;
     g_signal_connect(button,"clicked",G_CALLBACK(action),(gpointer)names[i]);
   }
+#endif
   label=gtk_label_new("Import a book to start reading");gtk_box_pack_start(GTK_BOX(root),label,FALSE,FALSE,0);
   stack=gtk_stack_new();gtk_box_pack_start(GTK_BOX(root),stack,TRUE,TRUE,0);
   shelf=gtk_list_box_new();gtk_list_box_set_activate_on_single_click(GTK_LIST_BOX(shelf),TRUE);
@@ -992,6 +1122,9 @@ int main(int argc,char **argv) {
 #ifdef EXR_READER_DROP_IMPORT_UI
   file_input_attach(shelf_scroll);
 #endif
+#ifdef EXR_READER_GTK_COMPACT
+  gtk_box_pack_start(GTK_BOX(shelf_panel),search,FALSE,FALSE,0);
+#else
 #ifdef EXR_READER_DESKTOP_METADATA
   GtkWidget *shelf_actions=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,4);
   gtk_box_pack_start(GTK_BOX(shelf_actions),search,TRUE,TRUE,0);
@@ -1027,6 +1160,7 @@ int main(int argc,char **argv) {
 #else
   gtk_box_pack_start(GTK_BOX(shelf_panel),search,FALSE,FALSE,0);
 #endif
+#endif
   gtk_box_pack_start(GTK_BOX(shelf_panel),shelf_scroll,TRUE,TRUE,0);
 #ifdef EXR_READER_ACCOUNT
   received_panel=gtk_box_new(GTK_ORIENTATION_VERTICAL,4);
@@ -1052,16 +1186,29 @@ int main(int argc,char **argv) {
   gtk_stack_add_named(GTK_STACK(stack),scroll(shelf),"shelf");
 #endif
   GtkWidget *reader=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,8),*right=gtk_box_new(GTK_ORIENTATION_VERTICAL,6);
+#ifdef EXR_READER_GTK_COMPACT
+  compact_button(right,"Close text and notes","Close text and notes",G_CALLBACK(action),(gpointer)"details");
+#endif
   image=gtk_image_new();
   atk_object_set_name(gtk_widget_get_accessible(image),"Rendered page; selectable text is in the adjacent panel");
+#ifdef EXR_READER_GTK_COMPACT
+  atk_object_set_name(gtk_widget_get_accessible(image),"Rendered reading page; selectable text and notes are in More");
+#endif
 #ifdef EXR_READER_PREFERENCES_UI
   GtkWidget *page_input=gtk_event_box_new();gtk_container_add(GTK_CONTAINER(page_input),image);
   gtk_widget_add_events(page_input,GDK_BUTTON_PRESS_MASK|GDK_BUTTON_RELEASE_MASK|GDK_POINTER_MOTION_MASK);
   g_signal_connect(page_input,"button-press-event",G_CALLBACK(preferences_page_press),NULL);
   g_signal_connect(page_input,"button-release-event",G_CALLBACK(preferences_page_release),NULL);
   atk_object_set_name(gtk_widget_get_accessible(page_input),"Reading page gestures");
+#ifdef EXR_READER_GTK_COMPACT
+  compact_page_focus=page_input;gtk_widget_set_can_focus(page_input,TRUE);
+  atk_object_set_name(gtk_widget_get_accessible(page_input),"Reading page");
+#endif
   gtk_box_pack_start(GTK_BOX(reader),scroll(page_input),TRUE,TRUE,0);
 #else
+#ifdef EXR_READER_GTK_COMPACT
+  compact_page_focus=image;gtk_widget_set_can_focus(image,TRUE);
+#endif
   gtk_box_pack_start(GTK_BOX(reader),scroll(image),TRUE,TRUE,0);
 #endif
   text=gtk_text_view_new();gtk_text_view_set_editable(GTK_TEXT_VIEW(text),FALSE);
@@ -1080,6 +1227,9 @@ int main(int argc,char **argv) {
   notes=gtk_list_box_new();gtk_widget_set_size_request(notes,320,120);
   atk_object_set_name(gtk_widget_get_accessible(notes),"Saved notes; activate to return to selected text");
   gtk_box_pack_start(GTK_BOX(right),scroll(notes),TRUE,TRUE,0);gtk_box_pack_start(GTK_BOX(reader),right,FALSE,FALSE,0);
+#ifdef EXR_READER_GTK_COMPACT
+  compact_details=right;gtk_widget_show_all(right);gtk_widget_set_no_show_all(right,TRUE);gtk_widget_hide(right);
+#endif
   gtk_stack_add_named(GTK_STACK(stack),reader,"reader");
   g_signal_connect(window,"key-press-event",G_CALLBACK(key),NULL);
   g_signal_connect(window,"focus-in-event",G_CALLBACK(focus_changed),NULL);
@@ -1100,11 +1250,24 @@ int main(int argc,char **argv) {
   g_signal_connect(gtk_text_view_get_buffer(GTK_TEXT_VIEW(text)),"mark-set",G_CALLBACK(selection_changed),NULL);
   g_signal_connect(gtk_widget_get_ancestor(image,GTK_TYPE_SCROLLED_WINDOW),"size-allocate",G_CALLBACK(page_allocated),NULL);
   g_signal_connect_after(image,"draw",G_CALLBACK(page_painted),NULL);
+#ifdef EXR_READER_GTK_COMPACT
+  g_signal_connect(stack,"notify::visible-child",G_CALLBACK(compact_stack_changed),NULL);
+#endif
   gtk_widget_show_all(window);gtk_window_present(GTK_WINDOW(window));queue=g_async_queue_new();
+#ifdef EXR_READER_GTK_COMPACT
+  compact_sync();
+#ifdef EXR_READER_PRODUCT_CATALOG
+  gtk_widget_grab_focus(search);
+#endif
+#endif
 #ifdef EXR_READER_PREFERENCES_UI
   preferences_platform_start();preferences_style();
 #endif
+#ifdef EXR_READER_GTK_COMPACT
+  thread=g_thread_new("reading",work,font_path);submit(READER_SHELF,0,NULL,font_size);
+#else
   thread=g_thread_new("reading",work,font_path);submit(last ? READER_OPEN:READER_SHELF,last,NULL,font_size);
+#endif
   state();gtk_main();g_thread_join(thread);g_async_queue_unref(queue);
 #ifdef EXR_READER_PREFERENCES_UI
   preferences_cleanup();
