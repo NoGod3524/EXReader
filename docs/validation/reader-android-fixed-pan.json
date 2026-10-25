@@ -1,0 +1,116 @@
+{
+  "accepted": true,
+  "source_sha": "b25975b45f021bdf1bd086088634cfc2a4b4d2d4",
+  "acceptance":{"run_id":40156615296,"attempt":1,"job_id":121059247720,"conclusion":"success","scope":"Android API34 default x86_64 emulator host only","pan_checks":8,"inherited_ui":{"host":16,"search":15,"navigation":18,"reading":16,"preferences":17,"cbz":10,"total":92},"total_ui_checks":100,"phases":[{"phase":"first","pid":9124,"checks":7},{"phase":"reopen","pid":9370,"checks":1}],"screenshots":23,"display_corner_samples":9,"original_reads":22,"cropped_rotation_selection_gestures":8,"artifact":{"id":12585631849,"bytes":147551041,"sha256":"1826428c4f0c35075d620f496b5a3ccef4a6e121bf9e797dd74ad881599b28b4","expires_at":"2027-01-23T03:00:46Z"},"independent_zip_png_proof_pending":true},
+  "fixed_base": "6b43e83537aa6b03bda889d258fe73c0e317acb1",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "checkpoint": {
+    "observed_at_utc": "2026-10-25 00:40:57 UTC",
+    "branch": "codex/reader-android-fixed-pan",
+    "workspace": "C:/Users/Oscar/.codex/worktrees/reader-android-sync-session/EXReader",
+    "source_head": "d199f0dc67ed929ad7c5a3fe8edb855ef50f1f67",
+    "source_origin_head": "d199f0dc67ed929ad7c5a3fe8edb855ef50f1f67",
+    "source_worktree_clean": true,
+    "all_source_tests_workflow_committed_and_pushed": true,
+    "reason": "user requested restart-safe checkpoint; original live run naturally completed failure; no new cloud round started",
+    "checkpoint_commit": "subsequent [skip ci] commit contains only original raw-report/log preservation in the new test driver and these checkpoint docs; exact final HEAD supplied in handback",
+    "previous_checkpoint_head": "5e1d839c55615ad44a5d92461637804098ef67bc",
+    "previous_checkpoint_remote_head": "5e1d839c55615ad44a5d92461637804098ef67bc"
+  },
+  "runs": [
+    {
+      "source_sha": "e2f177f5b8790ba4cb27e413558bc3a45ed5dfa3",
+      "run_id": 40145782695,
+      "attempt": 1,
+      "job_id": 121026688733,
+      "conclusion": "cancelled",
+      "reason": "source review removed irrelevant inherited search expectations from the new quadrant-only fixture manifest; original inherited test fixtures were unchanged",
+      "artifacts": [
+        {
+          "id": 12580996162,
+          "name": "reader-android-fixed-pan-40145782695-1",
+          "bytes": 21759444,
+          "sha256": "9f739316145eaedca4a5c630d1cd8ada0db0f2ba037f24f2edad1bb435c100b7",
+          "expires_at": "2027-01-23T00:12:21Z"
+        }
+      ]
+    },
+    {
+      "source_sha": "1c7e1634d0aa00bd1f3ddbee85dc5017013fa822",
+      "run_id": 40145939682,
+      "attempt": 1,
+      "job_id": 121027169823,
+      "conclusion": "failure",
+      "reason": "ReaderView.java pan condition missing one closing parenthesis; fixed in d199f0dc; no UI suite executed",
+      "artifacts": [
+        {
+          "id": 12580242735,
+          "name": "reader-android-fixed-pan-40145939682-1",
+          "bytes": 37260901,
+          "sha256": "f76283ffff1f023ca265c67ebaa8a27178aab2dfb8078b6d6a50b688ea90c146",
+          "expires_at": "2027-01-23T00:14:48Z"
+        }
+      ]
+    },
+    {
+      "source_sha": "d199f0dc67ed929ad7c5a3fe8edb855ef50f1f67",
+      "run_id": 40146403326,
+      "attempt": 1,
+      "job_id": 121028566204,
+      "status": "completed",
+      "conclusion": "failure",
+      "builds_and_native_audits_completed": true,
+      "checks": 0,
+      "inherited_ui": {
+        "host": 16,
+        "search": 15,
+        "navigation": 18,
+        "reading": 16,
+        "preferences": 17,
+        "cbz_reading": 10,
+        "total": 92,
+        "all_passed": true
+      },
+      "failure": "new Pan first phase report could not be decoded: json.decoder.JSONDecodeError at run_ui.py json.loads(private(...)); instrumentation-level root cause not yet read",
+      "artifacts": [
+        {
+          "id": 12580498901,
+          "name": "reader-android-fixed-pan-40146403326-1",
+          "bytes": 146190324,
+          "sha256": "51d6ea82c9ccc4f9ca0f7fc960826d986c924b544cdc303ed7f66848adfaceda",
+          "expires_at": "2027-01-23T00:21:56Z"
+        }
+      ]
+    },
+    {"source_sha":"094d475e2d8860c30ffcc2fb903d5aa9747706e9","run_id":40154163799,"attempt":1,"job_id":121051820296,"conclusion":"failure","accepted":false,"inherited_ui":{"total":92,"all_passed":true},"pan_first_check_passed":true,"failure":"cropped rotation270 pointer selected B instead of BLA because selection toolbar resized viewport mid-gesture; crop0/90/180 exact selection passed","artifact":{"id":12584082874,"bytes":146820764,"sha256":"bac698dcac07a4917e36412ada410213ef93a1ac2701d56f5a072b534019fd60","expires_at":"2027-01-23T02:21:56Z"}},
+    {"source_sha":"d509751501ac3d12b9a5bbb4b5388712a45be1e6","run_id":40155515246,"attempt":1,"job_id":121055966707,"conclusion":"failure","accepted":false,"inherited_ui":{"total":92,"all_passed":true},"pan_first_phase_partial_passed":6,"failure":"rotation-rebuild wait probe used getLong(book) on temporary empty frame; JSONException No value for book; subsequent transient reset/reopen checks unexecuted","artifact":{"id":12584294693,"bytes":147216497,"sha256":"a1a622f30101b1e72250d4a16baec8040d70753b9425aad67c21278f50b04cbd","expires_at":"2027-01-23T02:43:03Z"}}
+  ],
+  "diagnostics": [
+    {"source_sha":"7d8a9913962517ec581220e00b383bb0951307ea","run_id":40153537765,"job_id":121049911211,"conclusion":"success","diagnostic_only":true,"accepted":false,"finding":"Original APK first four-corner test completed; next selection test caused Process crashed. Original ZIP identity fully verified in Actions."},
+    {"source_sha":"d82f008c5596154a256f6b0aa988a939fdfc7e20","run_id":40153716101,"job_id":121050442774,"conclusion":"success","diagnostic_only":true,"accepted":false,"finding":"Exact original APK replay crash log: main-thread AssertionError panned real marker semantic node visible. No native crash. No acceptance granted.","artifact":{"id":12583890589,"bytes":34913,"sha256":"0426ecf220a5266d88dd619c5b19bd8ef49b952cd6e2117c7e56ff1c53c8c447","expires_at":"2027-01-23T02:14:47Z"}},
+    {"source_sha":"fff32bac782bc48ec2963a14e23a854c906bab41","run_id":40155347245,"job_id":121055463655,"conclusion":"success","diagnostic_only":true,"accepted":false,"finding":"Exact viewport-failure ZIP read in Actions. crop0/90/180 selected exact BRA/TRA/TLA; crop270 selected B; viewport height changed1766 to1618 when selection toolbar appeared."}
+  ],
+  "current_candidate":{"source_sha":"b25975b45f021bdf1bd086088634cfc2a4b4d2d4","run_id":40156615296,"accepted":true,"scope":"shared overlay toolbar, explicit Select and real650ms longpress+drag across cropped rotations0/90/180/270, Pan8 plus retained92; emulator host only"},
+  "pending": "Separate Actions-only ZIP/PNG proof and nativeViewports internal cancellation follow-up. No b259 evidence transfers to later production changes.",
+  "next_actions": [
+    "Original crash diagnosis completed only in Actions: public PDF source-space viewport mapping was missing in host, and main-thread probe assertion killed the process.",
+    "New b25975b4 candidate uses the public SDK viewport plus shared contextual overlay without resizing the reader, for explicit Select and real longpress. Preserve all old failed runs/artifacts and every retained assertion.",
+    "Full same-source40156615296 succeeded. Seal original100 evidence; independently verify original ZIP/PNG only in Actions.",
+    "On actual success, require Pan8 (first7/reopen1) and unchanged 92 UI checks plus original SDK/transport results; only then open a separate proof diagnostic branch to verify original ZIP and independently decode saved screenshots.",
+    "Never merge a *-proof branch or grant page colors/physical-device/TalkBack/performance/full-product scope.",
+    "Add HostTask control to nativeViewports public PDF open and per-page matrix loop in a separate production commit; validate only in the new common source full round.10000 page limit already matches frozen PDF reader; current100 does not exercise internal native cancellation or that page boundary."
+  ],
+  "prior_completed_cbz_head": "6b43e83537aa6b03bda889d258fe73c0e317acb1",
+  "page_colors_accepted": false,
+  "physical_device_execution": false,
+  "talkback_speech_accepted": false,
+  "performance_accepted": false,
+  "complete_product": false,
+  "diagnostic_driver_preservation": {
+    "path": "tests/reader_android_fixed_pan/run_ui.py",
+    "change": "save raw report bytes and logcat before JSON parsing; print original instrumentation/raw report when decode fails; all acceptance assertions retained",
+    "tested": true,
+    "tested_run": 40154163799,
+    "raw_report_and_logcat_preserved": true
+  }
+}

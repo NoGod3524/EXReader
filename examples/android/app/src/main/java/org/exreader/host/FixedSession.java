@@ -17,6 +17,8 @@ import java.nio.ByteBuffer;
  * copy; each page render is independent and the bitmap outlives document close.
  */
 final class FixedSession implements AutoCloseable {
+    static { System.loadLibrary("exreader_host"); }
+    private static native double[] nativeViewports(byte[] bytes);
     private final EXReader.FixedDocument document;
     private final NativeCbz cbz;
     private final int pageCount;
@@ -25,6 +27,7 @@ final class FixedSession implements AutoCloseable {
     private boolean closed;
     private final long bookId;
     private final boolean imageOnly;
+    private final double[] viewports;
 
     FixedSession(long bookId, String path, byte[] font, int format,HostTask task) throws Exception {
         this.bookId = bookId;
@@ -42,6 +45,10 @@ final class FixedSession implements AutoCloseable {
         try {
             pageCount = cbz==null?document.pageCount():cbz.count();
             if (pageCount <= 0) throw new IllegalStateException("The document has no pages");
+            task.check();
+            viewports = imageOnly ? null : nativeViewports(bytes);
+            task.check();
+            if(!imageOnly&&(viewports==null||viewports.length!=pageCount*6))throw new IllegalStateException("Incomplete public PDF page viewport directory");
             int width=cbz==null?document.render(0,1.0).width:cbz.render(0,1.0,task).meta[0];
             if(width<=0)throw new IllegalStateException("The first page cannot be rendered");
             baseScale = Math.max(0.25f, Math.min(20f, 600f / width));
@@ -86,7 +93,14 @@ final class FixedSession implements AutoCloseable {
         for (int i = 0; i < regions; i++) {
             starts[i] = textPage.ranges[i * 2];
             ends[i] = textPage.ranges[i * 2 + 1];
-            for (int k = 0; k < 8; k++) quads[i][k] = (float) textPage.quads[i * 8 + k];
+            // Public PDF text is in native source coordinates. Match the same
+            // crop/rotation/y-axis viewport used by exr_fixed_render at scale 1.
+            int matrix = page * 6;
+            for (int k = 0; k < 8; k += 2) {
+                double x=textPage.quads[i*8+k],y=textPage.quads[i*8+k+1];
+                quads[i][k]=(float)(viewports[matrix]*x+viewports[matrix+2]*y+viewports[matrix+4]);
+                quads[i][k+1]=(float)(viewports[matrix+1]*x+viewports[matrix+3]*y+viewports[matrix+5]);
+            }
         }
         String[] lineText;
         RectF[] lineBounds;
@@ -125,16 +139,20 @@ final class FixedSession implements AutoCloseable {
         java.util.List<StringBuilder> texts = new java.util.ArrayList<>();
         java.util.List<RectF> boxes = new java.util.ArrayList<>();
         java.util.List<Float> centers = new java.util.ArrayList<>();
+        java.util.List<Boolean> verticals = new java.util.ArrayList<>();
         for (int i = 0; i < quads.length; i++) {
             if (flags != null && (flags[i] & 2) != 0) continue;
             RectF box = box(quads[i]);
             if (box.width() <= 0 || box.height() <= 0) continue;
             String value = ReflowSession.slice(pageText, starts[i], ends[i]);
             if (value.isEmpty()) continue;
+            float dx=quads[i][2]-quads[i][0],dy=quads[i][3]-quads[i][1];
+            boolean vertical=Math.abs(dy)>Math.abs(dx);
+            float normal=vertical?box.width():box.height(),center=vertical?box.centerX():box.centerY();
             int group = -1;
             for (int g = 0; g < centers.size(); g++) {
-                float tolerance = Math.max(box.height(), boxes.get(g).height()) * 0.6f;
-                if (Math.abs(box.centerY() - centers.get(g)) <= tolerance) {
+                float tolerance = Math.max(normal, vertical?boxes.get(g).width():boxes.get(g).height()) * 0.6f;
+                if (verticals.get(g)==vertical && Math.abs(center - centers.get(g)) <= tolerance) {
                     group = g;
                     break;
                 }
@@ -142,14 +160,16 @@ final class FixedSession implements AutoCloseable {
             if (group < 0) {
                 texts.add(new StringBuilder(value));
                 boxes.add(new RectF(box));
-                centers.add(box.centerY());
+                centers.add(center);
+                verticals.add(vertical);
             } else {
                 RectF current = boxes.get(group);
                 StringBuilder builder = texts.get(group);
-                if (box.left - current.right > Math.max(2f, box.height() * 0.2f)) builder.append(' ');
+                float gap=vertical?(dy>=0?box.top-current.bottom:current.top-box.bottom):(dx>=0?box.left-current.right:current.left-box.right);
+                if (gap > Math.max(2f, normal * 0.2f)) builder.append(' ');
                 builder.append(value);
                 current.union(box);
-                centers.set(group, current.centerY());
+                centers.set(group, vertical?current.centerX():current.centerY());
             }
         }
         String[] text = new String[texts.size()];
