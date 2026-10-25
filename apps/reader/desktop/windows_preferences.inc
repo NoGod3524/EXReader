@@ -15,7 +15,7 @@ static void page_step(int direction);
 
 static exr_status prefs_job(host_job *job) {
   if (job_cancel_flag(job)) return EXR_CANCELLED;
-  return prefs_write(&job->prefs, job->message, 512);
+  return prefs_write(job, job->message, 512);
 }
 
 static int prefs_submit(const reader_preferences *next, int persist) {
