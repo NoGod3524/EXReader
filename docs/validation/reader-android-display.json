@@ -4,8 +4,246 @@
   "branch": "codex/dot-reader-android-display",
   "fixed_start": "a826a65c9c66e43620eff61b49cb79f941a3c953",
   "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
-  "status": "pending_first_actions_run",
-  "accepted": false,
+  "tested_sha": "bb6442cd6a8f9a16da853e4abd5d70451a291aa0",
+  "tested_tree": "82c93c98fd8a1605eb7c3c1d1e358caab7d5a6ad",
+  "source_module_tree": "0215f0441e7dce8053209094af1f46f3fe4483af",
+  "evidence_commit": "The separate [skip ci] commit containing this record; exact evidence HEAD is returned in the handoff.",
+  "evidence_delta": [
+    "docs/READER-ANDROID-DISPLAY.md",
+    "docs/validation/reader-android-display.json"
+  ],
+  "status": "api34_window_properties_passed",
+  "accepted": true,
+  "acceptance_scope": "Independent native Android AAR and real API34 installed probe; not integrated-product acceptance.",
+  "complete_product": false,
   "physical_effect": "UNAVAILABLE",
-  "complete_product": false
+  "run": {
+    "id": 40171106759,
+    "attempt": 1,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40171106759",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "id": 121101933695,
+        "name": "Android API34 native display",
+        "source_sha": "bb6442cd6a8f9a16da853e4abd5d70451a291aa0",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121102692474,
+        "name": "Android display evidence verifier",
+        "source_sha": "bb6442cd6a8f9a16da853e4abd5d70451a291aa0",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "artifacts": [
+    {
+      "id": 12590715221,
+      "name": "reader-android-display-report-40171106759-1",
+      "bytes": 2217,
+      "sha256": "7570f61f4ba18e2c94c9818af9d472d6e892212ca94b60173ee259d0f2018f27",
+      "expires_at": "2026-11-24T07:03:57Z",
+      "expired": false,
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/40171106759/artifacts/12590715221"
+    },
+    {
+      "id": 12590516044,
+      "name": "reader-android-display-native-40171106759-1",
+      "bytes": 534416,
+      "sha256": "b98567b6832b92a06b93326af06e61e5d99948761dc1bbb7aefe6c2b50a3d0c9",
+      "expires_at": "2026-11-24T07:03:43Z",
+      "expired": false,
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/40171106759/artifacts/12590516044"
+    }
+  ],
+  "native_result": {
+    "accepted": true,
+    "physical_effect": "UNAVAILABLE",
+    "unavailable": [
+      "physical_backlight",
+      "battery_or_power_policy",
+      "OEM_device_behavior",
+      "accessibility",
+      "formal_host_integration"
+    ],
+    "schema": 1,
+    "module": "EXReaderAndroidDisplay",
+    "module_version": "0.1.0",
+    "source_sha": "bb6442cd6a8f9a16da853e4abd5d70451a291aa0",
+    "run_id": "40171106759",
+    "run_attempt": "1",
+    "job": "android",
+    "api": 34,
+    "abi": "x86_64",
+    "ui_cases": [
+      "normal_numeric_switch",
+      "follows_system_exact",
+      "rejects_nonfinite_atomic",
+      "rejects_out_of_range_atomic",
+      "wrong_thread_no_effect",
+      "reentrant_no_effect",
+      "duplicate_attach_no_effect",
+      "null_window_rejected",
+      "preexisting_keep_preserved",
+      "external_brightness_preserved",
+      "external_keep_preserved",
+      "unrelated_flags_preserved",
+      "cancel_restore_retry",
+      "close_and_after_close",
+      "exclusive_same_window",
+      "independent_windows",
+      "focus_loss_restore_no_autoactivate",
+      "pause_background_restore",
+      "rotation_old_token_rejected",
+      "window_recreation_releases_old",
+      "destroyed_window_rejected",
+      "hidden_window_activate_rejected",
+      "detach_old_callbacks_rejected"
+    ],
+    "process_cases": [
+      "actual_process_terminated",
+      "fresh_process_new_pid",
+      "reopen_default_window",
+      "no_permissions_or_services",
+      "global_brightness_unchanged"
+    ],
+    "checks": 28,
+    "files": [
+      {
+        "path": "consumer/installed.apk",
+        "bytes": 31223,
+        "sha256": "6fa5794af37721f847ae080a1ab9308772be5a8a3aa6857d5084a4817c15e60d"
+      },
+      {
+        "path": "consumer/probe-debug.apk",
+        "bytes": 31223,
+        "sha256": "6fa5794af37721f847ae080a1ab9308772be5a8a3aa6857d5084a4817c15e60d"
+      },
+      {
+        "path": "stage/README.md",
+        "bytes": 4303,
+        "sha256": "2b6a4a7c8ea104dcb3042ddec1f659d0fe5158ab344baf7d9791f4043da3dcc0"
+      },
+      {
+        "path": "stage/classes.jar",
+        "bytes": 7651,
+        "sha256": "7614d93e989d758b35a06e100ad0b15d3ae6c7d03677229f6642813189c8fe1a"
+      },
+      {
+        "path": "stage/exreader-android-display-0.1.0.aar",
+        "bytes": 7952,
+        "sha256": "0cc2b45d1365cb5b3d79255016f81e2a313103567d4457d6fe54ce8135d4a3f4"
+      }
+    ],
+    "global_before": {
+      "screen_brightness": "102",
+      "screen_brightness_mode": "0"
+    },
+    "global_after": {
+      "screen_brightness": "102",
+      "screen_brightness_mode": "0"
+    },
+    "terminated_pid": 2733,
+    "reopened_pid": 2779,
+    "source_module_tree": "0215f0441e7dce8053209094af1f46f3fe4483af"
+  },
+  "strict_verifier": {
+    "checks": 46,
+    "positive_baseline": 1,
+    "rejected_mutations": 45,
+    "cases": [
+      "actual_authenticated_baseline",
+      "wrong_run_source",
+      "wrong_run_attempt",
+      "wrong_workflow",
+      "wrong_repository",
+      "producer_not_completed",
+      "producer_failure",
+      "producer_wrong_attempt",
+      "producer_wrong_source",
+      "duplicate_job",
+      "duplicate_artifact_id",
+      "wrong_artifact_name",
+      "expired_artifact",
+      "past_expiry",
+      "empty_artifact",
+      "artifact_wrong_source",
+      "wrong_zip_size",
+      "wrong_api_digest",
+      "wrong_actual_zip",
+      "missing_upload_log_binding",
+      "wrong_upload_digest",
+      "duplicate_zip_report",
+      "zip_path_traversal",
+      "zip_case_alias",
+      "missing_raw_suite",
+      "duplicate_json_key",
+      "nonfinite_json",
+      "wrong_report_source",
+      "wrong_report_attempt",
+      "wrong_original_module",
+      "physical_overclaim",
+      "missing_required_case",
+      "wrong_apk_bytes",
+      "wrong_aar_bytes",
+      "wrong_runtime_apk_identity",
+      "wrong_runtime_aar_identity",
+      "duplicate_named_ui_case",
+      "failed_ui_case",
+      "raw_property_mismatch",
+      "worker_property_read",
+      "missing_instrumentation_case",
+      "process_still_alive",
+      "process_not_fresh",
+      "injected_permission",
+      "injected_service",
+      "global_change"
+    ],
+    "accepted": true,
+    "native_credit": 0,
+    "recomputed_native_zip_sha256": "b98567b6832b92a06b93326af06e61e5d99948761dc1bbb7aefe6c2b50a3d0c9",
+    "recomputed_native_zip_bytes": 534416,
+    "producer_log_sha256": "66bbc21900a99d0afe6af44e68bab2d1d0a7119ec1ec7a554acd5624472d1142",
+    "raw_report_sha256": "0422fd28095fdb8e9e827da13886b11513d11bbd981c96260aa3fc80360c568b"
+  },
+  "evidence_observation": "Metadata and decoded job logs read through GitHub connector. All artifact download, ZIP parsing, digest recomputation, binary inspection, builds and execution occurred exclusively in GitHub Actions.",
+  "retained_failures": [
+    {
+      "run_id": 40170886028,
+      "attempt": 1,
+      "source_sha": "9b86c23a4324497c7ac93e3c33b60611c94b1285",
+      "conclusion": "failure",
+      "native_job": 121101293253,
+      "verifier_job": 121101582945,
+      "reason": "Two javac errors: Window.isDestroyed() is absent from public compileSdk35 stubs. No native cases ran; strict job rejected failed producer.",
+      "repair": "Removed two hidden Window calls; kept public owning Activity.isDestroyed/isFinishing and exact Window identity checks. All original cases and assertions unchanged.",
+      "artifacts": [
+        {
+          "id": 12590196035,
+          "name": "reader-android-display-native-40170886028-1",
+          "bytes": 3317,
+          "sha256": "3bc3f482ea95c40970781a039f8d1f1870dcf73121875d4cb017a835436ca1e7",
+          "expires_at": "2026-11-24T06:57:41Z"
+        },
+        {
+          "id": 12590515408,
+          "name": "reader-android-display-report-40170886028-1",
+          "bytes": 219,
+          "sha256": "a09f7bd23a6796bfa906f3bba9824e6d972118edd708f824423d6443fcac5598",
+          "expires_at": "2026-11-24T06:57:54Z"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Physical backlight, battery/power policy, OEM behavior, accessibility and formal host integration are UNAVAILABLE.",
+    "Android exposes no property authorship stamp; an identical external write or unobserved away-and-back change cannot be distinguished. Cooperating hosts deactivate before such writes.",
+    "Host must deactivate when its reader pane becomes hidden within a still-focused Activity; Window callbacks must not throw.",
+    "Only debug-signed CI probe installed; no release, tag, default-branch change, signing release or host integration.",
+    "Current Actions deprecation and emulator startup/shutdown diagnostic warnings remain in original logs; every required step completed successfully."
+  ]
 }
