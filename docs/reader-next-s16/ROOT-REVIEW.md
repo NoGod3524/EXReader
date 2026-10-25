@@ -1,5 +1,19 @@
 # S16 root source review / S15 integration note
 
+## Root evidence repair pending
+
+The root review now uploads all nine actual C/C++ consumer programs and all
+three installed jump-history archives. Its strict job recomputes each native
+program's bytes/digest, all three original-suite source/run/attempt identities,
+raw report/program/install bindings, baseline/default projections, bounded
+header insertions and default/raw archive symbols. Duplicate JSON keys and
+unsafe/duplicate ZIP members are refused. Actual artifact mutation controls
+cover all nine programs, three archives and three original-suite identities.
+
+These changes do not alter the module or original tests. Root review has its
+own maximum of three full Actions rounds; the original worker's excess rounds
+remain disclosed. Verification is pending; no local checks were run.
+
 2026-10-25。只读 Git、源码、原验证器及 GitHub run/job 元数据；没有本地构建、测试、语法检查或工件处理，没有启动新的运行。
 
 ## S16 可接入的候选源码

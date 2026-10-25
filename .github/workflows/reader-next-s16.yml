@@ -1,7 +1,7 @@
 name: Reader next S16 jump-history raw3
 on:
   push:
-    branches: [codex/reader-next-s16]
+    branches: [codex/reader-next-s16, codex/reader-next-s16-root-review]
   workflow_dispatch:
 permissions:
   contents: read
@@ -64,11 +64,16 @@ jobs:
             build/reader-next-s16/families/baseline-stage/include/reader_jump_history.h
             build/reader-next-s16/families/default-stage/lib/
             build/reader-next-s16/families/raw-stage/lib/
+            build/reader-next-s16/families/baseline-stage/lib/
             build/reader-next-s16/build/raw-consumer/s16-raw-probe*
             build/reader-next-s16/build/raw-consumer/s16-c-consumer*
             build/reader-next-s16/build/default-consumer/s16-c-consumer*
             build/reader-next-s16/build/original-default-consumer/jump-history-probe*
             build/reader-next-s16/build/original-default-consumer/jump-history-c-consumer*
+            build/reader-next-s16/build/original-baseline-consumer/jump-history-probe*
+            build/reader-next-s16/build/original-baseline-consumer/jump-history-c-consumer*
+            build/reader-next-s16/build/original-raw-consumer/jump-history-probe*
+            build/reader-next-s16/build/original-raw-consumer/jump-history-c-consumer*
             build/reader-next-s16/result.json
             build/reader-next-s16/assertion.log
           if-no-files-found: warn

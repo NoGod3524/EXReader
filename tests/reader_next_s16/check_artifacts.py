@@ -9,6 +9,8 @@ cases, lifecycle steps and both no-write verdicts. Nothing here runs on a
 developer machine.
 """
 import copy
+import difflib
+from datetime import datetime, timezone
 import hashlib
 import io
 import json
@@ -21,6 +23,99 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_raw import REQUIRED, SEMANTICS, STABLE_NO_WRITE
+from run import original_projection
+
+
+def json_load(data):
+    def pairs(entries):
+        result = {}
+        for key, value in entries:
+            if key in result:
+                raise ValueError('duplicate JSON key: ' + key)
+            result[key] = value
+        return result
+    return json.loads(data, object_pairs_hook=pairs)
+
+
+def complete_bindings(archive, result, platform, overrides=None):
+    """Recompute default compatibility and all executable/archive bindings."""
+    def get(path):
+        return (overrides or {}).get(path, archive.read(entry(archive, path)))
+    def need(ok, message):
+        if not ok:
+            raise ValueError(message)
+    suffix = '.exe' if platform == 'Windows' else ''
+    expected = {
+        'raw_probe': 'build/raw-consumer/s16-raw-probe',
+        'raw_c_consumer': 'build/raw-consumer/s16-c-consumer',
+        'default_c_consumer': 'build/default-consumer/s16-c-consumer',
+        'original_probe': 'build/original-default-consumer/jump-history-probe',
+        'original_c_consumer': 'build/original-default-consumer/jump-history-c-consumer',
+        'baseline_probe': 'build/original-baseline-consumer/jump-history-probe',
+        'baseline_c_consumer': 'build/original-baseline-consumer/jump-history-c-consumer',
+        'original_raw_probe': 'build/original-raw-consumer/jump-history-probe',
+        'original_raw_c_consumer': 'build/original-raw-consumer/jump-history-c-consumer',
+    }
+    need(set(result['programs']) == set(expected), 'exact nine native program roles')
+    binaries = {}
+    for role, stem in expected.items():
+        record = result['programs'][role]
+        path = stem + suffix
+        data = get(path)
+        need(record.get('member') == path and record.get('bytes') == len(data) > 0 and
+             record.get('sha256') == hashlib.sha256(data).hexdigest(), 'actual program binding: ' + role)
+        need(data.startswith(b'MZ' if platform == 'Windows' else b'\x7fELF'), 'native executable: ' + role)
+        binaries[role] = record
+    summaries = {}
+    archives = {}
+    headers = {}
+    context = {key: os.environ[key] for key in ('GITHUB_SHA', 'GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT')}
+    need((result.get('source_sha'), str(result.get('run_id')), str(result.get('run_attempt')), result.get('platform')) ==
+         (context['GITHUB_SHA'], context['GITHUB_RUN_ID'], context['GITHUB_RUN_ATTEMPT'], platform),
+         'complete producer result identity')
+    for family, stage, probe, consumer in (
+            ('original-baseline', 'baseline', 'baseline_probe', 'baseline_c_consumer'),
+            ('original-default', 'default', 'original_probe', 'original_c_consumer'),
+            ('original-raw', 'raw', 'original_raw_probe', 'original_raw_c_consumer')):
+        summary = json_load(get('evidence/' + family + '/summary.json'))
+        report_bytes = get('evidence/' + family + '/report.json')
+        report = json_load(report_bytes)
+        checks = report['checks']
+        names = [check['name'] for check in checks]
+        need(all(summary['identity'].get(key) == value for key, value in context.items()) and
+             summary.get('platform') == platform, 'original suite full identity: ' + family)
+        need(summary.get('jump_history_module_accepted') is True and not summary.get('problems') and
+             summary.get('checks_failed') == 0 and summary.get('checks_total') == len(checks) >= 149 and
+             len(names) == len(set(names)) and all(check.get('pass') is True for check in checks),
+             'complete original suite: ' + family)
+        need(summary.get('report_sha256') == hashlib.sha256(report_bytes).hexdigest() and
+             summary.get('probe_sha256') == binaries[probe]['sha256'] and
+             summary.get('c_consumer_sha256') == binaries[consumer]['sha256'], 'suite program/report: ' + family)
+        for key in ('cases', 'lifecycle', 'books', 'moves', 'sdk_version', 'parser_version',
+                    'jump_history_version', 'reading_state_version', 'revisions_version'):
+            need(summary.get(key) == report.get(key), 'suite projection differs from actual report: ' + key)
+        header = get('families/' + stage + '-stage/include/reader_jump_history.h')
+        library = 'reader_jump_history.lib' if platform == 'Windows' else 'libreader_jump_history.a'
+        data = get('families/' + stage + '-stage/lib/' + library)
+        need(data.startswith(b'!<arch>\n') and summary['installed']['library_sha256'] == hashlib.sha256(data).hexdigest()
+             and summary['installed']['header_sha256'] == hashlib.sha256(header).hexdigest(),
+             'actual installed header/archive: ' + stage)
+        headers[stage], archives[stage], summaries[stage] = header, data, summary
+    need(original_projection(summaries['baseline']) == original_projection(summaries['default']),
+         'recomputed baseline/default equivalence')
+    need(headers['default'] == headers['raw'], 'same capability-guarded installed header')
+    before, after = (headers[key].decode('utf-8').splitlines() for key in ('baseline', 'default'))
+    inserted = []
+    for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(a=before, b=after, autojunk=False).get_opcodes():
+        need(tag in ('equal', 'insert'), 'baseline header line modified')
+        if tag == 'insert':
+            inserted.extend(after[j1:j2])
+    need(0 < len(inserted) <= 70 and 'EXR_READER_SELECTOR_BYTES_CANDIDATE' in '\n'.join(inserted),
+         'bounded guarded pure header insertions')
+    for symbol in (b'reader_jh_commit_fixed_v3', b'reader_jh_commit_wire_raw_v3', b'reader_rs_decode_raw_v3'):
+        need(symbol not in archives['default'] and symbol in archives['raw'], 'actual archive capability symbols')
+    return {'program_roles': sorted(binaries), 'default_equals_baseline_recomputed': True,
+            'default_archive_no_raw_symbols_recomputed': True, 'original_suites': 3}
 
 PLATFORMS = ('Linux', 'Windows')
 WORKFLOW = '.github/workflows/reader-next-s16.yml'
@@ -193,13 +288,19 @@ def protocol_selftest():
         else:
             raise AssertionError('accepted invalid summary ' + key)
     print(json.dumps(dict(protocol_negative_cases=rejected, accepted=True)))
+    try:
+        json_load('{"accepted":false,"accepted":true}')
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('duplicate JSON key accepted')
 
 
 def api(path, binary=False):
     for attempt in range(4):
         result = subprocess.run(['gh', 'api', '-H', 'Accept: application/vnd.github+json', path], capture_output=True)
         if result.returncode == 0:
-            return result.stdout if binary else json.loads(result.stdout)
+            return result.stdout if binary else json_load(result.stdout)
         message = result.stderr.decode('utf-8', 'replace')
         if attempt == 3 or not any(code in message for code in ('HTTP 500', 'HTTP 502', 'HTTP 503', 'HTTP 504')):
             raise SystemExit('gh api ' + path + ' failed: ' + message)
@@ -238,7 +339,15 @@ def main(output):
                   'created_at': artifact.get('created_at'), 'expires_at': artifact.get('expires_at')}
         if str(artifact.get('workflow_run', {}).get('head_sha')) != source:
             problems.append(name + ': artifact head SHA differs from this source')
+        if str(artifact.get('workflow_run', {}).get('id')) != run or datetime.fromisoformat(
+                artifact['expires_at'].replace('Z', '+00:00')) <= datetime.now(timezone.utc):
+            problems.append(name + ': artifact run/expiry differs')
         archive = zipfile.ZipFile(io.BytesIO(data))
+        members = archive.namelist()
+        if len(members) != len(set(members)) or any(
+                info.orig_filename.startswith('/') or '..' in info.orig_filename.split('/') or
+                '\\' in info.orig_filename or ':' in info.orig_filename for info in archive.infolist()):
+            raise ValueError('duplicate or unsafe ZIP members')
         try:
             raw_summary_name = entry(archive, 'evidence/raw/summary.json')
             raw_report_name = entry(archive, 'evidence/raw/report.json')
@@ -251,14 +360,40 @@ def main(output):
             problems.append(name + ': ' + str(error))
             records.append(record)
             continue
-        raw_summary = json.loads(archive.read(raw_summary_name))
+        raw_summary = json_load(archive.read(raw_summary_name))
         report_bytes = archive.read(raw_report_name)
-        report = json.loads(report_bytes)
+        report = json_load(report_bytes)
         probe_bytes = archive.read(probe_name)
-        default_summary = json.loads(archive.read(default_summary_name))
-        original_summary = json.loads(archive.read(original_summary_name))
-        baseline_summary = json.loads(archive.read(baseline_summary_name))
-        result = json.loads(archive.read(result_name))
+        default_summary = json_load(archive.read(default_summary_name))
+        original_summary = json_load(archive.read(original_summary_name))
+        baseline_summary = json_load(archive.read(baseline_summary_name))
+        result = json_load(archive.read(result_name))
+        record['root_bindings'] = complete_bindings(archive, result, platform)
+        for role in result['programs']:
+            altered = copy.deepcopy(result)
+            altered['programs'][role]['sha256'] = '0' * 64
+            try:
+                complete_bindings(archive, altered, platform)
+            except ValueError:
+                continue
+            raise ValueError('tampered program accepted: ' + role)
+        for stage in ('baseline', 'default', 'raw'):
+            library = 'reader_jump_history.lib' if platform == 'Windows' else 'libreader_jump_history.a'
+            path = 'families/' + stage + '-stage/lib/' + library
+            try:
+                complete_bindings(archive, result, platform, {path: b'!<arch>\ncorrupt'})
+            except ValueError:
+                continue
+            raise ValueError('tampered module archive accepted: ' + stage)
+        for family in ('original-baseline', 'original-default', 'original-raw'):
+            path = 'evidence/' + family + '/summary.json'
+            altered = json_load(archive.read(entry(archive, path)))
+            altered['identity']['GITHUB_SHA'] = '0' * 40
+            try:
+                complete_bindings(archive, result, platform, {path: json.dumps(altered).encode()})
+            except ValueError:
+                continue
+            raise ValueError('foreign original suite accepted: ' + family)
         for label, problem in (('raw', check_problems(report, raw_summary)),
                                ('raw binding', binding_problems(record, raw_summary, report_bytes, probe_bytes))):
             problems += [name + ': ' + label + ': ' + item for item in problem]

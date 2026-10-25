@@ -342,8 +342,13 @@ def main():
                        ('raw_c_consumer', raw_build / ('s16-c-consumer' + SUFFIX)),
                        ('default_c_consumer', default_build / ('s16-c-consumer' + SUFFIX)),
                        ('original_probe', OUT / 'build' / 'original-default-consumer' / ('jump-history-probe' + SUFFIX)),
-                       ('original_c_consumer', OUT / 'build' / 'original-default-consumer' / ('jump-history-c-consumer' + SUFFIX))):
-        programs[name] = {'sha256': sha_file(path), 'bytes': Path(path).stat().st_size}
+                       ('original_c_consumer', OUT / 'build' / 'original-default-consumer' / ('jump-history-c-consumer' + SUFFIX)),
+                       ('baseline_probe', OUT / 'build/original-baseline-consumer' / ('jump-history-probe' + SUFFIX)),
+                       ('baseline_c_consumer', OUT / 'build/original-baseline-consumer' / ('jump-history-c-consumer' + SUFFIX)),
+                       ('original_raw_probe', OUT / 'build/original-raw-consumer' / ('jump-history-probe' + SUFFIX)),
+                       ('original_raw_c_consumer', OUT / 'build/original-raw-consumer' / ('jump-history-c-consumer' + SUFFIX))):
+        programs[name] = {'member': path.relative_to(OUT).as_posix(),
+                          'sha256': sha_file(path), 'bytes': Path(path).stat().st_size}
     result = {
         'accepted': not problems and raw_summary['accepted'] and default_summary['accepted'],
         'source_sha': os.environ['GITHUB_SHA'],
