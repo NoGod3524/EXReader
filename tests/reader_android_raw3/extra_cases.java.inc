@@ -50,15 +50,16 @@
     }
     private NativeReadingProduct.Result restoreUi(ReadingRecord target,ReadingVersion source)throws Exception{
         AtomicReference<NativeReadingProduct.Result> result=new AtomicReference<>();AtomicReference<Throwable> failure=new AtomicReference<>();java.util.concurrent.CountDownLatch done=new java.util.concurrent.CountDownLatch(1);
-        ((MainActivity)activity()).readingWrite(book("txt"),new ReadingPanel.Action(NativeReadingProduct.BOOKMARK,NativeReadingProduct.RESTORE,target,source,source.body),task(),value->{result.set(value);done.countDown();},error->{failure.set(error);done.countDown();});
+        int kind=source.capture.end>source.capture.start?NativeReadingProduct.HIGHLIGHT:NativeReadingProduct.BOOKMARK;
+        ((MainActivity)activity()).readingWrite(book("txt"),new ReadingPanel.Action(kind,NativeReadingProduct.RESTORE,target,source,source.body),task(),value->{result.set(value);done.countDown();},error->{failure.set(error);done.countDown();});
         need(done.await(90,java.util.concurrent.TimeUnit.SECONDS)&&failure.get()==null&&result.get()!=null&&result.get().saved(),"actual MainActivity owner restores explicit source version");return result.get();
     }
     private void rawContract()throws Exception{
         loadInput(false);open("txt");panel();JSONArray restored=new JSONArray();owner(store->{family(store);NativeCatalog.Result boot=store.bootstrapBook(book("txt"),NativeCatalog.newId(),new String[0],task());need(boot.status==0,"TXT actual source fact");return true;});
         for(int version:new int[]{1,2}){
-            final int selectedVersion=version;String[] identity=owner(store->{PageSnapshot live=(PageSnapshot)ReadingReview.field(activity(),"current");ReadingCapture captured=NativeReadingSdk.capture(store,live,live.start,live.start,fontBytesForInterop(),24,originalPath(book("txt")),task(),control());String annotation=NativeCatalog.newId(),put=NativeCatalog.newId(),removed=NativeCatalog.newId();
-                NativeReadingProduct.Result written=NativeReadingProduct.applyVersioned(store,put,new String[0],NativeReadingProduct.BOOKMARK,NativeReadingProduct.PUT,key("txt"),annotation,captured.mode,captured,"source "+selectedVersion,selectedVersion);need(written.saved(),"explicit real source version");
-                NativeReadingProduct.Result deleted=NativeReadingProduct.applyVersioned(store,removed,new String[]{put},NativeReadingProduct.BOOKMARK,NativeReadingProduct.DELETE,key("txt"),annotation,captured.mode,null,"",selectedVersion);need(deleted.saved(),"explicit tombstone");return new String[]{annotation,put,removed};});
+            final int selectedVersion=version;String[] identity=owner(store->{PageSnapshot live=(PageSnapshot)ReadingReview.field(activity(),"current");ReadingCapture captured=NativeReadingSdk.capture(store,live,live.start,live.end,fontBytesForInterop(),24,originalPath(book("txt")),task(),control());need(captured.end>captured.start,"anchor1 source requires a genuine nonempty SDK range");String annotation=NativeCatalog.newId(),put=NativeCatalog.newId(),removed=NativeCatalog.newId();
+                NativeReadingProduct.Result written=NativeReadingProduct.applyVersioned(store,put,new String[0],NativeReadingProduct.HIGHLIGHT,NativeReadingProduct.PUT,key("txt"),annotation,captured.mode,captured,"source "+selectedVersion,selectedVersion);need(written.saved(),"explicit real source version "+selectedVersion+" status="+written.status+" gap="+written.gap+" revision="+written.revision);
+                NativeReadingProduct.Result deleted=NativeReadingProduct.applyVersioned(store,removed,new String[]{put},NativeReadingProduct.HIGHLIGHT,NativeReadingProduct.DELETE,key("txt"),annotation,captured.mode,null,"",selectedVersion);need(deleted.saved(),"explicit tombstone");return new String[]{annotation,put,removed};});
             ReadingRecord target=owner(store->NativeReadingProduct.selected(store,key("txt"),identity[0],identity[2],false,control()));ReadingVersion source=owner(store->NativeReadingProduct.version(store,key("txt"),identity[0],identity[1],false,control()));need(source.anchorVersion==version,"source version comes from retained validated wire");
             NativeReadingProduct.Result result=restoreUi(target,source);ReadingRecord actual=owner(store->NativeReadingProduct.selected(store,key("txt"),identity[0],result.request,false,control()));need(actual.anchorVersion==version,"restore kept source anchor_version without upgrade");
             final String head=result.request;owner(store->{NativeReadingProduct.Result note=NativeReadingProduct.applyVersioned(store,NativeCatalog.newId(),new String[]{head},NativeReadingProduct.NOTE_TEXT,NativeReadingProduct.PUT,key("txt"),identity[0],actual.mode,null,"edited with source version",3);need(note.saved(),"raw note edits keep actual source");ReadingRecord after=NativeReadingProduct.selected(store,key("txt"),identity[0],note.request,false,control());need(after.anchorVersion==selectedVersion,"NOTE_TEXT cannot invent writer3 on source1/2");return true;});
@@ -90,8 +91,10 @@
     }
     private void networkReopen()throws Exception{
         JSONObject peer=peerManifest();JSONArray originals=peer.getJSONArray("originals"),revisions=peer.getJSONArray("revisions"),records=peer.getJSONArray("reading_records");books=new JSONObject();
+        java.util.Map<String,NativeSync.RemoteBook> remote=new java.util.HashMap<>();for(String[] row:NativeSync.books(new File(context.getFilesDir(),"reader-catalog.db").getPath(),"")){NativeSync.RemoteBook book=new NativeSync.RemoteBook(row);need(book.receivable(),"actual raw JNI remote book is a complete safe head");remote.put(book.key,book);}need(remote.size()==4,"actual JNI book projection enumerates four originals");
         owner(store->{family(store);NativeLibrary library=store.nativeLibrary();need(library.books().length==0,"fresh Android process imports only actual downloaded originals");
             for(int i=0;i<originals.length();i++){JSONObject row=originals.getJSONObject(i);File actual=new File(context.getFilesDir(),"raw3-session-cache/"+row.getString("sha256")+"."+row.getString("format"));need(digest(Files.readAllBytes(actual.toPath())).equals(row.getString("sha256")),"reopen source is real downloaded cache");
+                NativeSync.RemoteBook metadata=remote.get(row.getString("book_key"));need(metadata!=null,"downloaded actual global book key");String[] projected=NativeSync.project(new File(context.getFilesDir(),"reader-catalog.db").getPath(),metadata.key,metadata.revision,metadata.title);need(projected.length==7&&projected[1].equals(metadata.key),"actual raw JNI explicit metadata projection");
                 NativeLibrary.ImportResult imported=library.importFile(actual.getPath(),format(row.getString("format")),"actual downloaded "+row.getString("role"));BookStore.VerifiedSource verified=store.verifySource(imported.id,row.getString("sha256"),row.getLong("bytes"),task());store.finalizeImport(verified);books.put(row.getString("role"),new JSONObject().put("id",imported.id).put("title",verified.book.title).put("format",verified.format).put("sha256",verified.sha256));
                 need(context.getSharedPreferences("host",0).edit().putString("path_"+imported.id,actual.getPath()).putLong("size_"+imported.id,actual.length()).commit(),"actual downloaded original mapping");
             }
@@ -101,7 +104,7 @@
                     ReadingRecord selected=NativeReadingProduct.selected(store,key(role),annotation,row.getString("revision_id"),progress,control());need(selected.readable()&&selected.anchorVersion==row.getLong("anchor_version")&&sameCapture(selected.capture,captureFrom(row.getJSONObject("capture"))),"fresh native received typed record retains actual source version/nullable bytes");
                     NativeReadingSdk.Match found=resolve(store,book(role),selected.capture);need(found.found()&&Arrays.deepEquals(found.recaptured.bytes(),selected.capture.bytes()),"real downloaded source independently FOUND and recaptured after process reopen");resolutionRows.put(new JSONObject().put("role",role).put("revision",selected.head).put("found",true).put("capture",captureJson(found.recaptured)));
                 }return true;});need(snapshot().equals(before),"fresh received read-only SDK resolve changes no progress/notes/outbox");}
-        need(resolutionRows.length()==11,"all 11 native sender records independently reopened");rawDetails.put("network_reopen_records",resolutionRows.length());
+        need(resolutionRows.length()==11,"all 11 native sender records independently reopened");rawDetails.put("network_reopen_records",resolutionRows.length()).put("peer",peer.getJSONObject("sender")).put("peer_manifest_sha256",digest(Files.readAllBytes(new File(context.getFilesDir(),"raw3-peer-manifest.json").toPath())));
     }
     private void runRawPhase()throws Exception{
         if(phase.equals("kill-ui"))killUi();
@@ -111,5 +114,7 @@
         else if(phase.equals("session-push"))check("actual_android_raw_session_push_ack_close_256_shards",()->networkSession(true));
         else if(phase.equals("session-receive"))check("actual_android_raw_session_fresh_network_receive_256_shards",()->networkSession(false));
         else if(phase.equals("session-reopen"))check("fresh_android_owner_imports_downloaded_originals_and_resolves_11_exact_records",this::networkReopen);
+        else if(phase.equals("apple-receive"))check("actual_apple_raw_bundle_native_android_https_session_receive",()->networkSession(false));
+        else if(phase.equals("apple-reopen"))check("fresh_android_owner_resolves_11_actual_apple_records_from_downloaded_originals",this::networkReopen);
         else throw new AssertionError("unknown actual raw phase");
     }

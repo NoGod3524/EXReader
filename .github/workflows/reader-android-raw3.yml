@@ -173,6 +173,10 @@ jobs:
           cp build/android-raw3/baseline/host-debug.apk examples/android/app/build/outputs/apk/debug/app-debug.apk
           cp build/android-raw3/baseline/host-release.apk examples/android/app/build/outputs/apk/release/app-release-unsigned.apk
           cp build/host-session-android/test-apks/original-owner.apk examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+      - name: Authenticate fixed successful actual Apple raw sender inside Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_android_raw3/fetch_apple.py
       - name: Enable hosted runner emulator acceleration
         run: sudo chmod 666 /dev/kvm
       - name: Actual SDK owner import and public original export in Android private storage
@@ -212,7 +216,7 @@ jobs:
             python build/android-page-theme/candidate/fixed_pan_run_ui.py --fixtures build/android-fixed-pan/fixtures --output build/android-fixed-pan/ui
             adb install -r -t build/android-raw3/apks/host-debug.apk
             adb install -r -t build/android-raw3/apks/raw3-test.apk
-            python tests/reader_android_raw3/run_ui.py --fixtures build/android-raw3/fixtures --fixture build/webdav-android/fixture --output build/android-raw3/ui
+            python tests/reader_android_raw3/run_ui.py --fixtures build/android-raw3/fixtures --fixture build/webdav-android/fixture --output build/android-raw3/ui --apple-peer build/android-raw3/apple-peer/bundle
 
       - uses: actions/upload-artifact@v4
         with:

@@ -26,5 +26,6 @@ Gradle `-PexrSelectorBytes=true` 对应 CMake `EXR_READER_SELECTOR_BYTES_CANDIDA
 - 实际 MainActivity UI 的 private v2 保存、已提交响应边界的真实进程终止、新进程按原请求重试并公开 FOUND/重捕获。
 - 旧 v1 private request 保持writer2/NUL失败与原字节；实际 MainActivity按源1/2恢复、NOTE_TEXT不升级；NULL位置和错误owner负例。
 - 原Android HTTPS后端上的真实 NativeSync/Session worker执行256 shard，传送实际原件和wire、关闭；新接收进程不预置SDK原件，真实下载后再由新SDK owner导入、打开UI并逐字节核对11条记录与公开FOUND/重捕获。
+- 实际 Apple raw sender `15dab6b2270dc296ed6239db67ced2e22d255e65` / run `40196978163` attempt1 的原始ZIP `12600789926`，77,056,135B，SHA-256 `92be56ffa04d7c334d4811a42821a314089b4f8ae01746f0dfdf456b5eab9bd5`。仅在Actions认证native/strict成功、原ZIP身份、完整inventory与真实manifest后，原字节经实际Android HTTPS接收并在新进程独立FOUND/重捕获；不以此授予同源码双向。
 
 所有构建、语法检查、夹具、执行和工件解包认证均在 Actions。仅授予 API34 default x86_64 模拟器候选；Apple真实原件包互收另行核对身份。本包尚不授予双向、真机、主线默认启用或完整产品。
