@@ -21,6 +21,7 @@ ALLOWED = (
     'tests/reader_windows_search/verify.py', 'tests/reader_windows_search/check_ui.py',
     'tests/reader_windows_navigation/verify.py',
     'tests/reader_windows_records/verify.py',
+    'tests/reader_gtk_navigation/check_ui.py',
     # Root-reviewed chooser input driver; native production bytes stay pinned.
     'tests/reader_gtk_preferences/retain_account.py',
     'docs/READER-HOSTS-INTEGRATION.md',
