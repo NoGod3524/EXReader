@@ -109,3 +109,24 @@ python3 tests/reader_final_s08/runner.py --platform linux \
 
 本机（非 Actions）不执行上述任何构建/测试；本包全部结论来自 Actions 的真实 run，见
 [validation.json](validation.json)。
+
+## 结果（source bbba06e345715d404a9b15b8e0b225d00013ad03，run 40215560970 attempt 1）
+
+四个作业全部成功；同源汇总 accepted=true：
+
+| 作业 | id | 结论 | 检查 |
+| --- | ---: | --- | --- |
+| guard | 121235824739 | success | 32/32；聚合器红 action 21/21 |
+| platform (windows-2022) | 121235865937 | success | 115/115，诊断判定干净，检测器 17/17 |
+| platform (ubuntu-22.04) | 121235865981 | success | 129/129（含锁 collection、无服务、解锁后无明文），17/17 |
+| report | 121236152169 | success | 三个 ZIP 重新算 digest 与 API 一致，包内 manifest 逐文件一致 |
+
+- 秘密扫描：Windows 103 文件 / 1,749,157 字节 / 0 命中；Linux 103 文件 / 1,119,493 字节 / 0 命中；
+  两个平台还分别在 profiles 阶段后和 **worker 进程退出后**再扫（0 命中）。
+- 工件：guard 12607760331 1,138 B aee94e23...51e3；windows 12607780393 12,504 B
+  af83354c...688d；linux 12606794998 14,561 B c73a1398...9beb；report 12607640840 1,424 B
+  f35dfaee...2a67。全部 expires_at=2027-01-23T17:15:13Z，未过期，API digest 与重算一致。
+- 保留的失败：40214797350、40214912182、40215199931，根因与修复见 validation.json 的
+  failures/rounds_note；均为本包新工具的缺陷，未改 owner 断言、未删原失败工件。
+- 仍未验证：Windows Credential Manager UNAVAILABLE（pending，J21 已记录三种触发尝试都不成立）、
+  macOS/iOS/Android 后端（本包不重跑，只引用 J21 原 run，不重新授予）。

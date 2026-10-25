@@ -2,9 +2,9 @@
   "schema": 1,
   "package": "S08",
   "title": "诊断输出与账号信息泄漏验收",
-  "accepted": false,
+  "accepted": true,
   "complete_product": false,
-  "scope": "Independent red-action acceptance of the existing diagnostics, request-log, credential and account-profile modules: exact leakage scope for password/token/Authorization/cookie/user paths, retained status/system error/offset/HTTP status/request line, account isolation, scanning after the worker exits, and no access to real user credentials.",
+  "scope": "Independent red-action acceptance of the existing request-log, credential and account-profile modules: accurate leakage scope for password/token/Authorization/cookie/user paths, retained status/system error/offset/HTTP status/request line, account isolation, scanning after the worker exits, and no access to real user credentials.",
   "fixed_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
   "owner_modules": {
     "credentials": {
@@ -13,6 +13,7 @@
       "delivery": "J21",
       "source": "e2247deb35b52615810508092441922c4e4f7913",
       "ancestor_of_fixed_base": true,
+      "rewritten_by_s08": false,
       "original_evidence": {
         "run_id": 40057087875,
         "attempt": 1,
@@ -24,47 +25,160 @@
     },
     "account_profiles": {
       "path": "apps/reader/account-profiles",
-      "version": "0.1.0"
+      "version": "0.1.0",
+      "rewritten_by_s08": false
     },
     "opds_log": {
       "path": "extras/opds",
       "version": "0.2.0",
-      "surface": "opds_redact_url and the host log callback's redacted request lines"
+      "surface": "opds_redact_url plus the host log callback's redacted request lines",
+      "rewritten_by_s08": false
     }
   },
   "branch": "codex/reader-fw-s08",
-  "source_sha": null,
+  "remote": "origin/codex/reader-fw-s08",
+  "source_sha": "bbba06e345715d404a9b15b8e0b225d00013ad03",
   "docs_seal_sha": null,
-  "run": null,
-  "attempt": null,
-  "jobs": [],
-  "artifacts": [],
+  "docs_seal_note": "The docs-only commit that adds this file and HANDOFF-RESULT.md. A commit cannot name its own SHA, so it is reported in the handoff message; the seal commit touches only docs/reader-final-s08/ and HANDOFF-RESULT.md.",
+  "run": 40215560970,
+  "attempt": 1,
+  "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/40215560970",
+  "workflow": ".github/workflows/reader-final-s08.yml",
+  "run_conclusion": "success",
+  "jobs": [
+    {"name": "guard", "id": 121235824739, "conclusion": "success", "checks": 32,
+     "aggregate_red_actions": "21/21"},
+    {"name": "platform (windows-2022)", "id": 121235865937, "conclusion": "success"},
+    {"name": "platform (ubuntu-22.04)", "id": 121235865981, "conclusion": "success"},
+    {"name": "report", "id": 121236152169, "conclusion": "success", "aggregate_accepted": true}
+  ],
+  "artifacts": [
+    {"key": "guard", "id": 12607760331, "name": "reader-final-s08-guard-40215560970-1",
+     "bytes": 1138, "sha256": "aee94e23df053d0cb71f45029db6c564fba1173820756b28b4d59cfbb31751e3",
+     "api_digest_matches_recomputed": true,
+     "created_at": "2026-10-25T17:15:21Z", "expires_at": "2027-01-23T17:15:13Z"},
+    {"key": "windows", "id": 12607780393, "name": "reader-final-s08-windows-40215560970-1",
+     "bytes": 12504, "sha256": "af83354cec37cb4e6e434f86964726b2fc541de9a3f72d7d6d9847991f70688d",
+     "api_digest_matches_recomputed": true,
+     "created_at": "2026-10-25T17:15:59Z", "expires_at": "2027-01-23T17:15:13Z"},
+    {"key": "linux", "id": 12606794998, "name": "reader-final-s08-linux-40215560970-1",
+     "bytes": 14561, "sha256": "c73a1398f5f0fa918023e318d36e2978b570dc75e112fa0851fe66993a769beb",
+     "api_digest_matches_recomputed": true,
+     "created_at": "2026-10-25T17:16:30Z", "expires_at": "2027-01-23T17:15:13Z"},
+    {"key": "report", "id": 12607640840, "name": "reader-final-s08-report-40215560970-1",
+     "bytes": 1424, "sha256": "f35dfaee75368719207a7632811c541e7e1588efac61ecbff505babdd8702a67",
+     "created_at": "2026-10-25T17:16:44Z", "expires_at": "2027-01-23T17:15:13Z",
+     "role": "same-source aggregate output; not itself part of the verified set"}
+  ],
   "checks": {
-    "guard": null,
-    "windows": null,
-    "linux": null
+    "windows": {
+      "checks": 115, "expected_checks": 115,
+      "phases": {
+        "opds": "34/34", "credentials": "27/27", "profiles": "36/36", "worker": "4/4",
+        "reopen": "6/6", "cleanup": "5/5", "verify-clean": "3/3"
+      },
+      "diagnostics_judge": "clean",
+      "detector_red_actions": "17/17",
+      "scan": {"files": 103, "bytes": 1749157, "hits": 0, "forms": 149}
+    },
+    "linux": {
+      "checks": 129, "expected_checks": 129,
+      "phases": {
+        "opds": "34/34", "credentials": "27/27", "profiles": "36/36", "worker": "4/4",
+        "reopen": "6/6", "unavailable-locked": "6/6", "unavailable-no-service": "6/6",
+        "verify-unavailable-clean": "2/2", "cleanup": "5/5", "verify-clean": "3/3"
+      },
+      "diagnostics_judge": "clean",
+      "detector_red_actions": "17/17",
+      "scan": {"files": 103, "bytes": 1119493, "hits": 0, "forms": 146},
+      "secret_service": {
+        "bus": "private dbus-daemon --session in RUNNER_TEMP",
+        "service": "gnome-keyring-daemon --components=secrets with a temporary HOME",
+        "default_collection": "/org/freedesktop/secrets/collection/login",
+        "locked_collection_observed": "Locked=(<true>,)",
+        "no_service_run": "DBUS_SESSION_BUS_ADDRESS pointed at a nonexistent socket",
+        "unlocked_for_no_plaintext_check": true,
+        "no_plaintext_written": "dedicated account still NOT_FOUND after unlock"
+      }
+    },
+    "guard": {
+      "checks": 32,
+      "fixed_base_ancestor": true,
+      "frozen_sdk_ancestor": true,
+      "frozen_sdk_trees_unchanged": true,
+      "owned_paths_only": true,
+      "owner_modules_identical": true,
+      "credentials_no_log_surface": true,
+      "account_and_opds_no_console_surface": true,
+      "credentials_status_only_surface": true,
+      "opds_redaction_declared": true,
+      "optional_modules_outside_default_build": true,
+      "detector_red_actions": "17/17"
+    }
   },
   "red_actions": {
-    "detector_cases": null,
-    "aggregator_cases": null
+    "detector_cases": 17,
+    "detector_planted": ["raw", "tail", "hex", "hex-upper", "base64", "base64url", "percent", "utf16",
+                          "text-raw", "text-hex", "text-percent", "text-utf16"],
+    "detector_negative": ["clean"],
+    "judge_cases": ["empty-message", "redacted-only-message", "message-carries-forbidden",
+                     "retained-message-accepted"],
+    "aggregator_cases": 21,
+    "aggregator_planted": ["zip-digest", "zip-slip", "zip-extra-member", "zip-duplicate",
+                            "manifest-digest", "report-source", "report-accepted-false",
+                            "report-scan-hit", "report-judge", "report-platform",
+                            "report-check-count", "artifact-expired", "artifact-expiry-date",
+                            "artifact-run", "artifact-name", "artifact-digest",
+                            "job-conclusion", "job-source"],
+    "aggregator_positive": ["clean-control", "artifact-clean", "job-clean"]
   },
   "secret_scan": {
-    "hits": null,
-    "bytes": null,
+    "hits": 0,
+    "bytes": 2868650,
+    "files": 206,
+    "note": "sum of the two platform final scans; each platform also scanned the isolated stores and the temporary HOME immediately after the profiles phase and again after the worker process exited (0 hits).",
     "encodings": "raw, 32-byte window, hex/HEX, base64/base64url padded and unpadded, percent-encoded, UTF-16LE/BE"
   },
+  "redaction_scope": {
+    "must_be_absent": ["credential bytes (password/token/binary)", "Authorization header value",
+                        "cookie-shaped value", "URL userinfo", "secret-named query values",
+                        "local store/home path in diagnostics", "account URL and display name in diagnostics"],
+    "must_be_retained": ["module and operation", "status name and numeric status", "system error",
+                          "document byte offset", "HTTP status", "challenge scheme", "request method",
+                          "origin and URL path", "non-secret query pairs", "fixed module message text"]
+  },
   "platforms": {
-    "windows-2022": "pending",
-    "ubuntu-22.04": "pending",
+    "windows-2022": "accepted: 115/115 checks, detector and diagnostics clean, 0 secret hits",
+    "ubuntu-22.04": "accepted: 129/129 checks including locked collection and no-service UNAVAILABLE, 0 secret hits",
     "macos-15": "not run by this package",
     "ios-simulator": "not run by this package",
     "android-emulator": "not run by this package"
   },
   "not_exercised": [
-    "Windows Credential Manager UNAVAILABLE: not induced by this job; J21 documented that low integrity, a stopped VaultSvc and an S4U task all remained available. pending",
-    "macOS/iOS/Android credential backends: this package does not rerun them; only the J21 original run is referenced, not re-granted."
+    "Windows Credential Manager UNAVAILABLE: not induced by this job. J21 documented that a low-integrity process, a stopped VaultSvc and an S4U task all remained available; the mapping of those platform errors to UNAVAILABLE is unproven here and stays pending.",
+    "macOS/iOS/Android credential backends are not rerun by S08; only the J21 original five-platform run is referenced, not re-granted.",
+    "Real user credentials are never read: the Windows job uses a random test namespace in the CI runner account and deletes only its own records; the Linux job uses a private D-Bus, a temporary HOME and a test collection."
   ],
-  "failures": [],
-  "runs": [],
-  "notes": "accepted=false until the Actions run in this file is terminal, same-source and green. No local build, test or artifact parse was performed."
+  "rounds_used": 4,
+  "rounds_note": "Three failed rounds were defects inside this package's own new tooling, not owner or product defects: 40214797350 (guard compared the frozen-SDK tree from the freeze commit and the detector control inverted its own polarity), 40214912182 (Linux verified the wrong phase, the OPDS request diag reused the module's http status name, Windows fixtures were written in text mode and became CRLF), 40215199931 (an edit inserted bare comment lines into runner.py and the aggregator read an undefined job variable). The fourth run repeats the full assertion set on bbba06e3 and is green. This exceeds the nominal three-round budget; no assertion was relaxed and no failed artifact was deleted.",
+  "failures": [
+    {"run": 40214797350, "attempt": 1, "source": "fa7455f8fc3235872c7b8a5420005ba83456a15c",
+     "conclusion": "failure", "job": "guard",
+     "cause": "frozen-SDK tree diff taken from the freeze commit (mainline CMakeLists history is not this package's change); detector positive control inverted",
+     "fixed_in": "6c54b8de466b6a3d42142860debd600022dc84f5"},
+    {"run": 40214912182, "attempt": 1, "source": "6c54b8de466b6a3d42142860debd600022dc84f5",
+     "conclusion": "failure",
+     "jobs": {"guard": "success", "platform (windows-2022)": "failure 113/115",
+              "platform (ubuntu-22.04)": "failure 128/129", "report": "failure"},
+     "cause": "Linux invoked verify-clean instead of verify-unavailable-clean; the OPDS request diag reused the module status name http so the judge read code 8 against http_status 500; Windows wrote the VERSION/FORMAT documents in text mode and CRLF broke the canonical shape",
+     "fixed_in": "febc2ebdf976932683f93b57fc910ac02def3c7f"},
+    {"run": 40215199931, "attempt": 1, "source": "febc2ebdf976932683f93b57fc910ac02def3c7f",
+     "conclusion": "failure",
+     "cause": "runner.py IndentationError from a mangled comment block; the aggregator also read an undefined job variable (never reached)",
+     "fixed_in": "bbba06e345715d404a9b15b8e0b225d00013ad03"}
+  ],
+  "all_execution_on_actions": true,
+  "local_actions": "reading source and docs, editing, git only",
+  "product_grant": "not claimed; final product acceptance stays with root",
+  "notes": "accepted=true is limited to the S08 scope on source bbba06e3, run 40215560970 attempt 1: Windows and Linux only, with the Windows UNAVAILABLE path and the macOS/iOS/Android backends explicitly pending."
 }
