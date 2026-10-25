@@ -1,0 +1,45 @@
+name: Collect complete fixed-source native foundation leaves
+on:
+  push:
+    branches: [codex/reader-hosts-341-final]
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact common checkout and every complete leaf source SHA
+        type: string
+        required: true
+      run_table:
+        description: JSON source_sha and twelve complete run_id/attempt leaves, including explicit pending Windows entries
+        type: string
+        required: true
+permissions:
+  contents: read
+  actions: read
+jobs:
+  collect:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Parse only the new upper collector and exercise its synthetic refusal protocol
+        run: |
+          python -m py_compile tests/reader_hosts_341/aggregate_native.py tests/reader_hosts_341/test_aggregate_native.py
+          python tests/reader_hosts_341/aggregate_native.py --self-test
+      - name: Authenticate complete same-source leaves without replacing their original judges
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SOURCE: ${{ inputs.source_sha }}
+          NATIVE_RUN_TABLE: ${{ inputs.run_table }}
+        run: python tests/reader_hosts_341/aggregate_native.py --source "$TARGET_SOURCE"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-native-341-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/native-341-summary/result.json
+          if-no-files-found: error
