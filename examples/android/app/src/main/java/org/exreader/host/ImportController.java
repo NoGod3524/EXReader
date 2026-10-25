@@ -8,6 +8,8 @@ import android.os.Looper;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.exreader.importentry.ImportEntry;
@@ -28,6 +30,7 @@ final class ImportController implements ImportOwner {
     private final List<Intent> waiting = new ArrayList<>();
     private final List<ReadyRequest> pending = new ArrayList<>();
     private final List<ImportTicket> tickets = new ArrayList<>();
+    private final Set<ImportTicket> discardReady = new HashSet<>();
     private ImportEntry entry;
     private MainActivity owner, runningOwner;
     private ReadyRequest running;
@@ -42,14 +45,14 @@ final class ImportController implements ImportOwner {
                 main.post(() -> {
                     entry = opened; pending.addAll(recovered);
                     for (Intent intent : waiting) tickets.addAll(entry.submit(intent));
-                    waiting.clear(); pump();
+                    waiting.clear(); notifyCopying(); pump();
                 });
             } catch (Exception error) {
-                main.post(() -> { failure="Import staging unavailable"; waiting.clear(); notifyStatus(failure); });
+                main.post(() -> { failure="Import staging unavailable"; waiting.clear(); notifyCopying(); notifyStatus(failure); });
             }
         });
     }
-    void attach(MainActivity activity) { owner=activity; blocked=false; if(failure!=null)notifyStatus(failure); pump(); }
+    void attach(MainActivity activity) { owner=activity; blocked=false; notifyCopying(); if(failure!=null)notifyStatus(failure); pump(); }
     void detach(MainActivity activity) { if(owner==activity)owner=null; }
     void submit(Intent intent) {
         if(failure!=null){notifyStatus(failure);return;}
@@ -58,16 +61,19 @@ final class ImportController implements ImportOwner {
             if(waiting.size()>=8){notifyStatus("Import queue is full");return;}
             waiting.add(new Intent(intent));
         } else tickets.addAll(entry.submit(intent));
+        notifyCopying();
         notifyStatus("Copying selected books to private storage…");
         pump();
     }
     void cancelStaging() {
-        for(ImportTicket ticket:tickets)ticket.cancel();
+        for(ImportTicket ticket:tickets)if(!ticket.cancel()&&ticket.state()==ImportTicket.State.COMMITTED)discardReady.add(ticket);
         waiting.clear();
         for(ReadyRequest request:new ArrayList<>(pending))if(request!=running){
             pending.remove(request);files.execute(()->entry.release(request));
         }
+        notifyCopying();
     }
+    boolean isCopying() { return !waiting.isEmpty()||!tickets.isEmpty(); }
     void retry() { blocked=false; pump(); }
     void pump() {
         if(owner==null||entry==null||running!=null||blocked||pending.isEmpty())return;
@@ -89,10 +95,15 @@ final class ImportController implements ImportOwner {
         });
     }
     @Override public void onReady(ImportTicket ticket,ReadyRequest request) {
-        tickets.remove(ticket);pending.add(request);pump();
+        tickets.remove(ticket);
+        if(discardReady.remove(ticket)){files.execute(()->entry.release(request));notifyStatus("Import canceled");}
+        else pending.add(request);
+        notifyCopying();pump();
     }
     @Override public void onFailed(ImportTicket ticket,ImportError error) {
-        tickets.remove(ticket);notifyStatus("Import failed: "+error.code());pump();
+        tickets.remove(ticket);discardReady.remove(ticket);notifyCopying();
+        notifyStatus(error.code()==ImportError.Code.CANCELLED?"Import canceled":"Import failed: "+error.code());pump();
     }
+    private void notifyCopying(){if(owner!=null)owner.importCopying(isCopying());}
     private void notifyStatus(String text){if(owner!=null)owner.importStatus(text);}
 }

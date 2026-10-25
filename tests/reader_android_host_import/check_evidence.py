@@ -37,7 +37,7 @@ with zipfile.ZipFile(io.BytesIO(body)) as archive:
         info = archive.getinfo(name)
         assert 0 < info.file_size <= maximum
         return archive.read(name)
-    for path, count in [('host-session-android', 16), ('android-search', 15), ('android-navigation', 18), ('android-reading', 16), ('android-preferences', 17), ('android-cbz-reading', 10), ('android-fixed-pan', 8), ('android-host-import', 19)]:
+    for path, count in [('host-session-android', 16), ('android-search', 15), ('android-navigation', 18), ('android-reading', 16), ('android-preferences', 17), ('android-cbz-reading', 10), ('android-fixed-pan', 8), ('android-host-import', 20)]:
         raw = read(path + '/ui/result.json')
         report = json.loads(raw)
         assert all(report.get(key) == value for key, value in identity.items())
@@ -52,10 +52,21 @@ with zipfile.ZipFile(io.BytesIO(body)) as archive:
             assert len(report['phases']) == 9 and len({phase['pid'] for phase in report['phases']}) == 9
             held = [stop for stop in report['process_stops'] if stop.get('held_boundary')]
             assert len(held) == 4 and all(str(stop['instrumentation_pid']) in stop['pid_before_stop'].split() and not stop['pid_after_stop'] for stop in held)
+            assert {stop['phase'] for stop in held} == {'kill-copy', 'kill-stable', 'kill-ready', 'kill-published'}
+            all_checks = []
+            for phase in report['phases']:
+                raw_phase = json.loads(read(path + '/ui/' + phase['phase'] + '-raw-report.json'))
+                assert raw_phase == phase and all(raw_phase.get(key) == value for key, value in identity.items())
+                all_checks.extend(row['name'] for row in raw_phase['checks'])
+            assert len(all_checks) == len(set(all_checks)) == 20
+            assert len(report['apk_identities']) == 3
+            assert {apk['package'] for apk in report['apk_identities']} == {'org.exreader.host', 'org.exreader.host.test', 'org.exreader.hostimportsource'}
+            for apk in report['apk_identities']:
+                assert apk['sha256'] == apk['installed_sha256'] == hashlib.sha256(read(apk['artifact_path'], 128 * 1024**2)).hexdigest()
             assert any(capture['name'] == 'system-documentsui' and capture['package'] == 'com.android.documentsui' for capture in report['captures'])
         reports.append({'suite': path, 'checks': count, 'report_sha256': hashlib.sha256(raw).hexdigest()})
     apk = read('examples/android/app/build/outputs/apk/debug/app-debug.apk', 128 * 1024**2)
-result = {**identity, 'accepted': True, 'scope': 'API34 default x86_64 Android actual host imports and unchanged inherited suites only', 'checks': 119, 'producer_job': producer['id'], 'artifact': {key: artifact[key] for key in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')}, 'apk_sha256': hashlib.sha256(apk).hexdigest(), 'reports': reports, 'physical_device': False, 'third_party_cloud_provider': False, 'complete_product': False, 'performance_accepted': False}
+result = {**identity, 'accepted': True, 'scope': 'API34 default x86_64 Android actual host imports and unchanged inherited suites only', 'checks': 120, 'producer_job': producer['id'], 'artifact': {key: artifact[key] for key in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')}, 'apk_sha256': hashlib.sha256(apk).hexdigest(), 'reports': reports, 'physical_device': False, 'third_party_cloud_provider': False, 'complete_product': False, 'performance_accepted': False}
 output = Path('build/android-host-import-summary/summary.json')
 output.parent.mkdir(parents=True, exist_ok=True)
 output.write_text(json.dumps(result, indent=2) + '\n')
