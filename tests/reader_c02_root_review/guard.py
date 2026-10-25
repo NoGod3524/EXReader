@@ -12,8 +12,8 @@ START='0889f7d1e9a537c6c1b05456547e016b26e1cd85'
 GTK='57203a52aee439be5194ee0a4b13563a975e8daf'
 WORKFLOW='.github/workflows/reader-c02-root-review.yml'
 ORIGINAL='.github/workflows/reader-final-c02.yml'
-FILES={WORKFLOW,*('tests/reader_c02_root_review/'+name for name in
-    ('REVIEW.md','guard.py','windows_adapter.py','gtk_adapter.py','receipts.py','verify.py','test_protocol.py','validation.json'))}
+FILES={WORKFLOW,'.github/workflows/reader-c02-close-protocol.yml',*('tests/reader_c02_root_review/'+name for name in
+    ('REVIEW.md','guard.py','windows_adapter.py','gtk_adapter.py','receipts.py','verify.py','test_protocol.py','test_close_protocol.py','validation.json'))}
 STEP='''      - name: Check root adapter syntax and input-receipt refusal controls in Actions
         run: |
           python3 -m py_compile tests/reader_c02_root_review/*.py

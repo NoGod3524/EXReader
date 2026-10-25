@@ -106,3 +106,14 @@ Windows producer/apps仍绑定原固定0889树，GTK producer仍为57203a52的�
 
 所有最终job/artifact ID、大小、digest与2027-01-23到期时间见`validation.json`。原summary工件保留CPU分层p50/p95/max及RSS，
 预算仍为未批准的建议；本包只测旧Windows0889/GTK572 producer，不授予当前共同源码、完整产品或旧SDK预算达标。
+
+## 后续：仅修复诊断完成控制流
+
+独立分支`codex/reader-c02-close-protocol`从封存`05ca595b`推进，三轮原记录及accepted=false不变。
+`TraceWatch.close`只透传原close的返回/异常，并入待处理队列；原sampler完成`watch.failure`读取、launch分类与返回/抛出后，
+`DiagnosticSampler.launch_once`才在finally中等待独立observer和写JSON。诊断保存原分类记录，后续读取到的watch.failure另行标明阶段；
+不写回、清零或降级原failure。诊断落盘异常也不得替代原返回值或原异常。
+
+最小受控协议用例先于实现写入，断言原close返回、原launch返回、close/launch异常、诊断写盘异常及两者同时异常的顺序，
+要求真实failure原样保留、诊断join/写盘晚于原分类、close中不得等待。全部检查只在1个轻量Actions作业执行，
+不启动native UI、完整性能轮或新时间实验；尚待云端结果，仅授予诊断控制流修复。

@@ -15,6 +15,7 @@ S=B.S
 import observe as O
 
 WATCHES={}
+PENDING_DIAGNOSTICS=[]
 OriginalWatch=S.Watch
 OriginalHost=S.Host
 
@@ -64,14 +65,32 @@ class TraceWatch(OriginalWatch):
         WATCHES[str(self.folder.resolve())]=self
 
     def close(self):
-        super().close();self.file_events.close()
+        # Return/raise exactly as the original close, before any diagnostic wait.
+        try:return super().close()
+        finally:PENDING_DIAGNOSTICS.append(self)
+
+    def finish_diagnostics(self,classification):
+        self.file_events.close()
         value=dict(schema=1,source_sha=os.environ['GITHUB_SHA'],run_id=os.environ['GITHUB_RUN_ID'],
           attempt=os.environ['GITHUB_RUN_ATTEMPT'],operations=self.operations,original_observations=self.events,
           original_failure=self.failure,independent_file_events=self.file_events.events,
           independent_failure=self.file_events.failure,
+          original_classification=classification,
+          failure_phase='original_failure observed after original launch classification; its classified value is preserved separately',
           scope='diagnostic side channel only; no event or snapshot feeds original wait/predicate; latest snapshots can miss overwritten states')
         B.K.write_json(self.folder/'diagnostic-timeline.json',value)
         WATCHES.pop(str(self.folder.resolve()),None)
+
+
+def finish_pending(classification):
+    while PENDING_DIAGNOSTICS:
+        watch=PENDING_DIAGNOSTICS.pop(0)
+        try:watch.finish_diagnostics(classification)
+        except Exception as error:
+            # Diagnostic I/O cannot replace the original return/exception/outcome.
+            try:print('C02_DIAGNOSTIC_FINALIZE_FAILURE '+type(error).__name__+': '+str(error),flush=True)
+            except Exception:pass
+        finally:WATCHES.pop(str(watch.folder.resolve()),None)
 
 
 def watch_for(host):return WATCHES.get(str(host.folder.resolve()))
@@ -104,6 +123,11 @@ class TraceHost(OriginalHost):
 
 
 class DiagnosticSampler(B.CompactSampler):
+    def launch_once(self,index):
+        first=len(self.launches)
+        try:return super().launch_once(index)
+        finally:finish_pending(self.launches[first:])
+
     def await_state(self,host,watch,predicate,timeout,since=0,what='host state'):
         item=dict(operation='await_state',what=what,timeout=timeout,since=since,
                   entered_at=stamp(),before=snapshot(watch))

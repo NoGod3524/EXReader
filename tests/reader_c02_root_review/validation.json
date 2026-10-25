@@ -4,6 +4,15 @@
   "measurement_complete": false,
   "full_rounds_used": 3,
   "full_rounds_limit": 3,
+  "diagnostic_control_flow_fix": {
+    "accepted": false,
+    "status": "controlled protocol written and source reviewed; one lightweight Actions job pending",
+    "branch": "codex/reader-c02-close-protocol",
+    "scope": "defer independent observer join and diagnostic writes until original launch classification completes",
+    "original_failure_semantics_changed": false,
+    "performance_accepted": false,
+    "fourth_full_round_started": false
+  },
   "latest_run": {
     "source": "c86ddb57bfb3dd8ed7dc53cd07fcbfc94e95d32a",
     "run_id": 40243807845, "attempt": 1, "conclusion": "failure",
