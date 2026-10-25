@@ -1,4 +1,4 @@
-# Apple 提交事件驱动书架刷新
+# Apple 初始化接纳与书架提交发布
 
 独立后继分支基于 `f4aa876c`，不改其冻结分支、原六个测试消费者/断言或 parser 规则。
 
@@ -16,4 +16,14 @@
 
 该独立消费者显式复用 `6d53f3c0` / `40173677171` attempt 1 的冻结 SDK3.41 安装工件，原 producer 身份、ZIP 字节/散列、全部安装文件散列及 Mach-O 身份保留，不重标为当前 host 源码。SDK及所有安装模块的生产树与该 producer 精确相同；最终共同源的原六组回归仍需另行授予。
 
-当前未验收；构建、语法检查、夹具生成、工件恢复和实际 UI 只在 Actions。
+## 真实云端结果
+
+受测 host 源码 `e6c0ef2d2a3d9289dc415d16cb46d0eafa7f340d`，run [40181355084](https://github.com/NoGod3524/EXReader/actions/runs/40181355084) attempt 1，consumer `121132916448` success。iPad mini (A17 Pro) / iOS 26.2 simulator 两个实际 XCTest 场景均 Passed。
+
+- 初始化接纳：停止在真实 `start` 之前时 `busy=false / libraryReady=false / started=false / token=0`；普通导入控件禁用，直接调用原后端入口后 `rejected_unready=1`，token 与 UI 书数仍为 0。释放后 `libraryReady=true`，通过原普通导入按钮导入并打开真实 SDK 页。
+- 同帧提交发布：真实 owner 导入后 `observed_busy_changes=0`，SDK 书数 1；HostShelf 缓存 `0→1`，generation `3→4` 且 applied=4，页面真实文字含 `C00P000W00`。
+- 当前消费程序为唯一动态 SDK 链接，provider accepted=true、static_sdk_linked=false；实际程序 SHA-256 `4ba7ce459e15b5c9c00a94b2050b12d8977375d62676ce1776d959fabe555aaa`。
+
+工件 `12594511272`，50,989,276 字节，ZIP `sha256:66304f0c02b5a7b0beded56eb3684a3dfccec4046d05ed19143d7cc7e5264cd6`，有效期至 `2027-01-23T09:36:38Z`。原报告、实际应用、两场景的六张截图和 xcresult 都由该运行保留。
+
+授予分别限于 iPad simulator 的初始化接纳场景与同主线程回合导入发布场景。没有把该独立消费者记为原六组回归或六平台互通；原 `f4aa` 首次点击失败记录和后续诊断继续保留。构建、语法检查、夹具生成、工件恢复和实际 UI 全在 Actions。
