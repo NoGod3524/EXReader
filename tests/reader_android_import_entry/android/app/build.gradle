@@ -1,0 +1,39 @@
+plugins { id 'com.android.application' }
+
+def exrSdk = project.findProperty('exrSdk') ?: ''
+
+android {
+    namespace 'org.exreader.importprobe'
+    compileSdk 35
+    ndkVersion '27.0.12077973'
+    defaultConfig {
+        applicationId 'org.exreader.importprobe'
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName '0.1.0'
+        ndk { abiFilters 'x86_64' }
+        externalNativeBuild {
+            cmake { arguments "-DEXR_SDK=${exrSdk}", '-DANDROID_STL=c++_static' }
+        }
+    }
+    externalNativeBuild {
+        cmake {
+            path file('src/main/cpp/CMakeLists.txt')
+            version '3.22.1'
+        }
+    }
+    sourceSets {
+        main {
+            // The integration sample is consumed from the installed module prefix, not from the source tree.
+            java.srcDir "${exrSdk}/share/exreader-android-import-entry/sample/java"
+            jniLibs.srcDir "${exrSdk}/apk-libs"
+        }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    buildTypes { release { minifyEnabled false } }
+    packaging { jniLibs { useLegacyPackaging false } }
+    lint { abortOnError false }
+}
+
+dependencies { implementation project(':importentry') }
