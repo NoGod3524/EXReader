@@ -73,12 +73,12 @@ bash extras/apple-file-entry/install.sh <prefix> macos|iphonesimulator
 SDK事务失败或取消时暂存请求保留，宿主可重试或`release`；SDK已提交的结果优先于取消。
 Inbox原件在暂存成功后是否删除由宿主决定，建议只在SDK导入持久成功后调用`removeOriginal`。
 
-## T04 定向复审（新源码验收待 Actions）
+## T04 定向复审与云端验收
 
 复审固定起点为`3c355b4ea3faab974861f4863893c6018653740c`，独占分支
 `codex/dot-apple-file-entry-review`。已用 GitHub API 核实下节原 run 的七个作业确为
 同 source/run/attempt 的 completed/success，原交回 HEAD 相对原受测 SHA 只有本页与验收 JSON。
-原始运行和失败记录保留；下节绿灯不授予此次修改。
+原始运行和失败记录保留；本次使用独立新源码验收，不继承下节历史绿灯。
 
 定向修复：关闭排空关闭前入队的后台批次及完成回调（仍禁止从完成回调内调用`close()`）；
 已经提交的结果仍优先，关闭后的新调用仍异步收到`.closed`。iOS picker 的 delegate
@@ -95,6 +95,21 @@ macOS 系统 completion 同样防重复，但系统面板 UI 仍未驱动。
 此 seam 不替代真实 iCloud/File Provider 权限撤销测试。
 严格汇总新增真实作业 source/run/attempt 认证、API ZIP大小及SHA-256核对、重复 ZIP成员/报告拒绝、
 逐行原始结果与报告一致性以及安装模块摘要绑定，并保留原全部具名用例。
+
+受测源码`aa2ed90277270437a8192ab4e8403bd99392666a`，
+[run 40164811197](https://github.com/NoGod3524/EXReader/actions/runs/40164811197) attempt 1
+七作业全部 completed/success：macOS 39项 probe + 15项安装消费者，
+iPhone/iPad模拟器各40 + 15项，全部0失败0跳过；51项严格证据回归成功。
+九格式真实公开SDK回读、原33项探针和15项消费者断言全部保留。原生ZIP由汇总作业实际下载重算，
+大小和摘要与GitHub API一致，实际二进制及安装模块身份见[完整验收记录](validation/reader-apple-file-entry.json)。
+三个原生工件ID：macOS `12588412701`（466368字节）、iPhone `12588388432`（477847字节）、
+iPad `12587887962`（477881字节），有效期至`2027-01-23T05:14:36Z`。
+本次无新增失败运行；最终`[skip ci]`证据提交仅修改本页与验收JSON，代码/测试/工作流与受测SHA完全相同。
+
+范围仍限独立模块。真实云账号/Provider读取中权限撤销、App Sandbox安全作用域、
+交互式系统选择器、Files/Finder真实投递、真机、正式宿主接线、性能和无障碍均未授予。
+iOS直接驱动真实控制器的delegate仅证明一次性回调，未证明系统UI交互或独立控制器间的宿主代际策略。
+文件fsync/close错误在实现中检查，但未注入硬件故障，断电持久性仍未验证。
 
 ## 原 J05 验收（历史源码）
 

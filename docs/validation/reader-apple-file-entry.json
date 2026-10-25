@@ -1,5 +1,81 @@
 {
   "schema": 1,
+  "package": "T04 Apple file entry review",
+  "accepted": true,
+  "branch": "codex/dot-apple-file-entry-review",
+  "start_sha": "3c355b4ea3faab974861f4863893c6018653740c",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "tested_source_sha": "aa2ed90277270437a8192ab4e8403bd99392666a",
+  "tested_tree_sha": "186082aa00d23565752f6cbdfd5672d4c718a35c",
+  "evidence_commit_note": "This [skip ci] commit is a direct child of tested_source_sha; its SHA is supplied in the handoff, not self-embedded.",
+  "tested_to_evidence_diff": ["docs/READER-APPLE-FILE-ENTRY.md", "docs/validation/reader-apple-file-entry.json"],
+  "run": {
+    "id": 40164811197,
+    "attempt": 1,
+    "workflow": ".github/workflows/reader-apple-file-entry.yml",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40164811197"
+  },
+  "jobs": {
+    "scope and negative regressions": 121083581822,
+    "SDK macos": 121083582081,
+    "SDK iphonesimulator": 121083581959,
+    "native macos": 121085674132,
+    "native iphone": 121085674169,
+    "native ipad": 121085674145,
+    "same-source report": 121089394903
+  },
+  "results": {
+    "macos": {"probe": 39, "consumer": 15, "total": 54, "failed": 0, "skipped": 0},
+    "iphone_simulator": {"probe": 40, "consumer": 15, "total": 55, "failed": 0, "skipped": 0},
+    "ipad_simulator": {"probe": 40, "consumer": 15, "total": 55, "failed": 0, "skipped": 0},
+    "evidence_regressions": 51,
+    "formats_read_back_through_public_sdk": 9,
+    "named_check_manifest": "tests/reader_apple_file_entry/expected_checks.json at tested_source_sha",
+    "new_native_checks": [
+      "underreported-zero-and-short-length-never-silently-truncates",
+      "close-drains-old-background-callbacks-and-queued-batches",
+      "concurrent-release-does-not-free-another-request-budget",
+      "recovery-rejects-foreign-manifest-version-and-data-symlink",
+      "existing-staging-directory-hardened-and-symlink-refused",
+      "terminated-copy-reopen-sweeps-real-partial-data",
+      "picker-old-duplicate-and-reentrant-delegate-callbacks-consumed-once (iOS only)"
+    ],
+    "termination": "Each target runs the installed probe in a separate invocation which exits 73 during its first copied chunk, then another invocation reopens the actual partial file and verifies cleanup/retry. This is not a fabricated orphan fixture.",
+    "retained_cases": "All original 33 probe and 15 consumer assertions remain; no case or limit was relaxed."
+  },
+  "artifacts": [
+    {"name": "reader-apple-file-entry-macos-40164811197-1", "id": 12588412701, "bytes": 466368, "api_digest": "sha256:ff414903de6484d657befea71fe055a65229dba141ed7ddec01aeae223f11500", "actions_recomputed_zip_sha256": "ff414903de6484d657befea71fe055a65229dba141ed7ddec01aeae223f11500"},
+    {"name": "reader-apple-file-entry-iphone-40164811197-1", "id": 12588388432, "bytes": 477847, "api_digest": "sha256:2bc16ed8d919f901b31dc8732a8ee8b64cb9c08c7083bda864364e3a56fbeb68", "actions_recomputed_zip_sha256": "2bc16ed8d919f901b31dc8732a8ee8b64cb9c08c7083bda864364e3a56fbeb68"},
+    {"name": "reader-apple-file-entry-ipad-40164811197-1", "id": 12587887962, "bytes": 477881, "api_digest": "sha256:4c2bbe9ef4c8b339ed18949e5e93065ee544e8b4c8734e9461de305d09cf2a80", "actions_recomputed_zip_sha256": "4c2bbe9ef4c8b339ed18949e5e93065ee544e8b4c8734e9461de305d09cf2a80"},
+    {"name": "reader-apple-file-entry-report-40164811197-1", "id": 12588318456, "bytes": 1665, "api_digest": "sha256:fd97e4084a657985d1d88ea4866750067c3e6215fa6f39003d3966e82ad6816a"},
+    {"name": "reader-apple-file-entry-regressions-40164811197-1", "id": 12587224849, "bytes": 967, "api_digest": "sha256:ac26f06ed1fa16aeea96c6f73b12cee482864bb6bed34bd714f8261f646c30e4"},
+    {"name": "reader-apple-file-entry-stage-macos-40164811197-1", "id": 12588236457, "bytes": 18966788, "api_digest": "sha256:3caf43ea1496d87c8ab88850ddf5d09864b7bc3436d360901b9e2297dac4044b"},
+    {"name": "reader-apple-file-entry-stage-iphonesimulator-40164811197-1", "id": 12587609823, "bytes": 18961908, "api_digest": "sha256:0582f262ae512f9abcd40c7be018bf1f80c07b1fc8904d387184f0da55c8bc49"}
+  ],
+  "artifact_expiry": "2027-01-23T05:14:36Z",
+  "artifact_api_checked_at": "2026-10-25T05:49:38Z",
+  "artifact_verification": "All seven are unique, nonempty and unexpired API identities for this source/run. The report job authenticated all six upstream jobs and downloaded/recomputed the three native ZIP sizes and SHA-256 against API metadata, checked unique members/reports, exact result lines, and hashes of the actual probe, consumer and installed module. No artifact was downloaded or unpacked locally.",
+  "binary_identity": {
+    "macos": {"probe": "dd340c5143f90f6871990dcdc0eb9e1063e46890cfd63019f59ac251a94689d5", "consumer": "a265d4bcab2b131e40cb9a4dd6a11084560d6a51297b06d0a9fd4addcc461044", "installed_module": "09dcdbe46ad3f0b2d7ac9b2ac5753933309ef2a208d916d87042a7eacbc4989a"},
+    "iphone": {"probe": "939abad1a36d9944baa86ea2cb4346eb2306adef978236dbdabbbac8ad69006f", "consumer": "deaef90bf19e02328ca3a66d8815f14dddc593deb7c610b553f0026a1bc73bfe", "installed_module": "66d588f41dbfed5b4e322f775b4888fc7f94ad98b22e94f89cde8a253642d95f"},
+    "ipad": {"probe": "939abad1a36d9944baa86ea2cb4346eb2306adef978236dbdabbbac8ad69006f", "consumer": "deaef90bf19e02328ca3a66d8815f14dddc593deb7c610b553f0026a1bc73bfe", "installed_module": "85ab9f60611ff0889addbb0b1e5096793379b93ba94701c497aac34b56a7b5be"}
+  },
+  "environment": {"runner": "macos-15", "xcode": "Xcode 16.4 Build version 16F6", "ios_runtime": "26.2", "iphone": "iPhone 11", "ipad": "iPad Pro (12.9-inch) (3rd generation)"},
+  "new_failed_runs": [],
+  "historical_review": "Original run 40147364965 attempt 1 source cb0dcfc854ea33caa7b86750279344a6e3515f2d was rechecked through jobs/artifact APIs. Its handback 3c355b4ea3faab974861f4863893c6018653740c differs only in the same two evidence documents. Original evidence and all original failures are retained below, not reused as acceptance for the new source.",
+  "pending_not_exercised": [
+    "Real iCloud / third-party File Provider downloads and security-scope revocation during an actual provider read; availability and length faults are seams",
+    "Interactive system picker UI: iOS delegate methods were directly invoked on real controllers, not user-driven; macOS panel only compiled",
+    "Real app-sandbox security-scoped URLs; paired true/false scope paths use seams with real ordinary file I/O",
+    "Actual Files/Finder file-sharing delivery, physical devices, macOS App Sandbox entitlements",
+    "Power-loss durability and forced filesystem fsync/close failure injection; sync errors are checked in code but no hardware fault was induced",
+    "Formal Apple host integration, supersession policy across independently presented controllers, product UI, performance and accessibility"
+  ],
+  "scope_note": "Installed standalone module acceptance only, with a stable app-private directory and one mutable owner. No frozen SDK/schema/host paths changed; no PR, default-branch push, signing or release.",
+  "historical_j05": {
+  "schema": 1,
   "package": "J05 Apple file entry",
   "branch": "codex/reader-apple-file-entry",
   "start_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
@@ -104,4 +180,5 @@
     "macOS App Sandbox entitlements"
   ],
   "scope_note": "Module acceptance only; host wiring, product UI and six-platform interop belong to root."
+  }
 }
