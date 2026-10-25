@@ -2,6 +2,24 @@
   "schema": 1,
   "recorded_at_utc": "2026-10-25T08:52:49Z",
   "latest_checkpoint": {
+    "common_341_preparation": {
+      "branch": "codex/reader-hosts-341-final",
+      "worktree": "C:/Users/Oscar/.codex/worktrees/reader-windows-preferences-commit-review/EXReader",
+      "production_merge": "2dae171b75f04484813cd03487bbb9b5aab81c71",
+      "source": "49b2a7c86173181f8f79a760315ddb8ca2312bd1",
+      "later_module_sdk_run": 40185877681,
+      "state": "three_desktop_dual_exact_SDK_install_and_wrong_provider_rejection_running",
+      "accepted": false,
+      "full_composition_accepted": false,
+      "full_product_accepted": false,
+      "ordinary_merged": ["58eda15d886268e054f2211a837b4032e946e165", "1b3cfd1413fa5ebade31be6958f835f6de3b5290", "e8ed25c1cd7ccb33405611e27f9ad47fba8c9e34", "897f8973c1a8c74fa5aaf9a470d02e6914faeded"],
+      "new_production_scope": "only_four_later_modules_CMake_and_installed_configs_default340_explicit341_exact_no_C_ABI_or_implementation_change",
+      "later_modules": ["cloud-import", "thumbnails", "book-information", "local-downloads"],
+      "Windows_preferences_delivery_and_sealed_commit_boundary_merge": "pending",
+      "root_old_commit_review_branch_preserved": "codex/reader-windows-preferences-commit-review",
+      "selector3_adopted": false,
+      "next": "adapt_original27_package_composition_CMake_consumers_and_G1_build_invocation_to_explicit341_without_changing_original_judges_then_same_source_native_suites"
+    },
     "resume_20261025_directional_receive": {
       "source": "9ce130cf79020ec9ca15e3e03b7ec148ac451188",
       "branch": "codex/reader-apple-record-interop",
