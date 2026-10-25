@@ -192,5 +192,20 @@
       {"id": 12589670838, "name": "reader-ocr-overlay-macOS-40168228711-1", "bytes": 5147707, "sha256": "a2e4800d73c368e8f22210eba46eca0b9d90829e095ae40cd0b0ff98d389d185", "expires": "2027-01-23T06:11:37Z"},
       {"id": 12589461042, "name": "reader-ocr-overlay-evidence-40168228711-1", "bytes": 1902, "sha256": "cf849a2db7782df2e3e604acef78081f4a2d636335bb2625f1b4252b986d2480", "expires": "2027-01-23T06:11:37Z"}
     ]
+  },
+  "review_evidence_closure": {
+    "tested_sha": "34bcce60c3fad0aaf16291dcd87cfba26c39df7f",
+    "run_id": 40169456419,
+    "attempt": 1,
+    "accepted": true,
+    "checks": {"total": 56, "passed": 54, "skipped": 2, "failed": 0, "pending": 0},
+    "artifact_protocol_selftest": {"total": 36, "failed": 0},
+    "jobs": {"linux": 121097161262, "macos": 121097161425, "evidence": 121097430286},
+    "artifacts": [
+      {"id": 12589907747, "name": "reader-ocr-overlay-Linux-40169456419-1", "bytes": 5328485, "sha256": "39fdfcd56f62e0dcd120f9b12d785067395e241d72937d9e713e8e5847a70edc", "expires": "2027-01-23T06:32:37Z"},
+      {"id": 12589523258, "name": "reader-ocr-overlay-macOS-40169456419-1", "bytes": 5147708, "sha256": "d5125940b1e250cc389a4bb671698e898052ac77966845e9e1146a24cc967886", "expires": "2027-01-23T06:32:37Z"},
+      {"id": 12589822874, "name": "reader-ocr-overlay-evidence-40169456419-1", "bytes": 3378, "sha256": "3d3792616aa0448f447ea2e6b7d105268b642288fe7de15cb0c2547ba099d73c", "expires": "2027-01-23T06:32:37Z"}
+    ],
+    "supersedes_evidence_of": 40168228711
   }
 }

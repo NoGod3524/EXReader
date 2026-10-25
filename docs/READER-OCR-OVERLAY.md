@@ -157,3 +157,23 @@ gh workflow run reader-ocr-overlay.yml --ref codex/reader-ocr-overlay
 * 工件（有效期 2027-01-23T06:11:37Z）：Linux 12589161429 `reader-ocr-overlay-Linux-40168228711-1` 5328477 B sha256:e9907472…ef6de4；macOS 12589670838 `reader-ocr-overlay-macOS-40168228711-1` 5147707 B sha256:a2e4800d…89e0d185；evidence 12589461042 1902 B sha256:cf849a2d…d2480。完整摘要见 `docs/validation/reader-ocr-overlay.json` 的 `review` 段。消费者哈希在各工件的 evidence 报告中。
 * 未复核/未授予：Windows、移动、真机、真实扫描质量、中文 CER、硬 CPU/RSS 隔离、宿主接线；模型为 tessdata_fast 固定提交（Apache-2.0）已登记，Tesseract 版本取自 runner 包管理器、未固定。
 * 原交付证据（614b14ab / run 40127504830）保留不改。
+
+### 9.1 证据闭环补强（复核第二轮）
+
+根复核指出 `check_artifacts.py` 只列工件，未认证生产作业、只看 `expired`、未全局拒绝重复 ZIP 成员与无界解包。已在本包内修复（生产代码不变，56 项具名检查 54 PASS / 2 SKIP 保持不变）：
+
+* **运行/作业认证**：`runs/{run}/attempts/{attempt}` 的 id、`head_sha`、`run_attempt` 必须等于本次；`…/attempts/{n}/jobs` 中每个平台恰有一个 `overlay (ubuntu-24.04)` / `overlay (macos-14)` 作业，`completed/success`，其 `head_sha`、`run_id`、`run_attempt` 与本次相等，且 probe 判定与工件上传两步 `success`；工件的 `workflow_run.id` 与 `head_sha` 必须等于本次；作业/工件列表须完整（`total_count`）。
+* **实际 `expires_at`**：必须存在、带时区、可解析且晚于当前时间，同时 `expired is False`。
+* **ZIP 防护**：拒绝不可读 ZIP、**任何重复成员名**、绝对路径/`..`/反斜杠成员、成员数 > 2000、单成员 > 64 MiB、声明总解包 > 256 MiB、CRC 失败；读取时再按上限截断，不信任头部声明的大小。
+* 保留原有全部检查：摘要身份、report/results 摘要、结果表、夹具/模型/**已安装消费者二进制**哈希、模型身份、跨平台一致性、未声明工件。
+* **确定性协议反例**：`check_artifacts.py --selftest` 在证据作业中、真实校验前用合成输入执行 36 例（3 正例 + 33 拒绝例：作业失败/未完成/错 SHA/错 attempt/错 run/缺失/重复/上传步骤未成功/未知平台；run 错 SHA/attempt；工件已过期/`expires_at` 过去、缺失、畸形、无时区；错 SHA/错 run/摘要不符/大小不符；篡改消费者二进制/模型；重复成员（含重复 summary）；路径穿越/绝对路径；单成员/总量/成员数超界；非 ZIP/空 ZIP；缺消费者；跨 attempt 摘要）。`selftest.json` 随证据工件上传。
+
+验证 run **40169456419**（attempt 1，源码 `34bcce60c3fad0aaf16291dcd87cfba26c39df7f`，分支 `codex/reader-ocr-overlay-review`）：overlay (ubuntu-24.04) 121097161262、overlay (macos-14) 121097161425、same-run artifact evidence 121097430286 均 success；每平台 56 项 54 PASS / 2 SKIP / 0 FAIL；selftest `total=36 failed=0`；真实严格汇总 `accepted: true`、`problems: []`。
+
+| 工件 ID | 名称 | 字节 | sha256 | 到期 |
+|---|---|---|---|---|
+| 12589907747 | reader-ocr-overlay-Linux-40169456419-1 | 5328485 | 39fdfcd56f62e0dcd120f9b12d785067395e241d72937d9e713e8e5847a70edc | 2027-01-23T06:32:37Z |
+| 12589523258 | reader-ocr-overlay-macOS-40169456419-1 | 5147708 | d5125940b1e250cc389a4bb671698e898052ac77966845e9e1146a24cc967886 | 2027-01-23T06:32:37Z |
+| 12589822874 | reader-ocr-overlay-evidence-40169456419-1 | 3378 | 3d3792616aa0448f447ea2e6b7d105268b642288fe7de15cb0c2547ba099d73c | 2027-01-23T06:32:37Z |
+
+较早的 run 40168228711（源码 `d34426da`）保留不改；其证据汇总尚无作业认证，仅作过程记录。本节仍不授予宿主/Windows/移动/真机范围。
