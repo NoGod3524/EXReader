@@ -7,8 +7,10 @@ import json
 import os
 from pathlib import Path,PurePosixPath
 import subprocess
+import sqlite3
+import tempfile
 import zipfile
-from bundle import verify,parse
+from bundle import verify,verify_null,parse
 assert os.environ.get('GITHUB_ACTIONS')=='true'
 identity={k:os.environ[v] for k,v in [('source_sha','GITHUB_SHA'),('run_id','GITHUB_RUN_ID'),('attempt','GITHUB_RUN_ATTEMPT')]}
 source,run,attempt=identity.values();repo='repos/'+os.environ['GITHUB_REPOSITORY']+'/'
@@ -51,12 +53,12 @@ with archive('reader-android-raw3')[0] as package:
     def read(suffix):
         found=[n for n in names if n==suffix or n.endswith('/'+suffix)];assert len(found)==1,(suffix,found);return package.read(found[0])
     result=parse(read('ui/result.json'));native=parse(read('native/result.json'));guard=parse(read('guard.json'))
-    assert result['accepted'] and not result['adopted'] and result['checks']==16 and result['actual_tls']
+    assert result['accepted'] and not result['adopted'] and result['checks']==19 and result['actual_tls']
     assert all(result[k]==v and native[k]==v for k,v in identity.items()) and native['accepted'] and guard['accepted']
     assert guard['seven_modules_unchanged'] and guard['legacy_suites_unchanged'] and guard['sdk_boundaries_unchanged']
     assert len(native['archives'])==7 and native['legacy_anchor_max_version']==2 and native['one_product_sqlite'] and native['single_shared_sdk'] and not native['default_enabled']
-    assert result['incoming_apple_status']=='passed' and not result['bidirectional_interoperability_accepted']
-    assert len(result['phases'])==10 and len({p['pid'] for p in result['phases']})==10
+    assert result['incoming_apple_status']=='passed' and result['authentic_apple_null_status']=='passed' and not result['bidirectional_interoperability_accepted']
+    assert len(result['phases'])==13 and len({p['pid'] for p in result['phases']})==13
     for p in result['phases']:
         assert p==parse(read('ui/'+p['phase']+'-raw-report.json')) and p['passed'] and p['count']==len(p['checks']) and all(c['pass'] for c in p['checks'])
     by_phase={p['phase']:p for p in result['phases']}
@@ -74,6 +76,35 @@ with archive('reader-android-raw3')[0] as package:
     assert by_phase['apple-receive']['count']==by_phase['apple-reopen']['count']==1 and by_phase['apple-receive']['raw3']['session']['shards']==256 and by_phase['apple-receive']['raw3']['session']['pulled']==attestation['revisions']
     assert by_phase['apple-reopen']['raw3']['peer_manifest_sha256']==attestation['manifest_sha256'] and by_phase['apple-reopen']['raw3']['peer']['source_sha']==attestation['source_sha']
     assert by_phase['apple-reopen']['raw3']['network_reopen_records']==11 and len(by_phase['apple-reopen']['resolutions'])==11
+    negative=verify_null(lambda name:read('apple-peer/null-bundle/'+name));assert negative['manifest_sha256']==attestation['null_negative']['manifest_sha256']
+    assert negative['null_revision']==attestation['null_negative']['null_revision'] and negative['revisions']==attestation['null_negative']['revisions']
+    negative_manifest=negative['manifest'];origin=negative_manifest['origin_database'];assert origin==attestation['null_negative']['origin_database']
+    database=read('apple-peer/null-bundle/origin-catalog.db');assert len(database)==origin['bytes'] and hashlib.sha256(database).hexdigest()==origin['sha256']
+    with tempfile.TemporaryDirectory() as temporary:
+        inspected=Path(temporary)/'catalog.db';inspected.write_bytes(database)
+        for suffix,declared in origin['sidecars'].items():
+            assert suffix in ('-wal','-shm');body=read('apple-peer/null-bundle/origin-catalog.db'+suffix)
+            assert len(body)==declared['bytes'] and hashlib.sha256(body).hexdigest()==declared['sha256'];(Path(temporary)/('catalog.db'+suffix)).write_bytes(body)
+        connection=sqlite3.connect(inspected.resolve().as_uri()+'?mode=ro',uri=True)
+        try:source_rows=connection.execute('SELECT revision_id,body_sha256,CAST(body_json AS BLOB) FROM reader_revisions').fetchall()
+        finally:connection.close()
+    retained={rid:(parse(body),body,sha) for rid,sha,body in source_rows}
+    assert all(hashlib.sha256(body).hexdigest()==sha for wire,body,sha in retained.values())
+    needed=set()
+    def collect(rid):
+        if rid in needed:return
+        needed.add(rid)
+        for parent in retained[rid][0]['parents']:collect(parent)
+    collect(negative['null_revision']);book=negative_manifest['originals'][0]['book_key']
+    for rid,(wire,body,sha) in retained.items():
+        if wire['entity_kind']=='book' and wire['entity_key']==book:collect(rid)
+    assert needed=={row['id'] for row in negative_manifest['revisions']}
+    for row in negative_manifest['revisions']:assert retained[row['id']][1]==read('apple-peer/null-bundle/'+row['file'])
+    assert by_phase['apple-null-receive']['raw3']['session']['shards']==256 and by_phase['apple-null-receive']['raw3']['session']['pulled']==negative['revisions']
+    null_sha=next(row['sha256'] for row in negative_manifest['revisions'] if row['id']==negative['null_revision'])
+    for name,again in [('apple-null-reopen',False),('apple-null-reopen-again',True)]:
+        proof=by_phase[name]['raw3'];assert proof['authentic_null_revision']==negative['null_revision'] and proof['authentic_null_wire_sha256']==null_sha and proof['peer_manifest_sha256']==negative['manifest_sha256'] and proof['reopened_again']==again
+        assert all(proof[key] for key in ('nullable_preserved','typed_unreadable','version_unrestorable','actual_ui_navigation_refused','read_only_unchanged','fresh_sdk_owner')) and not by_phase[name]['resolutions']
     assert by_phase['raw-contract']['raw3']['null_exact_protocol_only'] and by_phase['raw-contract']['raw3']['restores']==[{'source_version':1,'restored_version':1},{'source_version':2,'restored_version':2}]
     boundary,=result['boundaries'];assert boundary['real_process_stopped'] and str(boundary['pid']) in boundary['pid_before'] and not boundary['pid_after']
     assert boundary=={**parse(read('ui/kill-ui-boundary.json')),'pid_before':boundary['pid_before'],'pid_after':'','real_process_stopped':True}
@@ -91,8 +122,8 @@ with archive('reader-android-raw3-protocol')[0] as protocol:
         body=protocol.read(name);assert len(body)==declared['bytes'] and hashlib.sha256(body).hexdigest()==declared['sha256']
 output={**identity,'accepted':True,'adopted':False,'scope':'API34 default x86_64 independent Android raw3 native host candidate',
  'inherited_business_checks':130,'retained_default_sender_checks':8,'original_protocol_phases':18,'java_policy_cases':20,
- 'raw_checks':16,'real_process_boundaries':1,'reading_records':11,'revisions':19,'originals':4,'manifest_sha256':verified['manifest_sha256'],
+ 'raw_checks':19,'real_process_boundaries':1,'reading_records':11,'revisions':19,'originals':4,'manifest_sha256':verified['manifest_sha256'],
  'artifacts':selected,'jobs':[{k:j[k] for k in ['id','name','head_sha','conclusion']} for j in jobs if j['name'] in ('android','protocol')],
- 'incoming_apple_status':'passed','actual_apple_attestation':attestation,'bidirectional_interoperability_accepted':False,'physical_device':False,'complete_product':False}
+ 'incoming_apple_status':'passed','authentic_apple_null_status':'passed','actual_apple_attestation':attestation,'bidirectional_interoperability_accepted':False,'physical_device':False,'complete_product':False}
 out=Path('build/android-raw3-summary');out.mkdir(parents=True,exist_ok=True)
 (out/'summary.json').write_text(json.dumps(output,indent=2)+'\n');print(json.dumps(output),flush=True)

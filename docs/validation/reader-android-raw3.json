@@ -15,6 +15,17 @@
       "android_job": 121184878356,
       "failed_phase": "raw-contract",
       "reason": "The new source-version fixture incorrectly tried to encode a point as anchor1, whose unchanged contract rejects GAP_POINT. The fixture now captures a genuine nonempty SDK range; production behavior is unchanged."
+    },
+    {
+      "source_sha": "58ddb147e912c06e4b85086ff53d014699994af9",
+      "run_id": 40200484893,
+      "attempt": 1,
+      "android_job": 121190419983,
+      "protocol_job": 121190419760,
+      "failed_phase": "session-reopen",
+      "reason": "The native metadata projection correctly retained the original product title, while the new fixture filtered the actual shelf by the SDK import's temporary title. The fixture now uses the title returned by the actual projection; production behavior is unchanged.",
+      "authenticated_apple_manifest_sha256": "f0960b35374e12827a8966f7022dc3f632e44c87419ca1482288386fb8031566",
+      "authenticated_apple_revisions": 15
     }
   ],
   "scope": "explicit API34 default x86_64 Android raw3 native host candidate",

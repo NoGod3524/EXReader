@@ -80,3 +80,38 @@ def folder(path):
  def read(name):
   file=root/safe(name);assert file.is_file() and not file.is_symlink();return file.read_bytes()
  return verify(read)
+
+def verify_null(read):
+ raw=read('manifest.json');manifest=parse(raw)
+ assert manifest['schema']==1 and manifest['purpose']=='authentic-apple-null-negative'
+ original,=manifest['originals'];assert original['role']==original['format']=='pdf'
+ data=read(safe(original['file']));assert len(data)==original['bytes']==8845 and sha(data)==original['sha256']=='5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc'
+ assert original['book_key']=='pdf:'+original['sha256']
+ files={'manifest.json',original['file']};wires={}
+ for row in manifest['revisions']:
+  name=safe(row['file']);assert name not in files;files.add(name);body=read(name);wire=parse(body)
+  assert len(body)==row['bytes'] and sha(body)==row['sha256'] and wire['id']==row['id'] and row['id'] not in wires
+  assert all(row[k]==wire[k] for k in ('entity_kind','entity_key','parents')) and row['book_key']==original['book_key']
+  assert wire['entity_kind'] in ('annotation','book') and (wire['entity_key']==original['book_key'] if wire['entity_kind']=='book' else wire['payload']['book_key']==original['book_key'])
+  wires[row['id']]=wire
+ assert 3<=len(wires)<=100
+ visiting=set();visited=set()
+ def walk(key):
+  assert key not in visiting
+  if key in visited:return
+  visiting.add(key);wire=wires[key]
+  for parent in wire['parents']:
+   assert parent in wires and all(wires[parent][k]==wire[k] for k in ('entity_kind','entity_key'));walk(parent)
+  visiting.remove(key);visited.add(key)
+ for key in wires:walk(key)
+ selected=wires[manifest['null_revision']];assert selected['entity_kind']=='annotation' and selected['payload']['annotation_id']==manifest['annotation_id']
+ location=selected['payload']['location'];assert location['anchor_version']==3 and location['mode']=='fixed_page' and location['selector']['exact']=={'base64':None,'size':0}
+ assert selected['parents'] and any(w['entity_kind']=='book' for w in wires.values())
+ assert not any(manifest['null_revision'] in w['parents'] for w in wires.values())
+ return {'manifest':manifest,'manifest_sha256':sha(raw),'files':sorted(files),'revisions':len(wires),'null_revision':manifest['null_revision'],'complete_graph':True}
+
+def null_folder(path):
+ root=Path(path)
+ def read(name):
+  file=root/safe(name);assert file.is_file() and not file.is_symlink();return file.read_bytes()
+ return verify_null(read)
