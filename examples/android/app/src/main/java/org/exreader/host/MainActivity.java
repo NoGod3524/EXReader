@@ -1026,6 +1026,9 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode != REQUEST_IMPORT) return;
+        if(BuildConfig.DEBUG)Log.i(TAG,"system import result request="+requestCode+" result="+resultCode
+                +" data="+(data!=null&&data.getData()!=null)+" flags="+(data==null?0:data.getFlags())
+                +" clips="+(data==null||data.getClipData()==null?0:data.getClipData().getItemCount()));
         if (resultCode != RESULT_OK || data == null) {
             setStatus("Selection canceled");
             return;

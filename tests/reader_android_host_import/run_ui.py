@@ -113,6 +113,10 @@ try:
         save(phase + '-raw-report.json', raw)
         report = json.loads(raw)
         print(json.dumps(report, ensure_ascii=False), flush=True)
+        if report['passed'] is not True:
+            for line in (a.output / (phase + '-logcat.txt')).read_text(errors='replace').splitlines():
+                if 'EXRHost' in line and ('system import result' in line or 'status ' in line):
+                    print(line, flush=True)
         reports.append(report)
         for observation in report['observations']:
             if 'capture' in observation:
