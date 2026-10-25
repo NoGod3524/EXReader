@@ -12,5 +12,6 @@ final class PageTheme {
         byte[] colors=value.colors();int at=(value.theme==2||value.theme==3&&system==2)?8:0;
         return new PageTheme(true,rgba(colors,at),rgba(colors,at+4),system);
     }
+    PageTheme forFormat(int format){return format==NativeLibrary.FORMAT_TXT||format==NativeLibrary.FORMAT_EPUB?this:ORIGINAL;}
     private static int rgba(byte[] bytes,int at){return (bytes[at]&255)<<24|(bytes[at+1]&255)<<16|(bytes[at+2]&255)<<8|(bytes[at+3]&255);}
 }

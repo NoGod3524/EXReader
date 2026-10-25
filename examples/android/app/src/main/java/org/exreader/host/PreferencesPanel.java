@@ -43,7 +43,7 @@ final class PreferencesPanel {
         EditText font=number(box,"字号 pt",original.font),line=number(box,"行距倍数",original.line),paragraph=number(box,"段距 pt",original.paragraph),margin=number(box,"页边距 pt",original.margin),zoom=number(box,"固定页缩放 %",original.zoom);
         Spinner theme=choice(box,"主题",new String[]{"浅色",BuildConfig.READER_PAGE_THEME?"深色":"深色（暂不可用）","跟随系统"},original.theme);
         android.widget.CheckBox preserve=new android.widget.CheckBox(activity);preserve.setText("原始配色");preserve.setContentDescription("原始配色");preserve.setChecked(host.preferencesOriginal());if(BuildConfig.READER_PAGE_THEME)box.addView(preserve);
-        TextView colors=new TextView(activity);colors.setText(BuildConfig.READER_PAGE_THEME?"阅读配色用于重排文字和整页背景；图片、作者背景与固定页保持原色。":"阅读页颜色由文档决定。深色阅读页暂不可用；系统为深色时保持原页并提示。");box.addView(colors);
+        TextView colors=new TextView(activity);colors.setText(BuildConfig.READER_PAGE_THEME?"阅读配色用于 TXT / EPUB 的文字和整页背景；图片、作者背景与其他格式保持原色。":"阅读页颜色由文档决定。深色阅读页暂不可用；系统为深色时保持原页并提示。");box.addView(colors);
         Spinner direction=choice(box,"翻页方向",new String[]{"从左向右","从右向左","上下翻页"},original.direction);
         Spinner input=choice(box,"翻页操作",new String[]{"点击","滑动","点击和滑动","方向键"},original.input);
         TextView status=new TextView(activity);status.setContentDescription("阅读设置状态");status.setAccessibilityLiveRegion(android.view.View.ACCESSIBILITY_LIVE_REGION_POLITE);box.addView(status);

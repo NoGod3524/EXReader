@@ -505,12 +505,12 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                     int requested = requestedPage >= 0 ? requestedPage : (int) Math.max(0, target.position);
                     load = candidateFixed.load(requested, requestedZoom, task);
                 } else if(bounded) {
-                    candidateReflow=requestedAppearance==null?new ReflowSession(store,target.id,fontBytes(),requestedFont):new ReflowSession(store,target.id,fontBytes(),requestedAppearance,requestedTheme);
+                    candidateReflow=requestedAppearance==null?new ReflowSession(store,target.id,fontBytes(),requestedFont):new ReflowSession(store,target.id,fontBytes(),requestedAppearance,requestedTheme.forFormat(target.format));
                     int display=requestedPage>=0?requestedPage:prefs.getInt("display_"+target.id,0);
                     load=candidateReflow.restore(display,task);
                     notice=load.snapshot.restoreNotice;
                 } else {
-                    candidateReflow = requestedAppearance==null?new ReflowSession(target.id,path,fontBytes(),requestedFont):new ReflowSession(target.id,path,fontBytes(),requestedAppearance,requestedTheme);
+                    candidateReflow = requestedAppearance==null?new ReflowSession(target.id,path,fontBytes(),requestedFont):new ReflowSession(target.id,path,fontBytes(),requestedAppearance,requestedTheme.forFormat(target.format));
                     long savedOffset = requestedOffset;
                     int state = -1;
                     if (savedOffset < 0) {
@@ -1733,7 +1733,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     }
     private void drainSystemTheme(){
         if(pendingSystemTheme<0||destroyed||operation!=0||pageBusy||current==null||readingPreferences==null)return;
-        pendingSystemTheme=-1;if(pageThemeOriginal||readingPreferences.theme!=3||current.fixed)return;
+        pendingSystemTheme=-1;if(pageThemeOriginal||readingPreferences.theme!=3||current.fixed||currentBook==null||!PageTheme.sample(readingPreferences,systemTheme(),pageThemeOriginal).forFormat(currentBook.format).enabled)return;
         applyingSystemTheme=true;applyPreferences(readingPreferences,false,false,()->{applyingSystemTheme=false;drainSystemTheme();},error->{applyingSystemTheme=false;drainSystemTheme();});
     }
     @Override public ReadingPreferences preferences(){return readingPreferences;}
@@ -1746,7 +1746,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     private void applyPreferences(ReadingPreferences value,boolean original,boolean save,Runnable done,java.util.function.Consumer<Throwable> failed){
         if(worker==null||current==null||operation!=0||pageBusy||!BuildConfig.READER_PREFERENCES){failed.accept(new IllegalStateException("请先完成当前阅读操作"));return;}
         final PageSnapshot frame=current;final long book=frame.bookId;final String path=prefs.getString("path_"+book,null);final int system=systemTheme();
-        final PageTheme palette=PageTheme.sample(value,system,original);final long revision=themeRevision;
+        final PageTheme palette=PageTheme.sample(value,system,original).forFormat(currentBook==null?0:currentBook.format);final long revision=themeRevision;
         final HostTask task=beginTask(3);final long gen=generation;
         worker.execute(()->{
             PageLoad load=null;ReflowSession candidate=null;boolean transferred=false;
