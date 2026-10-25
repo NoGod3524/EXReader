@@ -3,22 +3,106 @@
   "id": "S02",
   "kind": "linux-relocatable-candidate-verification",
   "accepted": false,
-  "verifier_source": "",
+  "reason": "desktop-entry launch phase of the verifier did not complete in CI; every other relocation, audit, default-launch and original-read-back check passed on the same source",
+  "verifier_source": "60a41b77f474540de80e18494475f4df2ca648ff",
+  "verifier_source_secondary": "1a99c6d2b5ea52bfccf33c3022f59d3de8f85086",
+  "fix_not_executed": "d6232efde80b906e2764cebe77adb39a80aea4e4",
+  "branch": "codex/reader-fw-s02",
+  "base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
   "producer": {
     "source": "57203a52aee439be5194ee0a4b13563a975e8daf",
     "evidence_seal": "9fc407a5cce5a0bfe644a60bd8dc29f84dea6d0e",
     "run": 40206458217,
-    "attempt": 1
+    "attempt": 1,
+    "workflow": ".github/workflows/reader-gtk-compact.yml",
+    "artifact": {
+      "id": 12604604561,
+      "name": "reader-gtk-341-final-40206458217-1",
+      "bytes": 112659381,
+      "sha256": "8d6c52593dd2017a6e13ffc2cf75fd3fd4546cdf3a5179b0da5afd55ac1fb685",
+      "expires_at": "2027-01-23T15:20:23Z"
+    },
+    "extra_artifacts": [
+      {"id": 12605108334, "name": "reader-gtk-341-final-summary-40206458217-1", "bytes": 15706, "sha256": "9e5b43cb209b151eb1042722d31fc7f02c431194ef3779a1482179410b3559d5"},
+      {"id": 12604909051, "name": "reader-gtk-compact-summary-40206458217-1", "bytes": 19348, "sha256": "4533df7c38b597b70645f4c764f0c602468593c567b86b6e07968e3ce4244044"}
+    ],
+    "program_sha256": "d715588d1c1fafa3a1d9677e78ff9410db41606789ba500b5e47f3ad8c2cd5a3",
+    "program_version": "3.41.0 1",
+    "payload_files": 27
   },
-  "run": null,
-  "jobs": [],
-  "artifacts": [],
-  "checks": [],
-  "failures_preserved": [],
+  "j24": {
+    "source": "2f5677f13efc34b200af697f1b6f7bff2b656e3b",
+    "contract_blob": "289b435fe7c71cbdfefdf1c01c0eee2b3e2141a3"
+  },
+  "atspi_client": {
+    "source": "67e2f8c4941205c5581e82fd5a1469d18f696019",
+    "blob": "50d51ac904502e0d6574876a9afb1883afcbde07"
+  },
+  "run": 40215120505,
+  "attempt": 1,
+  "jobs": [
+    {"id": 121234482773, "name": "preflight", "conclusion": "success"},
+    {"id": 121234519675, "name": "relocate", "conclusion": "failure"},
+    {"id": 121235185040, "name": "report", "conclusion": "failure"}
+  ],
+  "artifacts": [
+    {"id": 12606944249, "name": "reader-final-s02-evidence-40215120505-1", "bytes": 168626, "sha256": "3c9bad29c134b2776a099b4403c86110f761c63f1e6959e8f611dbd50909e954", "expires_at": "2027-01-23T17:09:47Z"},
+    {"id": 12607366313, "name": "reader-final-s02-report-40215120505-1", "bytes": 12802, "sha256": "f162b0d7f803c04c2bf03fb0b4962767e20b14d0377c610a138895bb2997cf42", "expires_at": "2027-01-23T17:09:47Z"}
+  ],
+  "secondary_run": {
+    "source": "1a99c6d2b5ea52bfccf33c3022f59d3de8f85086",
+    "run": 40215528466,
+    "attempt": 1,
+    "jobs": [
+      {"id": 121235728121, "name": "preflight", "conclusion": "success"},
+      {"id": 121235757636, "name": "relocate", "conclusion": "failure"},
+      {"id": 121238532839, "name": "report", "conclusion": "failure"}
+    ],
+    "artifacts": [
+      {"id": 12608086229, "name": "reader-final-s02-evidence-40215528466-1", "bytes": 171297, "sha256": "9c925f361a8e38a2f7787f7c34a119b646e1289fcdd9028f05486f01fc6f1bf1"},
+      {"id": 12608146128, "name": "reader-final-s02-report-40215528466-1", "bytes": 12743, "sha256": "2ab5ebfe5aed0d08bbac986219221d08af80d4bbe6c235d16be9e81eef83e59c"}
+    ]
+  },
+  "candidate": {
+    "archive": "EXReader-Linux-3.41.0-linux-x86_64-relocatable.tar.gz",
+    "bytes": 18286243,
+    "sha256": "aa6fd3cff8dd9269298b4ceb6e68b34235b4395409d813ee3b6f98cf5215a3e0",
+    "files": 27,
+    "relocated": "/tmp/s02-portable/EXReader Linux 3.41.0 (portable)"
+  },
+  "counts": {
+    "checks": 59,
+    "passed": 55,
+    "observed": 2,
+    "failed": 2
+  },
+  "passed_scopes": [
+    "producer run/artifact/zip digest/expiry/payload manifest/program identity/self evidence (11/11)",
+    "J24 seal + extract + relocation identity outside the workspace (7/7)",
+    "dynamic section, loader resolution, 16 NEEDED with 89 owning packages, fonts and licences, generated desktop entry validation, XDG layout (10/12; 2 recorded findings)",
+    "default no-argument launch: window, compact controls, XDG library and settings, no HOME library, untouched working directory, package-relative Reader.otf opened, 0 build-tree opens (11/11)",
+    "original book read-back: import, page offsets, run-unique AT-SPI marker, unchanged source hash, unchanged payload, no HOME/payload libraries (10/10)"
+  ],
+  "failures_preserved": [
+    {"run": 40214626449, "attempt": 1, "source": "3cdd505b", "stage": "preflight", "cause": "selfcheck_scan_tokens expected one token, synthetic binary carried two"},
+    {"run": 40214783375, "attempt": 1, "source": "9346d360", "stage": "preflight", "cause": "TarFile closed: extractfile outside the with-block"},
+    {"run": 40215019518, "attempt": 1, "source": "a11d77b0", "stage": "preflight", "cause": "make_archive dot-root treated as several roots"},
+    {"run": 40215120505, "attempt": 1, "source": "60a41b77", "stage": "smoke/phase_desktop", "cause": "gtk-launch missing from the runner image (FileNotFoundError)"},
+    {"run": 40215528466, "attempt": 1, "source": "1a99c6d2", "stage": "smoke/phase_desktop", "cause": "subprocess.run(PIPE) waited for the launched application (TimeoutExpired 180s); the leaked instance then broke readback_import"}
+  ],
+  "pending": [
+    "desktop-entry launch (gtk-launch) on the relocated candidate: harness fixed in d6232efd, not re-executed because the run budget was spent",
+    "a single run whose summary and same-run report both pass (aggregate re-download of the producer ZIP already passed its own checks in run 40215528466)"
+  ],
+  "recorded_findings": [
+    {"id": "compiled_build_path_tokens", "detail": "bin/exreader-linux carries one compiled string EXReader/EXReader/build; the dynamic section has no absolute RPATH/RUNPATH and the relocated program opened nothing under the build tree (0 attempts)"},
+    {"id": "producer_desktop_entry_absent", "detail": "the producer payload ships no .desktop entry and no icon; S02 generates the entry at install time"}
+  ],
   "not_tested": [
-    "distributions other than the Ubuntu 22.04 runner image",
+    "distributions other than the Ubuntu 22.04 GitHub runner image",
     "Wayland session, physical device, screen reader",
     "performance and memory budgets",
-    "system-wide installation, package manager integration, icon theme"
+    "system-wide installation, package manager integration, icon theme",
+    "Windows, macOS, Android and Apple hosts"
   ]
 }
