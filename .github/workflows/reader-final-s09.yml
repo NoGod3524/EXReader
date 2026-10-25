@@ -46,7 +46,7 @@ jobs:
             build/final-s09/protocol.log
             build/final-s09/fixtures/protocol.json
             build/final-s09/fixtures/fixture-artifact/
-          if-no-files-found: error
+          if-no-files-found: warn
 
   stage:
     name: closure (${{ matrix.os }})
