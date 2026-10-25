@@ -33,7 +33,7 @@ REQUIRED_PREFIXES = (
     "page_bounds_refusal:",
     "library_page_identity:",
     "archive_bytes_unchanged:",
-    "suite_results_identical:",
+    "suite_results_identical",
 )
 
 
@@ -126,10 +126,21 @@ def main(argv):
         checks.require("same_original_zip_both_platforms:" + identifier,
                        len(values) == 2 and len({item["sha256"] for item in values.values()}) == 1,
                        values)
+    def comparable(report):
+        # The echoed input path uses the platform separator unless the producer
+        # normalised it; compare the observations, not the spelling of the path.
+        copy = dict(report)
+        if "input" in copy:
+            copy["input"] = str(copy["input"]).replace("\\", "/")
+        return copy
+
     for identifier, values in reports.items():
+        normalized = {platform: comparable(report) for platform, report in values.items()}
         checks.require("cross_platform_identical:" + identifier,
-                       len(values) == 2 and values.get("linux") == values.get("windows"),
-                       {"platforms": sorted(values)})
+                       len(values) == 2 and normalized.get("linux") == normalized.get("windows"),
+                       {"platforms": sorted(values),
+                        "render_equal": values.get("linux", {}).get("render") == values.get("windows", {}).get("render"),
+                        "pages": sorted({str(report.get("page_count")) for report in values.values()})})
     payload = checks.payload({"source_sha": args.source_sha, "run_id": args.run_id,
                               "run_attempt": args.run_attempt, "artifacts": identity,
                               "platforms": sorted(summaries)})
