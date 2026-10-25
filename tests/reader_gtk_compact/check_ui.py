@@ -143,8 +143,9 @@ def main():
 
     def turn_pages(kind):
         before=tuple(host.read()[key] for key in ('part','page','start'))
+        buttons={name:element(name) for name in ('Previous page','Next page')}
         def turn(name):
-            generation=host.read()['generation'];click(name)
+            generation=host.read()['generation'];click_node(buttons[name])
             return host.wait(lambda value:value['generation']>generation and not value['saving'])
         value=turn('Previous page')
         assert value['error']==1 and tuple(value[key] for key in ('part','page','start'))==before
@@ -161,7 +162,9 @@ def main():
         if kind=='epub':assert len(parts)==manifest[kind]['parts']
         for target in reversed(positions[:-1]):
             value=turn('Previous page');assert value['error']==0 and tuple(value[key] for key in ('part','page','start'))==target
-        record(kind+'-turn-pages',host.read()['error']==0,dict(units=len(positions),parts=len(parts),first_boundary_rejected=True,last_boundary_rejected=True))
+        focused=[bus.name(node) for node in bus.focused_all(app)]
+        record(kind+'-turn-pages',host.read()['error']==0 and 'Previous page' in focused,
+               dict(units=len(positions),parts=len(parts),first_boundary_rejected=True,last_boundary_rejected=True,focused=focused))
 
     try:
         assert bus.init()[0]
@@ -175,9 +178,9 @@ def main():
         source=args.fixtures/manifest['txt']['path'];import_path(source)
         primary(True);record('reader-primary-controls',True,headers[-1]);screenshot('reading-txt')
         record('txt-page',host.read()['fixed']==0 and host.read()['book']>0 and host.read()['frame_generation']>0)
-        turn_pages('txt')
         record('default-tools-hidden',not nodes('Selectable page text') and not nodes('Annotation comment') and host.read()['compact_tools_open']==0)
         value=focus_snapshot('txt-page');record('page-keyboard-focus',any(row['name']=='Reading page' for row in value))
+        turn_pages('txt')
         host.key('alt+m');element('Reading',{'menu item'});host.key('Home','Right');element('Search within book…',{'menu item'})
         host.key('Escape','Escape');record('more-keyboard',bool(focus_snapshot('more-keyboard')))
 
