@@ -1,0 +1,23 @@
+allprojects { target ->
+    target.afterEvaluate {
+        if (target.path == ':backend') {
+            def root = target.rootProject.projectDir.toPath().resolve('../../..').normalize().toFile()
+            def output = new File(root, 'build/webdav-android/backend/exit-projection')
+            target.android.sourceSets.androidTest.java.setSrcDirs([new File(output, 'generated')])
+            target.tasks.matching { it.name == 'compileDebugAndroidTestJavaWithJavac' }.configureEach { task ->
+                task.doFirst {
+                    def sources = task.source.files.findAll { it.name.endsWith('.java') }.collect { path ->
+                        [path: root.toPath().relativize(path.toPath()).toString().replace('\\', '/'),
+                         sha256: java.security.MessageDigest.getInstance('SHA-256').digest(path.bytes).encodeHex().toString()]
+                    }.sort { it.path }
+                    def proof = new groovy.json.JsonSlurper().parse(new File(output, 'projection.json'))
+                    assert sources.findAll { it.path.endsWith('/BackendProbe.java') } == [[
+                        path: 'build/webdav-android/backend/exit-projection/generated/org/exreader/webdav/probe/BackendProbe.java', sha256: proof.generated_java_sha256]]
+                    new File(output, 'compile-input.json').text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson([
+                        source_sha: System.getenv('GITHUB_SHA'), run_id: System.getenv('GITHUB_RUN_ID'),
+                        attempt: System.getenv('GITHUB_RUN_ATTEMPT'), sources: sources])) + '\n'
+                }
+            }
+        }
+    }
+}
