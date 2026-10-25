@@ -19,6 +19,20 @@ static int prefs_press_x, prefs_press_y;
 /* One coalesced turn request made while the worker was busy. */
 static int prefs_turn_pending;
 
+/* Owner state of the single native settings dialog. The window and its
+   controls live in windows_preferences_ui.inc; the job path only needs to
+   know whether it is open and whether it is waiting for a completion. */
+static struct {
+  HWND dialog, message, toggle, note;
+  HWND font, line, paragraph, margin, theme, direction, input, zoom;
+  HWND light_fg, light_bg, dark_fg, dark_bg;
+  HWND labels[12];
+  HWND apply, defaults, import, rebuild, close;
+  int expanded;
+  int running;
+  int want_close;
+} prefs_ui;
+
 static void prefs_set_path(void) {
   if (!prefs.path[0]) path_join(prefs.path, HOST_PATH, g.data_dir, L"preferences.json");
 }
