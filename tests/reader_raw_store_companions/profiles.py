@@ -43,6 +43,15 @@ def check(core, out, raw, old, product, sdk, dav):
     observed = core.run([binary / ('version' + core.SUFFIX)], 'actual-sdk340-version').strip()
     assert observed == '3.40.0'
     checks = ['genuine-3.40.0-runtime']
+    genuine_old = core.ROOT / 'build/selector-bytes/baseline-stage'
+    binary, proof = configure('original-untagged-default',
+        find('EXReaderRevisions', '0.3.0', genuine_old) + find('EXReaderCommands', '0.1.0', old)
+        + 'add_executable(version main.c)\ntarget_link_libraries(version PRIVATE EXReaderCommands::reader_commands)\n')
+    (proof / 'main.c').write_text('#include <reader_commands.h>\nint main(void){reader_command_result r={0};'
+        + 'return reader_command_apply_book(0,0,&r,0)==READER_COMMAND_ARGUMENT?0:1;}\n')
+    core.run(['cmake', '--build', binary], 'original-untagged-default-build')
+    core.run([binary / ('version' + core.SUFFIX)], 'original-untagged-default-execute')
+    checks.append('genuine-original-untagged-0.3-default-accepted')
     reset = ('set(EXReader_DIR "' + path(sdk / 'lib/cmake/EXReader') + '" CACHE PATH "" FORCE)\n'
              + 'set(EXReaderRevisions_DIR "' + path(raw / 'lib/cmake/EXReaderRevisions') + '" CACHE PATH "" FORCE)\n')
     for name, preload, error in [
