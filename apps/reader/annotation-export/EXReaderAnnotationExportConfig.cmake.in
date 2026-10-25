@@ -1,5 +1,11 @@
 @PACKAGE_INIT@
 include(CMakeFindDependencyMacro)
-find_dependency(EXReaderRevisions 0.3.0 EXACT CONFIG)
-find_dependency(EXReaderReadingState 0.1.0 EXACT CONFIG)
+find_dependency(EXReaderRevisions @EXR_REVISIONS_VERSION@ EXACT CONFIG)
+find_dependency(EXReaderReadingState @EXR_READING_STATE_VERSION@ EXACT CONFIG)
 include("${CMAKE_CURRENT_LIST_DIR}/EXReaderAnnotationExportTargets.cmake")
+
+# RAW-CANDIDATE ORIGIN GUARD: append-only; never changes imported targets.
+if(@EXR_READER_SELECTOR_BYTES_CANDIDATE@)
+  _exr_raw_guard_target(EXReaderAnnotationExport::reader_annotation_export "${CMAKE_CURRENT_LIST_DIR}"
+    reader_annotation_export_raw3.h READER_ANNOTATION_EXPORT_RAW3_VERSION 0.2.0 TRUE)
+endif()
