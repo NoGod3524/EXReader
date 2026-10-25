@@ -1,1 +1,93 @@
-{"accepted":false,"base":"0889f7d1e9a537c6c1b05456547e016b26e1cd85","source_sha":null,"runs":[],"earlier_failed_runs":[{"source_sha":"808fc2caaf4d5d957edc55311b582039f89a9b7a","run_id":40211194569,"attempt":1,"linux_job":121222578454,"windows_job":121222578304,"reason":"Linux C/C++ including sanitizers and real 32-bit checks passed. Windows /WX rejected two test-only warnings: fopen deprecation and an explicit signed-char 0xff constant cast. The test now uses the standard CRT opt-out and unsigned-byte data; codec header unchanged."}],"scope":"private header codec public-types unit tests only","sdk_accepted":false,"host_accepted":false,"public_wire_accepted":false}
+{
+  "accepted": true,
+  "base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+  "source_sha": "5eb0ea09c53e37a371be558d52ec9c958aed80fc",
+  "runs": [
+    {
+      "source_sha": "5eb0ea09c53e37a371be558d52ec9c958aed80fc",
+      "run_id": "40211344040",
+      "attempt": "1",
+      "accepted": true,
+      "scope": "private header codec C11/C++ unit tests Windows/Linux only",
+      "artifacts": [
+        {
+          "id": 12606370429,
+          "name": "private-capture-linux-40211344040-1",
+          "digest": "sha256:5a6622b74c4f7e93d1d3ccd16f1e62053ae7e8ad5c0b638caec85a3b4cef532a",
+          "size_in_bytes": 135529,
+          "expires_at": "2027-01-23T16:22:15Z"
+        },
+        {
+          "id": 12606400224,
+          "name": "private-capture-windows-40211344040-1",
+          "digest": "sha256:43e92e8a62117b887407f27548771533e59d392332eed10462eac24c94948465",
+          "size_in_bytes": 213367,
+          "expires_at": "2027-01-23T16:22:15Z"
+        }
+      ],
+      "consumers": 8,
+      "cases_per_consumer": 10,
+      "identical_golden_vectors": 7,
+      "sdk_accepted": false,
+      "host_accepted": false,
+      "public_wire_accepted": false
+    }
+  ],
+  "earlier_failed_runs": [
+    {
+      "source_sha": "808fc2caaf4d5d957edc55311b582039f89a9b7a",
+      "run_id": 40211194569,
+      "attempt": 1,
+      "linux_job": 121222578454,
+      "windows_job": 121222578304,
+      "reason": "Linux C/C++ including sanitizers and real 32-bit checks passed. Windows /WX rejected two test-only warnings: fopen deprecation and an explicit signed-char 0xff constant cast. The test now uses the standard CRT opt-out and unsigned-byte data; codec header unchanged."
+    }
+  ],
+  "scope": "private header codec public-types unit tests only",
+  "sdk_accepted": false,
+  "host_accepted": false,
+  "public_wire_accepted": false,
+  "jobs": [
+    {
+      "id": 121223026243,
+      "name": "private-capture-windows",
+      "conclusion": "success"
+    },
+    {
+      "id": 121223026518,
+      "name": "private-capture-linux",
+      "conclusion": "success"
+    },
+    {
+      "id": 121223146631,
+      "name": "strict",
+      "conclusion": "success"
+    }
+  ],
+  "all_artifacts": [
+    {
+      "expired": false,
+      "name": "private-capture-windows-40211344040-1",
+      "bytes": 213367,
+      "id": 12606400224,
+      "digest": "sha256:43e92e8a62117b887407f27548771533e59d392332eed10462eac24c94948465",
+      "expires_at": "2027-01-23T16:22:15Z"
+    },
+    {
+      "expired": false,
+      "name": "private-capture-linux-40211344040-1",
+      "bytes": 135529,
+      "id": 12606370429,
+      "digest": "sha256:5a6622b74c4f7e93d1d3ccd16f1e62053ae7e8ad5c0b638caec85a3b4cef532a",
+      "expires_at": "2027-01-23T16:22:15Z"
+    },
+    {
+      "expired": false,
+      "name": "private-capture-summary-40211344040-1",
+      "bytes": 588,
+      "id": 12605787196,
+      "digest": "sha256:10e79f6683cf8ee4cb35cc741eed40b302be2c865abb7cc73c0dc5d25aabdc98",
+      "expires_at": "2027-01-23T16:22:15Z"
+    }
+  ]
+}
