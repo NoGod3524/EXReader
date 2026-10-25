@@ -153,3 +153,7 @@ python tests/reader_next_s17/strict.py   # 同 source/run/attempt 的工件身�
 raw报告仍须明确adopted=false/actual_hosts=false，并把完整检查数固定为legacy22/raw20。
 修复GitHub artifacts端点，增加producer completed和准确run_attempt核对；五项混装拒绝仍全部执行。
 没有把缺失字段默认当作false，没有放宽任何状态或冻结预算。本地不执行任何语法、构建或测试。
+
+Root审查 source537460e5/run40230047146/1 已全3作业success：Windows/Linux各legacy22、raw20完整具名检查及5项混装拒绝通过。
+严格汇总121280349092实际下载同轮两原ZIP复算身份/字节/SHA/有效期，核对程序与报告，跨平台checkset一致。
+原失败不覆盖，模块实现未因本轮修改，宿主接入和产品验收仍未授予。完整工件身份见root-review-validation.json。
