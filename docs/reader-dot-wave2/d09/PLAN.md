@@ -1,0 +1,13 @@
+# D09 — pinned GTK modal focus and coordinate audit
+
+Target 803098e9df1a365a9b8e206805c2d179aca8501f; harness base 0889f7d1e9a537c6c1b05456547e016b26e1cd85; approved SDK edddc463c06ed5731195cdb8f06b2df6dff7699e. Independent raw3/compact ON actual host, no review macros, normal/2×/dark/large-font. This does not grant old default OFF scope or retroactively green full original chain 40219591315.
+
+Read-only prior D03 c484ce52540851a4f35056bc8ca41afcfcab889e records the revoked records-dialog-focus assertion (main frame, outside insensitive modal). The verifier independently reauthenticates original run 40218375669/attempt 1 ZIP and recomputes all eight revoked focus paths. Earlier 40215023319 and 40215548145 failures remain retained and not acceptance evidence.
+
+Driver reuses unchanged AT-SPI/real-keyboard modules from fixed harness base, adapting only owned observations. Dialog focus requires active/modal/showing window and enabled/sensitive/visible/showing/focused descendant, checked both native ancestry and path. Before/open/before-close/after-close trees and PNGs persist. Main focus presence is insufficient. Keys cover shelf, import, reading page turns, search, directory, records save, settings and shelf return.
+
+Coordinate measurement compares actual host AT-SPI frame with X11 client geometry at original, moved 40 physical pixels and returned position. Scale multiplication is allowed only after dimension/translation calibration. At 2× all control coordinates are converted before offscreen candidate/crop calculations. Bounds and dominant pixel pairs do not establish clipping or WCAG text contrast. Contrast, screen-reader/Orca, physical-device and performance acceptance remain false.
+
+WM readiness is checked independently before launching; D-Bus failures retain their original command/log and do not diagnose a host response defect. One configuration failing does not grant missing configurations. Producer original program bytes, compilation flags, CMake cache, pre-ZIP modes, SDK archives, every tree/PNG digest and same-source/run/attempt are independently authenticated in a separate Actions job. Tests and artifacts are Actions-only.
+
+Validation has accepted=false until executed. Maximum three complete CI rounds, no production edits. Fix only a demonstrated observation/measurement defect. Actual product defects return to root, not test-weakened green.
