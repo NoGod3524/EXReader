@@ -1,6 +1,6 @@
 {
-  "accepted": false,
-  "status": "T07 new source pending Actions acceptance",
+  "accepted": true,
+  "status": "T07 accepted installed native consumers on Linux, Windows and macOS at exact tested source",
   "review_start": "3ca9d9fed564dbcba11fc95a034244c5cfe8c762",
   "branch": "codex/dot-opds-browser-review",
   "prior_evidence": {
@@ -655,6 +655,165 @@
   },
   "local_tests_run": false,
   "remaining": [
-    "new-source three-platform consumers and strict evidence"
-  ]
+    "Production host OPDS UI integration remains outside this package.",
+    "PDF/CBZ SDK import not newly granted; original EPUB SDK import scope retained.",
+    "No real mobile-device, accessibility, performance or hard wall-clock slow-stream deadline claim."
+  ],
+  "source_sha": "0cfe9e76f5a618659fe1a7c06939d7cc5f257f47",
+  "run_id": 40165618848,
+  "attempt": 1,
+  "workflow": ".github/workflows/reader-opds-browser.yml",
+  "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/40165618848",
+  "checks_per_platform": 65,
+  "original_cases_retained": 60,
+  "added_cases": [
+    "discard_denied_preserves_receipt",
+    "tls_url_credentials_refused",
+    "tls_header_values",
+    "tls_absolute_redirect",
+    "tls_relative_percent_redirect"
+  ],
+  "strict_test_groups": 6,
+  "strict_test_scope": [
+    "job run/source/attempt/completed-success",
+    "artifact ID/expiry/source/run/size/recomputed ZIP SHA256",
+    "ZIP member/report uniqueness and path ambiguity",
+    "duplicate JSON fields",
+    "required original and added cases with exact true outcomes",
+    "actual consumer binary bytes/name/platform/size/SHA256 vs embedded receipt",
+    "report source/run/attempt/platform/package"
+  ],
+  "jobs": [
+    {
+      "id": 121085942293,
+      "name": "opds consumers (windows-2022)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 121085942398,
+      "name": "opds consumers (ubuntu-22.04)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 121085942472,
+      "name": "opds consumers (macos-15)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 121089172893,
+      "name": "strict opds evidence",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12588742624,
+      "name": "reader-opds-browser-evidence-40165618848-1",
+      "size_in_bytes": 1674,
+      "digest": "sha256:e7c5eeffdc5c5891133ded71cc597b8a2abe822a5850fb19648cb035eb04514b",
+      "expires_at": "2027-01-23T05:27:49Z",
+      "expired": false,
+      "workflow_run": {
+        "id": 40165618848,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/dot-opds-browser-review",
+        "head_sha": "0cfe9e76f5a618659fe1a7c06939d7cc5f257f47"
+      }
+    },
+    {
+      "id": 12588266625,
+      "name": "reader-opds-browser-linux-40165618848-1",
+      "size_in_bytes": 4277475,
+      "digest": "sha256:1592f650eea33aca0f89c11ccd34e74a4b96354e96935a816db3157cdb2df7e6",
+      "expires_at": "2027-01-23T05:27:49Z",
+      "expired": false,
+      "workflow_run": {
+        "id": 40165618848,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/dot-opds-browser-review",
+        "head_sha": "0cfe9e76f5a618659fe1a7c06939d7cc5f257f47"
+      }
+    },
+    {
+      "id": 12588197151,
+      "name": "reader-opds-browser-windows-40165618848-1",
+      "size_in_bytes": 3388377,
+      "digest": "sha256:6b96ed36df1bac01273e2fbc09a45d2be2555ed71d84db6625b51e76271155b4",
+      "expires_at": "2027-01-23T05:27:49Z",
+      "expired": false,
+      "workflow_run": {
+        "id": 40165618848,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/dot-opds-browser-review",
+        "head_sha": "0cfe9e76f5a618659fe1a7c06939d7cc5f257f47"
+      }
+    },
+    {
+      "id": 12587729167,
+      "name": "reader-opds-browser-macos-40165618848-1",
+      "size_in_bytes": 3666566,
+      "digest": "sha256:a8736f8c6268cb8544e6fcb5bf6df65773005e4fa8e0e13e00ea59230d834efc",
+      "expires_at": "2027-01-23T05:27:49Z",
+      "expired": false,
+      "workflow_run": {
+        "id": 40165618848,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/dot-opds-browser-review",
+        "head_sha": "0cfe9e76f5a618659fe1a7c06939d7cc5f257f47"
+      }
+    }
+  ],
+  "consumer_identity_location": "Each platform opds-evidence/result.json and strict artifact result.json contain actual consumer sizes/SHA256, recomputed and cross-checked inside Actions. No artifact downloaded or parsed locally.",
+  "superseded_review_runs": [
+    {
+      "source_sha": "3ab8683585605557cfa9d84ed05c2d9bd6f1e2d8",
+      "run_id": 40164838222,
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "role": "superseded candidate; not final acceptance"
+    },
+    {
+      "source_sha": "419e0745f2c3f2db1d0a998da490d79fb350ed28",
+      "run_id": 40164948386,
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "role": "superseded candidate; not final acceptance"
+    },
+    {
+      "source_sha": "9bd9e3842c06f5c8f8bc1c9e696da61277bc9e7a",
+      "run_id": 40165059089,
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "role": "superseded candidate; not final acceptance"
+    },
+    {
+      "source_sha": "6d7aa249b3691d7f23d292ad2d4b96460660014f",
+      "run_id": 40165564885,
+      "attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "role": "superseded candidate; not final acceptance"
+    }
+  ],
+  "review_run_failures": [],
+  "evidence_commit": {
+    "source_tested": "0cfe9e76f5a618659fe1a7c06939d7cc5f257f47",
+    "skip_ci": true,
+    "allowed_delta": [
+      "docs/READER-OPDS-BROWSER.md",
+      "docs/validation/reader-opds-browser.json"
+    ],
+    "note": "Final evidence commit is docs-only; final HEAD is provided separately because a commit cannot contain its own SHA."
+  }
 }
