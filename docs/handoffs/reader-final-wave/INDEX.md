@@ -5,6 +5,12 @@
 Claude恰好3包（Sonnet5.5/medium，后台完全权限），Dot7包由用户手动发送，其余12包给DeepSeek（V4.1 Flash1017/high/PTC，后台完全权限）。本批独立于旧J/G包；旧模块先复用，不重复实现。
 已实际确认Claude3个后台会话busy，以及DeepSeek12个持久session/进程均存活并执行PTC工具，实际模型selection为deepseek-account/deepseek-flash/high。Dot7包等用户手动投放。状态和日志见root本机dispatch ledger；开工不代表验收通过。
 
+用户临时断网期间，Claude三个原会话已通过官方CLI停止，DeepSeek十二个任务及子进程已挂起。
+用户确认重连后，Claude以原会话保存的设置恢复，DeepSeek按PID和创建时间核对身份后原进程恢复；
+三个Claude均busy，十二个DeepSeek均存活且events继续更新。暂停与恢复记录保存在本机
+`C:/Users/Oscar/exreader-final-wave/dispatch/offline-pause.json` 与 `offline-resume.json`。
+这仍是执行状态，尚未逐包授予交付验收。
+
 ## Dot：请分别发给七个会话
 
 每个会话发送：

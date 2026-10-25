@@ -1,7 +1,41 @@
 {
   "schema": 1,
-  "recorded_at_utc": "2026-10-25T15:40:22Z",
+  "recorded_at_utc": "2026-10-25T17:55:00Z",
   "latest_checkpoint": {
+    "checkpoint_network_restored": {
+      "previous_snapshots_are_historical": true,
+      "common_source_still": "25bc0c67971f81491f50e0a3caaaf7e509bb7e35",
+      "complete_product_accepted": false,
+      "external_workers": {
+        "claude": {"packages":["C01","C02","C03"],"state":"original_sessions_resumed_busy","model":"Sonnet5.5","effort":"medium","permission":"bypassPermissions"},
+        "deepseek": {"packages":12,"state":"original_processes_resumed_alive_with_advancing_events","model":"deepseek-flash","effort":"high","mode":"ptc"},
+        "pause_resume_ledger":"C:/Users/Oscar/exreader-final-wave/dispatch/",
+        "deliveries_accepted":false
+      },
+      "independent_completed_runs_revalidated": [
+        {"scope":"Android raw3 independent host","source":"4a04a9cc74dde67f755c87e87b278d63a254a3ac","run":40207467982,"conclusion":"success","common_adopted":false},
+        {"scope":"GTK compact original and compact UI","source":"57203a52aee439be5194ee0a4b13563a975e8daf","run":40206458217,"conclusion":"success","common_adopted":false},
+        {"scope":"Android producer to macOS independent receive","source":"5062d5cd570eb9be9449e790895b5430d344d11d","run":40210925809,"conclusion":"success","same_source_bidirectional":false},
+        {"scope":"Private capture codec unit consumers","source":"5eb0ea09c53e37a371be558d52ec9c958aed80fc","run":40211344040,"conclusion":"success","host_runtime_accepted":false},
+        {"scope":"Apple original theme with simulator readiness preparation","source":"7c457fb68a24d917ac3bd60aa1f961b16fe9ae6b","run":40209647722,"conclusion":"success","replaces_old25bc_failure":false},
+        {"scope":"Apple original records with simulator readiness preparation","source":"1c2ce4a1262b171a2f90ea4b92c998795c289435","run":40214214442,"conclusion":"success","replaces_old25bc_failure":false},
+        {"scope":"Windows source and installed metadata only","source":"5c65a543365f616bcfea3002c757234d464267ec","run":40214712167,"conclusion":"success","host_runtime_accepted":false}
+      ],
+      "windows_actual_host": {
+        "branch":"codex/reader-windows-raw3-candidate",
+        "source":"b4fc135ce64fc651a4b988ad1dd852076413aa10",
+        "run":40218506868,"state":"in_progress","accepted":false,
+        "preserved_failures":[
+          {"run":40214712302,"reason":"source guard default Windows cp1252 decoding; explicit UTF-8 fix pending this full run"},
+          {"run":40217945503,"reason":"both host profiles built; raw fixed3 owner checks passed, compatibility setup used legacy encoder with raw store and receive omitted required transport SHA; failed, not accepted"}
+        ],
+        "current_scope":"exact installed profiles; original compact UI and bulk; actual owner before/after process death and legacy pending retry",
+        "remaining":"whole original OFF/F3/atomic13, actual authenticated Mac receive and final same-source interoperability"
+      },
+      "apple_raw3_ready_current_run":40217963443,
+      "apple_raw3_ready_accepted":false,
+      "next":"finish independent desktop/mobile candidates, ordinary merge into new common source, rerun full required gates without mixing old runs"
+    },
     "checkpoint_1458": {
       "common_source": "25bc0c67971f81491f50e0a3caaaf7e509bb7e35",
       "common_unique_workflows": {"passed":9,"failed":2,"complete_product_accepted":false},
