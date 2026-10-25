@@ -118,6 +118,16 @@ def main():
             require(len(archive.namelist()) == len(set(archive.namelist())), 'duplicate ZIP member')
             load = lambda path: json.loads(archive.read(path))
             value = load('windows-341-identity.json'); validate_identity(value, source, run, attempt)
+            catalog = module('common_catalog_adapter', ROOT / 'tests/reader_windows_341/catalog.py')
+            catalog_proof = load('windows-341-catalog-adapter.json')
+            catalog_source = catalog.PATH.read_text()
+            require(catalog_source.count(catalog.OLD) == 1 and
+                    catalog_proof['source_sha'] == source and str(catalog_proof['run_id']) == str(run) and
+                    str(catalog_proof['attempt']) == str(attempt) and catalog_proof['changed_literal_count'] == 1 and
+                    catalog_proof['expected_runtime'] == '3.41.0' and catalog_proof['original_assertions_retained'] is True and
+                    catalog_proof['original_source_sha256'] == hashlib.sha256(catalog_source.encode()).hexdigest() and
+                    catalog_proof['adapted_source_sha256'] == hashlib.sha256(catalog_source.replace(catalog.OLD, catalog.NEW).encode()).hexdigest(),
+                    'original catalog identity adaptation differs')
             for name, record in value['files'].items():
                 require(record['path'] == FILES[name], 'substituted actual file path')
                 content = archive.read(record['path'])
@@ -148,6 +158,7 @@ def main():
                 all(step['conclusion'] in ('success', 'skipped') for step in producer['steps']), 'full producer incomplete/hidden failure')
         artifact = {key: meta[key] for key in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')}
         facts = dict(artifact=artifact, producer_job=producer['id'], identity=value, protocol_rejections=controls,
+            catalog_identity_adapter=catalog_proof,
             consumer_sha256=production, atomic_review_sha256=review, old_veto_control_sha256=control,
             production_map_sha256=value['files']['production_map']['sha256'], original_judges_preserved=True)
         full.update(facts, accepted=True, f3_checks=25, original_f1_checks=264, original_f2_checks=130,
