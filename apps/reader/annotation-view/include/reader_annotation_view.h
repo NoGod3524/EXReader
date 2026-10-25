@@ -7,7 +7,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+#define READER_ANNOTATION_VIEW_VERSION "0.2.0"
+#else
 #define READER_ANNOTATION_VIEW_VERSION "0.1.0"
+#endif
 #define READER_AV_BATCH_MAX 100u
 /* One SAFE item is built from one retained revision of at most 1 MiB, and every
    decoded string is a substring of it, so an item never exceeds this plus its

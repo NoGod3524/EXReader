@@ -9,7 +9,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+#define READER_READING_STATE_VERSION "0.2.0"
+#else
 #define READER_READING_STATE_VERSION "0.1.0"
+#endif
 /* Bridge between public SDK selectors and the unchanged product revision wire
    v1 envelope with explicit anchor versions 1/2. It never reads SDK tables, never writes the product
    catalog, and never rewrites retained revision bytes. All calls follow the

@@ -3,7 +3,11 @@
 #define READER_READING_COMMANDS_H
 #include <reader_projection.h>
 #include <reader_reading_state.h>
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+#define READER_READING_COMMANDS_VERSION "0.2.0"
+#else
 #define READER_READING_COMMANDS_VERSION "0.1.0"
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif

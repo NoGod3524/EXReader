@@ -162,7 +162,7 @@ def main():
     header_differences = [p for p in sorted(off_files) if p.startswith('include/') and
                           (baseline / p).read_bytes() != (off / p).read_bytes()]
     assert set(header_differences) == {'include/reader_projection.h', 'include/reader_reading_state.h',
-                                     'include/reader_reading_commands.h', 'include/reader_annotation_view.h'}
+                                     'include/reader_reading_commands.h', 'include/reader_annotation_view.h', 'include/reader_revisions.h'}
     for p in off.rglob('*'):
         if p.suffix in {'.a', '.lib'}:
             assert b'_raw_v3' not in p.read_bytes() and b'reader_rs_encode_fixed_v3' not in p.read_bytes(), p
