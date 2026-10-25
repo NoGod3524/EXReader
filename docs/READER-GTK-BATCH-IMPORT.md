@@ -1,6 +1,51 @@
 # Native GTK folder batch import
 
-## Reboot checkpoint — 2026-10-25 00:36 UTC
+## Current cloud result
+
+Tested source `8e883e5ca19a3611eb38230b414e8f6cc0f1ba33`, run
+[40155787513](https://github.com/NoGod3524/EXReader/actions/runs/40155787513),
+attempt 1, job `121056796996`, completed with overall **failure**. The new
+folder-import scope passed: native UI **27/27**, backend **684** checks, original
+installed F4 consumer **668/668**, and fixed module review **4/4**. The strict
+same-source checker authenticated those reports and the retained records UI
+**30/30**, then correctly refused the incomplete retained Navigation suite.
+Its output has `batch_import_scope_passed=true`, `ok=false`, `accepted=false`.
+
+The native flat scan imported 37 candidates as 35 additions, one exact duplicate
+and one damaged EPUB failure, using at most 32 receipts and zero pending mapping.
+Cancellation, graceful close, actual source readback and reopen checks passed.
+The orphan-frame regression retained accepted Font26 after dropping Font28 and
+proved real NEXT/PREVIOUS page transitions. The binary SHA-256 is
+`072ac73aa5fefc241cad4d92533a1af66df01705866102c96d4ce65cf1cfd09a`.
+
+Retained Navigation failed at its fourth attempt to observe an active 9000-row
+scan before parent close: the actual scan had already completed (`phase=3`,
+`polls=40`). Retained Search failed when the fourth result's pointer click did
+not advance the action count. Both are preserved as failures; Search geometry
+still requires Actions-only inspection of the original failure tree. Settings
+remained exactly 33/35, with the two existing whole-page palette failures.
+All other steps, including Account and the original 2202-book shelf suites,
+completed successfully. No complete retained-suite or overall acceptance is
+granted from this run.
+
+Artifact `12585101839`, `reader-gtk-batch-import-40155787513-1`, is 55,357,250
+bytes, SHA-256 `87b235ecc6660c6e4e3c5cad756193315d67f8d7d3df39317593af46cfac05b2`,
+expires `2027-01-23T02:47:24Z`. Source reports and original logs remain inside;
+no artifact was downloaded or parsed locally.
+
+The previous source `b9d793f8b1a5512cea3fbfcf84f4519f84bc9ac9`, run
+`40153960628`, had passed the same 27 native and 684 backend checks, plus the
+retained Navigation/Search suites. Its strict checker wrongly required every
+legacy F4 check name to be unique. The unchanged legacy consumer exports both
+receipts of one duplicate book, intentionally repeating precisely three names
+twice. The current checker permits only that exact paired ID/path pattern;
+eight Actions-only positive/negative protocol cases passed. Previous evidence
+is not transferred to the current source.
+
+Root owns the shared Navigation/Search driver repair and the next common-source
+integration. This package does not change either protected test directory.
+
+## Historical reboot checkpoint — 2026-10-25 00:36 UTC
 
 Branch `codex/reader-gtk-batch-import-ui` has implementation head
 `0c302a4774ba693c261e786ac627bbfa0ddf4eb9`, verified equal to origin before
@@ -93,7 +138,8 @@ for actual embedded metadata or duplicate metadata.
 
 ## Cloud validation
 
-Validation is pending. The new workflow builds from installed packages, reruns
+The bounded batch scope above passed; complete retained-suite validation remains
+pending. The workflow builds from installed packages, reruns
 the original nine-format batch consumers and review regressions, exercises the
 real GTK chooser/receipt dialog, and preserves prior installed/host suites.
 The two frozen-SDK whole-page light/dark palette failures remain required

@@ -1,35 +1,52 @@
 {
   "accepted": false,
-  "batch_import_scope_passed": false,
-  "status": "reboot_checkpoint_pending_full_validation",
+  "batch_import_scope_passed": true,
+  "retained_suites_passed": false,
+  "strict_summary_ok": false,
+  "status": "batch_scope_passed_retained_navigation_search_and_palette_failures_preserved",
   "checkpoint_utc": "2026-10-25T00:36:08Z",
   "branch": "codex/reader-gtk-batch-import-ui",
-  "code_head": "0c302a4774ba693c261e786ac627bbfa0ddf4eb9",
+  "code_head": "8e883e5ca19a3611eb38230b414e8f6cc0f1ba33",
   "code_head_verified_on_origin_before_checkpoint_docs": true,
-  "native_ui_27_accepted": false,
+  "native_ui_27_accepted": true,
   "latest_full_run": {
-    "id": 40147055374,
+    "id": 40155787513,
     "attempt": 1,
-    "job": 121030532723,
-    "source": "0c302a4774ba693c261e786ac627bbfa0ddf4eb9",
+    "job": 121056796996,
+    "source": "8e883e5ca19a3611eb38230b414e8f6cc0f1ba33",
     "event": "workflow_dispatch",
     "diagnostic_only": false,
-    "status_at_checkpoint": "in_progress",
-    "step_at_checkpoint": "Install unchanged Search and rerun its public installed consumers"
+    "status": "completed",
+    "conclusion": "failure",
+    "program_sha256": "072ac73aa5fefc241cad4d92533a1af66df01705866102c96d4ce65cf1cfd09a",
+    "counts": {"native_ui": 27, "native_ui_failed": 0, "backend": 684, "original_consumer": 668, "module_review": 4, "name_protocol": 8, "retained_records_ui": 30},
+    "strict_error": "AssertionError('gtk-navigation-ui/result.json')",
+    "retained_failures": [
+      {"suite": "navigation", "reason": "Fourth active_directory() precondition timed out after the real 9000-row scan completed; phase=3, polls=40, no host error. Original cancellation, Escape and background cases passed before this failure."},
+      {"suite": "search", "reason": "choose(3) on repeated-spine SEARCHTOKEN results did not advance the action count; four results were complete, actions=19. Original failure-tree geometry inspection is pending on Actions."},
+      {"suite": "preferences", "count": 35, "passed": 33, "failed": 2, "reason": "Only the existing light canvas background and dark whole-page palette cases failed."}
+    ],
+    "artifact": {"id": 12585101839, "name": "reader-gtk-batch-import-40155787513-1", "bytes": 55357250, "digest": "sha256:87b235ecc6660c6e4e3c5cad756193315d67f8d7d3df39317593af46cfac05b2", "expires_at": "2027-01-23T02:47:24Z"},
+    "verified_reports": {
+      "gtk-batch-ui/report.json": {"sha256": "7cef59babfe6eb3001e4355bf109aa4028ccca65d7be139dc7a9cc62d07f76f6", "count": 27},
+      "gtk-batch-original/report.json": {"sha256": "99213d08e41b363ad12bc39640ce0eb6a2e719e66efb4cd6dd5067a2a5ec1ae1", "count": 668},
+      "gtk-batch-review/review.json": {"sha256": "924c0f512a6fa481f817b2379188862ed7f84db24d8be990ddd2e2f49036a5ef", "count": 4},
+      "records-ui/report.json": {"sha256": "61e91a031376d64e0b2d6d5d982d35fb52609a1ebf1605a19f3b2c9ec424d310", "count": 30}
+    }
   },
   "orphan_frame_fix": {
     "commit": "0c302a4774ba693c261e786ac627bbfa0ddf4eb9",
-    "status": "implemented_cloud_regression_not_yet_executed_at_checkpoint",
+    "status": "684_backend_checks_passed_on_8e883e5_source",
     "contract": "Only explicit main-UI idle confirmation may discard an orphaned unaccepted frame; an actual pending acceptance/COMMIT retains the existing barrier. The new real-SDK test drops Font28, resumes import only after confirmation, and requires the accepted Font26 to remain current."
   },
   "previous_full_run": {
     "id": 40146396866,
     "source": "70ecc1f4033a59a289071b0c7b5f2c4fa1cb714b",
     "native_ui_step": "failure",
-    "failure_detail": "not yet read at checkpoint; inspect this run's native report and traceback after reboot"
+    "failure_detail": "Probe selected the same-named scroll pane instead of the native Bookshelf list box, so no direct list-item children were found. The corrected probe explicitly requires the list-box role."
   },
-  "next_action": "Read the completed 70ecc1f4 native UI failure and latest 0c302a47 run before any further change. Complete the new orphan-frame regression, native UI27 and all retained suites on one final source. Retain the two real palette failures; no palette implementation has started and SDK must remain frozen.",
-  "cancelled_duplicate_push_runs": [40143189374, 40144539602, 40147052470],
+  "next_action": "Root owns shared Search/Navigation driver repair and common-source integration. Inspect the Search fourth-result failure tree on Actions, retain this run's genuine failures, and validate the new common source without transferring earlier Navigation/Search results. No repeat of the unchanged 8e full run is required.",
+  "cancelled_duplicate_push_runs": [40143189374, 40144539602, 40147052470, 40153568860, 40153758368, 40153770110],
   "base_source": "401729ba9537b58c8566372fb953384ce61381d7",
   "sdk_frozen_source": "9854061be331fe603a1822d9b2b36ee357154927",
   "sdk_version": "3.40.0",
@@ -43,7 +60,7 @@
     "light_foreground_and_background_change_page_pixels",
     "dark_theme_and_palette_change_page_pixels"
   ],
-  "runs": [],
+  "runs": [40155787513],
   "local_build_test_syntax_or_artifact_processing": false,
   "later_chooser_diagnostics": {
     "accepted": false,
@@ -59,6 +76,8 @@
     ]
   },
   "earlier_failed_runs": [
+    {"run": 40147055374, "source": "0c302a4774ba693c261e786ac627bbfa0ddf4eb9", "conclusion": "failure", "reason": "The added backend regression tried PREVIOUS on the first page and wrongly required a frame. It was corrected to use a long original and real NEXT/PREVIOUS transitions; the host's original boundary refusal was correct.", "artifact": {"id": 12580564669, "bytes": 55368602, "digest": "sha256:05a4a13f978bfe20ada5c0ecd93d8a3f2841fd55bb1316d6c8ceb2fe8de0573c"}},
+    {"run": 40153960628, "source": "b9d793f8b1a5512cea3fbfcf84f4519f84bc9ac9", "conclusion": "failure", "backend_checks": 684, "native_ui_checks": 27, "reason": "New native folder UI and backend, retained Navigation/Search/Account and other host suites passed. Only the two existing palette cases and the strict checker's incorrect uniqueness rule for the fixed legacy duplicate-original check labels failed.", "artifact": {"id": 12584492807, "bytes": 55552408, "digest": "sha256:5e8a7e2b9f1ebe95f2ed3a986513fbed17eb50d1281e0558f1ee3c8cf2813134", "expires_at": "2027-01-23T02:18:39Z"}},
     {
       "run": 40139011692,
       "attempt": 1,
