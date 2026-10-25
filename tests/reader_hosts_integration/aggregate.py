@@ -24,7 +24,8 @@ if mode == 'windows':
         print(navigation.self_test())
         print(original.selftest())
     else:
-        original.main(workflow_path=WORKFLOW)
+        import_organize = load('host_windows_import_organize_verifier', ROOT / 'reader_windows_import_organize/verify.py')
+        import_organize.main(workflow_path=WORKFLOW)
 elif mode == 'composition':
     original = load('host_composition_verifier', ROOT / 'reader_g1_integration/aggregate.py')
     original.original.WORKFLOW = WORKFLOW

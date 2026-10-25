@@ -32,9 +32,9 @@ def validate(report,source,run,attempt,product,probe,command,revision):
  require(any(r['method']=='PROPFIND' and r['authenticated'] for r in report['requests']) and any(r['method']=='GET' and r['authenticated'] for r in report['requests']),'no real authenticated TLS traffic')
  return len(names)
 
-def main():
+def main(workflow_path='.github/workflows/reader-windows-import-organize.yml'):
  require(os.environ.get('GITHUB_ACTIONS')=='true','Actions only')
- workflow='.github/workflows/reader-windows-import-organize.yml'
+ workflow=workflow_path
  records=module('retained_records',ROOT/'tests/reader_windows_records/verify.py');records.main(workflow)
  source=os.environ['GITHUB_SHA'];run=int(os.environ['GITHUB_RUN_ID']);attempt=int(os.environ['GITHUB_RUN_ATTEMPT'])
  out=Path('build/wio-summary');out.mkdir(parents=True,exist_ok=False)
