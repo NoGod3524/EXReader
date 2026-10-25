@@ -23,10 +23,12 @@ def main():
         raise RuntimeError('Checkout differs')
     for source in (COMPOSED,WINDOWS,RAW):
         subprocess.run(['git','merge-base','--is-ancestor',source,'HEAD'], cwd=ROOT, check=True)
-    owned = {'.github/workflows/reader-windows-raw3-preflight.yml','docs/READER-WINDOWS-RAW3.md'}
+    owned = {'.github/workflows/reader-windows-raw3-preflight.yml','docs/READER-WINDOWS-RAW3.md',
+             'apps/reader/desktop-metadata/CMakeLists.txt','apps/reader/desktop-metadata/EXReaderDesktopMetadataConfig.cmake.in',
+             'apps/reader/desktop-metadata/include/reader_metadata.h','apps/reader/desktop-metadata/src/metadata.cpp'}
     changed = git('diff','--name-only',COMPOSED,'HEAD').splitlines()
     if not all(p in owned or p.startswith('tests/reader_windows_raw3/') for p in changed):
-        raise RuntimeError('Composition-only stage changed runtime')
+        raise RuntimeError('Changed path outside metadata candidate and source composition')
     for module in MODULES:
         path = 'apps/reader/' + module
         if git('rev-parse','HEAD:'+path) != git('rev-parse',RAW+':'+path):

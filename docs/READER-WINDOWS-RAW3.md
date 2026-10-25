@@ -9,6 +9,14 @@ Windows 实际 owner、默认界面与原回归保持简洁版原件，七个可
 SDK 仍为批准的3.41候选 `edddc463c06ed5731195cdb8f06b2df6dff7699e`。
 源码前置检查通过也不代表宿主支持了 anchor3。
 
+第一处实际接入缺口是桌面metadata包原先只能寻找commands0.1。
+现增加默认关闭的raw0.2配置，显式 `reader_metadata_open_raw_v3` 打开raw revisions，
+book/group/membership及heads/get/identity均使用对应raw API；旧配置仍为0.1。
+raw包的旧open入口拒绝且不创建数据库，安装配置拒绝混用legacy/raw依赖。
+正在Windows/Linux分别构建安装两配置，再原样复用全部29项metadata消费者检查，
+包括真实进程终止、私有pending重放、错误线程与单一产品SQLite来源。
+这些结果只覆盖metadata包，不替代实际Windows宿主、网络或记录验收。
+
 后续实现必须覆盖实际宿主的以下入口：
 
 | 入口 | 需要完成 |

@@ -1,6 +1,16 @@
 /* SPDX-License-Identifier: MIT */
 #include "reader_metadata.h"
 #include <catalog.h>
+#ifdef EXR_READER_METADATA_RAW3
+#define reader_metadata_open reader_metadata_open_raw_v3
+#define reader_revisions_open reader_revisions_open_raw_v3
+#define reader_revision_heads reader_revision_heads_raw_v3
+#define reader_revision_get reader_revision_get_raw_v3
+#define reader_revision_book_identity reader_revision_book_identity_raw_v3
+#define reader_command_apply_book reader_command_apply_book_raw_v3
+#define reader_command_apply_group reader_command_apply_group_raw_v3
+#define reader_command_apply_membership reader_command_apply_membership_raw_v3
+#endif
 #include <algorithm>
 #include <cerrno>
 #include <cstdio>
@@ -311,6 +321,13 @@ extern "C" reader_metadata_status reader_metadata_open(const char *product_path,
     *out=owner.release();return READER_METADATA_OK;
   });
 }
+#ifdef EXR_READER_METADATA_RAW3
+#undef reader_metadata_open
+extern "C" reader_metadata_status reader_metadata_open(const char *,const char *,reader_metadata_owner **out,reader_metadata_error *error){
+  if(out)*out=nullptr;
+  return call(error,[&]() -> reader_metadata_status {reject(READER_METADATA_ARGUMENT,"Raw metadata requires explicit raw open");});
+}
+#endif
 extern "C" reader_metadata_status reader_metadata_close(reader_metadata_owner **owner,reader_metadata_error *error){return call(error,[&]{
   if(!owner)reject(READER_METADATA_ARGUMENT,"Missing metadata owner pointer");
   if(!*owner)return READER_METADATA_OK;
