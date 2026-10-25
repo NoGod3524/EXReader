@@ -1,0 +1,264 @@
+{
+  "schema": 1,
+  "observed_at_utc": "2026-10-25T00:38:41Z",
+  "reason": "User will restart the computer; preserve all local work and cloud continuation",
+  "packages": 25,
+  "tasks": [
+    {
+      "id": "J08",
+      "path": "C:/Users/Oscar/exreader-agents/g01-windows-account/j08-keyboard-actions/EXReader",
+      "branch": "codex/reader-keyboard-actions",
+      "head": "74804bbfff63fdc65d3e07037a8138cefff1cf75",
+      "remote_head": "74804bbfff63fdc65d3e07037a8138cefff1cf75",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    },
+    {
+      "id": "J01",
+      "path": "C:/Users/Oscar/exreader-agents/j01-webdav-import",
+      "branch": "codex/reader-webdav-import",
+      "head": "547711bc4fd728189c21f7edc968b7aba7ebb2b6",
+      "remote_head": "547711bc4fd728189c21f7edc968b7aba7ebb2b6",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    },
+    {
+      "id": "J02",
+      "path": "C:/Users/Oscar/exreader-agents/j02-opds-browser/EXReader",
+      "branch": "codex/reader-opds-browser",
+      "head": "3ca9d9fed564dbcba11fc95a034244c5cfe8c762",
+      "remote_head": "3ca9d9fed564dbcba11fc95a034244c5cfe8c762",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    },
+    {
+      "id": "J03",
+      "path": "C:/Users/Oscar/exreader-agents/j03-desktop-drop",
+      "branch": "codex/reader-desktop-drop",
+      "head": "986f2f0132ecdf753d6d428ba821a58175cd0d0c",
+      "remote_head": "986f2f0132ecdf753d6d428ba821a58175cd0d0c",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    },
+    {
+      "id": "J04",
+      "path": "C:/Users/Oscar/exreader-agents/j04-android-import-entry",
+      "branch": "codex/reader-android-import-entry",
+      "head": "635ddcb3f865059fd481f8deb9f7927e75743c6d",
+      "remote_head": "635ddcb3f865059fd481f8deb9f7927e75743c6d",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    },
+    {
+      "id": "J05",
+      "path": "C:/Users/Oscar/exreader-agents/j05-apple-file-entry",
+      "branch": "codex/reader-apple-file-entry",
+      "head": "3c355b4ea3faab974861f4863893c6018653740c",
+      "remote_head": "3c355b4ea3faab974861f4863893c6018653740c",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    },
+    {
+      "id": "J06",
+      "path": "C:/Users/Oscar/exreader-agents/j06-link-policy/EXReader",
+      "branch": "codex/reader-external-link-policy",
+      "head": "4175e1de8e61ebc68dc4a1313e32408a4956f1c7",
+      "remote_head": "4175e1de8e61ebc68dc4a1313e32408a4956f1c7",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    },
+    {
+      "id": "J07",
+      "path": "C:/Users/Oscar/exreader-agents/j07-jump-history/EXReader",
+      "branch": "codex/reader-jump-history",
+      "head": "496b426219d8b9ff50329c4a3a0336ae742acd94",
+      "remote_head": "496b426219d8b9ff50329c4a3a0336ae742acd94",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    },
+    {
+      "id": "J09",
+      "path": "C:/Users/Oscar/exreader-agents/j09-book-information",
+      "branch": "codex/reader-book-information",
+      "head": "e32fa06aeb3508eb07f0c7ef7443a3750a1f0e43",
+      "remote_head": "e32fa06aeb3508eb07f0c7ef7443a3750a1f0e43",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    },
+    {
+      "id": "J10",
+      "path": "C:/Users/Oscar/exreader-agents/j10-bulk-organization/EXReader",
+      "branch": "codex/reader-bulk-organization",
+      "head": "5b601e83d81f815a0d58120d7c80188e8b8b92e7",
+      "remote_head": "5b601e83d81f815a0d58120d7c80188e8b8b92e7",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    },
+    {
+      "id": "J11",
+      "path": "C:/Users/Oscar/exreader-agents/j11-explicit-conflict-actions",
+      "branch": "codex/reader-explicit-conflict-actions",
+      "head": "37fdc830d75eee8590120d52d4d881102e0d9dc4",
+      "remote_head": "37fdc830d75eee8590120d52d4d881102e0d9dc4",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    },
+    {
+      "id": "J12",
+      "path": "C:/Users/Oscar/exreader-agents/j12-sync-status-view",
+      "branch": "codex/reader-sync-status-view",
+      "head": "823bd01962432b70cd8f0728443fab95ca55404f",
+      "remote_head": "823bd01962432b70cd8f0728443fab95ca55404f",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    },
+    {
+      "id": "J13",
+      "path": "C:/Users/Oscar/exreader-agents/j13-account-profiles/EXReader",
+      "branch": "codex/reader-account-profiles",
+      "head": "2d67b87830a1fabad602aef2ac7bdb3ef579190e",
+      "remote_head": "2d67b87830a1fabad602aef2ac7bdb3ef579190e",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    },
+    {
+      "id": "J14",
+      "path": "C:/Users/Oscar/exreader-agents/j14-library-health/EXReader",
+      "branch": "codex/reader-library-health",
+      "head": "71f271eb48b2c15f1be18be6fc140a620163cf82",
+      "remote_head": "71f271eb48b2c15f1be18be6fc140a620163cf82",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    },
+    {
+      "id": "J15",
+      "path": "C:/Users/Oscar/exreader-agents/j15-ocr-overlay/EXReader",
+      "branch": "codex/reader-ocr-overlay",
+      "head": "607d3778839f97a0f5ecca45db120f3a3ef1550d",
+      "remote_head": "607d3778839f97a0f5ecca45db120f3a3ef1550d",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    },
+    {
+      "id": "J16",
+      "path": "C:/Users/Oscar/exreader-agents/j16-tts-windows/EXReader",
+      "branch": "codex/reader-tts-windows",
+      "head": "242f07c9804fd33340f1aa4e475f440b93820338",
+      "remote_head": "242f07c9804fd33340f1aa4e475f440b93820338",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    },
+    {
+      "id": "J17",
+      "path": "C:/Users/Oscar/exreader-agents/j17-tts-apple/EXReader",
+      "branch": "codex/reader-tts-apple",
+      "head": "24c498c6c69e382b1ff4dfaa50401a4031df400a",
+      "remote_head": "24c498c6c69e382b1ff4dfaa50401a4031df400a",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    },
+    {
+      "id": "J18",
+      "path": "C:/Users/Oscar/exreader-agents/j18-tts-android/EXReader",
+      "branch": "codex/reader-tts-android",
+      "head": "5993381e4507cffb7c63465642c2052f5760deb3",
+      "remote_head": "5993381e4507cffb7c63465642c2052f5760deb3",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    },
+    {
+      "id": "J19",
+      "path": "C:/Users/Oscar/exreader-agents/j19-tts-linux",
+      "branch": "codex/reader-tts-linux",
+      "head": "fc40e84746c11d32d4029b8b284b697343f6835b",
+      "remote_head": "fc40e84746c11d32d4029b8b284b697343f6835b",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    },
+    {
+      "id": "J20",
+      "path": "C:/Users/Oscar/exreader-agents/j20-localization/EXReader",
+      "branch": "codex/reader-localization",
+      "head": "e2e60f6e42491aa1e78342fce00398d29fbaf381",
+      "remote_head": "e2e60f6e42491aa1e78342fce00398d29fbaf381",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    },
+    {
+      "id": "J21",
+      "path": "C:/Users/Oscar/exreader-agents/j21-diagnostic-report/EXReader",
+      "branch": "codex/reader-diagnostic-report",
+      "head": "4793224343950b279a3591c8398f5a2a8514d754",
+      "remote_head": "4793224343950b279a3591c8398f5a2a8514d754",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    },
+    {
+      "id": "J22",
+      "path": "C:/Users/Oscar/exreader-agents/j22-cross-os-relay",
+      "branch": "codex/reader-cross-os-relay",
+      "head": "9ff063dcc6b898fb0c776edabadf743919045a7d",
+      "remote_head": "9ff063dcc6b898fb0c776edabadf743919045a7d",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    },
+    {
+      "id": "J23",
+      "path": "C:/Users/Oscar/exreader-agents/j23-app-boundary-fuzz/EXReader",
+      "branch": "codex/reader-app-boundary-fuzz",
+      "head": "3c5f2e1ed9fb3cc94cbb523fac298aa679dd711a",
+      "remote_head": "3c5f2e1ed9fb3cc94cbb523fac298aa679dd711a",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    },
+    {
+      "id": "J24",
+      "path": "C:/Users/Oscar/exreader-agents/j24-distribution-unix",
+      "branch": "codex/reader-distribution-unix",
+      "head": "9919608678f2764e74d3075c949303443e35e03d",
+      "remote_head": "9919608678f2764e74d3075c949303443e35e03d",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    },
+    {
+      "id": "J25",
+      "path": "C:/Users/Oscar/exreader-agents/j25-distribution-windows",
+      "branch": "codex/reader-distribution-windows",
+      "head": "901bc8cf3ceec7ebc8ba2a0db261d5f8581e0f92",
+      "remote_head": "901bc8cf3ceec7ebc8ba2a0db261d5f8581e0f92",
+      "remote_matches": true,
+      "clean": true,
+      "uncommitted": []
+    }
+  ],
+  "cloud_runs_continue_after_pc_restart": true,
+  "complete_product": false,
+  "finalized_at_utc": "2026-10-25T00:51:40Z",
+  "continuation": "../reader-independent/REBOOT-2026-10-25.md",
+  "all_package_worktrees_clean": true,
+  "all_package_heads_match_origin": true
+}

@@ -1,11 +1,11 @@
 {
   "schema": 1,
-  "recorded_at_utc": "2026-10-25T00:24:00Z",
+  "recorded_at_utc": "2026-10-25T00:51:40Z",
   "current_cycle": 1,
   "completed_cycles": 0,
   "audit_interval": 5,
   "next_audit_after_completed_cycle": 5,
-  "phase": "windows_reading_records_implementation_and_native_host_integration",
+  "phase": "reboot_checkpoint_saved_no_new_dispatch",
   "host_integration_candidate": {
     "branch": "codex/reader-hosts-integration",
     "source": "f0c272c87b2402979292d0cd973d4f5e7a9f62fd",
@@ -404,5 +404,15 @@
     "run": 40143936053,
     "proof_run": 40144799161,
     "integrated": false
+  },
+  "reboot_checkpoint": "REBOOT-2026-10-25.md",
+  "resume_first_existing_run": 40147139532,
+  "latest_host_candidate": {
+    "source": "c217b29f86b78fa4e6d9a599690e8f6c42a9a56a",
+    "run": 40146977543,
+    "status": "completed",
+    "conclusion": "failure",
+    "accepted": false,
+    "blocking_step": "Real GTK secure save load delete unavailable session-only full library scan cancel retry and shutdown"
   }
 }
