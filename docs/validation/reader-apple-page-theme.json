@@ -31,6 +31,17 @@
         {"id": 12590337635, "bytes": 20510473, "digest": "sha256:3af0fcf6ee668fe4734d666382a0516fbc7f254caaa8ea24b65aed4a20ed0c5d", "name": "apple-theme-sdk-macos-40171561915-1"},
         {"id": 12590322528, "bytes": 20517715, "digest": "sha256:779ab7ff65980756eed1dff61246f704a39e2689e80ffffb6d98dfe94b08b337", "name": "apple-theme-sdk-iphonesimulator-40171561915-1"}
       ]
+    },
+    {
+      "source_sha": "eea3087c2ef27b9d45e00333ef0a16e586a0ac6e",
+      "run_id": "40172575970",
+      "attempt": 1,
+      "accepted": false,
+      "sdk_jobs": {"macos": "success", "iphonesimulator": "success"},
+      "native": {"off_checks": 10, "on_checks": 37, "protocol_negatives": 10, "conclusion": "success", "job_id": 121106967876},
+      "macos_ui": {"cases": 4, "conclusion": "success", "job_id": 121107494839},
+      "ipad_ui": {"cases": 4, "conclusion": "success", "job_id": 121107494825},
+      "failure": "iPhone cold-start simctl device enumeration timed out after 45 seconds before Xcode. The next attempt gives this independent startup query 180 seconds; the 35-minute job limit and all business assertions remain unchanged."
     }
   ],
   "pending": ["native_theme", "macos_ui", "iphone_ui", "ipad_ui", "system_notifications", "six_original_suites_same_source"],

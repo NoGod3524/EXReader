@@ -26,5 +26,6 @@
 - `c2530f54ab43a6a085d5f6afd6c830ed95d05d9a` / [40170929666](https://github.com/NoGod3524/EXReader/actions/runs/40170929666) attempt 1：macOS/iOS simulator SDK 与产品安装两作业通过；原生 OFF 编译运行成功，ON 编译成功，整轮在作者背景精确色像素总数相等的断言处失败。此轮不授予主题。
 - 后续保留原/新精确颜色计数诊断，并比较原书实际实色区域的同坐标 8×8 RGBA 像素块；前景抗锯齿边缘不作为背景像素总数相等的依据。图片仍核对实色总数和实际像素块。尚待后续实测确认。
 - `049d90ca8b8d64d60d32fdf751b0c5f135de205b` / [40171561915](https://github.com/NoGod3524/EXReader/actions/runs/40171561915) attempt 1：SDK 两目标、原生 OFF 10/ON 37 项、macOS 四个真实主题 UI 场景及 collector 通过。作者背景精确色像素数原书 15329、深色 15308、浅色 15345，同坐标实色块与原图片通过。iPhone/iPad 驱动在 Xcode 尚未产出应用时查询容器，查询 20 秒超时导致驱动提前终止构建，collector 因此缺应用；strict 汇总正确拒绝。后续延后查询到实际应用已构建，并保留、间隔重试只读查询的暂态失败；没有删改四个 UI 场景、真实 OS 命令或像素断言。
+- `eea3087c2ef27b9d45e00333ef0a16e586a0ac6e` / [40172575970](https://github.com/NoGod3524/EXReader/actions/runs/40172575970) attempt 1：SDK 两目标、OFF 10/ON 37、十个协议负例、macOS 四场景和 iPad 四场景及 collector 全部通过。iPhone 在初次 `simctl list devices available` 的 45 秒冷启动等待上超时，尚未进入 Xcode，因此整轮仍拒绝。后续把该独立启动等待设为 180 秒，job 总时限仍为 35 分钟；所有业务断言、原六流程和原预算保持原样。早期失败也保存命令诊断，Xcode 失败会打印保留日志尾部。
 
 原 navigation/search/reading-records/shelf/import-mapping/WP13 流程仅添加候选分支守卫、显式 SDK 版本与开关环境。原业务步骤、消费者、collector、strict summary 原样保留；旧色彩断言不改。
