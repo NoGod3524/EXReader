@@ -289,11 +289,12 @@ struct LibraryScreen: View {
                     .onPreferenceChange(ShelfGeometryKey.self) { geometry in
                         let complete = shelf.rows.allSatisfy { geometry.frames[$0.id] != nil }
                         shelf.observe(geometry.frames, size: geometry.size, revision: geometry.revision, complete: complete)
-                        if complete, geometry.revision == shelf.geometryRevision, geometry.size.width > 0, geometry.size.height > 0,
-                           let key = shelf.restoreKey, let frame = geometry.frames[key], !frame.isEmpty {
-                            restoreShelf(proxy, revision: shelf.restoreRevision)
-                        }
                     }
+                    // A restore request must issue its native command even
+                    // when the aggregate geometry preference stays unchanged.
+                    // Only later real geometry can acknowledge that command.
+                    .onAppear { restoreShelf(proxy, revision: shelf.restoreRevision) }
+                    .onChange(of: shelf.restoreRevision) { revision in restoreShelf(proxy, revision: revision) }
                 }
             }
 
