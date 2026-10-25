@@ -12,6 +12,37 @@
 #include <thread>
 #include <utility>
 #include <vector>
+#ifdef READER_HOST_READING
+#include <reader_reading_commands.h>
+#include <reader_annotation_view.h>
+#endif
+
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+/* This binary owns raw stores for its entire lifetime; defaults keep MAX2. */
+#define reader_revisions_open reader_revisions_open_raw_v3
+#define reader_revision_validate reader_revision_validate_raw_v3
+#define reader_revision_local reader_revision_local_raw_v3
+#define reader_revision_receive reader_revision_receive_raw_v3
+#define reader_revision_get reader_revision_get_raw_v3
+#define reader_revision_heads reader_revision_heads_raw_v3
+#define reader_revision_book_identity reader_revision_book_identity_raw_v3
+#define reader_revision_outbox reader_revision_outbox_raw_v3
+#define reader_revision_retry reader_revision_retry_raw_v3
+#define reader_revision_ack reader_revision_ack_raw_v3
+#define reader_revision_local_project reader_revision_local_project_raw_v3
+#define reader_revision_local_reading reader_revision_local_reading_raw_v3
+#define reader_revision_project reader_revision_project_raw_v3
+#define reader_revision_selected reader_revision_selected_raw_v3
+#define reader_revision_annotations_page reader_revision_annotations_page_raw_v3
+#define reader_revision_entities_page reader_revision_entities_page_raw_v3
+#define reader_revision_book_title reader_revision_book_title_raw_v3
+#define reader_command_apply_book reader_command_apply_book_raw_v3
+#define reader_command_apply_group reader_command_apply_group_raw_v3
+#define reader_command_apply_membership reader_command_apply_membership_raw_v3
+#define reader_rs_decode reader_rs_decode_raw_v3
+#define reader_av_open reader_av_open_raw_v3
+#define reader_av_page_get reader_av_page_get_raw_v3
+#endif
 
 namespace product_jni {
 struct failure {const char *type;std::string message;};
@@ -255,4 +286,7 @@ extern "C" JNIEXPORT jobjectArray JNICALL JNI_METHOD(membership)(JNIEnv *env,jcl
 #endif
 #ifdef READER_RECORD_INTEROP_REVIEW
 #include "record_interop_probe.inc"
+#endif
+#ifdef READER_RAW3_REVIEW
+#include "raw3_probe.inc"
 #endif

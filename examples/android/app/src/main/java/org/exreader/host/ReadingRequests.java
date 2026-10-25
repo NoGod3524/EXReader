@@ -18,11 +18,19 @@ import org.json.JSONObject;
 final class ReadingRequests {
     private static final int MAX_BYTES=1048576;
     private static final Object REQUEST_LOCK=new Object();
-    private final Thread owner=Thread.currentThread();private final AtomicFile file;
+    private final Thread owner=Thread.currentThread();private final AtomicFile file;private final boolean rawCandidate;
     static final class Pending {
         final long sdkBook;final String book,id,revision,bootstrap,body;final String[] expected;
-        final int kind,operation,mode;final ReadingCapture capture;
+        final int kind,operation,mode,requestVersion,anchorVersion;final ReadingCapture capture;
         Pending(long sdkBook,String book,String id,String revision,String bootstrap,String[] expected,int kind,int operation,int mode,ReadingCapture capture,String body){
+            this(sdkBook,book,id,revision,bootstrap,expected,kind,operation,mode,capture,body,1,2);
+        }
+        Pending(long sdkBook,String book,String id,String revision,String bootstrap,String[] expected,int kind,int operation,int mode,ReadingCapture capture,String body,int anchorVersion){
+            this(sdkBook,book,id,revision,bootstrap,expected,kind,operation,mode,capture,body,2,anchorVersion);
+        }
+        private Pending(long sdkBook,String book,String id,String revision,String bootstrap,String[] expected,int kind,int operation,int mode,ReadingCapture capture,String body,int requestVersion,int anchorVersion){
+            if((requestVersion!=1&&requestVersion!=2)||anchorVersion<1||anchorVersion>3||(requestVersion==1&&anchorVersion!=2)||(anchorVersion==3&&mode!=ReadingCapture.FIXED))throw new IllegalArgumentException("Invalid explicit reading writer version");
+            this.requestVersion=requestVersion;this.anchorVersion=anchorVersion;
             if(sdkBook<=0||book==null||!book.matches("[a-z0-9]+:[0-9a-f]{64}")||id==null||expected==null||expected.length>32||kind<1||kind>4||operation<0||operation>2||mode<1||mode>3||body==null)throw new IllegalArgumentException("Invalid private reading request");
             requireId(revision);requireId(bootstrap);if(!id.isEmpty())requireId(id);HashSet<String> unique=new HashSet<>();for(String head:expected){requireId(head);if(!unique.add(head))throw new IllegalArgumentException("Duplicate observed reading head");}
             if(capture!=null&&(!book.equals(capture.bookKey)||mode!=capture.mode))throw new IllegalArgumentException("Private reading capture identity differs");
@@ -31,7 +39,8 @@ final class ReadingRequests {
             ReadingCapture.encode(body,65536);if(body.indexOf('\0')>=0)throw new IllegalArgumentException("Reading body contains NUL");this.sdkBook=sdkBook;this.book=book;this.id=id;this.revision=revision;this.bootstrap=bootstrap;this.expected=expected.clone();this.kind=kind;this.operation=operation;this.mode=mode;this.capture=capture;this.body=body;
         }
     }
-    ReadingRequests(File directory){file=new AtomicFile(new File(directory,"reading-request.json"));}
+    ReadingRequests(File directory){this(directory,false);}
+    ReadingRequests(File directory,boolean rawCandidate){file=new AtomicFile(new File(directory,"reading-request.json"));this.rawCandidate=rawCandidate;}
     private void owned(){if(Thread.currentThread()!=owner)throw new IllegalStateException("Reading requests require their SDK worker");}
     static String newId(){return UUID.randomUUID().toString().replace("-","");}
     static void requireId(String id){if(id==null||!id.matches("[0-9a-f]{32}"))throw new IllegalArgumentException("Invalid reading revision ID");}
@@ -44,12 +53,12 @@ final class ReadingRequests {
     Pending read()throws Exception {owned();synchronized(REQUEST_LOCK){return readLocked();}}
     private Pending readLocked()throws Exception {
         byte[] encoded;try(FileInputStream input=file.openRead();ByteArrayOutputStream output=new ByteArrayOutputStream()){byte[] chunk=new byte[8192];for(int count;(count=input.read(chunk))>0;){if(output.size()+count>MAX_BYTES)throw new IOException("Private reading request exceeds its bound");output.write(chunk,0,count);}encoded=output.toByteArray();}catch(FileNotFoundException absent){return null;}
-        JSONObject value=new JSONObject(ReadingCapture.decode(encoded));if(value.getInt("version")!=1||value.length()!=13||value.getInt("reserved")!=0)throw new IOException("Unknown private reading request version");for(String key:new String[]{"version","sdk_book","book","annotation","revision","bootstrap","expected","kind","operation","mode","capture","body","reserved"})if(!value.has(key))throw new IOException("Incomplete private reading request");JSONArray heads=value.getJSONArray("expected");if(heads.length()>32)throw new IOException("Retained heads exceed their bound");String[] expected=new String[heads.length()];for(int i=0;i<expected.length;i++)expected[i]=heads.getString(i);
-        return new Pending(value.getLong("sdk_book"),value.getString("book"),value.getString("annotation"),value.getString("revision"),value.getString("bootstrap"),expected,value.getInt("kind"),value.getInt("operation"),value.getInt("mode"),value.isNull("capture")?null:capture(value.getJSONObject("capture")),value.getString("body"));
+        JSONObject value=new JSONObject(ReadingCapture.decode(encoded));int version=value.getInt("version");boolean version2=version==2&&rawCandidate;if((version!=1&&!version2)||value.length()!=(version2?14:13)||value.getInt("reserved")!=0)throw new IOException("Unknown private reading request version");for(String key:new String[]{"version","sdk_book","book","annotation","revision","bootstrap","expected","kind","operation","mode","capture","body","reserved"})if(!value.has(key))throw new IOException("Incomplete private reading request");if(version2&&!value.has("anchor_version"))throw new IOException("Missing explicit reading writer version");JSONArray heads=value.getJSONArray("expected");if(heads.length()>32)throw new IOException("Retained heads exceed their bound");String[] expected=new String[heads.length()];for(int i=0;i<expected.length;i++)expected[i]=heads.getString(i);
+        return new Pending(value.getLong("sdk_book"),value.getString("book"),value.getString("annotation"),value.getString("revision"),value.getString("bootstrap"),expected,value.getInt("kind"),value.getInt("operation"),value.getInt("mode"),value.isNull("capture")?null:capture(value.getJSONObject("capture")),value.getString("body"),version,version2?value.getInt("anchor_version"):2);
     }
     void save(Pending request)throws Exception {
-        owned();synchronized(REQUEST_LOCK){Pending existing=readLocked();if(existing!=null)throw new IOException("A previous reading save still needs confirmation");JSONArray heads=new JSONArray();for(String head:request.expected)heads.put(head);JSONObject captured=capture(request.capture);
-        JSONObject value=new JSONObject().put("version",1).put("sdk_book",request.sdkBook).put("book",request.book).put("annotation",request.id).put("revision",request.revision).put("bootstrap",request.bootstrap).put("expected",heads).put("kind",request.kind).put("operation",request.operation).put("mode",request.mode).put("capture",captured==null?JSONObject.NULL:captured).put("body",request.body).put("reserved",0);
+        owned();synchronized(REQUEST_LOCK){if(request.requestVersion==2&&!rawCandidate)throw new IOException("Raw request requires explicit candidate");Pending existing=readLocked();if(existing!=null)throw new IOException("A previous reading save still needs confirmation");JSONArray heads=new JSONArray();for(String head:request.expected)heads.put(head);JSONObject captured=capture(request.capture);
+        JSONObject value=new JSONObject().put("version",request.requestVersion).put("sdk_book",request.sdkBook).put("book",request.book).put("annotation",request.id).put("revision",request.revision).put("bootstrap",request.bootstrap).put("expected",heads).put("kind",request.kind).put("operation",request.operation).put("mode",request.mode).put("capture",captured==null?JSONObject.NULL:captured).put("body",request.body).put("reserved",0);if(request.requestVersion==2)value.put("anchor_version",request.anchorVersion);
         byte[] encoded=ReadingCapture.encode(value.toString(),MAX_BYTES);FileOutputStream output=null;try{output=file.startWrite();output.write(encoded);file.finishWrite(output);output=null;}finally{if(output!=null)file.failWrite(output);}}
     }
     void clear(String expectedRevision)throws Exception {owned();synchronized(REQUEST_LOCK){Pending pending=readLocked();if(pending==null)return;if(!pending.revision.equals(expectedRevision))throw new IOException("A newer reading request must not be cleared");clearLocked();}}
