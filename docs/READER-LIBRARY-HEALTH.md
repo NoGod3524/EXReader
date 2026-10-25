@@ -160,7 +160,9 @@ digests and verdict counts to agree.
 
 ## Acceptance record
 
-Root复审候选在独立分支 `codex/reader-library-health-review` 修复两处取消边界：首次取消回调前先设置防重入状态；原件观察完成后、推进游标前再次轮询取消。新增回归实际在取消回调内调用step/destroy，以及只在最终读取进度回调请求取消并重试未推进游标。严格汇总另核原始具名结果及真实C/C++消费者文件摘要。该候选尚未云端验收；下述原通过只归原受测source。
+Root在独立分支 `codex/reader-library-health-review` 修复两处取消边界：首次取消回调前先设置防重入状态；原件观察完成后、推进游标前再次轮询取消。新增回归实际在取消回调内调用step/destroy，以及只在最终读取进度回调请求取消并重试未推进游标。严格汇总另核原始具名结果及真实C/C++消费者文件摘要。
+
+修复 source `10b038a55fabea493e3ef858d3171e8c65a54f0b` / [run 40163483001](https://github.com/NoGod3524/EXReader/actions/runs/40163483001) / attempt1 的Windows、Linux、macOS及严格汇总全部success。原2202行扫描、取消、跨线程/重入与安装后C/C++消费者保留；严格汇总重新下载三个ZIP、核实际消费者字节及原始新增取消用例，`problems=[]`，三平台行摘要仍为 `88c48114…4035fce`。新工件/作业完整身份在JSON的 `root_review` 中；原版测量与失败记录继续单列归原受测source，不转作新版本性能观测。宿主接线尚未完成。
 
 Tested source `a600cf3df53fdc8b97e47872e44f9b5c5ff6becb` (branch
 `codex/reader-library-health`), run
