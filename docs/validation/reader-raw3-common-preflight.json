@@ -1,0 +1,72 @@
+{
+  "package": "reader-raw3-common-preflight",
+  "composition_base": "e67d87cbeabb2457e0852f681ef0b27b2c0da4d8",
+  "branch": "codex/reader-raw3-common-guard",
+  "workflow": ".github/workflows/reader-raw3-common.yml",
+  "source_preflight_authenticated": true,
+  "accepted": false,
+  "complete_product": false,
+  "runtime_accepted": false,
+  "runs": [
+    {
+      "run": 40227227784,
+      "attempt": 1,
+      "source": "317be0d93fe94dd632772ee197e3df60481b9ccf",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "databaseId": 121271058510,
+          "name": "composition preflight and refusal controls",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "databaseId": 121271125821,
+          "name": "authenticate same-source preflight",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12612230165,
+          "name": "reader-raw3-common-preflight-40227227784-1",
+          "size_in_bytes": 9196,
+          "digest": "sha256:daaf300a8dec3dfac0b24fea075edb2f2c98c37dd172c3dd9c85bfdca7453714",
+          "expires_at": "2027-01-23T19:41:32Z",
+          "expired": false
+        },
+        {
+          "id": 12611419200,
+          "name": "reader-raw3-common-strict-40227227784-1",
+          "size_in_bytes": 1075,
+          "digest": "sha256:29ca048325592b557df9af6ff695342d01524dc65fc94ef73dd818e64d0d626d",
+          "expires_at": "2027-01-23T19:41:32Z",
+          "expired": false
+        }
+      ],
+      "strict": {
+        "accepted": false,
+        "actual_zip_sha256": "sha256:daaf300a8dec3dfac0b24fea075edb2f2c98c37dd172c3dd9c85bfdca7453714",
+        "artifact": {
+          "digest": "sha256:daaf300a8dec3dfac0b24fea075edb2f2c98c37dd172c3dd9c85bfdca7453714",
+          "expires_at": "2027-01-23T19:41:32Z",
+          "id": 12612230165,
+          "name": "reader-raw3-common-preflight-40227227784-1",
+          "size_in_bytes": 9196
+        },
+        "attempt": "1",
+        "complete_product": false,
+        "composition_base": "e67d87cbeabb2457e0852f681ef0b27b2c0da4d8",
+        "composition_preflight_authenticated": true,
+        "negative_controls": 22,
+        "producer_job": 121271058510,
+        "run_id": "40227227784",
+        "runtime_accepted": false,
+        "scope": "same-source composition preflight and refusal controls only",
+        "source_sha": "317be0d93fe94dd632772ee197e3df60481b9ccf"
+      }
+    }
+  ],
+  "scope": "source composition and refusal controls only; no full product or platform acceptance"
+}
