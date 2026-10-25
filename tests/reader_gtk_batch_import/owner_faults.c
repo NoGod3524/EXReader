@@ -13,6 +13,15 @@
    importer and GLib allocations remain real; the installed host is unchanged. */
 static int fail_receipt_once;
 static unsigned receipt_allocation_failures;
+static int fail_candidate_once;
+static unsigned candidate_allocation_failures;
+void *__real_calloc(size_t count,size_t bytes);
+void *__wrap_calloc(size_t count,size_t bytes) {
+  if(fail_candidate_once && count==READER_BATCH_DEFAULT_BATCH && bytes==sizeof(reader_batch_candidate)) {
+    fail_candidate_once=0;candidate_allocation_failures++;return NULL;
+  }
+  return __real_calloc(count,bytes);
+}
 static void *receipt_malloc(size_t bytes) {
   if(fail_receipt_once && bytes==sizeof(reader_batch_receipt)) {
     fail_receipt_once=0;receipt_allocation_failures++;return NULL;
@@ -111,6 +120,33 @@ static void scenario(const char *font,const char *output,const char *name,int fa
   g_free(base);g_free(root);g_free(database);g_free(path);
   printf("GTK_BATCH_OWNER_FAULT_CASE %s passed\n",name);
 }
+static void candidate_failure(const char *font,const char *output) {
+  char *base=g_build_filename(output,"candidate-allocation-failure",NULL),*root=g_build_filename(base,"input",NULL);
+  char *database=g_build_filename(base,"library.sqlite",NULL),*path=g_build_filename(root,"original.txt",NULL);
+  const char *body="Explicit retry after a real candidate allocation failure.\n";
+  require(g_mkdir_with_parents(root,0700)==0 && g_file_set_contents(path,body,-1,NULL),"candidate failure fixture");
+  linux_reader *reader=NULL;exr_error error={0};
+  require(linux_reader_open(database,font,NULL,&reader,&error)==EXR_OK,"candidate failure SDK open");
+  memset(&folder,0,sizeof(folder));folder.token=1;folder.has_owner=1;folder.control.request=1;
+  closing=busy=saving=save_failed=choosing_file=shelf_loading=FALSE;
+  folder_queue(READER_BATCH_BEGIN,root,0);fail_candidate_once=1;
+  host_result *done=execute_next(reader,READER_BATCH_BEGIN);
+  require(!fail_candidate_once && candidate_allocation_failures==1,"real frozen enumerator calloc returned NULL");
+  require(done->value.status==EXR_MEMORY && done->value.batch_done && done->value.batch_owned &&
+          !done->value.batch_map && !done->value.batch_attempted &&
+          !strcmp(done->value.message,"Cannot allocate candidate batch"),"BEGIN error has a live owner without MAP");
+  apply_result(done);
+  require(folder.has_owner && reader->batch_data && !folder.map,"UI retains terminal failed enumerator until CLOSE");
+  close_owner(reader,0);verify_original(reader,NULL);
+  folder.token++;folder.has_owner=1;folder.want_close=folder.release_queued=0;
+  g_atomic_int_inc(&folder.control.request);g_atomic_int_set(&folder.control.cancelled,0);
+  folder_queue(READER_BATCH_BEGIN,root,0);done=execute_next(reader,READER_BATCH_BEGIN);
+  require(done->value.status==EXR_OK && done->value.batch_imported==1 && done->value.batch_map,
+          "fresh explicit BEGIN succeeds after failed owner closes");apply_result(done);
+  close_owner(reader,0);verify_original(reader,body);linux_reader_close(reader);
+  g_free(base);g_free(root);g_free(database);g_free(path);
+  puts("GTK_BATCH_OWNER_FAULT_CASE candidate-allocation-failure passed");
+}
 int main(int argc,char **argv) {
   if(argc!=3) return 2;
   require(getenv("GITHUB_ACTIONS") && !strcmp(getenv("GITHUB_ACTIONS"),"true"),"Actions-only fault regression");
@@ -118,13 +154,15 @@ int main(int argc,char **argv) {
   scenario(argv[1],argv[2],"allocation-failure-map-close",1,1);
   scenario(argv[1],argv[2],"allocation-failure-direct-close",1,0);
   scenario(argv[1],argv[2],"empty-directory-map-close",0,1);
+  candidate_failure(argv[1],argv[2]);
   require(receipt_allocation_failures==2,"exactly two real allocation failures");
   char *path=g_build_filename(argv[2],"report.json",NULL);FILE *out=fopen(path,"w");require(out!=NULL,"open fault report");
-  fprintf(out,"{\"source_sha\":\"%s\",\"run_id\":\"%s\",\"attempt\":\"%s\",\"ok\":true,\"allocation_failures\":2,\"checks\":["
+  fprintf(out,"{\"source_sha\":\"%s\",\"run_id\":\"%s\",\"attempt\":\"%s\",\"ok\":true,\"allocation_failures\":3,\"receipt_allocation_failures\":2,\"candidate_allocation_failures\":1,\"checks\":["
     "{\"name\":\"allocation-failure-map-close\",\"passed\":true},"
     "{\"name\":\"allocation-failure-direct-close\",\"passed\":true},"
-    "{\"name\":\"empty-directory-map-close\",\"passed\":true}]}\n",
+    "{\"name\":\"empty-directory-map-close\",\"passed\":true},"
+    "{\"name\":\"candidate-allocation-failure\",\"passed\":true}]}\n",
     getenv("GITHUB_SHA"),getenv("GITHUB_RUN_ID"),getenv("GITHUB_RUN_ATTEMPT"));
   require(fclose(out)==0,"flush fault report");g_free(path);g_async_queue_unref(queue);
-  puts("GTK_BATCH_OWNER_FAULTS scenarios=3 allocation_failures=2 all passed");return 0;
+  puts("GTK_BATCH_OWNER_FAULTS scenarios=4 allocation_failures=3 all passed");return 0;
 }
