@@ -71,21 +71,24 @@ static void exercise(const exr_layout *layout,int pictures) {
     exr_bitmap_free(&one);exr_bitmap_free(&themed);
   }
   if(pictures) {
+    for(unsigned channels=1;channels<=4;channels+=3) {
     cancel_state state={0};exr_control control={cancel,NULL,&state};exr_bitmap expected={0},out={0};
-    OK(exr_render_page_background(layout,NULL,0,4,0x141e46ffu,&control,&expected,&error));
+    OK(exr_render_page_background(layout,NULL,0,channels,0x141e46ffu,&control,&expected,&error));
     size_t polls=state.count;CHECK(polls>2 && polls<10000);
     for(size_t n=1;n<=polls;n++) {
       state=(cancel_state){0,n};
-      CHECK(exr_render_page_background(layout,NULL,0,4,0x141e46ffu,&control,&out,&error)==EXR_CANCELLED);
+      CHECK(exr_render_page_background(layout,NULL,0,channels,0x141e46ffu,&control,&out,&error)==EXR_CANCELLED);
+      CHECK(error.code==EXR_CANCELLED);
       CHECK(!out.pixels && !out.width && !out.height && !out.stride && !out.channels);
       state=(cancel_state){0};
-      OK(exr_render_page_background(layout,NULL,0,4,0x141e46ffu,&control,&out,&error));CHECK(same(&expected,&out));
+      OK(exr_render_page_background(layout,NULL,0,channels,0x141e46ffu,&control,&out,&error));CHECK(same(&expected,&out));
       exr_bitmap_free(&out);
     }
     CHECK(exr_render_page_background(NULL,NULL,0,4,0,NULL,&out,&error)==EXR_ARGUMENT && !out.pixels);
     CHECK(exr_render_page_background(layout,NULL,SIZE_MAX,4,0,NULL,&out,&error)==EXR_ARGUMENT && !out.pixels);
     CHECK(exr_render_page_background(layout,NULL,0,3,0,NULL,&out,&error)==EXR_ARGUMENT && !out.pixels);
     exr_bitmap_free(&expected);
+    }
   }
   CHECK(exr_layout_memory_size(layout)==memory);
   exr_bitmap_free(&controlled);OK(exr_render_page_ex(layout,NULL,0,4,NULL,&controlled,&error));CHECK(same(&plain,&controlled));
@@ -162,6 +165,7 @@ int main(int argc,char **argv) {
     "table-border-dashed.epub","table-border-dotted.epub","table-border-rtl.epub",
     "table-border-vertical.epub","float-vertical-rl.epub","color-fonts.epub"};
   exr_font *font=NULL;char path[4096];CHECK(argc==4);
+  CHECK(!strcmp(exr_version(),EXR_VERSION) && exr_abi_version()==EXR_ABI_VERSION);
   frames=fopen(argv[2],"wb");CHECK(frames);
   snprintf(path,sizeof(path),"%s/fonts/primary.ttf",argv[1]);OK(exr_font_open(path,&font,&error));
   pictures();
