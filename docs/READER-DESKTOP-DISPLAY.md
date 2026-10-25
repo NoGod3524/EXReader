@@ -87,3 +87,40 @@ on a shared runner. No failure expectations are relaxed to make CI green.
 
 See `docs/validation/reader-desktop-display.json` for exact tested source,
 retained runs, artifact and actual binary identities after Actions completes.
+
+## Verified Actions handoff (2026-10-25)
+
+Tested source: **`1e66921ad7c7c4e09742ff8c6ce94a5848f85014`**.
+[Run 40172124474, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40172124474)
+completed successfully:
+
+| Job | Measured results |
+| --- | --- |
+| Linux `121104991570` | 49 PASS; physical screen/energy and Wayland UNAVAILABLE |
+| Windows `121104991894` | 34 PASS; physical screen/energy UNAVAILABLE |
+| Authentication `121105198936` | Both native artifacts authenticated; 47 executable rejection cases PASS |
+
+Linux separately exercised an actual GNOME session, not the fault fixture:
+cookie `971186983`, `/org/gnome/SessionManager/Inhibitor2`, flags **8** and expected
+application identity were observed; after killing the actual child process,
+GetInhibitors returned no remaining inhibitor. Windows separately observed the
+child's power request disappear through `powercfg /requests` after termination.
+These grant native request/lifecycle evidence, not physical display persistence.
+
+Final native artifact IDs: Linux `12590402582` (49986 bytes), Windows
+`12590781168` (38812 bytes); supplemental authenticated summary `12590457662`
+(1415 bytes). Full ZIP/API digests, expiries, actual module/consumer SHA-256s,
+job/source identities and negative case names are in the adjacent JSON evidence.
+
+Retained failed runs: `40171667144` (Linux libc helper-name collision) and
+`40171773778` (two-window fixture left reader 1 active, so it correctly
+reacquired after reader 2 destruction). The original failing reports/artifacts
+remain recorded; the zero-cookie teardown assertion was preserved. The fixture
+now explicitly deactivates reader 1 and asserts it remains released. Native
+restore-reacquisition coverage remains intact. Run `40171982938` then passed;
+final source additionally fixes and tests unavailable-service state surviving
+hide/show without silently retrying after a service reconnect.
+
+The handoff evidence commit changes **only this document and its JSON evidence**
+with `[skip ci]`; its code, tests, workflow and installed module tree are identical
+to the tested source. No host, T/J package, default branch, release or tag changed.

@@ -4,14 +4,337 @@
   "branch": "codex/dot-reader-desktop-display",
   "fixed_start": "a826a65c9c66e43620eff61b49cb79f941a3c953",
   "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
-  "status": "PENDING_ACTIONS",
-  "tested_sha": null,
-  "evidence_head": null,
+  "sdk_version": "3.40.0 / ABI1 (unchanged, SDK-free module)",
+  "status": "ACTIONS_VERIFIED_SCOPED",
+  "tested_sha": "1e66921ad7c7c4e09742ff8c6ce94a5848f85014",
+  "tested_tree": "fe0499731119bd415b89ab707404c8e7b84f48de",
+  "evidence_head": "The evidence-only commit containing this document; full SHA supplied in the final handoff.",
+  "evidence_delta_from_tested_sha": [
+    "docs/READER-DESKTOP-DISPLAY.md",
+    "docs/validation/reader-desktop-display.json"
+  ],
+  "run": {
+    "id": 40172124474,
+    "attempt": 1,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40172124474",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "id": 121104991570,
+        "name": "native (linux)",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "1e66921ad7c7c4e09742ff8c6ce94a5848f85014",
+        "run_attempt": 1,
+        "started_at": "2026-10-25T07:16:02Z",
+        "completed_at": "2026-10-25T07:17:05Z"
+      },
+      {
+        "id": 121104991894,
+        "name": "native (windows)",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "1e66921ad7c7c4e09742ff8c6ce94a5848f85014",
+        "run_attempt": 1,
+        "started_at": "2026-10-25T07:16:02Z",
+        "completed_at": "2026-10-25T07:16:36Z"
+      },
+      {
+        "id": 121105198936,
+        "name": "authenticate exact source artifacts",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "1e66921ad7c7c4e09742ff8c6ce94a5848f85014",
+        "run_attempt": 1,
+        "started_at": "2026-10-25T07:17:07Z",
+        "completed_at": "2026-10-25T07:17:14Z"
+      }
+    ]
+  },
+  "authenticated_native_evidence": {
+    "source_sha": "1e66921ad7c7c4e09742ff8c6ce94a5848f85014",
+    "run_id": 40172124474,
+    "run_attempt": 1,
+    "module_tree": "e0b31b7ae00feb7e400b7ff9bf418d02ab78e377",
+    "artifacts": [
+      {
+        "platform": "linux",
+        "job_id": 121104991570,
+        "id": 12590402582,
+        "name": "d07-linux-40172124474-1",
+        "size_in_bytes": 49986,
+        "sha256": "1ca498acff41ac1df7424dcf604000695d952ee5cc4f75c172bc73926a9b1e16",
+        "expires_at": "2026-11-08T07:17:02Z",
+        "actual_binaries": {
+          "bin/display_probe": {
+            "sha256": "840d20fc0054813389917203e1a062b607ee746dbd671fc4dcda745560c415e4",
+            "size": 40992
+          },
+          "bin/consumer_c": {
+            "sha256": "ed9676e60a6ed1a303cfc1e863586d0c8bb3e019ceabc51607a5ea8a6bd36d23",
+            "size": 27352
+          },
+          "bin/consumer_cpp": {
+            "sha256": "f102bc61421dd1bdf2824fb83d2b0d7e1c4227022f9d41afb94d3b064f517df4",
+            "size": 27352
+          },
+          "lib/libexr_desktop_display.a": {
+            "sha256": "383eddbaf155996c4036b2c48ab70fe55bcbbf8871f374d8668176edb1a7eb08",
+            "size": 19650
+          }
+        },
+        "results": {
+          "PASS": 49,
+          "UNAVAILABLE": 2
+        },
+        "capabilities": {
+          "physical_screen_energy": "UNAVAILABLE",
+          "wayland": "UNAVAILABLE",
+          "linux_real_service": "PASS",
+          "linux_fault_fixture": "deterministic-only"
+        }
+      },
+      {
+        "platform": "windows",
+        "job_id": 121104991894,
+        "id": 12590781168,
+        "name": "d07-windows-40172124474-1",
+        "size_in_bytes": 38812,
+        "sha256": "511ad88549e1c9ac639680d8008ae1d02fc51e1d7737335a983780a2ed52b991",
+        "expires_at": "2026-11-08T07:16:33Z",
+        "actual_binaries": {
+          "bin/display_probe.exe": {
+            "sha256": "ce53c008d5cfb21aaaa1b6eba573bd619d48b8a5048bd57e30ee59b50af97681",
+            "size": 24064
+          },
+          "bin/consumer_c.exe": {
+            "sha256": "67650fd667e645e0489882b56f4eeac31e40f9e15170706a1dcec066a61ba38f",
+            "size": 13824
+          },
+          "bin/consumer_cpp.exe": {
+            "sha256": "dc5766c1e3e3f70e26be03ea88db814ee7df19618a166604d7d1aaac36740e7e",
+            "size": 13824
+          },
+          "lib/exr_desktop_display.lib": {
+            "sha256": "202f1b24e9b5116458c5f0b0cc9411da3d5f3d26a05bf4aa73dbdb495837340a",
+            "size": 20634
+          }
+        },
+        "results": {
+          "PASS": 34,
+          "UNAVAILABLE": 1
+        },
+        "capabilities": {
+          "physical_screen_energy": "UNAVAILABLE",
+          "wayland": "UNAVAILABLE",
+          "linux_real_service": "NOT_APPLICABLE",
+          "linux_fault_fixture": "NOT_APPLICABLE"
+        }
+      }
+    ],
+    "negative_cases": {
+      "collections": [
+        "duplicate_artifact_id",
+        "duplicate_artifact_name",
+        "missing_native_artifact",
+        "duplicate_upstream_job",
+        "missing_upstream_job"
+      ],
+      "linux": [
+        "bad_api_digest",
+        "bad_zip_size",
+        "expired_artifact",
+        "wrong_attempt_name",
+        "wrong_artifact_source",
+        "failed_job",
+        "unfinished_job",
+        "wrong_job_attempt",
+        "duplicate_zip_report",
+        "missing_report",
+        "duplicate_json_key",
+        "wrong_report_sha",
+        "wrong_original_module",
+        "changed_actual_binary",
+        "missing_raw_member",
+        "summary_not_original",
+        "raw_missing",
+        "raw_duplicate",
+        "raw_fail",
+        "raw_module",
+        "raw_unavailable"
+      ],
+      "windows": [
+        "bad_api_digest",
+        "bad_zip_size",
+        "expired_artifact",
+        "wrong_attempt_name",
+        "wrong_artifact_source",
+        "failed_job",
+        "unfinished_job",
+        "wrong_job_attempt",
+        "duplicate_zip_report",
+        "missing_report",
+        "duplicate_json_key",
+        "wrong_report_sha",
+        "wrong_original_module",
+        "changed_actual_binary",
+        "missing_raw_member",
+        "summary_not_original",
+        "raw_missing",
+        "raw_duplicate",
+        "raw_fail",
+        "raw_module",
+        "raw_unavailable"
+      ]
+    }
+  },
+  "artifact_metadata": [
+    {
+      "id": 12590781168,
+      "name": "d07-windows-40172124474-1",
+      "size_in_bytes": 38812,
+      "api_sha256": "sha256:511ad88549e1c9ac639680d8008ae1d02fc51e1d7737335a983780a2ed52b991",
+      "expires_at": "2026-11-08T07:16:33Z",
+      "expired_at_handoff": false
+    },
+    {
+      "id": 12590457662,
+      "name": "d07-authenticated-40172124474-1",
+      "size_in_bytes": 1415,
+      "api_sha256": "sha256:e5bc7de8c7b3bd5dee4e7dc7af649d544504c571aed2438c6ad61cce386df72f",
+      "expires_at": "2026-11-08T07:17:12Z",
+      "expired_at_handoff": false
+    },
+    {
+      "id": 12590402582,
+      "name": "d07-linux-40172124474-1",
+      "size_in_bytes": 49986,
+      "api_sha256": "sha256:1ca498acff41ac1df7424dcf604000695d952ee5cc4f75c172bc73926a9b1e16",
+      "expires_at": "2026-11-08T07:17:02Z",
+      "expired_at_handoff": false
+    }
+  ],
+  "authentication_scope": "Native artifacts were downloaded, ZIP size/API digest recomputed, and raw results/binary identities authenticated only in Actions. Supplementary authenticated-summary artifact identity comes from API and upload-job log; it is not used recursively to authenticate itself.",
+  "measured_native_observations": {
+    "windows": "Real per-lease display-only PowerRequest handles; two leases; owner-only release; visibility/minimize/focus/destroy; cancellation/expiry/thread; killed-process request disappearance measured by powercfg.",
+    "linux_real_service": "Separate actual GNOME session on Xvfb X11 acquired cookie 971186983. GetInhibitors identified /org/gnome/SessionManager/Inhibitor2 with flags 8 and app org.exreader.DesktopDisplay; after SIGKILL pid 3505, remaining inhibitors were [].",
+    "linux_fault_service": "Deterministic service only: late cancellation/destroy/generation retry, missing/denied/zero-cookie, disconnect/reconnect, timeout sender cleanup. These cases do not grant real-desktop capability.",
+    "visibility_retry_regression": "UNAVAILABLE preserved across hide/show after service reconnect until explicit set_active(1)."
+  },
+  "retained_failures": [
+    {
+      "source_sha": "9da94ee0e63a4f0a2ec7a412af14a06f776d102b",
+      "run_id": 40171667144,
+      "attempt": 1,
+      "job_id": 121103602026,
+      "reason": "Linux helper revoke conflicted with libc declaration; build failed, named-results completeness then correctly failed. Windows passed 34 cases; no assertion removed.",
+      "fix": "Namespace private Linux helper to revoke_lease.",
+      "artifacts": [
+        {
+          "id": 12590496685,
+          "name": "d07-linux-40171667144-1",
+          "size_in_bytes": 1670,
+          "api_sha256": "sha256:1c90e4c820665799a8aa41aae7d82691ea2c65108127ffc2e76db0ced5cbbf23",
+          "expires_at": "2026-11-08T07:09:03Z",
+          "expired_at_handoff": false
+        },
+        {
+          "id": 12590287089,
+          "name": "d07-windows-40171667144-1",
+          "size_in_bytes": 38795,
+          "api_sha256": "sha256:76daf5d9ca49c25ae015fa124bf2056a7b5b155ad7d203484cc420a65846e367",
+          "expires_at": "2026-11-08T07:09:08Z",
+          "expired_at_handoff": false
+        }
+      ]
+    },
+    {
+      "source_sha": "1c2d6a6e90e7996786d4cb00c27d2e64e134631d",
+      "run_id": 40171773778,
+      "attempt": 1,
+      "job_id": 121103922047,
+      "reason": "destroy_releases expected global cookie count zero, but destroying reader window 2 restored focus to still-requested reader window 1, which legitimately reacquired. Original failing raw result and original zero-count assertion retained.",
+      "fix": "Host-shaped fixture explicitly deactivates reader 1 before window 2 teardown; added inactive_reader_stays_released assertion. Existing restore_reacquires assertion retained. No module auto-reacquisition behavior weakened.",
+      "artifacts": [
+        {
+          "id": 12590621701,
+          "name": "d07-windows-40171773778-1",
+          "size_in_bytes": 38795,
+          "api_sha256": "sha256:f29ddc2a672d4c32a553e4b1507c39efa758af69f1461cca3ee4ee05469e0b36",
+          "expires_at": "2026-11-08T07:10:52Z",
+          "expired_at_handoff": false
+        },
+        {
+          "id": 12590222518,
+          "name": "d07-linux-40171773778-1",
+          "size_in_bytes": 46406,
+          "api_sha256": "sha256:5a9f8acf726f28806fe53c0c9cfdf355552115f09df486f1897b0afada7324a6",
+          "expires_at": "2026-11-08T07:11:20Z",
+          "expired_at_handoff": false
+        }
+      ]
+    }
+  ],
+  "prior_verified_run": {
+    "source_sha": "c2109bbbbe2fb874ee2b02563099ab4d0f6bbec7",
+    "run_id": 40171982938,
+    "attempt": 1,
+    "results": {
+      "linux": {
+        "PASS": 48,
+        "UNAVAILABLE": 2
+      },
+      "windows": {
+        "PASS": 34,
+        "UNAVAILABLE": 1
+      },
+      "negative_verifier_cases": 47
+    },
+    "artifacts": [
+      {
+        "id": 12591080399,
+        "name": "d07-windows-40171982938-1",
+        "size_in_bytes": 38796,
+        "api_sha256": "sha256:adde5d2223ca57e55094d884942d0444f56b5612cb5dca001faea5af3b7a8a56",
+        "expires_at": "2026-11-08T07:14:17Z",
+        "expired_at_handoff": false
+      },
+      {
+        "id": 12590960664,
+        "name": "d07-authenticated-40171982938-1",
+        "size_in_bytes": 1414,
+        "api_sha256": "sha256:fd99cb29738ccfd0b90bbe53e62d7cafb8f6b87d648f9f14aa001e0103380dc8",
+        "expires_at": "2026-11-08T07:14:55Z",
+        "expired_at_handoff": false
+      },
+      {
+        "id": 12590173015,
+        "name": "d07-linux-40171982938-1",
+        "size_in_bytes": 49759,
+        "api_sha256": "sha256:279dd3d378f83987bdcb7b9ee938b23429c13b78146dadc8900edb2e15a90407",
+        "expires_at": "2026-11-08T07:14:45Z",
+        "expired_at_handoff": false
+      }
+    ]
+  },
   "capabilities": {
+    "windows_native_request_lifecycle": "PASS on hosted Windows 2022; not physical-screen evidence",
+    "linux_gnome_session_x11": "PASS for real IDLE-only service request and actual process cleanup",
+    "linux_fault_cases": "PASS deterministic-only",
     "physical_screen_energy": "UNAVAILABLE",
     "wayland": "UNAVAILABLE",
-    "linux_real_service": "PENDING_MEASUREMENT"
+    "other_linux_portals_desktops": "NOT_GRANTED",
+    "host_integration": "NOT_GRANTED (root-owned)",
+    "full_product_acceptance": "NOT_GRANTED"
   },
-  "retained_failures": [],
-  "remaining_gaps": ["Actions validation pending", "Host integration remains root-owned", "Physical screen, battery and Wayland are untested"]
+  "remaining_gaps": [
+    "Physical laptop-screen persistence, energy/battery, lid and lock/suspend interactions untested.",
+    "Wayland and non-GNOME portal/desktop implementations untested; no fallback granted.",
+    "Real Windows resource exhaustion/PowerSetRequest failure was not forcibly induced; native failure paths return UNAVAILABLE.",
+    "GTK create must be called on GTK's main thread by contract; subsequent calls enforce captured owner. No public GTK global query proves the initial thread.",
+    "Lease expiry requires continued host UI event-loop service; a blocked loop delays the timer. Close/cancel before stopping it.",
+    "Host wiring and common-source integration audits remain root-owned."
+  ],
+  "execution_boundary": "No Codex tasks, user-computer actions, local build/test/syntax/fixture/service/benchmark/artifact operations. Local work was source/docs/Git and read-only GitHub metadata/logs."
 }
