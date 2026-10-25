@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: MIT
  * Two phases, one host scheduler. Network jobs own only their WebDAV client;
  * only WINIO_IMPORT enters the existing SDK library lock. Product work opens
- * the same installed metadata owner and same pending sidecar as single edits.
+ * the same installed metadata API, with separate durable intent namespaces
+ * for J10 actions, legacy bootstrap, and the existing single-book editor.
  */
 static struct {
   HWND dialog,rows,message,groups,action,report;
@@ -160,28 +161,108 @@ static exr_status winio_groups(host_job *job) {
   if(catalog) reader_catalog_close(&catalog,&error);
   return code ? EXR_DATABASE:EXR_OK;
 }
-static void winio_bootstrap(reader_metadata_owner *owner,host_job *job) {
+static exr_status winio_bootstrap(reader_metadata_owner *owner,host_job *job) {
   winio_job *v=job->io;
-  /* Only explicitly selected books are eligible. Verify public retained bytes
-     before legacy bootstrap; conflicts are left for J10's item receipt. */
   for(size_t i=0;i<v->count;i++) {
-    if(job_cancel_flag(job)) break;
+    if(job_cancel_flag(job)) return EXR_CANCELLED;
     reader_metadata_snapshot *snapshot=NULL;reader_metadata_error error={0};reader_metadata_result result={0};
     reader_metadata_status code=reader_metadata_prepare_book(owner,v->keys[i],&snapshot,&error);
     const reader_metadata_view *view=reader_metadata_snapshot_view(snapshot);
+    exr_status status=EXR_OK;
     if(code==READER_METADATA_NEEDS_BOOTSTRAP && view && view->present && !view->deleted) {
       char hash[65];uint64_t bytes=0;exr_error sdk={0};
       EnterCriticalSection(&g.library_lock);
-      exr_status status=reader_catalog_sdk_original_identity(g.library,v->ids[i],NULL,hash,&bytes,&sdk);
+      status=reader_catalog_sdk_original_identity(g.library,v->ids[i],NULL,hash,&bytes,&sdk);
       LeaveCriticalSection(&g.library_lock);
-      if(status==EXR_OK && !strcmp(hash,view->book.source_sha256) && bytes==view->book.source_bytes) {
+      if(status==EXR_OK && (strcmp(hash,view->book.source_sha256) || bytes!=view->book.source_bytes)) status=EXR_DATABASE;
+      if(status==EXR_OK) {
         reader_metadata_verified_source proof={view->book.format,hash,bytes};
         code=reader_metadata_stage_bootstrap(owner,snapshot,&proof,&result,&error);
         if(code==READER_METADATA_OK) code=reader_metadata_finish_pending(owner,&result,&error);
+        if(result.committed) v->prepared++;
+        v->bootstrap_pending=result.pending;
+        if(code!=READER_METADATA_OK) status=EXR_DATABASE;
       }
-    }
+    } else if(code!=READER_METADATA_OK && code!=READER_METADATA_CONFLICT && code!=READER_METADATA_NEEDS_BOOTSTRAP) status=EXR_DATABASE;
     reader_metadata_snapshot_free(snapshot);
+    if(status!=EXR_OK) { v->bulk_error.metadata=error.code;return status; }
   }
+  return EXR_OK;
+}
+static int winio_resume_local(void *context,const reader_catalog_row *row) {
+  *(int64_t *)context=row->sdk_book_id;return 0;
+}
+static int winio_resume_pause(void *context) { (void)context;return 1; }
+static int winio_open_action_owner(const char *product,reader_metadata_owner **owner,reader_metadata_error *error) {
+  if(!g.product_profile_lock || g.product_profile_lock==INVALID_HANDLE_VALUE || !g.product_lock || g.product_lock==INVALID_HANDLE_VALUE) return 0;
+  char *path=malloc(strlen(product)+40);if(!path) return 0;
+  sprintf(path,"%s.bulk-action.pending",product);
+  reader_metadata_status code=reader_metadata_open(product,path,owner,error);free(path);
+  return code==READER_METADATA_OK;
+}
+static exr_status winio_original_selection(host_job *job,const char *product) {
+  winio_job *v=job->io;reader_catalog *catalog=NULL;reader_catalog_error error={0};
+  if(reader_catalog_open(product,&catalog,&error)) return EXR_DATABASE;
+  v->count=0;int failed=0;
+  for(size_t i=0;i<v->summary.total && i<READER_BULK_MAX_BATCH;i++) {
+    if(v->results[i].outcome!=READER_BULK_ITEM_NOT_RUN) continue;
+    size_t at=v->count++;snprintf(v->keys[at],sizeof(v->keys[at]),"%s",v->results[i].book_key);
+    int found=0;
+    if(reader_catalog_find(catalog,v->keys[at],NULL,winio_resume_local,&v->ids[at],&found,&error)) { failed=1;break; }
+  }
+  reader_catalog_close(&catalog,&error);return failed ? EXR_DATABASE:EXR_OK;
+}
+static reader_metadata_status winio_superseded_bootstrap(reader_metadata_owner *owner,host_job *job,size_t at,reader_metadata_error *error) {
+  /* Explicit Resume may encounter a normal editor that already bootstrapped
+     this legacy book. Never overwrite that history or discard committed
+     cleanup. Prove safe current history AND retained original first; the
+     public abandon operation independently rechecks the old ID is absent. */
+  winio_job *v=job->io;reader_metadata_snapshot *snapshot=NULL;
+  reader_metadata_status code=reader_metadata_prepare_book(owner,v->keys[at],&snapshot,error);
+  const reader_metadata_view *view=reader_metadata_snapshot_view(snapshot);
+  if(code==READER_METADATA_OK && view && view->present && !view->deleted && !view->needs_bootstrap && view->graph.projection_safe && view->graph.revisions && view->head_count) {
+    char hash[65];uint64_t bytes=0;exr_error sdk={0};
+    EnterCriticalSection(&g.library_lock);
+    exr_status status=reader_catalog_sdk_original_identity(g.library,v->ids[at],NULL,hash,&bytes,&sdk);
+    LeaveCriticalSection(&g.library_lock);
+    if(status==EXR_OK && !strcmp(hash,view->book.source_sha256) && bytes==view->book.source_bytes)
+      code=reader_metadata_abandon_pending(owner,error);
+    else code=READER_METADATA_CONFLICT;
+  } else if(code==READER_METADATA_OK) code=READER_METADATA_CONFLICT;
+  reader_metadata_snapshot_free(snapshot);return code;
+}
+static exr_status winio_bootstrap_phase(host_job *job,const char *product) {
+  winio_job *v=job->io;reader_metadata_owner *owner=NULL;reader_metadata_error error={0};reader_metadata_result pending={0};
+  char *path=malloc(strlen(product)+40);if(!path) return EXR_MEMORY;
+  sprintf(path,"%s.bulk-bootstrap.pending",product);
+  /* The actual existing host process keeps product.profile.lock and
+     <library>.product.lock open with share=0 from startup until shutdown.
+     Sequential native owner reopens NEVER release those profile locks. */
+  if(!g.product_profile_lock || g.product_profile_lock==INVALID_HANDLE_VALUE || !g.product_lock || g.product_lock==INVALID_HANDLE_VALUE) { free(path);return EXR_DATABASE; }
+  reader_metadata_status code=reader_metadata_open(product,path,&owner,&error);free(path);
+  if(code!=READER_METADATA_OK) { v->bulk_error.metadata=code;return EXR_DATABASE; }
+  exr_status status=EXR_OK;
+  code=reader_metadata_pending(owner,&pending,&error);
+  if(code==READER_METADATA_OK) {
+    /* This namespace is written ONLY by stage_bootstrap, never by J10 or the
+       single-book editor. The unchanged J10 journal already owns the exact
+       request, and only its remaining selected book can own this intent. */
+    size_t at=0;while(at<v->count && strcmp(pending.command.entity_key,v->keys[at])) at++;
+    if(at==v->count) status=EXR_DATABASE;
+    else {
+      char original[33];snprintf(original,sizeof(original),"%s",pending.command.revision_id);
+      code=reader_metadata_finish_pending(owner,&pending,&error);
+      if(pending.committed) v->prepared++;
+      v->bootstrap_pending=pending.pending;
+      if(code==READER_METADATA_CONFLICT && !pending.committed) {
+        code=winio_superseded_bootstrap(owner,job,at,&error);
+        if(code==READER_METADATA_OK) { snprintf(v->superseded_bootstrap,sizeof(v->superseded_bootstrap),"%s",original);v->bootstrap_pending=0; }
+      }
+      if(code!=READER_METADATA_OK) status=EXR_DATABASE;
+    }
+  } else if(code!=READER_METADATA_NO_PENDING) status=EXR_DATABASE;
+  if(status==EXR_OK) status=winio_bootstrap(owner,job);
+  reader_metadata_close(&owner,&error);return status;
 }
 static exr_status winio_bulk(host_job *job) {
   winio_job *v=job->io;reader_metadata_owner *owner=NULL;reader_metadata_error metadata={0};reader_bulk *bulk=NULL;
@@ -189,23 +270,40 @@ static exr_status winio_bulk(host_job *job) {
   if(!product) return EXR_MEMORY;
   journal=malloc(strlen(product)+32);if(!journal) { free(product);return EXR_MEMORY; }
   sprintf(journal,"%s.bulk.pending",product);
-  if(!acct_open_metadata(&owner,&metadata)) goto done;
-  if(reader_bulk_open(owner,product,journal,&bulk,&v->bulk_error)!=READER_BULK_OK) goto done;
-  reader_bulk_control control={job,job_cancel_check,NULL};
-  if(v->operation==WINIO_RUN) {
-    const char *keys[READER_BULK_MAX_BATCH];for(size_t i=0;i<v->count;i++) keys[i]=v->keys[i];
-    /* Do not touch a retained request before explicitly resuming it. */
+  if(!winio_open_action_owner(product,&owner,&metadata)) { v->bulk_status=READER_BULK_METADATA;v->bulk_error.metadata=metadata.code;goto done; }
+  v->bulk_status=reader_bulk_open(owner,product,journal,&bulk,&v->bulk_error);
+  if(v->bulk_status!=READER_BULK_OK) goto done;
+  reader_bulk_control control={job,job_cancel_check,NULL},pause={NULL,winio_resume_pause,NULL};
+  if(v->operation==WINIO_ACK) {
+    v->bulk_status=reader_bulk_acknowledge(bulk,&v->bulk_error);
+  } else if(v->operation==WINIO_INSPECT) {
     v->bulk_status=reader_bulk_inspect(bulk,v->results,READER_BULK_MAX_BATCH,&v->summary,&v->bulk_error);
-    if(v->bulk_status==READER_BULK_NO_JOURNAL) {
-      winio_bootstrap(owner,job);
+  } else {
+    if(v->operation==WINIO_RUN) {
+      const char *keys[READER_BULK_MAX_BATCH];for(size_t i=0;i<v->count;i++) keys[i]=v->keys[i];
       reader_bulk_request request={0};request.struct_size=sizeof(request);request.action=(reader_bulk_action)v->action;
-      request.group_id=v->group[0] ? v->group:NULL;request.book_keys=keys;request.book_count=v->count;request.control=control;
+      request.group_id=v->group[0] ? v->group:NULL;request.book_keys=keys;request.book_count=v->count;request.control=pause;
+      /* Persist the ORIGINAL request without executing any item. Thus even a
+         kill in legacy preparation cannot lose the user's selected action. */
       v->bulk_status=reader_bulk_run(bulk,&request,v->results,READER_BULK_MAX_BATCH,&v->summary,&v->bulk_error);
-    } else if(v->bulk_status==READER_BULK_OK) v->bulk_status=READER_BULK_JOURNAL_ACTIVE;
-  } else if(v->operation==WINIO_RESUME)
+    } else {
+      /* Only J10 writes this action namespace. Editor/account intents remain
+         in commands.pending, and can NEVER be adopted as a J10 receipt. */
+      v->bulk_status=reader_bulk_resume(bulk,&pause,v->results,READER_BULK_MAX_BATCH,&v->summary,&v->bulk_error);
+    }
+    if(v->bulk_status!=READER_BULK_OK && v->bulk_status!=READER_BULK_CANCELLED) goto done;
+    if(v->summary.complete) { status=EXR_OK;goto done; }
+    if(job_cancel_flag(job)) { status=EXR_CANCELLED;goto done; }
+    status=winio_original_selection(job,product);if(status!=EXR_OK) goto done;
+    reader_bulk_close(&bulk,&v->bulk_error);reader_metadata_close(&owner,&metadata);
+    /* Exactly one metadata owner at a time, on this one SDK/product worker. */
+    status=winio_bootstrap_phase(job,product);
+    if(status!=EXR_OK) { v->bulk_status=status==EXR_CANCELLED ? READER_BULK_CANCELLED:READER_BULK_METADATA;goto done; }
+    if(!winio_open_action_owner(product,&owner,&metadata)) { status=EXR_DATABASE;v->bulk_status=READER_BULK_METADATA;goto done; }
+    v->bulk_status=reader_bulk_open(owner,product,journal,&bulk,&v->bulk_error);
+    if(v->bulk_status!=READER_BULK_OK) { status=EXR_DATABASE;goto done; }
     v->bulk_status=reader_bulk_resume(bulk,&control,v->results,READER_BULK_MAX_BATCH,&v->summary,&v->bulk_error);
-  else if(v->operation==WINIO_ACK) v->bulk_status=reader_bulk_acknowledge(bulk,&v->bulk_error);
-  else v->bulk_status=reader_bulk_inspect(bulk,v->results,READER_BULK_MAX_BATCH,&v->summary,&v->bulk_error);
+  }
   status=(v->bulk_status==READER_BULK_OK || v->bulk_status==READER_BULK_NO_JOURNAL) ? EXR_OK:
     v->bulk_status==READER_BULK_CANCELLED ? EXR_CANCELLED:EXR_DATABASE;
 done:

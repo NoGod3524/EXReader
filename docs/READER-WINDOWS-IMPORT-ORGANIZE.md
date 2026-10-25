@@ -30,9 +30,25 @@ private generated staging names, and refuses links/directories.
 
 Bulk actions are explicit favorite set/clear and add/remove existing shelf, tag
 or series. Existing shelves support child navigation and keyset pagination.
-Selected legacy books bootstrap only after public retained-original verification.
-All J10 calls use the same product database and the existing metadata pending
-path, on the owning serialized worker. Each item has its own transaction;
+The exact J10 request is first durably recorded with its always-cancel control,
+before any legacy preparation. Selected legacy books bootstrap only after public
+retained-original verification. Bootstrap intents use a separate private
+`.bulk-bootstrap.pending` sidecar; J10 action intents use `.bulk-action.pending`.
+Neither namespace is the existing editor/account `.commands.pending`. The
+bootstrap owner and action owner are opened sequentially, never concurrently,
+on the same serialized SDK/product worker and same product database. Existing
+`product.profile.lock` and `<library>.product.lock` share-zero process-lifetime
+handles remain held through every native-owner close/reopen. Bootstrap recovery
+finishes its own original intent before the unchanged J10 request is resumed;
+a bootstrap commit is never reported as a requested favorite/group commit.
+If normal Details has meanwhile established verified safe history, explicit
+Resume can discard only the obsolete **uncommitted** preparation: it first
+verifies that current history and the public SDK original, then uses the public
+abandon API that independently refuses committed intents. The discarded ID is
+shown separately; current metadata and the original J10 request are preserved.
+An unrelated retained normal edit cannot become a J10 action receipt, even if its
+book key matches the next journal item. Public expected-head checks still reject
+stale normal edits after an intervening action. Each item has its own transaction;
 committed/created/conflict/not-run/replayed and original revision IDs are visible.
 The durable J10 journal is inspected on reopen, never auto-submitted. Resume
 uses the original request; acknowledgement removes only a completed journal.

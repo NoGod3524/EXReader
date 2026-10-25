@@ -22,6 +22,7 @@ static host_job *winio_new(int operation) {
   host_job *job=job_new(JOB_IMPORT_ORGANIZE);if(!job) return NULL;
   job->io=calloc(1,sizeof(*job->io));if(!job->io) { job_release(job);return NULL; }
   job->io->operation=operation;job->io->mode=winio.mode;job->io->generation=winio.generation;
+  job->io->cloud_status=READER_CLOUD_ARGUMENT;job->io->bulk_status=READER_BULK_ARGUMENT;
   snprintf(job->io->account,sizeof(job->io->account),"%s",acct.owner.id);
   return job;
 }
@@ -82,7 +83,8 @@ static void winio_go(void) {
     winio_submit(job);
   }
 }
-static void winio_render_bulk(winio_job *v) {
+static void winio_render_bulk(host_job *job) {
+  winio_job *v=job->io;
   winio.summary=v->summary;memcpy(winio.results,v->results,sizeof(winio.results));
   SendMessageW(winio.report,LB_RESETCONTENT,0,0);
   for(size_t i=0;i<v->summary.total && i<READER_BULK_MAX_BATCH;i++) {
@@ -91,10 +93,10 @@ static void winio_render_bulk(winio_job *v) {
       (unsigned long long)(i+1),item->book_key,(int)item->outcome,item->committed,item->created,item->conflict,item->replayed,item->revision_id);
     SendMessageW(winio.report,LB_ADDSTRING,0,(LPARAM)row);
   }
-  wchar_t text[512];swprintf(text,512,L"status=%d；committed=%llu created=%llu conflict=%llu unchanged=%llu failed=%llu not_run=%llu complete=%d。已提交不会回滚；恢复沿用原 revision。",
-    (int)v->bulk_status,(unsigned long long)v->summary.committed,(unsigned long long)v->summary.created,
+  wchar_t text[512];swprintf(text,512,L"status=%d host_status=%d；committed=%llu created=%llu conflict=%llu unchanged=%llu failed=%llu not_run=%llu complete=%d。原书准备=%d pending=%d（不计作整理提交）；已放弃过时且未提交的准备 revision=%S。",
+    (int)v->bulk_status,(int)job->status,(unsigned long long)v->summary.committed,(unsigned long long)v->summary.created,
     (unsigned long long)v->summary.conflicts,(unsigned long long)v->summary.unchanged,(unsigned long long)v->summary.failed,
-    (unsigned long long)v->summary.not_run,v->summary.complete);
+    (unsigned long long)v->summary.not_run,v->summary.complete,v->prepared,v->bootstrap_pending,v->superseded_bootstrap);
   SetWindowTextW(winio.message,text);
 }
 static void winio_accept(host_job *job) {
@@ -128,7 +130,7 @@ static void winio_accept(host_job *job) {
       for(size_t i=0;i<v->group_count;i++) SendMessageW(winio.groups,LB_ADDSTRING,0,(LPARAM)v->groups[i].name);
       SetWindowTextW(winio.message,L"选择现有分组；书架可双击进入下级。Ctrl/Shift 多选书籍，最多 100 本。");
     } else if(v->mode==WINIO_BULK) {
-      winio_render_bulk(v);if(v->summary.committed || v->operation==WINIO_ACK) product_shelf_schedule(0,0);
+      winio_render_bulk(job);if(v->summary.committed || v->operation==WINIO_ACK) product_shelf_schedule(0,0);
     } else {
       wchar_t text[512];
       if(v->operation==WINIO_LIST) swprintf(text,512,L"目录失败/取消 status=%d HTTP=%d；书库未改变。",v->dav_error.code,v->dav_error.http_status);
