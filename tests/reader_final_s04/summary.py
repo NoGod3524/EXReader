@@ -20,6 +20,17 @@ def load(path):
     return common.read_json(path) if path.is_file() else None
 
 
+def application_persisted(emulator):
+    observed = emulator.get('observed', {})
+    checks = [row for row in emulator.get('checks', [])
+              if row.get('name') == 'app_persisted_reader_selection']
+    return (observed.get('restore_input') == 'app'
+            and observed.get('open_path') == 'ui_tap'
+            and observed.get('preferences_injected') is False
+            and len(checks) == 1 and checks[0].get('pass') is True
+            and checks[0].get('mandatory') is True)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--static', type=pathlib.Path, default=pathlib.Path('build/in/s04-static'))
@@ -41,6 +52,8 @@ def main():
         problems.append('static report is missing')
     if emulator is None:
         problems.append('emulator report is missing')
+    elif not application_persisted(emulator):
+        problems.append('app-persisted selection is missing, injected or not mandatory')
     if static_auth is None:
         problems.append('static artifact authentication is missing')
     if emulator_auth is None:

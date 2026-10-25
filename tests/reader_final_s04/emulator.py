@@ -42,7 +42,7 @@ class Driver:
         self.derived = derived
         self.fixture_contract = fixture_contract
         self.checks = []
-        self.observed = {}
+        self.observed = {'preferences_injected': False}
 
     # ---- plumbing ---------------------------------------------------------
     def adb(self, *args, timeout=300, check=True, binary=False):
@@ -227,7 +227,7 @@ class Driver:
             except Refusal:
                 pass
             top = self.shell('dumpsys', 'activity', 'top', check=False)
-            found = re.search(r'EXReader d+.d+.d+/d+ · S+', top)
+            found = re.search(r'EXReader \d+\.\d+\.\d+/\d+ · \S+', top)
             if found:
                 self.observed['sdk_label_source'] = 'dumpsys activity top'
                 return found.group(0)
@@ -241,7 +241,7 @@ class Driver:
                    and identity.group(3) == 'x86_64',
                    {'label': label, 'derived_version': self.derived['sdk_version']})
 
-        maps = self.shell('cat', '/proc/%s/maps' % pid)
+        maps = self.run_as('cat', '/proc/%s/maps' % pid).decode('utf-8', 'replace')
         self.save('proc-maps.txt', maps)
         loaded = {name: [line for line in maps.splitlines() if name in line][:2]
                   for name in ('libexreader_host.so', 'libexreader_jni.so')}
@@ -337,15 +337,9 @@ class Driver:
             except Refusal:
                 opened = None
         if opened is None:
-            self.shell('am', 'force-stop', PACKAGE)
-            injected = self.inject_prefs(book_id)
-            self.save('shared_prefs-injected.xml', injected)
-            self.logcat(clear=True)
-            self.start()
-            opened = self.wait('the restored reading record to render',
-                               lambda: next((row for row in self.metrics() if row['book'] == book_id), None),
-                               240)
-            self.observed['open_path'] = 'prefs_restore'
+            self.observed['open_path'] = 'not_opened'
+        self.check('book_opened_through_host_ui', opened is not None,
+                   {'open_path': self.observed.get('open_path')})
         self.observed['first_page'] = opened
         self.check('book_opened_with_native_page', opened['page'] >= 1, opened)
 
@@ -390,21 +384,24 @@ class Driver:
         self.observed['database_files'] = database_files
         self.observed['progress'] = progress
         self.check('reading_record_persisted',
-                   any(value.get('rows', 0) > 0 for value in progress.values()
+                   not self.observed['preferences_injected']
+                   and any(value.get('rows', 0) > 0 for value in progress.values()
                        if isinstance(value, dict)),
                    {'progress': progress, 'database_files': database_files})
 
-        # The app itself persisted lastBook/lastReader when it opened the book. If
-        # that write never reached disk, restore the recorded values explicitly and
-        # say so; the reading record itself is never synthesized.
+        # Selection must have been written by the app; never repair it for acceptance.
         persisted = self.prefs()
         self.save('shared_prefs-before-offline.xml', persisted)
-        restore_input = 'app'
-        if b'lastReader' not in persisted or b'name="lastBook"' not in persisted:
-            self.shell('am', 'force-stop', PACKAGE)
-            self.inject_prefs(book_id)
-            restore_input = 'injected'
+        selection = {node.get('name'): (node.tag, node.get('value'))
+                     for node in ElementTree.fromstring(persisted)}
+        restore_input = ('app' if selection.get('lastReader') == ('boolean', 'true')
+                         and selection.get('lastBook') == ('long', str(book_id))
+                         and not self.observed['preferences_injected'] else 'missing_or_injected')
         self.observed['restore_input'] = restore_input
+        self.check('app_persisted_reader_selection', restore_input == 'app',
+                   {'restore_input': restore_input, 'book_id': book_id,
+                    'lastReader': selection.get('lastReader'), 'lastBook': selection.get('lastBook'),
+                    'preferences_injected': self.observed['preferences_injected']})
 
         self.shell('settings', 'put', 'global', 'airplane_mode_on', '1')
         self.shell('am', 'broadcast', '-a', 'android.intent.action.AIRPLANE_MODE', '--ez', 'state', 'true')
@@ -471,6 +468,8 @@ class Driver:
         self.check('no_fatal_process_state', not fatal, {'fatal': fatal[:10]})
 
     def inject_prefs(self, book_id):
+        # Diagnostic only; any use must invalidate application-persistence acceptance.
+        self.observed['preferences_injected'] = True
         data = self.run_as('cat', 'shared_prefs/host.xml', check=False)
         if not data.startswith(b'<?xml'):
             raise Refusal('the host has no readable shared preferences to restore from')

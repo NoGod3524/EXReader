@@ -69,6 +69,21 @@ def parse_certs(text):
     return signers, schemes
 
 
+def manifest_booleans(text, name, resource_id):
+    """Decode only documented boolean renderings; unknown values stay unknown."""
+    pattern = (r'^\s*A:\s+(?:[^\s]+:)?' + re.escape(name)
+               + r'\(' + re.escape(resource_id) + r'\)\s*=\s*(.*?)\s*$')
+    values = []
+    for raw in re.findall(pattern, text, re.MULTILINE):
+        if raw in ('false', '(type 0x12)0x0'):
+            values.append(False)
+        elif raw in ('true', '(type 0x12)0xffffffff'):
+            values.append(True)
+        else:
+            values.append(None)
+    return values
+
+
 def elf_identity(path):
     with open(path, 'rb') as handle:
         head = handle.read(64)
@@ -334,12 +349,14 @@ def main():
            'a changed permission set is refused, never re-baselined')
     xmltree = common.run([aapt2, 'dump', 'xmltree', '--file', 'AndroidManifest.xml', str(candidate)])
     (args.output / 'aapt2-manifest.txt').write_text(xmltree)
-    backup = re.search(r'allowBackup\(0x01010280\)=\(type 0x12\)0x([0-9a-f]+)', xmltree)
-    record('manifest_allowBackup', backup is not None and backup.group(1) == '0',
-           {'derived': derived['allowBackup'], 'observed': backup.group(1) if backup else None})
-    exported = re.findall(r'exported\(0x01010010\)=\(type 0x12\)(0x[0-9a-f]+)', xmltree)
+    print('aapt2 original manifest xmltree:', flush=True)
+    print(xmltree, flush=True)
+    backup = manifest_booleans(xmltree, 'allowBackup', '0x01010280')
+    record('manifest_allowBackup', backup == [False],
+           {'derived': derived['allowBackup'], 'observed': backup})
+    exported = manifest_booleans(xmltree, 'exported', '0x01010010')
     record('manifest_single_exported_activity',
-           len(re.findall(r'E: activity', xmltree)) == 1 and exported == ['0xffffffff'],
+           len(re.findall(r'E: activity', xmltree)) == 1 and exported == [True],
            {'activity_elements': len(re.findall(r'E: activity', xmltree)),
             'exported_attributes': exported, 'derived': derived['activity_exported']})
     record('manifest_debug_network_security',
@@ -361,7 +378,7 @@ def main():
     dn = next(iter(signers.values()), {}).get('dn', '')
     record('signature_debug_only', 'Android Debug' in dn, {'dn': dn},
            'only the debug candidate is in scope; store/signing authority is not granted')
-    record('signature_v2_or_v3', any(schemes.get(key) for key in schemes), {'schemes': schemes})
+    record('signature_v2_or_v3', any(schemes.get(key) for key in ('v2', 'v3')), {'schemes': schemes})
 
     # --- resources and assets identity ---------------------------------------
     record('resource_layout_present', 'res/layout/activity_main.xml' in names,

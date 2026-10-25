@@ -42,6 +42,7 @@ jobs:
         run: |
           python3 -m py_compile tests/reader_final_s04/*.py
           python3 -c "import pathlib,sys; print(sorted(p.name for p in pathlib.Path('tests/reader_final_s04').glob('*.py')))"
+          python3 tests/reader_final_s04/format_check.py
       - name: Install Android AAPT2, apksigner and platform tools
         run: |
           sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
