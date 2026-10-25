@@ -1,0 +1,145 @@
+name: Reader annotation import
+on:
+  push:
+    branches: [codex/dot-reader-annotation-import]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  consumer:
+    name: annotation import (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-15]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK, schema1, unchanged shared modules and package path ownership
+        run: |
+          START=a826a65c9c66e43620eff61b49cb79f941a3c953
+          K=9854061be331fe603a1822d9b2b36ee357154927
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$START" HEAD
+          git diff --exit-code "$K" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code "$START" HEAD -- apps/reader/store apps/reader/revisions apps/reader/reading-state apps/reader/sync apps/reader/commands apps/reader/annotation-export tests/reader_annotation_export docs/READER-REVISION-WIRE.md
+          allowed='^(apps/reader/annotation-import/|tests/reader_annotation_import/|\.github/workflows/reader-annotation-import\.yml$|docs/READER-ANNOTATION-IMPORT\.md$|docs/validation/reader-annotation-import\.json$)'
+          changed=$(git diff --name-only "$START" HEAD)
+          bad=$(printf '%s\n' "$changed" | sed '/^$/d' | grep -Ev "$allowed" || true)
+          test -z "$bad" || { echo "unowned path: $bad"; exit 1; }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the existing build tool version
+        run: python -m pip install ninja==1.11.1.1
+      - name: Enter the native Windows compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Install the one product SQLite provider and the unchanged revision module
+        run: |
+          mkdir -p build/ai-logs
+          git rev-parse HEAD > build/ai-logs/source.txt
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "AE_WS=$ws" >> "$GITHUB_ENV"
+          echo "AE_PRODUCT=$ws/build/ai-product-stage" >> "$GITHUB_ENV"
+          echo "AE_STAGE=$ws/build/ai-stage" >> "$GITHUB_ENV"
+          echo "AE_SDK=$ws/build/reading-library/stage" >> "$GITHUB_ENV"
+          echo "AE_EXPORT=$ws/build/ai-export-stage" >> "$GITHUB_ENV"
+          cmake -S apps/reader/store/native -B build/ai-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/ai-product-stage" 2>&1 | tee build/ai-logs/product-configure.log
+          cmake --build build/ai-product --parallel 4 2>&1 | tee build/ai-logs/product-build.log
+          cmake --install build/ai-product 2>&1 | tee build/ai-logs/product-install.log
+          cmake -S apps/reader/revisions -B build/ai-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$ws/build/ai-product-stage" -DCMAKE_INSTALL_PREFIX="$ws/build/ai-stage" 2>&1 | tee build/ai-logs/revisions-configure.log
+          cmake --build build/ai-revisions --parallel 4 2>&1 | tee build/ai-logs/revisions-build.log
+          cmake --install build/ai-revisions 2>&1 | tee build/ai-logs/revisions-install.log
+      - name: Build and install the frozen reading SDK once
+        run: |
+          set -o pipefail
+          cmake --preset reading-library 2>&1 | tee build/ai-logs/sdk-configure.log
+          cmake --build --preset reading-library --parallel 4 2>&1 | tee build/ai-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/ai-logs/sdk-install.log
+      - name: Install the unchanged reading-state decoder and the optional export package
+        run: |
+          set -o pipefail
+          cmake -S apps/reader/reading-state -B build/ai-adapter -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$AE_SDK" -DCMAKE_PREFIX_PATH="$AE_STAGE;$AE_PRODUCT" -DCMAKE_INSTALL_PREFIX="$AE_STAGE" 2>&1 | tee build/ai-logs/adapter-configure.log
+          cmake --build build/ai-adapter --verbose 2>&1 | tee build/ai-logs/adapter-build.log
+          cmake --install build/ai-adapter 2>&1 | tee build/ai-logs/adapter-install.log
+          cmake -S apps/reader/annotation-export -B build/ai-package -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$AE_STAGE;$AE_PRODUCT;$AE_SDK" -DCMAKE_INSTALL_PREFIX="$AE_EXPORT" 2>&1 | tee build/ai-logs/export-configure.log
+          cmake --build build/ai-package --verbose 2>&1 | tee build/ai-logs/export-build.log
+          cmake --install build/ai-package 2>&1 | tee build/ai-logs/export-install.log
+      - name: Install optional default-OFF importer against only installed revisions
+        run: |
+          cmake -S apps/reader/annotation-import -B build/ai-import -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_ANNOTATION_IMPORT_BUILD=ON -DCMAKE_PREFIX_PATH="$AE_STAGE;$AE_PRODUCT" -DCMAKE_INSTALL_PREFIX="$AE_WS/build/ai-import-stage"
+          cmake --build build/ai-import --verbose
+          cmake --install build/ai-import
+          cmake -S apps/reader/annotation-import -B build/ai-default-off -G Ninja
+          test ! -f build/ai-default-off/libreader_annotation_import.a
+      - name: Compile independent C and C++ consumers from installed packages only
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_annotation_import/consumer -B build/ai-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$AE_WS/build/ai-import-stage;$AE_EXPORT;$AE_STAGE;$AE_PRODUCT;$AE_SDK" 2>&1 | tee build/ai-logs/consumer-configure.log
+          cmake --build build/ai-consumer --verbose 2>&1 | tee build/ai-logs/consumer-build.log
+      - name: Generate the corpus and judge exports with independent readers
+        run: |
+          set -o pipefail
+          exe=""
+          if [ "$RUNNER_OS" = Windows ]; then exe=".exe"; fi
+          python tests/reader_annotation_export/make_fixtures.py build/ai-fixtures 2>&1 | tee build/ai-logs/fixtures.log
+          python tests/reader_annotation_import/check_import.py --probe "build/ai-consumer/annotation-import-probe$exe" --c-consumer "build/ai-consumer/annotation-import-c$exe" --fixtures build/ai-fixtures --output build/ai-evidence --package build/ai-import-stage 2>&1 | tee build/ai-logs/checks.log
+      - name: Preserve source-bound corpus, databases, outputs, packages and every failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-annotation-import-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/ai-logs/
+            build/ai-fixtures/
+            build/ai-evidence/
+            build/ai-export-stage/
+            build/ai-import-stage/
+            build/ai-consumer/annotation-import-probe*
+            build/ai-consumer/annotation-import-c*
+            build/ai-consumer/annotation-import-link.map
+            build/ai-package/CMakeCache.txt
+          if-no-files-found: error
+  evidence:
+    name: same-run artifact evidence
+    needs: consumer
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify artifact ids, bytes, digests, reports and cross-platform output identity in the cloud
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_annotation_import/check_artifacts.py build/ai-artifact-evidence
+      - name: Preserve the artifact verification record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-annotation-import-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/ai-artifact-evidence/
+          if-no-files-found: error

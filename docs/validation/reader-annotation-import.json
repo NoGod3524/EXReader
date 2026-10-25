@@ -1,0 +1,14 @@
+{
+  "package": "D04",
+  "branch": "codex/dot-reader-annotation-import",
+  "accepted": false,
+  "measured_capability_passed": false,
+  "status": "implementation awaiting Actions-only validation",
+  "tested_sha": null,
+  "gaps": [
+    "Original G05 JSONL retains head wires only, not non-head ancestor wires; full graph restore from this input is impossible on a fresh target",
+    "Advisory book_title/selection/tombstone/graph fields are delivered intact through callbacks but cannot be persisted as original revision entities without inventing identities",
+    "No host import UI acceptance"
+  ],
+  "retained_failures": []
+}
