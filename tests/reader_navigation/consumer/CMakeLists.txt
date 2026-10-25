@@ -10,7 +10,8 @@ endif()
 # Installed packages only: the optional navigation package and, through it, the frozen
 # SDK core. No product catalog, revision store, SQLite or reading-state module is linked.
 find_package(EXReaderNavigation 0.1.0 EXACT CONFIG REQUIRED)
-find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED COMPONENTS core pdf)
+set(EXR_SDK_VERSION "3.40.0" CACHE STRING "Exact installed SDK version used by navigation")
+find_package(EXReader ${EXR_SDK_VERSION} EXACT CONFIG REQUIRED COMPONENTS core pdf)
 add_executable(navigation-c-consumer api.c)
 set_target_properties(navigation-c-consumer PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(navigation-c-consumer PRIVATE EXReaderNavigation::reader_navigation)
