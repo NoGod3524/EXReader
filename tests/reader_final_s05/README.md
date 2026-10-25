@@ -18,12 +18,16 @@ that generated bundle.
 Run locally only to read the code: every build, test, syntax check, fixture
 generation, screenshot and artifact download happens in
 `.github/workflows/reader-final-s05.yml`.
-# Root review, source only
+# Root review, accepted simulator bundle-byte scope
 
 `codex/reader-fw-s05-root-review` starts at submitted S05 `ccef845e` and pins the
 successful producer `5ac5e1fa4cf6dcbfe81ea14b9f64b6288470164a`, run40217963443 /
-attempt1. This revision has not been executed. The original DS worktree and its
-runs are untouched; no local syntax/build/test or expensive Mac CI is started.
+attempt1. Implementation `d0a3971d0ee1254b24e4f5f9bc4503ebff3844ab` passed
+run40226594342/attempt1 on its first full Actions round: all six jobs, both real
+producer bundle-byte/copy/install/launch checks, original15 classification
+controls, new evidence-chain negatives and strict same-run authentication.
+The original DS worktree is untouched; no local syntax/build/test or artifact
+parsing was run. Exact evidence and limited grants are in the package contract.
 
 The new `identity.py` authenticates the producer's exact attempt, five jobs and
 per-device original ZIP pins, and S05's own same-run upstream ZIPs. `bundle_copy.py`
@@ -41,7 +45,7 @@ staged and installed observations agree. No chmod or resign is applied to a
 producer app. A missing executable bit or install failure stays a real failure.
 The binary-only/ad-hoc signature facts and no-device-signing scope remain.
 
-After source review, root may explicitly dispatch the existing workflow on the
-root-review branch. It uses the new fixed defaults; no producer rebuilding is
-needed. This branch is not in the original S05 push trigger. New S05 acceptance
-requires its own actual run, artifact authentication and evidence-only seal.
+The isolated workflow now triggers only its root-review branch/path; source and
+producer remain separate. This evidence seal changes Markdown/JSON only. Original
+mode/link fidelity, bundle signing, devices, screen readers, performance and the
+complete product are outside the accepted bundle-byte/simulator-install scope.

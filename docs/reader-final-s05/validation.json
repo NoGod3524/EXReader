@@ -5,13 +5,40 @@
   "contract": "docs/reader-final-s05/CONTRACT.md",
   "implementation_start": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
   "branch": "codex/reader-fw-s05-root-review",
-  "executed": false,
-  "accepted": false,
+  "executed": true,
+  "accepted": true,
   "source": {
-    "tested_sha": null,
+    "tested_sha": "d0a3971d0ee1254b24e4f5f9bc4503ebff3844ab",
     "docs_sha": null,
-    "run_id": null,
-    "attempt": null
+    "run_id": 40226594342,
+    "attempt": 1
+  },
+  "scope": "authenticated original iPhone/iPad simulator bundle bytes, staged copies and clean installation/actual program launch only",
+  "evidence": {
+    "conclusion": "success",
+    "jobs": [
+      {"id": 121269154902, "name": "Verifier fixture and mutant controls", "conclusion": "success"},
+      {"id": 121269155000, "name": "Authenticate designated producer iphone", "conclusion": "success"},
+      {"id": 121269155217, "name": "Authenticate designated producer ipad", "conclusion": "success"},
+      {"id": 121269891846, "name": "Clean simulator install smoke ipad", "conclusion": "success"},
+      {"id": 121269891867, "name": "Clean simulator install smoke iphone", "conclusion": "success"},
+      {"id": 121273193815, "name": "Aggregate S05 evidence", "conclusion": "success"}
+    ],
+    "artifacts": [
+      {"id": 12611273821, "name": "s05-harness-40226594342-1", "bytes": 163376, "digest": "sha256:ad0de45ba8290ec06b50d3cda97ef946a385ede9d0aa5adc2174f0b91c8790e6", "expires_at": "2026-11-08T19:35:31Z"},
+      {"id": 12611765260, "name": "s05-intake-iphone-40226594342-1", "bytes": 27985656, "digest": "sha256:93d68984b1e7e979945ea7bbe7e50e3fcb695ad4ee4785f23a3114f989a53a10", "expires_at": "2026-11-08T19:36:04Z"},
+      {"id": 12610884735, "name": "s05-intake-ipad-40226594342-1", "bytes": 27985664, "digest": "sha256:f9d7a456a355f8686d5040a38097b32b76938fb440edb7e3de7ac89fd700b0da", "expires_at": "2026-11-08T19:36:30Z"},
+      {"id": 12612550491, "name": "s05-smoke-iphone-40226594342-1", "bytes": 83618, "digest": "sha256:8dd3e4ee38630d17a59073dbffe4cffe2a404a91b4719d607ef4db230d75c703", "expires_at": "2026-11-08T19:50:15Z"},
+      {"id": 12611671612, "name": "s05-smoke-ipad-40226594342-1", "bytes": 97714, "digest": "sha256:ea60689acbc5578648f69648d7c6f3302ca60d26bf5d85b87fe8a90dabbc8f79", "expires_at": "2026-11-08T19:47:53Z"},
+      {"id": 12611776623, "name": "s05-summary-40226594342-1", "bytes": 12764, "digest": "sha256:26a0a5c115784ab4e427292f155eaab5cd3386cc6b27de6400f607a018710fa5", "expires_at": "2026-11-08T19:50:30Z"}
+    ],
+    "original_fixture_classification_cases": 15,
+    "original_fixture_classification_mismatches": [],
+    "new_named_refusal_checks": 10,
+    "strict_authenticated_upstream_zip_count": 5,
+    "strict_results": 6,
+    "strict_device_intakes": 2,
+    "rounds_used": 1
   },
   "producer": {
     "workflow": ".github/workflows/reader-apple-raw3-ios-ready.yml",
@@ -19,7 +46,7 @@
     "attempt": 1,
     "head_sha": "5ac5e1fa4cf6dcbfe81ea14b9f64b6288470164a",
     "conclusion": "success",
-    "eligible": null,
+    "eligible": true,
     "artifacts": [
       {"id": 12608976777, "name": "apple-raw3-ios-iphone-40217963443-1", "bytes": 152515213, "digest": "sha256:06cf2e467ce225e927b32f36dccf7febe93fc15bc60fc0d5450cfc56b068f49f", "expires_at": "2027-01-23T17:45:06Z"},
       {"id": 12608483488, "name": "apple-raw3-ios-ipad-40217963443-1", "bytes": 186145203, "digest": "sha256:2a37546c8d0bbcb8f171e6f2292bb3d2a94fa24e2ea07d4dcdd12ffe07fd7ead", "expires_at": "2027-01-23T17:45:06Z"}
@@ -54,16 +81,24 @@
   },
   "device_classes": {
     "iphone": {
-      "fixture_capability": null,
-      "producer_manifest": null,
-      "install_smoke": null,
-      "granted": false
+      "fixture_capability": true,
+      "producer_manifest": true,
+      "install_smoke": "pass",
+      "granted": true,
+      "files": 24,
+      "bundle_bytes": 48675556,
+      "program_sha256": "d1dac59d708f2f09cd3d125912d114f125327746eafaa957f5374ae30a3a0a01",
+      "info_plist_sha256": "91ad4be23fba41b207cda38b7976c2a91fa7ae60ece3c8d4593f320efa00c344"
     },
     "ipad": {
-      "fixture_capability": null,
-      "producer_manifest": null,
-      "install_smoke": null,
-      "granted": false
+      "fixture_capability": true,
+      "producer_manifest": true,
+      "install_smoke": "pass",
+      "granted": true,
+      "files": 24,
+      "bundle_bytes": 48675508,
+      "program_sha256": "056d8f96ceddeff9c3ca0517b2f36f73d642eb8c974cb179ec37c614dd315abd",
+      "info_plist_sha256": "91ad4be23fba41b207cda38b7976c2a91fa7ae60ece3c8d4593f320efa00c344"
     }
   },
   "grants": {
@@ -73,16 +108,20 @@
     "simulator": true
   },
   "pending": [
-    "root review implementation has not been executed; no new S05 acceptance is granted",
-    "the successful producer is designated, but new whole-bundle and same-run evidence checks await Actions",
     "original producer mode and symlink metadata were not recorded; preservation remains pending",
     "device signing, App Store delivery and physical device runs are outside this package"
   ],
   "notes": [
-    "root review is source-only; no local build, syntax test, artifact parsing or expensive Mac CI was run",
+    "the complete first Actions round passed; no local build, syntax test or artifact parsing was run",
     "original 72 run failure and artifact identities remain under previous_failed_producer",
     "fixtures are generated inside the Actions job only",
     "a fixture proves the verifier, never the product",
     "the original failed run log and artifact identity are recorded in docs/reader-final-s05/CONTRACT.md"
-  ]
+  ],
+  "original_modes_links_accepted": false,
+  "original_modes_links_status": "pending",
+  "producer_signature": {"state": "ad-hoc", "verify": false, "bundle_sealed": false, "established": false},
+  "complete_product": false,
+  "performance_accepted": false,
+  "docs_only_paths": ["docs/reader-final-s05/CONTRACT.md", "docs/reader-final-s05/validation.json", "tests/reader_final_s05/README.md"]
 }

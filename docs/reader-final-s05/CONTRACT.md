@@ -1,8 +1,8 @@
 # S05 iPhone/iPad 模拟器分发核验契约
 
-## root只读审查后的独立修订（未执行）
+## root审查后的独立修订与实际结果
 
-独立分支 `codex/reader-fw-s05-root-review` 从S05已提交 `ccef845e9f5cfe8c5a810d1ea7d4dedfce2c3214` 建立；不改原DS工作树，不启动Mac CI。下面§6保留的是旧72失败历史；当前默认producer是成功source `5ac5e1fa4cf6dcbfe81ea14b9f64b6288470164a` / run `40217963443` / attempt1 / `.github/workflows/reader-apple-raw3-ios-ready.yml`。iPhone工件12608976777（152515213B、`06cf2e467ce225e927b32f36dccf7febe93fc15bc60fc0d5450cfc56b068f49f`），iPad12608483488（186145203B、`2a37546c8d0bbcb8f171e6f2292bb3d2a94fa24e2ea07d4dcdd12ffe07fd7ead`），有效期均 `2027-01-23T17:45:06Z`。原成功producer不替代本修订自己的未执行验收。
+独立分支 `codex/reader-fw-s05-root-review` 从S05已提交 `ccef845e9f5cfe8c5a810d1ea7d4dedfce2c3214` 建立；原DS工作树未改。下面§6保留的是旧72失败历史；当前默认producer是成功source `5ac5e1fa4cf6dcbfe81ea14b9f64b6288470164a` / run `40217963443` / attempt1 / `.github/workflows/reader-apple-raw3-ios-ready.yml`。iPhone工件12608976777（152515213B、`06cf2e467ce225e927b32f36dccf7febe93fc15bc60fc0d5450cfc56b068f49f`），iPad12608483488（186145203B、`2a37546c8d0bbcb8f171e6f2292bb3d2a94fa24e2ea07d4dcdd12ffe07fd7ead`），有效期均 `2027-01-23T17:45:06Z`。该producer身份与下述S05工具受测身份分开记录。
 
 本修订只加强本包证据链：
 
@@ -12,7 +12,22 @@
 4. 所有结果记录implementation SHA/run/attempt。summary重新认证本轮五个上游成功作业及五份原ZIP；核对API digest、大小、未来有效期、唯一名称/source/run，下载重算ZIP，拒绝重复/缺失/跨轮JSON；完整检查两份producer intake、四份fixture结果与两份producer结果及bundle/install事实。汇总不再从目录任意取第一份或覆盖重复设备结果；只有实际producer授予成立才exit0。
 5. 新增最小纯证据负例（只在Actions）：跨attempt、工件归属/大小/digest/有效期、资源/模式变更、错误PID/程序路径、未密封authority签名不能established、重复/缺失结果。原fixture、15个分类mutant、模拟器预算与原签名事实保留。
 
-新工具未执行：`executed=false/accepted=false`。原host、SDK、原producer的测试/裁判/预算均未改。独立分支push不匹配原push分支，完整Mac运行由root之后明确触发。
+root随后授权本分支云端运行。受测实现 `d0a3971d0ee1254b24e4f5f9bc4503ebff3844ab`，[run40226594342](https://github.com/NoGod3524/EXReader/actions/runs/40226594342) / attempt1，首轮6作业全部success：fixture/classification121269154902、intake iPhone121269155000 / iPad121269155217、实际干净安装 iPhone121269891867 / iPad121269891846、严格汇总121273193815。原15项分类符合各自明确预期，新增10项具名拒绝与PID/路径/签名断言通过。
+
+两个实际producer均 `manifest_complete=true`、安装烟测pass、`granted=true/blocked_by=[]`；严格汇总重新认证5份同轮上游ZIP、唯一6结果/两份intake及全目录安装证据，输出 `accepted=true/problems=[]`。iPhone实际24文件48,675,556B，程序SHA `d1dac59d708f2f09cd3d125912d114f125327746eafaa957f5374ae30a3a0a01`；iPad24文件48,675,508B，程序SHA `056d8f96ceddeff9c3ca0517b2f36f73d642eb8c974cb179ec37c614dd315abd`；各自绑定各自原ZIP，Info.plist共同SHA `91ad4be23fba41b207cda38b7976c2a91fa7ae60ece3c8d4593f320efa00c344`。全部原bundle文件（含实际SDK动态库）身份和安装后清单保存在认证工件内。
+
+原包真实签名事实为ad-hoc、`verify=false/bundle_sealed=false/established=false`；两项pending为 `signature.verify` 与 `producer.original_modes_links_preservation`，未重签/改权限。汇总的accepted仅授全部原bundle字节、副本、干净模拟器安装与实际程序启动，不授原权限/链接保真、设备签名、读屏、真机、性能或完整产品。
+
+| 本轮工件 | ID | 字节 | SHA256 | 有效期 |
+| --- | ---: | ---: | --- | --- |
+| harness | 12611273821 | 163376 | `ad0de45ba8290ec06b50d3cda97ef946a385ede9d0aa5adc2174f0b91c8790e6` | 2026-11-08T19:35:31Z |
+| intake iPhone | 12611765260 | 27985656 | `93d68984b1e7e979945ea7bbe7e50e3fcb695ad4ee4785f23a3114f989a53a10` | 2026-11-08T19:36:04Z |
+| intake iPad | 12610884735 | 27985664 | `f9d7a456a355f8686d5040a38097b32b76938fb440edb7e3de7ac89fd700b0da` | 2026-11-08T19:36:30Z |
+| smoke iPhone | 12612550491 | 83618 | `8dd3e4ee38630d17a59073dbffe4cffe2a404a91b4719d607ef4db230d75c703` | 2026-11-08T19:50:15Z |
+| smoke iPad | 12611671612 | 97714 | `ea60689acbc5578648f69648d7c6f3302ca60d26bf5d85b87fe8a90dabbc8f79` | 2026-11-08T19:47:53Z |
+| summary | 12611776623 | 12764 | `26a0a5c115784ab4e427292f155eaab5cd3386cc6b27de6400f607a018710fa5` | 2026-11-08T19:50:30Z |
+
+封存仅更新本契约、验收JSON和测试目录README，运行源码仍为d0a3971d。原host、SDK、原producer的测试/裁判/预算未改，所有执行与工件下载解析均在Actions。
 
 固定实现起点 `0889f7d1e9a537c6c1b05456547e016b26e1cd85`，分支 `codex/reader-fw-s05`。
 本包只新增 `tests/reader_final_s05/`、`.github/workflows/reader-final-s05.yml`、`docs/reader-final-s05/` 与
