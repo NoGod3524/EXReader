@@ -1,0 +1,16 @@
+/* Instantiate unchanged installed consumers on explicit raw-capability APIs. */
+#include <reader_metadata.h>
+#include <reader_projection.h>
+#define reader_metadata_open reader_metadata_open_raw_v3
+#define reader_revisions_open reader_revisions_open_raw_v3
+#define reader_revision_validate reader_revision_validate_raw_v3
+#define reader_revision_local reader_revision_local_raw_v3
+#define reader_revision_get reader_revision_get_raw_v3
+#define reader_revision_heads reader_revision_heads_raw_v3
+#define reader_revision_book_identity reader_revision_book_identity_raw_v3
+#define reader_revision_local_project reader_revision_local_project_raw_v3
+#define reader_revision_project reader_revision_project_raw_v3
+#define reader_revision_selected reader_revision_selected_raw_v3
+#define reader_command_apply_book reader_command_apply_book_raw_v3
+#define reader_command_apply_group reader_command_apply_group_raw_v3
+#define reader_command_apply_membership reader_command_apply_membership_raw_v3
