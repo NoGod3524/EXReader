@@ -1,17 +1,55 @@
 {
-  "accepted": false,
+  "accepted": true,
   "adopted": false,
   "branch": "codex/reader-apple-raw3-android-receive",
   "base": "44eabdc86b3b84d986f81dbaf8cee92b1829cea8",
-  "source_sha": null,
+  "source_sha": "5062d5cd570eb9be9449e790895b5430d344d11d",
   "production_changed": false,
   "original_mac_judge_changed": false,
   "android_source": "4a04a9cc74dde67f755c87e87b278d63a254a3ac",
   "android_run": 40207467982,
   "android_attempt": 1,
   "android_manifest_sha256": "65a7c6e2be7a0d80e1a7c9eed3731383aa9bdbc71cfd09f89ce63861193b5345",
-  "runs": [],
-  "android_to_macos_receive_accepted": false,
+  "runs": [
+    {
+      "run_id": 40210925809,
+      "attempt": 1,
+      "source_sha": "5062d5cd570eb9be9449e790895b5430d344d11d",
+      "conclusion": "success",
+      "jobs": [
+        {"id": 121221773472, "name": "Actual macOS raw host and original controls", "conclusion": "success"},
+        {"id": 121224098177, "name": "Original unchanged macOS strict summary", "conclusion": "success"},
+        {"id": 121224143346, "name": "Actual authenticated Android to macOS receive", "conclusion": "success"},
+        {"id": 121224421216, "name": "summary", "conclusion": "success"}
+      ],
+      "artifacts": [
+        {"id": 12605523032, "name": "apple-raw3-native-40210925809-1", "size_in_bytes": 77055617, "digest": "sha256:101e88a6b3f6493fee5c320d1c5a6c3d2b512095f2bef4eed7e025bb20384ee5", "expires_at": "2027-01-23T16:16:56Z"},
+        {"id": 12606241221, "name": "apple-raw3-summary-40210925809-1", "size_in_bytes": 509, "digest": "sha256:efe414989943cfa344146104306582ff5903133272b05f43ada7099221eb4db1", "expires_at": "2027-01-23T16:16:56Z"},
+        {"id": 12605778060, "name": "apple-raw3-android-receive-40210925809-1", "size_in_bytes": 41839337, "digest": "sha256:e7d56df798b8d7cfe6b4c2682cf621a8f1139450ba73867cd8739bbb9d2cc136", "expires_at": "2027-01-23T16:16:56Z"},
+        {"id": 12606012685, "name": "apple-raw3-android-receive-summary-40210925809-1", "size_in_bytes": 1075, "digest": "sha256:08f89ffabac221789efb58cbd3aa277abe9075f3744ce6f1d1d8bcfbfdbf7297", "expires_at": "2027-01-23T16:16:56Z"}
+      ]
+    }
+  ],
+  "original_mac_controls": {"complete_raw_phases": 12, "compatibility_processes": 18, "owner_cases_per_sdk": 19, "java_policy_cases": 20, "unchanged_same_run_judge": true},
+  "receiver_program_sha256": "1e5f146efd993f21fd24d7ea8ed350ba854b403498761b1c2da06765a7ea2897",
+  "receiver_sdk_dso_sha256": "64fa27c57d88eebd0e348908c3f8831d900363a3220af7a24c80db00ee3f37e0",
+  "android_sender": {
+    "sender_zip": {"id": 12604233206, "size_in_bytes": 18682, "digest": "sha256:a38bffdb57ca35699e21b902def18a9d584a6055b7fbef41995e61b240c6168c", "expires_at": "2027-01-23T15:33:00Z"},
+    "native_zip": {"id": 12604412854, "size_in_bytes": 113970957, "digest": "sha256:c3db2ad1a2e31bc53d01620f2ef90e02a976e3b4f90ac76ed2e179c7c9052805", "expires_at": "2027-01-23T15:33:00Z"},
+    "apk_sha256": "860927a89eb7ab2e6ffcd93d596e7206a830f15d396be0e0135bf82bedb0b5f3",
+    "sdk_dso_sha256": "a345ab4c1def2e864a76b9e879da8a372e8821ad09b7991c8fe4e04626b2e8ac",
+    "revisions": 19, "originals": 4, "reading_records": 11,
+    "complete_original_graph": true, "verified_actual_APK_and_SDK": true
+  },
+  "phases": [
+    {"name": "actual-owner-receive", "mode": "receive", "pid": 2403, "found": 11},
+    {"name": "actual-owner-reopen", "mode": "receive", "pid": 2406, "found": 11},
+    {"name": "actual-native-HTTPS-receive", "mode": "session-receive", "pid": 3027, "found": 11},
+    {"name": "actual-native-HTTPS-reopen", "mode": "session-reopen", "pid": 3042, "found": 11}
+  ],
+  "actual_host_account_session": true,
+  "https_shards_per_sweep": 256,
+  "android_to_macos_receive_accepted": true,
   "same_source_bidirectional_accepted": false,
   "ios_ui_accepted": false,
   "physical_device_execution": false,
