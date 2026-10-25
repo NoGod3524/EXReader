@@ -88,9 +88,12 @@ def main():
         for kind,filename in FORMATS.items():
             profile=out/('profile-'+kind)
             app=P.App(args.candidate.resolve(),args.font.resolve(),profile);app.wait_idle()
+            app.wait(lambda:U.IsWindowVisible(app.window))
             if kind=='txt':
-                assert visible(app,119) and visible(app,126) and not any(visible(app,i) for i in (101,121,122,123,107,109))
-                shot('default-library.bmp');record('library-default-minimal')
+                state={identifier:visible(app,identifier) for identifier in (119,126,101,121,122,123,107,109)}
+                result['initial_visibility']=state;shot('default-library.bmp')
+                assert state[119] and state[126] and not any(state[i] for i in (101,121,122,123,107,109)),state
+                record('library-default-minimal')
                 menu=U.GetMenu(app.window)
                 assert U.GetMenuItemCount(menu)==4
                 assert {46001,46002,46003,46004,103,104,105,106,107,108,109,113,114,115,116,117,128,137,170,190,210,260}<=menu_ids(menu)
