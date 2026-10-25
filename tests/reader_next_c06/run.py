@@ -360,9 +360,9 @@ def raw_phase(raw, off, pdf, work):
     legacy_store = work / 'legacy-store.sqlite'
     expect(probe(off, 'make-store', 'legacy', legacy_store, work / 'books/txt.json').exit == 0, 'legacy store seeded for mixed-entry cases')
     old_on_raw = probe(raw, 'old-export', 'raw', sender, keys['pdf'], out / 'wrong-old.jsonl', out / 'wrong-old.md', label='old-export-on-raw')
-    expect(old_on_raw.status == EX_REVISION and not (out / 'wrong-old.jsonl').exists() and not (out / 'wrong-old.md').exists(), 'legacy export refuses a raw store with no output', old_on_raw.text)
+    expect(old_on_raw.status == EX_ARGUMENT and old_on_raw.value('REVISION').split()[0] == '1' and not (out / 'wrong-old.jsonl').exists() and not (out / 'wrong-old.md').exists(), 'legacy export refuses a raw store with no output', old_on_raw.text)
     raw_on_old = probe(raw, 'raw-export', 'legacy', legacy_store, 'txt:' + TXT_SHA, out / 'wrong-raw.jsonl', '-', 0, label='raw-export-on-legacy')
-    expect(raw_on_old.status == EX_REVISION and not (out / 'wrong-raw.jsonl').exists(), 'raw export refuses a legacy store with no output', raw_on_old.text)
+    expect(raw_on_old.status == EX_ARGUMENT and raw_on_old.value('REVISION').split()[0] == '1' and not (out / 'wrong-raw.jsonl').exists(), 'raw export refuses a legacy store with no output', raw_on_old.text)
     tiny = probe(raw, 'raw-export', 'raw', sender, keys['pdf'], out / 'tiny.jsonl', '-', 100, label='export-budget')
     expect(tiny.status == EX_LIMIT and not (out / 'tiny.jsonl').exists(), 'output budget breach publishes nothing', tiny.text)
     legacy_file = work / 'legacy-format.jsonl'
