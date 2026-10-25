@@ -16,6 +16,7 @@ RUNS = {
     40226933116: ('2bc682da196e8f737fa44b66fcc33dea69b442f8', {12612560327, 12612025078, 12611906192, 12611730900, 12611224502}),
     40227936319: ('255871b38f3b3252a917e920a11641255cc2b485', {12612590453, 12612361524, 12611907317, 12611802102, 12611697795}),
     40234424624: ('bfc6447798d533c4d5d5fe7ca02e9a54fc928999', None),
+    40235597650: ('ddb03807fc93f0aebcefbbbed124dd73831f4e3a', {12615025960, 12614124922}),
 }
 
 
@@ -25,17 +26,18 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     result = {'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
               'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'accepted': False,
-              'scope': 'authenticated historical artifacts only; no SDK candidate execution or acceptance', 'runs': []}
+              'scope': 'authenticated prior full and public-projection artifacts only; no SDK candidate execution or acceptance', 'runs': []}
     for run, (source, expected_ids) in RUNS.items():
         metadata = fetch(f'actions/runs/{run}/attempts/1')
-        assert metadata['head_sha'] == source and metadata['status'] == 'completed' and metadata['conclusion'] == 'failure'
+        expected_conclusion = 'success' if run == 40235597650 else 'failure'
+        assert metadata['head_sha'] == source and metadata['status'] == 'completed' and metadata['conclusion'] == expected_conclusion
         artifacts = fetch(f'actions/runs/{run}/artifacts?per_page=100')['artifacts']
         if expected_ids is not None:
             assert {row['id'] for row in artifacts} == expected_ids
         else:
             required = {f'reader-next-c04-{part}-{run}-1' for part in ('guard', 'diagnose', 'ubuntu-22.04', 'windows-latest')}
             assert required <= {row['name'] for row in artifacts} <= required | {f'reader-next-c04-aggregate-{run}-1'}
-        record = {'run_id': run, 'attempt': 1, 'source_sha': source, 'conclusion': 'failure', 'artifacts': []}
+        record = {'run_id': run, 'attempt': 1, 'source_sha': source, 'conclusion': metadata['conclusion'], 'artifacts': []}
         for artifact in artifacts:
             assert not artifact['expired'] and artifact['workflow_run']['head_sha'] == source and artifact['workflow_run']['id'] == run
             assert datetime.fromisoformat(artifact['expires_at'].replace('Z', '+00:00')) > datetime.now(timezone.utc)
@@ -60,7 +62,7 @@ def main():
                     target.parent.mkdir(parents=True, exist_ok=True)
                     target.write_bytes(data)
                     basename = path.name
-                    if basename in ('compare.json', 'summary-base.json', 'summary-cand.json', 'aggregate.json', 'guard.json', 'scan.json') or \
+                    if basename in ('compare.json', 'summary-base.json', 'summary-cand.json', 'aggregate.json', 'guard.json', 'scan.json', 'projection.json', 'identity.txt', 'program-hashes.txt', 'open.json') or \
                             basename.startswith('boundary-') or basename.endswith(('.stderr.txt', '.stdout.json', '.exit')):
                         try:
                             value = json.loads(data)
@@ -69,6 +71,11 @@ def main():
                         entry['files'][name] = value
                         if run == 40234424624 and basename == 'compare.json':
                             print('C04-ROOT-COMPARE ' + json.dumps({'artifact': artifact['name'], 'files': value['files']}, ensure_ascii=False), flush=True)
+                        if run == 40235597650 and basename == 'projection.json':
+                            assert value['source_sha'] == source and value['run_id'] == run and value['attempt'] == 1
+                            assert value['text_sha256'] == '3335a98106684c882c5f5737db2e6d8bd13e7bb8631ecf9cbbde9ac9c18dadef'
+                            assert value['exact_query_offset'] == value['casefold_query_offset'] == value['whitespace_collapsed_query_offset'] == -1
+                            print('C04-AUTHENTICATED-PROJECTION ' + json.dumps(value, ensure_ascii=False), flush=True)
             record['artifacts'].append(entry)
             # Never concatenate boundary-base.err and boundary-cand.err: an
             # expected base refusal must remain distinguishable from candidate failure.
