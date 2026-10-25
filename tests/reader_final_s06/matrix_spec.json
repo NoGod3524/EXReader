@@ -1,0 +1,144 @@
+{
+  "schema": 1,
+  "kind": "reader-final-s06-matrix-spec",
+  "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+  "layers": {
+    "module": "Installed package calls only: no operating-system handoff is performed.",
+    "host": "The probe also performs the real operating-system handoff (clipboard/pasteboard through the installed adapter) before importing."
+  },
+  "targets": [
+    {
+      "id": "windows",
+      "runner": "windows-2022",
+      "measured_by": "s06-matrix-probe",
+      "producer": "tests/reader_final_s06 (this workflow)",
+      "expects_evidence": true
+    },
+    {
+      "id": "linux",
+      "runner": "ubuntu-22.04",
+      "measured_by": "s06-matrix-probe",
+      "producer": "tests/reader_final_s06 (this workflow)",
+      "expects_evidence": true
+    },
+    {
+      "id": "macos",
+      "runner": "macos-15",
+      "measured_by": "s06-matrix-probe",
+      "producer": "tests/reader_final_s06 (this workflow)",
+      "expects_evidence": true
+    },
+    {
+      "id": "android",
+      "runner": "ubuntu-latest + API34 x86_64 emulator",
+      "measured_by": null,
+      "producer": "tests/reader_android_import_entry (J04) on its own runner",
+      "expects_evidence": false,
+      "pending_reason": "No job in this workflow builds or drives the Android host. The Android entry (content VIEW / SEND / SEND_MULTIPLE / ACTION_OPEN_DOCUMENT through a real DocumentsProvider) belongs to the J04 producer and needs its Gradle plus emulator run; a module-level import on an Android toolchain would not be host evidence, so this target stays pending instead of being filled."
+    },
+    {
+      "id": "iphone",
+      "runner": "macos-15 + iOS Simulator",
+      "measured_by": null,
+      "producer": "tests/apple_host/import_mapping UI suite on its own runner",
+      "expects_evidence": false,
+      "pending_reason": "No job in this workflow builds the iOS application, so no simulator document-open or share-sheet handoff was executed for this target. The Apple import-mapping producer owns that run and Apple host close-out is reserved to the integration owner."
+    },
+    {
+      "id": "ipad",
+      "runner": "macos-15 + iPad Simulator",
+      "measured_by": null,
+      "producer": "tests/apple_host/import_mapping UI suite on its own runner",
+      "expects_evidence": false,
+      "pending_reason": "Same as iphone: no iPad simulator build, launch or document-open handoff was executed in this run."
+    }
+  ],
+  "cells": [
+    {
+      "id": "local_file",
+      "title": "Local file import",
+      "layer_required": "host",
+      "required_cases": [
+        "local_file_private_path_import",
+        "local_file_utf8_path_import",
+        "local_file_source_route_cbz",
+        "local_file_original_readback_exact"
+      ]
+    },
+    {
+      "id": "system_open_share",
+      "title": "System open / share handoff",
+      "layer_required": "host",
+      "required_cases": [
+        "system_handoff_delivers_file",
+        "system_handoff_imports_delivered_file",
+        "system_handoff_directory_ignored",
+        "system_handoff_missing_path_rejected",
+        "system_handoff_multi_file_all_delivered"
+      ]
+    },
+    {
+      "id": "cloud_download_to_sideload",
+      "title": "Cloud download then sideload",
+      "layer_required": "host",
+      "required_cases": [
+        "cloud_download_matches_pinned_fixture",
+        "cloud_download_import_new_book",
+        "cloud_download_duplicate_matches_local_book"
+      ]
+    },
+    {
+      "id": "duplicate_same_original",
+      "title": "Already present identical original",
+      "layer_required": "host",
+      "required_cases": [
+        "duplicate_same_path_created_zero",
+        "duplicate_renamed_copy_created_zero",
+        "duplicate_preserves_title_progress_notes",
+        "duplicate_cancel_retains_old_book"
+      ]
+    },
+    {
+      "id": "bad_file",
+      "title": "Bad file",
+      "layer_required": "host",
+      "required_cases": [
+        "bad_truncated_rejected",
+        "bad_garbage_rejected",
+        "bad_empty_rejected",
+        "bad_missing_path_rejected",
+        "bad_zero_rows_after_rejection"
+      ]
+    },
+    {
+      "id": "nine_formats_original_identity",
+      "title": "Nine formats, original bytes and private mapping",
+      "layer_required": "module",
+      "required_cases": [
+        "format_txt_import_readback_dedupe",
+        "format_html_import_readback_dedupe",
+        "format_fb2_import_readback_dedupe",
+        "format_epub_import_readback_dedupe",
+        "format_docx_import_readback_dedupe",
+        "format_rtf_import_readback_dedupe",
+        "format_mobi_import_readback_dedupe",
+        "format_pdf_import_readback_dedupe",
+        "format_cbz_import_readback_dedupe",
+        "nine_formats_all_nine_measured",
+        "nine_formats_library_reopen"
+      ]
+    },
+    {
+      "id": "entry_cancel_and_reopen",
+      "title": "Cancel before commit, committed wins, export mapping and reopen",
+      "layer_required": "module",
+      "required_cases": [
+        "cancel_before_commit_zero_rows",
+        "cancel_before_commit_stream_zero_rows",
+        "original_export_matches_sha256",
+        "original_export_atomic_no_overwrite",
+        "committed_result_survives_reopen"
+      ]
+    }
+  ]
+}

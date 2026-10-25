@@ -1,0 +1,231 @@
+name: Reader final S06 import entry matrix
+# Six-target import-entry matrix. Only the three desktop targets run here; the
+# mobile targets stay pending with their reason recorded in
+# tests/reader_final_s06/matrix_spec.json and never inherit a module result.
+on:
+  push:
+    branches: [codex/reader-fw-s06]
+    paths:
+      - 'tests/reader_final_s06/**'
+      - '.github/workflows/reader-final-s06.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+env:
+  IMPLEMENTATION_BASE: 0889f7d1e9a537c6c1b05456547e016b26e1cd85
+
+jobs:
+  guard:
+    name: ownership, syntax and compiler protocol
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Require this exact source on the implementation base
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$IMPLEMENTATION_BASE" HEAD
+      - name: Reject any change outside the S06 owned paths
+        run: |
+          bad=0
+          for path in $(git diff --name-only "$IMPLEMENTATION_BASE" HEAD); do
+            case "$path" in
+              tests/reader_final_s06/*) ;;
+              docs/reader-final-s06/*) ;;
+              .github/workflows/reader-final-s06.yml) ;;
+              HANDOFF-RESULT.md) ;;
+              *) echo "outside the S06 ownership list: $path"; bad=1 ;;
+            esac
+          done
+          test "$bad" -eq 0
+      - name: Compile the tooling and run the negative compiler protocol
+        run: |
+          python3 -m py_compile tests/reader_final_s06/matrix.py tests/reader_final_s06/normalize.py
+          python3 tests/reader_final_s06/matrix.py selftest \
+            --spec tests/reader_final_s06/matrix_spec.json --output build/s06-guard
+      - name: Preserve the guard output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-final-s06-guard-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/s06-guard/
+          if-no-files-found: warn
+
+  evidence:
+    name: import entry (${{ matrix.target }})
+    needs: guard
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      # At most two platform jobs of this package run at the same time.
+      max-parallel: 2
+      matrix:
+        include:
+          - os: windows-2022
+            target: windows
+          - os: ubuntu-22.04
+            target: linux
+          - os: macos-15
+            target: macos
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the build tool the repository already uses
+        run: python -m pip install ninja==1.11.1.1
+      - name: Enter the Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c """$bat"" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Install GTK3, a virtual display and pkg-config
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev pkg-config xvfb xauth
+      - name: Record the source and workspace form
+        run: |
+          mkdir -p build/s06-logs "build/s06-evidence/${{ matrix.target }}"
+          git rev-parse HEAD > "build/s06-evidence/${{ matrix.target }}/source.txt"
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "WS=$ws" >> "$GITHUB_ENV"
+          echo "EVIDENCE=$ws/build/s06-evidence/${{ matrix.target }}" >> "$GITHUB_ENV"
+      - name: Build and install the frozen SDK
+        run: |
+          set -o pipefail
+          cmake --preset reading-library 2>&1 | tee build/s06-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/s06-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/s06-logs/sdk-install.log
+      - name: Build and install the independent sideload and drop packages
+        run: |
+          set -o pipefail
+          cmake -S extras/sideload -B build/s06-sideload -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DEXR_SDK="$WS/build/reading-library/stage" \
+            -DCMAKE_INSTALL_PREFIX="$WS/build/s06-sideload-stage" 2>&1 | tee build/s06-logs/sideload-configure.log
+          cmake --build build/s06-sideload 2>&1 | tee build/s06-logs/sideload-build.log
+          cmake --install build/s06-sideload 2>&1 | tee build/s06-logs/sideload-install.log
+          cmake -S extras/desktop-drop -B build/s06-drop -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$WS/build/s06-drop-stage" 2>&1 | tee build/s06-logs/drop-configure.log
+          cmake --build build/s06-drop 2>&1 | tee build/s06-logs/drop-build.log
+          cmake --install build/s06-drop 2>&1 | tee build/s06-logs/drop-install.log
+      - name: Build the matrix probe from the installed packages only
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_final_s06 -B build/s06-probe -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$WS/build/reading-library/stage;$WS/build/s06-sideload-stage;$WS/build/s06-drop-stage" \
+            2>&1 | tee build/s06-logs/probe-configure.log
+          cmake --build build/s06-probe --parallel 4 2>&1 | tee build/s06-logs/probe-build.log
+      - name: Download two pinned fixtures over HTTPS from the pinned commit
+        run: |
+          mkdir -p "$EVIDENCE/cloud"
+          for name in sample.epub pdf-public.pdf; do
+            curl -fsSL --retry 3 --retry-delay 2 -o "$EVIDENCE/cloud/$name" \
+              "https://raw.githubusercontent.com/NoGod3524/EXReader/$IMPLEMENTATION_BASE/tests/fixtures/$name"
+            if ! diff -q "$EVIDENCE/cloud/$name" "$WS/tests/fixtures/$name"; then
+              echo "the downloaded $name is not the pinned fixture"
+              exit 1
+            fi
+            if command -v sha256sum >/dev/null 2>&1; then sha256sum "$EVIDENCE/cloud/$name"; else shasum -a 256 "$EVIDENCE/cloud/$name"; fi
+          done
+      - name: Run the real entry matrix for this platform
+        env:
+          NO_AT_BRIDGE: '1'
+          GTK_A11Y: none
+        run: |
+          set +e
+          probe="$PWD/build/s06-probe/s06-matrix-probe"
+          if [ "$RUNNER_OS" = Windows ]; then probe="$probe.exe"; fi
+          mkdir -p "$EVIDENCE/probe"
+          cp "$probe" "$EVIDENCE/probe/"
+          if [ "$RUNNER_OS" = Linux ]; then
+            xvfb-run -a --server-args="-screen 0 1280x1024x24" \
+              "$probe" --fixtures "$WS/tests/fixtures" --work "$EVIDENCE" \
+              --platform "${{ matrix.target }}" --cloud "$EVIDENCE/cloud" \
+              > "$EVIDENCE/probe.jsonl" 2> "$EVIDENCE/probe-stderr.log"
+          else
+            "$probe" --fixtures "$WS/tests/fixtures" --work "$EVIDENCE" \
+              --platform "${{ matrix.target }}" --cloud "$EVIDENCE/cloud" \
+              > "$EVIDENCE/probe.jsonl" 2> "$EVIDENCE/probe-stderr.log"
+          fi
+          status=$?
+          printf '%s\n' "$status" > "$EVIDENCE/probe.exit"
+          echo "probe exit=$status"
+          tail -n 6 "$EVIDENCE/probe.jsonl" || true
+      - name: Bind the evidence to this source, run, attempt and binary
+        run: |
+          python3 - "$EVIDENCE" "${{ matrix.target }}" <<'PY'
+          import hashlib, json, os, sys
+          root, platform = sys.argv[1], sys.argv[2]
+          probe = os.path.join(root, "probe", "s06-matrix-probe")
+          if not os.path.isfile(probe):
+              probe = os.path.join(root, "probe", "s06-matrix-probe.exe")
+          digest = hashlib.sha256(open(probe, "rb").read()).hexdigest() if os.path.isfile(probe) else ""
+          record = {
+              "platform": platform,
+              "source_sha": os.environ["GITHUB_SHA"],
+              "run_id": os.environ["GITHUB_RUN_ID"],
+              "attempt": os.environ["GITHUB_RUN_ATTEMPT"],
+              "job": os.environ.get("GITHUB_JOB", ""),
+              "runner": os.environ["RUNNER_OS"],
+              "layer": "host",
+              "probe_sha256": digest,
+              "probe_bytes": os.path.getsize(probe) if os.path.isfile(probe) else 0,
+          }
+          open(os.path.join(root, "identity.json"), "w").write(json.dumps(record, indent=2, sort_keys=True) + "\n")
+          print(json.dumps(record, indent=2, sort_keys=True))
+          PY
+      - name: Preserve the source-bound evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-final-s06-evidence-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/s06-evidence/
+          if-no-files-found: warn
+
+  report:
+    name: strict same-run matrix
+    needs: [guard, evidence]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: reader-final-s06-evidence-*
+          path: build/s06-download
+      - name: Normalise the downloaded evidence
+        run: |
+          python3 -m py_compile tests/reader_final_s06/matrix.py tests/reader_final_s06/normalize.py
+          python3 tests/reader_final_s06/normalize.py --input build/s06-download --output build/s06-evidence
+      - name: Compile the six-target matrix
+        run: |
+          python3 tests/reader_final_s06/matrix.py compile \
+            --spec tests/reader_final_s06/matrix_spec.json \
+            --evidence build/s06-evidence --output build/s06-report
+      - name: Preserve the matrix report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-final-s06-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/s06-report/
+          if-no-files-found: error

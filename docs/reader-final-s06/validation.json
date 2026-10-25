@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "kind": "reader-final-s06-validation",
+  "package": "S06",
+  "title": "六目标导入入口真实回归矩阵",
+  "branch": "codex/reader-fw-s06",
+  "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+  "tested_implementation_source": null,
+  "docs_archive_source": null,
+  "workflow": ".github/workflows/reader-final-s06.yml",
+  "run": null,
+  "jobs": [],
+  "artifacts": [],
+  "matrix": {
+    "spec": "tests/reader_final_s06/matrix_spec.json",
+    "targets": 6,
+    "cells_per_target": 7,
+    "measured_targets": [],
+    "pending_targets": [
+      "android",
+      "iphone",
+      "ipad"
+    ],
+    "result": "not_run"
+  },
+  "checked": [],
+  "failures": [],
+  "not_verified": [
+    "android host entry (content VIEW / SEND / SEND_MULTIPLE / ACTION_OPEN_DOCUMENT through a real DocumentsProvider)",
+    "iphone simulator document-open and share handoff",
+    "ipad simulator document-open and share handoff",
+    "physical device, screen reader, USB transfer and performance budgets",
+    "native picker interaction and a pointer-device drag gesture",
+    "the cloud-import transport product path (owned by the cloud-import producers)"
+  ],
+  "accepted": false,
+  "task_wide_accepted": false,
+  "note": "Written before the first Actions run. accepted stays false and tested_implementation_source stays null until the same-run evidence and artifact identities are recorded here."
+}
