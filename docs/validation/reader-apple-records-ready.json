@@ -1,0 +1,15 @@
+{
+  "accepted": false,
+  "branch": "codex/reader-apple-records-ready",
+  "fixed_preparation_source": "7c457fb68a24d917ac3bd60aa1f961b16fe9ae6b",
+  "source_sha": null,
+  "runs": [],
+  "original_cases_per_platform": 7,
+  "original_native_checks": 19,
+  "sdk_targets": 2,
+  "production_changed": false,
+  "original_tests_and_judges_changed": false,
+  "raw3_ios_accepted": false,
+  "physical_device_execution": false,
+  "complete_product": false
+}
