@@ -638,7 +638,7 @@ int main(int argc, char **argv) {
       int result = reader_catalog_query_page(catalog, nullptr, nullptr, pointer, 1, 200, collect_row, &found, &error);
       page_record(name, result, found, error);
     };
-    query_record("attach.query.ascii", "query.ascii", 2);
+    query_record("attach.query.ascii", "query.ascii", 1);
     query_record("attach.query.unicode", "query.unicode", 1);
     query_record("attach.query.nfd", "book.2.title", 1);
     query_record("attach.query.empty", "", 3);

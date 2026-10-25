@@ -529,18 +529,25 @@ c_put("c.metadata.empty", status=0, found=0, rows=0, joined="")
 c_put("c.metadata.null", status=21, found=0, rows=0, joined="")
 
 # ------------------------------------------------------------------ output
+KINDS = {}
+
+
 def write_container(path):
     payload = bytearray(b"S121")
     payload += struct.pack("<II", 1, 0)
     records = []
     for name, text in TEXT_ITEMS.items():
         records.append((name, 1, text.encode("utf-16-le")))
+        KINDS[name] = 1
     records.append(("nul.product", 2, (FILE_NOTADB + "\x00" + "tail").encode("utf-16-le")))
+    KINDS["nul.product"] = 2
     for name, units in UNIT_ITEMS.items():
         raw = b"".join(struct.pack("<H", unit) for unit in units)
         records.append((name, 1, raw))
+        KINDS[name] = 1
     for name, text in ASCII_ITEMS.items():
         records.append((name, 0, text.encode("ascii")))
+        KINDS[name] = 0
     body = bytearray()
     for name, kind, raw in records:
         name_bytes = name.encode("ascii")
@@ -609,6 +616,7 @@ def main():
         "records": count,
         "consumer_records": len(RECORDS),
         "c_records": len(C_RECORDS),
+        "kinds": KINDS,
         "case_file_sha256": sha256_file(case_path),
         "expected_sha256": sha256_file(expected_path),
     }
