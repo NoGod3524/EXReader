@@ -7,12 +7,12 @@ on:
       mode:
         description: Cheap preflight or full ON and original OFF acceptance
         type: choice
-        options: [preflight, build, probe, full]
+        options: [preflight, build, probe, full, diagnose]
         default: preflight
       failed_run:
         description: Completed compact failed run for authenticated read-only diagnosis
         type: string
-        default: '40202860251'
+        default: '40222901619'
       inspect_failed:
         description: Read-only inspection of the pinned failed same-version EPUB evidence
         type: boolean
@@ -39,12 +39,12 @@ jobs:
           python3 -m py_compile tests/reader_gtk_compact/*.py tests/reader_gtk_raw3/*.py
           python3 tests/reader_gtk_raw3/guard.py
           python3 tests/reader_gtk_raw3/retained.py --self-test
-      - name: Authenticate failed compact raw ZIP and print real menu roles
+      - name: Authenticate failed raw ZIP and print retained startup evidence
         if: github.event_name == 'workflow_dispatch' && inputs.mode == 'diagnose'
         env:
           GH_TOKEN: ${{ github.token }}
           FAILED_RUN: ${{ inputs.failed_run }}
-        run: python3 tests/reader_gtk_compact/diagnose.py
+        run: python3 tests/reader_gtk_raw3/diagnose.py
   account:
     needs: preflight
     if: github.event_name == 'workflow_dispatch' && inputs.mode == 'full' && !inputs.inspect_failed
