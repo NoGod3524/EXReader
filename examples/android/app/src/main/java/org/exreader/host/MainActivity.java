@@ -31,6 +31,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import org.exreader.EXReader;
+import org.exreader.importentry.ImportEntry;
+import org.exreader.importentry.ReadyRequest;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -69,6 +71,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     private final Handler ui = new Handler(Looper.getMainLooper());
     private ExecutorService worker;
     private BookStore store;
+    private ImportController imports;
     private OrganizationPanel organizationPanel;
     private SyncPanel syncPanel;
     private SearchPanel searchPanel;
@@ -188,6 +191,9 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
             thread.setDaemon(true);
             return thread;
         });
+        imports = ImportController.get(this);
+        imports.attach(this);
+        if (savedInstanceState == null) routeImport(getIntent());
 
         worker.execute(() -> {
             try {
@@ -211,7 +217,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                 postStatus("Library error: " + message(error));
                 return;
             }
-            postUi(this::updateSdkLabel);
+            postUi(() -> { updateSdkLabel(); imports.pump(); });
             loadShelf(true);
         });
     }
@@ -282,6 +288,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         refreshButton.setOnClickListener(view -> {
             loadShelf(false);
             setStatus("Shelf refreshed");
+            imports.retry();
         });
         rebuildView.setOnClickListener(view -> {
             saveInstancePrefs();recreate();
@@ -307,6 +314,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         annotateButton.setOnClickListener(view -> annotateSelection());
         selectionCancel.setOnClickListener(view -> readerView.setSelectMode(false));
         cancelButton.setOnClickListener(view -> {
+            imports.cancelStaging();
             if (activeTask != null) activeTask.cancel();
             loadingText.setText("Canceling operation...");
         });
@@ -407,6 +415,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         pageBusy = false;
         hideLoading();
         setActionsEnabled(true);
+        ui.post(() -> { if (!destroyed && imports != null) imports.pump(); });
     }
 
     private void taskFailed(long gen, String prefix, Throwable error) {
@@ -617,6 +626,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         selectionBar.setVisibility(View.GONE);
         prefs.edit().putBoolean("lastReader", false).apply();
         loadShelf(false);
+        if(imports!=null)ui.post(imports::pump);
     }
 
     private void leaveReader() {
@@ -999,9 +1009,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
 
     private void startImport() {
         if (pageBusy || operation != 0) return;
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("*/*");
+        Intent intent = ImportEntry.pickerIntent(true);
         intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, Uri.parse(DOWNLOADS_URI));
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
         try {
@@ -1014,34 +1022,17 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode != REQUEST_IMPORT) return;
-        if (resultCode != RESULT_OK || data == null || data.getData() == null) {
+        if (resultCode != RESULT_OK || data == null) {
             setStatus("Selection canceled");
             return;
         }
-        Uri uri = data.getData();
-        try {
-            getContentResolver().takePersistableUriPermission(uri,
-                    data.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        } catch (Exception ignored) {
-            // The app copies the source immediately, so a denied grant is not fatal.
-        }
-        String name = queryName(uri);
-        long size = querySize(uri);
-        int format = formatFor(name);
-        if (format < 0) {
-            setStatus("Unsupported format: " + name);
-            return;
-        }
-        if (size > MAX_INPUT_BYTES) {
-            setStatus("File exceeds 32 MiB limit: " + name);
-            return;
-        }
-        importUri(uri, name, format);
+        imports.submit(data);
     }
 
     @Override protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
+        if (routeImport(intent)) return;
         if (!BuildConfig.DEBUG || !intent.getBooleanExtra("exr_review", false)) return;
         if(intent.hasExtra("review_progress_identity")) {
             String label=intent.getStringExtra("review_progress_identity");
@@ -1099,8 +1090,19 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         }
     }
 
-    private void importUri(Uri uri, String name, int format) {
-        if (worker == null || pageBusy || operation != 0) return;
+    private boolean routeImport(Intent intent) {
+        if(intent==null)return false;
+        String action=intent.getAction();
+        if(!Intent.ACTION_VIEW.equals(action)&&!Intent.ACTION_SEND.equals(action)&&!Intent.ACTION_SEND_MULTIPLE.equals(action))return false;
+        imports.submit(intent);return true;
+    }
+
+    void importStatus(String text) { if(!destroyed)setStatus(text); }
+
+    boolean importReady(ReadyRequest ready) {
+        if (destroyed || worker == null || store == null || pageBusy || operation != 0) return false;
+        final String name=ready.title().isEmpty()?ready.id():ready.title();
+        final int format=ready.format().exrCode();
         final HostTask task = beginTask(1);
         final long gen = generation;
         showLoading("Importing " + name + "...", true);
@@ -1112,7 +1114,9 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
             boolean published = false;
             boolean metadataFinalized = false;
             try {
-                copied = copyUri(uri, name, task);
+                if(ready.size()>MAX_INPUT_BYTES)throw new IOException("Current reader has a 32 MiB reading limit; the 128 MiB staging ceiling does not make larger books readable");
+                copied = copyUri(Uri.fromFile(ready.file()), ready.id(), task);
+                if(copied.bytes!=ready.size()||!ready.id().startsWith(copied.sha256+"."))throw new IOException("Staged original identity changed");
                 reviewGate("import-copied", task);
                 task.check();
                 String path = copied.file.getAbsolutePath();
@@ -1156,6 +1160,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                 metadataFinalized = true;
                 reviewGate("import-committed", task);
                 final boolean inserted = created;
+                imports.completed(this,ready,true,false);
                 postUi(() -> {
                     if (gen != generation) return;
                     finishTask(gen);
@@ -1171,6 +1176,8 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                 final Throwable failure = reported;
                 final boolean completed = published;
                 final boolean mapped = metadataFinalized;
+                boolean lifecycle = error instanceof HostTask.Cancelled && destroyed;
+                imports.completed(this,ready,!lifecycle && (!published || metadataFinalized),lifecycle);
                 postUi(() -> {
                     if (gen != generation) return;
                     finishTask(gen);
@@ -1181,6 +1188,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
             }
           }
         });
+        return true;
     }
 
     private static final class CopyResult {
@@ -1245,7 +1253,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         }
         long total = 0;
         try (InputStream input = resolver.openInputStream(uri);
-             OutputStream output = new FileOutputStream(temporary)) {
+             FileOutputStream output = new FileOutputStream(temporary)) {
             if (input == null) throw new IOException("The picker returned an unreadable source");
             byte[] buffer = new byte[65536];
             int count;
@@ -1256,6 +1264,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                 output.write(buffer, 0, count);
                 digest.update(buffer, 0, count);
             }
+            output.getFD().sync();
         } catch (HostTask.Cancelled canceled) {
             removeTemporary(temporary);
             throw canceled;
@@ -1272,6 +1281,11 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         String sourceHash = hex(digest.digest());
         File target = new File(folder, sourceHash + (extension.isEmpty() ? "" : "." + extension));
         if (target.isFile()) {
+            CopyResult expected=new CopyResult(target,false,sourceHash,total);
+            if(!matchesOwnedCopy(target.getPath(),expected,task)) {
+                removeTemporary(temporary);
+                throw new IOException("Existing private original does not match its content identity");
+            }
             if (!temporary.delete()) throw new IOException("Cannot clean the duplicate temporary file");
             return new CopyResult(target, false, sourceHash, total);
         } else if (!temporary.renameTo(target)) {
@@ -1485,6 +1499,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     }
 
     @Override protected void onDestroy() {
+        if(imports!=null)imports.detach(this);
         if(preferencesPanel!=null)preferencesPanel.close();
         if(readingPanel!=null)readingPanel.close();
         if(searchPanel!=null)searchPanel.close();
