@@ -360,10 +360,12 @@ def main():
                 batch.get('all_reading_navigation_search_and_non_palette_settings_retained') is True and
                 batch.get('accepted') is False and batch.get('diagnostic_only') is False and
                 batch.get('program_sha256') == program and batch.get('backend_checks') == 684 and
+                batch.get('owner_fault_scenarios') == 3 and
                 set(batch['retained_sdk_failures']) == set(failures), 'GTK batch strict proof differs')
         for tail, count, grant in (('gtk-batch-ui/report.json', 27, 'batch_import_scope_passed'),
                                    ('gtk-batch-original/report.json', 668, 'ok'),
-                                   ('gtk-batch-review/review.json', 4, 'ok')):
+                                   ('gtk-batch-review/review.json', 4, 'ok'),
+                                   ('gtk-batch-owner-faults/report.json', 3, 'ok')):
             raw = gtk.bytes(tail, 8 * 1024 * 1024);report = json.loads(raw)
             require(report.get('source_sha', report.get('source')) == source and
                     report.get(grant) is True and len(report['checks']) == count,
@@ -379,6 +381,10 @@ def main():
                 require(report['program_sha256'] == program and report['program_source_sha'] == source and
                         report['diagnostic_only'] is False and report['checks_failed'] == 0,
                         'GTK folder UI used another binary')
+            if count == 3:
+                require(report['allocation_failures'] == 2 and {r['name'] for r in rows} == {
+                    'allocation-failure-map-close', 'allocation-failure-direct-close', 'empty-directory-map-close'},
+                    'GTK real import-owner fault recovery missing')
         backend = gtk.bytes('gtk-batch-backend/checks.log', 4 * 1024 * 1024).decode()
         require('GTK_BATCH_BACKEND checks=684 all passed' in backend, 'GTK batch native backend incomplete')
         result['scopes']['gtk_folder_batch_import'] = True
