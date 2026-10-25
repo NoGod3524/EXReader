@@ -297,6 +297,22 @@ int reader_tts_android_deliver(JNIEnv *env, int64_t cookie, int kind, jstring ut
     release_pin(tts);
     return 0;
   }
+  /* An utterance callback belongs to the one accepted request. An id that is
+     not the active request is unknown (never accepted), future (the host has
+     not used it yet) or stale (already ended), and acting on it could advance
+     the terminal mark above a request that is still speaking and suppress its
+     terminal event. Such callbacks are refused here, before any state moves;
+     the stop and close paths end the active request themselves, so an engine
+     that never reports the end cannot leave the handle wedged. */
+  if (kind == READER_TTS_ANDROID_STARTED || kind == READER_TTS_ANDROID_RANGE ||
+      kind == READER_TTS_ANDROID_FINISHED || kind == READER_TTS_ANDROID_STOPPED ||
+      kind == READER_TTS_ANDROID_FAILED) {
+    if (request_id == 0 || request_id != tts->request_id) {
+      pthread_mutex_unlock(&tts->lock);
+      release_pin(tts);
+      return 0;
+    }
+  }
   switch (kind) {
     case READER_TTS_ANDROID_INIT_OK:
       tts->engine_ready = 1;

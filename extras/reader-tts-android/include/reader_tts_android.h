@@ -38,7 +38,14 @@ reader_tts_status reader_tts_android_initialize(JNIEnv *env, jobject context);
    the bounded per-handle queue: it never calls back into the host, never
    blocks on the engine and never retains the jstring. Unknown or already
    released cookies, malformed utterance ids and offsets outside the request
-   text are ignored; the return value says whether the event was consumed. */
+   text are ignored; the return value says whether the event was consumed. An
+   utterance callback (STARTED, RANGE, FINISHED, STOPPED, FAILED) is consumed
+   only while its id is the active accepted request: an id that was never
+   accepted, that the host has not used yet or that already ended leaves the
+   state untouched, so a late or fabricated callback can neither end a request
+   that is still speaking nor advance the handle past it. The utterance id is
+   the unsigned decimal form of the 64-bit request id, so ids at or above
+   2^63 arrive as negative Java longs and are still recognised. */
 int reader_tts_android_deliver(JNIEnv *env, int64_t cookie, int kind, jstring utterance,
   int start, int end);
 #ifdef __cplusplus

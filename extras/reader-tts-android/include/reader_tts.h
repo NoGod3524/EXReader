@@ -18,9 +18,12 @@
  *    never truncated). Hosts chunk with org.exreader.tts.Chunker and give each
  *    chunk a new, strictly increasing request id.
  *  - Request ids: non-zero, strictly increasing per handle (a stronger form of
- *    "never reused"). One active request at a time. Engine callbacks that carry
- *    an id which is not a decimal uint64, or that repeat the terminal of a
- *    request that already ended, are ignored and never reach the queue.
+ *    "never reused"). The whole uint64 range is usable: the id crosses the JNI
+ *    boundary as unsigned decimal, so values at or above 2^63 are preserved.
+ *    One active request at a time. An engine callback is consumed only while
+ *    its id is the active accepted request; an id that is not a decimal
+ *    uint64, was never accepted, is still unused or already ended is ignored
+ *    and never reaches the queue.
  */
 #ifndef READER_TTS_H
 #define READER_TTS_H

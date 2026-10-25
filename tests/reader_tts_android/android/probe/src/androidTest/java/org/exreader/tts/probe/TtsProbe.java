@@ -79,7 +79,7 @@ public final class TtsProbe extends Instrumentation {
             NativeTts.setMode(engineExpected ? 1 : 0);
             JSONArray cases = new JSONArray();
             int count = NativeTts.caseCount();
-            if (count < 46) throw new AssertionError("case table shrank to " + count);
+            if (count < 50) throw new AssertionError("case table shrank to " + count);
             for (int id = 0; id < count; id++) cases.put(runNative(id));
             cases.put(check("chunker_boundaries_and_surrogates", this::chunkerCheck));
             cases.put(check("rotation_during_speaking", () -> rotationCheck(engineExpected)));

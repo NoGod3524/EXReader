@@ -204,7 +204,11 @@ public final class Backend {
         } catch (RuntimeException error) {
             return RESULT_ENGINE_REJECTED;
         }
-        String utterance = Long.toString(requestId);
+        /* The C ABI accepts the whole uint64 range, so a request id at or above
+           2^63 arrives here as a negative Java long. The utterance id is the
+           unsigned decimal form of the same bits; the native side parses it
+           back into the original uint64 and nothing is lost. */
+        String utterance = Long.toUnsignedString(requestId);
         synchronized (lock) {
             /* Only the active request needs its text for offset conversion, so
                a request whose terminal callback never arrives cannot leave the

@@ -1168,6 +1168,272 @@ static int case_stale_callback_after_destroy_ignored(void) {
   return g_case_failed ? 1 : 0;
 }
 
+/* One accepted request at an extreme uint64 id, on a handle of its own: the id
+   reaches Java as a negative long and must come back as the identical unsigned
+   value with exactly one terminal event. */
+static int boundary_id_case(uint64_t request, const char *label) {
+  reader_tts *tts = NULL;
+  reader_tts_state state = READER_TTS_INITIALIZING;
+  reader_tts_snapshot snapshot;
+  struct outcome_count counts;
+  if (!g_engine_mode) return 2;
+  expect_status(reader_tts_create(NULL, &tts, NULL), READER_TTS_OK, label);
+  if (!tts) return 1;
+  if (wait_state(tts, 30000, &state) != 0 || state != READER_TTS_READY) {
+    note("the boundary handle did not reach READY; ");
+    g_case_failed = 1;
+  }
+  if (!g_case_failed) {
+    expect_status(reader_tts_speak(tts, request, SAMPLE, SAMPLE_BYTES, NULL, 1.0, NULL),
+      READER_TTS_OK, "speak at the id boundary");
+    if (!g_case_failed) {
+      expect_status(reader_tts_observe(tts, &snapshot, NULL), READER_TTS_OK,
+        "observe the boundary request");
+      expect_uint((unsigned long)snapshot.request_id, (unsigned long)request,
+        "the accepted id is retained unchanged");
+      if (drain_until_terminal(tts, request, 60000, &counts) != 0) {
+        note("the boundary request has no terminal event; ");
+        g_case_failed = 1;
+      } else {
+        expect_uint(counts.started, 1, "one STARTED for the boundary id");
+        expect_uint(counts.stopped + counts.finished + counts.failed, 1,
+          "exactly one terminal for the boundary id");
+        expect_uint(counts.foreign, 0, "no other request id at the boundary");
+      }
+    }
+  }
+  remember_completed(request);
+  note("id=%llu; ", (unsigned long long)request);
+  if (tts != NULL) {
+    reader_tts_request_close(tts, NULL);
+    if (wait_closed(tts, 20000, &state) == 0) reader_tts_destroy(&tts, NULL);
+  }
+  return g_case_failed ? 1 : 0;
+}
+
+static int case_speak_high_bit_request_id(void) {
+  return boundary_id_case((uint64_t)1 << 63, "create the high-bit handle");
+}
+
+static int case_speak_max_request_id(void) {
+  return boundary_id_case(UINT64_MAX, "create the maximum-id handle");
+}
+
+/* A fabricated callback is only trusted while it belongs to the active accepted
+   request: a future id must not move the terminal mark, the real request must
+   still terminate, and the next request must still be accepted and terminate. */
+static int case_future_callback_ignored_while_active(void) {
+  reader_tts *tts = NULL;
+  reader_tts_state state = READER_TTS_INITIALIZING;
+  reader_tts_snapshot snapshot;
+  struct outcome_count counts;
+  char active_text[24];
+  char future_text[24];
+  char stale_text[24];
+  long cookie = 0;
+  uint64_t active = 0;
+  uint64_t future = 0;
+  uint64_t next = 0;
+  char *text = NULL;
+  if (!g_engine_mode) return 2;
+  text = make_ascii(1200);
+  if (!text) return 1;
+  expect_status(reader_tts_create(NULL, &tts, NULL), READER_TTS_OK,
+    "create the callback-identity handle");
+  if (!tts) {
+    free(text);
+    return 1;
+  }
+  if (wait_state(tts, 30000, &state) != 0 || state != READER_TTS_READY) {
+    note("the callback-identity handle did not reach READY; ");
+    g_case_failed = 1;
+  }
+  if (!g_case_failed) {
+    active = next_id();
+    expect_status(reader_tts_speak(tts, active, text, 1200, NULL, 1.0, NULL), READER_TTS_OK,
+      "speak the identity request");
+    if (!g_case_failed && wait_for_started(tts, active, 20000) != 0) {
+      note("the identity request never started; ");
+      g_case_failed = 1;
+    }
+    cookie = exr_tts_platform_last_cookie();
+    expect_true(cookie > 0, "the identity request published a cookie");
+    snprintf(active_text, sizeof(active_text), "%llu", (unsigned long long)active);
+    future = active + 1000;
+    snprintf(future_text, sizeof(future_text), "%llu", (unsigned long long)future);
+    if (cookie > 0) {
+      /* Prove the cookie is this handle's: a range for the active request is
+         the one fabricated callback that must still be accepted. */
+      expect_uint((unsigned long)exr_tts_platform_deliver(cookie, READER_TTS_ANDROID_RANGE,
+        active_text), 1, "a range for the active request is accepted");
+      expect_uint((unsigned long)exr_tts_platform_deliver(cookie, READER_TTS_ANDROID_FINISHED,
+        future_text), 0, "a terminal for a future id is refused");
+      expect_uint((unsigned long)exr_tts_platform_deliver(cookie, READER_TTS_ANDROID_STARTED,
+        future_text), 0, "a start for a future id is refused");
+      expect_uint((unsigned long)exr_tts_platform_deliver(cookie, READER_TTS_ANDROID_RANGE,
+        future_text), 0, "a range for a future id is refused");
+    }
+    expect_status(reader_tts_observe(tts, &snapshot, NULL), READER_TTS_OK,
+      "observe after the future callbacks");
+    expect_uint((unsigned long)snapshot.request_id, (unsigned long)active,
+      "the active request id is untouched");
+    expect_status(reader_tts_stop(tts, active, NULL), READER_TTS_OK, "stop the identity request");
+    if (drain_until_terminal(tts, active, 45000, &counts) != 0) {
+      note("the identity request lost its terminal event; ");
+      g_case_failed = 1;
+    } else {
+      expect_uint(counts.stopped, 1, "exactly one STOPPED for the identity request");
+      expect_uint(counts.finished + counts.failed, 0, "no invented second terminal");
+      expect_uint(counts.foreign, 0, "no future id reached the queue");
+    }
+    remember_completed(active);
+    /* Another request must still be accepted and terminate after the refused
+       future terminal. */
+    next = next_id();
+    expect_status(reader_tts_speak(tts, next, SAMPLE, SAMPLE_BYTES, NULL, 1.0, NULL),
+      READER_TTS_OK, "speak after the refused future terminal");
+    if (!g_case_failed) {
+      if (drain_until_terminal(tts, next, 45000, &counts) != 0) {
+        note("the following request did not terminate; ");
+        g_case_failed = 1;
+      } else {
+        expect_uint(counts.stopped + counts.finished + counts.failed, 1,
+          "one terminal for the following request");
+        expect_uint(counts.foreign, 0, "no future id during the following request");
+      }
+      remember_completed(next);
+      if (cookie > 0) {
+        snprintf(stale_text, sizeof(stale_text), "%llu", (unsigned long long)next);
+        expect_uint((unsigned long)exr_tts_platform_deliver(cookie, READER_TTS_ANDROID_STOPPED,
+          stale_text), 0, "a repeated terminal for the ended request is refused");
+      }
+    }
+  }
+  if (tts != NULL) {
+    reader_tts_request_close(tts, NULL);
+    if (wait_closed(tts, 20000, &state) == 0) reader_tts_destroy(&tts, NULL);
+  }
+  note("active=%llu future=%llu; ", (unsigned long long)active, (unsigned long long)future);
+  free(text);
+  return g_case_failed ? 1 : 0;
+}
+
+/* The same identity rule while no request is active: a fabricated terminal for
+   an unused id must not be queued and must not wedge the handle. The cookie is
+   proven on a real request first, so a refused callback cannot be mistaken for
+   a callback of another handle. */
+static int case_future_callback_ignored_while_idle(void) {
+  reader_tts *tts = NULL;
+  reader_tts_state state = READER_TTS_INITIALIZING;
+  struct outcome_count counts;
+  reader_tts_event event;
+  int available = 0;
+  char active_text[24];
+  char future_text[24];
+  long cookie = 0;
+  uint64_t sample = 0;
+  uint64_t active = 0;
+  uint64_t future = 0;
+  uint64_t next = 0;
+  unsigned queued = 0;
+  if (!g_engine_mode) return 2;
+  expect_status(reader_tts_create(NULL, &tts, NULL), READER_TTS_OK,
+    "create the idle-callback handle");
+  if (!tts) return 1;
+  if (wait_state(tts, 30000, &state) != 0 || state != READER_TTS_READY) {
+    note("the idle-callback handle did not reach READY; ");
+    g_case_failed = 1;
+  }
+  if (!g_case_failed) {
+    sample = next_id();
+    expect_status(reader_tts_speak(tts, sample, SAMPLE, SAMPLE_BYTES, NULL, 1.0, NULL),
+      READER_TTS_OK, "speak the cookie sample");
+    if (!g_case_failed && wait_for_started(tts, sample, 20000) != 0) {
+      note("the cookie sample never started; ");
+      g_case_failed = 1;
+    }
+    cookie = exr_tts_platform_last_cookie();
+    expect_true(cookie > 0, "the cookie sample published a cookie");
+    snprintf(active_text, sizeof(active_text), "%llu", (unsigned long long)sample);
+    if (cookie > 0) {
+      expect_uint((unsigned long)exr_tts_platform_deliver(cookie, READER_TTS_ANDROID_RANGE,
+        active_text), 1, "a range for the active sample is accepted");
+    }
+    expect_status(reader_tts_stop(tts, sample, NULL), READER_TTS_OK, "stop the cookie sample");
+    if (drain_until_terminal(tts, sample, 45000, &counts) != 0) {
+      note("the cookie sample lost its terminal event; ");
+      g_case_failed = 1;
+    } else {
+      expect_uint(counts.stopped, 1, "one STOPPED for the cookie sample");
+    }
+    remember_completed(sample);
+    sleep_ms(100);
+    drain_events(tts, 64);
+    active = next_id();
+    expect_status(reader_tts_speak(tts, active, SAMPLE, SAMPLE_BYTES, NULL, 1.0, NULL),
+      READER_TTS_OK, "speak the second identity request");
+    if (!g_case_failed && wait_for_started(tts, active, 20000) != 0) {
+      note("the second identity request never started; ");
+      g_case_failed = 1;
+    }
+    snprintf(active_text, sizeof(active_text), "%llu", (unsigned long long)active);
+    if (cookie > 0) {
+      expect_uint((unsigned long)exr_tts_platform_deliver(cookie, READER_TTS_ANDROID_RANGE,
+        active_text), 1, "a range for the second active request is accepted");
+    }
+    expect_status(reader_tts_stop(tts, active, NULL), READER_TTS_OK,
+      "stop the second identity request");
+    if (drain_until_terminal(tts, active, 45000, &counts) != 0) {
+      note("the second identity request lost its terminal event; ");
+      g_case_failed = 1;
+    } else {
+      expect_uint(counts.stopped, 1, "one STOPPED for the second identity request");
+    }
+    remember_completed(active);
+    drain_events(tts, 64);
+    /* Idle now, with the cookie proven above. */
+    future = active + 4096;
+    snprintf(future_text, sizeof(future_text), "%llu", (unsigned long long)future);
+    if (cookie > 0) {
+      expect_uint((unsigned long)exr_tts_platform_deliver(cookie, READER_TTS_ANDROID_FINISHED,
+        future_text), 0, "an idle terminal for an unused id is refused");
+      expect_uint((unsigned long)exr_tts_platform_deliver(cookie, READER_TTS_ANDROID_STARTED,
+        future_text), 0, "an idle start for an unused id is refused");
+    }
+    for (int step = 0; step < 40; step++) {
+      if (reader_tts_poll(tts, &event, &available, NULL) != READER_TTS_OK) break;
+      if (!available) {
+        if (step > 10) break;
+        sleep_ms(5);
+        continue;
+      }
+      queued += 1;
+    }
+    expect_uint(queued, 0, "no fabricated event is queued while idle");
+    next = next_id();
+    expect_status(reader_tts_speak(tts, next, SAMPLE, SAMPLE_BYTES, NULL, 1.0, NULL),
+      READER_TTS_OK, "speak after the idle fabricated callback");
+    if (!g_case_failed) {
+      if (drain_until_terminal(tts, next, 45000, &counts) != 0) {
+        note("the request after the idle callback did not terminate; ");
+        g_case_failed = 1;
+      } else {
+        expect_uint(counts.started, 1, "one STARTED after the idle callback");
+        expect_uint(counts.stopped + counts.finished + counts.failed, 1,
+          "one terminal after the idle callback");
+        expect_uint(counts.foreign, 0, "no fabricated id after the idle callback");
+      }
+      remember_completed(next);
+    }
+  }
+  if (tts != NULL) {
+    reader_tts_request_close(tts, NULL);
+    if (wait_closed(tts, 20000, &state) == 0) reader_tts_destroy(&tts, NULL);
+  }
+  note("future=%llu queued=%u; ", (unsigned long long)future, queued);
+  return g_case_failed ? 1 : 0;
+}
+
 struct named_case {
   const char *name;
   int (*run)(void);
@@ -1268,6 +1534,8 @@ static const struct named_case g_cases[] = {
   { "voices_free_null_safe", case_voices_free_null_safe },
   { "speak_started_and_finished", case_speak_started_and_finished },
   { "speak_request_id_reuse_argument", case_speak_request_id_reuse_argument },
+  { "speak_high_bit_request_id", case_speak_high_bit_request_id },
+  { "speak_max_request_id", case_speak_max_request_id },
   { "single_terminal_per_request", case_single_terminal_per_request },
   { "range_utf8_boundaries", case_range_utf8_boundaries },
   { "poll_empty_available_zero", case_poll_empty_available_zero },
@@ -1279,6 +1547,8 @@ static const struct named_case g_cases[] = {
   { "stop_unknown_id_argument", case_stop_unknown_id_argument },
   { "late_events_keep_request_id", case_late_events_keep_request_id },
   { "duplicate_terminal_dropped", case_duplicate_terminal_dropped },
+  { "future_callback_ignored_while_active", case_future_callback_ignored_while_active },
+  { "future_callback_ignored_while_idle", case_future_callback_ignored_while_idle },
   { "overflow_utterance_id_ignored", case_overflow_utterance_id_ignored },
   { "pause_unsupported_state_unchanged", case_pause_unsupported_state_unchanged },
   { "resume_unsupported_state_unchanged", case_resume_unsupported_state_unchanged },
