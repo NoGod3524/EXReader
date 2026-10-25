@@ -1,0 +1,73 @@
+name: Isolated RTF CBZ format candidate and F5 v2
+on:
+  push:
+    branches: [codex/reader-format-combination]
+  workflow_dispatch:
+    inputs:
+      scope:
+        type: choice
+        options: [inspect, full]
+        default: inspect
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  preflight:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Pin sources, exact v2 diff and protocol refusals in Actions
+        run: |
+          python -m py_compile tests/reader_format_candidate/*.py
+          python tests/reader_format_candidate/preflight.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: format-guard-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/format/guard/
+          if-no-files-found: error
+  argv:
+    if: github.event_name == 'push' || inputs.scope == 'inspect'
+    needs: preflight
+    name: argv-${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            os: windows-latest
+          - platform: linux
+            os: ubuntu-22.04
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - name: Keep Git source text byte-identical
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build only the standalone entry adapter, with no SDK
+        run: |
+          cmake -S tests/reader_format_candidate -B build/format/argv-build -DFORMAT_ONLY_ARGS=ON -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/format/argv-build --config Release --parallel 4
+          python tests/reader_format_candidate/test_argv.py build/format/argv-build/bin build/format/argv-report
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: format-argv-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/format/argv-report/
+            build/format/argv-build/bin/
+          if-no-files-found: error
