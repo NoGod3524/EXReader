@@ -6,7 +6,9 @@ import json
 import os
 from pathlib import Path, PurePosixPath
 import sqlite3
+import shutil
 import sys
+import tempfile
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[5]
@@ -59,12 +61,19 @@ def load(directory, resources):
         for suffix in ('-wal', '-shm'):
             if database_name + suffix in result['files']:
                 Path(str(database) + suffix).write_bytes(archive.read(database_name + suffix))
-    connection = sqlite3.connect(database.resolve().as_uri() + '?mode=ro', uri=True)
-    try:
-        values = connection.execute('SELECT revision_id,CAST(body_json AS BLOB),body_sha256 FROM reader_revisions ORDER BY revision_id').fetchall()
-        books = connection.execute('SELECT book_key FROM reader_books ORDER BY book_key').fetchall()
-    finally:
-        connection.close()
+    # SQLite may update shared-memory coordination even for a readonly reader.
+    # Preserve the authenticated originals and query a separate disposable copy.
+    with tempfile.TemporaryDirectory(prefix='raw3-peer-read-') as temporary:
+        working = Path(temporary) / database.name
+        shutil.copyfile(database, working)
+        for suffix in ('-wal', '-shm'):
+            if Path(str(database) + suffix).exists(): shutil.copyfile(str(database) + suffix, str(working) + suffix)
+        connection = sqlite3.connect(working.resolve().as_uri() + '?mode=ro', uri=True)
+        try:
+            values = connection.execute('SELECT revision_id,CAST(body_json AS BLOB),body_sha256 FROM reader_revisions ORDER BY revision_id').fetchall()
+            books = connection.execute('SELECT book_key FROM reader_books ORDER BY book_key').fetchall()
+        finally:
+            connection.close()
     wires, ids, null_ids, versions = [], {row[0] for row in values}, [], set()
     for revision, wire, expected in values:
         assert hashlib.sha256(wire).hexdigest() == expected
