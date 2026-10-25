@@ -279,7 +279,7 @@
       "attempt": 1,
       "source_sha": "397664bc8918d5cf75976dde921a8bcb47ed1ad4",
       "job": "tts-android-device",
-      "reason": "two named cases failed: voice_selection_returns_to_default assumed the engine voice is unset before the first explicit voice, and rotation_during_speaking failed without observable detail",
+      "reason": "two named cases failed: voice_selection_returns_to_default assumed the engine voice is unset before the first explicit voice, and rotation_during_speaking failed again without observable detail",
       "artifact_id": null
     },
     {
@@ -287,7 +287,7 @@
       "attempt": 1,
       "source_sha": "870cf0839942c9641c361d234fcade1691152456",
       "job": "tts-android-device",
-      "reason": "voice_selection_returns_to_default reported \"a fresh handle already selected 'en-US-language'\": the framework itself selects the engine default voice while it connects",
+      "reason": "voice_selection_returns_to_default reported \"a fresh handle already selected 'en-US-language'\" (the framework itself selects the engine default voice while it connects) and rotation_during_speaking failed again with ranges but no terminal",
       "artifact_id": null
     },
     {
