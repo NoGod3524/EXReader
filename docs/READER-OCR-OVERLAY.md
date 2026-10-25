@@ -147,3 +147,13 @@ gh workflow run reader-ocr-overlay.yml --ref codex/reader-ocr-overlay
 ```
 
 作业内等价步骤（与 workflow 同序）：`make_fixtures.py --out <dir> --font <font>` → 构建/安装 SDK、`extras/ocr`、本包 → 编译 `tests/reader_ocr_overlay/consumer` → `check_overlay.py` → `check_artifacts.py`。本地不构建、不跑探针、不下载工件。
+
+## 9. 独立复核（分支 `codex/reader-ocr-overlay-review`）
+
+* 复核范围：Tesseract 实际安装接线、缩放/旋转/裁剪到页面坐标映射、取消/重入/线程、位图释放与文档释放后快照有效性、内存/限额算术、缺模型、输入不变、模型许可登记、OCR 与原生文本/永久锚点分离。结论：除下述一处外实现符合契约，未改限额、schema、SDK 或默认 reading 配置。
+* 缺陷（已修）：`reader_ocr_overlay_check_current` 带位图时不校验 `stride`，`stride < width*channels` 的调用方位图会让 FNV 哈希越过行尾读取。现在返回 `ARGUMENT`。
+* 测试缺口（已补）：原探针从未执行 `check_current` 的位图分支。新增具名 `check_current_bitmap`：相同像素 OK；改一个像素、改 scale、改 page id 均 STALE；过短 stride 为 ARGUMENT。检查总数 55 → 56。
+* 受测源码 `d34426da84567b3d06900b0639c35767ab162eb4`，run 40168228711 attempt 1；作业 overlay (ubuntu-24.04) 121093550196、overlay (macos-14) 121093550030、same-run artifact evidence 121093707990 均 success。每平台 56 项：54 PASS / 2 SKIP（`windows_host_scope`、`mobile_host_scope`）/ 0 FAIL / 0 PENDING；`check_artifacts.py` 严格同源汇总通过。
+* 工件（有效期 2027-01-23T06:11:37Z）：Linux 12589161429 `reader-ocr-overlay-Linux-40168228711-1` 5328477 B sha256:e9907472…ef6de4；macOS 12589670838 `reader-ocr-overlay-macOS-40168228711-1` 5147707 B sha256:a2e4800d…89e0d185；evidence 12589461042 1902 B sha256:cf849a2d…d2480。完整摘要见 `docs/validation/reader-ocr-overlay.json` 的 `review` 段。消费者哈希在各工件的 evidence 报告中。
+* 未复核/未授予：Windows、移动、真机、真实扫描质量、中文 CER、硬 CPU/RSS 隔离、宿主接线；模型为 tessdata_fast 固定提交（Apache-2.0）已登记，Tesseract 版本取自 runner 包管理器、未固定。
+* 原交付证据（614b14ab / run 40127504830）保留不改。

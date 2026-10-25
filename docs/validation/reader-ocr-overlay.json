@@ -177,5 +177,20 @@
     "hard CPU/RSS isolation (the deadline is cooperative)",
     "host UI wiring and default reading-profile enablement",
     "product transaction or sidecar behaviour"
-  ]
+  ],
+  "review": {
+    "branch": "codex/reader-ocr-overlay-review",
+    "tested_sha": "d34426da84567b3d06900b0639c35767ab162eb4",
+    "run_id": 40168228711,
+    "attempt": 1,
+    "accepted": true,
+    "fix": "check_current validates bitmap stride before hashing; new named check check_current_bitmap",
+    "checks": {"total": 56, "passed": 54, "skipped": 2, "failed": 0, "pending": 0},
+    "jobs": {"macos": 121093550030, "linux": 121093550196, "evidence": 121093707990},
+    "artifacts": [
+      {"id": 12589161429, "name": "reader-ocr-overlay-Linux-40168228711-1", "bytes": 5328477, "sha256": "e9907472111e915063eae0e9a8decc33f9405caeb5becd5801234877c1ef6de4", "expires": "2027-01-23T06:11:37Z"},
+      {"id": 12589670838, "name": "reader-ocr-overlay-macOS-40168228711-1", "bytes": 5147707, "sha256": "a2e4800d73c368e8f22210eba46eca0b9d90829e095ae40cd0b0ff98d389d185", "expires": "2027-01-23T06:11:37Z"},
+      {"id": 12589461042, "name": "reader-ocr-overlay-evidence-40168228711-1", "bytes": 1902, "sha256": "cf849a2db7782df2e3e604acef78081f4a2d636335bb2625f1b4252b986d2480", "expires": "2027-01-23T06:11:37Z"}
+    ]
+  }
 }
