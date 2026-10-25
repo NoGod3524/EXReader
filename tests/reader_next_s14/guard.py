@@ -13,9 +13,9 @@ SDK_341 = 'edddc463c06ed5731195cdb8f06b2df6dff7699e'
 MODULE_REF = '1563f4abb85ccd28c3a0aae3e9913f4330536215'
 MODULE = 'apps/reader/font-library'
 REUSED = ('include/reader_font_library.h', 'src/library.cpp', 'src/sha256.hpp')
-# Only these two files of the reused library may differ: the explicit SDK
-# selection in the build and the matching installed package dependency.
-MODULE_CHANGED = ('CMakeLists.txt', 'EXReaderFontLibraryConfig.cmake.in')
+# The CMake entries and the reused narrow installed-SDK provenance helper may
+# differ; public module code remains pinned. No imported target is rewritten.
+MODULE_CHANGED = ('CMakeLists.txt', 'EXReaderFontLibraryConfig.cmake.in', 'EXReaderSdkTargetGuard.cmake')
 FONT_SURFACE = ('include/exr/text.h', 'include/exr/font.h', 'include/exr/core.h',
                 'src/font_bitmap.c', 'src/font_color.c', 'src/font_colr_v1.c', 'src/font_outline.c',
                 'src/font_path.c', 'src/font_svg.c', 'src/fonts.c', 'src/pdf_font.c')

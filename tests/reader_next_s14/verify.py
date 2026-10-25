@@ -51,6 +51,28 @@ def strict_json(data):
     return json.loads(data, object_pairs_hook=pairs)
 
 
+def validate_preloaded(report, logs, spec, source, run_id, attempt, helper_hash):
+    require(report.get('accepted') is True and report.get('source_sha') == source and
+            str(report.get('run_id')) == str(run_id) and str(report.get('attempt')) == str(attempt) and
+            report.get('sdk_version') == spec['sdk'] and report.get('platform') == spec['platform'] and
+            report.get('helper_sha256') == helper_hash, 'preloaded source/SDK/helper identity')
+    expected = {mode + suffix for mode in ('source', 'installed')
+                for suffix in ('-same-prefix', '-foreign-prefix')}
+    rows = report.get('cases', [])
+    require(len(rows) == 4 and {row['name'] for row in rows} == expected, 'exact preloaded controls')
+    for row in rows:
+        foreign = row['name'].endswith('-foreign-prefix')
+        raw = logs[row['name']]
+        require(row.get('passed') is True and row.get('expected_refusal') is foreign and
+                row.get('refused') is foreign and type(row.get('exit')) is int and
+                (row['exit'] != 0 if foreign else row['exit'] == 0) and
+                row.get('log_sha256') == hashlib.sha256(raw).hexdigest(), 'actual preloaded configure outcome')
+        if foreign:
+            require(b'SDK imported target' in raw and re.search(rb'origin\s+mismatch', raw),
+                    'SDK target provenance refusal marker')
+    return True
+
+
 def validate(run, jobs, artifacts, blobs, source, run_id, attempt, module_tree, pinned):
     require(run['head_sha'] == source and run['id'] == run_id and run['run_attempt'] == attempt
             and run['path'] == WORKFLOW, 'caller identity')
@@ -469,6 +491,26 @@ def main():
         pinned = {path: subprocess.check_output(
             ['git', 'rev-parse', PINNED_MODULE + ':' + MODULE + '/' + path], text=True).strip() for path in REUSED}
         summary['platforms'] = validate(run, jobs, artifacts, blobs, source, run_id, attempt, module_tree, pinned)
+        helper_hash = hashlib.sha256(Path(MODULE + '/EXReaderSdkTargetGuard.cmake').read_bytes()).hexdigest()
+        summary['preloaded_target_controls'] = []
+        for spec in PLATFORMS:
+            name = 'reader-s14-font-library-%s-%s-%d-%d' % (spec['platform'], spec['label'], run_id, attempt)
+            artifact, = [item for item in artifacts if item['name'] == name]
+            with zipfile.ZipFile(io.BytesIO(blobs[artifact['id']])) as archive:
+                report = strict_json(archive.read('preloaded/result.json'))
+                logs = {row['name']: archive.read('preloaded/' + row['name'] + '.log') for row in report['cases']}
+            validate_preloaded(report, logs, spec, source, run_id, attempt, helper_hash)
+            for row_index in range(4):
+                bad = copy.deepcopy(report)
+                bad['cases'][row_index]['passed'] = False
+                try:
+                    validate_preloaded(bad, logs, spec, source, run_id, attempt, helper_hash)
+                except ValueError:
+                    pass
+                else:
+                    raise ValueError('preloaded negative control accepted')
+            summary['preloaded_target_controls'].append({'platform': spec['platform'], 'sdk': spec['sdk'],
+                                                        'controls': 4, 'strict_refusals': 4, 'accepted': True})
         summary['negative_tests'] = negative_tests(run, jobs, artifacts, blobs, source, run_id, attempt,
                                                    module_tree, pinned)
         summary['accepted'] = True

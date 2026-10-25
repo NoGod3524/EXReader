@@ -104,6 +104,8 @@ jobs:
           cmake --build build/s14-consumer --verbose 2>&1 | tee build/s14-evidence/logs/consumer-build.log
       - name: Fixed licensed fonts original suite and S14 native cases
         run: python tests/reader_next_s14/run.py
+      - name: Real already-loaded SDK target origins in source and installed packages
+        run: python tests/reader_next_s14/preloaded.py
       - name: Retain original binaries fonts licenses reports and all failures
         if: always()
         uses: actions/upload-artifact@v4
