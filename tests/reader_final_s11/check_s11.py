@@ -401,7 +401,8 @@ def batch_rows(ctx):
                  [i["committed"] for i in value["items"]], [1, 1])
     count, books = readback(probe, checks, library, out / "readback" / "b8-retry", "b8r")
     checks.equal("batch.cancel.retry.books", count, 3)
-    checks.equal("batch.cancel.committed_not_revoked", small["sha256"] in
+    checks.check("batch.cancel.committed_not_revoked",
+                 small["sha256"] in [b["sha256"] for b in books],
                  [b["sha256"] for b in books])
     row_clean(checks, "batch.cancel", row,
               {"lib.sqlite", "staging", "src", "src/a.txt", "src/b.txt", "src/c.txt"})
