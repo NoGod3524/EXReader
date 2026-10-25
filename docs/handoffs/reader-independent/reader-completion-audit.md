@@ -9,7 +9,7 @@ records 原始录像检查 `40203788769` 显示真实 CBZ 点击后仍为空书�
 Windows 简洁候选 `eab342ef` / `40201283788` 已通过22项新界面检查及完整原OFF/F3/atomic13，封存 `f355525b`，尚未接入共同源码。
 GTK 简洁候选 `3e719c51` / `40205409399`、Android raw3 `9498f3ed` / `40205927667` 尚待完整结果。
 Android前轮18项raw通过，最后kill-ui轮询误将ADB文件未出现的ENOENT当JSON，修复仅重试这个明确状态；整轮重跑。
-Apple移动 raw3 `72c6bbdd` / `40203714083` 的iPhone原OFF7项中5项通过，固定页记录与提交后真实终止失败，raw未开始；iPad仍运行，整轮尚未授予。
+Apple移动 raw3 `72c6bbdd` / `40203714083` 已完整失败：iPhone原OFF7项中5项通过，固定页记录与提交后真实终止失败，raw未开始；iPad原OFF7与新增raw/NULL/source1/2/kill/legacy全通过。strict正确拒绝；两轮各自单设备通过不合并授予。只读诊断 `40206147505` 继续取iPhone原失败证据。
 GTK先前More菜单后20项新检查通过，但记录列表在异步查询时禁用导致旧焦点请求无效；原工件已认证，新compact入口聚焦既有关闭按钮并验证键盘仍能进入编辑器与真实记录行。
 配色iPhone原工件再确认系统appearance light命令45秒超时、构建尚未开始；fast-import录像停在已导入书架，尚不能认定SDK正文或导入失败。
 macOS实际 raw3 独立候选已通过 `40196978163`，真实发送图为15 wires、4原件、11记录。
