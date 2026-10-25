@@ -1,0 +1,81 @@
+# SPDX-License-Identifier: MIT
+name: Reader next S17 raw sync status view
+on:
+  push:
+    branches: [codex/reader-next-s17]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  candidate:
+    name: installed dual-family status view (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 100
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Linux native TLS XML and SHA dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config ninja-build
+      - name: Enter native Windows compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Syntax-check the Actions-only acceptance scripts
+        run: |
+          python -m py_compile tests/reader_next_s17/run.py \
+            tests/reader_next_s17/check_raw_view.py tests/reader_next_s17/strict.py
+      - name: Install both capability families and run the real TLS acceptance
+        run: python tests/reader_next_s17/run.py
+      - name: Preserve source-bound evidence and installed packages without keys
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-next-s17-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/reader-next-s17/
+            !build/reader-next-s17/**/*.key
+            !build/reader-next-s17/**/*-source/**
+          if-no-files-found: error
+  summary:
+    name: strict same-run artifact aggregation
+    needs: [candidate]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Recompute archive digests and re-verify every report identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_next_s17/strict.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-next-s17-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-next-s17-summary/
+          if-no-files-found: error
