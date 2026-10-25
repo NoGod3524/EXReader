@@ -162,6 +162,7 @@ def main():
 
     phase_records = []
     total_checks = 0
+    failing_checks = []
     for index, (label, phase, expected, timeout) in enumerate(PHASES, start=1):
         log_name = "%02d-%s" % (index, label)
         record = {"label": label, "phase": phase, "log": log_name, "exit": None, "checks": [],
@@ -207,6 +208,9 @@ def main():
         if returncode != 0:
             fail(label + "_exit", str(returncode))
         failing = [row["id"] for row in parsed["checks"] if row["result"] != "pass"]
+        for row in parsed["checks"]:
+            if row["result"] != "pass":
+                failing_checks.append({"phase": label, "id": row["id"], "detail": row["detail"]})
         if failing:
             fail(label + "_check_failed", ",".join(failing[:6]))
         record["accepted"] = (failure is None and returncode == 0
@@ -345,13 +349,17 @@ def main():
         "listening": "not verified",
         "range_events": range_events,
     }
+    report["failing_checks"] = failing_checks
     report["accepted"] = failure is None and report["checks"] == report["expected_checks"] == report["passed"]
     if failure is not None:
         report["error"] = failure
     text = json.dumps(report, ensure_ascii=False, indent=2) + "\n"
     (output / "evidence" / "report.json").write_text(text, encoding="utf-8")
+    # Name every failing check in the job log as well: the per-phase stdout files live
+    # in the artifact, so a red run must not depend on unpacking it to say what failed.
     print(json.dumps({"accepted": report["accepted"], "checks": report["checks"],
-                      "expected": report["expected_checks"], "error": failure}, indent=2))
+                      "expected": report["expected_checks"], "error": failure,
+                      "failing_checks": failing_checks}, indent=2))
     return 0 if report["accepted"] else 1
 
 
