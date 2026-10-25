@@ -1,7 +1,24 @@
 {
   "package": "C01",
-  "accepted": false,
+  "accepted": true,
+  "accepted_scope": "evidence-gate tool: synthetic refusal protocol, live derived refusal controls, real partial table collected in the cloud",
   "complete_product": false,
-  "reason": "no Actions run executed yet",
-  "base_source": "0889f7d1e9a537c6c1b05456547e016b26e1cd85"
+  "performance_accepted": false,
+  "physical_device_execution": false,
+  "bidirectional_accepted": false,
+  "base_source": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+  "tested_source": "d222e2fcb41c2285065339ef654131313362ffb8",
+  "branch": "codex/reader-fw-c01",
+  "ci_rounds": [
+    {"run_id": 40213698559, "attempt": 1, "source": "ecb8858ea1e5294a28e5c2ec7d68d8763bb18ee2", "jobs": {"protocol": 121230173657, "collect": 121230208327}, "conclusion": "success", "note": "result JSON was not visible in the log (printed line absent); fixed by adding summarize.py"},
+    {"run_id": 40213898978, "attempt": 1, "source": "3e3ec1160a29cdd9430ef8928e948b3609fc2378", "conclusion": "success", "note": "inventory round, no program hashes pinned"},
+    {"run_id": 40214238250, "attempt": 1, "source": "d222e2fcb41c2285065339ef654131313362ffb8", "jobs": {"protocol": 121231814803, "collect": 121231844305}, "conclusion": "success",
+     "result_artifact": {"id": 12607007028, "name": "reader-final-c01-result-40214238250-1", "bytes": 17542, "sha256": "d1c9b1bdc10b5783694b9937da29f19edd686d326db46e63c06019a7ef239d40", "expires_at": "2027-01-23T16:58:49Z"}}
+  ],
+  "real_table": "docs/reader-final-c01/run-table.json",
+  "real_entries_authenticated": 6,
+  "real_entries_counted": 0,
+  "real_negative_control": {"run_id": 40203714083, "source": "72c6bbdd14ebf3be453fa7f0da81119d52675eb5", "refused": true, "reason": "run did not complete successfully"},
+  "program_hashes_pinned": ["windows compact-host/EXReaderProduct.exe", "gtk account-stage/lib/libexr_webdav.a (library only; GTK host binary has no recognized extension)", "android apks/host-debug.apk", "macos installed-raw-products/lib/libreader_catalog.a (library only)", "android-peer host-debug.apk + libexreader.so"],
+  "unverified": ["product_source (root integration) not set, so no entry counts and every scope stays pending", "sdk, performance, packaging, physical_device have no evidence", "apple_to_android direction absent", "iOS host: only the real failed run 40203714083", "program hash of GTK host executable and macOS app not pinned", "no physical device, screen reader, USB or performance budget executed"]
 }
