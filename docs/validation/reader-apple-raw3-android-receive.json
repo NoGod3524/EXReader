@@ -1,0 +1,19 @@
+{
+  "accepted": false,
+  "adopted": false,
+  "branch": "codex/reader-apple-raw3-android-receive",
+  "base": "44eabdc86b3b84d986f81dbaf8cee92b1829cea8",
+  "source_sha": null,
+  "production_changed": false,
+  "original_mac_judge_changed": false,
+  "android_source": "4a04a9cc74dde67f755c87e87b278d63a254a3ac",
+  "android_run": 40207467982,
+  "android_attempt": 1,
+  "android_manifest_sha256": "65a7c6e2be7a0d80e1a7c9eed3731383aa9bdbc71cfd09f89ce63861193b5345",
+  "runs": [],
+  "android_to_macos_receive_accepted": false,
+  "same_source_bidirectional_accepted": false,
+  "ios_ui_accepted": false,
+  "physical_device_execution": false,
+  "complete_product": false
+}
