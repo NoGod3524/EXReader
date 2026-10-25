@@ -27,6 +27,7 @@ def main():
       'run_id':os.environ['GITHUB_RUN_ID'],'attempt':os.environ['GITHUB_RUN_ATTEMPT'],'sdk_changed':False,
       'diagnostic_only':os.environ.get('GTK_NAVIGATION_DIAGNOSTIC_ONLY')=='true','settings_whole_page_palette_accepted':False,
       'complete_product':False,'performance_accepted':False,'program_sha256':hashlib.sha256(host.binary.read_bytes()).hexdigest()}
+    report['program_source_sha']=os.environ.get('GTK_NAVIGATION_PROGRAM_SOURCE',os.environ['GITHUB_SHA'])
     originals={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for root in (args.fixtures,args.fixed_inputs) for p in root.iterdir() if p.is_file()}
     def launch():
         # Establish the native test fixture before the unchanged host deadline.
@@ -130,11 +131,31 @@ def main():
         click('Full EPUB CFI',{'text'});host.key('ctrl+a');host.paste((args.fixtures/name).read_text());return action('Return')
     def active_directory():
         command('xdotool','windowactivate','--sync',host.window)
+        # X11 activation acknowledges the WM; wait for GTK's actual focus event
+        # before delivering the shortcut after minimize/restore.
+        # The observation file is event-driven; its focused bit may still be
+        # from the minimize event. Query the live native frame through AT-SPI.
+        native_frame=element('EXReader Linux',{'frame'});deadline=time.monotonic()+10
+        while time.monotonic()<deadline:
+            native_states=bus.states(native_frame)
+            if native_states.get('active') and native_states.get('showing'):break
+            assert host.process.poll() is None,'host exited before native focus'
+            time.sleep(.02)
+        else:raise TimeoutError('actual native main frame did not activate: '+repr(native_states))
+        before_host=host.wait(lambda value:value.get('visible')==1)
+        before_actions=int(observed()['actions'])
+        trace=dict(before_host=before_host,native_frame_states=native_states,before_actions=before_actions,samples=[])
+        report.setdefault('scan_observations',[]).append(trace);started=time.monotonic()
+        def scanning(value):
+            sample={key:value.get(key) for key in ('visible','running','phase','polls','actions','active','token')}
+            if not trace['samples'] or any(trace['samples'][-1].get(key)!=val for key,val in sample.items()):
+                if len(trace['samples'])<128:trace['samples'].append(dict(sample,elapsed_ms=round((time.monotonic()-started)*1000,3)))
+            return value['visible']=='1' and int(value['actions'])>before_actions and value['phase']=='2' and int(value['polls'])>0
         # Observe the real operation while the native input process is still
         # dispatching, instead of starting the observer after it returns.
         scan_inputs.append(subprocess.Popen(['xdotool','key','--clearmodifiers','--delay','0','ctrl+shift+t'],
                                             stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True))
-        return wait(lambda v:v['phase']=='2' and int(v['polls'])>0,idle=False,seconds=15,interval=.001)
+        return wait(scanning,idle=False,seconds=15,interval=.001)
     try:
         assert bus.init()[0];launch();app=bus.wait_application('exreader-linux');wait()
         book=import_book(args.fixtures/'nav3.epub');host.key('F7','ctrl+Home','ctrl+shift+Right','F11');host.paste('Existing native directory note');host.key('F8');host.wait(lambda v:v['notes']==1)
