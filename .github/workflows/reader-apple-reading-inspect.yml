@@ -1,0 +1,24 @@
+name: Read-only original Apple reading failure inspection
+on:
+  push:
+    branches: [codex/reader-apple-reading-inspect25]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate and inspect the original failed iPhone result in Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_apple_reading_inspect/inspect.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-reading-original-failure-inspection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-reading-original-inspect/
+          if-no-files-found: error
