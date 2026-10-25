@@ -15,9 +15,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from contract import (ALLOWED_PATHS, APPROVED_SDK, FROZEN_SDK, IMPLEMENTATION_START, PRODUCER_SOURCE,
-                      PRODUCER_TREE, REFERENCE_DOC, REFERENCE_PROGRAM, REFERENCE_SEAL,
-                      RETAINED_SOURCES, SDK_CORE_PATHS, SDK_INCLUDE_TREE, SDK_SRC_TREE, SDK_VERSION,
-                      require)
+                      PRODUCER_TREE, REFERENCE_DOC, REFERENCE_DOC_BLOB, REFERENCE_PROGRAM,
+                      REFERENCE_SEAL, RETAINED_SOURCES, SDK_CORE_PATHS, SDK_INCLUDE_TREE,
+                      SDK_SRC_TREE, SDK_VERSION, require)
 
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW = '.github/workflows/reader-final-s01.yml'
@@ -78,7 +78,7 @@ def main():
         require(producer_blob == git('rev-parse', 'HEAD:' + relative),
                 'retained source differs between producer and implementation: ' + relative)
         retained.append(relative)
-    require(git('rev-parse', 'HEAD:' + REFERENCE_DOC) == git('rev-parse', REFERENCE_SEAL + ':' + REFERENCE_DOC),
+    require(git('rev-parse', 'HEAD:' + REFERENCE_DOC) == REFERENCE_DOC_BLOB,
             'the published program hash document is not the sealed one')
     require(REFERENCE_PROGRAM in (ROOT / REFERENCE_DOC).read_text(encoding='utf-8'),
             'the sealed document does not publish the reference program hash')

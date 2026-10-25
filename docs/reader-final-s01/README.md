@@ -8,7 +8,7 @@
 
 | 角色 | 值 | 说明 |
 | --- | --- | --- |
-| producer source（程序来源） | `eab342ef456be4a8a1811e5249e3c217d906ce8a`，tree `6c4fad985bf46603f0afc5baaa4e2b2b9e82c870` | 最终 wave 共同约束里受测的 Windows 简洁 UI；本包用**独立 checkout**（`producer-src`）构建，不把当前分支 HEAD 换成它 |
+| producer source（程序来源） | `eab342ef456be4a8a1811e5249e3c217d906ce8a`，tree `cac30c03752cf9d664f275cb095d8311659785af` | 最终 wave 共同约束里受测的 Windows 简洁 UI；本包用**独立 checkout**（`producer-src`）构建，不把当前分支 HEAD 换成它 |
 | 批准 SDK source | `edddc463c06ed5731195cdb8f06b2df6dff7699e`（3.41） | producer checkout 的 `src` tree `01753c0a…`、`include` tree `2a81956f…` 与该提交逐字节相同；`CMakeLists.txt/CMakePresets.json/cmake/src/include` 零差异；冻结 3.40 SDK `9854061b…` 是其祖先 |
 | implementation source（本包代码来源） | 本分支 head | 只新增 `tests/reader_final_s01/`、`.github/workflows/reader-final-s01.yml`、`docs/reader-final-s01/`、`HANDOFF-RESULT.md` |
 

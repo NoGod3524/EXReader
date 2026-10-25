@@ -34,7 +34,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 IMPLEMENTATION_START = '0889f7d1e9a537c6c1b05456547e016b26e1cd85'
 PRODUCER_SOURCE = 'eab342ef456be4a8a1811e5249e3c217d906ce8a'
-PRODUCER_TREE = '6c4fad985bf46603f0afc5baaa4e2b2b9e82c870'
+PRODUCER_TREE = 'cac30c03752cf9d664f275cb095d8311659785af'
 FROZEN_SDK = '9854061be331fe603a1822d9b2b36ee357154927'
 APPROVED_SDK = 'edddc463c06ed5731195cdb8f06b2df6dff7699e'
 SDK_CORE_PATHS = ('CMakeLists.txt', 'CMakePresets.json', 'cmake', 'include', 'src')
@@ -58,6 +58,9 @@ FIRST_PARTY_FILES = {'LICENSE.txt': 'LICENSE', 'THIRD_PARTY_NOTICES.md': 'THIRD_
 REFERENCE_PROGRAM = '37caa77499e94ed060a2fc71f503fbf22be8abf2f3bb943af59890d785dcc7ff'
 REFERENCE_DOC = 'docs/READER-WINDOWS-COMPACT.md'
 REFERENCE_SEAL = 'f355525b74ae261db536c56200e46643919ef323'
+# Content id of that document at the seal and at the implementation source; a single
+# ref checkout carries the blob but not necessarily the seal commit object.
+REFERENCE_DOC_BLOB = '39f1e3ab30a35fe0fdd40206f2d6e1ae31e46b46'
 
 # The producer's own retained acceptance code and packaging tool. The verifier
 # asserts these blobs are byte identical at the producer commit and at the
