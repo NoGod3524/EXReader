@@ -1,5 +1,18 @@
 # C03 HANDOFF-RESULT
 
+## Root后续收口：Linux范围已通过
+
+受测 `34e5bf5440df8ab16ffc809943bbc2dc2fd4ea38`，run `40220894221` / attempt1，
+原24项具名检查全部通过，同次原ZIP/程序散列认证通过。详见当前validation.json；范围仅Linux本包。
+固定合并WebDAV修复候选 `8cc57c078f50c7e81bd2a75620a4acf9b23bb456`，原C03断言未改。
+原路径守卫继续执行，另逐文件核对该候选内容，SDK/raw模块未改。
+
+更正下方旧交回的诊断：cloud-import已有显式3.41.0参数支持，第二轮是漏传参数，并非owner不兼容。
+Root后续修复同一步安装prefix的可见性；run40219386136为23项通过、1项SIGPIPE失败，
+不是22项通过。WebDAV候选修复后，原reset/stall/cancel复合检查在本轮完整通过。
+
+## 原交回历史（保留失败，不代表当前状态）
+
 **状态：accepted=false。三轮CI已用尽，三轮均在构建阶段失败，C03 的任何具名检查都尚未执行。未验证项即全部检查。**
 
 - 起点（固定）：`0889f7d1e9a537c6c1b05456547e016b26e1cd85`；分支 `origin/codex/reader-fw-c03`

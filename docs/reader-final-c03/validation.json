@@ -1,14 +1,30 @@
 {
  "package": "C03",
- "accepted": false,
- "reason": "three CI rounds failed at build stage; no check executed",
+ "accepted": true,
+ "reason": "Linux hostile-fixture boundaries only; all 24 named checks and same-run artifact authentication passed",
  "start": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
- "tested_source": "f5d87fdd7a1d025509fb7847ab90d237617fc7a1",
- "runs": [
+ "tested_source": "34e5bf5440df8ab16ffc809943bbc2dc2fd4ea38",
+ "earlier_failed_build_runs": [
   40213760389,
   40213984264,
   40214192654
  ],
  "complete_product": false,
+ "run": 40220894221,
+ "attempt": 1,
+ "checks_passed": 24,
+ "jobs": {"boundaries":121252027782,"authentication":121252711722},
+ "sdk_version": "3.41.0",
+ "reviewed_transport_candidate": "8cc57c078f50c7e81bd2a75620a4acf9b23bb456",
+ "independent_transport_run": 40220541331,
+ "artifacts": [
+   {"id":12608919490,"bytes":5111821,"sha256":"476a663ae284771544e75b73de34b30eb4790da8153f401ccfcdd5a843298226","expires_at":"2027-01-23T18:21:57Z"},
+   {"id":12609332654,"bytes":618,"sha256":"9388ae0b196ba2b3dabdf1a93e91f08edb3f5191a441e0cc463a018495c2350d","expires_at":"2027-01-23T18:21:57Z"}
+ ],
+ "root_failed_runs": [
+   {"id":40219028708,"reason":"same-step session prefix was not available via GITHUB_ENV"},
+   {"id":40219386136,"passed":23,"failed":1,"reason":"SIGPIPE on actual reset; remaining stall/cancel in composite case not executed"}
+ ],
+ "pending": ["OS credential-store locked/denied", "symlink swap between download and import", "other platform executions", "real third-party WebDAV providers"],
  "see": "HANDOFF-RESULT.md"
 }

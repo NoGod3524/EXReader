@@ -1,7 +1,10 @@
 # C03 账号、导入与同步故障边界复核（契约）
 
 固定实现起点 `0889f7d1e9a537c6c1b05456547e016b26e1cd85`，分支 `codex/reader-fw-c03`。只新增 `tests/reader_final_c03/`、
-`.github/workflows/reader-final-c03.yml`、`docs/reader-final-c03/`、`HANDOFF-RESULT.md`；原 owner/SDK/测试/workflow 一行未改（`check_guards.py` 逐路径校验）。
+`.github/workflows/reader-final-c03.yml`、`docs/reader-final-c03/`、`HANDOFF-RESULT.md`。
+Root接手后固定合并独立WebDAV修复候选 `8cc57c078f50c7e81bd2a75620a4acf9b23bb456`；
+原C03断言、SDK及其他owner保持原件，路径守卫另认证该候选逐文件身份。
+当前Linux验收为run40220894221/1、24项通过；其他平台及下列pending不授予。
 
 ## 复用（只读）
 
