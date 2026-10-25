@@ -95,8 +95,8 @@ struct decoded {reader_rs_record r{};~decoded(){reader_rs_record_free(&r);}};
 const char *z(const char *s){return s?s:"";}
 bool same(const char *a,size_t an,const char *b,size_t bn){return an==bn&&(!an||!std::memcmp(a,b,an));}
 /* Everything but id, parents and note text must match the source decode. */
-bool same_location(const reader_rs_record &a,const reader_rs_record &b){
-  return (!a.exact)==(!b.exact)&&(!a.prefix)==(!b.prefix)&&(!a.suffix)==(!b.suffix)&&a.has_location&&b.has_location&&a.mode==b.mode&&a.anchor_version==b.anchor_version&&a.page==b.page&&a.part==b.part&&
+bool same_location(const reader_rs_record &a,const reader_rs_record &b,bool strict_null=false){
+  return (!strict_null||((!a.exact)==(!b.exact)&&(!a.prefix)==(!b.prefix)&&(!a.suffix)==(!b.suffix)))&&a.has_location&&b.has_location&&a.mode==b.mode&&a.anchor_version==b.anchor_version&&a.page==b.page&&a.part==b.part&&
     a.start==b.start&&a.end==b.end&&!std::strcmp(z(a.part_path),z(b.part_path))&&!std::strcmp(z(a.page_id),z(b.page_id))&&
     !std::strcmp(a.parser_version,b.parser_version)&&!std::strcmp(z(a.chapter),z(b.chapter))&&(!a.chapter)==(!b.chapter)&&
     same(z(a.exact),a.exact_size,z(b.exact),b.exact_size)&&same(z(a.prefix),a.prefix_size,z(b.prefix),b.prefix_size)&&
@@ -105,8 +105,8 @@ bool same_location(const reader_rs_record &a,const reader_rs_record &b){
 struct request {
   const reader_rc_context &context;const reader_rc_command &command;reader_rc_result &result;
   std::string revision_id,book_key,annotation_id,key,text;std::vector<std::string> parents;std::vector<const char *> pointers;
-  bool annotation=false;bool raw_api=false;
-  request(const reader_rc_context *c,const reader_rc_command *m,reader_rc_result *r,bool raw=false):context(*c),command(*m),result(*r),raw_api(raw){
+  bool annotation=false;bool raw_api=false;unsigned write_version=2;
+  request(const reader_rc_context *c,const reader_rc_command *m,reader_rc_result *r,bool raw=false,unsigned version=2):context(*c),command(*m),result(*r),raw_api(raw),write_version(raw?version:2){
     if(!context.store||(context.expected_count&&!context.expected_heads)||context.expected_count>READER_REVISION_MAX_PARENTS)reject("Invalid observed head set");
     revision_id=bounded(context.revision_id,32,"A stable revision ID is required");
     if(!hex32(revision_id))reject("Invalid stable revision ID");
@@ -222,7 +222,7 @@ struct request {
       unsigned version=(unsigned)old.r.anchor_version;
       std::string wire=encode(envelope(old.r.parser_version),c,(size_t)old.r.part,version);
       decoded fresh;st=reader_candidate_reader_rs_decode(raw_api,context.store,wire.data(),wire.size(),&fresh.r,&e);
-      if(st!=READER_RS_OK||!same_location(old.r,fresh.r)||std::strcmp(z(fresh.r.note_text),text.c_str()))
+      if(st!=READER_RS_OK||!same_location(old.r,fresh.r,raw_api&&old.r.anchor_version==3)||std::strcmp(z(fresh.r.note_text),text.c_str()))
         refuse(READER_RC_SOURCE,"The edited revision would not preserve the original selector");
       return wire;
     }
@@ -230,18 +230,20 @@ struct request {
     if(command.operation==READER_RC_DELETE){
       if(!command.capture||command.capture->anchor||command.capture->fixed)reject("Delete names only the capture mode");
       none.mode=command.capture->mode;
-      return encode(envelope(parser),none,0,raw_api?3:2);
+      return encode(envelope(parser),none,0,write_version);
     }
     if(!command.capture)reject("A real SDK capture is required");
+    if(raw_api&&command.capture->mode==READER_RS_FIXED_PAGE&&(!command.capture->fixed||!command.capture->fixed->exact))
+      reject("A new command requires a genuine non-NULL SDK exact selector");
     if(!parser[0])reject("A parser version is required");
     if(command.kind==READER_RC_BOOKMARK&&!point(command.capture))reject("A bookmark requires a point capture");
     if(command.kind==READER_RC_HIGHLIGHT&&(point(command.capture)||(command.capture->mode!=READER_RS_FIXED_PAGE&&command.capture->anchor&&!command.capture->anchor->exact)))
       reject("A highlight requires a nonempty range capture");
-    return encode(envelope(parser),*command.capture,command.part,raw_api?3:2);
+    return encode(envelope(parser),*command.capture,command.part,write_version);
   }
 };
 }
-static reader_rc_status apply(bool raw_api,const reader_rc_context *context,const reader_rc_command *command,reader_rc_result *result,reader_rc_error *error){
+static reader_rc_status apply(bool raw_api,const reader_rc_context *context,const reader_rc_command *command,reader_rc_result *result,reader_rc_error *error,unsigned write_version=2){
   if(error)std::memset(error,0,sizeof(*error));
   if(result)std::memset(result,0,sizeof(*result));
   auto fail=[&](const failure &f){
@@ -250,7 +252,8 @@ static reader_rc_status apply(bool raw_api,const reader_rc_context *context,cons
   };
   try{
     if(!context||!command||!result)reject("Missing reading command arguments");
-    request r(context,command,result,raw_api);
+    if(raw_api&&(write_version<1||write_version>3))reject("Explicit anchor version must be 1, 2 or 3");
+    request r(context,command,result,raw_api,write_version);
     std::string wire=r.build();
     reader_revision_error e{};
     reader_revision_status st=reader_candidate_reader_revision_local_reading(raw_api,context->store,wire.data(),wire.size(),r.pointers.empty()?nullptr:r.pointers.data(),
@@ -270,6 +273,7 @@ extern "C" reader_rc_status reader_rc_apply(const reader_rc_context *c,const rea
 #ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
 extern "C" reader_rc_status reader_rc_apply_fixed_v3(const reader_rc_context *c,const reader_rc_command *m,reader_rc_result *r,reader_rc_error *e){
   if(m&&m->capture&&m->capture->mode!=READER_RS_FIXED_PAGE){if(r)std::memset(r,0,sizeof(*r));if(e){std::memset(e,0,sizeof(*e));e->code=READER_RC_ARGUMENT;}return READER_RC_ARGUMENT;}
-  return apply(true,c,m,r,e);
+  return apply(true,c,m,r,e,3);
 }
+extern "C" reader_rc_status reader_rc_apply_raw_v3(const reader_rc_context *c,const reader_rc_command *m,unsigned version,reader_rc_result *r,reader_rc_error *e){return apply(true,c,m,r,e,version);}
 #endif

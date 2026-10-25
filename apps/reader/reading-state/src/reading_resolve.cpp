@@ -5,7 +5,9 @@ namespace {
 void check_sdk(exr_status status,const char *message){if(status!=EXR_OK)reject(READER_RS_SDK,message,READER_RS_GAP_NONE,(int)status);}
 void require_selector(const reader_rs_record *r,reader_rs_mode mode){
   if(!r||!r->has_location||r->mode!=mode||!r->exact)reject(READER_RS_ARGUMENT,"Record has no selector for this reading mode");
-  if(r->anchor_version!=1&&r->anchor_version!=2)reject(READER_RS_ARGUMENT,"Legacy resolver accepts only anchor1/2");
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+  if(r->anchor_version==3)reject(READER_RS_ARGUMENT,"Anchor3 requires the explicit candidate resolver");
+#endif
   if(r->end<r->start||r->end-r->start!=r->exact_size)reject(READER_RS_ARGUMENT,"Wire offset hints disagree with the quote length");
   if(r->start>SIZE_MAX||r->end>SIZE_MAX)reject(READER_RS_ARGUMENT,"Selector exceeds this host's address range");
 }
