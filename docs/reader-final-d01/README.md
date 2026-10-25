@@ -49,3 +49,18 @@
 [research.py](../../tests/reader_final_d01/research.py) 补查进度、离线打开、重开/Ready恢复、账号失败、冲突历史、重复导入及组织子操作。精确定位Windows现有分组批量加入（不声称新建分组或系列排序）、四宿主本地打开/进度路径、Apple账号选择器与阅读记录版本，以及Android实际Provider选择入口。隐式生命周期也有准确source handler，不要求必须新增按钮。
 
 剩余无host入口行逐项有 `research.classification/reason/references/source_searches`：外部OS线缆工作流；只有本机下载模块、未确立host调用；有文件夹/拖放模块而被审host未接对应路线；Apple共享catalog不等于组织编辑UI；Windows/GTK第三方Provider桥接未确立。搜索只证明所列source文件范围，不能称整个仓库不存在实现。每一行完成来源研究和状态归类，但仍不授予实际运行能力；精确入口完整度与144行研究覆盖分开。
+
+## 最终Actions结果（2026-10-25）
+
+受测审查器 `234a51a38528dfdeaa02a2313f3dd576bcbb254e`，[run 40216671775 / attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40216671775) 两job成功：trace-audit `121239186748`、strict `121239261557`。
+
+- 24需求×6平台=144行均完成来源研究/状态归类；111条找到明确源内路径（包括条件菜单、生命周期和隐式owner动作），33条为有原始引用/搜索范围的路线缺口。**不把111条路径称111项完整功能实现**。
+- 剩余分类：OS线缆工作流6；本地移除仅模块、未确立宿主路线6；文件夹模块但host路线未确立5；拖放适配器但host路线未确立5；Apple组织catalog不等于编辑UI9；Windows/GTK Provider桥接未确立2。
+- 14个结构/语义/研究负例、5个strict身份/范围负例全部拒绝；另有原ZIP字节篡改控制。
+- 手工144行未跑；实际implemented未知，exposed/evidenced不授予。`audit_completed=true`只指本包来源追踪审查；`trace_complete=false`明确仍有33条无精确host路线；`product_accepted=false`。
+
+[原始审查工件](https://github.com/NoGod3524/EXReader/actions/runs/40216671775/artifacts/12607298006)：ID12607298006，57,108字节，SHA-256 `4e6e7bcdb2a4265d596113397964c17ccee2e19c245b0473465a59baadb5e234`，到期2027-01-23T17:28:58Z。strict在Actions重新下载原ZIP并认证所有矩阵/报告成员；工件内有matrix.md、matrix.json、findings.json、原API响应和测试资料。
+
+[汇总工件](https://github.com/NoGod3524/EXReader/actions/runs/40216671775/artifacts/12607173490)：ID12607173490，6,430字节，上传SHA-256 `42b19ba237295580eacc4d6a2b4228afd061443c33a2b96f0e34d95cc84adc80`，同到期；仅核对API/上传日志，没有另下载汇总ZIP。审查实际运行Python3.10.12；实际审查器/catalog/research散列见validation.json。没有运行EXReader宿主或安装SDK。
+
+首轮结构绿灯但语义错误、第二轮研究不足、第三轮配置归属待细化均保留在validation.json，不拼接成最终通过。所有历史候选的API元数据当时可用，但其ZIP/host程序未重新散列；Apple移动历史失败原样保留、无状态转授。

@@ -1,1 +1,883 @@
-{"package":"D01","accepted":false,"audit_completed":false,"product_accepted":false,"complete_product":false,"status":"Actions pending","target_sha":"0889f7d1e9a537c6c1b05456547e016b26e1cd85","sdk":"edddc463c06ed5731195cdb8f06b2df6dff7699e","requirements_total":24,"platform_rows":144,"manual_pending":144,"historical_program_hashes_reverified":false}
+{
+  "accepted": true,
+  "audit_completed": true,
+  "product_accepted": false,
+  "complete_product": false,
+  "source": "234a51a38528dfdeaa02a2313f3dd576bcbb254e",
+  "run": 40216671775,
+  "attempt": 1,
+  "problems": [],
+  "traced": 111,
+  "untraced": 33,
+  "trace_complete": false,
+  "audit_scope": "matrix structure, source declarations and provenance review only; incomplete entry tracing explicitly retained",
+  "researched": 144,
+  "research_complete": true,
+  "gap_classifications": {
+    "adapter_available_no_matching_host_route": 5,
+    "catalog_module_not_host_organization_ui": 9,
+    "external_system_workflow": 6,
+    "module_available_no_matching_host_route": 5,
+    "module_only_no_host_route_established": 6,
+    "provider_bridge_not_established": 2
+  },
+  "producer_job_id": 121239186748,
+  "artifact": {
+    "id": 12607298006,
+    "name": "reader-final-d01-raw-40216671775-1",
+    "size_in_bytes": 57108,
+    "digest": "sha256:4e6e7bcdb2a4265d596113397964c17ccee2e19c245b0473465a59baadb5e234",
+    "expires_at": "2027-01-23T17:28:58Z"
+  },
+  "zip_sha256": "4e6e7bcdb2a4265d596113397964c17ccee2e19c245b0473465a59baadb5e234",
+  "negative_controls": {
+    "wrong_source": "rejected",
+    "wrong_run": "rejected",
+    "wrong_attempt": "rejected",
+    "product_grant": "rejected",
+    "missing_rows": "rejected"
+  },
+  "requirements_total": 24,
+  "platform_rows": 144,
+  "implemented_exposed": 0,
+  "missing": 0,
+  "blocked": 0,
+  "manual_pending": 144,
+  "evidenced": 0,
+  "program": {
+    "kind": "Python audit tool; no host program executed",
+    "python": "3.10.12 (main, Aug 31 2026, 10:18:17) [GCC 11.4.0]",
+    "sha256": "ec328af29903ba1c737edafd18d2388d3844a58493f244547322299d1744fdb0",
+    "catalog_sha256": "f5ae07f208e68f14dbd703f4831888db32a8014483f3f76b1ed2b3c4e2095415",
+    "research_sha256": "28cd9a697234a92aa742b624830150701cb195e7aeeb99f0fea01c53016405d5"
+  },
+  "report_sha256": "bbfbf7ea1d79ebf426300c802f3633286a377fc7f0637b1355750d25c59ed7e5",
+  "matrix_sha256": "17a4968d1fdc81ad1aa3952fe198e944d8774b9a6616de626e71c33374d6fed6",
+  "historical_evidence": [
+    {
+      "id": "E-WIN",
+      "source": "eab342ef456be4a8a1811e5249e3c217d906ce8a",
+      "delivery": "f355525b74ae261db536c56200e46643919ef323",
+      "run": 40201283788,
+      "platforms": [
+        "Windows"
+      ],
+      "scope": "独立compact ON + 原OFF回归；非默认完整产品",
+      "environment": "Windows Actions native UI",
+      "attempt": 1,
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 121192805744,
+          "name": "preflight",
+          "head_sha": "eab342ef456be4a8a1811e5249e3c217d906ce8a",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40201283788/job/121192805744",
+          "runner_name": "GitHub Actions 1000009745",
+          "labels": [
+            "ubuntu-22.04"
+          ]
+        },
+        {
+          "id": 121192850915,
+          "name": "installed F1 and native Windows search controls and lifecycle",
+          "head_sha": "eab342ef456be4a8a1811e5249e3c217d906ce8a",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40201283788/job/121192850915",
+          "runner_name": "GitHub Actions 1000009746",
+          "labels": [
+            "windows-2022"
+          ]
+        },
+        {
+          "id": 121197293392,
+          "name": "same-source native Windows search artifact authentication",
+          "head_sha": "eab342ef456be4a8a1811e5249e3c217d906ce8a",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40201283788/job/121197293392",
+          "runner_name": "GitHub Actions 1000009766",
+          "labels": [
+            "ubuntu-22.04"
+          ]
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12602637196,
+          "name": "reader-windows-search-summary-40201283788-1",
+          "size_in_bytes": 9142,
+          "digest": "sha256:66cae39b5cc7aebbf08119245679ab74251705253eaa4878517685c09ca3927e",
+          "expired": false,
+          "expires_at": "2027-01-23T14:14:14Z",
+          "workflow_run": {
+            "id": 40201283788,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-windows-compact",
+            "head_sha": "eab342ef456be4a8a1811e5249e3c217d906ce8a"
+          }
+        },
+        {
+          "id": 12601764928,
+          "name": "reader-windows-search-initial-40201283788-1",
+          "size_in_bytes": 169964880,
+          "digest": "sha256:4e158bdda8c18561b972b85d22ea8e71c6c6dcdc997b3f23a55747fc195954d3",
+          "expired": false,
+          "expires_at": "2027-01-23T14:14:14Z",
+          "workflow_run": {
+            "id": 40201283788,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-windows-compact",
+            "head_sha": "eab342ef456be4a8a1811e5249e3c217d906ce8a"
+          }
+        }
+      ],
+      "availability": "metadata_available",
+      "original_zip_reverified": false,
+      "program_hash_reverified": false,
+      "grant_to_base": false
+    },
+    {
+      "id": "E-GTK",
+      "source": "57203a52aee439be5194ee0a4b13563a975e8daf",
+      "delivery": "9fc407a5cce5a0bfe644a60bd8dc29f84dea6d0e",
+      "run": 40206458217,
+      "platforms": [
+        "Linux"
+      ],
+      "scope": "独立compact UI；非共同raw3",
+      "environment": "Linux Actions GTK/Xvfb",
+      "attempt": 1,
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 121208335325,
+          "name": "preflight",
+          "head_sha": "57203a52aee439be5194ee0a4b13563a975e8daf",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40206458217/job/121208335325",
+          "runner_name": "GitHub Actions 1000009831",
+          "labels": [
+            "ubuntu-22.04"
+          ]
+        },
+        {
+          "id": 121208336421,
+          "name": "Read-only failed GTK owner evidence diagnosis",
+          "head_sha": "57203a52aee439be5194ee0a4b13563a975e8daf",
+          "run_attempt": 1,
+          "conclusion": "skipped",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40206458217/job/121208336421",
+          "runner_name": null,
+          "labels": [
+            "ubuntu-22.04"
+          ]
+        },
+        {
+          "id": 121208399613,
+          "name": "GTK 3.41 complete retained suites and actual owner record compatibility",
+          "head_sha": "57203a52aee439be5194ee0a4b13563a975e8daf",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40206458217/job/121208399613",
+          "runner_name": "GitHub Actions 1000009832",
+          "labels": [
+            "ubuntu-22.04"
+          ]
+        },
+        {
+          "id": 121217426149,
+          "name": "Authenticate candidate canvas raw ZIP and source-bound reports",
+          "head_sha": "57203a52aee439be5194ee0a4b13563a975e8daf",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40206458217/job/121217426149",
+          "runner_name": "GitHub Actions 1000009870",
+          "labels": [
+            "ubuntu-22.04"
+          ]
+        },
+        {
+          "id": 121217558449,
+          "name": "Authenticate distinct compact ON and complete original OFF scopes",
+          "head_sha": "57203a52aee439be5194ee0a4b13563a975e8daf",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40206458217/job/121217558449",
+          "runner_name": "GitHub Actions 1000009871",
+          "labels": [
+            "ubuntu-22.04"
+          ]
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12605108334,
+          "name": "reader-gtk-341-final-summary-40206458217-1",
+          "size_in_bytes": 15706,
+          "digest": "sha256:9e5b43cb209b151eb1042722d31fc7f02c431194ef3779a1482179410b3559d5",
+          "expired": false,
+          "expires_at": "2027-01-23T15:20:23Z",
+          "workflow_run": {
+            "id": 40206458217,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-gtk-compact",
+            "head_sha": "57203a52aee439be5194ee0a4b13563a975e8daf"
+          }
+        },
+        {
+          "id": 12604909051,
+          "name": "reader-gtk-compact-summary-40206458217-1",
+          "size_in_bytes": 19348,
+          "digest": "sha256:4533df7c38b597b70645f4c764f0c602468593c567b86b6e07968e3ce4244044",
+          "expired": false,
+          "expires_at": "2027-01-23T15:20:23Z",
+          "workflow_run": {
+            "id": 40206458217,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-gtk-compact",
+            "head_sha": "57203a52aee439be5194ee0a4b13563a975e8daf"
+          }
+        },
+        {
+          "id": 12604604561,
+          "name": "reader-gtk-341-final-40206458217-1",
+          "size_in_bytes": 112659381,
+          "digest": "sha256:8d6c52593dd2017a6e13ffc2cf75fd3fd4546cdf3a5179b0da5afd55ac1fb685",
+          "expired": false,
+          "expires_at": "2027-01-23T15:20:23Z",
+          "workflow_run": {
+            "id": 40206458217,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-gtk-compact",
+            "head_sha": "57203a52aee439be5194ee0a4b13563a975e8daf"
+          }
+        }
+      ],
+      "availability": "metadata_available",
+      "original_zip_reverified": false,
+      "program_hash_reverified": false,
+      "grant_to_base": false
+    },
+    {
+      "id": "E-ANDROID",
+      "source": "4a04a9cc74dde67f755c87e87b278d63a254a3ac",
+      "delivery": "caa84411ae79c866c28cf982243b6cb80b4bbe49",
+      "run": 40207467982,
+      "platforms": [
+        "Android"
+      ],
+      "scope": "实际raw3候选；非真机六平台",
+      "environment": "Android emulator",
+      "attempt": 1,
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 121211375764,
+          "name": "protocol",
+          "head_sha": "4a04a9cc74dde67f755c87e87b278d63a254a3ac",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40207467982/job/121211375764",
+          "runner_name": "GitHub Actions 1000009842",
+          "labels": [
+            "macos-15"
+          ]
+        },
+        {
+          "id": 121211376063,
+          "name": "android",
+          "head_sha": "4a04a9cc74dde67f755c87e87b278d63a254a3ac",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40207467982/job/121211376063",
+          "runner_name": "GitHub Actions 1000009843",
+          "labels": [
+            "ubuntu-latest"
+          ]
+        },
+        {
+          "id": 121216568574,
+          "name": "summary",
+          "head_sha": "4a04a9cc74dde67f755c87e87b278d63a254a3ac",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40207467982/job/121216568574",
+          "runner_name": "GitHub Actions 1000009860",
+          "labels": [
+            "ubuntu-latest"
+          ]
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12604863663,
+          "name": "reader-android-raw3-summary-40207467982-1",
+          "size_in_bytes": 3328,
+          "digest": "sha256:03b8c54ea4b8e15a379d10bd508b09cc80b25cecf2fb90fff5e73e7773bf98f7",
+          "expired": false,
+          "expires_at": "2027-01-23T15:33:00Z",
+          "workflow_run": {
+            "id": 40207467982,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-android-raw3-candidate",
+            "head_sha": "4a04a9cc74dde67f755c87e87b278d63a254a3ac"
+          }
+        },
+        {
+          "id": 12604537792,
+          "name": "reader-android-page-theme-40207467982-1",
+          "size_in_bytes": 133598571,
+          "digest": "sha256:9ea2858145313296d39792d867794db1be687eb70dec38f155dcd1dfe156bf06",
+          "expired": false,
+          "expires_at": "2027-01-23T15:33:00Z",
+          "workflow_run": {
+            "id": 40207467982,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-android-raw3-candidate",
+            "head_sha": "4a04a9cc74dde67f755c87e87b278d63a254a3ac"
+          }
+        },
+        {
+          "id": 12604412857,
+          "name": "reader-android-record-bundle-40207467982-1",
+          "size_in_bytes": 16618,
+          "digest": "sha256:616552b26869f532870467a450a85813080f502c054765fcdbcc06c2979cb2d4",
+          "expired": false,
+          "expires_at": "2027-01-23T15:33:00Z",
+          "workflow_run": {
+            "id": 40207467982,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-android-raw3-candidate",
+            "head_sha": "4a04a9cc74dde67f755c87e87b278d63a254a3ac"
+          }
+        },
+        {
+          "id": 12604412854,
+          "name": "reader-android-raw3-40207467982-1",
+          "size_in_bytes": 113970957,
+          "digest": "sha256:c3db2ad1a2e31bc53d01620f2ef90e02a976e3b4f90ac76ed2e179c7c9052805",
+          "expired": false,
+          "expires_at": "2027-01-23T15:33:00Z",
+          "workflow_run": {
+            "id": 40207467982,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-android-raw3-candidate",
+            "head_sha": "4a04a9cc74dde67f755c87e87b278d63a254a3ac"
+          }
+        },
+        {
+          "id": 12604233206,
+          "name": "reader-android-raw3-bundle-40207467982-1",
+          "size_in_bytes": 18682,
+          "digest": "sha256:a38bffdb57ca35699e21b902def18a9d584a6055b7fbef41995e61b240c6168c",
+          "expired": false,
+          "expires_at": "2027-01-23T15:33:00Z",
+          "workflow_run": {
+            "id": 40207467982,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-android-raw3-candidate",
+            "head_sha": "4a04a9cc74dde67f755c87e87b278d63a254a3ac"
+          }
+        },
+        {
+          "id": 12604077135,
+          "name": "reader-android-raw3-protocol-40207467982-1",
+          "size_in_bytes": 53286742,
+          "digest": "sha256:3a4785c3f9060ecb6053db898fbeebc9c60f52688df9374830db0f1a5bf948ee",
+          "expired": false,
+          "expires_at": "2027-01-23T15:33:00Z",
+          "workflow_run": {
+            "id": 40207467982,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-android-raw3-candidate",
+            "head_sha": "4a04a9cc74dde67f755c87e87b278d63a254a3ac"
+          }
+        }
+      ],
+      "availability": "metadata_available",
+      "original_zip_reverified": false,
+      "program_hash_reverified": false,
+      "grant_to_base": false
+    },
+    {
+      "id": "E-MAC",
+      "source": "15dab6b2270dc296ed6239db67ced2e22d255e65",
+      "delivery": "44eabdc86b3b84d986f81dbaf8cee92b1829cea8",
+      "run": 40196978163,
+      "platforms": [
+        "macOS"
+      ],
+      "scope": "实际raw3 Mac候选；非共同双向",
+      "environment": "macOS Actions",
+      "attempt": 1,
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 121179826434,
+          "name": "Actual macOS raw host and original controls",
+          "head_sha": "15dab6b2270dc296ed6239db67ced2e22d255e65",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40196978163/job/121179826434",
+          "runner_name": "GitHub Actions 1000009697",
+          "labels": [
+            "macos-15"
+          ]
+        },
+        {
+          "id": 121186031984,
+          "name": "summary",
+          "head_sha": "15dab6b2270dc296ed6239db67ced2e22d255e65",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40196978163/job/121186031984",
+          "runner_name": "GitHub Actions 1000009711",
+          "labels": [
+            "ubuntu-22.04"
+          ]
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12601910101,
+          "name": "apple-raw3-summary-40196978163-1",
+          "size_in_bytes": 509,
+          "digest": "sha256:ff5bf72b40c5481b82fa5ed2e4992d5db62b424e804b1b419f9a0eee87196f9c",
+          "expired": false,
+          "expires_at": "2027-01-23T13:18:06Z",
+          "workflow_run": {
+            "id": 40196978163,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-apple-raw3",
+            "head_sha": "15dab6b2270dc296ed6239db67ced2e22d255e65"
+          }
+        },
+        {
+          "id": 12600789926,
+          "name": "apple-raw3-native-40196978163-1",
+          "size_in_bytes": 77056135,
+          "digest": "sha256:92be56ffa04d7c334d4811a42821a314089b4f8ae01746f0dfdf456b5eab9bd5",
+          "expired": false,
+          "expires_at": "2027-01-23T13:18:06Z",
+          "workflow_run": {
+            "id": 40196978163,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-apple-raw3",
+            "head_sha": "15dab6b2270dc296ed6239db67ced2e22d255e65"
+          }
+        }
+      ],
+      "availability": "metadata_available",
+      "original_zip_reverified": false,
+      "program_hash_reverified": false,
+      "grant_to_base": false
+    },
+    {
+      "id": "E-APPLE-FAILED",
+      "source": "72c6bbdd14ebf3be453fa7f0da81119d52675eb5",
+      "delivery": "72c6bbdd14ebf3be453fa7f0da81119d52675eb5",
+      "run": 40203714083,
+      "platforms": [
+        "iPhone",
+        "iPad"
+      ],
+      "scope": "整轮失败；不得借iPad单叶授予",
+      "environment": "Apple simulators",
+      "retained_failure": true,
+      "attempt": 1,
+      "conclusion": "failure",
+      "jobs": [
+        {
+          "id": 121200082586,
+          "name": "Installed SDK and exact raw products macos",
+          "head_sha": "72c6bbdd14ebf3be453fa7f0da81119d52675eb5",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40203714083/job/121200082586",
+          "runner_name": "GitHub Actions 1000009774",
+          "labels": [
+            "macos-15"
+          ]
+        },
+        {
+          "id": 121200082795,
+          "name": "Installed SDK and exact raw products iphonesimulator",
+          "head_sha": "72c6bbdd14ebf3be453fa7f0da81119d52675eb5",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40203714083/job/121200082795",
+          "runner_name": "GitHub Actions 1000009775",
+          "labels": [
+            "macos-15"
+          ]
+        },
+        {
+          "id": 121200931637,
+          "name": "Actual raw iOS UI iphone",
+          "head_sha": "72c6bbdd14ebf3be453fa7f0da81119d52675eb5",
+          "run_attempt": 1,
+          "conclusion": "failure",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40203714083/job/121200931637",
+          "runner_name": "GitHub Actions 1000009784",
+          "labels": [
+            "macos-15"
+          ]
+        },
+        {
+          "id": 121200931638,
+          "name": "Actual raw iOS UI ipad",
+          "head_sha": "72c6bbdd14ebf3be453fa7f0da81119d52675eb5",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40203714083/job/121200931638",
+          "runner_name": "GitHub Actions 1000009786",
+          "labels": [
+            "macos-15"
+          ]
+        },
+        {
+          "id": 121207225700,
+          "name": "summary",
+          "head_sha": "72c6bbdd14ebf3be453fa7f0da81119d52675eb5",
+          "run_attempt": 1,
+          "conclusion": "failure",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40203714083/job/121207225700",
+          "runner_name": "GitHub Actions 1000009826",
+          "labels": [
+            "ubuntu-22.04"
+          ]
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12603310238,
+          "name": "raw3-ios-sdk-macos-40203714083-1",
+          "size_in_bytes": 21887403,
+          "digest": "sha256:9d454bb6a9ba9d354562dc5316059b1857277b45ffbf69b74a576fe040dc2150",
+          "expired": false,
+          "expires_at": "2027-01-23T14:45:16Z",
+          "workflow_run": {
+            "id": 40203714083,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-apple-raw3-ios",
+            "head_sha": "72c6bbdd14ebf3be453fa7f0da81119d52675eb5"
+          }
+        },
+        {
+          "id": 12603156296,
+          "name": "raw3-ios-sdk-iphonesimulator-40203714083-1",
+          "size_in_bytes": 21891156,
+          "digest": "sha256:538d6c2888505d6398e1ce7294f8178de0008d0ddee119d969025cb278845cc1",
+          "expired": false,
+          "expires_at": "2027-01-23T14:45:16Z",
+          "workflow_run": {
+            "id": 40203714083,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-apple-raw3-ios",
+            "head_sha": "72c6bbdd14ebf3be453fa7f0da81119d52675eb5"
+          }
+        },
+        {
+          "id": 12603109164,
+          "name": "apple-raw3-ios-ipad-40203714083-1",
+          "size_in_bytes": 186160503,
+          "digest": "sha256:ea028247733536a7864f133b446cd54b41f0aecc76db51befaafaf2f117e61af",
+          "expired": false,
+          "expires_at": "2027-01-23T14:45:16Z",
+          "workflow_run": {
+            "id": 40203714083,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-apple-raw3-ios",
+            "head_sha": "72c6bbdd14ebf3be453fa7f0da81119d52675eb5"
+          }
+        },
+        {
+          "id": 12602953966,
+          "name": "apple-raw3-ios-iphone-40203714083-1",
+          "size_in_bytes": 182452877,
+          "digest": "sha256:3675f79031dc88ec8abf5217cf70a856a967c74812cd8a8030410bbbf7a48ad3",
+          "expired": false,
+          "expires_at": "2027-01-23T14:45:16Z",
+          "workflow_run": {
+            "id": 40203714083,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-apple-raw3-ios",
+            "head_sha": "72c6bbdd14ebf3be453fa7f0da81119d52675eb5"
+          }
+        }
+      ],
+      "availability": "metadata_available",
+      "original_zip_reverified": false,
+      "program_hash_reverified": false,
+      "grant_to_base": false
+    },
+    {
+      "id": "E-RECEIVE",
+      "source": "5062d5cd570eb9be9449e790895b5430d344d11d",
+      "delivery": "cd6fbe2e4f86c8ebd564d06518427c2642d045f6",
+      "run": 40210925809,
+      "platforms": [
+        "Android",
+        "macOS"
+      ],
+      "scope": "Android→Mac单向接收；非共同源码双向",
+      "environment": "mixed candidate producers",
+      "attempt": 1,
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 121221773472,
+          "name": "Actual macOS raw host and original controls",
+          "head_sha": "5062d5cd570eb9be9449e790895b5430d344d11d",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40210925809/job/121221773472",
+          "runner_name": "GitHub Actions 1000009879",
+          "labels": [
+            "macos-15"
+          ]
+        },
+        {
+          "id": 121224098177,
+          "name": "Original unchanged macOS strict summary",
+          "head_sha": "5062d5cd570eb9be9449e790895b5430d344d11d",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40210925809/job/121224098177",
+          "runner_name": "GitHub Actions 1000009887",
+          "labels": [
+            "ubuntu-22.04"
+          ]
+        },
+        {
+          "id": 121224143346,
+          "name": "Actual authenticated Android to macOS receive",
+          "head_sha": "5062d5cd570eb9be9449e790895b5430d344d11d",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40210925809/job/121224143346",
+          "runner_name": "GitHub Actions 1000009888",
+          "labels": [
+            "macos-15"
+          ]
+        },
+        {
+          "id": 121224421216,
+          "name": "summary",
+          "head_sha": "5062d5cd570eb9be9449e790895b5430d344d11d",
+          "run_attempt": 1,
+          "conclusion": "success",
+          "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/40210925809/job/121224421216",
+          "runner_name": "GitHub Actions 1000009889",
+          "labels": [
+            "ubuntu-22.04"
+          ]
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12606241221,
+          "name": "apple-raw3-summary-40210925809-1",
+          "size_in_bytes": 509,
+          "digest": "sha256:efe414989943cfa344146104306582ff5903133272b05f43ada7099221eb4db1",
+          "expired": false,
+          "expires_at": "2027-01-23T16:16:56Z",
+          "workflow_run": {
+            "id": 40210925809,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-apple-raw3-android-receive",
+            "head_sha": "5062d5cd570eb9be9449e790895b5430d344d11d"
+          }
+        },
+        {
+          "id": 12606012685,
+          "name": "apple-raw3-android-receive-summary-40210925809-1",
+          "size_in_bytes": 1075,
+          "digest": "sha256:08f89ffabac221789efb58cbd3aa277abe9075f3744ce6f1d1d8bcfbfdbf7297",
+          "expired": false,
+          "expires_at": "2027-01-23T16:16:56Z",
+          "workflow_run": {
+            "id": 40210925809,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-apple-raw3-android-receive",
+            "head_sha": "5062d5cd570eb9be9449e790895b5430d344d11d"
+          }
+        },
+        {
+          "id": 12605778060,
+          "name": "apple-raw3-android-receive-40210925809-1",
+          "size_in_bytes": 41839337,
+          "digest": "sha256:e7d56df798b8d7cfe6b4c2682cf621a8f1139450ba73867cd8739bbb9d2cc136",
+          "expired": false,
+          "expires_at": "2027-01-23T16:16:56Z",
+          "workflow_run": {
+            "id": 40210925809,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-apple-raw3-android-receive",
+            "head_sha": "5062d5cd570eb9be9449e790895b5430d344d11d"
+          }
+        },
+        {
+          "id": 12605523032,
+          "name": "apple-raw3-native-40210925809-1",
+          "size_in_bytes": 77055617,
+          "digest": "sha256:101e88a6b3f6493fee5c320d1c5a6c3d2b512095f2bef4eed7e025bb20384ee5",
+          "expired": false,
+          "expires_at": "2027-01-23T16:16:56Z",
+          "workflow_run": {
+            "id": 40210925809,
+            "repository_id": 1421442522,
+            "head_repository_id": 1421442522,
+            "head_branch": "codex/reader-apple-raw3-android-receive",
+            "head_sha": "5062d5cd570eb9be9449e790895b5430d344d11d"
+          }
+        }
+      ],
+      "availability": "metadata_available",
+      "original_zip_reverified": false,
+      "program_hash_reverified": false,
+      "grant_to_base": false
+    }
+  ],
+  "findings": 33,
+  "package": "D01",
+  "branch": "codex/reader-final-d01",
+  "tested_harness_sha": "234a51a38528dfdeaa02a2313f3dd576bcbb254e",
+  "target_sha_by_platform": {
+    "Windows": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+    "Linux": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+    "macOS": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+    "Android": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+    "iPhone": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+    "iPad": "0889f7d1e9a537c6c1b05456547e016b26e1cd85"
+  },
+  "sdk_target": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "sdk_installed": false,
+  "job_ids": [
+    121239186748,
+    121239261557
+  ],
+  "run_conclusion": "success",
+  "producer_negative_controls": {
+    "missing_platform": "rejected",
+    "duplicate_id": "rejected",
+    "fabricated_product_pass": "rejected",
+    "fabricated_evidence": "rejected",
+    "implemented_without_entry": "rejected",
+    "dangling_evidence": "rejected",
+    "mutable_commit": "rejected",
+    "missing_handler": "rejected",
+    "declaration_not_runtime_exposure": "rejected",
+    "candidate_failure_not_base_failure": "rejected",
+    "default_off_not_visible": "rejected",
+    "font_change_not_page_turn": "rejected",
+    "omitted_research": "rejected",
+    "unreferenced_gap": "rejected"
+  },
+  "artifacts": [
+    {
+      "id": 12607298006,
+      "name": "reader-final-d01-raw-40216671775-1",
+      "size_in_bytes": 57108,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12607298006",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12607298006/zip",
+      "expired": false,
+      "created_at": "2026-10-25T17:29:13Z",
+      "expires_at": "2027-01-23T17:28:58Z",
+      "updated_at": "2026-10-25T17:29:13Z",
+      "digest": "sha256:4e6e7bcdb2a4265d596113397964c17ccee2e19c245b0473465a59baadb5e234",
+      "workflow_run": {
+        "id": 40216671775,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/reader-final-d01",
+        "head_sha": "234a51a38528dfdeaa02a2313f3dd576bcbb254e"
+      },
+      "zip_recomputed_by_strict": true,
+      "summary_upload_digest_only": false
+    },
+    {
+      "id": 12607173490,
+      "name": "reader-final-d01-summary-40216671775-1",
+      "size_in_bytes": 6430,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12607173490",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12607173490/zip",
+      "expired": false,
+      "created_at": "2026-10-25T17:29:30Z",
+      "expires_at": "2027-01-23T17:28:58Z",
+      "updated_at": "2026-10-25T17:29:30Z",
+      "digest": "sha256:42b19ba237295580eacc4d6a2b4228afd061443c33a2b96f0e34d95cc84adc80",
+      "workflow_run": {
+        "id": 40216671775,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/reader-final-d01",
+        "head_sha": "234a51a38528dfdeaa02a2313f3dd576bcbb254e"
+      },
+      "zip_recomputed_by_strict": false,
+      "summary_upload_digest_only": true
+    }
+  ],
+  "retained_runs": [
+    {
+      "source": "ee167af40c5bc43309e3bf6410b101e312ff2d38",
+      "run": 40215207810,
+      "attempt": 1,
+      "ci_conclusion": "success",
+      "semantic_review": "rejected: wrong Android page-turn; cross-source mobile status; declared/default visibility conflation; rows != traced"
+    },
+    {
+      "source": "72a26b62388640ff6edce5660258253c164a9d15",
+      "run": 40216003259,
+      "attempt": 1,
+      "ci_conclusion": "success",
+      "limitation": "63 source paths;81 unresolved research entries; superseded by source review"
+    },
+    {
+      "source": "3a90496ce3c82a07c00b424a1e599c17eb4ca655",
+      "run": 40216570545,
+      "attempt": 1,
+      "ci_conclusion": "success",
+      "limitation": "111 source paths; refined implicit Windows config attribution in final harness"
+    }
+  ],
+  "unverified": [
+    "33 source-scoped host-route gaps classified, not proven repository-wide absent features",
+    "all144 manual/runtime cases",
+    "host program hashes and SDK installations",
+    "historical candidate ZIP/program hash reauthentication",
+    "physical devices, USB, actual screen readers, performance",
+    "same-source six-platform sync",
+    "summaryZIP not independently redownloaded after upload"
+  ],
+  "root_followups": [
+    "Resolve classified host-route gaps or document OS workflow boundaries",
+    "Build final common source with exact target flags and runtime reachability",
+    "Preserve historical Apple failure only at its own source",
+    "Run per-platform manual and same-source sync cases without transferring candidate grants"
+  ]
+}
