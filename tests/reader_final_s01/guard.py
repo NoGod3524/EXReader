@@ -89,7 +89,7 @@ def main():
                       'sdk_version': SDK_VERSION, 'approved_sdk': APPROVED_SDK,
                       'frozen_sdk': FROZEN_SDK, 'changed_paths': len(changed),
                       'retained_sources': len(retained),
-                      'reference_document': REFERENCE_DOC}, flush=True))
+                      'reference_document': REFERENCE_DOC}), flush=True)
 
 
 if __name__ == '__main__':

@@ -114,8 +114,14 @@ def main():
             problems.append('manifest does not declare the mandatory file: ' + name)
 
     # ------------------------------------------------------------ first Unicode path
-    base = args.unicode_root.resolve() if args.unicode_root else Path(os.environ.get('USERPROFILE') or Path.home()) / 'Desktop'
-    require(base.is_dir(), 'the Unicode destination root is missing: ' + str(base))
+    home = os.environ.get('USERPROFILE') or str(Path.home())
+    base = args.unicode_root.resolve() if args.unicode_root else Path(home) / 'Desktop'
+    base.mkdir(parents=True, exist_ok=True)
+    require(base.is_dir(), 'the Unicode destination root is not a directory: ' + str(base))
+    workspace = str(os.environ.get('GITHUB_WORKSPACE') or '')
+    if workspace:
+        require(not str(base).lower().startswith(workspace.lower()),
+                'the Unicode destination sits inside the workflow workspace')
     first_parent = base / ORIGINAL_FOLDER
     require(not first_parent.exists(), 'the first Unicode destination already exists')
     first_parent.mkdir(parents=True)
@@ -125,6 +131,7 @@ def main():
     payload = load_payload(first)
     problems += verify_zip(archive, payload, PACKAGE_ROOT)
     problems += verify_payload(payload, expected, REQUIRED_FILES)
+    print(json.dumps({'stage': 'extracted', 'destination': str(first)}), flush=True)
     require(str(first).isascii() is False and ' ' in str(first), 'the first destination is not Unicode with spaces')
     require(not ({'producer-src', 'build'} & set(first.parts)), 'the first destination sits inside a build tree')
     needles = private_path_needles([os.environ.get('GITHUB_WORKSPACE'), base])
@@ -162,6 +169,7 @@ def main():
     if set(moved_payload) != set(payload):
         problems.append('the move changed the packaged file set')
 
+    print(json.dumps({'stage': 'moved', 'destination': str(final)}), flush=True)
     program_digest_before = sha256(final / 'EXReader.exe')
     font = final / 'Reader.otf'
 
@@ -189,6 +197,8 @@ def main():
             'the moved program self-test reported fewer than 26 checks')
     require(selftest.get('engine_version') == version, 'the moved program reports another engine version')
     require(image_path.is_file() and image_path.stat().st_size > 0, 'the moved program wrote no self-test image')
+    print(json.dumps({'stage': 'self-test', 'checks': selftest['checks'],
+                      'engine_version': selftest['engine_version']}), flush=True)
 
     # ------------------------------------------------------------ retained compact acceptance
     fixtures = args.fixtures.resolve()
@@ -204,6 +214,8 @@ def main():
     elapsed_compact = round(time.time() - started, 3)
     (output / 'compact-stdout.log').write_text((completed.stdout or '') + '\n--- stderr ---\n' +
                                                (completed.stderr or ''), encoding='utf-8')
+    print(json.dumps({'stage': 'compact-run', 'exit_code': completed.returncode,
+                      'elapsed_seconds': elapsed_compact}), flush=True)
     compact_report_path = compact_folder / 'report.json'
     require(compact_report_path.is_file(), 'the retained compact acceptance wrote no report')
     compact = read_json(compact_report_path)
