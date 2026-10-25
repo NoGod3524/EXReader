@@ -24,7 +24,7 @@ jobs:
           base='a45dd5b4aa5084ffc6aaf44c78ef902331fd1982'
           subprocess.run(['git','merge-base','--is-ancestor',base,'HEAD'],check=True)
           subprocess.run(['git','diff','--exit-code',base,'HEAD','--','src','include','cmake','CMakeLists.txt','bindings','tests/fixtures','apps/reader/preferences','apps/reader/store','apps/reader/revisions','examples/android','examples/apple','examples/linux'],check=True)
-          allowed=('examples/reader.c','apps/reader/desktop/windows_preferences.inc','apps/reader/desktop/windows_preferences_state.inc','apps/reader/desktop/windows_preferences_ui.inc','apps/reader/windows-account/CMakeLists.txt','tests/reader_windows_preferences/commit_hooks.h','tests/reader_windows_preferences/check_commit.py','tests/reader_windows_preferences/verify_commit.py','.github/workflows/reader-windows-preferences-commit.yml','docs/READER-WINDOWS-PREFERENCES-COMMIT.md')
+          allowed=('examples/reader.c','apps/reader/desktop/windows_preferences.inc','apps/reader/desktop/windows_preferences_state.inc','apps/reader/desktop/windows_preferences_ui.inc','apps/reader/windows-account/CMakeLists.txt','tests/reader_windows_preferences/make_fixtures.py','tests/reader_windows_preferences/commit_hooks.h','tests/reader_windows_preferences/check_commit.py','tests/reader_windows_preferences/verify_commit.py','.github/workflows/reader-windows-preferences-commit.yml','docs/READER-WINDOWS-PREFERENCES-COMMIT.md')
           subprocess.run(['git','diff','--exit-code','4d712330','HEAD','--','apps/reader/desktop/windows_preferences_ui.inc'],check=True)
           paths=subprocess.check_output(['git','diff','--name-only',base,'HEAD'],text=True).splitlines()
           assert all(p in allowed for p in paths), paths
