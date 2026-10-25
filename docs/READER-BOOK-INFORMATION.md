@@ -195,3 +195,9 @@ platform）、22 个具名裁决与跨平台一致性；记录工件 12573584981
 
 本修复让内部解析失败经过原错误填充函数，失败与取消仍不发布快照。原22项全部保留，在既有每个轮询点的取消检查中增加返回码与 error.status 一致、错误信息非空断言，包含实际公开 PDF 解析调用中的取消。当前候选待 Actions 验证，旧 run `40127968068` 的通过仍仅归原 source `72fdc1a8976e95e615fe6bdd2c8fafcb651fa660`。
 
+## Root 修复验收
+
+source `aa76a35bfdec067da0850bcbb4a3c1d16cd096ff` / [run 40154360163](https://github.com/NoGod3524/EXReader/actions/runs/40154360163) / attempt1 四作业全部success。Windows、Linux、macOS各22个具名场景、795次断言通过，包含实际解析调用内逐轮询点取消的错误状态一致性；原九格式、快照寿命、公开API独立比对、来源身份和存储不变检查保留。
+
+strict job `121053053726` 在Actions核真实作业与同轮ZIP身份、大小和散列，`accepted=true`、`problems=[]`。最终证据HEAD只改本文和验收JSON，完整source/job/工件见JSON。复审关闭，等待共同源码接入；宿主信息界面、产品性能和六目标互通仍无授予。
+
