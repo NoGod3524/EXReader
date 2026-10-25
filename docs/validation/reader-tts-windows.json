@@ -7,8 +7,10 @@
   "abi": "reader_tts 0.1.0 (docs/handoffs/reader-next-wave/tts-contract.md)",
   "task": "docs/handoffs/reader-next-wave/tts-windows.md",
   "base_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
-  "source_sha": "62fd2967dd742e9139ed43d327f9dea6273bd84a",
-  "branch": "codex/reader-tts-windows",
+  "original_source_sha": "62fd2967dd742e9139ed43d327f9dea6273bd84a",
+  "delivery_head": "242f07c9804fd33340f1aa4e475f440b93820338",
+  "source_sha": "a83540121859594f8d6a83b58f68064919bcd394",
+  "branch": "codex/reader-tts-windows-review",
   "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
   "product_schema": 1,
   "workflow": ".github/workflows/reader-tts-windows.yml",
@@ -19,22 +21,23 @@
     "package_only_changes": true,
     "module_sources_without_logging": true,
     "default_build_excludes_module": true,
-    "product_sql_unchanged": "path whitelist guard: no path outside extras/reader-tts-windows, tests/reader_tts_windows, the package workflow and its two documents changed"
+    "product_sql_unchanged": "path whitelist guard: no path outside extras/reader-tts-windows, tests/reader_tts_windows, the package workflow and its two documents changed; the review branch was added to that workflow's push trigger only"
   },
   "run": {
-    "id": 40130594713,
+    "id": 40169432864,
     "attempt": 1,
+    "event": "push",
     "status": "completed",
     "conclusion": "success",
     "jobs": [
       {
-        "id": 120981281947,
+        "id": 121097093329,
         "name": "tts (windows-2022)",
         "conclusion": "success",
-        "runner": "windows-2022 (Windows Server 2022 x64, ImageOS win22, ImageVersion 20261012.333.1)"
+        "runner": "windows-2022 (Windows Server 2022 Datacenter x64, ImageOS win22, ImageVersion 20261022.344.1, CMake 3.31.6)"
       },
       {
-        "id": 120981525053,
+        "id": 121097267373,
         "name": "same-source report",
         "conclusion": "success"
       }
@@ -42,67 +45,76 @@
   },
   "artifacts": [
     {
-      "id": 12574299504,
-      "name": "reader-tts-windows-windows-40130594713-1",
-      "bytes": 8051116,
-      "digest": "sha256:8585dd1913ade0d8529de34e07dfab01d1c6465a37b7b1429c2c326c8452c10d",
-      "expires_at": "2027-01-22T20:37:14Z",
-      "contents": "evidence/report.json, evidence/logs/*, evidence/sapi-voices.txt, wav/*.wav, consumer/tts-consumer.exe, consumer/tts-probe.exe, stage/ (installed package), logs/ (configure, build, install, consumer, probe, CMakeCache)"
+      "id": 12589298424,
+      "name": "reader-tts-windows-windows-40169432864-1",
+      "bytes": 6660681,
+      "digest": "sha256:85ac766ecf5b30e7748564e0ba5bdbd707976ab73b27719cd07458cb61618ccb",
+      "expires_at": "2027-01-23T06:32:14Z",
+      "contents": "evidence/report.json, evidence/logs/*, evidence/sapi-voices.txt, wav/*.wav (9), consumer/tts-consumer.exe, consumer/tts-probe.exe, stage/ (installed package), logs/ (configure, build, install, consumer, probe, CMakeCache)"
     },
     {
-      "id": 12573848311,
-      "name": "reader-tts-windows-report-40130594713-1",
-      "bytes": 1916,
-      "digest": "sha256:f98a5d36e65ebd20f400e1b427b9b38773f314311e2ebfb74e5f5cd0c18d4c25",
-      "expires_at": "2027-01-22T20:37:14Z",
-      "contents": "aggregate.json (in-run: producer artifact, producer log binding, report identity, WAV containers, installed tree, consumer and probe hashes)"
+      "id": 12589063763,
+      "name": "reader-tts-windows-report-40169432864-1",
+      "bytes": 1940,
+      "digest": "sha256:38375b7e1577b4ef7d46095fa2ecb7269de699bcf658e10d78768d3f7d84e536",
+      "expires_at": "2027-01-23T06:32:14Z",
+      "contents": "aggregate.json (in-run: producer artifact, producer log binding, report identity, 9 WAV containers, installed tree, consumer and probe hashes)"
     }
   ],
   "strict_verification": {
-    "run_id": 40130774683,
+    "run_id": 40169574507,
     "attempt": 1,
+    "event": "workflow_dispatch",
+    "checkout_sha": "a83540121859594f8d6a83b58f68064919bcd394",
     "job": "retrospective verification",
-    "job_id": 120981827889,
+    "job_id": 121097506639,
     "artifact": {
-      "id": 12574078072,
-      "name": "reader-tts-windows-strict-40130774683-1",
-      "bytes": 8077625,
-      "digest": "sha256:5075c2e7eb1bc0ef056206e7698c4b5c83b5861e545463d5bddeb3e697fccd2f",
-      "expires_at": "2027-01-22T20:39:39Z"
+      "id": 12589093822,
+      "name": "reader-tts-windows-strict-40169574507-1",
+      "bytes": 6689947,
+      "digest": "sha256:b2ddc5edf42b855b20524fe899875a5e8edc68c06ad0e051aab414a890d75a7a",
+      "expires_at": "2027-01-23T06:34:36Z"
     },
-    "summary_sha256": "44413621db0818af5b279f2a6004433715b68ff345d677ac20a58271aa637bce",
-    "producer_log_sha256": "b40cfe7720a4f5aa08510ff4a9f75cff76f75c2bddfbc6fcfdbca756ef3471a8",
-    "report_producer_log_sha256": "a9facc6b1d7a38e197be3305ce45ca77242a58975be11b9a59bdd45886349490",
+    "summary_sha256": "248145a8887c3cb8b042d5db04e1592b061834530c225d7b8b4587d3c7ac2085",
+    "report_sha256": "8f11e194d2e226b7089111c5323eaaf1b456d396c4e11650dee011dbc1d8a689",
+    "producer_log_sha256": "709de5d6e0cae999734da4cc465624f02db400d232599ad5769dc4e751383384",
+    "report_producer_log_sha256": "43d2a143a8bf34d1d30e4954cea924f826563c629fb940b679fe9d5fddb80028",
     "zip_digests_recomputed": 2,
+    "wavfile_declarations": 9,
+    "wav_containers_recomputed": 10,
     "accepted": true
   },
   "checks": {
-    "total": 208,
-    "passed": 208,
-    "expected": 208,
+    "total": 222,
+    "passed": 222,
+    "expected": 222,
     "per_phase": {
       "basic": 45,
-      "speak": 22,
+      "speak": 30,
       "unicode": 18,
       "limits": 27,
-      "control": 27,
+      "control": 33,
       "chunks": 25,
       "overflow": 9,
       "service": 7,
       "memory": 17,
       "close": 11
+    },
+    "fixture_cases": {
+      "total": 21,
+      "positive": 2,
+      "rejection": 19,
+      "accepted": true
     }
   },
   "consumers": {
     "c_consumer": {
       "name": "tts-consumer.exe",
-      "bytes": 216064,
-      "sha256": "37afe221d89cf3e1398ee035810995dd9c081edf181a1052d2168c0060358569"
+      "sha256": "ab5970f77d042dc0392951ec06cec066084c2b60ad78043d5692cf533f21264b"
     },
     "cpp_probe": {
       "name": "tts-probe.exe",
-      "bytes": 285184,
-      "sha256": "e9b5af15ee4c21a05ca3dbc6ceafc782bb958f6971e5e88499ca132a38316e49",
+      "sha256": "8477ad0b1baa6d18b33d0805ba6fa4735e9d5959e6d6c835577de0f5e9fa66ca",
       "summary": {
         "result": "pass",
         "voices": 2,
@@ -123,40 +135,101 @@
       {
         "file": "speak.wav",
         "bytes": 1092808,
-        "duration_ms": 24779
+        "duration_ms": 24779,
+        "note": "400 B text, rate 1.0"
       },
       {
         "file": "unicode.wav",
         "bytes": 248934,
-        "duration_ms": 5643
+        "duration_ms": 5643,
+        "note": "CJK+emoji+combining+RTL"
       },
       {
         "file": "chunk0.wav",
-        "bytes": 2757440,
-        "duration_ms": 62525
+        "bytes": 1366494,
+        "duration_ms": 30985,
+        "note": "1000 B text, rate 1.5"
       },
       {
         "file": "chunk1.wav",
-        "bytes": 2767580,
-        "duration_ms": 62755
+        "bytes": 1371266,
+        "duration_ms": 31093,
+        "note": "1000 B text, rate 1.5"
       },
       {
         "file": "chunk2.wav",
-        "bytes": 2754570,
-        "duration_ms": 62460
+        "bytes": 1364864,
+        "duration_ms": 30948,
+        "note": "1000 B text, rate 1.5"
+      },
+      {
+        "file": "rate-slow.wav",
+        "bytes": 1765460,
+        "duration_ms": 40032,
+        "note": "200 B text, rate 0.5 (SAPI -10)"
+      },
+      {
+        "file": "rate-fast.wav",
+        "bytes": 192040,
+        "duration_ms": 4353,
+        "note": "same 200 B text, rate 2.0 (SAPI +10)"
+      },
+      {
+        "file": "voice.wav",
+        "bytes": 188076,
+        "duration_ms": 4263,
+        "note": "60 B text, explicit token from reader_tts_voices"
+      },
+      {
+        "file": "control-after-paused.wav",
+        "bytes": 578936,
+        "duration_ms": 13126,
+        "note": "next request after a stop accepted while PAUSED"
       },
       {
         "file": "probe.wav",
-        "bytes": 764800,
-        "duration_ms": 17341
+        "bytes": 529252,
+        "duration_ms": 12000,
+        "note": "independent C++ probe, rate 1.25"
       }
     ],
+    "rate_ratio_measured": "0.5 -> 40032 ms vs 2.0 -> 4353 ms for the same 200 B text (9.2x)",
     "voices_on_runner": [
       "Microsoft David Desktop - English (United States)",
       "Microsoft Zira Desktop - English (United States)"
     ],
     "voice_inventory_artifact": "evidence/sapi-voices.txt"
   },
+  "review_fixes": [
+    {
+      "id": "rate-not-applied",
+      "defect": "reader_tts_speak validated and stored rate, and the SAPI worker never called ISpVoice::SetRate, so every request spoke at the voice default rate",
+      "evidence": "run 40169117214 names speak.rate.applied as the single failing speak check (29/30) on the unrepaired worker; run 40169432864 passes it with the same text at 0.5 and 2.0",
+      "fix": "start_speak maps rate to round(log2(rate)*10) in -10..10 and calls SetRate after the voice is chosen; a failed SetRate is READER_TTS_IO with the raw HRESULT and no request",
+      "exercised": true
+    },
+    {
+      "id": "event-stride",
+      "defect": "the SAPI event buffer was declared SPEVENTEX[8] but GetEvents fills SPEVENT records, so the second and later events of a batch were read at the wrong stride (id and word parameters)",
+      "evidence": "inspection of the ISpEventSource vtable contract; the runner's file output returns too few events per call to force a batch",
+      "fix": "declare SPEVENT[8] and index it directly",
+      "exercised": false
+    },
+    {
+      "id": "paused-stop-left-engine-paused",
+      "defect": "a stop accepted while the request was PAUSED purged the voice without resuming it; ISpVoice::Pause is a persistent state, so the next request could never reach a terminal event on a real endpoint",
+      "evidence": "state-machine checks control.paused_stop.* and control.after_paused.* cover the accepted path; a file sink cannot show the paused engine advance, so the hang itself is not reproduced here",
+      "fix": "track the paused state per utterance and Resume before the purge in CMD_STOP",
+      "exercised": false
+    },
+    {
+      "id": "capability-overclaim",
+      "defect": "evidence/report.json hardcoded capabilities {pause: true, range: true} while the same report observed zero engine word positions and said so in not_exercised",
+      "evidence": "run 40169432864 reports capabilities {pause: true, range: false} from the observed bits; strict_contract rejects a claim without positions (fixture reject.report_capability_range)",
+      "fix": "derive the range bit from the observed engine positions; verifier rule plus rejection fixture",
+      "exercised": true
+    }
+  ],
   "installed_files": [
     "include/reader_tts.h",
     "include/reader_tts_windows.h",
@@ -173,18 +246,21 @@
     "installed-package consumption (C and C++)",
     "synthesis to WAV",
     "event stream",
-    "owner/argument/limit/memory/close rules"
+    "owner/argument/limit/memory/close rules",
+    "rate mapping reaches the engine (measured PCM durations)",
+    "explicit voice token selection and completion"
   ],
   "not_exercised": [
     "human listening judgement of the synthesised speech",
     "playback through a physical audio device (the runner has no audio endpoint; all synthesis used the package WAV sink)",
-    "engine RANGE events: the SAPI file output on this runner reported no word position (GetEvents S_FALSE, GetStatus word fields zero), so the capability bit stays clear; the UTF-16 to UTF-8 byte map is verified separately by reader_tts_windows_debug_map_utf16 (six named cases incl. surrogate pairs)",
-    "Windows host wiring, reading UI and host chunking (root-owned)",
-    "pause/resume audio progress (a file sink renders faster than realtime, so progress cannot be observed while paused)"
+    "engine RANGE events: the SAPI file output on this runner reported no word position (GetEvents S_FALSE, GetStatus word fields zero), so the capability bit stays clear and report.capabilities.range is false; the UTF-16 to UTF-8 byte map is verified separately by reader_tts_windows_debug_map_utf16 (six named cases incl. surrogate pairs)",
+    "multi-event GetEvents batches: the stride repair follows the ISpEventSource vtable signature, but the runner never forced a batch, so no named check proves that path",
+    "a paused engine blocking the next request: the file sink renders faster than realtime, so only the state machine and the reachability of the next request's terminal event are asserted",
+    "Windows host wiring, reading UI and host chunking (root-owned)"
   ],
   "pending": [
     "root host wiring",
-    "re-run of the range capability on a machine with an audio endpoint",
+    "re-run of the range capability and the paused-engine hang on a machine with an audio endpoint",
     "listening review"
   ],
   "limits": {
@@ -288,6 +364,23 @@
     {
       "run": 40130482552,
       "code": "job_set: the verify dispatch listed a skipped job in the evidence set"
+    }
+  ],
+  "review_failures": [
+    {
+      "run": 40168657049,
+      "sha": "c75268a35897a83822d338a25235c8b23af824f0",
+      "code": "compile: the new speak-phase checks used an undeclared status local (C2065); the consumer build failed, the acceptance step never ran"
+    },
+    {
+      "run": 40168902079,
+      "sha": "7a33cdb78c09c06386fd4aaeb82aa358bddfe514",
+      "code": "speak_summary_counts {passed: 29, total: 30}: one new speak check failed on the unrepaired worker; the failing id was not named in the job log yet"
+    },
+    {
+      "run": 40169117214,
+      "sha": "4bf9a57e8346206629ce30879393e1648a208346",
+      "code": "speak_summary_counts plus failing_checks naming speak.rate.applied on the unrepaired worker"
     }
   ]
 }

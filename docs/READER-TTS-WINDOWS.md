@@ -45,6 +45,9 @@ SPEAKING/PAUSED -> READY            （收到该请求终态）
 - start/终态：每个被接受的请求恰好一个 `READER_TTS_STARTED` 与一个终态
   （`FINISHED`／`STOPPED`／`FAILED`）。stop 或 close 被接受后，队列里只会有该请求那一个
   `STOPPED`；迟到事件没有路径污染新请求。
+- 暂停中的 stop：`ISpVoice::Pause` 是**持续的声音状态**，`Speak` 与 purge 都不会清除它，
+  所以在 PAUSED 上被接受的 stop 会先 `Resume` 再 purge，把引擎留在可朗读状态；否则下一个
+  请求会被送进一个仍然暂停的引擎，永远到不了终态（接真实音频端点时表现为挂住）。
 - `speak` 返回错误表示请求没有启动，因此不产生事件。
 - `reader_tts_error.native_code` 在失败来自 SAPI/COM 时是原始 HRESULT，否则为 0。
 
@@ -57,11 +60,15 @@ SPEAKING/PAUSED -> READY            （收到该请求终态）
 | UTF-8 | 严格校验：拒绝嵌入 NUL、不完整 scalar、过长编码、代理区、U+10FFFF 以上 → ARGUMENT |
 | RANGE | `start/end` 是本次输入文本的 **UTF-8 字节偏移**：引擎当前词位置（`ISpVoice::GetStatus` 的 `ulInputWordPos`/`ulInputWordLen`，即它正在朗读的 UTF-16 码元区间）经每请求映射表严格换算，即使落在代理对中间也只会得到字节边界。位置是采样来的、不是时钟推算：短于轮询间隔的词可能被跳过，相邻范围可能被合并。范围单调、落在 `[0, bytes)` 内；越界位置直接 `FAILED`+`IO`，不钳位成"看起来合理"的值 |
 | 队列 | 最多 128 事件，其中 RANGE 最多 112；相邻（间隔 ≤1 字节空白）范围合并而不是增长队列；容量耗尽时 `poll`/`speak` 返回 `LIMIT`，句柄须关闭 |
+| 事件来源 | worker 用 `ISpEventSource::GetEvents` 取引擎事件；该 vtable 逐条写入 **`SPEVENT`**（扩展的 `SPEVENTEX` 只属于 `ISpEventSource2::GetEventsEx`），包内按同一 stride 读取，批量取回的第 2 条及之后不会被错位解读 |
 
 ## 速度与声音
 
 - `rate` 为 0.5..2.0 的有限值（NaN/±inf → ARGUMENT）。Windows 映射到 SAPI 的 -10..10：
-  `round(log2(rate) * 10)`。这是引擎偏好，不是精确时长比例，头文件不作时长承诺。
+  `round(log2(rate) * 10)`，每个请求在选好声音之后用 `ISpVoice::SetRate` 下发给引擎
+  （换 token 会把速率重置成该 token 的默认值，所以顺序不能反）；`SetRate` 失败即
+  `READER_TTS_IO` + 原始 HRESULT，请求不启动。这是引擎偏好，不是精确时长比例，头文件不作
+  时长承诺；实测同一段 200 字节文本 0.5 → 40 032 ms、2.0 → 4 353 ms（约 9.2 倍）。
 - `voice_id` 为 NULL 或空串使用系统默认；非空 id 必须是 `reader_tts_voices` 返回的 id 之一，
   否则 ARGUMENT。id 是 SAPI token id 的 UTF-8 形式，`language` 尽量给出 BCP-47 标签
   （token 的 `Language` 是十六进制 LCID 时用 `LOCALE_SNAME` 换算）。
@@ -103,43 +110,78 @@ cmake -S tests/reader_tts_windows/consumer -B build/consumer -G Ninja \
   Actions 里 `evidence/sapi-voices.txt` 记录了 runner 的真实声音清单。
 - 宿主接线、朗读 UI、分块策略（何时切块、块大小）由 root 在共同源码里做。
 - 共享实现缺陷（若有）只交最小复现与建议补丁，不越界修改 SDK、宿主或其它包。
-## 云端验收（同源工件，2026-10-24）
+## 云端验收（审阅轮同源工件，2026-10-25）
 
 | 项 | 值 |
 | --- | --- |
-| 受测源码 | `62fd2967dd742e9139ed43d327f9dea6273bd84a`（分支 `codex/reader-tts-windows`） |
-| 运行 | run `40130594713` attempt 1，结论 success；作业 `tts (windows-2022)` #120981281947、`same-source report` #120981525053 |
-| 运行器 | windows-2022 · Windows Server 2022 x64 · ImageOS win22 · ImageVersion 20261012.333.1 · MSVC 19.44.35229.0 · CMake 3.31.6 |
-| 逐项检查 | 208 / 208 通过（basic 45、speak 22、unicode 18、limits 27、control 27、chunks 25、overflow 9、service 7、memory 17、close 11），每项具名 pass/fail 见工件里的 `evidence/logs/*.stdout.log` |
-| 生产者工件 | id 12574299504 · 8 051 116 B · `sha256:8585dd19…8452c10d` · 有效至 2027-01-22T20:37:14Z |
-| 汇总工件 | id 12573848311 · 1 916 B · `sha256:f98a5d36…18d4c25` · 有效至 2027-01-22T20:37:14Z |
-| 严格复核 | dispatch run `40130774683`（作业 `retrospective verification` #120981827889）：重新下载两个 ZIP、重算摘要、绑定生产者日志、核对报告身份与安装树，accepted=true；复核工件 id 12574078072 · 8 077 625 B · `sha256:5075c2e7…7fccd2f` |
-| 消费者 | C `tts-consumer.exe` `sha256:37afe221…60358569`；C++ `tts-probe.exe` `sha256:e9b5af15…8316e49`（独立可执行，仅链接安装后的包） |
-| 安装树 | 8 个文件：两个头、`lib/reader_tts.lib`(84 078 B)、四个 CMake 包文件、许可证 |
+| 受测源码 | `a83540121859594f8d6a83b58f68064919bcd394`（分支 `codex/reader-tts-windows-review`；交付起点 HEAD `242f07c9`，原始受测源 `62fd2967`） |
+| 运行 | run `40169432864` attempt 1（push）结论 success；作业 `tts (windows-2022)` #121097093329、`same-source report` #121097267373 |
+| 运行器 | windows-2022 · Windows Server 2022 Datacenter x64 · ImageOS win22 · ImageVersion 20261022.344.1 · CMake 3.31.6 · 编译器取自 runner 的 vcvars64（`logs/compiler.log`） |
+| 逐项检查 | 222 / 222 通过（basic 45、speak 30、unicode 18、limits 27、control 33、chunks 25、overflow 9、service 7、memory 17、close 11），逐项具名 pass/fail 见 `evidence/logs/*.stdout.log` |
+| 夹具正反例 | 21 个（1 正例 strict + 1 同运行正例 + 19 个反例，含新增 `reject.report_capability_range`） |
+| 生产者工件 | id 12589298424 · 6 660 681 B · `sha256:85ac766ecf5b30e7748564e0ba5bdbd707976ab73b27719cd07458cb61618ccb` · 有效至 2027-01-23T06:32:14Z |
+| 汇总工件 | id 12589063763 · 1 940 B · `sha256:38375b7e1577b4ef7d46095fa2ecb7269de699bcf658e10d78768d3f7d84e536` · 有效至 2027-01-23T06:32:14Z |
+| 严格复核 | dispatch run `40169574507`（作业 `retrospective verification` #121097506639，checkout `a8354012`）：在 Actions 内重新下载两个 ZIP、重算摘要、绑定生产者日志（`709de5d6…3384`，汇总作业日志 `43d2a143…0028`）、复核 10 个 WAV 容器（9 条 wavfile 声明 + probe.wav）、8 个安装文件与消费者/探针摘要，accepted=true；复核工件 id 12589093822 · 6 689 947 B · `sha256:b2ddc5edf42b855b20524fe899875a5e8edc68c06ad0e051aab414a890d75a7a` · 有效至 2027-01-23T06:34:36Z |
+| 报告身份 | `evidence/report.json` `sha256:8f11e194…d8a689`；同运行汇总 `aggregate.json` `sha256:248145a8…3c7ac2085` |
+| 消费者 | C `tts-consumer.exe` `sha256:ab5970f77d042dc0392951ec06cec066084c2b60ad78043d5692cf533f21264b`；C++ `tts-probe.exe` `sha256:8477ad0b1baa6d18b33d0805ba6fa4735e9d5959e6d6c835577de0f5e9fa66ca`（两者均只链接安装后的包；MSVC 每次构建嵌入时间戳，故逐运行绑定） |
+| 安装树 | 8 个文件：两个头、`lib/reader_tts.lib`、四个 CMake 包文件、许可证 |
 
-真实合成（同一路径写出 16 bit/22 050 Hz/单声道 PCM）：
+真实合成（同一条 SAPI 路径写出 16 bit/22 050 Hz/单声道 PCM，10 个文件全部由验收器重算容器）：
 
-| 文件 | 字节 | 时长 |
-| --- | ---: | ---: |
-| speak.wav（400 B 文本，rate 1.0） | 1 092 808 | 24.78 s |
-| unicode.wav（CJK+emoji+组合符+RTL） | 248 934 | 5.64 s |
-| chunk0/1/2.wav（各 1 000 B，rate 1.5） | 2 757 440 / 2 767 580 / 2 754 570 | 62.5 / 62.8 / 62.5 s |
-| probe.wav（C++ probe，rate 1.25） | 764 800 | 17.34 s |
+| 文件 | 字节 | 时长 | 说明 |
+| --- | ---: | ---: | --- |
+| speak.wav | 1 092 808 | 24 779 ms | 400 B 文本，rate 1.0 |
+| unicode.wav | 248 934 | 5 643 ms | CJK+emoji+组合符+RTL |
+| chunk0/1/2.wav | 1 366 494 / 1 371 266 / 1 364 864 | 30 985 / 31 093 / 30 948 ms | 各 1 000 B，rate 1.5（速率生效后比原交付的 62.5 s 快约 2 倍） |
+| rate-slow.wav | 1 765 460 | 40 032 ms | 200 B，rate 0.5（SAPI -10） |
+| rate-fast.wav | 192 040 | 4 353 ms | 同一 200 B，rate 2.0（SAPI +10） |
+| voice.wav | 188 076 | 4 263 ms | 60 B，显式选择 `reader_tts_voices` 里的真实 token |
+| control-after-paused.wav | 578 936 | 13 126 ms | 在 PAUSED 上 stop 之后的下一请求，rate 1.0 |
+| probe.wav | 529 252 | 12 000 ms | 独立 C++ probe，rate 1.25 |
+
+同一段 200 B 文本 0.5 与 2.0 的实测比约 9.2 倍，与 `round(log2(rate) * 10)` 的 ±10 档一致；
+`speak.rate.applied` 用这两个文件的字节数直接比较（慢 ≥ 1.5 × 快）。
 
 运行器上真实存在两个 SAPI 声音（Microsoft David/Zira Desktop），清单见工件 `evidence/sapi-voices.txt`。
+
+### 本轮审阅修复（全部有实现依据，逐条注明可观测性）
+
+1. **`rate` 从不下发到引擎**（真实缺陷，已被具名反例抓住）：`reader_tts_speak` 校验并保存了
+   `rate`，worker 从未调用 `ISpVoice::SetRate`，所有请求都以声音默认速率朗读。未修复的 worker
+   在 run `40169117214` 上让 `speak.rate.applied` 失败（speak 阶段 29/30）；修复后在 run
+   `40169432864` 上 30/30。
+2. **`GetEvents` 步长错位**：缓冲区声明为 `SPEVENTEX[8]` 却按 `SPEVENT` 的 vtable 语义接收、
+   又以 `SPEVENTEX` 的下标读取，批量取回的第 2 条及之后事件的 id/wParam/lParam 全部错位。
+   已改为 `SPEVENT[8]`。本 runner 的 SAPI 文件输出只返回很少的事件，报告里 `engine_event_total`
+   仅作诊断，因此这一条**不声称在本 runner 上被批量路径执行**。
+3. **PAUSED 状态下的 stop 会把引擎留在暂停**：`ISpVoice::Pause` 是持续状态，`Speak`/purge 都不清除，
+   于是下一个请求会进入一个暂停的引擎、永远到不了终态（真实音频端点上的挂住）。现在 stop 在
+   purge 前先 `Resume`。文件 sink 下 `Pause` 不产生可观察的推进差，因此本 runner 只能验证
+   状态机与"stop 之后的下一个请求仍能到达终态"（`control.after_paused.*`），**不声称已验证挂起复现**。
+4. **证据不得超前于观测**：`evidence/report.json` 里的 `capabilities` 原先硬写
+   `{"pause": true, "range": true}`，而同一份报告实测 `range_events=0`、能力位为 0 并在
+   `not_exercised` 里自认没有词位置。现在按实测给出（本 runner：`pause=true, range=false`），
+   严格复核新增 `report_capability_range` 规则与对应反例。
+5. **新增覆盖**：引擎事件源确实被查询（`speak.engine_event_source`）、真实 voice id 被接受并完成
+   （`speak.voice.explicit`）、暂停中 stop 的状态机与后续请求、rate 的时长对照。
+   失败时 job 日志直接列出失败具名检查（`failing_checks`），不再必须解包工件才知道红在哪。
 
 ### 本环境未覆盖
 
 - 听感判断、物理音频设备播放（runner 无音频端点，全部合成走包内 WAV sink）。
 - 引擎 RANGE 事件：该 runner 上 SAPI 把语音写到文件时既不产生 word-boundary 事件
-  （`GetEvents` 返回 S_FALSE），也不更新 `GetStatus` 的词位置，因此能力位按设计保持清除；
-  UTF-16→UTF-8 的字节换算由 `reader_tts_windows_debug_map_utf16` 的 6 个具名用例覆盖
-  （ASCII、双字节、CJK、代理对、混合、非法 UTF-8）。接真实音频端点后需重跑 RANGE 覆盖。
-- 暂停期间的音频推进：文件 sink 比实时快得多，暂停时无法观察推进，只验证状态机与事件静默。
+  （`GetEvents` 返回 S_FALSE），也不更新 `GetStatus` 的词位置，因此能力位按设计保持清除，
+  报告里的 `capabilities.range` 也如实为 false；UTF-16→UTF-8 的字节换算由
+  `reader_tts_windows_debug_map_utf16` 的 6 个具名用例覆盖（ASCII、双字节、CJK、代理对、
+  混合、非法 UTF-8）。接真实音频端点后需重跑 RANGE 覆盖。
+- 批量事件读取：见上第 2 条，按 SAPI vtable 语义修复，未在本 runner 上被批量路径执行。
+- 暂停期间的音频推进与"暂停中 stop 后引擎是否仍停住"：文件 sink 比实时快得多，观察不到推进差。
 - 宿主接线、朗读 UI 与分块策略由 root 在共同源码里做。
 
 ### 保留的原始失败
 
-22 个失败运行全部保留在 Actions 历史中（编译、事件 sink 的 0xC0000005、无声明的词位置、
-harness/夹具自身缺陷等），逐条 id 与原因见 `docs/validation/reader-tts-windows.json` 的
-`original_failures`；没有删除断言、换语料或把真实失败改成预期。
+- 原始交付的 22 个失败运行（编译、事件 sink 的 0xC0000005、无声明的词位置、harness/夹具自身缺陷等）
+  全部保留在 Actions 历史里，逐条 id 见 `docs/validation/reader-tts-windows.json` 的 `original_failures`。
+- 本轮审阅的 3 个失败运行同样保留：`40168657049`（新增检查漏声明 `status`，编译失败）、
+  `40168902079`（未修复 worker 上 speak 阶段 29/30，失败项当时未具名）、`40169117214`
+  （同一失败被具名成 `speak.rate.applied`）。没有删除断言、换语料或把真实失败改成预期。
