@@ -133,3 +133,5 @@ run/attempt 内逐个下载三份归档，重算 SHA-256 与 API digest 比对�
 
 补齐首轮 `7b70faf6` / run `40156517005` 三平台均在新夹具播种时被原修订validator拒绝：progress删除也必须显式`location_kind=reflow_global`，原helper默认none。本次仅修夹具的既有公开契约字段，validator与实际pending正数断言保留，原失败不删。
 
+`63506780` / run `40156837215` 已实际观察到正数pending-metadata且精确镜像，但新增Device未发送公开消费者的`open`命令，capture为session-only而没有outbox，行保留断言因此失败。补上该设备本线程的revisions打开/关闭，保留正数与未ack行的全部要求，继续新同源整轮。
+

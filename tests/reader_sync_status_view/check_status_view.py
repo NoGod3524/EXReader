@@ -444,6 +444,7 @@ def main():
         record('pending_original_is_surfaced_and_never_acknowledged')
 
         missing = Device('待元数据设备')
+        assert missing.created == 0 and missing.command('open')['status'] == 0
         orphan = revision(802, shard=201, kind='progress', key='txt:' + '9' * 64,
                           operation='delete', mode='reflow_global')
         orphan_id = seed(missing.db, orphan)
@@ -452,7 +453,9 @@ def main():
         mirrored = capture(missing, 100, 0)['summary']
         assert observed['pending_metadata'] > 0 and mirrored['metadata_wait'] > 0, (mirrored, observed)
         assert mirrored['metadata_wait'] == observed['pending_metadata'], (mirrored, observed)
-        assert orphan_id in {row['id'] for row in capture(missing, 100, 0)['rows']}
+        pending_metadata_view = capture(missing, 100, 0)
+        assert orphan_id in {row['id'] for row in pending_metadata_view['rows']}, pending_metadata_view
+        assert missing.command('close-revisions')['status'] == 0
         missing.close()
         record('metadata_wait_observations_mirror_the_session_counter')
 
