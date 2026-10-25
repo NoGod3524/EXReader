@@ -55,13 +55,13 @@ def selftest():
   raise ValueError('records validator accepted a rejected mutation')
  return len(mutations)
 
-def main():
+def main(workflow_path='.github/workflows/reader-windows-reading-records.yml'):
  require(os.environ.get('GITHUB_ACTIONS')=='true','Actions only')
  if sys.argv[1:]==['--protocol-selftest']:
   print(json.dumps({'records_protocol_rejections':selftest()}));return
  source=os.environ['GITHUB_SHA'];run=int(os.environ['GITHUB_RUN_ID']);attempt=int(os.environ['GITHUB_RUN_ATTEMPT'])
  nav=module('original_navigation_verifier',ROOT/'tests/reader_windows_navigation/verify.py')
- nav.main('.github/workflows/reader-windows-reading-records.yml')
+ nav.main(workflow_path)
  out=Path('build/winrecords-summary');out.mkdir(parents=True,exist_ok=False)
  result=dict(accepted=False,source_sha=source,run_id=run,attempt=attempt,problems=[],complete_product=False,
   performance_accepted=False,screen_reader_accepted=False)

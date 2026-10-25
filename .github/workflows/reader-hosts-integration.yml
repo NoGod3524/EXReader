@@ -288,8 +288,12 @@ jobs:
           'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
       - name: Check source syntax in Actions
         run: python3 -m py_compile tests/reader_windows_search/guard.py tests/reader_windows_search/check_ui.py tests/reader_windows_search/check_formats.py tests/reader_windows_search/check_keyboard.py tests/reader_windows_search/verify.py
+      - name: Check records syntax and strict protocol in Actions
+        run: |
+          python3 -m py_compile tests/reader_windows_records/guard.py tests/reader_windows_records/check_ui.py tests/reader_windows_records/verify.py
+          python3 tests/reader_windows_records/verify.py --protocol-selftest
       - name: Reject malformed current and legacy report contracts before building
-        run: python3 tests/reader_hosts_integration/aggregate.py windows --protocol-selftest
+        run: python3 tests/reader_windows_navigation/verify.py --protocol-selftest
       - name: Build and install the frozen SDK and one product provider
         run: |
           set -o pipefail
@@ -309,7 +313,7 @@ jobs:
         run: |
           set -o pipefail
           prefix="$WS_PREFIX"
-          for module in extras/webdav extras/credentials extras/sideload apps/reader/revisions apps/reader/commands apps/reader/desktop-metadata apps/reader/sync apps/reader/session apps/reader/reading-state apps/reader/search apps/reader/navigation; do
+          for module in extras/webdav extras/credentials extras/sideload apps/reader/revisions apps/reader/commands apps/reader/desktop-metadata apps/reader/sync apps/reader/session apps/reader/reading-state apps/reader/reading-commands apps/reader/annotation-view apps/reader/search apps/reader/navigation; do
             name=$(basename "$module")
             cmake -S "$module" -B "build/ws-$name" -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_PREFIX_PATH="$prefix;$WS/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee "build/winsearch-logs/$name-configure.log"
             cmake --build "build/ws-$name" --parallel 4 --verbose 2>&1 | tee "build/winsearch-logs/$name-build.log"
@@ -318,7 +322,7 @@ jobs:
       - name: Build actual account host with the optional native search UI
         run: |
           set -o pipefail
-          cmake -S apps/reader/windows-account -B build/ws-host -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage" -DREADER_METADATA_PREFIX="$WS_PREFIX" -DREADER_ACCOUNT_PREFIX="$WS_PREFIX" -DEXR_READER_WINDOWS_SEARCH=ON -DEXR_READER_WINDOWS_NAVIGATION=ON 2>&1 | tee build/winsearch-logs/host-configure.log
+          cmake -S apps/reader/windows-account -B build/ws-host -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage" -DREADER_METADATA_PREFIX="$WS_PREFIX" -DREADER_ACCOUNT_PREFIX="$WS_PREFIX" -DEXR_READER_WINDOWS_SEARCH=ON -DEXR_READER_WINDOWS_NAVIGATION=ON -DEXR_READER_WINDOWS_RECORDS=ON 2>&1 | tee build/winsearch-logs/host-configure.log
           cmake --build build/ws-host --parallel 4 --verbose 2>&1 | tee build/winsearch-logs/host-build.log
           cmake -S tests/reader_search/consumer -B build/ws-search-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage"
           cmake --build build/ws-search-consumer --parallel 4 --verbose
@@ -369,6 +373,10 @@ jobs:
           cmake --build build/account-capture --parallel 4
           python3 tests/windows_host/make_fixtures.py --output build/account-fixtures
           python3 tests/reader_reading_state/make_fixtures.py build/account-reading-fixtures
+      - name: Execute native reading records and real process recovery
+        if: ${{always() && steps.retained_build.outcome == 'success'}}
+        run: |
+          python3 tests/reader_windows_records/check_ui.py --candidate build/ws-package/EXReader/EXReader.exe --review build/ws-host/EXReaderShelfReview.exe --font build/ws-package/EXReader/Reader.otf --capture-probe build/account-capture/reading-capture-probe.exe --revision-consumer build/account-revisions-consumer/revision-consumer.exe --output build/ws-records-ui
       - name: Run every retained Windows account host regression
         if: ${{always() && steps.retained_build.outcome == 'success'}}
         env:
@@ -391,6 +399,9 @@ jobs:
           name: reader-windows-search-initial-${{github.run_id}}-${{github.run_attempt}}
           path: |
             build/winsearch-logs/
+            build/ws-records-ui/
+            build/account-capture/reading-capture-probe.exe
+            build/account-revisions-consumer/revision-consumer.exe
             build/ws-navigation-module-evidence/
             build/ws-navigation-ui/
             build/ws-navigation-consumer/navigation-probe.exe
@@ -444,6 +455,7 @@ jobs:
           path: |
             build/winsearch-summary/verified.json
             build/winnav-summary/verified.json
+            build/winrecords-summary/verified.json
           if-no-files-found: error
   gtk:
     if: ${{ github.event.inputs.verify_run == '' }}

@@ -50,3 +50,9 @@
 
 日志中原生 entry 已聚焦但内容 SHA-256 为空文本摘要、selected 为空、accept=0。root 保留产品实现和全部原断言，只修账户测试夹具的输入驱动：先核活动 chooser 的真实 entry 焦点，再向该 entry 输入 ASCII 夹具路径，核 entry 与 selected 摘要及 accept 敏感状态后才确认。此变化限定在测试驱动，守卫明确列出该文件；`apps/examples/extras` 仍与合并基点逐字一致。两项 palette 旧失败继续保留，当前整体仍未验收。
 
+# Windows 阅读记录接入共同候选
+
+已普通合入 Windows 阅读记录证据 HEAD `2dcd325b31590bbb5374842e6c7f26fa2dcedd21`。独立受测 source `fdd625f3a45907a178db07ac8d0e4c06a635321d` / run `40153457202` 的32项真实记录与原请求恢复、24项记录协议拒绝、原F1/F2及全部Windows宿主回归均通过。共同生产基点更新为 `e0c28defc7f2113cb4ccdab5dfe1d2b072915a82`，守卫保持SDK与schema冻结，生产目录固定到该普通合并。
+
+共同Windows作业复用完整 records 原作业，启用可选记录UI并安装既有G03/G04，保留原导航/搜索/宿主回归。严格汇总先执行原F1/F2认证，再认证记录32项及真实公开定位；共同最终汇总要求三个报告的宿主二进制摘要一致。尚未完成新共同轮之前，不把独立记录证据授予共同源码，也不授予Apple、GTK批量导入或Android平移。
+

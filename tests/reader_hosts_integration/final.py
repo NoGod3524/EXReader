@@ -246,7 +246,7 @@ def main():
                         'src', 'include', 'cmake', 'CMakeLists.txt', 'apps', 'examples', 'extras',
                         'tests/reader_gtk_reading_records', 'tests/reader_android_reading',
                         'tests/reader_android_navigation', 'tests/reader_android_search',
-                        'tests/reader_windows_navigation', 'tests/reader_android_preferences',
+                        'tests/reader_windows_navigation', 'tests/reader_windows_records', 'tests/reader_android_preferences',
                         'tests/reader_android_cbz_reading'], check=True)
     else:
         require(len(sys.argv) == 1, 'unknown verifier arguments')
@@ -310,6 +310,13 @@ def main():
                         navigation['consumer_sha256'] == report['consumer_sha256'] and
                         navigation['review_sha256'] == report['review_sha256'], 'Windows directory or original search proof missing')
                 result['scopes']['windows_navigation'] = True
+                records = bundle.report('winrecords-summary/verified.json');identity(records, source, run, attempt)
+                require(records.get('accepted') is True and records.get('problems') == [] and
+                        records.get('records_ui_checks') == 32 and records.get('protocol_rejections') == 24 and
+                        records.get('original_navigation_and_search_strict_preserved') is True and
+                        records['consumer_sha256'] == report['consumer_sha256'] and
+                        records['review_sha256'] == report['review_sha256'], 'Windows records or retained proof missing')
+                result['scopes']['windows_reading_records'] = True
 
         gtk, gtk_job = open_bundle('reader-gtk-reading-records', GTK_JOB, palette_job=True)
         records = gtk.report('records-ui/report.json');identity(records, source, run, attempt)
