@@ -6,11 +6,15 @@ separate branch starts at common source `687def68862649479ce536d619c7b37ba2d2cc4
 The completed SDK 3.40 drop/paste delivery and its two palette failures remain
 unchanged.
 
-SDK candidate `b911815e26a10e7c45f50f56bf7c4e46cbca010b` adds the public
-`exr_render_page_background` API, SDK 3.41.0 / core 3.40.0 / ABI 1. Its Linux
-foundation run `40164920053` passed the original 164 native tests, 535 installed
-candidate assertions and a separately rebuilt frozen pixel oracle. That is SDK
-foundation evidence, not GTK host or whole-SDK acceptance.
+SDK candidate `edddc463c06ed5731195cdb8f06b2df6dff7699e` adds the public
+`exr_render_page_background` API, SDK 3.41.0 / core 3.40.0 / ABI 1. Producer run
+`40165924012` passed Linux, Windows and macOS consumers: each ran the original
+164 native tests, 580 installed candidate assertions and 165 separately rebuilt
+frozen assertions over 12 cases. Its original ZIPs were authenticated by validator
+source `4a5a793ebe2a98a96ed119334399821e923c19ab`, run `40166642441`, without
+reexecuting those programs. That is SDK API/frozen-oracle evidence, not GTK host
+or whole-SDK acceptance. Shared version support `f680aeaddfb1ecc67ead353554f5b91a5703f72f`
+passed both exact SDK configurations and mixed-SDK rejection in run `40166479919`.
 
 The host keeps default `EXR_SDK_VERSION=3.40.0` and
 `EXR_READER_PAGE_BACKGROUND=OFF`. Explicitly selecting 3.41.0 and enabling this
@@ -56,6 +60,7 @@ fields are never invented: missing self-reported attempt/hash fields are bound
 externally through the finished producer job and authenticated ZIP. Actual SDK
 identity comes from the packaged binary and exact installed candidate headers.
 Native screenshot hashes and the authored image input are authenticated too.
+Old 3.40 saved-reading-state migration is not granted by this page-color package.
 
 See [the validation record](validation/reader-gtk-page-background.json). Builds,
 tests, syntax checks, fixtures and artifact processing run only in Actions.

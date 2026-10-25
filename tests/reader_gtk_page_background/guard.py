@@ -4,7 +4,7 @@ import os
 import subprocess
 
 BASE = '687def68862649479ce536d619c7b37ba2d2cc4b'
-SDK = 'b911815e26a10e7c45f50f56bf7c4e46cbca010b'
+SDK = 'edddc463c06ed5731195cdb8f06b2df6dff7699e'
 VERSION_SUPPORT = 'f680aeaddfb1ecc67ead353554f5b91a5703f72f'
 DEPENDENCY_MERGE = 'd2d627e8a69d8d27ad902490b920cc5bf3173f83'
 

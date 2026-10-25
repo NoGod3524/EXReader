@@ -10,7 +10,7 @@ defaults:
   run:
     shell: bash
 env:
-  GTK_PAGE_BACKGROUND_SDK_SOURCE: b911815e26a10e7c45f50f56bf7c4e46cbca010b
+  GTK_PAGE_BACKGROUND_SDK_SOURCE: edddc463c06ed5731195cdb8f06b2df6dff7699e
 jobs:
   account:
     name: GTK page canvas candidate and retained native suites
