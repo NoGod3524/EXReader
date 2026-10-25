@@ -1,0 +1,83 @@
+name: Reader SDK record migration
+on:
+  push:
+    branches: [codex/dot-sdk-record-migration]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  migration:
+    name: migration (${{ matrix.system }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            system: Linux
+          - os: windows-2022
+            system: Windows
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate fixed ancestry, ordinary dependency merge, frozen source and whitelist
+        run: python tests/reader_sdk_record_migration/guard.py
+      - name: Install Linux build tools
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - name: Enter Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Install actual 3.40 and 3.41; run original G03 and real two-process migration matrix
+        run: python tests/reader_sdk_record_migration/run.py
+      - name: Preserve all original reports, records, installed binaries and failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-sdk-record-migration-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/record-migration/evidence/
+          if-no-files-found: error
+          retention-days: 30
+  evidence:
+    name: authenticated migration evidence
+    needs: migration
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Guard the exact evidence source
+        run: python tests/reader_sdk_record_migration/guard.py
+      - name: Authenticate terminal jobs, unique artifacts, actual ZIP bytes, reports and binaries
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_sdk_record_migration/verify.py build/record-migration/verification
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-sdk-record-migration-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/record-migration/verification/
+          if-no-files-found: error
+          retention-days: 30

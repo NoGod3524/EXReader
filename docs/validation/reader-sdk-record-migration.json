@@ -1,0 +1,10 @@
+{
+  "package": "D01",
+  "status": "pending_actions",
+  "verification_accepted": false,
+  "migration_accepted": false,
+  "tested_sha": null,
+  "evidence_head": null,
+  "retained_failures": [],
+  "remaining_gaps": ["Actions Windows/Linux matrix has not yet completed", "Parser-qualified source identity requires a root-owned compatibility policy"]
+}
