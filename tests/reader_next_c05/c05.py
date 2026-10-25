@@ -398,6 +398,14 @@ def run_probe(consumer, asset, outdir, queries, primary_text):
             "stderr": stderr[-4000:]}, probe
 
 
+def stable_identity_sha256(identity):
+    """Identity without the per-runner download bookkeeping (attempt count, CDN final URL)."""
+    stable = json.loads(json.dumps(identity))
+    for entry in stable.get("files", {}).values():
+        entry.pop("download", None)
+    return sha256_bytes(json.dumps(stable, sort_keys=True).encode("utf-8"))
+
+
 def cmd_run(args):
     out = Path(args.out)
     prep = Path(args.prepared)
@@ -406,7 +414,8 @@ def cmd_run(args):
                "run_id": args.run_id, "attempt": args.attempt, "sdk_label": args.sdk_label,
                "python": sys.version.split()[0], "machine": platform.platform(),
                "consumer": str(args.consumer), "consumer_sha256": sha256_file(args.consumer),
-               "identity_sha256": sha256_file(prep / "identity.json"), "files": [], "checks": []}
+               "identity_sha256": sha256_file(prep / "identity.json"),
+               "identity_stable_sha256": stable_identity_sha256(identity), "files": [], "checks": []}
     ok_all = not identity["problems"]
     summary["checks"].append({"name": "f5_identity", "ok": not identity["problems"], "detail": identity["problems"]})
     ids = list(REAL) + list(SYNTHETIC)
@@ -521,7 +530,8 @@ def cmd_aggregate(args):
     c = Checks()
     c.add("two_platforms", len({s["platform"] for s in sums}) == 2, [s["platform"] for s in sums])
     c.add("same_source_run_attempt", len({(s["source_commit"], s["run_id"], s["attempt"]) for s in sums}) == 1)
-    c.add("same_identity", len({s["identity_sha256"] for s in sums}) == 1)
+    c.add("same_identity", len({s["identity_stable_sha256"] for s in sums}) == 1,
+          [(s["platform"], s["identity_stable_sha256"]) for s in sums])
     c.add("each_platform_accepted", all(s["accepted"] for s in sums), [(s["platform"], s["accepted"]) for s in sums])
     by = {s["platform"]: {f["id"]: f for f in s["files"]} for s in sums}
     for ident in list(REAL) + list(SYNTHETIC):
