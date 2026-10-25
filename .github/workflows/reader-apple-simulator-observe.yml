@@ -8,15 +8,19 @@ permissions:
   contents: read
 jobs:
   observe:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [iphone, ipad]
     runs-on: macos-15
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Observe original45s command before and after native Simulator launch
-        run: python3 tests/reader_apple_reading_inspect/simulator.py
+      - name: Query appearance service readiness then issue original45s setter exactly once
+        run: python3 tests/reader_apple_reading_inspect/simulator.py '${{ matrix.platform }}'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: diagnostic-simulator-appearance-${{ github.run_id }}-${{ github.run_attempt }}
+          name: diagnostic-simulator-appearance-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/apple-simulator-observation/
           if-no-files-found: error

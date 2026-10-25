@@ -3,6 +3,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import time
 
 
@@ -32,8 +33,12 @@ def main():
     if devices.get('exit_code') != 0:
         raise RuntimeError('Device inventory unavailable')
     rows = json.loads(devices['stdout'])['devices']
+    platform = sys.argv[1] if len(sys.argv)==2 else 'iphone'
+    if platform not in ('iphone','ipad'):
+        raise RuntimeError('Unknown platform')
+    prefix = 'iPhone' if platform=='iphone' else 'iPad'
     runtime, name, udid = max((runtime, row['name'], row['udid']) for runtime, group in rows.items()
-                             for row in group if row.get('isAvailable') and row['name'].startswith('iPhone'))
+                             for row in group if row.get('isAvailable') and row['name'].startswith(prefix))
     report.update(runtime=runtime, device=name, udid=udid)
     command(['xcrun', 'simctl', 'shutdown', udid])
     for argv, timeout in [(['xcrun', 'simctl', 'erase', udid],45),
@@ -41,12 +46,27 @@ def main():
                           (['xcrun', 'simctl', 'bootstatus', udid, '-b'],180)]:
         if command(argv, timeout).get('exit_code') != 0:
             raise RuntimeError('Original simulator initialization failed')
-    # Preserve the original command and timeout before trying a native UI launch.
-    command(['xcrun', 'simctl', 'ui', udid, 'appearance', 'light'])
-    command(['open', '-a', 'Simulator', '--args', '-CurrentDeviceUDID', udid])
-    command(['xcrun', 'simctl', 'bootstatus', udid, '-b'],180)
-    command(['xcrun', 'simctl', 'ui', udid, 'appearance', 'light'])
-    command(['xcrun', 'simctl', 'ui', udid, 'appearance'])
+    if command(['open', '-a', 'Simulator', '--args', '-CurrentDeviceUDID', udid]).get('exit_code')!=0:
+        raise RuntimeError('Native Simulator launch failed')
+    if command(['xcrun', 'simctl', 'bootstatus', udid, '-b'],180).get('exit_code')!=0:
+        raise RuntimeError('Post-window boot check failed')
+    # New diagnostic preparation: query-only bounded readiness. The formal
+    # original setter below is issued exactly once with the original45s budget.
+    deadline=time.monotonic()+180
+    ready=False
+    while time.monotonic()<deadline:
+        row=command(['xcrun','simctl','ui',udid,'appearance'],min(45,deadline-time.monotonic()))
+        if row.get('exit_code')==0 and row.get('stdout','').strip() in ('light','dark'):
+            ready=True
+            break
+    report['query_only_service_ready']=ready
+    if not ready:
+        raise RuntimeError('Appearance service never became ready inside diagnostic180s')
+    if command(['xcrun', 'simctl', 'ui', udid, 'appearance', 'light']).get('exit_code')!=0:
+        raise RuntimeError('Original45s setter still failed after readiness')
+    observed=command(['xcrun', 'simctl', 'ui', udid, 'appearance'])
+    if observed.get('exit_code')!=0 or observed.get('stdout','').strip()!='light':
+        raise RuntimeError('Actual appearance readback differs')
     command(['xcrun', 'simctl', 'shutdown', udid])
 
 
