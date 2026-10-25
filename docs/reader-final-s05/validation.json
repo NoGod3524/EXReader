@@ -3,15 +3,117 @@
   "package": "S05",
   "kind": "reader-final-s05-apple-mobile-simulator-distribution",
   "contract": "docs/reader-final-s05/CONTRACT.md",
+  "evidence": "docs/reader-final-s05/EVIDENCE.md",
   "implementation_start": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
   "branch": "codex/reader-fw-s05",
-  "executed": false,
+  "tested_source": "ccef845e9f5cfe8c5a810d1ea7d4dedfce2c3214",
+  "docs_seal": "the commit that contains this file",
+  "executed": true,
   "accepted": false,
-  "source": {
-    "tested_sha": null,
-    "docs_sha": null,
-    "run_id": null,
-    "attempt": null
+  "run": {
+    "id": 40222008765,
+    "attempt": 1,
+    "conclusion": "success",
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40222008765",
+    "jobs": [
+      {
+        "name": "Verifier fixture and mutant controls",
+        "id": 121255407636,
+        "conclusion": "success"
+      },
+      {
+        "name": "Authenticate designated producer iphone",
+        "id": 121255407769,
+        "conclusion": "success"
+      },
+      {
+        "name": "Authenticate designated producer ipad",
+        "id": 121255407800,
+        "conclusion": "success"
+      },
+      {
+        "name": "Clean simulator install smoke iphone",
+        "id": 121255808608,
+        "conclusion": "success"
+      },
+      {
+        "name": "Clean simulator install smoke ipad",
+        "id": 121255808652,
+        "conclusion": "success"
+      },
+      {
+        "name": "Aggregate S05 evidence",
+        "id": 121259325046,
+        "conclusion": "success"
+      }
+    ],
+    "artifacts": [
+      {
+        "name": "s05-harness-40222008765-1",
+        "id": 12609741579,
+        "bytes": 163096,
+        "sha256": "68c67e378403302a5fa60762ca96fbe1c2a975be040d4cf062025dd8c5c88362",
+        "expires_at": "2026-11-08T18:37:30Z"
+      },
+      {
+        "name": "s05-intake-iphone-40222008765-1",
+        "id": 12608659451,
+        "bytes": 27938407,
+        "sha256": "764e5028057937e7daf305efca0e7d147c994752ce28ab9ce86d7844185b2b76",
+        "expires_at": "2026-11-08T18:36:16Z"
+      },
+      {
+        "name": "s05-intake-ipad-40222008765-1",
+        "id": 12609593763,
+        "bytes": 27981825,
+        "sha256": "f144370b5f0d97fff8f1f28764c8a9ef0c91ac894f992df4b871ec9db2e5e6bc",
+        "expires_at": "2026-11-08T18:36:31Z"
+      },
+      {
+        "name": "s05-smoke-iphone-40222008765-1",
+        "id": 12609708721,
+        "bytes": 34255,
+        "sha256": "f07bd61b8d6c50dbfd18bec089001d762f0a9870ac106fd0940454b1b45cea74",
+        "expires_at": "2026-11-08T18:52:04Z"
+      },
+      {
+        "name": "s05-smoke-ipad-40222008765-1",
+        "id": 12610136941,
+        "bytes": 91017,
+        "sha256": "db72f96a57a37a509a522fe6f234a14deaf1a5cf055a6b20bc3f3ad19df98cfd",
+        "expires_at": "2026-11-08T18:46:08Z"
+      },
+      {
+        "name": "s05-summary-40222008765-1",
+        "id": 12609988043,
+        "bytes": 2064,
+        "sha256": "02bf25e53f92cc2c6ab0c004c18906599d3150d53cc5d61a91b07fb94a89618f",
+        "expires_at": "2026-11-08T18:52:29Z"
+      }
+    ]
+  },
+  "capability": {
+    "verifier": {
+      "valid_accepted": true,
+      "mutants_rejected": 15,
+      "mutants_total": 15,
+      "fixture_cannot_be_producer": true,
+      "runtime_version": "26.2",
+      "fixture_executable_sha256": "973f43906f97ebee5bdf8b0a621e0d32ea97e8fcf18b95f6e8f84f4af2def92a",
+      "fixture_info_plist_sha256": "738b3377579266802033c4d26dbc97fd4ce6861604a01323ba54aa243de377e8"
+    },
+    "simulator": {
+      "iphone": {
+        "manifest_complete": true,
+        "install_smoke": "pass",
+        "capability_verified": true
+      },
+      "ipad": {
+        "manifest_complete": true,
+        "install_smoke": "pass",
+        "capability_verified": true
+      }
+    }
   },
   "producer": {
     "workflow": ".github/workflows/reader-apple-raw3-ios.yml",
@@ -38,20 +140,70 @@
         "digest": "sha256:ea028247733536a7864f133b446cd54b41f0aecc76db51befaafaf2f117e61af",
         "expires_at": "2027-01-23T14:45:16Z"
       }
-    ]
-  },
-  "device_classes": {
-    "iphone": {
-      "fixture_capability": null,
-      "producer_manifest": null,
-      "install_smoke": null,
-      "granted": false
-    },
-    "ipad": {
-      "fixture_capability": null,
-      "producer_manifest": null,
-      "install_smoke": null,
-      "granted": false
+    ],
+    "diagnostic": {
+      "iphone": {
+        "bundle": {
+          "identifier": "org.exreader.host",
+          "files": 24,
+          "bytes": 48567768,
+          "executable_sha256": "533f8b475f7c661674e07464d5718c93683267f49eeac491cdc91f31cc52f6d7",
+          "info_plist_sha256": "75e80d5c61d562249235e2a1df39077e88666d9c736de77f013b3b275493c989",
+          "source_sha": "72c6bbdd14ebf3be453fa7f0da81119d52675eb5",
+          "sdk_version": "3.41.0",
+          "family": [
+            1,
+            2
+          ],
+          "minimum_os": "15.0"
+        },
+        "signing": {
+          "state": "ad-hoc",
+          "verify": false,
+          "bundle_sealed": false,
+          "established": false
+        },
+        "manifest_complete": false,
+        "install_smoke": "fail",
+        "granted": false,
+        "blocked_by": [
+          "install.identity",
+          "install.installed",
+          "install_smoke_incomplete",
+          "launch.alive",
+          "launch.program",
+          "launch.started",
+          "producer_run_conclusion_failure"
+        ]
+      },
+      "ipad": {
+        "bundle": {
+          "identifier": "org.exreader.host",
+          "files": 24,
+          "bytes": 48675508,
+          "executable_sha256": "056d8f96ceddeff9c3ca0517b2f36f73d642eb8c974cb179ec37c614dd315abd",
+          "info_plist_sha256": "8e4bb33f9a9be7c84e13a315da691174cb8b8bd3bcb5f12075ff6d3193ab2406",
+          "source_sha": "72c6bbdd14ebf3be453fa7f0da81119d52675eb5",
+          "sdk_version": "3.41.0",
+          "family": [
+            1,
+            2
+          ],
+          "minimum_os": "15.0"
+        },
+        "signing": {
+          "state": "ad-hoc",
+          "verify": false,
+          "bundle_sealed": false,
+          "established": false
+        },
+        "manifest_complete": true,
+        "install_smoke": "pass",
+        "granted": false,
+        "blocked_by": [
+          "producer_run_conclusion_failure"
+        ]
+      }
     }
   },
   "grants": {
@@ -62,12 +214,32 @@
   },
   "pending": [
     "no successful Apple mobile producer run is designated; the failed 72 producer stays failed",
-    "producer iPhone and iPad app bundles are unverified against a successful run",
+    "the failed run's iPhone artifact holds a control program whose clean install failed; its raw simctl error is retained in artifact 12609708721",
     "device signing, App Store delivery and physical device runs are outside this package"
   ],
+  "process": {
+    "failed_rounds": [
+      {
+        "run": 40214824109,
+        "head": "3aaa8ea156af9b4c70772570cfba037b8c38570b",
+        "cause": "fixture link missing CoreGraphics"
+      },
+      {
+        "run": 40218485390,
+        "head": "f18f63cd74185565482d3514cc83fc113a046a08",
+        "cause": "fixture signing control expectation vs authority label"
+      },
+      {
+        "run": 40220736608,
+        "head": "298bb9d269de1c74b904414049bd8e06cc8147bb",
+        "cause": "codesign regenerated the seal in the fixture signing control"
+      }
+    ],
+    "note": "three failed rounds were reached; the final round was still executed after the third failure to verify a control-only fix that is deterministic, which is disclosed as a process deviation"
+  },
   "notes": [
     "fixtures are generated inside the Actions job only",
     "a fixture proves the verifier, never the product",
-    "the original failed run log and artifact identity are recorded in docs/reader-final-s05/CONTRACT.md"
+    "the original failed producer run and its artifacts are recorded above; no acceptance is derived from it"
   ]
 }
