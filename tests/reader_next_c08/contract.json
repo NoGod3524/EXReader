@@ -1,0 +1,47 @@
+{
+  "package": "C08",
+  "start": "e67d87cbeabb2457e0852f681ef0b27b2c0da4d8",
+  "producer": {
+    "source_sha": "4a04a9cc74dde67f755c87e87b278d63a254a3ac",
+    "run_id": 40207467982,
+    "attempt": 1,
+    "conclusion": "success",
+    "jobs": {"android": 121211376063},
+    "artifacts": [
+      {"role": "raw3", "id": 12604412854, "name": "reader-android-raw3-40207467982-1",
+       "bytes": 113970957,
+       "digest": "sha256:c3db2ad1a2e31bc53d01620f2ef90e02a976e3b4f90ac76ed2e179c7c9052805",
+       "expires_at": "2027-01-23T15:33:00Z"},
+      {"role": "page-theme", "id": 12604537792, "name": "reader-android-page-theme-40207467982-1",
+       "bytes": 133598571,
+       "digest": "sha256:9ea2858145313296d39792d867794db1be687eb70dec38f155dcd1dfe156bf06",
+       "expires_at": "2027-01-23T15:33:00Z"}
+    ],
+    "apk_member": "build/android-raw3/apks/host-debug.apk",
+    "apk_sha256": "860927a89eb7ab2e6ffcd93d596e7206a830f15d396be0e0135bf82bedb0b5f3",
+    "apk_bytes": 29721554
+  },
+  "s04": {
+    "tested_source": "49fe49d36b24cd692ec907e07b5cf5c098fa548e",
+    "run_id": 40224699973,
+    "attempt": 1,
+    "jobs": {"emulator": 121263718767, "summary": 121264297890},
+    "sealed_docs": "116da77ed915b9a80fceade4b41dcea7093f9966"
+  },
+  "package_name": "org.exreader.host",
+  "fixture": {
+    "file": "tests/fixtures/sample.txt",
+    "bytes": 10635,
+    "sha256": "fe0e65a92ff83503015b42253a17ac643e4894058a062bb532ba61aaf5bf583b",
+    "device_name": "c08-original.txt",
+    "title_stem": "c08-original",
+    "format": 1
+  },
+  "expected_page": 3,
+  "owned_paths": [
+    "tests/reader_next_c08/",
+    ".github/workflows/reader-next-c08.yml",
+    "docs/reader-next-c08/",
+    "HANDOFF-RESULT-C08.md"
+  ]
+}
