@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "id": "S02",
+  "kind": "linux-relocatable-candidate-verification",
+  "accepted": false,
+  "verifier_source": "",
+  "producer": {
+    "source": "57203a52aee439be5194ee0a4b13563a975e8daf",
+    "evidence_seal": "9fc407a5cce5a0bfe644a60bd8dc29f84dea6d0e",
+    "run": 40206458217,
+    "attempt": 1
+  },
+  "run": null,
+  "jobs": [],
+  "artifacts": [],
+  "checks": [],
+  "failures_preserved": [],
+  "not_tested": [
+    "distributions other than the Ubuntu 22.04 runner image",
+    "Wayland session, physical device, screen reader",
+    "performance and memory budgets",
+    "system-wide installation, package manager integration, icon theme"
+  ]
+}

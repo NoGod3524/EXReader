@@ -1,0 +1,147 @@
+name: Reader final S02 Linux relocatable GTK compact candidate
+on:
+  push:
+    branches: [codex/reader-fw-s02]
+    paths:
+      - 'tests/reader_final_s02/**'
+      - '.github/workflows/reader-final-s02.yml'
+      - 'docs/reader-final-s02/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: reader-final-s02
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PRODUCER_RUN: '40206458217'
+  PRODUCER_SOURCE: '57203a52aee439be5194ee0a4b13563a975e8daf'
+  PRODUCER_SEAL: '9fc407a5cce5a0bfe644a60bd8dc29f84dea6d0e'
+  J24_SOURCE: '2f5677f13efc34b200af697f1b6f7bff2b656e3b'
+  ATSPI_SOURCE: '67e2f8c4941205c5581e82fd5a1469d18f696019'
+  RELOCATED: '/tmp/s02-portable/EXReader Linux 3.41.0 (portable)'
+  XDG_DATA: '/tmp/s02-xdg/data'
+  XDG_CONFIG: '/tmp/s02-runtime/config'
+
+jobs:
+  preflight:
+    name: preflight
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Compile the S02 tooling and guard the fixed implementation start
+        run: |
+          /usr/bin/python3 -m py_compile tests/reader_final_s02/*.py
+          /usr/bin/python3 tests/reader_final_s02/guard.py --output build/s02/preflight/guard.json
+          /usr/bin/python3 tests/reader_final_s02/selfcheck.py --output build/s02/preflight
+
+  relocate:
+    name: relocate
+    needs: preflight
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Extract the pinned J24 and AT-SPI sources and guard them
+        run: |
+          mkdir -p build/s02/j24 build/s02/atspi build/s02/preflight
+          git show "$J24_SOURCE":tools/reader_distribution_unix/contract.py > build/s02/j24/contract.py
+          git show "$ATSPI_SOURCE":tests/reader_a11y_gtk/atspi_client.py > build/s02/atspi/atspi_client.py
+          /usr/bin/python3 tests/reader_final_s02/guard.py --j24-tools build/s02/j24 --atspi build/s02/atspi --output build/s02/preflight/guard-relocate.json
+      - name: Install the native GTK runtime accessibility and X11 tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgtk-3-0 libsecret-1-0 libcurl4 libxml2 libssl3 libsqlite3-0 libglib2.0-bin at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 gsettings-desktop-schemas xvfb openbox dbus-x11 xdotool xclip x11-utils imagemagick binutils strace desktop-file-utils
+      - name: Authenticate the pinned GTK compact producer artefact
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          /usr/bin/python3 tests/reader_final_s02/collect.py --run "$PRODUCER_RUN" --output build/s02/producer
+      - name: Seal and relocate the candidate with the J24 primitives
+        continue-on-error: true
+        run: |
+          /usr/bin/python3 tests/reader_final_s02/package.py --payload build/s02/producer/payload --producer build/s02/producer/producer.json --j24 build/s02/j24 --workspace "$GITHUB_WORKSPACE" --relocated "$RELOCATED" --output build/s02/package
+      - name: Static audit fonts resources desktop entry and distribution packages
+        continue-on-error: true
+        run: |
+          mkdir -p /tmp/s02-audit-home
+          /usr/bin/python3 tests/reader_final_s02/audit.py --relocated "$RELOCATED" --producer build/s02/producer/producer.json --output build/s02/audit --xdg-data "$XDG_DATA" --home /tmp/s02-audit-home
+      - name: Generate the CI-only original book
+        continue-on-error: true
+        run: |
+          /usr/bin/python3 tests/reader_final_s02/make_fixture.py --output build/s02/fixtures
+      - name: Run the relocated package under GTK AT-SPI and read the original book back
+        continue-on-error: true
+        run: |
+          mkdir -p build/s02/smoke
+          xvfb-run -a -s '-screen 0 1440x1200x24' dbus-run-session -- bash -euc '
+            export XDG_RUNTIME_DIR="$(mktemp -d /tmp/s02-runtime-XXXXXX)"
+            chmod 700 "$XDG_RUNTIME_DIR"
+            export XDG_CONFIG_HOME="$XDG_CONFIG"
+            mkdir -p "$XDG_CONFIG_HOME" "$XDG_DATA"
+            openbox > build/s02/smoke/openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            export PYTHONPATH="$PWD/build/s02/atspi"
+            /usr/bin/python3 tests/reader_final_s02/smoke.py --relocated "$RELOCATED" --producer build/s02/producer/producer.json --fixtures build/s02/fixtures --output build/s02/smoke --atspi-dir build/s02/atspi --workspace "$PWD" --runtime /tmp/s02-runtime --xdg-data "$XDG_DATA" --config "$XDG_CONFIG"
+          '
+      - name: Merge the four evidence documents
+        if: always()
+        run: |
+          /usr/bin/python3 tests/reader_final_s02/summary.py --producer build/s02/producer/producer.json --package build/s02/package/package.json --audit build/s02/audit/audit.json --smoke build/s02/smoke/smoke.json --output build/s02/evidence/summary.json
+      - name: Preserve the S02 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-final-s02-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          path: |
+            build/s02/preflight/
+            build/s02/j24/
+            build/s02/atspi/
+            build/s02/producer/producer.json
+            build/s02/producer/producer-build.json
+            build/s02/producer/producer-compact-report.json
+            build/s02/producer/producer-runtime-dependencies.txt
+            build/s02/package/package.json
+            build/s02/package/archive/manifest.json
+            build/s02/audit/audit.json
+            build/s02/fixtures/manifest.json
+            build/s02/smoke/
+            build/s02/evidence/summary.json
+
+  report:
+    name: report
+    needs: [preflight, relocate]
+    if: always() && !cancelled()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Re-authenticate both artefacts from the Actions API
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          /usr/bin/python3 tests/reader_final_s02/aggregate.py --output build/s02/report
+      - name: Preserve the same-run report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-final-s02-report-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          path: build/s02/report/result.json
