@@ -129,6 +129,7 @@ static void winrecords_controls(void) {
   EnableWindow(records.controls[10],!busy&&records.result.pending&&!records.result.pending_corrupt);
   EnableWindow(records.controls[11],!busy&&records.result.pending&&!records.result.pending_corrupt);
   EnableWindow(records.controls[12],records.running&&(!g.job||!job_commit_barrier(g.job->kind)));
+  EnableWindow(records.controls[13],!g.closing);
   EnableWindow(records.body,ready&&!records.history);
 }
 static void winrecords_close(void) {
