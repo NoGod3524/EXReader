@@ -28,7 +28,16 @@ typedef enum { READER_SHELF, READER_OPEN, READER_IMPORT, READER_NEXT,
   READER_NAVIGATION_BEGIN, READER_NAVIGATION_ROWS, READER_NAVIGATION_CHOOSE,
   READER_NAVIGATION_CLOSE, READER_RECORDS_LIST, READER_RECORDS_SAVE,
   READER_RECORDS_RETRY, READER_RECORDS_DISCARD, READER_RECORDS_HISTORY,
-  READER_RECORDS_JUMP } reader_action;
+  READER_RECORDS_JUMP, READER_BATCH_BEGIN, READER_BATCH_NEXT,
+  READER_BATCH_MAP, READER_BATCH_CLOSE } reader_action;
+#ifdef EXR_READER_BATCH_IMPORT
+typedef struct { int request,cancelled,phase,current_bytes,total_bytes; } reader_batch_control;
+typedef struct {
+  char path[512],message[192];
+  int status,committed,created,mapped,code;
+  int64_t book;
+} reader_batch_receipt;
+#endif
 typedef struct { int cancelled,current_bytes,total_bytes; } reader_account_control;
 #ifdef EXR_READER_NAVIGATION
 typedef struct { int request,phase,polls;void (*changed)(void *);void *context; } reader_navigation_control;
@@ -46,6 +55,14 @@ typedef struct {
   size_t page;
   const char *query,*cursor_title,*cursor_key,*anchor_key;
   int direction;
+#ifdef EXR_READER_BATCH_IMPORT
+  uint64_t batch_token;
+  int batch_recursive,batch_request;
+  int batch_idle; /* UI confirms no frame is awaiting acceptance or COMMIT. */
+  const char *batch_root;
+  reader_batch_control *batch_control;
+  size_t batch_candidate_limit; /* Private host regression: zero keeps module default. */
+#endif
 #ifdef EXR_READER_READING_RECORDS
   uint64_t records_token;
   const char *records_after,*records_id,*records_head,*records_sha,*records_version,*records_text;
@@ -136,6 +153,12 @@ typedef struct {
   size_t receive_reading_rows,receive_reading_found,receive_reading_unresolved;
   int receive_reading_more;
   char *receive_resolutions;
+#ifdef EXR_READER_BATCH_IMPORT
+  int has_batch,batch_done,batch_complete,batch_truncated,batch_cancelled,batch_map,batch_deferred;
+  uint64_t batch_token,batch_seen,batch_attempted,batch_imported,batch_duplicates,batch_failed,batch_pending;
+  reader_batch_receipt *batch_rows;
+  size_t batch_count;
+#endif
 #ifdef EXR_READER_READING_RECORDS
   int has_records,records_pending,records_pending_error,records_created,records_code,records_match;
   int records_progress_state,records_progress_deleted,records_history_complete;

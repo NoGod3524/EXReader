@@ -28,6 +28,11 @@ static int worker_generation;
 static gboolean busy,saving,save_failed,closing,close_after_save;
 static gboolean choosing_file;
 static gboolean profile_writable;
+#ifdef EXR_READER_BATCH_IMPORT_UI
+static void folder_open(GtkWidget *,gpointer);
+static void folder_exit(void);
+static char *folder_observation(void);
+#endif
 #ifdef EXR_READER_READING_RECORDS_UI
 static void reading_records_open(GtkWidget *,gpointer);
 static void reading_records_close(void);
@@ -62,6 +67,9 @@ static char *preferences_observation(void);
 #endif
 typedef struct { reader_command command;char *path,*comment;int generation,stop,shelf_generation; } host_job;
 typedef struct { reader_result value;reader_action action;int generation,profile_writable,shelf_generation; } host_result;
+#ifdef EXR_READER_BATCH_IMPORT_UI
+static gboolean folder_apply(host_result *);
+#endif
 #ifdef EXR_READER_READING_RECORDS_UI
 static gboolean reading_records_apply(host_result *);
 #endif
@@ -186,6 +194,10 @@ static void state(void) {
 #ifdef EXR_READER_READING_RECORDS_UI
   char *record_state=reading_records_observation();
   complete=g_strconcat(data,record_state,NULL);g_free(data);g_free(record_state);data=complete;
+#endif
+#ifdef EXR_READER_BATCH_IMPORT_UI
+  char *folder_state=folder_observation();
+  complete=g_strconcat(data,folder_state,NULL);g_free(data);g_free(folder_state);data=complete;
 #endif
   g_file_set_contents(state_path,data,-1,NULL);g_free(data);
 }
@@ -419,6 +431,9 @@ static void job_free(host_job *job) {
   g_free((gpointer)job->command.collection_member_cursor);
   g_free((gpointer)job->command.account_root);g_free((gpointer)job->command.account_id);
   g_free((gpointer)job->command.receive_key);
+#ifdef EXR_READER_BATCH_IMPORT
+  g_free((gpointer)job->command.batch_root);
+#endif
 #ifdef EXR_READER_PREFERENCES
   g_free((gpointer)job->command.preferences_path);
 #endif
@@ -433,6 +448,9 @@ static void queue_commit(void) {
 static void pixels_free(guchar *pixels,gpointer unused) { (void)unused;free(pixels); }
 static gboolean apply_result(gpointer data) {
   host_result *done=data;reader_result *result=&done->value;
+#ifdef EXR_READER_BATCH_IMPORT_UI
+  if(done->action>=READER_BATCH_BEGIN && done->action<=READER_BATCH_CLOSE && folder_apply(done)) goto free_result;
+#endif
 #ifdef EXR_READER_READING_RECORDS_UI
   if(done->action>=READER_RECORDS_LIST && done->action<=READER_RECORDS_JUMP && reading_records_apply(done)) goto free_result;
 #endif
@@ -533,6 +551,9 @@ static gpointer work(gpointer font_path) {
   for(;;) {
     host_job *job=g_async_queue_pop(queue);if(job->stop) { job_free(job);break; }
     int barrier=job->command.action==READER_COMMIT;
+#ifdef EXR_READER_BATCH_IMPORT_UI
+    barrier=barrier || (job->command.action>=READER_BATCH_BEGIN && job->command.action<=READER_BATCH_CLOSE);
+#endif
 #ifdef EXR_READER_READING_RECORDS_UI
     barrier=barrier || job->command.action==READER_RECORDS_SAVE || job->command.action==READER_RECORDS_RETRY || job->command.action==READER_RECORDS_DISCARD;
 #endif
@@ -670,6 +691,9 @@ static void import_dialog(void) {
     submit(READER_IMPORT,0,path,font_size);g_free(path);
   } else { gtk_widget_destroy(dialog);state(); }
 }
+#ifdef EXR_READER_BATCH_IMPORT_UI
+#include "batch_import_ui.inc"
+#endif
 static void focus_list(GtkWidget *box) {
   GtkListBoxRow *row=gtk_list_box_get_selected_row(GTK_LIST_BOX(box));if(!row) row=gtk_list_box_get_row_at_index(GTK_LIST_BOX(box),0);
   if(row) { gtk_list_box_select_row(GTK_LIST_BOX(box),row);gtk_widget_grab_focus(GTK_WIDGET(row)); } else gtk_widget_grab_focus(box);
@@ -795,6 +819,9 @@ static void stop_worker(void) {
 #endif
   if(closing) return;
   closing=TRUE;
+#ifdef EXR_READER_BATCH_IMPORT_UI
+  folder_exit();
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   guint *sources[]={&search_timer,&viewport_timer,&restore_timer,&shelf_edge_idle};
   for(size_t i=0;i<G_N_ELEMENTS(sources);i++) if(*sources[i]) { g_source_remove(*sources[i]);*sources[i]=0; }
@@ -880,6 +907,18 @@ int main(int argc,char **argv) {
   const char *titles[]={"Import F1","Shelf F2","Previous F3","Next F4","A+ F5","A− F6","Text F7","Add note F8","Notes F9","Delete F10"};
   for(size_t i=0;i<G_N_ELEMENTS(names);i++) {
     GtkWidget *button=gtk_button_new_with_label(titles[i]);gtk_box_pack_start(GTK_BOX(toolbar),button,FALSE,FALSE,0);
+#ifdef EXR_READER_BATCH_IMPORT_UI
+    if(i==0) {
+      GtkWidget *sources=gtk_menu_button_new(),*source_menu=gtk_menu_new();
+      gtk_button_set_label(GTK_BUTTON(sources),"▾");atk_object_set_name(gtk_widget_get_accessible(sources),"Import sources");
+      GtkWidget *file_item=gtk_menu_item_new_with_label("Import file…"),*folder_item=gtk_menu_item_new_with_label("Import folder…");
+      gtk_menu_shell_append(GTK_MENU_SHELL(source_menu),file_item);gtk_menu_shell_append(GTK_MENU_SHELL(source_menu),folder_item);
+      g_signal_connect(file_item,"activate",G_CALLBACK(action),(gpointer)"import");
+      g_signal_connect(folder_item,"activate",G_CALLBACK(folder_open),NULL);
+      gtk_widget_show_all(source_menu);gtk_menu_button_set_popup(GTK_MENU_BUTTON(sources),source_menu);
+      gtk_box_pack_start(GTK_BOX(toolbar),sources,FALSE,FALSE,0);
+    }
+#endif
     if(i==4) bigger=button;else if(i==5) smaller=button;
     g_signal_connect(button,"clicked",G_CALLBACK(action),(gpointer)names[i]);
   }
