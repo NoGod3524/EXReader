@@ -1,0 +1,31 @@
+name: Read-only original raw3 iOS OFF failure inspection
+on:
+  push:
+    branches: [codex/reader-apple-raw3-ios-inspect72]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate original failed producer ZIP and read original assertions and AX
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_raw3_ios_inspect/inspect.py
+      - name: System Vision reads both original failed case movies and images
+        run: |
+          set -o pipefail
+          for item in testFixedCbzAndPdfRealPointRecords testRealTerminationAfterCommitReplaysExactlyOnce; do
+            ORIGINAL_CASE="$item" swift tests/apple_raw3_ios_inspect/read_images.swift build/apple-raw3-ios-inspection/attachments | tee "build/apple-raw3-ios-inspection/$item-image-text.txt"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-raw3-ios-original-inspection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-raw3-ios-inspection/
+          include-hidden-files: true
+          if-no-files-found: error
