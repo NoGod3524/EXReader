@@ -19,7 +19,11 @@ from run import Checks, write_json  # noqa: E402
 
 OWNED = ("candidates/reader-next-s13/", "tests/reader_next_s13/", ".github/workflows/reader-next-s13.yml",
          "docs/reader-next-s13/", "HANDOFF-RESULT-S13.md")
-FROZEN = ("src", "include", "cmake", "CMakeLists.txt", "bindings", "apps", "extras", "tools")
+# The approved SDK tree is src/include/cmake/CMakeLists.txt/bindings. apps/,
+# extras/, tools/, tests/, docs/ and .github/ legitimately differ between the
+# approved SDK commit and this fixed start, so they are compared with the fixed
+# start instead of with the SDK.
+FROZEN = ("src", "include", "cmake", "CMakeLists.txt", "bindings")
 
 
 def git(*arguments, check=False):
@@ -49,12 +53,12 @@ def main(argv):
                    {"head": head, "github_sha": os.environ.get("GITHUB_SHA")})
     checks.require("base_commit_present", git("cat-file", "-e", args.base + "^{commit}").returncode == 0, {"base": args.base})
     checks.require("approved_sdk_commit_present", git("cat-file", "-e", args.sdk + "^{commit}").returncode == 0, {"sdk": args.sdk})
-    checks.require("base_equals_approved_sdk_source",
-                   git("diff", "--quiet", args.sdk, args.base, "--", *FROZEN).returncode == 0,
-                   {"paths": list(FROZEN)})
-    checks.require("frozen_sdk_and_owners_untouched",
-                   git("diff", "--quiet", args.sdk, head, "--", *FROZEN).returncode == 0,
-                   {"paths": list(FROZEN)})
+    sdk_delta = git("diff", "--name-only", args.sdk, args.base, "--", *FROZEN).stdout.split()
+    checks.require("base_equals_approved_sdk_source", not sdk_delta,
+                   {"paths": list(FROZEN), "differences": sdk_delta[:20]})
+    head_delta = git("diff", "--name-only", args.sdk, head, "--", *FROZEN).stdout.split()
+    checks.require("frozen_sdk_untouched", not head_delta,
+                   {"paths": list(FROZEN), "differences": head_delta[:20]})
     originals = ("tests/test_cbz.c", "tests/test_cbz_formats.c", "tests/fixtures", "tests/reading_real",
                  "tools/reading_corpus", ".github/workflows/native.yml", "tests/sdk_components")
     checks.require("original_tests_and_fixtures_untouched",
