@@ -272,7 +272,7 @@ def receive(args):
     write_identity(out, identity, args.direction, 'receive', {
         'inventory_sha256': sha256_bytes(native), 'inventory_digest': json.loads(native)['digest'] if native else '', 'parent_inventory_digest': ident['inventory_digest'],
         'expected_sha256': sha256_path(HERE / 'expected.json'), 'probe_sha256': sha256_path(probe), 'tool_sha256': sha256_path(native_tool)})
-    stage_result(out, 'receive', args.direction, checks.items, {'probe_sha256': sha256_path(probe), 'requests': len(state['service'].requests) if 'service' in state else 0,
+    stage_result(out, 'receive', args.direction, checks.items, {'probe_sha256': sha256_path(probe), 'parent_inventory_digest': ident['inventory_digest'], 'requests': len(state['service'].requests) if 'service' in state else 0,
                                                               'cases': report.get('cases', [])})
     raise SystemExit(0 if checks.ok() else 1)
 
