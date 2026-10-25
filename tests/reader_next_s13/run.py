@@ -424,7 +424,7 @@ def program_identity(files, out):
             records.append({"path": str(path), "missing": True})
     write_json(out, {"schema": 1, "programs": records})
     print(json.dumps({"programs": len(records), "missing": [r["path"] for r in records if r.get("missing")]}))
-    return 0
+    return 1 if any(record.get("missing") for record in records) else 0
 
 
 # ------------------------------------------------------------------ checks --
@@ -649,6 +649,10 @@ def check_suite(base_junit, candidate_junit, out_path):
                    {"base": len(base), "candidate": len(candidate)})
     changed = sorted(name for name in set(base) & set(candidate) if base[name] != candidate[name])
     checks.require("suite_results_identical", not changed, {"changed": changed})
+    checks.require("all_registered_native_tests_pass", bool(base) and
+                   all(status == "passed" for status in base.values()) and
+                   all(status == "passed" for status in candidate.values()),
+                   {"base": base, "candidate": candidate})
     checks.require("original_cbz_tests_pass",
                    candidate.get("native-cbz") == "passed" and candidate.get("native-cbz-formats") == "passed",
                    {"native-cbz": candidate.get("native-cbz"), "native-cbz-formats": candidate.get("native-cbz-formats")})

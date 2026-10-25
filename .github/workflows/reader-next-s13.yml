@@ -1,7 +1,7 @@
 name: S13 CBZ leading-slash safety candidate
 on:
   push:
-    branches: [codex/reader-next-s13]
+    branches: [codex/reader-next-s13, codex/reader-next-s13-root-review]
     paths:
       - 'candidates/reader-next-s13/**'
       - 'tests/reader_next_s13/**'
@@ -46,6 +46,7 @@ jobs:
           git rev-parse HEAD | tee build/s13/logs/source.txt
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           python -m py_compile tests/reader_next_s13/run.py tests/reader_next_s13/strict.py tests/reader_next_s13/verify_tree.py
+          python tests/reader_next_s13/test_strict.py
           python tests/reader_next_s13/verify_tree.py --base "$BASE_SHA" --sdk "$SDK_SHA" \
             --manifest candidates/reader-next-s13/manifest.json --out build/s13/reports/checks-workspace.json
       - name: Materialise the fixed start and the isolated candidate tree
@@ -162,6 +163,10 @@ jobs:
             build/s13/inputs/
             build/s13/fixtures/
             build/s13/logs/
+            build/s13/consumer-base/bin/
+            build/s13/consumer-candidate/bin/
+            build/s13/sdk-base/
+            build/s13/sdk-candidate/
           if-no-files-found: error
           retention-days: 30
   strict:
@@ -182,13 +187,9 @@ jobs:
           set -euo pipefail
           mkdir -p build/strict
           gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?per_page=100" > build/strict/artifacts.json
-      - name: Download the artifacts of the producer jobs
-        if: always()
-        uses: actions/download-artifact@v4
-        with:
-          pattern: reader-next-s13-*
-          path: build/strict/download
       - name: Authenticate artifacts, original ZIPs and all named checks
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           mkdir -p build/strict/reports
