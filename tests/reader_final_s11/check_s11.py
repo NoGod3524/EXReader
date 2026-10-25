@@ -182,6 +182,15 @@ def write_text(path, text):
     return path
 
 
+def fault_supported(checks, name, fault):
+    """True when the platform really provided the fault; otherwise pending."""
+    if fault["supported"]:
+        checks.check(name + ".fault", True, fault["detail"])
+        return True
+    checks.skip(name, fault["detail"])
+    return False
+
+
 def batch_rows(ctx):
     probe, checks, fx, work, out = ctx["probe"], ctx["checks"], ctx["fixtures"], ctx["work"], ctx["output"]
     small = fx["text/small.txt"]
@@ -225,8 +234,7 @@ def batch_rows(ctx):
     library, staging = row / "lib.sqlite", row / "staging"
     staging.mkdir()
     fault = faultdir.make_readonly(staging)
-    checks.check("batch.readonly.fault", fault["supported"], fault["detail"])
-    if fault["supported"]:
+    if fault_supported(checks, "batch.readonly", fault):
         value = probe.run("b3-readonly", {
             "cmd": "batch", "library": str(library), "staging": str(staging),
             "count": 2, "item0": small["path"] + "|TXT|", "item1": epub["path"] + "|EPUB|"})
@@ -246,8 +254,6 @@ def batch_rows(ctx):
         restored = faultdir.restore_writable(staging, fault)
         checks.check("batch.readonly.restored", restored["restored"], restored["detail"])
         row_clean(checks, "batch.readonly", row, {"lib.sqlite", "staging"})
-    else:
-        checks.skip("batch.readonly", fault["detail"])
 
     # B4: a genuinely bounded volume (256 KiB tmpfs) refuses the staging copy.
     row = work / "batch-nospace"
@@ -255,8 +261,7 @@ def batch_rows(ctx):
     library = row / "lib.sqlite"
     volume = row / "small-volume"
     fault = faultdir.mount_tmpfs(volume, 256)
-    checks.check("batch.nospace.fault", fault["supported"], fault["detail"])
-    if fault["supported"]:
+    if fault_supported(checks, "batch.nospace", fault):
         try:
             value = probe.run("b4-nospace", {
                 "cmd": "batch", "library": str(library), "staging": str(volume),
@@ -273,8 +278,6 @@ def batch_rows(ctx):
         finally:
             faultdir.unmount_tmpfs(volume)
         checks.equal("batch.nospace.input_sha", sha256_file(large["path"]), large["sha256"])
-    else:
-        checks.skip("batch.nospace", fault["detail"])
 
     # B5: the same original imports exactly once after the staging fault clears.
     row = work / "batch-retry"
@@ -461,8 +464,7 @@ def cloud_rows(ctx):
     row.mkdir(parents=True)
     (row / "staging").mkdir()
     fault = faultdir.make_readonly(row / "staging")
-    checks.check("cloud.readonly.fault", fault["supported"], fault["detail"])
-    if fault["supported"]:
+    if fault_supported(checks, "cloud.readonly", fault):
         value = probe.run("c3-readonly", spec(row, "books/book.epub", "book.epub",
                                               "EPUB", epub["bytes"]))
         checks.equal("cloud.readonly.download", value["download"], "io")
@@ -473,16 +475,13 @@ def cloud_rows(ctx):
         restored = faultdir.restore_writable(row / "staging", fault)
         checks.check("cloud.readonly.restored", restored["restored"], restored["detail"])
         row_clean(checks, "cloud.readonly", row, {"lib.sqlite", "staging"})
-    else:
-        checks.skip("cloud.readonly", fault["detail"])
 
     # C4: a bounded volume ends the download without a published file.
     row = work / "cloud-nospace"
     row.mkdir(parents=True)
     volume = row / "small-volume"
     fault = faultdir.mount_tmpfs(volume, 256)
-    checks.check("cloud.nospace.fault", fault["supported"], fault["detail"])
-    if fault["supported"]:
+    if fault_supported(checks, "cloud.nospace", fault):
         try:
             value = probe.run("c4-nospace", spec(row, "books/large.txt", "large.txt",
                                                  "TXT", large["bytes"]))
@@ -495,8 +494,6 @@ def cloud_rows(ctx):
         finally:
             faultdir.unmount_tmpfs(volume)
         checks.equal("cloud.nospace.input_sha", sha256_file(large["path"]), large["sha256"])
-    else:
-        checks.skip("cloud.nospace", fault["detail"])
 
     # C5/C6: the staged bytes change between the two phases.
     for tag, tamper in (("c5-flip", "flip"), ("c6-truncate", "truncate")):
@@ -640,8 +637,7 @@ def sideload_rows(ctx):
     readback(probe, checks, base, out / "readback" / "s6-base", "s6base")
     volume = row / "small-volume"
     fault = faultdir.mount_tmpfs(volume, 512)
-    checks.check("sideload.nospace.fault", fault["supported"], fault["detail"])
-    if fault["supported"]:
+    if fault_supported(checks, "sideload.nospace", fault):
         try:
             target = volume / "lib.sqlite"
             shutil.copyfile(base, target)
@@ -669,8 +665,6 @@ def sideload_rows(ctx):
         finally:
             faultdir.unmount_tmpfs(volume)
         checks.equal("sideload.nospace.input_sha", sha256_file(large["path"]), large["sha256"])
-    else:
-        checks.skip("sideload.nospace", fault["detail"])
 
 
 def ld_setup(ctx, tag, fixture_name, fmt_name, extension, title):
@@ -750,8 +744,7 @@ def ld_rows(ctx):
                     "S11 read-only state")
     row, key, state = case["row"], case["key"], case["state"]
     fault = faultdir.make_readonly(state)
-    checks.check("ld.readonly.fault", fault["supported"], fault["detail"])
-    if fault["supported"]:
+    if fault_supported(checks, "ld.readonly", fault):
         value = ld_call(probe, "l3-remove-blocked", "ld-remove", row, key=key,
                         state=str(state))
         checks.equal("ld.readonly.status", value["status"], "io")
@@ -781,8 +774,6 @@ def ld_rows(ctx):
         checks.equal("ld.readonly.retry.pending", pending["pending"], 0)
         row_clean(checks, "ld.readonly", row,
                   {"sdk.db", "catalog.db", "state", "state/originals", "book.epub"})
-    else:
-        checks.skip("ld.readonly", fault["detail"])
 
     # L4: a read-only state directory refuses the reimport staging copy.
     case = ld_setup(ctx, "ld-reimport", "epub/sample.epub", "EPUB", "epub",
@@ -795,8 +786,7 @@ def ld_rows(ctx):
                         out / "readback" / "l4-detach", "l4d")
     checks.equal("ld.reimport.detach.books", count, 0)
     fault = faultdir.make_readonly(state)
-    checks.check("ld.reimport.fault", fault["supported"], fault["detail"])
-    if fault["supported"]:
+    if fault_supported(checks, "ld.reimport", fault):
         value = ld_call(probe, "l4-reimport-blocked", "ld-reimport", row, key=key,
                         state=str(state), file=str(source))
         checks.equal("ld.reimport.status", value["status"], "io")
@@ -823,8 +813,6 @@ def ld_rows(ctx):
         row_clean(checks, "ld.reimport", row,
                   {"sdk.db", "catalog.db", "state", "state/originals",
                    "state/originals/" + case["sha"] + ".orig", "book.epub"})
-    else:
-        checks.skip("ld.reimport", fault["detail"])
 
     # L5: cancellation before the first durable step.
     case = ld_setup(ctx, "ld-cancel-before", "epub/sample.epub", "EPUB", "epub",

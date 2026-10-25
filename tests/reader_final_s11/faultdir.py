@@ -13,6 +13,7 @@ provide the fault the helper says so and the judge records the row as pending
 with that exact reason instead of a pass. Nothing here fakes a failure: each
 fault is proven by trying to write through it before it is used.
 """
+import errno
 import os
 import subprocess
 import sys
@@ -88,8 +89,13 @@ def mount_tmpfs(path, kib=256):
         return {"supported": False,
                 "detail": "a fixed-size volume needs root mount; available on Linux only"}
     path.mkdir(parents=True, exist_ok=True)
-    ok, detail = _run(["sudo", "-n", "mount", "-t", "tmpfs", "-o",
-                       "size=" + str(kib) + "k,mode=0700", "tmpfs", str(path)])
+    # The volume must belong to the invoking user; otherwise the first write
+    # would fail with EACCES and the row would prove a permission fault instead
+    # of a space fault.
+    options = ("size=" + str(kib) + "k,uid=" + str(os.getuid()) +
+               ",gid=" + str(os.getgid()) + ",mode=0700")
+    ok, detail = _run(["sudo", "-n", "mount", "-t", "tmpfs", "-o", options,
+                       "tmpfs", str(path)])
     if not ok:
         return {"supported": False, "detail": "tmpfs mount failed: " + detail}
     probe = path / "s11-capacity-probe.bin"
@@ -101,8 +107,14 @@ def mount_tmpfs(path, kib=256):
             probe.unlink()
         except OSError:
             pass
+        if exc.errno != errno.ENOSPC:
+            _run(["sudo", "-n", "umount", "-l", str(path)])
+            return {"supported": False,
+                    "detail": "bounded tmpfs failed with " + str(exc.errno) + " (" + str(exc) +
+                              "), not ENOSPC"}
         return {"supported": True, "kib": kib,
-                "detail": str(kib) + " KiB tmpfs, ENOSPC proven: " + str(exc)}
+                "detail": str(kib) + " KiB tmpfs owned by uid " + str(os.getuid()) +
+                          ", ENOSPC proven: " + str(exc)}
     try:
         probe.unlink()
     except OSError:

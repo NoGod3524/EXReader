@@ -1,7 +1,10 @@
 # SPDX-License-Identifier: MIT
 # S11 independent consumer: installed packages only, no build-tree include dirs.
 cmake_minimum_required(VERSION 3.24)
-project(reader_final_s11_consumer LANGUAGES C)
+# CXX is enabled only so the C probe can be linked by the C++ driver: the
+# installed EXReaderWebDAV archive is C++ and its standard library must be on the
+# link line (Linux libstdc++, macOS libc++).
+project(reader_final_s11_consumer LANGUAGES C CXX)
 if(MSVC)
   add_compile_options(/utf-8)
 endif()
@@ -18,4 +21,5 @@ target_link_libraries(s11-probe PRIVATE
   EXReaderCloudImport::reader_cloud_import
   EXReaderLocalDownloads::reader_local_downloads
   EXReaderProductCatalog::reader_catalog)
-set_target_properties(s11-probe PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)
+set_target_properties(s11-probe PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON
+  LINKER_LANGUAGE CXX)

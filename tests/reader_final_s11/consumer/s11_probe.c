@@ -289,7 +289,7 @@ static int run_batch(void) {
     printf("{\"op\":\"batch\",\"library_open\":0,\"message\":");
     quoted(sdk_error.message);
     printf("}\n");
-    for (i = 0; i < total; i++) free(items[i].path);
+    for (i = 0; i < total; i++) free((void *)items[i].path);
     free(items);
     return 1;
   }
@@ -322,7 +322,7 @@ static int run_batch(void) {
   printf("]}\n");
   if (results) reader_batch_results_free(results, result_count);
   exr_library_close(library);
-  for (i = 0; i < total; i++) { free(items[i].path); free((void *)items[i].title); }
+  for (i = 0; i < total; i++) { free((void *)items[i].path); free((void *)items[i].title); }
   free(items);
   return 0;
 }
