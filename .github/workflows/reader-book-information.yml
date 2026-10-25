@@ -1,7 +1,7 @@
 name: Reader book information snapshot
 on:
   push:
-    branches: [codex/reader-book-information]
+    branches: [codex/reader-book-information, codex/reader-book-information-review]
   workflow_dispatch:
 permissions:
   contents: read

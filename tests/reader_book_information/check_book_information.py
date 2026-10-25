@@ -470,6 +470,8 @@ def case_cancel_at_every_poll(world, a):
     for limit in range(1, polls + 1):
         result = world.read(world.keys["plain"], 1, 1, cancel=limit)
         a.eq("plain.cancel[%d].status" % limit, result.get("status"), CANCELLED)
+        a.eq("plain.cancel[%d].error_status" % limit, result.get("error_status"), CANCELLED)
+        a.true("plain.cancel[%d].error_message" % limit, bool(result.get("message")))
         a.eq("plain.cancel[%d].out" % limit, result.get("out"), False)
         a.eq("plain.cancel[%d].polls" % limit, result.get("polls"), limit)
     size = world.book("large.txt")["bytes"]
@@ -483,6 +485,8 @@ def case_cancel_at_every_poll(world, a):
     for limit in (1, 2, 3, 2 + chunks // 2, large_polls - 1, large_polls):
         result = world.read(world.keys["large"], 1, 0, cancel=limit)
         a.eq("large.cancel[%d].status" % limit, result.get("status"), CANCELLED)
+        a.eq("large.cancel[%d].error_status" % limit, result.get("error_status"), CANCELLED)
+        a.true("large.cancel[%d].error_message" % limit, bool(result.get("message")))
         a.eq("large.cancel[%d].out" % limit, result.get("out"), False)
         a.eq("large.cancel[%d].polls" % limit, result.get("polls"), limit)
 

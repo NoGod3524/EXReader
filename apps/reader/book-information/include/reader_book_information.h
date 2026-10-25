@@ -113,7 +113,9 @@ typedef struct {
  * the view is immutable and may be read from any thread. *out is NULL on failure.
  * Missing local files, a different book, passwords and unreadable parsers are field
  * states (availability/identity/parser_status), not failures. error is cleared on
- * every call, including success. Returns zero (OK) on success.
+ * every call, including success; its status equals the returned status on
+ * failure, including cancellation inside a public parser call. Returns zero
+ * (OK) on success.
  * Reentrancy: the cancel callback may not call this function (REENTRANT) and may not
  * use the catalog or library handles. Cancellation is polled before each stage and
  * between hash chunks; the module never commits, so a cancelled call leaves both

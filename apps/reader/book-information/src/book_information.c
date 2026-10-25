@@ -427,7 +427,11 @@ reader_book_information_status reader_book_information_read(reader_catalog *cata
     if (options && options->read_parser_fields) {
       if (poll(&p)) CANCEL();
       result = read_parser(r, library, fill.sdk_id, &p);
-      if (result != READER_BOOK_INFORMATION_OK) goto done;
+      if (result != READER_BOOK_INFORMATION_OK) {
+        result = fail(error, result, 0, 0, result == READER_BOOK_INFORMATION_CANCELLED
+                      ? "Cancelled" : "Snapshot parser storage exhausted");
+        goto done;
+      }
       if (p.cancelled_seen) CANCEL();
     }
   }
