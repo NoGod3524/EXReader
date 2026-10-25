@@ -304,9 +304,9 @@ def main():
     # --- manifest identity through aapt2 --------------------------------------
     badging_text = common.run([aapt2, 'dump', 'badging', str(candidate)])
     (args.output / 'aapt2-badging.txt').write_text(badging_text)
-    print('aapt2 badging head:
-' + '
-'.join(badging_text.splitlines()[:25]), flush=True)
+    print('aapt2 badging head:')
+    for line in badging_text.splitlines()[:25]:
+        print(line)
     badging = parse_badging(badging_text)
     expected_fields = {
         'package': derived['applicationId'],
