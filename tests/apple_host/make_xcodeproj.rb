@@ -53,12 +53,21 @@ def app_settings(target, platform, deployment, info_plist)
     settings['ENABLE_HARDENED_RUNTIME'] = 'NO'
     settings['ENABLE_APP_SANDBOX'] = 'NO'
     settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
+    # Keep the actual host in its executable, like the shipped standalone
+    # package; Xcode's preview stub otherwise owns no product SQLite symbols.
+    settings['ENABLE_DEBUG_DYLIB'] = 'NO'
     settings['CLANG_ENABLE_MODULES'] = 'YES'
     settings['EXR_SDK_DIR'] = '$(SRCROOT)/sdk'
-    settings['OTHER_LDFLAGS'] = ['$(inherited)', '-lexreader', '-lsqlite3']
+    settings['OTHER_LDFLAGS'] = ['$(inherited)', '-lreader_reading_commands', '-lreader_annotation_view', '-lreader_navigation', '-lreader_search', '-lreader_session', '-lreader_sync',
+      '-lexr_webdav', '-lreader_commands', '-lreader_reading_state_codec', '-lreader_revisions',
+      '-lreader_revision_hash', '-lreader_catalog', '-lreader_catalog_sqlite', '-lexr_credentials', '-lexreader',
+      '-lc++', '-lxml2', '-framework', 'Foundation', '-framework', 'CoreFoundation', '-framework', 'Security']
+    settings['LD_GENERATE_MAP_FILE'] = 'YES'
+    settings['LD_MAP_FILE_PATH'] = '$(TARGET_BUILD_DIR)/$(PRODUCT_NAME).link.map'
     settings['LIBRARY_SEARCH_PATHS'] = ['$(inherited)', '$(EXR_SDK_DIR)/lib']
-    settings['HEADER_SEARCH_PATHS'] = ['$(inherited)', '$(EXR_SDK_DIR)/include']
-    settings['SWIFT_INCLUDE_PATHS'] = ['$(inherited)', '$(EXR_SDK_DIR)/include']
+    settings['HEADER_SEARCH_PATHS'] = ['$(inherited)', '$(EXR_SDK_DIR)/include', '$(EXR_SDK_DIR)/include/exreader-product']
+    settings['SWIFT_INCLUDE_PATHS'] = ['$(inherited)', '$(EXR_SDK_DIR)/include',
+      '$(EXR_SDK_DIR)/include/exreader-product', File.join(Dir.pwd, 'examples/apple/product')]
     settings['LD_RUNPATH_SEARCH_PATHS'] = ['$(inherited)', '@executable_path/Frameworks',
                                             '@executable_path/../Frameworks']
     if platform == :ios
@@ -116,6 +125,9 @@ def embed_phase(target)
         codesign --force --sign - "$lib"
       done
     fi
+    python3 "#{File.join(Dir.pwd, 'tools/check_apple_product.py')}" \\
+      --binary "${TARGET_BUILD_DIR}/${EXECUTABLE_PATH}" --map "${LD_MAP_FILE_PATH}" \\
+      --output "${TARGET_BUILD_DIR}/product-link.json"
   SCRIPT
 end
 
@@ -142,10 +154,28 @@ end
   # INFOPLIST_KEY settings alone did not survive the cloud product generation.
   Xcodeproj::Plist.write_to_path({'EXRSourceSHA' => source_sha}, info_plist)
   app_settings(app, platform, deployment, info_plist)
-  if ARGV[2]
-    app.build_configurations.each do |config|
-      config.build_settings['SWIFT_ACTIVE_COMPILATION_CONDITIONS'] = '$(inherited) EXR_APPLE_HOST_REVIEW EXR_APPLE_IMPORT_REVIEW'
+  app.build_configurations.each do |config|
+    conditions = ['$(inherited)']
+    # Original UI acceptance retains its diagnostic observations. Accessibility
+    # regression uses the production semantic tree without debug identities.
+    conditions << 'EXR_APPLE_HOST_REVIEW' unless test_directory.include?('/accessibility/')
+    if ARGV[2]
+      review = if test_directory.include?('/shelf/')
+        'EXR_APPLE_SHELF_REVIEW'
+      elsif test_directory.include?('/account/')
+        'EXR_APPLE_ACCOUNT_REVIEW'
+      elsif test_directory.include?('/reading/')
+        'EXR_APPLE_READING_REVIEW'
+      elsif test_directory.include?('/accessibility/')
+        nil
+      elsif test_directory.include?('/search/') || test_directory.include?('/navigation/')
+        nil
+      else
+        'EXR_APPLE_IMPORT_REVIEW'
+      end
+      conditions << review if review
     end
+    config.build_settings['SWIFT_ACTIVE_COMPILATION_CONDITIONS'] = conditions.join(' ')
   end
   embed_phase(app)
 

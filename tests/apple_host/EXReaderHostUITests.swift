@@ -614,13 +614,14 @@ final class EXReaderHostUITests: XCTestCase {
 
     func test05CancellationAndRecovery() throws {
         try step("step33_launch_with_deterministic_slow_import") {
-            launch(extra: ["-EXRHostDelayMs", "2500"])
+            launch(extra: ["-EXRHostDelayMs", "2500", "-EXRHoldSDKImportCancellation", "1"])
             openLibrary()
             attach("18-library-slow-mode")
         }
         try step("step34_cancel_in_flight_import") {
             tapLibraryImport("library.import.large", timeout: 30)
             XCTAssertTrue(waitElement("library.cancel", 4).exists)
+            XCTAssertTrue(waitElement("library.cancel.ready", 4).exists, "the real SDK cancellation callback must be held")
             element("library.cancel").tap()
             XCTAssertTrue(waitLabel("library.status", contains: "已取消", 40))
             attach("19-import-cancelled")
@@ -882,8 +883,10 @@ final class EXReaderHostUITests: XCTestCase {
         var location = ""
         try step("bounded01_import_source_and_open") {
             launch(); openLibrary()
-            tapLibraryImport("library.import.bounded", expecting: ["已导入", "已存在"])
-            bookRow("Bounded.epub").tap()
+            let deadline = tapLibraryImport("library.import.bounded", expecting: ["已导入", "已存在"])
+            let row = bookRow("Bounded.epub")
+            XCTAssertTrue(row.waitForExistence(timeout: min(20, max(0, deadline.timeIntervalSinceNow))))
+            row.tap()
             XCTAssertTrue(waitReaderIdle(90))
             XCTAssertTrue(text("reader.progress").contains("有界 EPUB"))
             waitElement("reader.first").tap()

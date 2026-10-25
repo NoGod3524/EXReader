@@ -1,0 +1,58 @@
+name: Apple reading records compile diagnostic
+on:
+  push:
+    branches: [codex/reader-apple-reading-records-ui]
+    paths: [.github/workflows/reader-apple-reading-records-diagnostic.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compile:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require frozen SDK and exact optional module trees
+        run: |
+          git merge-base --is-ancestor f5d25b4c71ea39bd22bebea4eedfee16ca178c35 HEAD
+          git diff --exit-code 9854061be331fe603a1822d9b2b36ee357154927 HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code a6d7dd81eef36e83e004fdc381a565a2ffee5462 HEAD -- apps/reader/store/001_catalog.sql
+          test "$(git rev-parse HEAD:apps/reader/reading-commands)" = cf067b8be378d4195817d1106b81f358579e2280
+          test "$(git rev-parse HEAD:apps/reader/annotation-view)" = 9d30b6c54f61496010f647695dedd7ea7ab0c7c1
+          test "$(git rev-parse HEAD:apps/reader/reading-state)" = 60127ae75fbac918237b1c8584e0f7ac2e6130a4
+          test "$(git rev-parse HEAD:apps/reader/search)" = 2e09cb2945564f25085074a816b95472392df205
+          test "$(git rev-parse HEAD:apps/reader/navigation)" = 9395914832e191ad63f18f6188ca5044260d2f12
+      - name: Build installed packages and real macOS Xcode app and test bundle
+        run: |
+          set -o pipefail
+          mkdir -p build/apple-reading-diagnostic
+          cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AAC=OFF
+          cmake --build build/sdk --parallel 4
+          cmake --install build/sdk --prefix stage/macos
+          python3 tools/build_apple_product.py --sdk stage/macos --target macos --build build/product
+          sdk="$PWD/stage/macos"
+          python3 tests/apple_host/reading/run_native.py --sdk "$sdk" --resources build/apple-reading-resources \
+            --output build/apple-reading-diagnostic/native
+          ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+          ruby tests/apple_host/make_xcodeproj.rb build/apple-reading-diagnostic-project build/apple-reading-resources tests/apple_host/reading/ui
+          xcodebuild build-for-testing -project build/apple-reading-diagnostic-project/EXReaderHost.xcodeproj \
+            -scheme EXReaderHost-macOS -destination platform=macOS -derivedDataPath build/ReadingDiagnosticDerivedData \
+            EXR_SDK_DIR="$sdk" CODE_SIGNING_ALLOWED=YES 2>&1 | tee build/apple-reading-diagnostic/compile.log
+          cp build/ReadingDiagnosticDerivedData/Build/Products/Debug/product-link.json build/apple-reading-diagnostic/xcode-product-link.json
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          value = {'diagnostic_only': True, 'accepted': False, 'source_sha': os.environ['GITHUB_SHA'],
+                   'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+                   'scope': 'macOS Xcode app/test-bundle build and native preflight only; no formal native/UI grant'}
+          Path('build/apple-reading-diagnostic/report.json').write_text(json.dumps(value, indent=2) + '\n')
+          print(json.dumps(value))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-reading-compile-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-reading-diagnostic/
+          if-no-files-found: error

@@ -1,0 +1,9 @@
+// Distinct from the SQLite3 module declared by Apple's CoreFoundation SDK.
+module CReaderSQLite [system] {
+    header "ProductSQLite.h"
+    export *
+}
+module CReaderProduct {
+    header "ReaderProduct.h"
+    export *
+}

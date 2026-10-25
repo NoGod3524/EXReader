@@ -12,6 +12,8 @@ import subprocess
 import sys
 from host_font import fetch as host_font
 from run_benchmarks import make_epub
+from apple_swift import flags as product_flags
+from check_apple_product import inspect as inspect_product
 
 ROOT = Path(__file__).absolute().parents[1]
 
@@ -51,9 +53,11 @@ def main():
     sources = sorted((ROOT/'examples/apple').glob('*.swift'))
     command = ['xcrun', '--sdk', native_sdk, 'swiftc', '-swift-version', '5', '-O', '-parse-as-library',
                '-sdk', sdk_path, '-target', target, '-I', sdk/'include', '-L', sdk/'lib',
-               '-lexreader', '-lsqlite3', '-Xlinker', '-rpath', '-Xlinker', rpath,
-               ROOT/'bindings/swift/EXReader.swift', *sources, '-o', executable]
+               '-lexreader', *product_flags(sdk), '-Xlinker', '-rpath', '-Xlinker', rpath,
+               ROOT/'bindings/swift/EXReader.swift', *sources, '-o', executable,
+               '-Xlinker', '-map', '-Xlinker', output/'product-link.map']
     run(*command)
+    (output/'product-link.json').write_text(json.dumps(inspect_product(executable, output/'product-link.map'), indent=2)+'\n')
     source_sha = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], text=True).strip()
     version = re.search(r'#define EXR_VERSION "([^"]+)"', (sdk/'include/exr/base.h').read_text())[1]
     info = {'CFBundleExecutable': 'EXReader', 'CFBundleIdentifier': 'org.exreader.host',
