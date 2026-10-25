@@ -45,3 +45,23 @@ preflight、完整实际Windows作业、原严格工件认证三作业全部succ
 各叶子真实源码检查使用同一EXTENSIONS精确清单，原独立fake-tree负例仍验证本包集合；
 Apple和GTK的合并扩展负例、Android遗漏已批准文件负例另有保留。
 新组合尚无运行结果；将从同一提交执行全部叶子，不拼接上述不同source的历史绿灯。
+# Next common-source review
+
+The bd8c3638 source retains its Android navigation failure (run 40229070687).
+The independent diagnostic 40233907741 observed a stale accessibility cache at
+First & chapter, not the original Group failure; it is not proof of that
+failure's cause. The new test-source projection refreshes only the public
+UiAutomation query cache. Original Java source, owner, 18 assertions and
+30s/900s limits remain fixed. Generated compiler input and actual installed
+instrumentation APK are authenticated separately. A new full run must pass.
+
+The prior common-source table also lacked the complete Windows raw owner
+chain. The added leaf preserves both compact22/bulk21 profiles, nine owner
+reports, three kills, native HTTPS256 and independent Mac11 capture twice.
+Its common guard and same-attempt authentication are explicit new entries;
+the original standalone guard is not claimed to have run.
+
+The extension policy adds exactly these six Windows files and three Android
+adapter files. Both changes require fresh same-source cloud evidence; old
+successes remain historical and do not complete the new candidate.
+

@@ -46,6 +46,15 @@ EXTENSIONS = {
     'tests/reader_raw3_common_apple/verify.py',
     'tests/reader_raw3_common_apple/test_guard.py',
     'tests/reader_raw3_common_apple/README.md',
+    '.github/workflows/reader-raw3-common-windows-owner.yml',
+    'tests/reader_raw3_common_windows_owner/projection.py',
+    'tests/reader_raw3_common_windows_owner/guard.py',
+    'tests/reader_raw3_common_windows_owner/selftest.py',
+    'tests/reader_raw3_common_windows_owner/strict.py',
+    'tests/reader_raw3_common_windows_owner/README.md',
+    'tests/reader_android_navigation_cache/adapter.py',
+    'tests/reader_android_navigation_cache/init.gradle',
+    'tests/reader_android_navigation_cache/README.md',
 }
 
 
