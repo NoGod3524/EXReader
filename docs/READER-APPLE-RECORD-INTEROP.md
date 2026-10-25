@@ -83,3 +83,18 @@ v3 的 exact/prefix/suffix 用严格 Base64 与明确字节长度表示；page I
 复捕获，以及原全部 v1/v2 正反例；另拒绝坏 Base64、长度不符、超额、未知版本与缺父。
 原 v2 失败在旧入口继续作为负对照。候选的实现、云端证据与主线采用分开记录，
 目前尚未改任何已冻结模块或授予新格式。
+
+独立核心候选现已交回：受测
+`eb0a4ac713be25c1487843c19c2d02d579258644`，
+[40186400653](https://github.com/NoGod3524/EXReader/actions/runs/40186400653) attempt1，
+Linux、Windows 及 strict 均 success；证据 HEAD
+`0737d03c1316295a210aa527833c05054d29c1d4`，
+[候选契约](https://github.com/NoGod3524/EXReader/blob/0737d03c1316295a210aa527833c05054d29c1d4/docs/READER-SELECTOR-BYTES-CANDIDATE.md)。
+它在同一真实 NUL PDF 上完成点/范围的公开 SDK 捕获、显式新命令、另一进程完整图接收、
+typed SAFE、FOUND、逐字复捕获及第三进程重开，并保留原 v2 GAP_NUL 负对照。
+原 revision59、v2协议28、SDK v1 121/v2 116、commands1413 与 typed-view56 同次通过。
+
+授予范围仍仅为独立安装的核心/typed 候选。该候选未接入实际 Apple 或 Android 宿主，
+本分支默认及实际发送程序均未改用新入口；原失败 40180582614 保持失败。
+下一步必须完整适配 revision store 能力及 commands/sync/session 等精确依赖链，
+再用两个实际宿主生成和接收原字节，不能用上述跨进程核心探针代替双向宿主验收。
