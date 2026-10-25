@@ -158,6 +158,19 @@
     "status": "failure",
     "reason": "Diagnostic compile command omitted unchanged bindings/swift/EXReader.swift required by the existing LegacySelfTest; real Xcode generator already includes it"
   },
+  "restart_checkpoint": {
+    "branch": "codex/reader-apple-reading-records-ui",
+    "implementation_sha": "1f2f3cbc4605a008558f2bda74ddfcdcd74ffef8",
+    "prior_evidence_head": "9c8b47412b410fa1882f330e85efa7dbc15a17cc",
+    "local_changes_before_checkpoint": false,
+    "live_runs": [
+      {"run_id": 40147125432, "source_sha": "1f2f3cbc4605a008558f2bda74ddfcdcd74ffef8", "scope": "real macOS Xcode app/test-bundle build and native19 diagnostic", "job_id": 121030738895, "observed_status": "in_progress", "accepted": false},
+      {"run_id": 40147139532, "source_sha": "1f2f3cbc4605a008558f2bda74ddfcdcd74ffef8", "scope": "focused three-target shelf recovery diagnostic", "sdk_jobs": [121030784612, 121030784790], "observed_status": "in_progress", "accepted": false}
+    ],
+    "preserved_full_shelf_failure": {"source_sha": "f5d25b4c71ea39bd22bebea4eedfee16ca178c35", "run_id": 40140560610, "ipad_job_id": 121013091061, "failure": "original06 process reopening left target offscreen without native scroll; original02 completed2202 forward/reverse and original07 passed", "accepted": false},
+    "next_action": "Read existing cloud runs after restart; do not redispatch for local restart. After actual Xcode/focused recovery stabilize, run one formal records full and original Nav/Search/WP13/Mapping/Shelf on final common Apple source",
+    "formal_records_full_started_on_current_source": false
+  },
   "complete_product": false,
   "physical_device_execution": false,
   "performance_accepted": false,
