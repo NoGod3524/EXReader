@@ -12,7 +12,7 @@ import sys
 TARGET = 'e67d87cbeabb2457e0852f681ef0b27b2c0da4d8'
 SDK = 'edddc463c06ed5731195cdb8f06b2df6dff7699e'
 FAMILY = '56793e7ca4f8ecdc5f2d9c3394fce4e201aca275'
-BRANCH = 'codex/reader-next-c07'
+BRANCH = 'codex/reader-next-c07-root-review'
 OWNED = ('tests/reader_next_c07/', 'docs/reader-next-c07/')
 OWNED_FILES = {'.github/workflows/reader-next-c07.yml', 'HANDOFF-RESULT-C07.md'}
 MODULES = ('revisions', 'reading-state', 'reading-commands', 'annotation-view', 'commands', 'sync', 'session')
