@@ -39,7 +39,8 @@ def cmake(name, source, prefix, sdk, version, extra=()):
     call(['cmake', '--install', build])
     return build
 def files(folder):
-    return {str(p.relative_to(folder)): digest(p) for p in sorted(Path(folder).rglob('*')) if p.is_file()}
+    # ZIP members always use '/', including when the actual binary is Windows.
+    return {p.relative_to(folder).as_posix(): digest(p) for p in sorted(Path(folder).rglob('*')) if p.is_file()}
 def report(path):
     data=json.loads(Path(path).read_text(encoding='utf-8'))
     assert data['failures']==0
@@ -99,7 +100,7 @@ for version, source in VERSIONS.items():
     shutil.copytree(sdk/'include', bound/'sdk-include')
     shutil.copy2(consumer/'migration-link.map',bound/'migration-link.map')
     identities[version]={'sdk_source':source, 'sdk_version':version,
-        'probe_path':str((bound/'modules/bin'/probe.name).relative_to(OUT)),
+        'probe_path':(bound/'modules/bin'/probe.name).relative_to(OUT).as_posix(),
         'probe_sha256':digest(probe), 'c_sha256':digest(c),
         'original_probe_name':'reading-commands-probe'+ext,
         'original_c_name':'reading-commands-c-consumer'+ext,
@@ -117,6 +118,11 @@ with zipfile.ZipFile(fixture/'book.epub') as old, zipfile.ZipFile(fixture/'missi
             data=data.replace(b'<itemref idref="b"/>',b'')
         new.writestr(info,data)
 manifest=json.loads((fixture/'manifest.json').read_text())
+# The original generator writes platform-native text newlines in its metadata.
+# Preserve those raw bytes, then serialize only the metadata deterministically
+# before the first producer/baseline. Book/source bytes are never rewritten.
+shutil.copy2(fixture/'manifest.json', OUT/'generator-manifest.raw.json')
+(fixture/'manifest.json').write_bytes((json.dumps(manifest,indent=2,sort_keys=True)+'\n').encode('utf-8'))
 sha_args=[role+'='+entry['sha256'] for role,entry in manifest.items()]
 original_hashes=files(fixture)
 matrices={}

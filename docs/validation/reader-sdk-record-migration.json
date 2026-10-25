@@ -5,6 +5,20 @@
   "migration_accepted": false,
   "tested_sha": null,
   "evidence_head": null,
-  "retained_failures": [],
+  "retained_failures": [{
+    "source_sha": "2f8244fedd7eb860990cca395a319e564f196eb1",
+    "run_id": 40170813901,
+    "attempt": 1,
+    "native_jobs": {"Linux": 121101087000, "Windows": 121101087131},
+    "native_conclusions": "success",
+    "strict_job": 121102058391,
+    "strict_conclusion": "failure",
+    "cause": "Windows producer serialized ZIP-relative paths using backslashes; strict lookup correctly rejected them. No failure report was written, so strict artifact upload also failed.",
+    "additional_log_finding": "The generated manifest metadata used Windows CRLF vs Linux LF; original book bytes were identical. D01 now preserves raw generator metadata separately and uses canonical LF metadata before the first producer baseline, retaining the whole-originals equality assertion.",
+    "artifacts": [
+      {"id": 12590605525, "name": "reader-sdk-record-migration-Linux-40170813901-1", "bytes": 37957067, "sha256": "0e7a3b882a5c10defe5e66f006bda580b563a386cabc259933e7bf1b87ae5428", "expires_at": "2026-11-24T07:00:07Z"},
+      {"id": 12590580640, "name": "reader-sdk-record-migration-Windows-40170813901-1", "bytes": 40885188, "sha256": "42978a51b4ad5cc5e5f190dc2dc8e85693ca31aefe1f372a4638ed6456fcca3c", "expires_at": "2026-11-24T07:00:19Z"}
+    ]
+  }],
   "remaining_gaps": ["Actions Windows/Linux matrix has not yet completed", "Parser-qualified source identity requires a root-owned compatibility policy"]
 }
