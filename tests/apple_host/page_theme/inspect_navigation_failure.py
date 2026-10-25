@@ -63,10 +63,19 @@ def snapshot(payload):
         fields = {key: child for key, child in node.items() if isinstance(child, (str, int, float, bool))}
         if any(re.search(r'library\.|uiTest|导入|取消|失败|书架|初始化|token=', str(child)) for child in fields.values()):
             rows.append({key: str(child)[:1800] for key, child in fields.items()})
-    return rows[:120]
+    scalars = []
+    def flatten(item, path=''):
+        if isinstance(item, dict):
+            for key, child in item.items(): flatten(child, path + '/' + str(key))
+        elif isinstance(item, list):
+            for index, child in enumerate(item): flatten(child, path + '/' + str(index))
+        else:
+            scalars.append({'path': path, 'value': str(item)[:1200]})
+    flatten(decoded)
+    return {'relevant': rows[:120], 'scalar_envelope': scalars[:250]}
 
 
-def media(path):
+def media(path, requested_second=None):
     script = OUT / 'read-preserved-pixels.swift'
     script.write_text('''import Foundation
 import Vision
@@ -74,12 +83,19 @@ import ImageIO
 import AVFoundation
 let url = URL(fileURLWithPath: CommandLine.arguments[1])
 let image: CGImage
+var selectedSecond: Double = 0
 if url.pathExtension == "mp4" {
     let asset = AVURLAsset(url: url)
     let generator = AVAssetImageGenerator(asset: asset)
     generator.appliesPreferredTrackTransform = true
-    let second = max(0, CMTimeGetSeconds(asset.duration) - 4)
-    image = try generator.copyCGImage(at: CMTime(seconds: second, preferredTimescale: 600), actualTime: nil)
+    generator.requestedTimeToleranceBefore = .zero
+    generator.requestedTimeToleranceAfter = .zero
+    let duration = CMTimeGetSeconds(asset.duration)
+    let requested = CommandLine.arguments.count > 2 ? Double(CommandLine.arguments[2]) : nil
+    let second = min(max(0, duration - 0.5), max(0, requested ?? (duration - 4)))
+    var actual = CMTime.invalid
+    image = try generator.copyCGImage(at: CMTime(seconds: second, preferredTimescale: 600), actualTime: &actual)
+    selectedSecond = CMTimeGetSeconds(actual)
 } else {
     image = CGImageSourceCreateImageAtIndex(CGImageSourceCreateWithURL(url as CFURL, nil)!, 0, nil)!
 }
@@ -87,11 +103,17 @@ let request = VNRecognizeTextRequest()
 request.recognitionLevel = .accurate
 request.recognitionLanguages = ["zh-Hans", "en-US"]
 try VNImageRequestHandler(cgImage: image).perform([request])
-let words = (request.results ?? []).compactMap { $0.topCandidates(1).first?.string }
-let data = try JSONSerialization.data(withJSONObject: ["width": image.width, "height": image.height, "ocr": words], options: [.sortedKeys])
+let words: [[String: Any]] = (request.results ?? []).compactMap {
+    guard let text = $0.topCandidates(1).first?.string else { return nil }
+    let box = $0.boundingBox
+    return ["text": text, "box": [box.minX, box.minY, box.width, box.height]]
+}
+let data = try JSONSerialization.data(withJSONObject: ["width": image.width, "height": image.height, "actual_second": selectedSecond, "ocr": words], options: [.sortedKeys])
 print(String(data: data, encoding: .utf8)!)
 ''')
-    result = subprocess.run(['swift', str(script), str(path)], capture_output=True, text=True, timeout=120)
+    args = ['swift', str(script), str(path)]
+    if requested_second is not None: args.append(str(requested_second))
+    result = subprocess.run(args, capture_output=True, text=True, timeout=120)
     return json.loads(result.stdout) if result.returncode == 0 else {'ocr_error': result.stderr[-2000:]}
 
 
@@ -148,6 +170,7 @@ def main():
                 row = {'name': item['suggestedHumanReadableName'], 'file': filename, 'bytes': size}
                 if path.suffix == '.mp4' and size <= 40 * 1024**2:
                     row['actual_preserved_last_frame_ocr'] = media(path)
+                    row['actual_preserved_early_frames'] = {str(second): media(path, second) for second in (0, 6, 8, 10, 12)}
                 elif size <= 8 * 1024**2:
                     data = path.read_bytes()
                     if data.startswith((b'bplist00', b'<?xml')):
