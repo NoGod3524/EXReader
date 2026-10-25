@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: MIT
 """Offline protocol self-test for the S20 assemble/unpack contract.
 
-It uses a synthetic payload only; it never touches a product build or a driver.
+It uses a synthetic payload laid out like the Linux delivery only; it never
+touches a product build or a platform driver.
 """
 import json
 import os
@@ -17,6 +18,9 @@ ROOT = Path(__file__).absolute().parents[2]
 ASSEMBLE = ROOT / 'tools' / 'reader_wave3_package' / 'assemble.py'
 UNPACK = ROOT / 'tools' / 'reader_wave3_package' / 'unpack.py'
 SOURCE = 'a' * 40
+ENTRY = 'EXReader-Linux/bin/exreader-linux'
+FONT = 'EXReader-Linux/Reader.otf'
+TEXT = 'EXReader-Linux/sub/data.txt'
 
 
 def run(argv, expect=0):
@@ -32,11 +36,13 @@ def main():
     workspace = Path(tempfile.mkdtemp(prefix='s20-selftest-'))
     try:
         payload = workspace / 'payload'
-        (payload / 'sub').mkdir(parents=True)
-        (payload / 'app.bin').write_bytes(bytes(range(256)) * 40)
-        (payload / 'sub' / 'data.txt').write_text('\u4e2d\u6587 payload\n', encoding='utf-8')
-        (payload / 'run.sh').write_text('#!/bin/sh\necho ok\n', encoding='utf-8')
-        os.chmod(payload / 'run.sh', 0o755)
+        (payload / 'EXReader-Linux' / 'bin').mkdir(parents=True)
+        (payload / 'EXReader-Linux' / 'sub').mkdir()
+        binary = payload / ENTRY
+        binary.write_bytes(bytes(range(256)) * 40)
+        os.chmod(binary, 0o755)
+        (payload / FONT).write_bytes(bytes(range(128)) * 8)
+        (payload / TEXT).write_text('\u4e2d\u6587 payload\n', encoding='utf-8')
         output = workspace / 'output'
         run([ASSEMBLE, '--target', 'linux', '--payload', payload, '--output', output,
              '--source-sha', SOURCE, '--sdk-version', '3.41.0'])
@@ -45,17 +51,21 @@ def main():
         archive = output / manifest['archive']['name']
         if not archive.is_file():
             raise SystemExit('archive was not created')
-        if manifest['files'].get('run.sh', {}).get('mode') != 0o755:
+        if manifest['files'].get(ENTRY, {}).get('mode') != 0o755:
             raise SystemExit('executable mode was not recorded')
-        if manifest['source_sha'] != SOURCE or manifest['target'] != 'linux':
+        if manifest['source_sha'] != SOURCE or manifest['target'] != 'linux' or manifest['entry'] != ENTRY:
             raise SystemExit('manifest identity is wrong')
+        if (output / (archive.name + '.sha256')).read_text(encoding='utf-8').split()[0] != manifest['archive']['sha256']:
+            raise SystemExit('published archive checksum differs')
         checks.append('manifest')
         with zipfile.ZipFile(archive) as bundle:
             names = set(bundle.namelist())
-        required = {'app.bin', 'sub/data.txt', 'run.sh', 'manifest.json', 'SHA256SUMS',
-                    '\u5b89\u88c5\u8bf4\u660e-\u4e2d\u6587.md'}
+            sums = bundle.read('SHA256SUMS').decode('utf-8').splitlines()
+        required = {ENTRY, FONT, TEXT, 'manifest.json', 'SHA256SUMS', '\u5b89\u88c5\u8bf4\u660e-\u4e2d\u6587.md'}
         if not required <= names:
             raise SystemExit('archive misses ' + str(sorted(required - names)))
+        if len([line for line in sums if line.strip()]) != 4:
+            raise SystemExit('SHA256SUMS does not cover the three payload files and the notes')
         checks.append('archive-inventory')
         unpacked = workspace / 'fresh'
         run([UNPACK, '--target', 'linux', '--archive', archive, '--manifest', output / 'manifest.json',
@@ -63,9 +73,11 @@ def main():
         report = json.loads((workspace / 'unpack.json').read_text(encoding='utf-8'))
         if report['files'] != len(manifest['files']) or report['checksums_checked'] != len(manifest['files']):
             raise SystemExit('unpack report counts differ')
-        if not os.access(unpacked / 'run.sh', os.X_OK):
+        if report['entry'] != ENTRY or report['entry_sha256'] != manifest['files'][ENTRY]['sha256']:
+            raise SystemExit('unpack report entry identity differs')
+        if not os.access(unpacked / ENTRY, os.X_OK):
             raise SystemExit('unpacked executable lost its mode')
-        if (unpacked / 'sub' / 'data.txt').read_text(encoding='utf-8') != '\u4e2d\u6587 payload\n':
+        if (unpacked / TEXT).read_text(encoding='utf-8') != '\u4e2d\u6587 payload\n':
             raise SystemExit('unpacked bytes differ')
         checks.append('unpack')
         run([UNPACK, '--target', 'linux', '--archive', archive, '--manifest', output / 'manifest.json',
@@ -74,9 +86,9 @@ def main():
         run([ASSEMBLE, '--target', 'linux', '--payload', payload, '--output', workspace / 'short',
              '--source-sha', 'abc'], expect=1)
         checks.append('refuse-short-source')
-        changed = workspace / 'changed-manifest.json'
         altered = dict(manifest)
         altered['target'] = 'windows'
+        changed = workspace / 'changed-manifest.json'
         changed.write_text(json.dumps(altered), encoding='utf-8')
         run([UNPACK, '--target', 'linux', '--archive', archive, '--manifest', changed,
              '--into', workspace / 'wrong-target', '--report', workspace / 'wrong.json'], expect=1)
@@ -86,12 +98,21 @@ def main():
         with zipfile.ZipFile(archive) as source_zip, zipfile.ZipFile(tampered, 'w', zipfile.ZIP_DEFLATED) as target_zip:
             for info in source_zip.infolist():
                 data = source_zip.read(info)
-                if info.filename == 'app.bin':
+                if info.filename == ENTRY:
                     data = bytes([data[0] ^ 0xFF]) + data[1:]
                 target_zip.writestr(info, data)
         run([UNPACK, '--target', 'linux', '--archive', tampered, '--manifest', output / 'manifest.json',
-             '--into', workspace / 'tampered', '--report', workspace / 'tampered.json'], expect=1)
+             '--into', workspace / 'tampered-out', '--report', workspace / 'tampered.json'], expect=1)
         checks.append('refuse-tampered-archive')
+        moved = dict(manifest)
+        moved['files'] = dict(manifest['files'])
+        moved['files'][ENTRY] = dict(moved['files'][ENTRY])
+        moved['files'][ENTRY]['sha256'] = '0' * 64
+        forged = workspace / 'forged-manifest.json'
+        forged.write_text(json.dumps(moved), encoding='utf-8')
+        run([UNPACK, '--target', 'linux', '--archive', archive, '--manifest', forged,
+             '--into', workspace / 'forged-out', '--report', workspace / 'forged.json'], expect=1)
+        checks.append('refuse-forged-digest')
     finally:
         shutil.rmtree(workspace, ignore_errors=True)
     print(json.dumps({'passed': True, 'checks': checks, 'count': len(checks)}, ensure_ascii=False))
