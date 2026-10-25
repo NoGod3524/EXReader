@@ -53,7 +53,13 @@ def main():
                 deadline=time.monotonic()+180;marker=None
                 while time.monotonic()<deadline:
                     test=subprocess.run(['adb','exec-out','run-as',package,'cat','files/raw3-kill-boundary.json'],capture_output=True,timeout=10)
-                    if test.returncode==0:marker=parse(test.stdout);save('kill-ui-boundary.json',test.stdout);break
+                    # exec-out can return zero while Android cat reports ENOENT.
+                    # The app publishes this marker atomically, so a JSON object
+                    # must parse strictly; only an absent marker is retried.
+                    if test.returncode==0 and test.stdout.lstrip().startswith(b'{'):
+                        marker=parse(test.stdout);save('kill-ui-boundary.json',test.stdout);break
+                    noise=test.stdout+test.stderr
+                    assert not noise or b'No such file or directory' in noise,noise.decode(errors='replace')
                     if process.poll() is not None:raise AssertionError(('UI kill boundary exited early',process.communicate()[0].decode(errors='replace')))
                     time.sleep(.1)
                 assert marker and marker['control_gate_arrived'] and all(marker[k]==v for k,v in identity.items())
