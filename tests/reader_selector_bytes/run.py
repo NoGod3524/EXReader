@@ -136,6 +136,7 @@ def graph_cases(probe, work):
 def main():
     assert os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only'
     OUT.mkdir(parents=True)
+    assert run(['git', 'rev-parse', 'HEAD']).strip() == os.environ['GITHUB_SHA']
     run(['git', 'merge-base', '--is-ancestor', BASE, 'HEAD'])
     run(['git', 'diff', '--exit-code', 'edddc463c06ed5731195cdb8f06b2df6dff7699e', 'HEAD', '--', 'src', 'include', 'cmake', 'CMakeLists.txt'])
     run(['git', 'diff', '--exit-code', BASE, 'HEAD', '--', 'apps/reader/store', 'examples', 'tests/fixtures'])
@@ -237,6 +238,7 @@ def main():
               'platform': sys.platform, 'pdf_sha256': PDF_SHA, 'pdf_bytes': 8845, 'protocol_checks': protocol_cases, 'graph_checks': graph_checks,
               'legacy_wire_bytes_unchanged': True, 'original_regressions_passed': True, 'logs': logs, 'sqlite_providers': providers,
               'off_inventory_unchanged': True, 'off_new_symbols_absent': True, 'off_header_byte_differences': header_differences,
+              'consumer_sha256': hashlib.sha256(programs['candidate'].read_bytes()).hexdigest(),
               'actual_android_apple_interop': False, 'adopted': False, 'physical_device': False, 'complete_product': False}
     (OUT / 'result.json').write_text(json.dumps(result, indent=2) + '\n')
     print(json.dumps(result), flush=True)

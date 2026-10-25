@@ -167,6 +167,12 @@ static void nullable(fixed &pdf,const fs::path &work){
   /* An empty allocated selector is distinct and still decodes allocated. */
   char empty[1]={0};expression.exact=empty;expression.prefix=empty;expression.suffix=empty;env.revision_id="00000000000000000000000000000056";
   check(reader_rs_encode_fixed_v3(h.store,&env,&c,&w,&n,&e)==READER_RS_OK,e.message);record empty_record;decode(h,std::string(w,n),empty_record);reader_rs_free(w);check(empty_record.r.exact&&empty_record.r.prefix&&empty_record.r.suffix&&!empty_record.r.exact_size,"allocated empty selector presence preserved");
+  std::string oversized(65537,'a');expression.exact=&oversized[0];expression.exact_size=oversized.size();expression.end=oversized.size();w=nullptr;n=0;
+  check(reader_rs_encode_fixed_v3(h.store,&env,&c,&w,&n,&e)==READER_RS_NOT_REPRESENTABLE&&e.gap==READER_RS_GAP_LIMIT&&!w&&!n,"raw codec rejects 65537 bytes before encoding");
+  expression.exact=empty;expression.exact_size=0;expression.end=0;expression.prefix=&oversized[0];expression.prefix_size=129;
+  check(reader_rs_encode_fixed_v3(h.store,&env,&c,&w,&n,&e)==READER_RS_NOT_REPRESENTABLE&&e.gap==READER_RS_GAP_LIMIT&&!w&&!n,"raw codec rejects 129 context bytes before encoding");
+  std::string big_wire(READER_REVISION_MAX_BYTES+1,' ');record too_big;
+  check(reader_rs_decode_raw_v3(h.store,big_wire.data(),big_wire.size(),&too_big.r,&e)==READER_RS_REVISION&&e.revision_code==READER_REV_LIMIT&&!too_big.r.has_location,"raw decoder bounds envelope before copying");
 }
 static void versions(const fs::path &work){
   history h(work/"versions.sqlite");reader_revision_error e{};reader_revision_info info{};int made=0;
