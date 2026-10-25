@@ -1,0 +1,95 @@
+name: WebDAV reset-peer signal boundary candidate
+on:
+  push:
+    branches: [codex/reader-webdav-sigpipe-candidate]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: webdav-sigpipe-candidate
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+jobs:
+  transport:
+    name: transport (${{ matrix.profile }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 35
+    strategy:
+      max-parallel: 2
+      fail-fast: false
+      matrix:
+        include:
+          - {profile: linux-curl, os: ubuntu-22.04, apple: 'OFF'}
+          - {profile: windows-winhttp, os: windows-2022, apple: 'OFF'}
+          - {profile: macos-curl, os: macos-15, apple: 'OFF'}
+          - {profile: macos-urlsession, os: macos-15, apple: 'ON'}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - name: Install Linux native dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev pkg-config ninja-build
+      - name: Native macOS dependencies
+        if: runner.os == 'macOS'
+        run: |
+          echo "PKG_CONFIG_PATH=$(brew --prefix libxml2)/lib/pkgconfig:$(brew --prefix curl)/lib/pkgconfig" >> "$GITHUB_ENV"
+      - name: Verify source ownership and parse new regression tools in Actions
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code 0889f7d1e9a537c6c1b05456547e016b26e1cd85 HEAD -- src include cmake CMakeLists.txt apps tests/fixtures
+          python -m py_compile tests/reader_webdav_sigpipe/run.py
+      - name: Build installed module and independent consumers
+        run: |
+          set -o pipefail
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "SIGPIPE_WS=$ws" >> "$GITHUB_ENV"
+          mkdir -p build/webdav-sigpipe/logs
+          cmake -S extras/webdav -B build/webdav-sigpipe/module -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_WEBDAV_APPLE_URLSESSION=${{ matrix.apple }} -DCMAKE_INSTALL_PREFIX="$ws/build/webdav-sigpipe/stage" 2>&1 | tee build/webdav-sigpipe/logs/configure.log
+          cmake --build build/webdav-sigpipe/module --parallel 4 --verbose 2>&1 | tee build/webdav-sigpipe/logs/build.log
+          cmake --install build/webdav-sigpipe/module
+          cmake -S tests/reader_webdav_sigpipe -B build/webdav-sigpipe/probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ws/build/webdav-sigpipe/stage"
+          cmake --build build/webdav-sigpipe/probe --parallel 4 --verbose
+          cmake -S tests/webdav/consumer -B build/webdav-sigpipe/original-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ws/build/webdav-sigpipe/stage"
+          cmake --build build/webdav-sigpipe/original-consumer --parallel 4 --verbose
+      - name: Build genuine unchanged module for Linux negative control
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p build/webdav-sigpipe/baseline-source
+          git archive 0889f7d1e9a537c6c1b05456547e016b26e1cd85 extras/webdav LICENSE | tar -x -C build/webdav-sigpipe/baseline-source
+          cmake -S build/webdav-sigpipe/baseline-source/extras/webdav -B build/webdav-sigpipe/baseline-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$SIGPIPE_WS/build/webdav-sigpipe/baseline-stage"
+          cmake --build build/webdav-sigpipe/baseline-build --parallel 4
+          cmake --install build/webdav-sigpipe/baseline-build
+          cmake -S tests/reader_webdav_sigpipe -B build/webdav-sigpipe/baseline-probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$SIGPIPE_WS/build/webdav-sigpipe/baseline-stage"
+          cmake --build build/webdav-sigpipe/baseline-probe --parallel 4
+      - name: Retain original native TLS and parser compatibility checks
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python tests/webdav/check_tls.py --consumer "build/webdav-sigpipe/original-consumer/webdav-consumer$exe" --module-prefix build/webdav-sigpipe/stage --output build/webdav-sigpipe/original-tls
+          python tests/webdav/check_compat.py --consumer "build/webdav-sigpipe/original-consumer/webdav-consumer$exe" --output build/webdav-sigpipe/original-compat
+      - name: Actual TLS reset process survival and thread signal contracts
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          baseline=()
+          if [ "$RUNNER_OS" = Linux ]; then baseline=(--baseline build/webdav-sigpipe/baseline-probe/webdav-sigpipe); fi
+          python tests/reader_webdav_sigpipe/run.py --probe "build/webdav-sigpipe/probe/webdav-sigpipe$exe" "${baseline[@]}" --profile '${{ matrix.profile }}' --out build/webdav-sigpipe/evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: webdav-sigpipe-${{ matrix.profile }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/webdav-sigpipe/logs/
+            build/webdav-sigpipe/evidence/
+            build/webdav-sigpipe/original-tls/
+            build/webdav-sigpipe/original-compat/
+            build/webdav-sigpipe/probe/webdav-sigpipe*
+            build/webdav-sigpipe/stage/
+            !build/**/*.key
+          if-no-files-found: error
