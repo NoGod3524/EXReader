@@ -45,6 +45,7 @@ def main():
         subprocess.run(['gh','api',REPO+f"/actions/artifacts/{artifact['id']}/zip"],stdout=stream,check=True)
     with archive.open('rb') as stream:digest=hashlib.file_digest(stream,'sha256').hexdigest()
     need(archive.stat().st_size==artifact['size_in_bytes'] and artifact['digest']=='sha256:'+digest,'Original ZIP bytes/digest')
+    network_verified=False
     with zipfile.ZipFile(archive) as z:
         names=z.namelist()
         need(len(names)==len(set(names)),'Duplicate ZIP names')
@@ -88,11 +89,33 @@ def main():
             pending=member('windows-raw3-host/'+folder+'/pending-before-retry.bin')
             need(killed['terminated_by_driver'] is True and killed['exit_code']!=0 and marker['phase']==phase and marker['pid']>0,'Actual process termination')
             need(marker['private_magic']==magic and pending[:8]==magic.encode() and len(pending)==marker['pending_bytes'] and hashlib.sha256(pending).hexdigest()==marker['pending_sha256'],'Original killed-process pending bytes')
+        if root.get('actual_account_window_mac_receive_passed') is True:
+            network=report('mac-network-receive/report.json')
+            need(network['accepted'] is True and network['source_sha']==args.source and str(network['run_id'])==str(args.run) and int(network['attempt'])==attempt,'Actual account receive report identity')
+            need(network['program_sha256']==root['profiles'][1]['programs']['EXReaderProduct'],'Actual receiving host program')
+            need(network['same_source_bidirectional'] is False and network['all_reading_records_FOUND'] is False and network['complete_product'] is False,'Network scope overstated')
+            proof=network['mac_proof']
+            need(proof['source_sha']=='15dab6b2270dc296ed6239db67ced2e22d255e65' and proof['run_id']==40196978163 and proof['attempt']==1,'Original Mac sender identity')
+            need(proof['artifact']['id']==12600789926 and proof['artifact']['digest']=='sha256:92be56ffa04d7c334d4811a42821a314089b4f8ae01746f0dfdf456b5eab9bd5','Original Mac sender ZIP')
+            need((proof['wire_count'],proof['original_count'],proof['reading_records'])==(15,4,11),'Original Mac packet scope')
+            required=['actual-account-window-receives-and-maps-four-Mac-originals',
+                'all-fifteen-original-Mac-wires-and-parent-graphs-retained-byte-for-byte',
+                'fresh-native-process-reopens-four-mappings-and-unchanged-wire-history',
+                'authenticated-native-TLS-completes-all-256-revision-shards',
+                'session-only-test-secret-not-persisted-in-profile']
+            required += ['native-open-'+kind for kind in ('txt','epub','pdf','cbz')]
+            need(len(network['checks'])==9 and set(network['checks'])==set(required),'Complete native receive check set')
+            requests=report('mac-network-receive/requests.json')
+            need(requests and all(row['authenticated'] is True for row in requests),'Actual request authentication')
+            shards={row['path'] for row in requests if row['method']=='PROPFIND' and row['path'].startswith('/dav/exreader-sync-v1/revisions/') and len(row['path'].removeprefix('/dav/exreader-sync-v1/revisions/'))==3}
+            need(shards=={'/dav/exreader-sync-v1/revisions/%02x/'%i for i in range(256)},'Complete native shard scan')
+            network_verified=True
     archive.unlink()
     result=dict(accepted=True,complete_product=False,source=args.source,producer_run=args.run,attempt=attempt,
                 producer_job=job['id'],artifact=artifact,zip_sha256=digest,owner_reports=len(modes),
                 scope='installed Windows profiles, original compact22 and bulk21, real owner and process recovery only',
-                whole_original_OFF_F3_atomic13=False,network_receive=False,same_source_bidirectional=False)
+                whole_original_OFF_F3_atomic13=False,network_receive=network_verified,same_source_bidirectional=False,
+                all_reading_records_FOUND=False)
     (out/'report.json').write_text(json.dumps(result,indent=2)+'\n',encoding='utf-8')
     print(json.dumps(result))
 
