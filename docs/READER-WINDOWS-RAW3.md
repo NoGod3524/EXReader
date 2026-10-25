@@ -133,3 +133,20 @@ READ本身没有调用capture callback，不把单纯decode成功算FOUND。EPUB
 这覆盖指定Mac源到Windows的独立入站与owner定位，不授实际GUI逐记录跳转、接收Mac原NULL wire的网络拒绝、
 共同源码双向或完整产品。完整原OFF/F3/atomic13另在source `53b7fa46632ce82861812766825134de6b4d335f`、
 run `40221572660` 执行；其preflight已过，完整原链仍在运行，不能用本节替代。
+
+## 完整原默认OFF、F3与atomic13
+
+受测源码 `53b7fa46632ce82861812766825134de6b4d335f`，run `40221572660` / attempt1，
+preflight、实际Windows完整原链、同轮严格工件认证三作业全部success。
+最终原裁判记录 `original_OFF_full_F3_and_atomic13_accepted=true`：原compact22、
+F1消费者264、原UI158、F2消费者130、导航UI31、记录UI32、设置UI46以及完整F3和atomic13全部保留。
+新工作流以逐字投影核对原f355工作流，仅替换名称/分支/guard/入口与显式push-full条件；
+实际原测试、构建开关、预算和严格裁判未改。工件认证实际下载同轮ZIP并核对身份与完整报告。
+
+| 工件 | ID | Bytes | SHA-256 | 有效期 |
+| --- | --- | --- | --- | --- |
+| 原运行ZIP | 12609902891 | 169995691 | `93672a529629a688e3f79a650319a28b897b42cadc23fb590d30284f4eeabda9` | 2027-01-23T18:30:31Z |
+| 严格汇总ZIP | 12609863093 | 9135 | `cba3a29d672ef643d289c06b7172723fc4e57e2148fa25f3b013ee734348723d` | 2027-01-23T18:30:31Z |
+
+本节授予该源码Windows独立compact与完整原默认OFF回归，不授共同源码六目标互通、产品性能或读屏验收。
+本文件前面记录的“仍在运行”是历史观察；本节为该run最终状态。
