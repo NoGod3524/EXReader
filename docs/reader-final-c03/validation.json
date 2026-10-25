@@ -1,1 +1,14 @@
-{"package":"C03","accepted":false,"reason":"not yet executed","start":"0889f7d1e9a537c6c1b05456547e016b26e1cd85","complete_product":false}
+{
+ "package": "C03",
+ "accepted": false,
+ "reason": "three CI rounds failed at build stage; no check executed",
+ "start": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+ "tested_source": "f5d87fdd7a1d025509fb7847ab90d237617fc7a1",
+ "runs": [
+  40213760389,
+  40213984264,
+  40214192654
+ ],
+ "complete_product": false,
+ "see": "HANDOFF-RESULT.md"
+}
