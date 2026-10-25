@@ -86,8 +86,23 @@ build remains an unadopted candidate even though the SDK version string already
 says 3.41.0. Orphan discovery is still the host's receipt-keeping job; no
 unattended crash cleanup, no share registration, no six-device claim.
 
-## Evidence record
+## Recorded evidence (2026-10-25)
 
-See `docs/reader-next-s15/evidence.json` for the recorded run identity,
-artifact IDs/sizes/digests/expiry, binary identities, job identities and the
-verifier rejection list.
+Tested source: `c1737e2a599d7d2cfc6d87569ab5e65093206a54`, tree
+`71bc03d1af030326c8d2645f00caf28ec4df9aa8`.
+[Run 40227960455 attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40227960455)
+completed **success**: Linux job `121273316640`, Windows job `121273316691`,
+macOS job `121273316467`, frozen-3.40 job `121273316693`, strict evidence job
+`121274056739`. Each platform passed 44 named checks against the installed
+3.41.0/ABI1 graph; the frozen job passed its 6 default-pin checks; the verifier
+rejected 17 mutations per platform (51 total) including tampered module,
+consumer, original bytes and a downgraded install-graph report.
+
+Two earlier rounds are retained rather than rewritten: run `40227126835` failed
+because the mixed-SDK control built its prefix list from a `Path` plus a string,
+and run `40227526450` failed because the installed C consumer exported from a
+database opened before seeding. Both root causes, their fixes and the passing
+round are recorded in `docs/reader-next-s15/evidence.json`.
+
+See `docs/reader-next-s15/evidence.json` for artifact IDs/sizes/digests/expiry,
+binary identities, job identities and the verifier rejection list.
