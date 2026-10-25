@@ -169,7 +169,8 @@ static void prefs_initialize(void) {
 
 /* Strict atomic save on the worker. On every failure the previous file stays
    whole and the caller keeps the accepted record and frame. */
-static exr_status prefs_write(const reader_preferences *value, wchar_t *message, size_t capacity) {
+static exr_status prefs_write(host_job *job, wchar_t *message, size_t capacity) {
+  const reader_preferences *value = &job->prefs;
   reader_preferences_error problem;
   reader_preferences_save_options options;
   reader_preferences_status status;
@@ -187,12 +188,23 @@ static exr_status prefs_write(const reader_preferences *value, wchar_t *message,
   memset(&problem, 0, sizeof(problem));
   memset(&options, 0, sizeof(options));
   options.struct_size = sizeof(options);
+  options.control.cancelled = job_cancel_check;
+  options.control.context = job;
+#ifdef EXR_READER_PREFS_COMMIT_REVIEW
+  review_pause(11, job);
+#endif
   status = reader_preferences_save(value, path, &options, &problem);
   free(path);
   if (status != READER_PREFERENCES_OK) {
     copy_wstring(message, capacity, prefs_problem_text(status));
     return prefs_status_to_exr(status);
   }
+  /* The public save returns OK after replacement even for a late cancel.
+     The common worker must publish that committed choice instead of vetoing it. */
+  InterlockedExchange(&job->prefs_committed, 1);
+#ifdef EXR_READER_PREFS_COMMIT_REVIEW
+  review_pause(12, job);
+#endif
   return EXR_OK;
 }
 
@@ -201,7 +213,7 @@ static exr_status prefs_write(const reader_preferences *value, wchar_t *message,
 static exr_status prefs_commit(host_job *job, exr_status status) {
   exr_status saved;
   if (status == EXR_OK && job->prefs_persist) {
-    saved = prefs_write(&job->prefs, job->message, 512);
+    saved = prefs_write(job, job->message, 512);
     if (saved != EXR_OK) {
       frame_clear(&job->frame);
       job->have_frame = 0;

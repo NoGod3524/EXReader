@@ -1,0 +1,104 @@
+name: Windows preference commit cancellation regression
+on:
+  push:
+    branches: [codex/reader-windows-preferences-commit-review]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Pin actual reviewed host and unchanged SDK and modules
+        run: |
+          python - <<'PY'
+          import os, subprocess
+          assert os.environ.get('GITHUB_ACTIONS') == 'true'
+          base='a45dd5b4aa5084ffc6aaf44c78ef902331fd1982'
+          subprocess.run(['git','merge-base','--is-ancestor',base,'HEAD'],check=True)
+          subprocess.run(['git','diff','--exit-code',base,'HEAD','--','src','include','cmake','CMakeLists.txt','bindings','tests/fixtures','apps/reader/preferences','apps/reader/store','apps/reader/revisions','examples/android','examples/apple','examples/linux'],check=True)
+          allowed=('examples/reader.c','apps/reader/desktop/windows_preferences.inc','apps/reader/desktop/windows_preferences_state.inc','apps/reader/windows-account/CMakeLists.txt','tests/reader_windows_preferences/commit_hooks.h','tests/reader_windows_preferences/check_commit.py','tests/reader_windows_preferences/verify_commit.py','.github/workflows/reader-windows-preferences-commit.yml','docs/READER-WINDOWS-PREFERENCES-COMMIT.md')
+          paths=subprocess.check_output(['git','diff','--name-only',base,'HEAD'],text=True).splitlines()
+          assert all(p in allowed for p in paths), paths
+          PY
+          python -m py_compile tests/reader_windows_preferences/check_commit.py tests/reader_windows_preferences/verify_commit.py
+          python tests/reader_windows_preferences/verify_commit.py --self-test
+      - name: Enter MSVC environment
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Install the exact additive SDK and unchanged public modules
+        run: |
+          set -euo pipefail
+          ws=$(cygpath -m "$PWD")
+          echo "WS=$ws" >> "$GITHUB_ENV"
+          sdk="$ws/build/sdk/stage"
+          prefix="$ws/build/product-stage"
+          mkdir -p build/prefs-commit/logs
+          python -m pip install 'uiautomation==2.0.29'
+          cmake --preset reading-library -B build/sdk -DCMAKE_INSTALL_PREFIX="$sdk" 2>&1 | tee build/prefs-commit/logs/sdk-configure.log
+          cmake --build build/sdk --parallel 4 2>&1 | tee build/prefs-commit/logs/sdk-build.log
+          cmake --install build/sdk
+          cmake -S apps/reader/store/native -B build/product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/product --parallel 4
+          cmake --install build/product
+          for module in extras/webdav extras/credentials extras/sideload apps/reader/revisions apps/reader/commands apps/reader/desktop-metadata apps/reader/sync apps/reader/session apps/reader/reading-state apps/reader/reading-commands apps/reader/annotation-view apps/reader/search apps/reader/navigation apps/reader/preferences; do
+            name=$(basename "$module")
+            cmake -S "$module" -B "build/modules/$name" -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$sdk" -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_PREFIX_PATH="$prefix;$sdk" -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee "build/prefs-commit/logs/$name-configure.log"
+            cmake --build "build/modules/$name" --parallel 4 2>&1 | tee "build/prefs-commit/logs/$name-build.log"
+            cmake --install "build/modules/$name"
+          done
+      - name: Build the real host and its old-cancellation negative control
+        run: |
+          set -euo pipefail
+          sdk="$WS/build/sdk/stage"
+          prefix="$WS/build/product-stage"
+          cmake -S apps/reader/windows-account -B build/host -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$sdk" -DCMAKE_PREFIX_PATH="$prefix;$sdk" -DREADER_METADATA_PREFIX="$prefix" -DREADER_ACCOUNT_PREFIX="$prefix" -DEXR_READER_WINDOWS_SEARCH=ON -DEXR_READER_WINDOWS_NAVIGATION=ON -DEXR_READER_WINDOWS_RECORDS=ON -DEXR_READER_WINDOWS_PREFERENCES=ON -DEXR_READER_PREFS_COMMIT_REVIEW_BUILD=ON 2>&1 | tee build/prefs-commit/logs/host-configure.log
+          cmake --build build/host --parallel 4 --target EXReaderProduct EXReaderPreferencesCommitReview EXReaderPreferencesCancelControl 2>&1 | tee build/prefs-commit/logs/host-build.log
+          python tools/build_windows_host.py --sdk "$sdk" --binary build/host/EXReaderPreferencesCommitReview.exe --output build/prefs-commit/package --static-reading
+          cp build/host/EXReaderPreferencesCancelControl.exe build/prefs-commit/control.exe
+          cp build/host/EXReaderProduct.exe build/prefs-commit/production.exe
+      - name: Cancel before replacement and after durable replacement in real processes
+        run: |
+          python tests/reader_windows_preferences/make_fixtures.py --output build/prefs-commit/fixtures
+          python tests/reader_windows_preferences/check_commit.py --candidate build/prefs-commit/package/EXReader/EXReader.exe --control build/prefs-commit/control.exe --font build/prefs-commit/package/EXReader/Reader.otf --fixtures build/prefs-commit/fixtures --output build/prefs-commit/ui
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-preferences-commit-${{github.run_id}}-${{github.run_attempt}}
+          path: build/prefs-commit/
+          if-no-files-found: error
+  evidence:
+    needs: windows
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate actual producer raw ZIP binaries and thirteen named checks
+        env:
+          GH_TOKEN: ${{github.token}}
+        run: python tests/reader_windows_preferences/verify_commit.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-preferences-commit-summary-${{github.run_id}}-${{github.run_attempt}}
+          path: build/prefs-commit-summary/
+          if-no-files-found: error
