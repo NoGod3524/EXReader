@@ -1,6 +1,11 @@
 name: Apple native product reading records
 on:
   workflow_dispatch:
+    inputs:
+      scope:
+        type: choice
+        options: [full, entry]
+        default: full
 permissions:
   contents: read
   actions: read
@@ -137,13 +142,18 @@ jobs:
           signing=NO
           if test "$platform" = macos; then scheme=EXReaderHost-macOS; sdk="$PWD/stage/macos"; signing=YES; fi
           destination=$(sed -n '1p' build/apple-reading-ui/destination.txt)
+          cases=()
+          if test '${{ inputs.scope }}' = entry; then
+            cases=("-only-testing:$scheme/ReadingUITests/testProgressBookmarkAndRestart")
+            if test "$platform" = macos; then cases=(-only-testing:EXReaderHostUITests-macOS/ReadingUITests/testProgressBookmarkAndRestart); else cases=(-only-testing:EXReaderHostUITests-iOS/ReadingUITests/testProgressBookmarkAndRestart); fi
+          fi
           xcodebuild test -project build/apple-reading-project/EXReaderHost.xcodeproj -scheme "$scheme" \
             -destination "$destination" -derivedDataPath build/ReadingDerivedData \
-            -resultBundlePath "build/apple-reading-ui/$platform.xcresult" -parallel-testing-enabled NO \
+            -resultBundlePath "build/apple-reading-ui/$platform.xcresult" -parallel-testing-enabled NO "${cases[@]}" \
             -test-timeouts-enabled YES -default-test-execution-time-allowance 180 -maximum-test-execution-time-allowance 300 \
             EXR_SDK_DIR="$sdk" CODE_SIGNING_ALLOWED="$signing" 2>&1 | tee "build/apple-reading-ui/$platform-xcodebuild.log"
       - name: Require exact raw reading records evidence and installed providers
-        if: always()
+        if: always() && inputs.scope != 'entry'
         id: evidence
         continue-on-error: true
         run: |
@@ -159,17 +169,28 @@ jobs:
             --app "$app" --sdk-root "stage/$target" --fixtures build/apple-resources/manifest.json \
             --sdk-identity "sdk-artifacts/apple-reading-sdk-$target-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT/build/sdk-identity.json" \
             --destination build/apple-reading-ui/destination.txt
+      - name: Record diagnostic scope without granting acceptance
+        if: always() && inputs.scope == 'entry'
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          Path('build/apple-reading-ui/diagnostic.json').write_text(json.dumps({
+              'diagnostic_only': True, 'accepted': False, 'source_sha': os.environ['GITHUB_SHA'],
+              'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+              'scope': 'actual native entry plus progress/bookmark/restart case only'}) + '\n')
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: apple-reading-ui-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/apple-reading-ui/
           if-no-files-found: error
-      - if: always() && (steps.ui.outcome != 'success' || steps.evidence.outcome != 'success')
+      - if: always() && (steps.ui.outcome != 'success' || (inputs.scope != 'entry' && steps.evidence.outcome != 'success'))
         run: exit 1
   summary:
     name: Strict same-source reading records summary
-    if: always()
+    if: always() && inputs.scope != 'entry'
     needs: [sdk, native, ui]
     runs-on: ubuntu-latest
     timeout-minutes: 15

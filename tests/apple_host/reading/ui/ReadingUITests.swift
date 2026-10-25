@@ -56,9 +56,12 @@ final class ReadingUITests: XCTestCase {
         // the actual native trigger. Require a real hittable control.
         let menu = element("reader.more")
         let trigger = menu.buttons.firstMatch
-        XCTAssertTrue(wait { menu.exists && ((trigger.exists && trigger.isEnabled && trigger.isHittable) || menu.isHittable) },
+        XCTAssertTrue(wait { menu.exists && trigger.exists && trigger.frame.width > 0 && trigger.frame.height > 0 &&
+            self.app.windows.firstMatch.frame.contains(trigger.frame) },
                       "Reading menu not reachable: \(app.debugDescription)")
-        if trigger.exists && trigger.isHittable { trigger.tap() } else { menu.tap() }
+        // UIKit's Menu wrapper and trigger report no XCTest hit point.
+        // Touch the measured native button; the actual popup below must open.
+        trigger.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
 #else
         tap("reader.more")
 #endif
