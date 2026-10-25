@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: MIT
 cmake_minimum_required(VERSION 3.24)
-project(EXReaderReadingState VERSION 0.1.0 LANGUAGES C CXX)
+option(EXR_READER_SELECTOR_BYTES_CANDIDATE "Explicit independent raw selector candidate; never default" OFF)
+if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
+  project(EXReaderReadingState VERSION 0.2.0 LANGUAGES C CXX)
+else()
+  project(EXReaderReadingState VERSION 0.1.0 LANGUAGES C CXX)
+endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(MSVC)
@@ -15,7 +20,11 @@ if(NOT EXR_SDK_VERSION MATCHES "^3\\.(40|41)\\.0$")
 endif()
 find_package(EXReader ${EXR_SDK_VERSION} EXACT CONFIG REQUIRED COMPONENTS core library
   PATHS "${EXR_SDK}" NO_DEFAULT_PATH)
-find_package(EXReaderRevisions 0.3.0 EXACT CONFIG REQUIRED)
+set(EXR_REVISIONS_VERSION 0.3.0)
+if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
+  set(EXR_REVISIONS_VERSION 0.4.0)
+endif()
+find_package(EXReaderRevisions ${EXR_REVISIONS_VERSION} EXACT CONFIG REQUIRED)
 add_library(reader_reading_state_codec STATIC src/reading_state.cpp)
 add_library(reader_reading_state STATIC src/reading_resolve.cpp)
 # Codec copies public selector values; it never calls or links the SDK. Its
@@ -45,3 +54,7 @@ write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/EXReaderReadingSta
   VERSION ${PROJECT_VERSION} COMPATIBILITY SameMinorVersion)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/EXReaderReadingStateConfig.cmake"
   "${CMAKE_CURRENT_BINARY_DIR}/EXReaderReadingStateConfigVersion.cmake" DESTINATION lib/cmake/EXReaderReadingState)
+
+if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
+  target_compile_definitions(reader_reading_state_codec PUBLIC EXR_READER_SELECTOR_BYTES_CANDIDATE=1)
+endif()

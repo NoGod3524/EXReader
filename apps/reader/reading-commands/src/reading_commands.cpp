@@ -7,6 +7,38 @@
 #include <string>
 #include <vector>
 
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+reader_rs_status reader_rs_encode_retained_raw_v3(reader_revisions *,const reader_rs_envelope *,const reader_rs_capture *,unsigned,size_t,char **,size_t *,reader_rs_error *);
+#endif
+
+static reader_revision_status reader_candidate_reader_revision_get(bool raw,reader_revisions *s,const char *id,char **w,size_t *n,reader_revision_info *i,reader_revision_error *e){
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+if(raw)return reader_revision_get_raw_v3(s,id,w,n,i,e);
+#else
+(void)raw;
+#endif
+return reader_revision_get(s,id,w,n,i,e);}
+static reader_revision_status reader_candidate_reader_revision_selected(bool raw,reader_revisions *s,const char *k,const char *id,char **w,size_t *n,reader_revision_info *i,reader_revision_selection *g,reader_revision_error *e){
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+if(raw)return reader_revision_selected_raw_v3(s,k,id,w,n,i,g,e);
+#else
+(void)raw;
+#endif
+return reader_revision_selected(s,k,id,w,n,i,g,e);}
+static reader_rs_status reader_candidate_reader_rs_decode(bool raw,reader_revisions *s,const void *w,size_t n,reader_rs_record *r,reader_rs_error *e){
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+if(raw)return reader_rs_decode_raw_v3(s,w,n,r,e);
+#else
+(void)raw;
+#endif
+return reader_rs_decode(s,w,n,r,e);}
+static reader_revision_status reader_candidate_reader_revision_local_reading(bool raw,reader_revisions *s,const void *w,size_t n,const char *const *p,size_t c,reader_revision_info *i,int *created,reader_revision_error *e){
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+if(raw)return reader_revision_local_reading_raw_v3(s,w,n,p,c,i,created,e);
+#else
+(void)raw;
+#endif
+return reader_revision_local_reading(s,w,n,p,c,i,created,e);}
 namespace {
 struct failure {reader_rc_status code;const char *message;reader_rs_error encode;reader_revision_error revision;};
 [[noreturn]] void reject(const char *message){throw failure{READER_RC_ARGUMENT,message,{},{}};}
@@ -63,8 +95,8 @@ struct decoded {reader_rs_record r{};~decoded(){reader_rs_record_free(&r);}};
 const char *z(const char *s){return s?s:"";}
 bool same(const char *a,size_t an,const char *b,size_t bn){return an==bn&&(!an||!std::memcmp(a,b,an));}
 /* Everything but id, parents and note text must match the source decode. */
-bool same_location(const reader_rs_record &a,const reader_rs_record &b){
-  return a.has_location&&b.has_location&&a.mode==b.mode&&a.anchor_version==b.anchor_version&&a.page==b.page&&a.part==b.part&&
+bool same_location(const reader_rs_record &a,const reader_rs_record &b,bool strict_null=false){
+  return (!strict_null||((!a.exact)==(!b.exact)&&(!a.prefix)==(!b.prefix)&&(!a.suffix)==(!b.suffix)))&&a.has_location&&b.has_location&&a.mode==b.mode&&a.anchor_version==b.anchor_version&&a.page==b.page&&a.part==b.part&&
     a.start==b.start&&a.end==b.end&&!std::strcmp(z(a.part_path),z(b.part_path))&&!std::strcmp(z(a.page_id),z(b.page_id))&&
     !std::strcmp(a.parser_version,b.parser_version)&&!std::strcmp(z(a.chapter),z(b.chapter))&&(!a.chapter)==(!b.chapter)&&
     same(z(a.exact),a.exact_size,z(b.exact),b.exact_size)&&same(z(a.prefix),a.prefix_size,z(b.prefix),b.prefix_size)&&
@@ -73,8 +105,8 @@ bool same_location(const reader_rs_record &a,const reader_rs_record &b){
 struct request {
   const reader_rc_context &context;const reader_rc_command &command;reader_rc_result &result;
   std::string revision_id,book_key,annotation_id,key,text;std::vector<std::string> parents;std::vector<const char *> pointers;
-  bool annotation=false;
-  request(const reader_rc_context *c,const reader_rc_command *m,reader_rc_result *r):context(*c),command(*m),result(*r){
+  bool annotation=false;bool raw_api=false;unsigned write_version=2;
+  request(const reader_rc_context *c,const reader_rc_command *m,reader_rc_result *r,bool raw=false,unsigned version=2):context(*c),command(*m),result(*r),raw_api(raw),write_version(raw?version:2){
     if(!context.store||(context.expected_count&&!context.expected_heads)||context.expected_count>READER_REVISION_MAX_PARENTS)reject("Invalid observed head set");
     revision_id=bounded(context.revision_id,32,"A stable revision ID is required");
     if(!hex32(revision_id))reject("Invalid stable revision ID");
@@ -125,7 +157,7 @@ struct request {
      with created == 0 (COLLISION only if the payload really differs). */
   std::string retained_annotation()const{
     owned held;size_t bytes=0;reader_revision_info info{};reader_revision_error e{};
-    reader_revision_status st=reader_revision_get(context.store,revision_id.c_str(),&held.wire,&bytes,&info,&e);
+    reader_revision_status st=reader_candidate_reader_revision_get(raw_api,context.store,revision_id.c_str(),&held.wire,&bytes,&info,&e);
     if(st==READER_REV_NOT_FOUND)return std::string();
     if(st!=READER_REV_OK)throw failure{READER_RC_REVISION,"Cannot read the retained revision",{},e};
     if(std::strcmp(info.entity_kind,"annotation"))refuse(READER_RC_SOURCE,"The retained revision ID belongs to another entity");
@@ -136,9 +168,13 @@ struct request {
     if(!hex32(aid))refuse(READER_RC_SOURCE,"The retained revision has no annotation identity");
     return aid;
   }
-  std::string encode(const reader_rs_envelope &env,const reader_rs_capture &capture,size_t part,bool v1)const{
+  std::string encode(const reader_rs_envelope &env,const reader_rs_capture &capture,size_t part,unsigned version)const{
     produced out;size_t bytes=0;reader_rs_error e{};
-    reader_rs_status st=v1?reader_rs_encode(context.store,&env,&capture,&out.wire,&bytes,&e):
+        reader_rs_status st;
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+    if(raw_api)st=reader_rs_encode_retained_raw_v3(context.store,&env,&capture,version,part,&out.wire,&bytes,&e);else
+#endif
+    st=version==1?reader_rs_encode(context.store,&env,&capture,&out.wire,&bytes,&e):
       reader_rs_encode_v2(context.store,&env,&capture,part,&out.wire,&bytes,&e);
     if(st!=READER_RS_OK){
       reader_rc_status code=st==READER_RS_ARGUMENT?READER_RC_ARGUMENT:st==READER_RS_MEMORY?READER_RC_MEMORY:READER_RC_ENCODE;
@@ -150,14 +186,14 @@ struct request {
      retry, otherwise the one safe selected head that is also the observed head. */
   std::string source()const{
     owned held;size_t bytes=0;reader_revision_info info{};reader_revision_error e{};
-    reader_revision_status st=reader_revision_get(context.store,revision_id.c_str(),&held.wire,&bytes,&info,&e);
+    reader_revision_status st=reader_candidate_reader_revision_get(raw_api,context.store,revision_id.c_str(),&held.wire,&bytes,&info,&e);
     if(st==READER_REV_OK){
       if(key!=info.entity_key)refuse(READER_RC_SOURCE,"The retained revision ID belongs to another entity");
       return std::string(held.wire,bytes);
     }
     if(st!=READER_REV_NOT_FOUND)throw failure{READER_RC_REVISION,"Cannot read the retained revision",{},e};
     owned chosen;reader_revision_selection selection{};e={};info={};bytes=0;
-    st=reader_revision_selected(context.store,"annotation",key.c_str(),&chosen.wire,&bytes,&info,&selection,&e);
+    st=reader_candidate_reader_revision_selected(raw_api,context.store,"annotation",key.c_str(),&chosen.wire,&bytes,&info,&selection,&e);
     if(st==READER_REV_NOT_FOUND||st==READER_REV_UNSAFE)refuse(READER_RC_SOURCE,"The annotation has no single safe head to edit");
     if(st!=READER_REV_OK)throw failure{READER_RC_REVISION,"Cannot read the selected annotation",{},e};
     if(parents[0]!=info.revision_id)refuse(READER_RC_UNSAFE,"The observed head is not the current safe head");
@@ -167,7 +203,7 @@ struct request {
     const char *parser=context.parser_version?context.parser_version:"";
     if(command.kind==READER_RC_NOTE_TEXT){
       std::string original=source();decoded old;reader_rs_error e{};
-      reader_rs_status st=reader_rs_decode(context.store,original.data(),original.size(),&old.r,&e);
+      reader_rs_status st=reader_candidate_reader_rs_decode(raw_api,context.store,original.data(),original.size(),&old.r,&e);
       if(st!=READER_RS_OK)throw failure{READER_RC_ENCODE,"The source revision cannot be decoded",e,{}};
       if(std::strcmp(old.r.entity_kind,"annotation")||book_key!=old.r.book_key||annotation_id!=old.r.annotation_id)
         refuse(READER_RC_SOURCE,"The source is not a revision of this annotation");
@@ -175,18 +211,18 @@ struct request {
       exr_anchor a{};exr_fixed_anchor f{};reader_rs_capture c{};c.mode=old.r.mode;
       static char empty[1]={0};
       if(old.r.mode==READER_RS_FIXED_PAGE){
-        f.start=(size_t)old.r.start;f.end=(size_t)old.r.end;f.page_id=old.r.page_id;f.exact=old.r.exact?old.r.exact:empty;
-        f.prefix=old.r.prefix?old.r.prefix:empty;f.suffix=old.r.suffix?old.r.suffix:empty;
+        f.start=(size_t)old.r.start;f.end=(size_t)old.r.end;f.page_id=old.r.page_id;f.exact=raw_api?old.r.exact:old.r.exact?old.r.exact:empty;
+        f.prefix=raw_api?old.r.prefix:old.r.prefix?old.r.prefix:empty;f.suffix=raw_api?old.r.suffix:old.r.suffix?old.r.suffix:empty;
         f.exact_size=old.r.exact_size;f.prefix_size=old.r.prefix_size;f.suffix_size=old.r.suffix_size;c.fixed=&f;c.page=(size_t)old.r.page;
       }else{
         a.start=(size_t)old.r.start;a.end=(size_t)old.r.end;a.exact=old.r.exact?old.r.exact:empty;
         a.prefix=old.r.prefix?old.r.prefix:empty;a.suffix=old.r.suffix?old.r.suffix:empty;
         a.chapter=old.r.mode==READER_RS_REFLOW_GLOBAL?old.r.chapter:nullptr;c.anchor=&a;c.part_path=old.r.part_path;
       }
-      bool v1=old.r.anchor_version==1;
-      std::string wire=encode(envelope(old.r.parser_version),c,(size_t)old.r.part,v1);
-      decoded fresh;st=reader_rs_decode(context.store,wire.data(),wire.size(),&fresh.r,&e);
-      if(st!=READER_RS_OK||!same_location(old.r,fresh.r)||std::strcmp(z(fresh.r.note_text),text.c_str()))
+      unsigned version=(unsigned)old.r.anchor_version;
+      std::string wire=encode(envelope(old.r.parser_version),c,(size_t)old.r.part,version);
+      decoded fresh;st=reader_candidate_reader_rs_decode(raw_api,context.store,wire.data(),wire.size(),&fresh.r,&e);
+      if(st!=READER_RS_OK||!same_location(old.r,fresh.r,raw_api&&old.r.anchor_version==3)||std::strcmp(z(fresh.r.note_text),text.c_str()))
         refuse(READER_RC_SOURCE,"The edited revision would not preserve the original selector");
       return wire;
     }
@@ -194,18 +230,20 @@ struct request {
     if(command.operation==READER_RC_DELETE){
       if(!command.capture||command.capture->anchor||command.capture->fixed)reject("Delete names only the capture mode");
       none.mode=command.capture->mode;
-      return encode(envelope(parser),none,0,false);
+      return encode(envelope(parser),none,0,write_version);
     }
     if(!command.capture)reject("A real SDK capture is required");
+    if(raw_api&&command.capture->mode==READER_RS_FIXED_PAGE&&(!command.capture->fixed||!command.capture->fixed->exact))
+      reject("A new command requires a genuine non-NULL SDK exact selector");
     if(!parser[0])reject("A parser version is required");
     if(command.kind==READER_RC_BOOKMARK&&!point(command.capture))reject("A bookmark requires a point capture");
     if(command.kind==READER_RC_HIGHLIGHT&&(point(command.capture)||(command.capture->mode!=READER_RS_FIXED_PAGE&&command.capture->anchor&&!command.capture->anchor->exact)))
       reject("A highlight requires a nonempty range capture");
-    return encode(envelope(parser),*command.capture,command.part,false);
+    return encode(envelope(parser),*command.capture,command.part,write_version);
   }
 };
 }
-extern "C" reader_rc_status reader_rc_apply(const reader_rc_context *context,const reader_rc_command *command,reader_rc_result *result,reader_rc_error *error){
+static reader_rc_status apply(bool raw_api,const reader_rc_context *context,const reader_rc_command *command,reader_rc_result *result,reader_rc_error *error,unsigned write_version=2){
   if(error)std::memset(error,0,sizeof(*error));
   if(result)std::memset(result,0,sizeof(*result));
   auto fail=[&](const failure &f){
@@ -214,10 +252,11 @@ extern "C" reader_rc_status reader_rc_apply(const reader_rc_context *context,con
   };
   try{
     if(!context||!command||!result)reject("Missing reading command arguments");
-    request r(context,command,result);
+    if(raw_api&&(write_version<1||write_version>3))reject("Explicit anchor version must be 1, 2 or 3");
+    request r(context,command,result,raw_api,write_version);
     std::string wire=r.build();
     reader_revision_error e{};
-    reader_revision_status st=reader_revision_local_reading(context->store,wire.data(),wire.size(),r.pointers.empty()?nullptr:r.pointers.data(),
+    reader_revision_status st=reader_candidate_reader_revision_local_reading(raw_api,context->store,wire.data(),wire.size(),r.pointers.empty()?nullptr:r.pointers.data(),
       r.pointers.size(),&result->revision,&result->created,&e);
     if(st!=READER_REV_OK){
       /* Failed commits leave history and outbox untouched; created stays zero. */
@@ -229,3 +268,12 @@ extern "C" reader_rc_status reader_rc_apply(const reader_rc_context *context,con
   }catch(const failure &f){return fail(f);}
   catch(...){return fail(failure{READER_RC_MEMORY,"Cannot allocate a bounded reading command",{},{}});}
 }
+
+extern "C" reader_rc_status reader_rc_apply(const reader_rc_context *c,const reader_rc_command *m,reader_rc_result *r,reader_rc_error *e){return apply(false,c,m,r,e);}
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+extern "C" reader_rc_status reader_rc_apply_fixed_v3(const reader_rc_context *c,const reader_rc_command *m,reader_rc_result *r,reader_rc_error *e){
+  if(m&&m->capture&&m->capture->mode!=READER_RS_FIXED_PAGE){if(r)std::memset(r,0,sizeof(*r));if(e){std::memset(e,0,sizeof(*e));e->code=READER_RC_ARGUMENT;}return READER_RC_ARGUMENT;}
+  return apply(true,c,m,r,e,3);
+}
+extern "C" reader_rc_status reader_rc_apply_raw_v3(const reader_rc_context *c,const reader_rc_command *m,unsigned version,reader_rc_result *r,reader_rc_error *e){return apply(true,c,m,r,e,version);}
+#endif

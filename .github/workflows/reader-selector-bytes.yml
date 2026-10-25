@@ -1,0 +1,63 @@
+name: Reader selector bytes optional candidate
+on:
+  push:
+    branches: [codex/reader-selector-bytes-candidate]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  candidate:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Enter native Windows compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and execute isolated installed families and real PDF processes
+        shell: bash
+        run: python tests/reader_selector_bytes/run.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-selector-bytes-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/selector-bytes/
+            !build/selector-bytes/*-source/
+          if-no-files-found: error
+  summary:
+    needs: [candidate]
+    if: always()
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate same-attempt original ZIPs and public capture bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_selector_bytes/strict.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-selector-bytes-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/selector-bytes-summary/
+          if-no-files-found: error
