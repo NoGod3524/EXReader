@@ -1,7 +1,7 @@
 name: Reader S14 reused font library on the approved SDK3.41 candidate
 on:
   push:
-    branches: [codex/reader-next-s14]
+    branches: [codex/reader-next-s14-root-review]
   workflow_dispatch:
 permissions:
   contents: read

@@ -104,3 +104,10 @@ and truncated fixtures are derived from the same file. No third-party font ships
 - Process termination is exercised; sudden power loss, filesystem/controller durability and
   network shares are not claimed. There is no collection face enumeration; explicit face
   selection only.
+
+## Root独立验证器修复（尚未授予）
+
+保留原失败与未执行项。本轮未修改字体库实现、公开头、默认版本或安装图。
+三个native负例按唯一role=suite选择真实日志/命令，不再按commands[1]猜顺序；伪造CASE前必须确认恰好命中一次。
+合成自检改用真实harness的命令顺序（C消费者、三项预期configure拒绝、suite、s14等），以覆盖原错位。
+所有42项拒绝控制与四套平台/SDK组合仍完整执行；本地不做语法、构建或测试。

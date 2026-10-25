@@ -268,16 +268,22 @@ def negative_tests(run, jobs, artifacts, blobs, source, run_id, attempt, module_
             elif case == 'unbound-module-source':
                 report['module_source_tree'] = '0' * 40
             elif case == 'altered-native-log':
-                content[report['commands'][1]['log']] += b'changed'
+                suite, = [command for command in report['commands'] if command['role'] == 'suite']
+                content[suite['log']] += b'changed'
             elif case == 'forged-native-case':
-                log = report['commands'][1]['log']
+                suite, = [command for command in report['commands'] if command['role'] == 'suite']
+                log = suite['log']
+                require(content[log].count(b'CASE empty-library') == 1,
+                        'negative fixture must alter the actual unique native case')
                 content[log] = content[log].replace(b'CASE empty-library', b'CASE fabricated-native-pass')
                 for item in report['identities']:
                     if item['path'] == log:
                         item['bytes'] = len(content[log])
                         item['sha256'] = hashlib.sha256(content[log]).hexdigest()
             elif case == 'missing-native-command':
-                report['commands'].pop(1)
+                require(sum(command['role'] == 'suite' for command in report['commands']) == 1,
+                        'negative fixture requires the actual unique suite command')
+                report['commands'] = [command for command in report['commands'] if command['role'] != 'suite']
             elif case == 'missing-termination':
                 report['terminations'].pop()
             elif case == 'zero-termination-exit':
@@ -345,14 +351,14 @@ def synthetic(spec, source, run_id, attempt, module_tree, pinned):
         native += NATIVE_POSIX
     commands = [
         ('c-consumer', 'installed-c-abi-' + tag_name, True),
+        ('configure-invalid-sdk', 'Unsupported exact reader SDK version', False),
+        ('configure-wrong-sdk', 'Could not find a package', False),
+        ('consumer-wrong-sdk', 'Could not find a package', False),
         ('suite', '\n'.join('CASE ' + c for c in native), True),
         ('s14', '\n'.join('CASE ' + c for c in S14_COMMON), True),
         ('list', '', True),
         ('import', '', True),
         ('status', 'STATUS 8', True),
-        ('configure-invalid-sdk', 'Unsupported exact reader SDK version', False),
-        ('configure-wrong-sdk', 'Could not find a package', False),
-        ('consumer-wrong-sdk', 'Could not find a package', False),
     ]
     if system == 'Windows':
         commands.append(('locked-manifest', '4: write', False))
