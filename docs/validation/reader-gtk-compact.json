@@ -12,7 +12,8 @@
     {"run_id": 40202860251, "scope": "full candidate", "conclusion": "failure", "reason": "Actual Alt+M opened native More and focused Reading, exposed as role menu; harness incorrectly required role menu item for submenu parents"},
     {"run_id": 40204389861, "scope": "authenticated failed artifact diagnosis only", "conclusion": "success", "reason": "Actions authenticated actual failed raw ZIP, report, PNG and visibility: Reading/Text and notes/Library/Import have menu role, leaf actions have menu item role; production unchanged"},
     {"run_id": 40204507162, "scope": "full candidate", "conclusion": "failure", "reason": "20 ON cases passed; records modal had no initial focused node because the owner disables its list during initial async request"},
-    {"run_id": 40205198425, "scope": "authenticated failed artifact diagnosis only", "conclusion": "success", "reason": "Real modal active/showing with empty non-focusable list and enabled focusable Close; compact entry now focuses stable existing Close and checks keyboard reachability of a real new bookmark row"}
+    {"run_id": 40205198425, "scope": "authenticated failed artifact diagnosis only", "conclusion": "success", "reason": "Real modal active/showing with empty non-focusable list and enabled focusable Close; compact entry now focuses stable existing Close and checks keyboard reachability of a real new bookmark row"},
+    {"run_id": 40205409399, "scope": "full candidate", "conclusion": "failure", "reason": "33 ON cases passed including initial records focus, keyboard-created bookmark row access and all 13 TXT pages; driver incorrectly sought Stop and close after completed paste, whose original owner correctly labels the button Close"}
   ],
   "off_full_original_scope_accepted": false,
   "compact_native_ui_accepted": false,
