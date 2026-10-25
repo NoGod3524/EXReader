@@ -50,9 +50,9 @@ SPECS={
 }
 for key in APPLE:
     if key=='page_theme':
-        SPECS['apple_'+key]=spec('reader-apple-page-theme',7,'Strict same-source page theme summary',
+        SPECS['apple_'+key]=spec('reader-apple-page-theme',8,'Strict same-source page theme summary',
           'apple-theme-summary-{run}-{attempt}','summary.json',
-          tuple('apple-theme-'+part+'-{run}-{attempt}' for part in ('sdk-macos','sdk-iphonesimulator','native','ui-macos','ui-iphone','ui-ipad')),
+          tuple('apple-theme-'+part+'-{run}-{attempt}' for part in ('sdk-macos','sdk-iphonesimulator','native','ui-macos','ui-iphone','ui-ipad','fast-import')),
           guard=('Authenticate exact SDK source and unchanged original business suites',2))
         continue
     workflow,stem,count=original_apple.SPECS[key]
@@ -76,10 +76,15 @@ def validate_input(value,source):
     require(isinstance(value,dict) and set(value)<= {'source_sha','runs','product_conditions','history'} and
             value.get('source_sha')==source and re.fullmatch('[0-9a-f]{40}',source),'fixed source missing/differs')
     require(isinstance(value.get('runs'),dict) and set(value['runs'])==set(REQUIRED),'all twelve mandatory leaf keys are required')
-    used=[]
-    for ref in value['runs'].values():
-        if ref is not None:ref_check(ref);used.append(ref['run_id'])
-    require(len(used)==len(set(used)),'duplicate/reused run across mandatory workflows')
+    used={}
+    for key,ref in value['runs'].items():
+        if ref is None:continue
+        ref_check(ref)
+        if ref['run_id'] in used:
+            other=used[ref['run_id']]
+            require({key,other}==set(WINDOWS_CONTRACTS) and ref==value['runs'][other],
+                    'duplicate/reused run across mandatory workflows or split Windows attempt')
+        else:used[ref['run_id']]=key
     conditions=value.get('product_conditions',{key:None for key in PRODUCT_REQUIRED})
     require(isinstance(conditions,dict) and set(conditions)==set(PRODUCT_REQUIRED),'required product facts missing')
     for ref in conditions.values():
@@ -216,6 +221,23 @@ def basic_summary(key,value,source,ref):
         require(len(uis)==3 and {row['platform'] for row in uis}==set(original_apple.PLATFORMS),'whole native Apple UI platform set absent')
         count={'apple_records':7,'apple_navigation':6,'apple_search':4,'apple_page_theme':4}[key]
         require(all(len(row['cases'])==count and all(case['result']=='Passed' for case in row['cases']) for row in uis),'original Apple UI cases missing/failed')
+    if key=='apple_page_theme':
+        native=[row['reports']['native'] for row in rows if '-native-' in row['name']]
+        require(len(native)==1 and native[0]['accepted'] is True and native[0]['original_on_off_exact'] is True and
+                native[0]['mixed_version_rejections']==5 and native[0]['sdk_version']=='3.41.0' and
+                native[0]['sdk_abi']==1 and native[0]['old_340_migration_tested'] is False,'original theme native controls absent')
+        for mode,count in (('on',37),('off',10)):
+            report=native[0]['reports'][mode]
+            require(report['accepted'] is True and report['theme_enabled']==(mode=='on') and
+                    len(report['checks'])==len({row['id'] for row in report['checks']})==count and
+                    all(row['passed'] is True for row in report['checks']),'original theme named native checks incomplete')
+        publication=[row['reports']['initialization_and_publication'] for row in rows if '-fast-import-' in row['name']]
+        require(len(publication)==1,'actual initialization/publication cases absent')
+        report=publication[0]
+        require(report['accepted_fast_import_fixture_only'] is True and len(report['cases'])==2 and
+                all(row['result']=='Passed' for row in report['cases']) and report['sdk_producer_source']==source and
+                report['sdk_producer_run']==ref['run_id'] and report['sdk_producer_attempt']==ref['attempt'] and
+                report['provider']['static_sdk_linked'] is False,'actual same-source initialization/publication cases incomplete')
 
 
 def load_summary(key,contract,ref,run,jobs,selected,summary_job,source):
