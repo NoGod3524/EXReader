@@ -1,1 +1,2730 @@
-{"package":"D04","accepted":false,"audit_completed":false,"target_sha":"0889f7d1e9a537c6c1b05456547e016b26e1cd85","sdk_sha":"edddc463c06ed5731195cdb8f06b2df6dff7699e","status":"awaiting Actions","voiceover_accepted":false,"physical_device_execution":false,"complete_product":false}
+{
+  "harness_sha": "0b5e29fa3458327828e1803258a93f88a866aaca",
+  "target_sha": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+  "sdk_sha": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "run_id": "40219612607",
+  "attempt": "1",
+  "artifact_authentication": true,
+  "negative_rejections": [
+    "macos/expired",
+    "macos/size_in_bytes",
+    "macos/digest",
+    "macos/name",
+    "macos/expires_at",
+    "macos/project-review-leak",
+    "macos/compiler-review-leak",
+    "iphone/expired",
+    "iphone/size_in_bytes",
+    "iphone/digest",
+    "iphone/name",
+    "iphone/expires_at",
+    "iphone/project-review-leak",
+    "iphone/compiler-review-leak",
+    "ipad/expired",
+    "ipad/size_in_bytes",
+    "ipad/digest",
+    "ipad/name",
+    "ipad/expires_at",
+    "ipad/project-review-leak",
+    "ipad/compiler-review-leak"
+  ],
+  "targets": [
+    {
+      "platform": "macos",
+      "job": {
+        "id": 121248112969,
+        "name": "D04 audit macos",
+        "conclusion": "failure"
+      },
+      "artifact": {
+        "id": 12609118697,
+        "name": "d04-macos-40219612607-1",
+        "size_in_bytes": 120689946,
+        "digest": "sha256:73092f137d636b4abe08c5dbe2fe1d7e21fc77c24850a53205afa6b21c7a1cd6",
+        "expires_at": "2026-11-24T18:19:44Z"
+      },
+      "zip_sha256": "73092f137d636b4abe08c5dbe2fe1d7e21fc77c24850a53205afa6b21c7a1cd6",
+      "program": {
+        "executable_sha256": "9cdf3c48dda1933bca57f7ebb3e0bab30fc7158414b0c7c9ccde33875ebb24e4",
+        "info_sha256": "af16af4b4a857fb2deb1d1f78f537e089ddfb422aaf27f633e257cf224cd4825",
+        "source": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+        "sdk_version": "3.41.0",
+        "page_theme": false
+      },
+      "checks": [
+        {
+          "label": "import",
+          "exit": 0,
+          "cases": [
+            {
+              "name": "test01ProductionBodyNamesAndActualEdgeTap()",
+              "result": "Passed",
+              "duration": "21s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "passed": true
+        },
+        {
+          "label": "normal",
+          "exit": 65,
+          "cases": [
+            {
+              "name": "test01DefaultShelfAndAccountDismissal()",
+              "result": "Passed",
+              "duration": "13s",
+              "steps": [],
+              "step_count": 0
+            },
+            {
+              "name": "test02DefaultReaderLowFrequencyJourney()",
+              "result": "Failed",
+              "duration": "1m 50s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "passed": false,
+          "screenshot_count": 30
+        },
+        {
+          "label": "original-compact",
+          "exit": 0,
+          "cases": [
+            {
+              "name": "test02CompactReaderActualTurnFontAndNotes()",
+              "result": "Passed",
+              "duration": "18s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "passed": true
+        }
+      ],
+      "audit_completed": false,
+      "problems": [
+        "normal: default journey incomplete"
+      ],
+      "findings": [
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].shelf",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].shelf",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].shelf",
+          "element": "_XCUI:FullScreenWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].shelf",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.choose",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.choose",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.choose",
+          "element": "_XCUI:FullScreenWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.choose",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "platform": "macos",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "library.import.picker",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-account-settings"
+        },
+        {
+          "platform": "macos",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "library.book.0|account.root",
+          "criterion": "overlap",
+          "verdict": "fail",
+          "expected": "可交互控件的布局框不互相重叠",
+          "actual": "可视区域重叠面积占较小控件 100%（原始重叠 100%，可视重叠 100%）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "在压缩布局中重新分配间距，避免控件互相覆盖",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-account-settings"
+        },
+        {
+          "platform": "macos",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "library.book.0|account.username",
+          "criterion": "overlap",
+          "verdict": "fail",
+          "expected": "可交互控件的布局框不互相重叠",
+          "actual": "可视区域重叠面积占较小控件 83%（原始重叠 83%，可视重叠 83%）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "在压缩布局中重新分配间距，避免控件互相覆盖",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-account-settings"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "_XCUI:ZoomWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "account.root",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "account.username",
+          "blocking": true
+        },
+        {
+          "platform": "macos",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "library.import.picker",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-before-account.done"
+        },
+        {
+          "platform": "macos",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "library.book.0|account.root",
+          "criterion": "overlap",
+          "verdict": "fail",
+          "expected": "可交互控件的布局框不互相重叠",
+          "actual": "可视区域重叠面积占较小控件 100%（原始重叠 100%，可视重叠 100%）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "在压缩布局中重新分配间距，避免控件互相覆盖",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-before-account.done"
+        },
+        {
+          "platform": "macos",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "library.book.0|account.username",
+          "criterion": "overlap",
+          "verdict": "fail",
+          "expected": "可交互控件的布局框不互相重叠",
+          "actual": "可视区域重叠面积占较小控件 83%（原始重叠 83%，可视重叠 83%）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "在压缩布局中重新分配间距，避免控件互相覆盖",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-before-account.done"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "_XCUI:ZoomWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "account.root",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "account.username",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-dismissed-focus-unobservable",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-dismissed-focus-unobservable",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-dismissed-focus-unobservable",
+          "element": "_XCUI:FullScreenWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-dismissed-focus-unobservable",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].keyboard-tab",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].keyboard-tab",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].keyboard-tab",
+          "element": "_XCUI:FullScreenWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].keyboard-tab",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].terminal",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].terminal",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].terminal",
+          "element": "_XCUI:FullScreenWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].terminal",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader",
+          "element": "_XCUI:FullScreenWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.next",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.next",
+          "element": "_XCUI:FullScreenWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.next",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].page-turned",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].page-turned",
+          "element": "_XCUI:FullScreenWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].page-turned",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.search",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.search",
+          "element": "_XCUI:FullScreenWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.search",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.search-dialog",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.search-dialog",
+          "element": "_XCUI:ZoomWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.search-dialog",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.search-dialog",
+          "element": "search.query",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-search.close",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-search.close",
+          "element": "_XCUI:ZoomWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-search.close",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-search.close",
+          "element": "search.query",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.search-dismissed-focus-unobservable",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.search-dismissed-focus-unobservable",
+          "element": "_XCUI:FullScreenWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.search-dismissed-focus-unobservable",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.navigation",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.navigation",
+          "element": "_XCUI:FullScreenWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.navigation",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.navigation-dialog",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.navigation-dialog",
+          "element": "_XCUI:ZoomWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.navigation-dialog",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-navigation.close",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-navigation.close",
+          "element": "_XCUI:ZoomWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-navigation.close",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.navigation-dismissed-focus-unobservable",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.navigation-dismissed-focus-unobservable",
+          "element": "_XCUI:FullScreenWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.navigation-dismissed-focus-unobservable",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.notes",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.notes",
+          "element": "_XCUI:FullScreenWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.notes",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.notes-dialog",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.notes-dialog",
+          "element": "_XCUI:ZoomWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.notes-dialog",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-notes.close",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-notes.close",
+          "element": "_XCUI:ZoomWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-notes.close",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.notes-dismissed-focus-unobservable",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.notes-dismissed-focus-unobservable",
+          "element": "_XCUI:FullScreenWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.notes-dismissed-focus-unobservable",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.more",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.more",
+          "element": "_XCUI:FullScreenWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.more",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].more-menu",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].more-menu",
+          "element": "_XCUI:FullScreenWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].more-menu",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.records",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.records",
+          "element": "_XCUI:FullScreenWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.records",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].records",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].records",
+          "element": "_XCUI:ZoomWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].records",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reading.close",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reading.close",
+          "element": "_XCUI:ZoomWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reading.close",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader-window-small",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader-window-small",
+          "element": "_XCUI:FullScreenWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader-window-small",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.back",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.back",
+          "element": "_XCUI:FullScreenWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.back",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].terminal",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].terminal",
+          "element": "_XCUI:CloseWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].terminal",
+          "element": "_XCUI:FullScreenWindow",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].terminal",
+          "element": "_XCUI:MinimizeWindow",
+          "blocking": true
+        }
+      ],
+      "default_ui_accepted": false,
+      "ax_semantics_accepted": false,
+      "dynamic_type_accepted": false,
+      "voiceover_accepted": false,
+      "physical_device_execution": false,
+      "destination": [
+        "platform=macOS",
+        "macos",
+        "macOS host",
+        "macOS"
+      ],
+      "system_content_sizes": {
+        "large": "pending: no platform-supported system large-font setting exercised"
+      },
+      "review_macros": [],
+      "unverified": [
+        "VoiceOver speech/rotor",
+        "physical iPhone/iPad",
+        "focus owner and restoration order",
+        "mobile hardware keyboard",
+        "macOS system large-font setting",
+        "system picker import (existing app fixture button used separately)",
+        "actual search query/result navigation (dialog reachability only)",
+        "text clipping inside labels requires visual review",
+        "full settings/theme: default page-theme OFF"
+      ],
+      "installed_library_hashes_location": "authenticated target ZIP report.json / installed_libraries",
+      "environments": [
+        {
+          "app_state": "runningForeground",
+          "device": "mac",
+          "kind": "environment",
+          "launch_arguments": [],
+          "metrics": {
+            "body_pt": 13,
+            "caption1_pt": 10,
+            "headline_pt": 13
+          },
+          "orientation": "macos-window",
+          "os": "Version 15.7.9 (Build 24G830)",
+          "platform": "macos"
+        },
+        {
+          "app_state": "runningForeground",
+          "device": "mac",
+          "kind": "environment",
+          "launch_arguments": [],
+          "metrics": {
+            "body_pt": 13,
+            "caption1_pt": 10,
+            "headline_pt": 13
+          },
+          "orientation": "macos-window",
+          "os": "Version 15.7.9 (Build 24G830)",
+          "platform": "macos"
+        }
+      ],
+      "runtime": "macOS 15.7.9 (24G830)"
+    },
+    {
+      "platform": "iphone",
+      "job": {
+        "id": 121248112719,
+        "name": "D04 audit iphone",
+        "conclusion": "failure"
+      },
+      "artifact": {
+        "id": 12609576718,
+        "name": "d04-iphone-40219612607-1",
+        "size_in_bytes": 144057687,
+        "digest": "sha256:79dc160ee4b48ad278642f1c7fff6450c93cf33f983487c4611417312cf09612",
+        "expires_at": "2026-11-24T18:25:31Z"
+      },
+      "zip_sha256": "79dc160ee4b48ad278642f1c7fff6450c93cf33f983487c4611417312cf09612",
+      "program": {
+        "executable_sha256": "b6efb976d75e2208c8bf4eab2d6a7fbc141f36cf976103b1790739aebd2b6524",
+        "info_sha256": "8d51c7f0e381c6779ac26dc6ae2975968a827c1b515e26514d6291632068bf16",
+        "source": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+        "sdk_version": "3.41.0",
+        "page_theme": false
+      },
+      "checks": [
+        {
+          "label": "import",
+          "exit": 0,
+          "cases": [
+            {
+              "name": "test01ProductionBodyNamesAndActualEdgeTap()",
+              "result": "Passed",
+              "duration": "1m 12s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "passed": true
+        },
+        {
+          "label": "normal",
+          "exit": 65,
+          "cases": [
+            {
+              "name": "test01DefaultShelfAndAccountDismissal()",
+              "result": "Passed",
+              "duration": "37s",
+              "steps": [],
+              "step_count": 0
+            },
+            {
+              "name": "test02DefaultReaderLowFrequencyJourney()",
+              "result": "Failed",
+              "duration": "49s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "passed": false,
+          "screenshot_count": 24
+        },
+        {
+          "label": "original-large",
+          "exit": 0,
+          "cases": [
+            {
+              "name": "test02CompactReaderActualTurnFontAndNotes()",
+              "result": "Passed",
+              "duration": "45s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "passed": true
+        },
+        {
+          "label": "large",
+          "exit": 65,
+          "cases": [
+            {
+              "name": "test01DefaultShelfAndAccountDismissal()",
+              "result": "Passed",
+              "duration": "25s",
+              "steps": [],
+              "step_count": 0
+            },
+            {
+              "name": "test02DefaultReaderLowFrequencyJourney()",
+              "result": "Failed",
+              "duration": "18s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "passed": false,
+          "screenshot_count": 7
+        }
+      ],
+      "audit_completed": false,
+      "problems": [
+        "normal: default journey incomplete",
+        "large: default journey incomplete"
+      ],
+      "findings": [
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].shelf",
+          "element": "library.refresh",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-shelf"
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].shelf",
+          "element": "account.sync.start",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-shelf"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].shelf",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.choose",
+          "element": "library.refresh",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-before-account.choose"
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.choose",
+          "element": "account.sync.start",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-before-account.choose"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.choose",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "account.done",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-account-settings"
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "account.local",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-account-settings"
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "account.open.f16ee30d-180c-4763-b634-5c9f358dc521",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-account-settings"
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "account.update.f16ee30d-180c-4763-b634-5c9f358dc521",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-account-settings"
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "account.connect",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-account-settings"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "account.root",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "account.username",
+          "blocking": true
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "account.done",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-before-account.done"
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "account.local",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-before-account.done"
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "account.open.f16ee30d-180c-4763-b634-5c9f358dc521",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-before-account.done"
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "account.update.f16ee30d-180c-4763-b634-5c9f358dc521",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-before-account.done"
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "account.connect",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-before-account.done"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "account.root",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "account.username",
+          "blocking": true
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-dismissed-focus-unobservable",
+          "element": "library.refresh",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-account-dismissed-focus-unobservable"
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-dismissed-focus-unobservable",
+          "element": "account.sync.start",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-account-dismissed-focus-unobservable"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-dismissed-focus-unobservable",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].shelf-landscape",
+          "element": "library.refresh",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-shelf-landscape"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].shelf-landscape",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].terminal",
+          "element": "library.refresh",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-terminal"
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].terminal",
+          "element": "account.sync.start",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-terminal"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].terminal",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader",
+          "element": "reader.more",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-reader"
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.next",
+          "element": "reader.more",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-before-reader.next"
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].page-turned",
+          "element": "reader.more",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-page-turned"
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.search",
+          "element": "reader.more",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-before-reader.search"
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.search-dialog",
+          "element": "search.close",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-reader.search-dialog"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.search-dialog",
+          "element": "search.query",
+          "blocking": true
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-search.close",
+          "element": "search.close",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-before-search.close"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-search.close",
+          "element": "search.query",
+          "blocking": true
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.search-dismissed-focus-unobservable",
+          "element": "reader.more",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-reader.search-dismissed-focus-unobservable"
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.navigation",
+          "element": "reader.more",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-before-reader.navigation"
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.navigation-dialog",
+          "element": "navigation.close",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-reader.navigation-dialog"
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-navigation.close",
+          "element": "navigation.close",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-before-navigation.close"
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.navigation-dismissed-focus-unobservable",
+          "element": "reader.more",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-reader.navigation-dismissed-focus-unobservable"
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.notes",
+          "element": "reader.more",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-before-reader.notes"
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.notes-dismissed-focus-unobservable",
+          "element": "reader.more",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-reader.notes-dismissed-focus-unobservable"
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.more",
+          "element": "reader.more",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-before-reader.more"
+        },
+        {
+          "platform": "iphone",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].terminal",
+          "element": "reader.more",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-terminal"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].shelf",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.choose",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "platform": "iphone",
+          "state": "large/-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "account.connect",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-account-settings"
+        },
+        {
+          "platform": "iphone",
+          "state": "large/-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "account.connect",
+          "criterion": "clipped",
+          "verdict": "fail",
+          "expected": "控件完整落在窗口内",
+          "actual": "frame={\"height\": 63.5, \"width\": 100.5, \"x\": 16.0, \"y\": 826.0} window={\"height\": 667, \"width\": 375, \"x\": 0, \"y\": 0}",
+          "severity": "major",
+          "blocking": true,
+          "fix": "为大字体/小窗口加滚动回退或压缩行距，避免控件溢出窗口",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-account-settings"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "account.root",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "account.username",
+          "blocking": true
+        },
+        {
+          "platform": "iphone",
+          "state": "large/-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "account.connect",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-before-account.done"
+        },
+        {
+          "platform": "iphone",
+          "state": "large/-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "account.connect",
+          "criterion": "clipped",
+          "verdict": "fail",
+          "expected": "控件完整落在窗口内",
+          "actual": "frame={\"height\": 63.5, \"width\": 100.5, \"x\": 16.0, \"y\": 826.0} window={\"height\": 667, \"width\": 375, \"x\": 0, \"y\": 0}",
+          "severity": "major",
+          "blocking": true,
+          "fix": "为大字体/小窗口加滚动回退或压缩行距，避免控件溢出窗口",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-before-account.done"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "account.root",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "account.username",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-dismissed-focus-unobservable",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "platform": "iphone",
+          "state": "large/-[DefaultUITests test01DefaultShelfAndAccountDismissal].shelf-landscape",
+          "element": "library.book.0",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-shelf-landscape"
+        },
+        {
+          "platform": "iphone",
+          "state": "large/-[DefaultUITests test01DefaultShelfAndAccountDismissal].shelf-landscape",
+          "element": "library.book.0",
+          "criterion": "clipped",
+          "verdict": "fail",
+          "expected": "控件完整落在窗口内",
+          "actual": "frame={\"height\": 142.0, \"width\": 651.0, \"x\": 8.0, \"y\": 349.0} window={\"height\": 375, \"width\": 667, \"x\": 0, \"y\": 0}",
+          "severity": "major",
+          "blocking": true,
+          "fix": "为大字体/小窗口加滚动回退或压缩行距，避免控件溢出窗口",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-shelf-landscape"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].shelf-landscape",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].terminal",
+          "element": "library.search",
+          "blocking": true
+        }
+      ],
+      "default_ui_accepted": false,
+      "ax_semantics_accepted": false,
+      "dynamic_type_accepted": false,
+      "voiceover_accepted": false,
+      "physical_device_execution": false,
+      "destination": [
+        "platform=iOS Simulator,id=48B2DA2E-AF18-4E36-BB25-B25969A4EBCF",
+        "48B2DA2E-AF18-4E36-BB25-B25969A4EBCF",
+        "iPhone SE (3rd generation)",
+        "com.apple.CoreSimulator.SimRuntime.iOS-26-2"
+      ],
+      "system_content_sizes": {
+        "normal": "medium",
+        "large": "accessibility-extra-extra-extra-large"
+      },
+      "review_macros": [],
+      "unverified": [
+        "VoiceOver speech/rotor",
+        "physical iPhone/iPad",
+        "focus owner and restoration order",
+        "mobile hardware keyboard",
+        "macOS system large-font setting",
+        "system picker import (existing app fixture button used separately)",
+        "actual search query/result navigation (dialog reachability only)",
+        "text clipping inside labels requires visual review",
+        "full settings/theme: default page-theme OFF"
+      ],
+      "installed_library_hashes_location": "authenticated target ZIP report.json / installed_libraries",
+      "environments": [
+        {
+          "app_state": "runningForeground",
+          "device": "iPhone",
+          "idiom": "UIUserInterfaceIdiom(rawValue: 0)",
+          "kind": "environment",
+          "launch_arguments": [],
+          "metrics": {
+            "body_pt": 16,
+            "caption1_pt": 11,
+            "headline_pt": 16
+          },
+          "orientation": "portrait",
+          "os": "Version 26.2 (Build 23C54)",
+          "platform": "iphone",
+          "screen_points": [
+            320,
+            480
+          ],
+          "screen_scale": 2
+        },
+        {
+          "app_state": "runningForeground",
+          "device": "iPhone",
+          "idiom": "UIUserInterfaceIdiom(rawValue: 0)",
+          "kind": "environment",
+          "launch_arguments": [],
+          "metrics": {
+            "body_pt": 16,
+            "caption1_pt": 11,
+            "headline_pt": 16
+          },
+          "orientation": "portrait",
+          "os": "Version 26.2 (Build 23C54)",
+          "platform": "iphone",
+          "screen_points": [
+            320,
+            480
+          ],
+          "screen_scale": 2
+        },
+        {
+          "app_state": "runningForeground",
+          "device": "iPhone",
+          "idiom": "UIUserInterfaceIdiom(rawValue: 0)",
+          "kind": "environment",
+          "launch_arguments": [],
+          "metrics": {
+            "body_pt": 53,
+            "caption1_pt": 43,
+            "headline_pt": 53
+          },
+          "orientation": "portrait",
+          "os": "Version 26.2 (Build 23C54)",
+          "platform": "iphone",
+          "screen_points": [
+            320,
+            480
+          ],
+          "screen_scale": 2
+        },
+        {
+          "app_state": "runningForeground",
+          "device": "iPhone",
+          "idiom": "UIUserInterfaceIdiom(rawValue: 0)",
+          "kind": "environment",
+          "launch_arguments": [],
+          "metrics": {
+            "body_pt": 53,
+            "caption1_pt": 43,
+            "headline_pt": 53
+          },
+          "orientation": "portrait",
+          "os": "Version 26.2 (Build 23C54)",
+          "platform": "iphone",
+          "screen_points": [
+            320,
+            480
+          ],
+          "screen_scale": 2
+        }
+      ],
+      "runtime": "iOS 26.2 (23C54)"
+    },
+    {
+      "platform": "ipad",
+      "job": {
+        "id": 121248112904,
+        "name": "D04 audit ipad",
+        "conclusion": "failure"
+      },
+      "artifact": {
+        "id": 12609099697,
+        "name": "d04-ipad-40219612607-1",
+        "size_in_bytes": 166449664,
+        "digest": "sha256:df6c0eb978604e14ee1fa760c59552ab1f0f74cebdc95f0c758071b7cf313efc",
+        "expires_at": "2026-11-24T18:41:54Z"
+      },
+      "zip_sha256": "df6c0eb978604e14ee1fa760c59552ab1f0f74cebdc95f0c758071b7cf313efc",
+      "program": {
+        "executable_sha256": "a810c1f4dfdb3f72fcd15b29fcc20afc2dcd3d45b5d8d6e6ba1c276704231151",
+        "info_sha256": "8d51c7f0e381c6779ac26dc6ae2975968a827c1b515e26514d6291632068bf16",
+        "source": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+        "sdk_version": "3.41.0",
+        "page_theme": false
+      },
+      "checks": [
+        {
+          "label": "import",
+          "exit": 0,
+          "cases": [
+            {
+              "name": "test01ProductionBodyNamesAndActualEdgeTap()",
+              "result": "Passed",
+              "duration": "1m 1s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "passed": true
+        },
+        {
+          "label": "normal",
+          "exit": 65,
+          "cases": [
+            {
+              "name": "test01DefaultShelfAndAccountDismissal()",
+              "result": "Passed",
+              "duration": "1m 2s",
+              "steps": [],
+              "step_count": 0
+            },
+            {
+              "name": "test02DefaultReaderLowFrequencyJourney()",
+              "result": "Failed",
+              "duration": "1m 10s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "passed": false,
+          "screenshot_count": 24
+        },
+        {
+          "label": "original-large",
+          "exit": 0,
+          "cases": [
+            {
+              "name": "test02CompactReaderActualTurnFontAndNotes()",
+              "result": "Passed",
+              "duration": "41s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "passed": true
+        },
+        {
+          "label": "large",
+          "exit": 65,
+          "cases": [
+            {
+              "name": "test01DefaultShelfAndAccountDismissal()",
+              "result": "Passed",
+              "duration": "27s",
+              "steps": [],
+              "step_count": 0
+            },
+            {
+              "name": "test02DefaultReaderLowFrequencyJourney()",
+              "result": "Failed",
+              "duration": "22s",
+              "steps": [],
+              "step_count": 0
+            }
+          ],
+          "passed": false,
+          "screenshot_count": 7
+        }
+      ],
+      "audit_completed": false,
+      "problems": [
+        "normal: default journey incomplete",
+        "large: default journey incomplete"
+      ],
+      "findings": [
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].shelf",
+          "element": "library.refresh",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-shelf"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].shelf",
+          "element": "account.sync.start",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-shelf"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].shelf",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.choose",
+          "element": "library.refresh",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-before-account.choose"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.choose",
+          "element": "account.sync.start",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-before-account.choose"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.choose",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "account.done",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-account-settings"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "account.local",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-account-settings"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "account.open.f3d1c38f-87e5-480a-85bf-2da34cc0e10a",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-account-settings"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "account.update.f3d1c38f-87e5-480a-85bf-2da34cc0e10a",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-account-settings"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "account.connect",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-account-settings"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "account.root",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "account.username",
+          "blocking": true
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "account.done",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-before-account.done"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "account.local",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-before-account.done"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "account.open.f3d1c38f-87e5-480a-85bf-2da34cc0e10a",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-before-account.done"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "account.update.f3d1c38f-87e5-480a-85bf-2da34cc0e10a",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-before-account.done"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "account.connect",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-before-account.done"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "account.root",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "account.username",
+          "blocking": true
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-dismissed-focus-unobservable",
+          "element": "library.refresh",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-account-dismissed-focus-unobservable"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-dismissed-focus-unobservable",
+          "element": "account.sync.start",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-account-dismissed-focus-unobservable"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-dismissed-focus-unobservable",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].shelf-landscape",
+          "element": "library.refresh",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-shelf-landscape"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].shelf-landscape",
+          "element": "account.sync.start",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-shelf-landscape"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].shelf-landscape",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].terminal",
+          "element": "library.refresh",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-terminal"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test01DefaultShelfAndAccountDismissal].terminal",
+          "element": "account.sync.start",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-terminal"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].terminal",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader",
+          "element": "reader.more",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-reader"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.next",
+          "element": "reader.more",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-before-reader.next"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].page-turned",
+          "element": "reader.more",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-page-turned"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.search",
+          "element": "reader.more",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-before-reader.search"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.search-dialog",
+          "element": "search.close",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-reader.search-dialog"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.search-dialog",
+          "element": "search.query",
+          "blocking": true
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-search.close",
+          "element": "search.close",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-before-search.close"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-search.close",
+          "element": "search.query",
+          "blocking": true
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.search-dismissed-focus-unobservable",
+          "element": "reader.more",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-reader.search-dismissed-focus-unobservable"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.navigation",
+          "element": "reader.more",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-before-reader.navigation"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.navigation-dialog",
+          "element": "navigation.close",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-reader.navigation-dialog"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-navigation.close",
+          "element": "navigation.close",
+          "criterion": "target-size",
+          "verdict": "fail",
+          "expected": "控件不小于 24 pt（WCAG 2.5.8）",
+          "actual": "最小边 19.5 pt",
+          "severity": "major",
+          "blocking": true,
+          "fix": "扩大点击区域（.contentShape / padding / frame(minWidth:minHeight:)）",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-before-navigation.close"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.navigation-dismissed-focus-unobservable",
+          "element": "reader.more",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-reader.navigation-dismissed-focus-unobservable"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.notes",
+          "element": "reader.more",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-before-reader.notes"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].reader.notes-dismissed-focus-unobservable",
+          "element": "reader.more",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-reader.notes-dismissed-focus-unobservable"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].before-reader.more",
+          "element": "reader.more",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-before-reader.more"
+        },
+        {
+          "platform": "ipad",
+          "state": "normal/-[DefaultUITests test02DefaultReaderLowFrequencyJourney].terminal",
+          "element": "reader.more",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test02DefaultReaderLowFrequencyJourney]-terminal"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].shelf",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.choose",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "platform": "ipad",
+          "state": "large/-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "account.connect",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-account-settings"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "account.root",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-settings",
+          "element": "account.username",
+          "blocking": true
+        },
+        {
+          "platform": "ipad",
+          "state": "large/-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "account.connect",
+          "criterion": "hittable",
+          "verdict": "fail",
+          "expected": "启用中的控件可被命中",
+          "actual": "isHittable=false（可能被遮挡或在窗口外）",
+          "severity": "major",
+          "blocking": true,
+          "fix": "",
+          "screenshot": "d04--[DefaultUITests test01DefaultShelfAndAccountDismissal]-before-account.done"
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "account.root",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].before-account.done",
+          "element": "account.username",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].account-dismissed-focus-unobservable",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].shelf-landscape",
+          "element": "library.search",
+          "blocking": true
+        },
+        {
+          "criterion": "name",
+          "verdict": "fail",
+          "state": "-[DefaultUITests test01DefaultShelfAndAccountDismissal].terminal",
+          "element": "library.search",
+          "blocking": true
+        }
+      ],
+      "default_ui_accepted": false,
+      "ax_semantics_accepted": false,
+      "dynamic_type_accepted": false,
+      "voiceover_accepted": false,
+      "physical_device_execution": false,
+      "destination": [
+        "platform=iOS Simulator,id=9D9BF050-F6F5-4D32-84C0-4B7AC57F63EF",
+        "9D9BF050-F6F5-4D32-84C0-4B7AC57F63EF",
+        "iPad mini (A17 Pro)",
+        "com.apple.CoreSimulator.SimRuntime.iOS-26-2"
+      ],
+      "system_content_sizes": {
+        "normal": "medium",
+        "large": "accessibility-extra-extra-extra-large"
+      },
+      "review_macros": [],
+      "unverified": [
+        "VoiceOver speech/rotor",
+        "physical iPhone/iPad",
+        "focus owner and restoration order",
+        "mobile hardware keyboard",
+        "macOS system large-font setting",
+        "system picker import (existing app fixture button used separately)",
+        "actual search query/result navigation (dialog reachability only)",
+        "text clipping inside labels requires visual review",
+        "full settings/theme: default page-theme OFF"
+      ],
+      "installed_library_hashes_location": "authenticated target ZIP report.json / installed_libraries",
+      "environments": [
+        {
+          "app_state": "runningForeground",
+          "device": "iPad",
+          "idiom": "UIUserInterfaceIdiom(rawValue: 0)",
+          "kind": "environment",
+          "launch_arguments": [],
+          "metrics": {
+            "body_pt": 16,
+            "caption1_pt": 11,
+            "headline_pt": 16
+          },
+          "orientation": "portrait",
+          "os": "Version 26.2 (Build 23C54)",
+          "platform": "ipad",
+          "screen_points": [
+            320,
+            480
+          ],
+          "screen_scale": 2
+        },
+        {
+          "app_state": "runningForeground",
+          "device": "iPad",
+          "idiom": "UIUserInterfaceIdiom(rawValue: 0)",
+          "kind": "environment",
+          "launch_arguments": [],
+          "metrics": {
+            "body_pt": 16,
+            "caption1_pt": 11,
+            "headline_pt": 16
+          },
+          "orientation": "portrait",
+          "os": "Version 26.2 (Build 23C54)",
+          "platform": "ipad",
+          "screen_points": [
+            320,
+            480
+          ],
+          "screen_scale": 2
+        },
+        {
+          "app_state": "runningForeground",
+          "device": "iPad",
+          "idiom": "UIUserInterfaceIdiom(rawValue: 0)",
+          "kind": "environment",
+          "launch_arguments": [],
+          "metrics": {
+            "body_pt": 53,
+            "caption1_pt": 43,
+            "headline_pt": 53
+          },
+          "orientation": "portrait",
+          "os": "Version 26.2 (Build 23C54)",
+          "platform": "ipad",
+          "screen_points": [
+            320,
+            480
+          ],
+          "screen_scale": 2
+        },
+        {
+          "app_state": "runningForeground",
+          "device": "iPad",
+          "idiom": "UIUserInterfaceIdiom(rawValue: 0)",
+          "kind": "environment",
+          "launch_arguments": [],
+          "metrics": {
+            "body_pt": 53,
+            "caption1_pt": 43,
+            "headline_pt": 53
+          },
+          "orientation": "portrait",
+          "os": "Version 26.2 (Build 23C54)",
+          "platform": "ipad",
+          "screen_points": [
+            320,
+            480
+          ],
+          "screen_scale": 2
+        }
+      ],
+      "runtime": "iOS 26.2 (23C54)"
+    }
+  ],
+  "accepted": false,
+  "complete_product": false,
+  "package": "D04",
+  "audit_completed": false,
+  "tested_harness_sha": "0b5e29fa3458327828e1803258a93f88a866aaca",
+  "status": "terminal_failure_after_three_rounds",
+  "verifier_job": {
+    "id": 121256918613,
+    "conclusion": "failure",
+    "authentication_completed": true,
+    "rejection": "real target audit incomplete; acceptance remains false"
+  },
+  "physical_device_execution": false,
+  "voiceover_accepted": false,
+  "summary_artifact": {
+    "id": 12610076633,
+    "name": "d04-validation-40219612607-1",
+    "size_in_bytes": 5281,
+    "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12610076633",
+    "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12610076633/zip",
+    "expired": false,
+    "created_at": "2026-10-25T18:42:43Z",
+    "expires_at": "2026-11-24T18:42:42Z",
+    "updated_at": "2026-10-25T18:42:43Z",
+    "digest": "sha256:67e58aaa9a7a67140c87487897303ba807d2ae99b1397c1310050dfa03bb6b17",
+    "workflow_run": {
+      "id": 40219612607,
+      "repository_id": 1421442522,
+      "head_repository_id": 1421442522,
+      "head_branch": "codex/reader-final-d04",
+      "head_sha": "0b5e29fa3458327828e1803258a93f88a866aaca"
+    },
+    "original_zip_rehashed_by_downstream_job": false,
+    "scope": "upload digest plus API metadata only; target ZIPs separately downloaded/rehashed in Actions"
+  },
+  "interpretation": "Raw name/hittable/clipped findings are conservative XCUI observations, not proven spoken-name failures or user-unreachable controls. See README root followups.",
+  "harness_failures": {
+    "macos": "DefaultUITests.swift shelf helper sees stale reader.back after first return and waits for it again. Terminal AX is already shelf. No product navigation failure proven.",
+    "mobile_normal": "reader.more AX wrapper isHittable=false. Existing ReadingUITests.records() documents UIKit Menu limitation and measured-native-button method; D04 does not bypass.",
+    "mobile_large": "Unmodified G16 recorder isHittable query throws activation-point error for offscreen font control; audit interrupted."
+  }
+}

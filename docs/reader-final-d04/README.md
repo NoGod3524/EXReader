@@ -38,3 +38,37 @@ iPhone original normal/large regressions pass. New normal journey reaches page t
 Geometry/name output is raw conservative audit evidence: empty XCUI label alone does not prove lack of a spoken name (value/placeholder may carry it), offscreen frames alone do not prove unrecoverable clipping, and false Menu isHittable alone does not prove real taps fail. No such observation is promoted to VoiceOver or full AX acceptance.
 
 Final verifier additionally compares uploaded executable/Info.plist bytes directly to reported hashes/source/version/page-theme and scans retained text logs/manifests for concrete credential patterns. This is a bounded scan, not proof of absence of all possible secrets.
+
+## Final result — failed audit, authenticated evidence
+
+**No product acceptance. Three failed rounds exhausted; no further CI retry.** Final tested harness `0b5e29fa3458327828e1803258a93f88a866aaca`, [run40219612607/attempt1](https://github.com/NoGod3524/EXReader/actions/runs/40219612607). All three actual default builds have no review macros, page-theme OFF, SDK3.41. Full machine record: [validation.json](validation.json); retained earlier runs: [retained-runs.json](retained-runs.json).
+
+| Target / job | Actual checks | Incomplete scope |
+|---|---|---|
+| macOS15.7.9 /121248112969 | Both original production-access cases pass; new shelf/account/Tab-Escape case passes. Reader turns page, opens/closes search/TOC/notes and More→records, resizes window900×516→500×516, returns to shelf. 30 exported default-audit PNGs. | New journey fails in post-return helper race: `shelf()` observes stale reader.back then waits again after it disappears. Terminal AX already has library.title. Not proof of broken product back navigation. |
+| iPhone SE3 /iOS26.2 /121248112719 | Both original cases pass; new shelf/account case passes at normal+large size; normal reader turns page and opens/closes search/TOC/notes. Default-audit PNGs24 normal+7 large. | Direct reader.more hit-test fails at new test line62 (known Menu wrapper limitation); large recorder query throws at original A11yAuditSupport.swift:284 for font.decrease. No records-path/default-large-journey completion. |
+| iPad mini A17Pro /iOS26.2 /121248112904 | Same named original and shelf checks pass; normal reader dialogs reached. Default-audit PNGs24 normal+7 large. | Same Menu wrapper limitation; large recorder activation-point exception for font.increase. |
+
+The 16 selected XCTest cases comprise **11 passed /5 failed** in this one source/run/attempt; this count is not a full product test suite. Every target's `audit_completed`, `default_ui_accepted`, `ax_semantics_accepted`, `dynamic_type_accepted`, `voiceover_accepted` remains false. Mobile system setting readback is medium→accessibility-extra-extra-extra-large; runner body font16→53pt, caption11→43pt. This proves system fixture application, not complete large-font acceptance. Mac window-size observation is not system font-size coverage.
+
+### Authenticated original target artifacts
+
+Verifier job **121256918613** downloaded all three original ZIPs in Actions, recomputed bytes/SHA-256, checked unique ID/name/expiry/same source/run/attempt/upstream job, every manifest file, actual executable+Info.plist bytes, actual project/compiler no-review conditions, and bounded text credential patterns. **21 injected negatives rejected**. It then failed on incomplete target audits; no fail-to-green conversion.
+
+| Artifact | Bytes | SHA-256 | Expiry UTC |
+|---|---:|---|---|
+| mac12609118697 |120689946|73092f137d636b4abe08c5dbe2fe1d7e21fc77c24850a53205afa6b21c7a1cd6|2026-11-24T18:19:44Z|
+| phone12609576718 |144057687|79dc160ee4b48ad278642f1c7fff6450c93cf33f983487c4611417312cf09612|2026-11-24T18:25:31Z|
+| pad12609099697 |166449664|df6c0eb978604e14ee1fa760c59552ab1f0f74cebdc95f0c758071b7cf313efc|2026-11-24T18:41:54Z|
+
+Actual executable hashes: Mac `9cdf3c48dda1933bca57f7ebb3e0bab30fc7158414b0c7c9ccde33875ebb24e4`; iPhone `b6efb976d75e2208c8bf4eab2d6a7fbc141f36cf976103b1790739aebd2b6524`; iPad `a810c1f4dfdb3f72fcd15b29fcc20afc2dcd3d45b5d8d6e6ba1c276704231151`. Installed SDK/product library hashes and entitlements output are in each authenticated target report/artifact. The summary artifact12610076633 has5281 bytes, upload/API digest67e58aaa9a7a67140c87487897303ba807d2ae99b1397c1310050dfa03bb6b17, expiry2026-11-24T18:42:42Z; unlike target ZIPs, this final verifier output has no downstream original-byte rehash and is explicitly metadata-only.
+
+### Exact root follow-ups, not production changes
+
+1. Own driver `tests/reader_final_d04/accessibility/DefaultUITests.swift:72–77,130`: synchronize the first return before invoking shelf helper; preserve terminal failure evidence. Current Mac already returns, so do not diagnose a product defect from this race.
+2. For mobile Menu, inspect existing `tests/apple_host/reading/ui/ReadingUITests.swift:53–71`; design a separately authorized observable native-trigger audit, retaining direct-wrapper failure. Do not equate AX isHittable=false to failed real taps.
+3. Design a separately versioned AX recorder that records unsupported offscreen hit-testing as an explicit coverage gap before querying live hit points; do not edit G16 or silently swallow its current exception.
+4. Review measured small target frames and placeholder/name semantics in `HostViews.swift` library toolbar and `HostAccountViews.swift` chooser against actual screen-reader/native hit regions. Raw empty-label/geometry findings are not final spoken-name or actual-touch conclusions.
+5. VoiceOver, true iPhone/iPad, mobile hardware keyboard, focus restoration owner/order, system-picker import, Mac system font-size, full large-reader/menu/records/settings clipping/overlap/scroll review and search-result navigation remain pending. No final six-platform acceptance.
+
+The docs-only seal uses `[skip ci]`; its parent is the tested harness. It changes only README, validation records, retained-runs record and HANDOFF-RESULT.md. No production/source/harness changed after final tested SHA.
