@@ -167,7 +167,7 @@ end
     # regression uses the production semantic tree without debug identities.
     conditions << 'EXR_APPLE_HOST_REVIEW' unless test_directory.include?('/accessibility/')
     if ARGV[2]
-      review = if test_directory.include?('/shelf/')
+      review = if test_directory.include?('/shelf/') || test_directory.include?('/page_theme/fast_import_ui')
         'EXR_APPLE_SHELF_REVIEW'
       elsif test_directory.include?('/account/')
         'EXR_APPLE_ACCOUNT_REVIEW'
