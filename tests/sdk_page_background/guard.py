@@ -3,10 +3,21 @@ import os
 from pathlib import Path
 import subprocess
 
-BASE = '9854061be331fe603a1822d9b2b36ee357154927'
+BASE = 'cdfe48231853d6e70fba2c41b42bdd187155901a'
+FROZEN = '9854061be331fe603a1822d9b2b36ee357154927'
+CANDIDATE = 'edddc463c06ed5731195cdb8f06b2df6dff7699e'
 assert os.environ.get('GITHUB_ACTIONS') == 'true'
 assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip() == os.environ['GITHUB_SHA']
 subprocess.run(['git', 'merge-base', '--is-ancestor', BASE, 'HEAD'], check=True)
+subprocess.run(['git', 'merge-base', '--is-ancestor', FROZEN, 'HEAD'], check=True)
+# Release tooling and numeric budgets came from the accepted default-branch
+# foundation, whose SDK is still byte-for-byte the original frozen version.
+protected = ['src', 'include', 'cmake', 'CMakeLists.txt', 'tests/fixtures', 'bindings']
+subprocess.run(['git', 'diff', '--exit-code', FROZEN, BASE, '--', *protected], check=True)
+subprocess.run(['git', 'diff', '--exit-code', CANDIDATE, 'HEAD', '--', *protected], check=True)
+subprocess.run(['git', 'diff', '--exit-code', BASE, 'HEAD', '--', 'tests/reading_real/budgets.json',
+                'tests/reading_real/contract.json', 'tools/reading_corpus/real-v1.json',
+                '.github/workflows/native.yml', '.github/workflows/reliability.yml'], check=True)
 paths = subprocess.check_output(['git', 'diff', '--name-only', BASE, 'HEAD'], text=True).splitlines()
 direct = {'src/raster.c', 'include/exr/render.h', 'include/exr/base.h', 'CMakeLists.txt', 'cmake/versions.cmake',
           '.github/workflows/sdk-page-background.yml', '.github/workflows/sdk-page-background-mobile.yml',

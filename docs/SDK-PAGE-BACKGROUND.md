@@ -19,3 +19,11 @@ Linux初轮在Actions重新构建原冻结SDK，安装两个版本并分别编�
 三个原工件有效期至 `2027-01-23T05:32:45Z`。认证汇总工件 `12588313157`，1287字节，SHA-256 `8f95d1304cf63d325513b0f21d049b38e3edab73784618ece104299c31a85c95`。三平台原API位图SHA-256均 `afac9ce14aea617710dda0444e0914b724290716c4fe49f77cb0d92a68f50b41`，每平台冻结及候选消费者各自的实际程序散列保存在汇总报告中。
 
 Android、iPhone/iPad、宿主真实控件与原六包/可靠性/性能门禁仍须各自实测。共享模块使用原SDK版本构造parser身份，3.41新建记录通过不等于3.40旧记录迁移通过；旧库重开/锚点身份兼容尚未授予。仅SDK消费者的EXACT版本声明随新SDK更新，旧3.40声明和原证据仍保留在冻结提交中。
+
+## 移动端与原门禁的后续结果
+
+移动端受测source `1180d9ce9b40cf30e1b9796ddb5392cf3a18215c` / [40167198635](https://github.com/NoGod3524/EXReader/actions/runs/40167198635) attempt1，Android API34 x86_64、iPhone/iPad arm64模拟器三生产者及严格ZIP认证均success。各自在同目标重新构建并安装冻结SDK与候选，执行未改的同一probe，核实际安装程序hash和12页原位图一致。没有物理设备/宿主主题UI授予。首轮ba1fc111/40167048953在交叉编译消费者查找安装Config时失败，1180仅修显式EXReader_DIR和查找根，不改SDK或probe；原失败保留。
+
+原六份reading-core/library的独立包门禁在source `ba1fc1116b7080fcaba163856387410a54d340e6` 的Linux [40167143220](https://github.com/NoGod3524/EXReader/actions/runs/40167143220) 与Windows/macOS [40167144549](https://github.com/NoGod3524/EXReader/actions/runs/40167144549) 均success，各自产生未发布候选。它们不替代完整reading-required门禁。
+
+完整门禁1180/[40167529130](https://github.com/NoGod3524/EXReader/actions/runs/40167529130) 保留失败：原985起点没有后续正式冻结预算，performance在构建前拒绝；R2对当前下载的pg84原件散列不符而拒绝，未换语料或修改预期。已普通合入已接纳默认分支固定 `cdfe48231853d6e70fba2c41b42bdd187155901a` 的原门禁工具/原冻结预算，生产SDK树仍逐字等eddd；守卫同时核foundation的SDK仍等985、预算/合同/清单仍等foundation。R2原始冻结字节来源问题仍单独处理，不能授予完整新SDK。
