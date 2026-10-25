@@ -23,12 +23,18 @@
     "accepted": false
   },
   "next_candidate": {
-    "production_baseline": "84a69b0e1e8ab8407042a68d97ea3f2d1591a887",
+    "production_baseline": "2c5a6cbb087c43abd7643e0085b3300fde95f125",
     "gtk_owner_delivery": "2df6040666635bcd7b0349b035b8f4885757fdd0",
     "owner_fault_scenarios": 4,
     "accepted": false,
-    "state": "unverified_production_and_focus_observer_candidate_with_original_program_diagnostic",
-    "diagnostic_run": 40161497966,
+    "state": "apple_records_candidate_merged_pending_retained_regression_fix_and_final_common_source_run",
+    "apple_records_candidate": "25eeb6aaccdc50e670f0aaea73631818bc0551f8",
+    "gtk_navigation_driver": "600ef981fb44acd91dca618850a25d1725de18f7",
+    "diagnostic_run": 40162074331,
+    "diagnostic_source": "cb7497ddb73ccc87efb3be4fb8b53edaa6715d7f",
+    "diagnostic_program_source": "e4356a6e13223469fdf3b2f3d5171a6e99ab10a6",
+    "diagnostic_navigation_checks": 29,
+    "earlier_diagnostic_failures": [40161497966, 40161675780],
     "diagnostic_does_not_grant_current_production": true
   },
   "tested_source": "15926e56034e26916b1e585cd9d907825379f17f",

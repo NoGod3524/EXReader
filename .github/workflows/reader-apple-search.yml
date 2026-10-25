@@ -21,7 +21,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Authenticate exact common-source host merge
+        if: github.ref_name == 'codex/reader-hosts-integration'
+        run: python3 tests/reader_hosts_integration/guard.py
       - name: Require fixed SDK schema and tested F1 module
+        if: github.ref_name != 'codex/reader-hosts-integration'
         run: |
           git diff --exit-code "$SDK_BASELINE" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
           git diff --exit-code a6d7dd81eef36e83e004fdc381a565a2ffee5462 HEAD -- apps/reader/store/001_catalog.sql

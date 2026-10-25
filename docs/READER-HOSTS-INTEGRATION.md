@@ -2,6 +2,10 @@
 
 ## 最新共同轮与后续候选
 
+原程序目录诊断最终 run `40162074331` 通过29项，包括实际扫描中关闭父窗口。程序仍为 `e4356a6e` 工件中的原始二进制，测试 source 为 `cb7497dd`；初两轮诊断 `40161497966`、`40161675780` 的失败保留。窄交付 `600ef981` 只修目录输入驱动：读取实时 AT-SPI 主窗口焦点，再要求新 action、可见扫描阶段及非零 poll，保留全部业务断言。
+
+生产候选已普通合入 Apple records `25eeb6aa`，共同基点 `2c5a6cbb`，尚未授予共同源码。其独立 records full run `40160552435` 已通过；旧 WP13 回归随后发现 iPhone 横屏选文关闭按钮被新增按钮挤出屏幕，Apple owner 正修复并重跑原断言。共同分支为原六套 Apple workflow 增加精确来源守卫入口，保留原分支守卫及全部构建、UI、工件认证。Actions额外核对六文件除守卫入口外与固定原版逐项相同。
+
 source `e4356a6e13223469fdf3b2f3d5171a6e99ab10a6` / run `40159425518` 已终态 failure。
 本轮最终认证确认三桌面18包组合和Windows搜索/目录/records32及其原回归；GTK目录 required step 失败，不能称为仅两项palette失败。
 GTK新批范围的包内认证已核 UI27、原668、review4、后端684、真实receipt分配故障3场景/2次及records30；保留目录失败，strict仍为false。

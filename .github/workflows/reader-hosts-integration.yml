@@ -7,7 +7,7 @@ on:
       verify_run:
         type: string
         default: ''
-        description: Read a preserved run, or nav:<run> to diagnose its original GTK binary without acceptance
+        description: syntax for input checks only, a preserved run, or nav:<run> for original GTK binary diagnostics
 permissions:
   contents: read
 defaults:
@@ -41,6 +41,7 @@ jobs:
           PY
           python3 tests/reader_hosts_integration/final.py --self-test
           python3 tests/reader_hosts_integration/aggregate.py windows --protocol-selftest
+          python3 tests/reader_hosts_integration/check_apple_workflows.py
   compose:
     if: ${{ github.event.inputs.verify_run == '' }}
     needs: pin
@@ -1045,7 +1046,7 @@ jobs:
   inspect:
     name: read one preserved common-source run without acceptance
     needs: pin
-    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.verify_run != '' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.verify_run != '' && github.event.inputs.verify_run != 'syntax' }}
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     permissions:
