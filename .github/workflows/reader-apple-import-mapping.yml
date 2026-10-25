@@ -7,8 +7,8 @@ permissions:
   contents: read
   actions: read
 env:
-  EXR_APPLE_SDK_VERSION: ${{ github.ref_name == 'codex/reader-apple-page-theme' && '3.41.0' || '3.40.0' }}
-  EXR_APPLE_PAGE_THEME: ${{ github.ref_name == 'codex/reader-apple-page-theme' && 'ON' || 'OFF' }}
+  EXR_APPLE_SDK_VERSION: ${{ github.ref_name == 'codex/reader-apple-hosts-final' && '3.41.0' || '3.40.0' }}
+  EXR_APPLE_PAGE_THEME: ${{ github.ref_name == 'codex/reader-apple-hosts-final' && 'ON' || 'OFF' }}
   SDK_BASELINE: 9854061be331fe603a1822d9b2b36ee357154927
 jobs:
   sdk:
@@ -27,10 +27,10 @@ jobs:
         if: github.ref_name == 'codex/reader-hosts-integration'
         run: python3 tests/reader_hosts_integration/guard.py
       - name: Authenticate isolated SDK3.41 Apple page-theme candidate
-        if: github.ref_name == 'codex/reader-apple-page-theme'
+        if: github.ref_name == 'codex/reader-apple-hosts-final'
         run: python3 tests/apple_host/page_theme/guard.py
       - name: Keep all eight frozen SDK trees and shared bindings unchanged
-        if: github.ref_name != 'codex/reader-hosts-integration' && github.ref_name != 'codex/reader-apple-page-theme'
+        if: github.ref_name != 'codex/reader-hosts-integration' && github.ref_name != 'codex/reader-apple-hosts-final'
         run: git diff --exit-code "$SDK_BASELINE" HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
       - name: Build the unchanged public SDK
         run: |

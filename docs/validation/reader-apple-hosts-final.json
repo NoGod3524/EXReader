@@ -1,0 +1,959 @@
+{
+  "accepted": true,
+  "branch": "codex/reader-apple-hosts-final",
+  "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877",
+  "post_merge_base": "902a73bd9984649000d63e96d5056b16daf28c85",
+  "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "old_sdk_source": "9854061be331fe603a1822d9b2b36ee357154927",
+  "module_source": "f680aeaddfb1ecc67ead353554f5b91a5703f72f",
+  "publication_delivery": "897f8973c1a8c74fa5aaf9a470d02e6914faeded",
+  "parser_delivery": "e8ed25c1cd7ccb33405611e27f9ad47fba8c9e34",
+  "android_java_policy_source": "b1a7b7891cd394671842164a07a86c8e316dace3",
+  "actual_android_host_interop_accepted": false,
+  "runs": [
+    {
+      "group": "theme",
+      "attempt": 1,
+      "conclusion": "success",
+      "id": 40182791189,
+      "jobs": [
+        {
+          "conclusion": "success",
+          "id": 121137207546,
+          "name": "SDK3.41 and installed products macos",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121137207742,
+          "name": "SDK3.41 and installed products iphonesimulator",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121137768268,
+          "name": "Original OFF ON pixels and theme transaction checks",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121139263223,
+          "name": "Real initialization and same-turn import publication",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121139263280,
+          "name": "Real page theme UI iphone",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121139263326,
+          "name": "Real page theme UI ipad",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121139263524,
+          "name": "Real page theme UI macos",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121147058621,
+          "name": "Strict same-source page theme summary",
+          "status": "completed"
+        }
+      ],
+      "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877",
+      "status": "completed",
+      "artifacts": [
+        {
+          "bytes": 50980696,
+          "digest": "sha256:60fe037474d7bb205a20f10c180cf216b7837002d2e5592938cbea1f07bd5066",
+          "expires_at": "2027-01-23T09:57:42Z",
+          "id": 12596241819,
+          "name": "apple-theme-fast-import-40182791189-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 37907794,
+          "digest": "sha256:a76de714ce90fcc5df33423d67a57e533ebe99c7a71717927903b8f2b6292807",
+          "expires_at": "2027-01-23T09:57:42Z",
+          "id": 12596102577,
+          "name": "apple-theme-ui-ipad-40182791189-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 155252,
+          "digest": "sha256:5c1b30e228eb2cf775afccc1a1b1585cc15e5d103e60967b2581184d5fd5f433",
+          "expires_at": "2027-01-23T09:57:42Z",
+          "id": 12596043097,
+          "name": "apple-theme-summary-40182791189-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 32128171,
+          "digest": "sha256:18693e18a942c8d282fc7cd2ed6b960523ff3375c4e657535e8cf14e35c0fba4",
+          "expires_at": "2027-01-23T09:57:42Z",
+          "id": 12595822120,
+          "name": "apple-theme-ui-iphone-40182791189-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 33242971,
+          "digest": "sha256:b4f0221a5a69353f6db42d250512626168c3fb42700b767befee257449b049f3",
+          "expires_at": "2027-01-23T09:57:42Z",
+          "id": 12595693560,
+          "name": "apple-theme-ui-macos-40182791189-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 3333616,
+          "digest": "sha256:49f800cadabecc7e52fc928355a86756895fafe3e996b1b4061aabfcc48d14e0",
+          "expires_at": "2027-01-23T09:57:42Z",
+          "id": 12595250981,
+          "name": "apple-theme-native-40182791189-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 20514660,
+          "digest": "sha256:6d4778a4be08d7efd9782b938fb31217d00e8d80854291afcb6156c3056d3880",
+          "expires_at": "2027-01-23T09:57:42Z",
+          "id": 12594907058,
+          "name": "apple-theme-sdk-macos-40182791189-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 20522217,
+          "digest": "sha256:788ea0424979a2fd25ebbc7cf217296cdd1e6af2f3a00f40b07ac4c0b670bd75",
+          "expires_at": "2027-01-23T09:57:42Z",
+          "id": 12594314557,
+          "name": "apple-theme-sdk-iphonesimulator-40182791189-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        }
+      ],
+      "strict_job_id": 121147058621,
+      "strict_summary_present": true
+    },
+    {
+      "group": "navigation",
+      "attempt": 1,
+      "conclusion": "success",
+      "id": 40182792754,
+      "jobs": [
+        {
+          "conclusion": "success",
+          "id": 121137212331,
+          "name": "Frozen SDK and installed F2 iphonesimulator",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121137212588,
+          "name": "Frozen SDK and installed F2 macos",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121137755031,
+          "name": "Native navigation and container contracts",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121138416343,
+          "name": "Navigation UI macos",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121138416355,
+          "name": "Navigation UI ipad",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121138416399,
+          "name": "Navigation UI iphone",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121141132483,
+          "name": "Strict same-source navigation summary",
+          "status": "completed"
+        }
+      ],
+      "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877",
+      "status": "completed",
+      "artifacts": [
+        {
+          "bytes": 109519,
+          "digest": "sha256:5e09d2b739d02528629a49daba276742b2a75baae3411b49909a37f027109634",
+          "expires_at": "2027-01-23T09:57:43Z",
+          "id": 12595511298,
+          "name": "apple-navigation-summary-40182792754-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 41250936,
+          "digest": "sha256:ba4fb7e8dfd15b600041101fc54b3510909678b3e353f12b8f24a30b1ea3355d",
+          "expires_at": "2027-01-23T09:57:43Z",
+          "id": 12595466352,
+          "name": "apple-navigation-ui-ipad-40182792754-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 20511398,
+          "digest": "sha256:7d29f8110d0176e3f988a3811be56ccf368585f707af1ed1e90446e76522a0f7",
+          "expires_at": "2027-01-23T09:57:43Z",
+          "id": 12595235377,
+          "name": "apple-navigation-sdk-macos-40182792754-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 1569056,
+          "digest": "sha256:8b937d8a87bc71e06d0e495883b4aabc8fb3e58822016f13eb2db4fa6313d667",
+          "expires_at": "2027-01-23T09:57:43Z",
+          "id": 12595042358,
+          "name": "apple-navigation-native-40182792754-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 20518502,
+          "digest": "sha256:11ad9c738d5222116c311b75a95167063cd3451788757345c714d395d06b1d0c",
+          "expires_at": "2027-01-23T09:57:43Z",
+          "id": 12594932057,
+          "name": "apple-navigation-sdk-iphonesimulator-40182792754-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 33323680,
+          "digest": "sha256:59553dfc2ac69763a3d2d9766844d0370c73b20a79102704995ef3a1795a4faf",
+          "expires_at": "2027-01-23T09:57:43Z",
+          "id": 12594923690,
+          "name": "apple-navigation-ui-iphone-40182792754-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 34848680,
+          "digest": "sha256:2954f76c583ac35844386e20c156a5dc09e38c2fc8e2d8f043718994a342a76e",
+          "expires_at": "2027-01-23T09:57:43Z",
+          "id": 12594648497,
+          "name": "apple-navigation-ui-macos-40182792754-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        }
+      ],
+      "strict_job_id": 121141132483,
+      "strict_summary_present": true
+    },
+    {
+      "group": "search",
+      "attempt": 1,
+      "conclusion": "success",
+      "id": 40182794064,
+      "jobs": [
+        {
+          "conclusion": "success",
+          "id": 121137216188,
+          "name": "Frozen SDK and installed F1 macos",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121137216273,
+          "name": "Frozen SDK and installed F1 iphonesimulator",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121138245426,
+          "name": "Native search and original adapter contracts",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121139221298,
+          "name": "Search UI macos",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121139221319,
+          "name": "Search UI ipad",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121139221325,
+          "name": "Search UI iphone",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121141897605,
+          "name": "Strict same-source search summary",
+          "status": "completed"
+        }
+      ],
+      "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877",
+      "status": "completed",
+      "artifacts": [
+        {
+          "bytes": 108083,
+          "digest": "sha256:80c795fe9e5264864511f3020fb58dd9edb0cca5a7a67e19b783d9da8e17db26",
+          "expires_at": "2027-01-23T09:57:44Z",
+          "id": 12595755474,
+          "name": "apple-search-summary-40182794064-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 20518720,
+          "digest": "sha256:664e2ff13aec139a4f53b55c6fa3762df5afd296ba598f0c194600631cf85e0b",
+          "expires_at": "2027-01-23T09:57:44Z",
+          "id": 12595430088,
+          "name": "apple-search-sdk-iphonesimulator-40182794064-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 38261200,
+          "digest": "sha256:5699ae8ad7d1140c208ac1e5dbe776416ee49098748d4950b1fd03dcb6d71203",
+          "expires_at": "2027-01-23T09:57:44Z",
+          "id": 12595406762,
+          "name": "apple-search-ui-ipad-40182794064-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 32334957,
+          "digest": "sha256:05936f00641d9166aa481789d1ba19d7455199d00e0de60792b223d0b026ab49",
+          "expires_at": "2027-01-23T09:57:44Z",
+          "id": 12595237052,
+          "name": "apple-search-ui-iphone-40182794064-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 20511281,
+          "digest": "sha256:1ac50022ce744c704e110e9e11a6f24f80bbd5f85f7dbbc450948cf1f2556e46",
+          "expires_at": "2027-01-23T09:57:44Z",
+          "id": 12595141676,
+          "name": "apple-search-sdk-macos-40182794064-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 4449596,
+          "digest": "sha256:4a15e5d50b72d4e432758d5120467c7ff0dbcebe9380383e197e96ae83a34600",
+          "expires_at": "2027-01-23T09:57:44Z",
+          "id": 12594938043,
+          "name": "apple-search-native-40182794064-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 32287876,
+          "digest": "sha256:64effb7d902730047237574f24922f411905dc8c721b108e9920dd783f9057ae",
+          "expires_at": "2027-01-23T09:57:44Z",
+          "id": 12594823620,
+          "name": "apple-search-ui-macos-40182794064-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        }
+      ],
+      "strict_job_id": 121141897605,
+      "strict_summary_present": true
+    },
+    {
+      "group": "records",
+      "attempt": 1,
+      "conclusion": "success",
+      "id": 40182795491,
+      "jobs": [
+        {
+          "conclusion": "success",
+          "id": 121137220291,
+          "name": "Frozen SDK and installed reading modules macos",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121137220454,
+          "name": "Frozen SDK and installed reading modules iphonesimulator",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121138680187,
+          "name": "Native reading records and durable requests",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121140143968,
+          "name": "Reading UI iphone",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121140143983,
+          "name": "Reading UI ipad",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121140144009,
+          "name": "Reading UI macos",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121146928974,
+          "name": "Strict same-source reading records summary",
+          "status": "completed"
+        }
+      ],
+      "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877",
+      "status": "completed",
+      "artifacts": [
+        {
+          "bytes": 60748304,
+          "digest": "sha256:8b3830f6a2dce0af5d97812aba625fb6e0c9516870cdd4fa02a42f6af5a26f66",
+          "expires_at": "2027-01-23T09:57:46Z",
+          "id": 12596440700,
+          "name": "apple-reading-ui-ipad-40182795491-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 112387,
+          "digest": "sha256:c2e4a29c28444b76df5636929abdeab3486c1fd9dfc365c84922f9dd4f1ba4db",
+          "expires_at": "2027-01-23T09:57:46Z",
+          "id": 12596267432,
+          "name": "apple-reading-summary-40182795491-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 1620724,
+          "digest": "sha256:6cadb573f434bfc2f514655fb760bac8e91ee82ee03cca5fec0514e91395d370",
+          "expires_at": "2027-01-23T09:57:46Z",
+          "id": 12595461689,
+          "name": "apple-reading-native-40182795491-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 20518576,
+          "digest": "sha256:810b6e3a96376d3d38b3a7a45c053073c093cccf0d353369418d9b0534aab80c",
+          "expires_at": "2027-01-23T09:57:46Z",
+          "id": 12595385293,
+          "name": "apple-reading-sdk-iphonesimulator-40182795491-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 38008694,
+          "digest": "sha256:4fc63c7ee2b5f73e9a1ca41a4225c71ed7dacc68643fe4ad340d60acf5f79376",
+          "expires_at": "2027-01-23T09:57:46Z",
+          "id": 12595249104,
+          "name": "apple-reading-ui-macos-40182795491-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 41017470,
+          "digest": "sha256:1bb66ff73209e91ad9765ecdb0266d4227b3e633c1594d5d884692d1e95103b5",
+          "expires_at": "2027-01-23T09:57:46Z",
+          "id": 12595233613,
+          "name": "apple-reading-ui-iphone-40182795491-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 20511208,
+          "digest": "sha256:eb44b06083d31836ae02888ba345a63946167ee05c824145bd6adc6d8c7e4aab",
+          "expires_at": "2027-01-23T09:57:46Z",
+          "id": 12594693194,
+          "name": "apple-reading-sdk-macos-40182795491-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        }
+      ],
+      "strict_job_id": 121146928974,
+      "strict_summary_present": true
+    },
+    {
+      "group": "shelf",
+      "attempt": 1,
+      "conclusion": "success",
+      "id": 40182804197,
+      "jobs": [
+        {
+          "conclusion": "success",
+          "id": 121137247780,
+          "name": "SDK macos",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121137247950,
+          "name": "SDK iphonesimulator",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121138839426,
+          "name": "native",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121139929511,
+          "name": "Shelf UI macos",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121139929559,
+          "name": "Shelf UI ipad",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121139929579,
+          "name": "Shelf UI iphone",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121160098698,
+          "name": "summary",
+          "status": "completed"
+        }
+      ],
+      "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877",
+      "status": "completed",
+      "artifacts": [
+        {
+          "bytes": 2818,
+          "digest": "sha256:d7a3787c9c6943f536d4d98de2bbc503f331d4a9b663e43795af303ae8e6acde",
+          "expires_at": "2027-01-23T09:57:55Z",
+          "id": 12596924171,
+          "name": "apple-shelf-validation-40182804197-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 49498869,
+          "digest": "sha256:7e6154eb2b0a08783ee84c7903e67c36d486ac5c5a8c1b0c8ca1c3fb0fcecc68",
+          "expires_at": "2027-01-23T09:57:55Z",
+          "id": 12596758024,
+          "name": "apple-shelf-ui-iphone-40182804197-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 51775351,
+          "digest": "sha256:6c4bf3041358608b2f4ca7794f1d0ba3e06de24e1a8a3aadd9f1bfdadd8c89aa",
+          "expires_at": "2027-01-23T09:57:55Z",
+          "id": 12596719423,
+          "name": "apple-shelf-ui-ipad-40182804197-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 39992970,
+          "digest": "sha256:ffed2dc370e0bb16eecd18b8d3be35297cd9a96e1ed1871dc46e18027f40095e",
+          "expires_at": "2027-01-23T09:57:55Z",
+          "id": 12596039341,
+          "name": "apple-shelf-ui-macos-40182804197-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 20511347,
+          "digest": "sha256:6d4a0845d890352081a99d8928113afb167e3bb5992b98e73911733374c01e7e",
+          "expires_at": "2027-01-23T09:57:55Z",
+          "id": 12595410323,
+          "name": "apple-shelf-sdk-macos-40182804197-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 20518762,
+          "digest": "sha256:0f23fbd0d4e569b6b1c400742c4c3b08fb97d0c4ffc59e30b488f9a984cb1720",
+          "expires_at": "2027-01-23T09:57:55Z",
+          "id": 12594718179,
+          "name": "apple-shelf-sdk-iphonesimulator-40182804197-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 31622869,
+          "digest": "sha256:90e397b07e9047a9ddcd91eb3342a80e35cc098b2a9fa1ccc642b57a221ae4bf",
+          "expires_at": "2027-01-23T09:57:55Z",
+          "id": 12594604017,
+          "name": "apple-shelf-native-40182804197-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        }
+      ],
+      "strict_job_id": 121160098698,
+      "strict_summary_present": true
+    },
+    {
+      "group": "mapping",
+      "attempt": 1,
+      "conclusion": "success",
+      "id": 40182811868,
+      "jobs": [
+        {
+          "conclusion": "success",
+          "id": 121137273381,
+          "name": "SDK iphonesimulator",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121137273492,
+          "name": "SDK macos",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121138767958,
+          "name": "native",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121139393251,
+          "name": "Mapping UI iphone",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121139393307,
+          "name": "Mapping UI ipad",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121139393335,
+          "name": "Mapping UI macos",
+          "status": "completed"
+        }
+      ],
+      "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877",
+      "status": "completed",
+      "artifacts": [
+        {
+          "bytes": 32470549,
+          "digest": "sha256:fe522b7cb4a686fa8c2b4da977b769efaeccf1237c3ab2945b43ccbbe12b7f86",
+          "expires_at": "2027-01-23T09:58:03Z",
+          "id": 12596211638,
+          "name": "apple-import-mapping-ui-ipad-40182811868-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 30922297,
+          "digest": "sha256:96079825a94d26431f754dad6d28179843d67e85ac9cebf67ac16c159e80a3b1",
+          "expires_at": "2027-01-23T09:58:03Z",
+          "id": 12596046123,
+          "name": "apple-import-mapping-ui-macos-40182811868-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 31994058,
+          "digest": "sha256:e40accfef45b75aea6f8029fcf653e82eb9d598f1a2d4ba71650a199975e5a6a",
+          "expires_at": "2027-01-23T09:58:03Z",
+          "id": 12595516563,
+          "name": "apple-import-mapping-ui-iphone-40182811868-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 20518841,
+          "digest": "sha256:eeb307a3c5577cf431bd3b4b177fa93d707669acbfc3a98ef1e66d74124e0386",
+          "expires_at": "2027-01-23T09:58:03Z",
+          "id": 12595255813,
+          "name": "apple-import-mapping-sdk-iphonesimulator-40182811868-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 20511322,
+          "digest": "sha256:1eb46ef3dac3c2eb50c38d047df6ba21def17b85c07bc9e0cab685cb6d9f2c79",
+          "expires_at": "2027-01-23T09:58:03Z",
+          "id": 12594922560,
+          "name": "apple-import-mapping-sdk-macos-40182811868-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 2888361,
+          "digest": "sha256:83f5088954fa2eef209233d9313f72bae3f981fb9159b55dbe16fa2323824755",
+          "expires_at": "2027-01-23T09:58:03Z",
+          "id": 12594763329,
+          "name": "apple-import-mapping-native-40182811868-1",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        }
+      ],
+      "strict_job_id": null,
+      "strict_summary_present": false
+    },
+    {
+      "group": "wp13",
+      "attempt": 1,
+      "conclusion": "success",
+      "id": 40182825599,
+      "jobs": [
+        {
+          "conclusion": "success",
+          "id": 121137315399,
+          "name": "sdk (macos)",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121137315468,
+          "name": "sdk (iphoneos)",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121137315569,
+          "name": "sdk (iphonesimulator)",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121139245180,
+          "name": "package",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121139245204,
+          "name": "uitest (ipad)",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121139245212,
+          "name": "uitest (macos)",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121139245251,
+          "name": "uitest (iphone)",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 121147183504,
+          "name": "summary",
+          "status": "completed"
+        }
+      ],
+      "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877",
+      "status": "completed",
+      "artifacts": [
+        {
+          "bytes": 90119,
+          "digest": "sha256:37c379368bd20709a53918719554f1c1c78a6b701f911d18e0e535653e7dbf5d",
+          "expires_at": "2026-11-24T10:47:27Z",
+          "id": 12596138018,
+          "name": "wp13-apple-validation",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 139999814,
+          "digest": "sha256:4bcabb73fe3d520d7296761e9257e802b2c55394e016844e9d30f69513fa7b04",
+          "expires_at": "2026-11-24T10:28:26Z",
+          "id": 12595776398,
+          "name": "wp13-apple-package",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 38930449,
+          "digest": "sha256:4134e6c024dd8725edeb151c8e9d35927f345993239e82cededbbf226d27b82f",
+          "expires_at": "2026-11-24T10:45:54Z",
+          "id": 12595743836,
+          "name": "wp13-apple-iphone",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 20511173,
+          "digest": "sha256:281779703296a90a3b082eb2dc9cae06967970c0f4fb8cae2f7aa2a47787cf97",
+          "expires_at": "2026-11-24T10:06:14Z",
+          "id": 12595460968,
+          "name": "wp13-apple-sdk-macos",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 39197608,
+          "digest": "sha256:2b2ad2b0b31def34996b901d35647fc6a60536297eb81f2ed39be125d237b7de",
+          "expires_at": "2026-11-24T10:29:39Z",
+          "id": 12595213257,
+          "name": "wp13-apple-macos",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 47767001,
+          "digest": "sha256:8bee856a2a13607eb14793ad8dde183fd707dd9e86e5618eb621272b2922c132",
+          "expires_at": "2026-11-24T10:27:04Z",
+          "id": 12595189841,
+          "name": "wp13-apple-ipad",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 20518988,
+          "digest": "sha256:a4db1e4cd31115eb3866a516e85a308199639d9754f3ef5a05138d1d8cc1c56b",
+          "expires_at": "2026-11-24T10:07:29Z",
+          "id": 12594633698,
+          "name": "wp13-apple-sdk-iphonesimulator",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        },
+        {
+          "bytes": 20212766,
+          "digest": "sha256:95c80684ecbeea465d989d4f4590337fa6e5288b5f0143ca269ec8153deb9de5",
+          "expires_at": "2026-11-24T10:02:51Z",
+          "id": 12594359832,
+          "name": "wp13-apple-sdk-iphoneos",
+          "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877"
+        }
+      ],
+      "strict_job_id": 121147183504,
+      "strict_summary_present": true
+    }
+  ],
+  "historical_source": "f4aa876c4e077201ade122c6a558a90731327daa",
+  "historical_runs": [
+    {
+      "group": "theme",
+      "id": 40174318190,
+      "attempt": 2,
+      "conclusion": "failure",
+      "reason": "iPhone pre-Xcode appearance command exceeded unchanged 45-second timeout"
+    },
+    {
+      "group": "navigation",
+      "id": 40174363253,
+      "attempt": 1,
+      "conclusion": "failure",
+      "reason": "iPad first import has no library row"
+    },
+    {
+      "group": "search",
+      "id": 40174365142,
+      "attempt": 1,
+      "conclusion": "failure",
+      "reason": "iPad first import has no library row"
+    },
+    {
+      "group": "records",
+      "id": 40174367348,
+      "attempt": 1,
+      "conclusion": "failure",
+      "reason": "iPad first import has no library row"
+    },
+    {
+      "group": "shelf",
+      "id": 40174369194,
+      "attempt": 1,
+      "conclusion": "success"
+    },
+    {
+      "group": "mapping",
+      "id": 40174370909,
+      "attempt": 1,
+      "conclusion": "success"
+    },
+    {
+      "group": "wp13",
+      "id": 40174372884,
+      "attempt": 1,
+      "conclusion": "success"
+    }
+  ],
+  "diagnostic_run": 40181597278,
+  "physical_device_execution": false,
+  "complete_product": false,
+  "sdk_version": "3.41.0",
+  "sdk_abi": 1,
+  "sdk_core_version": "3.40.0",
+  "scope": "Declared Apple macOS and iPhone/iPad simulator package scopes only; initialization and same-main-turn publication fixtures on iPad only",
+  "original_six_suites_accepted": true,
+  "theme_accepted": true,
+  "original_business_assertions_unchanged": true,
+  "job_count": 50,
+  "artifact_count": 50,
+  "preflight": {
+    "run_id": 40182728548,
+    "attempt": 1,
+    "conclusion": "success",
+    "protected_trees": 57,
+    "negative_checks": 114,
+    "legacy_workflows": 6,
+    "artifact": {
+      "id": 12593709807,
+      "bytes": 3440,
+      "digest": "sha256:5897d3d19af544c5811df636fd9d5a1c19e64bc095b2942bd97ea6c17a648279",
+      "expires_at": "2027-01-23T09:56:41Z"
+    }
+  },
+  "native_theme": {
+    "on_checks": 37,
+    "off_checks": 10,
+    "protocol_negatives": 10,
+    "ui_cases_per_platform": 4
+  },
+  "publication_fixtures": {
+    "run_id": 40182791189,
+    "job_id": 121139263223,
+    "sdk_producer_source": "2c2eabdad62de88bf5e3c337004be37663c61877",
+    "sdk_producer_run": 40182791189,
+    "sdk_producer_attempt": 1,
+    "program_sha256": "2384000f8a847409801d9c66eb1ee95bc17322d83423326dec94d1f329e14ef4",
+    "cases_passed": 2,
+    "observed_busy_changes": 0,
+    "sdk_books": 1,
+    "shelf_rows_before": 0,
+    "shelf_rows_after": 1,
+    "initialization_token_after_rejection": 0,
+    "initialization_rejected_unready": 1
+  },
+  "shelf_summary": {
+    "accepted": true,
+    "source_sha": "2c2eabdad62de88bf5e3c337004be37663c61877",
+    "run_id": "40182804197",
+    "attempt": "1",
+    "scope": null,
+    "platforms": {
+      "macos": {
+        "ui_cases": 7,
+        "named_observations": 11,
+        "attachments": 14,
+        "originals": 2202,
+        "measurements": {
+          "process_peak_rss_bytes": 257949696,
+          "timing_scope": "actual native layout observations and screenshots; no display-FPS claim"
+        }
+      },
+      "iphone": {
+        "ui_cases": 7,
+        "named_observations": 11,
+        "attachments": 14,
+        "originals": 2202,
+        "measurements": {
+          "process_peak_rss_bytes": 391086080,
+          "timing_scope": "actual native layout observations and screenshots; no display-FPS claim"
+        }
+      },
+      "ipad": {
+        "ui_cases": 7,
+        "named_observations": 11,
+        "attachments": 14,
+        "originals": 2202,
+        "measurements": {
+          "process_peak_rss_bytes": 387776512,
+          "timing_scope": "actual native layout observations and screenshots; no display-FPS claim"
+        }
+      }
+    },
+    "problems": []
+  },
+  "wp13": {
+    "cases_per_platform": 13,
+    "steps_per_platform": 67,
+    "attachments_per_platform": 50,
+    "gate_review_checks": 97
+  },
+  "artifact_metadata_source": "GitHub Actions API; payload verification remains in original Actions consumers and summaries",
+  "local_artifact_download_performed": false,
+  "old_340_migration_tested": false,
+  "six_platform_product_sync_accepted": false
+}

@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 """Consume the actual frozen SDK; verify a real same-turn import on an iPad."""
+import argparse
 import hashlib
 import io
 import json
@@ -44,6 +45,11 @@ def run(argv, name, timeout=900):
 
 def main():
     require(os.environ.get('GITHUB_ACTIONS') == 'true' and sys.platform == 'darwin', 'Actions macOS only')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--sdk', type=Path)
+    parser.add_argument('--sdk-identity', type=Path)
+    args = parser.parse_args()
+    require((args.sdk is None) == (args.sdk_identity is None), 'SDK and identity must be supplied together')
     OUT.mkdir(parents=True, exist_ok=True)
     source = os.environ['GITHUB_SHA']
     subprocess.run(['git', 'merge-base', '--is-ancestor', BASE, 'HEAD'], cwd=ROOT, check=True)
@@ -51,17 +57,33 @@ def main():
                '.github/workflows/reader-apple-shelf-publication.yml', 'docs/READER-APPLE-SHELF-PUBLICATION.md',
                'docs/validation/reader-apple-shelf-publication.json'}
     changed = subprocess.check_output(['git', 'diff', '--name-only', BASE, 'HEAD'], cwd=ROOT, text=True).splitlines()
-    require(all(path in allowed or path.startswith(('tests/apple_host/page_theme/fast_import/', 'tests/apple_host/page_theme/fast_import_ui/')) for path in changed), 'unowned source changed')
+    if args.sdk is None:
+        require(all(path in allowed or path.startswith(('tests/apple_host/page_theme/fast_import/', 'tests/apple_host/page_theme/fast_import_ui/')) for path in changed), 'unowned source changed')
+    else:
+        subprocess.run([sys.executable, 'tests/apple_host/page_theme/guard.py'], cwd=ROOT, check=True)
     # The installed SDK and modules are an explicit older producer, never relabelled
     # as this host source. All of their production trees remain byte-identical.
     subprocess.run(['git', 'diff', '--exit-code', SDK_PRODUCER, 'HEAD', '--', 'src', 'include', 'cmake', 'CMakeLists.txt',
                     'bindings', 'tests/fixtures', 'apps/reader', 'extras', 'tools/build_apple_product.py'], cwd=ROOT, check=True)
-    artifact = fetch('actions/artifacts/' + str(SDK_ARTIFACT))
-    require(artifact['workflow_run']['id'] == SDK_RUN and artifact['workflow_run']['head_sha'] == SDK_PRODUCER and
+    producer = source if args.sdk else SDK_PRODUCER
+    producer_run = int(os.environ['GITHUB_RUN_ID']) if args.sdk else SDK_RUN
+    producer_attempt = int(os.environ['GITHUB_RUN_ATTEMPT']) if args.sdk else 1
+    if args.sdk:
+        sdk = args.sdk.absolute()
+        identity = json.loads(args.sdk_identity.read_text())
+        candidates = fetch('actions/runs/' + str(producer_run) + '/artifacts?per_page=100')['artifacts']
+        candidates = [item for item in candidates if item['name'] == 'apple-theme-sdk-iphonesimulator-' + str(producer_run) + '-' + str(producer_attempt)]
+        require(len(candidates) == 1, 'missing/duplicate same-run SDK artifact')
+        artifact = candidates[0]
+        require(artifact['workflow_run']['head_sha'] == source and not artifact['expired'], 'foreign/expired SDK artifact')
+    else:
+        artifact = fetch('actions/artifacts/' + str(SDK_ARTIFACT))
+    if args.sdk is None:
+        require(artifact['workflow_run']['id'] == SDK_RUN and artifact['workflow_run']['head_sha'] == SDK_PRODUCER and
             artifact['name'] == 'apple-theme-sdk-iphonesimulator-' + str(SDK_RUN) + '-1' and not artifact['expired'] and
             artifact['size_in_bytes'] == SDK_BYTES and artifact['digest'] == SDK_DIGEST, 'frozen SDK producer differs')
-    raw = download_artifact_zip(SDK_ARTIFACT)
-    require(len(raw) == SDK_BYTES and 'sha256:' + hashlib.sha256(raw).hexdigest() == SDK_DIGEST, 'frozen SDK ZIP differs')
+    raw = download_artifact_zip(artifact['id'])
+    require(len(raw) == artifact['size_in_bytes'] and 'sha256:' + hashlib.sha256(raw).hexdigest() == artifact['digest'], 'SDK ZIP differs')
     restored = OUT / 'sdk-producer'
     with zipfile.ZipFile(io.BytesIO(raw)) as archive:
         require(len(archive.namelist()) == len(set(archive.namelist())), 'duplicate SDK ZIP member')
@@ -69,9 +91,12 @@ def main():
             path = PurePosixPath(name)
             require(not path.is_absolute() and '..' not in path.parts and '\\' not in name, 'unsafe SDK ZIP path')
         archive.extractall(restored)
-    sdk = restored / 'stage/iphonesimulator'
-    identity = json.loads((restored / 'build/sdk-identity.json').read_text())
-    validate_sdk(sdk, identity, SDK_PRODUCER, str(SDK_RUN), '1', 'iphonesimulator')
+    if args.sdk is None:
+        sdk = restored / 'stage/iphonesimulator'
+        identity = json.loads((restored / 'build/sdk-identity.json').read_text())
+    else:
+        require(identity == json.loads((restored / 'build/sdk-identity.json').read_text()), 'installed identity differs from authenticated ZIP')
+    validate_sdk(sdk, identity, producer, str(producer_run), str(producer_attempt), 'iphonesimulator')
     require(identity['sdk_version'] == '3.41.0' and identity['abi'] == 1, 'SDK version/ABI differs')
     resources = ROOT / 'build/fast-import-resources'
     run([sys.executable, 'tests/apple_host/prepare_fixtures.py', '--resources', resources], 'fixtures.log')
@@ -135,7 +160,7 @@ def main():
     shutil.copytree(app, OUT / 'program/EXReaderHost.app')
     report = {'accepted_fast_import_fixture_only': True, 'source_sha': source, 'run_id': os.environ['GITHUB_RUN_ID'],
               'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'platform': 'ipad', 'destination': {'udid': udid, 'name': name, 'runtime': runtime},
-              'sdk_producer_source': SDK_PRODUCER, 'sdk_producer_run': SDK_RUN, 'sdk_producer_attempt': 1,
+              'sdk_producer_source': producer, 'sdk_producer_run': producer_run, 'sdk_producer_attempt': producer_attempt,
               'sdk_artifact': {key: artifact[key] for key in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')},
               'sdk_identity_original': identity, 'provider': provider, 'cases': cases, 'observations': observations,
               'physical_device_execution': False, 'complete_product': False, 'original_six_suites_granted': False}
