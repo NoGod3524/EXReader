@@ -1,0 +1,18 @@
+cmake_minimum_required(VERSION 3.24)
+project(EXReaderNextC04 LANGUAGES C)
+if(MSVC)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  add_compile_options(/utf-8)
+endif()
+if(EXR_SDK)
+  list(PREPEND CMAKE_PREFIX_PATH "${EXR_SDK}")
+endif()
+find_package(EXReader CONFIG REQUIRED)
+add_executable(exreader-rtf-real-boundary test_rtf_real_boundary.c)
+target_link_libraries(exreader-rtf-real-boundary PRIVATE EXReader::exreader)
+set_target_properties(exreader-rtf-real-boundary PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)
+if(WIN32)
+  add_custom_command(TARGET exreader-rtf-real-boundary POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      "$<TARGET_FILE:EXReader::exreader>" "$<TARGET_FILE_DIR:exreader-rtf-real-boundary>")
+endif()
