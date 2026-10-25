@@ -17,6 +17,9 @@ struct HostReadingRecordsSheet: View {
     }
     var body: some View {
         VStack(spacing: 12) {
+            if let row = editing {
+                HostReadingNoteEditor(model: model, row: row) { editing = nil }
+            } else {
             Text("阅读记录").font(.headline).accessibilityAddTraits(.isHeader)
                 .accessibilityIdentifier("reading.title")
             HStack {
@@ -81,9 +84,9 @@ struct HostReadingRecordsSheet: View {
                 if model.busy { Button("取消") { model.cancelWork() }.accessibilityIdentifier("reading.cancel") }
                 Button("关闭") { presentation.wrappedValue.dismiss() }.accessibilityIdentifier("reading.close")
             }.buttonStyle(.bordered)
+            }
         }.padding().frame(minWidth: 280, minHeight: 360)
-            .onDisappear { if editing == nil { model.closeReadingRecords() } }
-            .sheet(item: $editing) { HostReadingNoteEditor(model: model, row: $0) }
+            .onDisappear { model.closeReadingRecords() }
             .alert(confirmationTitle, isPresented: Binding(get: { deleting != nil || restoring != nil || discardRevision != nil },
                 set: { if !$0 { deleting = nil; restoring = nil; discardRevision = nil } })) {
                 if let row = deleting {
@@ -104,10 +107,10 @@ struct HostReadingRecordsSheet: View {
 private struct HostReadingNoteEditor: View {
     @ObservedObject var model: HostReaderModel
     let row: HostReadingRow
+    let dismiss: () -> Void
     @State private var text: String
-    @Environment(\.presentationMode) private var presentation
-    init(model: HostReaderModel, row: HostReadingRow) {
-        self.model = model; self.row = row; _text = State(initialValue: row.body)
+    init(model: HostReaderModel, row: HostReadingRow, dismiss: @escaping () -> Void) {
+        self.model = model; self.row = row; self.dismiss = dismiss; _text = State(initialValue: row.body)
     }
     var body: some View {
         VStack(spacing: 12) {
@@ -115,9 +118,9 @@ private struct HostReadingNoteEditor: View {
             TextEditor(text: $text).frame(minHeight: 180).accessibilityIdentifier("reading.editor")
             if text.utf8.count > 65536 { Text("批注超过长度上限").foregroundColor(.red) }
             HStack {
-                Button("保存") { model.editReadingRecord(row, body: text); presentation.wrappedValue.dismiss() }
+                Button("保存") { model.editReadingRecord(row, body: text); dismiss() }
                     .accessibilityIdentifier("reading.save-note").disabled(text.utf8.count > 65536 || text.utf8.contains(0))
-                Button("取消") { presentation.wrappedValue.dismiss() }.accessibilityIdentifier("reading.cancel-note")
+                Button("取消") { dismiss() }.accessibilityIdentifier("reading.cancel-note")
             }.buttonStyle(.bordered)
         }.padding().frame(minWidth: 280, minHeight: 260)
     }
