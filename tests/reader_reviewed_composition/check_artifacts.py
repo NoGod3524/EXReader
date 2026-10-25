@@ -10,7 +10,7 @@ from pathlib import Path
 import sys
 import tempfile
 import zipfile
-from contract import BINARIES,REPORTS,digest,identity,require,validate,validate_files
+from contract import BINARIES,REPORTS,RAW,SANITIZER,digest,identity,require,validate,validate_files
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'tools'))
 from check_parallel_integration import download_artifact_zip,fetch,pages
 WORKFLOW='.github/workflows/reader-reviewed-composition.yml'
@@ -36,7 +36,7 @@ def archive_root(names):
  require(all(not n.startswith('/') and '\\' not in n and '..' not in n.split('/') for n in names),'unsafe ZIP member')
  roots=[n[:-len('bundle.json')] for n in names if n=='bundle.json' or n.endswith('/bundle.json')]
  require(len(roots)==1,'missing/duplicate bundle report');prefix=roots[0]
- for relative in REPORTS+['binaries/'+n for n in BINARIES]:
+ for relative in REPORTS+RAW+['binaries/'+n for n in BINARIES]:
   matches=[n for n in names if n==relative or n.endswith('/'+relative)]
   require(matches==[prefix+relative],'missing/duplicate report or binary '+relative)
  return prefix
@@ -55,14 +55,14 @@ def self_test():
  for field,value in [('head_sha','foreign'),('run_id',7),('run_attempt',3),('status','in_progress'),('conclusion','failure')]:
   changed=copy.deepcopy(jobs);changed[0][field]=value;rejected(lambda:authenticate_run(run,changed,'source',1,2))
  rejected(lambda:authenticate_run(run,jobs[:-1],'source',1,2));rejected(lambda:authenticate_run(run,jobs+[jobs[0]],'source',1,2))
- names=['bundle.json']+REPORTS+['binaries/'+n for n in BINARIES];archive_root(names)
+ names=['bundle.json']+REPORTS+RAW+['binaries/'+n for n in BINARIES];archive_root(names)
  rejected(lambda:archive_root(names+[names[1]]));rejected(lambda:archive_root(names+['other/bundle.json']));rejected(lambda:archive_root(names+['other/evidence/result.json']));rejected(lambda:archive_root(names[:-1]));rejected(lambda:archive_root(names+['../evil']))
  artifact=dict(id=1,name='a',size_in_bytes=3,expired=False,expires_at='2099-01-01T00:00:00Z',workflow_run=dict(id=1,head_sha='source'),digest='sha256:'+digest(b'zip'))
  authenticate_artifact([artifact],'a','source',1);check_zip_bytes(b'zip',artifact)
  for field,value in [('expired',True),('size_in_bytes',0),('digest',None),('expires_at','2000-01-01T00:00:00Z')]:
   changed=dict(artifact);changed[field]=value;rejected(lambda:authenticate_artifact([changed],'a','source',1))
  rejected(lambda:authenticate_artifact([artifact,artifact],'a','source',1));rejected(lambda:check_zip_bytes(b'bad',artifact))
- records={p:b'{}' for p in REPORTS};records.update({'binaries/'+n:b'bin' for n in BINARIES});manifest=dict(files={p:dict(bytes=len(v),sha256=digest(v)) for p,v in records.items()})
+ records={p:b'{}' for p in REPORTS+RAW};records.update({'binaries/'+n:b'bin' for n in BINARIES});manifest=dict(files={p:dict(bytes=len(v),sha256=digest(v)) for p,v in records.items()})
  validate_files(manifest,records.__getitem__)
  changed=copy.deepcopy(manifest);changed['files'].pop(REPORTS[0]);rejected(lambda:validate_files(changed,records.__getitem__))
  records[REPORTS[0]]=b'{"accepted":true}';rejected(lambda:validate_files(manifest,records.__getitem__))

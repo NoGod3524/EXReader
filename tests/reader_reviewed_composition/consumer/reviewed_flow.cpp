@@ -17,6 +17,7 @@
 #include <reader_sync_view.h>
 #include <chrono>
 #include <cstring>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -31,6 +32,11 @@ static void need(bool ok,const char *name) {
   std::cout<<(ok?"PASS ":"FAIL ")<<name<<std::endl;
   if(!ok)throw std::runtime_error(name);
   passed.emplace_back(name);
+}
+static std::string json_string(const std::string &s){
+  std::string out;
+  for(unsigned char c:s){if(c=='"'||c=='\\'){out+='\\';out+=(char)c;}else if(c<32){out+=' ';}else out+=(char)c;}
+  return out;
 }
 static std::string read(const std::string &p){std::ifstream f(fs::u8path(p),std::ios::binary);return {std::istreambuf_iterator<char>(f),{}};}
 struct Back {
@@ -163,6 +169,6 @@ int main(int argc,char **argv){
   }catch(const std::exception &e){error=e.what();}
   std::ofstream out(fs::u8path(report));out<<"{\"accepted\":"<<(accepted?"true":"false")<<",\"checks\":[";
   for(size_t i=0;i<passed.size();i++){if(i)out<<',';out<<"{\"name\":\""<<passed[i]<<"\",\"pass\":true}";}
-  out<<"],\"failure\":\""<<error<<"\",\"host_ui_accepted\":false,\"performance_accepted\":false}\n";
+  out<<"],\"failure\":\""<<json_string(error)<<"\",\"host_ui_accepted\":false,\"performance_accepted\":false}\n";
   return accepted?0:1;
 }

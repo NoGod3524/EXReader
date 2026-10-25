@@ -188,6 +188,7 @@ jobs:
             2>&1 | tee build/composition/logs/relocated-configure.log
           cmake --build build/relocated/build --verbose 2>&1 | tee build/composition/logs/relocated-build.log
           cp build/relocated/build/composition-interface.json build/composition/interface-relocated.json
+          python3 "$COMPOSITION_TESTS/check_prefix.py" --prefix "$COMP_PREFIX_RELOCATED" --source-root "$COMP_WS" --interface build/composition/interface-relocated.json --expect clean --scan-output build/composition/prefix-scan-relocated.json
       - name: Judge the composed flow with a real TLS WebDAV fixture
         run: |
           set -o pipefail
@@ -208,7 +209,7 @@ jobs:
       - name: Run the shared owner and session flow before and after prefix relocation
         run: |
           if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
-          python3 tests/reader_reviewed_composition/check_reviewed.py --probe "build/fresh/build/reviewed-flow$exe" --relocated "build/relocated/build/reviewed-flow$exe" --fixtures tests/fixtures --output build/composition/reviewed
+          python3 tests/reader_reviewed_composition/check_reviewed.py --probe "build/fresh/build/reviewed-flow$exe" --relocated "build/relocated/build/reviewed-flow$exe" --fixtures tests/fixtures --link-map build/fresh/build/reviewed-link.map --relocated-link-map build/relocated/build/reviewed-link.map --output build/composition/reviewed
       - name: Reject a broken target, an absent dependency, a second SQLite and a leaked include
         run: |
           set -o pipefail

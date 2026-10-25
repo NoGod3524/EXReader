@@ -8,8 +8,9 @@ import re
 import subprocess
 from pathlib import Path
 from webdav_fixture import WebDAVFixture
+from check_composition import archive_providers,direct_providers
 assert os.environ.get('GITHUB_ACTIONS')=='true','Actions only'
-p=argparse.ArgumentParser();p.add_argument('--probe',type=Path,required=True);p.add_argument('--relocated',type=Path,required=True);p.add_argument('--fixtures',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('--probe',type=Path,required=True);p.add_argument('--relocated',type=Path,required=True);p.add_argument('--link-map',type=Path,required=True);p.add_argument('--relocated-link-map',type=Path,required=True);p.add_argument('--fixtures',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args()
 out=a.output.resolve();out.mkdir(parents=True,exist_ok=True);problems=[];runs=[]
 original=(a.fixtures/'sample.txt').resolve();data=original.read_bytes();digest=hashlib.sha256(data).hexdigest()
 source=(Path(__file__).parent/'consumer/reviewed_flow.cpp').read_text()
@@ -17,6 +18,9 @@ required=re.findall(r'need\([^;]*?,"([^"]+)"\);',source)
 assert len(required)>=35 and len(required)==len(set(required)), 'fixed unique source check contract'
 with WebDAVFixture(out/'certificates',roots=('/reviewed/','/relocated/')) as fixture:
  for index,binary in enumerate((a.probe,a.relocated)):
+  map_path=(a.link_map,a.relocated_link_map)[index];map_text=map_path.read_text(encoding='utf-8',errors='replace');providers=archive_providers(map_text)
+  if len(providers)!=1 or 'reader_catalog_sqlite' not in providers[0] or direct_providers(map_text):problems.append('shared-flow SQLite provider mismatch '+str(providers))
+  (out/('link-map-'+str(index)+'.txt')).write_text(map_text,encoding='utf-8')
   root=fixture.roots[index];fixture.entries[root+'incoming.txt']=data
   folder=out/('run'+str(index));folder.mkdir();report=folder/'report.json'
   cmd=[str(binary.resolve()),str(folder/'work'),fixture.root_url(index),str(original),digest,str(report)]

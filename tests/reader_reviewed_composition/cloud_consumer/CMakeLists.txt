@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: MIT
+# Original installed consumers, unchanged. Only the supplemental allocator
+# wrapper corrects the upstream review probe's accidental prefix-depth include.
+cmake_minimum_required(VERSION 3.24)
+project(ReviewedCloudInstalledConsumers LANGUAGES C CXX)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
+if(MSVC)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  add_compile_options(/utf-8)
+  add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+endif()
+find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED COMPONENTS library)
+find_package(EXReaderSideload CONFIG REQUIRED)
+find_package(EXReaderWebDAV CONFIG REQUIRED)
+find_package(EXReaderCloudImport 0.1.0 EXACT CONFIG REQUIRED)
+set(original "${CMAKE_CURRENT_LIST_DIR}/../../reader_webdav_import/consumer")
+add_executable(cloud-probe "${original}/cloud_probe.c")
+target_link_libraries(cloud-probe PRIVATE EXReaderCloudImport::reader_cloud_import)
+add_executable(cloud-cpp-consumer "${original}/cloud_cpp_consumer.cpp")
+target_link_libraries(cloud-cpp-consumer PRIVATE EXReaderCloudImport::reader_cloud_import)
+add_executable(cloud-review-probe cloud_review_probe.c)
+target_link_libraries(cloud-review-probe PRIVATE EXReader::exr_library
+  EXReaderSideload::exr_sideload EXReaderWebDAV::exr_webdav)
+if(WIN32)
+  target_link_libraries(cloud-probe PRIVATE shell32)
+  target_link_libraries(cloud-review-probe PRIVATE shell32)
+endif()
