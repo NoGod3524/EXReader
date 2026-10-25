@@ -135,3 +135,9 @@ run/attempt 内逐个下载三份归档，重算 SHA-256 与 API digest 比对�
 
 `63506780` / run `40156837215` 已实际观察到正数pending-metadata且精确镜像，但新增Device未发送公开消费者的`open`命令，capture为session-only而没有outbox，行保留断言因此失败。补上该设备本线程的revisions打开/关闭，保留正数与未ack行的全部要求，继续新同源整轮。
 
+## Root 修复验收
+
+source `b6eaf3898a59f41d1cd7453f30107e6cba3f1e27` / [run 40157153398](https://github.com/NoGod3524/EXReader/actions/runs/40157153398) / attempt1 全4作业success。三平台各22项真实TLS/session检查和17个运行/作业/ZIP身份负例通过；真实待原件与正数待metadata均被精确镜像，未确认修订仍留在对应outbox。四线程100次capture统计严格通过。
+
+strict job `121061471183` 认证三份同源同attempt工件、实际上游作业、唯一报告/消费者及散列，`accepted=true`、`problems=[]`，各平台`metadata_wait_positive_covered=true`。最终证据HEAD仅修改本文和JSON；完整历史失败、修复和原交回证据保留。模块生产实现未改，复审关闭，等待共同源码及宿主同步面板接线。
+
