@@ -56,12 +56,50 @@ All original reports and new named results are retained. A missing public API
 would keep overall accepted=false with the exact missing signature; no fallback
 mapping or private SQL is permitted.
 
-## Scope and pending evidence
+## Scope and verified cloud evidence
 
 No production host UI, physical-keyboard/IME, performance, Android or iOS credit
 is granted. No complete-product or complete-library-sync claim is made.
-Cloud results will be recorded in the evidence-only `[skip ci]` commit after
-execution; current implementation is not yet tested.
+Tested source: `616a9bf85240f860bf5f8fa395b31c0954db703b` (tree
+`af62b2f63e03083c40711fe2ed789ece634350f0`).
+[Run 40166639576, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40166639576)
+completed successfully on the exact source. Linux job `121088941869`, Windows
+`121088941876`, macOS `121088941754`, and strict aggregate `121090754742` all
+completed/success. This evidence-only `[skip ci]` commit changes only this file
+and `docs/validation/reader-reviewed-composition.json`; it does not inherit
+runtime acceptance for different code.
+
+Each platform passed 36 original composition items, all 11 original negative
+gates and both 37-check shared-owner runs. Original reports retained cloud 47,
+bulk 21, link 37, history 149, keyboard 41, book-information 22 cases/795
+assertions, status 22 and profiles 42. Linux also passed the unchanged original
+account-profile ASan/UBSan commands, including the heap nonterminated-plan
+regression. The strict aggregate passed 32 tampering/identity controls and
+authenticated all three platform ZIPs, reports, installed proofs and actual
+consumer binaries. No missing public API or SQL fallback was needed.
+
+**Verified composition: accepted. Task-wide acceptance: withheld** only for the
+frozen-baseline discrepancy below. The aggregate explicitly names the exact
+22-package scope and keeps `task_wide_accepted=false`.
+
+Native keyboard gaps remain explicit: IME skipped on every hosted runner;
+Windows also skipped injected auto-repeat; macOS skipped deactivate-cancels.
+Those skips retain the original documented limitations, not extra input/IME
+credit. Complete named results, actual binary hashes and historical failure
+artifacts are recorded in the validation JSON.
+
+### Final artifact identities
+
+All expire `2027-01-23T05:44:49Z`. Platform archives were downloaded and their
+size/SHA-256 recomputed in the strict Actions job. The aggregate artifact's
+metadata is recorded from the API; it does not authenticate itself.
+
+| Artifact | ID | Bytes | SHA-256 |
+| --- | --- | ---: | --- |
+| Linux | 12588673235 | 61617137 | `77ed469beb4c39bfbd488c9b90078b13f146c83e98988d2a391aac7d091e3603` |
+| Windows | 12588678367 | 49612704 | `e2e9c87cd74b14a225a2bdbdc32ea7a171d11cef2f1a8c0d3e65603ce796b7d8` |
+| macOS | 12587829512 | 53528510 | `ba53f302953e839dcb9924ef05a43e983d06d0ccd9dac85dfa4b2183feea4371` |
+| Strict report | 12588069191 | 8130 | `40463428f6f139bc182f6e20371b5f803e88f0935f2af4336a3aa1198b06ff96` |
 
 ## Frozen-baseline count discrepancy (not silently resolved)
 
@@ -116,3 +154,11 @@ earlier in that same step (available only to later steps). The audit correctly
 refused the resulting empty path. T05 now supplies the explicit relocated path;
 no audit or acceptance rule is removed. Later scenario steps were not run on
 that source; the failed attempt remains preserved.
+
+Those two failed runs ultimately failed their strict aggregates too; no failed
+producer was accepted. Their macOS jobs later reproduced the same respective
+include/audit failures. Intermediate source
+`607fdb53e01173e13c9299ba4caf5fd555e03bc1`, run `40166164464`, passed all three
+producers and its aggregate, then was superseded by the final candidate to bind
+installed archive/header bytes and explicit unique IDs. Final-source evidence
+above supersedes that intermediate pass, rather than borrowing it.

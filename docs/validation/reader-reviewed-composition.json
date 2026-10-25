@@ -1,12 +1,672 @@
 {
+  "schema": "reader-reviewed-composition-task-evidence-v1",
   "accepted": false,
-  "status": "implementation_pending_actions",
+  "status": "verified_composition_complete_task_baseline_scope_unresolved",
   "fixed_start": "e4356a6e13223469fdf3b2f3d5171a6e99ab10a6",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
   "merge_point": "b143a861ef951a90c99e9c136cec47395aa700d2",
-  "tested_sha": null,
+  "tested_sha": "616a9bf85240f860bf5f8fa395b31c0954db703b",
+  "tested_tree": "af62b2f63e03083c40711fe2ed789ece634350f0",
+  "evidence_commit_policy": "This docs-only [skip ci] commit follows tested_sha; final evidence HEAD is recorded in the handoff because embedding its own SHA is circular.",
+  "tested_to_evidence_diff": [
+    "docs/READER-REVIEWED-COMPOSITION.md",
+    "docs/validation/reader-reviewed-composition.json"
+  ],
+  "branch": "codex/dot-reviewed-composition",
+  "verified_composition": {
+    "accepted": true,
+    "scope": "fixed-source 22-package installed composition only",
+    "run_id": 40166639576,
+    "attempt": 1,
+    "run_conclusion": "success",
+    "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/40166639576",
+    "packages": [
+      "EXReader",
+      "EXReaderAccountProfiles",
+      "EXReaderBatchImport",
+      "EXReaderBookInformation",
+      "EXReaderBulkOrganization",
+      "EXReaderCloudImport",
+      "EXReaderCommands",
+      "EXReaderCredentials",
+      "EXReaderDesktopMetadata",
+      "EXReaderJumpHistory",
+      "EXReaderKeyboardActions",
+      "EXReaderLinkPolicy",
+      "EXReaderPreferences",
+      "EXReaderProductCatalog",
+      "EXReaderReadingState",
+      "EXReaderRevisions",
+      "EXReaderSearch",
+      "EXReaderSession",
+      "EXReaderSideload",
+      "EXReaderSync",
+      "EXReaderSyncView",
+      "EXReaderWebDAV"
+    ],
+    "package_count": 22,
+    "jobs": [
+      {
+        "id": 121088941754,
+        "name": "one-prefix composition (macos)",
+        "source_sha": "616a9bf85240f860bf5f8fa395b31c0954db703b",
+        "run_id": 40166639576,
+        "attempt": 1,
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/40166639576/job/121088941754",
+        "runner": [
+          "macos-15"
+        ]
+      },
+      {
+        "id": 121088941869,
+        "name": "one-prefix composition (linux)",
+        "source_sha": "616a9bf85240f860bf5f8fa395b31c0954db703b",
+        "run_id": 40166639576,
+        "attempt": 1,
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/40166639576/job/121088941869",
+        "runner": [
+          "ubuntu-22.04"
+        ]
+      },
+      {
+        "id": 121088941876,
+        "name": "one-prefix composition (windows)",
+        "source_sha": "616a9bf85240f860bf5f8fa395b31c0954db703b",
+        "run_id": 40166639576,
+        "attempt": 1,
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/40166639576/job/121088941876",
+        "runner": [
+          "windows-2022"
+        ]
+      },
+      {
+        "id": 121090754742,
+        "name": "strict same-source composition report",
+        "source_sha": "616a9bf85240f860bf5f8fa395b31c0954db703b",
+        "run_id": 40166639576,
+        "attempt": 1,
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/NoGod3524/EXReader/actions/runs/40166639576/job/121090754742",
+        "runner": [
+          "ubuntu-22.04"
+        ]
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 12588678367,
+        "name": "reader-reviewed-composition-windows-40166639576-1",
+        "bytes": 49612704,
+        "digest": "sha256:e2e9c87cd74b14a225a2bdbdc32ea7a171d11cef2f1a8c0d3e65603ce796b7d8",
+        "expires_at": "2027-01-23T05:44:49Z",
+        "expired": false,
+        "source_sha": "616a9bf85240f860bf5f8fa395b31c0954db703b",
+        "run_id": 40166639576,
+        "zip_authenticated_in_actions": true,
+        "verification": "Downloaded, resized and SHA-256 recomputed by strict aggregate job 121090754742"
+      },
+      {
+        "id": 12588673235,
+        "name": "reader-reviewed-composition-linux-40166639576-1",
+        "bytes": 61617137,
+        "digest": "sha256:77ed469beb4c39bfbd488c9b90078b13f146c83e98988d2a391aac7d091e3603",
+        "expires_at": "2027-01-23T05:44:49Z",
+        "expired": false,
+        "source_sha": "616a9bf85240f860bf5f8fa395b31c0954db703b",
+        "run_id": 40166639576,
+        "zip_authenticated_in_actions": true,
+        "verification": "Downloaded, resized and SHA-256 recomputed by strict aggregate job 121090754742"
+      },
+      {
+        "id": 12588069191,
+        "name": "reader-reviewed-composition-report-40166639576-1",
+        "bytes": 8130,
+        "digest": "sha256:40463428f6f139bc182f6e20371b5f803e88f0935f2af4336a3aa1198b06ff96",
+        "expires_at": "2027-01-23T05:44:49Z",
+        "expired": false,
+        "source_sha": "616a9bf85240f860bf5f8fa395b31c0954db703b",
+        "run_id": 40166639576,
+        "zip_authenticated_in_actions": false,
+        "verification": "Aggregate output: API metadata recorded; not self-authenticated"
+      },
+      {
+        "id": 12587829512,
+        "name": "reader-reviewed-composition-macos-40166639576-1",
+        "bytes": 53528510,
+        "digest": "sha256:ba53f302953e839dcb9924ef05a43e983d06d0ccd9dac85dfa4b2183feea4371",
+        "expires_at": "2027-01-23T05:44:49Z",
+        "expired": false,
+        "source_sha": "616a9bf85240f860bf5f8fa395b31c0954db703b",
+        "run_id": 40166639576,
+        "zip_authenticated_in_actions": true,
+        "verification": "Downloaded, resized and SHA-256 recomputed by strict aggregate job 121090754742"
+      }
+    ],
+    "original_composition_items_per_platform": 36,
+    "original_negative_gates_per_platform": 11,
+    "shared_flow_checks_per_execution": 37,
+    "shared_flow_executions_per_platform": 2,
+    "shared_flow_named_checks": [
+      "profile persists non-secret account identity",
+      "profile prepares isolated shared product paths",
+      "profile verifies activation immediately before session creation",
+      "session owns the profile product without borrowing an SDK handle",
+      "cloud download runs on a distinct SDK-free network worker",
+      "download receipt matches independently hashed fixture bytes",
+      "SDK library is opened only on its owner thread",
+      "cloud staged receipt commits through installed sideload on SDK owner",
+      "SDK public original readback equals the downloaded immutable bytes",
+      "public product handles share the session product path on their owner thread",
+      "existing typed command creates verified metadata history and outbox",
+      "existing public catalog attaches the durable SDK identity without SQL",
+      "metadata owner opens the same shared product",
+      "bulk borrows the real metadata owner",
+      "bulk favorite commits on the downloaded mapped book",
+      "bulk journal acknowledges only its completed transaction",
+      "read-only book information snapshots the same owner and book",
+      "book information proves favorite local mapping and exact original identity",
+      "sync status captures the real shared session and retained book outbox",
+      "reading opens the cloud-imported document through the same SDK owner",
+      "reading obtains the real document text",
+      "history opens without creating another product mapping",
+      "reading captures two actual SDK positions",
+      "history stores the first actual reading capture",
+      "history stores a distinct actual landing",
+      "keyboard uses real installed preferences and public configuration",
+      "keyboard dispatch resolves history publicly before committing the actual back navigation",
+      "history cursor moves only after FOUND public resolve",
+      "external link policy coexists with the active reader owner",
+      "external link is classified for host confirmation without opening a site",
+      "read-only views and history leave the shared outbox unchanged",
+      "book information snapshot survives all borrowed owner handles",
+      "shared session starts after local product owners finish",
+      "shared session publishes the same favorite history through a complete bounded sweep",
+      "read-only status reports a completed sweep without claiming complete library sync",
+      "shared session close is requested explicitly",
+      "shared session reaches CLOSED before destruction"
+    ],
+    "named_results_by_platform": {
+      "linux": {
+        "original_composition_items": 36,
+        "shared_flow_items": 37,
+        "cloud": 47,
+        "bulk": 21,
+        "link": 37,
+        "history": 149,
+        "keyboard": 41,
+        "keyboard_skips": [
+          {
+            "suite": "probe",
+            "name": "ime-composing-passthrough",
+            "detail": "no input method runs under Xvfb; the composing gate and the VK_PROCESSKEY vector are covered by the installed consumers"
+          }
+        ],
+        "information_cases": 22,
+        "information_assertions": 795,
+        "status": 22,
+        "profiles": 42
+      },
+      "windows": {
+        "original_composition_items": 36,
+        "shared_flow_items": 37,
+        "cloud": 47,
+        "bulk": 21,
+        "link": 37,
+        "history": 149,
+        "keyboard": 41,
+        "keyboard_skips": [
+          {
+            "suite": "probe",
+            "name": "ime-composing-passthrough",
+            "detail": "no IME is installed on a hosted Windows runner; the VK_PROCESSKEY composing path is covered by the installed consumer's win32 vectors and its composing gate"
+          },
+          {
+            "suite": "probe",
+            "name": "reader-repeat-bounded",
+            "detail": "page_actions=1 but the runner did not auto-repeat injected input"
+          }
+        ],
+        "information_cases": 22,
+        "information_assertions": 795,
+        "status": 22,
+        "profiles": 42
+      },
+      "macos": {
+        "original_composition_items": 36,
+        "shared_flow_items": 37,
+        "cloud": 47,
+        "bulk": 21,
+        "link": 37,
+        "history": 149,
+        "keyboard": 41,
+        "keyboard_skips": [
+          {
+            "suite": "probe",
+            "name": "deactivate-cancels",
+            "detail": "deactivate did not reach the process on this runner (cancel_calls=0); the resign-key path is covered by focus-change-forgets-hold"
+          },
+          {
+            "suite": "probe",
+            "name": "ime-composing-passthrough",
+            "detail": "no input method and no accessibility grant exist on a hosted macOS runner; the composing gate is covered by the installed consumer's vectors"
+          }
+        ],
+        "information_cases": 22,
+        "information_assertions": 795,
+        "status": 22,
+        "profiles": 42
+      }
+    },
+    "authenticated_binary_and_raw_sha256": {
+      "linux": {
+        "composition-link.map": "5f0aeff9ebb0060acc55aed86884124a5deb7a4519665ed29f606f6dc9551ec8",
+        "composition-c-link.map": "ea1d0e8676df9066fe909172747c60670d151e9818e3ba76f879357c88c4f0a8",
+        "reviewed/link-map-0.txt": "b5285174d46e2f19e042c3e3a2ee69c4fba756b7b6871961a2aea5728da1d174",
+        "reviewed/link-map-1.txt": "97fa14fbb9604d5c568e99829863d1879d5842050760a7855f58d9b5fad9a264",
+        "interface.json": "9e9e4c0b163d56594d47a163ccaf1571f163358ba10f7a5c5277eb9fc7c3afb1",
+        "interface-relocated.json": "10e1f63d1a3ee3ba4410a6c0662c55a1ed0e587b8f2e3c404e20878d5259e28e",
+        "installed/cloud-header": "83f997de5a713a530862d71a07372f2eb165e75af96ca4b74fa8fe1b9f93ac2a",
+        "installed/cloud-library": "cfbbd06e0d92447773a17ba15110091d0067c7abb734d9e4f19945a6fb161281",
+        "installed/link-header": "3d61caf82f19e32f3abda52cc9b0c2c0f104e3146fcbb0f439b2aab0c622893a",
+        "installed/link-library": "dc114f072a96fa3f0ba43b036b48aefa525ac1712aaea39ea0a265c3b98393c8",
+        "installed/history-header": "99f55a5707ccd62aaf87b53752e930db08952264f75c95412c82d42b1ca61f35",
+        "installed/history-library": "346297c8d769a380e3bcd26b778a97114374bec4abe89113f61946f6f6de4dc5",
+        "composition-c": "43156818aedbd9483d273d1e895f989090e1f87786e4b807225e1a1f00dbae3b",
+        "composition-cxx": "73de07567ac447e97ca045b46bff1de86e06b6c12e70dcc87b3f81ddf1645680",
+        "composition-c-relocated": "43156818aedbd9483d273d1e895f989090e1f87786e4b807225e1a1f00dbae3b",
+        "composition-cxx-relocated": "73de07567ac447e97ca045b46bff1de86e06b6c12e70dcc87b3f81ddf1645680",
+        "reviewed-flow": "16b255f7b3f561c5e5dbf909f7a4a7b44513d43f0254313b0acd5ac2e02b2ddb",
+        "reviewed-flow-relocated": "16b255f7b3f561c5e5dbf909f7a4a7b44513d43f0254313b0acd5ac2e02b2ddb",
+        "cloud-probe": "51104f16479f51885cc8366216ba4a1da3c53a7a36b56ad336cb929ea94100a6",
+        "cloud-cpp-consumer": "b5fdfde5ff146590cfbaa64f787af31686a28c63532a8bffb9112ed290d78497",
+        "cloud-review-probe": "3374d9f60c0cc859b1df479b9a18aa3db2b9370a56535d86a9bd8f59c828443c",
+        "bulk-probe": "9f9889ce2f52e52f488acd78e1efa48a97d4c4adb25e485ba2af1981ef9c5b27",
+        "bulk-c-consumer": "2e05bf0d7c17f31ac8e4ed715223304a3bbce21172704dd10f50e3a79cc0b05a",
+        "link-probe": "c79169461300353edd62e8a5171a762a3f8c0b0de471ae188f7ae56edb00c541",
+        "link-cpp-consumer": "6a295656b809d9ccee76ee0fc2d77ab6ac8bd0ad9fbaa92cac325600927874d0",
+        "link-worker": "c29e32eba496eb682e705a6a5517617f227fa0b583889329dbeedc84ca99041e",
+        "link-sdk-consumer": "b80b4a8daf6a833d58e048e8f201167c294180d9b96eeb50241f225fa43c667f",
+        "jump-history-probe": "0b76b38fee8f555a5745fb178b7ff6cbf733c86d25714fb2a7de7de0445ccc3a",
+        "jump-history-c-consumer": "2de4141382ad0aa6135e69e508c29dc8fb50104a7760051da490e28b8e89539c",
+        "keyboard-c-consumer": "7dbb73c6958319ace27270c422a91ed94288a9fe0c00444dfa120a9ea8ada1d4",
+        "keyboard-cpp-consumer": "fbd1fddbe50673890b8c98070e29891c8667248de4c09fcbb7693f5af1c67362",
+        "keyboard-probe": "42579945018038206c6c84e991664058d4cf435d745b5df1e11b1bd259c00b6d",
+        "book-info-probe": "699bb5d33567db8af77dca93d75ed9be224e13cf933edb81eb4a87b4be3e1712",
+        "book-info-compare": "64e267955105408d1f820665a61573f544dd4e4f2663edbfebaac9e3b605d2cf",
+        "status-view-consumer": "d3178094770796ab2aec9a1239da7923c0d978594ed18d876ba52081b6987dd6",
+        "status-view-c-consumer": "c5674202d826f4e35e7da94d8528b7facc98b7abed94f61f42c7374fb6acafcc",
+        "revision-consumer": "e4b781e7fea0bfd28231ea99194abe0192f0697deef5c88234dcac9a6b33e8a7",
+        "profiles-probe": "1162085c56ab601b6a64af209be664c0dc51fb4322dfc3a8c0fe9d54eaee77dd",
+        "profiles-session-consumer": "c87c92cc73dd804c6662ea196a504e6bc27a0df6b4c53fb6b8c23ddc4b48cb5f",
+        "profiles-worker": "5186a650d06d1631aba9be325bc3a520fe7600c4019dd1f4a94883f9772588d8"
+      },
+      "windows": {
+        "composition-link.map": "da4f2715539f38dd94bb59152935ea12e4aa71dbb2276622e3e0e2d27c750b08",
+        "composition-c-link.map": "e06773df29e8a6b9b255527ffac66c5bd1ada69828d6eed78349e654cd88432b",
+        "reviewed/link-map-0.txt": "6b11231be4c9a9e5ef7bb01eda995c7da88d44695c6cb5d4225cad4c85cb9bfd",
+        "reviewed/link-map-1.txt": "bb47e8c8050036e17d7086f8cb1eec2ee48454346cb6686190d1362c1c0da539",
+        "interface.json": "bdb3c9ecf603397a610b573d58988b5f7e86d431361ea2df3251f80d186c85c2",
+        "interface-relocated.json": "8f782596ff0e9708f8f3b68185439c2936a7f50af69eebe12bcab5ce9d69d1c3",
+        "installed/cloud-header": "83f997de5a713a530862d71a07372f2eb165e75af96ca4b74fa8fe1b9f93ac2a",
+        "installed/cloud-library": "14730a9b4e34cc0bf0a6e45bc5cf671e390e37943e6da0db319e8a26916d801e",
+        "installed/link-header": "3d61caf82f19e32f3abda52cc9b0c2c0f104e3146fcbb0f439b2aab0c622893a",
+        "installed/link-library": "7aae473d5c1d79d91b8032e2f13346fbdbc2267bba20e520e52680e396de6abe",
+        "installed/history-header": "99f55a5707ccd62aaf87b53752e930db08952264f75c95412c82d42b1ca61f35",
+        "installed/history-library": "31b7ead4fdb64c9c2c0d16a79842ce0a23b911e32496790d110694639fab27b4",
+        "composition-c": "9c4d01a82530e05ff152e5d000ed8de1f1120891c9f96125b29d02becc7285bc",
+        "composition-cxx": "cc6b07c3021e7029cbea372068c83b648c9b889fd8cd732946fd4ee090d35e47",
+        "composition-c-relocated": "4176c482e3ba3d65768a2e1e9dda7cecab3422f24fbee15e7955752ad8c5eec4",
+        "composition-cxx-relocated": "0cebb3264665fe498881dd0a88664cc2403209603dabd76b12fcbdcf87d2ad06",
+        "reviewed-flow": "a7abd6728531be0303ecd99502f607fbbd1b4e5f5a779617584af87a5f4994ba",
+        "reviewed-flow-relocated": "5724b53bbc5f86670b9a9c8a3fe81cdb777b6544805a09284d5a5279212a151a",
+        "cloud-probe": "8ff54f3e231d0ff57e213224727ddfaa301d723171f7475d6cc8ec1568f09e55",
+        "cloud-cpp-consumer": "b7b0f417788f00ef19067ce146a4171c66ebcd27d599772a7fcddd1965f18de2",
+        "cloud-review-probe": "eda958216a664798d1717e937603d1b7d570f10ea320d5e75f76378e2b9f7b5e",
+        "bulk-probe": "00449b9a7e13a84328ed8c5b0b7e2bc943093ba084419b66a1fb4a054056e5ae",
+        "bulk-c-consumer": "e17896b05402f26c27a4ea24f41ba24326044dae747ee68d3dc5699555b91b1f",
+        "link-probe": "495ff7051cd7e78e918e619e7323edadc719cb30d96947110388ba1d1190c4e6",
+        "link-cpp-consumer": "696159c3db4d2cd6a5c27c90ea5de7b745a87b56efcf72a9808474b341d57bb4",
+        "link-worker": "286d8633962b5aa64eb55b8314bd0eca1c74936f3b088aadcbc471eecfcd16ea",
+        "link-sdk-consumer": "5937825e76da9da04ced4490fb00e66fdf79ac644cc1442e3a2595276bf88498",
+        "jump-history-probe": "65a6ea49f86750725b46675a9663221a3c504a6401bed4348679cc2d79c507f4",
+        "jump-history-c-consumer": "ab696fe11be83a21d8c2f29e2f9fb276eb5e8aed6be6699d1ad36aa8d6849460",
+        "keyboard-c-consumer": "2580f0a2bff0068382735160097ed4cc859c097002a44768caa43a359f34718f",
+        "keyboard-cpp-consumer": "65580b9b9919aa3bc2b131d2b992afb01de65f32bbe5095cbac48215cd74b740",
+        "keyboard-probe": "c4d543ad924a87f1a35e11c776d0d6434b0db4736b3c9e68d678b178da86cecc",
+        "book-info-probe": "471bff02cabc2793320b1f83de6f9b0f37f78378b17df5535c92fc698397f6e6",
+        "book-info-compare": "a3c027cbd77be27e6bb446c7b5f98402c51a523d1dcbc6dceff302841b62fb4e",
+        "status-view-consumer": "0601e2e88d6c101612572aa50f214566079f1522e77dc5776a847b7b40978003",
+        "status-view-c-consumer": "56ce171eff1be5f5ca06c4aebf02761017d2b0befa46d199bc24c9be2b76fd8f",
+        "revision-consumer": "612de9ba9e2c2cb3d6f7f7f86d4978d41da53a246bea218e04f59147abfec689",
+        "profiles-probe": "a8e84f7fa29915ad1a29e28e408df49357e58dc2c205250e477672d2a1d2c678",
+        "profiles-session-consumer": "5cfe4eba9e013bc808c0f200cdb6ea0a25015d4184413b380c167def6bf38058",
+        "profiles-worker": "196cd81eeb54ef95dd5b7b97f1898fcab9e8ef9ea54468b75278e2ae33de3594"
+      },
+      "macos": {
+        "composition-link.map": "b0c3fbbc1588180d33ac416260547ecdc0d0f00388a770ae8521b4cb17eb9520",
+        "composition-c-link.map": "594a7da53f5d862622c6593ca7b141d629d24ca0a2f649123d478204bb32111b",
+        "reviewed/link-map-0.txt": "83b757769224b3710fb9e266af24100e07fd518aeb4c473587dbbdd1a779b897",
+        "reviewed/link-map-1.txt": "4f72d5a6b256b6fcf8e4fe1d6906a86c4736813e25850cf0189f7d2edb219eca",
+        "interface.json": "770ace4561e1572785e26d1e954eae969724cf7a4ecdf61ac7e686270403134d",
+        "interface-relocated.json": "fdb3c01b8c5cdc00d82980bb53ab50d59186c6a36dbeb20789273f46485b1980",
+        "installed/cloud-header": "83f997de5a713a530862d71a07372f2eb165e75af96ca4b74fa8fe1b9f93ac2a",
+        "installed/cloud-library": "3ba6a2d85fa8f61a78073aa9df0c5c514ea4c9c0298f6ed6c44b5226bcf4bc97",
+        "installed/link-header": "3d61caf82f19e32f3abda52cc9b0c2c0f104e3146fcbb0f439b2aab0c622893a",
+        "installed/link-library": "89eefd431ff5806ba4d3d136d5b9208e9cf21b9a27d2365d9747701ac1f2d48f",
+        "installed/history-header": "99f55a5707ccd62aaf87b53752e930db08952264f75c95412c82d42b1ca61f35",
+        "installed/history-library": "e2fc2f01209b557c110e89083c2cdd9afa6b35eba22bbfd6e78d63c60bcc4172",
+        "composition-c": "7f26de1cf3f91ee51f90c7d5fa249a1ab6780489f873eea11ac4ac7c97a6c86c",
+        "composition-cxx": "81fb51cb672fce6627ab1505825b69ba9943736d66607b1466f944e25eb24939",
+        "composition-c-relocated": "7f26de1cf3f91ee51f90c7d5fa249a1ab6780489f873eea11ac4ac7c97a6c86c",
+        "composition-cxx-relocated": "81fb51cb672fce6627ab1505825b69ba9943736d66607b1466f944e25eb24939",
+        "reviewed-flow": "e5e257c883d679881f1f36cd5017afd49fa895c44cb12e1f94d30eceb843c3a6",
+        "reviewed-flow-relocated": "e5e257c883d679881f1f36cd5017afd49fa895c44cb12e1f94d30eceb843c3a6",
+        "cloud-probe": "6481319e4ebadf05b199f47e2066e09ea5051000e54e4297507aa35a04e72aa0",
+        "cloud-cpp-consumer": "a8c283354cd5df6620e67b1da2b5363230259cab9286a7e59245eab327a6e5a9",
+        "cloud-review-probe": "de2c3199d71bb6500e8c62081f61517d61b19fcc34d9f4aa4d2a3648a2b3b63b",
+        "bulk-probe": "fba282e977aade7bfea1e3b2e9bfe6c65499298ec0f84e698cb0c189a36f4330",
+        "bulk-c-consumer": "d9e63f96589ec2d17f81c04167e95ea4c3399c9a08efb232efd4014c932b7a03",
+        "link-probe": "9f6ac7f92431e141b7e9930c0d88e0172d021ae47504727351b6d64a6ce426ac",
+        "link-cpp-consumer": "22abd256473fd69dc94b4a04c960be7d1b6616db709dd3f02348ece064e754c4",
+        "link-worker": "cf692a081b9be8755025123107fc78eb94dd80b2d7672de805801f58402dc18a",
+        "link-sdk-consumer": "e23bb6b5951f0989347cc7524916aa3f4da6e2f309b774c676dda1626eaf18b3",
+        "jump-history-probe": "dd82ba3a76b7ba4d7d50e57738413f62689e5301f9a9bccb2a78e9d95efd2a35",
+        "jump-history-c-consumer": "99f9bbd54b95adea56c579a490cfbfa24de81bb1d187a84c6c6f5cf4e2baecfe",
+        "keyboard-c-consumer": "60f123568e4af71814ff450ce565587d8d7ee5154716a0c65301efb9785ce7a5",
+        "keyboard-cpp-consumer": "c2cfcbddb7ee9c1ab22b7f80078a574d56ae701125a74f67943c4aa170bab0ff",
+        "keyboard-probe": "c4a7f5356ea68303ee00192d34a6686755a1dc86c11b3acb9701ae469ba18ef6",
+        "book-info-probe": "a3e7798d6443f2365dca733376c1717f91c9f92dc6390cc6dc00c8cb34b5d3aa",
+        "book-info-compare": "48cce9e5ea7df2c85ff022257baa2e46e63f25d6b6e8d7dae12e64ca485b74a0",
+        "status-view-consumer": "0be812114a762d607719bf9331d7db659732a0a2eafe26d437b3b9205dbac504",
+        "status-view-c-consumer": "4d172580e9db018bcb38782aa165495b10c62ee88a163c1a11bec83676e31a6d",
+        "revision-consumer": "7823b3069ce087e2c48540ebc838f94c920ab0c77ade8d0ecb4b197c5cd64b3d",
+        "profiles-probe": "8b11360af8158bc4196931c48fb26118dae633e782902ef9258c295b94aceed9",
+        "profiles-session-consumer": "5d4385ac1a0cb808379fb617dbd8e4414da5a294c0fe21d6d503a917ad6541a0",
+        "profiles-worker": "ea5bf9ece46d2eaedebdf5c764c6089d141d77465a9ede435ccccf72113fa547"
+      }
+    },
+    "strict_protocol_negative_controls": 32,
+    "keyboard_skipped_everywhere": [
+      "ime-composing-passthrough"
+    ],
+    "linux_original_account_profiles_sanitizer": "ASan/UBSan original eight commands passed, including heap nonterminated-plan regression; failures=0",
+    "missing_public_api": [],
+    "sql_fallback_used": false,
+    "production_or_original_tests_modified_after_merge": false,
+    "local_execution": "source/docs/Git only; all builds/tests/syntax/fixtures/services/artifact processing ran in Actions",
+    "problems": []
+  },
+  "baseline_discrepancy": {
+    "handoff_claim": "existing 18-package one-prefix composition",
+    "fixed_source_observation": "13 optional packages plus EXReader SDK (14 unique package configs); with eight authorized additions, 22 unique package configs",
+    "source_sha": "e4356a6e13223469fdf3b2f3d5171a6e99ab10a6",
+    "references": [
+      "docs/READER-MODULE-COMPOSITION.md:32-42",
+      "tests/reader_module_composition/consumer/CMakeLists.txt:29-43"
+    ],
+    "resolution_owner": "main coordinator",
+    "acceptance_rule": "Do not infer unidentified packages or claim the stated 18-package baseline fulfilled. Preserve verified exact graph independently."
+  },
+  "preserved_attempts": [
+    {
+      "run_id": 40165114855,
+      "attempt": 1,
+      "source_sha": "258f0c36a40f1bd0cc65091a70317d7cb489d81d",
+      "status": "failure",
+      "detail": "All platforms: original supplemental cloud review probe's four-parent relative source include did not resolve at common prefix depth. Windows additionally rejected T05's backslash -D source/include paths for link/profiles. Strict aggregate refused failed producers; shared flow and original composition gates passed independently.",
+      "artifacts": [
+        {
+          "id": 12588707722,
+          "name": "reader-reviewed-composition-macos-40165114855-1",
+          "bytes": 25660467,
+          "digest": "sha256:2fac7510ea3304036028c8a9fee1547433df065186161f61c152ac8d09ab17c0",
+          "expires_at": "2027-01-23T05:19:32Z"
+        },
+        {
+          "id": 12588438106,
+          "name": "reader-reviewed-composition-report-40165114855-1",
+          "bytes": 372,
+          "digest": "sha256:1bee112640e972c0747b2e175c91508be6e34b324a930686f17cb6d430755276",
+          "expires_at": "2027-01-23T05:19:32Z"
+        },
+        {
+          "id": 12588256551,
+          "name": "reader-reviewed-composition-windows-40165114855-1",
+          "bytes": 23626260,
+          "digest": "sha256:dae95d103cc2662f01f4e64033c4f38ad480f3bfb0e9eb9e2fbbcc333cf3f82a",
+          "expires_at": "2027-01-23T05:19:32Z"
+        },
+        {
+          "id": 12587942094,
+          "name": "reader-reviewed-composition-linux-40165114855-1",
+          "bytes": 29391547,
+          "digest": "sha256:7a86653d2fa2d9163aaeac272f3ff734b5cdac07992502f62bb2a23a18a00677",
+          "expires_at": "2027-01-23T05:19:32Z"
+        }
+      ],
+      "jobs": [
+        {
+          "id": 121084469398,
+          "name": "one-prefix composition (macos)",
+          "status": "completed",
+          "conclusion": "failure",
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/40165114855/job/121084469398",
+          "failed_steps": [
+            "Bind all original reports and the actual installed consumer binaries",
+            "Require all original suites to pass without dropping failures"
+          ]
+        },
+        {
+          "id": 121084469476,
+          "name": "one-prefix composition (windows)",
+          "status": "completed",
+          "conclusion": "failure",
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/40165114855/job/121084469476",
+          "failed_steps": [
+            "Bind all original reports and the actual installed consumer binaries",
+            "Require all original suites to pass without dropping failures"
+          ]
+        },
+        {
+          "id": 121084469699,
+          "name": "one-prefix composition (linux)",
+          "status": "completed",
+          "conclusion": "failure",
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/40165114855/job/121084469699",
+          "failed_steps": [
+            "Bind all original reports and the actual installed consumer binaries",
+            "Require all original suites to pass without dropping failures"
+          ]
+        },
+        {
+          "id": 121089304407,
+          "name": "strict same-source composition report",
+          "status": "completed",
+          "conclusion": "failure",
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/40165114855/job/121089304407",
+          "failed_steps": [
+            "Authenticate every platform ZIP and bind each summary to this run"
+          ]
+        }
+      ]
+    },
+    {
+      "run_id": 40165661710,
+      "attempt": 1,
+      "source_sha": "ad2d94af43410e7ed63eb874dac81911916bddb6",
+      "status": "failure",
+      "detail": "Cloud wrapper repaired. Newly added relocated-prefix audit saw an empty same-step GITHUB_ENV value on all platforms; correctly refused. Windows still had previously diagnosed slash-path issue. Linux/macOS original suites passed; later scenarios skipped after audit failure. Strict aggregate refused producers.",
+      "artifacts": [
+        {
+          "id": 12588862615,
+          "name": "reader-reviewed-composition-macos-40165661710-1",
+          "bytes": 52770864,
+          "digest": "sha256:e39517fe3f4ab9c23eb9466bfdd7ce0464262e76884d8f9236dbb2e2ae3b972b",
+          "expires_at": "2027-01-23T05:28:30Z"
+        },
+        {
+          "id": 12588583130,
+          "name": "reader-reviewed-composition-report-40165661710-1",
+          "bytes": 372,
+          "digest": "sha256:32c2a02c33bc10bd672aafebf337c267bfdcb683f7c426d8d6d69b7112f1d51f",
+          "expires_at": "2027-01-23T05:28:30Z"
+        },
+        {
+          "id": 12588452174,
+          "name": "reader-reviewed-composition-windows-40165661710-1",
+          "bytes": 33700492,
+          "digest": "sha256:a3e7613766f925e42151bfacc5851b0a58b3946b059de2519ee45761d139966e",
+          "expires_at": "2027-01-23T05:28:30Z"
+        },
+        {
+          "id": 12587763225,
+          "name": "reader-reviewed-composition-linux-40165661710-1",
+          "bytes": 61196772,
+          "digest": "sha256:b441f515a9f7ddf42e7dc3c80388a3799ad658c0bf2a1080070b20542da8e2c3",
+          "expires_at": "2027-01-23T05:28:30Z"
+        }
+      ],
+      "jobs": [
+        {
+          "id": 121086065292,
+          "name": "one-prefix composition (macos)",
+          "status": "completed",
+          "conclusion": "failure",
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/40165661710/job/121086065292",
+          "failed_steps": [
+            "Relocate the prefix and rebuild the same consumers from the new path",
+            "Bind all original reports and the actual installed consumer binaries"
+          ]
+        },
+        {
+          "id": 121086065421,
+          "name": "one-prefix composition (windows)",
+          "status": "completed",
+          "conclusion": "failure",
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/40165661710/job/121086065421",
+          "failed_steps": [
+            "Relocate the prefix and rebuild the same consumers from the new path",
+            "Bind all original reports and the actual installed consumer binaries",
+            "Require all original suites to pass without dropping failures"
+          ]
+        },
+        {
+          "id": 121086065595,
+          "name": "one-prefix composition (linux)",
+          "status": "completed",
+          "conclusion": "failure",
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/40165661710/job/121086065595",
+          "failed_steps": [
+            "Relocate the prefix and rebuild the same consumers from the new path",
+            "Bind all original reports and the actual installed consumer binaries"
+          ]
+        },
+        {
+          "id": 121089871514,
+          "name": "strict same-source composition report",
+          "status": "completed",
+          "conclusion": "failure",
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/40165661710/job/121089871514",
+          "failed_steps": [
+            "Authenticate every platform ZIP and bind each summary to this run"
+          ]
+        }
+      ]
+    },
+    {
+      "run_id": 40166164464,
+      "attempt": 1,
+      "source_sha": "607fdb53e01173e13c9299ba4caf5fd555e03bc1",
+      "status": "success_intermediate",
+      "detail": "Three producers and aggregate passed. Superseded only to add required actual installed header/archive authentication, explicit unique IDs, cloud semantic source guard and precise 22-package-only scope metadata. Not used as final-source evidence.",
+      "artifacts": [
+        {
+          "id": 12588832452,
+          "name": "reader-reviewed-composition-windows-40166164464-1",
+          "bytes": 49523051,
+          "digest": "sha256:50d22d9c89a2b10d2a60f92accdd1a59109ba88446d67f71d5fa8b881720d242",
+          "expires_at": "2027-01-23T05:36:44Z"
+        },
+        {
+          "id": 12588757218,
+          "name": "reader-reviewed-composition-linux-40166164464-1",
+          "bytes": 61602706,
+          "digest": "sha256:948044b9ab3e776c1fceb04eef4b1433620d908b85337759143f55bba473d60e",
+          "expires_at": "2027-01-23T05:36:44Z"
+        },
+        {
+          "id": 12588683451,
+          "name": "reader-reviewed-composition-macos-40166164464-1",
+          "bytes": 53484247,
+          "digest": "sha256:2afbb7568efa3f43caec38e03d535e646bd7ca42ecd911d4789002c755464a8f",
+          "expires_at": "2027-01-23T05:36:44Z"
+        },
+        {
+          "id": 12587899330,
+          "name": "reader-reviewed-composition-report-40166164464-1",
+          "bytes": 7239,
+          "digest": "sha256:1005308476c6dc27f66ef363474c00ba82318b6abf525c6e2a078cc88bee0758",
+          "expires_at": "2027-01-23T05:36:44Z"
+        }
+      ],
+      "jobs": [
+        {
+          "id": 121087537668,
+          "name": "one-prefix composition (linux)",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/40166164464/job/121087537668",
+          "failed_steps": []
+        },
+        {
+          "id": 121087537793,
+          "name": "one-prefix composition (windows)",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/40166164464/job/121087537793",
+          "failed_steps": []
+        },
+        {
+          "id": 121087537897,
+          "name": "one-prefix composition (macos)",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/40166164464/job/121087537897",
+          "failed_steps": []
+        },
+        {
+          "id": 121090388421,
+          "name": "strict same-source composition report",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/NoGod3524/EXReader/actions/runs/40166164464/job/121090388421",
+          "failed_steps": []
+        }
+      ]
+    }
+  ],
+  "repairs": [
+    "T05-only cloud supplemental wrapper preserves original allocator injection and original cloud_probe.c cases; adjusts include depth only. Original installed C/C++ consumers unchanged. Supplemental source-including probe is not installed-only evidence.",
+    "T05 CMake -D source/include values use forward slashes on Windows.",
+    "Relocated-prefix audit receives explicit current-step path rather than newly written GITHUB_ENV value.",
+    "Strict final bundle retains actual executable bytes, cloud/link/history installed header/archive bytes, raw reports/link maps/interfaces, and Linux original sanitizer evidence."
+  ],
+  "remaining_gaps": [
+    "Task-wide acceptance withheld solely for unresolved identity of the handoff's stated 18-package baseline; the exact verified 22-package graph is listed above.",
+    "Native keyboard IME skipped everywhere; Windows injected auto-repeat skipped; macOS deactivate-cancels skipped. Original documented skips retained without physical-input/IME credit.",
+    "No host UI, performance, mobile, physical-device, real user cloud-provider or complete-library-sync acceptance is granted."
+  ],
   "host_ui_accepted": false,
   "performance_accepted": false,
-  "complete_product": false,
-  "failures": [],
-  "remaining_gaps": ["Cloud execution and strict same-run evidence pending"]
+  "android_accepted": false,
+  "ios_accepted": false,
+  "physical_device_accepted": false,
+  "complete_product": false
 }
