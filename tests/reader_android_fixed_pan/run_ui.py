@@ -30,8 +30,12 @@ try:
         command.append(package+'.test/'+package+'.FixedPanUiTest')
         process=subprocess.run(command,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=1200,check=False)
         save(phase+'-instrumentation.txt',process.stdout)
-        report=json.loads(private('fixed-pan-ui-'+phase+'.json'));save(phase+'-report.json',(json.dumps(report,ensure_ascii=False,indent=2)+'\n').encode())
+        raw_report=private('fixed-pan-ui-'+phase+'.json');save(phase+'-raw-report.txt',raw_report)
         save(phase+'-logcat.txt',adb('logcat','-d','-v','threadtime','-t','3000'))
+        try:report=json.loads(raw_report)
+        except json.JSONDecodeError:
+            print(process.stdout.decode(errors='replace'),flush=True);print(raw_report.decode(errors='replace'),flush=True);raise
+        save(phase+'-report.json',(json.dumps(report,ensure_ascii=False,indent=2)+'\n').encode())
         print(json.dumps({key:report.get(key) for key in ['phase','pid','passed','checks','count','failed_check','failure','failure_trace','display_pixels','pan_frames']},ensure_ascii=False),flush=True)
         for observation in report['observations']:
             image=private('fixed-pan-captures/'+observation['name']+'.png');assert image.startswith(b'\x89PNG\r\n\x1a\n') and len(image)>1000
