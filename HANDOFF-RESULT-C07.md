@@ -1,5 +1,19 @@
 # HANDOFF-RESULT-C07
 
+## root 独立审查
+
+裁判修正已通过新同源完整链：[40236707415](https://github.com/NoGod3524/EXReader/actions/runs/40236707415) / attempt 1，受测源码 `18f1d1d242185b635ab7d2f863bc47759c164f38`。fixtures/mac-send/android/mac-receive/strict 五作业全 success；81 项硬检查、两个方向通过，pending/failed 均空。本轮只用了 1/3 个完整 root 轮次。
+
+此前仅写入报告的 numbers/selectors/route 比较现已纳入 accepted 硬门禁，并将 transport 绑定真实 sender manifest。EPUB route 仅允许原 owner 合同中的 chapter 从 NULL 重建为同一个 part_path，其他字段必须相同；其余格式 route 全等。本轮真实工件的 44 条正例通过，640 个逐字段篡改负例全部拒绝；历史原 ZIP 的独立轻量检查同样 44/640 通过。
+
+保留原交付与原通过 run，不改 SDK/raw 七模块/owner/原测试，不授原 130 项/18 阶段全集。范围仍只限 API34 default x86_64 Android 模拟器与 macOS 原生 owner/协议，不授其他平台、GUI、真机、性能、真实公网云盘或完整产品。共同主线仍需另建实际 source wrapper 后重新联验。
+
+本轮身份与原 ZIP digest/bytes/expiry 见 [root-review-validation.json](docs/reader-next-c07/root-review-validation.json)，合同与接入说明见 [ROOT-REVIEW.md](docs/reader-next-c07/ROOT-REVIEW.md)。
+
+封存前轻量 [40238010988](https://github.com/NoGod3524/EXReader/actions/runs/40238010988) 已在 Actions 重新认证本轮 strict 原 ZIP，确认 81/44/640 及全部合同列；不重复执行或扩大原生验收。
+
+## 原交付历史（以下为原受测源码 d3f7ec5b 的记录）
+
 结论：同源双向原生记录协议联验 **通过（第 1 轮 CI，无需重跑）**。范围仅限 Android API34 x86_64 模拟器与 macOS 的原生 owner/协议。不授 GUI、六平台、真机、性能、最终产品。
 
 ## 固定身份
