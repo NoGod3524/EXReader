@@ -1055,7 +1055,7 @@ int main(int argc, char **argv) {
                                   books[2].sha.c_str(), books[2].title.c_str(), books[2].author.c_str(),
                                   books[2].sort.c_str(), books[2].bytes, books[2].favorite};
         reader_metadata_result queued{};
-        stage_only = (int)reader_metadata_stage_book(owner, fresh, &queued, &metadata_error);
+        stage_only = (int)reader_metadata_stage_book(owner, fresh, &stale, &queued, &metadata_error);
         number("error", (int)metadata_error.code);
       }
       number("status", stage_only);
@@ -1449,7 +1449,7 @@ int main(int argc, char **argv) {
         page rows;
         reader_catalog_error error{};
         reader_catalog_page(long_catalog, nullptr, nullptr, 200, collect_row, &rows, &error);
-        number("rows", (long long)rows.size());
+        number("rows", (long long)rows.rows.size());
         reader_catalog_close(&long_catalog, &long_catalog_error);
       }
     }
@@ -1519,7 +1519,7 @@ int main(int argc, char **argv) {
       local << "overlong_exists=" << (overlong_exists ? 1 : 0) << '\n';
       local << "overlong_note=" << (failure_note.empty() ? "none" : failure_note) << '\n';
       local << "records=" << observations.size() << '\n';
-      local << "note=absolute paths, path byte lengths and host path limits stay out of the cross-platform file\n';
+      local << "note=absolute paths, path byte lengths and host path limits stay out of the cross-platform file\n";
     }
     return 0;
   } catch (const std::exception &failure) {
