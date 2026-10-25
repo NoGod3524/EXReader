@@ -75,20 +75,57 @@ It keeps all original 15 protocol refusals and adds 12 source-pair/case refusal
 controls. Reverse behavior is reported as observed; a crash or unrelated
 failure cannot count as a version-policy refusal.
 
-Current status: **pending Actions evidence**. No cross-version GTK adoption,
-host UI compatibility, complete-product, mobile, physical-device, performance
-or universal migration acceptance is granted by source review alone. D01's
-independent raw resolver verification is not reused as this host's acceptance.
-All builds, syntax checks, fixtures, execution and artifact processing run only
-in Actions. Local work is restricted to source/docs/Git.
+Current status: **accepted for this explicit Linux GTK actual-owner pair**.
+Tested source `80e8f6a7b49f49015c36a15f04ef0af060a2bb32`,
+[run 40179185109](https://github.com/NoGod3524/EXReader/actions/runs/40179185109),
+attempt 1, completed successfully. Producer `121126347780` passed the complete
+original suites and all 28 new cases; strict job `121132581165` downloaded and
+authenticated the actual ZIP before granting this scoped acceptance.
+
+| Actual writer → actual reader | Formats | Result |
+| --- | --- | --- |
+| 3.40 → 3.40 | TXT / EPUB / PDF / CBZ | 4/4 accepted |
+| 3.41 → 3.41 | TXT / EPUB / PDF / CBZ | 4/4 accepted |
+| 3.40 → 3.41 | TXT / EPUB / PDF / CBZ | 4/4 accepted |
+| 3.41 → 3.40 (observed reverse behavior) | TXT / EPUB / PDF / CBZ | 4/4 actually accepted by the old owner |
+
+Each TXT/PDF seed and reopen passed 55/81 checks, EPUB 57/85 and CBZ 50/68.
+Each case retained 9 whole historical revision wires, or 8 for textless CBZ.
+All 12 real SIGKILL cases passed: first retry was `created=1` before the actual
+commit and `created=0` after it, with exact second replay always `created=0`.
+The actual old original backend controls also passed unchanged: first 64,
+resumed 19, routes 37 and graphs 141. Reverse acceptance is the observed GTK
+behavior for this pair, not an assumed cross-platform version policy.
+
+Strict authentication preserved all 15 original refusal controls plus 12 new
+source-pair controls and authenticated 10 distinct native screenshot hashes.
+Original 41 settings/preservation checks and every retained GTK suite passed.
+The ordinary GTK executable SHA-256 is
+`a9ef741747927b4baf9b73cbedb6ff1513fce1ebc241d38189fb0388d4b4a7bd`.
+The two real compatibility executables are independently inventoried in the
+validation JSON. Both actual owners' records backend source has the same
+SHA-256 `8ed84977496966c71840355e5f28eae11a66ca4535524629d2209f4812ebbb0a`.
+
+| Artifact | ID | ZIP bytes | SHA-256 | Expiry |
+| --- | ---: | ---: | --- | --- |
+| Raw actual-owner and original GTK evidence | 12593949166 | 70765679 | `cc848aeacdac19fdaaaf3f2eb53e7ece54e3e00318932f3ea80f613cba4746c2` | 2027-01-23T09:05:02Z |
+| Strict verified summary | 12594433408 | 14889 | `1f8aa1d8cd2f8f8f59782d7bddf00e453750bca4151dd48a33c80cd750bd3291` | 2027-01-23T09:05:02Z |
+
+Cross-version native widget interaction, complete-product, mobile,
+physical-device, performance and universal migration remain outside this
+grant. D01's independent raw resolver verification is not reused as this
+host's acceptance. All builds, syntax checks, fixtures, execution and artifact
+processing ran in Actions. Local work was restricted to source/docs/Git and
+read-only Actions metadata/logs.
 
 The first executable matrix retained a real same-version refusal: the probe
 sent a zero source-frame part after the old EPUB's genuine native progress had
 restored part 1. The existing worker correctly rejects stale-frame contexts
 before record admission; CBZ page 1 needs the same source context. Actions-only
 read-only inspection authenticated the original ZIP and ELF, verified native
-FOUND and old immutable wires, and traced admission without altering an ELF
-byte, register, parser or request. The correction changes only probe commands
+FOUND and old immutable wires, and traced admission with the on-disk ELF and
+producer bytes unchanged, without overriding call arguments, runtime tags or
+selectors. The correction changes only probe commands
 to carry actual current part/page exactly as the UI does. It does not change
 the retained destination or relax any production check. Earlier build-driver
 prefix/scope failures and all diagnostic identities remain in the JSON record.
