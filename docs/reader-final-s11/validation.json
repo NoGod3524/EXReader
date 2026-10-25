@@ -3,21 +3,299 @@
   "title": "原件导入持久化故障回归 (batch / cloud / local-download / sideload)",
   "accepted": false,
   "implementation_start": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
-  "approved_sdk": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
-  "tested_source_sha": null,
-  "docs_seal_sha": null,
+  "approved_sdk": {
+    "version": "3.41.0",
+    "sha": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+    "note": "identical to the tree at the implementation start for src/ include/ cmake/ CMakeLists.txt"
+  },
+  "tested_source_sha": "56ffaf519e9b604a585a604025805935541b8077",
+  "docs_seal": "the docs-only commit that adds this file (its SHA is in git log and in the S11 final message); it was pushed with [skip ci] and therefore has no run of its own",
   "remote_branch": "codex/reader-fw-s11",
   "workflow": ".github/workflows/reader-final-s11.yml",
-  "run": null,
-  "checks": {
-    "total": 0,
-    "pending": []
+  "row_contract": "docs/reader-final-s11/CONTRACT.md",
+  "runs": [
+    {
+      "round": 1,
+      "source_sha": "4844c923428b4cd032c9f0766c098e113fe24586",
+      "run_id": "40214586775",
+      "attempt": "1",
+      "jobs": [
+        {
+          "id": 121232863642,
+          "name": "S11 import faults (windows-2022)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 121232863880,
+          "name": "S11 import faults (macos-15)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 121232864008,
+          "name": "S11 import faults (ubuntu-22.04)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 121234177103,
+          "name": "same-run artifact evidence",
+          "conclusion": "failure"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12607190968,
+          "name": "reader-final-s11-Windows-40214586775-1",
+          "bytes": 4778145,
+          "sha256": "61534ff37e26e26dfca4104d2527c8c3c0efad0e8dd2aebe264ee708ee5b033c",
+          "expires_at": "2027-01-23T17:03:08Z"
+        },
+        {
+          "id": 12606953570,
+          "name": "reader-final-s11-macOS-40214586775-1",
+          "bytes": 1149659,
+          "sha256": "43d354cd51e5e42b332ea8d3c35395a3c3ab6a608e43c8f43440266956706cac",
+          "expires_at": "2027-01-23T17:03:08Z"
+        },
+        {
+          "id": 12607127553,
+          "name": "reader-final-s11-Linux-40214586775-1",
+          "bytes": 1142711,
+          "sha256": "2f72749d3c2f61f3c6b1be9a6a91dd59a4a2a394ba41de855051b875bdf29bd4",
+          "expires_at": "2027-01-23T17:03:08Z"
+        },
+        {
+          "id": 12607058132,
+          "name": "reader-final-s11-evidence-40214586775-1",
+          "bytes": 507,
+          "sha256": "d38dbcb92df017970e9ed896621dceefb186e7656f610c9d056cf65f07064489",
+          "expires_at": "2027-01-23T17:03:08Z"
+        }
+      ],
+      "failure": {
+        "defect_owner": "this package (S11 harness)",
+        "detail": "Linux and macOS failed at the consumer link step: the C-only probe target linked the C++ EXReaderWebDAV archive without the C++ driver (undefined reference to std::string, DSO missing). Windows failed in the judge with 35 checks passed because the judge treated an unsupported Linux-only fault as a failure instead of a pending row.",
+        "fix": "project(... LANGUAGES C CXX) + LINKER_LANGUAGE CXX on s11-probe; unsupported faults now record a pending row (fault_supported helper)."
+      }
+    },
+    {
+      "round": 2,
+      "source_sha": "d56297fc9281b227789c0347a91498420ab72051",
+      "run_id": "40215157859",
+      "attempt": "1",
+      "jobs": [
+        {
+          "id": 121234597680,
+          "name": "S11 import faults (windows-2022)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 121234597562,
+          "name": "S11 import faults (macos-15)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 121234597685,
+          "name": "S11 import faults (ubuntu-22.04)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 121236310941,
+          "name": "same-run artifact evidence",
+          "conclusion": "failure"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12607665704,
+          "name": "reader-final-s11-Windows-40215157859-1",
+          "bytes": 5081726,
+          "sha256": "56411324411fc7d208e52b7569abbc3f57f5807a1e408a6ca82f721ac603c4cb",
+          "expires_at": "2027-01-23T17:10:16Z"
+        },
+        {
+          "id": 12607760582,
+          "name": "reader-final-s11-macOS-40215157859-1",
+          "bytes": 5114516,
+          "sha256": "ed5d36e076ec63721b5a3a42e2ef03f44a952c3f2ae8a0d1d41b66c166dd1948",
+          "expires_at": "2027-01-23T17:10:16Z"
+        },
+        {
+          "id": 12607281437,
+          "name": "reader-final-s11-Linux-40215157859-1",
+          "bytes": 5719144,
+          "sha256": "8db531c50dcb9ba44df8992206d3209d010529ed7d507c50c31fda37d465bdc2",
+          "expires_at": "2027-01-23T17:10:16Z"
+        },
+        {
+          "id": 12607750670,
+          "name": "reader-final-s11-evidence-40215157859-1",
+          "bytes": 508,
+          "sha256": "e1ddd480fcbf61298b5fdd923c9026e7f4dc787ad8ba979e27cd0d5e61ce8e27",
+          "expires_at": "2027-01-23T17:10:16Z"
+        }
+      ],
+      "failure": {
+        "defect_owner": "this package (S11 harness)",
+        "detail": "Checks.equal() missing 1 required positional argument: 'expected' at check_s11.py:404 (the committed-not-revoked receipt was asserted with equal() instead of check()). 102 checks passed on Windows and macOS, 113 on Linux (batch group plus batch.nospace on Linux) before the TypeError.",
+        "fix": "the receipt is asserted with check() and the observed stored SHA-256 list is recorded as detail."
+      }
+    },
+    {
+      "round": 3,
+      "source_sha": "56ffaf519e9b604a585a604025805935541b8077",
+      "run_id": "40218428719",
+      "attempt": "1",
+      "jobs": [
+        {
+          "id": 121244517770,
+          "name": "S11 import faults (windows-2022)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 121244517614,
+          "name": "S11 import faults (macos-15)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 121244517784,
+          "name": "S11 import faults (ubuntu-22.04)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 121248308896,
+          "name": "same-run artifact evidence",
+          "conclusion": "failure"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12608289431,
+          "name": "reader-final-s11-Windows-40218428719-1",
+          "bytes": 5086242,
+          "sha256": "c8c8b7bf92ce867c5c3d3d98819bc07dd602e64c8d5e150f82bae9ea8457691f",
+          "expires_at": "2027-01-23T17:50:52Z"
+        },
+        {
+          "id": 12608847191,
+          "name": "reader-final-s11-macOS-40218428719-1",
+          "bytes": 5119079,
+          "sha256": "43482c18a3afa8ca360e19889337a6f2c56b892d1269a8cb97b1acef072b5c83",
+          "expires_at": "2027-01-23T17:50:52Z"
+        },
+        {
+          "id": 12608765607,
+          "name": "reader-final-s11-Linux-40218428719-1",
+          "bytes": 5723767,
+          "sha256": "fee11638fac8a5286e159eaa0cfd8c836886c5cd82654413dc6fc10628d4e1c1",
+          "expires_at": "2027-01-23T17:50:52Z"
+        },
+        {
+          "id": 12609166928,
+          "name": "reader-final-s11-evidence-40218428719-1",
+          "bytes": 507,
+          "sha256": "3a16b435ebe5ac7baae60d6a865de6ba8751f761f61892f3dfaad88f6eecbffb",
+          "expires_at": "2027-01-23T17:50:52Z"
+        }
+      ],
+      "checks_passed": {
+        "windows-2022": 127,
+        "macos-15": 127,
+        "ubuntu-22.04": 138
+      },
+      "groups_completed": {
+        "batch": {
+          "windows-2022": 105,
+          "macos-15": 105,
+          "ubuntu-22.04": 116
+        },
+        "cloud_C1": {
+          "windows-2022": 21,
+          "macos-15": 21,
+          "ubuntu-22.04": 21
+        }
+      },
+      "failure": {
+        "defect_owner": "EXReaderCloudImport (owner code, not modified here)",
+        "detail": "cloud.missing.download: actual \"remote\", expected \"io\" — a missing private staging directory is reported as READER_CLOUD_REMOTE instead of READER_CLOUD_IO. Staged=NULL, no commit, no row, no staging file and the directory is not created, so every non-status invariant held.",
+        "report": "docs/reader-final-s11/FINDING-cloud-staging-status.md",
+        "reproduction": "run 40218428719 row C2 on all three operating systems"
+      }
+    }
+  ],
+  "verified_rows": [
+    "B1 batch.missing (all three OS)",
+    "B2 batch.notdir (all three OS)",
+    "B3 batch.readonly: real read-only staging directory (POSIX 0555 / Windows icacls deny), per-item FAILED, committed=0, SDK IO, staging empty, 0 rows after reopen (all three OS)",
+    "B4 batch.nospace: real 256 KiB tmpfs, 3 MiB original, ENOSPC proven before use, staging empty afterwards (Linux only)",
+    "B5 batch.retry: created=1 and stored bytes/SHA-256 identical after reopen (all three OS)",
+    "B6 batch.changed: stored bytes are the staged copy, size_hint not trusted, input file unchanged (all three OS)",
+    "B7 batch.rejects: corrupt FORMAT and oversize LIMIT with committed=0, all three fixture SHA-256 unchanged, staging empty, 1 row after reopen (all three OS)",
+    "B8 batch.cancel: committed item kept, later items CANCELLED, 1 row after reopen, retry reaches 3 rows with the first still present (all three OS)",
+    "C1 cloud.ok: real TLS WebDAV download, staged_sha equals the fixture SHA-256, committed=1, created=1, staging removed, bytes and SHA-256 identical after reopen (all three OS)"
+  ],
+  "pending_rows": {
+    "windows-2022": [
+      {
+        "row": "batch.nospace",
+        "reason": "a fixed-size volume needs root mount; available on Linux only"
+      },
+      {
+        "row": "cloud.nospace",
+        "reason": "not reached in this run (judge stops at first violated assertion); same platform limitation as batch.nospace"
+      },
+      {
+        "row": "sideload.nospace",
+        "reason": "not reached in this run; same platform limitation as batch.nospace"
+      }
+    ],
+    "macos-15": [
+      {
+        "row": "batch.nospace",
+        "reason": "a fixed-size volume needs root mount; available on Linux only"
+      },
+      {
+        "row": "cloud.nospace",
+        "reason": "not reached in this run; same platform limitation as batch.nospace"
+      },
+      {
+        "row": "sideload.nospace",
+        "reason": "not reached in this run; same platform limitation as batch.nospace"
+      }
+    ],
+    "ubuntu-22.04": []
   },
-  "pending": [
-    "Linux-only rows (real ENOSPC via tmpfs: batch.nospace, cloud.nospace, sideload.nospace) cannot be injected on the Windows and macOS runners; they are recorded as pending with the exact reason on those jobs, never as passes."
-  ],
+  "unverified_rows": {
+    "reason": "The judge aborts on the first violated assertion by design (a produced report is never itself a pass). Round 3 stopped inside row C2, so every later row was never executed in any round.",
+    "rows": [
+      "C2 remaining assertions (staged NULL, no import, directory not created, 0 rows after reopen)",
+      "C3 cloud.readonly",
+      "C4 cloud.nospace",
+      "C5 cloud.flip",
+      "C6 cloud.truncate",
+      "C7 cloud.cancel",
+      "C8 cloud.cancel_import",
+      "S1 sideload.ok",
+      "S2 sideload.cancel_before",
+      "S3 sideload.cancel_mid",
+      "S4 sideload.pdf_cancel",
+      "S5 sideload.mutated",
+      "S6 sideload.nospace",
+      "L1 ld.basic",
+      "L2 ld.missing",
+      "L3 ld.readonly",
+      "L4 ld.reimport",
+      "L5 ld.cancel_before",
+      "L6 ld.cancel_begun"
+    ]
+  },
+  "evidence_source": "GitHub Actions artifacts API metadata for this run attempt (id, name, size_in_bytes, digest, expires_at). No artifact bytes were downloaded or parsed outside Actions; the per-invocation probe logs, databases and staging trees are inside the listed artifacts.",
   "not_verified": [
-    "No run has been executed for this source yet; accepted stays false until a run of this exact commit is recorded here."
+    "The status-name mapping for a missing/unwritable cloud staging directory (owner decision required, see the finding).",
+    "No platform was granted a host/device qualification by this package; only native library behaviour on the three CI runners is reported.",
+    "Windows and macOS cannot inject a real ENOSPC; the three nospace rows stay pending there."
   ],
-  "notes": "Rows are described in docs/reader-final-s11/CONTRACT.md."
+  "next_steps": [
+    "Root decides the owner question in docs/reader-final-s11/FINDING-cloud-staging-status.md (map EXR_DAV_IO to READER_CLOUD_IO, or document REMOTE for download-phase staging failures and let S11 assert it with that reason).",
+    "Then re-run this workflow once on the same tree plus the decision; rows C3-C9, S1-S6 and L1-L6 execute for the first time."
+  ]
 }
