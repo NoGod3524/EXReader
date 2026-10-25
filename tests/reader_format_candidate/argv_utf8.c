@@ -49,14 +49,17 @@ static int fmt_body(int argc,char **argv) {
   fputc('\n',stderr);
 #ifdef _WIN32
   {
-    HMODULE module=GetModuleHandleW(L"exreader.dll"); wchar_t path[32768]; char *utf8=NULL;
-    if(!module || !GetModuleFileNameW(module,path,32768) || !fmt_convert(path,&utf8)) return 93;
+    HMODULE module=GetModuleHandleW(L"exreader.dll"); wchar_t path[32768]; char *utf8=NULL; DWORD used;
+    if(!module) return 93;
+    used=GetModuleFileNameW(module,path,32768);
+    if(!used || used>=32768 || !fmt_convert(path,&utf8)) return 93;
     fprintf(stderr,"FORMAT_LOADED_SDK %s\n",utf8); free(utf8);
   }
 #else
   {
     Dl_info image;
-    if(!dladdr((const void *)&exr_version,&image) || !image.dli_fname) return 93;
+    void *symbol=dlsym(RTLD_DEFAULT,"exr_version");
+    if(!symbol || !dladdr(symbol,&image) || !image.dli_fname) return 93;
     fprintf(stderr,"FORMAT_LOADED_SDK %s\n",image.dli_fname);
   }
 #endif

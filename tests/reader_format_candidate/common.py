@@ -9,6 +9,7 @@ import os
 from pathlib import Path, PurePosixPath
 import subprocess
 import sys
+import tempfile
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -133,6 +134,7 @@ def materialize():
 def guard():
     actions(); own = identity()
     assert git('rev-parse', 'HEAD').decode().strip() == own['source_sha']
+    assert not git('diff', '--name-only', 'HEAD').strip(), 'tracked working source changed after checkout'
     assert os.environ['GITHUB_REF_NAME'] == 'codex/reader-format-combination'
     subprocess.run(['git', 'merge-base', '--is-ancestor', BASE, 'HEAD'], cwd=ROOT, check=True)
     changed = git('diff', '--name-only', BASE, 'HEAD').decode().splitlines()
@@ -154,6 +156,21 @@ def guard():
               'patches': {name: {'path': values[0], 'sha256': values[1], 'pre_sha256': values[2], 'post_sha256': values[3]} for name, values in PATCHES.items()}}
     write(WORK / 'guard/guard.json', result)
     return result
+
+
+def combined_tree(order=None):
+    actions()
+    with tempfile.TemporaryDirectory(prefix='format-index-') as directory:
+        env = dict(os.environ, GIT_INDEX_FILE=str(Path(directory) / 'index'))
+        subprocess.run(['git', 'read-tree', SDK], cwd=ROOT, env=env, check=True)
+        for name in (list(PATCHES) if order is None else order):
+            subprocess.run(['git', 'apply', '--cached', str(ROOT / 'candidates/reader-format-combination' / (name + '.patch'))], cwd=ROOT, env=env, check=True)
+        tree = subprocess.check_output(['git', 'write-tree'], cwd=ROOT, env=env).decode().strip()
+    for path, _, _, post_hash in PATCHES.values():
+        assert digest(git('show', tree + ':' + path)) == post_hash
+    return {'base_sdk_tree': git('rev-parse', SDK + '^{tree}').decode().strip(), 'candidate_sdk_tree': tree,
+            'base_src_tree': git('rev-parse', SDK + ':src').decode().strip(),
+            'candidate_src_tree': git('rev-parse', tree + ':src').decode().strip()}
 
 
 def safe_members(archive, max_bytes=1024 ** 3):

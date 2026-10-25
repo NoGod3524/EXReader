@@ -71,3 +71,81 @@ jobs:
             build/format/argv-report/
             build/format/argv-build/bin/
           if-no-files-found: error
+  corpus:
+    if: inputs.scope == 'full'
+    needs: preflight
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Pin the original 18 files and unchanged licence declarations once for this run
+        run: python tests/reader_format_candidate/driver.py pin
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: format-corpus-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/format/corpus/
+          if-no-files-found: error
+  producer:
+    if: inputs.scope == 'full'
+    needs: [preflight, corpus]
+    name: producer-${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            os: windows-latest
+          - platform: linux
+            os: ubuntu-22.04
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 150
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Keep source hashes identical to Git on both platforms
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Independent image dimensions for the unchanged S13 checks
+        run: python -m pip install --disable-pip-version-check --quiet pillow
+      - name: Original native suites, exact two-patch candidate, installed consumers and all 18 F5 records
+        run: python tests/reader_format_candidate/driver.py producer
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: format-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/format/evidence/
+          if-no-files-found: error
+          retention-days: 30
+  strict:
+    if: always() && inputs.scope == 'full'
+    needs: [preflight, corpus, producer]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate actual same-attempt ZIP and program bytes, then recompute the complete result
+        run: python tests/reader_format_candidate/strict.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: format-strict-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/format/strict-result/
+          if-no-files-found: error

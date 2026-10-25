@@ -5,15 +5,15 @@ import subprocess
 import sys
 from common import actions, write, file_hash, identity
 
+VECTORS = [[], [''], ['ASCII'], ['Бретёр', 'портрет'], ['😀', '漢字'], ['é', 'e\u0301'],
+           ['space in value', '"quoted"', 'trailing\\'], ['--query', '', '--file', 'C:/space dir/book.fb2']]
 
 def main():
     actions(); binary = Path(sys.argv[1]).resolve(); out = Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
     suffix = '.exe' if sys.platform == 'win32' else ''
     probe, native = binary / ('format-argv-probe' + suffix), binary / ('format-argv-self-test' + suffix)
-    vectors = [[], [''], ['ASCII'], ['Бретёр', 'портрет'], ['😀', '漢字'], ['é', 'e\u0301'],
-               ['space in value', '"quoted"', 'trailing\\'], ['--query', '', '--file', 'C:/space dir/book.fb2']]
     checks = []
-    for index, values in enumerate(vectors):
+    for index, values in enumerate(VECTORS):
         done = subprocess.run([str(probe), *values], capture_output=True, check=True)
         (out / f'argv-{index}.stdout').write_bytes(done.stdout); (out / f'argv-{index}.stderr').write_bytes(done.stderr)
         actual = json.loads(done.stdout.decode('utf-8'))['argv_hex']
