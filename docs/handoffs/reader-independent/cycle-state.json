@@ -45,6 +45,8 @@
       "complete_product_accepted": false
     },
     "current_independent_candidate_runs": {
+      "Windows_compact_UI": {"branch":"codex/reader-windows-compact", "source":"7400fa4e91bf0cfe45946c55333103618da7c0af", "base":"25bc0c67971f81491f50e0a3caaaf7e509bb7e35", "preflight_run":40198242154, "preflight_state":"success_original_OFF_source_and_jobs_exact_syntax_and_six_protocol_refusals", "state":"full_run_dispatch_requested_default_OFF_independent_native_library_reading_More_candidate", "superseded_cancelled_run":40197968923, "cancellation_reason":"actual_small_window_note_editor_geometry_bug_found_before_native_tests_fix_and_early_UI_stage_pushed", "common_main_adopted":false},
+      "GTK_compact_UI": {"branch":"codex/reader-gtk-compact", "state":"existing_GTK_agent_readonly_scope_mapping_requested_after_common_Windows_GTK_both_success", "common_main_adopted":false},
       "Windows_full341": {"source_prefix":"2e0d7ba6", "run":40193777488, "evidence_head":"d62816120b55b1e9b7e814e6202c089adc1bd1b6", "state":"all_three_jobs_success_root_API_confirmed_F325_atomic13_and_all_original_suites", "previous_failed_run":40192852460},
       "raw_companions_previous": {"source":"40a26619526c073daa8ccfcbc2459f69ad238c6d", "run":40192474330, "state":"both_platforms_and_strict_success_agent_report"},
       "raw_companions_final": {"source":"56793e7ca4f8ecdc5f2d9c3394fce4e201aca275", "run":40192929457, "evidence_head":"0793b26256e1397ba0f60d27de7d090fad61af81", "state":"both_platforms_and_strict_success_root_API_confirmed_includes_original_unlabelled03_consumer_positive"},
