@@ -294,28 +294,26 @@ def selfcheck(values: dict[str, bytes], texts: dict[str, str], judge_context: di
     results.append({"case": "clean", "detected": detect(clean.read_bytes(), forms), "expected": False})
 
     # Judge red actions: a fabricated empty/over-redacted export must be rejected,
-    # and a fabricated retained export with the same shape must be accepted.
+    # and a fabricated retained export with the same shape must be accepted, so
+    # the gate cannot pass by rejecting everything.
     base_profile = {"module": "profiles", "op": "load-null", "status": "ARGUMENT", "code": 1,
                     "system_error": 0, "offset": 0, "message": "store_dir is null"}
-    empty = dict(base_profile, message="")
-    results.append({"case": "empty-message",
-                    "rejected": bool(judge_diagnostics([empty], judge_context, coverage=False))})
-    redacted_only = dict(base_profile, message="REDACTED")
-    results.append({"case": "redacted-only-message",
-                    "rejected": bool(judge_diagnostics([redacted_only], judge_context, coverage=False))})
-    leaking_message = dict(base_profile, message="store_dir is null " + text)
-    results.append({"case": "message-carries-forbidden",
-                    "rejected": bool(judge_diagnostics([leaking_message], judge_context, coverage=False))})
-    clean_profile = dict(base_profile)
-    results.append({"case": "retained-message-accepted",
-                    "rejected": bool(judge_diagnostics([clean_profile], judge_context, coverage=False))})
+
+    def judge_case(name: str, diag: dict, should_reject: bool) -> None:
+        problems = judge_diagnostics([diag], judge_context, coverage=False)
+        results.append({"case": name, "rejected": bool(problems),
+                        "passed": bool(problems) if should_reject else not problems})
+
+    judge_case("empty-message", dict(base_profile, message=""), True)
+    judge_case("redacted-only-message", dict(base_profile, message="REDACTED"), True)
+    judge_case("message-carries-forbidden", dict(base_profile, message="store_dir is null " + text),
+               True)
+    judge_case("retained-message-accepted", dict(base_profile), False)
+
     for item in results:
-        if item["case"] == "clean":
-            item["passed"] = item["detected"] is False
-        elif "rejected" in item:
-            item["passed"] = bool(item["rejected"])
-        else:
-            item["passed"] = bool(item["detected"])
+        if "passed" not in item:
+            item["passed"] = item["detected"] is False if item["case"] == "clean" else \
+                bool(item["detected"])
     for path in root.rglob("*"):
         if path.is_file():
             path.unlink()

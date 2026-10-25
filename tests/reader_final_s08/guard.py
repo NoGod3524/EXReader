@@ -60,9 +60,12 @@ def main() -> int:
     record("fixed-base-ancestor", ancestor, "base=" + FIXED_BASE[:12])
     sdk = git("merge-base", "--is-ancestor", FROZEN_SDK, "HEAD").returncode == 0
     record("frozen-sdk-ancestor", sdk, "sdk=" + FROZEN_SDK[:12])
-    sdk_diff = git("diff", "--stat", FROZEN_SDK, "HEAD", "--", "src", "include", "cmake",
+    # This package must not move the protected SDK trees at all. The frozen SDK
+    # commit stays an ancestor; mainline history before the fixed base is not
+    # this package's change, so the diff is taken from the fixed base.
+    sdk_diff = git("diff", "--stat", FIXED_BASE, "HEAD", "--", "src", "include", "cmake",
                    "CMakeLists.txt", "tests/fixtures", "bindings").stdout.strip()
-    record("frozen-sdk-unchanged", sdk_diff == "", sdk_diff[:160] or "no change")
+    record("frozen-sdk-trees-unchanged", sdk_diff == "", sdk_diff[:160] or "no change")
 
     changed = [line for line in git("diff", "--name-only", FIXED_BASE, "HEAD").stdout.splitlines()
                if line.strip()]
