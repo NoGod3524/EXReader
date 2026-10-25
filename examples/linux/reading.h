@@ -62,6 +62,12 @@ typedef struct {
   const char *batch_root;
   reader_batch_control *batch_control;
   size_t batch_candidate_limit; /* Private host regression: zero keeps module default. */
+#ifdef EXR_READER_DROP_IMPORT
+  const char *batch_payload; /* Job-owned raw native bytes; parser runs on SDK worker. */
+  size_t batch_payload_bytes;
+  int batch_input; /* 0=directory, 1=uri-list, 2=gnome-copied-files */
+  int batch_origin; /* J03 origin enum, kept private to this host. */
+#endif
 #endif
 #ifdef EXR_READER_READING_RECORDS
   uint64_t records_token;
@@ -158,6 +164,9 @@ typedef struct {
   uint64_t batch_token,batch_seen,batch_attempted,batch_imported,batch_duplicates,batch_failed,batch_pending;
   reader_batch_receipt *batch_rows;
   size_t batch_count;
+#ifdef EXR_READER_DROP_IMPORT
+  size_t batch_source_items,batch_source_duplicates,batch_source_overflow;
+#endif
 #endif
 #ifdef EXR_READER_READING_RECORDS
   int has_records,records_pending,records_pending_error,records_created,records_code,records_match;
