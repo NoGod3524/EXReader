@@ -2,19 +2,268 @@
   "schema": 1,
   "package": "S10",
   "title": "computer transfer entries and capability evidence",
-  "accepted": false,
-  "source_sha": null,
-  "run_id": null,
-  "attempt": null,
-  "note": "Not executed yet: this placeholder is replaced by the strict summary of the real workflow run.",
-  "executed": [],
-  "declared_only": [],
-  "pending": [
-    "physical-device-and-usb-mtp",
-    "physical-apple-device-and-files-transfer",
-    "system-picker-ui",
-    "windows-desktop-execution",
-    "macos-desktop-execution"
+  "accepted": true,
+  "state": "same_source_accepted_with_named_pending_items",
+  "branch": "codex/reader-fw-s10",
+  "tested_source_sha": "9f49b736ecee0baeee8d9524e7e75a40592ae5d0",
+  "source_sha": "9f49b736ecee0baeee8d9524e7e75a40592ae5d0",
+  "base_source_sha": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+  "sdk_version": "3.41.0",
+  "sdk_abi": 1,
+  "scope": "Six-platform computer-to-device transfer entries: actual manifests, native entries and file coordination checks plus user steps. Real byte delivery and read-back on an Android emulator, an iPhone simulator, an iPad simulator and the Linux desktop entry. No new server, protocol or WebView; no owner file changed.",
+  "run": {
+    "id": 40218271618,
+    "attempt": 1,
+    "conclusion": "success",
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40218271618"
+  },
+  "jobs": [
+    {
+      "name": "guards",
+      "id": 121244044679,
+      "conclusion": "success"
+    },
+    {
+      "name": "android",
+      "id": 121244044649,
+      "conclusion": "success"
+    },
+    {
+      "name": "apple",
+      "id": 121244044513,
+      "conclusion": "success"
+    },
+    {
+      "name": "desktop",
+      "id": 121244044692,
+      "conclusion": "success"
+    },
+    {
+      "name": "summary",
+      "id": 121247475395,
+      "conclusion": "success"
+    }
   ],
-  "problems": ["workflow run not executed"]
+  "checks": {
+    "ownership_guards": 7,
+    "entry_contract_positive": 20,
+    "entry_contract_negative_mutations": 13,
+    "declared_platforms": [
+      "android",
+      "ios",
+      "ipados",
+      "linux-gtk",
+      "macos",
+      "windows"
+    ],
+    "android_device": 9,
+    "iphone_simulator": 14,
+    "ipad_simulator": 14,
+    "linux_desktop": 9,
+    "strict_summary": 21,
+    "summary_problems": 0
+  },
+  "entry_contract": {
+    "android": [
+      "android.intent.view-content",
+      "android.intent.send-filters",
+      "android.intent.no-broad-storage",
+      "android.owner.no-declared-surface",
+      "android.owner.saf-picker",
+      "android.owner.content-only",
+      "android.owner.sideload-handoff"
+    ],
+    "ios": [
+      "apple.files.sharing-keys",
+      "apple.owner.security-scope",
+      "apple.picker.document-importer"
+    ],
+    "ipados": [
+      "apple.files.review-project-keys"
+    ],
+    "macos": [
+      "macos.owner.security-scope",
+      "macos.picker.document-importer"
+    ],
+    "windows": [
+      "windows.entry.open-dialog",
+      "windows.entry.path-argument"
+    ],
+    "linux-gtk": [
+      "gtk.entry.file-chooser",
+      "gtk.entry.drop-target",
+      "gtk.entry.folder-batch"
+    ],
+    "all": [
+      "all.no-webview",
+      "all.no-server"
+    ]
+  },
+  "executed": [
+    {
+      "platform": "android",
+      "target": "API 34 default x86_64 emulator",
+      "entry": "content://org.exreader.s10docs.docs/document/S10-Transfer.epub granted with ACTION_VIEW",
+      "owner": "extras/android-import-entry hosted by org.exreader.importprobe (unchanged)",
+      "readback": "independent SQLite read of books.source in the SDK library equals the delivered bytes"
+    },
+    {
+      "platform": "ios",
+      "target": "iPhone simulator",
+      "entry": "HostReaderModel.importFile(url:) with startAccessingSecurityScopedResource",
+      "readback": "HostLibrary.sourceFingerprint of the stored original equals the delivered bytes"
+    },
+    {
+      "platform": "ipados",
+      "target": "iPad simulator",
+      "entry": "same owner entry",
+      "readback": "same fingerprint check"
+    },
+    {
+      "platform": "linux-gtk",
+      "target": "linux desktop entry",
+      "entry": "text/uri-list drop payload via extras/desktop-drop",
+      "readback": "exr_sideload_export_original compared with the dropped file by SHA-256"
+    }
+  ],
+  "declared_only": [
+    {
+      "platform": "windows",
+      "detail": "examples/reader.c open dialog and shell path argument: static contract checks only, executable not built in this run"
+    },
+    {
+      "platform": "macos",
+      "detail": "examples/apple .fileImporter and security scoped owner entry: static contract checks only, application not launched"
+    }
+  ],
+  "pending": [
+    "physical Android handset and USB/MTP copy (no device or cable in Actions)",
+    "physical iPhone/iPad and Finder/iTunes or iCloud Files transfer",
+    "system Files document picker and Android SAF picker UI interaction",
+    "Windows desktop executable run",
+    "macOS desktop application run",
+    "performance, hardware and store-distribution claims"
+  ],
+  "artifacts": [
+    {
+      "id": 12608745043,
+      "name": "reader-final-s10-guards-40218271618-1",
+      "bytes": 4064,
+      "digest": "sha256:61da68730017ded8195d8059dfdf1dd06caf2ec0b605e1c092a6d53cb47369cb",
+      "expiry": "2027-01-23T17:48:56Z"
+    },
+    {
+      "id": 12608329499,
+      "name": "reader-final-s10-android-40218271618-1",
+      "bytes": 7686,
+      "digest": "sha256:b89adf8a8d179571f7818fdbf5b8d70867717e988cea992eaf60e23824818c0a",
+      "expiry": "2027-01-23T17:48:56Z"
+    },
+    {
+      "id": 12609011496,
+      "name": "reader-final-s10-apple-40218271618-1",
+      "bytes": 53650661,
+      "digest": "sha256:d121579d68ebad9935b3c5509bb5c3fa900bb11dd743f232c6ab8ad56faf9e29",
+      "expiry": "2027-01-23T17:48:56Z"
+    },
+    {
+      "id": 12608640524,
+      "name": "reader-final-s10-desktop-40218271618-1",
+      "bytes": 20847,
+      "digest": "sha256:0338489b09eab5940a0fe3090083588cb4a36ac2af164d4e3efea3f7874926ed",
+      "expiry": "2027-01-23T17:48:56Z"
+    },
+    {
+      "id": 12608596187,
+      "name": "reader-final-s10-summary-40218271618-1",
+      "bytes": 7624,
+      "digest": "sha256:17b45691ed01e5d80c5b61ad6ce8147577e6180415a35d40ad9c09deb193c9fb",
+      "expiry": "2027-01-23T17:48:56Z"
+    }
+  ],
+  "machine_validation_location": {
+    "artifact": "reader-final-s10-summary-40218271618-1",
+    "artifact_id": 12608596187,
+    "zip_sha256": "17b45691ed01e5d80c5b61ad6ce8147577e6180415a35d40ad9c09deb193c9fb",
+    "files": [
+      "validation.json",
+      "summary.json",
+      "authenticated-artifacts.json"
+    ],
+    "note": "The summary job printed checks: 21, problems: [] in this attempt; its generated files stay inside the authenticated artifact ZIP above."
+  },
+  "artifact_zip_bytes_and_digests_recomputed_in_actions": true,
+  "job_and_run_identity_authenticated": true,
+  "physical_device_execution": false,
+  "usb_cable_execution": false,
+  "mtp_execution": false,
+  "files_app_transfer": false,
+  "complete_product": false,
+  "documentation_only_delta": [
+    "docs/reader-final-s10/EVIDENCE.md",
+    "docs/reader-final-s10/validation.json",
+    "HANDOFF-RESULT.md"
+  ],
+  "first_attempt_failure": {
+    "run_id": 40214657202,
+    "source_sha": "1dfdd4a019d815a719bc12e1cb64a721f6289bbc",
+    "conclusion": "failure",
+    "guards": {
+      "job": 121233078344,
+      "error": "mutation mutate.gtk.drop-target failed  instead of gtk.entry.drop-target",
+      "cause": "the self-test applied each mutation to the first occurrence only; examples/linux/drop_import_ui.inc names x-special/gnome-copied-files twice",
+      "fix": "apply every mutation to all occurrences in tests/reader_final_s10/check_entries.py"
+    },
+    "desktop": {
+      "job": 121233078143,
+      "error": "json.decoder.JSONDecodeError: Expecting value: line 15 column 3 (char 681)",
+      "cause": "tests/reader_final_s10/desktop/entry_check.c emitted a trailing comma while serialising drop items",
+      "fix": "comma-separated item writer plus a raw-copy fallback in tests/reader_final_s10/run_desktop.py"
+    },
+    "android": {
+      "job": 121233078504,
+      "conclusion": "success",
+      "checks": 9
+    },
+    "apple": {
+      "job": 121233078315,
+      "conclusion": "success",
+      "checks_per_simulator": 14
+    },
+    "summary": {
+      "job": 121237159297,
+      "conclusion": "skipped"
+    },
+    "artifacts": [
+      {
+        "id": 12607400235,
+        "name": "reader-final-s10-guards-40214657202-1",
+        "bytes": 1022,
+        "digest": "sha256:ab3892325a29cf222e8586f16101a4edeead059aca75f5ab81ffc1d33c39f06f",
+        "expiry": "2027-01-23T17:04:01Z"
+      },
+      {
+        "id": 12606623967,
+        "name": "reader-final-s10-android-40214657202-1",
+        "bytes": 7684,
+        "digest": "sha256:784e78c909a867d59f37b50f43b38bebfcc4249c4050c2d7f016dbb5f288c760",
+        "expiry": "2027-01-23T17:04:01Z"
+      },
+      {
+        "id": 12608185207,
+        "name": "reader-final-s10-apple-40214657202-1",
+        "bytes": 53650704,
+        "digest": "sha256:bf2fccabf9a2006a3c60fb6d230b260156141a3794751489168e88944805e8a8",
+        "expiry": "2027-01-23T17:04:01Z"
+      },
+      {
+        "id": 12606484332,
+        "name": "reader-final-s10-desktop-40214657202-1",
+        "bytes": 19276,
+        "digest": "sha256:590c6a11295bf087a14653639470fe46974e3766cb7dcaf20b539d51ea4bfe29",
+        "expiry": "2027-01-23T17:04:01Z"
+      }
+    ],
+    "kept": "the round-1 failure and its artifacts stay in the record; no assertion was weakened to pass"
+  }
 }
