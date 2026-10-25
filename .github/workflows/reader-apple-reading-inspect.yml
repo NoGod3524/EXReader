@@ -16,6 +16,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 tests/reader_apple_reading_inspect/inspect.py
+      - name: Read text from the original failed case screenshots with system Vision
+        run: |
+          set -o pipefail
+          swift tests/reader_apple_reading_inspect/read_images.swift build/apple-reading-original-inspect/attachments | tee build/apple-reading-original-inspect/failure-image-text.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
