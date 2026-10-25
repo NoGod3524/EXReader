@@ -1,0 +1,127 @@
+name: D14 bounded native lifecycle and resource observations
+on:
+  push:
+    branches: [codex/reader-dot-d14]
+    paths: ['tests/reader_dot_wave2/d14/**', '.github/workflows/reader-dot-d14.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: reader-dot-d14-${{ github.ref }}
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+env:
+  PYTHONUTF8: '1'
+  PYTHONIOENCODING: utf-8
+jobs:
+  lifecycle:
+    name: lifecycle (${{ matrix.platform }})
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        include:
+          - platform: windows
+            runner: windows-2022
+            target: 9321de84eb9c8d3d57cafbeaa8b0a28fe2a26a08
+          - platform: gtk
+            runner: ubuntu-22.04
+            target: 803098e9df1a365a9b8e206805c2d179aca8501f
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 85
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.target }}
+          path: target
+          fetch-depth: 0
+      - name: Owned source boundary and negative controls
+        run: |
+          python -m py_compile tests/reader_dot_wave2/d14/*.py
+          python tests/reader_dot_wave2/d14/contract.py
+          python - <<'PY'
+          import subprocess
+          allowed=('tests/reader_dot_wave2/d14/','docs/reader-dot-wave2/d14/','.github/workflows/reader-dot-d14.yml','HANDOFF-RESULT-D14.md')
+          paths=subprocess.check_output(['git','diff','--name-only','0889f7d1e9a537c6c1b05456547e016b26e1cd85','HEAD'],text=True).splitlines()
+          assert all(any(p.startswith(a) for a in allowed) for p in paths),paths
+          PY
+      - name: Native Windows compiler environment
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Linux desktop dependencies
+        if: matrix.platform == 'gtk'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ninja-build libglib2.0-dev libgtk-3-dev libsecret-1-dev libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil python3-psutil dbus-x11 gsettings-desktop-schemas
+      - name: Build real fixed compact target
+        run: |
+          python -m pip install Pillow==11.3.0 psutil==7.0.0 uiautomation==2.0.29
+          set -o pipefail
+          python tests/reader_dot_wave2/d14/build.py '${{ matrix.platform }}' 2>&1 | tee build-d14.log
+      - name: Windows two real stages, at most 45 minutes total
+        if: matrix.platform == 'windows'
+        timeout-minutes: 45
+        run: python tests/reader_dot_wave2/d14/run.py windows
+      - name: GTK two real stages, at most 45 minutes total
+        if: matrix.platform == 'gtk'
+        timeout-minutes: 45
+        run: |
+          mkdir atspi
+          git -C target show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > atspi/atspi_client.py
+          xvfb-run -a -s '-screen 0 1440x1200x24' dbus-run-session -- bash -euc '
+            openbox >openbox-d14.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            sleep 2
+            /usr/bin/python3 tests/reader_dot_wave2/d14/run.py gtk
+          '
+      - name: Preserve build logs after product writers finish
+        if: always()
+        run: |
+          mkdir -p evidence
+          cp build-d14.log evidence/build-d14.log || true
+          cp openbox-d14.log evidence/openbox-d14.log || true
+          python - <<'PY'
+          import hashlib,json,pathlib
+          p=pathlib.Path('evidence')
+          (p/'bundle.json').write_text(json.dumps({f.relative_to(p).as_posix():{'bytes':f.stat().st_size,'sha256':hashlib.sha256(f.read_bytes()).hexdigest()} for f in p.rglob('*') if f.is_file() and f.name!='bundle.json'},indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d14-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence/
+          if-no-files-found: error
+  authenticate:
+    if: always()
+    needs: lifecycle
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate both original ZIPs and reject partial lifecycle scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_dot_wave2/d14/authenticate.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d14-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: authentication/
+          if-no-files-found: error
