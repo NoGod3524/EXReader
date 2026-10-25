@@ -28,10 +28,11 @@ def validate(a,body,p):
     assert a['workflow_run']['id']==int(run) and a['workflow_run']['head_sha']==source
     assert len(body)==a['size_in_bytes']
     assert a['digest']=='sha256:'+hashlib.sha256(body).hexdigest()
-from contract import negative_checks
+from contract import negative_checks, measured_state
 results=[];negatives=negative_checks()
 def default_configuration(report,project,logs):
     conditions='\n'.join(line for line in project.splitlines() if 'SWIFT_ACTIVE_COMPILATION_CONDITIONS' in line)
+    assert conditions.strip(), 'missing actual build configuration'
     actual=sorted(set(re.findall(r'EXR_[A-Z_]+',conditions)))
     compile_flags=sorted(set(re.findall(r'-D\s*(EXR_[A-Z_]+)',logs)))
     assert report['review_macros']==actual==[], 'actual project/report review macro mismatch'
@@ -63,10 +64,34 @@ for p in ('macos','iphone','ipad'):
         assert hashlib.sha256(plist_bytes).hexdigest()==r['program']['info_sha256']
         plist=plistlib.loads(plist_bytes)
         assert plist['EXRSourceSHA']==r['target_sha'] and plist['EXRSDKVersion']=='3.41.0' and plist['EXRPageThemeEnabled'] is False
-        for kind,badproject,badlogs in [('project-review-leak',project+'\nSWIFT_ACTIVE_COMPILATION_CONDITIONS = EXR_APPLE_HOST_REVIEW;',logs),('compiler-review-leak',project,logs+'\nswiftc -DEXR_APPLE_HOST_REVIEW')]:
+        for kind,badproject,badlogs in [('missing-configuration','',logs),('project-review-leak',project+'\nSWIFT_ACTIVE_COMPILATION_CONDITIONS = EXR_APPLE_HOST_REVIEW;',logs),('compiler-review-leak',project,logs+'\nswiftc -DEXR_APPLE_HOST_REVIEW')]:
             try:default_configuration(r,badproject,badlogs)
             except AssertionError:negatives.append(p+'/'+kind)
             else:raise AssertionError('review leakage accepted')
+        for group in r['records'].values():
+            for state in group.get('states',{}).values():
+                measured_state(state)
+        actual_states=[state for group in r['records'].values() for state in group.get('states',{}).values()]
+        if actual_states:
+            baseline=actual_states[0]
+            for kind in ('stale-node','coordinate-only'):
+                bad=copy.deepcopy(baseline)
+                if kind=='stale-node':bad['elements'][0]['snapshot_id']='stale'
+                else:bad['elements']=[]
+                try:measured_state(bad)
+                except AssertionError:negatives.append(p+'/actual-'+kind)
+                else:raise AssertionError('accepted corrupted real observation')
+            visible=next((st for st in actual_states if any(n.get('hit_test_observation')=='live-current-window' for n in st['elements'])),None)
+            if visible:
+                bad=copy.deepcopy(visible)
+                next(n for n in bad['elements'] if n.get('hit_test_observation')=='live-current-window')['current_window']=False
+                try:measured_state(bad)
+                except AssertionError:negatives.append(p+'/actual-foreign-window')
+                else:raise AssertionError('accepted foreign-window observation')
+        try:
+            assert hashlib.sha256(z.read('EXReaderHost-executable')+b'wrong').hexdigest()==r['program']['executable_sha256']
+        except AssertionError:negatives.append(p+'/actual-wrong-program')
+        else:raise AssertionError('accepted wrong program')
         candidates=[j for j in jobs if j['name']==f'D10 audit {p}'];assert len(candidates)==1
         j=candidates[0];assert j['status']=='completed' and j['head_sha']==source
         results.append({'platform':p,'job':{'id':j['id'],'name':j['name'],'conclusion':j['conclusion']},'artifact':{k:a[k] for k in ('id','name','size_in_bytes','digest','expires_at')},'zip_sha256':hashlib.sha256(body).hexdigest(),'program':r['program'],'checks':r['checks'],'audit_completed':r['audit_completed'],'problems':r['problems'],'findings':[f for f in r['geometry_and_name_findings'] if f.get('verdict')=='fail'],'default_ui_accepted':False,'ax_semantics_accepted':False,'dynamic_type_accepted':False,'voiceover_accepted':False,'physical_device_execution':False})

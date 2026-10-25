@@ -4,7 +4,7 @@ platform="$1"
 harness="$PWD"
 cd target
 mkdir -p build/d10/results build/d10/accessibility/ui
-# Reuse the exact original tests and recorder; no editing/retry injection.
+# Reuse exact original tests; independently versioned D10 recorder.
 cp tests/apple_host/accessibility/ui/ReaderAccessUITests.swift build/d10/accessibility/ui/
 cp "$harness/tests/reader_dot_wave2/d10/accessibility/A11yAuditSupport.swift" build/d10/accessibility/ui/
 cp "$harness/tests/reader_dot_wave2/d10/accessibility/DefaultUITests.swift" build/d10/accessibility/ui/
@@ -65,7 +65,8 @@ run_case() {
 }
 appearance() {
   python3 - "$platform" "$udid" "$1" <<'APPEARANCE'
-import subprocess,sys
+import subprocess,sys,json
+from pathlib import Path
 platform,udid,value=sys.argv[1:]
 if platform=='macos':
     subprocess.run(['osascript','-e','tell application "System Events" to tell appearance preferences to set dark mode to '+str(value=='dark').lower()],check=True,timeout=45)
@@ -75,6 +76,8 @@ else:
     subprocess.run(['xcrun','simctl','ui',udid,'appearance',value],check=True,timeout=45)
     result=subprocess.check_output(['xcrun','simctl','ui',udid,'appearance'],text=True,timeout=45).strip()
     assert result==value
+row=dict(platform=platform,requested=value,observed=result)
+with Path('build/d10/appearance.jsonl').open('a') as out: out.write(json.dumps(row)+'\n')
 print('D10_APPEARANCE',platform,value,result)
 APPEARANCE
 }

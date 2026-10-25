@@ -6,6 +6,7 @@ sys.path.insert(0,str(Path('tests/reader_a11y_apple').resolve()))
 from audit_collect import parse_records, element_map, evaluate_geometry
 sys.path.insert(0,str(Path('tests/apple_host').resolve()))
 from collect_evidence import load_results
+from contract import measured_state
 p=sys.argv[1]; root=Path('target/build/d10'); out=Path('build/evidence');out.mkdir(parents=True,exist_ok=True)
 def sha(path): return hashlib.sha256(path.read_bytes()).hexdigest()
 def command(*a): return subprocess.run(a,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
@@ -29,6 +30,7 @@ for label in labels:
         shutil.copy2(log,out/log.name)
         records[label]=parse_records(log.read_text(errors='replace'))
         for step,state in records[label]['states'].items():
+            measured_state(state)
             elements=element_map(state)
             interactive=[id for id,e in elements.items() if e['role'] in ('Button','TextField','TextView','Toggle','MenuButton','PopUpButton')]
             evaluate_geometry(p,label+'/'+step,{'interactive':interactive},elements,state['window'],policy,findings,state['screenshot'])
@@ -49,7 +51,7 @@ contract=Path('build/d10-contract.json')
 if contract.exists(): shutil.copy2(contract,out/contract.name)
 overlap=Path('build/overlap-regression.json')
 if overlap.exists(): shutil.copy2(overlap,out/'overlap-regression.json')
-for name in ('destination.txt','normal-content-size.txt','large-content-size.txt','keyboard-ui-mode.txt','appearance-service-preparation.json','make_xcodeproj.rb'):
+for name in ('destination.txt','normal-content-size.txt','large-content-size.txt','keyboard-ui-mode.txt','appearance-service-preparation.json','make_xcodeproj.rb','appearance.jsonl'):
     if (root/name).exists(): shutil.copy2(root/name,out/name)
 project=root/'project/EXReaderHost.xcodeproj/project.pbxproj'
 review_macros=None
@@ -82,7 +84,7 @@ report={'schema':1,'package':'D10','platform':p,'harness_sha':os.environ['GITHUB
  'run_id':os.environ['GITHUB_RUN_ID'],'attempt':os.environ['GITHUB_RUN_ATTEMPT'],'job':os.environ['GITHUB_JOB'],
  'program':identity,'installed_libraries':libs,'review_macros':review_macros,'page_theme':'OFF','launch_scope':'default [] and separately labelled unchanged fixture regression',
  'destination':(root/'destination.txt').read_text().splitlines() if (root/'destination.txt').exists() else [],
- 'system_content_sizes':{label:(root/(label+'-content-size.txt')).read_text().strip() for label in audit_labels if (root/(label+'-content-size.txt')).exists()},
+ 'system_content_sizes':{label:(root/(label+'-content-size.txt')).read_text().strip() for label in ('normal','large') if (root/(label+'-content-size.txt')).exists()},
  'checks':checks,'records':records,'geometry_and_name_findings':findings,'problems':problems,
  'audit_completed':completed,'default_ui_accepted':False,'ax_semantics_accepted':False,'dynamic_type_accepted':False,
  'voiceover_accepted':False,'physical_device_execution':False,'complete_product':False,

@@ -263,9 +263,20 @@ final class A11yAuditRecorder {
         }
         let flat = Self.flatten(snapshot)
         if let attach {
-            let tree = XCTAttachment(string: snapshot.debugDescription)
+            func treeJSON(_ value: XCUIElementSnapshot) -> [String: Any] {
+                return ["role": A11yAudit.roleName(value.elementType), "id": value.identifier,
+                    "label": value.label, "value": (value.value as? String) ?? "",
+                    "frame": A11yAudit.frameJSON(value.frame), "enabled": value.isEnabled,
+                    "children": value.children.map { treeJSON($0) }]
+            }
+            guard let bytes = try? JSONSerialization.data(withJSONObject: treeJSON(snapshot), options: [.sortedKeys]) else {
+                A11yAudit.emit("EXR_A11Y_ERROR", ["error": "tree-serialization-failed", "step": step])
+                return false
+            }
+            let tree = XCTAttachment(string: String(decoding: bytes, as: UTF8.self))
             tree.name = "d10-window-tree-" + step; tree.lifetime = .keepAlways; attach(tree)
         }
+        let snapshotID = UUID().uuidString
         var elements: [[String: Any]] = []
         var anonymousControls = 0
         for node in flat.nodes {
@@ -274,6 +285,7 @@ final class A11yAuditRecorder {
                 continue
             }
             var record: [String: Any] = [
+                "snapshot_id": snapshotID,
                 "id": node.identifier,
                 "role": node.role,
                 "label": node.label,
@@ -291,7 +303,7 @@ final class A11yAuditRecorder {
                 let visible = flat.window.contains(node.frame) && !node.frame.isEmpty &&
                     (!toolbarChild || (toolbar.exists && toolbar.frame.contains(node.frame)))
                 record["visible_region_contains_frame"] = visible
-                record["current_window"] = true
+                record["current_window"] = live.exists
                 // Snapshot geometry precedes any activation point query. Missing
                 // or clipped nodes are unknown, not false and never accepted.
                 if visible && live.exists {
@@ -305,6 +317,7 @@ final class A11yAuditRecorder {
             elements.append(record)
         }
         var payload: [String: Any] = [
+            "snapshot_id": snapshotID,
             "kind": "state",
             "platform": platform,
             "test": test,

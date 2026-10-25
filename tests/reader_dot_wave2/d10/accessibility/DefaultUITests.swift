@@ -33,8 +33,9 @@ final class DefaultUITests: XCTestCase {
         return item.label.isEmpty ? item.value as? String ?? "" : item.label
     }
     private func capture(_ step: String) {
-        _ = audit.capture(app, test: name, step: name + "." + step,
+        let captured = audit.capture(app, test: name, step: name + "." + step,
                           screenshot: "d10-" + name + "-" + step) { self.add($0) }
+        XCTAssertTrue(captured, "Missing real snapshot at " + step)
     }
     private func wait(_ condition: () -> Bool) -> Bool {
         let deadline = Date().addingTimeInterval(60)

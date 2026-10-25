@@ -32,3 +32,16 @@ if __name__=='__main__':
     report={'contract_negatives':negative_checks(),'synthetic_only':True,'accepted':False}
     (out/'d10-contract.json').write_text(json.dumps(report,indent=2)+'\n')
     print(json.dumps(report))
+
+def measured_state(state):
+    """Used on real collected snapshots; no synthetic row can grant scope."""
+    assert state.get('snapshot_id'), 'missing fresh snapshot identity'
+    assert state.get('elements'), 'missing AX evidence'
+    for node in state['elements']:
+        assert node.get('snapshot_id')==state['snapshot_id'], 'stale snapshot node'
+        if node.get('hit_test_observation')=='live-current-window':
+            assert node['current_window'] is True, 'foreign window hit observation'
+            assert node['visible_region_contains_frame'] is True, 'offscreen hit observation'
+            assert type(node['hittable']) is bool
+        elif 'hit_test_observation' in node:
+            assert node['hittable'] is None, 'unobserved hittability promoted'
