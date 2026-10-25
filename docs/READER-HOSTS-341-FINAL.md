@@ -57,7 +57,35 @@ G1 原本会另编译 `7817caa9…` 的旧本地下载实现作为回归负对�
 新工作流的 compose/aggregate 两 job 从原共同运行 `07ebe878…` 逐字保留，
 只允许源 guard 入口、显式 SDK 配置参数和严格汇总调用身份这三类适配。
 Actions 先比对整段原 job，随后在三平台运行完整原测试、前缀迁移和 41 个严格协议负例。
-该完整运行尚未通过，不能从前面的四模块结果转授。
+该完整运行现已独立通过，结果来自下述完整运行，并非前面四模块结果的转授。
+
+## 完整 27 包组合证据
+
+受测源码 **`b5e49d1753a6b4b88811b03fa904fe9447865247`**，
+[40186697513](https://github.com/NoGod3524/EXReader/actions/runs/40186697513) attempt1。
+源码/配置 preflight `121148903660`、macOS `121148940682`、Linux `121148940690`、
+Windows `121148940743`、strict `121151720419` 均 success。
+
+同一次运行实际安装 SDK 3.41 与 26 个可选包，执行所有原消费者和判断，
+在迁移安装前缀前后完整运行原 G1 链与模块测试；单 SDK/SQLite 提供者、
+真实 TLS WebDAV、共享 owner/session、故障和配额检查均保留。
+strict 下载并认证三平台原 ZIP，重验同 source/run/attempt、字节/digest/有效期、
+原报告、实际程序散列及平台间测试身份；41 项原协议负例保留。
+结果为 `accepted=true`、`task_wide_accepted=true`、`problems=[]`，范围仅完整桌面包组合。
+
+| 工件 | ID | 字节 | SHA-256 |
+| --- | ---: | ---: | --- |
+| Linux | 12596229813 | 168,799,743 | `bb91f802bc64f89ed9550ff2865f0e0b8894da204a0290ce905b8237007e1a08` |
+| macOS | 12596960237 | 145,863,927 | `f17b3af047a2b0c934ba185a950e08db5ba4c1862cfc0d5d0cd458d6103399d6` |
+| Windows | 12597180367 | 130,183,857 | `304711d9f0ee747ed8d92d0e92118c5d30ee0cfac23b85a9cb015f0244a3aab9` |
+| strict summary | 12597560057 | 12,648 | `436d0efd311f4666a686394d1c185adcdf32c36eda708a769acf71d8e9dbeedd` |
+
+有效期均为 `2027-01-23T10:54:45Z`。本地未下载或解析工件。
+键盘原生 probe 的 `ime-composing-passthrough` 三平台均为原允许的 SKIP；
+安装后的键盘接口测试均 PASS，不能从该 probe 声称真实 IME 验收。
+`host_ui_accepted=false`、`performance_accepted=false`、`android_accepted=false`、
+`ios_accepted=false`、`complete_product=false`。同源码重复 dispatch `40186762063`
+已取消，不用于证据；本节后的文档提交不改变受测代码。
 
 ## 共同源码仍需完成
 
