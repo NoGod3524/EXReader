@@ -13,12 +13,14 @@ import os
 import sys
 import tempfile
 import zipfile
+from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'tools'))
 from check_parallel_integration import download_artifact_zip, fetch, pages, require  # noqa: E402
 
 PLATFORMS = [('linux', 'ubuntu-22.04'), ('windows', 'windows-2022'), ('macos', 'macos-15')]
+REQUIRED_CASES = frozenset(['browser_create', 'opds1_open', 'opds1_display_fields', 'opds1_identity', 'opds1_cursor_format', 'opds1_snapshot_links', 'opds1_link_classes', 'opds1_free_link', 'opds1_facets', 'opds1_search_advertised', 'opds1_feed_links', 'opds1_next_page', 'opds1_next_third_page', 'opds1_loop_refused', 'cursor_stale_after_advance', 'cursor_wrong_value', 'cursor_other_feed_refused', 'search_opensearch_utf8', 'search_terms_refused', 'opds2_snapshot', 'opds2_navigation', 'opds2_facet_counts', 'opds2_search_template', 'acquire_free_epub', 'acquire_duplicate', 'staged_discard', 'discard_foreign_name', 'acquire_buy_refused', 'acquire_borrow_refused', 'acquire_protected_refused', 'acquire_priced_refused', 'acquire_indirect_refused', 'acquire_sample_refused', 'acquire_fake_extension_mismatch', 'acquire_broken_published', 'acquire_cancel', 'browser_usable_after_cancel', 'busy_reentry', 'limits_max_pages', 'limits_lowered_entries', 'staging_required', 'auth_origin_accepted', 'cross_origin_redirect', 'cross_origin_credentials_dropped', 'auth_required', 'tls_available', 'tls_open', 'tls_acquire', 'import_acquire', 'import_ok', 'import_duplicate_reuses_book', 'import_descriptor_size_mismatch', 'import_media_type_refused', 'import_descriptor_required', 'import_digest_mismatch', 'import_broken_acquire', 'import_broken_rejected_by_sdk', 'import_cancelled_before_commit', 'import_library_usable_after_failure', 'import_library_open', 'discard_denied_preserves_receipt'])
 
 
 def validate_job(job, source, run_id, attempt):
@@ -26,6 +28,27 @@ def validate_job(job, source, run_id, attempt):
             job.get('run_attempt') == attempt, 'job identity differs')
     require(job.get('status') == 'completed' and job.get('conclusion') == 'success',
             'job not completed successfully')
+
+
+def validate_artifact(artifact, data, source, run_id):
+    require(type(artifact.get('id')) is int and artifact['id'] > 0, 'invalid artifact ID')
+    require(artifact.get('expired') is False and artifact.get('size_in_bytes', 0) > 0,
+            'artifact expired or empty')
+    require(datetime.fromisoformat(artifact['expires_at'].replace('Z', '+00:00')) >
+            datetime.now(timezone.utc), 'artifact expiry elapsed')
+    require(artifact['workflow_run']['id'] == run_id and
+            artifact['workflow_run']['head_sha'] == source, 'artifact run/source differs')
+    require(len(data) == artifact['size_in_bytes'], 'ZIP size differs')
+    require('sha256:' + hashlib.sha256(data).hexdigest() == artifact['digest'],
+            'ZIP digest differs')
+
+
+def unique_object(pairs):
+    result = {}
+    for key, value in pairs:
+        require(key not in result, 'duplicate JSON key')
+        result[key] = value
+    return result
 
 
 def validate_members(names):
@@ -42,9 +65,10 @@ def validate_members(names):
 def validate_cases(report):
     cases = report.get('cases', [])
     ids = [c.get('id') for c in cases]
-    require(len(cases) >= 60 and report.get('checks') == len(cases), 'case count differs')
+    require(len(cases) >= len(REQUIRED_CASES) and report.get('checks') == len(cases), 'case count differs')
     require(all(isinstance(i, str) and i for i in ids) and len(set(ids)) == len(ids),
             'invalid or duplicate case ID')
+    require(REQUIRED_CASES <= set(ids), 'required original/review case missing')
     require(all(c.get('ok') is True for c in cases), 'failed or malformed case')
     return [[c['id'], c['ok']] for c in cases]
 
@@ -86,12 +110,10 @@ def main():
                 download_artifact_zip(artifact['id'], stream)
                 stream.seek(0)
                 data = stream.read()
-            require(len(data) == artifact['size_in_bytes'], 'ZIP size differs: ' + name)
-            require('sha256:' + hashlib.sha256(data).hexdigest() == artifact['digest'],
-                    'ZIP digest differs: ' + name)
+            validate_artifact(artifact, data, source, run_id)
             with zipfile.ZipFile(io.BytesIO(data)) as archive:
                 validate_members(archive.namelist())
-                report = json.loads(archive.read('opds-evidence/result.json'))
+                report = json.loads(archive.read('opds-evidence/result.json'), object_pairs_hook=unique_object)
                 names = [n for n in archive.namelist()
                          if n.startswith('opds-consumer/') and not n.endswith('/') and
                          Path(n).name in ('opds-consumer', 'opds-consumer.exe',
@@ -111,6 +133,7 @@ def main():
                         'wrong or empty consumer binaries')
                 require(embedded == reported, 'consumer binaries differ from the report: ' + name)
             require(report.get('accepted') is True, 'report refused: ' + name)
+            require(report.get('package') == 'EXReaderOpdsBrowser 0.1.0', 'wrong package')
             require(report['source_sha'] == source, 'report source differs: ' + name)
             require(int(report['run_id']) == run_id and int(report['attempt']) == attempt,
                     'report run identity differs: ' + name)
@@ -129,6 +152,7 @@ def main():
                 [n, size, digest] for n, (size, digest) in embedded.items())
             summary['granted_platforms'].append(platform)
         require(len(outcomes) == 3, 'missing platform outcomes')
+        require(len({a['id'] for a in summary['artifacts']}) == 3, 'reused artifact ID')
         reference = outcomes['linux']
         for platform in ('windows', 'macos'):
             require(outcomes[platform] == reference, 'case outcomes differ on ' + platform)
