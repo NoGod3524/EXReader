@@ -1,0 +1,688 @@
+{
+  "source_sha": "8015c576822d5284dedfea17428ecf1a240befd0",
+  "run_id": 40244430230,
+  "attempt": 1,
+  "candidate_package_accepted": true,
+  "f5_v2_accepted": true,
+  "original_f5_v1_accepted": false,
+  "sdk_adopted": false,
+  "host_integration_accepted": false,
+  "complete_product": false,
+  "legacy_1710_count": 0,
+  "scope": "isolated RTF+CBZ patch candidate and separately versioned 18-file F5 corpus on Windows/Linux",
+  "jobs": [
+    {
+      "id": 121322898372,
+      "name": "preflight",
+      "head_sha": "8015c576822d5284dedfea17428ecf1a240befd0",
+      "conclusion": "success"
+    },
+    {
+      "id": 121322946182,
+      "name": "corpus",
+      "head_sha": "8015c576822d5284dedfea17428ecf1a240befd0",
+      "conclusion": "success"
+    },
+    {
+      "id": 121323122348,
+      "name": "producer-linux",
+      "head_sha": "8015c576822d5284dedfea17428ecf1a240befd0",
+      "conclusion": "success"
+    },
+    {
+      "id": 121323122490,
+      "name": "producer-windows",
+      "head_sha": "8015c576822d5284dedfea17428ecf1a240befd0",
+      "conclusion": "success"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12618171932,
+      "name": "format-guard-40244430230-1",
+      "size_in_bytes": 3892,
+      "digest": "sha256:b084a2433316edb331d3a03c42209d04502881309ca7f0ee8ca672af50aa56d6",
+      "expires_at": "2027-01-23T23:21:58Z"
+    },
+    {
+      "id": 12617368263,
+      "name": "format-corpus-40244430230-1",
+      "size_in_bytes": 8371026,
+      "digest": "sha256:375e5095115316c327e382f0bff01d619ada3a1908284148dcd5e2cccce32ab5",
+      "expires_at": "2027-01-23T23:21:58Z"
+    },
+    {
+      "id": 12618916350,
+      "name": "format-windows-40244430230-1",
+      "size_in_bytes": 100077026,
+      "digest": "sha256:f361dd6c40397150d65377624f3e7c95214f54579278df8a3ba01d9de6dde93c",
+      "expires_at": "2026-11-24T23:39:45Z"
+    },
+    {
+      "id": 12618691161,
+      "name": "format-linux-40244430230-1",
+      "size_in_bytes": 116239088,
+      "digest": "sha256:4f50f61c4694aac40abd24c6626914c1ba4fc64a98b4e26dca64bdd1ee12c3c0",
+      "expires_at": "2026-11-24T23:33:38Z"
+    }
+  ],
+  "trees": {
+    "base_sdk_tree": "a2539bedd524520bc52727e777bae5d3f6a3cbe0",
+    "candidate_sdk_tree": "dd5f4fa912bcaab483524a76988515c731f22702",
+    "base_src_tree": "01753c0ada7a8c948a19173b965fbc0f42c1341b",
+    "candidate_src_tree": "001bd8d0baa49ecde6fae82d799bafd0b007030f"
+  },
+  "manifest_v2_sha256": "1da605400ab0718e70718e17edc4710ad5fe36c232e1eb705b6f7ede1ecc2b59",
+  "platforms": {
+    "windows": {
+      "native_each": 169,
+      "rtf_boundary": 100,
+      "cbz_named": 103,
+      "argv_vectors": 8,
+      "programs": 11,
+      "panels": {
+        "v1-base-original": {
+          "accepted": false,
+          "files": 18,
+          "accepted_files": 12
+        },
+        "v1-candidate-utf8": {
+          "accepted": false,
+          "files": 18,
+          "accepted_files": 17
+        },
+        "v2-candidate-utf8": {
+          "accepted": true,
+          "files": 18,
+          "accepted_files": 18
+        }
+      }
+    },
+    "linux": {
+      "native_each": 169,
+      "rtf_boundary": 100,
+      "cbz_named": 103,
+      "argv_vectors": 8,
+      "programs": 11,
+      "panels": {
+        "v1-base-original": {
+          "accepted": false,
+          "files": 18,
+          "accepted_files": 14
+        },
+        "v1-candidate-utf8": {
+          "accepted": false,
+          "files": 18,
+          "accepted_files": 17
+        },
+        "v2-candidate-utf8": {
+          "accepted": true,
+          "files": 18,
+          "accepted_files": 18
+        }
+      }
+    }
+  },
+  "cbz_cross_platform_observations_identical": true,
+  "failed": [],
+  "pending": [],
+  "strict_job": {
+    "id": 121326920910,
+    "status": "completed",
+    "conclusion": "success"
+  },
+  "strict_result_artifact": {
+    "id": 12618846664,
+    "name": "format-strict-40244430230-1",
+    "size_in_bytes": 1247,
+    "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12618846664",
+    "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/12618846664/zip",
+    "expired": false,
+    "created_at": "2026-10-25T23:40:14Z",
+    "expires_at": "2027-01-23T23:21:58Z",
+    "updated_at": "2026-10-25T23:40:14Z",
+    "digest": "sha256:4fe7a69354a4eedcfcfb635b1c14a7b9523ded23740f24897c7db5ceb3ba1310",
+    "workflow_run": {
+      "id": 40244430230,
+      "repository_id": 1421442522,
+      "head_repository_id": 1421442522,
+      "head_branch": "codex/reader-format-combination",
+      "head_sha": "8015c576822d5284dedfea17428ecf1a240befd0"
+    }
+  },
+  "run_status": "completed",
+  "run_conclusion": "success",
+  "evidence_capture": "Actions original ZIPs were downloaded, unpacked and authenticated only in Actions; this record is transcribed from the successful strict job log and read-only Actions API metadata.",
+  "full_round_budget": {
+    "limit": 3,
+    "used": 2,
+    "remaining": 1,
+    "third_round_started": false
+  },
+  "historical_round1": {
+    "source_sha": "8015c576822d5284dedfea17428ecf1a240befd0",
+    "run_id": 40244263135,
+    "attempt": 1,
+    "scope": "historical component diagnosis only; no combined dual-OS acceptance",
+    "historical_run": 40240804927,
+    "historical_source": "03530b6a4c97275432dffdcab80c39486475645a",
+    "historical_attempt": 1,
+    "candidate_package_accepted": false,
+    "platforms": {
+      "windows": {
+        "native": {
+          "base": 169,
+          "candidate": 169
+        },
+        "rtf_boundary": {
+          "schema": 1,
+          "test": "rtf-real-boundary",
+          "padded": 5,
+          "rejected": 26,
+          "checks": 100
+        },
+        "original_rtf_public_status": {
+          "base:rtf-crowley-policy": {
+            "test": "original-public-open",
+            "status": 5,
+            "expected": 5,
+            "document": false
+          },
+          "base:rtf-micro-republics": {
+            "test": "original-public-open",
+            "status": 5,
+            "expected": 5,
+            "document": false
+          },
+          "candidate:rtf-crowley-policy": {
+            "test": "original-public-open",
+            "status": 0,
+            "expected": 0,
+            "document": true
+          },
+          "candidate:rtf-micro-republics": {
+            "test": "original-public-open",
+            "status": 0,
+            "expected": 0,
+            "document": true
+          }
+        },
+        "artifact": {
+          "id": 12615959354,
+          "name": "format-windows-40240804927-1",
+          "size_in_bytes": 6813006,
+          "digest": "sha256:f1a22864d767cea72ff1eaf6494d5d468224860cc05600a39284ef88108fc2a5",
+          "expires_at": "2026-11-24T22:46:32Z"
+        },
+        "cbz_fixture_reports": 50,
+        "cbz_fixture_loader_exit_codes": [
+          3221225781
+        ],
+        "cbz_103_completed": false,
+        "f5_v1": "not executed",
+        "f5_v2": "not executed"
+      },
+      "linux": {
+        "native": {
+          "base": 169,
+          "candidate": 169
+        },
+        "rtf_boundary": {
+          "schema": 1,
+          "test": "rtf-real-boundary",
+          "padded": 5,
+          "rejected": 26,
+          "checks": 100
+        },
+        "original_rtf_public_status": {
+          "base:rtf-crowley-policy": {
+            "test": "original-public-open",
+            "status": 5,
+            "expected": 5,
+            "document": false
+          },
+          "base:rtf-micro-republics": {
+            "test": "original-public-open",
+            "status": 5,
+            "expected": 5,
+            "document": false
+          },
+          "candidate:rtf-crowley-policy": {
+            "test": "original-public-open",
+            "status": 0,
+            "expected": 0,
+            "document": true
+          },
+          "candidate:rtf-micro-republics": {
+            "test": "original-public-open",
+            "status": 0,
+            "expected": 0,
+            "document": true
+          }
+        },
+        "artifact": {
+          "id": 12616208751,
+          "name": "format-linux-40240804927-1",
+          "size_in_bytes": 116154056,
+          "digest": "sha256:a36c210c337e5a8377409c700bb691df2d3eb4ad12bd85bd83b5cfafb23f4a00",
+          "expires_at": "2026-11-24T22:45:26Z"
+        },
+        "cbz_named_checks": 103,
+        "panels": {
+          "v1-base-original": {
+            "accepted": false,
+            "accepted_files": 14,
+            "failed": [
+              {
+                "id": "rtf-crowley-policy",
+                "mismatches": [
+                  {
+                    "op": "import",
+                    "expected": "ok",
+                    "actual": "failed"
+                  },
+                  {
+                    "op": "readback",
+                    "expected": "ok",
+                    "actual": "failed"
+                  },
+                  {
+                    "op": "open",
+                    "expected": "ok",
+                    "actual": "failed"
+                  },
+                  {
+                    "op": "metadata.title",
+                    "expected": "report(nonempty|empty)",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "metadata.entries",
+                    "expected": "not_exposed",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "toc",
+                    "expected": "empty",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "pages.first",
+                    "expected": "ok",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "pages.middle",
+                    "expected": "ok",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "pages.last",
+                    "expected": "ok",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "pages.sequential",
+                    "expected": "ok",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "pages.back",
+                    "expected": "ok",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "find",
+                    "expected": "found",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "anchor.capture",
+                    "expected": "ok",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "anchor.resolve",
+                    "expected": "found",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "anchor.resolve_reopen",
+                    "expected": "found",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "reopen",
+                    "expected": "ok",
+                    "actual": "failed"
+                  }
+                ]
+              },
+              {
+                "id": "rtf-micro-republics",
+                "mismatches": [
+                  {
+                    "op": "import",
+                    "expected": "ok",
+                    "actual": "failed"
+                  },
+                  {
+                    "op": "readback",
+                    "expected": "ok",
+                    "actual": "failed"
+                  },
+                  {
+                    "op": "open",
+                    "expected": "ok",
+                    "actual": "failed"
+                  },
+                  {
+                    "op": "metadata.title",
+                    "expected": "report(nonempty|empty)",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "metadata.entries",
+                    "expected": "not_exposed",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "toc",
+                    "expected": "empty",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "pages.first",
+                    "expected": "ok",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "pages.middle",
+                    "expected": "ok",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "pages.last",
+                    "expected": "ok",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "pages.sequential",
+                    "expected": "ok",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "pages.back",
+                    "expected": "ok",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "find",
+                    "expected": "found",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "anchor.capture",
+                    "expected": "ok",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "anchor.resolve",
+                    "expected": "found",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "anchor.resolve_reopen",
+                    "expected": "found",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "reopen",
+                    "expected": "ok",
+                    "actual": "failed"
+                  }
+                ]
+              },
+              {
+                "id": "cbz-pepper-01",
+                "mismatches": [
+                  {
+                    "op": "import",
+                    "expected": "ok",
+                    "actual": "failed"
+                  },
+                  {
+                    "op": "readback",
+                    "expected": "ok",
+                    "actual": "failed"
+                  },
+                  {
+                    "op": "open",
+                    "expected": "ok",
+                    "actual": "failed"
+                  },
+                  {
+                    "op": "metadata.title",
+                    "expected": "report(nonempty|empty)",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "metadata.entries",
+                    "expected": "report(nonempty|empty)",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "toc",
+                    "expected": "not_exposed",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "pages.first",
+                    "expected": "ok",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "pages.middle",
+                    "expected": "ok",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "pages.last",
+                    "expected": "ok",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "pages.sequential",
+                    "expected": "ok",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "pages.back",
+                    "expected": "ok",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "find",
+                    "expected": "empty",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "anchor.capture",
+                    "expected": "not_exposed",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "anchor.resolve",
+                    "expected": "not_exposed",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "anchor.resolve_reopen",
+                    "expected": "not_exposed",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "reopen",
+                    "expected": "ok",
+                    "actual": "failed"
+                  }
+                ]
+              },
+              {
+                "id": "cbz-pepper-02",
+                "mismatches": [
+                  {
+                    "op": "import",
+                    "expected": "ok",
+                    "actual": "failed"
+                  },
+                  {
+                    "op": "readback",
+                    "expected": "ok",
+                    "actual": "failed"
+                  },
+                  {
+                    "op": "open",
+                    "expected": "ok",
+                    "actual": "failed"
+                  },
+                  {
+                    "op": "metadata.title",
+                    "expected": "report(nonempty|empty)",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "metadata.entries",
+                    "expected": "report(nonempty|empty)",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "toc",
+                    "expected": "not_exposed",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "pages.first",
+                    "expected": "ok",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "pages.middle",
+                    "expected": "ok",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "pages.last",
+                    "expected": "ok",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "pages.sequential",
+                    "expected": "ok",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "pages.back",
+                    "expected": "ok",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "find",
+                    "expected": "empty",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "anchor.capture",
+                    "expected": "not_exposed",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "anchor.resolve",
+                    "expected": "not_exposed",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "anchor.resolve_reopen",
+                    "expected": "not_exposed",
+                    "actual": "skipped"
+                  },
+                  {
+                    "op": "reopen",
+                    "expected": "ok",
+                    "actual": "failed"
+                  }
+                ]
+              }
+            ]
+          },
+          "v1-candidate-utf8": {
+            "accepted": false,
+            "accepted_files": 17,
+            "failed": [
+              {
+                "id": "rtf-crowley-policy",
+                "mismatches": [
+                  {
+                    "op": "find",
+                    "expected": "found",
+                    "actual": "miss"
+                  },
+                  {
+                    "op": "anchor.capture",
+                    "expected": "ok",
+                    "actual": "failed"
+                  },
+                  {
+                    "op": "anchor.resolve",
+                    "expected": "found",
+                    "actual": "failed"
+                  },
+                  {
+                    "op": "anchor.resolve_reopen",
+                    "expected": "found",
+                    "actual": "failed"
+                  }
+                ]
+              }
+            ]
+          },
+          "v2-candidate-utf8": {
+            "accepted": true,
+            "accepted_files": 18,
+            "failed": []
+          }
+        },
+        "actual_programs_authenticated": 11
+      }
+    }
+  },
+  "windows_loader_regression": {
+    "source_sha": "8015c576822d5284dedfea17428ecf1a240befd0",
+    "run_id": 40244263135,
+    "attempt": 1,
+    "scope": "real prior S13 binary Windows loader diagnosis only; no new combined-SDK acceptance",
+    "reference_source": "313ebbb4f8e73ba42eb3bbe2b04b292f854886b4",
+    "reference_run": 40236345116,
+    "reference_artifact": {
+      "id": 12615243218,
+      "name": "reader-next-s13-windows-40236345116-1",
+      "size_in_bytes": 44652140,
+      "digest": "sha256:93b7d245379ffd54536e830bc5b85fb96f3619af9947c0693f702790559d8ca6",
+      "expires_at": "2026-11-24T21:51:47Z"
+    },
+    "program_sha256": "bae35428bd5155f7806934ca418e86bc41cffc381f5563076f30c37a645d3870",
+    "without_dll_exit": 3221225781,
+    "with_dll_exit": 0,
+    "with_dll_page_count": 4,
+    "deployed": [
+      {
+        "name": "exreader.dll",
+        "bytes": 7588864,
+        "sha256": "1e23e9c3568653b7ffc3695627152fb3bd2b8d8199296bc029022a460920bcbd",
+        "installed": "D:\\a\\EXReader\\EXReader\\build\\format\\loader-proof\\installed-sdk\\bin\\exreader.dll",
+        "deployed": "D:\\a\\EXReader\\EXReader\\build\\format\\loader-proof\\isolated\\exreader.dll"
+      }
+    ],
+    "same_binary_before_after": true
+  }
+}

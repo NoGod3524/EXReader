@@ -1,6 +1,8 @@
 # 格式组合任务暂停检查点
 
-恢复记录：用户重连后已明确继续。完整轮 1 `40240804927/1` 终态 failure；Linux producer 完整成功，Windows 在 CBZ probe 的部署阶段失败（尚未跑 F5 面板）。正在 Actions 认证旧原 ZIP 并验证 DLL 部署修复。本页下方保留当时断网前的原始暂停记录。
+恢复结果：用户重连后已明确继续。第 1 轮 `40240804927/1` 保留 failure；Windows 缺 SDK DLL 的部署问题已用原 S13 程序在 Actions 做无 DLL/补 DLL 正反验证。修复源码 `8015c576822d5284dedfea17428ecf1a240befd0` 的第 2 轮完整验收 `40244430230/1` 已 success：双 OS 各原 169×2、RTF100、CBZ103、F5 v2 18/18，strict 实际认证同轮原 ZIP 并重算通过。未启动第 3 轮。SDK 采用仍待 root 审查；完整身份见 [RESULTS.md](RESULTS.md) 和 [acceptance.json](acceptance.json)。
+
+以下是断网前保留的历史暂停记录，不能用其“运行中”状态覆盖上面的真实终态。
 
 用户要求暂停并准备断网；已停止新增派修、推送和 Actions。已在云端执行的完整 run 不取消，也不等待终态。恢复须等用户明确继续。
 
