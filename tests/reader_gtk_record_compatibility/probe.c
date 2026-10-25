@@ -116,6 +116,9 @@ static void compat_adopt(linux_reader *reader,const char *annotation,const char 
   compat_check(reader_revision_get(owner->revisions,revision,&wire,&bytes,&info,NULL)==READER_REV_OK && !strcmp(info.sha256,sha),"selected immutable wire identity read publicly");
   compat_check(reader_rs_decode(owner->revisions,wire,bytes,&decoded,NULL)==READER_RS_OK,"selected original record decodes without tag rewrite");
   reader_command command=compat_command(READER_RECORDS_JUMP);command.records_id=annotation;command.records_head=revision;command.records_sha=sha;command.records_progress=progress;
+  /* Like the real UI, carry the source frame's actual identity. These are
+     stale-frame guards, not destination hints or rewritten retained selectors. */
+  command.part=reader->current.part;command.page=reader->current.page;
   reader_result result={0};linux_reader_execute(reader,&command,&result);
   if(result.status!=EXR_OK || !result.has_frame || result.records_match!=EXR_ANCHOR_FOUND)
     fprintf(stderr,"adopt progress=%d annotation=%s revision=%s mode=%d anchor_version=%llu parser=%s part=%llu route=%s page=%llu range=%llu..%llu current_part=%zu current_page=%zu status=%d frame=%d match=%d message=%s\n",
@@ -161,6 +164,7 @@ static void compat_verify(linux_reader *reader) {
     reader_av_item *item=&listed.records_page.items[i];compat_check(item->state==READER_AV_STATE_SAFE,"old annotation history remains SAFE");
     if(item->deleted) {
       reader_command command=compat_command(READER_RECORDS_JUMP);command.records_id=item->annotation_id;command.records_head=item->revision_id;command.records_sha=item->sha256;
+      command.part=reader->current.part;command.page=reader->current.page;
       reader_result result={0};linux_reader_execute(reader,&command,&result);compat_check(result.status!=EXR_OK && !result.has_frame,"actual host refuses tombstone navigation without guessed fallback");reader_result_free(&result);
     } else compat_adopt(reader,item->annotation_id,item->revision_id,item->sha256,0);
   }
