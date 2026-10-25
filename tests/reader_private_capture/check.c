@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -69,9 +70,9 @@ static size_t blob_at(const unsigned char *bytes,unsigned field) {
 }
 int main(int argc,char **argv) {
   reader_rs_capture c;exr_anchor a;exr_fixed_anchor f;unsigned char *bytes=NULL,*mutated;size_t size=0,i;unsigned w,mask;
-  char exact[4]={'A',0,'B',(char)0xff},empty[1]={0},zero[1]={0};
+  unsigned char exact[4]={'A',0,'B',0xff};char empty[1]={0},zero[1]={0};
   REQUIRE(argc==2);memset(&c,0,sizeof(c));memset(&a,0,sizeof(a));memset(&f,0,sizeof(f));
-  c.mode=READER_RS_FIXED_PAGE;c.fixed=&f;c.page=7;f.page_id=(char *)"p7";f.start=11;f.end=15;f.exact=exact;f.exact_size=4;f.prefix=empty;
+  c.mode=READER_RS_FIXED_PAGE;c.fixed=&f;c.page=7;f.page_id=(char *)"p7";f.start=11;f.end=15;f.exact=(char *)exact;f.exact_size=4;f.prefix=empty;
   vector(argv[1],"fixed3",&c,3,3);vector(argv[1],"fixed1",&c,3,1);vector(argv[1],"fixed2",&c,3,2);puts("PASS fixed-counted-binary-all-writers");
   f.start=f.end=0;f.exact=NULL;f.exact_size=0;f.suffix=zero;f.suffix_size=1;vector(argv[1],"null-exact",&c,3,2);puts("PASS null-empty-and-binary-suffix");
   memset(&c,0,sizeof(c));c.mode=READER_RS_REFLOW_GLOBAL;c.anchor=&a;a.start=2;a.end=5;a.exact=(char *)"abc";a.suffix=empty;a.chapter=(char *)"chapter1";
