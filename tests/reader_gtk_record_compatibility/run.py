@@ -139,6 +139,9 @@ def exercise(entries):
             book = fixtures / filename
             seeded = process(writer, profile, book, 'seed')
             before = {p.name: sha(p) for p in profile.glob('*.json') if len(p.stem) == 32}
+            # Preserve the exact writer-closed state before the other SDK ever
+            # opens it; uncertain old saves start from this genuine old state.
+            shutil.copytree(profile, OUT / ('seed-snapshot-' + writer + '-' + reader + '-' + kind))
             result = process(reader, profile, book, 'verify', allow_refusal=(writer, reader) == ('new', 'old'))
             assert before and all(sha(profile / name) == digest for name, digest in before.items())
             cases.append(dict(name=writer + '-to-' + reader + '-' + kind, kind='reopen', format=kind,
@@ -152,7 +155,7 @@ def exercise(entries):
                                  ('old', 'new', list(formats))]:
         for kind in kinds:
             for stage in ('before', 'after'):
-                origin = OUT / ('profile-' + writer + '-' + reader + '-' + kind)
+                origin = OUT / ('seed-snapshot-' + writer + '-' + reader + '-' + kind)
                 profile = OUT / ('kill-' + writer + '-' + reader + '-' + kind + '-' + stage)
                 shutil.copytree(origin, profile)
                 os.chmod(profile, 0o700)
