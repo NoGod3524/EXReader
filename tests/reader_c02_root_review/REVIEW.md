@@ -116,7 +116,7 @@ Windows producer/apps仍绑定原固定0889树，GTK producer仍为57203a52的�
 
 最小受控协议用例先于实现写入，断言原close返回、原launch返回、close/launch异常、诊断写盘异常及两者同时异常的顺序，
 要求真实failure原样保留、诊断join/写盘晚于原分类、close中不得等待。全部检查只在1个轻量Actions作业执行，
-不启动native UI、完整性能轮或新时间实验；尚待云端结果，仅授予诊断控制流修复。
+不启动native UI、完整性能轮或新时间实验；验收范围仅为诊断控制流修复。
 
 唯一轻量运行[`40245305085/1`](https://github.com/NoGod3524/EXReader/actions/runs/40245305085)成功，
 受测source `99d8735a3583be0e4dea258ee1f0ecb3bc0e9d79`，job `121325493798`，6/6受控场景通过；
