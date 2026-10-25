@@ -37,7 +37,8 @@ def command(label, args, cwd=ROOT, timeout=1800):
 def cmake(label, source, binary, *, prefix=None, sdk=None, version=None, owner=None, install=False):
     args = ['cmake', '-S', source, '-B', binary, '-G', 'Ninja', '-DCMAKE_BUILD_TYPE=Release']
     if prefix:
-        args += ['-DCMAKE_PREFIX_PATH=' + str(prefix), '-DREADER_PRODUCT_PREFIX=' + str(prefix),
+        search = str(prefix) + (';' + str(sdk) if sdk else '')
+        args += ['-DCMAKE_PREFIX_PATH=' + search, '-DREADER_PRODUCT_PREFIX=' + str(prefix),
                  '-DCMAKE_INSTALL_PREFIX=' + str(prefix)]
     if sdk:
         args += ['-DEXR_SDK=' + str(sdk)]
@@ -53,6 +54,11 @@ def cmake(label, source, binary, *, prefix=None, sdk=None, version=None, owner=N
 
 
 def build():
+    # Compile the new actual-owner probe first, before repeating the frozen
+    # SDK build. Public/private header or probe compiler failures surface early.
+    cmake('new-owner-early', Path(__file__).parent, OUT / 'new-owner',
+          prefix=ROOT / 'build/account-stage', sdk=ROOT / 'build/reading-library/stage',
+          version='3.41.0', owner=ROOT)
     old = OUT / 'old-source'
     old.mkdir()
     with (OUT / 'old-source.tar').open('wb') as target:
@@ -208,6 +214,10 @@ def main():
         report['accepted'] = True
     except Exception as error:
         report['problems'].append(str(error))
+        # Surface the concrete test failure while the job's always-run evidence
+        # upload is finishing; ordinary Actions logs are unavailable until then.
+        annotation = str(error)[:6000].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+        print('::error::' + annotation, flush=True)
     (OUT / 'result.json').write_text(json.dumps(report, indent=2) + '\n')
     evidence = ROOT / 'build/gtk-record-compatibility-evidence'
     evidence.mkdir()
