@@ -2,6 +2,17 @@
 
 ## Root evidence repair pending
 
+Update: root round 1 passed. Source
+`28df223d1df2aa3e551ad4796d5e7615bd706d8e`, run `40236387400/1`, both
+producers and strict completed/success. Each platform retained all three
+149-check original suites and the 162-check raw suite, six wire cases and
+three moves. The strict log independently reports both compatibility verdicts
+true, nine program roles and three archives authenticated, with no problems.
+The 15 actual artifact mutation controls per platform rejected all changes.
+Full job/artifact identities are in `root-review-validation.json`.
+This supersedes the pending verification status below, not the original
+failure/round-limit history. Host integration and product grants remain absent.
+
 The root review now uploads all nine actual C/C++ consumer programs and all
 three installed jump-history archives. Its strict job recomputes each native
 program's bytes/digest, all three original-suite source/run/attempt identities,
