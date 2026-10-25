@@ -29,7 +29,7 @@ struct HostPageThemeSheet: View {
                             .accessibilityValue(choice == model.pageThemeChoice ? "已选" : "")
                     }
                 }
-            }
+            }.accessibilityIdentifier("theme.choices")
             Text(model.current?.isFixed == true ? "PDF 和漫画保留原书色彩。" : "图片和书中的背景保留原样。")
                 .font(.caption).foregroundColor(.secondary)
             Text(model.statusText).font(.caption).accessibilityIdentifier("theme.status")
@@ -37,8 +37,12 @@ struct HostPageThemeSheet: View {
             if model.showsTestFixtures {
                 Text(model.pageThemeObservation).font(.system(size: 5)).lineLimit(1)
                     .accessibilityIdentifier("theme.bitmap")
-                Button("请求系统外观检查") { model.requestPageThemeSystemReview() }
-                    .accessibilityIdentifier("theme.system-review")
+                HStack {
+                    Button("检查系统深色") { model.requestPageThemeSystemReview(dark: true) }
+                        .accessibilityIdentifier("theme.system-dark-review")
+                    Button("检查系统浅色") { model.requestPageThemeSystemReview(dark: false) }
+                        .accessibilityIdentifier("theme.system-light-review")
+                }
             }
 #endif
             Button("关闭") { presentation.wrappedValue.dismiss() }.buttonStyle(.bordered)

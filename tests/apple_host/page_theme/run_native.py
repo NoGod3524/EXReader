@@ -26,7 +26,8 @@ def main():
             result = subprocess.run([str(v) for v in command], cwd=repo, env=environment,
                                     stdout=log, stderr=subprocess.STDOUT, timeout=1200)
         content = (out / name).read_text(errors='replace')
-        print(content, flush=True)
+        if not name.startswith('symbols-'):
+            print(content, flush=True)
         if failure is None:
             assert result.returncode == 0, name
         else:
@@ -75,6 +76,7 @@ def main():
         if mode == 'on':
             expected |= {book + ':' + suffix for book in books for suffix in ('dark', 'light', 'system', 'original-roundtrip')}
             expected |= {book + ':' + suffix for book in books[:2] for suffix in ('cancel-every-sdk-poll', 'post-render-failure')}
+            expected |= {'model:latest-system-notification-only', 'model:failure-preserves-frame-and-retry', 'model:cancel-preserves-accepted-frame'}
         names = [row['id'] for row in report['checks']]
         assert set(names) == expected and all(row['passed'] is True for row in report['checks'])
         assert len(names) == len(set(names)), 'duplicate native check identity'

@@ -67,3 +67,75 @@ jobs:
           name: apple-theme-native-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/apple-theme-native/
           if-no-files-found: error
+  ui:
+    name: Real page theme UI ${{ matrix.platform }}
+    needs: [sdk, native]
+    runs-on: macos-15
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos, iphone, ipad]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: apple-theme-sdk-*
+          path: sdk-artifacts
+      - name: Prepare authored inputs and real native UI project
+        run: |
+          mkdir -p stage build/apple-theme-ui
+          cp -R sdk-artifacts/*/stage/* stage/
+          python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
+          python3 tests/apple_host/navigation/prepare_navigation_fixture.py --resources build/apple-resources
+          python3 tests/apple_host/reading/prepare_reading_fixture.py --resources build/apple-resources
+          python3 tests/apple_host/page_theme/prepare_fixtures.py --resources build/apple-resources
+          ruby -e "require 'xcodeproj'" >/dev/null 2>&1 || gem install xcodeproj --no-document || sudo gem install xcodeproj --no-document
+          ruby tests/apple_host/make_xcodeproj.rb build/apple-theme-project build/apple-resources tests/apple_host/page_theme/ui
+      - name: Native theme selection and real system appearance changes
+        id: ui
+        continue-on-error: true
+        run: |
+          target=iphonesimulator
+          if test '${{ matrix.platform }}' = macos; then target=macos; fi
+          python3 tests/apple_host/page_theme/run_ui.py --platform '${{ matrix.platform }}' \
+            --project build/apple-theme-project/EXReaderHost.xcodeproj --sdk "stage/$target" --output build/apple-theme-ui
+      - name: Authenticate raw observations installed providers and original attachments
+        if: always()
+        id: evidence
+        continue-on-error: true
+        run: |
+          target=iphonesimulator
+          app=build/ThemeDerivedData/Build/Products/Debug-iphonesimulator/EXReaderHost.app
+          if test '${{ matrix.platform }}' = macos; then target=macos; app=build/ThemeDerivedData/Build/Products/Debug/EXReaderHost.app; fi
+          python3 tests/apple_host/page_theme/collect_ui.py --platform '${{ matrix.platform }}' \
+            --xcresult build/apple-theme-ui/theme.xcresult --output build/apple-theme-ui/evidence --app "$app" \
+            --sdk-root "stage/$target" --sdk-identity "sdk-artifacts/apple-theme-sdk-$target-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT/build/sdk-identity.json" \
+            --fixtures build/apple-resources/manifest.json --system-commands build/apple-theme-ui/system-commands.json \
+            --destination build/apple-theme-ui/destination.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-theme-ui-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-theme-ui/
+          if-no-files-found: error
+      - if: always() && (steps.ui.outcome != 'success' || steps.evidence.outcome != 'success')
+        run: exit 1
+  summary:
+    name: Strict same-source page theme summary
+    if: always()
+    needs: [sdk, native, ui]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate producer jobs actual ZIP identities and raw reports
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_host/page_theme/summarize.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-theme-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-theme-summary/
+          if-no-files-found: error
