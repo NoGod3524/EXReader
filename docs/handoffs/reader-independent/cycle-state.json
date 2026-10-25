@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "recorded_at_utc": "2026-10-25T03:46:00Z",
+  "recorded_at_utc": "2026-10-25T04:15:00Z",
   "current_cycle": 1,
   "completed_cycles": 0,
   "audit_interval": 5,
@@ -20,6 +20,23 @@
     "superseded_cancellation_requested": true,
     "apple_included": false
   },
+  "next_unverified_host_candidate": {
+    "head": "efc0317c",
+    "production_baseline": "84a69b0e1e8ab8407042a68d97ea3f2d1591a887",
+    "gtk_batch_owned_delivery": "2df6040666635bcd7b0349b035b8f4885757fdd0",
+    "state": "source_saved_no_new_full_run_waiting_on_current_navigation_failure_evidence",
+    "owner_fault_scenarios": 4,
+    "allocation_failures": {"receipt": 2, "candidate": 1},
+    "accepted": false
+  },
+  "dot_seven": {
+    "handoff_commit": "550663bfe9668182ee735a8b09786f9c22230aae",
+    "index": "../reader-dot-seven/INDEX.md",
+    "prepared": 7,
+    "dispatched": false,
+    "reason": "No existing-Dot message API; user given one manual coordinator prompt",
+    "reserved_packages": ["Windows import and organization UI", "J11", "J22", "J05", "reviewed module composition", "J21", "J02"]
+  },
   "claude_p0_root_reviews": {
     "J01": {
       "source": "80b743c6f51bee6d95e7cf116b4e65000a599063",
@@ -28,7 +45,14 @@
       "checks_per_desktop": 47,
       "state": "root_repaired_cloud_success_awaiting_host_integration"
     },
-    "J04": {"state": "three_confirmed_import_entry_defects_under_independent_review_repair"}
+    "J04": {"state": "import_entry_review_and_actual_fault_repair_running_on_independent_branch"},
+    "J10": {
+      "source": "fd2c88e3c5f0f0c7a7bd8698e7efb3825079bd41",
+      "run": 40159996464,
+      "evidence_head": "757249aaed9a1dc6be981354f6af97e813233f04",
+      "scenarios_per_desktop": 21,
+      "state": "root_repaired_cloud_success_reserved_for_dot_windows_integration"
+    }
   },
   "host_integration_candidate": {
     "branch": "codex/reader-hosts-integration",
