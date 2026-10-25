@@ -125,6 +125,13 @@ int main(int argc,char **argv){try{
        <<",\"missing\":"<<v->graph.missing_parents<<",\"foreign\":"<<v->graph.foreign_parents<<",\"wire_bytes\":"<<v->wire_bytes<<",\"heads\":"<<head_json(v);
   }
   out<<"}";
+  if(action=="lifetime"&&snapshot){
+    const std::string before=head_json(reader_conflict_snapshot_view(snapshot));
+    const auto closed=reader_conflict_close(&owner,&error);
+    const bool stable=before==head_json(reader_conflict_snapshot_view(snapshot));
+    std::thread release([&]{reader_conflict_snapshot_free(snapshot);});release.join();snapshot=nullptr;
+    out<<",\"lifetime\":{\"close\":"<<closed<<",\"stable\":"<<(stable?"true":"false")<<",\"freed\":true}";
+  }
   if(action=="resolve"&&snapshot){
     if(!option("race").empty()){ /* A foreign sync revision lands through another connection after the snapshot. */
       reader_revisions *other=nullptr;reader_revision_error e{};reader_revisions_open(args[2].c_str(),&other,&e);
@@ -141,6 +148,7 @@ int main(int argc,char **argv){try{
     std::string format=cbook.substr(0,cbook.find(':')),sha=cbook.find(':')==std::string::npos?"":cbook.substr(cbook.find(':')+1);
     int rounds=number("rounds",1);
     for(int round=0;round<rounds;++round){
+      if(round)name=option("retry_name",name.c_str());
       reader_conflict_result result{};reader_conflict_error e{};reader_conflict_status status=READER_CONFLICT_ARGUMENT;
       auto run=[&]{
         if(kind=="book"||kind=="progress"||kind=="annotation"){

@@ -1,4 +1,16 @@
 {
+  "review": {
+    "package": "T02 explicit conflict actions review",
+    "accepted": false,
+    "base_commit": "37fdc830d75eee8590120d52d4d881102e0d9dc4",
+    "branch": "codex/dot-conflict-actions-review",
+    "status": "Actions acceptance pending for revised evidence verifier and added regressions",
+    "historical_run_attempt": 1,
+    "historical_jobs": [121010009316, 121010009480, 121010009494, 121010290934],
+    "historical_artifact_ids": [12579020164, 12578975246, 12578506436, 12577264908],
+    "module_source_changed": false,
+    "local_validation_performed": false
+  },
   "package": "J11 explicit conflict actions",
   "base_commit": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "tested_commit": "be093a95d5eb6beceb23ce5ba76cac3a79610555",

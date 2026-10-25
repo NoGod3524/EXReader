@@ -1,20 +1,23 @@
 name: Reader explicit conflict actions
 on:
   push:
-    branches: [codex/reader-explicit-conflict-actions]
+    branches: [codex/dot-conflict-actions-review]
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 defaults:
   run:
     shell: bash
 env:
-  BASE_COMMIT: f43baf9182d75907c0cb5d6f77048f27bca8c950
+  BASE_COMMIT: 37fdc830d75eee8590120d52d4d881102e0d9dc4
 jobs:
   conflict-actions:
     name: installed explicit conflict actions (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
+    env:
+      MATRIX_OS: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -24,15 +27,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Source, protected tree and allowed path guards
-        run: |
-          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          git merge-base --is-ancestor "$BASE_COMMIT" HEAD
-          changed=$(git diff --name-only "$BASE_COMMIT" HEAD)
-          echo "$changed"
-          bad=$(echo "$changed" | grep -v -E '^(apps/reader/conflict-actions/|tests/reader_explicit_conflict_actions/|\.github/workflows/reader-explicit-conflict-actions\.yml$|docs/READER-EXPLICIT-CONFLICT-ACTIONS\.md$|docs/validation/reader-explicit-conflict-actions\.json$)' || true)
-          test -z "$bad" || { echo "path outside the allowed set:"; echo "$bad"; exit 1; }
-          # Protected trees are byte-identical to the fixed start.
-          git diff --exit-code "$BASE_COMMIT" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings apps/reader/store apps/reader/revisions apps/reader/commands apps/reader/desktop-metadata extras .github/workflows/native.yml .github/workflows/reliability.yml
+        run: bash tests/reader_explicit_conflict_actions/source_guard.sh
       - name: Install Linux build tools
         if: runner.os == 'Linux'
         run: |
@@ -76,43 +71,40 @@ jobs:
       - name: Real two-client explicit conflict actions
         run: |
           if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
-          python3 tests/reader_explicit_conflict_actions/check_conflict_actions.py --consumer "build/consumer/conflict-consumer$exe" --c-consumer "build/consumer/conflict-c-consumer$exe" --link-map build/consumer/conflict-link.map --build-log build/logs/consumer-build.log --output build/evidence
+          python3 tests/reader_explicit_conflict_actions/check_conflict_actions.py --consumer "build/consumer/conflict-consumer$exe" --c-consumer "build/consumer/conflict-c-consumer$exe" --link-map build/consumer/conflict-link.map --build-log build/logs/consumer-build.log --build-root build --output build/evidence
       - name: Preserve source-bound evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: reader-conflict-actions-${{ runner.os }}-${{ github.sha }}
+          name: reader-conflict-actions-${{ runner.os }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             build/evidence/evidence.json
             build/logs/
             build/consumer/conflict-link.map
+            build/consumer/conflict-consumer${{ runner.os == 'Windows' && '.exe' || '' }}
+            build/consumer/conflict-c-consumer${{ runner.os == 'Windows' && '.exe' || '' }}
             build/conflict-stage/
           if-no-files-found: error
   summary:
     name: strict same-source summary
     needs: conflict-actions
     runs-on: ubuntu-22.04
+    timeout-minutes: 15
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
         with:
-          pattern: reader-conflict-actions-*-${{ github.sha }}
-          path: evidence
-      - name: Require identical source and check sets on every platform
-        run: |
-          python3 - <<'PY'
-          import json, os, pathlib
-          files = sorted(pathlib.Path('evidence').rglob('evidence.json'))
-          assert len(files) == 3, files
-          values = [json.loads(f.read_text(encoding='utf-8')) for f in files]
-          assert {v['sha'] for v in values} == {os.environ['GITHUB_SHA']}
-          assert len({tuple(v['checks']) for v in values}) == 1 and len(values[0]['checks']) == 29
-          assert {v['os'] for v in values} == {'Linux', 'Windows', 'Darwin'}
-          assert not any(v['local_run'] for v in values)
-          summary = {'sha': values[0]['sha'], 'platforms': sorted(v['os'] for v in values), 'checks': values[0]['checks']}
-          pathlib.Path('summary.json').write_text(json.dumps(summary, indent=2), encoding='utf-8')
-          print(json.dumps(summary, indent=2))
-          PY
+          fetch-depth: 0
+      - name: Source, protected tree and allowed path guards
+        run: bash tests/reader_explicit_conflict_actions/source_guard.sh
+      - name: Strict evidence rejection regressions
+        run: python3 tests/reader_explicit_conflict_actions/check_strict_summary.py
+      - name: Authenticate upstream jobs ZIPs and actual installed consumers
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_explicit_conflict_actions/strict_summary.py
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: reader-conflict-actions-summary-${{ github.sha }}
-          path: summary.json
+          name: reader-conflict-actions-summary-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: strict-evidence/
+          if-no-files-found: error

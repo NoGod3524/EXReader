@@ -9,6 +9,7 @@ import platform
 import sqlite3
 import subprocess
 import sys
+from evidence_contract import EXPECTED_CHECKS, package_sha256, required_assets
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'reader_revisions'))
 from check_protocol import sqlite_provider
 
@@ -28,6 +29,7 @@ def main():
         p.add_argument('--' + name, type=Path, required=True)
     for name in ('link-map', 'build-log'):
         p.add_argument('--' + name, type=Path)
+    p.add_argument('--build-root', type=Path, required=True)
     p.add_argument('--local-run', action='store_true', help='development run on a machine that is not GitHub Actions; not acceptance evidence')
     a = p.parse_args()
     sha = os.environ.get('GITHUB_SHA', '')
@@ -463,7 +465,64 @@ def main():
     forbidden = [p.name for p in root.iterdir() if p.suffix in ('.db', '.sdk', '.epub', '.pdf')]
     assert not forbidden
     record('no_sdk_database_notes_or_original_book_files_are_created_or_modified')
-    evidence = {'sha': sha, 'os': platform.system(), 'local_run': a.local_run, 'sqlite_provider': provider, 'checks': checks}
+
+    # Keep the original 29 named checks; extend the gaps identified in T02.
+    DA, _, dk, _, _, _ = fork_group('retry-fields')
+    c0 = counts(DA)
+    stable = '%032x' % 0xface
+    done = run('resolve', DA, target='group', gk=TAG, gid=dk, op=PUT, name='original fields',
+               retry_name='changed fields', rid=stable, rounds=2)
+    assert done['resolve']['status'] == OK and done['resolve']['created'] == 1
+    assert done['retry']['status'] == REVISION and done['retry']['revision_code'] == 7
+    assert done['retry']['committed'] == 0 and counts(DA) == (c0[0] + 1, c0[1] + 1)
+    assert group_name(DA, dk) == [('original fields', 0)]
+    assert json.loads(wire_of(DA, stable))['payload'] == {'name': 'original fields'}
+    record('same_snapshot_stable_id_with_changed_fields_is_collision_without_duplicate_history_or_outbox')
+
+    # The snapshot owns its copied view after close and can be freed on another worker.
+    LA, _, lk, _, _, _ = fork_group('lifetime')
+    c0, h0 = counts(LA), history(LA)
+    done = run('lifetime', LA, target='group', gk=TAG, gid=lk)
+    assert done['lifetime'] == {'close': OK, 'stable': True, 'freed': True}
+    assert counts(LA) == c0 and history(LA) == h0
+    record('snapshot_view_outlives_owner_close_and_is_released_on_another_worker')
+
+    # A membership restore cannot implicitly revive either referenced dependency.
+    mh = prepared(run('prepare', MA, target='membership', gk=TAG, gid=mg['key'], book=BOOK))['heads'][0]['id']
+    md2 = run('local-member', MA, op=DELETE, heads=mh, gk=TAG, gid=mg['key'], book=BOOK)
+    gd2 = run('local-group', MA, op=DELETE, heads=mg['id'], gk=TAG, gid=mg['key'], name='-')
+    bd2 = run('local-book', MA, op=DELETE, heads=mb['id'], book=BOOK, title='-', length=123)
+    assert md2['status'] == gd2['status'] == bd2['status'] == 0
+    stable = '%032x' % 0xbeef
+    for restored in (None, 'group', 'book'):
+        if restored == 'group':
+            assert run('resolve', MA, target='group', gk=TAG, gid=mg['key'], op=RESTORE, name='G')['resolve']['status'] == OK
+        elif restored == 'book':
+            assert run('resolve', MA, target='book', book=BOOK, op=RESTORE, title='B', author='')['resolve']['status'] == OK
+        c0, h0 = counts(MA), history(MA)
+        done = run('resolve', MA, target='membership', gk=TAG, gid=mg['key'], book=BOOK, op=RESTORE, rid=stable)
+        if restored != 'book':
+            assert done['resolve']['status'] == REVISION and done['resolve']['committed'] == 0
+            assert counts(MA) == c0 and history(MA) == h0 and stable not in h0
+        else:
+            assert done['resolve']['status'] == OK and done['resolve']['created'] == 1
+            assert counts(MA) == (c0[0] + 1, c0[1] + 1)
+    record('membership_restore_waits_for_explicit_group_and_book_restores_without_partial_writes')
+    assert checks == EXPECTED_CHECKS
+    runner_os = os.environ['RUNNER_OS']
+    build_root = a.build_root.resolve()
+    assert consumer == build_root / ('consumer/conflict-consumer' + ('.exe' if runner_os == 'Windows' else ''))
+    assert a.c_consumer.resolve() == build_root / ('consumer/conflict-c-consumer' + ('.exe' if runner_os == 'Windows' else ''))
+    assets = []
+    for path, role in required_assets(runner_os).items():
+        raw = (build_root / path).read_bytes()
+        assert raw
+        assets.append({'path': path, 'role': role, 'bytes': len(raw), 'sha256': hashlib.sha256(raw).hexdigest()})
+    evidence = {'accepted': True, 'sha': sha, 'os': platform.system(), 'runner_os': runner_os,
+                'run_id': int(os.environ['GITHUB_RUN_ID']), 'run_attempt': int(os.environ['GITHUB_RUN_ATTEMPT']),
+                'job': os.environ['GITHUB_JOB'], 'matrix_os': os.environ['MATRIX_OS'],
+                'local_run': a.local_run, 'sqlite_provider': provider, 'checks': checks,
+                'assets': assets, 'installed_package_sha256': package_sha256(assets)}
     (root / 'evidence.json').write_text(json.dumps(evidence, ensure_ascii=False, indent=2), encoding='utf-8')
     print(json.dumps({'complete': True, 'checks': len(checks)}))
 

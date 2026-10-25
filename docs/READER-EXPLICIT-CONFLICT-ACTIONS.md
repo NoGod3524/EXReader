@@ -89,3 +89,46 @@ Covered: real two-end concurrency, late parent, tombstone then put/explicit
 restore, 32/33 heads, foreign revision after prepare, retry, cancellation and
 native transaction failure (outbox trigger) with history and schema preserved
 and no SDK files. Not covered: UI, SDK verification, simulators/devices, audio.
+
+## T02 targeted review (2026-10-25)
+
+The review starts at `37fdc830d75eee8590120d52d4d881102e0d9dc4` on
+`codex/dot-conflict-actions-review`. The original tested source is
+`be093a95d5eb6beceb23ce5ba76cac3a79610555`; its delivered HEAD differs only
+in `docs/validation/reader-explicit-conflict-actions.json`. GitHub API review
+confirmed run `40140153887`, attempt 1, all three native consumer jobs and
+the original summary completed successfully. Those historical results remain
+attributed to that source, not to this review's changes.
+
+The implementation was followed through the installed C/C++ consumers,
+`prepare`/`resolve`/`close`, public revisions/commands/metadata contracts, and
+the native `reader_revision_local_project` transaction. No conflict module
+source change was justified: complete observed parents reach the transaction;
+exact retained retries precede the head comparison; new commands compare
+current heads inside the transaction; dependency activation failures roll
+back history, projection and outbox. Reading anchors remain display-only.
+
+The confirmed defect was the original summary's evidence trust boundary:
+matching JSON SHA, platform and check arrays did not authenticate actual
+upstream jobs, run attempt, ZIP identity or the executed consumer binaries.
+This review replaces that summary with API-authenticated completed/success
+jobs, source/run/attempt-specific unique artifact names, nonexpired API
+ID/size/digest checks, Actions-only ZIP SHA/size recomputation, duplicate ZIP
+member/report and duplicate JSON-key rejection, and hashes of the actual
+installed C/C++ executables and installed package files. Downloaded ZIPs are
+not extracted or executed. The installed package SHA hashes its sorted
+path/role/byte/SHA manifest. Every platform and the summary enforce the review
+base, frozen SDK and unchanged product provider/schema paths.
+
+All original 29 named behavior checks are retained. Three targeted regressions
+add changed-field collision on the same snapshot/stable ID, snapshot view
+lifetime after owner close with cross-worker release, and membership restore
+refusal until both the group and book have been explicitly restored. The
+strict verifier has executable rejection fixtures; these test verifier
+behavior, not substitute platform acceptance. New-source acceptance is pending
+until the exact source has completed all three Actions jobs and strict summary.
+
+Unchanged scope gaps: no production-host UI integration, SDK original-source
+verification, UI desktop controls, simulators/physical devices, accessibility,
+performance grant, audio, or durable cross-process retry intent. Native
+Windows/Linux/macOS command-line consumers are not UI/device acceptance.
