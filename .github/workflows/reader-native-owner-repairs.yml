@@ -1,0 +1,151 @@
+name: Native owner repairs actual Windows and GTK regressions
+on:
+  push:
+    branches: [codex/reader-native-owner-repairs]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: New explicit changed-owner guard and refusal controls
+        run: |
+          python -m compileall -q tests/reader_native_owner_repairs
+          if ($LASTEXITCODE) { throw 'syntax failed' }
+          python tests/reader_native_owner_repairs/guard.py
+          if ($LASTEXITCODE) { throw 'explicit owner policy failed' }
+      - name: Complete unchanged installed host owner bulk compact and real Mac packet suites
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python tests/reader_windows_raw3/host_build.py
+          if ($LASTEXITCODE) { throw 'original full Windows host suite failed' }
+      - name: Build public SDK state reader and run actual native owner regressions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $sdk = Join-Path $PWD 'build/windows-raw3-host/sdk-stage'
+          $raw = Join-Path $PWD 'build/windows-raw3-host/raw-stage'
+          $product = Join-Path $PWD 'build/windows-raw3-host/product-stage'
+          cmake -S tests/reader_native_owner_repairs -B build/native-owner-public -G Ninja -DCMAKE_BUILD_TYPE=Release "-DEXR_SDK=$sdk" "-DCMAKE_PREFIX_PATH=$raw;$product;$sdk"
+          if ($LASTEXITCODE) { throw 'public SDK reader configure failed' }
+          cmake --build build/native-owner-public --parallel 4 --verbose
+          if ($LASTEXITCODE) { throw 'public SDK reader build failed' }
+          python tests/reader_native_owner_repairs/windows.py
+          if ($LASTEXITCODE) { throw 'native Windows owner regressions failed' }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-installed-raw3-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/windows-raw3-host/
+            build/native-owner-preflight/
+            build/native-owner-public/
+            build/native-owner-reuse/
+            build/native-owner-windows/
+          include-hidden-files: true
+          if-no-files-found: error
+  gtk:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Explicit new changed-owner guard and Actions-only syntax
+        run: |
+          python3 -m compileall -q tests/reader_native_owner_repairs
+          python3 tests/reader_native_owner_repairs/guard.py
+      - name: Install real GTK display accessibility TLS and Secret Service dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils x11-xserver-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11 ninja-build
+      - name: Complete unchanged raw and legacy owner recovery network and exact retained packet suites
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_gtk_raw3/run.py --mode full
+      - name: Full original compact45 UI and original D09 observations on explicit new owner source
+        run: |
+          python3 tests/reader_native_owner_repairs/gtk.py --prepare
+          python3 tests/reader_gtk_compact/make_inputs.py build/gtk-raw3/raw-ui-fixtures
+          xvfb-run -a -s '-screen 0 1440x1200x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/tests/reader_a11y_gtk"
+            openbox >build/gtk-raw3/repair-openbox.log 2>&1 & wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_gtk_compact/check_ui.py --payload build/gtk-raw3/package/EXReader-Linux --fixtures build/gtk-raw3/raw-ui-fixtures --output build/gtk-raw3/raw-ui
+          '
+          for config in normal scale2 dark large; do
+            scale=1; font=11; theme=Adwaita
+            case "$config" in scale2) scale=2;; dark) theme=Adwaita-dark;; large) theme=HighContrast; font=20;; esac
+            configdir="$RUNNER_TEMP/native-owner-$config"; mkdir -p "$configdir/gtk-3.0"
+            printf '[Settings]\ngtk-theme-name=%s\ngtk-font-name=Sans %s\ngtk-xft-dpi=98304\n' "$theme" "$font" > "$configdir/gtk-3.0/settings.ini"
+            export XDG_CONFIG_HOME="$configdir" GDK_SCALE="$scale" GDK_DPI_SCALE=1 GTK_THEME="$theme" GTK_A11Y=atspi
+            unset NO_AT_BRIDGE || true
+            xvfb-run -a -s '-screen 0 2560x1920x24 -dpi 96' dbus-run-session -- bash -euc '
+              openbox > "build/native-owner-reuse/d09/$1-openbox.log" 2>&1 & wm=$!
+              trap "kill $wm || true" EXIT
+              for ready in $(seq 1 50); do
+                if xprop -root _NET_SUPPORTING_WM_CHECK | grep -q "window id # 0x"; then break; fi
+                sleep .1
+              done
+              xprop -root _NET_SUPPORTING_WM_CHECK | grep -q "window id # 0x"
+              gsettings set org.gnome.desktop.interface toolkit-accessibility true
+              gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+              /usr/bin/python3 build/native-owner-reuse/d09/audit.py --payload build/gtk-raw3/package/EXReader-Linux --output "build/native-owner-d09-$1" --mode ON
+            ' bash "$config"
+          done
+      - name: Native keyboard and native menu records focus on both selector profiles
+        run: |
+          export GDK_SCALE=1 GDK_DPI_SCALE=1 GTK_THEME=Adwaita GTK_A11Y=atspi
+          unset XDG_CONFIG_HOME NO_AT_BRIDGE || true
+          for profile in legacy raw; do
+            xvfb-run -a -s '-screen 0 1440x1200x24' dbus-run-session -- bash -euc '
+              openbox > "build/native-owner-reuse/$1-focus-openbox.log" 2>&1 & wm=$!
+              trap "kill $wm || true" EXIT
+              gsettings set org.gnome.desktop.interface toolkit-accessibility true
+              gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+              /usr/bin/python3 tests/reader_native_owner_repairs/gtk.py --profile "$1"
+            ' bash "$profile"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-owner-gtk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/gtk-raw3/
+            build/native-owner-*/
+          include-hidden-files: true
+          if-no-files-found: error
+  authenticate:
+    needs: [windows, gtk]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate actual source jobs original ZIP programs and complete reports
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_native_owner_repairs/strict.py --run "$GITHUB_RUN_ID" --source "$GITHUB_SHA"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-owner-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/windows-owner-authentication/*.json
+            build/native-owner-authentication/*.json
+          if-no-files-found: warn

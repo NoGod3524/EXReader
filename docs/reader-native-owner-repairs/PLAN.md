@@ -33,3 +33,39 @@ describe their new source policy explicitly; do not spoof old guards or event
 identities. Actual binaries, original producer ZIPs, reports, expiry, source,
 run/attempt and negative controls must be authenticated. At most three full
 root rounds; preserve every failed or missing scope.
+
+## New regression entry
+
+`reader-native-owner-repairs.yml` is the explicit changed-owner entry. The new
+source guard permits only the eight enumerated owner paths and this package's
+tests/workflow/docs relative to 96270a2b; all other existing source and test
+bytes remain frozen. It never executes or impersonates a sealed old guard.
+
+The Windows job runs the unchanged complete `host_build.py`, including both
+selector profiles, compact22/bulk21, original owner suite and process kills,
+actual native account Mac receive and independent all11 public SDK readback.
+The added harness checks native SendInput modal focus in reading/shelf views,
+actual default/small work-area bounds, real received selections and the
+original Mac NULL wire in two processes. The private review build adds six
+read-only queries for actual frame range, EPUB part and selection endpoints;
+the production executable has no new message handlers. A separate installed
+public SDK consumer snapshots SDK notes/progress and read-only product rows.
+
+The GTK job preserves unchanged `reader_gtk_raw3/run.py --mode full` business
+assertions (raw/legacy owners, real kill boundaries, Mac11 and NULL HTTPS
+receives), original raw compact45 and D09's twenty observations across its
+four environments. D09 changes only its explicitly declared target identity,
+with exact reverse projection. Both selector profiles exercise real keyboard
+and real menu records entry, Tab/reverse-Tab, dismissal and reopen.
+
+The strict job authenticates same-attempt producer state and original ZIP
+metadata, expiry, byte count and SHA-256, then recomputes member inventories,
+actual program and report identities. The full original Windows judge's
+business body remains unchanged; only its run entry and added owner proof are
+projected and reversed. The GTK original owner and compact judges' exact AST
+bodies execute unchanged. The new native judge includes rejection controls.
+
+The separate original GTK OFF35 and Windows OFF F3 atomic13 suites are not
+part of this new entry and are explicitly recorded as not rerun. This entry
+does not grant full product, six-platform, screen reader, DPI or contrast
+acceptance. No cloud round has completed yet.
