@@ -103,6 +103,8 @@ jobs:
           probe_candidate=build/s13/consumer-candidate/bin/reader-next-s13-probe
           if [ -f "$probe_base.exe" ]; then probe_base="$probe_base.exe"; fi
           if [ -f "$probe_candidate.exe" ]; then probe_candidate="$probe_candidate.exe"; fi
+          if [ ! -f "$probe_base" ]; then probe_base="$(find build/s13/consumer-base -maxdepth 3 -type f -name 'reader-next-s13-probe*' | head -1)"; fi
+          if [ ! -f "$probe_candidate" ]; then probe_candidate="$(find build/s13/consumer-candidate -maxdepth 3 -type f -name 'reader-next-s13-probe*' | head -1)"; fi
           printf '%s\n' "$probe_base" "$probe_candidate" > build/s13/logs/probes.txt
           sdk_library=build/s13/sdk-candidate/lib/libexreader.so
           if [ -f build/s13/sdk-candidate/bin/exreader.dll ]; then sdk_library=build/s13/sdk-candidate/bin/exreader.dll; fi
@@ -117,6 +119,8 @@ jobs:
           probe_base=build/s13/consumer-base/bin/reader-next-s13-probe
           if [ -f "$probe_candidate.exe" ]; then probe_candidate="$probe_candidate.exe"; fi
           if [ -f "$probe_base.exe" ]; then probe_base="$probe_base.exe"; fi
+          if [ ! -f "$probe_base" ]; then probe_base="$(find build/s13/consumer-base -maxdepth 3 -type f -name 'reader-next-s13-probe*' | head -1)"; fi
+          if [ ! -f "$probe_candidate" ]; then probe_candidate="$(find build/s13/consumer-candidate -maxdepth 3 -type f -name 'reader-next-s13-probe*' | head -1)"; fi
           python tests/reader_next_s13/run.py run-real --real tests/reader_next_s13/real.json \
             --inputs build/s13/inputs --base "$probe_base" --candidate "$probe_candidate" \
             --out build/s13/reports/real --databases build/s13/databases
