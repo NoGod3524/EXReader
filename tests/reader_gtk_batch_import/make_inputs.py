@@ -14,7 +14,9 @@ def main(output):
     root = output / 'folder 书籍'
     root.mkdir()
     for index in range(35):
-        (root / ('Book %02d 文字.txt' % index)).write_text(('Folder %02d book. Native reading stays usable.\n' % index) * 12, encoding='utf-8')
+        # The accepted original spans pages for the post-import NEXT/PREVIOUS
+        # check; PREVIOUS on its initial page is correctly rejected by the host.
+        (root / ('Book %02d 文字.txt' % index)).write_text(('Folder %02d book. Native reading stays usable.\n' % index) * (120 if index == 0 else 12), encoding='utf-8')
     shutil.copyfile(root / 'Book 00 文字.txt', root / 'Exact duplicate.txt')
     (root / 'Broken.epub').write_bytes(b'not an EPUB archive')
     (root / 'ignored.bin').write_bytes(b'unsupported')
