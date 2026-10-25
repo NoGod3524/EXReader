@@ -8,7 +8,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-BASE = '090268310347428c58801ed26b28466705700e0a'
+from source_paths import COMMON_BASE as BASE, CALLER_PIN_PATHS
 COMPOSITION_PREP = 'b5e49d1753a6b4b88811b03fa904fe9447865247'
 COMMON_PRODUCTION = '49b2a7c86173181f8f79a760315ddb8ca2312bd1'
 SEALED_GTK = '37e592375e365a510293c41b8716e7917a682a7a'
@@ -29,7 +29,8 @@ def main():
         subprocess.run(['git', 'merge-base', '--is-ancestor', parent, source], check=True)
     allowed = {WORKFLOW, 'tests/reader_hosts_341/guard_gtk.py', 'tests/reader_hosts_341/aggregate_gtk.py',
                'docs/READER-GTK-341-COMMON-PREP.md'}
-    changed = git('diff', '--name-only', BASE, source).splitlines();assert set(changed) <= allowed, changed
+    changed = git('diff', '--name-only', BASE, source).splitlines();assert set(changed) <= allowed | CALLER_PIN_PATHS, changed
+    subprocess.run(['git', 'diff', '--exit-code', BASE, source, '--', 'apps', 'examples', 'extras', 'tools'], check=True)
     for path in PROTECTED + ['licenses']:
         assert git('rev-parse', source + ':' + path) == git('rev-parse', SDK + ':' + path), path
     assert git('rev-parse', source + ':apps/reader/store/001_catalog.sql') == git('rev-parse', ORIGINAL + ':apps/reader/store/001_catalog.sql')
