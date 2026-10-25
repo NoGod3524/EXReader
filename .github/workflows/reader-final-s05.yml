@@ -1,7 +1,7 @@
 name: Reader final S05 Apple mobile simulator distribution
 on:
   push:
-    branches: [codex/reader-fw-s05]
+    branches: [codex/reader-fw-s05-root-review]
     paths:
       - 'tests/reader_final_s05/**'
       - '.github/workflows/reader-final-s05.yml'
@@ -26,7 +26,7 @@ permissions:
   contents: read
   actions: read
 concurrency:
-  group: reader-final-s05
+  group: reader-final-s05-root-review
   cancel-in-progress: false
 env:
   S05_BRANCH: codex/reader-fw-s05-root-review
