@@ -5,12 +5,22 @@
   "full_rounds_used": 3,
   "full_rounds_limit": 3,
   "diagnostic_control_flow_fix": {
-    "accepted": false,
-    "status": "controlled protocol written and source reviewed; one lightweight Actions job pending",
+    "accepted": true,
+    "status": "six deterministic controlled cases passed in the single lightweight Actions job",
     "branch": "codex/reader-c02-close-protocol",
+    "source": "99d8735a3583be0e4dea258ee1f0ecb3bc0e9d79",
+    "run_id": 40245305085, "attempt": 1, "conclusion": "success",
+    "job_id": 121325493798,
+    "check_count": 6, "checks_passed": 6,
+    "artifact": {
+      "id": 12618407013, "bytes": 1056,
+      "sha256": "699d6cbbbe79226edf61ad29e464caaed8ce5382404309542199acd792ac31e6",
+      "expires_at": "2027-01-23T23:33:28Z"
+    },
     "scope": "defer independent observer join and diagnostic writes until original launch classification completes",
     "original_failure_semantics_changed": false,
     "performance_accepted": false,
+    "original_three_full_rounds_accepted": false,
     "fourth_full_round_started": false
   },
   "latest_run": {
