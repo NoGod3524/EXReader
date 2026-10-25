@@ -1,14 +1,142 @@
 {
   "accepted": false,
-  "sender_export_accepted": false,
+  "sender_export_accepted": true,
+  "inherited_130_accepted": true,
   "incoming_apple_status": "pending",
   "bidirectional_interoperability_accepted": false,
   "base": "1b3cfd1413fa5ebade31be6958f835f6de3b5290",
   "policy_source": "b1a7b7891cd394671842164a07a86c8e316dace3",
+  "source_sha": "b93b4a2f9ac24d7d0fc4d48c917dae11bec4baf7",
+  "scope": "API34 default x86_64 Android sender export, actual missing-parent completion, and inherited 130 checks",
   "expected_inherited_checks": 130,
   "expected_sender_and_graph_checks": 8,
-  "runs": [],
+  "checks": 138,
+  "packet_zip_root": [
+    "manifest.json",
+    "originals/",
+    "revisions/"
+  ],
+  "runs": [
+    {
+      "source_sha": "b93b4a2f9ac24d7d0fc4d48c917dae11bec4baf7",
+      "run_id": "40181402323",
+      "attempt": "1",
+      "sender_export_accepted": true,
+      "inherited_130_accepted": true,
+      "checks": 138,
+      "incoming_apple_status": "pending",
+      "bidirectional_interoperability_accepted": false,
+      "actual_sdk": "3.41.0",
+      "bundle": {
+        "id": 12594712144,
+        "name": "reader-android-record-bundle-40181402323-1",
+        "size_in_bytes": 16615,
+        "digest": "sha256:08ce264db1a6e6083e15ddd20a60f6f088b7d82afe24e4d44aa8681e6551cac3",
+        "expires_at": "2027-01-23T09:37:20Z"
+      },
+      "manifest_sha256": "7628affd6e5ec37e748c9d09c57d5f50090c4060bbdd080b9800b45930829bbf",
+      "originals": 4,
+      "revisions": 19,
+      "reading_records": 11,
+      "actual_sender": {
+        "platform": "android",
+        "source_sha": "b93b4a2f9ac24d7d0fc4d48c917dae11bec4baf7",
+        "run_id": "40181402323",
+        "attempt": "1",
+        "apk_sha256": "eea5de2867e147f0a3a9418c0bfbf2e574bdaa18226ffa02340ed94fb549476e",
+        "sdk_dso_sha256": "a345ab4c1def2e864a76b9e879da8a372e8821ad09b7991c8fe4e04626b2e8ac",
+        "exr_version": "3.41.0",
+        "parser_version": "exreader-sdk-3.41.0",
+        "sdk_loaded_path": "/data/app/~~B1yIRo_3nu0aSZFnb-3Gzw==/org.exreader.host-eCWgBi4d8tr2U9dVpE7uUw==/base.apk!/lib/x86_64/libexreader.so",
+        "owner_handle": "1",
+        "native_thread": "128492123438320",
+        "java_thread": "exr-host-worker",
+        "revision_provider": "/data/app/~~B1yIRo_3nu0aSZFnb-3Gzw==/org.exreader.host-eCWgBi4d8tr2U9dVpE7uUw==/base.apk!/lib/x86_64/libexreader_product.so",
+        "command_provider": "/data/app/~~B1yIRo_3nu0aSZFnb-3Gzw==/org.exreader.host-eCWgBi4d8tr2U9dVpE7uUw==/base.apk!/lib/x86_64/libexreader_product.so"
+      },
+      "inherited_summary": {
+        "source_sha": "b93b4a2f9ac24d7d0fc4d48c917dae11bec4baf7",
+        "run_id": "40181402323",
+        "attempt": "1",
+        "accepted": true,
+        "scope": "API34 default x86_64 Android SDK3.41 actual page theme plus 120 inherited business checks",
+        "checks": 130,
+        "producer_job": 121133053868,
+        "artifact": {
+          "id": 12594881802,
+          "name": "reader-android-page-theme-40181402323-1",
+          "size_in_bytes": 133515330,
+          "digest": "sha256:73c69ed40adaf122d4cc5e8adc693ead2147befd92c0c0d98a8dd3aac3e61af0",
+          "expires_at": "2027-01-23T09:37:20Z"
+        },
+        "apk_sha256": "eea5de2867e147f0a3a9418c0bfbf2e574bdaa18226ffa02340ed94fb549476e",
+        "reports": [
+          {
+            "suite": "host-session-android",
+            "checks": 16,
+            "report_sha256": "ae309570d984da4feebb6d8dcd15dc5c69ab145e0d87dd77ea354022c3b2842a"
+          },
+          {
+            "suite": "android-search",
+            "checks": 15,
+            "report_sha256": "325d736f6103cebd3866be4d8e3dfcc7bd6d32d177a4288bb0ea4155531249e3"
+          },
+          {
+            "suite": "android-navigation",
+            "checks": 18,
+            "report_sha256": "e30c02ea821b40420c5771bfd4e57cf49fa34f3285f2acfa550e1fd6280878ac"
+          },
+          {
+            "suite": "android-reading",
+            "checks": 16,
+            "report_sha256": "577c79f1766606e32d07766dc8c0aed85f8a2fb85cfaae0cda1a874818efa52b"
+          },
+          {
+            "suite": "android-preferences",
+            "checks": 17,
+            "report_sha256": "b5b6bf15f528ea5649c67acea78a3816e79e91c70945f4e6aef76309bb23e130"
+          },
+          {
+            "suite": "android-cbz-reading",
+            "checks": 10,
+            "report_sha256": "d47c8fc67e03f7ff1bb6929943097be661dbfc211fa80eeb34193cc8c172f478"
+          },
+          {
+            "suite": "android-fixed-pan",
+            "checks": 8,
+            "report_sha256": "1e62f33b7e2dfc37c3f333f48d01ede8e1c79fe7cc4586c1462f838380a4d75c"
+          },
+          {
+            "suite": "android-host-import",
+            "checks": 20,
+            "report_sha256": "8a49b4ca2c35b644f48ed01372075b760dd0c98684e87bfea893755b49596b8a"
+          },
+          {
+            "suite": "android-page-theme",
+            "checks": 10,
+            "report_sha256": "0230d916141cd9e42e859cfbd97a4f341112a7a12d5bff5e6ba91d57c4265afd"
+          }
+        ],
+        "physical_device": false,
+        "third_party_cloud_provider": false,
+        "complete_product": false,
+        "performance_accepted": false
+      },
+      "physical_device": false,
+      "complete_product": false,
+      "producer_job": 121133053868,
+      "strict_summary_job": 121137003411,
+      "summary_artifact": {
+        "id": 12593694660,
+        "name": "reader-android-record-interop-summary-40181402323-1",
+        "size_in_bytes": 1658,
+        "digest": "sha256:db82485a4f3a1055a33fbf94e9ffa48a19361b43e13bfc7de62f0847ec9c133a",
+        "expires_at": "2027-01-23T09:37:20Z"
+      }
+    }
+  ],
   "physical_device": false,
+  "performance_accepted": false,
   "sdk340_in_place_upgrade_downgrade_accepted": false,
   "complete_product": false
 }
