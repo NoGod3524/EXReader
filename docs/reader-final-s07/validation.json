@@ -1,0 +1,57 @@
+{
+  "package": "S07 raw synchronization multi-peer faults and idempotency",
+  "state": "not_run",
+  "accepted": false,
+  "adopted": false,
+  "start": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+  "branch": "codex/reader-fw-s07",
+  "workflow": ".github/workflows/reader-final-s07.yml",
+  "source_sha": null,
+  "docs_sha": null,
+  "run_id": null,
+  "attempt": null,
+  "jobs": [],
+  "artifacts": [],
+  "checks": [
+    "real_capture_graph_and_original_identity_bootstrap",
+    "network_reset_before_commit_then_explicit_retry_publishes_exactly_once",
+    "response_lost_newer_head_then_old_request_retry_keeps_head_and_outbox",
+    "out_of_order_parent_graph_child_before_parent_then_complete",
+    "duplicate_wire_receive_is_idempotent_for_both_receivers",
+    "unknown_anchor_version_refused_over_network_and_direct_receive",
+    "legacy_max2_consumers_coexist_without_corruption",
+    "exact_wire_ids_parents_and_original_hash_after_cross_process_reopen"
+  ],
+  "check_results": [],
+  "preconditions": {
+    "frozen_capture_core": "not_run",
+    "frozen_raw7_two_peer_tls": "not_run",
+    "frozen_g07_original_session_20": "not_run",
+    "frozen_g07_fault_boundaries_21": "not_run"
+  },
+  "original_wire_identity": {
+    "wire_count": 15,
+    "pdf_bytes": 8845,
+    "pdf_sha256": "5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc",
+    "measured": false
+  },
+  "gaps": [
+    "real_third_party_webdav_service_and_real_account",
+    "six_target_sdk_interop_and_host_ui",
+    "concurrent_multi_writer_on_one_store",
+    "sqlite_page_torn_write_under_power_loss",
+    "server_side_retry_and_backoff_policy",
+    "android_apple_windows_gtk_host_projection"
+  ],
+  "grants": {
+    "three_peer_raw_sync_faults": false,
+    "raw7_module_unchanged": false,
+    "real_host_ui": false,
+    "six_platform_interop": false,
+    "real_third_party_service": false
+  },
+  "failures": [],
+  "actual_hosts": false,
+  "physical_device": false,
+  "complete_product": false
+}
