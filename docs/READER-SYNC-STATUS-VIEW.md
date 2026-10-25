@@ -129,3 +129,5 @@ run/attempt 内逐个下载三份归档，重算 SHA-256 与 API digest 比对�
 
 首轮 root source `3178736b4c4f30d54faffc759da55dddec0ad86b` / run `40154693490`：Linux、Windows通过；macOS实际四线程消费者统计 `ok=98/failed=0` 而拒绝，strict未执行。根因是探针多个线程无同步自增同一组普通整数，丢失成功计数；现每线程独占计数，join后在主线程归并，原4×25=100的严格断言不改，模块生产实现仍不变。失败运行与工件保留。
 
+线程统计修正 source `4ba603437c0f4f7bedd166e09891bbeb14789820` / run `40154953728` 三平台22项及严格汇总全通过。复核原报告仍有 `metadata_wait_positive_covered=false`，原检查只比较零值。现用真实独立session播种缺少book metadata的progress删除修订，跑完整256分片，必须观察到正数pending-metadata、视图精确镜像并保留未确认outbox；strict要求该正例覆盖标记。模块实现不变，这一补齐版本仍需新同源整轮。
+
