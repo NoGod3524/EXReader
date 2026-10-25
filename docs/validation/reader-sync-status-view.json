@@ -1,10 +1,10 @@
 {
   "schema": "reader-sync-status-view-acceptance-v1",
-  "accepted": false,
-  "state": "root_review_strict_producer_and_zip_binding_pending_actions",
+  "accepted": true,
+  "state": "root_review_closed_awaiting_common_source_integration",
   "branch": "codex/reader-sync-status-review",
-  "source_sha": null,
-  "run_id": null,
+  "source_sha": "b6eaf3898a59f41d1cd7453f30107e6cba3f1e27",
+  "run_id": 40157153398,
   "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
   "complete_product": false,
   "previous_authenticated_delivery": {
@@ -241,5 +241,99 @@
       "positive pending-metadata path has no independent fixture; only the per-field mirror against reader_session_snapshot is covered",
       "Android and iOS native hosts, audio/TTS, performance and accessibility are separate packages"
     ]
-  }
+  },
+  "attempt": 1,
+  "workflow_conclusion": "success",
+  "checks_per_platform": 22,
+  "protocol_negative_cases_per_platform": 17,
+  "metadata_wait_positive_covered": true,
+  "strict_job": 121061471183,
+  "host_ui_accepted": false,
+  "jobs": [
+    {
+      "databaseId": 121060864521,
+      "name": "installed read-only status view (windows-2022)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "databaseId": 121060864635,
+      "name": "installed read-only status view (macos-14)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "databaseId": 121060864683,
+      "name": "installed read-only status view (ubuntu-22.04)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "databaseId": 121061471183,
+      "name": "strict same-run artifact aggregation",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12585456445,
+      "name": "reader-sync-status-view-Linux-40157153398-1",
+      "size_in_bytes": 2830269,
+      "digest": "sha256:aabf3ab090c17a7b3e358adc701e66f4a6f78ba6a8488eee24dfa60d4099462a",
+      "expires_at": "2027-01-23T03:09:15Z",
+      "expired": false
+    },
+    {
+      "id": 12585206765,
+      "name": "reader-sync-status-view-aggregate-40157153398-1",
+      "size_in_bytes": 7754974,
+      "digest": "sha256:e88cbfc5d8dbdaab60e9a62adc3826ddef7fa8d6564cebcf809a8b611a73c52b",
+      "expires_at": "2027-01-23T03:09:15Z",
+      "expired": false
+    },
+    {
+      "id": 12585206586,
+      "name": "reader-sync-status-view-Windows-40157153398-1",
+      "size_in_bytes": 2514176,
+      "digest": "sha256:a860fb13fc423fecfd0d3c73217d38a4ef632c1ad43b92d3b359cbce65341215",
+      "expires_at": "2027-01-23T03:09:15Z",
+      "expired": false
+    },
+    {
+      "id": 12584926514,
+      "name": "reader-sync-status-view-macOS-40157153398-1",
+      "size_in_bytes": 2436899,
+      "digest": "sha256:14b8818540afabb9ed95eca3900ff332e74dcd940e1c8525ac4fb4eec50c11f0",
+      "expires_at": "2027-01-23T03:09:15Z",
+      "expired": false
+    }
+  ],
+  "earlier_root_runs": [
+    {
+      "source": "3178736b4c4f30d54faffc759da55dddec0ad86b",
+      "run": 40154693490,
+      "conclusion": "failure",
+      "reason": "Unsynchronized probe success counters lost increments on macOS"
+    },
+    {
+      "source": "4ba603437c0f4f7bedd166e09891bbeb14789820",
+      "run": 40154953728,
+      "conclusion": "success",
+      "reason": "Thread statistics corrected; metadata comparison still zero only"
+    },
+    {
+      "source": "7b70faf6c92c59896c7561409f7fe1017f1dccdc",
+      "run": 40156517005,
+      "conclusion": "failure",
+      "reason": "New progress tombstone fixture omitted explicit location kind"
+    },
+    {
+      "source": "63506780f95f3a8439f84858495de591330428a6",
+      "run": 40156837215,
+      "conclusion": "failure",
+      "reason": "Positive metadata observed, but new consumer revision handle was not opened before outbox capture"
+    }
+  ],
+  "evidence_head_note": "Only docs/READER-SYNC-STATUS-VIEW.md and docs/validation/reader-sync-status-view.json differ after tested source"
 }
