@@ -89,12 +89,12 @@
     {"source_sha":"d82f008c5596154a256f6b0aa988a939fdfc7e20","run_id":40153716101,"job_id":121050442774,"conclusion":"success","diagnostic_only":true,"accepted":false,"finding":"Exact original APK replay crash log: main-thread AssertionError panned real marker semantic node visible. No native crash. No acceptance granted.","artifact":{"id":12583890589,"bytes":34913,"sha256":"0426ecf220a5266d88dd619c5b19bd8ef49b952cd6e2117c7e56ff1c53c8c447","expires_at":"2027-01-23T02:14:47Z"}},
     {"source_sha":"fff32bac782bc48ec2963a14e23a854c906bab41","run_id":40155347245,"job_id":121055463655,"conclusion":"success","diagnostic_only":true,"accepted":false,"finding":"Exact viewport-failure ZIP read in Actions. crop0/90/180 selected exact BRA/TRA/TLA; crop270 selected B; viewport height changed1766 to1618 when selection toolbar appeared."}
   ],
-  "current_candidate":{"source_sha":"d509751501ac3d12b9a5bbb4b5388712a45be1e6","run_id":40155515246,"accepted":false,"scope":"public PDF viewport mapping plus selection-toolbar layout barrier; cropped rotations 0/90/180/270, Pan8 and retained92 full same-source round; result pending"},
-  "pending": "App-private public viewport mapping fix and original Pan8 plus retained92 full same-source cloud regression; current candidate remains unaccepted",
+  "current_candidate":{"source_sha":"b25975b45f021bdf1bd086088634cfc2a4b4d2d4","run_id":40156615296,"accepted":false,"scope":"shared overlay toolbar for all selection entries; explicit Select and real650ms longpress+drag across cropped rotations0/90/180/270; Pan8 and retained92 full same-source round; result pending"},
+  "pending": "Read the new shared-overlay candidate full round. No complete Pan phase or reopen accepted yet; after full success independently verify saved screenshots and 8 selection gesture frame sequences only in Actions.",
   "next_actions": [
-    "After restart, use Actions-only read-only diagnostic work to inspect artifact 12580498901 first-instrumentation.txt and available output files; verify exact ZIP id/bytes/digest/source before reading. Do not locally download or parse it.",
-    "Identify and fix the actual instrumentation/report-generation root cause. No Pan check is granted; the JSON decode failure alone does not establish an SDK or panning fault.",
-    "Run the full source after the unexecuted raw-report/log preservation change and any real root-cause fix; preserve original failed run/artifact and every old Host/Search/Nav/Reading/Prefs/CBZ assertion.",
+    "Original crash diagnosis completed only in Actions: public PDF source-space viewport mapping was missing in host, and main-thread probe assertion killed the process.",
+    "New b25975b4 candidate uses the public SDK viewport plus shared contextual overlay without resizing the reader, for explicit Select and real longpress. Preserve all old failed runs/artifacts and every retained assertion.",
+    "Read full same-source40156615296 result; fix actual failures without weakening exact marker or viewport-stability assertions.",
     "On actual success, require Pan8 (first7/reopen1) and unchanged 92 UI checks plus original SDK/transport results; only then open a separate proof diagnostic branch to verify original ZIP and independently decode saved screenshots.",
     "Never merge a *-proof branch or grant page colors/physical-device/TalkBack/performance/full-product scope."
   ],
@@ -104,10 +104,11 @@
   "talkback_speech_accepted": false,
   "performance_accepted": false,
   "complete_product": false,
-  "unexecuted_minimal_diagnostic_fix": {
+  "diagnostic_driver_preservation": {
     "path": "tests/reader_android_fixed_pan/run_ui.py",
     "change": "save raw report bytes and logcat before JSON parsing; print original instrumentation/raw report when decode fails; all acceptance assertions retained",
-    "tested": false,
-    "new_cloud_run_started": false
+    "tested": true,
+    "tested_run": 40154163799,
+    "raw_report_and_logcat_preserved": true
   }
 }
