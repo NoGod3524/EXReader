@@ -1,0 +1,190 @@
+# SPDX-License-Identifier: MIT
+name: Reader sync status view
+on:
+  push:
+    branches: [codex/reader-sync-status-view, codex/reader-sync-status-review]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+env:
+  FROZEN_START: f43baf9182d75907c0cb5d6f77048f27bca8c950
+  FROZEN_SDK: 9854061be331fe603a1822d9b2b36ee357154927
+jobs:
+  native:
+    name: installed read-only status view (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-14]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require the frozen start, unchanged SDK/schema and a whitelisted diff
+        run: |
+          set -o pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$FROZEN_START" HEAD
+          git diff --exit-code "$FROZEN_SDK" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code "$FROZEN_START" HEAD -- apps/reader/store/001_catalog.sql
+          git diff --exit-code "$FROZEN_START" HEAD -- extras/webdav apps/reader/session apps/reader/revisions apps/reader/sync
+          bad=0
+          while read -r path; do
+            [ -z "$path" ] && continue
+            case "$path" in
+              apps/reader/sync-status-view/*|tests/reader_sync_status_view/*) ;;
+              .github/workflows/reader-sync-status-view.yml) ;;
+              docs/READER-SYNC-STATUS-VIEW.md|docs/validation/reader-sync-status-view.json) ;;
+              *) echo "outside the J12 whitelist: $path"; bad=1 ;;
+            esac
+          done <<< "$(git diff --name-only "$FROZEN_START" HEAD)"
+          test "$bad" = 0
+      - name: Reject foreign producers and ambiguous ZIP payloads in Actions
+        run: |
+          python3 -m py_compile tests/reader_sync_status_view/aggregate.py
+          python3 tests/reader_sync_status_view/aggregate.py --protocol-selftest
+      - name: Install Linux native TLS XML and SHA dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config ninja-build
+      - name: Use Apple system native TLS XML and platform SHA with fixture-only OpenSSL CLI
+        if: runner.os == 'macOS'
+        run: |
+          brew install ninja pkg-config openssl@3
+          sdkroot=$(xcrun --sdk macosx --show-sdk-path)
+          mkdir -p build/apple-pkgconfig
+          version=$(/usr/bin/curl --version | awk 'NR==1 {print $2}')
+          cat > build/apple-pkgconfig/libcurl.pc <<EOF
+          prefix=$sdkroot/usr
+          Name: libcurl
+          Description: Apple SDK system libcurl
+          Version: $version
+          Libs: -L\${prefix}/lib -lcurl
+          Cflags:
+          EOF
+          echo "PKG_CONFIG_PATH=$PWD/build/apple-pkgconfig" >> "$GITHUB_ENV"
+          echo "EXR_SDK_PREFIX=$sdkroot/usr" >> "$GITHUB_ENV"
+          echo "CMAKE_PREFIX_PATH=$sdkroot/usr" >> "$GITHUB_ENV"
+          echo "PATH=$(brew --prefix openssl@3)/bin:$PATH" >> "$GITHUB_ENV"
+          /usr/bin/curl --version
+      - name: Enter Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install the unchanged product and transport dependencies
+        run: |
+          set -o pipefail
+          mkdir -p build/logs
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "WS=$ws" >> "$GITHUB_ENV"
+          cmake -S apps/reader/store/native -B build/product -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$ws/build/product-stage" 2>&1 | tee build/logs/product.log
+          cmake --build build/product 2>&1 | tee -a build/logs/product.log
+          ctest --test-dir build/product --output-on-failure --no-tests=error --timeout 180
+          cmake --install build/product 2>&1 | tee -a build/logs/product.log
+          cmake -S extras/webdav -B build/webdav -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$ws/build/webdav-stage" 2>&1 | tee build/logs/webdav.log
+          cmake --build build/webdav 2>&1 | tee -a build/logs/webdav.log
+          cmake --install build/webdav 2>&1 | tee -a build/logs/webdav.log
+          extra=""
+          if [ "$RUNNER_OS" = macOS ]; then extra=";$EXR_SDK_PREFIX"; fi
+          echo "CMAKE_PREFIX_PATH=$ws/build/product-stage;$ws/build/webdav-stage$extra" >> "$GITHUB_ENV"
+      - name: Build and install revisions, sync, session and the status view package
+        run: |
+          set -o pipefail
+          extra=""
+          if [ "$RUNNER_OS" = macOS ]; then extra=";$EXR_SDK_PREFIX"; fi
+          base="$WS/build/product-stage;$WS/build/webdav-stage$extra"
+          cmake -S apps/reader/revisions -B build/revisions -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DREADER_PRODUCT_PREFIX="$WS/build/product-stage" \
+            -DCMAKE_PREFIX_PATH="$base" \
+            -DCMAKE_INSTALL_PREFIX="$WS/build/revisions-stage" 2>&1 | tee build/logs/revisions.log
+          cmake --build build/revisions 2>&1 | tee -a build/logs/revisions.log
+          cmake --install build/revisions 2>&1 | tee -a build/logs/revisions.log
+          base="$base;$WS/build/revisions-stage"
+          cmake -S apps/reader/sync -B build/sync -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$base" \
+            -DCMAKE_INSTALL_PREFIX="$WS/build/sync-stage" 2>&1 | tee build/logs/sync.log
+          cmake --build build/sync 2>&1 | tee -a build/logs/sync.log
+          cmake --install build/sync 2>&1 | tee -a build/logs/sync.log
+          base="$base;$WS/build/sync-stage"
+          cmake -S apps/reader/session -B build/session -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$base" \
+            -DCMAKE_INSTALL_PREFIX="$WS/build/session-stage" 2>&1 | tee build/logs/session.log
+          cmake --build build/session 2>&1 | tee -a build/logs/session.log
+          cmake --install build/session 2>&1 | tee -a build/logs/session.log
+          base="$base;$WS/build/session-stage"
+          cmake -S apps/reader/sync-status-view -B build/status-view -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$base" \
+            -DCMAKE_INSTALL_PREFIX="$WS/build/status-view-stage" 2>&1 | tee build/logs/status-view.log
+          cmake --build build/status-view 2>&1 | tee -a build/logs/status-view.log
+          cmake --install build/status-view 2>&1 | tee -a build/logs/status-view.log
+          echo "CMAKE_PREFIX_PATH=$base;$WS/build/status-view-stage" >> "$GITHUB_ENV"
+      - name: Build the installed independent consumers
+        run: |
+          set -o pipefail
+          cmake -S tests/reader_revisions/consumer -B build/revision-consumer -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH" \
+            2>&1 | tee build/logs/revision-consumer.log
+          cmake --build build/revision-consumer 2>&1 | tee -a build/logs/revision-consumer.log
+          cmake -S tests/reader_sync_status_view/consumer -B build/status-view-consumer -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH" \
+            2>&1 | tee build/logs/status-view-consumer.log
+          cmake --build build/status-view-consumer --verbose 2>&1 | tee -a build/logs/status-view-consumer.log
+      - name: Actual native TLS status transitions, paging, lifetimes and storage invariance
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_sync_status_view/check_status_view.py \
+            --consumer "build/status-view-consumer/status-view-consumer$exe" \
+            --c-consumer "build/status-view-consumer/status-view-c-consumer$exe" \
+            --revision-consumer "build/revision-consumer/revision-consumer$exe" \
+            --output build/status-view-evidence
+      - name: Preserve source-bound evidence and installed packages without keys
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-sync-status-view-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/logs/
+            build/status-view-evidence/
+            build/status-view-stage/
+            build/status-view-consumer/status-view-consumer*
+            build/status-view-consumer/status-view-c-consumer*
+            build/revision-consumer/revision-consumer*
+            !build/**/certificates/*.key
+          if-no-files-found: error
+  aggregate:
+    name: strict same-run artifact aggregation
+    needs: native
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Recompute archive digests and re-verify every report identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 tests/reader_sync_status_view/aggregate.py \
+            --repository "$GITHUB_REPOSITORY" --run-id "$GITHUB_RUN_ID" \
+            --attempt "$GITHUB_RUN_ATTEMPT" --source "$GITHUB_SHA" --output build/aggregate
+          cat build/aggregate/aggregate.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-sync-status-view-aggregate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/aggregate/
+          if-no-files-found: error
