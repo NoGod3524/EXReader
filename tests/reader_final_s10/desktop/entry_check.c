@@ -146,21 +146,26 @@ int main(int argc, char **argv) {
     fprintf(report, "  \"drop_status\": %d,\n", (int)drop_status);
     fprintf(report, "  \"drop_status_name\": ");
     write_json_string(report, exr_drop_status_name(drop_status));
-    fprintf(report, ",\n  \"item_count\": %zu,\n  \"file_count\": %zu,\n  \"items\": [\n",
+    fprintf(report, ",\n  \"item_count\": %zu,\n  \"file_count\": %zu,\n  \"items\": [", report,
             info.item_count, info.file_count);
-    for (index = 0; request && index < info.item_count; index++) {
-      exr_drop_item item;
-      memset(&item, 0, sizeof(item));
-      item.struct_size = sizeof(item);
-      if (exr_drop_request_get_item(request, index, &item) != EXR_DROP_OK) continue;
-      fputs("    {\"index\": ", report);
-      fprintf(report, "%zu, \"status\": %d, \"status_name\": ", index, (int)item.status);
-      write_json_string(report, exr_drop_item_status_name(item.status));
-      fputs(", \"path\": ", report);
-      write_json_string(report, item.path);
-      fputs("},\n", report);
+    {
+      int first_item = 1;
+      for (index = 0; request && index < info.item_count; index++) {
+        exr_drop_item item;
+        memset(&item, 0, sizeof(item));
+        item.struct_size = sizeof(item);
+        if (exr_drop_request_get_item(request, index, &item) != EXR_DROP_OK) continue;
+        fputs(first_item ? "\n    " : ",\n    ", report);
+        first_item = 0;
+        fputs("{\"index\": ", report);
+        fprintf(report, "%zu, \"status\": %d, \"status_name\": ", index, (int)item.status);
+        write_json_string(report, exr_drop_item_status_name(item.status));
+        fputs(", \"path\": ", report);
+        write_json_string(report, item.path);
+        fputs("}", report);
+      }
     }
-    fputs("  ],\n  \"selected\": ", report);
+    fputs("\n  ],\n  \"selected\": ", report);
     write_json_string(report, selected);
     fprintf(report, ",\n  \"import_status\": %d,\n  \"book_id\": %lld,\n  \"created\": %d,\n",
             (int)import_status, (long long)result.book_id, result.created);

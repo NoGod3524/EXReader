@@ -360,7 +360,7 @@ def self_test():
             body = path.read_text(encoding='utf-8')
             if mutation['old'] not in body:
                 raise SystemExit('mutation anchor missing for ' + mutation['id'])
-            path.write_text(body.replace(mutation['old'], mutation['new'], 1), encoding='utf-8')
+            path.write_text(body.replace(mutation['old'], mutation['new']), encoding='utf-8')
             rows = run_checks(root)
             failed = sorted(row['id'] for row in rows if not row['passed'])
             expected = sorted(mutation['expect_fail'])

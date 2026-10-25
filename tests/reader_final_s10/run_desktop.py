@@ -66,7 +66,14 @@ def main():
                             capture_output=True, text=True, timeout=600)
     (output / 'entry.log').write_text(result.stdout + result.stderr)
     check('entry.exit-status', result.returncode == 0, 'returncode=' + str(result.returncode))
-    entry = json.loads(report_path.read_text()) if report_path.is_file() else {}
+    entry = {}
+    if report_path.is_file():
+        raw = report_path.read_text(encoding='utf-8', errors='replace')
+        (output / 'entry-report.raw.json').write_text(raw)
+        try:
+            entry = json.loads(raw)
+        except json.JSONDecodeError as error:
+            check('entry.report-parsed', False, str(error) + ': ' + raw[-400:])
     if not entry:
         check('entry.report-written', False, str(report_path))
 
