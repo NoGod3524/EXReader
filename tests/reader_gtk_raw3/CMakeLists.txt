@@ -32,4 +32,5 @@ target_link_libraries(gtk-raw3-owner PRIVATE exreader-linux-reading ${owner_link
   reader_catalog_sdk reader_catalog_sqlite PkgConfig::GLIB)
 target_compile_options(gtk-raw3-owner PRIVATE -Wall -Wextra -Werror)
 target_link_options(gtk-raw3-owner PRIVATE "-Wl,--wrap=reader_rc_apply"
-  "-Wl,--wrap=reader_rc_apply_raw_v3" "-Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/owner.map")
+  "-Wl,--wrap=reader_rc_apply_raw_v3" "-Wl,--wrap=reader_revisions_open_raw_v3"
+  "-Wl,--wrap=reader_revision_entities_page_raw_v3" "-Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/owner.map")

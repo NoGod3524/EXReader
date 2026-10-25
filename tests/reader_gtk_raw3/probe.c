@@ -3,6 +3,23 @@
 #include "../reader_gtk_record_compatibility/probe.c"
 #undef main
 
+/* Diagnostic-only wrappers preserve all arguments and return values. */
+reader_revision_status __real_reader_revisions_open_raw_v3(const char *,reader_revisions **,reader_revision_error *);
+reader_revision_status __wrap_reader_revisions_open_raw_v3(const char *path,reader_revisions **store,reader_revision_error *error) {
+  reader_revision_error local={0};reader_revision_error *observed=error ? error:&local;
+  reader_revision_status status=__real_reader_revisions_open_raw_v3(path,store,observed);
+  if(status!=READER_REV_OK)fprintf(stderr,"raw-open code=%d sqlite=%d message=%s\n",status,observed->sqlite_code,observed->message);
+  return status;
+}
+reader_revision_status __real_reader_revision_entities_page_raw_v3(reader_revisions *,const char *,const char *,int,size_t,reader_revision_entity_fn,void *,reader_revision_error *);
+reader_revision_status __wrap_reader_revision_entities_page_raw_v3(reader_revisions *store,const char *kind,const char *after,int direction,size_t limit,
+    reader_revision_entity_fn visit,void *context,reader_revision_error *error) {
+  reader_revision_error local={0};reader_revision_error *observed=error ? error:&local;
+  reader_revision_status status=__real_reader_revision_entities_page_raw_v3(store,kind,after,direction,limit,visit,context,observed);
+  if(status!=READER_REV_OK)fprintf(stderr,"raw-entities kind=%s after=%s code=%d sqlite=%d message=%s\n",kind,after ? after:"(null)",status,observed->sqlite_code,observed->message);
+  return status;
+}
+
 reader_rc_status __real_reader_rc_apply_raw_v3(const reader_rc_context *,const reader_rc_command *,unsigned,reader_rc_result *,reader_rc_error *);
 reader_rc_status __wrap_reader_rc_apply_raw_v3(const reader_rc_context *context,const reader_rc_command *command,
     unsigned version,reader_rc_result *result,reader_rc_error *error) {
