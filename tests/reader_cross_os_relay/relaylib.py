@@ -295,7 +295,9 @@ class Service:
 
     @property
     def root_url(self):
-        return 'https://localhost:%d/dav/' % self.server.server_port
+        # Windows tries the IPv6 loopback of 'localhost' first and waits for it on every connection.
+        host = 'localhost' if sys.platform == 'darwin' else '127.0.0.1'
+        return 'https://%s:%d/dav/' % (host, self.server.server_port)
 
     def __enter__(self):
         self.thread.start()
@@ -314,8 +316,12 @@ class Service:
 
 
 def run_probe(probe, args, secret_env, log):
-    done = subprocess.run([str(probe)] + [str(a) for a in args], capture_output=True, text=True, encoding='utf-8', timeout=600,
-                          env=dict(os.environ, READER_TEST_AUTH=secret_env))
+    try:
+        done = subprocess.run([str(probe)] + [str(a) for a in args], capture_output=True, text=True, encoding='utf-8', timeout=600,
+                              env=dict(os.environ, READER_TEST_AUTH=secret_env))
+    except subprocess.TimeoutExpired as error:
+        Path(log).write_text('TIMEOUT\n%s\n%s' % (error.stdout, error.stderr), encoding='utf-8', errors='replace')
+        raise
     Path(log).write_text(done.stdout + '\n' + done.stderr, encoding='utf-8')
     print(done.stdout)
     print(done.stderr)
