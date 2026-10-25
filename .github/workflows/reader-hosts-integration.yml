@@ -471,7 +471,9 @@ jobs:
         run: |
           python3 tests/reader_hosts_integration/guard.py
           test "$(git rev-parse HEAD:apps/reader/batch-import)" = 40ccc040a65970df056dfb635f247517f8c382df
-          test "$(git rev-parse HEAD:extras/sideload)" = 40a8fcfdd70807f4d1ac4d8fd099f74d715ca40f
+          # Common source includes b26f59ce's Android-only no-replace export.
+          # The desktop branches of that package are byte-identical.
+          test "$(git rev-parse HEAD:extras/sideload)" = 78c8785171861ba239517c0d7cb5130b0168d57f
           test "$(git rev-parse HEAD:apps/reader/reading-commands)" = cf067b8be378d4195817d1106b81f358579e2280
           test "$(git rev-parse HEAD:apps/reader/annotation-view)" = 9d30b6c54f61496010f647695dedd7ea7ab0c7c1
           test "$(git rev-parse HEAD:apps/reader/reading-state)" = 60127ae75fbac918237b1c8584e0f7ac2e6130a4
