@@ -198,3 +198,9 @@ only, bound to run 40127110929 attempt 1 at `b1c7467af0b9faf843b9ec988df49c0476c
 evidence commit is documentation-only and carries `[skip ci]`, so the final HEAD
 differs from the tested source only in this document and the validation record.
 Root still owns host wiring and the joint re-verification on common source.
+# Root activation 边界修复候选
+
+独立分支 `codex/reader-account-profiles-review` 从交回 `2d67b87830a1fabad602aef2ac7bdb3ef579190e` 接续。verify此前只重新核private目录链，遗漏originals；现两个派生目录都核查。共享UUID校验去掉无界strlen，在37字节内完成，拒绝整个固定容量plan无NUL的输入。
+
+新增两个安装消费者场景：prepare完成后真实替换originals为符号链接/Windows junction，verify必须UNSAFE_PATH且不触碰目标；整个activation在独立堆分配中填满非NUL，必须INVALID，Linux另在ASan/UBSan下执行。原40项及真实session跨账号隔离、所有严格工件认证保留；当前候选待Actions同源验证，原交回的通过不转授。
+

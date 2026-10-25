@@ -1,7 +1,7 @@
 name: Reader account profiles
 on:
   push:
-    branches: [codex/reader-account-profiles]
+    branches: [codex/reader-account-profiles, codex/reader-account-profiles-review]
   workflow_dispatch:
 permissions:
   contents: read
@@ -139,6 +139,7 @@ jobs:
           "$P" load "$S" | tee build/ap-logs/asan-load.log
           "$P" activation "$S" a1000000-0000-4000-8000-000000000001 | tee build/ap-logs/asan-activation.log
           "$P" verify-tampered "$S" a1000000-0000-4000-8000-000000000001 | tee build/ap-logs/asan-verify.log
+          "$P" verify-nonterminated | tee build/ap-logs/asan-nonterminated-plan.log
           "$W" add "$S" a1000000-0000-4000-8000-000000000002 b1000000-0000-4000-8000-000000000002 https://asan.example/reader/ two --cancel-before-rename | tee build/ap-logs/asan-cancel.log
           "$P" add-gen "$S" a1000000-0000-4000-8000-000000000003 b1000000-0000-4000-8000-000000000003 https://asan.example/reader/ three 0 | tee build/ap-logs/asan-conflict.log
           printf 'failures=0\n' > build/ap-evidence/sanitizer.txt
