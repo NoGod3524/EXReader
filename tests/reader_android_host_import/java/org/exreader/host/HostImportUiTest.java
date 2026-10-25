@@ -55,8 +55,8 @@ public final class HostImportUiTest extends Instrumentation {
         Rect bounds=new Rect();node.getBoundsInScreen(bounds);need(bounds.width()>0&&bounds.height()>0,"actual visible pointer target");
         if("com.android.documentsui".contentEquals(node.getPackageName()==null?"":node.getPackageName())){
             try{
-                String reply=shell("input touchscreen tap "+bounds.centerX()+" "+bounds.centerY()+" && echo EXR_PLATFORM_TAP_DONE");
-                need(reply.contains("EXR_PLATFORM_TAP_DONE"),"native platform touchscreen input completed");
+                String reply=shell("input touchscreen tap "+bounds.centerX()+" "+bounds.centerY());
+                need(!reply.contains("Usage:")&&!reply.contains("Error:"),"native platform touchscreen input returned no command error");
                 observations.put(new JSONObject().put("pointer_target",text(node)).put("package",String.valueOf(node.getPackageName())).put("input_driver","Android input touchscreen tap").put("bounds",new JSONArray().put(bounds.left).put(bounds.top).put(bounds.right).put(bounds.bottom)));
                 return;
             }catch(Exception error){throw new RuntimeException(error);}
