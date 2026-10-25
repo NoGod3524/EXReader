@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 project(EXReaderReadingConsumer LANGUAGES C CXX)
 list(PREPEND CMAKE_PREFIX_PATH "${EXR_SDK}")
-find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED COMPONENTS core pdf)
+find_package(EXReader 3.41.0 EXACT CONFIG REQUIRED COMPONENTS core pdf)
 foreach(component audio pdf_edit textindex)
   if(TARGET EXReader::exr_${component})
     message(FATAL_ERROR "Reading profile unexpectedly exports ${component}")
