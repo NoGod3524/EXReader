@@ -10,7 +10,25 @@ SDK 生产树固定 `edddc463c06ed5731195cdb8f06b2df6dff7699e`（3.41.0 / ABI1 /
 
 主题运行新增两项确定性 iPad UI 到自身完整作业图：SDK 必须来自该次运行的 iOS producer，下载 ZIP 字节/散列和安装身份全部核对；严格汇总同时拒绝缺失/失败的新增消费者。旧 `6d53` 或独立 `e6` 的程序和通过数不转授给当前 source。
 
-当前尚未完成该共同源运行；`accepted=false`。
+## 完整七组结果
+
+受测生产源码 `2c2eabdad62de88bf5e3c337004be37663c61877`，以下七组均 attempt 1、全部 success，共 50 个作业、50 个工件。额外源码预检 [40182728548](https://github.com/NoGod3524/EXReader/actions/runs/40182728548) success，57 项精确树身份与 114 个负例通过。验收 JSON 逐项登记全部 job ID、工件 ID、字节、声明 digest 与有效期；本地只读取云端日志和 API 元数据。
+
+| 组 | run | 作业 | 原断言与汇总 |
+| --- | --- | ---: | --- |
+| 主题 | [40182791189](https://github.com/NoGod3524/EXReader/actions/runs/40182791189) | 8 | 原 ON37 / OFF10 / protocol10；三平台各4主题场景；新增iPad两场景；strict `121147058621` accepted=true |
+| 导航 | [40182792754](https://github.com/NoGod3524/EXReader/actions/runs/40182792754) | 7 | 原三平台完整 UI/native；strict `121141132483` accepted=true |
+| 搜索 | [40182794064](https://github.com/NoGod3524/EXReader/actions/runs/40182794064) | 7 | 原三平台完整 UI/native；strict `121141897605` accepted=true |
+| 阅读记录 | [40182795491](https://github.com/NoGod3524/EXReader/actions/runs/40182795491) | 7 | 原三平台完整 UI/native 与真实终止边界；strict `121146928974` accepted=true |
+| 书架 | [40182804197](https://github.com/NoGod3524/EXReader/actions/runs/40182804197) | 7 | 每平台原7UI/11观察/2202原件，账户隔离和紧凑布局；strict `121160098698` accepted=true |
+| 导入映射 | [40182811868](https://github.com/NoGod3524/EXReader/actions/runs/40182811868) | 6 | 原三平台 UI/native/collector 全过；原工作流没有独立 summary job |
+| WP13 | [40182825599](https://github.com/NoGod3524/EXReader/actions/runs/40182825599) | 8 | 原三平台各13场景/67步骤/50附件，97个gate controls；strict `121147183504` accepted=true |
+
+此前 `f4aa` 的 iPad 导航、搜索、阅读记录首次导入断言均原样通过，主题 iPhone 原45秒系统外观命令限制也未调整。历史失败保留。
+
+新增两项确定性回归在本次主题 run 内使用本次 SDK producer，受测程序 SHA-256 `2384000f8a847409801d9c66eb1ee95bc17322d83423326dec94d1f329e14ef4`。初始化接纳拒绝后 token 仍0、拒绝计数1；同主线程回合导入实际 SDK 书数1、busy观察变化0、书架缓存0→1，并打开实际 SDK 页。新程序没有采用旧 `e6` 或 `6d53` 的消费者通过数。
+
+本记录 `accepted=true` 仅授予七组各自声明的 macOS、iPhone/iPad simulator 范围与 iPad 两个导入场景。WP13 工件有效期至2026-11-24，其余本轮工件至2027-01-23，准确时间见 JSON。真机、旧 iOS 书库迁移、性能预算和六平台产品同步尚不在本记录内；下一轮共同宿主需要新共同源码的完整运行。
 
 ## 保留的历史运行
 
