@@ -16,4 +16,10 @@ Root review budget: at most three full cloud rounds. No local builds, tests,
 syntax checks, fixture generation or artifact processing. No SDK adoption,
 performance or complete reader-product grant is made by this review.
 
-Status: cloud verification pending.
+Root round 1: source 1a0530fe, run 40235577328. Windows refused before
+SDK compilation because the new backslash-path regression fixture was
+normalized by Python's Windows ZIP writer. The test now assigns the raw
+member name after ZipInfo construction; the actual strict refusal remains
+unchanged. Linux's round-1 outcome is retained separately when terminal.
+
+Status: cloud verification pending; no acceptance from round 1.

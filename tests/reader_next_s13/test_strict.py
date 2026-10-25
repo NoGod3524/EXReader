@@ -14,7 +14,11 @@ class ArtifactChecks(unittest.TestCase):
     def consume(self, member="reports/summary.json", **changes):
         data = io.BytesIO()
         with zipfile.ZipFile(data, "w") as archive:
-            archive.writestr(member, b"{}")
+            # ZipInfo's constructor normalizes backslashes on Windows. Keep
+            # the malicious raw member spelling so both OSes test the refusal.
+            entry = zipfile.ZipInfo("placeholder")
+            entry.filename = member
+            archive.writestr(entry, b"{}")
         blob = data.getvalue()
         identity = dict(id=1, name="test", expired=False,
                         expires_at="2099-01-01T00:00:00Z", size_in_bytes=len(blob),
