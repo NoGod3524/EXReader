@@ -4,7 +4,9 @@
 
 原程序目录诊断最终 run `40162074331` 通过29项，包括实际扫描中关闭父窗口。程序仍为 `e4356a6e` 工件中的原始二进制，测试 source 为 `cb7497dd`；初两轮诊断 `40161497966`、`40161675780` 的失败保留。窄交付 `600ef981` 只修目录输入驱动：读取实时 AT-SPI 主窗口焦点，再要求新 action、可见扫描阶段及非零 poll，保留全部业务断言。
 
-生产候选已普通合入 Apple records `25eeb6aa`，共同基点 `2c5a6cbb`，尚未授予共同源码。其独立 records full run `40160552435` 已通过；旧 WP13 回归随后发现 iPhone 横屏选文关闭按钮被新增按钮挤出屏幕，Apple owner 正修复并重跑原断言。共同分支为原六套 Apple workflow 增加精确来源守卫入口，保留原分支守卫及全部构建、UI、工件认证。Actions额外核对六文件除守卫入口外与固定原版逐项相同。
+生产候选先普通合入 Apple records `25eeb6aa`，随后普通合入最终交付 `0f0cf3ba374b13d0e8a3c8fc1e04b3f3cfb6c9f6`，共同生产基点更新为 `c1123b78819ab1fcadfaee33c72679213b9cc219`。最终受测source `19fde18968e03bb4e87d86b0ed650716ac02c9fa` 的 records full [40163099176](https://github.com/NoGod3524/EXReader/actions/runs/40163099176) 和 WP13 [40163097702](https://github.com/NoGod3524/EXReader/actions/runs/40163097702) 均完整success，包含各自严格汇总。iOS选择面板加原生ScrollView后，旧iPhone横屏关闭按钮与原选区失效断言通过；旧失败 `40161458572` 保留。
+
+四套Nav/Search/Mapping/Shelf原回归已在先前25eeb源码上通过，尚不转授19fde或本共同源码。共同分支为原六套 Apple workflow 增加精确来源守卫入口，保留原分支守卫及全部构建、UI、工件认证。Actions额外核对六文件除守卫入口外与固定原版逐项相同。等Android最终交回后，在唯一完整共同SHA重跑六套；当前仍未授予共同源码。
 
 source `e4356a6e13223469fdf3b2f3d5171a6e99ab10a6` / run `40159425518` 已终态 failure。
 本轮最终认证确认三桌面18包组合和Windows搜索/目录/records32及其原回归；GTK目录 required step 失败，不能称为仅两项palette失败。

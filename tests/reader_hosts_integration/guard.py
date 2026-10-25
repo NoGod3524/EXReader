@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import subprocess
 
-BASE = '687def68862649479ce536d619c7b37ba2d2cc4b'
+BASE = 'c1123b78819ab1fcadfaee33c72679213b9cc219'
 SDK = '9854061be331fe603a1822d9b2b36ee357154927'
 DELIVERIES = {
     'g1': '3bcc6511c928665c0889a33bc98cf5e1bfadaccc',
@@ -20,6 +20,7 @@ DELIVERIES = {
     'gtk_navigation_driver': '600ef981fb44acd91dca618850a25d1725de18f7',
     'gtk_drop_import': 'eaa6852c8e965720c4ad07cfd223c30c282803f8',
     'apple_reading_records_candidate': '25eeb6aaccdc50e670f0aaea73631818bc0551f8',
+    'apple_reading_records_final': '0f0cf3ba374b13d0e8a3c8fc1e04b3f3cfb6c9f6',
 }
 ALLOWED = (
     'tests/reader_hosts_integration/', '.github/workflows/reader-hosts-integration.yml',
