@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "accepted": false,
+  "branch": "codex/reader-apple-page-theme",
+  "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "sdk_version": "3.41.0",
+  "sdk_abi": 1,
+  "sdk_core_version": "3.40.0",
+  "source_sha": null,
+  "runs": [],
+  "pending": ["native_theme", "macos_ui", "iphone_ui", "ipad_ui", "system_notifications", "six_original_suites_same_source"],
+  "physical_device_execution": false,
+  "old_340_migration_tested": false,
+  "complete_product": false
+}

@@ -1,0 +1,69 @@
+name: Isolated Apple SDK3.41 native page themes
+on:
+  push:
+    branches: [codex/reader-apple-page-theme]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+env:
+  EXR_APPLE_SDK_VERSION: '3.41.0'
+  EXR_APPLE_PAGE_THEME: 'ON'
+jobs:
+  sdk:
+    name: SDK3.41 and installed products ${{ matrix.target }}
+    runs-on: macos-15
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [macos, iphonesimulator]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate exact SDK source and unchanged original business suites
+        run: python3 tests/apple_host/page_theme/guard.py
+      - name: Build the one SDK and installed optional products
+        run: |
+          target='${{ matrix.target }}'
+          options=()
+          if test "$target" = iphonesimulator; then
+            options=(-DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO)
+          fi
+          cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AAC=OFF "${options[@]}"
+          cmake --build build/sdk --parallel 4
+          cmake --install build/sdk --prefix "stage/$target"
+          python3 tools/build_apple_product.py --sdk "stage/$target" --target "$target" --build build/product --sdk-version 3.41.0
+          python3 tests/apple_host/evidence_contract.py sdk --root "stage/$target" --platform "$target" --output build/sdk-identity.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-theme-sdk-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            stage/${{ matrix.target }}/
+            build/sdk-identity.json
+            build/apple-page-theme/guard.json
+          include-hidden-files: true
+          if-no-files-found: error
+  native:
+    name: Original OFF ON pixels and theme transaction checks
+    needs: sdk
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: apple-theme-sdk-macos-${{ github.run_id }}-${{ github.run_attempt }}
+          path: sdk-artifact
+      - name: Syntax and real installed native consumers
+        run: |
+          python3 -m compileall -q tests/apple_host/page_theme tools/build_apple_product.py tools/build_apple_host.py
+          python3 tests/apple_host/page_theme/run_native.py --sdk sdk-artifact/stage/macos --resources build/apple-resources --output build/apple-theme-native
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-theme-native-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-theme-native/
+          if-no-files-found: error

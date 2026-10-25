@@ -2,6 +2,8 @@
 """Install product packages beside an already installed frozen Apple SDK."""
 import argparse
 import json
+import os
+import re
 from pathlib import Path
 import subprocess
 
@@ -11,13 +13,21 @@ def main():
     parser.add_argument('--sdk', type=Path, required=True)
     parser.add_argument('--target', choices=('macos', 'iphonesimulator', 'iphoneos'), required=True)
     parser.add_argument('--build', type=Path, required=True)
+    parser.add_argument('--sdk-version', choices=('3.40.0', '3.41.0'),
+                        default=os.environ.get('EXR_APPLE_SDK_VERSION', '3.40.0'))
     args = parser.parse_args()
+    if args.sdk_version not in ('3.40.0', '3.41.0'):
+        parser.error('Unsupported explicit Apple SDK version')
     root = Path(__file__).absolute().parents[1]
     stage = args.sdk.absolute()
+    version = re.search(r'#define EXR_VERSION "([^"]+)"', (stage / 'include/exr/base.h').read_text())
+    if version is None or version[1] != args.sdk_version:
+        parser.error('Installed SDK version differs from the explicitly selected version')
     native = 'macosx' if args.target == 'macos' else args.target
     sysroot = subprocess.check_output(['xcrun', '--sdk', native, '--show-sdk-path'], text=True).strip()
     common = ['-DCMAKE_BUILD_TYPE=Release', '-DCMAKE_INSTALL_PREFIX=' + str(stage),
               '-DCMAKE_PREFIX_PATH=' + str(stage), '-DEXR_SDK=' + str(stage),
+              '-DEXR_SDK_VERSION=' + args.sdk_version,
               '-DREADER_PRODUCT_PREFIX=' + str(stage),
               '-DLIBXML2_INCLUDE_DIR=' + sysroot + '/usr/include/libxml2',
               '-DLIBXML2_LIBRARY=' + sysroot + '/usr/lib/libxml2.tbd']
@@ -45,7 +55,8 @@ def main():
                         ['cmake', '--install', str(build)]):
             subprocess.run(command, check=True)
     source = subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
-    manifest = {'source_sha': source, 'target': args.target, 'installed_modules': [x[0] for x in modules],
+    manifest = {'source_sha': source, 'target': args.target, 'sdk_version': args.sdk_version,
+                'installed_modules': [x[0] for x in modules],
                 'sqlite_provider': 'libreader_catalog_sqlite.a', 'system_sqlite_fallback': False,
                 'reading_resolver_linked': False, 'webdav_transport': 'Foundation URLSession'}
     (stage / 'share/exreader-apple').mkdir(parents=True, exist_ok=True)

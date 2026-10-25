@@ -4,6 +4,7 @@
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import plistlib
 import re
@@ -27,16 +28,29 @@ def main():
     parser.add_argument('--sdk', type=Path, required=True)
     parser.add_argument('--platform', choices=['macos', 'simulator', 'iphoneos'], required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--sdk-version', choices=('3.40.0', '3.41.0'),
+                        default=os.environ.get('EXR_APPLE_SDK_VERSION', '3.40.0'))
+    parser.add_argument('--page-theme', action='store_true', default=os.environ.get('EXR_APPLE_PAGE_THEME', 'OFF') == 'ON',
+                        help='Explicit SDK3.41 page-theme candidate')
     args = parser.parse_args()
+    if args.sdk_version not in ('3.40.0', '3.41.0'):
+        parser.error('Unsupported explicit Apple SDK version')
+    if os.environ.get('EXR_APPLE_PAGE_THEME', 'OFF') not in ('OFF', 'ON'):
+        parser.error('EXR_APPLE_PAGE_THEME must be explicitly OFF or ON')
     if sys.platform != 'darwin':
         parser.error('The Apple SDK build requires a macOS host')
     sdk, output = args.sdk.absolute(), args.output.absolute()
+    if args.page_theme and args.sdk_version != '3.41.0':
+        parser.error('--page-theme requires explicit --sdk-version=3.41.0')
     if output.exists():
         parser.error('Choose a new output directory to preserve earlier artifacts')
     for path in [sdk/'include/exreader.h', sdk/'lib', ROOT/'examples/apple/ReaderApp.swift',
                  ROOT/'examples/apple/HostSDK.swift']:
         if not path.exists():
             parser.error('Missing SDK or host source: '+str(path))
+    version = re.search(r'#define EXR_VERSION "([^"]+)"', (sdk/'include/exr/base.h').read_text())[1]
+    if version != args.sdk_version:
+        parser.error('Installed SDK version differs from the explicitly selected version')
     output.mkdir(parents=True)
     app = output/'EXReader.app'
     mobile = args.platform != 'macos'
@@ -56,10 +70,11 @@ def main():
                '-lexreader', *product_flags(sdk), '-Xlinker', '-rpath', '-Xlinker', rpath,
                ROOT/'bindings/swift/EXReader.swift', *sources, '-o', executable,
                '-Xlinker', '-map', '-Xlinker', output/'product-link.map']
+    if args.page_theme:
+        command += ['-D', 'EXR_APPLE_PAGE_THEME']
     run(*command)
     (output/'product-link.json').write_text(json.dumps(inspect_product(executable, output/'product-link.map'), indent=2)+'\n')
     source_sha = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], text=True).strip()
-    version = re.search(r'#define EXR_VERSION "([^"]+)"', (sdk/'include/exr/base.h').read_text())[1]
     info = {'CFBundleExecutable': 'EXReader', 'CFBundleIdentifier': 'org.exreader.host',
             'CFBundleName': 'EXReader', 'CFBundleDisplayName': 'EXReader',
             'CFBundlePackageType': 'APPL', 'CFBundleVersion': '1',
@@ -98,6 +113,7 @@ def main():
         run('codesign', '--force', '--sign', '-', frameworks/library.name)
     run('codesign', '--force', '--deep', '--sign', '-', app)
     manifest = {'schema': 1, 'source_sha': source_sha, 'sdk_version': version,
+                'page_theme_enabled': args.page_theme,
                 'platform': args.platform, 'target': target, 'bundle': str(app),
                 'signing': 'ad-hoc; device installation requires the owner signing identity',
                 'files': {str(p.relative_to(app)): hashlib.sha256(p.read_bytes()).hexdigest()
