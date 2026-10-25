@@ -26,6 +26,19 @@
       "reason": "The native metadata projection correctly retained the original product title, while the new fixture filtered the actual shelf by the SDK import's temporary title. The fixture now uses the title returned by the actual projection; production behavior is unchanged.",
       "authenticated_apple_manifest_sha256": "f0960b35374e12827a8966f7022dc3f632e44c87419ca1482288386fb8031566",
       "authenticated_apple_revisions": 15
+    },
+    {
+      "source_sha": "c6c094e42d50d77825b09e3b1a9fb90a7b1ab14c",
+      "run_id": 40202090557,
+      "attempt": 1,
+      "android_job": 121195208315,
+      "protocol_job": 121195208548,
+      "failed_phase": "apple-null-reopen-again",
+      "reason": "The second fresh-process test assumed the shelf was visible, while the actual host correctly restored the PDF reading screen. The fixture now uses its unchanged open helper to return to the shelf before selecting the persisted book; production behavior is unchanged.",
+      "actual_apple_11_network_records_found": true,
+      "actual_mac_null_network_received_and_first_ui_refusal_passed": true,
+      "authenticated_null_manifest_sha256": "86bd72f1609f38b3e006af1eb62172104262e70416a0a8d3a6a83dd968e064b7",
+      "authenticated_null_revisions": 3
     }
   ],
   "scope": "explicit API34 default x86_64 Android raw3 native host candidate",
