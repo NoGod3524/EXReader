@@ -22,5 +22,5 @@
   "performance_accepted": false,
   "mobile_accepted": false,
   "physical_device_accepted": false,
-  "runs": []
+  "runs": [{"source_sha": "13a5d48fd0110bbc52c7ffa641ae6e2693dcaec5", "run_id": 40174745821, "attempt": 1, "accepted": false, "status": "cancelled_superseded", "reason": "Source review strengthened kill cases to begin from exact writer-closed snapshots before the other SDK opens them, and moved compatibility execution ahead of unchanged long UI suites to expose test build failures earlier. No runtime acceptance is inherited."}]
 }

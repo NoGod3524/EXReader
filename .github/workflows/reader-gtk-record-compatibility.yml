@@ -172,6 +172,8 @@ jobs:
           ctest --test-dir build/account-desktop --output-on-failure --no-tests=error --timeout 180 --output-junit "$PWD/build/account-logs/desktop-tests.xml"
           python3 -m py_compile tests/linux_host/check_account_ui.py
           python3 tools/build_linux_host.py --sdk build/reading-library/stage --sdk-version 3.41.0 --binary build/account-desktop/gtk-host/exreader-linux --output build/account-package
+      - name: Build actual frozen old owner and exercise real cross-process record compatibility
+        run: python3 tests/reader_gtk_record_compatibility/run.py
       - name: Preserve fixed bounded backend and 2202-book installed SDK checks
         run: |
           mkdir -p build/desktop-evidence
@@ -356,8 +358,6 @@ jobs:
       - name: Authenticate candidate canvas and all retained non-palette scopes
         if: always()
         run: python3 tests/reader_gtk_page_background/check_evidence.py --build build
-      - name: Build actual frozen old owner and exercise real cross-process record compatibility
-        run: python3 tests/reader_gtk_record_compatibility/run.py
       - name: Preserve source-bound evidence and original logs without credentials or TLS private keys
         if: always()
         uses: actions/upload-artifact@v4
