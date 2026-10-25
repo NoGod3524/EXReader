@@ -18,11 +18,14 @@ def main():
     p=argparse.ArgumentParser();p.add_argument('--payload',type=Path,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--mode',choices=['OFF','ON'],required=True);a=p.parse_args()
     out=a.output.resolve();out.mkdir(parents=True,exist_ok=False)
     payload=a.payload.resolve();host=Host(payload/'bin/exreader-linux',payload/'Reader.otf',out)
+    built=json.loads((payload.parent/'build.json').read_text())
+    assert built['source_sha']==TARGET and built['sdk_version']=='3.41.0' and built['abi']==1 and built['files']['bin/exreader-linux']==digest(host.binary)
     report=dict(harness_sha=os.environ['GITHUB_SHA'],target_sha=TARGET,sdk_source=SDK,run_id=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],compact=a.mode,program_sha256=digest(host.binary),font_sha256=digest(host.font),audit_completed=False,keyboard_accepted=False,contrast_accepted=False,screen_reader_accepted=False,checks=[],snapshots=[],findings=[],pending=['Orca and human speech/braille experience','Human verification of visible focus rings, clipping and overlap','Whole UI text/non-text contrast; measured pixel pairs do not establish foreground/background semantics','Physical desktop and compositor scaling beyond Xvfb'])
     settings=Gtk.Settings.get_default();screen=Gdk.Screen.get_default()
     probe=Gtk.Window();probe.realize()
     report['environment']=dict(gtk=[Gtk.MAJOR_VERSION,Gtk.MINOR_VERSION,Gtk.MICRO_VERSION],theme=settings.get_property('gtk-theme-name'),font=settings.get_property('gtk-font-name'),xft_dpi=settings.get_property('gtk-xft-dpi'),gdk_window_scale=probe.get_window().get_scale_factor(),screen_resolution=screen.get_resolution(),screen=[screen.get_width(),screen.get_height()],env={k:os.environ.get(k) for k in ('GTK_THEME','GDK_SCALE','GDK_DPI_SCALE','XDG_CONFIG_HOME')},xrdb=command('xrdb','-query').stdout,xdpyinfo=command('xdpyinfo').stdout)
     probe.destroy();app=None
+    report['environment']['readback_source']='Same-environment GTK probe window and settings; actual host bounds, focus and name/role/state are separately obtained through AT-SPI. No in-process host DPI instrumentation.'
     def nodes(name=None,role=None):
         return [n for n in bus.walk(app) if (name is None or bus.name(n)==name) and (role is None or bus.role(n)==role) and bus.states(n).get('showing')]
     def focused(): return [dict(path=bus.path_of(n),name=bus.name(n),role=bus.role(n),states=bus.states(n)) for n in bus.focused_all(app)]
@@ -41,13 +44,39 @@ def main():
             if any(bus.name(n)==name and (role is None or bus.role(n)==role) for n in bus.focused_all(app)):return
             host.key('Tab')
         raise AssertionError('Keyboard Tab did not reach '+repr((name,role)))
-    def phase(name,fn):
+    def phase(name,fn,requires_book=False):
+        if requires_book and not host.host_state().get('book',0):
+            report['findings'].append(dict(name=name,error='Prerequisite import/open did not complete',classification='blocked_by_import_not_product_failure',target_sha=TARGET,reproduction='Inspect import-open-failed PNG/tree and chooser key trace before evaluating this phase'))
+            check(name+'-completed',False,'unevaluated: no open book','Successful real import prerequisite')
+            return
         try:fn();capture(name)
         except Exception as exc:
             report['findings'].append(dict(name=name,error=repr(exc),traceback=traceback.format_exc(),target_sha=TARGET,reproduction='Keys in keys.log; phase '+name,root_cause='Unconfirmed host or harness failure',minimal_suggestion='Inspect failure PNG, tree, and exact key trace before owner fix'))
             check(name+'-completed',False,repr(exc),'phase completed')
             try:capture(name+'-failed');host.key('Escape','Escape');host.activate(host.window)
             except Exception:pass
+    def choose_file(path,label):
+        # Same real-keyboard chooser route as original audit's run_chooser:
+        # activate the mapped chooser, clear any prefilled location, and allow
+        # GTK's first Return to resolve completion before the final accept.
+        host.activate(host.window)
+        host.wait_state(lambda s:not s.get('busy') and not s.get('saving'))
+        host.key('F1');wait_node('Import book','file chooser')
+        host.activate(host.window_named('Import book'))
+        host.key('ctrl+l','ctrl+a');host.type_text(str(path))
+        wanted=hashlib.sha256(str(path).encode()).hexdigest()
+        try:
+            wait_until(lambda:host.section('native_import').get('entry_sha256')==wanted and host.section('native_import').get('selected_sha256')==wanted and host.section('native_import').get('accept_sensitive')=='1',15,description='actual chooser entry and native selection contain complete path')
+        finally:
+            (out/(label+'-chooser-typed.json')).write_text(json.dumps(dict(wanted_path_sha256=wanted,native_import=host.section('native_import'),focus=focused()),indent=2))
+        capture(label+'-chooser-ready')
+        host.key('Return');time.sleep(.4)
+        if nodes('Import book','file chooser'):
+            capture(label+'-chooser-after-first-return')
+            state=host.section('native_import');(out/(label+'-chooser-before-second-return.json')).write_text(json.dumps(dict(native_import=state,focus=focused()),indent=2))
+            assert state.get('selected_sha256')==wanted and state.get('accept_sensitive')=='1','Chooser selection changed after first Return; refuse blind extra acceptance'
+            host.key('Return')
+        wait_until(lambda:not nodes('Import book','file chooser'),40,description='native import chooser closes')
     try:
         ok,reason=bus.init();assert ok,reason
         host.launch();app=bus.wait_application('exreader-linux');host.focus_hook=lambda:json.dumps(focused())
@@ -61,6 +90,8 @@ def main():
                 host.key(key);observations.append(dict(key=key,focus=focused()))
             (out/'tab-cycle.json').write_text(json.dumps(observations,indent=2))
             check('tab-forward-reverse',all(x['focus'] for x in observations),observations,'Every tested Tab and reverse Tab has an exposed focus target')
+            unnamed=[f for x in observations for f in x['focus'] if not f['name']]
+            check('tab-focus-names',not unnamed,unnamed,'Every tested focus stop has a nonempty accessible name; original named-focus contract retained')
         phase('tab-cycle',tabs)
         def cancel():
             host.key('F1');wait_node('Import book','file chooser');capture('import-cancel-dialog');host.key('Escape')
@@ -69,14 +100,14 @@ def main():
         phase('import-cancel',cancel)
         book=out/'D03.txt';book.write_text(('D03 keyboard scaling audit. Readable native page content.\n'*800))
         def import_book():
-            before=host.host_state().get('generation',0);host.key('F1');wait_node('Import book','file chooser');host.key('ctrl+l');host.type_text(str(book));host.key('Return')
+            before=host.host_state().get('generation',0);choose_file(book,'text')
             host.wait_state(lambda s:s.get('book',0)>0 and s.get('generation',0)>before and not s.get('saving'),timeout=60)
             check('keyboard-import-open',host.host_state().get('book',0)>0,host.host_state(),'Actual imported book opened with keyboard only')
         phase('import-open',import_book)
         def turn():
             before=host.host_state();host.key('F4');after=host.wait_state(lambda s:s.get('generation',0)>before.get('generation',0) and not s.get('saving'))
             check('next-page',(before.get('part'),before.get('page'),before.get('start'))!=(after.get('part'),after.get('page'),after.get('start')),[before,after],'Position changes through F4');host.key('F3');host.wait_state(lambda s:not s.get('saving'))
-        phase('page-turn',turn)
+        phase('page-turn',turn,requires_book=True)
         menu_seen=set()
         def menu(fixed=False):
             observed=[]
@@ -105,22 +136,22 @@ def main():
                     check('collections-types-keyboard',bool(focused()),focused(),'Shelves, Tags and Series selected through native combo keyboard')
                 host.key('Escape');wait_until(lambda:not nodes(title),15,description='closed '+title)
                 check(name+'-escape',bool(focused()),focused(),'Focus returns after Escape')
-            phase(name,dialog)
+            phase(name,dialog,requires_book=name in ('search','directory','records'))
         def notes():
             host.key('F7');wait_node('Selectable page text','text');host.key('ctrl+Home','ctrl+shift+Right','F8');host.wait_state(lambda s:not s.get('saving'));capture('notes-panel')
             check('text-note-keyboard',host.host_state().get('notes',0)>0,host.host_state(),'F7 selection and F8 save a text note');host.key('F9')
-        phase('text-notes',notes)
+        phase('text-notes',notes,requires_book=True)
         def shelf():
             host.key('F2','ctrl+f');check('return-shelf-search',any(x['name']=='Search bookshelf' for x in focused()),focused(),'F2 then Ctrl+F reaches shelf search');host.key('Escape')
         phase('return-shelf',shelf)
         def details():
             host.key('ctrl+e');wait_until(lambda:nodes('Book details'),15,description='Book details');capture('details-dialog');host.key('Escape');wait_until(lambda:not nodes('Book details'),15)
             check('details-escape',bool(focused()),focused(),'Keyboard details closes and restores focus')
-        phase('book-details',details)
+        phase('book-details',details,requires_book=True)
         if a.mode=='ON':
             def fixed_menu():
                 fixture=out.parent/'fixtures/fixed/Pages.pdf'
-                before=host.host_state().get('generation',0);host.key('F1');wait_node('Import book','file chooser');host.key('ctrl+l');host.type_text(str(fixture));host.key('Return')
+                before=host.host_state().get('generation',0);choose_file(fixture,'pdf')
                 host.wait_state(lambda s:s.get('fixed')==1 and s.get('generation',0)>before and not s.get('saving'),timeout=60)
                 capture('fixed-pdf');menu(True);host.key('F2','ctrl+f')
             phase('fixed-menu-union',fixed_menu)

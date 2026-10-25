@@ -3,6 +3,21 @@ set -euo pipefail
 harness="$PWD"; target="$PWD/target"
 mkdir -p evidence
 python3 target/tests/reader_gtk_compact/make_inputs.py "$harness/evidence/fixtures"
+python3 - <<'PY'
+import hashlib,json,shutil
+from pathlib import Path
+for mode in ('OFF','ON'):
+ target=Path('evidence/programs')/mode;target.mkdir(parents=True)
+ package=Path('target/build/d03-package-'+mode)
+ for source,name in ((package/'build.json','build.json'),(package/'runtime-dependencies.txt','runtime-dependencies.txt'),(package/'EXReader-Linux/bin/exreader-linux','exreader-linux'),(Path('target/build/d03-'+mode+'/CMakeCache.txt'),'CMakeCache.txt')):
+  shutil.copyfile(source,target/name)
+ manifest=json.loads((target/'build.json').read_text())
+ assert manifest['source_sha']=='9fc407a5cce5a0bfe644a60bd8dc29f84dea6d0e' and manifest['sdk_version']=='3.41.0' and manifest['abi']==1
+ assert hashlib.sha256((target/'exreader-linux').read_bytes()).hexdigest()==manifest['files']['bin/exreader-linux']
+ assert 'EXR_READER_GTK_COMPACT:BOOL='+mode in (target/'CMakeCache.txt').read_text()
+ print('ACTUAL PROGRAM '+mode+' '+json.dumps(manifest))
+shutil.copyfile('target/build/reading-library/stage/include/exr/base.h','evidence/programs/sdk-base.h')
+PY
 for mode in OFF ON; do
  for config in normal scale2 dark large; do
   scale=1; font=11; theme=Adwaita
