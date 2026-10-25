@@ -80,11 +80,13 @@
           "expires_at": "2027-01-23T00:21:56Z"
         }
       ]
-    }
+    },
+    {"source_sha":"094d475e2d8860c30ffcc2fb903d5aa9747706e9","run_id":40154163799,"attempt":1,"job_id":121051820296,"conclusion":"failure","accepted":false,"inherited_ui":{"total":92,"all_passed":true},"pan_first_check_passed":true,"failure":"cropped rotation270 pointer selected B instead of BLA because selection toolbar resized viewport mid-gesture; crop0/90/180 exact selection passed","artifact":{"id":12584082874,"bytes":146820764,"sha256":"bac698dcac07a4917e36412ada410213ef93a1ac2701d56f5a072b534019fd60","expires_at":"2027-01-23T02:21:56Z"}}
   ],
   "diagnostics": [
     {"source_sha":"7d8a9913962517ec581220e00b383bb0951307ea","run_id":40153537765,"job_id":121049911211,"conclusion":"success","diagnostic_only":true,"accepted":false,"finding":"Original APK first four-corner test completed; next selection test caused Process crashed. Original ZIP identity fully verified in Actions."},
-    {"source_sha":"d82f008c5596154a256f6b0aa988a939fdfc7e20","run_id":40153716101,"job_id":121050442774,"conclusion":"success","diagnostic_only":true,"accepted":false,"finding":"Exact original APK replay crash log: main-thread AssertionError panned real marker semantic node visible. No native crash. No acceptance granted.","artifact":{"id":12583890589,"bytes":34913,"sha256":"0426ecf220a5266d88dd619c5b19bd8ef49b952cd6e2117c7e56ff1c53c8c447","expires_at":"2027-01-23T02:14:47Z"}}
+    {"source_sha":"d82f008c5596154a256f6b0aa988a939fdfc7e20","run_id":40153716101,"job_id":121050442774,"conclusion":"success","diagnostic_only":true,"accepted":false,"finding":"Exact original APK replay crash log: main-thread AssertionError panned real marker semantic node visible. No native crash. No acceptance granted.","artifact":{"id":12583890589,"bytes":34913,"sha256":"0426ecf220a5266d88dd619c5b19bd8ef49b952cd6e2117c7e56ff1c53c8c447","expires_at":"2027-01-23T02:14:47Z"}},
+    {"source_sha":"fff32bac782bc48ec2963a14e23a854c906bab41","run_id":40155347245,"job_id":121055463655,"conclusion":"success","diagnostic_only":true,"accepted":false,"finding":"Exact viewport-failure ZIP read in Actions. crop0/90/180 selected exact BRA/TRA/TLA; crop270 selected B; viewport height changed1766 to1618 when selection toolbar appeared."}
   ],
   "current_candidate":{"source_sha":"094d475e2d8860c30ffcc2fb903d5aa9747706e9","run_id":40154163799,"accepted":false,"scope":"public PDF viewport mapping, cropped rotations 0/90/180/270, Pan8 and retained92 full same-source round; result pending"},
   "pending": "App-private public viewport mapping fix and original Pan8 plus retained92 full same-source cloud regression; current candidate remains unaccepted",
