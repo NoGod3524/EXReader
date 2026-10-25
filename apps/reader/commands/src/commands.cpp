@@ -55,9 +55,10 @@ void assigned(char *target,size_t capacity,const std::string &value){
   std::memcpy(target,value.c_str(),value.size()+1);
 }
 struct command {
+  const bool raw_api;
   const reader_command_context &context;reader_command_result &result;
   std::string revision_id;std::vector<std::string> parents;std::vector<const char *> pointers;
-  command(const reader_command_context *input,reader_command_result *output,reader_command_operation op):context(*input),result(*output){
+  command(const reader_command_context *input,reader_command_result *output,reader_command_operation op,bool raw=false):raw_api(raw),context(*input),result(*output){
     operation(op);
     if(!context.store||context.expected_count>READER_REVISION_MAX_PARENTS||
        (context.expected_count&&!context.expected_heads))reject("Invalid observed command heads");
@@ -78,7 +79,11 @@ struct command {
     for(size_t n=0;n<parents.size();++n){if(n)wire+=',';wire+=quote(parents[n]);}
     wire+="],\"payload\":"+payload+'}';
     reader_revision_error error{};
-    revision(reader_revision_local_project(context.store,wire.data(),wire.size(),pointers.data(),pointers.size(),sort,
+    auto commit=reader_revision_local_project;
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+    if(raw_api)commit=reader_revision_local_project_raw_v3;
+#endif
+    revision(commit(context.store,wire.data(),wire.size(),pointers.data(),pointers.size(),sort,
       &result.revision,&result.created,&result.applied,&error),error);
   }
 };
@@ -117,9 +122,9 @@ extern "C" reader_command_status reader_command_utf16(const uint16_t *input,size
   }catch(const failure &failed){if(error){error->code=failed.code;std::snprintf(error->message,sizeof(error->message),"%s",failed.message);}return failed.code;}
   catch(...){if(error){error->code=READER_COMMAND_REVISION;error->revision.code=READER_REV_MEMORY;}return READER_COMMAND_REVISION;}
 }
-extern "C" reader_command_status reader_command_apply_book(const reader_command_context *context,const reader_book_command *input,
+static reader_command_status reader_command_apply_book_impl(bool raw_api,const reader_command_context *context,const reader_book_command *input,
     reader_command_result *result,reader_command_error *error){return call(context,input,result,error,[&]{
-  command request(context,result,input->operation);std::string key=book(input->book_key),payload="null",sort;
+  command request(context,result,input->operation,raw_api);std::string key=book(input->book_key),payload="null",sort;
   if(input->operation!=READER_COMMAND_DELETE){
     if(!input->title||!input->author||!input->sort_title)reject("Book metadata and host sort title are required");
     std::string format=text(input->format,8),sha=text(input->source_sha256,64);
@@ -131,9 +136,9 @@ extern "C" reader_command_status reader_command_apply_book(const reader_command_
   }
   request.apply("book",key,input->operation,payload,input->operation==READER_COMMAND_DELETE?nullptr:sort.c_str());
 });}
-extern "C" reader_command_status reader_command_apply_group(const reader_command_context *context,const reader_group_command *input,
+static reader_command_status reader_command_apply_group_impl(bool raw_api,const reader_command_context *context,const reader_group_command *input,
     reader_command_result *result,reader_command_error *error){return call(context,input,result,error,[&]{
-  command request(context,result,input->operation);const char *kind=group(input->kind);std::string key=text(input->id,32,true),payload="null";
+  command request(context,result,input->operation,raw_api);const char *kind=group(input->kind);std::string key=text(input->id,32,true),payload="null";
   if(key.empty()){
     if(input->operation!=READER_COMMAND_PUT||context->expected_count)reject("Only a new group can allocate its identity");
     char generated[33];reader_revision_error failed{};revision(reader_revision_new_id(generated,&failed),failed);key=generated;
@@ -149,11 +154,15 @@ extern "C" reader_command_status reader_command_apply_group(const reader_command
   }
   request.apply(kind,key,input->operation,payload);
 });}
-extern "C" reader_command_status reader_command_apply_membership(const reader_command_context *context,const reader_membership_command *input,
+static reader_command_status reader_command_apply_membership_impl(bool raw_api,const reader_command_context *context,const reader_membership_command *input,
     reader_command_result *result,reader_command_error *error){return call(context,input,result,error,[&]{
-  command request(context,result,input->operation);const char *kind=group(input->kind);
+  command request(context,result,input->operation,raw_api);const char *kind=group(input->kind);
   std::string group_id=id(input->group_id),key=book(input->book_key);uint64_t bytes=0;reader_revision_error failed{};
-  reader_revision_status found=reader_revision_book_identity(context->store,key.c_str(),&bytes,&failed);
+  auto identity=reader_revision_book_identity;
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+  if(raw_api)identity=reader_revision_book_identity_raw_v3;
+#endif
+  reader_revision_status found=identity(context->store,key.c_str(),&bytes,&failed);
   if(found==READER_REV_NOT_FOUND)throw failure{READER_COMMAND_NEEDS_BOOK_BOOTSTRAP,"NEEDS_BOOK_BOOTSTRAP",failed};
   revision(found,failed);if(!bytes)reject("Retained original length is missing");
   if(input->ordinal>(uint64_t)INT64_MAX||(input->kind==READER_GROUP_TAG&&input->ordinal))reject("Invalid membership ordinal");
@@ -162,3 +171,22 @@ extern "C" reader_command_status reader_command_apply_membership(const reader_co
     +",\"collection_id\":"+quote(group_id)+",\"ordinal\":"+std::to_string(input->ordinal)+'}';
   request.apply("membership",std::string(kind)+":"+group_id+":"+key,input->operation,payload);
 });}
+
+extern "C" reader_command_status reader_command_apply_book(const reader_command_context *context,const reader_book_command *input,
+    reader_command_result *result,reader_command_error *error){return reader_command_apply_book_impl(false,context,input,result,error);}
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+extern "C" reader_command_status reader_command_apply_book_raw_v3(const reader_command_context *context,const reader_book_command *input,
+    reader_command_result *result,reader_command_error *error){return reader_command_apply_book_impl(true,context,input,result,error);}
+#endif
+extern "C" reader_command_status reader_command_apply_group(const reader_command_context *context,const reader_group_command *input,
+    reader_command_result *result,reader_command_error *error){return reader_command_apply_group_impl(false,context,input,result,error);}
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+extern "C" reader_command_status reader_command_apply_group_raw_v3(const reader_command_context *context,const reader_group_command *input,
+    reader_command_result *result,reader_command_error *error){return reader_command_apply_group_impl(true,context,input,result,error);}
+#endif
+extern "C" reader_command_status reader_command_apply_membership(const reader_command_context *context,const reader_membership_command *input,
+    reader_command_result *result,reader_command_error *error){return reader_command_apply_membership_impl(false,context,input,result,error);}
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+extern "C" reader_command_status reader_command_apply_membership_raw_v3(const reader_command_context *context,const reader_membership_command *input,
+    reader_command_result *result,reader_command_error *error){return reader_command_apply_membership_impl(true,context,input,result,error);}
+#endif

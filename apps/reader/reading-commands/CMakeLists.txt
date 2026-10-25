@@ -40,3 +40,11 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/EXReaderReadingCommandsConfig.cmake"
 if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
   target_compile_definitions(reader_reading_commands PUBLIC EXR_READER_SELECTOR_BYTES_CANDIDATE=1)
 endif()
+
+# RAW-CANDIDATE ORIGIN GUARD: append-only; never changes imported targets.
+if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
+  _exr_raw_guard_target(EXReaderReadingState::reader_reading_state_codec "${EXReaderReadingState_DIR}"
+    reader_reading_state.h READER_READING_STATE_VERSION 0.2.0 TRUE)
+  _exr_raw_guard_target(EXReaderReadingState::reader_reading_state "${EXReaderReadingState_DIR}"
+    reader_reading_state.h READER_READING_STATE_VERSION 0.2.0 FALSE)
+endif()
