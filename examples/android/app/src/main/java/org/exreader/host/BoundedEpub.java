@@ -206,10 +206,10 @@ final class BoundedEpub implements AutoCloseable {
     }
     private PageSnapshot snapshot(Frame frame,int display,int target,long pager) {
         int glyphs=(int)frame.meta[5],lines=(int)frame.meta[6],width=(int)frame.meta[2],height=(int)frame.meta[3];
-        Bitmap bitmap=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888);
+        Bitmap bitmap=theme.enabled?ReflowSession.themeBitmap(width,height,frame.pixels):Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888);
         try {
             if(frame.meta[4]!=(long)width*4) throw new IllegalStateException("Unexpected bitmap stride");
-            bitmap.copyPixelsFromBuffer(ByteBuffer.wrap(frame.pixels));
+            if(!theme.enabled)bitmap.copyPixelsFromBuffer(ByteBuffer.wrap(frame.pixels));
             long[] starts=new long[glyphs],ends=new long[glyphs];
             float[] x=new float[glyphs],baseline=new float[glyphs],advance=new float[glyphs],sizes=new float[glyphs];
             for(int i=0;i<glyphs;i++) { starts[i]=frame.spans[i*2]; ends[i]=frame.spans[i*2+1];

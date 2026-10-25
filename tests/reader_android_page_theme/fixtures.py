@@ -15,7 +15,7 @@ shutil.copytree('build/android-reading/fixtures', folder)
 def chunk(kind, data):
     return struct.pack('>I',len(data))+kind+data+struct.pack('>I',zlib.crc32(kind+data))
 png = b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('>IIBBBBB',48,48,8,6,0,0,0))+chunk(b'IDAT',zlib.compress((b'\0'+bytes([20,120,220,255])*48)*48))+chunk(b'IEND',b'')
-html = '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Theme EPUB</title></head><body><p>Theme foreground ink MMMMMMMMMMMMMMMMMMMMMMMMMMMMM.</p><div style="background-color:#e0b070; width:140px; height:64px;"> </div><p><img src="image.png" width="48" height="48"/></p>' + ''.join('<p>Theme chapter line %d with immutable selector and native page colors.</p>'%i for i in range(160)) + '</body></html>'
+html = '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Theme EPUB</title></head><body><p>Theme foreground ink MMMMMMMMMMMMMMMMMMMMMMMMMMMMM.</p><div style="background-color:#e0b070; width:140px; height:64px;">A</div><p><img src="image.png" width="48" height="48"/></p>' + ''.join('<p>Theme chapter line %d with immutable selector and native page colors.</p>'%i for i in range(160)) + '</body></html>'
 for name,title in [('search.epub','Theme EPUB'),('legacy.epub','Theme legacy EPUB')]:
     with zipfile.ZipFile(folder/name,'w') as package:
         package.writestr('mimetype','application/epub+zip',compress_type=zipfile.ZIP_STORED)

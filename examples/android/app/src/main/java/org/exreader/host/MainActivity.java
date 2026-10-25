@@ -1789,7 +1789,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                     });
                 }
                 transferred=true;final PageLoad delivered=load;
-                postUi(()->{if(gen!=generation)return;fontSize=value.font;zoom=value.zoom/100f;readerView.setTurnPreferences(value.direction,value.input);applyPage(gen,delivered,null);setStatus("阅读设置已保存");done.run();});
+                postUi(()->{if(gen!=generation){delivered.snapshot.bitmap.recycle();return;}if(BuildConfig.READER_PAGE_THEME&&value.theme==3&&revision!=themeRevision){delivered.snapshot.bitmap.recycle();finishTask(gen);done.run();return;}fontSize=value.font;zoom=value.zoom/100f;readerView.setTurnPreferences(value.direction,value.input);applyPage(gen,delivered,null);setStatus(save?"阅读设置已保存":"阅读配色已更新");done.run();});
             }catch(Throwable error){postUi(()->{if(gen!=generation)return;finishTask(gen);setStatus(error instanceof HostTask.Cancelled?"设置已取消，保留原页":message(error));failed.accept(error);});}
             finally{if(load!=null)load.close();if(!transferred&&candidate!=null)candidate.close();}
         });
