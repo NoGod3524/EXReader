@@ -92,7 +92,7 @@ struct HostReadingRequest: Codable {
               heads.count <= 32, Set(heads).count == heads.count, heads.allSatisfy(Self.id),
               bytes > 0, bookKey == format + ":" + sha256, sha256.utf8.count == 64,
               sha256.utf8.allSatisfy({ (48...57).contains($0) || (97...102).contains($0) }),
-              parser == String(cString: exr_version()), body.utf8.count <= 65536, !body.utf8.contains(0) else {
+              HostReadingWorker.acceptsParser(parser), body.utf8.count <= 65536, !body.utf8.contains(0) else {
             throw HostError.invalidInput("待完成阅读记录无效；请显式放弃后重试")
         }
         if operation != 1 && kind != 4 {
@@ -212,6 +212,14 @@ struct HostReadingHistory {
 }
 
 enum HostReadingWorker {
+    // Explicit upgrade policy for the canvas-only 3.41 candidate. This only
+    // admits decoding: apply/resolution still independently verify the retained
+    // original, graph and exact selector. Stored wire and retry parser tags are
+    // never rewritten. Other versions (including downgrade) stay refused.
+    static func acceptsParser(_ recorded: String) -> Bool {
+        let actual = String(cString: exr_version())
+        return recorded == actual || (actual == "3.41.0" && recorded == "3.40.0")
+    }
 #if EXR_APPLE_HOST_REVIEW
     static var afterDurableSave: (() throws -> Void)?
     static var afterCommit: (() throws -> Void)?
@@ -231,7 +239,7 @@ enum HostReadingWorker {
         let status = wire.withUnsafeBytes { reader_rs_decode(history, $0.baseAddress, $0.count, &record, &error) }
         guard status == READER_RS_OK else { throw HostError.invalidInput("阅读记录格式无法读取") }
         defer { reader_rs_record_free(&record) }
-        guard record.has_location != 0, hostReadingField(record.parser_version) == String(cString: exr_version()),
+        guard record.has_location != 0, acceptsParser(hostReadingField(record.parser_version)),
               record.start <= UInt64(Int.max), record.end <= UInt64(Int.max), record.part <= UInt64(Int.max), record.page <= UInt64(Int.max) else {
             throw HostError.invalidInput("保留版本没有可解析位置")
         }

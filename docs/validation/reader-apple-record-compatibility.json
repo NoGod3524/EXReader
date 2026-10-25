@@ -1,0 +1,11 @@
+{
+  "accepted": false,
+  "status": "pending Actions",
+  "base": "eea3087c2ef27b9d45e00333ef0a16e586a0ac6e",
+  "sdk_candidate": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "tested_source": null,
+  "runs": [],
+  "host_ui_accepted": false,
+  "downgrade_accepted": false,
+  "physical_device_accepted": false
+}
