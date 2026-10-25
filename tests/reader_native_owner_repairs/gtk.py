@@ -83,17 +83,35 @@ def focus(profile):
         host.key('ctrl+l', 'ctrl+a')
         host.type_text(str(book))
         wanted = hashlib.sha256(str(book).encode()).hexdigest()
-        wait_until(lambda: host.section('native_import').get('entry_sha256') == wanted
-                   and host.section('native_import').get('selected_sha256') == wanted
-                   and host.section('native_import').get('accept_sensitive') == '1', 20)
-        host.key('Return')
-        # Some GTK choosers use the first Return only to commit completion.
-        import time
-        time.sleep(.5)
-        if nodes('Import book', ('file chooser',)):
-            assert host.section('native_import').get('selected_sha256') == wanted
-            assert host.section('native_import').get('accept_sensitive') == '1'
-            host.key('Return')
+        # The legacy owner has no preferences observation section. Read the
+        # actual native chooser entry and button through AT-SPI in both builds.
+        def chooser_ready():
+            choosers = nodes('Import book', ('file chooser',))
+            if len(choosers) != 1:
+                return False
+            descendants = list(bus.walk(choosers[0]))
+            entered = [bus.accessible_text(n) for n in descendants
+                       if bus.role(n) == 'text' and bus.states(n).get('showing')]
+            accept = [n for n in descendants if bus.role(n) == 'push button' and bus.name(n) == 'Import'
+                      and all(bus.states(n).get(k) for k in ('enabled', 'sensitive', 'showing'))]
+            return bool(accept and any(t and t['text'] == str(book) for t in entered))
+        wait_until(chooser_ready, 25, description='actual native chooser contains full path and enabled Import button')
+        save(folder / 'import-chooser-tree.json', bus.dump(app))
+        if profile == 'raw':
+            wait_until(lambda: host.section('native_import').get('entry_sha256') == wanted
+                       and host.section('native_import').get('selected_sha256') == wanted
+                       and host.section('native_import').get('accept_sensitive') == '1', 20)
+        # One genuine button activation avoids GTK's two-Return completion path.
+        for _ in range(60):
+            targets = [n for n in bus.focused_all(app) if bus.role(n) == 'push button' and bus.name(n) == 'Import'
+                       and all(bus.states(n).get(k) for k in ('enabled', 'sensitive', 'showing', 'focused'))]
+            if len(targets) == 1:
+                break
+            host.key('Tab')
+        else:
+            raise AssertionError('native keyboard Tab cannot reach enabled Import button')
+        host.key('space')
+        wait_until(lambda: not nodes('Import book', ('file chooser',)), 40, description='single native Import activation closes chooser')
         host.wait_state(lambda s: s.get('book', 0) > 0 and not s.get('saving') and not s.get('busy'), timeout=90)
         for route in ('shortcut', 'menu', 'shortcut-reopen', 'menu-reopen'):
             if route.startswith('shortcut'):
@@ -131,6 +149,8 @@ def focus(profile):
             save(folder / 'failure-tree.json', bus.dump(app))
             host.screenshot(folder / 'failure.png', window='root')
     finally:
+        if app and nodes('Import book', ('file chooser',)):
+            host.key('Escape')
         report['exit_code'] = host.close()
         report['files'] = {p.relative_to(folder).as_posix(): dict(bytes=p.stat().st_size, sha256=digest(p)) for p in folder.rglob('*') if p.is_file()}
         save(folder / 'report.json', report)
