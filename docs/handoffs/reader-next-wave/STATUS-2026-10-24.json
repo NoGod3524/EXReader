@@ -1,9 +1,9 @@
 {
   "schema": 1,
-  "observed_at_utc": "2026-10-25T03:10:05Z",
+  "observed_at_utc": "2026-10-25T03:20:11Z",
   "packages": 19,
   "cloud_success": 19,
-  "returned_pending_root_review": 11,
+  "returned_pending_root_review": 10,
   "root_review_closed_awaiting_integration": [
     "J03",
     "J06",
@@ -12,7 +12,8 @@
     "J08",
     "J07",
     "J09",
-    "J13"
+    "J13",
+    "J12"
   ],
   "needs_further_work": [],
   "root_review_and_integration_complete": false,
@@ -93,12 +94,13 @@
       "source": "d427875579f714c0874c1b3cc5388b95a7f4e950",
       "status": "completed",
       "conclusion": "success",
-      "root_state": "root_strict_evidence_repair_actions_pending",
+      "root_state": "root_review_closed_awaiting_integration",
       "review": "J12-ROOT-REVIEW.md",
       "review_branch": "codex/reader-sync-status-review",
       "repair_source": "b6eaf3898a59f41d1cd7453f30107e6cba3f1e27",
-      "repair_run": 40154693490,
-      "repair_state": "positive_metadata_and_pending_row_fixture_owner_corrected_actions_pending"
+      "repair_run": 40157153398,
+      "repair_state": "positive_metadata_and_real_outbox_retention_accepted",
+      "review_head": "0bcb4d06bbeab6dd844954b19ee979e4bede50bd"
     },
     {
       "id": "J13",
