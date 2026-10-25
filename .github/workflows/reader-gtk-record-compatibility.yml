@@ -3,6 +3,11 @@ on:
   push:
     branches: [codex/reader-gtk-record-compatibility]
   workflow_dispatch:
+    inputs:
+      inspect_failed:
+        description: Read-only inspection of the pinned failed same-version EPUB evidence
+        type: boolean
+        default: false
 permissions:
   contents: read
   actions: read
@@ -13,6 +18,7 @@ env:
   GTK_PAGE_BACKGROUND_SDK_SOURCE: edddc463c06ed5731195cdb8f06b2df6dff7699e
 jobs:
   account:
+    if: ${{ !inputs.inspect_failed }}
     name: GTK original suites and actual owner record compatibility
     runs-on: ubuntu-22.04
     timeout-minutes: 65
@@ -426,7 +432,7 @@ jobs:
   evidence:
     name: Authenticate candidate canvas raw ZIP and source-bound reports
     needs: account
-    if: ${{ always() && !cancelled() }}
+    if: ${{ always() && !cancelled() && !inputs.inspect_failed }}
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
@@ -443,5 +449,22 @@ jobs:
           path: |
             build/gtk-record-compatibility-summary/verified.json
           if-no-files-found: error
+
+  inspect:
+    if: ${{ inputs.inspect_failed == true }}
+    name: Read-only failed GTK owner evidence diagnosis
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate unchanged source pair and inspect original failed ZIP in Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 -m py_compile tests/reader_gtk_record_compatibility/diagnose.py
+          python3 tests/reader_gtk_record_compatibility/guard.py
+          python3 tests/reader_gtk_record_compatibility/diagnose.py
 
 
