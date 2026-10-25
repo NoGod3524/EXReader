@@ -31,7 +31,8 @@ def main():
     assert run['status'] == 'completed' and run['path'] == '.github/workflows/reader-gtk-batch-import.yml'
     source = run['head_sha']
     subprocess.run(['git', 'cat-file', '-e', source + '^{commit}'], check=True)
-    subprocess.run(['git', 'diff', '--exit-code', source, 'HEAD', '--', 'examples/linux', 'apps/reader/desktop', 'apps/reader/batch-import', 'extras/sideload'], check=True)
+    subprocess.run(['git', 'diff', '--exit-code', source, 'HEAD', '--', 'src', 'include', 'cmake', 'CMakeLists.txt', 'apps/reader/batch-import', 'extras/sideload'], check=True)
+    host_changes = subprocess.check_output(['git', 'diff', '--name-only', source, 'HEAD', '--', 'examples/linux', 'apps/reader/desktop'], text=True).splitlines()
     rows = get('/actions/runs/' + str(run_id) + '/artifacts')['artifacts']
     expected = 'reader-gtk-batch-import-%d-%d' % (run_id, run['run_attempt'])
     artifacts = [row for row in rows if row['name'] == expected]
@@ -76,6 +77,7 @@ def main():
     digest = hashlib.sha256(binary.read_bytes()).hexdigest()
     assert digest == original['program_sha256']
     record = dict(accepted=False, diagnostic_only=True, test_source=os.environ['GITHUB_SHA'], program_source=source,
+                  host_tree_equal=not host_changes, changed_host_paths=host_changes,
                   previous_run=run_id, artifact={key: artifact[key] for key in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')},
                   program_sha256=digest, payload=str(payload))
     (output / 'input.json').write_text(json.dumps(record, indent=2) + '\n')
