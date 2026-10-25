@@ -34,7 +34,7 @@ def validate(report,manifest):
   require(p['accepted'] is all(r['accepted'] for r in rows),'positive acceptance mismatch')
  for n in negative:
   require(n['target_revision']==NULL and n.get('exit_code')==0,'NULL identity/exit')
-  actual=all(not v['enabled'] for v in n.get('controls',{}).values()) and set(n.get('controls',{}))=={'220','217','219'} and n.get('navigation_refused')is True and n.get('history_unchanged')is True and n.get('history_after_reopen_actions_unchanged')is True
+  actual=all(not v['enabled'] for v in n.get('controls',{}).values()) and set(n.get('controls',{}))=={'220','217','219'} and n.get('navigation_refused')is True and n.get('edit_refused')is True and n.get('history_unchanged')is True and n.get('history_after_reopen_actions_unchanged')is True
   require(n['accepted'] is actual,'NULL acceptance not supported')
  allpassed=all(p['accepted'] for p in positive+negative) and not report['failures']
  require(report['accepted'] is allpassed,'aggregate acceptance mismatch')
@@ -56,6 +56,9 @@ def main():
    for path,entry in result['files'].items():
     raw=b.bytes('evidence/'+path,128*1024**2);require(len(raw)==entry['bytes'] and hashlib.sha256(raw).hexdigest()==entry['sha256'],'inventoried raw evidence differs: '+path)
    target=b.report('target-auth.json');require(target['target_source']==SOURCE and target['artifact']['id']==12610050539,'target auth provenance')
+   require(target['programs']=={'EXReaderProduct':'81b767b9a4742a92d80315cf6e08a601f2959d2d01135ad340a4d47928967208','EXReaderShelfReview':'eb3734065e6e36951b5d483c8746ff6e26cf1c1d6a3340e4c35bbb597e324bfa'},'fixed actual program hashes')
+   for path,entry in target['configurations'].items():
+    raw=b.bytes('configs/'+path.replace('/','-'),64*1024**2);require(len(raw)==entry['bytes'] and hashlib.sha256(raw).hexdigest()==entry['sha256'],'original compiler configuration hash')
    for name,expected in target['programs'].items():require(hashlib.sha256(b.bytes('programs/'+name+'.exe',128*1024**2)).hexdigest()==expected,'actual program identity')
    consumer_hash=hashlib.sha256(b.bytes("consumer/windows-peer-owner.exe",128*1024**2)).hexdigest()
    for index,label in enumerate(("first","reopen")):
@@ -66,12 +69,29 @@ def main():
     proof,manifest,wires,originals,operations=mac_peer.load(Path(tmp)/'mac')
     require(proof==result['mac_proof'],'independently authenticated original Mac proof')
     byid={rid:(data,h) for rid,data,h in operations}
+    wanted=set()
+    def ancestor(rid):
+     if rid in wanted:return
+     wanted.add(rid)
+     for parent in json.loads(byid[rid][0])['parents']:ancestor(parent)
+    ancestor(NULL);key=json.loads(byid[NULL][0])['payload']['book_key']
+    for rid,(data,h) in byid.items():
+     wire=json.loads(data)
+     if wire['entity_kind']=='book' and wire['entity_key']==key:ancestor(rid)
+    require({x['id'] for x in result['null_original_graph']}==wanted,'exact NULL ancestor and metadata closure')
     for row in result['null_original_graph']:
      data,h=byid[row['id']];require(b.bytes('evidence/original-null-wires/'+row['id']+'.json',2*1024**2)==data and row['sha256']==h and row['parents']==json.loads(data)['parents'],'genuine original DB NULL graph bytes')
     require(NULL in {x['id'] for x in result['null_original_graph']},'actual NULL missing')
+    for label,expected_wires in [('positive',wires),('null',[(rid,byid[rid][1],byid[rid][0]) for rid in wanted])]:
+     received=result[label+'_receive'];require(received['accepted'] is True and received['program_sha256']==target['programs']['EXReaderProduct'],'actual account receiver result/program')
+     require({(x['id'],x['sha256'],x['bytes']) for x in received['retained']}=={(rid,h,len(data)) for rid,h,data in expected_wires},'complete received original wire identities')
+     requests=json.loads(b.bytes('evidence/'+label+'-receive/requests.json',4*1024**2))
+     require(requests and all(x['authenticated'] is True for x in requests),'authenticated actual HTTPS request trace')
+     shards={x['path'] for x in requests if x['method']=='PROPFIND' and x['path'].startswith('/dav/exreader-sync-v1/revisions/') and len(x['path'].removeprefix('/dav/exreader-sync-v1/revisions/'))==3}
+     require(shards=={'/dav/exreader-sync-v1/revisions/%02x/'%i for i in range(256)},'exact 256 native HTTPS shards')
     scope=validate(result,manifest)
     controls=[]
-    for label,mutate in [('missing-record',lambda r:r['positive'][0]['records'].pop()),('forged-target',lambda r:r.update(target_source=head)),('duplicate-process',lambda r:r['null'][0].update(pid=r['positive'][0]['pid'])),('false-total',lambda r:r.update(accepted=not r['accepted']))]:
+    for label,mutate in [('missing-record',lambda r:r['positive'][0]['records'].pop()),('forged-target',lambda r:r.update(target_source=head)),('duplicate-process',lambda r:r['null'][0].update(pid=r['positive'][0]['pid'])),('false-total',lambda r:r.update(accepted=not r['accepted'])),('wrong-actual-page',lambda r:next(x for x in r['positive'][0]['records'] if x['accepted'])['after'].update(page=99))]:
      bad=copy.deepcopy(result);mutate(bad)
      try:validate(bad,manifest)
      except (ValueError,KeyError,AssertionError):controls.append(label)

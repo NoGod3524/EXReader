@@ -48,8 +48,11 @@ jobs:
           path: |
             build/d12/*.json
             build/d12/programs/
+            build/d12/configs/
             build/d12/consumer/windows-peer-owner.exe
             build/d12/consumer/windows-peer-owner.map
+            build/d12/consumer/CMakeCache.txt
+            build/d12/consumer/build.ninja
             build/d12/evidence/
           if-no-files-found: error
   authenticate:

@@ -125,6 +125,9 @@ def positive(profile,manifest,wires,iteration,oracle_report):
     assert '独立原书与当前绘图文档中找到并定位' in row['message'],'Native jump did not confirm resolution'
     expected=[int(x) for x in record['capture']['numbers']]
     row['independent_oracle']=next(x for x in oracle_report['records'] if x['revision_id']==rid)
+    row['selection_matches_expected']=row['after']['selection_bytes']==expected[3]-expected[2]
+    if not row['selection_matches_expected']:
+     row['failure']='Observed selection length mismatch: expected %d, actual %d'%(expected[3]-expected[2],row['after']['selection_bytes'])
     if expected[0]==3:
      row['exact_jump_verified']=row['after']['fixed']==1 and row['after']['page']==expected[1] and row['after']['selection_bytes']==expected[3]-expected[2]
      row['observation_scope']='Actual fixed frame page and selection byte length; independent public SDK exact capture/unique page ID'
@@ -163,9 +166,16 @@ def null_ui(profile,key,iteration):
    result['message']=M.text(U.GetDlgItem(d,MESSAGE));result['after']=app.frame();M.screenshot(d,out/'after-open.bmp')
    result['navigation_refused']='找到并定位' not in result['message'] and result['after']==result['before']
   else:result['navigation_attempted']=False;result['navigation_refused']=True
+  if result['controls'][str(EDIT)]['enabled']:
+   M.set_text(U.GetDlgItem(d,BODY),'D12 genuine NULL must refuse editing')
+   send(U.GetDlgItem(d,EDIT),0xF5);app.record_idle(d)
+   result['edit_attempted']=True;result['edit_message']=M.text(U.GetDlgItem(d,MESSAGE))
+   result['edit_refused']='操作未确认' in result['edit_message'] and history(profile)==before
+   result['after_edit']=app.frame();M.screenshot(d,out/'after-edit.bmp')
+  else:result['edit_attempted']=False;result['edit_refused']=True
   result['history_unchanged']=history(profile)==before
   result['unsafe_actions_disabled']=all(not x['enabled'] for x in result['controls'].values())
-  result['accepted']=result['unsafe_actions_disabled'] and result['navigation_refused'] and result['history_unchanged']
+  result['accepted']=result['unsafe_actions_disabled'] and result['navigation_refused'] and result['edit_refused'] and result['history_unchanged']
   app.close_records(d)
  except Exception:result['failure']=traceback.format_exc()
  finally:
