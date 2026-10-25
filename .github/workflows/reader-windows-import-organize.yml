@@ -145,7 +145,7 @@ jobs:
         if: ${{always() && steps.retained_build.outcome == 'success'}}
         run: |
           python3 -m py_compile tests/reader_windows_import_organize/check_ui.py tests/reader_windows_import_organize/verify.py
-          python3 tests/reader_windows_import_organize/check_ui.py --candidate build/ws-package/EXReader/EXReader.exe --font build/ws-package/EXReader/Reader.otf --fixtures tests/fixtures --cloud-probe build/wio-reader_webdav_import/cloud-probe.exe --command-consumer build/account-commands-consumer/command-consumer.exe --output build/wio-ui
+          python3 tests/reader_windows_import_organize/check_ui.py --candidate build/ws-package/EXReader/EXReader.exe --font build/ws-package/EXReader/Reader.otf --fixtures tests/fixtures --cloud-probe build/wio-reader_webdav_import/cloud-probe.exe --command-consumer build/account-commands-consumer/command-consumer.exe --revision-consumer build/account-revisions-consumer/revision-consumer.exe --output build/wio-ui
       - name: Run every retained Windows account host regression
         if: ${{always() && steps.retained_build.outcome == 'success'}}
         env:

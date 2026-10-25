@@ -9,6 +9,8 @@ static struct {
   unsigned long generation;
   exr_webdav_listing listing;
   reader_cloud_staged *retained;
+  reader_cloud_import_result retained_receipt;
+  int retained_mapped;
   char resource[4097],parent[33],parents[32][33];size_t depth;
   winio_group group_rows[200];size_t group_count;
   char keys[150][73];int64_t ids[150];size_t count;
@@ -21,13 +23,31 @@ static struct {
 static int winio_modal_blocked(void) { return winio.dialog!=NULL || winio.running; }
 
 static int winio_kind(int kind) { return kind==JOB_IMPORT_ORGANIZE; }
+static int winio_staging_scan(int clean) {
+  /* A killed native transfer can leave its own temporary copy before J01 has
+     an opaque published owner. Both namespaces are private to this directory. */
+  const wchar_t *patterns[]={L"cloud-*",L".exr-webdav-*.tmp"};int remaining=0;
+  for(size_t i=0;i<2;i++) {
+    wchar_t pattern[HOST_PATH];WIN32_FIND_DATAW entry;swprintf(pattern,HOST_PATH,L"%ls\\%ls",winio.staging,patterns[i]);
+    HANDLE find=FindFirstFileW(pattern,&entry);
+    if(find==INVALID_HANDLE_VALUE) { if(GetLastError()!=ERROR_FILE_NOT_FOUND) remaining=1;continue; }
+    do {
+      if(!clean) { remaining=1;continue; }
+      wchar_t path[HOST_PATH];swprintf(path,HOST_PATH,L"%ls\\%ls",winio.staging,entry.cFileName);
+      HANDLE file=acct_open_private(path,NULL);
+      if(file==INVALID_HANDLE_VALUE) remaining=1;
+      else { CloseHandle(file);if(!DeleteFileW(path)) remaining=1; }
+    } while(FindNextFileW(find,&entry));FindClose(find);
+  }
+  return remaining;
+}
 static void winio_job_free(winio_job *value) {
   if(!value) return;
   exr_webdav_listing_free(&value->listing);
   if(value->staged) {
     /* A refused delete NEVER drops the opaque owner. New downloads are
        blocked until this exact owner has been successfully discarded. */
-    if(value->staged) { winio.retained=value->staged;value->staged=NULL; }
+    if(value->staged) { winio.retained=value->staged;winio.retained_receipt=value->imported;winio.retained_mapped=value->mapped;value->staged=NULL; }
   }
   free(value);
 }
@@ -43,9 +63,7 @@ static int winio_paths(host_job *job) {
     if(handle==INVALID_HANDLE_VALUE) return 0;
     if(!GetFileInformationByHandle(handle,&info) || (info.dwFileAttributes&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT)) || info.nNumberOfLinks!=1) { CloseHandle(handle);return 0; }
     winio.profile_lock=handle;
-    wchar_t pattern[HOST_PATH];WIN32_FIND_DATAW entry;swprintf(pattern,HOST_PATH,L"%ls\\cloud-*",winio.staging);
-    HANDLE find=FindFirstFileW(pattern,&entry);winio.orphans=find!=INVALID_HANDLE_VALUE;
-    if(find!=INVALID_HANDLE_VALUE) FindClose(find);
+    winio.orphans=winio_staging_scan(0);
   }
   return 1;
 }
@@ -197,26 +215,26 @@ done:
 }
 static exr_status winio_job_run(host_job *job) {
   winio_job *v=job->io;if(!v) return EXR_ARGUMENT;
-  if(v->operation==WINIO_LIST || v->operation==WINIO_DOWNLOAD) return winio_network(job);
+  if(v->operation==WINIO_LIST || v->operation==WINIO_DOWNLOAD) {
+    exr_status status=winio_network(job);
+    if(!v->receipt_saved && winio_paths(job)) {
+      if(v->operation==WINIO_LIST || (status!=EXR_OK && v->cloud_status==READER_CLOUD_OK)) {
+        v->cloud_status=status==EXR_OK ? READER_CLOUD_OK:status==EXR_CANCELLED ? READER_CLOUD_CANCELLED:READER_CLOUD_REMOTE;
+        v->cloud_error.webdav_code=v->dav_error.code;v->cloud_error.http_status=v->dav_error.http_status;
+      }
+      v->receipt_saved=winio_receipt(job);
+    }
+    return status;
+  }
   if(v->operation==WINIO_IMPORT) return winio_import(job);
   if(v->operation==WINIO_CLEAN) {
     if(!winio_paths(job)) return EXR_IO;
+    if(winio.retained) { v->imported=winio.retained_receipt;v->mapped=winio.retained_mapped; }
     v->staged=winio.retained;winio.retained=NULL;reader_cloud_staged_discard(&v->staged);
     if(!v->staged && winio.orphans) {
-      wchar_t pattern[HOST_PATH];WIN32_FIND_DATAW entry;swprintf(pattern,HOST_PATH,L"%ls\\cloud-*",winio.staging);
-      HANDLE find=FindFirstFileW(pattern,&entry);int failed=0;
-      if(find!=INVALID_HANDLE_VALUE) {
-        do {
-          wchar_t path[HOST_PATH];swprintf(path,HOST_PATH,L"%ls\\%ls",winio.staging,entry.cFileName);
-          /* No recursive traversal; never delete a link or unknown directory. */
-          HANDLE file=acct_open_private(path,NULL);
-          if(file==INVALID_HANDLE_VALUE) failed=1;
-          else { CloseHandle(file);if(!DeleteFileW(path)) failed=1; }
-        } while(FindNextFileW(find,&entry));FindClose(find);
-      }
-      winio.orphans=failed;
+      winio.orphans=winio_staging_scan(1);
     }
-    v->imported.staging_removed=v->staged==NULL;v->cloud_status=v->staged ? READER_CLOUD_IO:READER_CLOUD_OK;
+    v->imported.staging_removed=v->staged==NULL && !winio.orphans;v->cloud_status=v->staged || winio.orphans ? READER_CLOUD_IO:READER_CLOUD_OK;
     v->receipt_saved=winio_receipt(job);return v->staged || winio.orphans ? EXR_IO:EXR_OK;
   }
   if(v->operation==WINIO_GROUPS) return winio_groups(job);

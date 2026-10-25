@@ -55,6 +55,7 @@ static void winio_go(void) {
     LRESULT row=SendMessageW(winio.rows,LB_GETCURSEL,0,0);
     if(row==LB_ERR || (size_t)row>=winio.listing.count || winio.retained) return;
     exr_webdav_entry *entry=&winio.listing.entries[row];
+    if(strlen(entry->resource)>=4097 || strlen(entry->display_name)>=1025) { SetWindowTextW(winio.message,L"目录项目名称超过公开接口上限；未截断或下载。");return; }
     if(entry->collection) { winio_list(entry->resource);return; }
     if(reader_cloud_format_from_name(entry->display_name)==EXR_CUSTOM) { SetWindowTextW(winio.message,L"此文件不是支持的九种书籍格式。");return; }
     host_job *job=winio_new(WINIO_DOWNLOAD);if(!job) return;
@@ -110,7 +111,7 @@ static void winio_accept(host_job *job) {
     reader_cloud_staged_discard(&v->staged);v->cloud_status=READER_CLOUD_CANCELLED;
     v->imported.staging_removed=v->staged==NULL;v->receipt_saved=winio_receipt(job);
   }
-  if(v->staged) { winio.retained=v->staged;v->staged=NULL; }
+  if(v->staged) { winio.retained=v->staged;winio.retained_receipt=v->imported;winio.retained_mapped=v->mapped;v->staged=NULL; }
   if(current) {
     if(v->operation==WINIO_LIST && job->status==EXR_OK && !job_cancel_flag(job)) {
       exr_webdav_listing_free(&winio.listing);winio.listing=v->listing;memset(&v->listing,0,sizeof(v->listing));

@@ -61,8 +61,13 @@ SHA/size, expiry, duplicate members, exact named reports and tampering refusals.
 
 A Windows runner UI pass grants only the tested native desktop flows. It is not
 screen-reader, performance, physical-device, real-provider or complete-product
-acceptance. The initial T01 UI suite includes production-process termination
-with a completed retained request and exact replay. Before/after-commit crash
-windows and forced pending/staging cleanup denial are also retained in the
-unchanged J01/J10 independent module regressions; they are not yet claimed as
-production-host UI acceptance. A successful module run does not replace that gap.
+acceptance. The T01 UI suite includes production-process termination with completed and
+pre-commit retained requests, exact original-revision replay, and post-commit
+pending cleanup refusal. External SQLite RESERVED locks hold the real apply
+boundary; Windows file-sharing denial prevents pending deletion without changing
+the host binary. For cloud cleanup, a paused real HTTPS GET and suspended UI
+thread separate network publication from SDK import. A readonly published staging
+file exercises success, corruption, cancellation, and process-death recovery.
+These cases are not accepted merely because their source exists: the exact final
+production binary and Actions results must authenticate each named case. The
+unchanged J01/J10 regressions remain separate, additional module evidence.
