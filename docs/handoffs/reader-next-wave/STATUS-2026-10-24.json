@@ -1,17 +1,16 @@
 {
   "schema": 1,
-  "observed_at_utc": "2026-10-24T23:32:35Z",
+  "observed_at_utc": "2026-10-25T00:24:00Z",
   "packages": 19,
   "cloud_success": 19,
   "returned_pending_root_review": 15,
   "root_review_closed_awaiting_integration": [
     "J03",
     "J06",
-    "J25"
-  ],
-  "needs_further_work": [
+    "J25",
     "J19"
   ],
+  "needs_further_work": [],
   "root_review_and_integration_complete": false,
   "tasks": [
     {
@@ -138,13 +137,15 @@
     {
       "id": "J19",
       "branch": "codex/reader-tts-linux",
-      "latest_run": 40138462305,
-      "source": "2f4304c0a037e8f20b064bbfa248ea2e9371d436",
+      "latest_run": 40143498768,
+      "source": "0ee0bd0dcfa1b9646613d6b2a56e0a0aa49671a2",
       "status": "completed",
       "conclusion": "success",
-      "root_state": "root_review_two_close_boundary_repairs_dispatched_to_original_owner",
+      "root_state": "root_review_rework_closed_awaiting_integration",
       "earlier_observed_failure_run": 40132713831,
-      "review": "J19-ROOT-REVIEW.md"
+      "review": "J19-ROOT-REVIEW.md",
+      "evidence_head": "fc40e84746c11d32d4029b8b284b697343f6835b",
+      "preserved_original_success_run": 40138462305
     },
     {
       "id": "J20",

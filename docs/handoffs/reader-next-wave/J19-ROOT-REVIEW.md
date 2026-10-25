@@ -15,3 +15,15 @@
 请保留名额直到 `spd_close()` 完成并 join 旧事件线程；关闭时不得持有回调需要的 `g_mu` 或 handle mutex。用真实关闭边界上的隔离门控，让另一个 owner 在旧关闭未完成时尝试创建/说话，证明仍不可取得名额；释放门控并证明旧线程结束后，新 owner 才可成功建立连接，旧回调不影响新请求。不得只循环顺序创建/销毁来覆盖该交错。
 
 原负责人唯一修改原工作树 `C:/Users/Oscar/exreader-agents/j19-tts-linux` 和 `codex/reader-tts-linux`，保持原路径白名单及共同 C ABI。SDK、schema、wire、anchor 不改；全部构建、语法、测试、夹具与工件处理仍只在 Actions。新源码完整四配置与同轮严格汇总重验，保留原绿和全部失败；两份证据文档另以 `[skip ci]` 交回。不得重启已有无关运行。
+
+## 返修复审已关闭，等待共同集成
+
+返修受测源码 `0ee0bd0dcfa1b9646613d6b2a56e0a0aa49671a2`，文档 HEAD `fc40e84746c11d32d4029b8b284b697343f6835b`，远端分支与其一致。文档 HEAD 与受测源码只差两份证据文档。
+
+root 已重读生产差异及真实故障用例：`request_close` 在线程创建失败后持 handle mutex 恢复有效状态并返回 MEMORY，不再同步执行 closer；完整请求、队列和连接保留，终止回调已结束请求时不会复活。`drop_conn` 清空旧连接指针后释放 handle mutex，等待 `spd_close` 及旧事件线程结束，最后才释放全局名额；等待期间不持回调需要的锁。
+
+新故障测试通过 RLIMIT_NPROC 触发实际 pthread_create/EAGAIN，核对活动请求、队列、连接、名额和 destroy/BUSY；关闭边界门控中，第二 owner 无法取得名额，旧关闭结束后新 owner 才能连接并完成请求。新增17个具名检查保留在固定清单中。
+
+[run 40143498768](https://github.com/NoGod3524/EXReader/actions/runs/40143498768) / attempt 1 的 Ubuntu 22.04／24.04 release／ASan 四配置各 `155 pass / 0 fail / 0 skip / 0 other`。作业为 `121019956628`、`121019956661`、`121019956767`、`121019956685`，严格汇总 `121025198294` 明确 `accepted=True jobs=4 cases=620`。root 已直接核对这五份云端日志及汇总协议源码。
+
+两个原关闭缺口已修复；本包复审关闭，等待共同源码集成。旧源码、原绿和失败记录保留。该结论限 Linux 模块及其声明的真实 daemon／null 音频出口，不授予宿主 UI、真人听感、其它系统或完整产品。

@@ -1,26 +1,29 @@
 {
   "schema": 1,
-  "recorded_at_utc": "2026-10-24T23:47:06Z",
+  "recorded_at_utc": "2026-10-25T00:24:00Z",
   "current_cycle": 1,
   "completed_cycles": 0,
   "audit_interval": 5,
   "next_audit_after_completed_cycle": 5,
-  "phase": "native_hosts_common_source_revalidation_and_windows_navigation_candidate",
+  "phase": "windows_reading_records_implementation_and_native_host_integration",
   "host_integration_candidate": {
     "branch": "codex/reader-hosts-integration",
     "source": "f0c272c87b2402979292d0cd973d4f5e7a9f62fd",
     "production_baseline": "e90c55885b95d14036b9ab2da6983b6cad01a779",
     "run": 40143985644,
     "attempt": 1,
-    "status": "in_progress",
+    "status": "completed_failure_two_actual_palette_cases_only",
     "accepted": false,
     "pin_job_success": true,
-    "composition_all_three_jobs_and_strict_summary_success": false,
-    "windows_search_and_strict_summary_success": false,
+    "composition_all_three_jobs_and_strict_summary_success": true,
+    "windows_search_and_strict_summary_success": true,
     "windows_navigation_included": true,
     "android_preferences_controls_included": true,
     "gtk_palette_failures_remain_actual_failures": true,
-    "apple_host_not_yet_included": true
+    "apple_host_not_yet_included": true,
+    "authentication_job": 121026966594,
+    "problems": [],
+    "evidence_head": "86848155"
   },
   "implementation_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "handoff_commit": "059a7b4fcd0de44674a30fadc7e0fded7cc47acd",
@@ -384,5 +387,22 @@
     "new_package_created": false,
     "model": "Sonnet 5.5 Medium",
     "weekly_used_percent_observed": 79
+  },
+  "windows_records_candidate": {
+    "branch": "codex/reader-windows-reading-records-ui",
+    "source": "9c3848568d156b525205dfaabf7ff0f594c7d24a",
+    "run": 40146300669,
+    "accepted": false,
+    "state": "first_compile_failure_repaired_new_full_run_live",
+    "preserved_failed_run": 40145961543,
+    "earlier_superseded_run": 40145924785
+  },
+  "android_cbz_delivery": {
+    "branch": "codex/reader-android-cbz-reading",
+    "source": "ee59f8f3aed6cf984cece4501bcac82795c115fd",
+    "head": "6b43e83537aa6b03bda889d258fe73c0e317acb1",
+    "run": 40143936053,
+    "proof_run": 40144799161,
+    "integrated": false
   }
 }
