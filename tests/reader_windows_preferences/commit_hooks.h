@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* Cloud-only gates around the real public atomic-save call. */
 #define review_message prefs_original_review_message
-#include "../../windows_host/worker_review/hooks.h"
+#include "../windows_host/worker_review/hooks.h"
 #undef review_message
 static LRESULT review_message(HWND window, WPARAM code, LPARAM value) {
   if (code == 111 || code == 112) {
