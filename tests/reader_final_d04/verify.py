@@ -1,5 +1,5 @@
 """Authenticate original ZIP bytes, same-run identity and exact upstream jobs in Actions."""
-import copy,datetime,hashlib,io,json,os,subprocess,sys,zipfile
+import copy,datetime,hashlib,io,json,os,re,subprocess,sys,zipfile
 from pathlib import Path
 assert os.environ.get('GITHUB_ACTIONS')=='true'
 repo=os.environ['GITHUB_REPOSITORY'];run=os.environ['GITHUB_RUN_ID'];attempt=os.environ['GITHUB_RUN_ATTEMPT'];source=os.environ['GITHUB_SHA']
@@ -15,6 +15,12 @@ def validate(a,body,p):
     assert len(body)==a['size_in_bytes']
     assert a['digest']=='sha256:'+hashlib.sha256(body).hexdigest()
 results=[];negatives=[]
+def default_configuration(report,project,logs):
+    conditions='\n'.join(line for line in project.splitlines() if 'SWIFT_ACTIVE_COMPILATION_CONDITIONS' in line)
+    actual=sorted(set(re.findall(r'EXR_[A-Z_]+',conditions)))
+    compile_flags=sorted(set(re.findall(r'-D\s*(EXR_[A-Z_]+)',logs)))
+    assert report['review_macros']==actual==[], 'actual project/report review macro mismatch'
+    assert compile_flags==[], 'actual compiler review macro leakage'
 for p in ('macos','iphone','ipad'):
     match=[a for a in arts if a['name']==f'd04-{p}-{run}-{attempt}'];assert len(match)==1,(p,'unique artifact required')
     a=match[0];body=subprocess.check_output(['gh','api',f'repos/{repo}/actions/artifacts/{a["id"]}/zip'])
@@ -32,6 +38,13 @@ for p in ('macos','iphone','ipad'):
             b=z.read(f['path']);assert len(b)==f['bytes'] and hashlib.sha256(b).hexdigest()==f['sha256']
         assert r['harness_sha']==source and r['run_id']==run and r['attempt']==attempt and r['platform']==p
         assert r['target_sha']==os.environ['TARGET_SHA'] and r['sdk_sha']==os.environ['SDK_SHA']
+        project=z.read('project.pbxproj').decode()
+        logs='\n'.join(z.read(n).decode(errors='replace') for n in z.namelist() if n.endswith('.log'))
+        default_configuration(r,project,logs)
+        for kind,badproject,badlogs in [('project-review-leak',project+'\nSWIFT_ACTIVE_COMPILATION_CONDITIONS = EXR_APPLE_HOST_REVIEW;',logs),('compiler-review-leak',project,logs+'\nswiftc -DEXR_APPLE_HOST_REVIEW')]:
+            try:default_configuration(r,badproject,badlogs)
+            except AssertionError:negatives.append(p+'/'+kind)
+            else:raise AssertionError('review leakage accepted')
         candidates=[j for j in jobs if j['name']==f'D04 audit {p}'];assert len(candidates)==1
         j=candidates[0];assert j['status']=='completed' and j['head_sha']==source
         results.append({'platform':p,'job':{'id':j['id'],'name':j['name'],'conclusion':j['conclusion']},'artifact':{k:a[k] for k in ('id','name','size_in_bytes','digest','expires_at')},'zip_sha256':hashlib.sha256(body).hexdigest(),'program':r['program'],'checks':r['checks'],'audit_completed':r['audit_completed'],'problems':r['problems'],'findings':[f for f in r['geometry_and_name_findings'] if f.get('verdict')=='fail'],'default_ui_accepted':False,'ax_semantics_accepted':False,'dynamic_type_accepted':False,'voiceover_accepted':False,'physical_device_execution':False})

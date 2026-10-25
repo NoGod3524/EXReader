@@ -1,16 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 platform="$1"
-mkdir -p build/d04/results build/d04/accessibility
+mkdir -p build/d04/results build/d04/accessibility/ui
 # Reuse the exact original tests and recorder; no editing/retry injection.
-cp tests/apple_host/accessibility/ui/ReaderAccessUITests.swift build/d04/accessibility/
-cp tests/reader_a11y_apple/A11yAuditSupport.swift build/d04/accessibility/
-cp tests/reader_final_d04/accessibility/DefaultUITests.swift build/d04/accessibility/
+cp tests/apple_host/accessibility/ui/ReaderAccessUITests.swift build/d04/accessibility/ui/
+cp tests/reader_a11y_apple/A11yAuditSupport.swift build/d04/accessibility/ui/
+cp tests/reader_final_d04/accessibility/DefaultUITests.swift build/d04/accessibility/ui/
 python3 tests/apple_host/prepare_fixtures.py --resources build/apple-resources
 ruby -e "require 'xcodeproj'" || gem install xcodeproj --no-document
-GITHUB_SHA="$TARGET_SHA" ruby tests/apple_host/make_xcodeproj.rb build/d04/project build/apple-resources build/d04/accessibility/
+GITHUB_SHA="$TARGET_SHA" ruby tests/apple_host/make_xcodeproj.rb build/d04/project build/apple-resources build/d04/accessibility/ui
 # The generator's /accessibility/ route excludes all review conditions.
-! grep -E 'SWIFT_ACTIVE_COMPILATION_CONDITIONS.*EXR_' build/d04/project/EXReaderHost.xcodeproj/project.pbxproj
+if grep -E 'SWIFT_ACTIVE_COMPILATION_CONDITIONS.*EXR_' build/d04/project/EXReaderHost.xcodeproj/project.pbxproj; then
+  echo 'D04 refuses a review-enabled program'; exit 1
+fi
 python3 - "$platform" > build/d04/destination.txt <<'PY'
 import json,subprocess,sys
 if sys.argv[1]=='macos': print('platform=macOS\nmacos\nmacOS host\nmacOS');sys.exit()

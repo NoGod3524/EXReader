@@ -1,5 +1,5 @@
 """Collect real XCUI outcomes without converting an incomplete audit to acceptance."""
-import hashlib,json,os,plistlib,shutil,subprocess,sys
+import hashlib,json,os,plistlib,re,shutil,subprocess,sys
 from pathlib import Path
 assert os.environ.get('GITHUB_ACTIONS')=='true'
 sys.path.insert(0,str(Path('tests/reader_a11y_apple').resolve()))
@@ -36,10 +36,26 @@ for label in labels:
     expected=2 if label in ('normal','large') else 1
     entry['passed']=entry['exit']==0 and len(entry['cases'])==expected and all(c['result']=='Passed' for c in entry['cases'])
     checks.append(entry)
+    if label in ('normal','large'):
+        attachment_root=out/(label+'-attachments')
+        screenshots=[f for f in attachment_root.rglob('*') if f.is_file() and f.suffix.lower()=='.png']
+        if not screenshots: problems.append(label+': screenshots missing')
+        for screenshot in screenshots:
+            if not screenshot.read_bytes().startswith(b'\x89PNG\r\n\x1a\n'):
+                problems.append(label+': invalid PNG '+screenshot.name)
+        entry['screenshot_count']=len(screenshots)
+overlap=Path('build/overlap-regression.json')
+if overlap.exists(): shutil.copy2(overlap,out/'overlap-regression.json')
 for name in ('destination.txt','normal-content-size.txt','large-content-size.txt','keyboard-ui-mode.txt'):
     if (root/name).exists(): shutil.copy2(root/name,out/name)
 project=root/'project/EXReaderHost.xcodeproj/project.pbxproj'
-if project.exists(): shutil.copy2(project,out/'project.pbxproj')
+review_macros=None
+if project.exists():
+    shutil.copy2(project,out/'project.pbxproj')
+    conditions='\n'.join(line for line in project.read_text().splitlines() if 'SWIFT_ACTIVE_COMPILATION_CONDITIONS' in line)
+    review_macros=sorted(set(re.findall(r'EXR_[A-Z_]+',conditions)))
+    if review_macros: problems.append('review-enabled program refused: '+','.join(review_macros))
+else: problems.append('generated project configuration missing')
 products=root/'DerivedData/Build/Products'/('Debug' if p=='macos' else 'Debug-iphonesimulator')
 app=products/'EXReaderHost.app'; info=app/('Contents/Info.plist' if p=='macos' else 'Info.plist'); exe=app/('Contents/MacOS/EXReaderHost' if p=='macos' else 'EXReaderHost')
 identity={}
@@ -60,7 +76,9 @@ for label in ('normal',) if p=='macos' else ('normal','large'):
 # Geometry is a conservative screen-level finding, not proof that scrolling cannot recover it.
 report={'schema':1,'package':'D04','platform':p,'harness_sha':os.environ['GITHUB_SHA'],'target_sha':os.environ['TARGET_SHA'],'sdk_sha':os.environ['SDK_SHA'],
  'run_id':os.environ['GITHUB_RUN_ID'],'attempt':os.environ['GITHUB_RUN_ATTEMPT'],'job':os.environ['GITHUB_JOB'],
- 'program':identity,'installed_libraries':libs,'review_macros':[],'page_theme':'OFF','launch_scope':'default [] and separately labelled unchanged fixture regression',
+ 'program':identity,'installed_libraries':libs,'review_macros':review_macros,'page_theme':'OFF','launch_scope':'default [] and separately labelled unchanged fixture regression',
+ 'destination':(root/'destination.txt').read_text().splitlines() if (root/'destination.txt').exists() else [],
+ 'system_content_sizes':{label:(root/(label+'-content-size.txt')).read_text().strip() for label in ('normal','large') if (root/(label+'-content-size.txt')).exists()},
  'checks':checks,'records':records,'geometry_and_name_findings':findings,'problems':problems,
  'audit_completed':completed,'default_ui_accepted':False,'ax_semantics_accepted':False,'dynamic_type_accepted':False,
  'voiceover_accepted':False,'physical_device_execution':False,'complete_product':False,
