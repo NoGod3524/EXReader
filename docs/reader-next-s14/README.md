@@ -111,3 +111,8 @@ and truncated fixtures are derived from the same file. No third-party font ships
 三个native负例按唯一role=suite选择真实日志/命令，不再按commands[1]猜顺序；伪造CASE前必须确认恰好命中一次。
 合成自检改用真实harness的命令顺序（C消费者、三项预期configure拒绝、suite、s14等），以覆盖原错位。
 所有42项拒绝控制与四套平台/SDK组合仍完整执行；本地不做语法、构建或测试。
+
+Root第2轮 source74121fc2/run40231313668/1 已全部success：四套平台/SDK组合、原消费者与全部42项真实数据拒绝控制通过，
+严格作业121284437558实际下载四份原ZIP、复算字节/SHA/有效期、安装头/库/配置/程序/日志/许可/输入及真实进程终止恢复。
+首次root轮40230476316因branch guard未同步失败，已保留；SDK、模块实现和默认行为均未改。
+完整工件身份见root-review-validation.json。本次只授模块安装接口，不授宿主UI、移动端、性能或产品。

@@ -1,0 +1,68 @@
+{
+  "accepted": true,
+  "scope": "font-library installed package on Linux SDK3.40/3.41 and Windows/macOS SDK3.41",
+  "tested_source": "74121fc2b24897c04ccaf0e1d4e5247bc9aa36b1",
+  "run_id": 40231313668,
+  "attempt": 1,
+  "conclusion": "success",
+  "job_ids": [
+    121283444507,
+    121283444634,
+    121283444650,
+    121283444711,
+    121283444721,
+    121284437558
+  ],
+  "module_source_unchanged": true,
+  "default_sdk_340_unchanged": true,
+  "negative_controls": 42,
+  "all_original_negative_controls_executed": true,
+  "original_failures_retained": true,
+  "root_failed_round": {
+    "run": 40230476316,
+    "reason": "new root-review branch was not yet reflected in the branch source guard",
+    "conclusion": "failure",
+    "source": "0e28122cf6b6d8fe50a90bc3d5f4fff4c10c17fa"
+  },
+  "artifacts": [
+    {
+      "bytes": 10282533,
+      "expires_at": "2027-01-23T20:33:15Z",
+      "id": 12613676460,
+      "name": "reader-s14-font-library-Linux-SDK340-40231313668-1",
+      "sha256": "sha256:2bb8a696668c430069134cb65fce4bd48ecf89d5bbaa5938044ba706bcbdecc1"
+    },
+    {
+      "bytes": 10282219,
+      "expires_at": "2027-01-23T20:33:15Z",
+      "id": 12613421867,
+      "name": "reader-s14-font-library-Linux-SDK341-40231313668-1",
+      "sha256": "sha256:08f3c430ed8baed94d5ae69e3ddff854cad78922570a5cc5238356ed23248eb1"
+    },
+    {
+      "bytes": 6288,
+      "expires_at": "2027-01-23T20:33:15Z",
+      "id": 12613137443,
+      "name": "reader-s14-font-verified-40231313668-1",
+      "sha256": "sha256:85ca05654b23e82cffb47b24b496c613a4bf5588e8952a046da8bfa91a53f678"
+    },
+    {
+      "bytes": 9502525,
+      "expires_at": "2027-01-23T20:33:15Z",
+      "id": 12612793482,
+      "name": "reader-s14-font-library-macOS-SDK341-40231313668-1",
+      "sha256": "sha256:5bbf8b2fe5d456b544c885fafa4297e85bb2029e4e70d89c395a624ac649a324"
+    },
+    {
+      "bytes": 8783079,
+      "expires_at": "2027-01-23T20:33:15Z",
+      "id": 12612614440,
+      "name": "reader-s14-font-library-Windows-SDK341-40231313668-1",
+      "sha256": "sha256:51d7a65f1a24e38c492cae4a68b45414c3089de2f15c294f3aaba52ebbcdc23c"
+    }
+  ],
+  "host_ui_accepted": false,
+  "mobile_accepted": false,
+  "performance_accepted": false,
+  "complete_product": false
+}
