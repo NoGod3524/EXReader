@@ -160,9 +160,16 @@ def main() -> int:
                      "jobs")
         artifacts = pages("/repos/%s/actions/runs/%d/artifacts" % (repo, run_id), "artifacts")
         now = datetime.now(timezone.utc)
-        verified_jobs = [check_job(job, name="guard", source_sha=source, run_id=run_id)]
+
+        def pick(job_name: str) -> dict:
+            matches = [item for item in jobs if item.get("name") == job_name]
+            need(len(matches) == 1, "job_missing_or_duplicate:" + job_name)
+            return matches[0]
+
+        verified_jobs = [check_job(pick("guard"), name="guard", source_sha=source,
+                                   run_id=run_id)]
         for key, job_name in PLATFORMS.items():
-            verified_jobs.append(check_job(job, name=job_name, source_sha=source,
+            verified_jobs.append(check_job(pick(job_name), name=job_name, source_sha=source,
                                            run_id=run_id))
         verified = []
         for key in ("guard", "windows", "linux"):

@@ -125,10 +125,8 @@ def make_material(root: Path) -> dict:
     io_parent = root / "io-parent"
     io_parent.write_bytes(b"regular file in the way of a store\n")
     stores["store-io"] = str(io_parent / "store")
-    # Bytes only: a text-mode write would turn 
- into 
- on Windows and make
-    # the canonical-shape check fail before it can report VERSION/FORMAT.
+    # Bytes only: a text-mode write would translate the newlines on Windows and
+    # make the canonical-shape check fail before it reports VERSION/FORMAT.
     (root / "store-version" / "profiles.json").write_bytes(
         b'{\n  "format": "reader-account-profiles",\n  "version": 7,\n  "generation": 0,\n'
         b'  "profiles": []\n}\n')
