@@ -1,7 +1,7 @@
 name: Reader final S04 Android delivered APK verification
 on:
   push:
-    branches: [codex/reader-fw-s04]
+    branches: [codex/reader-fw-s04, codex/reader-fw-s04-root-review]
     paths:
       - 'tests/reader_final_s04/**'
       - '.github/workflows/reader-final-s04.yml'

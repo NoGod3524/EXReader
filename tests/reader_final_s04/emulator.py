@@ -128,7 +128,7 @@ class Driver:
         return self.adb('logcat', '-d', '-v', 'threadtime', '-t', '6000', binary=True)
 
     def metrics(self):
-        text = self.adb('logcat', '-d', '-v', 'threadtime', '-t', '6000').decode('utf-8', 'replace')
+        text = self.adb('logcat', '-d', '-v', 'threadtime', '-t', '6000')
         return [{'book': int(row.group(1)), 'page': int(row.group(2))}
                 for row in METRIC.finditer(text)]
 
