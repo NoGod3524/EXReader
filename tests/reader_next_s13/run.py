@@ -363,7 +363,9 @@ def run_real(real_path, inputs, base, candidate, out, databases):
             print(json.dumps({"file": entry["id"], "run": run, "open": report.get("open", {}).get("status"),
                               "message": report.get("open", {}).get("message", ""),
                               "pages": report.get("page_count"), "first": ids[:2], "last": ids[-2:],
-                              "render": report.get("render"), "probe_exit": report.get("_probe_exit")}))
+                              "render": report.get("render"), "capture": report.get("capture"),
+                              "fallback": report.get("fallback"), "reopen": report.get("reopen"),
+                              "library": report.get("library"), "probe_exit": report.get("_probe_exit")}))
         base = read_json(Path(out) / ("base-%s.json" % entry["id"]))
         print(json.dumps({"file": entry["id"], "base_open": base.get("open", {}),
                           "base_pages": base.get("page_count")}))
@@ -581,10 +583,14 @@ def check_real(real_path, inventory_path, plan_path, reports_dir, out_path):
                        capture.get("capture_status") == 0 and capture.get("anchor_page_id") == capture.get("page_id") and
                        capture.get("exact_size") == 0 and capture.get("prefix_size") == 0 and
                        capture.get("suffix_size") == 0 and capture.get("regions") == 0, capture)
+        # A point captured on a CBZ page resolves to a zero-length range at the
+        # page origin (FOUND, start==end==0). Nothing longer may be invented, and
+        # the same selector must not resolve on a different page id.
         checks.require("point_resolve_no_invented_range:" + identifier,
-                       capture.get("resolve_status") == 0 and capture.get("resolve_state") == 0 and
-                       capture.get("resolve_start") is None and capture.get("resolve_end") is None and
-                       capture.get("other_state", 0) == 0 and capture.get("other_start") is None, capture)
+                       capture.get("resolve_status") == 0 and capture.get("resolve_state") == 1 and
+                       capture.get("resolve_start") == 0 and capture.get("resolve_end") == 0 and
+                       capture.get("other_status") == 0 and capture.get("other_state") == 0 and
+                       capture.get("other_start") is None and capture.get("other_end") is None, capture)
         fallback = first.get("fallback", {})
         checks.require("page_bounds_refusal:" + identifier,
                        fallback.get("status") == 1 and fallback.get("empty_bitmap") is True and
