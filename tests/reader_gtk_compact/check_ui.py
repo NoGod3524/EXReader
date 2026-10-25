@@ -18,7 +18,7 @@ import atspi_client as bus
 REQUIRED=('empty-library','empty-continue-disabled','import-cancel','txt-page','epub-page','pdf-page','cbz-page',
  'reader-primary-controls','default-tools-hidden','page-keyboard-focus','more-keyboard','text-pane','text-focus',
  'comment-focus','legacy-note-add','notes-focus','legacy-note-delete','tools-close','tools-preserve-large-geometry','tools-expand-minimum','larger-smaller',
- 'search-dialog','directory-dialog','records-dialog','settings-dialog','details-dialog','collections-dialog',
+ 'search-dialog','directory-dialog','records-dialog','records-keyboard-rows','settings-dialog','details-dialog','collections-dialog',
  'account-dialog','folder-cancel','paste-duplicate','save-retry-entry','cancel-entry','library-search',
  'back-to-library','continue-reading','closed-library-preserves-last','reopen-library','reopen-continue',
  'four-source-files-unchanged','txt-turn-pages','epub-turn-pages','pdf-turn-pages','cbz-turn-pages','pdf-zoom-menu')
@@ -116,6 +116,23 @@ def main():
     def modal(section,title,caption,check):
         menu(section,title);dialog=element(caption)
         wait(lambda:any(bus.is_ancestor(dialog,node) for node in bus.focused_all(app)))
+        if check=='records-dialog':
+            wait(lambda:observe('reading_records').get('running')=='0')
+            assert any(bus.name(node)=='Close' for node in bus.focused_all(app))
+            def tab_to(predicate):
+                for _ in range(40):
+                    selected=[node for node in bus.focused_all(app) if predicate(node)]
+                    if selected:return selected
+                    host.key('Tab')
+                raise AssertionError('records keyboard route cannot reach requested control')
+            tab_to(lambda node:bus.name(node)=='Add bookmark');host.key('Return')
+            entry=element('Reading record text',{'text'});click_node(entry);host.paste('Compact keyboard bookmark');host.key('alt+s')
+            wait(lambda:observe('reading_records').get('count')=='1' and observe('reading_records').get('running')=='0')
+            listing=element('Bookmarks and annotations',{'list box'})
+            selected=tab_to(lambda node:bus.role(node)=='list item' and bus.is_ancestor(listing,node))
+            host.key('Down')
+            record('records-keyboard-rows',any(bus.role(node)=='list item' and bus.is_ancestor(listing,node) for node in bus.focused_all(app)),
+                   [dict(name=bus.name(node),role=bus.role(node)) for node in selected])
         focus_snapshot(caption);screenshot(check)
         host.key('Escape');wait(lambda:not nodes(caption));idle()
         command('xdotool','windowactivate','--sync',host.window);host.key('Tab')

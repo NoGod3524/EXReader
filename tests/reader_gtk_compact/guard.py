@@ -9,7 +9,7 @@ import sys
 
 ROOT=Path(__file__).resolve().parents[2]
 BASE='25bc0c67971f81491f50e0a3caaaf7e509bb7e35'
-PRODUCTION='a7bcf0483fb52ecf9cd3cdf7dda07a4aa742f174'
+PRODUCTION='fedce16a4ea6d9e1f0364d149f4f90b7a9caae5c'
 WORKFLOW='.github/workflows/reader-gtk-compact.yml'
 OLD_WORKFLOW='.github/workflows/reader-gtk-341-final.yml'
 PRODUCTION_PATHS={'examples/linux/reader.c','examples/linux/CMakeLists.txt'}
