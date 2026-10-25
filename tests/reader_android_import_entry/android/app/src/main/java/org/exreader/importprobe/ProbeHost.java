@@ -100,7 +100,12 @@ final class ProbeHost implements ImportOwner {
                 case "review-close-generation": reviewCloseGeneration(); break;
                 case "review-fd-count": {
                     String[] files = new File("/proc/self/fd").list();
-                    log("review-fd-count", "count", files == null ? -1 : files.length);
+                    org.json.JSONArray targets = new org.json.JSONArray();
+                    if (files != null) for (String fd : files) {
+                        try { targets.put(new JSONObject().put("fd", fd).put("target", android.system.Os.readlink("/proc/self/fd/" + fd))); }
+                        catch (android.system.ErrnoException | JSONException ignored) { }
+                    }
+                    log("review-fd-count", "count", files == null ? -1 : files.length, "targets", targets);
                     break;
                 }
                 default: log("command-unknown", "cmd", cmd);
