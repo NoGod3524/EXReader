@@ -346,13 +346,35 @@ class Round:
             raise PW.MeasurementFault('restored reading position differs from the saved one')
         self.add(state, 'resume_restored', resumed['ms'])
         key = resumed['key']
-        for _ in range(PLAN['resume']['page_turn']):
-            turn = PW.op_page_turn(host, key)
+        # Two forward then two backward turns: the saved position is unchanged when the
+        # process closes, so the next launch has one deterministic position to restore.
+        for step in range(PLAN['resume']['page_turn']):
+            if step < 2:
+                turn = PW.op_page_turn(host, key)
+            else:
+                turn = self.page_back(host, key)
             key = turn['to']
             self.add(state, 'page_turn', turn['ms'])
             self.add(state, 'ui_roundtrip_reading', host.roundtrip(5000))
+        if key != expected:
+            raise PW.MeasurementFault('page turns did not return to the saved position')
         time.sleep(1.0)
-        self.corpora[size]['reading_key'] = key
+
+    @staticmethod
+    def page_back(host, previous_key):
+        host.wait_enabled('previous', 30)
+        started = PW.now_ms()
+        host.click('previous')
+
+        def turned():
+            try:
+                key = PW.page_key(host.label(500))
+            except TimeoutError:
+                return None
+            return (key,) if key is not None and key != previous_key else None
+
+        (key,) = host.poll(turned, 25, interval=0.003)
+        return {'ms': round(PW.now_ms() - started, 3), 'to': key}
 
     def run_import(self, host, state, index):
         # The compact Import button opens the system picker; the existing compact
