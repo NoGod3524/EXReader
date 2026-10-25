@@ -117,7 +117,7 @@ def main():
         app.wait(lambda:visible(app,123))
         first=app.label();app.click('next');app.wait_idle();assert app.label()!=first
         app.click('previous');app.wait_idle();assert app.label()==first;record('reading-next-and-previous')
-        app.focus();A.tap(ord('L'),(A.VK_CONTROL,));app.wait(lambda:visible(app,119) and not visible(app,123))
+        app.focus();A.tap(0x25,(0x12,));app.wait(lambda:visible(app,119) and not visible(app,123))
         command(app,46002);assert visible(app,123) and app.label()==first;record('keyboard-library-and-resume')
         command(app,46003);assert all(visible(app,i) for i in (101,119,121,122,123,107,109));record('expanded-panel-retains-controls')
         app.note('Compact native note');app.wait(lambda:send(app.control('notes'),0x18B)>0);record('expanded-panel-note-commit')
@@ -131,7 +131,10 @@ def main():
         record('small-window-note-editor-remains-reachable');command(app,46003)
         for identifier,child,name in ((170,171,'search-native-dialog'),(190,191,'navigation-native-dialog'),
                                        (210,211,'records-native-dialog'),(260,261,'settings-native-dialog')):
-            command(app,identifier);dialog=app.wait(lambda:owned_dialog(app,child),timeout=30)
+            if identifier==210:
+                app.focus();A.tap(ord('L'),(A.VK_CONTROL,))
+            else:command(app,identifier)
+            dialog=app.wait(lambda:owned_dialog(app,child),timeout=30)
             assert U.IsWindowVisible(dialog)
             U.PostMessageW(dialog,0x10,0,0);app.wait(lambda:not U.IsWindow(dialog),timeout=30)
             app.wait_idle();record(name)
