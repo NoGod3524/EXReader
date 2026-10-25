@@ -56,6 +56,11 @@ def validate(result, read, source, run, attempt):
     require(sender['platform'] == 'macos' and sender['exr_version'] == sender['parser_version'] == '3.41.0' and
             sender['program_sha256'] == executable and sender['sdk_dso_sha256'] == hashlib.sha256(read('sender-bundle/proofs/sdk.dylib')).hexdigest(),
             'actual sender runtime/program/loaded SDK differs')
+    basename=sender['sdk_dso_basename']
+    require(isinstance(basename,str) and basename.startswith('libexreader') and basename.endswith('.dylib') and
+            '/' not in basename and '\\' not in basename and ':' not in basename and
+            read('original-compatibility/libraries-new/'+basename)==read('sender-bundle/proofs/sdk.dylib'),
+            'actual loaded SDK differs from original same-producer installed library')
     originals, revisions, records = manifest['originals'], manifest['revisions'], manifest['reading_records']
     roles = {'txt', 'epub', 'pdf', 'cbz'}
     require(len(originals) == 4 and {row['role'] for row in originals} == roles, 'four genuine originals required')
@@ -129,7 +134,11 @@ def main():
                 if info.filename.endswith('reading-requests/request.json'):
                     require(info.file_size<=1024**2,'oversized original request')
                     request=load(archive.read(info))
-                    findings.append(dict(member=info.filename,request=request))
+                    fixed=request.get('capture',{}).get('fixed',{})
+                    fields=fixed.get('fields',[])
+                    nul_positions={str(index):[offset for offset,value in enumerate(base64.b64decode(field,validate=True)) if value==0]
+                                   for index,field in enumerate(fields) if field is not None}
+                    findings.append(dict(member=info.filename,request=request,fixed_field_nul_positions=nul_positions))
         out=ROOT/'build/apple-record-interop-summary';out.mkdir(parents=True,exist_ok=True)
         result=dict(accepted=False,diagnostic_only=True,original_source=original['head_sha'],original_run=target,
                     original_attempt=original['run_attempt'],artifact=artifact,original_pending_requests=findings)

@@ -14,7 +14,35 @@ Apple 的 sender 声明真实裸版本 `3.41.0`，不替换成 Android 前缀。
 位置解析与重新捕获，检查 SDK 状态与产品 outbox 不变；第三进程重开后再解析同一 bundle。
 每次运行同时保留原 18 个兼容进程阶段、两 SDK 各 19 项原 owner 测试及 Java20 策略检查。
 
-当前验收：待首次 Actions。首轮目标为实际 Apple sender 与本机独立进程回读；
+当前验收：**未通过**。`aa561e86773935805d35150ad0bd2adc9cf4a7ff` 的
+[40180582614](https://github.com/NoGod3524/EXReader/actions/runs/40180582614) 中两 SDK、
+18 个原兼容进程阶段和新发送程序均已构建/执行；实际发送在 PDF 进度提交被拒绝。
+只读诊断 [40181690876](https://github.com/NoGod3524/EXReader/actions/runs/40181690876)
+认证原工件 `12593897613`，15,263,131 字节，SHA-256
+`20d5747479aebe7ef6d0ca2c6223b2bd1170e1d24af4c1cbd9fd81e2b93c777a`。
+原待完成请求保留原件 `pdf:5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc`
+（8,845 字节）、`kind=progress`、固定页 `page-1` 的 0..0 点捕获。
+实际 suffix 原始 Base64 为 `QWZp5LiAAEFBQfCfmIA=`，包含真实 NUL。
+现有 `reader_rs_encode_v2` 对固定页 exact/prefix/suffix 的 NUL 明确返回
+`NOT_REPRESENTABLE / GAP_NUL`，所以不是 parser 标签差异。原请求和原件均未删改。
+
+首轮目标为实际 Apple sender 与本机独立进程回读；
 **实际 Android 双向互通仍 pending**。Android 实际 sender 工件到达后再绑定其原始字节
 交给 Apple receiver，并将本分支实际 sender bundle 交回 Android。
 本包不授予宿主 UI、真机、六平台同步或完整产品验收。
+
+## 独立可选的选择器字节候选
+
+当前失败必须继续保留，不能用删除 NUL、改偏移、改变原件或另选容易通过的 PDF
+当作修复。本分支仍固定现有生产树和 wire v2。
+
+下一候选只扩展应用模块，SDK/产品 schema1/旧 wire 不改：为固定页原始选择器增加
+显式 anchor v3 与独立 encode/decode/command 入口，默认继续使用原 v2。
+v3 的 exact/prefix/suffix 用严格 Base64 与明确字节长度表示；page ID 和其余标识仍为
+原有严格 UTF-8。实际 start/end、NUL、空与 NULL 的区别、原件身份及父图均须无损保留。
+旧接收器明确拒绝 v3，不能将其当 v2 读取；新候选读旧记录时保留原始 wire/版本。
+
+候选验收须覆盖这个真实 PDF 的点/范围、跨进程原样重开、两端真实生成/接收/FOUND/
+复捕获，以及原全部 v1/v2 正反例；另拒绝坏 Base64、长度不符、超额、未知版本与缺父。
+原 v2 失败在旧入口继续作为负对照。候选的实现、云端证据与主线采用分开记录，
+目前尚未改任何已冻结模块或授予新格式。

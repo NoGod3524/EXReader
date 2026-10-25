@@ -104,6 +104,8 @@ func interopOutbox(_ context: UnsafeMutableRawPointer?, _ row: UnsafePointer<rea
                         choices.append((3, "highlight", try session.readingCapture(start: start, end: end, cancel: HostCancelBox())))
                     }
                     for (kind, label, location) in choices {
+                        print("ACTUAL_APPLE_RECORD_BEGIN role=\(role) kind=\(label) mode=\(location.mode)")
+                        fflush(stdout)
                         let request = try HostReadingWorker.request(session: session, catalog: catalog, kind: kind,
                             operation: 0, mode: location.mode, capture: location, body: kind == 1 ? "" : "Actual Apple " + label,
                             cancel: HostCancelBox())
@@ -134,7 +136,8 @@ func interopOutbox(_ context: UnsafeMutableRawPointer?, _ row: UnsafePointer<rea
                 try sdkBytes.write(to: bundle.appendingPathComponent("proofs/sdk.dylib"))
                 let sender: [String: Any] = ["platform": "macos", "source_sha": env["GITHUB_SHA"]!, "run_id": env["GITHUB_RUN_ID"]!,
                     "attempt": env["GITHUB_RUN_ATTEMPT"]!, "program_sha256": sha(executableBytes), "sdk_dso_sha256": sha(sdkBytes),
-                    "exr_version": version, "parser_version": version, "pid": ProcessInfo.processInfo.processIdentifier]
+                    "exr_version": version, "parser_version": version, "pid": ProcessInfo.processInfo.processIdentifier,
+                    "sdk_dso_basename": sdk.lastPathComponent]
                 try json(["schema": 1, "sender": sender, "originals": originals, "revisions": revisions, "reading_records": records])
                     .write(to: bundle.appendingPathComponent("manifest.json"))
                 checks.append("send:complete-original-wire-and-ancestor-export")
