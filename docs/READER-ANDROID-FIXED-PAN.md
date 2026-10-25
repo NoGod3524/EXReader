@@ -53,3 +53,5 @@ source `d509751501ac3d12b9a5bbb4b5388712a45be1e6` / run `40155515246` / job `121
 独立只读proof分支 `codex/reader-android-fixed-pan-proof` 不合入主线。首次proof `40158522030` 对原驱动未要求的 `before_down.selection_mode` 加了额外前提而拒绝；公开无障碍extras可能保留前一次模式位。checker已回到原受测契约：保留几何/token/原文严格比较及held/after真正已进入选择模式的检查，移除额外缓存前提，不改b259生产或原断言。修正proof仍待终态，不能称独立proof已通过。
 
 静态自审：10,000页矩阵目录上限与冻结SDK `src/pdf_pages.c` 的原PDF页数/Count上限一致，不是新增更窄的PDF限制。`nativeViewports` 的二次PDF打开及逐页矩阵读取确实只在Java调用前后执行HostTask.check；没有把HostTask传给公开open options.control，这是新增native段的协作取消缺口。当前100项不验证该新增段内部取消，也不验证10,000页边界。最小后续是复用现有host_task_control给打开过程传control，并在逐页循环调用现有host_cancelled；原件释放与未发布结果屏障保持。该后续须新共同源码验证，不能沿用b259证据授予。
+
+该取消后续现作为独立生产提交交给共同源码轮：JNI实现移到原有 `bounded_epub_jni.inc` 控制助手定义之后，不复制另一套callback；Java传入同一个HostTask，公开PDF打开接options.control，输出每一页调用host_cancelled。取消仍释放PDF对象、原件JNI字节和未完成数组，保留原HostTask.Cancelled异常；Java调用前后check不变。原Pan first阶段另加入直接native探针：记录正常四页目录的实际poll总数，在第3次（打开阶段）及倒数第2次（输出阶段）取消，严格拒绝部分返回，随后正常重开目录须逐项相同。此提交按集成安排不另开独立100项轮；新增代码和探针均未被b259受测，只有后续共同源码可授予。
