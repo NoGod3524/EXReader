@@ -2,6 +2,22 @@
   "schema": 1,
   "recorded_at_utc": "2026-10-25T17:55:00Z",
   "latest_checkpoint": {
+    "checkpoint_mobile_and_windows_owner": {
+      "complete_product_accepted":false,
+      "windows_owner":{
+        "source":"b4fc135ce64fc651a4b988ad1dd852076413aa10","run":40218506868,"attempt":1,"conclusion":"success",
+        "independent_authentication_run":40219693199,"authentication_conclusion":"success",
+        "seal":"f462bd49","scope":"legacy/raw installed hosts, compact22 each, bulk21 each, nine actual owner reports and real process recovery",
+        "whole_original_OFF_F3_atomic13":false,"network_receive":false,"same_source_bidirectional":false,
+        "next_network_source":"420a876b90e627daa1f1a201cd834fda76472e55","next_network_run":40220204074,"next_network_state":"in_progress"
+      },
+      "apple_mobile_raw3":{
+        "source":"5ac5e1fa4cf6dcbfe81ea14b9f64b6288470164a","run":40217963443,"attempt":1,"conclusion":"success",
+        "seal":"3ee3b7de96cb2ec950c3ec78a36726fc7c3eb9a4","scope":"same-run iPhone and iPad simulator original OFF7 plus raw6, SDK2 and strict summary",
+        "old72_failure_preserved":true,"physical_devices":false,"voiceover":false,"complete_mobile_bidirectional":false
+      },
+      "webdav_reset_candidate":{"source":"3e80195c8013970a21156f5df181ae6209bee70a","run":40220267962,"state":"in_progress","reason":"C03 actual TLS reset terminated process with SIGPIPE; no process-wide signal disposition change permitted"}
+    },
     "checkpoint_network_restored": {
       "previous_snapshots_are_historical": true,
       "common_source_still": "25bc0c67971f81491f50e0a3caaaf7e509bb7e35",
