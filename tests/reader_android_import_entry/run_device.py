@@ -448,7 +448,21 @@ def s_review_reliable_pipe_fds(output):
     after = wait(lambda e: e['ev'] == 'review-fd-count', since, 30, 'final fd count')
     check('review: 32 real reliable-pipe provider errors remain IO with no committed request', len(failures) == 32 and all(e['code'] == 'IO' and e['state'] == 'FAILED' for e in failures), failures)
     check('review: repeated reliable-pipe failure descriptors close within baseline plus four framework FDs', before['count'] > 0 and after['count'] <= before['count'] + 4, {'before': before, 'after': after, 'repetitions': 32})
+    observations['review_fds'] = {'before': before, 'after': after, 'repetitions': 32, 'limit_delta': 4}
     clean_staging('review reliable pipe errors')
+
+
+@scenario
+def s_review_callback_failure(output):
+    since = mark(); send('send', 'txt-short')
+    _, commit, readback = settle(since, 'txt-short')
+    if commit['status'] != 0 or not readback['equal']:
+        raise Failure('direct callback test input did not complete SDK readback')
+    since = mark(); ctl('review-callback-failure')
+    event = wait(lambda e: e['ev'] == 'review-callback-failure', since, 60, 'direct executor throwing onReady')
+    check('review: direct Executor throwing onReady never produces onFailed or retracts commit and leases remain releasable',
+          event.get('ok') is True and event.get('ready_calls') == 2 and event.get('failed_calls') == 0 and event.get('first_state') == 'COMMITTED' and event.get('released_leases') == 2, event)
+    observations['review_callback_failure'] = event
 
 
 def main():
@@ -468,7 +482,7 @@ def main():
     for fn in (s_setup, s_view_epub_and_dedupe, s_send_pdf, s_multi_short_unknown, s_staged_dedupe, s_picker,
                s_hostile_name, s_failures, s_permission, s_cancel, s_close_entry, s_ui_close_keeps_copy,
                s_rotation, s_kill_during_copy, s_kill_after_publish,
-               s_review_ticket_races, s_review_ready_leases, s_review_reliable_pipe_fds):
+               s_review_ticket_races, s_review_ready_leases, s_review_reliable_pipe_fds, s_review_callback_failure):
         fn(args.output)
     (args.output / 'evidence.jsonl').write_text('\n'.join(json.dumps(e) for e in events()))
     (args.output / 'revoke.log').write_text(run_as(SRC, 'cat', 'files/revoke.log'))

@@ -11,6 +11,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.exreader.importentry.ImportEntry;
 import org.exreader.importentry.ImportError;
 import org.exreader.importentry.ImportOwner;
@@ -98,6 +99,7 @@ final class ProbeHost implements ImportOwner {
                 case "review-stale-release": reviewStaleLease(); break;
                 case "review-foreign-release": reviewForeignLease(); break;
                 case "review-close-generation": reviewCloseGeneration(); break;
+                case "review-callback-failure": reviewCallbackFailure(); break;
                 case "review-fd-count": {
                     String[] files = new File("/proc/self/fd").list();
                     org.json.JSONArray targets = new org.json.JSONArray();
@@ -121,6 +123,34 @@ final class ProbeHost implements ImportOwner {
             valid = entry.pendingReady().size() == 1 && values.get(1).file().isFile();
         }
         log("review-release-first", "ok", valid);
+    }
+
+    private void reviewCallbackFailure() {
+        ImportEntry direct = null;
+        try {
+            AtomicInteger readyCalls = new AtomicInteger(), failedCalls = new AtomicInteger();
+            AtomicReference<ImportTicket> first = new AtomicReference<>();
+            CountDownLatch delivered = new CountDownLatch(2);
+            direct = ImportEntry.create(app, new File(app.getFilesDir(), "direct-callback-entry"), Runnable::run, new ImportOwner() {
+                public void onReady(ImportTicket ticket, ReadyRequest request) {
+                    int count = readyCalls.incrementAndGet();
+                    if (count == 1) first.set(ticket);
+                    delivered.countDown();
+                    if (count == 1) throw new IllegalStateException("expected owner callback failure");
+                }
+                public void onFailed(ImportTicket ticket, ImportError error) { failedCalls.incrementAndGet(); }
+            });
+            android.net.Uri uri = android.net.Uri.parse("content://org.exreader.importprobe.source.docs/document/txt-short");
+            direct.submit(uri, "text/plain"); direct.submit(uri, "text/plain");
+            if (!delivered.await(30, TimeUnit.SECONDS)) throw new AssertionError("actual direct-executor provider callbacks missing");
+            List<ReadyRequest> values = direct.pendingReady();
+            boolean valid = readyCalls.get() == 2 && failedCalls.get() == 0 && first.get().state() == ImportTicket.State.COMMITTED && values.size() == 2 && values.get(0).file().isFile();
+            File file = values.isEmpty() ? null : values.get(0).file();
+            for (ReadyRequest request : values) direct.release(request);
+            valid &= file != null && !file.exists() && direct.pendingReady().isEmpty();
+            log("review-callback-failure", "ok", valid, "ready_calls", readyCalls.get(), "failed_calls", failedCalls.get(), "first_state", first.get().state().name(), "released_leases", values.size());
+        } catch (Throwable error) { log("review-callback-failure", "ok", false, "error", android.util.Log.getStackTraceString(error)); }
+        finally { if (direct != null) { for (ReadyRequest request : direct.pendingReady()) direct.release(request); direct.close(); } }
     }
 
     private void reviewLastLease() {

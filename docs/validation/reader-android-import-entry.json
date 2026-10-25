@@ -3,6 +3,10 @@
   "review_branch": "codex/reader-android-import-entry-review",
   "review_base": "635ddcb3f865059fd481f8deb9f7927e75743c6d",
   "review_state": "source_written_cloud_execution_pending",
+  "review_runs": [
+    {"source_sha":"206f89045a9c64c5f6188643f8e2117320a1a346","run_id":40160142660,"attempt":1,"conclusion":"failure","checks_passed":92,"checks_failed":1,"failure":"FD comparison107 to118 exceeded baseline+4; preserved; repetitive Activity churn removed from the next pipe-only regression without relaxing threshold","artifacts":[{"id":12586136477,"bytes":1131,"sha256":"7ba7355650f3e5b5d7ab8bb2c14b2f9581f6391c98bc3889188969a299e3db9b"},{"id":12585767715,"bytes":11561182,"sha256":"447150a233f9c58c772b38d509b587adbb2562d9271e6d4ab74bcd2c11727a43"}]},
+    {"source_sha":"36021cce35f90b8439f85967075bd34c7d867306","run_id":40160762696,"attempt":1,"conclusion":"success","jobs":{"guards":121071633609,"android":121071633817,"summary":121072505494},"checks_passed":94,"checks_failed":0,"required_checks":41,"problems":[],"raw_zip_authentication":true,"covers_callback_followup":false,"artifacts":[{"id":12585753398,"bytes":1132,"sha256":"0ca846d61b02601989fcda76b636470650e71e4ebc19ba48c223e69c34934c9d"},{"id":12586742305,"bytes":11554191,"sha256":"b651c3179319e50733f3d53284d792211b3c90cce2b6e7d10612d1ee57b2cf71"},{"id":12586008151,"bytes":1136,"sha256":"c92ed45cb131ff13857909c629232ceeb956e84e86d33f730366a2e1873b2b4b"}]}
+  ],
   "original_delivery": {
   "work_package": "J04",
   "branch": "codex/reader-android-import-entry",

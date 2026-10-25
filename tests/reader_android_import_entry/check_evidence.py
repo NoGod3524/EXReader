@@ -51,6 +51,7 @@ REQUIRED_SCENARIOS = [
     'review: 32 real reliable-pipe provider errors remain IO with no committed request',
     'review: real share grants the pipe URI and warmup reports IO',
     'review: repeated reliable-pipe failure descriptors close within baseline plus four framework FDs',
+    'review: direct Executor throwing onReady never produces onFailed or retracts commit and leases remain releasable',
 ]
 
 
@@ -106,6 +107,10 @@ def main():
                'required_checks': len(REQUIRED_SCENARIOS)}
     if not problems:
         summary['checks_passed'] = results['passed']
+        fds = results.get('observations', {}).get('review_fds', {})
+        summary['review_fds'] = {key: fds.get(key) for key in ('repetitions', 'limit_delta')}
+        summary['review_fds'].update(before=fds.get('before', {}).get('count'), after=fds.get('after', {}).get('count'))
+        summary['review_callback_failure'] = results.get('observations', {}).get('review_callback_failure')
         summary['device'] = {'api': results['device_api'], 'abi': results['device_abi'], 'kind': 'emulator'}
         summary['artifacts'] = {p.name: sha(p) for p in sorted(args.android.glob('*.json'))}
         summary['scope'] = ('API34 x86_64 emulator, real DocumentsProvider and intents; not a physical device, '
