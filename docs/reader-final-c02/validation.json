@@ -2,12 +2,35 @@
   "schema": 1,
   "package": "C02",
   "accepted": false,
-  "reason": "No Actions run has been executed yet for the tested implementation source.",
+  "reason": "Three CI rounds used; no run produced a complete, problem-free aggregate. Tools themselves ran end to end on real compact hosts.",
   "fixed_start": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
   "gtk_producer": "57203a52aee439be5194ee0a4b13563a975e8daf",
-  "tested_source": null,
+  "gtk_sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "tested_source": "8796812478b01cb965338103260a19d143463010",
   "docs_seal_source": null,
-  "runs": [],
+  "runs": [
+    {"run": 40214285241, "attempt": 1, "source": "169b0be3c1c8199be0211649412d23d9e34041e4", "result": "failure",
+     "failure": "Windows warm-01 waited 3600s (reused profile restored reading view); both Windows jobs cancelled at the job limit; verify crashed on missing bundle. GTK rounds complete (384 rows each, 0 not ok)."},
+    {"run": 40228584162, "attempt": 1, "source": "fd95c5def517cc95cd369c2ca21d9c5bfc5b8a69", "result": "failure",
+     "failure": "Windows n500 resume restore mismatch (r1: 3 launches, r2: 2); GTK r1 n500 launch 05 import worker never started (2 samples failed)."},
+    {"run": 40230206029, "attempt": 1, "source": "8796812478b01cb965338103260a19d143463010", "result": "failure",
+     "failure": "Windows r2 n5000 resume-02/03 failed (no transition; restored position differs); GTK r2 launch g2-n5000-05 flagged failed by launch record although 384 rows ok. Windows r1 and GTK r1 clean."}
+  ],
+  "latest_run_jobs": {"preflight": 121280093680, "windows-build": 121280133727, "gtk-build": 121280133723,
+    "windows-round1": 121281076768, "windows-round2": 121281076711, "gtk-round1": 121281852128,
+    "gtk-round2": 121281852220, "verify": 121283017714},
+  "latest_run_artifacts": [
+    {"name": "c02-win-build", "id": 12611889619, "bytes": 20442814, "sha256": "c149aede521a8b1b4be303cb8a6f6f5a15ba54230db2381f4e1f06acccf398c9"},
+    {"name": "c02-gtk-build", "id": 12612841006, "bytes": 40764137, "sha256": "69654f5f417b73b78ade58f8f3631c36576d62b5da8f84ad163112df82184db8"},
+    {"name": "c02-win-round1", "id": 12612871327, "bytes": 188278, "sha256": "3bf3e97cf9c53164b56a966108b3d50b1b68d13057e02953c56e51fa1feca119"},
+    {"name": "c02-win-round2", "id": 12612749007, "bytes": 179622, "sha256": "f9fc9534407581c8f5920458f5842d6f4ca19292d31c09a3365cea385dfda31e"},
+    {"name": "c02-gtk-round1", "id": 12613101666, "bytes": 3983304, "sha256": "cc33cac764d569291b17febdd8276eae0d33aab103f9714081ea6748dc0d1f21"},
+    {"name": "c02-gtk-round2", "id": 12612846777, "bytes": 3983200, "sha256": "ce4259af1348061d2846a65c97adf408ae194bbde445f43f5aea78046e73fc8b"},
+    {"name": "c02-summary", "id": 12612926140, "bytes": 11528, "sha256": "8206a672c0e3778c61f5944b4f4b6b878dce964802a6e3c5e5ea6b7ccd448aae"}
+  ],
+  "expires_at": "2027-01-23T20:19:16Z",
+  "program_sha256": {"windows_compact_exe": "72e39bf5622611e9ae0c90b115ba01679356e7411917b0350ef222d1526aea18",
+                     "gtk_compact_exreader_linux": "2b2208d6d67f558af22f1bde6953af90d6b4740425297b4bde2410f2c6bdf22b"},
   "budget_approved": false,
   "frame_time_measured": false
 }
