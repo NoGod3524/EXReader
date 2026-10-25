@@ -122,10 +122,33 @@ jobs:
           if-no-files-found: error
       - if: always() && (steps.ui.outcome != 'success' || steps.evidence.outcome != 'success')
         run: exit 1
+  fast-import:
+    name: Real initialization and same-turn import publication
+    needs: [sdk, native]
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: apple-theme-sdk-iphonesimulator-${{ github.run_id }}-${{ github.run_attempt }}
+          path: sdk-artifact
+      - name: Preserve both deterministic actual owner UI assertions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_host/page_theme/fast_import/run.py --sdk sdk-artifact/stage/iphonesimulator --sdk-identity sdk-artifact/build/sdk-identity.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-theme-fast-import-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-shelf-publication/
+          if-no-files-found: error
   summary:
     name: Strict same-source page theme summary
     if: always()
-    needs: [sdk, native, ui]
+    needs: [sdk, native, ui, fast-import]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
