@@ -34,8 +34,13 @@ def configure(source,build,options,name):
 def owner_run(exe,mode,work,pdf,*extra):
     run([exe,mode,work,pdf,*extra],'owner-'+work.name+'-'+mode,300)
     report=json.loads((work/('report-'+mode+'.json')).read_text(encoding='utf-8'))
+    raw=exe.parent.name=='raw-owner-probe'
+    versions={key:('0.2.0' if raw else '0.1.0') for key in
+              ('commands','metadata','reading_state','reading_commands','annotation_view','sync','session')}
+    versions['revisions']='0.4.0' if raw else '0.3.0'
     if (report.get('ok') is not True or report.get('source_sha')!=os.environ['GITHUB_SHA']
             or report.get('mode')!=mode or report.get('sdk_version')!='3.41.0'
+            or report.get('profile')!=('raw3' if raw else 'legacy') or report.get('versions')!=versions
             or report.get('owner_source_sha256')!=hashlib.sha256(
                 (ROOT/'apps/reader/desktop/windows_records_owner.cpp').read_bytes()).hexdigest()
             or report.get('program_sha256')!=hashlib.sha256(exe.read_bytes()).hexdigest()
@@ -90,6 +95,8 @@ def killed_owner(exe,legacy_exe,work,pdf,phase,legacy=False):
         if (work/'pending.bin').read_bytes()!=pending:
             raise RuntimeError('Legacy writer changed the original raw pending file')
         owner_run(exe,'verify-child',work,pdf,str(phase))
+    if (work/'pending-before-retry.bin').read_bytes()!=pending or (work/'pending.bin').exists():
+        raise RuntimeError('Recovery did not consume exactly the original killed-process request')
 
 
 def main():
