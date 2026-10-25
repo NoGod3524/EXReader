@@ -104,7 +104,10 @@ static void raw_legacy_restore(linux_reader *reader) {
 static void raw_peer(linux_reader *reader,const char *index,int nullable) {
   reader_command command=compat_command(READER_RECEIVE_BEGIN);reader_result result={0};
   for(unsigned round=0;round<64;round++) {
-    linux_reader_execute(reader,&command,&result);compat_check(result.status==EXR_OK,"actual GTK received owner projects authenticated network history");
+    linux_reader_execute(reader,&command,&result);
+    if(result.status!=EXR_OK)fprintf(stderr,"received-project status=%d response=%d seen=%llu projected=%llu pending=%d message=%s\n",
+      result.status,result.receive_response,(unsigned long long)result.receive_seen,(unsigned long long)result.receive_projected,result.metadata_pending,result.message);
+    compat_check(result.status==EXR_OK,"actual GTK received owner projects authenticated network history");
     int more=result.receive_more;reader_result_free(&result);if(!more)break;
     command.action=READER_RECEIVE_NEXT;compat_check(round<63,"actual received projection remains bounded");
   }
