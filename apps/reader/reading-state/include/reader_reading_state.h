@@ -72,6 +72,12 @@ reader_rs_status reader_rs_encode(reader_revisions *, const reader_rs_envelope *
    part. Encoding validates bytes but does not insert or choose history. */
 reader_rs_status reader_rs_encode_v2(reader_revisions *, const reader_rs_envelope *,
   const reader_rs_capture *, size_t part, char **wire, size_t *bytes, reader_rs_error *);
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+/* Explicit candidate only: fixed_page anchor3; unchanged envelope/schema1.
+   Pointer presence, byte lengths and NUL selectors are preserved. No insert. */
+reader_rs_status reader_rs_encode_fixed_v3(reader_revisions *,const reader_rs_envelope *,
+  const reader_rs_capture *,char **wire,size_t *bytes,reader_rs_error *);
+#endif
 void reader_rs_free(void *);
 
 /* Decoded copy of one revalidated wire (anchor v1/v2). has_location is zero for delete. */
@@ -87,6 +93,12 @@ typedef struct {
 } reader_rs_record;
 reader_rs_status reader_rs_decode(reader_revisions *, const void *wire, size_t bytes,
   reader_rs_record *, reader_rs_error *);
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+/* Accepts retained v1/v2 unchanged and explicit fixed v3. Requires raw-v3 store.
+   NULL differs from an allocated empty value; sizes exclude the safety terminator. */
+reader_rs_status reader_rs_decode_raw_v3(reader_revisions *,const void *,size_t,
+  reader_rs_record *,reader_rs_error *);
+#endif
 void reader_rs_record_free(reader_rs_record *);
 
 /* Public SDK resolution only. OK means FOUND; MISSING/AMBIGUOUS/LEGACY return
@@ -105,6 +117,10 @@ reader_rs_status reader_rs_fixed_page(exr_fixed_document *, const char *page_id,
   size_t *page, reader_rs_error *);
 reader_rs_status reader_rs_resolve_fixed(exr_fixed_document *, const reader_rs_record *,
   const exr_control *, size_t *page, exr_anchor_match *, reader_rs_error *);
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+reader_rs_status reader_rs_resolve_fixed_v3(exr_fixed_document *,const reader_rs_record *,
+  const exr_control *,size_t *page,exr_anchor_match *,reader_rs_error *);
+#endif
 
 /* Annotation persistence through public SDK note APIs, only after FOUND.
    existing_note_id is the receiver's own SDK note (0 creates). Product history

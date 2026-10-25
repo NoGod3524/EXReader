@@ -5,6 +5,7 @@ namespace {
 void check_sdk(exr_status status,const char *message){if(status!=EXR_OK)reject(READER_RS_SDK,message,READER_RS_GAP_NONE,(int)status);}
 void require_selector(const reader_rs_record *r,reader_rs_mode mode){
   if(!r||!r->has_location||r->mode!=mode||!r->exact)reject(READER_RS_ARGUMENT,"Record has no selector for this reading mode");
+  if(r->anchor_version!=1&&r->anchor_version!=2)reject(READER_RS_ARGUMENT,"Legacy resolver accepts only anchor1/2");
   if(r->end<r->start||r->end-r->start!=r->exact_size)reject(READER_RS_ARGUMENT,"Wire offset hints disagree with the quote length");
   if(r->start>SIZE_MAX||r->end>SIZE_MAX)reject(READER_RS_ARGUMENT,"Selector exceeds this host's address range");
 }
@@ -52,9 +53,12 @@ size_t fixed_page(exr_fixed_document *doc,const char *page_id){
   if(hits!=1)reject(READER_RS_IDENTITY,"Fixed page ID is not unique in this original");
   return page;
 }
-size_t resolve_fixed(exr_fixed_document *doc,const reader_rs_record *r,const exr_control *control,exr_anchor_match *match){
+size_t resolve_fixed(exr_fixed_document *doc,const reader_rs_record *r,const exr_control *control,exr_anchor_match *match,bool raw=false){
   if(!match)reject(READER_RS_ARGUMENT,"Missing match output");
-  require_selector(r,READER_RS_FIXED_PAGE);
+  if(raw){
+    if(!r||r->anchor_version!=3||r->mode!=READER_RS_FIXED_PAGE||!r->has_location||!r->exact||r->end<r->start||r->end-r->start!=r->exact_size||r->start>SIZE_MAX||r->end>SIZE_MAX)
+      reject(READER_RS_ARGUMENT,"Invalid fixed anchor3 selector");
+  }else require_selector(r,READER_RS_FIXED_PAGE);
   size_t page=fixed_page(doc,r->page_id);
   if(page!=r->page)reject(READER_RS_IDENTITY,"Page-number hint disagrees with the page ID; no page is guessed");
   exr_fixed_text *text=nullptr;exr_error e{};
@@ -88,6 +92,13 @@ extern "C" reader_rs_status reader_rs_resolve_fixed(exr_fixed_document *doc,cons
   if(page)*page=SIZE_MAX;
   return call(error,[&]{size_t found_page=resolve_fixed(doc,r,control,match);if(page)*page=found_page;});
 }
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+extern "C" reader_rs_status reader_rs_resolve_fixed_v3(exr_fixed_document *doc,const reader_rs_record *r,const exr_control *control,size_t *page,exr_anchor_match *match,reader_rs_error *error){
+  if(page)*page=SIZE_MAX;
+  if(match){match->state=EXR_ANCHOR_MISSING;match->start=match->end=SIZE_MAX;}
+  return call(error,[&]{size_t n=resolve_fixed(doc,r,control,match,true);if(page)*page=n;});
+}
+#endif
 extern "C" reader_rs_status reader_rs_store_reflow_note(exr_library *lib,int64_t book,const exr_document *doc,const reader_rs_record *r,int64_t existing,int64_t *id,exr_anchor_match *match,reader_rs_error *error){
   if(id)*id=0;
   return call(error,[&]{
