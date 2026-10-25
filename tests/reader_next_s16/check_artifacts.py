@@ -156,12 +156,12 @@ def protocol_selftest():
             rejected += 1
         else:
             raise AssertionError('accepted invalid raw checks')
-    os.environ.setdefault('GITHUB_SHA', 'source')
-    os.environ.setdefault('GITHUB_RUN_ID', '7')
-    os.environ.setdefault('GITHUB_RUN_ATTEMPT', '1')
+    source = os.environ.get('GITHUB_SHA', 'source')
+    run = os.environ.get('GITHUB_RUN_ID', '7')
+    attempt = os.environ.get('GITHUB_RUN_ATTEMPT', '1')
     record = dict(platform='Linux', expired=False, zip_bytes=10, api_bytes=10, api_digest='sha256:a',
                   zip_digest='sha256:a')
-    good_summary = dict(identity=dict(GITHUB_SHA='source', GITHUB_RUN_ID='7', GITHUB_RUN_ATTEMPT='1'),
+    good_summary = dict(identity=dict(GITHUB_SHA=source, GITHUB_RUN_ID=run, GITHUB_RUN_ATTEMPT=attempt),
                         platform='Linux', report_sha256=hashlib.sha256(b'report').hexdigest(),
                         probe_sha256=hashlib.sha256(b'probe').hexdigest(),
                         no_write={key: (0 if key not in ('databases_unchanged', 'control_write_changed') else True)
