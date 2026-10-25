@@ -164,6 +164,18 @@ void read_found(Book &b,bool progress,const std::string &aid,unsigned version,co
   expect(product_snapshot(b)==before,label+" LIST/READ/FOUND has zero product writes");expect(sdk_snapshot(b)==sdk_before,label+" owner read leaves SDK notes/progress/original unchanged");
 }
 void bootstrap(Book &b){Revisions s(b.database);uint64_t bytes=0;auto st=reader_revision_book_identity(s.p,b.key.c_str(),&bytes,nullptr);if(st==READER_REV_OK){require(bytes==b.original.size(),"Retained book identity");return;}require(st==READER_REV_NOT_FOUND,"Missing book history before explicit bootstrap");std::string rid=new_id();reader_command_context ctx{s.p,rid.c_str(),nullptr,0};reader_book_command cmd{};cmd.operation=READER_COMMAND_PUT;cmd.book_key=b.key.c_str();cmd.format=b.format.c_str();cmd.source_sha256=b.hash.c_str();cmd.title=b.title.c_str();cmd.author="";cmd.sort_title=b.title.c_str();cmd.source_bytes=b.original.size();reader_command_result result{};require(reader_command_apply_book(&ctx,&cmd,&result,nullptr)==READER_COMMAND_OK,"Public typed book bootstrap");}
+#ifdef EXR_READER_WINDOWS_RAW3
+#undef reader_revisions_open
+#endif
+reader_rs_status encode_legacy_source(Book &b,unsigned version,const reader_rs_envelope &env,const Capture &cap,char **bytes,size_t *n,reader_rs_error *error){
+  reader_revisions *legacy=nullptr;reader_revision_error re{};
+  require(reader_revisions_open((b.root/"legacy-encoder.sqlite").u8string().c_str(),&legacy,&re)==READER_REV_OK,std::string("Open actual legacy encoder store: ")+re.message);
+  auto status=version==1?reader_rs_encode(legacy,&env,&cap.c,bytes,n,error):reader_rs_encode_v2(legacy,&env,&cap.c,cap.part,bytes,n,error);
+  reader_revisions_close(&legacy,nullptr);return status;
+}
+#ifdef EXR_READER_WINDOWS_RAW3
+#define reader_revisions_open reader_revisions_open_raw_v3
+#endif
 std::string seed(Book &b,unsigned version,const std::string &aid,const char *parser,bool nullable=false,const Selected *parent=nullptr,bool remote=false){
   bootstrap(b);b.context.range=true;Capture cap;capture_now(b,cap);exr_fixed_anchor null_expression{};
   if(nullable){/* A retained NULL transport expression, explicitly not an SDK capture. */null_expression.page_id=cap.f.page_id;cap.c.fixed=&null_expression;cap.c.page=0;}
@@ -172,9 +184,10 @@ std::string seed(Book &b,unsigned version,const std::string &aid,const char *par
 #ifdef EXR_READER_WINDOWS_RAW3
   if(version==3)st=reader_rs_encode_fixed_v3(s.p,&e,&cap.c,&bytes,&n,&error);else
 #endif
-  if(version==1)st=reader_rs_encode(s.p,&e,&cap.c,&bytes,&n,&error);else st=reader_rs_encode_v2(s.p,&e,&cap.c,cap.part,&bytes,&n,&error);
+  st=encode_legacy_source(b,version,e,cap,&bytes,&n,&error);
   require(st==READER_RS_OK,std::string("Encode genuine selected source: ")+error.message);std::string wire(bytes,n);reader_rs_free(bytes);reader_revision_info info{};int created=0;
-  auto status=remote?reader_revision_receive(s.p,wire.data(),wire.size(),nullptr,&info,&created,nullptr):reader_revision_local_reading(s.p,wire.data(),wire.size(),parent?&p:nullptr,parent?1:0,&info,&created,nullptr);
+  const auto transport_sha=sha(wire);
+  auto status=remote?reader_revision_receive(s.p,wire.data(),wire.size(),transport_sha.c_str(),&info,&created,nullptr):reader_revision_local_reading(s.p,wire.data(),wire.size(),parent?&p:nullptr,parent?1:0,&info,&created,nullptr);
   require(status==READER_REV_OK&&created,"Commit real retained selected source");return rid;
 }
 void roundtrip(Book &b,const std::string &aid,unsigned version,const std::string &source_rid){
@@ -240,7 +253,7 @@ void reject_pending(const fs::path &work,const fs::path &pdf,bool legacy_book){
 }
 #ifdef EXR_READER_WINDOWS_RAW3
 void newer_progress(Book &b,const Selected &prior){
-  Capture cap;capture_now(b,cap);Revisions store(b.database);auto rid=new_id();const char *parent=prior.info.revision_id;reader_rs_envelope env{};env.revision_id=rid.c_str();env.operation="put";env.entity_kind="progress";env.book_key=b.key.c_str();env.parents=&parent;env.parent_count=1;env.parser_version=exr_version();char *bytes=nullptr;size_t n=0;require(reader_rs_encode_fixed_v3(store.p,&env,&cap.c,&bytes,&n,nullptr)==READER_RS_OK,"Encode genuine newer remote progress");std::string wire(bytes,n);reader_rs_free(bytes);reader_revision_info info{};int created=0;require(reader_revision_receive(store.p,wire.data(),wire.size(),nullptr,&info,&created,nullptr)==READER_REV_OK&&created,"Receive actual newer head after original retained RID");
+  Capture cap;capture_now(b,cap);Revisions store(b.database);auto rid=new_id();const char *parent=prior.info.revision_id;reader_rs_envelope env{};env.revision_id=rid.c_str();env.operation="put";env.entity_kind="progress";env.book_key=b.key.c_str();env.parents=&parent;env.parent_count=1;env.parser_version=exr_version();char *bytes=nullptr;size_t n=0;require(reader_rs_encode_fixed_v3(store.p,&env,&cap.c,&bytes,&n,nullptr)==READER_RS_OK,"Encode genuine newer remote progress");std::string wire(bytes,n);reader_rs_free(bytes);reader_revision_info info{};int created=0;require(reader_revision_receive(store.p,wire.data(),wire.size(),sha(wire).c_str(),&info,&created,nullptr)==READER_REV_OK&&created,"Receive actual newer head after original retained RID");
 }
 void verify_child(const fs::path &work,const fs::path &pdf,int phase,bool legacy){
   Book b(work,pdf,!legacy);auto original=read(fs::path(b.pending));require(original.substr(0,8)==(legacy?"EXRRD001":"EXRRD002"),"Actual legacy/OFF or raw/ON producer private magic");write(work/"pending-before-retry.bin",original);std::string rid=pending_revision(b);auto before=product_snapshot(b);
