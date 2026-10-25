@@ -24,12 +24,14 @@
         "records_run":40195374154,"original_failure_preserved":true,
         "movie_inspection_run":40203788769,"movie_inspection_conclusion":"success",
         "movie_observation":"empty shelf and ready status persist after real CBZ tap; callback trace is not recoverable from movie",
-        "observational_reproduction_source":"f2230cf1","scope":"new diagnostic only; original production, fixture and assertions preserved",
+        "observational_reproduction_source":"df517051aeb5703c1899c58e8d4bd1acef5bf2a7","observational_reproduction_run":40205227355,"scope":"new diagnostic only; original production, fixture and assertions preserved",
         "theme_complete_rerun":40203445172,"theme_conclusion":"failure",
-        "theme_failure":"FastImportUITests.swift:85 waits for reader page containing C00P000W00 after imported shelf row already passed; distinct from records empty shelf"
+        "theme_failure":"FastImportUITests.swift:85 waits for reader page containing C00P000W00 after imported shelf row already passed; original movie stays on imported shelf",
+        "theme_iphone_failure":"authenticated system-commands.json again shows simctl appearance light45s timeout before build",
+        "theme_readonly_inspection_run":40205227429
       },
       "active_candidates": {
-        "gtk_compact":{"source":"34bd903a","run":40204507162,"state":"in_progress","production_pin":"a7bcf0483fb52ecf9cd3cdf7dda07a4aa742f174","diagnostic_run":40204389861,"diagnostic":"actual submenu parent role menu; leaf menu item"},
+        "gtk_compact":{"source":"3e719c51","run":40205409399,"state":"in_progress","production_pin":"fedce16a","diagnostic_run":40205198425,"diagnostic":"records dialog active, list disabled during async query so original focus request fails; compact entry focuses existing Close then tests keyboard reachability to real editor/record rows","prior_full_run":40204507162,"prior_conclusion":"failure_after20_new_UI_checks"},
         "android_raw3":{"source":"ade3fbffe928534891d9f91cb1fc44a994342501","run":40204041412,"state":"pending_final_result"},
         "apple_ios_raw3":{"source":"72c6bbdd14ebf3be453fa7f0da81119d52675eb5","run":40203714083,"state":"pending_final_result"},
         "apple_macos_raw3":{"tested_source":"15dab6b2270dc296ed6239db67ced2e22d255e65","sealed_head":"44eabdc86b3b84d986f81dbaf8cee92b1829cea8","run":40196978163,"conclusion":"success","sender_wires":15,"originals":4,"records":11}
