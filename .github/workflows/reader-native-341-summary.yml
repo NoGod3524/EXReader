@@ -1,13 +1,13 @@
 name: Collect complete fixed-source native foundation leaves
 on:
   push:
-    branches: [codex/reader-hosts-341-final, codex/reader-native-341-protocol, codex/reader-native-341-windows-contract]
+    branches: [codex/reader-hosts-341-final, codex/reader-native-341-protocol, codex/reader-native-341-windows-contract, codex/reader-native-341-source-preflight]
   workflow_dispatch:
     inputs:
       mode:
-        description: Protocol self-test or authenticated native collection
+        description: Protocol self-test, complete source guards or authenticated native collection
         type: choice
-        options: [protocol, collect]
+        options: [protocol, source-preflight, collect]
         default: protocol
       source_sha:
         description: Exact common checkout and every complete leaf source SHA
@@ -33,6 +33,45 @@ jobs:
         run: |
           python -m py_compile tests/reader_hosts_341/aggregate_native.py tests/reader_hosts_341/test_aggregate_native.py
           python tests/reader_hosts_341/aggregate_native.py --self-test
+  source-preflight:
+    needs: protocol
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'source-preflight'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    env:
+      EXR_SDK_VERSION: 3.41.0
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install PyYAML==6.0.3
+      - name: Authenticate complete composition caller without building
+        run: python tests/reader_hosts_341/guard_composition.py
+      - name: Authenticate complete GTK caller without building
+        if: always()
+        run: python tests/reader_hosts_341/guard_gtk.py
+      - name: Authenticate complete Android130 caller without building
+        if: always()
+        run: python tests/reader_hosts_341/guard_android.py
+      - name: Authenticate all seven Apple callers without building
+        if: always()
+        run: python tests/apple_host/page_theme/guard.py
+      - name: Authenticate complete Windows caller without building
+        if: always()
+        run: python tests/reader_windows_341/guard.py
+      - name: Authenticate upper collector exact production boundary
+        if: always()
+        run: |
+          python - <<'PY'
+          import os, sys
+          sys.path.insert(0, 'tests/reader_hosts_341')
+          from aggregate_native import source_guard
+          source_guard(os.environ['GITHUB_SHA'])
+          print('Exact common-source collector boundary authenticated; no native acceptance granted')
+          PY
   collect:
     needs: protocol
     if: github.event_name == 'workflow_dispatch' && inputs.mode == 'collect'
