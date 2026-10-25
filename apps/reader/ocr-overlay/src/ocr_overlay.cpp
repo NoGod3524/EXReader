@@ -298,7 +298,10 @@ Status reader_ocr_overlay_check_current(const reader_ocr_overlay *o, const char 
   if(!same_geometry(o->info.geometry, *geometry)) return fail(e, READER_OCR_OVERLAY_STALE, 0, "Page geometry changed");
   if(o->info.scale != scale) return fail(e, READER_OCR_OVERLAY_STALE, 0, "Render scale changed");
   if(bitmap) {
-    if(!bitmap->pixels || (bitmap->channels != 1 && bitmap->channels != 4)) return fail(e, READER_OCR_OVERLAY_ARGUMENT, 0, "Invalid currency bitmap");
+    /* The hash walks height rows of stride bytes: refuse a stride that would read past a row. */
+    if(!bitmap->pixels || (bitmap->channels != 1 && bitmap->channels != 4) ||
+       bitmap->stride < static_cast<size_t>(bitmap->width) * bitmap->channels)
+      return fail(e, READER_OCR_OVERLAY_ARGUMENT, 0, "Invalid currency bitmap");
     if(bitmap->width != o->info.bitmap_width || bitmap->height != o->info.bitmap_height || fnv1a(*bitmap) != o->info.pixel_fnv1a)
       return fail(e, READER_OCR_OVERLAY_STALE, 0, "Page pixels changed");
   }

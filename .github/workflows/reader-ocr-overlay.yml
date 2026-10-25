@@ -1,7 +1,7 @@
 name: Reader OCR overlay temporary text snapshot
 on:
   push:
-    branches: [codex/reader-ocr-overlay]
+    branches: [codex/reader-ocr-overlay, codex/reader-ocr-overlay-review]
   workflow_dispatch:
 permissions:
   contents: read

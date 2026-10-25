@@ -53,6 +53,7 @@ const char *const kChecks[] = {
   "render_fixture_page",
   "recognize_bitmap_ok",
   "recognize_bitmap_matches_page",
+  "check_current_bitmap",
   "snapshot_outlives_bitmap",
   "snapshot_outlives_document",
   "rotation_90_page",
@@ -515,6 +516,33 @@ int main(int argc, char **argv) {
       std::string(text, host_bytes) == std::string(baseline_text, baseline_bytes);
     check("recognize_bitmap_matches_page", same,
       "host_items=" + std::to_string(host_items) + " page_items=" + std::to_string(baseline_items));
+  }
+  {
+    /* Bitmap currency: the same pixels are current; one changed pixel, a changed scale or page id,
+       and a stride shorter than a row are each refused (the last before any pixel is read). */
+    reader_ocr_overlay_error cur{};
+    exr_bitmap same_view = rendered;
+    const Status same = host.value ? reader_ocr_overlay_check_current(host.value, "page-scan", &page_geometry, 1.0, &same_view, &cur)
+                                   : READER_OCR_OVERLAY_ARGUMENT;
+    std::vector<unsigned char> copy(static_cast<size_t>(rendered.stride) * rendered.height);
+    std::memcpy(copy.data(), rendered.pixels, copy.size());
+    copy[0] ^= 0xff;
+    exr_bitmap changed = rendered;
+    changed.pixels = copy.data();
+    const Status pixels = host.value ? reader_ocr_overlay_check_current(host.value, "page-scan", &page_geometry, 1.0, &changed, &cur)
+                                     : READER_OCR_OVERLAY_ARGUMENT;
+    const Status scale = host.value ? reader_ocr_overlay_check_current(host.value, "page-scan", &page_geometry, 2.0, nullptr, &cur)
+                                    : READER_OCR_OVERLAY_ARGUMENT;
+    const Status page = host.value ? reader_ocr_overlay_check_current(host.value, "other-page", &page_geometry, 1.0, nullptr, &cur)
+                                   : READER_OCR_OVERLAY_ARGUMENT;
+    exr_bitmap short_stride = rendered;
+    short_stride.stride = rendered.width * rendered.channels - 1;
+    const Status stride = host.value ? reader_ocr_overlay_check_current(host.value, "page-scan", &page_geometry, 1.0, &short_stride, &cur)
+                                     : READER_OCR_OVERLAY_ARGUMENT;
+    check("check_current_bitmap", same == READER_OCR_OVERLAY_OK && pixels == READER_OCR_OVERLAY_STALE &&
+      scale == READER_OCR_OVERLAY_STALE && page == READER_OCR_OVERLAY_STALE && stride == READER_OCR_OVERLAY_ARGUMENT,
+      std::string("same=") + status_name(same) + " pixels=" + status_name(pixels) + " scale=" + status_name(scale) +
+      " page=" + status_name(page) + " stride=" + status_name(stride));
   }
   {
     const reader_ocr_overlay_info *host_info = host.value ? reader_ocr_overlay_get_info(host.value) : nullptr;

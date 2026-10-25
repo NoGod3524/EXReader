@@ -23,7 +23,7 @@ REQUIRED = {
     'recognize_page_locate_rows', 'recognize_page_pixel_quad_consistent',
     'recognize_page_confidence_filter', 'render_fixture_page',
     'recognize_bitmap_ok', 'recognize_bitmap_matches_page',
-    'snapshot_outlives_bitmap', 'snapshot_outlives_document',
+    'check_current_bitmap', 'snapshot_outlives_bitmap', 'snapshot_outlives_document',
     'rotation_90_page', 'rotation_180_page', 'rotation_270_page',
     'rotation_quads_invariant', 'content_rotation_90_upright',
     'scale_1_5_page', 'scale_1_5_quads_agree', 'blank_page_empty',
