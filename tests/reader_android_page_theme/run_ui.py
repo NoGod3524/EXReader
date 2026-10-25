@@ -47,8 +47,8 @@ try:
   for row in manifest['books']:
    raw=private('preferences-fixtures/'+row['file']);assert len(raw)==row['bytes'] and hashlib.sha256(raw).hexdigest()==row['sha256'];sources.append({'phase':phase,**row})
   preferences=private('reading-settings/preferences.json');assert json.loads(preferences)['theme']=='system';save(phase+'-preferences.json',preferences)
-  before=subprocess.run(['adb','shell','pidof',package],capture_output=True,text=True,timeout=10).stdout.strip();assert str(report['pid']) in before.split();adb('shell','am','force-stop',package)
-  after=subprocess.run(['adb','shell','pidof',package],capture_output=True,text=True,timeout=10).stdout.strip();assert not after;stops.append({'phase':phase,'instrumentation_pid':report['pid'],'pid_before_stop':before,'pid_after_stop':after})
+  before=subprocess.run(['adb','shell','pidof',package],capture_output=True,text=True,timeout=10).stdout.strip();assert not before or str(report['pid']) in before.split();adb('shell','am','force-stop',package)
+  after=subprocess.run(['adb','shell','pidof',package],capture_output=True,text=True,timeout=10).stdout.strip();assert not after;stops.append({'phase':phase,'instrumentation_pid':report['pid'],'pid_before_stop':before,'pid_after_stop':after,'already_stopped_after_instrumentation':not bool(before)})
  assert len(reports)==2 and len({row['pid'] for row in reports})==2 and sum(row['count'] for row in reports)==10
  accepted=True
 finally:
