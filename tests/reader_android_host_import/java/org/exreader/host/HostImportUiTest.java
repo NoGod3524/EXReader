@@ -51,7 +51,18 @@ public final class HostImportUiTest extends Instrumentation {
     private static String text(AccessibilityNodeInfo node){return String.valueOf(node.getText()==null?"":node.getText());}
     private static boolean id(AccessibilityNodeInfo node,String name){return node.getViewIdResourceName()!=null&&node.getViewIdResourceName().endsWith("/"+name);}
     private void tap(AccessibilityNodeInfo node){if(!"com.android.documentsui".contentEquals(node.getPackageName()==null?"":node.getPackageName())&&node.performAction(AccessibilityNodeInfo.ACTION_CLICK))return;touch(node);}
-    private void touch(AccessibilityNodeInfo node){Rect bounds=new Rect();node.getBoundsInScreen(bounds);need(bounds.width()>0&&bounds.height()>0,"actual visible pointer target");long down=SystemClock.uptimeMillis();MotionEvent start=MotionEvent.obtain(down,down,MotionEvent.ACTION_DOWN,bounds.centerX(),bounds.centerY(),0);start.setSource(android.view.InputDevice.SOURCE_TOUCHSCREEN);try{need(getUiAutomation().injectInputEvent(start,true),"actual cross-window pointer down");}finally{start.recycle();}SystemClock.sleep(60);MotionEvent end=MotionEvent.obtain(down,SystemClock.uptimeMillis(),MotionEvent.ACTION_UP,bounds.centerX(),bounds.centerY(),0);end.setSource(android.view.InputDevice.SOURCE_TOUCHSCREEN);try{need(getUiAutomation().injectInputEvent(end,true),"actual cross-window pointer up");}finally{end.recycle();}}
+    private void touch(AccessibilityNodeInfo node){
+        Rect bounds=new Rect();node.getBoundsInScreen(bounds);need(bounds.width()>0&&bounds.height()>0,"actual visible pointer target");
+        MotionEvent.PointerProperties finger=new MotionEvent.PointerProperties();finger.id=0;finger.toolType=MotionEvent.TOOL_TYPE_FINGER;
+        MotionEvent.PointerCoords point=new MotionEvent.PointerCoords();point.x=bounds.centerX();point.y=bounds.centerY();point.pressure=1;point.size=1;
+        long down=SystemClock.uptimeMillis();
+        MotionEvent start=MotionEvent.obtain(down,down,MotionEvent.ACTION_DOWN,1,new MotionEvent.PointerProperties[]{finger},new MotionEvent.PointerCoords[]{point},0,0,1,1,0,0,android.view.InputDevice.SOURCE_TOUCHSCREEN,0);
+        try{need(start.getToolType(0)==MotionEvent.TOOL_TYPE_FINGER&&start.isFromSource(android.view.InputDevice.SOURCE_TOUCHSCREEN),"actual injected finger source");need(getUiAutomation().injectInputEvent(start,true),"actual cross-window finger down");}finally{start.recycle();}
+        SystemClock.sleep(60);point.pressure=0;
+        MotionEvent end=MotionEvent.obtain(down,SystemClock.uptimeMillis(),MotionEvent.ACTION_UP,1,new MotionEvent.PointerProperties[]{finger},new MotionEvent.PointerCoords[]{point},0,0,1,1,0,0,android.view.InputDevice.SOURCE_TOUCHSCREEN,0);
+        try{need(getUiAutomation().injectInputEvent(end,true),"actual cross-window finger up");}finally{end.recycle();}
+        try{observations.put(new JSONObject().put("pointer_target",text(node)).put("package",String.valueOf(node.getPackageName())).put("tool_type",MotionEvent.TOOL_TYPE_FINGER).put("source",android.view.InputDevice.SOURCE_TOUCHSCREEN).put("bounds",new JSONArray().put(bounds.left).put(bounds.top).put(bounds.right).put(bounds.bottom)));}catch(Exception error){throw new RuntimeException(error);}
+    }
     private void click(String value){until(node->node.isEnabled()&&node.isVisibleToUser()&&(text(node).equalsIgnoreCase(value)||value.contentEquals(node.getContentDescription()==null?"":node.getContentDescription())),this::tap,value);}
     private void clickDocument(String value)throws Exception{
         until(node->id(node,"header_title")&&text(node).equals("Files from HostImport"),null,"system picker browses the actual HostImport provider");
