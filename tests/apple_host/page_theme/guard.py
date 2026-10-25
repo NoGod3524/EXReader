@@ -8,6 +8,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[3]
 BASE = '9ee1053b83fcf934e6f0891eb77d468fc394da1e'
 SDK = 'edddc463c06ed5731195cdb8f06b2df6dff7699e'
+COMPATIBILITY = 'a67ad5e62f3b87e83bc9b775fa499cf30fda0cf4'
 BRANCH = 'codex/reader-apple-page-theme'
 WORKFLOWS = ('reader-apple-navigation.yml', 'reader-apple-search.yml',
              'reader-apple-reading-records.yml', 'reader-apple-shelf.yml',
@@ -23,11 +24,15 @@ SDK_PATHS = ('src', 'include', 'cmake', 'CMakeLists.txt', 'bindings', 'tests/fix
              'licenses', 'tools/layers.json', '.github/workflows/native.yml', '.github/workflows/reliability.yml')
 MODULE_PATHS = ('apps/reader/reading-state', 'apps/reader/search', 'apps/reader/navigation',
                 'apps/reader/reading-commands', 'apps/reader/annotation-view', 'apps/reader/store/001_catalog.sql')
+COMPATIBILITY_PATHS = ('examples/apple/HostReadingRecords.swift', 'tests/apple_host/record_compatibility',
+                       '.github/workflows/reader-apple-record-compatibility.yml',
+                       'docs/READER-APPLE-RECORD-COMPATIBILITY.md', 'docs/validation/reader-apple-record-compatibility.json')
 OWNED = {'examples/apple/HostModel.swift', 'examples/apple/HostSDK.swift', 'examples/apple/HostViews.swift',
          'examples/apple/HostPageThemeViews.swift', 'tools/build_apple_product.py', 'tools/build_apple_host.py',
          'tests/apple_host/make_xcodeproj.rb', '.github/workflows/reader-apple-page-theme.yml',
          'docs/READER-APPLE-PAGE-THEME.md', 'docs/validation/reader-apple-page-theme.json'}
 OWNED |= {'.github/workflows/' + name for name in WORKFLOWS}
+OWNED |= set(COMPATIBILITY_PATHS)
 
 
 def require(value, message):
@@ -54,7 +59,7 @@ def validate_trees(actual, expected):
 
 
 def validate_paths(paths):
-    require(all(path in OWNED or path.startswith('tests/apple_host/page_theme/') for path in paths),
+    require(all(path in OWNED or path.startswith(('tests/apple_host/page_theme/', 'tests/apple_host/record_compatibility/')) for path in paths),
             'unowned path changed')
 
 
@@ -63,8 +68,10 @@ def main():
     require(os.environ.get('GITHUB_REF_NAME') == BRANCH, 'isolated candidate branch required')
     require(git('rev-parse', 'HEAD') == os.environ['GITHUB_SHA'], 'checkout source differs')
     subprocess.run(['git', '-C', str(ROOT), 'merge-base', '--is-ancestor', BASE, 'HEAD'], check=True)
+    subprocess.run(['git', '-C', str(ROOT), 'merge-base', '--is-ancestor', COMPATIBILITY, 'HEAD'], check=True)
     expected = {path: git('rev-parse', SDK + ':' + path) for path in SDK_PATHS}
     expected.update({path: git('rev-parse', BASE + ':' + path) for path in MODULE_PATHS})
+    expected.update({path: git('rev-parse', COMPATIBILITY + ':' + path) for path in COMPATIBILITY_PATHS})
     actual = {path: git('rev-parse', 'HEAD:' + path) for path in expected}
     validate_trees(actual, expected)
     paths = git('diff', '--name-only', BASE, 'HEAD').splitlines()
@@ -106,6 +113,8 @@ def main():
     output = {'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
               'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'candidate_input_authenticated': True,
               'sdk_source': SDK, 'sdk_version': '3.41.0', 'sdk_abi': 1, 'theme_accepted': False,
+              'record_compatibility_delivery': COMPATIBILITY,
+              'record_compatibility_scope': 'independent macOS exact-source point-record owner evidence only',
               'legacy_workflows_unchanged': list(WORKFLOWS), 'negative_checks': checks,
               'protected_trees': expected, 'complete_product': False}
     destination = ROOT / 'build/apple-page-theme/guard.json'

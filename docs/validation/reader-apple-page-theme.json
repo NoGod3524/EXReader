@@ -8,6 +8,17 @@
   "sdk_core_version": "3.40.0",
   "source_sha": null,
   "runs": [],
+  "record_compatibility_delivery": "a67ad5e62f3b87e83bc9b775fa499cf30fda0cf4",
+  "record_compatibility_tested_source": "898e773c322fdd8d82184cacb0ce23c983af2edf",
+  "superseded_runs": [
+    {"source_sha": "6d53f3c09ddea3ea4f065846dbc53897d3668fcb", "run_id": "40173693127", "attempt": 1, "group": "navigation", "native_started_before_cancel": true, "status": "cancelled", "accepted": false},
+    {"source_sha": "6d53f3c09ddea3ea4f065846dbc53897d3668fcb", "run_id": "40173695508", "attempt": 1, "group": "search", "native_started_before_cancel": true, "status": "cancelled", "accepted": false},
+    {"source_sha": "6d53f3c09ddea3ea4f065846dbc53897d3668fcb", "run_id": "40173697469", "attempt": 1, "group": "records", "native_started_before_cancel": false, "status": "cancelled", "accepted": false},
+    {"source_sha": "6d53f3c09ddea3ea4f065846dbc53897d3668fcb", "run_id": "40173699601", "attempt": 1, "group": "shelf", "native_started_before_cancel": false, "status": "cancelled", "accepted": false},
+    {"source_sha": "6d53f3c09ddea3ea4f065846dbc53897d3668fcb", "run_id": "40173701701", "attempt": 1, "group": "mapping", "native_started_before_cancel": false, "status": "cancelled", "accepted": false},
+    {"source_sha": "6d53f3c09ddea3ea4f065846dbc53897d3668fcb", "run_id": "40173703786", "attempt": 1, "group": "wp13", "native_started_before_cancel": false, "status": "cancelled", "accepted": false}
+  ],
+  "isolated_pre_compatibility_run": {"source_sha": "6d53f3c09ddea3ea4f065846dbc53897d3668fcb", "run_id": "40173677171", "attempt": 1, "accepted_for_final_source": false},
   "earlier_failed_runs": [
     {
       "source_sha": "c2530f54ab43a6a085d5f6afd6c830ed95d05d9a",
@@ -31,6 +42,17 @@
         {"id": 12590337635, "bytes": 20510473, "digest": "sha256:3af0fcf6ee668fe4734d666382a0516fbc7f254caaa8ea24b65aed4a20ed0c5d", "name": "apple-theme-sdk-macos-40171561915-1"},
         {"id": 12590322528, "bytes": 20517715, "digest": "sha256:779ab7ff65980756eed1dff61246f704a39e2689e80ffffb6d98dfe94b08b337", "name": "apple-theme-sdk-iphonesimulator-40171561915-1"}
       ]
+    },
+    {
+      "source_sha": "eea3087c2ef27b9d45e00333ef0a16e586a0ac6e",
+      "run_id": "40172575970",
+      "attempt": 1,
+      "accepted": false,
+      "sdk_jobs": {"macos": "success", "iphonesimulator": "success"},
+      "native": {"off_checks": 10, "on_checks": 37, "protocol_negatives": 10, "conclusion": "success", "job_id": 121106967876},
+      "macos_ui": {"cases": 4, "conclusion": "success", "job_id": 121107494839},
+      "ipad_ui": {"cases": 4, "conclusion": "success", "job_id": 121107494825},
+      "failure": "iPhone cold-start simctl device enumeration timed out after 45 seconds before Xcode. The next attempt gives this independent startup query 180 seconds; the 35-minute job limit and all business assertions remain unchanged."
     }
   ],
   "pending": ["native_theme", "macos_ui", "iphone_ui", "ipad_ui", "system_notifications", "six_original_suites_same_source"],

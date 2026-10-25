@@ -1,0 +1,55 @@
+{
+  "accepted": true,
+  "scope": "iPad simulator initialization admission and same-main-turn real owner import publication fixtures only",
+  "initialization_gate_fixture_accepted": true,
+  "same_main_turn_publication_fixture_accepted": true,
+  "branch": "codex/reader-apple-shelf-publication",
+  "base": "f4aa876c4e077201ade122c6a558a90731327daa",
+  "source_sha": "e6c0ef2d2a3d9289dc415d16cb46d0eafa7f340d",
+  "runs": [{
+    "run_id": 40181355084,
+    "attempt": 1,
+    "conclusion": "success",
+    "job_id": 121132916448,
+    "cases_passed": 2,
+    "device": "iPad mini (A17 Pro)",
+    "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-26-2",
+    "artifact": {
+      "id": 12594511272,
+      "bytes": 50989276,
+      "digest": "sha256:66304f0c02b5a7b0beded56eb3684a3dfccec4046d05ed19143d7cc7e5264cd6",
+      "expires_at": "2027-01-23T09:36:38Z"
+    },
+    "initialization": {
+      "before": {"busy": false, "library_ready": false, "started": false, "token": 0},
+      "rejected_unready": 1,
+      "token_after_rejection": 0,
+      "sdk_ui_books_before_ready": 0,
+      "ordinary_import_after_real_ready": true
+    },
+    "same_main_turn": {
+      "observed_busy_changes": 0,
+      "sdk_books": 1,
+      "shelf_before": 0,
+      "shelf_after": 1,
+      "generation_before": 3,
+      "generation_after": 4,
+      "applied_generation_after": 4,
+      "real_sdk_page_contains": "C00P000W00"
+    },
+    "program_sha256": "4ba7ce459e15b5c9c00a94b2050b12d8977375d62676ce1776d959fabe555aaa",
+    "single_dynamic_sdk_provider_accepted": true,
+    "static_sdk_linked": false
+  }],
+  "sdk_producer_source": "6d53f3c09ddea3ea4f065846dbc53897d3668fcb",
+  "sdk_producer_run": 40173677171,
+  "sdk_producer_attempt": 1,
+  "sdk_artifact_id": 12591915246,
+  "sdk_artifact_bytes": 20517508,
+  "sdk_artifact_digest": "sha256:f87671e9a3a2cae26a6792f7e0d7afbc793fdb72c190e9f2a8908e2d456a7478",
+  "sdk_version": "3.41.0",
+  "sdk_abi": 1,
+  "original_six_suites_granted": false,
+  "physical_device_execution": false,
+  "complete_product": false
+}
