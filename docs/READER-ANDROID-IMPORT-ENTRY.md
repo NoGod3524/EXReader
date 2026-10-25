@@ -2,7 +2,9 @@
 
 ## Root复审候选
 
-独立分支 `codex/reader-android-import-entry-review` 从原交回HEAD `635ddcb3f865059fd481f8deb9f7927e75743c6d` 开始；未修改原外部工作树或宿主。原 `4b7ba6f3` / run `40140183174` 的78项证据仅归原源码。本次review修复尚待新的三作业云端运行，`accepted=false`。
+独立分支 `codex/reader-android-import-entry-review` 从原交回HEAD `635ddcb3f865059fd481f8deb9f7927e75743c6d` 开始；未修改原外部工作树或宿主。最终受测源码 `f5046e1fbe2cc91d2ec71a51d2020c1c38e4d969` / [run 40161341409](https://github.com/NoGod3524/EXReader/actions/runs/40161341409) attempt1 三作业success：设备95/95（原78项保留）、42项具名必需检查齐全，严格汇总problems=[]。仅授予该独立组件的API34 default x86_64模拟器范围；真实宿主接线另验。
+
+作业：guards `121073369421`、android `121073369108`、summary `121074094360`。工件有效期均为 `2027-01-23T04:17:26Z`：guards `12585809111` /1129B /SHA-256 `eea8299b045ec55b8cf07fcd4f48ece3935e6d9adf327301ecf155d8090b37d5`；android `12586462366` /11536095B /`9ef65c6ee43a0f65fb64b0a2d865f68631ab906f375655aafd5b606cfdba60ac`；summary `12586089149` /1281B /`0642b799166386aaef52796032cf48e47302d87f9cd1f9abfc8fc2ebdb45d5f0`。汇总实际认证当前attempt上游作业、两原ZIP完整字节/散列/有效期后读取报告。32次真实可靠pipe错误前后FD均108；direct Executor抛出后共两票各一次Ready、零Failed、首票COMMITTED，两lease可清理。
 
 修复四个实际问题：ticket取消与提交共用同一短锁，防止cancel返回true后仍发布；每个ReadyRequest是独立entry-owned lease，重复内容共享单一私有文件且仅最后lease删除，foreign/stale/repeated release无效；可靠pipe的checkError异常也必须关闭描述符；query.SIZE小报不得把未知长度pipe前缀当完整原件。保留原78项断言，新增20,000次真实双线程竞争、积压重复回调/跨entry/跨close代际lease、32次真实可靠pipe错误FD计数，以及小报长度拒绝。汇总另认证当前attempt的上游作业和原ZIP id/字节/digest/有效期，在Actions内重算散列后读取报告。
 
@@ -10,7 +12,7 @@ review首轮 source `206f89045a9c64c5f6188643f8e2117320a1a346` / run `4016014266
 
 source `36021cce35f90b8439f85967075bd34c7d867306` / run `40160762696` 的guards、android、summary三作业均success；94/94设备检查，41项具名必需项齐全、problems=[]。summary在Actions内实际核对两个上游job身份与ZIP完整字节/SHA/有效期。该源的通过数不覆盖接下来的callback修复。
 
-同轮复审确认：direct Executor下onReady抛RuntimeException原本会被复制catch误当IO，再通知onFailed。现把copy/发布异常和finish/deliver分开；回调RuntimeException在一次通知后被包含，COMMITTED不撤回、ready lease仍供显式清理/恢复，不再伪造第二次失败。新增真实provider两请求/direct Executor负例：第一onReady主动抛出，第二请求是串行worker排空屏障，严格核两个票据各一次Ready、零Failed、首票COMMITTED及两lease最终清理。最终源码需新的完整三作业，当前仍accepted=false。
+同轮复审确认：direct Executor下onReady抛RuntimeException原本会被复制catch误当IO，再通知onFailed。现把copy/发布异常和finish/deliver分开；回调RuntimeException在一次通知后被包含，COMMITTED不撤回、未释放ready lease仍供显式清理/恢复，不再伪造第二次失败。新增真实provider两请求/direct Executor负例：第一onReady主动抛出，第二请求是串行worker排空屏障，严格核两个票据各一次Ready、零Failed、首票COMMITTED及两lease最终清理。该路径已在最终95项完整源码轮通过。
 
 `extras/android-import-entry`是可选独立模块，不进入默认SDK构建，不改变SDK3.40.0／ABI1／schema7，
 不修改`examples/android`、现有Android owner或`extras/sideload`。它由两部分组成：
