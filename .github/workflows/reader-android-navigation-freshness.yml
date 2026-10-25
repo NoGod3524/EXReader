@@ -8,6 +8,11 @@ on:
         description: Read the sealed first diagnostic build log only; no emulator
         type: boolean
         default: false
+      inspection_target:
+        description: Authenticated original failure or completed final differential
+        type: choice
+        options: [original, final]
+        default: original
 permissions:
   contents: read
   actions: read
@@ -68,6 +73,7 @@ jobs:
     timeout-minutes: 5
     env:
       GH_TOKEN: ${{ github.token }}
+      INSPECTION_TARGET: ${{ inputs.inspection_target }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
