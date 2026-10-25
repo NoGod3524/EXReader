@@ -31,7 +31,7 @@ jobs:
       - name: Parse authored workflow and Python only in Actions
         run: |
           python3 -m pip install 'PyYAML==6.0.3'
-          python3 -m py_compile tests/reader_hosts_integration/guard.py tests/reader_hosts_integration/aggregate.py tests/reader_hosts_integration/final.py tests/reader_windows_search/verify.py tests/reader_windows_navigation/verify.py tests/reader_windows_navigation/check_ui.py tests/reader_gtk_preferences/retain_account.py
+          python3 -m py_compile tests/reader_hosts_integration/guard.py tests/reader_hosts_integration/aggregate.py tests/reader_hosts_integration/final.py tests/reader_windows_search/verify.py tests/reader_windows_navigation/verify.py tests/reader_windows_navigation/check_ui.py tests/reader_gtk_preferences/retain_account.py tests/reader_gtk_navigation/check_ui.py tests/reader_gtk_search/check_ui.py tests/reader_android_fixed_pan/verify_saved.py
           python3 - <<'PY'
           from pathlib import Path
           import yaml
@@ -458,8 +458,8 @@ jobs:
             build/winrecords-summary/verified.json
           if-no-files-found: error
   gtk:
-    if: ${{ github.event.inputs.verify_run == '' }}
     needs: pin
+    if: ${{ github.event.inputs.verify_run == '' }}
     name: GTK G03 G04 reading records and retained native suites
     runs-on: ubuntu-22.04
     timeout-minutes: 65
@@ -467,8 +467,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Authenticate exact integrated source and frozen public contracts
-        run: python3 tests/reader_hosts_integration/guard.py
+      - name: Authenticate common production and exact installed module trees
+        run: |
+          python3 tests/reader_hosts_integration/guard.py
+          test "$(git rev-parse HEAD:apps/reader/batch-import)" = 40ccc040a65970df056dfb635f247517f8c382df
+          test "$(git rev-parse HEAD:extras/sideload)" = 40a8fcfdd70807f4d1ac4d8fd099f74d715ca40f
+          test "$(git rev-parse HEAD:apps/reader/reading-commands)" = cf067b8be378d4195817d1106b81f358579e2280
+          test "$(git rev-parse HEAD:apps/reader/annotation-view)" = 9d30b6c54f61496010f647695dedd7ea7ab0c7c1
+          test "$(git rev-parse HEAD:apps/reader/reading-state)" = 60127ae75fbac918237b1c8584e0f7ac2e6130a4
       - name: Install native GTK TLS XML and Secret Service dependencies
         run: |
           sudo apt-get update
@@ -510,6 +516,16 @@ jobs:
           cmake -S extras/sideload -B build/account-sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
           cmake --build build/account-sideload --parallel 4
           cmake --install build/account-sideload
+      - name: Install fixed batch importer and retain original installed consumers and review regressions
+        run: |
+          cmake -S apps/reader/batch-import -B build/gtk-batch-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/gtk-batch-module --parallel 4
+          cmake --install build/gtk-batch-module
+          cmake -S tests/reader_batch_import/consumer -B build/gtk-batch-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage"
+          cmake --build build/gtk-batch-consumer --parallel 4
+          python3 tests/reader_batch_import/make_fixtures.py --fixtures tests/fixtures --out build/gtk-batch-original-fixtures
+          python3 tests/reader_batch_import/check_batch_import.py --probe build/gtk-batch-consumer/batch-probe --cxx build/gtk-batch-consumer/batch-cpp-consumer --fixtures build/gtk-batch-original-fixtures --staging build/gtk-batch-staging --work build/gtk-batch-original-work --output build/gtk-batch-original
+          python3 tests/reader_batch_import/check_review.py --probe build/gtk-batch-consumer/batch-review-probe --original-probe build/gtk-batch-consumer/batch-probe --work build/gtk-batch-review-work --output build/gtk-batch-review
       - name: Install public reading adapter and real-capture fixture consumers
         run: |
           cmake -S apps/reader/reading-state -B build/account-reading-state -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
@@ -581,7 +597,7 @@ jobs:
           python3 tests/reader_navigation/check_navigation.py --probe build/gtk-navigation-consumer/navigation-probe --c-consumer build/gtk-navigation-consumer/navigation-c-consumer --fixtures build/gtk-navigation-fixtures --installed "$ACCOUNT_PREFIX" --output build/gtk-navigation-installed
       - name: Build actual GTK host with optional navigation and retained installed integrations
         run: |
-          cmake -S apps/reader/desktop -B build/account-desktop -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DREADER_METADATA_PREFIX="$ACCOUNT_PREFIX" -DREADER_ACCOUNT_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_GTK_PREFERENCES=ON -DREADER_PREFERENCES_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_SEARCH=ON -DREADER_SEARCH_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_READING_RECORDS=ON -DREADER_READING_RECORDS_PREFIX="$ACCOUNT_PREFIX" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DEXR_READER_GTK_NAVIGATION=ON -DREADER_NAVIGATION_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_FIXTURES="$PWD/tests/fixtures" -DEXR_READER_BUILD_GTK=ON -DEXR_LINUX_REVIEW_TESTS=ON -DEXR_LINUX_FIXED_TESTS=ON 2>&1 | tee build/account-logs/host-configure.log
+          cmake -S apps/reader/desktop -B build/account-desktop -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DREADER_METADATA_PREFIX="$ACCOUNT_PREFIX" -DREADER_ACCOUNT_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_BATCH_IMPORT=ON -DREADER_BATCH_IMPORT_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_GTK_PREFERENCES=ON -DREADER_PREFERENCES_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_SEARCH=ON -DREADER_SEARCH_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_READING_RECORDS=ON -DREADER_READING_RECORDS_PREFIX="$ACCOUNT_PREFIX" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DEXR_READER_GTK_NAVIGATION=ON -DREADER_NAVIGATION_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_FIXTURES="$PWD/tests/fixtures" -DEXR_READER_BUILD_GTK=ON -DEXR_LINUX_REVIEW_TESTS=ON -DEXR_LINUX_FIXED_TESTS=ON 2>&1 | tee build/account-logs/host-configure.log
           cmake --build build/account-desktop --parallel 4 --verbose 2>&1 | tee build/account-logs/host-build.log
           python3 tests/reader_gtk_receive/check_link.py --map build/account-desktop/gtk-account-host.map --binary build/account-desktop/gtk-host/exreader-linux --output build/account-logs/host-link.json
           nm --defined-only build/account-desktop/gtk-host/exreader-linux > build/account-logs/navigation-provider-symbols.txt
@@ -614,6 +630,27 @@ jobs:
           build/account-desktop/reader-gtk-reading-records-backend "$PWD/build/records-backend/profile/library.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/records-command-fixtures/book.txt" resumed | tee build/records-backend/resumed.log
           build/account-desktop/reader-gtk-reading-records-backend "$PWD/build/records-backend/profile/routes.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/records-command-fixtures/book.epub" routes | tee build/records-backend/routes.log
           build/account-desktop/reader-gtk-reading-records-backend "$PWD/build/records-backend/profile/graphs.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/records-command-fixtures/book.txt" graphs | tee build/records-backend/graphs.log
+      - name: Folder importer owner barriers bounded receipts and public original mapping
+        run: |
+          python3 -m py_compile tests/reader_gtk_batch_import/make_inputs.py tests/reader_gtk_batch_import/check_ui.py
+          python3 tests/reader_gtk_batch_import/make_inputs.py build/gtk-batch-backend-fixtures
+          python3 tests/reader_gtk_batch_import/make_inputs.py build/gtk-batch-ui-fixtures
+          mkdir -p build/gtk-batch-backend/profile
+          chmod 700 build/gtk-batch-backend/profile
+          build/account-desktop/reader-gtk-batch-import-backend "$PWD/build/gtk-batch-backend/profile/library.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/gtk-batch-backend-fixtures" "$PWD/build/gtk-batch-backend/originals.tsv" exercise | tee build/gtk-batch-backend/checks.log
+      - name: Actual native folder chooser finite receipt list cancellation and reopen
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/account-logs/batch-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_gtk_batch_import/check_ui.py --payload build/account-package/EXReader-Linux --fixtures build/gtk-batch-ui-fixtures --output build/gtk-batch-ui --backend build/account-desktop/reader-gtk-batch-import-backend
+          '
       - name: Actual native progress bookmark highlight edit delete restore and process recovery
         run: |
           mkdir -p build/gtk-atspi-client
@@ -720,6 +757,14 @@ jobs:
             gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
             /usr/bin/python3 tests/reader_gtk_receive/check_atspi_fixes.py --payload build/account-package/EXReader-Linux --output build/account-atspi-fixes
           '
+      - name: Strict source bound folder scope and retained palette failures
+        if: always()
+        env:
+          BATCH_DIAGNOSTIC: 'false'
+        run: |
+          diagnostic=""
+          if [ "$BATCH_DIAGNOSTIC" = true ]; then diagnostic=--diagnostic; fi
+          python3 tests/reader_gtk_batch_import/check_evidence.py --build build $diagnostic
       - name: Preserve source-bound evidence and original logs without credentials or TLS private keys
         if: always()
         uses: actions/upload-artifact@v4
@@ -757,6 +802,14 @@ jobs:
             build/records-reading-sdk/
             build/records-backend/
             build/records-ui/
+            build/gtk-batch-evidence.json
+            build/gtk-batch-backend/
+            build/gtk-batch-ui/
+            build/gtk-batch-original/
+            build/gtk-batch-review/
+            build/gtk-batch-consumer/
+            build/gtk-batch-backend-fixtures/manifest.json
+            build/gtk-batch-ui-fixtures/manifest.json
             build/gtk-navigation-installed/
             build/gtk-navigation-fixtures/
             build/gtk-navigation-ui/
@@ -768,6 +821,7 @@ jobs:
 
   android:
     needs: pin
+    if: ${{ github.event.inputs.verify_run == '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -784,12 +838,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Authenticate common source and Android CBZ syntax
+      - name: Record identity and preserve frozen SDK schema and delivered packages
         run: |
-          python3 tests/reader_hosts_integration/guard.py
           mkdir -p build/session-android/logs
           git rev-parse HEAD > build/session-android/logs/source.txt
-          python3 -m py_compile tests/reader_android_cbz_reading/fixtures.py tests/reader_android_cbz_reading/audit.py tests/reader_android_cbz_reading/run_ui.py tests/reader_android_preferences/audit.py tests/reader_android_preferences/run_ui.py tests/reader_android_reading/audit.py tests/reader_android_reading/run_ui.py tests/reader_android_search/audit.py tests/reader_android_search/run_ui.py tests/reader_android_navigation/audit.py tests/reader_android_navigation/run_ui.py tests/reader_session_android/audit.py tests/reader_session_android/run_export.py tests/reader_session_android/run_roundtrip.py tests/reader_host_session_android/audit.py tests/reader_host_session_android/run_ui.py
+          python3 tests/reader_hosts_integration/guard.py
+          python -m py_compile tests/reader_android_fixed_pan/fixtures.py tests/reader_android_fixed_pan/run_ui.py tests/reader_android_cbz_reading/fixtures.py tests/reader_android_cbz_reading/audit.py tests/reader_android_cbz_reading/run_ui.py tests/reader_android_preferences/audit.py tests/reader_android_preferences/run_ui.py tests/reader_session_android/run_export.py tests/reader_session_android/run_roundtrip.py tests/reader_session_android/audit.py tests/reader_host_session_android/run_ui.py tests/reader_host_session_android/audit.py tests/reader_android_search/fixtures.py tests/reader_android_search/audit.py tests/reader_android_search/run_ui.py tests/reader_android_navigation/fixtures.py tests/reader_android_navigation/fixture_module.py tests/reader_android_navigation/audit.py tests/reader_android_navigation/run_ui.py tests/reader_android_reading/fixtures.py tests/reader_android_reading/audit.py tests/reader_android_reading/run_ui.py
       - name: Install Android compiler and API34 emulator
         run: |
           sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
@@ -812,6 +866,7 @@ jobs:
           python tests/reader_android_navigation/fixtures.py build/android-navigation/fixtures
           python tests/reader_android_reading/fixtures.py build/android-reading/fixtures
           python tests/reader_android_cbz_reading/fixtures.py build/android-cbz-reading/fixtures
+          python tests/reader_android_fixed_pan/fixtures.py build/android-fixed-pan/fixtures
           mkdir -p tests/reader_host_session_android/debug/res/raw
           cp build/webdav-android/fixture/public/ca.crt tests/reader_host_session_android/debug/res/raw/host_sync_fixture_ca.crt
       - name: Build and install the frozen public library SDK targeting API26
@@ -880,6 +935,9 @@ jobs:
           mkdir -p build/android-cbz-reading/test-apks
           gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrNavigation=true -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrReading=true -PexrPreferences=true -PexrPreferencesPrefix="$PWD/build/android-preferences/preferences-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.CbzReadingUiTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/cbz-reading-ui-runner-build.log
           cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/android-cbz-reading/test-apks/cbz-reading-ui.apk
+          mkdir -p build/android-fixed-pan/test-apks
+          gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrNavigation=true -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrReading=true -PexrPreferences=true -PexrPreferencesPrefix="$PWD/build/android-preferences/preferences-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.FixedPanUiTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/fixed-pan-ui-runner-build.log
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/android-fixed-pan/test-apks/fixed-pan-ui.apk
           cp build/host-session-android/test-apks/original-owner.apk examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
           python tests/reader_session_android/audit.py --output build/session-android/native
           python tests/reader_host_session_android/audit.py --output build/host-session-android/native
@@ -918,12 +976,15 @@ jobs:
             python tests/reader_android_preferences/run_ui.py --fixtures build/android-reading/fixtures --output build/android-preferences/ui
             adb install -r -t build/android-cbz-reading/test-apks/cbz-reading-ui.apk
             python tests/reader_android_cbz_reading/run_ui.py --fixtures build/android-cbz-reading/fixtures --output build/android-cbz-reading/ui
+            adb install -r -t build/android-fixed-pan/test-apks/fixed-pan-ui.apk
+            python tests/reader_android_fixed_pan/run_ui.py --fixtures build/android-fixed-pan/fixtures --output build/android-fixed-pan/ui
       - name: Preserve SDK consumer identity native logs and every export result
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: reader-android-cbz-reading-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
+            build/android-fixed-pan/
             build/android-cbz-reading/
             build/android-preferences/
             build/android-reading/
@@ -961,6 +1022,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Install independent PNG decoding for raw viewport proof
+        run: python3 -m pip install 'Pillow==11.3.0'
       - name: Reject incomplete source-bound host reports
         run: python3 tests/reader_hosts_integration/final.py --self-test
       - name: Authenticate exact-attempt jobs and raw ZIP reports
@@ -987,6 +1050,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Install independent PNG decoding for raw viewport proof
+        run: python3 -m pip install 'Pillow==11.3.0'
       - name: Authenticate the preserved source and reports with the repaired verifier
         env:
           GH_TOKEN: ${{github.token}}

@@ -351,6 +351,38 @@ def main():
         result['scopes'].update(gtk_reading_records=True, gtk_search=True, gtk_navigation=True,
                                 gtk_preferences=not failures)
 
+        # Authenticate the new folder UI against the same actual packaged host,
+        # then recheck the raw reports rather than trusting a copied grant flag.
+        sys.path.insert(0, str(ROOT / 'tests/reader_gtk_batch_import'))
+        from check_evidence import check_names
+        batch = gtk.report('gtk-batch-evidence.json');identity(batch, source, run, attempt)
+        require(batch.get('ok') is True and batch.get('batch_import_scope_passed') is True and
+                batch.get('all_reading_navigation_search_and_non_palette_settings_retained') is True and
+                batch.get('accepted') is False and batch.get('diagnostic_only') is False and
+                batch.get('program_sha256') == program and batch.get('backend_checks') == 684 and
+                set(batch['retained_sdk_failures']) == set(failures), 'GTK batch strict proof differs')
+        for tail, count, grant in (('gtk-batch-ui/report.json', 27, 'batch_import_scope_passed'),
+                                   ('gtk-batch-original/report.json', 668, 'ok'),
+                                   ('gtk-batch-review/review.json', 4, 'ok')):
+            raw = gtk.bytes(tail, 8 * 1024 * 1024);report = json.loads(raw)
+            require(report.get('source_sha', report.get('source')) == source and
+                    report.get(grant) is True and len(report['checks']) == count,
+                    'GTK batch raw report incomplete: ' + tail)
+            if 'run_id' in report:
+                require(str(report['run_id']) == str(run) and str(report['attempt']) == str(attempt),
+                        'GTK batch raw report foreign attempt')
+            rows = report['checks'];check_names([r['name'] for r in rows], legacy_originals=count == 668)
+            require(all(r.get('passed', r.get('pass', r.get('ok'))) is True for r in rows) and
+                    batch['verified'][tail] == dict(count=count, sha256=hashlib.sha256(raw).hexdigest()),
+                    'GTK batch raw checks or summary hash differ')
+            if count == 27:
+                require(report['program_sha256'] == program and report['program_source_sha'] == source and
+                        report['diagnostic_only'] is False and report['checks_failed'] == 0,
+                        'GTK folder UI used another binary')
+        backend = gtk.bytes('gtk-batch-backend/checks.log', 4 * 1024 * 1024).decode()
+        require('GTK_BATCH_BACKEND checks=684 all passed' in backend, 'GTK batch native backend incomplete')
+        result['scopes']['gtk_folder_batch_import'] = True
+
         android, _ = open_bundle('reader-android-cbz-reading', 'android')
         for feature, total, phases in (('reading', 16, 3), ('search', 15, 2), ('navigation', 18, 2), ('preferences', 17, 3), ('cbz_reading', 10, 3)):
             report = android.report('android-%s/ui/result.json' % feature.replace('_', '-'));identity(report, source, run, attempt)
@@ -381,6 +413,10 @@ def main():
         result['scopes']['android_reading_search_navigation_emulator'] = True
         result['scopes']['android_preferences_controls_emulator'] = True
         result['scopes']['android_cbz_reading_emulator'] = True
+        sys.path.insert(0, str(ROOT / 'tests/reader_android_fixed_pan'))
+        from verify_saved import verify_saved
+        result['android_fixed_pan_raw_proof'] = verify_saved(android.bytes, source, run, attempt)
+        result['scopes']['android_fixed_page_pan_emulator'] = True
         result['scopes']['android_page_colors'] = False
         result['accepted'] = not failures and not diagnostic
     except Exception as error:
