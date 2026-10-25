@@ -25,7 +25,7 @@
 | 文件格式 | `format=exreader-annotation-export`，版本 1 | `format=exreader-annotation-export-raw3`，版本 1，模块 0.2.0 |
 | store | `reader_revisions_open` | `reader_revisions_open_raw_v3` |
 
-互斥矩阵（全部由测试覆盖，失败时零写入、零输出文件）：旧导出遇 raw store→`REVISION`（旧 API 拒绝 raw store）；raw 导出遇旧 store→`REVISION`；
+互斥矩阵（全部由测试覆盖，失败时零写入、零输出文件）：旧导出遇 raw store→`ARGUMENT`（旧导出把修订库 ARGUMENT 原样映射，`revision_code=1`）；raw 导出遇旧 store→同样 `ARGUMENT`；
 旧导入遇 raw 文件→`FORMAT`（格式名不同）；raw 导入遇旧文件→`FORMAT`；旧导入遇 raw store→`REVISION`；raw 导入遇旧 store→`REVISION`；
 CMake `find_package(... EXACT)` 使 0.1.0/0.2.0 与 0.3.0/0.4.0 的混装在配置期失败。
 
