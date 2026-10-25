@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "source_sha": "53b7fa46632ce82861812766825134de6b4d335f",
+  "run_id": 40221572660,
+  "attempt": 1,
+  "conclusion": "success",
+  "accepted": true,
+  "scope": "Windows independent compact native UI plus complete original default-OFF regression",
+  "original_OFF_full_F3_and_atomic13_accepted": true,
+  "complete_product": false,
+  "performance_accepted": false,
+  "screen_reader_accepted": false,
+  "job_ids": [
+    121254074422,
+    121254121778,
+    121258558668
+  ],
+  "evidence": "GitHub Actions job 121258558668 original strict verifiers and GitHub artifact API",
+  "artifacts": [
+    {
+      "sha256": "93672a529629a688e3f79a650319a28b897b42cadc23fb590d30284f4eeabda9",
+      "bytes": 169995691,
+      "id": 12609902891,
+      "expires_at": "2027-01-23T18:30:31Z"
+    },
+    {
+      "sha256": "cba3a29d672ef643d289c06b7172723fc4e57e2148fa25f3b013ee734348723d",
+      "bytes": 9135,
+      "id": 12609863093,
+      "expires_at": "2027-01-23T18:30:31Z"
+    }
+  ]
+}
