@@ -201,3 +201,26 @@ reading-state）与建议补丁方向。已经发现并保留的失败不会删�
 
 该授予只覆盖 Linux Clang ASan/UBSan/LeakSanitizer 上的本包接口与夹具；不包含 Windows、
 macOS、iOS、Android、GTK 宿主、宿主 UI、产品接线、同步或发布签名。
+
+## 独立复审（codex/reader-app-boundary-fuzz-review）
+
+复审起点为已交付 HEAD `3c5f2e1e`（受测源 `3c1ba88b`、run 40129003487）。复审发现并在白名单内修复：
+
+1. 工作流只在原分支触发；已增加复审分支触发，保留保护树/路径守卫。
+2. 原先没有证据证明 ASan/UBSan/LSan/abort/退出码/超时是失败而非"预期拒绝"。新增消费者 `selftest`
+   阴性对照与具名检查 `harness.crash_and_exit_negative_controls`：真实堆溢出、有符号溢出、泄漏、abort、
+   未捕获异常、退出码 7 与挂起子进程均被驱动判为失败（泄漏在 `abort_on_error=1` 下为 SIGABRT，即 -6）。
+3. 变异输入的状态白名单过宽（MEMORY/DATABASE/SDK/OWNER/NOT_FOUND/IO 也算"已知"）；已收紧为仅内容类拒绝。
+4. 模糊循环未校验设置文件在每次 load 后字节不变；已增加。
+5. 驱动对 fuzz 子进程超时无处理；现在转为带 journal 末行和重放的失败，且要求 fuzz 种子非空且合法。
+6. 严格汇总新增：固定 2500 次/90000 ms 预算、每个 fuzz 目标 exit==0、消费者以 sanitizer 编译（CMakeCache）、
+   种子字节与清单一致、阴性对照结果。
+
+未发现共享实现（preferences/revisions/reading-state）缺陷；收紧后的状态白名单下 2500 次变异无违规。
+
+保留的原失败：run 40168427797（消费者编译错误：辅助函数声明顺序与未用变量，属本包）；
+run 40168716856（阴性对照对泄漏的退出码期望 23，实际 `abort_on_error=1` 下为 -6，属本包期望错误；其余 53 项通过）。
+
+最终通过：见 `docs/validation/reader-app-boundary-fuzz.json` 的 `review` 记录。受测源 `d97a49be`，
+run 40168960950 attempt 1，作业 121095719311 / 121096282918，54 个具名结果全部成功。仅授予 Linux
+Clang sanitizer 范围，不含宿主、真机、性能或完整产品。

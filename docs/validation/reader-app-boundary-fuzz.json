@@ -380,6 +380,25 @@
   ],
   "run_created_at": "2026-10-24T20:16:00Z",
   "run_updated_at": "2026-10-24T20:18:36Z",
+  "review": {
+    "branch": "codex/reader-app-boundary-fuzz-review",
+    "delivered_head": "3c5f2e1ed9fb3cc94cbb523fac298aa679dd711a",
+    "tested_source": "d97a49be12fa4eeac42fe946c4bf9c559fec4335",
+    "run_id": 40168960950,
+    "attempt": 1,
+    "jobs": [{"id": 121095719311, "name": "app boundary fuzz (ubuntu-22.04)", "conclusion": "success"}, {"id": 121096282918, "name": "strict boundary evidence", "conclusion": "success"}],
+    "named_checks": 54,
+    "artifacts": [
+      {"id": 12589507636, "name": "reader-app-boundary-fuzz-linux-40168960950-1", "bytes": 9229083, "digest": "sha256:d19baf9f4274a480bb69b59aa004c13a719f45060626275d59a4dc72477b7fdb", "expires_at": "2027-01-23T06:24:14Z"},
+      {"id": 12589912094, "name": "reader-app-boundary-fuzz-summary-40168960950-1", "bytes": 1488, "digest": "sha256:de11cd96d27ef8bbbef0436e16bfa628436085c0e5a004e7142ddf59a21a7ea8", "expires_at": "2027-01-23T06:24:14Z"}
+    ],
+    "retained_failures": [
+      {"run_id": 40168427797, "source_sha": "75f1469d5bb912b56fdfccd32c3e352d41e4d9d6", "cause": "consumer compile error in the new selftest/helper ordering"},
+      {"run_id": 40168716856, "source_sha": "1f4f3eb2d5533c6d855852417d6322bea8bd42e1", "cause": "leak negative control expected exit 23; abort_on_error gives SIGABRT (-6)"}
+    ],
+    "shared_implementation_defects": [],
+    "granted_platform": "linux"
+  },
   "notes": [
     "The strict job re-downloaded the exact ZIP, recomputed its length and sha256, and matched five fuzz journals, both consumer binaries, three installed headers, three installed archives, the seed manifest and the run/job identity.",
     "The tested source is 3c1ba88b; the evidence commit is documentation only and is marked [skip ci]."
