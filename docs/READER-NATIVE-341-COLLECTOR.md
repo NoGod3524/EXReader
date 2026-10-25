@@ -1,6 +1,6 @@
 # Fixed-source native workflow upper collector — preparation
 
-Status: **Actions syntax and 67 synthetic refusal cases passed; native collection pending**.
+Status: **Actions syntax and 82 synthetic refusal cases passed; native collection pending**.
 Starting root source is `5e8b132626cfe7540f675285787d24bf488857a8`.
 Only this collector, its synthetic refusal tests, its new workflow and this
 document change. Callers, production, original collectors and leaf judges stay
@@ -19,8 +19,8 @@ different attempt may reuse that run.
 | `composition` | SDK3.41, all 27 installed configs, original G1 before/after relocation, three platforms, strict41 |
 | `gtk41` | Full original producer, settings41, native navigation29/F2130, record16+12 and all retained GTK scopes |
 | `android130` | Original120+theme10 on API34 default x86_64, original APK/native/PNG/kill checks |
-| `windows_full_f3` | Full F3 and every retained original Windows suite — contract pending |
-| `windows_atomic13` | Root's actual atomic-commit13 — contract pending |
+| `windows_full_f3` | Same SDK3.41 full host, F3 25, F1 264, F2 130, navigation31, records32, UI158, J01 47, J10 21 and original import strict |
+| `windows_atomic13` | Same full-host actual atomic-commit13 and old-veto control, original nine protocol refusals |
 | `apple_records` | Complete records workflow, all macOS/iPhone/iPad producers and strict |
 | `apple_navigation` | Complete navigation workflow, all three UI platforms and strict |
 | `apple_search` | Complete search workflow, all three UI platforms and strict |
@@ -29,12 +29,19 @@ different attempt may reuse that run.
 | `apple_wp13` | Complete eight-job WP13 workflow and original gate-reviewed validation |
 | `apple_page_theme` | Complete eight-job SDK3.41 explicit page-theme workflow, including native ON37/OFF10, mixed-version5, three UI platforms and initialization/publication2 |
 
-The two Windows slots remain required `None` contracts. They always stay
-`pending` and block the foundation's `accepted` flag, even if another internal
-status were accidentally populated. The generic schema refuses unreviewed
-Windows summaries. Final Windows workflow/job/artifact/schema fields must be
-reviewed and implemented before acceptance; removing those requirements is not
-an option.
+Both Windows slots require the complete three-job `reader-windows-341-common`
+workflow, its raw ZIP and strict ZIP. The strict ZIP contains distinct
+`windows-341-summary/full-f3.json` and `windows-341-summary/atomic13.json` reports.
+Each binds one complete producer and the same actual raw artifact to its scope.
+Missing run inputs stay pending; no historical Windows run is preloaded.
+
+The upper validators require the complete actual file inventory, enabled five
+host options, SDK3.41 plus independently built SDK3.40 baseline, one production
+binary shared by F3 and retained suites, distinct review/control binaries,
+original catalog identity-only adapter and unchanged recursive strict results.
+Atomic13 reuses the original `verify_commit.validate` named checks directly.
+These schemas were reviewed against the independent Windows caller source;
+native execution at the final common source is still required.
 
 ## Evidence and attempt authentication
 
@@ -121,16 +128,16 @@ actual complete run. The already accepted composition source `b5e49d17` /
 1. Update `aggregate_native.BASE` to the reviewed final production boundary;
    current pin is `5e8b1326`. The source guard requires unchanged production from
    that boundary, exact SDK `eddd…`, unchanged schema1 and actual MAX2 header.
-2. Pin both real Windows contracts and their exact strict summary validators.
-   If full-F3 and atomic13 genuinely share one complete workflow/run, explicitly
-   use the reviewed two-slot identical-run/attempt exception; all other duplicate-run rejection remains.
+2. Supply the actual complete Windows run after its caller is merged and rerun
+   at the final common source. Both reviewed report contracts share the exact
+   same run/attempt; all other duplicate-run rejection remains.
 3. Confirm the final callers preserve the listed workflow/job/artifact names,
    actual source-guard step names and original strict schemas. Any required
    identity adaptation must be explicit; no required scope may be dropped.
 4. Configure separate product-fact adapters only after reviewing actual common
    source record/peer evidence. History never replaces these conditions.
 5. Collect only after all required complete same-source leaves finish. The
-   protocol suite now contains 67 negative controls for missing/failed/foreign/
+   protocol suite now contains 82 negative controls for missing/failed/foreign/
    duplicate/old-attempt/wrong-scope evidence, including absent theme-native or
    initialization/publication reports. These are synthetic collector checks.
 
@@ -150,6 +157,14 @@ fixture models all eight Apple theme jobs and eight artifacts; its four negative
 controls reject the old seven-job set, missing fast-import artifact, skipped
 source guard and previous-attempt fast-import artifact. Native collection stayed
 skipped. The 63-case run above remains the earlier source's evidence.
+
+Windows schema source `63dff918e552d7c648b39ca3a1fc59880a24b323`,
+[run 40194358316](https://github.com/NoGod3524/EXReader/actions/runs/40194358316)
+attempt 1: protocol success, `82 actual rejections`. Positive synthetic reports
+exercise both Windows scopes and the original atomic validator; 15 additional
+negative controls cover missing suites, split production, substituted controls,
+missing SDK identity/options, catalog rewrites, foreign retained/atomic records
+and failed actual atomic cases. Collection stayed skipped.
 
 Push runs the cheap protocol job. Manual dispatch defaults to `mode=protocol`;
 only explicit `mode=collect` runs the authenticated collection after protocol
