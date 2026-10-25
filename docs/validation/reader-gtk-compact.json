@@ -1,0 +1,16 @@
+{
+  "accepted": false,
+  "status": "source candidate; cloud execution pending",
+  "start_source": "25bc0c67971f81491f50e0a3caaaf7e509bb7e35",
+  "production_pin": "a7bcf0483fb52ecf9cd3cdf7dda07a4aa742f174",
+  "default_option": "EXR_READER_GTK_COMPACT=OFF",
+  "runs": [],
+  "off_full_original_scope_accepted": false,
+  "compact_native_ui_accepted": false,
+  "complete_product": false,
+  "performance_accepted": false,
+  "frame_accepted": false,
+  "six_platform_accepted": false,
+  "physical_device_execution": false,
+  "screen_reader_accepted": false
+}
