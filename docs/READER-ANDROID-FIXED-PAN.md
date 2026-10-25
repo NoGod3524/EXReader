@@ -55,3 +55,7 @@ source `d509751501ac3d12b9a5bbb4b5388712a45be1e6` / run `40155515246` / job `121
 静态自审：10,000页矩阵目录上限与冻结SDK `src/pdf_pages.c` 的原PDF页数/Count上限一致，不是新增更窄的PDF限制。`nativeViewports` 的二次PDF打开及逐页矩阵读取确实只在Java调用前后执行HostTask.check；没有把HostTask传给公开open options.control，这是新增native段的协作取消缺口。当前100项不验证该新增段内部取消，也不验证10,000页边界。最小后续是复用现有host_task_control给打开过程传control，并在逐页循环调用现有host_cancelled；原件释放与未发布结果屏障保持。该后续须新共同源码验证，不能沿用b259证据授予。
 
 该取消后续现作为独立生产提交交给共同源码轮：JNI实现移到原有 `bounded_epub_jni.inc` 控制助手定义之后，不复制另一套callback；Java传入同一个HostTask，公开PDF打开接options.control，输出每一页调用host_cancelled。取消仍释放PDF对象、原件JNI字节和未完成数组，保留原HostTask.Cancelled异常；Java调用前后check不变。原Pan first阶段另加入直接native探针：记录正常四页目录的实际poll总数，在第3次（打开阶段）及倒数第2次（输出阶段）取消，严格拒绝部分返回，随后正常重开目录须逐项相同。此提交按集成安排不另开独立100项轮；新增代码和探针均未被b259受测，只有后续共同源码可授予。
+
+独立原件只读proof现已完成：source `ea13fc5351175d14c0422a5dee0aecea675fc6d3` / run `40158665098` / job `121065364373` success。它在 Actions 内重新认证原成功run/attempt/job、ZIP完整大小/散列/有效期，严格复核Pan8+旧92、23张PNG完整身份、Pillow独立解码9个系统截图采样点与原CBZ所有四象限像素、22次原件身份、8组旋转显式/长按原文与视口，以及两真实进程/stop。proof工件 `12584733630` / 629 B / SHA-256 `eaf77de59c091960cc3272c7a2dfb9a39d66f41392ab8dc893126c568dd051e5`，有效期 `2027-01-23T03:33:40Z`。诊断仍 `diagnostic_only=true, accepted=false`，不把proof分支合入产品。
+
+新增取消修复的独立提交为 `9c7a99796680968acc036f04062563bc637b5b75`，父提交是b259纯证据HEAD `37e1b11de8e8a74d98bff7bf811a5d5b2c5e2502`；本包不启动该修复的独立整轮，交共同源码验证。以上原100项验收身份始终是b259，不覆盖9c7a。
