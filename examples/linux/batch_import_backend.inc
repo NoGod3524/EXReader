@@ -68,6 +68,7 @@ static exr_status batch_map(gtk_batch_owner *batch,reader_result *result) {
   return EXR_OK;
 }
 static void batch_copy(gtk_batch_owner *batch,reader_result *result) {
+  result->batch_owned=1;
   result->batch_token=batch->token;result->batch_done=batch->done;
   result->batch_complete=batch->complete;result->batch_truncated=batch->truncated;
   result->batch_cancelled=batch->cancelled;result->batch_map=batch->needs_map;
@@ -110,7 +111,7 @@ static void batch_execute(linux_reader *reader,const reader_command *command,rea
   }
   if(command->action==READER_BATCH_CLOSE) {
     batch_stop(batch);batch_phase(batch,3);result->status=batch_map(batch,result);batch->done=1;
-    batch_copy(batch,result);batch_phase(batch,0);batch_free(reader);return;
+    batch_copy(batch,result);batch_phase(batch,0);batch_free(reader);result->batch_owned=0;return;
   }
   if(command->action==READER_BATCH_MAP) {
     batch_phase(batch,3);result->status=batch_map(batch,result);batch_copy(batch,result);batch_phase(batch,0);return;

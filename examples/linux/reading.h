@@ -154,7 +154,7 @@ typedef struct {
   int receive_reading_more;
   char *receive_resolutions;
 #ifdef EXR_READER_BATCH_IMPORT
-  int has_batch,batch_done,batch_complete,batch_truncated,batch_cancelled,batch_map,batch_deferred;
+  int has_batch,batch_done,batch_complete,batch_truncated,batch_cancelled,batch_map,batch_deferred,batch_owned;
   uint64_t batch_token,batch_seen,batch_attempted,batch_imported,batch_duplicates,batch_failed,batch_pending;
   reader_batch_receipt *batch_rows;
   size_t batch_count;
