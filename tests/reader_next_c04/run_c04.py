@@ -43,7 +43,7 @@ def cmd_fetch(args):
 
 def cmd_run(args):
     module, entries = load_f5(args.f5)
-    corpus, root = Path(args.corpus), Path(args.out)
+    corpus, root = Path(args.corpus).resolve(), Path(args.out).resolve()
     root.mkdir(parents=True, exist_ok=True)
     records = []
     for entry in entries:
@@ -51,8 +51,10 @@ def cmd_run(args):
         if not source.is_file() or source.stat().st_size != entry["source"]["bytes"] or \
                 sha256_file(source) != entry["source"]["sha256"]:
             raise SystemExit("%s: corpus bytes differ from the pinned original" % entry["id"])
-        record = module.run_one(dict(entry, path=str(source)), root, Path(args.consumer),
-                                Path(args.font), args.timeout)
+        # F5 joins entry.path to its result root; an absolute original path must
+        # survive that join rather than becoming run-base/build/.../corpus/....
+        record = module.run_one(dict(entry, path=str(source)), root, Path(args.consumer).resolve(),
+                                Path(args.font).resolve(), args.timeout)
         record["input_sha256"] = sha256_file(source)
         records.append(record)
         print("[%s] %s %s" % (args.label, entry["id"], record["status"]), flush=True)

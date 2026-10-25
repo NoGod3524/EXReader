@@ -11,7 +11,19 @@ index 6c000eb..b1d6b84 100644
  enum { BOLD, ITALIC, SIZE, COLOR, BACKGROUND, UNDERLINE, STRIKE, ALIGN, LEFT, RIGHT,
         INDENT, BEFORE, AFTER, LEADING, MULTIPLE, DIRECTION, RTF_PROPERTIES };
  enum { LIST_TABLE=8,LIST_DEF,LIST_LEVEL,LEVEL_TEXT,LEVEL_NUMBERS,OVERRIDE_TABLE,LIST_OVERRIDE,OVERRIDE_LEVEL };
-@@ -161,7 +163,7 @@ static int number_control(rtf_context *c,rtf_state *s,const char *word,long valu
+@@ -138,7 +140,10 @@ static int number_control(rtf_context *c,rtf_state *s,const char *word,long valu
+   }
+   if(!strcmp(word,"listid") && (s->destination==LIST_DEF || s->destination==LIST_OVERRIDE)) {
+-    if(!has || (value>= -5 && value<= -1)) goto invalid;
++    /* Read-only compatibility: real Word streams use reserved IDs -1..-5.
++       Keep their signed int32 identity intact, including 0 and INT_MIN;
++       only the independent, bounded ls value indexes override_map. */
++    if(!has) goto invalid;
+     if(o) { o->list_id=(int)value; o->has_list_id=1; }
+     else { c->number_definitions[s->definition].id=(int)value; c->number_definitions[s->definition].has_id=1; }
+     return 1;
+   }
+@@ -161,7 +166,7 @@ static int number_control(rtf_context *c,rtf_state *s,const char *word,long valu
    if(!strcmp(word,"levelstartat")) { if(!has) goto invalid; level->start=(int)value; level->has_start=1; return 1; }
    if(!strcmp(word,"levelfollow")) { if(!has || value<0 || value>2) goto invalid; level->follow=(int)value; return 1; }
    if(!strcmp(word,"levellegal") || !strcmp(word,"levelnorestart")) { int flag=!has || value!=0; if(!strcmp(word,"levellegal")) level->legal=flag; else level->norestart=flag; return 1; }
@@ -29,7 +41,15 @@ index 6c000eb..b1d6b84 100644
    if(!put(css,"font-family:\"")) return 0;
    while(*family) {
      if((*family=='"' || *family=='\\') && !put(css,"\\")) return 0;
-@@ -717,7 +719,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
+@@ -496,6 +501,7 @@ static int font_commit(rtf_context *c,const rtf_state *s) {
+   size_t start=0,end=c->font_name.size,old; char *name;
+   if(s->font<0) { c->font_name.size=0; return 1; }
++  if(!c->fonts || s->font>=RTF_FONTS) { c->status=EXR_FORMAT; return 0; }
+   while(start<end && isspace((unsigned char)c->font_name.data[start])) start++;
+   while(end>start && isspace((unsigned char)c->font_name.data[end-1])) end--;
+   old=c->fonts[s->font] ? strlen(c->fonts[s->font]) : 0;
+   if(end-start>EXR_MAX_TEXT-(c->metadata_bytes-old)) { c->status=EXR_LIMIT; return 0; }
+@@ -717,7 +723,7 @@ exr_status exr_rtf(exr_document *d, const void *data, size_t n, exr_error *e) {
    rtf_state states[256] = {{0}};
    rtf_context context={0};
    size_t depth = 0, i = 0;

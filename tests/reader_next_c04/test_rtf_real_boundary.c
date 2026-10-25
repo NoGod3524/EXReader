@@ -19,7 +19,46 @@ static exr_status open_rtf(const sample *s, exr_document **doc) {
   return exr_document_open_memory(EXR_RTF, s->data, s->size, doc, &error);
 }
 
-int main(void) {
+static int list_id_checks(void) {
+  static const char *ids[] = {"0", "-1", "-2", "-3", "-4", "-5", "-2147483648", "2147483647"};
+  const char *level = "{\\listlevel\\levelnfc0\\levelstartat7}";
+  char data[4096]; size_t i; exr_document *doc = NULL;
+  for(i=0;i<sizeof(ids)/sizeof(*ids);i++) {
+    sample s = {"signed list identity", data, 0};
+    int count = snprintf(data,sizeof(data),"{\\rtf1{\\*\\listtable{\\list\\listid%s%s}}{\\*\\listoverridetable{\\listoverride\\listid%s\\listoverridecount0\\ls1}}\\pard\\ls1 Identity}",ids[i],level,ids[i]);
+    CHECK(count>0 && (size_t)count<sizeof(data)); s.size=(size_t)count;
+    CHECK(open_rtf(&s,&doc)==EXR_OK && doc);
+    CHECK(strstr(exr_document_text(doc,NULL),"7. Identity"));
+    exr_document_free(doc); doc=NULL;
+  }
+  {
+    /* Different signs must never alias via abs() or an offset/sentinel map. */
+    sample s = S("positive and negative identities",
+      "{\\rtf1{\\*\\listtable{\\list\\listid-2{\\listlevel\\levelnfc0\\levelstartat7}}{\\list\\listid2{\\listlevel\\levelnfc0\\levelstartat19}}}"
+      "{\\*\\listoverridetable{\\listoverride\\listid-2\\ls1}{\\listoverride\\listid2\\ls2}}\\pard\\ls1 Negative\\par\\pard\\ls2 Positive}");
+    CHECK(open_rtf(&s,&doc)==EXR_OK && doc);
+    CHECK(strstr(exr_document_text(doc,NULL),"7. Negative") && strstr(exr_document_text(doc,NULL),"19. Positive"));
+    exr_document_free(doc); doc=NULL;
+  }
+  {
+    static const sample bad[] = {
+      S("duplicate signed definition", "{\\rtf1{\\*\\listtable{\\list\\listid-2{\\listlevel}}{\\list\\listid-2{\\listlevel}}}A}"),
+      S("duplicate override index", "{\\rtf1{\\*\\listtable{\\list\\listid-2{\\listlevel}}}{\\*\\listoverridetable{\\listoverride\\listid-2\\ls1}{\\listoverride\\listid-2\\ls1}}A}"),
+      S("negative override index", "{\\rtf1{\\*\\listoverridetable{\\listoverride\\listid-2\\ls-1}}A}"),
+      S("zero override index", "{\\rtf1{\\*\\listoverridetable{\\listoverride\\listid-2\\ls0}}A}"),
+      S("overflow override index", "{\\rtf1{\\*\\listoverridetable{\\listoverride\\listid-2\\ls2001}}A}"),
+      S("missing signed definition", "{\\rtf1{\\*\\listoverridetable{\\listoverride\\listid-2\\ls1}}\\pard\\ls1 A}"),
+      S("signed id overflow", "{\\rtf1{\\*\\listtable{\\list\\listid-2147483649{\\listlevel}}}A}"),
+      S("missing id value", "{\\rtf1{\\*\\listtable{\\list\\listid{\\listlevel}}}A}"),
+    };
+    for(i=0;i<sizeof(bad)/sizeof(*bad);i++) {
+      CHECK(open_rtf(&bad[i],&doc)==EXR_FORMAT && !doc);
+    }
+  }
+  return 0;
+}
+
+int main(int argc, char **argv) {
   static const char body[] = "{\\rtf1\\ansi\\ansicpg1252\\uc1 Hello {\\b world}\\par Second \\u8217\\'92 end}";
   static const sample padded[] = {
     S("none", ""), S("crlf", "\r\n"), S("one NUL", "\0"), S("many NUL", "\0\0\0\0\0\0\0\0"),
@@ -58,6 +97,15 @@ int main(void) {
   size_t i, base_nodes = 0, nodes = 0;
   char *buffer;
 
+  if(argc==3 && (!strcmp(argv[1],"--real-base") || !strcmp(argv[1],"--real-candidate"))) {
+    exr_status expected=!strcmp(argv[1],"--real-base") ? EXR_FORMAT : EXR_OK;
+    exr_status actual=exr_document_open(argv[2],&doc,&error);
+    printf("{\"test\":\"original-public-open\",\"status\":%d,\"expected\":%d,\"document\":%s}\n",actual,expected,doc ? "true" : "false");
+    CHECK(actual==expected && (expected==EXR_OK ? doc!=NULL : doc==NULL));
+    exr_document_free(doc); return 0;
+  }
+  CHECK(argc==1);
+
   /* The unpadded stream is the reference. */
   CHECK(open_rtf(&(sample){ "base", body, sizeof(body) - 1 }, &base) == EXR_OK && base);
   base_text = exr_document_text(base, NULL);
@@ -89,6 +137,29 @@ int main(void) {
     CHECK(strstr(exr_document_text(doc, NULL), "Themed"));
     exr_document_free(doc); doc = NULL;
   }
+
+  {
+    static const sample fonts[] = {
+      S("maximum default font", "{\\rtf1\\deff32767{\\fonttbl{\\f32767 Arial;}}Default}"),
+      S("maximum explicit font", "{\\rtf1{\\fonttbl{\\f32767 Arial;}}\\f32767 Explicit}"),
+      S("duplicate font replaces prior name", "{\\rtf1{\\fonttbl{\\f32767 Old;}{\\f32767 New;}}\\f32767 Replaced}"),
+      S("list level maximum font", "{\\rtf1{\\fonttbl{\\f32767 Arial;}}{\\*\\listtable{\\list\\listid1{\\listlevel\\levelnfc0\\f32767}}}{\\*\\listoverridetable{\\listoverride\\listid1\\ls1}}\\pard\\ls1 Maximum}"),
+    };
+    static const sample bad_fonts[] = {
+      S("default font overflow", "{\\rtf1\\deff32768 A}"),
+      S("negative default font", "{\\rtf1\\deff-1 A}"),
+      S("explicit font overflow", "{\\rtf1\\f32768 A}"),
+      S("list font overflow", "{\\rtf1{\\*\\listtable{\\list\\listid1{\\listlevel\\f32768}}}A}"),
+      S("negative list font", "{\\rtf1{\\*\\listtable{\\list\\listid1{\\listlevel\\f-1}}}A}"),
+    };
+    for(i=0;i<sizeof(fonts)/sizeof(*fonts);i++) {
+      CHECK(open_rtf(&fonts[i],&doc)==EXR_OK && doc);
+      CHECK(exr_document_text(doc,NULL) && *exr_document_text(doc,NULL));
+      exr_document_free(doc); doc=NULL;
+    }
+    for(i=0;i<sizeof(bad_fonts)/sizeof(*bad_fonts);i++) CHECK(open_rtf(&bad_fonts[i],&doc)==EXR_FORMAT && !doc);
+  }
+  CHECK(list_id_checks()==0);
 
   for (i = 0; i < sizeof(rejected) / sizeof(*rejected); i++) {
     exr_status status = open_rtf(&rejected[i], &doc);

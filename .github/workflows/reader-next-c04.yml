@@ -187,7 +187,10 @@ jobs:
             echo "base_rtf_c_sha256=$(sha256sum sdk-base/src/rtf.c | cut -d' ' -f1)"
             echo "cand_rtf_c_sha256=$(sha256sum sdk-cand/src/rtf.c | cut -d' ' -f1)"
             echo "base_src_tree=$(git -C sdk-base rev-parse 'HEAD:src')"
-            echo "cand_src_tree=$(git -C sdk-cand write-tree)"
+            candidate_tree=$(git -C sdk-cand write-tree)
+            echo "cand_sdk_tree=$candidate_tree"
+            echo "base_sdk_tree=$(git -C sdk-base rev-parse 'HEAD^{tree}')"
+            echo "cand_src_tree=$(git -C sdk-cand rev-parse "$candidate_tree:src")"
             echo "cand_diff_files=$(git -C sdk-cand diff --cached --name-only | tr '\n' ' ')"
           } > build/c04/identity.txt
           cat build/c04/identity.txt
@@ -237,6 +240,17 @@ jobs:
         if: ${{ !cancelled() }}
         run: |
           ${{ matrix.python }} tests/reader_next_c04/run_c04.py run --f5 f5 --corpus build/c04/corpus --out build/c04/run-base --summary build/c04/summary-base.json --consumer "build/consumer-base/${{ matrix.bin }}exreader-real-corpus-consumer${{ matrix.exe }}" --font "${{ matrix.font }}" --label base --stage-name stage-base
+      - name: Exact public status for both original files on both SDKs
+        if: ${{ !cancelled() }}
+        run: |
+          set -eu
+          for id in rtf-crowley-policy rtf-micro-republics; do
+            for v in base cand; do
+              expected=candidate; if [ "$v" = base ]; then expected=base; fi
+              "build/boundary-$v/${{ matrix.bin }}exreader-rtf-real-boundary${{ matrix.exe }}" "--real-$expected" "$GITHUB_WORKSPACE/build/c04/corpus/assets/$id.rtf" > "build/c04/original-$v-$id.json"
+              cat "build/c04/original-$v-$id.json"
+            done
+          done
       - name: F5 real-document operations on the candidate SDK
         if: ${{ !cancelled() }}
         run: |
@@ -267,6 +281,7 @@ jobs:
             build/c04/boundary-*.err
             build/c04/boundary-*.exit
             build/c04/program-hashes.txt
+            build/c04/original-*.json
           retention-days: 30
           if-no-files-found: warn
 
@@ -282,6 +297,8 @@ jobs:
           pattern: reader-next-c04-*-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/artifacts
       - name: Join both platforms; the result stays an unaccepted candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: python3 tests/reader_next_c04/aggregate.py --dir build/artifacts --out build/c04/aggregate.json
       - uses: actions/upload-artifact@v4
         if: always()
