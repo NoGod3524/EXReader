@@ -4,11 +4,12 @@
   "latest_checkpoint": {
     "current_common_341_head": {
       "branch": "codex/reader-hosts-341-final",
-      "head": "5e8b132626cfe7540f675285787d24bf488857a8",
+      "head": "c8439e49a9d4d5a37cd3ef59b787a82a91e18f63",
       "worktree": "C:/Users/Oscar/.codex/worktrees/reader-windows-preferences-commit-review/EXReader",
       "ordinary_merged_full_composition": "7ac0ac74e40155391dce2ba28b098fe1ee83f39f",
       "ordinary_merged_GTK_caller_prep": "10d313e375c8767f7981b53424e1574a443e4e25",
       "Android_caller_ready": "69bc0c88e8adbf884bc71f94188e89b219349ca3",
+      "ordinary_merged_Android_caller_prep": "69bc0c88e8adbf884bc71f94188e89b219349ca3",
       "common_callers_run": false,
       "full_product_accepted": false,
       "next": "collect_final_Windows_and_Apple_delivery_then_ordinary_merge_all_callers_and_repin_one_final_production_boundary_before_full_same_source_runs"
@@ -24,7 +25,10 @@
       "scope": "four_independent_core_and_typed_packages_only",
       "root_review_record": "f8e5df8b_Apple_interop_doc_core_scope_only_original_sender_failure_retained",
       "host_adoption_audit": "requires_three_more_explicit_candidate_packages_and_versioned_private_pending_requests_no_implicit_v2_rewrite",
-      "companion_implementation": "existing_android_agent_implements_independent_optional_Commands_Sync_Session02_from0737_codex_reader_raw_store_companions_no_hosts_changed"
+      "companion_implementation": "existing_android_agent_implements_independent_optional_Commands_Sync_Session02_from0737_codex_reader_raw_store_companions_no_hosts_changed",
+      "root_dependency_boundary_review": "candidate_exact_ConfigVersion_can_reuse_an_already_imported_old_CMake_target_requires_actual_cap_header_and_archive_source_validation",
+      "approved_additional_scope": "only_eight_four_core_CMake_Config_append_checks_no_core_implementation_or_SDK_changes_full_new_source_retest_required",
+      "private_pending_request_boundary": "legacy_request_v1_stays_writer2_new_request_version_must_persist_explicit_anchor_version_no_retry_upgrade"
     },
     "common_341_complete_composition": {
       "branch": "codex/reader-composition-341",
