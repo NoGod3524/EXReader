@@ -3,6 +3,11 @@
 #define READER_SYNC_H
 #include <reader_revisions.h>
 #include <exr_webdav.h>
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+#define READER_SYNC_VERSION "0.2.0"
+#else
+#define READER_SYNC_VERSION "0.1.0"
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
