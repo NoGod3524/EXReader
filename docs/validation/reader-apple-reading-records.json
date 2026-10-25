@@ -1,7 +1,11 @@
 {
   "schema": 1,
-  "accepted": false,
-  "status": "native19 diagnostic passed; real Xcode preflight and focused shelf recovery pending before formal full",
+  "accepted": true,
+  "status": "native Apple product reading records accepted on SDK3.40; shared-source host integration remains separate",
+  "scope": "native Apple product reading records only",
+  "source_sha": "19fde18968e03bb4e87d86b0ed650716ac02c9fa",
+  "run_id": 40163099176,
+  "attempt": 1,
   "start_sha": "f5d25b4c71ea39bd22bebea4eedfee16ca178c35",
   "module_source": "ba25961961ae69222bfed4f7a98cb02bb1dc6847",
   "g03_tree": "cf067b8be378d4195817d1106b81f358579e2280",
@@ -12,7 +16,70 @@
   "sdk_abi": 1,
   "native_expected": 19,
   "ui_expected_each": 7,
-  "runs": [],
+  "runs": [
+    {
+      "source_sha": "19fde18968e03bb4e87d86b0ed650716ac02c9fa",
+      "run_id": 40163099176,
+      "attempt": 1,
+      "conclusion": "success",
+      "accepted": true,
+      "native_passed": 19,
+      "ui_passed_each": 7,
+      "jobs": {
+        "sdk_iphonesimulator": 121078576188,
+        "sdk_macos": 121078576279,
+        "native": 121082697539,
+        "ui_macos": 121084664391,
+        "ui_ipad": 121084664397,
+        "ui_iphone": 121084664427,
+        "strict_summary": 121090431589
+      },
+      "artifacts_expires_at": "2027-01-23T04:46:22Z",
+      "artifacts": [
+        {"id": 12588766881, "name": "apple-reading-ui-macos-40163099176-1", "bytes": 38006304, "digest": "sha256:8e29ead3264c70cb1406e43729d373468310705bef29c2bd2cb157842f32103a"},
+        {"id": 12588648490, "name": "apple-reading-ui-iphone-40163099176-1", "bytes": 40803101, "digest": "sha256:c8ab57067beb3bb1f4b6079a4c9c0c32d74a47e2e7c4a04295a2e8d0539e1639"},
+        {"id": 12588555221, "name": "apple-reading-native-40163099176-1", "bytes": 1614232, "digest": "sha256:24279cdd37d8f058c322a0759078b3a108d0393c47487adb6ecf5593d0943dd5"},
+        {"id": 12588517648, "name": "apple-reading-ui-ipad-40163099176-1", "bytes": 60592663, "digest": "sha256:12ea2d7531af0dfeac188db60f00ea0f2b17aec1ed22b59caf48efbefde7e7d1"},
+        {"id": 12588150432, "name": "apple-reading-sdk-iphonesimulator-40163099176-1", "bytes": 20355035, "digest": "sha256:df2d644271ce85ea8b69551ec0459d11ffeb2629f2e4ed2bddeffdd55bf10d85"},
+        {"id": 12587914241, "name": "apple-reading-summary-40163099176-1", "bytes": 102223, "digest": "sha256:b2c64f50652e4ca03af2e4676aa204020163337fadb2a150ff9407fcd69a6b83"},
+        {"id": 12587049471, "name": "apple-reading-sdk-macos-40163099176-1", "bytes": 20348500, "digest": "sha256:b38d6ce2d8c3e5008a2214a7cf41c8d21e2e5155ff7ed27094d0a80e5c555a75"}
+      ]
+    },
+    {
+      "source_sha": "25eeb6aaccdc50e670f0aaea73631818bc0551f8",
+      "run_id": 40160552435,
+      "attempt": 1,
+      "conclusion": "success",
+      "accepted": true,
+      "native_passed": 19,
+      "ui_passed_each": 7,
+      "strict_summary_job": 121073490375,
+      "scope": "earlier records source before compact iOS selection layout repair; grants remain bound to this source"
+    }
+  ],
+  "retained_regressions": {
+    "all_on_one_complete_sha": false,
+    "common_host_integration_accepted": false,
+    "on_final_source": [
+      {"workflow": "wp13-apple.yml", "source_sha": "19fde18968e03bb4e87d86b0ed650716ac02c9fa", "run_id": 40163097702, "attempt": 1, "conclusion": "success", "jobs": 8, "strict_summary_job": 121088374028, "iphone_ui_job": 121082151839, "repaired_original_case": "test11SelectionInvalidatedByViewportChange"}
+    ],
+    "on_prior_source": [
+      {"source_sha": "25eeb6aaccdc50e670f0aaea73631818bc0551f8", "workflow": "reader-apple-navigation.yml", "run_id": 40161454864, "attempt": 1, "conclusion": "success"},
+      {"source_sha": "25eeb6aaccdc50e670f0aaea73631818bc0551f8", "workflow": "reader-apple-search.yml", "run_id": 40161456543, "attempt": 1, "conclusion": "success"},
+      {"source_sha": "25eeb6aaccdc50e670f0aaea73631818bc0551f8", "workflow": "reader-apple-import-mapping.yml", "run_id": 40161460346, "attempt": 1, "conclusion": "success"},
+      {"source_sha": "25eeb6aaccdc50e670f0aaea73631818bc0551f8", "workflow": "reader-apple-shelf.yml", "scope": "full", "run_id": 40161462179, "attempt": 1, "conclusion": "success", "ui_cases_each": 7, "originals_forward_and_reverse_each": 2202, "strict_summary_job": 121088817697}
+    ]
+  },
+  "post_restart_failures_and_diagnostics": [
+    {"source_sha": "eff7ab646b386cb7a3e6fda3965697c3f0470432", "run_id": 40154557074, "conclusion": "cancelled", "macos_ui_job": 121054814177, "macos_ui_conclusion": "failure", "macos_passed": 6, "accepted": false, "reason": "Button-oriented tap helper rejects AppKit TextEditor AXEnabled; other pending jobs superseded, failure retained"},
+    {"source_sha": "986fca5cc80f8a3d5a1589b2cdfcf703296a5a5f", "run_id": 40155811151, "conclusion": "failure", "accepted": false, "reason": "Flattening the editor sheet did not change the AXEnabled result and was reverted. iOS cases stopped at the nonhittable Menu wrapper"},
+    {"source_sha": "9c58e1c4b572e78b7cd846b95055edb0eabc0e83", "run_id": 40156690279, "conclusion": "failure", "accepted": false, "macos_passed": 7, "reason": "Real text input and saved-body assertions pass on macOS; iOS entry still stopped at Menu wrapper"},
+    {"source_sha": "48832283953cb3687b28d1b19587d95fd18057d5", "run_id": 40158362929, "conclusion": "failure", "accepted": false, "macos_passed": 7, "reason": "Both identified iOS Menu wrapper and native descendant report no XCTest hit point; no iOS records grant"},
+    {"source_sha": "25eeb6aaccdc50e670f0aaea73631818bc0551f8", "run_id": 40159907949, "conclusion": "success", "diagnostic_only": true, "accepted": false, "scope": "Measured native Menu-button touch and original progress/bookmark/restart case, one actual case per target; formal summary skipped"},
+    {"source_sha": "25eeb6aaccdc50e670f0aaea73631818bc0551f8", "run_id": 40161458572, "conclusion": "failure", "accepted": false, "iphone_ui_job": 121074716771, "iphone_passed": 12, "iphone_expected": 13, "reason": "New highlight action increased iOS selection panel height. In landscape the original close action was offscreen; original test11 real AXScrollToVisible failed. Preserve original tap and invalidation assertions; fixed by native iOS ScrollView in19fde189"}
+  ],
+  "superseded_prior_source_retained_runs": [40154664585, 40154665955, 40154667537, 40154670575, 40154674340],
+  "superseded_prior_source_retained_reason": "Cancelled incomplete eff7ab64 runs after candidate changed; original jobs/logs remain and confer no final-source grant",
   "earlier_superseded_full_queues": [
     {
       "source_sha": "6af82afd980704a7624ceace1dbdcd303335a6c7",
@@ -147,7 +214,7 @@
       "attempt": 1,
       "diagnostic_only": true,
       "accepted": false,
-      "status": "in_progress",
+      "status": "success",
       "scope": "unchanged focused three-target native shelf restoration cases"
     },
     {
