@@ -1,0 +1,381 @@
+{
+  "accepted": true,
+  "status": "second root review finding closed and module scope re-accepted on Linux, Windows and macOS from one run; hosts remain unwired, common-source integration not granted",
+  "package": "EXReaderLinkPolicy 0.1.0",
+  "abi": 1,
+  "common_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk": {
+    "commit": "9854061be331fe603a1822d9b2b36ee357154927",
+    "version": "3.40.0",
+    "abi": 1
+  },
+  "branch": "codex/reader-external-link-policy",
+  "tested_source": "6fd6031c178ca567ad7a9ae7351b053aa23e45f3",
+  "tested_source_note": "the acceptance run tested this commit; the final HEAD of the branch is a docs-only [skip ci] commit on top of it",
+  "root_reviews": [
+    {
+      "record": "docs/handoffs/reader-next-wave/J06-ROOT-REVIEW.md at 4871e635",
+      "round": 2,
+      "finding": "external() located the fragment but still validated the query run to the end of the target, so a fragment that followed a query kept the query control-byte allowance and https://example.com/?q=x#%0A became NEEDS_HOST",
+      "fix": "the query region now ends at the first '#'; the fragment after it is validated as a fragment (encoded controls and non-UTF-8 escapes rejected) and a '?' inside a fragment stays literal text. Legal query CRLF such as mailto:…?body=x%0D%0Ay and https://example.com/?q=x%0D%0Ay#frag stays accepted."
+    },
+    {
+      "record": "docs/handoffs/reader-next-wave/J06-ROOT-REVIEW.md at 2b1ca2d1",
+      "round": 1,
+      "finding": "external() applied the query rules to the whole target (path/authority/fragment controls allowed) and internal() never decoded fragment escapes (#a%FF became INTERNAL)",
+      "fix": "component escape validation plus a fragment UTF-8 decoder shared with the container-path rules; landed in b3a01821"
+    }
+  ],
+  "run_id": 40136807836,
+  "attempt": 1,
+  "jobs": [
+    {
+      "id": 120999938782,
+      "name": "link policy consumers (Linux)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120999938721,
+      "name": "link policy consumers (Windows)",
+      "conclusion": "success"
+    },
+    {
+      "id": 120999938532,
+      "name": "link policy consumers (macOS)",
+      "conclusion": "success"
+    },
+    {
+      "id": 121000620042,
+      "name": "strict same-run link policy evidence",
+      "conclusion": "success"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12577945550,
+      "name": "reader-external-link-policy-Linux-40136807836-1",
+      "size_in_bytes": 426544,
+      "digest": "sha256:73f515acd1edc316c792d7f6131fab2f6dbee2ac0278a08323efbc87981873aa",
+      "expires_at": "2027-01-22T22:02:08Z"
+    },
+    {
+      "id": 12577180979,
+      "name": "reader-external-link-policy-Windows-40136807836-1",
+      "size_in_bytes": 862582,
+      "digest": "sha256:0df7d83f31a1b2385ae72a0eb5f5644ff7a9f47e202021d8a878346fb0afa6d4",
+      "expires_at": "2027-01-22T22:02:08Z"
+    },
+    {
+      "id": 12576959054,
+      "name": "reader-external-link-policy-macOS-40136807836-1",
+      "size_in_bytes": 391458,
+      "digest": "sha256:0a72086ee3c991312a159710bba408ce4834e15f2dbf95fe43dbb48925cb6b7d",
+      "expires_at": "2027-01-22T22:02:08Z"
+    }
+  ],
+  "evidence_artifact": {
+    "id": 12577345813,
+    "name": "reader-external-link-policy-summary-40136807836-1",
+    "size_in_bytes": 864,
+    "digest": "sha256:f3b27a2dbfa49b712199d1624609daaab043ed28ebfdd3e1e27a68ce485c5449",
+    "expires_at": "2027-01-22T22:02:08Z"
+  },
+  "evidence_job_record": "check_artifacts.py authenticated all three same-run ZIPs (ids, bytes, sha256 digests, future expiry), rejected altered report variants, and matched report.json to the installed library, header and consumer bytes inside each ZIP: 'artifact evidence ok: 3 artifacts'",
+  "named_checks": [
+    "fixtures-shape",
+    "default-cases-exact",
+    "custom-cases-exact",
+    "group-external-allowed",
+    "group-mixed-case-scheme",
+    "group-unicode",
+    "group-userinfo",
+    "group-protocol-relative",
+    "group-encoded-separators",
+    "group-double-escape",
+    "group-path-escape",
+    "group-forbidden-scheme",
+    "group-unknown-scheme",
+    "group-bad-scheme",
+    "group-controls",
+    "group-invalid-utf8",
+    "group-overlong",
+    "group-authority",
+    "group-internal-allowed",
+    "group-fragment-and-cfi",
+    "group-escapes",
+    "group-spaces",
+    "group-escape-boundary",
+    "probe-limits",
+    "probe-errors",
+    "probe-lifetime",
+    "probe-interleave",
+    "worker-alloc",
+    "worker-cancel",
+    "worker-lifetime",
+    "worker-limits",
+    "cpp-consumer",
+    "sdk-navigation-handoff",
+    "installed-header-parity",
+    "installed-library-unhooked",
+    "no-network-or-process-symbols",
+    "symbol-audit-negative-control"
+  ],
+  "checks_per_platform": 37,
+  "checks_passed": {
+    "Linux": 37,
+    "Windows": 37,
+    "macOS": 37
+  },
+  "fixtures": {
+    "default_cases": 144,
+    "custom_cases": 7,
+    "groups": 20
+  },
+  "review_regressions": {
+    "group": "escape-boundary",
+    "cases": 17,
+    "round1_negatives": [
+      "https://example.com/%0D",
+      "https://example.com/a%0Ab",
+      "https://example.com/%7F",
+      "https://example.com/#%0A",
+      "https://exa%0Ample.com/",
+      "#a%FF",
+      "#%E2%82",
+      "#%C0%AF"
+    ],
+    "round2_negatives": [
+      "https://example.com/?q=x#%0A",
+      "https://example.com/#a?b%0A",
+      "https://example.com/#%FF"
+    ],
+    "positives": [
+      "#章节",
+      "#%E7%AB%A0%E8%8A%82",
+      "mailto:reader@example.com?body=x%0D%0Ay",
+      "https://example.com/?q=x%0D%0Ay#frag",
+      "https://example.com/#a?b",
+      "mailto:reader@example.com?body=x%0D%0Ay#section"
+    ],
+    "note": "the mailto CRLF body positive from earlier rounds is retained unchanged"
+  },
+  "consumers": [
+    "link-probe",
+    "link-cpp-consumer",
+    "link-worker (source build with test hooks)",
+    "link-sdk-consumer",
+    "link-unsafe-control (negative control, never executed)"
+  ],
+  "sdk_handoff_evidence": "navigation-epub3.epub: 6 authored entries, 4 INTERNAL targets all resolved by exr_document_resolve, 1 NEEDS_HOST target refused by the SDK, CFI kept as INTERNAL/CFI",
+  "symbol_audit_evidence": {
+    "Linux": 110,
+    "Windows": 264,
+    "macOS": 221,
+    "forbidden_hits": 0,
+    "negative_control_hits": [
+      "fopen",
+      "getaddrinfo",
+      "remove",
+      "system"
+    ]
+  },
+  "installed_header_sha256": "3d61caf82f19e32f3abda52cc9b0c2c0f104e3146fcbb0f439b2aab0c622893a",
+  "problems": [],
+  "superseded_rounds": [
+    {
+      "source": "b3a018216e6a050fd3fc8425734512eebaf6887a",
+      "run_id": 40134055434,
+      "attempt": 1,
+      "checks_per_platform": 37,
+      "status": "was green for its own source and closed the first review round; the second review found the query/fragment boundary defect in that same source, so its green is not transferred",
+      "artifacts": [
+        {
+          "id": 12576770797,
+          "name": "reader-external-link-policy-Linux-40134055434-1",
+          "size_in_bytes": 424013,
+          "digest": "sha256:fc442daa803628e0ada91e899d4b19d1781d138e14f9b2b4946a43335c7466a4",
+          "expires_at": "2027-01-22T21:24:13Z"
+        },
+        {
+          "id": 12576581157,
+          "name": "reader-external-link-policy-Windows-40134055434-1",
+          "size_in_bytes": 861964,
+          "digest": "sha256:94759a5ba30fafd185a32e78889b718bcfac73634b8785a72123ca4ac151ecb3",
+          "expires_at": "2027-01-22T21:24:13Z"
+        },
+        {
+          "id": 12575853338,
+          "name": "reader-external-link-policy-macOS-40134055434-1",
+          "size_in_bytes": 389753,
+          "digest": "sha256:8dd8271aef48c0a5e9bfd7654bfc0a913e34be3472eb681eeaf5aa2f86e9b4ec",
+          "expires_at": "2027-01-22T21:24:13Z"
+        }
+      ],
+      "evidence_artifact": {
+        "id": 12575763518,
+        "name": "reader-external-link-policy-summary-40134055434-1",
+        "size_in_bytes": 867,
+        "digest": "sha256:33d846ba316cdbc64c712d79f7212e2ffab6d3982aa65277b9bc84ca193d0b40",
+        "expires_at": "2027-01-22T21:24:13Z"
+      }
+    },
+    {
+      "source": "e175a00fbf7f623993698a276e8f066c392ad061",
+      "run_id": 40123584995,
+      "attempt": 1,
+      "checks_per_platform": 36,
+      "status": "first acceptance round; superseded by both review fixes, which changed external escape handling, fragment validation and therefore the installed header digest (70deea67… → 3d61caf8…)",
+      "artifacts": [
+        {
+          "id": 12571723825,
+          "name": "reader-external-link-policy-Linux-40123584995-1",
+          "size_in_bytes": 421612,
+          "digest": "sha256:6a82469a2658f42447dc4f7417f5ab28b24e4194cf06c62673aa31ed504f4b29",
+          "expires_at": "2027-01-22T19:04:03Z"
+        },
+        {
+          "id": 12572047455,
+          "name": "reader-external-link-policy-Windows-40123584995-1",
+          "size_in_bytes": 858245,
+          "digest": "sha256:2a1d4d40be90b3e00a4a37edd7e7da332407cd240d00c1ee91b0a1a983ebbff2",
+          "expires_at": "2027-01-22T19:04:03Z"
+        },
+        {
+          "id": 12572544145,
+          "name": "reader-external-link-policy-macOS-40123584995-1",
+          "size_in_bytes": 384639,
+          "digest": "sha256:601e3505db9656e762808a74be6f297c416a9ec1a79a20bd0872523c4bea24fd",
+          "expires_at": "2027-01-22T19:04:03Z"
+        }
+      ],
+      "evidence_artifact": {
+        "id": 12572590948,
+        "name": "reader-external-link-policy-summary-40123584995-1",
+        "size_in_bytes": 865,
+        "digest": "sha256:7bd4fbed6e2ee664f4e7b6dc7886b06e60353eb0b074aeb178f535184c97e22d",
+        "expires_at": "2027-01-22T19:04:03Z"
+      }
+    }
+  ],
+  "retained_failures": [
+    {
+      "source": "ad378913631aa70877ba4beebcf7ee909d5c6773",
+      "run_id": 40122660917,
+      "attempt": 1,
+      "summary": "the C++ consumer was compiled with the wrong version macro names on every platform, so all three jobs failed",
+      "jobs": [
+        {
+          "id": 120957380020,
+          "name": "link policy consumers (Linux)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 120957380157,
+          "name": "link policy consumers (Windows)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 120957380182,
+          "name": "link policy consumers (macOS)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 120961852865,
+          "name": "strict same-run link policy evidence",
+          "conclusion": "failure"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12572355548,
+          "name": "reader-external-link-policy-Linux-40122660917-1",
+          "size_in_bytes": 394475,
+          "digest": "sha256:50d0c3bee2106f7412a9932fcb4dea527037feea41c72f0e86338a10f8123d80",
+          "expires_at": "2027-01-22T18:51:56Z"
+        },
+        {
+          "id": 12571393229,
+          "name": "reader-external-link-policy-Windows-40122660917-1",
+          "size_in_bytes": 721238,
+          "digest": "sha256:5e706d59ee62f4b3eab660305ed9bcbd956075a1b0fbf3dc9fa699082e03526e",
+          "expires_at": "2027-01-22T18:51:56Z"
+        },
+        {
+          "id": 12571918268,
+          "name": "reader-external-link-policy-macOS-40122660917-1",
+          "size_in_bytes": 358379,
+          "digest": "sha256:58e464c8c62c96f0b88a432ee04f85fc24a7aa482f352ecdbadd4ded0026ea59",
+          "expires_at": "2027-01-22T18:51:56Z"
+        },
+        {
+          "id": 12571519608,
+          "name": "reader-external-link-policy-summary-40122660917-1",
+          "size_in_bytes": 721,
+          "digest": "sha256:d1539de1b8b0fc9bdf405bf414e3f5d1e681c014dc36986ed90290b6c600f590",
+          "expires_at": "2027-01-22T18:51:56Z"
+        }
+      ]
+    },
+    {
+      "source": "1df6dd3cc995e7546d7e46c94a53d1893230c17d",
+      "run_id": 40122960979,
+      "attempt": 1,
+      "summary": "worker-cancel and worker-lifetime expectations were wrong and MSVC refused strcpy under /W4 /WX; Linux and Windows failed. The macOS job of this superseded run was cancelled while still queued so the fixed run could obtain a runner and produced no evidence",
+      "jobs": [
+        {
+          "id": 120958280278,
+          "name": "link policy consumers (Linux)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 120958280538,
+          "name": "link policy consumers (Windows)",
+          "conclusion": "failure"
+        },
+        {
+          "id": 120958280512,
+          "name": "link policy consumers (macOS)",
+          "conclusion": "cancelled"
+        },
+        {
+          "id": 120962383686,
+          "name": "strict same-run link policy evidence",
+          "conclusion": "failure"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12572206174,
+          "name": "reader-external-link-policy-Linux-40122960979-1",
+          "size_in_bytes": 421951,
+          "digest": "sha256:0348d79f94ea20be5abfb7520c5919fd5d4ad17da1ad100a9bb27847f9595e63",
+          "expires_at": "2027-01-22T18:55:53Z"
+        },
+        {
+          "id": 12572311188,
+          "name": "reader-external-link-policy-Windows-40122960979-1",
+          "size_in_bytes": 721101,
+          "digest": "sha256:e2334c527e2fec62037648c7f23009271e0351fd794c4f5d935b25eb872a8f4b",
+          "expires_at": "2027-01-22T18:55:53Z"
+        }
+      ]
+    }
+  ],
+  "granted_platforms": [
+    "linux",
+    "windows",
+    "macos"
+  ],
+  "module_accepted": true,
+  "host_ui_accepted": false,
+  "performance_claimed": false,
+  "device_accepted": false,
+  "sdk_changed": false,
+  "schema_changed": false,
+  "protected_trees_unchanged": true,
+  "uncovered": [
+    "product hosts (Windows, GTK, Android, Apple) are not wired to this package; that wiring belongs to root and the host owners",
+    "no emulator, real device, performance or accessibility scope is claimed",
+    "root review against the merged common source is still outstanding; integration is not claimed"
+  ]
+}
