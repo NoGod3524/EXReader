@@ -9,6 +9,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 import time
 
 ROOT=Path(__file__).resolve().parents[2]
@@ -70,6 +71,26 @@ def process(profile,source,mode,label,legacy=False,env=None):
     run(label,args,timeout=180,env=env)
     value=json.loads(report.read_text());assert value['accepted'] and value['check_count']==len(value['checks']) and all(row['passed'] for row in value['checks'])
     return dict(label=label,program_sha256=sha(binary),report=report.name,report_sha256=sha(report),checks=value['check_count'],mode=mode,legacy=legacy)
+
+
+def profile_refusals():
+    sdk=ROOT/'build/reading-library/stage';raw=OUT/'raw-stage';legacy=OUT/'legacy-stage';cases=[]
+    def rejected(name,prefix,legacy_profile,needle):
+        args=['cmake','-S',ROOT/'tests/reader_gtk_raw3','-B',OUT/('refuse-'+name),'-G','Ninja','-DCMAKE_BUILD_TYPE=Release',
+          '-DHOST_SOURCE='+str(ROOT),'-DEXR_SDK='+str(sdk),'-DEXR_SDK_VERSION=3.41.0','-DMODULE_PREFIX='+str(prefix),
+          '-DCMAKE_PREFIX_PATH='+str(prefix)+';'+str(sdk),'-DLEGACY_PROFILE='+('ON' if legacy_profile else 'OFF')]
+        done=run('refuse-'+name,args,expect=1)
+        assert needle in done.stdout+done.stderr,(name,done.stderr)
+        cases.append(dict(name=name,rejected=True,exit_code=done.returncode,required_diagnostic=needle))
+    rejected('raw-host-old-family',legacy,False,'0.2.0')
+    rejected('legacy-host-raw-family',raw,True,'0.1.0')
+    for name,relative,needle in [('escaped-header','include/reader_reading_state.h','header origin mismatch'),
+                                ('escaped-archive','lib/libreader_revisions.a','archive origin mismatch')]:
+        with tempfile.TemporaryDirectory(prefix='gtk-raw-origin-',dir=ROOT/'build') as temporary:
+            clone=Path(temporary)/'stage';shutil.copytree(raw,clone)
+            changed=clone/relative;changed.unlink();changed.symlink_to(legacy/relative)
+            rejected(name,clone,False,needle)
+    return cases
 
 
 def killed(profile,source,label,stage,legacy=False):
@@ -159,7 +180,7 @@ def network(phases):
             connection=sqlite3.connect((profile/'library.sqlite.product.sqlite').resolve().as_uri()+'?mode=ro',uri=True)
             try:retained={rid:body for rid,body in connection.execute('SELECT revision_id,CAST(body_json AS BLOB) FROM reader_revisions')}
             finally:connection.close()
-            assert all(retained[rid]==data for rid,digest,data in selected)
+            assert len(retained)==len(selected) and all(retained[rid]==data for rid,digest,data in selected)
             assert server.requests and all(row['authenticated'] for row in server.requests)
             request_log=OUT/(label+'-requests.json');request_log.write_text(json.dumps(server.requests,indent=2)+'\n')
             reports.append(dict(label=label,session=value,wire_count=len(selected),originals=len(books),
@@ -189,6 +210,7 @@ def main():
       scope='explicit GTK raw3 actual owner candidate',complete_product=False,performance_accepted=False,six_platform_accepted=False,physical_device_execution=False)
     try:
         build();report['built']=True
+        report['profile_refusals']=profile_refusals()
         if args.mode=='full':
             report['phases'],report['kills'],report['legacy_native_pending_refusals']=exercise()
             report['network']=network(report['phases'])

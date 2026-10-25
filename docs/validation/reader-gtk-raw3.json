@@ -1,0 +1,23 @@
+{
+  "accepted": false,
+  "status": "candidate; complete same-source raw host and retained regression pending",
+  "compact_baseline": "9fc407a5cce5a0bfe644a60bd8dc29f84dea6d0e",
+  "raw_family_source": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+  "private_capture_source": "4ad6f956a9ebe33f50a5f341b51b24bd538e871a",
+  "production_pin": "4b189aca819d9c5d1a7e73a6c5bbe0b2e8286f6e",
+  "default_option": "EXR_READER_GTK_RAW3=OFF",
+  "runs": [
+    {"run_id": 40211491324, "scope": "build only", "conclusion": "failure", "reason": "Host guard incorrectly required direct raw definition on the separate reading-state SDK resolver"},
+    {"run_id": 40211879275, "scope": "build only", "conclusion": "success", "source_sha": "4b189aca819d9c5d1a7e73a6c5bbe0b2e8286f6e"},
+    {"run_id": 40212846373, "scope": "isolated raw probe", "conclusion": "failure", "reason": "Probe expected runtime3.40; actual pinned SDK runtime is3.41"},
+    {"run_id": 40213236938, "scope": "isolated raw probe", "conclusion": "failure", "reason": "Ten actual owner phases and four durable kill boundaries passed; Mac root result lookup was ambiguous among nested result.json members"}
+  ],
+  "raw_host_accepted": false,
+  "complete_retained_chain_accepted": false,
+  "complete_product": false,
+  "performance_accepted": false,
+  "frame_accepted": false,
+  "physical_device_execution": false,
+  "screen_reader_accepted": false,
+  "six_platform_accepted": false
+}
