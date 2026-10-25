@@ -43,6 +43,13 @@ def main():
     old_owner = evidence / 'original-owner/HostReadingRecords.swift'
     old_owner.parent.mkdir()
     old_owner.write_bytes(subprocess.check_output(['git', 'show', BASE + ':examples/apple/HostReadingRecords.swift'], cwd=ROOT))
+    java_classes = evidence / 'java-policy-classes'
+    run(['javac', '-d', java_classes,
+         ROOT / 'examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java',
+         HERE / 'ParserPolicyCheck.java'], 'java-policy-compile')
+    run(['java', '-cp', java_classes, 'org.exreader.host.ParserPolicyCheck'], 'java-policy-check')
+    java_cases = [line.removeprefix('CASE ') for line in (evidence / 'java-policy-check.log').read_text().splitlines() if line.startswith('CASE ')]
+    assert len(java_cases) == len(set(java_cases)) == 20
     for label, (version, source) in SDKS.items():
         source_dir, prefix = out / ('source-' + label), out / ('sdk-' + label)
         source_dir.mkdir()
@@ -122,10 +129,24 @@ def main():
         phase('new-compatible', 'replay-' + boundary, profile, '3.40.0', 'replay-' + boundary)
         assert digest(original) == prior
 
+    for label, tag in [('old', 'exreader-sdk-3.40.0'), ('new', 'exreader-sdk-3.41.0')]:
+        produced = profiles / (label + '-prefixed-produced')
+        program = 'old-original' if label == 'old' else 'new-compatible'
+        phase(program, 'produce-prefixed', produced, tag, label + '-prefixed-produce')
+        controls = [('new-compatible', 'consume', label + '-prefixed-accept'),
+                    ('new-original', 'refuse', label + '-prefixed-original-reject')]
+        if label == 'old':
+            controls.append(('old-original', 'refuse', 'old-prefixed-original340-reject'))
+        for consumer, mode, name in controls:
+            target = profiles / name
+            shutil.copytree(produced, target)
+            phase(consumer, mode, target, tag, name)
+
     result = dict(accepted=True, source_sha=os.environ['GITHUB_SHA'], run_id=os.environ['GITHUB_RUN_ID'],
                   attempt=os.environ['GITHUB_RUN_ATTEMPT'], sdks=SDKS, programs=programs,
                   commands=commands, phases=phases, host_ui_accepted=False, physical_device_accepted=False,
-                  downgrade_accepted=False, original_suite_cases_per_sdk=19)
+                  downgrade_accepted=False, original_suite_cases_per_sdk=19,
+                  java_policy_cases=java_cases, actual_android_host_interop_accepted=False)
     result['inputs'] = {p.name: dict(bytes=p.stat().st_size, sha256=digest(p)) for p in (evidence / 'inputs').iterdir() if p.is_file()}
     result['files'] = {p.relative_to(evidence).as_posix(): dict(bytes=p.stat().st_size, sha256=digest(p))
                        for p in evidence.rglob('*') if p.is_file()}
