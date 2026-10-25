@@ -1,0 +1,203 @@
+# 书籍信息快照（EXReaderBookInformation 0.1.0）
+
+## 固定起点与边界
+
+- 固定起点：`f43baf9182d75907c0cb5d6f77048f27bca8c950`；冻结 SDK
+  `9854061be331fe603a1822d9b2b36ee357154927`（3.40.0 / ABI 1）；产品 schema1 与既有
+  wire v1、reading anchor v1/v2 不改。
+- 本包只写入 `apps/reader/book-information/**`、`tests/reader_book_information/**`、
+  `.github/workflows/reader-book-information.yml`、`docs/READER-BOOK-INFORMATION.md`
+  与 `docs/validation/reader-book-information.json`。
+- 依赖只有两件已安装的公开包：冻结 SDK 的 `EXReader::exr_library` 与产品目录
+  `EXReaderProductCatalog::reader_catalog 0.1.0`。不读 SDK 私有 SQL，不使用本机 SDK
+  行号作跨设备身份，不新增同步实体，不写产品库也不写 SDK 库。
+- 本包是只读组件；宿主信息面板、编辑、metadata 模块与真实宿主接线由 root 负责，本包
+  因此不豁免自己的模块实测。
+
+## 公开契约
+
+```c
+reader_book_information_status reader_book_information_read(
+    reader_catalog *catalog, exr_library *library, const char *book_key,
+    const reader_book_information_options *options,
+    reader_book_information **out, reader_book_information_error *error);
+const reader_book_information_view *reader_book_information_get(const reader_book_information *);
+void reader_book_information_free(reader_book_information *);
+```
+
+- **输入**：`catalog` 必需，`library` 可为 NULL（此时不触碰任何 SDK 对象）。
+  `book_key` 必须是产品键 `format:sha256`（≤128 字节），即
+  `reader_books.book_key`；`options->struct_size` 必须覆盖整个结构体，短于记录一律拒绝。
+  读取只经 `reader_catalog_metadata`、`exr_library_source`，以及（请求时）
+  `exr_library_fixed_source`（PDF/CBZ）或 `exr_library_epub_info_get`（EPUB）。
+- **输出与内存归属**：`*out` 是模块独占的深拷贝；调用方用
+  `reader_book_information_free` 释放。视图不借用产品行、SDK 源或 fixed 文档，因此
+  catalog、library、源和文档全部关闭后仍然有效；视图不可变，可被任意线程读取。
+  失败与取消时 `*out` 恒为 NULL。
+- **线程/重入**：`catalog` 与 `library` 必须在其创建 worker 上使用（两者自身即要求
+  owner 线程）。模块自身另有逐线程重入闸门：从本模块取消回调里再次调用会立刻返回
+  `REENTRANT`，不会触碰被借用的句柄。
+- **取消**：`cancelled` 回调在同一线程同步调用；每个阶段之前与每个 64 KiB 散列块之间
+  轮询。取消返回 `CANCELLED`，不产生任何部分快照。
+- **提交边界**：模块从不写库、不开事务、不留后台状态；每次调用把两个库恢复为调用前的
+  状态。读取期间只借用一行产品元数据与一个 SDK 源/文档。
+- **错误**：`error` 在每次调用入口清零，只在返回非 `OK` 时有意义；`catalog_code`
+  记录产品库/SQLite 码，`sdk_code` 记录 `exr_status`。缺本机文件、错书、口令与解析失败
+  都是视图里的字段状态，不是错误。
+
+## 产品字段与解析器字段
+
+视图严格分区，解析器字段永远不会覆盖或推测产品字段：
+
+| 分区 | 字段 | 来源 |
+| --- | --- | --- |
+| 产品 | `book_key`、`format`、`location_kind`、`title`、`author`、`author_known`、`favorite`、`deleted`、`product_source_bytes` | `reader_catalog_metadata` |
+| 本机 | `availability`、`identity`、`verified_bytes`、`verified_sha256` | `exr_library_source`（+ 本模块 64 KiB 分块 SHA-256） |
+| 解析器 | `parser_status`、`page_count_known`、`page_count`、`parser_title`、`epub_*`、`properties` | `exr_library_fixed_source` / `exr_library_epub_info_get` |
+
+未知就是未知：非定页格式的 `page_count_known=0`，空作者是 `author_known=0` 而不是
+"未知作者"，EPUB 没有公开标题就 `parser_title=NULL`。
+
+`parser_title` 是 fixed 文档提供方自己的标题，不是 PDF 的 Info `/Title`：
+CBZ 取 ComicInfo 的 `Title`；从库里读出的 PDF 没有提供方标题，因此为 NULL，PDF 的
+Info 标题只出现在 `properties` 的 `http://purl.org/dc/terms/title` 里。`location_kind` 只在存在本机映射
+时非空（云only行是空串）。视图不包含本机 SDK 书 ID：跨设备身份只有产品 `book_key`。
+
+| 格式 | 解析器字段 |
+| --- | --- |
+| `pdf`、`cbz` | 页数、fixed 提供方标题、键值元数据（PDF Info 八个键 + XMP；ComicInfo 属性） |
+| `epub` | 只有 bounded_storage / global_extent 存储模式；页数与标题保持未知 |
+| `txt`、`html`、`fb2`、`docx`、`rtf`、`mobi` | `NO_PUBLIC_FIELDS` |
+
+## 可用性与身份
+
+| availability | 含义 |
+| --- | --- |
+| `CLOUD_ONLY` | 只有产品元数据；目录没有本机映射 |
+| `LOCAL_UNCHECKED` | 有映射，但调用方没给 SDK 句柄 |
+| `LOCAL_PRESENT` | 公开 SDK 源存在并通过下列身份级别 |
+| `LOCAL_MISSING` | 有映射，但 SDK 无法提供原件（行缺失或读取中途失效） |
+| `LOCAL_MISMATCH` | 存的是另一本书 |
+
+| identity | 含义 |
+| --- | --- |
+| `NOT_CHECKED` | 没有打开 SDK 源 |
+| `SIZE_ONLY` | 存储大小等于产品大小，且未请求散列 |
+| `SHA256` | 大小与 SHA-256 都等于 `book_key` 里的摘要 |
+| `MISMATCH` | 大小或摘要不同；`verified_bytes=0` 且不给摘要 |
+
+`SIZE_ONLY` 是刻意更弱的档位：不请求 `verify_source` 时，字节数相同的另一本书无法
+分辨。该限制由 `size-only-identity-limit` 用例显式登记，不隐藏。
+
+## 上限
+
+| 项 | 硬上限 |
+| --- | ---: |
+| `book_key`（UTF-8 字节） | 128 |
+| 标题、作者、解析器标题（各自） | 1024 |
+| 元数据键 | 128 |
+| 元数据值 | 1024 |
+| 保留的元数据属性 | 32 |
+| 散列块 | 64 KiB |
+| 单次快照（含视图与属性数组） | < 48 KiB |
+
+超长文本只在 UTF-8 标量边界截断，并在 `title_truncated`、`author_truncated`、
+`parser_title_truncated`、`key_truncated`、`value_truncated` 标记；被截断的值绝不
+当作完整值。超出 32 条的属性、空键条目与非合法 UTF-8 条目计入 `properties_omitted`，
+不静默丢弃。
+
+## 验收
+
+`.github/workflows/reader-book-information.yml` 在 ubuntu-22.04、windows-2022、
+macos-15 上各自：源码/保护树/路径守卫 → 构建安装冻结 SDK 与产品目录 → 只对已安装包
+构建本组件 → 从已安装包编译独立 C 与 C++ 消费者 → 生成夹具、播种两个库、逐项判定。
+同一次 run 的工件由 evidence 作业通过 API 重新枚举、下载、解包、重算 ZIP 摘要并核对
+报告身份；缺项、跨源码、跨 attempt、篡改一律拒绝。
+
+22 个具名用例覆盖：九格式云端仅元数据、无库读取、SHA-256 与 size-only 身份、非 ASCII、
+超长字段与属性上限、无 Info 的页数、EPUB 两种存储模式、重排格式无公开字段、本机映射
+缺失、错书（尺寸/内容）、size-only 档位、无句柄、逐轮询点取消、SDK 关闭后快照可读、
+独立 public API 复算、异线程与不可变视图、取消回调重入、参数与错误契约、前后存储不变。
+
+前后存储不变的口径是"**模块调用**不改库"：消费者在同一次调用前后、同一进程内对两个库
+文件做整文件 64 位 FNV-1a 指纹与字节数比对，覆盖每一次 read（含被取消的调用）。SDK 自身
+在 `exr_library_open` 时写 SQLite 头计数的行为不在本断言内，模块本身从不打开、写入或
+持有任何数据库句柄。
+
+夹具、两个数据库、安装前缀、消费者二进制与全部失败原件随工件保留。
+
+## 复现
+
+```
+cmake --preset reading-library && cmake --build --preset reading-library && cmake --install build/reading-library
+cmake -S apps/reader/store/native -B build/bi-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=build/bi-prefix
+cmake --build build/bi-product && cmake --install build/bi-product
+cmake -S apps/reader/book-information -B build/bi-adapter -G Ninja -DCMAKE_BUILD_TYPE=Release \
+  -DEXR_SDK=$PWD/build/reading-library/stage \
+  -DCMAKE_PREFIX_PATH="$PWD/build/bi-prefix;$PWD/build/reading-library/stage" \
+  -DCMAKE_INSTALL_PREFIX=build/bi-prefix
+cmake --build build/bi-adapter && cmake --install build/bi-adapter
+cmake -S tests/reader_book_information/consumer -B build/bi-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_PREFIX_PATH="$PWD/build/bi-prefix;$PWD/build/reading-library/stage"
+cmake --build build/bi-consumer
+python3 tests/reader_book_information/make_fixtures.py --out build/bi-fixtures
+python3 tests/reader_book_information/check_book_information.py \
+  --probe build/bi-consumer/book-info-probe --compare build/bi-consumer/book-info-compare \
+  --fixtures build/bi-fixtures --work build/bi-work \
+  --output build/bi-evidence/book-info-evidence --platform "$RUNNER_OS"
+```
+
+以上全部只在 GitHub Actions 执行；本机只做源码、文档与 Git 操作。
+
+## 原失败与限制
+
+失败的 run、attempt 与工件按共同约束保留，不删除断言、不换语料、不把真实失败改成预期
+拒绝；记录见 `docs/validation/reader-book-information.json` 的
+`failure_iterations_retained`。
+
+## 同次云端证据
+
+受测源码：`72fdc1a8976e95e615fe6bdd2c8fafcb651fa660`（本分支，run
+`40127968068` / attempt `1`，workflow `.github/workflows/reader-book-information.yml`，
+结论 success）。三个桌面平台的作业与产物全部来自这一次 run：
+
+| runner | job | 具名用例 | 断言 | 工件 | 字节 | SHA-256 | 有效期 |
+| --- | ---: | ---: | ---: | --- | ---: | --- | --- |
+| windows-2022 | 120973358790 | 22/22 | 699 | 12574555079 `reader-book-information-Windows-40127968068-1` | 7340273 | `f58294c8…c5837` | 2027-01-22T20:02:03Z |
+| ubuntu-22.04 | 120973358746 | 22/22 | 699 | 12574360053 `reader-book-information-Linux-40127968068-1` | 9116213 | `5526558b…dca4d2` | 2027-01-22T20:02:03Z |
+| macos-15 | 120973358730 | 22/22 | 699 | 12573524988 `reader-book-information-macOS-40127968068-1` | 7934170 | `16c5f080…9393eb` | 2027-01-22T20:02:03Z |
+
+同次汇总作业 `same-run artifact evidence`（job `120974206183`）在该 run 内通过 API
+重新枚举、下载、解包并重算三个 ZIP 的 SHA-256，核对报告身份（source/run/attempt/
+platform）、22 个具名裁决与跨平台一致性；记录工件 12573584981，749 字节，
+`sha256:25164312e3d32cb9a8651dac5133e53d4f55afb557d7bff66373985780ff4d2e`，
+有效期 2027-01-22T20:02:03Z。
+
+在此之前有 11 次失败或取消的 run，原因与修复提交逐条记录在
+`docs/validation/reader-book-information.json` 的 `failure_iterations_retained`；
+没有任何断言被删除、语料被替换或失败被改写成预期拒绝。
+
+验收提交只改本文与 `docs/validation/reader-book-information.json`，标 `[skip ci]`；
+受测源码与最终 HEAD 的差异因此只有这两个文档文件。
+
+## 未覆盖范围
+
+- 加密 PDF 的 `PASSWORD_REQUIRED`：本包不生成加密夹具，该分支只有代码路径，没有实测。
+- 软删除产品行：产品包没有公开 API 设置 `reader_books.deleted`，因此 `deleted=1`
+  的视图只能由 root 的命令模块构造，本包不宣称覆盖。
+- 非合法 UTF-8 的产品/SDK 文本：两个提供方在进入本模块前已拒绝，这两处校验是防御性的，
+  未通过公开 API 实测。
+- 宿主信息面板接线、编辑能力、metadata 模块、真机与无障碍、性能与功耗：本包不授予。
+- 本包不因宿主未接线而免除模块实测，但也不把模块实测当成宿主功能通过。
+# Root 复审修复候选
+
+从交回 HEAD `e32fa06aeb3508eb07f0c7ef7443a3750a1f0e43` 独立建立 `codex/reader-book-information-review`，原工作树不改。复审发现公开解析器内部取消时，顶层返回 `CANCELLED` 却遗留入口清零的 `error.status=OK`；该分支绕过统一错误填充，内存失败也同样如此。
+
+本修复让内部解析失败经过原错误填充函数，失败与取消仍不发布快照。原22项全部保留，在既有每个轮询点的取消检查中增加返回码与 error.status 一致、错误信息非空断言，包含实际公开 PDF 解析调用中的取消。当前候选待 Actions 验证，旧 run `40127968068` 的通过仍仅归原 source `72fdc1a8976e95e615fe6bdd2c8fafcb651fa660`。
+
+## Root 修复验收
+
+source `aa76a35bfdec067da0850bcbb4a3c1d16cd096ff` / [run 40154360163](https://github.com/NoGod3524/EXReader/actions/runs/40154360163) / attempt1 四作业全部success。Windows、Linux、macOS各22个具名场景、795次断言通过，包含实际解析调用内逐轮询点取消的错误状态一致性；原九格式、快照寿命、公开API独立比对、来源身份和存储不变检查保留。
+
+strict job `121053053726` 在Actions核真实作业与同轮ZIP身份、大小和散列，`accepted=true`、`problems=[]`。最终证据HEAD只改本文和验收JSON，完整source/job/工件见JSON。复审关闭，等待共同源码接入；宿主信息界面、产品性能和六目标互通仍无授予。
+
