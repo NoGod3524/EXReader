@@ -25,6 +25,9 @@ static void product_shelf_search_changed(void) {
   settings_save();
 }
 static void product_shelf_dispatch(void) {
+#ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
+  if(winio_modal_blocked()) return;
+#endif
 #ifdef EXR_READER_DESKTOP_METADATA
   if(g.metadata_dialog || g.metadata_running) return;
 #endif
