@@ -23,3 +23,11 @@ member name after ZipInfo construction; the actual strict refusal remains
 unchanged. Linux's round-1 outcome is retained separately when terminal.
 
 Status: cloud verification pending; no acceptance from round 1.
+
+Root round 2: source 7a0f328c, run 40235804635. Windows exposed a second
+normalization layer: ZipInfo also normalizes the member name while reading.
+The strict verifier now checks orig_filename, the raw ZIP name, so a malicious
+backslash is refused before extraction on both operating systems. Linux
+round-1/2 producers are allowed to finish; their results cannot replace the
+missing Windows results. The third full root round is held until their
+remaining observations are available.

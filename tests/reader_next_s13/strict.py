@@ -34,7 +34,9 @@ def authenticated_zip(item, root):
         names = zipped.namelist()
         assert len(names) == len(set(names)), "duplicate ZIP members"
         for info in zipped.infolist():
-            name = info.filename
+            # ZipInfo normalizes Windows separators while reading too. Validate
+            # the raw central-directory name before trusting its normalized form.
+            name = info.orig_filename
             assert name and not name.startswith("/") and "\\" not in name and ":" not in name
             assert ".." not in name.split("/") and (info.external_attr >> 16) & 0o170000 != 0o120000
         zipped.extractall(destination)
