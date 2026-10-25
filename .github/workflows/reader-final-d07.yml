@@ -1,0 +1,74 @@
+name: Reader final D07 documentation
+on:
+  push:
+    branches: [codex/reader-final-d07]
+    paths:
+      - 'docs/reader-final-d07/**'
+      - 'docs/validation/reader-final-d07.json'
+      - 'tests/reader_final_d07/**'
+      - '.github/workflows/reader-final-d07.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: reader-final-d07
+  cancel-in-progress: false
+jobs:
+  docs:
+    name: D07 document audit
+    if: github.ref == 'refs/heads/codex/reader-final-d07'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned document parsers
+        run: |
+          python -m pip install markdown-it-py==3.0.0
+          npm install --prefix "$RUNNER_TEMP/d07-node" --ignore-scripts github-slugger@2.0.0
+      - name: Check fixed-source guide and negative controls
+        env:
+          SLUGGER_MODULE: ${{ runner.temp }}/d07-node/node_modules/github-slugger/index.js
+        run: python tests/reader_final_d07/check_docs.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-final-d07-payload-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-final-d07/payload/
+          if-no-files-found: error
+          retention-days: 30
+  evidence:
+    name: D07 artifact authentication
+    needs: docs
+    if: ${{ always() && !cancelled() && github.ref == 'refs/heads/codex/reader-final-d07' }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install markdown-it-py==3.0.0
+      - name: Authenticate original ZIP before reading evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_final_d07/authenticate.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-final-d07-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-final-d07/evidence/verified.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Authenticate uploaded evidence ZIP and print its identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_final_d07/authenticate.py --self-zip
