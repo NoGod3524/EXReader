@@ -104,8 +104,8 @@ def main():
         entry['accepted'] = not candidate_problems
         entry['problems'] = candidate_problems
         if manifest is not None:
-            link = manifest.get('product_link')
-            entry['executable_sha256'] = link.get('binary_sha256') if isinstance(link, dict) else None
+            entry['executable_sha256'] = manifest.get('signed_binary_sha256')
+            entry['pre_sign_binary_sha256'] = manifest.get('pre_sign_binary_sha256')
             entry['sdk_library'] = manifest.get('sdk_library')
             entry['file_count'] = manifest.get('file_count')
             entry['bundle_bytes'] = manifest.get('bundle_bytes')

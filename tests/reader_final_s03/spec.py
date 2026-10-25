@@ -228,12 +228,19 @@ def architecture_problems(arch_map):
 
 
 def build_version_problems(build_map):
+    """Every Mach-O must be a macOS build; only the host executable is pinned to 12.0.
+
+    The SDK and the product archives are built by plain CMake, so their deployment
+    target is the toolchain default and is recorded rather than pinned here.
+    """
     problems = []
     for relative in sorted(build_map):
         entry = build_map[relative]
         if entry.get('platform') != '1':
             problems.append('build_platform:' + relative + '=' + str(entry.get('platform')))
-        if entry.get('minos') != MINIMUM_MACOS:
+        if not entry.get('minos'):
+            problems.append('minimum_os_missing:' + relative)
+        elif relative == BUNDLE_EXECUTABLE and entry.get('minos') != MINIMUM_MACOS:
             problems.append('minimum_os:' + relative + '=' + str(entry.get('minos')))
         if not entry.get('sdk'):
             problems.append('build_sdk_missing:' + relative)

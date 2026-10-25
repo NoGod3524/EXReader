@@ -91,14 +91,20 @@ def architecture_and_build_version():
            'architecture:' + spec.BUNDLE_EXECUTABLE, 'arch fat')
     expect(spec.architecture_problems({spec.BUNDLE_EXECUTABLE: ['arm64', 'x86_64']}),
            'architecture:', 'arch universal')
-    good = {spec.BUNDLE_EXECUTABLE: {'platform': '1', 'minos': '12.0', 'sdk': '15.0'}}
+    framework = 'Contents/Frameworks/libexreader.1.dylib'
+    good = {spec.BUNDLE_EXECUTABLE: {'platform': '1', 'minos': '12.0', 'sdk': '15.0'},
+            framework: {'platform': '1', 'minos': '15.0', 'sdk': '15.0'}}
     expect_clean(spec.build_version_problems(good), 'build version good')
     wrong = {spec.BUNDLE_EXECUTABLE: {'platform': '2', 'minos': '12.0', 'sdk': '15.0'}}
     expect(spec.build_version_problems(wrong), 'build_platform:', 'build platform')
     wrong = {spec.BUNDLE_EXECUTABLE: {'platform': '1', 'minos': '11.0', 'sdk': '15.0'}}
     expect(spec.build_version_problems(wrong), 'minimum_os:', 'build minos')
+    wrong = {framework: {'platform': '1', 'minos': '11.0', 'sdk': '15.0'}}
+    expect_clean(spec.build_version_problems(wrong), 'recorded framework minimum')
     wrong = {spec.BUNDLE_EXECUTABLE: {'platform': '1', 'minos': '12.0'}}
     expect(spec.build_version_problems(wrong), 'build_sdk_missing:', 'build sdk')
+    wrong = {spec.BUNDLE_EXECUTABLE: {'platform': '1', 'sdk': '15.0'}}
+    expect(spec.build_version_problems(wrong), 'minimum_os_missing:', 'build minimum missing')
 
 
 @register

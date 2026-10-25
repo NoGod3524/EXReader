@@ -36,6 +36,18 @@ def application_support(home):
     return home / 'Library' / 'Application Support' / 'EXReaderHostTests'
 
 
+def state_snapshot(roots):
+    """Hash every file of the host test state under each candidate root."""
+    snapshot = {}
+    for root in roots:
+        if not root.is_dir():
+            continue
+        for path in sorted(root.rglob('*')):
+            if path.is_file() and not path.is_symlink():
+                snapshot[str(path)] = spec.digest(path)
+    return snapshot
+
+
 def run_check(producer, bundle, output, home, log, sandbox=None):
     home.mkdir(parents=True, exist_ok=True)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -142,18 +154,21 @@ def main():
 
     # 4. Offline open and then offline reopen on the moved bundle.
     offline_home = evidence / 'homes' / name / 'offline'
+    state_roots = [application_support(offline_home),
+                   Path.home() / 'Library' / 'Application Support' / 'EXReaderHostTests']
+    before = state_snapshot(state_roots)
     open_run = run_check(producer, relocated, evidence / 'reports' / name / 'offline-open',
                          offline_home, evidence / ('smoke-' + name + '-offline-open.log'),
                          sandbox=Path(offline['profile_path']))
-    state = application_support(offline_home)
-    open_run['previous_state'] = []
-    previous = sorted(path.name for path in state.rglob('*') if path.is_file()) if state.is_dir() else []
+    after = state_snapshot(state_roots)
+    created = sorted(path for path in after if before.get(path) != after[path])
     reopen_run = run_check(producer, relocated, evidence / 'reports' / name / 'offline-reopen',
                            offline_home, evidence / ('smoke-' + name + '-offline-reopen.log'),
                            sandbox=Path(offline['profile_path']))
-    reopen_run['previous_state'] = previous
-    if not previous:
+    final = state_snapshot(state_roots)
+    if not created:
         problems.append('reopen_without_previous_state')
+    reopened = sorted(path for path in final if final[path] != after.get(path))
 
     phases = {'baseline': baseline, 'offline-open': open_run, 'offline-reopen': reopen_run}
     for phase in spec.SMOKE_PHASES:
@@ -207,6 +222,10 @@ def main():
                    for phase in spec.SMOKE_PHASES},
         'check_count': (open_run['report'] or {}).get('check_count'),
         'checks': lists['offline-open'],
+        'reopen_state': {'roots': [str(root) for root in state_roots],
+                         'files_before_open': len(before),
+                         'files_created_by_open': created[:40],
+                         'files_written_by_reopen': reopened[:40]},
         'codesign': facts,
         'problems': problems,
         'accepted': not problems,

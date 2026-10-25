@@ -165,14 +165,16 @@ def product_library(producer, app, producer_output, symbols_path, candidate):
     else:
         if link.get('accepted') is not True:
             problems.append('product_link_rejected')
-        if link.get('binary_sha256') != expected_sha:
-            problems.append('product_link_binary_sha')
+        # The producer records this digest before its own ad-hoc signing step, so it
+        # is kept as the pre-signature identity instead of matching the final bytes.
         flag = link.get('selector_bytes_candidate')
         if not isinstance(flag, bool) or flag != spec.candidate(candidate)['selector_bytes']:
             problems.append('product_link_selector_flag')
         if record is not None and record.get('binary_sha256') != expected_sha:
             problems.append('product_library_binary_sha')
     return {'record': record, 'product_link': link, 'raw_providers': raw,
+            'signed_binary_sha256': expected_sha,
+            'pre_sign_binary_sha256': (link or {}).get('binary_sha256'),
             'problems': problems}
 
 
@@ -288,6 +290,8 @@ def main():
         'build_manifest': manifest,
         'product_library': product['record'],
         'product_link': product['product_link'],
+        'signed_binary_sha256': product['signed_binary_sha256'],
+        'pre_sign_binary_sha256': product['pre_sign_binary_sha256'],
         'raw_providers': product['raw_providers'],
         'private_path_hits': private_hits,
         'test_secret_hits': secret_hits,
