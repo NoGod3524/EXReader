@@ -75,7 +75,8 @@ def main():
             assert 'report.json' in names
             report = json.loads(archive.read('report.json'))
             validate(report)
-            assert set(names) == {'report.json'} | {'inputs/' + p for p in report['files']}, 'extra or missing payload'
+            expected = {'report.json'} | {'inputs/' + p for p in report['files']}
+            assert set(names) == expected, 'payload missing=%r extra=%r' % (sorted(expected - set(names)), sorted(set(names) - expected))
             for path, digest in report['files'].items():
                 data = archive.read('inputs/' + path)
                 assert hashlib.sha256(data).hexdigest() == digest
