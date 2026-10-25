@@ -71,6 +71,45 @@ UI 初次观察 p1→p2→p3，fresh reopen 与断网 reopen 各重新观察 UI 
 
 Root 第一轮 `9ad9a768c90ba3d57956335951c6497d8a4e4aec` / run `40232266125` / attempt 1 三作业均 success，三阶段公开 API 实际回读已全量执行。发现报告明细问题：`adb exec-out run-as` 虽返回 0，stdout 明确含 `Permission denied`，driver 已按无 JSON/API 报告正确拒绝 sameUID；summary 的 pending 列表原只筛非零退出，漏了这些已拒绝明细。第二轮按实际 `refusals` 和退出码共同保留完整拒绝上下文，再全轮同源重跑；第一轮的原始 stdout/JSON/日志完整保留，其 sameUID scope 始终为 false。
 
+## Root 最终受测结果
+
+受测源码 **`d521585af1a540f082b6cf4de42203480795b83f`**，分支 `codex/reader-next-c08-root-review`，run [40232710223](https://github.com/NoGod3524/EXReader/actions/runs/40232710223) / attempt 1，三个作业全部 success：静态 `121287650091`、模拟器 `121287879964`、严格汇总 `121288570030`。
+
+`accepted=true`、`problems=[]` 只授予认证只读副本上的公开 SDK 回读路线。模拟器共 34 项检查，32 项强制检查全部通过，两个路线诊断中副本路线通过、sameUID 路线不通过，故总计 33 项通过。没有把 sameUID 诊断改为成功。
+
+### 实际 API 返回值（本轮三阶段逐项相同）
+
+| 观察 | 首次关闭后 / fresh reopen 后 / 断网 reopen 后 |
+| --- | --- |
+| `exr_library_open` | `EXR_OK (0)`，独立只读副本 |
+| `exr_library_books` | `EXR_OK (0)`；一本书，id=1、TXT(1)、title=`c08-original`，position=1482 |
+| `exr_library_source` | `EXR_OK (0)`；size=10635、read=10635；一次 `read_at(0,10635)` 实际返回10635；SHA-256=`fe0e65a92ff83503015b42253a17ac643e4894058a062bb532ba61aaf5bf583b` |
+| `exr_library_progress_get` | `EXR_OK (0)`；state=FOUND(1)、start=end=1482；exact 为已分配空串，保留实际 prefix/suffix |
+| `exr_library_notes` | `EXR_OK (0)`；count=1，note id=1、start=1666、end=1691、text=`c08note` |
+| UI 页码 | 初次 p1→p2→p3；fresh reopen p3；离线 reopen p3 |
+
+API 并没有页号字段；1482 是公开持久化 offset。三次相同 offset 与三次 UI p3 独立记录并通过 book id=1 关联，**不声称独立、精确地由 offset 定位到 p3**。`independent_exact_page3_resolution_accepted=false`。
+
+三次消费者 PID 分别 2900、3034、3208；UID=EUID=2000，SELinux=`u:r:shell:s0`，实际程序 `/data/local/tmp/c08/c08_consumer`。消费者 16,176 B，SHA-256=`e7eb47f71bada77a5f2fbee281c3468a6bb400983c10c9d99f19933af44a3d7d`；来源 C 文件 SHA-256=`2181d7546cb5d00601d2f2ec945140a4619061eb16b5ccb5e3bdcaf588a89c59`。静态与模拟器构建均认证原 SDK 暂存的14个公开头与固定 producer 源码一致，SDK=3.41.0/ABI1。
+
+16 个 `dlsym` 符号均实际归属于已安装 `base.apk!/lib/x86_64/libexreader.so`，该成员 SHA-256=`a345ab4c1def2e864a76b9e879da8a372e8821ad09b7991c8fe4e04626b2e8ac`。`base.apk` 全字节等于固定 producer 原 APK。没有重签、重打包、改类、注入偏好或修改目标权限。
+
+每次独立读取前后，目标全部5个文件 stat+SHA-256 不变；副本完整集合为 `library.db`，77,824 B，SHA-256=`435a4eca6e509c0d8d1f1cb38f175f977a371bd1c4bd50e31855de0cc2680f01`，与目标快照逐字认证，三阶段各自前后完整 inventory 不变。断网实际值 airplane=1/wifi=0/mobile_data=0/ping_exit=2。
+
+sameUID 的 APK 映射/复制库两个变体，在三阶段都得到 `run-as: exec failed ... Permission denied`，没有 API JSON。ADB 自身返回0不代表消费者执行成功；六条拒绝上下文均保存在原报告和严格汇总。`same_uid_execution_accepted=false`，不尝试权限绕行。
+
+### 同轮原 ZIP
+
+全部到期 `2027-01-23T20:51:14Z`。严格汇总在 Actions 实际重新下载本轮静态/模拟器原 ZIP，认证大小、digest、有效期和 source/run/attempt，独立复判所有三阶段/API/笔记/源文件归属与无写记录。
+
+| 工件 | ID | 原 ZIP 字节 | SHA-256 |
+| --- | --- | --- | --- |
+| static | `12613427587` | 10,747 | `f9207a6cd161eabcce8523e63711fc6f1d3504063a0474dc474f9193e3401619` |
+| emulator | `12613129814` | 24,837,875 | `10950a879785cf846696e8833fd65eda5ef24acb696d33d6c38b8ffd6935c389` |
+| summary | `12613777459` | 3,281 | `65297851644a6628dc5c9e23166fd97ba6b1fda161476e73638d93f7446d34be` |
+
+详细机器记录见 [root-review-validation.json](root-review-validation.json)。本次用了两轮新的 root CI，原三轮失败、一次取消与原代理本地下载违规均保留。未授予 sameUID 执行、独立精确 p3 解析、产品目录私有 API、真机、签名/商店、性能和完整产品。
+
 ## 不在范围
 
 真机、商店/签名、性能、产品目录库 `reader-catalog.db` 的独立读取（SDK 公开头没有该库的 C 入口；此处的“书目”指 `exr_library_books`）、
