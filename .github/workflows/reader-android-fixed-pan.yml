@@ -3,13 +3,30 @@ on:
   push:
     branches: [codex/reader-android-fixed-pan]
   workflow_dispatch:
+    inputs:
+      inspect_saved_failure:
+        description: Read the fixed retained failure ZIP on this runner without building or granting acceptance
+        type: boolean
+        default: false
 permissions:
   contents: read
+  actions: read
 defaults:
   run:
     shell: bash
 jobs:
+  inspect:
+    if: github.event_name == 'workflow_dispatch' && inputs.inspect_saved_failure
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate the original failure ZIP and print its saved instrumentation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_android_fixed_pan/inspect_failure.py
   android:
+    if: github.event_name != 'workflow_dispatch' || !inputs.inspect_saved_failure
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
