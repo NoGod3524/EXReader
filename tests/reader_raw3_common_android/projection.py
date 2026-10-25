@@ -36,6 +36,12 @@ STRICT_UPLOAD = ('      - name: Preserve added common-kind strict provenance\n'
 
 def original_projection(text):
     changes = (
+        ('          python tests/reader_android_webdav_exit/adapter.py prepare\n', '', 1),
+        ('gradle -I "$PWD/tests/reader_android_webdav_exit/init.gradle" -p tests/webdav_android/android', 'gradle -p tests/webdav_android/android', 1),
+        ('          python tests/reader_android_webdav_exit/adapter.py build\n', '', 1),
+        ('            python tests/reader_android_webdav_exit/adapter.py run --fixture build/webdav-android/fixture --output build/webdav-android/backend\n',
+         '            python tests/webdav_android/run_backend.py --fixture build/webdav-android/fixture --output build/webdav-android/backend\n', 1),
+        ('          python tests/reader_android_webdav_exit/adapter.py strict\n', '', 1),
         ('          python tests/reader_android_navigation_cache/adapter.py prepare\n', '', 1),
         ('gradle -I "$PWD/tests/reader_android_navigation_cache/init.gradle" -p examples/android', 'gradle -p examples/android', 1),
         ('          python tests/reader_android_navigation_cache/adapter.py build\n', '', 1),

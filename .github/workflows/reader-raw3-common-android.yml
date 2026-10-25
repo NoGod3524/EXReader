@@ -40,6 +40,7 @@ jobs:
           python tests/reader_android_record_interop/candidate.py
           python tests/reader_android_raw3/candidate.py
           python tests/reader_android_navigation_cache/adapter.py prepare
+          python tests/reader_android_webdav_exit/adapter.py prepare
           python -m py_compile build/android-page-theme/candidate/preferences_run_ui.py
           python -m py_compile tests/reader_android_host_import/run_ui.py tests/reader_android_host_import/check_evidence.py
           python -m py_compile tests/reader_android_fixed_pan/fixtures.py tests/reader_android_fixed_pan/run_ui.py tests/reader_android_cbz_reading/fixtures.py tests/reader_android_cbz_reading/audit.py tests/reader_android_cbz_reading/run_ui.py tests/reader_android_preferences/audit.py tests/reader_android_preferences/run_ui.py tests/reader_session_android/run_export.py tests/reader_session_android/run_roundtrip.py tests/reader_session_android/audit.py tests/reader_host_session_android/run_ui.py tests/reader_host_session_android/audit.py tests/reader_android_search/fixtures.py tests/reader_android_search/audit.py tests/reader_android_search/run_ui.py tests/reader_android_navigation/fixtures.py tests/reader_android_navigation/fixture_module.py tests/reader_android_navigation/audit.py tests/reader_android_navigation/run_ui.py tests/reader_android_reading/fixtures.py tests/reader_android_reading/audit.py tests/reader_android_reading/run_ui.py
@@ -109,8 +110,9 @@ jobs:
           cmake --build build/android-preferences/preferences-build --parallel 4 --target install 2>&1 | tee build/session-android/logs/preferences-build.log
       - name: Compile SDK and product owners and unchanged Android transport tests
         run: |
-          gradle -p tests/webdav_android/android --no-daemon --stacktrace :platform:assembleDebug :platform:assembleDebugAndroidTest :platform:assembleRelease :support:assembleDebug :support:assembleRelease :support:runtimeEvidence :backend:assembleDebug :backend:assembleDebugAndroidTest :backend:assembleRelease :baseline:assembleRelease 2>&1 | tee build/webdav-android/logs/gradle.log
+          gradle -I "$PWD/tests/reader_android_webdav_exit/init.gradle" -p tests/webdav_android/android --no-daemon --stacktrace :platform:assembleDebug :platform:assembleDebugAndroidTest :platform:assembleRelease :support:assembleDebug :support:assembleRelease :support:runtimeEvidence :backend:assembleDebug :backend:assembleDebugAndroidTest :backend:assembleRelease :baseline:assembleRelease 2>&1 | tee build/webdav-android/logs/gradle.log
           python tests/webdav_android/audit.py --output build/webdav-android/packages
+          python tests/reader_android_webdav_exit/adapter.py build
           python tools/reader_catalog_assets.py --output examples/android/app/src/main/assets/reader-catalog-v1.json
           python -c "import sys; sys.path.insert(0,'tools'); from host_font import fetch; fetch('examples/android/app/src/main/assets')"
           mkdir -p examples/android/app/src/main/jniLibs/x86_64
@@ -202,7 +204,7 @@ jobs:
             python tests/reader_android_host_import/run_ui.py --output build/android-host-import/ui
             python tests/webdav_android/run_platform.py --fixture build/webdav-android/fixture --output build/webdav-android/platform
             cp build/webdav-android/fixture/requests.json build/webdav-android/platform/requests.json
-            python tests/webdav_android/run_backend.py --fixture build/webdav-android/fixture --output build/webdav-android/backend
+            python tests/reader_android_webdav_exit/adapter.py run --fixture build/webdav-android/fixture --output build/webdav-android/backend
             adb install -r -t build/host-session-android/test-apks/host-sync.apk
             python tests/reader_host_session_android/run_ui.py --fixture build/webdav-android/fixture --reading-fixtures build/session-android/reading-fixtures --output build/host-session-android/ui
             adb install -r -t build/android-search/test-apks/search-ui.apk
@@ -324,6 +326,7 @@ jobs:
           python -m pip install Pillow==11.1.0
           python tests/reader_raw3_common_android/strict.py
           python tests/reader_android_navigation_cache/adapter.py strict
+          python tests/reader_android_webdav_exit/adapter.py strict
       - uses: actions/upload-artifact@v4
         with:
           name: reader-android-raw3-summary-${{ github.run_id }}-${{ github.run_attempt }}
