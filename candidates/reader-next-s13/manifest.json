@@ -1,0 +1,88 @@
+{
+  "schema": 1,
+  "package": "reader-next-s13",
+  "title": "CBZ leading-slash read-only name compatibility candidate",
+  "status": "candidate-not-adopted",
+  "base": {
+    "commit": "e67d87cbeabb2457e0852f681ef0b27b2c0da4d8",
+    "branch": "codex/reader-next-s13"
+  },
+  "sdk": {
+    "approved": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+    "frozen_previous": "9854061be331fe603a1822d9b2b36ee357154927",
+    "version": "3.41.0",
+    "note": "src/, include/ and cmake/ at the base commit are byte-identical to the approved SDK tree; the candidate patch is applied only to an isolated copy in Actions."
+  },
+  "patch": {
+    "path": "candidates/reader-next-s13/s13-cbz-leading-slash.patch",
+    "sha256": "0f55b9f6e408b49bc830aaaf2b5b493e983b834e70fa9fa77cc0fef864b568b0",
+    "target": "src/cbz.c",
+    "target_blob": "b30803adb79a0a4c2e66320a749dee14f2bb52de",
+    "pre_sha256": "85f90ad69432a2a8d5979844694fa96715bdb2ef7186d276e374a684eb0d4d52",
+    "post_image": "candidates/reader-next-s13/src/cbz.c",
+    "post_sha256": "10016746d9a7f2539286574696afb181d7b2a5f3e3640207c5e08488d96727db",
+    "insertions": 45,
+    "deletions": 2,
+    "files": 1
+  },
+  "real_inputs": {
+    "manifest": "tests/reader_real_corpus/manifest.json@278d63691a4c73e7aa932d71a40a5938c5427514",
+    "file": "tests/reader_next_s13/real.json",
+    "ids": [
+      "cbz-pepper-01",
+      "cbz-pepper-02"
+    ],
+    "sha256": {
+      "cbz-pepper-01": "02e28b6d55d9d02b7ebaa2e0ba4a20e652c4fdcb63579b1169f8c0328689d2fe",
+      "cbz-pepper-02": "f4476b666947ef36240e05bc07e8b08f9260aa0d8c57b82e8ba9bbb029f6c8df"
+    },
+    "bytes": {
+      "cbz-pepper-01": 1078314,
+      "cbz-pepper-02": 2276638
+    },
+    "original_failure": {
+      "status": 5,
+      "message": "Unsafe CBZ member path"
+    }
+  },
+  "ownership": {
+    "writable_paths": [
+      "candidates/reader-next-s13/",
+      "tests/reader_next_s13/",
+      ".github/workflows/reader-next-s13.yml",
+      "docs/reader-next-s13/",
+      "HANDOFF-RESULT-S13.md"
+    ],
+    "untouched": [
+      "src/",
+      "include/",
+      "cmake/",
+      "CMakeLists.txt",
+      "tests/test_cbz.c",
+      "tests/test_cbz_formats.c",
+      "tests/fixtures/",
+      ".github/workflows/native.yml",
+      "apps/",
+      "extras/",
+      "bindings/"
+    ]
+  },
+  "scope": {
+    "allows": [
+      "one leading '/' stripped for validation and classification of CBZ archive member names"
+    ],
+    "keeps": [
+      "page id = the archive member name exactly as stored",
+      "all canonical path refusals",
+      "explicit rejection of normalized collisions",
+      "image, page count, work and cancellation limits"
+    ],
+    "excludes": [
+      "filesystem extraction",
+      "engine default repair",
+      "EPUB/HTML/export path validation changes",
+      "SDK tree rewrite",
+      "new public API"
+    ]
+  }
+}

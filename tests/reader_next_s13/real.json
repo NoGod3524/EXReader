@@ -1,0 +1,51 @@
+{
+ "schema": 1,
+ "dataset_id": "reader-real-corpus-v1",
+ "source_manifest": {
+  "commit": "278d63691a4c73e7aa932d71a40a5938c5427514",
+  "path": "tests/reader_real_corpus/manifest.json",
+  "note": "F5 fixed list. Bytes and SHA-256 below are copied verbatim from that pinned manifest and are re-verified before any run."
+ },
+ "expected_failure": {
+  "status": 5,
+  "message": "Unsafe CBZ member path"
+ },
+ "files": [
+  {
+   "id": "cbz-pepper-01",
+   "format": "CBZ",
+   "variant": "comic-zip",
+   "path": "cbz-pepper-01.cbz",
+   "url": "https://archive.org/download/peppercarrot-en/peppercarrot_episode01.cbz",
+   "final_url": "https://dn790000.ca.archive.org/0/items/peppercarrot-en/peppercarrot_episode01.cbz",
+   "bytes": 1078314,
+   "sha256": "02e28b6d55d9d02b7ebaa2e0ba4a20e652c4fdcb63579b1169f8c0328689d2fe",
+   "title": "Pepper&Carrot, Episode 1: The Potion of Flight",
+   "creator": "David Revoy",
+   "published": "2014",
+   "license": {
+    "name": "Creative Commons Attribution 4.0",
+    "url": "https://www.peppercarrot.com/en/license/",
+    "redistribution": true
+   }
+  },
+  {
+   "id": "cbz-pepper-02",
+   "format": "CBZ",
+   "variant": "comic-zip",
+   "path": "cbz-pepper-02.cbz",
+   "url": "https://archive.org/download/peppercarrot-en/peppercarrot_episode02.cbz",
+   "final_url": "https://dn760101.eu.archive.org/0/items/peppercarrot-en/peppercarrot_episode02.cbz",
+   "bytes": 2276638,
+   "sha256": "f4476b666947ef36240e05bc07e8b08f9260aa0d8c57b82e8ba9bbb029f6c8df",
+   "title": "Pepper&Carrot, Episode 2: Rainbow Potions",
+   "creator": "David Revoy",
+   "published": "2014",
+   "license": {
+    "name": "Creative Commons Attribution 4.0",
+    "url": "https://www.peppercarrot.com/en/license/",
+    "redistribution": true
+   }
+  }
+ ]
+}
