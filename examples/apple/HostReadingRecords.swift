@@ -212,13 +212,16 @@ struct HostReadingHistory {
 }
 
 enum HostReadingWorker {
-    // Explicit upgrade policy for the canvas-only 3.41 candidate. This only
+    // Explicit upgrade/spelling policy for the canvas-only 3.41 candidate. This only
     // admits decoding: apply/resolution still independently verify the retained
     // original, graph and exact selector. Stored wire and retry parser tags are
-    // never rewritten. Other versions (including downgrade) stay refused.
+    // never rewritten. Android's two known spellings are explicit; there is no
+    // arbitrary prefix stripping. Other versions (including downgrade) stay refused.
     static func acceptsParser(_ recorded: String) -> Bool {
         let actual = String(cString: exr_version())
-        return recorded == actual || (actual == "3.41.0" && recorded == "3.40.0")
+        if recorded == actual { return true }
+        return actual == "3.41.0" &&
+            ["3.40.0", "exreader-sdk-3.40.0", "exreader-sdk-3.41.0"].contains(recorded)
     }
 #if EXR_APPLE_HOST_REVIEW
     static var afterDurableSave: (() throws -> Void)?

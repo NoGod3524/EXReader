@@ -1,5 +1,13 @@
 # Apple 旧阅读记录的明确升级策略
 
+## 当前独立标签互通修复（待验）
+
+后继分支 `codex/reader-parser-tag-interop` 处理真实源码中的标签不一致：Android的原JNI formatter为 `exreader-sdk-<exr_version()>`，其Java reflow/EPUB及CBZ resolver要求该精确前缀；Windows/GTK/Apple写入纯版本号，Apple也曾精确要求纯版本号。因此同SDK也会互拒。
+
+仅在实际3.41消费者增加明确的四个已知标签：`3.41.0`、`exreader-sdk-3.41.0`、`3.40.0`、`exreader-sdk-3.40.0`。旧3.40行为保持原样，未知标签不作通用strip/semver猜测。Android原formatter、真实runtime与所有旧wire保持不变；原件、模式、FOUND与复捕获校验仍执行。
+
+本轮新增公开G03生成的两组前缀协议夹具、原owner拒绝对照及修正Apple owner读取，并实际编译运行Android纯Java策略的20个正反例。这些前缀夹具按原JNI的精确拼法生成并绑定实际SDK runtime，**不是Android设备发送端**。当前未授予本轮新源码、Android实际宿主编译/设备或真实双向跨设备互通；后续仍需实际发送端与接收端回归。下文已通过结果只归原 `898e773c` 的裸版本号升级范围。
+
 独立分支从 Apple 主题候选 `eea3087c2ef27b9d45e00333ef0a16e586a0ac6e` 创建。SDK 保护树仍逐字等于已验候选 `edddc463c06ed5731195cdb8f06b2df6dff7699e`，原冻结 3.40 提交和 wire/schema/预算不变。
 
 实际 Apple 宿主的 `HostReadingWorker.decoded` 与私有请求校验此前要求记录 parser 等于当前 `exr_version()`，因此 3.41 会拒绝真实旧3.40记录。D01只读矩阵已证明公开selector可解析，但不授予宿主接纳。
