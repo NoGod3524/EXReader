@@ -237,8 +237,10 @@ def main():
     probe_checks = []
     if raw:
         need(args.probe is not None and Path(args.probe).exists(), 'the raw mode requires the built raw probe')
+        probe_work = work / 'probe'
+        probe_work.mkdir()
         command = [args.probe, '--fixtures', args.fixtures,
-                   '--font', args.font, '--pdf', args.pdf, '--pdf-sha', pdf_sha, '--work', str(work / 'probe'),
+                   '--font', args.font, '--pdf', args.pdf, '--pdf-sha', pdf_sha, '--work', str(probe_work),
                    '--report', str(out / 'report.json')]
         for role, item in sorted(manifest.items()):
             command += ['--sha', role + '=' + item['sha256']]
