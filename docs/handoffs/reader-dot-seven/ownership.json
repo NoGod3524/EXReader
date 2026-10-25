@@ -2,8 +2,10 @@
   "schema": 1,
   "implementation_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
   "prepared_for": "Dot",
-  "dispatched": false,
-  "reason": "No direct existing-Dot message API; manual handoff selected per user fallback",
+  "dispatched": true,
+  "dispatch_mechanism": "external_manual_handoff_inferred_from_seven_real_remote_branches_and_runs",
+  "direct_message_sent_by_root": false,
+  "reason": "Observed real remote progress; old prepared-only state superseded. Original package grants still need root evidence review and integration.",
   "tasks": [
     {
       "id": "T01",
@@ -21,7 +23,7 @@
         "docs/READER-WINDOWS-IMPORT-ORGANIZE.md",
         "docs/validation/reader-windows-import-organize.json"
       ],
-      "state": "prepared_not_dispatched"
+      "state": "remote_run_in_progress_40167556466"
     },
     {
       "id": "T02",
@@ -41,7 +43,7 @@
       "legacy": "explicit-conflict-actions",
       "focus": "检查完整并发头、prepare到commit之间外来修订、墓碑/restore依赖、稳定重试ID及历史/outbox不重复。至少真实两端并发、缺父补回、过期快照拒绝；reading anchor仅展示，不能猜测resolve或按时钟选胜者。",
       "file": "T02-conflict-actions-review.md",
-      "state": "prepared_not_dispatched"
+      "state": "remote_run_success_40164827613_awaiting_root_review"
     },
     {
       "id": "T03",
@@ -60,7 +62,7 @@
       "legacy": "cross-os-relay",
       "focus": "审计四方向artifact-relayed HTTPS传递是否逐端核原始字节和来源；绑定平台、source/run/attempt、双方原始工件和public SDK回读，拒绝缺包/换源/换attempt/假对端。不要把传输脚本通过扩写成六台设备的产品同步通过。",
       "file": "T03-cross-os-relay-review.md",
-      "state": "prepared_not_dispatched"
+      "state": "remote_run_success_40164760850_awaiting_root_review"
     },
     {
       "id": "T04",
@@ -80,7 +82,7 @@
       "legacy": "apple-file-entry",
       "focus": "核文件选择/安全作用域/协调读写/回调代际/取消与真实关闭终止恢复、私有暂存所有权；拒绝未知长度小报造成的静默截断、权限丢失后半成品和旧回调重复移交。只维护独立入口包和probe，不碰正在推进的Apple正式宿主。",
       "file": "T04-apple-file-entry-review.md",
-      "state": "prepared_not_dispatched"
+      "state": "remote_run_success_40164811197_awaiting_root_review"
     },
     {
       "id": "T05",
@@ -94,7 +96,7 @@
         "docs/READER-REVIEWED-COMPOSITION.md",
         "docs/validation/reader-reviewed-composition.json"
       ],
-      "state": "prepared_not_dispatched"
+      "state": "remote_run_success_40166639576_awaiting_root_review"
     },
     {
       "id": "T06",
@@ -114,7 +116,7 @@
       "legacy": "diagnostic-report",
       "focus": "核凭据、Authorization、URLuserinfo/query、本地绝对路径、书名/正文/标注正文及嵌套错误消息的隐私边界；白名单字段、严格限额、坏UTF-8/控制符/截断、取消、失败原子性及并发快照。真实注入测试秘密并扫描全部输出，不能只grep几个生产字符串。",
       "file": "T06-diagnostic-report-review.md",
-      "state": "prepared_not_dispatched"
+      "state": "remote_run_success_40164861121_awaiting_root_review"
     },
     {
       "id": "T07",
@@ -134,7 +136,7 @@
       "legacy": "opds-browser",
       "focus": "核相对/绝对/百分号资源URL、同源凭据、分页与entry寿命、未知媒体、获取链接选择、重定向和失败清理、取消/重入/所有权。保持复用原OPDS/WebDAV/侧载公开包，不新增解析器或网络后端，不把模块通过当宿主浏览界面通过。",
       "file": "T07-opds-browser-review.md",
-      "state": "prepared_not_dispatched"
+      "state": "remote_run_success_40165618848_awaiting_root_review"
     }
   ]
 }
