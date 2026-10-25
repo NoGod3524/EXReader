@@ -10,6 +10,12 @@ STRATEGY='warm-catalog-snapshot-clean-settings-v1'
 COUNTS={'cold':4,'warm':4,'resume':4,'import':3}
 
 
+def diagnostic_identity(value,expected):
+    K.require(value.get('schema')==1 and value.get('source_sha')==expected['source'] and
+      str(value.get('run_id'))==str(expected['run']) and str(value.get('attempt'))==str(expected['attempt']),
+      'Foreign diagnostic timeline identity')
+
+
 def startup_fault(value):
     # CreateWindow exposes initially-enabled buttons before ShowWindow/reload_shelf.
     # Partial rows do not prove completion; only the frozen readiness helper

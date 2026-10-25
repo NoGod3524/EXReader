@@ -18,7 +18,7 @@ K=B.K
 
 class Round(B.Round):
     def __init__(self,args):
-        super().__init__(args);self.inputs={};self.starts={}
+        super().__init__(args);self.inputs={};self.starts={};self.operations=[]
         self.sizes=[int(value) for value in args.sizes.split(',')]
         if args.round==2:self.sizes.reverse()
         self.counts=dict(cold=args.cold,warm=args.warm,resume=args.resume,import_=args.imports)
@@ -110,16 +110,48 @@ class Round(B.Round):
           source_sha=os.environ['GITHUB_SHA'],run_id=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],
           sizes=self.sizes,launch_counts=self.counts,startup_navigation_injected=False,startup_query_modified=False,
           inputs=self.inputs,starts=self.starts))
+        K.write_json(self.out/'operation-trace.json',dict(schema=1,source_sha=os.environ['GITHUB_SHA'],
+          run_id=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],round=self.arguments.round,
+          observer_scope='extra read-only control snapshots outside original timed operation; observer cost not subtracted',
+          operations=self.operations))
         K.write_json(self.out/'bundle.json',K.bundle_for(self.out))
 
     def launch(self,size,cohort,index):
+        originals={name:getattr(PW,name) for name in ('op_resume','op_page_turn')}
+        launch='w%d-n%d-%s-%02d'%(self.arguments.round,size,cohort,index)
+        def probe(host):
+            try:return dict(self.surface(host),label=host.label(300),next_enabled=host.enabled('next'),
+                            process_exit=host.process.poll())
+            except Exception as error:return dict(observation_fault=type(error).__name__+': '+str(error))
+        def traced(name):
+            def call(host,*args,**kwargs):
+                def record(item):
+                    item.update(launch=launch,size=size,cohort=cohort,operation=name)
+                    self.operations.append(item)
+                    if name=='op_resume' or item['status']!='ok':print('C02_OPERATION '+json.dumps(item),flush=True)
+                return operation_call(originals[name],host,args,kwargs,probe,record)
+            return call
+        for name in originals:setattr(PW,name,traced(name))
         try:return super().launch(size,cohort,index)
-        finally:self.flush()
+        finally:
+            for name,function in originals.items():setattr(PW,name,function)
+            self.flush()
 
     def run(self):
         try:return super().run()
         finally:
             if self.out.exists():self.flush()
+
+
+def operation_call(function,host,args,kwargs,observe,record):
+    """Call the frozen operation once, preserving its return or exception."""
+    item=dict(before=observe(host),arguments=list(args),keyword_arguments=kwargs,entered_at=time.perf_counter())
+    try:
+        result=function(host,*args,**kwargs);item.update(status='ok',result=result);return result
+    except Exception as error:
+        item.update(status='failed',fault_class=type(error).__name__,fault=str(error));raise
+    finally:
+        item.update(returned_at=time.perf_counter(),after=observe(host));record(item)
 
 
 def main():

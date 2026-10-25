@@ -355,7 +355,7 @@ jobs:
             trap "kill $wm 2>/dev/null || true" EXIT
             sleep 1
             xdpyinfo > build/c02-xdpyinfo.txt
-            python3 tests/reader_final_c02/gtk_perf.py \
+            python3 tests/reader_c02_root_review/gtk_adapter.py \
               --payload build/c02-gtk-build/compact-package/EXReader-Linux \
               --seed build/c02-gtk-build/c02_seed \
               --output build/c02-gtk-round${{ matrix.round }} \

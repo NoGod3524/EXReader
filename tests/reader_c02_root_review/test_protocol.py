@@ -2,6 +2,8 @@
 import copy
 import os
 from pathlib import Path
+import tempfile
+import time
 import guard as G
 import receipts as R
 
@@ -76,6 +78,33 @@ def main():
         refused(check)
     data,loaded,expected,preparations=fixture()
     assert R.validate(data,loaded,expected,preparations)['launches']==30
+    diagnostic=dict(schema=1,source_sha=expected['source'],run_id=expected['run'],attempt=expected['attempt'])
+    R.diagnostic_identity(diagnostic,expected)
+    refused(lambda:R.diagnostic_identity(dict(diagnostic,run_id='other'),expected))
+    # Actual wrapper must preserve one invocation, identical arguments/return and exception.
+    import windows_adapter as W
+    calls=[];records=[];token=object();host=object()
+    def operation(value,*args,**kwargs):calls.append((value,args,kwargs));return token
+    result=W.operation_call(operation,host,('page',),{'timeout':25},lambda value:dict(observed=True),records.append)
+    assert result is token and calls==[(host,('page',),{'timeout':25})] and records[-1]['status']=='ok'
+    fault=RuntimeError('sentinel failure')
+    def fail(value):raise fault
+    try:W.operation_call(fail,host,(),{},lambda value:{},records.append)
+    except RuntimeError as error:assert error is fault
+    else:raise AssertionError('Operation failure swallowed')
+    assert records[-1]['status']=='failed'
+    import gtk_adapter as T
+    assert T.TraceWatch._loop is T.OriginalWatch._loop and T.TraceWatch.wait is T.OriginalWatch.wait
+    assert T.DiagnosticSampler.scenario_import is T.S.Sampler.scenario_import
+    with tempfile.TemporaryDirectory() as directory:
+        observer=T.FileEvents(directory)
+        try:
+            assert observer.failure is None
+            Path(directory,'state.ini').write_text('[host]\nbusy=1\nsequence=1\n',encoding='utf-8')
+            deadline=time.monotonic()+2
+            while time.monotonic()<deadline and not observer.events:time.sleep(0.01)
+        finally:observer.close()
+        assert observer.failure is None and any(item['name']=='state.ini' for item in observer.events)
     first=next(iter(data['starts']));warm=next(key for key in data['inputs'] if '-warm-' in key)
     surface=dict(data['starts'][first]['before_original'],page_key='')
     assert R.startup_fault(surface) is None

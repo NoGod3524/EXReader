@@ -13,7 +13,7 @@ GTK='57203a52aee439be5194ee0a4b13563a975e8daf'
 WORKFLOW='.github/workflows/reader-c02-root-review.yml'
 ORIGINAL='.github/workflows/reader-final-c02.yml'
 FILES={WORKFLOW,*('tests/reader_c02_root_review/'+name for name in
-    ('REVIEW.md','guard.py','windows_adapter.py','receipts.py','verify.py','test_protocol.py','validation.json'))}
+    ('REVIEW.md','guard.py','windows_adapter.py','gtk_adapter.py','receipts.py','verify.py','test_protocol.py','validation.json'))}
 STEP='''      - name: Check root adapter syntax and input-receipt refusal controls in Actions
         run: |
           python3 -m py_compile tests/reader_c02_root_review/*.py
@@ -52,6 +52,7 @@ def project(text):
       ('group: reader-c02-root-review-','group: reader-final-c02-',1),
       ('tests/reader_c02_root_review/guard.py','tests/reader_final_c02/guard.py',3),
       ('tests/reader_c02_root_review/windows_adapter.py','tests/reader_final_c02/win_perf.py',1),
+      ('tests/reader_c02_root_review/gtk_adapter.py','tests/reader_final_c02/gtk_perf.py',1),
       ('tests/reader_c02_root_review/verify.py','tests/reader_final_c02/verify.py',1),
       (STEP,'',1),(EXTRA,'',1)):
         require(text.count(new)==count,'Workflow substitution count differs: '+new)
