@@ -1,7 +1,7 @@
 name: Apple final host source preflight
 on:
   push:
-    branches: [codex/reader-apple-hosts-final]
+    branches: [codex/reader-hosts-341-final]
   workflow_dispatch:
 permissions:
   contents: read

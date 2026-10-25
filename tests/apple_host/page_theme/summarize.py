@@ -12,6 +12,7 @@ import zipfile
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'tools'))
 from check_parallel_integration import download_artifact_zip, fetch
 from run_native import native_ids
+from guard import COMMON_BASE
 
 
 def require(value, message):
@@ -67,6 +68,7 @@ def main():
                         guard['record_compatibility_delivery'] == 'e8ed25c1cd7ccb33405611e27f9ad47fba8c9e34' and
                         guard['post_merge_base'] == '902a73bd9984649000d63e96d5056b16daf28c85' and
                         guard['module_source'] == 'f680aeaddfb1ecc67ead353554f5b91a5703f72f' and
+                        guard['common_production_base'] == COMMON_BASE and guard['common_source_ui_accepted'] is False and
                         guard['android_java_policy_source'] == 'b1a7b7891cd394671842164a07a86c8e316dace3' and
                         guard['actual_android_host_interop_accepted'] is False and
                         len(guard['negative_checks']) == len(set(guard['negative_checks'])) == 57 + len(guard['protected_trees']),
