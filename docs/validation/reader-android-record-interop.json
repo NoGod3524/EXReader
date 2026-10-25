@@ -1,0 +1,14 @@
+{
+  "accepted": false,
+  "sender_export_accepted": false,
+  "incoming_apple_status": "pending",
+  "bidirectional_interoperability_accepted": false,
+  "base": "1b3cfd1413fa5ebade31be6958f835f6de3b5290",
+  "policy_source": "b1a7b7891cd394671842164a07a86c8e316dace3",
+  "expected_inherited_checks": 130,
+  "expected_sender_and_graph_checks": 8,
+  "runs": [],
+  "physical_device": false,
+  "sdk340_in_place_upgrade_downgrade_accepted": false,
+  "complete_product": false
+}
