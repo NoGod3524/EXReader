@@ -50,6 +50,8 @@ int main(void) {
     S("unicode out of range", "{\\rtf1 \\u70000 A}"),
     S("lone high surrogate", "{\\rtf1 \\u55357 A}"),
     S("other code page", "{\\rtf1\\ansi\\ansicpg1251 A}"),
+    S("font number 32768", "{\\rtf1{\\fonttbl{\\f32768 X;}}A}"),
+    S("negative font number", "{\\rtf1{\\fonttbl{\\f-1 X;}}A}"),
   };
   exr_document *base = NULL, *doc = NULL;
   const char *base_text;
@@ -80,6 +82,13 @@ int main(void) {
     exr_document_free(doc); doc = NULL; free(buffer);
   }
   exr_document_free(base);
+
+  {
+    static const sample theme = S("theme font", "{\\rtf1{\\fonttbl{\\f0 Arial;}{\\flomajor\\f31500 Cambria;}}\\f31500 Themed}");
+    CHECK(open_rtf(&theme, &doc) == EXR_OK && doc);
+    CHECK(strstr(exr_document_text(doc, NULL), "Themed"));
+    exr_document_free(doc); doc = NULL;
+  }
 
   for (i = 0; i < sizeof(rejected) / sizeof(*rejected); i++) {
     exr_status status = open_rtf(&rejected[i], &doc);
