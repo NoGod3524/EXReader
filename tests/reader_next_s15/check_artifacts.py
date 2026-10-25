@@ -125,6 +125,33 @@ def validate_frozen(report, members, source, run, attempt):
     exported = members['s15-frozen-work/export/' + digest + '.txt']
     require(exported == original, 'frozen exported original bytes')
     require(members.get('s15-frozen-logs/source.txt', b'').decode().strip() == source, 'frozen source binding')
+    provenance = load(members['s15-frozen-work/target-provenance/result.json'])
+    require(provenance['accepted'] is True and not provenance['failures']
+            and provenance['source_sha'] == source and provenance['run_id'] == str(run)
+            and provenance['attempt'] == str(attempt), 'preloaded-target provenance identity/outcome')
+    pairs = [('3.40.0', '3.41.0'), ('3.41.0', '3.40.0'), ('3.40.0', '3.40.0'), ('3.41.0', '3.41.0')]
+    expected = {kind + '-' + route + '-' + before + '-to-' + after for kind in ('full', 'private')
+                for route in ('source', 'installed') for before, after in pairs}
+    require(set(provenance['cases']) == expected, 'all source/installed preload negatives and positive controls required')
+    for name, case in provenance['cases'].items():
+        foreign = case['preloaded_version'] != case['selected_version']
+        require(case['passed'] is True and case['refusal_expected'] is foreign, 'preload case failed: ' + name)
+        require((case['exit'] != 0 and case['refused_by_origin_gate'] is True and case['post_location'] is None)
+                if foreign else (case['exit'] == 0 and case['refused_by_origin_gate'] is False
+                                 and case['post_location'] == case['preloaded_location']),
+                'foreign target refused without replacement / matching target retained: ' + name)
+        raw_log = members['s15-frozen-work/target-provenance/' + case['log']].decode()
+        if foreign:
+            require('SDK imported target header origin mismatch' in raw_log or 'SDK imported target archive origin mismatch' in raw_log,
+                    'real provenance refusal log absent')
+    gate = Path('apps/reader/original-export/EXReaderSdkTargetGuard.cmake').read_bytes()
+    for version in ('3.40.0', '3.41.0'):
+        member = 's15-frozen-work/target-provenance/configs/' + version + '-EXReaderSdkTargetGuard.cmake'
+        require(members[member] == gate and provenance['guard_files'][version + '/EXReaderSdkTargetGuard.cmake']
+                == hashlib.sha256(gate).hexdigest(), 'actual installed provenance gate differs')
+        config = members['s15-frozen-work/target-provenance/configs/' + version + '-EXReaderOriginalExportConfig.cmake']
+        require(b'_exr_sdk_target_provenance(EXReader::exr_library "${EXReader_DIR}" "' + version.encode() + b'")' in config,
+                'actual installed Config lacks its exact-version target provenance call')
     return True
 
 

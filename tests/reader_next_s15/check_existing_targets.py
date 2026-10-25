@@ -1,6 +1,7 @@
 """Actions-only real 3.40/3.41 preload regressions for source and installed use."""
 import argparse
 import hashlib
+import itertools
 import json
 import os
 from pathlib import Path
@@ -18,12 +19,22 @@ summary = {key: os.environ[value] for key, value in
 summary.update(accepted=False, cases={}, failures=[], sdk={}, guard_files={})
 template = '''cmake_minimum_required(VERSION 3.24)
 project(ExistingSdkTargets LANGUAGES C CXX)
-set(EXReader_DIR "${PRELOADED}/lib/cmake/EXReader")
-find_package(EXReader ${PRELOAD_VERSION} EXACT CONFIG REQUIRED COMPONENTS library)
-get_target_property(_configs EXReader::exr_library IMPORTED_CONFIGURATIONS)
-list(GET _configs 0 _config)
-string(TOUPPER "${_config}" _config)
-get_target_property(_before EXReader::exr_library IMPORTED_LOCATION_${_config})
+if(PRELOAD_KIND STREQUAL "private")
+  set(PACKAGE_PREFIX_DIR "${PRELOADED}")
+  include("${PRELOADED}/lib/cmake/EXReader/EXReaderDependencies.cmake")
+  set(_observe EXReader::vendor_file_miniz)
+else()
+  set(EXReader_DIR "${PRELOADED}/lib/cmake/EXReader")
+  find_package(EXReader ${PRELOAD_VERSION} EXACT CONFIG REQUIRED COMPONENTS library)
+  set(_observe EXReader::exr_library)
+endif()
+get_target_property(_before "${_observe}" IMPORTED_LOCATION)
+if(NOT _before)
+  get_target_property(_configs "${_observe}" IMPORTED_CONFIGURATIONS)
+  list(GET _configs 0 _config)
+  string(TOUPPER "${_config}" _config)
+  get_target_property(_before "${_observe}" IMPORTED_LOCATION_${_config})
+endif()
 file(WRITE "${CMAKE_BINARY_DIR}/target-before.txt" "${_before}")
 set(EXReader_DIR "${SELECTED}/lib/cmake/EXReader")
 if(ROUTE STREQUAL "source")
@@ -36,7 +47,10 @@ else()
   set(EXReaderOriginalExport_DIR "${PACKAGE}/lib/cmake/EXReaderOriginalExport")
   find_package(EXReaderOriginalExport 0.1.0 EXACT CONFIG REQUIRED)
 endif()
-get_target_property(_after EXReader::exr_library IMPORTED_LOCATION_${_config})
+get_target_property(_after "${_observe}" IMPORTED_LOCATION)
+if(NOT _after)
+  get_target_property(_after "${_observe}" IMPORTED_LOCATION_${_config})
+endif()
 file(WRITE "${CMAKE_BINARY_DIR}/target-after.txt" "${_after}")
 file(WRITE "${CMAKE_BINARY_DIR}/reported-version.txt" "${EXReader_VERSION}")
 '''
@@ -56,10 +70,10 @@ try:
                 dest = out.parent / 'configs' / (version + '-' + name)
                 dest.parent.mkdir(exist_ok=True); shutil.copyfile(path, dest)
                 summary['guard_files'][version + '/' + name] = hashlib.sha256(path.read_bytes()).hexdigest()
-    for route in ('source', 'installed'):
+    for preload_kind, route in itertools.product(('full', 'private'), ('source', 'installed')):
         for preloaded, selected in (('3.40.0', '3.41.0'), ('3.41.0', '3.40.0'),
                                    ('3.40.0', '3.40.0'), ('3.41.0', '3.41.0')):
-            name = route + '-' + preloaded + '-to-' + selected
+            name = preload_kind + '-' + route + '-' + preloaded + '-to-' + selected
             source = out.parent / name / 'source'; source.mkdir(parents=True)
             build = source.parent / 'build'
             (source / 'CMakeLists.txt').write_text(template, encoding='utf-8')
@@ -67,6 +81,7 @@ try:
                        '-DCMAKE_BUILD_TYPE=Release', '-DPRELOADED=' + str(sdks[preloaded]),
                        '-DPRELOAD_VERSION=' + preloaded, '-DSELECTED=' + str(sdks[selected]),
                        '-DSELECT_VERSION=' + selected, '-DROUTE=' + route,
+                       '-DPRELOAD_KIND=' + preload_kind,
                        '-DMODULE=' + str(a.module.resolve()), '-DPACKAGE=' + str(packages[selected])]
             process = subprocess.run(command, capture_output=True, text=True, timeout=600)
             log = source.parent / 'configure.log'; text = process.stdout + process.stderr
@@ -78,7 +93,7 @@ try:
             actual_refusal = process.returncode != 0 and ('SDK imported target header origin mismatch' in text
                                                         or 'SDK imported target archive origin mismatch' in text)
             after = (build / 'target-after.txt').read_text().strip() if (build / 'target-after.txt').exists() else None
-            item = {'preloaded_version': preloaded, 'selected_version': selected, 'route': route,
+            item = {'preloaded_version': preloaded, 'selected_version': selected, 'route': route, 'preload_kind': preload_kind,
                     'exit': process.returncode, 'refusal_expected': must_refuse, 'refused_by_origin_gate': actual_refusal,
                     'preloaded_location': before, 'preloaded_archive_sha256': hashlib.sha256(Path(before).read_bytes()).hexdigest(),
                     'post_location': after, 'reported_version': (build / 'reported-version.txt').read_text().strip()
@@ -88,7 +103,7 @@ try:
             if not item['passed']:
                 summary['failures'].append(name + (': existing foreign target escaped EXACT' if process.returncode == 0
                                                   else ': refusal was not the intended provenance gate'))
-    assert len(summary['cases']) == 8
+    assert len(summary['cases']) == 16
     summary['accepted'] = not summary['failures']
 except Exception as error:
     summary['failures'].append(repr(error))
