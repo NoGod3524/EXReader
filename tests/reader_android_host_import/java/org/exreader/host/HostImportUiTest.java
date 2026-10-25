@@ -1,0 +1,169 @@
+// SPDX-License-Identifier: MIT
+package org.exreader.host;
+
+import android.app.Activity;
+import android.app.Instrumentation;
+import android.app.UiAutomation;
+import android.accessibilityservice.AccessibilityServiceInfo;
+import android.content.Context;
+import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.Rect;
+import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
+import android.os.SystemClock;
+import android.view.accessibility.AccessibilityNodeInfo;
+import android.view.MotionEvent;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+/** Real provider, granted external intents, DocumentsUI and the existing host SDK owner. */
+public final class HostImportUiTest extends Instrumentation {
+    private static final String SOURCE="org.exreader.hostimportsource";
+    private Context context;private Bundle args;private JSONObject input;private String phase,active;
+    private ActivityMonitor monitor;
+    private final JSONArray checks=new JSONArray(),observations=new JSONArray();
+    interface Check{void run()throws Exception;}
+    static void need(boolean ok,String message){if(!ok)throw new AssertionError(message);}
+    @Override public void onCreate(Bundle arguments){super.onCreate(arguments);args=arguments;start();}
+    private void main(Runnable action){AtomicReference<Throwable> failure=new AtomicReference<>();runOnMainSync(()->{try{action.run();}catch(Throwable error){failure.set(error);}});Throwable error=failure.get();if(error instanceof Error)throw (Error)error;if(error instanceof RuntimeException)throw (RuntimeException)error;if(error!=null)throw new RuntimeException(error);}
+    private Activity activity(){Activity activity=monitor.getLastActivity();need(activity!=null,"actual host Activity");return activity;}
+    private String shell(String command)throws Exception{try(FileInputStream in=new ParcelFileDescriptor.AutoCloseInputStream(getUiAutomation().executeShellCommand(command));ByteArrayOutputStream out=new ByteArrayOutputStream()){byte[] buffer=new byte[8192];for(int count;(count=in.read(buffer))!=-1;)out.write(buffer,0,count);return out.toString("UTF-8");}}
+    private void control(String cmd)throws Exception{shell("am broadcast -f 32 -n "+SOURCE+"/.ControlReceiver --es cmd "+cmd);}
+    private void send(String mode,String docs,String pause){Intent intent=new Intent().setClassName(SOURCE,SOURCE+".SenderActivity").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).putExtra("mode",mode).putExtra("docs",docs);if(pause!=null)intent.putExtra("pause",pause);context.startActivity(intent);}
+    private void launch(){context.startActivity(new Intent(context,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));}
+    private AccessibilityNodeInfo find(AccessibilityNodeInfo root,Predicate<AccessibilityNodeInfo> match){if(root==null)return null;if(match.test(root))return root;for(int i=0;i<root.getChildCount();i++){AccessibilityNodeInfo child=root.getChild(i),found=find(child,match);if(found!=null){if(child!=null&&found!=child)child.recycle();return found;}if(child!=null)child.recycle();}return null;}
+    private boolean act(Predicate<AccessibilityNodeInfo> match,Consumer<AccessibilityNodeInfo> action){AccessibilityNodeInfo root=getUiAutomation().getRootInActiveWindow(),found=null;try{found=find(root,match);if(found==null)return false;if(action!=null)action.accept(found);return true;}finally{if(found!=null&&found!=root)found.recycle();if(root!=null)root.recycle();}}
+    private void until(Predicate<AccessibilityNodeInfo> match,Consumer<AccessibilityNodeInfo> action,String label){long end=SystemClock.elapsedRealtime()+60000;while(SystemClock.elapsedRealtime()<end){try{if(act(match,action))return;}catch(IllegalStateException stale){}SystemClock.sleep(80);}throw new AssertionError("UI expected "+label+" in "+active);}
+    private static String text(AccessibilityNodeInfo node){return String.valueOf(node.getText()==null?"":node.getText());}
+    private static boolean id(AccessibilityNodeInfo node,String name){return node.getViewIdResourceName()!=null&&node.getViewIdResourceName().endsWith("/"+name);}
+    private void tap(AccessibilityNodeInfo node){if(!"com.android.documentsui".contentEquals(node.getPackageName()==null?"":node.getPackageName())&&node.performAction(AccessibilityNodeInfo.ACTION_CLICK))return;touch(node);}
+    private void touch(AccessibilityNodeInfo node){
+        Rect bounds=new Rect();node.getBoundsInScreen(bounds);need(bounds.width()>0&&bounds.height()>0,"actual visible pointer target");
+        if("com.android.documentsui".contentEquals(node.getPackageName()==null?"":node.getPackageName())){
+            try{
+                String reply=shell("input touchscreen tap "+bounds.centerX()+" "+bounds.centerY());
+                need(!reply.contains("Usage:")&&!reply.contains("Error:"),"native platform touchscreen input returned no command error");
+                observations.put(new JSONObject().put("pointer_target",text(node)).put("package",String.valueOf(node.getPackageName())).put("input_driver","Android input touchscreen tap").put("bounds",new JSONArray().put(bounds.left).put(bounds.top).put(bounds.right).put(bounds.bottom)));
+                return;
+            }catch(Exception error){throw new RuntimeException(error);}
+        }
+        MotionEvent.PointerProperties finger=new MotionEvent.PointerProperties();finger.id=0;finger.toolType=MotionEvent.TOOL_TYPE_FINGER;
+        MotionEvent.PointerCoords point=new MotionEvent.PointerCoords();point.x=bounds.centerX();point.y=bounds.centerY();point.pressure=1;point.size=1;
+        long down=SystemClock.uptimeMillis();
+        MotionEvent start=MotionEvent.obtain(down,down,MotionEvent.ACTION_DOWN,1,new MotionEvent.PointerProperties[]{finger},new MotionEvent.PointerCoords[]{point},0,0,1,1,0,0,android.view.InputDevice.SOURCE_TOUCHSCREEN,0);
+        try{need(start.getToolType(0)==MotionEvent.TOOL_TYPE_FINGER&&start.isFromSource(android.view.InputDevice.SOURCE_TOUCHSCREEN),"actual injected finger source");need(getUiAutomation().injectInputEvent(start,true),"actual cross-window finger down");}finally{start.recycle();}
+        SystemClock.sleep(60);point.pressure=0;
+        MotionEvent end=MotionEvent.obtain(down,SystemClock.uptimeMillis(),MotionEvent.ACTION_UP,1,new MotionEvent.PointerProperties[]{finger},new MotionEvent.PointerCoords[]{point},0,0,1,1,0,0,android.view.InputDevice.SOURCE_TOUCHSCREEN,0);
+        try{need(getUiAutomation().injectInputEvent(end,true),"actual cross-window finger up");}finally{end.recycle();}
+        try{observations.put(new JSONObject().put("pointer_target",text(node)).put("package",String.valueOf(node.getPackageName())).put("tool_type",MotionEvent.TOOL_TYPE_FINGER).put("source",android.view.InputDevice.SOURCE_TOUCHSCREEN).put("bounds",new JSONArray().put(bounds.left).put(bounds.top).put(bounds.right).put(bounds.bottom)));}catch(Exception error){throw new RuntimeException(error);}
+    }
+    private void click(String value){until(node->node.isEnabled()&&node.isVisibleToUser()&&(text(node).equalsIgnoreCase(value)||value.contentEquals(node.getContentDescription()==null?"":node.getContentDescription())),this::tap,value);}
+    private void browseProvider()throws Exception{
+        Predicate<AccessibilityNodeInfo> opened=node->id(node,"header_title")&&node.isVisibleToUser()&&text(node).equals("Files from HostImport");
+        Predicate<AccessibilityNodeInfo> root=node->id(node,"title")&&node.isVisibleToUser()&&node.isEnabled()&&text(node).equals("HostImport");
+        for(int attempt=0;attempt<4;attempt++){
+            if(act(opened,null))return;
+            if(!act(root,null))until(node->node.isVisibleToUser()&&(String.valueOf(node.getContentDescription()).equals("Show roots")||String.valueOf(node.getContentDescription()).equals("Open navigation drawer")),this::tap,"system roots drawer");
+            getUiAutomation().waitForIdle(200,5000);
+            until(root,this::touch,"actual provider root row");
+            getUiAutomation().waitForIdle(200,5000);
+            long end=SystemClock.elapsedRealtime()+2000;while(SystemClock.elapsedRealtime()<end){if(act(opened,null))return;SystemClock.sleep(80);}
+        }
+        throw new AssertionError("real system picker did not navigate to HostImport after bounded platform touches");
+    }
+    private void clickDocument(String value)throws Exception{
+        until(node->id(node,"header_title")&&text(node).equals("Files from HostImport"),null,"system picker browses the actual HostImport provider");
+        until(node->id(node,"item_root")&&node.isVisibleToUser(),null,"real DocumentsUI document rows loaded");
+        getUiAutomation().waitForIdle(200,5000);
+        for(int page=0;page<16;page++){
+            if(act(node->node.isEnabled()&&node.isVisibleToUser()&&text(node).equals(value),this::touch))return;
+            android.view.accessibility.AccessibilityEvent scrolled=getUiAutomation().executeAndWaitForEvent(()->{
+                AtomicReference<Boolean> moved=new AtomicReference<>(false);
+                need(act(node->id(node,"dir_list")&&node.isVisibleToUser(),node->moved.set(node.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)))&&moved.get(),"actual DocumentsUI grid can scroll toward "+value);
+            },event->event.getEventType()==android.view.accessibility.AccessibilityEvent.TYPE_VIEW_SCROLLED&&"com.android.documentsui".contentEquals(event.getPackageName()),5000);
+            scrolled.recycle();
+            getUiAutomation().waitForIdle(200,5000);
+        }
+        throw new AssertionError("real DocumentsUI document not found within bounded scrolling: "+value);
+    }
+    private void pickerReturned(String document){
+        long end=SystemClock.elapsedRealtime()+60000,nextTouch=SystemClock.elapsedRealtime()+1000;int retries=0;
+        while(SystemClock.elapsedRealtime()<end){
+            if(act(node->"org.exreader.host".contentEquals(node.getPackageName()==null?"":node.getPackageName()),null))return;
+            boolean confirmed=act(node->"com.android.documentsui".contentEquals(node.getPackageName()==null?"":node.getPackageName())&&node.isVisibleToUser()&&node.isEnabled()&&(id(node,"action_menu_select")||id(node,"button1"))&&(text(node).equalsIgnoreCase("Open")||text(node).equalsIgnoreCase("Select")),this::tap);
+            if(!confirmed&&retries<3&&SystemClock.elapsedRealtime()>=nextTouch){if(act(node->node.isVisibleToUser()&&node.isEnabled()&&text(node).equals(document),this::touch))retries++;nextTouch=SystemClock.elapsedRealtime()+1000;}
+            SystemClock.sleep(80);
+        }
+        throw new AssertionError("real DocumentsUI did not return its selected content grant to the host");
+    }
+    private void status(String value){until(node->id(node,"status_text")&&text(node).contains(value),null,"status "+value);}
+    private void ready()throws Exception{long end=SystemClock.elapsedRealtime()+120000;while(SystemClock.elapsedRealtime()<end){AtomicReference<Boolean> ok=new AtomicReference<>(false);main(()->{try{Activity value=monitor.getLastActivity();if(value==null||value.isDestroyed())return;Object controller=ReadingReview.field(value,"imports");java.lang.reflect.Field entry=ImportController.class.getDeclaredField("entry");entry.setAccessible(true);ok.set(!value.isDestroyed()&&entry.get(controller)!=null&&ReadingReview.field(value,"store")!=null&&(int)ReadingReview.field(value,"operation")==0&&!(boolean)ReadingReview.field(value,"pageBusy"));}catch(Exception error){throw new RuntimeException(error);}});if(ok.get())return;SystemClock.sleep(80);}throw new AssertionError("live SDK owner did not become idle");}
+    private void emptyStaging()throws Exception{long end=SystemClock.elapsedRealtime()+30000;while(SystemClock.elapsedRealtime()<end){File[] files=new File(context.getFilesDir(),"incoming/exr-import/ready").listFiles();if(files!=null&&files.length==0)return;SystemClock.sleep(50);}throw new AssertionError("Ready lease not released after host mapping");}
+    private JSONArray books()throws Exception{return ReadingReview.call(activity(),store->{JSONArray rows=new JSONArray();for(NativeLibrary.Book book:store.books()){BookStore.VerifiedSource source=store.verifySource(book.id,null,0,new HostTask(()->false));CatalogStore.ShelfBook mapped=store.localShelfBook(book.id);need(mapped!=null&&mapped.key.bookKey.equals(source.key)&&mapped.sourceBytes==source.bytes,"SDK original mapped to product identity");String path=context.getSharedPreferences("host",0).getString("path_"+book.id,null);need(path!=null,"stable host path published");File file=new File(path).getCanonicalFile(),folder=new File(context.getFilesDir(),"books").getCanonicalFile();need(folder.equals(file.getParentFile())&&file.length()==source.bytes&&BookStore.syncFileHash(file,new HostTask(()->false)).equals(source.sha256),"published original is stable, private and byte-equal after staging release");rows.put(new JSONObject().put("id",book.id).put("format",book.format).put("sha256",source.sha256).put("bytes",source.bytes).put("key",source.key).put("title",book.title).put("path",path));}return rows;});}
+    private JSONObject book(String role)throws Exception{JSONObject expected=input.getJSONObject(role);JSONArray rows=books();for(int i=0;i<rows.length();i++){JSONObject row=rows.getJSONObject(i);if(row.getString("sha256").equals(expected.getString("sha256"))&&row.getLong("bytes")==expected.getLong("bytes"))return row;}throw new AssertionError("missing exact public SDK original "+role);}
+    private void imported(String role)throws Exception{long end=SystemClock.elapsedRealtime()+120000;Throwable last=null;while(SystemClock.elapsedRealtime()<end){try{ready();book(role);emptyStaging();observations.put(new JSONObject().put("role",role).put("book",book(role)));return;}catch(Throwable notYet){last=notYet;}SystemClock.sleep(80);}throw new AssertionError("real host import did not finish "+role,last);}
+    private String product()throws Exception{JSONObject result=new JSONObject();try(SQLiteDatabase db=SQLiteDatabase.openDatabase(new File(context.getFilesDir(),"reader-catalog.db").getPath(),null,SQLiteDatabase.OPEN_READONLY)){for(String table:new String[]{"reader_revisions","reader_outbox"}){JSONArray rows=new JSONArray();try(Cursor cursor=db.rawQuery("SELECT * FROM "+table+" ORDER BY revision_id",null)){while(cursor.moveToNext()){JSONArray row=new JSONArray();for(int i=0;i<cursor.getColumnCount();i++)row.put(cursor.isNull(i)?JSONObject.NULL:cursor.getType(i)==Cursor.FIELD_TYPE_BLOB?android.util.Base64.encodeToString(cursor.getBlob(i),android.util.Base64.NO_WRAP):cursor.getString(i));rows.put(row);}}result.put(table,rows);}}return result.toString();}
+    private JSONObject tree(AccessibilityNodeInfo node,int depth,int[] count)throws Exception{need(depth<=32&&++count[0]<=2048,"bounded actual semantic tree");JSONArray children=new JSONArray();for(int i=0;i<node.getChildCount();i++){AccessibilityNodeInfo child=node.getChild(i);if(child!=null){try{children.put(tree(child,depth+1,count));}finally{child.recycle();}}}return new JSONObject().put("id",node.getViewIdResourceName()).put("text",text(node)).put("description",String.valueOf(node.getContentDescription())).put("visible",node.isVisibleToUser()).put("enabled",node.isEnabled()).put("children",children);}
+    private void capture(String name)throws Exception{Bitmap bitmap=getUiAutomation().takeScreenshot();need(bitmap!=null,"actual screenshot");File folder=new File(context.getFilesDir(),"host-import-captures");need(folder.isDirectory()||folder.mkdirs(),"capture folder");try(FileOutputStream out=new FileOutputStream(new File(folder,name+".png"))){need(bitmap.compress(Bitmap.CompressFormat.PNG,100,out),"saved PNG");}finally{bitmap.recycle();}AccessibilityNodeInfo root=getUiAutomation().getRootInActiveWindow();try{JSONObject value=new JSONObject().put("capture",name).put("package",root==null?"":String.valueOf(root.getPackageName()));if(root!=null)value.put("tree",tree(root,0,new int[]{0}));observations.put(value);}finally{if(root!=null)root.recycle();}}
+    private void opened(String doc)throws Exception{long end=SystemClock.elapsedRealtime()+30000;while(SystemClock.elapsedRealtime()<end){if(shell("run-as "+SOURCE+" cat files/opens.log").contains("open "+doc+"\n"))return;SystemClock.sleep(80);}throw new AssertionError("actual external provider stream not opened "+doc);}
+    private void rotated(int rotation)throws Exception{Activity old=activity();getUiAutomation().setRotation(rotation);long end=SystemClock.elapsedRealtime()+60000;while(SystemClock.elapsedRealtime()<end){if(monitor.getLastActivity()!=null&&monitor.getLastActivity()!=old){ready();need(old.isDestroyed(),"old owner Activity destroyed");return;}SystemClock.sleep(80);}throw new AssertionError("actual Android rotation did not replace owner");}
+    private void check(String name,Check action)throws Exception{active=name;Bundle report=new Bundle();report.putString("class",getClass().getName());report.putString("test",name);sendStatus(1,report);action.run();checks.put(new JSONObject().put("name",name).put("pass",true));sendStatus(0,report);}
+    private void publish(File target,byte[] body)throws Exception{
+        File temporary=new File(target.getParentFile(),target.getName()+".part");
+        try(FileOutputStream output=new FileOutputStream(temporary)){output.write(body);output.getFD().sync();}
+        Files.move(temporary.toPath(),target.toPath(),java.nio.file.StandardCopyOption.ATOMIC_MOVE,java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+    }
+    private void assertCount(int expected)throws Exception{need(books().length()==expected,"exact SDK book count "+expected);}
+    private void displayPdf(boolean back)throws Exception{JSONObject expected=book("pdf");String title=expected.getString("title");until(node->id(node,"text1")&&node.isVisibleToUser()&&(text(node).equals(title)||text(node).startsWith(title+"\n")),this::tap,"imported PDF shelf row");long end=SystemClock.elapsedRealtime()+60000;boolean displayed=false;while(SystemClock.elapsedRealtime()<end){AtomicReference<Boolean> observed=new AtomicReference<>(false);main(()->{ReaderView view=activity().findViewById(R.id.reader_view);AccessibilityNodeInfo info=view.createAccessibilityNodeInfo();try{String raw=info.getExtras().getString("exreader.frame","");if(!raw.isEmpty()){JSONObject frame=new JSONObject(raw);observed.set(frame.optLong("book",-1)==expected.optLong("id")&&frame.has("bitmap_identity")&&frame.optLong("accepted_token")>0&&frame.optLong("settled_token")==frame.optLong("accepted_token")&&frame.optLong("settled_revision")==frame.optLong("revision")&&frame.optLong("drawn_ns")>0&&expected.optString("key").equals(frame.optString("source_key")));if(observed.get())observations.put(new JSONObject().put("rendered_frame",frame));}}catch(Exception error){throw new RuntimeException(error);}finally{info.recycle();}});if(observed.get()){displayed=true;break;}SystemClock.sleep(80);}need(displayed,"imported stable original produces a real SDK PDF frame after staging deletion");capture("imported-pdf-rendered");if(back)until(node->id(node,"back_button")&&node.isEnabled(),node->node.performAction(AccessibilityNodeInfo.ACTION_CLICK),"back to shelf");ready();}
+    @Override public void onStart(){
+        context=getTargetContext();phase=args.getString("phase");Throwable failure=null;Bundle result=new Bundle();
+        try{
+            input=new JSONObject(new String(Files.readAllBytes(new File(context.getFilesDir(),"host-import-input.json").toPath()),StandardCharsets.UTF_8));monitor=addMonitor(MainActivity.class.getName(),null,false);AccessibilityServiceInfo service=getUiAutomation().getServiceInfo();service.flags|=AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS;getUiAutomation().setServiceInfo(service);launch();ready();
+            if(phase.equals("first")){
+                check("real_VIEW_epub_uses_existing_owner_stable_original_and_product_mapping",()->{send("view","epub",null);imported("epub");assertCount(1);capture("view-epub");});
+                check("real_SEND_pdf_retains_original_after_staging_release",()->{send("send","pdf",null);imported("pdf");assertCount(2);displayPdf(true);capture("send-pdf");});
+                check("SEND_MULTIPLE_unknown_length_short_reads_and_untrusted_name",()->{send("multi","txt-short,evil-name",null);imported("short");imported("evil");assertCount(4);need(!book("evil").getString("title").contains("/"),"provider display name is sanitized");});
+                check("duplicate_redelivery_preserves_ids_paths_revisions_and_outbox",()->{JSONArray before=books();String state=product();send("send","txt-short-b",null);status("Already in shelf:");ready();emptyStaging();need(before.toString().equals(books().toString())&&state.equals(product()),"exact duplicate changes no identities or product history");});
+                check("real_system_DocumentsUI_SAF_selects_granted_provider_document",()->{click("Import");until(node->"com.android.documentsui".contentEquals(node.getPackageName()==null?"":node.getPackageName()),null,"real DocumentsUI");capture("system-documentsui");browseProvider();clickDocument("Seekable.txt");pickerReturned("Seekable.txt");imported("seekable");assertCount(5);capture("saf-imported");});
+                check("rotation_during_real_provider_copy_keeps_single_process_controller",()->{control("close-gate");control("reset-log");send("send","txt-slow",null);opened("txt-slow");rotated(UiAutomation.ROTATION_FREEZE_90);control("open-gate");imported("slow");assertCount(6);rotated(UiAutomation.ROTATION_FREEZE_0);book("slow");capture("copy-rotated");});
+                check("rotation_during_host_SDK_task_acknowledges_old_owner_and_retries_ready",()->{send("send","txt-rotating","import-copied");until(node->id(node,"loading_text")&&text(node).equals("Review import-copied"),null,"old owner copied boundary");Activity old=activity();Object controller=ReadingReview.field(old,"imports");getUiAutomation().setRotation(UiAutomation.ROTATION_FREEZE_90);long deadline=SystemClock.elapsedRealtime()+30000;boolean handed=false;while(SystemClock.elapsedRealtime()<deadline){AtomicReference<Boolean> current=new AtomicReference<>(false);main(()->{try{Activity next=activity();java.lang.reflect.Field owner=ImportController.class.getDeclaredField("runningOwner");owner.setAccessible(true);current.set(next!=old&&old.isDestroyed()&&ReadingReview.field(next,"imports")==controller&&owner.get(controller)==next&&((android.widget.TextView)next.findViewById(R.id.loading_text)).getText().toString().equals("Review import-copied"));}catch(Exception error){throw new RuntimeException(error);}});if(current.get()){handed=true;break;}SystemClock.sleep(50);}need(handed,"old lifecycle task acknowledges before the same Ready lease reaches new SDK owner");main(()->activity().getIntent().removeExtra("review_pause"));Files.write(new File(context.getFilesDir(),"review-release").toPath(),new byte[]{1});imported("rotating");assertCount(7);rotated(UiAutomation.ROTATION_FREEZE_0);capture("sdk-owner-rotated");});
+                check("user_cancel_before_publication_rolls_back_sdk_and_preserves_product",()->{String state=product();send("send","txt-cancel","import-inserted");until(node->id(node,"loading_text")&&text(node).equals("Review import-inserted"),null,"actual inserted boundary");click("Cancel");status("Import canceled");ready();emptyStaging();assertCount(7);need(state.equals(product()),"cancelled SDK insertion never publishes product changes");capture("cancelled");});
+                check("visible_copy_cancel_survives_rotation_and_preserves_sdk_product",()->{displayPdf(false);String state=product();control("close-gate");control("reset-log");send("send","txt-slow",null);opened("txt-slow");until(node->id(node,"import_button")&&node.isEnabled()&&text(node).equalsIgnoreCase("Cancel import"),null,"visible copy-stage cancel control");rotated(UiAutomation.ROTATION_FREEZE_90);until(node->id(node,"import_button")&&node.isEnabled()&&text(node).equalsIgnoreCase("Cancel import"),null,"copy-stage cancel survives actual owner rotation");capture("copy-cancel-rotated");click("Cancel import");status("Import canceled");control("open-gate");until(node->id(node,"import_button")&&node.isEnabled()&&text(node).equalsIgnoreCase("Import"),null,"copy-stage cancel returns original import action");ready();emptyStaging();assertCount(7);need(state.equals(product()),"cancelled provider copy changes neither SDK nor product history");rotated(UiAutomation.ROTATION_FREEZE_0);until(node->id(node,"import_button")&&node.isEnabled()&&text(node).equalsIgnoreCase("Import"),null,"completed cancellation remains visible after rotation");capture("copy-cancel-complete");});
+                check("provider_midstream_error_and_underreported_size_never_publish_prefix",()->{String state=product();send("send","txt-error",null);status("Import failed: IO");send("send","txt-overlong",null);status("Import failed: IO");assertCount(7);need(state.equals(product()),"failed provider copies preserve product");});
+                check("128MiB_staging_does_not_raise_32MiB_host_reading_limit",()->{send("send","pdf-33m",null);status("Current reader has a 32 MiB reading limit");ready();emptyStaging();assertCount(7);});
+            }else if(phase.equals("kill-copy")){
+                check("prepare_real_process_kill_during_unfinished_provider_copy",()->{control("close-gate");control("reset-log");send("send","txt-slow",null);opened("txt-slow");long end=SystemClock.elapsedRealtime()+30000;boolean found=false;while(SystemClock.elapsedRealtime()<end){File[] partial=new File(context.getFilesDir(),"incoming/exr-import/tmp").listFiles();if(partial!=null&&partial.length>0&&partial[0].length()>0){found=true;break;}SystemClock.sleep(50);}need(found,"real private partial exists before process termination");capture("kill-copy-boundary");});
+            }else if(phase.equals("recover-copy")){
+                check("fresh_process_cleans_partial_and_requires_real_URI_redelivery",()->{File[] partial=new File(context.getFilesDir(),"incoming/exr-import/tmp").listFiles();need(partial!=null&&partial.length==0,"previous process partial removed");assertCount(0);control("open-gate");send("send","txt-slow",null);imported("slow");assertCount(1);capture("copy-redelivered");});
+            }else if(phase.equals("kill-ready")){
+                check("prepare_real_process_kill_after_staging_before_host_publication",()->{send("view","txt-ready","import-copied");until(node->id(node,"loading_text")&&text(node).equals("Review import-copied"),null,"copied host boundary");File[] staged=new File(context.getFilesDir(),"incoming/exr-import/ready").listFiles(file->!file.getName().endsWith(".title"));need(staged!=null&&staged.length==1,"one published staged original retained");capture("kill-ready-boundary");});
+            }else if(phase.equals("kill-stable")){
+                check("prepare_real_process_kill_with_unfinished_stable_host_copy",()->{send("view","txt-stable","import-stable-partial");until(node->id(node,"loading_text")&&text(node).equals("Review import-stable-partial"),null,"actual open stable-copy descriptor");File[] partial=new File(context.getFilesDir(),"books").listFiles(file->file.getName().startsWith("import-")&&file.getName().endsWith(".part"));need(partial!=null&&partial.length==1&&partial[0].length()>0,"real owned stable-copy partial exists at kill boundary");capture("kill-stable-boundary");});
+            }else if(phase.equals("recover-stable")){
+                check("fresh_process_removes_stable_copy_partial_and_recovers_private_ready",()->{imported("stable");assertCount(1);File[] partial=new File(context.getFilesDir(),"books").listFiles(file->file.getName().startsWith("import-")&&file.getName().endsWith(".part"));need(partial!=null&&partial.length==0,"old stable-copy partial removed without touching published original");capture("stable-partial-recovered");});
+            }else if(phase.equals("recover-ready")){
+                check("fresh_process_recovers_ready_without_provider_URI_permission",()->{android.net.Uri uri=android.provider.DocumentsContract.buildDocumentUri(SOURCE+".docs","txt-ready");need(context.checkUriPermission(uri,android.os.Process.myPid(),android.os.Process.myUid(),Intent.FLAG_GRANT_READ_URI_PERMISSION)==android.content.pm.PackageManager.PERMISSION_DENIED,"external URI grant revoked before fresh process start");imported("ready");assertCount(1);capture("ready-recovered");});
+                check("replayed_intent_after_recovery_is_exactly_idempotent",()->{String state=product();JSONArray before=books();send("send","txt-ready",null);status("Already in shelf:");ready();emptyStaging();need(before.toString().equals(books().toString())&&state.equals(product()),"fresh process replay is identity stable");});
+            }else if(phase.equals("kill-published")){
+                check("prepare_real_process_kill_after_stable_path_publication",()->{send("send","txt-published","import-published");until(node->id(node,"loading_text")&&text(node).equals("Review import-published"),null,"published prefs boundary");File[] staged=new File(context.getFilesDir(),"incoming/exr-import/ready").listFiles(file->!file.getName().endsWith(".title"));need(staged!=null&&staged.length==1,"lease survives until product finalize");need(context.getSharedPreferences("host",0).getAll().keySet().stream().anyMatch(key->key.startsWith("path_")),"stable path published before kill");capture("kill-published-boundary");});
+            }else if(phase.equals("recover-published")){
+                check("fresh_process_repairs_mapping_then_releases_ready_and_reuses_stable_source",()->{imported("published");assertCount(1);String state=product();send("view","txt-published",null);status("Already in shelf:");ready();emptyStaging();assertCount(1);need(state.equals(product()),"published crash retry duplicates neither revisions nor outbox");capture("published-recovered");});
+            }else throw new AssertionError("unknown phase");
+        }catch(Throwable error){failure=error;try{capture("failure-"+phase);}catch(Throwable second){error.addSuppressed(second);}}
+        try{JSONObject report=new JSONObject().put("source_sha",args.getString("source_sha")).put("run_id",args.getString("run_id")).put("attempt",args.getString("attempt")).put("phase",phase).put("pid",android.os.Process.myPid()).put("passed",failure==null).put("checks",checks).put("count",checks.length()).put("observations",observations);if(failure!=null)report.put("failed_check",active).put("failure",failure.getMessage()).put("failure_trace",android.util.Log.getStackTraceString(failure));File reportFile=new File(context.getFilesDir(),"host-import-"+phase+".json");byte[] reportBody=report.toString(2).getBytes(StandardCharsets.UTF_8);publish(reportFile,reportBody);if(failure==null&&phase.startsWith("kill-")){Bundle boundary=new Bundle();boundary.putString("stream","HOST_IMPORT_BOUNDARY_READY "+phase);sendStatus(0,boundary);JSONObject marker=new JSONObject().put("source_sha",args.getString("source_sha")).put("run_id",args.getString("run_id")).put("attempt",args.getString("attempt")).put("phase",phase).put("pid",android.os.Process.myPid()).put("report_bytes",reportBody.length).put("report_sha256",BookStore.syncFileHash(reportFile,new HostTask(()->false)));publish(new File(context.getFilesDir(),"host-import-"+phase+".boundary"),marker.toString(2).getBytes(StandardCharsets.UTF_8));while(true)SystemClock.sleep(1000);}result.putString("stream",failure==null?"HOST_IMPORT_PASS "+phase:"HOST_IMPORT_FAIL "+phase);finish(failure==null?Activity.RESULT_OK:Activity.RESULT_CANCELED,result);}catch(Exception error){result.putString("shortMsg","Host import report unavailable");finish(Activity.RESULT_CANCELED,result);}
+    }
+}
