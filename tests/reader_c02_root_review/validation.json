@@ -1,0 +1,13 @@
+{
+  "accepted": false,
+  "status": "root adapter source prepared; full Actions pending",
+  "base_source": "169b0be3c1c8199be0211649412d23d9e34041e4",
+  "input_strategy": "warm-catalog-snapshot-clean-settings-v1",
+  "windows_producer": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+  "gtk_producer": "57203a52aee439be5194ee0a4b13563a975e8daf",
+  "original_timeout_run": 40214285241,
+  "diagnostic_run": 40230793806,
+  "budget_approved": false,
+  "current_common_product_performance_accepted": false,
+  "complete_product": false
+}
