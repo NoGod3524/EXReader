@@ -67,3 +67,19 @@ UI 实际看到私有请求落盘/产品提交后的原生观测，再由 UI run
 同时保留同一个 native19 消费者，不再以直接整批 swiftc 替代 Xcode 编译检查。
 目前新增完整套件尚未取得云端结果，验收记录为 `accepted:false`。源码、测试、语法检查与工件解析
 全部在 Actions，本地仅源码/文档/Git。性能、真机、跨平台产品联合验收继续单列。
+
+## 重启接续点
+
+实现已提交并推送到 `codex/reader-apple-reading-records-ui`，完整实现 SHA 为
+`1f2f3cbc4605a008558f2bda74ddfcdcd74ffef8`；后续证据提交 `9c8b47412b410fa1882f330e85efa7dbc15a17cc`
+只修改本页和验收 JSON。此次重启 checkpoint 同样只修改两份证据文档。
+
+当前 `40147125432` 的真实 Xcode/native 预检 job `121030738895` 仍在云端执行；
+同源 Shelf focused recovery `40147139532` 的 SDK jobs `121030784612` / `121030784790` 仍在执行。
+电脑重启后先读取这些既有 run，不重复 dispatch、不取消云端任务。
+
+旧 `f5d25b4c` 的 Shelf full `40140560610` 保留为失败：macOS/iPhone 完整通过，iPad 原02已遍历
+2202份原件并原07通过，原06在进程重开后目标仍在屏幕外，真实 native scroll 未发出。
+当前修复改为随真实 restore request 发 native scroll；focused 尚未给出结果，不授予该修复或 G03/G04 UI。
+下一步读取真实 Xcode预检与三目标恢复结果，修根因并保留原断言；稳定后才在最终共同 Apple 源码启动
+一轮正式 reading records full，并保留 Nav/Search/WP13/Mapping/Shelf 全套同源回归。
