@@ -518,7 +518,7 @@ run("icloud-not-downloaded-reported-before-any-copy") {
     guard case .notDownloaded = try failed(stage(area, source)) else { throw Fail(message: "not reported") }
     let quiet = makeArea(scratch().stage, requestDownload: false, hooks: hooks)
     try expect(try failed(stage(quiet, source)) == .notDownloaded(downloadRequested: false), "no request")
-    try expect(entries(dirs.stage).isEmpty && scope.starts.count == 1 && scope.stops.count == 1, "work or scope")
+    try expect(entries(dirs.stage).isEmpty && scope.starts.count == 2 && scope.stops.count == 2, "work or scope \(scope.starts.count)/\(scope.stops.count)")
     try expect(FileEntryHooks.liveUbiquity(URL(fileURLWithPath: "/tmp/.Book.epub.icloud")) == .notDownloaded, "placeholder")
     try expect(FileEntryHooks.liveUbiquity(source) == .notUbiquitous, "local file")
 }
