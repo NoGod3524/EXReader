@@ -95,6 +95,41 @@ one prefix, builds the DSO and the executable from installed packages only, then
   or SDK symbol;
 * refuses the six mixed graphs above.
 
+
+## Known integration requirements found by the S19 acceptance run
+
+The third complete round (source `1423a0f0`) installed the reviewed SDK 3.41.0
+and the whole package chain on all three runners, declared and attached the
+closure, and compiled the five-module feature translation unit everywhere. The
+product DSO then linked on macOS but not on Linux or Windows, for two different
+real reasons. Both are properties of the *installed packages*, not of this
+helper, and both must be handled before C09/C10/C11/D15 consume the closure.
+
+1. **A DSO needs position-independent module archives.** The optional packages do
+   not set `CMAKE_POSITION_INDEPENDENT_CODE` themselves (only the SDK top level
+   does), so a default installed build of, for example, `EXReaderAnnotationImport`
+   contains thread-local statics with `R_X86_64_TPOFF32` relocations. Linking
+   that archive into a shared object fails with
+   `relocation R_X86_64_TPOFF32 against '_ZN12_GLOBAL__N_16activeE' can not be
+   used when making a shared object; recompile with -fPIC`.
+   Install every package with `-DCMAKE_POSITION_INDEPENDENT_CODE=ON` when the
+   consumer is a DSO. This changes no source, target or header.
+
+2. **A Windows DLL cannot carry both the shared SDK import library and the SDK
+   static archives.** MSVC still pulls the archive members that the modules
+   reference and then reports `LNK2005` against `exreader.lib(exreader.dll)`
+   (`exr_library_open`, `exr_document_open_memory`, `exr_anchor_create`,
+   `exr_font_count`, `exr_version`, ...) and `LNK1169`. The module interfaces
+   carry `EXReader::exr_core` as a real dependency, and this helper does not and
+   must not remove it. On Windows the single-SDK closure therefore has to be the
+   **static** one (`SDK_LINK static`, one SDK inside the DSO, the host executable
+   linking no SDK at all); the shared-SDK profile stays valid on ELF and Mach-O,
+   where the shared provider is processed first and the archives are not pulled.
+
+Both facts were observed, not inferred: `libreader_host_features.dylib` and
+`reader-host-probe` linked and three of the six mixed graphs were refused in the
+same run that produced the Linux and Windows link errors.
+
 ## Boundaries
 
 * This package is a link-closure package, not a UI package: no host窗口, no
