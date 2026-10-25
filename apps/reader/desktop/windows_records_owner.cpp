@@ -376,7 +376,7 @@ void list(store &s,const book &b,const winrecords_request &r,winrecords_response
  auto progress_wire=selected(s,b.key,true,"",nullptr,nullptr,out.progress_info,out.progress);
  if(out.progress.kind==READER_SELECTION_SAFE&&!out.progress.graph.deleted&&!progress_wire.empty()) {
   record decoded;
-  out.progress_has_location=reader_rs_decode(s.revisions,progress_wire.data(),progress_wire.size(),&decoded.value,nullptr)==READER_RS_OK&&decoded.value.has_location;
+  out.progress_has_location=reader_rs_decode(s.revisions,progress_wire.data(),progress_wire.size(),&decoded.value,nullptr)==READER_RS_OK&&decoded.value.has_location&&decoded.value.exact!=nullptr;
  }
 }
 /* Read only ASCII root-parent IDs from public-validated wire, not an alternate

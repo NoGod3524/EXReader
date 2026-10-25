@@ -120,7 +120,7 @@ static void winrecords_controls(void) {
   int safe=progress?records.result.progress.kind==READER_SELECTION_SAFE:item&&item->state==READER_AV_STATE_SAFE;
   int deleted=progress?records.result.progress.graph.deleted:item&&item->deleted;
   int live=safe&&!deleted,ready=!busy&&!records.result.pending;
-  int located=progress?records.result.progress_has_location:item&&item->has_location;
+  int located=progress?records.result.progress_has_location:item&&item->has_location&&item->content_available&&item->exact!=NULL;
   for(int i=0;i<14;i++) EnableWindow(records.controls[i],!busy);
   EnableWindow(records.controls[0],ready&&!records.history&&(records.result.progress.kind==READER_SELECTION_MISSING||
     (records.result.progress.kind==READER_SELECTION_SAFE&&!records.result.progress.graph.deleted)));

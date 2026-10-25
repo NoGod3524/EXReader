@@ -4963,7 +4963,17 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
   if(message==WM_CONTEXTMENU && winio_context((HWND)wparam,lparam)) return 0;
 #endif
 #ifdef EXR_HOST_WORKER_REVIEW
-  if (message == WM_APP + 30) return review_message(window, wparam, lparam);
+  if (message == WM_APP + 30) {
+    /* Cloud review only: read the actual published frame/selection. These
+     * observations cannot navigate, select text, or modify persisted state. */
+    if (wparam == 40) return (LRESULT)g.selection.start;
+    if (wparam == 41) return (LRESULT)g.selection.end;
+    if (wparam == 42) return (LRESULT)g.frame.part;
+    if (wparam == 43) return (LRESULT)g.frame.range_start;
+    if (wparam == 44) return (LRESULT)g.frame.range_end;
+    if (wparam == 45) return (LRESULT)g.selection.active;
+    return review_message(window, wparam, lparam);
+  }
 #endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   if(message==WM_APP+31) { product_shelf_edges();return 0; }
