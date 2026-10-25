@@ -338,6 +338,13 @@ public final class ReaderView extends View {
         return selection;
     }
 
+    boolean selectionInLowerHalf() {
+        if(selection==null||selection.rects.isEmpty())return false;
+        computeFit();RectF bounds=new RectF(selection.rects.get(0));
+        for(int i=1;i<selection.rects.size();i++)bounds.union(selection.rects.get(i));
+        return toViewY(bounds.centerY())>getHeight()/2f;
+    }
+
     public void clearSelection() {
         renderChanged();
         selection = null;
