@@ -1,0 +1,99 @@
+{
+  "root_review_candidate": {
+    "branch": "codex/reader-cloud-import-review",
+    "accepted": true,
+    "state": "three_desktop_packages_and_real_fault_paths_accepted_awaiting_host_integration",
+    "source": "80b743c6f51bee6d95e7cf116b4e65000a599063",
+    "run_id": 40158826151,
+    "attempt": 1,
+    "checks_per_platform": 47,
+    "protocol_rejections": 9,
+    "jobs": {"Windows": 121065842741, "Linux": 121065842886, "macOS": 121065842967, "evidence": 121066933343},
+    "expires_at": "2027-01-23T03:36:17Z",
+    "artifacts": [
+      {"platform": "Windows", "id": 12584744282, "bytes": 8767873, "sha256": "e4ab444559cda424430a4427c5fdce21f88084eb231a70d5e6b440cefd3a024a"},
+      {"platform": "Linux", "id": 12584604097, "bytes": 12458976, "sha256": "68609c47e48071c0bc55111e72c152c612cc629151c7eb193d9abf545194050a"},
+      {"platform": "macOS", "id": 12584684154, "bytes": 10695309, "sha256": "612647266102512fe04c51f384f839b45ee81433bbbb8faf0f8f1b9c77f8154f"},
+      {"platform": "strict-summary", "id": 12585895106, "bytes": 680, "sha256": "e0d434a30cc92cd72a702c8085909098e22e12bb89e9cd9ac7c17a4bca0fa9e5"}
+    ],
+    "evidence_commit_difference": "only docs/READER-WEBDAV-IMPORT.md and docs/validation/reader-webdav-import.json",
+    "original_cloud_scope_remains_at_source": "a0eb0c7b91eb34d6e577ac581b419ce1da8729df"
+  },
+  "package": "EXReaderCloudImport",
+  "version": "0.1.0",
+  "fixed_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk_freeze": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "branch": "codex/reader-webdav-import",
+  "status": "cloud-verified",
+  "tested_source": "a0eb0c7b91eb34d6e577ac581b419ce1da8729df",
+  "later_commits": "original delivery 547711bc was documentation-only; later root source and test changes are separately authenticated in root_review_candidate",
+  "cloud": {
+    "run_id": 40138293883,
+    "run_attempt": 1,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40138293883",
+    "jobs": {
+      "ubuntu-22.04": "success",
+      "windows-2022": "success",
+      "macos-15": "success",
+      "same-run artifact evidence": "success"
+    },
+    "checks_per_platform": 43,
+    "altered_reports_rejected": 9,
+    "artifacts": [
+      {
+        "os": "Windows",
+        "id": 12577143124,
+        "bytes": 5720405,
+        "sha256": "002c43ab638d3783e65c7466989bf8626fe35dae3ac61cf2c7d8f85a6dc989bf"
+      },
+      {
+        "os": "Linux",
+        "id": 12577823400,
+        "bytes": 8383848,
+        "sha256": "91c59931597aa4a7bf818a55d3068c29f01e68f7b260c0b57def7c4f7d7cab7a"
+      },
+      {
+        "os": "macOS",
+        "id": 12577558554,
+        "bytes": 7208941,
+        "sha256": "d35871010c933194d14bc0afc063d27dc3a32604885c143135ab0c45d4bea671"
+      }
+    ]
+  },
+  "retained_failures": [
+    {
+      "run_id": 40115618988,
+      "source": "6f4e6833a99380208c0edc6fa6747403fa00018f",
+      "reason": "test used a 4096-byte limit on a 1084-byte fixture and a 43 KB 'slow' stream below the cancel threshold; fixed in the tests only"
+    },
+    {
+      "run_id": 40116077958,
+      "source": "cc11bbf85d083e282f17928f94f868a74760f7eb",
+      "reason": "all cases passed; final credential scan tried to read a directory named *.txt; fixed in the test only"
+    }
+  ],
+  "covered": [
+    "real native TLS on Linux, Windows and macOS (runner-trusted temporary CA)",
+    "nine formats plus azw3 via list, download, import",
+    "independent-process SDK readback of original bytes and titles",
+    "Unicode and same-name-different-content",
+    "duplicate preserved across failure cleanups",
+    "corruption after download (flip, truncate, append, delete)",
+    "SDK-rejected book",
+    "cross-origin redirect, HTTPS downgrade, untrusted certificate, hostname mismatch, 401, 404, 500",
+    "short read, listing length mismatch",
+    "32 MiB reflow and 128 MiB streaming ceilings, lowered limits",
+    "cancel before network, during stream, between phases, import commit-boundary sweep",
+    "credential isolation, installed C and C++ consumers, source/protected-tree/path guards"
+  ],
+  "not_covered": [
+    "real user cloud providers",
+    "mobile, simulator or device",
+    "actual audio or speech",
+    "host UI wiring",
+    "performance or memory budgets",
+    "actual 128 MiB transfer"
+  ],
+  "complete_product": false
+}
