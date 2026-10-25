@@ -7,7 +7,7 @@ on:
     inputs:
       scope:
         type: choice
-        options: [inspect, full]
+        options: [inspect, projection, full]
         default: inspect
 
 permissions:
@@ -49,7 +49,7 @@ jobs:
           path: build/c04-inspect/
           if-no-files-found: error
   guard:
-    if: inputs.scope == 'full'
+    if: inputs.scope == 'full' || inputs.scope == 'projection'
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     steps:
@@ -75,6 +75,52 @@ jobs:
         with:
           name: reader-next-c04-guard-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/c04/guard.json
+          if-no-files-found: error
+
+  projection:
+    if: inputs.scope == 'projection'
+    needs: guard
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SDK_SHA }}
+          path: sdk-base
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.F5_SHA }}
+          path: f5
+      - name: Rebuild the exact unaccepted candidate for read-only public text diagnosis
+        run: |
+          set -eu
+          mkdir -p build/c04-projection
+          python3 tests/reader_next_c04/run_c04.py fetch --f5 f5 --out build/c04-projection/corpus
+          cp -r sdk-base sdk-cand
+          git -C sdk-cand apply "$GITHUB_WORKSPACE/$PATCH"
+          git -C sdk-cand add -A
+          candidate_tree=$(git -C sdk-cand write-tree)
+          {
+            echo "source=$GITHUB_SHA run=$GITHUB_RUN_ID attempt=$GITHUB_RUN_ATTEMPT"
+            echo "sdk=$SDK_SHA f5=$F5_SHA"
+            echo "candidate_sdk_tree=$candidate_tree"
+            echo "candidate_src_tree=$(git -C sdk-cand rev-parse "$candidate_tree:src")"
+            sha256sum "$PATCH" sdk-cand/src/rtf.c
+          } | tee build/c04-projection/identity.txt
+          cmake -S sdk-cand -B build/sdk-cand -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AAC=OFF
+          cmake --build build/sdk-cand --config Release --parallel 4
+          cmake --install build/sdk-cand --config Release --prefix stage-cand
+          cmake -S tests/reader_next_c04 -B build/projection -DEXR_SDK="$GITHUB_WORKSPACE/stage-cand" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/projection --config Release --parallel 4
+          build/projection/exreader-rtf-real-boundary --projection "$GITHUB_WORKSPACE/build/c04-projection/corpus/assets/rtf-crowley-policy.rtf" "$GITHUB_WORKSPACE/build/c04-projection/public-text.txt" | tee build/c04-projection/open.json
+          sha256sum build/projection/exreader-rtf-real-boundary stage-cand/lib/libexr_formats.a build/c04-projection/public-text.txt | tee build/c04-projection/program-hashes.txt
+          python3 tests/reader_next_c04/projection_report.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-next-c04-projection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c04-projection/
           if-no-files-found: error
 
   diagnose:

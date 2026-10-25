@@ -97,6 +97,16 @@ int main(int argc, char **argv) {
   size_t i, base_nodes = 0, nodes = 0;
   char *buffer;
 
+  if(argc==4 && !strcmp(argv[1],"--projection")) {
+    FILE *output; const char *text; size_t size=0;
+    CHECK(exr_document_open(argv[2],&doc,&error)==EXR_OK && doc);
+    text=exr_document_text(doc,&size); CHECK(text && size);
+    output=fopen(argv[3],"wb"); CHECK(output);
+    CHECK(fwrite(text,1,size,output)==size); CHECK(fclose(output)==0);
+    printf("{\"test\":\"public-text-projection\",\"status\":0,\"bytes\":%zu,\"exact_query_present\":%s}\n",size,strstr(text,"Policy and Procedure TTR") ? "true" : "false");
+    exr_document_free(doc); return 0;
+  }
+
   if(argc==3 && (!strcmp(argv[1],"--real-base") || !strcmp(argv[1],"--real-candidate"))) {
     exr_status expected=!strcmp(argv[1],"--real-base") ? EXR_FORMAT : EXR_OK;
     exr_status actual=exr_document_open(argv[2],&doc,&error);
