@@ -443,9 +443,16 @@ def main():
         assert pending[book_id]['attempts'] == 0 and pending[book_id]['code'] == 0
         record('pending_original_is_surfaced_and_never_acknowledged')
 
-        observed = first.command('observe')
-        mirrored = capture(first, 100, 0)['summary']
+        missing = Device('待元数据设备')
+        orphan = revision(802, shard=201, kind='progress', key='txt:' + '9' * 64, operation='delete')
+        orphan_id = seed(missing.db, orphan)
+        missing.command('start')
+        observed = missing.wait(4, 300)
+        mirrored = capture(missing, 100, 0)['summary']
+        assert observed['pending_metadata'] > 0 and mirrored['metadata_wait'] > 0, (mirrored, observed)
         assert mirrored['metadata_wait'] == observed['pending_metadata'], (mirrored, observed)
+        assert orphan_id in {row['id'] for row in capture(missing, 100, 0)['rows']}
+        missing.close()
         record('metadata_wait_observations_mirror_the_session_counter')
 
         flags['http'] = 401
@@ -514,7 +521,7 @@ def main():
             'c_consumer_sha256': hashlib.sha256(c_consumer.read_bytes()).hexdigest(),
             'sdk_changed': False, 'schema_changed': False, 'wire_changed': False, 'anchor_changed': False,
             'host_ui_accepted': False, 'product_wiring_accepted': False,
-            'metadata_wait_positive_covered': False,
+            'metadata_wait_positive_covered': True,
             'fixture_endpoint': 'IPv4 loopback with verified certificate IP SAN'}
         for path in folder.rglob('*'):
             if path.is_file() and path.suffix != '.key':

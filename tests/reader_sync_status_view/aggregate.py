@@ -182,6 +182,8 @@ def main():
             problems.append(name + ' is missing named checks: %s' % sorted(REQUIRED - set(checks)))
         if report.get('accepted') is not True:
             problems.append(name + ' is not accepted')
+        if report.get('metadata_wait_positive_covered') is not True:
+            problems.append(name + ' did not exercise a positive pending-metadata state')
         signatures.add(tuple(checks))
         evidence.append({
             'platform': PLATFORMS[value], 'runner': value, 'artifact': {
