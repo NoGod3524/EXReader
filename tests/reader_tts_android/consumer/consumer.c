@@ -1222,7 +1222,15 @@ int exr_tts_consumer_rotation_finish(void) {
              snapshot.state == READER_TTS_SERVICE_UNAVAILABLE) {
     result = 1;
   }
-  outcome = collect(g_rotation, g_rotation_request, 45000, g_rotation_text, 900, &log);
+  /* The headless emulator engine paces its synthesis far slower than real time
+     (the observation below records the seconds), so the wait is bounded by the
+     utterance, not by a product budget: the assertions stay identical and the
+     request is still speaking while the Activity is recreated. */
+  {
+    time_t begun = time(NULL);
+    outcome = collect(g_rotation, g_rotation_request, 120000, g_rotation_text, 900, &log);
+    note("elapsed=%lds; ", (long)(time(NULL) - begun));
+  }
   if (outcome != 0 || log.started != 1 ||
       log.finished + log.stopped + log.failed != 1 || log.foreign_unknown != 0) {
     result = 1;
