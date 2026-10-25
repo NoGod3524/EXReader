@@ -146,6 +146,8 @@ static reader_rs_status encode(reader_revisions *store,const reader_rs_envelope 
     if(deleted)out+="null";
     else{
       require_capture(c);
+      if(version==3&&c->mode==READER_RS_FIXED_PAGE&&(c->fixed->exact_size>65536||c->fixed->prefix_size>128||c->fixed->suffix_size>128))
+        reject(READER_RS_NOT_REPRESENTABLE,"Raw selector exceeds its byte bound",READER_RS_GAP_LIMIT);
       reader_rs_gap gap=gap_of(c);
       if(version==1&&gap!=READER_RS_GAP_NONE)reject(READER_RS_NOT_REPRESENTABLE,"SDK capture has no lossless wire v1 selector",gap);
       if(version==2){
@@ -186,6 +188,7 @@ static reader_rs_status decode(bool raw_api,reader_revisions *store,const void *
   if(out)std::memset(out,0,sizeof(*out));
   reader_rs_status status=call(error,[&]{
     if(!store||!wire||!out)reject(READER_RS_ARGUMENT,"Missing wire or record output");
+    if(raw_api&&(bytes<2||bytes>READER_REVISION_MAX_BYTES))reject(READER_RS_REVISION,"Raw wire exceeds its bounded envelope",READER_RS_GAP_NONE,0,READER_REV_LIMIT);
     std::string w((const char *)wire,bytes);reader_revision_info info{};validate(store,w,&info,raw_api);
     if(std::strcmp(info.entity_kind,"progress")&&std::strcmp(info.entity_kind,"annotation"))reject(READER_RS_ARGUMENT,"Wire is not reading state");
     database json;statement q(json.db,"SELECT json_extract(?1,'$.location_kind'),json_extract(?1,'$.payload.location.parser_version'),"

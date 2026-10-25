@@ -1,5 +1,6 @@
 """Authenticate original ZIPs and independent public-SDK bytes in Actions only."""
 import base64
+from datetime import datetime, timezone
 import hashlib
 import io
 import json
@@ -30,6 +31,7 @@ def main():
         artifact = [a for a in artifacts if a['name'] == f'reader-selector-bytes-{platform}-{run}-{attempt}']
         assert len(artifact) == 1 and not artifact[0]['expired']
         a = artifact[0]
+        assert datetime.fromisoformat(a['expires_at'].replace('Z', '+00:00')) > datetime.now(timezone.utc)
         assert a['workflow_run']['head_sha'] == source and a['workflow_run']['id'] == int(run)
         raw = request('actions/artifacts/' + str(a['id']) + '/zip')
         assert len(raw) == a['size_in_bytes'] and 'sha256:' + hashlib.sha256(raw).hexdigest() == a['digest']
@@ -42,6 +44,8 @@ def main():
             result = json.loads(z.read('result.json'))
             assert result['accepted'] and result['source_sha'] == source and result['run_id'] == run and result['attempt'] == attempt
             assert result['legacy_wire_bytes_unchanged'] and result['original_regressions_passed'] and result['off_new_symbols_absent']
+            program = 'candidate-consumer/selector-bytes' + ('.exe' if platform == 'Windows' else '')
+            assert hashlib.sha256(z.read(program)).hexdigest() == result['consumer_sha256']
             assert len(result['protocol_checks']) >= 30 and len(result['graph_checks']) >= 11
             assert all(c['pass'] for c in result['protocol_checks'] + result['graph_checks'])
             for name, digest in result['logs'].items():
