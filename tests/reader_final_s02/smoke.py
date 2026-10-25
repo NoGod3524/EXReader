@@ -276,7 +276,18 @@ def main():
             raise common.S02Error('the native import chooser did not accept %s' % path)
         return True
 
+    def cleanup():
+        """Kill any application left behind by an earlier phase."""
+        for pid in pids_for(program):
+            try:
+                os.kill(pid, 15)
+            except OSError:
+                pass
+        if pids_for(program):
+            wait_pids_gone(program, 20)
+
     def phase_default():
+        cleanup()
         root, paths = prepare('default')
         trace = root / 'strace-open.log'
         log = open(str(root / 'application.log'), 'wb')
@@ -347,16 +358,22 @@ def main():
             wait_no_application(15)
 
     def phase_desktop():
+        cleanup()
         wait_no_application(30)
         root, paths = prepare('desktop')
         env = application_env(paths, {'XDG_DATA_HOME': args.xdg_data.resolve()})
-        launch = subprocess.run(['gtk-launch', 'exreader'], cwd=str(paths['cwd']), env=env,
-                                text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                timeout=180)
-        checks.add('desktop_entry_launch', launch.returncode == 0,
-                   'gtk-launch exit %d stderr %r' % (launch.returncode,
-                                                     launch.stderr.strip()[:300]))
+        launch_log = open(str(root / 'gtk-launch.log'), 'wb')
         try:
+            # gtk-launch hands its stdio to the launched application: capturing it
+            # through a pipe would block until the application itself exits.
+            launch = subprocess.run(['gtk-launch', 'exreader'], cwd=str(paths['cwd']), env=env,
+                                    stdout=launch_log, stderr=subprocess.STDOUT, timeout=90)
+            launch_log.flush()
+            launch_text = (root / 'gtk-launch.log').read_text(encoding='utf-8',
+                                                             errors='replace').strip()
+            checks.add('desktop_entry_launch', launch.returncode == 0,
+                       'gtk-launch exit %d output %r' % (launch.returncode,
+                                                         launch_text[:300]))
             bus.wait_application(APPLICATION, timeout=150)
             identifier = wait_window(program, 150)
             active['window'] = identifier
@@ -378,16 +395,12 @@ def main():
             code = close_window(identifier)
             checks.add('desktop_launch_close', code == 0, 'desktop-launched host exited')
         finally:
-            if pids_for(program):
-                for pid in pids_for(program):
-                    try:
-                        os.kill(pid, 15)
-                    except OSError:
-                        pass
-                wait_pids_gone(program, 30)
+            launch_log.close()
+            cleanup()
             wait_no_application(15)
 
     def phase_readback():
+        cleanup()
         wait_no_application(30)
         root, paths = prepare('readback')
         observation_path = root / 'observation.ini'
