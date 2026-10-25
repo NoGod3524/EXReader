@@ -186,14 +186,21 @@ def main():
     entries = tree_entries(producer, spec.SDK_SHA)
     tree_findings = tree_problems(args.sdk_source.absolute(), entries)
     problems.extend(tree_findings)
+    stage = stage_identity(args.stage.absolute())
+    problems.extend(stage['problems'])
     sdk = {'source_sha': spec.SDK_SHA,
            'archive_sha256': spec.digest(args.archive) if args.archive and args.archive.is_file() else None,
            'archive_bytes': args.archive.stat().st_size if args.archive and args.archive.is_file() else None,
            'tree_files': len(entries),
            'paths': sdk_paths,
-           'extracted_tree_problems': tree_findings}
-    stage = stage_identity(args.stage.absolute())
-    problems.extend(stage['problems'])
+           'extracted_tree_problems': tree_findings,
+           # The installed stage is where the version and ABI of this exact SDK
+           # build become observable, so they are recorded in the SDK block that
+           # the verifier reads (not only in the stage detail block).
+           'version': stage['version'],
+           'abi': stage['abi'],
+           'package_version': stage['package_version'],
+           'installed_libraries': [entry['name'] for entry in stage['libraries']]}
     identity = {
         'schema': 1,
         'verifier_sha': args.verifier_sha,
