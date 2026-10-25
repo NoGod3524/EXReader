@@ -32,4 +32,7 @@ SHA-256、字节、到期时间和成员；重新检查自己的同源树，并�
 
 这是 source composition preflight。`accepted=false`、`complete_product=false`、`runtime_accepted=false`。
 不同 SHA 的 Windows、Android、Apple、GTK 与 WebDAV 运行不能拼成共同产品验收。
-当前尚未执行云端运行，结果见专用 [验证记录](validation/reader-raw3-common-preflight.json)。
+云端 [run 40227227784](https://github.com/NoGod3524/EXReader/actions/runs/40227227784) / attempt 1
+在 source `317be0d93fe94dd632772ee197e3df60481b9ccf` 上 2/2 作业通过，22 个拒绝控制通过。
+严格作业实际认证原 ZIP，并重新计算同源源码检查；结果见专用
+[验证记录](validation/reader-raw3-common-preflight.json)。该结果只授予预检协议通过，仍不授产品/运行期验收。
