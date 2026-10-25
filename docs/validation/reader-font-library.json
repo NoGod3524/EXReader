@@ -3,11 +3,1568 @@
   "package": "D02",
   "branch": "codex/dot-reader-font-library",
   "fixed_start": "a826a65c9c66e43620eff61b49cb79f941a3c953",
-  "sdk": "9854061be331fe603a1822d9b2b36ee357154927",
-  "status": "pending Actions",
-  "tested_sha": null,
-  "runs": [],
-  "host_ui_accepted": false,
-  "mobile_accepted": false,
-  "power_loss_accepted": false
+  "frozen_handoff": "37acdb3cf89e30f8f1f6287f932a5cb2db1c26a9",
+  "sdk": {
+    "commit": "9854061be331fe603a1822d9b2b36ee357154927",
+    "version": "3.40.0",
+    "abi": 1
+  },
+  "status": "desktop component validated; root integration review pending",
+  "tested_sha": "1563f4abb85ccd28c3a0aae3e9913f4330536215",
+  "tested_tree": "9be8b63ce9b1e9129edea6477b7314c48c9924e6",
+  "module_source_tree": "a1fe4d4ad6b6ace14d94a9fb5b855e3639ff45c4",
+  "evidence_commit": {
+    "parent": "1563f4abb85ccd28c3a0aae3e9913f4330536215",
+    "message_marker": "[skip ci]",
+    "only_changed_paths": [
+      "docs/READER-FONT-LIBRARY.md",
+      "docs/validation/reader-font-library.json"
+    ],
+    "head_location": "Reported in handoff; this evidence-only commit is the final evidence HEAD."
+  },
+  "run": {
+    "id": 40171829885,
+    "attempt": 1,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40171829885",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "id": 121104088485,
+        "name": "font library (ubuntu-22.04)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121104088583,
+        "name": "font library (macos-15)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121104088637,
+        "name": "font library (windows-2022)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 121104649645,
+        "name": "same-run font evidence and negative verifier tests",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "platforms": [
+    {
+      "platform": "Linux",
+      "job_id": 121104088485,
+      "checks": 51,
+      "artifact": {
+        "id": 12590841550,
+        "name": "reader-font-library-Linux-40171829885-1",
+        "size_in_bytes": 10066360,
+        "digest": "sha256:aceb4335f4df9ea2347a544b0f42ea611640a93a56ae4b2b685bd9b85ada63a0",
+        "expires_at": "2027-01-23T07:11:12Z"
+      },
+      "identities": [
+        {
+          "path": "installed/include/reader_font_library.h",
+          "bytes": 5031,
+          "sha256": "c65d671823c5e298168a928f30af117e7542f5bfcc5d99e91e780964c8911361"
+        },
+        {
+          "path": "installed/lib/cmake/EXReaderFontLibrary/EXReaderFontLibraryConfig.cmake",
+          "bytes": 1083,
+          "sha256": "c9461b6f4411ec5c6026c54507166dcf80fc9153fdf60167ab60f621c11aa49d"
+        },
+        {
+          "path": "installed/lib/cmake/EXReaderFontLibrary/EXReaderFontLibraryConfigVersion.cmake",
+          "bytes": 3675,
+          "sha256": "6cecb804c170b7d5262a13684a8949f8d1c01a5d72898b1cd64f9e3ebfe448dd"
+        },
+        {
+          "path": "installed/lib/cmake/EXReaderFontLibrary/EXReaderFontLibraryTargets-release.cmake",
+          "bytes": 999,
+          "sha256": "acb8f008c96d4525f0148e69c38ba5a66497ab531464442f9564aeaa365acd13"
+        },
+        {
+          "path": "installed/lib/cmake/EXReaderFontLibrary/EXReaderFontLibraryTargets.cmake",
+          "bytes": 4302,
+          "sha256": "95cb900695a2831c25c07ee73eb51fc0c46acbef839e17a350e5e4cb608e08af"
+        },
+        {
+          "path": "installed/lib/libreader_font_library.a",
+          "bytes": 150164,
+          "sha256": "4e54b84373e777aee3df2e1580b224a42f7ff472991baa742ce7a4ad84f60d93"
+        },
+        {
+          "path": "binary/font-c",
+          "bytes": 5488512,
+          "sha256": "368a737bc321778b4992cff5c2db344874426145cc6b87af5afd89381aac61ee"
+        },
+        {
+          "path": "binary/font-probe",
+          "bytes": 6796464,
+          "sha256": "206fcf46bb1e4810bf3a200a4d32e01a1b018fa2bf93b240451909fa6d1138ea"
+        },
+        {
+          "path": "binary/font-probe.map",
+          "bytes": 911418,
+          "sha256": "049700ebbfdd3bedd0d11548e6bda14f0f02f3270f1ab90bcb17940515019ad7"
+        },
+        {
+          "path": "materials/LICENSE.md",
+          "bytes": 4492,
+          "sha256": "75784a295293a8992f5a8d99210566e0064a012e6dab6731305e3787f15896c7"
+        },
+        {
+          "path": "materials/bad.ttf",
+          "bytes": 220,
+          "sha256": "37f09b02540b91f1030bc1adf7e7352449e2f8ba02c4d5bd3207515c0c1c35a1"
+        },
+        {
+          "path": "materials/font.otf",
+          "bytes": 241392,
+          "sha256": "edf160d0d584deee8a3bb2c3371b2a7624ca63580fbe02c57c1f4c91e84d8787"
+        },
+        {
+          "path": "materials/font.ttc",
+          "bytes": 262140,
+          "sha256": "2069287da605aea2d08b0ff1a948209d3a0bd6316e10f2a2722bd1e42b9f46e3"
+        },
+        {
+          "path": "materials/font.ttf",
+          "bytes": 261868,
+          "sha256": "e5a4ee6a3d87bb9024796be390c6771e2a0eb1883dae25effaf57ca01668e24b"
+        },
+        {
+          "path": "materials/truncated.ttf",
+          "bytes": 64,
+          "sha256": "49522acc22c7a6db3094b02bde768af85eafde91eb35b7483d0bf964f132fe61"
+        },
+        {
+          "path": "command-01.log",
+          "bytes": 24,
+          "sha256": "b081c0811104d4b4a7f427121ae6407d467640d638c5242491c4bb3f866100fc"
+        },
+        {
+          "path": "command-02.log",
+          "bytes": 1506,
+          "sha256": "b5ec36d6e0a9b449a703f055d2ab95bc2429dfb09a65357476b29cc69ab2e310"
+        },
+        {
+          "path": "command-03.log",
+          "bytes": 66,
+          "sha256": "c85b0396926ca7881a68163b2f790891f6ae1c7af05d628c62363c4ea7957fb0"
+        },
+        {
+          "path": "command-04.log",
+          "bytes": 10,
+          "sha256": "af2f770832162995ec41feb2fe8cb6d9379b1aa7cf4d384ab0c1e714c0643c6a"
+        },
+        {
+          "path": "command-05.log",
+          "bytes": 66,
+          "sha256": "c85b0396926ca7881a68163b2f790891f6ae1c7af05d628c62363c4ea7957fb0"
+        },
+        {
+          "path": "command-06.log",
+          "bytes": 66,
+          "sha256": "c11b35092b5239555c64ff2315c69183219f09ec78ebefe1fd25fa22fe405221"
+        },
+        {
+          "path": "command-07.log",
+          "bytes": 131,
+          "sha256": "729ef79e9ee4bc0f4f3cad7ac9985c4185ee834dd5445b97cf65b8196f70be40"
+        },
+        {
+          "path": "command-08.log",
+          "bytes": 66,
+          "sha256": "c85b0396926ca7881a68163b2f790891f6ae1c7af05d628c62363c4ea7957fb0"
+        },
+        {
+          "path": "command-09.log",
+          "bytes": 66,
+          "sha256": "c85b0396926ca7881a68163b2f790891f6ae1c7af05d628c62363c4ea7957fb0"
+        },
+        {
+          "path": "command-10.log",
+          "bytes": 66,
+          "sha256": "c11b35092b5239555c64ff2315c69183219f09ec78ebefe1fd25fa22fe405221"
+        },
+        {
+          "path": "command-11.log",
+          "bytes": 131,
+          "sha256": "729ef79e9ee4bc0f4f3cad7ac9985c4185ee834dd5445b97cf65b8196f70be40"
+        },
+        {
+          "path": "command-12.log",
+          "bytes": 66,
+          "sha256": "c85b0396926ca7881a68163b2f790891f6ae1c7af05d628c62363c4ea7957fb0"
+        },
+        {
+          "path": "command-13.log",
+          "bytes": 66,
+          "sha256": "c85b0396926ca7881a68163b2f790891f6ae1c7af05d628c62363c4ea7957fb0"
+        },
+        {
+          "path": "command-14.log",
+          "bytes": 66,
+          "sha256": "c11b35092b5239555c64ff2315c69183219f09ec78ebefe1fd25fa22fe405221"
+        },
+        {
+          "path": "command-15.log",
+          "bytes": 131,
+          "sha256": "729ef79e9ee4bc0f4f3cad7ac9985c4185ee834dd5445b97cf65b8196f70be40"
+        },
+        {
+          "path": "command-16.log",
+          "bytes": 66,
+          "sha256": "c85b0396926ca7881a68163b2f790891f6ae1c7af05d628c62363c4ea7957fb0"
+        },
+        {
+          "path": "command-17.log",
+          "bytes": 131,
+          "sha256": "729ef79e9ee4bc0f4f3cad7ac9985c4185ee834dd5445b97cf65b8196f70be40"
+        },
+        {
+          "path": "command-18.log",
+          "bytes": 131,
+          "sha256": "729ef79e9ee4bc0f4f3cad7ac9985c4185ee834dd5445b97cf65b8196f70be40"
+        },
+        {
+          "path": "command-19.log",
+          "bytes": 66,
+          "sha256": "c85b0396926ca7881a68163b2f790891f6ae1c7af05d628c62363c4ea7957fb0"
+        },
+        {
+          "path": "command-20.log",
+          "bytes": 43,
+          "sha256": "43950b043e2648273418d0446aa4e9790baa82b00bae66886c671c60aac7fbf2"
+        },
+        {
+          "path": "command-21.log",
+          "bytes": 66,
+          "sha256": "c85b0396926ca7881a68163b2f790891f6ae1c7af05d628c62363c4ea7957fb0"
+        },
+        {
+          "path": "command-22.log",
+          "bytes": 66,
+          "sha256": "c11b35092b5239555c64ff2315c69183219f09ec78ebefe1fd25fa22fe405221"
+        },
+        {
+          "path": "command-23.log",
+          "bytes": 131,
+          "sha256": "729ef79e9ee4bc0f4f3cad7ac9985c4185ee834dd5445b97cf65b8196f70be40"
+        },
+        {
+          "path": "ready-committed",
+          "bytes": 9,
+          "sha256": "cc962289af2873dd6dad32931554372a7d2d2de5bd5859c8265eb58b5197a88e"
+        },
+        {
+          "path": "ready-copy",
+          "bytes": 4,
+          "sha256": "6f5a6034e770acbfb3f797e6a7eb7948d470d45f9928f92b7d72dc7c45e6d0cd"
+        },
+        {
+          "path": "ready-file-published",
+          "bytes": 14,
+          "sha256": "3e539482a83af19192a3dcc6034179f0f5830eebc75ed1425e49b57ed06bee73"
+        },
+        {
+          "path": "ready-validated",
+          "bytes": 9,
+          "sha256": "e3e4aec3737242616e0b3dd3a6c7eaaf3fe42746de7209e880dae8db335799cd"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "font.ttf",
+          "url": "https://raw.githubusercontent.com/adobe-fonts/source-serif/2823e993c53fca27c5c8749f529b56a5a7c77b6b/TTF/SourceSerif4-Regular.ttf",
+          "commit": "2823e993c53fca27c5c8749f529b56a5a7c77b6b",
+          "git_blob": "964a2bf8934182485cf4e2348c8443091739334f",
+          "bytes": 261868,
+          "sha256": "e5a4ee6a3d87bb9024796be390c6771e2a0eb1883dae25effaf57ca01668e24b",
+          "license": "SIL Open Font License 1.1"
+        },
+        {
+          "name": "font.otf",
+          "url": "https://raw.githubusercontent.com/adobe-fonts/source-serif/2823e993c53fca27c5c8749f529b56a5a7c77b6b/OTF/SourceSerif4-Regular.otf",
+          "commit": "2823e993c53fca27c5c8749f529b56a5a7c77b6b",
+          "git_blob": "fc9f84e94b2537b3cc10aaebcab08a0bc2a0e16b",
+          "bytes": 241392,
+          "sha256": "edf160d0d584deee8a3bb2c3371b2a7624ca63580fbe02c57c1f4c91e84d8787",
+          "license": "SIL Open Font License 1.1"
+        },
+        {
+          "name": "LICENSE.md",
+          "url": "https://raw.githubusercontent.com/adobe-fonts/source-serif/2823e993c53fca27c5c8749f529b56a5a7c77b6b/LICENSE.md",
+          "commit": "2823e993c53fca27c5c8749f529b56a5a7c77b6b",
+          "git_blob": "ebe298c6b488d68a43ec9b60155fb6b862a46bc1",
+          "bytes": 4492,
+          "sha256": "75784a295293a8992f5a8d99210566e0064a012e6dab6731305e3787f15896c7",
+          "license": "SIL Open Font License 1.1"
+        },
+        {
+          "name": "font.ttc",
+          "derived_from": "font.ttf twice; no glyph/name modifications",
+          "generator": "fonttools 4.58.0 TTCollection",
+          "sha256": "2069287da605aea2d08b0ff1a948209d3a0bd6316e10f2a2722bd1e42b9f46e3",
+          "bytes": 262140,
+          "license": "SIL Open Font License 1.1"
+        }
+      ],
+      "gaps": [
+        "No host font picker or mobile integration",
+        "Process termination, not power-loss hardware testing",
+        "No collection face enumeration; explicit face selection only"
+      ],
+      "named_checks": [
+        "installed-c-abi-sdk340",
+        "empty-library",
+        "unrelated-private-directory-file-preserved",
+        "ttf-import-content-identity",
+        "deduplicate-preserves-record",
+        "find-list-bounds",
+        "sdk-glyph-shape-layout",
+        "leased-remove-close-busy",
+        "wrong-thread-preserves-owner-and-lease",
+        "bounded-live-lease-count",
+        "otf-sdk-validation",
+        "ttc-explicit-face-and-invalid-face",
+        "manifest-close-reopen",
+        "same-process-exclusive-directory-lock",
+        "display-name-unicode-path-injection-bounds",
+        "unicode-selected-path-and-display",
+        "bad-and-truncated-preserve-library",
+        "nonregular-source-rejected",
+        "bounded-source-short-reads-and-hash",
+        "source-contract-snapshot-bounds",
+        "invalid-source-return-and-exception-contained",
+        "advertised-font-hard-limit-before-read",
+        "underreported-source-rejected",
+        "source-truncation-rejected",
+        "source-midstream-change-rejected",
+        "callback-reentry-rejected",
+        "cancel-each-stage-retry-preserves-old",
+        "selected-file-post-open-change-rejected",
+        "font-exact-byte-boundary",
+        "font-over-byte-boundary",
+        "directory-entry-limit-dedupe-at-capacity",
+        "directory-byte-limit-preserves-old",
+        "quota-deduplication-no-oversized-temporary",
+        "reopen-lower-budget-classified-limit",
+        "hard-limits-reject-oversized-config",
+        "explicit-remove-and-not-found",
+        "selected-original-never-removed",
+        "content-path-conflict-no-overwrite",
+        "manifest-version-corrupt-missing-classification",
+        "stored-hash-tampering-rejected",
+        "posix-source-and-directory-symlinks-rejected",
+        "crash-copy-recovery",
+        "crash-validated-recovery",
+        "crash-file-published-recovery",
+        "crash-committed-recovery",
+        "cross-process-lock-and-kill-release",
+        "posix-real-short-write-preserves-old",
+        "recomputed-original-font-hashes",
+        "installed-binary-and-package-identities",
+        "default-off-no-library",
+        "frozen-installed-font-header"
+      ],
+      "native_command_count": 23,
+      "terminations": [
+        {
+          "stage": "copy",
+          "pid": 7675,
+          "returncode": -9,
+          "recovered_hashes": [
+            "e5a4ee6a3d87bb9024796be390c6771e2a0eb1883dae25effaf57ca01668e24b"
+          ],
+          "readiness_file": "ready-copy"
+        },
+        {
+          "stage": "validated",
+          "pid": 7681,
+          "returncode": -9,
+          "recovered_hashes": [
+            "e5a4ee6a3d87bb9024796be390c6771e2a0eb1883dae25effaf57ca01668e24b"
+          ],
+          "readiness_file": "ready-validated"
+        },
+        {
+          "stage": "file-published",
+          "pid": 7686,
+          "returncode": -9,
+          "recovered_hashes": [
+            "e5a4ee6a3d87bb9024796be390c6771e2a0eb1883dae25effaf57ca01668e24b"
+          ],
+          "readiness_file": "ready-file-published"
+        },
+        {
+          "stage": "committed",
+          "pid": 7691,
+          "returncode": -9,
+          "recovered_hashes": [
+            "e5a4ee6a3d87bb9024796be390c6771e2a0eb1883dae25effaf57ca01668e24b",
+            "edf160d0d584deee8a3bb2c3371b2a7624ca63580fbe02c57c1f4c91e84d8787"
+          ],
+          "readiness_file": "ready-committed"
+        }
+      ],
+      "sdk_font_header_sha256": "c6fb1adda319b620179177ec6775b1098628444d5cc40f61163d34ab3ae159cf"
+    },
+    {
+      "platform": "Windows",
+      "job_id": 121104088637,
+      "checks": 52,
+      "artifact": {
+        "id": 12590177948,
+        "name": "reader-font-library-Windows-40171829885-1",
+        "size_in_bytes": 8568614,
+        "digest": "sha256:2eb604c6b975c77d5316124da690b4b6598d048e979890786228d17199d67c47",
+        "expires_at": "2027-01-23T07:11:12Z"
+      },
+      "identities": [
+        {
+          "path": "installed/include/reader_font_library.h",
+          "bytes": 5031,
+          "sha256": "c65d671823c5e298168a928f30af117e7542f5bfcc5d99e91e780964c8911361"
+        },
+        {
+          "path": "installed/lib/cmake/EXReaderFontLibrary/EXReaderFontLibraryConfig.cmake",
+          "bytes": 1112,
+          "sha256": "5089087759e15cf18667a6a3670960c8c3a608444c58787026b693c58e5530d6"
+        },
+        {
+          "path": "installed/lib/cmake/EXReaderFontLibrary/EXReaderFontLibraryConfigVersion.cmake",
+          "bytes": 3760,
+          "sha256": "30a60e77c316270fec5a2eed509a16fb0669dbe22549720658bfbde3196da96d"
+        },
+        {
+          "path": "installed/lib/cmake/EXReaderFontLibrary/EXReaderFontLibraryTargets-release.cmake",
+          "bytes": 1016,
+          "sha256": "d5bc03cf2b2f32f147e483c0fea759f4518fdcc35f994cfa8bb110a40d5b8359"
+        },
+        {
+          "path": "installed/lib/cmake/EXReaderFontLibrary/EXReaderFontLibraryTargets.cmake",
+          "bytes": 4409,
+          "sha256": "e0a913e339792c65ced5cf3244c05860d6d3dbe48afb61b5a7bd8ac6024f5598"
+        },
+        {
+          "path": "installed/lib/reader_font_library.lib",
+          "bytes": 1474672,
+          "sha256": "b24866d2fce225371e0f35e27c307f6f8122b235a628807d2d11ba58964458d3"
+        },
+        {
+          "path": "binary/font-c.exe",
+          "bytes": 3342336,
+          "sha256": "5158fe92a5e982c273fb26ce99637d1e56b6b184a4a7bfb5248ada50c5392eae"
+        },
+        {
+          "path": "binary/font-probe.exe",
+          "bytes": 4955136,
+          "sha256": "a09979f3b19450e60f32b3c596cc870e8ce0db4c389c1505509030265a3ff388"
+        },
+        {
+          "path": "binary/font-probe.map",
+          "bytes": 3461695,
+          "sha256": "803b45778910a496e7756c4dd688b449ff677294a8d24b8ed0a54668775f9abc"
+        },
+        {
+          "path": "materials/bad.ttf",
+          "bytes": 220,
+          "sha256": "37f09b02540b91f1030bc1adf7e7352449e2f8ba02c4d5bd3207515c0c1c35a1"
+        },
+        {
+          "path": "materials/font.otf",
+          "bytes": 241392,
+          "sha256": "edf160d0d584deee8a3bb2c3371b2a7624ca63580fbe02c57c1f4c91e84d8787"
+        },
+        {
+          "path": "materials/font.ttc",
+          "bytes": 262140,
+          "sha256": "2069287da605aea2d08b0ff1a948209d3a0bd6316e10f2a2722bd1e42b9f46e3"
+        },
+        {
+          "path": "materials/font.ttf",
+          "bytes": 261868,
+          "sha256": "e5a4ee6a3d87bb9024796be390c6771e2a0eb1883dae25effaf57ca01668e24b"
+        },
+        {
+          "path": "materials/LICENSE.md",
+          "bytes": 4492,
+          "sha256": "75784a295293a8992f5a8d99210566e0064a012e6dab6731305e3787f15896c7"
+        },
+        {
+          "path": "materials/truncated.ttf",
+          "bytes": 64,
+          "sha256": "49522acc22c7a6db3094b02bde768af85eafde91eb35b7483d0bf964f132fe61"
+        },
+        {
+          "path": "command-01.log",
+          "bytes": 26,
+          "sha256": "27522aa4a1d3e860cdd66bc28d6c01f066df2a1974f25606dfeb9f1448d35c89"
+        },
+        {
+          "path": "command-02.log",
+          "bytes": 1496,
+          "sha256": "d7c2d49a70dd8ff5e7ed01a146fb08a69a5968f20a27913654a905322f3c0409"
+        },
+        {
+          "path": "command-03.log",
+          "bytes": 68,
+          "sha256": "2c5565214905bbbefc570f193b53a8d1aabb2c7b2af40c341fa5f7e14a91614b"
+        },
+        {
+          "path": "command-04.log",
+          "bytes": 12,
+          "sha256": "c657597692dee8d43e779dab21fdb20b60a2c9ff3bb04d3f0abbb2ec9ad62384"
+        },
+        {
+          "path": "command-05.log",
+          "bytes": 68,
+          "sha256": "2c5565214905bbbefc570f193b53a8d1aabb2c7b2af40c341fa5f7e14a91614b"
+        },
+        {
+          "path": "command-06.log",
+          "bytes": 68,
+          "sha256": "6ec6caa2ce4acf490284f7259150605dfa9ee1fedb05f481a6e95776ed156dff"
+        },
+        {
+          "path": "command-07.log",
+          "bytes": 134,
+          "sha256": "e4395193e7c315ea1373fa99443f0c6fdff2890ea77aa596a847767ec1bab785"
+        },
+        {
+          "path": "command-08.log",
+          "bytes": 68,
+          "sha256": "2c5565214905bbbefc570f193b53a8d1aabb2c7b2af40c341fa5f7e14a91614b"
+        },
+        {
+          "path": "command-09.log",
+          "bytes": 68,
+          "sha256": "2c5565214905bbbefc570f193b53a8d1aabb2c7b2af40c341fa5f7e14a91614b"
+        },
+        {
+          "path": "command-10.log",
+          "bytes": 68,
+          "sha256": "6ec6caa2ce4acf490284f7259150605dfa9ee1fedb05f481a6e95776ed156dff"
+        },
+        {
+          "path": "command-11.log",
+          "bytes": 134,
+          "sha256": "e4395193e7c315ea1373fa99443f0c6fdff2890ea77aa596a847767ec1bab785"
+        },
+        {
+          "path": "command-12.log",
+          "bytes": 68,
+          "sha256": "2c5565214905bbbefc570f193b53a8d1aabb2c7b2af40c341fa5f7e14a91614b"
+        },
+        {
+          "path": "command-13.log",
+          "bytes": 68,
+          "sha256": "2c5565214905bbbefc570f193b53a8d1aabb2c7b2af40c341fa5f7e14a91614b"
+        },
+        {
+          "path": "command-14.log",
+          "bytes": 68,
+          "sha256": "6ec6caa2ce4acf490284f7259150605dfa9ee1fedb05f481a6e95776ed156dff"
+        },
+        {
+          "path": "command-15.log",
+          "bytes": 134,
+          "sha256": "e4395193e7c315ea1373fa99443f0c6fdff2890ea77aa596a847767ec1bab785"
+        },
+        {
+          "path": "command-16.log",
+          "bytes": 68,
+          "sha256": "2c5565214905bbbefc570f193b53a8d1aabb2c7b2af40c341fa5f7e14a91614b"
+        },
+        {
+          "path": "command-17.log",
+          "bytes": 134,
+          "sha256": "e4395193e7c315ea1373fa99443f0c6fdff2890ea77aa596a847767ec1bab785"
+        },
+        {
+          "path": "command-18.log",
+          "bytes": 134,
+          "sha256": "e4395193e7c315ea1373fa99443f0c6fdff2890ea77aa596a847767ec1bab785"
+        },
+        {
+          "path": "command-19.log",
+          "bytes": 68,
+          "sha256": "2c5565214905bbbefc570f193b53a8d1aabb2c7b2af40c341fa5f7e14a91614b"
+        },
+        {
+          "path": "command-20.log",
+          "bytes": 20,
+          "sha256": "a205aee235e058a47c944cee4d0dd7a5f75fd76bf5650a0504018cb0e426b044"
+        },
+        {
+          "path": "command-21.log",
+          "bytes": 141,
+          "sha256": "c8ec44827ba9c0469350ab272a20ebed17c0272e06a8f2b3fa127388e25d2d01"
+        },
+        {
+          "path": "command-22.log",
+          "bytes": 12,
+          "sha256": "a95e20a2a82d048d619748d44d16e3c85b35620938b70631c53c455b85d5f13d"
+        },
+        {
+          "path": "command-23.log",
+          "bytes": 68,
+          "sha256": "2c5565214905bbbefc570f193b53a8d1aabb2c7b2af40c341fa5f7e14a91614b"
+        },
+        {
+          "path": "command-24.log",
+          "bytes": 22,
+          "sha256": "d9d24a86c09948747b3a55a9e701ff3d30c7a27f495ff3d0c1af1136c7818144"
+        },
+        {
+          "path": "command-25.log",
+          "bytes": 2,
+          "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6"
+        },
+        {
+          "path": "command-26.log",
+          "bytes": 68,
+          "sha256": "2c5565214905bbbefc570f193b53a8d1aabb2c7b2af40c341fa5f7e14a91614b"
+        },
+        {
+          "path": "command-27.log",
+          "bytes": 68,
+          "sha256": "6ec6caa2ce4acf490284f7259150605dfa9ee1fedb05f481a6e95776ed156dff"
+        },
+        {
+          "path": "command-28.log",
+          "bytes": 134,
+          "sha256": "e4395193e7c315ea1373fa99443f0c6fdff2890ea77aa596a847767ec1bab785"
+        },
+        {
+          "path": "ready-committed",
+          "bytes": 9,
+          "sha256": "cc962289af2873dd6dad32931554372a7d2d2de5bd5859c8265eb58b5197a88e"
+        },
+        {
+          "path": "ready-copy",
+          "bytes": 4,
+          "sha256": "6f5a6034e770acbfb3f797e6a7eb7948d470d45f9928f92b7d72dc7c45e6d0cd"
+        },
+        {
+          "path": "ready-file-published",
+          "bytes": 14,
+          "sha256": "3e539482a83af19192a3dcc6034179f0f5830eebc75ed1425e49b57ed06bee73"
+        },
+        {
+          "path": "ready-validated",
+          "bytes": 9,
+          "sha256": "e3e4aec3737242616e0b3dd3a6c7eaaf3fe42746de7209e880dae8db335799cd"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "font.ttf",
+          "url": "https://raw.githubusercontent.com/adobe-fonts/source-serif/2823e993c53fca27c5c8749f529b56a5a7c77b6b/TTF/SourceSerif4-Regular.ttf",
+          "commit": "2823e993c53fca27c5c8749f529b56a5a7c77b6b",
+          "git_blob": "964a2bf8934182485cf4e2348c8443091739334f",
+          "bytes": 261868,
+          "sha256": "e5a4ee6a3d87bb9024796be390c6771e2a0eb1883dae25effaf57ca01668e24b",
+          "license": "SIL Open Font License 1.1"
+        },
+        {
+          "name": "font.otf",
+          "url": "https://raw.githubusercontent.com/adobe-fonts/source-serif/2823e993c53fca27c5c8749f529b56a5a7c77b6b/OTF/SourceSerif4-Regular.otf",
+          "commit": "2823e993c53fca27c5c8749f529b56a5a7c77b6b",
+          "git_blob": "fc9f84e94b2537b3cc10aaebcab08a0bc2a0e16b",
+          "bytes": 241392,
+          "sha256": "edf160d0d584deee8a3bb2c3371b2a7624ca63580fbe02c57c1f4c91e84d8787",
+          "license": "SIL Open Font License 1.1"
+        },
+        {
+          "name": "LICENSE.md",
+          "url": "https://raw.githubusercontent.com/adobe-fonts/source-serif/2823e993c53fca27c5c8749f529b56a5a7c77b6b/LICENSE.md",
+          "commit": "2823e993c53fca27c5c8749f529b56a5a7c77b6b",
+          "git_blob": "ebe298c6b488d68a43ec9b60155fb6b862a46bc1",
+          "bytes": 4492,
+          "sha256": "75784a295293a8992f5a8d99210566e0064a012e6dab6731305e3787f15896c7",
+          "license": "SIL Open Font License 1.1"
+        },
+        {
+          "name": "font.ttc",
+          "derived_from": "font.ttf twice; no glyph/name modifications",
+          "generator": "fonttools 4.58.0 TTCollection",
+          "sha256": "2069287da605aea2d08b0ff1a948209d3a0bd6316e10f2a2722bd1e42b9f46e3",
+          "bytes": 262140,
+          "license": "SIL Open Font License 1.1"
+        }
+      ],
+      "gaps": [
+        "No host font picker or mobile integration",
+        "Process termination, not power-loss hardware testing",
+        "No collection face enumeration; explicit face selection only"
+      ],
+      "named_checks": [
+        "installed-c-abi-sdk340",
+        "empty-library",
+        "unrelated-private-directory-file-preserved",
+        "ttf-import-content-identity",
+        "deduplicate-preserves-record",
+        "find-list-bounds",
+        "sdk-glyph-shape-layout",
+        "leased-remove-close-busy",
+        "wrong-thread-preserves-owner-and-lease",
+        "bounded-live-lease-count",
+        "otf-sdk-validation",
+        "ttc-explicit-face-and-invalid-face",
+        "manifest-close-reopen",
+        "same-process-exclusive-directory-lock",
+        "display-name-unicode-path-injection-bounds",
+        "unicode-selected-path-and-display",
+        "bad-and-truncated-preserve-library",
+        "nonregular-source-rejected",
+        "bounded-source-short-reads-and-hash",
+        "source-contract-snapshot-bounds",
+        "invalid-source-return-and-exception-contained",
+        "advertised-font-hard-limit-before-read",
+        "underreported-source-rejected",
+        "source-truncation-rejected",
+        "source-midstream-change-rejected",
+        "callback-reentry-rejected",
+        "cancel-each-stage-retry-preserves-old",
+        "selected-file-post-open-change-rejected",
+        "font-exact-byte-boundary",
+        "font-over-byte-boundary",
+        "directory-entry-limit-dedupe-at-capacity",
+        "directory-byte-limit-preserves-old",
+        "quota-deduplication-no-oversized-temporary",
+        "reopen-lower-budget-classified-limit",
+        "hard-limits-reject-oversized-config",
+        "explicit-remove-and-not-found",
+        "selected-original-never-removed",
+        "content-path-conflict-no-overwrite",
+        "manifest-version-corrupt-missing-classification",
+        "stored-hash-tampering-rejected",
+        "crash-copy-recovery",
+        "crash-validated-recovery",
+        "crash-file-published-recovery",
+        "crash-committed-recovery",
+        "cross-process-lock-and-kill-release",
+        "windows-locked-manifest-publish-failure-preserves-old",
+        "windows-junction-rejected",
+        "windows-removal-commit-uncertain-recovery",
+        "recomputed-original-font-hashes",
+        "installed-binary-and-package-identities",
+        "default-off-no-library",
+        "frozen-installed-font-header"
+      ],
+      "native_command_count": 28,
+      "terminations": [
+        {
+          "stage": "copy",
+          "pid": 3608,
+          "returncode": 1,
+          "recovered_hashes": [
+            "e5a4ee6a3d87bb9024796be390c6771e2a0eb1883dae25effaf57ca01668e24b"
+          ],
+          "readiness_file": "ready-copy"
+        },
+        {
+          "stage": "validated",
+          "pid": 1700,
+          "returncode": 1,
+          "recovered_hashes": [
+            "e5a4ee6a3d87bb9024796be390c6771e2a0eb1883dae25effaf57ca01668e24b"
+          ],
+          "readiness_file": "ready-validated"
+        },
+        {
+          "stage": "file-published",
+          "pid": 992,
+          "returncode": 1,
+          "recovered_hashes": [
+            "e5a4ee6a3d87bb9024796be390c6771e2a0eb1883dae25effaf57ca01668e24b"
+          ],
+          "readiness_file": "ready-file-published"
+        },
+        {
+          "stage": "committed",
+          "pid": 2820,
+          "returncode": 1,
+          "recovered_hashes": [
+            "e5a4ee6a3d87bb9024796be390c6771e2a0eb1883dae25effaf57ca01668e24b",
+            "edf160d0d584deee8a3bb2c3371b2a7624ca63580fbe02c57c1f4c91e84d8787"
+          ],
+          "readiness_file": "ready-committed"
+        }
+      ],
+      "sdk_font_header_sha256": "c6fb1adda319b620179177ec6775b1098628444d5cc40f61163d34ab3ae159cf"
+    },
+    {
+      "platform": "macOS",
+      "job_id": 121104088583,
+      "checks": 51,
+      "artifact": {
+        "id": 12590124775,
+        "name": "reader-font-library-macOS-40171829885-1",
+        "size_in_bytes": 9287115,
+        "digest": "sha256:d3c81ab583e0c65b077992481593570e8d760ba64da467dfc06ffab46320828e",
+        "expires_at": "2027-01-23T07:11:12Z"
+      },
+      "identities": [
+        {
+          "path": "installed/include/reader_font_library.h",
+          "bytes": 5031,
+          "sha256": "c65d671823c5e298168a928f30af117e7542f5bfcc5d99e91e780964c8911361"
+        },
+        {
+          "path": "installed/lib/cmake/EXReaderFontLibrary/EXReaderFontLibraryConfig.cmake",
+          "bytes": 1083,
+          "sha256": "c9461b6f4411ec5c6026c54507166dcf80fc9153fdf60167ab60f621c11aa49d"
+        },
+        {
+          "path": "installed/lib/cmake/EXReaderFontLibrary/EXReaderFontLibraryConfigVersion.cmake",
+          "bytes": 3675,
+          "sha256": "6cecb804c170b7d5262a13684a8949f8d1c01a5d72898b1cd64f9e3ebfe448dd"
+        },
+        {
+          "path": "installed/lib/cmake/EXReaderFontLibrary/EXReaderFontLibraryTargets-release.cmake",
+          "bytes": 999,
+          "sha256": "acb8f008c96d4525f0148e69c38ba5a66497ab531464442f9564aeaa365acd13"
+        },
+        {
+          "path": "installed/lib/cmake/EXReaderFontLibrary/EXReaderFontLibraryTargets.cmake",
+          "bytes": 4301,
+          "sha256": "70aace3d2e15265c271a7a8521613dabd75fafc0ebf1b9a7e0cc9c4902c874ee"
+        },
+        {
+          "path": "installed/lib/libreader_font_library.a",
+          "bytes": 95488,
+          "sha256": "1532932135e1504b104257feb1e09b8a8885a1065d4651457447155f2e970c9f"
+        },
+        {
+          "path": "binary/font-c",
+          "bytes": 4381192,
+          "sha256": "989e32b10e509c0286d155645e307249ac118a403911a58400d46cc2e6e2d612"
+        },
+        {
+          "path": "binary/font-probe",
+          "bytes": 5486296,
+          "sha256": "4d512750fe47f533e8b0136d9b4c3183e9c58456d2729575e71ef4c5ac2cc679"
+        },
+        {
+          "path": "binary/font-probe.map",
+          "bytes": 807654,
+          "sha256": "dfbb854c50a5c4f234a0d14181d9439edc2231ff3628fd607d7a80e12b5056e6"
+        },
+        {
+          "path": "materials/LICENSE.md",
+          "bytes": 4492,
+          "sha256": "75784a295293a8992f5a8d99210566e0064a012e6dab6731305e3787f15896c7"
+        },
+        {
+          "path": "materials/bad.ttf",
+          "bytes": 220,
+          "sha256": "37f09b02540b91f1030bc1adf7e7352449e2f8ba02c4d5bd3207515c0c1c35a1"
+        },
+        {
+          "path": "materials/font.otf",
+          "bytes": 241392,
+          "sha256": "edf160d0d584deee8a3bb2c3371b2a7624ca63580fbe02c57c1f4c91e84d8787"
+        },
+        {
+          "path": "materials/font.ttc",
+          "bytes": 262140,
+          "sha256": "2069287da605aea2d08b0ff1a948209d3a0bd6316e10f2a2722bd1e42b9f46e3"
+        },
+        {
+          "path": "materials/font.ttf",
+          "bytes": 261868,
+          "sha256": "e5a4ee6a3d87bb9024796be390c6771e2a0eb1883dae25effaf57ca01668e24b"
+        },
+        {
+          "path": "materials/truncated.ttf",
+          "bytes": 64,
+          "sha256": "49522acc22c7a6db3094b02bde768af85eafde91eb35b7483d0bf964f132fe61"
+        },
+        {
+          "path": "command-01.log",
+          "bytes": 24,
+          "sha256": "b081c0811104d4b4a7f427121ae6407d467640d638c5242491c4bb3f866100fc"
+        },
+        {
+          "path": "command-02.log",
+          "bytes": 1506,
+          "sha256": "b5ec36d6e0a9b449a703f055d2ab95bc2429dfb09a65357476b29cc69ab2e310"
+        },
+        {
+          "path": "command-03.log",
+          "bytes": 66,
+          "sha256": "c85b0396926ca7881a68163b2f790891f6ae1c7af05d628c62363c4ea7957fb0"
+        },
+        {
+          "path": "command-04.log",
+          "bytes": 10,
+          "sha256": "af2f770832162995ec41feb2fe8cb6d9379b1aa7cf4d384ab0c1e714c0643c6a"
+        },
+        {
+          "path": "command-05.log",
+          "bytes": 66,
+          "sha256": "c85b0396926ca7881a68163b2f790891f6ae1c7af05d628c62363c4ea7957fb0"
+        },
+        {
+          "path": "command-06.log",
+          "bytes": 66,
+          "sha256": "c11b35092b5239555c64ff2315c69183219f09ec78ebefe1fd25fa22fe405221"
+        },
+        {
+          "path": "command-07.log",
+          "bytes": 131,
+          "sha256": "729ef79e9ee4bc0f4f3cad7ac9985c4185ee834dd5445b97cf65b8196f70be40"
+        },
+        {
+          "path": "command-08.log",
+          "bytes": 66,
+          "sha256": "c85b0396926ca7881a68163b2f790891f6ae1c7af05d628c62363c4ea7957fb0"
+        },
+        {
+          "path": "command-09.log",
+          "bytes": 66,
+          "sha256": "c85b0396926ca7881a68163b2f790891f6ae1c7af05d628c62363c4ea7957fb0"
+        },
+        {
+          "path": "command-10.log",
+          "bytes": 66,
+          "sha256": "c11b35092b5239555c64ff2315c69183219f09ec78ebefe1fd25fa22fe405221"
+        },
+        {
+          "path": "command-11.log",
+          "bytes": 131,
+          "sha256": "729ef79e9ee4bc0f4f3cad7ac9985c4185ee834dd5445b97cf65b8196f70be40"
+        },
+        {
+          "path": "command-12.log",
+          "bytes": 66,
+          "sha256": "c85b0396926ca7881a68163b2f790891f6ae1c7af05d628c62363c4ea7957fb0"
+        },
+        {
+          "path": "command-13.log",
+          "bytes": 66,
+          "sha256": "c85b0396926ca7881a68163b2f790891f6ae1c7af05d628c62363c4ea7957fb0"
+        },
+        {
+          "path": "command-14.log",
+          "bytes": 66,
+          "sha256": "c11b35092b5239555c64ff2315c69183219f09ec78ebefe1fd25fa22fe405221"
+        },
+        {
+          "path": "command-15.log",
+          "bytes": 131,
+          "sha256": "729ef79e9ee4bc0f4f3cad7ac9985c4185ee834dd5445b97cf65b8196f70be40"
+        },
+        {
+          "path": "command-16.log",
+          "bytes": 66,
+          "sha256": "c85b0396926ca7881a68163b2f790891f6ae1c7af05d628c62363c4ea7957fb0"
+        },
+        {
+          "path": "command-17.log",
+          "bytes": 131,
+          "sha256": "729ef79e9ee4bc0f4f3cad7ac9985c4185ee834dd5445b97cf65b8196f70be40"
+        },
+        {
+          "path": "command-18.log",
+          "bytes": 131,
+          "sha256": "729ef79e9ee4bc0f4f3cad7ac9985c4185ee834dd5445b97cf65b8196f70be40"
+        },
+        {
+          "path": "command-19.log",
+          "bytes": 66,
+          "sha256": "c85b0396926ca7881a68163b2f790891f6ae1c7af05d628c62363c4ea7957fb0"
+        },
+        {
+          "path": "command-20.log",
+          "bytes": 43,
+          "sha256": "43950b043e2648273418d0446aa4e9790baa82b00bae66886c671c60aac7fbf2"
+        },
+        {
+          "path": "command-21.log",
+          "bytes": 66,
+          "sha256": "c85b0396926ca7881a68163b2f790891f6ae1c7af05d628c62363c4ea7957fb0"
+        },
+        {
+          "path": "command-22.log",
+          "bytes": 66,
+          "sha256": "c11b35092b5239555c64ff2315c69183219f09ec78ebefe1fd25fa22fe405221"
+        },
+        {
+          "path": "command-23.log",
+          "bytes": 131,
+          "sha256": "729ef79e9ee4bc0f4f3cad7ac9985c4185ee834dd5445b97cf65b8196f70be40"
+        },
+        {
+          "path": "ready-committed",
+          "bytes": 9,
+          "sha256": "cc962289af2873dd6dad32931554372a7d2d2de5bd5859c8265eb58b5197a88e"
+        },
+        {
+          "path": "ready-copy",
+          "bytes": 4,
+          "sha256": "6f5a6034e770acbfb3f797e6a7eb7948d470d45f9928f92b7d72dc7c45e6d0cd"
+        },
+        {
+          "path": "ready-file-published",
+          "bytes": 14,
+          "sha256": "3e539482a83af19192a3dcc6034179f0f5830eebc75ed1425e49b57ed06bee73"
+        },
+        {
+          "path": "ready-validated",
+          "bytes": 9,
+          "sha256": "e3e4aec3737242616e0b3dd3a6c7eaaf3fe42746de7209e880dae8db335799cd"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "font.ttf",
+          "url": "https://raw.githubusercontent.com/adobe-fonts/source-serif/2823e993c53fca27c5c8749f529b56a5a7c77b6b/TTF/SourceSerif4-Regular.ttf",
+          "commit": "2823e993c53fca27c5c8749f529b56a5a7c77b6b",
+          "git_blob": "964a2bf8934182485cf4e2348c8443091739334f",
+          "bytes": 261868,
+          "sha256": "e5a4ee6a3d87bb9024796be390c6771e2a0eb1883dae25effaf57ca01668e24b",
+          "license": "SIL Open Font License 1.1"
+        },
+        {
+          "name": "font.otf",
+          "url": "https://raw.githubusercontent.com/adobe-fonts/source-serif/2823e993c53fca27c5c8749f529b56a5a7c77b6b/OTF/SourceSerif4-Regular.otf",
+          "commit": "2823e993c53fca27c5c8749f529b56a5a7c77b6b",
+          "git_blob": "fc9f84e94b2537b3cc10aaebcab08a0bc2a0e16b",
+          "bytes": 241392,
+          "sha256": "edf160d0d584deee8a3bb2c3371b2a7624ca63580fbe02c57c1f4c91e84d8787",
+          "license": "SIL Open Font License 1.1"
+        },
+        {
+          "name": "LICENSE.md",
+          "url": "https://raw.githubusercontent.com/adobe-fonts/source-serif/2823e993c53fca27c5c8749f529b56a5a7c77b6b/LICENSE.md",
+          "commit": "2823e993c53fca27c5c8749f529b56a5a7c77b6b",
+          "git_blob": "ebe298c6b488d68a43ec9b60155fb6b862a46bc1",
+          "bytes": 4492,
+          "sha256": "75784a295293a8992f5a8d99210566e0064a012e6dab6731305e3787f15896c7",
+          "license": "SIL Open Font License 1.1"
+        },
+        {
+          "name": "font.ttc",
+          "derived_from": "font.ttf twice; no glyph/name modifications",
+          "generator": "fonttools 4.58.0 TTCollection",
+          "sha256": "2069287da605aea2d08b0ff1a948209d3a0bd6316e10f2a2722bd1e42b9f46e3",
+          "bytes": 262140,
+          "license": "SIL Open Font License 1.1"
+        }
+      ],
+      "gaps": [
+        "No host font picker or mobile integration",
+        "Process termination, not power-loss hardware testing",
+        "No collection face enumeration; explicit face selection only"
+      ],
+      "named_checks": [
+        "installed-c-abi-sdk340",
+        "empty-library",
+        "unrelated-private-directory-file-preserved",
+        "ttf-import-content-identity",
+        "deduplicate-preserves-record",
+        "find-list-bounds",
+        "sdk-glyph-shape-layout",
+        "leased-remove-close-busy",
+        "wrong-thread-preserves-owner-and-lease",
+        "bounded-live-lease-count",
+        "otf-sdk-validation",
+        "ttc-explicit-face-and-invalid-face",
+        "manifest-close-reopen",
+        "same-process-exclusive-directory-lock",
+        "display-name-unicode-path-injection-bounds",
+        "unicode-selected-path-and-display",
+        "bad-and-truncated-preserve-library",
+        "nonregular-source-rejected",
+        "bounded-source-short-reads-and-hash",
+        "source-contract-snapshot-bounds",
+        "invalid-source-return-and-exception-contained",
+        "advertised-font-hard-limit-before-read",
+        "underreported-source-rejected",
+        "source-truncation-rejected",
+        "source-midstream-change-rejected",
+        "callback-reentry-rejected",
+        "cancel-each-stage-retry-preserves-old",
+        "selected-file-post-open-change-rejected",
+        "font-exact-byte-boundary",
+        "font-over-byte-boundary",
+        "directory-entry-limit-dedupe-at-capacity",
+        "directory-byte-limit-preserves-old",
+        "quota-deduplication-no-oversized-temporary",
+        "reopen-lower-budget-classified-limit",
+        "hard-limits-reject-oversized-config",
+        "explicit-remove-and-not-found",
+        "selected-original-never-removed",
+        "content-path-conflict-no-overwrite",
+        "manifest-version-corrupt-missing-classification",
+        "stored-hash-tampering-rejected",
+        "posix-source-and-directory-symlinks-rejected",
+        "crash-copy-recovery",
+        "crash-validated-recovery",
+        "crash-file-published-recovery",
+        "crash-committed-recovery",
+        "cross-process-lock-and-kill-release",
+        "posix-real-short-write-preserves-old",
+        "recomputed-original-font-hashes",
+        "installed-binary-and-package-identities",
+        "default-off-no-library",
+        "frozen-installed-font-header"
+      ],
+      "native_command_count": 23,
+      "terminations": [
+        {
+          "stage": "copy",
+          "pid": 23672,
+          "returncode": -9,
+          "recovered_hashes": [
+            "e5a4ee6a3d87bb9024796be390c6771e2a0eb1883dae25effaf57ca01668e24b"
+          ],
+          "readiness_file": "ready-copy"
+        },
+        {
+          "stage": "validated",
+          "pid": 23679,
+          "returncode": -9,
+          "recovered_hashes": [
+            "e5a4ee6a3d87bb9024796be390c6771e2a0eb1883dae25effaf57ca01668e24b"
+          ],
+          "readiness_file": "ready-validated"
+        },
+        {
+          "stage": "file-published",
+          "pid": 23684,
+          "returncode": -9,
+          "recovered_hashes": [
+            "e5a4ee6a3d87bb9024796be390c6771e2a0eb1883dae25effaf57ca01668e24b"
+          ],
+          "readiness_file": "ready-file-published"
+        },
+        {
+          "stage": "committed",
+          "pid": 23689,
+          "returncode": -9,
+          "recovered_hashes": [
+            "e5a4ee6a3d87bb9024796be390c6771e2a0eb1883dae25effaf57ca01668e24b",
+            "edf160d0d584deee8a3bb2c3371b2a7624ca63580fbe02c57c1f4c91e84d8787"
+          ],
+          "readiness_file": "ready-committed"
+        }
+      ],
+      "sdk_font_header_sha256": "c6fb1adda319b620179177ec6775b1098628444d5cc40f61163d34ab3ae159cf"
+    }
+  ],
+  "verifier": {
+    "job_id": 121104649645,
+    "accepted": true,
+    "negative_count": 35,
+    "negative_tests": [
+      {
+        "case": "wrong-source",
+        "rejected": true,
+        "reason": "caller identity"
+      },
+      {
+        "case": "wrong-run",
+        "rejected": true,
+        "reason": "caller identity"
+      },
+      {
+        "case": "wrong-attempt",
+        "rejected": true,
+        "reason": "caller identity"
+      },
+      {
+        "case": "unfinished-job",
+        "rejected": true,
+        "reason": "upstream job identity/status"
+      },
+      {
+        "case": "failed-job",
+        "rejected": true,
+        "reason": "upstream job identity/status"
+      },
+      {
+        "case": "duplicate-job",
+        "rejected": true,
+        "reason": "duplicate job id"
+      },
+      {
+        "case": "missing-artifact",
+        "rejected": true,
+        "reason": "missing/duplicate artifact"
+      },
+      {
+        "case": "duplicate-artifact-name",
+        "rejected": true,
+        "reason": "duplicate artifact id/name"
+      },
+      {
+        "case": "duplicate-artifact-id",
+        "rejected": true,
+        "reason": "duplicate artifact id/name"
+      },
+      {
+        "case": "empty-artifact",
+        "rejected": true,
+        "reason": "artifact identity/size/expiry"
+      },
+      {
+        "case": "expired-artifact",
+        "rejected": true,
+        "reason": "artifact identity/size/expiry"
+      },
+      {
+        "case": "expired-timestamp",
+        "rejected": true,
+        "reason": "expired timestamp"
+      },
+      {
+        "case": "wrong-artifact-source",
+        "rejected": true,
+        "reason": "artifact identity/size/expiry"
+      },
+      {
+        "case": "wrong-artifact-run",
+        "rejected": true,
+        "reason": "artifact identity/size/expiry"
+      },
+      {
+        "case": "wrong-zip-size",
+        "rejected": true,
+        "reason": "ZIP size/digest"
+      },
+      {
+        "case": "wrong-zip-digest",
+        "rejected": true,
+        "reason": "ZIP size/digest"
+      },
+      {
+        "case": "duplicate-zip-member",
+        "rejected": true,
+        "reason": "duplicate ZIP member"
+      },
+      {
+        "case": "duplicate-json-key",
+        "rejected": true,
+        "reason": "duplicate JSON key"
+      },
+      {
+        "case": "missing-case",
+        "rejected": true,
+        "reason": "exact required named cases"
+      },
+      {
+        "case": "extra-case",
+        "rejected": true,
+        "reason": "exact required named cases"
+      },
+      {
+        "case": "duplicate-case",
+        "rejected": true,
+        "reason": "exact required named cases"
+      },
+      {
+        "case": "missing-original-module",
+        "rejected": true,
+        "reason": "missing original module/binary/license/input"
+      },
+      {
+        "case": "altered-binary",
+        "rejected": true,
+        "reason": "bound file changed: binary/font-probe"
+      },
+      {
+        "case": "altered-license",
+        "rejected": true,
+        "reason": "bound file changed: materials/LICENSE.md"
+      },
+      {
+        "case": "wrong-report-source",
+        "rejected": true,
+        "reason": "report identity/status"
+      },
+      {
+        "case": "wrong-report-attempt",
+        "rejected": true,
+        "reason": "report identity/status"
+      },
+      {
+        "case": "wrong-report-run",
+        "rejected": true,
+        "reason": "report identity/status"
+      },
+      {
+        "case": "failed-report",
+        "rejected": true,
+        "reason": "report identity/status"
+      },
+      {
+        "case": "wrong-platform",
+        "rejected": true,
+        "reason": "report identity/status"
+      },
+      {
+        "case": "unbound-module-source",
+        "rejected": true,
+        "reason": "original module source binding"
+      },
+      {
+        "case": "altered-native-log",
+        "rejected": true,
+        "reason": "bound file changed: command-02.log"
+      },
+      {
+        "case": "forged-native-case",
+        "rejected": true,
+        "reason": "original native named cases differ"
+      },
+      {
+        "case": "missing-native-command",
+        "rejected": true,
+        "reason": "native command inventory"
+      },
+      {
+        "case": "missing-termination",
+        "rejected": true,
+        "reason": "missing actual termination boundary"
+      },
+      {
+        "case": "zero-termination-exit",
+        "rejected": true,
+        "reason": "termination identity/exit"
+      }
+    ],
+    "source_run_attempt_and_completed_jobs_checked": true,
+    "upstream_zip_sizes_and_api_digests_recomputed_in_actions": true,
+    "duplicate_json_and_zip_members_rejected": true,
+    "exact_named_native_cases_reparsed": true,
+    "original_module_binary_input_license_and_native_log_identities_checked": true
+  },
+  "artifacts": [
+    {
+      "id": 12591280141,
+      "name": "reader-font-library-verified-40171829885-1",
+      "size_in_bytes": 4572,
+      "digest": "sha256:a93bb539bdad990f0e5388472dae0a75b98fc23397a0e8b07eefc7e3e1d749c3",
+      "expires_at": "2027-01-23T07:11:12Z",
+      "expired": false,
+      "source_sha": "1563f4abb85ccd28c3a0aae3e9913f4330536215",
+      "run_id": 40171829885,
+      "upstream_zip_recomputed_in_actions": false,
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/40171829885/artifacts/12591280141"
+    },
+    {
+      "id": 12590841550,
+      "name": "reader-font-library-Linux-40171829885-1",
+      "size_in_bytes": 10066360,
+      "digest": "sha256:aceb4335f4df9ea2347a544b0f42ea611640a93a56ae4b2b685bd9b85ada63a0",
+      "expires_at": "2027-01-23T07:11:12Z",
+      "expired": false,
+      "source_sha": "1563f4abb85ccd28c3a0aae3e9913f4330536215",
+      "run_id": 40171829885,
+      "upstream_zip_recomputed_in_actions": true,
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/40171829885/artifacts/12590841550"
+    },
+    {
+      "id": 12590177948,
+      "name": "reader-font-library-Windows-40171829885-1",
+      "size_in_bytes": 8568614,
+      "digest": "sha256:2eb604c6b975c77d5316124da690b4b6598d048e979890786228d17199d67c47",
+      "expires_at": "2027-01-23T07:11:12Z",
+      "expired": false,
+      "source_sha": "1563f4abb85ccd28c3a0aae3e9913f4330536215",
+      "run_id": 40171829885,
+      "upstream_zip_recomputed_in_actions": true,
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/40171829885/artifacts/12590177948"
+    },
+    {
+      "id": 12590124775,
+      "name": "reader-font-library-macOS-40171829885-1",
+      "size_in_bytes": 9287115,
+      "digest": "sha256:d3c81ab583e0c65b077992481593570e8d760ba64da467dfc06ffab46320828e",
+      "expires_at": "2027-01-23T07:11:12Z",
+      "expired": false,
+      "source_sha": "1563f4abb85ccd28c3a0aae3e9913f4330536215",
+      "run_id": 40171829885,
+      "upstream_zip_recomputed_in_actions": true,
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/40171829885/artifacts/12590124775"
+    }
+  ],
+  "retained_historical_runs": [
+    {
+      "source_sha": "912b02556c0c3ddeac35c7e925bff0ec445cd5b5",
+      "run_id": 40171023495,
+      "attempt": 1,
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/40171023495",
+      "status": "completed",
+      "conclusion": "success",
+      "verifier_job_id": 121102263890,
+      "artifacts": [
+        {
+          "id": 12590770336,
+          "name": "reader-font-library-Windows-40171023495-1",
+          "size_in_bytes": 8322083,
+          "digest": "sha256:df6230a8ebb46c26da24494c4cc588ab193f8c942ecfa4ad7a22d2167fc48778",
+          "expires_at": "2027-01-23T06:58:23Z",
+          "expired": false
+        },
+        {
+          "id": 12590520904,
+          "name": "reader-font-library-verified-40171023495-1",
+          "size_in_bytes": 3163,
+          "digest": "sha256:dd687ed131cf560d83626482d3b23c7861894c9faaa30f43ce5a1c649c92ee59",
+          "expires_at": "2027-01-23T06:58:23Z",
+          "expired": false
+        },
+        {
+          "id": 12590376092,
+          "name": "reader-font-library-macOS-40171023495-1",
+          "size_in_bytes": 9045726,
+          "digest": "sha256:0911400bff9f08eac893cb6c3f82b51e4a895ad7de6179075cc88782ec56ca60",
+          "expires_at": "2027-01-23T06:58:23Z",
+          "expired": false
+        },
+        {
+          "id": 12590236117,
+          "name": "reader-font-library-Linux-40171023495-1",
+          "size_in_bytes": 9822551,
+          "digest": "sha256:33831458858ce83310a4816d41beb81cd0602ef285cd37d59529c07d8cdf746e",
+          "expires_at": "2027-01-23T06:58:23Z",
+          "expired": false
+        }
+      ]
+    },
+    {
+      "source_sha": "e1303c0116b359d1fd467b40fe0f085c11d57c76",
+      "run_id": 40171357987,
+      "attempt": 1,
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/40171357987",
+      "status": "completed",
+      "conclusion": "success",
+      "verifier_job_id": 121103530300,
+      "artifacts": [
+        {
+          "id": 12590686429,
+          "name": "reader-font-library-verified-40171357987-1",
+          "size_in_bytes": 3166,
+          "digest": "sha256:637a987852669be1e6930718bed6af8a28d9abf8db12de6d3940422f28f11fe5",
+          "expires_at": "2027-01-23T07:03:38Z",
+          "expired": false
+        },
+        {
+          "id": 12590581212,
+          "name": "reader-font-library-Linux-40171357987-1",
+          "size_in_bytes": 10060030,
+          "digest": "sha256:2c17af74d7112ef178d7164976d53517b29aa06980e80c3f8b408560203626ef",
+          "expires_at": "2027-01-23T07:03:38Z",
+          "expired": false
+        },
+        {
+          "id": 12590192267,
+          "name": "reader-font-library-macOS-40171357987-1",
+          "size_in_bytes": 9279598,
+          "digest": "sha256:1c5e8b594abdf92cbf15ca89d2d48ac2a85ded113b20da38dcbba03f5b2a8e3e",
+          "expires_at": "2027-01-23T07:03:38Z",
+          "expired": false
+        },
+        {
+          "id": 12589069964,
+          "name": "reader-font-library-Windows-40171357987-1",
+          "size_in_bytes": 8553089,
+          "digest": "sha256:b49697f1608bc70b4fba6b69061bec377621711106f8821e6f0804954d1b05ea",
+          "expires_at": "2027-01-23T07:03:38Z",
+          "expired": false
+        }
+      ]
+    },
+    {
+      "source_sha": "0859b405e04d69fbf8844cce5c1c352f9dc565c9",
+      "run_id": 40171611884,
+      "attempt": 1,
+      "url": "https://github.com/NoGod3524/EXReader/actions/runs/40171611884",
+      "status": "completed",
+      "conclusion": "success",
+      "verifier_job_id": 121104523717,
+      "artifacts": [
+        {
+          "id": 12591060419,
+          "name": "reader-font-library-macOS-40171611884-1",
+          "size_in_bytes": 9285884,
+          "digest": "sha256:78132dcb6fa9c3af5839f39c73f18d5b26412311ab65fde256cbeb448e37af7a",
+          "expires_at": "2027-01-23T07:07:41Z",
+          "expired": false
+        },
+        {
+          "id": 12591055472,
+          "name": "reader-font-library-verified-40171611884-1",
+          "size_in_bytes": 3165,
+          "digest": "sha256:744e683e94918720fd2d9826b25aa39e2dad144bcf884a2ccbf11c8772d25375",
+          "expires_at": "2027-01-23T07:07:41Z",
+          "expired": false
+        },
+        {
+          "id": 12590696505,
+          "name": "reader-font-library-Windows-40171611884-1",
+          "size_in_bytes": 8567092,
+          "digest": "sha256:405410a06d33b1dddbad6b6371845d700e96b340987a980f331ef47243bf4f8c",
+          "expires_at": "2027-01-23T07:07:41Z",
+          "expired": false
+        },
+        {
+          "id": 12590337115,
+          "name": "reader-font-library-Linux-40171611884-1",
+          "size_in_bytes": 10065157,
+          "digest": "sha256:dae17f46d144ab981740ad75b5d69e4ec2a9691254202b937b4e3dbdc610edff",
+          "expires_at": "2027-01-23T07:07:41Z",
+          "expired": false
+        }
+      ]
+    }
+  ],
+  "unexpected_failures": [],
+  "retained_expected_failures": [
+    "Malformed/truncated fonts and invalid TTC face",
+    "Bad UTF-8 and path injection names",
+    "Cancellation before commit at each boundary with retry",
+    "Underreported, truncated, changing and throwing read sources",
+    "Wrong-thread, reentrant and leased-remove/close refusals",
+    "Configured/hard quota refusals and corruption/missing/version classification",
+    "Real POSIX file-size write failure",
+    "Real Windows manifest-sharing publication failure and postcommit removal uncertainty",
+    "Twelve actual killed child processes at before/after publication boundaries",
+    "All 35 strict verifier mutations"
+  ],
+  "acceptance": {
+    "standalone_static_desktop_package": true,
+    "installed_c_and_cpp_consumers": true,
+    "ttf_otf_first_face_import": true,
+    "ttc_explicit_face_selection": true,
+    "face_enumeration": false,
+    "host_ui": false,
+    "mobile": false,
+    "system_font_registration": false,
+    "product_schema_changed": false,
+    "sdk_changed": false,
+    "power_loss_hardware": false,
+    "complete_product": false
+  },
+  "remaining_gaps": [
+    "Root host integration and combined-source revalidation are not part of this isolated package.",
+    "No font chooser UI, mobile acceptance, or face enumeration/all-faces import.",
+    "Process termination recovery is measured; power loss, filesystem/controller persistence, network shares and malicious same-account directory mutation are not accepted.",
+    "The host must provide a dedicated private local directory, preserve the lock namespace, serialize handle lifetimes and destroy SDK layouts/pagers before lease release.",
+    "64 KiB is the copy-buffer bound, not total memory: SDK font creation copies encoded bytes and owns further decoded/cache allocations.",
+    "The verifier-summary artifact itself is recorded from GitHub upload/API metadata; the same job cannot self-authenticate its own later upload. The three upstream desktop ZIPs were independently downloaded and recomputed in Actions."
+  ],
+  "validation_location": "All builds, tests, syntax checks, materials and artifact processing occurred in GitHub Actions. Local work was source/document editing, Git, and read-only GitHub metadata/logs."
 }

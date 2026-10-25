@@ -169,3 +169,35 @@ readiness/recovery records, and
 35 named negative verifier mutations. Artifacts are downloaded/parsed only in
 Actions. No local build, test, syntax check, fixture creation or artifact parsing
 is authorized. Actual run identities are added only after real terminal runs.
+
+## Recorded desktop validation (2026-10-25)
+
+**Tested SHA:** `1563f4abb85ccd28c3a0aae3e9913f4330536215`.
+[Run 40171829885, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40171829885)
+completed successfully: **Linux 51, Windows 52, macOS 51** exact named cases.
+Strict evidence job **121104649645** independently checked the original native
+logs, installed binaries/static modules, font/license bytes, readiness records,
+and all three upstream ZIP sizes/digests, and rejected **35/35** negative
+mutations. Four real child processes were terminated on each desktop: POSIX
+SIGKILL (`-9`) or Windows TerminateProcess (`1`). Before manifest commit the old
+set recovered; after commit the new set recovered. Windows also verified actual
+postcommit unlink failure, poisoned-handle behavior, and subsequent recovery.
+
+The exact installed binaries, static package, input/license hashes, all case
+names, job identities, four final artifact identities and all twelve historical
+artifact identities are recorded in
+[`validation/reader-font-library.json`](validation/reader-font-library.json).
+All four source-iteration runs completed successfully; **no unexpected failure
+was discarded or assertion weakened**. Expected negative-case outputs remain in
+the artifacts. Final artifacts expire **2027-01-23T07:11:12Z**.
+
+The evidence-only commit changes this document and the JSON registry, with
+`[skip ci]`; it does not alter the tested implementation, tests, or workflow.
+The final evidence HEAD is supplied in the handoff rather than self-embedded in
+its own commit. The verifier-summary ZIP is recorded from GitHub metadata, not
+claimed to be self-verified by the job that uploads it afterward.
+
+Acceptance is limited to the isolated native desktop component. Host font UI,
+mobile, all-face enumeration, sudden power-loss durability, and the combined
+six-target product remain ungranted. Root owns host wiring and common-source
+integration review.
