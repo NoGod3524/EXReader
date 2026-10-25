@@ -35,6 +35,9 @@ def owner_run(exe,mode,work,pdf,*extra):
     run([exe,mode,work,pdf,*extra],'owner-'+work.name+'-'+mode,300)
     report=json.loads((work/('report-'+mode+'.json')).read_text(encoding='utf-8'))
     if (report.get('ok') is not True or report.get('source_sha')!=os.environ['GITHUB_SHA']
+            or report.get('mode')!=mode or report.get('sdk_version')!='3.41.0'
+            or report.get('owner_source_sha256')!=hashlib.sha256(
+                (ROOT/'apps/reader/desktop/windows_records_owner.cpp').read_bytes()).hexdigest()
             or report.get('program_sha256')!=hashlib.sha256(exe.read_bytes()).hexdigest()
             or not report.get('checks') or any(c.get('pass') is not True for c in report['checks'])):
         raise RuntimeError('Owner evidence rejected: '+str(work)+' '+mode)
@@ -63,8 +66,14 @@ def killed_owner(exe,legacy_exe,work,pdf,phase,legacy=False):
                     or len(evidence.get('pending_sha256',''))!=64
                     or evidence.get('private_magic')!=('EXRRD001' if legacy else 'EXRRD002')):
                 raise RuntimeError('Missing or invalid flushed owner kill marker')
+            pending=(work/'pending.bin').read_bytes()
+            if (len(pending)!=evidence['pending_bytes']
+                    or hashlib.sha256(pending).hexdigest()!=evidence['pending_sha256']):
+                raise RuntimeError('Kill marker differs from actual pending file')
             child.kill()  # Windows TerminateProcess, outside the real owner.
             child.wait(timeout=30)
+            if (work/'pending.bin').read_bytes()!=pending:
+                raise RuntimeError('Pending bytes changed during actual process termination')
         finally:
             if child.poll() is None:
                 child.kill()
@@ -73,9 +82,13 @@ def killed_owner(exe,legacy_exe,work,pdf,phase,legacy=False):
         terminated_by_driver=True),indent=2)+'\n',encoding='utf-8')
     if legacy:
         owner_run(legacy_exe,'reject-legacy-private',work,pdf)
+        if (work/'pending.bin').read_bytes()!=pending:
+            raise RuntimeError('Raw writer changed the original legacy pending file')
         owner_run(legacy_exe,'legacy-retry',work,pdf)
     else:
         owner_run(legacy_exe,'reject-private',work,pdf)
+        if (work/'pending.bin').read_bytes()!=pending:
+            raise RuntimeError('Legacy writer changed the original raw pending file')
         owner_run(exe,'verify-child',work,pdf,str(phase))
 
 
@@ -83,6 +96,10 @@ def main():
     if os.environ.get('GITHUB_ACTIONS')!='true' or sys.platform!='win32':
         raise RuntimeError('Windows Actions only')
     OUT.mkdir(parents=True,exist_ok=False);(OUT/'logs').mkdir()
+    fixture=(ROOT/'tests/fixtures/pdf-public-text.pdf').read_bytes()
+    if (len(fixture)!=8845 or hashlib.sha256(fixture).hexdigest()!=
+            '5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc'):
+        raise RuntimeError('Original NUL PDF identity differs')
     sdk=OUT/'sdk-stage';product=OUT/'product-stage'
     run(['cmake','--preset','reading-library','-B',OUT/'sdk-build','-DCMAKE_INSTALL_PREFIX='+str(sdk)],'sdk-configure')
     run(['cmake','--build',OUT/'sdk-build','--parallel','4'],'sdk-build')
