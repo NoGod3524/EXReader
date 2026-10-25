@@ -92,7 +92,8 @@ def main():
             line[200 * 3:400 * 3] = bytes((204, 32, 32)) * 200
         return bytes(line)
     with zipfile.ZipFile(output / 'Large comic.cbz', 'w') as archive:
-        archive.writestr(entry('page-1.png', png(2000, 3000, comic_row)))
+        item, data = entry('page-1.png', png(2000, 3000, comic_row))
+        archive.writestr(item, data)
 
     shutil.copyfile(ROOT / 'tests/fixtures/pdf-public.pdf', output / 'Fixed page.pdf')
     print('authored F3 fixtures:', sorted(item.name for item in output.iterdir()), flush=True)
