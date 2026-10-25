@@ -349,11 +349,14 @@ def main():
     target = [0, 0]
 
     def record(name, condition, detail=None):
+        # The observation is printed before the assertion so a failure still
+        # leaves its measured values in the run log.
+        print(json.dumps({'check': name, 'pass': bool(condition), 'detail': detail}, ensure_ascii=True),
+              flush=True)
         if not condition:
             raise AssertionError('failed check: ' + name)
         assert name not in checks, name
         checks.append(name)
-        print(json.dumps({'check': name, 'pass': True, 'detail': detail}, ensure_ascii=True), flush=True)
 
     def launch(exe, where, existing=False):
         nonlocal app
@@ -467,16 +470,20 @@ def main():
 
         def authored(image):
             # Only fully opaque interior samples: scaled edges blend with the
-            # page canvas by design and are not authored image pixels.
-            return {(x, y) for x in range(dx + 2, dx + width - 2, 2)
-                    for y in range(dy + 2, dy + height - 2, 2)
+            # page canvas by design and are not authored image pixels. The whole
+            # client is scanned so no view geometry can decide this check.
+            width_px, height_px, _ = image
+            return {(x, y) for x in range(2, width_px - 2, 2) for y in range(2, height_px - 2, 2)
                     if near(at(image, x, y), (51, 102, 204), 6)}
 
         picture_light, picture_dark = authored(light), authored(dark)
-        same = all(near(at(light, x, y), at(dark, x, y), 2) for x, y in list(picture_light)[:300])
+        shared = picture_light & picture_dark
+        same = all(near(at(light, x, y), at(dark, x, y), 2) for x, y in list(shared)[:300])
         record('authored-image-interior-preserved',
-               len(picture_light) > 40 and picture_light == picture_dark and same,
-               dict(pixels=len(picture_light)))
+               len(picture_light) > 40 and len(picture_dark) > 40 and picture_light == picture_dark and same,
+               dict(pixels_light=len(picture_light), pixels_dark=len(picture_dark), shared=len(shared),
+                    corner_light=at(light, 8, 8), corner_dark=at(dark, 8, 8),
+                    sample=sorted(shared)[:3]))
 
         # ---- fixed pages keep their own content and colours ------------------
         app.import_file(args.fixtures / 'Fixed page.pdf')
