@@ -348,13 +348,15 @@ def run_real(real_path, inputs, base, candidate, out, databases):
     real = read_json(real_path)
     Path(databases).mkdir(parents=True, exist_ok=True)
     for entry in real["files"]:
-        path = str(Path(inputs) / entry["path"])
+        # Forward slashes only, so the probe echoes the same input string on every
+        # platform and the cross-platform report comparison stays meaningful.
+        path = "%s/%s" % (str(inputs).replace("\\", "/"), entry["path"])
         call_probe(base, ["--probe", path], Path(out) / ("base-%s.json" % entry["id"]))
         for run in (1, 2):
-            database = Path(databases) / ("%s-run%d.sqlite" % (entry["id"], run))
-            if database.exists():
-                database.unlink()
-            call_probe(candidate, ["--probe", path, str(database)],
+            database = "%s/%s-run%d.sqlite" % (str(databases).replace("\\", "/"), entry["id"], run)
+            if Path(database).exists():
+                Path(database).unlink()
+            call_probe(candidate, ["--probe", path, database],
                        Path(out) / ("candidate-%s-run%d.json" % (entry["id"], run)))
     for entry in real["files"]:
         for run in (1, 2):
