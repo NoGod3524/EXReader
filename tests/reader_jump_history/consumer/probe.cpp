@@ -712,6 +712,44 @@ int main(int argc,char **argv){
   exr_anchor_free(&eSelection);
   exr_anchor_free(&eAnchor);
 
+  /* Equal per-handle counters are not a ticket to another history. Both the
+     same wire and different positions must keep the target cursor unchanged. */
+  stage("history instance tickets");
+  exr_anchor ticketFirst{},ticketSecond{};
+  SDK(exr_anchor_create(docTxt,first3,first3,&ticketFirst,&e_));
+  SDK(exr_anchor_create(docTxt,eta,eta,&ticketSecond,&e_));
+  reader_rs_capture ticket1{},ticket2{};ticket1.mode=ticket2.mode=READER_RS_REFLOW_GLOBAL;
+  ticket1.anchor=&ticketFirst;ticket2.anchor=&ticketSecond;
+  for(bool identical:{true,false}){
+    const std::string label=identical?"identical positions":"different positions";
+    reader_jh *source=nullptr,*target=nullptr;opened(&source,nullptr);opened(&target,nullptr);
+    for(reader_jh *h:{source,target}){
+      const reader_rs_capture &first=(h==target&&!identical)?ticket2:ticket1;
+      const reader_rs_capture &second=(h==target&&!identical)?ticket1:ticket2;
+      if(commit_capture(h,"txt",READER_JH_SEARCH,first,0).status!=READER_JH_OK ||
+         commit_capture(h,"txt",READER_JH_SEARCH,second,0).status!=READER_JH_OK)fatal("instance ticket setup");
+    }
+    reader_jh_item foreign{},own{};reader_jh_error ie{};
+    if(reader_jh_peek(source,READER_JH_BACK,&foreign,&ie)!=READER_JH_OK ||
+       reader_jh_peek(target,READER_JH_BACK,&own,&ie)!=READER_JH_OK)fatal("instance ticket peek");
+    reader_jh_state before=snapshot(target);
+    expect("foreign history ticket is STALE with "+label,
+      reader_jh_complete(target,&foreign,&ie)==READER_JH_STALE,ie.message);
+    expect_unchanged(target,before,"foreign history ticket leaves state unchanged with "+label);
+    expect("own history ticket remains valid with "+label,
+      reader_jh_complete(target,&own,&ie)==READER_JH_OK,ie.message);
+    reader_jh_item_release(&own);closed(&source);
+    opened(&source,nullptr);
+    if(commit_capture(source,"txt",READER_JH_SEARCH,ticket1,0).status!=READER_JH_OK ||
+       commit_capture(source,"txt",READER_JH_SEARCH,ticket2,0).status!=READER_JH_OK)fatal("reopened ticket setup");
+    before=snapshot(source);
+    expect("closed history ticket is STALE after reopen with "+label,
+      reader_jh_complete(source,&foreign,&ie)==READER_JH_STALE,ie.message);
+    expect_unchanged(source,before,"closed history ticket leaves state unchanged with "+label);
+    reader_jh_item_release(&foreign);closed(&source);closed(&target);
+  }
+  exr_anchor_free(&ticketFirst);exr_anchor_free(&ticketSecond);
+
   /* ---------------- E: one owner thread at a time ---------------- */
   stage("thread ownership");
   reader_jh *T=nullptr;opened(&T,nullptr);

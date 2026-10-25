@@ -1,10 +1,12 @@
 /* SPDX-License-Identifier: MIT */
 #include "reader_jump_history.h"
+#include <atomic>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <new>
+#include <memory>
 #include <string>
 #include <thread>
 #include <utility>
@@ -14,6 +16,16 @@ namespace {
 struct failure { reader_jh_status code; reader_rs_status rs; reader_rs_gap gap; int revision; const char *message; };
 [[noreturn]] void reject(reader_jh_status code,const char *message,reader_rs_status rs=READER_RS_OK,reader_rs_gap gap=READER_RS_GAP_NONE,int revision=0){
   throw failure{code,rs,gap,revision,message};
+}
+/* Entry tickets remain unique across live histories and close/reopen cycles.
+   A peek from another history must never complete this history's neighbor. */
+std::atomic<uint64_t> next_entry_id{1};
+uint64_t entry_id(){
+  uint64_t id=next_entry_id.load(std::memory_order_relaxed);
+  for(;;){
+    if(id==UINT64_MAX)reject(READER_JH_LIMIT,"History entry identifiers are exhausted");
+    if(next_entry_id.compare_exchange_weak(id,id+1,std::memory_order_relaxed))return id;
+  }
 }
 reader_jh_status report(reader_jh_error *e,const failure &f){
   if(e){e->code=f.code;e->rs_code=f.rs;e->gap=f.gap;e->revision_code=f.revision;std::snprintf(e->message,sizeof(e->message),"%s",f.message);}
@@ -30,7 +42,7 @@ struct reader_jh {
   uint32_t max_entries=READER_JH_DEFAULT_ENTRIES, max_bytes=READER_JH_DEFAULT_BYTES;
   std::vector<entry> list;
   size_t cursor=0, bytes=0;   /* cursor is meaningful only while list is not empty */
-  uint64_t next_id=1, generation=0, evicted_total=0, truncated_total=0;
+  uint64_t generation=0, evicted_total=0, truncated_total=0;
 };
 
 namespace {
@@ -77,17 +89,18 @@ void commit_wire(reader_jh *h,reader_revisions *store,reader_jh_kind kind,std::s
   const reader_rs_record &r=g.record;
   if(std::strcmp(r.entity_kind,"progress")||std::strcmp(r.operation,"put")||!r.has_location||!r.exact)
     reject(READER_JH_ARGUMENT,"Only a progress put with a location is a reading position");
-  entry fresh{h->next_id,kind,r.book_key,location_key(r),std::move(wire)};
+  entry fresh{0,kind,r.book_key,location_key(r),std::move(wire)};
   if(fresh.bytes()>READER_JH_MAX_ENTRY_BYTES||fresh.bytes()>h->max_bytes)reject(READER_JH_TOO_LARGE,"One history entry exceeds its byte limit");
   bool have=!h->list.empty();
   if(have&&h->list[h->cursor].key==fresh.key){*result=make_result(h,READER_JH_UNCHANGED,0,0);return;}
   bool coalesce=have&&kind==READER_JH_PAGE&&h->list[h->cursor].kind==READER_JH_PAGE&&h->list[h->cursor].book==fresh.book;
   size_t keep=have?(coalesce?h->cursor:h->cursor+1):0;
   h->list.reserve(keep+1); /* the only allocation that can fail after validation */
+  fresh.id=entry_id(); /* reject exhaustion before changing the history */
   size_t forward=have?h->list.size()-(h->cursor+1):0;
   for(size_t i=keep;i<h->list.size();i++)h->bytes-=h->list[i].bytes();
   h->list.erase(h->list.begin()+(std::ptrdiff_t)keep,h->list.end());
-  h->bytes+=fresh.bytes();h->list.push_back(std::move(fresh));h->next_id++;
+  h->bytes+=fresh.bytes();h->list.push_back(std::move(fresh));
   size_t drop=0;
   while(drop+1<h->list.size()&&((size_t)(h->list.size()-drop)>(size_t)h->max_entries||h->bytes>(size_t)h->max_bytes)){h->bytes-=h->list[drop].bytes();drop++;}
   if(drop)h->list.erase(h->list.begin(),h->list.begin()+(std::ptrdiff_t)drop);
@@ -149,14 +162,14 @@ extern "C" reader_jh_status reader_jh_commit(reader_jh *h,reader_revisions *stor
     reader_rs_envelope env{};env.revision_id=id;env.operation="put";env.entity_kind="progress";env.book_key=p->book_key;env.parser_version=p->parser_version;
     char *bytes=nullptr;size_t n=0;reader_rs_error re{};
     reader_rs_status rs=reader_rs_encode_v2(store,&env,p->capture,p->part,&bytes,&n,&re);
+    std::unique_ptr<char,decltype(&reader_rs_free)> owned(bytes,&reader_rs_free);
     if(rs!=READER_RS_OK){
-      reader_rs_free(bytes);
       if(rs==READER_RS_NOT_REPRESENTABLE)reject(READER_JH_NOT_REPRESENTABLE,"Capture has no lossless position wire",rs,re.gap);
       if(rs==READER_RS_REVISION)reject(READER_JH_REVISION,"Revision module refused the position wire",rs,re.gap,re.revision_code);
       if(rs==READER_RS_MEMORY)reject(READER_JH_MEMORY,"Cannot encode the position wire",rs);
       reject(READER_JH_ARGUMENT,"Capture is not usable as a position",rs,re.gap);
     }
-    std::string wire(bytes,n);reader_rs_free(bytes);
+    std::string wire(owned.get(),n);
     commit_wire(h,store,p->kind,std::move(wire),result);
   });
 }
