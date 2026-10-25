@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "observed_at_utc": "2026-10-25T02:32:04Z",
+  "observed_at_utc": "2026-10-25T02:36:50Z",
   "packages": 19,
   "cloud_success": 19,
   "returned_pending_root_review": 12,
@@ -13,7 +13,9 @@
     "J07",
     "J09"
   ],
-  "needs_further_work": [],
+  "needs_further_work": [
+    "J13"
+  ],
   "root_review_and_integration_complete": false,
   "tasks": [
     {
@@ -105,7 +107,8 @@
       "source": "b1c7467af0b9faf843b9ec988df49c0476c74ee9",
       "status": "completed",
       "conclusion": "success",
-      "root_state": "cloud_success_awaiting_root_review_and_integration"
+      "root_state": "root_review_activation_and_uuid_boundary_repairs_required",
+      "review": "J13-ROOT-REVIEW.md"
     },
     {
       "id": "J14",
