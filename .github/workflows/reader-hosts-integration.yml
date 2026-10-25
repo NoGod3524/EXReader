@@ -31,7 +31,7 @@ jobs:
       - name: Parse authored workflow and Python only in Actions
         run: |
           python3 -m pip install 'PyYAML==6.0.3'
-          python3 -m py_compile tests/reader_hosts_integration/guard.py tests/reader_hosts_integration/aggregate.py tests/reader_hosts_integration/final.py tests/reader_windows_search/verify.py tests/reader_windows_navigation/verify.py tests/reader_windows_navigation/check_ui.py
+          python3 -m py_compile tests/reader_hosts_integration/guard.py tests/reader_hosts_integration/aggregate.py tests/reader_hosts_integration/final.py tests/reader_windows_search/verify.py tests/reader_windows_navigation/verify.py tests/reader_windows_navigation/check_ui.py tests/reader_gtk_preferences/retain_account.py
           python3 - <<'PY'
           from pathlib import Path
           import yaml
