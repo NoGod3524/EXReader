@@ -4,6 +4,7 @@ Inputs and names below are fixed before launch. Production host is never linked
 with a test hook; database reads are independent observations, not host reports.
 """
 import argparse
+import copy
 import base64
 import ctypes as C
 from ctypes import wintypes as W
@@ -13,8 +14,10 @@ import os
 from pathlib import Path
 import shutil
 import sqlite3
+import stat
 import subprocess
 import sys
+import threading
 import traceback
 import uuid
 
@@ -36,7 +39,13 @@ REQUIRED=['native-ctrl-shift-i-opens-cloud-picker','configured-account-real-tls-
  'native-ctrl-shift-o-opens-extended-selection','uia-real-multiple-selection','favorite-only-explicit-selection',
  'completed-journal-reopens-with-original-receipts','real-process-kill-and-original-request-replay',
  'favorite-clear-only-explicit-selection','existing-nested-shelf-add-remove','existing-tag-add-remove','existing-series-add-remove',
- 'cancel-preserves-committed-and-unrun-report','resume-uses-retained-original-request','original-inputs-unchanged']
+ 'cancel-preserves-committed-and-unrun-report','resume-uses-retained-original-request',
+ 'committed-cloud-import-retains-refused-staging-owner','corrupt-cloud-import-retains-refused-staging-owner',
+ 'cancelled-cloud-import-retains-refused-staging-owner','kill-before-import-reopens-explicit-orphan-cleanup',
+ 'bulk-kill-before-commit-keeps-exact-request','bulk-retry-after-kill-uses-original-revision',
+ 'bulk-commit-cleanup-denial-still-reports-committed','bulk-kill-after-commit-replay-does-not-duplicate',
+ 'concurrent-head-is-explicit-and-unselected-books-stay-unchanged',
+ 'original-inputs-unchanged']
 
 class App(SearchApp,ACCOUNT.Device):
  def io_dialog(self):
@@ -53,7 +62,7 @@ class App(SearchApp,ACCOUNT.Device):
 def main():
  assert os.name=='nt' and os.environ.get('GITHUB_ACTIONS')=='true','Actions only'
  p=argparse.ArgumentParser()
- for name in ('candidate','font','fixtures','cloud-probe','command-consumer','output'):p.add_argument('--'+name,type=Path,required=True)
+ for name in ('candidate','font','fixtures','cloud-probe','command-consumer','revision-consumer','output'):p.add_argument('--'+name,type=Path,required=True)
  args=p.parse_args();out=args.output.resolve();out.mkdir(parents=True,exist_ok=False)
  checks=[];problems=[];screenshots=[];app=None;dav=None;phase='fixtures'
  originals={name:(args.fixtures/fixture).read_bytes() for name,fixture in INPUTS}
@@ -103,6 +112,37 @@ def main():
   value=json.loads(result.stdout);assert value['status']==0 and value['created']==1,value
   return value['key']
  def shot(d,name):M.screenshot(d,out/name);screenshots.append(name)
+ kernel=C.WinDLL('kernel32',use_last_error=True)
+ kernel.OpenThread.argtypes=[W.DWORD,W.BOOL,W.DWORD];kernel.OpenThread.restype=W.HANDLE
+ kernel.SuspendThread.argtypes=[W.HANDLE];kernel.SuspendThread.restype=W.DWORD
+ kernel.ResumeThread.argtypes=[W.HANDLE];kernel.ResumeThread.restype=W.DWORD
+ kernel.CloseHandle.argtypes=[W.HANDLE];kernel.CloseHandle.restype=W.BOOL
+ kernel.CreateFileW.argtypes=[W.LPCWSTR,W.DWORD,W.DWORD,C.c_void_p,W.DWORD,W.DWORD,W.HANDLE];kernel.CreateFileW.restype=W.HANDLE
+ kernel.WaitForSingleObject.argtypes=[W.HANDLE,W.DWORD];kernel.WaitForSingleObject.restype=W.DWORD
+ kernel.GetThreadTimes.argtypes=[W.HANDLE,C.POINTER(W.FILETIME),C.POINTER(W.FILETIME),C.POINTER(W.FILETIME),C.POINTER(W.FILETIME)];kernel.GetThreadTimes.restype=W.BOOL
+ class ThreadEntry(C.Structure):
+  _fields_=[('size',W.DWORD),('usage',W.DWORD),('id',W.DWORD),('owner',W.DWORD),('base',W.LONG),('delta',W.LONG),('flags',W.DWORD)]
+ kernel.CreateToolhelp32Snapshot.argtypes=[W.DWORD,W.DWORD];kernel.CreateToolhelp32Snapshot.restype=W.HANDLE
+ kernel.Thread32First.argtypes=[W.HANDLE,C.POINTER(ThreadEntry)];kernel.Thread32First.restype=W.BOOL
+ kernel.Thread32Next.argtypes=[W.HANDLE,C.POINTER(ThreadEntry)];kernel.Thread32Next.restype=W.BOOL
+ def threads():
+  snapshot=kernel.CreateToolhelp32Snapshot(4,0);assert snapshot and snapshot!=C.c_void_p(-1).value
+  result=set();entry=ThreadEntry();entry.size=C.sizeof(entry)
+  try:
+   found=kernel.Thread32First(snapshot,C.byref(entry))
+   while found:
+    if entry.owner==app.process.pid:result.add(entry.id)
+    found=kernel.Thread32Next(snapshot,C.byref(entry))
+  finally:kernel.CloseHandle(snapshot)
+  return result
+ def kill():
+  app.process.kill();app.process.wait(timeout=20);app.log.close();assert app.process.returncode!=0
+ def pending_identity(raw):
+  assert raw[:8]==b'EXRMETA1';at=8+6*8;fields=[]
+  for _ in range(3):
+   size=int.from_bytes(raw[at:at+8],'big');at+=8;fields.append(raw[at:at+size].decode());at+=size
+  assert len(fields[2])==32
+  return fields[1],fields[2]
  try:
   certs=out/'certificates';certs.mkdir();key=certs/'server.key';cert=certs/'server.crt'
   openssl=shutil.which('openssl') or r'C:\Program Files\Git\usr\bin\openssl.exe'
@@ -110,6 +150,15 @@ def main():
   subprocess.run(['certutil','-addstore','-f','Root',str(cert)],check=True,capture_output=True)
   user='fixture-user';password='fixture-secret-'+uuid.uuid4().hex
   auth='Basic '+base64.b64encode((user+':'+password).encode()).decode();dav=ACCOUNT.Dav(cert,key,auth)
+  gate=threading.Event();release=threading.Event();pause_get=[False]
+  base_handler=dav.server.RequestHandlerClass
+  class GatedHandler(base_handler):
+   def do_GET(self):
+    if pause_get[0]:
+     pause_get[0]=False;gate.set()
+     if not release.wait(40):self.reply(503);return
+    super().do_GET()
+  dav.server.RequestHandlerClass=GatedHandler
   dav.directories.add('/dav/books/')
   for name,data in originals.items():dav.entries['/dav/books/'+name.replace(' ','%20')]=data
   app=launch();phase='account'
@@ -117,7 +166,9 @@ def main():
   phase='cloud';d=show(CLOUD);record('native-ctrl-shift-i-opens-cloud-picker',bool(d))
   record('configured-account-real-tls-listing',any(r['method']=='PROPFIND' and r['authenticated'] for r in dav.requests) and any('books' in x for x in labels(d)))
   before=sql('SELECT count(*) FROM books',product=False)[0][0]
-  record('no-implicit-book-selection',send(U.GetDlgItem(d,ROWS),0x188)==-1 and 'committed=1' not in press(d,GO) and sql('SELECT count(*) FROM books',product=False)[0][0]==before)
+  selected=C.c_ssize_t(send(U.GetDlgItem(d,ROWS),0x188)).value
+  print(json.dumps({'initial_selected':selected,'sdk_rows_before_selection':before}),flush=True)
+  record('no-implicit-book-selection',selected==-1 and 'committed=1' not in press(d,GO) and sql('SELECT count(*) FROM books',product=False)[0][0]==before)
   choose(d,'books');press(d,GO);record('real-directory-navigation',len(labels(d))==len(INPUTS))
   for name,fixture in INPUTS:
    phase='import-'+fixture;choose(d,name);message=press(d,GO)
@@ -137,6 +188,56 @@ def main():
   dav.fail=500;message=press(d,GO);dav.fail=0
   receipt=(out/'profile/cloud-import.receipts').read_text()
   record('download-http-failure-retains-real-receipt-and-cleans','HTTP=500' in message and 'http=500' in receipt and not list((out/'profile/cloud-import').glob('cloud-*')))
+  # Hold only the real UI thread after the native network worker has entered
+  # GET. This creates a deterministic between-phases OS boundary, not a test
+  # hook in the production binary. The worker still publishes the actual file.
+  for outcome in ('committed','corrupt','cancelled','killed'):
+   phase='staging-'+outcome;gate.clear();release.clear();pause_get[0]=True
+   before_threads=threads();send(U.GetDlgItem(d,GO),0xF5);app.wait(gate.is_set)
+   candidates=[]
+   for identity in threads()-before_threads:
+    handle=kernel.OpenThread(0x100000|0x800,False,identity)
+    if handle:
+     created,ended,system,user_time=(W.FILETIME() for _ in range(4))
+     assert kernel.GetThreadTimes(handle,C.byref(created),C.byref(ended),C.byref(system),C.byref(user_time))
+     candidates.append(((created.dwHighDateTime<<32)|created.dwLowDateTime,handle))
+   assert candidates
+   candidates.sort();worker=candidates[0][1]
+   for _,handle in candidates[1:]:kernel.CloseHandle(handle)
+   tid=U.GetWindowThreadProcessId(app.window,None);thread=kernel.OpenThread(2,False,tid);assert thread
+   assert kernel.SuspendThread(thread)!=0xffffffff
+   staged=None
+   try:
+    if outcome=='cancelled':assert U.PostMessageW(d,0x111,CANCEL,0)
+    release.set()
+    def published():
+     values=list((out/'profile/cloud-import').glob('cloud-*'))
+     return values[0] if len(values)==1 and values[0].stat().st_size==len(originals[INPUTS[0][0]]) else None
+    staged=app.wait(published)
+    assert kernel.WaitForSingleObject(worker,15000)==0,'network worker must finish before modifying a published staging copy'
+    if outcome=='corrupt':staged.write_bytes(b'!'*len(originals[INPUTS[0][0]]))
+    staged.chmod(stat.S_IREAD)
+    if outcome=='killed':kill()
+   finally:
+    if app.process.poll() is None:assert kernel.ResumeThread(thread)!=0xffffffff
+    kernel.CloseHandle(thread)
+    kernel.CloseHandle(worker)
+   if outcome=='killed':
+    app=launch(existing=True)
+    account=app.open_account();app.fill(account,user=user,password=password,remember=False);app.apply(account,'仅本次会话');app.close_account(account)
+    d=show(CLOUD)
+    assert not U.IsWindowEnabled(U.GetDlgItem(d,GO)) and U.IsWindowEnabled(U.GetDlgItem(d,CLEAN))
+    press(d,CLEAN);assert staged.exists()
+    staged.chmod(stat.S_IREAD|stat.S_IWRITE);press(d,CLEAN)
+    record('kill-before-import-reopens-explicit-orphan-cleanup',not staged.exists() and sql('SELECT count(*) FROM books',product=False)==[(9,)])
+    choose(d,'books');press(d,GO);choose(d,INPUTS[0][0])
+   else:
+    settle(d);message=text(U.GetDlgItem(d,MESSAGE))
+    assert staged.exists() and 'retained=1' in message and U.IsWindowEnabled(U.GetDlgItem(d,CLEAN)),message
+    assert ('committed=1' if outcome=='committed' else 'committed=0') in message,message
+    if outcome=='committed':assert 'created=0' in message and 'staging_removed=0' in message,message
+    staged.chmod(stat.S_IREAD|stat.S_IWRITE);press(d,CLEAN)
+    record(outcome+'-cloud-import-retains-refused-staging-owner',not staged.exists() and sql('SELECT count(*) FROM books',product=False)==[(9,)])
   close(d);dav.pause=True;U.SetForegroundWindow(app.window);A.tap(ord('I'),(A.VK_CONTROL,A.VK_SHIFT));d=app.io_dialog();app.wait(lambda:dav.blocked.is_set())
   send(U.GetDlgItem(d,CLOSE),0xF5);dav.release.set();app.wait(lambda:not U.IsWindow(d));app.wait_idle()
   record('cancel-close-rejects-late-listing',sql('SELECT count(*) FROM books',product=False)==[(9,)] and U.IsWindowEnabled(app.window))
@@ -144,9 +245,14 @@ def main():
   d=show(CLOUD);record('401-no-plaintext-fallback','HTTP=401' in text(U.GetDlgItem(d,MESSAGE)) and not labels(d) and 'wrong-password' not in (out/'profile/account.ini').read_text());close(d)
   phase='bulk';d=show(BULK);record('native-ctrl-shift-o-opens-extended-selection',len(labels(d))==9 and send(U.GetDlgItem(d,ROWS),0x190)==0)
   names=select_books(d);record('uia-real-multiple-selection',send(U.GetDlgItem(d,ROWS),0x190)==2)
-  before=sql('SELECT book_key,favorite FROM reader_books ORDER BY book_key');message=press(d,GO)
+  before=sql('SELECT * FROM reader_books ORDER BY book_key')
+  expected_keys={format+':'+hashes[name] for name,format in [(name,fixture.rsplit('.',1)[1]) for name,fixture in INPUTS]
+                 if any(Path(name).stem in label for label in names)}
+  assert len(expected_keys)==2
+  message=press(d,GO)
   selected_keys={row[0] for row in sql('SELECT book_key FROM reader_books WHERE favorite=1')}
-  record('favorite-only-explicit-selection',len(selected_keys)==2 and 'committed=2' in message and len(labels(d,REPORT))==2 and sum(row[1] for row in before)==0)
+  record('favorite-only-explicit-selection',selected_keys==expected_keys and 'committed=2' in message and len(labels(d,REPORT))==2 and
+   [row for row in before if row[0] not in expected_keys]==[row for row in sql('SELECT * FROM reader_books ORDER BY book_key') if row[0] not in expected_keys])
   saved=counts();receipts=labels(d,REPORT);close(d);d=show(BULK)
   record('completed-journal-reopens-with-original-receipts',labels(d,REPORT)==receipts and counts()==saved)
   app.process.kill();app.process.wait(timeout=20);app.log.close();app=launch(existing=True);d=show(BULK);message=press(d,RESUME)
@@ -173,6 +279,56 @@ def main():
   message=press(d,RESUME)
   record('resume-uses-retained-original-request','complete=1' in message and sql('SELECT sum(favorite) FROM reader_books')==[(9,)] and len(labels(d,REPORT))==9)
   shot(d,'02-bulk-receipts.bmp');ack(d);close(d)
+  # The installed metadata owner can read/prepare under a separate SQLite
+  # RESERVED writer. Its actual apply waits at BEGIN IMMEDIATE. This gives the
+  # production binary an external, deterministic pre-commit boundary.
+  pending=Path(str(app.db)+'.product.sqlite.commands.pending')
+  for boundary in ('before','after'):
+   phase='bulk-kill-'+boundary;d=show(BULK);select_books(d,1);action(d,1 if boundary=='before' else 0)
+   before_counts=counts();before_favorites=sql('SELECT book_key,favorite FROM reader_books ORDER BY book_key')
+   blocker=sqlite3.connect(str(app.db)+'.product.sqlite',timeout=10);blocker.execute('BEGIN IMMEDIATE')
+   held=None
+   try:
+    send(U.GetDlgItem(d,GO),0xF5);app.wait(pending.exists,timeout=4)
+    retained=pending.read_bytes();retained_key,retained_revision=pending_identity(retained)
+    if boundary=='after':
+     held=kernel.CreateFileW(str(pending),0x80000000,1|2,None,3,0x80,None)
+     assert held and held!=C.c_void_p(-1).value
+     blocker.rollback();settle(d);message=text(U.GetDlgItem(d,MESSAGE))
+     committed_counts=counts();receipts=labels(d,REPORT)
+     record('bulk-commit-cleanup-denial-still-reports-committed','committed=1' in message and 'complete=0' in message and pending.read_bytes()==retained and
+      committed_counts==(before_counts[0]+1,before_counts[1]+1) and len(receipts)==1 and 'committed=1' in receipts[0])
+    kill()
+   finally:
+    blocker.rollback();blocker.close()
+    if held:kernel.CloseHandle(held)
+   app=launch(existing=True);d=show(BULK)
+   if boundary=='before':
+    record('bulk-kill-before-commit-keeps-exact-request',pending.read_bytes()==retained and counts()==before_counts and sql('SELECT book_key,favorite FROM reader_books ORDER BY book_key')==before_favorites)
+   else:
+    assert counts()==committed_counts and pending.read_bytes()==retained
+   message=press(d,RESUME);after_counts=counts()
+   if boundary=='before':
+    record('bulk-retry-after-kill-uses-original-revision','complete=1' in message and 'committed=1' in message and not pending.exists() and after_counts==(before_counts[0]+1,before_counts[1]+1) and
+     sql('SELECT entity_key FROM reader_revisions WHERE revision_id=?',(retained_revision,))==[(retained_key,)] and labels(d,REPORT)[0].endswith('revision='+retained_revision))
+   else:
+    record('bulk-kill-after-commit-replay-does-not-duplicate','complete=1' in message and 'committed=1' in message and not pending.exists() and after_counts==committed_counts and
+     labels(d,REPORT)[0].split('revision=')[-1]==receipts[0].split('revision=')[-1])
+   ack(d);close(d)
+  phase='concurrent-head'
+  ordered=sql('SELECT book_key FROM reader_books ORDER BY sort_title,book_key');conflict_key=ordered[0][0]
+  original=json.loads(sql("SELECT body_json FROM reader_revisions WHERE entity_kind='book' AND entity_key=? ORDER BY rowid LIMIT 1",(conflict_key,))[0][0])
+  concurrent=copy.deepcopy(original);concurrent['id']=uuid.uuid4().hex;concurrent['parents']=[]
+  raw=json.dumps(concurrent,ensure_ascii=False,separators=(',',':')).encode();wire=out/'concurrent-book.wire';wire.write_bytes(raw)
+  received=subprocess.run([str(args.revision_consumer.resolve()),'receive',str(app.db)+'.product.sqlite',str(wire),hashlib.sha256(raw).hexdigest()],capture_output=True,text=True,encoding='utf-8',timeout=60)
+  assert received.returncode==0 and json.loads(received.stdout)['status']==0,received.stdout+received.stderr
+  before_rows=sql('SELECT * FROM reader_books ORDER BY book_key')
+  d=show(BULK);select_books(d);action(d,1);message=press(d,GO);rows=labels(d,REPORT)
+  after_rows=sql('SELECT * FROM reader_books ORDER BY book_key')
+  record('concurrent-head-is-explicit-and-unselected-books-stay-unchanged','conflict=1' in message and len(rows)==2 and 'conflict=1' in rows[0] and
+   [row for row in before_rows if row[0]!=ordered[1][0]]==[row for row in after_rows if row[0]!=ordered[1][0]] and
+   sql('SELECT favorite FROM reader_books WHERE book_key=?',(ordered[1][0],))==[(0,)])
+  ack(d);close(d)
   record('original-inputs-unchanged',all(hashlib.sha256((args.fixtures/fixture).read_bytes()).hexdigest()==hashes[name] for name,fixture in INPUTS))
   assert len(checks)==len(REQUIRED) and set(checks)==set(REQUIRED)
   report['accepted']=True
@@ -193,6 +349,7 @@ def main():
   report['count']=len(checks);report['consumer_sha256']=hashlib.sha256(args.candidate.read_bytes()).hexdigest()
   report['cloud_probe_sha256']=hashlib.sha256(args.cloud_probe.read_bytes()).hexdigest()
   report['command_consumer_sha256']=hashlib.sha256(args.command_consumer.read_bytes()).hexdigest()
+  report['revision_consumer_sha256']=hashlib.sha256(args.revision_consumer.read_bytes()).hexdigest()
   (out/'import-organize-ui.json').write_text(json.dumps(report,indent=2,ensure_ascii=False)+'\n',encoding='utf-8');print(json.dumps(report,ensure_ascii=True),flush=True)
  if not report['accepted']:raise SystemExit('Windows cloud import / organization native acceptance failed')
 

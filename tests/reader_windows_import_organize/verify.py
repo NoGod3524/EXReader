@@ -19,12 +19,15 @@ from check_parallel_integration import fetch,download_artifact_zip,require
 def module(name,path):
  spec=importlib.util.spec_from_file_location(name,path);result=importlib.util.module_from_spec(spec);spec.loader.exec_module(result);return result
 
-def validate(report,source,run,attempt,product,probe,command):
+def validate(report,source,run,attempt,product,probe,command,revision):
  names=search.names_from_source(Path(__file__).with_name('check_ui.py'),'REQUIRED')
  search.bound(report,names,source,run,attempt)
- require(report['consumer_sha256']==product and report['cloud_probe_sha256']==probe and report['command_consumer_sha256']==command,'T01 used a different host or installed consumer')
+ require(report['consumer_sha256']==product and report['cloud_probe_sha256']==probe and report['command_consumer_sha256']==command and report['revision_consumer_sha256']==revision,'T01 used a different host or installed consumer')
  require(report['transport']=='SendInput+UIAutomation+Win32' and report['complete_product'] is False and report['performance_accepted'] is False and report['screen_reader_accepted'] is False,'invalid T01 scope')
  require(len(report['inputs'])==9 and report['screenshots'] and report['public_readback']['ok']==1 and len(report['public_readback']['books'])==9,'missing fixture or public SDK oracle')
+ inputs=search.names_from_source(Path(__file__).with_name('check_ui.py'),'INPUTS')
+ expected={name:hashlib.sha256((ROOT/'tests/fixtures'/fixture).read_bytes()).hexdigest() for name,fixture in inputs}
+ require(report['inputs']==expected,'fixed nine-format inputs changed')
  require(all(book['read_ok']==1 for book in report['public_readback']['books']),'public SDK readback failed')
  require(any(r['method']=='PROPFIND' and r['authenticated'] for r in report['requests']) and any(r['method']=='GET' and r['authenticated'] for r in report['requests']),'no real authenticated TLS traffic')
  return len(names)
@@ -55,10 +58,13 @@ def main():
    def sha(path):return hashlib.sha256(z.read(path)).hexdigest()
    def load(path):return json.loads(z.read(path))
    product=sha('ws-package/EXReader/EXReader.exe');probe=sha('wio-reader_webdav_import/cloud-probe.exe');command=sha('account-commands-consumer/command-consumer.exe')
-   report=load('wio-ui/import-organize-ui.json');count=validate(report,source,run,attempt,product,probe,command)
+   revision=sha('account-revisions-consumer/revision-consumer.exe')
+   report=load('wio-ui/import-organize-ui.json');count=validate(report,source,run,attempt,product,probe,command,revision)
+   originals={sha('wio-ui/readback/book-%d.bin'%book['id']) for book in report['public_readback']['books']}
+   require(originals==set(report['inputs'].values()),'independent original bytes differ from fixed fixtures')
    rejections=0
    for mutation in (dict(accepted=False),dict(source_sha='0'*40),dict(run_id='0'),dict(attempt='0'),dict(consumer_sha256='wrong'),dict(cloud_probe_sha256='wrong'),dict(command_consumer_sha256='wrong'),dict(inputs={}),dict(screenshots=[]),dict(requests=[]),dict(complete_product=True),dict(public_readback={'ok':0,'books':[]})):
-    try:validate(report|mutation,source,run,attempt,product,probe,command)
+    try:validate(report|mutation,source,run,attempt,product,probe,command,revision)
     except (ValueError,KeyError):rejections+=1
     else:raise ValueError('T01 strict verifier accepted a malformed report')
    for path in report['screenshots']:require(z.read('wio-ui/'+path).startswith(b'BM'),'missing actual Win32 screenshot')
