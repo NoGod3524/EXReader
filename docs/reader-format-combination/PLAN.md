@@ -45,6 +45,8 @@ RTF 保留值 listid 的接受仍明确属于只读兼容扩展；CBZ 只读去�
 
 新 query 的 find、anchor capture/resolve/reopen 必须在 v2 的新运行重新通过，不能把旧诊断或文本存在当作已经授予。v1 manifest 字节、旧失败与 `accepted:false` 继续保留；1710 仍为 `0/1710`，v2 只报告这 18 份独立真实语料。
 
+原 `run_acceptance.py.validate_manifest` 硬钉 dataset_id=v1，不能直接宣称原 runner 已支持 v2。新增薄 v2 runner：先用未改旧校验验证原 manifest，再对 v2 做上述完整深比较；复用未改的下载、许可收集、`run_one` 和 `compare_expectations` 函数。新 summary 明确记录 dataset_id=v2 与实际 v2 SHA，不改旧校验函数，也不把 v2 伪装成 v1。
+
 ## 4. 消费者修正边界
 
 C05 交付的是 FB2 专项 probe，不是已经通过全部九格式的 F5 替代消费者。新适配只复用它实际验证过的 Windows `CommandLineToArgvW` / `WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS)` 转换路径、来源和构建要求；必须给新 F5 适配另立身份和验收。
@@ -72,7 +74,7 @@ Windows 要另测 ASCII、空 query、Cyrillic 两个真实 query、非 BMP、NF
 3. **历史对照**：approved baseline + 原 v1/原消费者，保留这一轮真实失败；combined + UTF-8 消费者 + v1，保留 Crowley 原 query 的 miss 和连带锚点失败。对照使用原字节/查询/预期，不回写旧记录。
 4. **v2 必需项**：combined + UTF-8 消费者 + v2，18/18 必须按原逐项操作预期通过，原件公开读回与输入 SHA 完全一致；两个 FB2 query 的 UTF-8 字节、find 与锚点必须真实通过，Crowley 使用新连续 query 重新完成 find/anchor/reopen。不能把不同字体下页数差异当作预设相等，也不能把 CBZ 无文本的原声明改成文字查找通过。
 
-每项命令保留 timeout/exit/raw stdout/stderr，不能把无法打开文件当成格式拒绝。所有已运行消费者、probe、SDK 库/DSO 的实际文件一并上传，附字节、SHA-256、加载/依赖输出、工具链、两个 SDK tree、两 patch、consumer、manifest 与 18 输入的身份。
+每项命令保留 timeout/exit/raw stdout/stderr，不能把无法打开文件当成格式拒绝。本包安装后 F5 消费者、RTF/CBZ probe、argv 适配测试程序和 SDK 库/DSO 的实际文件一并上传，附字节、SHA-256、加载/依赖输出、工具链、两个 SDK tree、两 patch、consumer、manifest 与 18 输入的身份；native 全集保留完整测试清单、原日志和 JUnit。
 
 ### strict
 
