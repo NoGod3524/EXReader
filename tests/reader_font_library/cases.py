@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 """Fixed acceptance cases; reports may neither omit nor invent cases."""
 COMMON = [
- 'installed-c-abi-sdk340', 'empty-library', 'ttf-import-content-identity',
+ 'unrelated-private-directory-file-preserved', 'installed-c-abi-sdk340', 'empty-library', 'ttf-import-content-identity',
  'deduplicate-preserves-record', 'find-list-bounds', 'sdk-glyph-shape-layout',
  'leased-remove-close-busy', 'wrong-thread-preserves-owner-and-lease',
  'bounded-live-lease-count', 'otf-sdk-validation', 'ttc-explicit-face-and-invalid-face',
@@ -14,6 +14,7 @@ COMMON = [
  'callback-reentry-rejected', 'cancel-each-stage-retry-preserves-old',
  'selected-file-post-open-change-rejected', 'font-exact-byte-boundary',
  'font-over-byte-boundary', 'directory-entry-limit-dedupe-at-capacity',
+ 'quota-deduplication-no-oversized-temporary', 'reopen-lower-budget-classified-limit',
  'directory-byte-limit-preserves-old', 'hard-limits-reject-oversized-config',
  'explicit-remove-and-not-found', 'selected-original-never-removed',
  'content-path-conflict-no-overwrite', 'manifest-version-corrupt-missing-classification',

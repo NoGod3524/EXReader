@@ -192,13 +192,21 @@ void commit(rfl_library&l,const std::map<std::string,rfl_record>&records){
   try{directory_sync(l);}catch(...){l.poisoned=true;throw failure{RFL_COMMIT_UNCERTAIN,"manifest published but directory durability uncertain; reopen"};}
 }
 void load(rfl_library&l){
+  // Dedicated namespace: bound enumeration even for an externally damaged
+  // directory, and never adopt/delete unrelated original user files.
+  size_t inventory=0;
+  for(const auto&e:fs::directory_iterator(l.path)){
+    need(++inventory<=261,RFL_LIMIT,"private-directory entry limit");auto n=e.path().filename().u8string();
+    bool managed=n.size()==69&&n.substr(64)==".font"&&hash_valid(n.substr(0,64));
+    need(managed||n==".rfl-lock"||n=="manifest.rfl"||n==".rfl-initialized"||n==".rfl-tmp-font"||n==".rfl-tmp-manifest",RFL_CORRUPT,"unrelated entry in dedicated private directory");
+  }
   if(!exists(l,"manifest.rfl")){need(!exists(l,".rfl-initialized"),RFL_MISSING,"manifest missing from initialized directory");
     for(const auto&e:fs::directory_iterator(l.path)){auto n=e.path().filename().u8string();need(!(n.size()==69&&n.substr(64)==".font"),RFL_MISSING,"manifest missing with managed fonts");}commit(l,{});
   }
   auto f=child(l,"manifest.rfl");auto st=stat_file(f);need(st.size<=160*1024,RFL_CORRUPT,"manifest too large");std::string s(size_t(st.size),'\0');size_t at=0;while(at<s.size()){size_t n=read_at(f,at,&s[at],s.size()-at);need(n,RFL_CORRUPT,"manifest truncated");at+=n;}
   need(s.rfind("RFL",0)==0,RFL_CORRUPT,"manifest magic");need(s.rfind("RFL1\n",0)==0,RFL_MANIFEST_VERSION,"unknown manifest version");
   size_t pos=5;uint64_t total=0;std::string last;
-  while(pos<s.size()){auto end=s.find('\n',pos);need(end!=std::string::npos,RFL_CORRUPT,"manifest incomplete record");auto line=s.substr(pos,end-pos);auto a=line.find(' '),b=line.find(' ',a==std::string::npos?0:a+1);need(a==64&&b!=std::string::npos,RFL_CORRUPT,"manifest fields");auto hash=line.substr(0,a),number=line.substr(a+1,b-a-1);need(hash_valid(hash)&&hash>last&&!number.empty()&&number.size()<10&&number.find_first_not_of("0123456789")==std::string::npos,RFL_CORRUPT,"manifest identity/size/order");uint64_t size=std::stoull(number);need(std::to_string(size)==number&&size&&size<=l.limits.font_bytes,RFL_CORRUPT,"manifest size limit");auto name=unhex(line.substr(b+1));l.records.emplace(hash,record(hash,name,size));total+=size;need(l.records.size()<=l.limits.entries&&total<=l.limits.directory_bytes,RFL_LIMIT,"stored fonts exceed configured budget");last=hash;pos=end+1;}
+  while(pos<s.size()){auto end=s.find('\n',pos);need(end!=std::string::npos,RFL_CORRUPT,"manifest incomplete record");auto line=s.substr(pos,end-pos);auto a=line.find(' '),b=line.find(' ',a==std::string::npos?0:a+1);need(a==64&&b!=std::string::npos,RFL_CORRUPT,"manifest fields");auto hash=line.substr(0,a),number=line.substr(a+1,b-a-1);need(hash_valid(hash)&&hash>last&&!number.empty()&&number.size()<10&&number.find_first_not_of("0123456789")==std::string::npos,RFL_CORRUPT,"manifest identity/size/order");uint64_t size=std::stoull(number);need(std::to_string(size)==number&&size&&size<=64ull*1024*1024,RFL_CORRUPT,"manifest size limit");need(size<=l.limits.font_bytes,RFL_LIMIT,"stored font exceeds configured limit");auto name=unhex(line.substr(b+1));l.records.emplace(hash,record(hash,name,size));total+=size;need(l.records.size()<=l.limits.entries&&total<=l.limits.directory_bytes,RFL_LIMIT,"stored fonts exceed configured budget");last=hash;pos=end+1;}
   for(const auto&p:l.records){auto font=child(l,p.first+".font");need(stat_file(font).size==p.second.bytes&&digest(font)==p.first,RFL_CORRUPT,"stored font identity changed");auto validated=sdk_open(font,0);}
   if(!exists(l,".rfl-initialized")){auto marker=child(l,".rfl-initialized",true);write_all(marker,"RFL1\n",5);flush(marker);directory_sync(l);}
   else{auto marker=child(l,".rfl-initialized");char signature[5]{};need(stat_file(marker).size==5&&read_at(marker,0,signature,5)==5&&std::memcmp(signature,"RFL1\n",5)==0,RFL_CORRUPT,"initialization marker");}

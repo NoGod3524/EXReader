@@ -48,7 +48,9 @@ rfl_close(library, &error);
 ## Concrete contract
 
 - The host creates and secures an existing absolute, normalized, private
-  directory. Relative paths, invalid UTF-8, symbolic-link path components,
+  directory dedicated to this package, with no original user files. At most 261
+  reserved entries (256 fonts plus metadata/temporaries) are inspected; unrelated
+  files cause refusal and are preserved. Relative paths, invalid UTF-8, symbolic-link path components,
   Windows reparse points/junctions, device/alternate-stream paths and nonregular
   input files are rejected. File handles are checked **after opening**. Input
   files are never renamed, deleted or written. Paths are limited to 4096 UTF-8
