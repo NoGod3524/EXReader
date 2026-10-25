@@ -114,7 +114,9 @@ def main():
         'accepted': accepted,
         'scope': {'debug_candidate_only': True, 'store_channel': False,
                   'physical_device': False, 'signing_authority': False,
-                  'emulator_only': True, 'native_error_analysis': False},
+                  'emulator_only': True, 'native_error_analysis': False,
+                  'independent_public_sdk_readback': False},
+        'pending': ['independent public SDK original/progress value readback; SQL and private-copy hashes are diagnostic only'],
     }
     common.write_json(args.output / 'result.json', result)
 

@@ -481,8 +481,7 @@ class Driver:
                     'lastReader': selection.get('lastReader'), 'lastBook': selection.get('lastBook'),
                     'preferences_injected': self.observed['preferences_injected']})
 
-        self.shell('settings', 'put', 'global', 'airplane_mode_on', '1')
-        self.shell('am', 'broadcast', '-a', 'android.intent.action.AIRPLANE_MODE', '--ez', 'state', 'true')
+        self.shell('cmd', 'connectivity', 'airplane-mode', 'enable')
         self.shell('svc', 'wifi', 'disable')
         self.shell('svc', 'data', 'disable')
         time.sleep(3)
@@ -511,6 +510,14 @@ class Driver:
                              lambda: next((row for row in self.metrics() if row['book'] == book_id), None),
                              240)
         self.observed['offline_reopen_page'] = reopened
+        reopen_log = self.adb('logcat', '-d', '-t', '6000')
+        self.observed['offline_public_sdk_host_path'] = {
+            'handle_open': any('handle open book=%d mode=reflow' % book_id in line
+                               for line in reopen_log.splitlines()),
+            'source_api': 'MainActivity.openBook -> BookStore.verifySource -> exr_library_source',
+            'progress_api': 'MainActivity.openBook -> BookStore.progress -> exr_library_progress_get',
+            'independent_public_api_readback': False,
+        }
         self.check('offline_reopen_same_reading_record',
                    reopened['page'] == page, {'before': page, 'after': reopened['page']})
         try:
@@ -572,7 +579,9 @@ class Driver:
         evidence.mkdir(parents=True, exist_ok=True)
         pulled = {}
         for suffix in ('', '-wal', '-shm'):
-            data = self.run_as('cat', 'files/library.db' + suffix, check=False)
+            source_path = shlex.quote('files/library.db' + suffix)
+            data = self.run_as('sh', '-c', 'if [ -f ' + source_path + ' ]; then cat '
+                               + source_path + '; fi')
             if data:
                 (evidence / ('library.db' + suffix)).write_bytes(data)
                 pulled['library.db' + suffix] = len(data)
