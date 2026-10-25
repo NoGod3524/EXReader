@@ -2154,6 +2154,7 @@ static void page_step(int direction);
 static void change_font(int delta);
 static void change_zoom(int delta);
 static void select_all_page(void);
+static void selection_bounds(size_t *start,size_t *end);
 static void copy_quote(void);
 static void add_note(void);
 static void update_note(void);
