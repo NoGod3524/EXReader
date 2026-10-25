@@ -49,7 +49,30 @@ guard. Probe `40212846373` exposed an incorrect test expectation of runtime3.40
 instead of actual3.41. Probe `40213236938` passed all ten owner process phases,
 four kill/retry boundaries and legacy pending refusals, then stopped at an
 ambiguous suffix lookup for the Mac ZIP's root result. The loader now reads
-that exact root member. These partial runs grant no complete raw host scope.
+that exact root member. Subsequent source-only fixture corrections use exact
+root-relative ZIP inventory paths and the existing `exreader-sync-v1` DAV
+namespace. Diagnostic probes `40214986168`, `40215778447` and `40218351116`
+then identified an omitted real startup shelf command in the peer probe:
+the GTK catalog is deliberately opened lazily by that command. The probe now
+performs the same initialization before received-history operations.
+
+Isolated probe `40218764233/1`, source `803098e9`, passed all fourteen actual
+owner process phases, four real kill/retry boundaries, four installed-origin
+and family refusals, both authentic Mac network cases, and all original
+forty-five compact UI cases on the raw program. The normal Mac session pulled
+fifteen immutable wires and resolved eleven reading records across four
+originals; the separate NULL closure pulled three wires and kept its one NULL
+location unresolved after reopen. Both actual account windows completed all
+256 authenticated DAV shards. The complete retained-chain run is separate;
+this isolated probe does not substitute for it.
+
+Complete attempt `40219591315/1` passed all 35 original producer steps, both
+45-case compact UI suites, the actual raw owner/network cases, and the
+unchanged original OFF strict collector. Its compact wrapper then imported
+the OFF-only navigation image validator unnecessarily in a job without
+Pillow, so the compact and combined summaries failed. That import is now
+confined to `--off`; the production pin, original suites and original judges
+are unchanged. Complete acceptance requires a new whole same-source run.
 
 All builds, syntax checks, fixtures, UI, SQLite inspection and ZIP processing
 run in Actions. Performance, frame correctness, physical devices, screen

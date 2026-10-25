@@ -13,9 +13,9 @@ FINAL_JOB='Authenticate GTK raw3 host packet and complete retained compact OFF s
 def main():
     assert os.environ.get('GITHUB_ACTIONS')=='true'
     sys.path.insert(0,str(ROOT/'tests/reader_gtk_341_final'))
-    import navigation_contract
-    navigation_contract.MERGED=PRODUCTION
     if '--off' in sys.argv:
+        import navigation_contract
+        navigation_contract.MERGED=PRODUCTION
         path=ROOT/'tests/reader_gtk_341_final/aggregate.py';text=path.read_text();literal="'.github/workflows/reader-gtk-341-final.yml'";assert text.count(literal)==1
         module=type(sys)('raw3_retained_complete_off');module.__file__=str(path)
         exec(compile(text.replace(literal,repr(WORKFLOW)),str(path),'exec'),module.__dict__);module.main();return
