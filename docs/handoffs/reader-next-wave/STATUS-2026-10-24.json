@@ -1,15 +1,16 @@
 {
   "schema": 1,
-  "observed_at_utc": "2026-10-25T02:17:24Z",
+  "observed_at_utc": "2026-10-25T02:28:45Z",
   "packages": 19,
   "cloud_success": 19,
-  "returned_pending_root_review": 14,
+  "returned_pending_root_review": 13,
   "root_review_closed_awaiting_integration": [
     "J03",
     "J06",
     "J25",
     "J19",
-    "J08"
+    "J08",
+    "J07"
   ],
   "needs_further_work": [],
   "root_review_and_integration_complete": false,
@@ -52,10 +53,12 @@
       "source": "4ff8c803faec4d4bb351175290ad9f1cb9b82938",
       "status": "completed",
       "conclusion": "success",
-      "root_state": "root_repaired_independent_branch_actions_pending",
+      "root_state": "root_review_closed_awaiting_integration",
       "review_branch": "codex/reader-jump-history-review",
-      "repair_source": "1902a41bc9bb1c8b0dc7dcbd608d915f1948d669",
-      "repair_run": 40153658637
+      "repair_source": "98cf5683f84f1520ba358763fadcbd61f31242f8",
+      "repair_run": 40154247018,
+      "review_head": "561208ede9e85263c98e9563470349c7fa39ccb5",
+      "review": "J07-ROOT-REVIEW.md"
     },
     {
       "id": "J08",
@@ -74,7 +77,10 @@
       "source": "72fdc1a8976e95e615fe6bdd2c8fafcb651fa660",
       "status": "completed",
       "conclusion": "success",
-      "root_state": "cloud_success_awaiting_root_review_and_integration"
+      "root_state": "root_parser_error_repair_actions_pending",
+      "review_branch": "codex/reader-book-information-review",
+      "repair_source": "aa76a35bfdec067da0850bcbb4a3c1d16cd096ff",
+      "repair_run": 40154360163
     },
     {
       "id": "J12",
@@ -83,7 +89,8 @@
       "source": "d427875579f714c0874c1b3cc5388b95a7f4e950",
       "status": "completed",
       "conclusion": "success",
-      "root_state": "cloud_success_awaiting_root_review_and_integration"
+      "root_state": "root_review_strict_evidence_hardening_required",
+      "review": "J12-ROOT-REVIEW.md"
     },
     {
       "id": "J13",
