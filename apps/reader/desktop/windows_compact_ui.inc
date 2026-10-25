@@ -11,11 +11,13 @@ static void compact_controls(void) {
 }
 
 static void compact_visible(HWND window, int visible) {
-  if (window) ShowWindow(window, visible ? SW_SHOWNA : SW_HIDE);
+  if (window && (((GetWindowLongPtrW(window,GWL_STYLE)&WS_VISIBLE)!=0)!=!!visible))
+    ShowWindow(window, visible ? SW_SHOWNA : SW_HIDE);
 }
 
 static int compact_layout(void) {
   RECT area;
+  HWND previous_focus=GetFocus();
   HWND controls[] = {g.import_label,g.import_edit,g.import_button,g.open_button,g.delete_button,
     g.prev_button,g.next_button,g.select_button,g.copy_button,g.add_button,g.update_button,
     g.remove_button,g.jump_button,g.font_dec,g.font_inc,g.zoom_dec,g.zoom_inc,g.cancel_button,
@@ -40,8 +42,21 @@ static int compact_layout(void) {
     records.button,
 #endif
   };
-  for (size_t i=0;i<sizeof(controls)/sizeof(controls[0]);i++) compact_visible(controls[i],compact_expanded);
-  compact_visible(compact_back,0);compact_visible(compact_resume,0);
+  for (size_t i=0;i<sizeof(controls)/sizeof(controls[0]);i++) {
+    HWND window=controls[i];
+    int visible=compact_expanded || window==g.status;
+    if(compact_reading)
+      visible |= window==g.prev_button || window==g.next_button || window==g.page_label || window==g.page;
+    else {
+      visible |= window==g.import_button || window==g.open_button || window==g.shelf_label || window==g.books;
+#ifdef EXR_READER_PRODUCT_CATALOG
+      visible |= window==g.shelf_search_label || window==g.shelf_search;
+#endif
+    }
+    compact_visible(window,visible);
+  }
+  compact_visible(compact_back,!compact_expanded && compact_reading);
+  compact_visible(compact_resume,!compact_expanded && !compact_reading);
   if (compact_expanded) return 0;
   GetClientRect(g.window,&area);
   int width=area.right,height=area.bottom;
@@ -67,8 +82,8 @@ static int compact_layout(void) {
 #endif
   }
   compact_controls();
-  HWND focus=GetFocus();
-  if(focus && IsChild(g.window,focus) && !IsWindowVisible(focus)) SetFocus(compact_reading ? g.page:g.books);
+  if(previous_focus && IsChild(g.window,previous_focus) && !IsWindowVisible(previous_focus) && IsWindowEnabled(g.window))
+    SetFocus(compact_reading ? g.page:g.books);
   InvalidateRect(g.page,NULL,TRUE);
   return 1;
 }
@@ -96,8 +111,9 @@ static void compact_expand(int expanded) {
   /* The existing full panel keeps its original usable minimum geometry. */
   if(expanded) {
     RECT bounds;GetWindowRect(g.window,&bounds);
-    if(bounds.right-bounds.left<1060 || bounds.bottom-bounds.top<660)
-      SetWindowPos(g.window,NULL,0,0,1060,660,SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
+    int width=bounds.right-bounds.left,height=bounds.bottom-bounds.top;
+    if(width<1060 || height<660)
+      SetWindowPos(g.window,NULL,0,0,width<1060?1060:width,height<660?660:height,SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
   }
   layout_controls();
 }
