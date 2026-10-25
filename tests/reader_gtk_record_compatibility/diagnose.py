@@ -7,8 +7,10 @@ from pathlib import Path, PurePosixPath
 import sys
 import tempfile
 import zipfile
+import subprocess
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'tools'))
 from check_parallel_integration import download_artifact_zip, fetch
+from host_font import fetch as fetch_font
 
 assert os.environ.get('GITHUB_ACTIONS') == 'true'
 SOURCE = '126b4f78cb09a259fb8263d06dabf3a44f3f7a5f'
@@ -61,3 +63,66 @@ with zipfile.ZipFile(io.BytesIO(data)) as archive:
         selected = [wire for wire in wires if wire['id'] not in parents]
         for wire in selected:
             print(json.dumps(dict(diagnostic_only=True, profile=kind, selected_wire=wire), ensure_ascii=False), flush=True)
+    # Observe public function entries/returns in the exact original ELF. GDB
+    # never changes a register, request, runtime tag, selector or producer file.
+    scratch = Path('build/gtk-compat-readonly-debug').resolve();scratch.mkdir(parents=True)
+    profile = scratch / 'profile';profile.mkdir(mode=0o700)
+    prefix = 'gtk-record-compatibility-evidence/profile-old-old-epub/'
+    for name in names:
+        if prefix not in name or name.endswith('/'):
+            continue
+        tail = name.split(prefix, 1)[1]
+        target = profile / tail;target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        target.write_bytes(archive.read(name));target.chmod(0o600)
+    executable = scratch / 'original-old-owner'
+    executable.write_bytes(raw('gtk-record-compatibility-evidence/old-owner/gtk-record-compatibility'))
+    assert hashlib.sha256(executable.read_bytes()).hexdigest() == report['programs']['old']['binary_sha256']
+    executable.chmod(0o700)
+    root = Path(__file__).resolve().parents[2]
+    subprocess.run([sys.executable, root / 'tests/reader_reading_commands/make_fixtures.py', scratch / 'fixtures'], check=True)
+    book = scratch / 'fixtures/book.epub'
+    assert hashlib.sha256(book.read_bytes()).hexdigest() == '99a21d3a73924d5b2efe4596076348b1eb7b00715ebc727737edd91f2f3bf50b'
+    font = fetch_font(scratch / 'font') / 'Reader.otf'
+    script = scratch / 'observe.gdb'
+    script.write_text('''set pagination off
+set disable-randomization off
+python
+import gdb, json, struct
+def integer(expression):
+    return int(gdb.parse_and_eval(expression))
+class Return(gdb.FinishBreakpoint):
+    def __init__(self, name, match, part):
+        super().__init__(gdb.newest_frame(), internal=True)
+        self.function_name, self.match, self.part = name, match, part
+    def stop(self):
+        row = dict(diagnostic_only=True, event='actual-return', function=self.function_name,
+                   result=integer('$rax') & 0xffffffff)
+        memory = gdb.selected_inferior()
+        if self.match:
+            data = memory.read_memory(self.match,24).tobytes()
+            row.update(state=struct.unpack_from('<I',data)[0],start=struct.unpack_from('<Q',data,8)[0],end=struct.unpack_from('<Q',data,16)[0])
+        if self.part:
+            row['resolved_part'] = struct.unpack('<Q',memory.read_memory(self.part,8).tobytes())[0]
+        print(json.dumps(row),flush=True)
+        return False
+class Entry(gdb.Breakpoint):
+    def __init__(self,name):
+        super().__init__(name,internal=True)
+        self.function_name=name
+    def stop(self):
+        name=self.function_name
+        match=integer('$r9') if name=='reader_rs_resolve_epub' else integer('$rcx') if name=='exr_pager_anchor_resolve' else 0
+        part=integer('$rdx') if name=='reader_rs_epub_record_part' else 0
+        print(json.dumps(dict(diagnostic_only=True,event='actual-call',function=name)),flush=True)
+        Return(name,match,part)
+        return False
+for name in ['reader_rs_epub_record_part','reader_rs_resolve_epub','exr_pager_anchor_resolve','exr_publication_pager_create','exr_pager_get','exr_render_page_ex']:
+    Entry(name)
+end
+run
+''')
+    done = subprocess.run(['gdb', '--batch', '-x', str(script), '--args', str(executable), str(profile),
+        str(font), str(book), 'verify', str(scratch / 'diagnostic-partial.json'), '3.40.0', '3.40.0'],
+        capture_output=True, text=True, timeout=120)
+    print(done.stdout, flush=True);print(done.stderr, flush=True)
+    print(json.dumps(dict(accepted=False, diagnostic_only=True, original_elf_sha256=hashlib.sha256(executable.read_bytes()).hexdigest(), debugger_exit=done.returncode)), flush=True)
