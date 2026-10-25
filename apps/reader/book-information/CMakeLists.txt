@@ -12,7 +12,11 @@ if(EXR_SDK)
 endif()
 # Only the installed public SDK and the installed product catalog package; no SDK
 # private header, archive or second SQLite build is used here.
-find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED COMPONENTS library)
+set(EXR_SDK_VERSION "3.40.0" CACHE STRING "Exact installed SDK: frozen 3.40.0 or explicit 3.41.0 candidate")
+if(NOT EXR_SDK_VERSION MATCHES "^3\\.(40|41)\\.0$")
+  message(FATAL_ERROR "Unsupported exact reader SDK version: ${EXR_SDK_VERSION}")
+endif()
+find_package(EXReader ${EXR_SDK_VERSION} EXACT CONFIG REQUIRED COMPONENTS library)
 find_package(EXReaderProductCatalog 0.1.0 EXACT CONFIG REQUIRED)
 add_library(reader_book_information STATIC src/book_information.c)
 target_include_directories(reader_book_information PUBLIC

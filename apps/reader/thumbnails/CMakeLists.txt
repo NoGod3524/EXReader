@@ -10,7 +10,11 @@ endif()
 # Optional package. Only installed frozen SDK components are used: core (image
 # decode, fixed render) and library (exr_library_blob). No SDK private header,
 # SQL, product catalog or revision store is involved.
-find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED COMPONENTS core library
+set(EXR_SDK_VERSION "3.40.0" CACHE STRING "Exact installed SDK: frozen 3.40.0 or explicit 3.41.0 candidate")
+if(NOT EXR_SDK_VERSION MATCHES "^3\\.(40|41)\\.0$")
+  message(FATAL_ERROR "Unsupported exact reader SDK version: ${EXR_SDK_VERSION}")
+endif()
+find_package(EXReader ${EXR_SDK_VERSION} EXACT CONFIG REQUIRED COMPONENTS core library
   PATHS "${EXR_SDK}" NO_DEFAULT_PATH)
 add_library(reader_thumbnails STATIC src/thumbnails.cpp)
 target_include_directories(reader_thumbnails PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
