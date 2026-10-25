@@ -19,3 +19,9 @@ include ':webdav'
 project(':webdav').projectDir=file('../../extras/webdav/android/webdav')
 include ':credentials'
 project(':credentials').projectDir=file('../../extras/credentials/android/credentials')
+include ':importentry'
+project(':importentry').projectDir=file('../../extras/android-import-entry/android/importentry')
+if(providers.gradleProperty('exrHostImport').orNull == 'true') {
+    include ':hostimportsource'
+    project(':hostimportsource').projectDir=file('../../tests/reader_android_host_import/source')
+}
