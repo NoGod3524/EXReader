@@ -9,6 +9,7 @@ final class PageSnapshot {
     boolean bounded;
     int part = -1;
     String path;
+    String sourceKey;
     long textBase, boundedHandle;
     boolean preserveProgress;
     String restoreNotice;
@@ -16,6 +17,13 @@ final class PageSnapshot {
     BoundedEpub boundedOwner;
     String[] boundedLocation;
     float layoutFont;
+    float layoutLine=1.6f,layoutParagraph=12f,layoutMargin=32f;
+    long preferencesPoint=-1;
+    long preferencesRangeEnd=-1;
+    boolean fixedTextProvided;
+    String fixedPageId;
+    String fixedRendererSourceKey;
+    int fixedRendererIdentity;
     float layoutZoom=1f;
     final long bookId;
     final Bitmap bitmap;

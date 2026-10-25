@@ -1,0 +1,169 @@
+name: Reader GTK keyboard and accessibility audit
+on:
+  push:
+    branches: [codex/reader-a11y-gtk]
+    paths:
+      - 'tests/reader_a11y_gtk/**'
+      - '.github/workflows/reader-a11y-gtk.yml'
+      - 'docs/READER-A11Y-GTK.md'
+      - 'docs/validation/reader-a11y-gtk.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: reader-a11y-gtk-${{ github.ref }}
+  cancel-in-progress: true
+defaults:
+  run:
+    shell: bash
+env:
+  START_SHA: f43baf9182d75907c0cb5d6f77048f27bca8c950
+  SDK_SHA: 9854061be331fe603a1822d9b2b36ee357154927
+jobs:
+  audit:
+    name: Real D-Bus AT-SPI tree, keystrokes and screenshots on Xvfb
+    runs-on: ubuntu-22.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed source, frozen SDK tree and this package's file whitelist
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$START_SHA" HEAD
+          git diff --exit-code "$SDK_SHA" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          changed="$(git diff --name-only "$START_SHA" HEAD)"
+          echo "$changed"
+          bad="$(echo "$changed" | grep -v -E '^(tests/reader_a11y_gtk/|\.github/workflows/reader-a11y-gtk\.yml$|docs/READER-A11Y-GTK\.md$|docs/validation/reader-a11y-gtk\.json$)' || true)"
+          if [ -n "$bad" ]; then
+            echo "files outside this package changed:" >&2
+            echo "$bad" >&2
+            exit 1
+          fi
+          git diff --exit-code "$START_SHA" HEAD -- apps extras examples tools
+          { echo "source_sha=$GITHUB_SHA"; echo "start_sha=$START_SHA"; echo "sdk_sha=$SDK_SHA";
+            echo "run_id=$GITHUB_RUN_ID"; echo "attempt=$GITHUB_RUN_ATTEMPT";
+            echo "changed_files<<EOF"; echo "$changed"; echo "EOF"; } > source-binding.txt
+          cat source-binding.txt
+      - name: Install GTK, AT-SPI, X11 input and evidence tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring \
+            libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config \
+            at-spi2-core python3-gi gir1.2-atspi-2.0 gsettings-desktop-schemas \
+            dbus xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil
+          python3 -c 'import gi; gi.require_version("Atspi", "2.0"); from gi.repository import Atspi; from gi.repository import Atk; print("pygobject", gi.version_info, "atk", Atk.MAJOR_VERSION, Atk.MINOR_VERSION)'
+          dpkg-query -W at-spi2-core gir1.2-atspi-2.0 libatspi2.0-0 2>/dev/null || true
+          ls -l /usr/libexec/at-spi2-registryd /usr/lib/at-spi2-core/at-spi-bus-launcher 2>/dev/null || true
+      - name: Parse-check the audit harness
+        run: |
+          set -euo pipefail
+          python3 -m py_compile tests/reader_a11y_gtk/*.py
+          mkdir -p build/a11y-logs
+          python3 -c 'import sys; sys.path.insert(0, "tests/reader_a11y_gtk"); import expectations as c; print(len(c.PHASES), "phases", len(c.CHECKS), "checks")'
+      - name: Build installed product modules with one product provider
+        run: |
+          set -euo pipefail
+          mkdir -p build/a11y-logs
+          prefix="$PWD/build/a11y-stage"
+          echo "A11Y_PREFIX=$prefix" >> "$GITHUB_ENV"
+          cmake -S apps/reader/store/native -B build/a11y-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee build/a11y-logs/product-configure.log
+          cmake --build build/a11y-product --parallel 4 2>&1 | tee build/a11y-logs/product-build.log
+          cmake --install build/a11y-product 2>&1 | tee build/a11y-logs/product-install.log
+          cmake -S extras/webdav -B build/a11y-dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee build/a11y-logs/dav-configure.log
+          cmake --build build/a11y-dav --parallel 4 2>&1 | tee build/a11y-logs/dav-build.log
+          cmake --install build/a11y-dav
+          cmake -S apps/reader/revisions -B build/a11y-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee build/a11y-logs/revisions-configure.log
+          cmake --build build/a11y-revisions --parallel 4 2>&1 | tee build/a11y-logs/revisions-build.log
+          cmake --install build/a11y-revisions
+          for module in commands desktop-metadata sync session; do
+            cmake -S "apps/reader/$module" -B "build/a11y-$module" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee "build/a11y-logs/$module-configure.log"
+            cmake --build "build/a11y-$module" --parallel 4 2>&1 | tee "build/a11y-logs/$module-build.log"
+            cmake --install "build/a11y-$module"
+          done
+          cmake -S extras/credentials -B build/a11y-credentials -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee build/a11y-logs/credentials-configure.log
+          cmake --build build/a11y-credentials --parallel 4 2>&1 | tee build/a11y-logs/credentials-build.log
+          cmake --install build/a11y-credentials
+      - name: Install unchanged frozen SDK and public original export module
+        run: |
+          set -euo pipefail
+          cmake --preset reading-library 2>&1 | tee build/a11y-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/a11y-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/a11y-logs/sdk-install.log
+          cmake -S extras/sideload -B build/a11y-sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$A11Y_PREFIX" 2>&1 | tee build/a11y-logs/sideload-configure.log
+          cmake --build build/a11y-sideload --parallel 4 2>&1 | tee build/a11y-logs/sideload-build.log
+          cmake --install build/a11y-sideload
+      - name: Build the actual GTK product host with account and metadata integration
+        run: |
+          set -euo pipefail
+          cmake -S apps/reader/desktop -B build/a11y-desktop -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DEXR_SDK="$PWD/build/reading-library/stage" \
+            -DREADER_METADATA_PREFIX="$A11Y_PREFIX" -DREADER_ACCOUNT_PREFIX="$A11Y_PREFIX" \
+            -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_BUILD_GTK=ON \
+            -DEXR_READER_FIXTURES="$PWD/tests/fixtures" 2>&1 | tee build/a11y-logs/host-configure.log
+          cmake --build build/a11y-desktop --parallel 4 --verbose 2>&1 | tee build/a11y-logs/host-build.log
+          python3 tools/build_linux_host.py --sdk build/reading-library/stage \
+            --binary build/a11y-desktop/gtk-host/exreader-linux --output build/a11y-package 2>&1 | tee build/a11y-logs/package.log
+          build/a11y-package/EXReader-Linux/bin/exreader-linux --version
+      - name: Audit shelf, import, organize, reading, annotation and account surfaces through AT-SPI
+        run: |
+          set -euo pipefail
+          mkdir -p build/a11y-logs
+          xvfb-run -a -s '-screen 0 1440x1100x24' dbus-run-session -- bash -euc '
+            openbox > build/a11y-logs/openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            unset -v NO_AT_BRIDGE || true
+            unset -v GTK_MODULES || true
+            export GTK_A11Y=atspi
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true || true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true || true
+            echo "--- accessibility bus probe ---"
+            gdbus call --session --dest org.a11y.Bus --object-path /org/a11y/bus --method org.a11y.Bus.GetAddress || true
+            echo "--- running audit ---"
+            python3 tests/reader_a11y_gtk/audit_gtk_a11y.py --payload build/a11y-package/EXReader-Linux --output build/a11y-evidence
+          ' 2>&1 | tee build/a11y-logs/audit.log
+      - name: Validate the report, its evidence digests and the gate itself
+        if: always()
+        run: |
+          set -euo pipefail
+          python3 tests/reader_a11y_gtk/check_a11y_report.py --report build/a11y-evidence/result.json --self-test | tee build/a11y-logs/gate.log
+          python3 tests/reader_a11y_gtk/check_a11y_report.py --report build/a11y-evidence/result.json | tee -a build/a11y-logs/gate.log
+      - name: Refuse when the audit is incomplete or a blocking accessibility finding exists
+        if: always()
+        run: |
+          set -euo pipefail
+          python3 tests/reader_a11y_gtk/check_a11y_report.py --report build/a11y-evidence/result.json --require-accepted
+      - name: Summarize the named result
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('build/a11y-evidence/result.json')
+          if not path.exists():
+              print('no report was produced')
+              raise SystemExit(0)
+          report = json.loads(path.read_text())
+          print('source', report['source_sha'], 'run', report['run_id'], 'attempt', report['attempt'])
+          print('audit_completed', report['audit_completed'], 'accessibility_accepted', report['accessibility_accepted'])
+          print('orca_screen_reader_accepted', report['orca_screen_reader_accepted'])
+          print('counts', json.dumps(report['counts']))
+          for entry in report['checks']:
+              print('%-5s %-12s %s' % ('PASS' if entry['pass'] else 'FAIL', entry['severity'], entry['name']))
+          PY
+      - name: Preserve accessibility trees, keystrokes, screenshots and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-a11y-gtk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/a11y-evidence/
+            build/a11y-logs/
+            source-binding.txt
+            build/a11y-package/build.json
+            build/a11y-package/runtime-dependencies.txt
+            build/a11y-package/EXReader-Linux.tar.gz
+          if-no-files-found: error

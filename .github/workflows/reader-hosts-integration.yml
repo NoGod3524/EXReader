@@ -1,0 +1,1154 @@
+name: Reviewed native hosts common-source integration
+on:
+  push:
+    branches: [codex/reader-hosts-integration]
+  workflow_dispatch:
+    inputs:
+      verify_run:
+        type: string
+        default: ''
+        description: syntax for input checks, apple for six same-source suites, a preserved run, or nav:<run> for GTK diagnostics
+      apple_runs:
+        type: string
+        default: ''
+        description: For apple mode only, JSON object with records navigation search shelf mapping wp13 run IDs at this exact source
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+env:
+  START_SHA: f43baf9182d75907c0cb5d6f77048f27bca8c950
+  FROZEN_SDK: 9854061be331fe603a1822d9b2b36ee357154927
+  COMPOSITION_TESTS: tests/reader_module_composition
+jobs:
+  pin:
+    name: authenticate input lineage and workflow syntax
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require exact reviewed production bytes
+        run: python3 tests/reader_hosts_integration/guard.py
+      - name: Parse authored workflow and Python only in Actions
+        run: |
+          python3 -m pip install 'PyYAML==6.0.3'
+          python3 -m py_compile tests/reader_hosts_integration/guard.py tests/reader_hosts_integration/aggregate.py tests/reader_hosts_integration/final.py tests/reader_hosts_integration/probe_navigation.py tests/reader_windows_search/verify.py tests/reader_windows_navigation/verify.py tests/reader_windows_navigation/check_ui.py tests/reader_gtk_preferences/retain_account.py tests/reader_gtk_navigation/check_ui.py tests/reader_gtk_search/check_ui.py tests/reader_android_fixed_pan/verify_saved.py
+          python3 - <<'PY'
+          from pathlib import Path
+          import yaml
+          document = yaml.load(Path('.github/workflows/reader-hosts-integration.yml').read_text(), Loader=yaml.BaseLoader)
+          assert set(document['jobs']) == {'pin', 'compose', 'aggregate', 'search', 'summary', 'gtk', 'android', 'hosts-summary', 'inspect'}
+          assert set(document['on']) == {'push', 'workflow_dispatch'}
+          PY
+          python3 tests/reader_hosts_integration/final.py --self-test
+          python3 tests/reader_hosts_integration/aggregate.py windows --protocol-selftest
+          python3 tests/reader_hosts_integration/check_apple_workflows.py
+          python3 tests/reader_hosts_integration/apple.py --self-test
+  compose:
+    if: ${{ github.event.inputs.verify_run == '' }}
+    needs: pin
+    name: one-prefix composition (${{matrix.key}})
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            key: linux
+          - os: windows-2022
+            key: windows
+          - os: macos-15
+            key: macos
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate reviewed input trees and explicit integration edits
+        run: python3 tests/reader_hosts_integration/guard.py
+      - name: Install Linux native TLS XML keyring and SHA dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev libsecret-1-dev pkg-config ninja-build
+      - name: Use Apple system native TLS XML and platform frameworks
+        if: runner.os == 'macOS'
+        run: |
+          brew install ninja pkg-config openssl@3
+          sdkroot=$(xcrun --sdk macosx --show-sdk-path)
+          mkdir -p build/apple-pkgconfig
+          version=$(/usr/bin/curl --version | awk 'NR==1 {print $2}')
+          cat > build/apple-pkgconfig/libcurl.pc <<EOF
+          prefix=${sdkroot}/usr
+          Name: libcurl
+          Description: Apple SDK system libcurl
+          Version: ${version}
+          Libs: -L\${prefix}/lib -lcurl
+          Cflags:
+          EOF
+          echo "PKG_CONFIG_PATH=${PWD}/build/apple-pkgconfig" >> "$GITHUB_ENV"
+          echo "PATH=$(brew --prefix openssl@3)/bin:${PATH}" >> "$GITHUB_ENV"
+          /usr/bin/curl --version
+      - name: Enter Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vswhere = 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe'
+          $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c ('"{0}" >nul && set' -f $bat) | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install the default reading SDK into the composition prefix
+        run: |
+          set -o pipefail
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "COMP_WS=$ws" >> "$GITHUB_ENV"
+          mkdir -p build/composition/logs
+          prefix="$ws/build/prefix"
+          echo "COMP_PREFIX=$prefix" >> "$GITHUB_ENV"
+          cmake --preset reading-library -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee build/composition/logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/composition/logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/composition/logs/sdk-install.log
+      - name: Record the SDK-only snapshot of the prefix
+        run: |
+          set -o pipefail
+          python3 - <<'PY'
+          import os, shutil
+          prefix = os.environ['COMP_PREFIX']
+          snapshot = os.environ['COMP_WS'] + '/build/prefix-sdk-only'
+          shutil.copytree(prefix, snapshot)
+          print('sdk-only snapshot at', snapshot)
+          PY
+          python3 "$COMPOSITION_TESTS/check_prefix.py" --manifest "$COMP_PREFIX" \
+            --manifest-output build/composition/install-sdk.json
+      - name: Install every optional module into the same prefix
+        run: |
+          set -o pipefail
+          prefix="$COMP_PREFIX"
+          logs=build/composition/logs
+          build_module() {
+            name="$1"; source="$2"; shift 2
+            cmake -S "$source" -B "build/module-$name" -G Ninja -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix" "$@" \
+              2>&1 | tee "$logs/$name-configure.log"
+            cmake --build "build/module-$name" --verbose 2>&1 | tee "$logs/$name-build.log"
+            cmake --install "build/module-$name" 2>&1 | tee "$logs/$name-install.log"
+          }
+          build_module product apps/reader/store/native
+          build_module revisions apps/reader/revisions -DREADER_PRODUCT_PREFIX="$prefix"
+          build_module webdav extras/webdav
+          build_module sideload extras/sideload -DEXR_SDK="$prefix"
+          build_module credentials extras/credentials
+          build_module search apps/reader/search -DEXR_SDK="$prefix"
+          build_module preferences apps/reader/preferences
+          build_module batch-import apps/reader/batch-import -DEXR_SDK="$prefix"
+          build_module sync apps/reader/sync
+          build_module commands apps/reader/commands
+          build_module metadata apps/reader/desktop-metadata
+          build_module session apps/reader/session
+          build_module reading-state apps/reader/reading-state -DEXR_SDK="$prefix"
+          build_module thumbnails apps/reader/thumbnails -DEXR_SDK="$prefix"
+          build_module reading-commands apps/reader/reading-commands
+          build_module annotation-view apps/reader/annotation-view
+          build_module annotation-export apps/reader/annotation-export
+          build_module local-downloads apps/reader/local-downloads -DEXR_SDK="$prefix"
+      - name: Audit the composed prefix and the default reading snapshot
+        run: |
+          set -o pipefail
+          python3 "$COMPOSITION_TESTS/check_prefix.py" --manifest "$COMP_PREFIX" \
+            --manifest-output build/composition/install-all.json
+          source_root="$COMP_WS"
+          python3 "$COMPOSITION_TESTS/check_prefix.py" --prefix "$COMP_PREFIX" --source-root "$source_root" \
+            --expect clean --scan-output build/composition/prefix-scan.json
+          cmake -S "$COMPOSITION_TESTS/consumer/sdk_only" -B build/sdk-only -G Ninja \
+            -DEXR_MODULE_PREFIX="$COMP_WS/build/prefix-sdk-only"
+          cmake --build build/sdk-only --verbose
+          python3 "$COMPOSITION_TESTS/check_prefix.py" --sdk-snapshot "$COMP_WS/build/prefix-sdk-only" \
+            --sdk-report build/sdk-only/sdk-only-report.json --snapshot-output build/composition/sdk-only.json
+      - name: Build the fresh-directory C11 and C++ consumers from the installed prefix only
+        run: |
+          set -o pipefail
+          mkdir -p build/fresh
+          cp -R "$COMPOSITION_TESTS/consumer" build/fresh/consumer
+          cmake -S build/fresh/consumer -B build/fresh/build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DEXR_MODULE_PREFIX="$COMP_PREFIX" 2>&1 | tee build/composition/logs/consumer-configure.log
+          cmake --build build/fresh/build --verbose 2>&1 | tee build/composition/logs/consumer-build.log
+          cp build/fresh/build/composition-interface.json build/composition/interface.json
+          cp build/fresh/build/composition-link.map build/composition/composition-link.map
+          cp build/fresh/build/composition-c-link.map build/composition/composition-c-link.map
+      - name: Original new-module judges and real five-module chain from the composed prefix
+        run: python3 tests/reader_g1_integration/run_suites.py --prefix "$COMP_PREFIX"
+      - name: Relocate the prefix and rebuild the same consumers from the new path
+        run: |
+          set -o pipefail
+          python3 - <<'PY'
+          import os, shutil
+          prefix = os.environ['COMP_PREFIX']
+          relocated = os.environ['COMP_WS'] + '/build/prefix-relocated'
+          shutil.move(prefix, relocated)
+          print('relocated prefix at', relocated)
+          PY
+          echo "COMP_PREFIX_RELOCATED=$COMP_WS/build/prefix-relocated" >> "$GITHUB_ENV"
+          mkdir -p build/relocated
+          cp -R "$COMPOSITION_TESTS/consumer" build/relocated/consumer
+          cmake -S build/relocated/consumer -B build/relocated/build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DEXR_MODULE_PREFIX="$COMP_WS/build/prefix-relocated" \
+            2>&1 | tee build/composition/logs/relocated-configure.log
+          cmake --build build/relocated/build --verbose 2>&1 | tee build/composition/logs/relocated-build.log
+          cp build/relocated/build/composition-interface.json build/composition/interface-relocated.json
+      - name: Rebuild and run the new chain after the original prefix is removed
+        run: python3 tests/reader_g1_integration/run_suites.py --prefix "$COMP_PREFIX_RELOCATED" --relocated
+      - name: Judge the composed flow with a real TLS WebDAV fixture
+        run: |
+          set -o pipefail
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 "$COMPOSITION_TESTS/check_composition.py" \
+            --c-consumer "build/fresh/build/composition-c$exe" \
+            --cxx-consumer "build/fresh/build/composition-cxx$exe" \
+            --relocated-c-consumer "build/relocated/build/composition-c$exe" \
+            --relocated-cxx-consumer "build/relocated/build/composition-cxx$exe" \
+            --link-map build/fresh/build/composition-link.map \
+            --c-link-map build/fresh/build/composition-c-link.map \
+            --prefix "$COMP_PREFIX" \
+            --relocated-prefix "$COMP_PREFIX_RELOCATED" \
+            --fixtures tests/fixtures \
+            --interface build/composition/interface-relocated.json \
+            --manifest build/composition/install-all.json \
+            --output build/composition/evidence
+      - name: Reject a broken target, an absent dependency, a second SQLite and a leaked include
+        run: |
+          set -o pipefail
+          python3 "$COMPOSITION_TESTS/check_gates.py" \
+            --prefix "$COMP_PREFIX_RELOCATED" \
+            --consumer-source build/fresh/consumer \
+            --source-root "$COMP_WS" \
+            --scratch build/composition/scratch \
+            --generator Ninja \
+            --output build/composition/gates
+      - name: Preserve this attempt's evidence, logs and installed packages
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-module-composition-${{matrix.key}}-${{github.run_id}}-${{github.run_attempt}}
+          path: |
+            build/composition/
+            !build/composition/**/*.key
+            !build/composition/**/scratch/
+          if-no-files-found: error
+  aggregate:
+    name: strict same-source composition report
+    needs: [compose]
+    if: ${{ always() && github.event.inputs.verify_run == '' }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject incomplete, failing, foreign-source or duplicate summaries
+        run: python3 tests/reader_hosts_integration/aggregate.py composition --self-test
+      - name: Authenticate every platform ZIP and bind each summary to this run
+        env:
+          GH_TOKEN: ${{github.token}}
+        run: python3 tests/reader_hosts_integration/aggregate.py composition --downloads build/composition-zips --output build/composition-aggregate
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-module-composition-report-${{github.run_id}}-${{github.run_attempt}}
+          path: build/composition-aggregate/
+          if-no-files-found: error
+
+
+  search:
+    needs: pin
+    if: ${{github.event.inputs.verify_run == ''}}
+    name: installed F1 and native Windows search controls and lifecycle
+    runs-on: windows-2022
+    timeout-minutes: 90
+    outputs:
+      artifact_id: ${{steps.upload.outputs.artifact-id}}
+      artifact_digest: ${{steps.upload.outputs.artifact-digest}}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Authenticate frozen SDK, original F1 and root-owned host paths
+        run: python3 tests/reader_hosts_integration/guard.py
+      - name: Enter the Windows native compiler environment
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Check source syntax in Actions
+        run: python3 -m py_compile tests/reader_windows_search/guard.py tests/reader_windows_search/check_ui.py tests/reader_windows_search/check_formats.py tests/reader_windows_search/check_keyboard.py tests/reader_windows_search/verify.py
+      - name: Check records syntax and strict protocol in Actions
+        run: |
+          python3 -m py_compile tests/reader_windows_records/guard.py tests/reader_windows_records/check_ui.py tests/reader_windows_records/verify.py
+          python3 tests/reader_windows_records/verify.py --protocol-selftest
+      - name: Reject malformed current and legacy report contracts before building
+        run: python3 tests/reader_windows_navigation/verify.py --protocol-selftest
+      - name: Build and install the frozen SDK and one product provider
+        run: |
+          set -o pipefail
+          ws=$(cygpath -m "$PWD")
+          prefix="$ws/build/winsearch-stage"
+          echo "WS=$ws" >> "$GITHUB_ENV"
+          echo "WS_PREFIX=$prefix" >> "$GITHUB_ENV"
+          mkdir -p build/winsearch-logs
+          cmake --preset reading-library 2>&1 | tee build/winsearch-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/winsearch-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/winsearch-logs/sdk-install.log
+          cmake -S apps/reader/store/native -B build/ws-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/ws-product --parallel 4
+          ctest --test-dir build/ws-product --output-on-failure --no-tests=error --timeout 180
+          cmake --install build/ws-product
+      - name: Install unchanged public dependencies into one prefix
+        run: |
+          set -o pipefail
+          prefix="$WS_PREFIX"
+          for module in extras/webdav extras/credentials extras/sideload apps/reader/revisions apps/reader/commands apps/reader/desktop-metadata apps/reader/sync apps/reader/session apps/reader/reading-state apps/reader/reading-commands apps/reader/annotation-view apps/reader/search apps/reader/navigation; do
+            name=$(basename "$module")
+            cmake -S "$module" -B "build/ws-$name" -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_PREFIX_PATH="$prefix;$WS/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee "build/winsearch-logs/$name-configure.log"
+            cmake --build "build/ws-$name" --parallel 4 --verbose 2>&1 | tee "build/winsearch-logs/$name-build.log"
+            cmake --install "build/ws-$name"
+          done
+      - name: Build actual account host with the optional native search UI
+        run: |
+          set -o pipefail
+          cmake -S apps/reader/windows-account -B build/ws-host -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage" -DREADER_METADATA_PREFIX="$WS_PREFIX" -DREADER_ACCOUNT_PREFIX="$WS_PREFIX" -DEXR_READER_WINDOWS_SEARCH=ON -DEXR_READER_WINDOWS_NAVIGATION=ON -DEXR_READER_WINDOWS_RECORDS=ON 2>&1 | tee build/winsearch-logs/host-configure.log
+          cmake --build build/ws-host --parallel 4 --verbose 2>&1 | tee build/winsearch-logs/host-build.log
+          cmake -S tests/reader_search/consumer -B build/ws-search-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage"
+          cmake --build build/ws-search-consumer --parallel 4 --verbose
+      - name: Execute installed original F1 C and C++ consumers
+        run: |
+          python3 tests/reader_search/make_search_fixtures.py build/ws-search-fixtures
+          python3 tests/reader_search/check_search.py --probe build/ws-search-consumer/search-probe.exe --c-consumer build/ws-search-consumer/search-c-consumer.exe --fixtures build/ws-search-fixtures --font tests/fixtures/fonts/primary.ttf --installed build/winsearch-stage --output build/ws-search-module-evidence
+      - name: Package and execute initial real Win32 TXT controls
+        id: initial
+        run: |
+          python3 tools/build_windows_host.py --sdk build/reading-library/stage --binary build/ws-host/EXReaderProduct.exe --output build/ws-package --static-reading
+          python3 tests/reader_windows_search/check_ui.py --candidate build/ws-package/EXReader/EXReader.exe --font build/ws-package/EXReader/Reader.otf --output build/ws-search-ui
+      - name: Execute EPUB, PDF, provider refusal and live cancellation on the shared native host
+        id: formats
+        run: |
+          python3 tests/reader_windows_search/check_formats.py --candidate build/ws-package/EXReader/EXReader.exe --review build/ws-host/EXReaderShelfReview.exe --font build/ws-package/EXReader/Reader.otf --fixtures build/ws-search-fixtures --output build/ws-search-formats
+      - name: Execute real keyboard and UI Automation search controls
+        id: keyboard
+        if: ${{always() && steps.initial.outcome == 'success'}}
+        run: |
+          python3 -m pip install "uiautomation==2.0.29"
+          python3 tests/reader_windows_search/check_keyboard.py --candidate build/ws-package/EXReader/EXReader.exe --review build/ws-host/EXReaderShelfReview.exe --font build/ws-package/EXReader/Reader.otf --output build/ws-search-keyboard
+      - name: Compile navigation without optional search
+        run: |
+          set -o pipefail
+          cmake -S apps/reader/windows-account -B build/ws-navigation-only -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage" -DREADER_METADATA_PREFIX="$WS_PREFIX" -DREADER_ACCOUNT_PREFIX="$WS_PREFIX" -DEXR_READER_WINDOWS_SEARCH=OFF -DEXR_READER_WINDOWS_NAVIGATION=ON
+          cmake --build build/ws-navigation-only --parallel 4 --verbose
+      - name: Execute installed F2 and real native directory controls
+        run: |
+          set -o pipefail
+          python3 -m py_compile tests/reader_windows_navigation/guard.py tests/reader_windows_navigation/check_ui.py tests/reader_windows_navigation/verify.py
+          cmake -S tests/reader_navigation/consumer -B build/ws-navigation-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage"
+          cmake --build build/ws-navigation-consumer --parallel 4
+          python3 tests/reader_navigation/make_navigation_fixtures.py build/ws-navigation-fixtures
+          python3 tests/reader_navigation/check_navigation.py --probe build/ws-navigation-consumer/navigation-probe.exe --c-consumer build/ws-navigation-consumer/navigation-c-consumer.exe --fixtures build/ws-navigation-fixtures --installed build/winsearch-stage --output build/ws-navigation-module-evidence
+          cmake -S tests/reader_windows_navigation/consumer -B build/ws-navigation-cfi -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage"
+          cmake --build build/ws-navigation-cfi --parallel 4
+          python3 tests/reader_windows_navigation/check_ui.py --candidate build/ws-package/EXReader/EXReader.exe --review build/ws-host/EXReaderShelfReview.exe --font build/ws-package/EXReader/Reader.otf --cfi build/ws-navigation-cfi/navigation-fixture-cfi.exe --output build/ws-navigation-ui
+      - name: Build retained installed consumers and authored fixtures
+        id: retained_build
+        if: ${{always() && steps.initial.outcome == 'success' && steps.formats.outcome == 'success' && steps.keyboard.outcome == 'success'}}
+        run: |
+          for module in commands revisions; do
+            cmake -S "tests/reader_$module/consumer" -B "build/account-$module-consumer" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage"
+            cmake --build "build/account-$module-consumer" --parallel 4
+          done
+          cmake -S tests/reader_windows_account/consumer -B build/account-capture -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage"
+          cmake --build build/account-capture --parallel 4
+          python3 tests/windows_host/make_fixtures.py --output build/account-fixtures
+          python3 tests/reader_reading_state/make_fixtures.py build/account-reading-fixtures
+      - name: Execute native reading records and real process recovery
+        if: ${{always() && steps.retained_build.outcome == 'success'}}
+        run: |
+          python3 tests/reader_windows_records/check_ui.py --candidate build/ws-package/EXReader/EXReader.exe --review build/ws-host/EXReaderShelfReview.exe --font build/ws-package/EXReader/Reader.otf --capture-probe build/account-capture/reading-capture-probe.exe --revision-consumer build/account-revisions-consumer/revision-consumer.exe --output build/ws-records-ui
+      - name: Run every retained Windows account host regression
+        if: ${{always() && steps.retained_build.outcome == 'success'}}
+        env:
+          EXREADER_HOST_ACCEPTANCE: '1'
+        run: |
+          set -o pipefail
+          python3 tests/windows_host/check_evidence.py --package build/ws-package/EXReader --sdk build/reading-library/stage --manifest build/ws-package/build.json --fixtures build/account-fixtures --selftest-report build/ws-package/report.json --consumer-binary build/ws-host/EXReaderProduct.exe --static-link-map build/ws-host/windows-host.map --output build/account-negative
+          python3 tools/check_windows_host.py --package build/ws-package/EXReader --output build/account-ui158 --sdk build/reading-library/stage --manifest build/ws-package/build.json --steps tests/windows_host --fixtures build/account-fixtures --selftest-report build/ws-package/report.json --consumer-binary build/ws-host/EXReaderProduct.exe --static-link-map build/ws-host/windows-host.map
+          python3 tests/reader_catalog/check_windows_product.py --package build/ws-package/EXReader --original-evidence build/account-ui158 --fixtures build/account-fixtures --output build/account-product10
+          python3 tests/windows_host/check_shelf_worker.py --candidate build/ws-host/EXReaderShelfReview.exe --package build/ws-package/EXReader --output build/account-worker5
+          python3 tests/reader_windows_account/run_retained_shelf.py --candidate build/ws-package/EXReader/EXReader.exe --seed build/ws-host/reader-windows-shelf-seed.exe --package build/ws-package/EXReader --output build/account-shelf-ui
+          python3 tests/windows_host/check_metadata_ui.py --candidate build/ws-package/EXReader/EXReader.exe --package build/ws-package/EXReader --command-consumer build/account-commands-consumer/command-consumer.exe --output build/account-metadata-ui
+          python3 tests/reader_windows_account/check_account_ui.py --candidate build/ws-package/EXReader/EXReader.exe --package build/ws-package/EXReader --fixtures build/account-fixtures --revision-consumer build/account-revisions-consumer/revision-consumer.exe --capture-probe build/account-capture/reading-capture-probe.exe --reading-fixtures build/account-reading-fixtures --reading-font tests/fixtures/fonts/primary.ttf --link-map build/ws-host/windows-host.map --output build/account-ui
+          python3 tests/reader_windows_account/check_a11y_ui.py --candidate build/ws-package/EXReader/EXReader.exe --package build/ws-package/EXReader --fixtures build/account-reading-fixtures --output build/account-a11y
+      - name: Preserve source-bound initial evidence without granting broader scope
+        id: upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-windows-search-initial-${{github.run_id}}-${{github.run_attempt}}
+          path: |
+            build/winsearch-logs/
+            build/ws-records-ui/
+            build/account-capture/reading-capture-probe.exe
+            build/account-revisions-consumer/revision-consumer.exe
+            build/ws-navigation-module-evidence/
+            build/ws-navigation-ui/
+            build/ws-navigation-consumer/navigation-probe.exe
+            build/ws-navigation-consumer/navigation-c-consumer.exe
+            build/ws-navigation-cfi/navigation-fixture-cfi.exe
+            build/ws-navigation-only/windows-host.map
+            build/ws-navigation-only/EXReaderProduct.exe
+            build/ws-search-module-evidence/
+            build/ws-search-ui/
+            build/ws-search-formats/
+            build/ws-search-keyboard/
+            build/ws-search-consumer/search-probe.exe
+            build/ws-search-consumer/search-c-consumer.exe
+            build/ws-host/EXReaderShelfReview.exe
+            build/ws-host/EXReaderProduct.exe
+            build/account-negative/
+            build/account-ui158/
+            build/account-product10/
+            build/account-worker5/
+            build/account-shelf-ui/
+            build/account-metadata-ui/
+            build/account-ui/
+            build/account-a11y/
+            build/ws-host/windows-host.map
+            build/ws-host/CMakeCache.txt
+            build/ws-package/
+          if-no-files-found: error
+  summary:
+    if: ${{always() && github.event.inputs.verify_run == ''}}
+    needs: search
+    name: same-source native Windows search artifact authentication
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate candidate and isolated worker evidence from this exact run
+        env:
+          GH_TOKEN: ${{github.token}}
+          SEARCH_RESULT: ${{needs.search.result}}
+          ARTIFACT_ID: ${{needs.search.outputs.artifact_id}}
+          UPLOAD_DIGEST: ${{needs.search.outputs.artifact_digest}}
+        run: python3 tests/reader_hosts_integration/aggregate.py windows
+      - name: Preserve strict summary including rejections
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-windows-search-summary-${{github.run_id}}-${{github.run_attempt}}
+          path: |
+            build/winsearch-summary/verified.json
+            build/winnav-summary/verified.json
+            build/winrecords-summary/verified.json
+          if-no-files-found: error
+  gtk:
+    if: ${{ github.event.inputs.verify_run == '' }}
+    needs: pin
+    name: GTK book file drop paste and retained native suites
+    runs-on: ubuntu-22.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed common start reviewed J03 and host-only changes
+        run: python3 tests/reader_hosts_integration/guard.py
+      - name: Install native GTK TLS XML and Secret Service dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11
+      - name: Install reviewed J03 and rerun installed portable and GTK consumers
+        run: |
+          mkdir -p build/gtk-drop-j03
+          cmake -S extras/desktop-drop -B build/drop-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/build/drop-stage"
+          cmake --build build/drop-module --parallel 4
+          cmake --install build/drop-module
+          cmake -S extras/desktop-drop/examples -B build/drop-examples -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/drop-stage"
+          cmake --build build/drop-examples --parallel 4
+          build/drop-examples/host-example-c | tee build/gtk-drop-j03/c.log
+          build/drop-examples/host-example-cxx | tee build/gtk-drop-j03/cxx.log
+          cmake -S tests/reader_desktop_drop -B build/drop-consumers -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/drop-stage"
+          cmake --build build/drop-consumers --parallel 4
+          build/drop-consumers/drop-check | tee build/gtk-drop-j03/portable.log
+          build/drop-consumers/drop-consumer-cxx | tee build/gtk-drop-j03/installed-cxx.log
+          xvfb-run -a build/drop-consumers/drop-probe | tee build/gtk-drop-j03/gtk.log
+      - name: Build installed product metadata and account modules with one product provider
+        run: |
+          mkdir -p build/account-logs
+          prefix="$PWD/build/account-stage"
+          echo "ACCOUNT_PREFIX=$prefix" >> "$GITHUB_ENV"
+          cmake -S apps/reader/store/native -B build/account-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/account-product --parallel 4
+          ctest --test-dir build/account-product --output-on-failure --no-tests=error --timeout 180
+          cmake --install build/account-product
+          cmake -S extras/webdav -B build/account-dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/account-dav --parallel 4
+          cmake --install build/account-dav
+          cmake -S apps/reader/revisions -B build/account-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/account-revisions --parallel 4
+          cmake --install build/account-revisions
+          for module in commands desktop-metadata sync session; do
+            cmake -S "apps/reader/$module" -B "build/account-$module" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+            cmake --build "build/account-$module" --parallel 4
+            cmake --install "build/account-$module"
+          done
+          cmake -S extras/credentials -B build/account-credentials -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/account-credentials --parallel 4
+          cmake --install build/account-credentials
+          cmake -S tests/reader_commands/consumer -B build/account-command-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/account-command-consumer --parallel 4
+          cmake -S tests/reader_metadata/consumer -B build/account-metadata-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/account-metadata-consumer --parallel 4
+          cmake -S tests/reader_revisions/consumer -B build/account-revision-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/account-revision-consumer --parallel 4
+      - name: Install unchanged frozen SDK and public original export module
+        run: |
+          cmake --preset reading-library 2>&1 | tee build/account-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/account-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/account-logs/sdk-install.log
+          cmake -S extras/sideload -B build/account-sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/account-sideload --parallel 4
+          cmake --install build/account-sideload
+      - name: Install fixed batch importer and retain original installed consumers and review regressions
+        run: |
+          cmake -S apps/reader/batch-import -B build/gtk-batch-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/gtk-batch-module --parallel 4
+          cmake --install build/gtk-batch-module
+          cmake -S tests/reader_batch_import/consumer -B build/gtk-batch-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage"
+          cmake --build build/gtk-batch-consumer --parallel 4
+          python3 tests/reader_batch_import/make_fixtures.py --fixtures tests/fixtures --out build/gtk-batch-original-fixtures
+          python3 tests/reader_batch_import/check_batch_import.py --probe build/gtk-batch-consumer/batch-probe --cxx build/gtk-batch-consumer/batch-cpp-consumer --fixtures build/gtk-batch-original-fixtures --staging build/gtk-batch-staging --work build/gtk-batch-original-work --output build/gtk-batch-original
+          python3 tests/reader_batch_import/check_review.py --probe build/gtk-batch-consumer/batch-review-probe --original-probe build/gtk-batch-consumer/batch-probe --work build/gtk-batch-review-work --output build/gtk-batch-review
+      - name: Install public reading adapter and real-capture fixture consumers
+        run: |
+          cmake -S apps/reader/reading-state -B build/account-reading-state -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/account-reading-state --parallel 4
+          cmake --install build/account-reading-state
+          cmake -S tests/reader_reading_v2/consumer -B build/account-reading-probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage"
+          cmake --build build/account-reading-probe --parallel 4
+          cmake -S tests/reader_gtk_receive -B build/account-inspect -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/reading-library/stage"
+          cmake --build build/account-inspect --parallel 4
+          python3 tests/reader_reading_state/make_fixtures.py build/account-receive-fixtures
+          python3 -m py_compile tests/linux_host/check_account_ui.py tests/linux_host/receive_checks.py
+      - name: Install fixed G03 G04 and rerun their original public consumers
+        run: |
+          for module in reading-commands annotation-view; do
+            cmake -S "apps/reader/$module" -B "build/records-$module" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+            cmake --build "build/records-$module" --parallel 4
+            cmake --install "build/records-$module"
+          done
+          for package in reader_reading_commands reader_annotation_view; do
+            cmake -S "tests/$package/consumer" -B "build/records-$package-consumer" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage"
+            cmake --build "build/records-$package-consumer" --parallel 4
+          done
+          python3 tests/reader_reading_commands/make_fixtures.py build/records-command-fixtures
+          python3 tests/reader_reading_commands/check_reading_commands.py --probe build/records-reader_reading_commands-consumer/reading-commands-probe --c-consumer build/records-reader_reading_commands-consumer/reading-commands-c-consumer --fixtures build/records-command-fixtures --font tests/fixtures/fonts/primary.ttf --output build/records-commands-installed --link-map build/records-reader_reading_commands-consumer/reading-commands-link.map
+          python3 tests/reader_annotation_view/check_annotation_view.py --probe build/records-reader_annotation_view-consumer/annotation-view-probe --c-consumer build/records-reader_annotation_view-consumer/annotation-view-c-consumer --output build/records-view-installed --link-map build/records-reader_annotation_view-consumer/annotation-view-link.map
+      - name: Preserve the original 121 legacy checks and eighteen real v2 captures
+        run: |
+          mkdir -p build/records-legacy-source
+          git archive 210403d121d6484a8fff4ea7ffd911efa3163535 apps/reader/revisions extras/opds | tar -x -C build/records-legacy-source
+          legacy="$PWD/build/records-legacy-stage"
+          cmake -S build/records-legacy-source/apps/reader/revisions -B build/records-legacy-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$ACCOUNT_PREFIX" -DCMAKE_INSTALL_PREFIX="$legacy"
+          cmake --build build/records-legacy-revisions --parallel 4
+          cmake --install build/records-legacy-revisions
+          cmake -S apps/reader/reading-state -B build/records-legacy-adapter -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$legacy;$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$legacy"
+          cmake --build build/records-legacy-adapter --parallel 4
+          cmake --install build/records-legacy-adapter
+          cmake -S tests/reader_reading_state/consumer -B build/records-legacy-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$legacy;$ACCOUNT_PREFIX;$PWD/build/reading-library/stage"
+          cmake --build build/records-legacy-consumer --parallel 4
+          python3 tests/reader_reading_v2/check_sdk.py --probe build/account-reading-probe/reading-v2-probe --legacy-probe build/records-legacy-consumer/reading-state-probe --legacy-c-consumer build/records-legacy-consumer/reading-state-c-consumer --fixtures build/account-receive-fixtures --font tests/fixtures/fonts/primary.ttf --legacy-map build/records-legacy-consumer/reading-state-link.map --link-map build/account-reading-probe/reading-v2-link.map --output build/records-reading-sdk
+      - name: Install unchanged F3 and run all twenty installed package checks
+        run: |
+          cmake -S apps/reader/preferences -B build/preferences-package -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/preferences-package --parallel 4
+          cmake --install build/preferences-package
+          cmake -S tests/reader_preferences/consumer -B build/preferences-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX" -DEXR_PREFERENCES_SOURCE="$PWD/apps/reader/preferences/src" -DEXR_PREFERENCES_INCLUDE="$PWD/apps/reader/preferences/include"
+          cmake --build build/preferences-consumer --parallel 4
+          python3 tests/reader_preferences/make_preferences_fixtures.py build/preferences-fixtures
+          python3 tests/reader_preferences/check_preferences.py --consumer build/preferences-consumer/preferences-c-consumer --cpp build/preferences-consumer/preferences-cpp-consumer --worker build/preferences-consumer/preferences-worker --fixtures build/preferences-fixtures --installed "$ACCOUNT_PREFIX" --output build/preferences-installed-check --platform Linux
+          cmake -S tests/reader_gtk_preferences -B build/preferences-host-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX"
+          cmake --build build/preferences-host-consumer --parallel 4
+      - name: Install unchanged Search and rerun its public installed consumers
+        run: |
+          cmake -S apps/reader/search -B build/gtk-search-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/gtk-search-module --parallel 4
+          cmake --install build/gtk-search-module
+          cmake -S tests/reader_search/consumer -B build/gtk-search-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage"
+          cmake --build build/gtk-search-consumer --parallel 4
+          python3 tests/reader_search/make_search_fixtures.py build/gtk-search-fixtures
+          python3 tests/reader_gtk_search/make_inputs.py build/gtk-search-fixtures
+          python3 tests/reader_search/check_search.py --probe build/gtk-search-consumer/search-probe --c-consumer build/gtk-search-consumer/search-c-consumer --fixtures build/gtk-search-fixtures --font tests/fixtures/fonts/primary.ttf --installed "$ACCOUNT_PREFIX" --output build/gtk-search-installed
+      - name: Install fixed F2 and rerun all original public consumers
+        run: |
+          cmake -S apps/reader/navigation -B build/gtk-navigation-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/gtk-navigation-module --parallel 4
+          cmake --install build/gtk-navigation-module
+          cmake -S tests/reader_navigation/consumer -B build/gtk-navigation-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage"
+          cmake --build build/gtk-navigation-consumer --parallel 4
+          python3 tests/reader_navigation/make_navigation_fixtures.py build/gtk-navigation-fixtures
+          python3 tests/reader_navigation/check_navigation.py --probe build/gtk-navigation-consumer/navigation-probe --c-consumer build/gtk-navigation-consumer/navigation-c-consumer --fixtures build/gtk-navigation-fixtures --installed "$ACCOUNT_PREFIX" --output build/gtk-navigation-installed
+      - name: Build actual GTK host with optional navigation and retained installed integrations
+        run: |
+          cmake -S apps/reader/desktop -B build/account-desktop -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DREADER_METADATA_PREFIX="$ACCOUNT_PREFIX" -DREADER_ACCOUNT_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_BATCH_IMPORT=ON -DEXR_READER_GTK_DROP_IMPORT=ON -DREADER_DESKTOP_DROP_PREFIX="$PWD/build/drop-stage" -DREADER_BATCH_IMPORT_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_GTK_PREFERENCES=ON -DREADER_PREFERENCES_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_SEARCH=ON -DREADER_SEARCH_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_READING_RECORDS=ON -DREADER_READING_RECORDS_PREFIX="$ACCOUNT_PREFIX" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DEXR_READER_GTK_NAVIGATION=ON -DREADER_NAVIGATION_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_FIXTURES="$PWD/tests/fixtures" -DEXR_READER_BUILD_GTK=ON -DEXR_LINUX_REVIEW_TESTS=ON -DEXR_LINUX_FIXED_TESTS=ON 2>&1 | tee build/account-logs/host-configure.log
+          cmake --build build/account-desktop --parallel 4 --verbose 2>&1 | tee build/account-logs/host-build.log
+          python3 tests/reader_gtk_receive/check_link.py --map build/account-desktop/gtk-account-host.map --binary build/account-desktop/gtk-host/exreader-linux --output build/account-logs/host-link.json
+          nm --defined-only build/account-desktop/gtk-host/exreader-linux > build/account-logs/navigation-provider-symbols.txt
+          test "$(awk '$3=="reader_navigation_open_publication" {n++} END {print n+0}' build/account-logs/navigation-provider-symbols.txt)" = 1
+          test "$(awk '$3=="exr_version" {n++} END {print n+0}' build/account-logs/navigation-provider-symbols.txt)" = 1
+          grep -F "$ACCOUNT_PREFIX/lib/libreader_navigation.a" build/account-desktop/gtk-account-host.map > build/account-logs/navigation-provider-map.txt
+          ctest --test-dir build/account-desktop --output-on-failure --no-tests=error --timeout 180 --output-junit "$PWD/build/account-logs/desktop-tests.xml"
+          python3 -m py_compile tests/linux_host/check_account_ui.py
+          python3 tools/build_linux_host.py --sdk build/reading-library/stage --binary build/account-desktop/gtk-host/exreader-linux --output build/account-package
+      - name: Preserve fixed bounded backend and 2202-book installed SDK checks
+        run: |
+          mkdir -p build/desktop-evidence
+          cp build/account-logs/host-build.log build/desktop-evidence/build.log
+          python3 tests/reader_catalog/check_desktop_sdk.py build/account-desktop
+          python3 tests/linux_host/generate_fixed.py build/account-fixed-inputs
+          build/account-desktop/gtk-host/exreader-linux-fixed-backend build/account-fixed.sqlite build/account-package/EXReader-Linux/Reader.otf build/account-fixed-inputs | tee build/account-logs/fixed-backend.log
+          build/account-desktop/gtk-host/exreader-linux-fixed-import build/account-snapshot.sqlite build/account-package/EXReader-Linux/Reader.otf build/account-fixed-inputs/Pages.pdf build/account-fixed-inputs/mutable.pdf | tee build/account-logs/fixed-import.log
+          python3 tests/linux_host/generate_bounded.py build/account-bounded-inputs
+          build/account-desktop/gtk-host/exreader-linux-bounded-backend build/account-bounded.sqlite build/account-package/EXReader-Linux/Reader.otf build/account-bounded-inputs/routes.epub | tee build/account-logs/bounded-backend.log
+          mkdir -p build/account-shelf/profile
+          build/account-desktop/reader-gtk-shelf-check build/account-shelf/profile/library.sqlite build/account-package/EXReader-Linux/Reader.otf | tee build/account-logs/shelf-backend.log
+          build/account-desktop/reader-gtk-search-backend build/gtk-search-backend.sqlite build/account-package/EXReader-Linux/Reader.otf build/gtk-search-fixtures build/account-fixed-inputs | tee build/account-logs/search-backend.log
+          python3 tests/reader_gtk_navigation/make_inputs.py build/gtk-navigation-fixtures
+          build/account-desktop/reader-gtk-navigation-backend build/gtk-navigation-backend.sqlite build/account-package/EXReader-Linux/Reader.otf build/gtk-navigation-fixtures build/account-fixed-inputs | tee build/account-logs/navigation-backend.log
+      - name: Real reading owner writes keyset pages failed commit and true process retry
+        run: |
+          mkdir -p build/records-backend/profile
+          chmod 700 build/records-backend/profile
+          build/account-desktop/reader-gtk-reading-records-backend "$PWD/build/records-backend/profile/library.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/records-command-fixtures/book.txt" first | tee build/records-backend/first.log
+          build/account-desktop/reader-gtk-reading-records-backend "$PWD/build/records-backend/profile/library.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/records-command-fixtures/book.txt" resumed | tee build/records-backend/resumed.log
+          build/account-desktop/reader-gtk-reading-records-backend "$PWD/build/records-backend/profile/routes.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/records-command-fixtures/book.epub" routes | tee build/records-backend/routes.log
+          build/account-desktop/reader-gtk-reading-records-backend "$PWD/build/records-backend/profile/graphs.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/records-command-fixtures/book.txt" graphs | tee build/records-backend/graphs.log
+      - name: Folder importer owner barriers bounded receipts and public original mapping
+        run: |
+          python3 -m py_compile tests/reader_gtk_batch_import/make_inputs.py tests/reader_gtk_batch_import/check_ui.py
+          python3 tests/reader_gtk_batch_import/make_inputs.py build/gtk-batch-backend-fixtures
+          python3 tests/reader_gtk_batch_import/make_inputs.py build/gtk-batch-ui-fixtures
+          mkdir -p build/gtk-batch-backend/profile
+          chmod 700 build/gtk-batch-backend/profile
+          build/account-desktop/reader-gtk-batch-import-backend "$PWD/build/gtk-batch-backend/profile/library.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/gtk-batch-backend-fixtures" "$PWD/build/gtk-batch-backend/originals.tsv" exercise | tee build/gtk-batch-backend/checks.log
+          mkdir -p build/gtk-batch-owner-faults
+          build/account-desktop/reader-gtk-batch-owner-faults "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/gtk-batch-owner-faults" | tee build/gtk-batch-owner-faults/checks.log
+      - name: Actual native folder chooser finite receipt list cancellation and reopen
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/account-logs/batch-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_gtk_batch_import/check_ui.py --payload build/account-package/EXReader-Linux --fixtures build/gtk-batch-ui-fixtures --output build/gtk-batch-ui --backend build/account-desktop/reader-gtk-batch-import-backend
+          '
+      - name: Explicit file input backend and immutable public original readback
+        if: ${{ !cancelled() }}
+        run: |
+          python3 -m py_compile tests/reader_gtk_drop_import/*.py
+          python3 tests/reader_gtk_drop_import/make_inputs.py tests/fixtures build/gtk-drop-fixtures
+          python3 tests/reader_gtk_drop_import/check_backend.py --probe build/account-desktop/reader-gtk-drop-backend --font build/account-package/EXReader-Linux/Reader.otf --fixtures build/gtk-drop-fixtures --output build/gtk-drop-backend
+      - name: Real pointer drop asynchronous native clipboard cancellation and reopen
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/account-logs/drop-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_gtk_drop_import/check_ui.py --payload build/account-package/EXReader-Linux --fixtures build/gtk-drop-fixtures --output build/gtk-drop-ui --backend build/account-desktop/reader-gtk-drop-backend --native-source build/account-desktop/reader-gtk-drop-native-source
+          '
+      - name: Actual native progress bookmark highlight edit delete restore and process recovery
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+          /usr/bin/python3 -m py_compile tests/reader_gtk_reading_records/check_ui.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/account-logs/records-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_gtk_reading_records/check_ui.py --payload build/account-package/EXReader-Linux --fixtures build/records-command-fixtures --output build/records-ui --backend build/account-desktop/reader-gtk-reading-records-backend
+          '
+      - name: Actual native directory explicit targets independent FOUND and lifecycle
+        env:
+          GTK_NAVIGATION_DIAGNOSTIC_ONLY: 'false'
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+          /usr/bin/python3 -m py_compile tests/reader_gtk_navigation/check_ui.py tests/reader_gtk_navigation/make_inputs.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/account-logs/navigation-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_gtk_navigation/check_ui.py --payload build/account-package/EXReader-Linux --fixtures build/gtk-navigation-fixtures --fixed-inputs build/account-fixed-inputs --output build/gtk-navigation-ui
+          '
+      - name: Actual native in-book query results selection cancellation and lifecycle
+        if: ${{ !cancelled() }}
+        env:
+          GTK_SEARCH_DIAGNOSTIC_ONLY: 'false'
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+          /usr/bin/python3 -m py_compile tests/reader_gtk_search/check_ui.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/account-logs/search-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_gtk_search/check_ui.py --payload build/account-package/EXReader-Linux --fixtures build/gtk-search-fixtures --fixed-inputs build/account-fixed-inputs --output build/gtk-search-ui
+          '
+      - name: Actual settings controls geometry pixels gestures portal and persistence
+        if: ${{ !cancelled() }}
+        env:
+          GTK_PREFERENCES_DIAGNOSTIC_ONLY: 'false'
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+          /usr/bin/python3 -m py_compile tests/reader_gtk_preferences/check_ui.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export XDG_CURRENT_DESKTOP=GNOME
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/account-logs/preferences-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            gsettings set org.gnome.desktop.interface color-scheme prefer-light
+            timeout 25s gdbus call --session --dest org.freedesktop.portal.Desktop --object-path /org/freedesktop/portal/desktop --method org.freedesktop.portal.Settings.Read org.freedesktop.appearance color-scheme
+            /usr/bin/python3 tests/reader_gtk_preferences/check_ui.py --payload build/account-package/EXReader-Linux --output build/preferences-ui --consumer build/preferences-host-consumer/gtk-preferences-load --fixed-inputs build/account-fixed-inputs
+          '
+      - name: Real GTK secure save load delete unavailable session-only full library scan cancel retry and shutdown
+        if: ${{ !cancelled() }}
+        run: |
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            openbox >build/account-logs/account-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            python3 tests/reader_gtk_preferences/retain_account.py --payload build/account-package/EXReader-Linux --metadata-consumer build/account-metadata-consumer/metadata-consumer --revision-consumer build/account-revision-consumer/revision-consumer --output build/account-ui --receive-fixtures build/account-receive-fixtures --reading-probe build/account-reading-probe/reading-v2-probe --inspect-consumer build/account-inspect/received-sdk-inspect
+          '
+      - name: Preserve twenty product five fixed twenty-four shelf fourteen metadata fifteen collections twenty-seven
+        if: ${{ !cancelled() }}
+        run: |
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            openbox >build/account-logs/openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            python3 tools/check_linux_host.py --payload build/account-package/EXReader-Linux --output build/account-original
+            python3 tests/reader_catalog/check_gtk_product.py --payload build/account-package/EXReader-Linux --original-evidence build/account-original --output build/account-product-ui
+            python3 tools/check_linux_host_regressions.py --payload build/account-package/EXReader-Linux --consumer build/account-desktop/gtk-host --output build/account-regressions
+            python3 tests/reader_gtk_preferences/retain_fixed.py --payload build/account-package/EXReader-Linux --original-evidence build/account-original --product-evidence build/account-product-ui --output build/account-fixed-ui
+            python3 tests/linux_host/check_shelf_ui.py --payload build/account-package/EXReader-Linux --output build/account-shelf
+            python3 tests/linux_host/check_metadata_ui.py --payload build/account-package/EXReader-Linux --command-consumer build/account-command-consumer/command-consumer --output build/account-metadata-ui
+            python3 tests/linux_host/check_collections_ui.py --payload build/account-package/EXReader-Linux --command-consumer build/account-command-consumer/command-consumer --output build/account-collections-ui
+          '
+      - name: Targeted real AT-SPI regressions for G13 production fixes
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+          /usr/bin/python3 -m py_compile tests/reader_gtk_receive/check_atspi_fixes.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            openbox >build/account-logs/atspi-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_gtk_receive/check_atspi_fixes.py --payload build/account-package/EXReader-Linux --output build/account-atspi-fixes
+          '
+      - name: Strict source bound folder scope and retained palette failures
+        if: always()
+        env:
+          BATCH_DIAGNOSTIC: 'false'
+        run: |
+          diagnostic=""
+          if [ "$BATCH_DIAGNOSTIC" = true ]; then diagnostic=--diagnostic; fi
+          python3 tests/reader_gtk_batch_import/check_evidence.py --build build $diagnostic
+      - name: Authenticate source bound drop paste and retained host reports
+        if: always()
+        run: python3 tests/reader_gtk_drop_import/check_evidence.py --build build
+      - name: Preserve source-bound evidence and original logs without credentials or TLS private keys
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-gtk-drop-import-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/account-logs/
+            build/gtk-drop-j03/
+            build/gtk-drop-backend/
+            build/gtk-drop-ui/
+            build/gtk-drop-evidence.json
+            build/gtk-drop-fixtures/manifest.json
+            build/account-package/EXReader-Linux/bin/exreader-linux
+            build/account-desktop/verified.json
+            build/account-desktop/sdk-check/
+            build/account-desktop/native-check/
+            build/account-desktop/shelf-check/
+            build/account-desktop/organization-check/
+            build/account-desktop/kill-*/
+            build/account-desktop/sdk-link.map
+            build/account-desktop/gtk-account-host.map
+            build/account-desktop/Testing/Temporary/LastTest.log
+            build/account-desktop/CMakeCache.txt
+            build/account-stage/
+            build/account-original/
+            build/account-product-ui/
+            build/account-regressions/
+            build/account-fixed-ui/
+            build/account-shelf/
+            build/account-metadata-ui/
+            build/account-collections-ui/
+            build/account-ui/
+            build/account-atspi-fixes/
+            build/preferences-installed-check/
+            build/preferences-ui/
+            build/gtk-search-installed/
+            build/gtk-search-ui/
+            build/gtk-search-fixtures/
+            build/records-commands-installed/
+            build/records-view-installed/
+            build/records-reading-sdk/
+            build/records-backend/
+            build/records-ui/
+            build/gtk-batch-evidence.json
+            build/gtk-batch-backend/
+            build/gtk-batch-owner-faults/
+            build/gtk-batch-ui/
+            build/gtk-batch-original/
+            build/gtk-batch-review/
+            build/gtk-batch-consumer/
+            build/gtk-batch-backend-fixtures/manifest.json
+            build/gtk-batch-ui-fixtures/manifest.json
+            build/gtk-navigation-installed/
+            build/gtk-navigation-fixtures/
+            build/gtk-navigation-ui/
+            build/account-package/build.json
+            build/account-package/runtime-dependencies.txt
+            build/account-package/EXReader-Linux.tar.gz
+            !build/**/*.key
+          if-no-files-found: error
+  android:
+    needs: pin
+    if: ${{ github.event.inputs.verify_run == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Record identity and preserve frozen SDK schema and delivered packages
+        run: |
+          mkdir -p build/session-android/logs
+          git rev-parse HEAD > build/session-android/logs/source.txt
+          python3 tests/reader_hosts_integration/guard.py
+          python -m py_compile tests/reader_android_fixed_pan/fixtures.py tests/reader_android_fixed_pan/run_ui.py tests/reader_android_cbz_reading/fixtures.py tests/reader_android_cbz_reading/audit.py tests/reader_android_cbz_reading/run_ui.py tests/reader_android_preferences/audit.py tests/reader_android_preferences/run_ui.py tests/reader_session_android/run_export.py tests/reader_session_android/run_roundtrip.py tests/reader_session_android/audit.py tests/reader_host_session_android/run_ui.py tests/reader_host_session_android/audit.py tests/reader_android_search/fixtures.py tests/reader_android_search/audit.py tests/reader_android_search/run_ui.py tests/reader_android_navigation/fixtures.py tests/reader_android_navigation/fixture_module.py tests/reader_android_navigation/audit.py tests/reader_android_navigation/run_ui.py tests/reader_android_reading/fixtures.py tests/reader_android_reading/audit.py tests/reader_android_reading/run_ui.py
+      - name: Install Android compiler and API34 emulator
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "cmake;3.31.1" "cmake;3.22.1" "ndk;27.2.12479018" "ndk;27.0.12077973" "emulator" "system-images;android-34;default;x86_64"
+          python tests/webdav_android/fixture.py prepare --output build/webdav-android/fixture
+          for module in tests/reader_session_android/android/session tests/webdav_android/android/platform tests/webdav_android/android/backend; do
+            mkdir -p "$module/src/debug/res/raw"
+            cp build/webdav-android/fixture/public/ca.crt "$module/src/debug/res/raw/fixture_ca.crt"
+          done
+          mkdir -p tests/reader_session_android/android/session/src/debug/assets
+          cp tests/fixtures/sample.epub tests/reader_session_android/android/session/src/debug/assets/source.epub
+          python tests/reader_reading_state/make_fixtures.py build/session-android/reading-fixtures
+          cp -r build/session-android/reading-fixtures tests/reader_session_android/android/session/src/debug/assets/reading
+          cp tests/fixtures/fonts/primary.ttf tests/reader_session_android/android/session/src/debug/assets/reading/primary.ttf
+          python tests/reader_android_search/fixtures.py build/android-search/fixtures
+          python tests/reader_android_navigation/fixtures.py build/android-navigation/fixtures
+          python tests/reader_android_reading/fixtures.py build/android-reading/fixtures
+          python tests/reader_android_cbz_reading/fixtures.py build/android-cbz-reading/fixtures
+          python tests/reader_android_fixed_pan/fixtures.py build/android-fixed-pan/fixtures
+          mkdir -p tests/reader_host_session_android/debug/res/raw
+          cp build/webdav-android/fixture/public/ca.crt tests/reader_host_session_android/debug/res/raw/host_sync_fixture_ca.crt
+      - name: Build and install the frozen public library SDK targeting API26
+        run: |
+          toolchain="$ANDROID_HOME/ndk/27.2.12479018/build/cmake/android.toolchain.cmake"
+          echo "SESSION_TOOLCHAIN=$toolchain" >> "$GITHUB_ENV"
+          cmake -S . -B build/session-android/sdk -G Ninja -DCMAKE_TOOLCHAIN_FILE="$toolchain" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/build/session-android/sdk-stage" -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_JNI=ON -DEXR_ENABLE_LIBRARY=ON -DEXR_ENABLE_AUDIO=ON -DEXR_ENABLE_PDF=ON -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_PDF_CRYPTO=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_TEXT_INDEX=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF -DEXR_BUILD_SHARED_COMPAT=ON 2>&1 | tee build/session-android/logs/sdk-configure.log
+          cmake --build build/session-android/sdk --parallel 4 --target install 2>&1 | tee build/session-android/logs/sdk-build.log
+      - name: Install original sideload package and compile public SDK owner consumer
+        run: |
+          cmake -S extras/sideload -B build/session-android/sideload -G Ninja -DCMAKE_TOOLCHAIN_FILE="$SESSION_TOOLCHAIN" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE=Release -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH -DEXR_SDK="$PWD/build/session-android/sdk-stage" -DCMAKE_INSTALL_PREFIX="$PWD/build/session-android/sideload-stage" 2>&1 | tee build/session-android/logs/sideload-configure.log
+          cmake --build build/session-android/sideload --parallel 4 --target install 2>&1 | tee build/session-android/logs/sideload-build.log
+      - name: Install unchanged public Search package against the frozen SDK
+        run: |
+          cmake -S apps/reader/search -B build/android-search/search-build -G Ninja -DCMAKE_TOOLCHAIN_FILE="$SESSION_TOOLCHAIN" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH -DEXR_SDK="$PWD/build/session-android/sdk-stage" -DCMAKE_INSTALL_PREFIX="$PWD/build/android-search/search-stage" 2>&1 | tee build/session-android/logs/search-configure.log
+          cmake --build build/android-search/search-build --parallel 4 --target install 2>&1 | tee build/session-android/logs/search-build.log
+      - name: Install fixed F2 Navigation against the frozen SDK
+        run: |
+          cmake -S apps/reader/navigation -B build/android-navigation/navigation-build -G Ninja -DCMAKE_TOOLCHAIN_FILE="$SESSION_TOOLCHAIN" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH -DEXR_SDK="$PWD/build/session-android/sdk-stage" -DCMAKE_INSTALL_PREFIX="$PWD/build/android-navigation/navigation-stage" 2>&1 | tee build/session-android/logs/navigation-configure.log
+          cmake --build build/android-navigation/navigation-build --parallel 4 --target install 2>&1 | tee build/session-android/logs/navigation-build.log
+      - name: Install Android transport and product session packages with isolated SQLite
+        run: |
+          mkdir -p build/webdav-android/logs
+          for config in Debug Release; do
+            lower=$(echo "$config" | tr '[:upper:]' '[:lower:]')
+            if [ "$config" = Debug ]; then hooks=ON; else hooks=OFF; fi
+            cmake -S extras/webdav -B "build/webdav-android/native-$lower" -G Ninja -DCMAKE_TOOLCHAIN_FILE="$SESSION_TOOLCHAIN" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE="$config" -DEXR_WEBDAV_ANDROID_TESTING="$hooks" -DCMAKE_INSTALL_PREFIX="$PWD/build/webdav-android/stage-$lower" 2>&1 | tee "build/webdav-android/logs/$lower-configure.log"
+            cmake --build "build/webdav-android/native-$lower" --parallel 4 --target install 2>&1 | tee "build/webdav-android/logs/$lower-build.log"
+          done
+          product="$PWD/build/session-android/product-stage"
+          for module in store/native revisions commands desktop-metadata sync session reading-state reading-commands annotation-view; do
+            label=$(echo "$module" | tr / -)
+            cmake -S "apps/reader/$module" -B "build/session-android/product-$label" -G Ninja -DCMAKE_TOOLCHAIN_FILE="$SESSION_TOOLCHAIN" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH -DEXR_SDK="$PWD/build/session-android/sdk-stage" -DREADER_PRODUCT_PREFIX="$product" -DCMAKE_PREFIX_PATH="$product;$PWD/build/session-android/sdk-stage;$PWD/build/webdav-android/stage-release" -DCMAKE_INSTALL_PREFIX="$product" 2>&1 | tee "build/session-android/logs/product-$label-configure.log"
+            cmake --build "build/session-android/product-$label" --parallel 4 --target install 2>&1 | tee "build/session-android/logs/product-$label-build.log"
+          done
+      - name: Install unchanged hardened F3 local settings package
+        run: |
+          cmake -S apps/reader/preferences -B build/android-preferences/preferences-build -G Ninja -DCMAKE_TOOLCHAIN_FILE="$SESSION_TOOLCHAIN" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/build/android-preferences/preferences-stage" 2>&1 | tee build/session-android/logs/preferences-configure.log
+          cmake --build build/android-preferences/preferences-build --parallel 4 --target install 2>&1 | tee build/session-android/logs/preferences-build.log
+      - name: Compile SDK and product owners and unchanged Android transport tests
+        run: |
+          gradle -p tests/reader_session_android/android --no-daemon --stacktrace :session:assembleDebug :session:assembleDebugAndroidTest :session:assembleRelease 2>&1 | tee build/session-android/logs/gradle.log
+          gradle -p tests/webdav_android/android --no-daemon --stacktrace :platform:assembleDebug :platform:assembleDebugAndroidTest :platform:assembleRelease :support:assembleDebug :support:assembleRelease :support:runtimeEvidence :backend:assembleDebug :backend:assembleDebugAndroidTest :backend:assembleRelease :baseline:assembleRelease 2>&1 | tee build/webdav-android/logs/gradle.log
+          python tests/webdav_android/audit.py --output build/webdav-android/packages
+          python tools/reader_catalog_assets.py --output examples/android/app/src/main/assets/reader-catalog-v1.json
+          python -c "import sys; sys.path.insert(0,'tools'); from host_font import fetch; fetch('examples/android/app/src/main/assets')"
+          mkdir -p examples/android/app/src/main/jniLibs/x86_64
+          cp build/session-android/sdk-stage/lib/libexreader_jni.so examples/android/app/src/main/jniLibs/x86_64/libexreader_jni.so
+          mkdir -p build/host-session-android/test-apks
+          gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrNavigation=true -PexrReading=true -PexrPreferences=true -PexrPreferencesPrefix="$PWD/build/android-preferences/preferences-stage" -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.ProductOwnerTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/original-runner-build.log
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/host-session-android/test-apks/original-owner.apk
+          gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrNavigation=true -PexrReading=true -PexrPreferences=true -PexrPreferencesPrefix="$PWD/build/android-preferences/preferences-stage" -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.HostSyncTest :app:assembleDebug :app:assembleDebugAndroidTest :app:assembleRelease 2>&1 | tee build/session-android/logs/original-owner-build.log
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/host-session-android/test-apks/host-sync.apk
+          gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrNavigation=true -PexrReading=true -PexrPreferences=true -PexrPreferencesPrefix="$PWD/build/android-preferences/preferences-stage" -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.SearchUiTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/search-ui-runner-build.log
+          mkdir -p build/android-search/test-apks
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/android-search/test-apks/search-ui.apk
+          mkdir -p build/android-navigation/test-apks
+          gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrNavigation=true -PexrReading=true -PexrPreferences=true -PexrPreferencesPrefix="$PWD/build/android-preferences/preferences-stage" -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.NavigationUiTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/navigation-ui-runner-build.log
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/android-navigation/test-apks/navigation-ui.apk
+          mkdir -p build/android-reading/test-apks
+          gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrNavigation=true -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrReading=true -PexrPreferences=true -PexrPreferencesPrefix="$PWD/build/android-preferences/preferences-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.ReadingUiTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/reading-ui-runner-build.log
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/android-reading/test-apks/reading-ui.apk
+          mkdir -p build/android-preferences/test-apks
+          gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrNavigation=true -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrReading=true -PexrPreferences=true -PexrPreferencesPrefix="$PWD/build/android-preferences/preferences-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.PreferencesUiTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/preferences-ui-runner-build.log
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/android-preferences/test-apks/preferences-ui.apk
+          mkdir -p build/android-cbz-reading/test-apks
+          gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrNavigation=true -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrReading=true -PexrPreferences=true -PexrPreferencesPrefix="$PWD/build/android-preferences/preferences-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.CbzReadingUiTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/cbz-reading-ui-runner-build.log
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/android-cbz-reading/test-apks/cbz-reading-ui.apk
+          mkdir -p build/android-fixed-pan/test-apks
+          gradle -p examples/android --no-daemon --stacktrace -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$PWD/build/session-android/product-stage" -PexrSync=true -PexrSearch=true -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrNavigation=true -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrReading=true -PexrPreferences=true -PexrPreferencesPrefix="$PWD/build/android-preferences/preferences-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.FixedPanUiTest :app:assembleDebugAndroidTest 2>&1 | tee build/session-android/logs/fixed-pan-ui-runner-build.log
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/android-fixed-pan/test-apks/fixed-pan-ui.apk
+          cp build/host-session-android/test-apks/original-owner.apk examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+          python tests/reader_session_android/audit.py --output build/session-android/native
+          python tests/reader_host_session_android/audit.py --output build/host-session-android/native
+          python tests/reader_android_search/audit.py --output build/android-search/native
+          python tests/reader_android_navigation/audit.py --output build/android-navigation/native
+          python tests/reader_android_reading/audit.py --output build/android-reading/native
+          python tests/reader_android_preferences/audit.py --output build/android-preferences/native
+          python tests/reader_android_cbz_reading/audit.py --output build/android-cbz-reading/native
+      - name: Enable hosted runner emulator acceleration
+        run: sudo chmod 666 /dev/kvm
+      - name: Actual SDK owner import and public original export in Android private storage
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            python tests/reader_session_android/run_export.py --output build/session-android/export
+            python tests/reader_session_android/run_roundtrip.py --fixture build/webdav-android/fixture --output build/session-android/roundtrip
+            python tests/webdav_android/run_platform.py --fixture build/webdav-android/fixture --output build/webdav-android/platform
+            cp build/webdav-android/fixture/requests.json build/webdav-android/platform/requests.json
+            python tests/webdav_android/run_backend.py --fixture build/webdav-android/fixture --output build/webdav-android/backend
+            adb install -r -t build/host-session-android/test-apks/host-sync.apk
+            python tests/reader_host_session_android/run_ui.py --fixture build/webdav-android/fixture --reading-fixtures build/session-android/reading-fixtures --output build/host-session-android/ui
+            adb install -r -t build/android-search/test-apks/search-ui.apk
+            python tests/reader_android_search/run_ui.py --fixtures build/android-search/fixtures --output build/android-search/ui
+            adb install -r -t build/android-navigation/test-apks/navigation-ui.apk
+            python tests/reader_android_navigation/run_ui.py --fixtures build/android-navigation/fixtures --output build/android-navigation/ui
+            adb install -r -t build/android-reading/test-apks/reading-ui.apk
+            python tests/reader_android_reading/run_ui.py --fixtures build/android-reading/fixtures --output build/android-reading/ui
+            adb install -r -t build/android-preferences/test-apks/preferences-ui.apk
+            python tests/reader_android_preferences/run_ui.py --fixtures build/android-reading/fixtures --output build/android-preferences/ui
+            adb install -r -t build/android-cbz-reading/test-apks/cbz-reading-ui.apk
+            python tests/reader_android_cbz_reading/run_ui.py --fixtures build/android-cbz-reading/fixtures --output build/android-cbz-reading/ui
+            adb install -r -t build/android-fixed-pan/test-apks/fixed-pan-ui.apk
+            python tests/reader_android_fixed_pan/run_ui.py --fixtures build/android-fixed-pan/fixtures --output build/android-fixed-pan/ui
+      - name: Preserve SDK consumer identity native logs and every export result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-android-cbz-reading-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/android-fixed-pan/
+            build/android-cbz-reading/
+            build/android-preferences/
+            build/android-reading/
+            build/android-navigation/
+            build/android-search/
+            build/host-session-android/
+            examples/android/app/build/outputs/apk/
+            build/session-android/logs/
+            build/session-android/export/
+            build/session-android/roundtrip/
+            build/session-android/native/
+            build/session-android/product-stage/
+            build/webdav-android/platform/
+            build/webdav-android/backend/
+            build/webdav-android/logs/
+            build/webdav-android/packages/
+            build/webdav-android/fixture/public/
+            build/webdav-android/fixture/requests.json
+            build/session-android/sdk-stage/
+            build/session-android/sdk/CMakeCache.txt
+            build/session-android/sideload-stage/
+            tests/reader_session_android/android/session/build/outputs/apk/
+          if-no-files-found: error
+
+  hosts-summary:
+    name: authenticate native hosts and retain actual palette failures
+    needs: [compose, aggregate, search, summary, gtk, android]
+    if: ${{ always() && github.event.inputs.verify_run == '' }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install independent PNG decoding for raw viewport proof
+        run: python3 -m pip install 'Pillow==11.3.0'
+      - name: Reject incomplete source-bound host reports
+        run: python3 tests/reader_hosts_integration/final.py --self-test
+      - name: Authenticate exact-attempt jobs and raw ZIP reports
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULTS: '${{ toJSON(needs) }}'
+        run: python3 tests/reader_hosts_integration/final.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-hosts-integration-summary-${{github.run_id}}-${{github.run_attempt}}
+          path: build/hosts-summary/result.json
+          if-no-files-found: error
+  inspect:
+    name: inspect preserved source or authenticate six same-source Apple suites
+    needs: pin
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.verify_run != '' && github.event.inputs.verify_run != 'syntax' }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install independent PNG decoding for raw viewport proof
+        if: inputs.verify_run != 'apple'
+        run: python3 -m pip install 'Pillow==11.3.0'
+      - name: Authenticate the preserved source and reports with the repaired verifier
+        if: ${{ !startsWith(inputs.verify_run, 'nav:') && inputs.verify_run != 'apple' }}
+        env:
+          GH_TOKEN: ${{github.token}}
+          INSPECT_RUN: ${{inputs.verify_run}}
+        run: python3 tests/reader_hosts_integration/final.py --inspect-run "$INSPECT_RUN"
+      - name: Authenticate all six original Apple workflows at this exact source
+        if: inputs.verify_run == 'apple'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APPLE_RUNS: ${{ inputs.apple_runs }}
+        run: python3 tests/reader_hosts_integration/apple.py
+      - name: Install native runtime for original-program navigation diagnostics
+        if: startsWith(inputs.verify_run, 'nav:')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-0 libsecret-1-0 libcurl4 libxml2 libssl3 at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil dbus-x11
+      - name: Authenticate original ZIP program and unchanged navigation source
+        if: startsWith(inputs.verify_run, 'nav:')
+        env:
+          GH_TOKEN: ${{github.token}}
+          PROBE: ${{inputs.verify_run}}
+        run: |
+          python3 tests/reader_hosts_integration/probe_navigation.py "${PROBE#nav:}"
+          python3 tests/linux_host/generate_fixed.py build/navigation-probe/fixed-inputs
+      - name: Diagnose native focus acknowledgment and actual scanning without granting current production
+        if: startsWith(inputs.verify_run, 'nav:')
+        env:
+          GTK_NAVIGATION_DIAGNOSTIC_ONLY: 'true'
+        run: |
+          mkdir -p build/gtk-atspi-client
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/navigation-probe/openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_gtk_navigation/check_ui.py --payload "$NAV_PROBE_PAYLOAD" --fixtures build/navigation-probe/fixtures --fixed-inputs build/navigation-probe/fixed-inputs --output build/navigation-probe/ui
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-hosts-inspection-${{github.run_id}}-${{github.run_attempt}}
+          path: |
+            build/hosts-summary/result.json
+            build/navigation-probe/input.json
+            build/navigation-probe/original-report.json
+            build/navigation-probe/openbox.log
+            build/navigation-probe/ui/
+            build/apple-common-evidence/
+          if-no-files-found: error

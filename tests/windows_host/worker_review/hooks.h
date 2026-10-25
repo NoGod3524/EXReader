@@ -49,7 +49,14 @@ static LRESULT review_message(HWND window, WPARAM code, LPARAM value) {
   if (code == 26) return (LRESULT)GetWindowThreadProcessId(window, NULL);
   if (code == 27) return InterlockedCompareExchange(&review_offset_calls, 0, 0);
   if (code == 28) return InterlockedCompareExchange(&review_offset_injected, 0, 0);
-  if (code >= 101 && code <= 105) {
+  if ((code >= 101 && code <= 105)
+#ifdef EXR_READER_WINDOWS_NAVIGATION
+      || code == 106 || code == 107
+#endif
+#ifdef EXR_READER_WINDOWS_RECORDS
+      || code == 108 || code == 109 || code == 110
+#endif
+  ) {
     wchar_t name[100];
     swprintf(name, 100, L"Local\\EXReaderWorkerReview-%lu", GetCurrentProcessId());
     if (!review_event) review_event = CreateEventW(NULL, TRUE, FALSE, name);

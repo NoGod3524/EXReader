@@ -15,6 +15,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.json.JSONObject;
+import org.json.JSONArray;
 
 /** Debug command harness. Production session/SDK/product behavior stays native. */
 final class SessionController {
@@ -77,10 +78,76 @@ final class SessionController {
     private void cleanup(File folder)throws Exception{
         for(File entry:new File(folder,"cache").listFiles())if(entry.isFile()&&(entry.getName().startsWith(".reader-sync-")||entry.getName().startsWith(".exr-webdav-")))Files.delete(entry.toPath());
     }
+    private static long[] readingIds(JSONObject saved)throws Exception{JSONArray rows=saved.getJSONArray("books");long[] ids=new long[5];for(int i=0;i<4;i++)ids[i]=rows.getJSONObject(i).getLong("sdk_id");ids[4]=saved.getLong("global_epub_id");return ids;}
+    private File readingFont(File folder)throws Exception{
+        File font=new File(folder,"primary.ttf");if(!font.exists())try(InputStream in=context.getAssets().open("reading/primary.ttf")){Files.copy(in,font.toPath());}return font;
+    }
+    private JSONObject readingInstall(File folder,boolean sender)throws Exception{
+        String[] roles={"txt","epub","pdf","cbz"};int[] formats={1,4,8,9};
+        JSONObject manifest;try(InputStream in=context.getAssets().open("reading/manifest.json")){manifest=new JSONObject(new String(in.readAllBytes(),StandardCharsets.UTF_8));}
+        JSONArray books=new JSONArray();String database=new File(folder,"sdk.sqlite").getAbsolutePath();
+        if(!sender)for(String role:roles){
+            String key=role+":"+manifest.getJSONObject(role).getString("sha256");
+            JSONObject selected=product(()->decode(NativeProduct.inspectBook(productPath(folder),key)));if(selected.getInt("selection")!=4||selected.getInt("heads")!=1)throw new IllegalStateException("Unsafe reading metadata before SDK import");
+            JSONObject projected=product(()->decode(NativeProduct.projectBook(productPath(folder),key,selected.getString("head"),selected.getString("selected_title"))));if(projected.getInt("status")!=0)throw new IllegalStateException("Reading metadata projection refused");
+        }
+        sdk(()->{
+            long owner=NativeSdk.open(database);if(owner==0)throw new IllegalStateException("Reading SDK open failed");
+            try{
+                if(!sender){File spacer=new File(folder,"spacer.txt");try(InputStream in=context.getAssets().open("reading/spacer.txt")){Files.copy(in,spacer.toPath());}long[] imported=NativeSdk.importFile(owner,spacer.getAbsolutePath(),1);if(imported[0]!=0)throw new IllegalStateException("Reading spacer refused");}
+                for(int n=0;n<4;n++){
+                    JSONObject entry=manifest.getJSONObject(roles[n]);String sha=entry.getString("sha256");long bytes=entry.getLong("bytes");File source;
+                    if(sender){source=new File(folder,entry.getString("file"));try(InputStream in=context.getAssets().open("reading/"+entry.getString("file"))){Files.copy(in,source.toPath());}}
+                    else source=new File(folder,"cache/"+sha+"."+roles[n]);
+                    if(source.length()!=bytes||!hash(source).equals(sha))throw new IllegalStateException("Reading original identity differs");
+                    long[] imported=NativeSdk.importFile(owner,source.getAbsolutePath(),formats[n]);if(imported==null||imported[0]!=0||imported[1]<=0)throw new IllegalStateException("Reading SDK import refused");
+                    if(sender){File original=new File(folder,"originals/"+sha+"."+roles[n]);String[] exported=NativeSdk.exportOriginal(owner,imported[1],original.getAbsolutePath(),-1,0);if(Integer.parseInt(exported[0])!=0||original.length()!=bytes||!hash(original).equals(sha))throw new IllegalStateException("Reading SDK export differs");}
+                    books.put(new JSONObject().put("role",roles[n]).put("format",roles[n]).put("sha",sha).put("bytes",bytes).put("key",roles[n]+":"+sha).put("sdk_id",imported[1]).put("path",source.getAbsolutePath()).put("location",n==1?"epub_chapter":n>1?"fixed_page":"reflow_global"));
+                }
+            }finally{NativeSdk.close(owner);}return true;
+        });
+        long global=sdk(()->NativeSdk.readingGlobalImport(database,books.getJSONObject(1).getString("path")));if(global<=0)throw new IllegalStateException("Global EPUB import refused");
+        JSONObject saved=new JSONObject().put("books",books).put("global_epub_id",global);
+        for(int n=0;n<4;n++){
+            JSONObject book=books.getJSONObject(n);String title="Remote "+book.getString("role");
+            if(sender)product(()->decode(NativeProduct.prepareBook(productPath(folder),new File(folder,"reading-metadata-"+book.getString("role")+".pending").getAbsolutePath(),book.getString("format"),book.getString("sha"),book.getLong("bytes"),title,"云端作者",title)));
+            JSONObject attached=product(()->decode(NativeProduct.attach(productPath(folder),book.getString("format"),book.getString("sha"),book.getLong("bytes"),book.getLong("sdk_id"),book.getString("location"),title,"云端作者",title)));if(attached.getInt("status")!=0)throw new IllegalStateException("Reading mapping refused");
+        }
+        readingFont(folder);Files.write(new File(folder,"reading-books.json").toPath(),saved.toString(2).getBytes(StandardCharsets.UTF_8));
+        if(!sender){long[] audit=sdk(()->NativeSdk.readingAudit(database,readingIds(saved),true));if(audit[0]!=0||audit[1]!=audit[2])throw new IllegalStateException("Reading local progress setup refused");saved.put("initial_audit",new JSONArray(audit));}
+        return saved;
+    }
+    private JSONObject readingPrepare(File folder)throws Exception{
+        JSONObject saved=readingInstall(folder,true);String database=new File(folder,"sdk.sqlite").getAbsolutePath();
+        JSONObject captured=sdk(()->decode(NativeSdk.readingCapture(database,readingIds(saved),readingFont(folder).getAbsolutePath())));JSONArray rows=captured.getJSONArray("captures");
+        if(rows.length()!=18)throw new IllegalStateException("Eighteen real captures required");
+        for(int n=0;n<rows.length();n++){
+            JSONObject c=rows.getJSONObject(n);JSONObject book=saved.getJSONArray("books").getJSONObject(Math.min(c.getInt("route"),3));if(c.getInt("route")==4)book=saved.getJSONArray("books").getJSONObject(1);
+            c.put("key",book.getString("key"));String[] fields={c.getString("kind"),c.getString("key"),c.getString("exact"),c.getString("prefix"),c.getString("suffix"),c.isNull("chapter")?null:c.optString("chapter",null),c.getInt("mode")==3?c.getString("page_id"):c.optString("part_path",""),c.getString("id"),captured.getString("parser_version")};
+            long[] numbers={c.getInt("mode"),c.getInt("mode")==3?c.getLong("page"):c.optLong("part",0),c.getLong("start"),c.getLong("end")};JSONObject committed=product(()->decode(NativeProduct.readingAppend(productPath(folder),fields,numbers)));c.put("retained",committed);
+        }
+        captured.put("books",saved.getJSONArray("books")).put("global_epub_id",saved.getLong("global_epub_id"));return captured;
+    }
+    private JSONObject readingResolve(File folder,JSONObject command)throws Exception{
+        JSONObject saved=new JSONObject(new String(Files.readAllBytes(new File(folder,"reading-books.json").toPath()),StandardCharsets.UTF_8));long[] ids=readingIds(saved);String database=new File(folder,"sdk.sqlite").getAbsolutePath();JSONArray rows=command.getJSONArray("captures"),results=new JSONArray();
+        for(int n=0;n<rows.length();n++){
+            JSONObject capture=rows.getJSONObject(n),retained=capture.getJSONObject("retained");JSONObject decoded=product(()->decode(NativeProduct.readingDecode(productPath(folder),retained.getString("revision"))));
+            if(!decoded.getString("wire").equals(retained.getString("wire"))||!decoded.getString("sha256").equals(retained.getString("sha256"))||decoded.getInt("anchor_version")!=2||!decoded.getString("book_key").equals(capture.getString("key")))throw new IllegalStateException("Reading retained bytes differ");
+            if(capture.getString("kind").equals("annotation")&&!decoded.getBoolean("safe_selected"))throw new IllegalStateException("Reading annotation is not safe selected");
+            for(String field:new String[]{"mode","start","end","exact","prefix","suffix"})if(!String.valueOf(decoded.get(field)).equals(String.valueOf(capture.get(field))))throw new IllegalStateException("Reading selector differs: "+field);
+            int mode=decoded.getInt("mode");String[] selector={decoded.getString("exact"),decoded.getString("prefix"),decoded.getString("suffix"),decoded.isNull("chapter")?null:decoded.getString("chapter"),mode==3?decoded.getString("page_id"):decoded.getString("part_path")};long unit=mode==3?decoded.getLong("page"):decoded.getLong("part");
+            long[] match=sdk(()->NativeSdk.readingResolve(database,ids[capture.getInt("route")],mode,unit,decoded.getLong("start"),decoded.getLong("end"),selector,readingFont(folder).getAbsolutePath()));
+            results.put(new JSONObject().put("id",capture.getString("id")).put("mode",mode).put("sdk_status",match[0]).put("state",match[1]).put("start",match[2]).put("end",match[3]).put("expected_start",capture.getLong("start")).put("expected_end",capture.getLong("end")).put("wire_sha256",decoded.getString("sha256")).put("safe_selected",decoded.getBoolean("safe_selected")));
+        }
+        long[] audit=sdk(()->NativeSdk.readingAudit(database,ids,false));return new JSONObject().put("cases",results).put("audit",new JSONArray(audit)).put("books",saved.getJSONArray("books"));
+    }
     private JSONObject execute(JSONObject command)throws Exception{
         String action=command.getString("action"),name=command.optString("profile","A");File folder=profile(name);
         if(action.equals("prepare"))return prepare(folder,command);
         if(action.equals("restore"))return restore(folder,command);
+        if(action.equals("prepare-reading"))return readingPrepare(folder);
+        if(action.equals("restore-reading"))return readingInstall(folder,false);
+        if(action.equals("resolve-reading"))return readingResolve(folder,command);
         if(action.equals("inspect"))return product(()->decode(NativeProduct.inspectBook(productPath(folder),command.getString("key"))));
         if(action.equals("outbox"))return product(()->decode(NativeProduct.outbox(productPath(folder))));
         if(action.equals("project"))return product(()->decode(NativeProduct.projectBook(productPath(folder),command.getString("key"),command.getString("head"),Normalizer.normalize(command.getString("title"),Normalizer.Form.NFC))));

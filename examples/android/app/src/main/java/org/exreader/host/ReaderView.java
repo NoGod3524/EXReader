@@ -56,6 +56,10 @@ public final class ReaderView extends View {
     private boolean longPress;
     private float downX;
     private float downY;
+    private float panX,panY,panLimitX,panLimitY,downPanX,downPanY;
+    private boolean panning;
+    private int turnDirection=1,turnInput=1;
+    void setTurnPreferences(int direction,int input){turnDirection=direction;turnInput=input;}
 
     private String[] lineText = new String[0];
     private RectF[] lineBounds = new RectF[0];
@@ -135,6 +139,7 @@ public final class ReaderView extends View {
                 .put("viewport_width",getWidth()).put("viewport_height",getHeight())
                 .put("drawn_width",drawnWidth).put("drawn_height",drawnHeight)
                 .put("fit",drawnFit).put("offset_x",drawnX).put("offset_y",drawnY)
+                .put("pan_x",panX).put("pan_y",panY).put("pan_limit_x",panLimitX).put("pan_limit_y",panLimitY)
                 .put("selection_mode",selectMode).put("selection_start",selection==null?-1:selection.start)
                 .put("selection_end",selection==null?-1:selection.end);
             if(BuildConfig.DEBUG && debugBitmapIdentity!=null) state.put("bitmap_identity",debugBitmapIdentity);
@@ -143,11 +148,21 @@ public final class ReaderView extends View {
                 .put("anchor_sha256",pointHash==null?org.json.JSONObject.NULL:pointHash)
                 .put("anchor_kind",page.bounded?"bounded_point":page.fixed?"fixed_page":"source_offset")
                 .put("font",page.fixed?org.json.JSONObject.NULL:page.layoutFont).put("zoom",page.layoutZoom)
+                .put("line_spacing",page.layoutLine).put("paragraph_spacing",page.layoutParagraph).put("margin",page.layoutMargin).put("preferences_point",page.preferencesPoint).put("preferences_range_end",page.preferencesRangeEnd)
                 .put("render_scale",page.renderScale).put("bitmap_width",page.bitmap.getWidth()).put("bitmap_height",page.bitmap.getHeight())
+                .put("fixed_public_text",page.fixed?Boolean.valueOf(page.fixedTextProvided):org.json.JSONObject.NULL)
+                .put("fixed_public_text_bytes",page.fixed?page.text.length:org.json.JSONObject.NULL)
+                .put("fixed_page_id",page.fixedPageId==null?org.json.JSONObject.NULL:page.fixedPageId).put("fixed_renderer",page.fixedRendererIdentity)
+                .put("source_key",page.sourceKey==null?org.json.JSONObject.NULL:page.sourceKey)
+                .put("fixed_renderer_source_key",page.fixedRendererSourceKey==null?org.json.JSONObject.NULL:page.fixedRendererSourceKey)
                 .put("glyph_font_first",page.glyphSize==null || page.glyphSize.length==0?org.json.JSONObject.NULL:page.glyphSize[0]);
+            if(page!=null)state.put("actual_line_count",page.lineBounds==null?0:page.lineBounds.length)
+                .put("actual_first_x",page.glyphX==null||page.glyphX.length==0?org.json.JSONObject.NULL:page.glyphX[0])
+                .put("actual_baseline_delta",page.glyphBaseline==null||page.glyphBaseline.length<2?org.json.JSONObject.NULL:baselineDelta(page.glyphBaseline));
             return state.toString();
         } catch(org.json.JSONException error) { throw new IllegalStateException(error); }
     }
+    private static float baselineDelta(float[] values){for(int i=1;i<values.length;i++)if(Math.abs(values[i]-values[0])>.1f)return values[i]-values[0];return 0;}
 
     private final Runnable longPressRunnable = new Runnable() {
         @Override public void run() {
@@ -176,7 +191,7 @@ public final class ReaderView extends View {
             info.setText(lineText[index]);
             info.setContentDescription(lineText[index]);
             info.setBoundsInScreen(screenBounds(lineBounds[index]));
-            info.setVisibleToUser(true);
+            Rect visible=new Rect();info.setVisibleToUser(getGlobalVisibleRect(visible)&&Rect.intersects(screenBounds(lineBounds[index]),visible));
             info.setEnabled(true);
             info.setFocusable(true);
             info.setClickable(false);
@@ -241,6 +256,7 @@ public final class ReaderView extends View {
         // Keep UI bitmap resampling deterministic in one viewport-sized software layer.
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         setFocusable(true);
+        if(BuildConfig.READER_PREFERENCES)setFocusableInTouchMode(true);
         setClickable(true);
         setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_YES);
         selectionPaint.setColor(Color.argb(80, 21, 101, 192));
@@ -257,7 +273,9 @@ public final class ReaderView extends View {
     public void setPage(PageSnapshot snapshot) {
         handler.removeCallbacks(longPressRunnable);
         down = false;
+        endPan();panX=panY=0;
         page = snapshot;
+        if(snapshot!=null&&turnInput==4)requestFocus();
         if(BuildConfig.DEBUG) {
             debugBitmapIdentity=snapshot==null ? null : bitmapIdentity(snapshot.bitmap);
             acceptedToken++; renderChanged(); pointHash=null;
@@ -320,6 +338,13 @@ public final class ReaderView extends View {
         return selection;
     }
 
+    boolean selectionInLowerHalf() {
+        if(selection==null||selection.rects.isEmpty())return false;
+        computeFit();RectF bounds=new RectF(selection.rects.get(0));
+        for(int i=1;i<selection.rects.size();i++)bounds.union(selection.rects.get(i));
+        return toViewY(bounds.centerY())>getHeight()/2f;
+    }
+
     public void clearSelection() {
         renderChanged();
         selection = null;
@@ -347,10 +372,33 @@ public final class ReaderView extends View {
 
     @Override public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
         super.onInitializeAccessibilityNodeInfo(info);
+        computeFit();
         info.setClassName(ReaderView.class.getName());
         info.setContentDescription(describe());
-        info.setScrollable(false);
+        info.setScrollable(page!=null);
+        if(page!=null){
+            info.addAction(new AccessibilityNodeInfo.AccessibilityAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD,"Next page"));
+            info.addAction(new AccessibilityNodeInfo.AccessibilityAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD,"Previous page"));
+            if(panX<panLimitX)info.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT);
+            if(panX>-panLimitX)info.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT);
+            if(panY<panLimitY)info.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_UP);
+            if(panY>-panLimitY)info.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_DOWN);
+        }
         if(BuildConfig.DEBUG) info.getExtras().putString("exreader.frame",frameObservation());
+    }
+
+    @Override public boolean performAccessibilityAction(int action,Bundle arguments){
+        if(isShown()&&isEnabled()&&page!=null){
+            computeFit();
+            if(action==AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_LEFT.getId())return panBy(getWidth()*.8f,0);
+            if(action==AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_RIGHT.getId())return panBy(-getWidth()*.8f,0);
+            if(action==AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_UP.getId())return panBy(0,getHeight()*.8f);
+            if(action==AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_DOWN.getId())return panBy(0,-getHeight()*.8f);
+        }
+        if(isShown()&&isEnabled()&&page!=null&&listener!=null&&(action==AccessibilityNodeInfo.ACTION_SCROLL_FORWARD||action==AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)){
+            listener.onTapZone(action==AccessibilityNodeInfo.ACTION_SCROLL_FORWARD?1:-1);return true;
+        }
+        return super.performAccessibilityAction(action,arguments);
     }
 
     private AccessibilityNodeInfo hostNode() {
@@ -395,15 +443,29 @@ public final class ReaderView extends View {
             fit = 1f;
             offsetX = 0f;
             offsetY = 0f;
+            panX=panY=panLimitX=panLimitY=0;
             return;
         }
         float width = Math.max(1, getWidth() - 16f);
         float height = Math.max(1, getHeight() - 16f);
         fit = Math.min(width / page.bitmap.getWidth(), height / page.bitmap.getHeight());
+        // Native raster scale controls resolution. Keep the requested visual
+        // zoom instead of fitting that higher-resolution bitmap back down.
+        if(BuildConfig.READER_PREFERENCES&&page.fixed)fit*=page.layoutZoom;
         if (!(fit > 0f)) fit = 1f;
-        offsetX = (getWidth() - page.bitmap.getWidth() * fit) / 2f;
-        offsetY = (getHeight() - page.bitmap.getHeight() * fit) / 2f;
+        panLimitX=page.fixed&&page.bitmap.getWidth()*fit>width+1?(page.bitmap.getWidth()*fit-width)/2:0;
+        panLimitY=page.fixed&&page.bitmap.getHeight()*fit>height+1?(page.bitmap.getHeight()*fit-height)/2:0;
+        panX=Math.max(-panLimitX,Math.min(panLimitX,panX));panY=Math.max(-panLimitY,Math.min(panLimitY,panY));
+        offsetX = (getWidth() - page.bitmap.getWidth() * fit) / 2f+panX;
+        offsetY = (getHeight() - page.bitmap.getHeight() * fit) / 2f+panY;
     }
+
+    private boolean panBy(float dx,float dy){
+        computeFit();float oldX=panX,oldY=panY;panX+=dx;panY+=dy;computeFit();
+        if(oldX==panX&&oldY==panY)return false;
+        renderChanged();invalidate();sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED);return true;
+    }
+    private void endPan(){panning=false;if(getParent()!=null)getParent().requestDisallowInterceptTouchEvent(false);}
 
     @Override protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -444,11 +506,13 @@ public final class ReaderView extends View {
         float y = event.getY();
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
+                if(turnInput==4)requestFocus();
                 down = true;
                 moved = false;
                 longPress = false;
                 downX = x;
                 downY = y;
+                downPanX=panX;downPanY=panY;panning=false;
                 if (selectMode) {
                     int hit = hit(x, y);
                     if (hit >= 0) {
@@ -461,9 +525,17 @@ public final class ReaderView extends View {
                 }
                 return true;
             case MotionEvent.ACTION_MOVE:
+                if(!down)return true;
                 if (Math.abs(x - downX) > 8f || Math.abs(y - downY) > 8f) {
                     moved = true;
                     handler.removeCallbacks(longPressRunnable);
+                }
+                if(!selectMode&&!longPress&&moved){
+                    float dx=x-downX,dy=y-downY;
+                    if(!panning&&((Math.abs(dx)>=Math.abs(dy)&&panLimitX>0)||(Math.abs(dy)>Math.abs(dx)&&panLimitY>0))){
+                        panning=true;if(getParent()!=null)getParent().requestDisallowInterceptTouchEvent(true);
+                    }
+                    if(panning)panBy(downPanX+dx-panX,downPanY+dy-panY);
                 }
                 if (selectMode && anchor >= 0) {
                     int hit = hit(x, y);
@@ -475,21 +547,34 @@ public final class ReaderView extends View {
                 return true;
             case MotionEvent.ACTION_UP:
                 handler.removeCallbacks(longPressRunnable);
+                if(!down){endPan();return true;}
+                if(panning){down=false;endPan();return true;}
                 if (selectMode) {
                     if (anchor >= 0 && selection == null) updateSelection(true);
                     down = false;
                     return true;
                 }
-                if (!moved && !longPress) {
-                    int zone = x < getWidth() * 0.3f ? -1 : x > getWidth() * 0.7f ? 1 : 0;
-                    if (zone != 0 && listener != null) listener.onTapZone(zone);
+                if(!longPress){
+                    int zone=0;
+                    if(!moved&&(turnInput==1||turnInput==3)){
+                        float coordinate=turnDirection==3?y:x,extent=turnDirection==3?getHeight():getWidth();
+                        zone=coordinate<extent*.3f?-1:coordinate>extent*.7f?1:0;
+                        if(turnDirection==2)zone=-zone;
+                    }else if(moved&&(turnInput==2||turnInput==3)){
+                        float along=turnDirection==3?y-downY:x-downX,across=turnDirection==3?x-downX:y-downY;
+                        if(Math.abs(along)>=48f&&Math.abs(along)>Math.abs(across)*1.5f){zone=along<0?1:-1;if(turnDirection==2)zone=-zone;}
+                    }
+                    if(zone!=0&&listener!=null)listener.onTapZone(zone);
                 }
                 down = false;
                 performClick();
                 return true;
             case MotionEvent.ACTION_CANCEL:
                 handler.removeCallbacks(longPressRunnable);
-                down = false;
+                down = false;endPan();
+                return true;
+            case MotionEvent.ACTION_POINTER_DOWN:
+                handler.removeCallbacks(longPressRunnable);down=false;moved=true;endPan();
                 return true;
             default:
                 return super.onTouchEvent(event);

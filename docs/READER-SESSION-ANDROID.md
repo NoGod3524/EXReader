@@ -13,3 +13,18 @@
 前轮 `ca318e79` / `40072691890` 因原宿主测试 APK 未登记 ProductOwnerTest runner 而拒绝。新轮显式选择该 runner，并在命令失败时先保存原始 instrumentation 输出。失败运行与工件保留。
 
 这份记录只授予 Android 原生会话、原书及产品 metadata 往返范围。18 个真实捕获跨 DAV 的阅读状态互通、宿主同步 UI、安全凭据接入和真机均待后续验收。
+
+## 18 个真实捕获的后续验收
+
+源码 `4b09e4375f95111ef8a0b835cc1c5cc946c6f6fd`，
+[Android 40081333678](https://github.com/NoGod3524/EXReader/actions/runs/40081333678) attempt 1 全部通过：原 8 项导出、11 组会话及原宿主 17+2 中断恢复、DAV 91+4 检查同次保留，并增加第 12 组阅读状态真实 TLS 往返。
+
+TXT、全局 EPUB、有界 EPUB、PDF 和 CBZ 的原 18 个案例全部使用公开 SDK 捕获；四份原件经 SDK 公开导出后发布，接收端核验 SHA/长度、安全唯一 metadata 后导入。SDK owner 与产品 owner 只复制 selector 纯值，产品侧链接原有 v2 codec；两份 SQLite 及 owner 保持隔离，没有另写 wire 编解码。
+
+结果为 17 个精确 FOUND、1 个 AMBIGUOUS；重叠 spine 路由、章节范围、无文本固定页点与多字节偏移均保留。产品标注生成的 SDK 笔记副本为零，接收端已有 TXT 阅读位置保持 636。真实 force-stop 后 PID 从 2535 变为 5150，重开重新 resolve 的 18 组结果及笔记/进度观测相同。关闭后客户端、上传句柄均为零，native attach/detach 为 2194/2194。
+
+同源码 [codec 回归 40081333621](https://github.com/NoGod3524/EXReader/actions/runs/40081333621) 的 Windows/Linux 各通过原 v1 121 项、v2 116 项/18 捕获及安装后纯 codec 消费者；map 确认 codec 不链接 SDK 函数。Android 同时保留 Debug/Release 的实际链接与打包身份审计。
+
+Android 工件 `12555611930`，47,082,966 字节，SHA-256 `b87c9db722083ef7eab42ce53bf98f06cff755f0d29def8fc32d12b4342d9602`，到期 `2027-01-22T09:16:59Z`。完整身份与逐项结果见 [阅读状态 Android 记录](validation/reader-reading-state-android.json)。首轮 `ec2aa6e5` / `40080981674` 的缺少 core 链接失败保留；断言未放宽。
+
+这次授予独立原生壳中的公开捕获、TLS 传输、纯值 codec 和公开只读 resolve。正式宿主的账号设置、Receive、产品标注界面、用户显式采纳导航、真机和六平台互通继续分别验收。

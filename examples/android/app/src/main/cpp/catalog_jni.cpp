@@ -249,3 +249,7 @@ extern "C" JNIEXPORT jobjectArray JNICALL JNI_METHOD(membership)(JNIEnv *env,jcl
 #ifdef READER_PRODUCT_FIXTURES
 #include "../../debug/cpp/catalog_fixture.inc"
 #endif
+
+#ifdef READER_HOST_READING
+#include "reading_product_jni.inc"
+#endif

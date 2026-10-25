@@ -3,6 +3,12 @@
    Only installed public headers are used; no engine internals. */
 #include <jni.h>
 #include <exreader.h>
+#ifdef READER_HOST_SYNC
+#include <exr_sideload.h>
+#endif
+#if defined(READER_HOST_SYNC) || defined(READER_HOST_SEARCH)
+#include <dlfcn.h>
+#endif
 
 #include <limits.h>
 #include <stdint.h>
@@ -185,6 +191,32 @@ static exr_library *library(JNIEnv *env, jlong handle) {
   return (exr_library *)(intptr_t)handle;
 }
 
+#ifdef READER_HOST_SYNC
+typedef struct {JNIEnv *env;jobject task;jmethodID check;} sync_export_control;
+static int sync_export_cancel(void *opaque) {
+  sync_export_control *control=opaque;
+  if((*control->env)->ExceptionCheck(control->env))return 1;
+  (*control->env)->CallVoidMethod(control->env,control->task,control->check);
+  return (*control->env)->ExceptionCheck(control->env)?1:0;
+}
+JNIEXPORT jlong JNICALL Java_org_exreader_host_NativeLibrary_nativeExportOriginal(
+    JNIEnv *env,jclass type,jlong handle,jlong book,jstring destination,jobject task) {
+  exr_library *store=library(env,handle);char *path=NULL;uint64_t bytes=0;
+  exr_sideload_options options={0};exr_error error={0};exr_status status;
+  sync_export_control control={env,task,NULL};jclass task_type;(void)type;
+  if(!store||!task)return 0;
+  path=input_string(env,destination);if(!path)return 0;
+  task_type=(*env)->GetObjectClass(env,task);if(!task_type){free(path);return 0;}
+  control.check=(*env)->GetMethodID(env,task_type,"check","()V");(*env)->DeleteLocalRef(env,task_type);
+  if(!control.check){free(path);return 0;}
+  options.struct_size=sizeof(options);options.control.cancelled=sync_export_cancel;options.control.context=&control;
+  status=exr_sideload_export_original(store,(int64_t)book,path,&options,&bytes,&error);free(path);
+  if((*env)->ExceptionCheck(env))return 0;
+  if(status!=EXR_OK){throw_status(env,status,&error,"Cannot stage original for sync");return 0;}
+  return (jlong)bytes;
+}
+#endif
+
 static jobjectArray new_rows(JNIEnv *env, jsize count) {
   jclass type = (*env)->FindClass(env, "[Ljava/lang/String;");
   jobjectArray rows;
@@ -227,12 +259,54 @@ static int set_number(JNIEnv *env, jobjectArray row, jsize column, long long val
 
 #include "bounded_epub_jni.inc"
 
+/* App-local viewport directory uses the same cooperative control as the other
+   host readers, including the second public PDF open and every output page. */
+JNIEXPORT jdoubleArray JNICALL Java_org_exreader_host_FixedSession_nativeViewports(
+    JNIEnv *env,jclass type,jbyteArray bytes,jobject task) {
+  exr_fixed_document *document=NULL;exr_fixed_open_options options={0};
+  const exr_fixed_page *pages;host_control context;
+  exr_error error={0};exr_status status=EXR_ARGUMENT;
+  jsize size=bytes?(*env)->GetArrayLength(env,bytes):0;
+  jbyte *input=NULL;jdoubleArray result=NULL;size_t count=0,i;
+  (void)type;
+  if(size<=0||size>32*1024*1024||!task){throw_argument(env,"Invalid PDF viewport original/control");return NULL;}
+  options.control=host_task_control(env,task,&context);
+  if((*env)->ExceptionCheck(env)||host_cancelled(&context))return NULL;
+  input=(*env)->GetByteArrayElements(env,bytes,NULL);if(!input)return NULL;
+  options.struct_size=sizeof(options);
+  status=exr_fixed_open_memory(EXR_PDF,input,(size_t)size,&options,&document,&error);
+  if(status!=EXR_OK)goto done;
+  pages=exr_fixed_pages(document,&count);
+  if(!count||count>10000){status=EXR_LIMIT;goto done;}
+  result=(*env)->NewDoubleArray(env,(jsize)(count*6));if(!result)goto done;
+  for(i=0;i<count&&!(*env)->ExceptionCheck(env);i++) {
+    exr_viewport viewport;
+    if(host_cancelled(&context)){status=EXR_CANCELLED;break;}
+    status=exr_viewport_create(&pages[i].geometry,1.0,&viewport,&error);
+    if(status!=EXR_OK)break;
+    (*env)->SetDoubleArrayRegion(env,result,(jsize)(i*6),6,viewport.matrix);
+  }
+done:
+  exr_fixed_free(document);(*env)->ReleaseByteArrayElements(env,bytes,input,JNI_ABORT);
+  if(status!=EXR_OK){if(result)(*env)->DeleteLocalRef(env,result);result=NULL;throw_status(env,status,&error,"Cannot read public PDF viewport geometry");}
+  return (*env)->ExceptionCheck(env)?NULL:result;
+}
+
 JNIEXPORT jstring JNICALL Java_org_exreader_host_NativeLibrary_nativeIdentity(JNIEnv *env, jclass type) {
   char buffer[128];
   (void)type;
   snprintf(buffer, sizeof(buffer), "%s/%u", exr_version(), exr_abi_version());
   return output_string(env, buffer);
 }
+#ifdef READER_HOST_SYNC
+JNIEXPORT jobjectArray JNICALL Java_org_exreader_host_NativeLibrary_syncIdentity(JNIEnv *env,jclass type) {
+  Dl_info library_info={0},source_info={0},export_info={0};jobjectArray row=new_row(env,4);(void)type;
+  if(!row)return NULL;
+  if(!dladdr((void *)exr_library_open,&library_info)||!dladdr((void *)exr_library_source,&source_info)||!dladdr((void *)exr_sideload_export_original,&export_info))return NULL;
+  if(!set_cell(env,row,0,exr_version())||!set_cell(env,row,1,library_info.dli_fname)||!set_cell(env,row,2,source_info.dli_fname)||!set_cell(env,row,3,export_info.dli_fname))return NULL;
+  return row;
+}
+#endif
 
 JNIEXPORT jlong JNICALL Java_org_exreader_host_NativeLibrary_nativeOpen(JNIEnv *env, jclass type, jstring path) {
   char *name = input_string(env, path);
@@ -808,3 +882,17 @@ JNIEXPORT void JNICALL Java_org_exreader_host_NativeLibrary_nativeDeleteBook(
   status = exr_library_delete(store, (int64_t)book_id, &error);
   if (status != EXR_OK) throw_status(env, status, &error, "Cannot remove the book");
 }
+
+#ifdef READER_HOST_SEARCH
+#include "search_jni.inc"
+#endif
+#ifdef READER_HOST_NAVIGATION
+#include "navigation_jni.inc"
+#endif
+#ifdef READER_HOST_READING
+#include "reading_sdk_jni.inc"
+#include "cbz_renderer_jni.inc"
+#endif
+#ifdef READER_HOST_PREFERENCES
+#include "preferences_jni.inc"
+#endif

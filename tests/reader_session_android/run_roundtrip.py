@@ -22,7 +22,7 @@ from xml.sax.saxutils import escape
 
 class Dav:
     def __init__(self, fixture, authorization):
-        self.auth=authorization;self.entries={};self.dirs={f'/{name}/' for name in ('dav','cancel','auth','other')}
+        self.auth=authorization;self.entries={};self.dirs={f'/{name}/' for name in ('dav','cancel','auth','other','reading')}
         self.requests=[];self.lock=threading.Lock();self.blocked=threading.Event();self.release=threading.Event();self.gate=None
         owner=self
         class Handler(BaseHTTPRequestHandler):
@@ -220,6 +220,34 @@ def main():
             assert adb('exec-out','run-as','org.exreader.host','cat','files/owner-kill-'+phase+'/witness.txt')==witness
             recovered=instrument('original-recover-'+phase,'recover-'+phase);assert ('EXR_OWNER_RECOVERED recover-'+phase).encode() in recovered and b'INSTRUMENTATION_CODE: -1' in recovered
         record('unchanged_original_product_owner_17_and_two_process_phases',provider=report['provider'])
+        reading=control('prepare-reading','ReadingA');assert len(reading['captures'])==18
+        assert control('outbox','ReadingA')['count']==26
+        create('ReadingA','reading');control('start','ReadingA');sent=wait('ReadingA',4);assert control('outbox','ReadingA')['count']==0;close('ReadingA')
+        create('ReadingB','reading');control('start','ReadingB');received=wait('ReadingB',4);close('ReadingB')
+        restored=control('restore-reading','ReadingB')
+        for original,local in zip(reading['books'],restored['books'],strict=True):
+            assert original['key']==local['key'] and original['sdk_id']!=local['sdk_id']
+            remote='/reading/exreader-sync-v1/objects/'+original['sha'][:2]+'/'+original['sha']+'.'+original['format']
+            with server.lock:body=server.entries[remote]
+            assert len(body)==original['bytes'] and hashlib.sha256(body).hexdigest()==original['sha']
+        expected=['txt-progress-start','txt-progress-multibyte','txt-progress-end','txt-bookmark','txt-highlight','txt-ambiguous',
+                  'epub-global-highlight','epub-global-progress','epub-bookmark-part-0','epub-bookmark-part-1',
+                  'epub-chapter-progress','epub-bookmark-part-2','pdf-highlight','pdf-bookmark','pdf-textless-bookmark',
+                  'pdf-progress','cbz-bookmark','cbz-progress']
+        resolved=control('resolve-reading','ReadingB',captures=reading['captures'])
+        def reading_checks(value):
+            assert [row['id'] for row in value['cases']]==expected
+            for row in value['cases']:
+                assert row['sdk_status']==0 and row['state']==(2 if row['id']=='txt-ambiguous' else 1),row
+                if row['state']==1:assert row['start']==row['expected_start'] and row['end']==row['expected_end'],row
+            assert value['audit'][0]==0 and value['audit'][1]==value['audit'][2] and value['audit'][3:]==[0,0,0,0]
+        reading_checks(resolved)
+        reading_stats=control('stats');assert reading_stats['clients']==reading_stats['uploads']==0 and reading_stats['attaches']==reading_stats['detaches']
+        old_pid=resolved['pid'];adb('shell','am','force-stop',package);adb('shell','am','start','-n',package+'/.ControlActivity')
+        reopened=control('resolve-reading','ReadingB',captures=reading['captures']);assert reopened['pid']!=old_pid;reading_checks(reopened)
+        assert reopened['cases']==resolved['cases'] and reopened['audit']==resolved['audit']
+        reading_schemas={profile:snapshot(profile) for profile in ('ReadingA','ReadingB')}
+        record('eighteen_public_sdk_captures_cross_real_tls_dav_with_exact_v2_codec_and_reopen',sent=sent,received=received,resolved=resolved,reopened_pid=reopened['pid'],schemas=reading_schemas,stats=reading_stats,originals=4,receiver_found=17,receiver_ambiguous=1,sdk_note_copies=0,active_progress_untouched=True)
         accepted=True
     except BaseException as error:
         failure={'type':type(error).__name__,'message':str(error)};raise

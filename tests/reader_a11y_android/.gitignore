@@ -1,0 +1,4 @@
+harness/.gradle/
+harness/build/
+harness/a11y/build/
+harness/local.properties
