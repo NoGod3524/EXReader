@@ -1,7 +1,13 @@
 # Windows SDK3.41 complete common host caller
 
-Current status: **candidate source, no cloud result yet**. Reviewed production
+Current status: **candidate source, complete acceptance pending**. Reviewed production
 boundary: `436c5bd57b2b6acc0076a0942e7c7f93f38fcb96`.
+
+Preflight `40191472981` passed on source `84b53274`; complete attempt
+`40191539835` stopped before business execution because Git Bash converted the
+new `/MAP` linker flag into `C:/Program Files/Git/MAP`. The caller now disables
+that automatic conversion only for the host configuration step. Original
+checks and the failed attempt remain unchanged.
 
 The main `ws-host` compiles SDK3.41, F3, cloud import, bulk organization,
 reading records, search and navigation together. All original Windows suites

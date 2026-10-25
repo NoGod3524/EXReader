@@ -94,6 +94,8 @@ jobs:
             cmake --install "build/ws-$name"
           done
       - name: Build actual account host with the optional native search UI
+        env:
+          MSYS_NO_PATHCONV: '1'
         run: |
           set -o pipefail
           cmake -S apps/reader/windows-account -B build/ws-host -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$WS/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage" -DREADER_METADATA_PREFIX="$WS_PREFIX" -DREADER_ACCOUNT_PREFIX="$WS_PREFIX" -DEXR_READER_WINDOWS_SEARCH=ON -DEXR_READER_WINDOWS_NAVIGATION=ON -DEXR_READER_WINDOWS_RECORDS=ON -DEXR_READER_WINDOWS_IMPORT_ORGANIZE=ON -DEXR_READER_WINDOWS_PREFERENCES=ON -DEXR_READER_PREFS_COMMIT_REVIEW_BUILD=ON -DCMAKE_EXE_LINKER_FLAGS=/MAP 2>&1 | tee build/winsearch-logs/host-configure.log
