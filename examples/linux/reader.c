@@ -28,6 +28,13 @@ static int worker_generation;
 static gboolean busy,saving,save_failed,closing,close_after_save;
 static gboolean choosing_file;
 static gboolean profile_writable;
+#ifdef EXR_READER_DROP_IMPORT_UI
+static void file_input_paste(GtkWidget *,gpointer);
+static void file_input_attach(GtkWidget *);
+static void file_input_shutdown(void);
+static void file_input_cancel(void);
+static char *file_input_observation(void);
+#endif
 #ifdef EXR_READER_BATCH_IMPORT_UI
 static void folder_open(GtkWidget *,gpointer);
 static void folder_exit(void);
@@ -198,6 +205,10 @@ static void state(void) {
 #ifdef EXR_READER_BATCH_IMPORT_UI
   char *folder_state=folder_observation();
   complete=g_strconcat(data,folder_state,NULL);g_free(data);g_free(folder_state);data=complete;
+#endif
+#ifdef EXR_READER_DROP_IMPORT_UI
+  char *input_state=file_input_observation();
+  complete=g_strconcat(data,input_state,NULL);g_free(data);g_free(input_state);data=complete;
 #endif
   g_file_set_contents(state_path,data,-1,NULL);g_free(data);
 }
@@ -433,6 +444,9 @@ static void job_free(host_job *job) {
   g_free((gpointer)job->command.receive_key);
 #ifdef EXR_READER_BATCH_IMPORT
   g_free((gpointer)job->command.batch_root);
+#endif
+#ifdef EXR_READER_DROP_IMPORT
+  g_free((gpointer)job->command.batch_payload);
 #endif
 #ifdef EXR_READER_PREFERENCES
   g_free((gpointer)job->command.preferences_path);
@@ -694,12 +708,18 @@ static void import_dialog(void) {
 #ifdef EXR_READER_BATCH_IMPORT_UI
 #include "batch_import_ui.inc"
 #endif
+#ifdef EXR_READER_DROP_IMPORT_UI
+#include "drop_import_ui.inc"
+#endif
 static void focus_list(GtkWidget *box) {
   GtkListBoxRow *row=gtk_list_box_get_selected_row(GTK_LIST_BOX(box));if(!row) row=gtk_list_box_get_row_at_index(GTK_LIST_BOX(box),0);
   if(row) { gtk_list_box_select_row(GTK_LIST_BOX(box),row);gtk_widget_grab_focus(GTK_WIDGET(row)); } else gtk_widget_grab_focus(box);
 }
 static void action(GtkWidget *widget,gpointer name) {
   (void)widget;const char *a=name;
+#ifdef EXR_READER_DROP_IMPORT_UI
+  if(!strcmp(a,"cancel") && file_input.pending) { file_input_cancel();return; }
+#endif
 #ifdef EXR_READER_NAVIGATION_UI
   if(directory_opened()) return;
 #endif
@@ -819,6 +839,9 @@ static void stop_worker(void) {
 #endif
   if(closing) return;
   closing=TRUE;
+#ifdef EXR_READER_DROP_IMPORT_UI
+  file_input_shutdown();
+#endif
 #ifdef EXR_READER_BATCH_IMPORT_UI
   folder_exit();
 #endif
@@ -915,6 +938,10 @@ int main(int argc,char **argv) {
       gtk_menu_shell_append(GTK_MENU_SHELL(source_menu),file_item);gtk_menu_shell_append(GTK_MENU_SHELL(source_menu),folder_item);
       g_signal_connect(file_item,"activate",G_CALLBACK(action),(gpointer)"import");
       g_signal_connect(folder_item,"activate",G_CALLBACK(folder_open),NULL);
+#ifdef EXR_READER_DROP_IMPORT_UI
+      GtkWidget *paste_files=gtk_menu_item_new_with_label("Paste book files");
+      gtk_menu_shell_append(GTK_MENU_SHELL(source_menu),paste_files);g_signal_connect(paste_files,"activate",G_CALLBACK(file_input_paste),NULL);
+#endif
       gtk_widget_show_all(source_menu);gtk_menu_button_set_popup(GTK_MENU_BUTTON(sources),source_menu);
       gtk_box_pack_start(GTK_BOX(toolbar),sources,FALSE,FALSE,0);
     }
@@ -932,6 +959,9 @@ int main(int argc,char **argv) {
   gtk_entry_set_max_length(GTK_ENTRY(search),256);gtk_entry_set_text(GTK_ENTRY(search),shelf_query);
   atk_object_set_name(gtk_widget_get_accessible(search),"Search bookshelf");
   shelf_scroll=scroll(shelf);
+#ifdef EXR_READER_DROP_IMPORT_UI
+  file_input_attach(shelf_scroll);
+#endif
 #ifdef EXR_READER_DESKTOP_METADATA
   GtkWidget *shelf_actions=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,4);
   gtk_box_pack_start(GTK_BOX(shelf_actions),search,TRUE,TRUE,0);
