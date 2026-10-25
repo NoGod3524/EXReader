@@ -212,6 +212,8 @@ def main():
             problems.append("the TLS origin served no request")
         if any(r['authorization'] for r in tls_records):
             problems.append('URL credentials reached the TLS fixture without explicit authorization')
+        if not any(r['path'] == '/opds1/catalog.xml?q=percent%20encoded' for r in tls_records):
+            problems.append('TLS relative redirect did not preserve exact percent-encoded target')
 
         for entry in sorted(staging.iterdir()):
             if not STAGED.match(entry.name):
