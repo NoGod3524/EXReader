@@ -1,13 +1,13 @@
 # WebDAV 选书下载与侧载导入
 
-## Root 复审候选（待新的 Actions 结果）
+## Root 复审修复已通过
 
-复审分支 `codex/reader-cloud-import-review` 保留原43项运行记录；下面的修改尚未获得该旧source的授予。
+复审分支 `codex/reader-cloud-import-review` 保留原43项运行记录。新source `80b743c6f51bee6d95e7cf116b4e65000a599063` / run `40158826151` / attempt1 三平台各47项和同次严格汇总全部 success。
 修复可空诊断指针、发布前一次性准备文件所有权、显式/派生标题分配失败被静默忽略，以及删除失败虚报成功。
 新增实际删除拒绝与恢复、前三个所有权分配点失败、两种标题分配失败和空诊断参数用例。
 原安装后 C/C++ 消费者保留；附加故障探针仅拦截同一适配器源码的分配，不拦截 SDK 或网络后端。
 若系统拒绝删除，`staging_removed=0`、`*staged` 保留供 discard 重试，已提交书的成功回执不变。
-所有 `error` 输出可传 NULL。三平台和真实上游作业/二进制摘要由新的 Actions 轮次认证。
+所有 `error` 输出可传 NULL。三平台和真实上游作业/二进制摘要已由该轮 Actions 认证；9个报告协议负例仍通过。最终证据提交仅改本文和验收 JSON，等待宿主接线与共同源码集成。
 
 `apps/reader/cloud-import` 是独立的静态 C11 适配包 `EXReaderCloudImport` 0.1.0。
 它把已有的 WebDAV 目录浏览、选中远端文件、下载到私有 staging 和侧载导入串成两个显式分开的阶段。
@@ -52,7 +52,7 @@ list(client, "books/")  ->  用户选中 entry(resource, display_name, bytes)
 - **内存**：不分配整本书；64 KiB 缓冲用于回读与哈希。
 - **错误**：`READER_CLOUD_REMOTE`（`webdav_code`／`http_status` 带原 WebDAV 状态：TLS、401、重定向、HTTP、IO 等）、
   `LENGTH`（实收长度≠`expected_bytes`）、`LIMIT`、`CANCELLED`、`ARGUMENT`、`MEMORY`、`IO`。
-  所有失败都清除临时与部分 staging 文件，client 仍可重试。
+  失败尝试清除临时与部分 staging 文件；若系统拒绝删除，staged 保留清理所有权，client 仍可重试。
 - **取消／提交边界**：取消在 I/O 边界检查；阻塞中的原生 HTTPS 调用受 client 超时限制，不保证立即中断。
   文件一旦原子发布，调用返回 OK（published wins），之后到达的取消由宿主改为调用 discard。
 - **凭据**：Authorization 只在 client 创建时由宿主提供；本包不接触、不记录、不复制。

@@ -1,8 +1,22 @@
 {
   "root_review_candidate": {
     "branch": "codex/reader-cloud-import-review",
-    "accepted": false,
-    "state": "source_and_fault_checks_written_awaiting_actions",
+    "accepted": true,
+    "state": "three_desktop_packages_and_real_fault_paths_accepted_awaiting_host_integration",
+    "source": "80b743c6f51bee6d95e7cf116b4e65000a599063",
+    "run_id": 40158826151,
+    "attempt": 1,
+    "checks_per_platform": 47,
+    "protocol_rejections": 9,
+    "jobs": {"Windows": 121065842741, "Linux": 121065842886, "macOS": 121065842967, "evidence": 121066933343},
+    "expires_at": "2027-01-23T03:36:17Z",
+    "artifacts": [
+      {"platform": "Windows", "id": 12584744282, "bytes": 8767873, "sha256": "e4ab444559cda424430a4427c5fdce21f88084eb231a70d5e6b440cefd3a024a"},
+      {"platform": "Linux", "id": 12584604097, "bytes": 12458976, "sha256": "68609c47e48071c0bc55111e72c152c612cc629151c7eb193d9abf545194050a"},
+      {"platform": "macOS", "id": 12584684154, "bytes": 10695309, "sha256": "612647266102512fe04c51f384f839b45ee81433bbbb8faf0f8f1b9c77f8154f"},
+      {"platform": "strict-summary", "id": 12585895106, "bytes": 680, "sha256": "e0d434a30cc92cd72a702c8085909098e22e12bb89e9cd9ac7c17a4bca0fa9e5"}
+    ],
+    "evidence_commit_difference": "only docs/READER-WEBDAV-IMPORT.md and docs/validation/reader-webdav-import.json",
     "original_cloud_scope_remains_at_source": "a0eb0c7b91eb34d6e577ac581b419ce1da8729df"
   },
   "package": "EXReaderCloudImport",
@@ -13,7 +27,7 @@
   "branch": "codex/reader-webdav-import",
   "status": "cloud-verified",
   "tested_source": "a0eb0c7b91eb34d6e577ac581b419ce1da8729df",
-  "later_commits": "documentation and this record only; no source or test change after the tested source",
+  "later_commits": "original delivery 547711bc was documentation-only; later root source and test changes are separately authenticated in root_review_candidate",
   "cloud": {
     "run_id": 40138293883,
     "run_attempt": 1,
