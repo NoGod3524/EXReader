@@ -8,6 +8,10 @@ on:
         description: Read the fixed retained failure ZIP on this runner without building or granting acceptance
         type: boolean
         default: false
+      replay_saved_failure:
+        description: Reproduce only the original APK Pan phase with logcat; diagnostic only
+        type: boolean
+        default: false
 permissions:
   contents: read
   actions: read
@@ -16,17 +20,40 @@ defaults:
     shell: bash
 jobs:
   inspect:
-    if: github.event_name == 'workflow_dispatch' && inputs.inspect_saved_failure
+    if: github.event_name == 'workflow_dispatch' && (inputs.inspect_saved_failure || inputs.replay_saved_failure)
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - name: Authenticate the original failure ZIP and print its saved instrumentation
         env:
           GH_TOKEN: ${{ github.token }}
+          PREPARE_REPLAY: ${{ inputs.replay_saved_failure }}
         run: python tests/reader_android_fixed_pan/inspect_failure.py
+      - name: Enable diagnostic emulator acceleration
+        if: inputs.replay_saved_failure
+        run: sudo chmod 666 /dev/kvm
+      - name: Reproduce the exact retained APK Pan phase and preserve the original crash
+        if: inputs.replay_saved_failure
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: python tests/reader_android_fixed_pan/replay_failure.py
+      - name: Preserve diagnostic-only raw logs
+        if: always() && inputs.replay_saved_failure
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-fixed-pan-failure-replay-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/android-fixed-pan-replay/logs/
+          if-no-files-found: error
   android:
-    if: github.event_name != 'workflow_dispatch' || !inputs.inspect_saved_failure
+    if: github.event_name != 'workflow_dispatch' || !(inputs.inspect_saved_failure || inputs.replay_saved_failure)
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:

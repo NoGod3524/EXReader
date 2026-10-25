@@ -3,7 +3,7 @@ import hashlib
 import io
 import json
 import os
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -55,3 +55,17 @@ assert archive.getinfo(found[0]).file_size < 1024**2
 print(json.dumps({'diagnostic_only': True, 'accepted': False, 'source': source, 'run': run, 'artifact': artifact, 'digest': digest, 'path': found[0]}), flush=True)
 print(archive.read(found[0]).decode('utf-8', errors='replace'), flush=True)
 print(json.dumps({'retained_pan_files': [name for name in names if 'android-fixed-pan/ui/' in name]}), flush=True)
+if os.environ.get('PREPARE_REPLAY') == 'true':
+    folder = Path('build/android-fixed-pan-replay')
+    folder.mkdir(parents=True, exist_ok=True)
+    for suffix, output in [('examples/android/app/build/outputs/apk/debug/app-debug.apk', 'host.apk'),
+                           ('build/android-fixed-pan/test-apks/fixed-pan-ui.apk', 'probe.apk')]:
+        found = [name for name in names if name.endswith(suffix)]
+        assert len(found) == 1 and archive.getinfo(found[0]).file_size < 100 * 1024**2
+        (folder / output).write_bytes(archive.read(found[0]))
+    originals = [name for name in names if '/android-fixed-pan/fixtures/' in name and not name.endswith('/')]
+    assert len(originals) == 8
+    (folder / 'fixtures').mkdir(exist_ok=True)
+    for name in originals:
+        assert archive.getinfo(name).file_size < 32 * 1024**2
+        (folder / 'fixtures' / PurePosixPath(name).name).write_bytes(archive.read(name))
