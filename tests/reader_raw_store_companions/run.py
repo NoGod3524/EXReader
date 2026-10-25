@@ -45,7 +45,7 @@ def main():
     core_sha = guard_companions()
     # These are exactly the sealed independent-package ownership statements;
     # all SDK, original-regression, raw capture and behavioral assertions stay.
-    source = CORE.read_text()
+    source = CORE.read_text(encoding='utf-8')
     first = source.index("    changed = run(['git', 'diff', '--name-only', BASE, 'HEAD'])")
     last = source.index("    pdf = ROOT / 'tests/fixtures/pdf-public-text.pdf'", first)
     replaced = source[first:last]
