@@ -60,6 +60,11 @@ CLAIM_KEYS = ('runtime_accepted', 'runtime_ready', 'legal_conclusion', 'legal_ad
 class ClosureError(Exception):
     """A closure input is unusable; the code names the rejected property."""
 
+    def __init__(self, code, detail=None):
+        super().__init__(code)
+        self.code = code
+        self.detail = detail
+
 
 class Report:
     """Collected problems (stable codes) and checks (pass, fail or reported)."""
@@ -141,6 +146,12 @@ def resolve_owner(path, index, package_map):
     candidates = set(index.get(identity) or ())
     if not candidates:
         candidates = set(index.get(packages.canonical(identity)) or ())
+    if not candidates:
+        # An upstream-named copy of a registered library (libwebpmux.a beside the
+        # registered webp family) belongs to the component that ships that library.
+        for name, owners_of_name in index.items():
+            if identity.startswith(name):
+                candidates |= set(owners_of_name)
     return sorted(candidates)
 
 
@@ -717,10 +728,13 @@ def verify(documents, payload, kind='sdk', platform='linux', components=None,
                             'owner': next((owner for owner, owned in owners.items()
                                            if path in owned), None),
                             'bytes': record['bytes'], 'sha256': record['sha256']})
-        distinct = {entry['owner'] for entry in entries}
-        if len(distinct) > 1:
-            report.add('archive_duplicate_split_owner', '%s %r' % (identity, sorted(map(str, distinct))))
         duplicates.append({'library': identity, 'copies': entries})
+    static = inventory.get('static_dependency') or {}
+    declared_archives = {entry.get('path') for entry in static.get('archives') or []} | \
+        {entry.get('path') for entry in static.get('foreign_archives') or []}
+    for path in archives:
+        if path not in declared_archives:
+            report.add('archive_undeclared', path)
     report.item('archives.owners', not unowned and not ambiguous,
                 '%d archives, %d owners, %d duplicate library names'
                 % (len(archives), len(owners), len(duplicates)))

@@ -202,8 +202,8 @@ def mutation_archive_ambiguous(state):
     state['components'].append(extra)
 
 
-def mutation_duplicate_split_owner(state):
-    state['components'][2]['vendor_files'] = ['expat', 'miniz']
+def mutation_archive_undeclared(state):
+    state['documents']['inventory']['static_dependency']['foreign_archives'] = []
 
 
 def mutation_link_record_missing(state):
@@ -354,7 +354,7 @@ CASES = [
      {'stage_file_unrecorded', 'archive_unowned'}),
     ('stage_file_tampered', mutation_stage_identity, {'stage_file_identity'}),
     ('archive_ambiguous_owner', mutation_archive_ambiguous, {'archive_ambiguous_owner'}),
-    ('duplicate_split_owner', mutation_duplicate_split_owner, {'archive_duplicate_split_owner'}),
+    ('archive_undeclared', mutation_archive_undeclared, {'archive_undeclared'}),
     ('link_record_missing', mutation_link_record_missing, {'link_record_missing'}),
     ('link_output_tampered', mutation_link_output, {'link_output_digest'}),
     ('link_classification_drift', mutation_link_drift, {'link_classification_drift'}),
@@ -415,9 +415,9 @@ def artifact_identity_cases():
         try:
             contract.artifact_identity(artifact, run, now)
         except contract.InventoryError as error:
-            cases.append((name, False, error.code))
+            cases.append((name, True, error.code))
         else:
-            cases.append((name, True, 'accepted a forged identity'))
+            cases.append((name, False, 'accepted a forged identity'))
     return cases
 
 

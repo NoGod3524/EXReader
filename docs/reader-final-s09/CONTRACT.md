@@ -39,13 +39,17 @@ accepted          = 上述四者都没有问题，且没有任何文档宣称运
 | `lib/<name>`（上游名副本） | 同上（`libaom`→libaom、`libwebp`→libwebp） |
 | `lib/<pkg>`、`lib/lib<pkg>`（组合前缀） | `packages.PACKAGES` 里该包的 id |
 
-零 owner → `archive_unowned`；多 owner → `archive_ambiguous_owner`。
+零 owner → `archive_unowned`；多 owner → `archive_ambiguous_owner`；清单没有给它分类 →
+`archive_undeclared`。
 
 ### 2.2 重复库
 
 同一个库身份出现两份及以上（G09 记录为六份上游名副本，闭包以真实 stage 为准逐份枚举）时，闭包**必须**逐份记录
 路径、owner、字节与 SHA-256，且两份不得属于不同组件（`archive_duplicate_split_owner`）。
 SBOM 若把它们合并成一个文件元素，`spdx_file_missing`/`cdx_file_missing` 会失败。
+每一份安装归档还必须被清单明确归入"组件归档"或"上游名副本"，否则 `archive_undeclared`。
+上游名副本若没有同名登记（例如 `libwebpmux.a`、`libwebpdecoder.a` 之于登记的 webp 家族），
+按"库名前缀属于携带该库的组件"归到唯一 owner；仍然归不到任何组件才是缺口。
 
 ### 2.3 系统库 vs 随包库
 
