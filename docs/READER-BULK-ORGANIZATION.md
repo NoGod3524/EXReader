@@ -1,5 +1,17 @@
 # Reader bulk organization (J10)
 
+## Root review repair
+
+Branch `codex/reader-bulk-organization-review`, source `fd2c88e3c5f0f0c7a7bd8698e7efb3825079bd41`,
+run `40159996464` attempt1: Windows/Linux/macOS each passed 21 scenarios and the strict artifact job passed.
+Apply success now remains COMMITTED in callbacks, results and counters even when clearing the pending intent
+fails; completion remains false until cleanup resumes. The new real filesystem failure proves that resume
+retains the original revision without duplicating history/outbox. Cancellation diagnostics match returned
+status, and negative action values are refused consistently across compilers. All original 2202-book,
+100-item batch, conflict, cancel and real process-kill checks remain. The earlier green repair and the
+fixture-only assertion failure are retained in the validation JSON. Final evidence changes only these two
+module documents. Host UI integration remains pending.
+
 `EXReaderBulkOrganization::reader_bulk` (`apps/reader/bulk-organization`) applies one
 explicit organization action to at most 100 selected books: favorite set/clear, and
 add/remove for shelf, tag and series. It runs the existing typed commands through the
