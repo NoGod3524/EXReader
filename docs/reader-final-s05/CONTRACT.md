@@ -70,8 +70,11 @@ platform = iossimulator）、`arch.device_slice_absent`（无 ios slice）、`ar
 资源：`resources.inventory`（逐文件 SHA-256）、`resources.symlink`（拒绝绝对/越界符号链接）、
 `resources.special`（拒绝 FIFO/设备等非普通文件）、`resources.case_collision`（大小写碰撞）。
 
-签名与 entitlement：`signature.verify`（已签名必须 `codesign --verify --deep --strict` 通过；
-未签名记为 pending，模拟器安装不需要签名，且不授予签名）、`entitlements.parse`、
+签名与 entitlement：`signature.verify` 分三种：未签名 → pending；只有可执行文件带 linker ad-hoc 签名、
+没有 `_CodeSignature/CodeResources`（`bundle_sealed=false`）→ pending（记录 `verify` 与原始 log，
+不得据此声称已签名）；bundle 已封装签名 → 必须 `codesign --verify --deep --strict` 通过，否则 fail。
+`result.signing.established` 只有“带 authority 的 bundle 签名且校验通过”才为 true，且始终不授予设备签名。
+`entitlements.parse`、
 `entitlements.no_private`（拒绝 `com.apple.private.*`）、`entitlements.application_identifier`、
 `entitlements.debug_marker`（`get-task-allow=true` 记 pending，不授予设备签名）。
 
@@ -96,6 +99,10 @@ platform = iossimulator）、`arch.device_slice_absent`（无 ios slice）、`ar
   “两个 producer 作业都 success” 失败；iPad 作业本身 success，但整轮失败，**不能作为成功来源**。
 - 因此本包 `accepted=false`，producer 侧为 pending；工具以 CI 生成夹具完成全部能力证明，
   并对该失败 run 的原始 artifact 做 diagnostic 记录（只记录事实，不授予）。
+- 该失败 run 的 app 由 `CODE_SIGNING_ALLOWED=NO` 构建：`Info.plist` 有 `EXRSourceSHA=72c6bbdd`、
+  `EXRSDKVersion=3.41.0`、`CFBundleSupportedPlatforms=['iPhoneSimulator']`、`UIDeviceFamily=[1,2]`、
+  `MinimumOSVersion=15.0`；但只有可执行文件的 linker ad-hoc 签名，没有 `_CodeSignature/CodeResources`，
+  故 `bundle_sealed=false`、`signature.verify` 记 pending，`signing.established=false`。
 
 ## 7. 重跑
 

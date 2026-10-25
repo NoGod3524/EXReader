@@ -202,24 +202,31 @@ def mutants(app, work, implementation_sha, version):
     def nested_library_replaced(target):
         (target / 'Frameworks' / 'libS05Kit.dylib').write_text('not a mach-o binary\n')
 
+    def executable_only_signature(target):
+        seal = target / '_CodeSignature'
+        if seal.is_dir():
+            shutil.rmtree(seal)
+        command(['codesign', '--force', '--sign', '-', str(target / 'EXReaderS05Fixture')])
+
     cases = [
-        ('platform_device', platform_device, 'bundle.platform'),
-        ('family_ipad_only', family_ipad, 'bundle.family'),
-        ('executable_missing', executable_missing, 'bundle.executable'),
-        ('executable_not_executable', executable_not_executable, 'bundle.executable'),
-        ('identifier_missing', identifier_missing, 'bundle.identifier'),
-        ('minimum_os_newer', minimum_os_newer, 'bundle.minimum_os'),
-        ('info_plist_missing', info_plist_missing, 'bundle.info_plist'),
-        ('arch_x86_only', arch_x86_only, 'arch.main_arm64'),
-        ('arch_device_platform', arch_device_platform, 'arch.simulator_platform'),
-        ('arch_device_platform_nested', platform_device_nested, 'arch.simulator_platform'),
-        ('resource_symlink_escape', symlink_escape, 'resources.symlink'),
-        ('private_entitlement', private_entitlement, 'entitlements.no_private'),
-        ('signature_tampered', signature_tampered, 'signature.verify'),
-        ('nested_library_replaced', nested_library_replaced, 'arch.nested_code'),
+        ('platform_device', platform_device, 'bundle.platform', 'fail'),
+        ('family_ipad_only', family_ipad, 'bundle.family', 'fail'),
+        ('executable_missing', executable_missing, 'bundle.executable', 'fail'),
+        ('executable_not_executable', executable_not_executable, 'bundle.executable', 'fail'),
+        ('identifier_missing', identifier_missing, 'bundle.identifier', 'fail'),
+        ('minimum_os_newer', minimum_os_newer, 'bundle.minimum_os', 'fail'),
+        ('info_plist_missing', info_plist_missing, 'bundle.info_plist', 'fail'),
+        ('arch_x86_only', arch_x86_only, 'arch.main_arm64', 'fail'),
+        ('arch_device_platform', arch_device_platform, 'arch.simulator_platform', 'fail'),
+        ('arch_device_platform_nested', platform_device_nested, 'arch.simulator_platform', 'fail'),
+        ('resource_symlink_escape', symlink_escape, 'resources.symlink', 'fail'),
+        ('private_entitlement', private_entitlement, 'entitlements.no_private', 'fail'),
+        ('signature_tampered', signature_tampered, 'signature.verify', 'fail'),
+        ('executable_only_signature', executable_only_signature, 'signature.verify', 'pending'),
+        ('nested_library_replaced', nested_library_replaced, 'arch.nested_code', 'fail'),
     ]
     records = []
-    for name, mutate, expected in cases:
+    for name, mutate, expected, expected_status in cases:
         target = work / ('mutant-' + name) / app.name
         target.parent.mkdir()
         copy_app(app, target)
@@ -229,9 +236,10 @@ def mutants(app, work, implementation_sha, version):
                                   runtime_version=version, expected_source=implementation_sha)
         found = next((item for item in checks if item['id'] == expected), None)
         records.append({'mutant': name, 'expected': expected,
+                        'expected_status': expected_status,
                         'status': found['status'] if found else 'missing',
                         'detail': (found or {}).get('detail'),
-                        'rejected': bool(found) and found['status'] == 'fail'})
+                        'rejected': bool(found) and found['status'] == expected_status})
     return records
 
 

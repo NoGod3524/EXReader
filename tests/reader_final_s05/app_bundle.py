@@ -195,6 +195,7 @@ def signature(app):
     entry = {'signed': False, 'state': 'absent', 'verify': None, 'verify_log': '',
              'identifier': None, 'team_identifier': None, 'authorities': [],
              'entitlements': None, 'entitlements_sha256': None, 'entitlements_error': None,
+             'bundle_sealed': (Path(app) / '_CodeSignature' / 'CodeResources').is_file(),
              'tool': 'codesign'}
     if sys.platform != 'darwin':
         entry['state'] = 'unavailable'
@@ -517,15 +518,22 @@ def check(manifest_value, device_class, mode='fixture', runtime_version=None, ex
     passed('resources.case_collision', not collisions, 'case collisions=%r' % (collisions[:8],))
 
     signature_value = manifest_value.get('signature') or {}
-    if signature_value.get('signed'):
-        passed('signature.verify', signature_value.get('verify') is True,
-               'state=%r authorities=%r log=%r' % (signature_value.get('state'),
-                                                   (signature_value.get('authorities') or [])[:3],
-                                                   (signature_value.get('verify_log') or '')[-400:]))
-    else:
+    signature_state = signature_value.get('state')
+    sealed = signature_value.get('bundle_sealed') is True
+    signature_log = (signature_value.get('verify_log') or '')[-400:]
+    if not signature_value.get('signed'):
         add('signature.verify', 'pending',
             'bundle is not signed (state=%r); a simulator installation does not need a signature and no signing is granted'
-            % (signature_value.get('state'),))
+            % (signature_state,))
+    elif signature_state == 'ad-hoc' and not sealed:
+        add('signature.verify', 'pending',
+            'executable-only ad-hoc signature without _CodeSignature/CodeResources (verify=%r); the executable is signed but the bundle is not, so no signing is established and none is granted; log=%r'
+            % (signature_value.get('verify'), signature_log))
+    else:
+        passed('signature.verify', signature_value.get('verify') is True,
+               'state=%r sealed=%r authorities=%r log=%r' % (signature_state, sealed,
+                                                             (signature_value.get('authorities') or [])[:3],
+                                                             signature_log))
     rights = signature_value.get('entitlements')
     if signature_value.get('signed') and signature_value.get('entitlements_error'):
         add('entitlements.parse', 'fail', 'entitlements do not parse: ' + str(signature_value['entitlements_error']))

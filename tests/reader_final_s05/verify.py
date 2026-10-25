@@ -212,8 +212,15 @@ def main():
         'signature': {'state': (manifest['signature'] or {}).get('state'),
                       'signed': (manifest['signature'] or {}).get('signed'),
                       'verify': (manifest['signature'] or {}).get('verify'),
+                      'bundle_sealed': (manifest['signature'] or {}).get('bundle_sealed'),
                       'entitlements_sha256': (manifest['signature'] or {}).get('entitlements_sha256'),
                       'entitlements': (manifest['signature'] or {}).get('entitlements')},
+        'signing': {'state': (manifest['signature'] or {}).get('state'),
+                    'verify': (manifest['signature'] or {}).get('verify'),
+                    'bundle_sealed': (manifest['signature'] or {}).get('bundle_sealed'),
+                    'established': ((manifest['signature'] or {}).get('state') == 'signed' and
+                                    (manifest['signature'] or {}).get('verify') is True),
+                    'device_signing_granted': False},
         'file_sharing': manifest['file_sharing'],
         'device': (smoke or {}).get('device'),
         'runtime_version': runtime,
@@ -268,7 +275,7 @@ def main():
                       'bundle': result['bundle'], 'manifest_complete': manifest_complete,
                       'install_smoke': result['install_smoke']['status'],
                       'capability_verified': capability_verified, 'granted': granted,
-                      'blocking': blocking, 'pending': pending,
+                      'signing': result['signing'], 'blocking': blocking, 'pending': pending,
                       'blocked_by': result['blocked_by']}, indent=2))
     ok = capability_verified if mode == 'fixture' else (granted if mode == 'producer' else True)
     return 0 if ok else 1
