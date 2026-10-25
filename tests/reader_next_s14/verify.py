@@ -382,8 +382,7 @@ def synthetic(spec, source, run_id, attempt, module_tree, pinned):
                              'readiness_file': 'ready-' + stage})
     command_records = []
     for index, (role, output, okay) in enumerate(commands, 1):
-        files['command-%02d.log' % index] = (output + '
-').encode()
+        files['command-%02d.log' % index] = (output + chr(10)).encode()
         arguments = [cname] if role == 'c-consumer' else ['probe', role]
         command_records.append({'number': index, 'role': role, 'arguments': arguments,
                                 'log': 'command-%02d.log' % index,
