@@ -8,6 +8,8 @@
 #include <string.h>
 #include <windows.h>
 #include <ole2.h>
+#include <shlobj.h>
+#include <wchar.h>
 
 int s06_handoff_deliver(const char *const *paths, size_t count, s06_handoff_result *out) {
   wchar_t *wide[S06_HANDOFF_MAX_ITEMS];

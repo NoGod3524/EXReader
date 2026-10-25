@@ -2,6 +2,7 @@
 /* Real AppKit handoff: the probe owns file URLs on the general pasteboard and
    reads them back through the installed EXReaderDesktopDrop Apple adapter. */
 #include "s06_handoff_internal.h"
+#import <exr_desktop_drop_apple.h>
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 #include <stdio.h>
