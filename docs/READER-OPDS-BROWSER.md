@@ -215,3 +215,16 @@ NO_PROXY exception. Windows already uses explicit no-proxy transport. These
 changes require fresh three-platform CI. A hard wall-clock deadline for slow
 streaming responses remains unverified across native transports; the existing
 connection/read/low-speed limits are not promoted to such a claim.
+
+Independent source cross-review also found retained CRLF in POSIX response header
+values. Location CRLF was percent-encoded into redirected resource URLs; reported
+Content-Length became unknown. Header values now trim complete line endings, with
+real TLS absolute and percent-encoded relative redirect cases and direct public
+transport header/body-length assertions on all three desktop platforms. Binary and
+report identity rejection cases exercise the same helpers as real ZIP validation.
+
+The common transport now refuses URL userinfo before either HTTP/TLS backend can
+send a request, including redirect targets. This prevents libcurl's automatic
+URL-based Basic authentication from bypassing the explicit authorization field.
+A TLS userinfo refusal case and server-side zero-Authorization receipt check cover
+this boundary under the same real fixture run.

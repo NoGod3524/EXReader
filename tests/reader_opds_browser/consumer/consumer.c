@@ -25,6 +25,22 @@ static const char *g_busy_url;
 static int g_busy_seen;
 static int g_busy_status;
 
+typedef struct { int status, clean_type; int64_t length; size_t received; } header_probe;
+static int probe_head(void *user, const opds_response *response) {
+  header_probe *p = (header_probe *)user;
+  p->status = response->status;
+  p->length = response->content_length;
+  p->clean_type = response->content_type &&
+    !strcmp(response->content_type, "application/atom+xml;profile=opds-catalog");
+  return 0;
+}
+static int probe_body(void *user, const void *data, size_t size) {
+  header_probe *p = (header_probe *)user;
+  (void)data;
+  p->received += size;
+  return 0;
+}
+
 static void json_escape(FILE *f, const char *text) {
   for (; text && *text; text++) {
     unsigned char ch = (unsigned char)*text;
@@ -547,6 +563,43 @@ int main(int argc, char **argv) {
       record("tls_available", 0, "this build carries no TLS transport");
     } else {
       record("tls_available", 1, "https transport built");
+      {
+        reader_opds_page *userinfo_page = NULL;
+        snprintf(buffer, sizeof buffer, "https://test-user:test-pass@%s/opds1/catalog.xml",
+                 g_secure + strlen("https://"));
+        status = reader_opds_open(secure, buffer, NULL, &userinfo_page, &error);
+        record("tls_url_credentials_refused", status == READER_OPDS_ARGUMENT && !userinfo_page,
+               "%s", reader_opds_status_name(status));
+        reader_opds_page_free(userinfo_page);
+      }
+      {
+        header_probe probe = {0};
+        opds_request request;
+        const opds_transport *transport = reader_opds_default_transport();
+        opds_status fetched;
+        memset(&request, 0, sizeof request);
+        request.method = "GET";
+        request.url = join(g_secure, "/opds1/catalog.xml", buffer, sizeof buffer);
+        fetched = transport->fetch(transport->context, &request, 10000, NULL,
+                                   probe_head, probe_body, &probe, &error);
+        record("tls_header_values", fetched == OPDS_OK && probe.status == 200 &&
+               probe.clean_type && probe.length > 0 && (uint64_t)probe.length == probe.received,
+               "status=%d clean=%d length=%lld bytes=%zu", (int)fetched, probe.clean_type,
+               (long long)probe.length, probe.received);
+      }
+      {
+        static const char *paths[] = {"/redirect/to-tls", "/redirect/relative-percent"};
+        static const char *ids[] = {"tls_absolute_redirect", "tls_relative_percent_redirect"};
+        size_t n;
+        for (n = 0; n < 2; n++) {
+          reader_opds_page *redirected = NULL;
+          status = reader_opds_open(secure, join(g_secure, paths[n], buffer, sizeof buffer),
+                                    NULL, &redirected, &error);
+          record(ids[n], status == READER_OPDS_OK && redirected && redirected->entry_count == 3,
+                 "%s %s", reader_opds_status_name(status), error.message);
+          reader_opds_page_free(redirected);
+        }
+      }
       status = reader_opds_open(secure, join(g_secure, "/opds1/catalog.xml", buffer, sizeof buffer), NULL, &feed, &error);
       record("tls_open", status == READER_OPDS_OK && feed && feed->entry_count == 3, "%s %s",
              reader_opds_status_name(status), error.message);

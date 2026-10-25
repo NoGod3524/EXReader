@@ -31,7 +31,7 @@ static void copy_value(const char *value, size_t n, char *out, size_t cap) {
   size_t begin = 0, end = n;
   if (!cap) return;
   while (begin < end && (value[begin] == ' ' || value[begin] == '\t')) begin++;
-  while (end > begin && (value[end - 1] == ' ' || value[end - 1] == '\t' || value[end - 1] == '\r')) end--;
+  while (end > begin && (value[end - 1] == ' ' || value[end - 1] == '\t' || value[end - 1] == '\r' || value[end - 1] == '\n')) end--;
   if (end - begin >= cap) end = begin + cap - 1;
   memcpy(out, value + begin, end - begin);
   out[end - begin] = 0;
@@ -105,6 +105,8 @@ static size_t on_header(char *data, size_t size, size_t count, void *user) {
       size_t i = 0;
       long long total = 0;
       int digits = 0;
+      while (vn && (value[vn - 1] == ' ' || value[vn - 1] == '\t' ||
+                    value[vn - 1] == '\r' || value[vn - 1] == '\n')) vn--;
       while (i < vn && (value[i] == ' ' || value[i] == '\t')) i++;
       for (; i < vn; i++) {
         if (value[i] < '0' || value[i] > '9') { digits = 0; break; }
