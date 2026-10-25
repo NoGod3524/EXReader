@@ -1,23 +1,41 @@
 name: Collect complete fixed-source native foundation leaves
 on:
   push:
-    branches: [codex/reader-hosts-341-final]
+    branches: [codex/reader-hosts-341-final, codex/reader-native-341-protocol]
   workflow_dispatch:
     inputs:
+      mode:
+        description: Protocol self-test or authenticated native collection
+        type: choice
+        options: [protocol, collect]
+        default: protocol
       source_sha:
         description: Exact common checkout and every complete leaf source SHA
         type: string
-        required: true
+        required: false
       run_table:
         description: JSON source_sha and twelve complete run_id/attempt leaves, including explicit pending Windows entries
         type: string
-        required: true
+        required: false
 permissions:
   contents: read
   actions: read
 jobs:
+  protocol:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Parse the upper collector and exercise synthetic refusal protocol
+        run: |
+          python -m py_compile tests/reader_hosts_341/aggregate_native.py tests/reader_hosts_341/test_aggregate_native.py
+          python tests/reader_hosts_341/aggregate_native.py --self-test
   collect:
-    if: github.event_name == 'workflow_dispatch'
+    needs: protocol
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'collect'
     runs-on: ubuntu-22.04
     timeout-minutes: 30
     steps:
@@ -27,10 +45,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Parse only the new upper collector and exercise its synthetic refusal protocol
-        run: |
-          python -m py_compile tests/reader_hosts_341/aggregate_native.py tests/reader_hosts_341/test_aggregate_native.py
-          python tests/reader_hosts_341/aggregate_native.py --self-test
       - name: Authenticate complete same-source leaves without replacing their original judges
         env:
           GH_TOKEN: ${{ github.token }}

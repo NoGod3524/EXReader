@@ -18,6 +18,10 @@ def run_tests():
     wrong=copy.deepcopy(manifest);wrong['runs'].pop('apple_page_theme');refuse('six-apple-instead-of-seven',lambda:a.validate_input(wrong,source))
     wrong=copy.deepcopy(manifest);wrong['runs']['composition']={'linux':ref,'macos':ref,'windows':ref};refuse('platform-spliced-input',lambda:a.validate_input(wrong,source))
     wrong=copy.deepcopy(manifest);wrong['runs']['gtk41']=ref;wrong['runs']['android130']=ref;refuse('duplicate-whole-run',lambda:a.validate_input(wrong,source))
+    coupled=copy.deepcopy(manifest);coupled['runs']['windows_full_f3']=dict(ref);coupled['runs']['windows_atomic13']=dict(ref)
+    a.validate_input(coupled,source)
+    wrong=copy.deepcopy(coupled);wrong['runs']['windows_atomic13']['attempt']=1;refuse('split-Windows-attempt',lambda:a.validate_input(wrong,source))
+    wrong=copy.deepcopy(coupled);wrong['runs']['apple_records']=dict(ref);refuse('third-scope-reuses-Windows-run',lambda:a.validate_input(wrong,source))
     refuse('foreign-fixed-source',lambda:a.validate_input(manifest,'b'*40))
     refuse('boolean-run-id',lambda:a.ref_check(dict(run_id=True,attempt=1)))
     refuse('implicit-latest-attempt',lambda:a.ref_check(dict(run_id=123)))
@@ -71,10 +75,21 @@ def run_tests():
     theme=dict(accepted=True,source_sha=source,run_id=123,attempt=2,scope=a.SCOPES['apple_page_theme'],physical_device_execution=False,
                complete_product=False,artifacts=[dict(name='apple-theme-sdk-'+p,reports=dict(sdk=dict(sdk_version='3.41.0',abi=1))) for p in ('macos','iphonesimulator')]+
                  [dict(name='apple-theme-ui-'+p,reports=dict(ui=dict(platform=p,cases=[dict(result='Passed') for _ in range(4)]))) for p in a.original_apple.PLATFORMS])
+    theme['artifacts'] += [dict(name='apple-theme-native-123-2',reports=dict(native=dict(accepted=True,original_on_off_exact=True,
+        mixed_version_rejections=5,sdk_version='3.41.0',sdk_abi=1,old_340_migration_tested=False,
+        reports={mode:dict(accepted=True,theme_enabled=mode=='on',checks=[dict(id=str(i),passed=True) for i in range(count)])
+                 for mode,count in (('on',37),('off',10))}))),
+        dict(name='apple-theme-fast-import-123-2',reports=dict(initialization_and_publication=dict(
+            accepted_fast_import_fixture_only=True,cases=[dict(result='Passed'),dict(result='Passed')],sdk_producer_source=source,
+            sdk_producer_run=123,sdk_producer_attempt=2,provider=dict(static_sdk_linked=False))))]
     a.basic_summary('apple_page_theme',theme,source,ref)
-    wrong=copy.deepcopy(theme);wrong['artifacts'].pop();refuse('missing-apple-platform',lambda:a.basic_summary('apple_page_theme',wrong,source,ref))
+    wrong=copy.deepcopy(theme);wrong['artifacts'].pop(4);refuse('missing-apple-platform',lambda:a.basic_summary('apple_page_theme',wrong,source,ref))
     wrong=copy.deepcopy(theme);wrong['artifacts'][0]['reports']['sdk']['sdk_version']='3.40.0';refuse('old-apple-sdk-scope',lambda:a.basic_summary('apple_page_theme',wrong,source,ref))
-    wrong=copy.deepcopy(theme);wrong['artifacts'][-1]['reports']['ui']['cases'][0]['result']='Skipped';refuse('skipped-apple-ui-case',lambda:a.basic_summary('apple_page_theme',wrong,source,ref))
+    wrong=copy.deepcopy(theme);wrong['artifacts'][4]['reports']['ui']['cases'][0]['result']='Skipped';refuse('skipped-apple-ui-case',lambda:a.basic_summary('apple_page_theme',wrong,source,ref))
+    wrong=copy.deepcopy(theme);wrong['artifacts'].pop();refuse('missing-initialization-publication',lambda:a.basic_summary('apple_page_theme',wrong,source,ref))
+    wrong=copy.deepcopy(theme);wrong['artifacts'][-1]['reports']['initialization_and_publication']['cases'][0]['result']='Skipped';refuse('skipped-publication-case',lambda:a.basic_summary('apple_page_theme',wrong,source,ref))
+    wrong=copy.deepcopy(theme);wrong['artifacts'][-2]['reports']['native']['reports']['on']['checks'].pop();refuse('missing-native-theme-case',lambda:a.basic_summary('apple_page_theme',wrong,source,ref))
+    wrong=copy.deepcopy(theme);wrong['artifacts'].pop(-2);refuse('missing-native-theme-controls',lambda:a.basic_summary('apple_page_theme',wrong,source,ref))
     refuse('unreviewed-windows-schema',lambda:a.basic_summary('windows_full_f3',android,source,ref))
     result=dict(leaves={key:dict(status='verified') for key in a.REQUIRED},product_conditions={key:dict(status='pending') for key in a.PRODUCT_REQUIRED},problems=[])
     a.finish(result);a.require(result['accepted'] is False and set(result['pending_contracts'])==set(a.WINDOWS_CONTRACTS) and
@@ -82,7 +97,7 @@ def run_tests():
     wrong=copy.deepcopy(result);wrong['leaves'].pop('windows_full_f3');refuse('drop-required-slot-to-green',lambda:a.finish(wrong))
     wrong=copy.deepcopy(result);wrong['product_conditions'].pop('apple_to_android');refuse('drop-required-peer-condition',lambda:a.finish(wrong))
     a.require(a.SPECS['apple_mapping']['summary_name'] is None and len(a.expected_names('apple_mapping',a.SPECS['apple_mapping'],123,2))==6,'mapping summary invented')
-    a.require(len(rejected)==57,'a protocol refusal control was omitted')
+    a.require(len(rejected)==63,'a protocol refusal control was omitted')
     print('native upper collector protocol negatives: '+str(len(rejected))+' actual rejections; synthetic fixtures only',flush=True)
 
 
