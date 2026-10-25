@@ -16,13 +16,14 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def png(width, height, paint):
-    """Truecolour PNG with a declared per-pixel painter."""
+def png(width, height, row):
+    """Truecolour PNG whose every scanline is produced by the given painter."""
     raw = bytearray()
     for y in range(height):
         raw.append(0)
-        for x in range(width):
-            raw.extend(paint(x, y))
+        raw.extend(row(y))
+    assert len(raw) == height * (1 + width * 3)
+
     def chunk(tag, body):
         return (struct.pack('>I', len(body)) + tag + body +
                 struct.pack('>I', zlib.crc32(tag + body) & 0xffffffff))
@@ -78,18 +79,20 @@ def main():
         ''.join('Reading page %04d keeps the authored words, the saved position and the '
                 'selected appearance together.\n\n' % row for row in range(420)),
         encoding='utf-8')
+    picture = png(120, 80, lambda y: bytes((51, 102, 204)) * 120)
     epub(output / 'Picture book.epub', 'Picture book',
          '<p>Picture book opening paragraph before the image.</p>'
          '<p><img src="picture.png" alt="authored"/></p>'
          '<p>Picture book closing paragraph after the image.</p>' + paragraphs,
-         png(120, 80, lambda x, y: (51, 102, 204)))
+         picture)
 
-    def comic(x, y):
-        if 200 <= x < 400 and 200 <= y < 400:
-            return (204, 32, 32)
-        return (250, 250, 250)
+    def comic_row(y):
+        line = bytearray(bytes((250, 250, 250)) * 2000)
+        if 200 <= y < 400:
+            line[200 * 3:400 * 3] = bytes((204, 32, 32)) * 200
+        return bytes(line)
     with zipfile.ZipFile(output / 'Large comic.cbz', 'w') as archive:
-        archive.writestr(entry('page-1.png', png(2000, 3000, comic)))
+        archive.writestr(entry('page-1.png', png(2000, 3000, comic_row)))
 
     shutil.copyfile(ROOT / 'tests/fixtures/pdf-public.pdf', output / 'Fixed page.pdf')
     print('authored F3 fixtures:', sorted(item.name for item in output.iterdir()), flush=True)

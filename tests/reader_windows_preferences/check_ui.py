@@ -170,31 +170,45 @@ def document(profile):
 
 
 class App(M.MetadataApp):
-    def wait_idle(self, timeout=90):
-        self.wait(lambda: U.IsWindowEnabled(self.control('import')), timeout=timeout)
+    def find_dialog(self):
+        found = []
+
+        @ENUM
+        def visit(window, unused):
+            pid = W.DWORD()
+            U.GetWindowThreadProcessId(window, C.byref(pid))
+            if pid.value == self.process.pid and U.IsWindowVisible(window) and U.GetDlgItem(window, MESSAGE):
+                found.append(window)
+            return True
+        U.EnumWindows(visit, 0)
+        return found[-1] if found else None
+
+    def wait_idle(self, timeout=180):
+        # While the settings dialog owns the input the owner window stays
+        # disabled, so the dialog's own Apply button is the idle signal.
+        def ready():
+            handle = self.find_dialog()
+            if handle:
+                return bool(U.IsWindowEnabled(U.GetDlgItem(handle, APPLY)))
+            return bool(U.IsWindowEnabled(self.control('import')))
+        self.wait(ready, timeout=timeout)
         time.sleep(.2)
-        self.wait(lambda: U.IsWindowEnabled(self.control('import')), timeout=timeout)
+        self.wait(ready, timeout=timeout)
 
     def focus(self):
         def ready():
+            A.USER32.BringWindowToTop(self.window)
             U.SetForegroundWindow(self.window)
             return U.GetForegroundWindow() == self.window
         self.wait(ready, timeout=10)
 
-    def dialog(self):
-        def find():
-            found = []
+    def settle(self, size=(1100, 720)):
+        U.SetWindowPos(self.window, 0, 0, 0, size[0], size[1], 0x0002 | 0x0004 | 0x0040)
+        time.sleep(.6)
+        return page_client(self)
 
-            @ENUM
-            def visit(window, unused):
-                pid = W.DWORD()
-                U.GetWindowThreadProcessId(window, C.byref(pid))
-                if pid.value == self.process.pid and U.IsWindowVisible(window) and U.GetDlgItem(window, MESSAGE):
-                    found.append(window)
-                return True
-            U.EnumWindows(visit, 0)
-            return found[-1] if found else None
-        return self.wait(find, timeout=20)
+    def dialog(self):
+        return self.wait(self.find_dialog, timeout=20)
 
     def open_dialog(self):
         self.focus()
@@ -219,6 +233,7 @@ class App(M.MetadataApp):
         return shot(self.control('page'))
 
     def fit_page(self, target):
+        target = tuple(target)
         for _ in range(5):
             current = page_client(self)
             if current == target:
@@ -324,7 +339,7 @@ def main():
                   transport='SendInput+UIAutomation+Win32', complete_product=False,
                   performance_accepted=False, screen_reader_accepted=False,
                   scope='native Windows UI only; not device, performance or screen-reader acceptance')
-    target = (760, 980)
+    target = [0, 0]
 
     def record(name, condition, detail=None):
         if not condition:
@@ -337,6 +352,9 @@ def main():
         nonlocal app
         app = App(exe.resolve(), args.font.resolve(), where, existing=existing)
         app.wait_idle()
+        app.settle()
+        if target[0]:
+            app.fit_page(target)
         return app
 
     try:
@@ -346,7 +364,6 @@ def main():
         app.import_file(args.fixtures / 'Reading sample.txt')
         app.open('Reading sample')
         app.wait_idle()
-        app.fit_page(target)
         dialog = app.open_dialog()
         record('native-shortcut-opens-settings-dialog', bool(dialog) and bool(U.IsWindowVisible(dialog)))
         hidden = not U.IsWindowVisible(U.GetDlgItem(dialog, LIGHT_FG))
@@ -358,20 +375,23 @@ def main():
         app.close_dialog()
 
         # ---- an untouched installation renders exactly like the option-off host
+        candidate_page = page_client(app)
         baseline = launch(args.baseline, baseline_profile)
         baseline.import_file(args.fixtures / 'Reading sample.txt')
         baseline.open('Reading sample')
         baseline.wait_idle()
+        baseline_page = page_client(baseline)
+        target[0] = min(candidate_page[0], baseline_page[0]) - 2
+        target[1] = min(candidate_page[1], baseline_page[1]) - 2
         baseline.fit_page(target)
-        app.fit_page(target)
-        left = app.page_shot('default-on.bmp', probes)
         right = baseline.page_shot('default-off.bmp', probes)
-        record('default-start-keeps-original-page-pixels', left == right)
         baseline.close_app()
         launch(args.candidate, profile, existing=True)
         app.open('Reading sample')
         app.wait_idle()
         app.fit_page(target)
+        left = app.page_shot('default-on.bmp', probes)
+        record('default-start-keeps-original-page-pixels', left == right)
 
         # ---- explicit light selection ----------------------------------------
         dialog = app.open_dialog()
