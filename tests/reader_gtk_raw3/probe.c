@@ -148,7 +148,7 @@ int main(int argc,char **argv) {
   if(argc!=7) return 2;
   compat_profile=argv[1];compat_report=fopen(argv[5],"wb");if(!compat_report) return 2;
   fprintf(compat_report,"{\"runtime_version\":\"%s\",\"mode\":\"%s\",\"checks\":[",exr_version(),argv[4]);
-  compat_check(!strcmp(exr_version(),"3.40.0"),"raw owner uses actual frozen SDK core runtime");
+  compat_check(!strcmp(exr_version(),"3.41.0"),"raw owner uses exact installed SDK3.41 runtime");
   char *database=g_build_filename(argv[1],"library.sqlite",NULL);linux_reader *reader=NULL;exr_error error={0};
   compat_check(linux_reader_open(database,argv[2],NULL,&reader,&error)==EXR_OK,"actual raw GTK owner opens its profile");
   int peer=!strcmp(argv[4],"receive") || !strcmp(argv[4],"null-receive");

@@ -31,7 +31,9 @@ def validate(value,source,run,attempt):
       peer.get('reading_records')==11 and peer.get('wire_count')==15 and peer.get('original_count')==4,'authentic Mac packet missing')
     rows=network.get('phases',[])
     require(len(rows)==2 and {row['label'] for row in rows}=={'mac11','mac-null'} and
-      all(row['immutable_wires_unchanged'] is True and row['session']['accepted'] is True and row['session']['completed_shards']==256 for row in rows),'actual network or immutable records incomplete')
+      all(row['immutable_wires_unchanged'] is True and row['actual_gtk_ui_executed'] is True and row['session']['accepted'] is True and
+        row['session']['actual_gtk_ui_executed'] is True and row['session']['completed_shards']==256 and row['session']['session_state']==4
+        and row['session']['account']['password_visible']=='0' and row['session']['account']['remember']=='0' for row in rows),'actual GTK account network or immutable records incomplete')
 
 
 def selftest():

@@ -33,8 +33,3 @@ target_link_libraries(gtk-raw3-owner PRIVATE exreader-linux-reading ${owner_link
 target_compile_options(gtk-raw3-owner PRIVATE -Wall -Wextra -Werror)
 target_link_options(gtk-raw3-owner PRIVATE "-Wl,--wrap=reader_rc_apply"
   "-Wl,--wrap=reader_rc_apply_raw_v3" "-Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/owner.map")
-if(NOT LEGACY_PROFILE)
-  add_executable(gtk-raw3-session session.cpp)
-  target_link_libraries(gtk-raw3-session PRIVATE EXReaderSession::reader_session)
-  target_compile_options(gtk-raw3-session PRIVATE -Wall -Wextra -Werror)
-endif()
