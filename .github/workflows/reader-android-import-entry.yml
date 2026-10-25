@@ -1,0 +1,141 @@
+name: Android import entry candidate
+on:
+  push:
+    branches: [codex/reader-android-import-entry, codex/reader-android-import-entry-review]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  guards:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Source, path and protected-tree guards with named positive and negative cases
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python -m py_compile tests/reader_android_import_entry/*.py
+          python tests/reader_android_import_entry/check_guards.py --output build/guards
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-android-import-entry-guards-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/guards/
+          if-no-files-found: error
+
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Record source identity
+        run: |
+          mkdir -p build/android-import-entry
+          python - <<'PY'
+          import json, os
+          json.dump({k: os.environ[v] for k, v in [('source_sha', 'GITHUB_SHA'), ('run_id', 'GITHUB_RUN_ID'), ('attempt', 'GITHUB_RUN_ATTEMPT')]},
+                    open('build/android-import-entry/identity.json', 'w'))
+          PY
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+      - name: Install pinned Android tools
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          echo "$sdk/emulator" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;27.0.12077973" "cmake;3.22.1" "emulator" "system-images;android-34;default;x86_64"
+          sudo apt-get update -qq
+          sudo apt-get install -y patchelf
+          python -m pip install ninja==1.11.1.1
+      - name: Build the frozen SDK, sideload module and import-entry native component (Release and Debug, API 26)
+        run: |
+          python tests/reader_android_import_entry/stage_sdk.py --prefix "$PWD/stage/entry" --work "$PWD/build/android-import-entry/native"
+          cp build/android-import-entry/native/stage.json build/android-import-entry/stage.json
+      - name: Compile the Android library and probe apps (API 26, Debug and Release)
+        run: |
+          gradle -p extras/android-import-entry/android --no-daemon --stacktrace :importentry:assembleDebug :importentry:assembleRelease 2>&1 | tee build/android-import-entry/gradle-library.log
+          gradle -p tests/reader_android_import_entry/android --no-daemon --stacktrace :importentry:assembleDebug :importentry:assembleRelease :app:assembleDebug :app:assembleRelease :source:assembleDebug -PexrSdk="$PWD/stage/entry" 2>&1 | tee build/android-import-entry/gradle-probe.log
+          python tests/reader_android_import_entry/audit_packages.py --stage "$PWD/stage/entry" --work "$PWD/build/android-import-entry/native" --output build/android-import-entry
+      - name: Enable emulator acceleration
+        run: sudo chmod 666 /dev/kvm
+      - name: Real DocumentsProvider, share intents, grants, lifecycle and process kills on API 34, then installed-SDK import and read-back
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          cores: 4
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            python tests/reader_android_import_entry/run_device.py --importer tests/reader_android_import_entry/android/app/build/outputs/apk/debug/app-debug.apk --source tests/reader_android_import_entry/android/source/build/outputs/apk/debug/source-debug.apk --output build/android-import-entry
+      - name: Preserve source-bound evidence and packages
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-android-import-entry-android-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/android-import-entry/*.json
+            build/android-import-entry/*.jsonl
+            build/android-import-entry/*.log
+            build/android-import-entry/*.txt
+            build/android-import-entry/native/stage.log
+            stage/entry/lib/cmake/EXReaderAndroidImportEntry/
+            stage/entry/include/exr_android_import_entry.h
+            stage/entry/lib/libexr_android_import_entry.a
+            extras/android-import-entry/android/importentry/build/outputs/aar/
+            tests/reader_android_import_entry/android/app/build/outputs/apk/
+            tests/reader_android_import_entry/android/source/build/outputs/apk/
+          if-no-files-found: error
+
+  summary:
+    needs: [guards, android]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate exact-attempt producer jobs and raw artifact ZIP identities
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_android_import_entry/authenticate_artifacts.py --output build/in --evidence build/summary/authenticated-artifacts.json
+      - name: Refuse any failed, skipped, missing or foreign-source result
+        run: |
+          python tests/reader_android_import_entry/check_evidence.py --guards build/in/guards --android build/in/android/build/android-import-entry --output build/summary
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-android-import-entry-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/summary/
+          if-no-files-found: error

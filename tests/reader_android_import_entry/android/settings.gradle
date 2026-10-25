@@ -1,0 +1,5 @@
+pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }
+rootProject.name='EXReaderImportEntryProbe'
+include ':app', ':source', ':importentry'
+project(':importentry').projectDir = file('../../../extras/android-import-entry/android/importentry')

@@ -1,0 +1,59 @@
+{
+  "accepted": true,
+  "source_sha": "f5046e1fbe2cc91d2ec71a51d2020c1c38e4d969",
+  "review_branch": "codex/reader-android-import-entry-review",
+  "review_base": "635ddcb3f865059fd481f8deb9f7927e75743c6d",
+  "review_state": "component_emulator_accepted_host_not_integrated",
+  "acceptance":{"run_id":40161341409,"attempt":1,"jobs":{"guards":121073369421,"android":121073369108,"summary":121074094360},"conclusion":"success","checks_passed":95,"checks_failed":0,"retained_original_checks":78,"required_checks":42,"problems":[],"raw_zip_authentication":true,"device":{"api":34,"abi":"x86_64","kind":"emulator"},"review_fds":{"repetitions":32,"before":108,"after":108,"limit_delta":4},"review_callback_failure":{"ready_calls":2,"failed_calls":0,"first_state":"COMMITTED","released_leases":2},"artifacts":[{"id":12585809111,"name":"reader-android-import-entry-guards-40161341409-1","bytes":1129,"sha256":"eea8299b045ec55b8cf07fcd4f48ece3935e6d9adf327301ecf155d8090b37d5","expires_at":"2027-01-23T04:17:26Z"},{"id":12586462366,"name":"reader-android-import-entry-android-40161341409-1","bytes":11536095,"sha256":"9ef65c6ee43a0f65fb64b0a2d865f68631ab906f375655aafd5b606cfdba60ac","expires_at":"2027-01-23T04:17:26Z"},{"id":12586089149,"name":"reader-android-import-entry-summary-40161341409-1","bytes":1281,"sha256":"0642b799166386aaef52796032cf48e47302d87f9cd1f9abfc8fc2ebdb45d5f0","expires_at":"2027-01-23T04:17:26Z"}]},
+  "pending_scope":["real reader host integration","third-party providers","real system DocumentsUI picker","physical devices/other API or ABI","cancellation deadline during synchronous query/getType/open Binder calls","128 MiB original usable by current32 MiB host renderer"],
+  "review_runs": [
+    {"source_sha":"206f89045a9c64c5f6188643f8e2117320a1a346","run_id":40160142660,"attempt":1,"conclusion":"failure","checks_passed":92,"checks_failed":1,"failure":"FD comparison107 to118 exceeded baseline+4; preserved; repetitive Activity churn removed from the next pipe-only regression without relaxing threshold","artifacts":[{"id":12586136477,"bytes":1131,"sha256":"7ba7355650f3e5b5d7ab8bb2c14b2f9581f6391c98bc3889188969a299e3db9b"},{"id":12585767715,"bytes":11561182,"sha256":"447150a233f9c58c772b38d509b587adbb2562d9271e6d4ab74bcd2c11727a43"}]},
+    {"source_sha":"36021cce35f90b8439f85967075bd34c7d867306","run_id":40160762696,"attempt":1,"conclusion":"success","jobs":{"guards":121071633609,"android":121071633817,"summary":121072505494},"checks_passed":94,"checks_failed":0,"required_checks":41,"problems":[],"raw_zip_authentication":true,"covers_callback_followup":false,"artifacts":[{"id":12585753398,"bytes":1132,"sha256":"0ca846d61b02601989fcda76b636470650e71e4ebc19ba48c223e69c34934c9d"},{"id":12586742305,"bytes":11554191,"sha256":"b651c3179319e50733f3d53284d792211b3c90cce2b6e7d10612d1ee57b2cf71"},{"id":12586008151,"bytes":1136,"sha256":"c92ed45cb131ff13857909c629232ceeb956e84e86d33f730366a2e1873b2b4b"}]}
+  ],
+  "original_delivery": {
+  "work_package": "J04",
+  "branch": "codex/reader-android-import-entry",
+  "start_commit": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "source_sha": "4b7ba6f3729ee3dde534e36258bf7cc1e2ee9507",
+  "run": {
+    "id": "40140183174",
+    "attempt": 1,
+    "url": "https://github.com/NoGod3524/EXReader/actions/runs/40140183174",
+    "jobs": {
+      "guards": "success",
+      "android": "success",
+      "summary": "success"
+    }
+  },
+  "device": {
+    "kind": "emulator",
+    "api": 34,
+    "abi": "x86_64"
+  },
+  "required_checks": 31,
+  "checks_passed": 78,
+  "checks_failed": 0,
+  "artifact_sha256": {
+    "identity.json": "5687295cde17c1fe55d78faa84e7a1095d5ed2f41cca85a3578075520b6b218d",
+    "packages.json": "a8a6c275ba4615e904f249cdb19af3e930cc74a782232c3c125ac7532e2b0f84",
+    "results.json": "366c1cbb188a4090e9f3d5d6083848ab6e75c977f3e50803e8c8b70ff11df1ee",
+    "stage.json": "4bae735dfaec4c8c4c1182ac698a82d7cbc36fd540eb820ea231aba11e425432"
+  },
+  "observations": {
+    "txt_32m_sdk_status": 6,
+    "note": "exactly 32 MiB TXT stages; SDK memory import returns EXR_LIMIT"
+  },
+  "history": [
+    "run 40115834320 failed: Java compile (InterruptedIOException)",
+    "run 40138536331: 46 passed 3 failed (reliable-pipe error unseen, revoke ignored, TXT SDK dedupe assumption)",
+    "run 40139643202: remaining failures were test assumptions (never-granted URI reused a granted doc; 32 MiB SDK verdict)"
+  ],
+  "scope_not_covered": [
+    "physical devices",
+    "other API levels or ABIs",
+    "audio/speech",
+    "system DocumentsUI picker (self-built picker Activity used)",
+    "third-party cloud providers"
+  ]
+  }
+}
