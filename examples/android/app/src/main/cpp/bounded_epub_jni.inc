@@ -232,7 +232,10 @@ static jobject host_epub_frame(JNIEnv *env,jlong handle,jobject task,int advance
   if(text.size) (*env)->SetByteArrayRegion(env,jt,0,(jsize)text.size,(const jbyte *)text.bytes);
   if(bitmap.pixels) (*env)->SetByteArrayRegion(env,jp,0,(jsize)((size_t)bitmap.stride*bitmap.height),(const jbyte *)bitmap.pixels);
   {
-    size_t count=0;const exr_box *boxes=render&&reader->themed?exr_layout_boxes(layout,&count):NULL;
+    size_t count=0;const exr_box *boxes=NULL;
+#ifdef READER_READING_FIXTURES
+    if(render&&reader->themed)boxes=exr_layout_boxes(layout,&count);
+#endif
     if(count>200000){status=EXR_LIMIT;goto done;}
     jboxes=(*env)->NewLongArray(env,(jsize)(count*10));if(!jboxes)goto done;
     for(i=0;i<count;i++){
