@@ -1,0 +1,140 @@
+{
+  "schema": 1,
+  "implementation_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "prepared_for": "Dot",
+  "dispatched": false,
+  "reason": "No direct existing-Dot message API; manual handoff selected per user fallback",
+  "tasks": [
+    {
+      "id": "T01",
+      "title": "Windows 云盘导入与书架批量整理实际界面",
+      "base": "e4356a6e13223469fdf3b2f3d5171a6e99ab10a6",
+      "branch": "codex/dot-windows-import-organize",
+      "file": "T01-windows-import-organize.md",
+      "allowed": [
+        "examples/reader.c",
+        "apps/reader/windows-account/**",
+        "apps/reader/desktop/windows_*",
+        "apps/reader/desktop/windows*.*",
+        "tests/reader_windows_import_organize/**",
+        ".github/workflows/reader-windows-import-organize.yml",
+        "docs/READER-WINDOWS-IMPORT-ORGANIZE.md",
+        "docs/validation/reader-windows-import-organize.json"
+      ],
+      "state": "prepared_not_dispatched"
+    },
+    {
+      "id": "T02",
+      "j": "J11",
+      "title": "显式冲突处理复审与修复",
+      "slug": "conflict-actions-review",
+      "base": "37fdc830d75eee8590120d52d4d881102e0d9dc4",
+      "branch": "codex/dot-conflict-actions-review",
+      "allowed": [
+        "apps/reader/conflict-actions/**",
+        "tests/reader_explicit_conflict_actions/**",
+        ".github/workflows/reader-explicit-conflict-actions.yml",
+        "docs/READER-EXPLICIT-CONFLICT-ACTIONS.md",
+        "docs/validation/reader-explicit-conflict-actions.json"
+      ],
+      "original": "codex/reader-explicit-conflict-actions",
+      "legacy": "explicit-conflict-actions",
+      "focus": "检查完整并发头、prepare到commit之间外来修订、墓碑/restore依赖、稳定重试ID及历史/outbox不重复。至少真实两端并发、缺父补回、过期快照拒绝；reading anchor仅展示，不能猜测resolve或按时钟选胜者。",
+      "file": "T02-conflict-actions-review.md",
+      "state": "prepared_not_dispatched"
+    },
+    {
+      "id": "T03",
+      "j": "J22",
+      "title": "跨操作系统原书与修订往返复审",
+      "slug": "cross-os-relay-review",
+      "base": "9ff063dcc6b898fb0c776edabadf743919045a7d",
+      "branch": "codex/dot-cross-os-relay-review",
+      "allowed": [
+        "tests/reader_cross_os_relay/**",
+        ".github/workflows/reader-cross-os-relay.yml",
+        "docs/READER-CROSS-OS-RELAY.md",
+        "docs/validation/reader-cross-os-relay.json"
+      ],
+      "original": "codex/reader-cross-os-relay",
+      "legacy": "cross-os-relay",
+      "focus": "审计四方向artifact-relayed HTTPS传递是否逐端核原始字节和来源；绑定平台、source/run/attempt、双方原始工件和public SDK回读，拒绝缺包/换源/换attempt/假对端。不要把传输脚本通过扩写成六台设备的产品同步通过。",
+      "file": "T03-cross-os-relay-review.md",
+      "state": "prepared_not_dispatched"
+    },
+    {
+      "id": "T04",
+      "j": "J05",
+      "title": "Apple 文件入口复审与修复",
+      "slug": "apple-file-entry-review",
+      "base": "3c355b4ea3faab974861f4863893c6018653740c",
+      "branch": "codex/dot-apple-file-entry-review",
+      "allowed": [
+        "extras/apple-file-entry/**",
+        "tests/reader_apple_file_entry/**",
+        ".github/workflows/reader-apple-file-entry.yml",
+        "docs/READER-APPLE-FILE-ENTRY.md",
+        "docs/validation/reader-apple-file-entry.json"
+      ],
+      "original": "codex/reader-apple-file-entry",
+      "legacy": "apple-file-entry",
+      "focus": "核文件选择/安全作用域/协调读写/回调代际/取消与真实关闭终止恢复、私有暂存所有权；拒绝未知长度小报造成的静默截断、权限丢失后半成品和旧回调重复移交。只维护独立入口包和probe，不碰正在推进的Apple正式宿主。",
+      "file": "T04-apple-file-entry-review.md",
+      "state": "prepared_not_dispatched"
+    },
+    {
+      "id": "T05",
+      "title": "八个已复审可移植模块共同安装与实际组合",
+      "base": "e4356a6e13223469fdf3b2f3d5171a6e99ab10a6",
+      "branch": "codex/dot-reviewed-composition",
+      "file": "T05-reviewed-composition.md",
+      "allowed": [
+        "tests/reader_reviewed_composition/**",
+        ".github/workflows/reader-reviewed-composition.yml",
+        "docs/READER-REVIEWED-COMPOSITION.md",
+        "docs/validation/reader-reviewed-composition.json"
+      ],
+      "state": "prepared_not_dispatched"
+    },
+    {
+      "id": "T06",
+      "j": "J21",
+      "title": "用户诊断导出隐私与故障复审",
+      "slug": "diagnostic-report-review",
+      "base": "4793224343950b279a3591c8398f5a2a8514d754",
+      "branch": "codex/dot-diagnostic-report-review",
+      "allowed": [
+        "apps/reader/diagnostic-report/**",
+        "tests/reader_diagnostic_report/**",
+        ".github/workflows/reader-diagnostic-report.yml",
+        "docs/READER-DIAGNOSTIC-REPORT.md",
+        "docs/validation/reader-diagnostic-report.json"
+      ],
+      "original": "codex/reader-diagnostic-report",
+      "legacy": "diagnostic-report",
+      "focus": "核凭据、Authorization、URLuserinfo/query、本地绝对路径、书名/正文/标注正文及嵌套错误消息的隐私边界；白名单字段、严格限额、坏UTF-8/控制符/截断、取消、失败原子性及并发快照。真实注入测试秘密并扫描全部输出，不能只grep几个生产字符串。",
+      "file": "T06-diagnostic-report-review.md",
+      "state": "prepared_not_dispatched"
+    },
+    {
+      "id": "T07",
+      "j": "J02",
+      "title": "OPDS 浏览与获取适配复审",
+      "slug": "opds-browser-review",
+      "base": "3ca9d9fed564dbcba11fc95a034244c5cfe8c762",
+      "branch": "codex/dot-opds-browser-review",
+      "allowed": [
+        "apps/reader/opds-browser/**",
+        "tests/reader_opds_browser/**",
+        ".github/workflows/reader-opds-browser.yml",
+        "docs/READER-OPDS-BROWSER.md",
+        "docs/validation/reader-opds-browser.json"
+      ],
+      "original": "codex/reader-opds-browser",
+      "legacy": "opds-browser",
+      "focus": "核相对/绝对/百分号资源URL、同源凭据、分页与entry寿命、未知媒体、获取链接选择、重定向和失败清理、取消/重入/所有权。保持复用原OPDS/WebDAV/侧载公开包，不新增解析器或网络后端，不把模块通过当宿主浏览界面通过。",
+      "file": "T07-opds-browser-review.md",
+      "state": "prepared_not_dispatched"
+    }
+  ]
+}
