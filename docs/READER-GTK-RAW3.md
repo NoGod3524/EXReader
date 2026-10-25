@@ -74,6 +74,17 @@ Pillow, so the compact and combined summaries failed. That import is now
 confined to `--off`; the production pin, original suites and original judges
 are unchanged. Complete acceptance requires a new whole same-source run.
 
+Attempt `40222901619/1` stopped after its account-window startup failure;
+the other long producer was cancelled. Authenticated read-only diagnosis
+`40223736688` showed the exact previously successful program SHA reached
+Ready with `visible=1` and no application error. The account driver had
+reused `Session` but omitted the original checker's 30-second Openbox-ready
+barrier. It now retains that barrier, records failed window trees, and
+does not try to screenshot a missing window. The diagnostic also exposed
+hidden Ninja logs declared by the raw report but omitted by the uploader;
+the raw upload now retains hidden files. TLS private keys remain outside
+the artifact root. These diagnostic runs grant no host acceptance.
+
 All builds, syntax checks, fixtures, UI, SQLite inspection and ZIP processing
 run in Actions. Performance, frame correctness, physical devices, screen
 readers, six-platform interchange and complete-product acceptance remain out
