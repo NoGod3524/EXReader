@@ -1,11 +1,13 @@
 """Actions-only replay of an authenticated original GTK host; no acceptance."""
 import hashlib
+import io
 import json
 import os
 from pathlib import Path, PurePosixPath
 import subprocess
 import sys
 import tarfile
+from PIL import Image, ImageChops
 
 from final import Bundle, fetch, identity, pages, require
 
@@ -40,6 +42,28 @@ def main():
     try:
         original = bundle.report('gtk-navigation-ui/result.json');identity(original, source, run_id, attempt)
         (out / 'original-report.json').write_text(json.dumps(original, indent=2) + '\n')
+        # Inspect the original failing captures as well as replaying the exact
+        # program. A later pass cannot explain or replace those original bytes.
+        captures = {}
+        for label in ('before-directory', 'after-directory'):
+            try:
+                raw = bundle.bytes('gtk-navigation-ui/' + label + '.png', 16 * 1024**2)
+            except ValueError:
+                continue
+            picture = Image.open(io.BytesIO(raw));require(picture.width <= 4096 and picture.height <= 4096, 'oversized original PNG')
+            captures[label] = picture.convert('RGB')
+            (out / ('original-' + label + '.png')).write_bytes(raw)
+        original_pixels = dict(diagnostic_only=True, accepted=False, available=list(captures))
+        if len(captures) == 2:
+            before, after = captures['before-directory'], captures['after-directory']
+            require(before.size == after.size, 'original screenshot dimensions differ')
+            difference = ImageChops.difference(before, after)
+            changed = [(index % before.width, index // before.width, a, b)
+                       for index, (a, b) in enumerate(zip(before.getdata(), after.getdata())) if a != b]
+            original_pixels.update(size=list(before.size), changed_pixels=len(changed),
+                                   changed_bounds=difference.getbbox(), samples=changed[:24])
+        (out / 'original-pixel-difference.json').write_text(json.dumps(original_pixels, indent=2) + '\n')
+        print(json.dumps(dict(original_pixel_difference=original_pixels)), flush=True)
         # CFI inputs are emitted by the original installed SDK consumer. Copy
         # the authenticated original fixtures, including those captured CFIs.
         fixture_hashes = {};fixture_bytes = 0
