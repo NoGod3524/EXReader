@@ -6,6 +6,7 @@ import io
 import json
 import os
 from pathlib import Path, PurePosixPath
+import shutil
 import subprocess
 import sys
 import tarfile
@@ -102,6 +103,36 @@ def main():
                 before_state_available=bool(original.get('image_observations')),
                 original_image_observations=original.get('image_observations', []),
                 state_is_failure_finally_snapshot=True)
+            tree_bytes = bundle.bytes('gtk-navigation-ui/failure-tree.json', 4 * 1024**2)
+            tree = json.loads(tree_bytes)
+            def walk_tree(node):
+                yield node
+                for child in node.get('children', []):yield from walk_tree(child)
+            relevant = []
+            for node in walk_tree(tree):
+                if node['name'] in ('EXReader Linux', 'Rendered page; selectable text is in the adjacent panel',
+                                    'Reading page gestures', 'Directory and page entries') or node['role'] == 'dialog':
+                    relevant.append({key: node.get(key) for key in ('role', 'name', 'states', 'extents', 'path')})
+            original_pixels.update(original_failure_tree_sha256=hashlib.sha256(tree_bytes).hexdigest(),
+                                   original_failure_tree_geometry=relevant)
+            # OCR is a bounded diagnostic of the immutable original captures,
+            # never a pass/fail oracle or replacement for exact RGB equality.
+            if not shutil.which('tesseract'):
+                subprocess.run(['sudo', 'apt-get', 'install', '-y', 'tesseract-ocr'], check=True)
+            ocr = {}
+            for label in ('before-directory', 'after-directory'):
+                text = subprocess.check_output(['tesseract', str(out / ('original-' + label + '.png')),
+                                                'stdout', '--psm', '11', 'tsv'], text=True, timeout=30)
+                (out / ('original-' + label + '.tsv')).write_text(text)
+                words = []
+                for row in text.splitlines()[1:]:
+                    columns = row.split('\t', 11)
+                    if len(columns) == 12 and columns[11].strip():
+                        words.append(dict(text=columns[11], bounds=list(map(int, columns[6:10])), confidence=columns[10]))
+                require(len(words) <= 2000, 'unbounded original screenshot OCR')
+                ocr[label] = words
+            original_pixels.update(original_capture_ocr=ocr,
+                ocr_version=subprocess.check_output(['tesseract', '--version'], text=True).splitlines()[0])
         (out / 'original-pixel-difference.json').write_text(json.dumps(original_pixels, indent=2) + '\n')
         print(json.dumps(dict(original_pixel_difference=original_pixels)), flush=True)
         # CFI inputs are emitted by the original installed SDK consumer. Copy

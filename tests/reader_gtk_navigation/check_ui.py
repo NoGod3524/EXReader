@@ -124,10 +124,15 @@ def main():
     def frame():
         value=host.read();return {key:value[key] for key in ('book','part','page','start','end','font','zoom','notes','selection_start','selection_end','frame_generation')}
     def image(name):
-        path=output/(name+'.png');command('import','-window',host.window,str(path));value=host.read();prefs=observed('preferences')
+        path=output/(name+'.png');before_host=host.read();before_preferences=observed('preferences')
+        named=[node for node in bus.walk(app) if bus.name(node)=='Rendered page; selectable text is in the adjacent panel']
+        image_nodes=[dict(role=bus.role(node),extents=bus.extents(node),states=bus.states(node)) for node in named]
+        native_geometry=command('xdotool','getwindowgeometry','--shell',host.window)
+        command('import','-window',host.window,str(path));value=host.read();prefs=observed('preferences')
         width,height=int(prefs['bitmap_width']),int(prefs['bitmap_height']);x=value['page_x']+(value['page_width']-width)//2;y=value['page_y']+(value['page_height']-height)//2
         digest=hashlib.sha256(Image.open(path).convert('RGB').crop((x,y,x+width,y+height)).tobytes()).hexdigest()
-        report.setdefault('image_observations',[]).append(dict(name=name,host=value,preferences=prefs,crop=[x,y,width,height],sha256=digest))
+        report.setdefault('image_observations',[]).append(dict(name=name,host=value,preferences=prefs,crop=[x,y,width,height],sha256=digest,
+          before_host=before_host,before_preferences=before_preferences,native_image_nodes=image_nodes,native_window_geometry=native_geometry))
         return digest
     def cfi(name):
         click('Full EPUB CFI',{'text'});host.key('ctrl+a');host.paste((args.fixtures/name).read_text());return action('Return')
