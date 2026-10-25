@@ -32,6 +32,29 @@ void fail(reader_sync_view_error *e,reader_sync_view_status s,int session,int re
   e->message[n]=0;
 }
 
+/* One capability per handle: a store opened through
+ * reader_revisions_open_raw_v3 refuses the legacy entry point (READER_REV_ARGUMENT)
+ * and vice versa. The compiled profile selects the entry point that matches the
+ * handle its host opened. No private handle field is read, and a handle from the
+ * other family fails closed instead of being guessed. */
+reader_revision_status read_outbox(reader_revisions *store,size_t limit,reader_revision_outbox_fn visit,
+    void *context,reader_revision_error *error){
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+  return reader_revision_outbox_raw_v3(store,limit,visit,context,error);
+#else
+  return reader_revision_outbox(store,limit,visit,context,error);
+#endif
+}
+
+reader_revision_status read_heads(reader_revisions *store,const char *entity_kind,const char *entity_key,
+    reader_revision_head_fn visit,void *context,reader_revision_state *state,reader_revision_error *error){
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+  return reader_revision_heads_raw_v3(store,entity_kind,entity_key,visit,context,state,error);
+#else
+  return reader_revision_heads(store,entity_kind,entity_key,visit,context,state,error);
+#endif
+}
+
 reason from_revision(int code){
   switch(code){
     case READER_REV_OK:
@@ -272,7 +295,7 @@ extern "C" reader_sync_view_status reader_sync_view_capture(reader_session *sess
       collector gathered;
       gathered.limit=limit;
       reader_revision_error revision_error{};
-      reader_revision_status status=reader_revision_outbox(revisions,limit,visit,&gathered,&revision_error);
+      reader_revision_status status=read_outbox(revisions,limit,visit,&gathered,&revision_error);
       if(gathered.memory){
         throw std::bad_alloc();
       }
@@ -290,7 +313,7 @@ extern "C" reader_sync_view_status reader_sync_view_capture(reader_session *sess
             continue;
           }
           reader_revision_state state{};
-          status=reader_revision_heads(revisions,row.kind.c_str(),row.key.c_str(),heads_visit,nullptr,&state,&revision_error);
+          status=read_heads(revisions,row.kind.c_str(),row.key.c_str(),heads_visit,nullptr,&state,&revision_error);
           if(status!=READER_REV_OK){
             fail(error,READER_SYNC_VIEW_REVISIONS,0,(int)status,"Conflict check could not be read");
             return READER_SYNC_VIEW_REVISIONS;
