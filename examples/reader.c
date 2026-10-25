@@ -65,6 +65,9 @@
 #ifdef EXR_READER_WINDOWS_RECORDS
 #include "../apps/reader/desktop/windows_records_types.h"
 #endif
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+#include "../apps/reader/desktop/windows_preferences.h"
+#endif
 
 enum {
   IDC_IMPORT_LABEL = 100, IDC_IMPORT_EDIT, IDC_IMPORT_BUTTON, IDC_OPEN_BUTTON,
@@ -135,6 +138,12 @@ typedef struct {
   size_t page_count;
 #if defined(EXR_READER_WINDOWS_SEARCH) || defined(EXR_READER_WINDOWS_NAVIGATION) || defined(EXR_READER_WINDOWS_RECORDS)
   char source_key[256];
+#endif
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+  /* Effective page palette of this session. Plain values, so a copied session
+     never points at another session's stylesheet text. */
+  uint32_t background, foreground;
+  int themed;
 #endif
 } host_session;
 
@@ -514,6 +523,11 @@ static void selection_clear(void) {
   if (g.page) InvalidateRect(g.page, NULL, FALSE);
 }
 
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+/* Defined with the other preference state below, after the job record. */
+static void prefs_initialize(void);
+#endif
+
 /* Settings: host preferences only. Books, progress and annotations live in SQLite. */
 static void settings_load(void) {
   g.font_percent = (int)GetPrivateProfileIntW(L"Host", L"FontPercent", 150, g.settings_path);
@@ -532,6 +546,10 @@ static void settings_load(void) {
   char *utf8=host_utf8(key);if(utf8 && strlen(utf8)<sizeof(g.shelf_top_key)) strcpy(g.shelf_top_key,utf8);free(utf8);
   GetPrivateProfileStringW(L"Shelf",L"SelectedKey",L"",key,73,g.settings_path);
   utf8=host_utf8(key);if(utf8 && strlen(utf8)<sizeof(g.shelf_selected_key)) strcpy(g.shelf_selected_key,utf8);free(utf8);
+#endif
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+  /* Bounded local read of the installed F3 record; no SDK work here. */
+  prefs_initialize();
 #endif
 }
 
@@ -827,7 +845,8 @@ enum { JOB_NONE = 0, JOB_OPEN, JOB_GO, JOB_LAYOUT, JOB_IMPORT, JOB_NOTE_ADD, JOB
   JOB_PRODUCT_ATTACH, JOB_PRODUCT_REPAIR, JOB_PRODUCT_DELETE, JOB_PRODUCT_SHELF,
   JOB_METADATA_PREPARE, JOB_METADATA_SAVE, JOB_METADATA_RETRY, JOB_METADATA_DISCARD,
   JOB_ACCOUNT_LOAD, JOB_ACCOUNT_SET, JOB_ACCOUNT_FORGET, JOB_ACCOUNT_STAGE, JOB_ACCOUNT_RECEIVE,
-  JOB_SEARCH_BATCH, JOB_SEARCH_OPEN, JOB_NAVIGATION_ROWS, JOB_NAVIGATION_OPEN, JOB_RECORDS, JOB_IMPORT_ORGANIZE };
+  JOB_SEARCH_BATCH, JOB_SEARCH_OPEN, JOB_NAVIGATION_ROWS, JOB_NAVIGATION_OPEN, JOB_RECORDS, JOB_IMPORT_ORGANIZE,
+  JOB_PREFERENCES };
 #ifdef EXR_READER_WINDOWS_ACCOUNT
 static int account_job_kind(int kind) { return kind>=JOB_ACCOUNT_LOAD && kind<=JOB_ACCOUNT_RECEIVE; }
 #endif
@@ -932,6 +951,10 @@ struct host_job {
   int account_action,account_remember;
   char *account_root,*account_user,*account_password;
 #endif
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+  reader_preferences prefs;
+  int prefs_valid,prefs_persist,system_theme;
+#endif
 };
 
 static int job_commit_barrier(int kind) {
@@ -966,6 +989,12 @@ static int host_cancel_check(void *context) {
   return g.job ? job_cancel_flag(g.job) : 0;
 }
 
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+/* Colour helpers, the bounded store and the F3 navigation values. This file
+   never creates an SDK object and never touches the worker. */
+#include "../apps/reader/desktop/windows_preferences_state.inc"
+#endif
+
 static void job_pause(host_job *job) {
   int remaining = g.delay_ms;
   while (remaining > 0 && !job_cancel_flag(job)) {
@@ -980,6 +1009,11 @@ static host_job *job_new(int kind) {
   if (!job) return NULL;
   job->refs = 1;
   job->kind = kind;
+  job->zoom_percent = g.zoom_percent;
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+  /* Immutable value snapshot: the worker never reads the owner's record. */
+  prefs_job_init(job);
+#endif
   return job;
 }
 #ifdef EXR_READER_WINDOWS_SEARCH
@@ -1173,14 +1207,29 @@ static void job_cancel_button(void) {
 /* Sessions and rendering                                              */
 /* ------------------------------------------------------------------ */
 
-static void session_configure(host_session *session, int font_percent) {
+static void session_configure(host_session *session, host_job *job) {
   /* exr_layout_options.font_size is a point size, not a scale: the preserved
      self-test uses 28 points with 1.5 line height. Percent maps onto that base. */
-  if (font_percent < HOST_FONT_MIN) font_percent = HOST_FONT_MIN;
-  if (font_percent > HOST_FONT_MAX) font_percent = HOST_FONT_MAX;
+  int font_percent = (job && job->font_percent > 0) ? job->font_percent : g.font_percent;
   session->config = exr_layout_config_defaults();
   session->config.page.width = 720;
   session->config.page.height = 1040;
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+  /* An explicitly chosen F3 record replaces the legacy percent mapping. Until
+     then the original mapping below is what an untouched install still uses. */
+  if (job && job->prefs_valid) {
+    session->config.page.margin = job->prefs.margin;
+    session->config.page.font_size = job->prefs.font_size;
+    session->config.page.line_height = job->prefs.line_spacing;
+    session->config.page.paragraph_spacing = job->prefs.paragraph_spacing;
+    session->background = prefs_background_of(&job->prefs, job->system_theme);
+    session->foreground = prefs_foreground_of(&job->prefs, job->system_theme);
+    session->themed = 1;
+    return;
+  }
+#endif
+  if (font_percent < HOST_FONT_MIN) font_percent = HOST_FONT_MIN;
+  if (font_percent > HOST_FONT_MAX) font_percent = HOST_FONT_MAX;
   session->config.page.margin = 36;
   session->config.page.font_size = 28.0f * (float)font_percent / 100.0f;
   session->config.page.line_height = 1.5f;
@@ -1201,7 +1250,12 @@ static exr_status bounded_pager(host_session *session, size_t part, exr_pager **
   exr_chapter_options options = exr_chapter_options_defaults();
   exr_status status;
   options.workspace_budget = 8 * 1024 * 1024; options.window_bytes = 64 * 1024;
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+  status = prefs_chapter_pager(session->publication, part, &session->config, session->themed,
+                               session->foreground, &options, out, error);
+#else
   status = exr_publication_pager_create(session->publication, part, g.font, &session->config, &options, out, error);
+#endif
   if (status == EXR_OK) status = exr_pager_set_cache(*out, 2, 8 * 1024 * 1024, error);
   if (status == EXR_OK) status = exr_pager_set_checkpoints(*out, 8, 4 * 1024 * 1024, 8, error);
   if (status != EXR_OK) { exr_pager_free(*out); *out = NULL; }
@@ -1231,6 +1285,12 @@ static exr_status render_reflow(host_session *session, size_t page, host_frame *
   if (info->start > info->end || info->end - info->start > HOST_PAGE_TEXT_LIMIT) return EXR_LIMIT;
   text = session->bounded ? NULL : exr_document_text(session->document, &size);
   if (!session->bounded && (!text || info->end > size)) return EXR_FORMAT;
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+  if (session->themed)
+    status = exr_render_page_background(layout, exr_layout_font(layout), 0, 4, session->background,
+                                        control, &out->bitmap, error);
+  else
+#endif
   status = exr_render_page_ex(layout, exr_layout_font(layout), 0, 4, control, &out->bitmap, error);
   if (status != EXR_OK) return status;
   out->text_bytes = info->end - info->start;
@@ -1334,8 +1394,17 @@ static exr_status render_fixed(host_session *session, size_t page, int zoom_perc
   scale = base * ((double)zoom_percent / 100.0);
   if (!isfinite(scale) || scale <= 0) return EXR_ARGUMENT;
   if (width * scale > 4096.0 || height * scale > 4096.0) {
-    double limit = fmin(4096.0 / width, 4096.0 / height);
-    scale = limit;
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+    /* A chosen F3 zoom is never silently reduced: the host bound is reported. */
+    if (session->themed) {
+      strcpy(error->message, "Fixed page exceeds the host 4096 pixel bound");
+      return EXR_LIMIT;
+    }
+#endif
+    {
+      double limit = fmin(4096.0 / width, 4096.0 / height);
+      scale = limit;
+    }
   }
   options.channels = 4;
   options.background = 0xffffffffu;
@@ -1583,6 +1652,13 @@ static exr_status job_open(host_job *job) {
   }
   session.book_id = book.id;
   session.fixed = is_fixed_format(book.format);
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+  if (job->prefs_valid) {
+    session.background = prefs_background_of(&job->prefs, job->system_theme);
+    session.foreground = prefs_foreground_of(&job->prefs, job->system_theme);
+    session.themed = 1;
+  }
+#endif
   if (session.fixed) {
     exr_fixed_open_options options = {0};
     const exr_fixed_page *pages;
@@ -1612,11 +1688,12 @@ static exr_status job_open(host_job *job) {
     }
     {
       exr_control control = {job_cancel_check, NULL, job};
-      status = render_fixed(&session, target, g.zoom_percent, &job->frame, &control, &error);
+      status = render_fixed(&session, target, job->zoom_percent > 0 ? job->zoom_percent : g.zoom_percent,
+                            &job->frame, &control, &error);
     }
   } else {
     exr_library_epub_info info = {sizeof(info), 0, 0};
-    session_configure(&session, job->font_percent > 0 ? job->font_percent : g.font_percent);
+    session_configure(&session, job);
     session.config.control.cancelled = host_cancel_check;
     session.config.control.context = NULL;
     EnterCriticalSection(&g.library_lock);
@@ -1792,7 +1869,11 @@ static exr_status job_go(host_job *job) {
     job->applied_page = job->frame.page;
     job->page_count = g.session.page_count;
   }
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+  return prefs_commit(job, status);
+#else
   return status;
+#endif
 }
 
 static exr_status job_layout(host_job *job) {
@@ -1803,9 +1884,26 @@ static exr_status job_layout(host_job *job) {
   exr_control control = {job_cancel_check, NULL, job};
   size_t page = 0;
   size_t offset = job->has_anchor ? job->anchor.start : 0;
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+  uint32_t background = g.session.background, foreground = g.session.foreground;
+  int themed = g.session.themed;
+  if (job->prefs_valid) {
+    background = prefs_background_of(&job->prefs, job->system_theme);
+    foreground = prefs_foreground_of(&job->prefs, job->system_theme);
+    themed = 1;
+  }
+#endif
   if (!g.session.active || g.session.fixed || (!g.session.document && !g.session.bounded)) return EXR_ARGUMENT;
   if (job->book_id && job->book_id != g.session.book_id) return EXR_CANCELLED;
   config = g.session.config;
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+  if (job->prefs_valid) {
+    config.page.margin = job->prefs.margin;
+    config.page.font_size = job->prefs.font_size;
+    config.page.line_height = job->prefs.line_spacing;
+    config.page.paragraph_spacing = job->prefs.paragraph_spacing;
+  } else
+#endif
   config.page.font_size = 28.0f * (float)job->font_percent / 100.0f;
   config.control.cancelled = host_cancel_check;
   config.control.context = NULL;
@@ -1813,6 +1911,11 @@ static exr_status job_layout(host_job *job) {
     host_session candidate = g.session; exr_anchor point = {0}; exr_anchor_match match;
     status = exr_pager_anchor_create(g.session.pager, g.frame.range_start, g.frame.range_start, &control, &point, &error);
     candidate.config = config;
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+    candidate.background = background;
+    candidate.foreground = foreground;
+    candidate.themed = themed;
+#endif
     if (status == EXR_OK) status = bounded_pager(&candidate, candidate.part, &pager, &error);
     candidate.pager = pager;
     if (status == EXR_OK) status = exr_pager_anchor_resolve(pager, &point, &control, &match, &error);
@@ -1831,15 +1934,31 @@ static exr_status job_layout(host_job *job) {
     if (status == EXR_OK) {
       job->candidate_pager = pager; job->candidate_config = config; job->have_frame = 1; job->applied_page = page;
     } else exr_pager_free(pager);
-    job->error = error; return status;
+    job->error = error;
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+    return prefs_commit(job, status);
+#else
+    return status;
+#endif
   }
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+  status = prefs_page_pager(g.session.document, &config, themed, foreground, &pager, &error);
+#else
   status = exr_pager_create(g.session.document, g.font, &config, &pager, &error);
+#endif
   if (status == EXR_OK) status = exr_pager_set_cache(pager, 2, 0, &error);
   if (status == EXR_OK) status = exr_pager_set_checkpoints(pager, 8, 4 * 1024 * 1024, 8, &error);
   if (status == EXR_OK && job->has_anchor) {
     exr_anchor_match match;
     exr_status resolved = exr_anchor_resolve_ex(g.session.document, &job->anchor, &control, &match, &error);
-    if (resolved != EXR_OK) { exr_pager_free(pager); return resolved; }
+    if (resolved != EXR_OK) {
+      exr_pager_free(pager);
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+      return prefs_commit(job, resolved);
+#else
+      return resolved;
+#endif
+    }
     if (resolved == EXR_OK && match.state == EXR_ANCHOR_FOUND)
       offset = match.start;
     else if (resolved == EXR_OK && match.state == EXR_ANCHOR_AMBIGUOUS)
@@ -1852,6 +1971,11 @@ static exr_status job_layout(host_job *job) {
     host_session candidate = g.session;
     candidate.pager = pager;
     candidate.config = config;
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+    candidate.background = background;
+    candidate.foreground = foreground;
+    candidate.themed = themed;
+#endif
     status = page_for_offset(&candidate, offset, &control, &page, NULL, NULL, &error);
     if (status == EXR_OK)
       status = render_reflow(&candidate, page, &job->frame, &control, &error);
@@ -1864,7 +1988,11 @@ static exr_status job_layout(host_job *job) {
     }
   }
   if (pager) exr_pager_free(pager);
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+  return prefs_commit(job, status);
+#else
   return status;
+#endif
 }
 
 static exr_status read_import_file(host_job *job, void **data, size_t *size, exr_error *error) {
@@ -2069,6 +2197,9 @@ static exr_status job_import(host_job *job) {
 #ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
 #include "../apps/reader/desktop/windows_import_organize.inc"
 #endif
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+#include "../apps/reader/desktop/windows_preferences.inc"
+#endif
 static unsigned __stdcall job_thread(void *context) {
   host_job *job = context;
   job_pause(job);
@@ -2130,6 +2261,9 @@ static exr_status job_run(host_job *job) {
   switch (job->kind) {
 #ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
     case JOB_IMPORT_ORGANIZE: return winio_job_run(job);
+#endif
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+    case JOB_PREFERENCES: return prefs_job(job);
 #endif
     case JOB_OPEN: return job_open(job);
     case JOB_GO: return job_go(job);
@@ -2222,6 +2356,9 @@ static HWND make_static(HWND parent, int id, const wchar_t *text) {
 #ifdef EXR_READER_WINDOWS_RECORDS
 #include "../apps/reader/desktop/windows_records.inc"
 #endif
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+#include "../apps/reader/desktop/windows_preferences_ui.inc"
+#endif
 
 static void create_controls(HWND parent) {
   g.import_label = make_static(parent, IDC_IMPORT_LABEL, L"导入路径");
@@ -2297,6 +2434,10 @@ static void create_controls(HWND parent) {
   g.status = make_static(parent, IDC_STATUS, L"就绪");
   SetWindowLongPtrW(g.status, GWL_STYLE, GetWindowLongPtrW(g.status, GWL_STYLE) | SS_ENDELLIPSIS);
   SetWindowTextW(parent, L"EXReader");
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+  /* One native menu entry; every low-frequency control lives inside it. */
+  prefs_create_menu(parent);
+#endif
 }
 
 static void layout_controls(void) {
@@ -2597,6 +2738,11 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
     case WM_LBUTTONDOWN:
       if (g.job || g.pending || !g.frame.valid) return 0;
       SetFocus(window);
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+      prefs_press_active = 1;
+      prefs_press_x = (short)LOWORD(lparam);
+      prefs_press_y = (short)HIWORD(lparam);
+#endif
       if (g.frame.bounded) { bounded_mouse((short)LOWORD(lparam), (short)HIWORD(lparam), 1, 0); return 0; }
       {
         size_t offset = point_offset((short)LOWORD(lparam), (short)HIWORD(lparam), 0);
@@ -2625,6 +2771,30 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
       }
       return 0;
     case WM_LBUTTONUP:
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+      if (prefs.active && prefs_press_active) {
+        RECT area;
+        int dx = (short)LOWORD(lparam) - prefs_press_x;
+        int dy = (short)HIWORD(lparam) - prefs_press_y;
+        int turn = prefs_turn_from_swipe(dx, dy);
+        prefs_press_active = 0;
+        if (!turn && dx <= PREFS_TAP_DISTANCE && dx >= -PREFS_TAP_DISTANCE &&
+            dy <= PREFS_TAP_DISTANCE && dy >= -PREFS_TAP_DISTANCE) {
+          GetClientRect(window, &area);
+          turn = prefs_turn_from_tap(prefs_press_x, prefs_press_y, area.right, area.bottom);
+        }
+        if (turn) {
+          dragging = 0;
+          g.hit_pending = g.hit_up = 0;
+          if (GetCapture() == window) ReleaseCapture();
+          memset(&g.selection, 0, sizeof(g.selection));
+          if (g.job || g.pending) prefs_turn_pending = turn;
+          else page_step(turn);
+          InvalidateRect(window, NULL, FALSE);
+          return 0;
+        }
+      }
+#endif
       if (g.frame.bounded && dragging) { bounded_mouse((short)LOWORD(lparam), (short)HIWORD(lparam), 0, 1); return 0; }
       if (g.job || g.pending) { dragging = 0; if (GetCapture() == window) ReleaseCapture(); return 0; }
       if (dragging) {
@@ -2652,8 +2822,30 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
     case WM_KEYDOWN:
       if (g.job || g.pending) return 0;
       switch (wparam) {
-        case VK_LEFT: case VK_PRIOR: page_step(-1); return 0;
-        case VK_RIGHT: case VK_NEXT: page_step(1); return 0;
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+        /* An open input-method composition owns the key: never turn a page. */
+        case VK_PROCESSKEY: break;
+#endif
+        case VK_LEFT: case VK_PRIOR:
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+          if (prefs.active) { page_step(prefs_turn_from_key(wparam)); return 0; }
+#endif
+          page_step(-1); return 0;
+        case VK_RIGHT: case VK_NEXT:
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+          if (prefs.active) { page_step(prefs_turn_from_key(wparam)); return 0; }
+#endif
+          page_step(1); return 0;
+        case VK_DOWN:
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+          if (prefs.active) { page_step(prefs_turn_from_key(VK_DOWN)); return 0; }
+#endif
+          break;
+        case VK_UP:
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+          if (prefs.active) { page_step(prefs_turn_from_key(VK_UP)); return 0; }
+#endif
+          break;
         case VK_HOME: page_step(-1000000); return 0;
         case 'A':
           if (GetKeyState(VK_CONTROL) & 0x8000) { select_all_page(); return 0; }
@@ -2696,6 +2888,15 @@ static void update_page_label(void) {
     SetWindowTextW(g.page_label, text);
   } else {
     wchar_t text[256];
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+    if (prefs.active) {
+      swprintf(text, 256, L"第 %llu 页 · %ls · 字号 %.1f 磅",
+               (unsigned long long)(g.frame.page + 1), format_name(g.current.format),
+               (double)prefs.value.font_size);
+      SetWindowTextW(g.page_label, text);
+      return;
+    }
+#endif
     if (g.session.bounded) swprintf(text, 256, L"章 %llu · 本章第 %llu 页 · EPUB · 字号 %d%%",
              (unsigned long long)(g.frame.part + 1), (unsigned long long)(g.frame.page + 1), g.font_percent);
     else swprintf(text, 256, L"第 %llu 页 · %ls · 字号 %d%%",
@@ -2828,6 +3029,38 @@ static void change_font(int delta) {
   exr_error error = {0};
   if (!g.has_current || !g.frame.valid) { set_status(L"请先打开一本书。"); return; }
   if (g.frame.fixed) { set_status(L"当前是固定页书籍，请使用“缩放+”或“缩放-”。"); return; }
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+  /* Once a reading preference is accepted it owns the point size. A request
+     outside the public range or the page envelope is reported, not clamped. */
+  if (prefs.active) {
+    reader_preferences candidate = prefs.value;
+    float next_font = candidate.font_size + (delta > 0 ? 2.0f : -2.0f);
+    if (next_font < PREFS_FONT_MIN) { set_statusf(L"字号已到下限（%.0f 磅）。", (double)PREFS_FONT_MIN); return; }
+    if (next_font > PREFS_FONT_MAX) { set_statusf(L"字号已到上限（%.0f 磅）。", (double)PREFS_FONT_MAX); return; }
+    candidate.font_size = next_font;
+    if (!prefs_geometry_ok(&candidate)) { set_status(L"该字号在当前页面放不下，未应用。"); return; }
+    if (g.job || g.pending) return;
+    if (!g.session.bounded &&
+        exr_anchor_create(g.session.document, g.frame.range_start, g.frame.range_start,
+                          &anchor, &error) != EXR_OK) {
+      wchar_t message[512];
+      describe_error(message, 512, L"无法建立字号重排锚点", error.code, &error);
+      set_status(message);
+      return;
+    }
+    job = job_new(JOB_LAYOUT);
+    if (!job) { exr_anchor_free(&anchor); set_status(L"内存不足，无法重排。"); return; }
+    job->book_id = g.current.id;
+    job->font_percent = (int)(next_font + 0.5f);
+    job->anchor = anchor;
+    job->has_anchor = !g.session.bounded;
+    job->prefs = candidate;
+    job->prefs_valid = 1;
+    job->prefs_persist = 1;
+    job_submit(job);
+    return;
+  }
+#endif
   if (g.job || g.pending) return;
   next = g.font_percent + delta;
   if (next < HOST_FONT_MIN) { set_statusf(L"字号已到下限（%d%%）。", HOST_FONT_MIN); return; }
@@ -2853,6 +3086,26 @@ static void change_zoom(int delta) {
   host_job *job;
   if (!g.has_current || !g.frame.valid) { set_status(L"请先打开一本书。"); return; }
   if (!g.frame.fixed) { set_status(L"当前是重排书籍，请使用“字号+”或“字号-”。"); return; }
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+  if (prefs.active) {
+    reader_preferences candidate = prefs.value;
+    int next_zoom = (int)candidate.fixed_page_zoom + (delta > 0 ? HOST_ZOOM_STEP : -HOST_ZOOM_STEP);
+    if (next_zoom < HOST_ZOOM_MIN) { set_statusf(L"缩放已到下限（%d%%）。", HOST_ZOOM_MIN); return; }
+    if (next_zoom > HOST_ZOOM_MAX) { set_statusf(L"缩放已到上限（%d%%）。", HOST_ZOOM_MAX); return; }
+    if (g.job || g.pending) return;
+    candidate.fixed_page_zoom = (uint32_t)next_zoom;
+    job = job_new(JOB_GO);
+    if (!job) { set_status(L"内存不足，无法缩放。"); return; }
+    job->book_id = g.current.id;
+    job->target_page = g.frame.page;
+    job->zoom_percent = next_zoom;
+    job->prefs = candidate;
+    job->prefs_valid = 1;
+    job->prefs_persist = 1;
+    job_submit(job);
+    return;
+  }
+#endif
   if (g.job || g.pending) return;
   next = g.zoom_percent + delta;
   if (next < HOST_ZOOM_MIN) { set_statusf(L"缩放已到下限（%d%%）。", HOST_ZOOM_MIN); return; }
@@ -3306,6 +3559,10 @@ static void host_update_controls(void) {
 }
 
 static void handle_job_complete(host_job *job) {
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+  prefs.last_ok = 0;
+  if(job->kind==JOB_PREFERENCES) { prefs_accept(job);return; }
+#endif
 #ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
   if(winio_kind(job->kind)) { winio_accept(job);return; }
 #endif
@@ -3420,6 +3677,18 @@ static void handle_job_complete(host_job *job) {
       (job->kind == JOB_OPEN || job->kind == JOB_GO || job->kind == JOB_LAYOUT)) job->status = EXR_CANCELLED;
   if (job->status != EXR_OK) g.pending_selection = 0;
   if (job->status == EXR_OK) {
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+    /* The worker saved strictly before returning OK, so the published frame
+       and this record always describe the same accepted selection. */
+    if (job->prefs_valid) {
+      prefs.value = job->prefs;
+      prefs.active = 1;
+      prefs.corrupt = 0;
+      prefs.file_present = 1;
+      prefs.load_status = READER_PREFERENCES_OK;
+      prefs.last_ok = 1;
+    }
+#endif
     if (job->kind == JOB_OPEN) {
       if (job->session_swapped && job->have_frame && job->candidate.book_id == job->book_id && job->frame.book_id == job->book_id) {
         exr_book next = {0};
@@ -3555,6 +3824,9 @@ static void handle_job_complete(host_job *job) {
 }
 
 static void host_command(int id) {
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+  if(prefs_ui_open() && id!=IDC_PREFERENCES) return;
+#endif
 #ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
   if(id==IDC_CLOUD_IMPORT || id==IDC_BULK_ORGANIZE) { winio_show(id==IDC_CLOUD_IMPORT ? WINIO_CLOUD:WINIO_BULK);return; }
   if(winio.dialog) return;
@@ -4601,6 +4873,9 @@ done:
 
 static void finish_close(HWND window) {
   if (g.job || g.pending) return;
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+  prefs_close();
+#endif
 #ifdef EXR_READER_WINDOWS_ACCOUNT
   /* The network worker reaches CLOSED first; the UI never waits for the network. */
   if (acct_exit_blocked()) return;
@@ -4648,9 +4923,20 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       limits->ptMinTrackSize.y = 660;
       return 0;
     }
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+    case WM_SETTINGCHANGE:
+    case WM_THEMECHANGED:
+      /* Sampled here, on the UI owner, and handed to the worker as a value. */
+      prefs_system_changed();
+      prefs_pump();
+      return 0;
+#endif
     case WM_COMMAND: {
       int id = LOWORD(wparam);
       int code = HIWORD(wparam);
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+      if(id==IDC_PREFERENCES) { prefs_show();return 0; }
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
       if(id==IDC_SHELF_SEARCH && code==EN_CHANGE) {
         if(!g.shelf_applying) product_shelf_search_changed();
@@ -4708,6 +4994,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       } else {
         host_update_controls();
       }
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+      prefs_after_complete();
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
       product_shelf_dispatch();host_update_controls();
       if(!g.job && !g.pending) PostMessageW(window,WM_APP+31,0,0);
@@ -4734,6 +5023,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       return 0;
     case WM_CLOSE:
       if (g.closing) return 0;
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+      prefs_close();
+#endif
 #ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
       winio_close();
 #endif
@@ -4768,6 +5060,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       return 0;
     case WM_DESTROY:
       KillTimer(window, 1);
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+      prefs_destroy_menu(window);
+#endif
       settings_save();
       PostQuitMessage(g.drive_mode ? (g.drive_failures ? 1 : 0) : 0);
       return 0;
@@ -4822,6 +5117,11 @@ static int message_loop(void) {
        g.window && IsWindowEnabled(g.window) && (message.wParam=='I' || message.wParam=='O')) {
       winio_show(message.wParam=='I' ? WINIO_CLOUD:WINIO_BULK);continue;
     }
+#endif
+#ifdef EXR_READER_WINDOWS_PREFERENCES
+    if(prefs_ui_open() && IsDialogMessageW(prefs_dialog_handle(),&message)) continue;
+    prefs_translate(&message);
+    if(message.message==WM_NULL) continue;
 #endif
     if (g.window && IsDialogMessageW(g.window, &message)) continue;
     TranslateMessage(&message);
