@@ -1,0 +1,143 @@
+name: Reader S14 reused font library on the approved SDK3.41 candidate
+on:
+  push:
+    branches: [codex/reader-next-s14]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  preflight:
+    name: guard fixed source and replay verifier contracts
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Guard fixed source frozen SDK and exclusive write paths
+        run: python tests/reader_next_s14/guard.py
+      - name: Check harness syntax and replay verifier negative contracts in Actions
+        run: |
+          set -euo pipefail
+          python -m py_compile tests/reader_next_s14/guard.py tests/reader_next_s14/cases.py tests/reader_next_s14/run.py tests/reader_next_s14/verify.py
+          python tests/reader_next_s14/verify.py --self-test
+  fonts:
+    name: font library (${{ matrix.runner }}, ${{ matrix.label }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {runner: ubuntu-22.04, platform: Linux, system: Linux, label: SDK341, sdk: 3.41.0, tag: sdk341}
+          - {runner: windows-2022, platform: Windows, system: Windows, label: SDK341, sdk: 3.41.0, tag: sdk341}
+          - {runner: macos-15, platform: macOS, system: Darwin, label: SDK341, sdk: 3.41.0, tag: sdk341}
+          - {runner: ubuntu-22.04, platform: Linux, system: Linux, label: SDK340, sdk: 3.40.0, tag: sdk340}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Guard fixed source frozen SDK and exclusive write paths
+        run: python tests/reader_next_s14/guard.py
+      - name: Install pinned Actions-only build and fixture tools
+        run: python -m pip install ninja==1.11.1.1 fonttools==4.58.0
+      - name: Enter native Windows toolchain
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File ${env:GITHUB_ENV} -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File ${env:GITHUB_ENV} -Append -Encoding utf8
+          'CXX=cl' | Out-File ${env:GITHUB_ENV} -Append -Encoding utf8
+      - name: Materialize and install the exact SDK selection
+        env:
+          SDK_SELECTION: ${{ matrix.sdk }}
+        run: |
+          set -euo pipefail
+          mkdir -p build/s14-evidence/logs
+          if [ "$SDK_SELECTION" = "3.41.0" ]; then
+            sdk_source=.
+          else
+            mkdir -p build/sdk340-src
+            git archive 9854061be331fe603a1822d9b2b36ee357154927 | tar -x -C build/sdk340-src
+            sdk_source=build/sdk340-src
+          fi
+          (
+            cd "$sdk_source"
+            cmake --preset reading-core 2>&1 | tee "$GITHUB_WORKSPACE/build/s14-evidence/logs/sdk-configure.log"
+            cmake --build --preset reading-core --parallel 4 2>&1 | tee "$GITHUB_WORKSPACE/build/s14-evidence/logs/sdk-build.log"
+            cmake --install build/reading-core 2>&1 | tee "$GITHUB_WORKSPACE/build/s14-evidence/logs/sdk-install.log"
+          )
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            ws=$(cygpath -m "$PWD")
+            stage=$(cygpath -m "$PWD/$sdk_source/build/reading-core/stage")
+          else
+            ws="$PWD"
+            stage="$PWD/$sdk_source/build/reading-core/stage"
+          fi
+          echo "WS=$ws" >> "$GITHUB_ENV"
+          echo "S14_SDK_STAGE=$stage" >> "$GITHUB_ENV"
+          echo "S14_SDK_VERSION=$SDK_SELECTION" >> "$GITHUB_ENV"
+          test -f "$stage/lib/cmake/EXReader/EXReaderConfig.cmake"
+      - name: Install the optional static package and fresh C/C++ consumers
+        run: |
+          set -euo pipefail
+          cmake -S apps/reader/font-library -B build/s14-default-off -G Ninja -DCMAKE_BUILD_TYPE=Release 2>&1 | tee build/s14-evidence/logs/default-off-configure.log
+          cmake --build build/s14-default-off 2>&1 | tee build/s14-evidence/logs/default-off-build.log
+          cmake -S apps/reader/font-library -B build/s14-package -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_FONT_LIBRARY_BUILD=ON -DEXR_SDK_VERSION="$S14_SDK_VERSION" -DEXR_SDK="$S14_SDK_STAGE" -DCMAKE_PREFIX_PATH="$S14_SDK_STAGE" -DCMAKE_INSTALL_PREFIX="$WS/build/s14-stage" 2>&1 | tee build/s14-evidence/logs/package-configure.log
+          cmake --build build/s14-package --verbose 2>&1 | tee build/s14-evidence/logs/package-build.log
+          cmake --install build/s14-package 2>&1 | tee build/s14-evidence/logs/package-install.log
+          cmake -S tests/reader_next_s14/consumer -B build/s14-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXPECTED_SDK_VERSION="$S14_SDK_VERSION" -DEXPECTED_SDK_TAG="${{ matrix.tag }}" -DCMAKE_PREFIX_PATH="$WS/build/s14-stage;$S14_SDK_STAGE" 2>&1 | tee build/s14-evidence/logs/consumer-configure.log
+          cmake --build build/s14-consumer --verbose 2>&1 | tee build/s14-evidence/logs/consumer-build.log
+      - name: Fixed licensed fonts original suite and S14 native cases
+        run: python tests/reader_next_s14/run.py
+      - name: Retain original binaries fonts licenses reports and all failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-s14-font-library-${{ matrix.platform }}-${{ matrix.label }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/s14-evidence/
+          include-hidden-files: true
+          if-no-files-found: error
+  evidence:
+    name: same-run S14 evidence and negative verifier cases
+    needs: fonts
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Guard fixed source frozen SDK and exclusive write paths
+        run: python tests/reader_next_s14/guard.py
+      - name: Authenticate completed upstream jobs and original artifact bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_next_s14/verify.py
+      - name: Preserve strict verifier result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-s14-font-verified-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/s14-verified/
+          if-no-files-found: error
