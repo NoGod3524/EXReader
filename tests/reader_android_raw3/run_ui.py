@@ -18,9 +18,10 @@ def main():
     assert os.environ.get('GITHUB_ACTIONS')=='true'
     p=argparse.ArgumentParser()
     for key in ('fixtures','fixture','output'):p.add_argument('--'+key,type=Path,required=True)
+    p.add_argument('--apple-peer',type=Path)
     a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True)
     identity={key:os.environ[value] for key,value in [('source_sha','GITHUB_SHA'),('run_id','GITHUB_RUN_ID'),('attempt','GITHUB_RUN_ATTEMPT')]}
-    package='org.exreader.host';reports=[];boundaries=[];accepted=False
+    package='org.exreader.host';reports=[];boundaries=[];accepted=False;apple_accepted=False;apple_attestation=None
     authorization='Basic '+base64.b64encode(('raw3:'+secrets.token_hex(32)).encode()).decode()
     server=Dav(a.fixture,authorization);port=server.server.server_port
     def adb(*args,input=None,timeout=120):return subprocess.check_output(['adb',*map(str,args)],input=input,stderr=subprocess.STDOUT,timeout=timeout)
@@ -78,9 +79,9 @@ def main():
         for observation in report['observations']:save('captures/'+name+'-'+observation['name']+'.png',private('preferences-captures/'+observation['name']+'.png'))
         reports.append(report);print(json.dumps({'phase':name,'passed':True,'count':report['count'],'pid':report['pid']}),flush=True)
         return report
-    def peer():
-        push(a.output/'bundle/manifest.json','raw3-peer-manifest.json')
-        for row in parse((a.output/'bundle/manifest.json').read_bytes())['revisions']:push(a.output/'bundle'/row['file'],'interop-incoming/'+row['file'])
+    def peer(selected=None):
+        selected=selected or a.output/'bundle';push(selected/'manifest.json','raw3-peer-manifest.json')
+        for row in parse((selected/'manifest.json').read_bytes())['revisions']:push(selected/row['file'],'interop-incoming/'+row['file'])
     def session_input():
         write('raw3-session-input.json',json.dumps({'root':f'https://127.0.0.1:{port}/dav/','account':str(uuid.uuid4()),'authorization':authorization}).encode())
     try:
@@ -109,6 +110,21 @@ def main():
             assert any(r['method']=='GET' and r['path']==path for r in server.requests[put+1:])
         reset();peer();session_input();phase('session-receive',['actual_android_raw_session_fresh_network_receive_256_shards'])
         phase('session-reopen',['fresh_android_owner_imports_downloaded_originals_and_resolves_11_exact_records'])
+        if a.apple_peer:
+            verified_peer=folder(a.apple_peer);apple_attestation=parse((a.apple_peer.parent/'attestation.json').read_bytes());assert apple_attestation['accepted'] and apple_attestation['manifest_sha256']==verified_peer['manifest_sha256']
+            actual_peer=verified_peer['manifest'];assert actual_peer['sender']['platform']=='macos' and verified_peer['reading_records']==11 and verified_peer['originals']==4
+            entries={}
+            for row in actual_peer['originals']:
+                sha=row['sha256'];entries['/dav/exreader-sync-v1/objects/'+sha[:2]+'/'+sha+'.'+row['format']]=(a.apple_peer/row['file']).read_bytes()
+            for row in actual_peer['revisions']:entries['/dav/exreader-sync-v1/revisions/'+row['id'][:2]+'/'+row['id']+'-'+row['sha256']+'.json']=(a.apple_peer/row['file']).read_bytes()
+            with server.lock:
+                server.entries=entries;server.dirs={'/dav/'}
+                for path in entries:
+                    parts=path.strip('/').split('/')[:-1]
+                    for n in range(1,len(parts)+1):server.dirs.add('/'+'/'.join(parts[:n])+'/')
+            reset();peer(a.apple_peer);session_input();phase('apple-receive',['actual_apple_raw_bundle_native_android_https_session_receive'])
+            phase('apple-reopen',['fresh_android_owner_resolves_11_actual_apple_records_from_downloaded_originals'])
+            apple_accepted=True
         reset()
         for file in (a.output/'bundle').rglob('*'):
             if file.is_file():push(file,'interop-incoming/'+file.relative_to(a.output/'bundle').as_posix())
@@ -125,7 +141,7 @@ def main():
     finally:
         server.release.set();server.server.shutdown();server.server.server_close()
         adb('shell','am','force-stop',package)
-        result={**identity,'accepted':accepted,'adopted':False,'scope':'explicit API34 x86_64 Android raw3 native host candidate','checks':sum(r['count'] for r in reports),'phases':reports,'boundaries':boundaries,'actual_tls':True,'incoming_apple_status':'pending','bidirectional_interoperability_accepted':False,'physical_device':False,'api':34,'abi':'x86_64','complete_product':False}
+        result={**identity,'accepted':accepted,'adopted':False,'scope':'explicit API34 x86_64 Android raw3 native host candidate','checks':sum(r['count'] for r in reports),'phases':reports,'boundaries':boundaries,'actual_tls':True,'incoming_apple_status':'passed' if apple_accepted else 'pending','actual_apple_attestation':apple_attestation,'bidirectional_interoperability_accepted':False,'physical_device':False,'api':34,'abi':'x86_64','complete_product':False}
         save('result.json',(json.dumps(result,ensure_ascii=False,indent=2)+'\n').encode())
         print(json.dumps({**identity,'accepted':accepted,'checks':result['checks']}),flush=True)
 

@@ -7,6 +7,16 @@
   "merge": "09377761748cd5549bc864e932e5edd38019142b",
   "source_sha": null,
   "runs": [],
+  "earlier_failed_runs": [
+    {
+      "source_sha": "6f4399225ac5c61eb8aad79272fe0f11dd9c6f90",
+      "run_id": 40198642719,
+      "attempt": 1,
+      "android_job": 121184878356,
+      "failed_phase": "raw-contract",
+      "reason": "The new source-version fixture incorrectly tried to encode a point as anchor1, whose unchanged contract rejects GAP_POINT. The fixture now captures a genuine nonempty SDK range; production behavior is unchanged."
+    }
+  ],
   "scope": "explicit API34 default x86_64 Android raw3 native host candidate",
   "incoming_apple_status": "pending",
   "bidirectional_interoperability_accepted": false,
