@@ -4,7 +4,7 @@
   "latest_checkpoint": {
     "current_common_341_head": {
       "branch": "codex/reader-hosts-341-final",
-      "head": "c6289d5e27ef89f687da43cb3ff5194970135a6f",
+      "head": "3c8c9eabbd9e8a5001db10b7a1a92cf69be1c223",
       "worktree": "C:/Users/Oscar/.codex/worktrees/reader-windows-preferences-commit-review/EXReader",
       "ordinary_merged_full_composition": "7ac0ac74e40155391dce2ba28b098fe1ee83f39f",
       "ordinary_merged_GTK_caller_prep": "10d313e375c8767f7981b53424e1574a443e4e25",
@@ -20,10 +20,10 @@
       "next": "await_full_Windows341_combined_run_then_merge_caller_review_schema_and_repin_one_final_production_boundary_before_full_same_source_runs"
     },
     "upper_native_collector_protocol": {
-      "source": "e3e5cc6ddf7f0b219eae79a61fa13a3122f2029d",
-      "run": 40193435537,
+      "source": "b1b1639639cffa6a7decce51a1f54027802429a3",
+      "run": 40193923047,
       "attempt": 1,
-      "state": "Actions_syntax_and63_synthetic_refusals_success",
+      "state": "Actions_syntax_and67_synthetic_refusals_success",
       "Apple_theme_jobs": 8,
       "includes_fast_import_initialization_publication": true,
       "Windows_identical_whole_run_attempt_two_slot_exception": true,
@@ -32,10 +32,10 @@
       "complete_product_accepted": false
     },
     "current_independent_candidate_runs": {
-      "Windows_full341": {"source_prefix":"ee4a86db", "run":40192852460, "state":"in_progress_after_search_UI"},
+      "Windows_full341": {"source_prefix":"2e0d7ba6", "run":40193777488, "state":"preflight_success_full_run_in_progress_after_UTF8_catalog_wrapper_repair", "previous_failed_run":40192852460},
       "raw_companions_previous": {"source":"40a26619526c073daa8ccfcbc2459f69ad238c6d", "run":40192474330, "state":"both_platforms_and_strict_success_agent_report"},
-      "raw_companions_final": {"source":"56793e7ca4f8ecdc5f2d9c3394fce4e201aca275", "run":40192929457, "state":"in_progress_extra_original_unlabelled03_consumer_positive"},
-      "Apple_raw3_host": {"state":"implemented_independent_default_OFF_candidate_waiting_final_companion_family_before_native_CI", "common_main_adopted":false}
+      "raw_companions_final": {"source":"56793e7ca4f8ecdc5f2d9c3394fce4e201aca275", "run":40192929457, "state":"both_platforms_and_strict_success_root_API_confirmed_includes_original_unlabelled03_consumer_positive"},
+      "Apple_raw3_host": {"state":"agent_proceeding_exact_final56793_family_merge_and_actual_native_harness", "common_main_adopted":false}
     },
     "raw_selector_core_sealed": {
       "source": "eb0a4ac713be25c1487843c19c2d02d579258644",
