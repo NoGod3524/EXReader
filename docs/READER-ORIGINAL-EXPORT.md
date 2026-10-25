@@ -108,5 +108,32 @@ locked-temporary cleanup failure and conflict publication failures; Windows
 mid-stream disk-full/fsync fault injection is **UNAVAILABLE**, not a mock pass.
 No system-share UI or six-device connection claim is granted.
 
-Initial implementation is awaiting Actions results; the final evidence-only
-commit will record exact tested and evidence identities and retained failures.
+## Recorded native evidence (2026-10-25)
+
+Tested source: `9fdcb28dcf5bc6fe93618d260441ad483d88bc4d`; tree
+`09f179920364bf658705377ce68d0f528787da69`.
+[Run 40171470925, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40171470925)
+completed **success**: Linux job `121103001763`, Windows job `121103001812`,
+macOS job `121103001681`, strict evidence job `121103815311`. Each platform
+passed 33 named consumer checks; the verifier rejected 15 mutations per
+platform (45 total). Actual nine-format outputs were bound to frozen fixture
+bytes, and actual installed static archives/C/C++ consumers were ZIP/hash-bound.
+
+The initial source `a64e239a8554aa08e5e1537ba636abbd3a2c70f6` also passed
+[run 40170953790/1](https://github.com/NoGod3524/EXReader/actions/runs/40170953790),
+30 checks/platform and 15 verifier rejections/platform. Both runs remain
+retained. No observed CI failures or original assertions were removed.
+
+This document and `docs/validation/reader-original-export.json` are the only
+changes in the final evidence-only `[skip ci]` child commit. The exact evidence
+HEAD is returned separately in the handoff (a commit cannot contain its own
+SHA). The JSON records every artifact ID/name/size/digest/expiry, actual binary
+identities, jobs, named cases and remaining gaps. Producer ZIPs were downloaded
+and rehashed in Actions; the terminal evidence ZIP has API identity metadata
+only, explicitly distinguished in the record.
+
+The measured desktop package capability passed; full D03 acceptance remains
+for root review of Windows mid-stream fault-injection UNAVAILABLE, bookshelf
+snapshot memory, stable host-controlled destination and explicit orphan
+receipt boundaries. No share UI, six-device, host-integration or physical
+power-loss claim is made.
