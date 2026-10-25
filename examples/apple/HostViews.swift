@@ -184,9 +184,8 @@ struct LibraryScreen: View {
     }
 
     private func restoreShelf(_ proxy: ScrollViewProxy, revision: Int) {
-        guard revision == shelf.restoreRevision, shelf.needsScroll, let key = shelf.restoreKey else { return }
         DispatchQueue.main.async {
-            guard shelf.restoreRevision == revision, shelf.needsScroll else { return }
+            guard shelf.restoreRevision == revision, shelf.needsScroll, let key = shelf.restoreKey else { return }
             proxy.scrollTo(key, anchor: .top)
             shelf.didScroll(revision: revision)
         }
@@ -294,7 +293,11 @@ struct LibraryScreen: View {
                     // when the aggregate geometry preference stays unchanged.
                     // Only later real geometry can acknowledge that command.
                     .onAppear { restoreShelf(proxy, revision: shelf.restoreRevision) }
-                    .onChange(of: shelf.restoreRevision) { revision in restoreShelf(proxy, revision: revision) }
+                    // Published delivers every request, including a request
+                    // made while ScrollViewReader keeps its content identity.
+                    // Its value is assigned after delivery; issue on main's
+                    // next turn and reject any superseded revision there.
+                    .onReceive(shelf.$restoreRevision) { revision in restoreShelf(proxy, revision: revision) }
                 }
             }
 
