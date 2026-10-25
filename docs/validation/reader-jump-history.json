@@ -1,14 +1,14 @@
 {
   "schema": "reader-jump-history-validation-v1",
-  "accepted": false,
-  "scope": "Root review repair candidate; previous source evidence retained separately",
+  "accepted": true,
+  "scope": "Root-reviewed bounded jump history with instance-safe tickets; three desktop installed consumers, four formats and no writes",
   "branch": "codex/reader-jump-history-review",
   "implementation_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
-  "tested_source_sha": null,
-  "run_id": null,
+  "tested_source_sha": "98cf5683f84f1520ba358763fadcbd61f31242f8",
+  "run_id": 40154247018,
   "host_wiring_accepted": false,
-  "state": "root_review_repairs_pending_actions",
+  "state": "root_review_closed_awaiting_common_source_integration",
   "findings": [
     "Cross-history and closed/reopened-history completion tickets collide",
     "Encoded wire allocation leaks if string construction throws"
@@ -530,5 +530,87 @@
     ],
     "default_branch_merged": false,
     "tag_or_release": false
-  }
+  },
+  "attempt": 1,
+  "workflow_conclusion": "success",
+  "checks_per_platform": 149,
+  "protocol_negative_cases_per_platform": 18,
+  "stored_cases": 5,
+  "actual_resolved_moves": 5,
+  "strict_job": 121052635664,
+  "jobs": [
+    {
+      "databaseId": 121052078452,
+      "name": "jump history consumers (Windows)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "databaseId": 121052078456,
+      "name": "jump history consumers (Linux)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "databaseId": 121052078519,
+      "name": "jump history consumers (macOS)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "databaseId": 121052635664,
+      "name": "strict jump-history evidence",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12584311079,
+      "name": "reader-jump-history-Linux-40154247018-1",
+      "size_in_bytes": 8949168,
+      "digest": "sha256:80a9d47e884dee5221faf3eaff490ad25d8e8e4c428805ff4c95f359a3903a93",
+      "expires_at": "2027-01-23T02:23:16Z",
+      "expired": false
+    },
+    {
+      "id": 12584071485,
+      "name": "reader-jump-history-evidence-40154247018-1",
+      "size_in_bytes": 3720,
+      "digest": "sha256:2c4a6a978aee8412fc9a357a298ba5bc4c5131a0d4bfb51609472a733ab293a3",
+      "expires_at": "2027-01-23T02:23:16Z",
+      "expired": false
+    },
+    {
+      "id": 12583926696,
+      "name": "reader-jump-history-macOS-40154247018-1",
+      "size_in_bytes": 7679268,
+      "digest": "sha256:baf556eb621061e032020b7b237e41d37f2c880f07acbb84286e21bddd1abd57",
+      "expires_at": "2027-01-23T02:23:16Z",
+      "expired": false
+    },
+    {
+      "id": 12583298548,
+      "name": "reader-jump-history-Windows-40154247018-1",
+      "size_in_bytes": 5920496,
+      "digest": "sha256:eaa7ef9608436c2d7df3bfe7562e0da7a8315833d4c2eb1dcdc51694e1216b3b",
+      "expires_at": "2027-01-23T02:23:16Z",
+      "expired": false
+    }
+  ],
+  "earlier_root_runs": [
+    {
+      "source": "1902a41bc9bb1c8b0dc7dcbd608d915f1948d669",
+      "run": 40153658637,
+      "conclusion": "success",
+      "note": "Functional ticket repair before additional strict producer checks"
+    },
+    {
+      "source": "910aa03ef3e6cc45f2f5e065f2ea01e300f27a70",
+      "run": 40153976517,
+      "conclusion": "failure",
+      "note": "Three platform consumers passed; stronger strict gate rejected duplicate generic assertion names; preserved"
+    }
+  ],
+  "evidence_head_note": "Only docs/READER-JUMP-HISTORY.md and docs/validation/reader-jump-history.json differ after tested source"
 }

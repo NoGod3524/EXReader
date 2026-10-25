@@ -229,3 +229,9 @@ that embedded each runner's own path. Nothing here runs on a developer machine.
 
 强化 source `910aa03ef3e6cc45f2f5e065f2ea01e300f27a70` / run `40153976517` 三平台消费者仍通过，但 strict 真实拒绝原探针重复命名的通用检查。现保留每一次原断言，仅给同名检查的第二次及以后加稳定序号；没有降低去重要求。另增6个原始结果负例，与12个身份负例合计18个，等待新同源整轮。
 
+## Root 修复验收
+
+最终受测 source `98cf5683f84f1520ba358763fadcbd61f31242f8` / [run 40154247018](https://github.com/NoGod3524/EXReader/actions/runs/40154247018) / attempt1：三桌面消费者及严格汇总4/4 success。每平台149项具名检查、5个四格式存储场景、5次实际重定位移动全部通过；每平台18个身份/原始结果负例全部拒绝。新增10项证明同位置、不同位置以及关闭后重建的跨实例 ticket 被拒绝，拒绝不移动游标且自己的 ticket 仍可使用。
+
+strict job `121052635664` 在 Actions 重新散列三个 ZIP、绑定三个真实 completed/success 上游作业和报告source/run/attempt，重核149个唯一原始检查与消费者二进制，`jump_history_module_accepted=true`、`problems=[]`。旧139项、四格式、无写入控制均保留。此次证据提交只修改本文和验收JSON；完整工件身份见JSON。复审关闭，等待共同源码接入，不授予生产宿主接线或性能。
+
