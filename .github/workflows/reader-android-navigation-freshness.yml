@@ -3,6 +3,11 @@ on:
   push:
     branches: [codex/reader-android-navigation-freshness-review]
   workflow_dispatch:
+    inputs:
+      inspect_failed_build:
+        description: Read the sealed first diagnostic build log only; no emulator
+        type: boolean
+        default: false
 permissions:
   contents: read
   actions: read
@@ -11,6 +16,7 @@ defaults:
     shell: bash
 jobs:
   diagnostic:
+    if: ${{ !inputs.inspect_failed_build }}
     runs-on: ubuntu-22.04
     timeout-minutes: 110
     env:
@@ -56,3 +62,15 @@ jobs:
           name: android-navigation-freshness-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/navigation-freshness/evidence/
           if-no-files-found: error
+  inspect-failed-build:
+    if: ${{ inputs.inspect_failed_build }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Authenticate diagnostic ZIP and print its real failed probe build log
+        run: python tests/reader_android_navigation_freshness/inspect_failed_build.py

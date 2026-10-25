@@ -6,6 +6,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import traceback
 import zipfile
 
 from authenticate import BASE, ROOT, OUT, need, sha
@@ -22,6 +23,8 @@ def command(argv, log, timeout=600, check=True, env=None):
         process = subprocess.run(list(map(str, argv)), cwd=ROOT, env=env,
                                  stdout=stream, stderr=subprocess.STDOUT, timeout=timeout)
     if check:
+        if process.returncode:
+            print('\n'.join(log.read_text(errors='replace').splitlines()[-80:]), flush=True)
         need(process.returncode == 0, f'command failed; retained {log.relative_to(ROOT)}')
     return process.returncode
 
@@ -59,8 +62,19 @@ def run_group(name, runner, cache=None):
             process = subprocess.run(['adb', 'exec-out', 'run-as', PACKAGE, 'cat',
                                       'files/' + prefix + phase + '.json'],
                                      capture_output=True, timeout=90)
+            stem = prefix + phase
+            (target / (stem + '.read-stdout.txt')).write_bytes(process.stdout)
+            (target / (stem + '.read-stderr.txt')).write_bytes(process.stderr)
+            (target / (stem + '.read-exit.txt')).write_text(str(process.returncode) + '\n')
             if process.returncode == 0:
-                (target / (prefix + phase + '.json')).write_bytes(process.stdout)
+                try:
+                    report = json.loads(process.stdout)
+                except (ValueError, UnicodeError):
+                    # adb exec-out may return zero even when remote cat failed.
+                    (target / (prefix + phase + '.unavailable.txt')).write_bytes(process.stdout)
+                else:
+                    need(isinstance(report, dict), 'private report is not a JSON object')
+                    (target / (prefix + phase + '.json')).write_bytes(process.stdout)
     result_path = target / 'result.json'
     result = json.loads(result_path.read_text()) if result_path.exists() else None
     reports = []
@@ -215,11 +229,19 @@ def main():
         need(stage_inventory() == stages, 'authenticated installed SDK or product stage changed')
         subprocess.run(['git', 'diff', '--exit-code'], cwd=ROOT, check=True)
     finally:
+        primary_error = traceback.format_exc() if sys.exc_info()[0] is not None else None
+        comparisons, collector_errors = {}, []
+        for group in groups:
+            try:
+                comparisons[group['name']] = compare_cache(group['name'])
+            except Exception as error:
+                collector_errors.append({'group': group['name'], 'type': type(error).__name__, 'error': str(error)})
         result = {'diagnostic_source': os.environ['GITHUB_SHA'], 'producer_source': BASE,
                   'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
                   'original': original, 'trace_probe': traced, 'rebuilt': rebuilt,
                   'authenticated_stages': stages, 'groups': groups,
-                  'cache_differentials': {group['name']: compare_cache(group['name']) for group in groups},
+                  'cache_differentials': comparisons, 'primary_error': primary_error,
+                  'collector_errors': collector_errors,
                   'accepted': False, 'complete_product': False, 'physical_device': False,
                   'interpretation': 'Full original suite results and paired cache observations only; no product grant.'}
         (EVIDENCE / 'diagnostic.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n')
