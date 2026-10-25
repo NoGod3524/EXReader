@@ -1310,14 +1310,69 @@ final class HostReaderModel: ObservableObject {
     @Published private(set) var productIndexPending = false
     @Published var stateHash = "—"
     @Published var busy = false
+    @Published private(set) var libraryReady = false
     @Published private(set) var syncPreparing = false
     @Published var notes: [HostNoteRow] = []
     @Published var showLibrary = true
     @Published var frameCount = 0
     @Published private(set) var uiTestTrace = ""
 #if EXR_APPLE_HOST_REVIEW
+    @Published private(set) var reviewInitializationHeld = false
+    private var reviewInitializationReleased = false
+    private var reviewRejectedBeforeInitialization = 0
+    var reviewInitializationHoldEnabled: Bool { CommandLine.arguments.contains("-EXRHoldInitializationBeforeStart") }
+    var reviewInitializationObservation: String {
+        let value: [String: Any] = ["held": reviewInitializationHeld, "library_ready": libraryReady,
+            "started": started, "busy": busy, "token": token, "rejected_unready": reviewRejectedBeforeInitialization,
+            "retained_ui_books": books.count]
+        return (try? String(data: JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]), encoding: .utf8)) ?? "{}"
+    }
+    func reviewTryImportBeforeInitialization() { importFixture("Sample", extension: "epub") }
+    func reviewReleaseInitialization() {
+        reviewInitializationReleased = true; reviewInitializationHeld = false; start()
+    }
     @Published private var uiTestCancellationReadyToken: Int?
     var uiTestCancellationReady: Bool { busy && uiTestCancellationReadyToken == token }
+    @Published private(set) var reviewFastImportObservation = "{}"
+    private var reviewFastImportArmed = false
+    private var reviewFastImportCompleted = false
+    private var reviewFastImportBusyChanges = 0
+    var reviewFastImportEnabled: Bool { CommandLine.arguments.contains("-EXRFastImportOneMainTurn") }
+    var reviewFastImportReady: Bool { libraryReady && !busy && books.isEmpty }
+
+    func observeReviewLibraryBusy(_ value: Bool) {
+        guard reviewFastImportEnabled else { return }
+        if reviewFastImportArmed { reviewFastImportBusyChanges += 1 }
+        updateReviewFastImport()
+    }
+
+    private func updateReviewFastImport() {
+        let value: [String: Any] = ["ready": reviewFastImportReady, "completed": reviewFastImportCompleted,
+            "busy": busy, "observed_busy_changes": reviewFastImportBusyChanges,
+            "sdk_books": books.count, "same_main_turn": reviewFastImportCompleted]
+        reviewFastImportObservation = (try? String(data: JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]), encoding: .utf8)) ?? "{}"
+    }
+
+    // Complete the real owner import and its production publication inside one
+    // button action, so SwiftUI cannot observe an intermediate busy=true frame.
+    func reviewImportFixtureInOneMainTurn() {
+        guard reviewFastImportEnabled, reviewFastImportReady else { return }
+        precondition(Thread.isMainThread)
+        reviewFastImportArmed = true; reviewFastImportCompleted = false; reviewFastImportBusyChanges = 0
+        let (myToken, cancel) = begin()
+        do {
+            guard let file = Bundle.main.url(forResource: "Sample", withExtension: "epub") else { throw HostError.invalidInput("缺少实际 EPUB 夹具") }
+            let publish: () -> Void = try queue.sync {
+                guard let session = self.session, let catalog = self.catalog else { throw HostError.invalidInput("书库未就绪") }
+                let (_, created) = try session.importBook(url: file, cancel: cancel, catalog: catalog)
+                guard created else { throw HostError.invalidResult("快速导入回归必须创建真实新书") }
+                return self.mutationPublication(session: session, token: myToken, status: "已导入 Sample.epub", imported: true)
+            }
+            publish()
+            reviewFastImportCompleted = !busy && books.count == 1
+            updateReviewFastImport()
+        } catch { fail(error); updateReviewFastImport() }
+    }
 #endif
 #if EXR_APPLE_IMPORT_REVIEW
     @Published private(set) var importMappingProbe = ""
@@ -1454,6 +1509,12 @@ final class HostReaderModel: ObservableObject {
     func start() {
         traceUITest("startup-request")
         guard !started else { return }
+#if EXR_APPLE_HOST_REVIEW
+        if reviewInitializationHoldEnabled && !reviewInitializationReleased {
+            reviewInitializationHeld = true
+            return
+        }
+#endif
         started = true
         busy = true
         traceUITest("startup-worker-scheduled")
@@ -1528,13 +1589,18 @@ final class HostReaderModel: ObservableObject {
                     self.traceUITest("startup-publish rows=\(rows.count)")
                     self.books = rows
                     self.productIndexPending = !repairProblems.isEmpty
+                    // Both owner dependencies and the initial SDK read exist
+                    // before any import control or backend entry is admitted.
+                    self.libraryReady = true
                     self.busy = false
                     if !repairProblems.isEmpty {
                         self.errorText = "产品索引待修复：" + repairProblems.joined(separator: "；")
                         self.statusText = "书籍已保留，产品索引待修复"
                     } else if let lastID, lastPresent {
+                        self.errorText = ""; self.statusText = "就绪"
                         self.openBook(id: lastID)
                     } else {
+                        self.errorText = ""; self.statusText = "就绪"
                         self.busy = false
                     }
                     self.traceUITest("startup-finished")
@@ -1683,6 +1749,11 @@ final class HostReaderModel: ObservableObject {
     }
 
     private func completeMutation(session: HostSession, token: Int, status: String, imported: Bool = false) {
+        let publish = mutationPublication(session: session, token: token, status: status, imported: imported)
+        DispatchQueue.main.async { publish() }
+    }
+
+    private func mutationPublication(session: HostSession, token: Int, status: String, imported: Bool) -> () -> Void {
         let books = Result { try session.listBooks() }
         let notes = Result { try session.notes() }
         let hash = Result { try session.stateHash() }
@@ -1693,7 +1764,7 @@ final class HostReaderModel: ObservableObject {
         do { try writeState(session: session) }
         catch { warnings.append("状态记录失败：\(describe(error))") }
         let warning = warnings.joined(separator: "；")
-        DispatchQueue.main.async {
+        return {
             if imported { self.traceUITest("import-publish source-token=\(token),status=\(status)") }
             guard token == self.token else { return }
             if case .success(let rows) = books { self.books = rows }
@@ -2118,6 +2189,15 @@ final class HostReaderModel: ObservableObject {
 
     func importFile(_ url: URL) {
         traceUITest("import-request file=\(url.lastPathComponent)")
+        guard libraryReady else {
+            traceUITest("import-rejected-unready")
+#if EXR_APPLE_HOST_REVIEW
+            reviewRejectedBeforeInitialization += 1
+#endif
+            errorText = "书库未就绪"
+            statusText = "书库正在初始化，请稍候"
+            return
+        }
         guard !busy else { traceUITest("import-rejected-busy"); return }
         let (myToken, box) = begin()
         statusText = "正在导入…"
@@ -2524,6 +2604,7 @@ final class HostReaderModel: ObservableObject {
         notes = try session.notes()
         stateHash = try session.stateHash()
         showLibrary = false
+        libraryReady = true
         busy = false
     }
 #endif
