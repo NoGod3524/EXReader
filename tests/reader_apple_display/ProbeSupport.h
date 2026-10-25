@@ -28,6 +28,13 @@ static NSDictionary *identity(void) {
         @"run":@ADR_PROBE_RUN, @"attempt":@ADR_PROBE_ATTEMPT,
         @"librarySHA256":@ADR_LIBRARY_SHA, @"headerSHA256":@ADR_HEADER_SHA,
         @"binarySHA256":fileSHA(NSBundle.mainBundle.executablePath ?: NSProcessInfo.processInfo.arguments[0]),
+        @"bundleIdentifier":NSBundle.mainBundle.bundleIdentifier ?: @"",
+        @"executableName":(NSBundle.mainBundle.executablePath ?: NSProcessInfo.processInfo.arguments[0]).lastPathComponent,
+#if TARGET_OS_IOS
+        @"appInfoSHA256":fileSHA([NSBundle.mainBundle.bundlePath stringByAppendingPathComponent:@"Info.plist"]),
+#else
+        @"appInfoSHA256":@"",
+#endif
         @"pid":@(getpid()), @"platform":@ADR_PLATFORM};
 }
 static void record(NSString *name, NSString *status, NSString *detail) {

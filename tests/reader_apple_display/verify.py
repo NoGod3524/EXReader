@@ -7,6 +7,7 @@ import io
 import json
 import os
 from pathlib import Path, PurePosixPath
+import plistlib
 import urllib.error
 import urllib.request
 import zipfile
@@ -65,6 +66,12 @@ def verify_payload(files, want, kind):
     require(b['binary']==('display-probe' if kind=='macos' else 'DisplayProbe.app/DisplayProbe'), 'wrong executable member')
     require(files[b['binary']][:4] in (b'\xcf\xfa\xed\xfe', b'\xce\xfa\xed\xfe', b'\xca\xfe\xba\xbe'), 'not actual Mach-O binary')
     require(files[b['library']].startswith(b'!<arch>\n'), 'not actual installed static archive')
+    if kind!='macos':
+        info=files['DisplayProbe.app/Info.plist']
+        require(sha(info)==b['appInfoSHA256'], 'app Info.plist identity')
+        plist=plistlib.loads(info)
+        require(plist['CFBundleIdentifier']=='org.exreader.displayprobe' and plist['CFBundleExecutable']=='DisplayProbe', 'actual app bundle identity')
+        require(plist['UIApplicationSceneManifest']['UIApplicationSupportsMultipleScenes'] is True, 'app scenes not configured')
     require(files[b['header']]==(ROOT/'extras/apple-reader-display/include/ADRDisplayLease.h').read_bytes(), 'not original public header')
     require(want['source'].encode() in files[b['library']], 'original module source not embedded')
     require(want['source'].encode() in files[b['binary']], 'source not embedded in actual binary')
@@ -80,8 +87,10 @@ def verify_payload(files, want, kind):
         r=load(files[name]); require(r.get('schema')==1 and r.get('stage')==stage, 'wrong native stage')
         i=r['identity']; match_identity(i,want,kind)
         require(i.get('librarySource')==want['source'], 'wrong original module source')
-        for key in ('binarySHA256','librarySHA256','headerSHA256'):
+        for key in ('binarySHA256','librarySHA256','headerSHA256','appInfoSHA256'):
             require(i.get(key)==b[key], 'runtime/build binding mismatch '+key)
+        require(i.get('executableName')==('display-probe' if kind=='macos' else 'DisplayProbe'), 'runtime executable name')
+        if kind!='macos': require(i.get('bundleIdentifier')=='org.exreader.displayprobe','runtime bundle identity')
         require(type(i.get('pid')) is int and i['pid']>0, 'missing actual native PID')
         rows.extend(check_cases(r,contract[group],contract))
         return r
@@ -122,7 +131,7 @@ def verify_payload(files, want, kind):
             sim=load(files['simulator.json'])
             require(sim['device']['isAvailable'] is True and sim['device']['name'].startswith('iPhone' if kind=='iphone' else 'iPad'), 'wrong actual simulator class')
     return {'platform':kind,'source':want['source'],'binary':b['binary'],'binarySHA256':b['binarySHA256'],
-            'librarySHA256':b['librarySHA256'],'headerSHA256':b['headerSHA256'],
+            'librarySHA256':b['librarySHA256'],'headerSHA256':b['headerSHA256'],'appInfoSHA256':b['appInfoSHA256'],
             'passed':sum(r['status']=='PASS' for r in rows),'pending':[r['name'] for r in rows if r['status']=='PENDING'],
             'namedCases':rows,'acceptance':'PENDING_PHYSICAL_DEVICE_AND_HOST_INTEGRATION',
             'deviceRuntime':'NOT_RUN' if kind=='iphoneos' else 'actual-native-process'}

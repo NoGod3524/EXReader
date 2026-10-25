@@ -84,7 +84,10 @@ static void core(UIWindow *window) {
     CGFloat originalBrightness = screen.brightness;
     a = [ADRDisplayLease leaseForWindow:window status:NULL];
     ADRStatus brightnessStatus = [a setEnabled:YES hostActive:YES brightness:@0.37];
-    capability(@"ios_brightness_readback", brightnessStatus, [snapshot(a)[@"ownsBrightness"] boolValue] && equalBrightness(screen.brightness, .37));
+    NSString *readback = [NSString stringWithFormat:@"requested=0.37 observed=%.8f status=%ld owns=%d; simulator is not physical backlight evidence",
+        (double)screen.brightness, (long)brightnessStatus, [snapshot(a)[@"ownsBrightness"] boolValue]];
+    record(@"ios_brightness_readback", brightnessStatus == ADRStatusUnavailable ? @"PENDING" :
+        ((brightnessStatus == ADRStatusOK && [snapshot(a)[@"ownsBrightness"] boolValue] && equalBrightness(screen.brightness, .37)) ? @"PASS" : @"FAIL"), readback);
     b = [ADRDisplayLease leaseForWindow:window status:NULL];
     ADRStatus conflict = [b setEnabled:YES hostActive:YES brightness:@0.63];
     if (brightnessStatus == ADRStatusUnavailable) {
@@ -193,8 +196,10 @@ static void multiUnavailable(NSString *reason) {
                     multiUnavailable(@"UIKit reports supportsMultipleScenes=false on this simulator"); return;
                 }
                 NSUserActivity *activity = [[NSUserActivity alloc] initWithActivityType:@"org.exreader.display.second"];
-                [UIApplication.sharedApplication requestSceneSessionActivation:nil userActivity:activity options:nil errorHandler:^(NSError *error) {
-                    (void)error; multiUnavailable(@"Real scene activation request returned a system error");
+                UISceneActivationRequestOptions *requestOptions = [UISceneActivationRequestOptions new];
+                requestOptions.requestingScene = firstScene;
+                [UIApplication.sharedApplication requestSceneSessionActivation:nil userActivity:activity options:requestOptions errorHandler:^(NSError *error) {
+                    multiUnavailable([NSString stringWithFormat:@"Real scene activation error %@/%ld", error.domain, (long)error.code]);
                 }];
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 15 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
                     if (!secondLease) multiUnavailable(@"No second active real scene within the bounded simulator observation window");
@@ -209,7 +214,7 @@ static void multiUnavailable(NSString *reason) {
                 [UIApplication.sharedApplication requestSceneSessionDestruction:firstScene.session options:nil errorHandler:^(NSError *error) {
                     (void)error;
                     if (!multiFinished) {
-                        multiFinished = YES; pending(@"ios_scene_disconnect_releases", @"Real session destruction returned a system error");
+                        multiFinished = YES; pending(@"ios_scene_disconnect_releases", [NSString stringWithFormat:@"Real scene destruction error %@/%ld", error.domain, (long)error.code]);
                         [firstLease close]; [secondLease close]; writeReport(output, @"complete");
                     }
                 }];
@@ -257,7 +262,7 @@ static void multiUnavailable(NSString *reason) {
 - (UISceneConfiguration *)application:(UIApplication *)application configurationForConnectingSceneSession:(UISceneSession *)session options:(UISceneConnectionOptions *)options {
     (void)application; (void)options;
     UISceneConfiguration *config = [[UISceneConfiguration alloc] initWithName:@"Display" sessionRole:session.role];
-    config.delegateClass = DisplaySceneDelegate.class; return config;
+    config.sceneClass = UIWindowScene.class; config.delegateClass = DisplaySceneDelegate.class; return config;
 }
 @end
 int main(int argc, char **argv) {

@@ -85,5 +85,11 @@ def reject_mutations(originals, jobs, want):
     rejects('reject_wrong_upstream_attempt',lambda:bad_job(lambda j:j.update(run_attempt=999)))
     rejects('reject_wrong_upstream_run',lambda:bad_job(lambda j:j.update(run_id=0)))
     rejects('reject_duplicate_upstream_job',lambda:check_jobs(jobs+[next(j for j in jobs if j['name']=='native (macos)')],want))
-    if len(results)!=36: raise AssertionError('Missing required verifier rejection case')
+    kind,data,metadata,original=next(o for o in originals if o[0]=='iphone')
+    with zipfile.ZipFile(io.BytesIO(data)) as z: manifest=load(z.read('manifest.json'))
+    rejects('reject_wrong_runtime_bundle',lambda:forged(raw(lambda r:r['identity'].update(bundleIdentifier='org.invalid.substitution'))))
+    rejects('reject_changed_app_info',lambda:forged(lambda f,m:f.__setitem__('DisplayProbe.app/Info.plist',b'not original app Info.plist')))
+    rejects('reject_same_process_reopen',lambda:forged(lambda f,m:edit(f,'termination.json',lambda t:t.update(newPID=t['oldPID']))))
+    rejects('reject_swapped_lifecycle_process',lambda:forged(lambda f,m:edit(f,'raw-background.json',lambda r:r['identity'].update(pid=1))))
+    if len(results)!=40: raise AssertionError('Missing required verifier rejection case')
     return results

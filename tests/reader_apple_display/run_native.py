@@ -94,10 +94,11 @@ def native_build(kind, out):
                  'CFBundleName':'DisplayProbe', 'CFBundleDisplayName':'DisplayProbe',
                  'CFBundlePackageType':'APPL', 'CFBundleVersion':'1', 'CFBundleShortVersionString':'1.0',
                  'MinimumOSVersion':'15.0', 'LSRequiresIPhoneOS':True, 'UIDeviceFamily':[1,2],
-                 'UILaunchScreen':{}, 'UISupportedInterfaceOrientations':['UIInterfaceOrientationPortrait', 'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'],
+                 'UILaunchScreen':{}, 'UIRequiresFullScreen':False,
+                 'UISupportedInterfaceOrientations':['UIInterfaceOrientationPortrait', 'UIInterfaceOrientationPortraitUpsideDown', 'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'],
                  'UIApplicationSceneManifest':{'UIApplicationSupportsMultipleScenes':True,
                     'UISceneConfigurations':{'UIWindowSceneSessionRoleApplication':[
-                        {'UISceneConfigurationName':'Display', 'UISceneDelegateClassName':'DisplaySceneDelegate'}]}},
+                        {'UISceneConfigurationName':'Display', 'UISceneClassName':'UIWindowScene', 'UISceneDelegateClassName':'DisplaySceneDelegate'}]}},
                  'NSUserActivityTypes':['org.exreader.display.second']}
         (app / 'Info.plist').write_bytes(plistlib.dumps(plist))
     linkmap = out / 'consumer.linkmap'
@@ -111,6 +112,7 @@ def native_build(kind, out):
         'attempt':os.environ['GITHUB_RUN_ATTEMPT'], 'platform':kind, 'arch':arch, 'target':target,
         'sdk':sdk, 'sdkVersion':run(['xcrun','--sdk',sdk,'--show-sdk-version']),
         'binary':str(binary.relative_to(out)), 'binarySHA256':digest(binary),
+        'appInfoSHA256':digest(binary.parent/'Info.plist') if kind != 'macos' else '',
         'library':'installed/lib/libAppleReaderDisplay.a', 'librarySHA256':digest(library),
         'header':'installed/include/ADRDisplayLease.h', 'headerSHA256':digest(header),
         'signing':'unsigned' if kind == 'iphoneos' else ('simulator-only-ad-hoc' if kind != 'macos' else 'none'),

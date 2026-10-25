@@ -98,7 +98,7 @@ symbols, installed header, all native phase reports and actual process IDs.
 The final authenticate job independently checks completed/success upstream jobs on
 the attempt-specific API, unique artifact names/IDs, nonempty bytes, expiry and API
 digest; downloads each ZIP **in Actions**, recomputes its size/SHA256, rejects
-duplicate JSON/ZIP members, and verifies every inventory member. Thirty-six named
+duplicate JSON/ZIP members, and verifies every inventory member. Forty named
 negative tests mutate copies of the actual authenticated artifacts and job metadata;
 original artifacts remain unchanged. The complete authenticated proof is in the
 Actions job log (`D06_AUTHENTICATED_EVIDENCE=`) and its step summary. There is no
