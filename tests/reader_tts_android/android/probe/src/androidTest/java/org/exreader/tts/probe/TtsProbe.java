@@ -362,10 +362,10 @@ public final class TtsProbe extends Instrumentation {
                 if (voice == null) {
                     throw new AssertionError("the C list reports a voice the engine does not have: " + fields[0]);
                 }
-                String name = voice.getLocalizedName();
+                String name = voice.getLocale() == null ? null : voice.getLocale().getDisplayName();
                 if (name != null && !name.isEmpty() && !name.equals(fields[1])) {
                     throw new AssertionError("voice " + fields[0] + " reports name '" + fields[1]
-                        + "' but the engine localized name is '" + name + "'");
+                        + "' but the engine locale display name is '" + name + "'");
                 }
                 String tag = voice.getLocale() == null ? "und" : voice.getLocale().toLanguageTag();
                 if (!tag.equals(fields[2])) {

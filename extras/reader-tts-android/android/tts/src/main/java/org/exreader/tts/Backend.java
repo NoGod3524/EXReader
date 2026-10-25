@@ -249,8 +249,10 @@ public final class Backend {
             String id = voice.getName();
             if (id == null || id.isEmpty()) continue;
             /* id selects the voice, name is what a picker shows, language is a
-               BCP 47 tag. The engine id is not a display name. */
-            String name = voice.getLocalizedName();
+               BCP 47 tag. The engine id is not a display name, and
+               android.speech.tts.Voice exposes no display name of its own, so
+               the localized locale name is the human readable label. */
+            String name = voice.getLocale() == null ? id : voice.getLocale().getDisplayName();
             if (name == null || name.isEmpty()) name = id;
             String language = voice.getLocale() == null ? "und" : voice.getLocale().toLanguageTag();
             if (language.isEmpty()) language = "und";
