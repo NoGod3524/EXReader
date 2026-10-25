@@ -1,6 +1,6 @@
 # C07 同源 Android 与 Apple 双向记录协议联验
 
-状态：未验收（`accepted=false`，待同一 run/attempt 的严格复核）。本文不授予 GUI、六平台、真机、性能或最终产品。
+状态：第 1 轮 CI 严格通过（run 40227524890 / attempt 1，源码 d3f7ec5b），见 HANDOFF-RESULT-C07.md。仅授原生 owner/协议；不授 GUI、六平台、真机、性能或最终产品。
 
 固定目标源码 `e67d87cbeabb2457e0852f681ef0b27b2c0da4d8`，独立分支 `codex/reader-next-c07`。
 已有 Android `4a04a9cc` 与 Mac `15dab6b2`/iOS `5ac5e1fa` 的独立成功只作参考，不复用为同源通过。
