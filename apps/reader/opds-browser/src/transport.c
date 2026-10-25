@@ -25,6 +25,14 @@ static opds_status dispatch(void *context, const opds_request *request, unsigned
   (void)context;
   if (!request || !request->url || !head || !body)
     return reader_opds_fail(error, OPDS_ARGUMENT, "request, head and body callbacks are required");
+  {
+    const char *authority = strstr(request->url, "://");
+    if (authority) {
+      authority += 3;
+      if (memchr(authority, '@', strcspn(authority, "/?#")))
+        return reader_opds_fail(error, OPDS_ARGUMENT, "URL userinfo is not an authorization source");
+    }
+  }
   if (request->method && strcmp(request->method, "GET"))
     return reader_opds_fail(error, OPDS_UNSUPPORTED, "only GET is supported");
   if ((request->accept && strpbrk(request->accept, "\r\n")) ||

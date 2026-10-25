@@ -318,6 +318,12 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/redirect/to-plain":
             self.send_body(302, "text/plain", b"", [("Location", STATE["bases"]["plain"] + "/opds1/catalog.xml")])
             return
+        if path == "/redirect/to-tls":
+            self.send_body(302, "text/plain", b"", [("Location", STATE["bases"]["tls"] + "/opds1/catalog.xml")])
+            return
+        if path == "/redirect/relative-percent":
+            self.send_body(302, "text/plain", b"", [("Location", "/opds1/catalog.xml?q=percent%20encoded")])
+            return
         if path.startswith("/books/"):
             name = path[len("/books/"):]
             if name == "stall.epub":

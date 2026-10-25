@@ -21,6 +21,8 @@ from check_parallel_integration import download_artifact_zip, fetch, pages, requ
 
 PLATFORMS = [('linux', 'ubuntu-22.04'), ('windows', 'windows-2022'), ('macos', 'macos-15')]
 REQUIRED_CASES = frozenset(['browser_create', 'opds1_open', 'opds1_display_fields', 'opds1_identity', 'opds1_cursor_format', 'opds1_snapshot_links', 'opds1_link_classes', 'opds1_free_link', 'opds1_facets', 'opds1_search_advertised', 'opds1_feed_links', 'opds1_next_page', 'opds1_next_third_page', 'opds1_loop_refused', 'cursor_stale_after_advance', 'cursor_wrong_value', 'cursor_other_feed_refused', 'search_opensearch_utf8', 'search_terms_refused', 'opds2_snapshot', 'opds2_navigation', 'opds2_facet_counts', 'opds2_search_template', 'acquire_free_epub', 'acquire_duplicate', 'staged_discard', 'discard_foreign_name', 'acquire_buy_refused', 'acquire_borrow_refused', 'acquire_protected_refused', 'acquire_priced_refused', 'acquire_indirect_refused', 'acquire_sample_refused', 'acquire_fake_extension_mismatch', 'acquire_broken_published', 'acquire_cancel', 'browser_usable_after_cancel', 'busy_reentry', 'limits_max_pages', 'limits_lowered_entries', 'staging_required', 'auth_origin_accepted', 'cross_origin_redirect', 'cross_origin_credentials_dropped', 'auth_required', 'tls_available', 'tls_open', 'tls_acquire', 'import_acquire', 'import_ok', 'import_duplicate_reuses_book', 'import_descriptor_size_mismatch', 'import_media_type_refused', 'import_descriptor_required', 'import_digest_mismatch', 'import_broken_acquire', 'import_broken_rejected_by_sdk', 'import_cancelled_before_commit', 'import_library_usable_after_failure', 'import_library_open', 'discard_denied_preserves_receipt'])
+REQUIRED_CASES |= frozenset(['tls_header_values', 'tls_absolute_redirect', 'tls_relative_percent_redirect',
+                           'tls_url_credentials_refused'])
 
 
 def validate_job(job, source, run_id, attempt):
@@ -73,6 +75,43 @@ def validate_cases(report):
     return [[c['id'], c['ok']] for c in cases]
 
 
+def validate_consumers(archive, report, platform):
+    names = [n for n in archive.namelist()
+             if n.startswith('opds-consumer/') and not n.endswith('/') and
+             PurePosixPath(n).name in ('opds-consumer', 'opds-consumer.exe',
+                                      'opds-import-consumer', 'opds-import-consumer.exe')]
+    require(len(names) == 2, 'consumer binaries missing or duplicated')
+    embedded = {}
+    for entry in names:
+        payload = archive.read(entry)
+        embedded[PurePosixPath(entry).name] = (len(payload), hashlib.sha256(payload).hexdigest())
+    reported = {c['name']: (int(c['bytes']), c['sha256']) for c in report['consumers']}
+    require(len(report['consumers']) == len(reported) == 2, 'duplicate consumer identity')
+    expected = {'opds-consumer', 'opds-import-consumer'}
+    if platform == 'windows':
+        expected = {n + '.exe' for n in expected}
+    require(set(embedded) == expected and all(v[0] > 0 for v in embedded.values()),
+            'wrong or empty consumer binaries')
+    require(embedded == reported, 'consumer binaries differ from the report')
+    return embedded
+
+
+def validate_report(report, source, run_id, attempt, platform):
+    require(report.get('accepted') is True, 'report refused')
+    require(report.get('package') == 'EXReaderOpdsBrowser 0.1.0', 'wrong package')
+    require(report['source_sha'] == source, 'report source differs')
+    require(int(report['run_id']) == run_id and int(report['attempt']) == attempt,
+            'report run identity differs')
+    require(report['platform'] == platform, 'report platform differs')
+    require(report['sdk_changed'] is False and report['schema_changed'] is False,
+            'report claims frozen tree changes')
+    require(int(report['checks']) > 0 and report['cases'], 'report has no cases')
+    require(report['origin_isolation']['plain_requests_with_authorization'] == 0,
+            'credentials reached the plain origin')
+    require(report['origin_isolation']['tls_requests'] > 0, 'no TLS request served')
+    return validate_cases(report)
+
+
 def main():
     require(os.environ.get('GITHUB_ACTIONS') == 'true', 'cloud only')
     run_id = int(os.environ['GITHUB_RUN_ID'])
@@ -114,37 +153,8 @@ def main():
             with zipfile.ZipFile(io.BytesIO(data)) as archive:
                 validate_members(archive.namelist())
                 report = json.loads(archive.read('opds-evidence/result.json'), object_pairs_hook=unique_object)
-                names = [n for n in archive.namelist()
-                         if n.startswith('opds-consumer/') and not n.endswith('/') and
-                         Path(n).name in ('opds-consumer', 'opds-consumer.exe',
-                                          'opds-import-consumer', 'opds-import-consumer.exe')]
-                require(len(names) == 2, 'consumer binaries missing from ' + name)
-                embedded = {}
-                for entry in names:
-                    payload = archive.read(entry)
-                    embedded[Path(entry).name] = (len(payload), hashlib.sha256(payload).hexdigest())
-                reported = {c['name']: (int(c['bytes']), c['sha256']) for c in report['consumers']}
-                require(len(report['consumers']) == len(reported) == 2,
-                        'duplicate consumer identity')
-                expected = {'opds-consumer', 'opds-import-consumer'}
-                if platform == 'windows':
-                    expected = {n + '.exe' for n in expected}
-                require(set(embedded) == expected and all(v[0] > 0 for v in embedded.values()),
-                        'wrong or empty consumer binaries')
-                require(embedded == reported, 'consumer binaries differ from the report: ' + name)
-            require(report.get('accepted') is True, 'report refused: ' + name)
-            require(report.get('package') == 'EXReaderOpdsBrowser 0.1.0', 'wrong package')
-            require(report['source_sha'] == source, 'report source differs: ' + name)
-            require(int(report['run_id']) == run_id and int(report['attempt']) == attempt,
-                    'report run identity differs: ' + name)
-            require(report['platform'] == platform, 'report platform differs: ' + name)
-            require(report['sdk_changed'] is False and report['schema_changed'] is False,
-                    'report claims frozen tree changes')
-            require(int(report['checks']) > 0 and report['cases'], 'report has no cases: ' + name)
-            require(report['origin_isolation']['plain_requests_with_authorization'] == 0,
-                    'credentials reached the plain origin: ' + name)
-            require(report['origin_isolation']['tls_requests'] > 0, 'no TLS request served: ' + name)
-            outcomes[platform] = validate_cases(report)
+                embedded = validate_consumers(archive, report, platform)
+            outcomes[platform] = validate_report(report, source, run_id, attempt, platform)
             summary['artifacts'].append({k: artifact[k] for k in
                                          ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')})
             summary['jobs'].append({k: job[k] for k in ('id', 'name', 'conclusion')})

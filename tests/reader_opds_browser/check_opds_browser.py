@@ -210,6 +210,8 @@ def main():
             problems.append("the credential origin never received an Authorization header")
         if not tls_records:
             problems.append("the TLS origin served no request")
+        if any(r['authorization'] for r in tls_records):
+            problems.append('URL credentials reached the TLS fixture without explicit authorization')
 
         for entry in sorted(staging.iterdir()):
             if not STAGED.match(entry.name):
