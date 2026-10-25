@@ -53,6 +53,14 @@ public final class HostImportUiTest extends Instrumentation {
     private void tap(AccessibilityNodeInfo node){if(!"com.android.documentsui".contentEquals(node.getPackageName()==null?"":node.getPackageName())&&node.performAction(AccessibilityNodeInfo.ACTION_CLICK))return;touch(node);}
     private void touch(AccessibilityNodeInfo node){
         Rect bounds=new Rect();node.getBoundsInScreen(bounds);need(bounds.width()>0&&bounds.height()>0,"actual visible pointer target");
+        if("com.android.documentsui".contentEquals(node.getPackageName()==null?"":node.getPackageName())){
+            try{
+                String reply=shell("input touchscreen tap "+bounds.centerX()+" "+bounds.centerY()+" && echo EXR_PLATFORM_TAP_DONE");
+                need(reply.contains("EXR_PLATFORM_TAP_DONE"),"native platform touchscreen input completed");
+                observations.put(new JSONObject().put("pointer_target",text(node)).put("package",String.valueOf(node.getPackageName())).put("input_driver","Android input touchscreen tap").put("bounds",new JSONArray().put(bounds.left).put(bounds.top).put(bounds.right).put(bounds.bottom)));
+                return;
+            }catch(Exception error){throw new RuntimeException(error);}
+        }
         MotionEvent.PointerProperties finger=new MotionEvent.PointerProperties();finger.id=0;finger.toolType=MotionEvent.TOOL_TYPE_FINGER;
         MotionEvent.PointerCoords point=new MotionEvent.PointerCoords();point.x=bounds.centerX();point.y=bounds.centerY();point.pressure=1;point.size=1;
         long down=SystemClock.uptimeMillis();
@@ -64,6 +72,19 @@ public final class HostImportUiTest extends Instrumentation {
         try{observations.put(new JSONObject().put("pointer_target",text(node)).put("package",String.valueOf(node.getPackageName())).put("tool_type",MotionEvent.TOOL_TYPE_FINGER).put("source",android.view.InputDevice.SOURCE_TOUCHSCREEN).put("bounds",new JSONArray().put(bounds.left).put(bounds.top).put(bounds.right).put(bounds.bottom)));}catch(Exception error){throw new RuntimeException(error);}
     }
     private void click(String value){until(node->node.isEnabled()&&node.isVisibleToUser()&&(text(node).equalsIgnoreCase(value)||value.contentEquals(node.getContentDescription()==null?"":node.getContentDescription())),this::tap,value);}
+    private void browseProvider()throws Exception{
+        Predicate<AccessibilityNodeInfo> opened=node->id(node,"header_title")&&node.isVisibleToUser()&&text(node).equals("Files from HostImport");
+        Predicate<AccessibilityNodeInfo> root=node->id(node,"title")&&node.isVisibleToUser()&&node.isEnabled()&&text(node).equals("HostImport");
+        for(int attempt=0;attempt<4;attempt++){
+            if(act(opened,null))return;
+            if(!act(root,null))until(node->node.isVisibleToUser()&&(String.valueOf(node.getContentDescription()).equals("Show roots")||String.valueOf(node.getContentDescription()).equals("Open navigation drawer")),this::tap,"system roots drawer");
+            getUiAutomation().waitForIdle(200,5000);
+            until(root,this::touch,"actual provider root row");
+            getUiAutomation().waitForIdle(200,5000);
+            long end=SystemClock.elapsedRealtime()+2000;while(SystemClock.elapsedRealtime()<end){if(act(opened,null))return;SystemClock.sleep(80);}
+        }
+        throw new AssertionError("real system picker did not navigate to HostImport after bounded platform touches");
+    }
     private void clickDocument(String value)throws Exception{
         until(node->id(node,"header_title")&&text(node).equals("Files from HostImport"),null,"system picker browses the actual HostImport provider");
         until(node->id(node,"item_root")&&node.isVisibleToUser(),null,"real DocumentsUI document rows loaded");
@@ -79,11 +100,12 @@ public final class HostImportUiTest extends Instrumentation {
         }
         throw new AssertionError("real DocumentsUI document not found within bounded scrolling: "+value);
     }
-    private void pickerReturned(){
-        long end=SystemClock.elapsedRealtime()+60000;
+    private void pickerReturned(String document){
+        long end=SystemClock.elapsedRealtime()+60000,nextTouch=SystemClock.elapsedRealtime()+1000;int retries=0;
         while(SystemClock.elapsedRealtime()<end){
             if(act(node->"org.exreader.host".contentEquals(node.getPackageName()==null?"":node.getPackageName()),null))return;
-            act(node->"com.android.documentsui".contentEquals(node.getPackageName()==null?"":node.getPackageName())&&node.isVisibleToUser()&&node.isEnabled()&&(id(node,"action_menu_select")||id(node,"button1"))&&(text(node).equalsIgnoreCase("Open")||text(node).equalsIgnoreCase("Select")),this::tap);
+            boolean confirmed=act(node->"com.android.documentsui".contentEquals(node.getPackageName()==null?"":node.getPackageName())&&node.isVisibleToUser()&&node.isEnabled()&&(id(node,"action_menu_select")||id(node,"button1"))&&(text(node).equalsIgnoreCase("Open")||text(node).equalsIgnoreCase("Select")),this::tap);
+            if(!confirmed&&retries<3&&SystemClock.elapsedRealtime()>=nextTouch){if(act(node->node.isVisibleToUser()&&node.isEnabled()&&text(node).equals(document),this::touch))retries++;nextTouch=SystemClock.elapsedRealtime()+1000;}
             SystemClock.sleep(80);
         }
         throw new AssertionError("real DocumentsUI did not return its selected content grant to the host");
@@ -111,7 +133,7 @@ public final class HostImportUiTest extends Instrumentation {
                 check("real_SEND_pdf_retains_original_after_staging_release",()->{send("send","pdf",null);imported("pdf");assertCount(2);displayPdf(true);capture("send-pdf");});
                 check("SEND_MULTIPLE_unknown_length_short_reads_and_untrusted_name",()->{send("multi","txt-short,evil-name",null);imported("short");imported("evil");assertCount(4);need(!book("evil").getString("title").contains("/"),"provider display name is sanitized");});
                 check("duplicate_redelivery_preserves_ids_paths_revisions_and_outbox",()->{JSONArray before=books();String state=product();send("send","txt-short-b",null);status("Already in shelf:");ready();emptyStaging();need(before.toString().equals(books().toString())&&state.equals(product()),"exact duplicate changes no identities or product history");});
-                check("real_system_DocumentsUI_SAF_selects_granted_provider_document",()->{click("Import");until(node->"com.android.documentsui".contentEquals(node.getPackageName()==null?"":node.getPackageName()),null,"real DocumentsUI");capture("system-documentsui");if(!act(node->text(node).equals("HostImport")&&node.isVisibleToUser(),null)){until(node->node.isVisibleToUser()&&(String.valueOf(node.getContentDescription()).equals("Show roots")||String.valueOf(node.getContentDescription()).equals("Open navigation drawer")),this::tap,"system roots drawer");}getUiAutomation().waitForIdle(200,5000);click("HostImport");getUiAutomation().waitForIdle(200,5000);clickDocument("Seekable.txt");pickerReturned();imported("seekable");assertCount(5);capture("saf-imported");});
+                check("real_system_DocumentsUI_SAF_selects_granted_provider_document",()->{click("Import");until(node->"com.android.documentsui".contentEquals(node.getPackageName()==null?"":node.getPackageName()),null,"real DocumentsUI");capture("system-documentsui");browseProvider();clickDocument("Seekable.txt");pickerReturned("Seekable.txt");imported("seekable");assertCount(5);capture("saf-imported");});
                 check("rotation_during_real_provider_copy_keeps_single_process_controller",()->{control("close-gate");control("reset-log");send("send","txt-slow",null);opened("txt-slow");rotated(UiAutomation.ROTATION_FREEZE_90);control("open-gate");imported("slow");assertCount(6);rotated(UiAutomation.ROTATION_FREEZE_0);book("slow");capture("copy-rotated");});
                 check("rotation_during_host_SDK_task_acknowledges_old_owner_and_retries_ready",()->{send("send","txt-rotating","import-copied");until(node->id(node,"loading_text")&&text(node).equals("Review import-copied"),null,"old owner copied boundary");Activity old=activity();Object controller=ReadingReview.field(old,"imports");getUiAutomation().setRotation(UiAutomation.ROTATION_FREEZE_90);long deadline=SystemClock.elapsedRealtime()+30000;boolean handed=false;while(SystemClock.elapsedRealtime()<deadline){AtomicReference<Boolean> current=new AtomicReference<>(false);main(()->{try{Activity next=activity();java.lang.reflect.Field owner=ImportController.class.getDeclaredField("runningOwner");owner.setAccessible(true);current.set(next!=old&&old.isDestroyed()&&ReadingReview.field(next,"imports")==controller&&owner.get(controller)==next&&((android.widget.TextView)next.findViewById(R.id.loading_text)).getText().toString().equals("Review import-copied"));}catch(Exception error){throw new RuntimeException(error);}});if(current.get()){handed=true;break;}SystemClock.sleep(50);}need(handed,"old lifecycle task acknowledges before the same Ready lease reaches new SDK owner");main(()->activity().getIntent().removeExtra("review_pause"));Files.write(new File(context.getFilesDir(),"review-release").toPath(),new byte[]{1});imported("rotating");assertCount(7);rotated(UiAutomation.ROTATION_FREEZE_0);capture("sdk-owner-rotated");});
                 check("user_cancel_before_publication_rolls_back_sdk_and_preserves_product",()->{String state=product();send("send","txt-cancel","import-inserted");until(node->id(node,"loading_text")&&text(node).equals("Review import-inserted"),null,"actual inserted boundary");click("Cancel");status("Import canceled");ready();emptyStaging();assertCount(7);need(state.equals(product()),"cancelled SDK insertion never publishes product changes");capture("cancelled");});
