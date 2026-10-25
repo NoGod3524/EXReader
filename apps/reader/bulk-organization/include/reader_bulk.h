@@ -6,7 +6,11 @@
 extern "C" {
 #endif
 
+#ifdef EXR_READER_BULK_RAW3
+#define READER_BULK_VERSION "0.2.0"
+#else
 #define READER_BULK_VERSION "0.1.0"
+#endif
 #define READER_BULK_MAX_BATCH 100u
 #define READER_BULK_MAX_HEADS 32u            /* == READER_REVISION_MAX_PARENTS */
 #define READER_BULK_JOURNAL_MAX_BYTES ((size_t)524288)
@@ -151,6 +155,12 @@ typedef struct {
  * `owner`, which must outlive it. Nothing is read or created yet. */
 reader_bulk_status reader_bulk_open(reader_metadata_owner *owner, const char *product_path,
   const char *journal_path, reader_bulk **out, reader_bulk_error *);
+#ifdef EXR_READER_BULK_RAW3
+/* Explicit raw package only; the borrowed metadata owner must have been opened
+ * with reader_metadata_open_raw_v3. Private journal/schema1 remain unchanged. */
+reader_bulk_status reader_bulk_open_raw_v3(reader_metadata_owner *owner, const char *product_path,
+  const char *journal_path, reader_bulk **out, reader_bulk_error *);
+#endif
 reader_bulk_status reader_bulk_close(reader_bulk **, reader_bulk_error *);
 
 /* Start a batch. Refuses JOURNAL_ACTIVE when an earlier journal exists and

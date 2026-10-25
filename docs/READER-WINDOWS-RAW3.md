@@ -17,6 +17,13 @@ Windows/Linux已分别构建安装两配置，再原样复用全部29项metadata
 包括真实进程终止、私有pending重放、错误线程与单一产品SQLite来源。
 这些结果只覆盖metadata包，不替代实际Windows宿主、网络或记录验收。
 
+实际宿主接入现已写入独立默认OFF raw选项、所有账号/记录/metadata入口及EXRRD002私有native capture。
+旧EXRRD001保持writer2/source0，不迁移；新请求显式writer/source，restore必须相同。
+真实READ/RESTORE/NOTE_TEXT只接受明确支持parser，NULL不导航/编辑/进入恢复列表，DELETE只传mode。
+source编译检查不授运行；实际SDK/安装包/Win32完整配置编译与原消费者正在新增验证。
+批量整理还依赖metadata0.1，现增加同样默认OFF的bulk0.2显式open配置，避免raw宿主丢失该原有功能；
+原bulk实现和全部原检查分别在legacy/raw配置运行后才授予该包结果。
+
 ## Metadata独立验收
 
 受测源码 `0889f7d1e9a537c6c1b05456547e016b26e1cd85`，
