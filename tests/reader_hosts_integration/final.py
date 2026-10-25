@@ -4,6 +4,7 @@ import copy
 from datetime import datetime, timezone
 import hashlib
 import io
+import importlib.util
 import json
 import os
 from pathlib import Path, PurePosixPath
@@ -22,7 +23,7 @@ from check_parallel_integration import download_artifact_zip, fetch, pages, requ
 WORKFLOW = '.github/workflows/reader-hosts-integration.yml'
 PALETTE = {'light_foreground_and_background_change_page_pixels',
            'dark_theme_and_palette_change_page_pixels'}
-GTK_JOB = 'GTK G03 G04 reading records and retained native suites'
+GTK_JOB = 'GTK book file drop paste and retained native suites'
 PALETTE_STEP = 'Actual settings controls geometry pixels gestures portal and persistence'
 
 
@@ -318,7 +319,7 @@ def main():
                         records['review_sha256'] == report['review_sha256'], 'Windows records or retained proof missing')
                 result['scopes']['windows_reading_records'] = True
 
-        gtk, gtk_job = open_bundle('reader-gtk-reading-records', GTK_JOB, palette_job=True)
+        gtk, gtk_job = open_bundle('reader-gtk-drop-import', GTK_JOB, palette_job=True)
         records = gtk.report('records-ui/report.json');identity(records, source, run, attempt)
         named(records, 30, 'reading_records_scope_passed', 'checks_total', pass_key='passed', expected=gtk_record_names())
         require(records.get('checks_failed') == 0 and not records.get('error'), 'GTK record failure')
@@ -360,12 +361,12 @@ def main():
                 batch.get('all_reading_navigation_search_and_non_palette_settings_retained') is True and
                 batch.get('accepted') is False and batch.get('diagnostic_only') is False and
                 batch.get('program_sha256') == program and batch.get('backend_checks') == 684 and
-                batch.get('owner_fault_scenarios') == 3 and
+                batch.get('owner_fault_scenarios') == 4 and
                 set(batch['retained_sdk_failures']) == set(failures), 'GTK batch strict proof differs')
         for tail, count, grant in (('gtk-batch-ui/report.json', 27, 'batch_import_scope_passed'),
                                    ('gtk-batch-original/report.json', 668, 'ok'),
                                    ('gtk-batch-review/review.json', 4, 'ok'),
-                                   ('gtk-batch-owner-faults/report.json', 3, 'ok')):
+                                   ('gtk-batch-owner-faults/report.json', 4, 'ok')):
             raw = gtk.bytes(tail, 8 * 1024 * 1024);report = json.loads(raw)
             require(report.get('source_sha', report.get('source')) == source and
                     report.get(grant) is True and len(report['checks']) == count,
@@ -381,13 +382,56 @@ def main():
                 require(report['program_sha256'] == program and report['program_source_sha'] == source and
                         report['diagnostic_only'] is False and report['checks_failed'] == 0,
                         'GTK folder UI used another binary')
-            if count == 3:
-                require(report['allocation_failures'] == 2 and {r['name'] for r in rows} == {
-                    'allocation-failure-map-close', 'allocation-failure-direct-close', 'empty-directory-map-close'},
+            if tail == 'gtk-batch-owner-faults/report.json':
+                require(report['allocation_failures'] == 3 and report['receipt_allocation_failures'] == 2 and
+                    report['candidate_allocation_failures'] == 1 and {r['name'] for r in rows} == {
+                    'allocation-failure-map-close', 'allocation-failure-direct-close', 'empty-directory-map-close',
+                    'candidate-allocation-failure'},
                     'GTK real import-owner fault recovery missing')
         backend = gtk.bytes('gtk-batch-backend/checks.log', 4 * 1024 * 1024).decode()
         require('GTK_BATCH_BACKEND checks=684 all passed' in backend, 'GTK batch native backend incomplete')
         result['scopes']['gtk_folder_batch_import'] = True
+
+        # New native DND/clipboard proof includes the original retained reports.
+        # The old schema-1 X11 report has no self-reported attempt; bind its
+        # original bytes through this exact completed producer job and ZIP.
+        spec = importlib.util.spec_from_file_location('gtk_drop_contract', ROOT / 'tests/reader_gtk_drop_import/aggregate.py')
+        contract = importlib.util.module_from_spec(spec);spec.loader.exec_module(contract)
+        drop = gtk.report('gtk-drop-evidence.json');contract.validate(drop, source, run, attempt)
+        require(drop['program_sha256'] == program and set(drop['retained_sdk_failures']) == set(failures),
+                'GTK native file input used another binary or hid retained failures')
+        for tail, count in contract.REQUIRED.items():
+            raw = gtk.bytes(tail, 8 * 1024 * 1024)
+            require(drop['verified'][tail] == dict(count=count, sha256=hashlib.sha256(raw).hexdigest()),
+                    'GTK native file input changed a bound report: ' + tail)
+            if tail.endswith('.log'):
+                summaries = [json.loads(line) for line in raw.decode().splitlines() if line.startswith('{')]
+                summaries = [row for row in summaries if row.get('case') == '__summary']
+                require(len(summaries) == 1 and summaries[0]['total'] == summaries[0]['passed'] == count
+                        and summaries[0]['failed'] == summaries[0]['skipped'] == 0, 'J03 installed consumer incomplete')
+                continue
+            report = json.loads(raw)
+            if tail == 'account-original/report.json':
+                require(report.get('source_sha', report.get('source')) == source and str(report['run_id']) == str(run)
+                        and report['schema'] == 1 and report['kind'] == 'real-x11-input'
+                        and 'attempt' not in report and 'program_sha256' not in report,
+                        'legacy report identity unexpectedly changed')
+            else:
+                identity(report, source, run, attempt)
+            if 'program_sha256' in report:
+                require(report['program_sha256'] == program, 'GTK native file report used another executable')
+            if count is not None:
+                rows = report['checks']
+                names = [row.get('name') for row in rows] if rows and isinstance(rows[0], dict) else rows
+                require(len(rows) == len(set(names)) == count and all(
+                    row.get('passed', row.get('pass', row.get('ok'))) is True if isinstance(row, dict) else isinstance(row, str)
+                    for row in rows), 'GTK native file input raw checks failed or omitted: ' + tail)
+            if tail == 'gtk-drop-ui/report.json':
+                require(report['drop_import_scope_passed'] is True and report['accepted'] is False
+                        and report['complete_product'] is False, 'GTK native input scope falsely broadened')
+            elif tail == 'gtk-drop-backend/report.json':
+                require(report['ok'] is True, 'GTK selected-file owner failed')
+        result['scopes']['gtk_native_drop_paste_import'] = True
 
         android, _ = open_bundle('reader-android-cbz-reading', 'android')
         for feature, total, phases in (('reading', 16, 3), ('search', 15, 2), ('navigation', 18, 2), ('preferences', 17, 3), ('cbz_reading', 10, 3)):

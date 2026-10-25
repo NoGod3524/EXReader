@@ -1,7 +1,7 @@
 name: Apple public SDK product import mapping
 on:
   push:
-    branches: [codex/reader-apple-import-mapping]
+    branches: [codex/reader-apple-import-mapping, codex/reader-apple-shelf]
   workflow_dispatch:
 permissions:
   contents: read
@@ -21,7 +21,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Authenticate exact common-source host merge
+        if: github.ref_name == 'codex/reader-hosts-integration'
+        run: python3 tests/reader_hosts_integration/guard.py
       - name: Keep all eight frozen SDK trees and shared bindings unchanged
+        if: github.ref_name != 'codex/reader-hosts-integration'
         run: git diff --exit-code "$SDK_BASELINE" HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
       - name: Build the unchanged public SDK
         run: |
@@ -33,6 +37,7 @@ jobs:
           cmake -S . -B "build/sdk-$target" -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AAC=OFF "${options[@]}"
           cmake --build "build/sdk-$target" --parallel 4
           cmake --install "build/sdk-$target" --prefix "stage/$target"
+          python3 tools/build_apple_product.py --sdk "stage/$target" --target "$target" --build "build/apple-product-$target"
           python3 tests/apple_host/evidence_contract.py sdk --root "stage/$target" --platform "$target" --output build/sdk-identity.json
       - uses: actions/upload-artifact@v4
         if: always()
@@ -56,7 +61,8 @@ jobs:
       - name: Execute the original exact eight catalog adapter checks
         run: |
           mkdir -p build/apple-import-native
-          xcrun swiftc -swift-version 5 -parse-as-library examples/apple/HostCatalog.swift tests/reader_catalog/apple_catalog_check.swift -lsqlite3 -o build/apple-import-native/catalog-check
+          sdk="$PWD/sdk-artifact/stage/macos"
+          python3 tools/apple_swift.py --sdk "$sdk" -- -swift-version 5 -parse-as-library examples/apple/HostCatalog.swift tests/reader_catalog/apple_catalog_check.swift -o build/apple-import-native/catalog-check
           build/apple-import-native/catalog-check apps/reader/store/001_catalog.sql build/apple-import-native/catalog.json
       - name: Compile and execute the actual public SDK mapping consumer
         run: |
@@ -75,8 +81,8 @@ jobs:
           padding.unlink()
           PY
           sdk="$PWD/sdk-artifact/stage/macos"
-          xcrun swiftc -swift-version 5 -parse-as-library -O -D EXR_APPLE_HOST_REVIEW \
-            -I "$sdk/include" -L "$sdk/lib" -lexreader -lsqlite3 \
+          python3 tools/apple_swift.py --sdk "$sdk" -- -swift-version 5 -parse-as-library -O -D EXR_APPLE_HOST_REVIEW \
+            -I "$sdk/include" -L "$sdk/lib" -lexreader \
             -Xlinker -rpath -Xlinker "$sdk/lib" \
             examples/apple/HostSDK.swift examples/apple/HostModel.swift examples/apple/HostCatalog.swift examples/apple/SelectableText.swift \
             tests/apple_host/import_mapping/MappingReview.swift -o build/apple-import-native/mapping-review \
@@ -185,6 +191,13 @@ jobs:
             --container "$container" --app "$app" --fixtures build/apple-resources/manifest.json \
             --sdk-root "stage/$target" --sdk-identity "sdk-artifacts/apple-import-mapping-sdk-$target-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT/build/sdk-identity.json" \
             --destination build/apple-import-ui/destination.txt
+      - name: Retain actual executable provider symbols and link map
+        if: always()
+        run: |
+          mkdir -p build/apple-import-ui/product-provider
+          if test -d build/MappingDerivedData/Build/Products; then
+            find build/MappingDerivedData/Build/Products -type f \( -name '*.link.map*' -o -name product-link.json \) -exec cp '{}' build/apple-import-ui/product-provider/ \;
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -9,7 +9,11 @@ if(EXR_SDK)
   list(PREPEND CMAKE_PREFIX_PATH "${EXR_SDK}")
 endif()
 # Only the installed public SDK and the installed sideload package.
-find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED COMPONENTS library)
+set(EXR_SDK_VERSION "3.40.0" CACHE STRING "Exact installed SDK: frozen 3.40.0 or explicit 3.41.0 candidate")
+if(NOT EXR_SDK_VERSION MATCHES "^3\\.(40|41)\\.0$")
+  message(FATAL_ERROR "Unsupported exact reader SDK version: ${EXR_SDK_VERSION}")
+endif()
+find_package(EXReader ${EXR_SDK_VERSION} EXACT CONFIG REQUIRED COMPONENTS library)
 find_package(EXReaderSideload CONFIG REQUIRED)
 add_library(reader_batch_import STATIC src/batch_import.c)
 target_include_directories(reader_batch_import PUBLIC

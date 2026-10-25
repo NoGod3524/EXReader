@@ -30,9 +30,17 @@ jobs:
           git rev-parse HEAD > build/apple-catalog/source.txt
           xcodebuild -version > build/apple-catalog/xcode.txt
           xcrun swiftc --version > build/apple-catalog/swift.txt
-      - name: Execute the production adapter with system SQLite
+      - name: Install the frozen SDK and native product packages
         run: |
-          xcrun swiftc -swift-version 5 -parse-as-library examples/apple/HostCatalog.swift tests/reader_catalog/apple_catalog_check.swift -lsqlite3 -o build/apple-catalog/check
+          cmake -S . -B build/apple-catalog/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AAC=OFF
+          cmake --build build/apple-catalog/sdk --parallel 4
+          cmake --install build/apple-catalog/sdk --prefix stage/apple-catalog
+          python3 tools/build_apple_product.py --sdk stage/apple-catalog --target macos --build build/apple-catalog/product
+      - name: Execute the production adapter with installed product SQLite
+        run: |
+          python3 tools/apple_swift.py --sdk stage/apple-catalog -- -swift-version 5 -parse-as-library \
+            -L stage/apple-catalog/lib -lexreader -Xlinker -rpath -Xlinker "$PWD/stage/apple-catalog/lib" \
+            examples/apple/HostCatalog.swift tests/reader_catalog/apple_catalog_check.swift -o build/apple-catalog/check
           build/apple-catalog/check apps/reader/store/001_catalog.sql build/apple-catalog/result.json
       - name: Require all eight original adapter checks from this run
         run: |
@@ -65,7 +73,9 @@ jobs:
             sdk=$(xcrun --sdk "$platform" --show-sdk-path)
             target=arm64-apple-ios15.0
             if test "$platform" = iphonesimulator; then target=arm64-apple-ios15.0-simulator; fi
-            xcrun --sdk "$platform" swiftc -swift-version 5 -parse-as-library -sdk "$sdk" -target "$target" -c examples/apple/HostCatalog.swift -o "build/apple-catalog/catalog-$platform.o"
+            xcrun --sdk "$platform" swiftc -swift-version 5 -parse-as-library -sdk "$sdk" -target "$target" \
+              -I stage/apple-catalog/include -I stage/apple-catalog/include/exreader-product -I examples/apple/product \
+              -c examples/apple/HostCatalog.swift -o "build/apple-catalog/catalog-$platform.o"
             xcrun --sdk "$platform" --show-sdk-version > "build/apple-catalog/sdk-$platform.txt"
           done
       - name: Preserve adapter reports and cross-compilation outputs

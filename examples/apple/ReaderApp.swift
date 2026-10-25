@@ -3,9 +3,10 @@ import SwiftUI
 
 @main
 struct EXReaderHostApp: App {
+    @StateObject private var accounts = HostAccounts()
     var body: some Scene {
         WindowGroup {
-            HostRootView()
+            HostAccountRoot(accounts: accounts)
         }
     }
 }

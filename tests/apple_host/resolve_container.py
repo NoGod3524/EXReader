@@ -22,6 +22,10 @@ def main():
               'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'udid': args.udid,
               'commands': [], 'status': 'failed'}
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    # A second diagnostic phase must not erase the collector's first failure.
+    # Reserve the name before any simulator observation and refuse reuse.
+    with args.output.open('x'):
+        pass
 
     def command(arguments, timeout):
         record = {'argv': arguments, 'timeout_seconds': timeout,

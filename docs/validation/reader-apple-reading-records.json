@@ -1,0 +1,202 @@
+{
+  "schema": 1,
+  "accepted": false,
+  "status": "native19 diagnostic passed; real Xcode preflight and focused shelf recovery pending before formal full",
+  "start_sha": "f5d25b4c71ea39bd22bebea4eedfee16ca178c35",
+  "module_source": "ba25961961ae69222bfed4f7a98cb02bb1dc6847",
+  "g03_tree": "cf067b8be378d4195817d1106b81f358579e2280",
+  "g04_tree": "9d30b6c54f61496010f647695dedd7ea7ab0c7c1",
+  "codec_tree": "60127ae75fbac918237b1c8584e0f7ac2e6130a4",
+  "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "sdk_abi": 1,
+  "native_expected": 19,
+  "ui_expected_each": 7,
+  "runs": [],
+  "earlier_superseded_full_queues": [
+    {
+      "source_sha": "6af82afd980704a7624ceace1dbdcd303335a6c7",
+      "run_id": 40142500507,
+      "attempt": 1,
+      "accepted": false,
+      "producer_status": "SDK producers cancelled while queued; no native or UI execution",
+      "strict_summary_job": 121018933620,
+      "strict_summary_conclusion": "failure",
+      "reason": "Superseded implementation before any SDK build; keep source and rejection, use one final explicit current-source full after preflight"
+    },
+    {
+      "source_sha": "96811166743b5f18218b9aa0b6f0df64a4e175e0",
+      "run_id": 40142823497,
+      "attempt": 1,
+      "accepted": false,
+      "producer_status": "SDK producers cancelled while queued; no native or UI execution",
+      "strict_summary_job": 121018955698,
+      "strict_summary_conclusion": "failure",
+      "reason": "Replaced UI termination mechanism with actual native boundary observation and runner termination; preserve all history"
+    }
+  ],
+  "compile_diagnostics": [
+    {
+      "source_sha": "96811166743b5f18218b9aa0b6f0df64a4e175e0",
+      "run_id": 40142823496,
+      "attempt": 1,
+      "job_id": 121017938203,
+      "status": "success",
+      "scope": "macOS app compilation only",
+      "diagnostic_only": true,
+      "accepted": false,
+      "artifact": {
+        "id": 12580006274,
+        "bytes": 1966106,
+        "digest": "sha256:ac3a3b8446d974b7d5668aa2ef2a786b146a0fde4465b38658609b6da8d4557a",
+        "expires_at": "2027-01-22T23:27:38Z"
+      }
+    }
+  ],
+  "native_preflights": [
+    {
+      "source_sha": "72f2ca2fd8281d8c3ef36917091aba46419ce446",
+      "run_id": 40144185965,
+      "attempt": 1,
+      "job_id": 121021931954,
+      "status": "success",
+      "diagnostic_only": true,
+      "accepted": false,
+      "native_passed": 19,
+      "native_expected": 19,
+      "scope": "direct macOS app compilation and installed native consumer, no Xcode/UI execution grant",
+      "artifact": {
+        "id": 12580840342,
+        "bytes": 3575312,
+        "digest": "sha256:43171bcd92dee10c08976e9e63442e87c91cb4d79d89a4bfd5fa0095d181a444",
+        "expires_at": "2027-01-22T23:47:57Z"
+      }
+    },
+    {
+      "source_sha": "1b4acf2d430ec7702d3071306a1a5116875d19c6",
+      "run_id": 40144674393,
+      "attempt": 1,
+      "job_id": 121023367239,
+      "status": "success",
+      "diagnostic_only": true,
+      "accepted": false,
+      "native_passed": 19,
+      "native_expected": 19,
+      "scope": "direct app compilation and native19 including real Unicode-equivalent CBZ page IDs with distinct UTF-8 bytes",
+      "artifact": {
+        "id": 12580256984,
+        "bytes": 3582411,
+        "digest": "sha256:f6f12e689291a1a4235e7eebec3e4e6d372277439d1f188b251dafbb89e6f75e",
+        "expires_at": "2027-01-22T23:55:33Z"
+      }
+    },
+    {
+      "source_sha": "9d9a9dc085bc79848d974fd6e1cd7f716927f8f1",
+      "run_id": 40145615101,
+      "attempt": 1,
+      "job_id": 121026190895,
+      "status": "success",
+      "diagnostic_only": true,
+      "accepted": false,
+      "native_passed": 19,
+      "native_expected": 19,
+      "scope": "direct app compilation and native19, not Xcode batch or native shelf recovery",
+      "artifact": {
+        "id": 12581195682,
+        "bytes": 3583633,
+        "digest": "sha256:87b4f9ab2b09f7ffe146b98b07a90bb24da492771175ae20ebb19ab13be7909c",
+        "expires_at": "2027-01-23T00:09:51Z"
+      }
+    },
+    {
+      "source_sha": "3f7bcbede9ef6a175eaf66d742bb67ab1450995f",
+      "run_id": 40143531917,
+      "attempt": 1,
+      "job_id": 121020027087,
+      "status": "failure",
+      "diagnostic_only": true,
+      "accepted": false,
+      "native_passed": 17,
+      "native_expected": 19,
+      "failed": ["real-public-point-captures-four-formats", "cbz-real-empty-snapshot-point-independent-found"],
+      "reason": "Host decoder dropped EPUB chapter scope stored as part_path; preserve exact selector equality, reconstruct chapter from the retained EPUB route. First failing loop prevented reaching the CBZ capture, so its missing input is not a CBZ provider failure",
+      "artifact": {
+        "id": 12579194309,
+        "bytes": 3566712,
+        "digest": "sha256:1ba807edd310c968d439863d5c75f18e1cdfed188527f8573d92635df050dc1d",
+        "expires_at": "2027-01-22T23:38:03Z"
+      }
+    }
+  ],
+  "shelf_recovery_attempts": [
+    {
+      "source_sha": "1f2f3cbc4605a008558f2bda74ddfcdcd74ffef8",
+      "run_id": 40147139532,
+      "attempt": 1,
+      "diagnostic_only": true,
+      "accepted": false,
+      "status": "failure",
+      "native_job": 121031320930,
+      "passed_ui_jobs": {"macos": 121032026863},
+      "failed_ui_jobs": {"iphone": 121032026860, "ipad": 121032026855},
+      "reason": "iPad05/07 passed,06 process restoration never issued native scroll (issued_restore_revision=-1). iPhone05 query timeout,06 same restoration failure,07 passed. Preserve assertions; native restore delivery repaired in109dd671, not yet accepted"
+    },
+    {
+      "source_sha": "109dd671bf4a39f44433129e28d1a471a8765eb1",
+      "run_id": 40153506967,
+      "attempt": 1,
+      "diagnostic_only": true,
+      "accepted": false,
+      "status": "in_progress",
+      "scope": "unchanged focused three-target native shelf restoration cases"
+    },
+    {
+      "source_sha": "9d9a9dc085bc79848d974fd6e1cd7f716927f8f1",
+      "run_id": 40145621010,
+      "attempt": 1,
+      "diagnostic_only": true,
+      "accepted": false,
+      "status": "failure",
+      "sdk_jobs": [121026210046, 121026210151],
+      "native_job": 121026963916,
+      "failed_ui_jobs": {"macos": 121027580170, "iphone": 121027580383, "ipad": 121027580168},
+      "ui_cases_executed": 0,
+      "reason": "Real Xcode batch app build cannot see public SDK enum globals in HostSDK.swift after product headers import SDK subheaders; direct whole-app swiftc and native19 had passed. Preserve this build failure before actual focused UI execution",
+      "ui_artifacts": {
+        "macos": {"id": 12581271110, "bytes": 30545, "digest": "sha256:cf2bb9daae117393adc4e83282ffa3c29ef83af3cd79fd5fd50e7bbcb6a7b1a5"},
+        "iphone": {"id": 12580462823, "bytes": 36060, "digest": "sha256:0fc62996c86d8d37463a4c4c7322428fa524889814f3dc809e594de65be709d9"},
+        "ipad": {"id": 12580821959, "bytes": 42445, "digest": "sha256:6530f8556efc2472aac3bbd8ebf7f535c8cb6cf9227954ed564058cbf3d7b2b6"}
+      },
+      "artifacts_expires_at": "2027-01-23T00:09:57Z"
+    }
+  ],
+  "initial_compile_diagnostic": {
+    "source_sha": "f581dec838f29131475aac8488926f92b2a71602",
+    "run_id": 40141724772,
+    "attempt": 1,
+    "diagnostic_only": true,
+    "accepted": false,
+    "status": "failure",
+    "reason": "Diagnostic compile command omitted unchanged bindings/swift/EXReader.swift required by the existing LegacySelfTest; real Xcode generator already includes it"
+  },
+  "restart_checkpoint": {
+    "branch": "codex/reader-apple-reading-records-ui",
+    "implementation_sha": "1f2f3cbc4605a008558f2bda74ddfcdcd74ffef8",
+    "prior_evidence_head": "9c8b47412b410fa1882f330e85efa7dbc15a17cc",
+    "local_changes_before_checkpoint": false,
+    "live_runs": [
+      {"run_id": 40147125432, "source_sha": "1f2f3cbc4605a008558f2bda74ddfcdcd74ffef8", "scope": "real macOS Xcode app/test-bundle build and native19 diagnostic", "job_id": 121030738895, "observed_status": "in_progress", "accepted": false},
+      {"run_id": 40147139532, "source_sha": "1f2f3cbc4605a008558f2bda74ddfcdcd74ffef8", "scope": "focused three-target shelf recovery diagnostic", "sdk_jobs": [121030784612, 121030784790], "observed_status": "in_progress", "accepted": false}
+    ],
+    "preserved_full_shelf_failure": {"source_sha": "f5d25b4c71ea39bd22bebea4eedfee16ca178c35", "run_id": 40140560610, "ipad_job_id": 121013091061, "failure": "original06 process reopening left target offscreen without native scroll; original02 completed2202 forward/reverse and original07 passed", "accepted": false},
+    "next_action": "Read existing cloud runs after restart; do not redispatch for local restart. After actual Xcode/focused recovery stabilize, run one formal records full and original Nav/Search/WP13/Mapping/Shelf on final common Apple source",
+    "formal_records_full_started_on_current_source": false
+  },
+  "complete_product": false,
+  "physical_device_execution": false,
+  "performance_accepted": false,
+  "sdk_changed": false,
+  "schema_changed": false,
+  "wire_changed": false,
+  "local_builds_tests_or_artifact_downloads": false
+}
