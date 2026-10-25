@@ -1,0 +1,22 @@
+/* SPDX-License-Identifier: MIT */
+/* Test-only instantiation of the unchanged original revisions consumer on the
+ * explicit raw capability. The original source file is included, not edited. */
+#include <reader_projection.h>
+#define reader_revisions_open reader_revisions_open_raw_v3
+#define reader_revision_validate reader_revision_validate_raw_v3
+#define reader_revision_local reader_revision_local_raw_v3
+#define reader_revision_receive reader_revision_receive_raw_v3
+#define reader_revision_get reader_revision_get_raw_v3
+#define reader_revision_heads reader_revision_heads_raw_v3
+#define reader_revision_book_identity reader_revision_book_identity_raw_v3
+#define reader_revision_outbox reader_revision_outbox_raw_v3
+#define reader_revision_retry reader_revision_retry_raw_v3
+#define reader_revision_ack reader_revision_ack_raw_v3
+#define reader_revision_local_project reader_revision_local_project_raw_v3
+#define reader_revision_local_reading reader_revision_local_reading_raw_v3
+#define reader_revision_project reader_revision_project_raw_v3
+#define reader_revision_selected reader_revision_selected_raw_v3
+#define reader_revision_annotations_page reader_revision_annotations_page_raw_v3
+#define reader_revision_entities_page reader_revision_entities_page_raw_v3
+#define reader_revision_book_title reader_revision_book_title_raw_v3
+#include "../../reader_revisions/consumer/main.cpp"

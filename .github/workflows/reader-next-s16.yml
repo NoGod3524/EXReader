@@ -1,0 +1,101 @@
+name: Reader next S16 jump-history raw3
+on:
+  push:
+    branches: [codex/reader-next-s16, codex/reader-next-s16-root-review]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  consumers:
+    name: S16 consumers (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            platform: Linux
+          - os: windows-2022
+            platform: Windows
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Enter the native Windows compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
+          if (-not (Test-Path -LiteralPath $vswhere)) { throw 'vswhere not found' }
+          $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC/Auxiliary/Build/vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          $script = Join-Path ${env:RUNNER_TEMP} 's16-msvc-env.cmd'
+          @('@echo off', ('call "' + $bat + '" >nul'), 'set') | Set-Content -LiteralPath $script -Encoding ascii
+          $lines = cmd /c $script
+          $lines | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Python syntax and the evidence protocol only
+        run: |
+          python3 -m py_compile tests/reader_next_s16/run.py tests/reader_next_s16/check_raw.py tests/reader_next_s16/check_artifacts.py
+          python3 tests/reader_next_s16/check_artifacts.py --protocol-selftest
+      - name: Build both installed families and judge the original and raw consumers
+        env:
+          S16_PLATFORM: ${{ matrix.platform }}
+        run: python3 tests/reader_next_s16/run.py
+      - name: Preserve originals, logs, installed headers and every failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-next-s16-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/reader-next-s16/logs/
+            build/reader-next-s16/fixtures/
+            build/reader-next-s16/evidence/
+            build/reader-next-s16/families/default-stage/include/reader_jump_history.h
+            build/reader-next-s16/families/raw-stage/include/reader_jump_history.h
+            build/reader-next-s16/families/baseline-stage/include/reader_jump_history.h
+            build/reader-next-s16/families/default-stage/lib/
+            build/reader-next-s16/families/raw-stage/lib/
+            build/reader-next-s16/families/baseline-stage/lib/
+            build/reader-next-s16/build/raw-consumer/s16-raw-probe*
+            build/reader-next-s16/build/raw-consumer/s16-c-consumer*
+            build/reader-next-s16/build/default-consumer/s16-c-consumer*
+            build/reader-next-s16/build/original-default-consumer/jump-history-probe*
+            build/reader-next-s16/build/original-default-consumer/jump-history-c-consumer*
+            build/reader-next-s16/build/original-baseline-consumer/jump-history-probe*
+            build/reader-next-s16/build/original-baseline-consumer/jump-history-c-consumer*
+            build/reader-next-s16/build/original-raw-consumer/jump-history-probe*
+            build/reader-next-s16/build/original-raw-consumer/jump-history-c-consumer*
+            build/reader-next-s16/result.json
+            build/reader-next-s16/assertion.log
+          if-no-files-found: warn
+  evidence:
+    name: strict S16 evidence
+    needs: [consumers]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate both same-run ZIPs and compare every named result
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_next_s16/check_artifacts.py build/reader-next-s16-evidence
+      - name: Preserve the artifact verification record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-next-s16-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-next-s16-evidence/
+          if-no-files-found: warn

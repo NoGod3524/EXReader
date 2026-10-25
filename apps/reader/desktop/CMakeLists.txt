@@ -306,3 +306,11 @@ if(EXR_READER_BUILD_GTK)
     endforeach()
   endif()
 endif()
+
+# Platform feature owners extend the candidate host after its existing targets.
+# Each platform owns only its own include; absent files preserve the old graph.
+if(WIN32 AND EXISTS "${CMAKE_CURRENT_LIST_DIR}/windows_feature_integration.cmake")
+  include("${CMAKE_CURRENT_LIST_DIR}/windows_feature_integration.cmake")
+elseif(UNIX AND NOT APPLE AND EXISTS "${CMAKE_CURRENT_LIST_DIR}/gtk_feature_integration.cmake")
+  include("${CMAKE_CURRENT_LIST_DIR}/gtk_feature_integration.cmake")
+endif()

@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "tested_source": "28df223d1df2aa3e551ad4796d5e7615bd706d8e",
+  "run_id": 40236387400,
+  "attempt": 1,
+  "conclusion": "success",
+  "root_round": 1,
+  "original_worker_round_limit_violation_retained": true,
+  "scope": "Linux and Windows independent installed jump-history package only",
+  "module_implementation_changed_by_root": false,
+  "host_wiring_accepted": false,
+  "gui_accepted": false,
+  "physical_devices_accepted": false,
+  "performance_accepted": false,
+  "complete_product": false,
+  "jobs": [
+    {"id": 121298774629, "name": "S16 consumers (Windows)", "conclusion": "success"},
+    {"id": 121298774884, "name": "S16 consumers (Linux)", "conclusion": "success"},
+    {"id": 121299746789, "name": "strict S16 evidence", "conclusion": "success"}
+  ],
+  "per_platform": {
+    "original_suites": 3,
+    "original_checks_each": 149,
+    "raw_checks": 162,
+    "stored_wire_cases": 6,
+    "moves": 3,
+    "native_program_roles_authenticated": 9,
+    "installed_archives_authenticated": 3,
+    "real_artifact_mutation_refusals": 15,
+    "default_equals_baseline_recomputed": true,
+    "default_archive_no_raw_symbols_recomputed": true,
+    "root_strict_problems": []
+  },
+  "artifacts": [
+    {"id": 12615700748, "name": "reader-next-s16-Windows-40236387400-1", "bytes": 18224989, "digest": "sha256:c856e75cfc999ea7c8d4ed744edd65ffb049003ce55099a47880bfa84dde0e56", "expires_at": "2027-01-23T21:37:52Z"},
+    {"id": 12615630698, "name": "reader-next-s16-Linux-40236387400-1", "bytes": 22790573, "digest": "sha256:6d281d63e2bb18902ef86784027e151b218dd384189d59203eb19a35af6a95a6", "expires_at": "2027-01-23T21:37:52Z"},
+    {"id": 12614892616, "name": "reader-next-s16-evidence-40236387400-1", "bytes": 4012, "digest": "sha256:6ac7697b66c54700701136e5bfda21314e5e4a947f79218e1ed078256703671e", "expires_at": "2027-01-23T21:37:52Z"}
+  ],
+  "evidence_access": "Actual original ZIP bytes and members authenticated in Actions; root read only GitHub metadata and completed job text logs locally."
+}

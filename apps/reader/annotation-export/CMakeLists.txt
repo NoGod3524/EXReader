@@ -1,6 +1,15 @@
 # SPDX-License-Identifier: MIT
 cmake_minimum_required(VERSION 3.24)
-project(EXReaderAnnotationExport VERSION 0.1.0 LANGUAGES C CXX)
+option(EXR_READER_SELECTOR_BYTES_CANDIDATE "Explicit raw0.2 portable export family; never default" OFF)
+if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
+  project(EXReaderAnnotationExport VERSION 0.2.0 LANGUAGES C CXX)
+  set(EXR_REVISIONS_VERSION 0.4.0)
+  set(EXR_READING_STATE_VERSION 0.2.0)
+else()
+  project(EXReaderAnnotationExport VERSION 0.1.0 LANGUAGES C CXX)
+  set(EXR_REVISIONS_VERSION 0.3.0)
+  set(EXR_READING_STATE_VERSION 0.1.0)
+endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(MSVC)
@@ -11,8 +20,8 @@ endif()
 # revision store and SDK-free reading-state decoder. No
 # SDK private header, SQL or second SQLite is used. Put the installed revision,
 # product, reading-state and SDK prefixes on CMAKE_PREFIX_PATH.
-find_package(EXReaderRevisions 0.3.0 EXACT CONFIG REQUIRED)
-find_package(EXReaderReadingState 0.1.0 EXACT CONFIG REQUIRED)
+find_package(EXReaderRevisions ${EXR_REVISIONS_VERSION} EXACT CONFIG REQUIRED)
+find_package(EXReaderReadingState ${EXR_READING_STATE_VERSION} EXACT CONFIG REQUIRED)
 add_library(reader_annotation_export STATIC src/annotation_export.cpp)
 target_include_directories(reader_annotation_export PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
@@ -27,6 +36,10 @@ endif()
 include(CMakePackageConfigHelpers)
 install(TARGETS reader_annotation_export EXPORT EXReaderAnnotationExportTargets ARCHIVE DESTINATION lib)
 install(FILES include/reader_annotation_export.h DESTINATION include)
+if(EXR_READER_SELECTOR_BYTES_CANDIDATE)
+  target_compile_definitions(reader_annotation_export PUBLIC EXR_READER_SELECTOR_BYTES_CANDIDATE=1)
+  install(FILES include/reader_annotation_export_raw3.h DESTINATION include)
+endif()
 install(EXPORT EXReaderAnnotationExportTargets NAMESPACE EXReaderAnnotationExport:: DESTINATION lib/cmake/EXReaderAnnotationExport)
 configure_package_config_file(EXReaderAnnotationExportConfig.cmake.in "${CMAKE_CURRENT_BINARY_DIR}/EXReaderAnnotationExportConfig.cmake"
   INSTALL_DESTINATION lib/cmake/EXReaderAnnotationExport)

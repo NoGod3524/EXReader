@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: MIT
 #include "reader_annotation_export.h"
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+#include "reader_annotation_export_raw3.h"
+#include <reader_selector_bytes_detail.h>
+#endif
 #include <reader_projection.h>
 #include <algorithm>
 #include <cstdio>
@@ -437,10 +441,75 @@ struct record_guard {
   ~record_guard(){reader_rs_record_free(&record);}
 };
 
+/* Wrong-store refusals retain the legacy entry's ARGUMENT mapping. The raw3
+   entry checks its capability before creating outputs and reports REVISION. */
+reader_revision_status api_page(bool raw,reader_revisions *r,const char *book,const char *after,size_t limit,
+  reader_revision_annotation_fn fn,void *context,reader_revision_error *e){
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+  if(raw)return reader_revision_annotations_page_raw_v3(r,book,after,1,limit,fn,context,e);
+#endif
+  (void)raw;return reader_revision_annotations_page(r,book,after,1,limit,fn,context,e);
+}
+reader_revision_status api_heads(bool raw,reader_revisions *r,const char *kind,const char *key,reader_revision_head_fn fn,
+  void *context,reader_revision_state *state,reader_revision_error *e){
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+  if(raw)return reader_revision_heads_raw_v3(r,kind,key,fn,context,state,e);
+#endif
+  (void)raw;return reader_revision_heads(r,kind,key,fn,context,state,e);
+}
+reader_revision_status api_get(bool raw,reader_revisions *r,const char *id,char **wire,size_t *bytes,reader_revision_info *info,
+  reader_revision_error *e){
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+  if(raw)return reader_revision_get_raw_v3(r,id,wire,bytes,info,e);
+#endif
+  (void)raw;return reader_revision_get(r,id,wire,bytes,info,e);
+}
+reader_revision_status api_title(bool raw,reader_revisions *r,const char *id,char **title,reader_revision_error *e){
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+  if(raw)return reader_revision_book_title_raw_v3(r,id,title,e);
+#endif
+  (void)raw;return reader_revision_book_title(r,id,title,e);
+}
+reader_rs_status api_decode(bool raw,reader_revisions *r,const void *wire,size_t bytes,reader_rs_record *out,reader_rs_error *e){
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+  if(raw)return reader_rs_decode_raw_v3(r,wire,bytes,out,e);
+#endif
+  (void)raw;return reader_rs_decode(r,wire,bytes,out,e);
+}
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+/* Canonical, independently decoded location of one head (null for a delete). */
+void selector_json(std::string &out,const char *value,size_t size){
+  out+="{\"size\":"+std::to_string((unsigned long long)size)+",\"base64\":";
+  if(value)json_string(out,reader_selector_bytes_detail::encode(value,size));else out+="null";
+  out+="}";
+}
+void optional_string(std::string &out,const char *value){if(value)json_string(out,value,std::strlen(value));else out+="null";}
+std::string location_json(const reader_rs_record &r){
+  if(!r.has_location)return "null";
+  std::string out="{\"mode\":";json_string(out,mode_name(r.mode),std::strlen(mode_name(r.mode)));
+  out+=",\"parser_version\":";json_string(out,r.parser_version,std::strlen(r.parser_version));
+  out+=",\"anchor_version\":"+std::to_string((unsigned long long)r.anchor_version);
+  out+=",\"page_id\":";optional_string(out,r.page_id);
+  out+=",\"page\":";if(r.mode==READER_RS_FIXED_PAGE)out+=std::to_string((unsigned long long)r.page);else out+="null";
+  out+=",\"part_path\":";optional_string(out,r.part_path);
+  out+=",\"part\":";if(r.mode==READER_RS_EPUB_CHAPTER&&r.anchor_version>=2)out+=std::to_string((unsigned long long)r.part);else out+="null";
+  out+=",\"chapter\":";optional_string(out,r.chapter);
+  out+=",\"start\":"+std::to_string((unsigned long long)r.start)+",\"end\":"+std::to_string((unsigned long long)r.end);
+  out+=",\"exact\":";selector_json(out,r.exact,r.exact_size);
+  out+=",\"prefix\":";selector_json(out,r.prefix,r.prefix_size);
+  out+=",\"suffix\":";selector_json(out,r.suffix,r.suffix_size);
+  out+="}";return out;
+}
+std::string selector_label(const char *value,size_t size){
+  if(!value)return "NULL（无值）";
+  return std::to_string((unsigned long long)size)+" 字节"+(size?"":"（已分配的空值）");
+}
+#endif
+
 class exporter {
  public:
-  exporter(const reader_annotation_export_options &o,sink *json,sink *markdown,reader_annotation_export_stats &stats):
-    o_(o),revisions_(o.revisions),json_(json),markdown_(markdown),stats_(stats),book_(o.book_key){}
+  exporter(const reader_annotation_export_options &o,sink *json,sink *markdown,reader_annotation_export_stats &stats,bool raw=false):
+    o_(o),revisions_(o.revisions),json_(json),markdown_(markdown),stats_(stats),book_(o.book_key),raw_(raw){}
   void run(){
     derive_title();
     write_headers();
@@ -448,7 +517,7 @@ class exporter {
     for(;;){
       poll();
       page_collector page;reader_revision_error e{};
-      reader_revision_status s=reader_revision_annotations_page(revisions_,book_.c_str(),have_after?after.c_str():nullptr,1,100,collect_row,&page,&e);
+      reader_revision_status s=api_page(raw_,revisions_,book_.c_str(),have_after?after.c_str():nullptr,100,collect_row,&page,&e);
       if(page.failed)fail(READER_ANNOTATION_EXPORT_MEMORY,"Out of memory while reading an annotation page");
       if(s!=READER_REV_OK)fail(s==READER_REV_ARGUMENT?READER_ANNOTATION_EXPORT_ARGUMENT:READER_ANNOTATION_EXPORT_REVISION,e.message,(int)s,0,e.sqlite_code);
       if(page.rows.empty())break;
@@ -469,10 +538,10 @@ class exporter {
     }
     /* Best effort: the title of the single safe non-delete book head, if present. */
     head_collector heads;reader_revision_state state{};reader_revision_error e{};
-    if(reader_revision_heads(revisions_,"book",book_.c_str(),collect_head,&heads,&state,&e)!=READER_REV_OK||heads.failed)return;
+    if(api_heads(raw_,revisions_,"book",book_.c_str(),collect_head,&heads,&state,&e)!=READER_REV_OK||heads.failed)return;
     if(heads.heads.size()!=1||heads.heads[0].operation=="delete"||!state.projection_safe)return;
     char *title=nullptr;
-    if(reader_revision_book_title(revisions_,heads.heads[0].id.c_str(),&title,&e)==READER_REV_OK&&title){
+    if(api_title(raw_,revisions_,heads.heads[0].id.c_str(),&title,&e)==READER_REV_OK&&title){
       size_t n=std::strlen(title);
       if(n<=READER_ANNOTATION_EXPORT_TITLE_MAX&&well_formed(title,n)){title_=title;have_title_=true;}
     }
@@ -480,8 +549,23 @@ class exporter {
   }
   void write_headers(){
     if(json_){
-      std::string line="{\"type\":\"header\",\"format\":\"exreader-annotation-export\",\"format_version\":1,\"module_version\":\"" READER_ANNOTATION_EXPORT_VERSION "\",\"book_key\":";
-      json_string(line,book_);line+=",\"book_title\":";
+      std::string line;
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+      if(raw_){
+        /* Original identity: immutable byte length of the retained non-delete book history. */
+        uint64_t source_bytes=0;reader_revision_error e{};
+        reader_revision_status s=reader_revision_book_identity_raw_v3(revisions_,book_.c_str(),&source_bytes,&e);
+        if(s!=READER_REV_OK&&s!=READER_REV_NOT_FOUND)fail(READER_ANNOTATION_EXPORT_REVISION,e.message,(int)s,0,e.sqlite_code);
+        line="{\"type\":\"header\",\"format\":\"" READER_ANNOTATION_EXPORT_RAW3_FORMAT "\",\"format_version\":1,\"module_version\":\"" READER_ANNOTATION_EXPORT_RAW3_VERSION "\",\"book_key\":";
+        json_string(line,book_);line+=",\"source_bytes\":";
+        if(s==READER_REV_OK)line+=std::to_string((unsigned long long)source_bytes);else line+="null";
+        line+=",\"book_title\":";
+      }else
+#endif
+      {
+        line="{\"type\":\"header\",\"format\":\"exreader-annotation-export\",\"format_version\":1,\"module_version\":\"" READER_ANNOTATION_EXPORT_VERSION "\",\"book_key\":";
+        json_string(line,book_);line+=",\"book_title\":";
+      }
       if(have_title_)json_string(line,title_);else line+="null";
       line+=",\"order\":\"annotation_id_ascending\",\"wire_encoding\":\"json_string_utf8\"}\n";
       json_->put(line);
@@ -489,7 +573,8 @@ class exporter {
     if(markdown_){
       std::string text="# "+md_inline(have_title_?title_:book_)+"\n\n";
       text+="- 书籍标识：`"+book_+"`\n";
-      text+="- 导出：EXReader 标注导出（格式版本 1）。纯文本，未执行任何 HTML，未联网，未解析书中位置。\n";
+      text+=raw_?"- 导出：EXReader 标注导出（raw3 格式版本 1）。纯文本，未执行任何 HTML，未联网，未解析书中位置。\n"
+                :"- 导出：EXReader 标注导出（格式版本 1）。纯文本，未执行任何 HTML，未联网，未解析书中位置。\n";
       text+="- 说明：偏移只是保存的提示；有多个头的批注逐个列出，没有选择或合并。\n\n";
       markdown_->put(text);
     }
@@ -525,7 +610,7 @@ class exporter {
          that completes a parent, merges, deletes or restores between the page and
          this read therefore cannot produce a mixed description. */
       head_collector collected;reader_revision_error e{};
-      reader_revision_status s=reader_revision_heads(revisions_,"annotation",key.c_str(),collect_head,&collected,&graph,&e);
+      reader_revision_status s=api_heads(raw_,revisions_,"annotation",key.c_str(),collect_head,&collected,&graph,&e);
       if(collected.failed)fail(READER_ANNOTATION_EXPORT_MEMORY,"Out of memory while reading heads");
       if(s!=READER_REV_OK)fail(READER_ANNOTATION_EXPORT_REVISION,e.message,(int)s,0,e.sqlite_code);
       heads.swap(collected.heads);
@@ -557,27 +642,32 @@ class exporter {
     for(size_t i=0;i<heads.size();i++){
       poll();
       wire_copy wire;reader_revision_info info{};reader_revision_error e{};
-      reader_revision_status s=reader_revision_get(revisions_,heads[i].id.c_str(),&wire.data,&wire.size,&info,&e);
+      reader_revision_status s=api_get(raw_,revisions_,heads[i].id.c_str(),&wire.data,&wire.size,&info,&e);
       if(s!=READER_REV_OK)fail(READER_ANNOTATION_EXPORT_REVISION,e.message,(int)s,0,e.sqlite_code);
       if(heads[i].sha!=info.sha256||key!=info.entity_key||std::strcmp(info.entity_kind,"annotation")!=0||info.bytes!=wire.size)
         fail(READER_ANNOTATION_EXPORT_REVISION,"A retained head differs from its revision graph");
       if(!well_formed(wire.data,wire.size))fail(READER_ANNOTATION_EXPORT_REVISION,"A retained wire is not well-formed UTF-8");
       stats_.head_wires++;
+      record_guard decoded;
+      if(markdown_||(json_&&raw_)){
+        reader_rs_error re{};
+        reader_rs_status ds=api_decode(raw_,revisions_,wire.data,wire.size,&decoded.record,&re);
+        if(ds!=READER_RS_OK)fail(READER_ANNOTATION_EXPORT_DECODE,re.message,re.revision_code,(int)ds,0);
+      }
       if(json_){
         std::string line=i?",":"";
         line+="{\"revision_id\":";json_string(line,heads[i].id);
         line+=",\"operation\":";json_string(line,info.operation);
         line+=",\"sha256\":";json_string(line,info.sha256);
-        line+=",\"bytes\":"+std::to_string(wire.size)+",\"wire\":";
+        line+=",\"bytes\":"+std::to_string(wire.size);
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+        if(raw_)line+=",\"location\":"+location_json(decoded.record);
+#endif
+        line+=",\"wire\":";
         json_string(line,wire.data,wire.size);line+="}";
         json_->put(line);
       }
-      if(markdown_){
-        record_guard decoded;reader_rs_error re{};
-        reader_rs_status ds=reader_rs_decode(revisions_,wire.data,wire.size,&decoded.record,&re);
-        if(ds!=READER_RS_OK)fail(READER_ANNOTATION_EXPORT_DECODE,re.message,re.revision_code,(int)ds,0);
-        markdown_->put(markdown_head(i+1,heads.size(),heads[i].id,info.operation,decoded.record));
-      }
+      if(markdown_)markdown_->put(markdown_head(i+1,heads.size(),heads[i].id,info.operation,decoded.record));
     }
     if(json_)json_->put("]}\n");
   }
@@ -615,7 +705,12 @@ class exporter {
       text+="- 页面标识："+md_inline(r.page_id?r.page_id:"")+"；页索引（从0起）："+std::to_string(r.page)+"\n";
     if(r.mode==READER_RS_REFLOW_GLOBAL&&r.anchor_version>=2)
       text+="- 章节范围："+(r.chapter?md_inline(r.chapter):std::string("无"))+"\n";
-    text+="- 偏移提示（仅供参考，未用于定位）："+std::to_string(r.start)+"–"+std::to_string(r.end)+"\n\n";
+    text+="- 偏移提示（仅供参考，未用于定位）："+std::to_string(r.start)+"–"+std::to_string(r.end)+"\n";
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+    if(raw_)text+="- 选择器字节：引文 "+selector_label(r.exact,r.exact_size)+"；前文 "+selector_label(r.prefix,r.prefix_size)+
+      "；后文 "+selector_label(r.suffix,r.suffix_size)+"\n";
+#endif
+    text+="\n";
     if(r.exact_size){text+="引文：\n\n";md_fence(text,r.exact,r.exact_size);}
     else text+="引文：（无，位置点或书签）\n";
     if(r.prefix_size){text+="\n前文：\n\n";md_fence(text,r.prefix,r.prefix_size);}
@@ -631,6 +726,7 @@ class exporter {
   reader_annotation_export_stats &stats_;
   std::string book_,title_;
   bool have_title_=false;
+  bool raw_;
 };
 
 void validate(const reader_annotation_export_options *o){
@@ -648,14 +744,14 @@ void validate(const reader_annotation_export_options *o){
     fail(READER_ANNOTATION_EXPORT_ARGUMENT,"Both outputs resolve to the same final target");
   if(o->max_output_bytes>READER_ANNOTATION_EXPORT_HARD_MAX_BYTES)fail(READER_ANNOTATION_EXPORT_ARGUMENT,"Output budget exceeds the 1 GiB maximum");
 }
-void export_book(const reader_annotation_export_options &o,reader_annotation_export_stats &stats){
+void export_book(const reader_annotation_export_options &o,reader_annotation_export_stats &stats,bool raw){
   uint64_t budget=o.max_output_bytes?o.max_output_bytes:READER_ANNOTATION_EXPORT_DEFAULT_MAX_BYTES;
   std::vector<sink *> owned;
   struct releaser {std::vector<sink *> &v;~releaser(){for(sink *s:v)delete s;}} release{owned};
   sink *json=nullptr,*markdown=nullptr;
   if(o.jsonl_path){json=new sink(o.jsonl_path,budget,o);owned.push_back(json);json->open();}
   if(o.markdown_path){markdown=new sink(o.markdown_path,budget,o);owned.push_back(markdown);markdown->open();}
-  exporter(o,json,markdown,stats).run();
+  exporter(o,json,markdown,stats,raw).run();
   if(json)json->complete();
   if(markdown)markdown->complete();
   stats.jsonl_bytes=json?json->bytes():0;
@@ -665,7 +761,8 @@ void export_book(const reader_annotation_export_options &o,reader_annotation_exp
 }
 }  // namespace
 
-extern "C" reader_annotation_export_status reader_annotation_export_run(const reader_annotation_export_options *options,
+namespace {
+reader_annotation_export_status run_export(bool raw,const reader_annotation_export_options *options,
   reader_annotation_export_stats *stats,reader_annotation_export_error *error){
   /* The cancel callback runs on the export thread inside this call. A second
      entry from that callback would open a second pair of temporaries and could
@@ -686,7 +783,16 @@ extern "C" reader_annotation_export_status reader_annotation_export_run(const re
   export_status code=READER_ANNOTATION_EXPORT_OK;int revision_code=0,rs_code=0,os_error=0;std::string message;
   try{
     validate(options);
-    export_book(*options,local);
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+    if(raw){
+      /* Check before opening either sink, also for Markdown-only exports. A
+         JSON header must not be the only place that enforces raw capability. */
+      uint64_t source_bytes=0;reader_revision_error e{};
+      reader_revision_status s=reader_revision_book_identity_raw_v3(options->revisions,options->book_key,&source_bytes,&e);
+      if(s!=READER_REV_OK&&s!=READER_REV_NOT_FOUND)fail(READER_ANNOTATION_EXPORT_REVISION,e.message,(int)s,0,e.sqlite_code);
+    }
+#endif
+    export_book(*options,local,raw);
   }catch(const failure &f){
     code=f.code;revision_code=f.revision_code;rs_code=f.rs_code;os_error=f.os_error;message=f.message;
   }catch(const std::bad_alloc &){
@@ -704,3 +810,14 @@ extern "C" reader_annotation_export_status reader_annotation_export_run(const re
   }
   return code;
 }
+}  // namespace
+extern "C" reader_annotation_export_status reader_annotation_export_run(const reader_annotation_export_options *options,
+  reader_annotation_export_stats *stats,reader_annotation_export_error *error){
+  return run_export(false,options,stats,error);
+}
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+extern "C" reader_annotation_export_status reader_annotation_export_raw3_run(const reader_annotation_export_options *options,
+  reader_annotation_export_stats *stats,reader_annotation_export_error *error){
+  return run_export(true,options,stats,error);
+}
+#endif
