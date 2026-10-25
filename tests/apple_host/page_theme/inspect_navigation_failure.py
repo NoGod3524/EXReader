@@ -146,7 +146,9 @@ def main():
                 path = attachments / filename
                 size = path.stat().st_size
                 row = {'name': item['suggestedHumanReadableName'], 'file': filename, 'bytes': size}
-                if size <= 8 * 1024**2:
+                if path.suffix == '.mp4' and size <= 40 * 1024**2:
+                    row['actual_preserved_last_frame_ocr'] = media(path)
+                elif size <= 8 * 1024**2:
                     data = path.read_bytes()
                     if data.startswith((b'bplist00', b'<?xml')):
                         row['snapshot_fields'] = snapshot(data)
@@ -154,8 +156,6 @@ def main():
                         row['actual_preserved_pixel_ocr'] = media(path)
                     elif path.suffix in ('.json', '.txt') and b'\x00' not in data[:200]:
                         row['text'] = data.decode('utf-8', errors='replace')[:16000]
-                elif path.suffix == '.mp4' and size <= 40 * 1024**2:
-                    row['actual_preserved_last_frame_ocr'] = media(path)
                 report['observations'].append(row)
     (OUT / 'diagnostic.json').write_text(json.dumps(report, indent=2, sort_keys=True) + '\n')
     print(json.dumps(report, ensure_ascii=False, sort_keys=True), flush=True)
