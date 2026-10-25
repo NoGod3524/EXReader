@@ -6,6 +6,7 @@ import importlib.util
 import io
 import json
 import os
+import re
 from pathlib import Path, PurePosixPath
 import subprocess
 import sys
@@ -191,16 +192,26 @@ def api_helpers():
     return fetch, download_artifact_zip
 
 
+def artifact_metadata(row, full_name, own):
+    assert row['name'] == full_name and row['workflow_run']['id'] == own['run_id'] and row['workflow_run']['head_sha'] == own['source_sha'], 'artifact source/run/attempt identity'
+    assert row['expired'] is False and type(row['size_in_bytes']) is int and row['size_in_bytes'] > 0, 'expired/empty artifact'
+    assert re.fullmatch(r'sha256:[0-9a-f]{64}', row['digest']), 'artifact digest syntax'
+    assert datetime.fromisoformat(row['expires_at'].replace('Z', '+00:00')) > datetime.now(timezone.utc), 'artifact expiry'
+
+
+def artifact_body(row, raw):
+    assert len(raw) == row['size_in_bytes'] and 'sha256:' + digest(raw) == row['digest'], 'actual ZIP byte count/digest'
+
+
 def artifact(name, destination):
     actions(); fetch, download = api_helpers(); own = identity()
     full = f"{name}-{own['run_id']}-{own['attempt']}"
     rows = fetch(f"actions/runs/{own['run_id']}/artifacts?per_page=100")['artifacts']
     found = [row for row in rows if row['name'] == full]; assert len(found) == 1, full
     row = found[0]
-    assert not row['expired'] and row['workflow_run']['id'] == own['run_id'] and row['workflow_run']['head_sha'] == own['source_sha']
-    assert datetime.fromisoformat(row['expires_at'].replace('Z', '+00:00')) > datetime.now(timezone.utc)
+    artifact_metadata(row, full, own)
     raw = download(row['id'])
-    assert len(raw) == row['size_in_bytes'] and 'sha256:' + digest(raw) == row['digest']
+    artifact_body(row, raw)
     destination = Path(destination); destination.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(io.BytesIO(raw)) as zipped:
         safe_members(zipped)

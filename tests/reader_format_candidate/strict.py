@@ -23,10 +23,11 @@ def main():
     names={'preflight','corpus','producer-windows','producer-linux'}
     upstream=[row for row in jobs if row['name'] in names]
     assert len(upstream)==4 and {row['name'] for row in upstream}==names
-    assert all(row['head_sha']==own['source_sha'] and row['status']=='completed' and row['conclusion']=='success' for row in upstream), upstream
+    assert all(row['head_sha']==own['source_sha'] and row['status']=='completed' and row['conclusion']=='success' and row['run_attempt']==own['attempt'] for row in upstream), upstream
     metadata=fetch(f"actions/runs/{own['run_id']}/attempts/{own['attempt']}")
     assert metadata['head_sha']==own['source_sha'] and metadata['path'].split('@')[0]=='.github/workflows/reader-format-combination.yml'
-    records=fetch(f"actions/runs/{own['run_id']}/artifacts?per_page=100")['artifacts']
+    records=[row for row in fetch(f"actions/runs/{own['run_id']}/artifacts?per_page=100")['artifacts']
+             if row['name'].endswith(f"-{own['run_id']}-{own['attempt']}")]
     expected_artifacts={f"{label}-{own['run_id']}-{own['attempt']}" for label in ('format-guard','format-corpus','format-windows','format-linux')}
     assert len(records)==4 and {row['name'] for row in records}==expected_artifacts
     verified=[]
@@ -46,7 +47,7 @@ def main():
     guard_record=strict_json((WORK/'strict/guard/guard.json').read_bytes())
     protocol=strict_json((WORK/'strict/guard/protocol.json').read_bytes())
     assert all(guard_record[key]==value for key,value in own.items())
-    assert protocol['ok'] and protocol['rejected']==len(protocol['cases'])==112 and len(set(protocol['cases']))==112
+    assert protocol['ok'] and protocol['rejected']==len(protocol['cases'])==122 and len(set(protocol['cases']))==122
     expected=combined_tree(); assert expected==strict_json((WORK/'strict/guard/trees.json').read_bytes())
     platforms={}; named_sets=[]; cbz_observations={}; f5=load_module(WORK/'vendor/f5/run_acceptance.py','strict_original_f5')
     mandatory_programs={'rtf-base','rtf-candidate','cbz-base','cbz-candidate','adapter-base','adapter-candidate',

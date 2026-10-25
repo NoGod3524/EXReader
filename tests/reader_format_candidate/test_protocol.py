@@ -4,7 +4,7 @@ import io
 import json
 from pathlib import Path
 import zipfile
-from common import actions, WORK, HERE, manifest_contract, strict_json, safe_members, owned_paths, verify_program, digest, write
+from common import actions, WORK, HERE, manifest_contract, strict_json, safe_members, owned_paths, verify_program, digest, write, artifact_metadata, artifact_body, identity
 
 
 def main():
@@ -56,6 +56,22 @@ def main():
     verify_program(binary, actual)
     refuse('fake-program-size', lambda: verify_program(binary, {**actual, 'bytes': 0}))
     refuse('fake-program-hash', lambda: verify_program(binary, {**actual, 'sha256': '0'*64}))
+    own=identity(); full=f"format-windows-{own['run_id']}-{own['attempt']}"; blob=b'protocol-fixture'
+    metadata={'name':full,'workflow_run':{'id':own['run_id'],'head_sha':own['source_sha']},'expired':False,
+              'size_in_bytes':len(blob),'digest':'sha256:'+digest(blob),'expires_at':'2099-01-01T00:00:00Z'}
+    artifact_metadata(metadata,full,own); artifact_body(metadata,blob)
+    for name,change in (('name',lambda m:m.__setitem__('name',full+'-wrong-attempt')),
+                        ('run',lambda m:m['workflow_run'].__setitem__('id',own['run_id']+1)),
+                        ('source',lambda m:m['workflow_run'].__setitem__('head_sha','0'*40)),
+                        ('expired',lambda m:m.__setitem__('expired',True)),
+                        ('expiry',lambda m:m.__setitem__('expires_at','2000-01-01T00:00:00Z')),
+                        ('digest',lambda m:m.__setitem__('digest','invalid')),
+                        ('size',lambda m:m.__setitem__('size_in_bytes',0)),
+                        ('missing-report',lambda m:m.pop('workflow_run'))):
+        mutant=deepcopy(metadata); change(mutant)
+        refuse('artifact:'+name,lambda mutant=mutant:artifact_metadata(mutant,full,own))
+    refuse('artifact:actual-size',lambda:artifact_body({**metadata,'size_in_bytes':1},blob))
+    refuse('artifact:actual-digest',lambda:artifact_body({**metadata,'digest':'sha256:'+'0'*64},blob))
     result = {'ok': True, 'rejected': len(passed), 'cases': passed, 'valid_manifest_accepted': True, 'valid_program_accepted': True}
     write(WORK / 'guard/protocol.json', result); print(json.dumps(result), flush=True)
 
