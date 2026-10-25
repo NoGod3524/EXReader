@@ -9,6 +9,14 @@ new `/MAP` linker flag into `C:/Program Files/Git/MAP`. The caller now disables
 that automatic conversion only for the host configuration step. Original
 checks and the failed attempt remain unchanged.
 
+Second complete attempt `40191893337` on `5a52324a` passed original F1/F2,
+navigation, records, import UI and UI158. Original catalog product10 then
+rejected the new executable at its single hard-coded runtime `3.40.0` identity
+assertion. The new catalog wrapper changes only that complete expected identity
+literal to `3.41.0`, retains the exact original file and every other assertion,
+and records both source hashes plus the one-literal adaptation. The old account
+test's legacy `parser_version=3.40.0` record remains unchanged.
+
 The main `ws-host` compiles SDK3.41, F3, cloud import, bulk organization,
 reading records, search and navigation together. All original Windows suites
 run on that same production executable: F1 264, F2 130, navigation31, records32,

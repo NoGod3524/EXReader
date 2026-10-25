@@ -26,7 +26,8 @@ jobs:
         run: python3 tests/reader_windows_341/guard.py
       - name: Parse common wrappers and original strict refusal protocols in Actions
         run: |
-          python3 -m py_compile tests/reader_windows_341/guard.py tests/reader_windows_341/identity.py tests/reader_windows_341/verify.py
+          python3 -m py_compile tests/reader_windows_341/guard.py tests/reader_windows_341/identity.py tests/reader_windows_341/verify.py tests/reader_windows_341/catalog.py
+          python3 tests/reader_windows_341/catalog.py --self-test
           python3 tests/reader_windows_preferences/verify.py --protocol-selftest
           python3 tests/reader_windows_preferences/verify_commit.py --self-test
           python3 tests/reader_windows_341/verify.py --self-test
@@ -179,7 +180,7 @@ jobs:
           set -o pipefail
           python3 tests/windows_host/check_evidence.py --package build/ws-package/EXReader --sdk build/reading-library/stage --manifest build/ws-package/build.json --fixtures build/account-fixtures --selftest-report build/ws-package/report.json --consumer-binary build/ws-host/EXReaderProduct.exe --static-link-map build/ws-host/windows-host.map --output build/account-negative
           python3 tools/check_windows_host.py --package build/ws-package/EXReader --output build/account-ui158 --sdk build/reading-library/stage --manifest build/ws-package/build.json --steps tests/windows_host --fixtures build/account-fixtures --selftest-report build/ws-package/report.json --consumer-binary build/ws-host/EXReaderProduct.exe --static-link-map build/ws-host/windows-host.map
-          python3 tests/reader_catalog/check_windows_product.py --package build/ws-package/EXReader --original-evidence build/account-ui158 --fixtures build/account-fixtures --output build/account-product10
+          python3 tests/reader_windows_341/catalog.py --package build/ws-package/EXReader --original-evidence build/account-ui158 --fixtures build/account-fixtures --output build/account-product10
           python3 tests/windows_host/check_shelf_worker.py --candidate build/ws-host/EXReaderShelfReview.exe --package build/ws-package/EXReader --output build/account-worker5
           python3 tests/reader_windows_account/run_retained_shelf.py --candidate build/ws-package/EXReader/EXReader.exe --seed build/ws-host/reader-windows-shelf-seed.exe --package build/ws-package/EXReader --output build/account-shelf-ui
           python3 tests/windows_host/check_metadata_ui.py --candidate build/ws-package/EXReader/EXReader.exe --package build/ws-package/EXReader --command-consumer build/account-commands-consumer/command-consumer.exe --output build/account-metadata-ui
@@ -231,6 +232,7 @@ jobs:
           path: |
             build/windows-341-guard/
             build/windows-341-identity.json
+            build/windows-341-catalog-adapter.json
             build/reading-library/stage/include/exr/base.h
             build/reading-library/stage/lib/cmake/EXReader/EXReaderConfig.cmake
             build/reading-library/stage/lib/cmake/EXReader/EXReaderConfigVersion.cmake
