@@ -70,9 +70,10 @@ platform = iossimulator）、`arch.device_slice_absent`（无 ios slice）、`ar
 资源：`resources.inventory`（逐文件 SHA-256）、`resources.symlink`（拒绝绝对/越界符号链接）、
 `resources.special`（拒绝 FIFO/设备等非普通文件）、`resources.case_collision`（大小写碰撞）。
 
-签名与 entitlement：`signature.verify` 分三种：未签名 → pending；只有可执行文件带 linker ad-hoc 签名、
-没有 `_CodeSignature/CodeResources`（`bundle_sealed=false`）→ pending（记录 `verify` 与原始 log，
-不得据此声称已签名）；bundle 已封装签名 → 必须 `codesign --verify --deep --strict` 通过，否则 fail。
+签名与 entitlement：`signature.verify` 分三种：未签名 → pending；只有可执行文件被签名、
+没有 `_CodeSignature/CodeResources`（`bundle_sealed=false`，例如 `CODE_SIGNING_ALLOWED=NO` 的 linker
+ad-hoc 签名）→ pending（记录 `state`、`verify` 与原始 log，不得据此声称已签名）；bundle 已封装签名 →
+必须 `codesign --verify --deep --strict` 通过，否则 fail（被改动的密封资源属于这一类）。
 `result.signing.established` 只有“带 authority 的 bundle 签名且校验通过”才为 true，且始终不授予设备签名。
 `entitlements.parse`、
 `entitlements.no_private`（拒绝 `com.apple.private.*`）、`entitlements.application_identifier`、

@@ -283,7 +283,10 @@ def self_check(fixture, output, implementation_sha):
     }
     (output / 'fixture-checks.json').write_text(json.dumps(result, indent=2) + '\n')
     print(json.dumps({'valid_accepted': valid['accepted'], 'rejected': result['rejected'],
-                      'total': result['total'], 'fixture_cannot_be_producer': result['fixture_cannot_be_producer'],
+                      'total': result['total'],
+                      'mismatches': ['%s:%s(expected %s)' % (item['mutant'], item['status'], item['expected_status'])
+                                     for item in records if not item['rejected']],
+                      'fixture_cannot_be_producer': result['fixture_cannot_be_producer'],
                       'passed': result['passed'], 'runtime_version': version}, indent=2))
     return 0 if result['passed'] else 1
 

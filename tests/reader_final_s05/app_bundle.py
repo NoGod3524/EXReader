@@ -525,10 +525,10 @@ def check(manifest_value, device_class, mode='fixture', runtime_version=None, ex
         add('signature.verify', 'pending',
             'bundle is not signed (state=%r); a simulator installation does not need a signature and no signing is granted'
             % (signature_state,))
-    elif signature_state == 'ad-hoc' and not sealed:
+    elif not sealed:
         add('signature.verify', 'pending',
-            'executable-only ad-hoc signature without _CodeSignature/CodeResources (verify=%r); the executable is signed but the bundle is not, so no signing is established and none is granted; log=%r'
-            % (signature_value.get('verify'), signature_log))
+            'executable-only signature without _CodeSignature/CodeResources (state=%r verify=%r); the executable is signed but the bundle is not, so no signing is established and none is granted; log=%r'
+            % (signature_state, signature_value.get('verify'), signature_log))
     else:
         passed('signature.verify', signature_value.get('verify') is True,
                'state=%r sealed=%r authorities=%r log=%r' % (signature_state, sealed,
