@@ -110,3 +110,26 @@ compact仍使用原完整校验器，未将静态库当作宿主程序。
 
 授予范围仅上述Windows独立配置与真实owner恢复；完整原默认OFF/F3/atomic13、真实Mac认证网络接收、
 共同源码双向互通、完整产品及性能仍未授予。原两次失败继续保留。
+
+## Mac真实网络接收与十一条独立定位
+
+后续受测 `9321de84eb9c8d3d57cafbeaa8b0a28fe2a26a08`，run `40221234665` / attempt1 success，
+保留上述两配置原compact22、bulk21和owner进程恢复。实际Win32账号窗口经认证HTTPS完整扫描256分片，
+接收Mac原15wire与4本原件，原wire字节/父图一致，四格式真实打开并由新GUI进程重开。
+
+随后两次真实独立owner消费者各读取全部11个实际RID/SHA与本地映射，READ返回的原capture与Mac清单一致；
+再用新SDK对象公开resolve得到FOUND并重新capture，确认原件、公开SDK进度/笔记、产品全部逻辑行含outbox未变。
+READ本身没有调用capture callback，不把单纯decode成功算FOUND。EPUB原transport.chapter的NULL按原样核对，
+独立pager的chapter按既有宿主规则显式从part_path重建，单独记录；不声称NULL与该字符串相同。
+
+独立认证 run `40222024767` / attempt1 success，在Actions下载该轮唯一原ZIP，复算digest与字节，
+核对两次不同PID、源码/程序/owner/期望文件散列、原11个RID/SHA集合及逐项READ/FOUND/重捕获/NULL负例结果。
+
+| 工件 | ID | Bytes | SHA-256 | 有效期 |
+| --- | --- | --- | --- | --- |
+| 原接收与owner ZIP | 12610050539 | 234847679 | `1271a76418ead98675e24f3406f3240614003c10c15385a3c74867c05e0401a1` | 2027-01-23T18:26:13Z |
+| 独立认证 | 12610090820 | 817 | `aad1bf60c856e306f0a8c4618ed9b7f2c7004ce342e56cec00a0018e9d7fff79` | 2027-01-23T18:36:07Z |
+
+这覆盖指定Mac源到Windows的独立入站与owner定位，不授实际GUI逐记录跳转、接收Mac原NULL wire的网络拒绝、
+共同源码双向或完整产品。完整原OFF/F3/atomic13另在source `53b7fa46632ce82861812766825134de6b4d335f`、
+run `40221572660` 执行；其preflight已过，完整原链仍在运行，不能用本节替代。
