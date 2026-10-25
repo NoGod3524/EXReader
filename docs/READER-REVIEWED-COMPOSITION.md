@@ -1,6 +1,6 @@
 # Reviewed modules: installed composition (T05)
 
-## Independent review follow-up (pending new Actions evidence)
+## Independent review follow-up: accepted on 27 package configs
 
 Review branch `codex/reader-reviewed-composition-review` starts at the sealed
 Dot delivery `386b2cdf5071ccde299c04f5941eaee69c9b77bd`. The historical tested
@@ -27,8 +27,56 @@ maps, actual binaries and installed header/archive proofs are authenticated in
 the T05 ZIP. The old 22-package consumer criteria, all 11 negative gates and
 both 37-check shared-owner chains remain required. The original G1 aggregate's
 9 base and 6 extension refusal controls run unchanged alongside the extended
-T05 protocol controls. No old result grants this
-new source acceptance; its validation stays pending until a complete new run.
+T05 protocol controls. The following new-source evidence grants this follow-up
+only its tested three-desktop installed-package scope.
+
+Tested source `0b03cb6a1e94d799a8f30efa9a8cd3d9121c14d2` (tree
+`a884a2ef6909f578761f7247321476a28a91adbb`),
+[run 40172066797, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40172066797):
+Linux `121104816169`, Windows `121104816444`, macOS `121104816370`, and strict
+aggregate `121107433138` all completed/success. The aggregate accepted all
+27 configs, with `task_wide_accepted=true` for T05 and `complete_product=false`.
+It downloaded and hashed each real platform ZIP, authenticated every retained
+raw report, original consumer and installed proof, and checked matching
+platform/phase cases and the original export byte outcomes.
+
+Each of the two physical prefix phases passed:
+
+| Original G1 criterion | Linux | Windows | macOS |
+| --- | ---: | ---: | ---: |
+| shared G1 chain | 20 | 20 | 20 |
+| thumbnail probe | 179 | 178 | 179 |
+| thumbnail regression / allocation fault | 11 / 3 | 11 / 3 | 11 / 3 |
+| reading commands | 1413 | 1413 | 1413 |
+| annotation view | 56 | 56 | 56 |
+| annotation export | 25 | 25 | 25 |
+| local downloads / old-build controls | 54 / 7 | 54 / 7 | 54 / 7 |
+
+Windows keeps the original unavailable thread-count measurement; no check is
+invented for it. The original 36 composition items, all 11 negative gates,
+both 37-check reviewed shared-owner flows, and cloud 47 / bulk 21 / link 37 /
+history 149 / keyboard 41 / book-information 22 cases with 795 assertions /
+status 22 / profiles 42 all passed on each platform. The original Linux
+account-profile ASan/UBSan suite remains required. The early and strict stages
+also passed T05's 41 protocol refusals and the unchanged G1 9+6 controls.
+IME, Windows injected auto-repeat and macOS deactivate-cancels retain their
+documented hosted-runner skips. No host UI, performance, mobile or physical
+device acceptance is added.
+
+All final artifacts expire `2027-01-23T07:15:06Z`:
+
+| Artifact | ID | Bytes | SHA-256 |
+| --- | --- | ---: | --- |
+| Linux | 12590588059 | 168758857 | `a3be1afb2949b313c37fbf732436fb6aa986b2d02f265fe4973d30b4824bdc62` |
+| Windows | 12591321183 | 130176439 | `b7e16ca633d32ce7dff026854c27aea05470fee1a778d5dbe7e2b6044c45dcec` |
+| macOS | 12590758141 | 145852214 | `3ed0878002e30a2168d1e4ceb1ff0dadd65f605faad593116b278bb30c77f8e8` |
+| Strict report | 12590728818 | 12622 | `d17e266a82e50292d6156c006184a8a927d06c424b9dabed4537cf37c8a51f19` |
+
+The strict report artifact's own identity comes from the API, without a
+self-authentication claim. The complete strict JSON, including every bound
+binary/raw-map/header/archive digest, is copied verbatim from its cloud log
+into `docs/validation/reader-reviewed-composition.json`. This evidence-only
+commit changes only those two documents and carries `[skip ci]`.
 
 The first review source `a7a4e96e66b2823c9816ff3ab45fb4c219d675a4`, run
 `40171264203`, retained the actual 27-package prefix, both original G1 full
@@ -42,7 +90,7 @@ versus POSIX RLIMIT failure cases, skip rules and cross-platform output digest
 comparison. These are checker corrections; no original judge, test fixture or
 production module changes.
 
-## Boundaries and exact ordinary merges
+## Historical Dot delivery: boundaries and exact ordinary merges
 
 Fixed start: `e4356a6e13223469fdf3b2f3d5171a6e99ab10a6`.
 Ordinary merge point: `b143a861ef951a90c99e9c136cec47395aa700d2`.
@@ -98,7 +146,7 @@ All original reports and new named results are retained. A missing public API
 would keep overall accepted=false with the exact missing signature; no fallback
 mapping or private SQL is permitted.
 
-## Scope and verified cloud evidence
+## Historical 22-package scope and verified cloud evidence
 
 No production host UI, physical-keyboard/IME, performance, Android or iOS credit
 is granted. No complete-product or complete-library-sync claim is made.
@@ -143,7 +191,7 @@ metadata is recorded from the API; it does not authenticate itself.
 | macOS | 12587829512 | 53528510 | `ba53f302953e839dcb9924ef05a43e983d06d0ccd9dac85dfa4b2183feea4371` |
 | Strict report | 12588069191 | 8130 | `40463428f6f139bc182f6e20371b5f803e88f0935f2af4336a3aa1198b06ff96` |
 
-## Frozen-baseline count discrepancy (not silently resolved)
+## Historical frozen-baseline discrepancy (resolved by the follow-up above)
 
 The handoff calls the prior suite “18 packages”. At fixed start
 `e4356a6e13223469fdf3b2f3d5171a6e99ab10a6`,
