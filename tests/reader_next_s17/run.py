@@ -122,7 +122,7 @@ def main():
     OUT.mkdir(parents=True)
     product = OUT / 'product-stage'
     build(ROOT / 'apps/reader/store/native', 'product', product)
-    run(['ctest', '--test-dir', str(OUT / 'product'), '--output-on-failure', '--no-tests=error',
+    run(['ctest', '--test-dir', str(OUT / 'build' / 'product'), '--output-on-failure', '--no-tests=error',
          '--timeout', '180'], 'product-ctest')
     dav = OUT / 'webdav-stage'
     build(ROOT / 'extras/webdav', 'webdav', dav)
