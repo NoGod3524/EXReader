@@ -37,10 +37,36 @@ Apple 两个实际接收进程分别首次接收与重开相同原字节，覆�
 11 个真实点/范围。原保留记录通过公开 decoder 与 manifest 比较；新 SDK 捕获则与
 实际宿主对原 wire 的重建比较，保留 EPUB `part_path` 与隐式 chapter 的真实区别。
 同时核对实际加载 DSO、安装来源、完整唯一父图及只读状态不变。
-这条新路径尚未运行通过；即使通过也只授予 Android→Apple 原生 owner 单向范围，
+这条新路径已通过下面的独立运行，只授予 Android→Apple 原生 owner 单向范围，
 不能授予 Apple→Android、双向互通或完整产品。原 `apple-loopback` 发送路径仍可显式运行，
 仍使用上述真实 NUL PDF，不因方向接收而宣称其失败已修复。
 本包不授予宿主 UI、真机、六平台同步或完整产品验收。
+
+## Android→Apple 已封存单向证据
+
+受测 Apple 源码 `9ce130cf79020ec9ca15e3e03b7ec148ac451188`，
+[run 40184339801](https://github.com/NoGod3524/EXReader/actions/runs/40184339801) attempt1，
+native `121141831952` 与 strict `121143544084` 均 success。
+Android 发送源与本次 Apple 接收源分别记录，不声称共同源码。
+
+- 两个真实 macOS 进程 PID 56564 / 56566，分别首次接收和原 profile 重开；
+  各自 11 条记录全部 FOUND、复捕获一致、完整唯一父图接纳、SDK 状态与 outbox 不变。
+- 原 18 个兼容阶段、两版 SDK 各 19 项原 owner 测试与 Java20 策略检查同次重跑；
+  strict 另拒绝 7 项错误身份/范围/进程/manifest 协议。
+- 实际程序 SHA-256 `8c09d3e7c129f0b11dfad505e3f6e771f0bceff3071d28806bcd1b4971bd2d56`；
+  两进程实际加载 `libexreader.3.41.0.dylib`，SHA-256
+  `64fa27c57d88eebd0e348908c3f8831d900363a3220af7a24c80db00ee3f37e0`，
+  与同 producer 原兼容安装库逐字相符。产品审计确认动态 SDK 与安装后的命令模块。
+
+| 工件 | ID | 字节 | SHA-256 |
+| --- | ---: | ---: | --- |
+| 原始接收、原兼容控制与已认证发送包 | 12595851323 | 68,572,246 | `8949f0b81f62e0fe680a5c4639bb5e84f6c7436ed49118fbeedbf2a92045e553` |
+| strict summary | 12595856266 | 892 | `e6156a298bcac31ab3491255b33506c484142ae61b061191d81e11b5088c63b9` |
+
+有效期均为 `2027-01-23T10:20:07Z`。ZIP 下载、摘要认证、解包和原始证据解析均在 Actions；
+本地仅阅读运行日志与 API 元数据。本节之后的证据提交不改变受测源码。
+`android_to_apple_accepted=true`；`apple_to_android_accepted=false`，
+`actual_apple_sender_accepted=false`，`bidirectional_interoperability_accepted=false`。
 
 ## 独立可选的选择器字节候选
 
