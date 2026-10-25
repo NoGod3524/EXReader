@@ -8,8 +8,9 @@ COMMON = [
  'manifest-close-reopen', 'same-process-exclusive-directory-lock',
  'display-name-unicode-path-injection-bounds', 'unicode-selected-path-and-display',
  'bad-and-truncated-preserve-library', 'nonregular-source-rejected',
- 'bounded-source-short-reads-and-hash', 'underreported-source-rejected',
- 'source-truncation-rejected', 'source-midstream-change-rejected',
+ 'bounded-source-short-reads-and-hash', 'source-contract-snapshot-bounds', 'underreported-source-rejected',
+ 'invalid-source-return-and-exception-contained', 'advertised-font-hard-limit-before-read',
+ 'stored-hash-tampering-rejected', 'source-truncation-rejected', 'source-midstream-change-rejected',
  'callback-reentry-rejected', 'cancel-each-stage-retry-preserves-old',
  'selected-file-post-open-change-rejected', 'font-exact-byte-boundary',
  'font-over-byte-boundary', 'directory-entry-limit-dedupe-at-capacity',
@@ -22,7 +23,7 @@ COMMON = [
  'default-off-no-library', 'frozen-installed-font-header',
 ]
 POSIX = ['posix-source-and-directory-symlinks-rejected', 'posix-real-short-write-preserves-old']
-WINDOWS = ['windows-junction-rejected', 'windows-locked-manifest-publish-failure-preserves-old']
+WINDOWS = ['windows-removal-commit-uncertain-recovery', 'windows-junction-rejected', 'windows-locked-manifest-publish-failure-preserves-old']
 NEGATIVE = ['wrong-source','wrong-run','wrong-attempt','unfinished-job','failed-job','duplicate-job',
  'missing-artifact','duplicate-artifact-name','duplicate-artifact-id','empty-artifact','expired-artifact',
  'expired-timestamp','wrong-artifact-source','wrong-artifact-run','wrong-zip-size','wrong-zip-digest',

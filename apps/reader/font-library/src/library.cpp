@@ -201,7 +201,7 @@ void load(rfl_library&l){
   while(pos<s.size()){auto end=s.find('\n',pos);need(end!=std::string::npos,RFL_CORRUPT,"manifest incomplete record");auto line=s.substr(pos,end-pos);auto a=line.find(' '),b=line.find(' ',a==std::string::npos?0:a+1);need(a==64&&b!=std::string::npos,RFL_CORRUPT,"manifest fields");auto hash=line.substr(0,a),number=line.substr(a+1,b-a-1);need(hash_valid(hash)&&hash>last&&!number.empty()&&number.size()<10&&number.find_first_not_of("0123456789")==std::string::npos,RFL_CORRUPT,"manifest identity/size/order");uint64_t size=std::stoull(number);need(std::to_string(size)==number&&size&&size<=l.limits.font_bytes,RFL_CORRUPT,"manifest size limit");auto name=unhex(line.substr(b+1));l.records.emplace(hash,record(hash,name,size));total+=size;need(l.records.size()<=l.limits.entries&&total<=l.limits.directory_bytes,RFL_LIMIT,"stored fonts exceed configured budget");last=hash;pos=end+1;}
   for(const auto&p:l.records){auto font=child(l,p.first+".font");need(stat_file(font).size==p.second.bytes&&digest(font)==p.first,RFL_CORRUPT,"stored font identity changed");auto validated=sdk_open(font,0);}
   if(!exists(l,".rfl-initialized")){auto marker=child(l,".rfl-initialized",true);write_all(marker,"RFL1\n",5);flush(marker);directory_sync(l);}
-  else{auto marker=child(l,".rfl-initialized");need(stat_file(marker).size==5,RFL_CORRUPT,"initialization marker");}
+  else{auto marker=child(l,".rfl-initialized");char signature[5]{};need(stat_file(marker).size==5&&read_at(marker,0,signature,5)==5&&std::memcmp(signature,"RFL1\n",5)==0,RFL_CORRUPT,"initialization marker");}
   unlink_child(l,".rfl-tmp-font");unlink_child(l,".rfl-tmp-manifest");
   for(const auto&e:fs::directory_iterator(l.path)){auto n=e.path().filename().u8string();if(n.size()==69&&n.substr(64)==".font"&&hash_valid(n.substr(0,64))&&!l.records.count(n.substr(0,64))){auto orphan=child(l,n);need(digest(orphan)==n.substr(0,64),RFL_CORRUPT,"unreferenced file does not match managed hash");orphan.close();unlink_child(l,n);}}
   directory_sync(l);
@@ -211,6 +211,14 @@ template<typename F>rfl_status boundary(rfl_error *e,F fn)noexcept{if(e)*e={};tr
 void poll(const rfl_control*c,const char*stage,uint64_t done,uint64_t total,bool can_cancel=true){if(c&&c->progress){int stop=c->progress(c->context,stage,done,total);need(!stop||!can_cancel,RFL_CANCELLED,"cancelled before commit");}}
 void import(rfl_library&l,const rfl_source&s,const std::string&name,const rfl_control*c,rfl_record*out,int*created){
   need(s.read&&s.bytes,RFL_ARGUMENT,"empty source");need(s.bytes<=l.limits.font_bytes,RFL_LIMIT,"font byte limit");
+  uint64_t current=0;for(const auto&p:l.records)current+=p.second.bytes;
+  // A full directory can still deduplicate, without allocating an over-budget
+  // temporary font. Two bounded passes authenticate the immutable source first.
+  if(l.records.size()>=l.limits.entries||current+s.bytes>l.limits.directory_bytes){
+    std::array<unsigned char,65536> scratch{};std::string previous;
+    for(unsigned pass=0;pass<2;++pass){sha256 h;uint64_t at=0;while(at<s.bytes){poll(c,"verify",at,s.bytes);size_t cap=size_t(std::min<uint64_t>(scratch.size(),s.bytes-at)),n=0;auto st=s.read(s.context,at,scratch.data(),cap,&n);need(st==RFL_OK,st,"source quota preflight read");need(n&&n<=cap,RFL_CHANGED,"source quota preflight length");h.add(scratch.data(),n);at+=n;}size_t extra=0;auto st=s.read(s.context,s.bytes,scratch.data(),1,&extra);need(st==RFL_OK,st,"source quota preflight EOF");need(!extra,RFL_CHANGED,"source length underreported");auto value=h.finish();if(pass)need(value==previous,RFL_CHANGED,"source changed between quota preflight passes");previous=value;}
+    auto found=l.records.find(previous);need(found!=l.records.end(),RFL_LIMIT,"directory font budget");auto existing=child(l,previous+".font");need(digest(existing)==previous,RFL_CORRUPT,"existing duplicate changed");auto validated=sdk_open(existing,0);poll(c,"validated",s.bytes,s.bytes);*out=found->second;*created=0;return;
+  }
   unlink_child(l,".rfl-tmp-font");struct cleanup{rfl_library&l;~cleanup(){try{unlink_child(l,".rfl-tmp-font");unlink_child(l,".rfl-tmp-manifest");}catch(...){}}} cleanup{l};
   sha256 first;std::array<unsigned char,65536>b{};
   {auto temp=child(l,".rfl-tmp-font",true);uint64_t offset=0;
@@ -245,7 +253,7 @@ rfl_status rfl_open(const char*directory,const rfl_limits*limits,rfl_library**ou
   load(*l);*out=l.release();});}
 rfl_status rfl_close(rfl_library*l,rfl_error*e){return boundary(e,[&]{{operation op(l,true);need(l->leases.empty(),RFL_BUSY,"font leases active");}delete l;});}
 rfl_status rfl_import_file(rfl_library*l,const char*path,const char*name,const rfl_control*c,rfl_record*out,int*created,rfl_error*e){if(out)*out={};if(created)*created=0;return boundary(e,[&]{operation op(l);need(out&&created,RFL_ARGUMENT,"null outputs");auto label=string_arg(name,255,true);auto f=absolute_open(path_arg(path),false);file_source source{&f,stat_file(f)};rfl_source s{source.original.size,file_read,&source};import(*l,s,label,c,out,created);});}
-rfl_status rfl_import_source(rfl_library*l,const rfl_source*s,const char*name,const rfl_control*c,rfl_record*out,int*created,rfl_error*e){if(out)*out={};if(created)*created=0;return boundary(e,[&]{operation op(l);need(s&&out&&created,RFL_ARGUMENT,"null arguments");auto label=string_arg(name,255,true);import(*l,*s,label,c,out,created);});}
+rfl_status rfl_import_source(rfl_library*l,const rfl_source*s,const char*name,const rfl_control*c,rfl_record*out,int*created,rfl_error*e){if(out)*out={};if(created)*created=0;return boundary(e,[&]{operation op(l);need(s&&out&&created,RFL_ARGUMENT,"null arguments");auto label=string_arg(name,255,true);const rfl_source snapshot=*s;import(*l,snapshot,label,c,out,created);});}
 rfl_status rfl_count(rfl_library*l,size_t*out,rfl_error*e){if(out)*out=0;return boundary(e,[&]{operation op(l);need(out,RFL_ARGUMENT,"null count");*out=l->records.size();});}
 rfl_status rfl_get(rfl_library*l,size_t index,rfl_record*out,rfl_error*e){if(out)*out={};return boundary(e,[&]{operation op(l);need(out,RFL_ARGUMENT,"null record");need(index<l->records.size(),RFL_NOT_FOUND,"index absent");auto it=l->records.begin();std::advance(it,index);*out=it->second;});}
 rfl_status rfl_find(rfl_library*l,const char*hash,rfl_record*out,rfl_error*e){if(out)*out={};return boundary(e,[&]{operation op(l);need(out,RFL_ARGUMENT,"null record");auto h=hash_arg(hash);auto it=l->records.find(h);need(it!=l->records.end(),RFL_NOT_FOUND,"hash absent");*out=it->second;});}

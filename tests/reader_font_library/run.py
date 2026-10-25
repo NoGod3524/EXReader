@@ -102,6 +102,14 @@ def main():
             results['checks'].append('windows-locked-manifest-publish-failure-preserves-old')
             junction=base/'junction';run(['cmd','/c','mklink','/J',junction,root]);assert run([probe,'status',junction]).stdout.strip()!='STATUS 0';os.rmdir(junction)
             results['checks'].append('windows-junction-rejected')
+            removal=base/'remove-uncertain';removal.mkdir();run([probe,'import',removal,materials/'font.ttf'])
+            handle=kernel.CreateFileW(str(removal/(font_hash+'.font')),0x80000000,3,None,3,0x80,None)
+            assert handle not in (None,ctypes.c_void_p(-1).value), ctypes.get_last_error()
+            try:assert run([probe,'remove',removal,font_hash]).stdout.strip()=='STATUS 15 COUNT 15'
+            finally:assert kernel.CloseHandle(handle)
+            assert (removal/'manifest.rfl').read_bytes()==b'RFL1\n'
+            assert listed(removal)==[] and not list(removal.glob('*.font'))
+            results['checks'].append('windows-removal-commit-uncertain-recovery')
         assert (root/'manifest.rfl').read_bytes()==before and listed(root)==[font_hash]
         run([probe,'import',root,materials/'font.otf']);assert listed(root)==sorted([font_hash,other_hash])
         for entry in results['inputs']:assert sha((materials/entry['name']).read_bytes())==entry['sha256']

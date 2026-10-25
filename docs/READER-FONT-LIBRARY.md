@@ -64,11 +64,12 @@ rfl_close(library, &error);
   individually 64 KiB; no whole-font module heap buffer is created. Mapping is
   used only to supply the real installed `exr_font_create` API. **That SDK copies
   the entire encoded font and allocates decoded/cache state**: total peak memory
-  is NOT 64 KiB, nor are SDK caches covered by the encoded-byte lease budget.
+  is NOT 64 KiB, nor are SDK caches covered by the encoded-byte lease budget. Full directories authenticate duplicates without
+  an over-budget temporary font; new bytes are refused before disk copying.
 - File imports keep a native read handle, check size/identity/modification
   metadata around reads, reject extra bytes beyond declared size, and reread
   the selected bytes for the same SHA-256. A callback source follows the same
-  immutable seekable contract and second-pass validation. Short reads are
+  immutable seekable contract and second-pass validation. The source descriptor is snapshotted at entry. Short reads are
   retried, zero before declared EOF is rejected, EOF must report zero even when
   probed with capacity one. An adversarial provider that lies consistently is
   outside this borrowed-source contract; no claim of a filesystem snapshot.
