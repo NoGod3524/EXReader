@@ -1,6 +1,20 @@
 {
   "schema": "reader-reviewed-composition-task-evidence-v1",
   "accepted": false,
+  "review_followup": {
+    "accepted": false,
+    "status": "pending_complete_same_source_actions_run",
+    "branch": "codex/reader-reviewed-composition-review",
+    "start": "386b2cdf5071ccde299c04f5941eaee69c9b77bd",
+    "compared_common_source": "a826a65c9c66e43620eff61b49cb79f941a3c953",
+    "optional_packages": 26,
+    "installed_package_configs_including_sdk": 27,
+    "retained_g1_optional_packages": 18,
+    "reviewed_additions": 8,
+    "omitted_packages_restored": ["EXReaderThumbnails", "EXReaderReadingCommands", "EXReaderAnnotationView", "EXReaderAnnotationExport", "EXReaderLocalDownloads"],
+    "original_production_and_judges_changed": false,
+    "run_id": null
+  },
   "status": "verified_composition_complete_task_baseline_scope_unresolved",
   "fixed_start": "e4356a6e13223469fdf3b2f3d5171a6e99ab10a6",
   "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",

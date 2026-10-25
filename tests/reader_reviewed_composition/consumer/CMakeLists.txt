@@ -47,9 +47,19 @@ find_package(EXReaderKeyboardActions 0.1.0 EXACT CONFIG REQUIRED)
 find_package(EXReaderBookInformation 0.1.0 EXACT CONFIG REQUIRED)
 find_package(EXReaderSyncView 0.1.0 EXACT CONFIG REQUIRED)
 find_package(EXReaderAccountProfiles 0.1.0 EXACT CONFIG REQUIRED)
+find_package(EXReaderThumbnails 0.1.0 EXACT CONFIG REQUIRED)
+find_package(EXReaderReadingCommands 0.1.0 EXACT CONFIG REQUIRED)
+find_package(EXReaderAnnotationView 0.1.0 EXACT CONFIG REQUIRED)
+find_package(EXReaderAnnotationExport 0.1.0 EXACT CONFIG REQUIRED)
+find_package(EXReaderLocalDownloads 0.1.0 EXACT CONFIG REQUIRED)
 find_package(Threads REQUIRED)
 
 set(EXR_PACKAGE_TARGETS
+  EXReaderThumbnails::reader_thumbnails
+  EXReaderReadingCommands::reader_reading_commands
+  EXReaderAnnotationView::reader_annotation_view
+  EXReaderAnnotationExport::reader_annotation_export
+  EXReaderLocalDownloads::reader_local_downloads
   EXReaderCloudImport::reader_cloud_import
   EXReaderBulkOrganization::reader_bulk
   EXReaderLinkPolicy::reader_link_policy
@@ -85,6 +95,11 @@ endforeach()
 # The composed link graph: the C11 consumer and the C++17 consumer both link
 # every installed package from this one prefix.
 set(EXR_COMPOSED_LIBRARIES
+  EXReaderThumbnails::reader_thumbnails
+  EXReaderReadingCommands::reader_reading_commands
+  EXReaderAnnotationView::reader_annotation_view
+  EXReaderAnnotationExport::reader_annotation_export
+  EXReaderLocalDownloads::reader_local_downloads
   EXReaderCloudImport::reader_cloud_import
   EXReaderBulkOrganization::reader_bulk
   EXReaderLinkPolicy::reader_link_policy
@@ -163,6 +178,11 @@ function(exr_header_probe owner header language)
 endfunction()
 
 set(EXR_MODULE_HEADERS
+  "EXReaderThumbnails::reader_thumbnails|reader_thumbnails.h"
+  "EXReaderReadingCommands::reader_reading_commands|reader_reading_commands.h"
+  "EXReaderAnnotationView::reader_annotation_view|reader_annotation_view.h"
+  "EXReaderAnnotationExport::reader_annotation_export|reader_annotation_export.h"
+  "EXReaderLocalDownloads::reader_local_downloads|reader_local_downloads.h"
   "EXReaderCloudImport::reader_cloud_import|reader_cloud_import.h"
   "EXReaderBulkOrganization::reader_bulk|reader_bulk.h"
   "EXReaderLinkPolicy::reader_link_policy|reader_link_policy.h"

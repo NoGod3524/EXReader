@@ -13,6 +13,7 @@ import tempfile
 import zipfile
 from contract import BINARIES,REPORTS,RAW,SANITIZER,digest,identity,require,validate,validate_files
 from check_prefix import PACKAGES
+from g1 import REPORT_TAILS as G1_REPORT_TAILS
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'tools'))
 from check_parallel_integration import download_artifact_zip,fetch,pages
 WORKFLOW='.github/workflows/reader-reviewed-composition.yml'
@@ -67,11 +68,20 @@ def self_test():
   changed=dict(artifact);changed[field]=value;rejected(lambda:authenticate_artifact([changed],'a','source',1))
  rejected(lambda:authenticate_artifact([artifact,artifact],'a','source',1));rejected(lambda:check_zip_bytes(b'bad',artifact))
  rejected(lambda:authenticate_artifact([artifact,dict(artifact,name='other')],'a','source',1))
- records={p:b'{}' for p in REPORTS+RAW};records['original/history/summary.json']=json.dumps(dict(report_sha256=digest(b'{}'))).encode();records.update({'binaries/'+n:b'bin' for n in BINARIES});manifest=dict(files={p:dict(bytes=len(v),sha256=digest(v)) for p,v in records.items()})
+ records={p:b'{}' for p in REPORTS+RAW};records['original/history/summary.json']=json.dumps(dict(report_sha256=digest(b'{}'))).encode();records.update({'binaries/'+n:b'bin' for n in BINARIES})
+ for phase in ('fresh','relocated'):
+  records['g1/'+phase+'/phase.json']=json.dumps(dict(reports={name:digest(records['g1/'+phase+'/'+name]) for name in G1_REPORT_TAILS if name!='phase.json'})).encode()
+ manifest=dict(files={p:dict(bytes=len(v),sha256=digest(v)) for p,v in records.items()})
  validate_files(manifest,records.__getitem__)
  changed=copy.deepcopy(manifest);changed['files'].pop(REPORTS[0]);rejected(lambda:validate_files(changed,records.__getitem__))
  records[REPORTS[0]]=b'{"accepted":true}';rejected(lambda:validate_files(manifest,records.__getitem__))
  records[REPORTS[0]]=b'{}';records['binaries/'+BINARIES[0]]=b'evil';rejected(lambda:validate_files(manifest,records.__getitem__))
+ records['binaries/'+BINARIES[0]]=b'bin'
+ for tail in ('thumbnails/result.json','reading-commands/summary.json','annotation-view/summary.json','annotation-export/result.json','local-downloads/report.json','result.json'):
+  changed=copy.deepcopy(manifest);changed['files'].pop('g1/relocated/'+tail);rejected(lambda:validate_files(changed,records.__getitem__))
+ changed=copy.deepcopy(manifest);changed['files'].pop('g1/fresh/binaries/g1-chain');rejected(lambda:validate_files(changed,records.__getitem__))
+ changed=copy.deepcopy(manifest);changed['files']['g1/relocated/binaries/ld-probe']['sha256']='0'*64;rejected(lambda:validate_files(changed,records.__getitem__))
+ altered=dict(records);altered['g1/relocated/phase.json']=b'{"reports":{}}';changed=copy.deepcopy(manifest);changed['files']['g1/relocated/phase.json']=dict(bytes=len(altered['g1/relocated/phase.json']),sha256=digest(altered['g1/relocated/phase.json']));rejected(lambda:validate_files(changed,altered.__getitem__))
  for field,value in [('source_sha','wrong'),('run_id','wrong'),('attempt','wrong')]:
   report=dict(source_sha='source',run_id='1',attempt='2');report[field]=value;rejected(lambda:identity(report,'source','1','2'))
  print('strict protocol negative controls passed:',count)
@@ -84,11 +94,11 @@ def main():
  a.output.mkdir(parents=True,exist_ok=True);a.downloads.mkdir(parents=True,exist_ok=True)
  source=os.environ['GITHUB_SHA'];run_id=os.environ['GITHUB_RUN_ID'];attempt=os.environ['GITHUB_RUN_ATTEMPT']
  result=dict(accepted=False,source_sha=source,run_id=run_id,attempt=attempt,jobs=[],artifacts=[],platforms={},problems=[],host_ui_accepted=False,performance_accepted=False,android_accepted=False,ios_accepted=False,complete_product=False)
- result.update(acceptance_scope='fixed-source 22-package installed composition only',packages=sorted(PACKAGES),task_wide_accepted=False,task_gap='The handoff names an 18-package baseline; the fixed source names only 13 optional packages plus EXReader. Five unspecified baseline packages are not invented or granted.')
+ result.update(acceptance_scope='fixed-source 26 optional packages plus SDK: 27 installed package configs',packages=sorted(PACKAGES),task_wide_accepted=False,task_gap='Pending the complete current-source 18 optional package baseline plus eight reviewed additions.')
  try:
   result['negative_controls']=self_test()
   run=fetch('actions/runs/'+run_id);jobs=pages('actions/runs/'+run_id+'/attempts/'+attempt+'/jobs','jobs');result['jobs']=authenticate_run(run,jobs,source,run_id,attempt)
-  artifacts=pages('actions/runs/'+run_id+'/artifacts','artifacts');case_sets={};keyboard_sets={};original_sets={};history_stable={}
+  artifacts=pages('actions/runs/'+run_id+'/artifacts','artifacts');case_sets={};keyboard_sets={};original_sets={};history_stable={};g1_sets={}
   for key,platform in PLATFORMS:
    name='reader-reviewed-composition-'+key+'-'+run_id+'-'+attempt;a_meta=authenticate_artifact(artifacts,name,source,run_id)
    with tempfile.TemporaryFile() as stream:download_artifact_zip(a_meta['id'],stream);stream.seek(0);data=stream.read()
@@ -102,12 +112,20 @@ def main():
     keyboard_sets[key]={(c['suite'],c['name']):c['status'] for c in docs['original/keyboard/result.json']['cases']}
     original_sets[key]={name:sorted(r[field] for r in docs[path][rows]) for name,path,rows,field in [('cloud','original/cloud/result.json','checks','id'),('bulk','original/bulk/report.json','checks','name'),('link','original/link/report.json','checks','name'),('history','original/history/report.json','checks','name'),('information','original/information/report.json','checks','name'),('profiles','original/profiles/result.json','cases','name')]}
     original_sets[key]['status']=docs['original/status/result.json']['checks']
+    g1_sets[key]={}
+    for phase in ('fresh','relocated'):
+     base='g1/'+phase+'/'
+     g1_sets[key][phase]={name:sorted(row['name'] for row in docs[base+path]['checks']) for name,path in [('chain','chain.json'),('commands','reading-commands/report.json'),('view','annotation-view/work/report.json'),('local','local-downloads/report.json')]}
+     tr=docs[base+'thumbnails/result.json']
+     g1_sets[key][phase].update(thumbnails=sorted(n for n in tr['check_names'] if not n.startswith('threads:')),thumbnail_regressions=sorted(tr['regress_check_names']),thumbnail_faults=sorted(tr['fault_check_names']),export=sorted(docs[base+'annotation-export/result.json']['checks']),local_regressions=sorted(docs[base+'local-regressions/regressions.json']['cases']))
     hs=docs['original/history/summary.json'];history_stable[key]=dict(originals=hs['originals'],cases=sorted(c['id'] for c in hs['cases']),steps=sorted(s['step'] for s in hs['lifecycle']),no_write={k:hs['no_write'][k] for k in ('revision_rows','outbox_rows','sdk_progress_records','sdk_notes','sdk_fixed_notes','sdk_epub_notes','databases_unchanged','control_write_changed')})
    result['platforms'][key]=dict(named_results=named_results,binaries=binary_hashes)
    result['artifacts'].append({f:a_meta[f] for f in ('id','name','size_in_bytes','digest','expires_at')})
   require(case_sets['linux']==case_sets['windows']==case_sets['macos'],'cross-platform shared-flow case identity differs')
   require(original_sets['linux']==original_sets['windows']==original_sets['macos'],'cross-platform original case identity differs')
   require(history_stable['linux']==history_stable['windows']==history_stable['macos'],'cross-platform original history proof differs')
+  require(g1_sets['linux']==g1_sets['windows']==g1_sets['macos'],'cross-platform retained G1 check identities differ')
+  require(all(value['fresh']==value['relocated'] for value in g1_sets.values()),'retained G1 phase check identities differ')
   require(set(keyboard_sets['linux'])==set(keyboard_sets['windows'])==set(keyboard_sets['macos']),'keyboard case identity differs across platforms')
   skipped_everywhere=[]
   for suite,name in keyboard_sets['linux']:
@@ -119,6 +137,8 @@ def main():
   require(len(skipped_everywhere)<=2,'too many native keyboard cases skipped everywhere')
   result['keyboard_skipped_everywhere']=skipped_everywhere
   result['accepted']=True
+  result['task_wide_accepted']=True
+  result['task_gap']=None
  except Exception as e:result['problems'].append(str(e))
  (a.output/'result.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result));return 0 if result['accepted'] else 1
 if __name__=='__main__':raise SystemExit(main())

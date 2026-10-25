@@ -6,6 +6,11 @@
 #include <reader_book_information.h>
 #include <reader_sync_view.h>
 #include <reader_account_profiles.h>
+#include <reader_thumbnails.h>
+#include <reader_reading_commands.h>
+#include <reader_annotation_view.h>
+#include <reader_annotation_export.h>
+#include <reader_local_downloads.h>
 /* SPDX-License-Identifier: MIT */
 /* Installed-prefix composition consumer compiled as C11.
    Same single prefix and the same exported targets as the C++ consumer: this

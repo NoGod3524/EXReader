@@ -6,12 +6,17 @@ import json
 import re
 import sys
 from pathlib import Path
+from g1 import REPORTS as G1_REPORTS, RAW as G1_RAW, REPORT_TAILS as G1_REPORT_TAILS, validate as validate_g1
 ROOT=Path(__file__).resolve().parents[2]
 REPORTS=['prefix-scan-relocated.json','source-guard.json','evidence/result.json','evidence/composition-c.json','evidence/composition-c-relocated.json','evidence/composition-run1.json','evidence/composition-run2.json','gates/gates.json','install-all.json','sdk-only.json','prefix-scan.json','reviewed/result.json','reviewed/run0/report.json','reviewed/run1/report.json','original/suites.json','original/cloud/result.json','original/bulk/report.json','original/link/report.json','original/history/summary.json','original/history/report.json','original/keyboard/result.json','original/information/report.json','original/status/result.json','original/profiles/result.json']
 BINARIES=['composition-c','composition-cxx','composition-c-relocated','composition-cxx-relocated','reviewed-flow','reviewed-flow-relocated','cloud-probe','cloud-cpp-consumer','cloud-review-probe','bulk-probe','bulk-c-consumer','link-probe','link-cpp-consumer','link-worker','link-sdk-consumer','jump-history-probe','jump-history-c-consumer','keyboard-c-consumer','keyboard-cpp-consumer','keyboard-probe','book-info-probe','book-info-compare','status-view-consumer','status-view-c-consumer','revision-consumer','profiles-probe','profiles-session-consumer','profiles-worker']
 RAW=['composition-link.map','composition-c-link.map','reviewed/link-map-0.txt','reviewed/link-map-1.txt','interface.json','interface-relocated.json']
 INSTALLED={'cloud-header':('EXReaderCloudImport','headers'),'cloud-library':('EXReaderCloudImport','libraries'),'link-header':('EXReaderLinkPolicy','headers'),'link-library':('EXReaderLinkPolicy','libraries'),'history-header':('EXReaderJumpHistory','headers'),'history-library':('EXReaderJumpHistory','libraries')}
+for key,package in [('thumbnails','EXReaderThumbnails'),('reading-commands','EXReaderReadingCommands'),('annotation-view','EXReaderAnnotationView'),('annotation-export','EXReaderAnnotationExport'),('local-downloads','EXReaderLocalDownloads')]:
+ INSTALLED[key+'-header']=(package,'headers');INSTALLED[key+'-library']=(package,'libraries')
 RAW+=['installed/'+name for name in INSTALLED]
+REPORTS += G1_REPORTS
+RAW += G1_RAW
 SANITIZER=['original/sanitizer/sanitizer.txt','original/sanitizer/profiles-probe-asan','original/sanitizer/profiles-worker-asan','original/sanitizer/nonterminated-plan.log']
 def require(ok,message):
  if not ok:raise ValueError(message)
@@ -54,7 +59,7 @@ def validate(doc,binary_hashes,source,run,attempt,platform):
  expected={'cloud','bulk','link','history','keyboard','information','status','profiles'}
  require(len(suites.get('suites',[]))==8 and {r['name'] for r in suites['suites']}==expected and all(r.get('accepted') is True for r in suites['suites']),'original suite missing or failing')
  require(not doc['sdk-only.json'].get('problems') and not doc['prefix-scan.json'].get('problems') and not doc['prefix-scan-relocated.json'].get('problems'),'default SDK isolation or prefix scan failed')
- require(len(doc['prefix-scan.json'].get('packages',{}))==22,'actual installed package graph differs')
+ require(len(doc['prefix-scan.json'].get('packages',{}))==27,'actual installed package graph differs')
  for name,(package,kind) in INSTALLED.items():
   paths=doc['prefix-scan-relocated.json']['packages'][package][kind]
   require(len(paths)==1 and doc['install-all.json'][paths[0]]['sha256']==binary_hashes['installed/'+name],'installed proof differs from shared-prefix manifest '+name)
@@ -94,7 +99,8 @@ def validate(doc,binary_hashes,source,run,attempt,platform):
  require(sr.get('platform')==status.PLATFORMS[platform] and sr.get('count')==len(sr['checks']),'status platform or count differs')
  require(sr['consumer_sha256']==binary_hashes['status-view-consumer'] and sr['c_consumer_sha256']==binary_hashes['status-view-c-consumer'],'status binaries differ')
  profiles=load_module('reader_account_profiles','check_artifacts.py');profiles.verify_report(doc['original/profiles/result.json'],source,str(run),str(attempt),platform)
- return dict(original_composition_items=len(doc['evidence/result.json']['items']),shared_flow_items=len(required),cloud=len(doc['original/cloud/result.json']['checks']),bulk=len(doc['original/bulk/report.json']['checks']),link=len(doc['original/link/report.json']['checks']),history=hs['checks_total'],keyboard=len(kr['cases']),keyboard_skips=kr.get('skipped',[]),information_cases=len(ir['checks']),information_assertions=ir['assertions'],status=len(sr['checks']),profiles=doc['original/profiles/result.json']['checks'])
+ g1=validate_g1(doc,binary_hashes,source,run,attempt,platform)
+ return dict(original_composition_items=len(doc['evidence/result.json']['items']),shared_flow_items=len(required),cloud=len(doc['original/cloud/result.json']['checks']),bulk=len(doc['original/bulk/report.json']['checks']),link=len(doc['original/link/report.json']['checks']),history=hs['checks_total'],keyboard=len(kr['cases']),keyboard_skips=kr.get('skipped',[]),information_cases=len(ir['checks']),information_assertions=ir['assertions'],status=len(sr['checks']),profiles=doc['original/profiles/result.json']['checks'],retained_g1=g1)
 def digest(data):return hashlib.sha256(data).hexdigest()
 def validate_files(manifest,read):
  required=set(REPORTS)|set(RAW)|{'binaries/'+name for name in BINARIES}
@@ -108,4 +114,10 @@ def validate_files(manifest,read):
   elif path.startswith('binaries/'):binary_hashes[path.split('/')[-1]]=digest(data)
   elif path.endswith('sanitizer.txt'):require(data==b'failures=0\n','original sanitizer failure')
  require(documents['original/history/summary.json'].get('report_sha256')==manifest['files']['original/history/report.json']['sha256'],'history raw report differs from original summary')
+ for phase in ('fresh','relocated'):
+  base='g1/'+phase+'/'
+  phase_reports=documents[base+'phase.json'].get('reports',{})
+  require(set(phase_reports)==set(G1_REPORT_TAILS)-{'phase.json'},'missing/unexpected G1 raw phase reports')
+  for name,value in phase_reports.items():
+   require(base+name in manifest['files'] and manifest['files'][base+name]['sha256']==value,'G1 phase raw report differs')
  return documents,binary_hashes

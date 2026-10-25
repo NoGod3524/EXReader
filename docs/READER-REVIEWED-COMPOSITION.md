@@ -1,5 +1,33 @@
 # Reviewed modules: installed composition (T05)
 
+## Independent review follow-up (pending new Actions evidence)
+
+Review branch `codex/reader-reviewed-composition-review` starts at the sealed
+Dot delivery `386b2cdf5071ccde299c04f5941eaee69c9b77bd`. The historical tested
+source, run and 22-package result below remain unchanged.
+
+The current common G1 suite at `a826a65c9c66e43620eff61b49cb79f941a3c953`
+identifies the five omitted packages: EXReaderThumbnails,
+EXReaderReadingCommands, EXReaderAnnotationView, EXReaderAnnotationExport and
+EXReaderLocalDownloads. Their implementation trees and original test trees
+already match the sealed Dot source byte for byte; no production repair is
+needed. The original G08 baseline is 13 optional packages plus the SDK. G1 is
+18 optional packages plus the SDK. Keeping that complete baseline and adding
+the eight reviewed packages produces **26 optional packages, or 27 installed
+package configs including EXReader**.
+
+This review adds only T05's existing allowed test/workflow/document paths. It
+installs those five packages into the same prefix, links their public targets
+and compiles their headers in both original C11/C++17 consumers, extends default
+SDK isolation to cover them, and executes the unchanged complete G1 suite before
+and after physical prefix relocation. Both runs use the original runner's full
+mode, including its original five module judges and old-build failure control;
+the runner and all original judges remain unchanged. Raw original reports,
+maps, actual binaries and installed header/archive proofs are authenticated in
+the T05 ZIP. The old 22-package consumer criteria, all 11 negative gates and
+both 37-check shared-owner chains remain required. No old result grants this
+new source acceptance; its validation stays pending until a complete new run.
+
 ## Boundaries and exact ordinary merges
 
 Fixed start: `e4356a6e13223469fdf3b2f3d5171a6e99ab10a6`.
