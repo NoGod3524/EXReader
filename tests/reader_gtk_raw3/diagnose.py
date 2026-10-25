@@ -22,10 +22,14 @@ def main():
     try:
         report=json.loads(bundle.zip.read('result.json'))
         require(report['accepted'] is False and report['source_sha']==metadata['head_sha'] and int(report['run_id'])==run and int(report['attempt'])==1,'foreign failed report')
+        members=set(bundle.zip.namelist());missing=[]
         for path,row in report['files'].items():
+            if path not in members:
+                require(any(part.startswith('.') for part in Path(path).parts),'missing non-hidden evidence: '+path)
+                missing.append(path);continue
             data=bundle.zip.read(path)
             require(len(data)==row['bytes'] and hashlib.sha256(data).hexdigest()==row['sha256'],'failed inventory differs: '+path)
-        print(json.dumps(dict(diagnostic_only=True,accepted=False,source_sha=metadata['head_sha'],run_id=run,artifact=meta['id'])))
+        print(json.dumps(dict(diagnostic_only=True,accepted=False,source_sha=metadata['head_sha'],run_id=run,artifact=meta['id'],missing_hidden_inventory=missing)))
         for path in ('mac11-display/openbox.log','mac11-display/account/application.log','mac11-display/account/state.ini',
                      'mac11-display/account/report.json','mac11-display/account/window-tree.txt'):
             print('\nFILE '+path,flush=True)
