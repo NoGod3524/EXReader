@@ -97,3 +97,40 @@ SHA256 `2a6f987f7a3adae21453e95a4c17deeaa4088ce6d01dd0952a339634e7db9665`.
 The strict job refused the failed producers. No package acceptance is granted
 from this round. The tuple/list source-evidence fix and stricter public SDK
 snapshot/negative checks were prepared by static review and have not run yet.
+
+## Second complete round: observed owner repairs, retained harness failures
+
+Source `b11b0dd3b1354134dc1c82525e7e8578f3633758`, run `40243909026` /
+attempt 1 failed. Windows successfully selected/read back a real supported
+display mode and passed the complete unchanged legacy/raw host build, original
+compact22/bulk21, owner/kill recovery, actual Mac receive and all11 peer suites.
+Both selector profiles passed native modal focus in shelf/reading views and
+actual default/1024/800 work-area bounds. In two real GUI processes every one
+of the eleven received records reached its independently resolved target;
+TXT/EPUB/PDF highlights had the actual expected nonempty selection. Product
+history/outbox stayed unchanged. Both genuine NULL cases had Open/Edit/Restore
+disabled, no action dispatched, and unchanged full public SDK/product state.
+
+The sole Windows failure was the new harness demanding unchanged public SDK
+progress even during successful navigation. Normal accepted GO calls the
+existing SDK save-progress path. The final round preserves complete public
+progress before/after values and permits only legal point/page changes in
+books actually navigated. Metadata, notes, byte-exact original sources,
+product revisions/outbox and actual GUI book/part/page/selection remain strict.
+All NULL full-state equality and disabled-action assertions remain unchanged.
+
+GTK again passed unchanged full owner/kill/receive suites, compact45 and all
+four D09 environments without findings. Its new legacy chooser full-path and
+enabled-button observations succeeded, but the added Tab-to-Import lookup
+failed before records opened. This is a harness prerequisite failure, not an
+established product Tab defect. The final round returns to the original D09
+Return completion/accept sequence, with actual native target readback and
+same X11 window identity before any second accept. It also authenticates and
+prints the original second-round chooser trees/keys read-only in Actions.
+
+Second-round original ZIPs: Windows `12617593185`, 256846015 B,
+SHA256 `58e4da407a6fd41e744457c7b1a079114f9227cbe2aca49122bfb5eab87cd745`;
+GTK `12618471568`, 128105447 B,
+SHA256 `3234dcf05413fcadb55f9ea84b02394caeb3aa7af0a8ee353c74c60d7309681d`.
+No final owner-repair acceptance is granted from this failed round. One
+complete round remains; it has not been started yet.

@@ -255,8 +255,34 @@ def main():
             oracle = d.oracle(profile, d.E / 'mac/sender', iteration)
             result['positive'].append(positive(d, profile, manifest, wires, iteration, oracle))
             after = snapshot(profile, 'positive-after-' + iteration)
-            result['positive'][-1]['public_sdk_unchanged'] = initial['sdk_public_state'] == after['sdk_public_state']
-            result['positive'][-1]['accepted'] = result['positive'][-1]['accepted'] and result['positive'][-1]['public_sdk_unchanged']
+            phase = result['positive'][-1]
+            phase['public_sdk_unchanged'] = initial['sdk_public_state'] == after['sdk_public_state']
+            phase['public_sdk_nonprogress_unchanged'] = all(initial[k] == after[k] for k in
+                ('metadata_without_progress_sha256', 'notes_sha256', 'originals_sha256'))
+            before_progress = {r['book_id']: r for r in initial['public_progress']}
+            after_progress = {r['book_id']: r for r in after['public_progress']}
+            phase['public_progress_before'] = initial['public_progress']
+            phase['public_progress_after'] = after['public_progress']
+            phase['public_progress_changes'] = [dict(book_id=book, before=before_progress[book], after=after_progress[book])
+                                                for book in sorted(before_progress) if before_progress[book] != after_progress[book]]
+            last_frames = {r['after']['book_id']: r['after'] for r in phase['records'] if r['accepted']}
+            legal = set(before_progress) == set(after_progress) and all(r['validated_public_state'] for r in after_progress.values())
+            for change in phase['public_progress_changes']:
+                point = change['after']
+                frame = last_frames.get(change['book_id'])
+                if not frame:
+                    legal = False
+                elif point['kind'] == 'fixed':
+                    legal = legal and point['position'] == frame['page'] and point['position'] < point['page_count']
+                elif point['kind'] == 'global':
+                    legal = legal and point['position'] == point['selector']['start'] == point['selector']['end'] == frame['frame_start']
+                elif point['kind'] == 'epub':
+                    legal = legal and point['present'] == 1 and point['part'] == frame['part'] and point['selector']['start'] == point['selector']['end'] == frame['frame_start']
+                else:
+                    legal = False
+            phase['only_legal_public_progress_updates'] = legal and phase['public_sdk_nonprogress_unchanged']
+            phase['accepted'] = phase['accepted'] and phase['only_legal_public_progress_updates']
+            initial = after
         mapping = {rid: (raw, digest) for rid, raw, digest in operations}
         closure = {}
         visiting = set()

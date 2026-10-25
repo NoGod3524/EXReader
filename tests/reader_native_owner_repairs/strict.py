@@ -96,7 +96,8 @@ def native_windows(value, read, source_sha, run, attempt):
     require(value['positive_receive']['accepted'] and value['null_receive']['accepted'], 'actual native HTTPS receives missing')
     for result in value['positive']:
         require(result['accepted'] is True and result['history_unchanged'] is True
-                and result['public_sdk_unchanged'] is True and len(result['records']) == 11
+                and result['public_sdk_nonprogress_unchanged'] is True
+                and result['only_legal_public_progress_updates'] is True and len(result['records']) == 11
                 and {r['revision_id'] for r in result['records']} == expected_ids, 'complete actual GUI records not granted')
         for row in result['records']:
             require(row['accepted'] is True and row['exact_jump_verified'] is True, 'unverified actual jump')
@@ -132,11 +133,50 @@ def native_windows(value, read, source_sha, run, attempt):
         require(len({r['pid'] for r in snapshots}) == 3 and all(r['pid'] > 0 for r in snapshots), 'fresh public SDK readback processes missing')
         for snapshot in snapshots:
             identity(snapshot, source_sha, run, attempt)
-            require(snapshot['program_sha256'] == state_program and snapshot['owner_source_sha256'] == actual_owner,
+            require(snapshot['program_sha256'] == state_program and snapshot['owner_source_sha256'] == actual_owner and snapshot['sdk_version'] == '3.41.0',
                     'actual compiled public SDK state reader differs')
-        require(all(r['sdk_public_state'] == snapshots[0]['sdk_public_state'] for r in snapshots), 'GUI changed public SDK progress or notes')
+        for field in ('metadata_without_progress_sha256', 'notes_sha256', 'originals_sha256', 'originals'):
+            require(all(r[field] == snapshots[0][field] for r in snapshots), 'GUI changed SDK nonprogress state: ' + field)
         if group == 'null':
+            require(all(r['sdk_public_state'] == snapshots[0]['sdk_public_state'] for r in snapshots), 'NULL GUI changed any public SDK state')
             require(all(r['product_readonly_state'] == snapshots[0]['product_readonly_state'] for r in snapshots), 'NULL GUI changed product rows')
+        else:
+            expected_sources = {(r['format'], r['bytes'], r['sha256']) for r in manifest['originals']}
+            require({(r['format'], r['bytes'], r['sha256']) for r in snapshots[0]['originals']} == expected_sources
+                    and len(snapshots[0]['originals']) == len(expected_sources) == 4, 'public original bytes differ from authenticated Mac packet')
+            source_keys = {r['book_id']: r['format'] + ':' + r['sha256'] for r in snapshots[0]['originals']}
+            for index, result in enumerate(value['positive']):
+                before, after = snapshots[index], snapshots[index + 1]
+                require(result['public_sdk_unchanged'] is (before['sdk_public_state'] == after['sdk_public_state']), 'SDK aggregate change observation differs')
+                require(result['public_progress_before'] == before['public_progress']
+                        and result['public_progress_after'] == after['public_progress'], 'actual progress before/after values missing')
+                old_points = {r['book_id']: r for r in before['public_progress']}
+                new_points = {r['book_id']: r for r in after['public_progress']}
+                require(len(old_points) == len(before['public_progress']) == len(new_points) == len(after['public_progress'])
+                        and set(old_points) == set(new_points) == set(source_keys), 'public progress book set changed')
+                changed = [dict(book_id=book, before=old_points[book], after=new_points[book]) for book in sorted(old_points) if old_points[book] != new_points[book]]
+                require(result['public_progress_changes'] == changed, 'progress change list differs from original public snapshots')
+                frames = {}
+                for row in result['records']:
+                    original = next(r for r in manifest['reading_records'] if r['revision_id'] == row['revision_id'])
+                    frame = row['after']
+                    require(frame['book_id'] == frame['session_book'] and source_keys[frame['book_id']] == original['capture']['route'][0], 'actual GUI book differs from original source capture')
+                    frames[frame['book_id']] = frame
+                for point in new_points.values():
+                    require(point['validated_public_state'] is True and type(point['position']) is int and point['position'] >= 0, 'public progress state not validated')
+                for change in changed:
+                    point = change['after']
+                    require(change['book_id'] in frames, 'progress changed in a book not actually navigated')
+                    frame = frames[change['book_id']]
+                    if point['kind'] == 'fixed':
+                        require(point['position'] == frame['page'] and point['position'] < point['page_count'], 'fixed saved progress differs from actual GUI page')
+                    elif point['kind'] == 'global':
+                        require(point['position'] == point['selector']['start'] == point['selector']['end'] == frame['frame_start'], 'global saved point differs from actual GUI frame')
+                    elif point['kind'] == 'epub':
+                        require(point['present'] == 1 and point['part'] == frame['part'] and point['path'] is not None
+                                and point['selector']['start'] == point['selector']['end'] == frame['frame_start'], 'EPUB saved point differs from actual GUI part/frame')
+                    else:
+                        raise ValueError('unexpected public progress mode')
     inventory(value, read, 'native-owner-windows/')
 
 
@@ -167,7 +207,9 @@ def source_provenance(archive, source_sha, run, attempt, root, network_verified,
             bad.update(mutation)
             candidates.append(bad)
         for transform in (
-            lambda v: v['positive'][0].__setitem__('public_sdk_unchanged', False),
+            lambda v: v['positive'][0].__setitem__('public_sdk_nonprogress_unchanged', False),
+            lambda v: v['positive'][0].__setitem__('only_legal_public_progress_updates', False),
+            lambda v: v['positive'][0].__setitem__('public_progress_after', []),
             lambda v: v['positive'][0]['records'].pop(),
             lambda v: v['null'][0]['controls'][next(iter(v['null'][0]['controls']))].__setitem__('enabled', True),
             lambda v: v['null'][0].__setitem__('public_sdk_and_all_product_rows_unchanged', False),
@@ -265,6 +307,12 @@ def gtk_proof(run, attempt, source_sha):
             identity(report, source_sha, run, attempt)
             require(report['accepted'] is True and report['exit_code'] == 0 and report['profile'] == profile
                     and len(report['observations']) == 4 and {r['route'] for r in report['observations']} == {'shortcut', 'menu', 'shortcut-reopen', 'menu-reopen'}, 'both GTK native entry routes and reopen required')
+            imported = report['import_evidence']
+            require(imported['full_native_entry_and_enabled_accept_verified'] is True
+                    and imported['first_accept_windows'] and imported['accept_key_count'] in (1, 2), 'actual native chooser prerequisite absent')
+            if imported['accept_key_count'] == 2:
+                require(imported['second_target_present'] is True and imported['second_accept_enabled'] is True
+                        and set(imported['first_accept_windows']) == set(imported['second_accept_windows']), 'blind duplicate native import acceptance')
             actual_program = program if profile == 'raw' else hashlib.sha256(read('native-owner-gtk-legacy-package/EXReader-Linux/bin/exreader-linux', 128 * 1024**2)).hexdigest()
             require(report['program_sha256'] == actual_program, 'GTK focus used another actual program')
             cache = read('gtk-raw3/' + profile + '-owner/CMakeCache.txt', 2 * 1024**2).decode()

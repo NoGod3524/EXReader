@@ -46,7 +46,7 @@ def focus(profile):
     sys.path.insert(0, str(ROOT / 'tests/reader_a11y_gtk'))
     sys.path.insert(0, str(ROOT / 'build/native-owner-reuse/d09'))
     import atspi_client as bus
-    from driver import Host, wait_until
+    from driver import Host, wait_until, command
     from contract import modal_focus_ok
     folder = ROOT / ('build/native-owner-gtk-focus-' + profile)
     folder.mkdir()
@@ -101,17 +101,33 @@ def focus(profile):
             wait_until(lambda: host.section('native_import').get('entry_sha256') == wanted
                        and host.section('native_import').get('selected_sha256') == wanted
                        and host.section('native_import').get('accept_sensitive') == '1', 20)
-        # One genuine button activation avoids GTK's two-Return completion path.
-        for _ in range(60):
-            targets = [n for n in bus.focused_all(app) if bus.role(n) == 'push button' and bus.name(n) == 'Import'
-                       and all(bus.states(n).get(k) for k in ('enabled', 'sensitive', 'showing', 'focused'))]
-            if len(targets) == 1:
-                break
-            host.key('Tab')
-        else:
-            raise AssertionError('native keyboard Tab cannot reach enabled Import button')
-        host.key('space')
-        wait_until(lambda: not nodes('Import book', ('file chooser',)), 40, description='single native Import activation closes chooser')
+        def mapped_choosers():
+            found = command('xdotool', 'search', '--onlyvisible', '--all', '--pid', str(host.process.pid), '--name', '^Import book$')
+            return found.stdout.splitlines() if found.returncode == 0 else []
+        report['import_evidence'] = dict(typed_path_sha256=wanted, first_accept_windows=mapped_choosers(),
+                                         full_native_entry_and_enabled_accept_verified=True, accept_key_count=1)
+        assert report['import_evidence']['first_accept_windows']
+        host.key('Return')
+        import time
+        time.sleep(.6)
+        if mapped_choosers():
+            # Match the original D09 completion/accept route. A second key is
+            # allowed only while the same real chooser remains mapped and the
+            # original full path or selected fixture is still exposed there.
+            choosers = nodes('Import book', ('file chooser',))
+            assert len(choosers) == 1
+            descendants = list(bus.walk(choosers[0]))
+            selected = [bus.name(n) for n in descendants if bus.states(n).get('selected')]
+            entered = [bus.accessible_text(n) for n in descendants if bus.role(n) == 'text' and bus.states(n).get('showing')]
+            target_present = any(t and t['text'] == str(book) for t in entered) or any(name == book.name for name in selected)
+            accepts = [n for n in descendants if bus.role(n) == 'push button' and bus.name(n) == 'Import'
+                       and all(bus.states(n).get(k) for k in ('enabled', 'sensitive', 'showing'))]
+            report['import_evidence'].update(second_accept_windows=mapped_choosers(), selected_names=selected,
+                second_target_present=target_present, second_accept_enabled=bool(accepts), accept_key_count=2)
+            save(folder / 'import-before-second-accept.json', bus.dump(app))
+            assert target_present and accepts and set(report['import_evidence']['second_accept_windows']) == set(report['import_evidence']['first_accept_windows']), 'native chooser no longer exposes the original complete target'
+            host.key('Return')
+        wait_until(lambda: not mapped_choosers(), 40, description='actual native import chooser closes')
         host.wait_state(lambda s: s.get('book', 0) > 0 and not s.get('saving') and not s.get('busy'), timeout=90)
         for route in ('shortcut', 'menu', 'shortcut-reopen', 'menu-reopen'):
             if route.startswith('shortcut'):
