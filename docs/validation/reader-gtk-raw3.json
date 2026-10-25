@@ -11,7 +11,9 @@
     {"run_id": 40211879275, "scope": "build only", "conclusion": "success", "source_sha": "4b189aca819d9c5d1a7e73a6c5bbe0b2e8286f6e"},
     {"run_id": 40212846373, "scope": "isolated raw probe", "conclusion": "failure", "reason": "Probe expected runtime3.40; actual pinned SDK runtime is3.41"},
     {"run_id": 40213236938, "scope": "isolated raw probe", "conclusion": "failure", "reason": "Ten actual owner phases and four durable kill boundaries passed; Mac root result lookup was ambiguous among nested result.json members"},
-    {"run_id": 40214034302, "scope": "full candidate", "conclusion": "cancelled", "reason": "Corrected intermediate retained collector topology before expensive original suites: dependent final job is not created until this collector completes; final collector still requires all seven actual jobs"}
+    {"run_id": 40214034302, "scope": "full candidate", "conclusion": "cancelled", "reason": "Corrected intermediate retained collector topology before expensive original suites: dependent final job is not created until this collector completes; final collector still requires all seven actual jobs"},
+    {"run_id": 40213972775, "scope": "isolated raw probe", "conclusion": "failure", "reason": "All four installed family/origin refusals and ten owner phases passed; Mac inventory requires exact root-relative members because several filenames repeat under nested folders"},
+    {"run_id": 40214173397, "scope": "full candidate", "conclusion": "cancelled", "reason": "Apply the same exact-member Mac inventory correction to the whole source before retained acceptance; do not stitch old producer results"}
   ],
   "raw_host_accepted": false,
   "complete_retained_chain_accepted": false,

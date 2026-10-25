@@ -27,33 +27,36 @@ def load(out):
     meta=fetch('actions/artifacts/'+str(ARTIFACT));require(meta['digest']==DIGEST and meta['size_in_bytes']==77056135 and
       meta['workflow_run']['head_sha']==SOURCE and meta['workflow_run']['id']==RUN,'Mac artifact identity differs')
     bundle=Bundle(meta);out.mkdir(parents=True,exist_ok=False)
+    def member(path,limit):
+        entry=bundle.zip.getinfo(path);require(not entry.is_dir() and entry.file_size<=limit,'Mac exact member too large')
+        data=bundle.zip.read(entry);require(len(data)==entry.file_size,'Mac exact member size differs');return data
     try:
         root=bundle.zip.getinfo('result.json');require(root.file_size<=8*1024**2,'Mac root report too large')
         report=json.loads(bundle.zip.read(root));require(report['accepted'] and report['source_sha']==SOURCE and str(report['run_id'])==str(RUN) and str(report['attempt'])=='1','foreign Mac report')
         for path,entry in report['files'].items():
-            data=bundle.bytes(path,128*1024**2)
+            data=member(path,128*1024**2)
             require(len(data)==entry['bytes'] and hashlib.sha256(data).hexdigest()==entry['sha256'],'Mac inventoried member differs')
-        raw=bundle.bytes('sender-bundle/manifest.json',2*1024**2)
+        raw=member('sender-bundle/manifest.json',2*1024**2)
         require(hashlib.sha256(raw).hexdigest()=='f0960b35374e12827a8966f7022dc3f632e44c87419ca1482288386fb8031566','Mac manifest differs')
         manifest=json.loads(raw);require(len(manifest['reading_records'])==11 and len(manifest['originals'])==4 and len(manifest['revisions'])==15,'Mac packet scope differs')
         sender=manifest['sender'];require(sender['source_sha']==SOURCE and str(sender['run_id'])==str(RUN) and str(sender['attempt'])=='1' and
           sender['platform']=='macos' and sender['parser_version']=='3.41.0' and sender['pid']>0,'Mac actual sender identity differs')
-        require(hashlib.sha256(bundle.bytes('sender-bundle/proofs/program',128*1024**2)).hexdigest()==sender['program_sha256'] and
-          hashlib.sha256(bundle.bytes('sender-bundle/proofs/sdk.dylib',128*1024**2)).hexdigest()==sender['sdk_dso_sha256'],'Mac program or actual SDK differs')
+        require(hashlib.sha256(member('sender-bundle/proofs/program',128*1024**2)).hexdigest()==sender['program_sha256'] and
+          hashlib.sha256(member('sender-bundle/proofs/sdk.dylib',128*1024**2)).hexdigest()==sender['sdk_dso_sha256'],'Mac program or actual SDK differs')
         packet=out/'sender';packet.mkdir();(packet/'manifest.json').write_bytes(raw)
         wires=[];originals={}
         for row in manifest['revisions']:
-            data=bundle.bytes('sender-bundle/'+row['file'],2*1024**2)
+            data=member('sender-bundle/'+row['file'],2*1024**2)
             require(len(data)==row['bytes'] and hashlib.sha256(data).hexdigest()==row['sha256'],'Mac wire differs')
             (packet/(row['id']+'.json')).write_bytes(data);wires.append((row['id'],row['sha256'],data))
         for row in manifest['originals']:
-            data=bundle.bytes('sender-bundle/'+row['file'],128*1024**2)
+            data=member('sender-bundle/'+row['file'],128*1024**2)
             require(len(data)==row['bytes'] and hashlib.sha256(data).hexdigest()==row['sha256'],'Mac original differs')
             originals[row['book_key']]=(row,data);(packet/(row['sha256']+'.'+row['format'])).write_bytes(data)
         database_name='profiles/source-version-and-NULL-operations/reader-catalog.db';database=out/'original-mac-operations.db'
-        database.write_bytes(bundle.bytes(database_name,64*1024**2))
+        database.write_bytes(member(database_name,64*1024**2))
         for suffix in ('-wal','-shm'):
-            if database_name+suffix in report['files']:Path(str(database)+suffix).write_bytes(bundle.bytes(database_name+suffix,64*1024**2))
+            if database_name+suffix in report['files']:Path(str(database)+suffix).write_bytes(member(database_name+suffix,64*1024**2))
     finally:bundle.close()
     with tempfile.TemporaryDirectory(prefix='gtk-raw3-peer-') as temporary:
         working=Path(temporary)/database.name;shutil.copyfile(database,working)
