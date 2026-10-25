@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+from source_paths import COMMON_BASE, CALLER_PIN_PATHS
 
 BASE = 'f9671923a854901d19bddd0396073dbc90fab222'
 ORIGINAL = '07ebe8786434ef384c97ccdb451242d3c6aee6cb'
@@ -29,14 +30,14 @@ def main():
     source = os.environ['GITHUB_SHA']
     assert git('rev-parse', 'HEAD').strip() == source
     assert os.environ['EXR_SDK_VERSION'] == '3.41.0'
-    for ancestor in (BASE, ORIGINAL, SDK):
+    for ancestor in (BASE, COMMON_BASE, ORIGINAL, SDK):
         subprocess.run(['git', 'merge-base', '--is-ancestor', ancestor, 'HEAD'], check=True)
     subprocess.run(['git', 'diff', '--exit-code', SDK, 'HEAD', '--',
                     'src', 'include', 'cmake', 'CMakeLists.txt', 'bindings', 'tests/fixtures'], check=True)
     for folder in ('apps', 'examples', 'extras'):
-        subprocess.run(['git', 'diff', '--exit-code', BASE, 'HEAD', '--', folder], check=True)
-    paths = git('diff', '--name-only', BASE, 'HEAD').splitlines()
-    assert all(path.startswith('tests/reader_hosts_341/') or path in
+        subprocess.run(['git', 'diff', '--exit-code', COMMON_BASE, 'HEAD', '--', folder], check=True)
+    paths = git('diff', '--name-only', COMMON_BASE, 'HEAD').splitlines()
+    assert all(path in CALLER_PIN_PATHS or path in
                (WORKFLOW, 'docs/READER-HOSTS-341-FINAL.md') for path in paths), paths
     old = git('show', ORIGINAL + ':.github/workflows/reader-hosts-integration.yml')
     expected = old[old.index('  compose:\n'):old.index('  search:\n')]
@@ -62,7 +63,7 @@ def main():
     assert all(re.search(pattern, joined) for pattern, _ in cloud.BOUNDARY)
     assert 'EXR_SIDELOAD_STREAM_LIMIT' in joined and 'EXR_SIDELOAD_MEMORY_LIMIT' in joined
     result = dict(accepted=True, source_sha=source, run_id=os.environ['GITHUB_RUN_ID'],
-                  attempt=os.environ['GITHUB_RUN_ATTEMPT'], baseline=BASE, sdk_source=SDK,
+                  attempt=os.environ['GITHUB_RUN_ATTEMPT'], baseline=BASE, common_production_base=COMMON_BASE, sdk_source=SDK,
                   sdk_version='3.41.0', schema_changed=False, cloud_adapter_source_guard=True,
                   cloud_source_controls=controls, original_complete_job_preserved=True,
                   host_ui_accepted=False, complete_product=False)

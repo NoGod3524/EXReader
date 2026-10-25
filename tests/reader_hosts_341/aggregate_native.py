@@ -10,7 +10,7 @@ import subprocess
 import sys
 
 ROOT=Path(__file__).resolve().parents[2]
-BASE='5e8b132626cfe7540f675285787d24bf488857a8'
+from source_paths import COMMON_BASE as BASE
 SDK='edddc463c06ed5731195cdb8f06b2df6dff7699e'
 SCHEMA_OWNER='07ebe8786434ef384c97ccdb451242d3c6aee6cb'
 sys.path.insert(0,str(ROOT/'tests/reader_hosts_integration'))

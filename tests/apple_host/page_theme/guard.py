@@ -4,10 +4,12 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 
 ROOT = Path(__file__).resolve().parents[3]
 BASE = '9ee1053b83fcf934e6f0891eb77d468fc394da1e'
-COMMON_BASE = 'b5e49d1753a6b4b88811b03fa904fe9447865247'
+sys.path.insert(0, str(ROOT / 'tests/reader_hosts_341'))
+from source_paths import COMMON_BASE, CALLER_PIN_PATHS
 SDK = 'edddc463c06ed5731195cdb8f06b2df6dff7699e'
 FINAL_BASE = '902a73bd9984649000d63e96d5056b16daf28c85'
 MODULE_BASE = 'f680aeaddfb1ecc67ead353554f5b91a5703f72f'
@@ -82,7 +84,7 @@ def validate_trees(actual, expected):
 
 
 def validate_paths(paths):
-    require(all(path in OWNED or path.startswith(('tests/apple_host/page_theme/', 'tests/apple_host/record_compatibility/')) for path in paths),
+    require(all(path in OWNED or path in CALLER_PIN_PATHS or path.startswith(('tests/apple_host/page_theme/', 'tests/apple_host/record_compatibility/')) for path in paths),
             'unowned path changed')
 
 

@@ -3,9 +3,9 @@ import json
 import os
 from pathlib import Path
 import subprocess
+from source_paths import COMMON_BASE as BASE, CALLER_PIN_PATHS
 
 ROOT=Path(__file__).resolve().parents[2]
-BASE='b5e49d1753a6b4b88811b03fa904fe9447865247'
 COMMON_PRODUCTION='49b2a7c86173181f8f79a760315ddb8ca2312bd1'
 ORIGINAL='07ebe8786434ef384c97ccdb451242d3c6aee6cb'
 THEME='1b3cfd1413fa5ebade31be6958f835f6de3b5290'
@@ -27,7 +27,8 @@ def validate_source(write=False):
         subprocess.run(['git','merge-base','--is-ancestor',parent,source],check=True)
     allowed={WORKFLOW,'tests/reader_hosts_341/guard_android.py','tests/reader_hosts_341/aggregate_android.py',
              'docs/READER-ANDROID-341-COMMON-PREP.md'}
-    changed=git('diff','--name-only',BASE,source).splitlines();assert set(changed)<=allowed,changed
+    changed=git('diff','--name-only',BASE,source).splitlines();assert set(changed)<=allowed | CALLER_PIN_PATHS,changed
+    subprocess.run(['git','diff','--exit-code',BASE,source,'--','apps','examples','extras','tools'],check=True)
     for path in ('src','include','cmake','CMakeLists.txt','bindings','tests/fixtures','licenses',
                  '.github/workflows/native.yml','.github/workflows/reliability.yml'):
         assert git('rev-parse',source+':'+path)==git('rev-parse',SDK+':'+path),path
