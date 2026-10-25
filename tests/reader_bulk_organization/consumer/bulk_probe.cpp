@@ -110,7 +110,7 @@ int on_cancel(void *context){
 void print_result(reader_bulk_status status,const reader_bulk_error &error,const reader_bulk_summary &summary,
     const std::vector<reader_bulk_item_result> &items,size_t count,const std::string &extra=""){
   std::ostringstream o;
-  o<<"{\"status\":"<<status<<",\"metadata\":"<<error.metadata<<",\"error\":"<<quote(error.message);
+  o<<"{\"status\":"<<status<<",\"error_code\":"<<error.code<<",\"metadata\":"<<error.metadata<<",\"error\":"<<quote(error.message);
   o<<",\"summary\":{\"batch_id\":"<<quote(summary.batch_id)<<",\"action\":"<<summary.action<<",\"total\":"<<summary.total
    <<",\"committed\":"<<summary.committed<<",\"created\":"<<summary.created<<",\"unchanged\":"<<summary.unchanged
    <<",\"conflicts\":"<<summary.conflicts<<",\"failed\":"<<summary.failed<<",\"not_run\":"<<summary.not_run

@@ -65,7 +65,11 @@ void set_error(reader_bulk_error *error,reader_bulk_status code,reader_metadata_
 }
 template<class Function>reader_bulk_status call(reader_bulk_error *error,Function function){
   if(error)std::memset(error,0,sizeof(*error));
-  try{return function();}
+  try{
+    reader_bulk_status status=function();
+    if(error)error->code=status;
+    return status;
+  }
   catch(const failure &failed){set_error(error,failed.code,failed.metadata,failed.message);return failed.code;}
   catch(const fs::filesystem_error &){set_error(error,READER_BULK_IO,READER_METADATA_OK,"Bulk journal file operation failed");return READER_BULK_IO;}
   catch(...){set_error(error,READER_BULK_IO,READER_METADATA_OK,"Cannot allocate bounded bulk batch state");return READER_BULK_IO;}
