@@ -39,6 +39,7 @@ jobs:
           done
           python -m py_compile tests/reader_android_page_theme/*.py
           python tests/reader_android_page_theme/candidate.py
+          python -m py_compile build/android-page-theme/candidate/preferences_run_ui.py
           python -m py_compile tests/reader_android_host_import/run_ui.py tests/reader_android_host_import/check_evidence.py
           python -m py_compile tests/reader_android_fixed_pan/fixtures.py tests/reader_android_fixed_pan/run_ui.py tests/reader_android_cbz_reading/fixtures.py tests/reader_android_cbz_reading/audit.py tests/reader_android_cbz_reading/run_ui.py tests/reader_android_preferences/audit.py tests/reader_android_preferences/run_ui.py tests/reader_session_android/run_export.py tests/reader_session_android/run_roundtrip.py tests/reader_session_android/audit.py tests/reader_host_session_android/run_ui.py tests/reader_host_session_android/audit.py tests/reader_android_search/fixtures.py tests/reader_android_search/audit.py tests/reader_android_search/run_ui.py tests/reader_android_navigation/fixtures.py tests/reader_android_navigation/fixture_module.py tests/reader_android_navigation/audit.py tests/reader_android_navigation/run_ui.py tests/reader_android_reading/fixtures.py tests/reader_android_reading/audit.py tests/reader_android_reading/run_ui.py
       - name: Install Android compiler and API34 emulator
@@ -163,6 +164,8 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
           script: |
             adb install -r -t examples/android/app/build/outputs/apk/debug/app-debug.apk
+            adb install -r -t build/android-page-theme/test-apks/page-theme-ui.apk
+            python tests/reader_android_page_theme/run_ui.py --fixtures build/android-page-theme/fixtures --output build/android-page-theme/ui
             adb install -r -t build/android-host-import/test-apks/host-import-ui.apk
             python tests/reader_android_host_import/run_ui.py --output build/android-host-import/ui
             python tests/webdav_android/run_platform.py --fixture build/webdav-android/fixture --output build/webdav-android/platform
@@ -182,8 +185,6 @@ jobs:
             python tests/reader_android_cbz_reading/run_ui.py --fixtures build/android-cbz-reading/fixtures --output build/android-cbz-reading/ui
             adb install -r -t build/android-fixed-pan/test-apks/fixed-pan-ui.apk
             python tests/reader_android_fixed_pan/run_ui.py --fixtures build/android-fixed-pan/fixtures --output build/android-fixed-pan/ui
-            adb install -r -t build/android-page-theme/test-apks/page-theme-ui.apk
-            python tests/reader_android_page_theme/run_ui.py --fixtures build/android-page-theme/fixtures --output build/android-page-theme/ui
 
       - name: Preserve SDK consumer identity native logs and every export result
         if: always()

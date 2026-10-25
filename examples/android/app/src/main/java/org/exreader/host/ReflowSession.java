@@ -243,10 +243,9 @@ final class ReflowSession implements AutoCloseable {
 
     private PageSnapshot themeSnapshot(BoundedEpub.Frame frame,int at,float size){
         int width=(int)frame.meta[2],height=(int)frame.meta[3],gc=(int)frame.meta[5],lc=(int)frame.meta[6];
-        Bitmap bitmap=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888);
+        Bitmap bitmap=themeBitmap(width,height,frame.pixels);
         try{
             if(frame.meta[4]!=(long)width*4)throw new IllegalStateException("Unexpected theme bitmap stride");
-            bitmap.copyPixelsFromBuffer(ByteBuffer.wrap(frame.pixels));
             long[] starts=new long[gc],ends=new long[gc];float[] x=new float[gc],baseline=new float[gc],advance=new float[gc],sizes=new float[gc];
             for(int i=0;i<gc;i++){starts[i]=frame.spans[i*2];ends[i]=frame.spans[i*2+1];x[i]=frame.geometry[i*4];baseline[i]=frame.geometry[i*4+1];advance[i]=frame.geometry[i*4+2];sizes[i]=frame.geometry[i*4+3];}
             String[] lines=new String[lc];RectF[] bounds=new RectF[lc];
@@ -257,6 +256,13 @@ final class ReflowSession implements AutoCloseable {
             if(!"3.41.0".equals(frame.sdk))throw new IllegalStateException("Page theme requires SDK3.41");
             result.pageTheme=theme;result.themeSdk=frame.sdk;result.themeBoxes=frame.boxes;result.layoutFont=size;result.layoutLine=appearance.line;result.layoutParagraph=appearance.paragraph;result.layoutMargin=appearance.margin;return result;
         }catch(RuntimeException|Error error){bitmap.recycle();throw error;}
+    }
+    static Bitmap themeBitmap(int width,int height,byte[] rgba){
+        if(width<=0||height<=0||(long)width*height*4!=rgba.length)throw new IllegalArgumentException("Invalid native RGBA frame");
+        int[] pixels=new int[width*height];for(int i=0;i<pixels.length;i++){int at=i*4;pixels[i]=(rgba[at+3]&255)<<24|(rgba[at]&255)<<16|(rgba[at+1]&255)<<8|(rgba[at+2]&255);}
+        // setPixels converts SDK straight RGBA to Android's premultiplied storage.
+        // Canvas cannot draw an explicitly unpremultiplied Bitmap.
+        Bitmap bitmap=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888);bitmap.setPixels(pixels,0,width,0,0,width,height);return bitmap;
     }
     private PageLoad themeNext(HostTask task)throws Exception{
         if(themedPager==0)return themePrepare(index+1,-1,fontSize,task);
