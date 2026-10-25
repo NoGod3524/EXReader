@@ -1,5 +1,34 @@
 # Native GTK folder batch import
 
+## Reboot checkpoint — 2026-10-25 00:36 UTC
+
+Branch `codex/reader-gtk-batch-import-ui` has implementation head
+`0c302a4774ba693c261e786ac627bbfa0ddf4eb9`, verified equal to origin before
+this checkpoint's evidence-only documentation commit. Host, probes and workflow
+changes are committed; the new orphan-frame fix is included.
+
+Full cold run [40147055374](https://github.com/NoGod3524/EXReader/actions/runs/40147055374),
+attempt 1, job `121030532723`, is still in progress on that exact source. The
+observed step is installation/checking of the unchanged Search package. The
+new orphan-frame backend regression and full native UI27 have not executed yet
+in this run at the checkpoint. No cloud run is restarted for the computer reboot.
+
+The prior full run [40146396866](https://github.com/NoGod3524/EXReader/actions/runs/40146396866)
+on `70ecc1f4` has a failed folder UI step; its actual failure detail still needs
+to be read after reboot. Earlier completed sources passed 673 host backend
+checks, but that count does not include the newest orphan-frame test. The native
+chooser diagnostic `40146055189` passed its eight scoped checks with 80 extra
+parent directories and real offscreen cell focus, then 37 candidates produced
+35 additions, one duplicate and one damaged-file failure. That diagnostic used
+the verified older `cac48f05` program, separately identifies its test source,
+and remains `accepted=false`.
+
+`accepted=false`, `batch_import_scope_passed=false` and native UI27 acceptance
+remain unchanged. Both real page-palette failures remain failures. No native
+page-palette implementation has started. After reboot, read the previous UI
+traceback and latest full run, then finish all declared host and retained checks
+on one final source. All execution and artifact processing remain on Actions.
+
 The optional GTK folder importer uses the installed `EXReaderBatchImport 0.1.0`
 package over the unchanged SDK 3.40.0 / ABI 1. Its fixed implementation tree is
 `40ccc040a65970df056dfb635f247517f8c382df`, with sideload tree
@@ -42,6 +71,10 @@ the established startup repair; it never silently resumes a folder scan.
 
 A displayed page must finish its normal COMMIT before another import can
 invalidate borrowed SQLite sources. The worker yields while a frame is pending.
+Only an explicit UI confirmation of no pending acceptance/save may release an
+orphaned unaccepted frame left after cancelling a reading generation. The new
+backend case verifies that the abandoned Font28 frame is not adopted and the
+accepted Font26 remains the reading source.
 Each actual item reuses `reader_import_suspend` / `reader_import_resume`, retains
 the accepted old reading position, and does not navigate automatically to a new
 book. Imports pause while other source-owning Search, Directory or Reading

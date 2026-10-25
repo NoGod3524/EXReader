@@ -1,7 +1,35 @@
 {
   "accepted": false,
   "batch_import_scope_passed": false,
-  "status": "pending_cloud_execution",
+  "status": "reboot_checkpoint_pending_full_validation",
+  "checkpoint_utc": "2026-10-25T00:36:08Z",
+  "branch": "codex/reader-gtk-batch-import-ui",
+  "code_head": "0c302a4774ba693c261e786ac627bbfa0ddf4eb9",
+  "code_head_verified_on_origin_before_checkpoint_docs": true,
+  "native_ui_27_accepted": false,
+  "latest_full_run": {
+    "id": 40147055374,
+    "attempt": 1,
+    "job": 121030532723,
+    "source": "0c302a4774ba693c261e786ac627bbfa0ddf4eb9",
+    "event": "workflow_dispatch",
+    "diagnostic_only": false,
+    "status_at_checkpoint": "in_progress",
+    "step_at_checkpoint": "Install unchanged Search and rerun its public installed consumers"
+  },
+  "orphan_frame_fix": {
+    "commit": "0c302a4774ba693c261e786ac627bbfa0ddf4eb9",
+    "status": "implemented_cloud_regression_not_yet_executed_at_checkpoint",
+    "contract": "Only explicit main-UI idle confirmation may discard an orphaned unaccepted frame; an actual pending acceptance/COMMIT retains the existing barrier. The new real-SDK test drops Font28, resumes import only after confirmation, and requires the accepted Font26 to remain current."
+  },
+  "previous_full_run": {
+    "id": 40146396866,
+    "source": "70ecc1f4033a59a289071b0c7b5f2c4fa1cb714b",
+    "native_ui_step": "failure",
+    "failure_detail": "not yet read at checkpoint; inspect this run's native report and traceback after reboot"
+  },
+  "next_action": "Read the completed 70ecc1f4 native UI failure and latest 0c302a47 run before any further change. Complete the new orphan-frame regression, native UI27 and all retained suites on one final source. Retain the two real palette failures; no palette implementation has started and SDK must remain frozen.",
+  "cancelled_duplicate_push_runs": [40143189374, 40144539602, 40147052470],
   "base_source": "401729ba9537b58c8566372fb953384ce61381d7",
   "sdk_frozen_source": "9854061be331fe603a1822d9b2b36ee357154927",
   "sdk_version": "3.40.0",
@@ -15,5 +43,105 @@
     "light_foreground_and_background_change_page_pixels",
     "dark_theme_and_palette_change_page_pixels"
   ],
-  "runs": []
+  "runs": [],
+  "local_build_test_syntax_or_artifact_processing": false,
+  "later_chooser_diagnostics": {
+    "accepted": false,
+    "program_source": "cac48f0557506c97ccd4295c891bfdb838c14f22",
+    "program_sha256": "71773ddd98bc4b653d0a0bc37c7ecc6d4ea447161676f34ddcf17c67e74862aa",
+    "input_artifact": {"id": 12579304921, "bytes": 55493518, "digest": "sha256:42fb6fe4007cd2dabaeafad18e12bf05d72cdfe8fa01ccbac9d078d3b1359de4"},
+    "host_tree_equal": false,
+    "changed_host_paths_at_last_diagnostic": ["examples/linux/batch_import_ui.inc"],
+    "runs": [
+      {"id": 40145364234, "test_source": "d061e31941c720e4e57a1dfe7a32c7ce3b9cdbff", "conclusion": "failure", "reason": "Actual cell Component.scroll_to is unsupported, including the visible work row."},
+      {"id": 40145583501, "test_source": "2eca97bdceef95c75c1a0c477f6b55197a4c1133", "conclusion": "failure", "reason": "Native viewport wheel actions did not reveal the padded chooser-fixtures target before the existing deadline."},
+      {"id": 40146055189, "test_source": "70ecc1f4033a59a289071b0c7b5f2c4fa1cb714b", "conclusion": "success", "accepted": false, "checks": 8, "extra_parent_directories": 80, "reason": "The native accessible cell focus action returned true and revealed the actual offscreen row; subsequent real pointer clicks and exact selected-path SHA checks imported 37 candidates as 35 new, one duplicate and one bad EPUB, max32 receipts and zero pending mapping. This old-program diagnostic does not grant current-source UI27."}
+    ]
+  },
+  "earlier_failed_runs": [
+    {
+      "run": 40139011692,
+      "attempt": 1,
+      "job": 121006557670,
+      "source": "7c26153e3557beb92208787da41c555f7433ca9b",
+      "conclusion": "failure",
+      "reason": "Strict host compilation rejected two snprintf format-truncation warnings and a missing GTK variadic sentinel. Original batch668, review4 and existing installed package checks passed; no new host acceptance was granted.",
+      "artifact": {"id": 12577669881, "bytes": 14765108, "digest": "sha256:446ba5294100284ee374f85d120a519c70381929b358cca217ec72d762aa2efb", "expires_at": "2027-01-22T22:32:37Z"}
+    },
+    {
+      "run": 40139372605,
+      "attempt": 1,
+      "job": 121007649432,
+      "source": "0f0303faf3135677a74b6ab8efd3cab08d428260",
+      "conclusion": "failure",
+      "backend_checks": 673,
+      "reason": "The native folder chooser stayed open with no selected path. New observation called get_filename synchronously during GTK transitions and the probe confirmed without observing the native focus/selection readiness. Deferred existing native_import snapshots replaced the direct getter; this run grants no UI scope.",
+      "artifact": {"id": 12577289306, "bytes": 34349368, "digest": "sha256:987696c1dcce54ceca1badb8cd33970c27e295e118ead14b81711a84cf3392d7", "expires_at": "2027-01-22T22:37:43Z"}
+    },
+    {
+      "run": 40140095188,
+      "attempt": 1,
+      "job": 121009829351,
+      "source": "d6c8ddaca78a6e49498ab36e8c86983ccb0d57c9",
+      "conclusion": "failure",
+      "backend_checks": 673,
+      "reason": "The active native GtkFileChooserEntry's exact text SHA differed from the probe's path SHA. Later cloud-only inspection observed GTK appending a directory separator; the selected-path and response state also needed independent native observation.",
+      "artifact": {"id": 12577459936, "bytes": 34350856, "digest": "sha256:6a4d0a7576ca745a0450dff244b2eadb6369f6695ddcf96ad7aab6ab688dc30d", "expires_at": "2027-01-22T22:48:09Z"}
+    },
+    {
+      "run": 40140610408,
+      "attempt": 1,
+      "job": 121011373771,
+      "source": "8a866c074b9982be4fcd1488f7894f8eea91d495",
+      "conclusion": "failure",
+      "backend_checks": 673,
+      "reason": "Moving Enter did not fix the preceding exact typed-path comparison: GTK had completed the directory entry with a trailing separator. Only two preparatory native checks executed.",
+      "artifact": {"id": 12578213256, "bytes": 34350428, "digest": "sha256:b9bf1d86a36765c4a2cb39c6ea639cd12ffe2a90377cfbd4f030178a486beafa", "expires_at": "2027-01-22T22:55:44Z"}
+    },
+    {
+      "run": 40141269875,
+      "attempt": 1,
+      "job": 121013333255,
+      "source": "a9663cc379cb995c506b759ed462055487a6a7f1",
+      "conclusion": "failure",
+      "backend_checks": 673,
+      "reason": "The normal cold push retained the same exact typed-directory comparison while the new source-separated artifact diagnostic exposed the GTK entry's actual trailing separator. The cold native run still stopped before import.",
+      "artifact": {"id": 12578902023, "bytes": 34350263, "digest": "sha256:0f191e610ab7a3b2e74cea3e6906c67806adb950c689f818b610c9589c88927e", "expires_at": "2027-01-22T23:05:14Z"}
+    },
+    {
+      "run": 40143191019,
+      "attempt": 1,
+      "job": 121019025172,
+      "source": "cac48f0557506c97ccd4295c891bfdb838c14f22",
+      "conclusion": "failure",
+      "backend_checks": 673,
+      "reason": "The full native directory table contained an offscreen target cell reporting showing with negative sentinel coordinates. The probe passed these coordinates to xdotool. Native Component.scroll_to and nonnegative coordinate checks replace that invalid action; existing palette assertions still ran and retained their two real failures.",
+      "artifact": {"id": 12579304921, "bytes": 55493518, "digest": "sha256:42fb6fe4007cd2dabaeafad18e12bf05d72cdfe8fa01ccbac9d078d3b1359de4", "expires_at": "2027-01-22T23:33:02Z"}
+    },
+    {
+      "run": 40144546358,
+      "attempt": 1,
+      "job": 121022985810,
+      "source": "0e426fd92877230c7943ad60ad7851297116ed22",
+      "conclusion": "failure",
+      "reason": "The native UI probe required unsupported Component.scroll_to on the first work cell. The actual error annotation was native cell cannot scroll into view: work; later padded diagnostics replaced it with the standard native focus action. Palette assertions retained their real failures.",
+      "artifact": {"id": 12580251879, "bytes": 55415605, "digest": "sha256:3bc1d5dfb53d19f08cd03fcf3974fc6f20f621c086e352c2ec113ea158efbffa", "expires_at": "2027-01-22T23:53:30Z"}
+    }
+  ],
+  "chooser_diagnostics": {
+    "accepted": false,
+    "program_source": "8a866c074b9982be4fcd1488f7894f8eea91d495",
+    "program_sha256": "630197230d0a52b181dac4ad760d3414632f07a779313c713ab820dccbe1a18f",
+    "input_artifact": {"id": 12578213256, "bytes": 34350428, "digest": "sha256:b9bf1d86a36765c4a2cb39c6ea639cd12ffe2a90377cfbd4f030178a486beafa"},
+    "runs": [
+      {"run": 40141305537, "source": "a9663cc379cb995c506b759ed462055487a6a7f1", "conclusion": "failure", "reason": "Diagnostic extractor assumed a containing directory; the existing build_linux_host archive puts payload contents directly at its root. No UI ran and no artifact was uploaded."},
+      {"run": 40141381580, "source": "fe00eb340e2e24f00e0aca6296ef7c8c701282bc", "conclusion": "failure", "reason": "Actual GtkFileChooserEntry text showed the exact directory with an automatically appended slash."},
+      {"run": 40141639727, "source": "d71e4ce9821b360312a630ec12d3908f3821757a", "conclusion": "failure", "reason": "Equivalent typed-directory spellings matched, but the directory accept control remained unavailable."},
+      {"run": 40141980440, "source": "cf46e2c5777b617394c313fb1fcecc46823dd86b", "conclusion": "failure", "reason": "Independent AT-SPI inspection confirmed Choose folder itself was default but genuinely disabled."},
+      {"run": 40142268523, "source": "4d726cbabf98ffc02977f339c076d433ca0a0acd", "conclusion": "failure", "reason": "A second native Enter left the same actual accept control disabled."},
+      {"run": 40142449668, "source": "53f897a14500e0ce5b028940c042795453ff2b12", "conclusion": "failure", "reason": "The native chooser exposed places and a location entry but no browsed directory rows."},
+      {"run": 40142622003, "source": "fc94be99fdc4a3d5c2f6b8e6ef997f2cd15b6fc9", "conclusion": "failure", "reason": "Clicking the real Home place exposed actual home directory rows and enabled acceptance, but the location-entry path still did not complete a dialog response."},
+      {"run": 40142940953, "test_source": "d194e216b61ed8da919c8249836c00d1ee5a9b4f", "conclusion": "success", "checks": 8, "accepted": false, "reason": "Each real native directory-table row was selected and its exact path SHA verified; ancestors were opened and the final directory selected through the live native accept control. 37 candidates produced 35 additions, one exact duplicate and one real format failure; max UI rows 32 and no pending product mapping."}
+    ]
+  }
 }
