@@ -12,6 +12,11 @@ static void winrecords_phase(void *context,int phase) {
 static exr_status winrecords_resolve(host_job *job,host_session *input,const reader_rs_record *record,
     size_t *unit,exr_anchor_match *match,exr_pager **temporary) {
   exr_control control={job_cancel_check,NULL,job};reader_rs_error error={0};reader_rs_status code=READER_RS_IDENTITY;
+#ifdef EXR_READER_WINDOWS_RAW3
+  if(input->fixed && record->mode==READER_RS_FIXED_PAGE && record->anchor_version==3)
+    code=reader_rs_resolve_fixed_v3(input->fixed_document,record,&control,unit,match,&error);
+  else
+#endif
   if(input->fixed && record->mode==READER_RS_FIXED_PAGE)
     code=reader_rs_resolve_fixed(input->fixed_document,record,&control,unit,match,&error);
   else if(input->bounded && record->mode==READER_RS_EPUB_CHAPTER) {

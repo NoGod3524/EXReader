@@ -50,7 +50,7 @@ def main():
             value=report('report.json')
             if item['name'].startswith('windows-raw3-source-only-'):
                 require(value['source_preflight_passed'] is True and value['accepted'] is False and
-                        value['host_raw3_implemented'] is False,'source-only boundary differs')
+                        value['host_raw3_accepted'] is False,'source-only boundary differs')
             else:
                 require(value['accepted'] is True and value['host_raw3_accepted'] is False and value['mixed_family_refusals']==2,
                         'metadata scope differs')
