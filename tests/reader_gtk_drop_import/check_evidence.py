@@ -19,13 +19,23 @@ def main():
     report = dict(accepted=False, drop_import_scope_passed=False, ok=False, source_sha=source, run_id=run, attempt=attempt,
                   program_sha256=digest, complete_product=False, physical_device_execution=False,
                   six_platform_accepted=False, performance_accepted=False, orca_accepted=False,
-                  settings_whole_page_palette_accepted=False, verified={})
+                  settings_whole_page_palette_accepted=False, verified={}, legacy_reports_external_identity={})
 
     def load(relative, grant=None, count=None):
         path = build / relative
         value = json.loads(path.read_text())
         assert value.get('source_sha', value.get('source')) == source, relative
-        assert str(value['run_id']) == run and str(value['attempt']) == attempt, relative
+        assert str(value['run_id']) == run, relative
+        if relative == 'account-original/report.json':
+            # This unchanged schema predates attempt/program fields. Keep its
+            # bytes intact; the finished producer job and raw ZIP bind it.
+            assert value['schema'] == 1 and value['kind'] == 'real-x11-input'
+            assert 'attempt' not in value and 'program_sha256' not in value
+            report['legacy_reports_external_identity'][relative] = dict(
+                source_sha=source, run_id=run, attempt=attempt, program_sha256=digest,
+                binding='same-attempt producer job and authenticated raw ZIP; not legacy self-report')
+        else:
+            assert str(value['attempt']) == attempt, relative
         if 'program_sha256' in value:
             assert value['program_sha256'] == digest, relative
         if grant:
