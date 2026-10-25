@@ -34,10 +34,13 @@ struct object {
 };
 std::string array(const std::vector<std::string> &items){std::string o="[";for(size_t i=0;i<items.size();i++){if(i)o+=",";o+=items[i];}return o+"]";}
 std::vector<std::string> checks,cases,lifecycle;
+std::map<std::string,size_t> check_occurrences;
 size_t failures=0,moves=0;
 void expect(const std::string &name,bool ok,const std::string &detail=""){
+  size_t occurrence=++check_occurrences[name];
+  std::string unique=occurrence==1?name:name+" ["+std::to_string(occurrence)+"]";
   if(!ok){failures++;std::fprintf(stderr,"FAIL %s %s\n",name.c_str(),detail.c_str());}
-  checks.push_back(object().str("name",name).set("pass",boolean(ok)).str("detail",detail).dump());
+  checks.push_back(object().str("name",unique).set("pass",boolean(ok)).str("detail",detail).dump());
 }
 void stage(const char *what){std::printf("stage: %s\n",what);std::fflush(stdout);}
 [[noreturn]] void fatal(const std::string &what){std::fprintf(stderr,"FATAL %s\n",what.c_str());std::exit(2);}
