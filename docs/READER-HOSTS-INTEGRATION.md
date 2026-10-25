@@ -56,3 +56,11 @@
 
 共同Windows作业复用完整 records 原作业，启用可选记录UI并安装既有G03/G04，保留原导航/搜索/宿主回归。严格汇总先执行原F1/F2认证，再认证记录32项及真实公开定位；共同最终汇总要求三个报告的宿主二进制摘要一致。尚未完成新共同轮之前，不把独立记录证据授予共同源码，也不授予Apple、GTK批量导入或Android平移。
 
+## Windows 记录与 Android CBZ 的共同源码认证结果
+
+source `15926e56034e26916b1e585cd9d907825379f17f` / [run 40154395150](https://github.com/NoGod3524/EXReader/actions/runs/40154395150) / attempt1 已终态，认证 job `121056256969` 实际读取同轮工件，`problems=[]`。三桌面18包组合、Windows搜索/目录/记录32项与全部原回归、GTK记录/搜索/目录、Android原92项（含CBZ10）均在同一源码上通过。Windows严格汇总同时保留原F1/F2和记录三个报告的相同宿主摘要。
+
+整体仍为`accepted=false`，仅保留GTK的两个实际整页配色失败：`dark_theme_and_palette_change_page_pixels`、`light_foreground_and_background_change_page_pixels`；Android `page_colors=false`。原账户chooser输入故障已修正，本轮账户全套通过，不能继续将它列作当前失败。Apple宿主、GTK文件夹批量导入和Android平移仍由独立候选推进，不在本次共同授予范围。
+
+前一 source `c2f652b97a0dda5f2bbd46fa3386dec231990185` / run `40153783967` 同样完成CBZ与原宿主认证，`problems=[]`、仅两palette失败；它尚无Windows记录。两轮身份及原f0证据完整保留于JSON，旧绿不转授不同源码。本次后续证据提交只改本文和JSON。
+
