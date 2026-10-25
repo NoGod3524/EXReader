@@ -1,6 +1,6 @@
 # Android SDK3.41 整页主题候选
 
-状态：实现与 Actions 验收脚本已准备，尚未获得云端通过。
+状态：云端迭代中，尚未获得整轮通过。
 
 本候选起自 Android 导入证据 `8a564e817fec01538d9c6efc35d173c6f24d8fec`，普通合并 SDK3.41 `edddc463c06ed5731195cdb8f06b2df6dff7699e` 和模块显式版本支持 `f680aeaddfb1ecc67ead353554f5b91a5703f72f`；之后的路径归属基点为 `82ca471c867209f48d3c07eaf92baf0eee57c74b`。
 
@@ -15,3 +15,9 @@ TXT 和非有界 EPUB 使用宿主所有的公开 SDK 对象，几何、文本�
 新增 10 项实际宿主检查覆盖 TXT/EPUB 的 light/dark/system、Original、原生翻页、可见文字的 bookmark/highlight capture/resolve、作者背景/PNG 真实布局内部采样、固定页原色、取消、I/O 失败、外观连发与新进程恢复。工件保留实际应用原始 PNG、RGBA、原始报告、布局盒坐标与源图片中心像素；严格作业独立认证 ZIP API 字节/digest、像素与报告身份。
 
 Android 实际 parser 标签仍为 `exreader-sdk-3.41.0`，未改旧 formatter、resolve guards 或 wire。不授予 3.40 旧记录迁移、六平台互通、真机、辅助技术或性能范围。
+
+## 保留的失败
+
+- `f7025b6b` / run `40176117979`：宿主与原生审计通过；旧导入20、HostSync16、搜索15通过。目录第三项发现列表 ready 先于首行真实布局发布，随后已修宿主批量换页/复位/布局就绪发布，原18项测试不变。
+- `5aa59af5` / run `40176912569`：Original 与独立旧公开绑定的实际像素逐值对比通过；TXT 深色实际前景像素失败。TXT 没有 HTML body，已改为在公开段落模型上应用前景规则；原生整页背景已是真实目标颜色，不能据此授予整页主题。
+- 根共同源 run `40175058872` 的旧 FixedPan 第二项保留为未收口：真实 pointer/timer 尚未形成有效选区。当前原8项断言和注入事件不变，候选只增加失败时实际 pointer/hit/anchor 与 frame 诊断，继续用同源整轮验证。

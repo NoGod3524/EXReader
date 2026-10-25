@@ -1,11 +1,15 @@
 {
   "accepted": false,
-  "status": "awaiting-first-cloud-run",
+  "status": "cloud-iteration-not-accepted",
   "sdk_candidate": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
   "post_merge_base": "82ca471c867209f48d3c07eaf92baf0eee57c74b",
   "expected_inherited_business_checks": 120,
   "expected_theme_checks": 10,
-  "runs": [],
+  "runs": [
+    {"source_sha":"f7025b6b4159f0decfe98929bd8255832346fcad","run":40176117979,"attempt":1,"accepted":false,"failure":"original_navigation_first_row_layout_readiness_race","diagnostic_passed_business_groups":{"host_import":20,"host_sync":16,"search":15}},
+    {"source_sha":"5aa59af5cad7076aa5174571fcdbb90a3eff2a08","run":40176912569,"attempt":1,"accepted":false,"failure":"actual_txt_foreground_not_applied_to_bodyless_paragraph_model","original_binding_pixel_comparison_passed":true}
+  ],
+  "retained_upstream_failure":{"run":40175058872,"check":"panned_pdf_selection_and_clipped_semantic_bounds_match_actual_page","failure":"actual timer/pointer enters real selection mode before drag","original_assertion_unchanged":true},
   "physical_device": false,
   "performance_accepted": false,
   "sdk340_record_migration_accepted": false,
