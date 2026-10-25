@@ -81,3 +81,14 @@ or universal migration acceptance is granted by source review alone. D01's
 independent raw resolver verification is not reused as this host's acceptance.
 All builds, syntax checks, fixtures, execution and artifact processing run only
 in Actions. Local work is restricted to source/docs/Git.
+
+The first executable matrix retained a real same-version refusal: the probe
+sent a zero source-frame part after the old EPUB's genuine native progress had
+restored part 1. The existing worker correctly rejects stale-frame contexts
+before record admission; CBZ page 1 needs the same source context. Actions-only
+read-only inspection authenticated the original ZIP and ELF, verified native
+FOUND and old immutable wires, and traced admission without altering an ELF
+byte, register, parser or request. The correction changes only probe commands
+to carry actual current part/page exactly as the UI does. It does not change
+the retained destination or relax any production check. Earlier build-driver
+prefix/scope failures and all diagnostic identities remain in the JSON record.
