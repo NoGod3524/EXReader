@@ -1,24 +1,463 @@
 {
   "package": "D01",
-  "status": "pending_actions",
-  "verification_accepted": false,
+  "status": "verification_complete_migration_not_accepted",
+  "verification_accepted": true,
   "migration_accepted": false,
-  "tested_sha": null,
-  "evidence_head": null,
-  "retained_failures": [{
-    "source_sha": "2f8244fedd7eb860990cca395a319e564f196eb1",
-    "run_id": 40170813901,
-    "attempt": 1,
-    "native_jobs": {"Linux": 121101087000, "Windows": 121101087131},
-    "native_conclusions": "success",
-    "strict_job": 121102058391,
-    "strict_conclusion": "failure",
-    "cause": "Windows producer serialized ZIP-relative paths using backslashes; strict lookup correctly rejected them. No failure report was written, so strict artifact upload also failed.",
-    "additional_log_finding": "The generated manifest metadata used Windows CRLF vs Linux LF; original book bytes were identical. D01 now preserves raw generator metadata separately and uses canonical LF metadata before the first producer baseline, retaining the whole-originals equality assertion.",
+  "tested_sha": "69d8f789e68141a4b9c26219ff3a4f43f3d355e3",
+  "retained_failures": [
+    {
+      "source_sha": "2f8244fedd7eb860990cca395a319e564f196eb1",
+      "run_id": 40170813901,
+      "attempt": 1,
+      "native_jobs": {
+        "Linux": 121101087000,
+        "Windows": 121101087131
+      },
+      "native_conclusions": "success",
+      "strict_job": 121102058391,
+      "strict_conclusion": "failure",
+      "cause": "Windows producer serialized ZIP-relative paths using backslashes; strict lookup correctly rejected them. No failure report was written, so strict artifact upload also failed.",
+      "additional_log_finding": "The generated manifest metadata used Windows CRLF vs Linux LF; original book bytes were identical. D01 now preserves raw generator metadata separately and uses canonical LF metadata before the first producer baseline, retaining the whole-originals equality assertion.",
+      "artifacts": [
+        {
+          "id": 12590605525,
+          "name": "reader-sdk-record-migration-Linux-40170813901-1",
+          "bytes": 37957067,
+          "sha256": "0e7a3b882a5c10defe5e66f006bda580b563a386cabc259933e7bf1b87ae5428",
+          "expires_at": "2026-11-24T07:00:07Z"
+        },
+        {
+          "id": 12590580640,
+          "name": "reader-sdk-record-migration-Windows-40170813901-1",
+          "bytes": 40885188,
+          "sha256": "42978a51b4ad5cc5e5f190dc2dc8e85693ca31aefe1f372a4638ed6456fcca3c",
+          "expires_at": "2026-11-24T07:00:19Z"
+        }
+      ]
+    }
+  ],
+  "remaining_gaps": [
+    "Strict parser-qualified source identity has no authorized cross-version compatibility policy; migration_accepted remains false.",
+    "Only the generated TXT, global/bounded EPUB, PDF and CBZ corpus was exercised; not arbitrary user libraries or other formats.",
+    "macOS, mobile platforms, physical UI/navigation effects and cross-device sync were not tested; complete_product and cross_device_sync remain false.",
+    "No new crash-during-commit recovery claim. Existing unchanged G03 negative tests were retained.",
+    "Root must review any future public-interface parser compatibility policy and host integration; D01 changes no frozen implementation, schema, wire or identity rule."
+  ],
+  "tested_tree": "cc8cd80ed2f0191fb72642ad873fc7109a7d0ebf",
+  "branch": "codex/dot-sdk-record-migration",
+  "evidence_parent": "69d8f789e68141a4b9c26219ff3a4f43f3d355e3",
+  "evidence_delta": [
+    "docs/READER-SDK-RECORD-MIGRATION.md",
+    "docs/validation/reader-sdk-record-migration.json"
+  ],
+  "evidence_head_identification": "Documentation-only [skip ci] commit containing this record; exact Git SHA supplied in final handoff.",
+  "completed_at": "2026-10-25T07:13:37Z",
+  "run_id": 40171441924,
+  "attempt": 1,
+  "run_conclusion": "success",
+  "jobs": [
+    {
+      "id": 121102918770,
+      "name": "migration (Linux)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 121102918815,
+      "name": "migration (Windows)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 121104155488,
+      "name": "authenticated migration evidence",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "strict_verification": {
+    "source_sha": "69d8f789e68141a4b9c26219ff3a4f43f3d355e3",
+    "run_id": "40171441924",
+    "attempt": "1",
+    "verification_accepted": true,
+    "migration_accepted": false,
+    "cross_device_sync": false,
+    "complete_product": false,
     "artifacts": [
-      {"id": 12590605525, "name": "reader-sdk-record-migration-Linux-40170813901-1", "bytes": 37957067, "sha256": "0e7a3b882a5c10defe5e66f006bda580b563a386cabc259933e7bf1b87ae5428", "expires_at": "2026-11-24T07:00:07Z"},
-      {"id": 12590580640, "name": "reader-sdk-record-migration-Windows-40170813901-1", "bytes": 40885188, "sha256": "42978a51b4ad5cc5e5f190dc2dc8e85693ca31aefe1f372a4638ed6456fcca3c", "expires_at": "2026-11-24T07:00:19Z"}
+      {
+        "system": "Linux",
+        "job_id": 121102918770,
+        "job_status": "completed",
+        "job_conclusion": "success",
+        "artifact_id": 12590686677,
+        "name": "reader-sdk-record-migration-Linux-40171441924-1",
+        "bytes": 37957546,
+        "api_digest": "sha256:d812a6110c2e272ab9ff20681dbfefadf148c899f9e7ad2443e7cf980d9cefaa",
+        "recomputed_sha256": "d812a6110c2e272ab9ff20681dbfefadf148c899f9e7ad2443e7cf980d9cefaa",
+        "expires_at": "2026-11-24T07:10:47Z",
+        "result_sha256": "063edb14ad190c4d7b30e2598b71c7cd8e1dea2a7df5d20d957f865ea0dd2791",
+        "matrices": {
+          "3.40.0-to-3.40.0": {
+            "report": "3.40.0-to-3.40.0.json",
+            "report_sha256": "d2b6be4645fe146972e63c828e65b49fb9ec01dd8bdf9235ec435340815707e3",
+            "checks": 304,
+            "records": 56,
+            "database_and_wire_bytes_unchanged": true,
+            "admissions": {
+              "CONFLICT_REJECTED": 2,
+              "FOUND": 38,
+              "TOMBSTONE_REJECTED": 15,
+              "UNRESOLVED": 1
+            }
+          },
+          "3.40.0-to-3.41.0": {
+            "report": "3.40.0-to-3.41.0.json",
+            "report_sha256": "82a34dda0fe2b3c31683001f1941c2b77fdcdd8315b8f503b52c86e06d3a3db0",
+            "checks": 305,
+            "records": 56,
+            "database_and_wire_bytes_unchanged": true,
+            "admissions": {
+              "CONFLICT_REJECTED": 2,
+              "PARSER_IDENTITY_REJECTED": 39,
+              "TOMBSTONE_REJECTED": 15
+            }
+          },
+          "3.41.0-to-3.41.0": {
+            "report": "3.41.0-to-3.41.0.json",
+            "report_sha256": "68d8350cd1a66c844667a2087d9f9fb256faf5b7e9dbf204f437a08d1ad09c92",
+            "checks": 304,
+            "records": 56,
+            "database_and_wire_bytes_unchanged": true,
+            "admissions": {
+              "CONFLICT_REJECTED": 2,
+              "FOUND": 38,
+              "TOMBSTONE_REJECTED": 15,
+              "UNRESOLVED": 1
+            }
+          },
+          "3.41.0-to-3.40.0": {
+            "report": "3.41.0-to-3.40.0.json",
+            "report_sha256": "f3ef41bd4ec3c7ddedd78312109d26e7b82b618da404649b406c6ae5b258214d",
+            "checks": 305,
+            "records": 56,
+            "database_and_wire_bytes_unchanged": true,
+            "admissions": {
+              "CONFLICT_REJECTED": 2,
+              "PARSER_IDENTITY_REJECTED": 39,
+              "TOMBSTONE_REJECTED": 15
+            }
+          }
+        },
+        "programs": {
+          "3.40.0": {
+            "sdk_source": "9854061be331fe603a1822d9b2b36ee357154927",
+            "probe_sha256": "1fbe334b3dd23e746054fdc4ef4cd3f2cfc1a3cef05c51b3d143e5b28a25508d",
+            "c_sha256": "864d0fc0cb84fb776198e275336b9bab206b47cddb4e57c093099a7e7cfc7025",
+            "original_checks": 1413,
+            "original_failures": 0
+          },
+          "3.41.0": {
+            "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+            "probe_sha256": "1adb64b6d3767a8a59f8ddda9f8b56ad8f16c8f6719b7f30221367eb0e58ce17",
+            "c_sha256": "649d35601b6639bad799a75dc1a5d4cf72e4c5084f1b8a5755a534be79aedc24",
+            "original_checks": 1413,
+            "original_failures": 0
+          }
+        },
+        "verifier_rejections": [
+          "wrong-source",
+          "wrong-run",
+          "wrong-attempt",
+          "failed-job",
+          "running-job",
+          "wrong-job-name",
+          "wrong-artifact-id",
+          "expired-artifact",
+          "expired-date",
+          "wrong-api-digest",
+          "wrong-api-size",
+          "empty-zip",
+          "duplicate-zip-member",
+          "duplicate-json-key",
+          "missing-report",
+          "wrong-module-source",
+          "wrong-original-report",
+          "false-migration-acceptance",
+          "backslash-manifest-path",
+          "absolute-manifest-path",
+          "parent-manifest-path",
+          "backslash-zip-member",
+          "parent-zip-member",
+          "absolute-zip-member",
+          "binary-tamper",
+          "original-tamper",
+          "missing-case",
+          "duplicate-case"
+        ],
+        "unexpected_exception_evidence_preserved": true
+      },
+      {
+        "system": "Windows",
+        "job_id": 121102918815,
+        "job_status": "completed",
+        "job_conclusion": "success",
+        "artifact_id": 12589389989,
+        "name": "reader-sdk-record-migration-Windows-40171441924-1",
+        "bytes": 40885497,
+        "api_digest": "sha256:fedf1f2d033d02503dcf1db03844a8775f9cfbd2fad2201ac7351b7b15e5e228",
+        "recomputed_sha256": "fedf1f2d033d02503dcf1db03844a8775f9cfbd2fad2201ac7351b7b15e5e228",
+        "expires_at": "2026-11-24T07:11:26Z",
+        "result_sha256": "50937e3b9f7e1a9c9ef9602fc3ef5135d2c0a604289b5e2dcc5167c7bed17ad4",
+        "matrices": {
+          "3.40.0-to-3.40.0": {
+            "report": "3.40.0-to-3.40.0.json",
+            "report_sha256": "81ac7751c3a86bb1fdab47d543b53f177aaf81a3b85ec14380342e8d2fa96216",
+            "checks": 304,
+            "records": 56,
+            "database_and_wire_bytes_unchanged": true,
+            "admissions": {
+              "CONFLICT_REJECTED": 2,
+              "FOUND": 38,
+              "TOMBSTONE_REJECTED": 15,
+              "UNRESOLVED": 1
+            }
+          },
+          "3.40.0-to-3.41.0": {
+            "report": "3.40.0-to-3.41.0.json",
+            "report_sha256": "1d8292f5e36615a966658635e0e1c7eb2b750dc939e568ff653859a513bd21ce",
+            "checks": 305,
+            "records": 56,
+            "database_and_wire_bytes_unchanged": true,
+            "admissions": {
+              "CONFLICT_REJECTED": 2,
+              "PARSER_IDENTITY_REJECTED": 39,
+              "TOMBSTONE_REJECTED": 15
+            }
+          },
+          "3.41.0-to-3.41.0": {
+            "report": "3.41.0-to-3.41.0.json",
+            "report_sha256": "aff81e5df29d0bac1fc2294fc78b39b0e245cc7168d36d432fa72ad3f7ffe1aa",
+            "checks": 304,
+            "records": 56,
+            "database_and_wire_bytes_unchanged": true,
+            "admissions": {
+              "CONFLICT_REJECTED": 2,
+              "FOUND": 38,
+              "TOMBSTONE_REJECTED": 15,
+              "UNRESOLVED": 1
+            }
+          },
+          "3.41.0-to-3.40.0": {
+            "report": "3.41.0-to-3.40.0.json",
+            "report_sha256": "e829af2e3ad1268cbefd8de6be04658591ff47adf58f26a7099c4d53ae632b5c",
+            "checks": 305,
+            "records": 56,
+            "database_and_wire_bytes_unchanged": true,
+            "admissions": {
+              "CONFLICT_REJECTED": 2,
+              "PARSER_IDENTITY_REJECTED": 39,
+              "TOMBSTONE_REJECTED": 15
+            }
+          }
+        },
+        "programs": {
+          "3.40.0": {
+            "sdk_source": "9854061be331fe603a1822d9b2b36ee357154927",
+            "probe_sha256": "726b5225910a20413ae66bddb28159196a2fca0aaf39f312291497e31edabd74",
+            "c_sha256": "2b268ccb702da642fa18509c58e97a43eea8e687b2096d19038d963e2fa05855",
+            "original_checks": 1413,
+            "original_failures": 0
+          },
+          "3.41.0": {
+            "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+            "probe_sha256": "de18e93191fde08e5aa54da0e38cfc8219ab634d6aefffe362e99f453b091f3d",
+            "c_sha256": "99cc398e1ddc90c83a77f7eb018cd53f9b4545fbc4666d8e1441c641e0c22398",
+            "original_checks": 1413,
+            "original_failures": 0
+          }
+        },
+        "verifier_rejections": [
+          "wrong-source",
+          "wrong-run",
+          "wrong-attempt",
+          "failed-job",
+          "running-job",
+          "wrong-job-name",
+          "wrong-artifact-id",
+          "expired-artifact",
+          "expired-date",
+          "wrong-api-digest",
+          "wrong-api-size",
+          "empty-zip",
+          "duplicate-zip-member",
+          "duplicate-json-key",
+          "missing-report",
+          "wrong-module-source",
+          "wrong-original-report",
+          "false-migration-acceptance",
+          "backslash-manifest-path",
+          "absolute-manifest-path",
+          "parent-manifest-path",
+          "backslash-zip-member",
+          "parent-zip-member",
+          "absolute-zip-member",
+          "binary-tamper",
+          "original-tamper",
+          "missing-case",
+          "duplicate-case"
+        ],
+        "unexpected_exception_evidence_preserved": true
+      }
     ]
-  }],
-  "remaining_gaps": ["Actions Windows/Linux matrix has not yet completed", "Parser-qualified source identity requires a root-owned compatibility policy"]
+  },
+  "artifacts": [
+    {
+      "id": 12590686677,
+      "name": "reader-sdk-record-migration-Linux-40171441924-1",
+      "bytes": 37957546,
+      "sha256": "d812a6110c2e272ab9ff20681dbfefadf148c899f9e7ad2443e7cf980d9cefaa",
+      "expires_at": "2026-11-24T07:10:47Z",
+      "expired": false,
+      "authentication": "Strict Actions job independently downloaded and recomputed ZIP digest/size, then authenticated exact reports and binaries."
+    },
+    {
+      "id": 12590677056,
+      "name": "reader-sdk-record-migration-evidence-40171441924-1",
+      "bytes": 5076,
+      "sha256": "a14242f2954cb27a0d85959df170b87c940566cfaae3d0794df74b77f25798ac",
+      "expires_at": "2026-11-24T07:13:33Z",
+      "expired": false,
+      "authentication": "API digest/size and completed upload log agree; this aggregate ZIP was not independently redownloaded."
+    },
+    {
+      "id": 12589389989,
+      "name": "reader-sdk-record-migration-Windows-40171441924-1",
+      "bytes": 40885497,
+      "sha256": "fedf1f2d033d02503dcf1db03844a8775f9cfbd2fad2201ac7351b7b15e5e228",
+      "expires_at": "2026-11-24T07:11:26Z",
+      "expired": false,
+      "authentication": "Strict Actions job independently downloaded and recomputed ZIP digest/size, then authenticated exact reports and binaries."
+    }
+  ],
+  "original_g03_programs": {
+    "linux": [
+      {
+        "sdk_version": "3.40.0",
+        "identity": {
+          "GITHUB_SHA": "69d8f789e68141a4b9c26219ff3a4f43f3d355e3",
+          "GITHUB_RUN_ID": "40171441924",
+          "GITHUB_RUN_ATTEMPT": "1",
+          "GITHUB_JOB": "migration",
+          "RUNNER_OS": "Linux",
+          "GITHUB_REF_NAME": "codex/dot-sdk-record-migration"
+        },
+        "probe_sha256": "de9b0b899fa40381d1d9735b8a8213dedb6d0d99e0425f6a902321079da8a967",
+        "c_consumer_sha256": "b30cc4960accfb18400fe253762196d49d2e6c2367e4c488c62623b4a2ed4e41",
+        "report_sha256": "8bcc9ca1ba8e77b4d404528138e47e51ac61da75f17cfe6fa73826ef15e88987",
+        "checks_total": 1413,
+        "checks_failed": 0,
+        "sqlite": {
+          "version": "3.54.0",
+          "source_id": "2026-10-09 15:46:58 be8d059e9a49089ab2dce5ed26dd87aaf598fdc5fbe0b107c0dd758464bcd5e3",
+          "link_providers": [
+            "libreader_catalog_sqlite.a"
+          ]
+        }
+      },
+      {
+        "sdk_version": "3.41.0",
+        "identity": {
+          "GITHUB_SHA": "69d8f789e68141a4b9c26219ff3a4f43f3d355e3",
+          "GITHUB_RUN_ID": "40171441924",
+          "GITHUB_RUN_ATTEMPT": "1",
+          "GITHUB_JOB": "migration",
+          "RUNNER_OS": "Linux",
+          "GITHUB_REF_NAME": "codex/dot-sdk-record-migration"
+        },
+        "probe_sha256": "250486a1770126c6b060af17d57461627f30825416e0c7966a33ff6c544d343c",
+        "c_consumer_sha256": "b30cc4960accfb18400fe253762196d49d2e6c2367e4c488c62623b4a2ed4e41",
+        "report_sha256": "17b7c61355262373cdd94ead42799640078d3ce2d9ed48a8d777df0955a9d004",
+        "checks_total": 1413,
+        "checks_failed": 0,
+        "sqlite": {
+          "version": "3.54.0",
+          "source_id": "2026-10-09 15:46:58 be8d059e9a49089ab2dce5ed26dd87aaf598fdc5fbe0b107c0dd758464bcd5e3",
+          "link_providers": [
+            "libreader_catalog_sqlite.a"
+          ]
+        }
+      }
+    ],
+    "windows": [
+      {
+        "sdk_version": "3.40.0",
+        "identity": {
+          "GITHUB_SHA": "69d8f789e68141a4b9c26219ff3a4f43f3d355e3",
+          "GITHUB_RUN_ID": "40171441924",
+          "GITHUB_RUN_ATTEMPT": "1",
+          "GITHUB_JOB": "migration",
+          "RUNNER_OS": "Windows",
+          "GITHUB_REF_NAME": "codex/dot-sdk-record-migration"
+        },
+        "probe_sha256": "16752f252e068118393ea6269c578e83b25e4c8c8505b8ee29e99b72af0400a7",
+        "c_consumer_sha256": "5bb3ea1929b1de334c593df90a7f1c77e8a8aa73d506ddbb7a0afa1cae5b3b4c",
+        "report_sha256": "b58fa341502a77824b5b5a1cb5d93ddb017a0fe252f1f1dc2803908bd561fab1",
+        "checks_total": 1413,
+        "checks_failed": 0,
+        "sqlite": {
+          "version": "3.54.0",
+          "source_id": "2026-10-09 15:46:58 be8d059e9a49089ab2dce5ed26dd87aaf598fdc5fbe0b107c0dd758464bcd5e3",
+          "link_providers": [
+            "reader_catalog_sqlite.lib"
+          ]
+        }
+      },
+      {
+        "sdk_version": "3.41.0",
+        "identity": {
+          "GITHUB_SHA": "69d8f789e68141a4b9c26219ff3a4f43f3d355e3",
+          "GITHUB_RUN_ID": "40171441924",
+          "GITHUB_RUN_ATTEMPT": "1",
+          "GITHUB_JOB": "migration",
+          "RUNNER_OS": "Windows",
+          "GITHUB_REF_NAME": "codex/dot-sdk-record-migration"
+        },
+        "probe_sha256": "7da8be96b356c6f86c4b792127bfb63cfbace2afe3b821b3d6386c99cbce4a7e",
+        "c_consumer_sha256": "2c0d0839eca5164b0b9884b6f1e3beada325123d70214ef060ec37fb372781b2",
+        "report_sha256": "61ea966019dd026938bb09c08a528837d74ed7e19360d5c6e63232647972268f",
+        "checks_total": 1413,
+        "checks_failed": 0,
+        "sqlite": {
+          "version": "3.54.0",
+          "source_id": "2026-10-09 15:46:58 be8d059e9a49089ab2dce5ed26dd87aaf598fdc5fbe0b107c0dd758464bcd5e3",
+          "link_providers": [
+            "reader_catalog_sqlite.lib"
+          ]
+        }
+      }
+    ]
+  },
+  "measured_scope": {
+    "systems": [
+      "Linux (ubuntu-22.04)",
+      "Windows (windows-2022)"
+    ],
+    "records_per_direction": 56,
+    "directions_per_system": 4,
+    "checks_per_same_version_direction": 304,
+    "checks_per_cross_version_direction": 305,
+    "original_g03_checks_per_sdk_per_system": 1413,
+    "verifier_rejections_per_system": 28,
+    "unexpected_exception_evidence_selftests": 2,
+    "raw_match_per_direction": {
+      "FOUND": 40,
+      "AMBIGUOUS": 1,
+      "tombstone_without_selector": 15
+    },
+    "cross_version_admission_per_direction": {
+      "PARSER_IDENTITY_REJECTED": 39,
+      "CONFLICT_REJECTED": 2,
+      "TOMBSTONE_REJECTED": 15
+    }
+  }
 }

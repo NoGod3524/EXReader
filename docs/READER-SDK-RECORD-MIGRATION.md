@@ -84,3 +84,43 @@ duplicate records, tampered binaries, and false migration acceptance.
 Current execution status and retained failures are in
 `docs/validation/reader-sdk-record-migration.json`. Final evidence is committed
 separately with `[skip ci]`; that documentation-only HEAD is not the tested SHA.
+
+## Completed Windows/Linux result — 2026-10-25
+
+- Tested source: `69d8f789e68141a4b9c26219ff3a4f43f3d355e3` (tree
+  `cc8cd80ed2f0191fb72642ad873fc7109a7d0ebf`).
+- Run [40171441924, attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40171441924): **success**.
+- Native jobs: Linux `121102918770`, Windows `121102918815`; strict authentication
+  job `121104155488`: all completed/success.
+- Each OS ran 56 retained records in each of four separate-process directions.
+  Each same-version control passed 304 checks; each cross-version direction passed
+  305. Original unchanged G03 passed 1,413 assertions for each actual SDK on each
+  OS. All 28 verifier-rejection cases per OS passed, as did both deliberate
+  unexpected-exception evidence-preservation tests.
+
+Across both directions and systems, 40 located selectors returned raw FOUND with
+stable offsets, quote/context and route, one deliberately ambiguous selector
+remained AMBIGUOUS, and 15 retained tombstones had no selector. These are separate
+from admission: each cross-version direction rejected 39 parser-qualified records,
+2 conflicted records and 15 tombstones. No migration record, SDK note/progress,
+original byte, history or outbox file changed during the read-only probes.
+
+**Verification is complete; migration acceptance remains false.** The safe
+parser-identity refusal is the task result, not a hidden compatibility fix. No
+cross-device, physical UI, arbitrary-library or full-product acceptance is granted.
+
+The first run `40170813901` at `2f8244fedd7eb860990cca395a319e564f196eb1`
+is retained: both native jobs passed but strict evidence failed on Windows
+backslash manifest paths, followed by a missing failure-artifact upload. The fix
+canonicalizes paths at their producer and adds strict traversal/backslash rejection
+cases; it does not repair or relax malformed verifier inputs. The original
+fixture generator's platform-native manifest newlines are retained separately;
+only generated metadata is serialized to canonical LF before the first producer
+baseline. Actual book corpus bytes and equality assertions are unchanged.
+
+All artifact IDs, sizes, expiration times, ZIP hashes, actual installed consumer
+identities, original G03 binaries, report hashes, retained first-run evidence and
+remaining gaps are recorded in the adjacent validation JSON. The two native ZIPs
+were independently rehashed in Actions. The final aggregate ZIP's API identity
+also matches its actual upload log; it was not separately redownloaded. Final
+handoff supplies the documentation-only evidence HEAD, distinct from tested source.
