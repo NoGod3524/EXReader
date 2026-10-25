@@ -12,6 +12,7 @@ def run(name,args,cwd=target):
 try:
  host=find('apk/debug/app-debug.apk');(out/'programs').mkdir(exist_ok=True);shutil.copy2(host,out/'programs/app-debug.apk');programs['host']={'path':str(host),'sha256':hashlib.sha256(host.read_bytes()).hexdigest()}
  assert run('android-install-host',['adb','install','-r','-t',host])==0
+ run('android-actual-config',[sys.executable,root/'tests/reader_dot_wave2/d11/apk_config.py',host],cwd=root)
  run('android-focus',[sys.executable,root/'tests/reader_dot_wave2/d11/android_focus.py'],cwd=root)
  # Bind installed application bytes independently to the authenticated input APK.
  installed=subprocess.check_output(['adb','shell','pm','path','org.exreader.host'],text=True).strip().removeprefix('package:')

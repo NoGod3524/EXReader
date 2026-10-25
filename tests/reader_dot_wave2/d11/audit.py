@@ -7,8 +7,11 @@ def git(*a):return subprocess.check_output(['git',*a],text=True).strip()
 assert git('rev-parse','HEAD')==os.environ['GITHUB_SHA'];subprocess.run(['git','merge-base','--is-ancestor',BASE,'HEAD'],check=True)
 changed=git('diff','--name-only',BASE,'HEAD').splitlines();assert changed and all(p.startswith(('tests/reader_dot_wave2/d11/','docs/reader-dot-wave2/d11/')) or p in ('.github/workflows/reader-dot-d11.yml','HANDOFF-RESULT-D11.md') for p in changed)
 sources={}
+SDK='edddc463c06ed5731195cdb8f06b2df6dff7699e';subprocess.run(['git','fetch','origin',SDK],check=True)
 for host,sha in TARGETS.items():
  subprocess.run(['git','fetch','origin',sha],check=True)
+ for protected in ('src','include','cmake','CMakeLists.txt'):
+  assert git('rev-parse',sha+':'+protected)==git('rev-parse',SDK+':'+protected),(host,'SDK source mismatch',protected)
  paths={'windows':['apps/reader/desktop/windows_compact_ui.inc','apps/reader/desktop/windows_search.inc','apps/reader/desktop/windows_navigation.inc','apps/reader/desktop/windows_records.inc','apps/reader/desktop/windows_preferences_ui.inc'],'gtk':['examples/linux/reader.c','examples/linux/preferences_ui.inc'],'android':['examples/android/app/src/main/java/org/exreader/host/MainActivity.java']}.get(host,['examples/apple/HostViews.swift','examples/apple/HostSearchViews.swift','examples/apple/HostNavigationViews.swift','examples/apple/HostReadingRecordViews.swift','examples/apple/HostPageThemeViews.swift'])
  rows=[]
  for path in paths:

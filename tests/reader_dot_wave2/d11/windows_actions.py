@@ -9,6 +9,7 @@ root=pathlib.Path.cwd();target=root/'target';out=root/'build/d11/windows-actions
 sys.path.insert(0,str(target/'tests/reader_windows_preferences'))
 import check_ui as P
 U=P.U;A=P.A;send=P.send
+U.GetPropW.argtypes=[W.HWND,W.LPCWSTR];U.GetPropW.restype=W.HANDLE
 U.IsChild.argtypes=[W.HWND,W.HWND];U.IsChild.restype=W.BOOL
 U.GetParent.argtypes=[W.HWND];U.GetParent.restype=W.HWND
 U.GetDlgCtrlID.argtypes=[W.HWND];U.GetDlgCtrlID.restype=C.c_int
@@ -49,7 +50,9 @@ def picker(path=None):
  U.EnumChildWindows(d,visit,0);assert len(candidates)==1
  control=A.auto.ControlFromHandle(candidates[0]);control.Click();A.tap(ord('A'),(A.VK_CONTROL,));control.GetValuePattern().SetValue(str(path.resolve()));A.tap(0x0D);app.wait(lambda:not U.IsWindow(d),timeout=30);app.wait_idle()
 try:
- app=P.App(binary,font,out/'profile');app.wait_idle()
+ app=P.App(binary,font,out/'profile');app.wait_idle();app.focus();app.wait(lambda:U.IsWindowVisible(app.window),timeout=15)
+ app.wait(lambda:(U.GetPropW(app.control('books'),'EXReaderShelfSnapshot') or 0)>=2 and (U.GetPropW(app.control('books'),'EXReaderShelfSnapshot') or 0)%2==0,timeout=30)
+ report['initial_controls']={str(i):dict(hwnd=int(U.GetDlgItem(app.window,i) or 0),visible=bool(U.IsWindowVisible(U.GetDlgItem(app.window,i))),enabled=bool(U.IsWindowEnabled(U.GetDlgItem(app.window,i)))) for i in (119,123,46002)}
  resume=U.GetDlgItem(app.window,46002);assert U.IsWindowVisible(resume) and not U.IsWindowEnabled(resume)
  # Real mouse to disabled exposed control; no BM_CLICK bypass.
  rect=W.RECT();U.GetWindowRect(resume,C.byref(rect));A.auto.Click((rect.left+rect.right)//2,(rect.top+rect.bottom)//2);app.wait_idle();record('disabled_noop',not visible(123),enabled=False,control='Continue reading')
@@ -61,7 +64,7 @@ try:
  for key,code,child in [('search',ord('F'),171),('directory',ord('G'),191),('records',ord('L'),211),('settings',0xBC,261)]:
   app.focus();A.tap(code,(A.VK_CONTROL,));d=app.wait(lambda:dialog(child),timeout=30);app.wait(lambda:U.IsChild(d,A.focus_of(app.process.pid)) and U.IsWindowEnabled(A.focus_of(app.process.pid)) and U.IsWindowVisible(A.focus_of(app.process.pid)));record(key,True,modal=int(d),focused_inside=True)
   A.tap(A.VK_ESCAPE);app.wait(lambda:not U.IsWindow(d),timeout=30);app.wait_idle();app.wait(lambda:A.focus_of(app.process.pid)==app.control('page'));record('close.'+key,app.label()==first)
- record('no_unexpected_revision',sha(source)==original and inventory==database_inventory(out/'profile'),before=inventory,after=database_inventory(out/'profile'),source_before=original,source_after=sha(source))
+ record('no_unexpected_revision',sha(source)==original and valid_inventory(inventory) and inventory==database_inventory(out/'profile'),before=inventory,after=database_inventory(out/'profile'),source_before=original,source_after=sha(source))
  app.focus();A.tap(0x25,(0x12,));app.wait(lambda:visible(119) and not visible(123));record('back')
  A.auto.ControlFromHandle(U.GetDlgItem(app.window,46002)).Click();app.wait(lambda:visible(123));record('resume',app.label()==first)
  app.click('next');app.wait_idle();record('continue_after_return',app.label()!=first);report['accepted']=True

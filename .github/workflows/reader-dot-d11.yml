@@ -16,6 +16,9 @@ jobs:
           bash -n tests/reader_dot_wave2/d11/build_gtk.sh
           python3 tests/reader_dot_wave2/d11/audit.py
           python3 tests/reader_dot_wave2/d11/contract.py
+      - name: Authenticate prior own round and print every Apple native failure
+        env: {GH_TOKEN: '${{github.token}}'}
+        run: python3 tests/reader_dot_wave2/d11/prior_round.py
       - name: Preserve authenticated original D06 failure logs
         env: {GH_TOKEN: '${{github.token}}'}
         run: python3 tests/reader_dot_wave2/d11/prior_failure.py
@@ -77,8 +80,11 @@ jobs:
             openbox >/tmp/d11-openbox.log 2>&1 &
             gsettings set org.gnome.desktop.interface toolkit-accessibility true
             gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
-            /usr/bin/python3 tests/reader_dot_wave2/d11/run_desktop.py gtk
+            /usr/bin/python3 tests/reader_dot_wave2/d11/run_desktop.py gtk execute
           '
+      - name: Seal GTK only after X11 and D-Bus clipboard writers terminate
+        if: always() && matrix.host == 'gtk'
+        run: python3 tests/reader_dot_wave2/d11/run_desktop.py gtk seal
       - name: Android emulator virtualization
         if: matrix.host == 'android'
         run: sudo chmod 666 /dev/kvm

@@ -8,7 +8,10 @@ def run(name,args,timeout=1500):
   try:r=subprocess.run(list(map(str,args)),cwd=target,stdout=log,stderr=subprocess.STDOUT,env=env,timeout=timeout);code=r.returncode
   except subprocess.TimeoutExpired:code=124
  executions.append(dict(name=name,returncode=code));print(json.dumps(executions[-1]),flush=True)
- if code:print('\n'.join((out/(host+'-'+name+'.log')).read_text(errors='replace').splitlines()[-90:]),flush=True)
+ if code:
+  lines=(out/(host+'-'+name+'.log')).read_text(errors='replace').splitlines()
+  print('\n'.join(line for line in lines if any(word in line for word in ('error:', 'failed', 'D11_ACTION', 'XCTAssert', 'caught error'))),flush=True)
+  print('\n'.join(lines[-90:]),flush=True)
  return code
 try:
  sdk=producer/'sdk';assert (sdk/'lib/libexreader.dylib').is_file()

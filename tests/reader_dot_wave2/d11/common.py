@@ -18,3 +18,7 @@ def database_inventory(root):
    result[p.name]={t:repr(db.execute('select * from "'+t.replace('"','""')+'" order by rowid').fetchall()) for t in tables};db.close()
   except sqlite3.Error as e:result[p.name]={'error':str(e)}
  return result
+
+def valid_inventory(value):
+ tables={k for db in value.values() for k in db}
+ return {'reader_revisions','reader_outbox'}<=tables and 'error' not in tables

@@ -22,7 +22,9 @@ try:
     names=z.namelist();assert len(names)==len(set(names)) and all(not pathlib.PurePosixPath(n).is_absolute() and '..' not in pathlib.PurePosixPath(n).parts for n in names)
     if host=='source':continue
     e=json.loads(z.read(unique(names,host+'-execution.json')));validate(e,host,sha,run,attempt)
-    for path,value in e['files'].items():verify_bytes(z.read(unique(names,path)),value)
+    for path,value in e['files'].items():
+     data=z.read(unique(names,path))
+     assert len(data)==value['bytes'] and hashlib.sha256(data).hexdigest()==value['sha256'],('file binding mismatch',path,value,dict(bytes=len(data),sha256=hashlib.sha256(data).hexdigest()))
     actions=pending(host);observed=[]
     if host in ('windows','gtk','android'):
      suffix={'windows':'windows-actions/report.json','gtk':'gtk-actions/report.json','android':'android-focus/report.json'}[host]

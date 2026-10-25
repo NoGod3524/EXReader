@@ -17,7 +17,7 @@ def wait(label,predicate):
 def tap(n):
  c=list(map(int,re.findall(r'\d+',n.attrib['bounds'])));assert len(c)==4 and n.get('enabled')=='true';adb('shell','input','tap',(c[0]+c[2])//2,(c[1]+c[3])//2)
 def record(key,t,passed=True,**raw):
- (out/(key+'.png')).write_bytes(adb('exec-out','screencap','-p'));rows[key]=dict(action=key,exposed=True,enabled=raw.pop('enabled',True),executed=True,result='passed' if passed else 'failed',input='emulator adb touch/key; not external keyboard',focus=[n.attrib for n in t.iter('node') if n.get('focused')=='true'],raw=raw);print('D11_ACTION '+json.dumps(rows[key]),flush=True);assert passed,key
+ (out/(key+'.png')).write_bytes(adb('exec-out','screencap','-p'));rows[key]=dict(action=key,exposed=True,enabled=raw.pop('enabled',True),executed=True,result='passed' if passed else 'failed',input='emulator adb touch/key; not external keyboard',focus=[n.attrib for n in t.iter('node') if n.get('focused')=='true'],raw=raw);rows[key]['raw']['page_label']=find(t,id='page_label')[0].get('text') if find(t,id='page_label') else None;print('D11_ACTION '+json.dumps(rows[key]),flush=True);assert passed,key
 
 def cancel_picker(t):
  seen=[]
@@ -31,7 +31,8 @@ def cancel_picker(t):
   adb('shell','input','keyevent',4);time.sleep(.4);t=tree('picker-back-observed')
   if find(t,id='book_list'):report['picker_cancel_states']=seen;return t
  raise AssertionError('DocumentsUI cancellation did not return to originating shelf')
-def page(t):return find(t,id='page_label')[0].get('text')
+def page(t):
+ label=find(t,id='page_label')[0].get('text');m=re.match(r'^p\.(\d+)\b',label);assert m,('unexpected native position label',label);return int(m.group(1))
 def turn(t,next):
  n=find(t,id='reader_view')[0];c=list(map(int,re.findall(r'\d+',n.get('bounds'))));x=c[0]+int((c[2]-c[0])*(.9 if next else .1));y=(c[1]+c[3])//2;adb('shell','input','tap',x,y)
 try:

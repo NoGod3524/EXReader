@@ -42,9 +42,9 @@ try:
  initial=state();click('Next page');host.wait(lambda s:not s['saving'] and state()!=initial);record('next',state()!=initial,before=initial,after=state());click('Previous page');host.wait(lambda s:not s['saving'] and state()==initial);record('previous',state()==initial)
  inventory=database_inventory(out/'profile')
  for key,title,caption in [('search','Search within book…','Search within book'),('directory','Directory / page entries…','Directory and page entries'),('records','Reading records…','Reading records'),('settings','Reading settings…','Reading settings')]:
-  menu(title);modal=element(caption);wait(lambda:any(bus.is_ancestor(modal,n) and bus.states(n).get('showing') and bus.states(n).get('sensitive') for n in bus.focused_all(app)));record(key,True,modal=caption,focused_inside=True)
+  menu(title);modal=element(caption);wait(lambda:any(bus.is_ancestor(modal,n) and bus.states(n).get('showing') and bus.states(n).get('sensitive') for n in bus.focused_all(app)));record(key,True,modal=caption,entry_path='More reader actions > Reading > '+title,focused_inside=True)
   host.key('Escape');wait(lambda:not nodes(caption));idle();record('close.'+key,bool(focus()) and state()==initial,page=state())
- record('no_unexpected_revision',sha(source)==original and inventory==database_inventory(out/'profile'),before=inventory,after=database_inventory(out/'profile'),source_before=original,source_after=sha(source))
+ record('no_unexpected_revision',sha(source)==original and valid_inventory(inventory) and inventory==database_inventory(out/'profile'),before=inventory,after=database_inventory(out/'profile'),source_before=original,source_after=sha(source))
  click('Back to library');host.wait(lambda s:s['reader_visible']==0);record('back');click('Continue reading');host.wait(lambda s:s['reader_visible']==1 and not s['saving']);record('resume',state()==initial);click('Next page');host.wait(lambda s:not s['saving'] and state()!=initial);record('continue_after_return')
  report['accepted']=True
 except Exception:report['error']=traceback.format_exc();print(report['error'],flush=True)
