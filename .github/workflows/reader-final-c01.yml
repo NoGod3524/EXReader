@@ -1,7 +1,7 @@
 name: Reader final C01 product evidence gate
 on:
   push:
-    branches: [codex/reader-fw-c01]
+    branches: [codex/reader-fw-c01, codex/reader-final-gate-review]
     paths:
       - tests/reader_final_c01/**
       - docs/reader-final-c01/run-table.json

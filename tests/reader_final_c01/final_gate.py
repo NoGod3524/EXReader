@@ -15,7 +15,8 @@ import zipfile
 SDK_341='edddc463c06ed5731195cdb8f06b2df6dff7699e'
 SDK_340='9854061be331fe603a1822d9b2b36ee357154927'
 HEX40=re.compile('[0-9a-f]{40}');HEX64=re.compile('[0-9a-f]{64}')
-HOSTS={'windows','gtk','android','macos','ios'}
+HOSTS={'windows','gtk','android','macos','iphone','ipad'}
+APPROVED_POLICIES={}
 UI_KINDS={'native_host','emulator'}
 BINARY=('.exe','.dll','.so','.dylib','.apk','.aab','.a','.lib')
 SLACK=timedelta(seconds=5)
@@ -28,7 +29,7 @@ SCOPES={
  'default_ui':dict(key='platform',values=HOSTS,kinds=UI_KINDS,programs=True),
  'performance':dict(key='platform',values=HOSTS,kinds={'native_host'},programs=True,budget=True),
  'packaging':dict(key='platform',values=HOSTS,kinds={'native_host'},programs=True),
- 'physical_device':dict(key='platform',values={'android','ios'},kinds={'physical_device'},programs=True)}
+ 'physical_device':dict(key='platform',values={'android','iphone','ipad'},kinds={'physical_device'},programs=True)}
 
 
 class GateError(Exception):pass
@@ -79,10 +80,40 @@ class Live:
         return path
 
 
+def executable(archive,name):
+    """Recognize host images; archives and shared libraries cannot stand in for a host."""
+    with archive.open(name) as stream:header=stream.read(4096)
+    if header[:2]==b'MZ' and len(header)>=64:
+        offset=int.from_bytes(header[60:64],'little')
+        with archive.open(name) as stream:stream.read(offset);pe=stream.read(24)
+        return len(pe)==24 and pe[:4]==b'PE\0\0' and bool(int.from_bytes(pe[22:24],'little')&2) and not int.from_bytes(pe[22:24],'little')&0x2000
+    if header[:4]==b'\x7fELF' and len(header)>=64:
+        order='little' if header[5]==1 else 'big'
+        kind=int.from_bytes(header[16:18],order)
+        if kind==2:return True
+        if kind!=3:return False
+        wide=header[4]==2
+        offset=int.from_bytes(header[32:40] if wide else header[28:32],order)
+        stride=int.from_bytes(header[54:56] if wide else header[42:44],order)
+        count=int.from_bytes(header[56:58] if wide else header[44:46],order)
+        if not stride or count>1024:return False
+        with archive.open(name) as stream:
+            stream.read(offset);program_headers=stream.read(stride*count)
+        return any(int.from_bytes(program_headers[i*stride:i*stride+4],order)==3 for i in range(count))
+    if header[:4] in (b'\xcf\xfa\xed\xfe',b'\xce\xfa\xed\xfe',b'\xfe\xed\xfa\xcf',b'\xfe\xed\xfa\xce'):
+        return int.from_bytes(header[12:16],'little' if header[0] in (0xcf,0xce) else 'big')==2
+    if name.lower().endswith('.apk'):
+        with archive.open(name) as stream,zipfile.ZipFile(stream) as apk:
+            return 'AndroidManifest.xml' in apk.namelist() and 'classes.dex' in apk.namelist()
+    return False
+
+
 def inspect_zip(path,decl,source,run_id,attempt):
     with zipfile.ZipFile(path) as archive:
         need(archive.testzip() is None,'corrupt ZIP')
-        infos={info.filename:info for info in archive.infolist() if not info.is_dir()}
+        entries=[info for info in archive.infolist() if not info.is_dir()]
+        infos={info.filename:info for info in entries}
+        need(len(entries)==len(infos) and all(not n.startswith('/') and '\\' not in n and '..' not in n.split('/') for n in infos),'duplicate or unsafe ZIP members')
         binaries=[dict(member=name,bytes=info.file_size,sha256=member_sha(archive,name))
                   for name,info in sorted(infos.items()) if name.lower().endswith(BINARY)][:200]
         programs=decl.get('programs',{})
@@ -91,10 +122,12 @@ def inspect_zip(path,decl,source,run_id,attempt):
             need(member in infos,'program member absent: '+member)
             need(HEX64.fullmatch(str(want)) is not None and member_sha(archive,member)==want,'program hash differs: '+member)
         subs={'$source':source,'$run':str(run_id),'$attempt':str(attempt)}
+        reports=[]
         for report in decl.get('reports',[]):
             member=report.get('member')
             need(member in infos and infos[member].file_size<=32*1024**2 and isinstance(report.get('equals'),dict),'report member absent/large/malformed')
             document=json.loads(archive.read(member))
+            reports.append(dict(member=member,document=document))
             for dotted,want in report['equals'].items():
                 current=document
                 for part in dotted.split('.'):
@@ -102,7 +135,8 @@ def inspect_zip(path,decl,source,run_id,attempt):
                     current=current[part]
                 want=subs.get(want,want) if isinstance(want,str) else want
                 need(current==want or (isinstance(want,str) and str(current)==want),'report identity differs: '+dotted)
-        return dict(artifact=decl['name'],members=len(infos),sample=sorted(infos)[:3],binaries=binaries,programs_verified=len(programs))
+        return dict(artifact=decl['name'],members=len(infos),sample=sorted(infos)[:3],binaries=binaries,
+                    programs_verified=len(programs),executable_members=[n for n in programs if executable(archive,n)],reports=reports)
 
 
 def authenticate(entry,api,now,folder):
@@ -150,10 +184,10 @@ def authenticate(entry,api,now,folder):
             proofs.append(dict(id=decl['id'],bytes=decl['bytes'],sha256=decl['sha256'],expires_at=row['expires_at'],**inspect_zip(path,decl,source,run_id,attempt)))
         finally:path.unlink()
     return dict(run_id=run_id,attempt=attempt,source_sha=source,jobs=[dict(id=job['id'],name=job['name'],conclusion=job['conclusion']) for job in jobs],
-                artifacts=proofs,programs_verified=sum(row['programs_verified'] for row in proofs)>0)
+                artifacts=proofs,programs_verified=any(row['executable_members'] for row in proofs))
 
 
-def classify(entry,auth,product):
+def classify(entry,auth,product,policies=None):
     """Decide whether an authentic entry may grant its scope cell for the final product source."""
     spec=SCOPES.get(entry.get('scope'))
     if spec is None:return 'refused','unknown scope'
@@ -168,6 +202,35 @@ def classify(entry,auth,product):
     pending=[]
     if not product:pending.append('product source not integrated')
     if spec.get('programs') and not auth['programs_verified']:pending.append('actual program hashes not declared')
+    policy=(APPROVED_POLICIES if policies is None else policies).get(entry.get('policy_id'))
+    if policy is None:pending.append('root-reviewed scope report policy absent')
+    else:
+        if (policy.get('scope')!=entry['scope'] or policy.get('cell')!=entry.get(spec['key']) or
+                policy.get('workflow')!=entry['workflow']):return 'refused','scope policy mismatch'
+        reports=[r['document'] for a in auth.get('artifacts',[]) for r in a.get('reports',[]) if r['member']==policy.get('report')]
+        if len(reports)!=1:return 'refused','required authenticated scope report missing or ambiguous'
+        document=reports[0]
+        def field(path):
+            value=document
+            for part in path.split('.'):
+                if not isinstance(value,dict) or part not in value:raise GateError('scope report field absent: '+path)
+                value=value[part]
+            return value
+        try:
+            identity=policy['identity']
+            need(field(identity['source'])==entry['source_sha'],'scope report source')
+            need(str(field(identity['run']))==str(entry['run_id']) and str(field(identity['attempt']))==str(entry['attempt']),'scope report run/attempt')
+            need(policy.get('requirements'),'scope result requirements absent')
+            for path,want in policy['requirements'].items():need(type(field(path)) is type(want) and field(path)==want,'scope result '+path)
+            if spec.get('programs'):
+                members={n for a in auth['artifacts'] for n in a['executable_members']}
+                need(policy.get('programs') and set(policy['programs'])<=members,'required actual host executable missing')
+            if spec.get('budget'):
+                need(HEX64.fullmatch(str(policy.get('budget_sha256'))) is not None and budget['sha256']==policy['budget_sha256'],'budget not root approved')
+                need(field(policy['budget_field'])==policy['budget_sha256'],'scope report budget hash')
+            if entry['scope']=='physical_device':
+                need(field(policy['physical_field']) is True and field(policy['emulator_field']) is False,'actual physical device report required')
+        except (GateError,KeyError) as error:return 'refused',str(error)
     return ('authentic_not_counted','; '.join(pending)) if pending else ('counts','')
 
 
@@ -277,6 +340,7 @@ def collect(table,api,now,folder,with_derived=False):
 
 
 def main():
+    global APPROVED_POLICIES
     need(os.environ.get('GITHUB_ACTIONS')=='true','Actions only')
     parser=argparse.ArgumentParser();parser.add_argument('--self-test',action='store_true');parser.add_argument('--table')
     parser.add_argument('--out',default='build/reader-final-c01');parser.add_argument('--derived-controls',action='store_true')
@@ -284,6 +348,7 @@ def main():
     if args.self_test:
         from test_final_gate import run_tests
         run_tests();return 0
+    APPROVED_POLICIES=json.loads((Path(__file__).resolve().parent/'approved-policies.json').read_text(encoding='utf-8'))
     out=Path(args.out);out.mkdir(parents=True,exist_ok=True)
     table=json.loads(Path(args.table).read_text(encoding='utf-8'))
     with tempfile.TemporaryDirectory() as folder:

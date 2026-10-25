@@ -17,11 +17,13 @@ SOURCE='1'*40
 class Fake:
     def __init__(self):
         blob=io.BytesIO()
+        image=bytearray(128);image[:2]=b'MZ';image[60:64]=(64).to_bytes(4,'little');image[64:68]=b'PE\0\0';image[86:88]=(2).to_bytes(2,'little')
         with zipfile.ZipFile(blob,'w') as archive:
-            archive.writestr('bin/reader.exe',b'MZprogram')
-            archive.writestr('report.json',json.dumps({'source_sha':SOURCE,'run_id':11,'attempt':1}))
+            archive.writestr('bin/reader.exe',image)
+            archive.writestr('bin/static.a',b'!<arch>\n')
+            archive.writestr('report.json',json.dumps({'source_sha':SOURCE,'run_id':11,'attempt':1,'accepted':True}))
         self.data=blob.getvalue();self.sha=hashlib.sha256(self.data).hexdigest()
-        self.program=hashlib.sha256(b'MZprogram').hexdigest()
+        self.program=hashlib.sha256(image).hexdigest()
         self.run_row=dict(id=11,head_sha=SOURCE,path='.github/workflows/x.yml@refs/heads/b',status='completed',conclusion='success',run_attempt=1)
         self.job_rows=[dict(id=i,name=name,head_sha=SOURCE,run_id=11,run_attempt=1,status='completed',conclusion='success',
                             started_at='2026-10-25T10:00:00Z',completed_at='2026-10-25T10:10:00Z',steps=[]) for i,name in ((1,'build'),(2,'summary'))]
@@ -38,7 +40,7 @@ class Fake:
         path=Path(folder)/('%d.zip'%artifact_id);path.write_bytes(self.data);return path
 
     def entry(self,**changes):
-        value=dict(scope='host',platform='windows',kind='native_host',run_id=11,attempt=1,workflow='.github/workflows/x.yml',source_sha=SOURCE,
+        value=dict(scope='host',platform='windows',policy_id='synthetic-windows',kind='native_host',run_id=11,attempt=1,workflow='.github/workflows/x.yml',source_sha=SOURCE,
                    jobs=['build','summary'],artifacts=[dict(id=101,name='x-11-1',sha256=self.sha,bytes=len(self.data),
                    programs={'bin/reader.exe':self.program},
                    reports=[dict(member='report.json',equals={'source_sha':'$source','run_id':'$run','attempt':'$attempt'})])])
@@ -52,13 +54,23 @@ def must_refuse(label,call):
 
 
 def run_tests():
+    gate.APPROVED_POLICIES={'synthetic-windows':dict(scope='host',cell='windows',workflow='.github/workflows/x.yml',report='report.json',
+        identity=dict(source='source_sha',run='run_id',attempt='attempt'),requirements=dict(accepted=True),programs=['bin/reader.exe'])}
     with tempfile.TemporaryDirectory() as folder:
         def auth(entry,api=None,now=NOW):return gate.authenticate(entry,api or Fake(),now,folder)
         good=auth(Fake().entry())
         assert good['programs_verified'] and gate.classify(Fake().entry(),good,SOURCE)==('counts','')
         assert gate.classify(Fake().entry(),good,None)[0]=='authentic_not_counted'
         assert gate.classify(Fake().entry(),good,'2'*40)[0]=='refused'
-        assert gate.classify(Fake().entry(),dict(programs_verified=False),SOURCE)[0]=='authentic_not_counted'
+        assert gate.classify(Fake().entry(),dict(programs_verified=False),SOURCE)[0]!='counts'
+        static=Fake().entry();static['artifacts'][0]['programs']={'bin/static.a':hashlib.sha256(b'!<arch>\n').hexdigest()}
+        static_auth=auth(static)
+        assert static_auth['programs_verified'] is False and gate.classify(static,static_auth,SOURCE)[0]!='counts'
+        missing=Fake().entry();missing['artifacts'][0]['reports']=[]
+        assert gate.classify(missing,auth(missing),SOURCE)[0]=='refused'
+        assert gate.classify(Fake().entry(policy_id='unapproved'),good,SOURCE)[0]!='counts'
+        need_result=copy.deepcopy(good);need_result['artifacts'][0]['reports'][0]['document']['accepted']=False
+        assert gate.classify(Fake().entry(),need_result,SOURCE)[0]=='refused'
         fake=Fake();fake.entry()
         must_refuse('declared source differs',lambda:auth(fake.entry(source_sha='2'*40)))
         api=Fake();api.run_row['head_sha']='2'*40
@@ -92,17 +104,19 @@ def run_tests():
         must_refuse('duplicate artifact',lambda:auth(entry))
     ok=dict(programs_verified=True)
     assert gate.classify(Fake().entry(scope='physical_device',platform='android',kind='emulator'),ok,SOURCE)[0]=='refused'
-    assert gate.classify(Fake().entry(scope='physical_device',platform='android',kind='physical_device'),ok,SOURCE)[0]=='counts'
+    assert gate.classify(Fake().entry(scope='physical_device',platform='android',kind='physical_device'),ok,SOURCE)[0]!='counts'
     assert gate.classify(Fake().entry(scope='performance',budget=dict(approved=False,sha256='0'*64)),ok,SOURCE)[0]=='refused'
-    assert gate.classify(Fake().entry(scope='performance',budget=dict(approved=True,sha256='0'*64)),ok,SOURCE)[0]=='counts'
+    assert gate.classify(Fake().entry(scope='performance',budget=dict(approved=True,sha256='0'*64)),ok,SOURCE)[0]!='counts'
     assert gate.classify(Fake().entry(scope='sdk',platform='sdk'),ok,SOURCE)[0]=='refused'
-    assert gate.classify(Fake().entry(scope='sdk',platform='sdk',sdk_source=gate.SDK_341,frozen_sdk_source=gate.SDK_340),ok,SOURCE)[0]=='counts'
+    assert gate.classify(Fake().entry(scope='sdk',platform='sdk',sdk_source=gate.SDK_341,frozen_sdk_source=gate.SDK_340),ok,SOURCE)[0]!='counts'
     assert gate.classify(Fake().entry(scope='nowhere'),ok,SOURCE)[0]=='refused'
     row=lambda scope,key,value:(dict(scope=scope,**{gate.SCOPES[scope]['key']:value}),'counts','')
     full=[row(name,spec['key'],value) for name,spec in gate.SCOPES.items() for value in spec['values']]
     assert all(item['status']=='verified' for item in gate.evaluate(full).values())
     assert gate.evaluate([r for r in full if r[0].get('direction')!='apple_to_android'])['bidirectional']['status']=='pending'
-    assert gate.evaluate([r for r in full if r[0].get('platform')!='ios' or r[0]['scope']!='physical_device'])['physical_device']['status']=='pending'
+    assert gate.evaluate([r for r in full if r[0].get('platform')!='ipad' or r[0]['scope']!='physical_device'])['physical_device']['status']=='pending'
+    assert gate.evaluate([r for r in full if r[0].get('platform')!='iphone'])['host']['status']=='pending'
+    assert gate.evaluate([r for r in full if r[0].get('platform')!='ipad'])['host']['status']=='pending'
     assert gate.evaluate([r for r in full if r[0]['scope']!='packaging'])['packaging']['missing']
     with tempfile.TemporaryDirectory() as folder:
         table=dict(schema=1,product_source=None,entries=[Fake().entry()],negative_controls=[Fake().entry(source_sha='2'*40)])
