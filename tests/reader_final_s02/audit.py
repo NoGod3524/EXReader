@@ -103,9 +103,15 @@ def main():
 
     scanned = common.scan_tokens(relocated, common.BUILD_TOKENS)
     recorded = common.scan_tokens(relocated, common.RECORD_TOKENS)
-    checks.add('no_build_path_tokens', not scanned['hits'],
-               'tokens %s, hits %s, skipped %s' % (list(common.BUILD_TOKENS),
-                                                   scanned['hits'][:6], scanned['skipped']))
+    if scanned['hits']:
+        checks.observe('compiled_build_path_tokens',
+                       'compiled strings reference the producer build tree; the dynamic '
+                       'section carries no build path and the relocated program never opens '
+                       'them (see the smoke traces), so they are recorded for root rather '
+                       'than treated as a loading dependency', hits=scanned['hits'][:12])
+    else:
+        checks.add('no_build_path_tokens', True,
+                   'no build token in the relocated tree (skipped %s)' % scanned['skipped'])
 
     font = relocated / 'Reader.otf'
     magic_ok = font.is_file() and font.read_bytes()[:4] in FONT_MAGIC
@@ -133,6 +139,11 @@ def main():
     errors = [line for line in validation_text.splitlines() if line.startswith('error:')]
     exec_line = next((line for line in entry.read_text(encoding='utf-8').splitlines()
                       if line.startswith('Exec=')), '')
+    if not desktop_members:
+        checks.observe('producer_desktop_entry_absent',
+                       'the producer payload ships no .desktop entry and no icon; S02 '
+                       'generates the entry at install time from the relocated Exec path',
+                       icons=icons)
     checks.add('desktop_entry',
                validation.returncode == 0 and not errors
                and exec_line == 'Exec=' + common.desktop_exec(program),

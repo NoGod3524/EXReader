@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-"""Merge the four S02 evidence documents into one accepted/blocked summary."""
+"""Merge the four S02 evidence documents into one accepted/blocked summary.
+
+Every stage document is optional at read time: a stage that produced nothing
+becomes a named failed check instead of aborting the merge, so a blocked run
+still leaves a complete, quotable summary behind.
+"""
 import argparse
 import json
 import os
@@ -18,10 +23,19 @@ def main():
     parser.add_argument('--smoke', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
-    documents = {'producer': common.read_json(args.producer),
-                 'package': common.read_json(args.package),
-                 'audit': common.read_json(args.audit),
-                 'smoke': common.read_json(args.smoke)}
+
+    def load(stage, path):
+        try:
+            return common.read_json(path)
+        except Exception as error:
+            return {'checks': [{'id': 'stage_%s_missing' % stage, 'status': 'fail',
+                                'detail': type(error).__name__ + ': ' + str(error)}],
+                    'problems': ['stage %s produced no document' % stage]}
+
+    documents = {'producer': load('producer', args.producer),
+                 'package': load('package', args.package),
+                 'audit': load('audit', args.audit),
+                 'smoke': load('smoke', args.smoke)}
     checks = common.Checks()
 
     for stage, document in documents.items():
@@ -29,13 +43,15 @@ def main():
             record = dict(row)
             record['stage'] = stage
             checks.items.append(record)
-            print(json.dumps({'stage': stage, 'check': row['id'], 'status': row['status']},
-                             ensure_ascii=False), flush=True)
+            print(json.dumps({'stage': stage, 'check': row.get('id'),
+                              'status': row.get('status')}, ensure_ascii=False), flush=True)
+        print(json.dumps({'stage': stage, 'checks': len(document.get('checks') or []),
+                          'problems': len(document.get('problems') or []),
+                          'ok': document.get('ok')}, ensure_ascii=False), flush=True)
     checks.add('all_stages_reported',
                all(document.get('checks') for document in documents.values()),
-               'producer=%d package=%d audit=%d smoke=%d' % tuple(
-                   len(documents[stage].get('checks') or [])
-                   for stage in ('producer', 'package', 'audit', 'smoke')))
+               ' '.join('%s=%d' % (stage, len(documents[stage].get('checks') or []))
+                        for stage in ('producer', 'package', 'audit', 'smoke')))
     for stage, document in documents.items():
         checks.add('no_problems_' + stage, not document.get('problems'),
                    json.dumps(document.get('problems') or []))
@@ -50,47 +66,54 @@ def main():
     package = documents['package']
     audit = documents['audit']
     smoke = documents['smoke']
-    program = producer.get('program', {}).get('sha256')
+    producer_run = producer.get('run') or {}
+    artifact = producer.get('selected_artifact') or {}
+    program = (producer.get('program') or {}).get('sha256')
+    identity = (package.get('identity') or {}).get('producer') or {}
     checks.add('single_program_identity',
                bool(program)
-               and package['archive'].get('name')
-               and package['relocated'].get('program_sha256') == program
-               and audit.get('relocated')
-               and smoke.get('program_sha256') == program,
+               and bool((package.get('archive') or {}).get('name'))
+               and (package.get('relocated') or {}).get('program_sha256') == program
+               and smoke.get('program_sha256') == program
+               and any(row.get('id') == 'program_digest' and row.get('status') == 'pass'
+                       for row in audit.get('checks') or []),
                'producer program %s' % program)
-    identity = package.get('identity') or {}
     checks.add('single_producer_run',
-               identity.get('producer', {}).get('run') == producer['run']['id']
-               and identity.get('producer', {}).get('attempt') == producer['run']['attempt']
-               and identity.get('producer', {}).get('source') == producer['run']['head_sha']
-               and identity.get('producer', {}).get('artifact_digest')
-               == producer['selected_artifact'].get('digest'),
-               'run %s attempt %s source %s' % (producer['run']['id'],
-                                                producer['run']['attempt'],
-                                                producer['run']['head_sha']))
+               identity.get('run') == producer_run.get('id')
+               and identity.get('attempt') == producer_run.get('attempt')
+               and identity.get('source') == producer_run.get('head_sha')
+               and identity.get('artifact_digest') == artifact.get('digest'),
+               'run %s attempt %s source %s' % (producer_run.get('id'),
+                                                producer_run.get('attempt'),
+                                                producer_run.get('head_sha')))
 
     document = {
         'schema': 1,
         'kind': 's02-verification-summary',
         'verifier_source': expected,
         'accepted': checks.accepted(),
-        'producer': {'repository': producer.get('repository'),
-                     'run': producer['run'], 'artifact': producer['selected_artifact'],
-                     'zip': producer['zip'], 'program': producer['program'],
-                     'payload': producer['payload']['totals'],
-                     'pinned': producer.get('pinned')},
-        'candidate': {'archive': package.get('archive'), 'relocated': package.get('relocated'),
-                      'identity': package.get('identity')},
+        'producer': {'repository': producer.get('repository'), 'run': producer_run,
+                     'artifact': artifact, 'zip': producer.get('zip'),
+                     'program': producer.get('program'),
+                     'payload': (producer.get('payload') or {}).get('totals'),
+                     'pinned': producer.get('pinned'),
+                     'build': (producer.get('build') or {})},
+        'candidate': {'archive': package.get('archive'),
+                      'relocated': package.get('relocated'), 'identity': package.get('identity')},
         'dependencies': audit.get('dependencies'),
         'resources': audit.get('resources'),
         'desktop_entry': audit.get('desktop_entry'),
         'checks': checks.items,
         'counts': {'total': len(checks.items),
-                   'passed': len([row for row in checks.items if row['status'] == 'pass']),
+                   'passed': len([row for row in checks.items if row.get('status') == 'pass']),
                    'failed': len(checks.failed()),
+                   'observed': len(checks.observed()),
                    'by_stage': {stage: len(documents[stage].get('checks') or [])
                                 for stage in documents}},
         'problems': checks.failed(),
+        'recorded_findings': [{'id': row.get('id'), 'detail': row.get('detail'),
+                               'stage': row.get('stage')}
+                              for row in checks.items if row.get('status') == 'observed'],
         'scope': {
             'granted': ['Linux x86_64 Ubuntu 22.04 runner: relocatable candidate seal/extract, '
                         'dynamic section and loader resolution, fonts/resources, generated '

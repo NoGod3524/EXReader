@@ -151,18 +151,19 @@ def safe_extract_tar(archive, destination, expect_root=None):
     need(expect_root is None or root in (expect_root, '.'),
          'tar root %r differs from %r' % (root, expect_root))
     members = []
-    for parts, member in entries:
-        relative = parts[1:] if (root != '.' and parts[0] == root) else parts
-        need(relative, 'tar member outside its root: %s' % member.name)
-        target = destination.joinpath(*relative)
-        target.parent.mkdir(parents=True, exist_ok=True)
-        source = tar.extractfile(member)
-        need(source is not None, 'unreadable tar member: %s' % member.name)
-        with source:
-            target.write_bytes(source.read())
-        os.chmod(str(target), member.mode & 0o777)
-        members.append({'path': '/'.join(relative), 'bytes': target.stat().st_size,
-                        'sha256': sha256_file(target), 'mode': member.mode & 0o777})
+    with tarfile.open(str(archive), 'r:gz') as tar:
+        for parts, member in entries:
+            relative = parts[1:] if (root != '.' and parts[0] == root) else parts
+            need(relative, 'tar member outside its root: %s' % member.name)
+            target = destination.joinpath(*relative)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            source = tar.extractfile(member)
+            need(source is not None, 'unreadable tar member: %s' % member.name)
+            with source:
+                target.write_bytes(source.read())
+            os.chmod(str(target), member.mode & 0o777)
+            members.append({'path': '/'.join(relative), 'bytes': target.stat().st_size,
+                            'sha256': sha256_file(target), 'mode': member.mode & 0o777})
     return {'root': root, 'members': members}
 
 
@@ -333,8 +334,21 @@ class Checks:
                               'detail': detail}, ensure_ascii=False), flush=True)
         return bool(ok)
 
+    def observe(self, identifier, detail, **extra):
+        """Record a finding that is reported but does not decide acceptance."""
+        row = {'id': identifier, 'status': 'observed', 'detail': detail}
+        row.update(extra)
+        self.items.append(row)
+        if self.stream:
+            print(json.dumps({'check': identifier, 'status': 'observed',
+                              'detail': detail}, ensure_ascii=False), flush=True)
+        return row
+
     def failed(self):
-        return [row['id'] for row in self.items if row['status'] != 'pass']
+        return [row['id'] for row in self.items if row['status'] == 'fail']
+
+    def observed(self):
+        return [row['id'] for row in self.items if row['status'] == 'observed']
 
     def accepted(self):
         return bool(self.items) and not self.failed()

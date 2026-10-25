@@ -96,7 +96,7 @@ def main():
         tree_blob = git('rev-parse', J24_SOURCE + ':tools/reader_distribution_unix',
                         cwd=repository).stdout.strip()
         contract = args.j24_tools.resolve() / 'contract.py'
-        extracted = git('hash-object', contract, cwd=repository, check=False)
+        extracted = git('hash-object', '--no-filters', contract, cwd=repository, check=False)
         check('pinned_j24_tool_tree', tree_blob == J24_TREE_BLOB,
               'commit %s tool tree %s expected %s' % (J24_SOURCE, tree_blob, J24_TREE_BLOB))
         check('pinned_j24_contract_blob',
@@ -106,7 +106,7 @@ def main():
                   J24_CONTRACT_BLOB))
     if args.atspi is not None:
         client = args.atspi.resolve() / 'atspi_client.py'
-        extracted = git('hash-object', client, cwd=repository, check=False)
+        extracted = git('hash-object', '--no-filters', client, cwd=repository, check=False)
         check('pinned_atspi_client_extracted_blob',
               extracted.returncode == 0 and extracted.stdout.strip() == ATSPI_BLOB,
               'extracted atspi_client.py blob %r expected %s' % (
