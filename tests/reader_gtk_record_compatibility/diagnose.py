@@ -90,10 +90,19 @@ python
 import gdb, json, struct
 def integer(expression):
     return int(gdb.parse_and_eval(expression))
+def string(address):
+    if not address:return None
+    data=bytearray()
+    for i in range(1024):
+        value=gdb.selected_inferior().read_memory(address+i,1).tobytes()[0]
+        if not value:break
+        data.append(value)
+    return data.decode('utf-8','replace')
 class Return(gdb.FinishBreakpoint):
-    def __init__(self, name, match, part):
+    def __init__(self, name, match, part, extra):
         super().__init__(gdb.newest_frame(), internal=True)
         self.function_name, self.match, self.part = name, match, part
+        self.extra=extra
     def stop(self):
         row = dict(diagnostic_only=True, event='actual-return', function=self.function_name,
                    result=integer('$rax') & 0xffffffff)
@@ -103,6 +112,11 @@ class Return(gdb.FinishBreakpoint):
             row.update(state=struct.unpack_from('<I',data)[0],start=struct.unpack_from('<Q',data,8)[0],end=struct.unpack_from('<Q',data,16)[0])
         if self.part:
             row['resolved_part'] = struct.unpack('<Q',memory.read_memory(self.part,8).tobytes())[0]
+        if self.function_name=='reader_catalog_sdk_original_identity' and row['result']==0:
+            row['original_sha256']=string(self.extra['sha'])
+        if self.function_name=='reader_rs_decode' and row['result']==0:
+            data=memory.read_memory(self.extra['record'],328).tobytes()
+            row.update(decoded_mode=struct.unpack_from('<I',data,196)[0],has_location=struct.unpack_from('<I',data,200)[0],anchor_version=struct.unpack_from('<Q',data,208)[0],part=struct.unpack_from('<Q',data,312)[0])
         print(json.dumps(row),flush=True)
         return False
 class Entry(gdb.Breakpoint):
@@ -113,10 +127,15 @@ class Entry(gdb.Breakpoint):
         name=self.function_name
         match=integer('$r9') if name=='reader_rs_resolve_epub' else integer('$rcx') if name=='exr_pager_anchor_resolve' else 0
         part=integer('$rdx') if name=='reader_rs_epub_record_part' else 0
-        print(json.dumps(dict(diagnostic_only=True,event='actual-call',function=name)),flush=True)
-        Return(name,match,part)
+        row=dict(diagnostic_only=True,event='actual-call',function=name)
+        extra={}
+        if name=='reader_revision_selected':row.update(entity_kind=string(integer('$rsi')),entity_key=string(integer('$rdx')))
+        if name=='reader_catalog_sdk_original_identity':extra['sha']=integer('$rcx')
+        if name=='reader_rs_decode':extra['record']=integer('$rcx')
+        print(json.dumps(row),flush=True)
+        Return(name,match,part,extra)
         return False
-for name in ['reader_rs_epub_record_part','reader_rs_resolve_epub','exr_pager_anchor_resolve','exr_publication_pager_create','exr_pager_get','exr_render_page_ex']:
+for name in ['reader_catalog_sdk_original_identity','reader_revision_selected','reader_rs_decode','reader_rs_epub_record_part','reader_rs_resolve_epub','exr_pager_anchor_resolve','exr_publication_pager_create','exr_pager_get','exr_render_page_ex']:
     Entry(name)
 end
 run
