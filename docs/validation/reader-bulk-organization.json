@@ -1,7 +1,20 @@
 {
   "root_review": {
-    "accepted": false,
-    "state": "final_status_code_consistency_fix_awaiting_actions",
+    "accepted": true,
+    "state": "three_desktop_21_checks_and_strict_summary_passed_awaiting_host_integration",
+    "source": "fd2c88e3c5f0f0c7a7bd8698e7efb3825079bd41",
+    "run": 40159996464,
+    "attempt": 1,
+    "checks_per_platform": 21,
+    "protocol_rejections": 9,
+    "jobs": {"Linux": 121069354554, "Windows": 121069354700, "macOS": 121069354737, "evidence": 121069632086},
+    "expires_at": "2027-01-23T03:55:34Z",
+    "artifacts": [
+      {"platform": "Windows", "id": 12586485984, "bytes": 5302606, "sha256": "b60a5b357b59b7ae4a209bc02a56c4e106ec76ecc20c527e614ee8470f698158"},
+      {"platform": "Linux", "id": 12586470989, "bytes": 4433123, "sha256": "5d16d7543a923b07c1b88ce5d5e77c33678ec64f21f034bfa27849e65063c702"},
+      {"platform": "macOS", "id": 12586190675, "bytes": 4236995, "sha256": "4955ab67c9aa2b5ff252a108e5912c808adacbf4fb82fc9baf176966d9700d88"},
+      {"platform": "strict", "id": 12585911723, "bytes": 785, "sha256": "3476119e947cf6eaf04f8c7fc6c09bac6da2e8c8d664520c649c17153650c76b"}
+    ],
     "prior_repair_source": "93594d8c24b110469d2f3f47ff3e4a78314f8138",
     "prior_repair_run": 40159702796,
     "preserved_probe_failure": {"source": "742d1a437a16f854fcc8713c85eea4942e95ded9", "run": 40159870482, "reason": "new bulk-error consistency assertion was incorrectly applied to the fixture seed JSON, which has no bulk error object"},
