@@ -1,0 +1,51 @@
+{
+  "accepted": true,
+  "status": "native Apple upgrade and exact known parser spellings passed; actual Android peer exchange remains pending",
+  "current_tested_source": "b1a7b7891cd394671842164a07a86c8e316dace3",
+  "current_run": {
+    "id": 40176647484,
+    "attempt": 1,
+    "conclusion": "success",
+    "producer_job": 121118647082,
+    "strict_job": 121127045183,
+    "native_process_phases": 18,
+    "original_owner_checks_per_sdk": 19,
+    "java_policy_checks": 20,
+    "protocol_rejections": 6,
+    "public_android_spelling_fixture_is_real_android_sender": false,
+    "artifacts": [
+      {"id":12592549982,"bytes":53257384,"sha256":"af40a35b4b916c68f4cc4ea9307e6baf4be165375d7d79698c0a31f40b8da88e","expires_at":"2027-01-23T08:26:53Z"},
+      {"id":12594080612,"bytes":566,"sha256":"e03a340b56e3df8e8454864ad60ecd7349b1471c9ac98be88fb6cb9150bebe2a","expires_at":"2027-01-23T08:26:53Z"}
+    ]
+  },
+  "actual_android_host_interop_accepted": false,
+  "base": "eea3087c2ef27b9d45e00333ef0a16e586a0ac6e",
+  "sdk_candidate": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "tested_source": "898e773c322fdd8d82184cacb0ce23c983af2edf",
+  "runs": [{
+    "id": 40173356985,
+    "attempt": 1,
+    "conclusion": "success",
+    "producer_job": 121108728132,
+    "strict_job": 121110070831,
+    "native_process_phases": 11,
+    "original_owner_checks_per_sdk": 19,
+    "original_sdks": ["3.40.0", "3.41.0"],
+    "actual_cross_version_point_records": 8,
+    "formats": ["TXT", "bounded EPUB", "PDF", "CBZ"],
+    "retained_private_request_boundaries": ["before commit: created=1", "after commit: created=0"],
+    "protocol_rejections": 6,
+    "artifacts": [
+      {"id":12591740607,"bytes":53067165,"sha256":"23a4259f920adb75b6803bd05be4b63e6926a218f3b8ba15df8555dcae455130","expires_at":"2027-01-23T07:35:40Z"},
+      {"id":12591950169,"bytes":534,"sha256":"c1bfec976ce0a7756582f609c43f3bf8db3df5b2e33303f8f5c366b9ec1d6a7a","expires_at":"2027-01-23T07:35:40Z"}
+    ]
+  }],
+  "scope": "macOS native Apple owner upgrade, four-format eight point records and two actual private request replay boundaries",
+  "stored_wire_and_parser_rewritten": false,
+  "cross_version_range_records_tested": false,
+  "ios_old_library_tested": false,
+  "common_340_branch_changed": false,
+  "host_ui_accepted": false,
+  "downgrade_accepted": false,
+  "physical_device_accepted": false
+}

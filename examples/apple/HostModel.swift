@@ -7,6 +7,28 @@ import CReaderProduct
 import Combine
 import Darwin
 
+#if EXR_APPLE_PAGE_THEME
+enum HostPageThemeChoice: String, CaseIterable {
+    case original, light, dark, system
+    var title: String {
+        switch self { case .original: return "原书"; case .light: return "浅色"; case .dark: return "深色"; case .system: return "跟随系统" }
+    }
+}
+
+struct HostPagePalette: Equatable {
+    let foreground: UInt32?
+    let background: UInt32?
+    static let original = HostPagePalette(foreground: nil, background: nil)
+    static func resolve(_ choice: HostPageThemeChoice, systemDark: Bool) -> HostPagePalette {
+        if choice == .original { return .original }
+        let dark = choice == .dark || (choice == .system && systemDark)
+        return HostPagePalette(foreground: dark ? 0xe6e6e6ff : 0x1a1a1aff,
+                               background: dark ? 0x101010ff : 0xffffffff)
+    }
+    var userCSS: String? { foreground.map { String(format: "*{color:#%08x !important;}", $0) } }
+}
+#endif
+
 // Product shelf state is independent of SDK pagination and its owner handles.
 // Only three catalog pages are retained; async results carry a query generation.
 final class HostShelf: ObservableObject {
@@ -492,6 +514,34 @@ final class HostSession {
     private(set) var pageText = ""
     private var pageRange: Range<Int> = 0..<0
     private var currentCancel: HostCancelBox?
+#if EXR_APPLE_PAGE_THEME
+    private(set) var pagePalette = HostPagePalette.original
+
+    func configurePagePalette(_ palette: HostPagePalette) {
+        precondition(book == nil, "Only unopened candidates may be configured")
+        pagePalette = palette
+    }
+
+    func pageThemeCandidate(_ palette: HostPagePalette, cancel: HostCancelBox) throws -> (HostSession, HostSnapshot) {
+        try cancel.check()
+        guard let book else { throw HostError.invalidInput("请先打开书籍") }
+        let result = candidate()
+        result.book = book; result.document = document; result.publication = publication; result.fixed = fixed
+        result.part = part; result.page = page; result.readingOffset = readingOffset
+        result.preserveUnresolvedProgress = preserveUnresolvedProgress
+        result.pagePalette = palette
+        try result.begin(cancel)
+        if fixed == nil {
+            try result.rebuildPager(width: Double(viewport.width), height: Double(viewport.height), font: fontSize, cancel: cancel)
+        }
+        let snapshot = try result.renderSnapshot(persistProgress: false)
+#if EXR_APPLE_HOST_REVIEW
+        try HostSDKReview.event?("page-theme-rendered")
+#endif
+        try cancel.check()
+        return (result, snapshot)
+    }
+#endif
 
     init(library: HostLibrary, font: HostFont, slowDelay: Double, viewport: CGSize, fontSize: Double) {
         self.library = library
@@ -533,8 +583,12 @@ final class HostSession {
     }
 
     func candidate() -> HostSession {
-        HostSession(library: library, font: font, slowDelay: slowDelay,
-                    viewport: viewport, fontSize: fontSize)
+        let result = HostSession(library: library, font: font, slowDelay: slowDelay,
+                                 viewport: viewport, fontSize: fontSize)
+#if EXR_APPLE_PAGE_THEME
+        result.pagePalette = pagePalette
+#endif
+        return result
     }
 
     // The old reader is untouched until a fresh SDK instance has FOUND the
@@ -549,6 +603,9 @@ final class HostSession {
         }
         let result = HostSession(library: independent, font: font, slowDelay: slowDelay,
                                  viewport: viewport, fontSize: fontSize)
+#if EXR_APPLE_PAGE_THEME
+        result.pagePalette = pagePalette
+#endif
         try result.begin(cancel)
         result.book = target
         let match: HostAnchorMatch
@@ -597,6 +654,9 @@ final class HostSession {
             throw HostError.invalidInput("原件身份已变化，请重新打开目录")
         }
         let result = HostSession(library: independent, font: font, slowDelay: slowDelay, viewport: viewport, fontSize: fontSize)
+#if EXR_APPLE_PAGE_THEME
+        result.pagePalette = pagePalette
+#endif
         try result.begin(cancel); result.book = targetBook
         let target = selection.resolution.target
         if targetBook.isFixed {
@@ -843,12 +903,18 @@ final class HostSession {
         viewport = CGSize(width: width, height: height)
         fontSize = size
         let newPager: HostPager
+        let userCSS: String?
+#if EXR_APPLE_PAGE_THEME
+        userCSS = pagePalette.userCSS
+#else
+        userCSS = nil
+#endif
         if let publication {
             newPager = try HostPager(publication: publication, part: part, font: font, width: width, height: height,
-                                    fontSize: size, box: cancel)
+                                    fontSize: size, box: cancel, userCSS: userCSS)
         } else if let document {
             newPager = try HostPager(document: document, font: font, width: width, height: height,
-                                    fontSize: size, box: cancel)
+                                    fontSize: size, box: cancel, userCSS: userCSS)
         } else { throw HostError.invalidResult("阅读器不可用") }
         pager = newPager
         page = try newPager.pageIndex(for: offset, cancel: cancel)
@@ -913,7 +979,7 @@ final class HostSession {
         }
     }
 
-    func renderSnapshot(userMove: Bool = false) throws -> HostSnapshot {
+    func renderSnapshot(userMove: Bool = false, persistProgress: Bool = true) throws -> HostSnapshot {
         guard let book else { throw HostError.invalidInput("没有打开的书") }
         let cancel = currentCancel ?? HostCancelBox()
         try cancel.check()
@@ -924,8 +990,14 @@ final class HostSession {
             let total = max(1, fixed.pageCount)
             let percent = Int((Double(page + 1) / Double(total) * 100).rounded())
             let location = "第 \(page + 1) / \(total) 页"
-            try cancel.commit {
-                try library.updatePosition(book: book, position: page)
+            if persistProgress {
+                try cancel.commit {
+                    try library.updatePosition(book: book, position: page)
+                    pageText = text
+                    pageRange = 0..<0
+                }
+            } else {
+                try cancel.check()
                 pageText = text
                 pageRange = 0..<0
             }
@@ -937,20 +1009,31 @@ final class HostSession {
         guard let pager else { throw HostError.invalidInput("分页尚未就绪") }
         let range = try pager.pageRange(page, cancel: cancel)
         let nextOffset = userMove ? range.lowerBound : readingOffset
+#if EXR_APPLE_PAGE_THEME
+        let bitmap = try pager.render(page, background: pagePalette.background, cancel: cancel)
+#else
         let bitmap = try pager.render(page, cancel: cancel)
+#endif
         guard let image = makeCGImage(bitmap) else { throw HostError.invalidResult("页面图像无法创建") }
         // Rendering consumes the borrowed layout first; this query may evict its
         // chapter projection window and returns only an owned current-page copy.
         let text = try pager.text(range, cancel: cancel)
         let totalBytes = max(1, pager.extent)
         let percent = min(100, Int((Double(range.upperBound) / Double(totalBytes) * 100).rounded()))
-        let anchor = try pager.makeAnchor(start: nextOffset, end: nextOffset, cancel: cancel)
-        try cancel.commit {
-            // This SDK call updates numeric position and selector in one transaction.
-            if publication != nil {
-                if userMove { preserveUnresolvedProgress = false }
-                if !preserveUnresolvedProgress { try library.setEPUBProgress(bookID: book.id, part: part, path: currentPath, anchor: anchor) }
-            } else { try library.setProgress(bookID: book.id, anchor: anchor) }
+        if persistProgress {
+            let anchor = try pager.makeAnchor(start: nextOffset, end: nextOffset, cancel: cancel)
+            try cancel.commit {
+                // This SDK call updates numeric position and selector in one transaction.
+                if publication != nil {
+                    if userMove { preserveUnresolvedProgress = false }
+                    if !preserveUnresolvedProgress { try library.setEPUBProgress(bookID: book.id, part: part, path: currentPath, anchor: anchor) }
+                } else { try library.setProgress(bookID: book.id, anchor: anchor) }
+                readingOffset = nextOffset
+                pageRange = range
+                pageText = text
+            }
+        } else {
+            try cancel.check()
             readingOffset = nextOffset
             pageRange = range
             pageText = text
@@ -1145,6 +1228,83 @@ final class HostReaderModel: ObservableObject {
     @Published var pageBaseOffset = 0
     @Published var pageAccessibilityLabel = ""
     @Published var fontSize = 28
+#if EXR_APPLE_PAGE_THEME
+    @Published private(set) var pageThemeChoice = HostPageThemeChoice.original
+    @Published private(set) var pageThemePalette = HostPagePalette.original
+    private var requestedPageTheme = HostPageThemeChoice.original
+    private var pageSystemDark = false
+    private var pageThemeEpoch = 0
+    private var pendingPageTheme = false
+
+#if EXR_APPLE_HOST_REVIEW
+    // Observe the actual accepted SDK bitmap; no alternate drawing path.
+    var pageThemeObservation: String {
+        guard let image, let data = image.dataProvider?.data else { return "unrendered" }
+        let bytes = data as Data
+        let hash = SHA256.hash(data: bytes).map { String(format: "%02x", $0) }.joined()
+        let corner = bytes.prefix(4).map { String(format: "%02x", $0) }.joined()
+        return "\(pageThemeChoice.rawValue)|\(corner)|\(hash)|\(pageBaseOffset)|\(location)"
+    }
+
+    func requestPageThemeSystemReview(dark: Bool) {
+        guard testFixtures else { return }
+        do {
+            let path = try stateFileURL().deletingLastPathComponent().appendingPathComponent("page-theme-system-request.json")
+            try JSONSerialization.data(withJSONObject: ["source_sha": Bundle.main.object(forInfoDictionaryKey: "EXRSourceSHA") as? String ?? "",
+                "requested_appearance": dark ? "dark" : "light", "choice": pageThemeChoice.rawValue]).write(to: path, options: .atomic)
+        } catch { errorText = describe(error) }
+    }
+#endif
+
+    func observePageThemeEnvironment(dark: Bool) {
+        guard dark != pageSystemDark else { return }
+        pageSystemDark = dark
+        if requestedPageTheme == .system { changePageTheme(.system) }
+    }
+
+    func changePageTheme(_ choice: HostPageThemeChoice) {
+        requestedPageTheme = choice
+        pageThemeEpoch += 1
+        pendingPageTheme = true
+        applyPendingPageTheme()
+    }
+
+    private func applyPendingPageTheme() {
+        guard pendingPageTheme, !busy else { return }
+        let choice = requestedPageTheme, epoch = pageThemeEpoch
+        let palette = HostPagePalette.resolve(choice, systemDark: pageSystemDark)
+        pendingPageTheme = false
+        guard let bookID = current?.id else {
+            pageThemeChoice = choice; pageThemePalette = palette; return
+        }
+        guard choice != pageThemeChoice || palette != pageThemePalette else { return }
+        let (myToken, box) = begin()
+        queue.async {
+            do {
+                guard let session = self.session else { throw HostError.invalidInput("书库未就绪") }
+                try self.requireBook(bookID, session: session, cancel: box)
+                let (candidate, snapshot) = try session.pageThemeCandidate(palette, cancel: box)
+                try box.check()
+                let accepted = DispatchQueue.main.sync { () -> Bool in
+                    guard myToken == self.token else { return false }
+                    guard epoch == self.pageThemeEpoch else { self.finish(); return false }
+                    self.apply(snapshot, persist: false)
+                    self.pageThemeChoice = choice; self.pageThemePalette = palette
+                    self.statusText = "阅读主题已更新"
+                    self.finish()
+                    return true
+                }
+                if accepted { self.session = candidate }
+            } catch {
+                DispatchQueue.main.async {
+                    guard myToken == self.token else { return }
+                    if epoch == self.pageThemeEpoch { self.requestedPageTheme = self.pageThemeChoice }
+                    self.fail(error)
+                }
+            }
+        }
+    }
+#endif
     @Published var statusText = "就绪"
     @Published var errorText = ""
     @Published private(set) var productIndexPending = false
@@ -1473,6 +1633,9 @@ final class HostReaderModel: ObservableObject {
             }
         }
         busy = false
+#if EXR_APPLE_PAGE_THEME
+        applyPendingPageTheme()
+#endif
     }
 
     private func requireBook(_ id: Int64, session: HostSession, cancel: HostCancelBox) throws {
@@ -1544,7 +1707,7 @@ final class HostReaderModel: ObservableObject {
         }
     }
 
-    private func apply(_ snapshot: HostSnapshot) {
+    private func apply(_ snapshot: HostSnapshot, persist: Bool = true) {
         current = HostBookRow(id: snapshot.book.id, title: snapshot.book.title,
                               detail: "\(snapshot.book.formatLabel) · 位置 \(snapshot.book.position)",
                               isFixed: snapshot.book.isFixed, position: snapshot.book.position)
@@ -1558,9 +1721,11 @@ final class HostReaderModel: ObservableObject {
         pagePath = snapshot.path
         pageAccessibilityLabel = snapshot.pageAccessibilityLabel
         fontSize = snapshot.fontSize
-        defaults.set(snapshot.fontSize, forKey: "EXRFontSize")
         frameCount += 1
-        defaults.set(snapshot.book.id, forKey: "EXRLastBook")
+        if persist {
+            defaults.set(snapshot.fontSize, forKey: "EXRFontSize")
+            defaults.set(snapshot.book.id, forKey: "EXRLastBook")
+        }
     }
 
     private func publishNotes(_ rows: [HostNoteRow], hash: String) {
@@ -1922,6 +2087,9 @@ final class HostReaderModel: ObservableObject {
 
     func openBook(_ row: HostBookRow) {
         guard !busy else { return }
+#if EXR_APPLE_PAGE_THEME
+        let palette = pageThemePalette
+#endif
         search.invalidate()
         navigation.invalidate()
         readingRecords.bind(nil)
@@ -1931,6 +2099,9 @@ final class HostReaderModel: ObservableObject {
             do {
                 guard let session = self.session else { throw HostError.invalidInput("书库未就绪") }
                 let candidate = session.candidate()
+#if EXR_APPLE_PAGE_THEME
+                candidate.configurePagePalette(palette)
+#endif
                 let snapshot = try candidate.open(bookID: row.id, cancel: box)
                 if self.completeFrame(snapshot, session: candidate, token: myToken, status: "就绪", opening: true) {
                     // Only the accepted candidate replaces SDK handles, on their serial owner queue.

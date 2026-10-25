@@ -9,6 +9,11 @@ require 'pathname'
 root = Dir.pwd
 output = File.expand_path(ARGV[0] || File.join(root, 'build/apple-host'))
 resources = File.expand_path(ARGV[1] || File.join(root, 'build/apple-resources'))
+page_theme = ENV.fetch('EXR_APPLE_PAGE_THEME', 'OFF')
+sdk_version = ENV.fetch('EXR_APPLE_SDK_VERSION', '3.40.0')
+raise 'EXR_APPLE_PAGE_THEME must be explicitly OFF or ON' unless ['OFF', 'ON'].include?(page_theme)
+raise 'Unsupported explicit Apple SDK version' unless ['3.40.0', '3.41.0'].include?(sdk_version)
+raise 'Page themes require explicit SDK3.41' if page_theme == 'ON' && sdk_version != '3.41.0'
 project_path = File.join(output, 'EXReaderHost.xcodeproj')
 FileUtils.mkdir_p(output)
 FileUtils.rm_rf(project_path)
@@ -152,10 +157,12 @@ end
   info_plist = File.join(output, "Info-#{label}.plist")
   # Xcode's generated standard keys augment this explicit source plist. Custom
   # INFOPLIST_KEY settings alone did not survive the cloud product generation.
-  Xcodeproj::Plist.write_to_path({'EXRSourceSHA' => source_sha}, info_plist)
+  Xcodeproj::Plist.write_to_path({'EXRSourceSHA' => source_sha, 'EXRSDKVersion' => sdk_version,
+    'EXRPageThemeEnabled' => page_theme == 'ON'}, info_plist)
   app_settings(app, platform, deployment, info_plist)
   app.build_configurations.each do |config|
     conditions = ['$(inherited)']
+    conditions << 'EXR_APPLE_PAGE_THEME' if page_theme == 'ON'
     # Original UI acceptance retains its diagnostic observations. Accessibility
     # regression uses the production semantic tree without debug identities.
     conditions << 'EXR_APPLE_HOST_REVIEW' unless test_directory.include?('/accessibility/')
@@ -164,7 +171,7 @@ end
         'EXR_APPLE_SHELF_REVIEW'
       elsif test_directory.include?('/account/')
         'EXR_APPLE_ACCOUNT_REVIEW'
-      elsif test_directory.include?('/reading/')
+      elsif test_directory.include?('/reading/') || test_directory.include?('/page_theme/')
         'EXR_APPLE_READING_REVIEW'
       elsif test_directory.include?('/accessibility/')
         nil
