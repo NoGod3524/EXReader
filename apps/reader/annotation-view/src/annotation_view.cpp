@@ -59,6 +59,7 @@ template <size_t N> void copy_field(char (&out)[N], const char *in) {
 }
 
 struct reader_av_view {
+  const bool raw_api;explicit reader_av_view(bool raw=false):raw_api(raw){}
   reader_revisions *store = nullptr;
   std::thread::id owner = std::this_thread::get_id();
   bool active = false;
@@ -154,7 +155,11 @@ void build(reader_revisions *store, const std::string &book, const captured &row
   if (it.state != READER_AV_STATE_SAFE) return;
   r.check();
   record_guard rg; reader_rs_error e{};
-  reader_rs_status st = reader_rs_decode(store, row.wire.data(), row.wire.size(), &rg.record, &e);
+    reader_rs_status st;
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+  if(r.view->raw_api)st=reader_rs_decode_raw_v3(store,row.wire.data(),row.wire.size(),&rg.record,&e);else
+#endif
+  st=reader_rs_decode(store,row.wire.data(),row.wire.size(),&rg.record,&e);
   if (st != READER_RS_OK) fail(READER_AV_DECODE, e.message, e.revision_code, (int)st);
   rg.owned = true;
   r.check();
@@ -173,7 +178,7 @@ void build(reader_revisions *store, const std::string &book, const captured &row
   it.has_part = (it.mode == READER_AV_MODE_EPUB && rec.anchor_version >= 2) ? 1 : 0; it.part = it.has_part ? rec.part : 0;
   it.has_page = it.mode == READER_AV_MODE_FIXED ? 1 : 0; it.page = it.has_page ? rec.page : 0;
   it.start = rec.start; it.end = rec.end;
-  if (!rec.exact || !rec.prefix || !rec.suffix || !rec.note_text) fail(READER_AV_CONTRACT, "Decoded annotation lacks a selector or text");
+  if ((!r.view->raw_api&&(!rec.exact||!rec.prefix||!rec.suffix))||!rec.note_text) fail(READER_AV_CONTRACT, "Decoded annotation lacks a selector or text");
   take(out.part_path, rec.part_path, rec.part_path ? std::strlen(rec.part_path) : 0);
   take(out.page_id, rec.page_id, rec.page_id ? std::strlen(rec.page_id) : 0);
   take(out.exact, rec.exact, rec.exact_size); take(out.prefix, rec.prefix, rec.prefix_size); take(out.suffix, rec.suffix, rec.suffix_size);
@@ -182,7 +187,7 @@ void build(reader_revisions *store, const std::string &book, const captured &row
   it.exact_size = rec.exact_size; it.prefix_size = rec.prefix_size; it.suffix_size = rec.suffix_size; it.note_size = out.note.s.size();
   const bool point = rec.exact_size == 0 && rec.start == rec.end;
   it.kind = point ? READER_AV_KIND_BOOKMARK : it.note_size ? READER_AV_KIND_NOTE : READER_AV_KIND_HIGHLIGHT;
-  it.content_available = 1;
+  it.content_available = rec.exact ? 1 : 0;
 }
 
 void make_cursor(reader_av_cursor &c, const reader_av_cursor &base, int direction, const char *after, bool complete) {
@@ -193,7 +198,7 @@ void make_cursor(reader_av_cursor &c, const reader_av_cursor &base, int directio
 }
 }
 
-extern "C" reader_av_status reader_av_open(reader_revisions *store, const char *book_key, const reader_av_options *options,
+static reader_av_status open_view(bool raw_api,reader_revisions *store, const char *book_key, const reader_av_options *options,
     reader_av_view **out, reader_av_error *error) {
   if (out) *out = nullptr;
   return call(error, [&] {
@@ -211,7 +216,7 @@ extern "C" reader_av_status reader_av_open(reader_revisions *store, const char *
         budget = options->max_page_bytes;
       }
     }
-    std::unique_ptr<reader_av_view> view(new reader_av_view());
+    std::unique_ptr<reader_av_view> view(new reader_av_view(raw_api));
     view->store = store; view->book = book_key; view->cancel = cancel; view->cancel_context = context;
     view->budget = budget; view->binding = bind_book(view->book);
     *out = view.release();
@@ -227,11 +232,12 @@ extern "C" reader_av_status reader_av_cursor_start(const reader_av_view *view, i
   });
 }
 
-extern "C" reader_av_status reader_av_page_get(reader_av_view *view, const reader_av_cursor *from, size_t limit,
+static reader_av_status page_get(bool raw_api,reader_av_view *view, const reader_av_cursor *from, size_t limit,
     reader_av_page *page, reader_av_error *error) {
   if (page) std::memset(page, 0, sizeof(*page));
   return call(error, [&] {
     guard owner(view);
+    if(view->raw_api!=raw_api)fail(READER_AV_ARGUMENT,"Use the explicit view API matching this capability" );
     if (!from || !page || limit < 1 || limit > READER_AV_BATCH_MAX) fail(READER_AV_ARGUMENT, "Page requires a cursor, output and limit 1..100");
     if (from->version != 1 || (from->direction != 1 && from->direction != -1) || from->binding != view->binding ||
         std::strncmp(from->book_key, view->book.c_str(), sizeof(from->book_key)) != 0 || from->has_after > 1 || from->complete > 1 ||
@@ -247,7 +253,11 @@ extern "C" reader_av_status reader_av_page_get(reader_av_view *view, const reade
       collect c; c.r = &r; c.book = &view->book; c.direction = direction; c.budget = view->budget;
       if (from->has_after) { c.have_last = true; c.last = from->after_id; }
       reader_revision_error rerr{};
-      reader_revision_status st = reader_revision_annotations_page(view->store, view->book.c_str(), from->has_after ? from->after_id : nullptr,
+            auto enumerate=reader_revision_annotations_page;
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+      if(raw_api)enumerate=reader_revision_annotations_page_raw_v3;
+#endif
+      reader_revision_status st = enumerate(view->store, view->book.c_str(), from->has_after ? from->after_id : nullptr,
         direction, limit, visit, &c, &rerr);
       if (r.cancelled) fail(READER_AV_CANCELLED, "Cancelled by the caller");
       if (st != READER_REV_OK) fail(READER_AV_REVISION, rerr.message, (int)st);
@@ -317,3 +327,10 @@ extern "C" reader_av_status reader_av_close(reader_av_view **view, reader_av_err
     delete v; *view = nullptr;
   });
 }
+
+extern "C" reader_av_status reader_av_open(reader_revisions *s,const char *b,const reader_av_options *o,reader_av_view **v,reader_av_error *e){return open_view(false,s,b,o,v,e);}
+extern "C" reader_av_status reader_av_page_get(reader_av_view *v,const reader_av_cursor *c,size_t n,reader_av_page *p,reader_av_error *e){return page_get(false,v,c,n,p,e);}
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+extern "C" reader_av_status reader_av_open_raw_v3(reader_revisions *s,const char *b,const reader_av_options *o,reader_av_view **v,reader_av_error *e){return open_view(true,s,b,o,v,e);}
+extern "C" reader_av_status reader_av_page_get_raw_v3(reader_av_view *v,const reader_av_cursor *c,size_t n,reader_av_page *p,reader_av_error *e){return page_get(true,v,c,n,p,e);}
+#endif

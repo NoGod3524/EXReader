@@ -253,3 +253,6 @@ extern "C" JNIEXPORT jobjectArray JNICALL JNI_METHOD(membership)(JNIEnv *env,jcl
 #ifdef READER_HOST_READING
 #include "reading_product_jni.inc"
 #endif
+#ifdef READER_RECORD_INTEROP_REVIEW
+#include "record_interop_probe.inc"
+#endif

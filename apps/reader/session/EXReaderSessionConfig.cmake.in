@@ -1,5 +1,26 @@
 @PACKAGE_INIT@
 include(CMakeFindDependencyMacro)
-find_dependency(EXReaderSync 0.1.0 EXACT CONFIG)
+find_dependency(EXReaderSync @EXR_SYNC_VERSION@ EXACT CONFIG)
 find_dependency(Threads)
 include("${CMAKE_CURRENT_LIST_DIR}/EXReaderSessionTargets.cmake")
+
+foreach(_raw_target EXReaderSync::reader_sync EXReaderSession::reader_session)
+  get_target_property(_raw_dependency_defs ${_raw_target} INTERFACE_COMPILE_DEFINITIONS)
+  if(@EXR_READER_SELECTOR_BYTES_CANDIDATE@)
+    if(NOT "EXR_READER_SELECTOR_BYTES_CANDIDATE=1" IN_LIST _raw_dependency_defs)
+      message(FATAL_ERROR "Exact imported target belongs to the legacy capability family")
+    endif()
+
+  else()
+    if("EXR_READER_SELECTOR_BYTES_CANDIDATE=1" IN_LIST _raw_dependency_defs)
+      message(FATAL_ERROR "Legacy imported target cannot be replaced by a raw candidate")
+    endif()
+  endif()
+endforeach()
+
+if(@EXR_READER_SELECTOR_BYTES_CANDIDATE@)
+  _exr_raw_guard_target(EXReaderSync::reader_sync "${EXReaderSync_DIR}"
+    reader_sync.h READER_SYNC_VERSION 0.2.0 TRUE)
+  _exr_raw_guard_target(EXReaderSession::reader_session "${CMAKE_CURRENT_LIST_DIR}"
+    reader_session.h READER_SESSION_VERSION 0.2.0 TRUE)
+endif()

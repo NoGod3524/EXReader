@@ -6,6 +6,7 @@ option(EXR_HOST_NAVIGATION "Install the optional public navigation host integrat
 option(EXR_HOST_READING "Install optional typed product reading UI integration" OFF)
 option(EXR_HOST_PREFERENCES "Install optional device-local reading settings" OFF)
 option(EXR_HOST_PAGE_THEME "Explicit SDK 3.41 whole-page theme candidate" OFF)
+option(EXR_ANDROID_RECORD_INTEROP_REVIEW "Debug-only real retained-wire review probe" OFF)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -81,6 +82,10 @@ target_compile_features(exreader_product PRIVATE cxx_std_17)
 target_link_libraries(exreader_product PRIVATE EXReaderCommands::reader_commands
   EXReaderProductCatalog::reader_catalog EXReaderProductCatalog::reader_catalog_sqlite dl)
 target_compile_options(exreader_product PRIVATE -Wall -Wextra -fvisibility=hidden)
+if(EXR_ANDROID_RECORD_INTEROP_REVIEW AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+  target_compile_definitions(exreader_product PRIVATE READER_RECORD_INTEROP_REVIEW=1)
+  target_include_directories(exreader_product PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../tests/reader_android_record_interop/cpp")
+endif()
 target_link_options(exreader_product PRIVATE -Wl,-z,max-page-size=16384 -Wl,--exclude-libs,ALL
   -Wl,-Bsymbolic -Wl,--trace-symbol=sqlite3_open_v2 "-Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/product-link.map")
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
