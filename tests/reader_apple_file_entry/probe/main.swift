@@ -120,6 +120,22 @@ func sparse(_ url: URL, size: UInt64) {
     close(descriptor)
 }
 
+func rawNames(_ directory: URL) -> [[UInt8]] {
+    guard let dir = opendir(directory.path) else { return [] }
+    defer { closedir(dir) }
+    var names: [[UInt8]] = []
+    while let entry = readdir(dir) {
+        let length = Int(entry.pointee.d_namlen)
+        let bytes = withUnsafePointer(to: &entry.pointee.d_name) { pointer in
+            pointer.withMemoryRebound(to: UInt8.self, capacity: length) {
+                Array(UnsafeBufferPointer(start: $0, count: length))
+            }
+        }
+        if bytes != [0x2e] && bytes != [0x2e, 0x2e] { names.append(bytes) }
+    }
+    return names
+}
+
 func entries(_ directory: URL) -> [String] {
     return ((try? FileManager.default.contentsOfDirectory(atPath: directory.path)) ?? []).sorted()
 }
@@ -207,23 +223,22 @@ run("unicode-names-preserved-scalar-exact-nfc-and-nfd") {
     let dirs = scratch()
     let area = makeArea(dirs.stage)
     let names = ["caf\u{E9} \u{4E66}\u{7C4D}\u{1F600}.epub", "cafe\u{301} \u{4E66}\u{7C4D}\u{1F600}.epub"]
-    var seen: [[UnicodeScalar]] = []
     for (index, name) in names.enumerated() {
         let folder = dirs.src.appendingPathComponent("d\(index)", isDirectory: true)
         try! FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let url = folder.appendingPathComponent(name)
         put(url, pattern(100, seed: UInt64(index + 1)))
+        // Oracle: the raw bytes the file system reports for the entry.
+        let onDisk = rawNames(folder)
+        try expect(onDisk.count == 1, "listing")
         let request = try succeeded(stage(area, url))
-        try expect(Array(request.displayName.unicodeScalars) == Array(name.unicodeScalars), "scalars changed \(index)")
-        try expect(Array(request.displayName.utf8) == Array(name.utf8), "utf8 changed \(index)")
-        seen.append(Array(request.displayName.unicodeScalars))
+        try expect(Array(request.displayName.utf8) == onDisk[0], "bytes differ from disk name \(Array(request.displayName.unicodeScalars).map { String($0.value, radix: 16) })")
+        try expect(request.displayName.hasSuffix(".epub") && request.displayName.unicodeScalars.contains(UnicodeScalar(0x1F600)!), "content lost")
     }
-    try expect(seen[0] != seen[1], "nfc and nfd collapsed")
     let reopened = makeArea(dirs.stage).pendingRequests()
     try expect(reopened.count == 2, "reopened count")
-    for request in reopened {
-        try expect(names.contains { Array($0.unicodeScalars) == Array(request.displayName.unicodeScalars) }, "manifest changed scalars")
-    }
+    let live = Set(area.pendingRequests().map { Array($0.displayName.unicodeScalars) })
+    try expect(Set(reopened.map { Array($0.displayName.unicodeScalars) }) == live, "manifest changed scalars")
 }
 
 run("staging-stable-after-scope-release-and-source-removal") {

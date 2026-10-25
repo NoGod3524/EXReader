@@ -98,12 +98,16 @@ public final class FileEntryStagingArea {
             throw FileEntryError.notDownloaded(downloadRequested: requested)
         }
 
+        // Coordination can block forever on a FIFO or device node, so reject those first.
+        var kind = stat()
+        if stat(url.path, &kind) == 0 && (kind.st_mode & 0o170000) != 0o100000 { throw FileEntryError.notRegularFile }
+
         let coordinator = NSFileCoordinator(filePresenter: nil)
         cancellation.onCancel { coordinator.cancel() }
         var coordinationError: NSError?
         var outcome: Result<FileEntryRequest, FileEntryError>?
         coordinator.coordinate(readingItemAt: url, options: [], error: &coordinationError) { readable in
-            outcome = self.copy(source: readable, displayName: url.lastPathComponent,
+            outcome = self.copy(source: readable, displayName: Self.diskName(url),
                                 origin: origin, cancellation: cancellation)
         }
         if let outcome = outcome { return try outcome.get() }
@@ -281,6 +285,18 @@ public final class FileEntryStagingArea {
     private func readManifest(id: String) -> Manifest? {
         guard let data = try? Data(contentsOf: URL(fileURLWithPath: manifestPath(id))) else { return nil }
         return try? JSONDecoder().decode(Manifest.self, from: data)
+    }
+
+    /// Last path component as the file system names it (the bytes of the file-system
+    /// representation), without Foundation's Unicode canonicalization.
+    static func diskName(_ url: URL) -> String {
+        let name: String? = url.withUnsafeFileSystemRepresentation { pointer in
+            guard let pointer = pointer else { return nil }
+            let bytes = Array(UnsafeBufferPointer(start: pointer, count: strlen(pointer)))
+            let tail = bytes.split(separator: 0x2f, omittingEmptySubsequences: true).last ?? []
+            return String(decoding: tail.map { UInt8(bitPattern: $0) }, as: UTF8.self)
+        }
+        return name ?? url.lastPathComponent
     }
 
     static func isID(_ text: String) -> Bool {
