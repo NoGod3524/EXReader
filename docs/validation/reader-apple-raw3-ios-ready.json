@@ -1,0 +1,17 @@
+{
+  "accepted": false,
+  "branch": "codex/reader-apple-raw3-ios-ready",
+  "ordinary_merge_source": "4749131d722f4f585be767207ed16b32dd9d9b3d",
+  "raw_producer_source": "72c6bbdd14ebf3be453fa7f0da81119d52675eb5",
+  "readiness_source": "7c457fb68a24d917ac3bd60aa1f961b16fe9ae6b",
+  "source_sha": null,
+  "runs": [],
+  "original_off_cases_per_platform": 7,
+  "raw_phases_per_platform": 6,
+  "production_diff_from_72": false,
+  "original_tests_and_judges_changed": false,
+  "physical_device_execution": false,
+  "android_interop_accepted": false,
+  "full_mobile_sync_accepted": false,
+  "complete_product": false
+}
