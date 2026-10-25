@@ -1,0 +1,23 @@
+{
+  "package": "S11",
+  "title": "原件导入持久化故障回归 (batch / cloud / local-download / sideload)",
+  "accepted": false,
+  "implementation_start": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+  "approved_sdk": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "tested_source_sha": null,
+  "docs_seal_sha": null,
+  "remote_branch": "codex/reader-fw-s11",
+  "workflow": ".github/workflows/reader-final-s11.yml",
+  "run": null,
+  "checks": {
+    "total": 0,
+    "pending": []
+  },
+  "pending": [
+    "Linux-only rows (real ENOSPC via tmpfs: batch.nospace, cloud.nospace, sideload.nospace) cannot be injected on the Windows and macOS runners; they are recorded as pending with the exact reason on those jobs, never as passes."
+  ],
+  "not_verified": [
+    "No run has been executed for this source yet; accepted stays false until a run of this exact commit is recorded here."
+  ],
+  "notes": "Rows are described in docs/reader-final-s11/CONTRACT.md."
+}
