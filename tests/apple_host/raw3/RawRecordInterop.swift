@@ -233,8 +233,11 @@ func interopOutbox(_ context: UnsafeMutableRawPointer?, _ row: UnsafePointer<rea
                     var choices: [(Int, String, HostReadingCapture)] = [(1, "progress", point), (2, "bookmark", point)]
                     if role != "cbz" {
                         guard let first = snapshot.pageText.unicodeScalars.first else { throw HostError.invalidResult("Real range text missing: " + role) }
-                        let start = snapshot.pageRange.lowerBound
-                        let end = role == "pdf" ? snapshot.pageRange.upperBound : start + String(first).utf8.count
+                        // A fixed HostSnapshot deliberately has pageRange 0..<0.
+                        // The real zero-point SDK suffix supplies a bounded byte
+                        // range; recapture it through the actual SDK as a range.
+                        let start = role == "pdf" ? 0 : snapshot.pageRange.lowerBound
+                        let end = role == "pdf" ? (point.fixed?.fields[3]?.count ?? 0) : start + String(first).utf8.count
                         choices.append((3, "highlight", try session.readingCapture(start: start, end: end, cancel: HostCancelBox())))
                     }
                     for (kind, label, location) in choices {
