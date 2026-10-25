@@ -40,9 +40,9 @@ def main():
                 app.open(title)
                 app.wait_idle()
             app.open_dialog()
-            field = F.ZOOM if role == 'pdf' else F.MARGIN
-            key = 'fixed_page_zoom' if role == 'pdf' else 'margin'
-            initial, next_value = (100, 125) if role == 'pdf' else (36, 60)
+            field = F.ZOOM if role == 'pdf' else F.MARGIN if role == 'empty' else F.FONT
+            key = 'fixed_page_zoom' if role == 'pdf' else 'margin' if role == 'empty' else 'font_size'
+            initial, next_value = (100, 125) if role == 'pdf' else (36, 60) if role == 'empty' else (24, 26)
             F.set_text(app.field(field), str(initial))
             app.apply()
             app.close_dialog()
@@ -50,23 +50,38 @@ def main():
             before_frame = app.page_shot(role + '-before.bmp', output) if filename else None
 
             for stage in (11, 12):
-                app.open_dialog()
-                F.set_text(app.field(field), str(next_value))
+                if not filename:
+                    app.open_dialog()
+                    F.set_text(app.field(field), str(next_value))
                 assert app.q(stage + 100) == 1
-                app.press(F.APPLY)
+                if not filename:
+                    app.press(F.APPLY)
+                else:
+                    # Persist through the real nonmodal font/zoom toolbar path;
+                    # the modal settings owner correctly blocks other commands.
+                    F.send(F.U.GetDlgItem(app.window, 116 if role == 'pdf' else 114), 0xF5)
                 app.wait(lambda: app.q(18) == stage, timeout=90)
                 at_boundary = F.document(profile)[1]
                 assert (at_boundary == before) == (stage == 11)
-                # Deliver the real owner cancel command at a held worker
-                # boundary. The hook never edits the flag or the save result.
-                F.send(app.window, 0x111, 117, 0)
+                pid = app.process.pid
+                if filename:
+                    app.click('cancel')
+                else:
+                    # While modal, application close is the real owner cancel
+                    # path. Check the resulting durable choice after restart.
+                    F.send(app.window, F.WM_CLOSE)
                 app.release()
-                app.wait_idle()
-                app.close_dialog()
+                if filename:
+                    app.wait_idle()
+                else:
+                    app.process.wait(timeout=90)
+                    app.log.close()
+                    app = F.App(args.candidate.resolve(), args.font.resolve(), profile, existing=True)
+                    app.settle()
                 value, after = F.document(profile)
                 frame = app.page_shot(role + '-stage-' + str(stage) + '.bmp', output) if filename else None
                 expected = initial if stage == 11 else next_value
-                assert value[key] == expected
+                assert value[key] == expected, dict(role=role,stage=stage,key=key,actual=value[key],expected=expected,status=app.status())
                 assert (after == before) == (stage == 11)
                 if filename:
                     assert (frame == before_frame) == (stage == 11)
@@ -74,7 +89,8 @@ def main():
                 assert float(F.text(app.field(field))) == expected
                 app.close_dialog()
                 rows.append(dict(name=role + ('-before-save-cancel-retains' if stage == 11 else '-after-save-cancel-publishes'),
-                                 passed=True, pid=app.process.pid, boundary_stage=stage,
+                                 passed=True, pid=pid, boundary_stage=stage,
+                                 cancellation='native-cancel-button' if filename else 'actual-close-and-reopen',
                                  file_sha256=hashlib.sha256(after).hexdigest()))
                 print(json.dumps(rows[-1]), flush=True)
 
@@ -96,20 +112,23 @@ def main():
         # veto restored. It must leave disk committed and UI stale.
         profile = output / 'old-veto-control'
         app = F.App(args.control.resolve(), args.font.resolve(), profile)
+        app.settle()
+        app.import_file(args.fixtures / 'Reading sample.txt')
+        app.open('Reading sample')
+        app.wait_idle()
         app.open_dialog()
-        F.set_text(app.field(F.MARGIN), '36')
+        F.set_text(app.field(F.FONT), '24')
         app.apply()
-        F.set_text(app.field(F.MARGIN), '60')
+        app.close_dialog()
         assert app.q(112) == 1
-        app.press(F.APPLY)
+        F.send(F.U.GetDlgItem(app.window, 114), 0xF5)
         app.wait(lambda: app.q(18) == 12, timeout=90)
-        F.send(app.window, 0x111, 117, 0)
+        app.click('cancel')
         app.release()
         app.wait_idle()
-        app.close_dialog()
-        assert F.document(profile)[0]['margin'] == 60
+        assert F.document(profile)[0]['font_size'] == 26
         app.open_dialog()
-        assert float(F.text(app.field(F.MARGIN))) == 36
+        assert float(F.text(app.field(F.FONT))) == 24
         rows.append(dict(name='old-post-save-veto-control-rejected', passed=True, pid=app.process.pid))
         app.close_dialog()
         app.close_app()
