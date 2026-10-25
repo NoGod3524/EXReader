@@ -120,6 +120,9 @@ def main(argv):
                        {"id": item.get("id"), "bytes": item.get("size_in_bytes"),
                         "digest": item.get("digest"), "expires_at": item.get("expires_at")})
         artifact_dir = authenticated_zip(item, root)
+        if not (artifact_dir / "reports/programs.json").is_file():
+            checks.require("actual_program_report_present:" + platform, False)
+            continue
         programs = read_json(artifact_dir / "reports/programs.json")["programs"]
         checks.require("three_actual_programs:" + platform, len(programs) == 3 and
                        len({record["path"] for record in programs}) == 3)

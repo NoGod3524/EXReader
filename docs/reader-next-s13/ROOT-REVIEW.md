@@ -31,3 +31,9 @@ backslash is refused before extraction on both operating systems. Linux
 round-1/2 producers are allowed to finish; their results cannot replace the
 missing Windows results. The third full root round is held until their
 remaining observations are available.
+
+Round 1 is now terminal failure: Linux producer succeeded; Windows failed
+before build, and strict refused its missing program report. The missing
+report is now recorded as an explicit failed observation rather than an
+uncaught file-read error, allowing the completed Linux observations to be
+retained in the failure summary. No cross-round grant is made.
