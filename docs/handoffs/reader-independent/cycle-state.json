@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "recorded_at_utc": "2026-10-25T15:17:41Z",
+  "recorded_at_utc": "2026-10-25T15:26:07Z",
   "latest_checkpoint": {
     "checkpoint_1458": {
       "common_source": "25bc0c67971f81491f50e0a3caaaf7e509bb7e35",
@@ -24,15 +24,16 @@
         "records_run":40195374154,"original_failure_preserved":true,
         "movie_inspection_run":40203788769,"movie_inspection_conclusion":"success",
         "movie_observation":"empty shelf and ready status persist after real CBZ tap; callback trace is not recoverable from movie",
-        "observational_reproduction_source":"df517051aeb5703c1899c58e8d4bd1acef5bf2a7","observational_reproduction_run":40205227355,"scope":"new diagnostic only; original production, fixture and assertions preserved",
+        "observational_reproduction_source":"df517051aeb5703c1899c58e8d4bd1acef5bf2a7","observational_reproduction_run":40205227355,"scope":"new diagnostic only; original production, fixture and assertions preserved","observed":"CBZ and later PDF accepted, SDK returned, published and committed; diagnostic AX overhead reached original180s case allowance, UI test failed; diagnostic workflow success grants nothing",
         "theme_complete_rerun":40203445172,"theme_conclusion":"failure",
         "theme_failure":"FastImportUITests.swift:85 waits for reader page containing C00P000W00 after imported shelf row already passed; original movie stays on imported shelf",
         "theme_iphone_failure":"authenticated system-commands.json again shows simctl appearance light45s timeout before build",
         "theme_readonly_inspection_run":40205227429,"theme_readonly_inspection_conclusion":"success",
-        "simulator_readiness_diagnostic":{"source":"e9ac1f22","run":40205950476,"state":"in_progress","original_appearance_timeout_seconds":45,"accepted":false}
+        "simulator_readiness_diagnostic":{"source":"e9ac1f22","run":40205950476,"state":"completed_success","original_appearance_timeout_seconds":45,"accepted":false,"observation":"first appearance timed out; native Simulator window open plus bootstatus followed by identical appearance in5.0s and readback light"},
+        "simulator_readiness_candidate":{"source":"f123b7cc3c3177b20767ed239ce9e4d4a023fe73","run":40206808414,"state":"in_progress","base":"25bc0c67971f81491f50e0a3caaaf7e509bb7e35","application_and_original_UI_runner_unchanged":true,"original_full_workflow_projection_exact":true,"original_assertions_and_budgets_unchanged":true,"not_a25bc_producer":true}
       },
       "active_candidates": {
-        "gtk_compact":{"source":"3e719c51","run":40205409399,"state":"in_progress","production_pin":"fedce16a","diagnostic_run":40205198425,"diagnostic":"records dialog active, list disabled during async query so original focus request fails; compact entry focuses existing Close then tests keyboard reachability to real editor/record rows","prior_full_run":40204507162,"prior_conclusion":"failure_after20_new_UI_checks"},
+        "gtk_compact":{"source":"57203a52","run":40206458217,"state":"in_progress","production_pin":"fedce16a","diagnostic_run":40205198425,"diagnostic":"records dialog active, list disabled during async query so original focus request fails; compact entry focuses existing Close; actual keyboard editor and record-row reachability passed on prior run","prior_full_run":40205409399,"prior_conclusion":"failure_after33_new_UI_checks_driver_used_Stop_and_close_after_done_changed_actual_label_to_Close"},
         "android_raw3":{"source":"9498f3ed469a37063f0106c106ddaa08b2cfdce0","run":40205927667,"state":"in_progress","prior_run":40204041412,"prior_conclusion":"failure","prior_failure":"last kill-ui marker poll interpreted adb cat ENOENT output as JSON after18 raw checks; retry only exact missing-marker case, complete scope retained"},
         "apple_ios_raw3":{"source":"72c6bbdd14ebf3be453fa7f0da81119d52675eb5","run":40203714083,"state":"completed_failure","iphone_failure":"original_OFF_seven_cases5of7; fixed_CBZ_PDF and real_termination_after_commit failed before raw tests; original failure artifact12602953966 preserved","ipad":"complete original_OFF7 and raw_NULL_source1_2_kill_legacy success","strict":"refused","readonly_diagnostic_run":40206147505,"no_cross_run_grant":true},
         "apple_macos_raw3":{"tested_source":"15dab6b2270dc296ed6239db67ced2e22d255e65","sealed_head":"44eabdc86b3b84d986f81dbaf8cee92b1829cea8","run":40196978163,"conclusion":"success","sender_wires":15,"originals":4,"records":11}
