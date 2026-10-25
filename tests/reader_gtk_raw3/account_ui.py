@@ -34,7 +34,7 @@ def main():
             time.sleep(.05)
         raise TimeoutError('actual raw account state: '+repr(account()))
     try:
-        host.launch();host.key('ctrl+shift+a');wait(lambda value:value['visible']=='1')
+        host.launch();report['pid']=host.process.pid;host.key('ctrl+shift+a');wait(lambda value:value['visible']=='1')
         dialog=command('xdotool','search','--onlyvisible','--all','--pid',host.process.pid,'--name','^Account and Sync$').splitlines()[-1]
         command('xdotool','windowactivate','--sync',dialog)
         for mnemonic,value in [('w',os.environ['GTK_RAW3_DAV_URL']),('u',user),('p',password)]:

@@ -89,9 +89,9 @@ def fixture(private,script):
 
 
 def populate(server,wires,originals):
-    server.directories.update(['/dav/revisions/','/dav/objects/'])
-    for number in range(256):server.directories.add('/dav/revisions/%02x/'%number)
-    for revision,sha,data in wires:server.entries['/dav/revisions/%s/%s-%s.json'%(revision[:2],revision,sha)]=data
+    server.directories.update(['/dav/exreader-sync-v1/','/dav/exreader-sync-v1/revisions/','/dav/exreader-sync-v1/objects/'])
+    for number in range(256):server.directories.add('/dav/exreader-sync-v1/revisions/%02x/'%number)
+    for revision,sha,data in wires:server.entries['/dav/exreader-sync-v1/revisions/%s/%s-%s.json'%(revision[:2],revision,sha)]=data
     for row,data in originals.values():
-        digest=row['sha256'];server.directories.add('/dav/objects/'+digest[:2]+'/')
-        server.entries['/dav/objects/%s/%s.%s'%(digest[:2],digest,row['format'])]=data
+        digest=row['sha256'];server.directories.add('/dav/exreader-sync-v1/objects/'+digest[:2]+'/')
+        server.entries['/dav/exreader-sync-v1/objects/%s/%s.%s'%(digest[:2],digest,row['format'])]=data
