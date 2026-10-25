@@ -120,6 +120,15 @@ if(EXR_READER_BUILD_GTK)
       add_executable(reader-gtk-batch-import-backend ../../../tests/reader_gtk_batch_import/backend.c)
       target_compile_options(reader-gtk-batch-import-backend PRIVATE -Wall -Wextra -Werror)
       target_link_libraries(reader-gtk-batch-import-backend PRIVATE exreader-linux-reading reader_catalog_sdk reader_catalog_sqlite PkgConfig::GLIB)
+      # As with notes_failure, compile the real owner/UI callbacks into an
+      # isolated, uninstalled fault probe; the installed host has no test hook.
+      pkg_check_modules(GTK_BATCH_FAULTS REQUIRED IMPORTED_TARGET gtk+-3.0)
+      add_executable(reader-gtk-batch-owner-faults ../../../tests/reader_gtk_batch_import/owner_faults.c)
+      target_compile_definitions(reader-gtk-batch-owner-faults PRIVATE EXR_READER_PRODUCT_CATALOG=1
+        EXR_READER_BATCH_IMPORT=1 EXR_READER_BATCH_IMPORT_UI=1)
+      target_compile_options(reader-gtk-batch-owner-faults PRIVATE -Wall -Wextra -Werror)
+      target_link_libraries(reader-gtk-batch-owner-faults PRIVATE reader_catalog_sdk reader_catalog_sqlite
+        EXReaderBatchImport::reader_batch_import EXReader::exr_core EXReader::exr_library PkgConfig::GTK_BATCH_FAULTS)
     endif()
   endif()
   if(EXR_READER_GTK_READING_RECORDS)
