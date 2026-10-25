@@ -93,6 +93,15 @@ def main():
             cache=raw.bytes('raw-owner/CMakeCache.txt',2*1024**2).decode()
             require('EXR_READER_GTK_RAW3:BOOL=ON' in cache and 'EXR_SDK_VERSION:STRING=3.41.0' in cache,'actual raw host/SDK flags absent')
             ui=raw.report('raw-ui/report.json');count=compact.validate_ui(ui,source,run,attempt,program);require(count==45,'raw compact UI cases changed')
+            fixture=raw.report('raw-ui-fixtures/manifest.json');require(fixture==ui['fixtures'],'actual raw UI fixtures differ')
+            for row in fixture.values():
+                data=raw.bytes('raw-ui-fixtures/'+row['path'],64*1024**2)
+                require(len(data)==row['bytes'] and hashlib.sha256(data).hexdigest()==row['sha256'],'actual raw UI fixture bytes differ')
+            for row in value['network']['phases']:
+                session=row['session'];identity(session,source,run,attempt)
+                require(session['program_sha256']==program,'native account UI used another program')
+                data=raw.bytes(row['label']+'-display/account/'+session['screenshot']['path'],32*1024**2)
+                require(data.startswith(b'\x89PNG\r\n\x1a\n') and hashlib.sha256(data).hexdigest()==session['screenshot']['sha256'],'actual native account screenshot differs')
             mapping=raw.bytes('raw-owner/actual-owner/gtk-account-host.map',32*1024**2)
             for symbol in (b'reader_revisions_open_raw_v3',b'reader_metadata_open_raw_v3',b'reader_session_create_raw_v3',b'reader_rs_decode_raw_v3',
               b'reader_rs_resolve_fixed_v3',b'reader_rc_apply_raw_v3',b'reader_av_open_raw_v3',b'reader_av_page_get_raw_v3',b'reader_command_apply_book_raw_v3'):

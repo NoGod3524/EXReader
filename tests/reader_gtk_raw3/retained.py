@@ -25,8 +25,11 @@ def main():
     def scope_pages(endpoint,key):
         rows=actual_pages(endpoint,key)
         if key=='jobs':
-            expected={'preflight',module.HOST,module.OLD_STRICT,module.DIAGNOSTIC,module.SUMMARY,RAW_JOB,FINAL_JOB}
-            module.require(len(rows)==7 and {r['name'] for r in rows}==expected,'complete new topology differs')
+            expected={'preflight',module.HOST,module.OLD_STRICT,module.DIAGNOSTIC,module.SUMMARY,RAW_JOB}
+            actual={r['name'] for r in rows}
+            # The final job depends on this collector and may not exist yet.
+            # Its own collector subsequently requires all seven actual jobs.
+            module.require(len(rows)==len(actual) and actual in (expected,expected|{FINAL_JOB}),'retained-scope topology differs')
             return [r for r in rows if r['name'] not in (RAW_JOB,FINAL_JOB)]
         return rows
     module.pages=scope_pages;module.main()
