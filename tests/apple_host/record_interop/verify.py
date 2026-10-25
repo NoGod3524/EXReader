@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path, PurePosixPath
 import sys
+import subprocess
 import tempfile
 import zipfile
 
@@ -108,6 +109,33 @@ def validate(result, read, source, run, attempt):
 
 def main():
     require(os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only')
+    if '--inspect-run' in sys.argv:
+        target = sys.argv[sys.argv.index('--inspect-run') + 1]
+        require(target.isdecimal(), 'bad original run')
+        original = fetch('actions/runs/' + target)
+        require(original['status'] == 'completed' and original['path'] == '.github/workflows/reader-apple-record-interop.yml', 'not a completed original producer')
+        subprocess.run(['git','merge-base','--is-ancestor',original['head_sha'],'HEAD'],check=True)
+        matches = [item for item in fetch('actions/runs/' + target + '/artifacts?per_page=100')['artifacts']
+                   if item['name'] == 'apple-host-record-interop-' + target + '-' + str(original['run_attempt'])]
+        require(len(matches) == 1, 'original artifact absent or duplicate')
+        artifact = matches[0]
+        require(artifact['workflow_run']['head_sha'] == original['head_sha'] and not artifact['expired'], 'foreign or expired original artifact')
+        with tempfile.TemporaryFile() as stream:
+            download_artifact_zip(artifact['id'],stream);stream.seek(0);raw=stream.read()
+        require(len(raw)==artifact['size_in_bytes'] and 'sha256:'+hashlib.sha256(raw).hexdigest()==artifact['digest'],'original raw ZIP differs')
+        findings=[]
+        with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+            for info in archive.infolist():
+                if info.filename.endswith('reading-requests/request.json'):
+                    require(info.file_size<=1024**2,'oversized original request')
+                    request=load(archive.read(info))
+                    findings.append(dict(member=info.filename,request=request))
+        out=ROOT/'build/apple-record-interop-summary';out.mkdir(parents=True,exist_ok=True)
+        result=dict(accepted=False,diagnostic_only=True,original_source=original['head_sha'],original_run=target,
+                    original_attempt=original['run_attempt'],artifact=artifact,original_pending_requests=findings)
+        (out/'inspection.json').write_text(json.dumps(result,indent=2)+'\n')
+        print(json.dumps(result),flush=True)
+        return
     source, run, attempt = os.environ['GITHUB_SHA'], os.environ['GITHUB_RUN_ID'], os.environ['GITHUB_RUN_ATTEMPT']
     out = ROOT / 'build/apple-record-interop-summary'; out.mkdir(parents=True, exist_ok=True)
     summary = dict(accepted=False, source_sha=source, run_id=run, attempt=attempt,
