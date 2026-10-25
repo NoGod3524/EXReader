@@ -22,6 +22,9 @@ sys.path.insert(0, str(HERE))
 import contract
 
 PROFILE = 'reading-core'
+# A candidate is only evidence for the platform it was actually built on: the
+# runner identity and the architecture are part of the package claim.
+RUNNERS = {'linux': ('Linux', 'X64'), 'macos': ('macOS', 'ARM64')}
 REQUIRED = ('include/exr/base.h', 'include/exr/core.h', 'include/exreader.h',
             'lib/cmake/EXReader/EXReaderConfig.cmake',
             'lib/cmake/EXReader/EXReaderConfigVersion.cmake',
@@ -42,6 +45,11 @@ def version_abi(header):
 
 def build(profile, install, output, platform, runner_os, arch, licenses):
     contract.need(profile == PROFILE, 'J24 stages the reading-core distribution only')
+    want_os, want_arch = RUNNERS[platform]
+    contract.need(runner_os == want_os,
+                  'a %s candidate cannot be staged on a %s runner' % (platform, runner_os))
+    contract.need(arch == want_arch,
+                  'the accepted %s candidate is %s, not %s' % (platform, want_arch, arch))
     install, output = Path(install).resolve(strict=True), Path(output)
     contract.need(not output.exists(), 'candidate output already exists: ' + str(output))
     for relative in REQUIRED:
@@ -52,6 +60,8 @@ def build(profile, install, output, platform, runner_os, arch, licenses):
     exported = (install / 'lib/cmake/EXReader/EXReaderTargets.cmake').read_text(encoding='utf-8')
     dependencies = (install / 'lib/cmake/EXReader/EXReaderDependencies.cmake').read_text(encoding='utf-8')
     targets = contract.link_order(exported)
+    definitions = contract.compile_definitions(exported)
+    contract.need(definitions, 'the installed package exports no compile definition')
     components = ['lib%s.a' % name for name in targets]
     vendor = contract.vendor_archives(dependencies)
     system = contract.system_libraries(dependencies)
@@ -70,13 +80,21 @@ def build(profile, install, output, platform, runner_os, arch, licenses):
     output.mkdir(parents=True)
     prefix = output / 'prefix'
     shutil.copytree(install, prefix, symlinks=False)
-    pc_text = contract.render_pc(sdk_version, DESCRIPTION, components, vendor, system)
+    pc_text = contract.render_pc(sdk_version, DESCRIPTION, components, vendor, system, definitions)
     pc_path = prefix / 'lib/pkgconfig/exreader.pc'
     pc_path.parent.mkdir(parents=True, exist_ok=True)
     pc_path.write_text(pc_text, encoding='utf-8')
-    pc_fields, pc_problems = contract.pc_contract(pc_text, sdk_version, components, vendor, system)
+    pc_fields, pc_problems = contract.pc_contract(pc_text, sdk_version, components, vendor, system,
+                                                 definitions)
     contract.need(not pc_problems, 'generated pkg-config unit is invalid: ' + '; '.join(pc_problems))
     foreign = contract.foreign_pkgconfig(prefix)
+    for entry in foreign:
+        # Removal is only justified for a unit that is unusable after relocation,
+        # i.e. one whose prefix is an absolute build path. A relocatable upstream
+        # unit is installed material: refuse the candidate instead of deleting it.
+        contract.need(entry['absolute'] is True,
+                      'upstream pkg-config unit is already relocatable and must not be removed: '
+                      + entry['path'] + ' prefix=' + str(entry['prefix']))
     for entry in foreign:
         (prefix / entry['path']).unlink()
     remaining = sorted(path.name for path in (prefix / 'lib/pkgconfig').glob('*.pc'))
@@ -108,6 +126,7 @@ def build(profile, install, output, platform, runner_os, arch, licenses):
                       'fields': pc_fields},
         'link_order': components,
         'component_targets': targets,
+        'compile_definitions': definitions,
         'foreign_pkgconfig': foreign,
         'private_archives': vendor,
         'system_libraries': system,
@@ -116,7 +135,7 @@ def build(profile, install, output, platform, runner_os, arch, licenses):
                    'executables': sum(1 for record in records if record['executable']),
                    'material_files': sum(1 for record in records if contract.is_material(record['path']))},
         'dedupe_plan': plan,
-        'dedupe_summary': {'groups': len({item['sha256'] for item in plan}),
+        'dedupe_summary': {'groups': len({(item['sha256'], item['executable']) for item in plan}),
                            'duplicates': len(plan), 'duplicate_bytes': duplicate_bytes,
                            'material_roots': list(contract.MATERIAL_ROOTS)},
         'licenses': {'path': str(Path(licenses).resolve(strict=True)), 'release_ready': True,
@@ -136,6 +155,9 @@ def build(profile, install, output, platform, runner_os, arch, licenses):
         ('upstream_pkgconfig_units', 'pass',
          'removed %d private units that upstream installed with absolute prefixes' % len(foreign)),
         ('pkginfo_unit', 'pass', 'validated Name/Version/Cflags/Libs/Libs.private coverage'),
+        ('compile_definitions', 'pass',
+         'Cflags carries the %d definition(s) the installed package exports: %s'
+         % (len(definitions), ' '.join(definitions))),
         ('licence_materials', 'pass', 'installed materials check reported release ready'),
         ('duplicate_material_plan', 'pass', '%d duplicate copies, %d bytes' % (len(plan), duplicate_bytes)),
     ]

@@ -126,6 +126,52 @@ def scan_tokens(root, tokens):
     return hits
 
 
+def compile_definitions(targets_text):
+    """Compile definitions the installed CMake package imposes on its consumers.
+
+    A pkg-config consumer never reads EXReaderTargets.cmake, so a unit that only
+    carries `-I` gives a different compile interface than the package it describes
+    (on Windows the missing `EXR_STATIC` alone changes every declaration).
+    """
+    names = []
+    for match in re.finditer(
+            r'set_target_properties\(EXReader::(exr_\w+) PROPERTIES(.*?)'
+            r'(?=\nset_target_properties\(|\nadd_library\(|\n#|\Z)',
+            targets_text, re.S):
+        found = re.search(r'INTERFACE_COMPILE_DEFINITIONS "((?:[^"\\]|\\.)*)"', match.group(2))
+        if not found:
+            continue
+        for item in found.group(1).split(';'):
+            item = item.replace('\\"', '"').replace('\\\\', '\\').strip()
+            if item and item not in names:
+                names.append(item)
+    return sorted(names)
+
+
+def exported_links(name, properties, static, seen=()):
+    """Resolve one component's exported archives, splicing interface targets.
+
+    An exported component may name another exported target that owns no archive of
+    its own (the public interface target). Its own link interface is expanded here so
+    a real dependency behind an interface target is never dropped from the order.
+    """
+    links = []
+    for link in properties.get(name, []):
+        if not link.startswith('EXReader::exr_'):
+            continue
+        dependency = link.split('::', 1)[1]
+        if dependency in seen:
+            continue
+        if dependency in static:
+            if dependency not in links:
+                links.append(dependency)
+        elif dependency in properties:
+            for expanded in exported_links(dependency, properties, static, seen + (dependency,)):
+                if expanded not in links:
+                    links.append(expanded)
+    return links
+
+
 def link_order(targets_text):
     """Return static component archives so every archive precedes its dependencies."""
     properties = {}
@@ -140,14 +186,7 @@ def link_order(targets_text):
     need(static, 'no static component archive is exported')
     import heapq
 
-    dependencies = {}
-    for name in static:
-        dependencies[name] = []
-        for link in properties.get(name, []):
-            if link.startswith('EXReader::exr_'):
-                dependency = link.split('::', 1)[1]
-                if dependency != 'exr_core' and (dependency in properties or dependency in static):
-                    dependencies[name].append(dependency)
+    dependencies = {name: exported_links(name, properties, static) for name in static}
     dependents = {name: 0 for name in static}
     for name in static:
         for dependency in dependencies[name]:
@@ -205,8 +244,9 @@ def archive_flag(filename):
     return '-l' + stem
 
 
-def render_pc(version, description, components, vendor, system):
+def render_pc(version, description, components, vendor, system, definitions=()):
     need(components and vendor and system, 'incomplete pkg-config input')
+    cflags = ['-I${includedir}'] + ['-D' + item for item in definitions]
     lines = [
         'prefix=' + PC_PREFIX,
         'exec_prefix=${prefix}',
@@ -218,7 +258,7 @@ def render_pc(version, description, components, vendor, system):
         'Description: ' + description,
         'URL: https://github.com/NoGod3524/EXReader',
         'Version: ' + version,
-        'Cflags: -I${includedir}',
+        'Cflags: ' + ' '.join(cflags),
         'Libs: -L${libdir} ' + ' '.join(archive_flag(name) for name in components),
         'Libs.private: -L${vendordir} ' + ' '.join(archive_flag(name) for name in vendor) +
         ' ' + ' '.join(system),
@@ -242,7 +282,7 @@ def _expand(value, variables, depth=0):
     return re.sub(r'\$\{([A-Za-z_][A-Za-z0-9_]*)\}', replace, value)
 
 
-def pc_contract(text, version, components, vendor, system):
+def pc_contract(text, version, components, vendor, system, definitions=()):
     """Validate the installed pkg-config file; report every violation."""
     problems = []
     lines = text.splitlines()
@@ -283,6 +323,16 @@ def pc_contract(text, version, components, vendor, system):
                     problems.append('%s: path is not relative to pcfiledir: %s' % (name, token))
             elif token.startswith('-Wl,'):
                 problems.append('%s: linker-wrapper flag is not relocatable: %s' % (name, token))
+    expected_definitions = {'-D' + item for item in definitions}
+    observed_definitions = {token for token in expanded.get('Cflags', '').split()
+                            if token.startswith('-D')}
+    if observed_definitions != expected_definitions:
+        missing = expected_definitions - observed_definitions
+        extra = observed_definitions - expected_definitions
+        if missing:
+            problems.append('Cflags omits the exported definition(s): ' + ' '.join(sorted(missing)))
+        if extra:
+            problems.append('Cflags lists unexpected definition(s): ' + ' '.join(sorted(extra)))
     libs = expanded.get('Libs', '').split()
     private = expanded.get('Libs.private', '').split()
     expected_components = {archive_flag(name) for name in components}
@@ -335,22 +385,29 @@ def is_material(relative):
 
 
 def dedupe_plan(records):
-    """Plan hardlinks for identical archive material; archives and headers stay apart."""
+    """Plan hardlinks for identical archive material; archives and headers stay apart.
+
+    A hardlink shares one inode, so it also shares one permission mode. Two copies
+    with the same bytes but a different executable bit are therefore not duplicates:
+    linking them would silently change an installed mode.
+    """
     groups = {}
     for record in records:
         relative = record['path']
         if not is_material(relative) or relative.endswith(NO_LINK_SUFFIX) or record['bytes'] == 0:
             continue
-        groups.setdefault(record['sha256'], []).append(record)
+        key = (record['sha256'], bool(record.get('executable')))
+        groups.setdefault(key, []).append(record)
     plan = []
-    for sha in sorted(groups):
-        entries = sorted(groups[sha], key=lambda item: item['path'])
+    for key in sorted(groups):
+        entries = sorted(groups[key], key=lambda item: item['path'])
         if len(entries) < 2:
             continue
         primary = entries[0]
         for duplicate in entries[1:]:
             plan.append({'primary': primary['path'], 'duplicate': duplicate['path'],
-                         'bytes': duplicate['bytes'], 'sha256': sha})
+                         'bytes': duplicate['bytes'], 'sha256': key[0],
+                         'executable': key[1]})
     return plan
 
 
@@ -390,7 +447,8 @@ def seal(prefix, output, name, epoch, identity):
                     info.type, info.linkname = tarfile.LNKTYPE, str(root / primary_of[record['path']])
                     tar.addfile(info)
                     members.append({'path': record['path'], 'link_to': primary_of[record['path']],
-                                    'bytes': record['bytes'], 'sha256': record['sha256']})
+                                    'bytes': record['bytes'], 'sha256': record['sha256'],
+                                    'executable': record['executable']})
                     continue
                 payload = path.read_bytes()
                 need(digest_bytes(payload) == record['sha256'], 'tree changed during seal: ' + record['path'])
@@ -450,8 +508,13 @@ def extract(archive, destination, manifest):
         member = recorded.get(relative)
         if member is None:
             continue
-        if path.stat().st_size != member['bytes'] or digest(path) != member['sha256']:
+        status = path.stat()
+        if status.st_size != member['bytes'] or digest(path) != member['sha256']:
             problems.append('extracted file differs: ' + relative)
+        if 'executable' not in member:
+            problems.append('manifest member records no mode: ' + relative)
+        elif bool(status.st_mode & 0o111) != bool(member['executable']):
+            problems.append('extracted mode differs: ' + relative)
     for group in manifest.get('hardlink_groups') or []:
         if len(group) < 2:
             continue

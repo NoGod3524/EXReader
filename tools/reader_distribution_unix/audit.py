@@ -19,6 +19,8 @@ sys.path.insert(0, str(HERE))
 import contract
 
 CONSUMER_KEYS = {'c': ('version', 'abi', 'pages', 'text_bytes', 'png_bytes', 'negative_checks'),
+                 'pkgconfig': ('version', 'abi', 'pages', 'text_bytes', 'png_bytes',
+                               'negative_checks'),
                  'cxx': ('version', 'abi', 'pages', 'text_bytes', 'headers', 'negative_checks')}
 
 
@@ -108,6 +110,9 @@ def pkgconfig_query(prefix, platform, tokens, stage):
     for flag in ('-lexr_render', '-lexr_pdf', '-lexr_vendor_miniz', '-pthread', '-lm'):
         if flag not in tokens_flags:
             problems.append('pkg-config output is missing ' + flag)
+    for definition in stage.get('compile_definitions') or []:
+        if '-D' + definition not in tokens_flags:
+            problems.append('pkg-config output is missing the exported definition ' + definition)
     for name in stage.get('link_order') or []:
         if contract.archive_flag(name) not in tokens_flags:
             problems.append('pkg-config output is missing component ' + name)
@@ -134,16 +139,16 @@ def consumer_report(name, path, stage):
         value = report.get(key)
         if type(value) is not int or value <= 0:
             problems.append('%s consumer %s is not a positive integer' % (name, key))
-    if name == 'c':
-        if type(report.get('png_bytes')) is not int or report['png_bytes'] <= 0:
-            problems.append('c consumer rendered no PNG bytes')
-    else:
+    if name == 'cxx':
         if type(report.get('headers')) is not int or report['headers'] < 13:
             problems.append('cxx consumer did not include every public header')
+    else:
+        if type(report.get('png_bytes')) is not int or report['png_bytes'] <= 0:
+            problems.append('%s consumer rendered no PNG bytes' % name)
     return problems, report
 
 
-def smoke_evidence(path):
+def smoke_evidence(path, source_sha):
     problems = []
     try:
         summary = json.loads(Path(path).read_text(encoding='utf-8'))
@@ -152,6 +157,8 @@ def smoke_evidence(path):
     results = summary.get('results') or []
     if summary.get('accepted') is not True:
         problems.append('nine-format smoke did not accept the run')
+    if summary.get('source_sha') != source_sha:
+        problems.append('nine-format smoke summary belongs to another source')
     if summary.get('source_dirty') is not False:
         problems.append('nine-format smoke saw a dirty source tree')
     if summary.get('identities_unchanged') is not True:
@@ -238,6 +245,17 @@ def build_report(args):
     record('tree_inventory', inventory_problems,
            '%d files; every recorded digest is present' % len(records))
 
+    mode_problems, executable_files = [], 0
+    staged_mode = {record['path']: bool(record.get('executable')) for record in stage['files']}
+    for record in records:
+        if record['path'] not in staged_mode:
+            continue
+        if bool(record['executable']) != staged_mode[record['path']]:
+            mode_problems.append('%s no longer matches its staged permission bit' % record['path'])
+        executable_files += 1 if record['executable'] else 0
+    record('executable_modes', mode_problems,
+           '%d executable files keep the staged permission bit' % executable_files)
+
     layout_problems = []
     for relative in ('include/exr/base.h', 'lib/pkgconfig/exreader.pc',
                      'lib/cmake/EXReader/EXReaderConfig.cmake', 'docs/SUPPORT_MATRIX.md',
@@ -250,9 +268,10 @@ def build_report(args):
     record('install_layout', layout_problems, 'required installed paths and no build artefacts')
 
     pc_text = (prefix / stage['pkgconfig']['path']).read_text(encoding='utf-8')
+    definitions = stage.get('compile_definitions') or []
     pc_fields, pc_problems = contract.pc_contract(pc_text, stage['sdk_version'],
                                                   stage['link_order'], stage['private_archives'],
-                                                  stage['system_libraries'])
+                                                  stage['system_libraries'], definitions)
     if contract.digest_bytes(pc_text.encode('utf-8')) != stage['pkgconfig']['sha256']:
         pc_problems.append('installed pkg-config bytes differ from the staged unit')
     if 'pcfiledir' not in pc_fields.get('prefix', ''):
@@ -391,11 +410,11 @@ def build_report(args):
         else:
             consumer_problems.append('rendered PNG is missing: ' + args.png)
     record('installed_consumers', consumer_problems,
-           'C and C++ consumers ran against the installed prefix')
+           'C, C++ and pkg-config consumers ran against the installed prefix')
 
     smoke_problems, smoke = [], None
     if args.smoke:
-        smoke_problems, smoke = smoke_evidence(args.smoke)
+        smoke_problems, smoke = smoke_evidence(args.smoke, stage.get('source_sha'))
     else:
         smoke_problems = ['nine-format smoke summary is required']
     record('nine_format_smoke', smoke_problems,

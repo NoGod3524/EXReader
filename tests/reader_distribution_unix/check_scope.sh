@@ -16,8 +16,7 @@ if [ -n "$outside" ]; then
   echo "$outside"
   exit 1
 fi
-python3 -m py_compile tools/reader_distribution_unix/contract.py tools/reader_distribution_unix/stage.py \
-  tools/reader_distribution_unix/transform.py tools/reader_distribution_unix/audit.py \
-  tools/reader_distribution_unix/seal.py tests/reader_distribution_unix/compare.py \
-  tests/reader_distribution_unix/selfcheck.py
+# Every package python file, including the same-source report tools: a syntax error
+# in a file the report job imports must fail here and not after both builds.
+python3 -m py_compile tools/reader_distribution_unix/*.py tests/reader_distribution_unix/*.py
 echo "scope: start $START_SHA, frozen SDK $FROZEN_SDK, product schema unchanged, package-only changes"

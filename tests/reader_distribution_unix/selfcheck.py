@@ -84,6 +84,42 @@ def link_order():
     expect_error(lambda: contract.link_order(cycle), 'cycle')
 
 
+@case('link-order-through-interface')
+def link_order_interface():
+    """A dependency reached through the exported interface target still orders.
+
+    `exr_text` reaches `exr_base` only through `exr_core` (an interface target with
+    no archive). Dropping that edge would emit `exr_base` before its user and the
+    static link would silently resolve nothing.
+    """
+    text = '''
+add_library(EXReader::exr_aaa STATIC IMPORTED)
+add_library(EXReader::exr_base STATIC IMPORTED)
+add_library(EXReader::exr_text STATIC IMPORTED)
+set_target_properties(EXReader::exr_text PROPERTIES
+  INTERFACE_LINK_LIBRARIES "EXReader::exr_core"
+)
+add_library(EXReader::exr_core INTERFACE IMPORTED)
+set_target_properties(EXReader::exr_core PROPERTIES
+  INTERFACE_LINK_LIBRARIES "EXReader::exr_base"
+)
+'''
+    order = contract.link_order(text)
+    assert order == ['exr_aaa', 'exr_text', 'exr_base'], order
+
+
+@case('stage-refuses-foreign-runner')
+def stage_runner():
+    """A candidate is only evidence for the runner and architecture it came from."""
+    import stage
+    for platform, runner_os, arch, needle in (
+            ('macos', 'Linux', 'X64', 'cannot be staged'),
+            ('linux', 'Linux', 'ARM64', 'accepted linux candidate is X64')):
+        expect_error(lambda p=platform, o=runner_os, a=arch: stage.build(
+            'reading-core', Path('/nonexistent-j24-install'), Path('/nonexistent-j24-out'),
+            p, o, a, Path('/nonexistent-j24-licenses')), needle)
+
+
 @case('vendor-and-system')
 def vendor_and_system():
     names = contract.vendor_archives(DEPENDENCIES)
@@ -98,13 +134,36 @@ def pkgconfig_round_trip():
     text = contract.render_pc('3.40.0', 'EXReader test unit',
                               ['libexr_pdf.a', 'libexr_render.a'],
                               ['libexr_vendor_miniz.a'],
-                              ['-pthread', '-lm'])
+                              ['-pthread', '-lm'], ['EXR_STATIC'])
     fields, problems = contract.pc_contract(text, '3.40.0',
                                             ['libexr_pdf.a', 'libexr_render.a'],
                                             ['libexr_vendor_miniz.a'],
-                                            ['-pthread', '-lm'])
+                                            ['-pthread', '-lm'], ['EXR_STATIC'])
     assert not problems, problems
     assert fields['prefix'] == '${pcfiledir}/../..', fields['prefix']
+    assert '-DEXR_STATIC' in fields['cflags'], fields['cflags']
+
+
+@case('compile-definitions')
+def compile_definitions():
+    """The pkg-config unit must carry the compile interface the package exports."""
+    assert contract.compile_definitions(TARGETS) == ['EXR_STATIC'], \
+        contract.compile_definitions(TARGETS)
+    quoted = ('add_library(EXReader::exr_pdf STATIC IMPORTED)\n'
+              'set_target_properties(EXReader::exr_pdf PROPERTIES\n'
+              '  INTERFACE_COMPILE_DEFINITIONS "EXR_STATIC;MBEDTLS_CONFIG_FILE=\\"exr_crypto_config.h\\""\n'
+              ')\n')
+    assert contract.compile_definitions(quoted) == [
+        'EXR_STATIC', 'MBEDTLS_CONFIG_FILE="exr_crypto_config.h"'], contract.compile_definitions(quoted)
+    text = contract.render_pc('3.40.0', 'unit', ['libexr_pdf.a'],
+                              ['libexr_vendor_miniz.a'], ['-pthread', '-lm'], ['EXR_STATIC'])
+    _, problems = contract.pc_contract(text, '3.40.0', ['libexr_pdf.a'],
+                                       ['libexr_vendor_miniz.a'], ['-pthread', '-lm'],
+                                       ['EXR_STATIC', 'EXR_EXTRA'])
+    assert any('Cflags omits' in problem for problem in problems), problems
+    _, problems = contract.pc_contract(text, '3.40.0', ['libexr_pdf.a'],
+                                       ['libexr_vendor_miniz.a'], ['-pthread', '-lm'], [])
+    assert any('unexpected definition' in problem for problem in problems), problems
 
 
 @case('pkgconfig-rejects-absolute-prefix')
@@ -165,7 +224,22 @@ def dedupe_plan():
     ]
     plan = contract.dedupe_plan(records)
     assert plan == [{'primary': 'LICENSE', 'duplicate': 'share/exreader/LICENSE',
-                     'bytes': 4, 'sha256': 'aa'}], plan
+                     'bytes': 4, 'sha256': 'aa', 'executable': False}], plan
+
+
+@case('dedupe-plan-keeps-modes')
+def dedupe_plan_modes():
+    """A hardlink shares one inode and one mode: equal bytes are not enough."""
+    records = [
+        {'path': 'docs/run.sh', 'bytes': 4, 'sha256': 'aa', 'executable': True},
+        {'path': 'share/exreader/run.sh', 'bytes': 4, 'sha256': 'aa', 'executable': False},
+        {'path': 'docs/copy.sh', 'bytes': 4, 'sha256': 'bb', 'executable': True},
+        {'path': 'share/exreader/copy.sh', 'bytes': 4, 'sha256': 'bb', 'executable': True},
+    ]
+    plan = contract.dedupe_plan(records)
+    assert [(item['primary'], item['duplicate']) for item in plan] == [
+        ('docs/copy.sh', 'share/exreader/copy.sh')], plan
+    assert plan[0]['executable'] is True, plan
 
 
 @case('tree-scan')
@@ -220,6 +294,39 @@ def seal_extract():
         bad['files'][0]['sha256'] = '0' * 64
         tampered = contract.extract(root / 'out/EXReader-test.tar.gz', root / 'tampered', bad)
         assert not tampered['accepted'], 'tampered manifest was accepted'
+    finally:
+        shutil.rmtree(root)
+
+
+@case('seal-records-modes')
+def seal_modes():
+    """The sealed manifest and the extracted tree must both keep an executable bit."""
+    root = Path(tempfile.mkdtemp(prefix='j24-mode-'))
+    try:
+        prefix = root / 'prefix'
+        (prefix / 'docs').mkdir(parents=True)
+        (prefix / 'bin').mkdir()
+        (prefix / 'LICENSE').write_text('license text\n', encoding='utf-8')
+        os.link(prefix / 'LICENSE', prefix / 'docs' / 'LICENSE')
+        probe = prefix / 'bin' / 'reader-probe'
+        probe.write_text('#!/bin/sh\nexit 0\n', encoding='utf-8')
+        os.chmod(probe, 0o755)
+        manifest = contract.seal(prefix, root / 'out', 'EXReader-mode.tar.gz', 1700000000,
+                                 {'source_sha': 'x'})
+        modes = {member['path']: member['executable'] for member in manifest['files']}
+        assert modes == {'LICENSE': False, 'docs/LICENSE': False,
+                         'bin/reader-probe': True}, modes
+        report = contract.extract(root / 'out/EXReader-mode.tar.gz', root / 'extracted', manifest)
+        assert report['accepted'], report['problems']
+        extracted = {record['path']: record['executable'] for record in report['files']}
+        assert extracted['bin/reader-probe'] is True, extracted
+        broken = json.loads(json.dumps(manifest))
+        for member in broken['files']:
+            if member['path'] == 'bin/reader-probe':
+                member['executable'] = False
+        refused = contract.extract(root / 'out/EXReader-mode.tar.gz', root / 'refused', broken)
+        assert not refused['accepted'], refused
+        assert any('mode differs' in problem for problem in refused['problems']), refused
     finally:
         shutil.rmtree(root)
 

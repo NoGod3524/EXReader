@@ -27,11 +27,14 @@ WORKFLOW = '.github/workflows/reader-distribution-unix.yml'
 PLATFORMS = ('linux', 'macos')
 JOB_NAMES = {'rejection protocol', 'unix (linux)', 'unix (macos)', 'same-source report'}
 REPORT_JOB = 'same-source report'
-REQUIRED_CHECKS = ('tree_inventory', 'install_layout', 'pkgconfig_contract', 'pkgconfig_directory',
-                   'absolute_path_scan',
+REQUIRED_CHECKS = ('tree_inventory', 'executable_modes', 'install_layout', 'pkgconfig_contract',
+                   'pkgconfig_directory', 'absolute_path_scan',
                    'cmake_relocatable', 'document_bytes', 'licence_materials',
                    'duplicate_material', 'pkgconfig_query', 'installed_consumers',
                    'nine_format_smoke')
+# A candidate is evidence only for the runner it was built on: the platform key,
+# the runner identity and the architecture are one claim.
+RUNNERS = {'linux': ('Linux', 'X64'), 'macos': ('macOS', 'ARM64')}
 
 
 class ReportError(RuntimeError):
@@ -155,6 +158,8 @@ def summary_main(args):
                               'expires_at': expires})
     results.append(check('artifact_identity', [], '%d same-run artifacts downloaded and re-hashed'
                          % len(artifact_rows)))
+    results.append(check('protocol_artifact', verify_protocol(downloaded.get('protocol') or {}),
+                         'named self-check cases re-read from the uploaded protocol log'))
 
     platforms = {}
     for key in PLATFORMS:
@@ -189,6 +194,45 @@ def write(folder, summary):
     (folder / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n', encoding='utf-8')
 
 
+def verify_protocol(files):
+    """Re-derive the protocol claim from the uploaded log instead of a job conclusion.
+
+    The log must name every case it ran and end with a summary whose case count is
+    exactly the number of named cases and whose failure count is zero, so a truncated
+    or hand-written log cannot stand in for the run.
+    """
+    issues = []
+    log = files.get('selfcheck.log')
+    if log is None:
+        return ['protocol artifact has no selfcheck.log']
+    lines = [line.strip() for line in log.decode('utf-8', 'replace').splitlines() if line.strip()]
+    named = [line for line in lines if line.startswith(('pass ', 'fail '))]
+    failed = [line for line in named if line.startswith('fail ')]
+    if not named:
+        issues.append('protocol log names no case')
+    issues.extend('protocol case failed: ' + line for line in failed)
+    summary = None
+    if lines and lines[-1].startswith('{'):
+        try:
+            summary = json.loads(lines[-1])
+        except ValueError:
+            issues.append('protocol summary line is not JSON')
+    if not isinstance(summary, dict):
+        issues.append('protocol log has no JSON summary line')
+    else:
+        if summary.get('failures') != 0:
+            issues.append('protocol summary records %s failures' % summary.get('failures'))
+        if summary.get('cases') != len(named):
+            issues.append('protocol summary counts %s cases but the log names %d'
+                          % (summary.get('cases'), len(named)))
+        if type(summary.get('cases')) is not int or summary['cases'] < 11:
+            issues.append('protocol summary claims fewer cases than the suite defines')
+    extra = [line for line in lines[:-1] if not line.startswith(('pass ', 'fail '))]
+    if extra:
+        issues.append('protocol log has %d lines that belong to no named case' % len(extra))
+    return issues
+
+
 def require_audit(name, payload_bytes, sha, label):
     issues = []
     report = json.loads(payload_bytes.decode('utf-8'))
@@ -219,7 +263,8 @@ def verify_platform(key, files, sha, run_id, attempt, output):
     issues = []
     need('stage.json' in files, key + ': stage.json missing')
     stage = json.loads(files['stage.json'].decode('utf-8'))
-    for field, expected in (('source_sha', sha), ('platform', key), ('profile', 'reading-core')):
+    for field, expected in (('source_sha', sha), ('platform', key), ('profile', 'reading-core'),
+                            ('runner_os', RUNNERS[key][0]), ('architecture', RUNNERS[key][1])):
         if stage.get(field) != expected:
             issues.append('stage %s differs: %s' % (field, stage.get(field)))
     ci = stage.get('ci') or {}
@@ -233,7 +278,8 @@ def verify_platform(key, files, sha, run_id, attempt, output):
     pc = (stage.get('pkgconfig') or {}).get('text', '')
     fields, pc_problems = contract.pc_contract(pc, stage.get('sdk_version'), stage.get('link_order'),
                                                stage.get('private_archives'),
-                                               stage.get('system_libraries'))
+                                               stage.get('system_libraries'),
+                                               stage.get('compile_definitions') or [])
     issues.extend('pkg-config: ' + problem for problem in pc_problems)
     if contract.digest_bytes(pc.encode('utf-8')) != (stage.get('pkgconfig') or {}).get('sha256'):
         issues.append('recorded pkg-config digest does not match its bytes')
@@ -244,6 +290,29 @@ def verify_platform(key, files, sha, run_id, attempt, output):
     if 'dist/manifest.json' not in files:
         issues.append('archive manifest missing')
     manifest = json.loads(files.get('dist/manifest.json', b'{}').decode('utf-8'))
+    dedupe = json.loads(files.get('dedupe.json', b'{}').decode('utf-8'))
+    identity = manifest.get('identity') or {}
+    for field, expected in (('source_sha', sha), ('platform', key), ('profile', 'reading-core'),
+                            ('sdk_version', stage.get('sdk_version')), ('abi', stage.get('abi'))):
+        if identity.get(field) != expected:
+            issues.append('archive identity %s differs: %s' % (field, identity.get(field)))
+    if identity.get('pkgconfig_sha256') != (stage.get('pkgconfig') or {}).get('sha256'):
+        issues.append('archive identity does not record this staged pkg-config unit')
+    origin = identity.get('ci') or {}
+    if (str(origin.get('GITHUB_RUN_ID')) != str(run_id)
+            or str(origin.get('GITHUB_RUN_ATTEMPT')) != str(attempt)):
+        issues.append('archive identity was recorded by another run or attempt')
+    if manifest.get('stage_sha256') != contract.digest_bytes(files['stage.json']):
+        issues.append('archive manifest does not belong to this stage.json')
+    if ('dedupe.json' in files
+            and identity.get('dedupe_sha256') != contract.digest_bytes(files['dedupe.json'])):
+        issues.append('archive manifest does not belong to this duplicate-removal report')
+    if manifest.get('duplicate_bytes_retained_once') != dedupe.get('bytes_saved'):
+        issues.append('archive manifest records another duplicate saving')
+    if archives and manifest.get('root') != archives[0][:-len('.tar.gz')]:
+        issues.append('archive root differs from its file name')
+    if type(identity.get('epoch')) is not int:
+        issues.append('archive identity records no source epoch')
     archive_sha = None
     extracted_files = []
     if archives and manifest:
@@ -261,6 +330,8 @@ def verify_platform(key, files, sha, run_id, attempt, output):
             for path, entry in claimed.items():
                 if recorded[path]['sha256'] != entry['sha256'] or recorded[path]['bytes'] != entry['bytes']:
                     issues.append('archive member identity differs: ' + path)
+                elif bool(recorded[path].get('executable')) != bool(entry.get('executable')):
+                    issues.append('archive member permission bit differs: ' + path)
         workspace = Path(tempfile.mkdtemp(prefix='j24-report-'))
         try:
             archive_path = workspace / archives[0]
@@ -278,6 +349,8 @@ def verify_platform(key, files, sha, run_id, attempt, output):
                 other = claimed.get(entry['path'])
                 if other is None or other['sha256'] != entry['sha256'] or other['bytes'] != entry['bytes']:
                     issues.append('extracted file differs: ' + entry['path'])
+                elif bool(entry.get('executable')) != bool(other.get('executable')):
+                    issues.append('extracted permission bit differs: ' + entry['path'])
             licence_path = workspace / 'licenses.json'
             if 'licenses.json' not in files:
                 issues.append('licence report missing from the artifact')
@@ -333,7 +406,6 @@ def verify_platform(key, files, sha, run_id, attempt, output):
         comparison = json.loads(files[name].decode('utf-8'))
         if comparison.get('accepted') is not True:
             issues.append(name + ' did not accept relocation')
-    dedupe = json.loads(files.get('dedupe.json', b'{}').decode('utf-8'))
     if dedupe.get('accepted') is not True:
         issues.append('dedupe report did not accept the tree')
     if dedupe.get('source_sha') != sha:
@@ -360,6 +432,21 @@ def verify_platform(key, files, sha, run_id, attempt, output):
             if entry.get('classification') != 'passed':
                 issues.append('smoke %s: %s is %s' % (label, entry.get('path'),
                                                       entry.get('classification')))
+    for label in ('before', 'extracted'):
+        name = 'evidence/%s-pkgconfig.json' % label
+        if name not in files:
+            issues.append('missing ' + name)
+            continue
+        probe = json.loads(files[name].decode('utf-8'))
+        if probe.get('accepted') is not True:
+            issues.append('the pkg-config consumer did not match the CMake build at ' + label)
+        for field in ('probe', 'reference'):
+            reported = probe.get(field) or {}
+            if (reported.get('version') != stage.get('sdk_version')
+                    or reported.get('abi') != stage.get('abi')):
+                issues.append('pkg-config consumer %s identity differs at %s' % (field, label))
+        if probe.get('rendered_png_sha256_equal') is not True:
+            issues.append('the two build paths rendered different bytes at ' + label)
     for label in ('before', 'after', 'extracted'):
         for consumer in ('c', 'cxx'):
             name = 'evidence/%s-unix-%s.json' % (label, consumer)

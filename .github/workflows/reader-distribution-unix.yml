@@ -1,7 +1,7 @@
 name: Unix relocatable distribution candidate
 on:
   push:
-    branches: [codex/reader-distribution-unix]
+    branches: [codex/reader-distribution-unix, codex/reader-distribution-unix-review]
     paths:
       - 'tools/reader_distribution_unix/**'
       - 'tests/reader_distribution_unix/**'
@@ -140,6 +140,26 @@ jobs:
             tests/fixtures/fonts/primary.ttf tools/reading_core/smoke-manifest.json \
             build/evidence/before/smoke --root tests/fixtures --timeout 60 \
             2>&1 | tee build/logs/smoke-before.log
+      - name: Build and run the public C consumer from the pkg-config unit only
+        run: |
+          set -o pipefail
+          export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig"
+          { echo "## cflags"; pkg-config --cflags exreader
+            echo "## libs --static"; pkg-config --libs --static exreader
+          } | tee build/logs/pkgconfig-query.log
+          cc -std=c11 -O2 $(pkg-config --cflags exreader) \
+            tests/reader_distribution_unix/consumer/main.c -o build/pkgconfig-consumer \
+            $(pkg-config --libs --static exreader) 2>&1 | tee build/logs/pkgconfig-link.log
+          "build/pkgconfig-consumer" "$PREFIX/examples/books/layout.epub" \
+            "$PREFIX/examples/fonts/primary.ttf" build/evidence/before/pkgconfig-c.png \
+            > build/evidence/before/unix-c-pkgconfig.json 2> build/logs/pkgconfig-run.err
+          cat build/evidence/before/unix-c-pkgconfig.json
+          python3 tests/reader_distribution_unix/pkgconfig_consumer.py \
+            --reference build/evidence/before/unix-c.json \
+            --probe build/evidence/before/unix-c-pkgconfig.json \
+            --reference-png build/evidence/before/unix-c.png \
+            --probe-png build/evidence/before/pkgconfig-c.png \
+            --output build/evidence/before/pkgconfig.json 2>&1 | tee build/logs/pkgconfig-compare.log
       - name: Audit the relocated prefix before duplicate removal
         run: |
           set -o pipefail
@@ -151,6 +171,7 @@ jobs:
             --consumer unix-cxx-consumer="$WS/build/consumer-before/unix-cxx-consumer" \
             --consumer-report c=build/evidence/before/unix-c.json \
             --consumer-report cxx=build/evidence/before/unix-cxx.json \
+            --consumer-report pkgconfig=build/evidence/before/unix-c-pkgconfig.json \
             --png build/evidence/before/unix-c.png \
             --smoke build/evidence/before/smoke/summary.json 2>&1 | tee build/logs/audit-before.log
       - name: Remove duplicate archive materials and prove content identity
@@ -227,6 +248,22 @@ jobs:
             tests/fixtures/fonts/primary.ttf tools/reading_core/smoke-manifest.json \
             build/evidence/extracted/smoke --root tests/fixtures --timeout 60 \
             2>&1 | tee build/logs/smoke-extracted.log
+          export PKG_CONFIG_PATH="$WS/build/extracted/lib/pkgconfig"
+          cc -std=c11 -O2 $(pkg-config --cflags exreader) \
+            tests/reader_distribution_unix/consumer/main.c -o build/pkgconfig-consumer-extracted \
+            $(pkg-config --libs --static exreader) 2>&1 | tee build/logs/pkgconfig-link-extracted.log
+          "build/pkgconfig-consumer-extracted" "$WS/build/extracted/examples/books/layout.epub" \
+            "$WS/build/extracted/examples/fonts/primary.ttf" \
+            build/evidence/extracted/pkgconfig-c.png \
+            > build/evidence/extracted/unix-c-pkgconfig.json 2> build/logs/pkgconfig-run-extracted.err
+          cat build/evidence/extracted/unix-c-pkgconfig.json
+          python3 tests/reader_distribution_unix/pkgconfig_consumer.py \
+            --reference build/evidence/extracted/unix-c.json \
+            --probe build/evidence/extracted/unix-c-pkgconfig.json \
+            --reference-png build/evidence/extracted/unix-c.png \
+            --probe-png build/evidence/extracted/pkgconfig-c.png \
+            --output build/evidence/extracted/pkgconfig.json \
+            2>&1 | tee build/logs/pkgconfig-compare-extracted.log
           python3 tools/reader_distribution_unix/audit.py --prefix "$WS/build/extracted" \
             --stage build/candidate/stage.json --label extracted \
             --output build/evidence/extracted/audit.json --platform "$PLATFORM" --repo "$WS" \
@@ -236,6 +273,7 @@ jobs:
             --consumer unix-cxx-consumer="$WS/build/consumer-extracted/unix-cxx-consumer" \
             --consumer-report c=build/evidence/extracted/unix-c.json \
             --consumer-report cxx=build/evidence/extracted/unix-cxx.json \
+            --consumer-report pkgconfig=build/evidence/extracted/unix-c-pkgconfig.json \
             --png build/evidence/extracted/unix-c.png \
             --smoke build/evidence/extracted/smoke/summary.json \
             2>&1 | tee build/logs/audit-extracted.log
@@ -255,7 +293,8 @@ jobs:
           done
           if [ -d build/dist ]; then cp build/dist/* "$art/dist/"; fi
           for label in before after extracted; do
-            for name in audit.json unix-c.json unix-cxx.json unix-c.png; do
+            for name in audit.json unix-c.json unix-cxx.json unix-c.png unix-c-pkgconfig.json \
+                        pkgconfig.json pkgconfig-c.png; do
               if [ -f "build/evidence/$label/$name" ]; then
                 cp "build/evidence/$label/$name" "$art/evidence/$label-$name"
               fi
