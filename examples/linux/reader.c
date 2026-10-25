@@ -166,11 +166,18 @@ static void compact_sync(void) {
   if(!stack || !compact_library_controls) return;
   const char *name=gtk_stack_get_visible_child_name(GTK_STACK(stack));
   gboolean reading=name && !strcmp(name,"reader");
-  gtk_widget_set_visible(compact_library_controls,!reading);
-  gtk_widget_set_visible(compact_reading_controls,reading);
+  if(gtk_widget_get_visible(compact_library_controls)==reading) gtk_widget_set_visible(compact_library_controls,!reading);
+  if(gtk_widget_get_visible(compact_reading_controls)!=reading) gtk_widget_set_visible(compact_reading_controls,reading);
   gtk_widget_set_sensitive(compact_continue,compact_resume>0);
   if(compact_larger) gtk_menu_item_set_label(GTK_MENU_ITEM(compact_larger),fixed ? "Zoom in":"Larger text");
   if(compact_smaller) gtk_menu_item_set_label(GTK_MENU_ITEM(compact_smaller),fixed ? "Zoom out":"Smaller text");
+}
+static void compact_show_details(gboolean visible) {
+  if(visible && !gtk_widget_get_visible(compact_details)) {
+    int width,height;gtk_window_get_size(GTK_WINDOW(window),&width,&height);
+    if(width<1040 || height<820) gtk_window_resize(GTK_WINDOW(window),MAX(width,1040),MAX(height,820));
+  }
+  gtk_widget_set_visible(compact_details,visible);
 }
 static void compact_stack_changed(GObject *object,GParamSpec *property,gpointer unused) {
   (void)object;(void)property;(void)unused;compact_sync();
@@ -879,12 +886,12 @@ static void action(GtkWidget *widget,gpointer name) {
 #ifdef EXR_READER_GTK_COMPACT
   if(!strcmp(a,"resume")) { if(compact_resume>0) open_id(compact_resume);return; }
   if(!strcmp(a,"details")) {
-    gboolean visible=!gtk_widget_get_visible(compact_details);gtk_widget_set_visible(compact_details,visible);
+    gboolean visible=!gtk_widget_get_visible(compact_details);compact_show_details(visible);
     if(!visible && compact_page_focus) gtk_widget_grab_focus(compact_page_focus);
     state();return;
   }
   if(!strcmp(a,"text") || !strcmp(a,"note") || !strcmp(a,"notes") || !strcmp(a,"delete") || !strcmp(a,"comment"))
-    gtk_widget_show(compact_details);
+    compact_show_details(TRUE);
 #endif
   if(!strcmp(a,"import")) import_dialog();
   else if(!strcmp(a,"shelf")) {
