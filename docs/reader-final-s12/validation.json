@@ -1,0 +1,44 @@
+{
+ "package": "S12",
+ "document": "docs/reader-final-s12/S12-UNICODE-STATE.md",
+ "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+ "protected_sdk": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+ "accepted": false,
+ "status": "not_executed",
+ "tested_source": null,
+ "docs_seal_source": null,
+ "branch": "codex/reader-fw-s12",
+ "workflow": ".github/workflows/reader-final-s12.yml",
+ "run": null,
+ "attempt": null,
+ "jobs": [],
+ "artifacts": [],
+ "checks": {
+  "utf16_records": 36,
+  "account_records": 20,
+  "attach_records": 33,
+  "metadata_records": 37,
+  "resync_records": 12,
+  "probe_records": 11,
+  "path_records": 4,
+  "nul_records": 1,
+  "stability_records": 6,
+  "c_records": 18
+ },
+ "platforms": ["windows-2022", "ubuntu-22.04"],
+ "granted_scope": [
+  "installed product catalog, revision store, typed commands, raw metadata 0.2 and account-profile packages",
+  "Unicode, spaced, non-BMP and long-path product database and pending intent",
+  "schema 1 and wire v1 kept unchanged; byte stability across reopen and re-sync"
+ ],
+ "not_granted": [
+  "host UI of any platform",
+  "screen reader or real device behaviour",
+  "SDK original verification, original export or network sync",
+  "performance budget, 1710 counts or release readiness"
+ ],
+ "failures": [],
+ "pending": [
+  "no cloud run has been executed for this package yet"
+ ]
+}
