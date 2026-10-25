@@ -6,10 +6,10 @@ on:
     inputs:
       producer_run:
         required: true
-        default: '40218506868'
+        default: '40220204074'
       producer_source:
         required: true
-        default: b4fc135ce64fc651a4b988ad1dd852076413aa10
+        default: 420a876b90e627daa1f1a201cd834fda76472e55
 permissions:
   contents: read
   actions: read
@@ -27,8 +27,8 @@ jobs:
       - name: Authenticate original ZIP and all source-bound owner evidence
         env:
           GH_TOKEN: ${{ github.token }}
-          PRODUCER_RUN: ${{ inputs.producer_run || '40218506868' }}
-          PRODUCER_SOURCE: ${{ inputs.producer_source || 'b4fc135ce64fc651a4b988ad1dd852076413aa10' }}
+          PRODUCER_RUN: ${{ inputs.producer_run || '40220204074' }}
+          PRODUCER_SOURCE: ${{ inputs.producer_source || '420a876b90e627daa1f1a201cd834fda76472e55' }}
         run: python tests/reader_windows_raw3/authenticate.py --run "$PRODUCER_RUN" --source "$PRODUCER_SOURCE"
       - uses: actions/upload-artifact@v4
         if: always()
