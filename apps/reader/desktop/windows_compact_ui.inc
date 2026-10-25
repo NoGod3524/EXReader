@@ -195,7 +195,7 @@ static void compact_create(HWND parent) {
   AppendMenuW(reading,MF_STRING,IDC_ADD_NOTE,L"标注编辑…");
   AppendMenuW(reading,MF_STRING,IDC_FONT_DEC,L"缩小字号");AppendMenuW(reading,MF_STRING,IDC_FONT_INC,L"增大字号");
   AppendMenuW(reading,MF_STRING,IDC_ZOOM_DEC,L"缩小固定页");AppendMenuW(reading,MF_STRING,IDC_ZOOM_INC,L"放大固定页");
-  AppendMenuW(view,MF_STRING,IDC_COMPACT_SHELF,L"书架\tCtrl+L");
+  AppendMenuW(view,MF_STRING,IDC_COMPACT_SHELF,L"书架\tAlt+←");
   AppendMenuW(view,MF_STRING,IDC_COMPACT_MORE,L"更多操作(&M)");
   AppendMenuW(view,MF_STRING,IDC_CANCEL,L"取消当前任务");
   InsertMenuW(menu,0,MF_BYPOSITION|MF_POPUP,(UINT_PTR)library,L"书库(&B)");
@@ -205,9 +205,11 @@ static void compact_create(HWND parent) {
 }
 
 static int compact_translate(const MSG *message) {
-  if(message->message!=WM_KEYDOWN || !IsWindowEnabled(g.window) || !(GetKeyState(VK_CONTROL)&0x8000) ||
-      (GetKeyState(VK_SHIFT)&0x8000) || (message->hwnd!=g.window && !IsChild(g.window,message->hwnd))) return 0;
-  if(message->wParam=='L') { compact_switch(0);return 1; }
+  if(!IsWindowEnabled(g.window) || (message->hwnd!=g.window && !IsChild(g.window,message->hwnd))) return 0;
+  if(message->message==WM_SYSKEYDOWN && message->wParam==VK_LEFT && (GetKeyState(VK_MENU)&0x8000)) {
+    compact_switch(0);return 1;
+  }
+  if(message->message!=WM_KEYDOWN || !(GetKeyState(VK_CONTROL)&0x8000) || (GetKeyState(VK_SHIFT)&0x8000)) return 0;
   if(message->wParam=='O') { compact_import();return 1; }
   return 0;
 }
