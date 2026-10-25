@@ -1,6 +1,7 @@
 {
-  "accepted": false,
-  "source_sha": "d199f0dc67ed929ad7c5a3fe8edb855ef50f1f67",
+  "accepted": true,
+  "source_sha": "b25975b45f021bdf1bd086088634cfc2a4b4d2d4",
+  "acceptance":{"run_id":40156615296,"attempt":1,"job_id":121059247720,"conclusion":"success","scope":"Android API34 default x86_64 emulator host only","pan_checks":8,"inherited_ui":{"host":16,"search":15,"navigation":18,"reading":16,"preferences":17,"cbz":10,"total":92},"total_ui_checks":100,"phases":[{"phase":"first","pid":9124,"checks":7},{"phase":"reopen","pid":9370,"checks":1}],"screenshots":23,"display_corner_samples":9,"original_reads":22,"cropped_rotation_selection_gestures":8,"artifact":{"id":12585631849,"bytes":147551041,"sha256":"1826428c4f0c35075d620f496b5a3ccef4a6e121bf9e797dd74ad881599b28b4","expires_at":"2027-01-23T03:00:46Z"},"independent_zip_png_proof_pending":true},
   "fixed_base": "6b43e83537aa6b03bda889d258fe73c0e317acb1",
   "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
   "checkpoint": {
@@ -89,14 +90,15 @@
     {"source_sha":"d82f008c5596154a256f6b0aa988a939fdfc7e20","run_id":40153716101,"job_id":121050442774,"conclusion":"success","diagnostic_only":true,"accepted":false,"finding":"Exact original APK replay crash log: main-thread AssertionError panned real marker semantic node visible. No native crash. No acceptance granted.","artifact":{"id":12583890589,"bytes":34913,"sha256":"0426ecf220a5266d88dd619c5b19bd8ef49b952cd6e2117c7e56ff1c53c8c447","expires_at":"2027-01-23T02:14:47Z"}},
     {"source_sha":"fff32bac782bc48ec2963a14e23a854c906bab41","run_id":40155347245,"job_id":121055463655,"conclusion":"success","diagnostic_only":true,"accepted":false,"finding":"Exact viewport-failure ZIP read in Actions. crop0/90/180 selected exact BRA/TRA/TLA; crop270 selected B; viewport height changed1766 to1618 when selection toolbar appeared."}
   ],
-  "current_candidate":{"source_sha":"b25975b45f021bdf1bd086088634cfc2a4b4d2d4","run_id":40156615296,"accepted":false,"scope":"shared overlay toolbar for all selection entries; explicit Select and real650ms longpress+drag across cropped rotations0/90/180/270; Pan8 and retained92 full same-source round; result pending"},
-  "pending": "Read the new shared-overlay candidate full round. No complete Pan phase or reopen accepted yet; after full success independently verify saved screenshots and 8 selection gesture frame sequences only in Actions.",
+  "current_candidate":{"source_sha":"b25975b45f021bdf1bd086088634cfc2a4b4d2d4","run_id":40156615296,"accepted":true,"scope":"shared overlay toolbar, explicit Select and real650ms longpress+drag across cropped rotations0/90/180/270, Pan8 plus retained92; emulator host only"},
+  "pending": "Separate Actions-only ZIP/PNG proof and nativeViewports internal cancellation follow-up. No b259 evidence transfers to later production changes.",
   "next_actions": [
     "Original crash diagnosis completed only in Actions: public PDF source-space viewport mapping was missing in host, and main-thread probe assertion killed the process.",
     "New b25975b4 candidate uses the public SDK viewport plus shared contextual overlay without resizing the reader, for explicit Select and real longpress. Preserve all old failed runs/artifacts and every retained assertion.",
-    "Read full same-source40156615296 result; fix actual failures without weakening exact marker or viewport-stability assertions.",
+    "Full same-source40156615296 succeeded. Seal original100 evidence; independently verify original ZIP/PNG only in Actions.",
     "On actual success, require Pan8 (first7/reopen1) and unchanged 92 UI checks plus original SDK/transport results; only then open a separate proof diagnostic branch to verify original ZIP and independently decode saved screenshots.",
-    "Never merge a *-proof branch or grant page colors/physical-device/TalkBack/performance/full-product scope."
+    "Never merge a *-proof branch or grant page colors/physical-device/TalkBack/performance/full-product scope.",
+    "Add HostTask control to nativeViewports public PDF open and per-page matrix loop in a separate production commit; validate only in the new common source full round.10000 page limit already matches frozen PDF reader; current100 does not exercise internal native cancellation or that page boundary."
   ],
   "prior_completed_cbz_head": "6b43e83537aa6b03bda889d258fe73c0e317acb1",
   "page_colors_accepted": false,
