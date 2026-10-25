@@ -1,0 +1,16 @@
+{
+  "package": "reader-raw3-common-android",
+  "base": "1a6d98ed613c61ffea4267f01f83e2c49b1c02f6",
+  "branch": "codex/reader-raw3-common-android",
+  "original_workflow_source": "caa84411ae79c866c28cf982243b6cb80b4bbe49",
+  "workflow": ".github/workflows/reader-raw3-common-android.yml",
+  "guard_kind": "common",
+  "legacy_guard_executed": false,
+  "prepared_only": true,
+  "pushed": false,
+  "accepted": false,
+  "complete_product": false,
+  "physical_device": false,
+  "bidirectional_interoperability_accepted": false,
+  "runs": []
+}
