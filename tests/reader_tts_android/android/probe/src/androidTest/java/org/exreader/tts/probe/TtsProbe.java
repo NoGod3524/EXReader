@@ -236,8 +236,10 @@ public final class TtsProbe extends Instrumentation {
         }
         int finish = NativeTts.rotationFinish();
         String detail = NativeTts.caseDetail();
-        if (!rotated) throw new AssertionError("the activity was not recreated by the rotation");
-        if (finish != 0) throw new AssertionError("the request did not survive the rotation: " + finish);
+        if (!rotated) throw new AssertionError("the activity was not recreated by the rotation: " + detail);
+        if (finish != 0) {
+            throw new AssertionError("the request did not survive the rotation: " + finish + " " + detail);
+        }
         return "recreated=" + (SessionActivity.creations() - creations) + " " + (detail == null ? "" : detail);
     }
 
@@ -414,8 +416,14 @@ public final class TtsProbe extends Instrumentation {
         Backend backend = openBackend(1L << 43, 30000);
         try {
             if (!backend.isReady()) throw new AssertionError("engine not ready for the voice-selection case");
+            /* The framework itself puts the engine default voice into the
+               request parameters when the connection is set up, so the state
+               before the first explicit voice is the default, not "unset". */
             String active = backend.activeVoiceId();
-            if (active != null) throw new AssertionError("a fresh handle already selected '" + active + "'");
+            if (active != null && !active.equals(defaultName)) {
+                throw new AssertionError("a fresh handle already selected '" + active
+                    + "' instead of the default");
+            }
             File explicit = audioFile("voice-explicit.wav");
             File restored = audioFile("voice-default.wav");
             byte[] text = "Voice selection sample.".getBytes(StandardCharsets.UTF_8);

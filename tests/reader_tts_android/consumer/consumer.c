@@ -20,7 +20,7 @@
 #include <time.h>
 
 #define DETAIL_BYTES 8192
-#define COMPLETED_IDS 16
+#define COMPLETED_IDS 64
 
 static reader_tts *g_main;
 static reader_tts *g_limited;
