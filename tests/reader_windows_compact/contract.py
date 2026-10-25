@@ -3,7 +3,7 @@ FORMATS={'txt':'Reading sample.txt','epub':'Picture book.epub','pdf':'Fixed page
 REQUIRED=['library-default-minimal','native-menu-capabilities','system-picker-cancel-preserves-library']
 REQUIRED += [kind+'-'+scope for kind in FORMATS for scope in ('native-import','reading-view')]
 REQUIRED += ['reading-next-and-previous','keyboard-library-and-resume','expanded-panel-retains-controls',
-             'expanded-panel-note-commit','compact-resize-and-focus','search-native-dialog','navigation-native-dialog',
+             'expanded-panel-note-commit','compact-resize-and-focus','small-window-note-editor-remains-reachable','search-native-dialog','navigation-native-dialog',
              'records-native-dialog','settings-native-dialog','restart-restores-compact-reading']
 
 

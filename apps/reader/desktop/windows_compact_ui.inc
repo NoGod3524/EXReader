@@ -91,22 +91,26 @@ static void compact_import(void) {
   } else if(CommDlgExtendedError()) set_status(L"无法打开系统文件选择器。");
 }
 
+static void compact_expand(int expanded) {
+  compact_expanded=expanded;
+  /* The existing full panel keeps its original usable minimum geometry. */
+  if(expanded) {
+    RECT bounds;GetWindowRect(g.window,&bounds);
+    if(bounds.right-bounds.left<1060 || bounds.bottom-bounds.top<660)
+      SetWindowPos(g.window,NULL,0,0,1060,660,SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
+  }
+  layout_controls();
+}
+
 static int compact_command(int id) {
   if(id==IDC_COMPACT_IMPORT || (id==IDC_IMPORT_BUTTON && !compact_expanded)) { compact_import();return 1; }
   if(id==IDC_COMPACT_SHELF) { compact_switch(0);return 1; }
   if(id==IDC_COMPACT_READ) { compact_switch(1);return 1; }
   if(id==IDC_ADD_NOTE && !compact_expanded) {
-    compact_expanded=1;layout_controls();SetFocus(g.note_edit);return 1;
+    compact_expand(1);SetFocus(g.note_edit);return 1;
   }
   if(id==IDC_COMPACT_MORE) {
-    compact_expanded=!compact_expanded;
-    /* The original dense layout needs its original minimum geometry. */
-    if(compact_expanded) {
-      RECT bounds;GetWindowRect(g.window,&bounds);
-      if(bounds.right-bounds.left<1060 || bounds.bottom-bounds.top<660)
-        SetWindowPos(g.window,NULL,0,0,1060,660,SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
-    }
-    layout_controls();return 1;
+    compact_expand(!compact_expanded);return 1;
   }
   return 0;
 }

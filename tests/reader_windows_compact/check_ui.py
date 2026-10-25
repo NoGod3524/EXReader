@@ -115,7 +115,12 @@ def main():
         app.note('Compact native note');app.wait(lambda:send(app.control('notes'),0x18B)>0);record('expanded-panel-note-commit')
         command(app,46003);app.settle((700,480));assert visible(app,123) and not visible(app,122)
         bounds=W.RECT();U.GetClientRect(app.control('page'),C.byref(bounds));assert bounds.right>500 and bounds.bottom>250
+        app.focus();app.wait(lambda:A.focus_of(app.process.pid)==app.control('page'))
         shot('small-reading.bmp');record('compact-resize-and-focus')
+        command(app,109);app.wait(lambda:visible(app,122))
+        bounds=W.RECT();U.GetWindowRect(app.window,C.byref(bounds))
+        assert bounds.right-bounds.left>=1060 and bounds.bottom-bounds.top>=660
+        record('small-window-note-editor-remains-reachable');command(app,46003)
         for identifier,child,name in ((170,171,'search-native-dialog'),(190,191,'navigation-native-dialog'),
                                        (210,211,'records-native-dialog'),(260,261,'settings-native-dialog')):
             command(app,identifier);dialog=app.wait(lambda:owned_dialog(app,child),timeout=30)
