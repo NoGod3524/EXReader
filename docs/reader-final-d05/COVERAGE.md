@@ -45,3 +45,22 @@ Classification: harness environment setup, not a product failure. Round 2 uses
 the existing audit's absolute Android SDK tool path and retains setup logging.
 Also fixed filename sanitization for a TOC label containing `/`; no case IDs,
 semantic labels, product source or assertions changed.
+
+Round 2: harness `a32a10c191e8a6d2e791f81686f8f8761515a7b5`, run
+40215281412 attempt 1. Audit job 121234967050 completed both independent
+instrumentations: 15 original cases (5 pass, 10 fail), 19 delta cases (2 pass,
+17 fail). Artifact 12607826896 retained. Verify job 121238972852 failed on
+cross-host artifact redirect HTTP401, before ZIP authentication. The next
+verifier strips Authorization on cross-host redirect; GitHub API still receives
+its required token, and the signed artifact URL supplies storage authorization.
+No credentials are printed and no digest/expiry/source check is weakened.
+
+The delta cancellation case left DocumentsUI active; its failure is retained.
+The independent import case now force-stops/relaunches the host as explicit
+case setup, not as a retry of cancellation. Shelf row selection is restricted
+to `book_list` plus the fixture's embedded title, matching CatalogShelf.java:262,
+not status text or the old filename-only selector. The original 15-case suite
+is unchanged, including its legacy selector and all failures. Added independent
+annotation creation and post-rebuild record checks through real controls.
+Font tree checks remain distinct from full font-scale acceptance because glyph
+clipping/visual review and some page surfaces are unverified.

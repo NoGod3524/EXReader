@@ -28,6 +28,10 @@ jobs:
           test -z "$unexpected" || { echo "$unexpected"; exit 1; }
           mkdir -p build/final-d05
           printf '%s\n' "$GITHUB_SHA" > build/final-d05/harness-source.txt
+      - name: Authenticate retained round-two ZIP and diagnose UI prerequisites
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_final_d05/evidence.py history
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
