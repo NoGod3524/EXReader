@@ -57,15 +57,37 @@ for version, source in SDK_SOURCES.items():
                        version if version == '3.41.0' else None, extra)
         run('cmake', '--install', target)
     consumers = {}
-    for name, directory in (('reading', 'reader_reading_state'), ('search', 'reader_search'),
+    for name, directory in (('reading', 'reader_reading_v2'), ('search', 'reader_search'),
                             ('navigation', 'reader_navigation'), ('batch', 'reader_batch_import')):
         consumers[name] = build('consumer-' + name + '-' + version, 'tests/' + directory + '/consumer',
                                 prefix, sdk, version if version == '3.41.0' else None)
     output = BUILD/('results-' + version);output.mkdir()
     run('python3', 'tests/reader_reading_state/make_fixtures.py', output/'reading-fixtures')
-    run('python3', 'tests/reader_reading_state/check_reading_state.py', '--probe', consumers['reading']/'reading-state-probe',
-        '--c-consumer', consumers['reading']/'reading-state-c-consumer', '--fixtures', output/'reading-fixtures',
-        '--font', 'tests/fixtures/fonts/primary.ttf', '--link-map', consumers['reading']/'reading-state-link.map', '--output', output/'reading')
+    # Reuse the host's real unchanged v1 client, not the newer v2-capable revision
+    # implementation under a v1-negative test. Both adapters use this job's SDK.
+    legacy_source = BUILD/('legacy-source-' + version);legacy_source.mkdir()
+    archive = subprocess.Popen(['git', 'archive', '210403d121d6484a8fff4ea7ffd911efa3163535',
+                                'apps/reader/revisions', 'extras/opds'], stdout=subprocess.PIPE)
+    try:
+        subprocess.run(['tar', '-x', '-C', str(legacy_source)], stdin=archive.stdout, check=True)
+    finally:
+        archive.stdout.close()
+    assert archive.wait() == 0
+    legacy = BUILD/('legacy-' + version)
+    target = build('legacy-revisions-' + version, legacy_source/'apps/reader/revisions', legacy, sdk,
+                   extra=['-DREADER_PRODUCT_PREFIX=' + str(prefix)])
+    run('cmake', '--install', target)
+    legacy_paths = ['-DCMAKE_PREFIX_PATH=' + str(legacy) + ';' + str(prefix) + ';' + str(sdk)]
+    target = build('legacy-adapter-' + version, 'apps/reader/reading-state', legacy, sdk,
+                   version if version == '3.41.0' else None, legacy_paths)
+    run('cmake', '--install', target)
+    legacy_consumer = build('legacy-consumer-' + version, 'tests/reader_reading_state/consumer',
+                            legacy, sdk, extra=legacy_paths)
+    run('python3', 'tests/reader_reading_v2/check_sdk.py', '--probe', consumers['reading']/'reading-v2-probe',
+        '--legacy-probe', legacy_consumer/'reading-state-probe', '--legacy-c-consumer', legacy_consumer/'reading-state-c-consumer',
+        '--fixtures', output/'reading-fixtures', '--font', 'tests/fixtures/fonts/primary.ttf',
+        '--legacy-map', legacy_consumer/'reading-state-link.map', '--link-map', consumers['reading']/'reading-v2-link.map',
+        '--output', output/'reading')
     run('python3', 'tests/reader_search/make_search_fixtures.py', output/'search-fixtures')
     run('python3', 'tests/reader_search/check_search.py', '--probe', consumers['search']/'search-probe',
         '--c-consumer', consumers['search']/'search-c-consumer', '--fixtures', output/'search-fixtures',
@@ -81,11 +103,17 @@ for version, source in SDK_SOURCES.items():
     run('python3', 'tests/reader_batch_import/check_review.py', '--probe', consumers['batch']/'batch-review-probe',
         '--original-probe', consumers['batch']/'batch-probe', '--work', output/'batch-review-work', '--output', output/'batch-review')
     versions[version] = dict(sdk_source=source, reports={}, configs={})
-    for name, relative, flag in (('reading', 'reading/summary.json', 'v1_highlight_roundtrip_accepted'),
+    for name, relative, flag in (('reading', 'reading/result.json', 'accepted'),
                                  ('search', 'search/result.json', 'accepted'), ('navigation', 'navigation/result.json', 'accepted'),
                                  ('batch', 'batch/report.json', 'ok'), ('batch-review', 'batch-review/review.json', 'ok')):
         raw = (output/relative).read_bytes();value = json.loads(raw)
-        assert value[flag] is True and value.get('source_sha', value.get('source')) == os.environ['GITHUB_SHA']
+        assert value[flag] is True
+        assert value.get('source_sha', value.get('source')) == os.environ['GITHUB_SHA']
+        if name == 'reading':
+            original = json.loads((output/'reading/legacy/summary.json').read_bytes())
+            assert all(original['identity'][key] == os.environ[key]
+                       for key in ('GITHUB_SHA', 'GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT'))
+            assert original['sdk_version'] == version and value['legacy_checks'] == 121
         versions[version]['reports'][name] = dict(path=str((output/relative).relative_to(BUILD)), sha256=hashlib.sha256(raw).hexdigest())
     for package in ('ReadingState', 'Search', 'Navigation', 'BatchImport'):
         path = prefix/'lib/cmake'/('EXReader' + package)/('EXReader' + package + 'Config.cmake')

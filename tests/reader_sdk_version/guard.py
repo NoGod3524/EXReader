@@ -12,6 +12,7 @@ subprocess.run(['git', 'diff', '--exit-code', SDK, 'HEAD', '--', 'src', 'include
                 'tests/fixtures', 'bindings', '.github/workflows/native.yml', '.github/workflows/reliability.yml'], check=True)
 allowed = {'apps/reader/desktop/CMakeLists.txt', 'tools/build_linux_host.py',
            'tests/reader_batch_import/consumer/CMakeLists.txt', 'tests/reader_navigation/consumer/CMakeLists.txt',
+           'tests/reader_gtk_receive/CMakeLists.txt', 'tests/linux_host/check_fixed_ui.py',
            '.github/workflows/reader-sdk-version-support.yml', 'docs/READER-SDK-VERSION-SUPPORT.md'}
 for package in ('reading-state', 'search', 'navigation', 'batch-import'):
     directory = Path('apps/reader')/package
