@@ -64,6 +64,7 @@ if info.exists() and exe.exists():
     identity={'executable_sha256':sha(exe),'info_sha256':sha(info),'source':plist.get('EXRSourceSHA'),'sdk_version':plist.get('EXRSDKVersion'),'page_theme':plist.get('EXRPageThemeEnabled')}
     if identity['source']!=os.environ['TARGET_SHA'] or identity['sdk_version']!='3.41.0' or identity['page_theme'] is not False: problems.append('program plist identity mismatch')
     shutil.copy2(exe,out/'EXReaderHost-executable')
+    shutil.copy2(info,out/'EXReaderHost-Info.plist')
     ent=command('codesign','-d','--entitlements',':-',str(app)); (out/'entitlements.txt').write_text(ent.stdout)
 else: problems.append('actual program missing')
 libs={str(f):sha(f) for f in Path('stage/lib').glob('*') if f.is_file()}

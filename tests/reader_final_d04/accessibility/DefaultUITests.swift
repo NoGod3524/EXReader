@@ -27,6 +27,12 @@ final class DefaultUITests: XCTestCase {
     private func node(_ id: String) -> XCUIElement {
         app.descendants(matching: .any).matching(identifier: id).firstMatch
     }
+    // Same label-or-value access as original ReaderAccessUITests.text.
+    // AppKit StaticText publishes reader.location in value, not label.
+    private func text(_ id: String) -> String {
+        let item = node(id)
+        return item.label.isEmpty ? item.value as? String ?? "" : item.label
+    }
     private func capture(_ step: String) {
         _ = audit.capture(app, test: name, step: name + "." + step,
                           screenshot: "d04-" + name + "-" + step) { self.add($0) }
@@ -93,9 +99,9 @@ final class DefaultUITests: XCTestCase {
         XCTAssertTrue(node("reader.page").waitForExistence(timeout: 90))
         XCTAssertTrue(wait { !self.node("reader.busy").exists })
         capture("reader")
-        let location = node("reader.location").label
+        let location = text("reader.location")
         tap("reader.next")
-        XCTAssertTrue(wait { !self.node("reader.busy").exists && self.node("reader.location").label != location })
+        XCTAssertTrue(wait { !self.node("reader.busy").exists && self.text("reader.location") != location })
         capture("page-turned")
         for (open, close) in [("reader.search", "search.close"), ("reader.navigation", "navigation.close"), ("reader.notes", "notes.close")] {
             tap(open); XCTAssertTrue(node(close).waitForExistence(timeout: 30)); capture(open + "-dialog")

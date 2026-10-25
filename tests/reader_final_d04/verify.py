@@ -1,5 +1,5 @@
 """Authenticate original ZIP bytes, same-run identity and exact upstream jobs in Actions."""
-import copy,datetime,hashlib,io,json,os,re,subprocess,sys,zipfile
+import copy,datetime,hashlib,io,json,os,plistlib,re,subprocess,sys,zipfile
 from pathlib import Path
 assert os.environ.get('GITHUB_ACTIONS')=='true'
 repo=os.environ['GITHUB_REPOSITORY'];run=os.environ['GITHUB_RUN_ID'];attempt=os.environ['GITHUB_RUN_ATTEMPT'];source=os.environ['GITHUB_SHA']
@@ -36,11 +36,18 @@ for p in ('macos','iphone','ipad'):
         r=json.loads(z.read('report.json'));files=json.loads(z.read('files.json'))
         for f in files:
             b=z.read(f['path']);assert len(b)==f['bytes'] and hashlib.sha256(b).hexdigest()==f['sha256']
+            if f['path'].endswith(('.log','.json','.txt','.pbxproj')):
+                assert not re.search(rb'(gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{60,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----)',b), 'credential pattern in retained text evidence'
         assert r['harness_sha']==source and r['run_id']==run and r['attempt']==attempt and r['platform']==p
         assert r['target_sha']==os.environ['TARGET_SHA'] and r['sdk_sha']==os.environ['SDK_SHA']
         project=z.read('project.pbxproj').decode()
         logs='\n'.join(z.read(n).decode(errors='replace') for n in z.namelist() if n.endswith('.log'))
         default_configuration(r,project,logs)
+        assert hashlib.sha256(z.read('EXReaderHost-executable')).hexdigest()==r['program']['executable_sha256']
+        plist_bytes=z.read('EXReaderHost-Info.plist')
+        assert hashlib.sha256(plist_bytes).hexdigest()==r['program']['info_sha256']
+        plist=plistlib.loads(plist_bytes)
+        assert plist['EXRSourceSHA']==r['target_sha'] and plist['EXRSDKVersion']=='3.41.0' and plist['EXRPageThemeEnabled'] is False
         for kind,badproject,badlogs in [('project-review-leak',project+'\nSWIFT_ACTIVE_COMPILATION_CONDITIONS = EXR_APPLE_HOST_REVIEW;',logs),('compiler-review-leak',project,logs+'\nswiftc -DEXR_APPLE_HOST_REVIEW')]:
             try:default_configuration(r,badproject,badlogs)
             except AssertionError:negatives.append(p+'/'+kind)
