@@ -209,6 +209,7 @@ jobs:
             build/session-android/sdk/CMakeCache.txt
             build/session-android/sideload-stage/
             tests/reader_session_android/android/session/build/outputs/apk/
+            tests/reader_android_host_import/source/build/outputs/apk/
           if-no-files-found: error
 
   summary:
@@ -217,7 +218,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Authenticate this exact producer ZIP and all 119 same-source checks
+      - name: Authenticate this exact producer ZIP and all 120 same-source checks
         env:
           GH_TOKEN: ${{ github.token }}
         run: python tests/reader_android_host_import/check_evidence.py

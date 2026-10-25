@@ -10,6 +10,8 @@ Ready 请求交给现有单一 host worker 和 BookStore；不使用 J04 示例�
 
 生命周期取消在旧 worker 完成回报后把 Ready 请求交给新 owner；旧 Activity 的 UI 过滤器不会吞掉这个回报。用户明确取消则撤销未发布 SDK 插入，清理本次拥有的稳定副本和对应 lease。产品映射失败保留 Ready 与已发布原件；Refresh 或重新附着 owner 可重试。
 
+复制期间复用同一个 Import 按钮显示 `Cancel import`，旋转后从进程 controller 恢复可见状态；复制终止后恢复 Import。票据若刚好已提交、Ready 回调尚未送达，用户取消会释放那个 Ready lease，不撤回模块的 staging 提交，也不启动 SDK 导入。Ready 已交给 SDK worker 后，沿用原有 Cancel overlay 与 host publication 边界。
+
 进程终止后，J04 清理未发布临时文件；未完成 URI 复制需要真实重投，不能恢复失效 URI grant。已发布 Ready 使用私有字节恢复，SDK 精确去重后补齐路径和产品映射。产品键仍为格式与原件散列。
 
 宿主启动在原有 IMPORT_LOCK 下清理自己尚未完成的 `books/import-<数字>.part`；不触碰已发布 SHA 原件或其他文件。新 owner 先等旧 Activity 的 SDK 导入补偿完成，避免删除活跃复制。
@@ -22,7 +24,7 @@ Provider 的同步 Binder query/getType/open 阶段仍没有内部超时；复�
 
 ## 云端验收
 
-当前尚未验收。新工作流在同一源码和同一个宿主 APK 上运行旧 Host16/Search15/Navigation18/Reading16/Preferences17/CBZ10/Pan8，共 100 项，再运行新入口 19 项。
+当前尚未验收。新工作流在同一源码和同一个宿主 APK 上运行旧 Host16/Search15/Navigation18/Reading16/Preferences17/CBZ10/Pan8，共 100 项，再运行新入口 20 项。
 
 新增套件使用独立真实 DocumentsProvider、外部授予的 VIEW/SEND/MULTIPLE、真实系统 DocumentsUI、实际旋转、用户取消、Provider 错误、小报长度与 33 MiB 暂存上限负例。另在复制中、稳定原件副本尚未完成、Ready 发布后和 host 路径 publication 后保持真实边界，由 Actions 外部终止活 PID，再在新 PID 上恢复/重投。
 

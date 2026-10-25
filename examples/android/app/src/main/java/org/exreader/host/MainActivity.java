@@ -285,7 +285,10 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
             if(operation!=0||pageBusy||id<=0)return true;
             new android.app.AlertDialog.Builder(this).setItems(new String[]{"Organize book"},(dialog,which)->organizationPanel.show(id)).show();return true;
         });
-        importButton.setOnClickListener(view -> startImport());
+        importButton.setOnClickListener(view -> {
+            if(imports.isCopying()){imports.cancelStaging();setStatus(imports.isCopying()?"Canceling import...":"Import canceled");}
+            else startImport();
+        });
         refreshButton.setOnClickListener(view -> {
             loadShelf(false);
             setStatus("Shelf refreshed");
@@ -1095,10 +1098,25 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         if(intent==null)return false;
         String action=intent.getAction();
         if(!Intent.ACTION_VIEW.equals(action)&&!Intent.ACTION_SEND.equals(action)&&!Intent.ACTION_SEND_MULTIPLE.equals(action))return false;
+        // An incoming book brings its import/cancel control into view, including
+        // a cold launch whose previous reading page would otherwise auto-restore.
+        restoreReader=false;restoreBook=0;
+        prefs.edit().putBoolean("lastReader",false).apply();
+        if(preferencesPanel!=null)preferencesPanel.close();
+        if(readingPanel!=null)readingPanel.close();
+        if(searchPanel!=null)searchPanel.close();
+        if(navigationPanel!=null)navigationPanel.close();
+        if(operation!=1&&(currentBook!=null||operation!=0||pageBusy))leaveReader();
+        else showShelf(false);
         imports.submit(intent);return true;
     }
 
     void importStatus(String text) { if(!destroyed)setStatus(text); }
+    void importCopying(boolean copying) {
+        if(destroyed)return;
+        importButton.setText(copying?"Cancel import":"Import");
+        importButton.setContentDescription(copying?"Cancel book import":"Import a book");
+    }
 
     boolean importReady(ReadyRequest ready) {
         if (destroyed || worker == null || store == null || pageBusy || operation != 0) return false;

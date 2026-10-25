@@ -16,7 +16,7 @@ package = 'org.exreader.host'
 source = 'org.exreader.hostimportsource'
 identity = {key: os.environ[value] for key, value in [('source_sha', 'GITHUB_SHA'), ('run_id', 'GITHUB_RUN_ID'), ('attempt', 'GITHUB_RUN_ATTEMPT')]}
 expected = {
-    'first': ['real_VIEW_epub_uses_existing_owner_stable_original_and_product_mapping', 'real_SEND_pdf_retains_original_after_staging_release', 'SEND_MULTIPLE_unknown_length_short_reads_and_untrusted_name', 'duplicate_redelivery_preserves_ids_paths_revisions_and_outbox', 'real_system_DocumentsUI_SAF_selects_granted_provider_document', 'rotation_during_real_provider_copy_keeps_single_process_controller', 'rotation_during_host_SDK_task_acknowledges_old_owner_and_retries_ready', 'user_cancel_before_publication_rolls_back_sdk_and_preserves_product', 'provider_midstream_error_and_underreported_size_never_publish_prefix', '128MiB_staging_does_not_raise_32MiB_host_reading_limit'],
+    'first': ['real_VIEW_epub_uses_existing_owner_stable_original_and_product_mapping', 'real_SEND_pdf_retains_original_after_staging_release', 'SEND_MULTIPLE_unknown_length_short_reads_and_untrusted_name', 'duplicate_redelivery_preserves_ids_paths_revisions_and_outbox', 'real_system_DocumentsUI_SAF_selects_granted_provider_document', 'rotation_during_real_provider_copy_keeps_single_process_controller', 'rotation_during_host_SDK_task_acknowledges_old_owner_and_retries_ready', 'user_cancel_before_publication_rolls_back_sdk_and_preserves_product', 'visible_copy_cancel_survives_rotation_and_preserves_sdk_product', 'provider_midstream_error_and_underreported_size_never_publish_prefix', '128MiB_staging_does_not_raise_32MiB_host_reading_limit'],
     'kill-copy': ['prepare_real_process_kill_during_unfinished_provider_copy'],
     'recover-copy': ['fresh_process_cleans_partial_and_requires_real_URI_redelivery'],
     'kill-stable': ['prepare_real_process_kill_with_unfinished_stable_host_copy'],
@@ -54,9 +54,16 @@ for role, name in [('epub', 'cover-import.epub'), ('pdf', 'pdf-public.pdf')]:
     fixtures[role] = {'bytes': len(body), 'sha256': hashlib.sha256(body).hexdigest()}
 save('independent-expected-sources.json', (json.dumps(fixtures, indent=2) + '\n').encode())
 reports, captures, stops = [], [], []
+apk_identities = []
 accepted = False
 try:
     adb('install', '-r', '-t', 'tests/reader_android_host_import/source/build/outputs/apk/debug/hostimportsource-debug.apk')
+    for installed_package, artifact_path in [(package, 'examples/android/app/build/outputs/apk/debug/app-debug.apk'), (package + '.test', 'build/android-host-import/test-apks/host-import-ui.apk'), (source, 'tests/reader_android_host_import/source/build/outputs/apk/debug/hostimportsource-debug.apk')]:
+        expected_apk_sha = hashlib.sha256(Path(artifact_path).read_bytes()).hexdigest()
+        installed_path, = [line.removeprefix('package:') for line in adb('shell', 'pm', 'path', installed_package).decode().splitlines() if line.startswith('package:') and line.endswith('/base.apk')]
+        installed_sha = adb('shell', 'sha256sum', installed_path).decode().split()[0]
+        assert installed_sha == expected_apk_sha
+        apk_identities.append({'package': installed_package, 'artifact_path': artifact_path, 'sha256': expected_apk_sha, 'installed_path': installed_path, 'installed_sha256': installed_sha})
     # The artifact basename follows the Gradle project name, not its directory name.
     reset()
     for phase, names in expected.items():
@@ -136,5 +143,5 @@ try:
     assert any(item['name'] == 'system-documentsui' and item['package'] == 'com.android.documentsui' for item in captures)
     accepted = True
 finally:
-    result = {**identity, 'accepted': accepted, 'api': 34, 'abi': 'x86_64', 'checks': sum(report['count'] for report in reports), 'phases': reports, 'captures': captures, 'process_stops': stops, 'physical_device': False, 'third_party_cloud_provider': False, 'performance_accepted': False, 'complete_product': False, 'reading_limit_bytes': 32 * 1024 * 1024}
+    result = {**identity, 'accepted': accepted, 'api': 34, 'abi': 'x86_64', 'checks': sum(report['count'] for report in reports), 'phases': reports, 'captures': captures, 'process_stops': stops, 'apk_identities': apk_identities, 'physical_device': False, 'third_party_cloud_provider': False, 'performance_accepted': False, 'complete_product': False, 'reading_limit_bytes': 32 * 1024 * 1024}
     save('result.json', (json.dumps(result, indent=2, ensure_ascii=False) + '\n').encode())
