@@ -101,6 +101,17 @@ function(reader_windows_account_host target)
 endfunction()
 
 reader_windows_account_host(EXReaderProduct)
+
+option(EXR_READER_PREFS_COMMIT_REVIEW_BUILD "Build cloud-only preference commit controls" OFF)
+if(EXR_READER_WINDOWS_PREFERENCES AND EXR_READER_PREFS_COMMIT_REVIEW_BUILD)
+  foreach(target IN ITEMS EXReaderPreferencesCommitReview EXReaderPreferencesCancelControl)
+    reader_windows_account_host(${target})
+    target_compile_definitions(${target} PRIVATE EXR_HOST_WORKER_REVIEW=1 EXR_READER_PREFS_COMMIT_REVIEW=1
+      "EXR_HOST_WORKER_REVIEW_HEADER=\"${ROOT}/tests/reader_windows_preferences/commit_hooks.h\"")
+  endforeach()
+  # Cloud negative control: restore only the old post-save cancellation veto.
+  target_compile_definitions(EXReaderPreferencesCancelControl PRIVATE EXR_PREFS_OLD_CANCEL_VETO_CONTROL=1)
+endif()
 target_link_options(EXReaderProduct PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/windows-host.map")
 
 # Isolated worker/cache ownership regression and 2202-book seed, not installed.
