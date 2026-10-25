@@ -1,0 +1,32 @@
+{
+  "accepted": false,
+  "status": "candidate; complete same-source raw host and retained regression pending",
+  "compact_baseline": "9fc407a5cce5a0bfe644a60bd8dc29f84dea6d0e",
+  "raw_family_source": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+  "private_capture_source": "4ad6f956a9ebe33f50a5f341b51b24bd538e871a",
+  "production_pin": "4b189aca819d9c5d1a7e73a6c5bbe0b2e8286f6e",
+  "default_option": "EXR_READER_GTK_RAW3=OFF",
+  "runs": [
+    {"run_id": 40211491324, "scope": "build only", "conclusion": "failure", "reason": "Host guard incorrectly required direct raw definition on the separate reading-state SDK resolver"},
+    {"run_id": 40211879275, "scope": "build only", "conclusion": "success", "source_sha": "4b189aca819d9c5d1a7e73a6c5bbe0b2e8286f6e"},
+    {"run_id": 40212846373, "scope": "isolated raw probe", "conclusion": "failure", "reason": "Probe expected runtime3.40; actual pinned SDK runtime is3.41"},
+    {"run_id": 40213236938, "scope": "isolated raw probe", "conclusion": "failure", "reason": "Ten actual owner phases and four durable kill boundaries passed; Mac root result lookup was ambiguous among nested result.json members"},
+    {"run_id": 40214034302, "scope": "full candidate", "conclusion": "cancelled", "reason": "Corrected intermediate retained collector topology before expensive original suites: dependent final job is not created until this collector completes; final collector still requires all seven actual jobs"},
+    {"run_id": 40213972775, "scope": "isolated raw probe", "conclusion": "failure", "reason": "All four installed family/origin refusals and ten owner phases passed; Mac inventory requires exact root-relative members because several filenames repeat under nested folders"},
+    {"run_id": 40214173397, "scope": "full candidate", "conclusion": "cancelled", "reason": "Apply the same exact-member Mac inventory correction to the whole source before retained acceptance; do not stitch old producer results"},
+    {"run_id": 40214413320, "scope": "isolated raw probe", "conclusion": "failure", "reason": "Full Mac ZIP inventory authenticated and actual GTK account UI completed256shards; fixture incorrectly omitted exreader-sync-v1 namespace so pulled0 was rejected"},
+    {"run_id": 40214986168, "scope": "isolated raw probe", "conclusion": "failure", "reason": "Actual GTK account UI authenticated HTTPS, completed256shards and pulled all15 Mac wires; peer probe omitted the actual GTK startup shelf command, leaving metadata_ready without its catalog owner"},
+    {"run_id": 40215778447, "scope": "isolated raw probe", "conclusion": "failure", "reason": "Diagnostic confirmed EXR_DATABASE before any received row; source trace found missing startup shelf initialization in peer probe"},
+    {"run_id": 40218351116, "scope": "isolated diagnostic raw probe", "conclusion": "failure", "source_sha": "196a180a36569d33d804d655cc971db73bb33fbc", "reason": "Unmodified raw API diagnostics confirmed the peer probe had not initialized its catalog through the real GTK startup shelf command"},
+    {"run_id": 40218764233, "attempt": 1, "scope": "isolated raw owner and original compact UI probe", "conclusion": "success", "source_sha": "803098e9df1a365a9b8e206805c2d179aca8501f", "actual_owner_phases": 14, "original_compact_ui_checks": 45, "reason": "The test now executes the actual startup shelf command before receiving; production remains unchanged at its fixed pin"},
+    {"run_id": 40219591315, "attempt": 1, "scope": "complete same-source candidate", "conclusion": "failure", "source_sha": "803098e9df1a365a9b8e206805c2d179aca8501f", "retained_actual_steps_passed": 35, "retained_compact_ui_checks_passed": 45, "raw_compact_ui_checks_passed": 45, "original_off_strict_passed": true, "reason": "The compact wrapper unnecessarily imported the OFF-only navigation image validator in a job without Pillow; its ModuleNotFoundError prevented the compact and final summaries. The OFF-only import now executes only for --off; no production or original judge changed"}
+  ],
+  "raw_host_accepted": false,
+  "complete_retained_chain_accepted": false,
+  "complete_product": false,
+  "performance_accepted": false,
+  "frame_accepted": false,
+  "physical_device_execution": false,
+  "screen_reader_accepted": false,
+  "six_platform_accepted": false
+}

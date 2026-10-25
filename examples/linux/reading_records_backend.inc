@@ -40,12 +40,24 @@ static int records_pending_read(linux_reader *reader,GKeyFile **out) {
   }
   if(fstat(file,&after) || !received_same_file(&before,&after) || memchr(bytes,0,at)) goto done;
   bytes[at]=0;GKeyFile *pending=g_key_file_new();
+#ifdef EXR_READER_GTK_RAW3
+  if(!g_key_file_load_from_data(pending,bytes,at,G_KEY_FILE_NONE,NULL) ||
+      (g_key_file_get_integer(pending,"request","version",NULL)!=1 && g_key_file_get_integer(pending,"request","version",NULL)!=2)) {
+#else
   if(!g_key_file_load_from_data(pending,bytes,at,G_KEY_FILE_NONE,NULL) || g_key_file_get_integer(pending,"request","version",NULL)!=1) {
+#endif
     g_key_file_free(pending);goto done;
   }
   static const char *required[]={"version","sdk_book","kind","operation","book","annotation","revision","bootstrap","body","parser","capture","format","title","author","sort","source_bytes","favorite","heads"};
   gsize group_count=0,key_count=0;char **groups=g_key_file_get_groups(pending,&group_count),**keys=g_key_file_get_keys(pending,"request",&key_count,NULL);
+#ifdef EXR_READER_GTK_RAW3
+  int native=g_key_file_get_integer(pending,"request","version",NULL)==2;
+  int shape=group_count==1 && !strcmp(groups[0],"request") && key_count==G_N_ELEMENTS(required)+(native ? 3:0);
+  if(native && (!g_key_file_has_key(pending,"request","writer_version",NULL) || !g_key_file_has_key(pending,"request","source_version",NULL) ||
+      !g_key_file_has_key(pending,"request","capture_mode",NULL))) shape=0;
+#else
   int shape=group_count==1 && !strcmp(groups[0],"request") && key_count==G_N_ELEMENTS(required);
+#endif
   for(size_t i=0;i<G_N_ELEMENTS(required);i++) if(!g_key_file_has_key(pending,"request",required[i],NULL)) shape=0;
   g_strfreev(groups);g_strfreev(keys);
   if(!shape) { g_key_file_free(pending);goto done; }
@@ -219,13 +231,26 @@ static exr_status records_prepare(linux_reader *reader,received_owner *owner,con
   if(hcode!=READER_REV_OK || heads.overflow || heads.count!=graph.heads || heads.count>1) { status=EXR_ARGUMENT;goto done; }
   const char *parents[32];for(size_t i=0;i<heads.count;i++) parents[i]=heads.ids[i];
   reader_rs_record retained={0};reader_rs_error problem={0};reader_rs_capture captured={0};exr_anchor anchor={0};exr_fixed_anchor fixed={0};
+#ifdef EXR_READER_GTK_RAW3
+  unsigned writer_version=reader->current.fixed_document ? 3u:2u,source_version=0;
+#endif
   reader_session source={0};exr_error sdk_error={0};size_t capture_unit=reader->current.fixed_document ? reader->current.page:reader->current.part;
   char *capture_wire=NULL;size_t capture_bytes=0;
+#ifdef EXR_READER_GTK_RAW3
+  if(command->records_kind==READER_RC_NOTE_TEXT) {
+    if(!old_wire || reader_rs_decode(owner->revisions,old_wire,old_size,&retained,&problem)!=READER_RS_OK ||
+        (retained.mode==READER_RS_FIXED_PAGE && retained.anchor_version==3 && !retained.exact)) { status=EXR_ARGUMENT;goto prepared_done; }
+    source_version=(unsigned)retained.anchor_version;writer_version=source_version;
+  }
+#endif
   if(command->records_operation==READER_RC_RESTORE) {
     char *history=NULL;size_t history_bytes=0;reader_revision_info historical={0};
     reader_revision_status code=reader_revision_get(owner->revisions,command->records_version,&history,&history_bytes,&historical,NULL);
     if(code!=READER_REV_OK || strcmp(historical.entity_key,info.entity_key) || strcmp(historical.book_key,book->key) || !strcmp(historical.operation,"delete")) status=EXR_ARGUMENT;
     if(status==EXR_OK && reader_rs_decode(owner->revisions,history,history_bytes,&retained,&problem)!=READER_RS_OK) status=EXR_ARGUMENT;
+#ifdef EXR_READER_GTK_RAW3
+    if(status==EXR_OK) { source_version=(unsigned)retained.anchor_version;writer_version=source_version; }
+#endif
     reader_revision_bytes_free(history);
     if(status==EXR_OK) { body=retained.note_text ? retained.note_text:"";if(!progress) kind=retained.start==retained.end ? READER_RC_BOOKMARK:READER_RC_HIGHLIGHT; }
     exr_anchor_match match={0};size_t unit=0;
@@ -243,11 +268,29 @@ static exr_status records_prepare(linux_reader *reader,received_owner *owner,con
   if(status==EXR_OK && command->records_kind!=READER_RC_NOTE_TEXT) {
     reader_rs_envelope envelope={revision,command->records_operation==READER_RC_DELETE ? "delete":command->records_operation==READER_RC_RESTORE ? "restore":"put",
       progress ? "progress":"annotation",book->key,progress ? NULL:annotation,parents,heads.count,progress || command->records_operation==READER_RC_DELETE ? NULL:body,exr_version()};
+#ifdef EXR_READER_GTK_RAW3
+    (void)envelope;
+    if(command->records_operation!=READER_RC_DELETE) {
+      unsigned char *native=NULL;size_t native_size=0;
+      status=reader_private_capture_encode(&captured,capture_unit,writer_version,&native,&native_size);
+      if(status==EXR_OK) { capture_wire=(char *)g_base64_encode(native,native_size);capture_bytes=strlen(capture_wire); }
+      reader_private_capture_free(native);
+    }
+#else
     if(reader_rs_encode_v2(owner->revisions,&envelope,&captured,capture_unit,&capture_wire,&capture_bytes,&problem)!=READER_RS_OK) { status=EXR_ARGUMENT;snprintf(result->message,sizeof(result->message),"Capture cannot be retained: %.120s",problem.message); }
+#endif
   }
   if(status==EXR_OK) status=cancel(reader);
   if(status==EXR_OK) {
+#ifdef EXR_READER_GTK_RAW3
+    GKeyFile *pending=g_key_file_new();
+    g_key_file_set_integer(pending,"request","version",2);
+    g_key_file_set_integer(pending,"request","writer_version",(gint)writer_version);
+    g_key_file_set_integer(pending,"request","source_version",(gint)source_version);
+    g_key_file_set_integer(pending,"request","capture_mode",(gint)captured.mode);
+#else
     GKeyFile *pending=g_key_file_new();g_key_file_set_integer(pending,"request","version",1);
+#endif
     g_key_file_set_int64(pending,"request","sdk_book",command->book);g_key_file_set_integer(pending,"request","kind",kind);
     g_key_file_set_integer(pending,"request","operation",command->records_operation);
     records_key_string(pending,"book",book->key);records_key_string(pending,"annotation",annotation);records_key_string(pending,"revision",revision);
@@ -259,7 +302,12 @@ static exr_status records_prepare(linux_reader *reader,received_owner *owner,con
     status=records_pending_write(reader,pending);g_key_file_free(pending);
     if(status==EXR_OK) { result->records_pending=1;g_strlcpy(result->records_revision,revision,33);g_strlcpy(result->records_annotation,annotation,33); }
   }
+#ifdef EXR_READER_GTK_RAW3
+prepared_done:
+  (void)capture_bytes;g_free(capture_wire);reader_rs_record_free(&retained);exr_anchor_free(&anchor);exr_fixed_anchor_free(&fixed);session_free(&source);
+#else
   reader_rs_free(capture_wire);reader_rs_record_free(&retained);exr_anchor_free(&anchor);exr_fixed_anchor_free(&fixed);session_free(&source);
+#endif
 done:
   reader_revision_bytes_free(old_wire);
   if(status!=EXR_OK && !result->message[0]) snprintf(result->message,sizeof(result->message),"Save did not complete. Refresh this record before trying again");
@@ -279,13 +327,38 @@ static exr_status records_retry(linux_reader *reader,received_owner *owner,const
   uint64_t bytes=g_key_file_get_uint64(pending,"request","source_bytes",error ? NULL : &error);int favorite=g_key_file_get_integer(pending,"request","favorite",error ? NULL : &error);
   int64_t sdk_book=g_key_file_get_int64(pending,"request","sdk_book",error ? NULL : &error);exr_status status=EXR_ARGUMENT;
   reader_rs_record decoded={0};reader_rs_error decode_error={0};reader_rs_capture capture_value={0};exr_anchor anchor={0};exr_fixed_anchor fixed={0};
+#ifdef EXR_READER_GTK_RAW3
+  int pending_version=g_key_file_get_integer(pending,"request","version",NULL);
+  unsigned writer_version=pending_version==1 ? 2u:(unsigned)g_key_file_get_integer(pending,"request","writer_version",NULL);
+  unsigned source_version=pending_version==1 ? 0u:(unsigned)g_key_file_get_integer(pending,"request","source_version",NULL);
+  if(writer_version<1 || writer_version>3 || source_version>3 ||
+      (source_version && source_version!=writer_version)) goto done;
+#endif
   if(error || !key || strcmp(key,book->key) || sdk_book!=reader->current.id || !records_hex(bootstrap,32) || !records_hex(revision,32) ||
      head_count>32 || !body || strlen(body)>65536 || !g_utf8_validate(body,-1,NULL) || kind<READER_RC_PROGRESS || kind>READER_RC_NOTE_TEXT || operation<READER_RC_PUT || operation>READER_RC_RESTORE ||
      !format || strcmp(format,book->format) || bytes!=book->bytes || !title || !author || !sort || !parser || !wire || (kind!=READER_RC_PROGRESS && !records_hex(annotation,32))) goto done;
   for(size_t i=0;i<head_count;i++) if(!records_hex(heads[i],32)) goto done;
   if(kind!=READER_RC_NOTE_TEXT) {
+#ifdef EXR_READER_GTK_RAW3
+    if(pending_version==2) {
+      int mode=g_key_file_get_integer(pending,"request","capture_mode",NULL);
+      if(mode<READER_RS_REFLOW_GLOBAL || mode>READER_RS_FIXED_PAGE) goto done;
+      if(operation==READER_RC_DELETE) { if(wire[0]) goto done;decoded.mode=(reader_rs_mode)mode;decoded.anchor_version=writer_version; }
+      else {
+        gsize native_size=0;guchar *native=g_base64_decode(wire,&native_size);char *canonical=g_base64_encode(native,native_size);
+        exr_status capture_status=strcmp(canonical,wire) ? EXR_ARGUMENT:reader_private_capture_decode(native,native_size,&decoded);
+        g_free(canonical);g_free(native);
+        if(capture_status!=EXR_OK || decoded.anchor_version!=writer_version || decoded.mode!=(reader_rs_mode)mode) goto done;
+      }
+    } else {
+      if(reader_rs_decode(owner->revisions,wire,strlen(wire),&decoded,&decode_error)!=READER_RS_OK || strcmp(decoded.book_key,key) ||
+         strcmp(decoded.entity_kind,kind==READER_RC_PROGRESS ? "progress":"annotation") || (kind!=READER_RC_PROGRESS && strcmp(decoded.annotation_id,annotation))) goto done;
+    }
+    if(operation!=READER_RC_DELETE && decoded.mode==READER_RS_FIXED_PAGE && !decoded.exact) goto done;
+#else
     if(reader_rs_decode(owner->revisions,wire,strlen(wire),&decoded,&decode_error)!=READER_RS_OK || strcmp(decoded.book_key,key) ||
        strcmp(decoded.entity_kind,kind==READER_RC_PROGRESS ? "progress":"annotation") || (kind!=READER_RC_PROGRESS && strcmp(decoded.annotation_id,annotation))) goto done;
+#endif
     records_capture_from_record(&decoded,&capture_value,&anchor,&fixed);
   }
   /* From the durable boundary onwards no UI cancellation interrupts a product
@@ -301,7 +374,11 @@ static exr_status records_retry(linux_reader *reader,received_owner *owner,const
   reader_rc_context context={owner->revisions,revision,(const char *const *)heads,head_count,parser};
   reader_rc_command command={(reader_rc_kind)kind,(reader_rc_operation)operation,key,kind==READER_RC_PROGRESS ? NULL:annotation,
     kind==READER_RC_NOTE_TEXT ? NULL:&capture_value,(size_t)decoded.part,kind==READER_RC_PROGRESS || operation==READER_RC_DELETE ? NULL:body};
+#ifdef EXR_READER_GTK_RAW3
+  reader_rc_result saved={0};reader_rc_error problem={0};reader_rc_status code=reader_rc_apply_raw_v3(&context,&command,writer_version,&saved,&problem);
+#else
   reader_rc_result saved={0};reader_rc_error problem={0};reader_rc_status code=reader_rc_apply(&context,&command,&saved,&problem);
+#endif
   result->records_code=code;result->records_created=saved.created;g_strlcpy(result->records_revision,revision,33);g_strlcpy(result->records_annotation,saved.annotation_id,33);
   status=code==READER_RC_OK ? records_pending_clear(reader,revision):EXR_DATABASE;
   snprintf(result->message,sizeof(result->message),"%s",code==READER_RC_OK ? saved.created ? "Reading record saved":"Original save confirmed; no duplicate record":

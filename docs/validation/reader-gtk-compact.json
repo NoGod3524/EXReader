@@ -1,0 +1,52 @@
+{
+  "accepted": true,
+  "status": "compact ON native functions and complete original OFF scopes accepted at one source/run/attempt",
+  "start_source": "25bc0c67971f81491f50e0a3caaaf7e509bb7e35",
+  "production_pin": "fedce16a4ea6d9e1f0364d149f4f90b7a9caae5c",
+  "default_option": "EXR_READER_GTK_COMPACT=OFF",
+  "source_sha": "57203a52aee439be5194ee0a4b13563a975e8daf",
+  "run_id": 40206458217,
+  "attempt": 1,
+  "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/40206458217",
+  "jobs": [
+    {"id": 121208335325, "name": "preflight", "conclusion": "success"},
+    {"id": 121208336421, "name": "Read-only failed GTK owner evidence diagnosis", "conclusion": "skipped"},
+    {"id": 121208399613, "name": "GTK 3.41 complete retained suites and actual owner record compatibility", "conclusion": "success", "actual_steps": 35},
+    {"id": 121217426149, "name": "Authenticate candidate canvas raw ZIP and source-bound reports", "conclusion": "success"},
+    {"id": 121217558449, "name": "Authenticate distinct compact ON and complete original OFF scopes", "conclusion": "success"}
+  ],
+  "artifacts": [
+    {"id": 12604604561, "name": "reader-gtk-341-final-40206458217-1", "size_in_bytes": 112659381, "digest": "sha256:8d6c52593dd2017a6e13ffc2cf75fd3fd4546cdf3a5179b0da5afd55ac1fb685", "expires_at": "2027-01-23T15:20:23Z"},
+    {"id": 12605108334, "name": "reader-gtk-341-final-summary-40206458217-1", "size_in_bytes": 15706, "digest": "sha256:9e5b43cb209b151eb1042722d31fc7f02c431194ef3779a1482179410b3559d5", "expires_at": "2027-01-23T15:20:23Z"},
+    {"id": 12604909051, "name": "reader-gtk-compact-summary-40206458217-1", "size_in_bytes": 19348, "digest": "sha256:4533df7c38b597b70645f4c764f0c602468593c567b86b6e07968e3ce4244044", "expires_at": "2027-01-23T15:20:23Z"}
+  ],
+  "on_checks": 45,
+  "native_more_leaf_entries": 22,
+  "four_format_page_sweeps": {"txt": 13, "epub": 2, "pdf": 3, "cbz": 3},
+  "four_format_first_last_boundaries_rejected": true,
+  "records_initial_close_focus_and_real_keyboard_bookmark_row": true,
+  "independent_protocol_rejections": 24,
+  "off_original_authored_steps": 31,
+  "off_projection_base": "25bc0c67971f81491f50e0a3caaaf7e509bb7e35",
+  "off_projection_exact": true,
+  "whitespace_normalization": "CRLF to LF only",
+  "runs": [
+    {"run_id": 40200750312, "scope": "preflight only", "conclusion": "success"},
+    {"run_id": 40200828327, "scope": "full candidate", "conclusion": "cancelled", "reason": "Added necessary explicit four-format positive turns/boundaries and PDF zoom coverage while this run was still in module installation"},
+    {"run_id": 40201452800, "scope": "preflight only", "conclusion": "success"},
+    {"run_id": 40201561236, "scope": "full candidate", "conclusion": "failure", "reason": "Harness expected page focus after physically clicking Previous; entry-focus assertion moved before turns and button-focus assertion added after turns"},
+    {"run_id": 40202860251, "scope": "full candidate", "conclusion": "failure", "reason": "Actual Alt+M opened native More and focused Reading, exposed as role menu; harness incorrectly required role menu item for submenu parents"},
+    {"run_id": 40204389861, "scope": "authenticated failed artifact diagnosis only", "conclusion": "success", "reason": "Actions authenticated actual failed raw ZIP, report, PNG and visibility: Reading/Text and notes/Library/Import have menu role, leaf actions have menu item role; production unchanged"},
+    {"run_id": 40204507162, "scope": "full candidate", "conclusion": "failure", "reason": "20 ON cases passed; records modal had no initial focused node because the owner disables its list during initial async request"},
+    {"run_id": 40205198425, "scope": "authenticated failed artifact diagnosis only", "conclusion": "success", "reason": "Real modal active/showing with empty non-focusable list and enabled focusable Close; compact entry now focuses stable existing Close and checks keyboard reachability of a real new bookmark row"},
+    {"run_id": 40205409399, "scope": "full candidate", "conclusion": "failure", "reason": "33 ON cases passed including initial records focus, keyboard-created bookmark row access and all 13 TXT pages; driver incorrectly sought Stop and close after completed paste, whose original owner correctly labels the button Close"}
+  ],
+  "off_full_original_scope_accepted": true,
+  "compact_native_ui_accepted": true,
+  "complete_product": false,
+  "performance_accepted": false,
+  "frame_accepted": false,
+  "six_platform_accepted": false,
+  "physical_device_execution": false,
+  "screen_reader_accepted": false
+}
