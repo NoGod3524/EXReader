@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import subprocess
 
-BASE = '2c5a6cbb087c43abd7643e0085b3300fde95f125'
+BASE = '687def68862649479ce536d619c7b37ba2d2cc4b'
 SDK = '9854061be331fe603a1822d9b2b36ee357154927'
 DELIVERIES = {
     'g1': '3bcc6511c928665c0889a33bc98cf5e1bfadaccc',
@@ -18,6 +18,7 @@ DELIVERIES = {
     'gtk_batch_import': '2df6040666635bcd7b0349b035b8f4885757fdd0',
     'android_fixed_pan': 'c5f55fbedcd15a910a40626624e997b58f8fd1b6',
     'gtk_navigation_driver': '600ef981fb44acd91dca618850a25d1725de18f7',
+    'gtk_drop_import': 'eaa6852c8e965720c4ad07cfd223c30c282803f8',
     'apple_reading_records_candidate': '25eeb6aaccdc50e670f0aaea73631818bc0551f8',
 }
 ALLOWED = (
