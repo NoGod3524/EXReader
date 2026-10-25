@@ -19,7 +19,7 @@ expected = {
     'first': ['same_sdk_product_sqlite_and_installed_g03_g04', 'read_only_empty_list_preserves_sdk_product_and_pixels',
               'real_txt_progress_and_point_bookmark_do_not_write_sdk', 'real_txt_selection_highlight_and_note_edit_keep_selector',
               'explicit_current_found_navigation_renders_without_sdk_note_copy', 'delete_and_explicit_retained_restore_do_not_auto_navigate',
-              'epub_actual_capture_keeps_spine_path_and_current_font', 'pdf_real_page_id_points_and_cbz_capture_refusal',
+              'epub_actual_capture_keeps_spine_path_and_current_font', 'pdf_and_cbz_real_page_id_points',
               'missing_legacy_nul_and_fixed_page_id_are_never_guessed', 'unsafe_graphs_display_counts_without_exposing_or_choosing_heads',
               'stale_selected_head_never_overwrites_new_head', 'cancel_real_capture_keeps_stores_and_actual_frame',
               'close_rotation_background_drop_real_pending_reads', 'bounded_record_pagination_and_plain_text_labels'],
