@@ -228,3 +228,24 @@ send a request, including redirect targets. This prevents libcurl's automatic
 URL-based Basic authentication from bypassing the explicit authorization field.
 A TLS userinfo refusal case and server-side zero-Authorization receipt check cover
 this boundary under the same real fixture run.
+
+## T07 final cloud acceptance
+
+Tested source: 0cfe9e76f5a618659fe1a7c06939d7cc5f257f47.
+Run https://github.com/NoGod3524/EXReader/actions/runs/40165618848, attempt 1,
+completed/success. Windows 121085942293, Linux 121085942398, macOS 121085942472
+all passed 65 named cases (all original 60 retained). Strict job 121089172893
+passed six verifier test groups and authenticated the three actual producer ZIPs,
+recomputed ZIP identity and bound all six native consumer binaries to the reports.
+The strict result artifact 12588742624 contains the recomputed binary identity
+ledger. Its own ZIP identity is separately reported by upload logs and GitHub API,
+not recursively self-certified. Full artifact IDs, hashes, sizes and expiry are in
+the companion validation JSON. No review run failed; four intermediate successful
+candidates remain recorded but are superseded by this exact source.
+
+The final [skip ci] evidence commit changes only this document and the validation
+JSON. It does not change tested implementation, tests, workflow, SDK or schema.
+This is module/installed-consumer acceptance, not production host UI or six-device
+product acceptance. Remaining scope limitations above and original failure history
+are preserved. All builds, syntax/test execution, fixtures, services and artifact
+processing took place inside Actions only.
