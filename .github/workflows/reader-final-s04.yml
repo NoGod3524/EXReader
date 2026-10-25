@@ -1,0 +1,158 @@
+name: Reader final S04 Android delivered APK verification
+on:
+  push:
+    branches: [codex/reader-fw-s04]
+    paths:
+      - 'tests/reader_final_s04/**'
+      - '.github/workflows/reader-final-s04.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+env:
+  # The first run derives the APK/SDK pins from the authenticated artifact; the
+  # sealed run sets this to false so every pin must already be in the contract.
+  S04_ALLOW_DERIVE: 'true'
+jobs:
+  static:
+    name: S04 authenticated static APK acceptance
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Path ownership guard with its own negative selftest
+        run: |
+          mkdir -p build/s04-logs
+          python3 tests/reader_final_s04/guard.py --fixed 0889f7d1e9a537c6c1b05456547e016b26e1cd85 --output build/s04-guards 2>&1 | tee build/s04-logs/guard.log
+      - name: Syntax-check the package in the cloud
+        run: |
+          python3 -m py_compile tests/reader_final_s04/*.py
+          python3 -c "import pathlib,sys; print(sorted(p.name for p in pathlib.Path('tests/reader_final_s04').glob('*.py')))"
+      - name: Install Android AAPT2, apksigner and platform tools
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          sudo apt-get update
+          sudo apt-get install -y binutils
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "build-tools;35.0.0"
+          echo "AAPT2=$sdk/build-tools/35.0.0/aapt2" >> "$GITHUB_ENV"
+          echo "APKSIGNER=$sdk/build-tools/35.0.0/apksigner" >> "$GITHUB_ENV"
+          "$sdk/build-tools/35.0.0/aapt2" version
+          "$sdk/build-tools/35.0.0/apksigner" --version
+      - name: Authenticate the frozen producer run, attempt, job and artifact bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 tests/reader_final_s04/authenticate.py --role raw3 --role page-theme --output build/s04-authenticate 2>&1 | tee build/s04-logs/authenticate.log
+      - name: Static version, permission, resource, signature and SDK/JNI identity checks
+        run: |
+          python3 tests/reader_final_s04/static_apks.py --contract docs/reader-final-s04/apk-contract.json --inventory build/s04-authenticate/inventory.json --output build/s04-static 2>&1 | tee build/s04-logs/static.log
+      - name: Preserve the static evidence under one upload root
+        if: always()
+        run: |
+          mkdir -p build/s04-upload/static
+          cp -r build/s04-static build/s04-upload/static/s04-static || true
+          cp -r build/s04-authenticate build/s04-upload/static/s04-authenticate || true
+          cp -r build/s04-guards build/s04-upload/static/s04-guards || true
+          cp -r build/s04-logs build/s04-upload/static/s04-logs || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-final-s04-static-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/s04-upload/
+          if-no-files-found: warn
+
+  emulator:
+    name: S04 clean install, launch and offline reopen on a fresh emulator
+    needs: static
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate the same producer artifact again in this job
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p build/s04-logs
+          python3 tests/reader_final_s04/authenticate.py --role raw3 --output build/s04-authenticate 2>&1 | tee build/s04-logs/authenticate-emulator.log
+      - name: Enable hosted runner emulator acceleration
+        run: sudo chmod 666 /dev/kvm
+      - name: Actual install, real native SDK load, import, reading record and offline reopen
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            set -o pipefail
+            export ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+            export PATH="$PATH:$ANDROID_SDK_ROOT/platform-tools"
+            python3 tests/reader_final_s04/emulator.py --contract docs/reader-final-s04/apk-contract.json --inventory build/s04-authenticate/inventory.json --output build/s04-emulator 2>&1 | tee build/s04-logs/emulator.log
+      - name: Preserve the emulator evidence under one upload root
+        if: always()
+        run: |
+          mkdir -p build/s04-upload/emulator
+          cp -r build/s04-emulator build/s04-upload/emulator/s04-emulator || true
+          cp -r build/s04-authenticate build/s04-upload/emulator/s04-authenticate || true
+          cp -r build/s04-logs build/s04-upload/emulator/s04-logs || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-final-s04-emulator-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/s04-upload/
+          if-no-files-found: warn
+
+  summary:
+    name: S04 cross-job identity and result
+    needs: [static, emulator]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: reader-final-s04-*
+          path: build/in
+          merge-multiple: true
+      - name: Join only identical source, artifact digest and APK bytes
+        run: |
+          python3 tests/reader_final_s04/summary.py --static build/in/static/s04-static --emulator build/in/emulator/s04-emulator --static-auth build/in/static/s04-authenticate --emulator-auth build/in/emulator/s04-authenticate --output build/s04-summary
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-final-s04-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/s04-summary/
+          if-no-files-found: warn

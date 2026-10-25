@@ -1,0 +1,102 @@
+{
+  "package": "S04",
+  "title": "Android delivered APK verification (version/minSdk/ABI/permissions, resources, SDK/JNI identity, install/launch/offline reopen)",
+  "start": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+  "branch": "codex/reader-fw-s04",
+  "producer": {
+    "source_sha": "4a04a9cc74dde67f755c87e87b278d63a254a3ac",
+    "branch": "codex/reader-android-raw3-candidate",
+    "workflow": ".github/workflows/reader-android-raw3.yml",
+    "workflow_name": "Android explicit raw3 native host candidate",
+    "run_id": 40207467982,
+    "attempt": 1,
+    "conclusion": "success",
+    "jobs": {
+      "android": 121211376063
+    },
+    "artifacts": [
+      {
+        "role": "raw3",
+        "id": 12604412854,
+        "name": "reader-android-raw3-40207467982-1",
+        "bytes": 113970957,
+        "digest": "sha256:c3db2ad1a2e31bc53d01620f2ef90e02a976e3b4f90ac76ed2e179c7c9052805",
+        "expires_at": "2027-01-23T15:33:00Z",
+        "candidates": {
+          "raw3_debug": "build/android-raw3/apks/host-debug.apk",
+          "default_off_debug": "build/android-raw3/baseline/host-debug.apk",
+          "raw3_instrumentation": "build/android-raw3/apks/raw3-test.apk",
+          "raw3_release_unsigned": "build/android-raw3/apks/host-release.apk"
+        }
+      },
+      {
+        "role": "page-theme",
+        "id": 12604537792,
+        "name": "reader-android-page-theme-40207467982-1",
+        "bytes": 133598571,
+        "digest": "sha256:9ea2858145313296d39792d867794db1be687eb70dec38f155dcd1dfe156bf06",
+        "expires_at": "2027-01-23T15:33:00Z",
+        "note": "same producer run/attempt; carries build/session-android/sdk-stage (installed 3.41.0 SDK headers and libexreader_jni.so) used for the JNI identity comparison"
+      }
+    ],
+    "sealed_source_blobs": {
+      "examples/android/app/build.gradle": "c23f4f07b2c10db4d30f15df382e32363054c914",
+      "examples/android/settings.gradle": "86aedc0f1b403f69dc98989677a56fe72ad0ae08",
+      "examples/android/build.gradle": "bb423691248723c96ba1b52fe29221399dc3b627",
+      "examples/android/gradle.properties": "cff6e7d03109ebc217a4e34824d3970c093e3768",
+      "include/exr/base.h": "6426b81ae2c3f0357727395c42e60156eec20538",
+      "include/exreader.h": "73515505d48621e97f57b64378f4ff224183d711",
+      "tools/host_font.py": "ee87ee77d9da31ef3eb2c7d34eee5ee13b01566d",
+      "tools/reader_catalog_assets.py": "1593022cb783411b27e7492de44b476208b8bf25",
+      "apps/reader/store/001_catalog.sql": "6d6230265e562a3743ca9982019f13f2884e5c3e",
+      "examples/android/app/src/main/AndroidManifest.xml": "abd9bbeadfdb03ee309183564eb51645461895f8",
+      "extras/webdav/android/webdav/src/main/AndroidManifest.xml": "fbb2ef8380df607cdf94c72a1d30ee491932d94b",
+      "extras/credentials/android/credentials/src/main/AndroidManifest.xml": "b2d3ea123526d400738f87fcb9891f3421426ef9",
+      "extras/android-import-entry/android/importentry/src/main/AndroidManifest.xml": "b2d3ea123526d400738f87fcb9891f3421426ef9",
+      "tests/reader_host_session_android/debug/AndroidManifest.xml": "956dac0c429b57ed56de215b8de7db2ab37235ce"
+    }
+  },
+  "expected": {
+    "applicationId": "org.exreader.host",
+    "namespace": "org.exreader.host",
+    "versionCode": "1",
+    "versionName": "0.1.0",
+    "minSdk": "26",
+    "targetSdk": "35",
+    "compileSdk": "35",
+    "abis": [
+      "x86_64"
+    ],
+    "permissions": [
+      "android.permission.INTERNET"
+    ],
+    "sdk_version": "3.41.0",
+    "launchable_activity": "org.exreader.host.MainActivity",
+    "allowBackup": "false",
+    "activity_exported": "true",
+    "debug_network_security": true
+  },
+  "fixture": {
+    "file": "tests/fixtures/sample.txt",
+    "bytes": 10635,
+    "sha256": "fe0e65a92ff83503015b42253a17ac643e4894058a062bb532ba61aaf5bf583b",
+    "extension": "txt",
+    "role": "original document imported once, read, and reopened offline"
+  },
+  "pins": {
+    "candidate_sha256": null,
+    "candidate_bytes": null,
+    "baseline_sha256": null,
+    "test_apk_sha256": null,
+    "release_apk_sha256": null,
+    "sdk_jni_sha256": null
+  },
+  "scope": {
+    "debug_candidate_only": true,
+    "store_channel": false,
+    "physical_device": false,
+    "signing_authority": false,
+    "emulator_only": true,
+    "native_error_analysis": false
+  }
+}
