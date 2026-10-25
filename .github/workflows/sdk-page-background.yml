@@ -9,66 +9,118 @@ defaults:
   run:
     shell: bash
 jobs:
-  linux:
-    runs-on: ubuntu-22.04
+  desktop:
+    name: background consumers (${{ matrix.key }})
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-22.04, key: linux}
+          - {os: windows-2022, key: windows}
+          - {os: macos-15, key: macos}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Require the authorized isolated SDK scope and original tests
         run: python3 tests/sdk_page_background/guard.py
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Install build tools
+        if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - name: Enter Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c ('"{0}" >nul && set' -f $bat) | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Record platform and native compiler paths
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); exe=.exe; else ws="$PWD"; exe=; fi
+          echo "BG_WORKSPACE=$ws" >> "$GITHUB_ENV"
+          echo "BG_EXE=$exe" >> "$GITHUB_ENV"
+          echo "BG_PLATFORM=${{ matrix.key }}" >> "$GITHUB_ENV"
       - name: Build and install the exact frozen SDK as an independent pixel oracle
         run: |
           mkdir -p build/frozen-source build/background
           git archive 9854061be331fe603a1822d9b2b36ee357154927 | tar -x -C build/frozen-source
           cmake -S build/frozen-source -B build/frozen-sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AAC=OFF
           cmake --build build/frozen-sdk --parallel 4
-          cmake --install build/frozen-sdk --prefix "$PWD/build/frozen-stage"
-          cmake -S tests/sdk_page_background -B build/frozen-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/frozen-stage" -DBACKGROUND_BASELINE=ON
+          cmake --install build/frozen-sdk --prefix "$BG_WORKSPACE/build/frozen-stage"
+          cmake -S tests/sdk_page_background -B build/frozen-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$BG_WORKSPACE/build/frozen-stage" -DBACKGROUND_BASELINE=ON
           cmake --build build/frozen-consumer --parallel 4
       - name: Build the candidate and run every original native test
         run: |
           cmake -S . -B build/native -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AAC=OFF
           cmake --build build/native --parallel 4
-          ctest --test-dir build/native --output-on-failure --no-tests=error --timeout 180
-          cmake --install build/native --prefix "$PWD/build/candidate-stage"
-          cmake -S tests/sdk_page_background -B build/candidate-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/candidate-stage"
+          ctest --test-dir build/native --output-on-failure --no-tests=error --timeout 180 --output-junit "$BG_WORKSPACE/build/background/native-junit.xml"
+          cmake --install build/native --prefix "$BG_WORKSPACE/build/candidate-stage"
+          cmake -S tests/sdk_page_background -B build/candidate-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$BG_WORKSPACE/build/candidate-stage"
           cmake --build build/candidate-consumer --parallel 4
       - name: Compare old API pixels and exercise actual image alpha and cancellation
         run: |
           python3 tests/sdk_page_background/make_fixture.py build/background/long.epub
-          build/frozen-consumer/page-background tests/fixtures build/background/frozen-frames.bin build/background/long.epub | tee build/background/frozen.json
-          build/candidate-consumer/page-background tests/fixtures build/background/candidate-frames.bin build/background/long.epub | tee build/background/candidate.json
+          build/frozen-consumer/page-background$BG_EXE tests/fixtures build/background/frozen-frames.bin build/background/long.epub | tee build/background/frozen.json
+          build/candidate-consumer/page-background$BG_EXE tests/fixtures build/background/candidate-frames.bin build/background/long.epub | tee build/background/candidate.json
           cmp build/background/frozen-frames.bin build/background/candidate-frames.bin
           python3 - <<'PY'
-          import hashlib, json, os
+          import hashlib, json, os, xml.etree.ElementTree as ET
           from pathlib import Path
           root = Path('build/background')
           old = json.loads((root/'frozen.json').read_text());new = json.loads((root/'candidate.json').read_text())
           assert old['sdk']=='3.40.0' and new['sdk']=='3.41.0' and old['abi']==new['abi']==1
           assert old['accepted'] is new['accepted'] is True and old['cases']==new['cases']==12
           assert new['checks']>old['checks']>30
+          native = ET.parse(root/'native-junit.xml').getroot()
+          assert len(native.findall('testcase'))>0 and not native.findall('.//failure') and not native.findall('.//error')
           sha = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
           result = dict(source_sha=os.environ['GITHUB_SHA'],run_id=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],
-                        scope='Linux installed API and original native suite only',accepted=True,complete_product=False,
+                        platform=os.environ['BG_PLATFORM'],scope='installed API and original native suite only',accepted=True,complete_product=False,
+                        original_native_tests=len(native.findall('testcase')),
                         frozen_source='9854061be331fe603a1822d9b2b36ee357154927',old=old,new=new,
                         old_api_pixels_identical=True,pixel_sha256=sha(root/'candidate-frames.bin'),
-                        frozen_consumer_sha256=sha(Path('build/frozen-consumer/page-background')),
-                        candidate_consumer_sha256=sha(Path('build/candidate-consumer/page-background')),
+                        frozen_consumer_sha256=sha(Path('build/frozen-consumer/page-background'+os.environ['BG_EXE'])),
+                        candidate_consumer_sha256=sha(Path('build/candidate-consumer/page-background'+os.environ['BG_EXE'])),
                         performance_accepted=False,host_ui_accepted=False,six_platform_accepted=False)
           (root/'result.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result))
           PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: sdk-page-background-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          name: sdk-page-background-${{ matrix.key }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             build/background/
             build/native/Testing/Temporary/LastTest.log
-            build/frozen-consumer/page-background
-            build/candidate-consumer/page-background
+            build/frozen-consumer/page-background*
+            build/candidate-consumer/page-background*
             build/candidate-stage/include/exr/
+          if-no-files-found: error
+  evidence:
+    name: strict background candidate evidence
+    needs: desktop
+    if: always()
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rehash exact-attempt ZIPs actual consumers and frozen-oracle pixels
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/sdk_page_background/aggregate.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sdk-page-background-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/background-summary/result.json
           if-no-files-found: error
