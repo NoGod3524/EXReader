@@ -24,11 +24,12 @@ final class NativeReadingSdk {
     }
     static Match resolve(BookStore store,long book,ReadingCapture capture,byte[] font,float size,HostTask task,ReadingControl control)throws Exception {
         store.searchOwner();BookStore.VerifiedSource source=store.verifySource(book,null,0,task);
-        if(!source.key.equals(capture.bookKey)||!("exreader-sdk-"+nativeVersion()).equals(capture.parser))throw new IllegalStateException("Reading original or parser differs");
+        if(!source.key.equals(capture.bookKey)||!acceptsParser(capture.parser))throw new IllegalStateException("Reading original or parser differs");
         int displayedMode=source.book.fixed()?ReadingCapture.FIXED:source.location.equals("epub_chapter")?ReadingCapture.EPUB:ReadingCapture.REFLOW;if(capture.mode!=displayedMode)throw new Projection();
         task.check();Match result=nativeResolve(store.nativeLibrary().checked(),book,capture.numbers(),capture.route(),capture.bytes(),font,size,control);task.check();return result;
     }
     static String parser(){return "exreader-sdk-"+nativeVersion();}
+    static boolean acceptsParser(String recorded){return ReadingParserPolicy.accepts(recorded,nativeVersion());}
     private static native String nativeVersion();
     private static native ReadingCapture nativeCapture(long library,long book,int mode,long unit,String path,long start,long end,String key,byte[] font,float size,ReadingControl control);
     private static native Match nativeResolve(long library,long book,long[] numbers,String[] route,byte[][] selectors,byte[] font,float size,ReadingControl control);
