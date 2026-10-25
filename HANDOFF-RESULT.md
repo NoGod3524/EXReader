@@ -1,5 +1,24 @@
 # S04 HANDOFF-RESULT — Android 交付 APK 核验
 
+## Root 隔离复核进度（2026-10-25）
+
+本节接续原 DS 交回，原失败记录保留。当前仍 `accepted=false`，受测 source
+`0852c015f349e4ef8ce0672a18f6255640d886a0`，run `40223913409` / attempt 1。
+静态必需项通过，模拟器已通过原件导入与私有副本字节校验、UI 实际开书、p1→p2→p3、
+宿主自己保存的 `lastReader=true` / `lastBook=1`（`restore_input=app`，无偏好注入）。
+离线重开尚未执行：API34 拒绝工具发送受保护的 `AIRPLANE_MODE` 广播。
+
+初始化分两阶段：空书架冷启动执行 host/core 的 SDK 身份路径；实际重排书出页才初始化独立 SDK JNI。
+两库动态检查保留在 UI 出页之后，按原 APK 中 ELF executable PT_LOAD 对应的文件偏移核对真实
+`base.apk` executable maps。早期“空书架必须已加载 JNI”的工具失败保留，不改生产宿主。
+
+现有 `book_progress` SQL 仅是诊断；`files/books` 哈希仅证明私有副本。它们不是独立公开 SDK 回读。
+独立原件/进度公开 API 回读仍 pending；真实宿主重开本身走公开 SDK 的 source/progress 路径，
+但不得据此声称有独立消费者逐项回读。全部 root run/job/artifact 身份见 `validation.json` 的
+`root_review_runs`，本轮 19 项运行记录见 `root_review_latest`。
+
+以下为原 DS 三轮记录，其“模拟器从未运行”的表述仅描述原交回时点。
+
 **状态：accepted=false。** 三轮 CI 已用尽；末端 commit 只修掉 last 一个**我方**语法缺陷，**未再执行**（不再刷 run）；模拟器作业三轮都被 static 失败挡住，从未运行。
 本包**没有**任何"通过"主张。
 
