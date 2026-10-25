@@ -369,7 +369,10 @@ def main():
     # in the artifact, so a red run must not depend on unpacking it to say what failed.
     print(json.dumps({"accepted": report["accepted"], "checks": report["checks"],
                       "expected": report["expected_checks"], "error": failure,
-                      "failing_checks": failing_checks}, indent=2))
+                      "failing_checks": failing_checks,
+                      "capabilities": report["capabilities"],
+                      "wavs": [{key: row[key] for key in ("file", "bytes", "duration_ms", "minimum_ms")}
+                               for row in report["wavs"] if "duration_ms" in row]}, indent=2))
     return 0 if report["accepted"] else 1
 
 
