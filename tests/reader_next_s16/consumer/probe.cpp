@@ -461,7 +461,8 @@ int main(int argc,char **argv){
   stage("real CBZ textless page");
   {exr_fixed_text *cbzText=nullptr;SDK(exr_fixed_load_text(cbzDoc,1,nullptr,&cbzText,&e_));
    exr_fixed_anchor cbzPoint{};SDK(exr_fixed_anchor_create(cbzIds[1].c_str(),cbzText,0,0,&cbzPoint,&e_));
-   commit_report r=commit_fixed_v3(H,raw,keys["cbz"],READER_JH_PAGE,fixed_capture(cbzPoint));
+   reader_rs_capture cbzCapture=fixed_capture(cbzPoint);cbzCapture.page=1; /* the page-number hint must agree with the page ID */
+   commit_report r=commit_fixed_v3(H,raw,keys["cbz"],READER_JH_PAGE,cbzCapture);
    expect_committed("a real CBZ textless page is stored by the raw entry",r,READER_JH_ADDED);
    reader_jh_item it=current_item(H);rec_guard g;reader_rs_error re{};
    if(!decode_raw(std::string(it.wire,it.wire_bytes),g,&re))fatal(std::string("decode cbz wire: ")+re.message);
@@ -804,7 +805,9 @@ int main(int argc,char **argv){
   stage("thread ownership");
   reader_jh *T=nullptr;opened(&T,nullptr);
   {exr_fixed_anchor a{};pdf_point(offsets[0],&a);
-   if(commit_fixed_v3(T,raw,keys["pdf"],READER_JH_PAGE,fixed_capture(a)).status!=READER_JH_OK)fatal("thread setup landing");}
+   if(commit_fixed_v3(T,raw,keys["pdf"],READER_JH_PAGE,fixed_capture(a)).status!=READER_JH_OK)fatal("thread setup landing");
+   exr_fixed_anchor b{};pdf_point(offsets[1],&b);
+   if(commit_fixed_v3(T,raw,keys["pdf"],READER_JH_SEARCH,fixed_capture(b)).status!=READER_JH_OK)fatal("thread setup landing two");}
   struct thread_results { reader_jh_status commit=READER_JH_OK,wire=READER_JH_OK,peek=READER_JH_OK,close=READER_JH_OK,adopt=READER_JH_OK; } tr{};
   std::thread worker([&]{
     exr_fixed_anchor a{};pdf_point(offsets[2],&a);

@@ -244,7 +244,7 @@ def main():
     evidence = OUT / 'evidence'
 
     def original_suite(prefix, name, consumer_source, extra_prefixes=()):
-        consumer = build(consumer_source, name + '-original-consumer', prefix,
+        consumer = build(consumer_source, name + '-consumer', prefix,
                          ['-DCMAKE_PREFIX_PATH=' + ';'.join(map(str, [prefix, *extra_prefixes, product, sdk]))],
                          install=False)
         arguments = [sys.executable, ROOT / 'tests/reader_jump_history/check_jump_history.py',
@@ -268,6 +268,8 @@ def main():
                                     'find_package(EXReaderJumpHistory 0.2.0 EXACT CONFIG REQUIRED)')
     differences = [pair for pair in zip(consumer_text.splitlines(), patched.splitlines()) if pair[0] != pair[1]]
     assert len(differences) == 1, ('the raw consumer copy must change exactly the package version line', differences)
+    (raw_consumer / 'CMakeLists.txt').write_text(patched, encoding='utf-8')
+    assert (raw_consumer / 'CMakeLists.txt').read_text(encoding='utf-8') == patched
     on_suite = original_suite(on, 'original-raw', raw_consumer)
 
     baseline_summary = json.loads((evidence / 'original-baseline/summary.json').read_text(encoding='utf-8'))
@@ -304,18 +306,20 @@ def main():
                                 '-B', str(OUT / 'negatives/raw-against-default'), '-G', 'Ninja',
                                 '-DCMAKE_BUILD_TYPE=Release', '-DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON',
                                 '-DCMAKE_PREFIX_PATH=' + ';'.join(map(str, [off, product, sdk]))],
-                               'negative-raw-against-default', 'requested version 0.2.0'))
+                               'negative-raw-against-default', 'requested version "0.2.0"'))
     negatives.append(must_fail(['cmake', '-S', str(ROOT / 'apps/reader/jump-history'),
                                 '-B', str(OUT / 'negatives/default-against-raw'), '-G', 'Ninja',
                                 '-DCMAKE_BUILD_TYPE=Release', '-DEXR_READER_SELECTOR_BYTES_CANDIDATE=OFF',
                                 '-DCMAKE_PREFIX_PATH=' + ';'.join(map(str, [on, product, sdk]))],
-                               'negative-default-against-raw', 'requested version 0.1.0'))
+                               'negative-default-against-raw', 'requested version "0.1.0"'))
     negatives.append(must_fail(['cmake', '-S', str(original_consumer),
                                 '-B', str(OUT / 'negatives/original-consumer-against-raw'), '-G', 'Ninja',
                                 '-DCMAKE_BUILD_TYPE=Release',
                                 '-DCMAKE_PREFIX_PATH=' + ';'.join(map(str, [on, product, sdk]))],
                                'negative-original-consumer-against-raw', 'EXReaderJumpHistory'))
-    fake = OUT / 'negatives/faked-reading-state'
+    fake_prefix = OUT / 'negatives/faked-prefix'
+    fake = fake_prefix / 'lib/cmake/EXReaderReadingState'
+    fake.parent.mkdir(parents=True)
     shutil.copytree(off / 'lib/cmake/EXReaderReadingState', fake)
     version_file = fake / 'EXReaderReadingStateConfigVersion.cmake'
     text = version_file.read_text(encoding='utf-8')
@@ -325,7 +329,7 @@ def main():
     negatives.append(must_fail(['cmake', '-S', str(ROOT / 'apps/reader/jump-history'),
                                 '-B', str(OUT / 'negatives/faked-family-target'), '-G', 'Ninja',
                                 '-DCMAKE_BUILD_TYPE=Release', '-DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON',
-                                '-DCMAKE_PREFIX_PATH=' + ';'.join(map(str, [fake, off, product, sdk]))],
+                                '-DCMAKE_PREFIX_PATH=' + ';'.join(map(str, [fake_prefix, off, product, sdk]))],
                                'negative-faked-family-target',
                                'Raw candidate jump history requires the raw candidate reading-state target'))
 
@@ -336,8 +340,8 @@ def main():
     for name, path in (('raw_probe', raw_build / ('s16-raw-probe' + SUFFIX)),
                        ('raw_c_consumer', raw_build / ('s16-c-consumer' + SUFFIX)),
                        ('default_c_consumer', default_build / ('s16-c-consumer' + SUFFIX)),
-                       ('original_probe', OUT / 'build' / 'default-original-consumer' / ('jump-history-probe' + SUFFIX)),
-                       ('original_c_consumer', OUT / 'build' / 'default-original-consumer' / ('jump-history-c-consumer' + SUFFIX))):
+                       ('original_probe', OUT / 'build' / 'original-default-consumer' / ('jump-history-probe' + SUFFIX)),
+                       ('original_c_consumer', OUT / 'build' / 'original-default-consumer' / ('jump-history-c-consumer' + SUFFIX))):
         programs[name] = {'sha256': sha_file(path), 'bytes': Path(path).stat().st_size}
     result = {
         'accepted': not problems and raw_summary['accepted'] and default_summary['accepted'],

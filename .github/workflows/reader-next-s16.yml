@@ -67,8 +67,8 @@ jobs:
             build/reader-next-s16/build/raw-consumer/s16-raw-probe*
             build/reader-next-s16/build/raw-consumer/s16-c-consumer*
             build/reader-next-s16/build/default-consumer/s16-c-consumer*
-            build/reader-next-s16/build/default-original-consumer/jump-history-probe*
-            build/reader-next-s16/build/default-original-consumer/jump-history-c-consumer*
+            build/reader-next-s16/build/original-default-consumer/jump-history-probe*
+            build/reader-next-s16/build/original-default-consumer/jump-history-c-consumer*
             build/reader-next-s16/result.json
             build/reader-next-s16/assertion.log
           if-no-files-found: warn
