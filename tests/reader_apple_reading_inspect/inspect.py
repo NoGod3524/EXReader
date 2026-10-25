@@ -99,7 +99,7 @@ def main():
         for path in attachments.rglob('*'):
             if path.is_file() and path.suffix in ('.txt','.json','.log') and path.stat().st_size<=2*1024**2:
                 text=path.read_text(encoding='utf-8',errors='replace')
-                if any(key in text for key in ('fixture-request','import-request','rejected-unready','committed','library.title')):
+                if target != 'records' or any(key in text for key in ('fixture-request','import-request','rejected-unready','committed','library.title')):
                     trace.append(path.relative_to(out).as_posix());print('TRACE-ATTACHMENT',str(path),text[:24000],flush=True)
     result['trace_text_attachments']=trace
     result['trace_absence_is_not_proof_of_missing_import_callback']=True

@@ -22,6 +22,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: python3 tests/reader_apple_reading_inspect/inspect.py '${{ matrix.target }}'
       - name: Read text from the original failed case screenshots with system Vision
+        env:
+          ORIGINAL_CASE: ${{ matrix.target == 'fast-import' && 'testFastOwnerImportPublishesWithoutBusyTransition' || 'testFixedCbzAndPdfRealPointRecords' }}
         run: |
           set -o pipefail
           if test -d build/apple-reading-original-inspect/attachments; then

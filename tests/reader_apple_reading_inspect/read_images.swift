@@ -13,6 +13,7 @@ let root = URL(fileURLWithPath: CommandLine.arguments[1]).standardizedFileURL
 let data = try Data(contentsOf: root.appendingPathComponent("manifest.json"))
 guard let groups = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { fatalError("Invalid export manifest") }
 var count = 0
+let wantedCase = ProcessInfo.processInfo.environment["ORIGINAL_CASE"] ?? "testFixedCbzAndPdfRealPointRecords"
 func recognize(_ image: CGImage, label: String) {
     print("ORIGINAL-FAILURE-IMAGE \(label) \(image.width)x\(image.height)")
     let request = VNRecognizeTextRequest()
@@ -29,7 +30,7 @@ func recognize(_ image: CGImage, label: String) {
 }
 for group in groups {
     let owner = (group["testIdentifier"] as? String) ?? (group["testName"] as? String) ?? ""
-    guard owner.contains("testFixedCbzAndPdfRealPointRecords") else { continue }
+    guard owner.contains(wantedCase) else { continue }
     for attachment in group["attachments"] as? [[String: Any]] ?? [] {
         guard let name = attachment["exportedFileName"] as? String else { continue }
         let url = root.appendingPathComponent(name).standardizedFileURL

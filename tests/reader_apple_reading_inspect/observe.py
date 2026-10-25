@@ -41,7 +41,7 @@ def main():
 '''
     edits = [
         ('    private func element(', helper + '    private func element('),
-        ('        app.terminate()\n', '        observeImport("teardown")\n        app.terminate()\n'),
+        ('    override func tearDownWithError() throws {\n', '    override func tearDownWithError() throws {\n        observeImport("teardown")\n'),
         ('        element(id).tap()\n', '        element(id).tap()\n        if id.hasPrefix("library.import.") { observeImport("after-tap") }\n'),
     ]
     observed = original
