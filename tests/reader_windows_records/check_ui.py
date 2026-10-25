@@ -139,6 +139,8 @@ def main():
   d=show();record('empty-list-is-read-only',len(labels(d))==1 and counts()==before and source_state()==before_source)
   close(d);U.SetForegroundWindow(app.window);A.tap(ord('L'),(A.VK_CONTROL,));d=app.dialog();settle(d)
   names=[A.auto.ControlFromHandle(U.GetDlgItem(d,id)).Name for id in range(PROGRESS,CLOSE+1)]
+  report['native_accessible_names']={'actions':names,'rows':A.auto.ControlFromHandle(U.GetDlgItem(d,ROWS)).Name}
+  print(json.dumps({'native_accessible_names':report['native_accessible_names']},ensure_ascii=True),flush=True)
   record('real-ctrl-l-and-uia-names',bool(d) and all(names) and '阅读记录' in A.auto.ControlFromHandle(U.GetDlgItem(d,ROWS)).Name)
   press(d,PROGRESS);progress=latest('progress');loc=progress['payload']['location'];proof=audit(progress)
   record('txt-progress-public-point-v2',counts()==(before[0]+2,before[1]+2) and loc['anchor_version']==2 and loc['selector']['exact']=='' and proof['match_start']==proof['match_end'])
