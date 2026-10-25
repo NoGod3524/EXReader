@@ -53,6 +53,9 @@ static LRESULT review_message(HWND window, WPARAM code, LPARAM value) {
 #ifdef EXR_READER_WINDOWS_NAVIGATION
       || code == 106 || code == 107
 #endif
+#ifdef EXR_READER_WINDOWS_RECORDS
+      || code == 108 || code == 109 || code == 110
+#endif
   ) {
     wchar_t name[100];
     swprintf(name, 100, L"Local\\EXReaderWorkerReview-%lu", GetCurrentProcessId());
