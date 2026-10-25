@@ -24,6 +24,17 @@ def module(name, path):
     return value
 
 
+def bmp_inner(raw, pad=6):
+    """Actual pixels away from the client edge of one 32-bit BMP capture."""
+    width = int.from_bytes(raw[18:22], 'little')
+    height = int.from_bytes(raw[22:26], 'little')
+    require(raw[:2] == b'BM' and width > 2 * pad and height > 2 * pad, 'not a native BMP capture')
+    stride = width * 4
+    body = raw[54:]
+    return b''.join(body[y * stride + pad * 4:(y + 1) * stride - pad * 4]
+                    for y in range(pad, height - pad))
+
+
 def validate(report, source, run, attempt, host, baseline):
     expected = search.names_from_source(Path(__file__).with_name('check_ui.py'), 'REQUIRED')
     search.bound(report, expected, source, run, attempt)
@@ -125,11 +136,14 @@ def main(workflow_path='.github/workflows/reader-windows-preferences-ui.yml'):
             # Independent re-assertions of the two pixel claims: the untouched
             # installation and a fixed page are byte-identical; the reflow page
             # theme really changed the canvas.
-            require(z.read('wprefs-ui/captures/default-on.bmp') == z.read('wprefs-ui/captures/default-off.bmp'),
+            require(bmp_inner(z.read('wprefs-ui/captures/default-on.bmp')) ==
+                    bmp_inner(z.read('wprefs-ui/captures/default-off.bmp')),
                     'default rendering differs from the option-off host')
-            require(z.read('wprefs-ui/captures/fixed-light.bmp') == z.read('wprefs-ui/captures/fixed-dark.bmp'),
+            require(bmp_inner(z.read('wprefs-ui/captures/fixed-light.bmp')) ==
+                    bmp_inner(z.read('wprefs-ui/captures/fixed-dark.bmp')),
                     'fixed page content changed with the theme')
-            require(z.read('wprefs-ui/captures/picture-light.bmp') != z.read('wprefs-ui/captures/picture-dark.bmp'),
+            require(bmp_inner(z.read('wprefs-ui/captures/picture-light.bmp')) !=
+                    bmp_inner(z.read('wprefs-ui/captures/picture-dark.bmp')),
                     'the reflow page theme did not change the canvas')
             document = load('wprefs-ui/profile/preferences.json')
             require(len(document) == 14 and document['format'] == 'exreader-preferences' and

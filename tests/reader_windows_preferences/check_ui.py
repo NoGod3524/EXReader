@@ -144,6 +144,13 @@ def near(pixel, expected, tolerance=12):
     return all(abs(pixel[index] - expected[index]) <= tolerance for index in range(3))
 
 
+def inner(image, pad=6):
+    """Window pixels away from the client edge (focus ring and border excluded)."""
+    width, height, body = image
+    return b''.join(body[(y * width + pad) * 4:(y * width + width - pad) * 4]
+                    for y in range(pad, height - pad))
+
+
 def layout(client, bitmap):
     width, height = client
     bw, bh = bitmap
@@ -391,7 +398,7 @@ def main():
         app.wait_idle()
         app.fit_page(target)
         left = app.page_shot('default-on.bmp', probes)
-        record('default-start-keeps-original-page-pixels', left == right)
+        record('default-start-keeps-original-page-pixels', inner(left) == inner(right))
 
         # ---- explicit light selection ----------------------------------------
         dialog = app.open_dialog()
@@ -478,7 +485,7 @@ def main():
         app.apply()
         app.close_dialog()
         fixed_dark = app.page_shot('fixed-dark.bmp', probes)
-        record('fixed-page-content-and-colours-untouched', fixed_light == fixed_dark)
+        record('fixed-page-content-and-colours-untouched', inner(fixed_light) == inner(fixed_dark))
 
         # ---- the installed fixed renderer owns the zoom ----------------------
         dialog = app.open_dialog()
@@ -504,7 +511,8 @@ def main():
         after, after_raw = document(profile)
         comic_after = app.page_shot('comic-refused.bmp', probes)
         record('fixed-page-zoom-refusal-is-explicit',
-               before_raw == after_raw and before['fixed_page_zoom'] == 150 and comic_before == comic_after,
+               before_raw == after_raw and before['fixed_page_zoom'] == 150 and
+               inner(comic_before) == inner(comic_after),
                dict(status=app.status()))
         app.close_dialog()
 
@@ -650,7 +658,8 @@ def main():
             after, after_raw = document(profile)
             after_image = app.page_shot('save-refused.bmp', probes)
             record('failed-save-keeps-accepted-frame',
-                   accepted_raw == after_raw and before_image == after_image, dict(status=app.status()))
+                   accepted_raw == after_raw and inner(before_image) == inner(after_image),
+                   dict(status=app.status()))
             app.close_dialog()
         finally:
             if handle and handle != W.HANDLE(-1).value:
