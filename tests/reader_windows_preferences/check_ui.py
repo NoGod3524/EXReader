@@ -562,7 +562,7 @@ def main():
 
         # ---- rapid selections end in exactly one accepted state --------------
         for index in (1, 0, 1, 0, 1):
-            if not app.dialog():
+            if not app.find_dialog():
                 app.open_dialog()
             app.choose(THEME, index)
             app.press(APPLY)
