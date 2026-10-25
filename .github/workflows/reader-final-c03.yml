@@ -1,0 +1,127 @@
+name: Reader final C03 account import sync fault boundaries
+on:
+  push:
+    branches: [codex/reader-fw-c03]
+    paths:
+      - 'tests/reader_final_c03/**'
+      - '.github/workflows/reader-final-c03.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  boundaries:
+    name: C03 boundaries (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      max-parallel: 2
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Path ownership guard with its own negative selftest
+        run: |
+          mkdir -p build/c03-logs
+          python3 tests/reader_final_c03/check_guards.py --fixed 0889f7d1e9a537c6c1b05456547e016b26e1cd85 --output build/c03-guards 2>&1 | tee build/c03-logs/guards.log
+      - name: Syntax-check the package Python in the cloud
+        run: python3 -m py_compile tests/reader_final_c03/check_c03.py tests/reader_final_c03/check_guards.py tests/reader_final_c03/check_artifacts.py
+      - name: Install native TLS XML and SHA dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config ninja-build
+      - name: Build the frozen reading library and the unchanged cloud-import chain
+        run: |
+          set -o pipefail
+          ws="$PWD"
+          echo "WS=$ws" >> "$GITHUB_ENV"
+          echo "WI_PREFIX=$ws/build/wi-prefix" >> "$GITHUB_ENV"
+          echo "WI_SDK=$ws/build/reading-library/stage" >> "$GITHUB_ENV"
+          cmake --preset reading-library 2>&1 | tee build/c03-logs/sdk-configure.log
+          cmake --build --preset reading-library --parallel 4 2>&1 | tee build/c03-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/c03-logs/sdk-install.log
+          cmake -S extras/sideload -B build/wi-sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$ws/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ws/build/wi-prefix" 2>&1 | tee build/c03-logs/sideload-configure.log
+          cmake --build build/wi-sideload --parallel 4 2>&1 | tee build/c03-logs/sideload-build.log
+          cmake --install build/wi-sideload 2>&1 | tee build/c03-logs/sideload-install.log
+          cmake -S extras/webdav -B build/wi-webdav -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_WEBDAV_APPLE_URLSESSION=OFF -DCMAKE_INSTALL_PREFIX="$ws/build/wi-prefix" 2>&1 | tee build/c03-logs/webdav-configure.log
+          cmake --build build/wi-webdav --parallel 4 2>&1 | tee build/c03-logs/webdav-build.log
+          cmake --install build/wi-webdav 2>&1 | tee build/c03-logs/webdav-install.log
+          cmake -S apps/reader/cloud-import -B build/wi-adapter -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$ws/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$ws/build/wi-prefix;$ws/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ws/build/wi-prefix" 2>&1 | tee build/c03-logs/adapter-configure.log
+          cmake --build build/wi-adapter --parallel 4 2>&1 | tee build/c03-logs/adapter-build.log
+          cmake --install build/wi-adapter 2>&1 | tee build/c03-logs/adapter-install.log
+          cmake -S tests/reader_webdav_import/consumer -B build/c03-probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ws/build/wi-prefix;$ws/build/reading-library/stage" 2>&1 | tee build/c03-logs/probe-configure.log
+          cmake --build build/c03-probe --parallel 4 2>&1 | tee build/c03-logs/probe-build.log
+          sha256sum build/c03-probe/cloud-probe | tee build/c03-logs/cloud-probe.sha256
+      - name: Build the unchanged product, revision, sync and session chain
+        run: |
+          set -o pipefail
+          ws="$PWD"
+          echo "RES_PREFIXES=$ws/build/res-dav-stage;$ws/build/res-revision-stage;$ws/build/res-product-stage;$ws/build/res-sync-stage" >> "$GITHUB_ENV"
+          echo "RES_SESSION_STAGE=$ws/build/res-session-stage" >> "$GITHUB_ENV"
+          cmake -S apps/reader/store/native -B build/res-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/res-product-stage" 2>&1 | tee build/c03-logs/product-configure.log
+          cmake --build build/res-product 2>&1 | tee build/c03-logs/product-build.log
+          cmake --install build/res-product 2>&1 | tee build/c03-logs/product-install.log
+          cmake -S extras/webdav -B build/res-dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/res-dav-stage" 2>&1 | tee build/c03-logs/dav-configure.log
+          cmake --build build/res-dav 2>&1 | tee build/c03-logs/dav-build.log
+          cmake --install build/res-dav 2>&1 | tee build/c03-logs/dav-install.log
+          cmake -S apps/reader/revisions -B build/res-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$ws/build/res-product-stage" -DCMAKE_INSTALL_PREFIX="$ws/build/res-revision-stage" 2>&1 | tee build/c03-logs/revision-configure.log
+          cmake --build build/res-revisions 2>&1 | tee build/c03-logs/revision-build.log
+          cmake --install build/res-revisions 2>&1 | tee build/c03-logs/revision-install.log
+          cmake -S apps/reader/sync -B build/res-sync -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ws/build/res-dav-stage;$ws/build/res-revision-stage;$ws/build/res-product-stage" -DCMAKE_INSTALL_PREFIX="$ws/build/res-sync-stage" 2>&1 | tee build/c03-logs/sync-configure.log
+          cmake --build build/res-sync 2>&1 | tee build/c03-logs/sync-build.log
+          cmake --install build/res-sync 2>&1 | tee build/c03-logs/sync-install.log
+          cmake -S apps/reader/session -B build/res-session -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ws/build/res-sync-stage;$ws/build/res-dav-stage;$ws/build/res-revision-stage;$ws/build/res-product-stage" -DCMAKE_INSTALL_PREFIX="$ws/build/res-session-stage" 2>&1 | tee build/c03-logs/session-configure.log
+          cmake --build build/res-session 2>&1 | tee build/c03-logs/session-build.log
+          cmake --install build/res-session 2>&1 | tee build/c03-logs/session-install.log
+          cmake -S tests/reader_sync_resilience/consumer -B build/c03-resilience -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$RES_SESSION_STAGE;$RES_PREFIXES" 2>&1 | tee build/c03-logs/resilience-configure.log
+          cmake --build build/c03-resilience 2>&1 | tee build/c03-logs/resilience-build.log
+          sha256sum build/c03-resilience/resilience-consumer | tee build/c03-logs/resilience-consumer.sha256
+      - name: C03 hostile-fixture boundaries over verified temporary HTTPS
+        run: |
+          python3 tests/reader_final_c03/check_c03.py --probe build/c03-probe/cloud-probe --resilience build/c03-resilience/resilience-consumer --fixtures tests/fixtures --output build/c03-evidence 2>&1 | tee build/c03-logs/c03.log
+      - name: Preserve source-bound evidence, logs and the exact programs without keys
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-final-c03-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/c03-logs/
+            build/c03-guards/
+            build/c03-evidence/
+            build/c03-probe/cloud-probe
+            build/c03-resilience/resilience-consumer
+            !build/**/*.key
+          if-no-files-found: warn
+  authenticate:
+    name: C03 same-run artifact authentication
+    needs: boundaries
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify artifact id, bytes, digest, expiry, run identity and program hashes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_final_c03/check_artifacts.py --output build/c03-artifact-evidence
+      - name: Preserve the authentication record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-final-c03-authentication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c03-artifact-evidence/
+          if-no-files-found: warn
