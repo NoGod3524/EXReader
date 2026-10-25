@@ -4,6 +4,7 @@
     "state": "final_status_code_consistency_fix_awaiting_actions",
     "prior_repair_source": "93594d8c24b110469d2f3f47ff3e4a78314f8138",
     "prior_repair_run": 40159702796,
+    "preserved_probe_failure": {"source": "742d1a437a16f854fcc8713c85eea4942e95ded9", "run": 40159870482, "reason": "new bulk-error consistency assertion was incorrectly applied to the fixture seed JSON, which has no bulk error object"},
     "prior_repair_result": "three_desktop_21_checks_and_strict_summary_success"
   },
   "package": "EXReaderBulkOrganization",
