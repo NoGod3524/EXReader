@@ -1,6 +1,8 @@
 # Android 固定页视口平移
 
-固定起点 `6b43e83537aa6b03bda889d258fe73c0e317acb1`；分支 `codex/reader-android-fixed-pan`。重启前受测源码 `d199f0dc67ed929ad7c5a3fe8edb855ef50f1f67` 的云端运行已自然结束为 failure；旧 92 项 UI 同源通过，新 Pan 尚未验收，`accepted=false`。
+固定起点 `6b43e83537aa6b03bda889d258fe73c0e317acb1`；分支 `codex/reader-android-fixed-pan`。受测源码 `b25975b45f021bdf1bd086088634cfc2a4b4d2d4` / [run 40156615296](https://github.com/NoGod3524/EXReader/actions/runs/40156615296) attempt1 / Android job `121059247720` 已完整 success：新 Pan8 与原92项 UI 同源通过，共100项。仅授予 API34 default x86_64 模拟器上的本宿主范围。
+
+原工件 `12585631849`，147551041 B，SHA-256 `1826428c4f0c35075d620f496b5a3ccef4a6e121bf9e797dd74ad881599b28b4`，有效期 `2027-01-23T03:00:46Z`。Pan first7/reopen1 的真实进程分别9124/9370；23张系统截图、9个四角RGB观测、22次原件回读、8组四旋转×显式Select/650ms长按拖动原文与视口严格检查均由本次真实驱动核对。后续独立ZIP/PNG只读proof仍单独记录，不把诊断运行当生产验收。
 
 ## 原生页面配色的真实缺口
 
@@ -8,7 +10,7 @@
 
 ## 平移契约
 
-只改 Android 宿主 `ReaderView`，接在已有 Preferences 真实固定页缩放路径上：实际固定页在原 Canvas 目标上平移，不重绘/重新分页/重新捕获锚点，不改页面位图。超出可用视口一像素以上的方向才允许平移；每个方向都夹紧到距边缘 8 px 的内容边界。无溢出方向保留原翻页规则。拖动在有溢出的主方向被认定后持续消费本次手势，边缘不转化为翻页；点击、硬件和原 forward/back 语义仍负责翻页。选字模式保留原文字拖选优先级。
+Android 宿主 `ReaderView` 接在已有 Preferences 真实固定页缩放路径上，另修正 app-private PDF viewport 几何与共享选择工具条布局：实际固定页在原 Canvas 目标上平移，不重绘/重新分页/重新捕获锚点，不改页面位图。超出可用视口一像素以上的方向才允许平移；每个方向都夹紧到距边缘 8 px 的内容边界。无溢出方向保留原翻页规则。拖动在有溢出的主方向被认定后持续消费本次手势，边缘不转化为翻页；点击、硬件和原 forward/back 语义仍负责翻页。选字模式保留原文字拖选优先级。
 
 平移量仅为当前 view 的瞬时状态，换页/重新发布页面复位，尺寸改变时夹紧，重开与旋转不持久化它。取消和多指接触不会制造点击/翻页。相同实际 offset 同时用于 Canvas、文本命中、选区覆盖与虚拟无障碍节点边界；被视口裁掉的行标为不可见。标准四向无障碍滚动动作用于平移，原 forward/back 仍翻页。
 
@@ -43,3 +45,11 @@ source `094d475e2d8860c30ffcc2fb903d5aa9747706e9` / run `40154163799` / job `121
 source `d509751501ac3d12b9a5bbb4b5388712a45be1e6` / run `40155515246` / job `121055966707` 已自然 failure：旧92项全部通过，Pan 前六项（包括四个裁剪旋转的精确选字、语义平移、取消、多指、单轴翻页及固定页/重排原交互）通过；第七项旋转重建时探针对临时无页面的 frame 直接 `getLong("book")`，报 `JSONException: No value for book`。等待条件改为先用 `optLong` 等待真实目标 book 和新 view，保留原超时及最终页面/zoom/pan/原件断言，不把临时空 frame 当成功。
 
 显式 Select 预留空间方案不能覆盖长按同帧进入选择模式，因此最终共享修复改为原生 `FrameLayout` 叠放上下文工具条：没有选区时完全隐藏，有选区时沿已有 viewport 转换判断位置，显示在选区另一侧。显示、隐藏及移动工具条都不参与 ReaderView 的尺寸分配，显式 Select 和真实450ms长按均走同一回调，无常驻空工具条。四个裁剪旋转各执行显式 Select 与真实650ms长按再拖动两条路径，精确选出同一声明角标，逐次保存 `before_mode/before_down/held/after` 实际 frame，严格要求宽高/offset/token不变，并核对工具条不盖住所选角标。新源码仍需完整同源整轮，不继承 d509 的通过数。
+
+## b259 同源验收与静态后续
+
+本节之后的状态覆盖以上历史候选的“待运行”说明。b259整轮实际通过：Host16、Search15、Navigation18、Reading16、Preferences17、CBZ10，以及Pan first7/reopen1。四个非零CropBox的0/90/180/270旋转均由显式Select和真实长按650ms后拖动精确选中BRA/TRA/TLA/BLA；八组进入模式、按下、长按保持、结束观测严格保持实际视口宽高、offset及页面token，工具条不遮住所选角标。真实旋转重建与force-stop后重开也通过。配色、真机、TalkBack语音、性能、完整六平台产品仍未授予。
+
+独立只读proof分支 `codex/reader-android-fixed-pan-proof` 不合入主线。首次proof `40158522030` 对原驱动未要求的 `before_down.selection_mode` 加了额外前提而拒绝；公开无障碍extras可能保留前一次模式位。checker已回到原受测契约：保留几何/token/原文严格比较及held/after真正已进入选择模式的检查，移除额外缓存前提，不改b259生产或原断言。修正proof仍待终态，不能称独立proof已通过。
+
+静态自审：10,000页矩阵目录上限与冻结SDK `src/pdf_pages.c` 的原PDF页数/Count上限一致，不是新增更窄的PDF限制。`nativeViewports` 的二次PDF打开及逐页矩阵读取确实只在Java调用前后执行HostTask.check；没有把HostTask传给公开open options.control，这是新增native段的协作取消缺口。当前100项不验证该新增段内部取消，也不验证10,000页边界。最小后续是复用现有host_task_control给打开过程传control，并在逐页循环调用现有host_cancelled；原件释放与未发布结果屏障保持。该后续须新共同源码验证，不能沿用b259证据授予。
