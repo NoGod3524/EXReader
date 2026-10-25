@@ -20,8 +20,8 @@ import apple as original_apple
 APPLE=('records','navigation','search','shelf','mapping','wp13','page_theme')
 REQUIRED=('composition','gtk41','android130','windows_full_f3','windows_atomic13',*('apple_'+name for name in APPLE))
 PRODUCT_REQUIRED=('apple_record_compatibility','android_to_apple','apple_to_android')
-# These are required, unresolved contracts. The root must fill their actual
-# complete workflow/job/artifact/schema identities after reviewing the delivery.
+# Reviewed Windows strict schemas use one whole run for two required scopes.
+# Product peer contracts still require separate actual common-source evidence.
 WINDOWS_CONTRACTS={}
 PRODUCT_CONTRACTS={name:None for name in PRODUCT_REQUIRED}
 SCOPES={
