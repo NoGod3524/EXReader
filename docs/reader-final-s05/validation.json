@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "package": "S05",
+  "kind": "reader-final-s05-apple-mobile-simulator-distribution",
+  "contract": "docs/reader-final-s05/CONTRACT.md",
+  "implementation_start": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+  "branch": "codex/reader-fw-s05",
+  "executed": false,
+  "accepted": false,
+  "source": {
+    "tested_sha": null,
+    "docs_sha": null,
+    "run_id": null,
+    "attempt": null
+  },
+  "producer": {
+    "workflow": ".github/workflows/reader-apple-raw3-ios.yml",
+    "run_id": 40203714083,
+    "attempt": 1,
+    "head_sha": "72c6bbdd14ebf3be453fa7f0da81119d52675eb5",
+    "conclusion": "failure",
+    "eligible": false,
+    "blocked_by": [
+      "producer_run_conclusion_failure"
+    ],
+    "artifacts": [
+      {
+        "id": 12602953966,
+        "name": "apple-raw3-ios-iphone-40203714083-1",
+        "bytes": 182452877,
+        "digest": "sha256:3675f79031dc88ec8abf5217cf70a856a967c74812cd8a8030410bbbf7a48ad3",
+        "expires_at": "2027-01-23T14:45:16Z"
+      },
+      {
+        "id": 12603109164,
+        "name": "apple-raw3-ios-ipad-40203714083-1",
+        "bytes": 186160503,
+        "digest": "sha256:ea028247733536a7864f133b446cd54b41f0aecc76db51befaafaf2f117e61af",
+        "expires_at": "2027-01-23T14:45:16Z"
+      }
+    ]
+  },
+  "device_classes": {
+    "iphone": {
+      "fixture_capability": null,
+      "producer_manifest": null,
+      "install_smoke": null,
+      "granted": false
+    },
+    "ipad": {
+      "fixture_capability": null,
+      "producer_manifest": null,
+      "install_smoke": null,
+      "granted": false
+    }
+  },
+  "grants": {
+    "device_signing": false,
+    "app_store": false,
+    "physical_device": false,
+    "simulator": true
+  },
+  "pending": [
+    "no successful Apple mobile producer run is designated; the failed 72 producer stays failed",
+    "producer iPhone and iPad app bundles are unverified against a successful run",
+    "device signing, App Store delivery and physical device runs are outside this package"
+  ],
+  "notes": [
+    "fixtures are generated inside the Actions job only",
+    "a fixture proves the verifier, never the product",
+    "the original failed run log and artifact identity are recorded in docs/reader-final-s05/CONTRACT.md"
+  ]
+}

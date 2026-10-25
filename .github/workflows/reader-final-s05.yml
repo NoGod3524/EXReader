@@ -1,0 +1,166 @@
+name: Reader final S05 Apple mobile simulator distribution
+on:
+  push:
+    branches: [codex/reader-fw-s05]
+    paths:
+      - 'tests/reader_final_s05/**'
+      - '.github/workflows/reader-final-s05.yml'
+  workflow_dispatch:
+    inputs:
+      producer_run_id:
+        description: Producer Actions run id
+        default: '40203714083'
+      producer_sha:
+        description: Producer head commit
+        default: '72c6bbdd14ebf3be453fa7f0da81119d52675eb5'
+      producer_artifact_iphone:
+        description: Producer artifact name for the iPhone class
+        default: 'apple-raw3-ios-iphone-40203714083-1'
+      producer_artifact_ipad:
+        description: Producer artifact name for the iPad class
+        default: 'apple-raw3-ios-ipad-40203714083-1'
+      producer_workflow:
+        description: Producer workflow path
+        default: '.github/workflows/reader-apple-raw3-ios.yml'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: reader-final-s05
+  cancel-in-progress: false
+env:
+  S05_BRANCH: codex/reader-fw-s05
+  S05_RUN_ID: ${{ github.event.inputs.producer_run_id || '40203714083' }}
+  S05_SHA: ${{ github.event.inputs.producer_sha || '72c6bbdd14ebf3be453fa7f0da81119d52675eb5' }}
+  S05_WORKFLOW: ${{ github.event.inputs.producer_workflow || '.github/workflows/reader-apple-raw3-ios.yml' }}
+  S05_ARTIFACT_IPHONE: ${{ github.event.inputs.producer_artifact_iphone || 'apple-raw3-ios-iphone-40203714083-1' }}
+  S05_ARTIFACT_IPAD: ${{ github.event.inputs.producer_artifact_ipad || 'apple-raw3-ios-ipad-40203714083-1' }}
+jobs:
+  intake:
+    name: Authenticate designated producer ${{ matrix.device }}
+    runs-on: macos-15
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        device: [iphone, ipad]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Refuse to run outside the S05 implementation branch
+        run: test "$GITHUB_REF_NAME" = "$S05_BRANCH"
+      - name: Authenticate the original artifact bytes for this device class
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [ "${{ matrix.device }}" = iphone ]; then artifact="$S05_ARTIFACT_IPHONE"; else artifact="$S05_ARTIFACT_IPAD"; fi
+          python3 tests/reader_final_s05/producer_source.py --run-id "$S05_RUN_ID" --sha "$S05_SHA" --workflow "$S05_WORKFLOW" --artifact "$artifact" --device-classes "${{ matrix.device }}" --implementation-sha "$GITHUB_SHA" --output build/reader-final-s05/intake
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: s05-intake-${{ matrix.device }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/reader-final-s05/intake/producer-source.json
+            build/reader-final-s05/intake/staging.tar
+          if-no-files-found: warn
+          retention-days: 14
+
+  harness:
+    name: Verifier fixture and mutant controls
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Refuse to run outside the S05 implementation branch
+        run: test "$GITHUB_REF_NAME" = "$S05_BRANCH"
+      - name: Build the CI generated simulator fixture app
+        run: python3 tests/reader_final_s05/fixture.py --build --output build/reader-final-s05/fixture --implementation-sha "$GITHUB_SHA"
+      - name: Prove the verifier accepts the untouched fixture and rejects every mutant
+        run: python3 tests/reader_final_s05/fixture.py --self-check --fixture build/reader-final-s05/fixture --output build/reader-final-s05/harness --implementation-sha "$GITHUB_SHA"
+      - name: Bundle manifest and checks for the iPhone and iPad classes
+        run: |
+          set -euo pipefail
+          for device in iphone ipad; do
+            python3 tests/reader_final_s05/verify.py --app build/reader-final-s05/fixture/EXReaderS05Fixture.app --device-class "$device" --mode fixture --no-smoke --implementation-sha "$GITHUB_SHA" --output "build/reader-final-s05/harness/$device"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: s05-harness-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-final-s05/harness
+          if-no-files-found: warn
+          retention-days: 14
+
+  smoke:
+    name: Clean simulator install smoke ${{ matrix.device }}
+    needs: [harness, intake]
+    if: always()
+    runs-on: macos-15
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        device: [iphone, ipad]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Refuse to run outside the S05 implementation branch
+        run: test "$GITHUB_REF_NAME" = "$S05_BRANCH"
+      - name: Build the CI generated simulator fixture app
+        run: python3 tests/reader_final_s05/fixture.py --build --output build/reader-final-s05/fixture --implementation-sha "$GITHUB_SHA"
+      - name: Fixture bundle checks with a clean install and launch
+        run: python3 tests/reader_final_s05/verify.py --app build/reader-final-s05/fixture/EXReaderS05Fixture.app --device-class "${{ matrix.device }}" --mode fixture --implementation-sha "$GITHUB_SHA" --output "build/reader-final-s05/smoke/${{ matrix.device }}"
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: s05-intake-${{ matrix.device }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-final-s05/intake
+      - name: Restore the authenticated app bundle with its modes
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          if [ -f build/reader-final-s05/intake/staging.tar ]; then
+            tar -xf build/reader-final-s05/intake/staging.tar -C build/reader-final-s05/intake
+          fi
+      - name: Designated producer app on the clean simulator
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          if [ ! -f build/reader-final-s05/intake/producer-source.json ]; then
+            echo "no authenticated producer source staged for ${{ matrix.device }}; producer stays pending"
+            exit 0
+          fi
+          python3 tests/reader_final_s05/verify.py --producer-source build/reader-final-s05/intake/producer-source.json --device-class "${{ matrix.device }}" --expected-source "$S05_SHA" --implementation-sha "$GITHUB_SHA" --output "build/reader-final-s05/smoke/${{ matrix.device }}/producer"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: s05-smoke-${{ matrix.device }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-final-s05/smoke/${{ matrix.device }}
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 14
+
+  summary:
+    name: Aggregate S05 evidence
+    needs: [harness, smoke, intake]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Refuse to run outside the S05 implementation branch
+        run: test "$GITHUB_REF_NAME" = "$S05_BRANCH"
+      - uses: actions/download-artifact@v4
+        with:
+          path: build/reader-final-s05/downloads
+      - name: Aggregate and refuse to call a fixture or a failed producer a pass
+        run: |
+          python3 tests/reader_final_s05/summary.py --evidence build/reader-final-s05/downloads --output build/reader-final-s05/summary --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" --sha "$GITHUB_SHA" --branch "$GITHUB_REF_NAME"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: s05-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-final-s05/summary
+          if-no-files-found: warn
+          retention-days: 14
