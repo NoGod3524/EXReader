@@ -67,7 +67,25 @@ legacy/raw 模块；同轮覆盖真实 NUL PDF 捕获、独立重开，以及提
 驱动核对标记 PID、落盘 pending 的长度和 SHA-256，并在终止后及跨配置拒绝写入后核对原字节。
 报告必须对应本轮源码、实际 owner 源码、SDK 3.41.0 及实际可执行程序散列。
 
-这些改动尚未运行；当前不授予 owner 恢复或宿主运行结果。首次完整 host 运行
+首次完整 host 运行
 `40214712302` 在源码检查阶段因 Windows 默认 cp1252 解码失败；现已显式使用 UTF-8，
 原失败保留，修复仍待云端验证。Claude 三个任务与 DeepSeek 十二个任务按用户断网请求暂停，
 须在用户确认恢复后续接。
+
+## 首轮实际 owner 运行与修正
+
+受测 `47d91ae641805ebccd9579011ece262604cc534c`，
+[run 40217945503](https://github.com/NoGod3524/EXReader/actions/runs/40217945503) 失败。
+两配置实际宿主和 owner 均完成编译；raw 固定页真实 NUL 点/范围、LIST/READ、NOTE_TEXT、
+DELETE、HISTORY、RESTORE及独立 FOUND/字节重捕获检查通过。整轮在兼容、parser 与 NULL
+准备阶段失败，因此不授 owner 完整结果，也不授进程终止恢复。
+
+探针的旧 v1/v2 编码器误用了 raw store；这些公开旧接口明确要求 legacy store。
+现使用独立 legacy store 通过原公开编码器生成 wire，再提交给实际 raw store；
+远端 receive 另补必需的 wire SHA-256，固定/NULL内容与预期均不改。
+
+新受测 `b4fc135ce64fc651a4b988ad1dd852076413aa10`，
+[run 40218506868](https://github.com/NoGod3524/EXReader/actions/runs/40218506868) 正在执行。
+本轮还原样复用 legacy/raw 两配置的原22项 compact UI检查与原校验器。
+实际完整默认OFF/F3/atomic13、认证网络接收与共同源码互通仍须另行完成；本轮不替代它们。
+用户确认网络恢复后，Claude三个原会话与DeepSeek十二个原进程均已恢复，执行状态不代表交付验收。
