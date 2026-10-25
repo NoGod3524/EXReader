@@ -3,7 +3,7 @@
 固定共同基线：`1a6d98ed613c61ffea4267f01f83e2c49b1c02f6`。
 GTK 已封存叶子：`69c60ace09f7f995e92c55494b1bdf80e6474621`，其受测 source 为
 `1cf5ab55b6a92c471af69a8e68b0e9d0c5e3fe6e`、完整 run 为 `40224308783/1`。
-本包只新增当前目录的五个文件与一个工作流，既有文件逐 Git blob、类型、模式保护。
+本包自身的 `NEW_FILES` 始终只有当前目录五个文件与一个工作流，既有文件逐 Git blob、类型、模式保护。
 当前没有新云端运行，也没有新增运行验收；本地未执行语法、测试、构建或工件解析。
 
 新工作流逐字还原已封存 `reader-gtk-raw3.yml`。允许的替换只有工作流名、分支、两处新 source guard、
@@ -25,9 +25,19 @@ GTK69 的 Linux owner/CMake/codec/旧工作流/套件 pin、冻结 SDK 和八个
 两个原 strict 输出与最终 raw 输出均额外绑定新 guard kind；适配验证失败会改为 `accepted=false` 并失败退出。
 Pillow 相关导航合同只在原 OFF 图片认证作业内加载。
 
+组合适配的实际触发分支为 `codex/reader-raw3-common-integration`，逐字逆投影同步采用该真实分支。
+只有 `check_source` 的真实调用才用 importlib 加载 root 的
+`tests/reader_raw3_common_runtime/combined.py`，读取相同固定 BASE 与精确 EXTENSIONS；
+不调用 `configure`，不改 `sys.modules`。`validate_tree` 的可选参数只允许精确追加这些组合路径，
+不放宽任何旧 blob/mode；默认调用与原 fake-tree 负例仍只接受本包六文件。
+报告中的 `allowed_new_files` 仍为本包六项，`composition_extensions` 与 `changed/paths`
+另行绑定实际新组合树，严格入口会再次核对。
+原拒绝路径 `examples/new_owner.c` 仍未批准，保留原样；新增显式扩展参数的拒绝控制，旧负例没有删除。
+
 合入共同源码前的源审查方案：
 
-1. 核对相对固定基线只有上述六个新文件，原 SDK、owner、旧 guards、套件和预算没有差异。
+1. 核对本 GTK 包只有上述六个文件；组合其他叶子后，新文件总集合须精确等于本包与 root EXTENSIONS 的并集，
+   原 SDK、owner、旧 guards、套件和预算没有差异。
 2. 人工核对工作流 diff 仅含列明的入口/名称替换和新增 preflight step；云端再做逐字逆投影。
 3. 核对新兼容报告明确标记新 kind，两个旧合同的全部断言仍完整调用，固定旧 host/SDK 常量没有覆盖。
 4. 云端先做新 guard 负例：拒绝旧 kind、错误 Actions 身份、伪称旧 guard 已执行、运行授权、错误基线、

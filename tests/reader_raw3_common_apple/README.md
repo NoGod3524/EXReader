@@ -1,6 +1,6 @@
 # Common raw3 Apple 完整工作流投影
 
-此包仅准备同一源码上的完整 Apple 验收入口，当前没有运行记录，也不授予运行验收。源码基点为 `1a6d98ed613c61ffea4267f01f83e2c49b1c02f6`，开发分支为 `codex/reader-raw3-common-apple`。
+此包仅准备同一源码上的完整 Apple 验收入口，当前没有运行记录，也不授予运行验收。源码基点为 `1a6d98ed613c61ffea4267f01f83e2c49b1c02f6`，共同运行分支为 `codex/reader-raw3-common-integration`，最初开发分支为 `codex/reader-raw3-common-apple`。
 
 | 新工作流 | 原完整工作流 | 原作业与判定 |
 | --- | --- | --- |
@@ -28,6 +28,6 @@
 
 本轮只本地提交新增源码；未 push、未启动 Actions，未本地构建、语法检查、测试或下载处理工件。
 
-根代理组合 Windows/GTK/Android 投影时，必须在最终真实分支上同时更新 `BRANCH`、三个新 workflow 的所有对应分支绑定，以及精确新增文件集合；保留本包基点所有已有 blob/mode。新文件的清单须逐项固定，不能将任意目录加入豁免。三份完整 Apple 工作流应继续分开运行，以保留原 strict 对作业/工件数量的要求。
+`BRANCH` 与三个新 workflow 的全部对应条件已绑定共同真实分支 `codex/reader-raw3-common-integration`。真实 guard 从 `tests/reader_raw3_common_runtime/combined.py` 纯加载 `EXTENSIONS`，合并本包七文件后逐项比较精确新增集合；不调用 `configure()`，不改 `sys.modules`，基点所有已有 blob/mode 仍必须不变。自测的假树默认继续使用本包 `NEW_FILES`。清单逐项固定，没有目录豁免。三份完整 Apple 工作流继续分开运行，以保留原 strict 对作业/工件数量的要求。
 
 此包不更改产品、SDK、schema 1、wire envelope 1、anchor 1/2 和公开默认 MAX 2。真机、读屏、性能、完整产品与六平台互通均未在本包授予。

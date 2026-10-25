@@ -1,7 +1,7 @@
 name: Common raw3 source complete Windows original OFF F3 atomic13 chain
 on:
   push:
-    branches: [codex/reader-raw3-common-runtime]
+    branches: [codex/reader-raw3-common-integration]
   workflow_dispatch:
     inputs:
       mode:

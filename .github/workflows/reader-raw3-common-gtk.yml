@@ -1,7 +1,7 @@
 name: Common raw3 GTK actual host and complete retained scopes
 on:
   push:
-    branches: [codex/reader-raw3-common-gtk]
+    branches: [codex/reader-raw3-common-integration]
   workflow_dispatch:
     inputs:
       mode:

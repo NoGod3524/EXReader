@@ -35,8 +35,11 @@ def mutation(source, path, mode, body):
     with tempfile.TemporaryDirectory(prefix='android-common-negative-') as folder:
         env = dict(os.environ, GIT_INDEX_FILE=str(Path(folder) / 'index'))
         guard.git('read-tree', source, env=env)
-        oid = guard.git('hash-object', '-w', '--stdin', data=body).decode().strip()
-        guard.git('update-index', '--add', '--cacheinfo', mode + ',' + oid + ',' + path, env=env)
+        if mode is None:
+            guard.git('update-index', '--force-remove', '--', path, env=env)
+        else:
+            oid = guard.git('hash-object', '-w', '--stdin', data=body).decode().strip()
+            guard.git('update-index', '--add', '--cacheinfo', mode + ',' + oid + ',' + path, env=env)
         return guard.git('write-tree', env=env).decode().strip()
 
 
@@ -51,13 +54,28 @@ def main():
     current = guard.git('show', source + ':' + guard.WORKFLOW).decode('utf-8')
     if original_projection(current).encode('utf-8') != original:
         raise RuntimeError('positive workflow projection differs')
+    if guard.inspect_tree(source)['errors']:
+        raise RuntimeError('positive combined composition differs from the root exact extension set')
     controls = []
     for name, (path, mode, body, prefix) in TREE_CASES.items():
         tree = mutation(source, path, mode, body)
         errors = guard.inspect_tree(tree)['errors']
         if not any(error.startswith(prefix) for error in errors):
             raise RuntimeError('actual tree mutation accepted: ' + name)
-        controls.append({'name': name, 'rejected': True, 'tree': tree})
+        control = {'name': name, 'rejected': True, 'tree': tree}
+        if name == 'unknown_path':
+            if path in guard.root_extensions() or 'extensions.exact_set' not in errors:
+                raise RuntimeError('unknown-path control no longer targets an unapproved extra file')
+            # Retain the original unknown-path assertion and also prove that an
+            # omitted reviewed root file cannot shrink the declared composition.
+            omitted = 'tests/reader_raw3_common_runtime/combined.py'
+            if omitted not in guard.root_extensions():
+                raise RuntimeError('reviewed omitted-file control is missing from root policy')
+            missing_tree = mutation(source, omitted, None, None)
+            if 'extensions.exact_set' not in guard.inspect_tree(missing_tree)['errors']:
+                raise RuntimeError('missing approved extension was accepted')
+            control.update(missing_approved_rejected=True, missing_tree=missing_tree)
+        controls.append(control)
     for name, (before, after) in WORKFLOW_CASES.items():
         if before not in current:
             raise RuntimeError('negative control marker missing: ' + name)

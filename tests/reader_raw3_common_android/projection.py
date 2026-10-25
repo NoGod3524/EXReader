@@ -38,7 +38,7 @@ def original_projection(text):
     changes = (
         ('name: Common source Android complete raw3 chain',
          'name: Android explicit raw3 native host candidate', 1),
-        ('branches: [codex/reader-raw3-common-android]',
+        ('branches: [codex/reader-raw3-common-integration]',
          'branches: [codex/reader-android-raw3-candidate]', 1),
         (NEW_GUARD, OLD_GUARD, 2),
         (NEW_STRICT, OLD_STRICT, 1),

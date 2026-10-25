@@ -1,6 +1,7 @@
 """Authenticate a common source and exact full Apple workflow projections in Actions."""
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -12,7 +13,7 @@ BASE = '1a6d98ed613c61ffea4267f01f83e2c49b1c02f6'
 SDK = 'edddc463c06ed5731195cdb8f06b2df6dff7699e'
 FAMILY = '56793e7ca4f8ecdc5f2d9c3394fce4e201aca275'
 CORE = '0737d03c1316295a210aa527833c05054d29c1d4'
-BRANCH = 'codex/reader-raw3-common-apple'
+BRANCH = 'codex/reader-raw3-common-integration'
 KIND = 'common-source-exact-apple-workflow-projection-v1'
 HERE = 'tests/reader_raw3_common_apple/'
 SPECS = {
@@ -69,11 +70,12 @@ def tree(ref):
     return values
 
 
-def validate_tree(baseline, current):
+def validate_tree(baseline, current, extensions=None):
     for path, value in baseline.items():
         require(current.get(path) == value, 'Existing common-source blob/mode changed: ' + path)
     added = set(current) - set(baseline)
-    require(added == NEW_FILES, 'Common Apple projection file set differs: ' + repr(sorted(added)))
+    expected = NEW_FILES if extensions is None else NEW_FILES | set(extensions)
+    require(added == expected, 'Common Apple projection file set differs: ' + repr(sorted(added)))
     require(all(current[path].split()[0] == '100644' for path in added), 'Nonregular/executable projection file')
 
 
@@ -136,7 +138,13 @@ def main():
     require(source == os.environ['GITHUB_SHA'], 'Actions checkout/source differs')
     for ancestor in (BASE, CORE, FAMILY):
         subprocess.run(['git', 'merge-base', '--is-ancestor', ancestor, 'HEAD'], cwd=ROOT, check=True)
-    validate_tree(tree(BASE), tree('HEAD'))
+    # Read the reviewed extension set without invoking configure() or changing
+    # sys.modules: the original Apple guard remains the active imported module.
+    spec = importlib.util.spec_from_file_location('apple_common_source_extensions',
+        ROOT / 'tests/reader_raw3_common_runtime/combined.py')
+    composition = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(composition)
+    validate_tree(tree(BASE), tree('HEAD'), composition.EXTENSIONS)
     subprocess.run(['git', 'diff', '--exit-code', 'HEAD', '--', '.'], cwd=ROOT, check=True)
     # All three workflows and every original driver/judge are pinned together.
     for mode, spec in SPECS.items():

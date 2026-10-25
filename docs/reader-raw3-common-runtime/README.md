@@ -28,3 +28,20 @@
 
 预检只证明指定组合源码与包装器范围，`accepted=false`、`runtime_accepted=false`、`complete_product=false`。
 同源Windows完整链另在f2c6d2b/run40227026677执行，不把不同源码的旧绿灯合并授予。
+
+## Windows共同候选完整原链的首次结果
+
+固定受测source `f2c6d2b37ffa50c52e78d6fbfb06cedd744a49f5`，run `40227026677` / attempt1，
+preflight、完整实际Windows作业、原严格工件认证三作业全部success。
+原裁判确认compact22、完整默认OFF、完整F3与atomic13均通过，未放宽断言/预算，未授完整产品或性能。
+原ZIP12612217187（169991108B，SHA-256 `e7b9319db71a23ee004c749485972b80d5a024c68c443216144ff497fe2b596e`），
+严格汇总12612531721（9141B，SHA-256 `a416410c1466c1a78a5f9e7e01ca2fdb8d8d642afc421f01cf1e5d1a38b4ad6b`），
+两者有效期均到2027-01-23T19:39:00Z。严格作业121274978705认证原ZIP并执行原完整裁判。
+
+## 最终共同源码门禁组合
+
+当前组合在固定1a6d基线之上只增加35个明确允许的文件。Windows/GTK/Android/Apple三套完整工作流
+均使用真实分支codex/reader-raw3-common-integration，旧生产、SDK、裁判、驱动、预算的blob/mode不变。
+各叶子真实源码检查使用同一EXTENSIONS精确清单，原独立fake-tree负例仍验证本包集合；
+Apple和GTK的合并扩展负例、Android遗漏已批准文件负例另有保留。
+新组合尚无运行结果；将从同一提交执行全部叶子，不拼接上述不同source的历史绿灯。
