@@ -471,6 +471,7 @@ static void phase_basic(suite *s) {
 static void phase_speak(suite *s) {
   reader_tts *handle = open_ready(s, NULL, "speak.create");
   reader_tts_snapshot snap;
+  reader_tts_status status;
   tally t;
   size_t bytes;
   int foreign = 0, outcome;
