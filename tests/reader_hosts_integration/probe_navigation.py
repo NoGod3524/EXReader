@@ -14,8 +14,8 @@ def main():
     require(os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only')
     run_id = int(sys.argv[1])
     run = fetch('actions/runs/%d' % run_id)
-    require(run['status'] == 'completed' and run['path'] == '.github/workflows/reader-hosts-integration.yml',
-            'not a completed shared-host run')
+    require(run['path'] == '.github/workflows/reader-hosts-integration.yml',
+            'not a shared-host run')
     source, attempt = run['head_sha'], run['run_attempt']
     subprocess.run(['git', 'merge-base', '--is-ancestor', source, 'HEAD'], check=True)
     # Fixtures and actual navigation code must still match the old program.
@@ -25,12 +25,14 @@ def main():
                     'examples/linux/navigation_backend.inc', 'examples/linux/navigation_ui.inc',
                     'tests/reader_navigation/make_navigation_fixtures.py',
                     'tests/reader_gtk_navigation/make_inputs.py', 'tests/linux_host/generate_fixed.py'], check=True)
+    producers = {'GTK G03 G04 reading records and retained native suites': 'reader-gtk-reading-records',
+                 'GTK book file drop paste and retained native suites': 'reader-gtk-drop-import'}
     jobs = [j for j in pages('actions/runs/%d/attempts/%d/jobs' % (run_id, attempt), 'jobs')
-            if j['name'] == 'GTK G03 G04 reading records and retained native suites']
+            if j['name'] in producers]
     require(len(jobs) == 1 and jobs[0]['status'] == 'completed' and jobs[0]['head_sha'] == source,
             'original GTK producer missing')
     names = [a for a in pages('actions/runs/%d/artifacts' % run_id, 'artifacts')
-             if a['name'] == 'reader-gtk-reading-records-%d-%d' % (run_id, attempt)]
+             if a['name'] == '%s-%d-%d' % (producers[jobs[0]['name']], run_id, attempt)]
     require(len(names) == 1 and names[0]['workflow_run']['head_sha'] == source and
             names[0]['workflow_run']['id'] == run_id, 'foreign or duplicate original artifact')
     out = Path('build/navigation-probe');out.mkdir(parents=True, exist_ok=True)
