@@ -134,6 +134,7 @@ def main():
         ],
     }
     common.write_json(args.output, document)
+    print(json.dumps({'recorded_findings': document['recorded_findings']}, ensure_ascii=False))
     print(json.dumps({'accepted': document['accepted'], 'checks': document['counts'],
                       'failed': document['problems'][:8]}))
     return 0 if document['accepted'] else 1

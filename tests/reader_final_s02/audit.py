@@ -105,10 +105,13 @@ def main():
     recorded = common.scan_tokens(relocated, common.RECORD_TOKENS)
     if scanned['hits']:
         checks.observe('compiled_build_path_tokens',
-                       'compiled strings reference the producer build tree; the dynamic '
+                       'compiled strings reference the producer build tree: %s; the dynamic '
                        'section carries no build path and the relocated program never opens '
                        'them (see the smoke traces), so they are recorded for root rather '
-                       'than treated as a loading dependency', hits=scanned['hits'][:12])
+                       'than treated as a loading dependency' % ', '.join(
+                           '%s in %s x%d' % (hit['token'], hit['path'], hit['count'])
+                           for hit in scanned['hits'][:6]),
+                       hits=scanned['hits'][:12])
     else:
         checks.add('no_build_path_tokens', True,
                    'no build token in the relocated tree (skipped %s)' % scanned['skipped'])

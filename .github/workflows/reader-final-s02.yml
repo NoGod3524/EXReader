@@ -63,7 +63,7 @@ jobs:
       - name: Install the native GTK runtime accessibility and X11 tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libgtk-3-0 libsecret-1-0 libcurl4 libxml2 libssl3 libsqlite3-0 libglib2.0-bin at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 gsettings-desktop-schemas xvfb openbox dbus-x11 xdotool xclip x11-utils imagemagick binutils strace desktop-file-utils
+          sudo apt-get install -y --no-install-recommends libgtk-3-0 libgtk-3-bin libsecret-1-0 libcurl4 libxml2 libssl3 libsqlite3-0 libglib2.0-bin at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 gsettings-desktop-schemas xvfb openbox dbus-x11 xdotool xclip x11-utils imagemagick binutils strace desktop-file-utils xdg-utils
       - name: Authenticate the pinned GTK compact producer artefact
         continue-on-error: true
         env:
