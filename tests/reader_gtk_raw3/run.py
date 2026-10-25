@@ -56,8 +56,8 @@ def build():
             extra+=['-DEXR_READER_PAGE_BACKGROUND=ON']
             for option,name in [('PREFERENCES','PREFERENCES'),('SEARCH','SEARCH'),('NAVIGATION','NAVIGATION'),('BATCH_IMPORT','BATCH_IMPORT'),('DROP_IMPORT','DESKTOP_DROP')]:
                 extra+=['-DEXR_READER_GTK_'+option+'=ON','-DREADER_'+name+'_PREFIX='+str(prefix)]
-        cmake(profile+'-owner',ROOT/'tests/reader_gtk_raw3',OUT/(profile+'-owner'),prefix,
-          extra=extra,targets=('gtk-raw3-owner','exreader-linux'))
+        targets=('gtk-raw3-owner','exreader-linux') if profile=='legacy' else ('gtk-raw3-owner','exreader-linux','gtk-raw3-session')
+        cmake(profile+'-owner',ROOT/'tests/reader_gtk_raw3',OUT/(profile+'-owner'),prefix,extra=extra,targets=targets)
     run('package',['python3','tools/build_linux_host.py','--sdk','build/reading-library/stage','--sdk-version','3.41.0',
       '--binary',OUT/'raw-owner/actual-owner/gtk-host/exreader-linux','--output',OUT/'package'])
 
@@ -99,19 +99,32 @@ def killed(profile,source,label,stage,legacy=False):
 
 
 def exercise():
-    phases=[];kills=[];pdf=ROOT/'tests/fixtures/pdf-public-text.pdf'
+    phases=[];kills=[];refusals=[];pdf=ROOT/'tests/fixtures/pdf-public-text.pdf'
     assert pdf.stat().st_size==8845 and sha(pdf)=='5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc'
-    initial=OUT/'raw-profile';initial.mkdir()
+    initial=OUT/'raw-profile';initial.mkdir(mode=0o700)
     phases.append(process(initial,pdf,'seed','raw-seed'))
     phases.append(process(initial,pdf,'verify','raw-reopen'))
     for stage in ('before','after'):
         profile=OUT/('kill-'+stage);shutil.copytree(initial,profile)
         kills.append(killed(profile,pdf,'raw-kill-'+stage,stage))
+        refused=OUT/('legacy-refuses-native-'+stage);shutil.copytree(profile,refused)
+        pending=refused/'library.sqlite.product.sqlite.reading.pending';before=pending.read_bytes()
+        import sqlite3
+        def inventory():
+            connection=sqlite3.connect((refused/'library.sqlite.product.sqlite').resolve().as_uri()+'?mode=ro',uri=True)
+            try:return connection.execute('SELECT revision_id,CAST(body_json AS BLOB),body_sha256 FROM reader_revisions ORDER BY revision_id').fetchall()
+            finally:connection.close()
+        immutable=inventory()
+        done=run('legacy-refuses-native-'+stage,[OUT/'legacy-owner/gtk-raw3-owner',refused,
+          ROOT/'tests/fixtures/fonts/primary.ttf',pdf,'retry',OUT/('legacy-refuses-native-'+stage+'.partial.json'),'3.40.0','3.40.0'],expect=1)
+        assert 'compatibility check failed: original private request retained before explicit retry' in done.stderr
+        assert pending.read_bytes()==before and inventory()==immutable
+        refusals.append(dict(stage=stage,pending_sha256=sha(pending),pending_bytes=len(before),retained_wire_count=len(immutable),legacy_exit=done.returncode))
         environment=dict(os.environ,GTK_RECORD_EXPECT_CREATED='1' if stage=='before' else '0')
         phases.append(process(profile,pdf,'retry','raw-retry-'+stage,env=environment))
         phases.append(process(profile,pdf,'verify','raw-verify-'+stage))
     txt=OUT/'Legacy source.txt';txt.write_text('Public original legacy text for exact original requests and independent reading.\n'*20)
-    legacy=OUT/'legacy-profile';legacy.mkdir()
+    legacy=OUT/'legacy-profile';legacy.mkdir(mode=0o700)
     phases.append(process(legacy,txt,'seed','legacy-seed',legacy=True))
     phases.append(process(legacy,txt,'legacy-restore','raw-retained-v1-v2'))
     for stage in ('before','after'):
@@ -119,7 +132,51 @@ def exercise():
         kills.append(killed(profile,txt,'legacy-kill-'+stage,stage,legacy=True))
         environment=dict(os.environ,GTK_RECORD_EXPECT_CREATED='1' if stage=='before' else '0')
         phases.append(process(profile,txt,'retry','legacy-exact-raw-retry-'+stage,env=environment))
-    return phases,kills
+    return phases,kills,refusals
+
+
+def network(phases):
+    from peer import load,fixture,populate
+    proof,manifest,wires,originals,operations=load(OUT/'mac-peer')
+    reports=[]
+    def receive(label,selected,books,index,mode):
+        profile=OUT/(label+'-profile');profile.mkdir(mode=0o700)
+        for name in ('sync-work','sync-originals'):(profile/name).mkdir(mode=0o700)
+        server=fixture(ROOT/('build/'+label+'-tls-private'),OUT/(label+'-tls.py'))
+        try:
+            populate(server,selected,books)
+            environment=dict(os.environ,GTK_RAW3_DAV_URL=server.url,GTK_RAW3_DAV_AUTH=server.auth)
+            args=[OUT/'raw-owner/gtk-raw3-session',profile/'library.sqlite.product.sqlite',profile/'sync-work',profile/'sync-originals']
+            done=run(label+'-network',args,timeout=210,env=environment);value=json.loads(done.stdout)
+            assert value['accepted'] and value['completed_shards']==256 and value['completed_sweeps']==1 and value['pulled']==len(selected)
+            for row,data in books.values():
+                cached=profile/'sync-work'/(row['sha256']+'.'+row['format']);assert cached.read_bytes()==data
+            phases.append(process(profile,index,mode,label+'-owner'))
+            phases.append(process(profile,index,mode,label+'-reopen'))
+            import sqlite3
+            connection=sqlite3.connect((profile/'library.sqlite.product.sqlite').resolve().as_uri()+'?mode=ro',uri=True)
+            try:retained={rid:body for rid,body in connection.execute('SELECT revision_id,CAST(body_json AS BLOB) FROM reader_revisions')}
+            finally:connection.close()
+            assert all(retained[rid]==data for rid,digest,data in selected)
+            assert server.requests and all(row['authenticated'] for row in server.requests)
+            request_log=OUT/(label+'-requests.json');request_log.write_text(json.dumps(server.requests,indent=2)+'\n')
+            reports.append(dict(label=label,session=value,wire_count=len(selected),originals=len(books),
+              immutable_wires_unchanged=True,requests=request_log.name,actual_gtk_ui_executed=False))
+        finally:server.close()
+    receive('mac11',wires,originals,OUT/'mac-peer/sender/books.tsv','receive')
+    retained={rid:(json.loads(data),digest,data) for rid,data,digest in operations}
+    null_id=proof['null_revision_ids'][0];null=retained[null_id][0];book=null['payload']['book_key'];needed=set()
+    def ancestors(rid):
+        if rid in needed:return
+        needed.add(rid)
+        for parent in retained[rid][0]['parents']:ancestors(parent)
+    ancestors(null_id)
+    for rid,(wire,digest,data) in retained.items():
+        if wire['entity_kind']=='book' and wire['entity_key']==book:ancestors(rid)
+    selected=[(rid,retained[rid][1],retained[rid][2]) for rid in sorted(needed)]
+    index=OUT/'mac-peer/null-books.tsv';index.write_text(book+' -1\n')
+    receive('mac-null',selected,{book:originals[book]},index,'null-receive')
+    return dict(peer=proof,phases=reports)
 
 
 def main():
@@ -130,7 +187,10 @@ def main():
       scope='explicit GTK raw3 actual owner candidate',complete_product=False,performance_accepted=False,six_platform_accepted=False,physical_device_execution=False)
     try:
         build();report['built']=True
-        if args.mode=='full':report['phases'],report['kills']=exercise()
+        if args.mode=='full':
+            report['phases'],report['kills'],report['legacy_native_pending_refusals']=exercise()
+            report['network']=network(report['phases'])
+            report['accepted']=True
     finally:
         report['files']={p.relative_to(OUT).as_posix():dict(bytes=p.stat().st_size,sha256=sha(p)) for p in OUT.rglob('*') if p.is_file() and p.name!='result.json'}
         (OUT/'result.json').write_text(json.dumps(report,indent=2)+'\n')

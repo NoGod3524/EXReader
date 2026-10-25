@@ -101,6 +101,49 @@ static void raw_legacy_restore(linux_reader *reader) {
   }
   compat_check(seen==6,"actual raw owner restored both retained v1 and v2 sources");reader_result_free(&listed);
 }
+static void raw_peer(linux_reader *reader,const char *index,int nullable) {
+  reader_command command=compat_command(READER_RECEIVE_BEGIN);reader_result result={0};
+  for(unsigned round=0;round<64;round++) {
+    linux_reader_execute(reader,&command,&result);compat_check(result.status==EXR_OK,"actual GTK received owner projects authenticated network history");
+    int more=result.receive_more;reader_result_free(&result);if(!more)break;
+    command.action=READER_RECEIVE_NEXT;compat_check(round<63,"actual received projection remains bounded");
+  }
+  FILE *books=fopen(index,"rb");compat_check(books!=NULL,"authenticated Mac book index exists");
+  char key[73];long expected=0;size_t found=0,nulls=0,book_count=0;
+  while(fscanf(books,"%72s %ld",key,&expected)==2) {
+    command=compat_command(READER_RECEIVE_OPEN);command.receive_key=key;
+    linux_reader_execute(reader,&command,&result);
+    if(result.status!=EXR_OK)fprintf(stderr,"receive status=%d %s\n",result.status,result.message);
+    compat_check(result.status==EXR_OK && result.receive_book>0 && !result.receive_needs_download && !result.receive_pending,"actual GTK imports only downloaded verified original cache");
+    if(!nullable)compat_check(result.receive_reading_found==(size_t)expected && !result.receive_reading_unresolved && !result.receive_reading_more,"actual received owner resolves every expected Mac reading record");
+    else compat_check(result.receive_reading_unresolved>=1,"actual received owner keeps NULL location unresolved");
+    found+=result.receive_reading_found;int64_t book=result.receive_book;reader_result_free(&result);
+    command=compat_command(READER_OPEN);command.book=book;linux_reader_execute(reader,&command,&result);
+    compat_check(result.status==EXR_OK && result.has_frame && !result.note_count,"actual imported original opens without inventing SDK notes");compat_commit(reader,&result);reader_result_free(&result);
+    command=compat_command(READER_RECORDS_LIST);command.book=book;linux_reader_execute(reader,&command,&result);
+    compat_check(result.status==EXR_OK && result.records_page.complete,"actual raw GTK record view enumerates complete Mac book records");
+    for(size_t i=0;i<result.records_page.count;i++) {
+      reader_av_item *item=&result.records_page.items[i];if(item->deleted)continue;
+      reader_command jump=compat_command(READER_RECORDS_JUMP);jump.book=book;jump.part=reader->current.part;jump.page=reader->current.page;
+      jump.records_id=item->annotation_id;jump.records_head=item->revision_id;jump.records_sha=item->sha256;
+      reader_result landed={0};linux_reader_execute(reader,&jump,&landed);
+      if(item->anchor_version==3 && !item->exact) {
+        nulls++;compat_check(landed.status!=EXR_OK && !landed.has_frame,"actual GTK refuses NULL selector navigation without offset fallback");reader_result_free(&landed);
+        jump.action=READER_RECORDS_SAVE;jump.records_kind=READER_RC_NOTE_TEXT;jump.records_operation=READER_RC_PUT;jump.records_text="must be refused";
+        linux_reader_execute(reader,&jump,&landed);compat_check(landed.status!=EXR_OK && !landed.records_created,"actual GTK refuses editing NULL selector and preserves history");reader_result_free(&landed);
+      } else {
+        compat_check(landed.status==EXR_OK && landed.has_frame && landed.records_match==EXR_ANCHOR_FOUND &&
+          landed.selected_start==item->start && landed.selected_end==item->end && !landed.note_count,"actual GTK jump independently finds exact Mac selected range");
+        compat_commit(reader,&landed);reader_result_free(&landed);
+        reader_rs_record record=raw_record(reader,item->revision_id);
+        if(record.mode==READER_RS_FIXED_PAGE)raw_capture_equal(reader,&record);
+        reader_rs_record_free(&record);
+      }
+    }
+    reader_result_free(&result);book_count++;
+  }
+  fclose(books);compat_check(nullable ? book_count==1 && nulls==1:book_count==4 && found==11 && !nulls,"actual Mac packet yields exactly eleven normal records or one explicit NULL negative");
+}
 int main(int argc,char **argv) {
   if(argc!=7) return 2;
   compat_profile=argv[1];compat_report=fopen(argv[5],"wb");if(!compat_report) return 2;
@@ -108,6 +151,9 @@ int main(int argc,char **argv) {
   compat_check(!strcmp(exr_version(),"3.40.0"),"raw owner uses actual frozen SDK core runtime");
   char *database=g_build_filename(argv[1],"library.sqlite",NULL);linux_reader *reader=NULL;exr_error error={0};
   compat_check(linux_reader_open(database,argv[2],NULL,&reader,&error)==EXR_OK,"actual raw GTK owner opens its profile");
+  int peer=!strcmp(argv[4],"receive") || !strcmp(argv[4],"null-receive");
+  if(peer)raw_peer(reader,argv[3],!strcmp(argv[4],"null-receive"));
+  else {
   reader_command command=compat_command(!strcmp(argv[4],"seed") ? READER_IMPORT:READER_OPEN);command.path=argv[3];reader_result frame={0};
   linux_reader_execute(reader,&command,&frame);compat_check(frame.status==EXR_OK && frame.has_frame,"actual raw owner imports or reopens stored original");compat_commit(reader,&frame);reader_result_free(&frame);
   compat_original(reader,argv[3]);
@@ -119,6 +165,8 @@ int main(int argc,char **argv) {
     reader_av_item *item=&listed.records_page.items[i];if(!item->deleted)compat_adopt(reader,item->annotation_id,item->revision_id,item->sha256,0);
   }reader_result_free(&listed); }
   else compat_check(0,"known actual raw owner mode");
-  compat_original(reader,argv[3]);linux_reader_close(reader);g_free(database);
+  compat_original(reader,argv[3]);
+  }
+  linux_reader_close(reader);g_free(database);
   fprintf(compat_report,"],\"accepted\":true,\"check_count\":%u,\"created\":%d,\"retained_revision\":\"%s\"}\n",compat_checks,compat_created,compat_retry_revision);fclose(compat_report);return 0;
 }
