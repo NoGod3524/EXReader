@@ -3,6 +3,11 @@ on:
   push:
     branches: [codex/sdk-page-background]
   workflow_dispatch:
+    inputs:
+      verify_run:
+        type: string
+        default: ''
+        description: Rehash one original same-source desktop run without recompiling its unchanged SDK
 permissions:
   contents: read
 defaults:
@@ -10,6 +15,7 @@ defaults:
     shell: bash
 jobs:
   desktop:
+    if: inputs.verify_run == ''
     name: background consumers (${{ matrix.key }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
@@ -114,9 +120,12 @@ jobs:
       actions: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Rehash exact-attempt ZIPs actual consumers and frozen-oracle pixels
         env:
           GH_TOKEN: ${{ github.token }}
+          BG_VERIFY_RUN: ${{ inputs.verify_run }}
         run: python3 tests/sdk_page_background/aggregate.py
       - uses: actions/upload-artifact@v4
         if: always()

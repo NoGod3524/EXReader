@@ -5,21 +5,38 @@ import io
 import json
 import os
 from pathlib import Path
+import subprocess
 import sys
 import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'tools'))
-from check_parallel_integration import download_artifact_zip, fetch, pages, require
+from check_parallel_integration import fetch, pages, require
+
+
+def download_artifact_zip(artifact_id):
+    return subprocess.check_output(['gh', 'api', 'repos/' + os.environ['GITHUB_REPOSITORY']
+                                    + '/actions/artifacts/%d/zip' % artifact_id], timeout=120)
 
 
 def main():
     require(os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only')
-    source = os.environ['GITHUB_SHA'];run = int(os.environ['GITHUB_RUN_ID']);attempt = int(os.environ['GITHUB_RUN_ATTEMPT'])
+    validator_source = os.environ['GITHUB_SHA'];validation_run = int(os.environ['GITHUB_RUN_ID'])
+    selected = os.environ.get('BG_VERIFY_RUN', '')
+    metadata = fetch('actions/runs/' + (selected or str(validation_run)))
+    source = metadata['head_sha'];run = metadata['id'];attempt = metadata['run_attempt']
+    if selected:
+        subprocess.run(['git', 'merge-base', '--is-ancestor', source, validator_source], check=True)
+        subprocess.run(['git', 'diff', '--exit-code', source, validator_source, '--', 'src', 'include', 'cmake',
+                        'CMakeLists.txt', 'examples', 'bindings', 'tests/fixtures', 'tests/sdk_page_background/probe.c',
+                        'tests/sdk_page_background/CMakeLists.txt', 'tests/sdk_page_background/make_fixture.py'], check=True)
+    else:
+        require(source == validator_source, 'wrong current source')
     result = dict(source_sha=source, run_id=run, attempt=attempt, accepted=False,
+                  validator_source=validator_source, validation_run_id=validation_run,
+                  original_programs_rechecked_without_reexecution=bool(selected),
                   complete_product=False, performance_accepted=False, host_ui_accepted=False,
                   six_platform_accepted=False, platforms={}, problems=[])
     try:
-        metadata = fetch('actions/runs/%d' % run)
         require(metadata['head_sha'] == source and metadata['run_attempt'] == attempt
                 and metadata['path'] == '.github/workflows/sdk-page-background.yml', 'foreign run')
         jobs = pages('actions/runs/%d/attempts/%d/jobs' % (run, attempt), 'jobs')

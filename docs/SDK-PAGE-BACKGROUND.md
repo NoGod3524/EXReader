@@ -6,4 +6,4 @@ SDK候选3.41.0 / core3.40.0新增 `exr_render_page_background`；只在原渲�
 
 Linux初轮在Actions重新构建原冻结SDK，安装两个版本并分别编译仅消费安装包的消费者。12个页面样本包含真实图片/显式白底/半透明绘制、复杂文字、双线/虚线/点线/透明/RTL/竖排表格、彩色字体和有界EPUB第0/95页。旧三个入口的位图文件必须逐字相同；新白底与旧入口逐字相同。浅/深/透明/半透明背景检查真实像素、图片alpha、书籍显式白底；逐取消轮询点验证清空输出且重试一致。原全部native测试原样运行；旧用例与夹具未改。
 
-所有构建、运行、语法检查、夹具和工件处理只在Actions。本轮尚未有结果。Windows/macOS、Android、iPhone/iPad、宿主真实控件与原六包/可靠性/性能门禁须后续独立验收；不能把Linux候选通过当作六目标迁移完成。仅SDK消费者的EXACT版本声明随新SDK更新，旧3.40声明和原证据仍保留在冻结提交中。
+所有构建、运行、语法检查、夹具和工件处理只在Actions。初轮b911815e/run40164920053 Linux原native164与候选535断言已通过。后续edddc463/run40165924012三桌面实际构建/测试生产者均success；首次strict因root引用了985工具中不存在的下载helper而ImportError，原失败保留。只修改自有汇总器，后续Actions重新散列该轮三个原ZIP并核原始像素/程序，明确program source与validator source，不重编或转授新生产source。Windows/macOS最终工件认证、Android、iPhone/iPad、宿主真实控件与原六包/可靠性/性能门禁须按各自真实结果独立登记；不能把桌面候选当作六目标迁移完成。仅SDK消费者的EXACT版本声明随新SDK更新，旧3.40声明和原证据仍保留在冻结提交中。
