@@ -5,6 +5,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 jobs:
   host:
     runs-on: windows-2022
@@ -19,6 +20,8 @@ jobs:
           python -m compileall -q tests/reader_windows_raw3
           python tests/reader_windows_raw3/guard.py
       - name: Build actual SDK packages and both Win32 profiles and retain full original bulk checks
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: python tests/reader_windows_raw3/host_build.py
       - uses: actions/upload-artifact@v4
         if: always()
