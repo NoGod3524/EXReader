@@ -1,0 +1,92 @@
+name: D06 real native action and focus audit
+on:
+  push:
+    branches: [codex/reader-final-d06]
+    paths: ['tests/reader_final_d06/**', '.github/workflows/reader-final-d06.yml']
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: reader-final-d06
+  cancel-in-progress: false
+jobs:
+  guard:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - run: |
+          python3 -m py_compile tests/reader_final_d06/*.py
+          python3 tests/reader_final_d06/audit.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: d06-source-${{github.run_id}}-${{github.run_attempt}}
+          path: build/d06/source-index.json
+  native:
+    needs: guard
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        include:
+          - {host: windows, os: windows-2022, target: eab342ef456be4a8a1811e5249e3c217d906ce8a}
+          - {host: gtk, os: ubuntu-22.04, target: 57203a52aee439be5194ee0a4b13563a975e8daf}
+    runs-on: ${{matrix.os}}
+    timeout-minutes: 45
+    defaults:
+      run: {shell: bash}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{matrix.target}}
+          path: target
+      - name: Authenticate original ZIP bytes and exact producer identity
+        env:
+          GH_TOKEN: ${{github.token}}
+        run: python3 tests/reader_final_d06/producer.py ${{matrix.host}}
+      - name: Install native Windows observation dependencies
+        if: matrix.host == 'windows'
+        run: python3 -m pip install uiautomation==2.0.29
+      - name: Install native GTK and AT-SPI observation dependencies
+        if: matrix.host == 'gtk'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-0 libsecret-1-0 libcurl4 libxml2 at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11
+      - name: Execute real Windows default and compact native action paths
+        if: matrix.host == 'windows'
+        run: python3 tests/reader_final_d06/run_desktop.py windows
+      - name: Execute real GTK compact native action paths with focus observations
+        if: matrix.host == 'gtk'
+        run: |
+          export PYTHONPATH="$PWD/target/tests/reader_a11y_gtk"
+          xvfb-run -a -s '-screen 0 1440x1200x24' dbus-run-session -- bash -euc '
+            openbox >build/d06/openbox.log 2>&1 &
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            /usr/bin/python3 tests/reader_final_d06/run_desktop.py gtk
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d06-${{matrix.host}}-${{github.run_id}}-${{github.run_attempt}}
+          path: |
+            build/d06/**
+            !build/d06/*-producer/**
+            !build/d06/*-producer.zip
+          if-no-files-found: error
+  verify:
+    needs: [guard, native]
+    if: always()
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate same-run ZIP and report identities, preserve real failures
+        env:
+          GH_TOKEN: ${{github.token}}
+        run: python3 tests/reader_final_d06/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d06-verification-${{github.run_id}}-${{github.run_attempt}}
+          path: build/d06/verification.json
