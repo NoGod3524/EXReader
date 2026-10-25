@@ -28,8 +28,8 @@ from contract import (APPROVED_SDK, FROZEN_SDK, IMPLEMENTATION_START, PRODUCER_H
                       SDK_VERSION, PACKAGE_NAME, classify_dependencies, dependency_names,
                       dependency_problems, forbidden_package_tokens, license_items, license_problems,
                       load_payload, manifest_problems, non_shipping_files, pe_identity,
-                      private_path_hits, private_path_needles, read_json, require, scan_problems,
-                      secret_hits, sha256, verify_payload, write_json, write_zip)
+                      describe_path_hits, private_path_needles, read_json, require, secret_hits,
+                      sha256, verify_payload, write_json, write_zip)
 from contract import PACKAGE_ROOT
 
 
@@ -194,12 +194,21 @@ def main():
                     'entries': rows}
 
     # ---------------------------------------------------------------- byte scans
+    # A build-machine path inside a shipped byte is a release blocker in the G09
+    # sense: recorded per file, needle and byte offset, it sets release_ready
+    # false, and it never substitutes for the portability evidence itself
+    # (operating-system-only imports plus a run in a directory the build tree
+    # never occupied). Test secrets stay a hard refusal.
     needles = private_path_needles([os.environ.get('GITHUB_WORKSPACE'),
                                     producer, args.build_root.resolve(), stage,
                                     args.payload.resolve(), program])
-    path_hits = private_path_hits(payload, needles)
+    path_hits = describe_path_hits(payload, needles)
     secret_scan = secret_hits(payload)
-    problems += scan_problems(payload, needles)
+    for hit in secret_scan:
+        problems.append('%s ships a test secret marker (%s)' % (hit['path'], hit['marker']))
+    release_blockers = ['%s ships a build-machine absolute path (%s, %s, byte offset %d)'
+                        % (hit['path'], hit['needle'], hit['encoding'], hit['offset'])
+                        for hit in path_hits]
     require(not forbidden_package_tokens(payload),
             'package ships a browser runtime: ' + json.dumps(forbidden_package_tokens(payload)))
 
@@ -304,6 +313,8 @@ def main():
                 'scans': {'private_paths': {'needles': needles, 'hits': path_hits},
                           'test_secrets': {'hits': secret_scan}},
                 'retained': retained,
+                'release_blockers': release_blockers,
+                'release_ready': not problems and not release_blockers,
                 'run': run, 'problems': problems,
                 'scope': ('Candidate package assembly only: per-file bytes, license attribution, '
                           'dependency provenance, archive reproducibility. No device, screen-reader, '
@@ -323,7 +334,8 @@ def main():
                'program_bytes': len(payload['EXReader.exe']), 'files': len(files),
                'sdk_version': sdk_version, 'selftest_checks': report['checks'],
                'dependencies': len(rows), 'registered_license_material': len(registered),
-               'problems': problems}
+               'release_ready': not problems and not release_blockers,
+               'release_blockers': release_blockers, 'problems': problems}
     write_json(output / 'assembly.json', summary)
     print(json.dumps(summary), flush=True)
     require(not problems, 'candidate assembly refused: ' + json.dumps(problems))

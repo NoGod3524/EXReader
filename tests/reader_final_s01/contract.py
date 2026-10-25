@@ -436,6 +436,26 @@ def secret_hits(payload):
     return distribution().scan_test_secrets(stage_view(payload))
 
 
+def describe_path_hits(payload, needles, limit=4):
+    """Per-file, per-needle byte evidence for a build-machine path inside shipped bytes."""
+    hits = []
+    encoded = [(needle, needle.encode('utf-8'), needle.encode('utf-16-le')) for needle in needles]
+    for name in sorted(payload):
+        data = payload[name]
+        for needle, utf8, utf16 in encoded:
+            for encoding, marker in (('utf-8', utf8), ('utf-16-le', utf16)):
+                found = 0
+                start = data.find(marker)
+                while start >= 0 and found < limit:
+                    window = data[max(0, start - 40):start + len(marker) + 80]
+                    hits.append({'path': name, 'needle': needle, 'encoding': encoding,
+                                 'offset': start,
+                                 'context': window.decode('utf-8', errors='replace').replace('\r', ' ').replace('\n', ' ')})
+                    found += 1
+                    start = data.find(marker, start + 1)
+    return hits
+
+
 def scan_problems(payload, needles):
     problems = []
     for hit in private_path_hits(payload, needles):
@@ -550,6 +570,11 @@ def selftest():
         wide = {'EXReader.exe': 'C:\\Users\\runneradmin\\x'.encode('utf-16-le')}
         require(private_path_hits(wide, private_path_needles([])), 'UTF-16 build path was admitted')
         passed('refuse_private_build_path_utf16')
+        detailed = describe_path_hits(dirty, private_path_needles(['D:/a/EXReader/EXReader']))
+        require(detailed and isinstance(detailed[0]['offset'], int) and detailed[0]['offset'] >= 0 and
+                detailed[0]['encoding'] in ('utf-8', 'utf-16-le') and detailed[0]['context'],
+                'path hit evidence lacks an offset, encoding or context')
+        passed('positive_path_hit_evidence')
         require(secret_hits({'keys.txt': b'ghp_' + b'a' * 36}), 'test secret was admitted')
         passed('refuse_test_secret')
 

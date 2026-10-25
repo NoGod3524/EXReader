@@ -47,6 +47,10 @@ def main():
         problems.append('the moved-package evidence belongs to another producer')
     if moved['program']['sha256'] != manifest['program']['sha256']:
         problems.append('the moved program differs from the assembled program')
+    blockers = list(manifest.get('release_blockers') or [])
+    for blocker in moved.get('release_blockers') or []:
+        if blocker not in blockers:
+            blockers.append(blocker)
 
     require(str(args.artifact_id).isdigit(), 'a positive artifact id is required')
     meta = fetch('actions/artifacts/' + str(int(args.artifact_id)))
@@ -107,15 +111,17 @@ def main():
             moved['self_test']['exit_code'] == 0 and moved['self_test']['checks'] >= 26},
         {'name': 'retained-compact-acceptance-complete', 'passed':
             moved['compact']['accepted'] and moved['compact']['checks'] >= 22},
-        {'name': 'no-build-path-or-test-secret-in-distributed-bytes', 'passed':
-            not manifest['scans']['private_paths']['hits'] and
+        {'name': 'no-test-secret-in-distributed-bytes', 'passed':
             not manifest['scans']['test_secrets']['hits']},
+        {'name': 'no-build-machine-path-in-distributed-bytes', 'passed': not blockers},
     ]
     for check in checks:
         if not check['passed']:
             problems.append('failed check: ' + check['name'])
 
-    result = {'schema': 1, 'accepted': not problems,
+    result = {'schema': 1, 'accepted': not problems and not blockers,
+              'release_ready': not problems and not blockers,
+              'release_blockers': blockers,
               'source': {'implementation': source, 'producer': manifest['producer_source'],
                          'producer_tree': manifest['producer_tree'],
                          'sdk_approved': manifest['sdk']['approved_source'],
@@ -139,8 +145,10 @@ def main():
                         'compact acceptance on the moved program.')}
     write_json(args.output, result)
     print(json.dumps({'accepted': result['accepted'], 'artifact': artifact,
-                      'checks': len(checks), 'problems': problems}), flush=True)
-    require(not problems, 'S01 evidence refused: ' + json.dumps(problems))
+                      'checks': len(checks), 'problems': problems,
+                      'release_blockers': blockers}), flush=True)
+    require(not problems and not blockers,
+            'S01 evidence refused: ' + json.dumps(problems + blockers))
 
 
 if __name__ == '__main__':

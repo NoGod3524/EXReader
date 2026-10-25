@@ -27,8 +27,8 @@ from pathlib import Path
 
 from contract import (PACKAGE_ROOT, REQUIRED_FILES, RETAINED_SOURCES, classify_dependencies,
                       dependency_names, dependency_problems, manifest_problems, load_payload,
-                      pe_identity, private_path_hits, private_path_needles, read_json, require,
-                      scan_problems, secret_hits, sha256, verify_payload, verify_zip, write_json)
+                      describe_path_hits, pe_identity, private_path_needles, read_json, require,
+                      secret_hits, sha256, verify_payload, verify_zip, write_json)
 
 ROOT = Path(__file__).resolve().parents[2]
 ORIGINAL_FOLDER = 's01 原始 位置'
@@ -135,9 +135,13 @@ def main():
     require(str(first).isascii() is False and ' ' in str(first), 'the first destination is not Unicode with spaces')
     require(not ({'producer-src', 'build'} & set(first.parts)), 'the first destination sits inside a build tree')
     needles = private_path_needles([os.environ.get('GITHUB_WORKSPACE'), base])
-    path_hits = private_path_hits(payload, needles)
+    path_hits = describe_path_hits(payload, needles)
     secret_scan = secret_hits(payload)
-    problems += scan_problems(payload, needles)
+    for hit in secret_scan:
+        problems.append('%s ships a test secret marker (%s)' % (hit['path'], hit['marker']))
+    release_blockers = ['%s ships a build-machine absolute path (%s, %s, byte offset %d)'
+                        % (hit['path'], hit['needle'], hit['encoding'], hit['offset'])
+                        for hit in path_hits]
 
     identity = pe_identity(payload['EXReader.exe'])
     for key in ('machine', 'subsystem', 'authenticode', 'certificate_bytes'):
@@ -270,6 +274,7 @@ def main():
               'scans': {'private_paths': {'hits': path_hits, 'needles': len(needles)},
                         'test_secrets': {'hits': secret_scan}},
               'mutation': {'changed': mutated, 'added': added, 'removed': removed},
+              'release_blockers': release_blockers, 'release_ready': not problems and not release_blockers,
               'network': {'server_started': 0, 'credentials_used': 0,
                           'isolation': 'not claimed: the run needed no network resource but no interface cut was performed'},
               'not_verified': ['default-OFF full host acceptance (tools/check_windows_host.py)',
