@@ -51,6 +51,9 @@ private func hostPasteboard(_ value: String) {
 struct HostRootView: View {
     @StateObject private var model: HostReaderModel
     @Environment(\.scenePhase) private var phase
+#if EXR_APPLE_PAGE_THEME
+    @Environment(\.colorScheme) private var pageThemeScheme
+#endif
     private let selfTesting = CommandLine.arguments.contains("--self-test")
 
     init(profile: HostAccountProfile? = nil, accounts: HostAccounts? = nil) {
@@ -79,8 +82,16 @@ struct HostRootView: View {
         .frame(minWidth: 380, minHeight: 460)
 #endif
         .onAppear {
+#if EXR_APPLE_PAGE_THEME
+            if !selfTesting { model.observePageThemeEnvironment(dark: pageThemeScheme == .dark) }
+#endif
             if !selfTesting { model.observeUITestScene(String(describing: phase)); model.start() }
         }
+#if EXR_APPLE_PAGE_THEME
+        .onChange(of: pageThemeScheme) { value in
+            if !selfTesting { model.observePageThemeEnvironment(dark: value == .dark) }
+        }
+#endif
         .onChange(of: phase) { value in
             if !selfTesting { model.observeUITestScene(String(describing: value)) }
             if value != .active && !selfTesting { model.persistNow(); model.closeAccountSession() }
@@ -404,6 +415,9 @@ struct ReaderScreen: View {
     @State private var showSearch = false
     @State private var showNavigation = false
     @State private var showReadingRecords = false
+#if EXR_APPLE_PAGE_THEME
+    @State private var showPageTheme = false
+#endif
 #if os(iOS)
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -465,6 +479,10 @@ struct ReaderScreen: View {
                 Menu {
                     Button("阅读记录") { model.prepareReadingRecords(); showReadingRecords = true }
                         .accessibilityIdentifier("reader.records")
+#if EXR_APPLE_PAGE_THEME
+                    Button("阅读主题") { showPageTheme = true }
+                        .accessibilityIdentifier("reader.theme")
+#endif
                 } label: { Image(systemName: "ellipsis").frame(width: 28, height: 28) }
                     .accessibilityLabel(Text("更多阅读操作"))
                     .accessibilityIdentifier("reader.more").disabled(model.busy)
@@ -486,7 +504,11 @@ struct ReaderScreen: View {
 
             GeometryReader { geometry in
                 ZStack {
+#if EXR_APPLE_PAGE_THEME
+                    hostPageThemeColor(model.current?.isFixed == true ? 0xffffffff : model.pageThemePalette.background ?? 0xffffffff)
+#else
                     Color.white
+#endif
                     if let image = model.image {
                         Image(decorative: image, scale: 1)
                             .resizable()
@@ -503,7 +525,11 @@ struct ReaderScreen: View {
                 .onAppear { model.updateViewport(geometry.size) }
                 .onChange(of: geometry.size) { value in model.updateViewport(value) }
             }
+#if EXR_APPLE_PAGE_THEME
+            .background(hostPageThemeColor(model.current?.isFixed == true ? 0xffffffff : model.pageThemePalette.background ?? 0xffffffff))
+#else
             .background(Color.white)
+#endif
             .padding(.horizontal, 4)
 
             HStack(spacing: 12) {
@@ -547,6 +573,9 @@ struct ReaderScreen: View {
         .sheet(isPresented: $showSearch) { HostSearchSheet(model: model) }
         .sheet(isPresented: $showNavigation) { HostNavigationSheet(model: model) }
         .sheet(isPresented: $showReadingRecords) { HostReadingRecordsSheet(model: model) }
+#if EXR_APPLE_PAGE_THEME
+        .sheet(isPresented: $showPageTheme) { HostPageThemeSheet(model: model) }
+#endif
         .onDisappear { model.detach() }
         .onChange(of: model.location) { value in hostAnnounce(value) }
         .onChange(of: model.statusText) { value in if !model.busy { hostAnnounce(value) } }

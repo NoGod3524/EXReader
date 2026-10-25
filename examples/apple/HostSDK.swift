@@ -347,7 +347,7 @@ final class HostPager {
     private var box: HostCancelBox
 
     init(document: HostDocument, font: HostFont, width: Double, height: Double,
-         fontSize: Double, box: HostCancelBox) throws {
+         fontSize: Double, box: HostCancelBox, userCSS: String? = nil) throws {
         self.document = document
         publication = nil
         self.font = font
@@ -365,7 +365,14 @@ final class HostPager {
         config.control = hostControl(box)
         var result: OpaquePointer?
         var error = exr_error()
-        try hostCheck(exr_pager_create(document.handle, font.handle, &config, &result, &error), error)
+        let status: exr_status
+        if let userCSS {
+            status = userCSS.withCString { css in
+                config.user_css = css
+                return exr_pager_create(document.handle, font.handle, &config, &result, &error)
+            }
+        } else { status = exr_pager_create(document.handle, font.handle, &config, &result, &error) }
+        try hostCheck(status, error)
         guard let result else { throw HostError.invalidResult("分页器无法创建") }
         if box.isCancelled {
             exr_pager_free(result)
@@ -375,7 +382,7 @@ final class HostPager {
     }
 
     init(publication: HostPublication, part: Int, font: HostFont, width: Double, height: Double,
-         fontSize: Double, box: HostCancelBox, windowBytes: Int = 16384) throws {
+         fontSize: Double, box: HostCancelBox, windowBytes: Int = 16384, userCSS: String? = nil) throws {
         document = nil; self.publication = publication; self.font = font; self.box = box
         _ = try publication.route(part)
         try publication.bind(box)
@@ -386,7 +393,14 @@ final class HostPager {
         var options = exr_chapter_options_defaults()
         options.workspace_budget = 16 * 1024 * 1024; options.window_bytes = windowBytes
         var result: OpaquePointer?, error = exr_error()
-        try hostCheck(exr_publication_pager_create(publication.handle, part, font.handle, &config, &options, &result, &error), error)
+        let status: exr_status
+        if let userCSS {
+            status = userCSS.withCString { css in
+                config.user_css = css
+                return exr_publication_pager_create(publication.handle, part, font.handle, &config, &options, &result, &error)
+            }
+        } else { status = exr_publication_pager_create(publication.handle, part, font.handle, &config, &options, &result, &error) }
+        try hostCheck(status, error)
         guard let result else { throw HostError.invalidResult("有界章节无法创建") }
         if box.isCancelled { exr_pager_free(result); throw HostError.cancelled }
         do {
@@ -471,7 +485,7 @@ final class HostPager {
         return Int(pages[0].start)..<Int(pages[0].end)
     }
 
-    func render(_ index: Int, cancel: HostCancelBox? = nil) throws -> HostBitmap {
+    func render(_ index: Int, background: UInt32? = nil, cancel: HostCancelBox? = nil) throws -> HostBitmap {
         guard index >= 0 else { throw HostError.invalidInput("页码无效") }
         try bind(cancel)
         var layout: OpaquePointer?
@@ -481,7 +495,16 @@ final class HostPager {
         var bitmap = exr_bitmap()
         defer { exr_bitmap_free(&bitmap) }
         var control = hostControl(box)
+#if EXR_APPLE_PAGE_THEME
+        if let background {
+            try hostCheck(exr_render_page_background(layout, exr_layout_font(layout), 0, 4, background, &control, &bitmap, &error), error)
+        } else {
+            try hostCheck(exr_render_page_ex(layout, exr_layout_font(layout), 0, 4, &control, &bitmap, &error), error)
+        }
+#else
+        guard background == nil else { throw HostError.invalidInput("阅读主题未启用") }
         try hostCheck(exr_render_page_ex(layout, exr_layout_font(layout), 0, 4, &control, &bitmap, &error), error)
+#endif
         try box.check()
         guard let pixels = bitmap.pixels, bitmap.width > 0, bitmap.height > 0 else {
             throw HostError.invalidResult("页面渲染失败")
