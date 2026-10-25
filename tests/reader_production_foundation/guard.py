@@ -15,7 +15,10 @@ ORIGIN = '1a6d98ed613c61ffea4267f01f83e2c49b1c02f6'
 REVIEWED = 'b8fcb233155957ea25ff1d39be7554b21142378f'
 MANIFEST = 'docs/reader-production-foundation/snapshot-manifest.json'
 WORKFLOW = '.github/workflows/reader-production-foundation.yml'
-OWN = {WORKFLOW, 'tests/reader_production_foundation/guard.py'}
+OWN = {WORKFLOW, 'tests/reader_production_foundation/guard.py',
+       'tests/reader_production_foundation/runtime.py',
+       'tests/reader_production_foundation/consumer/CMakeLists.txt',
+       'tests/reader_production_foundation/consumer/main.cpp'}
 OUT = ROOT / 'build/reader-production-foundation'
 
 
@@ -140,6 +143,56 @@ def strict():
     print(json.dumps({'composition_accepted': True, 'runtime_accepted': False, 'source_sha': source}), flush=True)
 
 
+def runtime_strict():
+    sys.path.insert(0, str(ROOT / 'tools'))
+    from check_parallel_integration import fetch, pages, download_artifact_zip
+    from datetime import datetime, timezone
+    source, run, attempt = (os.environ[key] for key in ('GITHUB_SHA', 'GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT'))
+    metadata = fetch('actions/runs/' + run + '/attempts/' + attempt)
+    assert metadata['head_sha'] == source and str(metadata['run_attempt']) == attempt
+    assert metadata['path'].split('@')[0] == WORKFLOW
+    jobs = pages('actions/runs/' + run + '/attempts/' + attempt + '/jobs', 'jobs')
+    artifacts = pages('actions/runs/' + run + '/artifacts', 'artifacts')
+    results = []
+    for platform, runner in [('Linux', 'ubuntu-22.04'), ('Windows', 'windows-2022'), ('macOS', 'macos-15')]:
+        job, = [row for row in jobs if row['name'] == 'shared install (' + runner + ')']
+        assert job['head_sha'] == source and str(job['run_attempt']) == attempt
+        assert job['status'] == 'completed' and job['conclusion'] == 'success'
+        item, = [row for row in artifacts if row['name'] == 'production-foundation-runtime-' + platform + '-' + run + '-' + attempt]
+        assert not item['expired'] and item['workflow_run']['head_sha'] == source and str(item['workflow_run']['id']) == run
+        assert datetime.fromisoformat(item['expires_at'].replace('Z', '+00:00')) > datetime.now(timezone.utc)
+        raw = download_artifact_zip(item['id'])
+        assert len(raw) == item['size_in_bytes'] and 'sha256:' + hashlib.sha256(raw).hexdigest() == item['digest']
+        with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+            names = archive.namelist()
+            assert len(names) == len(set(names))
+            result = json.loads(archive.read('result.json'))
+            assert (result['source_sha'], result['run_id'], result['attempt'], result['platform']) == (source, run, attempt, platform)
+            assert result['runtime_accepted'] is True and result['legacy_guards_executed'] is False and result['complete_product'] is False
+            files = result['files']
+            assert {name for name in names if not name.endswith('/')} == set(files) | {'result.json'}
+            for name, identity in files.items():
+                data = archive.read(name)
+                assert len(data) == identity['bytes'] and hashlib.sha256(data).hexdigest() == identity['sha256'], name
+            assert len(result['programs']) >= 20
+            for program in result['programs'].values():
+                assert files[program['member']] == {key: program[key] for key in ('bytes', 'sha256')}
+            assert set(result['reports']) == {'font','original','annotation','jump-default','jump-raw','view-default','view-raw'}
+            prefix = 'build/reader-production-foundation/runtime/'
+            for name, path in result['reports'].items():
+                assert path.startswith(prefix), (name, path)
+                report = json.loads(archive.read(path[len(prefix):]))
+                assert report['accepted'] is True, name
+            for family in ('baseline', 'default', 'raw'):
+                report = json.loads(archive.read('jump-original-' + family + '/summary.json'))
+                assert report['jump_history_module_accepted'] is True
+                assert report['checks_failed'] == 0 and report['checks_total'] >= 149
+        results.append({'platform': platform, 'artifact': {key: item[key] for key in ('id','name','size_in_bytes','digest','expires_at')},
+                        'program_count': len(result['programs']), 'file_count': len(files)})
+    write('runtime-strict.json', {'source_sha': source, 'run_id': run, 'attempt': attempt,
+                                'runtime_accepted': True, 'complete_product': False, 'platforms': results})
+
+
 if __name__ == '__main__':
     assert os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only'
-    {'preflight': preflight, 'strict': strict}[sys.argv[1]]()
+    {'preflight': preflight, 'strict': strict, 'runtime-strict': runtime_strict}[sys.argv[1]]()

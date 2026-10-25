@@ -38,3 +38,57 @@ jobs:
           name: production-foundation-source-summary-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/reader-production-foundation/strict.json
           if-no-files-found: error
+  runtime:
+    needs: preflight
+    name: shared install (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 110
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-15]
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install ninja==1.11.1.1 fonttools==4.58.0
+      - name: Native Windows compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Syntax and full original business judges on shared installs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -m py_compile tests/reader_production_foundation/runtime.py
+          python tests/reader_production_foundation/runtime.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: production-foundation-runtime-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-production-foundation/runtime/
+          if-no-files-found: error
+  runtime-strict:
+    needs: [runtime, strict]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate all original runtime ZIPs, programs and reports
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_production_foundation/guard.py runtime-strict
+      - uses: actions/upload-artifact@v4
+        with:
+          name: production-foundation-runtime-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/reader-production-foundation/runtime-strict.json
+          if-no-files-found: error
