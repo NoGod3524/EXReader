@@ -1,7 +1,7 @@
 name: Reader next S15 original export 3.41
 on:
   push:
-    branches: [codex/reader-next-s15]
+    branches: [codex/reader-next-s15, codex/reader-next-s15-root-review]
   workflow_dispatch:
 permissions:
   contents: read
@@ -168,6 +168,23 @@ jobs:
           ws="$PWD"
           python tests/reader_next_s15/make_fixtures.py build/s15-frozen-fixtures 2>&1 | tee build/s15-frozen-logs/fixtures.log
           python tests/reader_next_s15/check_frozen_sdk.py --sdk "$ws/build/s15-frozen-src/build/reading-library/stage" --module-src apps/reader/original-export --stage "$ws/build/s15-frozen-stage" --consumer "$ws/tests/reader_next_s15/consumer" --fixtures "$ws/build/s15-frozen-fixtures" --work "$ws/build/s15-frozen-work" --output "$ws/build/s15-frozen-work/frozen.json" 2>&1 | tee build/s15-frozen-logs/checks.log
+      - name: Build the real approved SDK for already-loaded-target regression
+        run: |
+          set -o pipefail
+          mkdir -p build/s15-preload-sdk-src
+          git archive "$S15_SDK" | tar -x -C build/s15-preload-sdk-src
+          cd build/s15-preload-sdk-src
+          cmake --preset reading-library 2>&1 | tee ../s15-frozen-logs/preload-sdk-configure.log
+          cmake --build --preset reading-library --parallel 4 2>&1 | tee ../s15-frozen-logs/preload-sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee ../s15-frozen-logs/preload-sdk-install.log
+          cd "$GITHUB_WORKSPACE"
+          sdk="$PWD/build/s15-preload-sdk-src/build/reading-library/stage"
+          cmake -S apps/reader/original-export -B build/s15-preload-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$sdk" -DEXR_SDK_VERSION=3.41.0 -DCMAKE_INSTALL_PREFIX="$PWD/build/s15-preload-stage" 2>&1 | tee build/s15-frozen-logs/preload-module-configure.log
+          cmake --build build/s15-preload-module --parallel 4 --target install 2>&1 | tee build/s15-frozen-logs/preload-module-build.log
+      - name: Refuse foreign preloaded SDK targets without replacing them
+        run: |
+          set -o pipefail
+          python tests/reader_next_s15/check_existing_targets.py --sdk340 "$PWD/build/s15-frozen-src/build/reading-library/stage" --sdk341 "$PWD/build/s15-preload-sdk-src/build/reading-library/stage" --stage340 "$PWD/build/s15-frozen-stage" --stage341 "$PWD/build/s15-preload-stage" --module "$PWD/apps/reader/original-export" --output build/s15-frozen-work/target-provenance/result.json 2>&1 | tee build/s15-frozen-logs/target-provenance.log
       - name: Preserve the frozen graph result and every failure
         if: always()
         uses: actions/upload-artifact@v4
