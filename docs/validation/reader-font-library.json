@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "package": "D02",
+  "branch": "codex/dot-reader-font-library",
+  "fixed_start": "a826a65c9c66e43620eff61b49cb79f941a3c953",
+  "sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "status": "pending Actions",
+  "tested_sha": null,
+  "runs": [],
+  "host_ui_accepted": false,
+  "mobile_accepted": false,
+  "power_loss_accepted": false
+}

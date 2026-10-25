@@ -1,0 +1,107 @@
+name: Reader font library
+on:
+  push:
+    branches: [codex/dot-reader-font-library]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  fonts:
+    name: font library (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-15]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fixed source SDK schema and exclusive path guards
+        run: |
+          set -euo pipefail
+          START=a826a65c9c66e43620eff61b49cb79f941a3c953
+          SDK=9854061be331fe603a1822d9b2b36ee357154927
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$START" HEAD
+          git diff --exit-code "$SDK" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code "$START" HEAD -- apps/reader/store apps/reader/revisions apps/reader/reading-state docs/READER-REVISION-WIRE.md
+          allowed='^(apps/reader/font-library/|tests/reader_font_library/|\.github/workflows/reader-font-library\.yml$|docs/READER-FONT-LIBRARY\.md$|docs/validation/reader-font-library\.json$)'
+          bad=$(git diff --name-only "$START" HEAD | grep -Ev "$allowed" || true)
+          test -z "$bad" || { echo "Unowned paths: $bad"; exit 1; }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned Actions-only build and fixture tools
+        run: python -m pip install ninja==1.11.1.1 fonttools==4.58.0
+      - name: Enter native Windows toolchain
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install unchanged SDK 3.40
+        run: |
+          set -euo pipefail
+          mkdir -p build/font-evidence/logs
+          cmake --preset reading-core 2>&1 | tee build/font-evidence/logs/sdk-configure.log
+          cmake --build --preset reading-core --parallel 4 2>&1 | tee build/font-evidence/logs/sdk-build.log
+          cmake --install build/reading-core 2>&1 | tee build/font-evidence/logs/sdk-install.log
+      - name: Install optional static package and fresh C/C++ consumers
+        run: |
+          set -euo pipefail
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          cmake -S apps/reader/font-library -B build/font-default-off -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/font-default-off
+          cmake -S apps/reader/font-library -B build/font-package -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_FONT_LIBRARY_BUILD=ON -DCMAKE_PREFIX_PATH="$ws/build/reading-core/stage" -DCMAKE_INSTALL_PREFIX="$ws/build/font-stage" 2>&1 | tee build/font-evidence/logs/package-configure.log
+          cmake --build build/font-package --verbose 2>&1 | tee build/font-evidence/logs/package-build.log
+          cmake --install build/font-package 2>&1 | tee build/font-evidence/logs/package-install.log
+          cmake -S tests/reader_font_library/consumer -B build/font-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ws/build/font-stage;$ws/build/reading-core/stage" 2>&1 | tee build/font-evidence/logs/consumer-configure.log
+          cmake --build build/font-consumer --verbose 2>&1 | tee build/font-evidence/logs/consumer-build.log
+      - name: Fixed licensed fonts native cases and real process termination
+        run: python tests/reader_font_library/run.py
+      - name: Retain original binaries fonts licenses reports and all failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-font-library-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/font-evidence/
+          include-hidden-files: true
+          if-no-files-found: error
+  evidence:
+    name: same-run font evidence and negative verifier tests
+    needs: fonts
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate completed upstream jobs and original artifact bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python tests/reader_font_library/verify.py
+      - name: Preserve strict verifier result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-font-library-verified-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/font-verified/
+          if-no-files-found: error
