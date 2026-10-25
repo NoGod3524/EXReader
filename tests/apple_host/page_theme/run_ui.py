@@ -20,10 +20,24 @@ def main():
     out = args.output.absolute(); out.mkdir(parents=True, exist_ok=True)
     commands, served = [], []
 
+    def save_commands():
+        report = {'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
+                  'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'platform': args.platform, 'served': served,
+                  'commands': commands, 'physical_device_execution': False}
+        (out / 'system-commands.json').write_text(json.dumps(report, indent=2, sort_keys=True) + '\n')
+
+    save_commands()
+
     def command(argv, timeout=45, check=True):
-        proc = subprocess.run([str(v) for v in argv], capture_output=True, text=True, timeout=timeout)
+        try:
+            proc = subprocess.run([str(v) for v in argv], capture_output=True, text=True, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            commands.append({'argv': [str(v) for v in argv], 'exit_code': None, 'timed_out_seconds': timeout})
+            save_commands()
+            raise
         commands.append({'argv': [str(v) for v in argv], 'exit_code': proc.returncode,
                          'stdout': proc.stdout, 'stderr': proc.stderr})
+        save_commands()
         if check and proc.returncode:
             raise RuntimeError('Native OS command failed: ' + ' '.join(map(str, argv)))
         return proc
@@ -35,7 +49,7 @@ def main():
         assert original_style in ('true', 'false')
         device, runtime = 'macOS host', command(['sw_vers', '-productVersion']).stdout.strip()
     else:
-        payload = json.loads(command(['xcrun', 'simctl', 'list', 'devices', 'available', '--json']).stdout)
+        payload = json.loads(command(['xcrun', 'simctl', 'list', 'devices', 'available', '--json'], timeout=180).stdout)
         prefix = 'iPhone' if args.platform == 'iphone' else 'iPad'
         runtime, device, udid = max((runtime, row['name'], row['udid']) for runtime, rows in payload['devices'].items()
                                    for row in rows if row.get('isAvailable') and row['name'].startswith(prefix))
@@ -82,6 +96,7 @@ def main():
                                 marker = container / 'Documents/page-theme-system-request.json'
                         except subprocess.TimeoutExpired:
                             commands.append({'argv': argv, 'exit_code': None, 'diagnostic': 'read-only container lookup timed out before a successful resolution'})
+                        save_commands()
                         next_container_probe = time.monotonic() + 10
                 else:
                     marker = Path.home() / 'Library/Application Support/EXReader/page-theme-system-request.json'
@@ -95,7 +110,9 @@ def main():
                         appearance(style); served.append(style)
                 time.sleep(1)
             code = process.returncode
-        assert code == 0, 'XCTest failed; inspect preserved xcodebuild.log'
+        if code:
+            print('\n'.join((out / 'xcodebuild.log').read_text(errors='replace').splitlines()[-240:]), flush=True)
+            raise RuntimeError('XCTest failed; inspect preserved xcodebuild.log')
         assert served == ['dark', 'light'], 'real OS dark/light commands were not both exercised'
     finally:
         if process is not None and process.poll() is None:
@@ -108,10 +125,7 @@ def main():
             command(['osascript', '-e', 'tell application "System Events" to tell appearance preferences to set dark mode to ' + original_style], check=False)
         elif udid:
             appearance('light')
-        report = {'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
-                  'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'platform': args.platform, 'served': served,
-                  'commands': commands, 'physical_device_execution': False}
-        (out / 'system-commands.json').write_text(json.dumps(report, indent=2, sort_keys=True) + '\n')
+        save_commands()
 
 
 if __name__ == '__main__':
