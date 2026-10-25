@@ -13,6 +13,7 @@ import subprocess
 import sys
 import traceback
 import uuid
+import zipfile
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'reader_windows_search'))
 from check_ui import SearchApp,U,ENUM,send,text,M
@@ -61,6 +62,10 @@ def main():
  fixture=importlib.util.module_from_spec(spec);spec.loader.exec_module(fixture)
  txt=out/'Records original.txt';txt.write_text(''.join('Paragraph %03d unique 中文🙂. '%i+'reading text '*70+'\n' for i in range(90)),encoding='utf-8')
  epub=out/'Records EPUB.epub';fixture.epub(epub)
+ with zipfile.ZipFile(epub) as book:entries={name:book.read(name) for name in book.namelist()}
+ entries['book.opf']=entries['book.opf'].replace(b'<dc:title>Reading state fixture</dc:title>',b'<dc:title>Records EPUB</dc:title>')
+ with zipfile.ZipFile(epub,'w') as book:
+  for name,data in entries.items():fixture.entry(book,name,data)
  pdf=out/'Records PDF.pdf';fixture.pdf(pdf)
  cbz=out/'Records CBZ.cbz';fixture.cbz(cbz)
  files=[txt,epub,pdf,cbz];hashes={str(f):hashlib.sha256(f.read_bytes()).hexdigest() for f in files}
@@ -171,7 +176,7 @@ def main():
   shot(d,'01-real-states.bmp');close(d);saved_counts=counts();app.close();app=launch(args.candidate,out/'profile',existing=True)
   app.open('Records original');app.wait_idle();d=show();record('restart-keeps-records-and-discards-transient-history',counts()==saved_counts and len(labels(d))==33)
   close(d);phase='epub';app.open('Records EPUB');app.wait_idle();app.click('next');app.wait_idle();d=show();press(d,PROGRESS);ep=latest('progress');audit(ep)
-  record('epub-progress-preserves-explicit-part',ep['payload']['location']['mode']=='epub_chapter' and ep['payload']['location']['anchor_version']==2 and isinstance(ep['payload']['location']['part'],int))
+  record('epub-progress-preserves-explicit-part',ep['payload']['location']['mode']=='epub_chapter' and ep['payload']['location']['anchor_version']==2 and ep['payload']['location']['part']==1 and ep['payload']['location']['part_path']=='b.xhtml')
   close(d);app.click('select');app.wait_idle();d=show();body(d,'EPUB current selection');press(d,HIGHLIGHT);epnote=latest();audit(epnote)
   record('epub-note-public-v2-and-found',epnote['payload']['location']['part_path']==ep['payload']['location']['part_path'])
   close(d);app.open('Records PDF');app.wait_idle();app.click('next');app.wait_idle();d=show();press(d,PROGRESS);fixed=latest('progress');proof=audit(fixed)
