@@ -242,7 +242,22 @@ static int run(int argc, char **argv) {
     return 0;
   }
 
-  if ((strcmp(argv[1], "verify") == 0 || strcmp(argv[1], "verify-tampered") == 0) && argc == 4) {
+  if (strcmp(argv[1], "verify-nonterminated") == 0 && argc == 2) {
+    reader_account_profiles_activation *bad = malloc(sizeof(*bad));
+    reader_account_profiles_status status;
+    if (!bad) return 2;
+    memset(bad, 0x7f, sizeof(*bad));
+    bad->struct_size = (uint32_t)sizeof(*bad);
+    bad->profile.struct_size = (uint32_t)sizeof(bad->profile);
+    memcpy(bad->profile.profile_id, "a1000000-0000-4000-8000-000000000001", 36);
+    status = reader_account_profiles_verify_activation("unused", bad, NULL, &error);
+    free(bad);
+    print_status(status, &error);
+    return status == READER_ACCOUNT_PROFILES_INVALID ? 0 : 2;
+  }
+
+  if (((strcmp(argv[1], "verify") == 0 || strcmp(argv[1], "verify-tampered") == 0) && argc == 4) ||
+      (strcmp(argv[1], "verify-held") == 0 && argc == 5)) {
     reader_account_profiles_activation plan;
     reader_account_profiles_status prepare;
     reader_account_profiles_status verify;
@@ -253,6 +268,12 @@ static int run(int argc, char **argv) {
     if (prepare != READER_ACCOUNT_PROFILES_OK) {
       print_status(prepare, &error);
       return 0;
+    }
+    if (strcmp(argv[1], "verify-held") == 0) {
+      FILE *ready = fopen(argv[4], "wb");
+      if (!ready) return 2;
+      if (fputs("ready", ready) < 0 || fclose(ready) != 0) return 2;
+      if (fgetc(stdin) != '1') return 2;
     }
     if (strcmp(argv[1], "verify-tampered") == 0) {
       size_t used = strlen(plan.product_path);

@@ -54,7 +54,7 @@ reader_account_profiles_status ap_check_string(const char *value, size_t maximum
 int ap_uuid_valid(const char *value) {
   size_t index;
   int non_zero = 0;
-  if (!value || strlen(value) != READER_ACCOUNT_PROFILES_UUID_BYTES) return 0;
+  if (!value) return 0;
   for (index = 0; index < READER_ACCOUNT_PROFILES_UUID_BYTES; ++index) {
     char byte = value[index];
     if (index == 8u || index == 13u || index == 18u || index == 23u) {
@@ -65,7 +65,7 @@ int ap_uuid_valid(const char *value) {
       return 0;
     }
   }
-  return non_zero;
+  return value[READER_ACCOUNT_PROFILES_UUID_BYTES] == '\0' && non_zero;
 }
 
 static int ap_utf8_next(const unsigned char *value, size_t *length, uint32_t *code) {
@@ -1039,6 +1039,8 @@ reader_account_profiles_verify_activation(const char *store_dir,
     return READER_ACCOUNT_PROFILES_ARGUMENT;
   }
   status = ap_verify_directory_chain(plan->private_directory, error);
+  if (status != READER_ACCOUNT_PROFILES_OK) return status;
+  status = ap_verify_directory_chain(plan->original_directory, error);
   if (status != READER_ACCOUNT_PROFILES_OK) return status;
   status = ap_check_library(plan->product_path, plan->profile.account_id,
                             plan->profile.root_url, error);

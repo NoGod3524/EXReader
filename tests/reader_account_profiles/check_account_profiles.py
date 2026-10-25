@@ -55,6 +55,8 @@ REQUIRED_CASES = (
     "binding-mismatch-refused",
     "binding-match-accepted",
     "verify-tampered-plan",
+    "verify-originals-replaced-after-prepare",
+    "verify-nonterminated-plan",
     "verify-stale-plan",
     "verify-missing-profile",
     "unicode-store-path",
@@ -715,6 +717,41 @@ def case_verify_tampered_plan():
     expect(kv(process).get("verify") == "ARGUMENT", "a tampered plan was accepted")
 
 
+def case_verify_nonterminated_plan():
+    expect_status(run([PROBE, "verify-nonterminated"]), "INVALID")
+
+
+def case_verify_originals_replaced_after_prepare():
+    store_path = store("verify-originals-replacement")
+    profile_id, account = uuid_pair(94)
+    add(store_path, profile_id, account, "https://originals.example/reader/", "originals")
+    before = document_bytes(store_path)
+    ready = Path(store_path) / "prepared-ready"
+    target = ROOT / "originals-replacement-target"
+    target.mkdir()
+    marker = target / "untouched.txt";marker.write_bytes(b"original target unchanged")
+    original = Path(store_path) / "profiles" / profile_id / "originals"
+    process = spawn([PROBE, "verify-held", store_path, profile_id, ready], stdin=subprocess.PIPE)
+    linked = False
+    try:
+        wait_file(ready)
+        original.rename(original.with_name("originals.saved"))
+        make_link(target, original);linked = True
+        stdout, stderr = process.communicate("1", timeout=30)
+        result = subprocess.CompletedProcess(process.args, process.returncode, stdout, stderr)
+        expect(process.returncode == 0, "held verification consumer failed: " + stderr)
+        expect(kv(result).get("prepare") == "OK", "original prepare failed")
+        expect(kv(result).get("verify") == "UNSAFE_PATH", "replaced originals directory was accepted")
+        expect(document_bytes(store_path) == before, "verify changed the profile document")
+        expect({path.name for path in target.iterdir()} == {marker.name} and
+               marker.read_bytes() == b"original target unchanged", "verify touched the link target")
+    finally:
+        if process.poll() is None: terminate(process)
+        if linked:
+            if IS_WINDOWS: os.rmdir(original)
+            else: original.unlink()
+
+
 def case_verify_stale_plan():
     store_path = store("verify-stale")
     profile_id, account = uuid_pair(92)
@@ -859,6 +896,8 @@ CASES = (
     ("binding-mismatch-refused", case_binding_mismatch_refused),
     ("binding-match-accepted", case_binding_match_accepted),
     ("verify-tampered-plan", case_verify_tampered_plan),
+    ("verify-originals-replaced-after-prepare", case_verify_originals_replaced_after_prepare),
+    ("verify-nonterminated-plan", case_verify_nonterminated_plan),
     ("verify-stale-plan", case_verify_stale_plan),
     ("verify-missing-profile", case_verify_missing_profile),
     ("unicode-store-path", case_unicode_store_path),
