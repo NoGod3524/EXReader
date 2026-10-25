@@ -1,6 +1,31 @@
-# Explicit GTK raw3 host candidate
+# Optional GTK raw3 host
 
-Status: **candidate; complete same-source acceptance pending**.
+Status: **accepted for the declared optional GTK raw3 and retained regression scopes**.
+
+Tested source: `1cf5ab55b6a92c471af69a8e68b0e9d0c5e3fe6e`.
+Complete [run `40224308783/1`](https://github.com/NoGod3524/EXReader/actions/runs/40224308783)
+succeeded: all six required jobs passed and the historical diagnosis job was
+explicitly skipped. The final independent collector reported
+`accepted=true` with `problems=[]` after authenticating both producer ZIPs,
+the complete original OFF strict result, compact ON/OFF summary, actual
+programs/maps/caches, all raw inventory files including hidden build logs,
+both account windows, and the original UI screenshots/fixtures.
+
+The one-source acceptance retains all 35 actual producer steps and 31
+original authored OFF steps, all 45 original compact UI cases, and all 45
+of those cases again on the raw host. It also covers fourteen actual owner
+process phases, four real SIGKILL/retry boundaries, four actual installed
+family/origin refusals, and fourteen independent raw-summary rejection
+controls. The original compact collector retains its 24 rejection controls.
+No original suite, fixture, judge or budget changed.
+
+The real GTK account windows each completed 256 authenticated HTTPS DAV
+shards. The normal Mac packet retained all fifteen immutable wires and four
+originals, then the actual received owner imported, resolved eleven reading
+records and reopened them. The separate three-wire NULL ancestor closure
+remained unresolved after reopen and refused navigation/text editing.
+All five artifacts' IDs, byte counts, SHA-256 digests, expiry and seven job
+identities are recorded in [the validation record](validation/reader-gtk-raw3.json).
 
 This branch ordinarily merges sealed GTK compact `9fc407a5`, accepted raw
 families/metadata `0889f7d1`, and the shared private capture codec `4ad6f956`.
@@ -72,7 +97,8 @@ unchanged original OFF strict collector. Its compact wrapper then imported
 the OFF-only navigation image validator unnecessarily in a job without
 Pillow, so the compact and combined summaries failed. That import is now
 confined to `--off`; the production pin, original suites and original judges
-are unchanged. Complete acceptance requires a new whole same-source run.
+are unchanged. The final accepted attempt re-executed both complete producers
+and every collector at its new source identity.
 
 Attempt `40222901619/1` stopped after its account-window startup failure;
 the other long producer was cancelled. Authenticated read-only diagnosis
