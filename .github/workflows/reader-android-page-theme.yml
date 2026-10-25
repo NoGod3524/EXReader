@@ -31,12 +31,9 @@ jobs:
         run: |
           mkdir -p build/session-android/logs
           git rev-parse HEAD > build/session-android/logs/source.txt
-          git merge-base --is-ancestor 82ca471c867209f48d3c07eaf92baf0eee57c74b HEAD
-          git diff --exit-code edddc463c06ed5731195cdb8f06b2df6dff7699e HEAD -- src include cmake CMakeLists.txt
-          git diff --exit-code 82ca471c867209f48d3c07eaf92baf0eee57c74b HEAD -- apps/reader extras bindings tests/fixtures tests/reader_android_host_import tests/reader_android_fixed_pan tests/reader_android_cbz_reading tests/reader_android_reading tests/reader_android_preferences tests/reader_android_navigation tests/reader_android_search tests/reader_host_session_android
-          git diff --name-only 82ca471c867209f48d3c07eaf92baf0eee57c74b HEAD | while IFS= read -r path; do
-            case "$path" in examples/android/*|tests/reader_android_page_theme/*|.github/workflows/reader-android-page-theme.yml|docs/READER-ANDROID-PAGE-THEME.md|docs/validation/reader-android-page-theme.json) ;; *) echo "Unexpected page theme path: $path"; exit 1 ;; esac
-          done
+          python -m pip install PyYAML==6.0.3
+          python -m py_compile tests/reader_hosts_341/guard_android.py tests/reader_hosts_341/aggregate_android.py
+          python tests/reader_hosts_341/guard_android.py
           python -m py_compile tests/reader_android_page_theme/*.py
           python tests/reader_android_page_theme/candidate.py
           python -m py_compile build/android-page-theme/candidate/preferences_run_ui.py
@@ -226,12 +223,14 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Authenticate original ZIP and all 130 same-source checks
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          python -m pip install Pillow==11.1.0
-          python tests/reader_android_page_theme/check_evidence.py
+          python -m pip install Pillow==11.1.0 PyYAML==6.0.3
+          python tests/reader_hosts_341/aggregate_android.py
       - uses: actions/upload-artifact@v4
         with:
           name: reader-android-page-theme-summary-${{ github.run_id }}-${{ github.run_attempt }}
