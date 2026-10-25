@@ -2,6 +2,7 @@
 set -euo pipefail
 harness="$PWD"; target="$PWD/target"
 mkdir -p evidence
+python3 target/tests/reader_gtk_compact/make_inputs.py "$harness/evidence/fixtures"
 for mode in OFF ON; do
  for config in normal scale2 dark large; do
   scale=1; font=11; theme=Adwaita

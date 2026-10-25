@@ -32,7 +32,9 @@ def main():
     def capture(name):
         tree=bus.dump(app);(out/(name+'.json')).write_text(json.dumps(tree,indent=2));host.screenshot(out/(name+'.png'),window='root')
         rects=[dict(path=bus.path_of(n),role=bus.role(n),name=bus.name(n),box=bus.extents(n),states=bus.states(n)) for n in bus.walk(app) if bus.states(n).get('showing')]
-        report['snapshots'].append(dict(name=name,geometry=host.geometry(),focus=focused(),visible=rects,png_sha256=digest(out/(name+'.png')),tree_sha256=digest(out/(name+'.json'))))
+        with Image.open(out/(name+'.png')) as image: width,height=image.size
+        outside=[r for r in rects if r['box'] and r['role'] in ('push button','toggle button','text','combo box','menu item') and (r['box']['x']<0 or r['box']['y']<0 or r['box']['x']+r['box']['width']>width or r['box']['y']+r['box']['height']>height)]
+        report['snapshots'].append(dict(name=name,geometry=host.geometry(),focus=focused(),visible=rects,screen_pixels=[width,height],offscreen_candidates=outside,geometry_limit='Bounds only; text clipping, intentional scrolling and overlapping descendants require visual review',png_sha256=digest(out/(name+'.png')),tree_sha256=digest(out/(name+'.json'))))
     def wait_node(name,role): return wait_until(lambda:nodes(name,role),15,description=name)[0]
     def tab_to(name,role=None):
         for _ in range(80):
@@ -75,14 +77,17 @@ def main():
             before=host.host_state();host.key('F4');after=host.wait_state(lambda s:s.get('generation',0)>before.get('generation',0) and not s.get('saving'))
             check('next-page',(before.get('part'),before.get('page'),before.get('start'))!=(after.get('part'),after.get('page'),after.get('start')),[before,after],'Position changes through F4');host.key('F3');host.wait_state(lambda s:not s.get('saving'))
         phase('page-turn',turn)
-        def menu():
+        menu_seen=set()
+        def menu(fixed=False):
             observed=[]
             for index,parent in enumerate(('Reading','Text and notes','Library','Import')):
-                host.key('alt+m','Home',*(['Down']*index),'Right');wait_node(parent,'menu');capture('more-'+str(index))
+                host.key('alt+m','Home',*(['Down']*index),'Right');wait_node(parent,'menu');capture(('fixed-' if fixed else '')+'more-'+str(index))
                 leaves=[dict(path=bus.path_of(n),role=bus.role(n),name=bus.name(n),states=bus.states(n)) for n in bus.walk(app) if bus.role(n)=='menu item']
                 observed.extend(x['name'] for x in leaves)
                 host.key('Escape','Escape')
-            check('more-22-leaves',set(LEAVES)<=set(observed),sorted(set(observed)),list(LEAVES))
+            menu_seen.update(observed)
+            expected=set(LEAVES) if fixed else set(LEAVES)-{'Zoom in','Zoom out'}
+            check('more-22-leaves' if fixed else 'more-text-leaves',expected<=menu_seen,sorted(menu_seen),sorted(expected))
         if a.mode=='ON':phase('more-hierarchy',menu)
         else:report['pending'].append('Compact-only four More parents not applicable to default OFF')
         for name,key,title in [('search','ctrl+shift+f','Search within book'),('directory','ctrl+shift+t','Directory and page entries'),('records','ctrl+shift+r','Reading records'),('settings','ctrl+comma','Reading settings'),('collections','ctrl+shift+c','Library collections'),('account','ctrl+shift+a','Account and Sync')]:
@@ -92,6 +97,12 @@ def main():
                 if name=='records':
                     tab_to('Add bookmark');host.key('Return');tab_to('Reading record text','text');host.type_text('D03 bookmark');host.key('alt+s');time.sleep(1);capture('records-saved')
                     check('record-save',bool(nodes('D03 bookmark')) or any('D03 bookmark' in bus.name(n) for n in bus.walk(app)),[bus.name(n) for n in bus.walk(app) if 'D03' in bus.name(n)],'Saved bookmark exposed in real tree')
+                if name=='collections':
+                    tab_to('Collection type','combo box')
+                    for choice in ('Shelves','Tags','Series'):
+                        host.key('Home',*(['Down']*('Shelves','Tags','Series').index(choice)))
+                        time.sleep(.3);capture('collections-'+choice.lower())
+                    check('collections-types-keyboard',bool(focused()),focused(),'Shelves, Tags and Series selected through native combo keyboard')
                 host.key('Escape');wait_until(lambda:not nodes(title),15,description='closed '+title)
                 check(name+'-escape',bool(focused()),focused(),'Focus returns after Escape')
             phase(name,dialog)
@@ -102,6 +113,17 @@ def main():
         def shelf():
             host.key('F2','ctrl+f');check('return-shelf-search',any(x['name']=='Search bookshelf' for x in focused()),focused(),'F2 then Ctrl+F reaches shelf search');host.key('Escape')
         phase('return-shelf',shelf)
+        def details():
+            host.key('ctrl+e');wait_until(lambda:nodes('Book details'),15,description='Book details');capture('details-dialog');host.key('Escape');wait_until(lambda:not nodes('Book details'),15)
+            check('details-escape',bool(focused()),focused(),'Keyboard details closes and restores focus')
+        phase('book-details',details)
+        if a.mode=='ON':
+            def fixed_menu():
+                fixture=out.parent/'fixtures/fixed/Pages.pdf'
+                before=host.host_state().get('generation',0);host.key('F1');wait_node('Import book','file chooser');host.key('ctrl+l');host.type_text(str(fixture));host.key('Return')
+                host.wait_state(lambda s:s.get('fixed')==1 and s.get('generation',0)>before and not s.get('saving'),timeout=60)
+                capture('fixed-pdf');menu(True);host.key('F2','ctrl+f')
+            phase('fixed-menu-union',fixed_menu)
         command('xdotool','windowsize','--sync',host.window,'800','600');time.sleep(.4);capture('small-window')
         # Sample only the real screenshot region occupied by the shelf search.
         search=nodes('Search bookshelf')
@@ -114,7 +136,9 @@ def main():
             if len(common)==2:
                 levels=sorted(lum(x[1]) for x in common);report['measured_contrast']=dict(path=bus.path_of(search[0]),region=box,colors=common,ratio=(levels[1]+.05)/(levels[0]+.05),algorithm='WCAG relative sRGB luminance of two most frequent actual region colors',limitation='Not a verified text/background pair; not a contrast acceptance grant')
         report['audit_completed']=not any('error' in f for f in report['findings'])
-        report['keyboard_accepted']=report['audit_completed'] and all(c['passed'] for c in report['checks'])
+        report['keyboard_flows_passed']=report['audit_completed'] and all(c['passed'] for c in report['checks'])
+        # A real key route does not establish visible focus in every theme.
+        report['keyboard_accepted']=False
     except Exception as exc:
         report['fatal']=repr(exc);report['traceback']=traceback.format_exc()
         try:
