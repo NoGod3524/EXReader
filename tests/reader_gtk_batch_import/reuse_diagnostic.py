@@ -66,6 +66,32 @@ def main():
         bundle.extractall(archive)
     original = json.loads((archive / 'gtk-batch-ui/report.json').read_text())
     assert original['source_sha'] == source and str(original['run_id']) == str(run_id)
+    if os.environ.get('INSPECT_EVIDENCE_ONLY') == 'true':
+        record = dict(accepted=False, diagnostic_only=True, execution=False,
+                      test_source=os.environ['GITHUB_SHA'], program_source=source,
+                      previous_run=run_id, attempt=run['run_attempt'],
+                      artifact={key: artifact[key] for key in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')})
+        for folder in ('gtk-navigation-ui', 'gtk-search-ui'):
+            path = archive / folder / 'result.json'
+            value = json.loads(path.read_text())
+            assert value['source_sha'] == source and str(value['run_id']) == str(run_id)
+            assert str(value['attempt']) == str(run['run_attempt'])
+            print(json.dumps(dict(report=folder, sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+                                  state={key: value.get(key) for key in ('accepted', 'navigation_scope_passed', 'search_scope_passed', 'last_observation', 'failure_host', 'host_returncode_before_cleanup')},
+                                  checks=[dict(name=row.get('name'), passed=row.get('pass')) for row in value['checks']]), ensure_ascii=False), flush=True)
+            tree = archive / folder / 'failure-tree.json'
+            if tree.exists():
+                def walk(node, ancestors):
+                    compact = {key: node.get(key) for key in ('role', 'name', 'states', 'extents')}
+                    name = node.get('name', '')
+                    if node.get('states', {}).get('focused') or name in ('Search within book', 'In-book results', 'In-book query', 'Directory and page entries') or name.startswith('Search result '):
+                        print(json.dumps(dict(tree=folder, node=compact, ancestors=ancestors[-4:]), ensure_ascii=False), flush=True)
+                    for child in node.get('children', []):
+                        walk(child, ancestors + [compact])
+                walk(json.loads(tree.read_text()), [])
+        (output / 'input.json').write_text(json.dumps(record, indent=2) + '\n')
+        print(json.dumps(record), flush=True)
+        return
     payload = output / 'payload'
     payload.mkdir()
     with tarfile.open(archive / 'account-package/EXReader-Linux.tar.gz') as bundle:

@@ -12,6 +12,10 @@ on:
         type: string
         default: '0'
         description: Existing own run for verified chooser-only artifact diagnostics; zero builds current source
+      inspect_evidence_only:
+        type: boolean
+        default: false
+        description: Read preserved source-bound failure reports and geometry only; no execution or acceptance
 permissions:
   contents: read
   actions: read
@@ -396,6 +400,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install native diagnostic display dependencies
+        if: ${{ !inputs.inspect_evidence_only }}
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-0 libsecret-1-0 at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk dbus-x11
@@ -403,8 +408,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PROBE_RUN: ${{ inputs.probe_run }}
+          INSPECT_EVIDENCE_ONLY: ${{ inputs.inspect_evidence_only }}
         run: python3 tests/reader_gtk_batch_import/reuse_diagnostic.py "$PROBE_RUN" build/chooser-reuse
       - name: Run only the real chooser diagnostic with separate source identities
+        if: ${{ !inputs.inspect_evidence_only }}
         run: |
           python3 tests/reader_gtk_batch_import/make_inputs.py build/chooser-fixtures
           mkdir -p build/gtk-atspi-client
