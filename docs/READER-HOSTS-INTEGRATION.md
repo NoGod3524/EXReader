@@ -1,5 +1,18 @@
 # 原生宿主共同源码候选
 
+## 最新共同轮与后续候选
+
+source `e4356a6e13223469fdf3b2f3d5171a6e99ab10a6` / run `40159425518` 已终态 failure。
+本轮最终认证确认三桌面18包组合和Windows搜索/目录/records32及其原回归；GTK目录 required step 失败，不能称为仅两项palette失败。
+GTK新批范围的包内认证已核 UI27、原668、review4、后端684、真实receipt分配故障3场景/2次及records30；保留目录失败，strict仍为false。
+Android作业已success，但共同最终认证在GTK处拒绝，未到达原始Pan截图/原件的最终重新认证，不把旧Pan proof转授本轮。
+
+目录失败仍是第四次扫描：15秒内未观测到phase2，最后实测visible=1、running=0、phase3、40次poll、9000项，parent-close断言尚未执行。root已保留全部断言，补GTK实际焦点确认、fresh action条件和扫描状态时间序列；run `40161497966`仅复用已重新散列的本轮原程序做诊断，明确分开program source与test source，不授予当前生产候选。
+
+后续候选普通合入 `2df6040666635bcd7b0349b035b8f4885757fdd0`，用真实owner存活位处理无需MAP的枚举分配失败；新增第4场景、累计3次分配失败。尚未共同复验。此前 `c49f24ab` / run `40159238563` 因root复制的GTK sideload pin仍是旧树而中止，已核差异仅为此前验过的Android专属无覆盖导出修复，并固定正确树；原轮保留。
+
+下文此前各节仍分别归其固定source。
+
 候选分支 `codex/reader-hosts-integration`；当前未验收，不能拼接原分支绿灯。直接普通merge保留以下来源及其失败历史：
 
 | 来源 | 固定交回HEAD | 原范围 |
