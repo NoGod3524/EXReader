@@ -1,6 +1,20 @@
 # Dot 第二批：七个新增独立包
 
-本批由用户手动交给Dot，尚未派发。不要重做上一批T01–T07：截至本次核对，其七条远端分支均存在，T02–T07最近一次云端运行success，T01运行40167556466仍在进行；各包仍需root读取证据后接入。
+本批已由外部会话实际执行，七条指定远端分支均存在，最近源码运行均success；root正在复核，不能重复派发。上一批T01已在run40167556466通过46项新UI及全部保留回归，并普通合入共同候选；其余T包继续按原writer与证据范围接续。
+
+## 远端执行核对
+
+| 包 | 远端HEAD | 最新源码运行 | 结果 |
+| --- | --- | --- | --- |
+| D01 | `69d8f789e68141a4b9c26219ff3a4f43f3d355e3` | [40171441924](https://github.com/NoGod3524/EXReader/actions/runs/40171441924) | success；verification=true，migration=false |
+| D02 | `1563f4abb85ccd28c3a0aae3e9913f4330536215` | [40171829885](https://github.com/NoGod3524/EXReader/actions/runs/40171829885) | success，待root复核 |
+| D03 | `25cd7b4b15d952e3f7a10e39ed80ae16a3d9a3ee` | [40171470925](https://github.com/NoGod3524/EXReader/actions/runs/40171470925) | success，受测source `9fdcb28d`，待root复核 |
+| D04 | `9c7e276f13f42cb61a32507c36d1c22c4489bd01` | [40171486469](https://github.com/NoGod3524/EXReader/actions/runs/40171486469) | success，待root复核 |
+| D05 | `0fcbb9578a6b2a5a5e53c0968241ebcdf5b69ba5` | [40171106759](https://github.com/NoGod3524/EXReader/actions/runs/40171106759) | success，受测source `bb6442cd`，待root复核 |
+| D06 | `bcffd40517f8fd3abbb8495f39acd54b4d0fbc6b` | [40171836777](https://github.com/NoGod3524/EXReader/actions/runs/40171836777) | success，待root复核 |
+| D07 | `c2109bbbbe2fb874ee2b02563099ab4d0f6bbec7` | [40171982938](https://github.com/NoGod3524/EXReader/actions/runs/40171982938) | success，待root复核 |
+
+D01严格汇总原始日志明确记录 `verification_accepted=true`、`migration_accepted=false`：旧wire的公开解析与真正parser-qualified来源接纳分开，仍需root制定并实测明确的兼容策略；不能据作业绿灯称升级迁移已通过。表中源码运行与后续证据HEAD分开，尚不转授共同源码。
 
 先读[共同约束](README.md)，每包另开独立工作树/会话，严格使用任务书固定起点和唯一分支。
 
@@ -22,4 +36,4 @@ D01只读验证旧记录迁移，不修改SDK或当前reading wire/source规则�
 
 > 接手本目录D01–D07七包，先读README及七份完整任务书，在七个独立会话/工作树并行实施。按任务书固定SHA和路径边界，不重做T01–T07或J包复核，不动root/三个平台owner文件。所有构建、语法检查、测试、夹具、服务、benchmark和工件处理仅GitHub Actions。可自行提交/push本包功能分支并修复CI，不需询问是否push；不推默认、不合PR、不创建tag/Release。逐包交回完整tested SHA、证据HEAD、真实运行/工件/失败/缺口；由root审查接入。不能把模拟器、命令入队或报告生成授予为真机、实际亮度或完整产品通过。
 
-发送本INDEX的固定提交URL，避免后续说明变化。七个新包均为prepared，用户实际发送后才登记为dispatched。
+发送本INDEX的固定提交URL，避免后续说明变化。七个新包已按远端执行证据登记，不再作为空闲任务重复分发。
