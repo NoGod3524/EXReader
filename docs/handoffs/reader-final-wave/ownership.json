@@ -1,0 +1,259 @@
+{
+  "schema": 1,
+  "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+  "claude": 3,
+  "dot_manual": 7,
+  "deepseek": 12,
+  "root_reserved": [
+    "Windows/GTK raw3 production",
+    "Apple original UI failures",
+    "same-source native integration",
+    "original judge changes",
+    "SDK protected trees",
+    "default branch and release"
+  ],
+  "packages": [
+    {
+      "id": "C01",
+      "owner": "Claude",
+      "title": "C01 最终产品证据门禁",
+      "document": "C01.md",
+      "branch": "codex/reader-fw-c01",
+      "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+      "status": "running_background",
+      "runtime_scope": "new_paths_only",
+      "production_writer": false
+    },
+    {
+      "id": "C02",
+      "owner": "Claude",
+      "title": "C02 产品级性能测量工具",
+      "document": "C02.md",
+      "branch": "codex/reader-fw-c02",
+      "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+      "status": "running_background",
+      "runtime_scope": "new_paths_only",
+      "production_writer": false
+    },
+    {
+      "id": "C03",
+      "owner": "Claude",
+      "title": "C03 账号、导入与同步故障边界复核",
+      "document": "C03.md",
+      "branch": "codex/reader-fw-c03",
+      "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+      "status": "running_background",
+      "runtime_scope": "new_paths_only",
+      "production_writer": false
+    },
+    {
+      "id": "D01",
+      "owner": "Dot（手动）",
+      "title": "D01：六平台首版需求、实际入口与验收追踪",
+      "document": "D01.md",
+      "branch": "codex/reader-final-d01",
+      "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+      "status": "ready_manual_handoff",
+      "runtime_scope": "new_paths_only",
+      "production_writer": false
+    },
+    {
+      "id": "D02",
+      "owner": "Dot（手动）",
+      "title": "D02：Windows compact 高DPI、对比度与UIA键盘审查",
+      "document": "D02.md",
+      "branch": "codex/reader-final-d02",
+      "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+      "status": "ready_manual_handoff",
+      "runtime_scope": "new_paths_only",
+      "production_writer": false
+    },
+    {
+      "id": "D03",
+      "owner": "Dot（手动）",
+      "title": "D03：GTK compact 缩放、对比度与AT-SPI键盘审查",
+      "document": "D03.md",
+      "branch": "codex/reader-final-d03",
+      "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+      "status": "ready_manual_handoff",
+      "runtime_scope": "new_paths_only",
+      "production_writer": false
+    },
+    {
+      "id": "D04",
+      "owner": "Dot（手动）",
+      "title": "D04：Apple三目标默认界面、动态字体与AX语义审查",
+      "document": "D04.md",
+      "branch": "codex/reader-final-d04",
+      "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+      "status": "ready_manual_handoff",
+      "runtime_scope": "new_paths_only",
+      "production_writer": false
+    },
+    {
+      "id": "D05",
+      "owner": "Dot（手动）",
+      "title": "D05：Android默认界面、字体缩放、旋转与TalkBack语义审查",
+      "document": "D05.md",
+      "branch": "codex/reader-final-d05",
+      "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+      "status": "ready_manual_handoff",
+      "runtime_scope": "new_paths_only",
+      "production_writer": false
+    },
+    {
+      "id": "D06",
+      "owner": "Dot（手动）",
+      "title": "D06：四宿主动作、快捷键与焦点一致性审查",
+      "document": "D06.md",
+      "branch": "codex/reader-final-d06",
+      "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+      "status": "ready_manual_handoff",
+      "runtime_scope": "new_paths_only",
+      "production_writer": false
+    },
+    {
+      "id": "D07",
+      "owner": "Dot（手动）",
+      "title": "D07：首版中文用户指南与恢复指引",
+      "document": "D07.md",
+      "branch": "codex/reader-final-d07",
+      "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+      "status": "ready_manual_handoff",
+      "runtime_scope": "new_paths_only",
+      "production_writer": false
+    },
+    {
+      "id": "S01",
+      "owner": "DeepSeek",
+      "title": "S01 Windows最终可迁移包核验",
+      "document": "S01.md",
+      "branch": "codex/reader-fw-s01",
+      "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+      "status": "launching_background",
+      "runtime_scope": "new_paths_only",
+      "production_writer": false
+    },
+    {
+      "id": "S02",
+      "owner": "DeepSeek",
+      "title": "S02 Linux可迁移候选包核验",
+      "document": "S02.md",
+      "branch": "codex/reader-fw-s02",
+      "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+      "status": "launching_background",
+      "runtime_scope": "new_paths_only",
+      "production_writer": false
+    },
+    {
+      "id": "S03",
+      "owner": "DeepSeek",
+      "title": "S03 macOS应用包搬移核验",
+      "document": "S03.md",
+      "branch": "codex/reader-fw-s03",
+      "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+      "status": "launching_background",
+      "runtime_scope": "new_paths_only",
+      "production_writer": false
+    },
+    {
+      "id": "S04",
+      "owner": "DeepSeek",
+      "title": "S04 Android交付APK核验",
+      "document": "S04.md",
+      "branch": "codex/reader-fw-s04",
+      "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+      "status": "launching_background",
+      "runtime_scope": "new_paths_only",
+      "production_writer": false
+    },
+    {
+      "id": "S05",
+      "owner": "DeepSeek",
+      "title": "S05 iPhone与iPad模拟器候选分发核验",
+      "document": "S05.md",
+      "branch": "codex/reader-fw-s05",
+      "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+      "status": "launching_background",
+      "runtime_scope": "new_paths_only",
+      "production_writer": false
+    },
+    {
+      "id": "S06",
+      "owner": "DeepSeek",
+      "title": "S06 六目标导入入口真实回归矩阵",
+      "document": "S06.md",
+      "branch": "codex/reader-fw-s06",
+      "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+      "status": "launching_background",
+      "runtime_scope": "new_paths_only",
+      "production_writer": false
+    },
+    {
+      "id": "S07",
+      "owner": "DeepSeek",
+      "title": "S07 raw同步多peer故障与幂等回归",
+      "document": "S07.md",
+      "branch": "codex/reader-fw-s07",
+      "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+      "status": "launching_background",
+      "runtime_scope": "new_paths_only",
+      "production_writer": false
+    },
+    {
+      "id": "S08",
+      "owner": "DeepSeek",
+      "title": "S08 诊断输出与账号信息泄漏验收",
+      "document": "S08.md",
+      "branch": "codex/reader-fw-s08",
+      "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+      "status": "launching_background",
+      "runtime_scope": "new_paths_only",
+      "production_writer": false
+    },
+    {
+      "id": "S09",
+      "owner": "DeepSeek",
+      "title": "S09 最终分发许可证与SBOM闭包",
+      "document": "S09.md",
+      "branch": "codex/reader-fw-s09",
+      "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+      "status": "launching_background",
+      "runtime_scope": "new_paths_only",
+      "production_writer": false
+    },
+    {
+      "id": "S10",
+      "owner": "DeepSeek",
+      "title": "S10 电脑传书入口与能力证据",
+      "document": "S10.md",
+      "branch": "codex/reader-fw-s10",
+      "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+      "status": "launching_background",
+      "runtime_scope": "new_paths_only",
+      "production_writer": false
+    },
+    {
+      "id": "S11",
+      "owner": "DeepSeek",
+      "title": "S11 原件导入持久化故障回归",
+      "document": "S11.md",
+      "branch": "codex/reader-fw-s11",
+      "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+      "status": "launching_background",
+      "runtime_scope": "new_paths_only",
+      "production_writer": false
+    },
+    {
+      "id": "S12",
+      "owner": "DeepSeek",
+      "title": "S12 Unicode路径与书库状态跨配置回归",
+      "document": "S12.md",
+      "branch": "codex/reader-fw-s12",
+      "implementation_base": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+      "status": "launching_background",
+      "runtime_scope": "new_paths_only",
+      "production_writer": false
+    }
+  ]
+}
