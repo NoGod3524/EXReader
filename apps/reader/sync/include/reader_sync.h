@@ -39,6 +39,11 @@ void reader_sync_free(reader_sync *);
    No projection/SDK/current-reading mutation or remote garbage collection. */
 reader_sync_status reader_sync_step(reader_sync *,unsigned shard,const char *after,size_t limit,
   const exr_webdav_control *,reader_sync_report *,reader_sync_error *);
+#ifdef EXR_READER_SELECTOR_BYTES_CANDIDATE
+/* Explicit immutable raw-store transport capability; exact original wire only. */
+reader_sync_status reader_sync_create_raw_v3(const reader_sync_config *config,reader_sync **out,reader_sync_error *error);
+reader_sync_status reader_sync_step_raw_v3(reader_sync *sync,unsigned shard,const char *after,size_t limit,const exr_webdav_control *control,reader_sync_report *out,reader_sync_error *error);
+#endif
 #ifdef __cplusplus
 }
 #endif
