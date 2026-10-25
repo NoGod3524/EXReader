@@ -53,7 +53,8 @@ def main():
                                 capture_output=True, encoding='utf-8', errors='strict', timeout=timeout)
         assert result.returncode == 0, (mode, options, result.returncode, result.stderr)
         value = json.loads(result.stdout)
-        if 'status' in value and mode != 'bad-request':
+        # seed reports its fixture setup status, not a bulk API result.
+        if 'status' in value and mode not in ('bad-request', 'seed'):
             assert value['error_code'] == value['status'], (mode, value)
         if expect is not None:
             assert value['status'] == expect, (mode, options, expect, value)
