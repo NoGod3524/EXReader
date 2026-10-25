@@ -1,1 +1,928 @@
-{"package":"D06","accepted":false,"keyboard_accepted":false,"complete_product":false,"status":"awaiting Actions","implementation_source":"0889f7d1e9a537c6c1b05456547e016b26e1cd85","sdk_source":"edddc463c06ed5731195cdb8f06b2df6dff7699e","screen_reader_execution":"pending"}
+{
+  "package": "D06",
+  "status": "blocked_after_three_failed_rounds",
+  "accepted": false,
+  "audit_completed": false,
+  "evidence_collection_completed": true,
+  "keyboard_accepted": false,
+  "complete_product": false,
+  "tested_harness_sha": "9e01b2b5b079d1058f3206052e21e63c97d32c94",
+  "implementation_source": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+  "sdk_source": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "run_id": "40217793667",
+  "attempt": "1",
+  "jobs": [
+    {
+      "id": 121242611335,
+      "name": "guard",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 121242662236,
+      "name": "native (iphone, macos-15, 72c6bbdd14ebf3be453fa7f0da81119d52675eb5)",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 121242662262,
+      "name": "native (gtk, ubuntu-22.04, 57203a52aee439be5194ee0a4b13563a975e8daf)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 121242662291,
+      "name": "native (macos, macos-15, 15dab6b2270dc296ed6239db67ced2e22d255e65)",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 121242662311,
+      "name": "native (android, ubuntu-latest, 4a04a9cc74dde67f755c87e87b278d63a254a3ac)",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 121242662363,
+      "name": "native (ipad, macos-15, 72c6bbdd14ebf3be453fa7f0da81119d52675eb5)",
+      "status": "completed",
+      "conclusion": "failure"
+    },
+    {
+      "id": 121242662412,
+      "name": "native (windows, windows-2022, eab342ef456be4a8a1811e5249e3c217d906ce8a)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 121250241559,
+      "name": "verify",
+      "status": "completed",
+      "conclusion": "failure"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12608317797,
+      "name": "d06-source-40217793667-1",
+      "size_in_bytes": 10188,
+      "digest": "sha256:8c06de55a8ae2fd8958dda60a9aa88e9639f88a681a8fb60bae659404a6db20a",
+      "expires_at": "2027-01-23T17:42:56Z"
+    },
+    {
+      "id": 12607523904,
+      "name": "d06-windows-40217793667-1",
+      "size_in_bytes": 330615,
+      "digest": "sha256:e3e069ea627a135fbbeece5b3cc143ebd6add25ada953ecd2ff3ac3c0728470c",
+      "expires_at": "2027-01-23T17:42:56Z"
+    },
+    {
+      "id": 12608024883,
+      "name": "d06-gtk-40217793667-1",
+      "size_in_bytes": 194831,
+      "digest": "sha256:a575f405b2dbae686a53af0895b3028c907a1407fcee5382aa0b1e41be980706",
+      "expires_at": "2027-01-23T17:42:56Z"
+    },
+    {
+      "id": 12608164204,
+      "name": "d06-android-40217793667-1",
+      "size_in_bytes": 2740282,
+      "digest": "sha256:833b0fe3ca9997b33942fa69541c49523453bb3b88da93dc89205e992b669038",
+      "expires_at": "2027-01-23T17:42:56Z"
+    },
+    {
+      "id": 12608905695,
+      "name": "d06-macos-40217793667-1",
+      "size_in_bytes": 109936148,
+      "digest": "sha256:0a276b16d389b12891f8e3753a64a2d62e0458c031a5cec8bbba11e12c9a4f79",
+      "expires_at": "2027-01-23T17:42:56Z"
+    },
+    {
+      "id": 12608661481,
+      "name": "d06-iphone-40217793667-1",
+      "size_in_bytes": 98773498,
+      "digest": "sha256:429c1b015fc4daf3b3578a0c041e8a6cd3197741e09474e0743a7e4fcdc09caa",
+      "expires_at": "2027-01-23T17:42:56Z"
+    },
+    {
+      "id": 12608462511,
+      "name": "d06-ipad-40217793667-1",
+      "size_in_bytes": 132195345,
+      "digest": "sha256:311d3554aa1e082619be6bdab177e4058901d53c20ac4dd5ad8952aaca419b79",
+      "expires_at": "2027-01-23T17:42:56Z"
+    }
+  ],
+  "negative_controls": 13,
+  "platforms": {
+    "windows": {
+      "mapping_completed": true,
+      "target_sha": "eab342ef456be4a8a1811e5249e3c217d906ce8a",
+      "programs": {
+        "default": {
+          "path": "D:\\a\\EXReader\\EXReader\\build\\d06\\windows-producer\\ws-package\\EXReader\\EXReader.exe",
+          "sha256": "7406f67dd812392f4b57844e4e1cf239b96d9695aea6ae512bcf341aafb6c4cf"
+        },
+        "compact": {
+          "path": "D:\\a\\EXReader\\EXReader\\build\\d06\\windows-producer\\compact-host\\EXReaderProduct.exe",
+          "sha256": "37caa77499e94ed060a2fc71f503fbf22be8abf2f3bb943af59890d785dcc7ff"
+        },
+        "review": {
+          "path": "D:\\a\\EXReader\\EXReader\\build\\d06\\windows-producer\\ws-host\\EXReaderShelfReview.exe",
+          "sha256": "d5fac978ac1e130b3ae8dfc8bc3ebb40c511cd7ef70f6132de384e4ae15c876f"
+        }
+      },
+      "executed_actions": [
+        {
+          "name": "ctrl-f-opens-native-search",
+          "group": "windows-default-keyboard/keyboard-uia.json",
+          "passed": true
+        },
+        {
+          "name": "initial-focus-is-named-query",
+          "group": "windows-default-keyboard/keyboard-uia.json",
+          "passed": true
+        },
+        {
+          "name": "native-query-value-pattern",
+          "group": "windows-default-keyboard/keyboard-uia.json",
+          "passed": true
+        },
+        {
+          "name": "enter-searches-focused-query",
+          "group": "windows-default-keyboard/keyboard-uia.json",
+          "passed": true
+        },
+        {
+          "name": "results-expose-selection-items",
+          "group": "windows-default-keyboard/keyboard-uia.json",
+          "passed": true
+        },
+        {
+          "name": "completed-next-and-cancel-disabled",
+          "group": "windows-default-keyboard/keyboard-uia.json",
+          "passed": true
+        },
+        {
+          "name": "all-actions-have-native-accessible-names",
+          "group": "windows-default-keyboard/keyboard-uia.json",
+          "passed": true
+        },
+        {
+          "name": "tab-reaches-every-enabled-action",
+          "group": "windows-default-keyboard/keyboard-uia.json",
+          "passed": true
+        },
+        {
+          "name": "shift-tab-returns-to-previous-control",
+          "group": "windows-default-keyboard/keyboard-uia.json",
+          "passed": true
+        },
+        {
+          "name": "uia-select-and-invoke-locate",
+          "group": "windows-default-keyboard/keyboard-uia.json",
+          "passed": true
+        },
+        {
+          "name": "focus-remains-in-search-after-locate",
+          "group": "windows-default-keyboard/keyboard-uia.json",
+          "passed": true
+        },
+        {
+          "name": "escape-closes-and-returns-reading-focus",
+          "group": "windows-default-keyboard/keyboard-uia.json",
+          "passed": true
+        },
+        {
+          "name": "reopen-clears-transient-query",
+          "group": "windows-default-keyboard/keyboard-uia.json",
+          "passed": true
+        },
+        {
+          "name": "empty-enter-refuses-query",
+          "group": "windows-default-keyboard/keyboard-uia.json",
+          "passed": true
+        },
+        {
+          "name": "keyboard-does-not-write-notes-or-history",
+          "group": "windows-default-keyboard/keyboard-uia.json",
+          "passed": true
+        },
+        {
+          "name": "real-escape-cancels-live-query",
+          "group": "windows-default-keyboard/keyboard-uia.json",
+          "passed": true
+        },
+        {
+          "name": "second-escape-closes-after-cancel",
+          "group": "windows-default-keyboard/keyboard-uia.json",
+          "passed": true
+        },
+        {
+          "name": "text-input-key",
+          "group": "windows-text-repeat/report.json",
+          "passed": true
+        },
+        {
+          "name": "text-input-key",
+          "group": "windows-text-repeat/report.json",
+          "passed": true
+        },
+        {
+          "name": "text-input-key",
+          "group": "windows-text-repeat/report.json",
+          "passed": true
+        },
+        {
+          "name": "text-input-key",
+          "group": "windows-text-repeat/report.json",
+          "passed": true
+        },
+        {
+          "name": "repeat-open-search",
+          "group": "windows-text-repeat/report.json",
+          "passed": true
+        },
+        {
+          "name": "repeat-open-search",
+          "group": "windows-text-repeat/report.json",
+          "passed": true
+        },
+        {
+          "name": "repeat-open-search",
+          "group": "windows-text-repeat/report.json",
+          "passed": true
+        },
+        {
+          "name": "escape-focus-restore",
+          "group": "windows-text-repeat/report.json",
+          "passed": true
+        },
+        {
+          "name": "library-default-minimal",
+          "group": "windows-compact/report.json",
+          "passed": true
+        },
+        {
+          "name": "native-menu-capabilities",
+          "group": "windows-compact/report.json",
+          "passed": true
+        },
+        {
+          "name": "system-picker-cancel-preserves-library",
+          "group": "windows-compact/report.json",
+          "passed": true
+        },
+        {
+          "name": "txt-native-import",
+          "group": "windows-compact/report.json",
+          "passed": true
+        },
+        {
+          "name": "txt-reading-view",
+          "group": "windows-compact/report.json",
+          "passed": true
+        },
+        {
+          "name": "epub-native-import",
+          "group": "windows-compact/report.json",
+          "passed": true
+        },
+        {
+          "name": "epub-reading-view",
+          "group": "windows-compact/report.json",
+          "passed": true
+        },
+        {
+          "name": "pdf-native-import",
+          "group": "windows-compact/report.json",
+          "passed": true
+        },
+        {
+          "name": "pdf-reading-view",
+          "group": "windows-compact/report.json",
+          "passed": true
+        },
+        {
+          "name": "cbz-native-import",
+          "group": "windows-compact/report.json",
+          "passed": true
+        },
+        {
+          "name": "cbz-reading-view",
+          "group": "windows-compact/report.json",
+          "passed": true
+        },
+        {
+          "name": "reading-next-and-previous",
+          "group": "windows-compact/report.json",
+          "passed": true
+        },
+        {
+          "name": "keyboard-library-and-resume",
+          "group": "windows-compact/report.json",
+          "passed": true
+        },
+        {
+          "name": "expanded-panel-retains-controls",
+          "group": "windows-compact/report.json",
+          "passed": true
+        },
+        {
+          "name": "expanded-panel-note-commit",
+          "group": "windows-compact/report.json",
+          "passed": true
+        },
+        {
+          "name": "compact-resize-and-focus",
+          "group": "windows-compact/report.json",
+          "passed": true
+        },
+        {
+          "name": "small-window-note-editor-remains-reachable",
+          "group": "windows-compact/report.json",
+          "passed": true
+        },
+        {
+          "name": "search-native-dialog",
+          "group": "windows-compact/report.json",
+          "passed": true
+        },
+        {
+          "name": "navigation-native-dialog",
+          "group": "windows-compact/report.json",
+          "passed": true
+        },
+        {
+          "name": "records-native-dialog",
+          "group": "windows-compact/report.json",
+          "passed": true
+        },
+        {
+          "name": "settings-native-dialog",
+          "group": "windows-compact/report.json",
+          "passed": true
+        },
+        {
+          "name": "restart-restores-compact-reading",
+          "group": "windows-compact/report.json",
+          "passed": true
+        }
+      ],
+      "passed": 47,
+      "failed": [],
+      "pending": [
+        "complete modal/focus matrix",
+        "repeat-submit across all dialogs",
+        "screen reader speech",
+        "physical external keyboard"
+      ],
+      "keyboard_accepted": false,
+      "scoped_native_checks_accepted": true,
+      "scope_incomplete": true,
+      "actions_blocked": [],
+      "weak_assertions": []
+    },
+    "android": {
+      "mapping_completed": true,
+      "target_sha": "4a04a9cc74dde67f755c87e87b278d63a254a3ac",
+      "programs": {
+        "host": {
+          "path": "/home/runner/work/EXReader/EXReader/build/d06/android-producer/examples/android/app/build/outputs/apk/debug/app-debug.apk",
+          "sha256": "a4627d562df9c2436a9f91f1371112de5ad6801e4f43544546c412195e1d0c74"
+        },
+        "search": {
+          "path": "/home/runner/work/EXReader/EXReader/build/d06/android-producer/build/android-search/test-apks/search-ui.apk",
+          "sha256": "80ff56ab8fa150523cbec27f16661485aeb08a8ec50598c1f2388b74c1b56876"
+        },
+        "navigation": {
+          "path": "/home/runner/work/EXReader/EXReader/build/d06/android-producer/build/android-navigation/test-apks/navigation-ui.apk",
+          "sha256": "1dac34086db7b0fcec270f3cd38926ad3a8c5c1682ffda31c09b44cc3313a35f"
+        },
+        "installed": {
+          "path": "/data/app/~~SdFQG8GVjC_8mhqhmsR4UA==/org.exreader.host-sof2j6lExD1q2C1sCJ5Mxg==/base.apk",
+          "sha256": "a4627d562df9c2436a9f91f1371112de5ad6801e4f43544546c412195e1d0c74"
+        }
+      },
+      "executed_actions": [
+        {
+          "name": "installed_search_and_same_shared_sdk_provider",
+          "group": "android-search/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "txt_bounded_batches_preserve_source_notes_progress_outbox_and_page",
+          "group": "android-search/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "unicode_query_and_explicit_empty_result_preserve_reader",
+          "group": "android-search/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "invalid_query_reports_error_without_touching_stores",
+          "group": "android-search/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "ambiguous_selection_keeps_list_page_and_stored_progress",
+          "group": "android-search/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "txt_explicit_found_selection_navigates_real_page",
+          "group": "android-search/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "bounded_epub_unique_and_repeated_spine_routes",
+          "group": "android-search/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "pdf_text_found_and_textless_pdf_empty_are_distinct",
+          "group": "android-search/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "cbz_is_explicitly_unsupported_not_empty",
+          "group": "android-search/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "jni_query_selector_byte_and_owner_boundaries",
+          "group": "android-search/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "cancel_real_installed_search_control_then_retry",
+          "group": "android-search/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "close_real_control_releases_and_reopens_search",
+          "group": "android-search/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "background_closes_control_and_manual_reopen_is_clean",
+          "group": "android-search/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "process_reopen_has_no_search_and_preserves_original_stores",
+          "group": "android-search/reopen-report.json",
+          "passed": true
+        },
+        {
+          "name": "real_search_after_process_restart",
+          "group": "android-search/reopen-report.json",
+          "passed": true
+        },
+        {
+          "name": "installed_navigation_and_single_shared_sdk_provider",
+          "group": "android-navigation/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "root_pagination_and_read_only_directory_preserve_actual_frame_and_stores",
+          "group": "android-navigation/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "hierarchy_unicode_fragment_selects_independently_verified_part",
+          "group": "android-navigation/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "external_targets_do_not_launch_or_change_reader",
+          "group": "android-navigation/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "part_only_requires_explicit_start_confirmation",
+          "group": "android-navigation/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "unresolved_and_container_escape_never_guess",
+          "group": "android-navigation/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "plain_label_and_empty_authored_navigation",
+          "group": "android-navigation/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "repeated_spine_needs_explicit_identity_and_never_first_match",
+          "group": "android-navigation/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "full_cfi_from_public_sdk_resolves_again_and_navigates",
+          "group": "android-navigation/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "surrogate_collapsed_and_corrupt_cfi_stay_unmoved",
+          "group": "android-navigation/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "pdf_pages_are_not_authored_outline",
+          "group": "android-navigation/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "cbz_pages_use_actual_page_ids",
+          "group": "android-navigation/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "jni_boundaries_thread_and_verified_identity_are_enforced",
+          "group": "android-navigation/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "cancel_real_resolve_then_close_and_retry_is_clean",
+          "group": "android-navigation/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "close_and_actual_rotation_cancel_stale_results",
+          "group": "android-navigation/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "background_releases_snapshot_and_manual_reopen_starts_at_root",
+          "group": "android-navigation/first-report.json",
+          "passed": true
+        },
+        {
+          "name": "process_reopen_has_no_snapshot_or_stale_destination",
+          "group": "android-navigation/reopen-report.json",
+          "passed": true
+        },
+        {
+          "name": "real_navigation_works_after_process_restart",
+          "group": "android-navigation/reopen-report.json",
+          "passed": true
+        },
+        {
+          "name": "query-key-21",
+          "group": "android-focus/report.json",
+          "passed": true
+        },
+        {
+          "name": "query-key-22",
+          "group": "android-focus/report.json",
+          "passed": true
+        },
+        {
+          "name": "query-key-62",
+          "group": "android-focus/report.json",
+          "passed": true
+        },
+        {
+          "name": "query-key-29",
+          "group": "android-focus/report.json",
+          "passed": true
+        },
+        {
+          "name": "search-back-page-preserved",
+          "group": "android-focus/report.json",
+          "passed": true
+        },
+        {
+          "name": "records-native-entry",
+          "group": "android-focus/report.json",
+          "passed": true
+        },
+        {
+          "name": "records-back-page-preserved",
+          "group": "android-focus/report.json",
+          "passed": true
+        },
+        {
+          "name": "return-shelf",
+          "group": "android-focus/report.json",
+          "passed": true
+        },
+        {
+          "name": "native-import-picker",
+          "group": "android-focus/report.json",
+          "passed": true
+        }
+      ],
+      "passed": 42,
+      "failed": [
+        "picker-cancel: book_list not reached after one Back; provider-navigation/harness assumption unresolved"
+      ],
+      "pending": [
+        "complete modal/focus matrix",
+        "repeat-submit across all dialogs",
+        "screen reader speech",
+        "physical external keyboard"
+      ],
+      "keyboard_accepted": false,
+      "scoped_native_checks_accepted": false,
+      "scope_incomplete": true,
+      "actions_blocked": [
+        "picker-cancel"
+      ],
+      "weak_assertions": [
+        "page-preserved checks do not require reader focus; search Back observed back_button focus",
+        "records entry check alone does not prove full modal focus cycle"
+      ]
+    },
+    "macos": {
+      "mapping_completed": true,
+      "target_sha": "15dab6b2270dc296ed6239db67ced2e22d255e65",
+      "programs": {
+        "Build/Products/Debug/EXReaderHost.app/Contents/MacOS/EXReaderHost": {
+          "sha256": "0cfb50ec9a38ec6f8db7d93f4dc7c154a1d8e9233376f4dd6f486db935cf91ef",
+          "bytes": 6938416
+        }
+      },
+      "configuration": {
+        "test_source_directory": "/Users/runner/work/EXReader/EXReader/build/d06/macos-tests/accessibility/ui",
+        "generated_project_sha256": "f0b2b93de5b8733b9f0bd1fe2734462be385f0bd587e57819b96d0581ac387f1",
+        "review_macros_present": false,
+        "page_theme_enabled": true,
+        "signing_allowed": false
+      },
+      "destination": "platform=macOS",
+      "executed_actions": [
+        {
+          "name": "shelf",
+          "group": "actual-XCTest-log",
+          "passed": true
+        },
+        {
+          "name": "import-fixture-native-entry",
+          "group": "actual-XCTest-log",
+          "passed": true
+        },
+        {
+          "name": "open",
+          "group": "actual-XCTest-log",
+          "passed": true
+        },
+        {
+          "name": "next-page",
+          "group": "actual-XCTest-log",
+          "passed": true
+        },
+        {
+          "name": "search-text-focus",
+          "group": "actual-XCTest-log",
+          "passed": true
+        },
+        {
+          "name": "search-result",
+          "group": "actual-XCTest-log",
+          "passed": true
+        }
+      ],
+      "passed": 6,
+      "failed": [
+        "search.close: immediate query disappearance assertion failed; animation timing hypothesis"
+      ],
+      "pending": [
+        "complete modal/focus matrix",
+        "repeat-submit across all dialogs",
+        "screen reader speech",
+        "physical external keyboard"
+      ],
+      "keyboard_accepted": false,
+      "scoped_native_checks_accepted": false,
+      "scope_incomplete": true,
+      "actions_blocked": [
+        "search-close",
+        "directory",
+        "records",
+        "back-shelf"
+      ],
+      "weak_assertions": [
+        "native text value proves typed query, not physical keyboard routing",
+        "per-step AX tree/screenshots do not assert all entry/exit focus owners"
+      ]
+    },
+    "iphone": {
+      "mapping_completed": true,
+      "target_sha": "72c6bbdd14ebf3be453fa7f0da81119d52675eb5",
+      "programs": {
+        "Build/Products/Debug-iphonesimulator/EXReaderHost.app/EXReaderHost": {
+          "sha256": "7ce3a968a3097047cff2c5495b3e6782d82268b32dc39590954a7d6c223e22e3",
+          "bytes": 6973664
+        }
+      },
+      "configuration": {
+        "test_source_directory": "/Users/runner/work/EXReader/EXReader/build/d06/iphone-tests/accessibility/ui",
+        "generated_project_sha256": "5e2ea72ff5d5f4701de2ad32eb7e378dd2f666fcd6163e33178b9793a39a0ba8",
+        "review_macros_present": false,
+        "page_theme_enabled": true,
+        "signing_allowed": false
+      },
+      "destination": "platform=iOS Simulator,id=48B2DA2E-AF18-4E36-BB25-B25969A4EBCF",
+      "executed_actions": [
+        {
+          "name": "shelf",
+          "group": "actual-XCTest-log",
+          "passed": true
+        },
+        {
+          "name": "import-fixture-native-entry",
+          "group": "actual-XCTest-log",
+          "passed": true
+        },
+        {
+          "name": "open",
+          "group": "actual-XCTest-log",
+          "passed": true
+        },
+        {
+          "name": "next-page",
+          "group": "actual-XCTest-log",
+          "passed": true
+        },
+        {
+          "name": "search-text-focus",
+          "group": "actual-XCTest-log",
+          "passed": true
+        },
+        {
+          "name": "search-result",
+          "group": "actual-XCTest-log",
+          "passed": true
+        },
+        {
+          "name": "search-close",
+          "group": "actual-XCTest-log",
+          "passed": true
+        },
+        {
+          "name": "directory",
+          "group": "actual-XCTest-log",
+          "passed": true
+        }
+      ],
+      "passed": 8,
+      "failed": [
+        "reader.more: generic isHittable predicate failed; existing native descendant trigger workaround not reused"
+      ],
+      "pending": [
+        "complete modal/focus matrix",
+        "repeat-submit across all dialogs",
+        "screen reader speech",
+        "physical external keyboard"
+      ],
+      "keyboard_accepted": false,
+      "scoped_native_checks_accepted": false,
+      "scope_incomplete": true,
+      "actions_blocked": [
+        "records",
+        "back-shelf"
+      ],
+      "weak_assertions": [
+        "native text value proves typed query, not physical keyboard routing",
+        "per-step AX tree/screenshots do not assert all entry/exit focus owners"
+      ]
+    },
+    "ipad": {
+      "mapping_completed": true,
+      "target_sha": "72c6bbdd14ebf3be453fa7f0da81119d52675eb5",
+      "programs": {
+        "Build/Products/Debug-iphonesimulator/EXReaderHost.app/EXReaderHost": {
+          "sha256": "633a0854b8a4f0210b41dfaa707092c31423939b26555a9112a25ec3fb77ebec",
+          "bytes": 6973616
+        }
+      },
+      "configuration": {
+        "test_source_directory": "/Users/runner/work/EXReader/EXReader/build/d06/ipad-tests/accessibility/ui",
+        "generated_project_sha256": "1b5b562c88a7fe6330870cfa22bf6403fdbad3d466b45783358d7870c29ee5da",
+        "review_macros_present": false,
+        "page_theme_enabled": true,
+        "signing_allowed": false
+      },
+      "destination": "platform=iOS Simulator,id=9D9BF050-F6F5-4D32-84C0-4B7AC57F63EF",
+      "executed_actions": [
+        {
+          "name": "shelf",
+          "group": "actual-XCTest-log",
+          "passed": true
+        },
+        {
+          "name": "import-fixture-native-entry",
+          "group": "actual-XCTest-log",
+          "passed": true
+        },
+        {
+          "name": "open",
+          "group": "actual-XCTest-log",
+          "passed": true
+        },
+        {
+          "name": "next-page",
+          "group": "actual-XCTest-log",
+          "passed": true
+        },
+        {
+          "name": "search-text-focus",
+          "group": "actual-XCTest-log",
+          "passed": true
+        },
+        {
+          "name": "search-result",
+          "group": "actual-XCTest-log",
+          "passed": true
+        },
+        {
+          "name": "search-close",
+          "group": "actual-XCTest-log",
+          "passed": true
+        },
+        {
+          "name": "directory",
+          "group": "actual-XCTest-log",
+          "passed": true
+        }
+      ],
+      "passed": 8,
+      "failed": [
+        "reader.more: generic isHittable predicate failed; existing native descendant trigger workaround not reused"
+      ],
+      "pending": [
+        "complete modal/focus matrix",
+        "repeat-submit across all dialogs",
+        "screen reader speech",
+        "physical external keyboard"
+      ],
+      "keyboard_accepted": false,
+      "scoped_native_checks_accepted": false,
+      "scope_incomplete": true,
+      "actions_blocked": [
+        "records",
+        "back-shelf"
+      ],
+      "weak_assertions": [
+        "native text value proves typed query, not physical keyboard routing",
+        "per-step AX tree/screenshots do not assert all entry/exit focus owners"
+      ]
+    },
+    "gtk": {
+      "mapping_completed": true,
+      "target_sha": "57203a52aee439be5194ee0a4b13563a975e8daf",
+      "programs": {
+        "compact": {
+          "path": "/home/runner/work/EXReader/EXReader/build/d06/gtk-producer/compact-package/EXReader-Linux/bin/exreader-linux",
+          "sha256": "d715588d1c1fafa3a1d9677e78ff9410db41606789ba500b5e47f3ad8c2cd5a3"
+        }
+      },
+      "executed_actions": [
+        "unchanged compact native UI driver returned 0; per-action verification rejected"
+      ],
+      "passed": [],
+      "failed": [
+        "Verifier bare AssertionError: visible execution envelope meets contract; count/identity assertions have nonempty diagnostics. Remaining bare guards include ZIP path/duplicate safety and manifest size/hash; openbox.log is hashed before background openbox/Xvfb teardown (mutable-log race candidate). Exact member unavailable."
+      ],
+      "pending": [
+        "per-action manifest/report verification",
+        "default GTK runtime",
+        "complete modal focus/repeat-submit matrix",
+        "screen-reader speech"
+      ],
+      "keyboard_accepted": false,
+      "scoped_native_checks_accepted": false,
+      "scope_incomplete": true,
+      "actions_blocked": [
+        "per-action final verification"
+      ],
+      "weak_assertions": []
+    }
+  },
+  "errors": [
+    "gtk: AssertionError: ",
+    "android: native execution failure",
+    "macos: native execution failure",
+    "iphone: native execution failure",
+    "ipad: native execution failure"
+  ],
+  "earlier_failed_runs": [
+    {
+      "run_id": 40215158098,
+      "harness_sha": "43f2d96df2e43d4e31a041ae37b7881dd9297115",
+      "reason": "redirect HTTP401; zero native execution"
+    },
+    {
+      "run_id": 40215565178,
+      "harness_sha": "9f5358bfa4ba8d4de06d254442baf4def4b0fbb3",
+      "reason": "Apple XCTest assertions; review macros enabled; Windows separator verifier refusal"
+    }
+  ],
+  "screen_reader_execution": "pending",
+  "raw_actions_report": "actions-verification.json",
+  "note": "Raw audit_completed is envelope-presence bookkeeping, not task completion. Failed assertion tails are recorded here even when raw passed-step arrays have no failed row. No fourth run authorized.",
+  "scope_incomplete": true
+}

@@ -10,8 +10,8 @@ No production files are changed. Audit completion is not keyboard or product acc
 |---|---|---|
 | Windows default and compact | eab342ef456be4a8a1811e5249e3c217d906ce8a / 40201283788 attempt 1 | f355525b74ae261db536c56200e46643919ef323 |
 | GTK compact | 57203a52aee439be5194ee0a4b13563a975e8daf / 40206458217 attempt 1 | 9fc407a5cce5a0bfe644a60bd8dc29f84dea6d0e |
-| Android reference, no new execution yet | 4a04a9cc74dde67f755c87e87b278d63a254a3ac | caa84411ae79c866c28cf982243b6cb80b4bbe49 |
-| macOS reference, no new execution yet | 15dab6b2270dc296ed6239db67ced2e22d255e65 | 44eabdc86b3b84d986f81dbaf8cee92b1829cea8 |
+| Android authenticated native replay | 4a04a9cc74dde67f755c87e87b278d63a254a3ac | caa84411ae79c866c28cf982243b6cb80b4bbe49 |
+| macOS unsigned source build and native test | 15dab6b2270dc296ed6239db67ced2e22d255e65 | 44eabdc86b3b84d986f81dbaf8cee92b1829cea8 |
 | iPhone and iPad rejected candidate | 72c6bbdd14ebf3be453fa7f0da81119d52675eb5 / 40203714083 failed | no collective grant |
 
 The new workflow authenticates original ZIP bytes, expiry and producer SHA in Actions,
@@ -34,7 +34,7 @@ owners already provide native event tools; this package does not duplicate their
 Reused new execution: Windows search keyboard's 17 named native checks (Ctrl+F,
 query focus, Enter, full Tab cycle, Shift+Tab, locate, cancel/close focus recovery),
 Windows compact's system picker cancellation/import/open/previous/next/Alt+Left/
-resume/records/search/directory/settings routes, GTK compact's 46 named controls,
+resume/records/search/directory/settings routes, GTK compact's 45 named checks,
 real menu/keyboard input and AT-SPI focus including import cancel, records row focus,
 close restore, library and continue. Additional Windows input ownership probe adds
 left/right/space/letter in query and repeated Ctrl+F; it does not claim repeat-submit.
@@ -70,3 +70,15 @@ owned Actions `.../accessibility/ui` directory; the generated project is hashed 
 explicit assertion rejects either review macro. The XCTest also rejects `reader.state`.
 Compact toolbar reachability follows the existing accessibility driver's native viewport
 scroll rule, extended to the actual search/directory buttons. No hidden control API is used.
+
+## Final status (supersedes provisional coverage paragraphs above)
+
+**Scope incomplete after three failed rounds.** All six platform jobs actually executed
+native programs, including unsigned Apple apps, rather than merely reviewing producers.
+Final harness `9e01b2b5b079d1058f3206052e21e63c97d32c94`, run40217793667/1 fails.
+Windows47 scoped checks are authenticated; GTK native exit0 is not a verifier grant;
+Android42 partial checks, macOS6, iPhone8 and iPad8 action marks remain partial.
+See [handoff](../../HANDOFF-RESULT.md), [validation](validation.json), and
+[raw Actions verification](actions-verification.json). The machine-readable report
+separates assertion failures, blocked actions, weak assertions and pending scopes.
+No fourth run, no production fix, no full keyboard/audit/product acceptance.
