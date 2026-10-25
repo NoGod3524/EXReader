@@ -19,15 +19,27 @@ CASE='testFixedCbzAndPdfRealPointRecords'
 
 
 def main():
+    global RUN, CASE
+    target = sys.argv[1] if len(sys.argv) == 2 else 'records'
+    require(target in ('records', 'fast-import', 'theme-iphone'), 'unknown diagnostic target')
+    workflow = '.github/workflows/reader-apple-reading-records.yml'
+    artifact_name = 'apple-reading-ui-iphone-'
+    bundle_name = 'iphone.xcresult'
+    if target != 'records':
+        RUN = 40203445172
+        workflow = '.github/workflows/reader-apple-page-theme.yml'
+        artifact_name = 'apple-theme-fast-import-' if target == 'fast-import' else 'apple-theme-ui-iphone-'
+        CASE = 'testFastOwnerImportPublishesWithoutBusyTransition' if target == 'fast-import' else 'test'
+        bundle_name = 'ipad.xcresult' if target == 'fast-import' else 'iphone.xcresult'
     require(os.environ.get('GITHUB_ACTIONS')=='true','Actions only')
     out=ROOT/'build/apple-reading-original-inspect';out.mkdir(parents=True,exist_ok=False)
     result=dict(accepted=False,diagnostic_only=True,original_source=SOURCE,original_run=RUN,original_attempt=1,
                 diagnostic_source=os.environ['GITHUB_SHA'],original_failure_preserved=True,commands=[])
     run=fetch('actions/runs/'+str(RUN))
     require(run['head_sha']==SOURCE and run['run_attempt']==1 and run['status']=='completed' and run['conclusion']=='failure' and
-            run['path']=='.github/workflows/reader-apple-reading-records.yml','original run differs')
+            run['path']==workflow,'original run differs')
     rows=fetch('actions/runs/'+str(RUN)+'/artifacts?per_page=100')['artifacts']
-    meta,=[row for row in rows if row['name']=='apple-reading-ui-iphone-'+str(RUN)+'-1']
+    meta,=[row for row in rows if row['name']==artifact_name+str(RUN)+'-1']
     require(not meta['expired'] and meta['workflow_run']['head_sha']==SOURCE and meta['workflow_run']['id']==RUN and
             0<meta['size_in_bytes']<=512*1024**2,'original artifact differs')
     with tempfile.TemporaryFile() as stream:
@@ -41,14 +53,24 @@ def main():
             path=PurePosixPath(info.filename)
             require(not path.is_absolute() and '..' not in path.parts and '\\' not in info.filename and
                     (info.external_attr>>16)&0o170000!=0o120000,'unsafe original ZIP member')
-            if not (any(part.endswith('.xcresult') for part in path.parts) or info.filename.endswith('xcodebuild.log')):continue
+            if not (any(part.endswith('.xcresult') for part in path.parts) or path.suffix in ('.log', '.json', '.txt')):continue
             target=extracted.joinpath(*path.parts)
             if info.is_dir():target.mkdir(parents=True,exist_ok=True)
             else:
                 require(info.file_size<=256*1024**2,'member too large')
                 target.parent.mkdir(parents=True,exist_ok=True)
                 with archive.open(info) as source,target.open('wb') as destination:shutil.copyfileobj(source,destination)
-    bundles=list(extracted.rglob('iphone.xcresult'));require(len(bundles)==1,'original iPhone bundle missing')
+    if target != 'records':
+        for path in extracted.rglob('*'):
+            if path.is_file() and path.suffix in ('.json', '.log', '.txt') and not any(part.endswith('.xcresult') for part in path.parts) and path.stat().st_size <= 2*1024**2:
+                print('ORIGINAL-RAW-TEXT', path.relative_to(out).as_posix(), path.read_text(errors='replace')[-24000:], flush=True)
+    bundles=list(extracted.rglob(bundle_name))
+    if not bundles and target == 'theme-iphone':
+        result['original_xcresult_absent'] = True
+        (out/'report.json').write_text(json.dumps(result,indent=2)+'\n',encoding='utf-8')
+        print(json.dumps(result),flush=True)
+        return
+    require(len(bundles)==1,'original result bundle missing or ambiguous')
     bundle=bundles[0]
     def command(name,*args):
         response=subprocess.run(['xcrun','xcresulttool',*map(str,args)],stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=120)

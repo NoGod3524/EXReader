@@ -2,6 +2,7 @@ name: Diagnostic original iPhone import trace
 on:
   push:
     branches: [codex/reader-apple-reading-inspect25]
+    paths: [.github/workflows/reader-apple-import-observe.yml, tests/reader_apple_reading_inspect/observe.py]
   workflow_dispatch:
     inputs:
       scope:
