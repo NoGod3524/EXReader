@@ -1,6 +1,6 @@
 # D11 semantic action and focus audit
 
-Validation: **accepted=false; not executed**. Fresh Win32 and GTK executables use the exact task-page targets. Android uses authenticated original APK bytes. Apple compiles exact fixed targets against independently authenticated approved SDK producer bytes. Harness SHA is never substituted for target SHA or injected into old guards.
+Validation: **accepted=false; two complete rounds retained; final iteration not yet published**. Fresh Win32 and GTK executables use the exact task-page targets. Android uses authenticated original APK bytes. Apple compiles exact fixed targets against independently authenticated approved SDK producer bytes. Harness SHA is never substituted for target SHA or injected into old guards.
 
 Six target jobs share max-parallel 2. Every target records the action IDs in `common.py`, raw native outcomes and focus; unknown/missing stays unknown/missing. Source routing declarations are a separate non-behavioral index. Native touch is not external keyboard. Page themes are not full preferences. Reopen-book is not a dedicated Continue control. A named path may execute successfully while total consistency is refused for missing focus/disabled/revision evidence.
 

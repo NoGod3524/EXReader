@@ -17,8 +17,8 @@ final class ActionFocusTests: XCTestCase {
   XCTAssertTrue(wait{viewport().contains(self.node(id).frame) && self.node(id).isEnabled && self.node(id).isHittable},id);node(id).tap()
  }
  func text(_ id:String)->String {let n=node(id);return (n.value as? String).flatMap{$0.isEmpty ? nil:$0} ?? n.label}
- func mark(_ id:String,_ native:String,_ value:String="") {
-  let row:[String:Any]=["case":name,"action":id,"native_id":native,"exposed":true,"enabled":true,"executed":true,"result":"passed","input":"native-pointer","focus":"unverified","value":value];rows.append(row)
+ func mark(_ id:String,_ native:String,_ value:String="",enabled:Bool=true) {
+  let row:[String:Any]=["case":name,"action":id,"native_id":native,"exposed":true,"enabled":enabled,"executed":true,"result":"passed","input":"native-pointer","focus":"unverified","value":value];rows.append(row)
   let data=try! JSONSerialization.data(withJSONObject:row,options:[.sortedKeys]);print("D11_ACTION "+String(decoding:data,as:UTF8.self))
   let tree=XCTAttachment(string:app.debugDescription);tree.name=id+"-tree";tree.lifetime = .keepAlways;add(tree)
  }
@@ -45,7 +45,11 @@ final class ActionFocusTests: XCTestCase {
   open();let first=text("reader.location")
   tap("reader.next");XCTAssertTrue(wait{!self.node("reader.busy").exists && self.text("reader.location") != first});mark("next","reader.next",text("reader.location"))
   tap("reader.previous");XCTAssertTrue(wait{!self.node("reader.busy").exists && self.text("reader.location")==first});mark("previous","reader.previous",first)
-  tap("reader.search");XCTAssertTrue(node("search.query").waitForExistence(timeout:15));node("search.query").tap();node("search.query").typeText("D11_UNMATCHED_TOKEN");XCTAssertTrue((node("search.query").value as? String ?? "").contains("D11_UNMATCHED_TOKEN"));tap("search.find");XCTAssertTrue(wait{self.text("search.status").contains("没有匹配结果")});mark("search","search.query",text("search.status"))
+  tap("reader.search");XCTAssertTrue(node("search.query").waitForExistence(timeout:15));let disabled=node("search.find");XCTAssertFalse(disabled.isEnabled);let statusBefore=text("search.status");let queryBefore=node("search.query").value as? String ?? "";let box=disabled.frame
+  XCTAssertTrue(box.width>0 && box.height>0 && app.windows.firstMatch.frame.contains(box))
+  disabled.coordinate(withNormalizedOffset:CGVector(dx:0.5,dy:0.5)).tap()
+  RunLoop.current.run(until:Date().addingTimeInterval(0.5));XCTAssertFalse(node("search.find").isEnabled);XCTAssertEqual(text("search.status"),statusBefore);XCTAssertEqual(node("search.query").value as? String ?? "",queryBefore);mark("disabled_noop","search.find",statusBefore,enabled:false)
+  node("search.query").tap();node("search.query").typeText("D11_UNMATCHED_TOKEN");XCTAssertTrue((node("search.query").value as? String ?? "").contains("D11_UNMATCHED_TOKEN"));tap("search.find");XCTAssertTrue(wait{self.text("search.status").contains("没有匹配结果")});mark("search","search.query",text("search.status"))
   tap("search.close");XCTAssertTrue(wait{!self.node("search.query").exists});mark("close.search","search.close")
   tap("reader.navigation");XCTAssertTrue(node("navigation.close").waitForExistence(timeout:15));mark("directory","reader.navigation");tap("navigation.close");XCTAssertTrue(wait{!self.node("navigation.close").exists});mark("close.directory","navigation.close")
   more("reader.records","阅读记录");XCTAssertTrue(node("reading.close").waitForExistence(timeout:15));mark("records","reader.records");tap("reading.close");XCTAssertTrue(wait{!self.node("reading.close").exists});mark("close.records","reading.close")
@@ -57,7 +61,15 @@ final class ActionFocusTests: XCTestCase {
  func testPickerCancel() {
   open();tap("reader.back");XCTAssertTrue(wait{self.node("library.title").exists});tap("library.import.picker")
   XCTAssertTrue(wait{self.app.buttons["Cancel"].exists || self.app.buttons["取消"].exists})
+#if os(macOS)
+  // The original failure was a TouchBar alias, not an unreachable picker.
+  // Scope to actual native windows and require exactly one operable button.
+  let candidates=app.windows.descendants(matching:.button).matching(NSPredicate(format:"label == %@ OR label == %@","Cancel","取消"))
+  XCTAssertTrue(wait{candidates.count==1 && candidates.firstMatch.isEnabled && candidates.firstMatch.isHittable},app.debugDescription)
+  candidates.firstMatch.tap()
+#else
   if app.buttons["Cancel"].exists {app.buttons["Cancel"].tap()} else {app.buttons["取消"].tap()}
+#endif
   XCTAssertTrue(wait{self.node("library.book.0").exists && self.node("library.book.0").isHittable});mark("cancel","library.import.picker")
  }
 }

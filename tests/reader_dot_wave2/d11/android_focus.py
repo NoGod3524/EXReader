@@ -19,6 +19,19 @@ def tap(n):
 def record(key,t,passed=True,**raw):
  (out/(key+'.png')).write_bytes(adb('exec-out','screencap','-p'));rows[key]=dict(action=key,exposed=True,enabled=raw.pop('enabled',True),executed=True,result='passed' if passed else 'failed',input='emulator adb touch/key; not external keyboard',focus=[n.attrib for n in t.iter('node') if n.get('focused')=='true'],raw=raw);rows[key]['raw']['page_label']=find(t,id='page_label')[0].get('text') if find(t,id='page_label') else None;print('D11_ACTION '+json.dumps(rows[key]),flush=True);assert passed,key
 
+def inventory(label):
+ names=set(adb('exec-out','run-as',PACKAGE,'ls','files').decode().splitlines())
+ wanted=[name for name in ('reader-catalog.db','reader-catalog.db-wal') if name in names];assert 'reader-catalog.db' in wanted
+ first={n:adb('exec-out','run-as',PACKAGE,'cat','files/'+n) for n in wanted}
+ second={n:adb('exec-out','run-as',PACKAGE,'cat','files/'+n) for n in wanted};assert first==second,'database bytes changed during independent snapshot'
+ folder=out/('database-'+label);folder.mkdir()
+ for n,data in first.items():(folder/n).write_bytes(data)
+ db=__import__('sqlite3').connect((folder/'reader-catalog.db').resolve().as_uri()+'?mode=ro',uri=True)
+ assert db.execute('pragma quick_check').fetchall()==[('ok',)]
+ value={name:repr(db.execute('select * from '+name+' order by rowid').fetchall()) for name in ('reader_revisions','reader_outbox')};db.close()
+ report.setdefault('database_captures',{})[label]={n:dict(bytes=len(data),sha256=hashlib.sha256(data).hexdigest()) for n,data in first.items()}
+ return value
+
 def cancel_picker(t):
  seen=[]
  for _ in range(8):
@@ -50,18 +63,22 @@ try:
  tap(find(t,text='D11.txt')[0]);t=wait('import-complete',lambda t:bool(find(t,id='page_label')) or (bool(find(t,id='book_list')) and bool(list(find(t,id='book_list')[0]))));record('import',t)
  if not find(t,id='page_label'):tap(list(find(t,id='book_list')[0])[0]);t=wait('reader',lambda t:bool(find(t,id='page_label')))
  first=page(t);turn(t,True);t=wait('next',lambda t:bool(find(t,id='page_label')) and page(t)!=first);record('next',t,before=first,after=page(t));turn(t,False);t=wait('previous',lambda t:bool(find(t,id='page_label')) and page(t)==first);record('previous',t)
+ before_history=inventory('before')
  for key,title in [('search','书内搜索'),('directory','目录 / 按页入口'),('records','阅读记录'),('settings','阅读设置')]:
   tap(find(t,id='reader_more')[0]);t=wait('menu-'+key,lambda t:bool(find(t,text=title)));tap(find(t,text=title)[0]);t=tree('dialog-'+key)
-  assert not find(t,id='reader_more'),'dialog did not own active window';record(key,t,True,active_dialog_tree=True)
+  assert not find(t,id='reader_more'),'dialog did not own active window'
+  if key!='search':record(key,t,True,active_dialog_tree=True)
   if key=='search':
+   disabled=find(t,text='取消搜索');assert len(disabled)==1 and disabled[0].get('enabled')=='false';before_status=[n.attrib for n in t.iter('node') if n.get('content-desc')=='搜索状态'];assert before_status,'native search status absent';c=list(map(int,re.findall(r'\d+',disabled[0].get('bounds'))));adb('shell','input','tap',(c[0]+c[2])//2,(c[1]+c[3])//2);t=tree('disabled-search-cancel');after_status=[n.attrib for n in t.iter('node') if n.get('content-desc')=='搜索状态'];record('disabled_noop',t,before_status==after_status and find(t,text='取消搜索')[0].get('enabled')=='false',enabled=False,control='取消搜索',before=before_status,after=after_status)
    edit=find(t,cls='android.widget.EditText');assert edit;tap(edit[0]);adb('shell','input','text','D11_UNMATCHED');t=tree('search-typed');assert any(n.get('focused')=='true' for n in find(t,cls='android.widget.EditText'));report['query_focus']=find(t,cls='android.widget.EditText')[0].attrib
+   start=find(t,text='搜索');assert len(start)==1;tap(start[0]);t=wait('search-complete',lambda t:any(n.get('content-desc')=='搜索状态' and n.get('text')=='没有找到匹配文字' for n in t.iter('node')));record(key,t,True,active_dialog_tree=True,search_result=[n.attrib for n in t.iter('node') if n.get('content-desc')=='搜索状态'])
   for _ in range(3):
    adb('shell','input','keyevent',4);t=tree('dialog-back-'+key)
    if find(t,id='page_label'):break
   assert find(t,id='page_label');record('close.'+key,t,page(t)==first)
- # Source bytes preserved; revision/outbox not independently observed on device remains pending.
+ # Compare source bytes and independent read-only catalog snapshots before/after inspection.
  report['source_unchanged']=hashlib.sha256(adb('exec-out','cat','/sdcard/Download/D11.txt')).hexdigest()==original
- rows['no_unexpected_revision'].update(reason='source file preserved; device revision/outbox independent inventory pending')
+ after_history=inventory('after');record('no_unexpected_revision',t,report['source_unchanged'] and before_history==after_history,before=before_history,after=after_history,source_sha256=original)
  tap(find(t,id='back_button')[0]);t=wait('back',lambda t:bool(find(t,id='book_list')));record('back',t);tap(list(find(t,id='book_list')[0])[0]);t=wait('resume',lambda t:bool(find(t,id='page_label')));record('resume',t,page(t)==first,dedicated_continue='missing; actual book reopen');turn(t,True);t=wait('continue',lambda t:bool(find(t,id='page_label')) and page(t)!=first);record('continue_after_return',t);report['accepted']=True
 except Exception:report['error']=traceback.format_exc();print(report['error'],flush=True)
 finally:

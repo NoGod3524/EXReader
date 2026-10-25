@@ -10,7 +10,7 @@ def identity(host):
 def pending(host):return {k:dict(action=k,exposed=None,enabled=None,executed=False,result='pending',input=None,focus=None,reason='not reached') for k in ACTIONS}
 def database_inventory(root):
  result={}
- for p in pathlib.Path(root).rglob('*.sqlite*'):
+ for p in pathlib.Path(root).rglob('*.sqlite'):
   if not p.is_file() or p.name.endswith(('-wal','-shm','-journal')):continue
   try:
    db=sqlite3.connect(p.resolve().as_uri()+'?mode=ro',uri=True)

@@ -41,7 +41,7 @@ try:
   with tarfile.open(out/'programs'/(host+'-app.tar.gz'),'w:gz') as tar:tar.add(bundle,arcname='EXReaderHost.app')
   break
  for p in derived.rglob('EXReaderHost'):
-  if p.is_file():programs[str(p.relative_to(derived))]={'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size}
+  if p.is_file():programs[str(p.relative_to(derived))]={'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size,'mode':p.stat().st_mode & 0o7777,'is_symlink':p.is_symlink(),'observed_before_zip':True}
  sys.path.insert(0,str(target/'tests/apple_host'))
  from collect_evidence import load_results
  cases=load_results(out/(host+'.xcresult'))

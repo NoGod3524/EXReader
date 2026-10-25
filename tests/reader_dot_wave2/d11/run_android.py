@@ -22,6 +22,6 @@ except Exception:
  traceback.print_exc();executions.append(dict(name='environment-or-harness',returncode=1))
 finally:
  report=dict(harness_sha=os.environ['GITHUB_SHA'],target_sha=subprocess.check_output(['git','-C',str(target),'rev-parse','HEAD'],text=True).strip(),producer=json.loads((out/'android-producer-identity.json').read_text()),run_id=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],host='android',programs=programs,executions=executions,accepted=bool(executions) and all(r['returncode']==0 for r in executions),keyboard_accepted=False,complete_product=False,screen_reader_accepted=False,device=subprocess.check_output(['adb','shell','getprop','ro.build.fingerprint'],text=True).strip())
- report['files']={p.relative_to(out).as_posix():{'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in out.rglob('*') if p.is_file() and '-producer' not in str(p.relative_to(out)) and p.suffix in ('.json','.png','.log','.txt','.xml','.apk')}
+ report['files']={p.relative_to(out).as_posix():{'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in out.rglob('*') if p.is_file() and '-producer' not in str(p.relative_to(out)) and p.suffix in ('.json','.png','.log','.txt','.xml','.apk','.db','.db-wal')}
  (out/'android-execution.json').write_text(json.dumps(report,indent=2));print(json.dumps(report),flush=True)
 assert report['accepted']

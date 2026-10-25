@@ -1,7 +1,7 @@
 """Read prior own original evidence only in Actions before another full iteration."""
 import datetime,hashlib,io,json,os,pathlib,zipfile
 from producer import request
-RUN=40225647982;SOURCE='9eb9f65ba258f3e00f6e67f9d090dbce8a879029'
+RUN=40227580106;SOURCE='940616fd5d84e20873530b3f615a9187f3d5a517'
 state=json.loads(request('/actions/runs/'+str(RUN)));assert state['status']=='completed' and state['head_sha']==SOURCE and state['run_attempt']==1
 out=pathlib.Path('build/d11/prior-round');out.mkdir(parents=True,exist_ok=True);rows=[]
 for a in json.loads(request('/actions/runs/'+str(RUN)+'/artifacts?per_page=100'))['artifacts']:
@@ -25,6 +25,8 @@ for a in json.loads(request('/actions/runs/'+str(RUN)+'/artifacts?per_page=100')
      if any(word in line for word in ('error:', 'failed', 'XCTAssert', 'caught error', 'D11_ACTION')):selected += lines[max(0,i-4):i+5]
     print('PRIOR_APPLE '+a['name']+'\n'+'\n'.join(selected),flush=True)
     (out/(a['name']+'-native.log')).write_text(text)
+   elif name.endswith(('windows-actions/report.json','gtk-actions/report.json','android-focus/report.json')):
+    value=json.loads(z.read(name));print('PRIOR_NATIVE '+json.dumps(dict(artifact=a['name'],error=value.get('error'),actions=value.get('actions'))),flush=True)
    elif name.endswith('verification.json'):
     value=json.loads(z.read(name));print('PRIOR_VERIFY '+json.dumps({k:value.get(k) for k in ('errors','scope_refusal','artifacts')}),flush=True)
 (out/'identities.json').write_text(json.dumps(dict(run=RUN,source=SOURCE,attempt=1,artifacts=rows,accepted=False),indent=2))

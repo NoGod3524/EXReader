@@ -31,6 +31,7 @@ try:
      native=json.loads(z.read(unique(names,suffix)));assert native['harness_sha']==sha and native['target_sha']==TARGETS[host] and native['run_id']==run and native['attempt']==attempt
      actions=native['actions'];observed=list(actions.values());e['native_report']=native
      if host=='android':
+      e['actual_apk_configuration']=json.loads(z.read(unique(names,'apk-config/actual-config.json')))
       data=z.read(unique(names,'programs/app-debug.apk'));assert hashlib.sha256(data).hexdigest()==e['programs']['host']['sha256']==e['programs']['installed']['sha256']
      else:
       p=e['programs']['actual'];verify_bytes(z.read(unique(names,p['path'])),p);assert p['sha256']==native['program_sha256']
