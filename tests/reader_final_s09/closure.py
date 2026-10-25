@@ -347,6 +347,7 @@ def verify_link(payload, inventory, records, kind, package_table, report):
         linked |= set(distributed)
         lines.append({'kind': 'sdk', 'record': link['record'], 'token_count': len(tokens),
                       'bundled': distributed, 'system': system, 'other_count': len(other),
+                      'recorded_system': sorted(link.get('system_libraries') or []),
                       'source': link['record']['raw_output_path']})
     else:
         for section in inventory.get('packages') or []:
@@ -378,6 +379,7 @@ def verify_link(payload, inventory, records, kind, package_table, report):
                           'token_count': len(tokens), 'bundled': evidence['archives'],
                           'system': evidence['system_libraries'],
                           'frameworks': evidence['frameworks'],
+                          'recorded_system': sorted(recorded.get('system_libraries') or []),
                           'source': section['link']['raw_output_path']})
     if kind == 'sdk':
         # Every archive this profile ships must be on the real consumer link line, or be
@@ -385,8 +387,11 @@ def verify_link(payload, inventory, records, kind, package_table, report):
         for path in sorted(component_archives):
             if path.split('/')[-1] not in linked and path not in declared_unlinked:
                 report.add('link_bundled_not_linked', path)
+    # Both the partition derived from the captured bytes and the list the inventory
+    # claims are inspected: a recorded system library that names an installed archive,
+    # or resolves to a bundled library, is a claim the bytes do not support.
     for line in lines:
-        for token in line['system']:
+        for token in sorted(set(line['system']) | set(line.get('recorded_system') or [])):
             base = re.split(r'[\\/]', token)[-1]
             if base in archive_names:
                 report.add('link_bundled_as_system', '%s: %s' % (line['source'], token))

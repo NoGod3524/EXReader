@@ -51,6 +51,7 @@ jobs:
   stage:
     name: closure (${{ matrix.os }})
     needs: [protocol]
+    if: always()
     runs-on: ${{ matrix.os }}
     timeout-minutes: 150
     strategy:
@@ -178,6 +179,7 @@ jobs:
   producer:
     name: authenticated producer artifact
     needs: [protocol]
+    if: always()
     runs-on: ubuntu-22.04
     timeout-minutes: 40
     env:
@@ -235,7 +237,7 @@ jobs:
         if: always()
         run: |
           python3 - <<'PY'
-          import json, pathlib, sys
+          import json, pathlib
           summary = {'verifier_source': None, 'items': {}}
           for name in ('linux-core', 'combined-linux'):
               base = pathlib.Path('build/producer') / name / 'closure' / 'closure.json'
