@@ -1,15 +1,35 @@
 """Actions-only replay of an authenticated original GTK host; no acceptance."""
+import configparser
+from collections import Counter
 import hashlib
 import io
 import json
 import os
 from pathlib import Path, PurePosixPath
+import shutil
 import subprocess
 import sys
 import tarfile
 from PIL import Image, ImageChops
 
 from final import Bundle, fetch, identity, pages, require
+
+
+def pixel_difference(before, after):
+    require(before.size == after.size, 'original screenshot dimensions differ')
+    difference = ImageChops.difference(before, after)
+    count = 0; samples = []; deltas = Counter(); bounds = None
+    for index, (a, b) in enumerate(zip(before.getdata(), after.getdata())):
+        if a == b:continue
+        x, y = index % before.width, index // before.width
+        count += 1;deltas[max(abs(a[k] - b[k]) for k in range(3))] += 1
+        if len(samples) < 24:samples.append([x, y, a, b])
+        bounds = [x, y, x + 1, y + 1] if bounds is None else [
+            min(bounds[0], x), min(bounds[1], y), max(bounds[2], x + 1), max(bounds[3], y + 1)]
+    return dict(size=list(before.size), changed_pixels=count, changed_bounds=bounds,
+                pil_changed_bounds=difference.getbbox(), max_channel_delta_histogram=dict(sorted(deltas.items())),
+                before_rgb_sha256=hashlib.sha256(before.tobytes()).hexdigest(),
+                after_rgb_sha256=hashlib.sha256(after.tobytes()).hexdigest(), samples=samples)
 
 
 def main():
@@ -56,12 +76,63 @@ def main():
         original_pixels = dict(diagnostic_only=True, accepted=False, available=list(captures))
         if len(captures) == 2:
             before, after = captures['before-directory'], captures['after-directory']
-            require(before.size == after.size, 'original screenshot dimensions differ')
-            difference = ImageChops.difference(before, after)
-            changed = [(index % before.width, index // before.width, a, b)
-                       for index, (a, b) in enumerate(zip(before.getdata(), after.getdata())) if a != b]
-            original_pixels.update(size=list(before.size), changed_pixels=len(changed),
-                                   changed_bounds=difference.getbbox(), samples=changed[:24])
+            original_pixels.update(pixel_difference(before, after))
+            state_bytes = bundle.bytes('gtk-navigation-ui/state.ini', 1024**2)
+            (out / 'original-state.ini').write_bytes(state_bytes)
+            state = configparser.ConfigParser(interpolation=None);state.read_string(state_bytes.decode())
+            require(state.has_section('host') and state.has_section('preferences'), 'original failure state absent')
+            host, preferences = dict(state['host']), dict(state['preferences'])
+            width, height = int(preferences['bitmap_width']), int(preferences['bitmap_height'])
+            page_x, page_y = int(host['page_x']), int(host['page_y'])
+            page_width, page_height = int(host['page_width']), int(host['page_height'])
+            x = page_x + (page_width - width) // 2;y = page_y + (page_height - height) // 2
+            box = [x, y, x + width, y + height]
+            require(0 < width <= 4096 and 0 < height <= 4096, 'unbounded original bitmap')
+            roi_before, roi_after = before.crop(box), after.crop(box)
+            roi_before.save(out / 'original-before-directory-derived-roi.png')
+            roi_after.save(out / 'original-after-directory-derived-roi.png')
+            original_pixels.update(original_state_sha256=hashlib.sha256(state_bytes).hexdigest(),
+                failure_state=dict(host=host, preferences=preferences),
+                original_image_formula_crop=box,
+                crop_inside_window=(0 <= x < x + width <= before.width and 0 <= y < y + height <= before.height),
+                original_scrolled_window=[page_x, page_y, page_width, page_height],
+                original_formula_roi_difference=pixel_difference(roi_before, roi_after),
+                viewport_difference=pixel_difference(before.crop([page_x, page_y, page_x + page_width, page_y + page_height]),
+                                                     after.crop([page_x, page_y, page_x + page_width, page_y + page_height])),
+                failure_state_painted_generation_matches_frame=(host['painted_generation'] == host['frame_generation']),
+                before_state_available=bool(original.get('image_observations')),
+                original_image_observations=original.get('image_observations', []),
+                state_is_failure_finally_snapshot=True)
+            tree_bytes = bundle.bytes('gtk-navigation-ui/failure-tree.json', 4 * 1024**2)
+            tree = json.loads(tree_bytes)
+            def walk_tree(node):
+                yield node
+                for child in node.get('children', []):yield from walk_tree(child)
+            relevant = []
+            for node in walk_tree(tree):
+                if node['name'] in ('EXReader Linux', 'Rendered page; selectable text is in the adjacent panel',
+                                    'Reading page gestures', 'Directory and page entries') or node['role'] == 'dialog':
+                    relevant.append({key: node.get(key) for key in ('role', 'name', 'states', 'extents', 'path')})
+            original_pixels.update(original_failure_tree_sha256=hashlib.sha256(tree_bytes).hexdigest(),
+                                   original_failure_tree_geometry=relevant)
+            # OCR is a bounded diagnostic of the immutable original captures,
+            # never a pass/fail oracle or replacement for exact RGB equality.
+            if not shutil.which('tesseract'):
+                subprocess.run(['sudo', 'apt-get', 'install', '-y', 'tesseract-ocr'], check=True)
+            ocr = {}
+            for label in ('before-directory', 'after-directory'):
+                text = subprocess.check_output(['tesseract', str(out / ('original-' + label + '.png')),
+                                                'stdout', '--psm', '11', 'tsv'], text=True, timeout=30)
+                (out / ('original-' + label + '.tsv')).write_text(text)
+                words = []
+                for row in text.splitlines()[1:]:
+                    columns = row.split('\t', 11)
+                    if len(columns) == 12 and columns[11].strip():
+                        words.append(dict(text=columns[11], bounds=list(map(int, columns[6:10])), confidence=columns[10]))
+                require(len(words) <= 2000, 'unbounded original screenshot OCR')
+                ocr[label] = words
+            original_pixels.update(original_capture_ocr=ocr,
+                ocr_version=subprocess.check_output(['tesseract', '--version'], text=True).splitlines()[0])
         (out / 'original-pixel-difference.json').write_text(json.dumps(original_pixels, indent=2) + '\n')
         print(json.dumps(dict(original_pixel_difference=original_pixels)), flush=True)
         # CFI inputs are emitted by the original installed SDK consumer. Copy

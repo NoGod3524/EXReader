@@ -93,7 +93,8 @@ def main():
         if not idle:return value
         window=command('xdotool','search','--onlyvisible','--name','^Directory and page entries$').splitlines()[-1]
         command('xdotool','windowactivate','--sync',window);return value
-    def close_directory():host.key('Escape');wait(lambda v:v['visible']=='0')
+    def close_directory():
+        before=host.read();host.key('Escape');wait(lambda v:v['visible']=='0');return before
     def rows():return [node for node in bus.children(element('Directory entries')) if bus.role(node)=='list item']
     def select(index,candidate=False):
         prefix=('Spine item ' if candidate else 'Directory entry ')+str(index+1)
@@ -123,11 +124,40 @@ def main():
         return result
     def frame():
         value=host.read();return {key:value[key] for key in ('book','part','page','start','end','font','zoom','notes','selection_start','selection_end','frame_generation')}
-    def image(name):
-        path=output/(name+'.png');command('import','-window',host.window,str(path));value=host.read();prefs=observed('preferences')
-        width,height=int(prefs['bitmap_width']),int(prefs['bitmap_height']);x=value['page_x']+(value['page_width']-width)//2;y=value['page_y']+(value['page_height']-height)//2
-        digest=hashlib.sha256(Image.open(path).convert('RGB').crop((x,y,x+width,y+height)).tobytes()).hexdigest()
-        report.setdefault('image_observations',[]).append(dict(name=name,host=value,preferences=prefs,crop=[x,y,width,height],sha256=digest))
+    def image(name,after_draw=None):
+        path=output/(name+'.png');barrier=None
+        if 'page_draw_serial' in host.read():
+            def painted(value):
+                if not (value['painted_generation']==value['frame_generation'] and value['page_draw_sensitive']==1):return False
+                if after_draw is None:return True
+                if not (value['page_draw_serial']>after_draw and value['focused']==1):return False
+                visible=subprocess.run(['xdotool','search','--onlyvisible','--name','^Directory and page entries$'],text=True,capture_output=True,timeout=5)
+                assert visible.returncode in (0,1),visible.stderr
+                return visible.returncode==1 and command('xdotool','getactivewindow')==host.window
+            ready=host.wait(painted)
+            barrier=dict(after_draw=after_draw,painted_serial=ready['page_draw_serial'],
+                         frame_generation=ready['frame_generation'],painted_generation=ready['painted_generation'],
+                         sensitive=ready['page_draw_sensitive'],focused=ready['focused'])
+        else:
+            assert report['diagnostic_only'],'actual host image draw observation is required'
+        before_host=host.read();before_preferences=observed('preferences')
+        named=[node for node in bus.walk(app) if bus.name(node)=='Rendered page; selectable text is in the adjacent panel']
+        image_nodes=[dict(role=bus.role(node),extents=bus.extents(node),states=bus.states(node)) for node in named]
+        native_geometry=command('xdotool','getwindowgeometry','--shell',host.window)
+        command('import','-window',host.window,str(path));value=host.read();prefs=observed('preferences')
+        width,height=int(prefs['bitmap_width']),int(prefs['bitmap_height'])
+        if 'image_located' in value:
+            assert value['image_located']==1 and width<=value['image_width'] and height<=value['image_height']
+            x=value['image_x']+(value['image_width']-width)//2;y=value['image_y']+(value['image_height']-height)//2
+            assert value['page_x']<=x and x+width<=value['page_x']+value['page_width']
+            assert value['page_y']<=y and y+height<=value['page_y']+value['page_height']
+            assert before_host['frame_generation']==value['frame_generation']==value['painted_generation'] and value['page_draw_sensitive']==1
+        else:
+            x=value['page_x']+(value['page_width']-width)//2;y=value['page_y']+(value['page_height']-height)//2
+        picture=Image.open(path).convert('RGB');assert 0<=x<x+width<=picture.width and 0<=y<y+height<=picture.height
+        digest=hashlib.sha256(picture.crop((x,y,x+width,y+height)).tobytes()).hexdigest()
+        report.setdefault('image_observations',[]).append(dict(name=name,host=value,preferences=prefs,crop=[x,y,width,height],sha256=digest,
+          before_host=before_host,before_preferences=before_preferences,native_image_nodes=image_nodes,native_window_geometry=native_geometry,draw_barrier=barrier))
         return digest
     def cfi(name):
         click('Full EPUB CFI',{'text'});host.key('ctrl+a');host.paste((args.fixtures/name).read_text());return action('Return')
@@ -173,7 +203,7 @@ def main():
         record('external_link_stays_visible_and_does_not_open_or_change_reading',observed()['code']=='12' and frame()==prior and storage()==saved)
         action('alt+b');choose(8);record('unsafe_target_refuses_without_fallback',observed()['code']=='7' and frame()==prior and storage()==saved)
         choose(7);record('missing_target_refuses_without_fallback',observed()['code']=='9' and frame()==prior and storage()==saved)
-        close_directory();after_frame=frame();after_storage=storage();after_pixels=image('after-directory')
+        close_state=close_directory();after_frame=frame();after_storage=storage();after_pixels=image('after-directory',after_draw=close_state.get('page_draw_serial'))
         record('read_only_browsing_close_preserves_pixels_notes_progress_and_product',after_frame==prior and after_storage==saved and after_pixels==pixels,
                dict(before_frame=prior,after_frame=after_frame,before_storage=saved,after_storage=after_storage,before_pixels=pixels,after_pixels=after_pixels))
         notes=storage(True);open_directory();select(0);action('alt+h');choose(1)
