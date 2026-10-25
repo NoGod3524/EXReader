@@ -1,0 +1,58 @@
+name: Android navigation accessibility cache differential
+on:
+  push:
+    branches: [codex/reader-android-navigation-freshness-review]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  diagnostic:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 110
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.9'}
+      - name: Authenticate actual failed-producer APK pair and restore installed stages
+        run: |
+          python -m py_compile tests/reader_android_navigation_freshness/*.py
+          python tests/reader_android_navigation_freshness/authenticate.py
+          python tests/reader_android_navigation_freshness/prepare.py
+      - name: Prepare only compiler and original API34 emulator
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "cmake;3.22.1" "ndk;27.2.12479018" "ndk;27.0.12077973" "emulator" "system-images;android-34;default;x86_64"
+          sudo chmod 666 /dev/kvm
+      - name: Original 18-check control then trace and cache differential
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: bash tests/reader_android_navigation_freshness/run.sh
+      - name: Retain original control failures signatures projection proof and cache observations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-navigation-freshness-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/navigation-freshness/evidence/
+          if-no-files-found: error
