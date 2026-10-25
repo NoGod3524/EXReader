@@ -4,7 +4,8 @@
   "base": "25bc0c67971f81491f50e0a3caaaf7e509bb7e35",
   "runs": [
     {"source":"7400fa4e91bf0cfe45946c55333103618da7c0af","run":40198400279,"attempt":1,"conclusion":"failure","reason":"compact ON compiled; early UI stage missing its reused uiautomation dependency; strict refused"},
-    {"source":"69b604f83c3e823a923d41aafdd0c931923ce04e","run":40199103895,"attempt":1,"conclusion":"failure","reason":"initial compact library visibility assertion failed; no UI checks granted; add actual window readiness and explicit state/screenshot evidence"}
+    {"source":"69b604f83c3e823a923d41aafdd0c931923ce04e","run":40199103895,"attempt":1,"conclusion":"failure","reason":"initial compact library visibility assertion failed; no UI checks granted; add actual window readiness and explicit state/screenshot evidence"},
+    {"source":"740d47b1c4885eddbe61ec16e77a8d697c9b189c","run":40199849523,"attempt":1,"conclusion":"failure","reason":"8 UI checks passed; test reused reflow-only page label parser for PDF; preserve fixed page label and validate its actual page/total syntax"}
   ],
   "earlier_cancelled_run": {"run":40197968923,"source":"1fd2a40c4535269ab6063448cc398585ad760963","reason":"small-window note editor geometry fix before native UI tests"},
   "scope": "independent Windows compact native UI plus complete original default-OFF regression",
