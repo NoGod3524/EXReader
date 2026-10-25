@@ -3,7 +3,7 @@
   "observed_at_utc": "2026-10-25T03:20:11Z",
   "packages": 19,
   "cloud_success": 19,
-  "returned_pending_root_review": 10,
+  "returned_pending_root_review": 9,
   "root_review_closed_awaiting_integration": [
     "J03",
     "J06",
@@ -13,7 +13,8 @@
     "J07",
     "J09",
     "J13",
-    "J12"
+    "J12",
+    "J14"
   ],
   "needs_further_work": [],
   "root_review_and_integration_complete": false,
@@ -123,10 +124,12 @@
       "source": "a600cf3df53fdc8b97e47872e44f9b5c5ff6becb",
       "status": "completed",
       "conclusion": "success",
-      "root_state": "root_cancel_boundary_repair_pending_three_desktop_cloud_evidence",
+      "root_state": "root_review_closed_awaiting_integration",
       "review_branch": "codex/reader-library-health-review",
       "repair_source": "10b038a55fabea493e3ef858d3171e8c65a54f0b",
-      "repair_run": 40163483001
+      "repair_run": 40163483001,
+      "review_head": "cac8ec718647afb99b66a9b3fdc8a968f83dd002",
+      "review": "J14-ROOT-REVIEW.md"
     },
     {
       "id": "J15",
