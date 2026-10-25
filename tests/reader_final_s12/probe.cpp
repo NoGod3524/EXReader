@@ -202,7 +202,7 @@ static bool same_file(const fs::path &left, const fs::path &right, std::string *
 
 struct workspace {
   fs::path root, base, library, originals, accounts, snapshots;
-  fs::path main_db, mirror_db, probe_db, pending;
+  fs::path main_db, mirror_db, probe_db, pending, frozen;
 };
 static void snapshot(const workspace &where, const fs::path &source, const char *label) {
   std::error_code code;
@@ -286,6 +286,7 @@ int main(int argc, char **argv) {
     where.mirror_db = where.library / fs::u8path(decode("file.mirror"));
     where.probe_db = where.originals / fs::u8path(decode("file.probe"));
     where.pending = where.library / fs::u8path(decode("file.pending"));
+    where.frozen = where.library / fs::u8path(decode("file.frozen"));
     std::error_code fs_error;
     fs::create_directories(where.library, fs_error);
     fs::create_directories(where.originals, fs_error);
@@ -721,6 +722,13 @@ int main(int argc, char **argv) {
       number("found", present);
     }
     snapshot(where, where.main_db, "main.after_seed");
+    /* The C ABI consumer reads this byte-identical frozen copy, so both ABIs
+     * observe the same state and the copy itself is later proven unchanged. */
+    {
+      std::error_code frozen_error;
+      fs::copy_file(where.main_db, where.frozen, fs::copy_options::overwrite_existing, frozen_error);
+      if (frozen_error) throw std::runtime_error("cannot freeze the initial product database");
+    }
     record("attach.repeat");
     number("status", attach_book(catalog, books[0], &catalog_error));
     number("error", catalog_error.code);
@@ -874,7 +882,7 @@ int main(int argc, char **argv) {
     record("metadata.shared.open");
     number("status", (int)reader_revisions_open_raw_v3(where.main_db.u8string().c_str(), &shared, &revision_error));
     if (!shared) throw std::runtime_error("the shared revision store did not open");
-    std::string wire_one, wire_digest;
+    std::string wire_one, wire_digest, wire_revision, wire_hex;
     {
       char *wire = nullptr;
       size_t wire_bytes = 0;
@@ -888,13 +896,11 @@ int main(int argc, char **argv) {
       field("operation", literal(info.operation));
       number("parents", (long long)info.parent_count);
       field("book_key", literal(info.book_key));
-      /* The assigned revision ID is random by contract, so the exact bytes are
-       * recorded separately and reconstructed structurally by the checker. */
-      record("metadata.wire.book1");
-      field("revision", literal(info.revision_id));
-      field("sha", literal(info.sha256));
-      field("hex", wire ? hex(std::string(wire, wire_bytes)) : std::string("<null>"));
+      /* The assigned revision ID is random by contract, so the exact bytes stay
+       * in the platform-local evidence and are reconstructed structurally. */
+      wire_revision.assign(info.revision_id);
       wire_digest.assign(info.sha256);
+      if (wire) wire_hex.assign(hex(std::string(wire, wire_bytes)));
       if (wire) wire_one.assign(wire, wire_bytes);
       reader_revision_bytes_free(wire);
     }
@@ -1112,6 +1118,7 @@ int main(int argc, char **argv) {
       }
       number("stage", stage_status);
       const std::string book5_head = staged.command.revision_id;
+      number("revision_len", (long long)book5_head.size());
       reader_metadata_result finished{};
       if (stage_status == 0) number("finish", (int)reader_metadata_finish_pending(owner, &finished, &metadata_error));
       reader_metadata_snapshot_free(fresh);
@@ -1519,6 +1526,10 @@ int main(int argc, char **argv) {
       local << "overlong_exists=" << (overlong_exists ? 1 : 0) << '\n';
       local << "overlong_note=" << (failure_note.empty() ? "none" : failure_note) << '\n';
       local << "records=" << observations.size() << '\n';
+      local << "wire_revision=" << wire_revision << '\n';
+      local << "wire_sha=" << wire_digest << '\n';
+      local << "wire_hex=" << wire_hex << '\n';
+      local << "frozen_relative=" << where.frozen.lexically_relative(where.library).u8string() << '\n';
       local << "note=absolute paths, path byte lengths and host path limits stay out of the cross-platform file\n";
     }
     return 0;

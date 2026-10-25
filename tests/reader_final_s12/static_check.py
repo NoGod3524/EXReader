@@ -91,7 +91,7 @@ def main():
     probe_source = read(os.path.join(options.root, "probe.cpp"))
     api_source = read(os.path.join(options.root, "api.c"))
     probe = consumer_names(probe_source)
-    compare("consumer", probe, set(expected["required_consumer"]) | derived, problems)
+    compare("consumer", probe, set(expected["required_consumer"]), problems)
     api = c_names(api_source)
     compare("c-consumer", api, expected["required_c"], problems)
     if kinds:

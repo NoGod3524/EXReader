@@ -174,22 +174,18 @@ def check_integrity(label, observations, problems):
     return checked
 
 
-def check_wire(rule, observations, problems):
-    name = "metadata.wire.book1"
-    fields = observations.get(name)
-    if fields is None:
-        problems.append("derived wire record is missing")
-        return None
-    identity = fields.get(rule["id_field"], "")
+def check_wire(rule, local, problems):
+    """Reconstruct the retained wire from the published command document."""
+    identity = local.get(rule["id_field"], "")
     if len(identity) != rule["id_length"] or any(char not in "0123456789abcdef" for char in identity):
-        problems.append("derived wire record has no valid assigned revision identity")
+        problems.append("platform evidence carries no valid assigned revision identity")
         return None
     template = rule["template"].replace("@@ID@@", identity).encode("utf-8")
-    payload = bytes.fromhex(fields.get(rule["hex_field"], ""))
+    payload = bytes.fromhex(local.get(rule["hex_field"], ""))
     if payload != template:
         problems.append("retained wire document differs from the published command shape")
         return identity
-    if sha256_bytes(payload) != fields.get(rule["sha_field"]):
+    if sha256_bytes(payload) != local.get(rule["sha_field"], ""):
         problems.append("retained wire sha256 does not cover the recorded bytes")
     return identity
 
@@ -271,19 +267,9 @@ def main():
     c_observations, c_order = parse_records(options.c_observations)
 
     summary, verdicts, failures = check_group("consumer", observations, expected["records"],
-                                              expected["required_consumer"], expected["derived"], problems)
+                                              expected["required_consumer"], [], problems)
     c_summary, c_verdicts, c_failures = check_group("c", c_observations, expected["c_records"],
                                                     expected["required_c"], [], problems)
-    wire_identity = check_wire(expected["derived"]["metadata.wire.book1"], observations, problems)
-    integrity = check_integrity("consumer", observations, problems)
-    c_integrity = check_integrity("c", c_observations, problems)
-    agreement = check_agreement(observations, c_observations, problems)
-
-    names = container_texts(case_path, {"dir.workspace", "dir.space", "dir.library", "file.main"})
-    database = os.path.join(options.root, names["dir.workspace"], names["dir.space"], names["dir.library"],
-                            names["file.main"])
-    digests, _ = check_snapshots(options.root, database, problems)
-
     local = {}
     if os.path.isfile(options.local):
         with open(options.local, "r", encoding="utf-8") as handle:
@@ -293,6 +279,27 @@ def main():
                     local[key] = value
     else:
         problems.append("platform-local evidence is missing")
+    rule = dict(expected["derived"]["metadata.wire.book1"])
+    rule["id_field"] = "wire_revision"
+    rule["sha_field"] = "wire_sha"
+    rule["hex_field"] = "wire_hex"
+    wire_identity = check_wire(rule, local, problems)
+    integrity = check_integrity("consumer", observations, problems)
+    c_integrity = check_integrity("c", c_observations, problems)
+    agreement = check_agreement(observations, c_observations, problems)
+
+    names = container_texts(case_path, {"dir.workspace", "dir.space", "dir.library", "file.main", "file.frozen"})
+    database = os.path.join(options.root, names["dir.workspace"], names["dir.space"], names["dir.library"],
+                            names["file.main"])
+    digests, _ = check_snapshots(options.root, database, problems)
+    frozen = os.path.join(os.path.dirname(database), names.get("file.frozen", ""))
+    if os.path.isfile(frozen):
+        if "main.after_seed" not in digests:
+            problems.append("initial snapshot is missing for the frozen comparison")
+        elif sha256_file(frozen) != digests["main.after_seed"]["sha256"]:
+            problems.append("the read-only C consumer changed the frozen product copy")
+    else:
+        problems.append("frozen product copy is missing")
 
     report = {
         "format": "s12-1",

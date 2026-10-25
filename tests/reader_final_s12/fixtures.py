@@ -35,6 +35,7 @@ FILE_PROBE = "探针 书库.sqlite"
 FILE_LONG = "长路径 书库.sqlite"
 FILE_OVERLONG = "超长 书库.sqlite"
 FILE_PENDING = "待提交 元数据.intent"
+FILE_FROZEN = "冻结 书库.sqlite"
 FILE_NOTADB = "不是数据库.bin"
 
 SEGMENT_LONG = "长路径-0123456789abcdefghij"
@@ -75,6 +76,7 @@ TEXT_ITEMS = {
     "file.probe": FILE_PROBE,
     "file.long": FILE_LONG,
     "file.overlong": FILE_OVERLONG,
+    "file.frozen": FILE_FROZEN,
     "file.pending": FILE_PENDING,
     "file.notadb": FILE_NOTADB,
     "title.nfc": TITLE_NFC,
@@ -204,8 +206,8 @@ for book in PROBE_BOOKS:
     ASCII_ITEMS[prefix + ".sdk"] = str(book["sdk"])
 
 REVISION_EXTERNAL = "00112233445566778899aabbccddeeff"
-REVISION_COMPETE_ONE = "0f0f0f0f0f0f4f0f8f0f0f0f0f0f0f01"
-REVISION_COMPETE_TWO = "0f0f0f0f0f0f4f0f8f0f0f0f0f0f0f02"
+REVISION_COMPETE_ONE = "11111111111141118111111111111111"
+REVISION_COMPETE_TWO = "22222222222242228222222222222222"
 ASCII_ITEMS["revision.external"] = REVISION_EXTERNAL
 ASCII_ITEMS["revision.compete.1"] = REVISION_COMPETE_ONE
 ASCII_ITEMS["revision.compete.2"] = REVISION_COMPETE_TWO
@@ -420,7 +422,7 @@ put("metadata.prepare.book1.after", status=0, present=1, deleted=0, needs_bootst
     sorthex=hex_bytes(BOOKS[0]["sort"]), author_null=0, head_matches=1)
 put("metadata.shared.open", status=0)
 template_one = wire_template(BOOKS[0])
-put("metadata.get.book1", status=0, bytes=len(template_one.replace("@@ID@@", "0" * 32)),
+put("metadata.get.book1", status=0, bytes=len(template_one.replace("@@ID@@", "0" * 32).encode("utf-8")),
     entity="book", operation="put", parents=0, book_key=BOOKS[0]["key"])
 put("metadata.book4.bootstrap", prepare=2, stage=0, revision_len=32, finish=0)
 put("metadata.book4.null_author", prepare=0, status=6, error=6)
@@ -442,7 +444,7 @@ put("metadata.book3.abandon", status=0)
 put("metadata.book3.pending_after_abandon", status=1, pending=0)
 put("metadata.book5.bootstrap", prepare=2, stage=0, revision_len=32, finish=0)
 put("metadata.book5.wire", status=0,
-    bytes=len(wire_template(BOOKS[4]).replace("@@ID@@", "0" * 32)))
+    bytes=len(wire_template(BOOKS[4]).replace("@@ID@@", "0" * 32).encode("utf-8")))
 put("metadata.book5.receive.one", status=0, created=1, revision=REVISION_COMPETE_ONE)
 put("metadata.book5.receive.two", status=0, created=1, revision=REVISION_COMPETE_TWO)
 put("metadata.book5.prepare", status=3, heads=2,

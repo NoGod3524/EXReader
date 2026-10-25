@@ -202,7 +202,8 @@ int main(int argc, char **argv) {
   must_convert("dir.workspace", workspace, sizeof(workspace));
   must_convert("dir.space", space, sizeof(space));
   must_convert("dir.library", library, sizeof(library));
-  must_convert("file.main", database_name, sizeof(database_name));
+  /* The frozen copy of the initial state, so both ABIs observe the same rows. */
+  must_convert("file.frozen", database_name, sizeof(database_name));
   must_convert("query.ascii", query_ascii, sizeof(query_ascii));
   must_convert("query.unicode", query_unicode, sizeof(query_unicode));
   must_convert("book.1.sort", sort_nfc, sizeof(sort_nfc));
