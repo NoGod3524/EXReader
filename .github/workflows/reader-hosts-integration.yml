@@ -1075,8 +1075,6 @@ jobs:
           PROBE: ${{inputs.verify_run}}
         run: |
           python3 tests/reader_hosts_integration/probe_navigation.py "${PROBE#nav:}"
-          python3 tests/reader_navigation/make_navigation_fixtures.py build/navigation-probe/fixtures
-          python3 tests/reader_gtk_navigation/make_inputs.py build/navigation-probe/fixtures
           python3 tests/linux_host/generate_fixed.py build/navigation-probe/fixed-inputs
       - name: Diagnose native focus acknowledgment and actual scanning without granting current production
         if: startsWith(inputs.verify_run, 'nav:')

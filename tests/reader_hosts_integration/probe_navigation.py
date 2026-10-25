@@ -2,7 +2,7 @@
 import hashlib
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import subprocess
 import sys
 import tarfile
@@ -38,6 +38,22 @@ def main():
     try:
         original = bundle.report('gtk-navigation-ui/result.json');identity(original, source, run_id, attempt)
         (out / 'original-report.json').write_text(json.dumps(original, indent=2) + '\n')
+        # CFI inputs are emitted by the original installed SDK consumer. Copy
+        # the authenticated original fixtures, including those captured CFIs.
+        fixture_hashes = {};fixture_bytes = 0
+        for item in bundle.zip.infolist():
+            parts = PurePosixPath(item.filename).parts
+            if 'gtk-navigation-fixtures' not in parts or item.is_dir():continue
+            relative = PurePosixPath(*parts[parts.index('gtk-navigation-fixtures') + 1:])
+            require(relative.parts and str(relative) not in fixture_hashes and len(fixture_hashes) < 200,
+                    'duplicate or unbounded original navigation fixtures')
+            data = bundle.bytes(item.filename, 32 * 1024**2);fixture_bytes += len(data)
+            require(fixture_bytes <= 64 * 1024**2, 'unbounded navigation fixture bytes')
+            destination = out / 'fixtures' / str(relative)
+            destination.parent.mkdir(parents=True, exist_ok=True);destination.write_bytes(data)
+            fixture_hashes[str(relative)] = hashlib.sha256(data).hexdigest()
+        require({'surrogate.cfi', 'collapsed.cfi', 'normal.cfi', 'cancel.epub'} <= set(fixture_hashes),
+                'actual captured navigation inputs absent')
         payload = out / 'payload';payload.mkdir()
         found, members, unpacked = set(), 0, 0
         info = bundle.info('account-package/EXReader-Linux.tar.gz')
@@ -61,6 +77,7 @@ def main():
         record = dict(accepted=False, diagnostic_only=True, program_source_sha=source,
                       program_sha256=original['program_sha256'], original_run=run_id, original_attempt=attempt,
                       test_source_sha=os.environ['GITHUB_SHA'], test_run=os.environ['GITHUB_RUN_ID'],
+                      original_fixture_sha256=fixture_hashes,
                       artifact={k: names[0][k] for k in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')})
         (out / 'input.json').write_text(json.dumps(record, indent=2) + '\n')
         with open(os.environ['GITHUB_ENV'], 'a') as env:
