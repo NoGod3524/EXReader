@@ -51,7 +51,17 @@ final class ReadingUITests: XCTestCase {
         mark("original-opens")
     }
     private func records() {
+#if os(iOS)
+        // SwiftUI's identified Menu is an AX wrapper; its descendant is
+        // the actual native trigger. Require a real hittable control.
+        let menu = element("reader.more")
+        let trigger = menu.buttons.firstMatch
+        XCTAssertTrue(wait { menu.exists && ((trigger.exists && trigger.isEnabled && trigger.isHittable) || menu.isHittable) },
+                      "Reading menu not reachable: \(app.debugDescription)")
+        if trigger.exists && trigger.isHittable { trigger.tap() } else { menu.tap() }
+#else
         tap("reader.more")
+#endif
         XCTAssertTrue(wait { self.element("reader.records").exists || self.app.menuItems["阅读记录"].exists || self.app.buttons["阅读记录"].exists })
         if element("reader.records").exists { tap("reader.records") }
         else if app.menuItems["阅读记录"].exists { app.menuItems["阅读记录"].tap() }
