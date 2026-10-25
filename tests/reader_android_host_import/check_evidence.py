@@ -49,6 +49,7 @@ with zipfile.ZipFile(io.BytesIO(body)) as archive:
             assert all(row['pass'] is True for row in phase['checks'])
         if path == 'android-host-import':
             assert report['reading_limit_bytes'] == 32 * 1024**2
+            assert report['marker_protocol']['present_exit_code'] == 0 and report['marker_protocol']['absent_exit_code'] != 0
             assert len(report['phases']) == 9 and len({phase['pid'] for phase in report['phases']}) == 9
             held = [stop for stop in report['process_stops'] if stop.get('held_boundary')]
             assert len(held) == 4 and all(str(stop['instrumentation_pid']) in stop['pid_before_stop'].split() and not stop['pid_after_stop'] for stop in held)

@@ -55,6 +55,7 @@ for role, name in [('epub', 'cover-import.epub'), ('pdf', 'pdf-public.pdf')]:
 save('independent-expected-sources.json', (json.dumps(fixtures, indent=2) + '\n').encode())
 reports, captures, stops = [], [], []
 apk_identities = []
+marker_protocol = {}
 accepted = False
 try:
     adb('install', '-r', '-t', 'tests/reader_android_host_import/source/build/outputs/apk/debug/hostimportsource-debug.apk')
@@ -66,6 +67,11 @@ try:
         apk_identities.append({'package': installed_package, 'artifact_path': artifact_path, 'sha256': expected_apk_sha, 'installed_path': installed_path, 'installed_sha256': installed_sha})
     # The artifact basename follows the Gradle project name, not its directory name.
     reset()
+    present = subprocess.run(['adb', 'shell', 'run-as', package, 'test', '-f', 'files/host-import-input.json'], capture_output=True, timeout=10)
+    absent = subprocess.run(['adb', 'shell', 'run-as', package, 'test', '-f', 'files/host-import-boundary-must-not-exist'], capture_output=True, timeout=10)
+    marker_protocol = {'present_exit_code': present.returncode, 'absent_exit_code': absent.returncode}
+    print(json.dumps({'marker_protocol': marker_protocol}), flush=True)
+    assert present.returncode == 0 and absent.returncode != 0
     for phase, names in expected.items():
         if phase.startswith('kill-'):
             reset()
@@ -81,13 +87,24 @@ try:
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             deadline = time.monotonic() + 180
             while time.monotonic() < deadline:
-                present = subprocess.run(['adb', 'exec-out', 'run-as', package, 'test', '-f', 'files/host-import-' + phase + '.boundary'], capture_output=True, timeout=10)
+                present = subprocess.run(['adb', 'shell', 'run-as', package, 'test', '-f', 'files/host-import-' + phase + '.boundary'], capture_output=True, timeout=10)
                 if present.returncode == 0:
                     break
                 if process.poll() is not None:
                     break
                 time.sleep(.1)
-            boundary = json.loads(private('host-import-' + phase + '.json'))
+            raw_boundary = private('host-import-' + phase + '.json')
+            save(phase + '-boundary-raw.json', raw_boundary)
+            try:
+                boundary = json.loads(raw_boundary)
+            except json.JSONDecodeError:
+                print(raw_boundary.decode(errors='replace'), flush=True)
+                save(phase + '-boundary-logcat.txt', adb('logcat', '-d', '-v', 'threadtime', '-t', '4000'))
+                adb('shell', 'am', 'force-stop', package)
+                output, _ = process.communicate(timeout=30)
+                save(phase + '-instrumentation.txt', output)
+                print(output.decode(errors='replace'), flush=True)
+                raise
             if boundary['passed'] is not True:
                 output, _ = process.communicate(timeout=30)
                 save(phase + '-instrumentation.txt', output)
@@ -113,10 +130,9 @@ try:
         save(phase + '-raw-report.json', raw)
         report = json.loads(raw)
         print(json.dumps(report, ensure_ascii=False), flush=True)
-        if report['passed'] is not True:
-            for line in (a.output / (phase + '-logcat.txt')).read_text(errors='replace').splitlines():
-                if 'EXRHost' in line and ('system import result' in line or 'status ' in line):
-                    print(line, flush=True)
+        for line in (a.output / (phase + '-logcat.txt')).read_text(errors='replace').splitlines():
+            if 'EXRHost' in line and ('system import result' in line or (report['passed'] is not True and 'status ' in line)):
+                print(line, flush=True)
         reports.append(report)
         for observation in report['observations']:
             if 'capture' in observation:
@@ -147,5 +163,5 @@ try:
     assert any(item['name'] == 'system-documentsui' and item['package'] == 'com.android.documentsui' for item in captures)
     accepted = True
 finally:
-    result = {**identity, 'accepted': accepted, 'api': 34, 'abi': 'x86_64', 'checks': sum(report['count'] for report in reports), 'phases': reports, 'captures': captures, 'process_stops': stops, 'apk_identities': apk_identities, 'physical_device': False, 'third_party_cloud_provider': False, 'performance_accepted': False, 'complete_product': False, 'reading_limit_bytes': 32 * 1024 * 1024}
+    result = {**identity, 'accepted': accepted, 'api': 34, 'abi': 'x86_64', 'checks': sum(report['count'] for report in reports), 'phases': reports, 'captures': captures, 'process_stops': stops, 'apk_identities': apk_identities, 'marker_protocol': marker_protocol, 'physical_device': False, 'third_party_cloud_provider': False, 'performance_accepted': False, 'complete_product': False, 'reading_limit_bytes': 32 * 1024 * 1024}
     save('result.json', (json.dumps(result, indent=2, ensure_ascii=False) + '\n').encode())
