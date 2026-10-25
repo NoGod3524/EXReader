@@ -71,3 +71,29 @@ SDK 书库、产品 SQLite、私钥、测试密码都不进工件（汇总拒绝
 复现：推送分支或 `workflow_dispatch`。验收结果与失败原件见
 [validation/reader-cross-os-relay.json](validation/reader-cross-os-relay.json)，该文件初始为
 `accepted=false`，仅按真实 Actions 结果填写。尚未跑出的范围一律保持未授予。
+
+## 云端结果
+
+受测源码 `908aa002e3ceb76fdce7f8a5b79f7773ee11d4ab`，
+[run 40146644907](https://github.com/NoGod3524/EXReader/actions/runs/40146644907) attempt 1，
+18个作业全部成功：guard、plan、三平台 build、四方向各 send/receive/confirm、严格汇总
+（`accepted=true, problems=[]`，13项合成负例自检均被拒绝）。三平台安装后的 `exr_relay`
+消费者各33项具名检查（0失败；符号链接/引号文件名两项按平台能力可跳过），纯C消费者退出码0。
+四方向均：四格式原件按预先固定的SHA-256逐字节到达、NFC/NFD/俄文/emoji元数据逐字节保留、
+18捕获在接收端与原发送端OS各自的空库中 17 FOUND + 1 AMBIGUOUS、零误定位，冲突/墓碑/待父、
+取消后重试与重开均通过，写回的合并、书籍编辑、成员墓碑和新高亮由原发送端OS复读。
+工件ID/字节/digest/有效期与可执行文件哈希见 [验收JSON](validation/reader-cross-os-relay.json)。
+
+最终提交只比受测源码多本文与验收JSON（`[skip ci]`），不是纯文档HEAD之外的源码差异。
+
+保留的失败原件（均未删改断言或预期）：run 40139319049（plan在固定摘要前按设计失败；
+Linux/macOS 构建因含双引号的临时文件名无法上传）；run 40139621500（探针把"每个分片后待处理计数为零"
+当作要求，且误以为合并后的标签仍冲突）；run 40142080783（Windows 作为接收/确认端运行至600秒超时，
+改用 127.0.0.1 后通过，原因推测为 `localhost` 先走IPv6，未单独证实）；run 40146089096（全部阶段通过，
+汇总因接收结果缺少所消费清单摘要而拒绝）。
+
+## 未覆盖
+
+仅为制品中继兼容，不是实时六设备用户云盘；未覆盖 WinHTTP 之外的 Windows 后端差异、iOS/Android、
+宿主UI、模拟器/真机、实际音频/朗读、性能与无障碍。服务为本包的Python HTTPS WebDAV目录，
+不替代已有 Apache/Nextcloud 互操作验收。

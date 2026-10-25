@@ -3,16 +3,257 @@
   "branch": "codex/reader-cross-os-relay",
   "start_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "sdk_sha": "9854061be331fe603a1822d9b2b36ee357154927",
-  "accepted": false,
-  "tested_source_sha": null,
-  "run": null,
-  "attempt": null,
-  "directions": ["linux-to-windows", "windows-to-linux", "linux-to-macos", "macos-to-linux"],
-  "jobs": [],
-  "artifacts": [],
-  "consumer_sha256": {},
-  "original_failures": [],
-  "granted_scope": [],
+  "accepted": true,
+  "tested_source_sha": "908aa002e3ceb76fdce7f8a5b79f7773ee11d4ab",
+  "run": 40146644907,
+  "attempt": 1,
+  "directions": [
+    "linux-to-windows",
+    "windows-to-linux",
+    "linux-to-macos",
+    "macos-to-linux"
+  ],
+  "jobs": [
+    {
+      "id": 121029299408,
+      "name": "guard",
+      "conclusion": "success"
+    },
+    {
+      "id": 121029328236,
+      "name": "build (macOS)",
+      "conclusion": "success"
+    },
+    {
+      "id": 121029328241,
+      "name": "plan",
+      "conclusion": "success"
+    },
+    {
+      "id": 121029328286,
+      "name": "build (Linux)",
+      "conclusion": "success"
+    },
+    {
+      "id": 121029328296,
+      "name": "build (Windows)",
+      "conclusion": "success"
+    },
+    {
+      "id": 121030041501,
+      "name": "send linux-to-macos",
+      "conclusion": "success"
+    },
+    {
+      "id": 121030041503,
+      "name": "send linux-to-windows",
+      "conclusion": "success"
+    },
+    {
+      "id": 121030041536,
+      "name": "send macos-to-linux",
+      "conclusion": "success"
+    },
+    {
+      "id": 121030041545,
+      "name": "send windows-to-linux",
+      "conclusion": "success"
+    },
+    {
+      "id": 121030234974,
+      "name": "receive macos-to-linux",
+      "conclusion": "success"
+    },
+    {
+      "id": 121030234994,
+      "name": "receive windows-to-linux",
+      "conclusion": "success"
+    },
+    {
+      "id": 121030235012,
+      "name": "receive linux-to-macos",
+      "conclusion": "success"
+    },
+    {
+      "id": 121030235018,
+      "name": "receive linux-to-windows",
+      "conclusion": "success"
+    },
+    {
+      "id": 121030448336,
+      "name": "confirm linux-to-windows",
+      "conclusion": "success"
+    },
+    {
+      "id": 121030448337,
+      "name": "confirm linux-to-macos",
+      "conclusion": "success"
+    },
+    {
+      "id": 121030448349,
+      "name": "confirm windows-to-linux",
+      "conclusion": "success"
+    },
+    {
+      "id": 121030448450,
+      "name": "confirm macos-to-linux",
+      "conclusion": "success"
+    },
+    {
+      "id": 121030635510,
+      "name": "strict relay summary",
+      "conclusion": "success"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12581326765,
+      "name": "relay-plan-40146644907-1",
+      "size_in_bytes": 4523,
+      "digest": "sha256:9d201c019bc8d238efbcf77d577fcadf005e04588ea2ae6af7802e1a2c8b4758",
+      "expires_at": "2027-01-23T00:25:38Z"
+    },
+    {
+      "id": 12580448097,
+      "name": "relay-build-Linux-40146644907-1",
+      "size_in_bytes": 4788488,
+      "digest": "sha256:493b163fe77c2925f49e6b161f8aa1c04e7fcd5ae90ff3ac9817225ea224028f",
+      "expires_at": "2027-01-23T00:25:38Z"
+    },
+    {
+      "id": 12580663311,
+      "name": "relay-build-Windows-40146644907-1",
+      "size_in_bytes": 4371659,
+      "digest": "sha256:61fa7e3478898d5ff756d83752a39ff1959e1879bc896155fe029fd182f4e2a1",
+      "expires_at": "2027-01-23T00:25:38Z"
+    },
+    {
+      "id": 12580353239,
+      "name": "relay-build-macOS-40146644907-1",
+      "size_in_bytes": 4267412,
+      "digest": "sha256:4d6f3a550727f4fe5c624222373a89c86e730a6c3725bd0628cb0b82e1ac30db",
+      "expires_at": "2027-01-23T00:25:38Z"
+    },
+    {
+      "id": 12580188553,
+      "name": "relay-send-linux-to-windows-40146644907-1",
+      "size_in_bytes": 36514,
+      "digest": "sha256:c00c20d93672142ca7d72fb8f81d1e026965408eeef95d09bf34b1ec68892a22",
+      "expires_at": "2027-01-23T00:25:38Z"
+    },
+    {
+      "id": 12580683503,
+      "name": "relay-receive-linux-to-windows-40146644907-1",
+      "size_in_bytes": 46474,
+      "digest": "sha256:1301e3029a9b2fa3dd6f6ae70a7e111a0b27503161281c2dba1b1c88cfa2e6ba",
+      "expires_at": "2027-01-23T00:25:38Z"
+    },
+    {
+      "id": 12580868318,
+      "name": "relay-confirm-linux-to-windows-40146644907-1",
+      "size_in_bytes": 13795,
+      "digest": "sha256:8f75e6e20b58bf94277a15dd6a277e75b4bbd74b717d34dfe9ca5e71c50f8140",
+      "expires_at": "2027-01-23T00:25:38Z"
+    },
+    {
+      "id": 12581182564,
+      "name": "relay-send-windows-to-linux-40146644907-1",
+      "size_in_bytes": 36551,
+      "digest": "sha256:9571c18c268d93e45e691b84e046f284a94aaa378b62168d360951c08e0694d9",
+      "expires_at": "2027-01-23T00:25:38Z"
+    },
+    {
+      "id": 12580543159,
+      "name": "relay-receive-windows-to-linux-40146644907-1",
+      "size_in_bytes": 46363,
+      "digest": "sha256:f19c9c7524320ca6dc175413c7047db8ceaa6d218b76f9ffeeec9be0f6babbc0",
+      "expires_at": "2027-01-23T00:25:38Z"
+    },
+    {
+      "id": 12580848221,
+      "name": "relay-confirm-windows-to-linux-40146644907-1",
+      "size_in_bytes": 13863,
+      "digest": "sha256:b0c039ac9d71733f97dc719623dc7ec411d774b8db4b71cd6e0b0cca5c8610ee",
+      "expires_at": "2027-01-23T00:25:38Z"
+    },
+    {
+      "id": 12580753276,
+      "name": "relay-send-linux-to-macos-40146644907-1",
+      "size_in_bytes": 36538,
+      "digest": "sha256:8b9b618f528c1501d05f6e6c7f4d1a9a746472dcd579c5502b0ed51c90e7893f",
+      "expires_at": "2027-01-23T00:25:38Z"
+    },
+    {
+      "id": 12580498323,
+      "name": "relay-receive-linux-to-macos-40146644907-1",
+      "size_in_bytes": 46487,
+      "digest": "sha256:fc013390c1f7dd8bc1a93e6cbcdd93511bc6795d560fb1afdc74957e7a56095c",
+      "expires_at": "2027-01-23T00:25:38Z"
+    },
+    {
+      "id": 12580428479,
+      "name": "relay-confirm-linux-to-macos-40146644907-1",
+      "size_in_bytes": 13839,
+      "digest": "sha256:5ff514bb796a42494770b9fc529165e03affe58f5cb4043957570aca8a89715f",
+      "expires_at": "2027-01-23T00:25:38Z"
+    },
+    {
+      "id": 12580558074,
+      "name": "relay-send-macos-to-linux-40146644907-1",
+      "size_in_bytes": 36527,
+      "digest": "sha256:0f25b954623c36b06ee3d9a700580720126b7b1428ab4cb9dd8f9326561e8f22",
+      "expires_at": "2027-01-23T00:25:38Z"
+    },
+    {
+      "id": 12581132890,
+      "name": "relay-receive-macos-to-linux-40146644907-1",
+      "size_in_bytes": 46504,
+      "digest": "sha256:aee4bba18ee54b1a69295d7cfcedd34e64faae487ee2efb247647254f7d7c924",
+      "expires_at": "2027-01-23T00:25:38Z"
+    },
+    {
+      "id": 12581282617,
+      "name": "relay-confirm-macos-to-linux-40146644907-1",
+      "size_in_bytes": 13812,
+      "digest": "sha256:58a1b04b941094eb83fe1714eabcf9296388d17bdb1f7f8e8e2087974af7e115",
+      "expires_at": "2027-01-23T00:25:38Z"
+    }
+  ],
+  "consumer_sha256": {
+    "Linux": {
+      "relay_probe": "1aeb3f9c42fee0d8b655088db113966e7a72be8de71c01f5c96ce095d0790bde",
+      "relay_tool": "d3e68400eab7bfd84b246f3cd7097db2c77971896f63fc51cbf322eaf14a684f",
+      "component_checks": 33,
+      "failures": 0,
+      "skips": 0
+    },
+    "Windows": {
+      "relay_probe": "26331dc77570fe5130232918a8457f4f23e0ff4b5f355c2494ccc5278134df4f",
+      "relay_tool": "5974296e1f187647ba75addcca4b081cce9499f0caaf0fedc6b796188166be6f",
+      "component_checks": 33,
+      "failures": 0,
+      "skips": 1
+    },
+    "macOS": {
+      "relay_probe": "e3f74e10e5d76cb302af47b947abd364beefdf8095251bcf0e7fdba19aa63fa0",
+      "relay_tool": "40afa3bf86878e57aa41cac1a8f8b1560df8cbca4ad2fb878c0ba65db1a9b3fc",
+      "component_checks": 33,
+      "failures": 0,
+      "skips": 0
+    }
+  },
+  "original_failures": [
+    "run 40139319049 (7ff0a7d8): plan failed by design before the digests were pinned; Linux/macOS builds failed at artifact upload because of a scratch file named with a double quote",
+    "run 40139621500 (e168fd62): all receive/confirm jobs failed - my probe demanded zero pending counters after each shard instead of after the full sweep, and expected the merged tag to remain conflicted",
+    "run 40142080783 (5ebe5611): Windows receive/confirm hung to the 600 s timeout ; changed to 127.0.0.1 off macOS (suspected IPv6-first localhost delay, not separately proven) and the next run passed",
+    "run 40146089096 (9f2c7077): all stages passed, summary rejected because the receive result lacked the consumed inventory digest"
+  ],
+  "granted_scope": [
+    "installed exr_relay component plus installed C/C++ consumers on Linux, Windows and macOS (31 named cases each, pure C consumer exit 0)",
+    "artifact-relayed Linux->Windows, Windows->Linux, Linux->macOS, macOS->Linux: send, receive-with-return, confirm, same source/run/attempt",
+    "four original formats by pinned SHA-256; Unicode NFC/NFD/Russian/emoji metadata; 17 FOUND + 1 planted ambiguity, zero mislocated; conflict, tombstone, pending parent; cancel-retry and store reopen",
+    "strict same-source summary with 13 built-in rejection self-tests"
+  ],
   "not_granted": [
     "live six-device user cloud",
     "host UI",
@@ -21,5 +262,10 @@
     "performance",
     "accessibility"
   ],
-  "note": "Initial record. Filled only from a real Actions run; a generated report is not functional acceptance."
+  "note": "Initial record. Filled only from a real Actions run; a generated report is not functional acceptance.",
+  "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/40146644907",
+  "summary": {
+    "accepted": true,
+    "problems": []
+  }
 }
