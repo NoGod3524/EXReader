@@ -234,7 +234,7 @@ static void winnav_close(void) {
   if(window) DestroyWindow(window);
   winnav_result_free(&directory.result);directory.depth=directory.candidate_first=0;directory.book_id=0;
   directory.rows=directory.open=directory.children=directory.up=directory.previous=directory.next=directory.cancel=directory.message=NULL;
-  if(!g.closing && g.page) SetFocus(g.page);
+  host_restore_content_focus();
 }
 static void winnav_submit(int open,uint64_t parent,uint64_t first,uint64_t explicit_part,size_t depth) {
   if(!directory.dialog || directory.running || g.job || g.pending || g.closing || !g.session.active || directory.book_id!=g.current.id) return;

@@ -391,7 +391,7 @@ static INT_PTR CALLBACK prefs_dialog_procedure(HWND dialog, UINT message, WPARAM
       prefs_ui.want_close = 0;
       if (g.window && IsWindow(g.window)) {
         host_a11y_owner_enabled(1);
-        if (!g.closing) { SetActiveWindow(g.window); SetFocus(g.page); }
+        if (!g.closing) { SetActiveWindow(g.window); host_restore_content_focus(); }
       }
       prefs_dialog_closed();
       return TRUE;

@@ -373,7 +373,11 @@ void list(store &s,const book &b,const winrecords_request &r,winrecords_response
   out.page.complete=!out.has_next;
  }
  reader_av_close(&view,nullptr);need(code==READER_AV_OK,"Record list did not complete",code==READER_AV_CANCELLED?EXR_CANCELLED:EXR_DATABASE);
- selected(s,b.key,true,"",nullptr,nullptr,out.progress_info,out.progress);
+ auto progress_wire=selected(s,b.key,true,"",nullptr,nullptr,out.progress_info,out.progress);
+ if(out.progress.kind==READER_SELECTION_SAFE&&!out.progress.graph.deleted&&!progress_wire.empty()) {
+  record decoded;
+  out.progress_has_location=reader_rs_decode(s.revisions,progress_wire.data(),progress_wire.size(),&decoded.value,nullptr)==READER_RS_OK&&decoded.value.has_location;
+ }
 }
 /* Read only ASCII root-parent IDs from public-validated wire, not an alternate
    transport validator. Nested text/quotes are skipped at their actual depth. */

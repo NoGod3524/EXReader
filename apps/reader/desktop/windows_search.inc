@@ -184,7 +184,7 @@ static void winsearch_close(void) {
   winsearch_batch_free(&inbook.batch);inbook.have_cursor=0;
   inbook.query=inbook.find=inbook.next=inbook.rows=inbook.open=inbook.cancel=inbook.message=NULL;
   inbook.book_id=0;
-  if(!g.closing && g.page) SetFocus(g.page);
+  host_restore_content_focus();
 }
 static void winsearch_submit(int next,int open_hit) {
   if(!inbook.dialog || inbook.running || g.job || g.pending || g.closing ||

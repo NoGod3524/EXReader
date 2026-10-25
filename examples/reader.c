@@ -1028,6 +1028,43 @@ static host_job *job_new(int kind) {
 #endif
   return job;
 }
+/* A dialog may also be opened over the compact shelf while a book remains
+   loaded. Restore focus to a currently operable surface, never a hidden page. */
+#if defined(EXR_READER_WINDOWS_SEARCH) || defined(EXR_READER_WINDOWS_NAVIGATION) || defined(EXR_READER_WINDOWS_RECORDS) || defined(EXR_READER_WINDOWS_PREFERENCES)
+static void host_restore_content_focus(void) {
+  HWND targets[] = {g.page, g.books};
+  if (g.closing) return;
+  for (size_t i = 0; i < sizeof(targets) / sizeof(targets[0]); i++) {
+    if (targets[i] && IsWindowVisible(targets[i]) && IsWindowEnabled(targets[i])) {
+      SetFocus(targets[i]); return;
+    }
+  }
+}
+#endif
+
+static int host_work_area(HWND window, RECT *area) {
+  MONITORINFO info = {0}; info.cbSize = sizeof(info);
+  HMONITOR monitor = MonitorFromWindow(window, MONITOR_DEFAULTTOPRIMARY);
+  if (!monitor || !GetMonitorInfoW(monitor, &info)) return 0;
+  *area = info.rcWork;
+  return area->right > area->left && area->bottom > area->top;
+}
+
+static void host_fit_work_area(HWND window) {
+  RECT bounds, area;
+  if (!GetWindowRect(window, &bounds) || !host_work_area(window, &area)) return;
+  int width = bounds.right - bounds.left, height = bounds.bottom - bounds.top;
+  int available_width = area.right - area.left, available_height = area.bottom - area.top;
+  if (width > available_width) width = available_width;
+  if (height > available_height) height = available_height;
+  int x = bounds.left, y = bounds.top;
+  if (x + width > area.right) x = area.right - width;
+  if (y + height > area.bottom) y = area.bottom - height;
+  if (x < area.left) x = area.left;
+  if (y < area.top) y = area.top;
+  SetWindowPos(window, NULL, x, y, width, height, SWP_NOZORDER | SWP_NOACTIVATE);
+}
+
 #ifdef EXR_READER_WINDOWS_SEARCH
 static void winsearch_hit_free(host_search_hit *hit);
 static void winsearch_batch_free(host_search_batch *batch);
@@ -3773,7 +3810,11 @@ static void handle_job_complete(host_job *job) {
         if (!save_progress()) { g.pending_selection = 0; return; }
         if (job->message[0]) set_status(job->message);
         else set_statusf(L"第 %llu 页。", (unsigned long long)(g.frame.page + 1));
-        if (job->resolved_selection) { g.pending_start = job->note_start; g.pending_end = job->note_end; }
+        if (job->resolved_selection) {
+          g.pending_book = g.current.id; g.pending_part = g.frame.part;
+          g.pending_start = job->note_start; g.pending_end = job->note_end;
+          g.pending_selection = 1;
+        }
         apply_pending_selection();
       } else {
         set_status(L"翻页失败：任务没有生成画面。");
@@ -4952,6 +4993,11 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
         limits->ptMinTrackSize.y = 420;
       }
 #endif
+      RECT work;
+      if (host_work_area(window, &work)) {
+        if (limits->ptMinTrackSize.x > work.right - work.left) limits->ptMinTrackSize.x = work.right - work.left;
+        if (limits->ptMinTrackSize.y > work.bottom - work.top) limits->ptMinTrackSize.y = work.bottom - work.top;
+      }
       return 0;
     }
 #ifdef EXR_READER_WINDOWS_COMPACT
@@ -5357,6 +5403,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
     LONG_PTR style = GetWindowLongPtrW(g.window, GWL_EXSTYLE);
     SetWindowLongPtrW(g.window, GWL_EXSTYLE, style | WS_EX_CONTROLPARENT);
   }
+  host_fit_work_area(g.window);
   ShowWindow(g.window, show ? show : SW_SHOWNORMAL);
   UpdateWindow(g.window);
   reload_shelf();

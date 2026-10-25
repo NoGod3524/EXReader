@@ -41,6 +41,7 @@ typedef struct {
   char versions[32][33];char *version_labels[32];size_t version_count;
   int history_complete,has_previous,has_next,pending,pending_corrupt,created,committed;
   int command_code;
+  int progress_has_location;
   char message[192];
 } winrecords_response;
 exr_status winrecords_execute(const winrecords_request *,winrecords_response *);
