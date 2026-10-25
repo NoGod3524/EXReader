@@ -219,7 +219,11 @@ final class HostAccountSession: ObservableObject {
                         config.product_path = productPath; config.private_directory = privatePath
                         config.original_directory = originalsPath; config.account_id = account
                         config.dav.root_url = root; config.dav.authorization = auth; config.dav.timeout_ms = 30000
+#if EXR_APPLE_RAW3
+                        return reader_session_create_raw_v3(&config, &handle)
+#else
                         return reader_session_create(&config, &handle)
+#endif
                     } }
                 } }
             } }
