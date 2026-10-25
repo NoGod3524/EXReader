@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 import subprocess
 
-BASE = 'cdfe48231853d6e70fba2c41b42bdd187155901a'
+BASE = '220585e8248918096b9fc2c389ea5ad2389d388b'
 FROZEN = '9854061be331fe603a1822d9b2b36ee357154927'
 CANDIDATE = 'edddc463c06ed5731195cdb8f06b2df6dff7699e'
 assert os.environ.get('GITHUB_ACTIONS') == 'true'
@@ -16,13 +16,15 @@ protected = ['src', 'include', 'cmake', 'CMakeLists.txt', 'tests/fixtures', 'bin
 subprocess.run(['git', 'diff', '--exit-code', FROZEN, BASE, '--', *protected], check=True)
 subprocess.run(['git', 'diff', '--exit-code', CANDIDATE, 'HEAD', '--', *protected], check=True)
 subprocess.run(['git', 'diff', '--exit-code', BASE, 'HEAD', '--', 'tests/reading_real/budgets.json',
+                'tests/reading_real/environments.json', 'tests/reading_real/environments',
                 'tests/reading_real/contract.json', 'tools/reading_corpus/real-v1.json',
                 '.github/workflows/native.yml', '.github/workflows/reliability.yml'], check=True)
 paths = subprocess.check_output(['git', 'diff', '--name-only', BASE, 'HEAD'], text=True).splitlines()
 direct = {'src/raster.c', 'include/exr/render.h', 'include/exr/base.h', 'CMakeLists.txt', 'cmake/versions.cmake',
           '.github/workflows/sdk-page-background.yml', '.github/workflows/sdk-page-background-mobile.yml',
-          '.github/workflows/r2-reading-corpus.yml', '.github/workflows/reading-real.yml',
-          'tools/reading_corpus/collect.py', 'tests/reading_corpus/check_collect.py',
+          '.github/workflows/reading-real.yml',
+          'tools/measure_reading_real.py',
+          'tools/reading_required.py', '.github/workflows/reading-required.yml',
           'docs/SDK-PAGE-BACKGROUND.md'}
 for path in paths:
     if path in direct or path.startswith(('tests/sdk_page_background/', 'tests/sdk_page_background_mobile/')):

@@ -59,7 +59,7 @@ jobs:
       - name: Strict same-source, same-attempt quality and release-material summary
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 tools/reading_required.py build/reading-required/artifacts build/reading-required/needs.json build/reading-required/summary.json
+        run: python3 tools/reading_required.py build/reading-required/artifacts build/reading-required/needs.json build/reading-required/summary.json --sdk-candidate edddc463c06ed5731195cdb8f06b2df6dff7699e
       - name: Preserve rejection or acceptance without publishing
         if: always()
         uses: actions/upload-artifact@v4

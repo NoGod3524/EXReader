@@ -129,21 +129,25 @@ jobs:
       - name: Preserve exact authorized SDK and accepted frozen budgets
         run: python3 tests/sdk_page_background/guard.py
       - name: Install only the original independent source inspector
-        run: sudo apt-get update -qq && sudo apt-get install -y poppler-utils
+        run: sudo apt-get update -qq && sudo apt-get install -y poppler-utils python3-pil
       - name: Retain all original collector refusals and test explicit frozen-cache identity checks
-        run: python3 tests/reading_corpus/check_collect.py
+        run: |
+          python3 tests/reading_corpus/check_collect.py
+          python3 tests/check_reading_real_environments.py
+          python3 tests/check_reading_real_baseline.py
+          python3 tests/check_reading_real_baseline_report.py
+          python3 tests/check_reading_real_review.py
+          python3 tests/sdk_page_background/check_performance_scope.py
       - name: Rehash original input ZIP and restore only the unchanged eight published byte streams
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          python3 tests/sdk_page_background/restore_inputs.py build/frozen-corpus-cache
-          python3 tools/reading_corpus/collect.py collect tools/reading_corpus/real-v1.json build/frozen-corpus-collection --input-cache build/frozen-corpus-cache
+          python3 tools/reading_corpus/collect.py cached tools/reading_corpus/real-v1.json build/frozen-corpus-collection
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: sdk-background-frozen-inputs-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            build/frozen-corpus-cache/provenance.json
             build/frozen-corpus-collection/manifest.json
             build/frozen-corpus-collection/licenses/
           if-no-files-found: error

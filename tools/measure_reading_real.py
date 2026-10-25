@@ -21,6 +21,7 @@ SDK = "9854061be331fe603a1822d9b2b36ee357154927"
 CORPUS_REGISTRATION = "ea5c13e081cfba86d9f6dd759439894463e51126"
 PROTECTED = ("src", "include", "cmake", "CMakeLists.txt", "tests/fixtures",
              ".github/workflows/native.yml", ".github/workflows/reliability.yml", "bindings")
+AUTHORIZED_BACKGROUND_SDK = "edddc463c06ed5731195cdb8f06b2df6dff7699e"
 CONTRACT = ROOT / "tests/reading_real/contract.json"
 MANIFEST = ROOT / "tools/reading_corpus/real-v1.json"
 BUDGETS = ROOT / "tests/reading_real/budgets.json"
@@ -124,7 +125,27 @@ def retain_baseline_report(origin, output):
         archive_path.unlink(missing_ok=True)
 
 
-def verify_baseline_report(budgets, current, output):
+def authorized_background_candidate(current, expected_sdk=SDK):
+    """Explicit new SDK scope; the old default freeze and numeric budgets stay intact."""
+    if 'authorized_sdk_candidate' not in current:
+        require(expected_sdk == SDK, 'Missing explicitly requested SDK candidate scope')
+        return False
+    require(expected_sdk == current['authorized_sdk_candidate'] == current['sdk_candidate'] == AUTHORIZED_BACKGROUND_SDK
+            and current['baseline_sdk_candidate'] == SDK
+            and current['before']['sdk_candidate'] == AUTHORIZED_BACKGROUND_SDK,
+            'Unauthorized SDK candidate scope')
+    require(current['before']['source_sha'] == current['source_sha'] and
+            current['before']['source_tree'] == git('rev-parse', current['source_sha'] + '^{tree}'),
+            'Authorized SDK source tree claim changed')
+    require(subprocess.run(['git', 'merge-base', '--is-ancestor', AUTHORIZED_BACKGROUND_SDK,
+                            current['source_sha']], cwd=ROOT).returncode == 0, 'Authorized SDK candidate is not an ancestor')
+    require(all(current['before']['sdk_trees'][path] == git('rev-parse', AUTHORIZED_BACKGROUND_SDK + ':' + path)
+                == git('rev-parse', current['source_sha'] + ':' + path) for path in PROTECTED),
+            'Authorized SDK candidate tree or report changed')
+    return True
+
+
+def verify_baseline_report(budgets, current, output, expected_sdk=SDK):
     origin = current["baseline_origin"]
     require(origin["summary_file"] == "baseline-summary.json" and
             sha256(output / "baseline-summary.json") == origin["summary_sha256"] == budgets["baseline_summary_sha256"],
@@ -135,14 +156,18 @@ def verify_baseline_report(budgets, current, output):
             baseline["run_id"] == str(budgets["baseline_run_id"]) and
             baseline["run_attempt"] == str(budgets["baseline_run_attempt"]) and baseline["measurement_valid"] is True,
             "Baseline report identity or complete measurement refused")
+    candidate = authorized_background_candidate(current, expected_sdk)
     require(baseline["before"] == baseline["after"] and baseline["before"]["source_clean"] and
             baseline["before"]["source_sha"] == baseline["source_sha"] and
             baseline["before"]["source_tree"] == git("rev-parse", baseline["source_sha"] + "^{tree}") and
-            baseline["sdk_candidate"] == current["sdk_candidate"] and
-            baseline["before"]["sdk_candidate"] == current["before"]["sdk_candidate"] and
-            baseline["before"]["sdk_trees"] == current["before"]["sdk_trees"], "Baseline SDK identity refused")
+            baseline["sdk_candidate"] == (SDK if candidate else current["sdk_candidate"]) and
+            baseline["before"]["sdk_candidate"] == (SDK if candidate else current["before"]["sdk_candidate"]) and
+            (candidate or baseline["before"]["sdk_trees"] == current["before"]["sdk_trees"]), "Baseline SDK identity refused")
     require(all(baseline["before"]["sdk_trees"][path] == git("rev-parse", baseline["source_sha"] + ":" + path)
                 for path in PROTECTED), "Baseline protected tree claims differ from committed source")
+    if candidate:
+        require(all(baseline['before']['sdk_trees'][path] == git('rev-parse', SDK + ':' + path)
+                    for path in PROTECTED), 'Original baseline does not match its canonical frozen SDK')
     require(baseline["contract_sha256"] == current["contract_sha256"] == budgets["contract_sha256"] and
             baseline["corpus_manifest_sha256"] == current["corpus_manifest_sha256"] == budgets["corpus_manifest_sha256"] and
             baseline["contract"] == current["contract"] and baseline["files"] == current["files"] and
@@ -182,10 +207,10 @@ def verify_baseline_report(budgets, current, output):
     return baseline
 
 
-def identity(binary, font, manifest, contract, entries, corpus):
+def identity(binary, font, manifest, contract, entries, corpus, sdk_candidate=SDK):
     return {"source_sha": git("rev-parse", "HEAD"), "source_tree": git("rev-parse", "HEAD^{tree}"),
             "source_clean": not git("status", "--porcelain", "--untracked-files=all"),
-            "sdk_candidate": SDK, "sdk_trees": {path: git("rev-parse", "HEAD:" + path) for path in PROTECTED},
+            "sdk_candidate": sdk_candidate, "sdk_trees": {path: git("rev-parse", "HEAD:" + path) for path in PROTECTED},
             "binary": file_identity(binary), "font": file_identity(font),
             "manifest_sha256": sha256(manifest), "contract_sha256": sha256(contract),
             "inputs": {entry["id"]: file_identity(corpus / entry["path"]) for entry in entries},
@@ -193,9 +218,9 @@ def identity(binary, font, manifest, contract, entries, corpus):
                 ("tools/reading_real_benchmark.c", "tools/measure_reading_real.py", "tools/host_font.py", "tests/reading_real/CMakeLists.txt")}}
 
 
-def native_metrics(record, entry, contract):
+def native_metrics(record, entry, contract, engine_version="3.40.0"):
     require(record["schema"] == 1 and record["success"] is True and record["status"] == 0 and
-            record["engine_version"] == "3.40.0" and record["engine_abi"] == 1 and
+            record["engine_version"] == engine_version and record["engine_abi"] == 1 and
             record["stage"] == "complete" and record["mode"] == entry["format"].lower(), "Native measurement failed")
     for field in ("font_open_ms", "open_ms", "first_visible_ms", "peak_rss_bytes", "baseline_peak_rss_bytes"):
         require(number(record[field]), "Invalid metric " + field)
@@ -293,8 +318,8 @@ def pixel_difference(native, reference):
                 "changed_channel_fraction": nonzero / (a.width * a.height * 3)}
 
 
-def fallback_refusals(record, entry, contract):
-    native_metrics(record, entry, contract)
+def fallback_refusals(record, entry, contract, engine_version="3.40.0"):
+    native_metrics(record, entry, contract, engine_version)
     changes = {"not_oversize": ("layout_bytes", contract["epub"]["page_cache_budget"]),
                "no_cache_rejection": ("cache_rejection_status", 0), "no_rejected_get_time": ("failed_cache_ms", 0),
                "changed_route": ("page", 999999), "changed_text": ("text_hash", "0" * 16)}
@@ -302,7 +327,7 @@ def fallback_refusals(record, entry, contract):
         mutant = copy.deepcopy(record)
         next(sample for sample in mutant["samples"] if sample["oversize_fallback"])[key] = value
         try:
-            native_metrics(mutant, entry, contract)
+            native_metrics(mutant, entry, contract, engine_version)
         except ValueError:
             continue
         raise ValueError("Oversize refusal accepted " + name)
@@ -317,8 +342,8 @@ def frozen_signatures(expected, observed):
             "Cross-source page RGBA/UTF-8/position signature changed; explicit review and a new frozen baseline required")
 
 
-def signature_refusals(record, entry, contract):
-    _, baseline = native_metrics(record, entry, contract)
+def signature_refusals(record, entry, contract, engine_version="3.40.0"):
+    _, baseline = native_metrics(record, entry, contract, engine_version)
     frozen_signatures(baseline, baseline)
     route = (record["samples"][0]["part"], record["samples"][0]["page"])
     for field in ("pixel_hash", "text_hash", "position_hash"):
@@ -327,7 +352,7 @@ def signature_refusals(record, entry, contract):
             if (sample["part"], sample["page"]) == route:
                 sample[field] = "0" * 16
         # Deliberately stable corruption passes ordinary within-process repeat checks.
-        _, changed = native_metrics(mutant, entry, contract)
+        _, changed = native_metrics(mutant, entry, contract, engine_version)
         try:
             frozen_signatures(baseline, changed)
         except ValueError:
@@ -339,15 +364,18 @@ def signature_refusals(record, entry, contract):
     return result
 
 
-def audit(summary, output, budgets=None):
+def audit(summary, output, budgets=None, expected_sdk=SDK):
     require(summary["schema"] == 1 and summary["scope"] == "linux_representative_reading", "Wrong report scope")
     require(summary["render_parity_granted"] is False, "External pixel comparison cannot grant render parity")
     require(summary["run_id"] == os.environ["GITHUB_RUN_ID"] and
             summary["run_attempt"] == os.environ["GITHUB_RUN_ATTEMPT"] and
             summary["source_sha"] == os.environ["GITHUB_SHA"], "Cloud run/source/attempt identity changed")
     before = summary["before"]
+    candidate = authorized_background_candidate(summary, expected_sdk)
+    engine_version = "3.41.0" if candidate else "3.40.0"
     require(before == summary["after"] and before["source_clean"] and
-            before["source_sha"] == summary["source_sha"] and before["sdk_candidate"] == SDK,
+            before["source_sha"] == summary["source_sha"] and
+            before["sdk_candidate"] == (AUTHORIZED_BACKGROUND_SDK if candidate else SDK),
             "Source/input identity changed")
     require(before["contract_sha256"] == summary["contract_sha256"] and
             before["manifest_sha256"] == summary["corpus_manifest_sha256"], "Contract/manifest identity changed")
@@ -373,7 +401,7 @@ def audit(summary, output, budgets=None):
             name = attempt[key]
             require(Path(name).name == name and sha256(output / name) == attempt[key + "_sha256"], "Raw output changed/missing")
         record = read(output / attempt["stdout"])
-        values, pixels = native_metrics(record, entry, contract)
+        values, pixels = native_metrics(record, entry, contract, engine_version)
         require(entry["id"] not in signatures or signatures[entry["id"]] == pixels, "Cross-process pixels changed")
         signatures[entry["id"]] = pixels
         rows[entry["id"]].append(values)
@@ -413,7 +441,7 @@ def audit(summary, output, budgets=None):
         require(origin["run"]["id"] == budgets["baseline_run_id"] and
                 origin["run"]["head_sha"] == budgets["baseline_source_sha"] and
                 origin["artifact"]["digest"] == budgets["baseline_artifact_digest"], "Baseline origin changed")
-        baseline_report = verify_baseline_report(budgets, summary, output)
+        baseline_report = verify_baseline_report(budgets, summary, output, expected_sdk)
         from export_reading_real_budgets import verify_review
         review_path = ROOT / budgets['pixel_review_path']
         require(review_path.resolve().is_relative_to(ROOT.resolve()) and review_path.is_file() and
@@ -445,8 +473,8 @@ def audit(summary, output, budgets=None):
     return {"cases": results, "pixel_comparisons": comparisons, "page_signatures": page_signatures}
 
 
-def selfcheck(summary, output, budgets):
-    audit(summary, output, budgets)
+def selfcheck(summary, output, budgets, expected_sdk=SDK):
+    audit(summary, output, budgets, expected_sdk)
     changes = {
         "source": lambda s: s.update(source_sha="0" * 40),
         "run": lambda s: s.update(run_id="0"),
@@ -466,13 +494,14 @@ def selfcheck(summary, output, budgets):
         mutant = copy.deepcopy(summary)
         change(mutant)
         try:
-            audit(mutant, output, budgets)
+            audit(mutant, output, budgets, expected_sdk)
         except (OSError, ValueError, KeyError, TypeError):
             continue
         raise ValueError("Refusal regression accepted " + name)
     native = read(output / summary["attempts"][0]["stdout"])
     entry = summary["files"][0]
     raw_changes = {
+        "wrong_runtime_sdk": lambda r: r.update(engine_version="3.40.0" if expected_sdk == AUTHORIZED_BACKGROUND_SDK else "3.41.0"),
         "native_failure": lambda r: r.update(success=False),
         "nonfinite_timing": lambda r: r.update(open_ms=float("nan")),
         "dropped_operation": lambda r: r["samples"].pop(),
@@ -487,7 +516,8 @@ def selfcheck(summary, output, budgets):
     for name, change in raw_changes.items():
         mutant = copy.deepcopy(native);change(mutant)
         try:
-            native_metrics(mutant, entry, summary["contract"])
+            native_metrics(mutant, entry, summary["contract"],
+                           "3.41.0" if summary.get("authorized_sdk_candidate") == AUTHORIZED_BACKGROUND_SDK else "3.40.0")
         except (ValueError, KeyError, TypeError):
             continue
         raise ValueError("Native refusal regression accepted " + name)
@@ -508,6 +538,8 @@ def main():
     budget_group = parser.add_mutually_exclusive_group()
     budget_group.add_argument("--budgets", type=Path)
     budget_group.add_argument("--frozen-budgets", action="store_true")
+    parser.add_argument("--sdk-candidate", choices=(SDK, AUTHORIZED_BACKGROUND_SDK), default=SDK,
+                        help="Explicit separately authorized background SDK; default remains the original frozen SDK")
     args = parser.parse_args()
     require(os.environ.get("GITHUB_ACTIONS") == "true", "Measurements require GitHub Actions")
     output = args.output.resolve();output.mkdir(parents=True, exist_ok=False)
@@ -515,7 +547,7 @@ def main():
     entries = [entry for entry in manifest["files"] if entry.get("performance_representative")]
     binary = args.binary.resolve();font = ROOT / contract["font_path"]
     summary = {"schema": 1, "scope": "linux_representative_reading", "accepted": False,
-               "measurement_valid": False, "source_sha": args.source_sha, "sdk_candidate": SDK,
+               "measurement_valid": False, "source_sha": args.source_sha, "sdk_candidate": args.sdk_candidate,
                "run_id": os.environ["GITHUB_RUN_ID"], "run_attempt": os.environ["GITHUB_RUN_ATTEMPT"],
                "corpus_registration_sha": CORPUS_REGISTRATION,
                "contract_path": "tests/reading_real/contract.json", "budget_path": "tests/reading_real/budgets.json",
@@ -525,6 +557,8 @@ def main():
                "real_document_credit": 0, "synthetic_credit": 0, "wp16_cpu_credit_seconds": 0,
                "results": None, "complete_product": False}
     summary["render_parity_granted"] = False
+    if args.sdk_candidate != SDK:
+        summary.update(authorized_sdk_candidate=args.sdk_candidate, baseline_sdk_candidate=SDK)
     summary["external_pixel_scope"] = "reviewed difference-regression boundaries only; never a correctness/parity score"
     summary["cross_source_signatures_checked"] = False
     summary["memory_telemetry"] = {
@@ -535,14 +569,14 @@ def main():
     summary["diagnostic_observations"] = []
     try:
         require(len(args.source_sha) == 40, "Use a full source SHA")
-        require(subprocess.run(["git", "merge-base", "--is-ancestor", SDK, args.source_sha], cwd=ROOT).returncode == 0,
+        require(subprocess.run(["git", "merge-base", "--is-ancestor", args.sdk_candidate, args.source_sha], cwd=ROOT).returncode == 0,
                 "SDK is not an ancestor")
         require(subprocess.run(["git", "merge-base", "--is-ancestor", CORPUS_REGISTRATION, args.source_sha], cwd=ROOT).returncode == 0,
                 "First corpus registration is not an ancestor")
         require(git("rev-parse", "HEAD:tools/reading_corpus/real-v1.json") ==
                 git("rev-parse", CORPUS_REGISTRATION + ":tools/reading_corpus/real-v1.json"), "Registered manifest blob changed")
         for path in PROTECTED:
-            require(git("rev-parse", "HEAD:" + path) == git("rev-parse", SDK + ":" + path), "SDK protected tree changed")
+            require(git("rev-parse", "HEAD:" + path) == git("rev-parse", args.sdk_candidate + ":" + path), "SDK protected tree changed")
         summary["environment"] = environment()
         require(summary["environment"]["runner_os"] == "Linux" and summary["environment"]["runner_arch"] == "X64" and
                 summary["environment"]["runner_image"] == "ubuntu22", "Wrong fixed runner")
@@ -555,7 +589,8 @@ def main():
             summary["budget_path"] = selection["budget_path"]
             summary["budget_sha256"] = selection["budget_sha256"]
             summary["budget_selection"] = selection
-        summary["before"] = identity(binary, font, args.manifest, CONTRACT, entries, args.corpus)
+        summary["before"] = identity(binary, font, args.manifest, CONTRACT, entries, args.corpus, args.sdk_candidate)
+        engine_version = "3.41.0" if args.sdk_candidate == AUTHORIZED_BACKGROUND_SDK else "3.40.0"
         sdk_files = sorted(path for path in args.sdk.rglob("*") if path.is_file())
         summary["installed_sdk"] = {"bytes": sum(path.stat().st_size for path in sdk_files),
             "files": {str(path.relative_to(args.sdk)): file_identity(path) for path in sdk_files}}
@@ -564,7 +599,7 @@ def main():
         if budgets:
             summary["baseline_origin"] = baseline_origin(budgets, args.source_sha)
             retain_baseline_report(summary["baseline_origin"], output)
-            verify_baseline_report(budgets, summary, output)
+            verify_baseline_report(budgets, summary, output, args.sdk_candidate)
         for entry in entries:
             source = args.corpus / entry["path"]
             for process in range(1, contract["processes"] + 1):
@@ -589,12 +624,12 @@ def main():
                     if item["exit_code"]:
                         observation["error"] = (output / item["stderr"]).read_text(encoding="utf-8")[:1000]
                     try:
-                        observation["metrics"], _ = native_metrics(raw, entry, contract)
+                        observation["metrics"], _ = native_metrics(raw, entry, contract, engine_version)
                         observation["complete_process_valid"] = True
                         if "signature_refusal_regression" not in summary:
-                            summary["signature_refusal_regression"] = signature_refusals(raw, entry, contract)
+                            summary["signature_refusal_regression"] = signature_refusals(raw, entry, contract, engine_version)
                         if raw["oversize_fallbacks"] and "oversize_refusal_regression" not in summary:
-                            summary["oversize_refusal_regression"] = fallback_refusals(raw, entry, contract)
+                            summary["oversize_refusal_regression"] = fallback_refusals(raw, entry, contract, engine_version)
                     except (ValueError, KeyError, TypeError) as error:
                         observation["complete_process_valid"] = False
                         observation["validation_problem"] = str(error)
@@ -622,9 +657,9 @@ def main():
                             item["diagnostic_pixel_problem"] = str(error)
                     print(json.dumps({"reference_observation": item}), flush=True)
                     summary["references"].append(item)
-        summary["after"] = identity(binary, font, args.manifest, CONTRACT, entries, args.corpus)
-        summary["results"] = audit(summary, output, budgets)
-        summary["refusal_regression"] = selfcheck(summary, output, budgets)
+        summary["after"] = identity(binary, font, args.manifest, CONTRACT, entries, args.corpus, args.sdk_candidate)
+        summary["results"] = audit(summary, output, budgets, args.sdk_candidate)
+        summary["refusal_regression"] = selfcheck(summary, output, budgets, args.sdk_candidate)
         summary["measurement_valid"] = True
         summary["real_document_credit"] = len(entries)
         summary["accepted"] = budgets is not None

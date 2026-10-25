@@ -162,7 +162,7 @@ def validate_candidates(root, source, run, attempt):
     return candidates
 
 
-def reports(root, source, run, attempt):
+def reports(root, source, run, attempt, sdk_candidate='9854061be331fe603a1822d9b2b36ee357154927'):
     candidates = validate_candidates(root, source, run, attempt)
     for host in ('Windows', 'macOS'):
         for profile in ('reading-core', 'reading-library'):
@@ -207,7 +207,7 @@ def reports(root, source, run, attempt):
             performance.get('budget_sha256') == sha256(budget_path), 'strict frozen performance evidence missing')
     require(performance.get('refusal_regression', {}).get('passed') is True,
             'performance evidence refusal regression missing')
-    audit(performance, performance_path.parent, real_read(budget_path))
+    audit(performance, performance_path.parent, real_read(budget_path), sdk_candidate)
     return {'sdk_version': candidates[0]['identity']['sdk_version'], 'abi': candidates[0]['identity']['abi'],
             'library_schema': 7, 'sdk_candidate': performance['sdk_candidate'],
             'candidates': [{key: item[key] for key in ('profile', 'host', 'arch', 'archive', 'bytes', 'sha256', 'manifest_sha256')}
@@ -222,6 +222,8 @@ def main():
     parser.add_argument('evidence', type=Path)
     parser.add_argument('needs', type=Path)
     parser.add_argument('output', type=Path)
+    parser.add_argument('--sdk-candidate', choices=('9854061be331fe603a1822d9b2b36ee357154927',
+                        'edddc463c06ed5731195cdb8f06b2df6dff7699e'), default='9854061be331fe603a1822d9b2b36ee357154927')
     args = parser.parse_args()
     require(os.environ.get('GITHUB_ACTIONS') == 'true', 'required reading gate runs only in cloud')
     source, run, attempt = (os.environ[key] for key in ('GITHUB_SHA', 'GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT'))
@@ -246,7 +248,7 @@ def main():
                                               read('docs/reading-required-ruleset.json'))
         result['artifacts'] = verify_metadata(source, run, attempt, read(args.needs),
                                              pages(f'actions/runs/{run}/artifacts', 'artifacts'), workflow_head)
-        result['identity'] = reports(args.evidence, source, run, attempt)
+        result['identity'] = reports(args.evidence, source, run, attempt, args.sdk_candidate)
         result['accepted'] = True
     except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
         result['problems'].append(str(error))

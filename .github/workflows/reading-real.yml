@@ -81,6 +81,7 @@ jobs:
           python3 tests/check_reading_real_baseline_report.py
           python3 tests/check_reading_real_review.py
           python3 tests/check_reading_real_environments.py
+          python3 tests/sdk_page_background/check_performance_scope.py
       - name: Verify bounded collector retry and download refusals
         run: python3 tests/reading_corpus/check_collect.py
       - name: Recover eight frozen originals and verify current publisher licenses
@@ -111,7 +112,7 @@ jobs:
             echo 'Strict performance gate requires a committed baseline and numeric budgets.'
             exit 1
           fi
-          python3 tools/measure_reading_real.py build/reading-real-consumer/reading-real-benchmark tools/reading_corpus/real-v1.json build/reading-real-inputs/assets build/reading-real --sdk build/reading-core/stage --source-sha "$GITHUB_SHA" "${budget_args[@]}"
+          python3 tools/measure_reading_real.py build/reading-real-consumer/reading-real-benchmark tools/reading_corpus/real-v1.json build/reading-real-inputs/assets build/reading-real --sdk build/reading-core/stage --source-sha "$GITHUB_SHA" --sdk-candidate edddc463c06ed5731195cdb8f06b2df6dff7699e "${budget_args[@]}"
       - name: Require complete baseline collection without acceptance
         if: inputs.baseline_only == true
         run: |
