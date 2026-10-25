@@ -15,6 +15,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import bundle_copy
 import time
 
 APP_PREFIX = {'iphone': 'iPhone', 'ipad': 'iPad'}
@@ -121,6 +122,7 @@ def _run(app, device_class, output, bundle_identifier, executable):
     facts['installation']['identity_matches'] = (
         facts['installation']['installed_executable_sha256'] is not None and
         facts['installation']['installed_executable_sha256'] == facts['installation']['source_executable_sha256'])
+    facts['installation']['bundle_copy'] = bundle_copy.installed_facts(app, installed)
     started = time.time()
     launch = step('launch', ['xcrun', 'simctl', 'launch', udid, bundle_identifier], timeout=300)
     match = re.search(r':\s*(\d+)\s*$', (launch.stdout or '').strip().splitlines()[-1] if (launch.stdout or '').strip() else '')
@@ -135,12 +137,13 @@ def _run(app, device_class, output, bundle_identifier, executable):
             alive = False
     program_path = ''
     if pid:
-        program = step('running-program', ['ps', '-p', str(pid), '-o', 'pid=,comm='], timeout=120, check=False)
+        program = step('running-program', ['ps', '-ww', '-p', str(pid), '-o', 'pid=,comm='], timeout=120, check=False)
         program_path = (program.stdout or '').strip()
     facts['launch'] = {'bundle_identifier': bundle_identifier, 'pid': pid,
                        'alive_after_seconds': ALIVE_SECONDS, 'alive': alive,
                        'program': program_path or None,
-                       'program_matches': bool(program_path) and identity in program_path}
+                       'expected_program': str(installed_executable.resolve()),
+                       'program_matches': bool(pid) and bundle_copy.running_program(pid, program_path, installed_executable)}
     screenshot = step('screenshot', ['xcrun', 'simctl', 'io', udid, 'screenshot', str(output / 'screen.png')],
                       timeout=300, check=False)
     screen = output / 'screen.png'

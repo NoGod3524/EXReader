@@ -23,6 +23,8 @@ import sys
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import zip_stage
+import bundle_copy
+import identity
 
 
 def require(condition, message):
@@ -80,11 +82,14 @@ def stage(app, output, device_class):
         import shutil
         shutil.copytree(app['path'], str(destination), symlinks=True)
     staged = zip_stage.app_facts(destination)
+    bundle_copy.same(bundle_copy.snapshot(destination), bundle_copy.snapshot(app['path']))
     require(staged['executable_sha256'] == app['executable_sha256'],
             'staged executable differs from the extracted bundle')
     require(staged['info_plist_sha256'] == app['info_plist_sha256'],
             'staged Info.plist differs from the extracted bundle')
     staged['staged'] = destination.relative_to(Path(output)).as_posix()
+    staged['snapshot'] = bundle_copy.snapshot(destination)
+    staged['original_binding'] = app.get('original_binding')
     return staged
 
 
@@ -105,9 +110,10 @@ def write(output, record):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--repository', default=os.environ.get('GITHUB_REPOSITORY', 'NoGod3524/EXReader'))
-    parser.add_argument('--run-id', type=int)
-    parser.add_argument('--sha')
-    parser.add_argument('--workflow', default='.github/workflows/reader-apple-raw3-ios.yml')
+    parser.add_argument('--run-id', type=int, default=identity.RUN)
+    parser.add_argument('--sha', default=identity.SOURCE)
+    parser.add_argument('--attempt', type=int, default=identity.ATTEMPT)
+    parser.add_argument('--workflow', default=identity.WORKFLOW)
     parser.add_argument('--artifact')
     parser.add_argument('--expect-digest')
     parser.add_argument('--zip', type=Path)
@@ -121,13 +127,14 @@ def main():
     require(not output.exists(), 'choose a new intake directory: ' + str(output))
     output.mkdir(parents=True)
     classes = [value.strip() for value in args.device_classes.split(',') if value.strip()]
-    require(classes and set(classes) <= {'iphone', 'ipad'}, 'unsupported device classes')
+    require(classes and len(classes) == len(set(classes)) and set(classes) <= {'iphone', 'ipad'}, 'unsupported/duplicate device classes')
+    implementation = identity.implementation(args.implementation_sha, args.branch)
     record = {
         'schema': 1,
         'kind': 'reader-final-s05-producer-source',
         'repository': args.repository,
-        'implementation': {'sha': args.implementation_sha, 'branch': args.branch},
-        'designation': {'run_id': args.run_id, 'head_sha': args.sha, 'workflow': args.workflow,
+        'implementation': implementation,
+        'designation': {'run_id': args.run_id, 'attempt': args.attempt, 'head_sha': args.sha, 'workflow': args.workflow,
                         'artifact': args.artifact, 'expect_digest': args.expect_digest},
         'run': None,
         'artifact': None,
@@ -159,19 +166,30 @@ def main():
     else:
         require(args.run_id is not None and args.sha and args.artifact,
                 'designate --run-id, --sha and --artifact (or pass --zip)')
-        run = api('repos/%s/actions/runs/%s' % (args.repository, args.run_id))
+        run = api('repos/%s/actions/runs/%s/attempts/%s' % (args.repository, args.run_id, args.attempt))
+        pinned = (args.run_id, args.sha, args.attempt, args.workflow) == (identity.RUN, identity.SOURCE, identity.ATTEMPT, identity.WORKFLOW)
+        if pinned:
+            run, record['producer_jobs'] = identity.producer_jobs(args.repository)
+        else:
+            record['blocked_by'].append('not_the_frozen_successful_producer')
         record['run'] = {key: run.get(key) for key in
                          ('id', 'name', 'path', 'head_sha', 'head_branch', 'event', 'status',
                           'conclusion', 'run_attempt', 'created_at', 'updated_at', 'html_url')}
         listing = api('repos/%s/actions/runs/%s/artifacts?per_page=100' % (args.repository, args.run_id))
         candidates = [item for item in listing.get('artifacts') or [] if item.get('name') == args.artifact]
+        require(len(candidates) <= 1, 'duplicate designated producer artifact')
         if not candidates:
             record['blocked_by'].append('producer_artifact_missing')
         else:
             artifact = candidates[0]
+            identity.metadata(artifact, args.sha, args.run_id)
+            if pinned:
+                require(len(classes) == 1, 'one exact producer artifact per device class')
+                expected_pin = identity.ARTIFACTS[classes[0]]
+                require(all(artifact.get(key) == value for key, value in expected_pin.items()), 'producer artifact differs from fixed device pin')
             record['artifact'] = {key: artifact.get(key) for key in
                                   ('id', 'name', 'size_in_bytes', 'digest', 'created_at',
-                                   'expires_at', 'expired')}
+                                   'expires_at', 'expired', 'workflow_run')}
             archive = download(args.repository, artifact['id'], output / 'artifact.zip')
             digest = zip_stage.sha256(archive)
             reported = str(artifact.get('digest') or '')
@@ -191,8 +209,10 @@ def main():
                     'downloaded artifact bytes do not match the designated digest')
             if not record['artifact']['download']['bytes_match_api']:
                 record['blocked_by'].append('producer_artifact_size_mismatch')
-            if run.get('conclusion') != 'success':
+            if run.get('status') != 'completed' or run.get('conclusion') != 'success':
                 record['blocked_by'].append('producer_run_conclusion_failure')
+            if run.get('run_attempt') != args.attempt:
+                record['blocked_by'].append('producer_attempt_mismatch')
             if run.get('head_sha') != args.sha:
                 record['blocked_by'].append('producer_source_mismatch')
             if run.get('path') != args.workflow:
@@ -203,6 +223,7 @@ def main():
         write(output, record)
         return 0
     extraction = output / 'extract'
+    identity.inspect_zip(archive.read_bytes())
     record['extraction'] = zip_stage.extract(archive, extraction)
     if args.zip is None:
         archive.unlink()
@@ -212,9 +233,16 @@ def main():
         record['blocked_by'].append('producer_app_bundle_missing')
     for device_class in classes:
         try:
-            value = choose(apps, device_class)
-        except ValueError:
+            if not record['blocked_by']:
+                actual_app = extraction / 'program-raw/EXReaderHost.app'
+                value = identity.unique([app for app in apps if Path(app['path']) == actual_app], 'exact successful raw app missing/duplicated')
+                require((1 if device_class == 'iphone' else 2) in value.get('family', []), 'raw app device family differs')
+                value['original_binding'] = bundle_copy.authenticate_original(extraction, actual_app, device_class)
+            else:
+                value = choose(apps, device_class)
+        except ValueError as failure:
             record['blocked_by'].append('producer_app_bundle_missing_' + device_class)
+            record.setdefault('intake_failures', {})[device_class] = str(failure)
             continue
         record['chosen'][device_class] = stage(value, output, device_class)
     if len(record['chosen']) != len(classes):
@@ -224,6 +252,8 @@ def main():
         # second artifact upload; the ZIP container does not guarantee them.
         subprocess.run(['tar', '-cf', str(output / 'staging.tar'), '-C', str(output), 'staging'],
                        check=True, capture_output=True)
+        record['staging_tar'] = dict(bytes=(output / 'staging.tar').stat().st_size,
+                                     sha256=zip_stage.sha256(output / 'staging.tar'))
     record['eligible'] = not record['blocked_by'] and len(record['chosen']) == len(classes)
     write(output, record)
     return 0

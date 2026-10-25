@@ -22,6 +22,7 @@ import sys
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import app_bundle
+import identity
 
 
 def require(condition, message):
@@ -275,7 +276,7 @@ def self_check(fixture, output, implementation_sha):
     result = {
         'schema': 1,
         'kind': 'reader-final-s05-fixture-self-check',
-        'implementation': {'sha': implementation_sha},
+        'implementation': identity.implementation(implementation_sha),
         'fixture': {'app': str(app), 'identifier': record['identifier'],
                     'executable_sha256': record['executable_sha256'],
                     'info_plist_sha256': record['info_plist_sha256']},

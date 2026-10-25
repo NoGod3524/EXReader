@@ -16,8 +16,12 @@ inherits the fixture result.
 """
 import argparse
 import json
+import os
 from pathlib import Path
 import sys
+import identity
+import zip_stage
+import bundle_copy
 
 CLASSES = ('iphone', 'ipad')
 
@@ -39,10 +43,117 @@ def collect(root):
     for path in sorted(root.rglob('result.json')):
         value = load(path)
         if isinstance(value, dict) and value.get('kind') == 'reader-final-s05-simulator-distribution':
+            value['_evidence_directory'] = str(path.parent)
             found['results'].append(value)
     for path in sorted(root.rglob('producer-source.json')):
         found['producer_source'].append(load(path))
     return found
+
+
+def authenticated_inputs(args):
+    implementation = identity.implementation(args.sha, args.branch)
+    require((args.run_id, args.attempt) == (implementation['run_id'], implementation['attempt']),
+            'summary requested another run/attempt')
+    repository = os.environ['GITHUB_REPOSITORY']
+    prefix = 'repos/%s/actions/runs/%s' % (repository, args.run_id)
+    listing = identity.api(prefix + '/attempts/%s/jobs?per_page=100' % args.attempt)
+    expected_jobs = {'Verifier fixture and mutant controls'}
+    expected_jobs |= {'Authenticate designated producer ' + device for device in CLASSES}
+    expected_jobs |= {'Clean simulator install smoke ' + device for device in CLASSES}
+    jobs = [row for row in listing['jobs'] if row['name'] in expected_jobs]
+    require(listing['total_count'] == len(listing['jobs']) == 6 and len(jobs) == 5 and
+            {row['name'] for row in jobs} == expected_jobs, 'S05 original producer job set changed/duplicated')
+    require(all(row['status'] == 'completed' and row['conclusion'] == 'success' and
+                row['head_sha'] == args.sha and row['run_attempt'] == int(args.attempt) for row in jobs),
+            'S05 job failed or source/run/attempt differs')
+    artifacts = identity.api(prefix + '/artifacts?per_page=100')['artifacts']
+    names = {'s05-harness-%s-%s' % (args.run_id, args.attempt)}
+    names |= {'s05-%s-%s-%s-%s' % (kind, device, args.run_id, args.attempt)
+              for kind in ('intake', 'smoke') for device in CLASSES}
+    selected = [row for row in artifacts if row['name'] in names]
+    require(len(selected) == len(names) and {row['name'] for row in selected} == names,
+            'S05 current-attempt artifacts missing/duplicated')
+    destination = args.evidence.parent / 'authenticated-inputs'
+    require(not destination.exists(), 'new strict input directory required')
+    destination.mkdir(parents=True)
+    retained = []
+    for meta in selected:
+        raw = identity.archive_bytes(repository, meta, args.sha, args.run_id)
+        archive = destination / (meta['name'] + '.zip')
+        archive.write_bytes(raw)
+        zip_stage.extract(archive, destination / meta['name'])
+        archive.unlink()
+        retained.append({key: meta[key] for key in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')})
+    return destination, implementation, retained, jobs
+
+
+def validate_unique(found, implementation):
+    require(len(found['fixture_checks']) == 1 and len(found['producer_source']) == 2,
+            'duplicate/missing harness or per-device producer intake')
+    identity.same_implementation(found['fixture_checks'][0]['implementation'], implementation)
+    sources = {}
+    for source in found['producer_source']:
+        identity.same_implementation(source['implementation'], implementation)
+        keys = set(source['chosen'])
+        require(len(keys) == 1 and keys <= set(CLASSES), 'intake must name exactly one device')
+        device = next(iter(keys))
+        require(device not in sources, 'duplicate producer intake class')
+        sources[device] = source
+    require(set(sources) == set(CLASSES), 'missing device intake')
+    expected = {(device, 'fixture', smoke) for device in CLASSES for smoke in (False, True)}
+    observed = set()
+    for value in found['results']:
+        identity.same_implementation(value['sources']['implementation'], implementation)
+        device, mode = value['device_class'], value['mode']
+        key = (device, mode, value['install_smoke']['requested'])
+        require(key not in observed, 'duplicate verifier result class/mode/smoke')
+        observed.add(key)
+        if mode in ('producer', 'diagnostic'):
+            require(device in sources, 'foreign result device class')
+            producer = value['sources']['producer']
+            require(all(producer[name] == sources[device][name] for name in ('designation', 'run', 'artifact', 'eligible', 'blocked_by')),
+                    'verifier result differs from authenticated per-device intake')
+            expected.add(key)
+    require(len(found['results']) == 6 and observed == expected and
+            sum(value['mode'] in ('producer', 'diagnostic') for value in found['results']) == 2 and
+            {value['device_class'] for value in found['results'] if value['mode'] in ('producer', 'diagnostic')} == set(CLASSES),
+            'exact four fixture and two per-device actual producer results required')
+    return sources
+
+
+def validate_producer_bundle(value, source):
+    if value['mode'] != 'producer':
+        require(value['granted'] is False, 'diagnostic result claimed a grant')
+        return
+    device = value['device_class']
+    pin = identity.ARTIFACTS[device]
+    require(all(source['artifact'].get(key) == item for key, item in pin.items()), 'intake producer pin differs')
+    require((source['designation']['run_id'], source['designation']['attempt'], source['designation']['head_sha'], source['designation']['workflow']) ==
+            (identity.RUN, identity.ATTEMPT, identity.SOURCE, identity.WORKFLOW), 'producer designation differs')
+    chosen = source['chosen'][device]
+    require(chosen['original_binding']['original_bundle_bytes_authenticated'] and
+            chosen['original_binding']['original_modes_links_accepted'] is False, 'original facts overstated')
+    root = Path(value['_evidence_directory'])
+    manifest = load(root / 'bundle-manifest.json')
+    rows = manifest['resources']['files']
+    require(len(rows) == len({row['path'] for row in rows}), 'duplicate bundle manifest file')
+    content = {row['path']: dict(bytes=row['bytes'], sha256=row['sha256']) for row in rows}
+    require(content == chosen['snapshot']['content'], 'verifier full bundle inventory differs from authenticated intake')
+    require(value['bundle']['executable_sha256'] == chosen['executable_sha256'] and
+            value['bundle']['info_plist_sha256'] == chosen['info_plist_sha256'], 'result bundle identity differs')
+    checks = value['checks']
+    require(len(checks) == len({row['id'] for row in checks}) and
+            value['blocking'] == [row['id'] for row in checks if row['status'] == 'fail'], 'verifier check inventory differs')
+    install = value['install_smoke']
+    copied = install['installation']['bundle_copy']
+    require(copied['all_bundle_bytes_match'] and copied['all_observed_links_match'], 'installed bundle bytes/links incomplete')
+    bundle_copy.same(copied['source_snapshot'], chosen['snapshot'])
+    bundle_copy.same(copied['installed_snapshot'], copied['source_snapshot'], include_metadata=False)
+    launch = install['launch']
+    require(bundle_copy.running_program(launch['pid'], launch['program'], launch['expected_program']) and
+            launch['program_matches'] and launch['alive'], 'actual installed PID/program did not match')
+    require(value['original_modes_links_accepted'] is False and value['original_modes_links_status'] == 'pending',
+            'original ZIP mode/link fidelity was incorrectly granted')
 
 
 def main():
@@ -56,7 +167,12 @@ def main():
     args = parser.parse_args()
     output = args.output.absolute()
     require(not output.exists(), 'choose a new summary directory: ' + str(output))
-    found = collect(args.evidence)
+    strict_root, implementation, authenticated_artifacts, authenticated_jobs = authenticated_inputs(args)
+    found = collect(strict_root)
+    sources = validate_unique(found, implementation)
+    for value in found['results']:
+        if value['mode'] in ('producer', 'diagnostic'):
+            validate_producer_bundle(value, sources[value['device_class']])
     problems = []
     checks = [item for item in found['fixture_checks']
               if (item.get('implementation') or {}).get('sha') == args.sha]
@@ -111,7 +227,7 @@ def main():
             'device': chosen['device'],
             'bundle': chosen['bundle'],
         }
-    source = found['producer_source'][0] if found['producer_source'] else None
+    source = sources['iphone']
     if source is None:
         problems.append('no producer source record was downloaded')
     elif source['implementation']['sha'] != args.sha:
@@ -162,6 +278,11 @@ def main():
             'simulator': simulator,
         },
         'producer': producer,
+        'producer_sources': sources,
+        'authenticated_upstream_jobs': authenticated_jobs,
+        'authenticated_artifacts': authenticated_artifacts,
+        'original_modes_links_accepted': False,
+        'original_modes_links_status': 'pending',
         'problems': problems,
         'pending': pending,
         'accepted': accepted_result,
@@ -183,7 +304,7 @@ def main():
                                          'blocked_by': value['blocked_by']}
                                    for key, value in producer.items()},
                       'problems': problems, 'pending': pending}, indent=2))
-    return 0 if not problems else 1
+    return 0 if accepted_result else 1
 
 
 if __name__ == '__main__':

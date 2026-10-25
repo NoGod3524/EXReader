@@ -9,19 +9,19 @@ on:
     inputs:
       producer_run_id:
         description: Producer Actions run id
-        default: '40203714083'
+        default: '40217963443'
       producer_sha:
         description: Producer head commit
-        default: '72c6bbdd14ebf3be453fa7f0da81119d52675eb5'
+        default: '5ac5e1fa4cf6dcbfe81ea14b9f64b6288470164a'
       producer_artifact_iphone:
         description: Producer artifact name for the iPhone class
-        default: 'apple-raw3-ios-iphone-40203714083-1'
+        default: 'apple-raw3-ios-iphone-40217963443-1'
       producer_artifact_ipad:
         description: Producer artifact name for the iPad class
-        default: 'apple-raw3-ios-ipad-40203714083-1'
+        default: 'apple-raw3-ios-ipad-40217963443-1'
       producer_workflow:
         description: Producer workflow path
-        default: '.github/workflows/reader-apple-raw3-ios.yml'
+        default: '.github/workflows/reader-apple-raw3-ios-ready.yml'
 permissions:
   contents: read
   actions: read
@@ -29,12 +29,12 @@ concurrency:
   group: reader-final-s05
   cancel-in-progress: false
 env:
-  S05_BRANCH: codex/reader-fw-s05
-  S05_RUN_ID: ${{ github.event.inputs.producer_run_id || '40203714083' }}
-  S05_SHA: ${{ github.event.inputs.producer_sha || '72c6bbdd14ebf3be453fa7f0da81119d52675eb5' }}
-  S05_WORKFLOW: ${{ github.event.inputs.producer_workflow || '.github/workflows/reader-apple-raw3-ios.yml' }}
-  S05_ARTIFACT_IPHONE: ${{ github.event.inputs.producer_artifact_iphone || 'apple-raw3-ios-iphone-40203714083-1' }}
-  S05_ARTIFACT_IPAD: ${{ github.event.inputs.producer_artifact_ipad || 'apple-raw3-ios-ipad-40203714083-1' }}
+  S05_BRANCH: codex/reader-fw-s05-root-review
+  S05_RUN_ID: ${{ github.event.inputs.producer_run_id || '40217963443' }}
+  S05_SHA: ${{ github.event.inputs.producer_sha || '5ac5e1fa4cf6dcbfe81ea14b9f64b6288470164a' }}
+  S05_WORKFLOW: ${{ github.event.inputs.producer_workflow || '.github/workflows/reader-apple-raw3-ios-ready.yml' }}
+  S05_ARTIFACT_IPHONE: ${{ github.event.inputs.producer_artifact_iphone || 'apple-raw3-ios-iphone-40217963443-1' }}
+  S05_ARTIFACT_IPAD: ${{ github.event.inputs.producer_artifact_ipad || 'apple-raw3-ios-ipad-40217963443-1' }}
 jobs:
   intake:
     name: Authenticate designated producer ${{ matrix.device }}
@@ -74,6 +74,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Refuse to run outside the S05 implementation branch
         run: test "$GITHUB_REF_NAME" = "$S05_BRANCH"
+      - name: Reject changed evidence-chain identities and copies
+        run: python3 tests/reader_final_s05/test_chain.py
       - name: Build the CI generated simulator fixture app
         run: python3 tests/reader_final_s05/fixture.py --build --output build/reader-final-s05/fixture --implementation-sha "$GITHUB_SHA"
       - name: Prove the verifier accepts the untouched fixture and rejects every mutant
@@ -122,9 +124,7 @@ jobs:
         continue-on-error: true
         run: |
           set -euo pipefail
-          if [ -f build/reader-final-s05/intake/staging.tar ]; then
-            tar -xf build/reader-final-s05/intake/staging.tar -C build/reader-final-s05/intake
-          fi
+          python3 tests/reader_final_s05/restore.py --intake build/reader-final-s05/intake --implementation-sha "$GITHUB_SHA"
       - name: Designated producer app on the clean simulator
         if: always()
         continue-on-error: true
@@ -154,10 +154,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Refuse to run outside the S05 implementation branch
         run: test "$GITHUB_REF_NAME" = "$S05_BRANCH"
-      - uses: actions/download-artifact@v4
-        with:
-          path: build/reader-final-s05/downloads
+
       - name: Aggregate and refuse to call a fixture or a failed producer a pass
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           python3 tests/reader_final_s05/summary.py --evidence build/reader-final-s05/downloads --output build/reader-final-s05/summary --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" --sha "$GITHUB_SHA" --branch "$GITHUB_REF_NAME"
       - uses: actions/upload-artifact@v4

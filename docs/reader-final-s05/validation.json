@@ -4,7 +4,7 @@
   "kind": "reader-final-s05-apple-mobile-simulator-distribution",
   "contract": "docs/reader-final-s05/CONTRACT.md",
   "implementation_start": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
-  "branch": "codex/reader-fw-s05",
+  "branch": "codex/reader-fw-s05-root-review",
   "executed": false,
   "accepted": false,
   "source": {
@@ -14,6 +14,18 @@
     "attempt": null
   },
   "producer": {
+    "workflow": ".github/workflows/reader-apple-raw3-ios-ready.yml",
+    "run_id": 40217963443,
+    "attempt": 1,
+    "head_sha": "5ac5e1fa4cf6dcbfe81ea14b9f64b6288470164a",
+    "conclusion": "success",
+    "eligible": null,
+    "artifacts": [
+      {"id": 12608976777, "name": "apple-raw3-ios-iphone-40217963443-1", "bytes": 152515213, "digest": "sha256:06cf2e467ce225e927b32f36dccf7febe93fc15bc60fc0d5450cfc56b068f49f", "expires_at": "2027-01-23T17:45:06Z"},
+      {"id": 12608483488, "name": "apple-raw3-ios-ipad-40217963443-1", "bytes": 186145203, "digest": "sha256:2a37546c8d0bbcb8f171e6f2292bb3d2a94fa24e2ea07d4dcdd12ffe07fd7ead", "expires_at": "2027-01-23T17:45:06Z"}
+    ]
+  },
+  "previous_failed_producer": {
     "workflow": ".github/workflows/reader-apple-raw3-ios.yml",
     "run_id": 40203714083,
     "attempt": 1,
@@ -61,11 +73,14 @@
     "simulator": true
   },
   "pending": [
-    "no successful Apple mobile producer run is designated; the failed 72 producer stays failed",
-    "producer iPhone and iPad app bundles are unverified against a successful run",
+    "root review implementation has not been executed; no new S05 acceptance is granted",
+    "the successful producer is designated, but new whole-bundle and same-run evidence checks await Actions",
+    "original producer mode and symlink metadata were not recorded; preservation remains pending",
     "device signing, App Store delivery and physical device runs are outside this package"
   ],
   "notes": [
+    "root review is source-only; no local build, syntax test, artifact parsing or expensive Mac CI was run",
+    "original 72 run failure and artifact identities remain under previous_failed_producer",
     "fixtures are generated inside the Actions job only",
     "a fixture proves the verifier, never the product",
     "the original failed run log and artifact identity are recorded in docs/reader-final-s05/CONTRACT.md"

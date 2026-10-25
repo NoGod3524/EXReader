@@ -25,6 +25,8 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import app_bundle
 import sim_smoke
+import bundle_copy
+import identity
 
 
 def require(condition, message):
@@ -34,6 +36,10 @@ def require(condition, message):
 
 def load_json(path):
     return json.loads(Path(path).read_text())
+
+
+def signing_established(signature):
+    return signature.get('state') == 'signed' and signature.get('bundle_sealed') is True and signature.get('verify') is True
 
 
 def producer_sources(path, mode, device_class, expected_source, implementation_sha):
@@ -47,6 +53,7 @@ def producer_sources(path, mode, device_class, expected_source, implementation_s
     implementation = value.get('implementation') or {}
     require(implementation.get('sha') == implementation_sha,
             'producer source was staged by a different implementation commit')
+    identity.same_implementation(implementation, identity.implementation(implementation_sha))
     eligible = value.get('eligible') is True
     if mode == 'producer':
         require(eligible, 'producer source is not eligible: ' + ','.join(value.get('blocked_by') or []))
@@ -136,6 +143,11 @@ def main():
     output.mkdir(parents=True)
     manifest = app_bundle.manifest(app)
     if chosen is not None:
+        bundle_copy.same(bundle_copy.snapshot(app), chosen['snapshot'])
+        if mode == 'producer':
+            require(chosen.get('original_binding', {}).get('original_bundle_bytes_authenticated') is True,
+                    'original complete bundle bytes were not authenticated')
+            bundle_copy.same(bundle_copy.snapshot(app), chosen['original_binding']['snapshot'])
         require(chosen.get('executable_sha256') == manifest['executable'].get('sha256'),
                 'staged executable bytes differ from the authenticated producer artifact')
         require(chosen.get('info_plist_sha256') == manifest['info_plist'].get('sha256'),
@@ -158,6 +170,13 @@ def main():
     checks = app_bundle.check(manifest, args.device_class, mode=mode,
                               runtime_version=runtime, expected_source=expected_source)
     checks += smoke_checks(smoke)
+    if producer is not None:
+        checks.append(dict(id='producer.original_modes_links_preservation', status='pending',
+                           detail='original report attests file bytes only; ZIP does not attest original chmod/link metadata; no chmod or resign applied'))
+    if smoke is not None:
+        copied = (smoke.get('installation') or {}).get('bundle_copy') or {}
+        checks.append(dict(id='install.complete_bundle_bytes', status='pass' if copied.get('all_bundle_bytes_match') else 'fail',
+                           detail='all installed files/bytes/hashes and observed safe links compared'))
     blocking = [item['id'] for item in checks if item['status'] == 'fail']
     pending = [item['id'] for item in checks if item['status'] == 'pending']
     manifest_complete = not blocking
@@ -181,7 +200,7 @@ def main():
             blocked_by = list(producer.get('blocked_by') or []) + blocking
             if not smoke_pass:
                 blocked_by.append('install_smoke_incomplete')
-    sources = {'implementation': {'sha': args.implementation_sha, 'branch': args.branch},
+    sources = {'implementation': identity.implementation(args.implementation_sha, args.branch),
                'producer': None}
     if producer is not None:
         sources['producer'] = {
@@ -218,8 +237,7 @@ def main():
         'signing': {'state': (manifest['signature'] or {}).get('state'),
                     'verify': (manifest['signature'] or {}).get('verify'),
                     'bundle_sealed': (manifest['signature'] or {}).get('bundle_sealed'),
-                    'established': ((manifest['signature'] or {}).get('state') == 'signed' and
-                                    (manifest['signature'] or {}).get('verify') is True),
+                    'established': signing_established(manifest['signature'] or {}),
                     'device_signing_granted': False},
         'file_sharing': manifest['file_sharing'],
         'device': (smoke or {}).get('device'),
@@ -227,6 +245,8 @@ def main():
         'checks': checks,
         'blocking': blocking,
         'pending': pending,
+        'original_modes_links_accepted': False,
+        'original_modes_links_status': 'pending',
         'manifest_complete': manifest_complete,
         'install_smoke': {'status': (smoke or {}).get('status', 'skipped'),
                           'requested': not args.no_smoke,

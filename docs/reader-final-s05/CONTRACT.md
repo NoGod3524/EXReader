@@ -1,5 +1,19 @@
 # S05 iPhone/iPad 模拟器分发核验契约
 
+## root只读审查后的独立修订（未执行）
+
+独立分支 `codex/reader-fw-s05-root-review` 从S05已提交 `ccef845e9f5cfe8c5a810d1ea7d4dedfce2c3214` 建立；不改原DS工作树，不启动Mac CI。下面§6保留的是旧72失败历史；当前默认producer是成功source `5ac5e1fa4cf6dcbfe81ea14b9f64b6288470164a` / run `40217963443` / attempt1 / `.github/workflows/reader-apple-raw3-ios-ready.yml`。iPhone工件12608976777（152515213B、`06cf2e467ce225e927b32f36dccf7febe93fc15bc60fc0d5450cfc56b068f49f`），iPad12608483488（186145203B、`2a37546c8d0bbcb8f171e6f2292bb3d2a94fa24e2ea07d4dcdd12ffe07fd7ead`），有效期均 `2027-01-23T17:45:06Z`。原成功producer不替代本修订自己的未执行验收。
+
+本修订只加强本包证据链：
+
+1. 指定producer的attempt API、完整五作业ID/状态/source、唯一精确工件ID/名称/大小/digest/归属/未来有效期全部闭合；只选择 `program-raw/EXReaderHost.app`，核对原 `result.json/files` 全目录字节及各成功raw phase的实际程序hash，不按任意名字排名授予。
+2. 原report只记录文件bytes/SHA，未记录原chmod和symlink元信息。故只授可证明的全部文件字节；`original_modes_links_accepted=false/status=pending`。解包后的观察模式仅用于ditto副本、已认证tar和恢复之间的比较，不提升为原producer模式证明；不重设权限、不重签原包。若原包执行权限缺失，保留真实安装/检查失败，不修成“原模式已保留”。
+3. 安装后核全部文件集/字节/hash和安全链接，对比源与安装后观察模式并记录事实；源模式与链接原始保真仍pending。真实launch PID和ps返回的canonical程序路径必须等于实际安装的可执行文件，不再做名字substring匹配。
+4. 所有结果记录implementation SHA/run/attempt。summary重新认证本轮五个上游成功作业及五份原ZIP；核对API digest、大小、未来有效期、唯一名称/source/run，下载重算ZIP，拒绝重复/缺失/跨轮JSON；完整检查两份producer intake、四份fixture结果与两份producer结果及bundle/install事实。汇总不再从目录任意取第一份或覆盖重复设备结果；只有实际producer授予成立才exit0。
+5. 新增最小纯证据负例（只在Actions）：跨attempt、工件归属/大小/digest/有效期、资源/模式变更、错误PID/程序路径、未密封authority签名不能established、重复/缺失结果。原fixture、15个分类mutant、模拟器预算与原签名事实保留。
+
+新工具未执行：`executed=false/accepted=false`。原host、SDK、原producer的测试/裁判/预算均未改。独立分支push不匹配原push分支，完整Mac运行由root之后明确触发。
+
 固定实现起点 `0889f7d1e9a537c6c1b05456547e016b26e1cd85`，分支 `codex/reader-fw-s05`。
 本包只新增 `tests/reader_final_s05/`、`.github/workflows/reader-final-s05.yml`、`docs/reader-final-s05/` 与
 `HANDOFF-RESULT.md`；现有 apps/examples/SDK/tests/workflow 全部只读。

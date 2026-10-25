@@ -33,6 +33,8 @@ def extract(archive, destination):
     archive = Path(archive)
     destination = Path(destination)
     require(archive.is_file(), 'missing artifact archive: ' + str(archive))
+    from identity import inspect_zip
+    inspect_zip(archive.read_bytes())
     with open(archive, 'rb') as stream:
         require(stream.read(4) == b'PK\x03\x04', 'artifact is not a ZIP archive: ' + str(archive))
     destination.mkdir(parents=True)
