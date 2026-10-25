@@ -6,6 +6,8 @@
 
 修复四个实际问题：ticket取消与提交共用同一短锁，防止cancel返回true后仍发布；每个ReadyRequest是独立entry-owned lease，重复内容共享单一私有文件且仅最后lease删除，foreign/stale/repeated release无效；可靠pipe的checkError异常也必须关闭描述符；query.SIZE小报不得把未知长度pipe前缀当完整原件。保留原78项断言，新增20,000次真实双线程竞争、积压重复回调/跨entry/跨close代际lease、32次真实可靠pipe错误FD计数，以及小报长度拒绝。汇总另认证当前attempt的上游作业和原ZIP id/字节/digest/有效期，在Actions内重算散列后读取报告。
 
+review首轮 source `206f89045a9c64c5f6188643f8e2117320a1a346` / run `40160142660` 的guards与编译通过，设备92项通过、1项失败：原78项、20k竞争、全部lease反例、小报长度和32次可靠pipe IO均通过；新增FD总量检查107→118，超出原定baseline+4。失败及工件保留，阈值不变。回归现先做一次真实分享取得grant及IO预热，再在同一Activity/已授予URI上直接提交32次真实provider复制，避免把反复创建分享窗口的资源混进pipe比较；两端FD清单用`/proc/self/fd`真实readlink留存。此调整尚待云端，不把107→118解释为已排除泄漏。
+
 `extras/android-import-entry`是可选独立模块，不进入默认SDK构建，不改变SDK3.40.0／ABI1／schema7，
 不修改`examples/android`、现有Android owner或`extras/sideload`。它由两部分组成：
 

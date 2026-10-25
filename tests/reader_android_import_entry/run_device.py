@@ -432,16 +432,22 @@ def s_review_ready_leases(output):
 
 @scenario
 def s_review_reliable_pipe_fds(output):
+    # Obtain the real grant and finish one error before measuring; launching 32
+    # Activities would mix window/Intent descriptor lifetimes into the pipe test.
+    since = mark(); send('send', 'txt-error')
+    warmup = wait(lambda e: e['ev'] == 'failed' and e.get('uri', '').endswith('txt-error'), since, 60, 'reliable pipe warmup')
+    check('review: real share grants the pipe URI and warmup reports IO', warmup['code'] == 'IO', warmup)
+    time.sleep(0.5)
     since = mark(); ctl('review-fd-count')
-    before = wait(lambda e: e['ev'] == 'review-fd-count', since, 30, 'initial fd count')['count']
+    before = wait(lambda e: e['ev'] == 'review-fd-count', since, 30, 'initial fd count')
     failures = []
     for iteration in range(32):
-        since = mark(); send('send', 'txt-error')
+        since = mark(); ctl('submit-uri', arg=DOC_URI + 'txt-error')
         failures.append(wait(lambda e: e['ev'] == 'failed' and e.get('uri', '').endswith('txt-error'), since, 60, 'reliable pipe error'))
     since = mark(); ctl('review-fd-count')
-    after = wait(lambda e: e['ev'] == 'review-fd-count', since, 30, 'final fd count')['count']
+    after = wait(lambda e: e['ev'] == 'review-fd-count', since, 30, 'final fd count')
     check('review: 32 real reliable-pipe provider errors remain IO with no committed request', len(failures) == 32 and all(e['code'] == 'IO' and e['state'] == 'FAILED' for e in failures), failures)
-    check('review: repeated reliable-pipe failure descriptors close within baseline plus four framework FDs', before > 0 and after <= before + 4, {'before': before, 'after': after, 'repetitions': 32})
+    check('review: repeated reliable-pipe failure descriptors close within baseline plus four framework FDs', before['count'] > 0 and after['count'] <= before['count'] + 4, {'before': before, 'after': after, 'repetitions': 32})
     clean_staging('review reliable pipe errors')
 
 

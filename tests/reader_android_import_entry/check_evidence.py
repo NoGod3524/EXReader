@@ -49,6 +49,7 @@ REQUIRED_SCENARIOS = [
     'review: foreign entry leases cannot remove either entry original',
     'review: closed-entry stale lease cannot delete recovered file and new owner imports exact bytes',
     'review: 32 real reliable-pipe provider errors remain IO with no committed request',
+    'review: real share grants the pipe URI and warmup reports IO',
     'review: repeated reliable-pipe failure descriptors close within baseline plus four framework FDs',
 ]
 
