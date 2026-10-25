@@ -12,7 +12,8 @@ import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'tools'))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from relaylib import DIRECTIONS, ROLES  # noqa: E402
+from relaylib import DIRECTIONS, HERE, ROLES, load_expected, need  # noqa: E402
+from evidence import archive_files, strict_json, verify_artifact, verify_binary, verify_inventory, verify_job, verify_probe, verify_zip_bytes  # noqa: E402
 
 OSES = ('Linux', 'Windows', 'macOS')
 COMPONENT_CHECKS = {'sha256_vector_empty', 'sha256_vector_abc', 'sha256_vector_million', 'inventory_counts_files_and_directories', 'inventory_is_deterministic',
@@ -56,12 +57,15 @@ def problems_for(identity, results):
         ident_ok(b, 'build ' + os_name)
         if b.get('os') != os_name:
             bad('build %s ran on %s' % (os_name, b.get('os')))
-        names = {c['name']: c['status'] for c in b.get('component_checks', [])}
+        checks = b.get('component_checks', [])
+        names = {c['name']: c['status'] for c in checks}
+        if len(names) != len(checks):
+            bad('build %s duplicate component checks' % os_name)
         if not COMPONENT_CHECKS <= set(names):
             bad('build %s lacks component checks %s' % (os_name, sorted(COMPONENT_CHECKS - set(names))))
-        if any(s == 'fail' for s in names.values()) or any(s == 'skip' and n not in OPTIONAL_SKIPS for n, s in names.items()):
+        if any(s not in ('pass', 'skip') for s in names.values()) or any(s == 'skip' and n not in OPTIONAL_SKIPS for n, s in names.items()):
             bad('build %s component check failed/skipped' % os_name)
-        if b.get('c_consumer_exit') != 0 or not b.get('probe_sha256') or not b.get('tool_sha256'):
+        if b.get('c_consumer_exit') != 0 or not all(b.get(k) for k in ('probe_sha256', 'tool_sha256', 'cpp_consumer_sha256', 'c_consumer_sha256')):
             bad('build %s consumer evidence incomplete' % os_name)
     for direction, (sender, receiver) in DIRECTIONS.items():
         chain = {}
@@ -85,15 +89,30 @@ def problems_for(identity, results):
             if r.get('probe_sha256') != b.get('probe_sha256'):
                 bad('%s %s ran a probe that is not the built one' % (direction, stage))
         ids = {s: results.get('identity', {}).get(s, {}).get(direction, {}) for s in ('send', 'receive')}
+        for stage, peer in ids.items():
+            label = '%s %s package' % (direction, stage)
+            for field in ('source_sha', 'run_id', 'attempt'):
+                if str(peer.get(field)) != str(identity[field]):
+                    bad(label + ' ' + field + ' differs')
+            os_name = (sender, receiver)[STAGE_OS[stage]]
+            if peer.get('stage') != stage or peer.get('direction') != direction or peer.get('os') != os_name:
+                bad(label + ' peer identity differs')
+            for field in ('probe_sha256', 'tool_sha256'):
+                if peer.get(field) != builds.get(os_name, {}).get(field):
+                    bad(label + ' binary differs')
         if ids['send'] and ids['receive'] and chain.get('receive', {}).get('parent_inventory_digest') != ids['send'].get('inventory_digest'):
             bad('%s receive consumed a tree other than the sent one' % direction)
         if ids['receive'] and chain.get('confirm', {}).get('parent_inventory_digest') != ids['receive'].get('inventory_digest'):
             bad('%s confirm read a tree other than the returned one' % direction)
         if not ids['send'].get('inventory_digest') or ids['send'].get('inventory_digest') == ids['receive'].get('inventory_digest'):
             bad('%s return leg did not change the tree' % direction)
+        if ids['receive'].get('parent_inventory_digest') != ids['send'].get('inventory_digest'):
+            bad('%s returned package parent differs' % direction)
         cases = chain.get('receive', {}).get('cases', [])
         if len(cases) != 18 or sum(c.get('state') == 'FOUND' for c in cases) != 17 or [c['state'] for c in cases].count('AMBIGUOUS') != 1:
             bad('%s receive capture outcomes differ' % direction)
+        if [(c.get('id'), c.get('state')) for c in cases] != [(c['id'], c['state']) for c in load_expected()['cases']]:
+            bad('%s receive capture identities differ' % direction)
     pairs = {frozenset(v) for v in DIRECTIONS.values()}
     for pair in pairs:
         both = [d for d, v in DIRECTIONS.items() if frozenset(v) == pair]
@@ -105,7 +124,7 @@ def problems_for(identity, results):
 def selftest(identity):
     good = {'plan': dict(identity, accepted=True, pinned=True), 'build': {}, 'send': {}, 'receive': {}, 'confirm': {}, 'identity': {'send': {}, 'receive': {}}}
     for os_name in OSES:
-        good['build'][os_name] = dict(identity, accepted=True, os=os_name, probe_sha256='p' + os_name, tool_sha256='t', c_consumer_exit=0,
+        good['build'][os_name] = dict(identity, accepted=True, os=os_name, probe_sha256='p' + os_name, tool_sha256='t', cpp_consumer_sha256='cpp', c_consumer_sha256='c', c_consumer_exit=0,
                                       component_checks=[{'name': n, 'status': 'pass'} for n in COMPONENT_CHECKS])
     for d, (s, r) in DIRECTIONS.items():
         for stage in ('send', 'receive', 'confirm'):
@@ -114,12 +133,12 @@ def selftest(identity):
                        sdk_changed=False, schema_changed=False, host_ui_accepted=False, real_device_accepted=False, live_six_device_cloud=False)
             if stage == 'receive':
                 res['parent_inventory_digest'] = 'S' + d
-                res['cases'] = [{'state': 'FOUND'}] * 17 + [{'state': 'AMBIGUOUS'}]
+                res['cases'] = copy.deepcopy(load_expected()['cases'])
             if stage == 'confirm':
                 res['parent_inventory_digest'] = 'R' + d
             good[stage][d] = res
-        good['identity']['send'][d] = {'inventory_digest': 'S' + d}
-        good['identity']['receive'][d] = {'inventory_digest': 'R' + d}
+        good['identity']['send'][d] = dict(identity, direction=d, stage='send', os=s, probe_sha256='p' + s, tool_sha256='t', inventory_digest='S' + d)
+        good['identity']['receive'][d] = dict(identity, direction=d, stage='receive', os=r, probe_sha256='p' + r, tool_sha256='t', inventory_digest='R' + d, parent_inventory_digest='S' + d)
     base = problems_for(identity, good)
     if base:
         raise SystemExit('selftest: the synthetic good run was refused: %s' % base)
@@ -143,6 +162,14 @@ def selftest(identity):
     mutated('probe not built here', lambda v: v['send']['linux-to-windows'].update(probe_sha256='other'))
     mutated('component negative case missing', lambda v: v['build']['Windows']['component_checks'].pop())
     mutated('scope overclaim', lambda v: v['confirm']['linux-to-windows'].update(host_ui_accepted=True))
+    mutated('package other source', lambda v: v['identity']['send']['linux-to-windows'].update(source_sha='0' * 40))
+    mutated('package other run', lambda v: v['identity']['send']['linux-to-windows'].update(run_id='0'))
+    mutated('package other attempt', lambda v: v['identity']['receive']['linux-to-windows'].update(attempt='0'))
+    mutated('package fake peer', lambda v: v['identity']['send']['windows-to-linux'].update(os='Linux'))
+    mutated('package different binary', lambda v: v['identity']['receive']['linux-to-macos'].update(tool_sha256='other'))
+    mutated('component unknown status', lambda v: v['build']['Linux']['component_checks'][0].update(status='unknown'))
+    mutated('component duplicate check', lambda v: v['build']['Linux']['component_checks'].append(copy.deepcopy(v['build']['Linux']['component_checks'][0])))
+    mutated('capture duplicate identity', lambda v: v['receive']['linux-to-windows']['cases'][0].update(id='txt-bookmark'))
 
 
 def main():
@@ -150,12 +177,19 @@ def main():
     require(os.environ.get('GITHUB_ACTIONS') == 'true', 'cloud only')
     run_id, attempt, source = int(os.environ['GITHUB_RUN_ID']), int(os.environ['GITHUB_RUN_ATTEMPT']), os.environ['GITHUB_SHA']
     identity = {'source_sha': source, 'run_id': str(run_id), 'attempt': str(attempt)}
+    if sys.argv[1:] == ['--self-test']:
+        selftest(identity)
+        from evidence_selftest import selftest as evidence_selftest
+        evidence_selftest(identity)
+        return
     out = Path(sys.argv[1])
     out.mkdir(parents=True)
     summary = {'accepted': False, 'source_sha': source, 'run_id': run_id, 'attempt': attempt, 'artifacts': [], 'problems': [],
                'scope': 'artifact-relayed cross-OS compatibility (Windows<->Linux, macOS<->Linux); not a live six-device user cloud; no host UI or device'}
     try:
         selftest(identity)
+        from evidence_selftest import selftest as evidence_selftest
+        evidence_selftest(identity)
         run = fetch('actions/runs/%d' % run_id)
         require(run['head_sha'] == source and run['run_attempt'] == attempt and run['path'] == '.github/workflows/reader-cross-os-relay.yml', 'run identity differs')
         jobs = pages('actions/runs/%d/attempts/%d/jobs' % (run_id, attempt), 'jobs')
@@ -166,32 +200,73 @@ def main():
         for d in DIRECTIONS:
             wanted += [(stage, d, 'relay-%s-%s%s' % (stage, d, suffix), '%s %s' % (stage, d)) for stage in ('send', 'receive', 'confirm')]
         results = {'plan': None, 'build': {}, 'send': {}, 'receive': {}, 'confirm': {}, 'identity': {'send': {}, 'receive': {}}}
+        seen_ids, seen_jobs = set(), set()
+        guard = [j for j in jobs if j['name'] == 'guard']
+        require(len(guard) == 1, 'missing/duplicate guard job')
+        verify_job(identity, guard[0], 'guard', 'Linux')
+        seen_jobs.add(guard[0]['id'])
+        summary['jobs'] = [{k: guard[0][k] for k in ('id', 'name', 'status', 'conclusion', 'head_sha', 'run_id', 'run_attempt')}]
+        expected = load_expected()
+        expected_sha = hashlib.sha256((HERE / 'expected.json').read_bytes()).hexdigest()
+        trees, transports, returns = {'send': {}, 'receive': {}}, {}, {}
         for stage, key, name, job_name in wanted:
             matches = [a for a in artifacts if a['name'] == name]
             require(len(matches) == 1, 'missing/duplicate artifact ' + name)
             artifact = matches[0]
             matches = [j for j in jobs if j['name'] == job_name]
             require(len(matches) == 1, 'missing/duplicate job ' + job_name)
-            require(matches[0]['head_sha'] == source and matches[0]['run_attempt'] == attempt and matches[0]['conclusion'] == 'success', 'job %s did not succeed on this source' % job_name)
-            require(not artifact['expired'] and artifact['size_in_bytes'] > 0 and artifact['workflow_run']['head_sha'] == source, 'artifact identity differs ' + name)
+            job = matches[0]
+            os_name = key if stage == 'build' else ('Linux' if stage == 'plan' else DIRECTIONS[key][STAGE_OS[stage]])
+            verify_job(identity, job, job_name, os_name)
+            verify_artifact(identity, artifact, name)
+            require(artifact['id'] not in seen_ids and job['id'] not in seen_jobs, 'reused artifact/job id')
+            seen_ids.add(artifact['id'])
+            seen_jobs.add(job['id'])
+            summary['jobs'].append({k: job[k] for k in ('id', 'name', 'status', 'conclusion', 'head_sha', 'run_id', 'run_attempt')})
             with tempfile.TemporaryFile() as stream:
                 download_artifact_zip(artifact['id'], stream)
                 stream.seek(0)
                 data = stream.read()
-            require(len(data) == artifact['size_in_bytes'] and 'sha256:' + hashlib.sha256(data).hexdigest() == artifact['digest'], 'ZIP bytes/digest differ ' + name)
+            verify_zip_bytes(data, artifact)
             with zipfile.ZipFile(io.BytesIO(data)) as archive:
-                result = json.loads(archive.read('result.json'))
+                files = archive_files(archive)
+                result = strict_json(archive.read('result.json'))
+                if stage == 'plan':
+                    require(result['expected_sha256'] == expected_sha, 'plan differs from source pin')
+                    for role, item in expected['originals'].items():
+                        original = archive.read('fixtures/' + item['file'])
+                        require(len(original) == item['bytes'] and hashlib.sha256(original).hexdigest() == item['sha256'], 'plan original bytes differ: ' + role)
+                if stage in ('send', 'receive', 'confirm'):
+                    verify_probe(strict_json(archive.read('probe.json')), stage, expected)
+                    transport = hashlib.sha256(archive.read('transport.tsv')).hexdigest()
+                    if stage == 'send':
+                        transports[key] = transport
+                    else:
+                        require(transports[key] == transport, 'original transport bytes changed: ' + name)
+                        returned = hashlib.sha256(archive.read('return.tsv')).hexdigest()
+                        if stage == 'receive':
+                            returns[key] = returned
+                        else:
+                            require(returns[key] == returned, 'return transport bytes changed: ' + name)
                 if stage in ('send', 'receive'):
-                    results['identity'][stage][key] = json.loads(archive.read('identity.json'))
-                    inventory = archive.read('inventory.json')
-                    require(hashlib.sha256(inventory).hexdigest() == results['identity'][stage][key]['inventory_sha256'], 'inventory bytes differ from identity ' + name)
-                    files = {i.filename for i in archive.infolist()}
-                    require(any(f.startswith('tree/') for f in files) and not any(f.endswith('.key') or f.endswith('.sqlite') for f in files), 'package carries a key or database ' + name)
+                    peer = strict_json(archive.read('identity.json'))
+                    results['identity'][stage][key] = peer
+                    require(peer['expected_sha256'] == expected_sha and peer['transport_sha256'] == transport, 'package plan/transport differs: ' + name)
+                    if stage == 'receive':
+                        require(peer['return_sha256'] == returned, 'package return transport differs: ' + name)
+                    trees[stage][key] = verify_inventory(archive, files, peer)
+                    for role, item in expected['originals'].items():
+                        path = 'exreader-sync-v1/objects/%s/%s.%s' % (item['sha256'][:2], item['sha256'], role)
+                        require(trees[stage][key].get(path) == (item['bytes'], item['sha256']), 'raw relayed original differs: ' + role)
+                    if stage == 'receive':
+                        old, new = trees['send'][key], trees['receive'][key]
+                        require(all(new.get(p) == v for p, v in old.items()) and len(new) == len(old) + 4, 'immutable bytes changed on return: ' + name)
                 if stage == 'build':
-                    for exe_name, key_name in (('relay-probe', 'probe_sha256'), ('relay-tool', 'tool_sha256')):
+                    for exe_name, key_name in (('relay-probe', 'probe_sha256'), ('relay-tool', 'tool_sha256'),
+                                               ('relay-consumer', 'cpp_consumer_sha256'), ('relay-c-consumer', 'c_consumer_sha256')):
                         suffix_exe = '.exe' if key == 'Windows' else ''
-                        require(hashlib.sha256(archive.read('bin/' + exe_name + suffix_exe)).hexdigest() == result[key_name], 'binary hash differs ' + name)
-                    result['component_checks'] = json.loads(archive.read('component-consumer.json'))['checks']
+                        verify_binary(archive, 'bin/' + exe_name + suffix_exe, result[key_name])
+                    result['component_checks'] = strict_json(archive.read('component-consumer.json'))['checks']
             if stage == 'plan':
                 results['plan'] = result
             elif stage == 'build':
@@ -200,9 +275,11 @@ def main():
                 results[stage][key] = result
             summary['artifacts'].append({k: artifact[k] for k in ('id', 'name', 'size_in_bytes', 'digest', 'expires_at')})
         summary['problems'] = problems_for(identity, results)
-        summary['accepted'] = not summary['problems']
         summary['directions'] = sorted(DIRECTIONS)
+        summary['consumer_sha256'] = {o: {k: results['build'][o][k] for k in ('probe_sha256', 'tool_sha256', 'cpp_consumer_sha256', 'c_consumer_sha256', 'component_checks_count', 'component_failures', 'component_skips', 'c_consumer_exit')} for o in OSES}
+        summary['accepted'] = not summary['problems']
     except Exception as error:
+        summary['accepted'] = False
         summary['problems'].append(str(error))
     (out / 'result.json').write_text(json.dumps(summary, indent=2) + '\n', encoding='utf-8')
     print(json.dumps(summary), flush=True)

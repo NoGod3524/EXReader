@@ -129,6 +129,10 @@ def load_package(path, identity, direction, stage, native_tool, checks):
     path = Path(path)
     ident = json.loads((path / 'identity.json').read_text(encoding='utf-8'))
     need(same_identity(ident, identity) and ident['direction'] == direction and ident['stage'] == stage, 'relay identity differs from this run/direction')
+    need(ident['os'] == DIRECTIONS[direction][0 if stage == 'send' else 1], 'relay peer OS differs')
+    need(ident['expected_sha256'] == sha256_path(HERE / 'expected.json'), 'relay plan differs from the pin')
+    for filename in ('transport.tsv',) + (('return.tsv',) if stage == 'receive' else ()):
+        need(sha256_path(path / filename) == ident[filename.replace('.tsv', '_sha256')], 'relay transport bytes differ: ' + filename)
     inv = (path / 'inventory.json').read_bytes()
     need(sha256_bytes(inv) == ident['inventory_sha256'], 'inventory bytes differ from the identity')
     holder = {}
@@ -152,11 +156,14 @@ def load_package(path, identity, direction, stage, native_tool, checks):
         done = tool(native_tool, 'verify', copy, path / 'inventory.json')
         need(done.returncode != 0, 'a missing revision was NOT refused')
     checks.run('negative: altered or missing revision byte is refused before serving', tamper)
+    need(checks.ok(), 'refusing to serve an unauthenticated relay tree')
     return ident, inv, holder
 
 
 def write_identity(out, identity, direction, stage, extra):
     value = dict(identity, direction=direction, stage=stage, os=current_os())
+    for filename in ('transport.tsv',) + (('return.tsv',) if stage == 'receive' else ()):
+        value[filename.replace('.tsv', '_sha256')] = sha256_path(out / filename)
     value.update(extra)
     (out / 'identity.json').write_text(json.dumps(value, indent=2, sort_keys=True) + '\n', encoding='utf-8')
 
@@ -322,6 +329,7 @@ def build_report(args):
         installed.append({'path': path.relative_to(args.prefix).as_posix(), 'bytes': path.stat().st_size, 'sha256': sha256_path(path)})
     probe, native_tool = args.bin / exe('relay-probe'), args.bin / exe('relay-tool')
     value = dict(run_identity(), stage='build', os=current_os(), c_consumer_exit=args.c_exit, probe_sha256=sha256_path(probe), tool_sha256=sha256_path(native_tool),
+                 cpp_consumer_sha256=sha256_path(args.bin / exe('relay-consumer')), c_consumer_sha256=sha256_path(args.bin / exe('relay-c-consumer')),
                  component_failures=consumer['failures'], component_skips=consumer['skips'], component_checks_count=len(consumer['checks']), installed_files=installed,
                  python=platform.python_version(), accepted=consumer['failures'] == 0 and args.c_exit == 0,
                  scope='installed relay component, installed C and C++ consumers and relay executables on this OS only')

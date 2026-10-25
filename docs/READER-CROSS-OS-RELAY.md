@@ -1,5 +1,14 @@
 # 真实跨操作系统修订与原书往返验收（J22）
 
+## T03 独立复审（2026-10-25）
+
+复审固定起点 `9ff063dcc6b898fb0c776edabadf743919045a7d`，唯一写入分支
+`codex/dot-cross-os-relay-review`。下方 J22 历史证据只属于其原受测源码，不能授予复审修改。
+确认并修复：汇总未拒绝重复 ZIP/JSON、未完整认证完成状态/实际 run/平台、包身份与原始字节链未被独立汇总约束，
+以及接收端本地清单校验失败后仍继续启动服务的问题。保留原 13 项汇总负例与所有原生用例，增加拒绝例；
+同时保存并绑定实际安装后 C/C++ 消费者、probe 和 tool 二进制。新源码的验收等待 Actions 实际运行。
+本次不在本地运行构建、测试、语法检查、夹具、服务，也不下载或解析工件。
+
 固定起点 `f43baf9182d75907c0cb5d6f77048f27bca8c950`，SDK `9854061b…`/3.40.0/ABI 1，
 产品 schema1 与既有 wire v1、reading anchor v1/v2 均不改。只增加
 `tests/reader_cross_os_relay/**`、`.github/workflows/reader-cross-os-relay.yml` 和本文档/验收JSON。

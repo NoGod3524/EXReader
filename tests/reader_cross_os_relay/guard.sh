@@ -3,7 +3,7 @@
 # Per-job source guard: exact checkout, fixed start ancestor, protected SDK/schema trees equal,
 # product SQL equal to the start, and every changed path inside this package's allowlist.
 set -euo pipefail
-START=f43baf9182d75907c0cb5d6f77048f27bca8c950
+START=9ff063dcc6b898fb0c776edabadf743919045a7d
 SDK=9854061be331fe603a1822d9b2b36ee357154927
 SCHEMA=f32bb8aa18ed3de286900f19ce4230fd93435dd0
 test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
