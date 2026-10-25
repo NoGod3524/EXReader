@@ -1,14 +1,15 @@
 {
   "schema": 1,
-  "observed_at_utc": "2026-10-25T00:24:00Z",
+  "observed_at_utc": "2026-10-25T02:17:24Z",
   "packages": 19,
   "cloud_success": 19,
-  "returned_pending_root_review": 15,
+  "returned_pending_root_review": 14,
   "root_review_closed_awaiting_integration": [
     "J03",
     "J06",
     "J25",
-    "J19"
+    "J19",
+    "J08"
   ],
   "needs_further_work": [],
   "root_review_and_integration_complete": false,
@@ -51,7 +52,10 @@
       "source": "4ff8c803faec4d4bb351175290ad9f1cb9b82938",
       "status": "completed",
       "conclusion": "success",
-      "root_state": "cloud_success_awaiting_root_review_and_integration"
+      "root_state": "root_repaired_independent_branch_actions_pending",
+      "review_branch": "codex/reader-jump-history-review",
+      "repair_source": "1902a41bc9bb1c8b0dc7dcbd608d915f1948d669",
+      "repair_run": 40153658637
     },
     {
       "id": "J08",
@@ -60,7 +64,8 @@
       "source": "f8e765b15932b6b738f709bd03b48c4f0d6b0c4f",
       "status": "completed",
       "conclusion": "success",
-      "root_state": "cloud_success_awaiting_root_review_and_integration"
+      "root_state": "root_review_closed_awaiting_integration",
+      "review": "J08-ROOT-REVIEW.md"
     },
     {
       "id": "J09",
