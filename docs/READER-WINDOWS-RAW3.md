@@ -1,6 +1,6 @@
 # Windows raw3 宿主候选
 
-当前阶段只完成源码组合，宿主 raw3 尚未实现，未授予运行或互通验收。
+桌面metadata的可选raw配置已完成独立验收；Windows实际记录/同步宿主raw3尚未实现，未授予宿主或互通验收。
 
 普通 merge 将 Windows 简洁版封存 `f355525b74ae261db536c56200e46643919ef323`
 与已通过的 raw selector/伴随模块 `56793e7c` 组合为
@@ -13,9 +13,29 @@ SDK 仍为批准的3.41候选 `edddc463c06ed5731195cdb8f06b2df6dff7699e`。
 现增加默认关闭的raw0.2配置，显式 `reader_metadata_open_raw_v3` 打开raw revisions，
 book/group/membership及heads/get/identity均使用对应raw API；旧配置仍为0.1。
 raw包的旧open入口拒绝且不创建数据库，安装配置拒绝混用legacy/raw依赖。
-正在Windows/Linux分别构建安装两配置，再原样复用全部29项metadata消费者检查，
+Windows/Linux已分别构建安装两配置，再原样复用全部29项metadata消费者检查，
 包括真实进程终止、私有pending重放、错误线程与单一产品SQLite来源。
 这些结果只覆盖metadata包，不替代实际Windows宿主、网络或记录验收。
+
+## Metadata独立验收
+
+受测源码 `0889f7d1e9a537c6c1b05456547e016b26e1cd85`，
+[run40209325599](https://github.com/NoGod3524/EXReader/actions/runs/40209325599)，attempt1，四作业全success。
+Windows/Linux分别执行legacy/raw两配置各29项原检查、真实C/C++消费者及显式open验证，两个混配configure均拒绝。
+严格汇总实际下载本轮三个原ZIP，核对source/run/attempt、字节/digest/有效期，
+两平台每配置的29项完整名字，以及四个真实程序SHA-256（包括原消费者报告自己的程序SHA）。
+
+| 工件 | ID | Bytes | SHA-256 |
+| --- | ---: | ---: | --- |
+| Windows | 12604173715 | 22463059 | `5e9057311636460c2c38463bcb59ab83042e94be6402f2a108c70029bc357d03` |
+| Linux | 12604774056 | 18344581 | `c765225c86e83cf1f7b31028e487456086a81138d4a52980f294f24f18c06514` |
+| source | 12604133762 | 473 | `a7b31592635e86121026845fcfd4e1afb6872e3367e2e4d9093967b35f0407a6` |
+| summary | 12604303499 | 710 | `56274c57e5df447c3d8ff43513866dd864d05743199a76782ee5e342fbc8e896` |
+
+有效期均到 `2027-01-23T15:56:48Z`。作业ID：source121216980957、Linux121217017638、
+Windows121217017686、strict121217386170。
+首轮 `f8b4ea7d` / `40208744954` 两平台已过；新增汇总的 `7f678011` / `40209259006`
+因漏计原检查中动态命名的两个真实kill检查而拒绝。修正仅汇总契约，模块未改，失败保留。
 
 后续实现必须覆盖实际宿主的以下入口：
 
