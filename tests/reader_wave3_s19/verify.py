@@ -72,8 +72,9 @@ def main():
             problems.append(key + ': negative set differs ' + repr(result['negatives']))
         if not result['single_sdk_module'] or not result['exr_pointer_identity']:
             problems.append(key + ': single SDK identity not proven')
-        if sum(1 for name in result['modules_loaded'] if name in ('libexreader.so', 'libexreader.dylib',
-                                                                  'exreader.dll')) != 1:
+        sdk_modules = [name for name in result['modules_loaded']
+                       if name.lower().startswith(('libexreader.so', 'libexreader.dylib', 'exreader.dll'))]
+        if len(sdk_modules) != 1:
             problems.append(key + ': loaded SDK module count ' + repr(result['modules_loaded']))
         for name, recorded_program in result['programs'].items():
             candidates = [folder / name, folder / (name + '.exe'), folder / (name + '.dll'),
