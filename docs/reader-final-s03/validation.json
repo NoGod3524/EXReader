@@ -4,8 +4,9 @@
   "adopted": false,
   "complete_product": false,
   "scope": "macOS ARM64 .app candidate assembly, dependency closure, resource manifest, relocated original native smoke test, offline open and reopen for the pinned producer source",
-  "source_sha": null,
+  "source_sha": "93427741a4f2c4fce803a00d3ff84c8654c7b388",
   "start_sha": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+  "verifier_package": "tests/reader_final_s03",
   "producer_source_sha": "15dab6b2270dc296ed6239db67ced2e22d255e65",
   "producer_seal_sha": "44eabdc86b3b84d986f81dbaf8cee92b1829cea8",
   "producer_run": 40196978163,
@@ -19,32 +20,183 @@
     "name": "apple-raw3-native-40196978163-1",
     "bytes": 77056135,
     "digest": "sha256:92be56ffa04d7c334d4811a42821a314089b4f8ae01746f0dfdf456b5eab9bd5",
-    "expires_at": "2027-01-23T13:18:06Z"
+    "expires_at": "2027-01-23T13:18:06Z",
+    "rechecked_in_this_package": false,
+    "consumption_mode": "secondary source checkout of the producer commit only; the producer ZIP was not downloaded or re-verified here"
   },
   "sdk_source_sha": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
   "sdk_version": "3.41.0",
   "sdk_abi": "1u",
   "frozen_sdk_340": "9854061be331fe603a1822d9b2b36ee357154927",
-  "runs": [],
-  "artifacts": [],
-  "candidates": {},
-  "checks": {},
+  "runs": [
+    {
+      "id": 40215433040,
+      "attempt": 1,
+      "source_sha": "93427741a4f2c4fce803a00d3ff84c8654c7b388",
+      "workflow": ".github/workflows/reader-final-s03.yml",
+      "conclusion": "failure",
+      "jobs": {
+        "guard": {
+          "id": 121235435182,
+          "conclusion": "success",
+          "started_at": "2026-10-25T17:13:40Z",
+          "completed_at": "2026-10-25T17:13:52Z"
+        },
+        "native": {
+          "id": 121235486548,
+          "conclusion": "failure",
+          "started_at": "2026-10-25T17:15:20Z",
+          "completed_at": "2026-10-25T17:21:48Z"
+        }
+      },
+      "artifacts": [
+        {
+          "id": 12607287249,
+          "name": "reader-final-s03-evidence-40215433040-1",
+          "bytes": 80970449,
+          "digest": "sha256:dbc66b40649032d4497512745d02e90bd9acdba478b79bd7033521be130a82d2",
+          "expires_at": "2027-01-23T17:13:38Z"
+        },
+        {
+          "id": 12606649775,
+          "name": "reader-final-s03-guard-40215433040-1",
+          "bytes": 747,
+          "digest": "sha256:d36233222b9886c647bd2c01d7a03cea4c97e79e3978f3a9cdb4752b5128b2c0",
+          "expires_at": "2027-01-23T17:13:38Z"
+        }
+      ],
+      "candidate_evidence": {
+        "default": {
+          "manifest_accepted": true,
+          "smoke_accepted": true,
+          "problems": [],
+          "bundle_files": 36,
+          "bundle_bytes": 45068685,
+          "dependency_records": 38,
+          "sdk_library": [
+            "Contents/Frameworks/libexreader.1.dylib",
+            "Contents/Frameworks/libexreader.3.41.0.dylib",
+            "Contents/Frameworks/libexreader.dylib"
+          ],
+          "private_path_hits": 3,
+          "native_self_checks": 21,
+          "offline_denied": true,
+          "adhoc_signature": true,
+          "gatekeeper_exit": 3
+        },
+        "raw": {
+          "manifest_accepted": true,
+          "smoke_accepted": true,
+          "problems": [],
+          "bundle_files": 36,
+          "bundle_bytes": 45092492,
+          "dependency_records": 38,
+          "sdk_library": [
+            "Contents/Frameworks/libexreader.1.dylib",
+            "Contents/Frameworks/libexreader.3.41.0.dylib",
+            "Contents/Frameworks/libexreader.dylib"
+          ],
+          "private_path_hits": 3,
+          "native_self_checks": 21,
+          "offline_denied": true,
+          "adhoc_signature": true,
+          "gatekeeper_exit": 3
+        }
+      },
+      "relocated_bundle": "build/s03/evidence/relocated/最终 阅读器 候选 ünïcode 空格/EXReader.app",
+      "identity_step": {
+        "accepted": true,
+        "problems": []
+      },
+      "aggregate_gate": {
+        "accepted": false,
+        "problems": [
+          "sdk_version:None",
+          "sdk_abi:None"
+        ]
+      }
+    }
+  ],
+  "earlier_runs": [
+    {
+      "id": 40214519357,
+      "attempt": 1,
+      "source_sha": "5fbd58e7da67697418c8f0c0d9e86a46f37eaf4b",
+      "conclusion": "failure",
+      "reason": "workflow startup failure with zero jobs: the runner context is not available in a job-level env, and this workflow used runner.temp there",
+      "fix": "the job derives S03_WORK/S03_EVIDENCE into GITHUB_ENV inside its first step"
+    },
+    {
+      "id": 40214601048,
+      "attempt": 1,
+      "source_sha": "bff5eaaf755e8f25743f6d4baef568e18ae86c16",
+      "conclusion": "cancelled",
+      "reason": "cancelled by the verifier while still building the SDK, after finding two over-narrow assertions in its own tool",
+      "fix": "the framework deployment target is recorded instead of pinned to 12.0; the producer's pre-signing product digest is recorded instead of compared with the post-signing bytes"
+    },
+    {
+      "id": 40214808236,
+      "attempt": 1,
+      "source_sha": "a3a20cf895b25f04e7dbd841e0f728403bdb78a6",
+      "conclusion": "failure",
+      "reason": "the manifest gate rejected both candidates with sdk_library_count:3 and framework_not_referenced twice: the producer ships one SDK library under the three versioned names the linker asks for",
+      "fix": "identity-based rule: one LC_ID_DYLIB and one exported-symbol digest across the aliases, and no copy outside Contents/Frameworks"
+    }
+  ],
+  "candidates": {
+    "default": {
+      "accepted_by_its_own_tools": true,
+      "counted_by_the_run_gate": false
+    },
+    "raw": {
+      "accepted_by_its_own_tools": true,
+      "counted_by_the_run_gate": false
+    }
+  },
+  "checks": {
+    "candidates": 2,
+    "native_self_checks": {
+      "default": 21,
+      "raw": 21
+    },
+    "app_phases_per_candidate": 3,
+    "bundle_files": {
+      "default": 36,
+      "raw": 36
+    },
+    "dependency_records": {
+      "default": 38,
+      "raw": 38
+    },
+    "offline_envelope": {
+      "default": "sandbox-exec, control reachable, outbound denied",
+      "raw": "sandbox-exec, control reachable, outbound denied"
+    },
+    "relocated_path_contains_space_and_unicode": true,
+    "gatekeeper": "rejected (spctl exit 3) on both candidates, as expected for an ad-hoc signed, non-notarized bundle"
+  },
   "release_readiness": {
     "signed_with_owner_identity": false,
     "notarized": false,
     "gatekeeper_accepted": false,
     "release_ready": false,
     "physical_device_execution": false,
-    "blockers": []
+    "blockers": [
+      "default: Contents/... ships a build-machine absolute path (/Users/runner/) in 3 distributed files",
+      "raw: Contents/... ships a build-machine absolute path (/Users/runner/) in 3 distributed files"
+    ]
   },
   "pending": [
-    "no evidence yet: the workflow has not run for this package on this branch",
+    "the identity evidence schema fix (SDK version/ABI moved into the sdk block) is committed but not verified by Actions: the three-round CI budget for this package is spent",
     "signing identity, notarization, Gatekeeper acceptance and store publication: no signing secret is used; the candidate is ad-hoc signed only",
     "physical Apple hardware (iPhone/iPad/Mac test devices), USB cabling and human screen reading: not executed in this package",
+    "the raw3 runtime request path is not exercised by the app self-test: that runtime evidence belongs to producer run 40196978163",
     "long-session reading, performance budgets and energy measurements: not measured here",
     "the final unified source integration: this package consumes the pinned producer commit and does not modify product owners"
   ],
   "problems": [
-    "not_run"
+    "sdk_version:None",
+    "sdk_abi:None",
+    "no run of the fixed identity evidence wiring: CI budget spent at three failing rounds"
   ]
 }

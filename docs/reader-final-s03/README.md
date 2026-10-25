@@ -55,3 +55,50 @@ producer 的 SDK 承载路径（`include`、`src`、`cmake`、`CMakeLists.txt`�
 - 只有原工件而不重建时，把证据 ZIP 解到任意目录后运行
   `python3 tests/reader_final_s03/aggregate.py --evidence <目录> --output <目录> --verifier-sha <受测 SHA> --producer-sha 15dab6b... --sdk-sha edddc463...`，
   它会用证据里的 `identity.json`、`manifest-*.json`、`smoke-*.json` 重算判定，不读本机产物。
+## 已执行证据（2026-10-25，run 40215433040 attempt 1）
+
+受测源码 `93427741a4f2c4fce803a00d3ff84c8654c7b388`（本分支），两个 job：`guard` `121235435182` success（12s），`native` `121235486548` 17:15:20–17:21:48Z。
+工件：`reader-final-s03-evidence-40215433040-1` `12607287249`，80,970,449 B，`sha256:dbc66b40649032d4497512745d02e90bd9acdba478b79bd7033521be130a82d2`，有效至 2027-01-23T17:13:38Z；`reader-final-s03-guard-40215433040-1` `12606649775`，747 B，`sha256:d36233222b9886c647bd2c01d7a03cea4c97e79e3978f3a9cdb4752b5128b2c0`。
+
+同一轮里实际通过的部分（两个候选各自 `accepted: true`、`problems: []`）：
+
+| 项 | default | raw |
+| --- | --- | --- |
+| .app 文件数 / 字节 | 36 / 45,068,685 | 36 / 45,092,492 |
+| 可执行文件架构 | arm64 | arm64 |
+| otool 依赖记录 | 38 | 38 |
+| 动态 SDK 身份（3 个别名同身份） | `libexreader.1.dylib` / `libexreader.3.41.0.dylib` / `libexreader.dylib` | 同左 |
+| 原 native 自检 | 21 项，`passed=true` | 21 项，`passed=true` |
+| 移位路径 | `…/relocated/最终 阅读器 候选 ünïcode 空格/EXReader.app` | 同左 |
+| 离线包络 | 控制探针可达、同参数探针被拒 | 同左 |
+| 签名事实 | ad-hoc、`codesign --verify` 通过、`spctl` exit 3 | 同左 |
+| 构建机绝对路径 | 3 个分发文件命中（转 owner） | 3 个（同左） |
+
+identity 步骤自身 `accepted: true, problems: []`（SDK 源码树逐 blob 等于 `edddc463`、stage 版本 3.41.0 / ABI 1u、唯一 `libexreader*.dylib`）。
+
+**同轮未通过**：`aggregate.py` 读 `identity.json` 的 `sdk.version` / `sdk.abi`，而 `identity.py` 当时把这两项只写在 `stage` 块里 ⇒ 全局 `accepted: false`（`problems: ["sdk_version:None","sdk_abi:None"]`）。修复（已提交、**尚未由 Actions 验证**，本包三轮 CI 预算已用完）：
+
+```diff
+--- a/tests/reader_final_s03/identity.py
++++ b/tests/reader_final_s03/identity.py
+@@
+-    sdk = {'source_sha': spec.SDK_SHA, … 'extracted_tree_problems': tree_findings}
+-    stage = stage_identity(args.stage.absolute())
+-    problems.extend(stage['problems'])
++    stage = stage_identity(args.stage.absolute())
++    problems.extend(stage['problems'])
++    sdk = {'source_sha': spec.SDK_SHA, … 'extracted_tree_problems': tree_findings,
++           'version': stage['version'], 'abi': stage['abi'],
++           'package_version': stage['package_version'],
++           'installed_libraries': [entry['name'] for entry in stage['libraries']]}
+```
+
+一次重跑修复后的源码即可把 `accepted` 翻到 true（其余断言、证据、原失败均不变）；本轮不为此再刷 CI。
+
+## 失败轮次（保留，不覆盖）
+
+| run | 受测源码 | 结论 | 原因 |
+| --- | --- | --- | --- |
+| 40214519357 | `5fbd58e7` | failure（0 job） | workflow 启动失败：`runner` 上下文不能用在 job 级 `env` |
+| 40214601048 | `bff5eaaf` | cancelled | 自查出自己两处过窄断言（Frameworks minos 固定 12.0、用签名前摘要比签名后字节）后由 verifier 取消，未进入验收 |
+| 40214808236 | `a3a20cf8` | failure | `sdk_library_count:3` + `framework_not_referenced`×2：producer 把同一个动态库按链接器需要的三个版本名各放一份，工具却要求"恰好一个文件" |
