@@ -20,7 +20,7 @@ defaults:
 env:
   START_SHA: f43baf9182d75907c0cb5d6f77048f27bca8c950
   FROZEN_SDK: 9854061be331fe603a1822d9b2b36ee357154927
-  COMPOSITION_TESTS: tests/reader_module_composition
+  COMPOSITION_TESTS: tests/reader_reviewed_composition
 jobs:
   pin:
     name: authenticate input lineage and workflow syntax
@@ -45,11 +45,12 @@ jobs:
           PY
           python3 tests/reader_hosts_integration/final.py --self-test
           python3 tests/reader_hosts_integration/aggregate.py windows --protocol-selftest
+          python3 tests/reader_hosts_integration/aggregate.py composition --self-test
           python3 tests/reader_hosts_integration/check_apple_workflows.py
           python3 tests/reader_hosts_integration/apple.py --self-test
   compose:
-    if: ${{ github.event.inputs.verify_run == '' }}
     needs: pin
+    if: ${{ github.event.inputs.verify_run == '' }}
     name: one-prefix composition (${{matrix.key}})
     runs-on: ${{matrix.os}}
     timeout-minutes: 120
@@ -67,13 +68,26 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Authenticate reviewed input trees and explicit integration edits
-        run: python3 tests/reader_hosts_integration/guard.py
+      - name: Require exact reviewed production and preserve the common-source guard
+        run: |
+          python3 tests/reader_hosts_integration/guard.py
+          mkdir -p build/composition
+          cp build/hosts-input.json build/composition/source-guard.json
+      - name: Check the extended evidence protocol and phase orchestrator in Actions
+        run: |
+          python3 -m py_compile tests/reader_reviewed_composition/g1.py tests/reader_reviewed_composition/g1_suites.py
+          python3 tests/reader_reviewed_composition/check_artifacts.py --self-test
       - name: Install Linux native TLS XML keyring and SHA dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev libsecret-1-dev pkg-config ninja-build
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev libsecret-1-dev pkg-config ninja-build libgtk-3-dev libxtst-dev xvfb openbox
+          Xvfb :99 -screen 0 1280x1024x24 &
+          sleep 2
+          DISPLAY=:99 openbox --sm-disable &
+          echo "DISPLAY=:99" >> "$GITHUB_ENV"
+          echo "GDK_BACKEND=x11" >> "$GITHUB_ENV"
+          echo "NO_AT_BRIDGE=1" >> "$GITHUB_ENV"
       - name: Use Apple system native TLS XML and platform frameworks
         if: runner.os == 'macOS'
         run: |
@@ -135,7 +149,7 @@ jobs:
           build_module() {
             name="$1"; source="$2"; shift 2
             cmake -S "$source" -B "build/module-$name" -G Ninja -DCMAKE_BUILD_TYPE=Release \
-              -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix" "$@" \
+              -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix" -DCMAKE_MSVC_RUNTIME_LIBRARY="MultiThreaded$<$<CONFIG:Debug>:Debug>" "$@" \
               2>&1 | tee "$logs/$name-configure.log"
             cmake --build "build/module-$name" --verbose 2>&1 | tee "$logs/$name-build.log"
             cmake --install "build/module-$name" 2>&1 | tee "$logs/$name-install.log"
@@ -158,6 +172,15 @@ jobs:
           build_module annotation-view apps/reader/annotation-view
           build_module annotation-export apps/reader/annotation-export
           build_module local-downloads apps/reader/local-downloads -DEXR_SDK="$prefix"
+          build_module cloud-import apps/reader/cloud-import -DEXR_SDK="$prefix"
+          build_module bulk-organization apps/reader/bulk-organization -DEXR_SDK="$prefix"
+          build_module link-policy apps/reader/link-policy -DEXR_SDK="$prefix"
+          build_module jump-history apps/reader/jump-history -DEXR_SDK="$prefix"
+          build_module keyboard-actions apps/reader/keyboard-actions -DEXR_SDK="$prefix"
+          build_module book-information apps/reader/book-information -DEXR_SDK="$prefix"
+          build_module sync-status-view apps/reader/sync-status-view -DEXR_SDK="$prefix"
+          build_module account-profiles apps/reader/account-profiles -DEXR_SDK="$prefix"
+
       - name: Audit the composed prefix and the default reading snapshot
         run: |
           set -o pipefail
@@ -182,8 +205,12 @@ jobs:
           cp build/fresh/build/composition-interface.json build/composition/interface.json
           cp build/fresh/build/composition-link.map build/composition/composition-link.map
           cp build/fresh/build/composition-c-link.map build/composition/composition-c-link.map
-      - name: Original new-module judges and real five-module chain from the composed prefix
-        run: python3 tests/reader_g1_integration/run_suites.py --prefix "$COMP_PREFIX"
+      - name: Run every original module consumer and unchanged judgement against the common prefix
+        id: original_suites
+        continue-on-error: true
+        run: python3 tests/reader_reviewed_composition/suites.py --prefix "$COMP_PREFIX" --output build/composition/original
+      - name: Retain the complete original G1 chain and judges before relocation
+        run: python3 tests/reader_reviewed_composition/g1_suites.py --prefix "$COMP_PREFIX" --phase fresh
       - name: Relocate the prefix and rebuild the same consumers from the new path
         run: |
           set -o pipefail
@@ -202,8 +229,9 @@ jobs:
             2>&1 | tee build/composition/logs/relocated-configure.log
           cmake --build build/relocated/build --verbose 2>&1 | tee build/composition/logs/relocated-build.log
           cp build/relocated/build/composition-interface.json build/composition/interface-relocated.json
-      - name: Rebuild and run the new chain after the original prefix is removed
-        run: python3 tests/reader_g1_integration/run_suites.py --prefix "$COMP_PREFIX_RELOCATED" --relocated
+          python3 "$COMPOSITION_TESTS/check_prefix.py" --prefix "$COMP_WS/build/prefix-relocated" --source-root "$COMP_WS" --interface build/composition/interface-relocated.json --expect clean --scan-output build/composition/prefix-scan-relocated.json
+      - name: Retain the complete original G1 chain and judges after relocation
+        run: python3 tests/reader_reviewed_composition/g1_suites.py --prefix "$COMP_PREFIX_RELOCATED" --phase relocated
       - name: Judge the composed flow with a real TLS WebDAV fixture
         run: |
           set -o pipefail
@@ -221,6 +249,10 @@ jobs:
             --interface build/composition/interface-relocated.json \
             --manifest build/composition/install-all.json \
             --output build/composition/evidence
+      - name: Run the shared owner and session flow before and after prefix relocation
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python3 tests/reader_reviewed_composition/check_reviewed.py --probe "build/fresh/build/reviewed-flow$exe" --relocated "build/relocated/build/reviewed-flow$exe" --fixtures tests/fixtures --link-map build/fresh/build/reviewed-link.map --relocated-link-map build/relocated/build/reviewed-link.map --output build/composition/reviewed
       - name: Reject a broken target, an absent dependency, a second SQLite and a leaked include
         run: |
           set -o pipefail
@@ -231,15 +263,23 @@ jobs:
             --scratch build/composition/scratch \
             --generator Ninja \
             --output build/composition/gates
+      - name: Bind all original reports and the actual installed consumer binaries
+        if: always()
+        run: python3 tests/reader_reviewed_composition/bundle.py --output build/composition
+      - name: Require all original suites to pass without dropping failures
+        if: always()
+        run: test "${{ steps.original_suites.outcome }}" = success
       - name: Preserve this attempt's evidence, logs and installed packages
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: reader-module-composition-${{matrix.key}}-${{github.run_id}}-${{github.run_attempt}}
+          name: reader-reviewed-composition-${{matrix.key}}-${{github.run_id}}-${{github.run_attempt}}
           path: |
             build/composition/
             !build/composition/**/*.key
             !build/composition/**/scratch/
+            !build/composition/**/certificates/**
+            !build/composition/original/work/**
           if-no-files-found: error
   aggregate:
     name: strict same-source composition report
