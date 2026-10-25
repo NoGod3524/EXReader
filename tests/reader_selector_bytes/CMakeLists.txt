@@ -17,3 +17,8 @@ add_executable(selector-bytes probe.cpp api.c)
 target_link_libraries(selector-bytes PRIVATE EXReaderAnnotationView::reader_annotation_view
   EXReaderReadingCommands::reader_reading_commands EXReaderReadingState::reader_reading_state
   EXReaderProductCatalog::reader_catalog_sqlite)
+if(MSVC)
+  target_link_options(selector-bytes PRIVATE "/MAP:${CMAKE_CURRENT_BINARY_DIR}/selector-bytes.map")
+else()
+  target_link_options(selector-bytes PRIVATE "-Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/selector-bytes.map")
+endif()

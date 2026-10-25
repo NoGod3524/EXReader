@@ -76,6 +76,11 @@ reader_rc_status reader_rc_apply(const reader_rc_context *, const reader_rc_comm
    keeps the selected source's actual version and nullable selector tags. */
 reader_rc_status reader_rc_apply_fixed_v3(const reader_rc_context *,const reader_rc_command *,
   reader_rc_result *,reader_rc_error *);
+/* Raw-capability store with an explicit output anchor version 1/2/3. Used to
+   restore an old selected source without silently upgrading its representation.
+   NOTE_TEXT always preserves its source version. Delete has no anchor version. */
+reader_rc_status reader_rc_apply_raw_v3(const reader_rc_context *,const reader_rc_command *,
+  unsigned anchor_version,reader_rc_result *,reader_rc_error *);
 #endif
 #ifdef __cplusplus
 }

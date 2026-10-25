@@ -18,6 +18,7 @@ PDF_SHA = '5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc'
 MODULES = ['revisions', 'reading-state', 'reading-commands', 'annotation-view']
 SUFFIX = '.exe' if os.name == 'nt' else ''
 ENV = dict(os.environ)
+ENV['SELECTOR_TXT_SHA'] = hashlib.sha256(b'A real public SDK text capture has enough context for stable matching.').hexdigest()
 
 def run(args, name=None, timeout=1800):
     args = list(map(str, args))
@@ -97,6 +98,41 @@ def protocol(probe, work):
     check('span mismatch', lambda v: selector(v).update(end=1))
     return cases
 
+def graph_cases(probe, work):
+    template = json.loads((work / 'bookmark.json').read_text())
+    checks = []
+    def value(number, parents=(), annotation=None):
+        v = copy.deepcopy(template)
+        v.update(id=f'{number:032x}', parents=[f'{p:032x}' for p in parents])
+        if annotation:
+            v['payload']['annotation_id'] = annotation
+            v['entity_key'] = v['payload']['book_key'] + ':' + annotation
+        return v
+    def deliver(name, v, database, status=0, graph=None):
+        file = work / ('graph-' + str(len(checks)) + '.json')
+        file.write_text(json.dumps(v, separators=(',', ':')))
+        text = run([probe, 'receive-wire', file, work / database], 'graph-' + str(len(checks)), 30)
+        actual = int(text.split('STATUS ')[-1].splitlines()[0])
+        assert actual == status, (name, actual, status)
+        if graph is not None:
+            actual_graph = list(map(int, text.split('GRAPH ')[-1].splitlines()[0].split()))
+            assert actual_graph == graph, (name, actual_graph, graph)
+        checks.append({'name': name, 'status': actual, 'pass': True})
+    deliver('newest actual capture before true parent', value(1001, [1000]), 'missing', graph=[1, 1, 0, 0])
+    deliver('true original parent completes graph', value(1000), 'missing', graph=[1, 0, 0, 1])
+    deliver('exact duplicate does not add head', value(1000), 'missing', graph=[1, 0, 0, 1])
+    different = value(1000);different['payload']['text'] = 'collision'
+    deliver('same ID different exact bytes', different, 'missing', 7)
+    deliver('first true concurrent head', value(2000), 'concurrent', graph=[1, 0, 0, 1])
+    deliver('second true concurrent head is unsafe', value(2001), 'concurrent', graph=[2, 0, 0, 0])
+    deliver('explicit complete observed head merge', value(2002, [2000, 2001]), 'concurrent', graph=[1, 0, 0, 1])
+    deliver('first cycle edge remains missing', value(3000, [3001]), 'cycle', graph=[1, 1, 0, 0])
+    deliver('closing causal cycle rolls back', value(3001, [3000]), 'cycle', 9)
+    deliver('known other entity parent', value(4000, annotation='d' * 32), 'foreign', graph=[1, 0, 0, 1])
+    deliver('foreign entity parent is refused', value(4001, [4000]), 'foreign', 4)
+    # The graph is real received SDK-capture wire, never fabricated parser tags.
+    return checks
+
 def main():
     assert os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only'
     OUT.mkdir(parents=True)
@@ -119,6 +155,16 @@ def main():
     baseline = module_family(original, 'baseline', False, product, sdk)
     off = module_family(ROOT, 'off', False, product, sdk)
     candidate = module_family(ROOT, 'candidate', True, product, sdk)
+    baseline_files = {p.relative_to(baseline).as_posix() for p in baseline.rglob('*') if p.is_file()}
+    off_files = {p.relative_to(off).as_posix() for p in off.rglob('*') if p.is_file()}
+    assert baseline_files == off_files
+    header_differences = [p for p in sorted(off_files) if p.startswith('include/') and
+                          (baseline / p).read_bytes() != (off / p).read_bytes()]
+    assert set(header_differences) == {'include/reader_projection.h', 'include/reader_reading_state.h',
+                                     'include/reader_reading_commands.h', 'include/reader_annotation_view.h'}
+    for p in off.rglob('*'):
+        if p.suffix in {'.a', '.lib'}:
+            assert b'_raw_v3' not in p.read_bytes() and b'reader_rs_encode_fixed_v3' not in p.read_bytes(), p
     programs = {}
     for name, prefix in [('baseline', baseline), ('off', off), ('candidate', candidate)]:
         consumer = build(ROOT / 'tests/reader_selector_bytes', name + '-consumer', prefix,
@@ -130,17 +176,40 @@ def main():
         expected = (OUT / 'baseline-legacy' / filename).read_bytes()
         assert expected == (OUT / 'off-legacy' / filename).read_bytes() == (OUT / 'candidate-legacy' / filename).read_bytes()
     work = OUT / 'actual'
-    for phase in ['seed', 'receive', 'reopen']:
+    for phase in ['seed', 'receive', 'reopen', 'nullable', 'versions']:
         run([programs['candidate'], phase, pdf, work], 'actual-' + phase, 120)
+    for name in programs:
+        run([programs[name], 'legacy-refuse', work / 'progress.json', OUT / (name + '-reject')], name + '-reject')
     protocol_cases = protocol(programs['candidate'], work)
+    graph_checks = graph_cases(programs['candidate'], work)
+    import sqlite3
+    for file in work.rglob('*.sqlite'):
+        with sqlite3.connect(file) as connection:
+            assert connection.execute('PRAGMA application_id').fetchone()[0] == 1163416144
+            assert connection.execute('PRAGMA user_version').fetchone()[0] == 1
+    assert hashlib.sha256((work / 'original.pdf').read_bytes()).hexdigest() == PDF_SHA
+    sys.path.insert(0, str(ROOT / 'tests/reader_reading_state'))
+    from check_reading_state import sqlite_providers
+    providers = sqlite_providers((OUT / 'candidate-consumer/selector-bytes.map').read_text(errors='replace'))
+    assert len(providers) == 1 and 'reader_catalog_sqlite' in providers[0], providers
     # Complete original v1/v2 probes are built from unchanged original sources.
-    legacy = archive(LEGACY, 'legacy-source', 'apps/reader/revisions', 'extras/opds')
+    legacy = archive(LEGACY, 'legacy-source', 'apps/reader/revisions', 'extras/opds', 'tests/reader_revisions')
     old = OUT / 'legacy-stage'
     build(legacy / 'apps/reader/revisions', 'legacy-revisions', old, ['-DREADER_PRODUCT_PREFIX=' + str(product)])
     build(original / 'apps/reader/reading-state', 'legacy-state', old,
           ['-DEXR_SDK_VERSION=3.41.0', '-DEXR_SDK=' + str(sdk), '-DCMAKE_PREFIX_PATH=' + ';'.join(map(str, [old, product, sdk]))])
     old_probe = build(ROOT / 'tests/reader_reading_state/consumer', 'legacy-consumer', old,
           ['-DCMAKE_PREFIX_PATH=' + ';'.join(map(str, [old, product, sdk]))], False)
+    legacy_revision = build(legacy / 'tests/reader_revisions/consumer', 'legacy-revision-consumer', old,
+          ['-DCMAKE_PREFIX_PATH=' + ';'.join(map(str, [old, product]))], False)
+    current_revision = build(ROOT / 'tests/reader_revisions/consumer', 'off-revision-consumer', off,
+          ['-DCMAKE_PREFIX_PATH=' + ';'.join(map(str, [off, product]))], False)
+    run([sys.executable, ROOT / 'tests/reader_revisions/check_protocol.py', '--consumer', current_revision / ('revision-consumer' + SUFFIX),
+         '--c-consumer', current_revision / ('revision-c-consumer' + SUFFIX), '--product-prefix', product, '--revision-prefix', off,
+         '--build-log', OUT / 'off-revision-consumer-build.log', '--link-map', current_revision / 'revision-link.map',
+         '--output', OUT / 'original-revision-regression'], 'original-revision-regression', 240)
+    run([sys.executable, ROOT / 'tests/reader_reading_v2/check_protocol.py', '--consumer', current_revision / ('revision-consumer' + SUFFIX),
+         '--legacy-consumer', legacy_revision / ('revision-consumer' + SUFFIX), '--output', OUT / 'original-v2-protocol'], 'original-v2-protocol', 240)
     v2 = build(ROOT / 'tests/reader_reading_v2/consumer', 'v2-consumer', off,
           ['-DCMAKE_PREFIX_PATH=' + ';'.join(map(str, [off, product, sdk]))], False)
     fixtures = OUT / 'fixtures'
@@ -165,8 +234,9 @@ def main():
     logs = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in OUT.glob('*.log')}
     result = {'accepted': True, 'scope': 'explicit core codec/revisions/commands/typed-view candidate only',
               'source_sha': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
-              'platform': sys.platform, 'pdf_sha256': PDF_SHA, 'pdf_bytes': 8845, 'protocol_checks': protocol_cases,
-              'legacy_wire_bytes_unchanged': True, 'original_regressions_passed': True, 'logs': logs,
+              'platform': sys.platform, 'pdf_sha256': PDF_SHA, 'pdf_bytes': 8845, 'protocol_checks': protocol_cases, 'graph_checks': graph_checks,
+              'legacy_wire_bytes_unchanged': True, 'original_regressions_passed': True, 'logs': logs, 'sqlite_providers': providers,
+              'off_inventory_unchanged': True, 'off_new_symbols_absent': True, 'off_header_byte_differences': header_differences,
               'actual_android_apple_interop': False, 'adopted': False, 'physical_device': False, 'complete_product': False}
     (OUT / 'result.json').write_text(json.dumps(result, indent=2) + '\n')
     print(json.dumps(result), flush=True)

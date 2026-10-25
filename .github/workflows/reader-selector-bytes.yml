@@ -42,3 +42,22 @@ jobs:
             build/selector-bytes/
             !build/selector-bytes/*-source/
           if-no-files-found: error
+  summary:
+    needs: [candidate]
+    if: always()
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate same-attempt original ZIPs and public capture bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_selector_bytes/strict.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-selector-bytes-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/selector-bytes-summary/
+          if-no-files-found: error
