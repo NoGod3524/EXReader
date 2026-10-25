@@ -30,4 +30,11 @@ NEGATIVE = ['wrong-source','wrong-run','wrong-attempt','unfinished-job','failed-
  'expired-timestamp','wrong-artifact-source','wrong-artifact-run','wrong-zip-size','wrong-zip-digest',
  'duplicate-zip-member','duplicate-json-key','missing-case','extra-case','duplicate-case',
  'missing-original-module','altered-binary','altered-license','wrong-report-source',
- 'wrong-report-attempt','wrong-report-run','failed-report','wrong-platform','unbound-module-source']
+ 'wrong-report-attempt','wrong-report-run','failed-report','wrong-platform','unbound-module-source',
+ 'altered-native-log','forged-native-case','missing-native-command','missing-termination','zero-termination-exit']
+
+# These cases are judged by the process harness, not emitted by the C++ suite.
+HARNESS_COMMON = ['installed-c-abi-sdk340', 'crash-copy-recovery',
+ 'crash-validated-recovery', 'crash-file-published-recovery', 'crash-committed-recovery',
+ 'cross-process-lock-and-kill-release', 'recomputed-original-font-hashes',
+ 'installed-binary-and-package-identities', 'default-off-no-library', 'frozen-installed-font-header']

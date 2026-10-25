@@ -30,7 +30,7 @@ def main():
     materials=base/'materials';materials.mkdir()
     results={'accepted':False,'source_sha':os.environ['GITHUB_SHA'],'run_id':int(os.environ['GITHUB_RUN_ID']),
       'attempt':int(os.environ['GITHUB_RUN_ATTEMPT']),'platform':platform.system(),'checks':[],
-      'failures':[],'identities':[],'inputs':[],'host_ui_accepted':False,'mobile_accepted':False,
+      'failures':[],'identities':[],'inputs':[],'commands':[],'terminations':[],'host_ui_accepted':False,'mobile_accepted':False,
       'power_loss_accepted':False,'sdk_changed':False,'schema_changed':False,
       'gaps':['No host font picker or mobile integration','Process termination, not power-loss hardware testing',
               'No collection face enumeration; explicit face selection only']}
@@ -41,7 +41,8 @@ def main():
     def run(args,okay=True):
         nonlocal log_number
         p=subprocess.run([str(x) for x in args],capture_output=True,text=True,encoding='utf-8',timeout=180)
-        log_number+=1;(base/f'command-{log_number:02d}.log').write_text(p.stdout+'\n'+p.stderr,encoding='utf-8')
+        log_number+=1;log_name=f'command-{log_number:02d}.log';(base/log_name).write_text(p.stdout+'\n'+p.stderr,encoding='utf-8')
+        results['commands'].append({'number':log_number,'arguments':[str(x) for x in args],'log':log_name,'returncode':p.returncode,'expected_success':okay})
         print(p.stdout,end='');print(p.stderr,end='')
         if okay: assert p.returncode==0, (args,p.returncode)
         return p
@@ -82,6 +83,7 @@ def main():
                     if p.poll() is None:p.kill();p.wait(timeout=30)
             expected=sorted([font_hash,other_hash] if stage=='committed' else [font_hash])
             assert listed(root)==expected
+            results['terminations'].append({'stage':stage,'pid':p.pid,'returncode':p.returncode,'recovered_hashes':expected,'readiness_file':'ready-'+stage})
             assert not list(root.glob('.rfl-tmp-*'))
             assert sorted(p.stem for p in root.glob('*.font'))==expected
             if stage!='committed':run([probe,'import',root,materials/'font.otf'])
@@ -124,7 +126,7 @@ def main():
         assert len(libraries)==1 and libraries[0].stat().st_size>0
         module_source=subprocess.check_output(['git','rev-parse',os.environ['GITHUB_SHA']+':apps/reader/font-library'],text=True).strip()
         results['module_source_tree']=module_source
-        for p in sorted((base/'installed').rglob('*'))+sorted(binary.rglob('*'))+sorted(materials.rglob('*')):
+        for p in sorted((base/'installed').rglob('*'))+sorted(binary.rglob('*'))+sorted(materials.rglob('*'))+sorted(base.glob('command-*.log'))+sorted(base.glob('ready-*')):
             if p.is_file():
                 i=identity(p);i['path']=p.relative_to(base).as_posix();results['identities'].append(i)
         results['checks'].append('installed-binary-and-package-identities')

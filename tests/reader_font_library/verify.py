@@ -13,7 +13,7 @@ import subprocess
 import sys
 import tempfile
 import zipfile
-from cases import COMMON, POSIX, WINDOWS, NEGATIVE
+from cases import COMMON, POSIX, WINDOWS, NEGATIVE, HARNESS_COMMON
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'tools'))
 from check_parallel_integration import download_artifact_zip, fetch, pages, require
 
@@ -58,6 +58,24 @@ def validate(run,jobs,artifacts,blobs,source,run_id,attempt,module_tree):
             require({f'binary/{binary}',f'binary/{c}','binary/font-probe.map',module,'installed/include/reader_font_library.h','materials/LICENSE.md','materials/font.ttf','materials/font.otf','materials/font.ttc'}<=set(paths),'missing original module/binary/license/input')
             for i in ids:
                 content=z.read(i['path']);require(len(content)==i['bytes']>0 and hashlib.sha256(content).hexdigest()==i['sha256'],'bound file changed: '+i['path'])
+            commands=r['commands'];require(len(commands)>20 and [c['number'] for c in commands]==list(range(1,len(commands)+1)),'native command inventory')
+            require(len({c['log'] for c in commands})==len(commands) and all(c['log'] in paths for c in commands),'native logs not bound')
+            require(sum(not c['expected_success'] for c in commands)==(1 if system=='Windows' else 0),'unexpected native failure inventory')
+            for command in commands:
+                require(command['returncode']==0 if command['expected_success'] else command['returncode']!=0,'native command exit differs')
+            require(commands[0]['arguments'][0].endswith(c) and z.read(commands[0]['log']).decode().strip()=='installed-c-abi-sdk340','original C consumer result')
+            require(commands[1]['arguments'][0].endswith(binary) and commands[1]['arguments'][1]=='suite','original C++ consumer binding')
+            native=[line.removeprefix('CASE ') for line in z.read(commands[1]['log']).decode().splitlines() if line.startswith('CASE ')]
+            native_expected=set(COMMON)-set(HARNESS_COMMON)
+            if system!='Windows':native_expected.add('posix-source-and-directory-symlinks-rejected')
+            require(len(native)==len(set(native)) and set(native)==native_expected,'original native named cases differ')
+            events=r['terminations'];require(len(events)==4 and {e['stage'] for e in events}=={'copy','validated','file-published','committed'},'missing actual termination boundary')
+            input_hashes={i['name']:i['sha256'] for i in r['inputs']}
+            for event in events:
+                require(type(event['pid']) is int and event['pid']>0 and event['returncode']!=0 and event['readiness_file'] in paths,'termination identity/exit')
+                require(z.read(event['readiness_file']).decode()==event['stage'],'termination readiness binding')
+                expected_hashes=sorted([input_hashes['font.ttf'],input_hashes['font.otf']] if event['stage']=='committed' else [input_hashes['font.ttf']])
+                require(event['recovered_hashes']==expected_hashes,'termination recovered set')
             require('reader_font_library' in z.read('binary/font-probe.map').decode(errors='replace') and 'rfl_import_file' in z.read('binary/font-probe.map').decode(errors='replace'),'installed module not linked')
             require(hashlib.sha256(z.read('sdk-font-header.h')).hexdigest()==r['sdk_font_header_sha256'],'installed SDK header binding')
             require({i['name'] for i in r['inputs']}=={'font.ttf','font.otf','font.ttc','LICENSE.md'},'input inventory')
@@ -104,6 +122,14 @@ def negative_tests(run,jobs,artifacts,blobs,source,run_id,attempt,module_tree):
             elif case=='failed-report':report['accepted']=False
             elif case=='wrong-platform':report['platform']='Windows'
             elif case=='unbound-module-source':report['module_source_tree']='0'*40
+            elif case=='altered-native-log':content[report['commands'][1]['log']]+=b'changed'
+            elif case=='forged-native-case':
+                log=report['commands'][1]['log'];content[log]=content[log].replace(b'CASE empty-library',b'CASE fabricated-native-pass')
+                for item in report['identities']:
+                    if item['path']==log:item['bytes']=len(content[log]);item['sha256']=hashlib.sha256(content[log]).hexdigest()
+            elif case=='missing-native-command':report['commands'].pop(1)
+            elif case=='missing-termination':report['terminations'].pop()
+            elif case=='zero-termination-exit':report['terminations'][0]['returncode']=0
             if case!='duplicate-json-key':content['result.json']=json.dumps(report).encode()
             stream=io.BytesIO()
             with zipfile.ZipFile(stream,'w',zipfile.ZIP_DEFLATED) as z:

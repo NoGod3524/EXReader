@@ -163,7 +163,9 @@ These are observed filesystem failures, not mocked successful capabilities.
 The strict same-run verifier authenticates completed successful jobs with the
 same source/run/attempt, unique artifact IDs/names, expiry, nonempty sizes, API
 SHA-256 against downloaded ZIP bytes, unique ZIP members and JSON keys, exact
-case sets, original module/source/binary/link-map/input/license identities, and
-30 named negative verifier mutations. Artifacts are downloaded/parsed only in
+case sets, original module/source/binary/link-map/input/license identities, independently
+reparsed original native-case logs, native exit codes and real termination
+readiness/recovery records, and
+35 named negative verifier mutations. Artifacts are downloaded/parsed only in
 Actions. No local build, test, syntax check, fixture creation or artifact parsing
 is authorized. Actual run identities are added only after real terminal runs.
