@@ -85,5 +85,15 @@ def semantic_refusals():
     goodc=dict(scale=2,samples=samples);assert coordinate_ok(goodc)
     bad=copy.deepcopy(goodc);bad['scale']=1;assert not coordinate_ok(bad);refused.append('scale2-unconverted-rejected')
     assert not coordinate_ok({'scale':2,'verified':True});refused.append('unmeasured-coordinate-claim-rejected')
-    assert not scope_ready({});refused.append('missing-configurations-rejected')
+    positive=dict(audit_completed=True,program_sha256='f'*64,coordinate_calibration=goodc,checks=[dict(name=n,passed=True,actual=good if n.endswith('-dialog-focus') else {}) for n in REQUIRED],snapshots=[dict(name=n+'-'+stage) for n in ('search','directory','records','settings') for stage in ('before-open','dialog','before-close','after-close')])
+    complete={name:copy.deepcopy(positive) for name in CONFIGS}
+    assert scope_ready(complete),'synthetic contract fixture positive only; not product evidence'
+    for missing in CONFIGS:
+        bad=copy.deepcopy(complete);del bad[missing]
+        assert not scope_ready(bad);refused.append('missing-'+missing+'-rejected')
+    for key,value in [('program_sha256',''),('snapshots',[])]:
+        bad=copy.deepcopy(complete);bad[CONFIGS[0]][key]=value
+        assert not scope_ready(bad);refused.append('missing-'+key+'-rejected')
+    bad=copy.deepcopy(complete);bad[CONFIGS[0]]['checks'][0]['passed']=False
+    assert not scope_ready(bad);refused.append('false-required-check-rejected')
     return refused

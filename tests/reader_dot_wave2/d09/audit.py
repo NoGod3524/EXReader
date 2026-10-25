@@ -4,6 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[3]
 sys.path.insert(0,str(ROOT/'tests/reader_a11y_gtk'))
 from contract import modal_focus_ok, coordinate_ok
+import x11
 import atspi_client as bus
 from driver import Host, command, wait_until
 import gi
@@ -46,13 +47,14 @@ def main():
             if samples:
                 origin=samples[0]['physical'];command('xdotool','windowmove','--sync',host.window,str(origin['X']+shift),str(origin['Y']+shift));time.sleep(.3)
             frames=nodes('EXReader Linux','frame');assert len(frames)==1
-            samples.append(dict(physical=geometry_values(),logical=bus.extents(frames[0])))
-        result=dict(scale=scale,samples=samples,method='actual host X11 client geometry versus AT-SPI frame; physical movement 40px and return validates scale/offset',verified=False)
+            native=x11.geometry(host.window)
+            samples.append(dict(physical=native['frame'],logical=bus.extents(frames[0]),native_x11=native,xdotool_observation=geometry_values()))
+        result=dict(scale=scale,samples=samples,method='actual Xlib XQueryTree WM frame and XTranslateCoordinates root space versus AT-SPI frame; actual movement and return validates scale/offset; xdotool retained as non-authoritative observation',verified=False)
         result['verified']=coordinate_ok(result)
         return result
     def check(name,ok,actual,expected):
         row=dict(name=name,passed=bool(ok),actual=actual,expected=expected);report['checks'].append(row);print(json.dumps(row),flush=True)
-        if not ok: report['findings'].append(dict(**row,target_sha=TARGET,reproduction='Run '+a.mode+' '+out.name+'; see keys.log and '+name+' snapshot',root_cause='Unconfirmed; inspect actual tree and keyboard trace; environment readiness is separately recorded',minimal_suggestion='Owner to inspect GTK focus/geometry handling; no production edits in D09'))
+        if not ok: report['findings'].append(dict(classification='harness-coordinate-measurement' if name=='coordinate-calibration' else 'native-ui-observation',**row,target_sha=TARGET,reproduction='Run '+a.mode+' '+out.name+'; see keys.log and '+name+' snapshot',root_cause='Unconfirmed; inspect actual tree and keyboard trace; environment readiness is separately recorded',minimal_suggestion='Owner to inspect GTK focus/geometry handling; no production edits in D09'))
     def capture(name):
         tree=bus.dump(app);(out/(name+'.json')).write_text(json.dumps(tree,indent=2));host.screenshot(out/(name+'.png'),window='root')
         rects=[dict(path=bus.path_of(n),role=bus.role(n),name=bus.name(n),box=bus.extents(n),states=bus.states(n)) for n in bus.walk(app) if bus.states(n).get('showing')]
@@ -61,7 +63,7 @@ def main():
         for r in rects:
             r['physical_box']={k:v*calibration.get('scale',1) for k,v in r['box'].items()} if r['box'] and calibration.get('verified') else None
         outside=[r for r in rects if r['physical_box'] and (r['physical_box']['x']<0 or r['physical_box']['y']<0 or r['physical_box']['x']+r['physical_box']['width']>width or r['physical_box']['y']+r['physical_box']['height']>height)]
-        report['snapshots'].append(dict(name=name,geometry=host.geometry(),coordinates_verified=calibration.get('verified',False),focus=focused(),visible=rects,screen_pixels=[width,height],offscreen_candidates=outside,geometry_limit='Bounds only; text clipping, intentional scrolling and overlapping descendants require visual review',png_sha256=digest(out/(name+'.png')),tree_sha256=digest(out/(name+'.json'))))
+        report['snapshots'].append(dict(name=name,geometry=host.geometry(),native_x11=x11.geometry(host.window),coordinates_verified=calibration.get('verified',False),focus=focused(),visible=rects,screen_pixels=[width,height],offscreen_candidates=outside,geometry_limit='Bounds only; text clipping, intentional scrolling and overlapping descendants require visual review',png_sha256=digest(out/(name+'.png')),tree_sha256=digest(out/(name+'.json'))))
     def wait_node(name,role): return wait_until(lambda:nodes(name,role),15,description=name)[0]
     def tab_to(name,role=None):
         for _ in range(80):

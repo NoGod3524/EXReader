@@ -39,6 +39,18 @@ for mode in ('OFF','ON'):
   revoked.append(dict(configuration=mode+'-'+config,old_raw_pass=c['passed'],focus=c['actual'],accepted=False,reason='Focus in main frame, not modal descendant; old presence predicate invalid'))
 prior=dict(run_id=oldrun,attempt=1,harness_sha=oldsha,artifact=oldart['id'],bytes=len(oldbytes),sha256=oldhash,expires_at=oldart['expires_at'],revoked=revoked,retained_failed_runs=['40215023319','40215548145','40218375669'])
 print('D09 PRIOR D03 REVOKED '+json.dumps(prior),flush=True)
+previous_run='40224943448';previous_sha='b28ce904ca65e7d5e7a37a269522e8e039889901'
+previous=get('/actions/runs/'+previous_run);assert previous['status']=='completed' and previous['head_sha']==previous_sha and previous['run_attempt']==1
+previous_arts=[a for a in get('/actions/runs/'+previous_run+'/artifacts')['artifacts'] if a['name']=='reader-dot-d09-'+previous_run+'-1'];assert len(previous_arts)==1
+pa=previous_arts[0];pb=get('/actions/artifacts/'+str(pa['id'])+'/zip',True);ph=hashlib.sha256(pb).hexdigest()
+assert not pa['expired'] and len(pb)==pa['size_in_bytes'] and pa['digest']=='sha256:'+ph and ph=='105e6fab0ee44dcc225669ec9f0a3a7de28b406e7ce0c90c5dfca3d973ee5429'
+pz=zipfile.ZipFile(io.BytesIO(pb));previous_failures=[]
+for config in CONFIGS:
+ pd=json.loads(pz.read(config+'/result.json'));assert pd['harness_sha']==previous_sha and pd['run_id']==previous_run and pd['attempt']=='1'
+ previous_failures.append(dict(configuration=config,failed_checks=[x for x in pd['checks'] if not x['passed']],audit_completed=pd['audit_completed']))
+prior_d09=dict(run_id=previous_run,harness_sha=previous_sha,attempt=1,id=pa['id'],bytes=len(pb),sha256=ph,expires_at=pa['expires_at'],configurations=previous_failures,reason='18/20 checks each config; records modal focus product observation retained; X11 client versus WM frame calibration harness mismatch corrected only in subsequent run')
+print('D09 RETAINED ROUND 1 '+json.dumps(prior_d09),flush=True)
+
 jobs=get('/actions/runs/'+run+'/attempts/'+attempt+'/jobs')['jobs'];producer=[j for j in jobs if j['name']=='GTK native scale audit'];assert len(producer)==1
 artifacts=get('/actions/runs/'+run+'/artifacts')['artifacts'];name='reader-dot-d09-'+run+'-'+attempt
 chosen=[a for a in artifacts if a['name']==name];assert len(chosen)==1
@@ -85,9 +97,9 @@ for mode in ('ON',):
   negative_count=refusals(d,sha,run,attempt,mode,programs[mode],reader)
   print('D09 NEGATIVE CHECKS '+mode+'-'+config+' '+str(negative_count),flush=True)
   reports.append(dict(configuration=mode+'-'+config,environment=d['environment'],measured_contrast=d.get('measured_contrast'),geometry=[{k:s.get(k) for k in ('name','geometry','screen_pixels','offscreen_candidates')} for s in d['snapshots'] if s['name'] in ('shelf','page-turn','notes-panel','small-window')],**{k:d[k] for k in ('program_sha256','audit_completed','keyboard_accepted','contrast_accepted','screen_reader_accepted','checks','findings','pending')}))
-result=dict(harness_sha=sha,run_id=run,attempt=attempt,producer_job=producer[0]['id'],artifact={k:art[k] for k in ('id','name','size_in_bytes','expires_at')},zip_sha256=digest,zip_verified=True,credential_pattern_scan='pass',retained_failures=[prior],semantic_negative_controls=semantic_negatives,programs=programs,configurations=reports,accepted=scope_ready(raw_reports),audit_completed=all(d['audit_completed'] for d in reports),keyboard_accepted=all(d['keyboard_accepted'] for d in reports),contrast_accepted=False,screen_reader_accepted=False)
+result=dict(harness_sha=sha,run_id=run,attempt=attempt,producer_job=producer[0]['id'],artifact={k:art[k] for k in ('id','name','size_in_bytes','expires_at')},zip_sha256=digest,zip_verified=True,credential_pattern_scan='pass',retained_failures=[prior,prior_d09],semantic_negative_controls=semantic_negatives,programs=programs,configurations=reports,accepted=scope_ready(raw_reports),audit_completed=all(d['audit_completed'] for d in reports),keyboard_accepted=all(d['keyboard_accepted'] for d in reports),contrast_accepted=False,screen_reader_accepted=False)
 Path('verification.json').write_text(json.dumps(result,indent=2));print('D09 VERIFIED '+json.dumps({k:v for k,v in result.items() if k not in ('configurations','retained_failures')}),flush=True)
 for d in reports:
- print('D09 CONFIG '+json.dumps(dict(configuration=d['configuration'],checks=[dict(name=x['name'],passed=x['passed']) for x in d['checks']],findings=d['findings'],environment=d['environment'])),flush=True)
+ print('D09 CONFIG '+json.dumps(dict(configuration=d['configuration'],checks=[dict(name=x['name'],passed=x['passed']) for x in d['checks']],findings=d['findings'],environment={k:v for k,v in d['environment'].items() if k!='xdpyinfo'})),flush=True)
 # Audit evidence validity is separate from product acceptance. Incomplete execution is a failure.
 assert result['accepted'],'Required scope failed or incomplete; raw facts and authentication retained, no production repair' 
