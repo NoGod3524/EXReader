@@ -1,0 +1,82 @@
+name: Reader final D04 Apple default UI audit
+on:
+  push:
+    branches: [codex/reader-final-d04]
+    paths: ['tests/reader_final_d04/**', '.github/workflows/reader-final-d04.yml']
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: reader-final-d04
+  cancel-in-progress: false
+env:
+  TARGET_SHA: 0889f7d1e9a537c6c1b05456547e016b26e1cd85
+  SDK_SHA: edddc463c06ed5731195cdb8f06b2df6dff7699e
+  EXR_APPLE_SDK_VERSION: 3.41.0
+  EXR_APPLE_PAGE_THEME: 'OFF'
+jobs:
+  audit:
+    name: D04 audit ${{ matrix.platform }}
+    runs-on: macos-15
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        platform: [macos, iphone, ipad]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Exact new-path and SDK guard
+        run: python3 tests/reader_final_d04/guard.py
+      - name: Original geometry positive and negative regressions
+        run: python3 tests/reader_a11y_apple/a11y_overlap_regression.py --output build/overlap-regression.json
+      - name: Build exact approved SDK trees and fixed-base production modules
+        run: |
+          set -euo pipefail
+          target=iphonesimulator
+          options=(-DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO)
+          if [ '${{ matrix.platform }}' = macos ]; then target=macos; options=(); fi
+          cmake -S . -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AAC=OFF "${options[@]}"
+          cmake --build build/sdk --parallel 2
+          cmake --install build/sdk --prefix "$PWD/stage"
+          python3 tools/build_apple_product.py --sdk stage --target "$target" --build build/product
+      - name: Unmodified regression and independent default UI audit
+        id: ui
+        continue-on-error: true
+        run: bash tests/reader_final_d04/run.sh '${{ matrix.platform }}'
+      - name: Collect actual outcomes and retain failures
+        id: collect
+        if: always()
+        continue-on-error: true
+        run: python3 tests/reader_final_d04/collect.py '${{ matrix.platform }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d04-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/evidence/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Preserve real failed outcome
+        if: always() && (steps.ui.outcome != 'success' || steps.collect.outcome != 'success')
+        run: exit 1
+  verify:
+    name: D04 strict original ZIP verifier
+    needs: audit
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify original ZIP bytes and same-attempt target identities
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_final_d04/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d04-validation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/verification/
+          retention-days: 30
+          if-no-files-found: error
