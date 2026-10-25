@@ -1,9 +1,38 @@
 {
-  "accepted": false,
+  "accepted": true,
   "branch": "codex/reader-apple-records-ready",
   "fixed_preparation_source": "7c457fb68a24d917ac3bd60aa1f961b16fe9ae6b",
-  "source_sha": null,
-  "runs": [],
+  "source_sha": "1c2ce4a1262b171a2f90ea4b92c998795c289435",
+  "runs": [{
+    "run_id": 40214214442, "attempt": 1, "conclusion": "success",
+    "jobs": [
+      {"id": 121231740471, "name": "Frozen SDK and installed reading modules iphonesimulator", "conclusion": "success"},
+      {"id": 121231740797, "name": "Frozen SDK and installed reading modules macos", "conclusion": "success"},
+      {"id": 121232238317, "name": "Native reading records and durable requests", "conclusion": "success"},
+      {"id": 121232550016, "name": "Reading UI iphone", "conclusion": "success"},
+      {"id": 121232550031, "name": "Reading UI macos", "conclusion": "success"},
+      {"id": 121232550041, "name": "Reading UI ipad", "conclusion": "success"},
+      {"id": 121235837090, "name": "Strict same-source reading records summary", "conclusion": "success"}
+    ],
+    "artifacts": [
+      {"id": 12606274463, "name": "apple-reading-sdk-macos-40214214442-1", "size_in_bytes": 20526634, "digest": "sha256:99626cecc756d18341c7dff5b085bb0cf876baa03f4f8b5e7852ef24bf11cfae", "expires_at": "2027-01-23T16:58:29Z"},
+      {"id": 12606538366, "name": "apple-reading-sdk-iphonesimulator-40214214442-1", "size_in_bytes": 20534028, "digest": "sha256:95ed8b7858ef339c33ec189bf1b2df130588eb5b554a9d46b4c71de411dd39ae", "expires_at": "2027-01-23T16:58:29Z"},
+      {"id": 12607355104, "name": "apple-reading-native-40214214442-1", "size_in_bytes": 1620640, "digest": "sha256:f900ada6d820590f390c15b9009de3d7be84ca89c0e420c7ab67ac92586ede45", "expires_at": "2027-01-23T16:58:29Z"},
+      {"id": 12606698549, "name": "apple-reading-ui-macos-40214214442-1", "size_in_bytes": 38064975, "digest": "sha256:ada1ab61fc5097e40c9f0cf2bcbce2e927816fcc88b2e8fca3171cf7600a68e4", "expires_at": "2027-01-23T16:58:29Z"},
+      {"id": 12606979282, "name": "apple-reading-ui-iphone-40214214442-1", "size_in_bytes": 40909101, "digest": "sha256:fd1dedfb921c5f55a58f5f21e59598ca19010a021ff379f0685746411f45ab65", "expires_at": "2027-01-23T16:58:29Z"},
+      {"id": 12606884645, "name": "apple-reading-ui-ipad-40214214442-1", "size_in_bytes": 60831051, "digest": "sha256:54e9e03181d7587899cd2d358078bee05b9608989d2e71fcd84d160920565558", "expires_at": "2027-01-23T16:58:29Z"},
+      {"id": 12607049125, "name": "apple-reading-summary-40214214442-1", "size_in_bytes": 115325, "digest": "sha256:183fceb836065510af6f4f481738b069ed975e9f0cf25f50a81cf548cb74cb67", "expires_at": "2027-01-23T16:58:29Z"}
+    ]
+  }],
+  "original_full_strict_passed": true,
+  "same_run_readiness_verified": true,
+  "platforms": [
+    {"platform": "macos", "cases": 7, "attachments": 38, "test_seconds": 106.466},
+    {"platform": "iphone", "device": "iPhone SE (3rd generation)", "runtime": "iOS-26-2", "cases": 7, "attachments": 38, "test_seconds": 259.443, "appearance_query_results": ["timeout45", "light"], "successful_query_seconds": 17.828256166},
+    {"platform": "ipad", "device": "iPad mini (A17 Pro)", "runtime": "iOS-26-2", "cases": 7, "attachments": 38, "test_seconds": 334.445, "appearance_query_results": ["light"], "successful_query_seconds": 3.307381166}
+  ],
+  "intermittent_tap_not_reproduced_in_this_run": true,
+  "tap_root_cause_confirmed": false,
   "original_cases_per_platform": 7,
   "original_native_checks": 19,
   "sdk_targets": 2,
