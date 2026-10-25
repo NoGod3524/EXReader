@@ -61,7 +61,10 @@ def guard():
 
 
 def build(source, name, prefix, extra=(), install=True):
-    target = OUT / name
+    # The build directory must never be a package prefix: configure_package_config_file
+    # writes <Name>Config.cmake into the build tree, and CMake would then prefer that
+    # half-installed file over lib/cmake/<Name> in the stage.
+    target = OUT / 'build' / name
     run(['cmake', '-S', source, '-B', target, '-G', 'Ninja', '-DCMAKE_BUILD_TYPE=Release',
          '-DCMAKE_INSTALL_PREFIX=' + path(prefix), *extra], name + '-configure')
     run(['cmake', '--build', target, '--parallel', '4'], name + '-build')
@@ -75,7 +78,7 @@ def family(label, enabled, product, dav):
     stages = {}
     prefix = [product, dav]
     for module in MODULES:
-        stage = OUT / (label + '-' + module)
+        stage = OUT / (label + '-' + module + '-stage')
         build(ROOT / 'apps/reader' / module, label + '-' + module, stage,
               ['-DEXR_READER_SELECTOR_BYTES_CANDIDATE=' + ('ON' if enabled else 'OFF'),
                '-DREADER_PRODUCT_PREFIX=' + path(product),
