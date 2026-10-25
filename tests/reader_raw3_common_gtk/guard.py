@@ -52,11 +52,12 @@ def tree(ref):
     return result
 
 
-def validate_tree(baseline,current):
+def validate_tree(baseline,current,extensions=None):
     for path,identity in baseline.items():
         require(current.get(path)==identity,'Existing common-source blob or mode changed: '+path)
     added=set(current)-set(baseline)
-    require(added==NEW_FILES,'Common GTK wrapper file set differs: '+repr(sorted(added)))
+    allowed=NEW_FILES|set(extensions or ())
+    require(added==allowed,'Common GTK wrapper file set differs: '+repr(sorted(added)))
     require(all(current[path].split()[0]=='100644' for path in added),'Common GTK wrapper mode differs')
 
 
@@ -64,7 +65,7 @@ def project_workflow(text):
     substitutions=(
       ('name: Common raw3 GTK actual host and complete retained scopes',
        'name: Explicit GTK raw3 actual host and complete retained scopes',1),
-      ('branches: [codex/reader-raw3-common-gtk]',
+      ('branches: [codex/reader-raw3-common-integration]',
        'branches: [codex/reader-gtk-raw3-candidate]',1),
       ('python3 tests/reader_raw3_common_gtk/guard.py','python3 tests/reader_gtk_raw3/guard.py',2),
       ('python3 tests/reader_raw3_common_gtk/retained.py','python3 tests/reader_gtk_raw3/retained.py',3),
@@ -91,7 +92,14 @@ def check_source(source):
     require(git('rev-parse','HEAD').decode().strip()==source,'Checkout and actual Actions source differ')
     for parent in (BASE,GTK_PIN,GTK_TESTED,SDK,RAW,CODEC):
         subprocess.run(['git','merge-base','--is-ancestor',parent,source],cwd=ROOT,check=True)
-    validate_tree(tree(BASE),tree(source))
+    # Read only the reviewed composition's pure constants. Do not configure its
+    # historical adapters or replace this process's guard module registration.
+    composition=load('common_gtk_extensions_registry','tests/reader_raw3_common_runtime/combined.py')
+    require(composition.BASE==BASE,'Composition extension registry uses another baseline')
+    extensions=composition.EXTENSIONS
+    require(isinstance(extensions,(set,frozenset)) and all(type(path) is str for path in extensions),
+            'Composition extension registry is not an exact path set')
+    validate_tree(tree(BASE),tree(source),extensions=extensions)
     subprocess.run(['git','diff','--exit-code',source,'--','.'],cwd=ROOT,check=True)
     for path in GTK_PIN_PATHS:
         require(object_id(source,path)==object_id(GTK_PIN,path),'Sealed GTK leaf changed: '+path)
@@ -141,6 +149,9 @@ def validate_source_report(value,source,run,attempt):
             all(identity==object_id(BASE,path) for path,identity in expected.items()),'Actual common production tree differs')
     require(value.get('gtk_source_trees')=={path:object_id(GTK_PIN,path) for path in GTK_PIN_PATHS},
             'Sealed GTK leaf proof differs')
+    changed=set(tree(source))-set(tree(BASE))
+    require(value.get('changed')==sorted(changed) and
+            value.get('composition_extensions')==sorted(changed-NEW_FILES),'Actual composition extension proof differs')
     return value
 
 
@@ -148,7 +159,9 @@ def validate_compatibility_report(value,source,run,attempt):
     validate_header(value,source,run,attempt)
     validate_source_report(value.get('integration_guard',{}),source,run,attempt)
     require(value.get('baseline_tree')==value['integration_guard']['baseline_tree'] and
-            value.get('original_workflow_sha256')==value['integration_guard']['original_workflow_sha256'],
+            value.get('original_workflow_sha256')==value['integration_guard']['original_workflow_sha256'] and
+            value.get('composition_extensions')==value['integration_guard']['composition_extensions'] and
+            value.get('paths')==value['integration_guard']['changed'],
             'Compatibility gate baseline differs')
     # The unchanged original compatibility contract still verifies its fixed
     # old host/SDK, source trees, all process reports and every negative assertion.
@@ -157,18 +170,19 @@ def validate_compatibility_report(value,source,run,attempt):
 def main():
     require(os.environ.get('GITHUB_ACTIONS')=='true','Actions only')
     source=os.environ['GITHUB_SHA'];sealed,digest=check_source(source)
+    changed=sorted(set(tree(source))-set(tree(BASE)))
     header=dict(source_sha=source,run_id=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],
       accepted=True,source_guard_passed=True,runtime_accepted=False,old_guard_executed=False,
       guard_kind=GUARD_KIND,guard_schema=1,composition_source=BASE,gtk_source_pin=GTK_PIN,
       gtk_tested_source=GTK_TESTED,workflow=WORKFLOW,original_workflow=ORIGINAL,
       baseline_tree=git('rev-parse',BASE+'^{tree}').decode().strip(),original_workflow_sha256=digest,
       all_existing_blobs_and_modes_unchanged=True,original_gtk_workflow_projection_exact=True,
-      allowed_new_files=sorted(NEW_FILES))
+      allowed_new_files=sorted(NEW_FILES),composition_extensions=sorted(set(changed)-NEW_FILES))
     report=dict(**header,ordinary_merge_source=BASE,common_source=sealed.COMMON,sdk=SDK,
       shared_version_support=sealed.MODULES,deliveries=sealed.DELIVERIES,
       production_trees={path:object_id(source,path) for path in ('apps','examples','extras','tools')},
       gtk_source_trees={path:object_id(GTK_PIN,path) for path in GTK_PIN_PATHS},
-      changed=sorted(NEW_FILES),original_failed_run_retained=40177143143,
+      changed=changed,original_failed_run_retained=40177143143,
       retained_original_producer_steps=31,retained_actual_producer_steps=35,
       scope='new common GTK source gate only; no runtime or old-guard acceptance')
     sys.path.insert(0,str(ROOT/'tests/reader_gtk_record_compatibility'))
@@ -178,7 +192,7 @@ def main():
       owner_trees={name:object_id(owner,'examples/linux') for name,owner in [('old',OLD_HOST),('new',source)]},
       protected_trees={name:{path:object_id(sdk,path) for path in sealed.PROTECTED}
                        for name,sdk in [('old',OLD_SDK),('new',NEW_SDK)]},
-      paths=sorted(NEW_FILES),integration_guard=report,
+      paths=changed,integration_guard=report,
       scope='new common GTK compatibility-source gate; original runtime contract is still required')
     build=ROOT/'build';build.mkdir(exist_ok=True)
     for name,value in [('gtk-341-source-guard.json',report),('gtk-record-compatibility-guard.json',compatibility)]:

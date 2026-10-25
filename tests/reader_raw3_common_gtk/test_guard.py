@@ -30,6 +30,16 @@ def main():
     bad=dict(valid);del bad[guard.WORKFLOW]
     refused(lambda:guard.validate_tree(baseline,bad));tree_refusals+=1
 
+    # Supplying an exact extension set changes only the explicitly opted-in
+    # call. All original fake-tree controls above still use the six-file set.
+    extension='tests/common_guard_protocol_fixture/explicit_extension.py'
+    extended={**valid,extension:'100644 blob explicit-extension'}
+    guard.validate_tree(baseline,extended,extensions={extension})
+    refused(lambda:guard.validate_tree(baseline,extended));tree_refusals+=1
+    refused(lambda:guard.validate_tree(baseline,valid,extensions={extension}));tree_refusals+=1
+    bad=dict(extended);bad['examples/linux/reading.c']='100644 blob changed'
+    refused(lambda:guard.validate_tree(baseline,bad,extensions={extension}));tree_refusals+=1
+
     source='a'*40;run=1;attempt=2
     header=dict(source_sha=source,run_id=run,attempt=attempt,guard_kind=guard.GUARD_KIND,guard_schema=1,
       composition_source=guard.BASE,gtk_source_pin=guard.GTK_PIN,gtk_tested_source=guard.GTK_TESTED,

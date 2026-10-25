@@ -1,7 +1,7 @@
 name: Common source Android complete raw3 chain
 on:
   push:
-    branches: [codex/reader-raw3-common-android]
+    branches: [codex/reader-raw3-common-integration]
   workflow_dispatch:
 permissions:
   contents: read

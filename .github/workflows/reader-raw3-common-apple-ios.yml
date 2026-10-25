@@ -1,7 +1,7 @@
 name: Common raw3 source complete iPhone iPad raw3 and bounded readiness
 on:
   push:
-    branches: [codex/reader-raw3-common-apple]
+    branches: [codex/reader-raw3-common-integration]
   workflow_dispatch:
 permissions:
   contents: read

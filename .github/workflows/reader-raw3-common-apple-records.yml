@@ -1,7 +1,7 @@
 name: Common raw3 source full Apple original records and bounded readiness
 on:
   push:
-    branches: [codex/reader-raw3-common-apple]
+    branches: [codex/reader-raw3-common-integration]
   workflow_dispatch:
     inputs:
       scope:
@@ -12,8 +12,8 @@ permissions:
   contents: read
   actions: read
 env:
-  EXR_APPLE_SDK_VERSION: ${{ github.ref_name == 'codex/reader-raw3-common-apple' && '3.41.0' || '3.40.0' }}
-  EXR_APPLE_PAGE_THEME: ${{ github.ref_name == 'codex/reader-raw3-common-apple' && 'ON' || 'OFF' }}
+  EXR_APPLE_SDK_VERSION: ${{ github.ref_name == 'codex/reader-raw3-common-integration' && '3.41.0' || '3.40.0' }}
+  EXR_APPLE_PAGE_THEME: ${{ github.ref_name == 'codex/reader-raw3-common-integration' && 'ON' || 'OFF' }}
   SDK_BASELINE: 9854061be331fe603a1822d9b2b36ee357154927
 jobs:
   sdk:
@@ -36,10 +36,10 @@ jobs:
         if: github.ref_name == 'codex/reader-hosts-integration'
         run: python3 tests/reader_hosts_integration/guard.py
       - name: Authenticate isolated SDK3.41 Apple page-theme candidate
-        if: github.ref_name == 'codex/reader-raw3-common-apple'
+        if: github.ref_name == 'codex/reader-raw3-common-integration'
         run: python3 tests/reader_raw3_common_apple/guard.py --mode records --target '${{ matrix.target }}'
       - name: Require fixed SDK schema and exact G03 G04 and codec trees
-        if: github.ref_name != 'codex/reader-hosts-integration' && github.ref_name != 'codex/reader-raw3-common-apple'
+        if: github.ref_name != 'codex/reader-hosts-integration' && github.ref_name != 'codex/reader-raw3-common-integration'
         run: |
           git diff --exit-code "$SDK_BASELINE" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
           git diff --exit-code a6d7dd81eef36e83e004fdc381a565a2ffee5462 HEAD -- apps/reader/store/001_catalog.sql

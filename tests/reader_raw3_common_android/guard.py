@@ -1,6 +1,7 @@
 """Honest common-kind guard; the original Android-only guard remains untouched."""
 from functools import lru_cache
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path, PurePosixPath
@@ -39,10 +40,27 @@ def snapshot(source):
     return result
 
 
-def owned(path):
+def root_extensions():
+    path = ROOT / 'tests/reader_raw3_common_runtime/combined.py'
+    spec = importlib.util.spec_from_file_location('common_android_root_extension_policy', path)
+    policy = importlib.util.module_from_spec(spec)
+    # Only load the declarations. Do not call configure() or register its guard
+    # under another module name; the root's reviewed EXTENSIONS is the policy.
+    spec.loader.exec_module(policy)
+    if policy.BASE != BASE or not isinstance(policy.EXTENSIONS, (set, frozenset)):
+        raise RuntimeError('root extension policy identity differs')
+    if not all(isinstance(item, str) for item in policy.EXTENSIONS):
+        raise RuntimeError('root extension policy contains a non-path')
+    return frozenset(policy.EXTENSIONS)
+
+
+def owned(path, extensions=None):
+    if extensions is None:
+        extensions = root_extensions()
     return ('\\' not in path and str(PurePosixPath(path)) == path
             and not PurePosixPath(path).is_absolute() and '..' not in PurePosixPath(path).parts
-            and (path.startswith('tests/reader_raw3_common_android/') or path == WORKFLOW or path in DOCS))
+            and (path.startswith('tests/reader_raw3_common_android/') or path == WORKFLOW
+                 or path in DOCS or path in extensions))
 
 
 def part(tree, path):
@@ -56,14 +74,18 @@ def require_event_identity(source, event_sha):
 
 def inspect_tree(source):
     before, after = snapshot(BASE), snapshot(source)
+    extensions = root_extensions()
     errors, changed = [], []
+    additions = set(after) - set(before)
+    if additions != extensions:
+        errors.append('extensions.exact_set')
     for path in sorted(set(before) | set(after)):
         if before.get(path) == after.get(path):
             continue
         changed.append(path)
         if path in before:
             errors.append('immutable:' + path)
-        elif not owned(path):
+        elif not owned(path, extensions):
             errors.append('unowned:' + path)
         elif after[path][:2] != ('100644', 'blob'):
             errors.append('mode:' + path)
@@ -96,6 +118,7 @@ def inspect_tree(source):
     if not exact:
         errors.append('workflow_projection')
     return {'errors': errors, 'changed': changed, 'components': trees,
+            'root_extensions': sorted(extensions), 'extensions_exact_set': additions == extensions,
             'workflow_projection_exact': exact,
             'original_workflow_sha256': hashlib.sha256(original_workflow).hexdigest(),
             'common_workflow_sha256': hashlib.sha256(current_workflow).hexdigest()}

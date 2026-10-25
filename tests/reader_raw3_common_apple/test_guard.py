@@ -78,6 +78,12 @@ def main():
     baseline = {'original-driver.py': '100644 blob ' + '1' * 40}
     current = dict(baseline, **{path: '100644 blob ' + '2' * 40 for path in NEW_FILES})
     validate_tree(baseline, current)
+    extension = 'tests/another_reviewed_wrapper/guard.py'
+    extended = dict(current, **{extension: '100644 blob ' + '5' * 40})
+    validate_tree(baseline, extended, {extension})
+    rejects(lambda: validate_tree(baseline, extended), 'extension_without_explicit_review')
+    rejects(lambda: validate_tree(baseline, current, {extension}), 'missing_reviewed_extension')
+    checks.extend(('extension_without_explicit_review', 'missing_reviewed_extension'))
     for label, candidate in (
             ('changed_driver_blob', dict(current, **{'original-driver.py': '100644 blob ' + '3' * 40})),
             ('changed_driver_mode', dict(current, **{'original-driver.py': '100755 blob ' + '1' * 40})),
