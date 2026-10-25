@@ -73,7 +73,33 @@
    **原工件 ZIP** 的字节、`sha256:digest`、有效期与 run 身份，再逐个复算工件内的消费者二进制、
    观测文件与快照摘要。
 
-## 6. 结果
+## 6. 本轮真实结果（三轮 CI，全部失败，未验收）
 
-见 `validation.json` 与 worktree 根的 `HANDOFF-RESULT.md`：未执行时 `accepted=false`，
-执行后只填同一次 source/run/attempt 的真实值，失败原样保留。
+同一工作流的全部三轮都只用本包分支/路径触发，矩阵 `max-parallel: 2`，每轮只有一个 live run：
+
+| run | 受测 source | 预检 | Windows | Linux | compare | strict |
+| --- | --- | --- | --- | --- | --- | --- |
+| 40215053846 a1 | `9babde99` | success | failure | failure | skipped | skipped |
+| 40215267638 a1 | `911db25d` | success | failure | failure | skipped | skipped |
+| 40218361806 a1 | `66379633` | success | failure | failure | skipped | skipped |
+
+失败原因全部在本包新增工具，不在 owner 代码：
+
+1. run 40215053846：消费者编译缺陷（`reader_metadata_stage_book` 少传 typed command、
+   `page::size` 应为 `page::rows.size()`、一个字符串字面量用单引号收尾），两平台同一诊断。
+2. run 40215267638：两个消费者都构建成功并运行，但 `query.ascii` 在容器里是 UTF-16LE，
+   消费者按 ASCII 身份读取，C++ 消费者在第一条记录后即报 `container item is not ASCII`。
+3. run 40218361806：167 条 C++ 记录与 18 条 C 记录全部产出、无崩溃；6 项字节稳定断言与
+   "只读重开不改产品库字节"全部通过，但 8 条 C++ 与 5 条 C 记录不符，且两平台观测不逐字节相同：
+   并发修订 ID 写成 34 个十六进制字符（`identifier()` 拒绝，导致 book5 并发 head 未建立，连带
+   `metadata.book5.*` 与 `metadata.reopen` 的 pending/sidecar 偏离）、`metadata.book5.bootstrap` 漏 `revision_len`、
+   `metadata.get.book1.bytes` 用字符数(401)而非 UTF-8 字节数(417)、C 消费者读的是已被改过标题的活动库、
+   以及随机修订 ID 泄漏进跨平台观测文件。
+
+这些修正在 `afceae3a3a7a009ab396a273f729e115acf397fc` 里完成（32 位十六进制竞争 ID、补字段、
+字节数改用 `encode('utf-8')`、C 消费者改读 attach 后冻结的字节副本、wire 身份移入平台本地证据），
+但**尚未在 Actions 执行**。按规程本包已用完三轮，不再自行刷运行；第四轮由 root 决定。
+逐轮工件 ID/字节/`sha256:` digest/到期时间、逐条根因与未验证项见 `validation.json` 与
+worktree 根的 `HANDOFF-RESULT.md`。
+
+结论：S12 **未通过**（`accepted=false`），不授予任何平台、宿主、SDK、性能或发布范围。
