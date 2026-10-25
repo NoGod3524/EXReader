@@ -345,7 +345,7 @@ static const exr_line *glyph_line(const exr_layout *l,size_t glyph) {
   }
   return NULL;
 }
-static exr_status render(const exr_layout *l, exr_font *f, size_t page, unsigned channels,
+static exr_status render(const exr_layout *l, exr_font *f, size_t page, unsigned channels,uint32_t background,
                          const exr_control *control, exr_bitmap *out, exr_error *e) {
   size_t i, j, total,glyph_work=0; exr_status status=EXR_OK;
   uint32_t width, height;
@@ -368,7 +368,19 @@ static exr_status render(const exr_layout *l, exr_font *f, size_t page, unsigned
   out->height = height;
   out->stride = width * channels;
   out->channels = channels;
-  memset(out->pixels, 255, (size_t)out->stride * height);
+  if(background==0xffffffffu) memset(out->pixels,255,(size_t)out->stride*height);
+  else if(channels==1) {
+    unsigned r=background>>24,g=(background>>16)&255,b=(background>>8)&255;
+    memset(out->pixels,(int)((r*77+g*150+b*29+128)>>8),(size_t)out->stride*height);
+  } else {
+    unsigned char rgba[4]={(unsigned char)(background>>24),(unsigned char)(background>>16),
+                           (unsigned char)(background>>8),(unsigned char)background};
+    uint32_t x,y;
+    for(y=0;y<height;y++) {
+      if(!(y&63) && exr_control_cancel(control,e)!=EXR_OK) goto cancelled;
+      for(x=0;x<width;x++) memcpy(out->pixels+(size_t)y*out->stride+x*4,rgba,4);
+    }
+  }
   p = &l->pages[page];
   if(l->positioned) {
     const exr_positioned_page *positioned=&l->positioned[page];
@@ -420,13 +432,22 @@ font_error:
 }
 exr_status exr_render_page(const exr_layout *l, exr_font *f, size_t page, exr_bitmap *out,
                            exr_error *e) {
-  return render(l, f, page, 1, NULL, out, e);
+  return render(l, f, page, 1, 0xffffffffu, NULL, out, e);
 }
 exr_status exr_render_page_color(const exr_layout *l, exr_font *f, size_t page, exr_bitmap *out,
                                  exr_error *e) {
-  return render(l, f, page, 4, NULL, out, e);
+  return render(l, f, page, 4, 0xffffffffu, NULL, out, e);
 }
 exr_status exr_render_page_ex(const exr_layout *l, exr_font *f, size_t page, unsigned channels,
                                const exr_control *control, exr_bitmap *out, exr_error *e) {
-  return render(l, f, page, channels, control, out, e);
+  return render(l, f, page, channels, 0xffffffffu, control, out, e);
+}
+exr_status exr_render_page_background(const exr_layout *l,exr_font *f,size_t page,unsigned channels,
+  uint32_t background,const exr_control *control,exr_bitmap *out,exr_error *e) {
+  exr_status status;
+  if(out) memset(out,0,sizeof(*out));
+  if(e) memset(e,0,sizeof(*e));
+  status=render(l,f,page,channels,background,control,out,e);
+  if(e) e->code=status;
+  return status;
 }
