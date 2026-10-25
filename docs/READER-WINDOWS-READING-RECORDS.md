@@ -18,11 +18,15 @@
 
 ## 验证状态
 
-当前为未验收候选，尚无构建或测试通过声明。新工作流在 Actions 编译并执行真实 Win32/UI Automation、安装后公开 SDK 独立定位、真实杀进程与原请求重试、非 SAFE 隐私、32条分页；原 F1/F2、Windows 158项及账号／元数据／书架／worker 等完整回归保留。所有构建、语法检查、夹具和工件解析只在 Actions。
+source `fdd625f3a45907a178db07ac8d0e4c06a635321d` / [run 40153457202](https://github.com/NoGod3524/EXReader/actions/runs/40153457202) / attempt1 已完成 Windows 本包验收。原生宿主 job `121049667319` 与严格认证 job `121051080607` 均 success，新增阅读记录32/32、记录协议负例24/24通过；严格汇总 `accepted=true`、`problems=[]`。所有构建、语法检查、夹具和工件解析只在 Actions。
+
+同一受测源码同时保留 F1 安装消费者264项、F2安装消费者130项、导航UI31项、旧Windows UI158项及账号／元数据／书架／worker 等完整回归。真实发布前关闭、发布前/后杀进程、重启不自动提交、原请求重试无额外history/outbox均已在本轮执行通过。记录定位由独立公开SDK及当前renderer实际FOUND复核，EPUB明确part、PDF稳定page_id、CBZ无文字point均通过。
+
+主工件 `12583307918`，68,785,748 bytes，`sha256:2e8453db78f818b5242f89f121f42dbc5b4294899a292f6d01d068e927f748de`；汇总工件 `12584195425`，2,061 bytes，`sha256:83168d6d01aa35f6f992466846ddc5c3224a421fd9caae3c59341a1e48ae7096`，有效期均为 `2027-01-23T02:10:46Z`。后续证据HEAD只修改本文和验收JSON，不改变受测源码；共同宿主分支集成尚待完成。
 
 真机、读屏、性能、配色、六目标产品互通及真实发布不由本候选授予。
 
-## 重启检查点
+## 重启前检查点（历史）
 
 当前源码 `f8ff3de341383ed7bb513fbf050e7bcf2a6fa025` 已推送，完整 [run 40147158548](https://github.com/NoGod3524/EXReader/actions/runs/40147158548) / job `121030839240` 在收尾观察时仍运行；不需要因电脑重启重新启动。当前仍未验收。
 
