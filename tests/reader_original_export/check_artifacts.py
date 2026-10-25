@@ -24,6 +24,7 @@ def object_pairs(pairs):
 def load(raw): return json.loads(raw,object_pairs_hook=object_pairs)
 
 def validate(report,members,platform,source,run,attempt):
+    require(type(report['run_id']) is int and type(report['attempt']) is int,'integer report run identity')
     require(report['accepted'] is True and report['source_sha']==source and report['run_id']==run and report['attempt']==attempt,'report identity/outcome')
     require(report['platform']==platform and report['system_share_ui'] is False and report['six_devices'] is False,'platform/scope')
     expected=REQUIRED|({'windows_actual_locked_cleanup_failure'} if platform=='Windows' else {'posix_real_midstream_write_failure'})
@@ -35,12 +36,19 @@ def validate(report,members,platform,source,run,attempt):
         member=identity['member'];require(member not in used and member in members,'missing/duplicate binary binding');used.add(member)
         data=members[member];require(len(data)==identity['bytes']>0 and hashlib.sha256(data).hexdigest()==identity['sha256'],'actual binary digest '+role)
         require(member.startswith('oe-evidence/binaries/'),'binary member scope')
+        if role=='module':
+            require(data.startswith(b'!<arch>\n') and data==members.get('oe-stage/lib/'+member.split('/')[-1]),'actual installed static module binding')
+        else:
+            require(data[:4] in ({b'\x7fELF'} if platform=='Linux' else {b'\xcf\xfa\xed\xfe',b'\xfe\xed\xfa\xcf',b'\xca\xfe\xba\xbe',b'\xbe\xba\xfe\xca'} if platform=='macOS' else {data[:4]}),'native executable format')
+            if platform=='Windows':require(data[:2]==b'MZ','native PE executable')
     nine=report['cases']['nine']['items'];require(len(nine)==9 and {r['format'] for r in nine}==set(range(1,10)),'nine original modules')
     require(all(r['committed']==1 and r['created']==1 and len(r['hash'])==64 and r['bytes']>0 for r in nine),'nine real outputs')
     # Bind actual originals, final files, snapshots and report; basename is stable.
     for r in nine:
         ext=['txt','html','fb2','epub','docx','rtf','mobi','pdf','cbz'][r['format']-1]
         original=members['oe-fixtures/book.'+ext]
+        frozen=['sample.txt','sample.html','sample.fb2','sample.epub','sample.docx','sample.rtf','sample.mobi','pdf-public-text.pdf','comic.cbz'][r['format']-1]
+        require(original==(Path('tests/fixtures')/frozen).read_bytes(),'original bound to frozen source fixture')
         final=members['oe-evidence/nine/'+r['hash']+'.'+ext]
         require(final==original and len(final)==r['bytes'] and hashlib.sha256(final).hexdigest()==r['hash'],'actual original/final bytes')
     before={p.removeprefix('oe-evidence/before/'):v for p,v in members.items() if p.startswith('oe-evidence/before/')}

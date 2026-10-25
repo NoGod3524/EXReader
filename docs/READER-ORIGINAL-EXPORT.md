@@ -27,9 +27,18 @@ SHA-256 is computed from those actual bytes, then the flushed staged file is
 read back and hashed before publication. The SHA implementation is a local
 MIT-licensed copy of the existing thumbnail component's SHA-256 primitive,
 not a second SDK/parser. Format comes from `exr_library_books`. SDK 3.40 lacks
-a per-ID format lookup, so that public metadata snapshot retains the SDK's
-own metadata allocation bound; this package does not claim an O(100)
-metadata-memory bound. No original is loaded as a whole-book heap buffer.
+a per-ID format lookup. Its public bookshelf snapshot enumerates **all matching
+library rows** and allocates an `exr_book` array plus copies of title, author,
+and tags for each. At the frozen SDK source, `src/base_internal.h` defines
+`EXR_MAX_ITEMS` as **4,194,304**; `exr_library_books` returns `EXR_MEMORY` when
+that count/allocation guard fails (`src/library.c`). This is the implementation
+limit of the frozen public API, not an O(100) metadata-memory bound or a small
+aggregate byte cap. Metadata memory grows with the entire library and its
+strings and can exhaust memory before that count. No private header or SQL is
+used by the module. The **64 KiB claim applies only to the original-byte copy
+buffer**, not total process memory, SDK metadata, source handles, or receipts.
+A bounded per-ID public format getter is an SDK gap for future integration.
+No original is loaded as a whole-book heap buffer.
 
 Before any file creation, every selected source is opened and its declared
 size checked. Defaults: 128 MiB/book, 512 MiB/batch. A caller may lower both or
@@ -70,7 +79,8 @@ attempts cleanup and retains `cleanup_pending` plus the real path if cleanup
 fails. Process death cannot run cleanup: host-journaled orphan receipts remain
 owned by that host, not silently removed by a later export. Retry opens a fresh
 SDK owner and exports again; the fixture exercises actual process termination,
-explicit orphan cleanup from its receipt, and successful reopen/retry. The
+explicit orphan cleanup from its receipt, and successful reopen/retry; a
+second real termination after publication verifies duplicate-safe reopen. The
 module does not claim unattended orphan discovery or a global transaction.
 A host must verify its receipt still refers to its temporary before deleting
 it. There is no completion manifest, network, OS share registration, shell or

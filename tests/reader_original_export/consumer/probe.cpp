@@ -60,7 +60,7 @@ static void progress(void *p,size_t index,roe_event ev,const roe_item *r){
   if(s.mode=="reentry"&&!s.fired){s.fired=true;roe_result *nested=nullptr;roe_selection selected{1,nullptr};s.reentry=roe_run(s.e,&selected,1,s.o,&nested);check(!nested&&s.reentry==ROE_OWNER,"reentry refused");check(roe_destroy(&s.e)==ROE_OWNER,"destroy reentry refused");check(enter(&s)==1,"same owner SDK refused");}
   if(s.mode=="cancelafter1"&&ev==ROE_PUBLISHED&&index==0)s.stop=true;
   if(s.mode=="invalidate"&&ev==ROE_COPYING&&!s.fired){s.fired=true;exr_library *other=open(s.db.c_str());exr_book *books=nullptr;size_t n=0;exr_error er{};check(exr_library_books(other,nullptr,&books,&n,&er)==EXR_OK,"other books");books[0].favorite=!books[0].favorite;check(exr_library_update(other,&books[0],&er)==EXR_OK,"other invalidates source");exr_books_free(books,n);exr_library_close(other);}
-  if(s.mode=="kill"&&ev==ROE_COPYING){std::cout<<"READY "<<r->cleanup_path<<std::endl;std::this_thread::sleep_for(std::chrono::minutes(10));}
+  if((s.mode=="kill"&&ev==ROE_COPYING)||(s.mode=="killpublished"&&ev==ROE_PUBLISHED)){std::cout<<"READY "<<(s.mode=="kill"?r->cleanup_path:r->output_path)<<std::endl;std::this_thread::sleep_for(std::chrono::minutes(10));}
   if(s.mode=="cleanfail"&&ev==ROE_COPYING&&!s.fired){s.fired=true;s.stop=true;
 #ifdef _WIN32
     std::wstring w=fs::u8path(r->cleanup_path).wstring();s.hold=CreateFileW(w.c_str(),GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,nullptr,OPEN_EXISTING,0,nullptr);check(s.hold!=INVALID_HANDLE_VALUE,"hold temporary deletion lock");
@@ -80,6 +80,7 @@ static void run(int argc,char **argv){
   if(s.mode=="badutf")o.directory="/bad\xffpath";
   std::string slug="Readable_Name";if(s.mode=="display"||s.mode=="badslug"||s.mode=="device"){o.naming=ROE_DISPLAY_NAME;if(s.mode=="badslug")slug="../escape";if(s.mode=="device")slug="CON";}
   if(s.mode=="booklimit")o.per_book_bytes=1;if(s.mode=="batchlimit")o.batch_bytes=1;if(s.mode=="hardlimit")o.batch_bytes=ROE_HARD_BATCH_BYTES+1;
+  if(s.mode=="batchsum"){exr_source source{};exr_error er{};check(exr_library_source(lib,1,&source,&er)==EXR_OK,"batch sum bound");o.batch_bytes=source.size;source.release(source.context);}
   std::vector<roe_selection> selected;std::stringstream ids(argv[5]);std::string id;while(std::getline(ids,id,','))selected.push_back({std::stoll(id),slug.c_str()});
   roe_result *r=nullptr;roe_status status;
   if(s.mode=="wrongthread"){status=ROE_OK;std::thread t([&]{status=roe_run(s.e,selected.data(),selected.size(),&o,&r);});t.join();}
@@ -102,7 +103,7 @@ static void inspect(const char *db,const char *dir,const char *product){
   reader_revisions *store=nullptr;reader_revision_error error{};check(reader_revisions_open(product,&store,&error)==READER_REV_OK,"inspect product");char *wire=nullptr;size_t bytes=0;reader_revision_info info{};check(reader_revision_get(store,"11111111111111111111111111111111",&wire,&bytes,&info,&error)==READER_REV_OK,"retained history");write(fs::u8path(dir)/"history.json",wire,bytes);reader_revision_bytes_free(wire);
   std::string q;check(reader_revision_outbox(store,100,outbox,&q,&error)==READER_REV_OK&&!q.empty(),"outbox retained");write(fs::u8path(dir)/"outbox.txt",q.data(),q.size());check(reader_revisions_close(&store,&error)==READER_REV_OK,"close product");std::cout<<"{\"inspected\":11}"<<std::endl;
 }
-int main(int argc,char **argv){try{
+static int main_impl(int argc,char **argv){try{
 #ifndef _WIN32
   std::signal(SIGXFSZ,SIG_IGN);
 #endif
@@ -111,3 +112,13 @@ int main(int argc,char **argv){try{
   else if(command=="inspect"){check(argc==5,"inspect args");inspect(argv[2],argv[3],argv[4]);}
   else if(command=="export")run(argc,argv);else throw std::runtime_error("unknown command");return 0;
 }catch(const std::exception &e){std::cerr<<e.what()<<std::endl;return 1;}}
+
+#ifdef _WIN32
+int wmain(int argc,wchar_t **argv){
+  std::vector<std::string> utf8;std::vector<char *> args;
+  for(int i=0;i<argc;i++){int n=WideCharToMultiByte(CP_UTF8,WC_ERR_INVALID_CHARS,argv[i],-1,nullptr,0,nullptr,nullptr);if(n<=0)return 2;std::string s(static_cast<size_t>(n),'\0');WideCharToMultiByte(CP_UTF8,WC_ERR_INVALID_CHARS,argv[i],-1,&s[0],n,nullptr,nullptr);s.pop_back();utf8.push_back(s);}
+  for(auto &s:utf8)args.push_back(&s[0]);return main_impl(argc,args.data());
+}
+#else
+int main(int argc,char **argv){return main_impl(argc,argv);}
+#endif

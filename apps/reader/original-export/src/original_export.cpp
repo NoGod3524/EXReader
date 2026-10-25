@@ -255,7 +255,7 @@ extern "C" roe_status roe_run(roe_exporter *e,const roe_selection *selected,size
         notify(o,i,ROE_STAGED,r);Sha256 sha;sha.init();unsigned char buffer[65536];uint64_t pos=0;
         while(pos<r.bytes){need(!cancelled(o),ROE_CANCELLED);size_t got;
           {const exr_source &s=sources.sources[i];got=s.read_at(s.context,pos,buffer,static_cast<size_t>(std::min<uint64_t>(sizeof(buffer),r.bytes-pos)));}
-          need(got>0&&got<=std::min<uint64_t>(sizeof(buffer),r.bytes-pos),ROE_SOURCE);
+          if(!got||got>std::min<uint64_t>(sizeof(buffer),r.bytes-pos)){r.sdk_status=EXR_IO;throw failure{ROE_SOURCE};}
           need(writefile(f.f,buffer,got),ROE_IO);sha.update(buffer,got);pos+=got;notify(o,i,ROE_COPYING,r);
         }
         digest(sha,r.original_sha256);need(flushfile(f.f),ROE_IO);char verified[65];
@@ -274,13 +274,13 @@ extern "C" roe_status roe_run(roe_exporter *e,const roe_selection *selected,size
           need(existing.f!=invalid&&regular(existing.f,&size)&&size==r.bytes&&hashfile(existing.f,size,existing_hash,buffer)&&std::strcmp(existing_hash,r.original_sha256)==0,ROE_CONFLICT);
           r.committed=1;r.created=0;r.durable=1;r.status=ROE_OK;
         }
-        if(temporary){if(dir.remove(temp)){temporary=false;r.cleanup_pending=0;r.cleanup_path[0]=0;}else r.status=ROE_CLEANUP;}
+        if(temporary){if(dir.remove(temp)){temporary=false;if(dir.sync()){r.cleanup_pending=0;r.cleanup_path[0]=0;}else r.status=ROE_CLEANUP;}else r.status=ROE_CLEANUP;}
         if(!r.durable&&r.status==ROE_OK)r.status=ROE_IO;
         notify(o,i,ROE_PUBLISHED,r);
       }catch(const failure &f){r.status=f.status;}
       catch(const std::bad_alloc &){r.status=ROE_MEMORY;}
       catch(...){r.status=ROE_IO;}
-      if(temporary){if(dir.remove(temp)){r.cleanup_pending=0;r.cleanup_path[0]=0;}else{r.cleanup_pending=1;}}
+      if(temporary){if(dir.remove(temp)){if(dir.sync()){r.cleanup_pending=0;r.cleanup_path[0]=0;}}else{r.cleanup_pending=1;}}
       if(r.status!=ROE_OK){result->status=r.status;for(size_t j=i+1;j<count;j++)result->items[j].status=r.status==ROE_CANCELLED?ROE_CANCELLED:ROE_PENDING;return result->status;}
     }
     result->status=ROE_OK;

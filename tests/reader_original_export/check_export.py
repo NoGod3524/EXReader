@@ -56,6 +56,8 @@ try:
     passcase('nine_format_byte_roundtrips');passcase('temporary_readback_verified')
     require(len(list(d.iterdir()))==9 and not any(x['id'] in (10,11) for x in r['items']),'unselected excluded');passcase('selected_unselected_isolation')
     again,_=run('duplicate',','.join(map(str,range(1,10))),directory=d);itemok(again,0);passcase('duplicate_same_bytes')
+    d=output/'书籍-🙂';d.mkdir();r,_=run('unicode',directory=d);itemok(r);require(Path(r['items'][0]['path']).read_bytes()==(fixtures/'book.txt').read_bytes(),'native Unicode destination');passcase('valid_unicode_destination')
+    r,d=run('batch-preflight','1,11',mode='batchsum');fails(r,2,d);require(not list(d.iterdir()),'whole batch size preflight before any creation');passcase('batch_preflight_atomic')
     r,d=run('same-title','1,11');itemok(r);require(r['items'][0]['path']!=r['items'][1]['path'],'same title distinct bytes');passcase('same_title_distinct_bytes')
     d=output/'conflict';d.mkdir();target=d/(manifest[0]['sha256']+'.txt');target.write_bytes(b'DO NOT OVERWRITE');r,_=run('conflict',directory=d);fails(r,7,d);require(target.read_bytes()==b'DO NOT OVERWRITE','conflict overwritten');passcase('existing_conflict_no_overwrite')
     r,d=run('display',mode='display');itemok(r);require(Path(r['items'][0]['path']).name.startswith('Readable_Name--'),'restricted display name');passcase('display_name_restricted')
@@ -82,6 +84,12 @@ try:
         line=p.stdout.readline().decode().strip();require(line.startswith('READY '),'kill reached actual copied temporary');receipt=Path(line[6:]);require(receipt.is_file(),'kill receipt file');p.kill();p.wait(timeout=30);require(p.returncode!=0,'real process terminated');require(receipt.exists() and not list(d.glob('*.txt')),'prefix never published on kill')
     (raw/'kill-receipt.txt').write_text(line+'\n'+str(p.returncode)+'\n');receipt.unlink()
     r,_=run('reopened-retry','10',directory=d);itemok(r);require(Path(r['items'][0]['path']).read_bytes()==(fixtures/'large.txt').read_bytes(),'reopen retry original');passcase('process_kill_reopen_retry')
+    d=output/'kill-published';d.mkdir()
+    with (raw/'kill-published.stderr').open('wb') as err:
+        p=subprocess.Popen([str(probe),'export',str(db),str(d),'killpublished','1'],stdout=subprocess.PIPE,stderr=err)
+        line=p.stdout.readline().decode().strip();require(line.startswith('READY '),'actual publication before kill');published=Path(line[6:]);require(published.is_file(),'committed path');p.kill();p.wait(timeout=30);require(p.returncode!=0,'kill after commit')
+    (raw/'kill-published-receipt.txt').write_text(line+'\n'+str(p.returncode)+'\n')
+    r,_=run('committed-retry',directory=d);itemok(r,0);require(published.read_bytes()==(fixtures/'book.txt').read_bytes(),'committed retry preserved bytes');passcase('process_kill_after_commit_retry')
     if os.name!='nt':
         import resource
         def limits(): resource.setrlimit(resource.RLIMIT_FSIZE,(100000,100000))

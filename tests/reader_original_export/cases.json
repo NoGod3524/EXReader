@@ -1,5 +1,5 @@
 [
-"installed_c_abi", "nine_format_byte_roundtrips", "selected_unselected_isolation",
+"installed_c_abi", "valid_unicode_destination", "batch_preflight_atomic", "process_kill_after_commit_retry", "nine_format_byte_roundtrips", "selected_unselected_isolation",
 "duplicate_same_bytes", "same_title_distinct_bytes", "existing_conflict_no_overwrite",
 "display_name_restricted", "bad_utf8", "traversal_rejected", "device_name_rejected",
 "directory_alias_rejected", "target_alias_rejected", "count_101_rejected", "count_100_accepted",
