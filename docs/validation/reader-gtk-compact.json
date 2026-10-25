@@ -8,7 +8,9 @@
     {"run_id": 40200750312, "scope": "preflight only", "conclusion": "success"},
     {"run_id": 40200828327, "scope": "full candidate", "conclusion": "cancelled", "reason": "Added necessary explicit four-format positive turns/boundaries and PDF zoom coverage while this run was still in module installation"},
     {"run_id": 40201452800, "scope": "preflight only", "conclusion": "success"},
-    {"run_id": 40201561236, "scope": "full candidate", "conclusion": "failure", "reason": "Harness expected page focus after physically clicking Previous; entry-focus assertion moved before turns and button-focus assertion added after turns"}
+    {"run_id": 40201561236, "scope": "full candidate", "conclusion": "failure", "reason": "Harness expected page focus after physically clicking Previous; entry-focus assertion moved before turns and button-focus assertion added after turns"},
+    {"run_id": 40202860251, "scope": "full candidate", "conclusion": "failure", "reason": "Actual Alt+M opened native More and focused Reading, exposed as role menu; harness incorrectly required role menu item for submenu parents"},
+    {"run_id": 40204389861, "scope": "authenticated failed artifact diagnosis only", "conclusion": "success", "reason": "Actions authenticated actual failed raw ZIP, report, PNG and visibility: Reading/Text and notes/Library/Import have menu role, leaf actions have menu item role; production unchanged"}
   ],
   "off_full_original_scope_accepted": false,
   "compact_native_ui_accepted": false,

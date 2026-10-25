@@ -16,6 +16,15 @@ the harness changes; the production pin stays fixed. Real failure screenshots
 and visibility dictionaries remain in that run. No OFF or ON acceptance is
 granted from these incomplete runs.
 
+Full `40202860251` also passed actual entry page focus and the complete 13-page
+TXT sweep. It stopped on a submenu role assertion. Read-only Actions diagnosis
+`40204389861` authenticated that failed run's actual raw ZIP, report and PNG;
+Alt+M had opened More and focused Reading, whose real GTK accessible role is
+`menu`. All four submenu parents use `menu`, while leaf actions use `menu item`.
+The harness now requests these actual roles and prints requested names and
+visible menu/focus state on failure. The complete TXT sweep runs after new menu
+interactions so new menu failures surface before repeating all page turns.
+
 `EXR_READER_GTK_COMPACT` defaults **OFF** in `examples/linux/CMakeLists.txt`.
 Only that file and `examples/linux/reader.c` change production. SDK3.41,
 schema1, record/MAX2/wire formats, owners, existing dialogs and budgets remain

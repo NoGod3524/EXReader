@@ -110,7 +110,7 @@ def main():
 
     def menu(section,title):
         command('xdotool','windowactivate','--sync',host.window);click('More reader actions')
-        if section:click(section,{'menu item'});host.key('Right')
+        if section:click(section,{'menu'});host.key('Right')
         click(title,{'menu item'});entries.append(title)
 
     def modal(section,title,caption,check):
@@ -185,7 +185,7 @@ def main():
         record('txt-page',host.read()['fixed']==0 and host.read()['book']>0 and host.read()['frame_generation']>0)
         record('default-tools-hidden',not nodes('Selectable page text') and not nodes('Annotation comment') and host.read()['compact_tools_open']==0)
         value=focus_snapshot('txt-page');record('page-keyboard-focus',any(row['name']=='Reading page' for row in value))
-        host.key('alt+m');element('Reading',{'menu item'});host.key('Home','Right');element('Search within book…',{'menu item'})
+        host.key('alt+m');element('Reading',{'menu'});host.key('Home','Right');element('Search within book…',{'menu item'})
         host.key('Escape','Escape');record('more-keyboard',bool(focus_snapshot('more-keyboard')))
 
         command('xdotool','windowsize','--sync',host.window,1160,920)
