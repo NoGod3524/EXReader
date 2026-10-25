@@ -111,11 +111,13 @@ def inspect(report):
             listing={row.filename for row in files}
             log=subprocess.run(['gh','api','repos/'+os.environ['GITHUB_REPOSITORY']+
                 '/actions/jobs/'+str(SPECS[key]['job'])+'/logs'],capture_output=True,timeout=60)
-            require(log.returncode==0,'Original job log could not be read')
             rounds[key]=dict(artifact={field:meta[field] for field in ('id','name','size_in_bytes','digest','expires_at')},
               job_id=job['id'],job_conclusion=job['conclusion'],started_at=job['started_at'],completed_at=job['completed_at'],
-              file_count=len(files),files=rows,job_log_sha256=sha(log.stdout),
-              timestamped_launches=launches(log.stdout.decode('utf-8','replace')),
+              file_count=len(files),files=rows,job_log_available=log.returncode==0,
+              job_log_sha256=sha(log.stdout) if log.returncode==0 else None,
+              job_log_failure_sha256=sha(log.stderr) if log.returncode else None,
+              job_log_failure_http_status=re.findall(r'HTTP [0-9]{3}',log.stderr.decode('utf-8','replace')) if log.returncode else [],
+              timestamped_launches=launches(log.stdout.decode('utf-8','replace')) if log.returncode==0 else [],
               missing_final_round_files=[name for name in ('samples.json','launches.json','memory.json','plan.json','bundle.json') if name not in listing],
               original_profiles_uploaded=any(name.endswith(('.sqlite','.ini')) for name in listing))
         finally:bundle.close()
