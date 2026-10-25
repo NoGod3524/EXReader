@@ -135,6 +135,7 @@ jobs:
           mkdir -p build/background-sanitizer
           cmake -S . -B build/sanitized-sdk -G Ninja -DCMAKE_BUILD_TYPE=Debug -DEXR_SANITIZE=ON -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AAC=OFF
           cmake --build build/sanitized-sdk --parallel 4
+          ctest --test-dir build/sanitized-sdk --show-only=json-v1 > build/background-sanitizer/native-tests.json
           ctest --test-dir build/sanitized-sdk --output-on-failure --no-tests=error --timeout 180 --output-junit "$PWD/build/background-sanitizer/native-junit.xml"
           cmake --install build/sanitized-sdk --prefix "$PWD/build/sanitized-stage"
       - name: Exercise installed background API colors images and every cancellation point under both sanitizers
@@ -152,10 +153,13 @@ jobs:
           root = Path('build/background-sanitizer')
           probe = json.loads((root/'probe.json').read_bytes())
           tests = ET.parse(root/'native-junit.xml').getroot()
-          assert len(tests.findall('testcase')) == 164 and not tests.findall('.//failure') and not tests.findall('.//error')
+          expected = [case['name'] for case in json.loads((root/'native-tests.json').read_bytes())['tests']]
+          actual = [case.attrib['name'] for case in tests.findall('testcase')]
+          assert len(actual) == len(set(actual)) == len(expected) == len(set(expected)) == 161
+          assert set(actual) == set(expected) and not tests.findall('.//failure') and not tests.findall('.//error') and not tests.findall('.//skipped')
           assert probe['accepted'] is True and probe['sdk'] == '3.41.0' and probe['abi'] == 1 and probe['cases'] == 12 and probe['checks'] >= 580
           result = dict(source_sha=os.environ['GITHUB_SHA'], run_id=os.environ['GITHUB_RUN_ID'], attempt=os.environ['GITHUB_RUN_ATTEMPT'],
-                        accepted=True, native_tests=164, probe=probe, asan=True, ubsan=True,
+                        accepted=True, native_tests=len(actual), native_test_names=actual, probe=probe, asan=True, ubsan=True,
                         consumer_sha256=hashlib.sha256((root/'page-background').read_bytes()).hexdigest(),
                         performance_accepted=False, complete_product=False)
           (root/'result.json').write_text(json.dumps(result, indent=2)+'\n');print(json.dumps(result))

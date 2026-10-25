@@ -27,3 +27,5 @@ Android、iPhone/iPad、宿主真实控件与原六包/可靠性/性能门禁仍
 原六份reading-core/library的独立包门禁在source `ba1fc1116b7080fcaba163856387410a54d340e6` 的Linux [40167143220](https://github.com/NoGod3524/EXReader/actions/runs/40167143220) 与Windows/macOS [40167144549](https://github.com/NoGod3524/EXReader/actions/runs/40167144549) 均success，各自产生未发布候选。它们不替代完整reading-required门禁。
 
 完整门禁1180/[40167529130](https://github.com/NoGod3524/EXReader/actions/runs/40167529130) 保留失败：原985起点没有后续正式冻结预算，performance在构建前拒绝；R2对当前下载的pg84原件散列不符而拒绝，未换语料或修改预期。已普通合入已接纳默认分支固定 `cdfe48231853d6e70fba2c41b42bdd187155901a` 的原门禁工具/原冻结预算，生产SDK树仍逐字等eddd；守卫同时核foundation的SDK仍等985、预算/合同/清单仍等foundation。R2原始冻结字节来源问题仍单独处理，不能授予完整新SDK。
+
+独立ASan/UBSan轮f7e659cd/[40167606838](https://github.com/NoGod3524/EXReader/actions/runs/40167606838) 的原native实际161/161及新API580断言均通过，但root汇总误把Release的164写作Sanitize配置预期，最终AssertionError；不抹去原失败。修正为Sanitize实际固定161，并逐名字核执行前ctest注册表与JUnit、拒绝跳过；只修验证逻辑，SDK、原测试和编译选项不变，后续结果独立登记。
