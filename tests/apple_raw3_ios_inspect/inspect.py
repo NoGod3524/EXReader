@@ -3,6 +3,7 @@ import hashlib
 import io
 import json
 import os
+import plistlib
 from pathlib import Path, PurePosixPath
 import shutil
 import subprocess
@@ -76,10 +77,45 @@ def main():
         elif isinstance(value, list):
             for child in value: walk(child)
     if tests: walk(json.loads(tests))
+    tap_activities = []
     for index, identifier in enumerate(dict.fromkeys(identifiers or ['ReadingUITests/' + case + '()' for case in CASES])):
-        command('activities-' + str(index), 'get', 'test-results', 'activities', '--path', bundle, '--test-id', identifier, '--format', 'json')
+        activity = command('activities-' + str(index), 'get', 'test-results', 'activities', '--path', bundle, '--test-id', identifier, '--format', 'json')
+        def touch(value):
+            if isinstance(value, dict):
+                title = str(value.get('title', ''))
+                if title.startswith('Tap ') and any(key in title for key in ('library.import.records-cbz', 'reader.records', 'reader.more', 'Button at')):
+                    node = {'case': identifier, 'activity': value}
+                    tap_activities.append(node)
+                    print('ORIGINAL-TAP-ACTIVITY', json.dumps(node, default=str), flush=True)
+                for child in value.values(): touch(child)
+            elif isinstance(value, list):
+                for child in value: touch(child)
+        if activity: touch(json.loads(activity))
+    (out / 'tap-activities.json').write_text(json.dumps(tap_activities, indent=2) + '\n')
     attachments = out / 'attachments'
     command('attachments-export', 'export', 'attachments', '--path', bundle, '--output-path', attachments)
+    exported = json.loads((attachments / 'manifest.json').read_bytes())
+    events = []
+    for group in exported:
+        owner = group.get('testIdentifier') or group.get('testName') or ''
+        if not any(case in owner for case in CASES): continue
+        print('ORIGINAL-FAILED-CASE-ATTACHMENT-MANIFEST', json.dumps(group), flush=True)
+        for item in group['attachments']:
+            label = item.get('suggestedHumanReadableName', '')
+            if 'synthes' not in label.lower(): continue
+            path = attachments / item['exportedFileName']
+            data = path.read_bytes()
+            try: decoded = plistlib.loads(data)
+            except Exception:
+                try: decoded = json.loads(data)
+                except Exception: decoded = {'raw_utf8': data.decode(errors='replace')[:20000], 'prefix_hex': data[:256].hex()}
+            event = {'case': owner, 'attachment': item, 'bytes': len(data), 'decoded': decoded}
+            events.append(event)
+            print('ORIGINAL-SYNTHESIZED-EVENT', json.dumps(event, default=str)[:26000], flush=True)
+    (out / 'synthesized-events.json').write_text(json.dumps(events, indent=2, default=str) + '\n')
+    for index, line in enumerate(lines):
+        if 'Tap ' in line and any(key in line for key in ('library.import.records-cbz', 'reader.records', 'Button at')):
+            print('ORIGINAL-TOUCH-LOG', '\n'.join(lines[max(0, index - 6):index + 18]), flush=True)
     traces = []
     for path in attachments.rglob('*'):
         if path.is_file() and path.suffix in ('.txt', '.json', '.log') and path.stat().st_size <= 2 * 1024**2:
