@@ -230,7 +230,6 @@ def main():
             modal('Reading',title,caption,check)
         menu(None,'Retry saving position');record('save-retry-entry',host.process.poll() is None and not host.read()['save_failed'])
         menu(None,'Cancel current operation');record('cancel-entry',host.process.poll() is None and not host.read()['busy'])
-        turn_pages('txt')
         click('Back to library');host.wait(lambda value:value['reader_visible']==0);primary(False);record('back-to-library')
         host.key('ctrl+f');host.key('ctrl+a');host.paste('Compact');idle()
         record('library-search',any(bus.name(node)=='Search bookshelf' for node in bus.focused_all(app)))
@@ -247,8 +246,9 @@ def main():
         menu('Import','Paste book files')
         wait(lambda:observe('folder_import').get('done')=='1' and observe('folder_import').get('running')=='0',60)
         record('paste-duplicate',observe('folder_import').get('duplicates')=='1' and observe('folder_import').get('failed')=='0')
-        click('Stop and close');wait(lambda:observe('folder_import').get('visible')=='0' and observe('folder_import').get('owner')=='0')
+        click('Close',{'push button'});wait(lambda:observe('folder_import').get('visible')=='0' and observe('folder_import').get('owner')=='0')
         click('Continue reading');host.wait(lambda value:value['reader_visible']==1 and not value['saving']);record('continue-reading')
+        turn_pages('txt')
         for kind in ('epub','pdf','cbz'):
             host.key('F2');host.wait(lambda value:value['reader_visible']==0)
             import_path(args.fixtures/manifest[kind]['path'],via_menu=kind=='epub')

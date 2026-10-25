@@ -35,6 +35,13 @@ Close button stable focus after invoking that owner. A new keyboard case tabs
 to Add bookmark, saves through the original dialog, then tabs to the real row
 and presses Down. The original owner and OFF source remain unchanged.
 
+Full `40205409399` passed that stable focus and keyboard record-row case, all
+13 TXT pages and all library dialogs. It then found a harness label error:
+after paste is complete, the original batch owner labels its button Close,
+while the harness sought the running-operation label Stop and close. The
+harness now clicks Close only after confirming completion and verifies owner
+release. All library interactions now precede the unchanged complete TXT sweep.
+
 `EXR_READER_GTK_COMPACT` defaults **OFF** in `examples/linux/CMakeLists.txt`.
 Only that file and `examples/linux/reader.c` change production. SDK3.41,
 schema1, record/MAX2/wire formats, owners, existing dialogs and budgets remain
