@@ -133,8 +133,13 @@ def check_stages(emulator, identity, contract):
                          'loaded_from': report['loaded_from'], 'database_path': report['database_path']})
         same_uid = stage['modes']['same_uid_run_as']
         pending.append({'stage': stage['stage'], 'attempts': [
-            {'variant': row['variant'], 'exit': row['exit'], 'stderr': row['stderr'], 'refusals': row['refusals']}
-            for row in same_uid if row['exit'] != 0]})
+            {'variant': row['variant'], 'adb_exit': row['exit'], 'stderr': row['stderr'],
+             'diagnostic_stdout': row.get('stdout_head'), 'api_report_present': row['report'] is not None,
+             'refusals': row['refusals']}
+            for row in same_uid if row['exit'] != 0 or row['refusals']]})
+        if stage['outcome']['same_uid_run_as'] is None:
+            require(len(pending[-1]['attempts']) == len(same_uid) > 0,
+                    'same-UID rejection evidence was dropped because adb returned zero')
     require(values[0] == values[1] == values[2], 'actual public API values changed across separate cold/offline reopens')
     relationship = observed['progress_relationship']
     require(relationship['public_api_page_number'] is None and relationship['independent_exact_page3_resolution_accepted'] is False,

@@ -69,6 +69,8 @@ UI 初次观察 p1→p2→p3，fresh reopen 与断网 reopen 各重新观察 UI 
 原 `40227150857`、`40227267225`、`40227848141` 三轮失败及取消的 `40227112046` 均保留在原 `HANDOFF-RESULT-C08.md`。原第三轮的 sameUID 消费者被 SELinux 拒绝执行；此项维持 pending，不以提权、改访问控制、重签 APK、注入类或偏好修成通过。认证只读副本是任务原文允许的独立正式路线。
 原代理报告过一次本地下载模拟器工件的违规，原记录完整保留；本次 root 审查不在本地执行语法、构建、测试、模拟器或工件下载/解析。
 
+Root 第一轮 `9ad9a768c90ba3d57956335951c6497d8a4e4aec` / run `40232266125` / attempt 1 三作业均 success，三阶段公开 API 实际回读已全量执行。发现报告明细问题：`adb exec-out run-as` 虽返回 0，stdout 明确含 `Permission denied`，driver 已按无 JSON/API 报告正确拒绝 sameUID；summary 的 pending 列表原只筛非零退出，漏了这些已拒绝明细。第二轮按实际 `refusals` 和退出码共同保留完整拒绝上下文，再全轮同源重跑；第一轮的原始 stdout/JSON/日志完整保留，其 sameUID scope 始终为 false。
+
 ## 不在范围
 
 真机、商店/签名、性能、产品目录库 `reader-catalog.db` 的独立读取（SDK 公开头没有该库的 C 入口；此处的“书目”指 `exr_library_books`）、
