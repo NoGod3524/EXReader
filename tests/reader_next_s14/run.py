@@ -173,7 +173,8 @@ def main():
                                      'bytes': config.stat().st_size, 'sha256': sha(config.read_bytes())}
         results['checks'].append('s14-installed-package-binds-exact-sdk')
 
-        sdk_config = (stage / 'lib/cmake/EXReader/EXReaderConfig.cmake').read_text(encoding='utf-8')
+        sdk_config_bytes = (stage / 'lib/cmake/EXReader/EXReaderConfig.cmake').read_bytes()
+        sdk_config = sdk_config_bytes.decode(encoding='utf-8')
         assert 'set(EXReader_VERSION "%s")' % sdk_version in sdk_config, 'installed SDK identity'
         targets = only(Path('build/s14-stage'), 'EXReaderFontLibraryTargets.cmake').read_text(encoding='utf-8')
         assert 'EXReader::exr_core' in targets and not re.search(r'EXReader::exr_(?!core)', targets), \
@@ -185,7 +186,7 @@ def main():
         assert header == frozen, 'installed SDK font header differs from the selected pin'
         (base / 'sdk-font-header.h').write_bytes(header)
         results['sdk_font_header_sha256'] = sha(header)
-        results['sdk_exreader_config_sha256'] = sha(sdk_config.encode())
+        results['sdk_exreader_config_sha256'] = sha(sdk_config_bytes)
         shutil.copyfile(stage / 'lib/cmake/EXReader/EXReaderConfig.cmake', base / 'sdk-exreader-config.cmake')
         results['checks'].append('frozen-installed-font-header')
 
