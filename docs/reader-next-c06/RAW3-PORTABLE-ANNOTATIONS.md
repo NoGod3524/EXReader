@@ -105,14 +105,38 @@ spool 为私有匿名（POSIX `tmpfile`；Windows `CREATE_NEW`＋`DELETE_ON_CLOS
 ## 6. 未授予
 
 宿主 UI 接线；移动端／Apple 端构建；对 Mac 来源记录的 FOUND（Mac 数据缺少对应的 SDK 文档句柄，使用显式 ALREADY_VERIFIED 并如实标注）；
-性能；真机；最终 root 对新 portable 契约的审查与接纳（由 root 负责）。
+性能；真机；最终主线接纳与默认启用（由 root 负责）。
 
-## 7. Root 审查修复（尚待云端验证）
+## 7. Root 审查修复与云端结果
 
 独立分支 `codex/reader-next-c06-root-review` 从原第三轮受测 `1015f2ca397c6411e6f67fc061ce64ee2e57384c` 建立，不修改原 Claude worktree。原三轮失败 `40227792202`、`40228225687`、`40228668273` 均保留，不能视为导入器已运行。
 
 源码审查修复三个问题：raw 导出 Markdown-only capability 状态不一致；预览指纹没有覆盖完整输入；提交回调丢失预检 FOUND 分类。新 raw ABI 尚未授予，确认字段明确改为完整 `char[65]` SHA-256；旧接口、旧头、旧导入源码前缀、默认格式与默认行为保持。
 
-根审查 CI 将完整重跑全部原阶段和新增拒绝例，最多三轮；本地未执行语法、构建、测试或工件处理。此节当前仅记录源码准备，不授予任何平台。
+根审查 CI 完整重跑全部原阶段和新增拒绝例，使用两轮，上限三轮；本地未执行语法、构建、测试或工件处理。
 
 根审查第一轮 `24f151847a01ff9422859b537c78dfcf42c44290` / run `40230274472` / attempt 1：Linux、Windows 各 213 项完整通过；最终证据作业拒绝平台检查名不一致。原因是原探针将 `.a`／`.lib` 实际文件名写进逻辑检查 ID；第二轮改为固定模块身份，并新增两库完整唯一清单检查，实际文件名仍保留诊断。保留原整轮失败，不跨轮拼证据。
+
+根审查第二轮受测源码 **`909d05c31afdce27a7d8fbe861ead89f5b4552cf`**，run [40230743482](https://github.com/NoGod3524/EXReader/actions/runs/40230743482) / attempt 1，三个作业全部 success：
+
+| 作业 | job ID | 结果 |
+| --- | --- | --- |
+| Linux (`ubuntu-22.04`) | `121281725233` | 216 项，全部通过 |
+| Windows (`windows-2022`) | `121281725092` | 216 项，全部通过 |
+| same-run artifact evidence | `121282776628` | `accepted=true`、`problems=[]`、`cross_platform_identical_exports=true` |
+
+两平台均实际执行：默认／固定旧基线／显式 raw 三族安装消费者、四组混配拒绝、旧头与导入前缀保持、八份 raw JSONL/Markdown、完整输入 SHA-256（0/55/56/63 padding 与跨 64 KiB）、合法标题修改后旧确认拒绝、预览取消、导入预算、逐项提交取消/续传/重复、公开 PDF anchor3 与 TXT anchor1/2 FOUND、歧义拒绝、全部损坏输入与同 ID 异字节预检。提交回调的 FOUND/NULL/删除分类被实测核对。
+
+同轮两平台重新认证固定 Mac 原 ZIP（source `15dab6b2270dc296ed6239db67ced2e22d255e65` / run `40196978163` / attempt 1 / artifact `12600789926`），消费两个原书库的 **3 个 annotation 头、1 个真实 NULL、源 anchor1/2/3**。实际导出和导入逐字保持头 wire、不伪造祖先，真实 NULL 改为空值的负例被拒绝。此路径显式 `ALREADY_VERIFIED`，`found_checked=0`，不授予这些 Mac 来源记录的 public FOUND。
+
+原 ZIP（全部有效期 `2027-01-23T20:26:05Z`）：
+
+| 工件 | ID | 原 ZIP 字节 | SHA-256 |
+| --- | --- | --- | --- |
+| Linux | `12613090660` | 6,214,242 | `67e202bc1272f0b9cd6fe44e28ca3aab736f98c8a58da5fac69fefaef81d1010` |
+| Windows | `12612149598` | 5,757,969 | `d15112b655a2a84ceb9834f721dc9084d677e346ae1ac06f31d9789d44032b72` |
+| evidence | `12613710230` | 616 | `496c32c10f7d70e2617497e957187b567952855e966b3b55503a5e9ec9064ef0` |
+
+证据作业实际下载同轮两个原 ZIP，认证 source/run/attempt、字节、digest、未来有效期、完整唯一检查集合，并重新计算 ZIP 内实际八份 raw 输出、旧 JSONL/Markdown、Mac 两份 JSONL、安装消费者程序与构建日志的哈希。两平台导出字节完全一致。详细机器记录见 [root-review-validation.json](root-review-validation.json)。
+
+本次仅授予该受测源码上 Linux/Windows 的显式 raw0.2 包接口；不等于主线接纳、默认启用、宿主 UI、Apple/Android 构建、真机、性能或完整产品。65536 头／单 wire 1 MiB 的最大规模压力没有单独构造；记录不将这些声明为实测压力通过。
