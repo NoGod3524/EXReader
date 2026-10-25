@@ -1,5 +1,7 @@
 name: Authenticate original Windows owner evidence
 on:
+  push:
+    branches: [codex/reader-windows-owner-auth-only]
   workflow_dispatch:
     inputs:
       producer_run:
@@ -25,8 +27,8 @@ jobs:
       - name: Authenticate original ZIP and all source-bound owner evidence
         env:
           GH_TOKEN: ${{ github.token }}
-          PRODUCER_RUN: ${{ inputs.producer_run }}
-          PRODUCER_SOURCE: ${{ inputs.producer_source }}
+          PRODUCER_RUN: ${{ inputs.producer_run || '40218506868' }}
+          PRODUCER_SOURCE: ${{ inputs.producer_source || 'b4fc135ce64fc651a4b988ad1dd852076413aa10' }}
         run: python tests/reader_windows_raw3/authenticate.py --run "$PRODUCER_RUN" --source "$PRODUCER_SOURCE"
       - uses: actions/upload-artifact@v4
         if: always()
