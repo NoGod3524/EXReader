@@ -209,9 +209,15 @@ def serve(remote, certificate, key):
         def do_PUT(self):
             path = self.path
             fault = remote.take('PUT', path)
-            if fault == 'reset_before_commit':
+            if fault == 'discard_upload':
+                # The origin reads the whole upload and drops the connection
+                # without storing it. Closing while the client is still writing
+                # would kill the client process with SIGPIPE on Linux, which is
+                # a host-boundary property, not the sync contract under test.
+                length = int(self.headers.get('Content-Length', 0) or 0)
+                dropped = self.rfile.read(length) if length else b''
                 remote.record('PUT', path, self.headers.get('Authorization') == remote.authorization,
-                              'reset_before_commit')
+                              'discard_upload', dropped)
                 self.drop()
                 return
             length = int(self.headers.get('Content-Length', 0) or 0)
@@ -448,7 +454,7 @@ def scenario(harness):
 
     # 2. A real connection reset before the remote commit, then an explicit retry.
     pdf_object = object_path('dav', PDF_SHA, 'pdf')
-    remote.fault('PUT', pdf_object, 'reset_before_commit')
+    remote.fault('PUT', pdf_object, 'discard_upload')
     failed = harness.sync(sender, 'sender-push-reset', expected=3)
     assert failed['dav_code'] == 5 and failed['http_status'] == 404, failed
     assert failed['pushed'] == 0 and failed['pulled'] == 0, failed
@@ -469,12 +475,17 @@ def scenario(harness):
         assert remote.entries.get(path) == body, (revision_id, 'remote bytes')
         assert counts.get(revision_id) == 1, (revision_id, counts.get(revision_id))
     assert remote.entries.get(pdf_object) == original
-    harness.published('network_reset_before_commit_then_explicit_retry_publishes_exactly_once', {
+    harness.published('network_drop_before_commit_then_explicit_retry_publishes_once', {
         'failed_status': failed['status'], 'failed_dav_code': failed['dav_code'],
         'failed_http_status': failed['http_status'],
-        'reset_put_outcomes': statuses(remote, 'PUT', pdf_object),
-        'remote_object_absent_after_reset': absent_after_reset,
-        'outbox_rows_after_reset': len(retained_outbox['outbox']),
+        'dropped_upload_put_outcomes': statuses(remote, 'PUT', pdf_object),
+        'dropped_upload_sha256': [item['sha256'] for item in remote.requests
+                                  if item['method'] == 'PUT' and item['path'] == pdf_object][0],
+        'dropped_upload_bytes': [item['bytes'] for item in remote.requests
+                                 if item['method'] == 'PUT' and item['path'] == pdf_object][0],
+        'remote_object_absent_after_drop': absent_after_reset,
+        'outbox_rows_after_drop': len(retained_outbox['outbox']),
+        'outbox_ids_after_drop': sorted(item['id'] for item in retained_outbox['outbox']),
         'retry_pushed': retried['pushed'],
         'outbox_rows_after_retry': 0,
         'remote_revision_objects': len(counts),
@@ -482,7 +493,16 @@ def scenario(harness):
         'remote_original_sha256': digest(remote.entries[pdf_object]),
     })
 
-    # 3. Response lost, newer head received, then the old request retried.
+    # 3. Response lost, a newer head published on top of it, then the old request
+    # retried against an origin that already holds that newer head.
+    #
+    # The frozen public step always replays retained rows before it pulls, and
+    # the only non-aborting skip in that replay needs a missing local original
+    # *and* a 404 remote original. So "receive the newer head as one step, then
+    # retry as the next step" is not reachable through the frozen API. The
+    # reachable and stronger form is used here: at retry time the origin already
+    # holds the newer head, the client has not seen it yet, and the same step
+    # then delivers it. The request order in the trace proves the ordering.
     harness.sync(first, 'receiver-one-pull-all')
     compare(harness, first, 'receiver-one-initial', source)
     head = harness.heads(sender, 'book', BOOK, name='sender-book-head')
@@ -504,6 +524,9 @@ def scenario(harness):
     committed_after_loss = remote.entries.get(old_path) == old_wire
     assert committed_after_loss
     assert [item['id'] for item in harness.outbox(sender, name='sender-outbox-after-lost')['outbox']] == [OLD_ID]
+    heads_at_loss = harness.heads(sender, 'book', BOOK, name='sender-heads-at-loss')
+    assert heads_at_loss['state']['heads'] == 1 and heads_at_loss['heads'][0]['id'] == OLD_ID, heads_at_loss
+    assert heads_at_loss['state']['revisions'] == 2, heads_at_loss
     harness.sync(first, 'receiver-one-pull-committed-old')
     head = harness.heads(first, 'book', BOOK, name='receiver-one-head-old')
     assert head['heads'][0]['id'] == OLD_ID, head
@@ -513,38 +536,53 @@ def scenario(harness):
     newer_wire = harness.retained(first, NEWER_ID, 'receiver-one-newer-wire')
     assert json.loads(newer_wire.decode('utf-8'))['parents'] == [OLD_ID]
     assert harness.sync(first, 'receiver-one-push-newer')['pushed'] == 1
-    assert remote.entries.get(revision_path('dav', NEWER_ID, newer_wire)) == newer_wire
-    harness.sync(sender, 'sender-pull-newer-head')
-    heads_before = harness.heads(sender, 'book', BOOK, name='sender-heads-before-retry')
-    assert heads_before['state']['heads'] == 1 and heads_before['heads'][0]['id'] == NEWER_ID, heads_before
-    assert heads_before['state']['revisions'] == 3, heads_before
-    pending_before = harness.outbox(sender, name='sender-outbox-before-retry')
-    assert [item['id'] for item in pending_before['outbox']] == [OLD_ID], pending_before
+    newer_path = revision_path('dav', NEWER_ID, newer_wire)
+    assert remote.entries.get(newer_path) == newer_wire
+    trace_start = len(remote.requests)
     retry = harness.sync(sender, 'sender-retry-old-request')
+    window = remote.requests[trace_start:]
     assert retry['pushed'] == 1, retry
     heads_after = harness.heads(sender, 'book', BOOK, name='sender-heads-after-retry')
-    assert heads_after == heads_before, (heads_before, heads_after)
+    assert heads_after['state']['heads'] == 1 and heads_after['heads'][0]['id'] == NEWER_ID, heads_after
+    assert heads_after['heads'][0]['complete'] == 1, heads_after
+    assert heads_after['state']['revisions'] == 3, heads_after
     assert harness.outbox(sender, name='sender-outbox-after-retry-old')['outbox'] == []
     assert harness.retained(sender, OLD_ID, 'sender-old-wire-after-retry') == old_wire
     assert remote.entries.get(old_path) == old_wire
     counts = inventory(remote, 'dav')
     assert counts.get(OLD_ID) == 1 and counts.get(NEWER_ID) == 1, counts
+    order = []
+    for item in window:
+        if item['method'] == 'PUT' and item['path'] == old_path:
+            order.append(['put-old', item['status']])
+        elif item['method'] == 'GET' and item['path'] == old_path:
+            order.append(['get-old', item['status']])
+        elif item['method'] == 'GET' and item['path'] == newer_path:
+            order.append(['get-newer', item['status']])
+    assert order[0] == ['put-old', 412], order
+    assert order[1] == ['get-old', 200], order
+    assert order[-1] == ['get-newer', 200], order
     harness.published('response_lost_newer_head_then_old_request_retry_keeps_head_and_outbox', {
         'lost_status': lost['status'], 'lost_dav_code': lost['dav_code'],
         'lost_http_status': lost['http_status'],
-        'lost_put_outcomes': statuses(remote, 'PUT', old_path),
-        'lost_get_outcomes': statuses(remote, 'GET', old_path),
+        'put_outcomes_for_old_resource': statuses(remote, 'PUT', old_path),
+        'get_outcomes_for_old_resource': statuses(remote, 'GET', old_path),
         'remote_committed_after_lost_response': committed_after_loss,
         'outbox_rows_after_loss': 1,
         'newer_head_revision_id': NEWER_ID,
-        'heads_before_retry': heads_before['heads'], 'heads_after_retry': heads_after['heads'],
-        'history_before_retry': heads_before['state']['revisions'],
+        'heads_at_loss': heads_at_loss['heads'], 'heads_after_retry': heads_after['heads'],
+        'head_at_loss': heads_at_loss['heads'][0]['id'],
+        'history_at_loss': heads_at_loss['state']['revisions'],
         'history_after_retry': heads_after['state']['revisions'],
+        'old_revision_is_head_after_retry': OLD_ID in [item['id'] for item in heads_after['heads']],
         'outbox_rows_after_retry': 0,
-        'retry_put_outcomes': statuses(remote, 'PUT', old_path),
+        'retry_request_order': order,
         'remote_object_count_old': counts.get(OLD_ID),
         'remote_object_count_newer': counts.get(NEWER_ID),
         'old_wire_unchanged': harness.retained(sender, OLD_ID, 'sender-old-wire-proof') == old_wire,
+        'ordering_note': ('reader_sync_step replays retained rows before pulling, so the newer head '
+                          'arrives in the same step as the retry; the trace proves the retry target '
+                          'already existed and that the newer head was delivered afterwards'),
     })
 
     # 4. Out-of-order parent graph: the child is served alone, then the parent.

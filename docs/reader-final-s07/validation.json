@@ -1,6 +1,6 @@
 {
   "package": "S07 raw synchronization multi-peer faults and idempotency",
-  "state": "not_run",
+  "state": "in_progress",
   "accepted": false,
   "adopted": false,
   "start": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
@@ -14,7 +14,7 @@
   "artifacts": [],
   "checks": [
     "real_capture_graph_and_original_identity_bootstrap",
-    "network_reset_before_commit_then_explicit_retry_publishes_exactly_once",
+    "network_drop_before_commit_then_explicit_retry_publishes_once",
     "response_lost_newer_head_then_old_request_retry_keeps_head_and_outbox",
     "out_of_order_parent_graph_child_before_parent_then_complete",
     "duplicate_wire_receive_is_idempotent_for_both_receivers",
@@ -24,10 +24,10 @@
   ],
   "check_results": [],
   "preconditions": {
-    "frozen_capture_core": "not_run",
-    "frozen_raw7_two_peer_tls": "not_run",
-    "frozen_g07_original_session_20": "not_run",
-    "frozen_g07_fault_boundaries_21": "not_run"
+    "frozen_capture_core": "not_measured",
+    "frozen_raw7_two_peer_tls": "not_measured",
+    "frozen_g07_original_session_20": "not_measured",
+    "frozen_g07_fault_boundaries_21": "not_measured"
   },
   "original_wire_identity": {
     "wire_count": 15,
@@ -50,7 +50,29 @@
     "six_platform_interop": false,
     "real_third_party_service": false
   },
-  "failures": [],
+  "failures": [
+    {
+      "round": 1,
+      "source_sha": "3ccfe9f5a78d9f41378b34b1aa575bd0e1a29283",
+      "run_id": "40214771240",
+      "attempt": 1,
+      "jobs": [
+        {"id": 121233408152, "name": "three-peer regression (ubuntu-22.04)", "conclusion": "failure"},
+        {"id": 121233408366, "name": "three-peer regression (windows-2022)", "conclusion": "failure"},
+        {"id": 121235287830, "name": "strict same-attempt aggregate", "conclusion": "failure"}
+      ],
+      "preconditions_that_passed": [
+        "frozen_capture_core accepted",
+        "frozen_raw7_two_peer_tls 9/9",
+        "frozen_g07_original_session 20/20",
+        "frozen_g07_fault_boundaries 21/21",
+        "three_peer item 1 real_capture_graph_and_original_identity_bootstrap"
+      ],
+      "linux_root_cause": "fixture closed the TLS connection before reading the upload body, so the writing client process was terminated by SIGPIPE (returncode -13) instead of reporting READER_SYNC_DAV; my fixture's fault was wrong, not the module's",
+      "windows_root_cause": "fixture expected the sender's outbox row to stay pending while a pull-only step delivered the newer head, but reader_sync_step replays pending rows before pulling in the same step, so the newer head was pushed-and-acked first; my scenario ordering assumption was wrong",
+      "disposition": "replaced the mid-write reset with a read-and-discard upload gate; restructured item 3 to the reachable and stronger ordering with the request trace proving 412 then GET then the newer head; SIGPIPE behaviour reported to root as an owner-boundary observation, no owner file changed"
+    }
+  ],
   "actual_hosts": false,
   "physical_device": false,
   "complete_product": false

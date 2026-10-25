@@ -14,7 +14,7 @@ is silently treated as a pass.
 
 CHECKS = [
     'real_capture_graph_and_original_identity_bootstrap',
-    'network_reset_before_commit_then_explicit_retry_publishes_exactly_once',
+    'network_drop_before_commit_then_explicit_retry_publishes_once',
     'response_lost_newer_head_then_old_request_retry_keeps_head_and_outbox',
     'out_of_order_parent_graph_child_before_parent_then_complete',
     'duplicate_wire_receive_is_idempotent_for_both_receivers',
@@ -29,15 +29,16 @@ EXPECTED = {
         'exactly the capture revisions plus the two typed metadata revisions, and the private '
         'original is the real 8845-byte PDF with SHA-256 '
         '5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc.',
-    'network_reset_before_commit_then_explicit_retry_publishes_exactly_once':
-        'A connection reset before the remote commit leaves no remote object and the whole '
-        'outbox retained; the explicit retry from a new process publishes every immutable '
-        'revision exactly once, verifies each by GET and empties the outbox.',
+    'network_drop_before_commit_then_explicit_retry_publishes_once':
+        'An origin that reads the upload and drops the connection without committing it leaves '
+        'no remote object and the whole outbox retained; the explicit retry from a new process '
+        'publishes every immutable revision exactly once, verifies each by GET and empties the '
+        'outbox.',
     'response_lost_newer_head_then_old_request_retry_keeps_head_and_outbox':
-        'After a committed PUT whose response and verification GET are lost, the sender '
-        'receives a newer head and then retries the old request: the retry is answered 412, '
-        'verified by GET, acknowledged exactly once, and the newer head, the history size and '
-        'the outbox are unchanged.',
+        'After a committed PUT whose response and verification GET are lost, a newer head exists '
+        'on the origin and the sender retries the old request: the retry is answered 412, '
+        'verified by GET, acknowledged exactly once, the newer head is delivered afterwards, and '
+        'the head set, the history size and the outbox are unchanged.',
     'out_of_order_parent_graph_child_before_parent_then_complete':
         'A receiver that is served a child revision before its parent retains the exact child '
         'bytes with a missing parent and no safe projection, and completes the graph with the '

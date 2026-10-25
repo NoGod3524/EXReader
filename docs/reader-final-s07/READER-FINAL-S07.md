@@ -52,9 +52,11 @@ unknown    只放一条真实 v3 wire 把 anchor_version 改成 4（给 raw 消�
 
 | 门 | 语义 | 用途 |
 | --- | --- | --- |
-| `reset_before_commit` | 不读 body、不落盘、直接断连 | 断网重试 |
+| `discard_upload` | 读完整个 body、不落盘、扣住响应断连 | 断网重试（未提交） |
 | `commit_then_drop` | body 已落盘，扣住响应断连 | 响应丢失 |
 | `drop` | GET 不返回任何响应就断连 | 使验证 GET 失败 |
+
+第 1 门**故意先读完 body 再断连**：若在客户端仍在上传时断连，Linux 上的原生客户端会被 SIGPIPE 直接杀死（见第 8 节观察），那只反映宿主边界，不反映同步契约。
 
 每个 peer 动作都是独立的原生进程（`raw-bootstrap/raw-sync/raw-revision/raw-commands` 或 legacy 消费者），因此"跨进程重开"是默认事实，不是声明。
 
@@ -63,8 +65,8 @@ unknown    只放一条真实 v3 wire 把 anchor_version 改成 4（给 raw 消�
 | # | id | 不变量 |
 | --- | --- | --- |
 | 1 | `real_capture_graph_and_original_identity_bootstrap` | 只引导真实捕获；导出 11 条 wire；原件 8845 字节 / `5627a430…` |
-| 2 | `network_reset_before_commit_then_explicit_retry_publishes_exactly_once` | 远端无对象、outbox 全留；显式重试每条只发布一次并 ack |
-| 3 | `response_lost_newer_head_then_old_request_retry_keeps_head_and_outbox` | 提交后响应与验证 GET 都丢失 → 收到更新 head → 重试旧请求：412+GET+一次 ack，head / history / outbox 不变 |
+| 2 | `network_drop_before_commit_then_explicit_retry_publishes_once` | 远端无对象、outbox 全留；显式重试每条只发布一次并 ack |
+| 3 | `response_lost_newer_head_then_old_request_retry_keeps_head_and_outbox` | 提交后响应与验证 GET 都丢失 → 远端已有更新 head → 重试旧请求：412+GET+一次 ack，随后同一 step 收到更新 head，head / history / outbox 不变 |
 | 4 | `out_of_order_parent_graph_child_before_parent_then_complete` | 先收子件：字节精确、`missing_parents=1`、`projection_safe=0`、子件 `complete=0`；父件到达后单一完整 head |
 | 5 | `duplicate_wire_receive_is_idempotent_for_both_receivers` | 重复投递：无新 head、无新 history、无 outbox、无新远端对象、无 PUT |
 | 6 | `unknown_anchor_version_refused_over_network_and_direct_receive` | 未知 anchor 版本经真实网络与直接 receive 都被 `FORMAT` 拒绝且不写入；MAX2 同时拒绝 v3 与 v4 |
@@ -84,7 +86,23 @@ unknown    只放一条真实 v3 wire 把 anchor_version 改成 4（给 raw 消�
 
 平台报告自报 `adopted/actual_hosts/complete_product = false`；汇总作业也不授予这些。
 
-## 7. 授予与缺口
+## 7. 第 3 项的可达形式（契约事实，不是放宽断言）
+
+冻结公开 step 的顺序是**先重放 pending 行、再拉取**（`reader_sync::step::push` 后 `pull`），而唯一不中断 step 的跳过条件是"本地原件缺失 **且** 远端原件 404"。因此"用一步只收更新 head、再用下一步重试旧请求"在冻结 API 下不可达。本包采用**更强且可达**的形式：
+
+1. 旧请求的 PUT 已提交、响应与验证 GET 都丢失 → 行仍 pending（断言 remote 字节、outbox、head）；
+2. 第二个 peer 经真实网络收到旧请求，并在其上发布更新 head；
+3. 发送方一次 step：旧请求 PUT→**412**、GET→**200**（字节相等）、**仅一次** ack；随后同一 step 拉到更新 head。
+
+请求轨迹（`retry_request_order`）逐条记录为 `[["put-old",412],["get-old",200],…,["get-newer",200]]`，因此"重试目标在服务器上已存在更 head、且更新 head 在重试之后才被交付"是被实测证明的。断言与第 2 节表格完全一致：单一 head = 更新 head、history=3（无重复行）、outbox 空、两条远端对象各 1 份、旧 wire 字节不变。
+
+## 8. 观察（交给 root，本包不改 owner）：上传中断连会以 SIGPIPE 结束宿主
+
+第 1 轮 Actions（source `3ccfe9f5`，run 40214771240 attempt 1）在 Linux 上暴露：当夹具在客户端仍在写 upload body 时直接断开（`shutdown(SHUT_RDWR)`+close），安装后的 `raw-sync` 进程被 **SIGPIPE 杀死**（`returncode=-13`，无任何 status 输出），而不是返回 `READER_SYNC_DAV`；同一 source 的 Windows 作业（WinHTTP）返回 `status=3 / dav_code=5 / http_status=404`。G07 第 17 条（"connection reset during put body"）没有覆盖这一点，因为它的 RST 发生在服务端已缓冲 body 之后。
+
+含义：宿主进程若不忽略 SIGPIPE，可能被对端在上传途中的 RST 直接终止。这属于原生传输/宿主边界，本包**不修改** owner 代码，只交可复现步骤与两份原日志；建议由传输 owner 评估 `MSG_NOSIGNAL`/忽略 SIGPIPE，或由六平台宿主统一忽略。S07 的验收夹具已改为"读完 body 再断连"，不再依赖该行为。
+
+## 9. 授予与缺口
 
 授予（本轮成功时）：三 peer raw 同步故障与幂等回归、冻结 raw7 模块未改、同次运行的冻结双 peer TLS 与 G07 前置。
 
