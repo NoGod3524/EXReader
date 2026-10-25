@@ -1,15 +1,328 @@
 {
-  "accepted": false,
+  "schema_version": 1,
+  "accepted": true,
   "base_sha": "e4356a6e13223469fdf3b2f3d5171a6e99ab10a6",
   "import_entry_head": "e4f20df783872dd536f40a7431b200352aa2da17",
+  "scope_guard_baseline": "96623448058a1379536c4092f4517f1da8612230",
   "sdk_sha": "9854061be331fe603a1822d9b2b36ee357154927",
   "sdk_version": "3.40.0",
   "sdk_abi": 1,
-  "runs": [],
-  "scope": "API34 default x86_64 Android real host imports only",
+  "sdk_unchanged": true,
+  "source_sha": "a7b2cb391c24a8ca0db3ff1472e3bfed84248be6",
+  "run_id": 40173100103,
+  "attempt": 1,
+  "workflow": ".github/workflows/reader-android-host-import.yml",
+  "producer_job": 121107925953,
+  "summary_job": 121111566027,
+  "conclusion": "success",
+  "scope": "API34 default x86_64 Android actual host imports and unchanged inherited suites only",
+  "api": 34,
+  "target": "default",
+  "abi": "x86_64",
+  "host_checks": 20,
+  "inherited_checks": 100,
+  "checks": 120,
+  "reports": [
+    {
+      "suite": "host-session-android",
+      "checks": 16,
+      "report_sha256": "43a8f8fbb2b0ef3c5355d4e2dd19b9ff6d6ef1c94fc6dafcf2cfb98dc814ddd1"
+    },
+    {
+      "suite": "android-search",
+      "checks": 15,
+      "report_sha256": "e0d930e5f4b00fc62fc7ad94b8e34a10ee8bf68910bba24b2acd79dc3023474f"
+    },
+    {
+      "suite": "android-navigation",
+      "checks": 18,
+      "report_sha256": "8865564de1914581a642c890be3d80ecc97a5cb1266be83a218ecc31d8a3c451"
+    },
+    {
+      "suite": "android-reading",
+      "checks": 16,
+      "report_sha256": "7a5cabeb1e07a03e3739f9f5398d1837a6c9b84a40000ccfa308a675209fc608"
+    },
+    {
+      "suite": "android-preferences",
+      "checks": 17,
+      "report_sha256": "437f7747807eff69a97ec9a672e91f0042b625ee67163b90adc9bca4c41bd3fd"
+    },
+    {
+      "suite": "android-cbz-reading",
+      "checks": 10,
+      "report_sha256": "eb1e99ecd618e1fbd99974ccad62c31da9deadc94c13e5a80c7cfbd4fb2532b8"
+    },
+    {
+      "suite": "android-fixed-pan",
+      "checks": 8,
+      "report_sha256": "2fbffb57183e4f04060618731282461681be12f0cdcc509fe1539dafbaf11e25"
+    },
+    {
+      "suite": "android-host-import",
+      "checks": 20,
+      "report_sha256": "872002fbd581d0f7fb3c1422b5afb882ea21f198a94c42afe5c1c4112df4eb71"
+    }
+  ],
+  "host_apk_sha256": "50394bd5c87f22918ad556037e61059f28b05c6fde3762a52ec6980124381a7f",
+  "installed_apks_bound_to_uploaded_bytes": 3,
+  "raw_host_phases": 9,
+  "distinct_instrumentation_pids": 9,
+  "held_live_process_kills": 4,
+  "kill_boundaries": [
+    "provider_copy_partial",
+    "stable_host_copy_partial",
+    "ready_before_host_publication",
+    "stable_path_published_before_product_finalize"
+  ],
+  "ready_protocol": {
+    "report_and_marker": "same-directory fsync then ATOMIC_MOVE",
+    "marker_binds": [
+      "source_sha",
+      "run_id",
+      "attempt",
+      "phase",
+      "pid",
+      "report_bytes",
+      "report_sha256"
+    ],
+    "present_exit_code": 0,
+    "absent_exit_code": 1,
+    "verified_before_force_stop": true,
+    "authenticated_again_in_summary": true
+  },
+  "system_picker_result_witness": {
+    "request_code": 1001,
+    "result_code": -1,
+    "has_data_uri": true,
+    "flags": 67,
+    "clip_count": 0,
+    "original_bytes": 70000
+  },
+  "positive_import_fixture_formats": [
+    "epub",
+    "pdf",
+    "txt"
+  ],
   "reading_limit_bytes": 33554432,
+  "epub_pdf_cbz_staging_limit_bytes": 134217728,
+  "artifacts": [
+    {
+      "role": "android",
+      "id": 12590858970,
+      "name": "reader-android-host-import-40173100103-1",
+      "size_in_bytes": 149268971,
+      "digest": "sha256:d439fe82ce0369dad8c77e9411e3dfe0e3a5a8cdb57f2d7841e3cdd7ebd4515d",
+      "expires_at": "2027-01-23T07:31:38Z"
+    },
+    {
+      "role": "summary",
+      "id": 12591098215,
+      "name": "reader-android-host-import-summary-40173100103-1",
+      "size_in_bytes": 1045,
+      "digest": "sha256:664761a917ea272b1c19645e500557841ac55471571e4d35e475e6e394e526fc",
+      "expires_at": "2027-01-23T07:31:38Z"
+    }
+  ],
+  "evidence": {
+    "raw_report_pattern": "build/android-host-import/ui/<phase>-raw-report.json",
+    "ready_marker_pattern": "build/android-host-import/ui/<kill-phase>-boundary-marker.json",
+    "host_result": "build/android-host-import/ui/result.json",
+    "strict_summary": "build/android-host-import-summary/summary.json",
+    "named_contract": "tests/reader_android_host_import/run_ui.py:expected",
+    "authenticator": "tests/reader_android_host_import/check_evidence.py"
+  },
+  "earlier_runs": [
+    {
+      "run_id": 40162680652,
+      "attempt": 1,
+      "source_sha": "c62bb54cc8300dd68be0e1bc426a381cd2fcca44",
+      "conclusion": "failure",
+      "producer_job": 121077340127,
+      "inherited_checks_passed": 100,
+      "host_checks_passed": 0,
+      "reason": "Probe read ActivityMonitor before the real Activity was created; fixed by waiting for the Activity, entry and SDK store.",
+      "artifact": {
+        "id": 12587267888,
+        "size_in_bytes": 149196193,
+        "digest": "sha256:ae9da319fd00d5f29e9f19313d6ccfdb80905b229e68233bf3295c88d0684bf1",
+        "expires_at": "2027-01-23T04:39:31Z"
+      },
+      "accepted": false
+    },
+    {
+      "run_id": 40163206426,
+      "attempt": 1,
+      "source_sha": "feddc24ebbd12407935e315e113ebce3166a4023",
+      "conclusion": "cancelled",
+      "reason": "Superseded before device execution while fixing text-row pointer handling; no acceptance.",
+      "accepted": false
+    },
+    {
+      "run_id": 40163282716,
+      "attempt": 1,
+      "source_sha": "7ba24d244de3e11948eda9b92312620749acae69",
+      "conclusion": "failure",
+      "producer_job": 121079113965,
+      "inherited_checks_passed": 100,
+      "host_checks_passed": 4,
+      "reason": "Probe matched the Material Import button case-sensitively; changed to the existing suites' case-insensitive label matching.",
+      "artifact": {
+        "id": 12587905927,
+        "size_in_bytes": 148305121,
+        "digest": "sha256:b3b55a9d0e8dc26ad2b482d0f1a23a61c657ac40bd44e671e229603ac8ebccc0",
+        "expires_at": "2027-01-23T04:49:28Z"
+      },
+      "accepted": false
+    },
+    {
+      "run_id": 40164605590,
+      "attempt": 1,
+      "source_sha": "3fefd26d3ef4ccc7809bbdb7512ca3f390ef6f5f",
+      "conclusion": "failure",
+      "producer_job": 121082971576,
+      "inherited_checks_passed": 100,
+      "host_checks_passed": 4,
+      "reason": "Real DocumentsUI was present with HostImport root; probe used Instrumentation.sendPointerSync, which targets the host UID and refused cross-window injection. Fixed with UiAutomation.injectInputEvent and explicit touchscreen source; all assertions retained.",
+      "artifact": {
+        "id": 12588880082,
+        "size_in_bytes": 148404489,
+        "digest": "sha256:a48f7d11b22549156f87211d71c5ef43721d3df03c3ceee78851c23616112a6d",
+        "expires_at": "2027-01-23T05:11:11Z"
+      },
+      "accepted": false
+    },
+    {
+      "run_id": 40165826038,
+      "attempt": 1,
+      "source_sha": "080e429ffafdb0264ecc144ed7459f3791f6a241",
+      "conclusion": "failure",
+      "producer_job": 121086535183,
+      "inherited_checks_passed": 0,
+      "host_checks_passed": 4,
+      "reason": "Real DocumentsUI opened HostImport but its alphabetical file grid only exposed the first eight rows; the probe did not scroll to Seekable.txt. Added bounded real accessibility scrolling with scroll-event synchronization, keeping the same expected 70000-byte document.",
+      "artifact": {
+        "id": 12588053200,
+        "size_in_bytes": 134892232,
+        "digest": "sha256:893f4877dfe93a480462a2d6bab6a111dd32ad2c0885894bb1e8a77a00573717",
+        "expires_at": "2027-01-23T05:31:07Z"
+      },
+      "accepted": false
+    },
+    {
+      "run_id": 40166632717,
+      "attempt": 1,
+      "source_sha": "62da47c7aab448363af6bb9b77921236bc986873",
+      "conclusion": "failure",
+      "producer_job": 121088921825,
+      "inherited_checks_passed": 0,
+      "host_checks_passed": 4,
+      "reason": "The real grid was scrolled to visible Seekable.txt, but the TextView accessibility click did not activate the document; the picker remained open. Kept that document and added forced real touchscreen activation plus an explicit return-to-host/content-grant barrier.",
+      "artifact": {
+        "id": 12588139156,
+        "size_in_bytes": 134929719,
+        "digest": "sha256:c4e0200f31a1bdb62a822431102c58aede321d20d6c3e09e9aba02b9ed12d94b",
+        "expires_at": "2027-01-23T05:44:41Z"
+      },
+      "accepted": false
+    },
+    {
+      "run_id": 40167448892,
+      "attempt": 1,
+      "source_sha": "4316ba6cbefe06000ffdb5644914b59c18fe021b",
+      "conclusion": "failure",
+      "producer_job": 121091299260,
+      "inherited_checks_passed": 0,
+      "host_checks_passed": 4,
+      "reason": "Provider navigation accessibility action could report success while the roots drawer still showed Download/No items. Probe scrolled the old empty grid. Centralized real touchscreen activation for all DocumentsUI controls and now waits for HostImport's actual header/document rows and idle layout before scrolling.",
+      "artifact": {
+        "id": 12589030518,
+        "size_in_bytes": 134904958,
+        "digest": "sha256:2890280771defd17cc39e58427f735958504a6656e4266ddb35de46f76be213b",
+        "expires_at": "2027-01-23T05:58:43Z"
+      },
+      "accepted": false
+    },
+    {
+      "run_id": 40168253479,
+      "attempt": 1,
+      "source_sha": "348edee49746e6ee8ac1c30d27b0251850bfd2e6",
+      "conclusion": "failure",
+      "producer_job": 121093620093,
+      "inherited_checks_passed": 0,
+      "host_checks_passed": 4,
+      "reason": "Real provider navigation/grid scrolling completed, but the picker did not activate/return the visible Seekable.txt. Events used the simple MotionEvent constructor with UNKNOWN tool type; the next candidate explicitly injects FINGER and records pointer fields plus the actual host result callback boundary. No host result/grant acceptance asserted for this run.",
+      "artifact": {
+        "id": 12589926479,
+        "size_in_bytes": 134935859,
+        "digest": "sha256:2eaa036a86c014ad76b1821efa3893b3a996067962192ca50b50d7c2a5ae9143",
+        "expires_at": "2027-01-23T06:12:02Z"
+      },
+      "accepted": false
+    },
+    {
+      "run_id": 40169858312,
+      "attempt": 1,
+      "source_sha": "94ef7cce4d69f04848dc8706512208e5c1731456",
+      "conclusion": "failure",
+      "producer_job": 121098321803,
+      "inherited_checks_passed": 0,
+      "host_checks_passed": 4,
+      "reason": "Recorded FINGER/source4098/bounds for system root taps, but real picker remained on Download with roots drawer open; no host result callback was logged. Current candidate delegates system touches to Android's native input touchscreen command and verifies each actual provider/file transition, retaining the same expected file and all20 checks.",
+      "artifact": {
+        "id": 12589814548,
+        "size_in_bytes": 134910818,
+        "digest": "sha256:1944d17b6a64ef28a883352e4a8f139c89331c491a2fa168fd6f6bc4037f5bdd",
+        "expires_at": "2027-01-23T06:39:22Z"
+      },
+      "accepted": false
+    },
+    {
+      "run_id": 40171066031,
+      "attempt": 1,
+      "source_sha": "be6b86c67b7f9fdaf518bb89eaa51369208b8d11",
+      "conclusion": "failure",
+      "producer_job": 121101814774,
+      "inherited_checks_passed": 0,
+      "host_checks_passed": 4,
+      "reason": "Stopped at an invalid shell-completion marker after the native input invocation; UiAutomation command execution did not execute the appended && echo. No host system-import-result callback occurred. Fixed to invoke the input command directly while retaining actual provider navigation/file/host-return/original-byte assertions.",
+      "artifact": {
+        "id": 12590691256,
+        "size_in_bytes": 134923073,
+        "digest": "sha256:6d73e642ce61f8149169c3bba59c177c4739e81014d6f6032024a568d68f7f49",
+        "expires_at": "2027-01-23T06:59:06Z"
+      },
+      "accepted": false
+    },
+    {
+      "run_id": 40171893908,
+      "attempt": 1,
+      "source_sha": "216703c1a646698d8a7af80148ff63c4383e7978",
+      "conclusion": "failure",
+      "producer_job": 121104277787,
+      "inherited_checks_passed": 0,
+      "host_checks_passed": 11,
+      "reason": "All first11 actual host cases passed, including genuine system SAF70KB public-source readback, both rotations and both cancellation boundaries. First kill-copy driver used exec-out remote-test exit status and read an unpublished/empty report. Next candidates use shell positive/negative exit guards, fsynced atomic report/marker publication, and identity+PID+size+SHA complete-marker binding before real external force-stop.",
+      "artifact": {
+        "id": 12591140973,
+        "size_in_bytes": 135300728,
+        "digest": "sha256:4bea4ca29940fef202d3b46a13b253b0f0ed41e79e8d4fb9982bf892dfb6c785",
+        "expires_at": "2027-01-23T07:12:14Z"
+      },
+      "accepted": false
+    },
+    {
+      "run_id": 40172755412,
+      "attempt": 1,
+      "source_sha": "7e86cb65d2f74324822ff03f1f3ee0dde6db3281",
+      "conclusion": "cancelled",
+      "reason": "Cancelled during compilation before device execution; complete fsync+atomic report publication and full identity/PID/size/SHA ready binding were added in the superseding candidate.",
+      "accepted": false
+    }
+  ],
   "physical_device": false,
   "third_party_cloud_provider": false,
+  "talkback_speech_accepted": false,
   "performance_accepted": false,
   "complete_product": false
 }

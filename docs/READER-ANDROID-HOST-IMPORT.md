@@ -24,8 +24,37 @@ Provider 的同步 Binder query/getType/open 阶段仍没有内部超时；复�
 
 ## 云端验收
 
-当前尚未验收。新工作流在同一源码和同一个宿主 APK 上运行旧 Host16/Search15/Navigation18/Reading16/Preferences17/CBZ10/Pan8，共 100 项，再运行新入口 20 项。
+通过。受测源码 `a7b2cb391c24a8ca0db3ff1472e3bfed84248be6`，[run 40173100103 / attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40173100103) 的 android（`121107925953`）与 strict summary（`121111566027`）均 success。同一源码和同一个宿主 APK 先执行新入口 20 项，再执行完整旧 100 项，全部通过：
+
+| 组 | 通过 |
+| --- | ---: |
+| Host session | 16 |
+| Search | 15 |
+| Navigation | 18 |
+| Reading | 16 |
+| Preferences | 17 |
+| CBZ reading | 10 |
+| Fixed pan | 8 |
+| 新宿主导入 | 20 |
+| 合计 | 120 |
 
 新增套件使用独立真实 DocumentsProvider、外部授予的 VIEW/SEND/MULTIPLE、真实系统 DocumentsUI、实际旋转、用户取消、Provider 错误、小报长度与 33 MiB 暂存上限负例。另在复制中、稳定原件副本尚未完成、Ready 发布后和 host 路径 publication 后保持真实边界，由 Actions 外部终止活 PID，再在新 PID 上恢复/重投。
 
 严格汇总先认证本 run/attempt 的 producer job 与原 ZIP digest、大小、有效期，再读取八组报告。任何一组未通过，都不授予本宿主接线。
+
+本轮真实系统 picker 回调为 `request=1001/result=-1/data=true/flags=67/clips=0`；所选 TXT 的 70,000 原始字节从公开 SDK 回读并核对散列。正向导入夹具覆盖 EPUB、PDF、TXT；PDF 在 staging 释放后从实际书架打开并取得已绘制帧。
+
+四处终止均在持有真实边界的活 PID 上由 Actions 外部执行 force-stop，九个阶段使用九个不同 PID。报告和完整 ready 元数据均经同目录 fsync + ATOMIC_MOVE 发布；ready 绑定 source/run/attempt/phase/pid、报告大小及 SHA-256，驱动验证完整内容后才终止。远程存在性协议实际为 present=0、absent=1。strict 再认证四份 ready 与九份 raw，及宿主、消费者、Provider 三个实际安装 APK 与上传字节一致。
+
+宿主 APK SHA-256：`50394bd5c87f22918ad556037e61059f28b05c6fde3762a52ec6980124381a7f`。
+
+| 工件 | ID | ZIP 字节 | SHA-256 | 到期 |
+| --- | ---: | ---: | --- | --- |
+| android | 12590858970 | 149,268,971 | `d439fe82ce0369dad8c77e9411e3dfe0e3a5a8cdb57f2d7841e3cdd7ebd4515d` | 2027-01-23T07:31:38Z |
+| summary | 12591098215 | 1,045 | `664761a917ea272b1c19645e500557841ac55471571e4d35e475e6e394e526fc` | 2027-01-23T07:31:38Z |
+
+早期失败及被替代的取消轮全部保留在 [验证记录](validation/reader-android-host-import.json)。它们包括 Activity 等待、按钮大小写、跨 UID/工具类型/实际列表滚动与文件激活，以及报告完成屏障错误；首次真实系统结果和后续恢复以本次完整 120 项为准。
+
+原始报告：`build/android-host-import/ui/<phase>-raw-report.json`；四份 ready：同目录 `<kill-phase>-boundary-marker.json`。具名清单在 `tests/reader_android_host_import/run_ui.py` 的 `expected`，认证入口为 `tests/reader_android_host_import/check_evidence.py`，完整 producer 为 `.github/workflows/reader-android-host-import.yml` 的 `android` job。
+
+共同合流轮复用 producer 时，需要用共同线所有权核对替换该分支的 `96623448..HEAD` 路径归属检查；构建、设备 120 项与认证不减。授予仍限 API34 default x86_64 模拟器，真实第三方云盘、真机、TalkBack 语音、性能与完整产品保持未授予。
