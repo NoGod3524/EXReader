@@ -8,12 +8,13 @@
   "original_delivery_note": "the delivery head of the original package branch is unchanged by this review; it is the acceptance commit over fe1eb58e",
   "sdk_baseline": "9854061be331fe603a1822d9b2b36ee357154927",
   "product_schema_baseline": "f32bb8aa18ed3de286900f19ce4230fd93435dd0",
-  "accepted_source_sha": "8ada05117d1e22cd8529c7345e9af4ccfbb35c51",
-  "previous_accepted_source_sha": "fe1eb58e2737aeeefbcdfe68e9ef6cff4db164f6",
+  "accepted_source_sha": "8db7d57a28530dfdeea763ef2c34a1343283714c",
+  "previous_accepted_source_sha": "8ada05117d1e22cd8529c7345e9af4ccfbb35c51",
+  "original_accepted_source_sha": "fe1eb58e2737aeeefbcdfe68e9ef6cff4db164f6",
   "evidence_doc_commit_note": "this commit changes docs/validation/reader-tts-android.json and docs/READER-TTS-ANDROID.md only; the tested source is the SHA above and the final head difference is documentation only",
-  "run_id": 40170544552,
+  "run_id": 40171693275,
   "attempt": 1,
-  "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/40170544552",
+  "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/40171693275",
   "run_conclusion": "success",
   "all_execution_on_actions": true,
   "native_target_api": 26,
@@ -27,13 +28,13 @@
   "default_voice": "en-US-language",
   "jobs": {
     "device": {
-      "id": 121100309217,
+      "id": 121103681289,
       "name": "tts-android-device",
       "conclusion": "success",
-      "head_sha": "8ada05117d1e22cd8529c7345e9af4ccfbb35c51"
+      "head_sha": "8db7d57a28530dfdeea763ef2c34a1343283714c"
     },
     "summary": {
-      "id": 121101447475,
+      "id": 121104804947,
       "name": "tts-artifact-summary",
       "conclusion": "success"
     }
@@ -41,24 +42,26 @@
   "artifacts": [
     {
       "purpose": "device evidence, installed packages and logs",
-      "id": 12589543789,
-      "name": "reader-tts-android-40170544552-1",
-      "bytes": 364387,
-      "sha256": "3ef610cf3c10ae4faa8172dfee5b1a26da7c2cb80c1a7bb25bbc152d7342b336",
-      "api_digest": "sha256:3ef610cf3c10ae4faa8172dfee5b1a26da7c2cb80c1a7bb25bbc152d7342b336",
-      "expires_at": "2027-01-23T06:50:32Z"
+      "id": 12591135384,
+      "name": "reader-tts-android-40171693275-1",
+      "bytes": 370952,
+      "sha256": "8acf989ecdde16fa897bd83bb5f44ec726f6176e53feb18f67dc40f2df1141df",
+      "api_digest": "sha256:8acf989ecdde16fa897bd83bb5f44ec726f6176e53feb18f67dc40f2df1141df",
+      "expires_at": "2027-01-23T07:09:01Z"
     },
     {
       "purpose": "strict same-run summary",
-      "id": 12590205946,
-      "name": "reader-tts-android-summary-40170544552-1",
-      "bytes": 1929,
-      "sha256": "eb506ae0f026f4f2fee7277ed67696d1aa0d3f7fee9b9df62ad550180f87758a",
-      "api_digest": "sha256:eb506ae0f026f4f2fee7277ed67696d1aa0d3f7fee9b9df62ad550180f87758a",
-      "expires_at": "2027-01-23T06:50:32Z"
+      "id": 12591070445,
+      "name": "reader-tts-android-summary-40171693275-1",
+      "bytes": 1982,
+      "sha256": "ac726773ec93af28e6fc4fd6896b93e3fa0da99642c9a60a49cc6da6f5c1c07a",
+      "api_digest": "sha256:ac726773ec93af28e6fc4fd6896b93e3fa0da99642c9a60a49cc6da6f5c1c07a",
+      "expires_at": "2027-01-23T07:09:01Z"
     }
   ],
   "review_fixes": [
+    "the utterance id was formatted with Long.toString while the C ABI accepts uint64: a request id at or above 2^63 became a negative utterance id that the callback parser rejects, so the request lost every real callback and the handle stayed SPEAKING; the id is now the unsigned decimal form of the same bits and the whole uint64 range round trips",
+    "reader_tts_android_deliver accepted STARTED, RANGE and terminal callbacks for any well formed decimal id, so a terminal for an id the host had not used yet advanced the terminal mark above the next real request and suppressed that request's terminal; utterance callbacks are now consumed only while their id is the active accepted request",
     "stop and request_close end the active request themselves: the accepted request keeps exactly one STOPPED event even when the engine never reports the interrupted utterance, and the handle returns to READY instead of staying STOPPING with every later speak refused as BUSY",
     "a repeated terminal callback for an already ended request is dropped, so onDone plus onStop from one engine cannot produce two terminals for one request",
     "an utterance id that is not decimal or that overflows uint64 is ignored instead of wrapping onto a different request id",
@@ -69,10 +72,10 @@
     "documented the real thread split (framework init callback on the process main thread, utterance callbacks on engine binder threads, request calls synchronous on the owner thread)"
   ],
   "named_results": {
-    "total_cases_per_run": 52,
+    "total_cases_per_run": 56,
     "engine_present": {
-      "cases": 52,
-      "passed": 51,
+      "cases": 56,
+      "passed": 55,
       "skipped": 1,
       "results": {
         "initialize_null_argument": "pass",
@@ -98,6 +101,8 @@
         "voices_free_null_safe": "pass",
         "speak_started_and_finished": "pass",
         "speak_request_id_reuse_argument": "pass",
+        "speak_high_bit_request_id": "pass",
+        "speak_max_request_id": "pass",
         "single_terminal_per_request": "pass",
         "range_utf8_boundaries": "pass",
         "poll_empty_available_zero": "pass",
@@ -109,6 +114,8 @@
         "stop_unknown_id_argument": "pass",
         "late_events_keep_request_id": "pass",
         "duplicate_terminal_dropped": "pass",
+        "future_callback_ignored_while_active": "pass",
+        "future_callback_ignored_while_idle": "pass",
         "overflow_utterance_id_ignored": "pass",
         "pause_unsupported_state_unchanged": "pass",
         "resume_unsupported_state_unchanged": "pass",
@@ -130,9 +137,9 @@
       }
     },
     "engine_removed": {
-      "cases": 52,
+      "cases": 56,
       "passed": 32,
-      "skipped": 20,
+      "skipped": 24,
       "results": {
         "initialize_null_argument": "pass",
         "create_before_bind_unavailable": "pass",
@@ -157,6 +164,8 @@
         "voices_free_null_safe": "pass",
         "speak_started_and_finished": "skip",
         "speak_request_id_reuse_argument": "skip",
+        "speak_high_bit_request_id": "skip",
+        "speak_max_request_id": "skip",
         "single_terminal_per_request": "skip",
         "range_utf8_boundaries": "skip",
         "poll_empty_available_zero": "pass",
@@ -168,6 +177,8 @@
         "stop_unknown_id_argument": "pass",
         "late_events_keep_request_id": "skip",
         "duplicate_terminal_dropped": "skip",
+        "future_callback_ignored_while_active": "skip",
+        "future_callback_ignored_while_idle": "skip",
         "overflow_utterance_id_ignored": "skip",
         "pause_unsupported_state_unchanged": "pass",
         "resume_unsupported_state_unchanged": "pass",
@@ -200,18 +211,18 @@
     "judgements": "bytes and container header only, plus the synthesized voice state reported by the engine; no spoken-output quality is claimed"
   },
   "packages": {
-    "aar_bytes": 11131,
-    "aar_sha256": "ad13b0436022dcff4f000c5c056971fcb16c4768372d0992847d87ca5117bce4",
+    "aar_bytes": 11148,
+    "aar_sha256": "5397266c19846b8a5754512c33963e071f1d62745fb550451eba6685956709bf",
     "aar_native_libraries": [],
-    "probe_debug_apk_bytes": 84302,
-    "probe_debug_apk_sha256": "171fe06f550898aee190a9e05b5e3ce1da82b4cecb75f193947a60369de8f6f9",
-    "baseline_apk_bytes": 8572,
-    "apk_bytes_delta": 75730,
+    "probe_debug_apk_bytes": 91150,
+    "probe_debug_apk_sha256": "a538285b8fa77d17a5a459da7cb1d4cbb3f04fd209a474352f3548933d74c9ac",
+    "baseline_apk_bytes": 8580,
+    "apk_bytes_delta": 82570,
     "probe_native_libraries": [
       {
         "entry": "lib/x86_64/libtts-consumer.so",
-        "bytes": 62440,
-        "sha256": "8f6fae6d53a24a64b2b57099cfaa2138f6df87bb666f4e0af0c36271769b4516"
+        "bytes": 69288,
+        "sha256": "243e7e802051b98371e4cd0395fda97cebf700221b63a0712558b06580a595b2"
       }
     ],
     "runtime_dependencies": []
@@ -223,6 +234,9 @@
     "creating-thread ownership; foreign-thread observe and destroy refused with the pointer kept",
     "strict UTF-8 refusal: overlong, incomplete, encoded surrogate, embedded NUL",
     "rate bounds, request id monotonicity, one active request and BUSY on replacement",
+    "the whole uint64 request id range: accepted requests at 2^63 (INT64_MAX+1) and at UINT64_MAX keep their exact id in observe and in every event and produce exactly one terminal on their own handle",
+    "an utterance callback is consumed only while its id is the active accepted request; callbacks for unknown, future and stale ids leave the state and the terminal mark untouched, proved with a fabricated cookie that a real request had accepted first",
+    "a refused future terminal cannot stop the real active request from ending, and the next request is still accepted and terminates",
     "byte limit lowering, engine text ceiling and event-queue reserve refusal without truncation",
     "STARTED plus exactly one FINISHED/STOPPED/FAILED per accepted request; a repeated terminal callback for the same request is dropped",
     "stop ends the request itself: exactly one STOPPED, no FINISHED and no FAILED afterwards, request id cleared, handle READY for the next request",
@@ -299,15 +313,38 @@
       "artifact_id": null
     }
   ],
-  "prior_success": {
-    "run_id": 40126240859,
-    "attempt": 1,
-    "source_sha": "fe1eb58e2737aeeefbcdfe68e9ef6cff4db164f6",
-    "artifact_id": 12573062623,
-    "artifact_bytes": 346395,
-    "artifact_sha256": "2224a5404b8df6c089422ae7948ac2830ac3b2637c061be11cf071984b2d09a2",
-    "note": "the original delivery acceptance with 46 named cases; retained because it is the source the review started from"
-  },
+  "previous_acceptances": [
+    {
+      "run_id": 40170544552,
+      "attempt": 1,
+      "source_sha": "8ada05117d1e22cd8529c7345e9af4ccfbb35c51",
+      "artifact_id": 12589543789,
+      "artifact_bytes": 364387,
+      "artifact_sha256": "3ef610cf3c10ae4faa8172dfee5b1a26da7c2cb80c1a7bb25bbc152d7342b336",
+      "named_cases": 52,
+      "note": "first review acceptance; superseded because the review found the uint64 request id truncation and the unbound callback identity"
+    },
+    {
+      "run_id": 40126240859,
+      "attempt": 1,
+      "source_sha": "fe1eb58e2737aeeefbcdfe68e9ef6cff4db164f6",
+      "artifact_id": 12573062623,
+      "artifact_bytes": 346395,
+      "artifact_sha256": "2224a5404b8df6c089422ae7948ac2830ac3b2637c061be11cf071984b2d09a2",
+      "named_cases": 46,
+      "note": "original delivery acceptance, retained because it is the source the review started from"
+    },
+    {
+      "run_id": 40125579469,
+      "attempt": 1,
+      "source_sha": "3bed74a4ef5eaa6507159c8761fadcb9b0b49318",
+      "artifact_id": 12573506191,
+      "artifact_bytes": 342299,
+      "artifact_sha256": "101336132c830621129828de086e618b0058a8b96d62fff35a7a2c80ce18dd99",
+      "named_cases": 45,
+      "note": "earlier delivery success without the rotation case"
+    }
+  ],
   "not_covered": [
     "Android host product wiring, background playback, audio focus, media session and haptics",
     "spoken-output quality and latency on a real handset; only engine callbacks, the rendered bytes and the engine's own voice state are evidence",

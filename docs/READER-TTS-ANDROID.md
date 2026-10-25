@@ -1,10 +1,12 @@
 # J18: Android system TextToSpeech backend
 
 Status: accepted by the independent package review on an API 34 emulator with a real
-engine, run 40170544552 at source `8ada05117d1e22cd8529c7345e9af4ccfbb35c51` (branch
-`codex/reader-tts-android-review`). The original delivery acceptance (run 40126240859 at
-`fe1eb58e2737aeeefbcdfe68e9ef6cff4db164f6`, head `5993381e4507cffb7c63465642c2052f5760deb3`,
-46 named cases) is retained in the same evidence record. The evidence record is
+engine, run 40171693275 at source `8db7d57a28530dfdeea763ef2c34a1343283714c` (branch
+`codex/reader-tts-android-review`). Two earlier acceptances are retained in the same evidence
+record and superseded: the first review acceptance (run 40170544552 at `8ada0511`, 52 named
+cases) and the original delivery acceptance (run 40126240859 at `fe1eb58e`, head
+`5993381e4507cffb7c63465642c2052f5760deb3`, 46 named cases); the root review found the uint64
+request id truncation and the unbound callback identity in the first one. The evidence record is
 `docs/validation/reader-tts-android.json`; this document commit changes documentation only.
 
 * Fixed start: `f43baf9182d75907c0cb5d6f77048f27bca8c950`
@@ -84,12 +86,19 @@ engine, run 40170544552 at source `8ada05117d1e22cd8529c7345e9af4ccfbb35c51` (br
   terminals for one request. Stopping an id that is not active is OK when it is at
   or below the last accepted id (it ended earlier) and ARGUMENT when it is above
   every accepted id.
-* Utterance ids are the decimal request ids. An engine callback whose id is not
-  decimal, longer than 20 digits or larger than `UINT64_MAX` is ignored instead of
-  being wrapped onto a different request. Callback entries pin the handle, so a
-  `destroy` that runs while a late callback is in flight cannot free the ring or
-  the lock under it; a callback that arrives after `destroy` is refused because the
-  cookie is no longer registered.
+* Request ids cross the JNI boundary as unsigned decimal, so the whole uint64 range is
+  usable: an id at or above 2^63 becomes a negative Java long inside the library and comes
+  back as the identical unsigned id in `observe` and in every event. An engine callback
+  whose id is not decimal, longer than 20 digits or larger than `UINT64_MAX` is ignored
+  instead of being wrapped onto a different request.
+* An engine callback is consumed only while its id is the active accepted request. Unknown
+  (never accepted), future (not used yet) and stale (already ended) ids leave the state and
+  the terminal mark untouched, so a fabricated or late callback can neither end a request
+  that is still speaking nor advance the handle past it; `stop` and `request_close` end the
+  active request themselves, and a repeated terminal for an ended request is refused too.
+  Callback entries pin the handle, so a `destroy` that runs while a late callback is in
+  flight cannot free the ring or the lock under it; a callback that arrives after `destroy`
+  is refused because the cookie is no longer registered.
 * `request_close` is non-blocking and idempotent: it stops the active request and
   asks the Java layer to shut the engine down. The handle reaches CLOSED only
   after the release callback arrived, which is also when the global reference is
@@ -130,6 +139,8 @@ named cases below:
 
 | Finding | Fix | Case |
 | --- | --- | --- |
+| `Backend.speak` formatted the request id with `Long.toString` although the C ABI accepts `uint64_t`: an id at or above 2^63 became a negative utterance id that the callback parser rejects, so the request lost every real callback and the handle stayed SPEAKING | the utterance id is the unsigned decimal form of the same bits, so the whole uint64 range round trips | `speak_high_bit_request_id`, `speak_max_request_id` |
+| the native callback entry accepted STARTED, RANGE and terminal events for any well formed decimal id, so a terminal for an id the host had not used yet advanced the terminal mark above a real request and suppressed its terminal | an utterance callback is consumed only while its id is the active accepted request; unknown, future and stale ids move nothing | `future_callback_ignored_while_active`, `future_callback_ignored_while_idle` |
 | `stop` left the handle in `STOPPING` until the engine reported the interrupted utterance; an engine that never reports left the request active forever, so every later `speak` returned BUSY | the platform-accepted stop ends the request itself with its one `STOPPED` event and returns the handle to READY | `stop_and_close_single_terminal`, `stop_single_stopped` |
 | `request_close` while a request was speaking could leave that accepted request without any terminal event, because the release callback can win the race with the engine's own stop callback | close ends the active request with exactly one `STOPPED` before CLOSED | `stop_and_close_single_terminal` |
 | a second terminal callback for one request (`onDone` then `onStop`, or a late callback) was queued as a second terminal | one terminal per request id; later ones are dropped | `duplicate_terminal_dropped`, `stop_single_stopped` |
@@ -146,35 +157,40 @@ delivery branch `codex/reader-tts-android` was not written to.
 
 ## Acceptance record
 
-* Tested source: `8ada05117d1e22cd8529c7345e9af4ccfbb35c51`; run 40170544552, attempt 1, both
-  jobs success (`tts-android-device` 121100309217, `tts-artifact-summary` 121101447475).
-* Artifact `reader-tts-android-40170544552-1` id 12589543789, 364387 bytes,
-  sha256 `3ef610cf3c10ae4faa8172dfee5b1a26da7c2cb80c1a7bb25bbc152d7342b336`,
-  expires 2027-01-23T06:50:32Z; the summary job re-downloaded it through the API, recomputed
-  the digest and compared this run's source, run, attempt, name, bytes and expiry.
-* Named outcomes: 52 cases per run. With `com.google.android.tts` installed 51 pass and one
-  skips (the missing-engine case); after every engine package was removed 32 pass and 20 skip
-  (the engine-dependent cases), including a real `service_unavailable_when_engine_missing` pass.
-  The new cases are `duplicate_terminal_dropped`, `overflow_utterance_id_ignored`,
+* Tested source: `8db7d57a28530dfdeea763ef2c34a1343283714c`; run 40171693275, attempt 1, both
+  jobs success (`tts-android-device` 121103681289, `tts-artifact-summary` 121104804947).
+* Artifact `reader-tts-android-40171693275-1` id 12591135384, 370952 bytes,
+  sha256 `8acf989ecdde16fa897bd83bb5f44ec726f6176e53feb18f67dc40f2df1141df`,
+  expires 2027-01-23T07:09:01Z; the summary artifact
+  `reader-tts-android-summary-40171693275-1` id 12591070445, 1982 bytes, sha256
+  `ac726773ec93af28e6fc4fd6896b93e3fa0da99642c9a60a49cc6da6f5c1c07a`. The summary job
+  re-downloaded the device ZIP through the API, recomputed its digest and compared this run's
+  source, run, attempt, name, bytes and expiry.
+* Named outcomes: 56 cases per run (50 installed-ABI cases and 6 probe-side checks). With
+  `com.google.android.tts` installed 55 pass and one skips (the missing-engine case); after every
+  engine package was removed 32 pass and 24 skip (the engine-dependent cases), including a real
+  `service_unavailable_when_engine_missing` pass. The cases added by this review are
+  `duplicate_terminal_dropped`, `overflow_utterance_id_ignored`,
   `stale_callback_after_destroy_ignored`, `stop_and_close_single_terminal`,
-  `voice_names_match_engine` and `voice_selection_returns_to_default`; every original case is
-  kept with its original assertions.
+  `speak_high_bit_request_id`, `speak_max_request_id`, `future_callback_ignored_while_active`,
+  `future_callback_ignored_while_idle`, `voice_names_match_engine` and
+  `voice_selection_returns_to_default`; every original case is kept with its original
+  assertions.
 * Audio: `files/audio/tts-sample.wav`, 91244 bytes, RIFF/WAVE, sha256
   `83f66b0e6de2231a14b994c4d21260ac5d5d773d376274d6546e5582e6164987`, produced by
   `synthesizeToFile` with the local voice `en-AU-language` while the engine default voice is
   `en-US-language`; the digest computed on the device and the digest of the published file match.
-* Packages: AAR 11131 bytes (no native libraries), probe debug APK 84302 bytes with
-  `lib/x86_64/libtts-consumer.so` 62440 bytes, baseline APK 8572 bytes, delta 75730 bytes,
-  no Maven runtime dependencies; the summary artifact
-  `reader-tts-android-summary-40170544552-1` is id 12590205946, 1929 bytes, sha256
-  `eb506ae0f026f4f2fee7277ed67696d1aa0d3f7fee9b9df62ad550180f87758a`.
+* Packages: AAR 11148 bytes (no native libraries), probe debug APK 91150 bytes with
+  `lib/x86_64/libtts-consumer.so` 69288 bytes, baseline APK 8580 bytes, delta 82570 bytes,
+  no Maven runtime dependencies.
 * Retained failures (not deleted): runs 40123986906 (JNI environment argument missing),
   40124242333 (androidTest APK path) and 40124745606 (summary job demanded an already completed
   run) from the original delivery; 40169096857, 40169276410, 40169702520 and 40170099201 from
   this review (`android.speech.tts.Voice` has no display-name accessor; a wrong assumption about
   the engine voice state before the first explicit voice; a missing diagnostic detail; and a
-  rotation wait shorter than the headless emulator's real synthesis). The original success runs
-  40126240859 and 40125579469 remain recorded.
+  rotation wait shorter than the headless emulator's real synthesis). The superseded acceptances
+  40170544552 (52 cases, first review acceptance), 40126240859 (46 cases, original delivery) and
+  40125579469 remain recorded.
 * Not covered: host product wiring, background playback, audio focus, media session, haptics,
   spoken quality on a handset, a genuine engine-level FAILED terminal event and the release
   failure path, other engines, voice timbre (only the engine's reported voice state and the
