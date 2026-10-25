@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "accepted": false,
+  "adopted": false,
+  "complete_product": false,
+  "scope": "macOS ARM64 .app candidate assembly, dependency closure, resource manifest, relocated original native smoke test, offline open and reopen for the pinned producer source",
+  "source_sha": null,
+  "start_sha": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+  "producer_source_sha": "15dab6b2270dc296ed6239db67ced2e22d255e65",
+  "producer_seal_sha": "44eabdc86b3b84d986f81dbaf8cee92b1829cea8",
+  "producer_run": 40196978163,
+  "producer_run_attempt": 1,
+  "producer_jobs": {
+    "native": 121179826434,
+    "strict": 121186031984
+  },
+  "producer_artifact": {
+    "id": 12600789926,
+    "name": "apple-raw3-native-40196978163-1",
+    "bytes": 77056135,
+    "digest": "sha256:92be56ffa04d7c334d4811a42821a314089b4f8ae01746f0dfdf456b5eab9bd5",
+    "expires_at": "2027-01-23T13:18:06Z"
+  },
+  "sdk_source_sha": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "sdk_version": "3.41.0",
+  "sdk_abi": "1u",
+  "frozen_sdk_340": "9854061be331fe603a1822d9b2b36ee357154927",
+  "runs": [],
+  "artifacts": [],
+  "candidates": {},
+  "checks": {},
+  "release_readiness": {
+    "signed_with_owner_identity": false,
+    "notarized": false,
+    "gatekeeper_accepted": false,
+    "release_ready": false,
+    "physical_device_execution": false,
+    "blockers": []
+  },
+  "pending": [
+    "no evidence yet: the workflow has not run for this package on this branch",
+    "signing identity, notarization, Gatekeeper acceptance and store publication: no signing secret is used; the candidate is ad-hoc signed only",
+    "physical Apple hardware (iPhone/iPad/Mac test devices), USB cabling and human screen reading: not executed in this package",
+    "long-session reading, performance budgets and energy measurements: not measured here",
+    "the final unified source integration: this package consumes the pinned producer commit and does not modify product owners"
+  ],
+  "problems": [
+    "not_run"
+  ]
+}

@@ -1,0 +1,154 @@
+name: S03 macOS .app candidate, dependency closure and relocated offline smoke
+on:
+  push:
+    branches: [codex/reader-fw-s03]
+    paths:
+      - 'tests/reader_final_s03/**'
+      - '.github/workflows/reader-final-s03.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+concurrency:
+  group: reader-final-s03
+  cancel-in-progress: false
+env:
+  START_SHA: 0889f7d1e9a537c6c1b05456547e016b26e1cd85
+  PRODUCER_SHA: 15dab6b2270dc296ed6239db67ced2e22d255e65
+  SDK_SHA: edddc463c06ed5731195cdb8f06b2df6dff7699e
+  SDK_VERSION: 3.41.0
+jobs:
+  guard:
+    name: Package scope, pinned producer and SDK source
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Actions-only syntax of this package
+        run: python3 -m compileall -q tests/reader_final_s03
+      - name: Reject writes outside this package and prove the pinned sources
+        run: python3 tests/reader_final_s03/guard.py
+      - name: Reject every single mutation of the recorded evidence
+        run: python3 tests/reader_final_s03/check_spec.py
+      - name: Preserve the guard record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-final-s03-guard-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/s03-guard/
+          if-no-files-found: warn
+
+  native:
+    name: ARM64 .app candidates, dependency closure, relocation and offline smoke
+    needs: [guard]
+    runs-on: macos-15
+    timeout-minutes: 150
+    env:
+      S03_WORK: ${{ runner.temp }}/s03
+      S03_EVIDENCE: ${{ github.workspace }}/build/s03/evidence
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require an ARM64 runner and a fresh evidence root
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = arm64
+          test ! -e "$S03_EVIDENCE"
+          mkdir -p "$S03_EVIDENCE" "$S03_WORK"
+          sw_vers
+          uname -a
+          xcodebuild -version
+          python3 --version
+          cmake --version | sed -n 1p
+      - name: Build the approved 3.41 SDK source into an installed stage
+        run: |
+          set -euo pipefail
+          git archive --format=tar "$SDK_SHA" > "$S03_WORK/sdk-source.tar"
+          shasum -a 256 "$S03_WORK/sdk-source.tar" | tee "$S03_EVIDENCE/sdk-source.sha256"
+          mkdir -p "$S03_WORK/sdk-source"
+          tar -xf "$S03_WORK/sdk-source.tar" -C "$S03_WORK/sdk-source"
+          cmake -S "$S03_WORK/sdk-source" -B "$S03_WORK/sdk-build" -DCMAKE_BUILD_TYPE=Release \
+            -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AAC=OFF
+          cmake --build "$S03_WORK/sdk-build" --parallel 4
+          cmake --install "$S03_WORK/sdk-build" --prefix "$S03_WORK/stage"
+          ls -l "$S03_WORK/stage/lib" | tee "$S03_EVIDENCE/stage-lib.txt"
+      - name: Secondary checkout of the actual macOS producer source
+        run: |
+          set -euo pipefail
+          git clone --shared --quiet --no-checkout "$GITHUB_WORKSPACE" "$S03_WORK/producer"
+          git -C "$S03_WORK/producer" checkout --quiet --detach "$PRODUCER_SHA"
+          test "$(git -C "$S03_WORK/producer" rev-parse HEAD)" = "$PRODUCER_SHA"
+          git -C "$S03_WORK/producer" log -1 --format='%H %ci %s' | tee "$S03_EVIDENCE/producer-head.txt"
+      - name: Install the default and the explicit raw3 candidate product families
+        run: |
+          set -euo pipefail
+          cd "$S03_WORK/producer"
+          python3 tools/build_apple_product.py --sdk "$S03_WORK/stage" \
+            --sdk-version "$SDK_VERSION" --target macos --build "$S03_WORK/products-default"
+          python3 tools/build_apple_product.py --sdk "$S03_WORK/stage" \
+            --sdk-version "$SDK_VERSION" --target macos --product-prefix "$S03_WORK/products-raw" \
+            --selector-bytes-candidate --build "$S03_WORK/raw-build"
+      - name: Assemble both .app candidates with the producer tools
+        run: |
+          set -euo pipefail
+          cd "$S03_WORK/producer"
+          python3 tools/build_apple_host.py --sdk "$S03_WORK/stage" --platform macos \
+            --sdk-version "$SDK_VERSION" --output "$S03_WORK/app-default"
+          python3 tools/build_apple_host.py --sdk "$S03_WORK/stage" --platform macos \
+            --sdk-version "$SDK_VERSION" --product-prefix "$S03_WORK/products-raw" \
+            --selector-bytes-candidate --output "$S03_WORK/app-raw"
+      - name: Dependency, resource and product-library manifest for each candidate
+        run: |
+          set -euo pipefail
+          failures=""
+          for candidate in default raw; do
+            if ! python3 tests/reader_final_s03/bundle.py \
+                --app "$S03_WORK/app-$candidate/EXReader.app" \
+                --producer-output "$S03_WORK/app-$candidate" \
+                --producer "$S03_WORK/producer" --stage "$S03_WORK/stage" \
+                --candidate "$candidate" --source-sha "$PRODUCER_SHA" \
+                --output "$S03_EVIDENCE"; then
+              failures="$failures manifest-$candidate"
+            fi
+          done
+          if [ -n "$failures" ]; then echo "rejected:$failures"; exit 1; fi
+      - name: Source, SDK and installed identity
+        run: |
+          set -euo pipefail
+          python3 tests/reader_final_s03/identity.py \
+            --producer "$S03_WORK/producer" --sdk-source "$S03_WORK/sdk-source" \
+            --sdk-source-sha "$SDK_SHA" --stage "$S03_WORK/stage" \
+            --archive "$S03_WORK/sdk-source.tar" --verifier-sha "$GITHUB_SHA" \
+            --output "$S03_EVIDENCE/identity.json"
+      - name: Relocate into a space and Unicode path, then offline open and reopen
+        run: |
+          set -euo pipefail
+          failures=""
+          for candidate in default raw; do
+            if ! python3 tests/reader_final_s03/smoke.py \
+                --app "$S03_WORK/app-$candidate/EXReader.app" \
+                --candidate "$candidate" --producer "$S03_WORK/producer" \
+                --source-sha "$PRODUCER_SHA" --evidence "$S03_EVIDENCE"; then
+              failures="$failures smoke-$candidate"
+            fi
+          done
+          if [ -n "$failures" ]; then echo "rejected:$failures"; exit 1; fi
+      - name: Verify and aggregate this run's evidence
+        if: always()
+        run: |
+          python3 tests/reader_final_s03/aggregate.py --evidence "$S03_EVIDENCE" \
+            --output "$S03_EVIDENCE" --verifier-sha "$GITHUB_SHA" \
+            --producer-sha "$PRODUCER_SHA" --sdk-sha "$SDK_SHA"
+      - name: Preserve the evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-final-s03-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/s03/evidence/
+          if-no-files-found: error
