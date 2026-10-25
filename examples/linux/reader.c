@@ -18,7 +18,8 @@ static int64_t book_id;
 static int font_size=24,last_error,bounded,fixed,zoom_percent=100;
 static size_t fixed_pages;
 static guint sequence;
-static guint frame_generation,painted_generation;
+static guint frame_generation,painted_generation,page_draw_serial;
+static gboolean page_draw_sensitive;
 static char *home,*settings_path,*state_path,*page_text;
 static GKeyFile *settings;
 static GAsyncQueue *queue;
@@ -169,8 +170,10 @@ static void state(void) {
 #endif
   GtkWidget *viewport=gtk_widget_get_ancestor(image,GTK_TYPE_SCROLLED_WINDOW);int x=0,y=0;
   if(viewport && gtk_widget_translate_coordinates(viewport,window,0,0,&x,&y)) {
-    char *bounds=g_strdup_printf("page_x=%d\npage_y=%d\npage_width=%d\npage_height=%d\nframe_generation=%u\npainted_generation=%u\n",
-      x,y,gtk_widget_get_allocated_width(viewport),gtk_widget_get_allocated_height(viewport),frame_generation,painted_generation);
+    int image_x=0,image_y=0;gboolean image_located=gtk_widget_translate_coordinates(image,window,0,0,&image_x,&image_y);
+    char *bounds=g_strdup_printf("page_x=%d\npage_y=%d\npage_width=%d\npage_height=%d\nframe_generation=%u\npainted_generation=%u\npage_draw_serial=%u\npage_draw_sensitive=%d\nimage_located=%d\nimage_x=%d\nimage_y=%d\nimage_width=%d\nimage_height=%d\n",
+      x,y,gtk_widget_get_allocated_width(viewport),gtk_widget_get_allocated_height(viewport),frame_generation,painted_generation,
+      page_draw_serial,page_draw_sensitive,image_located,image_x,image_y,gtk_widget_get_allocated_width(image),gtk_widget_get_allocated_height(image));
     complete=g_strconcat(data,bounds,NULL);g_free(data);g_free(bounds);data=complete;
   }
 #ifdef EXR_READER_PRODUCT_CATALOG
@@ -831,7 +834,7 @@ static void page_allocated(GtkWidget *widget,GtkAllocation *allocation,gpointer 
   (void)widget;(void)allocation;(void)unused;state();
 }
 static gboolean page_painted(GtkWidget *widget,cairo_t *context,gpointer unused) {
-  (void)widget;(void)context;(void)unused;painted_generation=frame_generation;state();return FALSE;
+  (void)context;(void)unused;painted_generation=frame_generation;page_draw_serial++;page_draw_sensitive=gtk_widget_is_sensitive(widget);state();return FALSE;
 }
 static void stop_worker(void) {
 #ifdef EXR_READER_ACCOUNT
