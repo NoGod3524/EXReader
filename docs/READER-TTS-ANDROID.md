@@ -27,8 +27,12 @@ Status: accepted on an API 34 emulator with a real engine, run 40126240859 at so
 ## Behaviour contract (implementation specifics)
 
 * Owner thread: the creating thread; `reader_tts_voice_list_free` needs no handle.
-  The library owns a private `HandlerThread`, so no host `Looper` is required and
-  the process main thread is never blocked by the library.
+  Engine creation, the init handshake and shutdown run on the library's private
+  `HandlerThread`; the framework delivers the engine init callback on the process
+  main thread and every utterance callback on an engine binder thread, so a
+  blocked main thread blocks readiness. The request entry points (`speak`,
+  `stop`, `voices`) are synchronous engine calls on the owner thread, which
+  therefore needs no `Looper`.
 * Limits: `max_utf8_bytes` defaults to 16384 and can only be lowered. Text above
   the configured limit, above the engine ceiling
   (`TextToSpeech.getMaxSpeechInputLength()`, 4000 UTF-16 units on the reference
@@ -47,7 +51,12 @@ Status: accepted on an API 34 emulator with a real engine, run 40126240859 at so
   is promised.
 * `voice_id` NULL or empty selects the engine default; an identifier the engine
   does not list is refused with ARGUMENT. `reader_tts_voices` never triggers an
-  engine download.
+  engine download. A voice reported by `reader_tts_voices` carries the engine
+  identifier in `id` (the value a host passes back), the engine's localized
+  display name in `name` and a BCP 47 tag in `language`.
+* Voice selection is engine state: an explicit `voice_id` stays selected for
+  this handle until another `voice_id` is given, and a request with an empty `voice_id`
+  re-selects the engine default voice instead of inheriting the previous one.
 * RANGE events carry UTF-8 byte offsets of the submitted text. Android reports
   UTF-16 offsets, which the library converts per request; a range that would
   split a surrogate pair is dropped instead of being invented.
@@ -62,6 +71,21 @@ Status: accepted on an API 34 emulator with a real engine, run 40126240859 at so
   becomes `READER_TTS_LIMIT`. An utterance failure returns the state to
   READY/`SERVICE_UNAVAILABLE` and reports the event; `last_status` then records the
   backend error class (`READER_TTS_IO`).
+* `stop` ends the active request itself: once the platform accepted the stop the
+  request is no longer active, its single `STOPPED` event is queued immediately and
+  the handle is READY for the next request. `request_close` does the same for a
+  request that is still active before the handle becomes CLOSED. A second terminal
+  callback for a request that already ended (an engine that reports both `onDone`
+  and `onStop`, or one that reports late) is dropped, so a host can never see two
+  terminals for one request. Stopping an id that is not active is OK when it is at
+  or below the last accepted id (it ended earlier) and ARGUMENT when it is above
+  every accepted id.
+* Utterance ids are the decimal request ids. An engine callback whose id is not
+  decimal, longer than 20 digits or larger than `UINT64_MAX` is ignored instead of
+  being wrapped onto a different request. Callback entries pin the handle, so a
+  `destroy` that runs while a late callback is in flight cannot free the ring or
+  the lock under it; a callback that arrives after `destroy` is refused because the
+  cookie is no longer registered.
 * `request_close` is non-blocking and idempotent: it stops the active request and
   asks the Java layer to shut the engine down. The handle reaches CLOSED only
   after the release callback arrived, which is also when the global reference is

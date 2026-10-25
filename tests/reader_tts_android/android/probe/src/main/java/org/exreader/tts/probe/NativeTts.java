@@ -13,6 +13,8 @@ public final class NativeTts {
     public static native String caseName(int id);
     public static native int runCase(int id);
     public static native String caseDetail();
+    /** Tab-separated id/name/language lines from the installed C ABI voice list. */
+    public static native String voiceLines();
     public static native int rotationBegin();
     public static native int rotationFinish();
 }

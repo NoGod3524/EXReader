@@ -24,9 +24,19 @@ const char *exr_tts_consumer_detail(void);
 int exr_tts_consumer_rotation_begin(void);
 int exr_tts_consumer_rotation_finish(void);
 
+/* Tab-separated "id<TAB>name<TAB>language" lines for every voice the installed
+   C ABI reports; empty when no engine is present. The probe app compares them
+   with the engine's own voice objects. */
+const char *exr_tts_consumer_voice_lines(void);
+
 /* Implemented by the host bridge (bridge.cpp). */
 int exr_tts_platform_bind_null(void);
 int exr_tts_platform_bind(void);
+/* Cookie of the last real engine callback the bridge forwarded, or 0. */
+long exr_tts_platform_last_cookie(void);
+/* Forwards one fabricated engine callback for the given cookie through
+   reader_tts_android_deliver, exactly as the AAR would. 1 consumed, 0 refused. */
+int exr_tts_platform_deliver(long cookie, int kind, const char *utterance);
 #ifdef __cplusplus
 }
 #endif

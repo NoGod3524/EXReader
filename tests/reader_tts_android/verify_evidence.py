@@ -22,7 +22,7 @@ from check_parallel_integration import download_artifact_zip, fetch, pages, requ
 
 WORKFLOW = '.github/workflows/reader-tts-android.yml'
 DEVICE_JOB = 'tts-android-device'
-MINIMUM_CASES = 40
+MINIMUM_CASES = 46
 
 
 def main():
@@ -136,7 +136,11 @@ def main():
         for required_case in ('speak_started_and_finished', 'range_utf8_boundaries',
                               'stop_single_stopped', 'busy_while_active',
                               'long_text_chunked_requests', 'voices_lifetime_after_destroy',
-                              'rotation_during_speaking', 'chunker_boundaries_and_surrogates'):
+                              'rotation_during_speaking', 'chunker_boundaries_and_surrogates',
+                              'stop_and_close_single_terminal', 'duplicate_terminal_dropped',
+                              'overflow_utterance_id_ignored',
+                              'stale_callback_after_destroy_ignored',
+                              'voice_names_match_engine', 'voice_selection_returns_to_default'):
             require(engine_cases.get(required_case) == 'pass',
                     required_case + ' did not pass with a real engine')
 

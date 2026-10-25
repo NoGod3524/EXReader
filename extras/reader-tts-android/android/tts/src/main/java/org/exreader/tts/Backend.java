@@ -24,10 +24,14 @@ import java.util.concurrent.TimeUnit;
  * Android system {@link TextToSpeech} binding used by the reader TTS C ABI.
  *
  * <p>The native library calls the static entry points with the handle cookie it
- * assigned. Every engine mutation happens on a private {@link HandlerThread}, so
- * the host thread never needs a Looper and never blocks the process main
- * thread. Engine callbacks are converted to bounded native events and never
- * call back into the host.
+ * assigned. Engine creation, the init handshake and shutdown run on a private
+ * {@link HandlerThread}; the framework delivers {@code OnInitListener} on the
+ * process main thread and every {@link UtteranceProgressListener} callback on
+ * an engine binder thread. The request entry points ({@code speak},
+ * {@code stop}, {@code voices}, {@code synthesizeToFile}) are synchronous
+ * binder calls made on the caller's thread and never need that thread to have
+ * a {@link android.os.Looper}. Every callback is converted into a bounded
+ * native event and never calls back into the host.
  *
  * <p>The host must load the shared library that implements
  * {@code reader_tts_android_deliver} and exposes {@code nativeEvent} before it
@@ -80,6 +84,8 @@ public final class Backend {
     private volatile int initStatus = TextToSpeech.ERROR;
     private volatile boolean initSettled;
     private volatile boolean closing;
+    /** True once this handle selected an explicit voice on the shared engine state. */
+    private volatile boolean voicePinned;
     private long audioSequence;
 
     private final UtteranceProgressListener listener = new UtteranceProgressListener() {
@@ -191,15 +197,8 @@ public final class Backend {
         TextToSpeech current = engine;
         if (current == null || initStatus != TextToSpeech.SUCCESS || closing) return RESULT_NOT_READY;
         if (text.length() > TextToSpeech.getMaxSpeechInputLength()) return RESULT_TOO_LONG;
-        if (voiceId != null && !voiceId.isEmpty()) {
-            Voice voice = findVoice(current, voiceId);
-            if (voice == null) return RESULT_UNKNOWN_VOICE;
-            try {
-                if (current.setVoice(voice) != TextToSpeech.SUCCESS) return RESULT_ENGINE_REJECTED;
-            } catch (RuntimeException error) {
-                return RESULT_ENGINE_REJECTED;
-            }
-        }
+        int selection = selectVoice(current, voiceId);
+        if (selection != RESULT_OK) return selection;
         try {
             current.setSpeechRate((float) rate);
         } catch (RuntimeException error) {
@@ -207,6 +206,10 @@ public final class Backend {
         }
         String utterance = Long.toString(requestId);
         synchronized (lock) {
+            /* Only the active request needs its text for offset conversion, so
+               a request whose terminal callback never arrives cannot leave the
+               text resident forever. */
+            texts.clear();
             texts.put(utterance, text);
         }
         int outcome;
@@ -245,9 +248,13 @@ public final class Backend {
             if (written >= MAX_VOICES) return null;
             String id = voice.getName();
             if (id == null || id.isEmpty()) continue;
+            /* id selects the voice, name is what a picker shows, language is a
+               BCP 47 tag. The engine id is not a display name. */
+            String name = voice.getLocalizedName();
+            if (name == null || name.isEmpty()) name = id;
             String language = voice.getLocale() == null ? "und" : voice.getLocale().toLanguageTag();
             if (language.isEmpty()) language = "und";
-            if (!writeField(out, id) || !writeField(out, id) || !writeField(out, language)) return null;
+            if (!writeField(out, id) || !writeField(out, name) || !writeField(out, language)) return null;
             written++;
         }
         return out.toByteArray();
@@ -259,6 +266,31 @@ public final class Backend {
         out.write(bytes, 0, bytes.length);
         out.write(0);
         return true;
+    }
+
+    /**
+     * Selects the voice of the next request. An empty id returns to the system
+     * default voice, so a request never inherits the voice of an earlier one.
+     */
+    private int selectVoice(TextToSpeech engine, String voiceId) {
+        try {
+            if (voiceId != null && !voiceId.isEmpty()) {
+                Voice voice = findVoice(engine, voiceId);
+                if (voice == null) return RESULT_UNKNOWN_VOICE;
+                if (engine.setVoice(voice) != TextToSpeech.SUCCESS) return RESULT_ENGINE_REJECTED;
+                voicePinned = true;
+                return RESULT_OK;
+            }
+            if (voicePinned) {
+                Voice fallback = engine.getDefaultVoice();
+                if (fallback != null && engine.setVoice(fallback) == TextToSpeech.SUCCESS) {
+                    voicePinned = false;
+                }
+            }
+            return RESULT_OK;
+        } catch (RuntimeException error) {
+            return RESULT_ENGINE_REJECTED;
+        }
     }
 
     private static Voice findVoice(TextToSpeech engine, String voiceId) {
@@ -284,6 +316,10 @@ public final class Backend {
                 /* A failed shutdown must not keep the native state open. */
             } finally {
                 engine = null;
+                synchronized (lock) {
+                    texts.clear();
+                    audio.clear();
+                }
                 synchronized (INSTANCES) {
                     INSTANCES.remove(cookie);
                 }
@@ -352,6 +388,21 @@ public final class Backend {
         if (current == null) return null;
         try {
             return current.getDefaultEngine();
+        } catch (RuntimeException error) {
+            return null;
+        }
+    }
+
+    /**
+     * Identifier of the voice selected for the next request, or null while the
+     * engine still uses its own default.
+     */
+    public String activeVoiceId() {
+        TextToSpeech current = engine;
+        if (current == null || initStatus != TextToSpeech.SUCCESS) return null;
+        try {
+            Voice voice = current.getVoice();
+            return voice == null ? null : voice.getName();
         } catch (RuntimeException error) {
             return null;
         }
@@ -431,15 +482,8 @@ public final class Backend {
         if (current == null || initStatus != TextToSpeech.SUCCESS || closing) return RESULT_NOT_READY;
         String text = new String(utf8, StandardCharsets.UTF_8);
         if (text.length() > TextToSpeech.getMaxSpeechInputLength()) return RESULT_TOO_LONG;
-        if (voiceId != null && !voiceId.isEmpty()) {
-            Voice voice = findVoice(current, voiceId);
-            if (voice == null) return RESULT_UNKNOWN_VOICE;
-            try {
-                if (current.setVoice(voice) != TextToSpeech.SUCCESS) return RESULT_ENGINE_REJECTED;
-            } catch (RuntimeException error) {
-                return RESULT_ENGINE_REJECTED;
-            }
-        }
+        int selection = selectVoice(current, voiceId);
+        if (selection != RESULT_OK) return selection;
         try {
             current.setSpeechRate((float) rate);
         } catch (RuntimeException error) {

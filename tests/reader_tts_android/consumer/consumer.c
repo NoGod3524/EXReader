@@ -7,6 +7,7 @@
  * the observed status, state, events and ownership rules.
  */
 #include "reader_tts.h"
+#include "reader_tts_android.h"
 
 #include "consumer.h"
 
@@ -183,6 +184,76 @@ static int collect(reader_tts *tts, uint64_t request, int timeout_ms, const char
         event.kind == READER_TTS_FAILED) {
       return 0;
     }
+  }
+  return 1;
+}
+
+/* Discards queued events for a bounded window; returns how many were dropped. */
+static int drain_events(reader_tts *tts, int polls) {
+  reader_tts_event event;
+  int available = 1;
+  int drained = 0;
+  for (int step = 0; step < polls; step++) {
+    if (reader_tts_poll(tts, &event, &available, NULL) != READER_TTS_OK) return drained;
+    if (!available) break;
+    drained += 1;
+  }
+  return drained;
+}
+
+struct outcome_count {
+  unsigned started;
+  unsigned ranges;
+  unsigned stopped;
+  unsigned finished;
+  unsigned failed;
+  unsigned foreign;
+};
+
+/* Waits until the given request produced a terminal event and counts its
+   events. 0 when a terminal arrived, 1 on timeout. */
+static int drain_until_terminal(reader_tts *tts, uint64_t request, int timeout_ms,
+  struct outcome_count *out) {
+  memset(out, 0, sizeof(*out));
+  for (int step = 0; step < timeout_ms / 5; step++) {
+    reader_tts_event event;
+    int available = 0;
+    if (reader_tts_poll(tts, &event, &available, NULL) != READER_TTS_OK) return 2;
+    if (!available) {
+      sleep_ms(5);
+      continue;
+    }
+    if (event.request_id != request) {
+      out->foreign += 1;
+      continue;
+    }
+    switch (event.kind) {
+      case READER_TTS_STARTED: out->started += 1; break;
+      case READER_TTS_RANGE: out->ranges += 1; break;
+      case READER_TTS_STOPPED: out->stopped += 1; break;
+      case READER_TTS_FINISHED: out->finished += 1; break;
+      case READER_TTS_FAILED: out->failed += 1; break;
+      default: break;
+    }
+    if (event.kind == READER_TTS_FINISHED || event.kind == READER_TTS_STOPPED ||
+        event.kind == READER_TTS_FAILED) {
+      return 0;
+    }
+  }
+  return 1;
+}
+
+/* Waits for the STARTED event of one request so later ordering is fixed. */
+static int wait_for_started(reader_tts *tts, uint64_t request, int timeout_ms) {
+  for (int step = 0; step < timeout_ms / 5; step++) {
+    reader_tts_event event;
+    int available = 0;
+    if (reader_tts_poll(tts, &event, &available, NULL) != READER_TTS_OK) return 2;
+    if (!available) {
+      sleep_ms(5);
+      continue;
+    }
+    if (event.request_id == request && event.kind == READER_TTS_STARTED) return 0;
   }
   return 1;
 }
@@ -835,6 +906,268 @@ static int case_long_text_chunked_requests(void) {
   return g_case_failed ? 1 : 0;
 }
 
+/* stop ends the active request with exactly one terminal event, and a close
+   issued while another request is speaking leaves that request with exactly
+   one terminal event too. Both are observed on the real engine. */
+static int case_stop_and_close_single_terminal(void) {
+  reader_tts *tts = NULL;
+  reader_tts_state state = READER_TTS_INITIALIZING;
+  reader_tts_snapshot snapshot;
+  struct outcome_count counts;
+  char *text = NULL;
+  uint64_t first = 0;
+  uint64_t second = 0;
+  unsigned terminals = 0;
+  if (!g_engine_mode) return 2;
+  text = make_ascii(1200);
+  if (!text) {
+    note("allocation failed; ");
+    return 1;
+  }
+  expect_status(reader_tts_create(NULL, &tts, NULL), READER_TTS_OK, "create the stop/close handle");
+  if (!tts) {
+    free(text);
+    return 1;
+  }
+  if (wait_state(tts, 30000, &state) != 0 || state != READER_TTS_READY) {
+    note("the stop/close handle did not reach READY; ");
+    g_case_failed = 1;
+  }
+  if (!g_case_failed) {
+    first = next_id();
+    expect_status(reader_tts_speak(tts, first, text, 1200, NULL, 1.0, NULL), READER_TTS_OK,
+      "speak before the stop");
+    if (!g_case_failed) {
+      if (wait_for_started(tts, first, 20000) != 0) {
+        note("the stopped request never started; ");
+        g_case_failed = 1;
+      }
+      expect_status(reader_tts_stop(tts, first, NULL), READER_TTS_OK, "stop the active request");
+      expect_status(reader_tts_observe(tts, &snapshot, NULL), READER_TTS_OK, "observe after the stop");
+      expect_uint((unsigned long)snapshot.request_id, 0, "a stopped request is not active");
+      expect_uint((unsigned long)snapshot.state, (unsigned long)READER_TTS_READY,
+        "a stopped handle is ready for the next request");
+      expect_status(reader_tts_stop(tts, first, NULL), READER_TTS_OK, "stop the same request twice");
+      if (drain_until_terminal(tts, first, 45000, &counts) != 0) {
+        note("the stopped request has no terminal event; ");
+        g_case_failed = 1;
+      } else {
+        expect_uint(counts.stopped, 1, "exactly one STOPPED");
+        expect_uint(counts.finished, 0, "a stopped request does not finish");
+        expect_uint(counts.failed, 0, "a stopped request does not fail");
+        expect_uint(counts.foreign, 0, "no other request id during the stop");
+      }
+      remember_completed(first);
+    }
+  }
+  if (!g_case_failed) {
+    second = next_id();
+    expect_status(reader_tts_speak(tts, second, text, 1200, NULL, 1.0, NULL), READER_TTS_OK,
+      "speak before the close");
+    if (!g_case_failed) {
+      sleep_ms(200);
+      expect_status(reader_tts_request_close(tts, NULL), READER_TTS_OK,
+        "close while a request is speaking");
+      for (int step = 0; step < 400; step++) {
+        reader_tts_event event;
+        int available = 0;
+        if (reader_tts_poll(tts, &event, &available, NULL) != READER_TTS_OK) {
+          note("poll after the close failed; ");
+          g_case_failed = 1;
+          break;
+        }
+        if (!available) {
+          if (step > 40) break;
+          sleep_ms(10);
+          continue;
+        }
+        if (event.request_id == second) {
+          if (event.kind == READER_TTS_STOPPED || event.kind == READER_TTS_FINISHED ||
+              event.kind == READER_TTS_FAILED) {
+            terminals += 1;
+            expect_uint((unsigned long)event.kind, (unsigned long)READER_TTS_STOPPED,
+              "a closed request ends as STOPPED");
+          }
+        } else if (event.request_id != first) {
+          note("event id %llu during the close; ", (unsigned long long)event.request_id);
+          g_case_failed = 1;
+        }
+      }
+      expect_uint(terminals, 1, "the closed request keeps exactly one terminal event");
+      expect_true(wait_closed(tts, 20000, &state) == 0, "the closed handle reaches CLOSED");
+      expect_status(reader_tts_destroy(&tts, NULL), READER_TTS_OK, "destroy the closed handle");
+      expect_true(tts == NULL, "the destroyed handle is cleared");
+    }
+  }
+  if (tts != NULL) {
+    reader_tts_request_close(tts, NULL);
+    if (wait_closed(tts, 20000, &state) == 0) reader_tts_destroy(&tts, NULL);
+  }
+  note("stop_terminals=%u; ", terminals);
+  free(text);
+  return g_case_failed ? 1 : 0;
+}
+
+/* A fabricated terminal for a request that already ended must not be queued a
+   second time: one accepted request, one terminal event. */
+static int case_duplicate_terminal_dropped(void) {
+  struct ledger log;
+  reader_tts_event event;
+  int available = 0;
+  unsigned duplicates = 0;
+  uint64_t request = 0;
+  long cookie = 0;
+  char utterance[24];
+  if (!g_engine_mode) return 2;
+  if (!g_main) return 1;
+  request = next_id();
+  expect_status(reader_tts_speak(g_main, request, SAMPLE, SAMPLE_BYTES, NULL, 1.0, NULL),
+    READER_TTS_OK, "speak the duplicate-terminal sample");
+  if (g_case_failed) return 1;
+  if (collect(g_main, request, 45000, SAMPLE, SAMPLE_BYTES, &log) != 0) {
+    note("the duplicate-terminal sample did not terminate; ");
+    return 1;
+  }
+  remember_completed(request);
+  g_last_accepted = request;
+  sleep_ms(200);
+  drain_events(g_main, 64);
+  cookie = exr_tts_platform_last_cookie();
+  expect_true(cookie > 0, "the engine callback published the handle cookie");
+  if (cookie <= 0) return 1;
+  snprintf(utterance, sizeof(utterance), "%llu", (unsigned long long)request);
+  expect_uint((unsigned long)exr_tts_platform_deliver(cookie, READER_TTS_ANDROID_FINISHED,
+    utterance), 0, "a repeated terminal for an ended request is refused");
+  for (int step = 0; step < 60; step++) {
+    if (reader_tts_poll(g_main, &event, &available, NULL) != READER_TTS_OK) {
+      note("poll after the repeated terminal failed; ");
+      g_case_failed = 1;
+      break;
+    }
+    if (!available) {
+      if (step > 20) break;
+      sleep_ms(5);
+      continue;
+    }
+    if (event.request_id == request &&
+        (event.kind == READER_TTS_FINISHED || event.kind == READER_TTS_STOPPED ||
+         event.kind == READER_TTS_FAILED)) {
+      duplicates += 1;
+    }
+  }
+  expect_uint(duplicates, 0, "no second terminal reaches the host");
+  return g_case_failed ? 1 : 0;
+}
+
+/* An utterance id that does not fit into the request id type, or is not
+   decimal, must be ignored instead of wrapping into a different request. */
+static int case_overflow_utterance_id_ignored(void) {
+  reader_tts_event event;
+  int available = 0;
+  unsigned bogus = 0;
+  long cookie = 0;
+  if (!g_engine_mode) return 2;
+  if (!g_main) return 1;
+  sleep_ms(100);
+  drain_events(g_main, 64);
+  cookie = exr_tts_platform_last_cookie();
+  expect_true(cookie > 0, "the engine callback published the handle cookie");
+  if (cookie <= 0) return 1;
+  expect_uint((unsigned long)exr_tts_platform_deliver(cookie, READER_TTS_ANDROID_STARTED,
+    "18446744073709551616"), 0, "an utterance id above the request id range is ignored");
+  expect_uint((unsigned long)exr_tts_platform_deliver(cookie, READER_TTS_ANDROID_RANGE,
+    "12x"), 0, "a non-decimal utterance id is ignored");
+  for (int step = 0; step < 40; step++) {
+    if (reader_tts_poll(g_main, &event, &available, NULL) != READER_TTS_OK) {
+      note("poll after the fabricated ids failed; ");
+      g_case_failed = 1;
+      break;
+    }
+    if (!available) {
+      if (step > 10) break;
+      sleep_ms(5);
+      continue;
+    }
+    if (event.request_id == 0 || event.request_id == (uint64_t)-1) bogus += 1;
+  }
+  expect_uint(bogus, 0, "no event carries a wrapped request id");
+  return g_case_failed ? 1 : 0;
+}
+
+/* After destroy, a callback that still carries the old handle cookie must be
+   refused: it must not reach a handle created later. */
+static int case_stale_callback_after_destroy_ignored(void) {
+  reader_tts *tts = NULL;
+  reader_tts_state state = READER_TTS_INITIALIZING;
+  struct ledger log;
+  uint64_t request = 0;
+  uint64_t fresh = 0;
+  long cookie = 0;
+  unsigned polluted = 0;
+  if (!g_engine_mode) return 2;
+  expect_status(reader_tts_create(NULL, &tts, NULL), READER_TTS_OK, "create the stale-callback handle");
+  if (!tts) return 1;
+  if (wait_state(tts, 30000, &state) != 0 || state != READER_TTS_READY) {
+    note("the stale-callback handle did not reach READY; ");
+    g_case_failed = 1;
+  }
+  if (!g_case_failed) {
+    request = next_id();
+    expect_status(reader_tts_speak(tts, request, SAMPLE, SAMPLE_BYTES, NULL, 1.0, NULL),
+      READER_TTS_OK, "speak the stale-callback sample");
+    if (!g_case_failed && collect(tts, request, 45000, SAMPLE, SAMPLE_BYTES, &log) != 0) {
+      note("the stale-callback sample did not terminate; ");
+      g_case_failed = 1;
+    }
+    remember_completed(request);
+    sleep_ms(150);
+    drain_events(tts, 64);
+    cookie = exr_tts_platform_last_cookie();
+    expect_true(cookie > 0, "the sample published a cookie");
+    expect_status(reader_tts_request_close(tts, NULL), READER_TTS_OK, "close before the stale callback");
+    expect_true(wait_closed(tts, 20000, &state) == 0, "the handle reaches CLOSED");
+    expect_status(reader_tts_destroy(&tts, NULL), READER_TTS_OK, "destroy before the stale callback");
+    expect_true(tts == NULL, "the destroyed handle is cleared");
+    if (cookie > 0) {
+      expect_uint((unsigned long)exr_tts_platform_deliver(cookie, READER_TTS_ANDROID_STARTED,
+        "1"), 0, "a callback for a destroyed handle is refused");
+      expect_uint((unsigned long)exr_tts_platform_deliver(cookie, READER_TTS_ANDROID_FINISHED,
+        "1"), 0, "a terminal for a destroyed handle is refused");
+    }
+    /* A fresh handle must not see events addressed to the destroyed cookie. */
+    expect_status(reader_tts_create(NULL, &tts, NULL), READER_TTS_OK, "create a fresh handle");
+    if (tts && !g_case_failed) {
+      if (wait_state(tts, 30000, &state) == 0) {
+        fresh = next_id();
+        if (reader_tts_speak(tts, fresh, SAMPLE, SAMPLE_BYTES, NULL, 1.0, NULL) == READER_TTS_OK) {
+          for (int step = 0; step < 400; step++) {
+            reader_tts_event event;
+            int available = 0;
+            if (reader_tts_poll(tts, &event, &available, NULL) != READER_TTS_OK) break;
+            if (!available) {
+              if (step > 40) break;
+              sleep_ms(5);
+              continue;
+            }
+            if (event.request_id != fresh) polluted += 1;
+            if (event.kind == READER_TTS_FINISHED || event.kind == READER_TTS_STOPPED ||
+                event.kind == READER_TTS_FAILED) {
+              break;
+            }
+          }
+        }
+        expect_uint(polluted, 0, "the fresh handle sees only its own request id");
+      }
+    }
+  }
+  if (tts != NULL) {
+    reader_tts_request_close(tts, NULL);
+    if (wait_closed(tts, 20000, &state) == 0) reader_tts_destroy(&tts, NULL);
+  }
+  note("stale_cookie=%ld polluted=%u; ", cookie, polluted);
+  return g_case_failed ? 1 : 0;
+}
+
 struct named_case {
   const char *name;
   int (*run)(void);
@@ -937,16 +1270,56 @@ static const struct named_case g_cases[] = {
   { "stop_completed_request_ok", case_stop_completed_request_ok },
   { "stop_unknown_id_argument", case_stop_unknown_id_argument },
   { "late_events_keep_request_id", case_late_events_keep_request_id },
+  { "duplicate_terminal_dropped", case_duplicate_terminal_dropped },
+  { "overflow_utterance_id_ignored", case_overflow_utterance_id_ignored },
   { "pause_unsupported_state_unchanged", case_pause_unsupported_state_unchanged },
   { "resume_unsupported_state_unchanged", case_resume_unsupported_state_unchanged },
   { "service_unavailable_when_engine_missing", case_service_unavailable_when_engine_missing },
   { "voices_lifetime_after_destroy", case_voices_lifetime_after_destroy },
+  { "stale_callback_after_destroy_ignored", case_stale_callback_after_destroy_ignored },
   { "destroy_wrong_owner_rejected", case_destroy_wrong_owner_rejected },
   { "long_text_chunked_requests", case_long_text_chunked_requests },
+  { "stop_and_close_single_terminal", case_stop_and_close_single_terminal },
   { "close_idempotent_and_refuses_new_requests", case_close_idempotent_and_refuses_new_requests },
   { "no_events_after_closed", case_no_events_after_closed },
   { "destroy_until_closed_and_null", case_destroy_until_closed_and_null }
 };
+
+#define VOICE_LINES_BYTES 98304
+static char g_voice_lines[VOICE_LINES_BYTES];
+
+const char *exr_tts_consumer_voice_lines(void) {
+  reader_tts *tts = NULL;
+  reader_tts_voice_list list;
+  reader_tts_state state = READER_TTS_INITIALIZING;
+  size_t used = 0;
+  g_voice_lines[0] = 0;
+  if (!g_engine_mode) return g_voice_lines;
+  if (reader_tts_create(NULL, &tts, NULL) != READER_TTS_OK || !tts) return g_voice_lines;
+  if (wait_state(tts, 30000, &state) != 0 || state != READER_TTS_READY) {
+    reader_tts_request_close(tts, NULL);
+    if (wait_closed(tts, 20000, &state) == 0) reader_tts_destroy(&tts, NULL);
+    return g_voice_lines;
+  }
+  memset(&list, 0, sizeof(list));
+  if (reader_tts_voices(tts, &list, NULL) == READER_TTS_OK) {
+    for (size_t index = 0; index < list.count; index++) {
+      int written = snprintf(g_voice_lines + used, VOICE_LINES_BYTES - used,
+        "%s\t%s\t%s\n", list.voices[index].id ? list.voices[index].id : "",
+        list.voices[index].name ? list.voices[index].name : "",
+        list.voices[index].language ? list.voices[index].language : "");
+      if (written <= 0 || (size_t)written >= VOICE_LINES_BYTES - used) {
+        g_voice_lines[used] = 0;
+        break;
+      }
+      used += (size_t)written;
+    }
+  }
+  reader_tts_voice_list_free(&list);
+  reader_tts_request_close(tts, NULL);
+  if (wait_closed(tts, 20000, &state) == 0) reader_tts_destroy(&tts, NULL);
+  return g_voice_lines;
+}
 
 void exr_tts_consumer_set_mode(int engine_expected) {
   g_engine_mode = engine_expected ? 1 : 0;

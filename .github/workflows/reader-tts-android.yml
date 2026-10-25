@@ -1,7 +1,7 @@
 name: Reader TTS Android
 on:
   push:
-    branches: [codex/reader-tts-android]
+    branches: [codex/reader-tts-android, codex/reader-tts-android-review]
   workflow_dispatch:
 permissions:
   contents: read

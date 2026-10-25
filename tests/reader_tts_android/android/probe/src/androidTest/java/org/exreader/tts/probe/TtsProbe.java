@@ -10,6 +10,7 @@ import android.content.pm.ResolveInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.Voice;
 
 import org.exreader.tts.Backend;
 import org.exreader.tts.Chunker;
@@ -22,7 +23,13 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Real-device acceptance probe for the Android TextToSpeech backend.
@@ -72,12 +79,14 @@ public final class TtsProbe extends Instrumentation {
             NativeTts.setMode(engineExpected ? 1 : 0);
             JSONArray cases = new JSONArray();
             int count = NativeTts.caseCount();
-            if (count < 40) throw new AssertionError("case table shrank to " + count);
+            if (count < 46) throw new AssertionError("case table shrank to " + count);
             for (int id = 0; id < count; id++) cases.put(runNative(id));
             cases.put(check("chunker_boundaries_and_surrogates", this::chunkerCheck));
             cases.put(check("rotation_during_speaking", () -> rotationCheck(engineExpected)));
             cases.put(check("engine_identity_recorded", () -> identityCheck(report, engineExpected)));
             cases.put(check("synthesize_to_file_audio", () -> audioCheck(report, engineExpected)));
+            cases.put(check("voice_names_match_engine", () -> voiceNamesCheck(engineExpected)));
+            cases.put(check("voice_selection_returns_to_default", () -> voiceSelectionCheck(engineExpected)));
             report.put("cases", cases);
             report.put("case_count", cases.length());
             JSONArray failed = new JSONArray();
@@ -287,6 +296,147 @@ public final class TtsProbe extends Instrumentation {
                  .put("default_voice", backend.defaultVoiceId() == null ? "" : backend.defaultVoiceId());
             report.put("audio", audio);
             return "bytes=" + bytes + " header=" + header;
+        } finally {
+            backend.close();
+        }
+    }
+
+    /** Opens one direct engine binding so a check can read the engine's own voice objects. */
+    private TextToSpeech openEngine() throws Exception {
+        final CountDownLatch settled = new CountDownLatch(1);
+        final int[] status = new int[1];
+        TextToSpeech engine = new TextToSpeech(getTargetContext(), value -> {
+            status[0] = value;
+            settled.countDown();
+        });
+        if (!settled.await(30, TimeUnit.SECONDS)) {
+            engine.shutdown();
+            throw new AssertionError("a direct engine binding did not settle");
+        }
+        if (status[0] != TextToSpeech.SUCCESS) {
+            engine.shutdown();
+            throw new AssertionError("a direct engine binding failed with " + status[0]);
+        }
+        return engine;
+    }
+
+    private static Map<String, Voice> voiceMap(TextToSpeech engine) {
+        Map<String, Voice> map = new HashMap<>();
+        Set<Voice> voices = engine.getVoices();
+        if (voices != null) {
+            for (Voice voice : voices) map.put(voice.getName(), voice);
+        }
+        return map;
+    }
+
+    private File audioFile(String name) {
+        File output = new File(getTargetContext().getFilesDir(), "audio/" + name);
+        File parent = output.getParentFile();
+        if (parent != null && !parent.isDirectory() && !parent.mkdirs()) {
+            throw new AssertionError("audio directory could not be created");
+        }
+        if (output.exists() && !output.delete()) throw new AssertionError("stale audio file kept: " + name);
+        return output;
+    }
+
+    /**
+     * The C ABI voice list must carry the engine's own id, display name and
+     * language tag for every installed voice: a picker cannot show an id.
+     */
+    private String voiceNamesCheck(boolean engineExpected) throws Exception {
+        if (!engineExpected) throw new Skip("no engine installed");
+        String lines = NativeTts.voiceLines();
+        if (lines == null || lines.isEmpty()) {
+            throw new AssertionError("the installed C ABI listed no voices");
+        }
+        TextToSpeech engine = openEngine();
+        try {
+            Map<String, Voice> voices = voiceMap(engine);
+            if (voices.isEmpty()) throw new Skip("the engine lists no voice objects");
+            int compared = 0;
+            for (String line : lines.split("\n")) {
+                if (line.isEmpty()) continue;
+                String[] fields = line.split("\t", -1);
+                if (fields.length != 3) throw new AssertionError("malformed C voice line: " + line);
+                Voice voice = voices.get(fields[0]);
+                if (voice == null) {
+                    throw new AssertionError("the C list reports a voice the engine does not have: " + fields[0]);
+                }
+                String name = voice.getLocalizedName();
+                if (name != null && !name.isEmpty() && !name.equals(fields[1])) {
+                    throw new AssertionError("voice " + fields[0] + " reports name '" + fields[1]
+                        + "' but the engine localized name is '" + name + "'");
+                }
+                String tag = voice.getLocale() == null ? "und" : voice.getLocale().toLanguageTag();
+                if (!tag.equals(fields[2])) {
+                    throw new AssertionError("voice " + fields[0] + " reports language '" + fields[2]
+                        + "' but the engine tag is '" + tag + "'");
+                }
+                compared++;
+            }
+            if (compared == 0) throw new AssertionError("the C voice list was empty");
+            return "voices=" + compared;
+        } finally {
+            engine.shutdown();
+        }
+    }
+
+    /**
+     * An explicit voice must stick for its own request, and a request with an
+     * empty voice id must return to the engine default instead of inheriting it.
+     */
+    private String voiceSelectionCheck(boolean engineExpected) throws Exception {
+        if (!engineExpected) throw new Skip("no engine installed");
+        Voice fallback = null;
+        Voice chosen = null;
+        String defaultName = null;
+        TextToSpeech engine = openEngine();
+        try {
+            fallback = engine.getDefaultVoice();
+            if (fallback == null) throw new Skip("the engine exposes no default voice");
+            defaultName = fallback.getName();
+            List<Voice> sorted = new ArrayList<>();
+            Set<Voice> all = engine.getVoices();
+            if (all != null) sorted.addAll(all);
+            sorted.sort((left, right) -> left.getName().compareTo(right.getName()));
+            String language = fallback.getLocale() == null ? "und" : fallback.getLocale().getLanguage();
+            for (Voice voice : sorted) {
+                if (voice.getName().equals(defaultName)) continue;
+                if (voice.isNetworkConnectionRequired()) continue;
+                if (voice.getLocale() == null || !language.equals(voice.getLocale().getLanguage())) continue;
+                chosen = voice;
+                break;
+            }
+        } finally {
+            engine.shutdown();
+        }
+        if (chosen == null) throw new Skip("the engine offers no second installed voice in the default language");
+        Backend backend = openBackend(1L << 43, 30000);
+        try {
+            if (!backend.isReady()) throw new AssertionError("engine not ready for the voice-selection case");
+            String active = backend.activeVoiceId();
+            if (active != null) throw new AssertionError("a fresh handle already selected '" + active + "'");
+            File explicit = audioFile("voice-explicit.wav");
+            File restored = audioFile("voice-default.wav");
+            byte[] text = "Voice selection sample.".getBytes(StandardCharsets.UTF_8);
+            int outcome = backend.synthesizeToFile(text, chosen.getName(), 1.0,
+                explicit.getAbsolutePath(), 60000);
+            if (outcome != 0) throw new Skip("the engine refused the explicit voice (result " + outcome + ")");
+            if (!chosen.getName().equals(backend.activeVoiceId())) {
+                throw new AssertionError("the explicit voice did not stick: " + backend.activeVoiceId());
+            }
+            outcome = backend.synthesizeToFile(text, null, 1.0, restored.getAbsolutePath(), 60000);
+            if (outcome != 0) throw new AssertionError("rendering with the default voice returned " + outcome);
+            active = backend.activeVoiceId();
+            if (!defaultName.equals(active)) {
+                throw new AssertionError("an empty voice id kept '" + active + "' instead of the default '"
+                    + defaultName + "'");
+            }
+            if (explicit.length() <= 44 || restored.length() <= 44) {
+                throw new AssertionError("a voice-selection render is empty");
+            }
+            return "default=" + defaultName + " explicit=" + chosen.getName()
+                + " sizes=" + explicit.length() + "/" + restored.length();
         } finally {
             backend.close();
         }

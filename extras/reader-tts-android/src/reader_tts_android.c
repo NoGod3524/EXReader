@@ -39,11 +39,18 @@ struct reader_tts {
   reader_tts_status last_status;
   uint64_t request_id;
   uint64_t last_request_id;
+  /* Highest request id that already got its single terminal event. A later
+     callback for the same id is a duplicate and is dropped. */
+  uint64_t terminal_id;
   unsigned capabilities;
   int engine_ready;
   int closing;
   int closed;
   int registered;
+  /* Callback entries currently holding this handle (registry pin). */
+  unsigned inflight;
+  /* destroy detached the handle; the last unpin frees it. */
+  int retired;
   size_t head;
   size_t count;
   struct exr_queued_event queue[READER_TTS_EVENT_CAPACITY];
@@ -160,17 +167,48 @@ static int queue_push(reader_tts *tts, uint64_t request_id, reader_tts_event_kin
   return 1;
 }
 
-static reader_tts *lookup(uint64_t cookie) {
+/* Ends one accepted request with its single terminal event. The caller holds
+   tts->lock. A request that already reached a terminal is never ended twice,
+   so a fabricating engine cannot report FINISHED after STOPPED (or the other
+   way round); the event is queued unless the ring has no room. */
+static int end_request_locked(reader_tts *tts, uint64_t request_id,
+  reader_tts_event_kind kind, reader_tts_status status) {
+  if (request_id == 0 || request_id <= tts->terminal_id) return 0;
+  if (!queue_push(tts, request_id, kind, status, 0, 0, 0)) return 0;
+  tts->terminal_id = request_id;
+  if (tts->request_id == request_id) {
+    tts->request_id = 0;
+    tts->state = tts->engine_ready ? READER_TTS_READY : READER_TTS_SERVICE_UNAVAILABLE;
+  }
+  return 1;
+}
+
+/* Callback entries pin the handle for their whole duration so a concurrent
+   reader_tts_destroy cannot free the lock and the ring under them. */
+static reader_tts *lookup_pin(uint64_t cookie) {
   reader_tts *found = NULL;
   pthread_mutex_lock(&g_registry_lock);
   for (size_t index = 0; index < EXR_TTS_MAX_HANDLES; index++) {
     if (g_handles[index] && g_handles[index]->cookie == cookie) {
       found = g_handles[index];
+      found->inflight += 1;
       break;
     }
   }
   pthread_mutex_unlock(&g_registry_lock);
   return found;
+}
+
+static void release_pin(reader_tts *tts) {
+  int free_now = 0;
+  pthread_mutex_lock(&g_registry_lock);
+  if (tts->inflight > 0) tts->inflight -= 1;
+  if (tts->retired && tts->inflight == 0) free_now = 1;
+  pthread_mutex_unlock(&g_registry_lock);
+  if (free_now) {
+    pthread_mutex_destroy(&tts->lock);
+    free(tts);
+  }
 }
 
 static void unregister_handle(reader_tts *tts) {
@@ -219,11 +257,19 @@ static uint64_t parse_request_id(JNIEnv *env, jstring utterance, int *ok) {
     return 0;
   }
   for (size_t index = 0; index < length; index++) {
+    unsigned digit = 0;
     if (text[index] < '0' || text[index] > '9') {
       (*env)->ReleaseStringUTFChars(env, utterance, text);
       return 0;
     }
-    value = value * 10u + (uint64_t)(text[index] - '0');
+    digit = (unsigned)(text[index] - '0');
+    /* Reject a decimal value that does not fit: wrapping would turn a
+       fabricated id into a different, real-looking request id. */
+    if (value > (UINT64_MAX - digit) / 10u) {
+      (*env)->ReleaseStringUTFChars(env, utterance, text);
+      return 0;
+    }
+    value = value * 10u + digit;
   }
   (*env)->ReleaseStringUTFChars(env, utterance, text);
   *ok = 1;
@@ -235,14 +281,20 @@ int reader_tts_android_deliver(JNIEnv *env, int64_t cookie, int kind, jstring ut
   reader_tts *tts = NULL;
   uint64_t request_id = 0;
   int valid = 0;
+  int consumed = 0;
+  int released = 0;
   if (cookie <= 0) return 0;
-  tts = lookup((uint64_t)cookie);
+  tts = lookup_pin((uint64_t)cookie);
   if (!tts) return 0;
   request_id = parse_request_id(env, utterance, &valid);
-  if (utterance && !valid) return 0;
+  if (utterance && !valid) {
+    release_pin(tts);
+    return 0;
+  }
   pthread_mutex_lock(&tts->lock);
   if (tts->closed) {
     pthread_mutex_unlock(&tts->lock);
+    release_pin(tts);
     return 0;
   }
   switch (kind) {
@@ -250,63 +302,50 @@ int reader_tts_android_deliver(JNIEnv *env, int64_t cookie, int kind, jstring ut
       tts->engine_ready = 1;
       tts->last_status = READER_TTS_OK;
       if (tts->state == READER_TTS_INITIALIZING) tts->state = READER_TTS_READY;
-      pthread_mutex_unlock(&tts->lock);
-      return 1;
+      consumed = 1;
+      break;
     case READER_TTS_ANDROID_INIT_FAILED:
       tts->engine_ready = 0;
       tts->request_id = 0;
       tts->last_status = READER_TTS_UNAVAILABLE;
       if (!tts->closing) tts->state = READER_TTS_SERVICE_UNAVAILABLE;
-      pthread_mutex_unlock(&tts->lock);
-      return 1;
+      consumed = 1;
+      break;
     case READER_TTS_ANDROID_STARTED:
-      queue_push(tts, request_id, READER_TTS_STARTED, READER_TTS_OK, 0, 0, 0);
-      if (tts->request_id == request_id) tts->state = READER_TTS_SPEAKING;
-      pthread_mutex_unlock(&tts->lock);
-      return 1;
-    case READER_TTS_ANDROID_RANGE:
-      if (start < 0 || end < start) {
-        pthread_mutex_unlock(&tts->lock);
-        return 0;
+      if (request_id != 0) {
+        queue_push(tts, request_id, READER_TTS_STARTED, READER_TTS_OK, 0, 0, 0);
+        if (tts->request_id == request_id) tts->state = READER_TTS_SPEAKING;
       }
+      consumed = 1;
+      break;
+    case READER_TTS_ANDROID_RANGE:
+      if (start < 0 || end < start) break;
       tts->capabilities |= READER_TTS_CAN_REPORT_RANGE;
       queue_push(tts, request_id, READER_TTS_RANGE, READER_TTS_OK,
         (size_t)start, (size_t)end, 1);
-      pthread_mutex_unlock(&tts->lock);
-      return 1;
+      consumed = 1;
+      break;
     case READER_TTS_ANDROID_FINISHED:
-      queue_push(tts, request_id, READER_TTS_FINISHED, READER_TTS_OK, 0, 0, 0);
-      if (tts->request_id == request_id) {
-        tts->request_id = 0;
-        tts->state = tts->engine_ready ? READER_TTS_READY : READER_TTS_SERVICE_UNAVAILABLE;
-      }
-      pthread_mutex_unlock(&tts->lock);
-      return 1;
+      consumed = end_request_locked(tts, request_id, READER_TTS_FINISHED, READER_TTS_OK);
+      break;
     case READER_TTS_ANDROID_STOPPED:
-      queue_push(tts, request_id, READER_TTS_STOPPED, READER_TTS_OK, 0, 0, 0);
-      if (tts->request_id == request_id) {
-        tts->request_id = 0;
-        tts->state = tts->engine_ready ? READER_TTS_READY : READER_TTS_SERVICE_UNAVAILABLE;
-      }
-      pthread_mutex_unlock(&tts->lock);
-      return 1;
+      consumed = end_request_locked(tts, request_id, READER_TTS_STOPPED, READER_TTS_OK);
+      break;
     case READER_TTS_ANDROID_FAILED:
-      queue_push(tts, request_id, READER_TTS_FAILED, READER_TTS_IO, 0, 0, 0);
-      if (tts->request_id == request_id) {
-        tts->request_id = 0;
-        tts->state = tts->engine_ready ? READER_TTS_READY : READER_TTS_SERVICE_UNAVAILABLE;
-      }
+      consumed = end_request_locked(tts, request_id, READER_TTS_FAILED, READER_TTS_IO);
       tts->last_status = READER_TTS_IO;
-      pthread_mutex_unlock(&tts->lock);
-      return 1;
+      break;
     case READER_TTS_ANDROID_RELEASED:
-      pthread_mutex_unlock(&tts->lock);
-      finish_close(env, tts);
-      return 1;
+      released = 1;
+      consumed = 1;
+      break;
     default:
-      pthread_mutex_unlock(&tts->lock);
-      return 0;
+      break;
   }
+  pthread_mutex_unlock(&tts->lock);
+  if (released) finish_close(env, tts);
+  release_pin(tts);
+  return consumed;
 }
 
 reader_tts_status reader_tts_android_initialize(JNIEnv *env, jobject context) {
@@ -823,10 +862,21 @@ reader_tts_status reader_tts_stop(reader_tts *tts, uint64_t request_id, reader_t
       (jlong)tts->cookie);
     if (clear_exception(env)) outcome = 1;
     release_env(attached);
+    pthread_mutex_lock(&tts->lock);
+    if (tts->request_id == request_id) {
+      if (outcome == 0) {
+        /* The platform accepted the stop: the request ends now, so the host
+           keeps exactly one terminal event even when the engine never reports
+           the interrupted utterance. A late engine callback is a duplicate. */
+        end_request_locked(tts, request_id, READER_TTS_STOPPED, READER_TTS_OK);
+      } else {
+        tts->state = tts->engine_ready ? READER_TTS_SPEAKING
+          : READER_TTS_SERVICE_UNAVAILABLE;
+        tts->last_status = READER_TTS_IO;
+      }
+    }
+    pthread_mutex_unlock(&tts->lock);
     if (outcome != 0) {
-      pthread_mutex_lock(&tts->lock);
-      tts->state = tts->engine_ready ? READER_TTS_SPEAKING : READER_TTS_SERVICE_UNAVAILABLE;
-      pthread_mutex_unlock(&tts->lock);
       report(error, READER_TTS_IO, (int)outcome);
       return READER_TTS_IO;
     }
@@ -907,6 +957,11 @@ reader_tts_status reader_tts_request_close(reader_tts *tts, reader_tts_error *er
   already = tts->closing || tts->closed;
   if (!already) {
     tts->closing = 1;
+    /* Closing stops the active request, so that request still gets its single
+       terminal event before the handle becomes CLOSED. */
+    if (tts->request_id != 0) {
+      end_request_locked(tts, tts->request_id, READER_TTS_STOPPED, READER_TTS_OK);
+    }
     if (tts->state != READER_TTS_CLOSED) tts->state = READER_TTS_CLOSING;
   }
   pthread_mutex_unlock(&tts->lock);
@@ -951,10 +1006,20 @@ reader_tts_status reader_tts_destroy(reader_tts **handle, reader_tts_error *erro
     return READER_TTS_BUSY;
   }
   pthread_mutex_unlock(&tts->lock);
+  /* No new callback can pin the handle from here on. An in-flight callback
+     still holds a pin, and the last one frees the ring and the lock. */
   unregister_handle(tts);
-  drop_backend(NULL, tts);
-  pthread_mutex_destroy(&tts->lock);
-  free(tts);
+  pthread_mutex_lock(&g_registry_lock);
+  tts->retired = 1;
+  {
+    int free_now = tts->inflight == 0;
+    pthread_mutex_unlock(&g_registry_lock);
+    if (free_now) {
+      drop_backend(NULL, tts);
+      pthread_mutex_destroy(&tts->lock);
+      free(tts);
+    }
+  }
   *handle = NULL;
   report(error, READER_TTS_OK, 0);
   return READER_TTS_OK;

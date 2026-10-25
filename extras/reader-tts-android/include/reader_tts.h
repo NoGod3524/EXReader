@@ -18,7 +18,9 @@
  *    never truncated). Hosts chunk with org.exreader.tts.Chunker and give each
  *    chunk a new, strictly increasing request id.
  *  - Request ids: non-zero, strictly increasing per handle (a stronger form of
- *    "never reused"). One active request at a time.
+ *    "never reused"). One active request at a time. Engine callbacks that carry
+ *    an id which is not a decimal uint64, or that repeat the terminal of a
+ *    request that already ended, are ignored and never reach the queue.
  */
 #ifndef READER_TTS_H
 #define READER_TTS_H
@@ -93,16 +95,18 @@ reader_tts_status reader_tts_speak(reader_tts *, uint64_t request_id,
 /* Android TextToSpeech has no pause: UNSUPPORTED, state unchanged. */
 reader_tts_status reader_tts_pause(reader_tts *, uint64_t request_id, reader_tts_error *);
 reader_tts_status reader_tts_resume(reader_tts *, uint64_t request_id, reader_tts_error *);
-/* stop: the active request ends with one STOPPED event (unless a terminal
-   event already happened). Stopping an already ended request is OK; an id
-   never issued or different from the active one is ARGUMENT. */
+/* stop: the active request ends with exactly one STOPPED event, queued by this
+   call once the platform accepted the stop, and the handle is READY again. A
+   later engine callback for the same request is a duplicate and is dropped.
+   Stopping an id at or below the last accepted id that is not active is OK (it
+   ended earlier); an id above every accepted id, or zero, is ARGUMENT. */
 reader_tts_status reader_tts_stop(reader_tts *, uint64_t request_id, reader_tts_error *);
 reader_tts_status reader_tts_observe(reader_tts *, reader_tts_snapshot *, reader_tts_error *);
 /* poll: *available=0 and a zeroed event when empty. */
 reader_tts_status reader_tts_poll(reader_tts *, reader_tts_event *, int *available, reader_tts_error *);
-/* request_close: non-blocking, idempotent; stops the active request and
-   releases the engine. The handle is CLOSED only after the system resources
-   are released and no callback can arrive any more. */
+/* request_close: non-blocking, idempotent; ends an active request with its one
+   STOPPED event and releases the engine. The handle is CLOSED only after the
+   system resources are released and no callback can arrive any more. */
 reader_tts_status reader_tts_request_close(reader_tts *, reader_tts_error *);
 /* destroy: BUSY (pointer kept) until CLOSED; then frees and sets *handle NULL. */
 reader_tts_status reader_tts_destroy(reader_tts **, reader_tts_error *);

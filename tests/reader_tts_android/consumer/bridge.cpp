@@ -16,12 +16,34 @@
 namespace {
 JNIEnv *g_env;
 jobject g_context;
+jlong g_last_cookie;
 }  // namespace
 
 extern "C" JNIEXPORT void JNICALL
 Java_org_exreader_tts_Backend_nativeEvent(JNIEnv *env, jclass, jlong cookie, jint kind,
   jstring utterance, jint start, jint end) {
+  g_last_cookie = cookie;
   reader_tts_android_deliver(env, (int64_t)cookie, (int)kind, utterance, (int)start, (int)end);
+}
+
+long exr_tts_platform_last_cookie(void) {
+  return (long)g_last_cookie;
+}
+
+/* Fabricates one engine callback for a handle the probe itself drives, through
+   the same entry the AAR uses. The saved JNIEnv belongs to the probe thread,
+   so this must be called from it (the case table is single threaded). */
+int exr_tts_platform_deliver(long cookie, int kind, const char *utterance) {
+  jstring text = nullptr;
+  int consumed = 0;
+  if (g_env == nullptr) return 0;
+  if (utterance != nullptr) {
+    text = g_env->NewStringUTF(utterance);
+    if (text == nullptr) return 0;
+  }
+  consumed = reader_tts_android_deliver(g_env, (int64_t)cookie, (int)kind, text, 0, 0);
+  if (text != nullptr) g_env->DeleteLocalRef(text);
+  return consumed;
 }
 
 extern "C" JNIEXPORT void JNICALL
@@ -62,6 +84,11 @@ Java_org_exreader_tts_probe_NativeTts_runCase(JNIEnv *, jclass, jint id) {
 extern "C" JNIEXPORT jstring JNICALL
 Java_org_exreader_tts_probe_NativeTts_caseDetail(JNIEnv *env, jclass) {
   return env->NewStringUTF(exr_tts_consumer_detail());
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_org_exreader_tts_probe_NativeTts_voiceLines(JNIEnv *env, jclass) {
+  return env->NewStringUTF(exr_tts_consumer_voice_lines());
 }
 
 extern "C" JNIEXPORT jint JNICALL

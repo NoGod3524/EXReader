@@ -44,11 +44,17 @@ REQUIRED)`) and is the exact program the cloud acceptance runs.
 
 * Every call except `reader_tts_voice_list_free` belongs to the thread that called
   `reader_tts_create`; other threads get `READER_TTS_OWNER`.
-* The host thread needs no `Looper`: the library owns an internal `HandlerThread`,
-  so neither the init callback nor the utterance callbacks depend on the host
-  event loop.
+* The owner thread needs no `Looper`. Engine creation, the init handshake and
+  shutdown run on the library's internal `HandlerThread`; the framework delivers
+  the engine init callback on the process main thread (so a blocked main thread
+  blocks readiness) and every utterance callback on an engine binder thread. The
+  request calls (`speak`, `stop`, `voices`, `synthesizeToFile`) are synchronous
+  engine calls on the owner thread and copy nothing into a callback.
 * `speak` copies the input. Voice strings live in one block owned by the list and
   stay readable after the handle is destroyed until `reader_tts_voice_list_free`.
+  Each voice carries the engine identifier (`id`), the localized display name
+  (`name`) and a BCP 47 language tag; an empty `voice_id` re-selects the engine
+  default voice instead of keeping the voice of an earlier request.
 * Engine callbacks only write one value into the bounded 128-event ring; the host
   never sees a callback and no request text or engine error string is copied into
   the queue.
