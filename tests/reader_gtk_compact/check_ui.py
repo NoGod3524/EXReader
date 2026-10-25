@@ -58,7 +58,9 @@ def main():
                 (roles is None or bus.role(node) in roles) and (not showing or bus.states(node).get('showing'))]
 
     def element(name,roles=None):
-        wait(lambda:bool(nodes(name,roles)),20);return nodes(name,roles)[0]
+        try:wait(lambda:bool(nodes(name,roles)),20)
+        except TimeoutError as error:raise TimeoutError('missing showing native element '+repr((name,roles))) from error
+        return nodes(name,roles)[0]
 
     def click_node(node):
         box=bus.extents(node);assert box and box['width']>0 and box['height']>0
@@ -84,6 +86,9 @@ def main():
             (output/'failure-visibility.json').write_text(json.dumps(dict(state=host.read(),
                 controls=[dict(name=bus.name(node),role=bus.role(node),states=bus.states(node),bounds=bus.extents(node))
                           for node in bus.walk(app)]),indent=2)+'\n')
+            print('failure native menus/focus: '+json.dumps([dict(name=bus.name(node),role=bus.role(node),states=bus.states(node))
+                for node in bus.walk(app) if bus.states(node).get('focused') or
+                (bus.states(node).get('showing') and bus.role(node) in ('menu','menu item','toggle button'))]),flush=True)
         except Exception as error:report['failure_capture_error']=type(error).__name__+': '+str(error)
 
     def observe(section):
@@ -180,7 +185,6 @@ def main():
         record('txt-page',host.read()['fixed']==0 and host.read()['book']>0 and host.read()['frame_generation']>0)
         record('default-tools-hidden',not nodes('Selectable page text') and not nodes('Annotation comment') and host.read()['compact_tools_open']==0)
         value=focus_snapshot('txt-page');record('page-keyboard-focus',any(row['name']=='Reading page' for row in value))
-        turn_pages('txt')
         host.key('alt+m');element('Reading',{'menu item'});host.key('Home','Right');element('Search within book…',{'menu item'})
         host.key('Escape','Escape');record('more-keyboard',bool(focus_snapshot('more-keyboard')))
 
@@ -209,6 +213,7 @@ def main():
             modal('Reading',title,caption,check)
         menu(None,'Retry saving position');record('save-retry-entry',host.process.poll() is None and not host.read()['save_failed'])
         menu(None,'Cancel current operation');record('cancel-entry',host.process.poll() is None and not host.read()['busy'])
+        turn_pages('txt')
         click('Back to library');host.wait(lambda value:value['reader_visible']==0);primary(False);record('back-to-library')
         host.key('ctrl+f');host.key('ctrl+a');host.paste('Compact');idle()
         record('library-search',any(bus.name(node)=='Search bookshelf' for node in bus.focused_all(app)))
