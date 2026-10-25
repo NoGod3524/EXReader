@@ -57,7 +57,7 @@ jobs:
           cmake -S apps/reader/cloud-import -B build/wi-adapter -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$ws/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$ws/build/wi-prefix;$ws/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ws/build/wi-prefix" 2>&1 | tee build/c03-logs/adapter-configure.log
           cmake --build build/wi-adapter --parallel 4 2>&1 | tee build/c03-logs/adapter-build.log
           cmake --install build/wi-adapter 2>&1 | tee build/c03-logs/adapter-install.log
-          cmake -S tests/reader_webdav_import/consumer -B build/c03-probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ws/build/wi-prefix;$ws/build/reading-library/stage" 2>&1 | tee build/c03-logs/probe-configure.log
+          cmake -S tests/reader_final_c03/probe -B build/c03-probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ws/build/wi-prefix;$ws/build/reading-library/stage" 2>&1 | tee build/c03-logs/probe-configure.log
           cmake --build build/c03-probe --parallel 4 2>&1 | tee build/c03-logs/probe-build.log
           sha256sum build/c03-probe/cloud-probe | tee build/c03-logs/cloud-probe.sha256
       - name: Build the unchanged product, revision, sync and session chain
