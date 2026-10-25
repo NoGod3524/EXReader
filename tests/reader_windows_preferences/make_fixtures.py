@@ -80,11 +80,15 @@ def main():
                 'selected appearance together.\n\n' % row for row in range(420)),
         encoding='utf-8')
     picture = png(120, 80, lambda y: bytes((51, 102, 204)) * 120)
-    epub(output / 'Picture book.epub', 'Picture book',
-         '<p>Picture book opening paragraph before the image.</p>'
-         '<p><img src="picture.png" alt="authored"/></p>'
-         '<p>Picture book closing paragraph after the image.</p>' + paragraphs,
-         picture)
+    # The authored block carries its colour twice: as a painted CSS background
+    # interior and as an image resource, so the theme can be checked against
+    # real authored pixels that never pass through text anti-aliasing.
+    authored = ('<p>Picture book opening paragraph before the authored block.</p>'
+                '<table style="background-color:#3366CC" width="240" height="120">'
+                '<tr><td>authored block</td></tr></table>'
+                '<p><img src="picture.png" width="240" height="160" alt="authored"/></p>'
+                '<p>Picture book closing paragraph after the authored block.</p>')
+    epub(output / 'Picture book.epub', 'Picture book', authored + paragraphs, picture)
 
     def comic_row(y):
         line = bytearray(bytes((250, 250, 250)) * 2000)
