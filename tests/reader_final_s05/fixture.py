@@ -203,10 +203,16 @@ def mutants(app, work, implementation_sha, version):
         (target / 'Frameworks' / 'libS05Kit.dylib').write_text('not a mach-o binary\n')
 
     def executable_only_signature(target):
+        # codesign regenerates the enclosing bundle seal when it signs the main
+        # executable in place, so the seal is removed again afterwards. The
+        # Mach-O signature stays, which is exactly a linker style ad-hoc binary
+        # inside an unsealed bundle.
         seal = target / '_CodeSignature'
         if seal.is_dir():
             shutil.rmtree(seal)
         command(['codesign', '--force', '--sign', '-', str(target / 'EXReaderS05Fixture')])
+        if seal.is_dir():
+            shutil.rmtree(seal)
 
     cases = [
         ('platform_device', platform_device, 'bundle.platform', 'fail'),
@@ -239,6 +245,7 @@ def mutants(app, work, implementation_sha, version):
                         'expected_status': expected_status,
                         'status': found['status'] if found else 'missing',
                         'detail': (found or {}).get('detail'),
+                        'bundle_sealed': (value.get('signature') or {}).get('bundle_sealed'),
                         'rejected': bool(found) and found['status'] == expected_status})
     return records
 
