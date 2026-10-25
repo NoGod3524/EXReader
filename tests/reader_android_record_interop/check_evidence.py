@@ -30,11 +30,21 @@ with zipfile.ZipFile(io.BytesIO(body)) as archive:
 with zipfile.ZipFile(io.BytesIO(old['body'])) as archive:
  def report(suffix):
   name,=[name for name in archive.namelist() if name.endswith(suffix)];return parse(archive.read(name))
- observed=report('android-record-interop/ui/result.json');assert observed['sender_export_accepted'] is True and observed['checks']==8 and observed['incoming_apple_status']=='pending' and observed['bidirectional_interoperability_accepted'] is False
- assert all(observed.get(key)==value for key,value in identity.items()) and len({phase['pid'] for phase in observed['phases']})==2
- assert [phase['count'] for phase in observed['phases']]==[6,2] and all(phase['passed'] is True and all(check['pass'] is True for check in phase['checks']) for phase in observed['phases'])
+ observed=report('android-record-interop/ui/result.json');incoming=observed.get('incoming_apple_accepted') is True
+ assert observed['sender_export_accepted'] is True and observed['checks']==(9 if incoming else 8) and observed['incoming_apple_status']==('passed' if incoming else 'pending') and observed['bidirectional_interoperability_accepted'] is False
+ assert all(observed.get(key)==value for key,value in identity.items()) and len({phase['pid'] for phase in observed['phases']})==(3 if incoming else 2)
+ assert [phase['count'] for phase in observed['phases']]==([6,2,1] if incoming else [6,2]) and all(phase['passed'] is True and all(check['pass'] is True for check in phase['checks']) for phase in observed['phases'])
  assert observed['phases'][0]['manifest_sha256']==verified['manifest_sha256'] and len(observed['phases'][0]['resolutions'])==11
  native=report('android-record-interop/native/result.json');assert native['accepted'] is True and all(native.get(key)==value for key,value in identity.items())
  assert native['checks'][0]['probe_exported'] is True and native['checks'][1]['probe_exported'] is False
-result={**identity,'sender_export_accepted':True,'inherited_130_accepted':True,'checks':138,'incoming_apple_status':'pending','bidirectional_interoperability_accepted':False,'actual_sdk':'3.41.0','bundle':{key:bundle[key] for key in ('id','name','size_in_bytes','digest','expires_at')},'manifest_sha256':verified['manifest_sha256'],'originals':verified['originals'],'revisions':verified['revisions'],'reading_records':verified['reading_records'],'actual_sender':sender,'inherited_summary':old['result'],'physical_device':False,'complete_product':False}
+ incoming_evidence=None
+ if incoming:
+  incoming_evidence=observed['phases'][-1]['actual_apple_incoming'];peer=incoming_evidence['peer'];assert peer['platform']=='macos' and peer['parser_version']=='3.41.0' and incoming_evidence['resolved']>=11
+  peer_artifact=incoming_evidence['attestation']['artifact']['id']
+  import sys
+  target=Path('build/android-record-interop-summary/independent-apple-proof')
+  subprocess.run([sys.executable,'tests/reader_android_record_interop/fetch_incoming.py','--artifact-id',str(peer_artifact),'--output',str(target)],check=True)
+  independent=parse((target/'attestation.json').read_bytes());assert independent==incoming_evidence['attestation']
+  resolutions=observed['phases'][-1]['resolutions'];assert len(resolutions)==incoming_evidence['resolved'] and all(row['stored_parser']=='3.41.0' and row['recapture']['route'][1]=='exreader-sdk-3.41.0' and row['found'] is True for row in resolutions)
+result={**identity,'sender_export_accepted':True,'inherited_130_accepted':True,'checks':139 if incoming else 138,'incoming_apple_status':'passed' if incoming else 'pending','incoming_apple_accepted':incoming,'bidirectional_interoperability_accepted':False,'actual_sdk':'3.41.0','bundle':{key:bundle[key] for key in ('id','name','size_in_bytes','digest','expires_at')},'manifest_sha256':verified['manifest_sha256'],'originals':verified['originals'],'revisions':verified['revisions'],'reading_records':verified['reading_records'],'actual_sender':sender,'incoming_evidence':incoming_evidence,'inherited_summary':old['result'],'physical_device':False,'complete_product':False}
 output=Path('build/android-record-interop-summary/summary.json');output.parent.mkdir(parents=True,exist_ok=True);output.write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result),flush=True)

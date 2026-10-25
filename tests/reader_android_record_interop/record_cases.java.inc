@@ -1,6 +1,7 @@
     private final JSONArray recordRows=new JSONArray(),originalRows=new JSONArray(),resolutionRows=new JSONArray();
     private final java.util.Map<String,byte[]> exported=new java.util.TreeMap<>();
     private JSONObject sender;
+    private JSONObject commandFailure;
     private byte[] fontBytesForInterop()throws Exception{try(java.io.InputStream stream=context.getAssets().open("Reader.otf")){return stream.readAllBytes();}}
     private File originalPath(long book){String path=context.getSharedPreferences("host",0).getString("path_"+book,null);return path==null?null:new File(path);}
     private static JSONObject captureJson(ReadingCapture capture)throws Exception{
@@ -19,7 +20,11 @@
     }
     private void saveRecord(String role,int kind,ReadingCapture capture,String[] parents,String annotation)throws Exception{
         owner(store->{String request=NativeCatalog.newId();NativeReadingProduct.Result result=NativeReadingProduct.apply(store,request,parents,kind,NativeReadingProduct.PUT,capture.bookKey,annotation,capture.mode,capture,kind==NativeReadingProduct.BOOKMARK?"Android actual sender point":"");
-            need(result.saved()&&result.created&&request.equals(result.request),"actual installed reading command committed on existing owner");boolean progress=kind==NativeReadingProduct.PROGRESS;
+            if(!result.saved()){
+                commandFailure=new JSONObject().put("role",role).put("kind",kind).put("status",result.status).put("gap",result.gap).put("revision_status",result.revision).put("request",request).put("annotation",annotation).put("parents",new JSONArray(Arrays.asList(parents))).put("capture",captureJson(capture));
+                durable(new File(context.getFilesDir(),"interop-command-failure.json"),commandFailure.toString(2).getBytes(StandardCharsets.UTF_8));
+            }
+            need(result.saved()&&result.created&&request.equals(result.request),"actual installed reading command committed on existing owner status="+result.status+" gap="+result.gap+" revision="+result.revision);boolean progress=kind==NativeReadingProduct.PROGRESS;
             ReadingRecord actual=NativeReadingProduct.selected(store,capture.bookKey,annotation,request,progress,control());need(actual.readable()&&actual.head.equals(request)&&actual.capture.parser.equals("exreader-sdk-3.41.0"),"actual typed stored reading recapture and unchanged native writer tag");
             byte[] retained=NativeReadingProduct.retained(store,capture.bookKey,annotation,request,progress,control());need(Arrays.equals(retained,RecordWireProbe.retained(store.productOwner(),request)),"public typed and generic retained wire are identical committed bytes");exported.put(request,retained);
             for(String parent:parents)exported.put(parent,RecordWireProbe.retained(store.productOwner(),parent));
@@ -36,7 +41,7 @@
             String[] identity=RecordWireProbe.ownerIdentity(store.productOwner());need(identity.length==4&&identity[0].equals(Long.toString(store.productOwner()))&&identity[2].equals(identity[3]),"retained reader and command writer share exact existing owner/provider");return new ReadingCapture[]{point,range};
         });
         saveRecord(role,NativeReadingProduct.PROGRESS,captures[0],new String[0],"");String previous=recordRows.getJSONObject(recordRows.length()-1).getString("revision_id");saveRecord(role,NativeReadingProduct.PROGRESS,captures[0],new String[]{previous},"");
-        saveRecord(role,NativeReadingProduct.BOOKMARK,captures[0],new String[0],NativeCatalog.newId());if(captures[1]!=null)saveRecord(role,NativeReadingProduct.HIGHLIGHT,captures[1],new String[0],NativeCatalog.newId());
+        saveRecord(role,NativeReadingProduct.BOOKMARK,captures[0],new String[0],owner(store->NativeCatalog.newId()));if(captures[1]!=null)saveRecord(role,NativeReadingProduct.HIGHLIGHT,captures[1],new String[0],owner(store->NativeCatalog.newId()));
         String before=snapshot();owner(store->{for(int i=0;i<recordRows.length();i++){JSONObject row=recordRows.getJSONObject(i);if(!row.getString("role").equals(role))continue;ReadingCapture capture=captureFrom(row.getJSONObject("capture"));NativeReadingSdk.Match match=resolve(store,book,capture);need(match.found()&&match.start==capture.start&&match.end==capture.end&&match.recaptured.bookKey.equals(capture.bookKey)&&match.recaptured.parser.equals("exreader-sdk-3.41.0")&&Arrays.deepEquals(match.recaptured.bytes(),capture.bytes()),"actual committed capture/resolve/recapture preserves original bytes and range");resolutionRows.put(new JSONObject().put("role",role).put("revision_id",row.getString("revision_id")).put("found",true).put("recapture",captureJson(match.recaptured)));}return true;});need(snapshot().equals(before),"read-only actual SDK resolve changes no SDK position/notes or product outbox");
         owner(store->{BookStore.VerifiedSource source=store.verifySource(book,null,0,task());File target=new File(context.getFilesDir(),"interop-outgoing/originals/"+role+"."+source.format);need(target.getParentFile().isDirectory()||target.getParentFile().mkdirs(),"bundle original directory");need(store.nativeLibrary().exportOriginal(book,target.getPath(),task())==source.bytes,"public exact original export from actual existing SDK owner");byte[] bytes=Files.readAllBytes(target.toPath());need(bytes.length==source.bytes&&digest(bytes).equals(source.sha256),"exported original binds actual SDK bytes");originalRows.put(new JSONObject().put("role",role).put("file","originals/"+target.getName()).put("format",source.format).put("book_key",source.key).put("bytes",bytes.length).put("sha256",source.sha256));return true;});
     }
@@ -100,6 +105,7 @@
             JSONObject report=new JSONObject().put("source_sha",arguments.getString("source_sha")).put("run_id",arguments.getString("run_id")).put("attempt",arguments.getString("attempt")).put("phase",phase).put("pid",android.os.Process.myPid()).put("passed",failure==null).put("checks",checks).put("count",checks.length()).put("observations",observations).put("resolutions",resolutionRows).put("incoming_apple_status","pending").put("bidirectional_interoperability_accepted",false);
             if(manifest!=null)report.put("manifest_sha256",digest(Files.readAllBytes(new File(context.getFilesDir(),"interop-outgoing/manifest.json").toPath()))).put("originals",originalRows.length()).put("revisions",manifest.getJSONArray("revisions").length()).put("reading_records",recordRows.length());if(phase.equals("incoming")&&sender!=null)report.put("actual_apple_incoming",sender).put("incoming_apple_status",failure==null?"passed":"failed");
             if(failure!=null)report.put("failed_check",active).put("failure",failure.getMessage()).put("failure_trace",android.util.Log.getStackTraceString(failure));
+            if(commandFailure!=null)report.put("actual_command_failure",commandFailure);
             durable(new File(context.getFilesDir(),"record-interop-"+phase+".json"),report.toString(2).getBytes(StandardCharsets.UTF_8));result.putString("stream",failure==null?"RECORD_INTEROP_SENDER_PASS":"RECORD_INTEROP_SENDER_FAIL");finish(failure==null?Activity.RESULT_OK:Activity.RESULT_CANCELED,result);
         }catch(Exception error){result.putString("shortMsg","Actual record bundle evidence unavailable");finish(Activity.RESULT_CANCELED,result);}
     }

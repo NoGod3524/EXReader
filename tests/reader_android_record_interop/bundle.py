@@ -23,6 +23,12 @@ def verify(read):
  assert len(peer['apk_sha256'] if peer['platform']=='android' else peer['program_sha256'])==64
  assert peer['parser_version']==('exreader-sdk-3.41.0' if peer['platform']=='android' else '3.41.0')
  originals={};files={'manifest.json'}
+ if peer['platform']=='macos':
+  program=read('proofs/program');sdk=read('proofs/sdk.dylib');assert sha(program)==peer['program_sha256'] and sha(sdk)==peer['sdk_dso_sha256']
+  import struct
+  for data,kind in ((program,2),(sdk,6)):
+   assert data[:4] in (b'\xcf\xfa\xed\xfe',b'\xfe\xed\xfa\xcf') and struct.unpack(('<' if data[:4]==b'\xcf\xfa\xed\xfe' else '>')+'I',data[12:16])[0]==kind
+  files|={'proofs/program','proofs/sdk.dylib'}
  for row in manifest['originals']:
   assert row['role'] not in originals and row['format']==row['role'] and row['role'] in ('txt','epub','pdf','cbz')
   name=safe(row['file']);assert name.startswith('originals/') and name not in files;files.add(name);data=read(name)
