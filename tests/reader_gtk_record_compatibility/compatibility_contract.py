@@ -4,6 +4,7 @@ import copy
 import hashlib
 import json
 import re
+import subprocess
 from run import BASE, OLD_HOST, OLD_SDK, NEW_SDK
 
 
@@ -51,6 +52,16 @@ def authenticate(raw, source, run, attempt):
     guard = json.loads(raw('gtk-record-compatibility-guard.json'))
     assert guard['accepted'] is True and guard['source_sha'] == source and str(guard['run_id']) == str(run) and str(guard['attempt']) == str(attempt)
     assert (guard['base'], guard['old_host'], guard['old_sdk'], guard['new_sdk']) == (BASE, OLD_HOST, OLD_SDK, NEW_SDK)
+    def tree(sha, path):
+        return subprocess.check_output(['git', 'rev-parse', sha + ':' + path], text=True).strip()
+    assert guard['owner_trees'] == {'old': tree(OLD_HOST, 'examples/linux'), 'new': tree(source, 'examples/linux')}
+    protected = ['src', 'include', 'cmake', 'CMakeLists.txt', 'tests/fixtures', 'bindings',
+                 '.github/workflows/native.yml', '.github/workflows/reliability.yml']
+    expected_trees = {name: {path: tree(sdk, path) for path in protected}
+                      for name, sdk in [('old', OLD_SDK), ('new', NEW_SDK)]}
+    assert guard['protected_trees'] == expected_trees
+    for owner, sdk in [(OLD_HOST, OLD_SDK), (source, NEW_SDK)]:
+        assert all(tree(owner, path) == tree(sdk, path) for path in protected)
     value = json.loads(raw(root + 'result.json'))
     validate(value, source, run, attempt)
     mutations = [('source_sha', 'foreign'), ('run_id', '0'), ('attempt', '0'), ('old_host', source),
@@ -64,9 +75,14 @@ def authenticate(raw, source, run, attempt):
             continue
         raise AssertionError('compatibility protocol accepted ' + key)
     programs = value['programs']
-    for program in programs.values():
+    originals = json.loads(raw('records-commands-installed/summary.json'))['originals']
+    for name, program in programs.items():
         assert hashlib.sha256(raw(root + program['binary'], 64 * 1024 * 1024)).hexdigest() == program['binary_sha256']
         assert hashlib.sha256(raw(root + program['map'], 8 * 1024 * 1024)).hexdigest() == program['map_sha256']
+        owner = OLD_HOST if name == 'old' else source
+        for field, path in [('backend_source_sha256', 'examples/linux/reading.c'),
+                            ('records_source_sha256', 'examples/linux/reading_records_backend.inc')]:
+            assert hashlib.sha256(subprocess.check_output(['git', 'show', owner + ':' + path])).hexdigest() == program[field]
     for mode in ('first', 'resumed', 'routes', 'graphs'):
         log = raw(root + 'old-original-' + mode + '.log').decode()
         assert re.search(r'reading-records backend checks=\d+ process=' + mode + r' passed', log)
@@ -100,15 +116,27 @@ def authenticate(raw, source, run, attempt):
     for case in value['cases']:
         writer, reader = programs[case['writer']], programs[case['reader']]
         if case['kind'] == 'reopen':
+            assert case['source_sha256'] == originals[case['format']]['sha256']
+            assert case['source_bytes'] == originals[case['format']]['bytes']
             written = process(case['writer_process'], writer)
             assert written['mode'] == 'seed'
             if case['format'] in ('epub', 'pdf'):
                 assert 'old process retains real public v1 revision' in [row['name'] for row in written['checks']]
             process(case['reader_process'], reader)
+            versions = set()
             for name, digest in case['original_wire_sha256'].items():
                 assert re.fullmatch('[0-9a-f]{32}\.json', name)
                 folder = case['writer_process']['report'].rsplit('/', 1)[0]
-                assert hashlib.sha256(raw(root + folder + '/' + name)).hexdigest() == digest
+                wire_bytes = raw(root + folder + '/' + name)
+                assert hashlib.sha256(wire_bytes).hexdigest() == digest
+                wire = json.loads(wire_bytes)
+                assert wire['id'] == name[:-5]
+                if wire['operation'] != 'delete':
+                    payload = wire['payload'];location = payload['location']
+                    assert payload['book_key'] == case['format'] + ':' + case['source_sha256']
+                    assert location['parser_version'] == writer['runtime_version']
+                    versions.add(location['anchor_version'])
+            assert 2 in versions and (case['format'] not in ('epub', 'pdf') or 1 in versions)
             if case['reverse_observation']:
                 reverse[case['format']] = case['reader_process']['accepted']
         else:
