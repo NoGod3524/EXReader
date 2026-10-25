@@ -27,5 +27,6 @@ Gradle `-PexrSelectorBytes=true` 对应 CMake `EXR_READER_SELECTOR_BYTES_CANDIDA
 - 旧 v1 private request 保持writer2/NUL失败与原字节；实际 MainActivity按源1/2恢复、NOTE_TEXT不升级；NULL位置和错误owner负例。
 - 原Android HTTPS后端上的真实 NativeSync/Session worker执行256 shard，传送实际原件和wire、关闭；新接收进程不预置SDK原件，真实下载后再由新SDK owner导入、打开UI并逐字节核对11条记录与公开FOUND/重捕获。
 - 实际 Apple raw sender `15dab6b2270dc296ed6239db67ced2e22d255e65` / run `40196978163` attempt1 的原始ZIP `12600789926`，77,056,135B，SHA-256 `92be56ffa04d7c334d4811a42821a314089b4f8ae01746f0dfdf456b5eab9bd5`。仅在Actions认证native/strict成功、原ZIP身份、完整inventory与真实manifest后，原字节经实际Android HTTPS接收并在新进程独立FOUND/重捕获；不以此授予同源码双向。
+- 真正 Mac NULL 负例单独来自同一原始ZIP的 `profiles/source-version-and-NULL-operations/reader-catalog.db`。Actions核数据库及可选WAL原字节后只读提取 `body_json`，逐条核保留散列，携带该NULL实体完整父图与同PDF书目祖先；不改写wire或数据库。单独经实际NativeSync HTTPS接收，实际SDK owner导入下载原件后由typed接口及真实UI拒绝导航，再新进程核保留字节与拒绝结果，不计入正常11条FOUND记录。
 
 所有构建、语法检查、夹具、执行和工件解包认证均在 Actions。仅授予 API34 default x86_64 模拟器候选；Apple真实原件包互收另行核对身份。本包尚不授予双向、真机、主线默认启用或完整产品。

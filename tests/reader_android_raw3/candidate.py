@@ -26,7 +26,7 @@ changes = [
     ('return new JSONObject().put("platform","android")',
      'family(store);return new JSONObject().put("raw_selector_candidate",true).put("platform","android")'),
     ('phase.equals("sender")||phase.equals("incoming")||phase.equals("missing-parent")',
-     'phase.equals("sender")||phase.equals("incoming")||phase.equals("missing-parent")||phase.equals("kill-ui")||phase.equals("reopen-ui")||phase.equals("legacy-pending")||phase.equals("session-push")||phase.equals("session-receive")||phase.equals("session-reopen")||phase.equals("raw-contract")||phase.equals("apple-receive")||phase.equals("apple-reopen")'),
+     'phase.equals("sender")||phase.equals("incoming")||phase.equals("missing-parent")||phase.equals("kill-ui")||phase.equals("reopen-ui")||phase.equals("legacy-pending")||phase.equals("session-push")||phase.equals("session-receive")||phase.equals("session-reopen")||phase.equals("raw-contract")||phase.equals("apple-receive")||phase.equals("apple-reopen")||phase.equals("apple-null-receive")||phase.equals("apple-null-reopen")||phase.equals("apple-null-reopen-again")'),
     ('            if(phase.equals("sender")){',
      '            need(BuildConfig.READER_SELECTOR_BYTES_CANDIDATE,"actual raw host opt-in");if(rawPhase()){runRawPhase();}\n            else if(phase.equals("sender")){')
 ]

@@ -6,8 +6,10 @@ import json
 import os
 from pathlib import Path,PurePosixPath
 import subprocess
+import sqlite3
+import tempfile
 import zipfile
-from bundle import verify,parse
+from bundle import verify,verify_null,parse
 assert os.environ.get('GITHUB_ACTIONS')=='true'
 PEER={'source_sha':'15dab6b2270dc296ed6239db67ced2e22d255e65','run_id':40196978163,'attempt':1,
  'native_job':121179826434,'strict_job':121186031984,'artifact_id':12600789926,'bytes':77056135,
@@ -47,7 +49,52 @@ with zipfile.ZipFile(io.BytesIO(body)) as z:
     assert pdf['bytes']==8845 and pdf['sha256']=='5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc'
     for name in verified['files']+['proofs/program','proofs/sdk.dylib']:
         target=out/'bundle'/name;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(z.read('sender-bundle/'+name))
+    # Inspect the authenticated producer database read-only; never synthesize or
+    # rewrite a reading wire. The negative is separate from the 11 normal records.
+    database_name='profiles/source-version-and-NULL-operations/reader-catalog.db'
+    database_bytes=z.read(database_name);database_identity=result['files'][database_name]
+    assert len(database_bytes)==database_identity['bytes'] and hashlib.sha256(database_bytes).hexdigest()==database_identity['sha256']
+    negative_root=out/'null-bundle';negative_root.mkdir(parents=True,exist_ok=True)
+    database_path=negative_root/'origin-catalog.db';database_path.write_bytes(database_bytes)
+    sidecars={}
+    for suffix in ('-wal','-shm'):
+        name=database_name+suffix
+        if name in result['files']:
+            body=z.read(name);declared=result['files'][name]
+            assert len(body)==declared['bytes'] and hashlib.sha256(body).hexdigest()==declared['sha256']
+            (negative_root/('origin-catalog.db'+suffix)).write_bytes(body);sidecars[suffix]=declared
+    with tempfile.TemporaryDirectory() as temporary:
+        inspected=Path(temporary)/'catalog.db';inspected.write_bytes(database_bytes)
+        for suffix in sidecars:(Path(temporary)/('catalog.db'+suffix)).write_bytes((negative_root/('origin-catalog.db'+suffix)).read_bytes())
+        connection=sqlite3.connect(inspected.resolve().as_uri()+'?mode=ro',uri=True)
+        try:rows=connection.execute('SELECT revision_id,entity_kind,entity_key,body_sha256,CAST(body_json AS BLOB) FROM reader_revisions').fetchall()
+        finally:connection.close()
+    retained={}
+    for rid,kind,key,sha,body in rows:
+        assert isinstance(body,bytes) and hashlib.sha256(body).hexdigest()==sha
+        wire=parse(body);assert (wire['id'],wire['entity_kind'],wire['entity_key'])==(rid,kind,key)
+        retained[rid]=(wire,body,sha)
+    nulls=[rid for rid,(wire,body,sha) in retained.items() if wire['entity_kind']=='annotation' and wire.get('payload') and wire['payload'].get('book_key')==pdf['book_key'] and wire['payload'].get('location',{}).get('anchor_version')==3 and wire['payload']['location']['selector']['exact']=={'base64':None,'size':0}]
+    null_id,=nulls;null_wire=retained[null_id][0];needed=set();visiting=set()
+    def collect(rid):
+        assert rid not in visiting and rid in retained
+        if rid in needed:return
+        visiting.add(rid)
+        for parent in retained[rid][0]['parents']:collect(parent)
+        visiting.remove(rid);needed.add(rid)
+    collect(null_id)
+    for rid,(wire,body,sha) in retained.items():
+        if wire['entity_kind']=='book' and wire['entity_key']==pdf['book_key']:collect(rid)
+    declarations=[]
+    for rid in sorted(needed):
+        wire,body,sha=retained[rid];name='revisions/'+rid+'.json';target=negative_root/name;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(body)
+        declarations.append({k:wire[k] for k in ('id','entity_kind','entity_key','parents')}|{'file':name,'bytes':len(body),'sha256':sha,'book_key':pdf['book_key']})
+    original_path=negative_root/pdf['file'];original_path.parent.mkdir(parents=True,exist_ok=True);original_path.write_bytes(z.read('sender-bundle/'+pdf['file']))
+    negative={'schema':1,'purpose':'authentic-apple-null-negative','sender':sender,'origin_database':{'file':database_name,**database_identity,'sidecars':sidecars},'originals':[pdf],'revisions':declarations,'null_revision':null_id,'annotation_id':null_wire['payload']['annotation_id']}
+    (negative_root/'manifest.json').write_text(json.dumps(negative,indent=2)+'\n')
+    null_verified=verify_null(lambda name:(negative_root/name).read_bytes())
 attestation={**PEER,'artifact':{k:artifact[k] for k in ['id','name','digest','size_in_bytes','expires_at']},
  'accepted':True,'manifest_sha256':verified['manifest_sha256'],'originals':verified['originals'],'revisions':verified['revisions'],'reading_records':verified['reading_records'],
- 'complete_graph':True,'original_inventory_verified':True,'actual_native_sender':sender}
+ 'complete_graph':True,'original_inventory_verified':True,'actual_native_sender':sender,
+ 'null_negative':{k:v for k,v in null_verified.items() if k not in ('manifest','files')}|{'origin_database':negative['origin_database']}}
 (out/'attestation.json').write_text(json.dumps(attestation,indent=2)+'\n');print(json.dumps(attestation),flush=True)
