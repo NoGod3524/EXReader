@@ -89,3 +89,24 @@ DELETE、HISTORY、RESTORE及独立 FOUND/字节重捕获检查通过。整轮�
 本轮还原样复用 legacy/raw 两配置的原22项 compact UI检查与原校验器。
 实际完整默认OFF/F3/atomic13、认证网络接收与共同源码互通仍须另行完成；本轮不替代它们。
 用户确认网络恢复后，Claude三个原会话与DeepSeek十二个原进程均已恢复，执行状态不代表交付验收。
+
+## Windows独立 owner 与两配置界面验收
+
+`b4fc135ce64fc651a4b988ad1dd852076413aa10` 的 run `40218506868` / attempt1 已完整success。
+legacy/raw两套SDK安装依赖与实际Win32程序均编译；各执行原compact22和原bulk21，
+真实owner九份报告全通过，包括NUL点/范围、source1/2/3编辑/删除/恢复、parser/NULL拒绝、
+独立新进程FOUND、提交前/提交后真实TerminateProcess与旧EXRRD001原请求接续。
+
+独立认证源码 `a985b613`，分支 `codex/reader-windows-owner-auth-only`，
+[run40219693199](https://github.com/NoGod3524/EXReader/actions/runs/40219693199) / attempt1 success。
+认证作业实际下载该producer的唯一原ZIP，复算字节/SHA-256/有效期，核对producer job/source/attempt、
+实际四个宿主程序和两owner程序、九报告的源码/配置/检查，以及三次终止的marker和原pending字节。
+compact仍使用原完整校验器，未将静态库当作宿主程序。
+
+| 工件 | ID | Bytes | SHA-256 | 有效期 |
+| --- | --- | --- | --- | --- |
+| 原host ZIP | 12609330174 | 230108804 | `d89da503030d71fbc09b688adfeaba76ddb3677bb3bf38702f011f1a7b0478fb` | 2027-01-23T17:51:51Z |
+| 独立认证 | 12609570423 | 797 | `2725b674f46334d06c19bd09068a476ec5277a09d3675ea87b2027dbbd16b445` | 2027-01-23T18:06:52Z |
+
+授予范围仅上述Windows独立配置与真实owner恢复；完整原默认OFF/F3/atomic13、真实Mac认证网络接收、
+共同源码双向互通、完整产品及性能仍未授予。原两次失败继续保留。
