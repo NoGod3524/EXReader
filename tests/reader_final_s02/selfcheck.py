@@ -94,8 +94,10 @@ def main():
     (tokens / 'binary').write_bytes(b'\x7fELF\x00EXReader/EXReader/build/compact-desktop\x00')
     (tokens / 'clean').write_text('no build path here\n', encoding='utf-8')
     scanned = common.scan_tokens(tokens, common.BUILD_TOKENS)
+    found = sorted(hit['token'] for hit in scanned['hits'])
     checks.add('selfcheck_scan_tokens',
-               [hit['token'] for hit in scanned['hits']] == ['EXReader/EXReader/build'],
+               found == ['EXReader/EXReader/build', 'compact-desktop']
+               and {hit['path'] for hit in scanned['hits']} == {'binary'},
                json.dumps(scanned['hits']))
 
     archive = work / 'candidate.tar.gz'
@@ -108,6 +110,18 @@ def main():
                == ['bin/exreader-linux', 'Reader.otf']
                and (work / 'extract1/bin/exreader-linux').stat().st_mode & 0o111,
                json.dumps(extracted['members']))
+
+    flat = work / 'flat.tar.gz'
+    make_tar(flat, [('.', b'', 'dir'),
+                    ('./bin/exreader-linux', b'#!binary', 'file'),
+                    ('./Reader.otf', b'font-bytes', 'file')])
+    flat_extract = common.safe_extract_tar(flat, work / 'extract-flat',
+                                           expect_root='EXReader-Linux')
+    checks.add('selfcheck_safe_extract_dot_root',
+               flat_extract['root'] == '.'
+               and [member['path'] for member in flat_extract['members']]
+               == ['bin/exreader-linux', 'Reader.otf'],
+               json.dumps(flat_extract))
 
     escaping = work / 'escaping.tar.gz'
     make_tar(escaping, [('EXReader-Linux', b'', 'dir'),

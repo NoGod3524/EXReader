@@ -117,38 +117,52 @@ def tree_problems(root, records):
 
 
 def safe_extract_tar(archive, destination, expect_root=None):
-    """Extract a single-root tarball, refusing links and escaping members."""
+    """Extract a single-root tarball, refusing links and escaping members.
+
+    shutil.make_archive(root_dir=payload) stores the payload *contents* behind a
+    '.' member, while a hand-built archive may keep a named root directory; both
+    layouts are accepted and the effective root is reported.
+    """
     destination = Path(destination)
     need(not destination.exists(), 'tar destination already exists: %s' % destination)
     destination.mkdir(parents=True)
-    members, roots = [], set()
+    entries, roots = [], set()
     with tarfile.open(str(archive), 'r:gz') as tar:
         for member in tar.getmembers():
             name = member.name
             need(name and not name.startswith('/'), 'absolute tar member: %s' % name)
             parts = [part for part in name.split('/') if part not in ('', '.')]
-            need(parts and '..' not in parts, 'escaping tar member: %s' % name)
+            need('..' not in parts, 'escaping tar member: %s' % name)
             need(not member.issym() and not member.islnk(),
                  'tar links are refused: %s' % name)
+            if not parts:
+                need(member.isdir(), 'archive root member is not a directory: %s' % name)
+                roots.add('.')
+                continue
             need(member.isdir() or member.isfile(), 'unexpected tar member: %s' % name)
             roots.add(parts[0])
             if member.isdir():
                 continue
-            need(len(parts) >= 2, 'tar member outside a root directory: %s' % name)
-            relative = parts[1:]
-            target = destination.joinpath(*relative)
-            target.parent.mkdir(parents=True, exist_ok=True)
-            source = tar.extractfile(member)
-            need(source is not None, 'unreadable tar member: %s' % name)
-            with source:
-                target.write_bytes(source.read())
-            os.chmod(str(target), member.mode & 0o777)
-            members.append({'path': '/'.join(relative), 'bytes': target.stat().st_size,
-                            'sha256': sha256_file(target), 'mode': member.mode & 0o777})
-    need(len(roots) == 1, 'tar has %d roots: %s' % (len(roots), sorted(roots)))
-    root = roots.pop()
-    need(expect_root is None or root == expect_root,
+            entries.append((parts, member))
+    need(roots, 'empty tar archive: %s' % archive)
+    named = {root for root in roots if root != '.'}
+    need(len(named) <= 1, 'tar has several roots: %s' % sorted(roots))
+    root = named.pop() if named else '.'
+    need(expect_root is None or root in (expect_root, '.'),
          'tar root %r differs from %r' % (root, expect_root))
+    members = []
+    for parts, member in entries:
+        relative = parts[1:] if (root != '.' and parts[0] == root) else parts
+        need(relative, 'tar member outside its root: %s' % member.name)
+        target = destination.joinpath(*relative)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        source = tar.extractfile(member)
+        need(source is not None, 'unreadable tar member: %s' % member.name)
+        with source:
+            target.write_bytes(source.read())
+        os.chmod(str(target), member.mode & 0o777)
+        members.append({'path': '/'.join(relative), 'bytes': target.stat().st_size,
+                        'sha256': sha256_file(target), 'mode': member.mode & 0o777})
     return {'root': root, 'members': members}
 
 
