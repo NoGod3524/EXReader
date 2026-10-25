@@ -4,7 +4,10 @@
   "package": "EXReaderLocalization 0.1.0",
   "common_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "source_sha": "6e7ba4b64fc3a05fbd6a960e81df1bb7ef58d42c",
-  "source_sha_note": "tested source; the only later commit on this branch is the [skip ci] documentation commit recorded in evidence_head",
+  "source_sha_note": "tested source of the delivery run; the only later commit on this branch is the [skip ci] documentation commit recorded in evidence_head",
+  "delivery_head": "e2e60f6e42491aa1e78342fce00398d29fbaf381",
+  "evidence_head": "e2e60f6e42491aa1e78342fce00398d29fbaf381",
+  "evidence_head_note": "delivery HEAD as pushed to origin/codex/reader-localization; it differs from source_sha only in docs/ and is marked [skip ci]",
   "branch": "codex/reader-localization",
   "workflow": ".github/workflows/reader-localization.yml",
   "run_id": 40127576739,
@@ -443,5 +446,158 @@
       ],
       "cause": "the exact-capacity fixture was sized in characters instead of UTF-8 bytes, so CJK rows were rendered into a buffer one byte too small"
     }
-  ]
+  ],
+  "review": {
+    "branch": "codex/reader-localization-review",
+    "delivery_head_reviewed": "e2e60f6e42491aa1e78342fce00398d29fbaf381",
+    "tested_source": "e7a9a9cb0e03594430c79e92331e81bd81ec94bc",
+    "tested_source_note": "the only commit after the tested source is the [skip ci] commit that carries this file; it changes docs/ only",
+    "run_id": 40168646569,
+    "attempt": 1,
+    "run_url": "https://github.com/NoGod3524/EXReader/actions/runs/40168646569",
+    "jobs": [
+      {"id": 121094797682, "name": "localization consumers (ubuntu-22.04)", "conclusion": "success"},
+      {"id": 121094797382, "name": "localization consumers (windows-2022)", "conclusion": "success"},
+      {"id": 121094797640, "name": "localization consumers (macos-14)", "conclusion": "success"},
+      {"id": 121094902214, "name": "strict localization evidence", "conclusion": "success"}
+    ],
+    "artifacts": [
+      {
+        "id": 12589481836,
+        "name": "reader-localization-Linux-40168646569-1",
+        "size_in_bytes": 94604,
+        "digest": "sha256:9169b772874bdb82e51d7ed3bd86e880c6b10424d5187116938e0e5f56e0ebe3",
+        "expires_at": "2027-01-23T06:18:50Z"
+      },
+      {
+        "id": 12589966063,
+        "name": "reader-localization-Windows-40168646569-1",
+        "size_in_bytes": 366786,
+        "digest": "sha256:f635212fee7f04d340d4f176ad75f344ecf92375b963de073a7c6b549f44e85d",
+        "expires_at": "2027-01-23T06:18:50Z"
+      },
+      {
+        "id": 12589616564,
+        "name": "reader-localization-macOS-40168646569-1",
+        "size_in_bytes": 87485,
+        "digest": "sha256:4d7afe4dabee6dc6b94b50b08f3cf309f2b634397913f827d2b0dfe3fb828fe2",
+        "expires_at": "2027-01-23T06:18:50Z"
+      },
+      {
+        "id": 12589346912,
+        "name": "reader-localization-summary-40168646569-1",
+        "size_in_bytes": 1390,
+        "digest": "sha256:5275126f4cd28ef82936f246cc566fabd5ab48bbf0f1d824a7a7983b4a825106",
+        "expires_at": "2027-01-23T06:18:50Z"
+      }
+    ],
+    "problems": [],
+    "catalog_digest": "41040fcc8a162eeecea1415dbee3710f708d3f0ffef0071aedb8bd291b5f4285",
+    "catalog_digest_note": "identical to the delivery run on all three platforms, so the resource pack and its canonical serialization are unchanged by the review",
+    "catalog_digest_per_platform": {
+      "linux": "41040fcc8a162eeecea1415dbee3710f708d3f0ffef0071aedb8bd291b5f4285",
+      "windows": "41040fcc8a162eeecea1415dbee3710f708d3f0ffef0071aedb8bd291b5f4285",
+      "macos": "41040fcc8a162eeecea1415dbee3710f708d3f0ffef0071aedb8bd291b5f4285"
+    },
+    "checks_per_platform": 22,
+    "named_cases": [
+      "installed-package-layout",
+      "installed-c-consumer",
+      "installed-cpp-consumer",
+      "installed-consumer-binding",
+      "abi-and-version",
+      "limits-match-header",
+      "hook-worker-manifest-parity",
+      "catalog-coverage-zh-en",
+      "catalog-template-parity",
+      "catalog-digest-cross-implementation",
+      "format-matrix-zh",
+      "format-matrix-en",
+      "refusal-arity-and-kind",
+      "refusal-malformed-utf8",
+      "value-limit-boundary",
+      "capacity-atomicity",
+      "output-limit",
+      "fallback-missing-translation",
+      "missing-base-translation",
+      "catalog-corruption-refusal",
+      "unsigned-and-max-slots",
+      "no-internal-diagnostics"
+    ],
+    "named_case_results": {
+      "linux": {"passed": 22, "failed": 0},
+      "windows": {"passed": 22, "failed": 0},
+      "macos": {"passed": 22, "failed": 0}
+    },
+    "raw_report_line": "{\"accepted\": true, \"cases\": 22, \"digest\": \"41040fcc8a162eeecea1415dbee3710f708d3f0ffef0071aedb8bd291b5f4285\"} printed by check_localization.py in all three consumer jobs",
+    "bindings": {
+      "Linux": {
+        "library": "f0c46d85e360342e4308c8e13ce908f055ffe7e433917d61cf9325f97e0109ac",
+        "c-consumer": "dcb6027b263614133e83157b32ac36c7286fc2102bc7fbc7bafb2f2144173e39",
+        "cpp-consumer": "9ac8cfe420cd1d9dae37851221a31a5c8343266f027487f28e93b39d22420a25",
+        "worker": "a96d7a588d8aa88b89d038a123bd6ab688c9d14cf502a9fc984b3c21b23bb790"
+      },
+      "Windows": {
+        "library": "503816e45a1ebabbb49a824093308f7f5afad913a08a00ed8623d1b9f3a4d868",
+        "c-consumer": "833b1328eb6faa36c10c22e3c8bbd83cd651289142db3a9af49854f967ae5551",
+        "cpp-consumer": "eeb8323fd8105ca4e367632e45e1c8d63eb0d6fd0f2e2efea96fb15de528c9db",
+        "worker": "e6ab1f0a1d8e540a9ac966cc304630cefa16eaec32e0ef3b8729f227d13814f2"
+      },
+      "macOS": {
+        "library": "69c5e2f66231dcb734d3a7a6ce114bdfa33f6e5032043da631e85bfb3838c469",
+        "c-consumer": "f1eb7895defaa4d68356beb847b8f4d57d48a99a695084bbd43a9195faaa9291",
+        "cpp-consumer": "af514ec56ae116e012fd4b5baf2b53a90f271a5a6fd69d0561338ed27add1570",
+        "worker": "15dc07dae7bd4d0643c61559b44d6a72b2d8b199c716420a9999217dfdcc98a3"
+      }
+    },
+    "bindings_note": "the Linux library (f0c46d85) and the Linux and macOS C++ consumer (9ac8cfe4, af514ec5) are byte-identical to the delivery run because their sources are unchanged, while the edited C consumer and hook worker differ on every platform; Windows PE and COFF images carry a linker timestamp, so both of its columns differ between runs",
+    "findings": [
+      {
+        "id": "R1",
+        "severity": "contract",
+        "summary": "the public header promised the slot-count limit as ARGUMENT/VALUE_TOO_LONG/LIMIT, but reader_localization_format refuses a row that declares more than READER_LOCALIZATION_MAX_SLOTS with CATALOG",
+        "fix": "header and docs name CATALOG for that refusal and state that it is checked before any caller parameter"
+      },
+      {
+        "id": "R2",
+        "severity": "contract",
+        "summary": "header and docs listed VALUE_INVALID before VALUE_TOO_LONG while the implementation checks the byte limit first, so a value that is both over-long and malformed reported an ordering the contract did not state",
+        "fix": "the documented order matches the implementation and a fixture row pins it: hex of 1025 bytes starting with 0xe2 reports VALUE_TOO_LONG"
+      },
+      {
+        "id": "R3",
+        "severity": "unexercised-contract",
+        "summary": "kind 'u', the int64/uint64 extremes, the 8-slot maximum and the over-long-layout refusal were documented but unreachable: no shipped row declares a 'u' slot or more than three slots, and the fixtures defined UINT_ARGS without using it",
+        "fix": "reader_localization_test_kinds (hook build only) replaces one row's layout, so the worker renders eight unsigned slots in reverse order, UINT64_MAX, a signed value in an unsigned slot, a nine-slot layout refused as CATALOG, a template that omits a declared slot and a permuted template bound by index"
+      },
+      {
+        "id": "R4",
+        "severity": "evidence",
+        "summary": "the 96/97-byte message-id boundary was only exercised with a 120-byte id, and the UTF-8 boundary set lacked overlong and over-range four-byte encodings and a truncated four-byte value",
+        "fix": "two boundary rows (96 bytes UNKNOWN_MESSAGE, 97 bytes ARGUMENT) and five UTF-8 boundary values in the installed C consumer"
+      },
+      {
+        "id": "R5",
+        "severity": "documentation",
+        "summary": "docs/READER-LOCALIZATION.md still described the tested source as aafb8fd0 with two [skip ci] commits after it, contradicting its own run record, and the validation record referred to an evidence_head field that did not exist",
+        "fix": "the run section names 6e7ba4b6 as the tested source with one documentation commit after it, and the record carries delivery_head and evidence_head"
+      }
+    ],
+    "production_behaviour": "unchanged: the only production edit is a static accessor that returns the shipped kinds pointer unless the hook build replaces one row; the 21 pre-existing named cases still pass on all three platforms with the delivery's catalog digest",
+    "retained_failures": "none on this branch: the review run finished green on attempt 1; the delivery branch's four retained failures stay recorded above and none of them was repaired by editing an expectation",
+    "uncovered": [
+      "no shipped row declares a 'u' slot or more than three slots: those paths are executed only through the test-hook build, never through an installed row",
+      "host wiring, host UI, host string migration and accessibility-tree behaviour (root owns the four native hosts)",
+      "performance, memory and CPU budgets, real devices, simulators, audio and text-to-speech"
+    ],
+    "delivery_authentication": {
+      "method": "read-only GitHub API metadata for run 40127576739; no ZIP was downloaded, extracted or parsed locally",
+      "head_sha": "6e7ba4b64fc3a05fbd6a960e81df1bb7ef58d42c",
+      "run_attempt": 1,
+      "jobs_match_record": true,
+      "artifacts_match_record": true,
+      "artifacts_live": true,
+      "checked_at": "2026-10-25"
+    }
+  }
 }

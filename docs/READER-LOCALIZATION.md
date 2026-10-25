@@ -295,8 +295,8 @@ digests, and its artifacts stay available until 2027-01-22.
 
 The only commit after `6e7ba4b6` on the delivery branch is the documentation
 commit `e2e60f6e` (validation record, `[skip ci]`), so the tested source and the
-delivery HEAD differ only in `docs/`. The review branch record is appended as
-`## Independent review` below once its own three-desktop run has finished.
+delivery HEAD differ only in `docs/`. The independent review and its own
+three-desktop run are recorded in `## Independent review` below.
 
 Earlier failed runs on this branch are kept as evidence, with their jobs,
 artifacts, digests and the exact case that failed. None of them was repaired by
@@ -312,3 +312,56 @@ editing an expectation:
 Commits after a tested source are documentation-only and carry `[skip ci]`; a
 tested source is always the last non-documentation commit, never a
 documentation HEAD.
+
+## Independent review
+
+Reviewed at the exact delivery HEAD `e2e60f6e` (also
+`origin/codex/reader-localization`) in an independent worktree on branch
+`codex/reader-localization-review`. The delivery run 40127576739 was
+re-authenticated from read-only GitHub API metadata: its `head_sha`, attempt,
+four jobs and four artifacts (id, name, non-empty byte count, `sha256`, expiry)
+match the record above, and no ZIP was downloaded locally.
+
+The audit covered the strict formatter, the shipped catalog, both installed
+consumers, the hook worker and the digest oracle against the public contract:
+UTF-8 boundaries, signed and unsigned extremes, byte limits, template
+parameter binding, no re-substitution of user text, the two-pass transactional
+failure and measurement rule, the capacity-only exception, static ownership,
+thread safety and locale independence. Five defects were fixed:
+
+| id | defect | fix |
+| --- | --- | --- |
+| R1 | the header promised the slot-count limit as `ARGUMENT`, `VALUE_TOO_LONG` or `LIMIT` while the library refuses it as `CATALOG` | header and docs name `CATALOG` and state that it precedes every caller parameter |
+| R2 | header and docs listed `VALUE_INVALID` before `VALUE_TOO_LONG` while the byte limit is actually checked first | documented order matches the implementation and a fixture row pins it |
+| R3 | kind `u`, the `int64_t` and `uint64_t` extremes, the 8-slot maximum and the over-long-layout refusal were documented but unreachable from any shipped row | `reader_localization_test_kinds` in the hook build; case `unsigned-and-max-slots` executes all of them |
+| R4 | the 96/97-byte id boundary was only tested with a 120-byte id, and the UTF-8 boundaries lacked overlong, over-range and truncated four-byte values | two boundary rows plus five UTF-8 values in the installed C consumer |
+| R5 | the run section still claimed `aafb8fd0` as the tested source and the record referenced a missing `evidence_head` field | corrected, and the record now carries `delivery_head` and `evidence_head` |
+
+The digest oracle stays independent: `localization_fixtures.py` recomputes the
+catalog digest with `hashlib` from its own 62-row table, the installed consumer
+enumerates the library, and `catalog-digest-cross-implementation` compares the
+two. No expectation was relaxed, no limit was raised and no failing input was
+replaced.
+
+Review run **40168646569 / attempt 1** at tested source
+`e7a9a9cb0e03594430c79e92331e81bd81ec94bc`: 22/22 named checks green on
+Linux, Windows and macOS with identical case sets and the delivery catalog
+digest `41040fcc8a162eeecea1415dbee3710f708d3f0ffef0071aedb8bd291b5f4285`, so
+the resource pack and its serialization are untouched by the review. Jobs
+121094797682 (ubuntu-22.04), 121094797382 (windows-2022), 121094797640
+(macos-14) and 121094902214 (strict localization evidence) all succeeded on the
+first attempt; no run on this branch failed. The four artifacts (Linux 94604 B,
+Windows 366786 B, macOS 87485 B, summary 1390 B, all expiring 2027-01-23) and
+the per-platform library, consumer and hook-worker digests are in
+`validation/reader-localization.json` under `review`. The Linux library and the
+unchanged C++ consumer are byte-identical to the delivery run, while the edited
+C consumer and worker differ, which is what a real per-binary binding looks
+like.
+
+The only production edit is a static accessor that returns the shipped `kinds`
+pointer unless the hook build replaces one row, so production behaviour, the
+ABI, the ids, the layouts, both templates and the digest are unchanged. Still
+outside this package: host wiring, host strings, performance, real devices,
+audio and text-to-speech. A slot kind with no shipped row remains reachable
+only through the hook build, and that is stated rather than implied.
+
