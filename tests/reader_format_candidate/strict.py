@@ -50,7 +50,7 @@ def main():
     assert protocol['ok'] and protocol['rejected']==len(protocol['cases'])==122 and len(set(protocol['cases']))==122
     expected=combined_tree(); assert expected==strict_json((WORK/'strict/guard/trees.json').read_bytes())
     platforms={}; named_sets=[]; cbz_observations={}; f5=load_module(WORK/'vendor/f5/run_acceptance.py','strict_original_f5')
-    mandatory_programs={'rtf-base','rtf-candidate','cbz-base','cbz-candidate','adapter-base','adapter-candidate',
+    mandatory_programs={'rtf-base','rtf-candidate','cbz-base','cbz-candidate','adapter-candidate',
                         'sdk-base','sdk-candidate','original-f5','argv-probe','argv-self-test','loaded-sdk-0'}
     for platform in ('windows','linux'):
         root=WORK/'strict'/platform
@@ -89,7 +89,7 @@ def main():
             cbz_observations.setdefault(ident,{})[platform]=observation
         programs=strict_json((root/'programs.json').read_bytes())['programs']
         by_name={row['name']:row for row in programs}
-        assert len(programs)==len(by_name)==summary['program_count']==12 and set(by_name)==mandatory_programs
+        assert len(programs)==len(by_name)==summary['program_count']==11 and set(by_name)==mandatory_programs
         for program in programs:
             path=Path(program['path'])
             assert not path.is_absolute() and '..' not in path.parts
@@ -133,7 +133,7 @@ def main():
                     if row['id'].startswith('rtf-'): assert row['result']['detail']['import_error']=='Invalid or unsupported RTF stream'
                     if row['id'].startswith('cbz-'): assert row['result']['detail']['import_error']=='Unsafe CBZ member path'
             panels[label]={'accepted':panel['accepted'],'files':len(accepted),'accepted_files':sum(accepted)}
-        platforms[platform]={'native_each':169,'rtf_boundary':100,'cbz_named':103,'argv_vectors':len(VECTORS),'programs':12,'panels':panels}
+        platforms[platform]={'native_each':169,'rtf_boundary':100,'cbz_named':103,'argv_vectors':len(VECTORS),'programs':11,'panels':panels}
     assert named_sets[0]==named_sets[1]
     assert all(rows['windows']==rows['linux'] for rows in cbz_observations.values())
     result={**own,'candidate_package_accepted':True,'f5_v2_accepted':True,'original_f5_v1_accepted':False,

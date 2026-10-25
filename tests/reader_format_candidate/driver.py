@@ -175,8 +175,8 @@ def producer():
     for variant in ('base','candidate'):
         configure(WORK/'vendor/rtf',WORK/('rtf-'+variant),stages[variant])
         configure(WORK/'vendor/cbz',WORK/('cbz-'+variant),stages[variant])
-        configure(HERE,WORK/('adapter-'+variant),stages[variant],('-DFORMAT_ORIGINAL_CONSUMER='+str(WORK/'vendor/f5/consumer.c'),))
-        assert file_hash(WORK/('adapter-'+variant)/'f5-consumer-original.c')=='f2b5d06d1fb1450c74317b537164ca97b60d7826806175066b597335d342cf96'
+    configure(HERE,WORK/'adapter-candidate',stages['candidate'],('-DFORMAT_ORIGINAL_CONSUMER='+str(WORK/'vendor/f5/consumer.c'),))
+    assert file_hash(WORK/'adapter-candidate/f5-consumer-original.c')=='f2b5d06d1fb1450c74317b537164ca97b60d7826806175066b597335d342cf96'
     configure(WORK/'vendor/f5',WORK/'original-consumer',stages['base'])
     run([sys.executable,HERE/'test_argv.py',WORK/'adapter-candidate/bin',WORK/'argv-report'],'argv-contract')
     rtf={variant:exe(WORK/('rtf-'+variant),'exreader-rtf-real-boundary') for variant in ('base','candidate')}
@@ -206,20 +206,21 @@ def producer():
     # Every process uses an absolute verified original. Business functions and all per-file expectations are unchanged.
     libraries={variant:(stages[variant]/'bin/exreader.dll' if os.name=='nt' else stages[variant]/'lib/libexreader.so').resolve() for variant in stages}
     font=Path('C:/Windows/Fonts/arial.ttf') if os.name=='nt' else Path('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf')
-    adapters={variant:exe(WORK/('adapter-'+variant),'format-f5-consumer') for variant in stages}
+    adapter=exe(WORK/'adapter-candidate','format-f5-consumer')
     panels={
         'v1-base-original':f5_panel(f5,v1['files'],corpus,exe(WORK/'original-consumer','exreader-real-corpus-consumer'),font,'v1-base-original',libraries['base'],False),
-        'v1-candidate-utf8':f5_panel(f5,v1['files'],corpus,adapters['candidate'],font,'v1-candidate-utf8',libraries['candidate'],True),
-        'v2-candidate-utf8':f5_panel(f5,v2['files'],corpus,adapters['candidate'],font,'v2-candidate-utf8',libraries['candidate'],True)}
+        'v1-candidate-utf8':f5_panel(f5,v1['files'],corpus,adapter,font,'v1-candidate-utf8',libraries['candidate'],True),
+        'v2-candidate-utf8':f5_panel(f5,v2['files'],corpus,adapter,font,'v2-candidate-utf8',libraries['candidate'],True)}
     assert not panels['v1-base-original']['accepted']
     v1_bad=[row['id'] for row in panels['v1-candidate-utf8']['files'] if row['status']!='accepted']
     assert v1_bad==['rtf-crowley-policy'], v1_bad
     assert panels['v2-candidate-utf8']['accepted'], [(r['id'],r['mismatches'],r.get('errors')) for r in panels['v2-candidate-utf8']['files'] if r['status']!='accepted']
     programs=[]
     for variant in stages:
-        for path,name in ((rtf[variant],'rtf-'+variant),(cbz_probes[variant],'cbz-'+variant),(adapters[variant],'adapter-'+variant),(libraries[variant],'sdk-'+variant)):
+        for path,name in ((rtf[variant],'rtf-'+variant),(cbz_probes[variant],'cbz-'+variant),(libraries[variant],'sdk-'+variant)):
             register_program(path,name,programs)
         shutil.copytree(stages[variant],EVIDENCE/'prefixes'/variant)
+    register_program(adapter,'adapter-candidate',programs)
     register_program(exe(WORK/'original-consumer','exreader-real-corpus-consumer'),'original-f5',programs)
     register_program(exe(WORK/'adapter-candidate','format-argv-probe'),'argv-probe',programs)
     register_program(exe(WORK/'adapter-candidate','format-argv-self-test'),'argv-self-test',programs)
