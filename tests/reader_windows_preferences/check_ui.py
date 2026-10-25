@@ -241,7 +241,7 @@ class App(M.MetadataApp):
 
     def fit_page(self, target):
         target = tuple(target)
-        for _ in range(5):
+        for _ in range(6):
             current = page_client(self)
             if current == target:
                 return
@@ -388,8 +388,10 @@ def main():
         baseline.open('Reading sample')
         baseline.wait_idle()
         baseline_page = page_client(baseline)
-        target[0] = min(candidate_page[0], baseline_page[0]) - 2
-        target[1] = min(candidate_page[1], baseline_page[1]) - 2
+        # The smaller page is reachable from both hosts by growing the other
+        # one; asking for anything less would fight the window's minimum size.
+        target[0] = min(candidate_page[0], baseline_page[0])
+        target[1] = min(candidate_page[1], baseline_page[1])
         baseline.fit_page(target)
         right = baseline.page_shot('default-off.bmp', probes)
         baseline.close_app()
