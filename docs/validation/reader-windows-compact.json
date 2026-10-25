@@ -2,7 +2,10 @@
   "accepted": false,
   "branch": "codex/reader-windows-compact",
   "base": "25bc0c67971f81491f50e0a3caaaf7e509bb7e35",
-  "runs": [],
+  "runs": [
+    {"source":"7400fa4e91bf0cfe45946c55333103618da7c0af","run":40198400279,"attempt":1,"conclusion":"failure","reason":"compact ON compiled; early UI stage missing its reused uiautomation dependency; strict refused"}
+  ],
+  "earlier_cancelled_run": {"run":40197968923,"source":"1fd2a40c4535269ab6063448cc398585ad760963","reason":"small-window note editor geometry fix before native UI tests"},
   "scope": "independent Windows compact native UI plus complete original default-OFF regression",
   "default_enabled": false,
   "performance_accepted": false,

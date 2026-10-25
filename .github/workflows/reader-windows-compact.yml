@@ -114,6 +114,7 @@ jobs:
         run: |
           cmake -S apps/reader/windows-account -B build/compact-host -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.41.0 -DEXR_SDK="$WS/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage" -DREADER_METADATA_PREFIX="$WS_PREFIX" -DREADER_ACCOUNT_PREFIX="$WS_PREFIX" -DEXR_READER_WINDOWS_SEARCH=ON -DEXR_READER_WINDOWS_NAVIGATION=ON -DEXR_READER_WINDOWS_RECORDS=ON -DEXR_READER_WINDOWS_IMPORT_ORGANIZE=ON -DEXR_READER_WINDOWS_PREFERENCES=ON -DEXR_READER_WINDOWS_COMPACT=ON
           cmake --build build/compact-host --target EXReaderProduct
+          python3 -m pip install "uiautomation==2.0.29"
           python3 -c "from tools.host_font import fetch; fetch('build/host-font-cache')"
           python3 tests/reader_windows_preferences/make_fixtures.py --output build/compact-fixtures
           python3 tests/reader_windows_compact/check_ui.py --candidate build/compact-host/EXReaderProduct.exe --font build/host-font-cache/Reader.otf --fixtures build/compact-fixtures --output build/compact-ui

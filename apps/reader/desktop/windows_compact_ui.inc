@@ -156,7 +156,7 @@ static void compact_create(HWND parent) {
   AppendMenuW(library,MF_STRING,IDC_COMPACT_READ,L"继续阅读");
   AppendMenuW(library,MF_STRING,IDC_DELETE_BUTTON,L"删除所选书籍");
 #ifdef EXR_READER_DESKTOP_METADATA
-  AppendMenuW(library,MF_STRING,IDC_METADATA_BUTTON,L"书籍详情与分类…");
+  AppendMenuW(library,MF_STRING,IDC_METADATA_BUTTON,L"书籍详情…");
 #endif
 #ifdef EXR_READER_WINDOWS_ACCOUNT
   AppendMenuW(library,MF_STRING,IDC_ACCOUNT_BUTTON,L"同步账号…");
