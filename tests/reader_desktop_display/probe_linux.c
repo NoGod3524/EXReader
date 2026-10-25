@@ -73,6 +73,8 @@ int main(int argc,char **argv) {
   result("service_disconnect_unavailable",snapshot(l).state==EXR_DISPLAY_UNAVAILABLE && !snapshot(l).native_identity);
   exr_display_set_active(l,1); pump(100); result("missing_service_unavailable",snapshot(l).state==EXR_DISPLAY_UNAVAILABLE);
   command("Grab"); pump(100); result("reconnect_requires_retry",snapshot(l).state==EXR_DISPLAY_UNAVAILABLE);
+  gtk_widget_hide(w); focus(w); pump(200);
+  result("unavailable_visibility_no_retry",snapshot(l).state==EXR_DISPLAY_UNAVAILABLE && count("Count")==0);
   exr_display_set_active(l,1); pump(200); result("explicit_reconnect",snapshot(l).state==EXR_DISPLAY_OK && count("Count")==1);
   exr_display_cancel(l); mode("timeout"); exr_display_set_active(l,1); pump(2400);
   result("timeout_disconnect_cleans_cookie",snapshot(l).state==EXR_DISPLAY_UNAVAILABLE && count("Count")==0);

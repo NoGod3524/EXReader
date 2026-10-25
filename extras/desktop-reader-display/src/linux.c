@@ -115,7 +115,7 @@ static void refresh(exr_display_lease *l) {
   if(l->wanted && now_ms()>=l->deadline) { l->wanted=0; revoke_lease(l,EXR_DISPLAY_EXPIRED); }
   ok=l->wanted && eligible(l);
   if(!ok) {
-    if(l->was_eligible) revoke_lease(l,l->wanted?EXR_DISPLAY_INACTIVE:l->state);
+    if(l->was_eligible) revoke_lease(l,l->wanted && l->state!=EXR_DISPLAY_UNAVAILABLE?EXR_DISPLAY_INACTIVE:l->state);
     l->was_eligible=0; return;
   }
   l->was_eligible=1;
@@ -135,7 +135,7 @@ static void visibility(GtkWidget *w,gpointer p) { (void)w; refresh(p); }
 static void active_notify(GObject *w,GParamSpec *s,gpointer p) { (void)w; (void)s; refresh(p); }
 static gboolean state_event(GtkWidget *w,GdkEventWindowState *e,gpointer p) {
   exr_display_lease *l=p; (void)w;
-  if(e->new_window_state&GDK_WINDOW_STATE_ICONIFIED) { revoke_lease(l,EXR_DISPLAY_INACTIVE); l->was_eligible=0; }
+  if(e->new_window_state&GDK_WINDOW_STATE_ICONIFIED) { revoke_lease(l,l->wanted && l->state!=EXR_DISPLAY_UNAVAILABLE?EXR_DISPLAY_INACTIVE:l->state); l->was_eligible=0; }
   else refresh(l);
   return FALSE;
 }
