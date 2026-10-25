@@ -54,6 +54,13 @@ with zipfile.ZipFile(io.BytesIO(body)) as archive:
             held = [stop for stop in report['process_stops'] if stop.get('held_boundary')]
             assert len(held) == 4 and all(str(stop['instrumentation_pid']) in stop['pid_before_stop'].split() and not stop['pid_after_stop'] for stop in held)
             assert {stop['phase'] for stop in held} == {'kill-copy', 'kill-stable', 'kill-ready', 'kill-published'}
+            for stop in held:
+                marker_body = read(path + '/ui/' + stop['phase'] + '-boundary-marker.json')
+                marker = json.loads(marker_body)
+                assert marker == stop['boundary_marker'] and hashlib.sha256(marker_body).hexdigest() == stop['marker_sha256']
+                assert all(marker.get(key) == value for key, value in identity.items()) and marker['phase'] == stop['phase'] and marker['pid'] == stop['instrumentation_pid']
+                raw_boundary = read(path + '/ui/' + stop['phase'] + '-raw-report.json')
+                assert len(raw_boundary) == marker['report_bytes'] and hashlib.sha256(raw_boundary).hexdigest() == marker['report_sha256']
             all_checks = []
             for phase in report['phases']:
                 raw_phase = json.loads(read(path + '/ui/' + phase['phase'] + '-raw-report.json'))

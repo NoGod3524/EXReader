@@ -93,12 +93,23 @@ try:
                 if process.poll() is not None:
                     break
                 time.sleep(.1)
-            raw_boundary = private('host-import-' + phase + '.json')
-            save(phase + '-boundary-raw.json', raw_boundary)
             try:
+                marker_body = private('host-import-' + phase + '.boundary')
+                save(phase + '-boundary-marker.json', marker_body)
+                marker = json.loads(marker_body)
+                assert all(marker.get(key) == value for key, value in identity.items()) and marker['phase'] == phase
+                raw_boundary = private('host-import-' + phase + '.json')
+                save(phase + '-boundary-raw.json', raw_boundary)
+                assert len(raw_boundary) == marker['report_bytes'] and hashlib.sha256(raw_boundary).hexdigest() == marker['report_sha256']
                 boundary = json.loads(raw_boundary)
-            except json.JSONDecodeError:
-                print(raw_boundary.decode(errors='replace'), flush=True)
+            except (json.JSONDecodeError, AssertionError, subprocess.CalledProcessError):
+                raw_failure = private('host-import-' + phase + '.json')
+                save(phase + '-boundary-failed-report.txt', raw_failure)
+                try:
+                    failed = json.loads(raw_failure)
+                    print(json.dumps({key: failed.get(key) for key in ('phase', 'passed', 'count', 'failed_check', 'failure', 'failure_trace')}, ensure_ascii=False), flush=True)
+                except json.JSONDecodeError:
+                    print(raw_failure[:2048].decode(errors='replace'), flush=True)
                 save(phase + '-boundary-logcat.txt', adb('logcat', '-d', '-v', 'threadtime', '-t', '4000'))
                 adb('shell', 'am', 'force-stop', package)
                 output, _ = process.communicate(timeout=30)
@@ -113,11 +124,11 @@ try:
                 print(json.dumps(boundary, ensure_ascii=False), flush=True)
                 raise AssertionError('device boundary check failed')
             before = adb('shell', 'pidof', package).decode().strip()
-            assert boundary['passed'] is True and str(boundary['pid']) in before.split()
+            assert boundary['passed'] is True and boundary['pid'] == marker['pid'] and str(boundary['pid']) in before.split()
             adb('shell', 'am', 'force-stop', package)
             after = subprocess.run(['adb', 'shell', 'pidof', package], capture_output=True, text=True, timeout=10).stdout.strip()
             assert not after
-            boundary_stop = {'phase': phase, 'instrumentation_pid': boundary['pid'], 'pid_before_stop': before, 'pid_after_stop': after, 'force_stop': True, 'held_boundary': True}
+            boundary_stop = {'phase': phase, 'instrumentation_pid': boundary['pid'], 'pid_before_stop': before, 'pid_after_stop': after, 'force_stop': True, 'held_boundary': True, 'boundary_marker': marker, 'marker_sha256': hashlib.sha256(marker_body).hexdigest()}
             document = {'kill-copy': 'txt-slow', 'kill-stable': 'txt-stable', 'kill-ready': 'txt-ready', 'kill-published': 'txt-published'}[phase]
             adb('shell', 'am', 'broadcast', '-f', '32', '-n', source + '/.ControlReceiver', '--es', 'cmd', 'revoke', '--es', 'doc', document)
             output, _ = process.communicate(timeout=30)
