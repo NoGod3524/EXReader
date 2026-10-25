@@ -1,0 +1,171 @@
+name: Reader next C05 Windows FB2 find attribution
+on:
+  push:
+    branches: [codex/reader-next-c05]
+    paths:
+      - candidates/reader-next-c05/**
+      - tests/reader_next_c05/**
+      - .github/workflows/reader-next-c05.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+env:
+  START_COMMIT: e67d87cbeabb2457e0852f681ef0b27b2c0da4d8
+  SDK_341: edddc463c06ed5731195cdb8f06b2df6dff7699e
+  PYTHONIOENCODING: utf-8
+jobs:
+  guard:
+    name: syntax, owned paths and unchanged SDK tree
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Only the C05 owned paths changed from the fixed start
+        run: |
+          git cat-file -e "$START_COMMIT^{commit}"
+          git merge-base --is-ancestor "$START_COMMIT" HEAD
+          bad=$(git diff --name-only "$START_COMMIT" HEAD | grep -Ev '^(candidates/reader-next-c05/|tests/reader_next_c05/|\.github/workflows/reader-next-c05\.yml$|docs/reader-next-c05/|HANDOFF-RESULT-C05\.md$)' || true)
+          if [ -n "$bad" ]; then echo "paths outside C05 ownership:"; echo "$bad"; exit 1; fi
+          git diff --exit-code "$SDK_341" HEAD -- src include cmake CMakeLists.txt
+      - name: Python syntax, workflow structure and judging self-test
+        run: |
+          python3 -m pip install 'PyYAML==6.0.3'
+          python3 -m py_compile tests/reader_next_c05/c05.py
+          python3 tests/reader_next_c05/c05.py selftest
+          python3 - <<'PY'
+          from pathlib import Path
+          import yaml
+          value = yaml.load(Path('.github/workflows/reader-next-c05.yml').read_text(), Loader=yaml.BaseLoader)
+          assert set(value['jobs']) == {'guard', 'probe', 'aggregate'}
+          PY
+  probe:
+    needs: guard
+    name: probe (${{ matrix.key }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            key: windows
+            py: python
+            font: C:/Windows/Fonts/arial.ttf
+            consumer: build/c05-consumer/Release/c05-fb2-probe.exe
+            control: build/c05-control/Release/c05-fb2-probe.exe
+            original: build/orig341/Release/exreader-real-corpus-consumer.exe
+            exact_argv: ''
+          - os: ubuntu-22.04
+            key: linux
+            py: python3
+            font: /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
+            consumer: build/c05-consumer/c05-fb2-probe
+            control: ''
+            original: build/orig341/exreader-real-corpus-consumer
+            exact_argv: --require-exact-argv
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Approved SDK 3.41 source in an isolated checkout
+        run: |
+          git worktree add --detach sdk-src/341 "$SDK_341"
+          test "$(git -C sdk-src/341 rev-parse HEAD)" = "$SDK_341"
+          git diff --exit-code "$SDK_341" HEAD -- src include cmake CMakeLists.txt
+          mkdir -p build/c05
+      - name: Build and install the approved SDK
+        run: |
+          cmake -S sdk-src/341 -B build/sdk341 -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_ENABLE_AAC=OFF
+          cmake --build build/sdk341 --config Release --parallel 4
+          cmake --install build/sdk341 --config Release --prefix "$GITHUB_WORKSPACE/stage341"
+      - name: Fix the F5 identity and pin the two original FB2 files
+        run: ${{ matrix.py }} tests/reader_next_c05/c05.py prepare --out build/c05/prepared
+      - name: Build the new consumer entry against the installed SDK
+        run: |
+          cmake -S candidates/reader-next-c05 -B build/c05-consumer -DEXR_SDK="$GITHUB_WORKSPACE/stage341" -DCMAKE_BUILD_TYPE=Release -DC05_SOURCE_UTF8=ON
+          cmake --build build/c05-consumer --config Release --parallel 4
+      - name: Build the unmodified F5 consumer from its fixed source
+        run: |
+          cmake -S build/c05/prepared/orig-consumer-src -B build/orig341 -DEXR_SDK="$GITHUB_WORKSPACE/stage341" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/orig341 --config Release --parallel 4
+      - name: Build the source-charset control (diagnostic, not a gate)
+        if: matrix.control != ''
+        continue-on-error: true
+        run: |
+          cmake -S candidates/reader-next-c05 -B build/c05-control -DEXR_SDK="$GITHUB_WORKSPACE/stage341" -DCMAKE_BUILD_TYPE=Release -DC05_SOURCE_UTF8=OFF
+          cmake --build build/c05-control --config Release --parallel 4
+      - name: Record program identity
+        run: |
+          {
+            echo "source_head=$(git rev-parse HEAD)"
+            echo "sdk_source=$(git -C sdk-src/341 rev-parse HEAD)"
+            echo "runner_image=${ImageVersion:-unknown}"
+            sha256sum "${{ matrix.consumer }}" "${{ matrix.original }}"
+            if [ -n "${{ matrix.control }}" ] && [ -f "${{ matrix.control }}" ]; then sha256sum "${{ matrix.control }}"; fi
+            find stage341 -type f \( -name '*.dll' -o -name '*.lib' -o -name '*.a' -o -name '*.so*' -o -name '*.h' -o -name '*.cmake' \) | sort | xargs sha256sum
+          } > build/c05/programs.txt
+          cat build/c05/programs.txt
+      - name: Reproduce the retained F5 failure with the original consumer
+        continue-on-error: true
+        run: |
+          ${{ matrix.py }} tests/reader_next_c05/c05.py repro --prepared build/c05/prepared --consumer "${{ matrix.original }}" --font "${{ matrix.font }}" --out build/c05/repro-original --platform ${{ matrix.key }} --sdk-label 3.41-edddc463
+      - name: Run the new consumer on the originals and the synthetic fixtures
+        id: gate
+        continue-on-error: true
+        run: |
+          ${{ matrix.py }} tests/reader_next_c05/c05.py run --prepared build/c05/prepared --consumer "${{ matrix.consumer }}" --out build/c05/run --platform ${{ matrix.key }} --source-commit "$GITHUB_SHA" --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" --sdk-label 3.41-edddc463 ${{ matrix.exact_argv }}
+      - name: Source-charset control run (diagnostic, not a gate)
+        if: matrix.control != ''
+        continue-on-error: true
+        run: |
+          ${{ matrix.py }} tests/reader_next_c05/c05.py run --prepared build/c05/prepared --consumer "${{ matrix.control }}" --out build/c05/control-run --platform ${{ matrix.key }}-control --source-commit "$GITHUB_SHA" --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" --sdk-label 3.41-edddc463-no-utf8
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c05-${{ matrix.key }}
+          path: |
+            build/c05/programs.txt
+            build/c05/prepared/identity.json
+            build/c05/prepared/assets/
+            build/c05/repro-original/
+            build/c05/run/
+            build/c05/control-run/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Fail unless every named check passed
+        run: |
+          ${{ matrix.py }} - <<'PY'
+          import json, sys
+          s = json.load(open('build/c05/run/summary.json'))
+          print('accepted', s['accepted'], 'checks', s['checks_total'], 'failed', len(s['checks_failed']))
+          sys.exit(0 if s['accepted'] else 1)
+          PY
+  aggregate:
+    needs: probe
+    if: always() && needs.probe.result != 'skipped'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: c05-*
+          path: build/artifacts
+      - name: Cross-platform comparison of identity and projections
+        run: |
+          set -eu
+          win=$(find build/artifacts -path '*c05-windows*' -path '*/run/summary.json' -print -quit)
+          lin=$(find build/artifacts -path '*c05-linux*' -path '*/run/summary.json' -print -quit)
+          test -n "$win"; test -n "$lin"
+          python3 tests/reader_next_c05/c05.py aggregate --summaries "$win" "$lin" --out build/aggregate.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c05-aggregate
+          path: build/aggregate.json
+          retention-days: 30
