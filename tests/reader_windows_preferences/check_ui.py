@@ -460,12 +460,14 @@ def main():
         dark = app.page_shot('picture-dark.bmp', probes)
 
         def authored(image):
+            # Only fully opaque interior samples: scaled edges blend with the
+            # page canvas by design and are not authored image pixels.
             return {(x, y) for x in range(dx + 2, dx + width - 2, 2)
                     for y in range(dy + 2, dy + height - 2, 2)
-                    if near(at(image, x, y), (51, 102, 204), 26)}
+                    if near(at(image, x, y), (51, 102, 204), 6)}
 
         picture_light, picture_dark = authored(light), authored(dark)
-        same = all(near(at(light, x, y), at(dark, x, y), 10) for x, y in list(picture_light)[:300])
+        same = all(near(at(light, x, y), at(dark, x, y), 2) for x, y in list(picture_light)[:300])
         record('authored-image-interior-preserved',
                len(picture_light) > 40 and picture_light == picture_dark and same,
                dict(pixels=len(picture_light)))
