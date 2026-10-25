@@ -105,6 +105,16 @@ def survey(data):
     out["distinct_words"] = len(words)
     out["words_top"] = words.most_common(40)
     out["identity_controls"] = identity_controls
+    out["query_literal_contexts"] = []
+    for keyword in (b"Policy", b"Procedure", b"TTR", b"policy", b"procedure"):
+        start = 0
+        for _ in range(12):
+            at = data.find(keyword, start)
+            if at < 0:
+                break
+            out["query_literal_contexts"].append({"keyword": keyword.decode('ascii'), "offset": at,
+                                                 "context": data[max(0, at-120):min(n, at+160)].decode('latin-1')})
+            start = at + len(keyword)
     return out
 
 
@@ -117,6 +127,7 @@ def main():
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2))
+    print('C04-KEYWORDS ' + json.dumps({name: row['query_literal_contexts'] for name, row in report['files'].items()}))
     return 0
 
 
