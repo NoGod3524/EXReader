@@ -26,7 +26,7 @@ def run(args, log=None, **kwargs):
                        stderr=subprocess.STDOUT, **kwargs)
     if log:
         Path(log).write_text(p.stdout)
-    print(p.stdout, flush=True)
+    print(p.stdout if len(p.stdout) <= 12000 else p.stdout[-12000:], flush=True)
     p.check_returncode()
     return p.stdout.strip()
 
@@ -41,6 +41,7 @@ def wait_json(path, stage=None, seconds=90):
         if path.exists():
             data = json.loads(path.read_text())
             if stage is None or data.get('stage') == stage:
+                print('D06_NATIVE_PHASE='+json.dumps(data,sort_keys=True),flush=True)
                 return data
         time.sleep(.5)
     raise RuntimeError(f'Timed out waiting for real native report {path} stage={stage}')

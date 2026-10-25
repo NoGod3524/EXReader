@@ -32,7 +32,7 @@ int main(int argc, const char **argv) {
         if ([mode isEqual:@"hold"]) {
             st = [a setEnabled:YES hostActive:YES brightness:nil];
             writeJSON(@{@"identity":identity(), @"status":@(st), @"snapshot":snapshot(a),
-                @"queriedProperties":@(properties(a) != nil)}, out);
+                @"queriedProperties":properties(a) != nil ? @YES : @NO}, out);
             if (st != ADRStatusOK) return 3;
             for (;;) pause(); // Bounded by Actions supervisor; SIGKILL is intentional.
         }
