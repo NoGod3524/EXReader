@@ -180,9 +180,15 @@ def main():
     for phase in (2,3):
         killed_owner(raw_exe,old_exe,OUT/('owner-kill-'+str(phase)),pdf,phase)
     killed_owner(old_exe,raw_exe,OUT/'owner-legacy-kill',pdf,2,legacy=True)
+    run([sys.executable,ROOT/'tests/reader_windows_raw3/network.py',
+         '--candidate',OUT/'raw-host/EXReaderProduct.exe','--font',ROOT/'build/host-font-cache/Reader.otf',
+         '--output',OUT/'mac-network-receive'],'actual-account-window-mac-receive',900)
+    network=json.loads((OUT/'mac-network-receive/report.json').read_text(encoding='utf-8'))
+    if network.get('accepted') is not True:raise RuntimeError('Actual Mac network receive failed')
     result=dict(source_sha=os.environ['GITHUB_SHA'],run_id=os.environ['GITHUB_RUN_ID'],attempt=os.environ['GITHUB_RUN_ATTEMPT'],
                 installed_host_build_passed=True,original_bulk_profiles_passed=True,profiles=profiles,
                 actual_owner_profiles_passed=True,actual_owner_process_kill_recovery_passed=True,
+                actual_account_window_mac_receive_passed=True,
                 host_raw3_accepted=False,scope='actual installed host build/link, original compact UI and bulk regressions, and owner recovery; no complete host/interoperability grant')
     (OUT/'report.json').write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps(result),flush=True)
