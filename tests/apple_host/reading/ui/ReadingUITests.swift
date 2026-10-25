@@ -84,7 +84,12 @@ final class ReadingUITests: XCTestCase {
     func testHighlightEditDeleteAndExplicitRestore() {
         openFixture(); let location = text("reader.location"), frame = text("reader.page")
         highlight(); records(); XCTAssertEqual(text("reading.kind.0"), "高亮"); mark("product-highlight")
-        tap("reading.edit.0"); tap("reading.editor"); element("reading.editor").typeText("Retained reader note")
+        tap("reading.edit.0")
+        // AppKit TextEditor exposes no enabled AX action like a button.
+        // Exercise its actual text input; the saved body below is the oracle.
+        let editor = app.textViews.matching(identifier: "reading.editor").firstMatch
+        XCTAssertTrue(wait { editor.exists && editor.isHittable }, "Note editor not reachable: \(app.debugDescription)")
+        editor.tap(); editor.typeText("Retained reader note")
         tap("reading.save-note"); complete("批注已保存")
         XCTAssertEqual(text("reading.kind.0"), "批注"); XCTAssertTrue(text("reading.body.0").contains("Retained reader note"))
         mark("selector-preserving-note-edit")
