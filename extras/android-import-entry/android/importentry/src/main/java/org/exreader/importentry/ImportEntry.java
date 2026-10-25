@@ -267,17 +267,23 @@ public final class ImportEntry {
     // ---- copy thread -------------------------------------------------------------------------------------
 
     private void run(ImportTicket ticket, String mimeHint) {
+        if (!ticket.begin() || ticket.cancelRequested()) {
+            finish(ticket, null, new ImportError(ImportError.Code.CANCELLED, "Cancelled before start"));
+            return;
+        }
+        ReadyRequest copied;
         try {
-            if (!ticket.begin() || ticket.cancelRequested()) {
-                finish(ticket, null, new ImportError(ImportError.Code.CANCELLED, "Cancelled before start"));
-                return;
-            }
-            finish(ticket, copy(ticket, mimeHint), null);
+            copied = copy(ticket, mimeHint);
         } catch (Failure f) {
             finish(ticket, null, new ImportError(f.code, f.getMessage()));
+            return;
         } catch (RuntimeException e) {
             finish(ticket, null, new ImportError(ImportError.Code.IO, String.valueOf(e)));
+            return;
         }
+        // Owner/executor failures are not copy failures and cannot retract a
+        // committed ticket or manufacture a second terminal notification.
+        finish(ticket, copied, null);
     }
 
     private static final class Failure extends Exception {
@@ -631,7 +637,12 @@ public final class ImportEntry {
     private void deliver(ImportTicket ticket, ReadyRequest request, ImportError error) {
         try {
             ownerExecutor.execute(() -> {
-                if (request != null) owner.onReady(ticket, request); else owner.onFailed(ticket, error);
+                try {
+                    if (request != null) owner.onReady(ticket, request); else owner.onFailed(ticket, error);
+                } catch (RuntimeException ignored) {
+                    // Notification already happened. Keep a ready lease available
+                    // for explicit cleanup/recovery; never call the owner twice.
+                }
             });
         } catch (RejectedExecutionException ignored) {
             // The host closed its executor; nothing is left to notify. A ready file stays listed for pendingReady().

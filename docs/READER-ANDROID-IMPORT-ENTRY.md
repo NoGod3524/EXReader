@@ -8,6 +8,10 @@
 
 review首轮 source `206f89045a9c64c5f6188643f8e2117320a1a346` / run `40160142660` 的guards与编译通过，设备92项通过、1项失败：原78项、20k竞争、全部lease反例、小报长度和32次可靠pipe IO均通过；新增FD总量检查107→118，超出原定baseline+4。失败及工件保留，阈值不变。回归现先做一次真实分享取得grant及IO预热，再在同一Activity/已授予URI上直接提交32次真实provider复制，避免把反复创建分享窗口的资源混进pipe比较；两端FD清单用`/proc/self/fd`真实readlink留存。此调整尚待云端，不把107→118解释为已排除泄漏。
 
+source `36021cce35f90b8439f85967075bd34c7d867306` / run `40160762696` 的guards、android、summary三作业均success；94/94设备检查，41项具名必需项齐全、problems=[]。summary在Actions内实际核对两个上游job身份与ZIP完整字节/SHA/有效期。该源的通过数不覆盖接下来的callback修复。
+
+同轮复审确认：direct Executor下onReady抛RuntimeException原本会被复制catch误当IO，再通知onFailed。现把copy/发布异常和finish/deliver分开；回调RuntimeException在一次通知后被包含，COMMITTED不撤回、ready lease仍供显式清理/恢复，不再伪造第二次失败。新增真实provider两请求/direct Executor负例：第一onReady主动抛出，第二请求是串行worker排空屏障，严格核两个票据各一次Ready、零Failed、首票COMMITTED及两lease最终清理。最终源码需新的完整三作业，当前仍accepted=false。
+
 `extras/android-import-entry`是可选独立模块，不进入默认SDK构建，不改变SDK3.40.0／ABI1／schema7，
 不修改`examples/android`、现有Android owner或`extras/sideload`。它由两部分组成：
 
@@ -36,6 +40,7 @@ review首轮 source `206f89045a9c64c5f6188643f8e2117320a1a346` / run `4016014266
 
 **线程与重入。** 所有`ImportEntry`方法可从任意线程调用。`create`／`release`执行私有文件系统I/O，宿主应在UI线程之外调用；其余方法不直接执行provider I/O，但可能等待内部发布锁。复制在一个私有线程进行（一次一个文件）。
 回调运行在宿主提供的`Executor`（缺省主线程），不持有内部锁，可重入调用`release`／`submit`。
+宿主回调抛出的RuntimeException不会变成provider IO或第二次终态通知；已交付ready lease保留，宿主通过pendingReady/release处理。宿主应在回调中自行记录和展示自己的SDK错误。
 复制线程不运行任何宿主SDK代码；宿主应把owner executor设为其唯一SDK线程。`exr_android_import_commit`同步执行，
 只能在拥有该`exr_library`的线程调用；范例桥接用`pthread_equal`拒绝其他线程（返回`EXR_ARGUMENT`）。
 同一staging目录同时只能有一个存活entry（进程内登记＋跨进程文件锁）。
