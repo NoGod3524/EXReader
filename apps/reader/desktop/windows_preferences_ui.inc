@@ -46,7 +46,8 @@ static void prefs_integer(HWND entry, int value) {
 
 static void prefs_color_text(HWND entry, const uint8_t rgba[4]) {
   wchar_t text[16];
-  swprintf(text, 16, L"#%02X%02X%02X%02X", rgba[0], rgba[1], rgba[2], rgba[3]);
+  swprintf(text, 16, L"#%02X%02X%02X%02X", (unsigned)rgba[0], (unsigned)rgba[1],
+           (unsigned)rgba[2], (unsigned)rgba[3]);
   SetWindowTextW(entry, text);
 }
 
