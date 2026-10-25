@@ -17,7 +17,7 @@ def main():
     includes=[ROOT/'include',ROOT/'apps/reader/desktop',ROOT/'apps/reader/store/native']
     includes += [ROOT/'apps/reader'/module/'include' for module in (
         'desktop-metadata','revisions','commands','reading-state','reading-commands','annotation-view','sync','session')]
-    includes += [ROOT/'extras'/module/'include' for module in ('credentials','sideload')]
+    includes += [ROOT/'extras'/module/'include' for module in ('credentials','sideload','webdav')]
     results=[]
     for raw in (False,True):
         name='raw' if raw else 'legacy'
