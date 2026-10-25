@@ -49,7 +49,8 @@ import java.util.concurrent.RejectedExecutionException;
  * file; 64 URIs per intent; 64 unfinished tickets; 32 unreleased ready requests; one copy at a time; a read that
  * makes no progress for {@code stallTimeoutMillis} fails with IO.
  *
- * <p>Threading: every method may be called from any thread and none blocks on I/O. Copying runs on one private
+ * <p>Threading: every method may be called from any thread. create/release do private filesystem I/O and should
+ * run off the UI thread; submit/cancel/close only queue or change state. Copying runs on one private
  * thread. Owner callbacks run on the host executor. One entry per staging directory (enforced in-process and by
  * a file lock across processes).
  *
@@ -84,6 +85,7 @@ public final class ImportEntry {
     private final Object lock = new Object();
     private final Map<ImportTicket, Boolean> tickets = new LinkedHashMap<>();
     private final Map<String, ReadyRequest> ready = new LinkedHashMap<>();
+    private final Map<ReadyRequest, Boolean> leases = new LinkedHashMap<>();
     private final String registryKey;
     private final RandomAccessFile lockFile;
     private final FileLock fileLock;
@@ -214,21 +216,25 @@ public final class ImportEntry {
         return rejected(uri, refusal, refusal == ImportError.Code.BACKLOG ? "Too many unfinished tickets" : "Entry is closed");
     }
 
-    /** Ready files not yet released, including those left by a previous process. Order: oldest first. */
+    /** Unreleased request leases, oldest first. Duplicate content has distinct leases sharing one file. */
     public List<ReadyRequest> pendingReady() {
-        synchronized (lock) { return new ArrayList<>(ready.values()); }
+        synchronized (lock) { return new ArrayList<>(leases.keySet()); }
     }
 
     /**
-     * Deletes the staged file once the host has imported or abandoned it. Idempotent; thread-safe. Never call it
+     * Releases this exact entry-owned lease; deletes its file only after the last lease. Foreign, stale and
+     * repeated releases are ignored. Never call it
      * before the host SDK call that reads {@code request.file()} has returned.
      */
     public void release(ReadyRequest request) {
         if (request == null) return;
         synchronized (lock) {
+            if (leases.remove(request) == null) return;
+            for (ReadyRequest remaining : leases.keySet()) if (remaining.id().equals(request.id())) return;
             ready.remove(request.id());
-            deleteQuietly(sidecar(request.file()));
-            deleteQuietly(request.file());
+            File owned = new File(readyDir, request.id());
+            deleteQuietly(sidecar(owned));
+            deleteQuietly(owned);
         }
     }
 
@@ -242,9 +248,15 @@ public final class ImportEntry {
         }
         for (ImportTicket t : open) t.cancel();
         worker.execute(() -> {
-            try { fileLock.release(); } catch (IOException ignored) { }
-            try { lockFile.close(); } catch (IOException ignored) { }
-            synchronized (OPEN) { OPEN.remove(registryKey); }
+            synchronized (lock) {
+                // Published files survive close for recovery. Old request objects
+                // cannot delete files after a new entry takes ownership.
+                leases.clear();
+                ready.clear();
+                try { fileLock.release(); } catch (IOException ignored) { }
+                try { lockFile.close(); } catch (IOException ignored) { }
+                synchronized (OPEN) { OPEN.remove(registryKey); }
+            }
         });
         worker.shutdown();
     }
@@ -323,7 +335,9 @@ public final class ImportEntry {
                 while (true) {
                     if (ticket.cancelRequested()) throw new Failure(ImportError.Code.CANCELLED, "Cancelled");
                     int want = COPY_BUFFER_BYTES;
-                    if (declared >= 0) want = (int) Math.min(want, declared - total);
+                    // Only the descriptor's actual asset range bounds reads;
+                    // advisory query SIZE must never silently truncate a pipe.
+                    if (length >= 0) want = (int) Math.min(want, length - total);
                     if (want <= 0) break;
                     if (!waitReadable(fd)) {
                         if ((System.nanoTime() - idleSince) / 1_000_000L > stallTimeoutMillis)
@@ -347,15 +361,13 @@ public final class ImportEntry {
                 }
                 if (total == 0) throw new Failure(ImportError.Code.EMPTY, "Provider returned no bytes");
                 if (declared >= 0 && total != declared)
-                    throw new Failure(ImportError.Code.IO, "Stream ended before its declared length");
+                    throw new Failure(ImportError.Code.IO, "Stream differs from its declared length");
                 out.getFD().sync();
             }
             // Closing a reliable pipe reports a writer-side error; that must fail the copy before any publish.
-            AssetFileDescriptor finished = afd;
-            afd = null;
-            try {
+            try (AssetFileDescriptor finished = afd) {
+                afd = null;
                 finished.getParcelFileDescriptor().checkError();
-                finished.close();
             } catch (IOException e) {
                 throw new Failure(ImportError.Code.IO, "Provider reported a stream error");
             }
@@ -364,7 +376,7 @@ public final class ImportEntry {
             ReadyRequest request;
             synchronized (lock) {
                 ReadyRequest existing = ready.get(id);
-                if (existing == null && ready.size() >= MAX_READY)
+                if (leases.size() >= MAX_READY)
                     throw new Failure(ImportError.Code.BACKLOG, "Too many unreleased ready requests");
                 if (!ticket.commit()) throw new Failure(ImportError.Code.CANCELLED, "Cancelled before publish");
                 if (existing != null && target.length() == total) {
@@ -377,6 +389,7 @@ public final class ImportEntry {
                     ready.put(id, request);
                     published = true;
                 }
+                leases.put(request, Boolean.TRUE);
             }
             return request;
         } catch (FileNotFoundException e) {
@@ -548,7 +561,9 @@ public final class ImportEntry {
                 deleteQuietly(f);
                 continue;
             }
-            ready.put(name, new ReadyRequest(name, f, format, f.length(), readSidecar(f), false));
+            ReadyRequest recovered = new ReadyRequest(name, f, format, f.length(), readSidecar(f), false);
+            ready.put(name, recovered);
+            leases.put(recovered, Boolean.TRUE);
         }
         File[] again = readyDir.listFiles();
         if (again != null) for (File f : again) {

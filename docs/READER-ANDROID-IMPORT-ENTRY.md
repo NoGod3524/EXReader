@@ -1,5 +1,11 @@
 # Android 分享、打开与 SAF 文件入口
 
+## Root复审候选
+
+独立分支 `codex/reader-android-import-entry-review` 从原交回HEAD `635ddcb3f865059fd481f8deb9f7927e75743c6d` 开始；未修改原外部工作树或宿主。原 `4b7ba6f3` / run `40140183174` 的78项证据仅归原源码。本次review修复尚待新的三作业云端运行，`accepted=false`。
+
+修复四个实际问题：ticket取消与提交共用同一短锁，防止cancel返回true后仍发布；每个ReadyRequest是独立entry-owned lease，重复内容共享单一私有文件且仅最后lease删除，foreign/stale/repeated release无效；可靠pipe的checkError异常也必须关闭描述符；query.SIZE小报不得把未知长度pipe前缀当完整原件。保留原78项断言，新增20,000次真实双线程竞争、积压重复回调/跨entry/跨close代际lease、32次真实可靠pipe错误FD计数，以及小报长度拒绝。汇总另认证当前attempt的上游作业和原ZIP id/字节/digest/有效期，在Actions内重算散列后读取报告。
+
 `extras/android-import-entry`是可选独立模块，不进入默认SDK构建，不改变SDK3.40.0／ABI1／schema7，
 不修改`examples/android`、现有Android owner或`extras/sideload`。它由两部分组成：
 
@@ -20,13 +26,13 @@
 **输出。** 每张`ImportTicket`恰好得到一次回调：`onReady(ticket, ReadyRequest)`或`onFailed(ticket, ImportError)`。
 `ReadyRequest`含内容身份`id`＝`<SHA-256>.<扩展名>`、私有文件、`ImportFormat`（`exrCode()`即原生`exr_format`）、
 字节数、清洗后的标题提示（至多256字节UTF-8，无分隔符与控制字符）和`alreadyStaged`。
-文件名只由内容决定，provider给的名字从不进入路径。
+文件名只由内容决定，provider给的名字从不进入路径。每次交付取得不同ReadyRequest lease；相同id共用文件，release只消耗传入的本entry lease，最后一个lease释放才删除。`pendingReady()`列出所有未释放lease，同内容可能重复出现；重复读取该列表不增加lease。32个就绪请求上限按lease数计。
 
 **内存。** 复制缓冲固定64 KiB，每次复制恰好一块；不做整文件分配；SHA-256流式计算。staging为
 `<filesDir>/exr-import/{tmp,ready,lock}`。就绪文件归entry所有，直到宿主调用`release(request)`；
 宿主在SDK调用返回前不得释放。原生`exr_android_import_request`中的字符串仅在调用期间借用。
 
-**线程与重入。** 所有`ImportEntry`方法可从任意线程调用且不做阻塞I/O。复制在一个私有线程进行（一次一个文件）。
+**线程与重入。** 所有`ImportEntry`方法可从任意线程调用。`create`／`release`执行私有文件系统I/O，宿主应在UI线程之外调用；其余方法不直接执行provider I/O，但可能等待内部发布锁。复制在一个私有线程进行（一次一个文件）。
 回调运行在宿主提供的`Executor`（缺省主线程），不持有内部锁，可重入调用`release`／`submit`。
 复制线程不运行任何宿主SDK代码；宿主应把owner executor设为其唯一SDK线程。`exr_android_import_commit`同步执行，
 只能在拥有该`exr_library`的线程调用；范例桥接用`pthread_equal`拒绝其他线程（返回`EXR_ARGUMENT`）。
@@ -37,9 +43,11 @@ provider中途报错、停滞超过30秒、早于声明长度结束）、`EMPTY`
 失败时不留任何临时或就绪文件。
 
 **取消与提交边界。** `ticket.cancel()`在原子发布前有效，即使provider停滞也在约250 ms内生效并删除临时文件。
-提交边界是`ticket.commit()`：发布（`fsync`后`ATOMIC_MOVE`到`ready/<id>`）之前取消成功，之后`cancel()`返回false，
+取消与`ticket.commit()`的进入共用同一短锁；commit进入后开始不可撤回的发布阶段（`fsync`后`ATOMIC_MOVE`到`ready/<id>`），之后`cancel()`返回false，
 已发布文件不会被撤回，宿主改为`release`。`close()`取消全部未提交票据（各得一次`CANCELLED`），可重复调用，
-异步释放staging锁。`exr_android_import_commit`在SDK提交后不会伪报取消。
+异步释放staging锁。锁移交前清除旧entry的lease表，之后旧ReadyRequest不能删除新entry恢复的文件；已发布文件仍供新entry恢复。宿主须先排空/停止旧owner的SDK工作再切换entry。`exr_android_import_commit`在SDK提交后不会伪报取消。
+
+250ms取消切片与30秒停滞检测覆盖已经打开描述符后的poll/read复制；当前同步ContentResolver.query/getType/open Binder调用没有内部超时或取消信号，不保证恶意/无响应provider在这些阶段的取消时限。现有停滞取消用例不覆盖该缺口。
 
 **生命周期。** 票据不绑定Activity：旋转或关闭界面不会中断复制。重建的Activity不得重新提交已提交的intent
 （范例以`savedInstanceState != null`判断）。进程被终止后，下次`create`删除所有`tmp/`残留；已发布但未交付的文件由
@@ -49,7 +57,7 @@ Intent授权覆盖接收任务：须在finish接收Activity之前调用`submit`�
 
 **硬上限。** 64 KiB缓冲；TXT／HTML／FB2／DOCX／RTF／MOBI 32 MiB，EPUB／CBZ／PDF 128 MiB
 （与`exr_sideload.h`的`EXR_SIDELOAD_MEMORY_LIMIT`／`STREAM_LIMIT`一致，原生组件再次校验）；声明长度超限在读取前即拒绝，
-未知长度在流中超限即拒绝；每个intent 64个URI；未完成票据64个；未释放就绪请求32个；停滞超时30秒。
+未知长度在流中超限即拒绝；query.SIZE只用于限额及最终长度核对，只有AssetFileDescriptor实际子区间长度可以截定读取边界；每个intent 64个URI；未完成票据64个；未释放就绪lease32个；已打开描述符的停滞超时30秒。
 
 ## 宿主接入
 

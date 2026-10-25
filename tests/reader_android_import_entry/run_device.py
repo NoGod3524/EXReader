@@ -241,7 +241,7 @@ def s_hostile_name(output):
 
 @scenario
 def s_failures(output):
-    cases = [('txt-error', 'IO'), ('txt-truncated', 'IO'), ('txt-33m', 'LIMIT'), ('epub-129m', 'LIMIT'),
+    cases = [('txt-error', 'IO'), ('txt-truncated', 'IO'), ('txt-overlong', 'IO'), ('txt-33m', 'LIMIT'), ('epub-129m', 'LIMIT'),
              ('epub-declared-big', 'LIMIT'), ('zip-unknown', 'UNSUPPORTED_FORMAT'), ('pdf-lie', 'UNSUPPORTED_FORMAT'),
              ('empty', 'EMPTY')]
     src('reset-log')
@@ -392,6 +392,59 @@ def s_kill_after_publish(output):
     clean_staging('kill after publish')
 
 
+@scenario
+def s_review_ticket_races(output):
+    since = mark(); ctl('review-ticket-races')
+    event = wait(lambda e: e['ev'] == 'review-ticket-races', since, 120, 'actual ticket races')
+    result = event.get('result', {})
+    check('review: 20000 concurrent cancel/commit calls have exactly one winner and no accepted cancel publishes',
+          result.get('ok') is True and result.get('iterations') == 20000 and result.get('cancel_wins', 0) + result.get('commit_wins', 0) == 20000, event)
+
+
+@scenario
+def s_review_ready_leases(output):
+    ctl('hold', arg='on'); since = mark()
+    send('send', 'txt-short')
+    wait(lambda e: e['ev'] == 'ready' and e.get('uri', '').endswith('txt-short'), since, 60, 'lease first ready')
+    send('send', 'txt-short-b')
+    wait(lambda e: e['ev'] == 'ready' and e.get('uri', '').endswith('txt-short-b'), since, 60, 'lease duplicate ready')
+    since = mark(); ctl('review-release-first')
+    event = wait(lambda e: e['ev'] == 'review-release-first', since, 30, 'first lease release')
+    check('review: releasing first duplicate lease preserves the second queued ready file', event.get('ok') is True, event)
+    since = mark(); ctl('review-release-last')
+    event = wait(lambda e: e['ev'] == 'review-release-last', since, 60, 'last lease import/release')
+    readback = wait(lambda e: e['ev'] == 'readback', since, 30, 'last lease SDK readback')
+    check('review: last duplicate lease imports through SDK with exact original readback then deletes once', event.get('ok') is True and readback['equal'] is True, [event, readback])
+    since = mark(); send('send', 'txt-short')
+    wait(lambda e: e['ev'] == 'ready' and e.get('uri', '').endswith('txt-short'), since, 60, 'new lease generation')
+    since = mark(); ctl('review-stale-release')
+    event = wait(lambda e: e['ev'] == 'review-stale-release', since, 30, 'stale release')
+    check('review: stale repeated release cannot delete a restaged same-content file', event.get('ok') is True, event)
+    since = mark(); ctl('review-foreign-release')
+    event = wait(lambda e: e['ev'] == 'review-foreign-release', since, 60, 'cross-entry foreign release')
+    check('review: foreign entry leases cannot remove either entry original', event.get('ok') is True, event)
+    since = mark(); ctl('review-close-generation')
+    event = wait(lambda e: e['ev'] == 'review-close-generation', since, 60, 'closed entry lease recovery')
+    readback = wait(lambda e: e['ev'] == 'readback', since, 30, 'recovered lease SDK readback')
+    check('review: closed-entry stale lease cannot delete recovered file and new owner imports exact bytes', event.get('ok') is True and readback['equal'] is True, [event, readback])
+    ctl('hold', arg='off'); clean_staging('review ready leases')
+
+
+@scenario
+def s_review_reliable_pipe_fds(output):
+    since = mark(); ctl('review-fd-count')
+    before = wait(lambda e: e['ev'] == 'review-fd-count', since, 30, 'initial fd count')['count']
+    failures = []
+    for iteration in range(32):
+        since = mark(); send('send', 'txt-error')
+        failures.append(wait(lambda e: e['ev'] == 'failed' and e.get('uri', '').endswith('txt-error'), since, 60, 'reliable pipe error'))
+    since = mark(); ctl('review-fd-count')
+    after = wait(lambda e: e['ev'] == 'review-fd-count', since, 30, 'final fd count')['count']
+    check('review: 32 real reliable-pipe provider errors remain IO with no committed request', len(failures) == 32 and all(e['code'] == 'IO' and e['state'] == 'FAILED' for e in failures), failures)
+    check('review: repeated reliable-pipe failure descriptors close within baseline plus four framework FDs', before > 0 and after <= before + 4, {'before': before, 'after': after, 'repetitions': 32})
+    clean_staging('review reliable pipe errors')
+
+
 def main():
     global cursor
     parser = argparse.ArgumentParser()
@@ -408,13 +461,15 @@ def main():
     adb('shell', 'pm', 'grant', IMP, 'android.permission.POST_NOTIFICATIONS', check=False)
     for fn in (s_setup, s_view_epub_and_dedupe, s_send_pdf, s_multi_short_unknown, s_staged_dedupe, s_picker,
                s_hostile_name, s_failures, s_permission, s_cancel, s_close_entry, s_ui_close_keeps_copy,
-               s_rotation, s_kill_during_copy, s_kill_after_publish):
+               s_rotation, s_kill_during_copy, s_kill_after_publish,
+               s_review_ticket_races, s_review_ready_leases, s_review_reliable_pipe_fds):
         fn(args.output)
     (args.output / 'evidence.jsonl').write_text('\n'.join(json.dumps(e) for e in events()))
     (args.output / 'revoke.log').write_text(run_as(SRC, 'cat', 'files/revoke.log'))
     (args.output / 'opens.log').write_text(run_as(SRC, 'cat', 'files/opens.log'))
     (args.output / 'logcat.txt').write_text(adb('logcat', '-d', '-v', 'threadtime', check=False))
-    result = {'device_api': api, 'device_abi': abi, 'checks': checks, 'observations': observations,
+    result = {**{key: os.environ[value] for key, value in [('source_sha', 'GITHUB_SHA'), ('run_id', 'GITHUB_RUN_ID'), ('attempt', 'GITHUB_RUN_ATTEMPT')]},
+              'device_api': api, 'device_abi': abi, 'checks': checks, 'observations': observations,
               'passed': sum(c['ok'] for c in checks), 'failed': sum(not c['ok'] for c in checks)}
     (args.output / 'results.json').write_text(json.dumps(result, indent=2))
     print('%d passed, %d failed' % (result['passed'], result['failed']))

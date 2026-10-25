@@ -22,6 +22,7 @@ REQUIRED_SCENARIOS = [
     'provider name is only a hint: no separators in title, no file named after it',
     'failure txt-error -> IO, no file left',
     'failure txt-truncated -> IO, no file left',
+    'failure txt-overlong -> IO, no file left',
     'failure txt-33m -> LIMIT, no file left',
     'failure epub-129m -> LIMIT, no file left',
     'failure epub-declared-big -> LIMIT, no file left',
@@ -41,6 +42,14 @@ REQUIRED_SCENARIOS = [
     'restart removes the orphaned temporary and finds nothing ready',
     'force-stop after publish keeps the staged file',
     'restart lists the published file and the host imports it (SDK dedupe keeps the earlier book)',
+    'review: 20000 concurrent cancel/commit calls have exactly one winner and no accepted cancel publishes',
+    'review: releasing first duplicate lease preserves the second queued ready file',
+    'review: last duplicate lease imports through SDK with exact original readback then deletes once',
+    'review: stale repeated release cannot delete a restaged same-content file',
+    'review: foreign entry leases cannot remove either entry original',
+    'review: closed-entry stale lease cannot delete recovered file and new owner imports exact bytes',
+    'review: 32 real reliable-pipe provider errors remain IO with no committed request',
+    'review: repeated reliable-pipe failure descriptors close within baseline plus four framework FDs',
 ]
 
 
@@ -77,7 +86,12 @@ def main():
             if ident.get(key) != identity[key]:
                 problems.append('identity mismatch for ' + key)
         results = load(args.android / 'results.json')
+        for key, value in identity.items():
+            if results.get(key) != value:
+                problems.append('device report identity mismatch for ' + key)
         names = {c['name']: c for c in results['checks']}
+        if len(names) != len(results['checks']) or any(c.get('ok') is not True for c in results['checks']):
+            problems.append('duplicate or non-passing device checks')
         for required in REQUIRED_SCENARIOS:
             if required not in names:
                 problems.append('required check never ran: ' + required)
