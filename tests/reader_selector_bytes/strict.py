@@ -5,6 +5,7 @@ import hashlib
 import io
 import json
 import os
+import subprocess
 from pathlib import Path, PurePosixPath
 import urllib.request
 import zipfile
@@ -14,6 +15,10 @@ def main():
     repo, run, attempt, source = (os.environ[k] for k in ['GITHUB_REPOSITORY', 'GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT', 'GITHUB_SHA'])
     token = os.environ['GH_TOKEN']
     def request(url, api=True):
+        if api and url.endswith('/zip'):
+            # gh follows the signed Azure redirect without forwarding the API
+            # Authorization header, as the existing accepted strict check does.
+            return subprocess.check_output(['gh', 'api', 'repos/' + repo + '/' + url], timeout=180)
         if api:
             url = 'https://api.github.com/repos/' + repo + '/' + url
         req = urllib.request.Request(url, headers={'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json'})
