@@ -1,0 +1,215 @@
+name: Reader next S15 original export 3.41
+on:
+  push:
+    branches: [codex/reader-next-s15]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+env:
+  S15_START: e67d87cbeabb2457e0852f681ef0b27b2c0da4d8
+  S15_SDK: edddc463c06ed5731195cdb8f06b2df6dff7699e
+  S15_MODULE: 25cd7b4b15d952e3f7a10e39ed80ae16a3d9a3ee
+  S15_FROZEN: 9854061be331fe603a1822d9b2b36ee357154927
+jobs:
+  export:
+    name: original export 3.41 (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 100
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-15]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Guard fixed start, approved SDK, module bytes and package ownership
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$S15_START" HEAD
+          git merge-base --is-ancestor "$S15_SDK" HEAD
+          git diff --exit-code "$S15_SDK" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code "$S15_MODULE" HEAD -- apps/reader/original-export/include apps/reader/original-export/src
+          git diff --exit-code "$S15_START" HEAD -- apps/reader/store apps/reader/revisions apps/reader/commands extras/sideload apps/reader/local-downloads apps/reader/session
+          allowed='^(apps/reader/original-export/|tests/reader_next_s15/|\.github/workflows/reader-next-s15\.yml$|docs/reader-next-s15/|HANDOFF-RESULT-S15\.md$)'
+          changed=$(git diff --name-only "$S15_START" HEAD)
+          bad=$(printf '%s\n' "$changed" | sed '/^$/d' | grep -Ev "$allowed" || true)
+          test -z "$bad" || { echo "unowned path: $bad"; exit 1; }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the existing build tool version
+        run: python -m pip install ninja==1.11.1.1
+      - name: Enter the native Windows compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Record source and prepare native paths
+        run: |
+          set -o pipefail
+          mkdir -p build/s15-logs build/s15-sdk-src
+          git rev-parse HEAD > build/s15-logs/source.txt
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); rtmp=$(cygpath -m "$RUNNER_TEMP"); else ws="$PWD"; rtmp="$RUNNER_TEMP"; fi
+          echo "WS=$ws" >> "$GITHUB_ENV"
+          echo "S15_SDK_STAGE=$ws/build/s15-sdk-src/build/reading-library/stage" >> "$GITHUB_ENV"
+          echo "S15_PREFIX=$ws/build/s15-prefix" >> "$GITHUB_ENV"
+          echo "S15_STAGE=$ws/build/s15-stage" >> "$GITHUB_ENV"
+          echo "S15_CONSUMER=$rtmp/s15-consumer" >> "$GITHUB_ENV"
+      - name: Build and install the approved SDK from an isolated copy of its commit
+        run: |
+          set -o pipefail
+          git archive "$S15_SDK" | tar -x -C build/s15-sdk-src
+          cd build/s15-sdk-src
+          cmake --preset reading-library 2>&1 | tee ../s15-logs/sdk-configure.log
+          cmake --build --preset reading-library --parallel 4 2>&1 | tee ../s15-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee ../s15-logs/sdk-install.log
+          cd "$GITHUB_WORKSPACE"
+          test -f "$S15_SDK_STAGE/lib/cmake/EXReader/EXReaderConfig.cmake"
+          grep -q 'set(EXReader_VERSION "3.41.0")' "$S15_SDK_STAGE/lib/cmake/EXReader/EXReaderConfig.cmake"
+      - name: Build and install the unchanged sideload and product packages
+        run: |
+          set -o pipefail
+          cmake -S extras/sideload -B build/s15-sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$S15_SDK_STAGE" -DCMAKE_INSTALL_PREFIX="$S15_PREFIX" 2>&1 | tee build/s15-logs/sideload-configure.log
+          cmake --build build/s15-sideload --parallel 4 2>&1 | tee build/s15-logs/sideload-build.log
+          cmake --install build/s15-sideload 2>&1 | tee build/s15-logs/sideload-install.log
+          cmake -S apps/reader/store/native -B build/s15-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$S15_PREFIX" 2>&1 | tee build/s15-logs/product-configure.log
+          cmake --build build/s15-product --parallel 4 2>&1 | tee build/s15-logs/product-build.log
+          cmake --install build/s15-product 2>&1 | tee build/s15-logs/product-install.log
+          cmake -S apps/reader/revisions -B build/s15-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$S15_PREFIX" -DCMAKE_INSTALL_PREFIX="$S15_PREFIX" 2>&1 | tee build/s15-logs/revisions-configure.log
+          cmake --build build/s15-revisions --parallel 4 2>&1 | tee build/s15-logs/revisions-build.log
+          cmake --install build/s15-revisions 2>&1 | tee build/s15-logs/revisions-install.log
+          cmake -S apps/reader/commands -B build/s15-commands -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$S15_PREFIX" -DCMAKE_INSTALL_PREFIX="$S15_PREFIX" 2>&1 | tee build/s15-logs/commands-configure.log
+          cmake --build build/s15-commands --parallel 4 2>&1 | tee build/s15-logs/commands-build.log
+          cmake --install build/s15-commands 2>&1 | tee build/s15-logs/commands-install.log
+      - name: Install the original-export package into the approved 3.41 graph
+        run: |
+          set -o pipefail
+          cmake -S apps/reader/original-export -B build/s15-package -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$S15_SDK_STAGE" -DEXR_SDK_VERSION=3.41.0 -DCMAKE_INSTALL_PREFIX="$S15_STAGE" 2>&1 | tee build/s15-logs/package-configure.log
+          cmake --build build/s15-package --verbose 2>&1 | tee build/s15-logs/package-build.log
+          cmake --install build/s15-package 2>&1 | tee build/s15-logs/package-install.log
+          grep -q 'find_dependency(EXReader 3.41.0 EXACT CONFIG COMPONENTS library)' "$S15_STAGE/lib/cmake/EXReaderOriginalExport/EXReaderOriginalExportConfig.cmake"
+      - name: Compile fresh installed C and C++ consumers
+        run: |
+          set -o pipefail
+          rm -rf "$S15_CONSUMER"
+          mkdir -p "$S15_CONSUMER"
+          cp tests/reader_next_s15/consumer/CMakeLists.txt tests/reader_next_s15/consumer/api.c tests/reader_next_s15/consumer/probe.cpp "$S15_CONSUMER/"
+          cmake -S "$S15_CONSUMER" -B build/s15-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$S15_STAGE;$S15_SDK_STAGE;$S15_PREFIX" 2>&1 | tee build/s15-logs/consumer-configure.log
+          cmake --build build/s15-consumer --verbose 2>&1 | tee build/s15-logs/consumer-build.log
+      - name: Negative install-graph controls against the approved install
+        run: |
+          set -o pipefail
+          mkdir -p build/s15-evidence
+          python tests/reader_next_s15/check_install_graph.py --module-src apps/reader/original-export --stage "$S15_STAGE" --sdk "$S15_SDK_STAGE" --work build/s15-graph-work --consumer "$S15_CONSUMER" --output build/s15-evidence/graph.json 2>&1 | tee build/s15-logs/graph.log
+      - name: Full original set, streamed storage, faults, kill/retry and public invariants
+        run: |
+          set -o pipefail
+          exe=""; module="$S15_STAGE/lib/libreader_original_export.a"
+          if [ "$RUNNER_OS" = Windows ]; then exe=".exe"; module="$S15_STAGE/lib/reader_original_export.lib"; fi
+          python tests/reader_next_s15/make_fixtures.py build/s15-fixtures 2>&1 | tee build/s15-logs/fixtures.log
+          python tests/reader_next_s15/check_export.py "build/s15-consumer/original-export-probe$exe" "build/s15-consumer/original-export-c-consumer$exe" build/s15-fixtures build/s15-evidence "$module" "$S15_SDK_STAGE" build/s15-evidence/graph.json 2>&1 | tee build/s15-logs/checks.log
+      - name: Preserve every real result, binary and failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-next-s15-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/s15-logs/
+            build/s15-fixtures/
+            build/s15-evidence/
+            build/s15-stage/
+            build/s15-consumer/original-export-link.map
+          if-no-files-found: error
+  frozen:
+    name: frozen 3.40 default graph (ubuntu-22.04)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Guard fixed start, frozen SDK and package ownership
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$S15_START" HEAD
+          git merge-base --is-ancestor "$S15_FROZEN" HEAD
+          git diff --exit-code "$S15_MODULE" HEAD -- apps/reader/original-export/include apps/reader/original-export/src
+          git diff --exit-code "$S15_START" HEAD -- apps/reader/store apps/reader/revisions apps/reader/commands extras/sideload apps/reader/local-downloads apps/reader/session
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install ninja==1.11.1.1
+      - name: Build and install the real frozen SDK 3.40 from an isolated copy
+        run: |
+          set -o pipefail
+          mkdir -p build/s15-frozen-logs build/s15-frozen-src
+          git rev-parse HEAD > build/s15-frozen-logs/source.txt
+          git archive "$S15_FROZEN" | tar -x -C build/s15-frozen-src
+          cd build/s15-frozen-src
+          cmake --preset reading-library 2>&1 | tee ../s15-frozen-logs/sdk-configure.log
+          cmake --build --preset reading-library --parallel 4 2>&1 | tee ../s15-frozen-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee ../s15-frozen-logs/sdk-install.log
+          cd "$GITHUB_WORKSPACE"
+          grep -q 'set(EXReader_VERSION "3.40.0")' build/s15-frozen-src/build/reading-library/stage/lib/cmake/EXReader/EXReaderConfig.cmake
+      - name: Default pin keeps the frozen 3.40 graph and refuses the 3.41 opt-in
+        run: |
+          set -o pipefail
+          ws="$PWD"
+          python tests/reader_next_s15/make_fixtures.py build/s15-frozen-fixtures 2>&1 | tee build/s15-frozen-logs/fixtures.log
+          python tests/reader_next_s15/check_frozen_sdk.py --sdk "$ws/build/s15-frozen-src/build/reading-library/stage" --module-src apps/reader/original-export --stage "$ws/build/s15-frozen-stage" --consumer "$ws/tests/reader_next_s15/consumer" --fixtures "$ws/build/s15-frozen-fixtures" --work "$ws/build/s15-frozen-work" --output "$ws/build/s15-frozen-work/frozen.json" 2>&1 | tee build/s15-frozen-logs/checks.log
+      - name: Preserve the frozen graph result and every failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-next-s15-frozen-340-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/s15-frozen-logs/
+            build/s15-frozen-work/
+          if-no-files-found: error
+  evidence:
+    name: strict S15 evidence
+    needs: [export, frozen]
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Guard evidence source and ownership
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$S15_START" HEAD
+          git diff --exit-code "$S15_SDK" HEAD -- src include cmake CMakeLists.txt bindings
+          git diff --exit-code "$S15_MODULE" HEAD -- apps/reader/original-export/include apps/reader/original-export/src
+          allowed='^(apps/reader/original-export/|tests/reader_next_s15/|\.github/workflows/reader-next-s15\.yml$|docs/reader-next-s15/|HANDOFF-RESULT-S15\.md$)'
+          changed=$(git diff --name-only "$S15_START" HEAD)
+          bad=$(printf '%s\n' "$changed" | sed '/^$/d' | grep -Ev "$allowed" || true)
+          test -z "$bad"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Authenticate actual artifacts, binaries and negative verifier cases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_next_s15/check_artifacts.py build/s15-artifact-evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reader-next-s15-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/s15-artifact-evidence/
+          if-no-files-found: error
