@@ -1,7 +1,7 @@
 name: Reader bulk organization
 on:
   push:
-    branches: [codex/reader-bulk-organization]
+    branches: [codex/reader-bulk-organization, codex/reader-bulk-organization-review]
   workflow_dispatch:
 permissions:
   contents: read

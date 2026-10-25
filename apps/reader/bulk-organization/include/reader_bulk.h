@@ -108,7 +108,7 @@ typedef struct {
   char batch_id[33];
   reader_bulk_action action;
   size_t total, committed, created, unchanged, conflicts, failed, not_run;
-  int complete;                   /* every item has a final outcome */
+  int complete;                   /* every item and its pending cleanup finished */
   int cancelled;                  /* last run stopped on control */
 } reader_bulk_summary;
 
@@ -159,6 +159,9 @@ reader_bulk_status reader_bulk_close(reader_bulk **, reader_bulk_error *);
  * or METADATA the results/summary describe the journal's current state. */
 reader_bulk_status reader_bulk_run(reader_bulk *, const reader_bulk_request *,
   reader_bulk_item_result *results, size_t capacity, reader_bulk_summary *, reader_bulk_error *);
+/* An apply that succeeded remains committed=1 in callbacks and returned
+ * results even if clearing its pending intent fails. summary.complete stays
+ * zero until resume finishes cleanup; committed items are never not_run. */
 /* Continue the journal's unfinished items after cancellation or process death.
  * control is the new run's callbacks (the request's are not persisted). A
  * completed journal just reports its results. */

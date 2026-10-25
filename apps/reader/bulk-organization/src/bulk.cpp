@@ -264,8 +264,12 @@ void summarize(const batch &b,reader_bulk_summary *out){
   std::memset(out,0,sizeof(*out));
   copy_text(out->batch_id,sizeof(out->batch_id),b.batch_id);
   out->action=(reader_bulk_action)b.action;out->total=b.items.size();out->cancelled=(int)b.cancelled;
+  bool complete=true;
   for(const auto &item:b.items){
-    if(item.phase!=PHASE_DONE){++out->not_run;continue;}
+    if(item.phase!=PHASE_DONE){
+      complete=false;
+      if(item.outcome!=READER_BULK_ITEM_COMMITTED){++out->not_run;continue;}
+    }
     switch(item.outcome){
       case READER_BULK_ITEM_COMMITTED:++out->committed;if(item.created)++out->created;break;
       case READER_BULK_ITEM_UNCHANGED:++out->unchanged;break;
@@ -273,13 +277,15 @@ void summarize(const batch &b,reader_bulk_summary *out){
       default:++out->failed;break;
     }
   }
-  out->complete=out->not_run==0?1:0;
+  out->complete=complete?1:0;
 }
 void export_results(const batch &b,reader_bulk_item_result *results,size_t capacity,reader_bulk_summary *summary){
   summarize(b,summary);
   for(size_t i=0;i<b.items.size()&&i<capacity;++i){
     fill_result(b,i,&results[i]);
-    if(b.items[i].phase!=PHASE_DONE){results[i].outcome=READER_BULK_ITEM_NOT_RUN;results[i].committed=0;results[i].conflict=0;}
+    if(b.items[i].phase!=PHASE_DONE&&b.items[i].outcome!=READER_BULK_ITEM_COMMITTED){
+      results[i].outcome=READER_BULK_ITEM_NOT_RUN;results[i].committed=0;results[i].conflict=0;
+    }
   }
 }
 void notify(const reader_bulk_control *control,reader_bulk_event event,const batch &b,size_t index){
@@ -421,6 +427,8 @@ step process_item(reader_bulk &h,batch &b,size_t index,const reader_bulk_control
     save(h,b);return STEP_NEXT;
   }
   item.created=applied.command.created?1:0;
+  // Apply is the commit boundary even when clearing the pending intent fails.
+  item.outcome=READER_BULK_ITEM_COMMITTED;item.replayed=applied.command.created?0:1;
   notify(control,READER_BULK_EVENT_COMMITTED,b,index);
 
   reader_metadata_result cleared{};
@@ -509,7 +517,7 @@ extern "C" reader_bulk_status reader_bulk_run(reader_bulk *handle,const reader_b
     size_t capacity,reader_bulk_summary *summary,reader_bulk_error *error){
   return call(error,[&]{
     guard lock(handle);
-    if(!request||request->struct_size!=sizeof(*request)||request->action>READER_BULK_SERIES_REMOVE)reject(READER_BULK_ARGUMENT,"Invalid bulk request");
+    if(!request||request->struct_size!=sizeof(*request)||(uint64_t)request->action>READER_BULK_SERIES_REMOVE)reject(READER_BULK_ARGUMENT,"Invalid bulk request");
     if(!request->book_keys||request->book_count==0||request->book_count>READER_BULK_MAX_BATCH)reject(READER_BULK_ARGUMENT,"Bulk batch must select 1..100 books");
     validate_results(results,capacity,request->book_count);
     batch b;b.database=handle->database;b.action=(uint64_t)request->action;

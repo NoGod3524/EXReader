@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <filesystem>
 #include <iterator>
 #include <iostream>
 #include <map>
@@ -40,6 +41,8 @@ struct options {
 struct hooks {
   options opt;
   std::string db;
+  std::string pending;
+  bool cleanup_blocked=false;
   long done=0;
   void pause_forever(){
     std::ofstream marker(opt.get("marker"));marker<<"ready";marker.close();
@@ -73,8 +76,15 @@ struct hooks {
     if(reader_revisions_close(&store,&e)!=READER_REV_OK)std::exit(27);
   }
 };
-void on_progress(void *context,reader_bulk_event event,size_t index,const reader_bulk_item_result *){
+void on_progress(void *context,reader_bulk_event event,size_t index,const reader_bulk_item_result *item){
   auto *h=static_cast<hooks *>(context);
+  if(event==READER_BULK_EVENT_COMMITTED&&h->opt.get("block_cleanup")=="1"){
+    if(!item->committed||item->outcome!=READER_BULK_ITEM_COMMITTED||!item->revision_id[0])std::exit(71);
+    std::filesystem::rename(h->pending,h->pending+".saved");
+    std::filesystem::create_directory(h->pending);
+    std::ofstream blocker(h->pending+"/blocker");blocker<<"retain actual pending cleanup failure";blocker.close();
+    h->cleanup_blocked=true;
+  }
   const std::string pause=h->opt.get("pause");           // staged:K | committed:K
   if(!pause.empty()){
     size_t colon=pause.find(':');
@@ -187,7 +197,7 @@ int main(int argc,char **argv){
   reader_bulk *bulk=nullptr;reader_bulk_error be{};
   if(reader_bulk_open(owner,db.c_str(),journal.c_str(),&bulk,&be)!=READER_BULK_OK){std::cout<<"{\"status\":-2,\"error\":"<<quote(be.message)<<"}"<<std::endl;return 0;}
 
-  hooks h;h.opt=opt;h.db=db;
+  hooks h;h.opt=opt;h.db=db;h.pending=pending;
   reader_bulk_control control{&h,on_cancel,on_progress};
   std::vector<reader_bulk_item_result> items(READER_BULK_MAX_BATCH);
   reader_bulk_summary summary{};
@@ -256,10 +266,19 @@ int main(int argc,char **argv){
     if(reader_bulk_run(bulk,&request,items.data(),0,&summary,&be)==READER_BULK_CAPACITY)++refused;            /* capacity */
     request.struct_size=1;
     if(reader_bulk_run(bulk,&request,items.data(),items.size(),&summary,&be)==READER_BULK_ARGUMENT)++refused; /* struct size */
+    request.struct_size=sizeof(request);request.action=(reader_bulk_action)-1;
+    request.group_id="00000000000000000000000000000000";
+    if(reader_bulk_run(bulk,&request,items.data(),items.size(),&summary,&be)==READER_BULK_ARGUMENT)++refused; /* negative enum */
     extra=",\"refused\":"+std::to_string(refused);
     status=READER_BULK_OK;
   }else return 2;
 
+  if(h.cleanup_blocked){
+    std::filesystem::remove(std::filesystem::path(pending)/"blocker");
+    std::filesystem::remove(pending);
+    std::filesystem::rename(pending+".saved",pending);
+    extra+=",\"cleanup_failure_injected\":true";
+  }
   reader_bulk_error closed{};
   if(reader_bulk_close(&bulk,&closed)!=READER_BULK_OK)return 6;
   reader_metadata_error me2{};
