@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: MIT
+# Consumer of the installed EXReader, sideload and desktop-drop packages only.
+cmake_minimum_required(VERSION 3.24)
+project(EXReaderS10Desktop LANGUAGES C)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+if(NOT EXR_SDK)
+  message(FATAL_ERROR "EXR_SDK must point at the installed prefix")
+endif()
+list(PREPEND CMAKE_PREFIX_PATH "${EXR_SDK}")
+find_package(EXReader CONFIG REQUIRED COMPONENTS library)
+find_package(EXReaderSideload CONFIG REQUIRED)
+find_package(EXReaderDesktopDrop 0.1 CONFIG REQUIRED)
+add_executable(entry_check entry_check.c)
+target_link_libraries(entry_check PRIVATE EXReaderSideload::exr_sideload EXReaderDesktopDrop::exr_desktop_drop)
