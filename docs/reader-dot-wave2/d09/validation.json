@@ -1,1 +1,1361 @@
-{"accepted":false,"executed":false,"target":"803098e9df1a365a9b8e206805c2d179aca8501f","prior_d03":"c484ce52540851a4f35056bc8ca41afcfcab889e","prior_records_focus_pass":"revoked: main frame outside modal, lacking enabled/sensitive","screen_reader_accepted":false,"contrast_accepted":false,"performance_accepted":false}
+{
+  "harness_sha": "2ccceba85cb12a9cab5c00e5cb62a7c5a4a4ece5",
+  "run_id": "40226140199",
+  "attempt": "1",
+  "producer_job": 121267803662,
+  "artifact": {
+    "id": 12611531256,
+    "name": "reader-dot-d09-40226140199-1",
+    "size_in_bytes": 16389760,
+    "expires_at": "2026-11-08T19:34:58Z"
+  },
+  "zip_sha256": "a7c6bda5d397ba36ac51d2bab4ea8559470b0f2a8465dd1349377a8410cc7bce",
+  "zip_verified": true,
+  "credential_pattern_scan": "pass",
+  "semantic_negative_controls": [
+    "main-frame-focus-rejected",
+    "missing-enabled-rejected",
+    "missing-sensitive-rejected",
+    "missing-visible-rejected",
+    "missing-showing-rejected",
+    "missing-focused-rejected",
+    "scale2-unconverted-rejected",
+    "unmeasured-coordinate-claim-rejected",
+    "missing-ON-normal-rejected",
+    "missing-ON-scale2-rejected",
+    "missing-ON-dark-rejected",
+    "missing-ON-large-rejected",
+    "missing-program_sha256-rejected",
+    "missing-snapshots-rejected",
+    "false-required-check-rejected"
+  ],
+  "programs": {
+    "ON": "4bb3597d43f6d818a5f8a8b78a1f0fb330e31d839065a4dff298febf63559742"
+  },
+  "accepted": false,
+  "audit_completed": true,
+  "keyboard_accepted": false,
+  "contrast_accepted": false,
+  "screen_reader_accepted": false,
+  "target_sha": "803098e9df1a365a9b8e206805c2d179aca8501f",
+  "base_sha": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
+  "sdk_sha": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "verifier_job": 121269533233,
+  "run_conclusion": "failure",
+  "evidence_authenticated": true,
+  "modal_focus_accepted": false,
+  "physical_device_accepted": false,
+  "performance_accepted": false,
+  "iterations_used": 2,
+  "stopping_reason": "Only product modal-focus defect remains; no production changes or blind rerun.",
+  "configurations": [
+    {
+      "configuration": "ON-normal",
+      "checks": [
+        {
+          "name": "bridge",
+          "passed": true
+        },
+        {
+          "name": "scale-readback",
+          "passed": true
+        },
+        {
+          "name": "compact-mode",
+          "passed": true
+        },
+        {
+          "name": "coordinate-calibration",
+          "passed": true
+        },
+        {
+          "name": "tab-forward-reverse",
+          "passed": true
+        },
+        {
+          "name": "tab-focus-names",
+          "passed": true
+        },
+        {
+          "name": "import-cancel",
+          "passed": true
+        },
+        {
+          "name": "keyboard-import-open",
+          "passed": true
+        },
+        {
+          "name": "next-page",
+          "passed": true
+        },
+        {
+          "name": "more-text-leaves",
+          "passed": true
+        },
+        {
+          "name": "search-dialog-focus",
+          "passed": true
+        },
+        {
+          "name": "search-escape",
+          "passed": true
+        },
+        {
+          "name": "directory-dialog-focus",
+          "passed": true
+        },
+        {
+          "name": "directory-escape",
+          "passed": true
+        },
+        {
+          "name": "records-dialog-focus",
+          "passed": false
+        },
+        {
+          "name": "record-save",
+          "passed": true
+        },
+        {
+          "name": "records-escape",
+          "passed": true
+        },
+        {
+          "name": "settings-dialog-focus",
+          "passed": true
+        },
+        {
+          "name": "settings-escape",
+          "passed": true
+        },
+        {
+          "name": "return-shelf-search",
+          "passed": true
+        }
+      ],
+      "findings": [
+        {
+          "classification": "native-ui-observation",
+          "name": "records-dialog-focus",
+          "passed": false,
+          "actual": {
+            "dialog_path": "application[exreader-linux]#0/dialog[Reading records]#1",
+            "dialog_states": {
+              "enabled": true,
+              "visible": true,
+              "showing": true,
+              "sensitive": true,
+              "active": true,
+              "modal": true
+            },
+            "focus": [
+              {
+                "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/filler[]#0/toggle button[More reader actions]#2",
+                "name": "More reader actions",
+                "role": "toggle button",
+                "states": {
+                  "visible": true,
+                  "showing": true,
+                  "focused": true,
+                  "focusable": true
+                },
+                "descendant": false
+              }
+            ]
+          },
+          "expected": "Focused enabled sensitive visible showing descendant of active modal, not main window",
+          "target_sha": "803098e9df1a365a9b8e206805c2d179aca8501f",
+          "reproduction": "Run ON ON-normal; see keys.log and records-dialog-focus snapshot",
+          "root_cause": "Unconfirmed; inspect actual tree and keyboard trace; environment readiness is separately recorded",
+          "minimal_suggestion": "Owner to inspect GTK focus/geometry handling; no production edits in D09"
+        }
+      ],
+      "environment": {
+        "gtk": [
+          3,
+          24,
+          33
+        ],
+        "theme": "Adwaita",
+        "font": "Sans 11",
+        "xft_dpi": 98304,
+        "gdk_window_scale": 1,
+        "screen_resolution": 96,
+        "screen": [
+          2560,
+          1920
+        ],
+        "env": {
+          "GTK_THEME": "Adwaita",
+          "GDK_SCALE": "1",
+          "GDK_DPI_SCALE": "1",
+          "XDG_CONFIG_HOME": "/home/runner/work/_temp/d09-ON-normal"
+        },
+        "xrdb": "",
+        "readback_source": "Same-environment GTK probe window and settings; actual host bounds, focus and name/role/state are separately obtained through AT-SPI. No in-process host DPI instrumentation."
+      },
+      "coordinate_calibration": {
+        "scale": 1,
+        "samples": [
+          {
+            "physical": {
+              "WINDOW": 2097252,
+              "X": 759,
+              "Y": 537,
+              "WIDTH": 1042,
+              "HEIGHT": 845,
+              "BORDER": 0,
+              "DEPTH": 24
+            },
+            "logical": {
+              "x": 759,
+              "y": 537,
+              "width": 1042,
+              "height": 845
+            },
+            "native_x11": {
+              "client": {
+                "WINDOW": 8388611,
+                "X": 760,
+                "Y": 557,
+                "WIDTH": 1040,
+                "HEIGHT": 820,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "frame": {
+                "WINDOW": 2097252,
+                "X": 759,
+                "Y": 537,
+                "WIDTH": 1042,
+                "HEIGHT": 845,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "root": {
+                "WINDOW": 1293,
+                "X": 0,
+                "Y": 0,
+                "WIDTH": 2560,
+                "HEIGHT": 1920,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "ancestor_chain": [
+                8388611,
+                2097252
+              ]
+            },
+            "xdotool_observation": {
+              "WINDOW": 8388611,
+              "X": 761,
+              "Y": 577,
+              "WIDTH": 1040,
+              "HEIGHT": 820,
+              "SCREEN": 0
+            }
+          },
+          {
+            "physical": {
+              "WINDOW": 2097252,
+              "X": 799,
+              "Y": 577,
+              "WIDTH": 1042,
+              "HEIGHT": 845,
+              "BORDER": 0,
+              "DEPTH": 24
+            },
+            "logical": {
+              "x": 799,
+              "y": 577,
+              "width": 1042,
+              "height": 845
+            },
+            "native_x11": {
+              "client": {
+                "WINDOW": 8388611,
+                "X": 800,
+                "Y": 597,
+                "WIDTH": 1040,
+                "HEIGHT": 820,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "frame": {
+                "WINDOW": 2097252,
+                "X": 799,
+                "Y": 577,
+                "WIDTH": 1042,
+                "HEIGHT": 845,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "root": {
+                "WINDOW": 1293,
+                "X": 0,
+                "Y": 0,
+                "WIDTH": 2560,
+                "HEIGHT": 1920,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "ancestor_chain": [
+                8388611,
+                2097252
+              ]
+            },
+            "xdotool_observation": {
+              "WINDOW": 8388611,
+              "X": 801,
+              "Y": 617,
+              "WIDTH": 1040,
+              "HEIGHT": 820,
+              "SCREEN": 0
+            }
+          },
+          {
+            "physical": {
+              "WINDOW": 2097252,
+              "X": 759,
+              "Y": 537,
+              "WIDTH": 1042,
+              "HEIGHT": 845,
+              "BORDER": 0,
+              "DEPTH": 24
+            },
+            "logical": {
+              "x": 759,
+              "y": 537,
+              "width": 1042,
+              "height": 845
+            },
+            "native_x11": {
+              "client": {
+                "WINDOW": 8388611,
+                "X": 760,
+                "Y": 557,
+                "WIDTH": 1040,
+                "HEIGHT": 820,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "frame": {
+                "WINDOW": 2097252,
+                "X": 759,
+                "Y": 537,
+                "WIDTH": 1042,
+                "HEIGHT": 845,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "root": {
+                "WINDOW": 1293,
+                "X": 0,
+                "Y": 0,
+                "WIDTH": 2560,
+                "HEIGHT": 1920,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "ancestor_chain": [
+                8388611,
+                2097252
+              ]
+            },
+            "xdotool_observation": {
+              "WINDOW": 8388611,
+              "X": 761,
+              "Y": 577,
+              "WIDTH": 1040,
+              "HEIGHT": 820,
+              "SCREEN": 0
+            }
+          }
+        ],
+        "method": "actual Xlib XQueryTree WM frame and XTranslateCoordinates root space versus AT-SPI frame; actual movement and return validates scale/offset; xdotool retained as non-authoritative observation",
+        "verified": true
+      }
+    },
+    {
+      "configuration": "ON-scale2",
+      "checks": [
+        {
+          "name": "bridge",
+          "passed": true
+        },
+        {
+          "name": "scale-readback",
+          "passed": true
+        },
+        {
+          "name": "compact-mode",
+          "passed": true
+        },
+        {
+          "name": "coordinate-calibration",
+          "passed": true
+        },
+        {
+          "name": "tab-forward-reverse",
+          "passed": true
+        },
+        {
+          "name": "tab-focus-names",
+          "passed": true
+        },
+        {
+          "name": "import-cancel",
+          "passed": true
+        },
+        {
+          "name": "keyboard-import-open",
+          "passed": true
+        },
+        {
+          "name": "next-page",
+          "passed": true
+        },
+        {
+          "name": "more-text-leaves",
+          "passed": true
+        },
+        {
+          "name": "search-dialog-focus",
+          "passed": true
+        },
+        {
+          "name": "search-escape",
+          "passed": true
+        },
+        {
+          "name": "directory-dialog-focus",
+          "passed": true
+        },
+        {
+          "name": "directory-escape",
+          "passed": true
+        },
+        {
+          "name": "records-dialog-focus",
+          "passed": false
+        },
+        {
+          "name": "record-save",
+          "passed": true
+        },
+        {
+          "name": "records-escape",
+          "passed": true
+        },
+        {
+          "name": "settings-dialog-focus",
+          "passed": true
+        },
+        {
+          "name": "settings-escape",
+          "passed": true
+        },
+        {
+          "name": "return-shelf-search",
+          "passed": true
+        }
+      ],
+      "findings": [
+        {
+          "classification": "native-ui-observation",
+          "name": "records-dialog-focus",
+          "passed": false,
+          "actual": {
+            "dialog_path": "application[exreader-linux]#0/dialog[Reading records]#1",
+            "dialog_states": {
+              "enabled": true,
+              "visible": true,
+              "showing": true,
+              "sensitive": true,
+              "active": true,
+              "modal": true
+            },
+            "focus": [
+              {
+                "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/filler[]#0/toggle button[More reader actions]#2",
+                "name": "More reader actions",
+                "role": "toggle button",
+                "states": {
+                  "visible": true,
+                  "showing": true,
+                  "focused": true,
+                  "focusable": true
+                },
+                "descendant": false
+              }
+            ]
+          },
+          "expected": "Focused enabled sensitive visible showing descendant of active modal, not main window",
+          "target_sha": "803098e9df1a365a9b8e206805c2d179aca8501f",
+          "reproduction": "Run ON ON-scale2; see keys.log and records-dialog-focus snapshot",
+          "root_cause": "Unconfirmed; inspect actual tree and keyboard trace; environment readiness is separately recorded",
+          "minimal_suggestion": "Owner to inspect GTK focus/geometry handling; no production edits in D09"
+        }
+      ],
+      "environment": {
+        "gtk": [
+          3,
+          24,
+          33
+        ],
+        "theme": "Adwaita",
+        "font": "Sans 11",
+        "xft_dpi": 98304,
+        "gdk_window_scale": 2,
+        "screen_resolution": 96,
+        "screen": [
+          1280,
+          960
+        ],
+        "env": {
+          "GTK_THEME": "Adwaita",
+          "GDK_SCALE": "2",
+          "GDK_DPI_SCALE": "1",
+          "XDG_CONFIG_HOME": "/home/runner/work/_temp/d09-ON-scale2"
+        },
+        "xrdb": "",
+        "readback_source": "Same-environment GTK probe window and settings; actual host bounds, focus and name/role/state are separately obtained through AT-SPI. No in-process host DPI instrumentation."
+      },
+      "coordinate_calibration": {
+        "scale": 2,
+        "samples": [
+          {
+            "physical": {
+              "WINDOW": 2097252,
+              "X": 239,
+              "Y": 127,
+              "WIDTH": 2082,
+              "HEIGHT": 1665,
+              "BORDER": 0,
+              "DEPTH": 24
+            },
+            "logical": {
+              "x": 119,
+              "y": 63,
+              "width": 1042,
+              "height": 833
+            },
+            "native_x11": {
+              "client": {
+                "WINDOW": 8388611,
+                "X": 240,
+                "Y": 147,
+                "WIDTH": 2080,
+                "HEIGHT": 1640,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "frame": {
+                "WINDOW": 2097252,
+                "X": 239,
+                "Y": 127,
+                "WIDTH": 2082,
+                "HEIGHT": 1665,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "root": {
+                "WINDOW": 1293,
+                "X": 0,
+                "Y": 0,
+                "WIDTH": 2560,
+                "HEIGHT": 1920,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "ancestor_chain": [
+                8388611,
+                2097252
+              ]
+            },
+            "xdotool_observation": {
+              "WINDOW": 8388611,
+              "X": 241,
+              "Y": 167,
+              "WIDTH": 2080,
+              "HEIGHT": 1640,
+              "SCREEN": 0
+            }
+          },
+          {
+            "physical": {
+              "WINDOW": 2097252,
+              "X": 279,
+              "Y": 167,
+              "WIDTH": 2082,
+              "HEIGHT": 1665,
+              "BORDER": 0,
+              "DEPTH": 24
+            },
+            "logical": {
+              "x": 139,
+              "y": 83,
+              "width": 1042,
+              "height": 833
+            },
+            "native_x11": {
+              "client": {
+                "WINDOW": 8388611,
+                "X": 280,
+                "Y": 187,
+                "WIDTH": 2080,
+                "HEIGHT": 1640,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "frame": {
+                "WINDOW": 2097252,
+                "X": 279,
+                "Y": 167,
+                "WIDTH": 2082,
+                "HEIGHT": 1665,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "root": {
+                "WINDOW": 1293,
+                "X": 0,
+                "Y": 0,
+                "WIDTH": 2560,
+                "HEIGHT": 1920,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "ancestor_chain": [
+                8388611,
+                2097252
+              ]
+            },
+            "xdotool_observation": {
+              "WINDOW": 8388611,
+              "X": 281,
+              "Y": 207,
+              "WIDTH": 2080,
+              "HEIGHT": 1640,
+              "SCREEN": 0
+            }
+          },
+          {
+            "physical": {
+              "WINDOW": 2097252,
+              "X": 239,
+              "Y": 127,
+              "WIDTH": 2082,
+              "HEIGHT": 1665,
+              "BORDER": 0,
+              "DEPTH": 24
+            },
+            "logical": {
+              "x": 119,
+              "y": 63,
+              "width": 1042,
+              "height": 833
+            },
+            "native_x11": {
+              "client": {
+                "WINDOW": 8388611,
+                "X": 240,
+                "Y": 147,
+                "WIDTH": 2080,
+                "HEIGHT": 1640,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "frame": {
+                "WINDOW": 2097252,
+                "X": 239,
+                "Y": 127,
+                "WIDTH": 2082,
+                "HEIGHT": 1665,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "root": {
+                "WINDOW": 1293,
+                "X": 0,
+                "Y": 0,
+                "WIDTH": 2560,
+                "HEIGHT": 1920,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "ancestor_chain": [
+                8388611,
+                2097252
+              ]
+            },
+            "xdotool_observation": {
+              "WINDOW": 8388611,
+              "X": 241,
+              "Y": 167,
+              "WIDTH": 2080,
+              "HEIGHT": 1640,
+              "SCREEN": 0
+            }
+          }
+        ],
+        "method": "actual Xlib XQueryTree WM frame and XTranslateCoordinates root space versus AT-SPI frame; actual movement and return validates scale/offset; xdotool retained as non-authoritative observation",
+        "verified": true
+      }
+    },
+    {
+      "configuration": "ON-dark",
+      "checks": [
+        {
+          "name": "bridge",
+          "passed": true
+        },
+        {
+          "name": "scale-readback",
+          "passed": true
+        },
+        {
+          "name": "compact-mode",
+          "passed": true
+        },
+        {
+          "name": "coordinate-calibration",
+          "passed": true
+        },
+        {
+          "name": "tab-forward-reverse",
+          "passed": true
+        },
+        {
+          "name": "tab-focus-names",
+          "passed": true
+        },
+        {
+          "name": "import-cancel",
+          "passed": true
+        },
+        {
+          "name": "keyboard-import-open",
+          "passed": true
+        },
+        {
+          "name": "next-page",
+          "passed": true
+        },
+        {
+          "name": "more-text-leaves",
+          "passed": true
+        },
+        {
+          "name": "search-dialog-focus",
+          "passed": true
+        },
+        {
+          "name": "search-escape",
+          "passed": true
+        },
+        {
+          "name": "directory-dialog-focus",
+          "passed": true
+        },
+        {
+          "name": "directory-escape",
+          "passed": true
+        },
+        {
+          "name": "records-dialog-focus",
+          "passed": false
+        },
+        {
+          "name": "record-save",
+          "passed": true
+        },
+        {
+          "name": "records-escape",
+          "passed": true
+        },
+        {
+          "name": "settings-dialog-focus",
+          "passed": true
+        },
+        {
+          "name": "settings-escape",
+          "passed": true
+        },
+        {
+          "name": "return-shelf-search",
+          "passed": true
+        }
+      ],
+      "findings": [
+        {
+          "classification": "native-ui-observation",
+          "name": "records-dialog-focus",
+          "passed": false,
+          "actual": {
+            "dialog_path": "application[exreader-linux]#0/dialog[Reading records]#1",
+            "dialog_states": {
+              "enabled": true,
+              "visible": true,
+              "showing": true,
+              "sensitive": true,
+              "active": true,
+              "modal": true
+            },
+            "focus": [
+              {
+                "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/filler[]#0/toggle button[More reader actions]#2",
+                "name": "More reader actions",
+                "role": "toggle button",
+                "states": {
+                  "visible": true,
+                  "showing": true,
+                  "focused": true,
+                  "focusable": true
+                },
+                "descendant": false
+              }
+            ]
+          },
+          "expected": "Focused enabled sensitive visible showing descendant of active modal, not main window",
+          "target_sha": "803098e9df1a365a9b8e206805c2d179aca8501f",
+          "reproduction": "Run ON ON-dark; see keys.log and records-dialog-focus snapshot",
+          "root_cause": "Unconfirmed; inspect actual tree and keyboard trace; environment readiness is separately recorded",
+          "minimal_suggestion": "Owner to inspect GTK focus/geometry handling; no production edits in D09"
+        }
+      ],
+      "environment": {
+        "gtk": [
+          3,
+          24,
+          33
+        ],
+        "theme": "Adwaita-dark",
+        "font": "Sans 11",
+        "xft_dpi": 98304,
+        "gdk_window_scale": 1,
+        "screen_resolution": 96,
+        "screen": [
+          2560,
+          1920
+        ],
+        "env": {
+          "GTK_THEME": "Adwaita-dark",
+          "GDK_SCALE": "1",
+          "GDK_DPI_SCALE": "1",
+          "XDG_CONFIG_HOME": "/home/runner/work/_temp/d09-ON-dark"
+        },
+        "xrdb": "",
+        "readback_source": "Same-environment GTK probe window and settings; actual host bounds, focus and name/role/state are separately obtained through AT-SPI. No in-process host DPI instrumentation."
+      },
+      "coordinate_calibration": {
+        "scale": 1,
+        "samples": [
+          {
+            "physical": {
+              "WINDOW": 2097252,
+              "X": 759,
+              "Y": 537,
+              "WIDTH": 1042,
+              "HEIGHT": 845,
+              "BORDER": 0,
+              "DEPTH": 24
+            },
+            "logical": {
+              "x": 759,
+              "y": 537,
+              "width": 1042,
+              "height": 845
+            },
+            "native_x11": {
+              "client": {
+                "WINDOW": 8388611,
+                "X": 760,
+                "Y": 557,
+                "WIDTH": 1040,
+                "HEIGHT": 820,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "frame": {
+                "WINDOW": 2097252,
+                "X": 759,
+                "Y": 537,
+                "WIDTH": 1042,
+                "HEIGHT": 845,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "root": {
+                "WINDOW": 1293,
+                "X": 0,
+                "Y": 0,
+                "WIDTH": 2560,
+                "HEIGHT": 1920,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "ancestor_chain": [
+                8388611,
+                2097252
+              ]
+            },
+            "xdotool_observation": {
+              "WINDOW": 8388611,
+              "X": 761,
+              "Y": 577,
+              "WIDTH": 1040,
+              "HEIGHT": 820,
+              "SCREEN": 0
+            }
+          },
+          {
+            "physical": {
+              "WINDOW": 2097252,
+              "X": 799,
+              "Y": 577,
+              "WIDTH": 1042,
+              "HEIGHT": 845,
+              "BORDER": 0,
+              "DEPTH": 24
+            },
+            "logical": {
+              "x": 799,
+              "y": 577,
+              "width": 1042,
+              "height": 845
+            },
+            "native_x11": {
+              "client": {
+                "WINDOW": 8388611,
+                "X": 800,
+                "Y": 597,
+                "WIDTH": 1040,
+                "HEIGHT": 820,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "frame": {
+                "WINDOW": 2097252,
+                "X": 799,
+                "Y": 577,
+                "WIDTH": 1042,
+                "HEIGHT": 845,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "root": {
+                "WINDOW": 1293,
+                "X": 0,
+                "Y": 0,
+                "WIDTH": 2560,
+                "HEIGHT": 1920,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "ancestor_chain": [
+                8388611,
+                2097252
+              ]
+            },
+            "xdotool_observation": {
+              "WINDOW": 8388611,
+              "X": 801,
+              "Y": 617,
+              "WIDTH": 1040,
+              "HEIGHT": 820,
+              "SCREEN": 0
+            }
+          },
+          {
+            "physical": {
+              "WINDOW": 2097252,
+              "X": 759,
+              "Y": 537,
+              "WIDTH": 1042,
+              "HEIGHT": 845,
+              "BORDER": 0,
+              "DEPTH": 24
+            },
+            "logical": {
+              "x": 759,
+              "y": 537,
+              "width": 1042,
+              "height": 845
+            },
+            "native_x11": {
+              "client": {
+                "WINDOW": 8388611,
+                "X": 760,
+                "Y": 557,
+                "WIDTH": 1040,
+                "HEIGHT": 820,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "frame": {
+                "WINDOW": 2097252,
+                "X": 759,
+                "Y": 537,
+                "WIDTH": 1042,
+                "HEIGHT": 845,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "root": {
+                "WINDOW": 1293,
+                "X": 0,
+                "Y": 0,
+                "WIDTH": 2560,
+                "HEIGHT": 1920,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "ancestor_chain": [
+                8388611,
+                2097252
+              ]
+            },
+            "xdotool_observation": {
+              "WINDOW": 8388611,
+              "X": 761,
+              "Y": 577,
+              "WIDTH": 1040,
+              "HEIGHT": 820,
+              "SCREEN": 0
+            }
+          }
+        ],
+        "method": "actual Xlib XQueryTree WM frame and XTranslateCoordinates root space versus AT-SPI frame; actual movement and return validates scale/offset; xdotool retained as non-authoritative observation",
+        "verified": true
+      }
+    },
+    {
+      "configuration": "ON-large",
+      "checks": [
+        {
+          "name": "bridge",
+          "passed": true
+        },
+        {
+          "name": "scale-readback",
+          "passed": true
+        },
+        {
+          "name": "compact-mode",
+          "passed": true
+        },
+        {
+          "name": "coordinate-calibration",
+          "passed": true
+        },
+        {
+          "name": "tab-forward-reverse",
+          "passed": true
+        },
+        {
+          "name": "tab-focus-names",
+          "passed": true
+        },
+        {
+          "name": "import-cancel",
+          "passed": true
+        },
+        {
+          "name": "keyboard-import-open",
+          "passed": true
+        },
+        {
+          "name": "next-page",
+          "passed": true
+        },
+        {
+          "name": "more-text-leaves",
+          "passed": true
+        },
+        {
+          "name": "search-dialog-focus",
+          "passed": true
+        },
+        {
+          "name": "search-escape",
+          "passed": true
+        },
+        {
+          "name": "directory-dialog-focus",
+          "passed": true
+        },
+        {
+          "name": "directory-escape",
+          "passed": true
+        },
+        {
+          "name": "records-dialog-focus",
+          "passed": false
+        },
+        {
+          "name": "record-save",
+          "passed": true
+        },
+        {
+          "name": "records-escape",
+          "passed": true
+        },
+        {
+          "name": "settings-dialog-focus",
+          "passed": true
+        },
+        {
+          "name": "settings-escape",
+          "passed": true
+        },
+        {
+          "name": "return-shelf-search",
+          "passed": true
+        }
+      ],
+      "findings": [
+        {
+          "classification": "native-ui-observation",
+          "name": "records-dialog-focus",
+          "passed": false,
+          "actual": {
+            "dialog_path": "application[exreader-linux]#0/dialog[Reading records]#1",
+            "dialog_states": {
+              "enabled": true,
+              "visible": true,
+              "showing": true,
+              "sensitive": true,
+              "active": true,
+              "modal": true
+            },
+            "focus": [
+              {
+                "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/filler[]#0/toggle button[More reader actions]#2",
+                "name": "More reader actions",
+                "role": "toggle button",
+                "states": {
+                  "visible": true,
+                  "showing": true,
+                  "focused": true,
+                  "focusable": true
+                },
+                "descendant": false
+              }
+            ]
+          },
+          "expected": "Focused enabled sensitive visible showing descendant of active modal, not main window",
+          "target_sha": "803098e9df1a365a9b8e206805c2d179aca8501f",
+          "reproduction": "Run ON ON-large; see keys.log and records-dialog-focus snapshot",
+          "root_cause": "Unconfirmed; inspect actual tree and keyboard trace; environment readiness is separately recorded",
+          "minimal_suggestion": "Owner to inspect GTK focus/geometry handling; no production edits in D09"
+        }
+      ],
+      "environment": {
+        "gtk": [
+          3,
+          24,
+          33
+        ],
+        "theme": "HighContrast",
+        "font": "Sans 20",
+        "xft_dpi": 98304,
+        "gdk_window_scale": 1,
+        "screen_resolution": 96,
+        "screen": [
+          2560,
+          1920
+        ],
+        "env": {
+          "GTK_THEME": "HighContrast",
+          "GDK_SCALE": "1",
+          "GDK_DPI_SCALE": "1",
+          "XDG_CONFIG_HOME": "/home/runner/work/_temp/d09-ON-large"
+        },
+        "xrdb": "",
+        "readback_source": "Same-environment GTK probe window and settings; actual host bounds, focus and name/role/state are separately obtained through AT-SPI. No in-process host DPI instrumentation."
+      },
+      "coordinate_calibration": {
+        "scale": 1,
+        "samples": [
+          {
+            "physical": {
+              "WINDOW": 2097252,
+              "X": 759,
+              "Y": 537,
+              "WIDTH": 1042,
+              "HEIGHT": 845,
+              "BORDER": 0,
+              "DEPTH": 24
+            },
+            "logical": {
+              "x": 759,
+              "y": 537,
+              "width": 1042,
+              "height": 845
+            },
+            "native_x11": {
+              "client": {
+                "WINDOW": 8388611,
+                "X": 760,
+                "Y": 557,
+                "WIDTH": 1040,
+                "HEIGHT": 820,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "frame": {
+                "WINDOW": 2097252,
+                "X": 759,
+                "Y": 537,
+                "WIDTH": 1042,
+                "HEIGHT": 845,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "root": {
+                "WINDOW": 1293,
+                "X": 0,
+                "Y": 0,
+                "WIDTH": 2560,
+                "HEIGHT": 1920,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "ancestor_chain": [
+                8388611,
+                2097252
+              ]
+            },
+            "xdotool_observation": {
+              "WINDOW": 8388611,
+              "X": 761,
+              "Y": 577,
+              "WIDTH": 1040,
+              "HEIGHT": 820,
+              "SCREEN": 0
+            }
+          },
+          {
+            "physical": {
+              "WINDOW": 2097252,
+              "X": 799,
+              "Y": 577,
+              "WIDTH": 1042,
+              "HEIGHT": 845,
+              "BORDER": 0,
+              "DEPTH": 24
+            },
+            "logical": {
+              "x": 799,
+              "y": 577,
+              "width": 1042,
+              "height": 845
+            },
+            "native_x11": {
+              "client": {
+                "WINDOW": 8388611,
+                "X": 800,
+                "Y": 597,
+                "WIDTH": 1040,
+                "HEIGHT": 820,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "frame": {
+                "WINDOW": 2097252,
+                "X": 799,
+                "Y": 577,
+                "WIDTH": 1042,
+                "HEIGHT": 845,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "root": {
+                "WINDOW": 1293,
+                "X": 0,
+                "Y": 0,
+                "WIDTH": 2560,
+                "HEIGHT": 1920,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "ancestor_chain": [
+                8388611,
+                2097252
+              ]
+            },
+            "xdotool_observation": {
+              "WINDOW": 8388611,
+              "X": 801,
+              "Y": 617,
+              "WIDTH": 1040,
+              "HEIGHT": 820,
+              "SCREEN": 0
+            }
+          },
+          {
+            "physical": {
+              "WINDOW": 2097252,
+              "X": 759,
+              "Y": 537,
+              "WIDTH": 1042,
+              "HEIGHT": 845,
+              "BORDER": 0,
+              "DEPTH": 24
+            },
+            "logical": {
+              "x": 759,
+              "y": 537,
+              "width": 1042,
+              "height": 845
+            },
+            "native_x11": {
+              "client": {
+                "WINDOW": 8388611,
+                "X": 760,
+                "Y": 557,
+                "WIDTH": 1040,
+                "HEIGHT": 820,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "frame": {
+                "WINDOW": 2097252,
+                "X": 759,
+                "Y": 537,
+                "WIDTH": 1042,
+                "HEIGHT": 845,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "root": {
+                "WINDOW": 1293,
+                "X": 0,
+                "Y": 0,
+                "WIDTH": 2560,
+                "HEIGHT": 1920,
+                "BORDER": 0,
+                "DEPTH": 24
+              },
+              "ancestor_chain": [
+                8388611,
+                2097252
+              ]
+            },
+            "xdotool_observation": {
+              "WINDOW": 8388611,
+              "X": 761,
+              "Y": 577,
+              "WIDTH": 1040,
+              "HEIGHT": 820,
+              "SCREEN": 0
+            }
+          }
+        ],
+        "method": "actual Xlib XQueryTree WM frame and XTranslateCoordinates root space versus AT-SPI frame; actual movement and return validates scale/offset; xdotool retained as non-authoritative observation",
+        "verified": true
+      }
+    }
+  ]
+}
