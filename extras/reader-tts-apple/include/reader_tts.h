@@ -18,6 +18,11 @@
  *    plain-value events; the library never calls into the host. Calls never
  *    block waiting for the run loop; the host pumps the run loop and calls
  *    reader_tts_poll until it reports no event.
+ *  - Every system delivery is handled on the owner thread: the backend already
+ *    receives AVSpeechSynthesizer delegate calls there, and a delivery offered on
+ *    any other thread is re-queued to the main queue before it can touch the
+ *    internal queue. So no library state is ever mutated off the owner thread,
+ *    and no callback can reach the handle after reader_tts_destroy.
  *  - The queue is reserved for the active request: speak needs three free slots
  *    (STARTED, at most one coalesced RANGE, one terminal) and returns LIMIT
  *    otherwise. A host that never polls therefore sees LIMIT, never a lost

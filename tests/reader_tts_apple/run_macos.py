@@ -110,6 +110,9 @@ def main():
             print('%s %s: %s' % (case['status'], case['name'], case['detail']), flush=True)
         provisional('logic suite reported failing cases')
         raise SystemExit('logic suite reported a failing case: %s' % logic_report['counts'])
+    # Verify the suite's own report, not only the merged document: the required
+    # cases and the minimum case count have to be satisfied by this producer.
+    check_report.verify_checks(logic_report, 'logic')
 
     # ---- installed-package probe (real backend) ----
     run('probe-configure', ['cmake', '-S', root / 'tests/reader_tts_apple', '-B', probe, *generator,
@@ -134,6 +137,12 @@ def main():
                 print('fail %s: %s' % (case['name'], case['detail']), flush=True)
         provisional('installed probe reported failing cases')
         raise SystemExit('probe reported a failing case: %s' % (probe_report['counts'],))
+    # The identity the running consumer recorded about itself (source SHA, run id,
+    # attempt, platform, binary digest). The driver's own environment is not
+    # evidence: binding it here is what ties this report to this source.
+    check_report.verify_identity(probe_report, 'macos')
+    check_report.verify_checks(probe_report, 'probe')
+    check_report.verify_consumer(probe_report, probe_binary)
 
     # ---- installed-package example ----
     run('example-configure', ['cmake', '-S', module_dir / 'examples', '-B', examples, *generator,
@@ -145,8 +154,10 @@ def main():
     example_run = run('example-voices', [example_binary, 'voices', '--limit', '3'], timeout=300, check=False)
     example_output = example_run.stdout + example_run.stderr
     # A machine without installed voices legitimately answers UNAVAILABLE; the
-    # point of this step is that the installed package links and runs.
-    assert '"voices":' in example_output or '"error": "voices"' in example_output, \
+    # point of this step is that the installed package links and runs. The example
+    # prints {"voices":N} on success and {"error":"voices","status":N} otherwise
+    # (Fail() writes the key without a space), so both spellings are accepted.
+    assert '"voices":' in example_output or '"error":"voices"' in example_output, \
         'example produced neither a voice list nor a recorded UNAVAILABLE: %r' % example_output[-400:]
 
     # ---- installed artifacts and consumer identity ----

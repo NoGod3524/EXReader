@@ -1,144 +1,125 @@
 {
-  "accepted": true,
+  "accepted": false,
   "schema": 1,
   "package": "J17 reader-tts-apple",
-  "branch": "codex/reader-tts-apple",
+  "branch": "codex/reader-tts-apple-review",
   "start_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
   "sdk_sha": "9854061be331fe603a1822d9b2b36ee357154927",
-  "source_sha": "ecc51101c130502da59b0ffe5eca78dc80138e54",
-  "run_id": 40129088735,
-  "attempt": 1,
-  "jobs": [
-    {
-      "id": 120976747249,
-      "name": "source, protected-tree and path guard",
-      "conclusion": "success"
-    },
-    {
-      "id": 120976780039,
-      "name": "macOS logic suite, installed probe and PCM",
-      "conclusion": "success"
-    },
-    {
-      "id": 120976780116,
-      "name": "iOS Simulator native speech inside a UIKit app",
-      "conclusion": "success"
-    },
-    {
-      "id": 120978693849,
-      "name": "strict same-source evidence",
-      "conclusion": "success"
-    }
-  ],
-  "artifacts": [
-    {
-      "id": 12573932041,
-      "name": "reader-tts-apple-macos-40129088735-1",
-      "size_in_bytes": 73611,
-      "digest": "sha256:352b8f3b4d5305e4f0b3e0f8f35c22b50505ee71ddfa5fc7f9f3036999b9e51c",
-      "expires_at": "2027-01-22T20:17:08Z",
-      "expired": false,
-      "head_sha": "ecc51101c130502da59b0ffe5eca78dc80138e54",
-      "platform": "macos",
-      "counts": {"pass": 104, "fail": 0, "pending": 0},
-      "logic_counts": {"pass": 65, "fail": 0},
-      "probe_counts": {"pass": 39, "fail": 0, "pending": 0},
-      "consumer_sha256": "9924a2d9fe45a6d56e8aa02f02183314b2606402ad9bccbfded78fba6612be3f",
-      "os": "15.7.9",
-      "arch": "arm64",
-      "speech_available": true,
-      "pcm": {
-        "file": "speech-result.json.wav",
-        "bytes": 75456,
-        "frames": 37706,
-        "sample_rate": 22050.0,
-        "duration_seconds": 1.710023,
-        "rms": 0.135588,
-        "sha256": "1816c23d5304b2a91dad6788c0a3783f8c68baaa64fc4afbaef4066c9fee66ba",
-        "recomputed_sha256": "1816c23d5304b2a91dad6788c0a3783f8c68baaa64fc4afbaef4066c9fee66ba"
-      }
-    },
-    {
-      "id": 12574162912,
-      "name": "reader-tts-apple-ios-40129088735-1",
-      "size_in_bytes": 15682,
-      "digest": "sha256:1e7eb9ac6cb06e46edaa5d4cf7d74cb2765775fca160ed62b8dc33cfdc47947a",
-      "expires_at": "2027-01-22T20:17:08Z",
-      "expired": false,
-      "head_sha": "ecc51101c130502da59b0ffe5eca78dc80138e54",
-      "platform": "ios-simulator",
-      "counts": {"pass": 26, "fail": 0, "pending": 13},
-      "consumer_sha256": "273d770d7b621bf891a7d54ec5f90f124120c0f9e45cc5c889adabdd57c72810",
-      "os": "iOS 26.2 (23C54)",
-      "arch": "arm64",
-      "devices": {
-        "iPhone 16 Pro": {"pass": 25, "fail": 0, "pending": 13},
-        "iPad (A16)": {"pass": 25, "fail": 0, "pending": 13}
+  "review_base_sha": "24c498c6c69e382b1ff4dfaa50401a4031df400a",
+  "source_sha": null,
+  "run_id": null,
+  "attempt": null,
+  "jobs": [],
+  "artifacts": [],
+  "platforms": {},
+  "named_results": {},
+  "review": {
+    "scope": [
+      "AVSpeechSynthesizer installed adapter: synthesizer/delegate creation, control calls, teardown",
+      "delegate/owner/thread/run-loop lifetime and detach gate",
+      "stop/cancel/close/reentry and late callbacks",
+      "UTF-16 range conversion versus the public UTF-8 byte contract",
+      "voice and device absence, explicit input limits, memory ownership"
+    ],
+    "findings": [
+      {
+        "id": "R1",
+        "severity": "memory",
+        "path": "tests/reader_tts_apple/probe.mm",
+        "defect": "The PCM evidence capture allocated PcmCapture with new and deleted it after the capture deadline while the AVFoundation buffer block (retained by the synthesizer) could still fire, and the block wrote samples/sample_rate/buffers while the main thread read them without synchronization: use-after-free plus a data race on the exact path the simulator always takes.",
+        "fix": "The capture is owned by a shared_ptr held by the block, every mutable field is guarded by a mutex, the abandoned render is stopped, and the main thread reads a locked snapshot."
       },
-      "speech_available": false,
-      "speech_note": "no speech-start callback within 25 s (state 1, events 1); no usable audio route on this runner",
-      "pcm": null
-    }
-  ],
-  "platforms": {
-    "macos": {"pass": 104, "fail": 0, "pending": 0},
-    "ios-simulator": {"pass": 26, "fail": 0, "pending": 13}
+      {
+        "id": "R2",
+        "severity": "lifetime",
+        "path": "extras/reader-tts-apple/src/apple_engine.mm",
+        "defect": "engine.hpp claimed delegate callbacks may arrive on any thread, but the atomic sink gate only silenced future loads: a non-main delivery that had already loaded the sink could touch the handle concurrently with detach/destroy.",
+        "fix": "Every delegate delivery is funnelled through deliverOnMain: so the sink is only touched on the owner (main) thread; main-thread deliveries keep their synchronous reentrant behaviour, other-thread deliveries are re-queued to the main queue. Header and Sink comments now state this guarantee."
+      },
+      {
+        "id": "R3",
+        "severity": "false-positive evidence",
+        "path": "tests/reader_tts_apple/logic_suite.cpp",
+        "defect": "memory.speak-fails-without-state-change set the allocator to fail the second allocation point, but reader_tts_speak has exactly one, so the case never reached the MEMORY branch and still passed, with an assertion that tolerated OK.",
+        "fix": "Fail the first point and require MEMORY, no engine call, unchanged state and a reusable request id."
+      },
+      {
+        "id": "R4",
+        "severity": "evidence identity",
+        "path": "tests/reader_tts_apple/run_macos.py, tests/reader_tts_apple/run_ios.py",
+        "defect": "The merged reports took source_sha/run_id/attempt from the driver environment, so the identity the running consumer wrote about itself (and the SIMCTL_CHILD_* forwarding added for it) was never verified on either platform.",
+        "fix": "Each producer report (macOS installed consumer, both simulator devices, logic suite) is verified with verify_identity/verify_checks/verify_consumer before merging; the logic suite now emits \"pending\": 0 so the shared checker can validate it directly."
+      },
+      {
+        "id": "R5",
+        "severity": "driver bug",
+        "path": "tests/reader_tts_apple/run_macos.py",
+        "defect": "The documented UNAVAILABLE fallback for a machine with no installed voice could never match: it looked for '\"error\": \"voices\"' while the example prints '\"error\":\"voices\"'.",
+        "fix": "Match the string the example actually prints."
+      }
+    ],
+    "regression_added": "close.while-stopping-closes-after-the-cancel (request_close while a STOPPED is still pending: pending terminal kept, backend stopped again, closed by the cancel, detach exactly once)",
+    "contract_changes": "none; reader_tts.h ABI, wire, anchors, budgets and the shared tts-contract.md untouched"
   },
-  "named_results": {
-    "logic-suite": {
-      "cases": 65,
-      "note": "platform-neutral state machine against a deterministic fake engine; every case is printed by name and any non-pass exits non-zero"
-    },
-    "macos-installed-probe": {
-      "cases": 39,
-      "live_speech": [
-        "probe.speak-english-lifecycle",
-        "probe.speak-english-callbacks",
-        "probe.speak-chinese-emoji-lifecycle",
-        "probe.range-byte-boundaries",
-        "probe.range-advances",
-        "probe.speak-named-voice",
-        "probe.pause-resume",
-        "probe.stop-after-pause",
-        "probe.queue-replacement-busy",
-        "probe.cancel-terminal-once",
-        "probe.late-callback-isolation",
-        "probe.post-cancel-utterance",
-        "probe.pcm-wav-captured"
-      ],
-      "note": "AVSpeechSynthesizer driven from the real main run loop on a runner whose output device is a BlackHole loopback installed for the fixture"
-    },
-    "ios-simulator-probe": {
-      "cases": 26,
-      "pending_cases": [
-        "probe.speak-english-lifecycle",
-        "probe.speak-english-callbacks",
-        "probe.state-ready-after-finish",
-        "probe.speak-chinese-emoji-lifecycle",
-        "probe.range-byte-boundaries",
-        "probe.range-advances",
-        "probe.speak-named-voice",
-        "probe.pause-resume",
-        "probe.stop-after-pause",
-        "probe.queue-replacement-busy",
-        "probe.cancel-terminal-once",
-        "probe.late-callback-isolation",
-        "probe.pcm-wav-captured"
-      ],
-      "note": "the simulator runtime accepted speakUtterance: and returned one terminal, but produced no speech callback and no audio buffer at all; nothing is granted for live speech or PCM there"
-    }
-  },
-  "capsule": {
-    "module_accepted": true,
-    "installed_consumer_accepted": true,
-    "macos_live_speech_accepted": true,
-    "ios_simulator_contract_accepted": true,
-    "ios_simulator_live_speech_accepted": false,
-    "host_function_accepted": false,
-    "physical_device_execution": false,
-    "listening_impression_evaluated": false,
-    "performance_budget_accepted": false,
-    "complete_product": false
+  "previous_delivery": {
+    "branch": "codex/reader-tts-apple",
+    "source_sha": "ecc51101c130502da59b0ffe5eca78dc80138e54",
+    "run_id": 40129088735,
+    "attempt": 1,
+    "accepted": true,
+    "note": "pre-review delivery, kept as history; its logic suite had 65 cases and none of the fixes above",
+    "jobs": [
+      {
+        "id": 120976747249,
+        "name": "source, protected-tree and path guard",
+        "conclusion": "success"
+      },
+      {
+        "id": 120976780039,
+        "name": "macOS logic suite, installed probe and PCM",
+        "conclusion": "success"
+      },
+      {
+        "id": 120976780116,
+        "name": "iOS Simulator native speech inside a UIKit app",
+        "conclusion": "success"
+      },
+      {
+        "id": 120978693849,
+        "name": "strict same-source evidence",
+        "conclusion": "success"
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 12573932041,
+        "name": "reader-tts-apple-macos-40129088735-1",
+        "size_in_bytes": 73611,
+        "digest": "sha256:352b8f3b4d5305e4f0b3e0f8f35c22b50505ee71ddfa5fc7f9f3036999b9e51c",
+        "expires_at": "2027-01-22T20:17:08Z",
+        "head_sha": "ecc51101c130502da59b0ffe5eca78dc80138e54",
+        "platform": "macos",
+        "counts": {
+          "pass": 104,
+          "fail": 0,
+          "pending": 0
+        }
+      },
+      {
+        "id": 12574162912,
+        "name": "reader-tts-apple-ios-40129088735-1",
+        "size_in_bytes": 15682,
+        "digest": "sha256:1e7eb9ac6cb06e46edaa5d4cf7d74cb2765775fca160ed62b8dc33cfdc47947a",
+        "expires_at": "2027-01-22T20:17:08Z",
+        "head_sha": "ecc51101c130502da59b0ffe5eca78dc80138e54",
+        "platform": "ios-simulator",
+        "counts": {
+          "pass": 26,
+          "fail": 0,
+          "pending": 13
+        }
+      }
+    ]
   },
   "retained_runs": [
     {

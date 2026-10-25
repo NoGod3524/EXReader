@@ -27,6 +27,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
@@ -237,15 +239,28 @@ std::string JsonEscape(const std::string &value) {
 }
 
 // ---- PCM capture through the platform engine, for real audio evidence ----
+// The buffer block below is retained by the synthesizer and can run after the
+// capture deadline, so the capture object is owned by a shared_ptr that the block
+// keeps alive: a late buffer writes into live memory instead of a freed object.
+// The block is the only writer and every field it touches sits under mu, so the
+// main thread's copy after the deadline never races with it either.
 struct PcmCapture {
+  std::mutex mu;
   std::vector<int16_t> samples;
   double sample_rate = 0;
   unsigned channels = 0;
-  std::atomic<bool> done{false};
   size_t buffers = 0;
+  std::atomic<bool> done{false};
 
-  void Append(const int16_t *data, size_t count) {
-    samples.insert(samples.end(), data, data + count);
+  void Append(int16_t sample) { samples.push_back(sample); }  // caller holds mu
+
+  void Snapshot(std::vector<int16_t> *out_samples, double *out_rate, unsigned *out_channels,
+                size_t *out_buffers) {
+    std::lock_guard<std::mutex> lock(mu);
+    *out_samples = samples;
+    *out_rate = sample_rate;
+    *out_channels = channels;
+    *out_buffers = buffers;
   }
 };
 
@@ -314,13 +329,14 @@ PcmResult CapturePcm(const std::string &text, double timeout) {
       return result;
     }
     AVSpeechUtterance *utterance = [AVSpeechUtterance speechUtteranceWithString:string];
-    PcmCapture *capture = new PcmCapture();
+    std::shared_ptr<PcmCapture> capture = std::make_shared<PcmCapture>();
     [synthesizer writeUtterance:utterance
               toBufferCallback:^(AVAudioBuffer *buffer) {
                 AVAudioPCMBuffer *pcm = [buffer isKindOfClass:[AVAudioPCMBuffer class]]
                                             ? (AVAudioPCMBuffer *)buffer
                                             : nil;
                 if (!pcm) return;
+                std::lock_guard<std::mutex> lock(capture->mu);
                 capture->sample_rate = pcm.format.sampleRate;
                 capture->channels = pcm.format.channelCount;
                 if (pcm.frameLength == 0) {
@@ -332,14 +348,14 @@ PcmResult CapturePcm(const std::string &text, double timeout) {
                 if (pcm.format.commonFormat == AVAudioPCMFormatInt16 && pcm.int16ChannelData) {
                   const int16_t *channel = pcm.int16ChannelData[0];
                   const size_t stride = pcm.format.isInterleaved ? (size_t)pcm.format.channelCount : 1;
-                  for (size_t i = 0; i < frames; ++i) capture->samples.push_back(channel[i * stride]);
+                  for (size_t i = 0; i < frames; ++i) capture->Append(channel[i * stride]);
                 } else if (pcm.format.commonFormat == AVAudioPCMFormatFloat32 && pcm.floatChannelData) {
                   const float *channel = pcm.floatChannelData[0];
                   for (size_t i = 0; i < frames; ++i) {
                     float value = channel[i];
                     if (value > 1.0f) value = 1.0f;
                     if (value < -1.0f) value = -1.0f;
-                    capture->samples.push_back((int16_t)std::lround(value * 32767.0f));
+                    capture->Append((int16_t)std::lround(value * 32767.0f));
                   }
                 }
               }];
@@ -347,13 +363,23 @@ PcmResult CapturePcm(const std::string &text, double timeout) {
     while (!capture->done.load() && [deadline timeIntervalSinceNow] > 0) {
       @autoreleasepool { Pump(0.01); }
     }
-    result.frames = capture->samples.size();
-    result.saw_callback = capture->done.load() || capture->buffers > 0 || !capture->samples.empty();
-    result.sample_rate = capture->sample_rate > 0 ? capture->sample_rate : 22050.0;
-    result.rms = Rms(capture->samples);
+    if (!capture->done.load()) {
+      // Abandon an unfinished render. The block still holds the capture alive, so
+      // a buffer that arrives after this point cannot touch freed memory.
+      [synthesizer stopSpeakingAtBoundary:AVSpeechBoundaryImmediate];
+    }
+    std::vector<int16_t> samples;
+    double sample_rate = 0;
+    unsigned channels = 0;
+    size_t buffers = 0;
+    capture->Snapshot(&samples, &sample_rate, &channels, &buffers);
+    result.frames = samples.size();
+    result.saw_callback = capture->done.load() || buffers > 0 || !samples.empty();
+    result.sample_rate = sample_rate > 0 ? sample_rate : 22050.0;
+    result.rms = Rms(samples);
     result.duration = result.sample_rate > 0 ? (double)result.frames / result.sample_rate : 0.0;
-    if (!capture->samples.empty()) {
-      result.wav = MakeWav(capture->samples, result.sample_rate, capture->channels ? capture->channels : 1);
+    if (!samples.empty()) {
+      result.wav = MakeWav(samples, result.sample_rate, channels ? channels : 1);
       result.bytes = result.wav.size();
       unsigned char digest[CC_SHA256_DIGEST_LENGTH];
       CC_SHA256(result.wav.data(), (CC_LONG)result.wav.size(), digest);
@@ -363,7 +389,6 @@ PcmResult CapturePcm(const std::string &text, double timeout) {
       result.detail = capture->done.load() ? "the system returned no sample buffers"
                                            : "no buffer callback within the capture deadline";
     }
-    delete capture;
   }
   return result;
 }

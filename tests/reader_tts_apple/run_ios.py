@@ -121,6 +121,13 @@ def main():
                 # failing cases from the artifact (never treated as a pass).
                 shutil.copy2(report_copy, out / 'result.json')
                 raise SystemExit('the %s simulator probe reported a failing case (%d)' % (label, exit_code))
+            # Bind the report the app wrote about itself to this source, run,
+            # attempt and installed bundle. The driver's environment is not
+            # evidence: the identity has to come out of the running app (which is
+            # why the run identity is forwarded through SIMCTL_CHILD_*).
+            check_report.verify_identity(report, 'ios-simulator')
+            check_report.verify_checks(report, 'probe')
+            check_report.verify_consumer(report, binary)
             return report, report_copy, wav_copy
         finally:
             subprocess.run(['xcrun', 'simctl', 'shutdown', udid], capture_output=True)

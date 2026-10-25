@@ -11,10 +11,13 @@ namespace rtts {
 
 struct VoiceInfo { std::string id, name, language; };
 
-// Callbacks from the system. They may arrive on any thread and re-entrantly
-// from inside an Engine call (AVSpeechSynthesizer can deliver a cancel while
-// stopSpeakingAtBoundary: runs); the implementation locks internally and never
-// calls the host.
+// Callbacks from the system. The Apple backend hands every delivery to the main
+// (owner) thread before it reaches the Sink: AVSpeechSynthesizer already calls
+// its delegate there, and a delivery offered on any other thread is re-queued to
+// the main queue instead of touching the sink. They can arrive re-entrantly from
+// inside an Engine call (AVSpeechSynthesizer delivers a cancel while
+// stopSpeakingAtBoundary: runs); the core locks internally and never calls the
+// host.
 class Sink {
  public:
   virtual ~Sink() {}

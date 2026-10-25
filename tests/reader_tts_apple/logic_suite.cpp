@@ -937,6 +937,42 @@ int main() {
     return Require(events.size() == 2 && events.back().kind == READER_TTS_STOPPED, "terminal event lost");
   });
 
+  Case("close.while-stopping-closes-after-the-cancel", [&]() -> std::string {
+    // request_close on a handle that is still waiting for its STOPPED event: the
+    // close has to keep the pending terminal, then finish the request once the
+    // system confirms, and only then release the backend.
+    Handle handle(0, FakeConfig{});
+    std::string detail = SpeakOk(handle.h, 1, kShort);
+    if (!detail.empty()) return detail;
+    handle.fake()->DeliverStarted(1);
+    reader_tts_error err{};
+    detail = Require(reader_tts_stop(handle.h, 1, &err) == READER_TTS_OK, "stop failed");
+    if (!detail.empty()) return detail;
+    detail = Require(State(handle.h) == READER_TTS_STOPPING, "state is not STOPPING");
+    if (!detail.empty()) return detail;
+    detail = Require(reader_tts_request_close(handle.h, &err) == READER_TTS_OK, "close failed");
+    if (!detail.empty()) return detail;
+    detail = Require(State(handle.h) == READER_TTS_CLOSING, "close did not keep the request open");
+    if (!detail.empty()) return detail;
+    detail = Require(handle.fake()->stop_calls == 2, "the close did not ask the backend to stop again");
+    if (!detail.empty()) return detail;
+    handle.fake()->DeliverCancelled(1);
+    detail = Require(State(handle.h) == READER_TTS_CLOSED, "the cancel did not close the handle");
+    if (!detail.empty()) return detail;
+    const std::vector<reader_tts_event> events = Drain(handle.h);
+    detail = EventsAreOrdered(events, 1);
+    if (!detail.empty()) return detail;
+    detail = Require(events.size() == 2 && events.back().kind == READER_TTS_STOPPED, "no STOPPED terminal");
+    if (!detail.empty()) return detail;
+    detail = Require(handle.fake()->detach_calls == 1, "the backend was not detached exactly once");
+    if (!detail.empty()) return detail;
+    reader_tts *raw = handle.h;
+    detail = Require(reader_tts_destroy(&raw, &err) == READER_TTS_OK && raw == nullptr, "destroy failed");
+    if (!detail.empty()) return detail;
+    handle.h = nullptr;
+    return {};
+  });
+
   // ---------- observe ----------
   Case("observe.reports-the-highest-accepted-request", [&]() -> std::string {
     Handle handle(0, FakeConfig{});
@@ -997,19 +1033,24 @@ int main() {
   Case("memory.speak-fails-without-state-change", [&]() -> std::string {
     Handle handle(0, FakeConfig{});
     reader_tts_error err{};
-    rtts_test_fail_alloc_after(2);  // the text copy point
+    // speak has exactly one allocation point, the copy of the caller's text, so
+    // failing the first one is what exercises the MEMORY path. (Failing the
+    // second point never fired here: the case used to pass without ever reaching
+    // the branch it is named after.)
+    rtts_test_fail_alloc_after(1);
     const reader_tts_status status = reader_tts_speak(handle.h, 1, kShort, std::strlen(kShort), nullptr, 1.0, &err);
     rtts_test_fail_alloc_after(0);
-    std::string detail = Require(status == READER_TTS_MEMORY || status == READER_TTS_OK, "unexpected status");
+    std::string detail = Require(status == READER_TTS_MEMORY, "the failed allocation did not report MEMORY");
     if (!detail.empty()) return detail;
-    if (status == READER_TTS_MEMORY) {
-      detail = Require(State(handle.h) == READER_TTS_READY, "state changed by a failed speak");
-      if (!detail.empty()) return detail;
-      detail = Require(Drain(handle.h).empty(), "events emitted by a failed speak");
-      if (!detail.empty()) return detail;
-      return Require(Speak(handle.h, 1, kShort) == READER_TTS_OK, "id consumed by a failed speak");
-    }
-    return {};
+    detail = Require(err.code == READER_TTS_MEMORY, "error code is not MEMORY");
+    if (!detail.empty()) return detail;
+    detail = Require(State(handle.h) == READER_TTS_READY, "state changed by a failed speak");
+    if (!detail.empty()) return detail;
+    detail = Require(Drain(handle.h).empty(), "events emitted by a failed speak");
+    if (!detail.empty()) return detail;
+    detail = Require(handle.fake()->last_speak.called == false, "a failed speak reached the engine");
+    if (!detail.empty()) return detail;
+    return Require(Speak(handle.h, 1, kShort) == READER_TTS_OK, "id consumed by a failed speak");
   });
 
   Case("memory.voices-fails-without-a-list", [&]() -> std::string {
@@ -1038,7 +1079,10 @@ int main() {
     std::printf("    {\"name\": \"%s\", \"status\": \"%s\", \"detail\": \"%s\"}%s\n", outcome.name.c_str(),
                 outcome.status.c_str(), outcome.detail.c_str(), i + 1 == g_outcomes.size() ? "" : ",");
   }
-  std::printf("  ],\n  \"counts\": {\"pass\": %d, \"fail\": %d}\n}\n", g_pass, g_fail);
+  // "pending" is always 0 for this suite; it is emitted so the shared report
+  // checker can validate the logic report on its own, exactly like a probe report,
+  // instead of only validating the merged document.
+  std::printf("  ],\n  \"counts\": {\"pass\": %d, \"fail\": %d, \"pending\": 0}\n}\n", g_pass, g_fail);
   std::printf("RESULT_JSON_END\n");
   std::fflush(stdout);
   return g_fail == 0 ? 0 : 1;

@@ -2,7 +2,9 @@ name: Native Apple speech adoption
 
 on:
   push:
-    branches: [codex/reader-tts-apple]
+    # The delivered package branch and the independent review branch. Both run the
+    # same guard, so a review push can never widen the allowlisted paths.
+    branches: [codex/reader-tts-apple, codex/reader-tts-apple-review]
   workflow_dispatch:
 
 permissions:
@@ -55,6 +57,7 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           git merge-base --is-ancestor "$START_SHA" HEAD
+          git merge-base --is-ancestor "$SDK_SHA" HEAD
           git diff --exit-code "$SDK_SHA" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
           git diff --exit-code "$START_SHA" HEAD -- apps/reader/store/001_catalog.sql
           git diff --name-only "$START_SHA" HEAD | while IFS= read -r path; do
@@ -116,6 +119,7 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           git merge-base --is-ancestor "$START_SHA" HEAD
+          git merge-base --is-ancestor "$SDK_SHA" HEAD
           git diff --exit-code "$SDK_SHA" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
           git diff --exit-code "$START_SHA" HEAD -- apps/reader/store/001_catalog.sql
           git diff --name-only "$START_SHA" HEAD | while IFS= read -r path; do

@@ -33,11 +33,15 @@ std::string ToStd(NSString *value) {
 
 }  // namespace
 
-// Callback gate: the atomic pointer is the only thing a delegate method reads
-// before forwarding, so detach() can silence every callback synchronously from
-// any thread while the native teardown finishes on the main queue.
+// Callback gate: the atomic pointer is the only thing a delivery reads before
+// forwarding, and every delivery reaches it on the main (owner) thread, so
+// detach() -- always called from that thread while the core holds its lock --
+// silences every callback both for the calls that follow it and for a delivery
+// that the system handed over on another thread and that is still waiting in the
+// main queue.
 @interface RTTSDelegate : NSObject <AVSpeechSynthesizerDelegate>
 - (instancetype)initWithSink:(rtts::Sink *)sink;
+- (void)deliverOnMain:(dispatch_block_t)body;
 - (void)silence;
 - (void)remember:(AVSpeechUtterance *)utterance requestId:(uint64_t)requestId;
 - (void)forgetAll;
@@ -62,6 +66,20 @@ std::string ToStd(NSString *value) {
 - (void)silence { _sink.store(nullptr); }
 - (NSMapTable<AVSpeechUtterance *, NSNumber *> *)ids { return _ids; }
 
+// AVSpeechSynthesizer is driven by the main run loop, so its delegate is called
+// on the main thread, which is also the handle's owner thread. Every delivery is
+// funnelled through here anyway: a delivery handed over on any other thread is
+// re-queued to the main queue instead of touching the sink from a foreign
+// thread, so the owner/lifetime rule in reader_tts.h holds for the whole
+// callback path and not just for the calls the host makes.
+- (void)deliverOnMain:(dispatch_block_t)body {
+  if ([NSThread isMainThread]) {
+    body();
+    return;
+  }
+  dispatch_async(dispatch_get_main_queue(), body);
+}
+
 - (void)remember:(AVSpeechUtterance *)utterance requestId:(uint64_t)requestId {
   if (!utterance) return;
   @synchronized(self) { [_ids setObject:@(requestId) forKey:utterance]; }
@@ -82,58 +100,70 @@ std::string ToStd(NSString *value) {
 - (void)speechSynthesizer:(AVSpeechSynthesizer *)synthesizer
     didStartSpeechUtterance:(AVSpeechUtterance *)utterance {
   (void)synthesizer;
-  BOOL found = NO;
-  const uint64_t requestId = [self requestIdFor:utterance found:&found];
-  rtts::Sink *sink = _sink.load();
-  if (found && sink) sink->started(requestId);
+  [self deliverOnMain:^{
+    BOOL found = NO;
+    const uint64_t requestId = [self requestIdFor:utterance found:&found];
+    rtts::Sink *sink = _sink.load();
+    if (found && sink) sink->started(requestId);
+  }];
 }
 
 - (void)speechSynthesizer:(AVSpeechSynthesizer *)synthesizer
     willSpeakRangeOfSpeechString:(NSRange)characterRange
                        utterance:(AVSpeechUtterance *)utterance {
   (void)synthesizer;
-  BOOL found = NO;
-  const uint64_t requestId = [self requestIdFor:utterance found:&found];
-  rtts::Sink *sink = _sink.load();
-  // UTF-16 units, exactly as the system reports them; the core converts to the
-  // UTF-8 byte boundaries of its own copy of the input.
-  if (found && sink) sink->range16(requestId, (size_t)characterRange.location, (size_t)characterRange.length);
+  [self deliverOnMain:^{
+    BOOL found = NO;
+    const uint64_t requestId = [self requestIdFor:utterance found:&found];
+    rtts::Sink *sink = _sink.load();
+    // UTF-16 units, exactly as the system reports them; the core converts to the
+    // UTF-8 byte boundaries of its own copy of the input.
+    if (found && sink) sink->range16(requestId, (size_t)characterRange.location, (size_t)characterRange.length);
+  }];
 }
 
 - (void)speechSynthesizer:(AVSpeechSynthesizer *)synthesizer
     didPauseSpeechUtterance:(AVSpeechUtterance *)utterance {
   (void)synthesizer;
-  BOOL found = NO;
-  const uint64_t requestId = [self requestIdFor:utterance found:&found];
-  rtts::Sink *sink = _sink.load();
-  if (found && sink) sink->paused(requestId);
+  [self deliverOnMain:^{
+    BOOL found = NO;
+    const uint64_t requestId = [self requestIdFor:utterance found:&found];
+    rtts::Sink *sink = _sink.load();
+    if (found && sink) sink->paused(requestId);
+  }];
 }
 
 - (void)speechSynthesizer:(AVSpeechSynthesizer *)synthesizer
     didContinueSpeechUtterance:(AVSpeechUtterance *)utterance {
   (void)synthesizer;
-  BOOL found = NO;
-  const uint64_t requestId = [self requestIdFor:utterance found:&found];
-  rtts::Sink *sink = _sink.load();
-  if (found && sink) sink->resumed(requestId);
+  [self deliverOnMain:^{
+    BOOL found = NO;
+    const uint64_t requestId = [self requestIdFor:utterance found:&found];
+    rtts::Sink *sink = _sink.load();
+    if (found && sink) sink->resumed(requestId);
+  }];
 }
 
 - (void)speechSynthesizer:(AVSpeechSynthesizer *)synthesizer
     didFinishSpeechUtterance:(AVSpeechUtterance *)utterance {
   (void)synthesizer;
-  BOOL found = NO;
-  const uint64_t requestId = [self requestIdFor:utterance found:&found];
-  rtts::Sink *sink = _sink.load();
-  if (found && sink) sink->finished(requestId);
+  [self deliverOnMain:^{
+    BOOL found = NO;
+    const uint64_t requestId = [self requestIdFor:utterance found:&found];
+    rtts::Sink *sink = _sink.load();
+    if (found && sink) sink->finished(requestId);
+  }];
 }
 
 - (void)speechSynthesizer:(AVSpeechSynthesizer *)synthesizer
     didCancelSpeechUtterance:(AVSpeechUtterance *)utterance {
   (void)synthesizer;
-  BOOL found = NO;
-  const uint64_t requestId = [self requestIdFor:utterance found:&found];
-  rtts::Sink *sink = _sink.load();
-  if (found && sink) sink->cancelled(requestId);
+  [self deliverOnMain:^{
+    BOOL found = NO;
+    const uint64_t requestId = [self requestIdFor:utterance found:&found];
+    rtts::Sink *sink = _sink.load();
+    if (found && sink) sink->cancelled(requestId);
+  }];
 }
 
 @end
