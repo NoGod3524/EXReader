@@ -122,7 +122,7 @@ def main():
                 K.require(item['identity']['program_sha256'] == build['program_sha256'],
                           '%s round %d program differs from the build artifact it consumed' % (platform_name, number))
                 loaded.append(item)
-            except K.Rejected as error:
+            except (K.Rejected, OSError, KeyError, ValueError) as error:
                 record['problems'].append('%s round %d: %s' % (platform_name, number, error))
     summary = A.build_summary(loaded, expected)
     summary['problems'] = record['problems'] + summary['problems']

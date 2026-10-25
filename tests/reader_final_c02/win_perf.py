@@ -38,6 +38,7 @@ else:  # pragma: no cover - the self-check of the shared rules runs elsewhere
 WM_COMMAND = 0x0111
 COMPACT_SHELF, COMPACT_MORE = 46001, 46003
 COLD_BUDGET_S = 3600
+LAUNCH_BUDGET_S = 600
 LONG_TITLE = 'Shelf 0000'
 AUTHOR_QUERY = 'Author %_!'
 
@@ -206,10 +207,15 @@ class Round:
             return corpus['reading'], 'shared-reading-profile'
         profile = corpus['folder'] / 'profiles' / launch_id
         if cohort == 'warm':
-            profile = corpus['folder'] / 'profiles' / 'warm-shared'
-            if not profile.exists():
-                shutil.copytree(corpus['template'], profile)
-            return profile, 'shared-warm-profile'
+            # Fresh settings (a reused profile would restore the reading view) with the
+            # already-built product catalog kept: the warm-catalog start.
+            if profile.exists():
+                shutil.rmtree(profile)
+            shutil.copytree(corpus['template'], profile)
+            for name in ('host.ini', 'application.log'):
+                if (profile / name).exists():
+                    (profile / name).unlink()
+            return profile, 'fresh-settings-built-catalog-copy'
         if profile.exists():
             shutil.rmtree(profile)
         PW.fresh_profile(corpus['template'], profile)
@@ -253,7 +259,7 @@ class Round:
                     self.add_missing(state, metric, slot)
         if host is not None:
             self.record_memory(host, peak, identity, launch_id, size, record)
-        if cohort in ('cold', 'import') and profile.exists():
+        if cohort in ('cold', 'warm', 'import') and profile.exists():
             shutil.rmtree(profile, ignore_errors=True)
         self.launches.append(record)
         print('LAUNCH %s ok=%s faults=%s' % (launch_id, record['ok'], record['faults']), flush=True)
@@ -283,7 +289,7 @@ class Round:
 
     # -- scenarios ------------------------------------------------------
     def run_start(self, host, state):
-        marks = PW.op_first_screen(host, COLD_BUDGET_S)
+        marks = PW.op_first_screen(host, LAUNCH_BUDGET_S)
         self.add(state, 'start_window', marks['window_ms'])
         self.add(state, 'start_first_rows', marks['rows_ms'])
         if marks.get('first_screen_interactive_ms') is None:
@@ -369,6 +375,16 @@ class Round:
                 self.add(state, 'ui_roundtrip_import_busy', None, 'failed', 'round trip timed out')
 
     # -- driver ---------------------------------------------------------
+    def flush(self, sizes, counts):
+        for size in sizes:
+            K.write_json(self.out / ('identity-n%d.json' % size), self.identity_for(size))
+        K.write_json(self.out / 'samples.json', {'schema': K.SCHEMA, 'rows': self.rows})
+        K.write_json(self.out / 'launches.json', {'schema': K.SCHEMA, 'launches': self.launches})
+        K.write_json(self.out / 'memory.json', {'schema': K.SCHEMA, 'records': self.memory})
+        K.write_json(self.out / 'plan.json', {'schema': K.SCHEMA, 'sizes': sizes, 'plan': PLAN,
+                                              'launch_counts': counts, 'budget_stopped': self.stopped})
+        K.write_json(self.out / 'bundle.json', K.bundle_for(self.out))
+
     def run(self):
         self.out.mkdir(parents=True)
         (self.out / 'logs').mkdir()
@@ -378,23 +394,25 @@ class Round:
             sizes.reverse()
         counts = {'cold': self.arguments.cold, 'warm': self.arguments.warm,
                   'resume': self.arguments.resume, 'import': self.arguments.imports}
+        self.stopped = False
+        started = time.monotonic()
         for size in sizes:
+            if time.monotonic() - started > self.arguments.budget_minutes * 60:
+                self.stopped = True
+                break
             self.prepare(size)
             for cohort in COHORT_ORDER:
                 for index in range(counts[cohort]):
+                    if time.monotonic() - started > self.arguments.budget_minutes * 60:
+                        self.stopped = True
+                        break
                     self.launch(size, cohort, index)
-        for size in sizes:
-            K.write_json(self.out / ('identity-n%d.json' % size), self.identity_for(size))
-        K.write_json(self.out / 'samples.json', {'schema': K.SCHEMA, 'rows': self.rows})
-        K.write_json(self.out / 'launches.json', {'schema': K.SCHEMA, 'launches': self.launches})
-        K.write_json(self.out / 'memory.json', {'schema': K.SCHEMA, 'records': self.memory})
-        K.write_json(self.out / 'plan.json', {'schema': K.SCHEMA, 'sizes': sizes, 'plan': PLAN,
-                                              'launch_counts': counts})
-        K.write_json(self.out / 'bundle.json', K.bundle_for(self.out))
+                    self.flush(sizes, counts)
+        self.flush(sizes, counts)
         failed = [row for row in self.rows if row['status'] != 'ok']
-        print('ROUND-EVIDENCE rows=%d not_ok=%d launches=%d failed_launches=%d' % (
+        print('ROUND-EVIDENCE rows=%d not_ok=%d launches=%d failed_launches=%d budget_stopped=%s' % (
             len(self.rows), len(failed), len(self.launches),
-            sum(1 for launch in self.launches if not launch['ok'])), flush=True)
+            sum(1 for launch in self.launches if not launch['ok']), self.stopped), flush=True)
 
 
 def main():
@@ -409,6 +427,7 @@ def main():
     parser.add_argument('--warm', type=int, default=4)
     parser.add_argument('--resume', type=int, default=4)
     parser.add_argument('--imports', type=int, default=3)
+    parser.add_argument('--budget-minutes', type=int, default=130)
     parser.add_argument('--producer-source', required=True)
     parser.add_argument('--sdk-version', required=True)
     arguments = parser.parse_args()
