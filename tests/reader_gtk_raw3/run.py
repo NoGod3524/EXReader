@@ -56,7 +56,7 @@ def build():
             extra+=['-DEXR_READER_PAGE_BACKGROUND=ON']
             for option,name in [('PREFERENCES','PREFERENCES'),('SEARCH','SEARCH'),('NAVIGATION','NAVIGATION'),('BATCH_IMPORT','BATCH_IMPORT'),('DROP_IMPORT','DESKTOP_DROP')]:
                 extra+=['-DEXR_READER_GTK_'+option+'=ON','-DREADER_'+name+'_PREFIX='+str(prefix)]
-        targets=('gtk-raw3-owner','exreader-linux') if profile=='legacy' else ('gtk-raw3-owner','exreader-linux','gtk-raw3-session')
+        targets=('gtk-raw3-owner','exreader-linux')
         cmake(profile+'-owner',ROOT/'tests/reader_gtk_raw3',OUT/(profile+'-owner'),prefix,extra=extra,targets=targets)
     run('package',['python3','tools/build_linux_host.py','--sdk','build/reading-library/stage','--sdk-version','3.41.0',
       '--binary',OUT/'raw-owner/actual-owner/gtk-host/exreader-linux','--output',OUT/'package'])
@@ -65,8 +65,8 @@ def build():
 def process(profile,source,mode,label,legacy=False,env=None):
     binary=OUT/(('legacy' if legacy else 'raw')+'-owner/gtk-raw3-owner')
     report=OUT/(label+'.json')
-    args=[binary,profile,ROOT/'tests/fixtures/fonts/primary.ttf',source,mode,report,'3.40.0']
-    if legacy:args+=['3.40.0']
+    args=[binary,profile,ROOT/'tests/fixtures/fonts/primary.ttf',source,mode,report,'3.41.0']
+    if legacy:args+=['3.41.0']
     run(label,args,timeout=180,env=env)
     value=json.loads(report.read_text());assert value['accepted'] and value['check_count']==len(value['checks']) and all(row['passed'] for row in value['checks'])
     return dict(label=label,program_sha256=sha(binary),report=report.name,report_sha256=sha(report),checks=value['check_count'],mode=mode,legacy=legacy)
@@ -76,8 +76,8 @@ def killed(profile,source,label,stage,legacy=False):
     marker=OUT/(label+'.marker');report=OUT/(label+'.partial.json');log=OUT/(label+'.log')
     environment=dict(os.environ,GTK_RECORD_KILL_STAGE=stage,GTK_RECORD_KILL_MARKER=str(marker))
     binary=OUT/(('legacy' if legacy else 'raw')+'-owner/gtk-raw3-owner')
-    args=[binary,profile,ROOT/'tests/fixtures/fonts/primary.ttf',source,'pending',report,'3.40.0']
-    if legacy:args+=['3.40.0']
+    args=[binary,profile,ROOT/'tests/fixtures/fonts/primary.ttf',source,'pending',report,'3.41.0']
+    if legacy:args+=['3.41.0']
     with log.open('w') as stream:
         child=subprocess.Popen(list(map(str,args)),cwd=ROOT,stdout=stream,stderr=subprocess.STDOUT,env=environment)
         try:
@@ -116,7 +116,7 @@ def exercise():
             finally:connection.close()
         immutable=inventory()
         done=run('legacy-refuses-native-'+stage,[OUT/'legacy-owner/gtk-raw3-owner',refused,
-          ROOT/'tests/fixtures/fonts/primary.ttf',pdf,'retry',OUT/('legacy-refuses-native-'+stage+'.partial.json'),'3.40.0','3.40.0'],expect=1)
+          ROOT/'tests/fixtures/fonts/primary.ttf',pdf,'retry',OUT/('legacy-refuses-native-'+stage+'.partial.json'),'3.41.0','3.41.0'],expect=1)
         assert 'compatibility check failed: original private request retained before explicit retry' in done.stderr
         assert pending.read_bytes()==before and inventory()==immutable
         refusals.append(dict(stage=stage,pending_sha256=sha(pending),pending_bytes=len(before),retained_wire_count=len(immutable),legacy_exit=done.returncode))
@@ -140,15 +140,17 @@ def network(phases):
     proof,manifest,wires,originals,operations=load(OUT/'mac-peer')
     reports=[]
     def receive(label,selected,books,index,mode):
-        profile=OUT/(label+'-profile');profile.mkdir(mode=0o700)
-        for name in ('sync-work','sync-originals'):(profile/name).mkdir(mode=0o700)
         server=fixture(ROOT/('build/'+label+'-tls-private'),OUT/(label+'-tls.py'))
         try:
             populate(server,selected,books)
             environment=dict(os.environ,GTK_RAW3_DAV_URL=server.url,GTK_RAW3_DAV_AUTH=server.auth)
-            args=[OUT/'raw-owner/gtk-raw3-session',profile/'library.sqlite.product.sqlite',profile/'sync-work',profile/'sync-originals']
-            done=run(label+'-network',args,timeout=210,env=environment);value=json.loads(done.stdout)
-            assert value['accepted'] and value['completed_shards']==256 and value['completed_sweeps']==1 and value['pulled']==len(selected)
+            script='openbox > "$2/openbox.log" 2>&1 & wm=$!; trap "kill $wm || true" EXIT; python3 tests/reader_gtk_raw3/account_ui.py --payload "$1" --output "$2/account"'
+            # The owner creates its private profile; keep window-manager logs separate.
+            container=OUT/(label+'-display');container.mkdir()
+            args=['xvfb-run','-a','-s','-screen 0 1440x1200x24','dbus-run-session','--','bash','-euc',script,'gtk-raw3-ui',OUT/'package/EXReader-Linux',container]
+            run(label+'-network',args,timeout=240,env=environment)
+            ui_output=container/'account';profile=ui_output/'profile';value=json.loads((ui_output/'report.json').read_text())
+            assert value['accepted'] and value['completed_shards']==256 and value['session_state']==4 and value['session_attempt']==1 and value['pulled']==len(selected)
             for row,data in books.values():
                 cached=profile/'sync-work'/(row['sha256']+'.'+row['format']);assert cached.read_bytes()==data
             phases.append(process(profile,index,mode,label+'-owner'))
@@ -161,7 +163,7 @@ def network(phases):
             assert server.requests and all(row['authenticated'] for row in server.requests)
             request_log=OUT/(label+'-requests.json');request_log.write_text(json.dumps(server.requests,indent=2)+'\n')
             reports.append(dict(label=label,session=value,wire_count=len(selected),originals=len(books),
-              immutable_wires_unchanged=True,requests=request_log.name,actual_gtk_ui_executed=False))
+              immutable_wires_unchanged=True,requests=request_log.name,actual_gtk_ui_executed=True))
         finally:server.close()
     receive('mac11',wires,originals,OUT/'mac-peer/sender/books.tsv','receive')
     retained={rid:(json.loads(data),digest,data) for rid,data,digest in operations}
