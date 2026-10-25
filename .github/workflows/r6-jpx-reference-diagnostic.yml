@@ -1,0 +1,31 @@
+name: Retained JPX reference observation
+on:
+  push:
+    branches: [codex/r6-reading-release]
+    paths: ['.github/workflows/r6-jpx-reference-diagnostic.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  observe:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 87dc72b336ad6c07191a27f9e661fe6f821de293
+      - name: Install image inspector
+        run: sudo apt-get update -qq && sudo apt-get install -y python3-pil poppler-utils
+      - name: Read exact retained native and reference pixels without rerunning the SDK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -o pipefail
+          mkdir -p build
+          python3 tests/pdf_jpx_integration/check.py --inspect-artifact 12477678119 \
+            --artifact-digest b9500d74f7b608ae3bfff899da3a7d487fac23d2ae5a997bb86862b3b7e3e1ec | tee build/jpx-reference-observation.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jpx-reference-observation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/jpx-reference-observation.json
+          if-no-files-found: error

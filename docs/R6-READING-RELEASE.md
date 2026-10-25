@@ -1,9 +1,76 @@
 # R6：阅读SDK门禁与发布接线
 
 起点`9bd2b2c3caf1f63dc4437e0af978247494e87145`；既有SDK冻结与四宿主结果保留在
-[冻结记录](R5-SDK-FREEZE.md)。R6接线不改变公开API；集成分支同时纳入R2/R4已验证的核心修复，须重新冻结SDK。
+[冻结记录](R5-SDK-FREEZE.md)。R6接线不改变公开API；集成分支同时纳入R2/R4核心修复。
 
-## 候选封装
+## 当前收口状态
+
+新SDK已在`9854061be331fe603a1822d9b2b36ee357154927`重新冻结：
+六组18执行作业、30工件全部同源、attempt1通过，版本/ABI/schema保持3.40.0/1/7。
+八份固定真实语料在该SDK上full8/8与location8/8通过；对应JPX专项当时失败，整run仍记失败，
+后继同保护树源码da1c183的JPX最终契约run39899523839三作业全部通过，
+原八份full8/location8也在该次普通ON作业重新严格通过，见[最终记录](validation/reading-jpx-final-da1c183.json)。
+
+四宿主首轮在共同S=`da1c1833d89932612d8e4549fee5aec378555ad4`重新复验，
+Windows/Linux/Apple/Android分别为39899820869、39899823392、39899825998、39899828858。
+本轮守卫已指向新K，Android所有权祖先以merge保留。
+Windows/Linux已严格通过；Android原45中的pdf_process_restart帧比较失败，最终拒绝，
+其独立10与bounded11通过不替代原出口；Apple因iPhone首次导入未触发而失败、summary拒绝。
+两份原失败均保留。Apple一次标准tap修正已在run39903016234完整通过；
+Android观测候选run39903068530也已通过，额外云端原件审计确认该新运行位图和截图相同。
+旧失败没有位图身份，299个±1边缘像素差异的根因仍未证明；绘制、原判定与预算均保留。
+最终共同宿主源码为`5bc805abb3a56297b73af06fdff8a248dd8326e0`：四组11作业、11份必需工件同源通过，
+Apple严格summary两次accepted=true、97项门禁通过；Android原45+10+11、49页及48+20门禁严格通过。
+各平台完成日志和工件身份见[R5记录](R5-SDK-FREEZE.md)；八条SDK保护树仍与K相同。
+
+正式R3基线`887e1bb59ef6f28c15824cb7593654f3610f3cef`、run39899829270已完成40进程及12参考页。
+逐页实际审阅后由云端导出数值预算，固定于`11cb054…`。该源码的run39901084062中，
+包括严格performance的16个上游作业全部成功；performance确认accepted=true、measurement_valid=true、problems=[]。
+最终reading-required汇总因缺少Pillow运行依赖而失败，整轮仍为未通过。
+
+`fa54027…`仅在汇总作业补齐python3-pil，预算、引擎、门禁断言未改；
+完整17作业重验run [39902467216](https://github.com/NoGod3524/EXReader/actions/runs/39902467216)、attempt1已成功：
+源码`fa540271ea8ad2d9af4cd31467699db2e50c640a`，17/17作业成功，28份工件同源、非空、未过期且digest有效。
+最终reading-required job120250787806实际输出accepted=true、problems=[]；
+18份必需上游工件、六份SDK包、R2逐项原始结果及R3原始输出/参考页/固定预算均被严格重核。
+签发者为GitHub Actions integration15368。完整身份见[本轮JSON](validation/reading-required-fa54027.json)。
+
+### 已接受的六份SDK候选
+
+以下均为上述源码、run及attempt的原始tar.gz；数值为SDK归档字节，不是应用可执行文件大小。
+
+| 平台/架构 | reading-core | reading-library |
+| --- | ---: | ---: |
+| Linux/X64 | 6,346,646 | 7,144,226 |
+| Windows/X64 | 8,493,092 | 9,695,591 |
+| macOS/ARM64 | 5,580,476 | 6,370,598 |
+
+本次接受范围为原生阅读SDK及固定real-v1八份代表文档。PR #2已合入默认分支，必需规则已启用；
+发布准备已核验受测源码的默认分支祖先关系，并从这次已接受运行原样导出六包，尚未创建tag或Release。
+四宿主同S验收单独登记；历史1710份库存、跨平台性能、真机/读屏及WP16仍分别验收。
+
+### 默认分支接纳与实际发布准备
+
+[PR #2](https://github.com/NoGod3524/EXReader/pull/2)已按merge方式合入，默认分支提交
+`31e4117bb3341f57fad65e2d067afaec20655b0e`保留SDK候选与宿主共同源码祖先。
+[规则25700819](https://github.com/NoGod3524/EXReader/rules/25700819)实际active：默认分支必须经PR，
+只允许merge，禁止删除和非快进；严格必需reading-required绑定GitHub Actions15368，bypass为空。
+
+首次真实prepare run39908471213保留为失败：57项协议通过后，共享fetch对空路径多加尾斜杠，
+仓库根API返回404，prepared=false。修复仅使空路径请求规范仓库根URL，非空路径与HTTPError语义保持；
+新增真实请求构造回归，原57项全部保留。
+修复源码`f448d3fe00858ca7c57734c116b29acbf03960a4`的
+[run39908781291](https://github.com/NoGod3524/EXReader/actions/runs/39908781291)已58/58及实际prepared=true、published=false、problems=[]。
+该工作流源码是修复候选；包源码始终为fa54027、accepted_run_id=39902467216、attempt1，未重建或重封装。
+八个输出为plan.json、SHA256SUMS和六原始tar.gz；逐包大小/散列、内外清单及逐文件身份全部重核。
+完整记录见[启用及准备JSON](validation/reading-release-activation-31e4117.json)。
+
+默认分支push门禁run39908383274在性能采样前因Baseline environment refused拒绝，measurement_valid=false；
+该轮不授予通过，环境原件另行核对，不能放宽预算或拼入旧运行。
+
+下列旧候选封装与协议记录只授予各自固定源码的声明范围。
+
+## 候选封装实现与历史验证
 
 复用`reading-core.yml`两个Linux preset的构建与安装，在同一个stage执行现有严格许可检查，
 并通过独立安装消费者核对SDK运行库版本/ABI与头文件；library额外使用公共API创建书库，
@@ -42,12 +109,12 @@ Windows/macOS仍执行core25项、library30项平台拒绝回归；各包的许�
 R2/R3报告必须绑定同source/run/attempt及冻结清单/测量契约/预算身份；诊断或缺证据不能变成发布通过。
 原生七个检查不由Linux profile替代。R4改变核心后由集成人重新验证并冻结SDK。
 
-GitHub默认分支当前`codex/framework`、rulesets仍未启用；About已更新为原生多格式/自有PDF/无WebView和MIT核心、可选依赖分别许可的说明，并云端读回。
-本包会先固定实际产生的check名及可审阅规则，再启用门禁并读取云端配置确认。
+GitHub默认分支当前`codex/framework`，规则25700819已active并云端读回；About已更新为原生多格式/自有PDF/无WebView和MIT核心、可选依赖分别许可的说明。
+实际check为reading-required，绑定GitHub Actions发布者15368，当前用户也无绕过权限。
 发布动作与候选封装分开；最终产物只能使用已接受源码、固定版本及同次工件，回退指向原有不可变版本，
-不覆盖旧tag、工件或失败。当前尚未授予R6整体完成。
+不覆盖旧tag、工件或失败。门禁接线及发布准备已实际执行，正式tag/Release仍待发布授权。
 
-## 当前云端接线与冻结影响
+## 接线迭代记录（历史）
 
 候选封装源码`65c968d65eaf274367bd645fd479a983f5a538a4`的run `39887578472`
 三个作业全部成功，封装协议32项通过；两个实际安装SDK分别封装235/238个文件。
@@ -83,4 +150,4 @@ run `39892833007`只读观察真实`reading-required`检查，确认发布者为
 保留H6、PR合并源码、签发者及当前attempt原生作业检查。
 发布准备还核对已接受摘要中的六包清单、远端默认分支祖先关系和既有版本，
 原样导出该轮六包与SHA256SUMS；不创建tag或Release。
-真实发布准备仍等待最终同源总门禁与默认分支接纳，协议通过不代表已生成可发布版本。
+最终同源总门禁已由run39902467216接受；真实发布准备仍等待默认分支接纳，协议通过不代表已导出发布计划。

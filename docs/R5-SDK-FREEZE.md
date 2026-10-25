@@ -1,7 +1,101 @@
 # R5 SDK 冻结跟踪
 
-当前R2/R4修复集成正在准备下一次冻结；下表K及H8–H11结果仍仅属于各自固定源码，
-不自动覆盖新图片/PDF缓存、CMap、anchor和R6原生工作流接线变化。接续见[R6集成记录](R6-READING-RELEASE.md)。
+当前冻结源码 **K = `9854061be331fe603a1822d9b2b36ee357154927`**，
+SDK 3.40.0 / core 3.39.0 / library 3.34.0 / ABI 1 / schema 7。
+六组18个执行作业、30份工件全部同源、attempt 1通过，正式授予本次SDK源码/API/schema冻结。
+本次包含R2/R4图片和PDF修复、受限JPX解码、缓存、CMap/anchor及R6原生工作流入口。
+元数据见[本轮冻结JSON](validation/reading-sdk-freeze-9854061.json)，接续见[R6集成记录](R6-READING-RELEASE.md)。
+
+## K985冻结证据
+
+| 组 | run | 执行作业 | 工件 | 完成结论 |
+| --- | --- | ---: | ---: | --- |
+| 完整native | [39897572352](https://github.com/NoGod3524/EXReader/actions/runs/39897572352) | 7/7 | 19 | 三桌面各169项、ASan/UBSan166项；安装/裁剪/绑定、Android arm64、Apple库及iPhone/iPad各21项原自检通过 |
+| bounded source / sanitizer | [39897574492](https://github.com/NoGod3524/EXReader/actions/runs/39897574492) | 2/2 | 2 | 普通和ASan/UBSan各native7/7、installed5/5；普通六负载严格接受，ASan不计性能 |
+| Linux reading presets | [39897576838](https://github.com/NoGod3524/EXReader/actions/runs/39897576838) | 2/2 | 2 | core3/3、library5/5安装消费者，各9格式、组成、许可及候选封装通过 |
+| Windows/macOS presets | [39897579058](https://github.com/NoGod3524/EXReader/actions/runs/39897579058) | 4/4 | 4 | core5程序/library8程序真实执行；各9格式及25/30拒绝回归通过 |
+| 严格许可材料 | [39897581729](https://github.com/NoGod3524/EXReader/actions/runs/39897581729) | 2/2 | 2 | 两preset均release_ready；22组件材料完整，31反例、1缺口阻断、3正控通过 |
+| PDF/CBZ合成测量 | [39897583781](https://github.com/NoGod3524/EXReader/actions/runs/39897583781) | 1/1 | 1 | 四合成case accepted、failure=null；60项证据拒绝回归通过 |
+
+许可证另有按条件跳过的material-pins诊断作业，不计上述18个执行作业。
+GitHub连接逐项核对完成日志、完整jobs/artifacts列表；30工件均绑定K及对应run，非空、未过期、SHA-256 digest有效。
+长章10→100MiB单章索引与解析工作区峰值增量20,269,300B，小于33,554,432B；
+六案例随机不匹配均为0、恢复checkpoint均为7，requested_full_enumeration=false。
+
+### 当前保护树
+
+| 路径 | K中的Git对象 |
+| --- | --- |
+| `src` | `adc09002584fc20a99fd170e8148dbd870a27f52` |
+| `include` | `86fb444dbf1664771d997daeff772bb465d617a7` |
+| `cmake` | `1194898d9b9545b1783b293ebdc7b3eecd957aba` |
+| `CMakeLists.txt` | `5d0083a0d7c05edae28ca43ddbab8f1c399ef34d` |
+| `tests/fixtures` | `2a1fd5e58347f6ed8692996ba855c703f3c2da46` |
+| `.github/workflows/native.yml` | `2df429e50fa80532026d0de46ee7fc5470b5274c` |
+| `.github/workflows/reliability.yml` | `a27c1d1ca5a7aae1d590ceed356fdd5cd81abdb9` |
+| `bindings` | `54c12f70a1a63cae6574984a388b66bf6248c38e` |
+
+OpenJPEG 2.5.4采用受限静态库；JPX关闭时不取源、不安装该库。
+原登记八份真实文档在K的run39897525130中full8/8、location8/8通过，
+其JPX专项步骤当时仍失败，整个运行保留failure；八份单独结论见[R2记录](R2-REAL-CORPUS.md)。
+后继同保护树源码da1c183的run39899523839已三作业全绿，JPX ON/ASan/OFF各24项及原八份full8/location8同次通过，
+见[最终记录](validation/reading-jpx-final-da1c183.json)。该批次不替代历史1710份库存，性能数字预算和像素审阅由R3另行固定。
+
+### 新K四宿主共同复验首轮（未通过，历史保留）
+
+共同源码S=`da1c1833d89932612d8e4549fee5aec378555ad4`包含K祖先及新守卫，八保护树与K相同。
+Android所有权祖先X=`d0b205a56e4fcfbd5cca55a808327f00b25971ed`以merge保留。
+宿主实现、夹具与超时断言未改，四组均在同一S重新执行：
+
+| 平台 | run | 状态 |
+| --- | --- | --- |
+| Windows | [39899820869](https://github.com/NoGod3524/EXReader/actions/runs/39899820869) | 成功；26自测、158动作/8图、51证据检查、H8的80项及worker11正/11反通过 |
+| Linux | [39899823392](https://github.com/NoGod3524/EXReader/actions/runs/39899823392) | 成功；原20UI、4故障组、H11的37项及独立backend82项通过 |
+| Apple | [39899825998](https://github.com/NoGod3524/EXReader/actions/runs/39899825998) | 失败；iPhone首次导入未触发请求，12/13，macOS/iPad/package通过；严格summary拒绝 |
+| Android | [39899828858](https://github.com/NoGod3524/EXReader/actions/runs/39899828858) | 失败；原45中pdf_process_restart帧比较失败，44/45；独立10/10及bounded11/11通过，最终严格拒绝 |
+
+桌面两份完成日志/工件身份见[独立审计](validation/r5-desktop-hosts-da1c183.json)。
+Android原失败工件保留，不能以独立用例通过替代原45出口。
+原件云端差分确认重启状态相同，299个边缘像素仅相差1级；该失败APK没有位图身份，根因仍未证明。
+后继DEBUG观测版本d78abd7的正式run39903068530已通过原45+10+11、48+20门禁及严格汇总，
+独立云端原件审计确认该新运行位图和截图相同，见[独立记录](validation/android-bitmap-diagnostic-d78abd7.json)。
+Apple后继`1abf9d3…`只将导入输入由单次0.1秒press改为一次标准tap；
+就绪检查、结果断言和deadline保留，完整八作业run39903016234已成功，见[独立记录](validation/r5-apple-host-1abf9d3.json)。
+上述独立结果不转授后继共同源码。
+
+### 四宿主共同源码复验（通过）
+
+最终宿主候选S=`5bc805abb3a56297b73af06fdff8a248dd8326e0`合入单次标准tap及Android DEBUG位图身份观测，
+八条SDK保护树与K相同。Android观测版本d78abd7已在独立运行通过全部45+10+11；
+其原生位图与屏幕均精确相同，见[诊断记录](validation/android-bitmap-diagnostic-d78abd7.json)。
+旧失败没有位图身份，旧299个±1边缘像素的根因仍未证明；本次不把新增观测称为修复GPU缺陷。
+
+下列四组全部在同一S重新执行，原用例、精确截图判定、8秒帧观测及各平台时限保持：
+
+| 平台 | run | 状态 |
+| --- | --- | --- |
+| Windows | [39905068109](https://github.com/NoGod3524/EXReader/actions/runs/39905068109) | 成功；26自检、158步/8图、51证据检查、80项H8及worker11正/11反通过 |
+| Linux | [39905072269](https://github.com/NoGod3524/EXReader/actions/runs/39905072269) | 成功；20UI、4故障组、37项H11及82项backend通过，严格接受 |
+| Apple | [39905075296](https://github.com/NoGod3524/EXReader/actions/runs/39905075296) | 八作业成功；三UI各13用例/67步骤/50附件，SDK21/Model18/bounded15、各legacy21；严格summary及97项门禁通过 |
+| Android | [39905079097](https://github.com/NoGod3524/EXReader/actions/runs/39905079097) | 成功；45+10+11零失败零跳过，49页/49次native next/0 recovery，48+20门禁及严格accepted通过 |
+
+四组11作业全部同S、attempt1成功，11份必需工件同run/source、非空、核对时未过期，API digest与上传日志一致。
+Apple严格summary在门禁回归前后均accepted=true、problems=[]；97项为1个正向与96个拒绝检查。
+[桌面记录](validation/r5-desktop-hosts-5bc805a.json)、[Apple记录](validation/r5-apple-host-5bc805a.json)与
+[Android记录](validation/r5-android-host-5bc805a.json)保存本轮完成结论与完整工件身份。
+Android原始位图和截图由额外云端审计核对，恢复前后像素差为0。
+
+本轮授予Windows、GTK/X11 Linux、macOS及iPhone/iPad模拟器、Android API34 x86_64模拟器各自声明的宿主范围。
+EPUB使用有界入口及章内持久化，其他重排格式保持原快照上限；真机与VoiceOver/TalkBack独立验收。
+
+R3严格性能与17作业SDK总门禁已在`fa54027…`、run39902467216同次通过，见[R6记录](R6-READING-RELEASE.md)。
+SDK总门禁绑定fa54027，四宿主绑定S；两份验收分别登记，不拼成同一次全产品验收。
+默认分支规则25700819已active，发布准备已完成六原包核验；未创建tag/Release，见[R6记录](R6-READING-RELEASE.md)。
+旧98作业长测不转移，新增WP16 CPU信用为0。
+
+## 前一轮K9c69与S3冻结记录（历史保留）
+
+以下K、当前等措辞均指该历史轮次，不授予K985的新实现或本轮宿主结果。
 
 状态：**SDK 已重新冻结**。固定源码 **`9c69bc4c7efb0cff68ced27562709fe597189041`**，
 SDK 3.40.0 / library 3.34.0 / ABI 1 / schema 7。
@@ -10,7 +104,7 @@ Apple 接续发现的16KiB窗口同单元递归已修复；原`ce5d664`冻结撤
 `e25959e1285b5ebf9a4bf5b27c596d12702dc695`，四组11作业与11份必需工件均同源、attempt1。
 首轮Android重启帧/iPad首次导入失败、第二轮iPhone首次导入失败均保留，详见下文。
 
-## 当前冻结证据
+## K9c69冻结证据（历史）
 
 六组全部绑定上述完整SHA、attempt 1；18个执行作业成功，30份工件同源、非空、未过期，
 Actions提供的SHA-256 digest字段有效。许可证另有一个按条件跳过的诊断作业，不计入18个。
@@ -66,7 +160,7 @@ GitHub 连接逐项读取 jobs、完成日志和每页100项的工件元数据�
 每次随机阶段实际淘汰11次、恢复检查点7次；10→100MiB的索引加解析工作区峰值增量20,269,300B，
 低于既有32MiB门槛。该工作区计量与进程RSS分列；不授予任意真实文档或绝对延迟预算。
 
-## 固定源码树
+## K9c69固定源码树（历史）
 
 宿主必须保留当前K=`9c69bc4…`祖先关系与以下八项Git对象一致，不能只比较SDK版本字符串。
 

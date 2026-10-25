@@ -21,8 +21,8 @@
 
 ## 当前执行状态
 
-2026-10-22 按 GitHub 只读信息核对；R1起点为 `codex/r1-reading-core`，
-当前R5集成分支为 `codex/reading-package-integration`：
+2026-10-23 UTC按 GitHub 只读信息核对；R1起点为 `codex/r1-reading-core`，
+当前集成分支为 `codex/r6-reading-release`：
 
 | 状态 | 内容 |
 | --- | --- |
@@ -32,12 +32,13 @@
 | 已完成 | R1 Windows/macOS（H1）：受测源码 `9b968a16` 的 run [39854485070](https://github.com/NoGod3524/EXReader/actions/runs/39854485070) 两 preset 4/4 成功（构建、安装、安装后消费者、九格式合成 smoke、依赖/配置判定），见 [H1 记录](https://github.com/NoGod3524/EXReader/blob/2e8e981b6dd44d855a23931480fe5e0d5c791762/docs/READING-PLATFORMS.md)；证据门禁加固由 [H6](https://github.com/NoGod3524/EXReader/blob/62ab38e8223e42f1562fda7137cd41b4d87620f1/docs/handoffs/reading-H6-platform-gate.md) 跟踪 |
 | 已完成 | R3 初始 PDF/CBZ 测量（合成）：源码 `3cd7bdf1` 的 run [39855093753](https://github.com/NoGod3524/EXReader/actions/runs/39855093753) 测极小 1 页 PDF/4 页 CBZ；可区分页面候选 `4b6f562c` 的 run [39856195765](https://github.com/NoGod3524/EXReader/actions/runs/39856195765) 加入 3 页 PDF/4 页 CBZ 合成文档，2026-10-22 只读核对 success，见 [R3 记录](https://github.com/NoGod3524/EXReader/blob/ea3d4d1a24c0febd8d14f110594b7226e2527c82/docs/READING-PDF-PERFORMANCE.md)；不是成熟基线，未设预算，RSS 增量为 0 不表示无分配 |
 | 失败保留 | 源码 `61aa183` 的 run `39852907619`：测量自验 mock 误拦截，实际采样未执行 |
-| 已验证 | 阅读SDK重新固定`9c69bc4`：窗口单元递归已修复，六组18执行作业/30工件同源通过；旧冻结撤回与失败记录保留，见[冻结记录](R5-SDK-FREEZE.md) |
-| 已完成 | H8–H11共同源码`e25959e`：Windows/Linux/Apple/Android四组11作业与11必需工件同源通过，各平台严格汇总接受，见[共同验收记录](R5-SDK-FREEZE.md) |
-| 推进中 | R2 real-v1八份独立原件已事先登记；组合`c358df7`的run `39891591170`整本7/8、定位8/8，NASA仍绘制失败，严格`accepted=false`。图片/解码流缓存和CMap修复保留旧失败，见[R2记录](R2-REAL-CORPUS.md)及[PDF流修复](R2-PDF-STREAM-CACHE.md)；此小集合不替代历史1710目标 |
-| 已验证局部 | R4 anchor热点`193317b`的run `39890468939`成对对照及sanitizer通过；仅按实际热点优化，NASA后续修复仍独立复验，见[R4记录](R4-CORE-HOTSPOTS.md) |
-| 推进中 | R3真实多进程采样、固定Noto字体、跨源码像素/文字/位置签名与预算来源拒绝协议已执行；正式数值预算仍未冻结，见[性能记录](READING-REAL-PERFORMANCE.md)。R6封装及门禁协议已运行，默认分支规则仍未启用，见[R6](R6-READING-RELEASE.md) |
-| 未完成 | 真实 EPUB/PDF 语料（0/1710）与故障修复；真实多页 PDF、跨平台性能与硬预算；R4；真机与读屏；必需检查与发布接线 |
+| 已验证 | 阅读SDK固定`9854061`，六组18执行作业/30工件同源通过，含本轮R2/R4修复及受限JPX；旧冻结与失败保留，见[冻结记录](R5-SDK-FREEZE.md) |
+| 已验收 | H8–H11共同源码`5bc805a`四组11作业与11份必需工件同源通过；旧失败保留，见[共同验收记录](R5-SDK-FREEZE.md) |
+| 已验证 | R2 real-v1固定八份在`da1c183`的run39899523839整本8/8、重开定位8/8严格通过；保留所有旧失败，原件/预期未改，见[R2记录](R2-REAL-CORPUS.md)。此独立批次不替代历史1710目标 |
+| 已验证局部 | R4图片/解码流缓存、CMap/anchor、CMYK/软蒙版、CFF/BBox与JPX修复已纳入新SDK；最终JPX三配置各24项同次通过，见[R4记录](R4-CORE-HOTSPOTS.md) |
+| 已验收 | R3冻结预算及R6三平台六份SDK候选：源码`fa54027`、run39902467216已17/17、28工件、严格accepted=true；真实八份、40进程、12参考页与原始证据同次通过，见[性能](READING-REAL-PERFORMANCE.md)及[R6](R6-READING-RELEASE.md) |
+| 已启用 | 默认分支已接纳PR #2，必需reading-required规则已active且无bypass；发布准备run39908781291已严格导出六原包，见[R6](R6-READING-RELEASE.md) |
+| 未完成 | 实际tag/Release；历史原件恢复、跨平台性能、真机与读屏分别跟踪 |
 
 `reading-core` 关闭音频、书库、全文索引、PDF 编辑、旧共享总库、工具与 JNI，保留 PDF、密码认证、ICC 与现有图像开关；
 `reading-library` 再打开 SQLite 书库。裁剪不增强 PDF/图像能力，也不表示性能达标。
@@ -56,8 +57,8 @@
 
 R1 的轻量配置通过组件选择实现。PDF 密码认证、必要图像/字体和显示正确性按声明场景保留，
 新增裁剪必须明确支持边界，不能为了缩小体积静默退化已有标准配置。
-R3 首轮用于确定预算，尚未测量的 MB/ms 数值留空；共享云 runner 的噪声和冷缓存不可控情况须登记，
-不能把不同硬件的结果当作同一性能保证。
+R3原始计划先测量再确定预算；现已冻结Linux reading-core固定八份语料的数字预算，并在run39902467216严格通过。
+其他平台和语料仍分别测量；共享云runner的噪声和冷缓存条件须登记，不能把不同硬件当作同一性能保证。
 R2/R4 的解析和资源管理修复必须保留针对性畸形输入、取消、预算及 ASan/UBSan 回归；
 R6 的核心门禁保留所有已声明格式的现有正确性回归。缩减功能排期不缩减已交付接口的质量要求。
 
