@@ -1,5 +1,11 @@
 # 已预载 SDK target 的补充审查
 
+第三轮已通过：受测源码 `c7205a9da1c11c0cc23fb04920dbd7a8071659d8`，
+run `40237292306/1`，六作业 completed/success。Linux3.40、Linux3.41、
+Windows3.41、macOS3.41四组合均通过原完整用例和新增四个真实预载对照。
+严格汇总同时认证原ZIP/所有原负例与新增日志身份、四次成功位篡改拒绝。
+完整身份在 `sdk-target-validation.json`；先前“尚未启动”段落保留为历史。
+
 此前的四组合验收覆盖新进程的 EXACT 版本选择，未覆盖宿主已经加载另一个 SDK 前缀的
 target 后再切换 EXReader_DIR。S15 的真实 3.40/3.41 预载复现已证明 EXACT 元数据不足。
 
