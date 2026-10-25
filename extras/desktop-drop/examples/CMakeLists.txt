@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: MIT
+# Host integration example: consumes only the installed EXReaderDesktopDrop package.
+cmake_minimum_required(VERSION 3.24)
+project(DesktopDropHostExample LANGUAGES C CXX)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
+if(MSVC)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  add_compile_options(/utf-8 /W4)
+else()
+  add_compile_options(-Wall -Wextra -Werror)
+endif()
+find_package(EXReaderDesktopDrop 0.1 CONFIG REQUIRED)
+add_executable(host-example-c host_c.c)
+target_link_libraries(host-example-c PRIVATE EXReaderDesktopDrop::exr_desktop_drop)
+add_executable(host-example-cxx host_cpp.cpp)
+target_link_libraries(host-example-cxx PRIVATE EXReaderDesktopDrop::exr_desktop_drop)

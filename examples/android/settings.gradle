@@ -15,3 +15,7 @@ dependencyResolutionManagement {
 rootProject.name = 'EXReaderAndroidHost'
 include ':app'
 include ':uitest'
+include ':webdav'
+project(':webdav').projectDir=file('../../extras/webdav/android/webdav')
+include ':credentials'
+project(':credentials').projectDir=file('../../extras/credentials/android/credentials')

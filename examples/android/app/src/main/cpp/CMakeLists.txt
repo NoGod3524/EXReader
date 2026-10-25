@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.22.1)
 project(exreader_host C CXX)
+option(EXR_HOST_SYNC "Install the optional native account/sync host integration" OFF)
+option(EXR_HOST_SEARCH "Install the optional public in-book search host integration" OFF)
+option(EXR_HOST_NAVIGATION "Install the optional public navigation host integration" OFF)
+option(EXR_HOST_READING "Install optional typed product reading UI integration" OFF)
+option(EXR_HOST_PREFERENCES "Install optional device-local reading settings" OFF)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -7,6 +12,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 if(NOT EXR_SDK)
   message(FATAL_ERROR "EXR_SDK must point at an installed EXReader SDK")
 endif()
+
 # The Android toolchain otherwise restricts package lookup to the NDK sysroot.
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
 list(APPEND CMAKE_PREFIX_PATH "${EXR_SDK}")
@@ -15,8 +21,46 @@ find_package(EXReader 3.41.0 EXACT CONFIG REQUIRED)
 
 add_library(exreader_host SHARED exreader_host_jni.c)
 target_link_libraries(exreader_host PRIVATE EXReader::exreader)
+if(EXR_HOST_PREFERENCES)
+  if(NOT EXR_HOST_READING)
+    message(FATAL_ERROR "Reading settings require the public reading anchor bridge")
+  endif()
+  list(APPEND CMAKE_PREFIX_PATH "${EXR_PREFERENCES_PREFIX}")
+  find_package(EXReaderPreferences 0.1.0 EXACT CONFIG REQUIRED)
+  target_link_libraries(exreader_host PRIVATE EXReaderPreferences::reader_preferences)
+  target_compile_definitions(exreader_host PRIVATE READER_HOST_PREFERENCES=1)
+endif()
 target_compile_options(exreader_host PRIVATE -Wall -Wextra)
 target_link_options(exreader_host PRIVATE -Wl,-z,max-page-size=16384)
+
+if(EXR_HOST_SEARCH)
+  list(APPEND CMAKE_PREFIX_PATH "${EXR_SEARCH_PREFIX}")
+  find_package(EXReaderSearch 0.1.0 EXACT CONFIG REQUIRED)
+  find_package(Threads REQUIRED)
+  target_compile_definitions(exreader_host PRIVATE READER_HOST_SEARCH=1)
+  target_include_directories(exreader_host PRIVATE
+    $<TARGET_PROPERTY:EXReaderSearch::reader_search,INTERFACE_INCLUDE_DIRECTORIES>)
+  # Keep the existing shared SDK provider; never link Search's static core closure.
+  target_link_libraries(exreader_host PRIVATE $<TARGET_FILE:EXReaderSearch::reader_search> Threads::Threads dl)
+  set_target_properties(exreader_host PROPERTIES LINKER_LANGUAGE CXX)
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(exreader_host PRIVATE READER_SEARCH_FIXTURES=1)
+  endif()
+endif()
+
+if(EXR_HOST_NAVIGATION)
+  list(APPEND CMAKE_PREFIX_PATH "${EXR_NAVIGATION_PREFIX}")
+  find_package(EXReaderNavigation 0.1.0 EXACT CONFIG REQUIRED)
+  find_package(Threads REQUIRED)
+  target_compile_definitions(exreader_host PRIVATE READER_HOST_NAVIGATION=1)
+  target_include_directories(exreader_host PRIVATE
+    $<TARGET_PROPERTY:EXReaderNavigation::reader_navigation,INTERFACE_INCLUDE_DIRECTORIES>)
+  target_link_libraries(exreader_host PRIVATE $<TARGET_FILE:EXReaderNavigation::reader_navigation> Threads::Threads dl)
+  set_target_properties(exreader_host PROPERTIES LINKER_LANGUAGE CXX)
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(exreader_host PRIVATE READER_NAVIGATION_FIXTURES=1)
+  endif()
+endif()
 
 # Installed product modules use their own SQLite provider; the frozen SDK stays
 # in the original host library. Hide archive symbols against Android interpose.
@@ -34,4 +78,33 @@ target_link_options(exreader_product PRIVATE -Wl,-z,max-page-size=16384 -Wl,--ex
   -Wl,-Bsymbolic -Wl,--trace-symbol=sqlite3_open_v2 "-Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/product-link.map")
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   target_compile_definitions(exreader_product PRIVATE READER_PRODUCT_FIXTURES=1)
+endif()
+
+if(EXR_HOST_SYNC)
+  list(APPEND CMAKE_PREFIX_PATH "${EXR_DAV}" "${EXR_SIDELOAD}")
+  find_package(EXReaderSession 0.1.0 EXACT CONFIG REQUIRED)
+  find_package(EXReaderSideload CONFIG REQUIRED)
+  target_sources(exreader_product PRIVATE sync_jni.cpp)
+  target_link_libraries(exreader_product PRIVATE EXReaderSession::reader_session)
+  target_compile_definitions(exreader_host PRIVATE READER_HOST_SYNC=1)
+  # The existing shared SDK also serves exreader-jni. Consume the installed
+  # public sideload archive without adding its static SDK dependency closure.
+  target_include_directories(exreader_host PRIVATE
+    $<TARGET_PROPERTY:EXReaderSideload::exr_sideload,INTERFACE_INCLUDE_DIRECTORIES>)
+  target_link_libraries(exreader_host PRIVATE $<TARGET_FILE:EXReaderSideload::exr_sideload> dl)
+  target_link_options(exreader_host PRIVATE -Wl,--exclude-libs,ALL
+    "-Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/sdk-host-link.map")
+endif()
+
+if(EXR_HOST_READING)
+  find_package(EXReaderReadingCommands 0.1.0 EXACT CONFIG REQUIRED)
+  find_package(EXReaderAnnotationView 0.1.0 EXACT CONFIG REQUIRED)
+  target_link_libraries(exreader_product PRIVATE EXReaderReadingCommands::reader_reading_commands
+    EXReaderAnnotationView::reader_annotation_view)
+  target_compile_definitions(exreader_host PRIVATE READER_HOST_READING=1)
+  target_compile_definitions(exreader_product PRIVATE READER_HOST_READING=1)
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(exreader_host PRIVATE READER_READING_FIXTURES=1)
+    target_compile_definitions(exreader_product PRIVATE READER_READING_FIXTURES=1)
+  endif()
 endif()

@@ -1,0 +1,760 @@
+{
+  "accepted": true,
+  "scope": "Android explicit product reading commands and annotation snapshots with real SDK capture, independent FOUND navigation, delete/restore and lifecycle",
+  "fixed_base": "d68d8e388730f0fbd9e86c70a422388be406391d",
+  "fixed_modules_source": "ba25961961ae69222bfed4f7a98cb02bb1dc6847",
+  "reading_commands_tree": "cf067b8be378d4195817d1106b81f358579e2280",
+  "annotation_view_tree": "9d30b6c54f61496010f647695dedd7ea7ab0c7c1",
+  "unchanged_reading_state_tree": "60127ae75fbac918237b1c8584e0f7ac2e6130a4",
+  "source_sha": "047648865e509d5835b7d6e1389681e314d94e28",
+  "runs": [
+    {
+      "source_sha": "95385c10a7242804d0cb251d94cc7e9cd2b06a32",
+      "run_id": 40121975611,
+      "attempt": 1,
+      "job_id": 120955320799,
+      "conclusion": "failure",
+      "phase": "installed product package configure",
+      "reason": "workflow CMAKE_PREFIX_PATH omitted installed SDK needed by EXReaderReadingStateConfig when configuring G03",
+      "reading_ui_executed": false,
+      "artifact": {
+        "id": 12570984487,
+        "bytes": 26035061,
+        "sha256": "630ea918ab62242bd31c0ba59867b5bb5c87d182c2576bebcce66994d289bdf4",
+        "expires_at": "2027-01-22T18:43:01Z"
+      }
+    },
+    {
+      "source_sha": "de535b794d01907a2e4012f8af70bec249ef418a",
+      "run_id": 40122329128,
+      "attempt": 1,
+      "job_id": 120956378350,
+      "conclusion": "failure",
+      "phase": "Android host native compile",
+      "reason": "borrowed public SDK fixed anchor page_id field required explicit const conversion at the read-only G03 boundary",
+      "reading_ui_executed": false,
+      "artifact": {
+        "id": 12571862425,
+        "bytes": 36961511,
+        "sha256": "69b8ba8ffec013171c2be9fa0fa837e4797b5018d134b823a2078e803f9928dc",
+        "expires_at": "2027-01-22T18:47:36Z"
+      }
+    },
+    {
+      "source_sha": "b3cbd3d0082ee39648fa8624355a4e6b9568c530",
+      "run_id": 40122869543,
+      "attempt": 1,
+      "job_id": 120958006917,
+      "conclusion": "cancelled",
+      "reason": "superseded after the exact page_id compiler error was identified; no reading UI result",
+      "reading_ui_executed": false,
+      "artifact": {
+        "id": 12571563183,
+        "bytes": 230,
+        "sha256": "f36bd7be17f054f5d39fe900deb18b9a596fef6a007c45cd8854c735c3c27c76",
+        "expires_at": "2027-01-22T18:54:38Z"
+      }
+    },
+    {
+      "source_sha": "b8a4dba77a71efe6b9240320a0b9b44587414ad3",
+      "run_id": 40122965870,
+      "attempt": 1,
+      "job_id": 120958294646,
+      "conclusion": "failure",
+      "phase": "reading UI first process",
+      "failed_check": "missing_legacy_nul_and_fixed_page_id_are_never_guessed",
+      "reason": "probe expected a new book frame after switching books but the actual reader remained on TXT; next source waits for exact filtered SDK book ID and shelf generation/layout readiness before clicking",
+      "reading_ui_first_checks_passed": 8,
+      "old_host_sync_and_search15_navigation18_passed": true,
+      "artifact": {
+        "id": 12571953183,
+        "bytes": 135784317,
+        "sha256": "73fd5a0ba18a8dac42e679c3bf533f190abcbe3106977c0d4093b823d49ccd56",
+        "expires_at": "2027-01-22T18:55:57Z"
+      }
+    },
+    {
+      "source_sha": "50fbd6106e331ddb00751fc2fcc4a46c5c164d7c",
+      "run_id": 40124730007,
+      "attempt": 1,
+      "job_id": 120963617146,
+      "conclusion": "failure",
+      "phase": "reading UI first book readiness",
+      "reason": "probe required shelf drawn_revision without enabling the optional metrics observer; actual semantic tree showed the filtered TXT row loaded. Replaced inactive metric with the actual visible laid-out row tag plus exact SDK ID and query generation",
+      "reading_ui_first_checks_passed": 0,
+      "old_host_sync_and_search15_navigation18_passed": true,
+      "artifact": {
+        "id": 12573640574,
+        "bytes": 134249663,
+        "sha256": "17e5334a04625dad7c68d2b90ddf69fd9129dab19b7007a7bf7897a64528e197",
+        "expires_at": "2027-01-22T19:18:58Z"
+      }
+    },
+    {
+      "source_sha": "0a1e272d2ec587b11865a46863cdeff2e230a77c",
+      "run_id": 40125972883,
+      "attempt": 1,
+      "job_id": 120967324865,
+      "conclusion": "failure",
+      "phase": "reading UI first book click",
+      "reason": "exact filtered row and SDK ID were ready, but the semantic row click did not publish a book frame; final actual tree remained on shelf with TXT row",
+      "root_cause_later_confirmed": "title-only selector matched shelf_search before the identically titled text1 book row",
+      "reading_ui_first_checks_passed": 0,
+      "old_host_sync_and_search15_navigation18_passed": true,
+      "artifact": {
+        "id": 12573308345,
+        "bytes": 134306707,
+        "sha256": "1079cf4914671d35d81f8b6287fceb507af5d72d762224f735d6679b836c7836",
+        "expires_at": "2027-01-22T19:35:14Z"
+      }
+    },
+    {
+      "source_sha": "de2a1ce4bb4087374d319dd7b549404e8344edaa",
+      "run_id": 40127433858,
+      "attempt": 1,
+      "job_id": 120971761334,
+      "conclusion": "failure",
+      "phase": "reading UI first book click",
+      "reason": "physical pointer changed the gesture but title-only selector still matched the shelf_search input; fixed the shared open helper to require text1 book row identity",
+      "reading_ui_first_checks_passed": 0,
+      "old_host_sync_and_search15_navigation18_passed": true,
+      "artifact": {
+        "id": 12572954749,
+        "bytes": 134275572,
+        "sha256": "e9f2485c2cd53940c0373d9c2732c6317d3c915ec3daa0ba9e73f1a3768d3178",
+        "expires_at": "2027-01-22T19:54:50Z"
+      }
+    },
+    {
+      "source_sha": "8ecd160d052b22b12cf7fd9e265b106fa017cdb5",
+      "run_id": 40128548716,
+      "attempt": 1,
+      "job_id": 120975121805,
+      "conclusion": "failure",
+      "phase": "reading UI unsafe graph fixture",
+      "failed_check": "unsafe_graphs_display_counts_without_exposing_or_choosing_heads",
+      "reason": "debug fixture omitted the required transport SHA-256 on reader_revision_receive; now independently hashes exact wire bytes in Java and passes the hash to the unchanged public validation/receive API",
+      "reading_ui_first_checks_passed": 9,
+      "old_host_sync_and_search15_navigation18_passed": true,
+      "artifact": {
+        "id": 12574182696,
+        "bytes": 135915994,
+        "sha256": "dbde35a874f4247309e44b079f4e57e7368c038cf3882f1655c89a974a407b9e",
+        "expires_at": "2027-01-22T20:09:50Z"
+      }
+    },
+    {
+      "source_sha": "dd0f884e8d5d7b6cde5090777b0959d65914ca80",
+      "run_id": 40129989048,
+      "attempt": 1,
+      "job_id": 120979454826,
+      "conclusion": "failure",
+      "phase": "driver cleanup after all first-process UI checks",
+      "reason": "all 14 first-process UI groups passed; driver incorrectly required pidof success after instrumentation finish had already ended the target process. It now records the reported instrumentation PID and tolerates normal completed-process exit before explicit cleanup; the actual postcommit kill phase still requires a live observed PID",
+      "reading_ui_first_checks_passed": 14,
+      "old_host_sync_and_search15_navigation18_passed": true,
+      "artifact": {
+        "id": 12575050554,
+        "bytes": 136177887,
+        "sha256": "0d91e830aefe467fbd45a56ec282c07c5ca86ea9e942e53e6076d5d0085887ed",
+        "expires_at": "2027-01-22T20:29:14Z"
+      }
+    },
+    {
+      "source_sha": "047648865e509d5835b7d6e1389681e314d94e28",
+      "run_id": 40131364703,
+      "attempt": 1,
+      "job_id": 120983574659,
+      "conclusion": "success",
+      "reading_ui_checks": 16,
+      "retained_formal16_search15_navigation18_passed": true,
+      "artifact": {
+        "id": 12575367601,
+        "bytes": 136598458,
+        "sha256": "9519c0c26d219322cbd95d3914733661aaff40df6c0c2d7214969a72fa81cbd2",
+        "expires_at": "2027-01-22T20:47:29Z"
+      }
+    }
+  ],
+  "all_execution_on_actions": true,
+  "sdk_product_stores_separate": true,
+  "performance_accepted": false,
+  "physical_device": false,
+  "talkback_speech_accepted": false,
+  "complete_product": false,
+  "run_id": 40131364703,
+  "attempt": 1,
+  "job_id": 120983574659,
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "artifact": {
+    "id": 12575367601,
+    "bytes": 136598458,
+    "sha256": "9519c0c26d219322cbd95d3914733661aaff40df6c0c2d7214969a72fa81cbd2",
+    "expires_at": "2027-01-22T20:47:29Z"
+  },
+  "reading": {
+    "source_sha": "047648865e509d5835b7d6e1389681e314d94e28",
+    "run_id": "40131364703",
+    "attempt": "1",
+    "accepted": true,
+    "checks": 16,
+    "captures": [
+      {
+        "phase": "first",
+        "name": "empty-records",
+        "bytes": 104244,
+        "sha256": "b36e1a9d7ba258b2a20c409c37a0a799d23b082790205538b9f6c27053ef7d86",
+        "nodes": 28
+      },
+      {
+        "phase": "first",
+        "name": "txt-point-progress",
+        "bytes": 109799,
+        "sha256": "a7e8e0373134dbba5fcc09ce0ad9c35f7f1c9e7baa833120273ab5c3c35137aa",
+        "nodes": 29
+      },
+      {
+        "phase": "first",
+        "name": "txt-range-note",
+        "bytes": 136408,
+        "sha256": "5cf06cd8f13074420431e851ecbc5f83f4c6428d645433e48da9b316d1cf6811",
+        "nodes": 30
+      },
+      {
+        "phase": "first",
+        "name": "txt-found",
+        "bytes": 425362,
+        "sha256": "5ac02303bc20d103af16a3932dd12aab48479f378b92ccb6c742a26a3c75d612",
+        "nodes": 40
+      },
+      {
+        "phase": "first",
+        "name": "explicit-restored-record",
+        "bytes": 119572,
+        "sha256": "ebafd82bfc7786259b1b3eab0a7a363ec890902c3655cdd8ce9badecbbc476ae",
+        "nodes": 30
+      },
+      {
+        "phase": "first",
+        "name": "epub-record-found",
+        "bytes": 164460,
+        "sha256": "9b790e99d1cc18337a683369e32145337d71e5cb859995bb904585831b195531",
+        "nodes": 27
+      },
+      {
+        "phase": "first",
+        "name": "pdf-point-found",
+        "bytes": 80059,
+        "sha256": "cb51b9a94512b7d0072b66a1fae11dcd8e2d46941b7f5542e3b7227082451328",
+        "nodes": 25
+      },
+      {
+        "phase": "first",
+        "name": "blank-point-found",
+        "bytes": 55494,
+        "sha256": "eb04b84cf6498b7346b2844ea39c0bbd1fb954dba369956cd43350e7675ee797",
+        "nodes": 23
+      },
+      {
+        "phase": "first",
+        "name": "cbz-capture-refused",
+        "bytes": 102417,
+        "sha256": "63f188112979863c99d3a2c8ef5f9df8b3c05e6840783135e52bcabc7e217fd7",
+        "nodes": 28
+      },
+      {
+        "phase": "first",
+        "name": "legacy-projection-refused",
+        "bytes": 116184,
+        "sha256": "49f74f0ba54e01ea814412de91e81bca4928b7cb9d7b441d3740a4ddb62368b5",
+        "nodes": 29
+      },
+      {
+        "phase": "first",
+        "name": "unsafe-record-counts",
+        "bytes": 139472,
+        "sha256": "372dd6c73417e23fb622935da81e3d84596f4d4498f42892a183e1db10b20f4a",
+        "nodes": 33
+      },
+      {
+        "phase": "first",
+        "name": "reader-after-lifecycle",
+        "bytes": 418142,
+        "sha256": "70ea76bb3ff33dfc1e3d2ebcfe5336e9256994b5a1a52ab94811d075fe6e8612",
+        "nodes": 38
+      },
+      {
+        "phase": "first",
+        "name": "records-keyset-pagination",
+        "bytes": 125936,
+        "sha256": "f4c3b48f7d4957ea56664b0a2da29f8152602ad39a9260f97cb68177518f45f9",
+        "nodes": 33
+      },
+      {
+        "phase": "retry",
+        "name": "process-kill-exact-retry",
+        "bytes": 129795,
+        "sha256": "63ceca19a74ae85c58f248023411888c63c7ac34add851bc5ac19dc0cddd68ad",
+        "nodes": 33
+      },
+      {
+        "phase": "reopen",
+        "name": "records-after-reopen",
+        "bytes": 129795,
+        "sha256": "63ceca19a74ae85c58f248023411888c63c7ac34add851bc5ac19dc0cddd68ad",
+        "nodes": 33
+      }
+    ],
+    "sources": [
+      {
+        "phase": "first",
+        "file": "search.txt",
+        "bytes": 4109,
+        "sha256": "3f934989c6fac53a72cacfc99369b7694b56447f80be0c3ef304913bce69c611"
+      },
+      {
+        "phase": "first",
+        "file": "search.epub",
+        "bytes": 1765,
+        "sha256": "a7a893ba1818907a5fa075565640af3c475e769def9dad9e9c9c3af0e73dab8e"
+      },
+      {
+        "phase": "first",
+        "file": "search.pdf",
+        "bytes": 1892,
+        "sha256": "9e2286aab0a355293872b9e022ba8328aee9391b5eb6ef60ed50718c4999fa85"
+      },
+      {
+        "phase": "first",
+        "file": "blank.pdf",
+        "bytes": 602,
+        "sha256": "0144a6054caabb0878db3271370ed83d0eda7a44200f891ce04338fc4d19161b"
+      },
+      {
+        "phase": "first",
+        "file": "search.cbz",
+        "bytes": 43936,
+        "sha256": "1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3"
+      },
+      {
+        "phase": "first",
+        "file": "long.epub",
+        "bytes": 1478719,
+        "sha256": "087d3376c83269be40cb4ed6009d2953443be80352718c9e0f2a5e88d5873e55"
+      },
+      {
+        "phase": "first",
+        "file": "legacy.epub",
+        "bytes": 1808,
+        "sha256": "a9c3b53daa16a9290814def3650c7d671826173685af53a5b9264e321590f07d"
+      },
+      {
+        "phase": "retry",
+        "file": "search.txt",
+        "bytes": 4109,
+        "sha256": "3f934989c6fac53a72cacfc99369b7694b56447f80be0c3ef304913bce69c611"
+      },
+      {
+        "phase": "retry",
+        "file": "search.epub",
+        "bytes": 1765,
+        "sha256": "a7a893ba1818907a5fa075565640af3c475e769def9dad9e9c9c3af0e73dab8e"
+      },
+      {
+        "phase": "retry",
+        "file": "search.pdf",
+        "bytes": 1892,
+        "sha256": "9e2286aab0a355293872b9e022ba8328aee9391b5eb6ef60ed50718c4999fa85"
+      },
+      {
+        "phase": "retry",
+        "file": "blank.pdf",
+        "bytes": 602,
+        "sha256": "0144a6054caabb0878db3271370ed83d0eda7a44200f891ce04338fc4d19161b"
+      },
+      {
+        "phase": "retry",
+        "file": "search.cbz",
+        "bytes": 43936,
+        "sha256": "1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3"
+      },
+      {
+        "phase": "retry",
+        "file": "long.epub",
+        "bytes": 1478719,
+        "sha256": "087d3376c83269be40cb4ed6009d2953443be80352718c9e0f2a5e88d5873e55"
+      },
+      {
+        "phase": "retry",
+        "file": "legacy.epub",
+        "bytes": 1808,
+        "sha256": "a9c3b53daa16a9290814def3650c7d671826173685af53a5b9264e321590f07d"
+      },
+      {
+        "phase": "reopen",
+        "file": "search.txt",
+        "bytes": 4109,
+        "sha256": "3f934989c6fac53a72cacfc99369b7694b56447f80be0c3ef304913bce69c611"
+      },
+      {
+        "phase": "reopen",
+        "file": "search.epub",
+        "bytes": 1765,
+        "sha256": "a7a893ba1818907a5fa075565640af3c475e769def9dad9e9c9c3af0e73dab8e"
+      },
+      {
+        "phase": "reopen",
+        "file": "search.pdf",
+        "bytes": 1892,
+        "sha256": "9e2286aab0a355293872b9e022ba8328aee9391b5eb6ef60ed50718c4999fa85"
+      },
+      {
+        "phase": "reopen",
+        "file": "blank.pdf",
+        "bytes": 602,
+        "sha256": "0144a6054caabb0878db3271370ed83d0eda7a44200f891ce04338fc4d19161b"
+      },
+      {
+        "phase": "reopen",
+        "file": "search.cbz",
+        "bytes": 43936,
+        "sha256": "1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3"
+      },
+      {
+        "phase": "reopen",
+        "file": "long.epub",
+        "bytes": 1478719,
+        "sha256": "087d3376c83269be40cb4ed6009d2953443be80352718c9e0f2a5e88d5873e55"
+      },
+      {
+        "phase": "reopen",
+        "file": "legacy.epub",
+        "bytes": 1808,
+        "sha256": "a9c3b53daa16a9290814def3650c7d671826173685af53a5b9264e321590f07d"
+      }
+    ],
+    "process_stops": [
+      {
+        "phase": "first",
+        "instrumentation_pid": 7211,
+        "pid_before_stop": "",
+        "ended_with_instrumentation": true,
+        "pid_after_stop": "",
+        "requested": true
+      },
+      {
+        "phase": "retry",
+        "instrumentation_pid": 7600,
+        "pid_before_stop": "",
+        "ended_with_instrumentation": true,
+        "pid_after_stop": "",
+        "requested": true
+      },
+      {
+        "phase": "reopen",
+        "instrumentation_pid": 7709,
+        "pid_before_stop": "",
+        "ended_with_instrumentation": true,
+        "pid_after_stop": "",
+        "requested": true
+      }
+    ],
+    "real_postcommit_kill": {
+      "actual_postcommit_gate": true,
+      "pid_before_stop": "7461",
+      "pid_after_stop": "",
+      "request_sha256": "e9324ebb2b56c61cfcc115e9f053d03464e5d6bb756a164f1b6b0cddc581941e",
+      "revision_id": "b18fa79129854b8496d9606b5b88c312",
+      "annotation_id": "05d2db1b883c476198b04fea34cdd36d",
+      "request_bytes": 606
+    },
+    "api": 34,
+    "abi": "x86_64",
+    "physical_device": false,
+    "reading_ui_accepted": true,
+    "performance_accepted": false,
+    "complete_product": false,
+    "talkback_speech_accepted": false,
+    "phases": [
+      {
+        "phase": "first",
+        "pid": 7211,
+        "passed": true,
+        "count": 14,
+        "checks": [
+          {
+            "name": "same_sdk_product_sqlite_and_installed_g03_g04",
+            "pass": true
+          },
+          {
+            "name": "read_only_empty_list_preserves_sdk_product_and_pixels",
+            "pass": true
+          },
+          {
+            "name": "real_txt_progress_and_point_bookmark_do_not_write_sdk",
+            "pass": true
+          },
+          {
+            "name": "real_txt_selection_highlight_and_note_edit_keep_selector",
+            "pass": true
+          },
+          {
+            "name": "explicit_current_found_navigation_renders_without_sdk_note_copy",
+            "pass": true
+          },
+          {
+            "name": "delete_and_explicit_retained_restore_do_not_auto_navigate",
+            "pass": true
+          },
+          {
+            "name": "epub_actual_capture_keeps_spine_path_and_current_font",
+            "pass": true
+          },
+          {
+            "name": "pdf_real_page_id_points_and_cbz_capture_refusal",
+            "pass": true
+          },
+          {
+            "name": "missing_legacy_nul_and_fixed_page_id_are_never_guessed",
+            "pass": true
+          },
+          {
+            "name": "unsafe_graphs_display_counts_without_exposing_or_choosing_heads",
+            "pass": true
+          },
+          {
+            "name": "stale_selected_head_never_overwrites_new_head",
+            "pass": true
+          },
+          {
+            "name": "cancel_real_capture_keeps_stores_and_actual_frame",
+            "pass": true
+          },
+          {
+            "name": "close_rotation_background_drop_real_pending_reads",
+            "pass": true
+          },
+          {
+            "name": "bounded_record_pagination_and_plain_text_labels",
+            "pass": true
+          }
+        ]
+      },
+      {
+        "phase": "retry",
+        "pid": 7600,
+        "passed": true,
+        "count": 1,
+        "checks": [
+          {
+            "name": "real_process_kill_after_commit_replays_identical_request_without_duplicate",
+            "pass": true
+          }
+        ]
+      },
+      {
+        "phase": "reopen",
+        "pid": 7709,
+        "passed": true,
+        "count": 1,
+        "checks": [
+          {
+            "name": "process_reopen_retains_reading_graph_and_releases_old_panels",
+            "pass": true
+          }
+        ]
+      }
+    ]
+  },
+  "native": {
+    "source_sha": "047648865e509d5835b7d6e1389681e314d94e28",
+    "run_id": "40131364703",
+    "attempt": "1",
+    "accepted": true,
+    "archives": {
+      "reader_reading_commands": {
+        "bytes": 700790,
+        "sha256": "f738a24885d9a5252c3824a3ad61b6c47fe9dc47857ca030f7068bc6986e6682"
+      },
+      "reader_annotation_view": {
+        "bytes": 420506,
+        "sha256": "09e6c530dfca81714977c0bbd5fbe1169b4b30f01770a52c278252126adde5a6"
+      }
+    },
+    "checks": [
+      {
+        "variant": "Debug",
+        "apk_sha256": "70ae33f7e9ad519683193fc6f65ed59e18a14686a920d7dac32302979d4222b7",
+        "apk_bytes": 26846608,
+        "libraries": {
+          "exreader_host": {
+            "sha256": "4b5b0e0038c1e48b4cf4dd229b023a06a6f8bb8cdf27bc69d53f5a8a53bf19e5",
+            "bytes": 487088,
+            "needed": [
+              "libexreader.so",
+              "libdl.so",
+              "libm.so",
+              "libc.so"
+            ]
+          },
+          "exreader_product": {
+            "sha256": "b649cde25cf2cbf2f8a819a2bafa7d9c1963eb53f4600f3e8001018451b6a8f0",
+            "bytes": 2735472,
+            "needed": [
+              "libdl.so",
+              "libm.so",
+              "libc.so"
+            ]
+          }
+        }
+      },
+      {
+        "variant": "Release",
+        "apk_sha256": "0e15282deb84fb157f36d83f0639c2a4ed23011c6f5775fb046fa9da059936de",
+        "apk_bytes": 25792609,
+        "libraries": {
+          "exreader_host": {
+            "sha256": "42582017d26f5a488b7948af7bf594fd6393c07c6b7b39b1c7ac22d2385e9bcd",
+            "bytes": 362256,
+            "needed": [
+              "libexreader.so",
+              "libdl.so",
+              "libm.so",
+              "libc.so"
+            ]
+          },
+          "exreader_product": {
+            "sha256": "17c8a00824c2305e18eb34d637344aa7854cfaaf587ffcfa1b98d1f67964eea2",
+            "bytes": 2179656,
+            "needed": [
+              "libdl.so",
+              "libm.so",
+              "libc.so"
+            ]
+          }
+        }
+      }
+    ],
+    "same_product_owner_dso": true,
+    "one_product_sqlite": true,
+    "sdk_single_shared_provider": true,
+    "codec_does_not_link_sdk": true
+  },
+  "sdk_configuration": {
+    "profile": "formal Android shared SDK, not desktop reading-core preset",
+    "options": {
+      "EXR_ENABLE_AUDIO": "ON",
+      "EXR_ENABLE_MP3": "ON",
+      "EXR_ENABLE_AAC": "OFF",
+      "EXR_BUILD_JNI": "ON",
+      "EXR_BUILD_SHARED_COMPAT": "ON"
+    },
+    "actual_cache_sha256": "e597e6f5e1c0512fbff2be9c761a32c2a579d43db07d7c2d3abb7100b852366b",
+    "installed_runtimes": {
+      "libexreader.so": {
+        "bytes": 22258128,
+        "sha256": "42bb8b94f1226f7a0d446c0c996762379d18a1e42abb03e4a0e08423947f80c2",
+        "needed": [
+          "libOpenSLES.so",
+          "libm.so",
+          "libdl.so",
+          "libc.so"
+        ]
+      },
+      "libexreader_jni.so": {
+        "bytes": 176496,
+        "sha256": "917a4b480cdc8d4cf02b474a1d13d43ffecc2d33881f64dea6a2fda47a54c337",
+        "needed": [
+          "libexreader.so",
+          "libm.so",
+          "libdl.so",
+          "libc.so"
+        ]
+      }
+    },
+    "jni_requires_audio_pdf": true
+  },
+  "packaged_sdk": [
+    {
+      "variant": "Debug",
+      "sdk": {
+        "bytes": 5545208,
+        "sha256": "041ba9141a4b0c655545349ee61be8bc36abccfca872cb852a8677f6753dee8b",
+        "needed": [
+          "libOpenSLES.so",
+          "libm.so",
+          "libdl.so",
+          "libc.so"
+        ]
+      },
+      "jni": {
+        "bytes": 40392,
+        "sha256": "182ee0175ca883aa5a3cc5d985b215cba2808df508ab7381cb341423909981f2",
+        "needed": [
+          "libexreader.so",
+          "libm.so",
+          "libdl.so",
+          "libc.so"
+        ]
+      }
+    },
+    {
+      "variant": "Release",
+      "sdk": {
+        "bytes": 5545208,
+        "sha256": "041ba9141a4b0c655545349ee61be8bc36abccfca872cb852a8677f6753dee8b",
+        "needed": [
+          "libOpenSLES.so",
+          "libm.so",
+          "libdl.so",
+          "libc.so"
+        ]
+      },
+      "jni": {
+        "bytes": 40392,
+        "sha256": "182ee0175ca883aa5a3cc5d985b215cba2808df508ab7381cb341423909981f2",
+        "needed": [
+          "libexreader.so",
+          "libm.so",
+          "libdl.so",
+          "libc.so"
+        ]
+      }
+    }
+  ],
+  "retained_same_source_checks": {
+    "sdk_export_and_source_identity": true,
+    "public_reading_capture_and_roundtrip": true,
+    "webdav_backend_cases": 91,
+    "webdav_restart_cases": 4,
+    "host_formal_ui": 16,
+    "search_ui": 15,
+    "navigation_ui": 18
+  },
+  "read_only_artifact_proof": {
+    "source_sha": "ef9433153dc04cb5846946fbf5dcbddaf8f6d967",
+    "branch": "codex/reader-android-reading-proof",
+    "run_id": 40132592232,
+    "attempt": 1,
+    "job_id": 120987289869,
+    "conclusion": "success",
+    "diagnostic_only": true,
+    "accepted": false,
+    "original_artifact_zip_downloaded_and_sha256_verified_on_actions": true
+  },
+  "limits": {
+    "api": 34,
+    "abi": "x86_64",
+    "physical_device": false,
+    "cbz_product_capture_supported": false,
+    "blank_pdf_genuine_point_supported": true,
+    "foreign_projection_navigation": "explicitly refused without changing retained wire or current frame",
+    "talkback_speech_accepted": false,
+    "performance_accepted": false,
+    "complete_product": false
+  },
+  "evidence_only_paths": [
+    "docs/READER-ANDROID-READING.md",
+    "docs/validation/reader-android-reading.json"
+  ]
+}

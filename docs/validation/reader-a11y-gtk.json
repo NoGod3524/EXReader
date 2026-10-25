@@ -1,0 +1,649 @@
+{
+  "source_sha": "67e2f8c4941205c5581e82fd5a1469d18f696019",
+  "start_sha": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk_contract": "9854061be331fe603a1822d9b2b36ee357154927",
+  "sdk_version": "3.40.0",
+  "sdk_abi": 1,
+  "workflow": ".github/workflows/reader-a11y-gtk.yml",
+  "branch": "codex/reader-a11y-gtk",
+  "run_id": 40082300842,
+  "attempt": 1,
+  "job": {
+    "id": 120838169808,
+    "name": "Real D-Bus AT-SPI tree, keystrokes and screenshots on Xvfb",
+    "conclusion": "failure",
+    "failure_is_the_refusal_gate": true,
+    "started_at": "2026-10-24T09:31:38Z",
+    "completed_at": "2026-10-24T09:35:26Z",
+    "audit_seconds": 104.5,
+    "note": "The audit step and the report validator both succeeded. The job is red because the final refusal gate exits 2 while blocking findings stand; every artifact below comes from this same run and attempt."
+  },
+  "kind": "gtk-atspi-keyboard-audit",
+  "scope": "GTK product host: shelf, import, organize, reading, annotation and account surfaces observed through AT-SPI with real X11 keystrokes",
+  "audit_completed": true,
+  "accessibility_accepted": false,
+  "refusal_reason": "six blocking accessibility findings are reproducible from this source; an AT-SPI audit cannot grant acceptance while they stand",
+  "orca_screen_reader_accepted": false,
+  "human_reader_review_accepted": false,
+  "complete_product": false,
+  "counts": {
+    "checks": 32,
+    "passed": 24,
+    "failed_blocking": 6,
+    "failed_advisory": 2,
+    "phases": 13
+  },
+  "checks": [
+    {
+      "name": "atspi_bridge_exposes_main_window",
+      "severity": "blocking",
+      "pass": true,
+      "element": "application[exreader-linux]#0/frame[EXReader Linux]#0"
+    },
+    {
+      "name": "shelf_list_named",
+      "severity": "blocking",
+      "pass": true,
+      "element": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/scroll pane[]#1/viewport[]#0/list box[Bookshelf]#0"
+    },
+    {
+      "name": "shelf_toolbar_names_and_actions",
+      "severity": "blocking",
+      "pass": true,
+      "element": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/filler[]#0/push button[Import F1]#0"
+    },
+    {
+      "name": "shelf_action_row_names",
+      "severity": "blocking",
+      "pass": true,
+      "element": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/filler[]#0/toggle button[More library actions]#1"
+    },
+    {
+      "name": "shelf_search_entry",
+      "severity": "blocking",
+      "pass": true,
+      "element": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/filler[]#0/text[Search bookshelf]#0"
+    },
+    {
+      "name": "shelf_tab_order_reaches_controls",
+      "severity": "blocking",
+      "pass": true,
+      "element": "window/EXReader Linux"
+    },
+    {
+      "name": "shelf_tab_order_follows_visual_order",
+      "severity": "blocking",
+      "pass": true,
+      "element": "window/EXReader Linux"
+    },
+    {
+      "name": "tab_cycle_elements_named",
+      "severity": "blocking",
+      "pass": false,
+      "element": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/scroll pane[]#1"
+    },
+    {
+      "name": "shelf_tab_order_cycles_without_trap",
+      "severity": "advisory",
+      "pass": true,
+      "element": "window/EXReader Linux"
+    },
+    {
+      "name": "more_menu_items_named",
+      "severity": "advisory",
+      "pass": true,
+      "element": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/filler[]#0/toggle button[More library actions]#1/menu[]#0/menu item[Collections…]#0"
+    },
+    {
+      "name": "more_menu_keyboard_activation",
+      "severity": "blocking",
+      "pass": true,
+      "element": "window/EXReader Linux"
+    },
+    {
+      "name": "collections_dialog_identity",
+      "severity": "blocking",
+      "pass": false,
+      "element": "application[exreader-linux]#0/dialog[Library collections]#1"
+    },
+    {
+      "name": "collections_dialog_controls_named",
+      "severity": "blocking",
+      "pass": true,
+      "element": "application[exreader-linux]#0/dialog[Library collections]#1"
+    },
+    {
+      "name": "collections_type_selector_reachable",
+      "severity": "advisory",
+      "pass": false,
+      "element": "application[exreader-linux]#0/dialog[Library collections]#1/filler[]#0/filler[]#0/combo box[Collection type]#1"
+    },
+    {
+      "name": "collections_dialog_escape_restores_focus",
+      "severity": "blocking",
+      "pass": true,
+      "element": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/filler[]#0/toggle button[More library actions]#1"
+    },
+    {
+      "name": "import_dialog_identity_and_focus",
+      "severity": "blocking",
+      "pass": true,
+      "element": "application[exreader-linux]#0/file chooser[Import book]#1"
+    },
+    {
+      "name": "import_dialog_escape_restores_focus",
+      "severity": "blocking",
+      "pass": true,
+      "element": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/filler[]#0/toggle button[More library actions]#1"
+    },
+    {
+      "name": "import_books_visible_on_shelf",
+      "severity": "blocking",
+      "pass": true,
+      "element": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/scroll pane[]#1/viewport[]#0/list box[Bookshelf]#0"
+    },
+    {
+      "name": "shelf_row_names",
+      "severity": "blocking",
+      "pass": false,
+      "element": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/scroll pane[]#1/viewport[]#0/list box[Bookshelf]#0/list item[]#0"
+    },
+    {
+      "name": "shelf_rows_focusable",
+      "severity": "blocking",
+      "pass": true,
+      "element": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/scroll pane[]#1/viewport[]#0/list box[Bookshelf]#0/list item[]#0"
+    },
+    {
+      "name": "reader_panel_names",
+      "severity": "blocking",
+      "pass": true,
+      "element": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/filler[]#1/scroll pane[]#0/text[Selectable page text]#0"
+    },
+    {
+      "name": "reader_tab_order_reaches_panels",
+      "severity": "advisory",
+      "pass": true,
+      "element": "window/EXReader Linux"
+    },
+    {
+      "name": "annotation_note_rows_named",
+      "severity": "blocking",
+      "pass": false,
+      "element": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/filler[]#1/scroll pane[]#2/viewport[]#0/list box[Saved notes; activate to return to selected text]#0/list item[]#0"
+    },
+    {
+      "name": "status_message_exposed_as_name_change",
+      "severity": "blocking",
+      "pass": false,
+      "element": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/label[Reading operation failed; accepted page retained]#1"
+    },
+    {
+      "name": "metadata_dialog_identity_and_focus",
+      "severity": "blocking",
+      "pass": true,
+      "element": "application[exreader-linux]#0/dialog[Book details]#1"
+    },
+    {
+      "name": "metadata_dialog_controls_named",
+      "severity": "blocking",
+      "pass": true,
+      "element": "application[exreader-linux]#0/dialog[Book details]#1/filler[]#0/panel[]#0/text[Book title]#4"
+    },
+    {
+      "name": "metadata_dialog_escape_restores_focus",
+      "severity": "blocking",
+      "pass": true,
+      "element": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/scroll pane[]#1/viewport[]#0/list box[Bookshelf]#0/list item[]#0"
+    },
+    {
+      "name": "account_dialog_identity_and_focus",
+      "severity": "blocking",
+      "pass": true,
+      "element": "application[exreader-linux]#0/dialog[Account and Sync]#1"
+    },
+    {
+      "name": "account_dialog_declares_modality",
+      "severity": "advisory",
+      "pass": false,
+      "element": "application[exreader-linux]#0/dialog[Account and Sync]#1"
+    },
+    {
+      "name": "account_entries_and_buttons_named",
+      "severity": "blocking",
+      "pass": true,
+      "element": "application[exreader-linux]#0/dialog[Account and Sync]#1"
+    },
+    {
+      "name": "account_password_secret_not_reachable_through_atspi",
+      "severity": "blocking",
+      "pass": true,
+      "element": "application[exreader-linux]#0/dialog[Account and Sync]#1/filler[]#0/panel[]#1/password text[WebDAV password]#2"
+    },
+    {
+      "name": "account_dialog_escape_restores_focus",
+      "severity": "blocking",
+      "pass": false,
+      "element": "application[exreader-linux]#0/frame[EXReader Linux]#0"
+    }
+  ],
+  "findings": [
+    {
+      "check": "tab_cycle_elements_named",
+      "severity": "blocking",
+      "element": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/scroll pane[]#1",
+      "expected": "every element that takes keyboard focus exposes a non-empty accessible name",
+      "actual": {
+        "unnamed_focus_stops": [
+          {
+            "role": "scroll pane",
+            "name": "",
+            "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/scroll pane[]#1"
+          }
+        ],
+        "cycle_length": 26
+      },
+      "reproduction": [
+        "show the shelf with F2",
+        "press Tab through one complete cycle and read the name of the FOCUSED element after each press"
+      ],
+      "minimal_fix": "the focusable element is the GtkScrolledWindow the host wraps each list in; GTK leaves its accessible unnamed while it still takes focus, so name it in reader.c: atk_object_set_name(gtk_widget_get_accessible(gtk_widget_get_ancestor(image, GTK_TYPE_SCROLLED_WINDOW)), \"Page\") and the same for the shelf, notes, organizer group and member lists"
+    },
+    {
+      "check": "collections_dialog_identity",
+      "severity": "blocking",
+      "element": "application[exreader-linux]#0/dialog[Library collections]#1",
+      "expected": "the organizer is a modal dialog named 'Library collections' with keyboard focus inside it",
+      "actual": {
+        "role": "dialog",
+        "states": {
+          "enabled": true,
+          "visible": true,
+          "showing": true,
+          "sensitive": true,
+          "active": true,
+          "modal": true
+        },
+        "focused": {
+          "path": "",
+          "role": "",
+          "name": "",
+          "states": {},
+          "extents": null
+        },
+        "focus_inside_dialog": false
+      },
+      "reproduction": [
+        "open the organizer from the shelf more menu with the keyboard",
+        "read the dialog element and the focused element"
+      ],
+      "minimal_fix": "GTK_DIALOG_MODAL is already requested, but GTK never moves focus into the dialog: add gtk_widget_grab_focus(collections.types) (or collections.groups) after gtk_widget_show_all in collections_open(), as metadata_present() and accounts_open() already do"
+    },
+    {
+      "check": "collections_type_selector_reachable",
+      "severity": "advisory",
+      "element": "application[exreader-linux]#0/dialog[Library collections]#1/filler[]#0/filler[]#0/combo box[Collection type]#1",
+      "expected": "the collection type selector can be reached from the keyboard, either in the Tab cycle or through its mnemonic",
+      "actual": {
+        "in_tab_cycle": false,
+        "reachable_by_mnemonic": false,
+        "focusable_state": null,
+        "focus_after_mnemonic": {
+          "path": "",
+          "role": "",
+          "name": "",
+          "states": {},
+          "extents": null
+        },
+        "tab_cycle": [
+          "Removed collections",
+          "Root",
+          "",
+          "New",
+          "",
+          "Close",
+          "",
+          "Removed collections",
+          "Root",
+          "",
+          "New",
+          "",
+          "Close",
+          "",
+          "Removed collections",
+          "Root"
+        ]
+      },
+      "reproduction": [
+        "open the organizer",
+        "Tab through one complete cycle, then press Alt+T",
+        "read the focused element after each step"
+      ],
+      "minimal_fix": "the selector sits outside the Tab chain and is reachable only through its _Type mnemonic; add gtk_widget_set_can_focus(collections.types, TRUE) while keeping the mnemonic widget so both paths work"
+    },
+    {
+      "check": "shelf_row_names",
+      "severity": "blocking",
+      "element": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/scroll pane[]#1/viewport[]#0/list box[Bookshelf]#0/list item[]#0",
+      "expected": "every shelf row exposes a non-empty accessible name so list navigation can announce the book",
+      "actual": {
+        "rows": [
+          {
+            "role": "list item",
+            "name": "",
+            "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/scroll pane[]#1/viewport[]#0/list box[Bookshelf]#0/list item[]#0",
+            "states": {
+              "enabled": true,
+              "visible": true,
+              "showing": true,
+              "focused": true,
+              "focusable": true,
+              "sensitive": true,
+              "selected": true,
+              "selectable": true
+            },
+            "text_children": [
+              "Alpha-shelf-book.txt\n"
+            ]
+          },
+          {
+            "role": "list item",
+            "name": "",
+            "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/scroll pane[]#1/viewport[]#0/list box[Bookshelf]#0/list item[]#1",
+            "states": {
+              "enabled": true,
+              "visible": true,
+              "showing": true,
+              "focusable": true,
+              "sensitive": true,
+              "selectable": true
+            },
+            "text_children": [
+              "Beta-shelf-book.txt\n"
+            ]
+          },
+          {
+            "role": "list item",
+            "name": "",
+            "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/scroll pane[]#1/viewport[]#0/list box[Bookshelf]#0/list item[]#2",
+            "states": {
+              "enabled": true,
+              "visible": true,
+              "showing": true,
+              "focusable": true,
+              "sensitive": true,
+              "selectable": true
+            },
+            "text_children": [
+              "Gamma-shelf-book.txt\n"
+            ]
+          }
+        ],
+        "unnamed_rows": 3,
+        "unnamed_with_text_child": 3
+      },
+      "reproduction": [
+        "import originals, show the shelf with F2",
+        "read the Name property of each list row on the bus"
+      ],
+      "minimal_fix": "in reader.c shelf_present(), after building the caption: atk_object_set_name(gtk_widget_get_accessible(row), caption) before the row is inserted; one call per row and no layout change. The caption is only reachable today as a child label, which a reader may fall back to but which leaves the row Name empty for AT-SPI clients that use it"
+    },
+    {
+      "check": "annotation_note_rows_named",
+      "severity": "blocking",
+      "element": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/filler[]#1/scroll pane[]#2/viewport[]#0/list box[Saved notes; activate to return to selected text]#0/list item[]#0",
+      "expected": "the saved-note list exposes each annotation with a non-empty accessible name",
+      "actual": {
+        "notes": 1,
+        "rows": [
+          {
+            "role": "list item",
+            "name": "",
+            "path": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/panel[]#2/filler[]#0/filler[]#1/scroll pane[]#2/viewport[]#0/list box[Saved notes; activate to return to selected text]#0/list item[]#0",
+            "text_children": [
+              "Audit note for the GTK accessibility audit"
+            ]
+          }
+        ],
+        "unnamed_rows": 1
+      },
+      "reproduction": [
+        "select page text with F7 then ctrl+a",
+        "type a comment after F11",
+        "press F8 to add the note",
+        "read the saved-note rows"
+      ],
+      "minimal_fix": "in reader.c notes_present(), after gtk_label_new(result->notes[i].text): atk_object_set_name(gtk_widget_get_accessible(row), result->notes[i].text) for the created row"
+    },
+    {
+      "check": "status_message_exposed_as_name_change",
+      "severity": "blocking",
+      "element": "application[exreader-linux]#0/frame[EXReader Linux]#0/filler[]#0/label[Reading operation failed; accepted page retained]#1",
+      "expected": "a refused import changes the status element name in place and the registry delivers an accessible-name property change for it",
+      "actual": {
+        "before_text": "Ready",
+        "after_text": "Reading operation failed; accepted page retained",
+        "same_element": true,
+        "property_change_events": [],
+        "event_total": 1459,
+        "status_role": "label",
+        "status_attributes": {}
+      },
+      "reproduction": [
+        "read the status label name",
+        "import invalid.epub with F1",
+        "read the label again and the delivered accessibility events"
+      ],
+      "minimal_fix": "the message is a plain label: use a GtkStatusbar (ATK_ROLE_STATUSBAR plus Statusbar::text-pushed) so assistive clients that announce status bars receive the change; GTK3 has no per-widget live region"
+    },
+    {
+      "check": "account_dialog_declares_modality",
+      "severity": "advisory",
+      "element": "application[exreader-linux]#0/dialog[Account and Sync]#1",
+      "expected": "the account dialog declares the MODAL state, as the organizer and details dialogs do, so assistive clients can announce that the library is unavailable while it is open",
+      "actual": {
+        "states": {
+          "enabled": true,
+          "visible": true,
+          "showing": true,
+          "sensitive": true,
+          "active": true
+        },
+        "role": "dialog",
+        "main_window_sensitive_note": "accounts_open() sets the main content insensitive instead of asking GTK for a modal dialog"
+      },
+      "reproduction": [
+        "press Ctrl+Shift+A",
+        "read the dialog state set on the accessibility bus"
+      ],
+      "minimal_fix": "pass GTK_DIALOG_MODAL to gtk_dialog_new_with_buttons in accounts_open() (accounts_ui.inc); the insensitive main content can then stay or go"
+    },
+    {
+      "check": "account_dialog_escape_restores_focus",
+      "severity": "blocking",
+      "element": "application[exreader-linux]#0/frame[EXReader Linux]#0",
+      "expected": "Escape closes the account dialog and focus returns to a control inside the main window",
+      "actual": {
+        "focused_after_escape": {
+          "path": "",
+          "role": "",
+          "name": "",
+          "states": {},
+          "extents": null
+        },
+        "window_activate_events_for_main": [
+          {
+            "t": 484.685,
+            "type": "window:activate",
+            "detail1": "",
+            "detail2": "",
+            "source_role": "frame",
+            "source_name": "EXReader Linux"
+          }
+        ],
+        "focus_is_inside_main_window": false,
+        "main_content_insensitive_while_open": true
+      },
+      "reproduction": [
+        "open Account and Sync",
+        "press Escape",
+        "read the focused element"
+      ],
+      "minimal_fix": "accounts_open() makes the whole main content insensitive, which drops the main window focus widget, and accounts_destroyed() only re-enables it: remember the focused widget before opening and grab it again in accounts_destroyed(), or use GTK_DIALOG_MODAL instead of insensitivity"
+    }
+  ],
+  "gaps": [
+    "Orca or any real screen reader speech output (no speech capture, no reader build)",
+    "AT-SPI live-region / announcement semantics: the GTK3 host marks no live region and the registry delivered no object:announcement event, so automatic announcement of the status text is not established either way",
+    "Braille display output and BRLTTY integration",
+    "Visible focus ring, contrast and theme rendering (WCAG 1.4.3/1.4.11/2.4.7)",
+    "Password-field presentation beyond the ATK role: the audited entry reports the password-text role and the audit measures what its text exports, but how a screen reader masks or announces a secret field is not covered",
+    "IME composition, caret browsing and selection announcement for the rendered page image",
+    "Network-backed account scan states (preparing, scanning, cancel, retry) because this audit runs offline against a local library only",
+    "Non-GTK hosts: Windows, Apple and Android surfaces are outside this package",
+    "Event coalescing and AT-SPI cache latency under a large library"
+  ],
+  "observations": {
+    "atspi_version": "atk 2.36 (atspi major/minor unavailable)",
+    "events_registered": [
+      "object:property-change",
+      "object:state-changed",
+      "object:text-changed",
+      "object:announcement",
+      "focus:",
+      "window:"
+    ],
+    "events_rejected": [],
+    "total_accessibility_events": 1459,
+    "status_label_name_change_events": 0,
+    "status_label_before": "Ready",
+    "status_label_after": "Reading operation failed; accepted page retained",
+    "shelf_list_role": "list box",
+    "shelf_row_role": "list item",
+    "shelf_row_captions": [
+      "Alpha-shelf-book.txt",
+      "Beta-shelf-book.txt",
+      "Gamma-shelf-book.txt"
+    ],
+    "search_entry_role": "text",
+    "password_entry_role": "password text",
+    "password_exported_text_length": 29,
+    "password_secret_exported": false,
+    "password_field_marked_secret": true,
+    "secret_leak_hits": 0,
+    "phases_executed": [
+      "bridge",
+      "shelf",
+      "shelf-tab-order",
+      "menu",
+      "collections-dialog",
+      "import-dialog",
+      "import-books",
+      "shelf-rows",
+      "reader",
+      "annotations",
+      "status-messages",
+      "metadata-dialog",
+      "account-dialog"
+    ],
+    "tab_cycle_roles": [
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "text",
+      "toggle button",
+      "push button",
+      "scroll pane",
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "push button",
+      "text",
+      "toggle button",
+      "push button"
+    ]
+  },
+  "evidence": {
+    "tree_dumps": 12,
+    "screenshots": 12,
+    "keystroke_lines": 136,
+    "result_json_bytes": 85869,
+    "result_json_sha256": "c764ae2cb3f1db45f9d2da7faf29791247be7c01278038a869563dc17ab9d78d",
+    "keys_log_sha256": "a22d46b3329bf80f8940d34b23b9fec3e37e564650cbfdfae3ba58b15f4b071e",
+    "application_log_sha256": "33cf04f8673bd1ada4bc83d1843d48b55fc893d5df73d2d2199189b966ceb455",
+    "program_sha256": "60dce4c781eb0b95176f9798a53688c6bc49e344f17f80c78ac13262a65daeb1",
+    "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b"
+  },
+  "artifacts": [
+    {
+      "id": 12555254384,
+      "name": "reader-a11y-gtk-40082300842-1",
+      "bytes": 18608097,
+      "sha256": "f93ce790edd167173f350a6b4a00b64fd2d5b47d852872916c54e4d6fc4aa140",
+      "digest_source": "GitHub artifacts API digest of the uploaded archive",
+      "created_at": "2026-10-24T09:31:36Z",
+      "expires_at": "2027-01-22T09:31:36Z",
+      "expired_at_verification": false,
+      "contents": "build/a11y-evidence/{result.json,tree/*.json,tree/*.txt,shots/*.png,keys.log,application.log,state.ini,profile,corpus}, build/a11y-logs/*, build/a11y-package/{build.json,runtime-dependencies.txt,EXReader-Linux.tar.gz}, source-binding.txt"
+    }
+  ],
+  "retained_failed_runs": [
+    {
+      "run_id": 40077115326,
+      "attempt": 1,
+      "source_sha": "3b958504e2357b45435662945e5ac9d04b59917e",
+      "outcome": "harness defect: report evidence key mismatch, gate refused. Not counted."
+    },
+    {
+      "run_id": 40078328226,
+      "attempt": 1,
+      "source_sha": "347ded0c",
+      "outcome": "cancelled by the concurrency group when the next commit pushed. Not counted."
+    },
+    {
+      "run_id": 40078531591,
+      "attempt": 1,
+      "source_sha": "4c617be6",
+      "outcome": "harness defect: clipboard paste race and focus-restore measurement. Not counted."
+    },
+    {
+      "run_id": 40079657024,
+      "attempt": 1,
+      "source_sha": "e7c7b967",
+      "outcome": "harness defect: typed secret echoed into the keystroke record; readiness hung on shelf_restoring. Not counted."
+    },
+    {
+      "run_id": 40081341755,
+      "attempt": 1,
+      "source_sha": "e8c30927",
+      "outcome": "harness defect: rows read before the shelf result handler inserted them. Not counted."
+    },
+    {
+      "run_id": 40081793354,
+      "attempt": 1,
+      "source_sha": "a912e1ef",
+      "outcome": "harness defect: bridge phase read frames before the window existed. Not counted."
+    }
+  ],
+  "remaining_work": [
+    "Orca or any real screen-reader speech pass is not granted: it needs a reader run with speech capture, which this package does not perform.",
+    "The six blocking findings are host defects in examples/linux/reader.c and accounts_ui.inc; the GTK receiver must decide the fixes listed in findings[].minimal_fix.",
+    "The organizer type selector stays outside the Tab cycle (advisory); its mnemonic probe cannot be decided until the dialog takes initial focus.",
+    "Network-backed account scan states (preparing, scanning, cancel, retry) remain uncovered because the audit runs offline.",
+    "Windows, Apple and Android surfaces are outside this package.",
+    "Braille output, contrast/theme rendering, IME and caret browsing are recorded as gaps, never as passes."
+  ],
+  "problems": []
+}

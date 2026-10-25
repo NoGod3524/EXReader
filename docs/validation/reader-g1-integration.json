@@ -1,0 +1,471 @@
+{
+  "schema": 1,
+  "accepted": true,
+  "state": "bounded_common_source_accepted",
+  "branch": "codex/reader-g1-integration",
+  "start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "inputs": "../../tests/reader_g1_integration/inputs.json",
+  "amendments": "ba25961961ae69222bfed4f7a98cb02bb1dc6847",
+  "workflow": ".github/workflows/reader-g1-integration.yml",
+  "tested_source": "4e2dad0bc40aa5b523b98175f19fcb8ddde3eaa3",
+  "runs": [
+    {
+      "run_id": 40118190108,
+      "attempt": 1,
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 120943826152,
+          "name": "one-prefix composition (windows)",
+          "conclusion": "success"
+        },
+        {
+          "id": 120943826315,
+          "name": "Win32 account sync receive and retained product suites",
+          "conclusion": "success"
+        },
+        {
+          "id": 120943826363,
+          "name": "one-prefix composition (macos)",
+          "conclusion": "success"
+        },
+        {
+          "id": 120943826368,
+          "name": "one-prefix composition (linux)",
+          "conclusion": "success"
+        },
+        {
+          "id": 120945032549,
+          "name": "strict same-source composition report",
+          "conclusion": "success"
+        },
+        {
+          "id": 120945372692,
+          "name": "strict same-source summary",
+          "conclusion": "success"
+        },
+        {
+          "id": 120945432129,
+          "name": "bounded common-source acceptance",
+          "conclusion": "success"
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 12570591453,
+          "name": "reader-g1-integration-summary-40118190108-1",
+          "size_in_bytes": 624,
+          "digest": "sha256:9ba538081f6f368f021c76e454e2776cf12f2e855a68d826095ebb9fa8e09fab",
+          "expires_at": "2027-01-22T17:53:34Z",
+          "source_sha": "4e2dad0bc40aa5b523b98175f19fcb8ddde3eaa3"
+        },
+        {
+          "id": 12570412429,
+          "name": "reader-module-composition-report-40118190108-1",
+          "size_in_bytes": 2029,
+          "digest": "sha256:6a180e6dfd664689e795cfc7dbf9069d83fc875a8fe14906bbb72c6de4a9f418",
+          "expires_at": "2027-01-22T17:53:34Z",
+          "source_sha": "4e2dad0bc40aa5b523b98175f19fcb8ddde3eaa3"
+        },
+        {
+          "id": 12570258473,
+          "name": "reader-windows-account-40118190108-1",
+          "size_in_bytes": 44145875,
+          "digest": "sha256:c4f5530cade254495471ccf012b5bd01de9fccdbe705a8705c85e8283076c039",
+          "expires_at": "2027-01-22T17:53:34Z",
+          "source_sha": "4e2dad0bc40aa5b523b98175f19fcb8ddde3eaa3"
+        },
+        {
+          "id": 12570232384,
+          "name": "reader-module-composition-linux-40118190108-1",
+          "size_in_bytes": 13157955,
+          "digest": "sha256:a241f7ceb72d38a291ae7bc09c088801378c608f4ac6f23948b23372b4b4f094",
+          "expires_at": "2027-01-22T17:53:34Z",
+          "source_sha": "4e2dad0bc40aa5b523b98175f19fcb8ddde3eaa3"
+        },
+        {
+          "id": 12570203572,
+          "name": "reader-windows-account-summary-40118190108-1",
+          "size_in_bytes": 791,
+          "digest": "sha256:2a12da75a8d61ad80cd26268685e1dc9693fed4e09c635b71cd82c318e877c4e",
+          "expires_at": "2027-01-22T17:53:34Z",
+          "source_sha": "4e2dad0bc40aa5b523b98175f19fcb8ddde3eaa3"
+        },
+        {
+          "id": 12569408494,
+          "name": "reader-module-composition-macos-40118190108-1",
+          "size_in_bytes": 12281397,
+          "digest": "sha256:d545e3260937428f4e1feea36f8e21f4260d9df5bfd8afdede3c75c0a49a9ace",
+          "expires_at": "2027-01-22T17:53:34Z",
+          "source_sha": "4e2dad0bc40aa5b523b98175f19fcb8ddde3eaa3"
+        },
+        {
+          "id": 12569343480,
+          "name": "reader-module-composition-windows-40118190108-1",
+          "size_in_bytes": 13072982,
+          "digest": "sha256:9a8cc7788bde6494bf474d16fbc979f834f2850ca4b1e00b1e6898e03d8fb6fa",
+          "expires_at": "2027-01-22T17:53:34Z",
+          "source_sha": "4e2dad0bc40aa5b523b98175f19fcb8ddde3eaa3"
+        }
+      ],
+      "final": {
+        "accepted": true,
+        "source_sha": "4e2dad0bc40aa5b523b98175f19fcb8ddde3eaa3",
+        "run_id": 40118190108,
+        "attempt": 1,
+        "artifacts": [
+          {
+            "id": 12570412429,
+            "name": "reader-module-composition-report-40118190108-1",
+            "size_in_bytes": 2029,
+            "digest": "sha256:6a180e6dfd664689e795cfc7dbf9069d83fc875a8fe14906bbb72c6de4a9f418",
+            "expires_at": "2027-01-22T17:53:34Z"
+          },
+          {
+            "id": 12570203572,
+            "name": "reader-windows-account-summary-40118190108-1",
+            "size_in_bytes": 791,
+            "digest": "sha256:2a12da75a8d61ad80cd26268685e1dc9693fed4e09c635b71cd82c318e877c4e",
+            "expires_at": "2027-01-22T17:53:34Z"
+          }
+        ],
+        "problems": [],
+        "scope": "three-desktop installed module composition and retained native Windows account/UIA scopes",
+        "complete_product": false,
+        "cycle_complete": false,
+        "gtk_accepted": false,
+        "android_accepted": false,
+        "ios_accepted": false,
+        "accessibility_accepted": false,
+        "performance_accepted": false
+      },
+      "composition": {
+        "accepted": true,
+        "source_sha": "4e2dad0bc40aa5b523b98175f19fcb8ddde3eaa3",
+        "run_id": 40118190108,
+        "attempt": 1,
+        "artifacts": [
+          {
+            "id": 12570232384,
+            "name": "reader-module-composition-linux-40118190108-1",
+            "size_in_bytes": 13157955,
+            "digest": "sha256:a241f7ceb72d38a291ae7bc09c088801378c608f4ac6f23948b23372b4b4f094",
+            "expires_at": "2027-01-22T17:53:34Z"
+          },
+          {
+            "id": 12569343480,
+            "name": "reader-module-composition-windows-40118190108-1",
+            "size_in_bytes": 13072982,
+            "digest": "sha256:9a8cc7788bde6494bf474d16fbc979f834f2850ca4b1e00b1e6898e03d8fb6fa",
+            "expires_at": "2027-01-22T17:53:34Z"
+          },
+          {
+            "id": 12569408494,
+            "name": "reader-module-composition-macos-40118190108-1",
+            "size_in_bytes": 12281397,
+            "digest": "sha256:d545e3260937428f4e1feea36f8e21f4260d9df5bfd8afdede3c75c0a49a9ace",
+            "expires_at": "2027-01-22T17:53:34Z"
+          }
+        ],
+        "problems": [],
+        "platforms": {
+          "linux": {
+            "runner": "Linux",
+            "items": 36,
+            "gate_items": 11,
+            "installed_files": 381,
+            "sqlite_providers": [
+              "libreader_catalog_sqlite.a"
+            ],
+            "webdav": {
+              "requests": 640,
+              "objects": 2,
+              "revisions": 10,
+              "puts": 20,
+              "gets": 46,
+              "propfinds": 548,
+              "mkcols": 26
+            },
+            "g1_initial": {
+              "accepted": true,
+              "source_sha": "4e2dad0bc40aa5b523b98175f19fcb8ddde3eaa3",
+              "run_id": "40118190108",
+              "attempt": "1",
+              "platform": "Linux",
+              "phase": "initial",
+              "checks": [
+                {
+                  "name": "new-five-module-chain-and-sdk-free-product-link",
+                  "pass": true
+                },
+                {
+                  "name": "G02-thumbnails-original-regression-allocation",
+                  "pass": true
+                },
+                {
+                  "name": "G03-reading-commands",
+                  "pass": true
+                },
+                {
+                  "name": "G04-annotation-view",
+                  "pass": true
+                },
+                {
+                  "name": "G05-annotation-export",
+                  "pass": true
+                },
+                {
+                  "name": "G06-local-downloads-and-old-build-control",
+                  "pass": true
+                }
+              ],
+              "consumers": {
+                "g1-chain": "20c8ed1bd5717fe416260fb848ae7b24f3e620d398c8aa7588e13f7fcb6fe224",
+                "g1-codec-only": "9b1302af83fca12e4c3b17b4ff27ff496b1cc195048f4b0f253f30671e406762",
+                "g1-codec.map": "06a753f92354258298403266def5771d84f8c788cc22d83f189b05000e89f078",
+                "g1-chain.map": "fb413faf4d73e56dba33bcc7e5e34067d132ee03b00e9012e2f7da7b1f025459"
+              },
+              "complete_product": false
+            },
+            "g1_relocated": {
+              "accepted": true,
+              "source_sha": "4e2dad0bc40aa5b523b98175f19fcb8ddde3eaa3",
+              "run_id": "40118190108",
+              "attempt": "1",
+              "platform": "Linux",
+              "phase": "relocated",
+              "checks": [
+                {
+                  "name": "new-five-module-chain-and-sdk-free-product-link",
+                  "pass": true
+                }
+              ],
+              "consumers": {
+                "g1-chain": "20c8ed1bd5717fe416260fb848ae7b24f3e620d398c8aa7588e13f7fcb6fe224",
+                "g1-codec-only": "9b1302af83fca12e4c3b17b4ff27ff496b1cc195048f4b0f253f30671e406762",
+                "g1-codec.map": "b74a9c7789471629ab45c31ed27a78ae12f95e492dc741fc1beddec1ec28e59a",
+                "g1-chain.map": "b7675b9817998417f7e841ca765e59f880c14283dd0e06d73f8b345af489ca5d"
+              },
+              "complete_product": false
+            }
+          },
+          "windows": {
+            "runner": "Windows",
+            "items": 36,
+            "gate_items": 11,
+            "installed_files": 381,
+            "sqlite_providers": [
+              "reader_catalog_sqlite.lib"
+            ],
+            "webdav": {
+              "requests": 640,
+              "objects": 2,
+              "revisions": 10,
+              "puts": 20,
+              "gets": 46,
+              "propfinds": 548,
+              "mkcols": 26
+            },
+            "g1_initial": {
+              "accepted": true,
+              "source_sha": "4e2dad0bc40aa5b523b98175f19fcb8ddde3eaa3",
+              "run_id": "40118190108",
+              "attempt": "1",
+              "platform": "Windows",
+              "phase": "initial",
+              "checks": [
+                {
+                  "name": "new-five-module-chain-and-sdk-free-product-link",
+                  "pass": true
+                },
+                {
+                  "name": "G02-thumbnails-original-regression-allocation",
+                  "pass": true
+                },
+                {
+                  "name": "G03-reading-commands",
+                  "pass": true
+                },
+                {
+                  "name": "G04-annotation-view",
+                  "pass": true
+                },
+                {
+                  "name": "G05-annotation-export",
+                  "pass": true
+                },
+                {
+                  "name": "G06-local-downloads-and-old-build-control",
+                  "pass": true
+                }
+              ],
+              "consumers": {
+                "g1-chain.exe": "6e765edb247a8c8a0f6ff69c78d18211e4e50ff2a74eb6c70abe3946a2201e84",
+                "g1-chain.map": "1bd12492d5621f6149d101c7dd9bc5cce159e19368cabe0ef51e025d3b4bf54f",
+                "g1-codec-only.exe": "30d5aeef0efd214eed79fb73b38ab8a03f6b6d102a6794319ce4d1432a4a7e22",
+                "g1-codec.map": "c90fe34d9bc9c190a90042316f7b6a72fb5e840ccfc67daf93b9c120445f703d"
+              },
+              "complete_product": false
+            },
+            "g1_relocated": {
+              "accepted": true,
+              "source_sha": "4e2dad0bc40aa5b523b98175f19fcb8ddde3eaa3",
+              "run_id": "40118190108",
+              "attempt": "1",
+              "platform": "Windows",
+              "phase": "relocated",
+              "checks": [
+                {
+                  "name": "new-five-module-chain-and-sdk-free-product-link",
+                  "pass": true
+                }
+              ],
+              "consumers": {
+                "g1-chain.exe": "c67b5babb0d84f752ec534b3dae7040e8fdcdb0a04c270f7a4a0da1d476bf9c1",
+                "g1-chain.map": "7e5acee4190bb4a4e96aa715b3e9bb0e40fb709a3af49ab408503928c728d6ff",
+                "g1-codec-only.exe": "e7cb2a65b0c3200b0daa04dbf9f0750a0c1b139fab78afb06e2ab9d88b1a3679",
+                "g1-codec.map": "f36438472d48c2761e467e7d2f11ff60d42c2ed2077f755f46dafd82583ce1dc"
+              },
+              "complete_product": false
+            }
+          },
+          "macos": {
+            "runner": "macOS",
+            "items": 36,
+            "gate_items": 11,
+            "installed_files": 381,
+            "sqlite_providers": [
+              "libreader_catalog_sqlite.a"
+            ],
+            "webdav": {
+              "requests": 640,
+              "objects": 2,
+              "revisions": 10,
+              "puts": 20,
+              "gets": 46,
+              "propfinds": 548,
+              "mkcols": 26
+            },
+            "g1_initial": {
+              "accepted": true,
+              "source_sha": "4e2dad0bc40aa5b523b98175f19fcb8ddde3eaa3",
+              "run_id": "40118190108",
+              "attempt": "1",
+              "platform": "macOS",
+              "phase": "initial",
+              "checks": [
+                {
+                  "name": "new-five-module-chain-and-sdk-free-product-link",
+                  "pass": true
+                },
+                {
+                  "name": "G02-thumbnails-original-regression-allocation",
+                  "pass": true
+                },
+                {
+                  "name": "G03-reading-commands",
+                  "pass": true
+                },
+                {
+                  "name": "G04-annotation-view",
+                  "pass": true
+                },
+                {
+                  "name": "G05-annotation-export",
+                  "pass": true
+                },
+                {
+                  "name": "G06-local-downloads-and-old-build-control",
+                  "pass": true
+                }
+              ],
+              "consumers": {
+                "g1-codec.map": "1e02b175039b8482868a3fd48c5506113e3ff2fea115f625ffefffeac119638b",
+                "g1-chain.map": "c5a4f62555f5648f8520f0a221772c43c0b12f758cb7c21124fd3177ee236505",
+                "g1-chain": "52601ccc28f4ffbaec8ffe4289779acf1b7e7ca561b25327b338955f7ec794d9",
+                "g1-codec-only": "08bf81bd9ab6b0ce313c0f57532415b09eb2850a170003ccfc6ad2e755574168"
+              },
+              "complete_product": false
+            },
+            "g1_relocated": {
+              "accepted": true,
+              "source_sha": "4e2dad0bc40aa5b523b98175f19fcb8ddde3eaa3",
+              "run_id": "40118190108",
+              "attempt": "1",
+              "platform": "macOS",
+              "phase": "relocated",
+              "checks": [
+                {
+                  "name": "new-five-module-chain-and-sdk-free-product-link",
+                  "pass": true
+                }
+              ],
+              "consumers": {
+                "g1-codec.map": "80ee2f1441af0722d73596088d207f423591dd9024e20616be876f5b5b6db2e6",
+                "g1-chain.map": "71bb96ba7dde17874dd8f10cc8663c8a0dc1ef0099a2ec84565556b5a398f252",
+                "g1-chain": "52601ccc28f4ffbaec8ffe4289779acf1b7e7ca561b25327b338955f7ec794d9",
+                "g1-codec-only": "08bf81bd9ab6b0ce313c0f57532415b09eb2850a170003ccfc6ad2e755574168"
+              },
+              "complete_product": false
+            }
+          }
+        },
+        "host_ui_accepted": false,
+        "android_accepted": false,
+        "ios_accepted": false,
+        "complete_product": false,
+        "scope": "three-desktop 18-package composition, G02-G06 original judges and SDK-free product codecs"
+      },
+      "windows": {
+        "accepted": true,
+        "problems": [],
+        "source_sha": "4e2dad0bc40aa5b523b98175f19fcb8ddde3eaa3",
+        "run_id": "40118190108",
+        "attempt": "1",
+        "artifact": {
+          "id": 12570258473,
+          "name": "reader-windows-account-40118190108-1",
+          "bytes": 44145875,
+          "expires_at": "2027-01-22T17:53:34Z",
+          "sha256": "sha256:c4f5530cade254495471ccf012b5bd01de9fccdbe705a8705c85e8283076c039"
+        },
+        "counts": {
+          "ui158": 158,
+          "account-product10/product-result.json": 10,
+          "account-worker5/worker-result.json": 5,
+          "account-shelf-ui/shelf-result.json": 13,
+          "account-metadata-ui/metadata-ui.json": 18,
+          "account": 32,
+          "a11y": 24
+        },
+        "account_uncovered": [
+          "Credential Manager UNAVAILABLE state",
+          "screen-reader narration",
+          "CONCURRENT, PENDING-parent and tombstone heads are planted directly in the receiver product store; no second remote peer produced that branch over the wire",
+          "cancel during receive/import (only cancel during the network scan is exercised)",
+          "a real remote HTTPS collection (loopback TLS with a runner-local test CA only)",
+          "product performance and any unified six-target product claim"
+        ]
+      }
+    }
+  ],
+  "earlier_failed_runs": [
+    {
+      "run_id": 40116411109,
+      "source_sha": "bb8e0b864ac5bd709d0d6f4c5de858ea33f020e6",
+      "reason": "Integration probe used reflow instead of public reflow_global location_kind; production module assertions retained",
+      "preserved": true
+    }
+  ],
+  "scope": "three-desktop installed module composition and retained native Windows account/UIA scopes",
+  "cycle_complete": false,
+  "complete_product": false,
+  "gtk_accepted": false,
+  "android_accepted": false,
+  "ios_accepted": false,
+  "performance_accepted": false,
+  "screen_reader_accepted": false,
+  "physical_device_execution": false,
+  "published": false
+}

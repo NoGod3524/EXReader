@@ -1,0 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Standalone root for the accessibility audit harness. It deliberately does not
+// include examples/android: the audited host APK is built by its own owner build
+// and installed unchanged, and this project only produces the independent test APK.
+plugins {
+    id 'com.android.application' version '8.6.1' apply false
+}

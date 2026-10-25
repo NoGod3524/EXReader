@@ -1,0 +1,596 @@
+{
+  "accepted": true,
+  "scope": "Android product CBZ page bookmarks/progress bound to the actual current renderer only",
+  "source_sha": "ee59f8f3aed6cf984cece4501bcac82795c115fd",
+  "fixed_base": "91270f8e7b5a3085430992b97dd27f612666480a",
+  "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "original_reading_source": "047648865e509d5835b7d6e1389681e314d94e28",
+  "sdk_modified": false,
+  "frozen_bindings_modified": false,
+  "module_trees_modified": false,
+  "preferences_tree": "a3e53123e861ac7ceb2c5fee4829288822229211",
+  "upgraded_check": {
+    "old": "pdf_real_page_id_points_and_cbz_capture_refusal",
+    "new": "pdf_and_cbz_real_page_id_points",
+    "reason": "replace only the known incorrect host CBZ refusal with true public capture and dual FOUND; retain PDF and every other assertion"
+  },
+  "runs": [
+    {
+      "source_sha": "691f87dcd3d3fe470616c46d3b03ca08eac97279",
+      "run_id": 40142671742,
+      "attempt": 1,
+      "job_id": 121017487031,
+      "conclusion": "cancelled",
+      "reason": "cancelled after source review found an internal exr_fixed_anchor_validate call; replaced with public resolve before compilation evidence was claimed",
+      "artifacts": [
+        {
+          "id": 12578758748,
+          "name": "reader-android-cbz-reading-40142671742-1",
+          "bytes": 230,
+          "sha256": "6864e32f56bb9f3434aa8af8cb7c6adebb07cedd8c5c6f2be49007cc8affa763",
+          "expires_at": "2027-01-22T23:25:21Z"
+        }
+      ]
+    },
+    {
+      "source_sha": "1530acb5ca2c07aa21d9d64ca263a2b40ba4442f",
+      "run_id": 40142712077,
+      "attempt": 1,
+      "job_id": 121017611098,
+      "conclusion": "failure",
+      "completed_new_checks": 0,
+      "failed_check": "actual_cbz_renderer_public_empty_text_and_three_distinct_pages",
+      "failure": "fixture expectation incorrectly declared grayscale; original deterministic PNG writer uses RGB(shade,80,255-shade)",
+      "fix": "predeclare original RGB [[40,80,215],[110,80,145],[180,80,75]] before SDK reads; retain strict pixel equality; record both actual and expected ARGB",
+      "original_sdk_transport_host16_search15_navigation18_reading16_preferences17_passed": true,
+      "artifacts": [
+        {
+          "id": 12579139279,
+          "name": "reader-android-cbz-reading-40142712077-1",
+          "bytes": 144918238,
+          "sha256": "de4d5cc4aebb3a318171c524dc5e60e3b2b23b43ba16bc579cf8d25993052cb6",
+          "expires_at": "2027-01-22T23:26:00Z"
+        }
+      ]
+    },
+    {
+      "source_sha": "ee59f8f3aed6cf984cece4501bcac82795c115fd",
+      "run_id": 40143936053,
+      "attempt": 1,
+      "job_id": 121021215678,
+      "conclusion": "success",
+      "checks": 10,
+      "artifacts": [
+        {
+          "id": 12579788900,
+          "name": "reader-android-cbz-reading-40143936053-1",
+          "bytes": 145725410,
+          "sha256": "bc687d9a2b0e430db0b50eeee0f722221800b46421dd8ffc80d7824bdc421d6c",
+          "expires_at": "2027-01-22T23:44:13Z"
+        }
+      ]
+    }
+  ],
+  "complete_product": false,
+  "ocr_accepted": false,
+  "page_colors_accepted": false,
+  "physical_device_execution": false,
+  "talkback_speech_accepted": false,
+  "performance_accepted": false,
+  "api": 34,
+  "emulator_target": "default",
+  "abi": "x86_64",
+  "cbz": {
+    "checks": 10,
+    "phases": [
+      {
+        "phase": "first",
+        "pid": 8088,
+        "passed": true,
+        "count": 8,
+        "checks": [
+          {
+            "name": "actual_cbz_renderer_public_empty_text_and_three_distinct_pages",
+            "pass": true
+          },
+          {
+            "name": "genuine_cbz_bookmark_progress_and_empty_tags_do_not_write_sdk",
+            "pass": true
+          },
+          {
+            "name": "wrong_hint_uses_independent_and_current_found_page_id",
+            "pass": true
+          },
+          {
+            "name": "missing_null_nul_and_wrong_source_never_guess",
+            "pass": true
+          },
+          {
+            "name": "note_edit_delete_and_explicit_restore_keep_real_cbz_selector",
+            "pass": true
+          },
+          {
+            "name": "product_progress_navigates_to_current_renderer_found_page",
+            "pass": true
+          },
+          {
+            "name": "cancel_capture_and_changed_display_copy_preserve_every_store",
+            "pass": true
+          },
+          {
+            "name": "close_and_actual_rotation_cancel_real_cbz_resolve",
+            "pass": true
+          }
+        ],
+        "actual_pages": [
+          {
+            "phase": "first",
+            "index": 0,
+            "page_id": "001.png",
+            "argb": 4280832215,
+            "expected_argb": 4280832215,
+            "source_key": "cbz:1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3",
+            "renderer": 248283844,
+            "text_bytes": 0
+          },
+          {
+            "phase": "first",
+            "index": 1,
+            "page_id": "002.png",
+            "argb": 4285419665,
+            "expected_argb": 4285419665,
+            "source_key": "cbz:1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3",
+            "renderer": 248283844,
+            "text_bytes": 0
+          },
+          {
+            "phase": "first",
+            "index": 2,
+            "page_id": "003.png",
+            "argb": 4290007115,
+            "expected_argb": 4290007115,
+            "source_key": "cbz:1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3",
+            "renderer": 248283844,
+            "text_bytes": 0
+          },
+          {
+            "phase": "first",
+            "index": 1,
+            "page_id": "002.png",
+            "argb": 4285419665,
+            "expected_argb": 4285419665,
+            "source_key": "cbz:1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3",
+            "renderer": 248283844,
+            "text_bytes": 0
+          },
+          {
+            "phase": "first",
+            "index": 1,
+            "page_id": "002.png",
+            "argb": 4285419665,
+            "expected_argb": 4285419665,
+            "source_key": "cbz:1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3",
+            "renderer": 248283844,
+            "text_bytes": 0
+          },
+          {
+            "phase": "first",
+            "index": 1,
+            "page_id": "002.png",
+            "argb": 4285419665,
+            "expected_argb": 4285419665,
+            "source_key": "cbz:1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3",
+            "renderer": 46684372,
+            "text_bytes": 0
+          }
+        ]
+      },
+      {
+        "phase": "retry",
+        "pid": 8399,
+        "passed": true,
+        "count": 1,
+        "checks": [
+          {
+            "name": "real_cbz_postcommit_process_kill_exact_retry_has_no_duplicate",
+            "pass": true
+          }
+        ],
+        "actual_pages": [
+          {
+            "phase": "retry",
+            "index": 1,
+            "page_id": "002.png",
+            "argb": 4285419665,
+            "expected_argb": 4285419665,
+            "source_key": "cbz:1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3",
+            "renderer": 251918824,
+            "text_bytes": 0
+          }
+        ]
+      },
+      {
+        "phase": "reopen",
+        "pid": 8503,
+        "passed": true,
+        "count": 1,
+        "checks": [
+          {
+            "name": "fresh_process_retains_cbz_empty_tags_and_actual_found_navigation",
+            "pass": true
+          }
+        ],
+        "actual_pages": [
+          {
+            "phase": "reopen",
+            "index": 1,
+            "page_id": "002.png",
+            "argb": 4285419665,
+            "expected_argb": 4285419665,
+            "source_key": "cbz:1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3",
+            "renderer": 251918824,
+            "text_bytes": 0
+          },
+          {
+            "phase": "reopen",
+            "index": 1,
+            "page_id": "002.png",
+            "argb": 4285419665,
+            "expected_argb": 4285419665,
+            "source_key": "cbz:1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3",
+            "renderer": 251918824,
+            "text_bytes": 0
+          }
+        ]
+      }
+    ],
+    "captures": [
+      {
+        "phase": "first",
+        "name": "cbz-page-0",
+        "bytes": 53965,
+        "sha256": "bb68f7d282d8abedc927917b42ba54e96f3b50f55aa0745e75826024bd5127c5",
+        "nodes": 23
+      },
+      {
+        "phase": "first",
+        "name": "cbz-page-1",
+        "bytes": 53493,
+        "sha256": "ddf05b7160dde210bdbbc00ae5abc091ef726b3d12dd656b95c3413cf10c2662",
+        "nodes": 23
+      },
+      {
+        "phase": "first",
+        "name": "cbz-page-2",
+        "bytes": 53104,
+        "sha256": "8382e395fac0da48764a0fc93ee59d5059edcc9c31f2508d233b50069f988c93",
+        "nodes": 23
+      },
+      {
+        "phase": "first",
+        "name": "cbz-product-points",
+        "bytes": 103786,
+        "sha256": "dc70ae0ca45d00661896d4aa1146daeb01772e4e395eb1342226dd0a1488159e",
+        "nodes": 29
+      },
+      {
+        "phase": "first",
+        "name": "cbz-wrong-hint-found",
+        "bytes": 54829,
+        "sha256": "14a85a6fd9c5c3be3bdc7328ecdb105e1e5dcdbd4352decbb87f6de5f8350d31",
+        "nodes": 23
+      },
+      {
+        "phase": "first",
+        "name": "cbz-location-refusals",
+        "bytes": 54829,
+        "sha256": "14a85a6fd9c5c3be3bdc7328ecdb105e1e5dcdbd4352decbb87f6de5f8350d31",
+        "nodes": 23
+      },
+      {
+        "phase": "first",
+        "name": "cbz-explicit-restored",
+        "bytes": 121635,
+        "sha256": "d374a62be312a312d30cb9ae641dd8fc051fa37870ea18d63e9a571ffe6104f6",
+        "nodes": 31
+      },
+      {
+        "phase": "first",
+        "name": "cbz-progress-found",
+        "bytes": 54457,
+        "sha256": "9efa21e40acad2e569bd52a63cb09ff43daf3705b38aadbdaf1cd9df66043aab",
+        "nodes": 23
+      },
+      {
+        "phase": "first",
+        "name": "cbz-capture-cancel-source",
+        "bytes": 54457,
+        "sha256": "9efa21e40acad2e569bd52a63cb09ff43daf3705b38aadbdaf1cd9df66043aab",
+        "nodes": 23
+      },
+      {
+        "phase": "first",
+        "name": "cbz-after-rotation",
+        "bytes": 53244,
+        "sha256": "7a2a20ff15a59977db092d56729c24f33d6ee2d833e2c437f1f318522a5b1d5c",
+        "nodes": 23
+      },
+      {
+        "phase": "retry",
+        "name": "cbz-exact-retry",
+        "bytes": 133466,
+        "sha256": "6c74c630383b11e39d6e7b100085a94026014e82aadb87bd7ae5c0feae1e6761",
+        "nodes": 32
+      },
+      {
+        "phase": "reopen",
+        "name": "cbz-reopened-found",
+        "bytes": 54472,
+        "sha256": "70c538bff9de1c6709d44d5910de1e362990a22f88b1cc1d04736c4d18a5e969",
+        "nodes": 23
+      }
+    ],
+    "sources": [
+      {
+        "phase": "first",
+        "file": "search.txt",
+        "bytes": 4109,
+        "sha256": "3f934989c6fac53a72cacfc99369b7694b56447f80be0c3ef304913bce69c611"
+      },
+      {
+        "phase": "first",
+        "file": "search.epub",
+        "bytes": 1765,
+        "sha256": "a7a893ba1818907a5fa075565640af3c475e769def9dad9e9c9c3af0e73dab8e"
+      },
+      {
+        "phase": "first",
+        "file": "search.pdf",
+        "bytes": 1892,
+        "sha256": "9e2286aab0a355293872b9e022ba8328aee9391b5eb6ef60ed50718c4999fa85"
+      },
+      {
+        "phase": "first",
+        "file": "blank.pdf",
+        "bytes": 602,
+        "sha256": "0144a6054caabb0878db3271370ed83d0eda7a44200f891ce04338fc4d19161b"
+      },
+      {
+        "phase": "first",
+        "file": "search.cbz",
+        "bytes": 43936,
+        "sha256": "1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3"
+      },
+      {
+        "phase": "first",
+        "file": "long.epub",
+        "bytes": 1478719,
+        "sha256": "087d3376c83269be40cb4ed6009d2953443be80352718c9e0f2a5e88d5873e55"
+      },
+      {
+        "phase": "first",
+        "file": "legacy.epub",
+        "bytes": 1808,
+        "sha256": "a9c3b53daa16a9290814def3650c7d671826173685af53a5b9264e321590f07d"
+      },
+      {
+        "phase": "retry",
+        "file": "search.txt",
+        "bytes": 4109,
+        "sha256": "3f934989c6fac53a72cacfc99369b7694b56447f80be0c3ef304913bce69c611"
+      },
+      {
+        "phase": "retry",
+        "file": "search.epub",
+        "bytes": 1765,
+        "sha256": "a7a893ba1818907a5fa075565640af3c475e769def9dad9e9c9c3af0e73dab8e"
+      },
+      {
+        "phase": "retry",
+        "file": "search.pdf",
+        "bytes": 1892,
+        "sha256": "9e2286aab0a355293872b9e022ba8328aee9391b5eb6ef60ed50718c4999fa85"
+      },
+      {
+        "phase": "retry",
+        "file": "blank.pdf",
+        "bytes": 602,
+        "sha256": "0144a6054caabb0878db3271370ed83d0eda7a44200f891ce04338fc4d19161b"
+      },
+      {
+        "phase": "retry",
+        "file": "search.cbz",
+        "bytes": 43936,
+        "sha256": "1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3"
+      },
+      {
+        "phase": "retry",
+        "file": "long.epub",
+        "bytes": 1478719,
+        "sha256": "087d3376c83269be40cb4ed6009d2953443be80352718c9e0f2a5e88d5873e55"
+      },
+      {
+        "phase": "retry",
+        "file": "legacy.epub",
+        "bytes": 1808,
+        "sha256": "a9c3b53daa16a9290814def3650c7d671826173685af53a5b9264e321590f07d"
+      },
+      {
+        "phase": "reopen",
+        "file": "search.txt",
+        "bytes": 4109,
+        "sha256": "3f934989c6fac53a72cacfc99369b7694b56447f80be0c3ef304913bce69c611"
+      },
+      {
+        "phase": "reopen",
+        "file": "search.epub",
+        "bytes": 1765,
+        "sha256": "a7a893ba1818907a5fa075565640af3c475e769def9dad9e9c9c3af0e73dab8e"
+      },
+      {
+        "phase": "reopen",
+        "file": "search.pdf",
+        "bytes": 1892,
+        "sha256": "9e2286aab0a355293872b9e022ba8328aee9391b5eb6ef60ed50718c4999fa85"
+      },
+      {
+        "phase": "reopen",
+        "file": "blank.pdf",
+        "bytes": 602,
+        "sha256": "0144a6054caabb0878db3271370ed83d0eda7a44200f891ce04338fc4d19161b"
+      },
+      {
+        "phase": "reopen",
+        "file": "search.cbz",
+        "bytes": 43936,
+        "sha256": "1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3"
+      },
+      {
+        "phase": "reopen",
+        "file": "long.epub",
+        "bytes": 1478719,
+        "sha256": "087d3376c83269be40cb4ed6009d2953443be80352718c9e0f2a5e88d5873e55"
+      },
+      {
+        "phase": "reopen",
+        "file": "legacy.epub",
+        "bytes": 1808,
+        "sha256": "a9c3b53daa16a9290814def3650c7d671826173685af53a5b9264e321590f07d"
+      }
+    ],
+    "process_stops": [
+      {
+        "phase": "first",
+        "instrumentation_pid": 8088,
+        "pid_before_stop": "",
+        "ended_with_instrumentation": true,
+        "pid_after_stop": "",
+        "requested": true
+      },
+      {
+        "phase": "retry",
+        "instrumentation_pid": 8399,
+        "pid_before_stop": "",
+        "ended_with_instrumentation": true,
+        "pid_after_stop": "",
+        "requested": true
+      },
+      {
+        "phase": "reopen",
+        "instrumentation_pid": 8503,
+        "pid_before_stop": "",
+        "ended_with_instrumentation": true,
+        "pid_after_stop": "",
+        "requested": true
+      }
+    ],
+    "real_postcommit_kill": {
+      "actual_postcommit_gate": true,
+      "pid_before_stop": "8271",
+      "pid_after_stop": "",
+      "request_sha256": "20ead0cbf26068e70c93d942d3a611062e500cae1573c60f0d7e22df6ea69483",
+      "revision_id": "316c3f8be1844771a5d92898a34a5ff4",
+      "annotation_id": "017d6d624f7346cea4ec633d91bca9f5",
+      "request_bytes": 531
+    }
+  },
+  "current_renderer": {
+    "same_real_document_paints_and_resolves": true,
+    "source_key": "cbz:1fc44de12a387e0ff1df9fb10aa1a5cb17aca32ee6ee9aa85d0db848adc4b0f3",
+    "public_text_snapshot_nonnull": true,
+    "text_bytes": 0,
+    "text_regions": 0,
+    "independent_and_current_found_required": true,
+    "old_hint_not_passed_to_current_resolver": true,
+    "rendered_page_id_rechecked_before_publication": true,
+    "fixture_images": [
+      {
+        "page_id": "001.png",
+        "rgb": [
+          40,
+          80,
+          215
+        ],
+        "bytes": 14548,
+        "sha256": "23fc0d81c82815fb7fdc22f18be262fe038e297a4feb5634cb54f0451904867c"
+      },
+      {
+        "page_id": "002.png",
+        "rgb": [
+          110,
+          80,
+          145
+        ],
+        "bytes": 14548,
+        "sha256": "fbda692056cbfa324a8a0be9adf0327eb55d42f41f98a70b98d69ceaebad04f4"
+      },
+      {
+        "page_id": "003.png",
+        "rgb": [
+          180,
+          80,
+          75
+        ],
+        "bytes": 14548,
+        "sha256": "426f48e0d5fb3f8fbe87ea78b8278417f94b8263698302c3680c2a7777ec33d3"
+      }
+    ]
+  },
+  "inherited": {
+    "host-session-android/ui/result.json": {
+      "accepted": true,
+      "checks": 16
+    },
+    "android-search/ui/result.json": {
+      "accepted": true,
+      "checks": 15
+    },
+    "android-navigation/ui/result.json": {
+      "accepted": true,
+      "checks": 18
+    },
+    "android-reading/ui/result.json": {
+      "accepted": true,
+      "checks": 16
+    },
+    "android-preferences/ui/result.json": {
+      "accepted": true,
+      "checks": 17
+    },
+    "sdk_export": {
+      "ok": true
+    },
+    "sdk_roundtrip": {
+      "accepted": true,
+      "checks": 12
+    },
+    "webdav_platform": {
+      "recorded": true,
+      "backend_accepted": false
+    },
+    "webdav_backend": {
+      "accepted": true,
+      "backend_cases": 91,
+      "restart_cases": 4,
+      "process_killed_after_server_commit": true
+    }
+  },
+  "independent_read_only_proof": {
+    "source_sha": "234389f986f8ea8c83d1b8e3c6e0f8174c3469a6",
+    "run_id": 40144799161,
+    "attempt": 1,
+    "job_id": 121023736911,
+    "conclusion": "success",
+    "diagnostic_only": true,
+    "accepted": false,
+    "original_artifact": {
+      "id": 12579788900,
+      "bytes": 145725410,
+      "sha256": "bc687d9a2b0e430db0b50eeee0f722221800b46421dd8ffc80d7824bdc421d6c",
+      "expires_at": "2027-01-22T23:44:13Z"
+    },
+    "raw_zip_digest_and_bytes_verified": true,
+    "fixture_png_crc_ihdr_and_all_rgb_pixels_verified": true,
+    "all_named_checks_reports_pngs_originals_kill_and_inherited_results_verified": true
+  }
+}

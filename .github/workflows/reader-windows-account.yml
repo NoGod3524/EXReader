@@ -1,0 +1,190 @@
+name: Windows native account sync and receive
+on:
+  push:
+    branches: [codex/reader-windows-account]
+  workflow_dispatch:
+    inputs:
+      account_only:
+        description: "Skip the retained suites while iterating on the account checks"
+        type: boolean
+        default: false
+permissions:
+  contents: read
+env:
+  START_SHA: f43baf9182d75907c0cb5d6f77048f27bca8c950
+  SDK_BASELINE: 9854061be331fe603a1822d9b2b36ee357154927
+defaults:
+  run:
+    shell: bash
+jobs:
+  account:
+    name: Win32 account sync receive and retained product suites
+    runs-on: windows-2022
+    timeout-minutes: 120
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      artifact_digest: ${{ steps.upload.outputs.artifact-digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require exact source, protected SDK tree, product schema and package allowlist
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$START_SHA" HEAD
+          git diff --exit-code "$SDK_BASELINE" HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
+          git diff --exit-code "$START_SHA" HEAD -- apps/reader/store/001_catalog.sql apps/reader/desktop/CMakeLists.txt
+          bad=$(git diff --name-only "$START_SHA" HEAD | grep -Ev '^(apps/reader/windows-account/|apps/reader/desktop/windows_accounts[^/]*\.inc$|apps/reader/desktop/windows_accessibility[^/]*\.inc$|apps/reader/desktop/windows_(catalog|shelf|metadata|metadata_ui)\.inc$|examples/reader\.c$|tests/reader_windows_account/|\.github/workflows/reader-windows-account\.yml$|docs/READER-WINDOWS-ACCOUNT\.md$|docs/validation/reader-windows-account\.json$)' || true)
+          if test -n "$bad"; then echo "Files outside the package allowlist:"; echo "$bad"; exit 1; fi
+      - name: Enter native Windows compiler environment
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Install one product provider and every native module the host consumes
+        run: |
+          ws=$(cygpath -m "$PWD")
+          prefix="$ws/build/account-stage"
+          echo "WS=$ws" >> "$GITHUB_ENV"
+          echo "ACCOUNT_PREFIX=$prefix" >> "$GITHUB_ENV"
+          mkdir -p build/account-logs
+          cmake -S apps/reader/store/native -B build/account-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/account-product --parallel 4
+          ctest --test-dir build/account-product --output-on-failure --no-tests=error --timeout 180
+          cmake --install build/account-product
+          cmake -S extras/webdav -B build/account-dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/account-dav --parallel 4
+          cmake --install build/account-dav
+          cmake -S apps/reader/revisions -B build/account-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/account-revisions --parallel 4
+          cmake --install build/account-revisions
+          for module in commands desktop-metadata sync session; do
+            cmake -S "apps/reader/$module" -B "build/account-$module" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+            cmake --build "build/account-$module" --parallel 4
+            cmake --install "build/account-$module"
+          done
+          cmake -S extras/credentials -B build/account-credentials -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/account-credentials --parallel 4
+          cmake --install build/account-credentials
+          cmake -S tests/reader_commands/consumer -B build/account-command-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/account-command-consumer --parallel 4
+          cmake -S tests/reader_revisions/consumer -B build/account-revision-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/account-revision-consumer --parallel 4
+      - name: Build and install the unmodified reading-library SDK and public original export module
+        run: |
+          cmake --preset reading-library 2>&1 | tee build/account-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/account-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/account-logs/sdk-install.log
+          cmake -S extras/sideload -B build/account-sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/account-sideload --parallel 4
+          cmake --install build/account-sideload
+      - name: Build the installed reading-state adapter and the account capture consumer
+        run: |
+          cmake -S apps/reader/reading-state -B build/account-reading-state -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX" 2>&1 | tee build/account-logs/reading-state-configure.log
+          cmake --build build/account-reading-state --parallel 4 2>&1 | tee build/account-logs/reading-state-build.log
+          cmake --install build/account-reading-state 2>&1 | tee build/account-logs/reading-state-install.log
+          cmake -S tests/reader_windows_account/consumer -B build/account-capture -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$WS/build/reading-library/stage" 2>&1 | tee build/account-logs/capture-configure.log
+          cmake --build build/account-capture --parallel 4 2>&1 | tee build/account-logs/capture-build.log
+          test -f build/account-capture/reading-capture-probe.exe
+          test -f build/account-capture/reading-capture-link.map
+      - name: Build the actual Win32 host with account integration from examples/reader.c
+        run: |
+          cmake -S apps/reader/windows-account -B build/account-host -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DREADER_METADATA_PREFIX="$ACCOUNT_PREFIX" -DREADER_ACCOUNT_PREFIX="$ACCOUNT_PREFIX" 2>&1 | tee build/account-logs/host-configure.log
+          cmake --build build/account-host --parallel 4 --verbose 2>&1 | tee build/account-logs/host-build.log
+          test -f build/account-host/EXReaderProduct.exe
+          test -f build/account-host/EXReaderShelfReview.exe
+          test -f build/account-host/windows-host.map
+      - name: Package the lightweight static product and generate fixtures
+        run: |
+          python3 tools/build_windows_host.py --sdk build/reading-library/stage --binary build/account-host/EXReaderProduct.exe --output build/account-package --static-reading
+          python3 tests/windows_host/make_fixtures.py --output build/account-fixtures
+          python3 tests/reader_reading_state/make_fixtures.py build/account-reading-fixtures
+          test -f build/account-reading-fixtures/manifest.json
+      - name: Original evidence rejection cases plus static SDK provider refusals
+        if: ${{ github.event.inputs.account_only != 'true' }}
+        run: python3 tests/windows_host/check_evidence.py --package build/account-package/EXReader --sdk build/reading-library/stage --manifest build/account-package/build.json --fixtures build/account-fixtures --selftest-report build/account-package/report.json --consumer-binary build/account-host/EXReaderProduct.exe --static-link-map build/account-host/windows-host.map --output build/account-negative
+      - name: Original 158 Windows UI actions and eight bound screenshots on this source
+        if: ${{ github.event.inputs.account_only != 'true' }}
+        env:
+          EXREADER_HOST_ACCEPTANCE: '1'
+        run: python3 tools/check_windows_host.py --package build/account-package/EXReader --output build/account-ui158 --sdk build/reading-library/stage --manifest build/account-package/build.json --steps tests/windows_host --fixtures build/account-fixtures --selftest-report build/account-package/report.json --consumer-binary build/account-host/EXReaderProduct.exe --static-link-map build/account-host/windows-host.map
+      - name: Original ten product checks
+        if: ${{ github.event.inputs.account_only != 'true' }}
+        run: python3 tests/reader_catalog/check_windows_product.py --package build/account-package/EXReader --original-evidence build/account-ui158 --fixtures build/account-fixtures --output build/account-product10
+      - name: Original five worker checks
+        if: ${{ github.event.inputs.account_only != 'true' }}
+        run: python3 tests/windows_host/check_shelf_worker.py --candidate build/account-host/EXReaderShelfReview.exe --package build/account-package/EXReader --output build/account-worker5
+      - name: Original thirteen 2202-book bookshelf UI checks
+        if: ${{ github.event.inputs.account_only != 'true' }}
+        run: python3 tests/reader_windows_account/run_retained_shelf.py --candidate build/account-package/EXReader/EXReader.exe --seed build/account-host/reader-windows-shelf-seed.exe --package build/account-package/EXReader --output build/account-shelf-ui
+      - name: Retained typed metadata edit and recovery checks
+        if: ${{ github.event.inputs.account_only != 'true' }}
+        run: python3 tests/windows_host/check_metadata_ui.py --candidate build/account-package/EXReader/EXReader.exe --package build/account-package/EXReader --command-consumer build/account-command-consumer/command-consumer.exe --output build/account-metadata-ui
+      - name: Real Win32 account controls, native HTTPS, two devices, retry, isolation and close barriers
+        run: python3 tests/reader_windows_account/check_account_ui.py --candidate build/account-package/EXReader/EXReader.exe --package build/account-package/EXReader --fixtures build/account-fixtures --revision-consumer build/account-revision-consumer/revision-consumer.exe --capture-probe build/account-capture/reading-capture-probe.exe --reading-fixtures build/account-reading-fixtures --reading-font tests/fixtures/fonts/primary.ttf --link-map build/account-host/windows-host.map --output build/account-ui
+      - name: Real keyboard and UI Automation regression on the packaged host
+        run: |
+          python3 -m pip install "uiautomation==2.0.29" 2>&1 | tee build/account-logs/a11y-pip.log
+          python3 tests/reader_windows_account/check_a11y_ui.py --candidate build/account-package/EXReader/EXReader.exe --package build/account-package/EXReader --fixtures build/account-reading-fixtures --output build/account-a11y 2>&1 | tee build/account-logs/a11y-ui.log
+      - name: Preserve source-bound evidence, packaged EXE and link graph
+        id: upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-windows-account-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/account-logs/
+            build/account-host/windows-host.map
+            build/account-capture/reading-capture-probe.exe
+            build/account-capture/reading-capture-link.map
+            build/account-reading-fixtures/
+            build/account-host/CMakeCache.txt
+            build/account-package/
+            build/account-negative/
+            build/account-ui158/
+            build/account-product10/
+            build/account-worker5/
+            build/account-shelf-ui/
+            build/account-metadata-ui/
+            build/account-ui/
+            build/account-a11y/
+            !build/**/*.key
+            !build/**/profile/**/*.sqlite
+          if-no-files-found: error
+  summary:
+    name: strict same-source summary
+    needs: account
+    if: ${{ always() && github.event.inputs.account_only != 'true' }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require the account job result and its uploaded artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACCOUNT_RESULT: ${{ needs.account.result }}
+          ARTIFACT_ID: ${{ needs.account.outputs.artifact_id }}
+          ARTIFACT_DIGEST: ${{ needs.account.outputs.artifact_digest }}
+        run: |
+          test "$ACCOUNT_RESULT" = success
+          test -n "$ARTIFACT_ID"
+          python3 tests/reader_windows_account/verify_summary.py --artifact-id "$ARTIFACT_ID" --upload-digest "$ARTIFACT_DIGEST" --account-checks 32 --a11y-checks 24 --output build/account-summary
+      - name: Preserve strict summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-windows-account-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/account-summary/verified.json
+          if-no-files-found: warn

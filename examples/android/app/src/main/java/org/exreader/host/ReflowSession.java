@@ -33,6 +33,14 @@ final class ReflowSession implements AutoCloseable {
     private long nativeNextCalls;
     private long recoveryCalls;
     private BoundedEpub bounded;
+    private ReadingPreferences appearance;
+
+    ReflowSession(BookStore store,long bookId,byte[] font,ReadingPreferences value) {
+        this(store,bookId,font,value.font);appearance=value;bounded.appearance=value;
+    }
+    ReflowSession(long bookId,String path,byte[] font,ReadingPreferences value) {
+        this(bookId,path,font,value.font);appearance=value;
+    }
 
     ReflowSession(BookStore store,long bookId,byte[] font,float size) {
         this.bookId=bookId; this.font=font; fontSize=size; document=null; text=null; title="EPUB";
@@ -42,6 +50,17 @@ final class ReflowSession implements AutoCloseable {
     PageLoad restore(int displayIndex,HostTask task) throws Exception { return bounded.restore(displayIndex,task); }
     PageLoad seek(NativeLibrary.Note note,HostTask task) throws Exception {
         return bounded!=null?bounded.seek(note,task):seek(note.start,task);
+    }
+    PageLoad seekSearch(NativeSearch.Hit hit,NativeSearch.Match match,HostTask task)throws Exception {
+        return bounded!=null?bounded.seekSearch(hit,task):seek(match.start,task);
+    }
+    PageLoad seekNavigation(NativeNavigation.Destination destination,HostTask task)throws Exception {
+        return bounded!=null?bounded.seekNavigation(destination,task):seek(destination.result.offset,task);
+    }
+    PageLoad seekReading(NativeReadingSdk.Match match,HostTask task)throws Exception {
+        if(!match.found())throw new IllegalArgumentException("Reading location is not FOUND");
+        if(bounded==null&&match.recaptured.mode!=ReadingCapture.REFLOW)throw new NativeReadingSdk.Projection();
+        return bounded!=null?bounded.seekReading(match,task):seek(match.recaptured.start,task);
     }
     void saveProgress(PageSnapshot page) { bounded.saveProgress(page); }
     void saveBoundedNote(long id,long start,long end,String text) { bounded.saveNote(id,start,end,text); }
@@ -79,10 +98,10 @@ final class ReflowSession implements AutoCloseable {
         EXReader.LayoutConfig config = new EXReader.LayoutConfig();
         config.width = PAGE_WIDTH;
         config.height = PAGE_HEIGHT;
-        config.margin = MARGIN;
+        config.margin = appearance==null?MARGIN:appearance.margin;
         config.fontSize = size;
-        config.lineHeight = 1.6f;
-        config.paragraphSpacing = 12f;
+        config.lineHeight = appearance==null?1.6f:appearance.line;
+        config.paragraphSpacing = appearance==null?12f:appearance.paragraph;
         config.documentCSS = true;
         config.embeddedFonts = true;
         config.direction = 0;
@@ -233,6 +252,7 @@ final class ReflowSession implements AutoCloseable {
                 bitmap.getWidth(), bitmap.getHeight(), starts, ends, null,
                 gx, baseline, advance, size, lineText, lineBounds, 0, bookId);
         snapshot.layoutFont=layoutFont;
+        if(appearance!=null){snapshot.layoutLine=appearance.line;snapshot.layoutParagraph=appearance.paragraph;snapshot.layoutMargin=appearance.margin;}
         return snapshot;
     }
 

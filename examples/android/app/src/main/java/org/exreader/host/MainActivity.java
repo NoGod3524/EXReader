@@ -20,10 +20,12 @@ import android.provider.DocumentsContract;
 import android.provider.OpenableColumns;
 import android.util.Log;
 import android.view.View;
+import android.view.Gravity;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -50,10 +52,11 @@ import java.util.concurrent.atomic.AtomicLong;
  * Single-activity Android host. All SDK access runs on one worker thread; the UI
  * only receives immutable page snapshots and never touches a native handle.
  */
-public final class MainActivity extends Activity implements ReaderView.Listener {
+public final class MainActivity extends Activity implements ReaderView.Listener,SyncController.Host,SearchPanel.Host,NavigationPanel.Host,ReadingPanel.Host,PreferencesPanel.Host {
     private static final String TAG = "EXRHost";
     private static final Object IMPORT_LOCK = new Object();
     private static final Object PROGRESS_LOCK = new Object();
+    private static final Object PREFERENCES_LOCK = new Object();
     private static final AtomicLong OWNER_EPOCH = new AtomicLong();
     private static final int REQUEST_IMPORT = 1001;
     private static final long MAX_INPUT_BYTES = 32L * 1024 * 1024;
@@ -67,6 +70,19 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     private ExecutorService worker;
     private BookStore store;
     private OrganizationPanel organizationPanel;
+    private SyncPanel syncPanel;
+    private SearchPanel searchPanel;
+    private NativeSearch search;
+    private NavigationPanel navigationPanel;
+    private NativeNavigation navigation;
+    private ReadingPanel readingPanel;
+    private PreferencesPanel preferencesPanel;
+    private volatile ReadingPreferences readingPreferences;
+    private String preferencesLoadError;
+    private ReadingRequests readingRequests;
+    private ReadingHistory readingHistory;
+    private PageSnapshot readingFrame;
+    private Selection readingSelection;
     private SharedPreferences prefs;
 
     private LinearLayout shelfPanel;
@@ -175,6 +191,17 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
 
         worker.execute(() -> {
             try {
+                if(BuildConfig.READER_PREFERENCES){
+                    ReadingPreferences loaded;
+                    synchronized(PREFERENCES_LOCK){
+                        File file=preferencesFile();HostTask task=new HostTask(()->destroyed||ownerEpoch!=OWNER_EPOCH.get());
+                        if(!file.getParentFile().isDirectory()&&!file.getParentFile().mkdirs())throw new IOException("Cannot create settings directory");
+                        try{loaded=file.exists()?NativePreferences.load(file.getPath(),task):NativePreferences.importLegacy(prefs.getFloat("font",24f),Math.round(prefs.getFloat("zoom",1f)*100),(prefs.contains("font")?1:0)|(prefs.contains("zoom")?2:0));}
+                        catch(RuntimeException error){loaded=NativePreferences.defaults();preferencesLoadError=message(error);}
+                    }
+                    readingPreferences=loaded;final ReadingPreferences restored=loaded;
+                    postUi(()->{fontSize=restored.font;zoom=restored.zoom/100f;readerView.setTurnPreferences(restored.direction,restored.input);});
+                }
                 // A previous Activity may still be compensating its unpublished insert.
                 synchronized (IMPORT_LOCK) {
                     store = new BookStore(getApplicationContext(), new File(getFilesDir(), "library.db"));
@@ -237,11 +264,16 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         noteList.setAdapter(noteAdapter);
         statusText.setContentDescription("Status");
         organizationPanel=new OrganizationPanel(this,action->{if(worker!=null)worker.execute(action);},()->store,()->catalogShelf.load());
+        if(BuildConfig.READER_SYNC)syncPanel=new SyncPanel(this,this);
+        if(BuildConfig.READER_SEARCH)searchPanel=new SearchPanel(this,this);
+        if(BuildConfig.READER_NAVIGATION)navigationPanel=new NavigationPanel(this,this);
+        if(BuildConfig.READER_READING)readingPanel=new ReadingPanel(this,this);
+        if(BuildConfig.READER_PREFERENCES)preferencesPanel=new PreferencesPanel(this,this);
     }
 
     private void wireActions() {
         findViewById(R.id.more_button).setOnClickListener(view->new android.app.AlertDialog.Builder(this)
-                .setTitle("More").setItems(new String[]{"Organize"},(dialog,which)->organizationPanel.show(0)).show());
+                .setTitle("More").setItems(BuildConfig.READER_SYNC?new String[]{"Organize","同步"}:new String[]{"Organize"},(dialog,which)->{if(which==0)organizationPanel.show(0);else syncPanel.show();}).show());
         bookList.setOnItemLongClickListener((parent,view,position,id)->{
             if(operation!=0||pageBusy||id<=0)return true;
             new android.app.AlertDialog.Builder(this).setItems(new String[]{"Organize book"},(dialog,which)->organizationPanel.show(id)).show();return true;
@@ -252,9 +284,14 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
             setStatus("Shelf refreshed");
         });
         rebuildView.setOnClickListener(view -> {
-            saveInstancePrefs();
-            recreate();
+            saveInstancePrefs();recreate();
         });
+        View readerMore=findViewById(R.id.reader_more);readerMore.setVisibility(BuildConfig.READER_SEARCH||BuildConfig.READER_NAVIGATION||BuildConfig.READER_READING||BuildConfig.READER_PREFERENCES?View.VISIBLE:View.GONE);
+        if((BuildConfig.READER_SEARCH||BuildConfig.READER_NAVIGATION)&&!BuildConfig.DEBUG)rebuildView.setVisibility(View.GONE);
+        readerMore.setOnClickListener(view->{ArrayList<String> actions=new ArrayList<>();if(BuildConfig.READER_PREFERENCES)actions.add("阅读设置");if(BuildConfig.READER_SEARCH)actions.add("书内搜索");if(BuildConfig.READER_NAVIGATION)actions.add("目录 / 按页入口");if(BuildConfig.READER_READING)actions.add("阅读记录");new AlertDialog.Builder(this).setTitle("阅读更多操作").setItems(actions.toArray(new String[0]),(dialog,which)->{
+            if(currentBook==null||current==null||operation!=0||pageBusy){setStatus("请先完成当前阅读操作");return;}
+            String action=actions.get(which);if(action.equals("阅读设置"))preferencesPanel.show();else if(action.equals("书内搜索"))searchPanel.show(currentBook.id);else if(action.equals("目录 / 按页入口"))navigationPanel.show(currentBook.id);else{readingPanel.close();readingFrame=current;readingSelection=readerView.getSelection();readingPanel.show(currentBook.id,readingSelection!=null&&readingSelection.end>readingSelection.start);}
+        }).show();});
         backButton.setOnClickListener(view -> leaveReader());
         fontDown.setOnClickListener(view -> changeFont(-1));
         fontUp.setOnClickListener(view -> changeFont(1));
@@ -340,6 +377,9 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     }
 
     private HostTask beginTask(int kind) {
+        if(searchPanel!=null)searchPanel.close();
+        if(navigationPanel!=null)navigationPanel.close();
+        if(readingPanel!=null)readingPanel.close();
         if (activeTask != null) activeTask.cancel();
         final long gen = ++generation;
         HostTask task = new HostTask(() -> destroyed || generation != gen);
@@ -405,6 +445,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         final HostTask task = beginTask(2);
         final long gen = generation;
         final float requestedFont = fontSize, requestedZoom = zoom;
+        final ReadingPreferences requestedAppearance=readingPreferences;
         showLoading("Opening " + displayTitle + "...", true);
         final long requestedOffset = offset;
         final int requestedPage = page;
@@ -432,17 +473,24 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                 if (!bounded && (path == null || !new File(path).isFile())) {
                     throw new IOException("The app-owned book copy is missing");
                 }
+                if(BuildConfig.READER_READING){
+                    String expected=local.key.bookKey.substring(local.key.bookKey.indexOf(':')+1);
+                    BookStore.VerifiedSource verified=store.verifySource(target.id,expected,local.sourceBytes,task);
+                    if(!verified.key.equals(local.key.bookKey))throw new IOException("Displayed original identity differs");
+                    if(!bounded&&(new File(path).length()!=verified.bytes||!BookStore.syncFileHash(new File(path),task).equals(verified.sha256)))throw new IOException("Displayed copy differs from the verified original");
+                }
                 if (target.fixed()) {
-                    candidateFixed = new FixedSession(target.id, path, fontBytes(), target.format);
+                    candidateFixed = new FixedSession(target.id,path,fontBytes(),target.format,task);
+                    if(candidateFixed.cbz()&&!local.key.bookKey.equals(candidateFixed.sourceKey()))throw new IOException("CBZ renderer original identity differs");
                     int requested = requestedPage >= 0 ? requestedPage : (int) Math.max(0, target.position);
                     load = candidateFixed.load(requested, requestedZoom, task);
                 } else if(bounded) {
-                    candidateReflow=new ReflowSession(store,target.id,fontBytes(),requestedFont);
+                    candidateReflow=requestedAppearance==null?new ReflowSession(store,target.id,fontBytes(),requestedFont):new ReflowSession(store,target.id,fontBytes(),requestedAppearance);
                     int display=requestedPage>=0?requestedPage:prefs.getInt("display_"+target.id,0);
                     load=candidateReflow.restore(display,task);
                     notice=load.snapshot.restoreNotice;
                 } else {
-                    candidateReflow = new ReflowSession(target.id, path, fontBytes(), requestedFont);
+                    candidateReflow = requestedAppearance==null?new ReflowSession(target.id,path,fontBytes(),requestedFont):new ReflowSession(target.id,path,fontBytes(),requestedAppearance);
                     long savedOffset = requestedOffset;
                     int state = -1;
                     if (savedOffset < 0) {
@@ -469,7 +517,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                 final PageLoad[] delivery={load};
                 try {
                     task.commit(() -> {
-                        delivery[0]=persistPage(delivery[0],task); delivery[0].accept();
+                        delivery[0]=persistPage(delivery[0],task);delivery[0].snapshot.sourceKey=local.key.bookKey;delivery[0].accept();
                         closeSessionsLocked(); reflow=nextReflow; fixed=nextFixed; sessionBookId=target.id;
                     });
                 } finally { load=delivery[0]; }
@@ -512,7 +560,11 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         bookTitle.setText(currentBook == null ? "" : currentBook.title);
         pageLabel.setText(pageSummary(load));
         fontLabel.setText("Size " + (int) fontSize);
+        describeValue(fontDown,"Decrease font size",fontLabel.getText());
+        describeValue(fontUp,"Increase font size",fontLabel.getText());
         zoomLabel.setText(String.format(Locale.US, "Zoom %.2f", zoom));
+        describeValue(zoomDown,"Zoom out",zoomLabel.getText());
+        describeValue(zoomUp,"Zoom in",zoomLabel.getText());
         boolean isFixed = current.fixed;
         fontDown.setVisibility(isFixed ? View.GONE : View.VISIBLE);
         fontUp.setVisibility(isFixed ? View.GONE : View.VISIBLE);
@@ -521,9 +573,16 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         zoomUp.setVisibility(isFixed ? View.VISIBLE : View.GONE);
         zoomLabel.setVisibility(isFixed ? View.VISIBLE : View.GONE);
         if (notice != null || current.restoreNotice!=null) setStatus(notice!=null?notice:current.restoreNotice);
+        if(BuildConfig.READER_PREFERENCES&&preferencesLoadError!=null)setStatus("设置未载入，原文件保留："+preferencesLoadError);
+        else if(BuildConfig.READER_PREFERENCES&&readingPreferences!=null&&readingPreferences.theme==3&&systemTheme()==2)setStatus("系统为深色；阅读页配色暂不支持，保留原页");
         Log.i(TAG, "metric {\"event\":\"page\",\"book\":" + bookId + ",\"page\":" + (current.index + 1)
                 + ",\"fixed\":" + isFixed + ",\"bytes\":" + current.bitmapBytes
                 + ",\"ms\":" + load.millis + "}");
+    }
+
+    private static void describeValue(View view,String label,CharSequence value){
+        if(Build.VERSION.SDK_INT>=30){view.setContentDescription(label);view.setStateDescription(value);}
+        else view.setContentDescription(label+". "+value);
     }
 
     private String pageSummary(PageLoad load) {
@@ -597,6 +656,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     private void runPage(PageAction action, Runnable accepted, String empty) {
         if (worker == null || current == null || operation != 0 || pageBusy) return;
         final long owner = current.bookId;
+        final String pageSourceKey=current.sourceKey;
         final HostTask task = beginTask(3);
         final long gen = generation;
         showLoading("Loading page...", true);
@@ -634,7 +694,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
                     return;
                 }
                 final PageLoad[] delivery={load};
-                try { task.commit(() -> { delivery[0]=persistPage(delivery[0],task); delivery[0].accept(); }); }
+                try { task.commit(() -> { delivery[0]=persistPage(delivery[0],task);delivery[0].snapshot.sourceKey=pageSourceKey;delivery[0].accept(); }); }
                 finally { load=delivery[0]; }
                 final PageLoad result=load;
                 postUi(() -> {
@@ -657,11 +717,12 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
 
     private void changeFont(int direction) {
         if (worker == null || current == null || current.fixed || pageBusy || operation != 0) return;
-        float size = Math.max(18f, Math.min(40f, fontSize + direction * 4f));
+        float size = Math.max(BuildConfig.READER_PREFERENCES?4f:18f, Math.min(BuildConfig.READER_PREFERENCES?256f:40f, fontSize + direction * 4f));
         if (size == fontSize) {
             setStatus("Font size limit");
             return;
         }
+        if(BuildConfig.READER_PREFERENCES){ReadingPreferences p=readingPreferences;preferencesApply(p.with(size,p.line,p.paragraph,p.margin,p.theme,p.direction,p.input,p.zoom),()->{},error->setStatus(message(error)));return;}
         runPage(task -> reflow.setFontSize(size, task), () -> {
             fontSize = size;
             prefs.edit().putFloat("font", size).apply();
@@ -671,11 +732,12 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
 
     private void changeZoom(int direction) {
         if (worker == null || current == null || !current.fixed || pageBusy || operation != 0) return;
-        float next = Math.max(1.0f, Math.min(2.0f, zoom + direction * 0.25f));
+        float next = Math.max(BuildConfig.READER_PREFERENCES?.25f:1.0f, Math.min(BuildConfig.READER_PREFERENCES?4.0f:2.0f, zoom + direction * 0.25f));
         if (next == zoom) {
             setStatus("Zoom limit");
             return;
         }
+        if(BuildConfig.READER_PREFERENCES){ReadingPreferences p=readingPreferences;preferencesApply(p.with(p.font,p.line,p.paragraph,p.margin,p.theme,p.direction,p.input,Math.round(next*100)),()->{},error->setStatus(message(error)));return;}
         runPage(task -> fixed.load(fixed.index(), next, task), () -> {
             zoom = next;
             prefs.edit().putFloat("zoom", next).apply();
@@ -720,6 +782,8 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     }
 
     private void closeSessionsLocked() {
+        closeSearchNative();
+        closeDirectoryNative();
         boolean closed = false;
         if (reflow != null) {
             reflow.close();
@@ -1394,11 +1458,20 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     }
 
     @Override protected void onStop() {
+        if(preferencesPanel!=null)preferencesPanel.close();
+        if(readingPanel!=null)readingPanel.close();
+        if(searchPanel!=null)searchPanel.close();
+        if(navigationPanel!=null)navigationPanel.close();
+        if(syncPanel!=null)syncPanel.background();
         super.onStop();
         saveInstancePrefs();
     }
 
     @Override public void onBackPressed() {
+        if(preferencesPanel!=null&&preferencesPanel.visible()){preferencesPanel.close();return;}
+        if(readingPanel!=null&&readingPanel.visible()){readingPanel.close();return;}
+        if(navigationPanel!=null&&navigationPanel.visible()){navigationPanel.close();return;}
+        if(searchPanel!=null&&searchPanel.visible()){searchPanel.close();return;}
         if(organizationPanel!=null&&organizationPanel.visible()){organizationPanel.hide();return;}
         if (notesPanel.getVisibility() == View.VISIBLE) {
             hideNotes();
@@ -1412,6 +1485,11 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
     }
 
     @Override protected void onDestroy() {
+        if(preferencesPanel!=null)preferencesPanel.close();
+        if(readingPanel!=null)readingPanel.close();
+        if(searchPanel!=null)searchPanel.close();
+        if(navigationPanel!=null)navigationPanel.close();
+        if(syncPanel!=null)syncPanel.close();
         if(organizationPanel!=null)organizationPanel.close();
         if (shelfMetrics!=null) shelfMetrics.close();
         if (catalogShelf!=null) catalogShelf.close();
@@ -1433,11 +1511,235 @@ public final class MainActivity extends Activity implements ReaderView.Listener 
         super.onDestroy();
     }
 
+    private ReadingRequests readingRequests(){if(readingRequests==null)readingRequests=new ReadingRequests(getFilesDir());return readingRequests;}
+    private ReadingControl readingControl(HostTask task,String stage){return new ReadingControl(task,getFilesDir(),stage,BuildConfig.DEBUG&&getIntent().getBooleanExtra("exr_reading_gate",false));}
+    private interface ReadingCall<T>{T run()throws Exception;}
+    private <T> void readingCall(HostTask task,ReadingCall<T> action,java.util.function.Consumer<T> done,java.util.function.Consumer<Throwable> failed){
+        ExecutorService owner=worker;if(owner==null||destroyed){failed.accept(new HostTask.Cancelled());return;}
+        owner.execute(()->{try{task.check();if(store==null)throw new HostTask.Cancelled();T value=action.run();task.check();done.accept(value);}catch(Throwable error){failed.accept(error);}});
+    }
+    private String readingBook(long book,HostTask task)throws Exception {
+        task.check();if(sessionBookId!=book)throw new HostTask.Cancelled();BookStore.VerifiedSource source=store.verifySource(book,null,0,task);CatalogStore.ShelfBook local=store.localShelfBook(book);if(local==null||!source.key.equals(local.key.bookKey)||source.bytes!=local.sourceBytes)throw new IOException("Reading original no longer matches this book");return source.key;
+    }
+    @Override public void releaseReading(){readingFrame=null;readingSelection=null;ExecutorService owner=worker;if(owner!=null&&!owner.isShutdown())owner.execute(()->readingHistory=null);}
+    @Override public void readingList(long book,String after,HostTask task,java.util.function.Consumer<ReadingPanel.State> done,java.util.function.Consumer<Throwable> failed){
+        readingCall(task,()->{String key=readingBook(book,task);NativeReadingProduct.Page page=NativeReadingProduct.list(store,key,after,false,readingControl(task,"list"));ReadingRequests.Pending pending=null;boolean corrupt=false;try{pending=readingRequests().read();}catch(Exception error){corrupt=true;}return new ReadingPanel.State(page,pending,corrupt);},done,failed);
+    }
+    private ReadingRecord readingSelected(long book,ReadingRecord selected,HostTask task)throws Exception {
+        String key=readingBook(book,task);if(selected==null||selected.state!=ReadingRecord.SAFE||!key.equals(selected.bookKey))throw new IOException("Please refresh and explicitly select a safe reading record");
+        ReadingRecord fresh=NativeReadingProduct.selected(store,key,selected.id,selected.head,selected.kind==ReadingRecord.PROGRESS,readingControl(task,"selected"));if(fresh.state!=ReadingRecord.SAFE||!fresh.head.equals(selected.head)||!fresh.sha.equals(selected.sha))throw new IOException("Reading record changed; refresh");return fresh;
+    }
+    private NativeReadingSdk.Match resolveReadingLocation(long book,ReadingCapture capture,float size,HostTask task)throws Exception{
+        String key=readingBook(book,task);if(!key.equals(capture.bookKey))throw new IOException("Reading selector belongs to another original");
+        NativeReadingSdk.Match independent=NativeReadingSdk.resolve(store,book,capture,fontBytes(),size,task,readingControl(task,"resolve"));
+        if(fixed==null||!fixed.cbz())return independent;
+        if(!key.equals(fixed.sourceKey()))throw new IOException("Current CBZ renderer belongs to another original");
+        NativeReadingSdk.Match actual=fixed.resolveCurrent(capture,task);
+        if(!readingBook(book,task).equals(key))throw new IOException("CBZ original changed during location verification");
+        if(!independent.found()||!actual.found())return independent.found()?actual:independent;
+        ReadingCapture a=independent.recaptured,b=actual.recaptured;
+        if(independent.unit!=actual.unit||independent.start!=actual.start||independent.end!=actual.end||!key.equals(b.bookKey)||!a.parser.equals(b.parser)||!a.pageId.equals(b.pageId)||!java.util.Arrays.deepEquals(a.bytes(),b.bytes()))throw new IOException("Independent and current CBZ page identities differ");
+        return actual;
+    }
+    @Override public void readingResolve(long book,ReadingRecord selected,HostTask task,java.util.function.Consumer<NativeReadingSdk.Match> done,java.util.function.Consumer<Throwable> failed){
+        final float size=fontSize;readingCall(task,()->{ReadingRecord fresh=readingSelected(book,selected,task);if(!fresh.readable())throw new IOException("This record has no current readable location");return resolveReadingLocation(book,fresh.capture,size,task);},done,failed);
+    }
+    @Override public void readingHistory(long book,ReadingRecord selected,boolean first,HostTask task,java.util.function.Consumer<ReadingHistory.Page> done,java.util.function.Consumer<Throwable> failed){
+        readingCall(task,()->{ReadingRecord fresh=readingSelected(book,selected,task);if(!fresh.deleted)throw new IOException("Explicit restore requires the current tombstone");if(first)readingHistory=new ReadingHistory(fresh.bookKey,fresh.id,fresh.head,fresh.kind==ReadingRecord.PROGRESS);if(readingHistory==null)throw new IOException("Please reopen retained versions");return readingHistory.next(store,readingControl(task,"history"));},done,failed);
+    }
+    @Override public void readingWrite(long book,ReadingPanel.Action action,HostTask task,java.util.function.Consumer<NativeReadingProduct.Result> done,java.util.function.Consumer<Throwable> failed){
+        final PageSnapshot frame=readingFrame;final Selection selectedRange=readingSelection;final float size=fontSize;final String originalPath=prefs.getString("path_"+book,null);
+        readingCall(task,()->{
+            if(readingRequests().read()!=null)throw new IOException("A previous reading request still needs confirmation");String key=readingBook(book,task);if(frame==null||frame.bookId!=book||!key.equals(frame.sourceKey))throw new IOException("Displayed reading frame changed");
+            ReadingCapture.encode(action.body,65536);if(action.body.indexOf('\0')>=0)throw new IllegalArgumentException("Reading body contains NUL");
+            boolean progress=action.kind==NativeReadingProduct.PROGRESS;ReadingRecord fresh=null;String id="";String[] heads=new String[0];int mode=frame.fixed?ReadingCapture.FIXED:frame.bounded?ReadingCapture.EPUB:ReadingCapture.REFLOW;ReadingCapture capture=null;
+            if(action.target!=null&&action.target.state==ReadingRecord.SAFE){fresh=readingSelected(book,action.target,task);id=fresh.id;heads=new String[]{fresh.head};mode=fresh.mode;}
+            else if(action.target!=null&&action.target.state!=ReadingRecord.MISSING)throw new IOException("Unsafe reading graph cannot be chosen automatically");
+            if(action.operation==NativeReadingProduct.RESTORE){
+                if(fresh==null||!fresh.deleted||action.version==null)throw new IOException("Choose a retained version and current tombstone explicitly");ReadingVersion retained=NativeReadingProduct.version(store,key,id,action.version.id,progress,readingControl(task,"history"));if(!retained.sha.equals(action.version.sha)||!retained.restorable())throw new IOException("Retained version changed");NativeReadingSdk.Match match=resolveReadingLocation(book,retained.capture,size,task);if(!match.found())throw new IOException("Retained location is not FOUND; nothing restored");capture=match.recaptured;mode=capture.mode;
+            }else if(action.operation==NativeReadingProduct.DELETE||action.kind==NativeReadingProduct.NOTE_TEXT){
+                if(fresh==null||fresh.deleted)throw new IOException("Select a current live reading head");
+            }else{
+                if(fresh!=null&&fresh.deleted)throw new IOException("Deleted records require explicit restore");long start=frame.start,end=start;if(action.kind==NativeReadingProduct.HIGHLIGHT){if(selectedRange==null||selectedRange.pageIndex!=frame.index||selectedRange.end<=selectedRange.start)throw new IOException("Select actual page text first");start=selectedRange.start;end=selectedRange.end;}
+                capture=NativeReadingSdk.capture(store,frame,start,end,fontBytes(),size,originalPath==null?null:new File(originalPath),task,readingControl(task,"capture"));mode=capture.mode;if(!progress&&id.isEmpty())id=ReadingRequests.newId();
+                if(fixed!=null&&fixed.cbz()){
+                    NativeReadingSdk.Match actual=resolveReadingLocation(book,capture,size,task);
+                    if(!actual.found()||!frame.fixedTextProvided||frame.fixedRendererIdentity!=fixed.rendererIdentity()||actual.unit!=frame.index||frame.fixedPageId==null||!frame.fixedPageId.equals(actual.recaptured.pageId))throw new IOException("Displayed CBZ page is not independently FOUND in the current renderer");
+                    capture=actual.recaptured;
+                }
+            }
+            ReadingRequests.Pending pending=new ReadingRequests.Pending(book,key,id,ReadingRequests.newId(),ReadingRequests.newId(),heads,action.kind,action.operation,mode,capture,action.body);task.check();readingRequests().save(pending);
+            try{task.check();return commitReading(pending,task);}catch(HostTask.Cancelled cancelled){readingRequests().clear(pending.revision);throw cancelled;}
+        },done,failed);
+    }
+    private NativeReadingProduct.Result commitReading(ReadingRequests.Pending pending,HostTask task)throws Exception {
+        if(!readingBook(pending.sdkBook,task).equals(pending.book))throw new IOException("Pending request belongs to another original");final NativeReadingProduct.Result[] result={null};
+        if(fixed!=null&&fixed.cbz()&&pending.capture!=null&&!resolveReadingLocation(pending.sdkBook,pending.capture,fontSize,task).found())throw new IOException("Pending CBZ location is not FOUND in both source and current renderer");
+        task.commit(()->{String[] selection=NativeCatalog.selection(store.productOwner(),"book",pending.book);if("0".equals(selection[0])){NativeCatalog.Result bootstrap=store.bootstrapBook(pending.sdkBook,pending.bootstrap,new String[0],task);if(bootstrap.status!=NativeCatalog.Result.OK)throw new IOException("Book metadata could not be prepared for the reading request");}
+            result[0]=NativeReadingProduct.apply(store,pending.revision,pending.expected,pending.kind,pending.operation,pending.book,pending.id,pending.mode,pending.capture,pending.body);
+        });
+        ReadingControl committed=readingControl(task,"committed");committed.check();committed.check();committed.check();readingRequests().clear(pending.revision);return result[0];
+    }
+    @Override public void readingRetry(long book,HostTask task,java.util.function.Consumer<NativeReadingProduct.Result> done,java.util.function.Consumer<Throwable> failed){
+        readingCall(task,()->{ReadingRequests.Pending pending=readingRequests().read();if(pending==null||pending.sdkBook!=book||!readingBook(book,task).equals(pending.book))throw new IOException("Open the original book for this pending request");return commitReading(pending,task);},done,failed);
+    }
+    @Override public void readingDiscard(HostTask task,Runnable done,java.util.function.Consumer<Throwable> failed){readingCall(task,()->{task.check();readingRequests().clear();return true;},ignored->done.run(),failed);}
+    @Override public void navigateReading(long book,NativeReadingSdk.Match match){
+        if(!match.found()||currentBook==null||currentBook.id!=book||current==null||operation!=0||pageBusy||match.unit<0||match.unit>Integer.MAX_VALUE||match.start<0||match.end<match.start)return;final float scale=zoom;final boolean isFixed=current.fixed;
+        runPage(task->{
+            if(!readingBook(book,task).equals(match.recaptured.bookKey))throw new IOException("Reading original changed before navigation");
+            NativeReadingSdk.Match location=isFixed&&fixed.cbz()?resolveReadingLocation(book,match.recaptured,fontSize,task):match;if(!location.found())throw new IOException("Current CBZ renderer cannot confirm the selected page");
+            PageLoad load=isFixed?fixed.load((int)location.unit,scale,task):reflow.seekReading(location,task);
+            try{if(load!=null){if(isFixed&&fixed.cbz()&&(!location.recaptured.pageId.equals(load.snapshot.fixedPageId)||!readingBook(book,task).equals(location.recaptured.bookKey)))throw new IOException("Rendered CBZ page/source changed before publication");load.snapshot.highlightStart=location.recaptured.start;load.snapshot.highlightEnd=location.recaptured.end;}return load;}
+            catch(Exception|Error error){if(load!=null)load.close();throw error;}
+        },()->setStatus("已跳转到阅读记录"),"阅读位置不可用");
+    }
+
+    private void closeDirectoryNative(){if(navigation!=null){navigation.close();navigation=null;}}
+    @Override public void releaseDirectory(){ExecutorService owner=worker;if(owner!=null&&!owner.isShutdown())owner.execute(this::closeDirectoryNative);}
+    private NativeNavigation.Control directoryControl(HostTask task){return new NativeNavigation.Control(task,getFilesDir(),BuildConfig.DEBUG&&getIntent().getBooleanExtra("exr_navigation_gate",false));}
+    @Override public void directory(long book,HostTask task,java.util.function.Consumer<NativeNavigation.Info> done,java.util.function.Consumer<Throwable> failed){
+        ExecutorService owner=worker;if(owner==null||destroyed){failed.accept(new HostTask.Cancelled());return;}
+        owner.execute(()->{try{task.check();closeDirectoryNative();navigation=new NativeNavigation(store,book,fontBytes(),task,directoryControl(task));NativeNavigation.Info info=navigation.info();task.check();done.accept(info);}catch(Throwable error){closeDirectoryNative();failed.accept(error);}});
+    }
+    @Override public void directoryPage(long book,long parent,long first,HostTask task,java.util.function.Consumer<NativeNavigation.Page> done,java.util.function.Consumer<Throwable> failed){
+        ExecutorService owner=worker;if(owner==null||destroyed){failed.accept(new HostTask.Cancelled());return;}
+        owner.execute(()->{try{task.check();if(navigation==null||navigation.book!=book)throw new HostTask.Cancelled();NativeNavigation.Page page=navigation.page(parent,first);task.check();done.accept(page);}catch(Throwable error){failed.accept(error);}});
+    }
+    @Override public void directoryResolve(long book,long row,long part,String cfi,HostTask task,java.util.function.Consumer<NativeNavigation.Destination> done,java.util.function.Consumer<Throwable> failed){
+        ExecutorService owner=worker;if(owner==null||destroyed){failed.accept(new HostTask.Cancelled());return;}
+        final float requestedFont=fontSize;
+        owner.execute(()->{try{task.check();if(navigation==null||navigation.book!=book)throw new HostTask.Cancelled();NativeNavigation.Destination target=navigation.resolve(store,row,part,cfi,fontBytes(),requestedFont,task,directoryControl(task));task.check();done.accept(target);}catch(Throwable error){failed.accept(error);}});
+    }
+    @Override public void navigateDirectory(NativeNavigation.Destination destination){
+        NativeNavigation.Result target=destination.result;
+        if((target.status!=NativeNavigation.OK&&target.status!=NativeNavigation.PART_ONLY)||currentBook==null||currentBook.id!=destination.book||current==null||operation!=0||pageBusy||target.part<0||target.part>Integer.MAX_VALUE||target.offset<0)return;
+        final boolean isFixed=current.fixed;final float scale=zoom;
+        runPage(task->{BookStore.VerifiedSource source=store.verifySource(destination.book,null,0,task);if(!(source.key+"@exreader-sdk-"+NativeNavigation.nativeParser()).equals(destination.key))throw new IOException("目录原件已改变");return isFixed?fixed.load((int)target.part,scale,task):reflow.seekNavigation(destination,task);},()->setStatus("已跳转到目录目标"),"目录目标不可用");
+    }
+    private void closeSearchNative(){if(search!=null){search.close();search=null;}}
+    @Override public void releaseSearch(){ExecutorService owner=worker;if(owner!=null&&!owner.isShutdown())owner.execute(this::closeSearchNative);}
+    @Override public void scan(long book,String query,boolean next,HostTask task,java.util.function.Consumer<NativeSearch.Batch> done,java.util.function.Consumer<Throwable> failed){
+        ExecutorService owner=worker;if(owner==null||destroyed){failed.accept(new HostTask.Cancelled());return;}
+        final boolean gate=BuildConfig.DEBUG&&getIntent().getBooleanExtra("exr_search_gate",false);
+        final float searchFont=fontSize;
+        owner.execute(()->{try{
+            task.check();if(store==null)throw new HostTask.Cancelled();NativeSearch.validate(query);
+            NativeSearch.Control control=new NativeSearch.Control(task,getFilesDir(),gate);
+            if(!next){closeSearchNative();search=new NativeSearch(store,book,query,fontBytes(),searchFont,task,control);}
+            else if(search==null||search.bookId!=book)throw new IllegalStateException("请重新搜索这本书");
+            NativeSearch.Batch batch=search.next(control);if(batch.complete)closeSearchNative();task.check();done.accept(batch);
+        }catch(Throwable error){closeSearchNative();failed.accept(error);}});
+    }
+    @Override public void resolve(long book,NativeSearch.Hit hit,HostTask task,java.util.function.Consumer<NativeSearch.Match> done,java.util.function.Consumer<Throwable> failed){
+        ExecutorService owner=worker;if(owner==null||destroyed){failed.accept(new HostTask.Cancelled());return;}
+        final float searchFont=fontSize;
+        owner.execute(()->{try{task.check();if(store==null)throw new HostTask.Cancelled();NativeSearch.Match match=NativeSearch.resolve(store,book,hit,fontBytes(),searchFont,task);task.check();done.accept(match);}catch(Throwable error){failed.accept(error);}});
+    }
+    @Override public void navigate(long book,NativeSearch.Hit hit,NativeSearch.Match match){
+        if(match.state!=NativeSearch.FOUND||currentBook==null||currentBook.id!=book||current==null||operation!=0||pageBusy)return;
+        if(match.unit<0||match.unit>Integer.MAX_VALUE||match.start<0||match.end<match.start){setStatus("搜索位置不可用");return;}
+        final boolean isFixed=current.fixed;final float scale=zoom;
+        runPage(task->{PageLoad load=isFixed?fixed.load((int)match.unit,scale,task):reflow.seekSearch(hit,match,task);if(load!=null){load.snapshot.highlightStart=match.start;load.snapshot.highlightEnd=match.end;}return load;},()->setStatus("已跳转到搜索结果"),"搜索位置不可用");
+    }
+    @Override public void prepareOriginals(HostTask task,Runnable done,java.util.function.Consumer<Throwable> failed){
+        ExecutorService owner=worker;if(owner==null||destroyed){failed.accept(new HostTask.Cancelled());return;}
+        owner.execute(()->{try{task.check();if(store==null)throw new IOException("书库仍在打开");store.stageSyncOriginals(new File(getFilesDir(),"sync-originals"),getSharedPreferences("sync-requests",MODE_PRIVATE),task);task.check();done.run();}catch(Throwable error){failed.accept(error);}});
+    }
+    @Override public void receive(NativeSync.RemoteBook book,File cached,HostTask task,java.util.function.Consumer<Long> done,java.util.function.Consumer<Throwable> failed){
+        ExecutorService owner=worker;if(owner==null||destroyed||operation!=0||pageBusy){failed.accept(new IllegalStateException("请先完成当前操作"));return;}
+        owner.execute(()->{synchronized(IMPORT_LOCK){try{
+            task.check();if(destroyed||store==null)throw new HostTask.Cancelled();
+            String sort=java.text.Normalizer.normalize(book.title,java.text.Normalizer.Form.NFC);String product=new File(getFilesDir(),"reader-catalog.db").getAbsolutePath();
+            String[] selected=NativeSync.project(product,book.key,book.revision,sort);
+            if(selected==null||selected.length!=7||!selected[1].equals(book.key)||!selected[0].equals(book.format)||Long.parseLong(selected[4])!=book.bytes)throw new IOException("书籍的同步记录已改变，请刷新后重试");
+            if(cached.length()!=book.bytes||!BookStore.syncFileHash(cached,task).equals(book.sha))throw new IOException("接收的原件校验失败");
+            closeSessionsLocked();task.check();int format=0;for(int candidate=NativeLibrary.FORMAT_TXT;candidate<=NativeLibrary.FORMAT_CBZ;candidate++)if(formatName(candidate).equalsIgnoreCase(book.format))format=candidate;
+            if(format==0)throw new IOException("暂不支持这种书籍格式");
+            NativeLibrary.ImportResult imported=store.importFile(cached.getAbsolutePath(),format,book.title);
+            BookStore.VerifiedSource verified=store.verifySource(imported.id,book.sha,book.bytes,task);
+            task.commit(()->{
+                NativeSync.project(product,book.key,book.revision,sort);
+                if(!prefs.edit().putString("path_"+imported.id,cached.getAbsolutePath()).putLong("size_"+imported.id,book.bytes).commit())throw new IOException("接收记录保存失败，可重试");
+                store.finalizeImport(verified);
+            });
+            postUi(()->loadShelf(false));done.accept(imported.id);
+        }catch(Throwable error){failed.accept(error);}}});
+    }
+
+    private File preferencesFile(){return new File(new File(getFilesDir(),"reading-settings"),"preferences.json");}
+    private int systemTheme(){return (getResources().getConfiguration().uiMode&android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES?2:1;}
+    @Override public ReadingPreferences preferences(){return readingPreferences;}
+    @Override public void preferencesCancel(){if(activeTask!=null)activeTask.cancel();}
+    @Override public void preferencesApply(ReadingPreferences value,Runnable done,java.util.function.Consumer<Throwable> failed){
+        if(worker==null||current==null||operation!=0||pageBusy||!BuildConfig.READER_PREFERENCES){failed.accept(new IllegalStateException("请先完成当前阅读操作"));return;}
+        final PageSnapshot frame=current;final long book=frame.bookId;final String path=prefs.getString("path_"+book,null);final int system=systemTheme();
+        final HostTask task=beginTask(3);final long gen=generation;
+        worker.execute(()->{
+            PageLoad load=null;ReflowSession candidate=null;boolean transferred=false;
+            try{
+                task.check();if(sessionBookId!=book)throw new HostTask.Cancelled();NativePreferences.validate(value);
+                if(NativePreferences.effectiveTheme(value,system)==2)throw new IOException("深色阅读页暂不可用，设置未保存");
+                if(frame.fixed){load=fixed.load(frame.index,value.zoom/100f,task);}
+                else{
+                    ReadingControl control=new ReadingControl(task,null,"preferences-location",false);
+                    ReadingCapture point=NativeReadingSdk.capture(store,frame,frame.start,frame.start,fontBytes(),fontSize,path==null?null:new File(path),task,control);
+                    NativeReadingSdk.Match resolved=NativeReadingSdk.resolve(store,book,point,fontBytes(),value.font,task,control);
+                    if(!resolved.found()&&resolved.state==NativeReadingSdk.AMBIGUOUS){
+                        // A repeated legacy chapter can make an empty page-start
+                        // point ambiguous. Capture a genuine visible range; it
+                        // must independently resolve uniquely at the same start.
+                        long limit=Math.min(frame.end,frame.start+65536L),end=frame.start;
+                        if(frame.end<=limit)end=frame.end;else for(long boundary:frame.ends)if(boundary>end&&boundary<=limit)end=boundary;
+                        if(end>frame.start){
+                            point=NativeReadingSdk.capture(store,frame,frame.start,end,fontBytes(),fontSize,path==null?null:new File(path),task,control);
+                            resolved=NativeReadingSdk.resolve(store,book,point,fontBytes(),value.font,task,control);
+                        }
+                    }
+                    if(!resolved.found())throw new IOException("当前位置未精确定位，设置未保存");
+                    candidate=frame.bounded?new ReflowSession(store,book,fontBytes(),value):new ReflowSession(book,path,fontBytes(),value);
+                    load=candidate.seekReading(resolved,task);if(load!=null){load.snapshot.preferencesPoint=resolved.start;load.snapshot.preferencesRangeEnd=resolved.end;}
+                }
+                if(load==null)throw new IOException("没有可显示页面，设置未保存");
+                load.snapshot.sourceKey=frame.sourceKey;
+                ReadingControl gate=new ReadingControl(task,getFilesDir(),"preferences",BuildConfig.DEBUG&&getIntent().getBooleanExtra("exr_preferences_gate",false));gate.check();gate.check();gate.check();
+                final PageLoad ready=load;final ReflowSession newReflow=candidate;
+                synchronized(PREFERENCES_LOCK){
+                    task.check();if(destroyed||ownerEpoch!=OWNER_EPOCH.get())throw new HostTask.Cancelled();
+                    task.commit(()->{
+                        // Save is the only fallible publication. No SDK progress or
+                        // product mutation follows it; the old exact point remains saved.
+                        NativePreferences.save(value,preferencesFile().getPath(),task);
+                        ready.accept();if(newReflow!=null){ReflowSession old=reflow;reflow=newReflow;if(old!=null)old.close();}
+                        readingPreferences=value;preferencesLoadError=null;
+                    });
+                }
+                transferred=true;final PageLoad delivered=load;
+                postUi(()->{if(gen!=generation)return;fontSize=value.font;zoom=value.zoom/100f;readerView.setTurnPreferences(value.direction,value.input);applyPage(gen,delivered,null);setStatus("阅读设置已保存");done.run();});
+            }catch(Throwable error){postUi(()->{if(gen!=generation)return;finishTask(gen);setStatus(error instanceof HostTask.Cancelled?"设置已取消，保留原页":message(error));failed.accept(error);});}
+            finally{if(load!=null)load.close();if(!transferred&&candidate!=null)candidate.close();}
+        });
+    }
+    @Override public boolean dispatchKeyEvent(android.view.KeyEvent event){
+        int code=event.getKeyCode();
+        if(BuildConfig.DEBUG&&BuildConfig.READER_PREFERENCES&&(code==19||code==20||code==21||code==22||code==92||code==93))Log.i(TAG,"preferences key code="+code+" action="+event.getAction()+" repeat="+event.getRepeatCount()+" input="+(readingPreferences==null?0:readingPreferences.input)+" operation="+operation+" selected="+(readerView!=null&&readerView.isSelectMode())+" focus="+hasWindowFocus());
+        if(BuildConfig.READER_PREFERENCES&&readingPreferences!=null&&readingPreferences.input==4&&current!=null&&!readerView.isSelectMode()&&operation==0&&readerPanel.getVisibility()==View.VISIBLE){
+            int delta=0;if(code==android.view.KeyEvent.KEYCODE_PAGE_DOWN||code==android.view.KeyEvent.KEYCODE_DPAD_DOWN)delta=1;
+            else if(code==android.view.KeyEvent.KEYCODE_PAGE_UP||code==android.view.KeyEvent.KEYCODE_DPAD_UP)delta=-1;
+            else if(readingPreferences.direction!=3&&code==android.view.KeyEvent.KEYCODE_DPAD_RIGHT)delta=readingPreferences.direction==2?-1:1;
+            else if(readingPreferences.direction!=3&&code==android.view.KeyEvent.KEYCODE_DPAD_LEFT)delta=readingPreferences.direction==2?1:-1;
+            if(delta!=0){if(event.getAction()==android.view.KeyEvent.ACTION_DOWN&&event.getRepeatCount()==0)turnPage(delta);return true;}
+        }
+        return super.dispatchKeyEvent(event);
+    }
     @Override public void onTapZone(int delta) {
         turnPage(delta);
     }
 
     @Override public void onSelectionChanged(Selection selection) {
+        FrameLayout.LayoutParams position=(FrameLayout.LayoutParams)selectionBar.getLayoutParams();
+        int gravity=readerView.selectionInLowerHalf()?Gravity.TOP:Gravity.BOTTOM;
+        if(position.gravity!=gravity){position.gravity=gravity;selectionBar.setLayoutParams(position);}
         selectionBar.setVisibility(View.VISIBLE);
         selectionStatus.setText("Selected: " + ReaderView.clip(selection.text, 80));
     }

@@ -29,6 +29,7 @@ final class BoundedEpub implements AutoCloseable {
     boolean unresolvedProgress;
     String unresolvedNotice;
     long chapterBudget=8*1024*1024;
+    ReadingPreferences appearance;
 
     BoundedEpub(NativeLibrary library,long book,byte[] font,float size) {
         this.library=library; this.book=book; this.font=font; this.size=size;
@@ -42,7 +43,8 @@ final class BoundedEpub implements AutoCloseable {
     }
     private long open(int target,float fontSize,HostTask task) throws Exception {
         task.check();
-        long began=System.nanoTime(); long opened=nativeOpen(library.checked(),book,target,font,fontSize,chapterBudget,task);
+        long began=System.nanoTime(); long opened=nativeOpen(library.checked(),book,target,font,fontSize,
+                appearance==null?1.6f:appearance.line,appearance==null?12f:appearance.paragraph,appearance==null?32f:appearance.margin,chapterBudget,task);
         Log.i("EXRHost","bounded open part="+target+" elapsed_ms="+((System.nanoTime()-began)/1000000L)); return opened;
     }
     private Frame next(long pager,HostTask task,boolean recovery,boolean render) throws Exception {
@@ -62,6 +64,21 @@ final class BoundedEpub implements AutoCloseable {
     PageLoad seek(NativeLibrary.Note note,HostTask task) throws Exception {
         if(note.location==null) throw new IllegalArgumentException("Missing chapter annotation route");
         return resolvedPage(note.location,0,size,task,false,false);
+    }
+    PageLoad seekSearch(NativeSearch.Hit hit,HostTask task)throws Exception {
+        if(hit.mode!=NativeSearch.EPUB)throw new IllegalArgumentException("Search chapter route mismatch");
+        return resolvedPage(hit.chapterLocation(),0,size,task,false,false);
+    }
+    PageLoad seekNavigation(NativeNavigation.Destination destination,HostTask task)throws Exception {
+        NativeNavigation.Result route=destination.result;int target=(int)route.part;
+        if(target<0||target>=parts.length||!parts[target][0].equals(route.path))throw new IllegalArgumentException("Navigation spine identity mismatch");
+        long candidate=open(target,size,task);
+        try{nativeCapture(candidate,target,route.offset);}catch(Exception|Error error){nativeClose(candidate);throw error;}
+        return prepareOn(candidate,target,0,-1,route.offset,size,task,false);
+    }
+    PageLoad seekReading(NativeReadingSdk.Match match,HostTask task)throws Exception {
+        if(!match.found()||match.recaptured.mode!=ReadingCapture.EPUB)throw new IllegalArgumentException("Reading chapter is not FOUND");
+        return resolvedPage(match.recaptured.chapterLocation(match.unit),0,size,task,false,false);
     }
     private PageLoad resolvedPage(String[] location,int display,float value,HostTask task,boolean fallback,boolean recovery) throws Exception {
         int target=Integer.parseInt(location[0]); long candidate=open(target,value,task);
@@ -202,6 +219,7 @@ final class BoundedEpub implements AutoCloseable {
                     starts,ends,null,x,baseline,advance,sizes,text,bounds,0,book);
             result.part=target; result.path=parts[target][0]; result.textBase=frame.meta[0]; result.bounded=true;
             result.boundedOwner=this; result.boundedLocation=nativeCapture(pager,target,frame.meta[0]);
+            if(appearance!=null){result.layoutLine=appearance.line;result.layoutParagraph=appearance.paragraph;result.layoutMargin=appearance.margin;}
             Log.i("EXRHost","bounded page {\"book\":"+book+",\"part\":"+target+",\"text_bytes\":"+frame.text.length+
                     ",\"workspace_peak\":"+frame.meta[7]+",\"projection_bytes\":"+frame.meta[8]+"}");
             return result;
@@ -209,7 +227,7 @@ final class BoundedEpub implements AutoCloseable {
     }
     @Override public void close() { closed=true; if(handle!=0) nativeClose(handle); handle=0; }
     private static native String[][] nativeParts(long library,long book);
-    private static native long nativeOpen(long library,long book,int part,byte[] font,float size,long budget,HostTask task);
+    private static native long nativeOpen(long library,long book,int part,byte[] font,float size,float line,float paragraph,float margin,long budget,HostTask task);
     private static native Frame nativeNext(long handle,HostTask task,boolean render);
     private static native Frame nativeRender(long handle,HostTask task);
     private static native long nativeCalls(long handle);

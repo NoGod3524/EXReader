@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: MIT */
-/* Installed product/session APIs only: deliberately no SDK headers or handle. */
+/* Installed product/session/codec APIs; SDK selectors cross only as values.
+   This owner never receives an SDK handle or calls an SDK function. */
 #include <reader_session.h>
 #include <reader_metadata.h>
+#include <reader_reading_state.h>
 #include <catalog.h>
 #include <exr_webdav_android.h>
 #include <sqlite3.h>
@@ -121,4 +123,33 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_org_exreader_sessionprobe_NativePro
   exr_webdav_android_test_stats(values);
 #endif
   return bytes(env,"{\"clients\":"+std::to_string(values[0])+",\"uploads\":"+std::to_string(values[1])+",\"attaches\":"+std::to_string(values[2])+",\"detaches\":"+std::to_string(values[3])+"}");
+}
+extern "C" JNIEXPORT jbyteArray JNICALL Java_org_exreader_sessionprobe_NativeProduct_readingAppend(JNIEnv *env,jclass,jstring database,jobjectArray fields,jlongArray numbers){
+  return result(env,[&]{
+    if(env->GetArrayLength(fields)!=9||env->GetArrayLength(numbers)!=4)throw failed{1};
+    std::string value[9];bool scoped=false;for(int n=0;n<9;n++){jstring input=(jstring)env->GetObjectArrayElement(fields,n);value[n]=arg(env,input);if(n==5&&input)scoped=true;if(input)env->DeleteLocalRef(input);}
+    jlong number[4];env->GetLongArrayRegion(numbers,0,4,number);if(number[0]<1||number[0]>3||number[1]<0||number[2]<0||number[3]<number[2])throw failed{1};
+    revisions store(arg(env,database));char id[33],annotation[33];require(reader_revision_new_id(id,nullptr));require(reader_revision_new_id(annotation,nullptr));
+    std::string entity=value[1]+(value[0]=="annotation"?":"+std::string(annotation):"");std::vector<std::string> observed;reader_revision_state graph{};
+    require(reader_revision_heads(store.value,value[0].c_str(),entity.c_str(),[](void *context,const reader_revision_head *head){((std::vector<std::string> *)context)->emplace_back(head->revision_id);return 0;},&observed,&graph,nullptr));
+    std::vector<const char *> parents;for(auto &head:observed)parents.push_back(head.c_str());
+    reader_rs_envelope envelope{};envelope.revision_id=id;envelope.annotation_id=annotation;envelope.operation="put";envelope.entity_kind=value[0].c_str();envelope.book_key=value[1].c_str();envelope.parents=parents.data();envelope.parent_count=parents.size();envelope.note_text=value[7].c_str();envelope.parser_version=value[8].c_str();
+    exr_anchor anchor{};anchor.start=(size_t)number[2];anchor.end=(size_t)number[3];anchor.exact=value[2].data();anchor.prefix=value[3].data();anchor.suffix=value[4].data();anchor.chapter=scoped?value[5].data():nullptr;
+    exr_fixed_anchor fixed{};fixed.start=anchor.start;fixed.end=anchor.end;fixed.page_id=value[6].data();fixed.exact=value[2].data();fixed.exact_size=value[2].size();fixed.prefix=value[3].data();fixed.prefix_size=value[3].size();fixed.suffix=value[4].data();fixed.suffix_size=value[4].size();
+    reader_rs_capture capture{};capture.mode=(reader_rs_mode)number[0];capture.anchor=&anchor;capture.fixed=&fixed;capture.part_path=value[6].c_str();capture.page=(size_t)number[1];
+    char *wire=nullptr;size_t count=0;reader_rs_error error{};require(reader_rs_encode_v2(store.value,&envelope,&capture,(size_t)number[1],&wire,&count,&error));std::string exact(wire,count);reader_rs_free(wire);
+    reader_revision_info info{};int created=0;require(reader_revision_local_reading(store.value,exact.data(),exact.size(),parents.data(),parents.size(),&info,&created,nullptr));if(!created)throw failed{1};
+    return "{\"revision\":"+quote(id)+",\"entity\":"+quote(entity)+",\"wire\":"+quote(exact)+",\"sha256\":"+quote(info.sha256)+"}";
+  });
+}
+extern "C" JNIEXPORT jbyteArray JNICALL Java_org_exreader_sessionprobe_NativeProduct_readingDecode(JNIEnv *env,jclass,jstring database,jstring revision){
+  return result(env,[&]{
+    revisions store(arg(env,database));std::string id=arg(env,revision);char *wire=nullptr;size_t count=0;reader_revision_info info{};require(reader_revision_get(store.value,id.c_str(),&wire,&count,&info,nullptr));std::string exact(wire,count);reader_revision_bytes_free(wire);
+    char *selected=nullptr;size_t selected_count=0;reader_revision_selection selection{};
+    int status=reader_revision_selected(store.value,info.entity_kind,info.entity_key,&selected,&selected_count,nullptr,&selection,nullptr);
+    bool selected_this=status==READER_REV_OK&&std::string(selected,selected_count)==exact;reader_revision_bytes_free(selected);
+    reader_rs_record record{};reader_rs_error error{};require(reader_rs_decode(store.value,exact.data(),exact.size(),&record,&error));
+    std::string out="{\"wire\":"+quote(exact)+",\"sha256\":"+quote(info.sha256)+",\"safe_selected\":"+(selected_this?"true":"false")+",\"kind\":"+quote(record.entity_kind)+",\"book_key\":"+quote(record.book_key)+",\"mode\":"+std::to_string((int)record.mode)+",\"anchor_version\":"+std::to_string(record.anchor_version)+",\"start\":"+std::to_string(record.start)+",\"end\":"+std::to_string(record.end)+",\"part\":"+std::to_string(record.part)+",\"page\":"+std::to_string(record.page)+",\"part_path\":"+quote(record.part_path?record.part_path:"")+",\"page_id\":"+quote(record.page_id?record.page_id:"")+",\"exact\":"+quote(std::string(record.exact?record.exact:"",record.exact_size))+",\"prefix\":"+quote(std::string(record.prefix?record.prefix:"",record.prefix_size))+",\"suffix\":"+quote(std::string(record.suffix?record.suffix:"",record.suffix_size))+",\"chapter\":"+(record.chapter?quote(record.chapter):"null")+"}";
+    reader_rs_record_free(&record);return out;
+  });
 }
