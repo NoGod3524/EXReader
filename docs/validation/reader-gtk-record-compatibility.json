@@ -1,0 +1,79 @@
+{
+  "schema": "reader-gtk-actual-owner-record-compatibility-v1",
+  "accepted": true,
+  "status": "accepted_explicit_linux_gtk_actual_owner_pair",
+  "acceptance_scope": "Linux actual GTK records for this explicit old/new owner and SDK pair",
+  "branch": "codex/reader-gtk-record-compatibility",
+  "fixed_start": "7290245f5ce0c85e76ea31bcf9d2de6b12723b5c",
+  "old_host": "eaa6852c8e965720c4ad07cfd223c30c282803f8",
+  "old_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
+  "new_sdk": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "tested_sha": "80e8f6a7b49f49015c36a15f04ef0af060a2bb32",
+  "run_id": 40179185109,
+  "attempt": 1,
+  "run_conclusion": "success",
+  "producer_job_id": 121126347780,
+  "strict_job_id": 121132581165,
+  "reopen_cases_required": 16,
+  "real_kill_cases_required": 12,
+  "reopen_cases_passed": 16,
+  "real_kill_cases_passed": 12,
+  "same_version_controls_passed": true,
+  "forward_old_to_new_passed": true,
+  "reverse_old_actual_acceptance": {"txt": true, "epub": true, "pdf": true, "cbz": true},
+  "reopen_checks_per_case": {
+    "txt": {"writer": 55, "reader": 81, "original_wires": 9},
+    "epub": {"writer": 57, "reader": 85, "original_wires": 9},
+    "pdf": {"writer": 55, "reader": 81, "original_wires": 9},
+    "cbz": {"writer": 50, "reader": 68, "original_wires": 8}
+  },
+  "kill_retry_created": {"before_commit": 1, "after_commit": 0, "exact_second_replay": 0},
+  "original_old_backend_checks": {"first": 64, "resumed": 19, "routes": 37, "graphs": 141},
+  "retained_original_gtk_suites_passed": true,
+  "original_settings_preservation_checks": 41,
+  "strict_verification": {
+    "accepted": true,
+    "actual_zip_download_authenticated_in_actions": true,
+    "original_protocol_rejections": 15,
+    "compatibility_protocol_rejections": 12,
+    "distinct_native_screenshot_hashes_authenticated": 10,
+    "runtime_versions": {"old": "3.40.0", "new": "3.41.0"},
+    "program_sha256": "a9ef741747927b4baf9b73cbedb6ff1513fce1ebc241d38189fb0388d4b4a7bd",
+    "compatibility_binary_sha256": {
+      "old": "128cd7e33fc4debbaf43008e97f61539f94b9ae8f49d1be9de4b4fbe9ae1d3aa",
+      "new": "76f4b7b5401d3f5e3856523f245ff938e34b538740dd85189e93ab64b62c37f8"
+    },
+    "compatibility_link_map_sha256": {
+      "old": "34072912240efd8ba24f61f60ef1685fa93b6d7a31788a01c3e8a2021106dbad",
+      "new": "a82fef2e43438998cf9264163e4bd6ce3a627711838c4e896ffafa58f50745ef"
+    },
+    "unchanged_old_and_new_records_backend_sha256": "8ed84977496966c71840355e5f28eae11a66ca4535524629d2209f4812ebbb0a",
+    "runtime_result_sha256": "97707832c43dcce1aab2498c8a1a21634126ad4aebf0ac569c15c3fd41656958",
+    "source_guard_sha256": "f1b5a3bc664884bd153f10835fe8febe2038ffe7805578e2c12a40f61bf9d4ca"
+  },
+  "artifacts": [
+    {"id": 12593949166, "name": "reader-gtk-record-compatibility-40179185109-1", "size_in_bytes": 70765679, "digest": "sha256:cc848aeacdac19fdaaaf3f2eb53e7ece54e3e00318932f3ea80f613cba4746c2", "expires_at": "2027-01-23T09:05:02Z", "expired": false},
+    {"id": 12594433408, "name": "reader-gtk-record-compatibility-summary-40179185109-1", "size_in_bytes": 14889, "digest": "sha256:1f8aa1d8cd2f8f8f59782d7bddf00e453750bca4151dd48a33c80cd750bd3291", "expires_at": "2027-01-23T09:05:02Z", "expired": false}
+  ],
+  "actual_backend_sources_modified": false,
+  "sdk_or_schema_modified": false,
+  "runtime_tags_overridden": false,
+  "old_requests_rewritten": false,
+  "d01_raw_resolver_verification_is_host_acceptance": false,
+  "host_ui_compatibility_accepted": false,
+  "complete_product": false,
+  "performance_accepted": false,
+  "mobile_accepted": false,
+  "physical_device_accepted": false,
+  "runs": [
+    {"source_sha": "13a5d48fd0110bbc52c7ffa641ae6e2693dcaec5", "run_id": 40174745821, "attempt": 1, "accepted": false, "status": "cancelled_superseded", "reason": "Source review strengthened kill cases to begin from exact writer-closed snapshots before the other SDK opens them, and moved compatibility execution ahead of unchanged long UI suites to expose test build failures earlier. No runtime acceptance is inherited."},
+    {"source_sha": "80b5e01fdc214ee9ff883aeaa7a6cd492a622e77", "run_id": 40175044454, "attempt": 1, "accepted": false, "status": "cancelled_after_recorded_test_setup_failure", "failed_step": "Build actual frozen old owner and exercise real cross-process record compatibility", "reason": "old-reading-commands configure could not find its real EXReader 3.40 dependency because the test build driver passed only the old module prefix, omitting the independently installed old SDK from CMAKE_PREFIX_PATH. EXR_SDK alone does not supply transitive find_dependency search context. Old SDK build and earlier original installed consumer checks passed; no compatibility probe execution is granted. Continued diagnostic UI checks then lacked intermediates skipped after that failure, so the remainder was cancelled after preserving the original failed step/logs. Production and original tests remain unchanged."},
+    {"source_sha": "00620ffa7381fa043c379b3cdb86d73dd39c5256", "run_id": 40176216695, "attempt": 1, "accepted": false, "status": "failure", "failed_step": "Build actual frozen old owner and exercise real cross-process record compatibility", "reason": "new-owner-early CMake configure copied the actual child owner's link target list into the parent probe, but imported EXReader targets were scoped to the child directory. The test CMake now requests GLOBAL package imports and creates its real GLib target in parent scope. No owner, SDK, runtime tag, module or original test changed; no compatibility probe execution is granted."},
+    {"source_sha": "126b4f78cb09a259fb8263d06dabf3a44f3f7a5f", "run_id": 40176886653, "attempt": 1, "accepted": false, "status": "failure", "reason": "Both real SDK/owner executables compiled and the unchanged old records controls passed. The first old-to-old EPUB progress jump used probe command.part=0 after true native reopening had restored current.part=1. The production front-door stale-frame guard correctly refused before records identity/resolve. Fixed only the probe to carry actual current part/page exactly like the real UI; original record destination, parser, wire, source, graph and both FOUND checks are unchanged. The same omission would affect the genuine CBZ page1 context."}
+  ],
+  "readonly_diagnostics": [
+    {"run_id": 40177750729, "source_sha": "f59b0735e76ba71c0f02bcc119a0d489dd0fccc4", "diagnostic_only": true, "accepted": false, "result": "Authenticated exact failed ZIP and original partial check array: old native progress and all old wires passed; first product progress jump failed."},
+    {"run_id": 40178389783, "source_sha": "314d9cc43967b4d09123c097ef5a199d40aabb29", "diagnostic_only": true, "accepted": false, "result": "Original unchanged ELF under read-only native breakpoints: old native pager resolve FOUND, no product-record route/resolve call reached."},
+    {"run_id": 40178868069, "source_sha": "924cc13991da4728dc603f98cf9a5cd2fae1f406", "diagnostic_only": true, "accepted": false, "result": "Original unchanged ELF: exact original SHA, SAFE progress selection and original decode passed, but stale frame gate prevented record jump admission. ELF SHA-256 95533d7b5e4834edf405b699a00b6e896a5b35a0062a9023a89e94f0bd37407e; artifact 12592797096, 48061050 bytes, sha256:62293efeb04d76fd5ff72689460ccf472c557c31a6110c4842421af5b1efd5e0."}
+  ]
+}
