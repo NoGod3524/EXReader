@@ -1,0 +1,16 @@
+{
+  "accepted": false,
+  "branch": "codex/reader-apple-shelf-publication",
+  "base": "f4aa876c4e077201ade122c6a558a90731327daa",
+  "source_sha": null,
+  "runs": [],
+  "sdk_producer_source": "6d53f3c09ddea3ea4f065846dbc53897d3668fcb",
+  "sdk_producer_run": 40173677171,
+  "sdk_producer_attempt": 1,
+  "sdk_artifact_id": 12591915246,
+  "sdk_version": "3.41.0",
+  "sdk_abi": 1,
+  "original_six_suites_granted": false,
+  "physical_device_execution": false,
+  "complete_product": false
+}
