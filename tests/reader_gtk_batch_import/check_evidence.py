@@ -1,11 +1,48 @@
 # SPDX-License-Identifier: MIT
 """Actions-only same-source scope check; known palette failures stay failures."""
 import argparse
+from collections import Counter
 import hashlib
 import json
 import os
 from pathlib import Path
 import re
+
+
+def check_names(names, legacy_originals=False):
+    assert all(isinstance(name, str) and name for name in names)
+    duplicates = {name: count for name, count in Counter(names).items() if count > 1}
+    if not legacy_originals:
+        assert not duplicates
+        return
+    # The fixed F4 probe exports both committed receipts of one duplicate book.
+    # Its unchanged checker labels those two exports by the same SDK ID and by
+    # the final receipt's path. Only these three exact paired checks may repeat.
+    known = [name for name in duplicates if re.fullmatch(r'import\.original\.known\.[1-9][0-9]*', name)]
+    assert len(known) == 1
+    tails = [tail for tail in ('sample.epub', '重复/副本.epub')
+             if 'import.original.sha.' + tail in duplicates]
+    assert len(tails) == 1
+    assert duplicates == {known[0]: 2, 'import.original.sha.' + tails[0]: 2,
+                          'import.original.bytes.' + tails[0]: 2}
+
+
+def check_name_protocol():
+    legacy = ['import.original.known.7'] * 2 + ['import.original.sha.sample.epub'] * 2 + ['import.original.bytes.sample.epub'] * 2
+    cases = [(['one', 'two'], False, True), (['one', 'one'], False, False),
+             (legacy, True, True), (legacy + ['one', 'one'], True, False),
+             (legacy + ['import.original.known.7'], True, False),
+             (legacy[:-1], True, False),
+             ([name.replace('sample.epub', 'unrelated.txt') for name in legacy], True, False),
+             ([name.replace('known.7', 'known.0') for name in legacy], True, False)]
+    for names, legacy_originals, expected in cases:
+        try:
+            check_names(names, legacy_originals)
+            passed = True
+        except AssertionError:
+            passed = False
+        assert passed is expected, (names, expected)
+    print('EVIDENCE_NAME_PROTOCOL checks=8 all passed', flush=True)
 
 
 def main():
@@ -14,6 +51,7 @@ def main():
     parser.add_argument('--diagnostic', action='store_true')
     args = parser.parse_args()
     assert os.environ.get('GITHUB_ACTIONS') == 'true'
+    check_name_protocol()
     build = args.build
     source = os.environ['GITHUB_SHA']
     run_id = os.environ['GITHUB_RUN_ID']
@@ -37,7 +75,7 @@ def main():
             checks = value['checks']
             assert len(checks) == count and all(row.get('passed', row.get('pass', row.get('ok'))) is True for row in checks), path
             names = [row.get('name') for row in checks]
-            assert len(set(names)) == len(names), path
+            check_names(names, legacy_originals=path == 'gtk-batch-original/report.json')
         report['verified'][path] = dict(sha256=hashlib.sha256((build / path).read_bytes()).hexdigest(), count=count)
         return value
 
