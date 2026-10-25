@@ -58,11 +58,15 @@ def main():
     require(not output.exists(), 'choose a new summary directory: ' + str(output))
     found = collect(args.evidence)
     problems = []
-    checks = found['fixture_checks']
-    require(checks, 'no fixture self-check evidence was downloaded')
-    harness = [item for item in checks if item['implementation']['sha'] == args.sha]
-    require(harness, 'the fixture self-check was produced by a different implementation commit')
-    harness = harness[0]
+    checks = [item for item in found['fixture_checks']
+              if (item.get('implementation') or {}).get('sha') == args.sha]
+    if not checks:
+        problems.append('no fixture self-check evidence was produced by this implementation commit')
+        harness = {'passed': False, 'valid': {'accepted': False, 'failing': []}, 'mutants': [],
+                   'fixture_cannot_be_producer': False, 'runtime_version': None,
+                   'fixture': {'executable_sha256': None}}
+    else:
+        harness = checks[0]
     if not harness['passed']:
         problems.append('fixture harness did not prove the verifier')
     if harness['valid']['failing']:
@@ -74,8 +78,10 @@ def main():
     if not harness['fixture_cannot_be_producer']:
         problems.append('a fixture was accepted as a producer source')
 
-    results = [value for value in found['results'] if value['sources']['implementation']['sha'] == args.sha]
-    require(results, 'no verifier result was produced by this implementation commit')
+    results = [value for value in found['results']
+               if (value.get('sources') or {}).get('implementation', {}).get('sha') == args.sha]
+    if not results:
+        problems.append('no verifier result was produced by this implementation commit')
     fixtures = {}
     for value in results:
         if value['mode'] == 'fixture':

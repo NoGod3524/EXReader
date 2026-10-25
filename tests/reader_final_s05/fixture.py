@@ -69,6 +69,7 @@ def build(output, source_sha):
              '-o', str(frameworks / 'libS05Kit.dylib')])
     command(['xcrun', '--sdk', 'iphonesimulator', 'clang', '-fobjc-arc', '-target', target,
              '-isysroot', sysroot, '-framework', 'UIKit', '-framework', 'Foundation',
+             '-framework', 'CoreGraphics',
              '-L', str(frameworks), '-lS05Kit', '-Wl,-rpath,@executable_path/Frameworks',
              str(HERE / 'fixture' / 'AppDelegate.m'), '-o', str(app / 'EXReaderS05Fixture')])
     info = {
