@@ -98,9 +98,12 @@ struct ThemeReview {
         HostSDKReview.event = nil
         try expect(model.pageThemeObservation == prior && model.frameCount == count && !model.errorText.isEmpty,
                    "Failed owner candidate replaced accepted pixels")
+        model.observePageThemeEnvironment(dark: false)
+        try pump { !model.busy && model.pageThemePalette == HostPagePalette.resolve(.system, systemDark: false) }
+        try expect(model.pageThemeChoice == .system && model.frameCount == count + 1, "Failure lost the accepted system subscription")
         model.changePageTheme(.light)
         try pump { !model.busy && model.pageThemeChoice == .light }
-        try expect(model.errorText.isEmpty && model.frameCount == count + 1, "Theme retry did not recover")
+        try expect(model.errorText.isEmpty && model.frameCount == count + 2, "Theme retry did not recover")
         checks.append(["id": "model:failure-preserves-frame-and-retry", "passed": true])
         let accepted = model.pageThemeObservation, acceptedCount = model.frameCount
         HostSDKReview.event = { event in

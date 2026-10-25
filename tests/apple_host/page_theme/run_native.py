@@ -9,6 +9,17 @@ import re
 import subprocess
 import sys
 
+BOOKS = ('Theme.txt', 'ThemeText.epub', 'ThemeAuthored.epub', 'Sample.pdf', 'NavigationPages.cbz')
+
+
+def native_ids(mode):
+    expected = {book + ':' + suffix for book in BOOKS for suffix in ('original', 'source-retained')}
+    if mode == 'on':
+        expected |= {book + ':' + suffix for book in BOOKS for suffix in ('dark', 'light', 'system', 'original-roundtrip')}
+        expected |= {book + ':' + suffix for book in BOOKS[:2] for suffix in ('cancel-every-sdk-poll', 'post-render-failure')}
+        expected |= {'model:latest-system-notification-only', 'model:failure-preserves-frame-and-retry', 'model:cancel-preserves-accepted-frame'}
+    return expected
+
 
 def main():
     assert os.environ.get('GITHUB_ACTIONS') == 'true', 'Actions only'
@@ -48,7 +59,7 @@ def main():
          '--platform', 'macos', '--output', out / 'should-not-exist'], 'theme-340-reject.log',
         environment=clean_env, failure='--page-theme requires explicit --sdk-version=3.41.0')
     assert not (out / 'should-not-exist').exists() and not (out / 'should-not-build').exists()
-    books = ('Theme.txt', 'ThemeText.epub', 'ThemeAuthored.epub', 'Sample.pdf', 'NavigationPages.cbz')
+    books = BOOKS
     originals, reports, binaries = {}, {}, {}
     for mode in ('off', 'on'):
         program = out / ('theme-review-' + mode)
@@ -72,13 +83,8 @@ def main():
         assert report['sdk'] == '3.41.0' and report['abi'] == 1
         assert all(report[key] == os.environ[env] for key, env in
                    [('source_sha', 'GITHUB_SHA'), ('run_id', 'GITHUB_RUN_ID'), ('attempt', 'GITHUB_RUN_ATTEMPT')])
-        expected = {book + ':' + suffix for book in books for suffix in ('original', 'source-retained')}
-        if mode == 'on':
-            expected |= {book + ':' + suffix for book in books for suffix in ('dark', 'light', 'system', 'original-roundtrip')}
-            expected |= {book + ':' + suffix for book in books[:2] for suffix in ('cancel-every-sdk-poll', 'post-render-failure')}
-            expected |= {'model:latest-system-notification-only', 'model:failure-preserves-frame-and-retry', 'model:cancel-preserves-accepted-frame'}
         names = [row['id'] for row in report['checks']]
-        assert set(names) == expected and all(row['passed'] is True for row in report['checks'])
+        assert set(names) == native_ids(mode) and all(row['passed'] is True for row in report['checks'])
         assert len(names) == len(set(names)), 'duplicate native check identity'
         originals[mode] = {book: (out / mode / (book + '.original.rgba')).read_bytes() for book in books}
         reports[mode] = report

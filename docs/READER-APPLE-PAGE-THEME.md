@@ -8,13 +8,23 @@
 - ON 初始是原书，无 CSS 覆盖。用户可以在阅读主题中选原书、浅色、深色、跟随系统；选择仅在当前窗口会话内有效。
 - 浅/深主题把前景 `#1a1a1aff` / `#e6e6e6ff` 作为用户 CSS，并用公开 `exr_render_page_background` 初始化白 / `#101010ff` canvas。作者显式背景与原图片保留，PDF/CBZ 保持原色。
 - 系统颜色由 SwiftUI 的真实 `colorScheme` 通知采样为不可变 palette，交串行 owner 重建 candidate。忙时只保留最新通知，旧 epoch 不发布。
-- 改色不保存 SDK 进度、笔记、产品修订、outbox 或旧字号设置。取消和失败保留旧 session、帧与 capture。
+- 改色不保存 SDK 进度、笔记、产品修订、outbox 或旧字号设置。取消和失败保留旧 session、帧与 capture；没有更新请求时恢复已接受的主题选择，继续接收它的系统通知。
 - 不授予旧 3.40 记录迁移、性能、真机或完整产品。
 
 ## 验证计划与当前状态
 
 当前 `accepted:false`，尚无候选通过记录。构建、语法检查、夹具生成、像素解析均只在 Actions。
 
-独立主题流程先认证 SDK 生产树及六原流程业务步骤未变，再对安装后的唯一动态 SDK 构建 OFF/ON 原生消费者。计划检查原书逐字一致、TXT/EPUB 实际 canvas 与前景、作者背景/图片保留、固定页逐字不变、非零 capture 不变、逐轮询取消、失败及重试。真实 macOS/iPhone/iPad UI 与系统外观变化还需单独执行。
+独立主题流程先认证 SDK 生产树及六原流程业务步骤未变，再对安装后的唯一动态 SDK 构建 OFF/ON 原生消费者。ON 37 个命名检查、OFF 10 个命名检查覆盖原书逐字一致、TXT/EPUB 实际 canvas 与前景、作者背景/图片保留、固定页逐字不变、非零 capture 不变、逐 SDK 轮询取消、失败及重试，以及 owner 忙时通知合并和过期帧不发布。新入口只允许 ON 消费者作为动态 SDK 导入，OFF 不导入它；两者都拒绝静态 renderer。
+
+独立真实 UI 为 macOS、iPhone 和 iPad 各四个场景：非零文本位置、EPUB 主题与原生控件可达、PDF/CBZ 原色、系统通知。系统场景只从应用写测试请求；Actions 调用 macOS 原生外观设置或 `simctl ui appearance` 改变真实环境，XCTest 等待应用接受帧中的 canvas 像素变色，再请求切回浅色。请求函数不修改 model 的系统布尔值或 palette。原始屏幕附件、已接受 SDK 位图散列和操作日志保留在工件中。
+
+十个协议负例拒绝缺项、重复、乱序、错误 canvas、偏移漂移、坏散列、未知主题、位置变化、未变化的深色位图以及原书回切不一致。
+
+## 历史尝试
+
+- `c2530f54ab43a6a085d5f6afd6c830ed95d05d9a` / [40170929666](https://github.com/NoGod3524/EXReader/actions/runs/40170929666) attempt 1：macOS/iOS simulator SDK 与产品安装两作业通过；原生 OFF 编译运行成功，ON 编译成功，整轮在作者背景精确色像素总数相等的断言处失败。此轮不授予主题。
+- 后续保留原/新精确颜色计数诊断，并比较原书实际实色区域的同坐标 8×8 RGBA 像素块；前景抗锯齿边缘不作为背景像素总数相等的依据。图片仍核对实色总数和实际像素块。尚待后续实测确认。
+- `049d90ca8b8d64d60d32fdf751b0c5f135de205b` / [40171561915](https://github.com/NoGod3524/EXReader/actions/runs/40171561915) 是后续主题与真实 UI 尝试；状态以云端结果为准。
 
 原 navigation/search/reading-records/shelf/import-mapping/WP13 流程仅添加候选分支守卫、显式 SDK 版本与开关环境。原业务步骤、消费者、collector、strict summary 原样保留；旧色彩断言不改。
