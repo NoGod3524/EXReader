@@ -17,10 +17,12 @@ def load(name, path):
 
 mode = sys.argv.pop(1)
 if mode == 'windows':
-    original = load('host_windows_navigation_verifier', ROOT / 'reader_windows_navigation/verify.py')
+    original = load('host_windows_records_verifier', ROOT / 'reader_windows_records/verify.py')
     if sys.argv[1:] == ['--protocol-selftest']:
         assert os.environ.get('GITHUB_ACTIONS') == 'true'
-        print(original.self_test())
+        navigation = load('host_windows_navigation_verifier', ROOT / 'reader_windows_navigation/verify.py')
+        print(navigation.self_test())
+        print(original.selftest())
     else:
         original.main(workflow_path=WORKFLOW)
 elif mode == 'composition':
