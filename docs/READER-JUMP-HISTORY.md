@@ -227,3 +227,5 @@ that embedded each runner's own path. Nothing here runs on a developer machine.
 
 首个修复 source `1902a41bc9bb1c8b0dc7dcbd608d915f1948d669` / run `40153658637` 已三平台与 strict 全绿。继续补齐原汇总遗漏的上游作业身份认证：必须三个同源码同 attempt 的 completed/success 作业，并从 ZIP 原始报告重新核具名结果，不能仅依赖报告摘要。新增12个作业/运行身份负例仅在 Actions 执行；该汇总强化版本需新源码完整验证。
 
+强化 source `910aa03ef3e6cc45f2f5e065f2ea01e300f27a70` / run `40153976517` 三平台消费者仍通过，但 strict 真实拒绝原探针重复命名的通用检查。现保留每一次原断言，仅给同名检查的第二次及以后加稳定序号；没有降低去重要求。另增6个原始结果负例，与12个身份负例合计18个，等待新同源整轮。
+

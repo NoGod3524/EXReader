@@ -40,6 +40,14 @@ def authenticate_jobs(metadata, jobs, source, run, attempt):
             raise ValueError('upstream job failed, unfinished or belongs to another source/attempt')
 
 
+def authenticate_checks(report, summary):
+    checks = report.get('checks', [])
+    names = [check.get('name') for check in checks]
+    if (not checks or len(names) != len(set(names)) or not set(REQUIRED).issubset(names) or
+            any(check.get('pass') is not True for check in checks) or summary.get('checks_total') != len(checks)):
+        raise ValueError('raw named checks missing, duplicated, failing or miscounted')
+
+
 def protocol_selftest():
     metadata = dict(id=7, head_sha='source', run_attempt=1, path=WORKFLOW)
     jobs = [dict(name='jump history consumers (' + platform + ')', head_sha='source',
@@ -59,6 +67,17 @@ def protocol_selftest():
         try: authenticate_jobs(metadata, bad, 'source', '7', '1')
         except ValueError: rejected += 1
         else: raise AssertionError('accepted invalid upstream jobs')
+    report = dict(checks=[dict(name=name, **{'pass': True}) for name in REQUIRED])
+    summary = dict(checks_total=len(REQUIRED));authenticate_checks(report, summary)
+    cases = [(dict(checks=[]), summary), (report, dict(checks_total=0))]
+    bad = copy.deepcopy(report);bad['checks'].append(bad['checks'][0]);cases.append((bad, dict(checks_total=len(bad['checks']))))
+    bad = copy.deepcopy(report);bad['checks'].pop();cases.append((bad, dict(checks_total=len(bad['checks']))))
+    for value in (False, 'true'):
+        bad = copy.deepcopy(report);bad['checks'][0]['pass'] = value;cases.append((bad, summary))
+    for bad, counted in cases:
+        try: authenticate_checks(bad, counted)
+        except ValueError: rejected += 1
+        else: raise AssertionError('accepted invalid raw checks')
     print(json.dumps(dict(protocol_negative_cases=rejected, accepted=True)))
 
 
@@ -111,12 +130,8 @@ def main(output):
         summary = json.loads(archive.read(summary_name))
         report_bytes = archive.read(report_name)
         report = json.loads(report_bytes)
-        checks = report.get('checks', [])
-        check_names = [check.get('name') for check in checks]
-        if (not checks or len(check_names) != len(set(check_names)) or
-                not set(REQUIRED).issubset(check_names) or any(check.get('pass') is not True for check in checks) or
-                summary.get('checks_total') != len(checks)):
-            problems.append(name + ': raw named checks missing, duplicated, failing or miscounted')
+        try: authenticate_checks(report, summary)
+        except ValueError as error: problems.append(name + ': ' + str(error))
         report_sha = hashlib.sha256(report_bytes).hexdigest()
         probe_sha = hashlib.sha256(archive.read(binary_name)).hexdigest()
         identity = summary.get('identity', {})
