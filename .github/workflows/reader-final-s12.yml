@@ -1,7 +1,7 @@
 name: S12 Unicode paths and library state regression
 on:
   push:
-    branches: [codex/reader-fw-s12]
+    branches: [codex/reader-fw-s12, codex/reader-fw-s12-root-review]
     paths:
       - 'tests/reader_final_s12/**'
       - '.github/workflows/reader-final-s12.yml'

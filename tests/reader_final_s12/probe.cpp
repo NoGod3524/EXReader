@@ -1148,8 +1148,13 @@ int main(int argc, char **argv) {
         copy.replace(parents, std::strlen("\"parents\":[]"), "\"parents\":[\"" + book5_head + "\"]");
         reader_revision_info received{};
         int created = -1;
+        reader_revision_info validated{};
+        reader_revision_error validation_error{};
+        if (reader_revision_validate_raw_v3(shared, copy.data(), copy.size(), nullptr,
+                                           &validated, &validation_error) != READER_REV_OK)
+          throw std::runtime_error("competing revision did not validate before transport receive");
         record(name);
-        number("status", (int)reader_revision_receive_raw_v3(shared, copy.data(), copy.size(), nullptr, &received,
+        number("status", (int)reader_revision_receive_raw_v3(shared, copy.data(), copy.size(), validated.sha256, &received,
                                                              &created, &revision_error));
         number("created", created);
         field("revision", literal(received.revision_id));
