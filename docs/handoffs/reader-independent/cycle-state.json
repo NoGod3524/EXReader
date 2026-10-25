@@ -2,6 +2,16 @@
   "schema": 1,
   "recorded_at_utc": "2026-10-25T12:35:00Z",
   "latest_checkpoint": {
+    "R6_readonly_revalidation": {
+      "pull_request": 3,
+      "state": "MERGED",
+      "default_branch": "codex/framework",
+      "merge_commit": "cdfe48231853d6e70fba2c41b42bdd187155901a",
+      "default_required_run": {"id":39974986212,"attempt":1,"conclusion":"success"},
+      "default_release_prepare_run": {"id":39975024792,"attempt":1,"conclusion":"success"},
+      "release_authorization": "no_new_tag_or_Release_authorized",
+      "scope": "read_only_API_revalidated_R6_milestone_only_not_current_reader_product_acceptance"
+    },
     "current_common_341_head": {
       "branch": "codex/reader-hosts-341-final",
       "head": "25bc0c67971f81491f50e0a3caaaf7e509bb7e35",
@@ -35,7 +45,7 @@
       "complete_product_accepted": false
     },
     "current_independent_candidate_runs": {
-      "Windows_full341": {"source_prefix":"2e0d7ba6", "run":40193777488, "state":"all_three_jobs_success_root_API_confirmed_F325_atomic13_and_all_original_suites", "previous_failed_run":40192852460},
+      "Windows_full341": {"source_prefix":"2e0d7ba6", "run":40193777488, "evidence_head":"d62816120b55b1e9b7e814e6202c089adc1bd1b6", "state":"all_three_jobs_success_root_API_confirmed_F325_atomic13_and_all_original_suites", "previous_failed_run":40192852460},
       "raw_companions_previous": {"source":"40a26619526c073daa8ccfcbc2459f69ad238c6d", "run":40192474330, "state":"both_platforms_and_strict_success_agent_report"},
       "raw_companions_final": {"source":"56793e7ca4f8ecdc5f2d9c3394fce4e201aca275", "run":40192929457, "evidence_head":"0793b26256e1397ba0f60d27de7d090fad61af81", "state":"both_platforms_and_strict_success_root_API_confirmed_includes_original_unlabelled03_consumer_positive"},
       "Apple_raw3_host": {"state":"agent_proceeding_exact_final56793_family_merge_and_actual_native_harness", "common_main_adopted":false},
