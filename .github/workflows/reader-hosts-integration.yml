@@ -638,6 +638,8 @@ jobs:
           mkdir -p build/gtk-batch-backend/profile
           chmod 700 build/gtk-batch-backend/profile
           build/account-desktop/reader-gtk-batch-import-backend "$PWD/build/gtk-batch-backend/profile/library.sqlite" "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/gtk-batch-backend-fixtures" "$PWD/build/gtk-batch-backend/originals.tsv" exercise | tee build/gtk-batch-backend/checks.log
+          mkdir -p build/gtk-batch-owner-faults
+          build/account-desktop/reader-gtk-batch-owner-faults "$PWD/build/account-package/EXReader-Linux/Reader.otf" "$PWD/build/gtk-batch-owner-faults" | tee build/gtk-batch-owner-faults/checks.log
       - name: Actual native folder chooser finite receipt list cancellation and reopen
         run: |
           mkdir -p build/gtk-atspi-client
@@ -804,6 +806,7 @@ jobs:
             build/records-ui/
             build/gtk-batch-evidence.json
             build/gtk-batch-backend/
+            build/gtk-batch-owner-faults/
             build/gtk-batch-ui/
             build/gtk-batch-original/
             build/gtk-batch-review/
