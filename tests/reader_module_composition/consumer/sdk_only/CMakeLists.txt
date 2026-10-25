@@ -17,7 +17,8 @@ endif()
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 list(PREPEND CMAKE_PREFIX_PATH "${EXR_MODULE_PREFIX}")
-find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED COMPONENTS core library)
+set(EXR_SDK_VERSION "3.40.0" CACHE STRING "Exact installed reading SDK")
+find_package(EXReader ${EXR_SDK_VERSION} EXACT CONFIG REQUIRED COMPONENTS core library)
 
 set(optional_packages
   EXReaderProductCatalog EXReaderRevisions EXReaderCommands EXReaderDesktopMetadata

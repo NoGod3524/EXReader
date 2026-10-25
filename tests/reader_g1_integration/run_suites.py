@@ -46,6 +46,9 @@ def main():
                    '-DCMAKE_BUILD_TYPE=Release', '-DEXR_SDK=' + str(prefix),
                    '-DCMAKE_PREFIX_PATH=' + (packages or str(prefix)),
                    '-DEXR_MODULE_PREFIX=' + str(prefix)]
+        if 'EXR_SDK_VERSION' in os.environ:
+            assert os.environ['EXR_SDK_VERSION'] in ('3.40.0', '3.41.0')
+            command.append('-DEXR_SDK_VERSION=' + os.environ['EXR_SDK_VERSION'])
         if install:
             command.append('-DCMAKE_INSTALL_PREFIX=' + str(install))
         run(label + '-configure', command)
@@ -157,6 +160,25 @@ def main():
             old.mkdir()
             with tarfile.open(archive) as bundle:
                 bundle.extractall(old)
+            if os.environ.get('EXR_SDK_VERSION') == '3.41.0':
+                # Compile the real old implementation against this candidate ABI.
+                # Only the archived CMake dependency spelling changes; retain both.
+                cmake = old / 'apps/reader/local-downloads/CMakeLists.txt'
+                original = cmake.read_bytes()
+                before = b'find_package(EXReader 3.40.0 EXACT CONFIG REQUIRED COMPONENTS library)'
+                assert original.count(before) == 1
+                updated = original.replace(before, b'find_package(EXReader ${EXR_SDK_VERSION} EXACT CONFIG REQUIRED COMPONENTS library)')
+                cmake.write_bytes(updated)
+                (output / 'old-local-module-CMake.original.txt').write_bytes(original)
+                (output / 'old-local-module-CMake.sdk341.txt').write_bytes(updated)
+                config = old / 'apps/reader/local-downloads/EXReaderLocalDownloadsConfig.cmake.in'
+                original = config.read_bytes()
+                before = b'find_dependency(EXReader 3.40.0 EXACT CONFIG COMPONENTS library)'
+                assert original.count(before) == 1
+                updated = original.replace(before, b'find_dependency(EXReader @EXR_SDK_VERSION@ EXACT CONFIG COMPONENTS library)')
+                config.write_bytes(updated)
+                (output / 'old-local-module-config.original.txt').write_bytes(original)
+                (output / 'old-local-module-config.sdk341.txt').write_bytes(updated)
             old_prefix = scratch / 'old-prefix'
             build('old-module', old / 'apps/reader/local-downloads', install=old_prefix)
             old_binary = build('old-consumer', REPO / 'tests/reader_local_downloads/consumer',
