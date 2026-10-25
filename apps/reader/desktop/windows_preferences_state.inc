@@ -45,7 +45,7 @@ static reader_preferences_theme prefs_sample_system(void) {
                     L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
                     0, KEY_QUERY_VALUE, &key) == ERROR_SUCCESS) {
     if (RegQueryValueExW(key, L"AppsUseLightTheme", NULL, NULL, (LPBYTE)&value, &size) != ERROR_SUCCESS ||
-        size != sizeof(value)) value = 1;
+        size != (DWORD)sizeof(value)) value = 1;
     RegCloseKey(key);
   }
   return value ? READER_PREFERENCES_THEME_LIGHT : READER_PREFERENCES_THEME_DARK;
