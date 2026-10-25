@@ -446,7 +446,7 @@ static void local_file_group(const char *work, held_fixture *epub, held_fixture 
 }
 
 /* -------------------------------------------------------- system handoff -- */
-static void handoff_group(const char *work, held_fixture *epub) {
+static void handoff_group(const char *work, held_fixture *handoff_book) {
   char pasted[S06_PATH], folder[S06_PATH], absent[S06_PATH], detail[S06_DETAIL];
   s06_handoff_result handoff;
   const char *single[1];
@@ -457,7 +457,7 @@ static void handoff_group(const char *work, held_fixture *epub) {
   (void)before;
 
   staged = join_path(pasted, sizeof(pasted), work, "handoff/pasted.epub") &&
-           write_file(pasted, epub->bytes, epub->size) &&
+           write_file(pasted, handoff_book->bytes, handoff_book->size) &&
            join_path(folder, sizeof(folder), work, "handoff/folder") && make_dir(folder) &&
            join_path(absent, sizeof(absent), work, "handoff/absent.epub");
   if (!staged) {
@@ -851,7 +851,7 @@ static int usage(void) {
 }
 
 int main(int argc, char **argv) {
-  held_fixture epub, fb2, cbz, pdf, docx;
+  held_fixture epub, fb2, cbz, pdf, docx, handoff_book;
   char library_path[S06_PATH], sub[S06_PATH];
   char escaped_work[4096], escaped_fixtures[4096], escaped_cloud[4096];
   int index;
@@ -873,6 +873,7 @@ int main(int argc, char **argv) {
   memset(&cbz, 0, sizeof(cbz));
   memset(&pdf, 0, sizeof(pdf));
   memset(&docx, 0, sizeof(docx));
+  memset(&handoff_book, 0, sizeof(handoff_book));
   if (!join_path(sub, sizeof(sub), work_dir, "local") || !make_dir(work_dir) ||
       !make_dir(sub) || !join_path(sub, sizeof(sub), work_dir, "handoff") || !make_dir(sub) ||
       !join_path(sub, sizeof(sub), work_dir, "exports") || !make_dir(sub) ||
@@ -892,7 +893,7 @@ int main(int argc, char **argv) {
 
   if (!load_fixture("sample.epub", &epub) || !load_fixture("sample.fb2", &fb2) ||
       !load_fixture("comic.cbz", &cbz) || !load_fixture("pdf-public.pdf", &pdf) ||
-      !load_fixture("sample.docx", &docx)) {
+      !load_fixture("sample.docx", &docx) || !load_fixture("layout.epub", &handoff_book)) {
     fprintf(stderr, "cannot read the pinned fixtures under %s\n", fixture_dir);
     return 2;
   }
@@ -933,7 +934,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  handoff_group(work_dir, &epub);
+  handoff_group(work_dir, &handoff_book);
   cloud_group(&epub, &pdf);
   duplicate_group(work_dir, &epub);
   bad_group(work_dir, &epub);
