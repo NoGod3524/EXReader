@@ -69,8 +69,14 @@ jobs:
           python3 tests/check_reading_real_review.py
       - name: Verify bounded collector retry and download refusals
         run: python3 tests/reading_corpus/check_collect.py
-      - name: Collect the shared frozen real-document manifest
-        run: python3 tools/reading_corpus/collect.py collect tools/reading_corpus/real-v1.json build/reading-real-inputs
+      - name: Restore only the exact originally frozen published input bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/sdk_page_background/restore_inputs.py build/frozen-corpus-cache
+      - name: Collect the shared frozen real-document manifest and recheck current license policy
+        run: |
+          python3 tools/reading_corpus/collect.py collect tools/reading_corpus/real-v1.json build/reading-real-inputs --input-cache build/frozen-corpus-cache
+          cp build/frozen-corpus-cache/provenance.json build/reading-real-inputs/frozen-input-provenance.json
       - name: Fetch the existing pinned native host font and license
         run: python3 -c "import sys; sys.path.insert(0, 'tools'); from host_font import fetch; fetch('build/reading-real-font')"
       - name: Build and install unchanged reading SDK
@@ -99,7 +105,7 @@ jobs:
         run: |
           mkdir -p build/reading-real-artifact/reading-real build/reading-real-artifact/identity
           if test -d build/reading-real; then cp -a build/reading-real/. build/reading-real-artifact/reading-real/; fi
-          for path in build/reading-real-inputs/manifest.json build/reading-real-inputs/licenses build/reading-real-font build/reading-real-consumer build/reading-core/CMakeCache.txt build/reading-core/compile_commands.json tests/reading_real/contract.json tests/reading_real/budgets.json tools/reading_corpus/real-v1.json; do
+          for path in build/reading-real-inputs/manifest.json build/reading-real-inputs/frozen-input-provenance.json build/reading-real-inputs/licenses build/reading-real-font build/reading-real-consumer build/reading-core/CMakeCache.txt build/reading-core/compile_commands.json tests/reading_real/contract.json tests/reading_real/budgets.json tools/reading_corpus/real-v1.json; do
             if test -e "$path"; then cp -a --parents "$path" build/reading-real-artifact/identity/; fi
           done
       - name: Preserve every raw sample, failure and reference comparison

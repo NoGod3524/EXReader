@@ -21,6 +21,8 @@ subprocess.run(['git', 'diff', '--exit-code', BASE, 'HEAD', '--', 'tests/reading
 paths = subprocess.check_output(['git', 'diff', '--name-only', BASE, 'HEAD'], text=True).splitlines()
 direct = {'src/raster.c', 'include/exr/render.h', 'include/exr/base.h', 'CMakeLists.txt', 'cmake/versions.cmake',
           '.github/workflows/sdk-page-background.yml', '.github/workflows/sdk-page-background-mobile.yml',
+          '.github/workflows/r2-reading-corpus.yml', '.github/workflows/reading-real.yml',
+          'tools/reading_corpus/collect.py', 'tests/reading_corpus/check_collect.py',
           'docs/SDK-PAGE-BACKGROUND.md'}
 for path in paths:
     if path in direct or path.startswith(('tests/sdk_page_background/', 'tests/sdk_page_background_mobile/')):

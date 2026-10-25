@@ -91,12 +91,28 @@ def structure(path, entry):
     return {'pdfinfo': proc.stdout}
 
 
+def cached_input(cache, entry):
+    """Read only the exact already-frozen bytes, never a replacement edition."""
+    root = cache.resolve(strict=True)
+    path = cache / entry['path']
+    if path.is_symlink() or not path.is_file() or not path.resolve(strict=True).is_relative_to(root):
+        raise ValueError('Unsafe or missing frozen input cache file')
+    with path.open('rb') as stream:
+        data = stream.read(min(entry['size'], entry['limits']['download_bytes']) + 1)
+    if len(data) != entry['size'] or sha(data) != entry['sha256']:
+        raise ValueError('Frozen cache identity changed')
+    return data, entry['source_url']
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('mode', choices=['discover', 'collect'])
     p.add_argument('manifest', type=Path)
     p.add_argument('output', type=Path)
+    p.add_argument('--input-cache', type=Path, help='Explicit hash-checked original bytes restored from an authenticated immutable artifact')
     a = p.parse_args()
+    if a.input_cache and a.mode != 'collect':
+        p.error('Frozen input cache is available only for collect, never discovery')
     if a.output.exists():
         p.error('Choose a new output; previous failures are retained')
     a.output.mkdir(parents=True)
@@ -113,7 +129,8 @@ def main():
         target.parent.mkdir(parents=True, exist_ok=True)
         try:
             time.sleep(0.5)
-            data, final_url = fetch(entry['source_url'], entry['limits']['download_bytes'])
+            data, final_url = (cached_input(a.input_cache, entry) if a.input_cache else
+                               fetch(entry['source_url'], entry['limits']['download_bytes']))
             if a.mode == 'collect' and (sha(data) != entry['sha256'] or len(data) != entry['size']):
                 raise ValueError('Frozen source identity changed')
             if sha(data) in hashes:
@@ -134,6 +151,7 @@ def main():
                          retrieved_url=final_url, retrieved_license_url=rights_url,
                          source_structure=structure(target, entry))
             entry['observed_license_sha256'] = sha(rights)
+            entry['retrieval_method'] = 'explicit_frozen_input_cache' if a.input_cache else 'publisher_https'
             if a.mode == 'discover':
                 entry['license_sha256'] = sha(rights)
             records.append(entry)

@@ -4,6 +4,7 @@
 from contextlib import contextmanager
 from email.utils import formatdate
 import io
+import tempfile
 from pathlib import Path
 import sys
 import unittest
@@ -43,6 +44,34 @@ def network(results):
 
 
 class CollectorProtocol(unittest.TestCase):
+    def test_exact_frozen_cache_bytes_and_refusals(self):
+        entry = dict(path='book.epub', size=8, sha256=collect.sha(b'original'),
+                     source_url=URL, limits={'download_bytes': 16})
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root/'book.epub'
+            path.write_bytes(b'original')
+            with network([]) as (opened, slept):
+                self.assertEqual(collect.cached_input(root, entry), (b'original', URL))
+                opened.assert_not_called()
+            for bad in (b'changed!', b'origina', b'original!'):
+                path.write_bytes(bad)
+                with self.subTest(data=bad), self.assertRaisesRegex(ValueError, 'cache identity changed'):
+                    collect.cached_input(root, entry)
+            path.unlink()
+            with self.assertRaisesRegex(ValueError, 'Unsafe or missing'):
+                collect.cached_input(root, entry)
+            outside = root.parent/(root.name + '-outside')
+            try:
+                outside.write_bytes(b'original')
+                path.symlink_to(outside)
+                with self.assertRaisesRegex(ValueError, 'Unsafe or missing'):
+                    collect.cached_input(root, entry)
+            finally:
+                if path.is_symlink():
+                    path.unlink()
+                outside.unlink(missing_ok=True)
+
     def test_429_then_success_honors_retry_after_seconds(self):
         with network([error(retry_after='3'), response()]) as (opened, slept):
             self.assertEqual(collect.fetch(URL, 8), (b'original', URL))
