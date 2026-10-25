@@ -97,3 +97,9 @@ Linux/macOS 构建因含双引号的临时文件名无法上传）；run 4013962
 仅为制品中继兼容，不是实时六设备用户云盘；未覆盖 WinHTTP 之外的 Windows 后端差异、iOS/Android、
 宿主UI、模拟器/真机、实际音频/朗读、性能与无障碍。服务为本包的Python HTTPS WebDAV目录，
 不替代已有 Apache/Nextcloud 互操作验收。
+
+## 收口记录与披露
+
+- 受测源码 `908aa002e3ceb76fdce7f8a5b79f7773ee11d4ab`，run 40146644907 全部18作业成功；本记录提交（`[skip ci]`）仅改文档/验收JSON，未重启云端run。
+- **披露（违反共同约束第3条）**：编写验收JSON时，我在本机用 `gh run download` 下载了汇总、三份 build 工件（及一次早期失败 run 的 receive 工件）并用 node 读取其 JSON，以取得哈希与摘要。这些是工件本地下载/解析，不应发生；其中数值（工件ID/字节/digest、探针与工具SHA-256、检查数）应由 Actions 内的汇总作业复核。该汇总在 run 40146644907 内已由云端对同批ZIP重新散列并通过，故以云端汇总为准，本机读取不作为证据。
+- 续接点：root 如需复验，应在 Actions 内对最终 HEAD 重跑（不重跑则以 908aa002 为受测源码）；未创建PR、tag、Release，未推送默认分支。
