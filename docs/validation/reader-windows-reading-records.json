@@ -1,24 +1,84 @@
 {
-  "accepted": false,
-  "state": "reboot_checkpoint_failed_close_control_repaired_not_rerun",
-  "candidate_source": "f8ff3de341383ed7bb513fbf050e7bcf2a6fa025",
+  "accepted": true,
+  "state": "windows_records_scope_accepted_same_source_retained_regressions",
+  "candidate_source": "fdd625f3a45907a178db07ac8d0e4c06a635321d",
   "branch": "codex/reader-windows-reading-records-ui",
-  "current_run": 40147158548,
-  "current_job": 121030839240,
-  "current_status": "completed_failure",
-  "current_named_checks_passed": 23,
-  "current_failure": "close-before-publication-discards-late-result",
-  "checkpoint_code_change": "Native close button was disabled for all running jobs. Keep it enabled: unpublished work is cancelled; a durable original request continues its existing commit barrier. This minimal fix has not yet been recompiled or rerun.",
+  "current_run": 40153457202,
+  "current_job": 121049667319,
+  "current_status": "completed_success",
+  "current_named_checks_passed": 32,
+  "current_failure": null,
+  "checkpoint_code_change": "Close remains enabled while records work runs; the saved fix and actual prepublication close and process-kill recovery all passed on the tested source.",
   "base": "f0c272c87b2402979292d0cd973d4f5e7a9f62fd",
   "sdk": "9854061be331fe603a1822d9b2b36ee357154927",
-  "complete_product": false,
   "screen_reader_accepted": false,
   "performance_accepted": false,
   "runs": [
-    {"id": 40145924785, "source": "21241ec5a63fdd8fa17daf7211213291281c8f7c", "state": "superseded_and_cancelled_after_source_fix"},
-    {"id": 40145961543, "source": "1b41497e6942c1180da6a5ace5351e131f38d4a8", "state": "failure", "reason": "Windows max macro, missing public pager anchor control argument and missing selection_bounds declaration; all repaired"},
-    {"id": 40146300669, "source": "9c3848568d156b525205dfaabf7ff0f594c7d24a", "state": "failure", "reason": "Records accessible list label failed the real UI assertion; all original F1/F2 and retained host suites passed; explicit accessible reading label added"},
-    {"id": 40147158548, "source": "f8ff3de341383ed7bb513fbf050e7bcf2a6fa025", "state": "failure", "checks_passed": 23, "failed_check": "close-before-publication-discards-late-result"}
+    {
+      "id": 40145924785,
+      "source": "21241ec5a63fdd8fa17daf7211213291281c8f7c",
+      "state": "superseded_and_cancelled_after_source_fix"
+    },
+    {
+      "id": 40145961543,
+      "source": "1b41497e6942c1180da6a5ace5351e131f38d4a8",
+      "state": "failure",
+      "reason": "Windows max macro, missing public pager anchor control argument and missing selection_bounds declaration; all repaired"
+    },
+    {
+      "id": 40146300669,
+      "source": "9c3848568d156b525205dfaabf7ff0f594c7d24a",
+      "state": "failure",
+      "reason": "Records accessible list label failed the real UI assertion; all original F1/F2 and retained host suites passed; explicit accessible reading label added"
+    },
+    {
+      "id": 40147158548,
+      "source": "f8ff3de341383ed7bb513fbf050e7bcf2a6fa025",
+      "state": "failure",
+      "checks_passed": 23,
+      "failed_check": "close-before-publication-discards-late-result"
+    },
+    {
+      "id": 40153457202,
+      "source": "fdd625f3a45907a178db07ac8d0e4c06a635321d",
+      "attempt": 1,
+      "state": "success",
+      "checks_passed": 32,
+      "strict_job": 121051080607
+    }
   ],
-  "next_action": "After restart dispatch a new full same-source run for the saved close-button fix; keep the original assertion. The 23 passed cases belong only to f8ff3de3. Real kill/retry cases after the failed close check remain unexecuted. No records acceptance has been granted."
+  "next_action": "Integrate this evidence HEAD into the shared hosts candidate, then run the full common-source checks. This grants only the Windows records scope.",
+  "strict_job": 121051080607,
+  "protocol_rejections": 24,
+  "complete_product": false,
+  "consumer_sha256": "3c44f55d0c19e0a0cac2525309138b8dfb95ae534a3d14dc420c2f93f26d9783",
+  "review_sha256": "c92664d36407d33034d0969d1a667d1859e57beccf4df4aa8773af2961f32c00",
+  "artifacts": [
+    {
+      "id": 12584195425,
+      "name": "reader-windows-search-summary-40153457202-1",
+      "size_in_bytes": 2061,
+      "digest": "sha256:83168d6d01aa35f6f992466846ddc5c3224a421fd9caae3c59341a1e48ae7096",
+      "expires_at": "2027-01-23T02:10:46Z",
+      "expired": false
+    },
+    {
+      "id": 12583307918,
+      "name": "reader-windows-search-initial-40153457202-1",
+      "size_in_bytes": 68785748,
+      "digest": "sha256:2e8453db78f818b5242f89f121f42dbc5b4294899a292f6d01d068e927f748de",
+      "expires_at": "2027-01-23T02:10:46Z",
+      "expired": false
+    }
+  ],
+  "retained": {
+    "f1": 264,
+    "f2": 130,
+    "navigation_ui": 31,
+    "legacy_windows_ui": 158,
+    "search_protocol_rejections": 23,
+    "navigation_protocol_rejections": 33,
+    "original_host_suites_preserved": true
+  },
+  "evidence_head_note": "Only docs/READER-WINDOWS-READING-RECORDS.md and docs/validation/reader-windows-reading-records.json change after the tested source"
 }
