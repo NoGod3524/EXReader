@@ -54,12 +54,12 @@ def main():
             require(not path.is_absolute() and '..' not in path.parts and '\\' not in info.filename and
                     (info.external_attr>>16)&0o170000!=0o120000,'unsafe original ZIP member')
             if not (any(part.endswith('.xcresult') for part in path.parts) or path.suffix in ('.log', '.json', '.txt')):continue
-            target=extracted.joinpath(*path.parts)
-            if info.is_dir():target.mkdir(parents=True,exist_ok=True)
+            destination=extracted.joinpath(*path.parts)
+            if info.is_dir():destination.mkdir(parents=True,exist_ok=True)
             else:
                 require(info.file_size<=256*1024**2,'member too large')
-                target.parent.mkdir(parents=True,exist_ok=True)
-                with archive.open(info) as source,target.open('wb') as destination:shutil.copyfileobj(source,destination)
+                destination.parent.mkdir(parents=True,exist_ok=True)
+                with archive.open(info) as source,destination.open('wb') as output:shutil.copyfileobj(source,output)
     if target != 'records':
         for path in extracted.rglob('*'):
             if path.is_file() and path.suffix in ('.json', '.log', '.txt') and not any(part.endswith('.xcresult') for part in path.parts) and path.stat().st_size <= 2*1024**2:
