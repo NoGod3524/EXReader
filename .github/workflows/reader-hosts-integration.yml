@@ -35,7 +35,7 @@ jobs:
       - name: Parse authored workflow and Python only in Actions
         run: |
           python3 -m pip install 'PyYAML==6.0.3'
-          python3 -m py_compile tests/reader_hosts_integration/guard.py tests/reader_hosts_integration/aggregate.py tests/reader_hosts_integration/final.py tests/reader_hosts_integration/probe_navigation.py tests/reader_windows_search/verify.py tests/reader_windows_navigation/verify.py tests/reader_windows_navigation/check_ui.py tests/reader_gtk_preferences/retain_account.py tests/reader_gtk_navigation/check_ui.py tests/reader_gtk_search/check_ui.py tests/reader_android_fixed_pan/verify_saved.py
+          python3 -m py_compile tests/reader_hosts_integration/guard.py tests/reader_hosts_integration/aggregate.py tests/reader_hosts_integration/final.py tests/reader_hosts_integration/probe_navigation.py tests/reader_windows_search/verify.py tests/reader_windows_navigation/verify.py tests/reader_windows_navigation/check_ui.py tests/reader_windows_import_organize/verify.py tests/reader_windows_import_organize/check_ui.py tests/reader_gtk_preferences/retain_account.py tests/reader_gtk_navigation/check_ui.py tests/reader_gtk_search/check_ui.py tests/reader_android_fixed_pan/verify_saved.py
           python3 - <<'PY'
           from pathlib import Path
           import yaml
@@ -271,7 +271,7 @@ jobs:
     if: ${{github.event.inputs.verify_run == ''}}
     name: installed F1 and native Windows search controls and lifecycle
     runs-on: windows-2022
-    timeout-minutes: 90
+    timeout-minutes: 120
     outputs:
       artifact_id: ${{steps.upload.outputs.artifact-id}}
       artifact_digest: ${{steps.upload.outputs.artifact-digest}}
@@ -319,7 +319,7 @@ jobs:
         run: |
           set -o pipefail
           prefix="$WS_PREFIX"
-          for module in extras/webdav extras/credentials extras/sideload apps/reader/revisions apps/reader/commands apps/reader/desktop-metadata apps/reader/sync apps/reader/session apps/reader/reading-state apps/reader/reading-commands apps/reader/annotation-view apps/reader/search apps/reader/navigation; do
+          for module in extras/webdav extras/credentials extras/sideload apps/reader/revisions apps/reader/commands apps/reader/desktop-metadata apps/reader/sync apps/reader/session apps/reader/reading-state apps/reader/reading-commands apps/reader/annotation-view apps/reader/search apps/reader/navigation apps/reader/cloud-import apps/reader/bulk-organization; do
             name=$(basename "$module")
             cmake -S "$module" -B "build/ws-$name" -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_PREFIX_PATH="$prefix;$WS/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$prefix" 2>&1 | tee "build/winsearch-logs/$name-configure.log"
             cmake --build "build/ws-$name" --parallel 4 --verbose 2>&1 | tee "build/winsearch-logs/$name-build.log"
@@ -328,10 +328,21 @@ jobs:
       - name: Build actual account host with the optional native search UI
         run: |
           set -o pipefail
-          cmake -S apps/reader/windows-account -B build/ws-host -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage" -DREADER_METADATA_PREFIX="$WS_PREFIX" -DREADER_ACCOUNT_PREFIX="$WS_PREFIX" -DEXR_READER_WINDOWS_SEARCH=ON -DEXR_READER_WINDOWS_NAVIGATION=ON -DEXR_READER_WINDOWS_RECORDS=ON 2>&1 | tee build/winsearch-logs/host-configure.log
+          cmake -S apps/reader/windows-account -B build/ws-host -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage" -DREADER_METADATA_PREFIX="$WS_PREFIX" -DREADER_ACCOUNT_PREFIX="$WS_PREFIX" -DEXR_READER_WINDOWS_SEARCH=ON -DEXR_READER_WINDOWS_NAVIGATION=ON -DEXR_READER_WINDOWS_RECORDS=ON -DEXR_READER_WINDOWS_IMPORT_ORGANIZE=ON 2>&1 | tee build/winsearch-logs/host-configure.log
           cmake --build build/ws-host --parallel 4 --verbose 2>&1 | tee build/winsearch-logs/host-build.log
           cmake -S tests/reader_search/consumer -B build/ws-search-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage"
           cmake --build build/ws-search-consumer --parallel 4 --verbose
+      - name: Build installed cloud import and bulk independent consumers
+        run: |
+          for module in reader_webdav_import reader_bulk_organization; do
+            cmake -S "tests/$module/consumer" -B "build/wio-$module" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$WS_PREFIX;$WS/build/reading-library/stage"
+            cmake --build "build/wio-$module" --parallel 4 --verbose
+          done
+      - name: Retain J01 and J10 named module regressions
+        run: |
+          set -o pipefail
+          python3 tests/reader_webdav_import/check_cloud_import.py --probe build/wio-reader_webdav_import/cloud-probe.exe --cxx build/wio-reader_webdav_import/cloud-cpp-consumer.exe --review-probe build/wio-reader_webdav_import/cloud-review-probe.exe --fixtures tests/fixtures --module-prefix build/winsearch-stage --output build/wio-cloud-module
+          python3 tests/reader_bulk_organization/check_bulk.py --probe build/wio-reader_bulk_organization/bulk-probe.exe --c-consumer build/wio-reader_bulk_organization/bulk-c-consumer.exe --link-map build/wio-reader_bulk_organization/bulk-link.map --output build/wio-bulk-module
       - name: Execute installed original F1 C and C++ consumers
         run: |
           python3 tests/reader_search/make_search_fixtures.py build/ws-search-fixtures
@@ -383,6 +394,11 @@ jobs:
         if: ${{always() && steps.retained_build.outcome == 'success'}}
         run: |
           python3 tests/reader_windows_records/check_ui.py --candidate build/ws-package/EXReader/EXReader.exe --review build/ws-host/EXReaderShelfReview.exe --font build/ws-package/EXReader/Reader.otf --capture-probe build/account-capture/reading-capture-probe.exe --revision-consumer build/account-revisions-consumer/revision-consumer.exe --output build/ws-records-ui
+      - name: Real native cloud selection and batch organization controls
+        if: ${{always() && steps.retained_build.outcome == 'success'}}
+        run: |
+          python3 -m py_compile tests/reader_windows_import_organize/check_ui.py tests/reader_windows_import_organize/verify.py
+          python3 tests/reader_windows_import_organize/check_ui.py --candidate build/ws-package/EXReader/EXReader.exe --font build/ws-package/EXReader/Reader.otf --fixtures tests/fixtures --cloud-probe build/wio-reader_webdav_import/cloud-probe.exe --command-consumer build/account-commands-consumer/command-consumer.exe --revision-consumer build/account-revisions-consumer/revision-consumer.exe --output build/wio-ui
       - name: Run every retained Windows account host regression
         if: ${{always() && steps.retained_build.outcome == 'success'}}
         env:
@@ -404,6 +420,14 @@ jobs:
         with:
           name: reader-windows-search-initial-${{github.run_id}}-${{github.run_attempt}}
           path: |
+            build/account-commands-consumer/command-consumer.exe
+            build/wio-ui/
+            build/wio-cloud-module/
+            build/wio-bulk-module/
+            build/wio-reader_webdav_import/*.exe
+            build/wio-reader_bulk_organization/*.exe
+            build/wio-reader_bulk_organization/bulk-link.map
+            !build/**/*.key
             build/winsearch-logs/
             build/ws-records-ui/
             build/account-capture/reading-capture-probe.exe
@@ -462,6 +486,7 @@ jobs:
             build/winsearch-summary/verified.json
             build/winnav-summary/verified.json
             build/winrecords-summary/verified.json
+            build/wio-summary/verified.json
           if-no-files-found: error
   gtk:
     if: ${{ github.event.inputs.verify_run == '' }}

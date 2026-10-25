@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import subprocess
 
-BASE = 'c1123b78819ab1fcadfaee33c72679213b9cc219'
+BASE = '434075ff2367bad5834c2aa375b32f61a55e8d69'
 SDK = '9854061be331fe603a1822d9b2b36ee357154927'
 DELIVERIES = {
     'g1': '3bcc6511c928665c0889a33bc98cf5e1bfadaccc',
@@ -21,6 +21,7 @@ DELIVERIES = {
     'gtk_drop_import': 'eaa6852c8e965720c4ad07cfd223c30c282803f8',
     'apple_reading_records_candidate': '25eeb6aaccdc50e670f0aaea73631818bc0551f8',
     'apple_reading_records_final': '0f0cf3ba374b13d0e8a3c8fc1e04b3f3cfb6c9f6',
+    'windows_cloud_import_organize': '7d8a2ef5aa2b12444bb4f968efc8828080c1bb53',
 }
 ALLOWED = (
     'tests/reader_hosts_integration/', '.github/workflows/reader-hosts-integration.yml',
@@ -33,6 +34,7 @@ ALLOWED = (
     'tests/reader_windows_search/verify.py', 'tests/reader_windows_search/check_ui.py',
     'tests/reader_windows_navigation/verify.py',
     'tests/reader_windows_records/verify.py',
+    'tests/reader_windows_import_organize/verify.py',
     'tests/reader_gtk_navigation/check_ui.py',
     'tests/reader_gtk_search/check_ui.py',
     'tests/reader_android_fixed_pan/verify_saved.py',

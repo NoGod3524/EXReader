@@ -73,6 +73,22 @@ def declaration(path, key):
     raise ValueError('missing fixed test contract: ' + key)
 
 
+def windows_import_summary(report, source, run, attempt, consumer):
+    identity(report, source, run, attempt)
+    require(report.get('accepted') is True and report.get('problems') == [] and
+            report.get('consumer_sha256') == consumer and
+            report.get('ui_checks') == len(declaration(
+                ROOT / 'tests/reader_windows_import_organize/check_ui.py', 'REQUIRED')) and
+            report.get('protocol_rejections') == 12 and
+            report.get('original_j01_checks') == 47 and report.get('original_j10_checks') == 21 and
+            report.get('original_f1_checks') == 264 and report.get('original_f2_checks') == 130 and
+            report.get('original_nav_ui') == 31 and report.get('original_records_ui') == 32 and
+            report.get('original_ui158') == 158 and report.get('original_strict_verifiers_preserved') is True and
+            all(report.get(key) is False for key in
+                ('complete_product', 'performance_accepted', 'screen_reader_accepted')),
+            'Windows cloud import or organization proof missing or substituted')
+
+
 class Bundle:
     def __init__(self, meta):
         self.meta = meta
@@ -159,7 +175,24 @@ def self_test():
         pass
     else:
         raise ValueError('retained failure became a pass')
-    print(json.dumps({'host_protocol_rejections': len(controls) + 1}))
+    wio = dict(accepted=True, problems=[], source_sha='s', run_id=1, attempt=2,
+               consumer_sha256='binary', ui_checks=46, protocol_rejections=12,
+               original_j01_checks=47, original_j10_checks=21, original_f1_checks=264,
+               original_f2_checks=130, original_nav_ui=31, original_records_ui=32,
+               original_ui158=158, original_strict_verifiers_preserved=True,
+               complete_product=False, performance_accepted=False, screen_reader_accepted=False)
+    windows_import_summary(wio, 's', 1, 2, 'binary')
+    changes = [dict(source_sha='foreign'), dict(attempt=3), dict(consumer_sha256='other'),
+               dict(ui_checks=45), dict(original_j01_checks=46), dict(original_j10_checks=20),
+               dict(original_strict_verifiers_preserved=False), dict(complete_product=True)]
+    for change in changes:
+        try:
+            windows_import_summary(wio | change, 's', 1, 2, 'binary')
+        except ValueError:
+            continue
+        raise ValueError('Windows import summary accepted a negative control')
+    print(json.dumps({'host_protocol_rejections': len(controls) + 1,
+                      'windows_import_protocol_rejections': len(changes)}))
 
 
 def authenticate_cbz(bundle, report, source, run, attempt):
@@ -318,6 +351,9 @@ def main():
                         records['consumer_sha256'] == report['consumer_sha256'] and
                         records['review_sha256'] == report['review_sha256'], 'Windows records or retained proof missing')
                 result['scopes']['windows_reading_records'] = True
+                import_organize = bundle.report('wio-summary/verified.json')
+                windows_import_summary(import_organize, source, run, attempt, report['consumer_sha256'])
+                result['scopes']['windows_cloud_import_and_bulk_organization'] = True
 
         gtk, gtk_job = open_bundle('reader-gtk-drop-import', GTK_JOB, palette_job=True)
         records = gtk.report('records-ui/report.json');identity(records, source, run, attempt)

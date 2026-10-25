@@ -2,6 +2,10 @@
 
 ## 最新共同轮与后续候选
 
+共同候选现普通合入 T01 Windows 云盘导入及批量整理交付 `7d8a2ef5aa2b12444bb4f968efc8828080c1bb53`，生产基点 `434075ff2367bad5834c2aa375b32f61a55e8d69`。原交付 run [40167556466](https://github.com/NoGod3524/EXReader/actions/runs/40167556466) attempt 1 已 success：46 项真实界面检查、J01 原47项、J10 原21项以及原 F1 264 / F2 130 / NavUI31 / records32 / UI158 及其余保留宿主套件，原 strict 链与新增12项拒绝均通过。root 复核了实际日志、来源、原件回读、提交后清理及独立意图恢复路径。
+
+共同 workflow 复制原 T01 全部 Windows 生产步骤，在同一个宿主开启可选接入；原 J01/J10 消费者及宿主回归不改。T01 verifier 仅增加明确调用方 workflow 参数，由共同入口调用整个原严格链；最终汇总另核本轮 T01 summary 与原搜索报告使用同一实际程序，新增八项拒绝检查。尚未给共同源码授予这46项；先做 Actions 语法/协议预检，待 Android 最终导入交付合入后再跑完整共同轮。SDK 仍为原冻结3.40。
+
 原程序目录诊断最终 run `40162074331` 通过29项，包括实际扫描中关闭父窗口。程序仍为 `e4356a6e` 工件中的原始二进制，测试 source 为 `cb7497dd`；初两轮诊断 `40161497966`、`40161675780` 的失败保留。窄交付 `600ef981` 只修目录输入驱动：读取实时 AT-SPI 主窗口焦点，再要求新 action、可见扫描阶段及非零 poll，保留全部业务断言。
 
 生产候选先普通合入 Apple records `25eeb6aa`，随后普通合入最终交付 `0f0cf3ba374b13d0e8a3c8fc1e04b3f3cfb6c9f6`，共同生产基点更新为 `c1123b78819ab1fcadfaee33c72679213b9cc219`。最终受测source `19fde18968e03bb4e87d86b0ed650716ac02c9fa` 的 records full [40163099176](https://github.com/NoGod3524/EXReader/actions/runs/40163099176) 和 WP13 [40163097702](https://github.com/NoGod3524/EXReader/actions/runs/40163097702) 均完整success，包含各自严格汇总。iOS选择面板加原生ScrollView后，旧iPhone横屏关闭按钮与原选区失效断言通过；旧失败 `40161458572` 保留。
