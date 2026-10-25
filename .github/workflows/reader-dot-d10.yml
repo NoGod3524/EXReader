@@ -1,0 +1,100 @@
+name: Reader dot D10 three-target Apple audit
+on:
+  push:
+    branches: [codex/reader-dot-d10]
+    paths: ['tests/reader_dot_wave2/d10/**', '.github/workflows/reader-dot-d10.yml']
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: reader-dot-d10
+  cancel-in-progress: false
+env:
+  SDK_SHA: edddc463c06ed5731195cdb8f06b2df6dff7699e
+  EXR_APPLE_SDK_VERSION: 3.41.0
+  EXR_APPLE_PAGE_THEME: 'OFF'
+jobs:
+  audit:
+    name: D10 audit ${{ matrix.platform }}
+    runs-on: macos-15
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        include:
+          - platform: macos
+            target: 15dab6b2270dc296ed6239db67ced2e22d255e65
+          - platform: iphone
+            target: 5ac5e1fa4cf6dcbfe81ea14b9f64b6288470164a
+          - platform: ipad
+            target: 5ac5e1fa4cf6dcbfe81ea14b9f64b6288470164a
+    env:
+      TARGET_SHA: ${{ matrix.target }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Owned paths and original geometry regressions
+        run: |
+          python3 tests/reader_dot_wave2/d10/guard.py
+          python3 tests/reader_a11y_apple/a11y_overlap_regression.py --output build/overlap-regression.json
+          python3 tests/reader_dot_wave2/d10/contract.py
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.target }}
+          path: target
+      - name: Exact SDK and target product build
+        run: |
+          set -euo pipefail
+          git -C target diff --exit-code
+          test "$(git -C target rev-parse HEAD)" = "$TARGET_SHA"
+          for path in src include cmake CMakeLists.txt bindings; do
+            test "$(git -C target rev-parse HEAD:$path)" = "$(git rev-parse $SDK_SHA:$path)"
+          done
+          target=iphonesimulator
+          options=(-DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO)
+          if [ '${{ matrix.platform }}' = macos ]; then target=macos; options=(-DCMAKE_OSX_SYSROOT=macosx); fi
+          cmake -S target -B build/sdk -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AAC=OFF "${options[@]}"
+          cmake --build build/sdk --parallel 2
+          cmake --install build/sdk --prefix "$PWD/target/stage"
+          cd target
+          python3 tools/build_apple_product.py --sdk stage --target "$target" --build build/product
+      - name: Unchanged original and new default UI audit
+        id: ui
+        continue-on-error: true
+        run: bash tests/reader_dot_wave2/d10/run.sh '${{ matrix.platform }}'
+      - name: Preserve actual outcomes
+        id: collect
+        if: always()
+        continue-on-error: true
+        run: python3 tests/reader_dot_wave2/d10/collect.py '${{ matrix.platform }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d10-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/evidence/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Preserve failed scope
+        if: always() && (steps.ui.outcome != 'success' || steps.collect.outcome != 'success')
+        run: exit 1
+  verify:
+    name: D10 strict original ZIP verifier
+    needs: audit
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate each original same-attempt ZIP and actual program
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_dot_wave2/d10/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d10-validation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/verification/
+          retention-days: 30
+          if-no-files-found: error
