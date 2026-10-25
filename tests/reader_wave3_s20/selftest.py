@@ -81,7 +81,8 @@ def main():
         run([UNPACK, '--target', 'linux', '--archive', archive, '--manifest', changed,
              '--into', workspace / 'wrong-target', '--report', workspace / 'wrong.json'], expect=1)
         checks.append('refuse-wrong-target')
-        tampered = workspace / 'tampered.zip'
+        (workspace / 'tampered').mkdir()
+        tampered = workspace / 'tampered' / archive.name
         with zipfile.ZipFile(archive) as source_zip, zipfile.ZipFile(tampered, 'w', zipfile.ZIP_DEFLATED) as target_zip:
             for info in source_zip.infolist():
                 data = source_zip.read(info)

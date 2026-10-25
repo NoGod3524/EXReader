@@ -73,7 +73,6 @@ def main(argv=None):
     inner = delivery.manifest(args.target, args.source_sha, args.sdk_version, covered, args.exclude, archive_name)
     inner['provenance'] = provenance
     inner['metadata_files'] = [delivery.MANIFEST, delivery.CHECKSUMS]
-    inner['archive'] = None
     extras = {
         delivery.INSTRUCTIONS: (notes, 0o644),
         delivery.MANIFEST: ((json.dumps(inner, indent=2, sort_keys=True) + '\n').encode('utf-8'), 0o644),

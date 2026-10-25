@@ -40,6 +40,14 @@ def local_json(path):
     return json.loads(Path(path).read_text(encoding='utf-8'))
 
 
+def locate(root, relative):
+    """Find exactly one uploaded evidence file without assuming the archive layout."""
+    matches = sorted(path for path in Path(root).rglob(relative) if path.is_file())
+    if len(matches) != 1:
+        return None
+    return matches[0]
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--targets', type=Path, required=True, help='Directory holding <artifact-name>/s20-<target>')
@@ -70,7 +78,7 @@ def main(argv=None):
         name = PREFIX + target + '-' + args.run + '-' + args.attempt
         entry = {'name': name, 'accepted': False, 'problems': []}
         artifact = names.get(name)
-        root = args.targets / name / ('s20-' + target)
+        root = args.targets / name
         if artifact is None:
             entry['problems'].append('this run/attempt did not upload the target artifact')
         else:
@@ -94,21 +102,24 @@ def main(argv=None):
                         entry['problems'].append('artifact expiry has passed')
                 except ValueError:
                     entry['problems'].append('artifact expiry is not parseable')
+        report_path = unpack_path = manifest_path = None
         if not root.is_dir():
             entry['problems'].append('downloaded artifact directory is missing: ' + str(root))
         else:
-            delivery_dir = root / 'delivery'
-            report_path = root / 'target.json'
-            unpack_path = root / 'unpack.json'
-            manifest_path = delivery_dir / 'manifest.json'
-            for path in (report_path, unpack_path, manifest_path):
-                if not path.is_file():
-                    entry['problems'].append('missing evidence: ' + path.name)
+            report_path = locate(root, 'target.json')
+            unpack_path = locate(root, 'unpack.json')
+            manifest_path = locate(root, 'manifest.json')
+            if manifest_path is not None and manifest_path.parent.name != 'delivery':
+                manifest_path = None
+            for label, path in (('target.json', report_path), ('unpack.json', unpack_path),
+                                ('delivery/manifest.json', manifest_path)):
+                if path is None:
+                    entry['problems'].append('missing or duplicated evidence: ' + label)
         if not entry['problems']:
             report = local_json(report_path)
             unpack = local_json(unpack_path)
             manifest = local_json(manifest_path)
-            archive = delivery_dir / manifest['archive']['name']
+            archive = manifest_path.parent / manifest['archive']['name']
             entry.update({
                 'source_sha': report.get('source_sha'),
                 'entry': report.get('entry'),
