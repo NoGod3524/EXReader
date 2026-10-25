@@ -330,9 +330,17 @@ def main():
             require(report.get('accepted') is True and report.get('problems') == [], 'strict summary did not accept')
             if stem == 'reader-module-composition-report':
                 require(set(report['platforms']) == {'linux', 'windows', 'macos'}, 'missing composed platform')
-                require(all(p['g1_initial']['accepted'] and p['g1_relocated']['accepted'] for p in report['platforms'].values()),
-                        'original integrated judges incomplete')
+                require(report.get('task_wide_accepted') is True and len(report.get('packages', [])) == 27 and
+                        report.get('negative_controls') == 41, 'complete composed package graph not accepted')
+                for platform in report['platforms'].values():
+                    retained = platform['named_results']['retained_g1']
+                    require(set(retained) == {'fresh', 'relocated'} and retained['fresh'] == retained['relocated'] and
+                            retained['fresh']['chain'] == 20 and retained['fresh']['reading_commands'] == 1413 and
+                            retained['fresh']['annotation_view'] == 56 and retained['fresh']['annotation_export'] == 25 and
+                            retained['fresh']['local_downloads'] == 54 and retained['fresh']['local_regressions'] == 7,
+                            'original integrated judges incomplete')
                 result['scopes']['three_desktop_composition'] = True
+                result['scopes']['composed_package_configs'] = 27
             else:
                 require(report.get('original_ui158') == 158 and report.get('original_f1_checks') == 264 and
                         report.get('protocol_rejections') == 23, 'Windows retained scopes missing')

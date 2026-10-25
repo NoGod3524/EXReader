@@ -27,8 +27,9 @@ if mode == 'windows':
         import_organize = load('host_windows_import_organize_verifier', ROOT / 'reader_windows_import_organize/verify.py')
         import_organize.main(workflow_path=WORKFLOW)
 elif mode == 'composition':
-    original = load('host_composition_verifier', ROOT / 'reader_g1_integration/aggregate.py')
-    original.original.WORKFLOW = WORKFLOW
+    sys.path.insert(0, str(ROOT / 'reader_reviewed_composition'))
+    original = load('host_composition_verifier', ROOT / 'reader_reviewed_composition/check_artifacts.py')
+    original.WORKFLOW = WORKFLOW
     raise SystemExit(original.main())
 else:
     raise ValueError('unknown integration verifier: ' + mode)
