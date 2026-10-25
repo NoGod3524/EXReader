@@ -59,5 +59,11 @@ UI 实际看到私有请求落盘/产品提交后的原生观测，再由 UI run
 宿主 decoder 把 EPUB 的 `part_path` 章节作用域漏回原生 selector，完整 selector 相等断言拒绝；
 修复按公开 record 模式恢复该作用域，保持原相等断言。第一次循环因此未到 CBZ，后续 CBZ 输入缺失
 不作为 SDK provider 缺陷。新探针逐格式保留 selector/SDK 状态比较，并独立执行全部四格式。
+`72f2ca2f` / `40144185965`、`1b4acf2d` / `40144674393`、`9d9a9dc0` / `40145615101`
+均实际编译完整 macOS app 并执行安装后 native19/19；后两轮包含真实 Unicode CBZ 双页分别 FOUND。
+这些是直接 swiftc 诊断，不授予 Xcode/UI。`9d9a9dc0` 的 Shelf focused `40145621010` SDK/原生通过，
+三目标实际 Xcode batch 编译均因 HostSDK 公共 SDK 枚举不可见失败，真实恢复用例尚未开始。
+产品桥头先显式引入公开 `exreader.h`；新的预检使用真实 Xcode app/test bundle build-for-testing，
+同时保留同一个 native19 消费者，不再以直接整批 swiftc 替代 Xcode 编译检查。
 目前新增完整套件尚未取得云端结果，验收记录为 `accepted:false`。源码、测试、语法检查与工件解析
 全部在 Actions，本地仅源码/文档/Git。性能、真机、跨平台产品联合验收继续单列。
