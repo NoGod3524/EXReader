@@ -592,6 +592,7 @@ jobs:
         with:
           name: gtk-raw3-candidate-${{ github.run_id }}-${{ github.run_attempt }}
           path: build/gtk-raw3/
+          include-hidden-files: true
           if-no-files-found: error
 
   raw_summary:
