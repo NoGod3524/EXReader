@@ -37,3 +37,5 @@
 宿主 `FixedSession` 原把公开 PDF text 的原生坐标直接当 Canvas 左上坐标。修正只在 app-private JNI 使用原 PDF、公开 `exr_fixed_pages` 的 geometry 和公开 `exr_viewport_create(scale=1)`，读取与 `exr_fixed_render` 相同的 crop/rotation/y-axis 矩阵，再统一转换宿主选区和语义几何；不改冻结 SDK 或 Java bindings。矩阵目录限制 10,000 页，原件仍限 32 MiB。旋转后语义行沿实际文字基线聚合，避免 90/270 度文字逐字拆行。
 
 新 Pan 夹具另加四份 `/CropBox [100 200 700 1000]`、`/Rotate 0/90/180/270` 的真实 PDF，SDK 读取前手写声明每个旋转的可见/裁剪角标及 600×800 或 800×600 视口；没有复制另一套 viewport 矩阵。原第二项检查内逐一用真实宿主控件打开、缩放和平移，验证渲染尺寸、语义裁剪、实际指针选择的精确原文，以及 SDK/product/settings 不变。Pan 仍是 first7+reopen1，现有原件为11份，原92项夹具和断言不变。新源码尚待完整云端整轮，`accepted=false`。
+
+source `094d475e2d8860c30ffcc2fb903d5aa9747706e9` / run `40154163799` / job `121051820296` 完整轮中原92项全部同源通过，新四角 RGB 检查通过。第二项在新增的 crop270 精确选字处失败，完整报告正常留存。只读诊断 run `40155347245` / job `121055463655` 在 Actions 内核对该原 ZIP 后确认 crop0/BRA、crop90/TRA、crop180/TLA 均通过；crop270 只选出 `B`，同时 ReaderView 高度由1766降到1618。真实宿主首次选字才把底部工具条从 GONE 改为 VISIBLE，使活动指针下的视口在拖选中途改变。修正在显式 Select 模式开启时先预留空工具条（INVISIBLE），选字仅揭示操作而不重新布局；清除选区时保留此空间直到退出模式。原精确 `BLA` 断言不变，并增加拖选前后实际视口尺寸、offset完全不变的检查。此修正需要新同源完整轮。

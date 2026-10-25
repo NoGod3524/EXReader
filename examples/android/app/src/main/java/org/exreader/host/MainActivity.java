@@ -1740,11 +1740,14 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     }
 
     @Override public void onSelectionCleared() {
-        selectionBar.setVisibility(View.GONE);
+        selectionBar.setVisibility(readerView.isSelectMode()?View.INVISIBLE:View.GONE);
         selectionStatus.setText("");
     }
 
     @Override public void onSelectModeChanged(boolean enabled) {
+        // Reserve the toolbar before a selection gesture: revealing its actions
+        // must not resize/reposition the page underneath the active pointer.
+        selectionBar.setVisibility(enabled?(readerView.getSelection()==null?View.INVISIBLE:View.VISIBLE):View.GONE);
         selectButton.setText(enabled ? "Selecting" : "Select");
         setStatus(enabled ? "Select mode on" : "Select mode off");
     }
