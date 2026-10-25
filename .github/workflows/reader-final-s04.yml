@@ -12,9 +12,9 @@ defaults:
   run:
     shell: bash
 env:
-  # The first run derives the APK/SDK pins from the authenticated artifact; the
-  # sealed run sets this to false so every pin must already be in the contract.
-  S04_ALLOW_DERIVE: 'true'
+  # Pins were derived from the authenticated artifact in run 40214931094 and are
+  # sealed in docs/reader-final-s04/apk-contract.json; every pin is now enforced.
+  S04_ALLOW_DERIVE: 'false'
 jobs:
   static:
     name: S04 authenticated static APK acceptance

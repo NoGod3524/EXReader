@@ -84,12 +84,13 @@
     "role": "original document imported once, read, and reopened offline"
   },
   "pins": {
-    "candidate_sha256": null,
-    "candidate_bytes": null,
-    "baseline_sha256": null,
-    "test_apk_sha256": null,
-    "release_apk_sha256": null,
-    "sdk_jni_sha256": null
+    "candidate_sha256": "860927a89eb7ab2e6ffcd93d596e7206a830f15d396be0e0135bf82bedb0b5f3",
+    "candidate_bytes": 29721554,
+    "baseline_sha256": "a4627d562df9c2436a9f91f1371112de5ad6801e4f43544546c412195e1d0c74",
+    "test_apk_sha256": "dae5e91a5480d68d69d164efc2ee56abfb7bb9cf4084eb4e2fae80fa94aa13bf",
+    "release_apk_sha256": "348c8c5bc81ab323ffb12577cd89bdb90bc2cf290bc0dc6511ef97eb755a1416",
+    "sdk_jni_sha256": "88ebe479a3aab9e5bc6ee93e3bb4d8dcc67301fd1e7c310da84118027310dc19",
+    "apk_jni_sha256": "288b0efe39ba577ef923957d24dff3c4e9e70aaab6b92701e25e214717e3818a"
   },
   "scope": {
     "debug_candidate_only": true,
@@ -98,5 +99,10 @@
     "signing_authority": false,
     "emulator_only": true,
     "native_error_analysis": false
+  },
+  "pin_provenance": {
+    "derived_at": "run 40214931094 attempt 1 (source 69fc2a90), static job log lines pin_*_derived",
+    "cross_check": "sdk_jni_sha256 and apk_jni_sha256 also appear in the round-1 refusal (run 40214594172)",
+    "note": "pins only pin the authenticated artifact identity; version/minSdk/targetSdk/ABI/permissions are re-derived from the producer source on every run"
   }
 }

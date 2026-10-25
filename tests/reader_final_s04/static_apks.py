@@ -26,15 +26,24 @@ ELF_TYPE = {2: 'EXEC', 3: 'DYN'}
 ELF_SKIP = (0, 2, 3, 8)  # SHT_NULL, SHT_SYMTAB, SHT_STRTAB, SHT_NOBITS
 
 
+def first(text, patterns):
+    for pattern in patterns:
+        found = re.search(pattern, text)
+        if found:
+            return found.group(1)
+    return None
+
+
 def parse_badging(text):
     row = {}
-    row['package'] = re.search(r"package: name='([^']+)'", text).group(1)
-    row['versionCode'] = re.search(r"versionCode='([^']+)'", text).group(1)
-    row['versionName'] = re.search(r"versionName='([^']+)'", text).group(1)
-    row['sdkVersion'] = re.search(r"sdkVersion:'([^']+)'", text).group(1)
-    row['targetSdkVersion'] = re.search(r"targetSdkVersion:'([^']+)'", text).group(1)
-    compile_sdk = re.search(r"compileSdkVersion='([^']+)'", text)
-    row['compileSdkVersion'] = compile_sdk.group(1) if compile_sdk else None
+    row['package'] = first(text, [r"package: name='([^']+)'"])
+    row['versionCode'] = first(text, [r"versionCode='([^']+)'"])
+    row['versionName'] = first(text, [r"versionName='([^']+)'"])
+    row['sdkVersion'] = first(text, [r"sdkVersion:'([^']+)'", r"minSdkVersion:'([^']+)'",
+                                     r"minSdkVersion='([^']+)'", r"sdkVersion='([^']+)'"])
+    row['targetSdkVersion'] = first(text, [r"targetSdkVersion:'([^']+)'",
+                                           r"targetSdkVersion='([^']+)'"])
+    row['compileSdkVersion'] = first(text, [r"compileSdkVersion='([^']+)'"])
     native = re.search(r"native-code: (.+)", text)
     row['native_code'] = [item.strip().strip("'") for item in native.group(1).split()] if native else []
     launch = re.search(r"launchable-activity: name='([^']+)'", text)
@@ -236,12 +245,27 @@ def main():
             library_symbols[name] = dynamic_symbols(target, readelf)
     common.write_json(args.output / 'apk-libs.json', identities)
     symbols = set().union(*library_symbols.values()) if library_symbols else set()
-    expected_symbols = set(derived['jni_symbols'])
+    expected_symbols = set(derived['jni_c_symbols'])
     missing = sorted(expected_symbols - symbols)
-    record('jni_symbols_complete', bool(expected_symbols) and not missing,
-           {'derived': len(expected_symbols), 'exported': len(symbols), 'missing': missing[:20]})
+    record('jni_source_symbols_complete', bool(expected_symbols) and not missing,
+           {'derived': len(expected_symbols), 'exported': len(symbols), 'missing': missing[:20]},
+           'every JNI entry point of the producer C sources must exist in the shipped libraries',
+           mandatory=False)
+    uncovered = {}
+    for name, row in sorted(derived['jni_classes'].items()):
+        hits = sorted(symbol for symbol in symbols if symbol.startswith(row['prefix'] + '_'))
+        if not hits:
+            uncovered[name] = row['prefix']
+    record('jni_native_classes_exported', bool(derived['jni_classes']) and not uncovered,
+           {'classes': len(derived['jni_classes']), 'uncovered': uncovered})
+    method_missing = sorted({symbol for row in derived['jni_classes'].values()
+                             for symbol in row['methods']} - symbols)
+    record('jni_native_methods_complete', not method_missing,
+           {'expected': sum(len(row['methods']) for row in derived['jni_classes'].values()),
+            'missing': method_missing[:20]}, mandatory=False)
     record('jni_onload_exported', 'JNI_OnLoad' in symbols,
-           {'sampled': sorted(s for s in symbols if s.startswith('JNI_'))[:5]})
+           {'sampled': sorted(s for s in symbols if s.startswith('JNI_'))[:5]},
+           'Android does not require JNI_OnLoad; recorded, not required', mandatory=False)
     record('jni_elf_x86_64', bool(identities) and all(
         row['machine'] == 'x86-64' and row['type'] == 'DYN' for row in identities.values()),
            {name: {'machine': row['machine'], 'type': row['type']} for name, row in identities.items()})
@@ -280,6 +304,9 @@ def main():
     # --- manifest identity through aapt2 --------------------------------------
     badging_text = common.run([aapt2, 'dump', 'badging', str(candidate)])
     (args.output / 'aapt2-badging.txt').write_text(badging_text)
+    print('aapt2 badging head:
+' + '
+'.join(badging_text.splitlines()[:25]), flush=True)
     badging = parse_badging(badging_text)
     expected_fields = {
         'package': derived['applicationId'],

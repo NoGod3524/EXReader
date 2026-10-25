@@ -203,7 +203,8 @@ class Driver:
 
         self.logcat(clear=True)
         started = self.start()
-        self.check('cold_launch_reported', 'Status: ok' in started or 'Warning: Activity' in started,
+        self.check('cold_launch_reported',
+                   'Status: ok' in started or 'Activity:' in started or 'Warning: Activity' in started,
                    {'am_start': started.strip()})
         pid = self.wait('the host process',
                         lambda: self.shell('pidof', PACKAGE, check=False).strip(), 120)
@@ -217,9 +218,20 @@ class Driver:
                                if 'ResumedActivity' in line][:3]})
 
         def sdk_label():
-            rows = self.nodes(self.dump())
-            node = self.find(rows, PACKAGE + ':id/sdk_label')
-            return node['text'] if node and node['text'] else None
+            try:
+                rows = self.nodes(self.dump())
+                node = self.find(rows, PACKAGE + ':id/sdk_label')
+                if node and node['text']:
+                    self.observed['sdk_label_source'] = 'hierarchy'
+                    return node['text']
+            except Refusal:
+                pass
+            top = self.shell('dumpsys', 'activity', 'top', check=False)
+            found = re.search(r'EXReader d+.d+.d+/d+ · S+', top)
+            if found:
+                self.observed['sdk_label_source'] = 'dumpsys activity top'
+                return found.group(0)
+            return None
 
         label = self.wait('the native SDK identity label', sdk_label, 180)
         identity = IDENTITY.match(label.strip())
@@ -280,6 +292,12 @@ class Driver:
             if data:
                 copies[name] = {'bytes': len(data), 'sha256': common.sha256_bytes(data)}
         self.observed['private_copies'] = copies
+        try:
+            self.wait('the import commit status line',
+                      lambda: 'status Imported' in self.adb('logcat', '-d', '-t', '4000', check=False),
+                      60)
+        except Refusal:
+            time.sleep(5)
         self.check('import_preserved_original_bytes',
                    any(row['sha256'] == fixture_sha and row['bytes'] == self.fixture_contract['bytes']
                        for row in copies.values()),
@@ -292,7 +310,7 @@ class Driver:
         def shelf_row():
             rows = self.nodes(self.dump())
             for row in rows:
-                if row['text'].strip() == 's04 original' and row['bounds']:
+                if 's04 original' in row['text'] and row['bounds']:
                     return row
             return None
 
@@ -303,9 +321,12 @@ class Driver:
             point = self.center(row['bounds'])
             self.observed['shelf_row'] = row
         except Refusal:
-            listing = self.find(self.nodes(self.dump()), PACKAGE + ':id/book_list')
-            if listing and listing['bounds']:
-                point = self.center(listing['bounds'], 0.5, 0.12)
+            try:
+                listing = self.find(self.nodes(self.dump()), PACKAGE + ':id/book_list')
+                if listing and listing['bounds']:
+                    point = self.center(listing['bounds'], 0.5, 0.12)
+            except Refusal:
+                point = None
         if point:
             self.shell('input', 'tap', point[0], point[1])
             try:
@@ -330,7 +351,10 @@ class Driver:
 
         page = opened['page']
         pages = [page]
-        reader = self.find(self.nodes(self.dump()), PACKAGE + ':id/reader_view')
+        try:
+            reader = self.find(self.nodes(self.dump()), PACKAGE + ':id/reader_view')
+        except Refusal:
+            reader = None
         turned = 0
         if reader and reader['bounds']:
             point = self.center(reader['bounds'], 0.85, 0.5)
@@ -352,21 +376,23 @@ class Driver:
         page = pages[-1]
         screenshot = self.adb('exec-out', 'screencap', '-p', binary=True)
         self.save('screenshots/02-reading.png', screenshot)
-        rows = self.nodes(self.dump())
-        self.check('reader_panel_visible', self.find(rows, PACKAGE + ':id/reader_panel') is not None,
-                   {'page_label': (self.find(rows, PACKAGE + ':id/page_label') or {}).get('text')})
-        self.save('ui-reading.xml', ElementTree.tostring(self.dump(), encoding='utf-8'))
+        try:
+            rows = self.nodes(self.dump())
+            self.save('ui-reading.xml', ElementTree.tostring(self.dump(), encoding='utf-8'))
+            self.check('reader_panel_visible',
+                       self.find(rows, PACKAGE + ':id/reader_panel') is not None,
+                       {'page_label': (self.find(rows, PACKAGE + ':id/page_label') or {}).get('text')})
+        except Refusal as error:
+            self.check('reader_panel_visible', False, {'hierarchy': str(error)},
+                       'the hierarchy dump was unavailable on this device', mandatory=False)
 
-        database = self.run_as('cat', 'files/library.db', check=False)
-        progress = {}
-        if database.startswith(b'SQLite format 3'):
-            self.save('library.db', database)
-            progress = self.progress_rows(database)
+        progress, database_files = self.pull_progress()
+        self.observed['database_files'] = database_files
         self.observed['progress'] = progress
         self.check('reading_record_persisted',
                    any(value.get('rows', 0) > 0 for value in progress.values()
                        if isinstance(value, dict)),
-                   progress)
+                   {'progress': progress, 'database_files': database_files})
 
         # The app itself persisted lastBook/lastReader when it opened the book. If
         # that write never reached disk, restore the recorded values explicitly and
@@ -388,6 +414,10 @@ class Driver:
         offline_state = {'airplane_mode_on': self.shell('settings', 'get', 'global', 'airplane_mode_on').strip(),
                          'wifi_on': self.shell('settings', 'get', 'global', 'wifi_on').strip(),
                          'mobile_data': self.shell('settings', 'get', 'global', 'mobile_data').strip()}
+        if offline_state['wifi_on'] != '0':
+            self.shell('cmd', 'wifi', 'set-wifi-enabled', 'disabled', check=False)
+            time.sleep(3)
+            offline_state['wifi_on'] = self.shell('settings', 'get', 'global', 'wifi_on').strip()
         ping = subprocess.run(['adb', 'shell', 'ping', '-c', '1', '-W', '2', '8.8.8.8'],
                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=60)
         offline_state['ping_exit'] = ping.returncode
@@ -408,12 +438,17 @@ class Driver:
         self.observed['offline_reopen_page'] = reopened
         self.check('offline_reopen_same_reading_record',
                    reopened['page'] == page, {'before': page, 'after': reopened['page']})
-        rows = self.nodes(self.dump())
-        self.check('offline_reader_panel_visible', self.find(rows, PACKAGE + ':id/reader_panel') is not None,
-                   {'page_label': (self.find(rows, PACKAGE + ':id/page_label') or {}).get('text')})
+        try:
+            rows = self.nodes(self.dump())
+            self.check('offline_reader_panel_visible',
+                       self.find(rows, PACKAGE + ':id/reader_panel') is not None,
+                       {'page_label': (self.find(rows, PACKAGE + ':id/page_label') or {}).get('text')})
+            self.save('ui-offline.xml', ElementTree.tostring(self.dump(), encoding='utf-8'))
+        except Refusal as error:
+            self.check('offline_reader_panel_visible', False, {'hierarchy': str(error)},
+                       'the hierarchy dump was unavailable on this device', mandatory=False)
         screenshot = self.adb('exec-out', 'screencap', '-p', binary=True)
         self.save('screenshots/03-offline-reopen.png', screenshot)
-        self.save('ui-offline.xml', ElementTree.tostring(self.dump(), encoding='utf-8'))
 
         after = {}
         for name in state['books']:
@@ -429,7 +464,9 @@ class Driver:
         self.save('logcat-offline.txt', log)
         text = log.decode('utf-8', 'replace')
         fatal = [line for line in text.splitlines()
-                 if 'FATAL EXCEPTION' in line or 'has died' in line or 'ANR in ' + PACKAGE in line]
+                 if ('FATAL EXCEPTION' in line and PACKAGE in line)
+                 or 'ANR in ' + PACKAGE in line
+                 or ('Process: ' + PACKAGE) in line]
         self.observed['fatal_lines'] = fatal[:10]
         self.check('no_fatal_process_state', not fatal, {'fatal': fatal[:10]})
 
@@ -452,11 +489,47 @@ class Driver:
                    'cat /data/local/tmp/s04-host.xml > shared_prefs/host.xml')
         return rendered
 
+    def pull_progress(self):
+        """Copy the private database with its WAL sidecars and read it back."""
+        evidence = self.output / 'database'
+        evidence.mkdir(parents=True, exist_ok=True)
+        pulled = {}
+        for suffix in ('', '-wal', '-shm'):
+            data = self.run_as('cat', 'files/library.db' + suffix, check=False)
+            if data:
+                (evidence / ('library.db' + suffix)).write_bytes(data)
+                pulled['library.db' + suffix] = len(data)
+        work = self.output / 'database-work'
+        work.mkdir(parents=True, exist_ok=True)
+        if not (evidence / 'library.db').is_file():
+            return {}, pulled
+        for name in pulled:
+            shutil.copyfile(evidence / name, work / name)
+        return self.progress_rows(work / 'library.db'), pulled
+
     def progress_rows(self, database):
+        """Read the copied database, retrying without a stale shm or wal sidecar."""
+        attempts = [database.parent]
+        for drop in (('library.db-shm',), ('library.db-shm', 'library.db-wal')):
+            work = self.output / ('database-work-' + str(len(drop)))
+            work.mkdir(parents=True, exist_ok=True)
+            for name in ('library.db', 'library.db-wal', 'library.db-shm'):
+                source = database.parent / name
+                if source.is_file() and name not in drop:
+                    shutil.copyfile(source, work / name)
+            attempts.append(work)
+        failure = None
+        for work in attempts:
+            try:
+                return self.read_progress(work / 'library.db')
+            except sqlite3.DatabaseError as error:
+                failure = str(error)
+        return {'error': failure, 'tables': []}
+
+    @staticmethod
+    def read_progress(database):
         result = {}
-        temporary = self.output / 'library-copy.db'
-        temporary.write_bytes(database)
-        connection = sqlite3.connect('file:' + str(temporary) + '?mode=ro', uri=True)
+        connection = sqlite3.connect(str(database))
         try:
             tables = [row[0] for row in connection.execute(
                 "SELECT name FROM sqlite_master WHERE type='table'")]

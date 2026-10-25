@@ -1,18 +1,32 @@
 {
   "package": "S04",
   "accepted": false,
-  "reason": "round 1 refused by the verifier's own byte-equality assumption; strip-aware identity check now in place, round 2 pending",
+  "reason": "round 3 (sealed pins + strip-aware JNI identity + fresh-emulator install/launch/offline reopen) pending",
   "start": "0889f7d1e9a537c6c1b05456547e016b26e1cd85",
   "producer_source": "4a04a9cc74dde67f755c87e87b278d63a254a3ac",
   "producer_run": 40207467982,
   "producer_attempt": 1,
+  "producer_job": 121211376063,
   "complete_product": false,
+  "sealed_pins": {
+    "candidate_sha256": "860927a89eb7ab2e6ffcd93d596e7206a830f15d396be0e0135bf82bedb0b5f3",
+    "candidate_bytes": 29721554,
+    "apk_jni_sha256": "288b0efe39ba577ef923957d24dff3c4e9e70aaab6b92701e25e214717e3818a",
+    "sdk_jni_sha256": "88ebe479a3aab9e5bc6ee93e3bb4d8dcc67301fd1e7c310da84118027310dc19"
+  },
   "runs": [
     {
       "source": "d37a9bc6fbedb9e164a2a50aee4dd92098cba8fa",
       "run": 40214594172,
       "attempt": 1,
-      "result": "static refusal: jni_blob_equals_same_run_sdk_stage (apk 288b0efe…, sdk-stage 88ebe479…); root cause: Gradle strips packaged prebuilt jniLibs, verifier assertion fixed; producer artifact unchanged",
+      "result": "refused by the verifier's own byte-equality assumption on the packaged JNI blob (apk 288b0efe… vs sdk-stage 88ebe479…); root cause: Gradle strips prebuilt jniLibs at packaging; producer artifact unchanged",
+      "accepted": false
+    },
+    {
+      "source": "69fc2a90d2a11ba17fd62a1f3d14c321cbfb1291",
+      "run": 40214931094,
+      "attempt": 1,
+      "result": "JNI identity then passed through exports (38==38) and ELF sections (18 shared, .text/.rodata identical, only .debug_* removed by packaging); static run still failed: (1) expected JNI names lacked the Java_ prefix, (2) aapt2 badging sdkVersion line format not matched, so parse_badging raised; both fixed here",
       "accepted": false
     }
   ]

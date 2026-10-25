@@ -29,6 +29,9 @@ producer 工件与 producer 源码一行未动。
 JNI 导出符号名（`examples/android/app/src/main/cpp/*`）。契约只 pin 这些文件的 git blob id 与 APK/SDK 摘要：
 producer 源码一变就是**拒绝**（`producer_source_sealed` / `documented_expectations_match_source`），不是静默重定基线。
 
+APK 侧只 pin「认证工件身份」这一类无法从源码推导的值（candidate/ baseline/ test/ release APK、APK 内 strip 后的 JNI、同 run sdk-stage JNI 的摘要与字节），
+在 run `40214931094` 由认证工件实测得到并封存（见 `apk-contract.json` 的 `pins`/`pin_provenance`）；从第 3 轮起 `S04_ALLOW_DERIVE=false`，缺 pin 或 pin 不符即拒绝。
+
 ## 静态验收（认证工件，不重建）
 
 | 区域 | 检查 |

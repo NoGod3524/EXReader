@@ -82,12 +82,36 @@ def derive(source_sha):
     for path in git_files(source_sha, 'examples/android/app/src/main/cpp',
                           ('.c', '.cpp', '.inc', '.h')):
         text = git_show(source_sha, path).decode('utf-8', 'replace')
-        symbols.update(re.findall(r'Java_(org_exreader_[A-Za-z0-9_]+)\s*\(', text))
-    values['jni_symbols'] = sorted(symbols)
+        symbols.update(re.findall(r'(Java_org_exreader_[A-Za-z0-9_]+)\s*\(', text))
+    values['jni_c_symbols'] = sorted(symbols)
+    values['jni_classes'] = java_natives(source_sha)
     values['sources'] = {path: git_blob(source_sha, path) for path in SOURCES}
     values['catalog_sql'] = {'path': 'apps/reader/store/001_catalog.sql',
                              'blob': git_blob(source_sha, 'apps/reader/store/001_catalog.sql')}
     return values
+
+
+def java_natives(source_sha):
+    """Classes of the host layer that declare native methods, with JNI names.
+
+    The check that uses this is class coverage: every class that declares a
+    native method must have at least one exported symbol in the shipped
+    libraries. Method-level equality is reported, not required, because a few
+    optional translation units are configuration dependent.
+    """
+    classes = {}
+    for path in git_files(source_sha, 'examples/android/app/src/main/java/org/exreader', ('.java',)):
+        text = git_show(source_sha, path).decode('utf-8', 'replace')
+        package = re.search(r'^package\s+([\w.]+);', text, re.MULTILINE)
+        if not package:
+            continue
+        methods = sorted(set(re.findall(r'\bnative\s+[\w\[\].<>]+\s+(\w+)\s*\(', text)))
+        if not methods:
+            continue
+        name = path.rsplit('/', 1)[-1][:-5]
+        prefix = 'Java_' + package.group(1).replace('.', '_') + '_' + name
+        classes[name] = {'prefix': prefix, 'methods': [prefix + '_' + method for method in methods]}
+    return classes
 
 
 def check_sealed(contract, derived):

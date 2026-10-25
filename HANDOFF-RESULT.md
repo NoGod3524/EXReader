@@ -10,4 +10,7 @@
 - 候选 APK：`build/android-raw3/apks/host-debug.apk`（debug；商店/签名/真机不在范围）
 - 历史失败（保留原样）：run 40214594172 / attempt 1（source d37a9bc6）static job 被我自己的「APK JNI 字节 == sdk-stage 字节」断言拒绝
   （apk 288b0efe… vs stage 88ebe479…）；根因是 Gradle 打包 strip 预置 jniLibs，不是 producer 缺陷；改为导出集合 + ELF section 内容比对，producer 工件与源码未动。
-- 未验证：真机、商店/签名、性能预算、dex 逐方法语义审计；第 2 轮（strip 修复后）尚待执行。
+- 第 2 轮失败（保留原样）：run 40214931094 / attempt 1（source 69fc2a90）。JNI 身份改为导出集合+section 内容后**通过**（38==38 导出、18 个 section 全等，
+  仅 `.debug_*` 被打包剥掉）；但 static 仍失败于两处**我方**缺陷：期望符号漏了 `Java_` 前缀、aapt2 badging 的 minSdk 行格式未匹配致解析抛错。现已修正。
+- 已封存 pin（来自第 2 轮认证工件实测，并与第 1 轮日志交叉一致）：candidate 860927a8…（29721554 B）、apk_jni 288b0efe…、sdk_jni 88ebe479…。
+- 未验证：真机、商店/签名、性能预算、dex 逐方法语义审计；第 3 轮（封存 pin + 新模拟器安装/启动/离线重开）尚待执行。
