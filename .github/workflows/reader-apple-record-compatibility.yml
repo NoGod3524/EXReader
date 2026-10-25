@@ -1,0 +1,47 @@
+name: Apple actual old record upgrade compatibility
+on:
+  push:
+    branches: [codex/reader-apple-record-compatibility]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  native:
+    name: Actual Apple old and upgraded owner processes
+    runs-on: macos-15
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify exact SDK source pair and isolated owner policy
+        run: python3 tests/apple_host/record_compatibility/guard.py
+      - name: Check source syntax in Actions only
+        run: python3 -m py_compile tests/apple_host/record_compatibility/*.py
+      - name: Build installed original SDKs and run actual owner controls and upgrade
+        run: python3 tests/apple_host/record_compatibility/run.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-record-compatibility-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-record-compatibility/evidence/
+          include-hidden-files: true
+          if-no-files-found: error
+  strict:
+    name: Authenticate actual Apple record upgrade evidence
+    needs: native
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate same-run jobs ZIP original reports and binaries
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/apple_host/record_compatibility/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apple-record-compatibility-summary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/apple-record-summary/
+          if-no-files-found: error
