@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "accepted": false,
-  "state": "same_source_scopes_authenticated_two_palette_failures_remain",
-  "tested_source": "f0c272c87b2402979292d0cd973d4f5e7a9f62fd",
+  "state": "same_source_windows_records_and_android_cbz_authenticated_two_palette_failures_remain",
+  "tested_source": "15926e56034e26916b1e585cd9d907825379f17f",
   "branch": "codex/reader-hosts-integration",
-  "merge_baseline": "e90c55885b95d14036b9ab2da6983b6cad01a779",
+  "merge_baseline": "e0c28defc7f2113cb4ccdab5dfe1d2b072915a82",
   "sdk": "9854061be331fe603a1822d9b2b36ee357154927",
   "runs": [
     {
@@ -67,6 +67,95 @@
       "windows_navigation_authenticated": true,
       "android_preferences_controls_authenticated": true,
       "android_page_colors_accepted": false
+    },
+    {
+      "id": 40146977543,
+      "attempt": 1,
+      "source": "c217b29f86b78fa4e6d9a599690e8f6c42a9a56a",
+      "conclusion": "failure",
+      "reason": "Native chooser clipboard input absent before account import; required account step rejected"
+    },
+    {
+      "id": 40153783967,
+      "attempt": 1,
+      "source": "c2f652b97a0dda5f2bbd46fa3386dec231990185",
+      "conclusion": "failure",
+      "authentication_job": 121054519530,
+      "problems": [],
+      "reason": "All declared host scopes authenticated; two real GTK palette failures remain; no Windows records yet"
+    },
+    {
+      "id": 40154395150,
+      "attempt": 1,
+      "source": "15926e56034e26916b1e585cd9d907825379f17f",
+      "conclusion": "failure",
+      "authentication_job": 121056256969,
+      "problems": [],
+      "result": {
+        "accepted": false,
+        "source_sha": "15926e56034e26916b1e585cd9d907825379f17f",
+        "run_id": 40154395150,
+        "attempt": 1,
+        "problems": [],
+        "artifacts": [
+          {
+            "id": 12584167252,
+            "name": "reader-module-composition-report-40154395150-1",
+            "size_in_bytes": 2023,
+            "digest": "sha256:34c267e3084d543bfd2bf83745d85b0d1e432da5b45320a3eb41444207fdbbf4",
+            "expires_at": "2027-01-23T02:25:38Z"
+          },
+          {
+            "id": 12583708754,
+            "name": "reader-windows-search-summary-40154395150-1",
+            "size_in_bytes": 2061,
+            "digest": "sha256:c7c77b2c9b3fddfd7710eda8c5f739dcf828ff1d469940562fbca9f56ce583b7",
+            "expires_at": "2027-01-23T02:25:38Z"
+          },
+          {
+            "id": 12583769308,
+            "name": "reader-gtk-reading-records-40154395150-1",
+            "size_in_bytes": 43314010,
+            "digest": "sha256:e527158fac5ef689ceec6d74682ac663691db44349aae511870570f7e7702cae",
+            "expires_at": "2027-01-23T02:25:38Z"
+          },
+          {
+            "id": 12584397577,
+            "name": "reader-android-cbz-reading-40154395150-1",
+            "size_in_bytes": 145888825,
+            "digest": "sha256:8ddc9451e27c0d894b96267fe7ad180081507b4949c7c79f1578a9bc19837b3e",
+            "expires_at": "2027-01-23T02:25:38Z"
+          }
+        ],
+        "scopes": {
+          "three_desktop_composition": true,
+          "windows_search": true,
+          "windows_navigation": true,
+          "windows_reading_records": true,
+          "gtk_reading_records": true,
+          "gtk_search": true,
+          "gtk_navigation": true,
+          "gtk_preferences": false,
+          "android_reading_search_navigation_emulator": true,
+          "android_preferences_controls_emulator": true,
+          "android_cbz_reading_emulator": true,
+          "android_page_colors": false
+        },
+        "retained_failures": [
+          "dark_theme_and_palette_change_page_pixels",
+          "light_foreground_and_background_change_page_pixels"
+        ],
+        "complete_product": false,
+        "performance_accepted": false,
+        "screen_reader_speech_accepted": false,
+        "physical_device_accepted": false,
+        "apple_host_accepted": false,
+        "six_target_product_accepted": false,
+        "cycle_complete": false,
+        "diagnostic_only": false,
+        "validator_source": "15926e56034e26916b1e585cd9d907825379f17f",
+        "validation_run_id": 40154395150
+      }
     }
   ],
   "retained_palette_failures": [
@@ -81,54 +170,60 @@
   "current_scopes": {
     "three_desktop_composition": true,
     "windows_search": true,
+    "windows_navigation": true,
+    "windows_reading_records": true,
     "gtk_reading_records": true,
     "gtk_search": true,
     "gtk_navigation": true,
     "gtk_preferences": false,
     "android_reading_search_navigation_emulator": true,
-    "windows_navigation": true,
     "android_preferences_controls_emulator": true,
+    "android_cbz_reading_emulator": true,
     "android_page_colors": false
   },
   "current_jobs": {
-    "source_and_syntax": 121021353233,
-    "composition_linux": 121021403976,
-    "composition_windows": 121021404003,
-    "composition_macos": 121021403991,
-    "composition_strict": 121026893848,
-    "windows_search_and_navigation": 121021403886,
-    "windows_strict": 121023083304,
-    "gtk": 121021403919,
-    "android": 121021404038,
-    "host_authentication": 121026966594
+    "source_and_syntax": 121052539850,
+    "composition_linux": 121052568735,
+    "composition_windows": 121052568727,
+    "composition_macos": 121052568782,
+    "composition_strict": 121054022847,
+    "windows_search_and_records": 121052568708,
+    "windows_strict": 121054500417,
+    "gtk": 121052568674,
+    "android": 121052568790,
+    "host_authentication": 121056256969
   },
   "current_artifacts": [
     {
-      "id": 12581155863,
-      "name": "reader-module-composition-report-40143985644-1",
-      "bytes": 2024,
-      "digest": "sha256:abf456c22f136b26acf64e994905ee6ce769496e35be5198707fa8d33f63a7fa"
+      "id": 12584167252,
+      "name": "reader-module-composition-report-40154395150-1",
+      "size_in_bytes": 2023,
+      "digest": "sha256:34c267e3084d543bfd2bf83745d85b0d1e432da5b45320a3eb41444207fdbbf4",
+      "expires_at": "2027-01-23T02:25:38Z"
     },
     {
-      "id": 12579903595,
-      "name": "reader-windows-search-summary-40143985644-1",
-      "bytes": 1425,
-      "digest": "sha256:e559fe41da9fdc92b98b47f02dcc0950f40244021e0b66503ae8d9e59a81b020"
+      "id": 12583708754,
+      "name": "reader-windows-search-summary-40154395150-1",
+      "size_in_bytes": 2061,
+      "digest": "sha256:c7c77b2c9b3fddfd7710eda8c5f739dcf828ff1d469940562fbca9f56ce583b7",
+      "expires_at": "2027-01-23T02:25:38Z"
     },
     {
-      "id": 12580301276,
-      "name": "reader-gtk-reading-records-40143985644-1",
-      "bytes": 43314160,
-      "digest": "sha256:14e854788b173f324b06d45a9ba104fd40e697192eb0f78111131a42d31cfc57"
+      "id": 12583769308,
+      "name": "reader-gtk-reading-records-40154395150-1",
+      "size_in_bytes": 43314010,
+      "digest": "sha256:e527158fac5ef689ceec6d74682ac663691db44349aae511870570f7e7702cae",
+      "expires_at": "2027-01-23T02:25:38Z"
     },
     {
-      "id": 12579733940,
-      "name": "reader-android-preferences-40143985644-1",
-      "bytes": 141775204,
-      "digest": "sha256:2f33300adcf01f43e6d47ea3d36f4dbd44a5b381722fa9c351195d12bcb58c7f"
+      "id": 12584397577,
+      "name": "reader-android-cbz-reading-40154395150-1",
+      "size_in_bytes": 145888825,
+      "digest": "sha256:8ddc9451e27c0d894b96267fe7ad180081507b4949c7c79f1578a9bc19837b3e",
+      "expires_at": "2027-01-23T02:25:38Z"
     }
   ],
-  "current_artifact_expiry": "2027-01-22T23:44:57Z",
+  "current_artifact_expiry": "2027-01-23T02:25:38Z",
   "preserved_diagnostic": {
     "run": 40140526318,
     "validator_source": "f09148bac21df08446173590e67492320819a82e",
@@ -139,45 +234,100 @@
     "problems": []
   },
   "previous_authenticated_evidence": {
-    "source": "7adda19cb5dd4108d4b4a434a8f2bb619519529d",
+    "source": "f0c272c87b2402979292d0cd973d4f5e7a9f62fd",
     "jobs": {
-      "source_and_syntax": 121014076303,
-      "composition_linux": 121014126221,
-      "composition_windows": 121014126264,
-      "composition_macos": 121014126282,
-      "composition_strict": 121016990543,
-      "windows_search": 121014126238,
-      "windows_strict": 121015971296,
-      "gtk": 121014126270,
-      "android": 121014126184,
-      "host_authentication": 121018373358
+      "source_and_syntax": 121021353233,
+      "composition_linux": 121021403976,
+      "composition_windows": 121021404003,
+      "composition_macos": 121021403991,
+      "composition_strict": 121026893848,
+      "windows_search_and_navigation": 121021403886,
+      "windows_strict": 121023083304,
+      "gtk": 121021403919,
+      "android": 121021404038,
+      "host_authentication": 121026966594
     },
     "artifacts": [
       {
-        "id": 12579440752,
-        "name": "reader-module-composition-report-40141520772-1",
-        "bytes": 2026,
-        "digest": "sha256:1c049f518dfbe4a368af4e6006eb218076904f6fb65d1329e308a58add97637b"
+        "id": 12581155863,
+        "name": "reader-module-composition-report-40143985644-1",
+        "bytes": 2024,
+        "digest": "sha256:abf456c22f136b26acf64e994905ee6ce769496e35be5198707fa8d33f63a7fa"
       },
       {
-        "id": 12579082302,
-        "name": "reader-windows-search-summary-40141520772-1",
-        "bytes": 752,
-        "digest": "sha256:106106d263acf885b28806490f206bd18b27164fcb6d1bb2acf4cb55bc16a3db"
+        "id": 12579903595,
+        "name": "reader-windows-search-summary-40143985644-1",
+        "bytes": 1425,
+        "digest": "sha256:e559fe41da9fdc92b98b47f02dcc0950f40244021e0b66503ae8d9e59a81b020"
       },
       {
-        "id": 12579641183,
-        "name": "reader-gtk-reading-records-40141520772-1",
-        "bytes": 43316682,
-        "digest": "sha256:ba4612b1c3d7c21e8bb7fa74176a88f79ec004dea2798bebfa4e1fa901bb1d41"
+        "id": 12580301276,
+        "name": "reader-gtk-reading-records-40143985644-1",
+        "bytes": 43314160,
+        "digest": "sha256:14e854788b173f324b06d45a9ba104fd40e697192eb0f78111131a42d31cfc57"
       },
       {
-        "id": 12579262436,
-        "name": "reader-android-reading-40141520772-1",
-        "bytes": 136586817,
-        "digest": "sha256:20874842a687b65646a125d678da787b6dc528139bf1263eedf69591991aa5e4"
+        "id": 12579733940,
+        "name": "reader-android-preferences-40143985644-1",
+        "bytes": 141775204,
+        "digest": "sha256:2f33300adcf01f43e6d47ea3d36f4dbd44a5b381722fa9c351195d12bcb58c7f"
       }
     ],
-    "artifact_expiry": "2027-01-22T23:08:49Z"
-  }
+    "artifact_expiry": "2027-01-22T23:44:57Z",
+    "scopes": {
+      "three_desktop_composition": true,
+      "windows_search": true,
+      "gtk_reading_records": true,
+      "gtk_search": true,
+      "gtk_navigation": true,
+      "gtk_preferences": false,
+      "android_reading_search_navigation_emulator": true,
+      "windows_navigation": true,
+      "android_preferences_controls_emulator": true,
+      "android_page_colors": false
+    },
+    "previous": {
+      "source": "7adda19cb5dd4108d4b4a434a8f2bb619519529d",
+      "jobs": {
+        "source_and_syntax": 121014076303,
+        "composition_linux": 121014126221,
+        "composition_windows": 121014126264,
+        "composition_macos": 121014126282,
+        "composition_strict": 121016990543,
+        "windows_search": 121014126238,
+        "windows_strict": 121015971296,
+        "gtk": 121014126270,
+        "android": 121014126184,
+        "host_authentication": 121018373358
+      },
+      "artifacts": [
+        {
+          "id": 12579440752,
+          "name": "reader-module-composition-report-40141520772-1",
+          "bytes": 2026,
+          "digest": "sha256:1c049f518dfbe4a368af4e6006eb218076904f6fb65d1329e308a58add97637b"
+        },
+        {
+          "id": 12579082302,
+          "name": "reader-windows-search-summary-40141520772-1",
+          "bytes": 752,
+          "digest": "sha256:106106d263acf885b28806490f206bd18b27164fcb6d1bb2acf4cb55bc16a3db"
+        },
+        {
+          "id": 12579641183,
+          "name": "reader-gtk-reading-records-40141520772-1",
+          "bytes": 43316682,
+          "digest": "sha256:ba4612b1c3d7c21e8bb7fa74176a88f79ec004dea2798bebfa4e1fa901bb1d41"
+        },
+        {
+          "id": 12579262436,
+          "name": "reader-android-reading-40141520772-1",
+          "bytes": 136586817,
+          "digest": "sha256:20874842a687b65646a125d678da787b6dc528139bf1263eedf69591991aa5e4"
+        }
+      ],
+      "artifact_expiry": "2027-01-22T23:08:49Z"
+    }
+  },
+  "current_authentication_problems": []
 }
