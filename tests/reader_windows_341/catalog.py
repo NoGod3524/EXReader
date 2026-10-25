@@ -13,7 +13,7 @@ NEW = "{'phase': '4', 'engine': '3.41.0', 'pid': str(process.pid)}"
 
 def main():
     assert os.environ.get('GITHUB_ACTIONS') == 'true'
-    original = PATH.read_text()
+    original = PATH.read_text(encoding='utf-8')
     assert original.count(OLD) == 1
     adapted = original.replace(OLD, NEW)
     code = compile(adapted, str(PATH), 'exec')

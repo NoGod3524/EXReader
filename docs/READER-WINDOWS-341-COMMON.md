@@ -17,6 +17,11 @@ literal to `3.41.0`, retains the exact original file and every other assertion,
 and records both source hashes plus the one-literal adaptation. The old account
 test's legacy `parser_version=3.40.0` record remains unchanged.
 
+Third attempt `40192852460` on `ee4a86db` again passed UI158 and stopped at
+the new catalog wrapper's implicit Windows cp1252 decoding of UTF-8 source.
+All new source reads now explicitly use UTF-8; the catalog adapter preflight
+also runs on Windows before any build, alongside the Ubuntu preflight.
+
 The main `ws-host` compiles SDK3.41, F3, cloud import, bulk organization,
 reading records, search and navigation together. All original Windows suites
 run on that same production executable: F1 264, F2 130, navigation31, records32,

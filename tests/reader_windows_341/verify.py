@@ -30,7 +30,7 @@ def module(name, path):
 
 def original_f3():
     path = ROOT / 'tests/reader_windows_preferences/verify.py'
-    code = path.read_text()
+    code = path.read_text(encoding='utf-8')
     require(code.count(OLD_ROOT) == 1, 'original F3 baseline adapter is no longer one literal path')
     # Retain every original F3 assertion and the complete recursive F1/F2/records
     # judges. Only the explicit 3.40 baseline ZIP root differs from old W01.
@@ -120,7 +120,7 @@ def main():
             value = load('windows-341-identity.json'); validate_identity(value, source, run, attempt)
             catalog = module('common_catalog_adapter', ROOT / 'tests/reader_windows_341/catalog.py')
             catalog_proof = load('windows-341-catalog-adapter.json')
-            catalog_source = catalog.PATH.read_text()
+            catalog_source = catalog.PATH.read_text(encoding='utf-8')
             require(catalog_source.count(catalog.OLD) == 1 and
                     catalog_proof['source_sha'] == source and str(catalog_proof['run_id']) == str(run) and
                     str(catalog_proof['attempt']) == str(attempt) and catalog_proof['changed_literal_count'] == 1 and

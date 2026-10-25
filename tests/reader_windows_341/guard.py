@@ -22,9 +22,9 @@ def main():
     for path in subprocess.check_output(['git', 'diff', '--name-only', BASE, source], text=True).splitlines():
         assert path.startswith(('tests/reader_windows_341/', 'docs/READER-WINDOWS-341-COMMON',
                                 'docs/validation/reader-windows-341-common')) or path == WORKFLOW, path
-    header = (ROOT / 'apps/reader/revisions/include/reader_revisions.h').read_text()
+    header = (ROOT / 'apps/reader/revisions/include/reader_revisions.h').read_text(encoding='utf-8')
     assert '#define READER_REVISION_ANCHOR_MAX_VERSION 2u' in header
-    workflow = (ROOT / WORKFLOW).read_text()
+    workflow = (ROOT / WORKFLOW).read_text(encoding='utf-8')
     for required in ('-DEXR_SDK_VERSION=3.41.0', '-DEXR_READER_WINDOWS_PREFERENCES=ON',
                      '-DEXR_READER_WINDOWS_IMPORT_ORGANIZE=ON', '-DEXR_READER_PREFS_COMMIT_REVIEW_BUILD=ON',
                      'check_commit.py', 'check_ui.py', FROZEN):
