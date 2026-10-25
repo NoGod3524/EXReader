@@ -15,7 +15,8 @@
     {"run_id": 40213972775, "scope": "isolated raw probe", "conclusion": "failure", "reason": "All four installed family/origin refusals and ten owner phases passed; Mac inventory requires exact root-relative members because several filenames repeat under nested folders"},
     {"run_id": 40214173397, "scope": "full candidate", "conclusion": "cancelled", "reason": "Apply the same exact-member Mac inventory correction to the whole source before retained acceptance; do not stitch old producer results"},
     {"run_id": 40214413320, "scope": "isolated raw probe", "conclusion": "failure", "reason": "Full Mac ZIP inventory authenticated and actual GTK account UI completed256shards; fixture incorrectly omitted exreader-sync-v1 namespace so pulled0 was rejected"},
-    {"run_id": 40214986168, "scope": "isolated raw probe", "conclusion": "failure", "reason": "Actual GTK account UI authenticated HTTPS, completed256shards and pulled all15 Mac wires; actual received projection returned non-OK before import; status/message diagnosis added without changing production"}
+    {"run_id": 40214986168, "scope": "isolated raw probe", "conclusion": "failure", "reason": "Actual GTK account UI authenticated HTTPS, completed256shards and pulled all15 Mac wires; peer probe omitted the actual GTK startup shelf command, leaving metadata_ready without its catalog owner"},
+    {"run_id": 40215778447, "scope": "isolated raw probe", "conclusion": "failure", "reason": "Diagnostic confirmed EXR_DATABASE before any received row; source trace found missing startup shelf initialization in peer probe"}
   ],
   "raw_host_accepted": false,
   "complete_retained_chain_accepted": false,
