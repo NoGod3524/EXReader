@@ -16,6 +16,21 @@
       "accepted": false,
       "sdk_jobs": {"macos": "success", "iphonesimulator": "success"},
       "failure": "Native ON authored EPUB exact background-color pixel count equality; OFF consumer and both compilations completed. Diagnostic counts and same-coordinate solid interior checks added for the next attempt."
+    },
+    {
+      "source_sha": "049d90ca8b8d64d60d32fdf751b0c5f135de205b",
+      "run_id": "40171561915",
+      "attempt": 1,
+      "accepted": false,
+      "sdk_jobs": {"macos": "success", "iphonesimulator": "success"},
+      "native": {"off_checks": 10, "on_checks": 37, "conclusion": "success", "job_id": 121104676126},
+      "macos_ui": {"cases": 4, "conclusion": "success", "job_id": 121105084987},
+      "failure": "iPhone/iPad driver queried the app container before the application was built. Read-only simctl lookup timed out and the driver terminated Xcode early; collectors then had no application. Strict summary rejected the run.",
+      "artifacts_observed_via_api": [
+        {"id": 12590397763, "bytes": 3321006, "digest": "sha256:5ce6c97a1f4a7d9e4dfe489bbe7a89785cff8b7344af6a74bd4174db66d27c4c", "name": "apple-theme-native-40171561915-1"},
+        {"id": 12590337635, "bytes": 20510473, "digest": "sha256:3af0fcf6ee668fe4734d666382a0516fbc7f254caaa8ea24b65aed4a20ed0c5d", "name": "apple-theme-sdk-macos-40171561915-1"},
+        {"id": 12590322528, "bytes": 20517715, "digest": "sha256:779ab7ff65980756eed1dff61246f704a39e2689e80ffffb6d98dfe94b08b337", "name": "apple-theme-sdk-iphonesimulator-40171561915-1"}
+      ]
     }
   ],
   "pending": ["native_theme", "macos_ui", "iphone_ui", "ipad_ui", "system_notifications", "six_original_suites_same_source"],
