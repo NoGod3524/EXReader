@@ -216,9 +216,19 @@ def main():
     assert 'EXR_READER_SELECTOR_BYTES_CANDIDATE' in added, 'the inserted header region lacks the candidate guard'
     assert 'reader_jh_commit_fixed_v3' in added, 'the inserted header region lacks the raw entry point'
     assert len(added.splitlines()) <= 70, 'the default header grew by ' + str(len(added.splitlines())) + ' lines'
+    # One installed header with one capability guard: the raw declarations exist
+    # in both installs and only the package's compile definition exposes them.
+    assert off_header == on_header, 'the two installs must ship the same guarded header'
+    assert 'EXR_READER_SELECTOR_BYTES_CANDIDATE' in off_header, 'the installed header has no capability guard'
     for symbol in ('reader_jh_commit_fixed_v3', 'reader_jh_commit_wire_raw_v3'):
-        assert symbol not in off_header, 'the default header exposes ' + symbol
         assert symbol in on_header, 'the raw header lacks ' + symbol
+    def exported_definitions(prefix):
+        path = prefix / 'lib/cmake/EXReaderJumpHistory/EXReaderJumpHistoryTargets.cmake'
+        return path.read_text(encoding='utf-8')
+    assert 'EXR_READER_SELECTOR_BYTES_CANDIDATE=1' not in exported_definitions(off), \
+        'the default package exports the raw capability'
+    assert 'EXR_READER_SELECTOR_BYTES_CANDIDATE=1' in exported_definitions(on), \
+        'the raw package does not export its capability'
     off_archives = [p for p in (off / 'lib').glob('*') if 'jump_history' in p.name]
     on_archives = [p for p in (on / 'lib').glob('*') if 'jump_history' in p.name]
     assert len(off_archives) == 1 and len(on_archives) == 1

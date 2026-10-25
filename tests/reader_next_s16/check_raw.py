@@ -334,17 +334,23 @@ def main():
          'the installed reading-state version is ' + repr(package_version(installed, 'EXReaderReadingState')))
     need(package_version(installed, 'EXReaderRevisions') == ('0.4.0' if raw else '0.3.0'),
          'the installed revisions version is ' + repr(package_version(installed, 'EXReaderRevisions')))
+    targets = (installed / 'lib' / 'cmake' / 'EXReaderJumpHistory' / 'EXReaderJumpHistoryTargets.cmake')
+    targets_text = targets.read_text(encoding='utf-8', errors='replace') if targets.exists() else ''
+    need(targets.exists(), 'the installed package has no exported target file')
+    need('EXR_READER_SELECTOR_BYTES_CANDIDATE' in header_text, 'the installed header has no capability guard')
     if raw:
         for symbol in ('reader_jh_commit_fixed_v3', 'reader_jh_commit_wire_raw_v3'):
             need(symbol in header_text, 'the raw installed header lacks ' + symbol)
             need(symbol.encode() in archive_bytes, 'the raw installed archive lacks ' + symbol)
         need('#define READER_JH_INSTALL_VERSION "0.2.0"' in header_text, 'the raw installed header lacks its family macro')
         need('#define READER_JH_VERSION "0.1.0"' in header_text, 'the raw installed header moved the ABI version')
+        need('EXR_READER_SELECTOR_BYTES_CANDIDATE=1' in targets_text, 'the raw package does not export its capability')
     else:
         for symbol in ('reader_jh_commit_fixed_v3', 'reader_jh_commit_wire_raw_v3'):
-            need(symbol not in header_text, 'the default installed header exposes ' + symbol)
             need(symbol.encode() not in archive_bytes, 'the default installed archive carries ' + symbol)
         need('#define READER_JH_INSTALL_VERSION "0.1.0"' in header_text, 'the default header lacks its family macro')
+        need('EXR_READER_SELECTOR_BYTES_CANDIDATE=1' not in targets_text,
+             'the default package exports the raw capability')
 
     summary = {
         'identity': {key: os.environ.get(key) for key in
