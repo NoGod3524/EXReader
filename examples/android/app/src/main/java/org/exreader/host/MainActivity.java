@@ -81,6 +81,10 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
     private ReadingPanel readingPanel;
     private PreferencesPanel preferencesPanel;
     private volatile ReadingPreferences readingPreferences;
+    private volatile boolean pageThemeOriginal=true;
+    private volatile long themeRevision;
+    private int sampledSystemTheme=-1,pendingSystemTheme=-1;
+    private boolean applyingSystemTheme;
     private String preferencesLoadError;
     private ReadingRequests readingRequests;
     private ReadingHistory readingHistory;
@@ -165,6 +169,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         super.onCreate(savedInstanceState);
         ownerEpoch = OWNER_EPOCH.incrementAndGet();
         prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
+        pageThemeOriginal=prefs.getBoolean("pageThemeOriginal",true);
         fontSize = prefs.getFloat("font", 24f);
         zoom = prefs.getFloat("zoom", 1f);
         if (savedInstanceState != null) {
@@ -420,6 +425,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         hideLoading();
         setActionsEnabled(true);
         ui.post(() -> { if (!destroyed && imports != null) imports.pump(); });
+        if(BuildConfig.READER_PAGE_THEME)ui.post(this::drainSystemTheme);
     }
 
     private void taskFailed(long gen, String prefix, Throwable error) {
@@ -459,6 +465,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         final long gen = generation;
         final float requestedFont = fontSize, requestedZoom = zoom;
         final ReadingPreferences requestedAppearance=readingPreferences;
+        final PageTheme requestedTheme=PageTheme.sample(requestedAppearance,systemTheme(),pageThemeOriginal);
         showLoading("Opening " + displayTitle + "...", true);
         final long requestedOffset = offset;
         final int requestedPage = page;
@@ -498,12 +505,12 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                     int requested = requestedPage >= 0 ? requestedPage : (int) Math.max(0, target.position);
                     load = candidateFixed.load(requested, requestedZoom, task);
                 } else if(bounded) {
-                    candidateReflow=requestedAppearance==null?new ReflowSession(store,target.id,fontBytes(),requestedFont):new ReflowSession(store,target.id,fontBytes(),requestedAppearance);
+                    candidateReflow=requestedAppearance==null?new ReflowSession(store,target.id,fontBytes(),requestedFont):new ReflowSession(store,target.id,fontBytes(),requestedAppearance,requestedTheme.forFormat(target.format));
                     int display=requestedPage>=0?requestedPage:prefs.getInt("display_"+target.id,0);
                     load=candidateReflow.restore(display,task);
                     notice=load.snapshot.restoreNotice;
                 } else {
-                    candidateReflow = requestedAppearance==null?new ReflowSession(target.id,path,fontBytes(),requestedFont):new ReflowSession(target.id,path,fontBytes(),requestedAppearance);
+                    candidateReflow = requestedAppearance==null?new ReflowSession(target.id,path,fontBytes(),requestedFont):new ReflowSession(target.id,path,fontBytes(),requestedAppearance,requestedTheme.forFormat(target.format));
                     long savedOffset = requestedOffset;
                     int state = -1;
                     if (savedOffset < 0) {
@@ -587,7 +594,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
         zoomLabel.setVisibility(isFixed ? View.VISIBLE : View.GONE);
         if (notice != null || current.restoreNotice!=null) setStatus(notice!=null?notice:current.restoreNotice);
         if(BuildConfig.READER_PREFERENCES&&preferencesLoadError!=null)setStatus("设置未载入，原文件保留："+preferencesLoadError);
-        else if(BuildConfig.READER_PREFERENCES&&readingPreferences!=null&&readingPreferences.theme==3&&systemTheme()==2)setStatus("系统为深色；阅读页配色暂不支持，保留原页");
+        else if(!BuildConfig.READER_PAGE_THEME&&BuildConfig.READER_PREFERENCES&&readingPreferences!=null&&readingPreferences.theme==3&&systemTheme()==2)setStatus("系统为深色；阅读页配色暂不支持，保留原页");
         Log.i(TAG, "metric {\"event\":\"page\",\"book\":" + bookId + ",\"page\":" + (current.index + 1)
                 + ",\"fixed\":" + isFixed + ",\"bytes\":" + current.bitmapBytes
                 + ",\"ms\":" + load.millis + "}");
@@ -1717,17 +1724,35 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
 
     private File preferencesFile(){return new File(new File(getFilesDir(),"reading-settings"),"preferences.json");}
     private int systemTheme(){return (getResources().getConfiguration().uiMode&android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES?2:1;}
+    @Override protected void onResume(){super.onResume();observeSystemTheme();}
+    @Override public void onConfigurationChanged(android.content.res.Configuration configuration){super.onConfigurationChanged(configuration);observeSystemTheme();}
+    private void observeSystemTheme(){
+        if(!BuildConfig.READER_PAGE_THEME)return;int system=systemTheme();if(system==sampledSystemTheme)return;
+        sampledSystemTheme=system;themeRevision++;pendingSystemTheme=system;
+        if(applyingSystemTheme&&activeTask!=null)activeTask.cancel();drainSystemTheme();
+    }
+    private void drainSystemTheme(){
+        if(pendingSystemTheme<0||destroyed||operation!=0||pageBusy||current==null||readingPreferences==null)return;
+        pendingSystemTheme=-1;if(pageThemeOriginal||readingPreferences.theme!=3||current.fixed||currentBook==null||!PageTheme.sample(readingPreferences,systemTheme(),pageThemeOriginal).forFormat(currentBook.format).enabled)return;
+        applyingSystemTheme=true;applyPreferences(readingPreferences,false,false,()->{applyingSystemTheme=false;drainSystemTheme();},error->{applyingSystemTheme=false;drainSystemTheme();});
+    }
     @Override public ReadingPreferences preferences(){return readingPreferences;}
+    @Override public boolean preferencesOriginal(){return pageThemeOriginal;}
     @Override public void preferencesCancel(){if(activeTask!=null)activeTask.cancel();}
     @Override public void preferencesApply(ReadingPreferences value,Runnable done,java.util.function.Consumer<Throwable> failed){
+        applyPreferences(value,pageThemeOriginal,true,done,failed);
+    }
+    @Override public void preferencesApplyTheme(ReadingPreferences value,boolean original,Runnable done,java.util.function.Consumer<Throwable> failed){applyPreferences(value,original,true,done,failed);}
+    private void applyPreferences(ReadingPreferences value,boolean original,boolean save,Runnable done,java.util.function.Consumer<Throwable> failed){
         if(worker==null||current==null||operation!=0||pageBusy||!BuildConfig.READER_PREFERENCES){failed.accept(new IllegalStateException("请先完成当前阅读操作"));return;}
         final PageSnapshot frame=current;final long book=frame.bookId;final String path=prefs.getString("path_"+book,null);final int system=systemTheme();
+        final PageTheme palette=PageTheme.sample(value,system,original).forFormat(currentBook==null?0:currentBook.format);final long revision=themeRevision;
         final HostTask task=beginTask(3);final long gen=generation;
         worker.execute(()->{
             PageLoad load=null;ReflowSession candidate=null;boolean transferred=false;
             try{
                 task.check();if(sessionBookId!=book)throw new HostTask.Cancelled();NativePreferences.validate(value);
-                if(NativePreferences.effectiveTheme(value,system)==2)throw new IOException("深色阅读页暂不可用，设置未保存");
+                if(!BuildConfig.READER_PAGE_THEME&&NativePreferences.effectiveTheme(value,system)==2)throw new IOException("深色阅读页暂不可用，设置未保存");
                 if(frame.fixed){load=fixed.load(frame.index,value.zoom/100f,task);}
                 else{
                     ReadingControl control=new ReadingControl(task,null,"preferences-location",false);
@@ -1745,7 +1770,7 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                         }
                     }
                     if(!resolved.found())throw new IOException("当前位置未精确定位，设置未保存");
-                    candidate=frame.bounded?new ReflowSession(store,book,fontBytes(),value):new ReflowSession(book,path,fontBytes(),value);
+                    candidate=frame.bounded?new ReflowSession(store,book,fontBytes(),value,palette):new ReflowSession(book,path,fontBytes(),value,palette);
                     load=candidate.seekReading(resolved,task);if(load!=null){load.snapshot.preferencesPoint=resolved.start;load.snapshot.preferencesRangeEnd=resolved.end;}
                 }
                 if(load==null)throw new IOException("没有可显示页面，设置未保存");
@@ -1753,17 +1778,18 @@ public final class MainActivity extends Activity implements ReaderView.Listener,
                 ReadingControl gate=new ReadingControl(task,getFilesDir(),"preferences",BuildConfig.DEBUG&&getIntent().getBooleanExtra("exr_preferences_gate",false));gate.check();gate.check();gate.check();
                 final PageLoad ready=load;final ReflowSession newReflow=candidate;
                 synchronized(PREFERENCES_LOCK){
-                    task.check();if(destroyed||ownerEpoch!=OWNER_EPOCH.get())throw new HostTask.Cancelled();
+                    task.check();if(destroyed||ownerEpoch!=OWNER_EPOCH.get()||BuildConfig.READER_PAGE_THEME&&value.theme==3&&revision!=themeRevision)throw new HostTask.Cancelled();
                     task.commit(()->{
                         // Save is the only fallible publication. No SDK progress or
                         // product mutation follows it; the old exact point remains saved.
-                        NativePreferences.save(value,preferencesFile().getPath(),task);
+                        if(save)NativePreferences.save(value,preferencesFile().getPath(),task);
                         ready.accept();if(newReflow!=null){ReflowSession old=reflow;reflow=newReflow;if(old!=null)old.close();}
                         readingPreferences=value;preferencesLoadError=null;
+                        pageThemeOriginal=original;if(save&&BuildConfig.READER_PAGE_THEME)prefs.edit().putBoolean("pageThemeOriginal",original).apply();
                     });
                 }
                 transferred=true;final PageLoad delivered=load;
-                postUi(()->{if(gen!=generation)return;fontSize=value.font;zoom=value.zoom/100f;readerView.setTurnPreferences(value.direction,value.input);applyPage(gen,delivered,null);setStatus("阅读设置已保存");done.run();});
+                postUi(()->{if(gen!=generation){delivered.snapshot.bitmap.recycle();return;}if(BuildConfig.READER_PAGE_THEME&&value.theme==3&&revision!=themeRevision){delivered.snapshot.bitmap.recycle();finishTask(gen);done.run();return;}fontSize=value.font;zoom=value.zoom/100f;readerView.setTurnPreferences(value.direction,value.input);applyPage(gen,delivered,null);setStatus(save?"阅读设置已保存":"阅读配色已更新");done.run();});
             }catch(Throwable error){postUi(()->{if(gen!=generation)return;finishTask(gen);setStatus(error instanceof HostTask.Cancelled?"设置已取消，保留原页":message(error));failed.accept(error);});}
             finally{if(load!=null)load.close();if(!transferred&&candidate!=null)candidate.close();}
         });

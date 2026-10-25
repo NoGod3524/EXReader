@@ -1,0 +1,484 @@
+{
+  "accepted": true,
+  "status": "accepted-declared-api34-emulator-scopes-only",
+  "sdk_candidate": "edddc463c06ed5731195cdb8f06b2df6dff7699e",
+  "post_merge_base": "82ca471c867209f48d3c07eaf92baf0eee57c74b",
+  "expected_inherited_business_checks": 120,
+  "expected_theme_checks": 10,
+  "runs": [
+    {
+      "source_sha": "f7025b6b4159f0decfe98929bd8255832346fcad",
+      "run": 40176117979,
+      "attempt": 1,
+      "accepted": false,
+      "failure": "original_navigation_first_row_layout_readiness_race",
+      "diagnostic_passed_business_groups": {
+        "host_import": 20,
+        "host_sync": 16,
+        "search": 15
+      }
+    },
+    {
+      "source_sha": "5aa59af5cad7076aa5174571fcdbb90a3eff2a08",
+      "run": 40176912569,
+      "attempt": 1,
+      "accepted": false,
+      "failure": "actual_txt_foreground_not_applied_to_bodyless_paragraph_model",
+      "original_binding_pixel_comparison_passed": true
+    },
+    {
+      "theme_first_phase_passed": 9,
+      "accepted": false,
+      "source_sha": "271a18567145716fd9425e026b1efd0d8c975709",
+      "attempt": 1,
+      "run": 40177552847,
+      "failure": "new runner incorrectly required PID to stay alive after normal instrumentation finish"
+    },
+    {
+      "status": "cancelled",
+      "accepted": false,
+      "reason": "superseded known instrumentation-exit runner condition",
+      "source_sha": "828f782e7bb970d8ae74d620eccf602f5fd139ca",
+      "attempt": 1,
+      "run": 40178167022
+    },
+    {
+      "checks": 130,
+      "run": 40178247177,
+      "attempt": 1,
+      "source_sha": "57bc3966c20171f2f51e3fc6bf02f1ad1f7e5165",
+      "accepted": true
+    }
+  ],
+  "retained_upstream_failure": {
+    "run": 40175058872,
+    "check": "panned_pdf_selection_and_clipped_semantic_bounds_match_actual_page",
+    "failure": "actual timer/pointer enters real selection mode before drag",
+    "original_assertion_unchanged": true
+  },
+  "physical_device": false,
+  "performance_accepted": false,
+  "sdk340_record_migration_accepted": false,
+  "six_platform_interoperability_accepted": false,
+  "complete_product": false,
+  "source_sha": "57bc3966c20171f2f51e3fc6bf02f1ad1f7e5165",
+  "branch": "codex/reader-android-page-theme",
+  "run": 40178247177,
+  "attempt": 1,
+  "producer_job": 121123515486,
+  "summary_job": 121126256838,
+  "checks": 130,
+  "actual_sdk": "3.41.0",
+  "scope": "API34 default x86_64 Android SDK3.41 actual page theme plus 120 inherited business checks",
+  "page_colors_accepted": true,
+  "summary": {
+    "source_sha": "57bc3966c20171f2f51e3fc6bf02f1ad1f7e5165",
+    "run_id": "40178247177",
+    "attempt": "1",
+    "accepted": true,
+    "scope": "API34 default x86_64 Android SDK3.41 actual page theme plus 120 inherited business checks",
+    "checks": 130,
+    "producer_job": 121123515486,
+    "artifact": {
+      "id": 12593940382,
+      "name": "reader-android-page-theme-40178247177-1",
+      "size_in_bytes": 131405024,
+      "digest": "sha256:1e0f4b7945798b326931684dd8ffdb2863d1f4ebac1a9121f25d46a8e02479ea",
+      "expires_at": "2027-01-23T08:50:53Z"
+    },
+    "apk_sha256": "a90a9cbb9e3c8c7441a2d6b7863ad0b2958b2857836f55b41fe451a98f808a68",
+    "reports": [
+      {
+        "suite": "host-session-android",
+        "checks": 16,
+        "report_sha256": "d9721d8824807204e9a283a2e938359ea8f325c165004969852bd5ea94cec2aa"
+      },
+      {
+        "suite": "android-search",
+        "checks": 15,
+        "report_sha256": "6e9546720f2deb09f929e2fd6d31a7692a2f3bbca36889dd0ee4f097f7605218"
+      },
+      {
+        "suite": "android-navigation",
+        "checks": 18,
+        "report_sha256": "886c75c32bef104a1cf34effcf37e38c4b2aa8705b7610c5f43bc73227611d5b"
+      },
+      {
+        "suite": "android-reading",
+        "checks": 16,
+        "report_sha256": "3ed38ce4d96ff5a12da1301ca9774b09a73125414cbe0d77ee9ae2afc4f4d994"
+      },
+      {
+        "suite": "android-preferences",
+        "checks": 17,
+        "report_sha256": "f6f441d6217d33c8b2e73c552cbd9b42d594d2341d12cbdae62056996c70da98"
+      },
+      {
+        "suite": "android-cbz-reading",
+        "checks": 10,
+        "report_sha256": "98e55486efe38fdcf542eccb3e32bad19b84c3a7d765ecc3b8b8cfd884228fd3"
+      },
+      {
+        "suite": "android-fixed-pan",
+        "checks": 8,
+        "report_sha256": "0031794e7d8b39f8bd33748ab79c37e59da20925dbde56282f07e501a1e38f4d"
+      },
+      {
+        "suite": "android-host-import",
+        "checks": 20,
+        "report_sha256": "49b12a0675362438b6d228ff139d80df3961d95460dbfcb81efb64ab3309d161"
+      },
+      {
+        "suite": "android-page-theme",
+        "checks": 10,
+        "report_sha256": "c4ab93b5c859d80d710c659697691b6184688303f471e8f86983a616d48be2ad"
+      }
+    ],
+    "physical_device": false,
+    "third_party_cloud_provider": false,
+    "complete_product": false,
+    "performance_accepted": false
+  },
+  "native": {
+    "source_sha": "57bc3966c20171f2f51e3fc6bf02f1ad1f7e5165",
+    "run_id": "40178247177",
+    "attempt": "1",
+    "accepted": true,
+    "installed_sdk": "3.41.0",
+    "shared_sdk_sha256": "3530f2f093a1831280a1ce4f078b4be750e09c6e8f31b213a049018ac8892bc2",
+    "host_sha256": "8b91fc11bf9fc131b54c7e1e0738dc74acd73853fc5a00e5d3ca9dac44d0b72a",
+    "sdk340_public_header_rejected": true,
+    "single_shared_sdk_needed": true,
+    "actual_background_import": true
+  },
+  "theme_phases": [
+    {
+      "checks": [
+        {
+          "name": "original_default_uses_existing_unmodified_render_path",
+          "pass": true
+        },
+        {
+          "name": "txt_dark_light_actual_ink_canvas_and_state",
+          "pass": true
+        },
+        {
+          "name": "txt_themed_turn_back_and_actual_selection_anchors",
+          "pass": true
+        },
+        {
+          "name": "bounded_epub_theme_preserves_author_and_png",
+          "pass": true
+        },
+        {
+          "name": "legacy_epub_theme_preserves_author_and_png",
+          "pass": true
+        },
+        {
+          "name": "fixed_pdf_cbz_theme_leaves_image_pixels_identical",
+          "pass": true
+        },
+        {
+          "name": "theme_cancel_discards_entire_candidate_palette",
+          "pass": true
+        },
+        {
+          "name": "system_ui_sample_serial_owner_and_latest_coalesced_palette",
+          "pass": true
+        },
+        {
+          "name": "theme_failure_keeps_last_model_bitmap_and_file",
+          "pass": true
+        }
+      ],
+      "pid": 2454,
+      "passed": true,
+      "phase": "first",
+      "anchors": [
+        {
+          "role": "txt",
+          "parser": "exreader-sdk-3.41.0",
+          "book_key": "txt:3f934989c6fac53a72cacfc99369b7694b56447f80be0c3ef304913bce69c611",
+          "start": 0,
+          "end": 27,
+          "text": "开头中文段落：书内",
+          "part": -1,
+          "path": null,
+          "bookmark_found": true,
+          "highlight_found": true
+        },
+        {
+          "role": "txt-next",
+          "parser": "exreader-sdk-3.41.0",
+          "book_key": "txt:3f934989c6fac53a72cacfc99369b7694b56447f80be0c3ef304913bce69c611",
+          "start": 559,
+          "end": 568,
+          "text": "Z-hit 001",
+          "part": -1,
+          "path": null,
+          "bookmark_found": true,
+          "highlight_found": true
+        },
+        {
+          "role": "txt-back",
+          "parser": "exreader-sdk-3.41.0",
+          "book_key": "txt:3f934989c6fac53a72cacfc99369b7694b56447f80be0c3ef304913bce69c611",
+          "start": 0,
+          "end": 27,
+          "text": "开头中文段落：书内",
+          "part": -1,
+          "path": null,
+          "bookmark_found": true,
+          "highlight_found": true
+        },
+        {
+          "role": "epub",
+          "parser": "exreader-sdk-3.41.0",
+          "book_key": "epub:b3be5dfcc99bcb33bf87694a5553294efa36ccc9e8507f541b70d9bbf8e3be2a",
+          "start": 0,
+          "end": 9,
+          "text": "Theme for",
+          "part": 0,
+          "path": "chapter.xhtml",
+          "bookmark_found": true,
+          "highlight_found": true
+        },
+        {
+          "role": "legacy",
+          "parser": "exreader-sdk-3.41.0",
+          "book_key": "epub:8b202e29d8b277a0eb0dee3073006c7de58408e45f864eef347fd1eb4416bb40",
+          "start": 0,
+          "end": 9,
+          "text": "Theme for",
+          "part": -1,
+          "path": null,
+          "bookmark_found": true,
+          "highlight_found": true
+        }
+      ],
+      "count": 9,
+      "frames": [
+        {
+          "width": 600,
+          "png_sha256": "4e99aa071bfccecaad164988480c654199b55163a30f7ce3f4c70cbfaff8fd5a",
+          "rgba_sha256": "b1f1ddd5b6a7c8622dcb6032a1d37e9ec3fb95f7fb133ad6265200e4ae79293a",
+          "preserved_samples": null,
+          "solid_ink_pixels": 11506,
+          "height": 860,
+          "name": "txt-dark"
+        },
+        {
+          "width": 600,
+          "png_sha256": "3a61c811ab8dab5e3b3b37eb7443445d7764b41769cf1ce09417ce9f7a539fe0",
+          "rgba_sha256": "435113c954b17f9e81a031cff5f0fe6f21ac549a5792e5402a149f1ffff88cfe",
+          "preserved_samples": null,
+          "solid_ink_pixels": 11506,
+          "height": 860,
+          "name": "txt-light"
+        },
+        {
+          "width": 600,
+          "png_sha256": "31a7f630c06d92ab743c4e7dd4d309b79757c13eb91da81e3f356a4f4759f7af",
+          "rgba_sha256": "1e810e6d6e57465fe48e4bf1be4b992dc86d5d4ac8639ce5e26b2feb89543ddb",
+          "preserved_samples": null,
+          "solid_ink_pixels": 3030,
+          "height": 860,
+          "name": "txt-next"
+        },
+        {
+          "width": 600,
+          "png_sha256": "09312f072ee52ee819e6602734d0b8b52b6c1dcc655e0e9e59bd50c7c10c5f06",
+          "rgba_sha256": "6eae88f4369ac8991fed9276f5875a40e62f20759c280f94aebb8a219a0dd961",
+          "preserved_samples": [
+            {
+              "x": 118,
+              "y": 194,
+              "kind": "author-background",
+              "rgba": "e0b070ff",
+              "layout_box": 0
+            },
+            {
+              "x": 72,
+              "y": 237,
+              "kind": "png",
+              "rgba": "1478dcff",
+              "layout_box": 1
+            }
+          ],
+          "solid_ink_pixels": 10932,
+          "height": 860,
+          "name": "epub-dark"
+        },
+        {
+          "width": 600,
+          "png_sha256": "b2c8da7ae312f1e63cd35fecf75224a0825b5d8241dd8164c1ac27359a68b079",
+          "rgba_sha256": "789945671c123914c29b377090b9011b495b32f428ef93285dc42bcde111989c",
+          "preserved_samples": [
+            {
+              "x": 118,
+              "y": 194,
+              "kind": "author-background",
+              "rgba": "e0b070ff",
+              "layout_box": 0
+            },
+            {
+              "x": 72,
+              "y": 237,
+              "kind": "png",
+              "rgba": "1478dcff",
+              "layout_box": 1
+            }
+          ],
+          "solid_ink_pixels": 10929,
+          "height": 860,
+          "name": "epub-light"
+        },
+        {
+          "width": 600,
+          "png_sha256": "09312f072ee52ee819e6602734d0b8b52b6c1dcc655e0e9e59bd50c7c10c5f06",
+          "rgba_sha256": "6eae88f4369ac8991fed9276f5875a40e62f20759c280f94aebb8a219a0dd961",
+          "preserved_samples": [
+            {
+              "x": 118,
+              "y": 194,
+              "kind": "author-background",
+              "rgba": "e0b070ff",
+              "layout_box": 0
+            },
+            {
+              "x": 72,
+              "y": 237,
+              "kind": "png",
+              "rgba": "1478dcff",
+              "layout_box": 1
+            }
+          ],
+          "solid_ink_pixels": 10932,
+          "height": 860,
+          "name": "legacy-dark"
+        },
+        {
+          "width": 600,
+          "png_sha256": "4e99aa071bfccecaad164988480c654199b55163a30f7ce3f4c70cbfaff8fd5a",
+          "rgba_sha256": "b1f1ddd5b6a7c8622dcb6032a1d37e9ec3fb95f7fb133ad6265200e4ae79293a",
+          "preserved_samples": null,
+          "solid_ink_pixels": 11506,
+          "height": 860,
+          "name": "cancel-retained-dark"
+        },
+        {
+          "width": 600,
+          "png_sha256": "4e99aa071bfccecaad164988480c654199b55163a30f7ce3f4c70cbfaff8fd5a",
+          "rgba_sha256": "b1f1ddd5b6a7c8622dcb6032a1d37e9ec3fb95f7fb133ad6265200e4ae79293a",
+          "preserved_samples": null,
+          "solid_ink_pixels": 11506,
+          "height": 860,
+          "name": "system-dark"
+        },
+        {
+          "width": 600,
+          "png_sha256": "3a61c811ab8dab5e3b3b37eb7443445d7764b41769cf1ce09417ce9f7a539fe0",
+          "rgba_sha256": "435113c954b17f9e81a031cff5f0fe6f21ac549a5792e5402a149f1ffff88cfe",
+          "preserved_samples": null,
+          "solid_ink_pixels": 11506,
+          "height": 860,
+          "name": "system-latest-light"
+        },
+        {
+          "width": 600,
+          "png_sha256": "3a61c811ab8dab5e3b3b37eb7443445d7764b41769cf1ce09417ce9f7a539fe0",
+          "rgba_sha256": "435113c954b17f9e81a031cff5f0fe6f21ac549a5792e5402a149f1ffff88cfe",
+          "preserved_samples": null,
+          "solid_ink_pixels": 11506,
+          "height": 860,
+          "name": "io-retained-light"
+        }
+      ]
+    },
+    {
+      "checks": [
+        {
+          "name": "fresh_process_restores_saved_system_theme_real_dark_frame",
+          "pass": true
+        }
+      ],
+      "pid": 2785,
+      "passed": true,
+      "phase": "reopen",
+      "anchors": [
+        {
+          "role": "txt-reopen",
+          "parser": "exreader-sdk-3.41.0",
+          "book_key": "txt:3f934989c6fac53a72cacfc99369b7694b56447f80be0c3ef304913bce69c611",
+          "start": 0,
+          "end": 27,
+          "text": "开头中文段落：书内",
+          "part": -1,
+          "path": null,
+          "bookmark_found": true,
+          "highlight_found": true
+        }
+      ],
+      "count": 1,
+      "frames": [
+        {
+          "width": 600,
+          "png_sha256": "4e99aa071bfccecaad164988480c654199b55163a30f7ce3f4c70cbfaff8fd5a",
+          "rgba_sha256": "b1f1ddd5b6a7c8622dcb6032a1d37e9ec3fb95f7fb133ad6265200e4ae79293a",
+          "preserved_samples": null,
+          "solid_ink_pixels": 11506,
+          "height": 860,
+          "name": "reopen-system-dark"
+        }
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "expires_at": "2027-01-23T08:50:53Z",
+      "digest": "sha256:1e0f4b7945798b326931684dd8ffdb2863d1f4ebac1a9121f25d46a8e02479ea",
+      "id": 12593940382,
+      "name": "reader-android-page-theme-40178247177-1",
+      "size_in_bytes": 131405024
+    },
+    {
+      "expires_at": "2027-01-23T08:50:53Z",
+      "digest": "sha256:cc2ce21b544774e52239703e7b9f566ab52cbfc21c513f505a5484d31bb09eea",
+      "id": 12593485972,
+      "name": "reader-android-page-theme-summary-40178247177-1",
+      "size_in_bytes": 1105
+    }
+  ],
+  "pan_intermittent_failure_claimed_fixed": false,
+  "existing_host_import_protocol": {
+    "checks": 20,
+    "bound_apks": 3,
+    "distinct_pids": 9,
+    "process_phases": 9,
+    "strict_original_zip_verified": true,
+    "actual_held_boundary_kills": 4
+  },
+  "expectation_changes": {
+    "other_f3_assertions_unchanged": true,
+    "fixed_pan_assertions_and_events_unchanged": true,
+    "replaced_gap_checks": [
+      "sdk341_dark_page_actual_palette_saved",
+      "sdk341_actual_system_dark_frame_palette"
+    ],
+    "f3_original_checks": 17,
+    "artifact_record": "android-page-theme/candidate/expectation-diff.json",
+    "fixed_pan_runner_change": "failure diagnostic printing only",
+    "host_sync_runtime_version": "3.41.0"
+  },
+  "android_parser": {
+    "formatter_unchanged": true,
+    "guards_unchanged": true,
+    "blobs": {
+      "NativeCbz": "08dabd4808c400f96f43a7445ad5ef2c6dfa8bf7",
+      "NativeReadingSdk": "f0d7a2c315719f585b1844f8a5e51c4d26bae7b5",
+      "reading_sdk_jni": "44abfeb2ac77ccf23efdfc2af2518ccd7b094c4b",
+      "reading_product_jni": "8238b5dfb78838e22ccdddaf8d7f5dad3764f445"
+    },
+    "actual": "exreader-sdk-3.41.0"
+  }
+}

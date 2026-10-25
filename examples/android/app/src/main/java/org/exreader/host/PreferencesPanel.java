@@ -17,6 +17,8 @@ final class PreferencesPanel {
         ReadingPreferences preferences();
         void preferencesApply(ReadingPreferences value,Runnable done,java.util.function.Consumer<Throwable> failed);
         void preferencesCancel();
+        boolean preferencesOriginal();
+        void preferencesApplyTheme(ReadingPreferences value,boolean original,Runnable done,java.util.function.Consumer<Throwable> failed);
     }
     private final Activity activity;private final Host host;private AlertDialog dialog;private boolean busy;
     PreferencesPanel(Activity activity,Host host){this.activity=activity;this.host=host;}
@@ -39,8 +41,9 @@ final class PreferencesPanel {
         close();ReadingPreferences original=host.preferences();if(original==null)return;
         LinearLayout box=new LinearLayout(activity);box.setOrientation(LinearLayout.VERTICAL);box.setPadding(24,12,24,12);
         EditText font=number(box,"字号 pt",original.font),line=number(box,"行距倍数",original.line),paragraph=number(box,"段距 pt",original.paragraph),margin=number(box,"页边距 pt",original.margin),zoom=number(box,"固定页缩放 %",original.zoom);
-        Spinner theme=choice(box,"主题",new String[]{"浅色","深色（暂不可用）","跟随系统"},original.theme);
-        TextView colors=new TextView(activity);colors.setText("阅读页颜色由文档决定。深色阅读页暂不可用；系统为深色时保持原页并提示。");box.addView(colors);
+        Spinner theme=choice(box,"主题",new String[]{"浅色",BuildConfig.READER_PAGE_THEME?"深色":"深色（暂不可用）","跟随系统"},original.theme);
+        android.widget.CheckBox preserve=new android.widget.CheckBox(activity);preserve.setText("原始配色");preserve.setContentDescription("原始配色");preserve.setChecked(host.preferencesOriginal());if(BuildConfig.READER_PAGE_THEME)box.addView(preserve);
+        TextView colors=new TextView(activity);colors.setText(BuildConfig.READER_PAGE_THEME?"阅读配色用于 TXT / EPUB 的文字和整页背景；图片、作者背景与其他格式保持原色。":"阅读页颜色由文档决定。深色阅读页暂不可用；系统为深色时保持原页并提示。");box.addView(colors);
         Spinner direction=choice(box,"翻页方向",new String[]{"从左向右","从右向左","上下翻页"},original.direction);
         Spinner input=choice(box,"翻页操作",new String[]{"点击","滑动","点击和滑动","方向键"},original.input);
         TextView status=new TextView(activity);status.setContentDescription("阅读设置状态");status.setAccessibilityLiveRegion(android.view.View.ACCESSIBILITY_LIVE_REGION_POLITE);box.addView(status);
@@ -57,7 +60,7 @@ final class PreferencesPanel {
                 float scale=Float.parseFloat(zoom.getText().toString());if(!Float.isFinite(scale)||scale!=(int)scale)throw new IllegalArgumentException("缩放需为整数百分比");
                 ReadingPreferences candidate=original.with(Float.parseFloat(font.getText().toString()),Float.parseFloat(line.getText().toString()),Float.parseFloat(paragraph.getText().toString()),Float.parseFloat(margin.getText().toString()),theme.getSelectedItemPosition()+1,direction.getSelectedItemPosition()+1,input.getSelectedItemPosition()+1,(int)scale);
                 busy=true;owner.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);status.setText("正在准备页面…");
-                host.preferencesApply(candidate,()->{if(dialog==owner){busy=false;close();}},error->{if(dialog==owner){busy=false;owner.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);status.setText(error.getMessage()==null?"未能应用设置":error.getMessage());scroll.post(()->scroll.smoothScrollTo(0,box.getBottom()));}});
+                host.preferencesApplyTheme(candidate,preserve.isChecked(),()->{if(dialog==owner){busy=false;close();}},error->{if(dialog==owner){busy=false;owner.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);status.setText(error.getMessage()==null?"未能应用设置":error.getMessage());scroll.post(()->scroll.smoothScrollTo(0,box.getBottom()));}});
             }catch(IllegalArgumentException error){status.setText(error.getMessage()==null?"请输入有效数值":error.getMessage());scroll.post(()->scroll.smoothScrollTo(0,box.getBottom()));}
         });
     }

@@ -56,6 +56,8 @@ public final class ReaderView extends View {
     private boolean longPress;
     private float downX;
     private float downY;
+    private int lastPointerHit=-1,lastPointerSource,lastPointerAction=-1;
+    private long lastPointerTime;
     private float panX,panY,panLimitX,panLimitY,downPanX,downPanY;
     private boolean panning;
     private int turnDirection=1,turnInput=1;
@@ -142,7 +144,10 @@ public final class ReaderView extends View {
                 .put("pan_x",panX).put("pan_y",panY).put("pan_limit_x",panLimitX).put("pan_limit_y",panLimitY)
                 .put("selection_mode",selectMode).put("selection_start",selection==null?-1:selection.start)
                 .put("selection_end",selection==null?-1:selection.end);
+            if(BuildConfig.DEBUG)state.put("pointer_down",down).put("pointer_moved",moved).put("pointer_long_press",longPress).put("pointer_anchor",anchor).put("pointer_focus",focus).put("pointer_last_hit",lastPointerHit).put("pointer_source",lastPointerSource).put("pointer_action",lastPointerAction).put("pointer_time",lastPointerTime).put("pointer_down_x",downX).put("pointer_down_y",downY);
             if(BuildConfig.DEBUG && debugBitmapIdentity!=null) state.put("bitmap_identity",debugBitmapIdentity);
+            if(page!=null&&BuildConfig.DEBUG&&BuildConfig.READER_PAGE_THEME)state.put("page_theme",new org.json.JSONObject().put("enabled",page.pageTheme.enabled).put("foreground_rgba",String.format(java.util.Locale.ROOT,"%08x",page.pageTheme.foreground)).put("background_rgba",String.format(java.util.Locale.ROOT,"%08x",page.pageTheme.background)).put("system",page.pageTheme.system).put("sdk",page.themeSdk));
+            if(page!=null&&BuildConfig.DEBUG&&BuildConfig.READER_PAGE_THEME){org.json.JSONArray boxes=new org.json.JSONArray();for(long value:page.themeBoxes)boxes.put(value);state.put("theme_boxes",boxes);}
             if(page!=null) state.put("book",page.bookId).put("index",page.index).put("part",page.part)
                 .put("path",page.path==null?org.json.JSONObject.NULL:page.path).put("start",page.start).put("end",page.end)
                 .put("anchor_sha256",pointHash==null?org.json.JSONObject.NULL:pointHash)
@@ -170,6 +175,7 @@ public final class ReaderView extends View {
             longPress = true;
             setSelectMode(true);
             int hit = hit(downX, downY);
+            if(BuildConfig.DEBUG)lastPointerHit=hit;
             if (hit >= 0) {
                 anchor = hit;
                 focus = hit;
@@ -504,6 +510,7 @@ public final class ReaderView extends View {
         computeFit();
         float x = event.getX();
         float y = event.getY();
+        if(BuildConfig.DEBUG){lastPointerSource=event.getSource();lastPointerAction=event.getActionMasked();lastPointerTime=event.getEventTime();}
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
                 if(turnInput==4)requestFocus();
@@ -515,6 +522,7 @@ public final class ReaderView extends View {
                 downPanX=panX;downPanY=panY;panning=false;
                 if (selectMode) {
                     int hit = hit(x, y);
+                    if(BuildConfig.DEBUG)lastPointerHit=hit;
                     if (hit >= 0) {
                         anchor = hit;
                         focus = hit;
