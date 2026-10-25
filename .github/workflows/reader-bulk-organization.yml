@@ -1,0 +1,128 @@
+name: Reader bulk organization
+on:
+  push:
+    branches: [codex/reader-bulk-organization, codex/reader-bulk-organization-review]
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  bulk:
+    name: bulk organization (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-15]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require fixed start, frozen SDK, unchanged product schema and path ownership
+        run: |
+          FIXED=f43baf9182d75907c0cb5d6f77048f27bca8c950
+          K=9854061be331fe603a1822d9b2b36ee357154927
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$FIXED" HEAD
+          git diff --exit-code "$K" HEAD -- src include cmake CMakeLists.txt tests/fixtures .github/workflows/native.yml .github/workflows/reliability.yml bindings
+          git diff --exit-code "$FIXED" HEAD -- apps/reader/store apps/reader/commands apps/reader/revisions apps/reader/desktop-metadata apps/reader/sync apps/reader/session apps/reader/desktop extras
+          allowed='^(apps/reader/bulk-organization/|tests/reader_bulk_organization/|\.github/workflows/reader-bulk-organization\.yml$|docs/READER-BULK-ORGANIZATION\.md$|docs/validation/reader-bulk-organization\.json$)'
+          changed=$(git diff --name-only "$FIXED" HEAD)
+          bad=$(printf '%s\n' "$changed" | sed '/^$/d' | grep -Ev "$allowed" || true)
+          test -z "$bad" || { echo "unowned path: $bad"; exit 1; }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the existing build tool version
+        run: python -m pip install ninja==1.11.1.1
+      - name: Enter the native Windows compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          if (-not (Test-Path -LiteralPath $bat)) { throw 'MSVC environment not found' }
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install the unchanged product chain
+        run: |
+          set -o pipefail
+          mkdir -p build/bulk-logs
+          git rev-parse HEAD > build/bulk-logs/source.txt
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "WS=$ws" >> "$GITHUB_ENV"
+          P="$ws/build/bulk-prefix"
+          cmake -S apps/reader/store/native -B build/bulk-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$P" 2>&1 | tee build/bulk-logs/product-configure.log
+          cmake --build build/bulk-product --parallel 4 2>&1 | tee build/bulk-logs/product-build.log
+          cmake --install build/bulk-product 2>&1 | tee build/bulk-logs/product-install.log
+          cmake -S apps/reader/revisions -B build/bulk-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$P" -DCMAKE_INSTALL_PREFIX="$P" 2>&1 | tee build/bulk-logs/revisions-configure.log
+          cmake --build build/bulk-revisions --parallel 4 2>&1 | tee build/bulk-logs/revisions-build.log
+          cmake --install build/bulk-revisions 2>&1 | tee build/bulk-logs/revisions-install.log
+          cmake -S apps/reader/commands -B build/bulk-commands -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$P" -DCMAKE_INSTALL_PREFIX="$P" 2>&1 | tee build/bulk-logs/commands-configure.log
+          cmake --build build/bulk-commands --parallel 4 2>&1 | tee build/bulk-logs/commands-build.log
+          cmake --install build/bulk-commands 2>&1 | tee build/bulk-logs/commands-install.log
+          cmake -S apps/reader/desktop-metadata -B build/bulk-metadata -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$P" -DCMAKE_INSTALL_PREFIX="$P" 2>&1 | tee build/bulk-logs/metadata-configure.log
+          cmake --build build/bulk-metadata --parallel 4 2>&1 | tee build/bulk-logs/metadata-build.log
+          cmake --install build/bulk-metadata 2>&1 | tee build/bulk-logs/metadata-install.log
+      - name: Build and install EXReaderBulkOrganization against installed packages only
+        run: |
+          set -o pipefail
+          P="$WS/build/bulk-prefix"
+          cmake -S apps/reader/bulk-organization -B build/bulk-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$P" -DCMAKE_INSTALL_PREFIX="$P" 2>&1 | tee build/bulk-logs/module-configure.log
+          cmake --build build/bulk-module --parallel 4 --verbose 2>&1 | tee build/bulk-logs/module-build.log
+          cmake --install build/bulk-module 2>&1 | tee build/bulk-logs/module-install.log
+      - name: Compile independent C and C++ consumers from installed packages
+        run: |
+          set -o pipefail
+          P="$WS/build/bulk-prefix"
+          cmake -S tests/reader_bulk_organization/consumer -B build/bulk-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$P" 2>&1 | tee build/bulk-logs/consumer-configure.log
+          cmake --build build/bulk-consumer --parallel 4 2>&1 | tee build/bulk-logs/consumer-build.log
+      - name: Real batches, conflicts, cancellation, process kills and independent database audit
+        run: |
+          exe=""
+          if [ "$RUNNER_OS" = Windows ]; then exe=".exe"; fi
+          python3 tests/reader_bulk_organization/check_bulk.py --probe "build/bulk-consumer/bulk-probe$exe" --c-consumer "build/bulk-consumer/bulk-c-consumer$exe" --link-map build/bulk-consumer/bulk-link.map --output build/bulk-evidence 2>&1 | tee build/bulk-logs/checks.log
+      - name: Preserve source-bound evidence and every failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-bulk-organization-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/bulk-logs/
+            build/bulk-evidence/
+            build/bulk-prefix/
+            build/bulk-consumer/bulk-probe*
+            build/bulk-consumer/bulk-c-consumer*
+            build/bulk-consumer/bulk-link.map
+          if-no-files-found: error
+  evidence:
+    name: same-run artifact evidence
+    needs: bulk
+    if: always()
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify artifact ids, bytes, digests and reports in the cloud
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/reader_bulk_organization/check_artifacts.py --output build/bulk-artifact-evidence
+      - name: Preserve the artifact verification record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-bulk-organization-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/bulk-artifact-evidence/
+          if-no-files-found: error
