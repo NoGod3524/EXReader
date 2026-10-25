@@ -1,0 +1,12 @@
+{
+  "package": "reader-raw3-common-preflight",
+  "composition_base": "e67d87cbeabb2457e0852f681ef0b27b2c0da4d8",
+  "branch": "codex/reader-raw3-common-guard",
+  "workflow": ".github/workflows/reader-raw3-common.yml",
+  "source_preflight_authenticated": false,
+  "accepted": false,
+  "complete_product": false,
+  "runtime_accepted": false,
+  "runs": [],
+  "scope": "source composition and refusal controls only; no full product or platform acceptance"
+}
