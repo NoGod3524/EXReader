@@ -972,6 +972,14 @@ static int job_commit_barrier(int kind) {
 static int job_cancel_flag(host_job *job) {
   return job && InterlockedCompareExchange((volatile LONG *)&job->cancel, 0, 0) != 0;
 }
+static int job_preferences_committed(host_job *job) {
+#if defined(EXR_READER_WINDOWS_PREFERENCES) && !defined(EXR_PREFS_OLD_CANCEL_VETO_CONTROL)
+  return job && InterlockedCompareExchange(&job->prefs_committed, 0, 0) != 0;
+#else
+  (void)job;
+  return 0;
+#endif
+}
 #ifdef EXR_HOST_WORKER_REVIEW
 #include EXR_HOST_WORKER_REVIEW_HEADER
 #define OFFSET_GET(pager,index,out,error) review_offset_get(pager,index,out,error)
@@ -2218,9 +2226,7 @@ static unsigned __stdcall job_thread(void *context) {
   }
 #endif
   if (job->status == EXR_OK && job_cancel_flag(job) && job->kind != JOB_NOTE_ADD && job->kind != JOB_NOTE_UPDATE
-#if defined(EXR_READER_WINDOWS_PREFERENCES) && !defined(EXR_PREFS_OLD_CANCEL_VETO_CONTROL)
-      && !InterlockedCompareExchange(&job->prefs_committed, 0, 0)
-#endif
+      && !job_preferences_committed(job)
 #ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
       && !winio_kind(job->kind)
 #endif
@@ -3677,7 +3683,7 @@ static void handle_job_complete(host_job *job) {
     }
     job->status = EXR_CANCELLED;
   }
-  if (job->status == EXR_OK && (job_cancel_flag(job) || g.closing) &&
+  if (job->status == EXR_OK && !job_preferences_committed(job) && (job_cancel_flag(job) || g.closing) &&
       (job->kind == JOB_OPEN || job->kind == JOB_GO || job->kind == JOB_LAYOUT)) job->status = EXR_CANCELLED;
   if (job->status != EXR_OK) g.pending_selection = 0;
   if (job->status == EXR_OK) {
