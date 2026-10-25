@@ -10,7 +10,7 @@
 | D10 | 7e4fcac25120199dd4818a86039e2257f28132a1 | Mac6/6、iPad10/10、iPhone8/10。两个大字体新驱动场景失败；不推断产品失败，不授全Apple或六平台。 |
 | D11 | da3ba2d1544edff6dc5004dd9d9d88aa732f9b12 | 六目标均执行，整体false；Android catalog observer和macOS picker前置条件尚未闭合，不跨轮拼接。 |
 | D12 | df78d4f5248deb7c1ac04b6cf7376a8fe0f80b6b | 最终harness初始化失败；只按第二轮真实GUI观察保留高亮选区缺失、真实NULL的Open/Edit启用问题及固定页窄通过，不继承最终轮未执行的Edit。 |
-| D13 | 未取得远端执行分支 | 用户明确说明平台安全检查阻塞，未执行、未验收。拒绝操作和原因原文已请求补充；不得换入口绕过该拒绝。 |
+| D13 | 未取得已核验提交或执行分支 | 用户更正：执行在实验前被检查终止，但完整拒绝原文、具体命令及规则无法找回；“网络安全风险”只是概括。无已核验运行或工件，未验收。不能断言某项路径操作被明确禁止，也不得改写实验或换入口重试。仅另做只读源码审查，见D13-SOURCE-REVIEW.md。 |
 | D14 | 93c2f583c7e54eb2aebcba13a18b532bd0a967f5 | Windows有界24周期/244检查通过；GTK仅第一阶段，未观察到live interval，cleanup后被harness终止，整体false。 |
 
 各包原始 `HANDOFF-RESULT-Dxx.md`、文档验证记录和云端原ZIP为详细证据入口。
