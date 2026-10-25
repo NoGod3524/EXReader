@@ -1,8 +1,19 @@
 # S17 — 同步状态视图的 raw 家族兼容
 
-状态：源码与验收脚本已就位；真实 CI 证据见本目录 `validation.json`（CI 之后写入）。
-本文件只描述设计与代码约束；任何"已通过"的结论必须由 GitHub Actions 的
-run/attempt/jobs 与工件身份支撑，不在文档里预支。
+状态：**未接纳（accepted=false）**。三轮完整 CI 已用完，见
+`validation.json` 与根目录 `HANDOFF-RESULT-S17.md`。
+
+定版事实：源码/验收脚本定版于 `ef5f3898393efea169add05b79c8c210082de121`，
+run `40227736624` / attempt `1`。两平台的验收本身全绿——默认家族的
+**原封不动**旧裁判 22/22、raw 家族的 20/20——但包级汇总没跑成：
+`run.py:217` 对旧裁判报告里不存在的 `adopted` 键做了断言（`KeyError`），
+因此 `result.json` 未写出、其后的 5 条混装拒绝矩阵一次都没执行；汇总作业又
+因为 `actions/runs/<id>/attempts/<n>/artifacts` 是 404 而在任何 digest 复算
+之前退出。这两个缺陷**留档未修**：三轮额度已满，改了就无法再把"源码 == CI
+跑过的源码"对上。工件 id/size/digest 只有 GitHub 自报值，**未经严格复算**。
+
+本文件其余部分只描述设计与代码约束；任何"已通过"的结论必须由 GitHub Actions
+的 run/attempt/jobs 与工件身份支撑，不在文档里预支。
 
 ## 1. 范围与所有权
 
