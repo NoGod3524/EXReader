@@ -1,10 +1,76 @@
 {
   "accepted": false,
-  "source_sha": null,
+  "source_sha": "d199f0dc67ed929ad7c5a3fe8edb855ef50f1f67",
   "fixed_base": "6b43e83537aa6b03bda889d258fe73c0e317acb1",
   "frozen_sdk": "9854061be331fe603a1822d9b2b36ee357154927",
-  "runs": [],
-  "pending": "first full same-source Actions run",
+  "checkpoint": {
+    "observed_at_utc": "2026-10-25T00:35:15Z",
+    "branch": "codex/reader-android-fixed-pan",
+    "workspace": "C:/Users/Oscar/.codex/worktrees/reader-android-sync-session/EXReader",
+    "source_head": "d199f0dc67ed929ad7c5a3fe8edb855ef50f1f67",
+    "source_origin_head": "d199f0dc67ed929ad7c5a3fe8edb855ef50f1f67",
+    "source_worktree_clean": true,
+    "all_source_tests_workflow_committed_and_pushed": true,
+    "reason": "user requested restart-safe checkpoint; no new feature or cloud round; running cloud job left unchanged",
+    "checkpoint_commit": "subsequent evidence-only [skip ci] commit; exact final HEAD supplied in handback"
+  },
+  "runs": [
+    {
+      "source_sha": "e2f177f5b8790ba4cb27e413558bc3a45ed5dfa3",
+      "run_id": 40145782695,
+      "attempt": 1,
+      "job_id": 121026688733,
+      "conclusion": "cancelled",
+      "reason": "source review removed irrelevant inherited search expectations from the new quadrant-only fixture manifest; original inherited test fixtures were unchanged",
+      "artifacts": [
+        {
+          "id": 12580996162,
+          "name": "reader-android-fixed-pan-40145782695-1",
+          "bytes": 21759444,
+          "sha256": "9f739316145eaedca4a5c630d1cd8ada0db0f2ba037f24f2edad1bb435c100b7",
+          "expires_at": "2027-01-23T00:12:21Z"
+        }
+      ]
+    },
+    {
+      "source_sha": "1c7e1634d0aa00bd1f3ddbee85dc5017013fa822",
+      "run_id": 40145939682,
+      "attempt": 1,
+      "job_id": 121027169823,
+      "conclusion": "failure",
+      "reason": "ReaderView.java pan condition missing one closing parenthesis; fixed in d199f0dc; no UI suite executed",
+      "artifacts": [
+        {
+          "id": 12580242735,
+          "name": "reader-android-fixed-pan-40145939682-1",
+          "bytes": 37260901,
+          "sha256": "f76283ffff1f023ca265c67ebaa8a27178aab2dfb8078b6d6a50b688ea90c146",
+          "expires_at": "2027-01-23T00:14:48Z"
+        }
+      ]
+    },
+    {
+      "source_sha": "d199f0dc67ed929ad7c5a3fe8edb855ef50f1f67",
+      "run_id": 40146403326,
+      "attempt": 1,
+      "job_id": 121028566204,
+      "status": "in_progress",
+      "conclusion": null,
+      "active_step": "Actual SDK owner import and public original export in Android private storage",
+      "builds_and_native_audits_completed": true,
+      "ui_acceptance_not_yet_observed": true,
+      "artifact": null
+    }
+  ],
+  "pending": "read terminal state of run 40146403326; no local builds/tests/syntax/artifact parsing",
+  "next_actions": [
+    "Read run 40146403326 and job 121028566204 metadata; preserve that existing run and wait for its actual terminal state.",
+    "Only after terminal state, read its real logs and artifact metadata; if failure fix the named root cause without weakening assertions, then run a complete same-source round after restart.",
+    "If success, require Pan8 (first7/reopen1) and unchanged Host16/Search15/Navigation18/Reading16/Preferences17/CBZ10 plus original SDK/transport results.",
+    "After restart create a separate codex/reader-android-fixed-pan-proof diagnostic branch if success: download the exact original ZIP in Actions, verify id/bytes/full SHA/expiry/source/run, decode the saved screenshot PNGs independently and strictly compare all nine planned corner pixels; verify 15 PNG captures, 14 original source identities and two process PIDs plus inherited results.",
+    "Then update only evidence docs with real accepted result; never merge a *-proof branch or grant page colors/physical-device/TalkBack/performance/full-product scope."
+  ],
+  "prior_completed_cbz_head": "6b43e83537aa6b03bda889d258fe73c0e317acb1",
   "page_colors_accepted": false,
   "physical_device_execution": false,
   "talkback_speech_accepted": false,
